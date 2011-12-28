@@ -1,0 +1,18 @@
+include(`leds.m4')
+
+par/or do
+    loop do
+        await 250ms;
+        emit Leds_led0Toggle();
+    end;
+with
+    loop do
+        await 500ms;
+        emit Leds_led1Toggle();
+    end;
+with
+    loop do
+        await 1000ms;
+        emit Leds_led2Toggle();
+    end;
+end;

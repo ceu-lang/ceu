@@ -1,0 +1,26 @@
+output void PinMode;
+output int  DigitalRead;
+output void DigitalWrite;
+
+emit PinMode( 2, $INPUT);
+emit PinMode(13, $OUTPUT);
+
+par/or do
+
+    loop do
+        int v = emit DigitalRead(2);
+        emit DigitalWrite(13, v);
+        await 10ms;
+    end;
+
+with
+
+    async do
+        loop do
+            $delay(10);
+            emit 10ms;  // TODO: now - pre
+        end;
+    end;
+    await forever;      // TODO: ele acha que o async termina
+
+end;

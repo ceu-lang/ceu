@@ -1,0 +1,59 @@
+output void PinMode;
+output int  DigitalRead;
+output void DigitalWrite;
+
+input int P2_LOW, P2_HIGH;
+
+_pinMode( 2, _INPUT);
+_pinMode(13, _OUTPUT);
+
+par/or do
+
+    int t = 500;
+    par/or do
+        loop do
+            _digitalWrite(13, _HIGH);
+            await (t);
+            _digitalWrite(13, _LOW);
+            await (t);
+        end
+    with
+        loop do
+            await P2_LOW;
+            par/or do
+                await P2_LOW;
+                t = 500;
+            with
+                await 200ms;
+                if t > 100 then
+                    t = t - 50;
+                end
+            end
+        end
+    end
+
+with
+
+    async do
+        u32 old = _millis();
+        int p2 = 0;
+        loop do
+            int tmp = _digitalRead(2);
+            if (p2 != tmp) then
+                p2 = tmp;
+                if p2==_HIGH then
+                    emit P2_HIGH();
+                else
+                    emit P2_LOW();
+                end
+            end
+            u32 now = _millis();
+//_DBG("t: now:%lu old:%lu dt:%d\n", now, old, dt);
+            _delay(10-(now-old));       // TODO: assert dt<=10
+            old = _millis();
+            emit 10ms;
+        end
+    end
+    await forever;      // TODO: ele acha que o async termina
+
+end

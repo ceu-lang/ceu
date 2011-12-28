@@ -1,0 +1,34 @@
+include(`leds.m4')
+include(`radio.m4')
+
+C {
+typedef nx_struct {
+    nx_uint16_t cnt;
+} t ;
+};
+
+RADIO_START(1s);
+
+par/or do
+    t* t_recv;
+    emit Radio_getPayload(&Radio_receive,0);
+    t_recv = Radio_getPayload;
+    loop do
+        await Radio_receive ;
+        SHOW(t_recv->cnt, 500ms);
+    end;
+
+with
+    message_t msg;
+    t* t_send;
+    emit Radio_getPayload(&msg, sizeof(t));
+    t_send = Radio_getPayload;
+    t_send->cnt = 1;
+
+    loop do
+        await 2s ;
+        RADIO_SEND(1s, $AM_BROADCAST_ADDR, &msg, sizeof(t));
+        BLINK(1,100ms) ;
+        t_send->cnt = t_send->cnt + 1;
+    end;
+end;

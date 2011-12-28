@@ -1,0 +1,30 @@
+include(`leds.m4')
+include(`photo.m4')
+
+define(`SAMPLING_FREQUENCY', `100ms')
+
+int data;
+
+loop do
+    await SAMPLING_FREQUENCY;
+    emit Photo_read();
+    data = await Photo_readDone;
+
+    if data & 0100 then
+        emit Leds_led2On();
+    else
+        emit Leds_led2Off();
+    end;
+
+    if data & 0010 then
+        emit Leds_led1On();
+    else
+        emit Leds_led1Off();
+    end;
+
+    if data & 0001 then
+        emit Leds_led0On();
+    else
+        emit Leds_led0Off();
+    end;
+end;
