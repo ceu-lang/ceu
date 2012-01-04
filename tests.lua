@@ -1697,6 +1697,70 @@ return a;
     }
 }
 Test { [[
+int a=0,b=0;
+par/or do
+    await 10ms;
+    await 10ms;
+    a = 1;
+with
+    await 20ms;
+    b = 1;
+end;
+return a + b;
+]],
+    run = {
+        ['~>20ms'] = 2,
+    }
+}
+Test { [[
+int a=0,b=0;
+par/or do
+    await (10);
+    await (10);
+    a = 1;
+with
+    await 20ms;
+    b = 1;
+end;
+return a + b;
+]],
+    run = {
+        ['~>20ms'] = 2,
+    }
+}
+Test { [[
+int a=0,b=0;
+par/or do
+    await (10);
+    await (10);
+    a = 1;
+with
+    await (20);
+    b = 1;
+end;
+return a + b;
+]],
+    run = {
+        ['~>20ms'] = 2,
+    }
+}
+Test { [[
+int a=0,b=0;
+par/or do
+    await 10ms;
+    await 10ms;
+    a = 1;
+with
+    await (20);
+    b = 1;
+end;
+return a + b;
+]],
+    run = {
+        ['~>20ms'] = 2,
+    }
+}
+Test { [[
 int a,b;
 par/or do
     a = await 10ms;

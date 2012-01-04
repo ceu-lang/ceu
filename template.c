@@ -37,7 +37,7 @@ tceu_gte TRGS[] = { === TRGS === };
 #define PVAR(tp,reg) ((tp*)(VARS+reg))
 char VARS[N_VARS];
 
-int _intl_, _extl_;
+int _intl_, _extl_, _extlmax_;
 
 /* INTRAS ***************************************************************/
 
@@ -131,8 +131,8 @@ int QTimer_prio (void* v1, void* v2) {
 Queue  Q_TIMERS;
 QTimer Q_TIMERS_BUF[N_TIMERS];
 
-void qins_timer (tceu_time ms, u8 extl, u8 intl, tceu_gte gte) {
-    QTimer v = { 0, extl, intl, gte };
+void qins_timer (tceu_time ms, tceu_gte gte) {
+    QTimer v = { 0, _extl_, _intl_, gte };
 
     s32 dt = ms - TIME_late;
     v.phys = TIME_now + dt;
@@ -209,9 +209,10 @@ int ceu_go_init (int* ret, tceu_time now)
 
     TIME_now  = now;
     TIME_late = 0;
-    _extl_    = 0;
 
     qins_track(PR_MAX, Init);
+
+    _extlmax_ = _extl_ = 0;
     return go(ret);
 }
 
@@ -223,6 +224,8 @@ int ceu_go_event (int* ret, int id, void* data) {
     //TIME_base++;
     TIME_late = 0;
     trigger(evt->trg);
+
+    _extl_ = ++_extlmax_;
     return go(ret);
 }
 
@@ -269,6 +272,7 @@ int ceu_go_time (int* ret, tceu_time now)
         }
     }
 
+    _extl_ = min.extl;
     return go(ret);
 }
 
@@ -285,6 +289,8 @@ int ceu_go_async (int* ret, int* count)
     spawn(Q_ASYNC[async_ini++]);
     async_ini %= N_ASYNCS;
     async_cnt--;
+
+    _extl_ = ++_extlmax_;
     return go(ret);
 }
 
@@ -294,7 +300,6 @@ int go (int* ret)
     QIntra itr;
     int _lbl_;
 
-    _extl_++;
     _intl_ = 0;
 
 _TRACKS_:
