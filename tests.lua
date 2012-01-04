@@ -9218,19 +9218,19 @@ PRE = ''
 
 Test { [[char* a = "Abcd12" ; return 1;]], run=1 }
 Test { [[
-_printf("FIM: %s\n", "Abcd12");
+_printf("END: %s\n", "Abcd12");
 return 0;
 ]],
     run='Abcd12',
 }
 Test { [[return _strlen("123");]], run=3 }
-Test { [[_printf("FIM: 1%d\n",2); return 0;]], run=12 }
-Test { [[_printf("FIM: 1%d%d\n",2,3); return 0;]], run=123 }
+Test { [[_printf("END: 1%d\n",2); return 0;]], run=12 }
+Test { [[_printf("END: 1%d%d\n",2,3); return 0;]], run=123 }
 
 Test { [[
 char[10] str;
 _strncpy(str, "123", 4);
-_printf("FIM: %d %s\n", _strlen(str), str);
+_printf("END: %d %s\n", _strlen(str), str);
 return 0;
 ]],
     run = '3 123'
@@ -9246,7 +9246,7 @@ int len = 0;
 _strcpy(d,a);
 _strcpy(&d[_strlen(d)], b);
 _strcpy(&d[_strlen(d)], c);
-_printf("FIM: %d %s\n", _strlen(d), d);
+_printf("END: %d %s\n", _strlen(d), d);
 return 0;
 ]],
     run = '12 Hello World!'

@@ -26,8 +26,9 @@ typedef struct {
     tceu_reg reg;
     tceu_trg trg;
 } Event;
-Event EVTS[] = { === EVTS === };
-#include "_ceu_events.h"
+Event EVTS[] = { === EVTS_T1 === };    // { var.size, var.reg, var.trg }
+
+=== EVTS_T2 ===
 
 char ANDS[N_ANDS];      // TODO: bitfield
 tceu_lbl GTES[N_GTES];
@@ -198,7 +199,7 @@ void dump (void)
 
 /**********************************************************************/
 
-int ceu_go_init (int* ret)
+int ceu_go_init (int* ret, tceu_time now)
 {
     memset(GTES, 0, N_GTES);
 
@@ -206,7 +207,7 @@ int ceu_go_init (int* ret)
     q_init(&Q_TRACKS, Q_TRACKS_BUF, N_TRACKS, sizeof(QTrack), QTrack_prio);
     q_init(&Q_INTRA,  Q_INTRA_BUF,  N_INTRAS, sizeof(QIntra), QIntra_prio);
 
-    TIME_now  = ceu_out_now();
+    TIME_now  = now;
     TIME_late = 0;
     _extl_    = 0;
 
@@ -332,18 +333,20 @@ _SWITCH_:
     return 0;
 }
 
-int ceu_go_polling ()
+int ceu_go_polling (tceu_time now)
 {
-    int ret;
+    int ret, async_cnt;
 
-    if (ceu_go_init(&ret))
+    if (ceu_go_init(&ret, now))
         return ret;
 
     if (ceu_go_start(&ret))
         return ret;
 
     for (;;) {
-        if (ceu_go_async(&ret,NULL))
+        if (ceu_go_async(&ret,&async_cnt))
             return ret;
+        if (async_cnt == 0)
+            break;              // returns nothing!
     }
 }

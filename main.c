@@ -15,7 +15,6 @@ typedef u16 tceu_lbl;
 
 #define ceu_out_pending()   (1)
 #define ceu_out_timer(ms)
-#define ceu_out_now()       TIME_now
 
 #include <assert.h>
 #define ASSERT(x,y) assert(x)
@@ -25,8 +24,8 @@ typedef u16 tceu_lbl;
 
 int main (int argc, char *argv[])
 {
-    int ret = ceu_go_polling();
+    int ret = ceu_go_polling(0);
 
-    printf("*** FIM: %d\n", ret);
+    printf("*** END: %d\n", ret);
     return ret;
 }

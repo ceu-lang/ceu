@@ -15,7 +15,6 @@ unsigned long millis(void);
 
 #define ceu_out_pending()   true
 #define ceu_out_timer(ms)
-#define ceu_out_now()       millis()
 
 #include <assert.h>
 #define ASSERT(x,y) assert(x)
@@ -41,7 +40,7 @@ void DBG (char *fmt, ... )
 void setup ()
 {
     Serial.begin(9600);
-    ceu_go_polling();
+    ceu_go_polling(millis());
 }
 
 void loop()

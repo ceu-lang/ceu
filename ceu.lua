@@ -30,7 +30,7 @@ do
         i = i + 1
 
     elseif string.sub(p, 1, 2) == '--' then
-        local opt = string.gsub(string.match(p, '--(.*)'), '%-', '_')
+        local opt = string.gsub(string.sub(p,3), '%-', '_')
         _OPTS[opt] = true
 
     else
@@ -129,15 +129,13 @@ do
     -- EVENTS
     do
         local str = ''
-        local t = {}
+        local t1, t2 = {}, {}
         for id, var in pairs(_ENV.exts) do
-            str = str..'#define IO_'..id..' '..#t..'\n'
-            t[#t+1] = '{'..var.size..','..var.reg..','..var.trg0..'}'
+            t1[#t1+1] = '{'..var.size..','..var.reg..','..var.trg0..'}'
+            t2[#t2+1] = '#define IO_'..id..' '..#t2
         end
-        tpl = sub(tpl, '=== EVTS ===', table.concat(t,','))
-        local f = io.open('_ceu_events.h','w')
-        f:write(str)
-        f:close()
+        tpl = sub(tpl, '=== EVTS_T1 ===', table.concat(t1,','))
+        tpl = sub(tpl, '=== EVTS_T2 ===', table.concat(t2,'\n'))
     end
 end
 

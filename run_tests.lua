@@ -96,7 +96,7 @@ Test = function (t)
         --print(os.execute("/tmp/ceu.exe")/256, T.run, str_input)
         --assert(os.execute("/tmp/ceu.exe")/256 == T.run, str_input)
         local ret = io.popen('/tmp/ceu.exe'):read'*a'
-        ret = string.match(ret, 'FIM: (.-)\n')
+        ret = string.match(ret, 'END: (.-)\n')
         assert(ret==T.run..'', ret..' vs '..T.run..' expected')
 
     else
@@ -122,7 +122,7 @@ Test = function (t)
             ceu:close()
             assert(os.execute('gcc -std=c99 -o /tmp/ceu.exe main.c') == 0)
             local ret = io.popen('/tmp/ceu.exe'):read'*a'
-            ret = string.match(ret, 'FIM: (%-?%d+)')
+            ret = string.match(ret, 'END: (%-?%d+)')
             assert(tonumber(ret)==ret2, ret..' vs '..ret2..' expected')
         end
     end
