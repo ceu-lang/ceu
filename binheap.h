@@ -15,9 +15,9 @@ void q_init     (Queue* Q, void* buf, u8 n_max, u8 unit, q_prio_t cmp);
 void q_insert   (Queue* Q, void* V);
 int  q_peek     (Queue* Q, void* V);
 int  q_remove_i (Queue* Q, int I, void* V);
-static int         q_remove  (Queue* Q, void* V);
-static inline void q_clear   (Queue* Q);
-static inline int  q_isEmpty (Queue* Q);
-static inline int  q_isFull  (Queue* Q);
+int  q_remove   (Queue* Q, void* V);
+void q_clear    (Queue* Q);
+int  q_isEmpty  (Queue* Q);
+int  q_isFull   (Queue* Q);
 
 #endif

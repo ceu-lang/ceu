@@ -3,7 +3,7 @@ MODE ?= work	# work|simul
 all: ceu _all
 
 ceu:
-	lua ceu.lua $(FILE).ceu --m4 --output _ceu_code.c
+	lua ceu.lua $(FILE).ceu --output _ceu_code.c
 
 clean: _clean
 	rm -f _ceu_*

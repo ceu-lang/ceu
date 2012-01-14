@@ -71,10 +71,10 @@ TYPE = ID * (S*'*')^0 /
 
 _GG = { [1] = K'' *S* V'_Stmts' *S* -1
 
-    , Block    = V'_Stmts'
-    , _Stmts   = V'_LstStmt'   * (S*EK';')^1
-               + V'_StmtBlock' * (S*EK';')^0 *S* V'_Stmts'^-1
-               + V'_Stmt'      * (S*EK';')^1 *S* V'_Stmts'^-1
+    , Block  = V'_Stmts'
+    , _Stmts = V'_LstStmt'   * (S*EK';')^1
+             + V'_StmtBlock' * (S*EK';')^0 *S* V'_Stmts'^-1
+             + V'_Stmt'      * (S*EK';')^1 *S* V'_Stmts'^-1
 
     , _LstStmt   = V'Return'   + V'Break'  + V'AwaitN'
     , _StmtBlock = V'_DoBlock' + V'Async'  + V'Host'

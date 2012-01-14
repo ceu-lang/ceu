@@ -1,23 +1,12 @@
-typedef          long  s32;
+typedef long  s32;
+typedef short s16;
+typedef char  s8;
+
 typedef unsigned long  u32;
-typedef          short s16;
 typedef unsigned short u16;
-typedef          char  s8;
 typedef unsigned char  u8;
 
-typedef u32 tceu_time;
-typedef u16 tceu_reg;
-typedef u16 tceu_gte;
-typedef u16 tceu_trg;
-typedef u16 tceu_lbl;
-
-unsigned long millis(void);
-
-#define ceu_out_pending()   true
-#define ceu_out_timer(ms)
-
-#include <assert.h>
-#define ASSERT(x,y) assert(x)
+//#include <assert.h>
 //#define ASSERT(x,y) if (!(x)) { fprintf(stderr,"ASR:%d\n",y);assert(x); };
 
 //#define PinMode         pinMode

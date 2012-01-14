@@ -1,6 +1,4 @@
 #include <string.h>
-#include "binheap.h"
-#include "binheap.c"
 
 #define PR_MAX  0xFF
 
@@ -11,6 +9,28 @@
 #define N_GTES      === N_GTES ===
 #define N_ANDS      === N_ANDS ===
 #define N_VARS      === N_VARS ===
+
+#ifndef ceu_out_pending
+#   define ceu_out_pending()   (1)
+#endif
+
+#ifndef ceu_out_timer
+#   define ceu_out_timer(ms)
+#endif
+
+#ifndef ASSERT
+#   include <assert.h>
+#   define ASSERT(x,y) assert(x)
+#endif
+
+typedef u32 tceu_time;
+typedef u16 tceu_reg;
+typedef u16 tceu_gte;
+typedef u16 tceu_trg;
+typedef u16 tceu_lbl;
+
+#include "binheap.h"
+#include "binheap.c"
 
 int go (int* ret);
 

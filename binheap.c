@@ -14,17 +14,17 @@ void  q_init (Queue* Q, void* buf, u8 n_max, u8 unit, q_prio_t cmp)
     //Q->buf[0] = NULL;
 }
 
-static inline int q_isFull (Queue* Q)
+int q_isFull (Queue* Q)
 {
     return Q->n == Q->n_max;
 }
 
-static inline int q_isEmpty (Queue* Q)
+int q_isEmpty (Queue* Q)
 {
     return Q->n == 0;
 }
 
-static inline void q_clear (Queue* Q)
+void q_clear (Queue* Q)
 {
     Q->n = 0;
 }
@@ -73,7 +73,7 @@ int q_remove_i (Queue* Q, int I, void* V)
     return 1;
 }
 
-static int q_remove (Queue* Q, void* V)
+int q_remove (Queue* Q, void* V)
 {
     return q_remove_i(Q, 1, V);
 }

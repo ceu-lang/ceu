@@ -83,7 +83,7 @@ Test = function (t)
         local ceu = assert(io.popen('./ceu.lua - --output _ceu_code.c', 'w'))
         ceu:write(str_all)
         ceu:close()
-        assert(os.execute('gcc -std=c99 -o /tmp/ceu.exe main.c 2>/dev/null') ~= 0)
+        assert(os.execute('gcc -std=c99 -o ceu.exe main.c 2>/dev/null') ~= 0)
 
     -- T.run = N
     elseif type(T.run) ~= 'table' then
@@ -92,10 +92,10 @@ Test = function (t)
         local ceu = assert(io.popen('./ceu.lua - --output _ceu_code.c', 'w'))
         ceu:write(str_all)
         ceu:close()
-        assert(os.execute('gcc -std=c99 -o /tmp/ceu.exe main.c') == 0)
+        assert(os.execute('gcc -std=c99 -o ceu.exe main.c') == 0)
         --print(os.execute("/tmp/ceu.exe")/256, T.run, str_input)
         --assert(os.execute("/tmp/ceu.exe")/256 == T.run, str_input)
-        local ret = io.popen('/tmp/ceu.exe'):read'*a'
+        local ret = io.popen('./ceu.exe'):read'*a'
         ret = string.match(ret, 'END: (.-)\n')
         assert(ret==T.run..'', ret..' vs '..T.run..' expected')
 
@@ -120,8 +120,8 @@ Test = function (t)
             --print(all)
             ceu:write(all)
             ceu:close()
-            assert(os.execute('gcc -std=c99 -o /tmp/ceu.exe main.c') == 0)
-            local ret = io.popen('/tmp/ceu.exe'):read'*a'
+            assert(os.execute('gcc -std=c99 -o ceu.exe main.c') == 0)
+            local ret = io.popen('./ceu.exe'):read'*a'
             ret = string.match(ret, 'END: (%-?%d+)')
             assert(tonumber(ret)==ret2, ret..' vs '..ret2..' expected')
         end
