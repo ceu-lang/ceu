@@ -4,6 +4,8 @@ PRE = ''
 --do return end
 --]===]
 
+Test { [[return(1);]], run=1 }
+Test { [[return (1);]], run=1 }
 Test { [[return 1;]], run=1 }
 
 Test { [[return 1; // return 1;]], run=1 }
@@ -31,6 +33,7 @@ Test { [[return (1<=2) + (1<2) + 2/1 - 2%3;]], run=2 }
 Test { [[return (~(~0b1010 & 0XF) | 0b0011 ^ 0B0010) & 0xF;]], run=11 }
 Test { [[int sizeof;]], parser=false }
 Test { [[return sizeof(int);]], run=4 }
+Test { [[return 1<2>3;]], run=0 }
 
 Test { [[int a;]],
     dfa = 'missing return statement',
@@ -45,6 +48,9 @@ Test { [[int a; a = 1; return a;]],
     run = 1,
 }
 Test { [[int a = 1; return a;]],
+    run = 1,
+}
+Test { [[int a = 1; return (a);]],
     run = 1,
 }
 Test { [[int a = 1;]],
@@ -8781,8 +8787,8 @@ char c;
 char* pc;
 i = c;
 c = i;
-i = (int) c;
-c = (char) i;
+i = <int> c;
+c = <char> i;
 return 10;
 ]],
     run = 10
