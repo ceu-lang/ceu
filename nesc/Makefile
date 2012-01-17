@@ -13,8 +13,7 @@ include $(MAKERULES)
 
 ceu:
 	@echo "======================================================="
-	m4 -D$(MODE) $(FILE).ceu > /tmp/$(notdir $(FILE)).ceu
-	lua asm.lua /tmp/$(notdir $(FILE)).ceu > _ceu_code.c
+	./ceu.lua --m4 --events --output _ceu_code.c $(FILE).ceu
 	@echo "======================================================="
 
 tests:
@@ -26,10 +25,10 @@ tests:
 	./base_station.exe | diff - base_station.out
 
 dist: clean_ceu
+	mkdir -p ../ceu_nesc_`date +%F`/ ; \
+	cp -R Makefile *.lua *.c *.h *.m4 *.nc samples/ ../ceu_nesc_`date +%F`/ ; \
 	cd .. ; \
-	mv nesc/ ceu_nesc_`date +%F`/ ; \
 	tar hcvzf ceu_nesc_`date +%F`.tgz ceu_nesc_`date +%F`/ ; \
-	mv ceu_nesc_`date +%F`/ nesc/ ;
 
 clean_ceu:
 	rm -f *.exe _ceu_*

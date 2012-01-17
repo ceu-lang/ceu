@@ -1,11 +1,11 @@
-output error_t   Serial_start;
-input  error_t   Serial_startDone;
+output error_t    Serial_start;
+input  error_t    Serial_startDone;
 
-output error_t   Serial_send;
-input  error_t   Serial_sendDone;
-input  message_t Serial_receive;
+output error_t    Serial_send;
+input  error_t    Serial_sendDone;
+input  message_t* Serial_receive;
 
-output void*     Serial_getPayload;
+output void*      Serial_getPayload;
 
 error_t serial_err;
 
@@ -14,8 +14,7 @@ loop do
     par/or do
         await $1;
     with
-        emit Serial_start();
-        serial_err = Serial_start;
+        serial_err = emit Serial_start();
         if serial_err != 0 then
             emit serial_err();
         else
@@ -36,8 +35,7 @@ loop do
     par/or do
         await $1;
     with
-        emit Serial_send($2,$3);
-        serial_err = Serial_send;
+        serial_err = emit Serial_send($2,$3);
         if serial_err != 0 then
             emit serial_err();
         else

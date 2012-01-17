@@ -206,7 +206,7 @@ return a;
     -- EVENTS
 
 Test { [[input int A=1;]], parser=false }
-Test { [[input int A; A=1; return 1;]], exps='invalid attribution' }
+Test { [[input int A; A=1; return 1;]], parser=false }
 Test { [[output int A; return 1;]], run=1 }
 Test { [[output int A; emit A(); return 1;]], run=false }
 Test { [[
@@ -217,7 +217,7 @@ output int A;
 A = 1;
 return 1;
 ]],
-    exps='invalid attribution'
+    parser = false,
 }
 
 Test { [[output int A;]],
@@ -254,7 +254,7 @@ C {
     void A (int v) {}
 };
 output char A;
-emit A(1);
+cahr v = emit A(1);
 return 0;
 ]],
     run = false;
@@ -265,10 +265,10 @@ C {
     void A (int v) {}
 };
 output char A;
-emit A(1);
+char v = emit A(1);
 return A;
 ]],
-    run = false;
+    parser = false,
 }
 
 Test { [[
@@ -298,13 +298,13 @@ C {
     void A () {}
 };
 output void A;
-emit A();
-return A;
+int v = emit A();
+return 0;
 ]],
-    exps = 'invalid return value'
+    exps = 'invalid attribution'
 }
 
-Test { [[emit A(10); return A;]],
+Test { [[emit A(10); return 0;]],
     env = 'variable "A" is not declared'
 }
 
@@ -330,6 +330,19 @@ C {
 output int ID;
 emit ID(10);
 return ID;
+]],
+    parser = false,
+}
+
+Test { [[
+C {
+    int ID (int v) {
+        return v;
+    }
+};
+output int ID;
+int v = emit ID(10);
+return v;
 ]],
     run = 10
 }
@@ -367,6 +380,18 @@ output void VD;
 emit VD(10);
 return VD;
 ]],
+    parser = false,
+}
+
+Test { [[
+C {
+    void VD (int v) {
+    }
+};
+output void VD;
+void v = emit VD(10);
+return v;
+]],
     exps = 'invalid return value'
 }
 
@@ -380,10 +405,23 @@ output int NEG;
 emit NEG(10);
 return NEG;
 ]],
+    parser = false,
+}
+
+Test { [[
+C {
+    int NEG (int v) {
+        return -v;
+    }
+};
+output int NEG;
+int v = emit NEG(10);
+return v;
+]],
     run = -10
 }
 
-Test { [[await A; return A;]],
+Test { [[await A; return 0;]],
     env = 'variable "A" is not declared',
 }
 
@@ -427,13 +465,28 @@ with
 end;
 return A;
 ]],
+    parser = false,
+}
+
+Test { [[
+input int A;
+int v;
+par/and do
+    v = await A;
+with
+    async do
+        emit A(10);
+    end;
+end;
+return v;
+]],
     run = 10
 }
 
 Test { [[
 input int A;
-await A;
-return A;
+int v = await A;
+return v;
 ]],
     run = {
         ['101~>A'] = 101,
@@ -449,12 +502,13 @@ C {
 };
 input  int A;
 output int ID;
+int v;
 par/and do
     await A;
 with
-    emit ID(10);
+    v = emit ID(10);
 end;
-return ID;
+return v;
 ]],
     run = {['1~>A']=10},
 }
@@ -467,12 +521,13 @@ C {
 };
 input  int A;
 output int ID;
+int v;
 par/or do
     await A;
 with
-    emit ID(10);
+    v = emit ID(10);
 end
-return ID;
+return v;
 ]],
     unreach = 1,
     run = 10,
@@ -551,16 +606,16 @@ end
 
 Test { [[
 input int A;
-await A;
-return A;
+int v = await A;
+return v;
 ]],
     run = { ['10~>A']=10 },
 }
 Test { [[
 input int A,B;
 await A;
-await B;
-return B;
+int v = await B;
+return v;
 ]],
     run = {
         ['3~>A ; 1~>B'] = 1,
@@ -592,8 +647,8 @@ Test { [[
 input int A;
 await A;
 await A;
-await A;
-return A;
+int v = await A;
+return v;
 ]],
     run  = {
         ['1~>A ; 2~>A ; 3~>A'] = 3,
@@ -618,10 +673,11 @@ return ret;
 
 Test { [[
 input int A;
+int v;
 if 1 then
-    await A;
+    v = await A;
 end;
-return A;
+return v;
 ]],
     run = {
         ['1~>A ; 0~>A'] = 1,
@@ -630,10 +686,11 @@ return A;
 
 Test { [[
 input int A;
+int v;
 if 0 then
-    await A;
+    v = await A;
 end;
-return A;
+return v;
 ]],
     run = 0,
 }
@@ -716,13 +773,14 @@ int a =
     do
         par/or do
             par/or do
+                int v;
                 par/or do
                     int v = await 10ms;
                     return v;
                 with
-                    await A;
+                    v = await A;
                 end;
-                return A;
+                return v;
             with
                 int v = await B;
                 return v;
@@ -963,8 +1021,8 @@ end;
 Test{ [[
 input int E;
 loop do
-    await E;
-    if E then
+    int v = await E;
+    if v then
         nothing;
     else
         nothing;
@@ -1332,8 +1390,8 @@ a = par/or do
     end;
     return 0;
 with
-    await A;
-    return A;
+    int v = await A;
+    return v;
 end;
 return a;
 ]],
@@ -1346,13 +1404,13 @@ input int A;
 int a;
 a = par/or do
     if 1 then
-        await A;
-        return A;
+        int v = await A;
+        return v;
     end;
     return 0;
 with
-    await A;
-    return A;
+    int v = await A;
+    return v;
 end;
 return a;
 ]],
@@ -1365,14 +1423,14 @@ int a;
 a = par/or do
     await A;
     if 1 then
-        await A;
+        int v = await A;
         // unreachable
-        return A;
+        return v;
     end;
     return 0;
 with
-    await A;
-    return A;
+    int v = await A;
+    return v;
 end;
 return a;
 ]],
@@ -1382,18 +1440,18 @@ return a;
 
 Test { [[
 input int A,B;
-int a;
+int a,v;
 a = par/or do
     if 1 then
-        await A;
+        v = await A;
     else
         await B;
-        return A;
+        return v;
     end;
     return 0;
 with
-    await A;
-    return A;
+    int v = await A;
+    return v;
 end;
 return a;
 ]],
@@ -1402,19 +1460,19 @@ return a;
 
 Test { [[
 input int A,B;
-int a;
+int a,v;
 a = par/or do
     if 1 then
-        await A;
-        return A;
+        v = await A;
+        return v;
     else
         await B;
-        return A;
+        return v;
     end;
     return 0;
 with
-    await A;
-    return A;
+    int v = await A;
+    return v;
 end;
 return a;
 ]],
@@ -1535,11 +1593,11 @@ end;
 Test { [[
 input int A;
 par/or do
-    await A;
-    return A;
+    int v = await A;
+    return v;
 with
-    await A;
-    return A;
+    int v = await A;
+    return v;
 end;
 ]],
     nd_acc = 1,
@@ -1559,14 +1617,14 @@ end;
 Test { [[
 input int A,B,C;
 par/or do
-    await A;
-    return A;
+    int v = await A;
+    return v;
 with
-    await B;
-    return B;
+    int v = await B;
+    return v;
 with
-    await C;
-    return C;
+    int v = await C;
+    return v;
 end;
 ]],
     run = { ['1~>A']=1, ['2~>B']=2, ['3~>C']=3 }
@@ -1595,11 +1653,11 @@ Test { [[
 input int A,B;
 par/or do
     await A;
-    await A;
-    return A;
+    int v = await A;
+    return v;
 with
-    await B;
-    return B;
+    int v = await B;
+    return v;
 end;
 ]],
     run = {
@@ -1613,11 +1671,11 @@ Test { [[
 input int A,B;
 await A;
 par/or do
-    await A;
-    return A;
+    int v = await A;
+    return v;
 with
-    await B;
-    return B;
+    int v = await B;
+    return v;
 end;
 ]],
     run = {
@@ -1629,12 +1687,12 @@ Test { [[
 input int A,B,C;
 par/or do
     await A;
-    await B;
-    return B;
+    int v = await B;
+    return v;
 with
     await A;
-    await C;
-    return C;
+    int v = await C;
+    return v;
 end;
 ]],
     run = {
@@ -1646,11 +1704,11 @@ Test { [[
 input int A,B,C;
 await A;
 par/or do
-    await B;
-    return B;
+    int v = await B;
+    return v;
 with
-    await C;
-    return C;
+    int v = await C;
+    return v;
 end;
 ]],
     run = {
@@ -2325,8 +2383,8 @@ end;
 Test { [[
 input int A;
 par/or do
-    await A;
-    return A;
+    int v = await A;
+    return v;
 with
     int v = await (1);
     return v;
@@ -2727,8 +2785,8 @@ input int A,B;
 int a = 0;
 par/or do
     par/or do
-        await A;
-        return A;
+        int v = await A;
+        return v;
     with
         await B;
     end;
@@ -2743,15 +2801,16 @@ return a;
 
 Test { [[
 input int A, C;
+int v;
 loop do
     par/or do
         await A;
     with
-        await C;
+        v = await C;
         break;
     end;
 end;
-return C;
+return v;
 ]],
     run = {
         ['0~>A ; 0~>A ; 3~>C'] = 3,
@@ -2760,16 +2819,17 @@ return C;
 }
 Test { [[
 input int A,B,C;
+int v;
 loop do
     par/or do
         await A;
         await B;
     with
-        await C;
+        v = await C;
         break;
     end;
 end;
-return C;
+return v;
 ]],
     run = {
         ['0~>A ; 0~>A ; 3~>C'] = 3,
@@ -2778,16 +2838,17 @@ return C;
 }
 Test { [[
 input int A,B,C;
+int v;
 loop do
     par/or do
         await A;
         await B;
     with
-        await C;
+        v = await C;
         break;
     end;
 end;
-return C;
+return v;
 ]],
     run = {
         ['0~>A ; 0~>A ; 3~>C'] = 3,
@@ -2796,16 +2857,17 @@ return C;
 }
 Test { [[
 input int A,B;
+int v;
 loop do
     par/or do
         await A;
         await B;
     with
-        await A;
+        v = await A;
         break;
     end;
 end;
-return A;
+return v;
 ]],
     unreach = 2,
     run = {
@@ -2814,29 +2876,32 @@ return A;
 }
 Test { [[
 input int A, B;
+int v;
 loop do
     par/or do
-        await A;
-        await A;
+        v = await A;
+        v = await A;
         break;
     with
-        await A;
+        v = await A;
         await B;
     end;
 end;
-return A;
+return v;
 ]],
+    nd_acc = 1,     -- TODO: should be 0
     run = {
         ['0~>B ; 0~>A ; 0~>B ; 0~>A ; 3~>A'] = 3,
     }
 }
 Test{ [[
 input int A;
+int v;
 loop do
-    await A;
+    v = await A;
     break;
 end;
-return A;
+return v;
 ]],
     run = {
         ['1~>A'] = 1,
@@ -4139,8 +4204,8 @@ par/or do
     end;
     return 1;
 with
-    await B;
-    return B;
+    int v = await B;
+    return v;
 end;
 ]],
     unreach = 2,
@@ -4291,11 +4356,11 @@ Test { [[
 input int A;
 int a;
 loop do
-    await A;
-    if A==2 then
+    int v = await A;
+    if v==2 then
         return a;
     end;
-    emit a(A);
+    emit a(v);
 end;
 ]],
     --trig_wo = 1,
@@ -4308,15 +4373,15 @@ Test { [[
 input int A;
 int a;
 loop do
-    await A;
-    if A==2 then
+    int v = await A;
+    if v==2 then
         return a;
     else
-        if A==4 then
+        if v==4 then
             break;
         end;
     end;
-    emit a(A);
+    emit a(v);
 end;
 return a-1;
 ]],
@@ -4394,14 +4459,16 @@ return ret;
 
 Test { [[
 input int A,B;
+int v;
 par/or do
-    await A;
+    v = await A;
 with
     await B;
-    await A;
+    v = await A;
 end;
-return A;
+return v;
 ]],
+    nd_acc = 1,     -- should be 0
     run = {
         ['10~>A'] = 10,
         ['0~>B ; 10~>A'] = 10,
@@ -4608,12 +4675,12 @@ input int A,B;
 par/or do
     loop do
         await A;
-        await B;
-        return B;
+        int v = await B;
+        return v;
     end;
 with
-    await A;
-    return A;
+    int v = await A;
+    return v;
 end;
 ]],
     unreach = 2,
@@ -4623,15 +4690,16 @@ end;
 }
 Test { [[
 input int A,B;
+int v;
 loop do
     par/or do
         await A;
     with
-        await B;
+        v = await B;
         break;
     end;
 end;
-return B;
+return v;
 ]],
 --(~A || ~B^)*]],
     run = {
@@ -4644,17 +4712,17 @@ int a;
 par/or do
     loop do
         if a then
-            await A;
+            a = await A;
             break;
         else
             await B;
         end;
     end;
-    return A;
+    return a;
 with
     await B;
-    await C;
-    return C;
+    a = await C;
+    return a;
 end;
 ]],
 --((a?~A^:~B))* || (~B;~C)]],
@@ -4666,11 +4734,11 @@ end;
 Test { [[
 input int A,B;
 if 11 then
-    await A;
-    return A;
+    int v = await A;
+    return v;
 else
-    await B;
-    return B;
+    int v = await B;
+    return v;
 end;
 ]],
 --(11?~A:~B)]],
@@ -4726,16 +4794,17 @@ end;
 }
 Test { [[
 input int A,B,C;
+int v;
 loop do
-    await A;
-    if A then
-        await B;
+    v = await A;
+    if v then
+        v = await B;
         break;
     else
         await C;
-    end;
-end;
-return B;
+    end
+end
+return v;
 ]],
 --(((~A)?~B^:~C))*]],
     run = {
@@ -4746,6 +4815,7 @@ return B;
 
 Test { [[
 input int A,B,C,D,E,F,G,H,I,J,K,L;
+int v;
 par/or do
     await A;
 with
@@ -4755,8 +4825,8 @@ await C;
 await D;
 await E;
 await F;
-await G;
-if G then
+int g = await G;
+if g then
     await H;
 else
     await I;
@@ -4766,11 +4836,11 @@ loop do
     par/or do
         await K;
     with
-        await L;
+        v = await L;
         break;
     end;
 end;
-return L;
+return v;
 ]],
 --(~A||~B); ~C; (~D,~E); ~F; ((~G)?~H:~I); ~J; ((~K||~L^))*]],
     run = {
@@ -5130,11 +5200,11 @@ return a;
 Test { [[
 input int A;
 par/or do
-    await A;
-    return A;
+    int v = await A;
+    return v;
 with
-    await A;
-    return A;
+    int v = await A;
+    return v;
 end;
 ]],
 --~A||~A]],
@@ -5380,11 +5450,11 @@ Test { [[
 input int A, B;
 int a;
 par/or do
-    await A;
-    a = A;
+    int v = await A;
+    a = v;
 with
-    await B;
-    a = B;
+    int v = await B;
+    a = v;
 with
     await A;
     await B;
@@ -5408,8 +5478,8 @@ par/or do
     a = 1;
 with
     await A;
-    await B;
-    a = B;
+    int v = await B;
+    a = v;
 end;
 return a;
 ]],
@@ -5467,8 +5537,8 @@ par/or do
 with
     nothing;
 end;
-await A;
-return A;
+int v = await A;
+return v;
 ]],
 --(1||2);~A]],
     run = {
@@ -5566,15 +5636,16 @@ return 1;
 }
 Test { [[
 input int A, B;
+int v;
 loop do
     par/or do
-        await A;
+        v = await A;
         break;
     with
         await B;
     end;
 end;
-return A;
+return v;
 ]],
 --(((0,~A);(1)^) || ~B->asr)*]],
     run = {
@@ -5647,18 +5718,20 @@ end;
 
 Test { [[
 input int A;
+int v;
 loop do
     par/or do
-        await A;
+        v = await A;
         break;
     with
-        await A;
+        v = await A;
         break;
     end;
 end;
-return A;
+return v;
 ]],
     unreach = 1,
+    nd_acc = 1,     -- should be 0
     run = {
         ['5~>A'] = 5,
     }
@@ -5685,15 +5758,16 @@ return v1 + v2;
 }
 Test { [[
 input int A;
+int v;
 loop do
     par/and do
-        await A;
+        v = await A;
         break;
     with
         nothing;
     end;
 end;
-return A;
+return v;
 ]],
     unreach = 1,
     run = {
@@ -5918,16 +5992,17 @@ return v1+v2+v3+v4+v5+v6;
 
 Test { [[
 input int A,B;
+int v;
 loop do
     await A;
     par/or do
         await A;
     with
-        await B;
+        v = await B;
         break;
     end;
 end;
-return B;
+return v;
 ]],
 --( ~A ; (~A||~B^) )*]],
     run = {
@@ -6049,8 +6124,8 @@ loop do
     par/or do
         await B;
     with
-        await B;
-        b = B;
+        int v = await B;
+        b = v;
         break;
     end;
     b = a;
@@ -6113,8 +6188,8 @@ with
                 await B;
                             // prio 1
             with
-                await B;
-                return B;   // prio 1
+                int v = await B;
+                return v;   // prio 1
             end;
             a = a + 1;
             return a;
@@ -6137,8 +6212,8 @@ with
             par/or do
                 await B;
             with
-                await B;
-                return B;
+                int v = await B;
+                return v;
             end;
             a = a + 1;
         end;
@@ -6313,15 +6388,16 @@ return a+b+c+d+e+f;
 -- EX.12: gates do AND podem conflitar com ret do loop
 Test { [[
 input int A;
+int v;
 loop do
     par/and do
-        await A;
+        v = await A;
         break;
     with
         await A;
     end;
 end;
-return A;
+return v;
 ]],
     unreach = 1,
     run = {
@@ -6331,30 +6407,32 @@ return A;
 
 Test { [[
 input int A;
+int v;
 loop do
     par/or do
-        await A;
+        v = await A;
         break;
     with
         await A;
     end;
 end;
-return A;
+return v;
 ]],
     nd_esc = 1,
 }
 
 Test { [[
 input int A;
+int v;
 par/or do
     loop do
-        await A;
+        v = await A;
         break;
     end;
-    return A;
+    return v;
 with
-    await A;
-    return A;
+    int v = await A;
+    return v;
 end;
 ]],
     nd_acc = 1,
@@ -6362,20 +6440,22 @@ end;
 
 Test { [[
 input int A,B;
+int v;
 par/or do
     loop do
         par/or do
-            await A;
+            v = await A;
             break;
         with
             await B;
         end;
     end;
 with
-    await A;
+    v = await A;
 end;
-return A;
+return v;
 ]],
+    nd_acc = 1, -- should be 0
     run = {
         ['0~>B ; 5~>A'] = 5,
     }
@@ -6444,12 +6524,13 @@ int b;
 par/or do
     b = 0;
     loop do
+        int v;
         par/and do
             nothing;
         with
-            await A;
+            v = await A;
         end;
-        b = 1 + A;
+        b = 1 + v;
     end;
 with
     await C;
@@ -6549,14 +6630,15 @@ end;
 Test { [[
 input int A;
 int a,b;
+int v;
 par/or do
-    await A;
+    v = await A;
     par/or do
         emit a(1);
     with
         emit b(1);
     end;
-    await A;
+    v = await A;
 with
     loop do
         par/or do
@@ -6566,7 +6648,7 @@ with
         end;
     end;
 end;
-return A;
+return v;
 ]],
     unreach = 1,
     nd_acc = 0,
@@ -6585,8 +6667,8 @@ par/or do
     with
         emit b(5);
     end;
-    await D;
-    return D;
+    int v = await D;
+    return v;
 with
     c = 0;
     loop do
@@ -6615,8 +6697,8 @@ input int A,B;
 int a,v,b;
 par/or do
     par/and do
-        await A;
-        emit a(A);
+        int v = await A;
+        emit a(v);
     with
         await B;
         emit b(1);
@@ -6699,8 +6781,8 @@ Test { [[
 input int D;
 int a;
 loop do
-    await D;
-    emit a(a+D);
+    int v = await D;
+    emit a(a+v);
 end;
 ]],
 --((a,~D)->add~>a)*]],
@@ -6716,14 +6798,14 @@ int a, b, c;
 par/or do
     a = 0;
     loop do
-        await A;
-        emit a(A);
+        int v = await A;
+        emit a(v);
     end;
 with
     b = 0;
     loop do
-        await D;
-        emit b(D+b);
+        int v = await D;
+        emit b(v+b);
     end;
 with
     c = 0;
@@ -6762,8 +6844,8 @@ par/and do
     loop do
         await A;
         emit b(0);
-        await C;
-        emit d(C);
+        int v = await C;
+        emit d(v);
     end;
 with
     loop do
@@ -6792,11 +6874,11 @@ with
             par/or do
                 await C;
                 await C;
-                await C;
-                return C;
+                int c = await C;
+                return c;
             with
-                await D;
-                return D;
+                int d = await D;
+                return d;
             end;
         if o == 0 then
             i = i + 1;
@@ -7035,20 +7117,22 @@ return a;
 
 Test { [[
 input int A, B;
+int v;
 par/and do
     par/or do
-        await A;
+        v = await A;
     with
-        await B;
+        v = await B;
     end;
 with
     loop do
-        await B;
+        v = await B;
         break;
     end;
 end;
-return B;
+return v;
 ]],
+    nd_acc = 1,     -- should be 0
     run = {
         ['5~>B ; 4~>B'] = 5,
         ['1~>A ; 0~>A ; 5~>B'] = 5,
@@ -7140,6 +7224,7 @@ return 0;
 
 Test { [[
 input int A, B, C, D, E;
+int d;
 par/or do
     await A;
 with
@@ -7147,11 +7232,11 @@ with
 end;
 await C;
 par/and do
-    await D;
+    d = await D;
 with
     await E;
 end;
-return D;
+return d;
 ]],
     run = {
         ['1~>A ; 0~>C ; 9~>D ; 10~>E'] = 9,
@@ -7332,8 +7417,8 @@ input int P2;
 par/or do
     loop do
         par/or do
-            await P2;
-            if P2 == 1 then
+            int p2 = await P2;
+            if p2 == 1 then
                 return 0;
             end;
         with
@@ -7727,8 +7812,8 @@ int a, b;
 par/or do
     par/and do
         loop do
-            await A;
-            emit a(A);
+            int v = await A;
+            emit a(v);
         end;
     with
         loop do
@@ -8255,7 +8340,7 @@ return i;
 
 Test { [[
 input int Start, A;
-int ret;
+int ret, a;
 par/or do
     do
         int a = 0;
@@ -8278,9 +8363,9 @@ par/or do
     end;
 with
     await Start;
-    await A;
+    a = await A;
 end;
-return A;
+return a;
 ]],
     --escape = 2,
     unreach = 3,
@@ -8400,10 +8485,11 @@ return 0;
 
 Test { [[
 input int A;
+int a;
 async do
-    emit A(1);
+    a = emit A(1);
 end;
-return A;
+return a;
 ]],
     run=1
 }
@@ -8501,6 +8587,7 @@ return ret;
 Test { [[
 input int F;
 int ret = 0;
+int f;
 par/or do
     ret = do
         int sum = 0;
@@ -8517,9 +8604,9 @@ par/or do
         return sum;
     end;
 with
-    await F;
+    f = await F;
 end;
-return ret+F;
+return ret+f;
 ]],
     run = {
         ['10~>F'] = 10,
@@ -8530,6 +8617,7 @@ return ret+F;
 Test { [[
 input int F;
 int ret = 0;
+int f;
 par/and do
     ret = async do
         int sum = 0;
@@ -8545,9 +8633,9 @@ par/and do
         return sum;
     end;
 with
-    await F;
+    f = await F;
 end;
-return ret+F;
+return ret+f;
 ]],
     run = { ['10~>F']=5060 }
 }
@@ -8555,6 +8643,7 @@ return ret+F;
 Test { [[
 input int F;
 int ret = 0;
+int f;
 par/or do
     ret = async do
         int sum = 0;
@@ -8570,9 +8659,9 @@ par/or do
         return sum;
     end;
 with
-    await F;
+    f = await F;
 end;
-return ret+F;
+return ret+f;
 ]],
     run = { ['10~>F']=10 }
 }

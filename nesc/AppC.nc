@@ -11,11 +11,8 @@ typedef u16 tceu_gte;
 typedef u16 tceu_trg;
 typedef u16 tceu_lbl;
 
-//#define out_timer(ms)
-#define out_pending()   (!call Scheduler.isEmpty() || !q_isEmpty(&Q_EXTS))
-#define out_timer(ms)   call Timer.startOneShot(ms)
-#define out_now()       call Timer.getNow()
-//#define out_now()     0
+#define ceu_out_pending()   (!call Scheduler.isEmpty() || !q_isEmpty(&Q_EXTS))
+#define ceu_out_timer(ms)   call Timer.startOneShot(ms)
 
 //#include <assert.h>
 //#define ASSERT(x,v) if (!(x)) { call Leds.set(v); EXIT_ok=1; }
@@ -78,12 +75,14 @@ implementation
 
     event void Boot.booted ()
     {
-        ceu_go_init(NULL);
+        ceu_go_init(NULL, call Timer.getNow());
         ceu_go_start(NULL);
 
         // TODO: periodic nunca deixaria TOSSched queue vazia
         //call Timer.startPeriodic(5);
+#if N_ASYNCS > 0
         call TimerAsync.startOneShot(10);
+#endif
     }
     
     event void Timer.fired ()
@@ -93,29 +92,28 @@ implementation
 
     event void TimerAsync.fired ()
     {
+#if N_ASYNCS > 0
         call TimerAsync.startOneShot(10);
         ceu_go_async(NULL,NULL);
+#endif
     }
 
 #ifdef IO_PHOTO
     event void Photo.readDone(error_t err, uint16_t val) {
-    	int param = val;
-        ceu_go_event(NULL, IO_Photo_readDone, &param);
+        ceu_go_event(NULL, IO_Photo_readDone, val);
     }
 #endif // IO_PHOTO
 
 #ifdef IO_RADIO
     event void RadioControl.startDone (error_t err) {
 #ifdef IO_Radio_startDone
-        int param = err;
-        ceu_go_event(NULL, IO_Radio_startDone, &param);
+        ceu_go_event(NULL, IO_Radio_startDone, err);
 #endif
     }
 
     event void RadioControl.stopDone (error_t err) {
 #ifdef IO_Radio_stopDone
-        int param = err;
-        ceu_go_event(NULL, IO_Radio_stopDone, &param);
+        ceu_go_event(NULL, IO_Radio_stopDone, err);
 #endif
     }
 
@@ -124,8 +122,7 @@ implementation
     {
         //dbg("APP", "sendDone: %d %d\n", data[0], data[1]);
 #ifdef IO_Radio_sendDone
-        error_t param = err;
-        ceu_go_event(NULL, IO_Radio_sendDone, &param);
+        ceu_go_event(NULL, IO_Radio_sendDone, err);
 #endif
     }
 
@@ -133,7 +130,7 @@ implementation
         (message_t* msg, void* payload, uint8_t nbytes)
     {
 #ifdef IO_Radio_receive
-        ceu_go_event(NULL, IO_Radio_receive, &param);
+        ceu_go_event(NULL, IO_Radio_receive, msg);
 #endif
         return msg;
     }
@@ -144,8 +141,7 @@ implementation
     event void Radio1Send.sendDone(message_t *msg, error_t ok) 
     {
 #ifdef IO_Radio1_sendDone
-        error_t param = ok;
-        ceu_go_event(NULL, IO_Radio1_sendDone, &param);
+        ceu_go_event(NULL, IO_Radio1_sendDone, msg);
 #endif
     }
     
@@ -162,16 +158,14 @@ implementation
     event void SerialControl.startDone (error_t err)
     {
 #ifdef IO_Serial_startDone
-        int param = err;
-        ceu_go_event(NULL, IO_Serial_startDone, &param);
+        ceu_go_event(NULL, IO_Serial_startDone, err);
 #endif
     }
 
     event void SerialControl.stopDone (error_t err)
     {
 #ifdef IO_Serial_stopDone
-        int param = err;
-        ceu_go_event(NULL, IO_Serial_stopDone, &param);
+        ceu_go_event(NULL, IO_Serial_stopDone, err);
 #endif
     }
 
@@ -179,8 +173,7 @@ implementation
     {
         //dbg("APP", "sendDone: %d %d\n", data[0], data[1]);
 #ifdef IO_Serial_sendDone
-        int param = err;
-        ceu_go_event(NULL, IO_Serial_sendDone, &param);
+        ceu_go_event(NULL, IO_Serial_sendDone, err);
 #endif
     }
     
@@ -209,8 +202,7 @@ implementation
     event void CollectionSend.sendDone(message_t *msg, error_t ok) 
     {
 #ifdef IO_Collection_send
-        error_t param = ok;
-        ceu_go_event(NULL, IO_Collection_sendDone, &param);
+        ceu_go_event(NULL, IO_Collection_sendDone, ok);
 #endif
     }
 

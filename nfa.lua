@@ -456,8 +456,11 @@ F = {
         bef.to = aft
     end,
 
-    Acc = function (me)
+    Int = function (me)
         INS(me, '', ACC(me.var,me.mode))
+    end,
+    Ext = function (me)
+        F.Int(me)
     end,
 
     Op2_call = function (me)

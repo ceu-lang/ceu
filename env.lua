@@ -29,20 +29,22 @@ function newvar (var)
     blk.vars[var.id] = var
     var.blk  = blk
 
-    if var.tp == 'void' then
-        var.size = '0'
-    else
-        var.size = '(sizeof('..var.tp..')*'..var.dim..')'
-    end
     if var.arr then
         assert(var.dim > 0, err(var,'invalid array dimension'))
         var.tp = var.tp..'*'
     end
 
+    if var.int then
+        if var.tp == 'void' then
+            var.size = '0'
+        else
+            var.size = '(sizeof('..var.tp..')*'..var.dim..')'
+        end
+        var.reg = alloc(var)
+        var.val = _ENV.reg(var)      -- TODO: arrays?
+    end
     var.trg0 = 0    -- TODO: move to gates.lua
     var.trgs = {}   -- TODO: move to gates.lua
-    var.reg = alloc(var)
-    var.val = _ENV.reg(var)      -- TODO: arrays?
 
     return var
 end
@@ -93,9 +95,12 @@ F = {
         _ENV.exts[me.var.id] = me.var
     end,
 
-    Acc = function (me)
+    Int = function (me)
         me.var = ASR(getvar(me[1]),
             me, 'variable "'..me[1]..'" is not declared')
+    end,
+    Ext = function (me)
+        F.Int(me)
     end,
 }
 

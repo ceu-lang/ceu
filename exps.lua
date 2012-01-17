@@ -1,7 +1,7 @@
 local C = require 'C'
 
-function check_lval_int (e1)
-    return e1.lval and e1.fst and e1.fst.var.int
+function check_lval (e1)
+    return e1.lval and e1.fst
 end
 function check_depth (e1, e2)
     local ptr = C.deref(e2.tp)
@@ -12,7 +12,7 @@ end
 F = {
     SetExp = function (me)
         local e1, e2 = unpack(me)
-        ASR( check_lval_int(e1) and
+        ASR( check_lval(e1) and
              C.contains(e1.tp,e2.tp) and
              check_depth(e1, e2),
                 me, 'invalid attribution')
@@ -21,7 +21,7 @@ F = {
 
     SetStmt = function (me)
         local e1, stmt = unpack(me)
-        ASR(check_lval_int(e1), me, 'invalid attribution')
+        ASR(check_lval(e1), me, 'invalid attribution')
         e1.fst.mode = 'wr'
         stmt.toset = e1
         if stmt.id=='AwaitT' then
@@ -37,7 +37,7 @@ F = {
 
     SetBlock = function (me)
         local e1, _ = unpack(me)
-        ASR(check_lval_int(e1), me, 'invalid attribution')
+        ASR(check_lval(e1), me, 'invalid attribution')
         e1.fst.mode = 'wr'
     end,
     Return = function (me)
@@ -163,12 +163,15 @@ F = {
         me.lval = exp.lval
     end,
 
-    Acc = function (me)
+    Ext = function (me)
         me.fst  = me
-        me.val  = _ENV.reg(me.var)
         me.tp   = me.var.tp
         me.lval = not me.var.arr
         me.mode = 'rd'
+    end,
+    Int = function (me)
+        F.Ext(me)
+        me.val  = _ENV.reg(me.var)
     end,
 
     TIME = function (me)

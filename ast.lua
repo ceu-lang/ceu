@@ -118,7 +118,7 @@ local C; C = {
                 node('Block')(ln, str,
                     node('Dcl_int')(ln, str, 'int', false, '$ret'),
                     node('SetBlock')(ln, str,
-                        node('Acc')(ln, str, '$ret'),
+                        node('Int')(ln, str, '$ret'),
                         node('Block')(ln, str, ...))))
         return _AST
     end,
@@ -149,7 +149,7 @@ local C; C = {
             ret[#ret+1] = node('Dcl_int')(ln, str, tp, dim, t[i])
             if t[i+1] then
                 ret[#ret+1] = node(t[i+1])(ln, str,
-                                            node('Acc')(ln,str,t[i]),
+                                            node('Int')(ln,str,t[i]),
                                             t[i+2])
             end
         end
@@ -196,7 +196,8 @@ local C; C = {
     end,
     ExpList  = node('ExpList'),
 
-    Acc      = node('Acc'),
+    Int      = node('Int'),
+    Ext      = node('Ext'),
     Cid      = node('Cid'),
     SIZEOF   = node('SIZEOF'),
     CONST    = node('CONST'),

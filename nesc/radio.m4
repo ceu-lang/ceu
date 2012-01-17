@@ -1,11 +1,11 @@
-output error_t   Radio_start;
-input  error_t   Radio_startDone;
+output error_t    Radio_start;
+input  error_t    Radio_startDone;
 
-output error_t   Radio_send;
-input  error_t   Radio_sendDone;
-input  message_t Radio_receive;
+output error_t    Radio_send;
+input  error_t    Radio_sendDone;
+input  message_t* Radio_receive;
 
-output void*     Radio_getPayload;
+output void*      Radio_getPayload;
 
 error_t radio_err;
 
@@ -14,9 +14,8 @@ loop do
     par/or do
         await $1;
     with
-        emit Radio_start();
-        radio_err = Radio_start;
-        if radio_err != 0 then
+        radio_err = emit Radio_start();
+        if radio_err then
             emit radio_err();
         else
             radio_err = await Radio_startDone;
@@ -36,8 +35,7 @@ loop do
     par/or do
         await $1;
     with
-        emit Radio_send($2,$3,$4);
-        radio_err = Radio_send;
+        radio_err = emit Radio_send($2,$3,$4);
         if radio_err != 0 then
             emit radio_err();
         else

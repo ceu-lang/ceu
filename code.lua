@@ -321,9 +321,10 @@ if (ceu_out_pending()) {
         local var = acc.var
 
         -- attribution
-        if var.int or var.input then
+        if var.int then
+            assert(#exps <= 1, 'apagar essa linha e a de baixo!')    -- TODO
             ASR(#exps <= 1, me, 'invalid emit')
-            if #exps>0 then
+            if #exps == 1 then
                 ASR(C.contains(var.tp,exps[1].tp), me, 'invalid emit')
                 LINE(me, var.val..' = '..exps[1].val..';')
             end
@@ -346,6 +347,11 @@ break;
             HALT(me)
             LABEL_out(me, lb_cnt)
 
+            -- set after the continuation
+            if me.toset then
+                LINE(me, me.toset.val..' = '..var.val..';')
+            end
+
         -- external event
         else
             local async = _ITER'Async'()
@@ -353,20 +359,20 @@ break;
                 local lb_cnt = LABEL_gen('Async_cont')
                 LINE(me, 'GTES['..async.gte..'] = '..lb_cnt..';')
                 LINE(me, 'qins_async('..async.gte..');')
-                LINE(me, 'return ceu_go_event(ret, IO_'..var.id..', NULL);')
+                LINE(me, 'return ceu_go_event(ret, IO_'..var.id ..', (void*)'..
+                            (exps[1] and exps[1].val or 'NULL')..');')
                 LABEL_out(me, lb_cnt)
+                if me.toset then
+                    LINE(me, me.toset.val..' = '..
+                            (exps[1] and exps[1].val or 'NULL')..';')
+                end
             else -- output
-                if var.tp == 'void' then
-                    LINE(me, me.call.val..';')
+                if me.toset then
+                    LINE(me, me.toset.val..' = '..me.call.val..';')
                 else
-                    LINE(me, var.val..' = '..me.call.val..';')
+                    LINE(me, me.call.val..';')
                 end
             end
-        end
-
-        -- set after the continuation
-        if me.toset then
-            LINE(me, me.toset.val..' = '..var.val..';')
         end
     end,
 
@@ -409,7 +415,11 @@ break;
         HALT(me)
         LABEL_out(me, lb)
         if me.toset then
-            LINE(me, me.toset.val..' = '..acc.var.val..';')
+            if acc.var.int then
+                LINE(me, me.toset.val..' = '..acc.var.val..';')
+            else
+                LINE(me, me.toset.val..' = ('..me.toset.tp..')DATA;')
+            end
         end
     end,
 }

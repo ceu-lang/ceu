@@ -20,10 +20,10 @@ F = {
         VARS = {}
     end,
     Root = function (me)
-        local TRG0 = 1
+        local TRG0 = 1          -- 0 is reserved for non-awaited events
         for var in pairs(VARS) do
             var.trg0 = TRG0
-            TRG0 = TRG0 + 1 + #var.trgs
+            TRG0 = TRG0 + 1 + #var.trgs     -- trg0: { sz, t0,t1,... }
             _GATES.trgs[#_GATES.trgs+1] = #var.trgs
             for _,gte in ipairs(var.trgs) do
                 _GATES.trgs[#_GATES.trgs+1] = gte

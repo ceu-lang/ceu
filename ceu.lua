@@ -1,14 +1,31 @@
 #!/usr/bin/env lua
 
 _OPTS = {
-    fnameIn    = nil,
-    fnameOut   = '-',
+    input       = nil,
+    output      = '-',
 
-    m4         = false,
-    m4_tmpfile = nil,
+    events      = false,
+    events_file = '_ceu_events.h',
 
-    dfa        = false,
-    dfa_viz    = false,
+    m4          = false,
+    m4_file     = '/tmp/tmp.ceu',
+
+    dfa         = false,
+    dfa_viz     = false,
+}
+
+_OPTS_NPARAMS = {
+    input       = nil,
+    output      = 1,
+
+    events      = 0,
+    events_file = 1,
+
+    m4          = 0,
+    m4_file     = 1,
+
+    dfa         = 0,
+    dfa_viz     = 1,
 }
 
 local params = {...}
@@ -19,56 +36,55 @@ do
     i = i + 1
 
     if p == '-' then
-        _OPTS.fnameIn = '-'
-
-    elseif p == '--output' then
-        _OPTS.fnameOut = params[i]
-        i = i + 1
-
-    elseif p == '--m4-tmpfile' then
-        _OPTS.m4_tmpfile = params[i]
-        i = i + 1
+        _OPTS.input = '-'
 
     elseif string.sub(p, 1, 2) == '--' then
         local opt = string.gsub(string.sub(p,3), '%-', '_')
-        _OPTS[opt] = true
+        if _OPTS_NPARAMS[opt] == 0 then
+            _OPTS[opt] = true
+        else
+            _OPTS[opt] = params[i]
+            i = i + 1
+        end
 
     else
-        _OPTS.fnameIn = p
+        _OPTS.input = p
     end
 end
-assert(_OPTS.fnameIn, [[
+assert(_OPTS.input, [[
 
 
-    ./ceu.lua <filename>        # CEU input file (or `-' for stdin)
+    ./ceu.lua <filename>         # CEU input file (or `-' for stdin)
 
         # optional parameters (default value in parenthesis)
 
-        --output <filename>     # C output file (stdout)
+        --output <filename>      # C output file (stdout)
 
-        --m4                    # preprocess the input with `m4' (false)
-        --m4-tmpfile <filename> # m4 temporary file (/tmp/<input filename>)
+        --events                 # declare events in a separate file (false)
+        --events-file <filename> # events output file (`_ceu_events.h')
 
-        --dfa                   # performs DFA analysis (false)
-        --dfa-viz               # generates DFA graph (false)
+        --m4                     # preprocess the input with `m4' (false)
+        --m4-file <filename>     # m4 output file (`/tmp/tmp.ceu')
+
+        --dfa                    # performs DFA analysis (false)
+        --dfa-viz                # generates DFA graph (false)
 ]])
 
 -- INPUT
 local inp
-if _OPTS.fnameIn == '-' then
+if _OPTS.input == '-' then
     inp = io.stdin
 else
-    inp = assert(io.open(_OPTS.fnameIn))
+    inp = assert(io.open(_OPTS.input))
 end
 _STR = inp:read'*a'
 
 if _OPTS.m4 then
-    _STR = assert(io.popen('m4 -')):read'*a'
+    local m4 = assert(io.popen('m4 - > '.._OPTS.m4_file, 'w'))
+    m4:write(_STR)
+    m4:close()
 
-    _OPTS.m4_tmpfile = _OPTS.m4_tmpfile or '/tmp/'.._OPTS.fnameIn
-    local fout = assert(io.open(_OPTS.m4_tmpfile), 'w')
-    fout:write(_STR)
-    fout:close()
+    _STR = assert(io.open(_OPTS.m4_file)):read'*a'
 end
 
 -- PARSE
@@ -129,21 +145,33 @@ do
     -- EVENTS
     do
         local str = ''
-        local t1, t2 = {}, {}
+        local t = {}
         for id, var in pairs(_ENV.exts) do
-            t1[#t1+1] = '{'..var.size..','..var.reg..','..var.trg0..'}'
-            t2[#t2+1] = '#define IO_'..id..' '..#t2
+            if var.input then
+                t[#t+1] = '#define IO_'..id..' '..var.trg0
+            else
+                -- negative doesn't interfere with trg0
+                t[#t+1] = '#define IO_'..id..' -'..(#t+1)
+            end
         end
-        tpl = sub(tpl, '=== EVTS_T1 ===', table.concat(t1,','))
-        tpl = sub(tpl, '=== EVTS_T2 ===', table.concat(t2,'\n'))
+
+        if _OPTS.events then
+            local f = io.open('_ceu_events.h','w')
+            f:write(table.concat(t,'\n'))
+            f:close()
+            tpl = sub(tpl, '=== EVTS ===',
+                           '#include "'.. _OPTS.events_file ..'"')
+        else
+            tpl = sub(tpl, '=== EVTS ===', table.concat(t,'\n'))
+        end
     end
 end
 
 -- OUTPUT
 local out
-if _OPTS.fnameOut == '-' then
+if _OPTS.output == '-' then
     out = io.stdout
 else
-    out = assert(io.open(_OPTS.fnameOut,'w'))
+    out = assert(io.open(_OPTS.output,'w'))
 end
 out:write(tpl)

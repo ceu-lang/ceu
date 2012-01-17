@@ -5,7 +5,7 @@
 #define N_TIMERS    (1+ === N_TIMERS === +1) // async (TODO: pq esse +1 async?)
 #define N_TRACKS    (1+ === N_TRACKS ===)
 #define N_INTRAS    (1+ === N_INTRAS ===)
-#define N_ASYNCS    (1+ === N_ASYNCS ===) // +1: avoids div by 0 (TODO: rm w/ ifdefs)
+#define N_ASYNCS    (=== N_ASYNCS ===)
 #define N_GTES      === N_GTES ===
 #define N_ANDS      === N_ANDS ===
 #define N_VARS      === N_VARS ===
@@ -24,9 +24,7 @@
 #endif
 
 typedef u32 tceu_time;
-typedef u16 tceu_reg;
 typedef u16 tceu_gte;
-typedef u16 tceu_trg;
 typedef u16 tceu_lbl;
 
 #include "binheap.h"
@@ -41,14 +39,9 @@ enum {
 === LABELS ===
 };
 
-typedef struct {
-    u8       size;
-    tceu_reg reg;
-    tceu_trg trg;
-} Event;
-Event EVTS[] = { === EVTS_T1 === };    // { var.size, var.reg, var.trg }
+=== EVTS ===
 
-=== EVTS_T2 ===
+void* DATA;
 
 char ANDS[N_ANDS];      // TODO: bitfield
 tceu_lbl GTES[N_GTES];
@@ -66,14 +59,14 @@ typedef struct {
     tceu_gte gte;
 } QIntra;
 
-static inline int QIntra_prio (void* v1, void* v2) {
+int QIntra_prio (void* v1, void* v2) {
     return ((QIntra*)v1)->intl > ((QIntra*)v2)->intl;
 }
 
 Queue  Q_INTRA;
 QIntra Q_INTRA_BUF[N_INTRAS];
 
-static inline void qins_intra (u8 intl, tceu_gte gte) {
+void qins_intra (u8 intl, tceu_gte gte) {
     QIntra v = { intl, gte };
     q_insert(&Q_INTRA, &v);
 }
@@ -85,14 +78,14 @@ typedef struct {
     tceu_lbl lbl;
 } QTrack;
 
-static inline int QTrack_prio (void* v1, void* v2) {
+int QTrack_prio (void* v1, void* v2) {
     return ((QTrack*)v1)->prio > ((QTrack*)v2)->prio;
 }
 
 Queue  Q_TRACKS;
 QTrack Q_TRACKS_BUF[N_TRACKS];
 
-static inline void qins_track (u8 prio, tceu_lbl lbl) {
+void qins_track (u8 prio, tceu_lbl lbl) {
     QTrack v = { prio, lbl };
     q_insert(&Q_TRACKS, &v);
 }
@@ -115,7 +108,7 @@ void spawn (tceu_gte gte)
     }
 }
 
-void trigger (tceu_trg trg)
+void trigger (int trg)
 {
     int i;
     for (i=1 ; i<=TRGS[trg] ; i++)
@@ -152,6 +145,7 @@ Queue  Q_TIMERS;
 QTimer Q_TIMERS_BUF[N_TIMERS];
 
 void qins_timer (tceu_time ms, tceu_gte gte) {
+    int i;
     QTimer v = { 0, _extl_, _intl_, gte };
 
     s32 dt = ms - TIME_late;
@@ -169,7 +163,6 @@ void qins_timer (tceu_time ms, tceu_gte gte) {
 
     // TODO: inef
     // checks if the gate is already on Q_TIMERS
-    int i;
     for (i=1; i<=Q_TIMERS.n; i++) {
         if (Q_TIMERS_BUF[i].gte == gte) {
             q_remove_i(&Q_TIMERS, i, NULL);
@@ -181,6 +174,7 @@ void qins_timer (tceu_time ms, tceu_gte gte) {
 
 /* ASYNCS ***************************************************************/
 
+#if N_ASYNCS > 0
 tceu_gte Q_ASYNC[N_ASYNCS];
 int async_ini = 0;
 int async_end = 0;
@@ -201,6 +195,7 @@ void qins_async (tceu_gte gte)
     async_cnt++;
     ASSERT(async_cnt <= N_ASYNCS, 6);
 }
+#endif
 
 /**********************************************************************/
 
@@ -237,13 +232,11 @@ int ceu_go_init (int* ret, tceu_time now)
 }
 
 int ceu_go_event (int* ret, int id, void* data) {
-    Event* evt = &EVTS[id];
-    if (data)
-        memcpy(&VARS[evt->reg], data, evt->size);
+    DATA = data;
 
     //TIME_base++;
     TIME_late = 0;
-    trigger(evt->trg);
+    trigger(id);
 
     _extl_ = ++_extlmax_;
     return go(ret);
@@ -261,8 +254,8 @@ int ceu_go_start (int* ret)
 
 int ceu_go_time (int* ret, tceu_time now)
 {
-    TIME_now = now; //(ext.v.time) ? ext.v.time : out_now();
     QTimer min, nxt;
+    TIME_now = now; //(ext.v.time) ? ext.v.time : out_now();
 
     if (!q_peek(&Q_TIMERS, &min))
         return 0;
@@ -296,6 +289,7 @@ int ceu_go_time (int* ret, tceu_time now)
     return go(ret);
 }
 
+#if N_ASYNCS > 0
 int ceu_go_async (int* ret, int* count)
 {
     if (count)
@@ -313,6 +307,7 @@ int ceu_go_async (int* ret, int* count)
     _extl_ = ++_extlmax_;
     return go(ret);
 }
+#endif
 
 int go (int* ret)
 {
@@ -368,10 +363,12 @@ int ceu_go_polling (tceu_time now)
     if (ceu_go_start(&ret))
         return ret;
 
+#if N_ASYNCS > 0
     for (;;) {
         if (ceu_go_async(&ret,&async_cnt))
             return ret;
         if (async_cnt == 0)
             break;              // returns nothing!
     }
+#endif
 }

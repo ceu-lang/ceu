@@ -123,10 +123,10 @@ _GG = { [1] = K'' *S* V'_Stmts' *S* -1
 
     , _Emit   = V'EmitT' + V'EmitE'
     , EmitT   = K'emit' *S* (V'TIME')
-    , EmitE   = K'emit' *S* V'Acc' *S* '(' *S* V'ExpList' *S* ')' -- TODO: so acc?
+    , EmitE   = K'emit' *S* (V'Int'+V'Ext') *S* '(' *S* V'ExpList' *S* ')' -- TODO: so acc?
 
     , AwaitN  = K'await' *S* 'forever'
-    , AwaitE  = K'await' *S* V'Acc'                               -- TODO: so acc?
+    , AwaitE  = K'await' *S* (V'Int'+V'Ext')                   -- TODO: so acc?
     , AwaitT  = K'await' *S* (V'_Parens'+V'TIME')
 
     , _Set     = V'SetExp' + V'SetStmt' + V'SetBlock'
@@ -161,7 +161,7 @@ _GG = { [1] = K'' *S* V'_Stmts' *S* -1
                 )^0
     , _13     = V'_Prim'
 
-    , _Prim   = V'_Parens' + V'Acc'   + V'Cid' + V'SIZEOF'
+    , _Prim   = V'_Parens' + V'Int'   + V'Cid' + V'SIZEOF'
               + V'NULL'    + V'CONST' + V'STRING'
 
     , ExpList = ( V'_Exp'*(S*','*S*V'_Exp')^0 )^-1
@@ -180,7 +180,8 @@ _GG = { [1] = K'' *S* V'_Stmts' *S* -1
                 (NUM * 's'   + Cc(0)) *
                 (NUM * 'ms'  + Cc(0))
 
-    , Acc  = V'INT' + V'EXT'
+    , Int  = V'INT'
+    , Ext  = V'EXT'
     , INT  = #m.R'az' * CK(ID) -- int names start with lower
     , EXT  = #m.R'AZ' * CK(ID) -- ext names start with upper
     , Cid  = CK(P'_' * ID)
