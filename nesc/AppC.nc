@@ -11,12 +11,15 @@ typedef u16 tceu_gte;
 typedef u16 tceu_trg;
 typedef u16 tceu_lbl;
 
+/*
+// increases code size
 #define ceu_out_pending()   (!call Scheduler.isEmpty() || !q_isEmpty(&Q_EXTS))
 #define ceu_out_timer(ms)   call Timer.startOneShot(ms)
 
 //#include <assert.h>
 //#define ASSERT(x,v) if (!(x)) { call Leds.set(v); EXIT_ok=1; }
 #define ASSERT(x,v)
+*/
 
 #include "IO.h"
 #include "Timer.h"
@@ -76,7 +79,9 @@ implementation
     event void Boot.booted ()
     {
         ceu_go_init(NULL, call Timer.getNow());
-        ceu_go_start(NULL);
+#ifdef IO_Start
+        ceu_go_event(NULL, IO_Start, NULL);
+#endif
 
         // TODO: periodic nunca deixaria TOSSched queue vazia
         //call Timer.startPeriodic(5);

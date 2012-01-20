@@ -13,7 +13,7 @@ include $(MAKERULES)
 
 ceu:
 	@echo "======================================================="
-	./ceu.lua --m4 --events --output _ceu_code.c $(FILE).ceu
+	./ceu.lua --dfa --m4 --events --output _ceu_code.c $(FILE).ceu
 	@echo "======================================================="
 
 tests:

@@ -38,7 +38,9 @@ void q_insert (Queue* Q, void* V)
 ////&Q_TRACKS);
 //fprintf(stderr,"cur: %p --- %d %d\n", Q, Q->n_max, Q->n);
 //if (q_isFull(Q)) { digitalWrite(13,Q==&Q_TIMERS); }
+#ifdef ASSERT
     ASSERT(!q_isFull(Q),5);
+#endif
 
     for (i=++Q->n; (i>1) && CMP(V,BUF(i/2)); i/=2)
         memcpy(BUF(i), BUF(i/2), Q->unit);

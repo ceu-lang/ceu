@@ -105,7 +105,7 @@ do
         dofile 'dfa.lua'
         DBG('nfa: '.._NFA.n_nodes..'  ||  dfa: '.._DFA.n_states)
         if _OPTS.dfa_viz then
-            dofile 'graphviz'
+            dofile 'graphviz.lua'
         end
     end
 

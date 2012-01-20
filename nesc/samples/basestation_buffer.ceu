@@ -20,7 +20,7 @@ with
     SERIAL_START(1s);
 end;
 
-par/or do
+par do
     loop do
         message_t* p = await Radio_receive;
         emit Leds_led1Toggle();

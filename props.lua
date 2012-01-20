@@ -34,7 +34,8 @@ end
 local STMTS = {
     Block=true, Dcl_int=true, Dcl_ext=true, Nothing=true,
     SetExp=true, SetBlock=true, SetStmt=true,
-    Return=true, Async=true, Host=true, ParOr=true, ParAnd=true, Loop=true,
+    Return=true, Async=true, Host=true,
+    ParEver=true, ParOr=true, ParAnd=true, Loop=true,
     Break=true, If=true, AwaitN=true, AwaitE=true, AwaitT=true, EmitE=true,
     EmitT=true, CallStmt=true
 }
@@ -73,10 +74,12 @@ F = {
         MAX_all(me, {t,f})
     end,
 
+    ParEver = function (me)
+        ADD_all(me, me)
+    end,
     ParAnd = function (me)
         ADD_all(me, me)
     end,
-
     ParOr = function (me)
         ADD_all(me, me)
     end,
@@ -88,7 +91,7 @@ F = {
         end
         local top = _ITER(f)()
         me.prio = top and top.prio+1 or 1
-        me.nd = true
+        me.nd_join = true
     end,
 
     Loop_pre = function (me)
@@ -102,11 +105,6 @@ F = {
             me,'break without loop')
         loop.brks[me] = true
     end,
-    --Loop = function (me)
-        -- TODO?
-        --me.optim  = _ITER'Async'() and (body.trigs=='no')
-        --body.optim = me.optim
-    --end,
 
     SetBlock_pre = function (me)
         F.ParOr_pre(me)
@@ -129,11 +127,6 @@ F = {
 
     AwaitT = function (me)
         me.n_timers = 1
-        me.n_intras = 1
-    end,
-    AwaitN = function (me)
-        me.forever = 'yes'
-        me.brk_awt_ret = 'yes'
     end,
 }
 

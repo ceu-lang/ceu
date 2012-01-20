@@ -51,30 +51,30 @@ loop do
 end
 ')
 
-C {
+C do
 
-static inline error_t Serial_start () {
+error_t Serial_start () {
     return call SerialControl.start();
 }
-static inline error_t Serial_stop () {
+error_t Serial_stop () {
     return call SerialControl.stop();
 }
 
-static inline void* Serial_getPayload (message_t* msg, uint8_t len) {
+void* Serial_getPayload (message_t* msg, uint8_t len) {
     return call SerialPacket.getPayload(msg, len);
 }
 
-static inline uint8_t Serial_payloadLength (message_t *msg) {
+uint8_t Serial_payloadLength (message_t *msg) {
     return call SerialPacket.payloadLength(msg);
 }
 
-static inline void Serial_setPayloadLength (message_t* msg, uint8_t len) {
+void Serial_setPayloadLength (message_t* msg, uint8_t len) {
     return call SerialPacket.setPayloadLength(msg, len);
 }
 
-static inline error_t Serial_send (message_t *msg, uint8_t len)  {
+error_t Serial_send (message_t *msg, uint8_t len)  {
     am_id_t id = call SerialAMPacket.type(msg);
     return call SerialSend.send[id](0, msg, len);
 }
 
-};
+end

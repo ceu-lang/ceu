@@ -1,6 +1,6 @@
 include(`leds.m4')
 
-par/or do
+par do
     loop do
         await 250ms;
         emit Leds_led0Toggle();

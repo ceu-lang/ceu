@@ -129,6 +129,7 @@ local C; C = {
     Async  = node('Async'),
     Host   = node('Host'),
 
+    ParEver= node('ParEver'),
     ParOr  = node('ParOr'),
     ParAnd = node('ParAnd'),
     Loop   = node('Loop'),

@@ -1,10 +1,10 @@
 _GATES = {
-    n_ands = nil,
-    n_gtes = nil,
-    trgs   = nil,
+    n_ands = 0,
+    n_gtes = 0,
+    trgs   = { 0 },     -- 0=all undefined should point to [0]
 }
 
-local VARS = nil
+local INTS = {}         -- variables that are internal events
 
 function alloc ()
     local g = _GATES.n_gtes
@@ -13,15 +13,9 @@ function alloc ()
 end
 
 F = {
-    Root_pre = function (me)
-        _GATES.n_ands = 0
-        _GATES.n_gtes = 0
-        _GATES.trgs = { 0 }     -- 0=all undefined should point to [0]
-        VARS = {}
-    end,
     Root = function (me)
         local TRG0 = 1          -- 0 is reserved for non-awaited events
-        for var in pairs(VARS) do
+        for var in pairs(INTS) do
             var.trg0 = TRG0
             TRG0 = TRG0 + 1 + #var.trgs     -- trg0: { sz, t0,t1,... }
             _GATES.trgs[#_GATES.trgs+1] = #var.trgs
@@ -32,9 +26,6 @@ F = {
     end,
 
     ParAnd_pre = function (me)
-        if me.forever == 'yes' then
-            return
-        end
         me.gte0 = _GATES.n_ands
         _GATES.n_ands = _GATES.n_ands+#me
     end,
@@ -70,7 +61,7 @@ F = {
     AwaitE = function (me)
         local acc,_ = unpack(me)
         me.gte = alloc()
-        VARS[acc.var] = true
+        INTS[acc.var] = true
         local t = acc.var.trgs
         t[#t+1] = me.gte
     end,

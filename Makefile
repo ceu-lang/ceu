@@ -1,8 +1,13 @@
+DATE = `date +%F`
+
 dist: clean
-	mkdir -p ../ceu_`date +%F`/ ; \
-	cp *.lua *.c *.h ../ceu_`date +%F`/ ; \
+	mkdir -p ../ceu_$(DATE)/ ; \
+	cp *.lua *.c *.h ../ceu_$(DATE)/ ; \
 	cd .. ; \
-	tar hcvzf ceu_`date +%F`.tgz ceu_`date +%F`/ ; \
+	tar hcvzf ceu_`date +%F`.tgz ceu_$(DATE)/ ; \
+
+upload: dist
+	rsync -e ssh -av ../ceu_$(DATE)/ fsantanna@sinistra.dreamhost.com:ceu/
 
 clean:
 	rm -f *.exe _ceu_*

@@ -48,6 +48,9 @@ F = {
         OR_all(me, me)
     end,
 
+    ParEver = function (me)
+        OR_all(me, me)
+    end,
     ParAnd = function (me)
         OR_all(me, me)
     end,
@@ -74,8 +77,6 @@ F = {
 
         me.breaks = false
         me.brk_awt_ret = body.awaits or body.returns
-        --me.optim  = _ITER'Async'() and (body.trigs=='no')
-        --body.optim = me.optim
     end,
 
     SetBlock = function (me)

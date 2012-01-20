@@ -1,11 +1,11 @@
 include(`leds.m4')
 include(`radio.m4')
 
-C {
+C do
 typedef nx_struct {
     nx_uint16_t cnt;
 } t ;
-};
+end
 
 RADIO_START(1s);
 

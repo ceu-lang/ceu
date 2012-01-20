@@ -1,6 +1,6 @@
 _ENV = {
-    n_vars = nil,
-    exts   = nil
+    n_vars = '0',
+    exts   = {},
 }
 
 function err (me, msg)
@@ -59,11 +59,6 @@ function getvar (id)
 end
 
 F = {
-    Root_pre = function (me)
-        _ENV.n_vars = '0'
-        _ENV.exts  = {}
-    end,
-
     Block_pre = function (me)
         me.vars = {}
     end,

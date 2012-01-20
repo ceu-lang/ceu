@@ -110,38 +110,38 @@ ifdef(`SIMUL',`
 ')
 ')
 
-C {
+C do
 
-static inline void Leds_set (uint8_t v) {
+void Leds_set (uint8_t v) {
     call Leds.set(v);
 }
-static inline void Leds_led0On () {
+void Leds_led0On () {
     call Leds.led0On();
 }
-static inline void Leds_led1On () {
+void Leds_led1On () {
     call Leds.led1On();
 }
-static inline void Leds_led2On () {
+void Leds_led2On () {
     call Leds.led2On();
 }
 
-static inline void Leds_led0Off () {
+void Leds_led0Off () {
     call Leds.led0Off();
 }
-static inline void Leds_led1Off () {
+void Leds_led1Off () {
     call Leds.led1Off();
 }
-static inline void Leds_led2Off () {
+void Leds_led2Off () {
     call Leds.led2Off();
 }
-static inline void Leds_led0Toggle () {
+void Leds_led0Toggle () {
     call Leds.led0Toggle();
 }
-static inline void Leds_led1Toggle () {
+void Leds_led1Toggle () {
     call Leds.led1Toggle();
 }
-static inline void Leds_led2Toggle () {
+void Leds_led2Toggle () {
     call Leds.led2Toggle();
 }
 
-};
+end

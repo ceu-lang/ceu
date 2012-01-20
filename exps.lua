@@ -141,7 +141,8 @@ F = {
     ['Op1_&'] = function (me)
         local op, e1 = unpack(me)
         me.fst = e1.fst
-        me.fst.mode = 'ref'
+        me.fst.ref = true
+        me.fst.mode = 'no'   -- just getting the address
         me.tp  = e1.tp..'*'
         me.val = '('..op..e1.val..')'
         ASR(e1.lval, me, 'invalid operand to unary "&"')

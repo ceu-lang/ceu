@@ -47,7 +47,7 @@ local EK = function (str)
 end
 
 KEYS = P'do'+'end'+'async'+'return'
-     + 'par/or'+'par/and'+'with'
+     + 'par'+'par/or'+'par/and'+'with'
      + 'if'+'then'+'else'
      + 'not'+'or'+'and'
      + 'await'+'forever'+'emit'
@@ -72,20 +72,26 @@ TYPE = ID * (S*'*')^0 /
 _GG = { [1] = K'' *S* V'_Stmts' *S* -1
 
     , Block  = V'_Stmts'
-    , _Stmts = V'_LstStmt'   * (S*EK';')^1
-             + V'_StmtBlock' * (S*EK';')^0 *S* V'_Stmts'^-1
-             + V'_Stmt'      * (S*EK';')^1 *S* V'_Stmts'^-1
+    , _Stmts = V'_LstStmt'      * (S*EK';')^1
+             + V'_LstStmtBlock' * (S*EK';')^0
+             + V'_Stmt'         * (S*EK';')^1 *S* V'_Stmts'^-1
+             + V'_StmtBlock'    * (S*EK';')^0 *S* V'_Stmts'^-1
 
-    , _LstStmt   = V'Return'   + V'Break'  + V'AwaitN'
-    , _StmtBlock = V'_DoBlock' + V'Async'  + V'Host'
-                 + V'ParOr'    + V'ParAnd'
-                 + V'If'       + V'Loop'
-    , _Stmt      =
-                   V'Nothing'
+    , _LstStmtBlock = V'ParEver'
+    , _LstStmt      = V'Return'   + V'Break'  + V'AwaitN' + V'ParEver'
+
+    , _Stmt      = V'Nothing'
                  + V'AwaitE'   + V'AwaitT' + V'_Emit'
                  + V'_Dcl_ext' + V'_Dcl_int'
                  + V'_Set'
                  + V'CallStmt' -- must be last
+    , _StmtBlock = V'_DoBlock' + V'Async'  + V'Host'
+                 + V'ParOr'    + V'ParAnd'
+                 + V'If'       + V'Loop'
+
+    , _SetBlock = V'_DoBlock' + V'Async'
+                 + V'ParOr'   + V'ParAnd' + V'ParEver'
+                 + V'If'      + V'Loop'
 
     -- TODO: only on top-level?
     , _Dcl_ext  = (CK'input'+CK'output') *S* TYPE *S*
@@ -95,19 +101,22 @@ _GG = { [1] = K'' *S* V'_Stmts' *S* -1
     , __Dcl_int = V'INT' * (S* '=' *S* (
                                 Cc'SetExp'   * V'_Exp' +
                                 Cc'SetStmt'  * (V'EmitE'+V'AwaitE'+V'AwaitT') +
-                                Cc'SetBlock' * V'_StmtBlock'
+                                Cc'SetBlock' * V'_SetBlock'
                             ) + Cc(false)*Cc(false))
 
     , Nothing = K'nothing'
     , _DoBlock= K'do' *S* V'Block' *S* EK'end'
     , Async   = K'async' *S* EK'do' *S* V'Block' *S* EK'end'
-    , Host    = P'C' *S* K'{' * C{ ((1-(P'{'+K'}')) + K'{'*V(1)*K'}')^0 } * K'}'
+    , Host    = P'C' *S* K'do' * C((P(1)-'end')^0) *S* K'end'
     , Return  = K'return' *S* V'_Exp'
 
     , ParOr   = K'par/or' *S* EK'do' *S*
                     V'Block' * (S* K'with' *S* V'Block')^1 *S*
                 EK'end'
     , ParAnd  = K'par/and' *S* EK'do' *S*
+                    V'Block' * (S* K'with' *S* V'Block')^1 *S*
+                EK'end'
+    , ParEver = K'par' *S* EK'do' *S*
                     V'Block' * (S* K'with' *S* V'Block')^1 *S*
                 EK'end'
 
@@ -133,7 +142,7 @@ _GG = { [1] = K'' *S* V'_Stmts' *S* -1
     , __Set    = V'_Exp' *S* K'='
     , SetExp   = V'__Set' *S* V'_Exp'
     , SetStmt  = V'__Set' *S* (V'EmitE'+V'AwaitE'+V'AwaitT')
-    , SetBlock = V'__Set' *S* V'_StmtBlock'
+    , SetBlock = V'__Set' *S* V'_SetBlock'
 
  --(V'Async' + V'_Await') -- TODO: so acc?
 

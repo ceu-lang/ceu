@@ -4,8 +4,8 @@ local U   = set.union
 _DFA = {
     states    = set.new(),
     n_states  = 0,
-    nd_acc    = {},
-    nd_esc    = {},
+    nd_acc    = {},     -- { [1]={q1,q2} (q1,q2 access the same var concur.)
+    nd_esc    = {},     -- { [1]={q1,q2} (q1,q2 are nested and escape concur.)
     nd_stop   = false,
     forever   = false,
     n_unreach = 0,
@@ -89,7 +89,6 @@ function STATE (qs_all, qs_cur)
             for j=i+1, #qs do
                 local q1, q2 = qs[i], qs[j]
                 if q1.qs_par and q1.qs_par[q2] then
---DBG('nd', S.n, q1.n, q2.n)
                     S.nd_stop = q1.escs
                                     or (q1.mode=='tr' and q2.mode=='aw')
                                     or (q2.mode=='tr' and q1.mode=='aw')
@@ -97,8 +96,17 @@ function STATE (qs_all, qs_cur)
                     if (not q1.qs_nd[q2]) and (not q2.qs_nd[q1])  then
                         q1.qs_nd[q2] = true -- avoid the same conflict
                         q2.qs_nd[q1] = true -- in other states
-                        if q1.escs then
+
+                        -- concurrent join
+                        if q1.esc and (q1.esc == q2.esc) then
+                            q1.stmt.nd_join = true
+                            q2.stmt.nd_join = true
+
+                        -- concurrent escape with different depths
+                        elseif q1.escs then
                             _DFA.nd_esc[#_DFA.nd_esc+1] = { q1, q2 }
+
+                        -- concurrent access to variables
                         else
                             _DFA.nd_acc[#_DFA.nd_acc+1] = { q1, q2 }
                         end
@@ -407,14 +415,16 @@ for S in pairs(_DFA.states) do
         all = U(all, qs)
     end
 end
+
 for q in pairs(_NFA.nodes) do
-    if q.must_reach and (not all[q]) then
---DBG('stmt', q.n)
-        q.stmt.unreachable = true
-        WRN(false, q.stmt, 'unreachable statement')
-        _DFA.n_unreach = _DFA.n_unreach + 1
-    end
-    if q.must_not_reach then
-        ASR(not all[q], q.stmt, 'missing return statement')
+    if all[q] then
+        ASR(not q.must_not_reach, q.stmt, 'missing return statement')
+    else
+        ASR(not q.must_reach, q.stmt, 'unreachable statement')
+        if q.should_reach then
+            q.stmt.unreachable = true
+            _DFA.n_unreach = _DFA.n_unreach + 1
+            WRN(false, q.stmt, 'unreachable statement')
+        end
     end
 end

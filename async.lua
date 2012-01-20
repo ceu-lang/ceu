@@ -5,6 +5,9 @@ F = {
     ParAnd = function (me)
         ASR(not _ITER'Async'(), me,'not permitted inside async')
     end,
+    ParEver = function (me)
+        ASR(not _ITER'Async'(), me,'not permitted inside async')
+    end,
 
     EmitE = function (me)
         local acc,_ = unpack(me)

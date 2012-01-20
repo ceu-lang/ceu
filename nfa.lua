@@ -2,9 +2,9 @@ local set = require 'set'
 local U   = set.union
 
 _NFA = {
-    nodes   = nil,   -- set of all created nodes (to generate visual graph)
-    n_nodes = nil,   -- node identification
-    alphas  = nil,   -- external events/asyncs found on the code
+    nodes   = set.new(), -- set of all created nodes (to generate visual graph)
+    n_nodes = 0,         -- node identification
+    alphas  = set.new(), -- external events/asyncs found on the code
 }
 
 _TIME_undef = {}
@@ -19,7 +19,7 @@ function _NFA.node (ret)
     _NFA.n_nodes = _NFA.n_nodes + 1
 
     ret.n    = _NFA.n_nodes
-    ret.stmt = ret.stmt or _ITER(isStmt)()
+    ret.stmt = ret.stmt or _ITER(isStmt)() or _AST
     ret.prio = ret.prio or 0
     ret.out  = {}
     return ret
@@ -30,16 +30,16 @@ function OUT (from, a, to)
 end
 
 local ND = {
-    tr  = { tr=true,  wr=true,  rd=true,  aw=true,  ref=false },
-    wr  = { tr=true,  wr=true,  rd=true,  aw=false, ref=false },
-    rd  = { tr=true,  wr=true,  rd=false, aw=false, ref=false },
-    aw  = { tr=true,  wr=false, rd=false, aw=false, ref=false },
-    ref = { tr=false, wr=false, rd=false, aw=false, ref=false },
+    tr  = { tr=true,  wr=true,  rd=true,  aw=true  },
+    wr  = { tr=true,  wr=true,  rd=true,  aw=false },
+    rd  = { tr=true,  wr=true,  rd=false, aw=false },
+    aw  = { tr=true,  wr=false, rd=false, aw=false },
+    no  = {},   -- never ND ('ref')
 }
 
 function qVSq (q1, q2)
     if q1.escs and q2.escs then
-        return set.hasInter(q1.escs, q2.escs) and q1.esc~=q2.esc
+        return set.hasInter(q1.escs, q2.escs) -- and q1.esc~=q2.esc
 
     elseif q1.mode and q2.mode and ND[q1.mode][q2.mode] then
         if q1.ptr then
@@ -138,10 +138,6 @@ F = {
     end,
 
     Root_pre = function (me)
-        _NFA.n_nodes = 0
-        _NFA.nodes   = set.new()
-        _NFA.alphas  = set.new()
-
         local init = { id='$Init' }
         _NFA.alphas[init] = true
 
@@ -155,13 +151,41 @@ F = {
             _NFA.node {
                 id  = 'INIT',
                 rem = set.new(bef),
-                must_reach = true,
+                should_reach = true,
             })
         bef.to = aft
     end,
     Root = function (me)
         CONCAT_all(me)
         INS(me, '', _NFA.node{id='FINISH'})
+    end,
+
+    ParEver = function (me)
+        local QS   = set.new()  -- only sub.qs
+
+        local qS = INS(me, '', _NFA.node{ id='+ever' })
+        local qF = INS(me, nil,
+            _NFA.node {
+                id  = '-ever',
+                --must_not_reach = true
+            })
+        me.nfa.f = qF
+
+        for _, sub in ipairs(me) do
+            local nfa = sub.nfa
+            PAR(QS, nfa.qs)
+
+            if nfa.s then
+                OUT(qS, '', nfa.s)
+                OUT(nfa.f, false, qF)
+            else
+                OUT(qS, false, qF)
+            end
+
+            QS = U(QS, nfa.qs)
+        end
+
+        me.nfa.qs = U(me.nfa.qs, QS)
     end,
 
     ParAnd = function (me)
@@ -173,7 +197,8 @@ F = {
             _NFA.node {
                 id  = '-and',
                 rem = ands,
-                must_reach = true
+                --must_reach = true
+                should_reach = true
         })
         me.nfa.f = qF
 
@@ -205,19 +230,21 @@ F = {
             _NFA.node {
                 id   = '-or',
                 prio = me.prio,
-                must_reach = true
+                --must_reach = true
+                should_reach = true
             })
         me.nfa.f = qF
 
         local QS = set.new()
 
+        me.nd_join = false      -- dfa.lua may change it
         for _, sub in ipairs(me) do
             nfa = sub.nfa
             local qor = INS(sub, '',
                 _NFA.node {
                     id   = 'or',
                     escs = set.new(me),
-                    esc  = me.prio,
+                    esc  = me,
                     stmt = nfa.f and nfa.f.stmt,       -- last stmt
                 })
             PAR(QS, nfa.qs)
@@ -264,11 +291,17 @@ F = {
 
     Loop = function (me)
         local body = unpack(me)
+        me.nd_join = false      -- dfa.lua may change it
 
         local qS = INS(me, '', _NFA.node{id='+loop',loop=me})
         CONCAT(me, body)
 
-        local qL = INS(me, '', _NFA.node{id='loop', to=qS})
+        local qL = INS(me, '',
+            _NFA.node {
+                id = 'loop',
+                to = qS,
+                --must_reach = true,    -- TODO: ou qL ou qO
+            })
         if not _ITER'Async'() then
             OUT(qL, '', qS)             -- do not loop on Async
         end
@@ -278,7 +311,7 @@ F = {
                 id   = '-loop',
                 prio = me.prio,
                 rem  = body.nfa.qs,
-                must_reach = true,
+                should_reach = true,
             })
 
         for brk in pairs(me.brks) do
@@ -292,14 +325,14 @@ F = {
             _NFA.node {
                 id   = 'brk',
                 escs = set.new(),
-                esc  = top.prio,
+                esc  = top,
             })
         INS(me, false, _NFA.node{id='***'})
 
         for stmt in _ITER() do
             if stmt == top then
                 break
-            elseif stmt.id=='ParOr' or stmt.id=='ParAnd' then
+            elseif stmt.id=='ParEver' or stmt.id=='ParOr' or stmt.id=='ParAnd' then
                 me.qBrk.escs[stmt] = true
             end
         end
@@ -320,13 +353,13 @@ F = {
         CONCAT(me, body)
 
         -- TODO: used to circunvent s -(me)-> f (see SetBlock)
-        me.nfa.x = INS(me, '', _NFA.node{ id='x' })
+        me.nfa.out = INS(me, '', _NFA.node{ id='out' })
 
         local aft = INS(me, me,
             _NFA.node {
                 id  = '-asy',
                 rem = set.new(bef),
-                must_reach = true,
+                should_reach = true,
             })
         bef.to = aft
     end,
@@ -348,25 +381,28 @@ F = {
             _NFA.node {
                 id   = 'ret',
                 escs = set.new(),
-                esc  = top.prio,
+                esc  = top,
             })
         INS(me, false, _NFA.node{id='***'})
         for stmt in _ITER() do
             if stmt == top then
                 break
-            elseif stmt.id=='ParOr' or stmt.id=='ParAnd' then
+            elseif stmt.id=='ParEver' or stmt.id=='ParOr' or stmt.id=='ParAnd' then
                 me.qRet.escs[stmt] = true
             end
         end
     end,
     SetBlock = function (me)
-        local _, stmt = unpack(me)
+        local e1, stmt = unpack(me)
+        me.nd_join = false      -- dfa.lua may change it
         CONCAT(me, stmt)
+        -- TODO: com o par/ever isso perdeu sentido?
+        -- nao: async precisa
         if stmt.nfa.f then
-            stmt.nfa.f.must_reach = false
+            stmt.nfa.f.should_reach = false
         end
         if stmt.id == 'Async' then
-            stmt.nfa.x.must_not_reach = true
+            stmt.nfa.out.must_not_reach = true
         else
             INS(me, '', _NFA.node{ id='***',must_not_reach=true })
         end
@@ -375,7 +411,8 @@ F = {
                 id   = '-ret',
                 prio = me.prio,
                 rem  = stmt.nfa.qs,
-                must_reach = true,
+                should_reach   = e1.var and e1.var.id~='$ret',
+                should_reach = not (e1.var and e1.var.id~='$ret'),
             })
         for ret in pairs(me.rets) do
             OUT(ret.qRet, '', set)
@@ -395,7 +432,7 @@ F = {
         if var.int then
             local qF = _NFA.node {
                 id = 'cont '..var.id,
-                must_reach = true,
+                should_reach = true,
             }
             INS(me, '~>', qF)
             q.to = qF
@@ -423,7 +460,7 @@ F = {
             _NFA.node {
                 id  = '-'..var.id,
                 rem = set.new(bef),
-                must_reach = true,
+                should_reach = true,
             })
         bef.to = aft
 
@@ -451,7 +488,7 @@ F = {
             _NFA.node {
                 id  = '-'..ms_id,
                 rem = set.new(bef),
-                must_reach = true,
+                should_reach = true,
             })
         bef.to = aft
     end,
@@ -476,7 +513,7 @@ F = {
                     INS(me, '', ACC(var,'wr',ptr))
 
                 -- $f(&a) --> a.mode='wr'
-                elseif exp.fst.mode=='ref' then
+                elseif exp.fst.ref then
                     INS(me, '', ACC(var,'wr'))
                 end
             end
