@@ -45,17 +45,14 @@ end
 
 function BLOCK_GATES (me)
     COMM(me, 'close gates')
-    local len = me.gtes[2] - me.gtes[1]
-    if len > 0 then
-        LINE(me, 'memset(&GTES['..me.gtes[1]..'], 0, ' ..
-            len..'*sizeof(tceu_lbl));')
+    if me.n_gtes > 0 then
+        LINE(me, 'memset(&GTES['..me.gte0..'], 0, ' ..
+            me.n_gtes..'*sizeof(tceu_lbl));')
     end
 end
 
-local _lbi = 0
 function LABEL_gen (name, ok)
-    _lbi = _lbi + 1
-    name = name .. (ok and '' or '_'.._lbi)
+    name = name .. (ok and '' or '_'..#_CODE.labels)    -- unique name
     _CODE.labels[#_CODE.labels+1] = name
     --assert(#_CODE.labels+1 < XXX) -- TODO
     return name
@@ -121,9 +118,7 @@ F = {
         HALT(me)
     end,
 
-    Block = function (me)
-        CONC_ALL(me)
-    end,
+    Block = CONC_ALL,
 
     ParEver = function (me)
         -- INITIAL code :: spawn subs
@@ -182,9 +177,9 @@ F = {
         local lb_ret = LABEL_gen('ParAnd_join')
 
         -- close gates
-        if me.gte0 then
+        if me.and0 then
             COMM(me, 'close ParAnd gates')
-            LINE(me, 'memset(ANDS+'..me.gte0..', 0, '..#me..');')
+            LINE(me, 'memset(ANDS+'..me.and0..', 0, '..#me..');')
         end
 
         -- INITIAL code :: spawn subs
@@ -201,19 +196,19 @@ F = {
             LINE(me, '')
             LINE(me, 'case '..lbls[i]..':', 0)
             CONC(me, sub)
-            if me.gte0 then
-                LINE(me, 'ANDS['..(me.gte0+i-1)..'] = 1; // open and')  -- open gate
+            if me.and0 then
+                LINE(me, 'ANDS['..(me.and0+i-1)..'] = 1; // open and')  -- open gate
                 SWITCH(me, lb_ret)
             else
                 HALT(me)
             end
         end
 
-        if me.gte0 then
+        if me.and0 then
             -- AFTER code :: test gates
             LABEL_out(me, lb_ret)
             for i, sub in ipairs(me) do
-                LINE(me, 'if (!ANDS['..(me.gte0+i-1)..'])')
+                LINE(me, 'if (!ANDS['..(me.and0+i-1)..'])')
                 HALT(me)
             end
         end

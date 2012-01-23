@@ -85,10 +85,19 @@ function _VISIT (F)
     return visit_aux(_AST, F)
 end
 
+local function FF (F, str)
+    local f = F[str]
+    if type(f) == 'string' then
+        return FF(F, f)
+    end
+    assert(f==nil or type(f)=='function')
+    return f
+end
+
 function visit_aux (me, F)
 --print(me.id, me, F)
-    local pre, mid, pos = F[me.id..'_pre'], F[me.id], F[me.id..'_pos']
-    local bef, aft = F[me.id..'_bef'], F[me.id..'_aft']
+    local pre, mid, pos = FF(F,me.id..'_pre'), FF(F,me.id), FF(F,me.id..'_pos')
+    local bef, aft = FF(F,me.id..'_bef'), FF(F,me.id..'_aft')
 
     if F.Node_pre then F.Node_pre(me) end
     if pre then pre(me) end
@@ -123,25 +132,25 @@ local C; C = {
         return _AST
     end,
 
-    Block  = node('Block'),
-    Nothing= node('Nothing'),
-    Return = node('Return'),
-    Async  = node('Async'),
-    Host   = node('Host'),
+    Block   = node('Block'),
+    Nothing = node('Nothing'),
+    Return  = node('Return'),
+    Async   = node('Async'),
+    Host    = node('Host'),
 
-    ParEver= node('ParEver'),
-    ParOr  = node('ParOr'),
-    ParAnd = node('ParAnd'),
-    Loop   = node('Loop'),
-    Break  = node('Break'),
-    If     = node('If'),
+    ParEver = node('ParEver'),
+    ParOr   = node('ParOr'),
+    ParAnd  = node('ParAnd'),
+    Loop    = node('Loop'),
+    Break   = node('Break'),
+    If      = node('If'),
 
-    AwaitN = node('AwaitN'),
-    AwaitE = node('AwaitE'),
-    AwaitT = node('AwaitT'),
+    AwaitN  = node('AwaitN'),
+    AwaitE  = node('AwaitE'),
+    AwaitT  = node('AwaitT'),
 
-    EmitE  = node('EmitE'),
-    EmitT  = node('EmitT'),
+    EmitE   = node('EmitE'),
+    EmitT   = node('EmitT'),
 
     _Dcl_int = function (ln, str, tp, dim, ...)
         local ret = {}

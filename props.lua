@@ -6,6 +6,7 @@ function same (me, sub)
 end
 
 function MAX_all (me, t)
+    t = t or me
     me.n_timers = 0
     me.n_tracks = 0
     me.n_intras = 0
@@ -19,6 +20,7 @@ function MAX_all (me, t)
 end
 
 function ADD_all (me, t)
+    t = t or me
     me.n_timers = 0
     me.n_tracks = 0
     me.n_intras = 0
@@ -59,9 +61,7 @@ F = {
         end
     end,
 
-    Block = function (me)
-        MAX_all(me, me)
-    end,
+    Block = MAX_all,
 
     Async = function (me)
         me.n_asyncs = 1
@@ -74,15 +74,9 @@ F = {
         MAX_all(me, {t,f})
     end,
 
-    ParEver = function (me)
-        ADD_all(me, me)
-    end,
-    ParAnd = function (me)
-        ADD_all(me, me)
-    end,
-    ParOr = function (me)
-        ADD_all(me, me)
-    end,
+    ParEver = ADD_all,
+    ParAnd  = ADD_all,
+    ParOr   = ADD_all,
 
     ParOr_pre = function (me)
         local f = function (stmt)

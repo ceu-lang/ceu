@@ -1,4 +1,5 @@
 function OR_all (me, t)
+    t = t or me
     me.awaits  = false
     me.breaks  = false
     me.returns = false
@@ -12,6 +13,7 @@ function OR_all (me, t)
 end
 
 function AND_all (me, t)
+    t = t or me
     me.awaits  = true
     me.breaks  = true
     me.returns = true
@@ -44,16 +46,9 @@ F = {
         end
     end,
 
-    Block = function (me)
-        OR_all(me, me)
-    end,
-
-    ParEver = function (me)
-        OR_all(me, me)
-    end,
-    ParAnd = function (me)
-        OR_all(me, me)
-    end,
+    Block   = OR_all,
+    ParEver = OR_all,
+    ParAnd  = OR_all,
 
     If = function (me)
         local c, t, f = unpack(me)
@@ -62,9 +57,7 @@ F = {
         AND_all(me, {t,f})
     end,
 
-    ParOr = function (me)
-        AND_all(me, me)
-    end,
+    ParOr = AND_all,
 
     Break = function (me)
         me.breaks = true

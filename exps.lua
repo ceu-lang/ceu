@@ -101,6 +101,17 @@ F = {
         ASR(C.contains(e1.tp,'int') and C.contains(e2.tp,'int'),
             me, 'invalid operands to binary "'..op..'"')
     end,
+    ['Op2_-']  = 'Op2_int_int',
+    ['Op2_+']  = 'Op2_int_int',
+    ['Op2_%']  = 'Op2_int_int',
+    ['Op2_*']  = 'Op2_int_int',
+    ['Op2_/']  = 'Op2_int_int',
+    ['Op2_|']  = 'Op2_int_int',
+    ['Op2_&']  = 'Op2_int_int',
+    ['Op2_<<'] = 'Op2_int_int',
+    ['Op2_>>'] = 'Op2_int_int',
+    ['Op2_^']  = 'Op2_int_int',
+
     Op1_int = function (me)
         local op, e1 = unpack(me)
         me.fst = nil
@@ -108,6 +119,9 @@ F = {
         me.val = '('..op..e1.val..')'
         ASR(C.contains(e1.tp,'int'), me, 'invalid operand to unary "'..op..'"')
     end,
+    ['Op1_~']  = 'Op1_int',
+    ['Op1_-']  = 'Op1_int',
+
 
     Op2_same = function (me)
         local op, e1, e2 = unpack(me)
@@ -116,6 +130,13 @@ F = {
         me.val = '('..e1.val..op..e2.val..')'
         ASR(C.max(e1.tp,e2.tp), me, 'invalid operands to binary "'..op..'"')
     end,
+    ['Op2_=='] = 'Op2_same',
+    ['Op2_!='] = 'Op2_same',
+    ['Op2_>='] = 'Op2_same',
+    ['Op2_<='] = 'Op2_same',
+    ['Op2_>']  = 'Op2_same',
+    ['Op2_<']  = 'Op2_same',
+
 
     Op2_any = function (me)
         local op, e1, e2 = unpack(me)
@@ -123,12 +144,17 @@ F = {
         me.tp  = 'int'
         me.val = '('..e1.val..op..e2.val..')'
     end,
+    ['Op2_||'] = 'Op2_any',
+    ['Op2_&&'] = 'Op2_any',
+
     Op1_any = function (me)
         local op, e1 = unpack(me)
         me.fst = nil
         me.tp  = 'int'
         me.val = '('..op..e1.val..')'
     end,
+    ['Op1_!']  = 'Op1_any',
+
 
     ['Op1_*'] = function (me)
         local op, e1 = unpack(me)
@@ -212,31 +238,8 @@ F = {
     end,
 }
 
-F['Op2_-']  = F.Op2_int_int
-F['Op2_+']  = F.Op2_int_int
-F['Op2_%']  = F.Op2_int_int
-F['Op2_*']  = F.Op2_int_int
-F['Op2_/']  = F.Op2_int_int
-F['Op2_|']  = F.Op2_int_int
-F['Op2_&']  = F.Op2_int_int
-F['Op2_<<'] = F.Op2_int_int
-F['Op2_>>'] = F.Op2_int_int
-F['Op2_^']  = F.Op2_int_int
-F['Op1_~']  = F.Op1_int
-F['Op1_-']  = F.Op1_int
-
-F['Op2_=='] = F.Op2_same
-F['Op2_!='] = F.Op2_same
-F['Op2_>='] = F.Op2_same
-F['Op2_<='] = F.Op2_same
-F['Op2_>']  = F.Op2_same
-F['Op2_<']  = F.Op2_same
-
-F['Op2_||'] = F.Op2_any
-F['Op2_&&'] = F.Op2_any
-F['Op1_!']  = F.Op1_any
-
 --[=[
+    -- TODO: (remove) no more pointer arith
     Op2_arith = function (me)
         local op, e1, e2 = unpack(me)
         local ptr_e1, ptr_e2 = C.deref(e1.tp), C.deref(e2.tp)

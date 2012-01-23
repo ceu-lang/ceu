@@ -369,9 +369,7 @@ F = {
         CONCAT(me, exp)
         CONCAT(me, acc)
     end,
-    SetStmt = function (me)
-        F.SetExp(me)
-    end,
+    SetStmt = 'SetExp',
 
     Return = function (me)
         local top = _ITER'SetBlock'()
@@ -496,9 +494,7 @@ F = {
     Int = function (me)
         INS(me, '', ACC(me.var,me.mode))
     end,
-    Ext = function (me)
-        F.Int(me)
-    end,
+    Ext = 'Int',
 
     Op2_call = function (me)
         local _, f, exps = unpack(me)

@@ -94,9 +94,7 @@ F = {
         me.var = ASR(getvar(me[1]),
             me, 'variable "'..me[1]..'" is not declared')
     end,
-    Ext = function (me)
-        F.Int(me)
-    end,
+    Ext = 'Int',
 }
 
 _VISIT(F)

@@ -27,7 +27,8 @@ int go (int* ret);
 === HOST ===
 
 enum {
-    Init = 0,
+    Inactive  = 0,
+    Init      = 1,
 === LABELS ===
 };
 
@@ -103,9 +104,9 @@ void qins_track_chk (u8 prio, tceu_lbl lbl) {
 void spawn (tceu_gte gte)
 {
     tceu_lbl lbl = GTES[gte];
-    if (lbl) {
+    if (lbl >= Init) {
         qins_track(PR_MAX, lbl);
-        GTES[gte] = 0;
+        GTES[gte] = Inactive;
     }
 }
 

@@ -4,6 +4,7 @@ PRE = ''
 --do return end
 --]===]
 
+
 Test { [[return(1);]], run=1 }
 Test { [[return (1);]], run=1 }
 Test { [[return 1;]], run=1 }
@@ -9747,6 +9748,65 @@ return v.a;
 }
 
 do return end
+
+    -- SUSPEND
+
+Test { [[
+input void A;
+suspend on A do
+    nothing;
+end
+return 0;
+]],
+    exps = 'invalid suspend event type',
+}
+
+Test { [[
+input int A;
+suspend on A do
+    nothing;
+end
+return 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input int A;
+input int B;
+suspend on A do
+    int v = await B;
+    return v;
+end
+]],
+    run = {
+        ['1~>B'] = 1,
+        ['0~>A ; 1~>B'] = 1,
+        ['1~>A ; 1~>B ; 0~>A ; 3~>B'] = 3,
+        ['1~>A ; 1~>B ; 0~>A ; 1~>A ; 2~>B ; 0~>A ; 3~>B'] = 3,
+        ['1~>A ; 1~>B ; 0~>A ; 1~>A ; 0~>A ; 3~>B'] = 3,
+        ['1~>A ; 1~>B ; 1~>A ; 2~>B ; 0~>A ; 3~>B'] = 3,
+    },
+}
+
+Test { [[
+input int  A;
+input int  B;
+input void C;
+suspend on A do
+    await C;
+_printf("oi\n");
+    int v = await B;
+    return v;
+end
+]],
+    run = {
+        ['~>C ; 1~>B'] = 1,
+        ['0~>A ; 1~>B ; ~>C ; 2~>B'] = 2,
+        ['~>C ; 1~>A ; 1~>B ; 0~>A ; 3~>B'] = 3,
+        ['~>C ; 1~>A ; 1~>B ; 1~>A ; 2~>B ; 0~>A ; 3~>B'] = 3,
+    },
+}
 
     -- ORGANISMS
 

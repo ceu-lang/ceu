@@ -137,7 +137,8 @@ do
     do
         local labels = ''
         for i, id in ipairs(_CODE.labels) do
-            labels = labels..'    '..id..' = '..i..',\n'
+            -- i+1: (Inactive=0,Init=1,...)
+            labels = labels..'    '..id..' = '..(i+1)..',\n'
         end
         tpl = sub(tpl, '=== LABELS ===', labels)
     end
