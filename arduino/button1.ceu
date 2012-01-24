@@ -1,23 +1,11 @@
-input int  PIN2, PIN2_LOW, PIN2_HIGH;
+input  int  PIN2;
 output void PIN13;
 
 par/or do
 
     loop do
-        par/or do
-            int t = 1000;
-            loop do
-                emit PIN13(0);
-                await (t);
-                emit PIN13(1);
-                await (t);
-                if t > 50 then
-                    t = t - 10;
-                end
-            end
-        with
-            await PIN2;
-        end
+        await PIN2;
+        emit PIN13(PIN2);
     end
 
 with
@@ -40,7 +28,6 @@ with
                 emit PIN2(pin2);
             end
             _delay(10);
-            emit 10ms;
         end
     end
 

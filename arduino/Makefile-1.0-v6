@@ -40,7 +40,7 @@ UNAME = $(shell uname)
 UNAME = $(shell uname)
 
 # Name of the program and source .pde file:
-TARGET = arduino
+TARGET ?= async
 VERSION = 0.1
 
 # Standard Arduino libraries it will import, e.g. LiquidCrystal:
