@@ -1,24 +1,21 @@
-local pairs, ipairs, next, print, unpack =
-      pairs, ipairs, next, print, unpack
+set = {}
 
-module (... or 'set', package.seeall)
+set.EMPTY = {}
 
-EMPTY = {}
-
-function powerset (S, start)
+function set.powerset (S, start)
     start = start or 1
     if start > #S then
         return {{}}
     end
-    local ret = powerset(S, start+1)
+    local ret = set.powerset(S, start+1)
     for i=1, #ret do
         ret[#ret+1] = {S[start], unpack(ret[i])}
     end
     return ret
 end
 
-function mapfilter (S, f)
-    local ret = new()
+function set.mapfilter (S, f)
+    local ret = set.new()
     for k, v in pairs(S) do
         local k1,v1 = f(k,v)
         if k1~=nil then
@@ -28,8 +25,8 @@ function mapfilter (S, f)
     return ret
 end
 
-function map (S, f)
-    local ret = new()
+function set.map (S, f)
+    local ret = set.new()
     for e, v in pairs(S) do
         local ee, vv = f(e, v)
         ret[ee] = vv or v
@@ -37,8 +34,8 @@ function map (S, f)
     return ret
 end
 
-function filter (S, f)
-    local ret = new()
+function set.filter (S, f)
+    local ret = set.new()
     for e,v in pairs(S) do
         if f(e,v) then
             ret[e] = v
@@ -47,15 +44,15 @@ function filter (S, f)
     return ret
 end
 
-function fold (S, acc, f)
+function set.fold (S, acc, f)
     for k, v in pairs(S) do
         acc = f(acc, k, v)
     end
     return acc
 end
 
-function union (c1, c2, V)
-    local ret = new()
+function set.union (c1, c2, V)
+    local ret = set.new()
     for e1,v1 in pairs(c1) do
         ret[e1] = v1
     end
@@ -68,9 +65,9 @@ function union (c1, c2, V)
 end
 
 --[[
-function union_inter (c1, c2)
-    local tot = size(inter(c1, c2))
-    local ret = new()
+function set.union_inter (c1, c2)
+    local tot = size(set.inter(c1, c2))
+    local ret = set.new()
     for e1 in pairs(c1) do
         ret[e1] = true
     end
@@ -81,7 +78,7 @@ function union_inter (c1, c2)
 end
 ]]
 
-function new (...)
+function set.new (...)
     local ret = {}
     for _, q in ipairs{...} do
         ret[q] = true
@@ -89,7 +86,7 @@ function new (...)
     return ret
 end
 
-function copy (s)
+function set.copy (s)
     local ret = {}
     for e,v in pairs(s) do
         ret[e] = v
@@ -97,23 +94,23 @@ function copy (s)
     return ret
 end
 
-function flatten (set)
-    local ret = new()
-    for e in pairs(set) do
+function set.flatten (s)
+    local ret = set.new()
+    for e in pairs(s) do
         ret[#ret+1] = e
     end
     return ret
 end
 
-function unflatten (vect)
-    local ret = new()
+function set.unflatten (vect)
+    local ret = set.new()
     for _, e in ipairs(vect) do
         ret[e] = true
     end
     return ret
 end
 
-function hasInter (s1, s2)
+function set.hasInter (s1, s2)
     for e,v in pairs(s1) do
         if s2[e] then
             return true
@@ -122,8 +119,8 @@ function hasInter (s1, s2)
     return false
 end
 
-function inter (s1, s2)
-    local ret = new()
+function set.inter (s1, s2)
+    local ret = set.new()
     for e,v in pairs(s1) do
         if s2[e] then
             ret[e] = v
@@ -132,11 +129,11 @@ function inter (s1, s2)
     return ret
 end
 
-function hasIntersection (s1, s2)
-    return next(inter(s1, s2))
+function set.hasIntersection (s1, s2)
+    return next(set.inter(s1, s2))
 end
 
-function contains (s1, s2, V)
+function set.contains (s1, s2, V)
     for e,v2 in pairs(s2) do
         if s1[e] == nil then
             return false
@@ -147,8 +144,8 @@ function contains (s1, s2, V)
     return true
 end
 
-function diff (s1, s2)
-    local ret = new()
+function set.diff (s1, s2)
+    local ret = set.new()
     for e,v in pairs(s1) do
         if s2[e] == nil then
             ret[e] = v
@@ -157,7 +154,7 @@ function diff (s1, s2)
     return ret
 end
 
-function dump (s, f)
+function set.dump (s, f)
     for e,v in pairs(s) do
         if f then
             f(e,v)
@@ -168,11 +165,11 @@ function dump (s, f)
     print()
 end
 
-function equals (s1, s2, V)
-    return contains(s1, s2, V) and contains(s2, s1, V)
+function set.equals (s1, s2, V)
+    return set.contains(s1, s2, V) and set.contains(s2, s1, V)
 end
 
-function size (s)
+function set.size (s)
     local ret = 0
     for _ in pairs(s) do
         ret = ret + 1
@@ -180,6 +177,6 @@ function size (s)
     return ret
 end
 
-function isEmpty (s)
-    return size(s) == 0
+function set.isEmpty (s)
+    return set.size(s) == 0
 end

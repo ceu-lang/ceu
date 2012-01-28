@@ -3,10 +3,15 @@ fin  = assert(io.open'ceu.lua'):read'*a'
 
 function subst (name)
     local s, e = string.find(fin, "dofile '"..name.."'")
-    fin = string.sub(fin, 1, (s-1))
-            .. assert(io.open(name)):read'*a' ..
+    fin = string.sub(fin, 1, (s-1)) ..
+            '\ndo\n' ..
+                assert(io.open(name)):read'*a' ..
+            '\nend\n' ..
           string.sub(fin, (e+1))
 end
+
+subst 'set.lua'
+subst 'C.lua'
 
 subst 'lines.lua'
 subst 'parser.lua'

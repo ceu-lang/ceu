@@ -1,0 +1,9 @@
+input int PIN2;
+
+_pinMode(13, _OUTPUT);
+_digitalWrite(13, _HIGH);
+
+loop do
+    int v = await PIN2;
+    _digitalWrite(13,v);
+end

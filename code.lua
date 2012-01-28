@@ -61,6 +61,7 @@ end
 function LABEL_out (me, name)
     LINE(me,'', 0)
     LINE(me, 'case '..name..':', 0)
+    LINE(me, ';')   -- ensures a non-void label-body (Arduino complains)
     return name
 end
 

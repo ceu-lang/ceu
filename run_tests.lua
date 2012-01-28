@@ -1,6 +1,8 @@
 #!/usr/bin/env lua
 
 dofile 'pak.lua'
+dofile 'set.lua'
+dofile 'C.lua'
 
 COUNT = 0
 T = nil

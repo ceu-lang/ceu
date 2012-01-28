@@ -1,7 +1,10 @@
 #include <stdlib.h>
 //#include "binheap.h"
 
-#define BUF(i) (Q->buf + (i)*Q->unit)
+// TODO: arduino warns about pointer arith
+//#define BUF(i) (Q->buf + (i)*Q->unit)
+#define BUF(i) ((void*)((u32)Q->buf + (i)*Q->unit))
+
 #define CMP(v1,v2) (Q->cmp(v1,v2))
 
 void  q_init (Queue* Q, void* buf, u8 n_max, u8 unit, q_prio_t cmp)

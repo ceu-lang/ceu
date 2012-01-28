@@ -2,7 +2,7 @@ output void PinMode;
 output int  DigitalRead;
 output void DigitalWrite;
 
-input int P2_LOW, P2_HIGH;
+input int PIN2_LOW, PIN2_HIGH;
 
 _pinMode( 2, _INPUT);
 _pinMode(13, _OUTPUT);
@@ -19,9 +19,9 @@ par/or do
         end
     with
         loop do
-            await P2_LOW;
+            await PIN2_LOW;
             par/or do
-                await P2_LOW;
+                await PIN2_LOW;
                 t = 500;
             with
                 await 200ms;
@@ -42,9 +42,9 @@ with
             if (p2 != tmp) then
                 p2 = tmp;
                 if p2==_HIGH then
-                    emit P2_HIGH();
+                    emit PIN2_HIGH();
                 else
-                    emit P2_LOW();
+                    emit PIN2_LOW();
                 end
             end
             u32 now = _millis();

@@ -1,5 +1,4 @@
-local set = require 'set'
-local U   = set.union
+local U = set.union
 
 _DFA = {
     states    = set.new(),

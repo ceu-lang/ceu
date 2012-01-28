@@ -1,0 +1,20 @@
+input int PIN2_LOW;
+
+_pinMode(13, _OUTPUT);
+
+loop do
+    par/or do
+        int t = 1000;
+        loop do
+            _digitalWrite(13, _LOW);
+            await (t);
+            _digitalWrite(13, _HIGH);
+            await (t);
+            if t > 50 then
+                t = t - 10;
+            end
+        end
+    with
+        await PIN2_LOW;
+    end
+end

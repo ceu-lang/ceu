@@ -113,7 +113,7 @@ void spawn (tceu_gte gte)
 void trigger (int trg)
 {
     int i;
-    for (i=1 ; i<=TRGS[trg] ; i++)
+    for (i=1 ; i<=((int)TRGS[trg]) ; i++)
         spawn(TRGS[trg+i]);
 }
 
@@ -144,7 +144,6 @@ int QTimer_prio (void* v1, void* v2) {
                     || (t1->extl==t2->extl && t1->intl>t2->intl)
 #endif
                 ));
-//printf("%d = %d %d vs %d %d\n", ret, t1->phys,t1->extl, t2->phys,t2->extl);
     return ret;
 }
 
@@ -212,21 +211,6 @@ void qins_async (tceu_gte gte)
 #endif
 }
 #endif
-
-/**********************************************************************/
-
-/*
-void dump (void)
-{
-    int i;
-    for (i=0; i<20; i++)
-        printf("%3d", i);
-    printf("\n");
-    for (i=0; i<20; i++)
-        printf("%3X", VARS[i]);
-    printf("\n");
-}
-*/
 
 /**********************************************************************/
 
@@ -344,30 +328,23 @@ int go (int* ret)
 #if N_INTRAS > 1
     QIntra itr;
     _intl_ = 0;
-#endif
-
 _TRACKS_:
+#endif
     while (q_remove(&Q_TRACKS,&trk))
     {
         _lbl_ = trk.lbl;
 _SWITCH_:
-//printf("=====================================\n");
-//dump();
-//printf("LABEL: %d\n", _lbl_);
         switch (_lbl_)
         {
             case Init:
 === CODE ===
         }
-//dump();
-//printf("=====================================\n");
     }
 
 #if N_INTRAS > 1
     if (q_remove(&Q_INTRA,&itr)) {
         spawn(itr.gte);
         _intl_ = itr.intl;
-//printf("intra: %d %d\n", _intl_, itr.gte);
         while (q_peek(&Q_INTRA, &itr)) {
             if (itr.intl < _intl_)
                 break;
@@ -388,7 +365,10 @@ _SWITCH_:
 
 int ceu_go_polling (tceu_time now)
 {
-    int ret, async_cnt;
+    int ret = 0;
+#if N_ASYNCS > 0
+    int async_cnt;
+#endif
 
     if (ceu_go_init(&ret, now))
         return ret;
@@ -407,4 +387,6 @@ int ceu_go_polling (tceu_time now)
             break;              // returns nothing!
     }
 #endif
+
+    return ret;
 }

@@ -1,14 +1,20 @@
+INOFILE ?= poll.pde
+CEUFILE ?= samples/blink1.ceu
+
 ARDUINODIR = /opt/arduino-1.0
-INOFILE = poll.pde
 BOARD = uno
 
-.PHONY: ceu all
-all: ceu _all
+CEUTMPFILE = _ceu_$(notdir $(CEUFILE)).tmp
 
-ceu:
-	./ceu $(CEU) --output _ceu_code.tmp
+.PHONY: all
+
+all: $(CEUTMPFILE) _all
+
+$(CEUTMPFILE): $(CEUFILE)
+	./ceu $(CEUFILE) --output $(CEUTMPFILE)
+	cp $(CEUTMPFILE) _ceu_code.tmp
 
 clean: _clean
-	rm -f _ceu_*
+	rm -f _ceu_*.tmp
 
 include arduino.mk

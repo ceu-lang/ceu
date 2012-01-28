@@ -1,4 +1,3 @@
-local set = require 'set'
 local io = io
 local s_rep = string.rep
 local exec = os.execute

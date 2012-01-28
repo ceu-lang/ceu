@@ -200,13 +200,14 @@ OBJCOPY := avr-objcopy
 AVRDUDE := avrdude
 
 # flags
-CPPFLAGS = -Os -Wall -fno-exceptions -ffunction-sections -fdata-sections
+CPPFLAGS = -Os -Wall -fno-strict-aliasing -fno-exceptions -ffunction-sections -fdata-sections
 CPPFLAGS += -mmcu=$(BOARD_BUILD_MCU) -DF_CPU=$(BOARD_BUILD_FCPU)
 CPPFLAGS += -I. -Iutil -Iutility -I$(ARDUINOSRCDIR)
 CPPFLAGS += -I$(ARDUINODIR)/hardware/arduino/variants/$(BOARD_BUILD_VARIANT)/
 CPPFLAGS += $(addprefix -I$(ARDUINODIR)/libraries/, $(LIBRARIES))
 CPPFLAGS += $(patsubst %, -I$(ARDUINODIR)/libraries/%/utility, $(LIBRARIES))
-AVRDUDEFLAGS = -C $(ARDUINODIR)/hardware/tools/avrdude.conf -DV
+#AVRDUDEFLAGS = -C $(ARDUINODIR)/hardware/tools/avrdude.conf -DV
+AVRDUDEFLAGS = -C /etc/avrdude.conf -DV
 AVRDUDEFLAGS += -p $(BOARD_BUILD_MCU) -P $(SERIALDEV)
 AVRDUDEFLAGS += -c $(BOARD_UPLOAD_PROTOCOL) -b $(BOARD_UPLOAD_SPEED)
 LINKFLAGS = -Os -Wl,--gc-sections -mmcu=$(BOARD_BUILD_MCU)
@@ -257,10 +258,10 @@ $(TARGET).hex: $(TARGET).elf
 $(TARGET).elf: $(ARDUINOLIB) $(OBJECTS)
 	$(CC) $(LINKFLAGS) $(OBJECTS) $(ARDUINOLIB) -o $@
 
-%.o: %.ino _ceu_code.tmp
+%.o: %.ino $(CEUTMPFILE)
 	$(COMPILE.cpp) -o $@ -x c++ -include $(ARDUINOSRCDIR)/Arduino.h $<
 
-%.o: %.pde _ceu_code.tmp
+%.o: %.pde $(CEUTMPFILE)
 	$(COMPILE.cpp) -o $@ -x c++ -include $(ARDUINOSRCDIR)/Arduino.h $<
 
 # building the arduino library

@@ -1,5 +1,4 @@
-local set = require 'set'
-local U   = set.union
+local U = set.union
 
 _NFA = {
     nodes   = set.new(), -- set of all created nodes (to generate visual graph)
@@ -45,15 +44,15 @@ function qVSq (q1, q2)
         if q1.ptr then
             if q2.ptr then
                 -- q1.ptr vs q2.ptr
-                return contains(q1.ptr, q2.ptr)
+                return C.contains(q1.ptr, q2.ptr)
             else
                 -- q1.ptr vs q2.var
-                return contains(q1.ptr, q2.var.tp) and q2.var.id~='$ret'
+                return C.contains(q1.ptr, q2.var.tp) and q2.var.id~='$ret'
             end
         else
             if q2.ptr then
                 -- q1.var vs q2.ptr
-                return contains(q2.ptr, q1.var.tp) and q1.var.id~='$ret'
+                return C.contains(q2.ptr, q1.var.tp) and q1.var.id~='$ret'
             else -- (trg input on asyncs is ok!)
                 -- q1.var vs q2.var
                 return q1.var==q2.var and (not q1.var.input)
@@ -504,7 +503,7 @@ F = {
             if exp.fst then
                 -- $f(pa) --> pa.mode='wr'
                 local var = exp.fst.var
-                local ptr = deref(var.tp)
+                local ptr = C.deref(var.tp)
                 if ptr then
                     INS(me, '', ACC(var,'wr',ptr))
 
@@ -520,7 +519,7 @@ F = {
         local _, e1 = unpack(me)
         CONCAT(me, e1)
         local var = e1.fst.var
-        INS(me, '', ACC(var,e1.fst.mode,assert(deref(var.tp))))
+        INS(me, '', ACC(var,e1.fst.mode,assert(C.deref(var.tp))))
         e1.fst.nfa.f.mode = 'rd'
     end,
 }

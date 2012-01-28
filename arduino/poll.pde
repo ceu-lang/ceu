@@ -6,13 +6,9 @@ typedef unsigned long  u32;
 typedef unsigned short u16;
 typedef unsigned char  u8;
 
-//#include <assert.h>
-//#define ASSERT(x,y) if (!(x)) { fprintf(stderr,"ASR:%d\n",y);assert(x); };
+#define POLLING_INTERVAL 10
 
-//#define PinMode         pinMode
-//#define DigitalRead     digitalRead
-//#define DigitalWrite    digitalWrite
-
+#ifdef DEBUG
 #include <stdarg.h>
 void DBG (char *fmt, ... )
 {
@@ -23,15 +19,60 @@ void DBG (char *fmt, ... )
     va_end(args);
     Serial.print(tmp);
 }
+#endif
 
 #include "_ceu_code.tmp"
 
+u32 old = millis();
+int ret;
+
+#if defined(IO_PIN2) || defined(IO_PIN2_HIGH) || defined(IO_PIN2_LOW)
+int p2 = 0;
+#endif
+
 void setup ()
 {
+#ifdef DEBUG
     Serial.begin(9600);
-    ceu_go_polling(millis());
+#endif
+
+#if defined(IO_PIN2) || defined(IO_PIN2_HIGH) || defined(IO_PIN2_LOW)
+    pinMode( 2, INPUT);
+#endif
+    pinMode(13, OUTPUT);
+
+    if ((ret = ceu_go_init(&ret,old)))
+        return;
+#ifdef IO_Start
+    ret = ceu_go_event(&ret, IO_Start, NULL);
+#endif
 }
 
 void loop()
 {
+    if (ret) return;
+
+#if defined(IO_PIN2) || defined(IO_PIN2_HIGH) || defined(IO_PIN2_LOW)
+    int tmp = digitalRead(2);
+    if (p2 != tmp) {
+        p2 = tmp;
+        if (p2==HIGH) {
+#ifdef IO_PIN2_HIGH
+            ret = ceu_go_event(&ret, IO_PIN2_HIGH, NULL);
+#endif
+        } else {
+#ifdef IO_PIN2_LOW
+           ret = ceu_go_event(&ret, IO_PIN2_LOW, NULL);
+#endif
+        }
+#ifdef IO_PIN2
+        ceu_go_event(&ret, IO_PIN2, (void*)p2);
+#endif
+    }
+#endif
+
+    u32 now = millis();
+    delay(POLLING_INTERVAL-(now-old));
+    old = millis();
+    ceu_go_time(&ret, old);
 }

@@ -63,15 +63,16 @@ if not _OPTS.input then
         --events                 # declare events in a separate file (false)
         --events-file <filename> # events output file (`_ceu_events.h')
 
-        --m4                     # preprocess the input with `m4' (false)
-        --m4-file <filename>     # m4 output file (`/tmp/tmp.ceu')
-
         --dfa                    # performs DFA analysis (false)
         --dfa-viz                # generates DFA graph (false)
 
 ]])
     os.exit(1)
 end
+        -- TODO:
+        --m4                     # preprocess the input with `m4' (false)
+        --m4-file <filename>     # m4 output file (`/tmp/tmp.ceu')
+
 
 -- INPUT
 local inp
@@ -92,6 +93,9 @@ end
 
 -- PARSE
 do
+    dofile 'set.lua'
+    dofile 'C.lua'
+
     dofile 'lines.lua'
     dofile 'parser.lua'
     dofile 'ast.lua'
