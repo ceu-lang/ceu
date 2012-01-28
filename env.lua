@@ -3,10 +3,6 @@ _ENV = {
     exts   = {},
 }
 
-function err (me, msg)
-    return 'ERR : env : line '..me.ln..' : '..me.id..' : '..msg
-end
-
 function alloc (var)
     local v = _ENV.n_vars
     _ENV.n_vars = _ENV.n_vars..'+'..var.size
@@ -24,13 +20,13 @@ end
 function newvar (var)
     local blk = var.int and _ITER'Block'()
                  or _ITER('Block',true)()
-    assert(not blk.vars[var.id],
-        err(var, 'variable "'..var.id..'" already declared'))
+    ASR(not blk.vars[var.id], var,
+        'variable "'..var.id..'" already declared')
     blk.vars[var.id] = var
     var.blk  = blk
 
     if var.arr then
-        assert(var.dim > 0, err(var,'invalid array dimension'))
+        ASR(var.dim>0, var,'invalid array dimension')
         var.tp = var.tp..'*'
     end
 

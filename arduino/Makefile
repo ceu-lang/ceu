@@ -1,13 +1,14 @@
-MODE ?= work	# work|simul
+ARDUINODIR = /opt/arduino-1.0
+INOFILE = poll.pde
+BOARD = uno
 
+.PHONY: ceu all
 all: ceu _all
 
 ceu:
-	lua ceu.lua $(FILE).ceu --output _ceu_code.c
+	./ceu $(CEU) --output _ceu_code.tmp
 
 clean: _clean
 	rm -f _ceu_*
 
-upload: all _upload
-
-include Makefile-1.0-v6
+include arduino.mk

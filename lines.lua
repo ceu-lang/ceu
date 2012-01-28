@@ -3,8 +3,8 @@ m.setmaxstack(200)
 
 function DBG (...)
     local t = {}
-    for _,v in ipairs{...} do
-        t[#t+1] = tostring(v)
+    for i=1, select('#',...) do
+        t[#t+1] = tostring( select(i,...) )
     end
     io.stderr:write(table.concat(t,'\t')..'\n')
 end
@@ -14,13 +14,23 @@ function MAX (v1, v2)
 end
 
 function WRN (cond, me, msg)
+    local ln = (type(me)=='number' and me) or me.ln[1]
     if not cond then
-        DBG('WRN : line '..me.ln..' : '..msg)
+        DBG('WRN : line '..ln..' : '..msg)
     end
     return cond
 end
 function ASR (cond, me, msg)
-    return assert(cond, 'ERR : line '..me.ln..' : '..me.id..' : '..msg)
+    local ln = (type(me)=='number' and me) or me.ln[1]
+    if _CEU then
+        if not cond then
+            DBG('ERR : line '..ln..' : '..msg)
+            os.exit(1)
+        end
+        return cond
+    else
+        return assert(cond, 'ERR : line '..ln..' : '..msg)
+    end
 end
 
 _I2L = {}

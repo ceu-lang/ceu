@@ -1,5 +1,7 @@
 #!/usr/bin/env lua
 
+dofile 'pak.lua'
+
 COUNT = 0
 T = nil
 
@@ -35,7 +37,7 @@ Test = function (t)
     -- PARSER
     if not check('parser') then return end
     if not check('ast')    then return end
-    --ast.dump(ast.AST)
+    --_DUMP(_AST)
     if not check('env')    then return end
     if not check('props')  then return end
     if not check('tight')  then return end
@@ -80,7 +82,7 @@ Test = function (t)
     if T.run == false then
         local str_all = PRE..str_input
         --print(str_all)
-        local ceu = assert(io.popen('./ceu.lua - --output _ceu_code.c', 'w'))
+        local ceu = assert(io.popen('./ceu - --output _ceu_code.c', 'w'))
         ceu:write(str_all)
         ceu:close()
         assert(os.execute('gcc -std=c99 -o ceu.exe main.c 2>/dev/null') ~= 0)
@@ -89,7 +91,7 @@ Test = function (t)
     elseif type(T.run) ~= 'table' then
         local str_all = PRE..str_input
         --print(str_all)
-        local ceu = assert(io.popen('./ceu.lua - --output _ceu_code.c', 'w'))
+        local ceu = assert(io.popen('./ceu - --output _ceu_code.c', 'w'))
         ceu:write(str_all)
         ceu:close()
         assert(os.execute('gcc -std=c99 -o ceu.exe main.c') == 0)
@@ -115,8 +117,7 @@ Test = function (t)
             input = string.gsub(input, '([^;]*)~>(%d[^;]*);?', 'emit %2;')
             input = string.gsub(input, '([^;]*)~>([^;]*);?', 'emit %2(%1);')
             local all = string.gsub(str_all, '`EVTS', input)
-            local ceu = assert(io.popen('./ceu.lua - --output _ceu_code.c', 
-            'w'))
+            local ceu = assert(io.popen('./ceu - --output _ceu_code.c', 'w'))
             --print(all)
             ceu:write(all)
             ceu:close()

@@ -4,45 +4,63 @@ _PARSER = {
 local P, C, V, Cc, Ct = m.P, m.C, m.V, m.Cc, m.Ct
 
 local ERR_msg = ''
-local ERR_tk  = nil
 local ERR_i   = nil
-
-function err ()
-    --local str = C(ERR_p):match(ERR_s, ERR_i)
-    --print(ERR_i, ERR_tk, ERR_msg, _I2L[ERR_i])
-    return 'ERR : syntax : line '.._I2L[ERR_i]..
-                       ' : near "'..ERR_tk..'"'..
-                       ' : '..ERR_msg
-end
+local LST_tk  = nil
+local LST_tki = nil
 
 local f = function (s, i, tk)
-    if i > ERR_i then
-        ERR_i  = i
-        ERR_tk = tk
+    if tk == '' then
+        ERR_i   = 0
+        LST_tki = 0           -- restart parsing
+        LST_tk  = 'BOF'
+    elseif i > LST_tki then
+        LST_tki = i
+        LST_tk  = tk
     end
+--DBG('f', ERR_i, LST_tki, LST_tk, i,tk)
     return true
 end
 local K = function (patt)
     ERR_msg = ''
-    if patt == '' then
-        ERR_i = 0           -- restart parsing
-    end
     return m.Cmt(patt, f)
 end
 local CK = function (patt)
     return C(K(patt))
 end
-local EK = function (str)
-    return m.Cmt(P(str)+C'',
-        function (s,i,tk)
-            if tk == '' then
-                ERR_i   = i
-                ERR_msg = 'expected "'..str..'"'
-                return false
-            else
-                return f(s,i,tk)
+local EK = function (tk)
+    return K(tk) + m.Cmt(P'',
+        function (_,i)
+            if i > ERR_i then
+                ERR_i = i
+                ERR_msg = 'expected `'..tk.."'"
             end
-            return true
+            return false
+        end)
+end
+
+local _V2NAME = {
+    _Exp = 'expression',
+    _Stmts = 'statement',
+}
+local EV = function (rule)
+    return V(rule) + m.Cmt(P'',
+        function (_,i)
+            if i > ERR_i then
+                ERR_i = i
+                ERR_msg = 'expected ' .. _V2NAME[rule]
+            end
+            return false
+        end)
+end
+
+local EE = function (msg)
+    return m.Cmt(P'',
+        function (_,i)
+            if i > ERR_i then
+                ERR_i = i
+                ERR_msg = 'expected '..msg
+            end
+            return false
         end)
 end
 
@@ -53,7 +71,7 @@ KEYS = P'do'+'end'+'async'+'return'
      + 'await'+'forever'+'emit'
      + 'loop'+'break'+'nothing'
      + 'input'+'output' -- TODO: types
-     + 'sizeof'+'null'
+     + 'sizeof'+'null'+'call'
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
 local S = V'_SPACES'
@@ -69,19 +87,19 @@ TYPE = ID * (S*'*')^0 /
         return (string.gsub( (string.gsub(str,' ','')), '^_', '' ))
     end
 
-_GG = { [1] = K'' *S* V'_Stmts' *S* -1
+_GG = { [1] = K'' *S* EV'_Stmts' *S* -1
 
-    , Block  = V'_Stmts'
-    , _Stmts = V'_LstStmt'      * (S*EK';')^1
-             + V'_LstStmtBlock' * (S*EK';')^0
-             + V'_Stmt'         * (S*EK';')^1 *S* V'_Stmts'^-1
-             + V'_StmtBlock'    * (S*EK';')^0 *S* V'_Stmts'^-1
+    , Block  = EV'_Stmts'
+    , _Stmts = V'_LstStmt'      *S* EK';' * (S*K';')^0
+             + V'_LstStmtBlock' * (S* K';')^0
+             + V'_Stmt'         *S* EK';' * (S*K';')^0 *S* V'_Stmts'^-1
+             + V'_StmtBlock'    * (S* K';')^0 *S* V'_Stmts'^-1
 
     , _LstStmtBlock = V'ParEver'
     , _LstStmt      = V'Return'   + V'Break'  + V'AwaitN' + V'ParEver'
 
     , _Stmt      = V'Nothing'
-                 + V'AwaitE'   + V'AwaitT' + V'_Emit'
+                 + V'AwaitT'   + V'AwaitE' + V'_Emit'
                  + V'_Dcl_ext' + V'_Dcl_int'
                  + V'_Set'
                  + V'CallStmt' -- must be last
@@ -98,31 +116,37 @@ _GG = { [1] = K'' *S* V'_Stmts' *S* -1
                     V'EXT' * (S*K','*S*V'EXT')^0
     , _Dcl_int  = TYPE *S* ('['*S*NUM*S*']' + Cc(false)) *S*
                     V'__Dcl_int' * (S*K','*S*V'__Dcl_int')^0
-    , __Dcl_int = V'INT' * (S* '=' *S* (
-                                Cc'SetExp'   * V'_Exp' +
-                                Cc'SetStmt'  * (V'EmitE'+V'AwaitE'+V'AwaitT') +
-                                Cc'SetBlock' * V'_SetBlock'
-                            ) + Cc(false)*Cc(false))
+    , __Dcl_int = V'INT' *S* (V'_Sets' + Cc(false)*Cc(false))
+
+    , _Set  = V'_Exp' *S* V'_Sets'
+    , _Sets = K'=' *S* (
+                Cc'SetStmt'  * (V'EmitE'+V'AwaitT'+V'AwaitE') +
+                Cc'SetBlock' * V'_SetBlock' +
+                Cc'SetExp'   * V'_Exp' +
+                EE'expression'
+              )
+
+    , CallStmt = (#V'Cid' + K'call'*S) * V'_Exp'
 
     , Nothing = K'nothing'
     , _DoBlock= K'do' *S* V'Block' *S* EK'end'
     , Async   = K'async' *S* EK'do' *S* V'Block' *S* EK'end'
-    , Host    = P'C' *S* K'do' * C((P(1)-'end')^0) *S* K'end'
-    , Return  = K'return' *S* V'_Exp'
+    , Host    = P'C' *S* EK'do' * C((P(1)-'end')^0) *S* EK'end'
+    , Return  = K'return' *S* EV'_Exp'
 
     , ParOr   = K'par/or' *S* EK'do' *S*
-                    V'Block' * (S* K'with' *S* V'Block')^1 *S*
+                    V'Block' * (S* EK'with' *S* V'Block')^1 *S*
                 EK'end'
     , ParAnd  = K'par/and' *S* EK'do' *S*
-                    V'Block' * (S* K'with' *S* V'Block')^1 *S*
+                    V'Block' * (S* EK'with' *S* V'Block')^1 *S*
                 EK'end'
     , ParEver = K'par' *S* EK'do' *S*
-                    V'Block' * (S* K'with' *S* V'Block')^1 *S*
+                    V'Block' * (S* EK'with' *S* V'Block')^1 *S*
                 EK'end'
 
-    , If      = K'if' *S* V'_Exp' *S* EK'then' *S*
+    , If      = K'if' *S* EV'_Exp' *S* EK'then' *S*
                     V'Block' *S*
-                (K'else' *S*
+                (EK'else' *S*
                     V'Block')^-1 *S*
                 EK'end'
     , Loop    = K'loop' *S* EK'do' *S*
@@ -132,21 +156,13 @@ _GG = { [1] = K'' *S* V'_Stmts' *S* -1
 
     , _Emit   = V'EmitT' + V'EmitE'
     , EmitT   = K'emit' *S* (V'TIME')
-    , EmitE   = K'emit' *S* (V'Int'+V'Ext') *S* '(' *S* V'ExpList' *S* ')' -- TODO: so acc?
 
-    , AwaitN  = K'await' *S* 'forever'
-    , AwaitE  = K'await' *S* (V'Int'+V'Ext')                   -- TODO: so acc?
+    , EmitE   = K'emit' *S* (V'Int'+V'Ext'+EE'identifier')
+                        *S* EK'(' *S* V'ExpList' *S* EK')'
+
+    , AwaitN  = K'await' *S* K'forever'             -- last stmt
     , AwaitT  = K'await' *S* (V'_Parens'+V'TIME')
-
-    , _Set     = V'SetExp' + V'SetStmt' + V'SetBlock'
-    , __Set    = V'_Exp' *S* K'='
-    , SetExp   = V'__Set' *S* V'_Exp'
-    , SetStmt  = V'__Set' *S* (V'EmitE'+V'AwaitE'+V'AwaitT')
-    , SetBlock = V'__Set' *S* V'_SetBlock'
-
- --(V'Async' + V'_Await') -- TODO: so acc?
-
-    , CallStmt = V'_Exp'
+    , AwaitE  = K'await' *S* (V'Int'+V'Ext'+EE'identifier')
 
     , _Exp    = V'_1'
     , _1      = V'_2'  * (S* CK'||' *S* V'_2')^0
@@ -164,8 +180,8 @@ _GG = { [1] = K'' *S* V'_Stmts' *S* -1
                  + (K'<'*CK(TYPE)*Cc'cast'*K'>')
                  )*S)^0 * V'_12'
     , _12     = V'_13' *S* (
-                    K'(' *S* Cc'call' *S* V'ExpList' *S* ')' +
-                    K'[' *S* Cc'idx'  *S* V'_Exp'    *S* ']' +
+                    K'(' *S* Cc'call' *S* V'ExpList' *S* EK')' +
+                    K'[' *S* Cc'idx'  *S* V'_Exp'    *S* EK']' +
                     CK(K'->' + '.')   *S* CK(ID)
                 )^0
     , _13     = V'_Prim'
@@ -173,21 +189,22 @@ _GG = { [1] = K'' *S* V'_Stmts' *S* -1
     , _Prim   = V'_Parens' + V'Int'   + V'Cid' + V'SIZEOF'
               + V'NULL'    + V'CONST' + V'STRING'
 
-    , ExpList = ( V'_Exp'*(S*','*S*V'_Exp')^0 )^-1
+    , ExpList = ( V'_Exp'*(S*','*S*EV'_Exp')^0 )^-1
 
-    , _Parens  = K'(' *S* V'_Exp' *S* K')'
+    , _Parens  = K'(' *S* EV'_Exp' *S* EK')'
 
-    , SIZEOF = C( K'sizeof' *S* '(' *S* (P(1)-')')^1 *S* ')' )
+    , SIZEOF = C( K'sizeof' *S* EK'(' *S* (P(1)-')')^1 *S* EK')' )
     , CONST = CK( (P'0b'+'0B'+'0x'+'0X') * ALPHANUM^1 )
             + CK( "'" * (P(1)-"'")^0 * "'" )
             + NUM
 
     , NULL = CK'null'
     , TIME = #NUM *
-                (NUM * 'h'   + Cc(0)) *
-                (NUM * 'min' + Cc(0)) *
-                (NUM * 's'   + Cc(0)) *
-                (NUM * 'ms'  + Cc(0))
+                (NUM * K'h'   + Cc(0)) *
+                (NUM * K'min' + Cc(0)) *
+                (NUM * K's'   + Cc(0)) *
+                (NUM * K'ms'  + Cc(0)) *
+                (NUM * EE'<h,min,s,ms>')^-1
 
     , Int  = V'INT'
     , Ext  = V'EXT'
@@ -195,7 +212,7 @@ _GG = { [1] = K'' *S* V'_Stmts' *S* -1
     , EXT  = #m.R'AZ' * CK(ID) -- ext names start with upper
     , Cid  = CK(P'_' * ID)
 
-    , STRING = CK( '"' * (P(1)-'"')^0 * '"' )
+    , STRING = CK( '"' * (P(1)-'"'-'\n')^0 * EK'"' )
 
     , _SPACES = (  m.S'\t\n\r '
                 + ('//' * (P(1)-'\n')^0 * P'\n'^-1)
@@ -209,4 +226,18 @@ _GG = { [1] = K'' *S* V'_Stmts' *S* -1
                     function (s,i,a,b) return a == b end)
 }
 
-assert( m.P(_GG):match(_STR), err() )
+function err ()
+    local x = (ERR_i<LST_tki) and 'before' or 'after'
+    return 'ERR : line '.._I2L[LST_tki]..
+              ' : '..x..' `'..LST_tk.."'"..
+              ' : '..ERR_msg
+end
+
+if _CEU then
+    if not m.P(_GG):match(_STR) then
+        DBG(err())
+        os.exit(1)
+    end
+else
+    assert(m.P(_GG):match(_STR), err())
+end

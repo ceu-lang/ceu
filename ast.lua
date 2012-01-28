@@ -1,17 +1,13 @@
 _AST = nil
 
-function err (me, msg)
-    return 'ERR : ast : line '..me.ln..' : '..me.id..' : '..msg
-end
-
 function node (id, min)
     min = min or 0
-    return function (ln, str, ...)
+    return function (ln1,ln2, str, ...)
         local node = { ... }
         if #node < min then
             return ...
         else
-            node.ln  = ln
+            node.ln  = {ln1, ln2}
             node.str = str
             node.id  = id
             return node
@@ -60,18 +56,18 @@ function _ISNODE (node)
     return type(node)=='table' and node.id
 end
 
-function dump (me, spc)
+function _DUMP (me, spc)
     spc = spc or 0
     local ks = ''
     for k, v in pairs(me) do
         if type(k)~='number' then
-            ks = ks.. k..'='..string.sub(tostring(v),1,5)..','
+            ks = ks.. k..'='..string.sub(tostring(v),1,8)..','
         end
     end
     DBG(string.rep(' ',spc) .. me.id .. ' ('..ks..')')
     for i, sub in ipairs(me) do
         if _ISNODE(sub) then
-            dump(sub, spc+2)
+            _DUMP(sub, spc+2)
         else
             DBG(string.rep(' ',spc+2) .. tostring(sub))
         end
@@ -122,13 +118,13 @@ function visit_aux (me, F)
 end
 
 local C; C = {
-    [1] = function (ln, str, ...)
-        _AST = node('Root')(ln, str,
-                node('Block')(ln, str,
-                    node('Dcl_int')(ln, str, 'int', false, '$ret'),
-                    node('SetBlock')(ln, str,
-                        node('Int')(ln, str, '$ret'),
-                        node('Block')(ln, str, ...))))
+    [1] = function (ln1,ln2, str, ...)
+        _AST = node('Root')(ln1,ln2, str,
+                node('Block')(ln1,ln2, str,
+                    node('Dcl_int')(ln1,ln2, str, 'int', false, '$ret'),
+                    node('SetBlock')(ln1,ln2, str,
+                        node('Int')(ln1,ln2, str, '$ret'),
+                        node('Block')(ln1,ln2, str, ...))))
         return _AST
     end,
 
@@ -152,53 +148,55 @@ local C; C = {
     EmitE   = node('EmitE'),
     EmitT   = node('EmitT'),
 
-    _Dcl_int = function (ln, str, tp, dim, ...)
+    _Dcl_int = function (ln1,ln2, str, tp, dim, ...)
         local ret = {}
         local t = { ... }
         for i=1, #t, 3 do
-            ret[#ret+1] = node('Dcl_int')(ln, str, tp, dim, t[i])
+            ret[#ret+1] = node('Dcl_int')(ln1,ln2, str, tp, dim, t[i])
             if t[i+1] then
-                ret[#ret+1] = node(t[i+1])(ln, str,
-                                            node('Int')(ln,str,t[i]),
-                                            t[i+2])
+                ret[#ret+1] = C._Set(ln1,ln2, str,
+                                node('Int')(ln1,ln2,str,t[i]),
+                                t[i+1],
+                                t[i+2])
             end
         end
         return unpack(ret)
     end,
 
-    _Dcl_ext = function (ln, str, mode, tp, ...)
+    _Set = function (ln1,ln2, str, e1, id, e2)
+        return node(id)(ln1,ln2, str, e1, e2)
+    end,
+
+    _Dcl_ext = function (ln1,ln2, str, mode, tp, ...)
         local ret = {}
         local t = { ... }
         for i=1, #t do
-            ret[#ret+1] = node('Dcl_ext')(ln, str, mode, tp, t[i])
+            ret[#ret+1] = node('Dcl_ext')(ln1,ln2, str, mode, tp, t[i])
         end
         return unpack(ret)
     end,
 
     CallStmt = node('CallStmt'),
-    SetExp   = node('SetExp'),
-    SetStmt  = node('SetStmt'),
-    SetBlock = node('SetBlock'),
 
-    _Exp = function (ln, str, ...)
+    _Exp = function (ln1,ln2, str, ...)
         local v1, v2, v3, v4 = ...
         if not v2 then          -- single value
             return v1
         elseif v1==true then    -- unary expression
             -- v1=true, v2=op, v3=exp
-            return node('Op1_'..v2)(ln, str, v2,
-                                    C._Exp(ln, str, select(3,...)))
+            return node('Op1_'..v2)(ln1,ln2, str, v2,
+                                    C._Exp(ln1,ln2, str, select(3,...)))
         else                    -- binary expression
             -- v1=e1, v2=op, v3=e2, v4=?
             if v2 == '->' then
-                return C._Exp(ln, str,
-                    node('Op2_.')(ln, str,'.',
-                                    node('Op1_*')(ln,str,'*',v1), v3),
+                return C._Exp(ln1,ln2, str,
+                    node('Op2_.')(ln1,ln2, str,'.',
+                                    node('Op1_*')(ln1,ln2,str,'*',v1), v3),
                     select(4,...)
                 )
             else
-                return C._Exp(ln, str,
-                    node('Op2_'..v2)(ln, str, v2, v1, v3),
+                return C._Exp(ln1,ln2, str,
+                    node('Op2_'..v2)(ln1,ln2, str, v2, v1, v3),
                     select(4,...)
                 )
             end
@@ -220,13 +218,18 @@ local function i2l (v)
     return _I2L[v]
 end
 
+local lines = function (...)
+    local t = { ... }   -- TODO: ineficiente
+    return t[1], t[#t], unpack(t, 2, #t-1)
+end
+
 for rule, f in pairs(C) do
-    _GG[rule] = (m.Cp()/i2l) * m.C(_GG[rule]) / f
+    _GG[rule] = (m.Cp()/i2l) * m.C(_GG[rule]) * (m.Cp()/i2l) / lines / f
 end
 
 for i=1, 12 do
     local id = '_'..i
-    _GG[id] = (m.Cp()/i2l) * m.C(_GG[id]) / C._Exp
+    _GG[id] = (m.Cp()/i2l) * m.C(_GG[id]) * (m.Cp()/i2l) / lines / C._Exp
 end
 
 _GG = m.P(_GG):match(_STR)

@@ -322,10 +322,7 @@ if (ceu_out_pending()) {
 
         -- attribution
         if var.int then
-            assert(#exps <= 1, 'apagar essa linha e a de baixo!')    -- TODO
-            ASR(#exps <= 1, me, 'invalid emit')
             if #exps == 1 then
-                ASR(C.contains(var.tp,exps[1].tp), me, 'invalid emit')
                 LINE(me, var.val..' = '..exps[1].val..';')
             end
         end

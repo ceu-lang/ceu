@@ -1,4 +1,4 @@
-#!/usr/bin/env lua
+_CEU = true
 
 _OPTS = {
     input       = nil,
@@ -51,10 +51,10 @@ do
         _OPTS.input = p
     end
 end
-assert(_OPTS.input, [[
+if not _OPTS.input then
+    io.stderr:write([[
 
-
-    ./ceu.lua <filename>         # CEU input file (or `-' for stdin)
+    ./ceu <filename>             # CEU input file (or `-' for stdin)
 
         # optional parameters (default value in parenthesis)
 
@@ -68,7 +68,10 @@ assert(_OPTS.input, [[
 
         --dfa                    # performs DFA analysis (false)
         --dfa-viz                # generates DFA graph (false)
+
 ]])
+    os.exit(1)
+end
 
 -- INPUT
 local inp

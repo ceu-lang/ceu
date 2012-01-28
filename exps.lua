@@ -1,10 +1,53 @@
-local C = require 'C'
+local types = {
+    void=true,
+    int=true,
+    u32=true, s32=true,
+    u16=true, s16=true,
+    u8=true,  s8=true,
+}
+
+function isNumeric (tp)
+    return types[tp] and tp~='void'
+end
+
+function deref (tp)
+    return string.match(tp, '(.-)%*$')
+end
+
+function ext (tp)
+    return (not deref(tp)) and (not types[tp])
+end
+
+function contains (tp1, tp2)
+    local _tp1, _tp2 = deref(tp1), deref(tp2)
+    if tp1 == tp2 then
+        return true
+    elseif isNumeric(tp1) and isNumeric(tp2) then
+        return true
+    elseif ext(tp1) or ext(tp2) then
+        return true
+    elseif _tp1 and _tp2 then
+        return tp1=='void*' or tp2=='void*'
+    end
+    return false
+end
+
+function max (tp1, tp2)
+    if contains(tp1, tp2) then
+        return tp1
+    elseif contains(tp2, tp1) then
+        return tp2
+    else
+        return nil
+    end
+end
+
 
 function check_lval (e1)
     return e1.lval and e1.fst
 end
 function check_depth (e1, e2)
-    local ptr = C.deref(e2.tp)
+    local ptr = deref(e2.tp)
     return (not ptr) or (not e2.fst) or
             e1.fst.var.blk.depth >= e2.fst.var.blk.depth
 end
@@ -13,7 +56,7 @@ F = {
     SetExp = function (me)
         local e1, e2 = unpack(me)
         ASR( check_lval(e1) and
-             C.contains(e1.tp,e2.tp) and
+             contains(e1.tp,e2.tp) and
              check_depth(e1, e2),
                 me, 'invalid attribution')
         e1.fst.mode = 'wr'
@@ -25,11 +68,11 @@ F = {
         e1.fst.mode = 'wr'
         stmt.toset = e1
         if stmt.id=='AwaitT' then
-            ASR(C.contains(e1.tp,'int'), me, 'invalid attribution')
+            ASR(contains(e1.tp,'int'), me, 'invalid attribution')
         else -- EmitE/AwaitE
             local e2 = unpack(stmt)
-            local ptr = C.deref(e2.tp)
-            ASR( C.contains(e1.tp,e2.tp) and
+            local ptr = deref(e2.tp)
+            ASR( contains(e1.tp,e2.tp) and
                  check_depth(e1,e2),
                     me, 'invalid attribution')
         end
@@ -43,8 +86,8 @@ F = {
     Return = function (me)
         local e1 = _ITER'SetBlock'()[1]
         local e2 = unpack(me)
-        local ptr = C.deref(e2.tp)
-        ASR( C.contains(e1.tp,e2.tp) and
+        local ptr = deref(e2.tp)
+        ASR( contains(e1.tp,e2.tp) and
              check_depth(e1, e2),
                 me, 'invalid return value')
     end,
@@ -57,10 +100,13 @@ F = {
 
     EmitE = function (me)
         local acc, exps = unpack(me)
+        local var = acc.var
         ASR(acc.lval and acc.fst, me, 'invalid event')
         acc.fst.mode = 'tr'
-        if acc.var.output then
-            me.call = { 'call', {val=acc.var.id}, select(2,unpack(me)) }
+        if var.int then
+            ASR(#exps==0 or contains(var.tp,exps[1].tp), me, 'invalid emit')
+        elseif var.output then
+            me.call = { 'call', {val=var.id}, select(2,unpack(me)) }
             F.Op2_call(me.call)
         end
     end,
@@ -85,8 +131,8 @@ F = {
 
     Op2_idx = function (me)
         local _, arr, idx = unpack(me)
-        local _arr = ASR(C.deref(arr.tp), me, 'cannot index a non array')
-        ASR(_arr and C.contains(idx.tp,'int'), me, 'invalid array index')
+        local _arr = ASR(deref(arr.tp), me, 'cannot index a non array')
+        ASR(_arr and contains(idx.tp,'int'), me, 'invalid array index')
         me.fst  = arr.fst
         me.tp   = _arr
         me.val  = '('..arr.val..'['..idx.val..'])'
@@ -98,7 +144,7 @@ F = {
         me.fst = nil
         me.tp  = 'int'
         me.val = '('..e1.val..op..e2.val..')'
-        ASR(C.contains(e1.tp,'int') and C.contains(e2.tp,'int'),
+        ASR(contains(e1.tp,'int') and contains(e2.tp,'int'),
             me, 'invalid operands to binary "'..op..'"')
     end,
     ['Op2_-']  = 'Op2_int_int',
@@ -117,7 +163,7 @@ F = {
         me.fst = nil
         me.tp  = 'int'
         me.val = '('..op..e1.val..')'
-        ASR(C.contains(e1.tp,'int'), me, 'invalid operand to unary "'..op..'"')
+        ASR(contains(e1.tp,'int'), me, 'invalid operand to unary "'..op..'"')
     end,
     ['Op1_~']  = 'Op1_int',
     ['Op1_-']  = 'Op1_int',
@@ -128,7 +174,7 @@ F = {
         me.fst = nil
         me.tp  = 'int'
         me.val = '('..e1.val..op..e2.val..')'
-        ASR(C.max(e1.tp,e2.tp), me, 'invalid operands to binary "'..op..'"')
+        ASR(max(e1.tp,e2.tp), me, 'invalid operands to binary "'..op..'"')
     end,
     ['Op2_=='] = 'Op2_same',
     ['Op2_!='] = 'Op2_same',
@@ -159,7 +205,7 @@ F = {
     ['Op1_*'] = function (me)
         local op, e1 = unpack(me)
         me.fst  = e1.fst
-        me.tp   = C.deref(e1.tp)
+        me.tp   = deref(e1.tp)
         me.val  = '('..op..e1.val..')'
         me.lval = true
         ASR(me.tp, me, 'invalid operand to unary "*"')
@@ -198,7 +244,7 @@ F = {
     end,
     Int = function (me)
         F.Ext(me)
-        me.val  = _ENV.reg(me.var)
+        me.val = _ENV.reg(me.var)
     end,
 
     TIME = function (me)
@@ -242,7 +288,7 @@ F = {
     -- TODO: (remove) no more pointer arith
     Op2_arith = function (me)
         local op, e1, e2 = unpack(me)
-        local ptr_e1, ptr_e2 = C.deref(e1.tp), C.deref(e2.tp)
+        local ptr_e1, ptr_e2 = deref(e1.tp), deref(e2.tp)
         me.val = '('..e1.val..op..e2.val..')'
         if ptr_e1 then
             me.tp = e1.tp

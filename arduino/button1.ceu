@@ -4,8 +4,8 @@ output void PIN13;
 par/or do
 
     loop do
-        await PIN2;
-        emit PIN13(PIN2);
+        int v = await PIN2;
+        emit PIN13(v);
     end
 
 with

@@ -24,7 +24,7 @@ void DBG (char *fmt, ... )
     Serial.print(tmp);
 }
 
-#include "_ceu_code.c"
+#include "_ceu_code.tmp"
 
 void setup ()
 {

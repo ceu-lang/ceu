@@ -418,13 +418,13 @@ end
 
 for q in pairs(_NFA.nodes) do
     if all[q] then
-        ASR(not q.must_not_reach, q.stmt, 'missing return statement')
+        ASR(not q.must_not_reach, q.stmt.ln[2], 'missing return statement')
     else
-        ASR(not q.must_reach, q.stmt, 'unreachable statement')
+        ASR(not q.must_reach, q.stmt.ln[2], 'unreachable statement')
         if q.should_reach then
             q.stmt.unreachable = true
             _DFA.n_unreach = _DFA.n_unreach + 1
-            WRN(false, q.stmt, 'unreachable statement')
+            WRN(false, q.stmt.ln[2], 'unreachable statement')
         end
     end
 end

@@ -45,15 +45,15 @@ function qVSq (q1, q2)
         if q1.ptr then
             if q2.ptr then
                 -- q1.ptr vs q2.ptr
-                return C.contains(q1.ptr, q2.ptr)
+                return contains(q1.ptr, q2.ptr)
             else
                 -- q1.ptr vs q2.var
-                return C.contains(q1.ptr, q2.var.tp) and q2.var.id~='$ret'
+                return contains(q1.ptr, q2.var.tp) and q2.var.id~='$ret'
             end
         else
             if q2.ptr then
                 -- q1.var vs q2.ptr
-                return C.contains(q2.ptr, q1.var.tp) and q1.var.id~='$ret'
+                return contains(q2.ptr, q1.var.tp) and q1.var.id~='$ret'
             else -- (trg input on asyncs is ok!)
                 -- q1.var vs q2.var
                 return q1.var==q2.var and (not q1.var.input)
@@ -409,7 +409,7 @@ F = {
                 id   = '-ret',
                 prio = me.prio,
                 rem  = stmt.nfa.qs,
-                should_reach   = e1.var and e1.var.id~='$ret',
+                --should_reach   = e1.var and e1.var.id~='$ret',
                 should_reach = not (e1.var and e1.var.id~='$ret'),
             })
         for ret in pairs(me.rets) do
@@ -504,7 +504,7 @@ F = {
             if exp.fst then
                 -- $f(pa) --> pa.mode='wr'
                 local var = exp.fst.var
-                local ptr = C.deref(var.tp)
+                local ptr = deref(var.tp)
                 if ptr then
                     INS(me, '', ACC(var,'wr',ptr))
 
@@ -520,7 +520,7 @@ F = {
         local _, e1 = unpack(me)
         CONCAT(me, e1)
         local var = e1.fst.var
-        INS(me, '', ACC(var,e1.fst.mode,assert(C.deref(var.tp))))
+        INS(me, '', ACC(var,e1.fst.mode,assert(deref(var.tp))))
         e1.fst.nfa.f.mode = 'rd'
     end,
 }

@@ -4,7 +4,6 @@ PRE = ''
 --do return end
 --]===]
 
-
 Test { [[return(1);]], run=1 }
 Test { [[return (1);]], run=1 }
 Test { [[return 1;]], run=1 }
@@ -42,7 +41,7 @@ Test { [[int a;]],
 Test { [[a = 1; return a;]],
     env = 'variable "a" is not declared',
 }
-Test { [[int a; a; return a;]],
+Test { [[int a; call a; return a;]],
     exps = 'invalid statement',
 }
 Test { [[int a; a = 1; return a;]],
@@ -58,10 +57,10 @@ Test { [[int a = 1;]],
     dfa = 'missing return statement',
 }
 Test { [[int a=1;int a; return a;]],
-    env = 'a : variable "a" already declared',
+    env = 'variable "a" already declared',
 }
 Test { [[int a = 1,a; return a;]],
-    env = 'a : variable "a" already declared',
+    env = 'variable "a" already declared',
 }
 Test { [[int a; a = a = 1]],
     parser = false,
@@ -72,7 +71,7 @@ Test { [[int a = b; return 0;]],
 Test { [[return 1;2;]],
     parser = false,
 }
-Test { [[1;return 2;]],
+Test { [[call 1;return 2;]],
     exps = 'invalid statement',
 }
 Test { [[int a; a=1; return a;]],
@@ -90,7 +89,7 @@ Test { [[int a; a=1 ; a=a; return a;]],
 Test { [[int a; a=1 ; nothing; nothing;]],
     dfa = 'missing return statement',
 }
-Test { [[int a; a=1 ; a; return a;]],
+Test { [[int a; a=1 ; call a; return a;]],
     exps = 'invalid statement',
 }
 
@@ -228,10 +227,10 @@ Test { [[input  int A;]],
     dfa = 'missing return statement',
 }
 Test { [[input int A; output int A; return 0;]],
-    env = 'A : variable "A" already declared',
+    env = 'variable "A" already declared',
 }
 Test { [[input  int A,A; return 0;]],
-    env = 'A : variable "A" already declared',
+    env = 'variable "A" already declared',
 }
 Test { [[
 input int A,B,C;

@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include "binheap.h"
+//#include "binheap.h"
 
 #define BUF(i) (Q->buf + (i)*Q->unit)
 #define CMP(v1,v2) (Q->cmp(v1,v2))
