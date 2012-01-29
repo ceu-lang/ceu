@@ -54,7 +54,7 @@ end
 function LABEL_gen (name, ok)
     name = name .. (ok and '' or '_'..#_CODE.labels)    -- unique name
     _CODE.labels[#_CODE.labels+1] = name
-    --assert(#_CODE.labels+1 < XXX) -- TODO
+    --assert(#_CODE.labels+1 < XXX) -- TODO: limits
     return name
 end
 
@@ -217,7 +217,7 @@ F = {
 
     If = function (me)
         local c, t, f = unpack(me)
--- TODO: assert(c==ptr or int)
+        -- TODO: If cond assert(c==ptr or int)
 
         local lb_t = t and LABEL_gen('True')
         local lb_f = f and LABEL_gen('False')
@@ -298,7 +298,6 @@ if (ceu_out_pending()) {
         end
         SWITCH(me, lb_ini)
 
-        -- TODO: igual ao ParOr
         -- AFTER code :: block inner gates
         --assert(not me.unreachable)          -- now it is always reachable
         if not me.unreachable then

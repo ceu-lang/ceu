@@ -219,7 +219,7 @@ local function i2l (v)
 end
 
 local lines = function (...)
-    local t = { ... }   -- TODO: ineficiente
+    local t = { ... }   -- TODO: inef
     return t[1], t[#t], unpack(t, 2, #t-1)
 end
 

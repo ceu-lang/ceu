@@ -239,22 +239,4 @@ F = {
     end,
 }
 
---[=[
-    -- TODO: (remove) no more pointer arith
-    Op2_arith = function (me)
-        local op, e1, e2 = unpack(me)
-        local ptr_e1, ptr_e2 = C.deref(e1.tp), C.deref(e2.tp)
-        me.val = '('..e1.val..op..e2.val..')'
-        if ptr_e1 then
-            me.tp = e1.tp
-            ASR(not ptr_e2, me, 'invalid operands to binary "'..op..'"')
-        elseif ptr_e2 then
-            me.tp = e2.tp
-            ASR(not ptr_e1, me, 'invalid operands to binary "'..op..'"')
-        else
-            me.tp = 'int'
-        end
-    end,
-]=]
-
 _VISIT(F)

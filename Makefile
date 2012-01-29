@@ -4,7 +4,7 @@ dist: clean
 	mkdir -p ../ceu_$(DATE)/ ; \
 	cp *.lua *.c *.h ../ceu_$(DATE)/ ; \
 	cd .. ; \
-	tar hcvzf ceu_`date +%F`.tgz ceu_$(DATE)/ ; \
+	tar hcvzf ceu_$(DATE).tgz ceu_$(DATE)/ ; \
 
 arduino: clean
 	lua pak.lua ; \
@@ -16,9 +16,9 @@ arduino: clean
 	mv ceu_arduino_* ../../ ;
 
 upload: dist
-	rsync -e ssh -av ../ceu_$(DATE)/ fsantanna@sinistra.dreamhost.com:ceu/
+	rsync -e ssh -av ../ceu_$(DATE)/ fsantanna@ceu-lang.org:ceu/
 
 clean:
-	rm -f *.exe _ceu_*
+	rm -f *.exe _ceu_* ceu
 
-.PHONY: clean dist
+.PHONY: clean dist arduino upload

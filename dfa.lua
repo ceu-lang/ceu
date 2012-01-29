@@ -139,7 +139,7 @@ local Q_INTRA = {
 }
 
 function q_spawn (Q, q1)
-    -- check if already spawn (TODO: ineficiente)
+    -- check if already spawn (TODO: inef)
     for _, q2 in ipairs(Q) do
         if q1 == q2 then
             return
@@ -149,7 +149,7 @@ function q_spawn (Q, q1)
 
     Q[#Q+1] = q1
 --DBG(q1.n, q1.id, q1.prio, q1._intl_)
-    table.sort(Q, Q.sort)    -- TODO: ineficiente
+    table.sort(Q, Q.sort)    -- TODO: inef
 end
 function q_next (Q)
     local q = Q[#Q]

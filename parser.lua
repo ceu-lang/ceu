@@ -111,7 +111,6 @@ _GG = { [1] = K'' *S* EV'_Stmts' *S* -1
                  + V'ParOr'   + V'ParAnd' + V'ParEver'
                  + V'If'      + V'Loop'
 
-    -- TODO: only on top-level?
     , _Dcl_ext  = (CK'input'+CK'output') *S* TYPE *S*
                     V'EXT' * (S*K','*S*V'EXT')^0
     , _Dcl_int  = TYPE *S* ('['*S*NUM*S*']' + Cc(false)) *S*

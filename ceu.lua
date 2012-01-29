@@ -69,7 +69,7 @@ if not _OPTS.input then
 ]])
     os.exit(1)
 end
-        -- TODO:
+        -- TODO: m4
         --m4                     # preprocess the input with `m4' (false)
         --m4-file <filename>     # m4 output file (`/tmp/tmp.ceu')
 
