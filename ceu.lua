@@ -108,9 +108,10 @@ do
     dofile 'gates.lua'
 
     if _OPTS.dfa then
+        DBG('WRN : the DFA algorithm is exponential, it may take a while!')
         dofile 'nfa.lua'
         dofile 'dfa.lua'
-        DBG('nfa: '.._NFA.n_nodes..'  ||  dfa: '.._DFA.n_states)
+        DBG('# States  ||  nfa: '.._NFA.n_nodes..'  ||  dfa: '.._DFA.n_states)
         if _OPTS.dfa_viz then
             dofile 'graphviz.lua'
         end

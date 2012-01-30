@@ -71,7 +71,7 @@ Test = function (t)
                 'unreach '.._DFA.n_unreach)
         end
 
-        assert(_DFA.forever == (T.forever==nil or T.forever),
+        assert(_DFA.forever==true and T.forever or T.forever==nil,
             'forever '..tostring(_DFA.forever))
     end
 

@@ -407,13 +407,13 @@ for _, t in ipairs(_DFA.nd_esc) do
 end
 
 local all = set.new()
-_DFA.forever = not all[_AST.nfa.f]
 
 for S in pairs(_DFA.states) do
     for _, qs in ipairs(S.qs_all) do
         all = U(all, qs)
     end
 end
+_DFA.forever = not all[_AST.nfa.f]
 
 for q in pairs(_NFA.nodes) do
     if all[q] then
