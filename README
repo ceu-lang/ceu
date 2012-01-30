@@ -2,3 +2,12 @@ Céu is a reactive language targeted at embedded systems, aiming to offer a
 higher-level and safer alternative to C.
 
 http://www.ceu-lang.org/
+
+This "standalone" distribution is intended to be used for the development of 
+Céu itself.
+As a kick-off, try running the following on the command line:
+
+$ ./run_tests
+
+For Céu distributions targeted at specific platforms (e.g. Arduino), consult 
+the website.
