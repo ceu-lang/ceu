@@ -1,5 +1,12 @@
-include(`leds.m4')
-include(`radio.m4')
+output error_t    Radio_start;
+input  error_t    Radio_startDone;
+output error_t    Radio_send;
+input  error_t    Radio_sendDone;
+input  message_t* Radio_receive;
+output void*      Radio_getPayload;
+
+output void       Leds_set;
+output void       Leds_led1On, Leds_led1Off;
 
 C do
 typedef nx_struct {
@@ -7,24 +14,62 @@ typedef nx_struct {
 } t ;
 end
 
-RADIO_START(1s);
+// radio start
+loop do
+    par/or do
+        await 1s;
+    with
+        int err = emit Radio_start();
+        if err==_SUCCESS then
+            err = await Radio_startDone;
+            if err == _SUCCESS then
+                break;
+            end
+        end
+        await forever;
+    end
+end
 
 par/or do
     loop do
         message_t* msg = await Radio_receive;
-        t* t_recv = emit Radio_getPayload(msg,0);
-        SHOW(t_recv->cnt, 500ms);
-    end;
+        _t* t_recv = emit Radio_getPayload(msg,0);
+
+        // shows `cnt' for 500ms
+        emit Leds_set(t_recv->cnt);
+        await 500ms;
+        emit Leds_set(0);
+    end
 
 with
     message_t msg;
-    t* t_send = emit Radio_getPayload(&msg, sizeof(t));
+    _t* t_send = emit Radio_getPayload(&msg, sizeof<_t>);
     t_send->cnt = 1;
 
     loop do
         await 2s;
-        RADIO_SEND(1s, _AM_BROADCAST_ADDR, &msg, sizeof(t));
-        BLINK(1,100ms) ;
+
+        // radio send
+        loop do
+            par/or do
+                await 1s;
+            with
+                int err = emit Radio_send(_AM_BROADCAST_ADDR,&msg,sizeof<_t>);
+                if err == _SUCCESS then
+                    err = await Radio_sendDone;
+                    if err == _SUCCESS then
+                        break;
+                    end
+                end
+            end
+            await forever;
+        end
+
+        // blinks green led for 100ms
+        emit Leds_led1On();
+        await 100ms;
+        emit Leds_led1Off();
+
         t_send->cnt = t_send->cnt + 1;
-    end;
-end;
+    end
+end

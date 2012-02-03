@@ -37,8 +37,8 @@ with
         if serialTot == 0 then
             await serialTot;
         else
-            SERIAL_SEND(1s, &serialBuf[serialOut],
-                        _Radio_payloadLength(&serialBuf[serialOut]));
+            int len = emit Radio_payloadLength(&serialBuf[serialOut]);
+            SERIAL_SEND(1s, &serialBuf[serialOut], len);
             serialOut = (serialOut+1) % SERIAL_LEN;
             serialTot = serialTot - 1;
         end;
@@ -65,8 +65,8 @@ with
         if radioTot == 0 then
             await radioTot;
         else
-            RADIO_SEND(1s, _AM_BROADCAST_ADDR, &radioBuf[radioOut],
-                    _Serial_payloadLength(&radioBuf[radioOut]));
+            int len = emit Serial_payloadLength(&radioBuf[radioOut]);
+            RADIO_SEND(1s, _AM_BROADCAST_ADDR, &radioBuf[radioOut], len);
             radioOut = (radioOut+1) % RADIO_LEN;
             radioTot = radioTot - 1;
         end;

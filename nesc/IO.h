@@ -17,11 +17,6 @@
     #define IO_RADIO 1
 #endif
 
-#if defined(IO_Radio1_send)    || defined(IO_Radio1_sendDone) || \
-    defined(IO_Radio1_receive)
-    #define IO_RADIO1 1
-#endif
-
 #if defined(IO_Serial_startDone) || defined(IO_Serial_stopDone) || \
     defined(IO_Serial_sendDone)  || defined(IO_Serial_receive)  || \
     defined(IO_Serial_send)
@@ -34,17 +29,6 @@
 
 #if defined(IO_Sounder_beep)
     #define IO_SOUNDER 1
-#endif
-
-#if defined (IO_Dissemination_start) || defined(IO_Dissemination_change) || \
-    defined(IO_Dissemination_changed) || defined(IO_Dissemination_get)    
-    #define IO_DISSEMINATION 1
-#endif
-
-#if defined(IO_Collection_start)   || defined(IO_Collection_setRoot)  || \
-    defined(IO_Collection_send)    || defined(IO_Collection_sendDone) || \
-    defined(IO_Collection_receive)   
-    #define IO_COLLECTION 1
 #endif
 
 #endif

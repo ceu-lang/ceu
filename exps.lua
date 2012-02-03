@@ -218,7 +218,7 @@ F = {
 
     SIZEOF = function (me)
         me.tp   = 'int'
-        me.val  = me[1]
+        me.val  = 'sizeof('..me[1]..')'
         me.lval = false
     end,
 

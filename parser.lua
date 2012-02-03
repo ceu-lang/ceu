@@ -192,7 +192,7 @@ _GG = { [1] = K'' *S* EV'_Stmts' *S* -1
 
     , _Parens  = K'(' *S* EV'_Exp' *S* EK')'
 
-    , SIZEOF = C( K'sizeof' *S* EK'(' *S* (P(1)-')')^1 *S* EK')' )
+    , SIZEOF = K'sizeof' *S* EK'<' *S* TYPE *S* EK'>'
     , CONST = CK( (P'0b'+'0B'+'0x'+'0X') * ALPHANUM^1 )
             + CK( "'" * (P(1)-"'")^0 * "'" )
             + NUM

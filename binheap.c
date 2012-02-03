@@ -1,9 +1,8 @@
 #include <stdlib.h>
 //#include "binheap.h"
 
-// TODO: arduino warns about pointer arith
-//#define BUF(i) (Q->buf + (i)*Q->unit)
-#define BUF(i) ((void*)((u32)Q->buf + (i)*Q->unit))
+// TODO: arduino requires `-Wno-pointer-arith')
+#define BUF(i) (Q->buf + (i)*Q->unit)
 
 #define CMP(v1,v2) (Q->cmp(v1,v2))
 

@@ -29,14 +29,6 @@ implementation
 #ifdef IO_SERIAL
     components SerialActiveMessageC as Serial;
 #endif
-#ifdef IO_DISSEMINATION
-    components DisseminationC;
-    components new DisseminatorC(settings_t, DIS_SETTINGS);
-#endif
-#ifdef IO_COLLECTION
-    components CollectionC;
-    components new CollectionSenderC(11) as CollectionSender;
-#endif
 
     AppC.Scheduler -> SchedulerBasicP;
     AppC.Boot  -> MainC;
@@ -61,10 +53,6 @@ implementation
     AppC.RadioControl  -> Radio.SplitControl;
 #endif
     
-#ifdef IO_RADIO1
-    AppC.Radio1Send      -> SendRadio1;
-    AppC.Radio1Receive   -> ReceiveRadio1;
-#endif
  #ifdef IO_SERIAL
     AppC.SerialSend     -> Serial.AMSend;
     AppC.SerialReceive  -> Serial.Receive;
@@ -73,16 +61,4 @@ implementation
     AppC.SerialControl  -> Serial.SplitControl;
 #endif
 
-#ifdef IO_DISSEMINATION
-    AppC.DisseminationControl -> DisseminationC;
-    AppC.DisseminationValue   -> DisseminatorC;
-    AppC.DisseminationUpdate  -> DisseminatorC;
-#endif
-
-#ifdef IO_COLLECTION
-    AppC.CollectionControl -> CollectionC;
-    AppC.CollectionRoot    -> CollectionC;
-    AppC.CollectionSend    -> CollectionSender;
-    AppC.CollectionReceive -> CollectionC.Receive[11];
-#endif
 }

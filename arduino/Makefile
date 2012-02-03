@@ -4,17 +4,21 @@ CEUFILE ?= samples/blink1.ceu
 ARDUINODIR = /opt/arduino-1.0
 BOARD = uno
 
-CEUTMPFILE = _ceu_$(notdir $(CEUFILE)).tmp
+CEUCFILE = _ceu_$(notdir $(CEUFILE)).tmp
 
-.PHONY: all
+.PHONY: all ceu
 
-all: $(CEUTMPFILE) _all
+all: ceu _all
 
-$(CEUTMPFILE): $(CEUFILE)
-	./ceu $(CEUFILE) --output $(CEUTMPFILE)
-	cp $(CEUTMPFILE) _ceu_code.tmp
+ceu: $(CEUCFILE)
+	cp $(CEUCFILE) _ceu_code.tmp
+
+$(CEUCFILE): $(CEUFILE)
+	./ceu $(CEUFILE) --output $(CEUCFILE)
 
 clean: _clean
 	rm -f _ceu_*.tmp
 
 include arduino.mk
+
+CPPFLAGS += -Wno-pointer-arith

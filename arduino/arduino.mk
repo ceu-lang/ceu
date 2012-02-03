@@ -258,10 +258,10 @@ $(TARGET).hex: $(TARGET).elf
 $(TARGET).elf: $(ARDUINOLIB) $(OBJECTS)
 	$(CC) $(LINKFLAGS) $(OBJECTS) $(ARDUINOLIB) -o $@
 
-%.o: %.ino $(CEUTMPFILE)
+%.o: %.ino _ceu_code.tmp
 	$(COMPILE.cpp) -o $@ -x c++ -include $(ARDUINOSRCDIR)/Arduino.h $<
 
-%.o: %.pde $(CEUTMPFILE)
+%.o: %.pde _ceu_code.tmp
 	$(COMPILE.cpp) -o $@ -x c++ -include $(ARDUINOSRCDIR)/Arduino.h $<
 
 # building the arduino library

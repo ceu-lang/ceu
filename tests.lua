@@ -32,7 +32,7 @@ Test { [[return 2>1 && 10!=0;]], run=1 }
 Test { [[return (1<=2) + (1<2) + 2/1 - 2%3;]], run=2 }
 Test { [[return (~(~0b1010 & 0XF) | 0b0011 ^ 0B0010) & 0xF;]], run=11 }
 Test { [[int sizeof;]], parser=false }
-Test { [[return sizeof(int);]], run=4 }
+Test { [[return sizeof<int>;]], run=4 }
 Test { [[return 1<2>3;]], run=0 }
 
 Test { [[int a;]],
@@ -8688,6 +8688,17 @@ return a;
 }
 
 Test { [[
+input void A;
+int a;
+async do
+    a = emit A();
+end;
+return a;
+]],
+    exps = 'invalid attribution',
+}
+
+Test { [[
 int a;
 async do
     emit a(1);
@@ -9681,16 +9692,17 @@ return 0;
 Test { [[
 C do
 typedef struct {
-    int a;
-    char b;
+    u16 a;
+    u8 b;
+    u8 c;
 } s;
 end
 _s vs;
 vs.a = 10;
 vs.b = 1;
-return vs.a + vs.b;
+return vs.a + vs.b + sizeof<_s>;
 ]],
-    run = 11,
+    run = 15,
 }
 
 Test { [[

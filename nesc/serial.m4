@@ -5,6 +5,7 @@ output error_t    Serial_send;
 input  error_t    Serial_sendDone;
 input  message_t* Serial_receive;
 
+output uint8_t    Serial_payloadLength;
 output void*      Serial_getPayload;
 
 error_t serial_err;
@@ -50,31 +51,3 @@ loop do
     await forever;
 end
 ')
-
-C do
-
-error_t Serial_start () {
-    return call SerialControl.start();
-}
-error_t Serial_stop () {
-    return call SerialControl.stop();
-}
-
-void* Serial_getPayload (message_t* msg, uint8_t len) {
-    return call SerialPacket.getPayload(msg, len);
-}
-
-uint8_t Serial_payloadLength (message_t *msg) {
-    return call SerialPacket.payloadLength(msg);
-}
-
-void Serial_setPayloadLength (message_t* msg, uint8_t len) {
-    return call SerialPacket.setPayloadLength(msg, len);
-}
-
-error_t Serial_send (message_t *msg, uint8_t len)  {
-    am_id_t id = call SerialAMPacket.type(msg);
-    return call SerialSend.send[id](0, msg, len);
-}
-
-end

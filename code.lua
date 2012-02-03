@@ -269,7 +269,6 @@ F = {
 
     Loop_pre = function (me)
         if not me.unreachable then
-            me.lb_out_goto = LABEL_gen('Loop_out_goto')
             me.lb_out  = LABEL_gen('Loop_out')
         end
     end,
@@ -356,13 +355,16 @@ break;
                 local lb_cnt = LABEL_gen('Async_cont')
                 LINE(me, 'GTES['..async.gte..'] = '..lb_cnt..';')
                 LINE(me, 'qins_async('..async.gte..');')
-                LINE(me, 'return ceu_go_event(ret, IO_'..var.id ..', (void*)'..
-                            (exps[1] and exps[1].val or 'NULL')..');')
-                LABEL_out(me, lb_cnt)
-                if me.toset then
-                    LINE(me, me.toset.val..' = '..
-                            (exps[1] and exps[1].val or 'NULL')..';')
+                if exps[1] then
+                    LINE(me, '{ '..exps[1].tp..' data = '..exps[1].val..';')
+                    if me.toset then
+                        LINE(me, me.toset.val..' = data;')
+                    end
+                    LINE(me, 'return ceu_go_event(ret, IO_'..var.id ..', &data); }')
+                else
+                    LINE(me, 'return ceu_go_event(ret, IO_'..var.id ..', NULL);')
                 end
+                LABEL_out(me, lb_cnt)
             else -- output
                 if me.toset then
                     LINE(me, me.toset.val..' = '..me.call.val..';')
@@ -421,7 +423,8 @@ break;
             if acc.var.int then
                 LINE(me, me.toset.val..' = '..acc.var.val..';')
             else
-                LINE(me, me.toset.val..' = ('..me.toset.tp..')DATA;')
+                LINE(me, 'if (DATA)')
+                LINE(me, '\t'..me.toset.val..' = *('..me.toset.tp..'*)DATA;')
             end
         end
     end,

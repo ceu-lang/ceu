@@ -66,7 +66,7 @@ void loop()
 #endif
         }
 #ifdef IO_PIN2
-        ceu_go_event(&ret, IO_PIN2, (void*)p2);
+        ceu_go_event(&ret, IO_PIN2, &p2);
 #endif
     }
 #endif

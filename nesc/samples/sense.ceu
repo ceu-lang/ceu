@@ -1,12 +1,14 @@
-include(`leds.m4')
-include(`photo.m4')
+output void Leds_led0On, Leds_led0Off;
+output void Leds_led1On, Leds_led1Off;
+output void Leds_led2On, Leds_led2Off;
 
-define(`SAMPLING_FREQUENCY', `100ms')
+output int Photo_read;
+input  int Photo_readDone;
 
 int data;
 
 loop do
-    await SAMPLING_FREQUENCY;
+    await 100ms;
     emit Photo_read();
     data = await Photo_readDone;
 

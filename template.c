@@ -34,7 +34,7 @@ enum {
 
 === EVTS ===
 
-void* DATA;
+void* DATA = NULL;
 
 char ANDS[N_ANDS];      // TODO: bitfield
 tceu_lbl GTES[N_GTES];

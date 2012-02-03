@@ -1,4 +1,6 @@
-include(`leds.m4')
+output void Leds_led0Toggle;
+output void Leds_led1Toggle;
+output void Leds_led2Toggle;
 
 par do
     loop do
