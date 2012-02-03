@@ -12,6 +12,7 @@ all: ceu _all
 
 ceu: $(CEUCFILE)
 	cp $(CEUCFILE) _ceu_code.tmp
+	touch *.pde *.ino
 
 $(CEUCFILE): $(CEUFILE)
 	./ceu $(CEUFILE) --output $(CEUCFILE)
