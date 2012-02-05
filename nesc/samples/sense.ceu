@@ -16,17 +16,17 @@ loop do
         emit Leds_led2On();
     else
         emit Leds_led2Off();
-    end;
+    end
 
     if data & 0010 then
         emit Leds_led1On();
     else
         emit Leds_led1Off();
-    end;
+    end
 
     if data & 0001 then
         emit Leds_led0On();
     else
         emit Leds_led0Off();
-    end;
-end;
+    end
+end
