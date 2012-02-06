@@ -1,17 +1,17 @@
-output error_t    Radio_start;
-input  error_t    Radio_startDone;
-output error_t    Radio_send;
-input  error_t    Radio_sendDone;
-input  message_t* Radio_receive;
-output void*      Radio_getPayload;
+output _error_t    Radio_start;
+input  _error_t    Radio_startDone;
+output _error_t    Radio_send;
+input  _error_t    Radio_sendDone;
+input  _message_t* Radio_receive;
+output void*       Radio_getPayload;
 
-output void       Leds_set;
-output void       Leds_led1On, Leds_led1Off;
+output void        Leds_set;
+output void        Leds_led1On, Leds_led1Off;
 
 C do
-typedef nx_struct {
-    nx_uint16_t cnt;
-} t ;
+    typedef nx_struct {
+        nx_uint16_t cnt;
+    } t ;
 end
 
 // radio start
@@ -20,7 +20,7 @@ loop do
         await 1s;
     with
         int err = emit Radio_start();
-        if err==_SUCCESS then
+        if err == _SUCCESS then
             err = await Radio_startDone;
             if err == _SUCCESS then
                 break;
@@ -30,9 +30,9 @@ loop do
     end
 end
 
-par/or do
+par do
     loop do
-        message_t* msg = await Radio_receive;
+        _message_t* msg = await Radio_receive;
         _t* t_recv = emit Radio_getPayload(msg,0);
 
         // shows `cnt' for 500ms
@@ -42,7 +42,7 @@ par/or do
     end
 
 with
-    message_t msg;
+    _message_t msg;
     _t* t_send = emit Radio_getPayload(&msg, sizeof<_t>);
     t_send->cnt = 1;
 
