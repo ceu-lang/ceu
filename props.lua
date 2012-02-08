@@ -114,7 +114,7 @@ F = {
 
     EmitE = function (me)
         local acc, exp = unpack(me)
-        if acc.var.int then
+        if acc.evt.dir == 'internal' then
             me.n_intras = 2
         end
     end,

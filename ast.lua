@@ -123,7 +123,7 @@ local C; C = {
                 node('Block')(ln1,ln2, str,
                     node('Dcl_int')(ln1,ln2, str, 'int', false, '$ret'),
                     node('SetBlock')(ln1,ln2, str,
-                        node('Int')(ln1,ln2, str, '$ret'),
+                        node('Var')(ln1,ln2, str, '$ret'),
                         node('Block')(ln1,ln2, str, ...))))
         return _AST
     end,
@@ -155,7 +155,7 @@ local C; C = {
             ret[#ret+1] = node('Dcl_int')(ln1,ln2, str, tp, dim, t[i])
             if t[i+1] then
                 ret[#ret+1] = C._Set(ln1,ln2, str,
-                                node('Int')(ln1,ln2,str,t[i]),
+                                node('Var')(ln1,ln2,str,t[i]),
                                 t[i+1],
                                 t[i+2])
             end
@@ -167,11 +167,11 @@ local C; C = {
         return node(id)(ln1,ln2, str, e1, e2)
     end,
 
-    _Dcl_ext = function (ln1,ln2, str, mode, tp, ...)
+    _Dcl_ext = function (ln1,ln2, str, dir, tp, ...)
         local ret = {}
         local t = { ... }
         for i=1, #t do
-            ret[#ret+1] = node('Dcl_ext')(ln1,ln2, str, mode, tp, t[i])
+            ret[#ret+1] = node('Dcl_ext')(ln1,ln2, str, dir, tp, t[i])
         end
         return unpack(ret)
     end,
@@ -204,8 +204,8 @@ local C; C = {
     end,
     ExpList  = node('ExpList'),
 
-    Int      = node('Int'),
-    Ext      = node('Ext'),
+    Var      = node('Var'),
+    Evt      = node('Evt'),
     Cid      = node('Cid'),
     SIZEOF   = node('SIZEOF'),
     CONST    = node('CONST'),

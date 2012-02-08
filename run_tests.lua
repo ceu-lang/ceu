@@ -33,7 +33,7 @@ Test = function (t)
 
     -- LINES
     _STR = PRE .. str_input
-    print(_STR)
+    --print(_STR)
     dofile 'lines.lua'
 
     -- PARSER

@@ -155,9 +155,9 @@ do
     do
         local str = ''
         local t = {}
-        for id, var in pairs(_ENV.exts) do
-            if var.input then
-                t[#t+1] = '#define IO_'..id..' '..var.trg0
+        for id, evt in pairs(_AST[1].evts) do   -- _AST[1] = first block
+            if evt.dir == 'input' then
+                t[#t+1] = '#define IO_'..id..' '..evt.trg0
             else
                 -- negative doesn't interfere with trg0
                 t[#t+1] = '#define IO_'..id..' -'..(#t+1)

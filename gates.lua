@@ -15,11 +15,11 @@ end
 F = {
     Root = function (me)
         local TRG0 = 1          -- 0 is reserved for non-awaited events
-        for var in pairs(INTS) do
-            var.trg0 = TRG0
-            TRG0 = TRG0 + 1 + #var.trgs     -- trg0: { sz, t0,t1,... }
-            _GATES.trgs[#_GATES.trgs+1] = #var.trgs
-            for _,gte in ipairs(var.trgs) do
+        for evt in pairs(INTS) do
+            evt.trg0 = TRG0
+            TRG0 = TRG0 + 1 + #evt.trgs     -- trg0: { sz, t0,t1,... }
+            _GATES.trgs[#_GATES.trgs+1] = #evt.trgs
+            for _,gte in ipairs(evt.trgs) do
                 _GATES.trgs[#_GATES.trgs+1] = gte
             end
         end
@@ -47,8 +47,7 @@ F = {
 
     EmitE = function (me)
         local acc,_ = unpack(me)
-        -- internal event
-        if acc.var.int then
+        if acc.evt.dir == 'internal' then
             me.gte_trg = alloc('n_gtes')
             me.gte_cnt = alloc('n_gtes')
         end
@@ -60,8 +59,8 @@ F = {
     AwaitE = function (me)
         local acc,_ = unpack(me)
         me.gte = alloc('n_gtes')
-        INTS[acc.var] = true
-        local t = acc.var.trgs
+        INTS[acc.evt] = true
+        local t = acc.evt.trgs
         t[#t+1] = me.gte
     end,
 }

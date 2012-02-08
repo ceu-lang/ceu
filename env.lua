@@ -1,6 +1,5 @@
 _ENV = {
     n_vars = '0',
-    exts   = {},
 }
 
 function alloc (var)
@@ -18,8 +17,7 @@ function _ENV.reg (var)
 end
 
 function newvar (var)
-    local blk = var.int and _ITER'Block'()
-                 or _ITER('Block',true)()
+    local blk = _ITER'Block'()
     ASR(not blk.vars[var.id], var,
         'variable "'..var.id..'" already declared')
     blk.vars[var.id] = var
@@ -30,17 +28,13 @@ function newvar (var)
         var.tp = var.tp..'*'
     end
 
-    if var.int then
-        if var.tp == 'void' then
-            var.size = '0'
-        else
-            var.size = '(sizeof('..var.tp..')*'..var.dim..')'
-        end
-        var.reg = alloc(var)
-        var.val = _ENV.reg(var)      -- TODO: arrays?
+    if var.tp == 'void' then
+        var.size = '0'
+    else
+        var.size = '(sizeof('..var.tp..')*'..var.dim..')'
     end
-    var.trg0 = 0    -- TODO: move to gates.lua
-    var.trgs = {}   -- TODO: move to gates.lua
+    var.reg = alloc(var)
+    var.val = _ENV.reg(var)      -- TODO: arrays?
 
     return var
 end
@@ -54,43 +48,71 @@ function getvar (id)
     end
 end
 
+function newevt (evt)
+    local blk = evt.dir=='internal' and _ITER'Block'()
+                 or _ITER('Block',true)()
+    ASR(not blk.evts[evt.id], evt,
+        'event "'..evt.id..'" already declared')
+    blk.evts[evt.id] = evt
+    evt.blk = blk
+
+    evt.trg0 = 0    -- TODO: move to gates.lua
+    evt.trgs = {}   -- TODO: move to gates.lua
+
+    return evt
+end
+
+function getevt (id)
+    for stmt in _ITER'Block' do
+        local evt = stmt.evts[id]
+        if evt then
+            return evt
+        end
+    end
+end
+
 F = {
     Block_pre = function (me)
         me.vars = {}
+        me.evts = {}
     end,
 
     Dcl_int = function (me)
         local tp, dim, id, exp = unpack(me)
-        me.var = newvar {
+        local var = newvar {
             ln  = me.ln,
             id  = id,
-            int = true,
             tp  = tp,
             arr = dim and tp,
             dim = dim or 1,
         }
+        me.var = var
+        if not var.arr then
+            var.dir = 'internal'
+            me.evt = newevt(var)
+            me.evt.var = var
+        end
     end,
 
    Dcl_ext = function (me)
-        local mode, tp, id = unpack(me)
-        me.var = newvar {
+        local dir, tp, id = unpack(me)
+        me.evt = newevt {
             ln  = me.ln,
             id  = id,
-            ext = true,
             tp  = tp,
-            arr = false,
-            dim = dim or 1,
-            input  = (mode == 'input'),
-            output = (mode == 'output'),
+            dir = dir,
         }
-        _ENV.exts[me.var.id] = me.var
     end,
 
-    Int = function (me)
+    Var = function (me)
         me.var = ASR(getvar(me[1]),
             me, 'variable "'..me[1]..'" is not declared')
     end,
-    Ext = 'Int',
+    Evt = function (me)
+        local id = unpack(me)
+        me.evt = ASR(getevt(id),
+            me, 'event "'..id..'" is not declared')
+    end,
 }
 
 _VISIT(F)

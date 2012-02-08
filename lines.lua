@@ -6,6 +6,9 @@ function DBG (...)
     for i=1, select('#',...) do
         t[#t+1] = tostring( select(i,...) )
     end
+    if #t == 0 then
+        t = { [1]=debug.traceback() }
+    end
     io.stderr:write(table.concat(t,'\t')..'\n')
 end
 

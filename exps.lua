@@ -19,16 +19,20 @@ F = {
 
     SetStmt = function (me)
         local e1, stmt = unpack(me)
+        local evt = stmt[1].evt
         ASR(check_lval(e1), me, 'invalid attribution')
         e1.fst.mode = 'wr'
         stmt.toset = e1
-        if stmt.id=='AwaitT' then
+        if stmt.id == 'AwaitT' then
             ASR(C.contains(e1.tp,'int'), me, 'invalid attribution')
-        else -- EmitE/AwaitE
-            local e2 = unpack(stmt)
-            local ptr = C.deref(e2.tp)
-            ASR( C.contains(e1.tp,e2.tp) and
-                 check_depth(e1,e2),
+        elseif stmt.id == 'AwaitE' then
+            ASR( C.contains(e1.tp,evt.tp) and
+                 check_depth(e1,evt),
+                    me, 'invalid attribution')
+        else -- 'EmitE' then
+            ASR(evt.dir == 'output', me, 'invalid attribution')
+            ASR( C.contains(e1.tp,evt.tp) and
+                 check_depth(e1,evt),
                     me, 'invalid attribution')
         end
     end,
@@ -41,7 +45,6 @@ F = {
     Return = function (me)
         local e1 = _ITER'SetBlock'()[1]
         local e2 = unpack(me)
-        local ptr = C.deref(e2.tp)
         ASR( C.contains(e1.tp,e2.tp) and
              check_depth(e1, e2),
                 me, 'invalid return value')
@@ -49,19 +52,21 @@ F = {
 
     AwaitE = function (me)
         local acc = unpack(me)
-        ASR(acc.lval and acc.fst, me, 'invalid event')
-        acc.fst.mode = 'aw'
+        if acc.evt.dir == 'internal' then
+            acc.mode = 'aw'
+        end
     end,
 
     EmitE = function (me)
         local acc, exps = unpack(me)
-        local var = acc.var
-        ASR(acc.lval and acc.fst, me, 'invalid event')
-        acc.fst.mode = 'tr'
-        if var.int then
-            ASR(#exps==0 or C.contains(var.tp,exps[1].tp), me, 'invalid emit')
-        elseif var.output then
-            me.call = { 'call', {val=var.id}, select(2,unpack(me)) }
+        if acc.evt.dir == 'internal' then
+            acc.mode = 'tr'
+            if exps and #exps>0 then
+                ASR(#exps==1, me, 'invalid emit')
+                ASR(C.contains(acc.evt.tp,exps[1].tp), me, 'invalid emit')
+            end
+        else
+            me.call = { 'call', {val=acc.evt.id}, select(2,unpack(me)) }
             F.Op2_call(me.call)
         end
     end,
@@ -191,14 +196,11 @@ F = {
         me.lval = exp.lval
     end,
 
-    Ext = function (me)
+    Var = function (me)
         me.fst  = me
         me.tp   = me.var.tp
         me.lval = not me.var.arr
         me.mode = 'rd'
-    end,
-    Int = function (me)
-        F.Ext(me)
         me.val = _ENV.reg(me.var)
     end,
 

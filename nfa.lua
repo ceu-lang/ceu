@@ -46,16 +46,15 @@ function qVSq (q1, q2)
                 -- q1.ptr vs q2.ptr
                 return C.contains(q1.ptr, q2.ptr)
             else
-                -- q1.ptr vs q2.var
-                return C.contains(q1.ptr, q2.var.tp) and q2.var.id~='$ret'
+                -- q1.ptr vs q2.acc
+                return C.contains(q1.ptr, q2.acc.tp) and q2.acc.id~='$ret'
             end
         else
             if q2.ptr then
-                -- q1.var vs q2.ptr
-                return C.contains(q2.ptr, q1.var.tp) and q1.var.id~='$ret'
-            else -- (trg input on asyncs is ok!)
-                -- q1.var vs q2.var
-                return q1.var==q2.var and (not q1.var.input)
+                -- q1.acc vs q2.ptr
+                return C.contains(q2.ptr, q1.acc.tp) and q1.acc.id~='$ret'
+            else
+                return q1.acc==q2.acc
             end
         end
     end
@@ -117,10 +116,10 @@ function INS (me, a, q)
     return q
 end
 
-function ACC (var, mode, ptr)
+function ACC (acc, mode, ptr)
     return _NFA.node {
-        id   = mode..' '..(ptr or var.id),
-        var  = var,
+        id   = mode..' '..(ptr or acc.id),
+        acc  = acc,
         ptr  = ptr,
         mode = mode,
     }
@@ -418,17 +417,16 @@ F = {
 
     EmitE = function (me)
         local acc, exps = unpack(me)
-        local var = acc.var
 
-        CONCAT_all(me, exps)
+        if exps then
+            CONCAT_all(me, exps)
+        end
         CONCAT(me, acc)
-
         local q = acc.nfa.f
 
-        -- internal event
-        if var.int then
+        if acc.evt.dir == 'internal' then
             local qF = _NFA.node {
-                id = 'cont '..var.id,
+                id = 'cont '..acc.evt.id,
                 should_reach = true,
             }
             INS(me, '~>', qF)
@@ -442,31 +440,26 @@ F = {
     end,
     AwaitE = function (me)
         local acc = unpack(me)
-        local var = acc.var
 
         CONCAT(me, acc)
 
         local bef = INS(me, '',
             _NFA.node {
-                id  = '+'..var.id,
-                awt = var,
+                id  = '+'..acc.evt.id,
+                awt = acc.evt,
                 keep = true,
             })
 
-        local aft = INS(me, var,
+        local aft = INS(me, acc.evt,
             _NFA.node {
-                id  = '-'..var.id,
+                id  = '-'..acc.evt.id,
                 rem = set.new(bef),
                 should_reach = true,
             })
         bef.to = aft
 
-        if var.ext then
-            _NFA.alphas[var] = true
-        end
-
-        if me.toset then
-            INS(me, '', ACC(var,'rd'))
+        if acc.evt.dir == 'input' then
+            _NFA.alphas[acc.evt] = true
         end
     end,
 
@@ -490,10 +483,15 @@ F = {
         bef.to = aft
     end,
 
-    Int = function (me)
+    Evt = function (me)
+        if me.evt.dir == 'internal' then
+            INS(me, '', ACC(me.evt,me.mode))
+        end
+    end,
+
+    Var = function (me)
         INS(me, '', ACC(me.var,me.mode))
     end,
-    Ext = 'Int',
 
     Op2_call = function (me)
         local _, f, exps = unpack(me)

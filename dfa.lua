@@ -3,7 +3,7 @@ local U = set.union
 _DFA = {
     states    = set.new(),
     n_states  = 0,
-    nd_acc    = {},     -- { [1]={q1,q2} (q1,q2 access the same var concur.)
+    nd_acc    = {},     -- { [1]={q1,q2} (q1,q2 access the same acc concur.)
     nd_esc    = {},     -- { [1]={q1,q2} (q1,q2 are nested and escape concur.)
     nd_stop   = false,
     forever   = false,
@@ -357,11 +357,11 @@ do
                             q = NODE_time(_TIME_undef)
                         end
                     end
-                elseif q.mode=='tr' and q.var.int then
+                elseif q.mode=='tr' and (q.acc.dir=='internal') then
                     q.to._intl_ = _intl_+1
                     q_spawn(Q_INTRA, q.to)
                     for q2 in pairs(qs_cur) do
-                        if q2.awt==q.var then
+                        if q2.awt==q.acc then
                             q2.to._intl_ = _intl_+2
 --DBG('awake', q2.to.n, q2.to.id, q2.to._intl_)
                             q_spawn(Q_INTRA, q2.to)
@@ -396,8 +396,8 @@ end
 
 for _, t in ipairs(_DFA.nd_acc) do
     local q1, q2 = unpack(t)
-    WRN(false, q1.stmt, 'nondet access to variable "'..q1.var.id..'"')
-    WRN(false, q2.stmt, 'nondet access to variable "'..q2.var.id..'"')
+    WRN(false, q1.stmt, 'nondet access to "'..q1.acc.id..'"')
+    WRN(false, q2.stmt, 'nondet access to "'..q2.acc.id..'"')
 end
 
 for _, t in ipairs(_DFA.nd_esc) do

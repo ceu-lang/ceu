@@ -259,7 +259,6 @@ F = {
     Async = function (me)
         local blk = unpack(me)
         local lb = LABEL_gen('Async_'..me.gte)
---DBG('async', me.gte)
         LINE(me, 'GTES['..me.gte..'] = '..lb..';')
         LINE(me, 'qins_async('..me.gte..');')
         HALT(me)
@@ -317,21 +316,19 @@ if (ceu_out_pending()) {
 
     EmitE = function (me)
         local acc, exps = unpack(me)
-        local var = acc.var
+        local evt = acc.evt
 
-        -- attribution
-        if var.int then
+        if evt.dir == 'internal' then
+            -- attribution
             if #exps == 1 then
-                LINE(me, var.val..' = '..exps[1].val..';')
+                LINE(me, evt.var.val..' = '..exps[1].val..';')
             end
-        end
 
-        -- internal event
-        if var.int then
-            local lb_cnt = LABEL_gen('Cnt_'..var.id)
-            local lb_trg = LABEL_gen('Trg_'..var.id)
+            -- emit
+            local lb_cnt = LABEL_gen('Cnt_'..evt.id)
+            local lb_trg = LABEL_gen('Trg_'..evt.id)
             LINE(me, [[
-// Emit ]]..var.id..[[;
+// Emit ]]..evt.id..[[;
 GTES[]]..me.gte_cnt..'] = '..lb_cnt..[[;
 GTES[]]..me.gte_trg..'] = '..lb_trg..[[;
 qins_intra(_intl_+1, ]]..me.gte_cnt..[[);
@@ -339,17 +336,11 @@ qins_intra(_intl_+2, ]]..me.gte_trg..[[);
 break;
 ]])
             LABEL_out(me, lb_trg)
-            LINE(me, 'trigger('..var.trg0..');')
+            LINE(me, 'trigger('..evt.trg0..');')
             HALT(me)
             LABEL_out(me, lb_cnt)
 
-            -- set after the continuation
-            if me.toset then
-                LINE(me, me.toset.val..' = '..var.val..';')
-            end
-
-        -- external event
-        else
+        else -- external event
             local async = _ITER'Async'()
             if async then
                 local lb_cnt = LABEL_gen('Async_cont')
@@ -357,12 +348,9 @@ break;
                 LINE(me, 'qins_async('..async.gte..');')
                 if exps[1] then
                     LINE(me, '{ '..exps[1].tp..' data = '..exps[1].val..';')
-                    if me.toset then
-                        LINE(me, me.toset.val..' = data;')
-                    end
-                    LINE(me, 'return ceu_go_event(ret, IO_'..var.id ..', &data); }')
+                    LINE(me, 'return ceu_go_event(ret, IO_'..evt.id ..', &data); }')
                 else
-                    LINE(me, 'return ceu_go_event(ret, IO_'..var.id ..', NULL);')
+                    LINE(me, 'return ceu_go_event(ret, IO_'..evt.id ..', NULL);')
                 end
                 LABEL_out(me, lb_cnt)
             else -- output
@@ -415,13 +403,13 @@ break;
     end,
     AwaitE = function (me)
         local acc,_ = unpack(me)
-        local lb = LABEL_gen('Await_'..acc.var.id)
+        local lb = LABEL_gen('Await_'..acc.evt.id)
         LINE(me, 'GTES['..me.gte..'] = '..lb..';')
         HALT(me)
         LABEL_out(me, lb)
         if me.toset then
-            if acc.var.int then
-                LINE(me, me.toset.val..' = '..acc.var.val..';')
+            if acc.evt.dir == 'internal' then
+                LINE(me, me.toset.val..' = '..acc.evt.var.val..';')
             else
                 LINE(me, 'if (DATA)')
                 LINE(me, '\t'..me.toset.val..' = *('..me.toset.tp..'*)DATA;')

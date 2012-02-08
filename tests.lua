@@ -227,10 +227,10 @@ Test { [[input  int A;]],
     dfa = 'missing return statement',
 }
 Test { [[input int A; output int A; return 0;]],
-    env = 'variable "A" already declared',
+    env = 'event "A" already declared',
 }
 Test { [[input  int A,A; return 0;]],
-    env = 'variable "A" already declared',
+    env = 'event "A" already declared',
 }
 Test { [[
 input int A,B,C;
@@ -305,7 +305,7 @@ return 0;
 }
 
 Test { [[emit A(10); return 0;]],
-    env = 'variable "A" is not declared'
+    env = 'event "A" is not declared'
 }
 
 Test { [[
@@ -422,7 +422,7 @@ return v;
 }
 
 Test { [[await A; return 0;]],
-    env = 'variable "A" is not declared',
+    env = 'event "A" is not declared',
 }
 
 Test { [[
@@ -534,12 +534,17 @@ return v;
 }
 
 print'TODO: deveria dar erro!'
-Test { [[int a = emit a(1); return a;]],
+Test { [[int a = a+1; return a;]],
     --env = 'variable "a" is not declared',
     run = 1,
 }
 
 Test { [[int a; a = emit a(1); return a;]],
+    exps = 'invalid attribution',
+    --trig_wo = 1,
+}
+
+Test { [[int a; emit a(1); return a;]],
     run = 1,
     --trig_wo = 1,
 }
@@ -1377,7 +1382,7 @@ input int Start;
 int a = 3;
 par do
     await Start;
-    a = emit a(a);
+    emit a(a);
     return a;
 with
     loop do
@@ -7967,7 +7972,8 @@ par/or do
     end;
 with
     await A;
-    a = emit c(1);
+    emit c(1);
+    a = c;
 end;
 return a;
 ]],
@@ -7981,7 +7987,8 @@ int a, b, c;
 par/or do
     loop do
         await c;
-        a = emit b(c+1);
+        emit b(c+1);
+        a = b;
     end;
 with
     loop do
@@ -7990,7 +7997,8 @@ with
     end;
 with
     await Start;
-    a = emit c(1);
+    emit c(1);
+    a = c;
 end;
 return a;
 ]],
@@ -8150,7 +8158,8 @@ input int Start;
 int a, b;
 par/and do
     await Start;
-    b = emit a(1);
+    emit a(1);
+    b = a;
 with
     await a;
     b = a + 1;
@@ -8164,7 +8173,8 @@ input int Start;
 int a, b;
 par/or do
     await Start;
-    b = emit a(1);
+    emit a(1);
+    b = a;
 with
     await a;
     b = a + 1;
@@ -8680,7 +8690,8 @@ Test { [[
 input int A;
 int a;
 async do
-    a = emit A(1);
+    a = 1;
+    emit A(a);
 end;
 return a;
 ]],
@@ -9226,8 +9237,8 @@ return _f2(&v[0],&v[1]) + _f1(v) + _f1(&v[0]);
     run = 39,
 }
 
-Test { [[int[2] v; await v;     return 0;]], exps='invalid event' }
-Test { [[int[2] v; emit v();    return 0;]], exps='invalid event' }
+Test { [[int[2] v; await v;     return 0;]], env='event "v" is not declared' }
+Test { [[int[2] v; emit v();    return 0;]], env='event "v" is not declared' }
 Test { [[int[2] v; await v[0];  return 0;]], parser=false }
 Test { [[int[2] v; emit v[0](); return 0;]], parser=false }
 Test { [[int[2] v; v=v; return 0;]], exps='invalid attribution' }

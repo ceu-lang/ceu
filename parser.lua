@@ -41,6 +41,7 @@ end
 local _V2NAME = {
     _Exp = 'expression',
     _Stmts = 'statement',
+    Evt = 'event',
 }
 local EV = function (rule)
     return V(rule) + m.Cmt(P'',
@@ -111,11 +112,12 @@ _GG = { [1] = K'' *S* EV'_Stmts' *S* -1
                  + V'ParOr'   + V'ParAnd' + V'ParEver'
                  + V'If'      + V'Loop'
 
-    , _Dcl_ext  = (CK'input'+CK'output') *S* TYPE *S*
-                    V'EXT' * (S*K','*S*V'EXT')^0
     , _Dcl_int  = TYPE *S* ('['*S*NUM*S*']' + Cc(false)) *S*
                     V'__Dcl_int' * (S*K','*S*V'__Dcl_int')^0
     , __Dcl_int = V'INT' *S* (V'_Sets' + Cc(false)*Cc(false))
+
+    , _Dcl_ext  = (CK'output'+CK'input') *S* TYPE *S* V'EXT'
+                    * (S*K','*S*V'EXT')^0
 
     , _Set  = V'_Exp' *S* V'_Sets'
     , _Sets = K'=' *S* (
@@ -155,13 +157,11 @@ _GG = { [1] = K'' *S* EV'_Stmts' *S* -1
 
     , _Emit   = V'EmitT' + V'EmitE'
     , EmitT   = K'emit' *S* (V'TIME')
-
-    , EmitE   = K'emit' *S* (V'Int'+V'Ext'+EE'identifier')
-                        *S* EK'(' *S* V'ExpList' *S* EK')'
+    , EmitE   = K'emit' *S* EV'Evt' * ( S* EK'(' *S* V'ExpList' *S* EK')' )^-1
 
     , AwaitN  = K'await' *S* K'forever'             -- last stmt
     , AwaitT  = K'await' *S* (V'_Parens'+V'TIME')
-    , AwaitE  = K'await' *S* (V'Int'+V'Ext'+EE'identifier')
+    , AwaitE  = K'await' *S* EV'Evt'
 
     , _Exp    = V'_1'
     , _1      = V'_2'  * (S* CK'||' *S* V'_2')^0
@@ -185,7 +185,7 @@ _GG = { [1] = K'' *S* EV'_Stmts' *S* -1
                 )^0
     , _13     = V'_Prim'
 
-    , _Prim   = V'_Parens' + V'Int'   + V'Cid' + V'SIZEOF'
+    , _Prim   = V'_Parens' + V'Var'   + V'Cid' + V'SIZEOF'
               + V'NULL'    + V'CONST' + V'STRING'
 
     , ExpList = ( V'_Exp'*(S*','*S*EV'_Exp')^0 )^-1
@@ -205,8 +205,8 @@ _GG = { [1] = K'' *S* EV'_Stmts' *S* -1
                 (NUM * K'ms'  + Cc(0)) *
                 (NUM * EE'<h,min,s,ms>')^-1
 
-    , Int  = V'INT'
-    , Ext  = V'EXT'
+    , Var  = V'INT'
+    , Evt  = V'INT' + V'EXT'
     , INT  = #m.R'az' * CK(ID) -- int names start with lower
     , EXT  = #m.R'AZ' * CK(ID) -- ext names start with upper
     , Cid  = CK(P'_' * ID)
