@@ -336,7 +336,7 @@ qins_intra(_intl_+2, ]]..me.gte_trg..[[);
 break;
 ]])
             LABEL_out(me, lb_trg)
-            LINE(me, 'trigger('..evt.trg0..');')
+            LINE(me, 'trigger('..(evt.trg0 or 0)..');')
             HALT(me)
             LABEL_out(me, lb_cnt)
 

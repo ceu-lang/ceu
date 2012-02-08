@@ -9,7 +9,7 @@ local types = {
 }
 
 function C.isNumeric (tp)
-    return types[tp] and tp~='void'
+    return tp~='void' and (not C.deref(tp))
 end
 
 function C.deref (tp)
@@ -43,4 +43,3 @@ function C.max (tp1, tp2)
         return nil
     end
 end
-

@@ -58,9 +58,11 @@ F = {
     end,
     AwaitE = function (me)
         local acc,_ = unpack(me)
+        local evt = acc.evt
         me.gte = alloc('n_gtes')
-        INTS[acc.evt] = true
-        local t = acc.evt.trgs
+        INTS[evt] = true
+        local t = evt.trgs or {}
+        evt.trgs = t
         t[#t+1] = me.gte
     end,
 }

@@ -55,10 +55,6 @@ function newevt (evt)
         'event "'..evt.id..'" already declared')
     blk.evts[evt.id] = evt
     evt.blk = blk
-
-    evt.trg0 = 0    -- TODO: move to gates.lua
-    evt.trgs = {}   -- TODO: move to gates.lua
-
     return evt
 end
 

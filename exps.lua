@@ -24,7 +24,7 @@ F = {
         e1.fst.mode = 'wr'
         stmt.toset = e1
         if stmt.id == 'AwaitT' then
-            ASR(C.contains(e1.tp,'int'), me, 'invalid attribution')
+            ASR(C.isNumeric(e1.tp), me, 'invalid attribution')
         elseif stmt.id == 'AwaitE' then
             ASR( C.contains(e1.tp,evt.tp) and
                  check_depth(e1,evt),
@@ -92,7 +92,7 @@ F = {
     Op2_idx = function (me)
         local _, arr, idx = unpack(me)
         local _arr = ASR(C.deref(arr.tp), me, 'cannot index a non array')
-        ASR(_arr and C.contains(idx.tp,'int'), me, 'invalid array index')
+        ASR(_arr and C.isNumeric(idx.tp), me, 'invalid array index')
         me.fst  = arr.fst
         me.tp   = _arr
         me.val  = '('..arr.val..'['..idx.val..'])'
@@ -104,7 +104,7 @@ F = {
         me.fst = nil
         me.tp  = 'int'
         me.val = '('..e1.val..op..e2.val..')'
-        ASR(C.contains(e1.tp,'int') and C.contains(e2.tp,'int'),
+        ASR(C.isNumeric(e1.tp) and C.isNumeric(e2.tp),
             me, 'invalid operands to binary "'..op..'"')
     end,
     ['Op2_-']  = 'Op2_int_int',
@@ -123,7 +123,7 @@ F = {
         me.fst = nil
         me.tp  = 'int'
         me.val = '('..op..e1.val..')'
-        ASR(C.contains(e1.tp,'int'), me, 'invalid operand to unary "'..op..'"')
+        ASR(C.isNumeric(e1.tp), me, 'invalid operand to unary "'..op..'"')
     end,
     ['Op1_~']  = 'Op1_int',
     ['Op1_-']  = 'Op1_int',
