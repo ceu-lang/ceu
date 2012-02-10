@@ -1,20 +1,16 @@
-output void Leds_led0Toggle;
-output void Leds_led1Toggle;
-output void Leds_led2Toggle;
-
 par do
     loop do
         await 250ms;
-        emit Leds_led0Toggle();
+        _Leds_led0Toggle();
     end
 with
     loop do
         await 500ms;
-        emit Leds_led1Toggle();
+        _Leds_led1Toggle();
     end
 with
     loop do
         await 1000ms;
-        emit Leds_led2Toggle();
+        _Leds_led2Toggle();
     end
 end

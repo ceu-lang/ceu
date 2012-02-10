@@ -91,12 +91,12 @@ F = {
     end,
 
    Dcl_ext = function (me)
-        local dir, tp, id = unpack(me)
+        local tp, id = unpack(me)
         me.evt = newevt {
             ln  = me.ln,
             id  = id,
             tp  = tp,
-            dir = dir,
+            dir = 'input',
         }
     end,
 

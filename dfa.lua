@@ -5,13 +5,17 @@ _DFA = {
     n_states  = 0,
     nd_acc    = {},     -- { [1]={q1,q2} (q1,q2 access the same acc concur.)
     nd_esc    = {},     -- { [1]={q1,q2} (q1,q2 are nested and escape concur.)
+    nd_call   = {},     -- { [1]={q1,q2} (q1,q2 call C functions.)
     nd_stop   = false,
     forever   = false,
     n_unreach = 0,
 }
 
 function NODE_time (old, ms)
-    old.qs_dif = old.qs_dif or {}
+    if old.ref then
+        old = old.ref   -- always get to the original q
+    end
+    old.qs_dif = old.qs_dif or { [old.ms]=old }
     local new = old.qs_dif[ms]
     if new then
         return new
@@ -19,10 +23,11 @@ function NODE_time (old, ms)
 
     local ms_id = (ms==_TIME_undef) and '??' or ms
     new = _NFA.node {
-        id = '+'..ms_id..'ms',
-        ms = ms,
+        id   = '+'..ms_id..'ms',
+        ms   = ms,
         keep = true,
-        to = old.to
+        to   = old.to,
+        ref  = old,
     }
     old.qs_dif[ms] = new
 
@@ -58,10 +63,12 @@ function STATE (qs_all, qs_cur)
             return S, false
         end
     end
---if _DFA.n_states == 10 then
-    --viz()
-    --error'oi'
---end
+--[==[
+if _DFA.n_states == 20 then
+    dofile 'raphviz.lua'
+    error'oi'
+end
+]==]
 
     local final = false
     for _, qs_intl in ipairs(qs_all) do
@@ -104,6 +111,10 @@ function STATE (qs_all, qs_cur)
                         -- concurrent escape with different depths
                         elseif q1.escs then
                             _DFA.nd_esc[#_DFA.nd_esc+1] = { q1, q2 }
+
+                        -- concurrent C call
+                        elseif q1.f then
+                            _DFA.nd_call[#_DFA.nd_call+1] = { q1, q2 }
 
                         -- concurrent access to variables
                         else
@@ -281,7 +292,7 @@ do
         while ifs_cur < math.pow(2,#ifs)
         do
             local T = { id=T.id..'/if:'..ifs_cur, ifs_cur=ifs_cur,
-                        ext=T.ext }
+                        ext=T.ext, ms=T.ms }
 
             local _intl_ = 1
             local idx    = 1       -- dif IDXs for dif intls (that may repeat)
@@ -320,6 +331,8 @@ do
                     q = q_next(Q_TRACKS)
                 end
 --DBG('exec', q.n, q.id, q.prio, _intl_)
+
+                -- previous ext time (used in timers)
                 local OLD = qs_togo[q]
                 local NEW = true
 
@@ -354,7 +367,7 @@ do
                     else                -- fresh time
                         NEW = T.ext
                         if T.ms == _TIME_undef then
-                            q = NODE_time(_TIME_undef)
+                            q = NODE_time(q, _TIME_undef)
                         end
                     end
                 elseif q.mode=='tr' and (q.acc.dir=='internal') then
@@ -404,6 +417,12 @@ for _, t in ipairs(_DFA.nd_esc) do
     local q1, q2 = unpack(t)
     WRN(false, q1.stmt, 'nondet flow "'..q1.stmt.id..'"')
     WRN(false, q2.stmt, 'nondet flow "'..q2.stmt.id..'"')
+end
+
+for _, t in ipairs(_DFA.nd_call) do
+    local q1, q2 = unpack(t)
+    WRN(false, q1.stmt, 'nondet call to "'..q1.id..'"')
+    WRN(false, q2.stmt, 'nondet call to "'..q2.id..'"')
 end
 
 local all = set.new()

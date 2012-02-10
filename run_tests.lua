@@ -2,7 +2,6 @@
 
 dofile 'pak.lua'
 dofile 'set.lua'
-dofile 'C.lua'
 
 COUNT = 0
 T = nil
@@ -40,6 +39,7 @@ Test = function (t)
     if not check('parser') then return end
     if not check('ast')    then return end
     --_DUMP(_AST)
+    if not check('C')      then return end
     if not check('env')    then return end
     if not check('props')  then return end
     if not check('tight')  then return end
@@ -65,6 +65,9 @@ Test = function (t)
 
         assert(#_DFA.nd_esc == (T.nd_esc or 0),
             'nd_esc '..#_DFA.nd_esc)
+
+        assert(#_DFA.nd_call == (T.nd_call or 0),
+            'nd_call '..#_DFA.nd_call)
 
         if not _DFA.nd_stop then
             assert(_DFA.n_unreach == (T.unreach or 0),
@@ -117,7 +120,8 @@ Test = function (t)
         ]]
         for input, ret2 in pairs(T.run) do
             input = string.gsub(input, '([^;]*)~>(%d[^;]*);?', 'emit %2;')
-            input = string.gsub(input, '([^;]*)~>([^;]*);?', 'emit %2(%1);')
+            input = string.gsub(input, '[ ]*(%d+)[ ]*~>([^;]*);?', 'emit %2=%1;')
+            input = string.gsub(input, '~>([^;]*);?', 'emit %1;')
             local all = string.gsub(str_all, '`EVTS', input)
             local ceu = assert(io.popen('./ceu - --output _ceu_code.c', 'w'))
             --print(all)

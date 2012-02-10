@@ -25,7 +25,7 @@ _OPTS_NPARAMS = {
     m4_file     = 1,
 
     dfa         = 0,
-    dfa_viz     = 1,
+    dfa_viz     = 0,
 }
 
 local params = {...}
@@ -94,12 +94,12 @@ end
 -- PARSE
 do
     dofile 'set.lua'
-    dofile 'C.lua'
 
     dofile 'lines.lua'
     dofile 'parser.lua'
     dofile 'ast.lua'
     --ast.dump(ast.AST)
+    dofile 'C.lua'
     dofile 'env.lua'
     dofile 'props.lua'
     dofile 'tight.lua'
@@ -158,9 +158,6 @@ do
         for id, evt in pairs(_AST[1].evts) do   -- _AST[1] = first block
             if evt.dir == 'input' then
                 t[#t+1] = '#define IO_'..id..' '..(evt.trg0 or 0)
-            else
-                -- negative doesn't interfere with trg0
-                t[#t+1] = '#define IO_'..id..' -'..(#t+1)
             end
         end
 

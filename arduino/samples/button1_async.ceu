@@ -1,20 +1,13 @@
-input  int  PIN2;
-output void PIN13;
+input int PIN2;
 
 par/or do
 
     loop do
         int v = await PIN2;
-        emit PIN13(v);
+        _digitalWrite(13, v);
     end
 
 with
-
-    C do
-        void PIN13 (int v) {
-            digitalWrite(13, v);
-        }
-    end
 
     async do
         _pinMode( 2, _INPUT);
@@ -25,7 +18,7 @@ with
             int tmp = _digitalRead(2);
             if (pin2 != tmp) then
                 pin2 = tmp;
-                emit PIN2(pin2);
+                emit PIN2=pin2;
             end
             _delay(10);
         end

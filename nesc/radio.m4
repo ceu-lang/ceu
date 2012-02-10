@@ -1,12 +1,6 @@
-output error_t    Radio_start;
-input  error_t    Radio_startDone;
-
-output error_t    Radio_send;
-input  error_t    Radio_sendDone;
-input  message_t* Radio_receive;
-
-output uint8_t    Radio_payloadLength;
-output void*      Radio_getPayload;
+input error_t    Radio_startDone;
+input error_t    Radio_sendDone;
+input message_t* Radio_receive;
 
 error_t radio_err;
 
@@ -15,13 +9,13 @@ loop do
     par/or do
         await $1;
     with
-        radio_err = emit Radio_start();
+        radio_err = _Radio_start();
         if radio_err then
-            emit radio_err();
+            emit radio_err;
         else
             radio_err = await Radio_startDone;
             if radio_err then
-                emit radio_err();
+                emit radio_err;
             else
                 break;
             end;
@@ -36,13 +30,13 @@ loop do
     par/or do
         await $1;
     with
-        radio_err = emit Radio_send($2,$3,$4);
+        radio_err = _Radio_send($2,$3,$4);
         if radio_err != 0 then
-            emit radio_err();
+            emit radio_err;
         else
             radio_err = await Radio_sendDone;
             if radio_err != 0 then
-                emit radio_err();
+                emit radio_err;
             else
                 break;
             end;

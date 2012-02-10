@@ -315,13 +315,13 @@ if (ceu_out_pending()) {
     end,
 
     EmitE = function (me)
-        local acc, exps = unpack(me)
+        local acc, exp = unpack(me)
         local evt = acc.evt
 
         if evt.dir == 'internal' then
             -- attribution
-            if #exps == 1 then
-                LINE(me, evt.var.val..' = '..exps[1].val..';')
+            if exp then
+                LINE(me, evt.var.val..' = '..exp.val..';')
             end
 
             -- emit
@@ -340,26 +340,18 @@ break;
             HALT(me)
             LABEL_out(me, lb_cnt)
 
-        else -- external event
+        else -- input event
+            local lb_cnt = LABEL_gen('Async_cont')
             local async = _ITER'Async'()
-            if async then
-                local lb_cnt = LABEL_gen('Async_cont')
-                LINE(me, 'GTES['..async.gte..'] = '..lb_cnt..';')
-                LINE(me, 'qins_async('..async.gte..');')
-                if exps[1] then
-                    LINE(me, '{ '..exps[1].tp..' data = '..exps[1].val..';')
-                    LINE(me, 'return ceu_go_event(ret, IO_'..evt.id ..', &data); }')
-                else
-                    LINE(me, 'return ceu_go_event(ret, IO_'..evt.id ..', NULL);')
-                end
-                LABEL_out(me, lb_cnt)
-            else -- output
-                if me.toset then
-                    LINE(me, me.toset.val..' = '..me.call.val..';')
-                else
-                    LINE(me, me.call.val..';')
-                end
+            LINE(me, 'GTES['..async.gte..'] = '..lb_cnt..';')
+            LINE(me, 'qins_async('..async.gte..');')
+            if exp then
+                LINE(me, '{ '..exp.tp..' data = '..exp.val..';')
+                LINE(me, 'return ceu_go_event(ret, IO_'..evt.id ..', &data); }')
+            else
+                LINE(me, 'return ceu_go_event(ret, IO_'..evt.id ..', NULL);')
             end
+            LABEL_out(me, lb_cnt)
         end
     end,
 

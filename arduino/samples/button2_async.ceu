@@ -1,5 +1,4 @@
-input int  PIN2, PIN2_LOW, PIN2_HIGH;
-output void PIN13;
+input int PIN2, PIN2_LOW, PIN2_HIGH;
 
 par/or do
 
@@ -7,9 +6,9 @@ par/or do
         par/or do
             int t = 1000;
             loop do
-                emit PIN13(0);
+                _digitalWrite(13, 0);
                 await (t);
-                emit PIN13(1);
+                _digitalWrite(13, 1);
                 await (t);
                 if t > 50 then
                     t = t - 10;
@@ -22,12 +21,6 @@ par/or do
 
 with
 
-    C do
-        void PIN13 (int v) {
-            digitalWrite(13, v);
-        }
-    end
-
     async do
         _pinMode( 2, _INPUT);
         _pinMode(13, _OUTPUT);
@@ -37,7 +30,7 @@ with
             int tmp = _digitalRead(2);
             if (pin2 != tmp) then
                 pin2 = tmp;
-                emit PIN2(pin2);
+                emit PIN2=pin2;
             end
             _delay(10);
             emit 10ms;

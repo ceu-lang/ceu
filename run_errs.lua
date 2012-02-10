@@ -143,8 +143,8 @@ end;
 return a;
 ]],
     err = [[
-WRN : line 3 : nondet access to variable "a"
-WRN : line 5 : nondet access to variable "a"
+WRN : line 3 : nondet access to "a"
+WRN : line 5 : nondet access to "a"
 ]]
 }
 

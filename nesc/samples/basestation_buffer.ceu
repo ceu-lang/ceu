@@ -23,13 +23,13 @@ end;
 par do
     loop do
         message_t* p = await Radio_receive;
-        emit Leds_led1Toggle();
+        _Leds_led1Toggle();
         if serialTot == SERIAL_LEN then
-            emit Leds_led2Toggle();
+            _Leds_led2Toggle();
         else
             serialBuf[serialIn] = *p;
             serialIn = (serialIn+1) % SERIAL_LEN;
-            emit serialTot(serialTot + 1);
+            emit serialTot = serialTot + 1;
         end;
     end;
 with
@@ -37,7 +37,7 @@ with
         if serialTot == 0 then
             await serialTot;
         else
-            int len = emit Radio_payloadLength(&serialBuf[serialOut]);
+            int len = _Radio_payloadLength(&serialBuf[serialOut]);
             SERIAL_SEND(1s, &serialBuf[serialOut], len);
             serialOut = (serialOut+1) % SERIAL_LEN;
             serialTot = serialTot - 1;
@@ -46,18 +46,18 @@ with
 with
     loop do
         await serial_err;
-        emit Leds_led2Toggle();
+        _Leds_led2Toggle();
     end;
 with
     loop do
         message_t* p = await Serial_receive;
-        emit Leds_led0Toggle();
+        _Leds_led0Toggle();
         if radioTot == RADIO_LEN then
-            emit Leds_led2Toggle();
+            _Leds_led2Toggle();
         else
             radioBuf[radioIn] = *p;
             radioIn = (radioIn+1) % RADIO_LEN;
-            emit radioTot(radioTot + 1);
+            emit radioTot = radioTot + 1;
         end;
     end;
 with
@@ -65,7 +65,7 @@ with
         if radioTot == 0 then
             await radioTot;
         else
-            int len = emit Serial_payloadLength(&radioBuf[radioOut]);
+            int len = _Serial_payloadLength(&radioBuf[radioOut]);
             RADIO_SEND(1s, _AM_BROADCAST_ADDR, &radioBuf[radioOut], len);
             radioOut = (radioOut+1) % RADIO_LEN;
             radioTot = radioTot - 1;
@@ -74,6 +74,6 @@ with
 with
     loop do
         await radio_err;
-        emit Leds_led2Toggle();
+        _Leds_led2Toggle();
     end;
 end;

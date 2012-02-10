@@ -1,7 +1,3 @@
-output void PinMode;
-output int  DigitalRead;
-output void DigitalWrite;
-
 input int PIN2_LOW, PIN2_HIGH;
 
 _pinMode( 2, _INPUT);
@@ -42,9 +38,9 @@ with
             if (p2 != tmp) then
                 p2 = tmp;
                 if p2==_HIGH then
-                    emit PIN2_HIGH();
+                    emit PIN2_HIGH;
                 else
-                    emit PIN2_LOW();
+                    emit PIN2_LOW;
                 end
             end
             u32 now = _millis();

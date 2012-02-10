@@ -68,11 +68,11 @@ end
 KEYS = P'do'+'end'+'async'+'return'
      + 'par'+'par/or'+'par/and'+'with'
      + 'if'+'then'+'else'
-     + 'not'+'or'+'and'
      + 'await'+'forever'+'emit'
      + 'loop'+'break'+'nothing'
-     + 'input'+'output' -- TODO: types
+     + 'input' -- TODO: types
      + 'sizeof'+'null'+'call'
+     + 'pure'+'deterministic'
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
 local S = V'_SPACES'
@@ -92,9 +92,9 @@ _GG = { [1] = K'' *S* EV'_Stmts' *S* -1
 
     , Block  = EV'_Stmts'
     , _Stmts = V'_LstStmt'      *S* EK';' * (S*K';')^0
-             + V'_LstStmtBlock' * (S* K';')^0
+             + V'_LstStmtBlock'           * (S*K';')^0
              + V'_Stmt'         *S* EK';' * (S*K';')^0 *S* V'_Stmts'^-1
-             + V'_StmtBlock'    * (S* K';')^0 *S* V'_Stmts'^-1
+             + V'_StmtBlock'              * (S*K';')^0 *S* V'_Stmts'^-1
 
     , _LstStmtBlock = V'ParEver'
     , _LstStmt      = V'Return'   + V'Break'  + V'AwaitN' + V'ParEver'
@@ -102,8 +102,9 @@ _GG = { [1] = K'' *S* EV'_Stmts' *S* -1
     , _Stmt      = V'Nothing'
                  + V'AwaitT'   + V'AwaitE' + V'_Emit'
                  + V'_Dcl_ext' + V'_Dcl_int'
-                 + V'_Set'
-                 + V'CallStmt' -- must be last
+                 + V'Dcl_det'  + V'_Dcl_pure'
+                 + V'_Set'     + V'CallStmt' -- must be after Set
+
     , _StmtBlock = V'_DoBlock' + V'Async'  + V'Host'
                  + V'ParOr'    + V'ParAnd'
                  + V'If'       + V'Loop'
@@ -112,16 +113,18 @@ _GG = { [1] = K'' *S* EV'_Stmts' *S* -1
                  + V'ParOr'   + V'ParAnd' + V'ParEver'
                  + V'If'      + V'Loop'
 
+    , _Dcl_pure = K'pure' *S* EV'Cid' * (S* K',' *S* V'Cid')^0
+    , Dcl_det   = K'deterministic' *S* EV'Cid' * (S* K',' *S* V'Cid')^0
+
     , _Dcl_int  = TYPE *S* ('['*S*NUM*S*']' + Cc(false)) *S*
                     V'__Dcl_int' * (S*K','*S*V'__Dcl_int')^0
     , __Dcl_int = V'INT' *S* (V'_Sets' + Cc(false)*Cc(false))
 
-    , _Dcl_ext  = (CK'output'+CK'input') *S* TYPE *S* V'EXT'
-                    * (S*K','*S*V'EXT')^0
+    , _Dcl_ext  = K'input' *S* TYPE *S* V'EXT' * (S*K','*S*V'EXT')^0
 
     , _Set  = V'_Exp' *S* V'_Sets'
     , _Sets = K'=' *S* (
-                Cc'SetStmt'  * (V'EmitE'+V'AwaitT'+V'AwaitE') +
+                Cc'SetStmt'  * (V'AwaitT'+V'AwaitE') +
                 Cc'SetBlock' * V'_SetBlock' +
                 Cc'SetExp'   * V'_Exp' +
                 EE'expression'
@@ -132,7 +135,7 @@ _GG = { [1] = K'' *S* EV'_Stmts' *S* -1
     , Nothing = K'nothing'
     , _DoBlock= K'do' *S* V'Block' *S* EK'end'
     , Async   = K'async' *S* EK'do' *S* V'Block' *S* EK'end'
-    , Host    = P'C' *S* EK'do' * C((P(1)-'end')^0) *S* EK'end'
+
     , Return  = K'return' *S* EV'_Exp'
 
     , ParOr   = K'par/or' *S* EK'do' *S*
@@ -157,7 +160,7 @@ _GG = { [1] = K'' *S* EV'_Stmts' *S* -1
 
     , _Emit   = V'EmitT' + V'EmitE'
     , EmitT   = K'emit' *S* (V'TIME')
-    , EmitE   = K'emit' *S* EV'Evt' * ( S* EK'(' *S* V'ExpList' *S* EK')' )^-1
+    , EmitE   = K'emit' *S* EV'Evt' * (S* K'=' *S* V'_Exp')^-1
 
     , AwaitN  = K'await' *S* K'forever'             -- last stmt
     , AwaitT  = K'await' *S* (V'_Parens'+V'TIME')
@@ -212,6 +215,17 @@ _GG = { [1] = K'' *S* EV'_Stmts' *S* -1
     , Cid  = CK(P'_' * ID)
 
     , STRING = CK( '"' * (P(1)-'"'-'\n')^0 * EK'"' )
+
+    , Host    = P'C' *S* EK'do' * m.S' \n\t'^0 *
+                    ( C(V'_C') + C((P(1)-'end')^0) )
+                *S* EK'end'
+
+    , _C      = m.Cg(V'_CSEP','mark') *
+                    (P(1)-V'_CEND')^0 *
+                V'_CEND'
+    , _CSEP = '/***' * (1-P'***/')^0 * '***/'
+    , _CEND = m.Cmt(C(V'_CSEP') * m.Cb'mark',
+                    function (s,i,a,b) return a == b end)
 
     , _SPACES = (  m.S'\t\n\r '
                 + ('//' * (P(1)-'\n')^0 * P'\n'^-1)

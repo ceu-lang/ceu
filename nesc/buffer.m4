@@ -14,12 +14,12 @@ do
         loop do
             await $1_ins ;
             if $1_n == $3 then
-                emit $1_overflow(1);
+                emit $1_overflow=1;
             else
                 buf[in] = $1_ins;
                 in = (in+1) % $3;
                 $1_n = $1_n + 1;
-                emit $1_inc();
+                emit $1_inc;
             end;
         end;
 
@@ -27,12 +27,12 @@ do
         loop do
             await $1_rem ;
             if $1_n == 0 then
-                emit $1_underflow(1);
+                emit $1_underflow=1;
             else
                 $1_rem = buf[out];
                 out = (out+1) % $3;
                 $1_n = $1_n - 1;
-                emit $1_dec();
+                emit $1_dec;
             end;
         end;
     end;

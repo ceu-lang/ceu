@@ -148,6 +148,17 @@ local C; C = {
     EmitE   = node('EmitE'),
     EmitT   = node('EmitT'),
 
+    Dcl_det = node('Dcl_det'),
+
+    _Dcl_pure = function (ln1,ln2, str, ...)
+        local ret = {}
+        local t = { ... }
+        for i=1, #t do
+            ret[#ret+1] = node('Dcl_pure')(ln1,ln2, str, t[i])
+        end
+        return unpack(ret)
+    end,
+
     _Dcl_int = function (ln1,ln2, str, tp, dim, ...)
         local ret = {}
         local t = { ... }
@@ -167,11 +178,11 @@ local C; C = {
         return node(id)(ln1,ln2, str, e1, e2)
     end,
 
-    _Dcl_ext = function (ln1,ln2, str, dir, tp, ...)
+    _Dcl_ext = function (ln1,ln2, str, tp, ...)
         local ret = {}
         local t = { ... }
         for i=1, #t do
-            ret[#ret+1] = node('Dcl_ext')(ln1,ln2, str, dir, tp, t[i])
+            ret[#ret+1] = node('Dcl_ext')(ln1,ln2, str, tp, t[i])
         end
         return unpack(ret)
     end,

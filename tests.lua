@@ -30,7 +30,8 @@ Test { [[return 0 || 10;]], run=1 }
 Test { [[return 0 && 10;]], run=0 }
 Test { [[return 2>1 && 10!=0;]], run=1 }
 Test { [[return (1<=2) + (1<2) + 2/1 - 2%3;]], run=2 }
-Test { [[return (~(~0b1010 & 0XF) | 0b0011 ^ 0B0010) & 0xF;]], run=11 }
+-- TODO: linux gcc only?
+--Test { [[return (~(~0b1010 & 0XF) | 0b0011 ^ 0B0010) & 0xF;]], run=11 }
 Test { [[int sizeof;]], parser=false }
 Test { [[return sizeof<int>;]], run=4 }
 Test { [[return 1<2>3;]], run=0 }
@@ -207,218 +208,16 @@ return a;
 
 Test { [[input int A=1;]], parser=false }
 Test { [[input int A; A=1; return 1;]], parser=false }
-Test { [[output int A; return 1;]], run=1 }
-Test { [[output int A; emit A(); return 1;]], run=false }
-Test { [[
-C do
-    int A () {}
-end
-output int A;
-A = 1;
-return 1;
-]],
-    parser = false,
-}
-
-Test { [[output int A;]],
-    dfa = 'missing return statement',
-}
 Test { [[input  int A;]],
     dfa = 'missing return statement',
 }
-Test { [[input int A; output int A; return 0;]],
-    env = 'event "A" already declared',
-}
-Test { [[input  int A,A; return 0;]],
+Test { [[input int A,A; return 0;]],
     env = 'event "A" already declared',
 }
 Test { [[
 input int A,B,C;
-output char D,E;
 ]],
     dfa = 'missing return statement',
-}
-
-Test { [[
-C do
-    void A (int v) {}
-end
-output char A;
-return 0;
-]],
-    run = 0;
-}
-
-Test { [[
-C do
-    void A (int v) {}
-end
-output char A;
-cahr v = emit A(1);
-return 0;
-]],
-    run = false;
-}
-
-Test { [[
-C do
-    void A (int v) {}
-end
-output char A;
-char v = emit A(1);
-return A;
-]],
-    parser = false,
-}
-
-Test { [[
-C do
-    int A (int v) {}
-end
-output void A;
-return 0;
-]],
-    --env = 'A : incompatible with function definition',
-    run = 0,
-}
-
-Test { [[
-C do
-    void A (int v) {}
-end
-output void A;
-emit A();
-return 0;
-]],
-    run = false,
-}
-
-Test { [[
-C do
-    void A () {}
-end
-output void A;
-int v = emit A();
-return 0;
-]],
-    exps = 'invalid attribution'
-}
-
-Test { [[emit A(10); return 0;]],
-    env = 'event "A" is not declared'
-}
-
-Test { [[
-C do
-    int Const () {
-        return -10;
-    }
-end
-output int Const;
-int ret = emit Const();
-return ret;
-]],
-    run = -10
-}
-
-Test { [[
-C do
-    int ID (int v) {
-        return v;
-    }
-end
-output int ID;
-emit ID(10);
-return ID;
-]],
-    parser = false,
-}
-
-Test { [[
-C do
-    int ID (int v) {
-        return v;
-    }
-end
-output int ID;
-int v = emit ID(10);
-return v;
-]],
-    run = 10
-}
-
-Test { [[
-C do
-    void VD (int v) {
-    }
-end
-output void VD;
-emit VD(10);
-return 1;
-]],
-    run = 1
-}
-
-Test { [[
-C do
-    void VD (int v) {
-    }
-end
-output void VD;
-int ret = emit VD(10);
-return ret;
-]],
-    exps = 'invalid attribution'
-}
-
-Test { [[
-C do
-    void VD (int v) {
-    }
-end
-output void VD;
-emit VD(10);
-return VD;
-]],
-    parser = false,
-}
-
-Test { [[
-C do
-    void VD (int v) {
-    }
-end
-output void VD;
-void v = emit VD(10);
-return v;
-]],
-    exps = 'invalid return value'
-}
-
-Test { [[
-C do
-    int NEG (int v) {
-        return -v;
-    }
-end
-output int NEG;
-emit NEG(10);
-return NEG;
-]],
-    parser = false,
-}
-
-Test { [[
-C do
-    int NEG (int v) {
-        return -v;
-    }
-end
-output int NEG;
-int v = emit NEG(10);
-return v;
-]],
-    run = -10
 }
 
 Test { [[await A; return 0;]],
@@ -431,7 +230,7 @@ par/or do
     await A;
 with
     async do
-        emit A(10);
+        emit A=10;
     end
 end;
 return 10;
@@ -446,7 +245,7 @@ par/or do
     ret = await A;
 with
     async do
-        emit A(10);
+        emit A=10;
     end;
 end
 return ret;
@@ -460,7 +259,7 @@ par/and do
     await A;
 with
     async do
-        emit A(10);
+        emit A=10;
     end;
 end;
 return A;
@@ -475,7 +274,7 @@ par/and do
     v = await A;
 with
     async do
-        emit A(10);
+        emit A=10;
     end;
 end;
 return v;
@@ -494,57 +293,18 @@ return v;
     },
 }
 
-Test { [[
-C do
-    int ID (int v) {
-        return v;
-    }
-end
-input  int A;
-output int ID;
-int v;
-par/and do
-    await A;
-with
-    v = emit ID(10);
-end;
-return v;
-]],
-    run = {['1~>A']=10},
-}
-
-Test { [[
-C do
-    int ID (int v) {
-        return v;
-    }
-end
-input  int A;
-output int ID;
-int v;
-par/or do
-    await A;
-with
-    v = emit ID(10);
-end
-return v;
-]],
-    unreach = 1,
-    run = 10,
-}
-
 print'TODO: deveria dar erro!'
 Test { [[int a = a+1; return a;]],
     --env = 'variable "a" is not declared',
     run = 1,
 }
 
-Test { [[int a; a = emit a(1); return a;]],
-    exps = 'invalid attribution',
+Test { [[int a; a = emit a=1; return a;]],
+    parser = false,
     --trig_wo = 1,
 }
 
-Test { [[int a; emit a(1); return a;]],
+Test { [[int a; emit a=1; return a;]],
     run = 1,
     --trig_wo = 1,
 }
@@ -1345,7 +1105,7 @@ return a+f;
 
 Test { [[
 int c;
-emit c(10);
+emit c=10;
 await c;
 return 0;
 ]],
@@ -1357,8 +1117,8 @@ return 0;
 -- EX.06: 2 triggers
 Test { [[
 int c;
-emit c(10);
-emit c(10);
+emit c=10;
+emit c=10;
 return c;
 ]],
     run = 10,
@@ -1368,7 +1128,7 @@ return c;
 Test { [[
 int a,b;
 a = 1;
-emit b(a);
+emit b=a;
 return b;
 ]],
     run = 1,
@@ -1382,7 +1142,7 @@ input int Start;
 int a = 3;
 par do
     await Start;
-    emit a(a);
+    emit a=a;
     return a;
 with
     loop do
@@ -2512,7 +2272,7 @@ input int Start;
 int a;
 par/and do
     await Start;
-    emit a(1);
+    emit a=1;
 with
     await a;
 end;
@@ -2526,13 +2286,13 @@ input int A;
 int b, c;
 par do
     await A;
-    emit b(1);
+    emit b=1;
     await c;
     return 10;
 with
     await b;
     await A;
-    emit c(10);
+    emit c=10;
     // unreachable
     await c;
     // unreachable
@@ -2566,7 +2326,7 @@ int a;
 par/or do
     return 1;
 with
-    emit a(1);
+    emit a=1;
     // unreachable
 end;
 // unreachable
@@ -2585,7 +2345,7 @@ int a;
 par do
     return 1;
 with
-    emit a(1);
+    emit a=1;
     // unreachable
 end;
 ]],
@@ -2597,7 +2357,7 @@ end;
 Test { [[
 int a;
 par do
-    emit a(1);
+    emit a=1;
     return 0;
 with
     return 2;
@@ -2611,7 +2371,7 @@ end;
 Test { [[
 int a;
 par/or do
-    emit a(1);
+    emit a=1;
 with
     nothing;
 end;
@@ -2631,7 +2391,7 @@ int a, ret;
 par/or do
     await Start;
     par/or do
-        emit a(2);
+        emit a=2;
     with
         ret = 3;
     end;
@@ -3039,8 +2799,8 @@ input int Start;
 int a,b,c;
 par/and do
     await Start;
-    emit b(1);
-    emit c(1);
+    emit b=1;
+    emit c=1;
 with
     await b;
     par/or do
@@ -3339,12 +3099,12 @@ par/or do
     x = 0;
 with
     await b;
-    emit a(b);
+    emit a=b;
     await 10ms;
     x = 1;
 with
     await Start;
-    emit b(1);
+    emit b=1;
     x = 2;
     await forever;
 end;
@@ -3368,8 +3128,8 @@ with
     x = 1;
 with
     await Start;
-    emit b(1);
-    emit a(b);
+    emit b=1;
+    emit a=b;
     x = 2;
     await forever;
 end;
@@ -4120,7 +3880,7 @@ par/or do
         await 10ms;
         x = 4;
     with
-        emit a();
+        emit a;
     end;
     int v = x;
 with
@@ -4141,7 +3901,7 @@ int a;
 loop do
     par/and do
         await A;
-        emit a(1);
+        emit a=1;
     with
         await a;
     end;
@@ -4159,14 +3919,14 @@ par do
     loop do
         par/or do
             await Start;
-            emit a(1);
+            emit a=1;
         with
             await a;
         end;
     end;
 with
     await a;
-    emit a(a);
+    emit a=a;
 end;
 ]],
     forever = true,
@@ -4184,14 +3944,14 @@ par do
     loop do
         par/and do
             await Start;
-            emit a(1);
+            emit a=1;
         with
             await a;
         end;
     end;
 with
     await a;
-    emit a(a);
+    emit a=a;
 end;
 ]],
     forever = true,
@@ -4205,13 +3965,13 @@ input int A;
 int a, d, e, i, j;
 par/and do
     await A;
-    emit a(1);
+    emit a=1;
 with
     d = await a;
-    emit i(5);
+    emit i=5;
 with
     e = await a;
-    emit j(6);
+    emit j=6;
 end;
 return d + e;
 ]],
@@ -4224,7 +3984,7 @@ return d + e;
 Test { [[
 int a;
 par do
-    emit a(1);
+    emit a=1;
 with
     return a;
 end;
@@ -4259,7 +4019,7 @@ par do
     end;
 with
     await A;
-    emit b(1);
+    emit b=1;
 end;
 ]],
     forever = true,
@@ -4272,7 +4032,7 @@ int a;
 par do
     par do
         await A;
-        emit a(1);
+        emit a=1;
     with
         await a;
         await a;
@@ -4293,7 +4053,7 @@ int a, b;
 par/or do
     b = await a;
 with
-    emit a(3);
+    emit a=3;
 end;
 return 0;
 ]],
@@ -4307,7 +4067,7 @@ int a,b;
 par/or do
     b = await a;
 with
-    emit a(3);
+    emit a=3;
 with
     a = b;
 end;
@@ -4320,25 +4080,11 @@ return 0;
 }
 
 Test { [[
-C do int Z1 (int a) { return a; } end
-output int Z1;
-input int A;
-int c;
-emit Z1(3);
-c = await A;
-return c;
-]],
-    run = {
-        ['10~>A ; 20~>A'] = 10,
-        ['3~>A ; 0~>A'] = 3,
-    }
-}
-Test { [[
 input int Start;
 int b,i;
 par/or do
     await Start;
-    emit b(1);
+    emit b=1;
     i = 2;
 with
     await b;
@@ -4355,11 +4101,11 @@ input int Start;
 int b,c;
 par/or do
     await Start;
-    emit b(1);
+    emit b=1;
     await c;
 with
     await b;
-    emit c(5);
+    emit c=5;
 end;
 return c;
 ]],
@@ -4434,7 +4180,7 @@ loop do
     if v==2 then
         return a;
     end;
-    emit a(v);
+    emit a=v;
 end;
 ]],
     --trig_wo = 1,
@@ -4455,7 +4201,7 @@ loop do
             break;
         end;
     end;
-    emit a(v);
+    emit a=v;
 end;
 return a-1;
 ]],
@@ -4990,7 +4736,7 @@ input int Start, C;
 int a;
 par do
     await Start;
-    emit a(1);
+    emit a=1;
     return 0;
 with
     par/or do
@@ -5014,7 +4760,7 @@ input int Start;
 int a;
 par do
     await Start;
-    emit a(1);
+    emit a=1;
 with
     await a;
     return a;
@@ -5030,7 +4776,7 @@ input int B,C;
 int a;
 par/or do
     await B;
-    emit a(5);
+    emit a=5;
 with
     par/and do
         await a;
@@ -5055,7 +4801,7 @@ input int Start, C;
 int a;
 par do
     await Start;
-    emit a(1);
+    emit a=1;
     return a;
 with
     par/and do
@@ -5349,7 +5095,7 @@ int a;
 par/or do
     await a;
 with
-    emit a(1);
+    emit a=1;
 end;
 return a;
 ]],
@@ -5362,9 +5108,9 @@ return a;
 Test { [[
 int a;
 par/or do
-    emit a(1);
+    emit a=1;
 with
-    emit a(1);
+    emit a=1;
 end;
 return a;
 ]],
@@ -5376,9 +5122,9 @@ return a;
 Test { [[
 int a, b;
 par/or do
-    emit a(2);
+    emit a=2;
 with
-    emit b(3);
+    emit b=3;
 end;
 return a+b;
 ]],
@@ -5389,13 +5135,13 @@ return a+b;
 Test { [[
 int a;
 int v = par do
-    emit a(1);
+    emit a=1;
     return a;
 with
-    emit a(1);
+    emit a=1;
     return a;
 with
-    emit a(1);
+    emit a=1;
     return a;
 end;
 return v;
@@ -5457,9 +5203,9 @@ Test { [[
 input int A;
 int a;
 await A;
-emit a(1);
+emit a=1;
 await A;
-emit a(1);
+emit a=1;
 return a;
 ]],
 --~A;1~>a;~A;1~>a]],
@@ -5474,7 +5220,7 @@ int a;
 par/or do
     loop do
         await A;
-        emit a(1);
+        emit a=1;
     end;
 with
     await A;
@@ -5493,7 +5239,7 @@ input int Start;
 int a;
 par do
     await Start;
-    emit a(1);
+    emit a=1;
     return a;
 with
     await a;
@@ -5514,7 +5260,7 @@ input int Start;
 int a;
 par/or do
     await Start;
-    emit a(1);
+    emit a=1;
 with
     await a;
     a = a + 1;
@@ -5693,11 +5439,11 @@ par/or do
     // unreachable
 with
     par/or do
-        emit b(1);
+        emit b=1;
     with
-        emit a(2);
+        emit a=2;
     with
-        emit c(3);
+        emit c=3;
     end;
     await d;
     // unreachable
@@ -5724,11 +5470,11 @@ par/or do
     end;
 with
     par/or do
-        emit a(10);
+        emit a=10;
     with
-        emit b(20);
+        emit b=20;
     with
-        emit c(30);
+        emit c=30;
     end;
 end;
 return 0;
@@ -5750,11 +5496,11 @@ par/or do
     end;
 with
     par/or do
-        emit a(10);
+        emit a=10;
     with
-        emit b(20);
+        emit b=20;
     with
-        emit c(30);
+        emit c=30;
     end;
 end;
 return 0;
@@ -5766,9 +5512,9 @@ return 0;
 Test { [[
 int a;
 par/or do
-    emit a(1);
+    emit a=1;
 with
-    emit a(1);
+    emit a=1;
     await a;
 end;
 return 0;
@@ -5780,9 +5526,9 @@ return 0;
 Test { [[
 int a;
 par do
-    emit a(1);
+    emit a=1;
 with
-    emit a(1);
+    emit a=1;
     await a;
 end;
 ]],
@@ -6763,9 +6509,9 @@ return c;
 Test { [[
 int a,b;
 par/or do
-    emit a(2);
+    emit a=2;
 with
-    emit b(5);
+    emit b=5;
 end;
 return a + b;
 ]],
@@ -6801,7 +6547,7 @@ end;
 
 Test { [[
 int a;
-emit a(8);
+emit a=8;
 return a;
 ]],
     run = 8,
@@ -6811,7 +6557,7 @@ return a;
 Test { [[
 int a;
 par/and do
-    emit a(9);
+    emit a=9;
 with
     loop do
         await a;
@@ -6832,9 +6578,9 @@ int v;
 par/or do
     v = await A;
     par/or do
-        emit a(1);
+        emit a=1;
     with
-        emit b(1);
+        emit b=1;
     end;
     v = await A;
 with
@@ -6861,9 +6607,9 @@ int a, b, c;
 par/or do
     await D;
     par/or do
-        emit a(8);
+        emit a=8;
     with
-        emit b(5);
+        emit b=5;
     end;
     int v = await D;
     return v;
@@ -6896,10 +6642,10 @@ int a,v,b;
 par/or do
     par/and do
         int v = await A;
-        emit a(v);
+        emit a=v;
     with
         await B;
-        emit b(1);
+        emit b=1;
     end;
     return v;
 with
@@ -6929,7 +6675,7 @@ par/or do
         return v;
     with
         await B;
-        emit b(1);
+        emit b=1;
         return v;
     end;
 with
@@ -6980,7 +6726,7 @@ input int D;
 int a;
 loop do
     int v = await D;
-    emit a(a+v);
+    emit a=a+v;
 end;
 ]],
 --((a,~D)->add~>a)*]],
@@ -6997,13 +6743,13 @@ par/or do
     a = 0;
     loop do
         int v = await A;
-        emit a(v);
+        emit a=v;
     end;
 with
     b = 0;
     loop do
         int v = await D;
-        emit b(v+b);
+        emit b=v+b;
     end;
 with
     c = 0;
@@ -7013,7 +6759,7 @@ with
         with
             await b;
         end;
-        emit c(a+b);
+        emit c=a+b;
     end;
 with
     await E;
@@ -7041,14 +6787,14 @@ int b, d, e;
 par/and do
     loop do
         await A;
-        emit b(0);
+        emit b=0;
         int v = await C;
-        emit d(v);
+        emit d=v;
     end;
 with
     loop do
         await d;
-        emit e(d);
+        emit e=d;
     end;
 end;
 ]],
@@ -7159,7 +6905,7 @@ input int A;
 int a;
 par/and do
     await A;
-    emit a(1);
+    emit a=1;
 with
     await a;
 with
@@ -7178,10 +6924,10 @@ input int A;
 int a;
 par/and do
     await A;
-    emit a(1);
+    emit a=1;
 with
     await a;
-    emit a(a);
+    emit a=a;
 end;
 return a;
 ]],
@@ -7195,7 +6941,7 @@ input int A;
 int a;
 par/and do
     await A;
-    emit a(1);
+    emit a=1;
 with
     await a;
     await a;
@@ -7212,9 +6958,9 @@ int a, b;
 par/and do
     await A;
     par/or do
-        emit a(1);
+        emit a=1;
     with
-        emit b(1);
+        emit b=1;
     end;
 with
     par/or do
@@ -7246,9 +6992,9 @@ int a,b;
 par/and do
     await A;
     par/or do
-        emit a(1);
+        emit a=1;
     with
-        emit b(1);
+        emit b=1;
     end;
 with
     par/and do
@@ -7278,7 +7024,7 @@ input int A;
 int a;
 par/and do
     await A;
-    emit a(1);
+    emit a=1;
 with
     await a;
     await a;
@@ -7302,8 +7048,8 @@ input int A;
 int a;
 par/and do
     await A;
-    emit a(1);
-    emit a(3);
+    emit a=1;
+    emit a=3;
 with
     await a;
     await a;
@@ -7342,7 +7088,7 @@ input int A;
 int a;
 par/and do
     await A;
-    emit a(8);
+    emit a=8;
 with
     await a;
     await a;
@@ -7364,7 +7110,7 @@ par/and do
     with
         await B;
     end;
-    emit a(1);
+    emit a=1;
 with
     par/and do
         nothing;
@@ -7387,7 +7133,7 @@ par/and do
     with
         await B;
     end;
-    emit a(1);
+    emit a=1;
 with
     par/or do
         await C;
@@ -7406,8 +7152,8 @@ input int A;
 int a,b;
 par/and do
     await A;
-    emit a(1);
-    emit b(1);
+    emit a=1;
+    emit b=1;
 with
     await a;
     await b;
@@ -7444,7 +7190,7 @@ return d;
 Test { [[
 int a;
 par/and do
-    emit a(1);
+    emit a=1;
 with
     par/or do
         nothing;
@@ -7466,7 +7212,7 @@ return 0;
 Test { [[
 int a;
 par/and do
-    emit a(1);
+    emit a=1;
 with
     par/or do
         nothing;
@@ -7516,9 +7262,9 @@ par/or do
     end;
 with
     await Start;
-    emit b();
-    emit b();
-    emit a();
+    emit b;
+    emit b;
+    emit a;
     return v;
 end;
 ]],
@@ -7534,7 +7280,7 @@ par/or do
     loop do
         par/or do
             await a;
-            emit b(a);
+            emit b=a;
             v = v + 1;
         with
             loop do
@@ -7547,9 +7293,9 @@ par/or do
     end;
 with
     await Start;
-    emit a(1);
-    emit a(1);
-    emit a(0);
+    emit a=1;
+    emit a=1;
+    emit a=0;
     return v;
 end;
 ]],
@@ -7627,14 +7373,14 @@ par/or do
     end;
 with
     async do
-        emit P2(0);
-        emit P2(0);
-        emit P2(0);
-        emit P2(0);
-        emit P2(0);
-        emit P2(0);
-        emit P2(0);
-        emit P2(1);
+        emit P2=0;
+        emit P2=0;
+        emit P2=0;
+        emit P2=0;
+        emit P2=0;
+        emit P2=0;
+        emit P2=0;
+        emit P2=1;
     end;
     await forever;      // TODO: ele acha que o async termina
 end;
@@ -7722,14 +7468,14 @@ with
     with
         loop do
             await 100ms;
-            emit draw(1);
+            emit draw=1;
         end;
     with
         loop do
             await 100ms;
-            emit sleeping(1);
+            emit sleeping=1;
             await 100ms;
-            emit occurring(1);
+            emit occurring=1;
         end;
     end;
 end;
@@ -7758,7 +7504,7 @@ int a, b, v=0;
 par/or do
     loop do
         await a;
-        emit b(1);
+        emit b=1;
         v = 4;
     end;
     // unreachable
@@ -7770,7 +7516,7 @@ with
     // unreachable
 with
     await Start;
-    emit a(1);
+    emit a=1;
     return v;
 end;
 // unreachable
@@ -7788,7 +7534,7 @@ int a, v1, v2;
 par/and do
     par/or do
         await Start;
-        emit a(10);
+        emit a=10;
     with
         await forever;
     end;
@@ -7816,12 +7562,12 @@ par/or do
     end;
 with
     await Start;
-    emit a(1);
-    emit a(a);
-    emit a(a);
-    emit a(a);
-    emit a(a);
-    emit a(a);
+    emit a=1;
+    emit a=a;
+    emit a=a;
+    emit a=a;
+    emit a=a;
+    emit a=a;
 end;
 return a;
 ]],
@@ -7839,16 +7585,16 @@ par/or do
     end;
 with
     await a;
-    emit b(1);
-    emit b(b);
-    emit b(b);
-    emit b(b);
-    emit b(b);
-    emit b(b);
-    emit b(b);
+    emit b=1;
+    emit b=b;
+    emit b=b;
+    emit b=b;
+    emit b=b;
+    emit b=b;
+    emit b=b;
 with
     await Start;
-    emit a(1);
+    emit a=1;
     b = 0;
 end;
 return b;
@@ -7863,10 +7609,10 @@ input int Start;
 int a;
 par/or do
     await Start;
-    emit a(0);
+    emit a=0;
 with
     await a;
-    emit a(a+1);
+    emit a=a+1;
     await forever;
 end;
 return a;
@@ -7879,10 +7625,10 @@ input int Start;
 int a,b;
 par/or do
     await Start;
-    emit a(0);
+    emit a=0;
 with
     await a;
-    emit b(a+1);
+    emit b=a+1;
     a = b + 1;
     await forever;
 with
@@ -7901,7 +7647,7 @@ int c = 0;
 par/or do
     loop do
         await A;
-        emit c(c);
+        emit c=c;
     end;
 with
     loop do
@@ -7923,8 +7669,8 @@ int a;
 par/or do
     loop do
         await Start;
-        emit a(0);
-        emit a(a+1);
+        emit a=0;
+        emit a=a+1;
     end;
 with
     int v1,v2;
@@ -7948,8 +7694,8 @@ int a;
 par/or do
     loop do
         await Start;
-        emit a(0);
-        emit a(a+1);
+        emit a=0;
+        emit a=a+1;
     end;
 with
     int v1,v2;
@@ -7972,7 +7718,7 @@ par/or do
     end;
 with
     await A;
-    emit c(1);
+    emit c=1;
     a = c;
 end;
 return a;
@@ -7987,7 +7733,7 @@ int a, b, c;
 par/or do
     loop do
         await c;
-        emit b(c+1);
+        emit b=c+1;
         a = b;
     end;
 with
@@ -7997,7 +7743,7 @@ with
     end;
 with
     await Start;
-    emit c(1);
+    emit c=1;
     a = c;
 end;
 return a;
@@ -8014,19 +7760,19 @@ par/or do
     par/and do
         loop do
             int v = await A;
-            emit a(v);
+            emit a=v;
         end;
     with
         loop do
             await a;
-            emit b(a);
+            emit b=a;
             await a;
-            emit b(a);
+            emit b=a;
         end;
     with
         loop do
             await b;
-            emit a(b);
+            emit a=b;
             i = i + 1;
         end;
     end;
@@ -8051,9 +7797,9 @@ par/or do
     loop do
         await 100ms;
         par/or do
-            emit x(x+1);
+            emit x=x+1;
         with
-            emit y(y+1);
+            emit y=y+1;
         end;
     end;
 with
@@ -8083,14 +7829,14 @@ int x = 0;
 int y = 0;
 par/or do
     await Start;
-    emit a(0);
+    emit a=0;
 with
     await b;
-    emit c(0);
+    emit c=0;
 with
     par/or do
         await a;
-        emit b(0);
+        emit b=0;
     with
         par/or do
             await b;
@@ -8119,9 +7865,9 @@ par/or do
     loop do
         await 100ms;
         par/or do
-            emit x(x+1);
+            emit x=x+1;
         with
-            emit y(y+1);
+            emit y=y+1;
         end;
         c = c + 1;
     end;
@@ -8158,7 +7904,7 @@ input int Start;
 int a, b;
 par/and do
     await Start;
-    emit a(1);
+    emit a=1;
     b = a;
 with
     await a;
@@ -8173,7 +7919,7 @@ input int Start;
 int a, b;
 par/or do
     await Start;
-    emit a(1);
+    emit a=1;
     b = a;
 with
     await a;
@@ -8191,11 +7937,11 @@ input int Start;
 int a;
 par/or do
     await a;
-    emit a(1);
+    emit a=1;
     return a;
 with
     await Start;
-    emit a(2);
+    emit a=2;
     return a;
 end;
 ]],
@@ -8211,14 +7957,14 @@ int a, b;
 par/or do
     loop do
         await a;
-        emit b(1);
+        emit b=1;
     end;
 with
     await Start;
-    emit a(1);
+    emit a=1;
 with
     await b;
-    emit a(2);
+    emit a=2;
 end;
 return a;
 ]],
@@ -8234,8 +7980,8 @@ int a, x, y, vis;
 par/or do
     par/and do
         await Start;
-        emit x(1);
-        emit y(1);
+        emit x=1;
+        emit y=1;
     with
         loop do
             par/or do
@@ -8247,10 +7993,10 @@ par/or do
     end;
 with
     await Start;
-    emit a(1);
-    emit x(0);
-    emit y(0);
-    emit vis(1);
+    emit a=1;
+    emit x=0;
+    emit y=0;
+    emit vis=1;
     await forever;
 end;
 ]],
@@ -8266,8 +8012,8 @@ int x, w, y, z, a, vis;
 par/or do
     par/and do
         await Start;
-        emit x(1);
-        emit w(1);
+        emit x=1;
+        emit w=1;
     with
         loop do
             par/or do
@@ -8284,11 +8030,11 @@ par/or do
     end;
 with
     await Start;
-    emit a(1);
-    emit y(0);
-    emit z(0);
-    emit z(0);
-    emit vis(1);
+    emit a=1;
+    emit y=0;
+    emit z=0;
+    emit z=0;
+    emit vis=1;
     await forever;
 with
     await F;
@@ -8306,8 +8052,8 @@ int x, w, y, z, a, vis;
 par/or do
     par/and do
         await Start;
-        emit x(1);
-        emit w(1);
+        emit x=1;
+        emit w=1;
     with
         loop do
             par/or do
@@ -8328,10 +8074,10 @@ par/or do
     end;
 with
     await Start;
-    emit a(1);
-    emit y(1);
-    emit z(1);
-    emit vis(1);
+    emit a=1;
+    emit y=1;
+    emit z=1;
+    emit vis=1;
     await forever;
 with
     await F;
@@ -8349,20 +8095,20 @@ int a, b, c, e, f;
 int v = 0;
 par/and do
     await Start;
-    emit a();
+    emit a;
     v = v + 1;
-    emit e();
+    emit e;
     v = v + 1;
 with
     await Start;
-    emit b();
+    emit b;
     v = v + 1;
-    emit f();
+    emit f;
     v = v + 1;
 with
     await a;
     v = v + 1;
-    emit c();
+    emit c;
     v = v + 1;
     await f;
 with
@@ -8385,20 +8131,20 @@ int v1 = 0;
 int v2 = 0;
 par/and do
     await Start;
-    emit a();
+    emit a;
     v1 = v1 + 1;
-    emit e();
+    emit e;
     v1 = v1 + 1;
 with
     await Start;
-    emit b();
+    emit b;
     v2 = v2 + 1;
-    emit f();
+    emit f;
     v2 = v2 + 1;
 with
     await a;
     v1 = v1 + 1;
-    emit c();
+    emit c;
     v = v + 1;
     await f;
 with
@@ -8550,7 +8296,7 @@ par/or do
         par/or do
             await Start;
             par/or do
-                emit a(40);
+                emit a=40;
             with
                 nothing;
             end;
@@ -8582,7 +8328,7 @@ par/or do
     int a;
     par/or do
         await Start;
-        emit a(5);
+        emit a=5;
         // unreachable
     with
         await a;
@@ -8679,7 +8425,7 @@ end;
 Test { [[
 input void X;
 async do
-    emit X();
+    emit X;
 end;
 return 0;
 ]],
@@ -8691,7 +8437,7 @@ input int A;
 int a;
 async do
     a = 1;
-    emit A(a);
+    emit A=a;
 end;
 return a;
 ]],
@@ -8702,17 +8448,17 @@ Test { [[
 input void A;
 int a;
 async do
-    a = emit A();
+    a = emit A;
 end;
 return a;
 ]],
-    exps = 'invalid attribution',
+    parser = false,
 }
 
 Test { [[
 int a;
 async do
-    emit a(1);
+    emit a=1;
 end;
 return 0;
 ]],
@@ -8738,9 +8484,9 @@ return 0;
 Test { [[
 input int X;
 async do
-    emit X(1);
+    emit X=1;
 end;
-emit X(1);
+emit X=1;
 return 0;
 ]],
   async='not permitted outside async'
@@ -8977,7 +8723,7 @@ Test { [[
 input int A;
 par/or do
     async do
-        emit A(1);
+        emit A=1;
     end;
     return 0;
 with
@@ -9011,7 +8757,7 @@ Test { [[
 input int A;
 par/or do
     async do
-        emit A(4);
+        emit A=4;
     end;
 with
     nothing;
@@ -9220,6 +8966,265 @@ return v[i+1];
     run = 5
 }
 
+Test { [[int[2] v; await v;     return 0;]], env='event "v" is not declared' }
+Test { [[int[2] v; emit v;    return 0;]], env='event "v" is not declared' }
+Test { [[int[2] v; await v[0];  return 0;]], parser=false }
+Test { [[int[2] v; emit v[0]; return 0;]], parser=false }
+Test { [[int[2] v; v=v; return 0;]], exps='invalid attribution' }
+Test { [[int v; return v[1];]], exps='cannot index a non array' }
+Test { [[int[2] v; return v[v];]], exps='invalid array index' }
+
+Test { [[
+int[2] v ;
+return v == &v[0] ;
+]],
+    run = 1,
+}
+
+    -- C FUNCS BLOCK
+
+Test { [[
+C do
+end
+return 1;
+]],
+    run = 1,
+}
+
+Test { [[
+C do
+    char* a = "end";
+end
+return 1;
+]],
+    parser = false,
+}
+
+Test { [[
+C do
+    /*** END ***/
+    char* a = "end";
+    /*** END ***/
+end
+return 1;
+]],
+    run = 1,
+}
+
+Test { [[
+C do
+    int A () {}
+end
+A = 1;
+return 1;
+]],
+    parser = false,
+}
+
+Test { [[
+C do
+    void A (int v) {}
+end
+return 0;
+]],
+    run = 0;
+}
+
+Test { [[
+C do
+    void A (int v) {}
+end
+cahr v = emit A=1;
+return 0;
+]],
+    parser = false,
+}
+
+Test { [[
+C do
+    void A (int v) {}
+end
+emit A=1;
+return 0;
+]],
+    env = 'event "A" is not declared',
+}
+
+Test { [[
+C do
+    int A (int v) {}
+end
+return 0;
+]],
+    --env = 'A : incompatible with function definition',
+    run = 0,
+}
+
+Test { [[
+C do
+    void A (int v) {}
+end
+_A();
+return 0;
+]],
+    run = false,
+}
+
+Test { [[
+C do
+    void A () {}
+end
+int v = _A();
+return v;
+]],
+}
+
+Test { [[emit A=10; return 0;]],
+    env = 'event "A" is not declared'
+}
+
+Test { [[
+C do
+    int Const () {
+        return -10;
+    }
+end
+int ret = _Const();
+return ret;
+]],
+    run = -10
+}
+
+Test { [[
+C do
+    int ID (int v) {
+        return v;
+    }
+end
+return _ID(10);
+]],
+    run = 10,
+}
+
+Test { [[
+C do
+    int ID (int v) {
+        return v;
+    }
+end
+int v = _ID(10);
+return v;
+]],
+    run = 10
+}
+
+Test { [[
+C do
+    void VD (int v) {
+    }
+end
+_VD(10);
+return 1;
+]],
+    run = 1
+}
+
+Test { [[
+C do
+    void VD (int v) {
+    }
+end
+int ret = _VD(10);
+return ret;
+]],
+    run = false,
+}
+
+Test { [[
+C do
+    void VD (int v) {
+    }
+end
+void v = _VD(10);
+return v;
+]],
+    exps = 'invalid return value'
+}
+
+Test { [[
+C do
+    int NEG (int v) {
+        return -v;
+    }
+end
+return _NEG(10);
+]],
+    run = -10,
+}
+
+Test { [[
+C do
+    int NEG (int v) {
+        return -v;
+    }
+end
+int v = _NEG(10);
+return v;
+]],
+    run = -10
+}
+
+Test { [[
+C do
+    int ID (int v) {
+        return v;
+    }
+end
+input int A;
+int v;
+par/and do
+    await A;
+with
+    v = _ID(10);
+end;
+return v;
+]],
+    run = {['1~>A']=10},
+}
+
+Test { [[
+C do
+    int ID (int v) {
+        return v;
+    }
+end
+input int A;
+int v;
+par/or do
+    await A;
+with
+    v = _ID(10);
+end
+return v;
+]],
+    unreach = 1,
+    run = 10,
+}
+
+Test { [[
+C do int Z1 (int a) { return a; } end
+input int A;
+int c;
+_Z1(3);
+c = await A;
+return c;
+]],
+    run = {
+        ['10~>A ; 20~>A'] = 10,
+        ['3~>A ; 0~>A'] = 3,
+    }
+}
+
 Test { [[
 C do
     int f1 (u8* v) {
@@ -9237,21 +9242,6 @@ return _f2(&v[0],&v[1]) + _f1(v) + _f1(&v[0]);
     run = 39,
 }
 
-Test { [[int[2] v; await v;     return 0;]], env='event "v" is not declared' }
-Test { [[int[2] v; emit v();    return 0;]], env='event "v" is not declared' }
-Test { [[int[2] v; await v[0];  return 0;]], parser=false }
-Test { [[int[2] v; emit v[0](); return 0;]], parser=false }
-Test { [[int[2] v; v=v; return 0;]], exps='invalid attribution' }
-Test { [[int v; return v[1];]], exps='cannot index a non array' }
-Test { [[int[2] v; return v[v];]], exps='invalid array index' }
-
-Test { [[
-int[2] v ;
-return v == &v[0] ;
-]],
-    run = 1,
-}
-
 PRE = [[
 C do
     static inline int idx (const int* vec, int i) {
@@ -9262,6 +9252,7 @@ C do
         return val;
     }
 end
+pure _idx;
 int[2] va;
 ]]
 
@@ -9289,7 +9280,31 @@ end;
 return _idx(va,0) + _idx(va,1);
 ]],
     nd_acc = 1,
+    nd_call = 1,
 }
+Test { [[
+par/and do
+    _set(va,0,1);
+with
+    _idx(va,1);
+end;
+return _idx(va,0) + _idx(va,1);
+]],
+    nd_acc = 1,
+}
+Test { [[
+_set(va,0,1);
+_set(va,1,2);
+par/and do
+    _idx(va,0);
+with
+    _idx(va,1);
+end;
+return _idx(va,0) + _idx(va,1);
+]],
+    run = 3,
+}
+
 PRE = ''
 
 Test { [[
@@ -9306,9 +9321,8 @@ return 1;
     run = 1
 }
 
-    -- C Funcs
-
 PRE = PRE .. [[
+pure _f3, _f5;
 C do
 int f1 (int* a, int* b) {
     return *a + *b;
@@ -9356,7 +9370,7 @@ with
 end;
 return 0;
 ]],
-    nd_acc = 1
+    nd_acc = 1,
 }
 Test { [[
 int a;
@@ -9368,7 +9382,6 @@ end;
 return 0;
 ]],
     nd_esc = 1,
-    nd_acc = 1,     -- TODO: const
 }
 Test { [[
 int a, b;
@@ -9458,7 +9471,7 @@ with
     return a;
 end;
 ]],
-    nd_acc = 2,     -- TODO: const
+    nd_acc = 1,
 }
 
 Test { [[
@@ -9470,6 +9483,7 @@ with
 end;
 return a+b;
 ]],
+    nd_call = 1,
     run = 6,
 }
 
@@ -9485,6 +9499,7 @@ end;
 return v1 + v2;
 ]],
     nd_acc = 2,
+    nd_call = 1,
 }
 
 Test { [[
@@ -9499,6 +9514,7 @@ end;
 return v1 + v2;
 ]],
     nd_acc = 2,     -- TODO: const
+    nd_call = 1,
 }
 
 Test { [[
@@ -9512,7 +9528,7 @@ with
 end;
 return v1 + v2;
 ]],
-    nd_acc = 2,     -- TODO: const
+    run = 6,
 }
 
 Test { [[
@@ -9527,6 +9543,7 @@ end;
 return a+b;
 ]],
     run = 4,
+    nd_call = 1,
 }
 
 Test { [[
@@ -9541,6 +9558,7 @@ end;
 return a+a;
 ]],
     nd_acc = 1,
+    nd_call = 1,
 }
 
 Test { [[
@@ -9554,7 +9572,7 @@ with
 end;
 return a+a;
 ]],
-    nd_acc = 1,     -- TODO: const
+    run = 4,
 }
 
 Test { [[
@@ -9570,6 +9588,7 @@ end;
 return v1+v2;
 ]],
     nd_acc = 2,
+    nd_call = 1,
 }
 
 Test { [[
@@ -9584,9 +9603,61 @@ with
 end;
 return v1+v2;
 ]],
-    nd_acc = 2,     -- TODO: const
+    nd_acc = 1,
 }
 PRE = ''
+
+Test { [[
+par/and do
+    _printf("END: 1\n");
+with
+    _assert(1);
+end
+return 0;
+]],
+    nd_call = 1,
+}
+
+Test { [[
+deterministic _f0, _printf, _f1, _assert, _f2;
+C do #include <assert.h> end
+par/and do
+    _printf("END: 1\n");
+with
+    _assert(1);
+end
+return 0;
+]],
+    run = 1,
+}
+
+Test { [[
+par do
+    loop do
+        _digitalWrite(11, _HIGH);
+        await 1s;
+        _digitalWrite(11, _LOW);
+        await 1s;
+    end
+with
+    loop do
+        _digitalWrite(12, _HIGH);
+        await 500ms;
+        _digitalWrite(12, _LOW);
+        await 500ms;
+    end
+with
+    loop do
+        _digitalWrite(13, _HIGH);
+        await 250ms;
+        _digitalWrite(13, _LOW);
+        await 250ms;
+    end
+end
+]],
+    nd_call = 6,
+    unreach = 4,
+}
 
     -- STRINGS
 

@@ -40,19 +40,23 @@ function qVSq (q1, q2)
     if q1.escs and q2.escs then
         return set.hasInter(q1.escs, q2.escs) -- and q1.esc~=q2.esc
 
+    elseif q1.f and q2.f then
+        return not (_C.pures[q1.id] or _C.pures[q2.id] or
+                        (_C.dets[q1.id] and _C.dets[q1.id][q2.id]))
+
     elseif q1.mode and q2.mode and ND[q1.mode][q2.mode] then
         if q1.ptr then
             if q2.ptr then
                 -- q1.ptr vs q2.ptr
-                return C.contains(q1.ptr, q2.ptr)
+                return _C.contains(q1.ptr, q2.ptr)
             else
                 -- q1.ptr vs q2.acc
-                return C.contains(q1.ptr, q2.acc.tp) and q2.acc.id~='$ret'
+                return _C.contains(q1.ptr, q2.acc.tp) and q2.acc.id~='$ret'
             end
         else
             if q2.ptr then
                 -- q1.acc vs q2.ptr
-                return C.contains(q2.ptr, q1.acc.tp) and q1.acc.id~='$ret'
+                return _C.contains(q2.ptr, q1.acc.tp) and q1.acc.id~='$ret'
             else
                 return q1.acc==q2.acc
             end
@@ -416,10 +420,10 @@ F = {
     end,
 
     EmitE = function (me)
-        local acc, exps = unpack(me)
+        local acc, exp = unpack(me)
 
-        if exps then
-            CONCAT_all(me, exps)
+        if exp then
+            CONCAT(me, exp)
         end
         CONCAT(me, acc)
         local q = acc.nfa.f
@@ -495,29 +499,45 @@ F = {
 
     Op2_call = function (me)
         local _, f, exps = unpack(me)
+        local isPure = _C.pures[me.fid]
 
         for _, exp in ipairs(exps) do
             CONCAT(me, exp)
             if exp.fst then
-                -- $f(pa) --> pa.mode='wr'
                 local var = exp.fst.var
-                local ptr = C.deref(var.tp)
-                if ptr then
-                    INS(me, '', ACC(var,'wr',ptr))
+                local ptr = _C.deref(var.tp)
 
-                -- $f(&a) --> a.mode='wr'
+                -- $f(pa)
+                if ptr then
+                    if isPure then
+                        INS(me, '', ACC(var,'rd',ptr))
+                    else
+                        INS(me, '', ACC(var,'wr',ptr))
+                    end
+
+                -- $f(&a)
                 elseif exp.fst.ref then
-                    INS(me, '', ACC(var,'wr'))
+                    if isPure then
+                        INS(me, '', ACC(var,'rd'))
+                    else
+                        INS(me, '', ACC(var,'wr'))
+                    end
                 end
             end
         end
+
+        INS(me, '',
+            _NFA.node {
+                id = me.fid,
+                f  = f,
+            })
     end,
 
     ['Op1_*'] = function (me)
         local _, e1 = unpack(me)
         CONCAT(me, e1)
         local var = e1.fst.var
-        INS(me, '', ACC(var,e1.fst.mode,assert(C.deref(var.tp))))
+        INS(me, '', ACC(var,e1.fst.mode,assert(_C.deref(var.tp))))
         e1.fst.nfa.f.mode = 'rd'
     end,
 }

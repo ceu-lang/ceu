@@ -2,7 +2,7 @@ function check_lval (e1)
     return e1.lval and e1.fst
 end
 function check_depth (e1, e2)
-    local ptr = C.deref(e2.tp)
+    local ptr = _C.deref(e2.tp)
     return (not ptr) or (not e2.fst) or
             e1.fst.var.blk.depth >= e2.fst.var.blk.depth
 end
@@ -11,7 +11,7 @@ F = {
     SetExp = function (me)
         local e1, e2 = unpack(me)
         ASR( check_lval(e1) and
-             C.contains(e1.tp,e2.tp) and
+             _C.contains(e1.tp,e2.tp) and
              check_depth(e1, e2),
                 me, 'invalid attribution')
         e1.fst.mode = 'wr'
@@ -24,14 +24,9 @@ F = {
         e1.fst.mode = 'wr'
         stmt.toset = e1
         if stmt.id == 'AwaitT' then
-            ASR(C.isNumeric(e1.tp), me, 'invalid attribution')
-        elseif stmt.id == 'AwaitE' then
-            ASR( C.contains(e1.tp,evt.tp) and
-                 check_depth(e1,evt),
-                    me, 'invalid attribution')
-        else -- 'EmitE' then
-            ASR(evt.dir == 'output', me, 'invalid attribution')
-            ASR( C.contains(e1.tp,evt.tp) and
+            ASR(_C.isNumeric(e1.tp), me, 'invalid attribution')
+        else --'AwaitE'
+            ASR( _C.contains(e1.tp,evt.tp) and
                  check_depth(e1,evt),
                     me, 'invalid attribution')
         end
@@ -45,7 +40,7 @@ F = {
     Return = function (me)
         local e1 = _ITER'SetBlock'()[1]
         local e2 = unpack(me)
-        ASR( C.contains(e1.tp,e2.tp) and
+        ASR( _C.contains(e1.tp,e2.tp) and
              check_depth(e1, e2),
                 me, 'invalid return value')
     end,
@@ -58,16 +53,10 @@ F = {
     end,
 
     EmitE = function (me)
-        local acc, exps = unpack(me)
+        local acc, exp = unpack(me)
+        ASR((not exp) or _C.contains(acc.evt.tp,exp.tp), me, 'invalid emit')
         if acc.evt.dir == 'internal' then
             acc.mode = 'tr'
-            if exps and #exps>0 then
-                ASR(#exps==1, me, 'invalid emit')
-                ASR(C.contains(acc.evt.tp,exps[1].tp), me, 'invalid emit')
-            end
-        else
-            me.call = { 'call', {val=acc.evt.id}, select(2,unpack(me)) }
-            F.Op2_call(me.call)
         end
     end,
 
@@ -87,12 +76,13 @@ F = {
         end
         me.fst = nil
         me.val = f.val..'('..table.concat(ps,',')..')'
+        me.fid = (f.id=='Cid' and f[1]) or '$anon'
     end,
 
     Op2_idx = function (me)
         local _, arr, idx = unpack(me)
-        local _arr = ASR(C.deref(arr.tp), me, 'cannot index a non array')
-        ASR(_arr and C.isNumeric(idx.tp), me, 'invalid array index')
+        local _arr = ASR(_C.deref(arr.tp), me, 'cannot index a non array')
+        ASR(_arr and _C.isNumeric(idx.tp), me, 'invalid array index')
         me.fst  = arr.fst
         me.tp   = _arr
         me.val  = '('..arr.val..'['..idx.val..'])'
@@ -104,7 +94,7 @@ F = {
         me.fst = nil
         me.tp  = 'int'
         me.val = '('..e1.val..op..e2.val..')'
-        ASR(C.isNumeric(e1.tp) and C.isNumeric(e2.tp),
+        ASR(_C.isNumeric(e1.tp) and _C.isNumeric(e2.tp),
             me, 'invalid operands to binary "'..op..'"')
     end,
     ['Op2_-']  = 'Op2_int_int',
@@ -123,7 +113,7 @@ F = {
         me.fst = nil
         me.tp  = 'int'
         me.val = '('..op..e1.val..')'
-        ASR(C.isNumeric(e1.tp), me, 'invalid operand to unary "'..op..'"')
+        ASR(_C.isNumeric(e1.tp), me, 'invalid operand to unary "'..op..'"')
     end,
     ['Op1_~']  = 'Op1_int',
     ['Op1_-']  = 'Op1_int',
@@ -134,7 +124,7 @@ F = {
         me.fst = nil
         me.tp  = 'int'
         me.val = '('..e1.val..op..e2.val..')'
-        ASR(C.max(e1.tp,e2.tp), me, 'invalid operands to binary "'..op..'"')
+        ASR(_C.max(e1.tp,e2.tp), me, 'invalid operands to binary "'..op..'"')
     end,
     ['Op2_=='] = 'Op2_same',
     ['Op2_!='] = 'Op2_same',
@@ -165,7 +155,7 @@ F = {
     ['Op1_*'] = function (me)
         local op, e1 = unpack(me)
         me.fst  = e1.fst
-        me.tp   = C.deref(e1.tp)
+        me.tp   = _C.deref(e1.tp)
         me.val  = '('..op..e1.val..')'
         me.lval = true
         ASR(me.tp, me, 'invalid operand to unary "*"')
