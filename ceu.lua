@@ -151,7 +151,7 @@ do
         tpl = sub(tpl, '=== LABELS ===', labels)
     end
 
-    -- EVENTS
+    -- EVENTS and FUNCTIONS used
     do
         local str = ''
         local t = {}
@@ -159,6 +159,12 @@ do
             if evt.dir == 'input' then
                 t[#t+1] = '#define IO_'..id..' '..(evt.trg0 or 0)
             end
+        end
+
+        -- FUNCTIONS called
+        for id in pairs(_EXPS.calls) do
+            -- negative doesn't interfere with events
+            t[#t+1] = '#define IO'..id..' -'..(#t+1)
         end
 
         if _OPTS.events then

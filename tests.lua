@@ -3775,6 +3775,22 @@ return a;
     }
 }
 
+-- TODO: BUG
+Test { [[
+int a;
+await (10);
+par/or do
+    await 10ms;
+    a = 2;
+with
+    await 20ms;
+    a = 3;
+end
+return a;
+]],
+    nd_acc = 1,
+}
+-- TODO: BUG
 Test { [[
 input int A;
 int a;
@@ -3796,7 +3812,7 @@ with
 end;
 return a;
 ]],
-    nd_acc = 3,
+    nd_acc = 4,
 }
 
 Test { [[

@@ -1,6 +1,6 @@
 input int PIN2, PIN2_LOW, PIN2_HIGH;
 
-par/or do
+par do
 
     loop do
         par/or do
@@ -36,5 +36,6 @@ with
             emit 10ms;
         end
     end
+    await forever;
 
 end

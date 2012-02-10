@@ -1,3 +1,7 @@
+_EXPS = {
+    calls = {}      -- { _printf=true, _myf=true, ... }
+}
+
 function check_lval (e1)
     return e1.lval and e1.fst
 end
@@ -77,6 +81,7 @@ F = {
         me.fst = nil
         me.val = f.val..'('..table.concat(ps,',')..')'
         me.fid = (f.id=='Cid' and f[1]) or '$anon'
+        _EXPS.calls[me.fid] = true
     end,
 
     Op2_idx = function (me)

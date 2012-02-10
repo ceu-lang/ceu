@@ -1,6 +1,6 @@
 input int PIN2;
 
-par/or do
+par do
 
     loop do
         int v = await PIN2;
@@ -23,5 +23,6 @@ with
             _delay(10);
         end
     end
+    await forever;
 
 end
