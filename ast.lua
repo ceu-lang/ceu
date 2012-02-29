@@ -217,7 +217,7 @@ local C; C = {
 
     Var      = node('Var'),
     Evt      = node('Evt'),
-    Cid      = node('Cid'),
+    ID_c     = node('Cid'),
     SIZEOF   = node('SIZEOF'),
     CONST    = node('CONST'),
     TIME     = node('TIME'),

@@ -167,12 +167,13 @@ F = {
     end,
     ['Op1_&'] = function (me)
         local op, e1 = unpack(me)
+        ASR(check_lval(e1), me, 'invalid operand to unary "&"')
         me.fst = e1.fst
         me.fst.ref = true
         me.fst.mode = 'no'   -- just getting the address
         me.tp  = e1.tp..'*'
         me.val = '('..op..e1.val..')'
-        ASR(e1.lval, me, 'invalid operand to unary "&"')
+        me.lval = false
     end,
 
     ['Op2_.'] = function (me)
@@ -194,7 +195,7 @@ F = {
     Var = function (me)
         me.fst  = me
         me.tp   = me.var.tp
-        me.lval = not me.var.arr
+        me.lval = not me.var.arr    -- not .lval but has .fst
         me.mode = 'rd'
         me.val = _ENV.reg(me.var)
     end,

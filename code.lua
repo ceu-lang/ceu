@@ -221,39 +221,35 @@ F = {
 
         local lb_t = t and LABEL_gen('True')
         local lb_f = f and LABEL_gen('False')
-        local lb_e = LABEL_gen('EndInf')
+        local lb_e = LABEL_gen('EndIf')
 
         LINE(me, [[if (]]..c.val..[[) {]])
             if lb_t then
                 SWITCH(me, lb_t)
-            elseif t then
-                CONC(me, t, 4)
+            else
+                SWITCH(me, lb_e)
             end
         LINE(me, [[} else {]])
             if lb_f then
                 SWITCH(me, lb_f)
-            elseif f then
-                CONC(me, f, 4)
+            else
+                SWITCH(me, lb_e)
             end
         LINE(me, [[}]])
 
         if lb_t then
-            SWITCH(me, lb_e)
             LABEL_out(me, lb_t)
             CONC(me, t, 4)
             SWITCH(me, lb_e)
         end
 
         if lb_f then
-            SWITCH(me, lb_e)
             LABEL_out(me, lb_f)
             CONC(me, f, 4)
             SWITCH(me, lb_e)
         end
 
-        if lb_t or lb_f then
-            LABEL_out(me, lb_e)
-        end
+        LABEL_out(me, lb_e)
     end,
 
     Async = function (me)

@@ -83,7 +83,8 @@ ID = ALPHA * ALPHANUM^0
 ID = ID - KEYS
 
 NUM  = CK(m.R'09'^1) / tonumber
-TYPE = ID * (S*'*')^0 /
+
+ID_type = ID * (S*'*')^0 /
     function (str)
         return (string.gsub( (string.gsub(str,' ','')), '^_', '' ))
     end
@@ -113,14 +114,14 @@ _GG = { [1] = K'' *S* EV'_Stmts' *S* -1
                  + V'ParOr'   + V'ParAnd' + V'ParEver'
                  + V'If'      + V'Loop'
 
-    , _Dcl_pure = K'pure' *S* EV'Cid' * (S* K',' *S* V'Cid')^0
-    , Dcl_det   = K'deterministic' *S* EV'Cid' * (S* K',' *S* V'Cid')^0
+    , _Dcl_pure = K'pure' *S* EV'ID_c' * (S* K',' *S* V'ID_c')^0
+    , Dcl_det   = K'deterministic' *S* EV'ID_c' * (S* K',' *S* V'ID_c')^0
 
-    , _Dcl_int  = TYPE *S* ('['*S*NUM*S*']' + Cc(false)) *S*
+    , _Dcl_int  = ID_type *S* ('['*S*NUM*S*']' + Cc(false)) *S*
                     V'__Dcl_int' * (S*K','*S*V'__Dcl_int')^0
-    , __Dcl_int = V'INT' *S* (V'_Sets' + Cc(false)*Cc(false))
+    , __Dcl_int = V'ID_int' *S* (V'_Sets' + Cc(false)*Cc(false))
 
-    , _Dcl_ext  = K'input' *S* TYPE *S* V'EXT' * (S*K','*S*V'EXT')^0
+    , _Dcl_ext  = K'input' *S* ID_type *S* V'ID_ext' * (S*K','*S*V'ID_ext')^0
 
     , _Set  = V'_Exp' *S* V'_Sets'
     , _Sets = K'=' *S* (
@@ -130,7 +131,7 @@ _GG = { [1] = K'' *S* EV'_Stmts' *S* -1
                 EE'expression'
               )
 
-    , CallStmt = (#V'Cid' + K'call'*S) * V'_Exp'
+    , CallStmt = (#V'ID_c' + K'call'*S) * V'_Exp'
 
     , Nothing = K'nothing'
     , _DoBlock= K'do' *S* V'Block' *S* EK'end'
@@ -179,7 +180,7 @@ _GG = { [1] = K'' *S* EV'_Stmts' *S* -1
     , _10     = V'_11' * (S* CK(K'*'+(K'/'-'//'-'/*')+'%') *S* V'_11')^0
     , _11     = (( Cc(true) * CK((K'!'-'!=') +  (K'&'-'&&')
                  + (K'-'-'->')+'+'+'~'+'*')
-                 + (K'<'*CK(TYPE)*Cc'cast'*K'>')
+                 + (K'<'*CK(ID_type)*Cc'cast'*K'>')
                  )*S)^0 * V'_12'
     , _12     = V'_13' *S* (
                     K'(' *S* Cc'call' *S* V'ExpList' *S* EK')' +
@@ -188,17 +189,16 @@ _GG = { [1] = K'' *S* EV'_Stmts' *S* -1
                 )^0
     , _13     = V'_Prim'
 
-    , _Prim   = V'_Parens' + V'Var'   + V'Cid' + V'SIZEOF'
+    , _Prim   = V'_Parens' + V'Var'   + V'ID_c' + V'SIZEOF'
               + V'NULL'    + V'CONST' + V'STRING'
 
     , ExpList = ( V'_Exp'*(S*','*S*EV'_Exp')^0 )^-1
 
     , _Parens  = K'(' *S* EV'_Exp' *S* EK')'
 
-    , SIZEOF = K'sizeof' *S* EK'<' *S* TYPE *S* EK'>'
-    , CONST = CK( (P'0b'+'0B'+'0x'+'0X') * ALPHANUM^1 )
+    , SIZEOF = K'sizeof' *S* EK'<' *S* ID_type *S* EK'>'
+    , CONST = CK( #m.R'09' * ALPHANUM^1 )
             + CK( "'" * (P(1)-"'")^0 * "'" )
-            + NUM
 
     , NULL = CK'null'
     , TIME = #NUM *
@@ -208,11 +208,11 @@ _GG = { [1] = K'' *S* EV'_Stmts' *S* -1
                 (NUM * K'ms'  + Cc(0)) *
                 (NUM * EE'<h,min,s,ms>')^-1
 
-    , Var  = V'INT'
-    , Evt  = V'INT' + V'EXT'
-    , INT  = #m.R'az' * CK(ID) -- int names start with lower
-    , EXT  = #m.R'AZ' * CK(ID) -- ext names start with upper
-    , Cid  = CK(P'_' * ID)
+    , Var    = V'ID_int'
+    , Evt    = V'ID_int' + V'ID_ext'
+    , ID_int = #m.R'az' * CK(ID) -- int names start with lower
+    , ID_ext = #m.R'AZ' * CK(ID) -- ext names start with upper
+    , ID_c   = CK(P'_' * ID)
 
     , STRING = CK( '"' * (P(1)-'"'-'\n')^0 * EK'"' )
 
