@@ -3,6 +3,8 @@ CEUFILE ?= samples/blink1.ceu
 
 ARDUINODIR = /opt/arduino-1.0
 BOARD = uno
+#lilypad328
+#uno
 
 CEUCFILE = _ceu_$(notdir $(CEUFILE)).tmp
 

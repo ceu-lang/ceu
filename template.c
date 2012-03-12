@@ -1,14 +1,15 @@
 #include <string.h>
 
-#define PR_MAX  0xFF
+#define PR_MAX  0x7F
+#define PR_MIN  (-0x7F)
 
 #define N_TIMERS    (1+ === N_TIMERS ===)
 #define N_TRACKS    (1+ === N_TRACKS ===)
-#define N_INTRAS    (1+ === N_INTRAS ===)
 #define N_ASYNCS    (=== N_ASYNCS ===)
-#define N_GTES      === N_GTES ===
-#define N_ANDS      === N_ANDS ===
-#define N_VARS      === N_VARS ===
+#define N_EMITS     (=== N_EMITS ===)
+#define N_GTES      (=== N_GTES ===)
+#define N_ANDS      (=== N_ANDS ===)
+#define N_VARS      (=== N_VARS ===)
 
 // Macros that can be defined:
 // ceu_out_pending()   (1)
@@ -16,8 +17,8 @@
 // ASSERT
 
 typedef u32 tceu_time;
-typedef u16 tceu_gte;
-typedef u16 tceu_lbl;
+typedef s16 tceu_gte;   // lbl=gte (must have the same sizes)
+typedef s16 tceu_lbl;
 
 #include "binheap.h"
 #include "binheap.c"
@@ -43,40 +44,19 @@ tceu_gte TRGS[] = { === TRGS === };
 #define PVAR(tp,reg) ((tp*)(VARS+reg))
 char VARS[N_VARS];
 
-#if N_INTRAS > 1
-int _intl_;
-#endif
-
 #if N_TIMERS > 1
 int _extl_;
 int _extlmax_;  // needed for timers
 #endif
 
-/* INTRAS ***************************************************************/
-#if N_INTRAS > 1
-
-typedef struct {
-    u8       intl;
-    tceu_gte gte;
-} QIntra;
-
-int QIntra_prio (void* v1, void* v2) {
-    return ((QIntra*)v1)->intl > ((QIntra*)v2)->intl;
-}
-
-Queue  Q_INTRA;
-QIntra Q_INTRA_BUF[N_INTRAS];
-
-void qins_intra (u8 intl, tceu_gte gte) {
-    QIntra v = { intl, gte };
-    q_insert(&Q_INTRA, &v);
-}
+#if N_EMITS > 0
+int _step_ = PR_MIN;
 #endif
 
 /* TRACKS ***************************************************************/
 
 typedef struct {
-    u8       prio;
+    s8       prio;
     tceu_lbl lbl;
 } QTrack;
 
@@ -87,12 +67,12 @@ int QTrack_prio (void* v1, void* v2) {
 Queue  Q_TRACKS;
 QTrack Q_TRACKS_BUF[N_TRACKS];
 
-void qins_track (u8 prio, tceu_lbl lbl) {
+void qins_track (s8 prio, tceu_lbl lbl) {
     QTrack v = { prio, lbl };
     q_insert(&Q_TRACKS, &v);
 }
 
-void qins_track_chk (u8 prio, tceu_lbl lbl) {
+void qins_track_chk (s8 prio, tceu_lbl lbl) {
     QTrack v = { prio, lbl };
     int i;
     for (i=1; i<=Q_TRACKS.n; i++)
@@ -104,7 +84,7 @@ void qins_track_chk (u8 prio, tceu_lbl lbl) {
 void spawn (tceu_gte gte)
 {
     tceu_lbl lbl = GTES[gte];
-    if (lbl >= Init) {
+    if (lbl != Inactive) {
         qins_track(PR_MAX, lbl);
         GTES[gte] = Inactive;
     }
@@ -128,22 +108,14 @@ int       TIME_expired = 0;
 typedef struct {
     tceu_time phys;
     u8 extl;            // TODO: garantir/zerar u8
-#if N_INTRAS > 1
-    u8 intl;            // TODO: garantir u8
-#endif
     tceu_gte gte;
 } QTimer;
 
 int QTimer_prio (void* v1, void* v2) {
     QTimer* t1 = (QTimer*) v1;
     QTimer* t2 = (QTimer*) v2;
-    int ret = t1->phys < t2->phys || (
-            (t1->phys == t2->phys) && (
-                t1->extl < t2->extl
-#if N_INTRAS > 1
-                    || (t1->extl==t2->extl && t1->intl>t2->intl)
-#endif
-                ));
+    int ret = t1->phys < t2->phys  ||
+            (t1->phys == t2->phys  &&  t1->extl < t2->extl);
     return ret;
 }
 
@@ -152,11 +124,7 @@ QTimer Q_TIMERS_BUF[N_TIMERS];
 
 void qins_timer (tceu_time ms, tceu_gte gte) {
     int i;
-#if N_INTRAS > 1
-    QTimer v = { 0, _extl_, _intl_, gte };
-#else
     QTimer v = { 0, _extl_, gte };
-#endif
 
     s32 dt = ms - TIME_late;
     v.phys = TIME_now + dt;
@@ -219,9 +187,6 @@ int ceu_go_init (int* ret, tceu_time now)
     memset(GTES, 0, N_GTES);
 
     q_init(&Q_TRACKS, Q_TRACKS_BUF, N_TRACKS, sizeof(QTrack), QTrack_prio);
-#if N_INTRAS > 1
-    q_init(&Q_INTRA,  Q_INTRA_BUF,  N_INTRAS, sizeof(QIntra), QIntra_prio);
-#endif
 
 #if N_TIMERS > 1
     q_init(&Q_TIMERS, Q_TIMERS_BUF, N_TIMERS, sizeof(QTimer), QTimer_prio);
@@ -263,22 +228,14 @@ int ceu_go_time (int* ret, tceu_time now)
     q_remove(&Q_TIMERS,NULL);
 
     TIME_late = TIME_now - min.phys; // how much late the timer is
-#if N_INTRAS > 1
-    qins_intra(min.intl, min.gte);
-#else
     spawn(min.gte);
-#endif
 
     while (q_peek(&Q_TIMERS,&nxt))
     {
         // spawn all sharing min phys/ext time
         if (nxt.phys==min.phys && nxt.extl==min.extl) {
             q_remove(&Q_TIMERS, NULL);
-#if N_INTRAS > 1
-            qins_intra(nxt.intl, nxt.gte);
-#else
             spawn(nxt.gte);
-#endif
 //printf("handlei: %d %d\n", nxt.intl, nxt.gte);
         } else {
             if (nxt.phys <= TIME_now)
@@ -325,14 +282,35 @@ int go (int* ret)
     QTrack trk;
     int _lbl_;
 
-#if N_INTRAS > 1
-    QIntra itr;
-    _intl_ = 0;
-_TRACKS_:
+#if N_EMITS > 0
+    int _step_ = PR_MIN;
 #endif
+
     while (q_remove(&Q_TRACKS,&trk))
     {
-        _lbl_ = trk.lbl;
+#if N_EMITS > 0
+        if (trk.prio < 0) {
+            _step_ = trk.prio;
+//fprintf(stderr, "step: %d\n", _step_);
+            tceu_lbl T[N_EMITS];
+            int n = 0;
+            while (1) {
+                int lbl = GTES[-trk.lbl];     // it is actually a gate
+//fprintf(stderr, "\tins: %d\n", lbl);
+                if (lbl != Inactive)
+                    T[n++] = lbl;
+                if (!q_peek(&Q_TRACKS,&trk) || (trk.prio < _step_))
+                    break;
+                else
+                    q_remove(&Q_TRACKS,NULL);
+            }
+            for (;n>0;)
+                qins_track(PR_MAX, T[--n]);
+            continue;
+        } else
+#endif
+            _lbl_ = trk.lbl;
+//fprintf(stderr, "lbl: %d\n", _lbl_);
 _SWITCH_:
         switch (_lbl_)
         {
@@ -340,20 +318,6 @@ _SWITCH_:
 === CODE ===
         }
     }
-
-#if N_INTRAS > 1
-    if (q_remove(&Q_INTRA,&itr)) {
-        spawn(itr.gte);
-        _intl_ = itr.intl;
-        while (q_peek(&Q_INTRA, &itr)) {
-            if (itr.intl < _intl_)
-                break;
-            q_remove(&Q_INTRA, NULL);
-            spawn(itr.gte);
-        }
-        goto _TRACKS_;
-    }
-#endif
 
 #if N_TIMERS > 1
     if (TIME_expired)

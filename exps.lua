@@ -18,14 +18,14 @@ F = {
              _C.contains(e1.tp,e2.tp) and
              check_depth(e1, e2),
                 me, 'invalid attribution')
-        e1.fst.mode = 'wr'
+        e1.fst.se = 'wr'
     end,
 
     SetStmt = function (me)
         local e1, stmt = unpack(me)
         local evt = stmt[1].evt
         ASR(check_lval(e1), me, 'invalid attribution')
-        e1.fst.mode = 'wr'
+        e1.fst.se = 'wr'
         stmt.toset = e1
         if stmt.id == 'AwaitT' then
             ASR(_C.isNumeric(e1.tp), me, 'invalid attribution')
@@ -39,7 +39,7 @@ F = {
     SetBlock = function (me)
         local e1, _ = unpack(me)
         ASR(check_lval(e1), me, 'invalid attribution')
-        e1.fst.mode = 'wr'
+        e1.fst.se = 'wr'
     end,
     Return = function (me)
         local e1 = _ITER'SetBlock'()[1]
@@ -52,7 +52,7 @@ F = {
     AwaitE = function (me)
         local acc = unpack(me)
         if acc.evt.dir == 'internal' then
-            acc.mode = 'aw'
+            acc.se = 'aw'
         end
     end,
 
@@ -60,7 +60,7 @@ F = {
         local acc, exp = unpack(me)
         ASR((not exp) or _C.contains(acc.evt.tp,exp.tp), me, 'invalid emit')
         if acc.evt.dir == 'internal' then
-            acc.mode = 'tr'
+            acc.se = 'tr'
         end
     end,
 
@@ -170,7 +170,7 @@ F = {
         ASR(check_lval(e1), me, 'invalid operand to unary "&"')
         me.fst = e1.fst
         me.fst.ref = true
-        me.fst.mode = 'no'   -- just getting the address
+        me.fst.se = 'no'   -- just getting the address
         me.tp  = e1.tp..'*'
         me.val = '('..op..e1.val..')'
         me.lval = false
@@ -196,8 +196,8 @@ F = {
         me.fst  = me
         me.tp   = me.var.tp
         me.lval = not me.var.arr    -- not .lval but has .fst
-        me.mode = 'rd'
-        me.val = _ENV.reg(me.var)
+        me.se   = 'rd'
+        me.val  = _ENV.reg(me.var)
     end,
 
     TIME = function (me)

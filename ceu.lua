@@ -132,8 +132,8 @@ do
 
     tpl = sub(tpl, '=== N_TIMERS ===', _AST.n_timers)
     tpl = sub(tpl, '=== N_TRACKS ===', _AST.n_tracks)
-    tpl = sub(tpl, '=== N_INTRAS ===', _AST.n_intras)
     tpl = sub(tpl, '=== N_ASYNCS ===', _AST.n_asyncs)
+    tpl = sub(tpl, '=== N_EMITS ===',  _AST.n_emits)
     tpl = sub(tpl, '=== N_GTES ===',   _GATES.n_gtes)
     tpl = sub(tpl, '=== N_ANDS ===',   _GATES.n_ands)
     tpl = sub(tpl, '=== TRGS ===',     table.concat(_GATES.trgs,','))

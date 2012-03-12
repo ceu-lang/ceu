@@ -2,76 +2,94 @@ local io = io
 local s_rep = string.rep
 local exec = os.execute
 
-function dfa_tostr (S)
-    local ret = '{'..S.n..'} '
-    for _, qs_intl in ipairs(S.qs_all) do
-        ret = ret.. '['
-        local qs = set.filter(qs_intl, function(q) return not q.dfa_hide end)
-        local n = 1
-        for q in pairs(qs) do
-            if n%5==0 then ret=ret..'\\n' end
-            n = n + 1
-            ret = ret ..' '.. nfa_tostr(q)
-        end
-        ret = ret .. ']'
-    end
-    return ret
+function TAB (n)
+    return string.rep(' ',n*4)
 end
 
-function nfa_tostr (q, t)
-    if q.hide then
-        return ''
-    else
-        return ('('..q.n..':'..q.id..')')
-    end
-    --return '('..q.n..')'
+function nfa_q2str (q)
+    return '"'..q.n..':'..q.id..'"'
 end
-
---[[
-function tostr (q, lvl)
-    lvl = lvl or 1
-    local ret = tostring(q)
-    if q.id then
-        ret = ret .. ' (' .. q.id .. ')'
-    else
-for k,v in pairs(q) do print(k,v) end
-        for qq in pairs(q.qs) do
-            ret = ret .. '\n' .. s_rep('\t',lvl) .. tostr(qq, lvl+1)
-        end
-    end
-    return ret
-end
-]]
 
 function nfa_q2dot (q)
     local ret = ''
-    local q_str = nfa_tostr(q)
-    ret = ret .. '\t"' .. q_str .. '";\n'
+    local q_str = nfa_q2str(q)
+    ret = ret .. TAB(1) .. q_str .. ';\n'
     for to,a in pairs(q.out) do
         if type(a)=='table' then a=a.id end
-        ret = ret .. '\t"' .. q_str .. '" -> "' .. nfa_tostr(to) ..
-              '" [label="'..tostring(a)..'"];\n'
+        ret = ret..TAB(1).. q_str..' -> '..nfa_q2str(to)..
+                ' [label="'..tostring(a)..'"];\n'
     end
     return ret
 end
 
 function dfa_q2dot (S)
-    local ret = ''
-    local q_str = dfa_tostr(S)
-    ret = ret .. '\t"' .. q_str .. '";\n'
-    for a,to in pairs(S.delta) do
-        ret = ret .. '\t"' .. q_str .. '" -> "' .. dfa_tostr(to) ..
-              '" [label="'..(a.id)..'"];\n'
+    local ret = dfa_q2str(S)
+    return ret
+end
+
+function p2id (p)
+    return '"'..tostring(p)..'"'
+end
+
+function dfa_q2str (S)
+    local ret = [[
+    subgraph cluster_]]..S.n..[[ {
+        style=filled;
+        color=lightgrey;
+        node [style=filled,color=white];
+        label = "DFA #]]..S.n..[[";
+]]
+    local ps = P_flatten(S.qs_path)
+    for p1 in pairs(ps) do
+        local color = p1.err or 'white'
+        ret = ret..TAB(2)..p2id(p1)..' [label='..nfa_q2str(p1.q)..',color='..
+                color..'];\n'
+        for _, p2 in ipairs(p1) do
+            ret = ret..TAB(2)..p2id(p1)..' -> '..p2id(p2)..';\n'
+        end
+    end
+    ret = ret .. [[
+    }
+]]
+    for T,Sto in pairs(S.delta) do
+        for qTo,t in pairs(T.qs_togo) do
+            local pFr, pTo = unpack(t)
+            if pFr.q ~= pTo.q then
+                ret = ret..TAB(1) .. p2id(pFr) ..'->'.. p2id(pTo) --..';\n'
+                    .. ' [label="'..T.id..'", color=red];\n'
+            end
+        end
     end
     return ret
 end
 
 function dfa2dot (QS)
-    local ret = 'digraph G {\n'
+    local ret = [[
+digraph G {
+    compound = true;
+]]
     for S in pairs(QS) do
         ret = ret .. dfa_q2dot(S)
     end
-    ret = ret .. '}'
+
+    for _, t in ipairs(_DFA.nds.flw) do
+        ret = ret..TAB(1).. p2id(t[1]) ..'->'.. p2id(t[2])
+                    .. ' [style=dotted,arrowhead=none];\n'
+    end
+
+    for _, t in ipairs(_DFA.nds.acc) do
+        ret = ret..TAB(1).. p2id(t[1]) ..'->'.. p2id(t[2])
+                    .. ' [style=dotted,arrowhead=none];\n'
+    end
+
+    for _, t in ipairs(_DFA.nds.call) do
+        ret = ret..TAB(1).. p2id(t[1]) ..'->'.. p2id(t[2])
+                    .. ' [style=dotted,arrowhead=none];\n'
+    end
+
+    ret = ret .. [[
+}
+]]
     return ret
 end
 

@@ -60,26 +60,33 @@ Test = function (t)
         dofile 'graphviz.lua' ; DBG('>>> VIZ')
         DBG('dfa', _DFA.n_states)
 
-        assert(#_DFA.nd_acc == (T.nd_acc or 0),
-            'nd_acc '..#_DFA.nd_acc)
+        assert(_DFA.nds.acc.tot == (T.nd_acc or 0),
+            'nd_acc '.._DFA.nds.acc.tot)
 
-        assert(#_DFA.nd_esc == (T.nd_esc or 0),
-            'nd_esc '..#_DFA.nd_esc)
+        assert(_DFA.nds.call.tot == (T.nd_call or 0),
+            'nd_call '.._DFA.nds.call.tot)
 
-        assert(#_DFA.nd_call == (T.nd_call or 0),
-            'nd_call '..#_DFA.nd_call)
+        assert(_DFA.nds.flw.tot == (T.nd_flw or 0),
+            'nd_flw '.._DFA.nds.flw.tot)
+
+        assert(_DFA.escs.tot == (T.nd_esc or 0),
+            'nd_esc '.._DFA.escs.tot)
 
         if not _DFA.nd_stop then
             assert(_DFA.n_unreach == (T.unreach or 0),
                 'unreach '.._DFA.n_unreach)
         end
 
-        assert(_DFA.forever==true and T.forever or T.forever==nil,
+        assert(_DFA.forever == (T.forever or false),
             'forever '..tostring(_DFA.forever))
     end
 
     -- RUN
-    if T.run==nil then return end
+    if T.run==nil then
+        assert(T.forever or T.nd_acc or T.nd_flw or T.nd_esc,
+                'missing run value')
+        return
+    end
 --print'=============='
 
     if not check('code') then return end
@@ -97,6 +104,7 @@ Test = function (t)
         local str_all = PRE..str_input
         --print(str_all)
         local ceu = assert(io.popen('./ceu - --output _ceu_code.c', 'w'))
+        --local ceu = assert(io.popen('lua ceu.lua - --output _ceu_code.c', 'w'))
         ceu:write(str_all)
         ceu:close()
         assert(os.execute('gcc -std=c99 -o ceu.exe main.c') == 0)

@@ -90,7 +90,6 @@ F = {
 
     SetStmt = function (me)
         local e1, e2 = unpack(me)
-        e2.toset = e1
         CONC(me, e2)
     end,
 
@@ -100,10 +99,9 @@ F = {
     SetBlock = function (me)
         local e1, e2 = unpack(me)
         CONC(me, e2)
-        HALT(me)
+        HALT(me)        -- must escape with `return´
         LABEL_out(me, me.lb_out)
-        --assert(not me.unreachable) (TODO: have to ensure this!)
-        if not me.unreachable then
+        if (not _DFA) or _DFA.qs_reach[me.nfa.f] then
             BLOCK_GATES(me)
         end
     end,
@@ -167,11 +165,8 @@ F = {
         end
 
         -- AFTER code :: block inner gates
-        --assert(not me.unreachable)          -- now it is always reachable
-        if not me.unreachable then
-            LABEL_out(me, lb_ret)
-            BLOCK_GATES(me)
-        end
+        LABEL_out(me, lb_ret)
+        BLOCK_GATES(me)
     end,
 
     ParAnd = function (me)
@@ -219,29 +214,24 @@ F = {
         local c, t, f = unpack(me)
         -- TODO: If cond assert(c==ptr or int)
 
-        local lb_t = t and LABEL_gen('True')
+        local lb_t = LABEL_gen('True')
         local lb_f = f and LABEL_gen('False')
         local lb_e = LABEL_gen('EndIf')
 
         LINE(me, [[if (]]..c.val..[[) {]])
-            if lb_t then
-                SWITCH(me, lb_t)
-            else
-                SWITCH(me, lb_e)
-            end
-        LINE(me, [[} else {]])
-            if lb_f then
-                SWITCH(me, lb_f)
-            else
-                SWITCH(me, lb_e)
-            end
-        LINE(me, [[}]])
+        SWITCH(me, lb_t)
 
-        if lb_t then
-            LABEL_out(me, lb_t)
-            CONC(me, t, 4)
+        LINE(me, [[} else {]])
+        if lb_f then
+            SWITCH(me, lb_f)
+        else
             SWITCH(me, lb_e)
         end
+        LINE(me, [[}]])
+
+        LABEL_out(me, lb_t)
+        CONC(me, t, 4)
+        SWITCH(me, lb_e)
 
         if lb_f then
             LABEL_out(me, lb_f)
@@ -263,9 +253,7 @@ F = {
     end,
 
     Loop_pre = function (me)
-        if not me.unreachable then
-            me.lb_out  = LABEL_gen('Loop_out')
-        end
+        me.lb_out  = LABEL_gen('Loop_out')
     end,
     Loop = function (me)
         local body = unpack(me)
@@ -293,8 +281,7 @@ if (ceu_out_pending()) {
         SWITCH(me, lb_ini)
 
         -- AFTER code :: block inner gates
-        --assert(not me.unreachable)          -- now it is always reachable
-        if not me.unreachable then
+        if (not _DFA) or _DFA.qs_reach[me.nfa.f] then
             LABEL_out(me, me.lb_out)
             BLOCK_GATES(me)
         end
@@ -327,8 +314,8 @@ if (ceu_out_pending()) {
 // Emit ]]..evt.id..[[;
 GTES[]]..me.gte_cnt..'] = '..lb_cnt..[[;
 GTES[]]..me.gte_trg..'] = '..lb_trg..[[;
-qins_intra(_intl_+1, ]]..me.gte_cnt..[[);
-qins_intra(_intl_+2, ]]..me.gte_trg..[[);
+qins_track(_step_+1, -]]..me.gte_cnt..[[);
+qins_track(_step_+2, -]]..me.gte_trg..[[);
 break;
 ]])
             LABEL_out(me, lb_trg)

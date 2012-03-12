@@ -1,5 +1,8 @@
 local U = set.union
 
+PR_MAX = 127
+PR_MIN = -127
+
 _NFA = {
     nodes   = set.new(), -- set of all created nodes (to generate visual graph)
     n_nodes = 0,         -- node identification
@@ -19,8 +22,9 @@ function _NFA.node (ret)
 
     ret.n    = _NFA.n_nodes
     ret.stmt = ret.stmt or _ITER(isStmt)() or _AST
-    ret.prio = ret.prio or 0
+    ret.prio = ret.prio or PR_MAX
     ret.out  = {}
+    ret.inAsync = _ITER'Async'()
     return ret
 end
 
@@ -33,18 +37,23 @@ local ND = {
     wr  = { tr=true,  wr=true,  rd=true,  aw=false },
     rd  = { tr=true,  wr=true,  rd=false, aw=false },
     aw  = { tr=true,  wr=false, rd=false, aw=false },
-    no  = {},   -- never ND ('ref')
+    no  = {},   -- never ND ('ref') (or no se stmts ('nothing')
 }
 
 function qVSq (q1, q2)
-    if q1.escs and q2.escs then
-        return set.hasInter(q1.escs, q2.escs) -- and q1.esc~=q2.esc
+
+    -- one escape (break/return) vs any one another
+    -- (still has to check if q1.esc contains q2, not ready here, see dfa)
+    if q1.esc then
+        return not (q2.keep or q2.inAsync)
+    elseif q2.esc then
+        return not (q1.keep or q1.inAsync)
 
     elseif q1.f and q2.f then
-        return not (_C.pures[q1.id] or _C.pures[q2.id] or
-                        (_C.dets[q1.id] and _C.dets[q1.id][q2.id]))
+        return not (_C.pures[q1.f] or _C.pures[q2.f] or
+                        (_C.dets[q1.f] and _C.dets[q1.f][q2.f]))
 
-    elseif q1.mode and q2.mode and ND[q1.mode][q2.mode] then
+    elseif q1.se and q2.se and ND[q1.se][q2.se] then
         if q1.ptr then
             if q2.ptr then
                 -- q1.ptr vs q2.ptr
@@ -69,11 +78,9 @@ function PAR (QS, qs)
         for q2 in pairs(qs) do
 --DBG(q1.n,q1.id, q2.n,q2.id, qVSq(q1,q2))
             if qVSq(q1,q2) then
-                q1.qs_nd  = q1.qs_nd  or {}
                 q1.qs_par = q1.qs_par or {}
                 q1.qs_par[q2] = true
 
-                q2.qs_nd  = q2.qs_nd  or {}
                 q2.qs_par = q2.qs_par or {}
                 q2.qs_par[q1] = true
             end
@@ -120,12 +127,12 @@ function INS (me, a, q)
     return q
 end
 
-function ACC (acc, mode, ptr)
+function ACC (acc, se, ptr)
     return _NFA.node {
-        id   = mode..' '..(ptr or acc.id),
-        acc  = acc,
-        ptr  = ptr,
-        mode = mode,
+        id  = se..' '..(ptr or acc.id),
+        acc = acc,
+        ptr = ptr,
+        se  = se,
     }
 end
 
@@ -140,20 +147,21 @@ F = {
     end,
 
     Root_pre = function (me)
+        me[#me].isLastStmt = true
+
         local init = { id='$Init' }
         _NFA.alphas[init] = true
 
         local bef = INS(me, '',
             _NFA.node {
-                id  = 'PREINIT',
+                id  = '+INIT',
                 awt = init,
                 keep = true,
             })
         local aft = INS(me, init,
             _NFA.node {
-                id  = 'INIT',
+                id  = '-INIT',
                 rem = set.new(bef),
-                should_reach = true,
             })
         bef.to = aft
     end,
@@ -162,6 +170,18 @@ F = {
         INS(me, '', _NFA.node{id='FINISH'})
     end,
 
+    Block = function (me)
+        CONCAT_all(me)
+        if not me.nfa.f then
+            INS(me, '', _NFA.node{id='nothing'})
+        end
+    end,
+
+    ParEver_pre = function (me)
+        for _,sub in ipairs(me) do
+            sub[#sub].isLastStmt = true
+        end
+    end,
     ParEver = function (me)
         local QS   = set.new()  -- only sub.qs
 
@@ -169,7 +189,7 @@ F = {
         local qF = INS(me, nil,
             _NFA.node {
                 id  = '-ever',
-                --must_not_reach = true
+                not_toReach = true
             })
         me.nfa.f = qF
 
@@ -199,8 +219,7 @@ F = {
             _NFA.node {
                 id  = '-and',
                 rem = ands,
-                --must_reach = true
-                should_reach = true
+                toReach = true
         })
         me.nfa.f = qF
 
@@ -232,8 +251,7 @@ F = {
             _NFA.node {
                 id   = '-or',
                 prio = me.prio,
-                --must_reach = true
-                should_reach = true
+                toReach = true
             })
         me.nfa.f = qF
 
@@ -245,9 +263,8 @@ F = {
             local qor = INS(sub, '',
                 _NFA.node {
                     id   = 'or',
-                    escs = set.new(me),
-                    esc  = me,
-                    stmt = nfa.f and nfa.f.stmt,       -- last stmt
+                    join = me,
+                    stmt = nfa.f and nfa.f.stmt,    -- last stmt
                 })
             PAR(QS, nfa.qs)
 
@@ -264,6 +281,14 @@ F = {
         local c, t, f = unpack(me)
         CONCAT(me, c)
 
+        if _ITER'Async'() then
+            CONCAT(me, t)
+            if f then
+                CONCAT(me, f)
+            end
+            return
+        end
+
         local qF = INS(me, nil, _NFA.node{ id='if-' })
         local qS = INS(me, '',
             _NFA.node {
@@ -272,12 +297,12 @@ F = {
                 ['#f'] = f and f.nfa.s or qF,
             })
 
-        if t and t.nfa.s then
+        if t.nfa.s then
             OUT(qS, '#t', t.nfa.s)
             me.nfa.qs = U(me.nfa.qs, t.nfa.qs)
             OUT(t.nfa.f, '', qF)
         else
-            OUT(qS, '#t', qF)
+            OUT(qS, '#f', qF)
         end
 
         if f and f.nfa.s then
@@ -293,6 +318,12 @@ F = {
 
     Loop = function (me)
         local body = unpack(me)
+
+        if _ITER'Async'() then
+            CONCAT(me, body)
+            return
+        end
+
         me.nd_join = false      -- dfa.lua may change it
 
         local qS = INS(me, '', _NFA.node{id='+loop',loop=me})
@@ -300,20 +331,18 @@ F = {
 
         local qL = INS(me, '',
             _NFA.node {
-                id = 'loop',
+                id = '^loop',
                 to = qS,
-                --must_reach = true,    -- TODO: ou qL ou qO
+                toReach = true,
             })
-        if not _ITER'Async'() then
-            OUT(qL, '', qS)             -- do not loop on Async
-        end
+        OUT(qL, '', qS)
 
         local qO = INS(me, false,
             _NFA.node {
                 id   = '-loop',
                 prio = me.prio,
                 rem  = body.nfa.qs,
-                should_reach = true,
+                toReach = not me.isLastStmt,
             })
 
         for brk in pairs(me.brks) do
@@ -322,28 +351,27 @@ F = {
     end,
 
     Break = function (me)
+        if _ITER'Async'() then
+            return
+        end
+
         local top = _ITER'Loop'()
         me.qBrk = INS(me, '',
             _NFA.node {
                 id   = 'brk',
-                escs = set.new(),
+                join = top,
                 esc  = top,
             })
         INS(me, false, _NFA.node{id='***'})
-
-        for stmt in _ITER() do
-            if stmt == top then
-                break
-            elseif stmt.id=='ParEver' or stmt.id=='ParOr' or stmt.id=='ParAnd' then
-                me.qBrk.escs[stmt] = true
-            end
-        end
     end,
 
     Async = function (me)
         local body = unpack(me)
         local id = '@'..tostring(body)
         _NFA.alphas[me] = true
+
+        local asy = INS(me, '', _NFA.node{id='asy'})
+        asy.inAsync = false     -- entry point
 
         local bef = INS(me, '',
             _NFA.node {
@@ -354,14 +382,11 @@ F = {
 
         CONCAT(me, body)
 
-        -- TODO: used to circunvent s -(me)-> f (see SetBlock)
-        me.nfa.out = INS(me, '', _NFA.node{ id='out' })
-
         local aft = INS(me, me,
             _NFA.node {
                 id  = '-asy',
                 rem = set.new(bef),
-                should_reach = true,
+                toReach = true,
             })
         bef.to = aft
     end,
@@ -377,45 +402,49 @@ F = {
         local top = _ITER'SetBlock'()
         CONCAT(me, me[1])
         INS(me, '', ACC(top[1].var,'wr'))
+
+        if _ITER'Async'() then
+            return
+        end
+
         me.qRet = INS(me, '',
             _NFA.node {
                 id   = 'ret',
-                escs = set.new(),
+                join = top,
                 esc  = top,
             })
         INS(me, false, _NFA.node{id='***'})
-        for stmt in _ITER() do
-            if stmt == top then
-                break
-            elseif stmt.id=='ParEver' or stmt.id=='ParOr' or stmt.id=='ParAnd' then
-                me.qRet.escs[stmt] = true
-            end
-        end
     end,
+
     SetBlock = function (me)
         local e1, stmt = unpack(me)
-        me.nd_join = false      -- dfa.lua may change it
         CONCAT(me, stmt)
-        -- TODO: com o par/ever isso perdeu sentido?
-        -- nao: async precisa
-        if stmt.nfa.f then
-            stmt.nfa.f.should_reach = false
+
+        if _ITER'Async'() then
+            return
         end
-        if stmt.id == 'Async' then
-            stmt.nfa.out.must_not_reach = true
-        else
-            INS(me, '', _NFA.node{ id='***',must_not_reach=true })
-        end
-        local set = INS(me, false,
+
+        me.nd_join = false      -- dfa.lua may change it
+
+        local set =
             _NFA.node {
                 id   = '-ret',
                 prio = me.prio,
                 rem  = stmt.nfa.qs,
-                --should_reach   = e1.var and e1.var.id~='$ret',
-                should_reach = not (e1.var and e1.var.id~='$ret'),
-            })
-        for ret in pairs(me.rets) do
-            OUT(ret.qRet, '', set)
+                toReach = (e1.var.id ~= '$ret'),
+            }
+
+        if stmt.id == 'Async' then
+            INS(me, '', set)    -- guaranteed to escape after asy-(me)->set
+        else
+            if stmt.id == 'Loop' then
+                stmt.nfa.f.toReach = false
+            end
+            INS(me, '', _NFA.node{ id='***',not_toReach=true })
+            INS(me, false, set)
+            for ret in pairs(me.rets) do
+                OUT(ret.qRet, '', set)
+            end
         end
     end,
 
@@ -431,10 +460,11 @@ F = {
         if acc.evt.dir == 'internal' then
             local qF = _NFA.node {
                 id = 'cont '..acc.evt.id,
-                should_reach = true,
+                isCnt = true,
+                toReach = true,
             }
             INS(me, '~>', qF)
-            q.to = qF
+            q.toCnt = qF
         end
     end,
 
@@ -444,7 +474,7 @@ F = {
     end,
     AwaitE = function (me)
         local acc = unpack(me)
-
+        INS(me, '', _NFA.node{id=acc.evt.id})
         CONCAT(me, acc)
 
         local bef = INS(me, '',
@@ -458,9 +488,10 @@ F = {
             _NFA.node {
                 id  = '-'..acc.evt.id,
                 rem = set.new(bef),
-                should_reach = true,
+                toReach = true,
+                isAwk = true,
             })
-        bef.to = aft
+        bef.toAwk = aft
 
         if acc.evt.dir == 'input' then
             _NFA.alphas[acc.evt] = true
@@ -471,6 +502,7 @@ F = {
         local ms = unpack(me)
         ms = (ms.id=='TIME') and ms.val or _TIME_undef
         local ms_id = ((ms==_TIME_undef) and '??' or ms)..'ms'
+        INS(me, '', _NFA.node{id=ms_id})
         local bef = INS(me, '',
             _NFA.node {
                 id = '+'..ms_id,
@@ -482,19 +514,20 @@ F = {
             _NFA.node {
                 id  = '-'..ms_id,
                 rem = set.new(bef),
-                should_reach = true,
+                toReach = true,
+                isAwk = true,
             })
-        bef.to = aft
+        bef.toAwk = aft
     end,
 
     Evt = function (me)
         if me.evt.dir == 'internal' then
-            INS(me, '', ACC(me.evt,me.mode))
+            INS(me, '', ACC(me.evt,me.se))
         end
     end,
 
     Var = function (me)
-        INS(me, '', ACC(me.var,me.mode))
+        INS(me, '', ACC(me.var,me.se))
     end,
 
     Op2_call = function (me)
@@ -529,7 +562,7 @@ F = {
         INS(me, '',
             _NFA.node {
                 id = me.fid,
-                f  = f,
+                f  = me.fid,
             })
     end,
 
@@ -537,8 +570,8 @@ F = {
         local _, e1 = unpack(me)
         CONCAT(me, e1)
         local var = e1.fst.var
-        INS(me, '', ACC(var,e1.fst.mode,assert(_C.deref(var.tp))))
-        e1.fst.nfa.f.mode = 'rd'
+        INS(me, '', ACC(var,e1.fst.se,assert(_C.deref(var.tp))))
+        e1.fst.nfa.f.se = 'rd'
     end,
 }
 

@@ -110,8 +110,7 @@ _GG = { [1] = K'' *S* EV'_Stmts' *S* -1
                  + V'ParOr'    + V'ParAnd'
                  + V'If'       + V'Loop'
 
-    , _SetBlock = V'_DoBlock' + V'Async'
-                 + V'ParOr'   + V'ParAnd' + V'ParEver'
+    , _SetBlock = V'_DoBlock' + V'Async' + V'ParEver'
                  + V'If'      + V'Loop'
 
     , _Dcl_pure = K'pure' *S* EV'ID_c' * (S* K',' *S* V'ID_c')^0

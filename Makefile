@@ -25,7 +25,7 @@ nesc: clean
 	lua pak.lua ; \
 	cd nesc/    ; \
 	mkdir -p ceu_nesc_$(DATE)/samples/ ; \
-	cp ceu README Makefile *.nc IO.h C2nesc.c ceu_nesc_$(DATE)/ ; \
+    cp ceu README Makefile *.m4 *.nc IO.h C2nesc.c ceu_nesc_$(DATE)/ ; \
 	cp samples/*.ceu ceu_nesc_$(DATE)/samples/ ; \
 	tar hcvzf ceu_nesc_$(DATE).tgz ceu_nesc_$(DATE)/ ; \
 	rm -Rf ../../ceu_nesc_$(DATE)/ ; \
