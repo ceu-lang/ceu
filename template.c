@@ -49,10 +49,6 @@ int _extl_;
 int _extlmax_;  // needed for timers
 #endif
 
-#if N_EMITS > 0
-int _step_ = PR_MIN;
-#endif
-
 /* TRACKS ***************************************************************/
 
 typedef struct {
@@ -290,10 +286,10 @@ int go (int* ret)
     {
 #if N_EMITS > 0
         if (trk.prio < 0) {
-            _step_ = trk.prio;
-//fprintf(stderr, "step: %d\n", _step_);
             tceu_lbl T[N_EMITS];
             int n = 0;
+            _step_ = trk.prio;
+//fprintf(stderr, "step: %d\n", _step_);
             while (1) {
                 int lbl = GTES[-trk.lbl];     // it is actually a gate
 //fprintf(stderr, "\tins: %d\n", lbl);
