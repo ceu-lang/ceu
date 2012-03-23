@@ -499,20 +499,20 @@ F = {
     end,
 
     AwaitT = function (me)
-        local ms = unpack(me)
-        ms = (ms.id=='TIME') and ms.val or _TIME_undef
-        local ms_id = ((ms==_TIME_undef) and '??' or ms)..'ms'
-        INS(me, '', _NFA.node{id=ms_id})
+        local us = unpack(me)
+        us = (us.id=='TIME') and us.us or _TIME_undef
+        local us_id = ((us==_TIME_undef) and '??' or us)..'us'
+        INS(me, '', _NFA.node{id=us_id})
         local bef = INS(me, '',
             _NFA.node {
-                id = '+'..ms_id,
-                ms = ms,
+                id = '+'..us_id,
+                us = us,
                 keep = true,
             })
 
-        local aft = INS(me, ms_id,
+        local aft = INS(me, us_id,
             _NFA.node {
-                id  = '-'..ms_id,
+                id  = '-'..us_id,
                 rem = set.new(bef),
                 toReach = true,
                 isAwk = true,

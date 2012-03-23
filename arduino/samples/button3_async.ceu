@@ -1,4 +1,4 @@
-input int PIN2_LOW, PIN2_HIGH;
+input int PIN02_LOW, PIN02_HIGH;
 
 _pinMode( 2, _INPUT);
 _pinMode(13, _OUTPUT);
@@ -15,9 +15,9 @@ par/or do
         end
     with
         loop do
-            await PIN2_LOW;
+            await PIN02_LOW;
             par/or do
-                await PIN2_LOW;
+                await PIN02_LOW;
                 t = 500;
             with
                 await 200ms;
@@ -38,9 +38,9 @@ with
             if (p2 != tmp) then
                 p2 = tmp;
                 if p2==_HIGH then
-                    emit PIN2_HIGH;
+                    emit PIN02_HIGH;
                 else
-                    emit PIN2_LOW;
+                    emit PIN02_LOW;
                 end
             end
             u32 now = _millis();

@@ -12,25 +12,25 @@ _DFA = {
 
 local _step_
 
-function NODE_time (old, ms)
+function NODE_time (old, us)
     if old.ref then
         old = old.ref   -- always get to the original q
     end
-    old.qs_dif = old.qs_dif or { [old.ms]=old }
-    local new = old.qs_dif[ms]
+    old.qs_dif = old.qs_dif or { [old.us]=old }
+    local new = old.qs_dif[us]
     if new then
         return new
     end
 
-    local ms_id = (ms==_TIME_undef) and '??' or ms
+    local us_id = (us==_TIME_undef) and '??' or us
     new = _NFA.node {
-        id    = '+'..ms_id..'ms',
-        ms    = ms,
+        id    = '+'..us_id..'us',
+        us    = us,
         keep  = true,
         toAwk = old.toAwk,
         ref   = old,
     }
-    old.qs_dif[ms] = new
+    old.qs_dif[us] = new
 
     -- includes the new node in all rems that old is present
     for x in pairs(_NFA.nodes) do
@@ -68,6 +68,60 @@ function P_equal (P1, P2)
         end
     end
     return true
+end
+
+-- P_t0: checks if the paths match the starting states
+--          they are equal and sorted by q.n (see S_find)
+do
+    local function _t0 (P)
+        local T = {}    -- { [s1]={p1,p3}, [s3]={p2} }
+        local ret = {}  -- { {p1,p3}, {p2} }
+        for i=1, #P do
+            local p1 = P[i]
+            if p1.t0 and (not T[p1]) then
+                local t = { p1 }
+                T[p1.t0] = t
+                ret[#ret+1] = t
+                for j=i+1, #P do
+                    local p2 = P[j]
+                    if p2.t0 == p1.t0 then
+                        t[#t+1] = p2
+                        T[p2] = true
+                    end
+                end
+            end
+        end
+        local t = T[P.t0]
+        if t then
+            t[#t+1] = { q={n=true} }
+        end
+        return ret
+    end
+
+    -- TODO: nao tem algoritmo melhor??
+    function P_t0 (P1, P2)
+        local T1 = _t0(P1)
+        local T2 = _t0(P2)
+
+        if #T1 ~= #T2 then
+            return false
+        end
+
+        for i, t1 in ipairs(T1) do
+            local t2 = T2[i]
+            if #t1 ~= #t2 then
+                return false
+            end
+            for j, p1 in ipairs(t1) do
+                local p2 = t2[j]
+                if p1.q.n ~= p2.q.n then
+                    return false
+                end
+            end
+        end
+
+        return true
+    end
 end
 
 function P_leaves (P)
@@ -108,13 +162,17 @@ function P_sort (P)
     end
 end
 
-function STATE (qs_path, qs_awt)
+function S_find (qs_path)
     P_sort(qs_path)
     for S in pairs(_DFA.states) do
-        if P_equal(S.qs_path, qs_path) then
-            return S, false
+        if P_equal(S.qs_path,qs_path) and P_t0(S.qs_path,qs_path) then
+            return S
         end
     end
+    return nil
+end
+
+function S_new (qs_path, qs_awt)
 --[==[
 if _DFA.n_states == 20 then
     dofile 'raphviz.lua'
@@ -261,7 +319,7 @@ end
 
 local p = { q=_AST.nfa.s }
 local Init =
-    STATE(
+    S_new(
         { p },
         { [_AST.nfa.s] = p }
     )
@@ -290,7 +348,7 @@ do
             end
         end
         if changed then
-            DELTAS[#DELTAS+1] = {id='',ext=ext,qs_togo=qs_togo}
+            DELTAS[#DELTAS+1] = {id=ext.id,qs_togo=qs_togo}
         end
     end
 
@@ -301,8 +359,8 @@ do
     -- MIN timer
     local min = set.fold(S.qs_awt, false,
         function(acc, q)
-            if q.ms and q.ms~=_TIME_undef and (acc==false or q.ms<acc) then
-                return q.ms
+            if q.us and q.us~=_TIME_undef and (acc==false or q.us<acc) then
+                return q.us
             else
                 return acc
             end
@@ -311,7 +369,7 @@ do
     -- all undefs + min (if existent)
     local qs_tmr = set.flatten(
                         set.filter(S.qs_awt,
-                            function(q) return q.ms==_TIME_undef end))
+                            function(q) return q.us==_TIME_undef end))
     if min then
         qs_tmr[#qs_tmr+1] = true
     end
@@ -319,8 +377,8 @@ do
         qs_tmr[q] = i
     end
 
-    -- for all possible starting states
-    for ext in pairs(_NFA.alphas)
+    -- for all possible t0 states
+    for s in pairs(_DFA.states)
     do
         local tmr_cur = 1   -- at least one timer transition
         while tmr_cur < math.pow(2,#qs_tmr)
@@ -328,31 +386,31 @@ do
             tmr_bin = dec2bin(tmr_cur)
             tmr_cur = tmr_cur + 1
             local minOn = min and (string.sub(tmr_bin,-#qs_tmr,-#qs_tmr)=='1')
-            local MS    = minOn and min or _TIME_undef
-            local MS_id = minOn and min or '??'
+            local US    = minOn and min or _TIME_undef
+            local US_id = minOn and min or '??'
 
             local qs_togo = {}
             local changed = false
 
             for q, P in pairs(S.qs_awt) do
-                if q.ms and P.ext==ext then         -- must match starting ext
+                if q.us and P.t0==s.n then       -- must match starting S
                     local idx = qs_tmr[q]
-                    if (minOn and q.ms==min) or
+                    if (minOn and q.us==min) or
                         (idx and string.sub(tmr_bin,-idx,-idx)=='1') then
                         qs_togo[q.toAwk] = P        -- expiring timers
                         changed = true
-                    elseif q.ms == _TIME_undef then
+                    elseif q.us == _TIME_undef then
                         qs_togo[q] = P              -- unchanged
                     else
-                        local ms, ms_id
+                        local us, us_id
                         if minOn then
-                            ms = q.ms - min
-                            ms_id = ms
+                            us = q.us - min
+                            us_id = us
                         else
-                            ms = _TIME_undef
-                            ms_id = '??'
+                            us = _TIME_undef
+                            us_id = '??'
                         end
-                        local new = NODE_time(q,ms) -- copy q (with dif time)
+                        local new = NODE_time(q,us) -- copy q (with dif time)
                         qs_togo[new] = P            -- non expiring timers
                         changed = true
                     end
@@ -362,9 +420,9 @@ do
             end
             if changed then
                 DELTAS[#DELTAS+1] = {
-                    id  = ext.id..'/'..tmr_cur,
-                    ms  = MS,
-                    ext = ext,
+                    id  = s.n..'/'..tmr_cur,
+                    us  = US,
+                    t0 = s.n,
                     qs_togo = qs_togo,
                 }
             end
@@ -374,20 +432,21 @@ do
     --------------------------------------------------
     -- Traverse transitions
     --------------------------------------------------
---DBG'==============='
     for _, T in ipairs(DELTAS)
     do
         local ifs = {}      -- { if1, if2, ... }
         local ifs_cur = 0   -- {   0,   0, ... }
 
+--DBG('===', _DFA.n_states+1)
+
         while ifs_cur < math.pow(2,#ifs)
         do
             local qs_togo = T.qs_togo
             local T = { id=T.id..'/'..ifs_cur, ifs_cur=ifs_cur,
-                        ext=T.ext, ms=T.ms, qs_togo={} }
+                        t0=T.t0, us=T.us, qs_togo={} }
 
             local qs_cur  = set.new()
-            local qs_path = { q=nil,prio=nil }
+            local qs_path = { t0=T.t0 } -- { t0=?, {q=?,prio=?,...}, ...  }
 
             ifs_bin = dec2bin(ifs_cur)
             ifs_cur = ifs_cur + 1
@@ -396,7 +455,7 @@ do
             for q,pFr in pairs(qs_togo) do    -- must start with these
                 local pTo = Q_spawn(q, qs_path, PR_MAX+1)
                 qs_togo[q] = pTo
-                pTo.ext = pFr.ext            -- used by timers
+                pTo.t0 = pFr.t0         -- used by timers
                 T.qs_togo[q] = { pFr, pTo }
             end
 
@@ -406,7 +465,6 @@ do
                     break
                 end
                 local q = P.q
---DBG('exec', q.id, q.n)
 
                 if q.keep then
                     qs_cur[q] = P
@@ -438,13 +496,13 @@ do
                             Q_spawn(q.to, qs_cur[q_and])
                         end
                     end
-                elseif q.ms then
-                    if not qs_togo[q] then
-                        P.ext = T.ext           -- new starting ext
-                        if T.ms == _TIME_undef then
-                            q = NODE_time(q, _TIME_undef)
-                        end
+                elseif q.us and (not qs_togo[q]) then
+                    -- keep starting S or set to S to be created
+                    P.t0 = T.t0 or _DFA.n_states+1
+                    if T.us == _TIME_undef then
+                        q = NODE_time(q, _TIME_undef)
                     end
+--DBG(q.us, P.t0)
                 elseif q.toCnt then
                     local p = Q_spawn(q.toCnt, nil, _step_+1)
                     p.trg = P
@@ -474,15 +532,9 @@ do
             end
 
             -- create new state
-            local s, isNew = STATE(qs_path, qs_cur)
-            S.delta[T] = s
-            if isNew then
-                if not s.final then
-                    TOGO[#TOGO+1] = s
-                end
-            else
---[[
-                -- adjusts transitions to point to existing state
+            local s = S_find(qs_path)
+            if s then
+                -- adjusts transitions to point to existing state (graphviz)
                 for q, t in pairs(T.qs_togo) do
                     local pFr, pTo = unpack(t)
                     for _,pNew in ipairs(s.qs_path) do
@@ -491,8 +543,13 @@ do
                         end
                     end
                 end
-]]
+            else
+                s = S_new(qs_path, qs_cur)
+                if not s.final then
+                    TOGO[#TOGO+1] = s
+                end
             end
+            S.delta[T] = s
         end
     end
 end

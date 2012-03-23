@@ -1,9 +1,9 @@
-input int PIN2;
+input int PIN02;
 
 par do
 
     loop do
-        int v = await PIN2;
+        int v = await PIN02;
         _digitalWrite(13, v);
     end
 
@@ -18,7 +18,7 @@ with
             int tmp = _digitalRead(2);
             if (pin2 != tmp) then
                 pin2 = tmp;
-                emit PIN2=pin2;
+                emit PIN02=pin2;
             end
             _delay(10);
         end

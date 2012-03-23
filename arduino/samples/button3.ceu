@@ -1,19 +1,21 @@
 input int Start;
-input int PIN2_LOW, PIN2_HIGH;
+input int PIN02_LOW, PIN02_HIGH;
 
-int t = 500;
+_pinMode(13, _OUTPUT);
+
+u64 t = 500;
 par/or do
     loop do
         _digitalWrite(13, _HIGH);
-        await (t);
+        await (t*1000);
         _digitalWrite(13, _LOW);
-        await (t);
+        await (t*1000);
     end
 with
     loop do
-        await PIN2_LOW;
+        await PIN02_LOW;
         par/or do
-            await PIN2_LOW;
+            await PIN02_LOW;
             t = 500;
         with
             await 200ms;

@@ -80,7 +80,7 @@ implementation
     
     event void Timer.fired ()
     {
-        ceu_go_time(NULL, call Timer.getNow());
+        ceu_go_time(NULL, call Timer.getNow()*1000);
 #ifndef ceu_out_timer
         call Timer.startOneShot(10);
 #endif

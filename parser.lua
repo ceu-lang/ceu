@@ -205,7 +205,8 @@ _GG = { [1] = K'' *S* EV'_Stmts' *S* -1
                 (NUM * K'min' + Cc(0)) *
                 (NUM * K's'   + Cc(0)) *
                 (NUM * K'ms'  + Cc(0)) *
-                (NUM * EE'<h,min,s,ms>')^-1
+                (NUM * K'us'  + Cc(0)) *
+                (NUM * EE'<h,min,s,ms,us>')^-1
 
     , Var    = V'ID_int'
     , Evt    = V'ID_int' + V'ID_ext'

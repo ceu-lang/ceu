@@ -163,8 +163,10 @@ do
 
         -- FUNCTIONS called
         for id in pairs(_EXPS.calls) do
-            -- negative doesn't interfere with events
-            t[#t+1] = '#define IO'..id..' -'..(#t+1)
+            if id ~= '$anon' then
+                -- negative doesn't interfere with events
+                t[#t+1] = '#define IO'..id..' -'..(#t+1)
+            end
         end
 
         if _OPTS.events then

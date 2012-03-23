@@ -201,11 +201,12 @@ F = {
     end,
 
     TIME = function (me)
-        local h,m,s,ms = unpack(me)
+        local h,m,s,ms,us = unpack(me)
         me.tp   = 'int'
-        me.val  = ms + s*1000 + m*60000 + h*3600000
+        me.us   = us + ms*1000 + s*1000000 + m*60000000 + h*3600000000
+        me.val  = me.us .. 'LL'
         me.lval = false
-        ASR(me.val > 0, me,'must be >0')
+        ASR(me.us > 0, me,'must be >0')
     end,
 
     Cid = function (me)

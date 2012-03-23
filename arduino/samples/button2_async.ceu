@@ -1,4 +1,4 @@
-input int PIN2, PIN2_LOW, PIN2_HIGH;
+input int PIN02, PIN02_LOW, PIN02_HIGH;
 
 par do
 
@@ -15,7 +15,7 @@ par do
                 end
             end
         with
-            await PIN2;
+            await PIN02;
         end
     end
 
@@ -30,7 +30,7 @@ with
             int tmp = _digitalRead(2);
             if (pin2 != tmp) then
                 pin2 = tmp;
-                emit PIN2=pin2;
+                emit PIN02=pin2;
             end
             _delay(10);
             emit 10ms;
