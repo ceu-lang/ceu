@@ -12,6 +12,9 @@ typedef uint8_t   u8;
 
 #include "_ceu_code.tmp"
 
+u32 old = micros();
+u64 now64 = old;
+
 int V;
 
 void setup ()
@@ -59,7 +62,7 @@ void setup ()
     pinMode(13, INPUT);
 #endif
 
-    ceu_go_init(NULL, micros());
+    ceu_go_init(NULL, now64);
 #ifdef IO_Start
     ceu_go_event(NULL, IO_Start, NULL);
 #endif
@@ -342,8 +345,12 @@ void loop()
     }
 #endif
 
+    u32 dt = micros() - old;    // no problems with `old´ overflow
 #ifdef POLLING_INTERVAL
-    delayMicroseconds(POLLING_INTERVAL);
+    if (POLLING_INTERVAL > dt)
+        delayMicroseconds(POLLING_INTERVAL-dt);
 #endif
-    ceu_go_time(NULL, micros());
+    now64 += dt;    // incrementing `dt´ avoids overflows
+    old   += dt;    // `old´ should overflow after 70mins
+    ceu_go_time(NULL, now64);
 }
