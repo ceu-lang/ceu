@@ -3,67 +3,48 @@ input _error_t    Radio_sendDone;
 input _message_t* Radio_receive;
 
 C do
-    typedef nx_struct {
-        nx_uint16_t cnt;
-    } t ;
+    typedef struct {
+        int cnt;
+    } Msg ;
 end
 
-// radio start
 loop do
-    par/or do
-        await 1s;
-    with
-        int err = _Radio_start();
+    int err = _Radio_start();
+    if err == _SUCCESS then
+        err = await Radio_startDone;
         if err == _SUCCESS then
-            err = await Radio_startDone;
-            if err == _SUCCESS then
-                break;
-            end
+            break;
         end
-        await forever;
     end
+    await 1s;
 end
 
 par do
     loop do
-        _message_t* msg = await Radio_receive;
-        _t* t_recv = _Radio_getPayload(msg,0);
-
-        // shows `cnt' for 500ms
-        _Leds_set(t_recv->cnt);
-        await 500ms;
-        _Leds_set(0);
+        _message_t* pkt_recv = await Radio_receive;
+        _Msg* msg_recv = _Radio_getPayload(pkt_recv,0);
+        _Leds_set(msg_recv->cnt);
     end
 
 with
-    _message_t msg;
-    _t* t_send = _Radio_getPayload(&msg, sizeof<_t>);
-    t_send->cnt = 1;
+    _message_t pkt_send;
+    _Msg* msg_send = _Radio_getPayload(&pkt_send, sizeof<_Msg>);
+    msg_send->cnt = 1;
 
     loop do
         await 2s;
 
-        // radio send
         loop do
-            par/or do
-                await 1s;
-            with
-                int err = _Radio_send(_AM_BROADCAST_ADDR,&msg,sizeof<_t>);
+            int err = _Radio_send(_AM_BROADCAST_ADDR,&pkt_send,sizeof<_Msg>);
+            if err == _SUCCESS then
+                err = await Radio_sendDone;
                 if err == _SUCCESS then
-                    err = await Radio_sendDone;
-                    if err == _SUCCESS then
-                        break;
-                    end
+                    break;
                 end
             end
-            await forever;
+            await 1s;
         end
 
-        // blinks green led for 100ms
-        _Leds_led1On();
-        await 100ms;
-        _Leds_led1Off();
-
-        t_send->cnt = t_send->cnt + 1;
+        msg_send->cnt = msg_send->cnt + 1;
     end
 end

@@ -159,7 +159,7 @@ _GG = { [1] = K'' *S* EV'_Stmts' *S* -1
     , Break   = K'break'
 
     , _Emit   = V'EmitT' + V'EmitE'
-    , EmitT   = K'emit' *S* (V'TIME')
+    , EmitT   = K'emit' *S* (V'_Parens'+V'TIME')
     , EmitE   = K'emit' *S* EV'Evt' * (S* K'=' *S* V'_Exp')^-1
 
     , AwaitN  = K'await' *S* K'forever'             -- last stmt

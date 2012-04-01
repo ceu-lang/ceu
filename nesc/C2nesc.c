@@ -62,6 +62,14 @@ int Photo_read () {
 }
 #endif
 
+// TEMP
+
+#ifdef IO_Temp_read
+int Temp_read () {
+   return call Temp.read();
+}
+#endif
+
 // RADIO
 
 #ifdef IO_Radio_start
@@ -93,9 +101,27 @@ void Radio_setPayloadLength (message_t* msg, uint8_t len) {
 }
 #endif
 
+#ifdef IO_Radio_maxPayloadLength
+uint8_t Radio_maxPayloadLength () {
+    return call RadioPacket.maxPayloadLength();
+}
+#endif
+
 #ifdef IO_Radio_setDestination
 void Radio_setDestination (message_t* msg, am_addr_t addr) {
     return call RadioAMPacket.setDestination(msg, addr);
+}
+#endif
+
+#ifdef IO_Radio_type
+am_id_t Radio_type (message_t* msg) {
+    return call RadioAMPacket.type(msg);
+}
+#endif
+
+#ifdef IO_Radio_setType
+void Radio_setType (message_t* msg, am_id_t id) {
+    call RadioAMPacket.setType(msg, id);
 }
 #endif
 

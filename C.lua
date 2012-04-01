@@ -12,15 +12,15 @@ local types = {
 }
 
 function _C.isNumeric (tp)
-    return tp~='void' and (not _C.deref(tp))
+    return tp~='void' and (not _C.deref(tp)) or _C.ext(tp)
 end
 
 function _C.deref (tp)
-    return string.match(tp, '(.-)%*$')
+    return string.match(tp, '(.-)%*$') or _C.ext(tp)
 end
 
 function _C.ext (tp)
-    return (not _C.deref(tp)) and (not types[tp])
+    return (not types[tp]) and (not string.match(tp, '(.-)%*$')) and tp
 end
 
 function _C.contains (tp1, tp2)

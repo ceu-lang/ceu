@@ -14,7 +14,7 @@ include $(MAKERULES)
 
 ceu:
 	@echo "======================================================="
-	./ceu $(CEUFILE) --dfa --events --output _ceu_code.tmp
+	./ceu $(CEUFILE) --events --output _ceu_code.tmp
 	@echo "======================================================="
 
 clean_ceu:

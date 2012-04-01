@@ -1,3 +1,5 @@
+typedef int64_t  s64;
+typedef uint64_t u64;
 typedef int32_t  s32;
 typedef uint32_t u32;
 typedef int16_t  s16;
@@ -40,6 +42,10 @@ module AppC @safe()
 #ifdef IO_PHOTO
     uses interface Read<uint16_t> as Photo;
 #endif
+#ifdef IO_TEMP
+    uses interface Read<uint16_t> as Temp;
+#endif
+
 #ifdef IO_RADIO
     uses interface AMSend       as RadioSend[am_id_t id];
     uses interface Receive      as RadioReceive[am_id_t id];
@@ -58,13 +64,18 @@ module AppC @safe()
 
 implementation
 {
+    u32 old;
+    u64 now64;
+
     int RET = 0;
     #include "C2nesc.c"
     #include "_ceu_code.tmp"
 
     event void Boot.booted ()
     {
-        ceu_go_init(NULL, call Timer.getNow());
+        old = call Timer.getNow() * 1000;
+        now64 = old;
+        ceu_go_init(NULL, now64);
 #ifdef IO_Start
         ceu_go_event(NULL, IO_Start, NULL);
 #endif
@@ -80,7 +91,10 @@ implementation
     
     event void Timer.fired ()
     {
-        ceu_go_time(NULL, call Timer.getNow()*1000);
+        u32 dt = call Timer.getNow()*1000 - old;
+        now64 += dt;
+        old   += dt;
+        ceu_go_time(NULL, now64);
 #ifndef ceu_out_timer
         call Timer.startOneShot(10);
 #endif
@@ -100,6 +114,13 @@ implementation
         ceu_go_event(NULL, IO_Photo_readDone, &v);
     }
 #endif // IO_PHOTO
+
+#ifdef IO_TEMP
+    event void Temp.readDone(error_t err, uint16_t val) {
+        int v = val;
+        ceu_go_event(NULL, IO_Temp_readDone, &v);
+    }
+#endif // IO_TEMP
 
 #ifdef IO_RADIO
     event void RadioControl.startDone (error_t err) {

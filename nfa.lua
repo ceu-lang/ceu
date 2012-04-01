@@ -53,22 +53,13 @@ function qVSq (q1, q2)
         return not (_C.pures[q1.f] or _C.pures[q2.f] or
                         (_C.dets[q1.f] and _C.dets[q1.f][q2.f]))
 
-    elseif q1.se and q2.se and ND[q1.se][q2.se] then
-        if q1.ptr then
-            if q2.ptr then
-                -- q1.ptr vs q2.ptr
-                return _C.contains(q1.ptr, q2.ptr)
-            else
-                -- q1.ptr vs q2.acc
-                return _C.contains(q1.ptr, q2.acc.tp) and q2.acc.id~='$ret'
-            end
+    elseif q1.acc_se and q2.acc_se and ND[q1.acc_se][q2.acc_se] then
+        if not q1.acc_id then
+            return _C.contains(q1.acc_tp, q2.acc_tp)
+        elseif not q2.acc_id then
+            return _C.contains(q2.acc_tp, q1.acc_tp)
         else
-            if q2.ptr then
-                -- q1.acc vs q2.ptr
-                return _C.contains(q2.ptr, q1.acc.tp) and q1.acc.id~='$ret'
-            else
-                return q1.acc==q2.acc
-            end
+            return q1.acc_id == q2.acc_id
         end
     end
 end
@@ -127,12 +118,13 @@ function INS (me, a, q)
     return q
 end
 
-function ACC (acc, se, ptr)
+function ACC (acc_id, acc_str, acc_tp, acc_se)
     return _NFA.node {
-        id  = se..' '..(ptr or acc.id),
-        acc = acc,
-        ptr = ptr,
-        se  = se,
+        id = acc_se..' '..acc_str,
+        acc_id  = acc_id,
+        acc_str = acc_str,
+        acc_tp  = acc_tp,
+        acc_se  = acc_se,
     }
 end
 
@@ -401,7 +393,8 @@ F = {
     Return = function (me)
         local top = _ITER'SetBlock'()
         CONCAT(me, me[1])
-        INS(me, '', ACC(top[1].var,'wr'))
+        local v = top[1].var
+        INS(me, '', ACC(v, v.id, v.tp, 'wr'))
 
         if _ITER'Async'() then
             return
@@ -522,12 +515,16 @@ F = {
 
     Evt = function (me)
         if me.evt.dir == 'internal' then
-            INS(me, '', ACC(me.evt,me.se))
+            INS(me, '', ACC(me.evt, me.evt.id, me.evt.tp, me.se))
         end
     end,
 
     Var = function (me)
-        INS(me, '', ACC(me.var,me.se))
+        INS(me, '', ACC(me.var, me.var.id, me.var.tp, me.se))
+    end,
+
+    Cid = function (me)
+        INS(me, '', ACC(me[1], me[1], me.tp, me.se))
     end,
 
     Op2_call = function (me)
@@ -536,25 +533,14 @@ F = {
 
         for _, exp in ipairs(exps) do
             CONCAT(me, exp)
-            if exp.fst then
-                local var = exp.fst.var
-                local ptr = _C.deref(var.tp)
 
-                -- $f(pa)
-                if ptr then
-                    if isPure then
-                        INS(me, '', ACC(var,'rd',ptr))
-                    else
-                        INS(me, '', ACC(var,'wr',ptr))
-                    end
-
-                -- $f(&a)
-                elseif exp.fst.ref then
-                    if isPure then
-                        INS(me, '', ACC(var,'rd'))
-                    else
-                        INS(me, '', ACC(var,'wr'))
-                    end
+            -- f(ptr_v)
+            local tp = _C.deref(exp.tp)
+            if tp then
+                if isPure then
+                    INS(me, '', ACC(nil, '<'..exp.tp..'>', tp, 'rd'))
+                else
+                    INS(me, '', ACC(nil, '<'..exp.tp..'>', tp, 'wr'))
                 end
             end
         end
@@ -569,9 +555,7 @@ F = {
     ['Op1_*'] = function (me)
         local _, e1 = unpack(me)
         CONCAT(me, e1)
-        local var = e1.fst.var
-        INS(me, '', ACC(var,e1.fst.se,assert(_C.deref(var.tp))))
-        e1.fst.nfa.f.se = 'rd'
+        INS(me, '', ACC(nil, e1.tp, e1.tp, e1.fst.se))
     end,
 }
 

@@ -1,0 +1,69 @@
+input _error_t    Radio_startDone;
+input _error_t    Radio_sendDone;
+input _message_t* Radio_receive;
+
+pure _Radio_getPayload;
+deterministic _Leds_set, _Radio_send;
+deterministic _Leds_led0Toggle, _Radio_send;
+
+C do
+    typedef struct {
+        nx_uint16_t cnt;
+    } Cnt;
+end
+
+loop do
+    int err = _Radio_start();
+    if err == _SUCCESS then
+        err = await Radio_startDone;
+        if err == _SUCCESS then
+            break;
+        end
+    end
+    await 1s;
+end
+
+void retry;
+
+par do
+    loop do
+        _message_t* msg = await Radio_receive;
+        _Cnt* data = _Radio_getPayload(msg, sizeof<_Cnt>);
+        _Leds_set(data->cnt);
+        await 1s;
+        data->cnt = data->cnt + 1;
+        _Radio_send((_TOS_NODE_ID+1)%3, msg, sizeof<_Cnt>);
+    end
+with
+    loop do
+        par/or do
+            await 5s;
+            par do
+                loop do
+                    emit retry;
+                    await 10s;
+                end
+            with
+                _Leds_set(0);
+                loop do
+                    _Leds_led0Toggle();
+                    await 500ms;
+                end
+            end
+        with
+            await Radio_receive;
+        end
+    end
+with
+    if _TOS_NODE_ID == 0 then
+        loop do
+            _message_t msg;
+            _Cnt* data = _Radio_getPayload(&msg, sizeof<_Cnt>);
+            data->cnt = 1;
+            _Radio_send(1, &msg, sizeof<_Cnt>);
+            await retry;
+        end
+    else
+        await forever;
+    end
+end

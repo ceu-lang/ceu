@@ -1,8 +1,8 @@
 DATE = `date +%F`
 
 all:
-	./ceu --dfa $(CEUFILE) --output _ceu_code.c
-	gcc main.c
+	./ceu $(CEUFILE) --output _ceu_code.c
+	gcc main.c $(CFLAGS)
 
 clean:
 	rm -f *.exe _ceu_* ceu

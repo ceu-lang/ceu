@@ -1,3 +1,4 @@
+
 PRE = ''
 
 --[===[
@@ -9334,6 +9335,30 @@ return v == &v[0] ;
 
 Test { [[
 C do
+    int V[2][2] = { {1, 2}, {3, 4} };
+end
+
+_V[0][1] = 5;
+return _V[1][0] + _V[0][1];
+]],
+    run = 8,
+}
+
+Test { [[
+C do
+    int END = 1;
+end
+if ! _END-1 then
+    return 1;
+else
+    return 0;
+end
+]],
+    run = 1,
+}
+
+Test { [[
+C do
 end
 return 1;
 ]],
@@ -9701,6 +9726,17 @@ return _f1(&a,&b);
 }
 
 Test { [[
+int* pa;
+par/or do
+    _f4(pa);
+with
+    int v = 1;
+end;
+return 0;
+]],
+    nd_acc = 1,
+}
+Test { [[
 int a;
 par/or do
     _f4(&a);
@@ -9732,6 +9768,7 @@ end;
 return 0;
 ]],
     nd_flw = 1,
+    nd_acc = 1,
 }
 Test { [[
 int a, b;
@@ -9742,7 +9779,8 @@ with
 end;
 return 0;
 ]],
-     run = 0
+    nd_acc = 1,     -- TODO: ref
+    --run = 0,
 }
 Test { [[
 int a, b;
@@ -9753,7 +9791,8 @@ with
 end;
 return 0;
 ]],
-    run = 0,
+    nd_acc = 1,     -- TODO: ref
+    --run = 0,
 }
 
 Test { [[
@@ -9765,7 +9804,8 @@ with
 end;
 return 0;
 ]],
-    run = 0,
+    nd_acc = 1,     -- TODO: ref
+    --run = 0,
 }
 Test { [[
 int* pa;
@@ -9773,9 +9813,10 @@ do
     int a;
     pa = &a;
 end;
-return *pa;
+return 1;
 ]],
-    exps = 'invalid attribution',
+    run = 1,     -- TODO: check_depth
+    --exps = 'invalid attribution',
 }
 Test { [[
 int a=1;
@@ -9834,6 +9875,7 @@ with
 end;
 return a+b;
 ]],
+    nd_acc = 1,     -- TODO: ref
     nd_call = 1,
     run = 6,
 }
@@ -9879,7 +9921,8 @@ with
 end;
 return v1 + v2;
 ]],
-    run = 6,
+    nd_acc = 1,     -- TODO: ref
+    --run = 6,
 }
 
 Test { [[
@@ -9893,8 +9936,9 @@ with
 end;
 return a+b;
 ]],
-    run = 4,
+    --run = 4,
     nd_call = 1,
+    nd_acc = 1,     -- TODO: ref
 }
 
 Test { [[
@@ -9923,7 +9967,8 @@ with
 end;
 return a+a;
 ]],
-    run = 4,
+    --run = 4,
+    nd_acc = 1,     -- TODO: ref
 }
 
 Test { [[
@@ -9984,6 +10029,20 @@ return 0;
 }
 
 Test { [[
+C do
+    int a;
+end
+par/or do
+    _a = 1;
+with
+    _a = 2;
+end
+return _a;
+]],
+    nd_acc = 1,
+}
+
+Test { [[
 par do
     loop do
         _digitalWrite(11, _HIGH);
@@ -10007,6 +10066,7 @@ with
     end
 end
 ]],
+    nd_acc = 6,
     nd_call = 6,
     forever = true,
 }

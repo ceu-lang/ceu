@@ -19,12 +19,11 @@ implementation
 #ifdef IO_PHOTO
     components new PhotoC();
 #endif
+#ifdef IO_TEMP
+    components new TempC();
+#endif
 #ifdef IO_RADIO
     components ActiveMessageC as Radio;
-#endif
-#ifdef IO_RADIO1
-    components new AMSenderC(99) as SendRadio1;
-    components new AMReceiverC(99) as ReceiveRadio1;
 #endif
 #ifdef IO_SERIAL
     components SerialActiveMessageC as Serial;
@@ -43,6 +42,9 @@ implementation
 #endif
 #ifdef IO_PHOTO
     AppC.Photo -> PhotoC;
+#endif
+#ifdef IO_TEMP
+    AppC.Temp -> TempC;
 #endif
 
 #ifdef IO_RADIO

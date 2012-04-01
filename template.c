@@ -137,6 +137,7 @@ void qins_timer (tceu_time ms, tceu_gte gte) {
 
 
     // TODO: inef
+    // TODO: create func and move calls to escapes
     // checks if the gate is already on Q_TIMERS
     for (i=1; i<=Q_TIMERS.n; i++) {
         if (Q_TIMERS_BUF[i].gte == gte) {
@@ -159,8 +160,9 @@ int async_cnt = 0;
 void qins_async (tceu_gte gte)
 {
     int i;
-    // TODO: maybe this is not needed
     // TODO: inef
+    // TODO: create func and move calls to escapes
+    // checks if the gate is already on Q_ASYNC
     for (i=async_ini; i!=async_end; i=(i+1)%N_ASYNCS) {
         if (Q_ASYNC[i] == gte)
             return;
@@ -215,8 +217,8 @@ int ceu_go_async (int* ret, int* count)
     if (async_cnt == 0)
         return 0;
 
-    spawn(Q_ASYNC[async_ini++]);
-    async_ini %= N_ASYNCS;
+    spawn(Q_ASYNC[async_ini]);
+    async_ini = (async_ini+1) % N_ASYNCS;
     async_cnt--;
 
 #if N_TIMERS > 1

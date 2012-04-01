@@ -12,10 +12,11 @@ function MAX_all (me, t)
     me.n_asyncs = 0
     me.n_emits  = 0
     for _, sub in ipairs(t) do
-        me.n_timers = MAX(me.n_timers, sub.n_timers)
         me.n_tracks = MAX(me.n_tracks, sub.n_tracks)
-        me.n_asyncs = MAX(me.n_asyncs, sub.n_asyncs)
         me.n_emits  = MAX(me.n_emits,  sub.n_emits)
+        -- TODO: ADD_all
+        me.n_timers = me.n_timers + sub.n_timers
+        me.n_asyncs = me.n_asyncs + sub.n_asyncs
     end
 end
 
@@ -26,10 +27,10 @@ function ADD_all (me, t)
     me.n_asyncs = 0
     me.n_emits  = 0
     for _, sub in ipairs(t) do
-        me.n_timers = me.n_timers + sub.n_timers
         me.n_tracks = me.n_tracks + sub.n_tracks
-        me.n_asyncs = me.n_asyncs + sub.n_asyncs
         me.n_emits  = me.n_emits  + sub.n_emits
+        me.n_timers = me.n_timers + sub.n_timers
+        me.n_asyncs = me.n_asyncs + sub.n_asyncs
     end
 end
 

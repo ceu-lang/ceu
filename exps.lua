@@ -2,21 +2,10 @@ _EXPS = {
     calls = {}      -- { _printf=true, _myf=true, ... }
 }
 
-function check_lval (e1)
-    return e1.lval and e1.fst
-end
-function check_depth (e1, e2)
-    local ptr = _C.deref(e2.tp)
-    return (not ptr) or (not e2.fst) or
-            e1.fst.var.blk.depth >= e2.fst.var.blk.depth
-end
-
 F = {
     SetExp = function (me)
         local e1, e2 = unpack(me)
-        ASR( check_lval(e1) and
-             _C.contains(e1.tp,e2.tp) and
-             check_depth(e1, e2),
+        ASR( e1.lval and _C.contains(e1.tp,e2.tp),
                 me, 'invalid attribution')
         e1.fst.se = 'wr'
     end,
@@ -24,29 +13,25 @@ F = {
     SetStmt = function (me)
         local e1, stmt = unpack(me)
         local evt = stmt[1].evt
-        ASR(check_lval(e1), me, 'invalid attribution')
+        ASR(e1.lval, me, 'invalid attribution')
         e1.fst.se = 'wr'
         stmt.toset = e1
         if stmt.id == 'AwaitT' then
             ASR(_C.isNumeric(e1.tp), me, 'invalid attribution')
         else --'AwaitE'
-            ASR( _C.contains(e1.tp,evt.tp) and
-                 check_depth(e1,evt),
-                    me, 'invalid attribution')
+            ASR( _C.contains(e1.tp,evt.tp), me, 'invalid attribution')
         end
     end,
 
     SetBlock = function (me)
         local e1, _ = unpack(me)
-        ASR(check_lval(e1), me, 'invalid attribution')
+        ASR(e1.lval, me, 'invalid attribution')
         e1.fst.se = 'wr'
     end,
     Return = function (me)
         local e1 = _ITER'SetBlock'()[1]
         local e2 = unpack(me)
-        ASR( _C.contains(e1.tp,e2.tp) and
-             check_depth(e1, e2),
-                me, 'invalid return value')
+        ASR( _C.contains(e1.tp,e2.tp), me, 'invalid return value')
     end,
 
     AwaitE = function (me)
@@ -78,7 +63,6 @@ F = {
         for i, exp in ipairs(exps) do
             ps[i] = exp.val
         end
-        me.fst = nil
         me.val = f.val..'('..table.concat(ps,',')..')'
         me.fid = (f.id=='Cid' and f[1]) or '$anon'
         _EXPS.calls[me.fid] = true
@@ -96,7 +80,6 @@ F = {
 
     Op2_int_int = function (me)
         local op, e1, e2 = unpack(me)
-        me.fst = nil
         me.tp  = 'int'
         me.val = '('..e1.val..op..e2.val..')'
         ASR(_C.isNumeric(e1.tp) and _C.isNumeric(e2.tp),
@@ -115,7 +98,6 @@ F = {
 
     Op1_int = function (me)
         local op, e1 = unpack(me)
-        me.fst = nil
         me.tp  = 'int'
         me.val = '('..op..e1.val..')'
         ASR(_C.isNumeric(e1.tp), me, 'invalid operand to unary "'..op..'"')
@@ -126,7 +108,6 @@ F = {
 
     Op2_same = function (me)
         local op, e1, e2 = unpack(me)
-        me.fst = nil
         me.tp  = 'int'
         me.val = '('..e1.val..op..e2.val..')'
         ASR(_C.max(e1.tp,e2.tp), me, 'invalid operands to binary "'..op..'"')
@@ -141,7 +122,6 @@ F = {
 
     Op2_any = function (me)
         local op, e1, e2 = unpack(me)
-        me.fst = nil
         me.tp  = 'int'
         me.val = '('..e1.val..op..e2.val..')'
     end,
@@ -150,7 +130,6 @@ F = {
 
     Op1_any = function (me)
         local op, e1 = unpack(me)
-        me.fst = nil
         me.tp  = 'int'
         me.val = '('..op..e1.val..')'
     end,
@@ -167,9 +146,8 @@ F = {
     end,
     ['Op1_&'] = function (me)
         local op, e1 = unpack(me)
-        ASR(check_lval(e1), me, 'invalid operand to unary "&"')
+        ASR(e1.lval, me, 'invalid operand to unary "&"')
         me.fst = e1.fst
-        me.fst.ref = true
         me.fst.se = 'no'   -- just getting the address
         me.tp  = e1.tp..'*'
         me.val = '('..op..e1.val..')'
@@ -210,9 +188,11 @@ F = {
     end,
 
     Cid = function (me)
+        me.fst  = me
         me.tp   = 'C'
+        me.lval = true
+        me.se   = 'rd'
         me.val  = string.sub(me[1], 2)
-        me.lval = false
     end,
 
     SIZEOF = function (me)

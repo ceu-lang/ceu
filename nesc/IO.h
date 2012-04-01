@@ -27,6 +27,10 @@
     #define IO_PHOTO 1
 #endif
 
+#if defined(IO_Temp_read) || defined(IO_Temp_readDone)
+    #define IO_TEMP 1
+#endif
+
 #if defined(IO_Sounder_beep)
     #define IO_SOUNDER 1
 #endif

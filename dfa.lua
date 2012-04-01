@@ -227,7 +227,7 @@ end
                     p2.err = 'red'
 
                 -- concurrent access to variables
-                elseif q1.se and q2.se then
+                elseif q1.acc_se and q2.acc_se then
                     _DFA.nds.acc[#_DFA.nds.acc+1] = { p1, p2 }
                     p1.err = 'red'
                     p2.err = 'red'
@@ -507,7 +507,7 @@ do
                     local p = Q_spawn(q.toCnt, nil, _step_+1)
                     p.trg = P
                     for q_awt,p_awt in pairs(qs_cur) do
-                        if q_awt.awt==q.acc and -- awt since qs_togo or happened before trg
+                        if q_awt.awt==q.acc_id and -- awt since qs_togo or happened before trg
                                 (qs_togo[q_awt]==p_awt or P_path(p_awt,P)) then
                             qs_cur[q_awt] = nil -- before it actually executes
                             local p = Q_spawn(q_awt.toAwk, nil, _step_+2)
@@ -580,7 +580,7 @@ end
 
 for _, t in ipairs( filter(_DFA.nds.acc) ) do
     local p1, p2 = unpack(t)
-    WRN(false, p1.q.stmt, 'nondet access to "'..p1.q.acc.id..
+    WRN(false, p1.q.stmt, 'nondet access to "'..p1.q.acc_str..
                             '" vs line '..p2.q.stmt.ln[1])
 end
 
