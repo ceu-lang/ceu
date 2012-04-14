@@ -2,10 +2,15 @@ _EXPS = {
     calls = {}      -- { _printf=true, _myf=true, ... }
 }
 
+function okAsync (exp)
+    local async = _ITER'Async'()
+    return (not async) or (exp.fst.var and async.depth<exp.fst.var.blk.depth)
+end
+
 F = {
     SetExp = function (me)
         local e1, e2 = unpack(me)
-        ASR( e1.lval and _C.contains(e1.tp,e2.tp),
+        ASR( e1.lval and _C.contains(e1.tp,e2.tp) and okAsync(e1),
                 me, 'invalid attribution')
         e1.fst.se = 'wr'
     end,
@@ -13,7 +18,7 @@ F = {
     SetStmt = function (me)
         local e1, stmt = unpack(me)
         local evt = stmt[1].evt
-        ASR(e1.lval, me, 'invalid attribution')
+        ASR(e1.lval and okAsync(e1), me, 'invalid attribution')
         e1.fst.se = 'wr'
         stmt.toset = e1
         if stmt.id == 'AwaitT' then
@@ -25,7 +30,7 @@ F = {
 
     SetBlock = function (me)
         local e1, _ = unpack(me)
-        ASR(e1.lval, me, 'invalid attribution')
+        ASR(e1.lval and okAsync(e1), me, 'invalid attribution')
         e1.fst.se = 'wr'
     end,
     Return = function (me)

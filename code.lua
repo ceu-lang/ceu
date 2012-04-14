@@ -329,7 +329,7 @@ break;
             LINE(me, 'GTES['..async.gte..'] = '..lb_cnt..';')
             LINE(me, 'qins_async('..async.gte..');')
             if exp then
-                LINE(me, '{ '..exp.tp..' data = '..exp.val..';')
+                LINE(me, '{ '..evt.tp..' data = '..exp.val..';')
                 LINE(me, 'return ceu_go_event(ret, IO_'..evt.id ..', &data); }')
             else
                 LINE(me, 'return ceu_go_event(ret, IO_'..evt.id ..', NULL);')
@@ -347,7 +347,11 @@ break;
         LINE(me, 'qins_async('..async.gte..');')
         LINE(me, [[
 #if N_TIMERS > 1
-    return ceu_go_time(ret, TIME_now+]]..exp.val..[[);
+    TIME_now += ]]..exp.val..[[;
+    { int status;
+      while ((status=ceu_go_time(ret, TIME_now)) == -1);
+      return status;
+    }
 #else
     return 0;
 #endif
@@ -387,7 +391,7 @@ break;
                 LINE(me, me.toset.val..' = '..acc.evt.var.val..';')
             else
                 LINE(me, 'if (DATA)')
-                LINE(me, '\t'..me.toset.val..' = *('..me.toset.tp..'*)DATA;')
+                LINE(me, '\t'..me.toset.val..' = *('..acc.evt.tp..'*)DATA;')
             end
         end
     end,

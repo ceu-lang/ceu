@@ -1,3 +1,13 @@
+/*
+ * A token ring network example for WSNs.
+ *
+ * To compile it, follow the instructions at
+ * http://www.ceu-lang.org/wiki/index.php?title=TinyOS
+ *
+ * Francisco Sant'Anna
+ * http://www.lua.inf.puc-rio.br/~francisco/
+ */
+
 input _error_t    Radio_startDone;
 input _error_t    Radio_sendDone;
 input _message_t* Radio_receive;

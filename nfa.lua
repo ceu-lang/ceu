@@ -119,6 +119,9 @@ function INS (me, a, q)
 end
 
 function ACC (acc_id, acc_str, acc_tp, acc_se)
+    if _ITER'Async'() then
+        acc_se = 'no'
+    end
     return _NFA.node {
         id = acc_se..' '..acc_str,
         acc_id  = acc_id,
@@ -394,11 +397,13 @@ F = {
         local top = _ITER'SetBlock'()
         CONCAT(me, me[1])
         local v = top[1].var
-        INS(me, '', ACC(v, v.id, v.tp, 'wr'))
 
         if _ITER'Async'() then
             return
         end
+
+        -- not on Async because it never runs concurrently
+        INS(me, '', ACC(v, v.id, v.tp, 'wr'))
 
         me.qRet = INS(me, '',
             _NFA.node {

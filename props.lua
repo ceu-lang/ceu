@@ -108,8 +108,9 @@ F = {
     Return = function (me)
         local setret = _ITER'SetBlock'()
         local async  = _ITER'Async'()
-        ASR(setret and (not async or setret.depth+1==async.depth),
-            me,'invalid return statement')
+        -- must have a setret between return and an async
+        ASR((not async) or async.depth<setret.depth or async.depth==setret.depth+1,
+            me, 'invalid return statement')
         setret.rets[me] = true
     end,
 

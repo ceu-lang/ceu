@@ -310,7 +310,7 @@ Test { [[int a; emit a=1; return a;]],
     --trig_wo = 1,
 }
 
-    -- TIME
+    -- WALL-CLOCK TIME
 
 Test { [[await 0ms; return 0;]],
     exps = 'must be >0',
@@ -409,6 +409,28 @@ return a;
         ['~>30s ; ~>10s ; ~>30s'] = 20000000,
     }
 }
+
+Test { [[
+par do
+    int v1,v2;
+    par/or do
+        await 10ms;
+        v1 = 1;
+    with
+        await 10ms;
+        v2 = 2;
+    end
+    return v1 + v2;
+with
+    async do
+        emit 5ms;
+        emit(5000);
+    end
+end
+]],
+    run = 3,
+}
+
 Test { [[
 input int A;
 await A;
@@ -7721,12 +7743,12 @@ par do
         par/or do
             await B;
             async do
-                v1 = v1 + 1;
+                int v = v1 + 1;
             end;
         with
             await B;
             async do
-                v2 = v2 + 1;
+                int v = v2 + 1;
             end;
         with
             await A;
@@ -7734,10 +7756,12 @@ par do
     end;
 with
     await F;
+    v1 = 1;
+    v2 = 1;
     return v1 + v2;
 end;
 ]],
-    nd_acc = 2,
+    run = { ['1~>F']=2 },
 }
 
 Test { [[
@@ -8721,7 +8745,8 @@ async do
 end;
 return a;
 ]],
-    run = 1,
+    exps = 'invalid attribution',
+    --run = 1,
 }
 
 Test { [[
@@ -8761,7 +8786,8 @@ with
 end;
 return a;
 ]],
-    nd_acc = 1,
+    exps = 'invalid attribution',
+    --nd_acc = 1,
 }
 
 Test { [[
@@ -8770,6 +8796,34 @@ async do
 end;
 ]],
     props = 'invalid return statement',
+}
+
+Test { [[
+int a = async do
+    int a = do
+        return 1;
+    end;
+    return a;
+end;
+return a;
+]],
+    run = 1
+}
+
+Test { [[
+input void A;
+int ret;
+par/or do
+   ret = async do
+      return 0;
+    end;
+with
+   await A;
+   ret = 1;
+end
+return ret;
+]],
+    run = { ['~>A']=1 },
 }
 
 Test { [[
@@ -8791,7 +8845,8 @@ async do
 end;
 return a;
 ]],
-    run=1
+    exps = 'invalid attribution',
+    --run=1
 }
 
 Test { [[
@@ -8870,6 +8925,18 @@ end;
 return 0;
 ]],
     props='break without loop'
+}
+
+Test { [[
+C do
+    int a;
+end
+async do
+    _a = 1;
+end
+return _a;
+]],
+    exps = 'invalid attribution',
 }
 
 Test { [[
@@ -9038,6 +9105,22 @@ return ret;
 }
 
 Test { [[
+int i =
+async do
+    int i = 10;
+    loop do
+        i = i - 1;
+        if !i then
+            return i;
+        end;
+    end;
+end;
+return i;
+]],
+    run = 0,
+}
+
+Test { [[
 int i = 10;
 async do
     loop do
@@ -9049,18 +9132,18 @@ async do
 end;
 return i;
 ]],
-    run = 0,
+    exps = 'invalid attribution',
 }
 
 Test { [[
-int i = 10;
-int sum = 0;
-async do
+int sum = async do
+    int i = 10;
+    int sum = 0;
     loop do
         sum = sum + i;
         i = i - 1;
         if !i then
-            break;
+            return sum;
         end;
     end;
 end;

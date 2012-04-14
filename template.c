@@ -23,7 +23,7 @@ typedef s16 tceu_lbl;
 #include "binheap.h"
 #include "binheap.c"
 
-int go (int* ret, tceu_time now);
+int go (int* ret);
 
 === HOST ===
 
@@ -45,8 +45,8 @@ tceu_gte TRGS[] = { === TRGS === };
 char VARS[N_VARS];
 
 #if N_TIMERS > 1
-u64 _extl_;
-u64 _extlmax_;  // needed for timers
+u32 _extl_;
+u32 _extlmax_;  // needed for timers
 #endif
 
 /* TRACKS ***************************************************************/
@@ -102,7 +102,7 @@ int       TIME_expired = 0;
 
 typedef struct {
     tceu_time phys;
-    u64 extl;
+    u32 extl;
     tceu_gte gte;
 } QTimer;
 
@@ -179,7 +179,7 @@ void qins_async (tceu_gte gte)
 
 /**********************************************************************/
 
-int ceu_go_init (int* ret, tceu_time now)
+int ceu_go_init (int* ret, u64 now)
 {
     memset(GTES, 0, N_GTES);
 
@@ -194,7 +194,7 @@ int ceu_go_init (int* ret, tceu_time now)
 
     qins_track(PR_MAX, Init);
 
-    return go(ret, 0);
+    return go(ret);
 }
 
 int ceu_go_event (int* ret, int id, void* data) {
@@ -206,7 +206,7 @@ int ceu_go_event (int* ret, int id, void* data) {
     _extl_ = ++_extlmax_;
 #endif
 
-    return go(ret, 0);
+    return go(ret);
 }
 
 #if N_ASYNCS > 0
@@ -226,111 +226,99 @@ int ceu_go_async (int* ret, int* count)
     _extl_ = ++_extlmax_;
 #endif
 
-    return go(ret, 0);
+    return go(ret);
 }
 #endif
 
 int ceu_go_time (int* ret, tceu_time now)
 {
 #if N_TIMERS > 1
-    return go(ret, now);
+    QTimer min, nxt;
+
+    TIME_now = now;
+
+    if (!q_peek(&Q_TIMERS, &min))
+        return 0;
+
+    if (min.phys > TIME_now)
+        return 0;
+
+    q_remove(&Q_TIMERS,NULL);
+
+    TIME_late = TIME_now - min.phys; // how much late the timer is
+    spawn(min.gte);
+
+    while (q_peek(&Q_TIMERS,&nxt))
+    {
+        // spawn all sharing min phys/ext time
+        if (nxt.phys==min.phys && nxt.extl==min.extl) {
+            q_remove(&Q_TIMERS, NULL);
+            spawn(nxt.gte);
+        } else {
+            if (nxt.phys <= TIME_now)
+                TIME_expired = 1;                   // spawn in next cycle
+#ifdef ceu_out_timer
+            else
+                ceu_out_timer(nxt.phys - TIME_now); // not yet to spawn
+#endif
+            break;
+        }
+    }
+
+    _extl_ = min.extl;
+    return go(ret);
 #else
+
     return 0;
 #endif
 }
 
-int go (int* ret, tceu_time now)
+int go (int* ret)
 {
-#if N_TIMERS > 1
-    if (now == 0)
-        goto GO;
-    else
-        TIME_now = now;
+    QTrack trk;
+    int _lbl_;
 
-GO_TIME:
+#if N_EMITS > 0
+    int _step_ = PR_MIN;
+#endif
+
+    while (q_remove(&Q_TRACKS,&trk))
     {
-        QTimer min, nxt;
-
-        if (!q_peek(&Q_TIMERS, &min))
-            return 0;
-
-        if (min.phys > TIME_now)
-            return 0;
-
-        q_remove(&Q_TIMERS,NULL);
-
-        TIME_late = TIME_now - min.phys; // how much late the timer is
-        spawn(min.gte);
-
-        while (q_peek(&Q_TIMERS,&nxt))
-        {
-            // spawn all sharing min phys/ext time
-            if (nxt.phys==min.phys && nxt.extl==min.extl) {
-                q_remove(&Q_TIMERS, NULL);
-                spawn(nxt.gte);
-            } else {
-                if (nxt.phys <= TIME_now)
-                    TIME_expired = 1;                   // spawn in next cycle
-#ifdef ceu_out_timer
+#if N_EMITS > 0
+        if (trk.prio < 0) {
+            tceu_lbl T[N_EMITS];
+            int n = 0;
+            _step_ = trk.prio;
+            while (1) {
+                int lbl = GTES[-trk.lbl];     // it is actually a gate
+                if (lbl != Inactive)
+                    T[n++] = lbl;
+                if (!q_peek(&Q_TRACKS,&trk) || (trk.prio < _step_))
+                    break;
                 else
-                    ceu_out_timer(nxt.phys - TIME_now); // not yet to spawn
-#endif
-                break;
+                    q_remove(&Q_TRACKS,NULL);
             }
-        }
-
-        _extl_ = min.extl;
-        goto GO;    //return go(ret);
-    }
-
-GO:
-#endif  // N_TIMERS > 1
-    {
-        QTrack trk;
-        int _lbl_;
-
-#if N_EMITS > 0
-        int _step_ = PR_MIN;
+            for (;n>0;)
+                qins_track(PR_MAX, T[--n]);
+            continue;
+        } else
 #endif
-
-        while (q_remove(&Q_TRACKS,&trk))
+            _lbl_ = trk.lbl;
+_SWITCH_:
+        switch (_lbl_)
         {
-#if N_EMITS > 0
-            if (trk.prio < 0) {
-                tceu_lbl T[N_EMITS];
-                int n = 0;
-                _step_ = trk.prio;
-                while (1) {
-                    int lbl = GTES[-trk.lbl];     // it is actually a gate
-                    if (lbl != Inactive)
-                        T[n++] = lbl;
-                    if (!q_peek(&Q_TRACKS,&trk) || (trk.prio < _step_))
-                        break;
-                    else
-                        q_remove(&Q_TRACKS,NULL);
-                }
-                for (;n>0;)
-                    qins_track(PR_MAX, T[--n]);
-                continue;
-            } else
-#endif
-                _lbl_ = trk.lbl;
-    _SWITCH_:
-            switch (_lbl_)
-            {
-                case Init:
+            case Init:
     === CODE ===
-            }
         }
+    }
 
 #if N_TIMERS > 1
-        if (TIME_expired) {
-            TIME_expired = 0;
-            goto GO_TIME;   //return ceu_go_time(ret, TIME_now);
-        }
-#endif
-        return 0;
+    if (TIME_expired) {
+        TIME_expired = 0;
+        return -1;
     }
+#endif
+    return 0;
 }
 
 int ceu_go_polling (tceu_time now)

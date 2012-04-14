@@ -352,7 +352,8 @@ void loop()
 #endif
     now64 += dt;    // incrementing `dt´ avoids overflows
     old   += dt;    // `old´ should overflow after 70mins
-    ceu_go_time(NULL, now64);
+    int s;
+    while ((s=ceu_go_time(NULL, now64)) == -1);
 
 #if N_ASYNCS > 0
     ceu_go_async(NULL, NULL);
