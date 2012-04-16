@@ -36,7 +36,8 @@ end
 
 local STMTS = {
     Block=true, Nothing=true,
-    Dcl_int=true, Dcl_ext=true, Dcl_pure=true, Dcl_det=true,
+    Dcl_var=true, Dcl_int=true, Dcl_ext=true,
+    Dcl_pure=true, Dcl_det=true,
     SetExp=true, SetBlock=true, SetStmt=true,
     Return=true, Async=true, Host=true,
     ParEver=true, ParOr=true, ParAnd=true, Loop=true,

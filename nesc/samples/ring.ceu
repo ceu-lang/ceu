@@ -13,8 +13,7 @@ input _error_t    Radio_sendDone;
 input _message_t* Radio_receive;
 
 pure _Radio_getPayload;
-deterministic _Leds_set, _Radio_send;
-deterministic _Leds_led0Toggle, _Radio_send;
+deterministic _Radio_send with _Leds_set, _Leds_led0Toggle;
 
 C do
     typedef struct {

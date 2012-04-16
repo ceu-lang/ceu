@@ -23,16 +23,18 @@ function newvar (var)
     blk.vars[var.id] = var
     var.blk  = blk
 
-    if var.arr then
-        ASR(var.dim>0, var,'invalid array dimension')
-        var.tp = var.tp..'*'
-    end
-
     if var.tp == 'void' then
+        ASR(var.isEvt, var, 'invalid type')
         var.size = '0'
     else
         var.size = '(sizeof('..var.tp..')*'..var.dim..')'
     end
+
+    if var.arr then
+        ASR(var.dim>0, var, 'invalid array dimension')
+        var.tp = var.tp..'*'    -- after var.size
+    end
+
     var.reg = alloc(var)
     var.val = _ENV.reg(var)      -- TODO: arrays?
 
@@ -42,7 +44,7 @@ end
 function getvar (id)
     for stmt in _ITER'Block' do
         local var = stmt.vars[id]
-        if var then
+        if var  then
             return var
         end
     end
@@ -73,21 +75,33 @@ F = {
         me.evts = {}
     end,
 
-    Dcl_int = function (me)
+    Dcl_var = function (me)
         local tp, dim, id, exp = unpack(me)
-        local var = newvar {
+        me.var = newvar {
             ln  = me.ln,
             id  = id,
             tp  = tp,
             arr = dim and tp,
             dim = dim or 1,
         }
-        me.var = var
-        if not var.arr then
-            var.dir = 'internal'
-            me.evt = newevt(var)
-            me.evt.var = var
-        end
+    end,
+
+    Dcl_int = function (me)
+        local tp, id = unpack(me)
+        me.evt = newevt {
+            ln  = me.ln,
+            id  = id,
+            tp  = tp,
+            dir = 'internal',
+            var = newvar {
+                ln  = me.ln,
+                id  = id,
+                tp  = tp,
+                arr = false,
+                dim = 1,
+                isEvt = true,
+            }
+        }
     end,
 
    Dcl_ext = function (me)

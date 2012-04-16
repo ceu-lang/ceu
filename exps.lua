@@ -221,6 +221,11 @@ F = {
         me.val  = '((void *)0)'
         me.lval = false
     end,
+    NOW = function (me)
+        me.tp   = 'u64'
+        me.val  = 'TIME_now'
+        me.lval = false
+    end,
 }
 
 _VISIT(F)

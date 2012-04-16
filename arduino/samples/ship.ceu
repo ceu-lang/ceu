@@ -17,8 +17,7 @@
 input int Key;
 
 pure _analog2key;
-deterministic _analogRead, _map_generate;
-deterministic _analogRead, _redraw;
+deterministic _analogRead with _map_generate, _redraw;
 
 C do
     #include <LiquidCrystal.h>

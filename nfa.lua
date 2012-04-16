@@ -520,6 +520,9 @@ F = {
 
     Evt = function (me)
         if me.evt.dir == 'internal' then
+            if me.se == 'tr' then
+                INS(me, '', ACC(me.evt.var, me.evt.var.id, me.evt.var.tp, 'wr'))
+            end
             INS(me, '', ACC(me.evt, me.evt.id, me.evt.tp, me.se))
         end
     end,

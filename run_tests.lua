@@ -10,9 +10,7 @@ function check (mod)
     assert(T[mod]==nil or T[mod]==false or type(T[mod])=='string')
     local ok, msg = pcall(dofile, mod..'.lua')
     if T[mod]~=nil then
-        assert(ok==false and
-                (T[mod]==false or
-                 string.find(msg,T[mod])),tostring(msg))
+        assert(string.find(msg, T[mod], nil, true), tostring(msg))
         return false
     else
         assert(ok==true, msg)

@@ -94,9 +94,10 @@ void trigger (int trg)
 }
 
 /* TIMERS ***************************************************************/
-#if N_TIMERS > 1
 
 tceu_time TIME_now = 0;
+
+#if N_TIMERS > 1
 tceu_time TIME_late;
 int       TIME_expired = 0;
 
@@ -185,9 +186,9 @@ int ceu_go_init (int* ret, u64 now)
 
     q_init(&Q_TRACKS, Q_TRACKS_BUF, N_TRACKS, sizeof(QTrack), QTrack_prio);
 
+    TIME_now  = now;
 #if N_TIMERS > 1
     q_init(&Q_TIMERS, Q_TIMERS_BUF, N_TIMERS, sizeof(QTimer), QTimer_prio);
-    TIME_now  = now;
     TIME_late = 0;
     _extlmax_ = _extl_ = 0;
 #endif
@@ -269,6 +270,7 @@ int ceu_go_time (int* ret, tceu_time now)
     return go(ret);
 #else
 
+    TIME_now = now;
     return 0;
 #endif
 }

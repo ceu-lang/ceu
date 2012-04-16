@@ -3,25 +3,29 @@ _PARSER = {
 
 local P, C, V, Cc, Ct = m.P, m.C, m.V, m.Cc, m.Ct
 
-local ERR_msg = ''
-local ERR_i   = nil
-local LST_tk  = nil
-local LST_tki = nil
+local ERR_msg
+local ERR_i
+local LST_i
+
+local I2TK
 
 local f = function (s, i, tk)
     if tk == '' then
-        ERR_i   = 0
-        LST_tki = 0           -- restart parsing
-        LST_tk  = 'BOF'
-    elseif i > LST_tki then
-        LST_tki = i
-        LST_tk  = tk
+        tk = 'BOF'
+        LST_i = 1           -- restart parsing
+        ERR_i = 0           -- ERR_i < 1st i
+        ERR_msg = '?'
+        I2TK = { [1]='BOF' }
+    elseif i > LST_i then
+        LST_i = i
+        I2TK[i] = tk
     end
+--DBG('f', tk, i, I2TK[i])
 --DBG('f', ERR_i, LST_tki, LST_tk, i,tk)
     return true
 end
 local K = function (patt)
-    ERR_msg = ''
+    ERR_msg = '?'
     return m.Cmt(patt, f)
 end
 local CK = function (patt)
@@ -42,6 +46,9 @@ local _V2NAME = {
     _Exp = 'expression',
     _Stmts = 'statement',
     Evt = 'event',
+    ID_int  = 'identifier',
+    ID_ext  = 'identifier',
+    ID_type = 'type',
 }
 local EV = function (rule)
     return V(rule) + m.Cmt(P'',
@@ -54,23 +61,23 @@ local EV = function (rule)
         end)
 end
 
-local EE = function (msg)
+local EM = function (msg)
     return m.Cmt(P'',
         function (_,i)
             if i > ERR_i then
                 ERR_i = i
-                ERR_msg = 'expected '..msg
+                ERR_msg = msg
+                return false
             end
-            return false
         end)
 end
 
 KEYS = P'do'+'end'+'async'+'return'
      + 'par'+'par/or'+'par/and'+'with'
      + 'if'+'then'+'else'
-     + 'await'+'forever'+'emit'
+     + 'await'+'forever'+'emit'+'now'
      + 'loop'+'break'+'nothing'
-     + 'input' -- TODO: types
+     + 'input'+'internal' -- TODO: types
      + 'sizeof'+'null'+'call'
      + 'pure'+'deterministic'
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
@@ -84,14 +91,9 @@ ID = ID - KEYS
 
 NUM  = CK(m.R'09'^1) / tonumber
 
-ID_type = ID * (S*'*')^0 /
-    function (str)
-        return (string.gsub( (string.gsub(str,' ','')), '^_', '' ))
-    end
+_GG = { [1] = K'' *S* V'_Stmts' *S* (P(-1) + EM'expected EOF')
 
-_GG = { [1] = K'' *S* EV'_Stmts' *S* -1
-
-    , Block  = EV'_Stmts'
+    , Block  = V'_Stmts'
     , _Stmts = V'_LstStmt'      *S* EK';' * (S*K';')^0
              + V'_LstStmtBlock'           * (S*K';')^0
              + V'_Stmt'         *S* EK';' * (S*K';')^0 *S* V'_Stmts'^-1
@@ -100,11 +102,11 @@ _GG = { [1] = K'' *S* EV'_Stmts' *S* -1
     , _LstStmtBlock = V'ParEver'
     , _LstStmt      = V'Return'   + V'Break'  + V'AwaitN' + V'ParEver'
 
-    , _Stmt      = V'Nothing'
-                 + V'AwaitT'   + V'AwaitE' + V'_Emit'
-                 + V'_Dcl_ext' + V'_Dcl_int'
-                 + V'Dcl_det'  + V'_Dcl_pure'
-                 + V'_Set'     + V'CallStmt' -- must be after Set
+    , _Stmt = V'Nothing'
+            + V'AwaitT'   + V'AwaitE' + V'_Emit'
+            + V'_Dcl_ext' + V'_Dcl_int' + V'_Dcl_var'
+            + V'Dcl_det'  + V'_Dcl_pure'
+            + V'_Set'     + V'CallStmt' -- must be after Set
 
     , _StmtBlock = V'_DoBlock' + V'Async'  + V'Host'
                  + V'ParOr'    + V'ParAnd'
@@ -114,23 +116,30 @@ _GG = { [1] = K'' *S* EV'_Stmts' *S* -1
                  + V'If'      + V'Loop'
 
     , _Dcl_pure = K'pure' *S* EV'ID_c' * (S* K',' *S* V'ID_c')^0
-    , Dcl_det   = K'deterministic' *S* EV'ID_c' * (S* K',' *S* V'ID_c')^0
+    , Dcl_det   = K'deterministic' *S* EV'ID_c' *S* EK'with' *S*
+                    EV'ID_c' * (S* K',' *S* V'ID_c')^0
 
-    , _Dcl_int  = ID_type *S* ('['*S*NUM*S*']' + Cc(false)) *S*
+    , _Dcl_var  = V'ID_type' *S* ('['*S*NUM*S*']' + Cc(false)) *S*
+                    V'__Dcl_var' * (S*K','*S*V'__Dcl_var')^0
+    , __Dcl_var = V'ID_int' *S* (V'_Sets' + Cc(false)*Cc(false))
+
+    , _Dcl_int  = K'internal' *S* EV'ID_type' *S*
                     V'__Dcl_int' * (S*K','*S*V'__Dcl_int')^0
-    , __Dcl_int = V'ID_int' *S* (V'_Sets' + Cc(false)*Cc(false))
+    , __Dcl_int = EV'ID_int' *S* (V'_Sets' + Cc(false)*Cc(false))
 
-    , _Dcl_ext  = K'input' *S* ID_type *S* V'ID_ext' * (S*K','*S*V'ID_ext')^0
+    , _Dcl_ext  = K'input'    *S* EV'ID_type' *S*
+                    EV'ID_ext' * (S*K','*S*EV'ID_ext')^0
 
     , _Set  = V'_Exp' *S* V'_Sets'
     , _Sets = K'=' *S* (
                 Cc'SetStmt'  * (V'AwaitT'+V'AwaitE') +
                 Cc'SetBlock' * V'_SetBlock' +
                 Cc'SetExp'   * V'_Exp' +
-                EE'expression'
+                EM'expected expression'
               )
 
     , CallStmt = (#V'ID_c' + K'call'*S) * V'_Exp'
+               + EM'invalid statement (or C identifier?)'
 
     , Nothing = K'nothing'
     , _DoBlock= K'do' *S* V'Block' *S* EK'end'
@@ -179,7 +188,7 @@ _GG = { [1] = K'' *S* EV'_Stmts' *S* -1
     , _10     = V'_11' * (S* CK(K'*'+(K'/'-'//'-'/*')+'%') *S* V'_11')^0
     , _11     = (( Cc(true) * CK((K'!'-'!=') +  (K'&'-'&&')
                  + (K'-'-'->')+'+'+'~'+'*')
-                 + (K'<'*CK(ID_type)*Cc'cast'*K'>')
+                 + (K'<'*EV'ID_type'*Cc'cast'*K'>')
                  )*S)^0 * V'_12'
     , _12     = V'_13' *S* (
                     K'(' *S* Cc'call' *S* V'ExpList' *S* EK')' +
@@ -189,16 +198,17 @@ _GG = { [1] = K'' *S* EV'_Stmts' *S* -1
     , _13     = V'_Prim'
 
     , _Prim   = V'_Parens' + V'Var'   + V'ID_c' + V'SIZEOF'
-              + V'NULL'    + V'CONST' + V'STRING'
+              + V'NULL'    + V'CONST' + V'STRING' + V'NOW'
 
     , ExpList = ( V'_Exp'*(S*','*S*EV'_Exp')^0 )^-1
 
     , _Parens  = K'(' *S* EV'_Exp' *S* EK')'
 
-    , SIZEOF = K'sizeof' *S* EK'<' *S* ID_type *S* EK'>'
+    , SIZEOF = K'sizeof' *S* EK'<' *S* EV'ID_type' *S* EK'>'
     , CONST = CK( #m.R'09' * ALPHANUM^1 )
             + CK( "'" * (P(1)-"'")^0 * "'" )
 
+    , NOW  = CK'now'
     , NULL = CK'null'
     , TIME = #NUM *
                 (NUM * K'h'   + Cc(0)) *
@@ -206,15 +216,20 @@ _GG = { [1] = K'' *S* EV'_Stmts' *S* -1
                 (NUM * K's'   + Cc(0)) *
                 (NUM * K'ms'  + Cc(0)) *
                 (NUM * K'us'  + Cc(0)) *
-                (NUM * EE'<h,min,s,ms,us>')^-1
+                (NUM * EM'expected <h,min,s,ms,us>')^-1
 
     , Var    = V'ID_int'
     , Evt    = V'ID_int' + V'ID_ext'
     , ID_int = #m.R'az' * CK(ID) -- int names start with lower
     , ID_ext = #m.R'AZ' * CK(ID) -- ext names start with upper
     , ID_c   = CK(P'_' * ID)
+    , ID_type = CK(ID * (S*'*')^0) /
+                  function (str)
+                    return (string.gsub( (string.gsub(str,' ','')), '^_', '' ))
+                  end
 
-    , STRING = CK( '"' * (P(1)-'"'-'\n')^0 * EK'"' )
+
+    , STRING = CK( CK'"' * (P(1)-'"'-'\n')^0 * EK'"' )
 
     , Host    = P'C' *S* EK'do' * m.S' \n\t'^0 *
                     ( C(V'_C') + C((P(1)-'end')^0) )
@@ -240,9 +255,10 @@ _GG = { [1] = K'' *S* EV'_Stmts' *S* -1
 }
 
 function err ()
-    local x = (ERR_i<LST_tki) and 'before' or 'after'
-    return 'ERR : line '.._I2L[LST_tki]..
-              ' : '..x..' `'..LST_tk.."'"..
+    local x = (ERR_i<LST_i) and 'before' or 'after'
+--DBG(LST_i, ERR_i, ERR_msg, _I2L[LST_i], I2TK[LST_i])
+    return 'ERR : line '.._I2L[LST_i]..
+              ' : '..x..' `'..(I2TK[LST_i] or '?').."'"..
               ' : '..ERR_msg
 end
 

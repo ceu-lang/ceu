@@ -15,7 +15,8 @@ Test { [[return /*
 
 */ 1;]], run=1 }
 Test { [[return /**/* **/ 1;]], run=1 }
-Test { [[return /**/* */ 1;]], parser=false }
+Test { [[return /**/* */ 1;]],
+    parser = "ERR : line 1 : after `return' : expected expression" }
 
 Test { [[return 0;]], run=0 }
 Test { [[return 9999;]], run=9999 }
@@ -33,7 +34,9 @@ Test { [[return 2>1 && 10!=0;]], run=1 }
 Test { [[return (1<=2) + (1<2) + 2/1 - 2%3;]], run=2 }
 -- TODO: linux gcc only?
 --Test { [[return (~(~0b1010 & 0XF) | 0b0011 ^ 0B0010) & 0xF;]], run=11 }
-Test { [[int sizeof;]], parser=false }
+Test { [[int sizeof;]],
+    parser = "ERR : line 1 : before `int' : invalid statement (or C identifier?)",
+}
 Test { [[return sizeof<int>;]], run=4 }
 Test { [[return 1<2>3;]], run=0 }
 
@@ -64,14 +67,14 @@ Test { [[int a=1;int a; return a;]],
 Test { [[int a = 1,a; return a;]],
     env = 'variable "a" already declared',
 }
-Test { [[int a; a = a = 1]],
-    parser = false,
+Test { [[int a; a = b = 1]],
+    parser = "ERR : line 1 : after `b' : expected `;'",
 }
 Test { [[int a = b; return 0;]],
     env = 'variable "b" is not declared',
 }
 Test { [[return 1;2;]],
-    parser = false,
+    parser = "ERR : line 1 : after `;' : expected EOF",
 }
 Test { [[call 1;return 2;]],
     exps = 'invalid statement',
@@ -121,7 +124,7 @@ return 0;
     run = 0,
 }
 Test { [[if (2) then  else return 0; end;]],
-    parser = false,
+    parser = "ERR : line 1 : after `then' : invalid statement (or C identifier?)",
 }
 
 -- IF vs SEQ priority
@@ -207,8 +210,14 @@ return a;
 
     -- EVENTS
 
-Test { [[input int A=1;]], parser=false }
-Test { [[input int A; A=1; return 1;]], parser=false }
+Test { [[input int A=1;]], parser="ERR : line 1 : after `A' : expected `;'" }
+Test { [[
+input int A;
+A=1;
+return 1;
+]],
+    parser="ERR : line 2 : before `A' : invalid statement (or C identifier?)"
+}
 Test { [[input  int A;]],
     dfa = 'missing return statement',
 }
@@ -265,7 +274,7 @@ with
 end;
 return A;
 ]],
-    parser = false,
+    parser = "ERR : line 9 : after `return' : expected expression",
 }
 
 Test { [[
@@ -301,11 +310,15 @@ Test { [[int a = a+1; return a;]],
 }
 
 Test { [[int a; a = emit a=1; return a;]],
-    parser = false,
+    parser = "ERR : line 1 : after `=' : expected expression",
     --trig_wo = 1,
 }
 
 Test { [[int a; emit a=1; return a;]],
+    env = 'ERR : line 1 : event "a" is not declared',
+    --trig_wo = 1,
+}
+Test { [[internal int a; emit a=1; return a;]],
     run = 1,
     --trig_wo = 1,
 }
@@ -315,8 +328,24 @@ Test { [[int a; emit a=1; return a;]],
 Test { [[await 0ms; return 0;]],
     exps = 'must be >0',
 }
+Test { [[
+input void A;
+await A;
+return 0;
+]],
+    run = { ['~>10ms; ~>A'] = 0 }
+}
+Test { [[return now;]], run=0 }
+Test { [[
+input void A;
+await A;
+return now;
+]],
+    run = { ['~>10ms; ~>A'] = 10000 }
+}
+
 Test { [[await -1ms; return 0;]],
-    parser = false,
+    parser = "ERR : line 1 : after `await' : expected event",
 }
 Test { [[int a=await 10s; return a;]],
     run = {
@@ -329,10 +358,10 @@ Test { [[await forever;]],
     forever = true,
 }
 Test { [[await forever; await forever;]],
-    parser = false,
+    parser = "ERR : line 1 : after `;' : expected EOF",
 }
 Test { [[await forever; return 0;]],
-    parser = false,
+    parser = "ERR : line 1 : after `;' : expected EOF",
 }
 
 Test { [[emit 1ms; return 0;]], async='not permitted outside async' }
@@ -497,7 +526,7 @@ end
 }
 
 Test { [[
-int a;
+internal int a;
 par/and do
     a = do
         return 1;
@@ -726,7 +755,8 @@ int a =
     end;
 return a;
 ]],
-    parser = false,
+    -- TODO: melhor seria: unexpected statement
+    parser = "ERR : line 17 : after `;' : expected `with'",
     --unreach = 1,
     run = {
         ['1~>B; ~>20ms; 1~>F'] = 1000,
@@ -921,8 +951,8 @@ return a;
     tight = 'tight loop',
 }
 
-Test { [[break; return 1;]], parser=false }
-Test { [[break; break;]], parser=false }
+Test { [[break; return 1;]], parser="ERR : line 1 : after `;' : expected EOF" }
+Test { [[break; break;]], parser="ERR : line 1 : after `;' : expected EOF" }
 Test { [[loop do break; end; return 1;]], unreach=1, run=1 }
 Test { [[
 int ret;
@@ -1057,7 +1087,7 @@ return 0;
 }
 
 Test { [[
-int a;
+internal int a;
 par/and do
     await a;
 with
@@ -1269,7 +1299,7 @@ return a+f;
 -- INTERNAL EVENTS
 
 Test { [[
-int c;
+internal int c;
 emit c=10;
 await c;
 return 0;
@@ -1281,7 +1311,7 @@ return 0;
 
 -- EX.06: 2 triggers
 Test { [[
-int c;
+internal int c;
 emit c=10;
 emit c=10;
 return c;
@@ -1291,7 +1321,7 @@ return c;
 }
 
 Test { [[
-int a,b;
+internal int a,b;
 a = 1;
 emit b=a;
 return b;
@@ -1304,7 +1334,7 @@ return b;
 
 Test { [[
 input int Start;
-int a = 3;
+internal int a = 3;
 par do
     await Start;
     emit a=a;
@@ -2519,7 +2549,7 @@ return a;
 -- 1st to use Start
 Test { [[
 input int Start;
-int a;
+internal int a;
 par/and do
     await Start;
     emit a=1;
@@ -2533,7 +2563,7 @@ return 10;
 
 Test { [[
 input int A;
-int b, c;
+internal int b, c;
 par do
     await A;
     emit b=1;
@@ -2572,7 +2602,7 @@ end;
     forever = true,
 }
 Test { [[
-int a;
+internal int a;
 par/or do
     return 1;
 with
@@ -2593,7 +2623,7 @@ return 0;
 }
 -- TODO: nd_flw?
 Test { [[
-int a;
+internal int a;
 par/or do
     nothing;
 with
@@ -2612,7 +2642,7 @@ return 0;
     --trig_wo = 1,
 }
 Test { [[
-int a;
+internal int a;
 par do
     return 1;
 with
@@ -2627,7 +2657,7 @@ end;
     --trig_wo = 1,
 }
 Test { [[
-int a;
+internal int a;
 par do
     emit a=1;
     return 0;
@@ -2642,7 +2672,7 @@ end;
     run = 2,
 }
 Test { [[
-int a;
+internal int a;
 par/or do
     emit a=1;
 with
@@ -2659,7 +2689,8 @@ return 0;
 
 Test { [[
 input int Start;
-int a, v1=0,v2=0;
+internal int a;
+int v1=0,v2=0;
 await Start;
 par/or do
     emit a=2;
@@ -2676,7 +2707,8 @@ return v1+v2;
 
 Test { [[
 input int Start;
-int a, v1=0,v2=0,v3=0;
+internal int a;
+int v1=0,v2=0,v3=0;
 par/or do
     await Start;
     emit a=2;
@@ -2698,7 +2730,8 @@ return v1+v2+v3;
 -- 1st to escape and terminate
 Test { [[
 input int Start;
-int a, ret;
+internal int a;
+int ret;
 par/or do
     await Start;
     par/or do
@@ -3117,7 +3150,7 @@ return 1;
 
 Test { [[
 input int Start;
-int a,b,c;
+internal int a,b,c;
 par/and do
     await Start;
     emit b=1;
@@ -3413,7 +3446,8 @@ return ret;
 
 Test { [[
 input int Start;
-int a, b, x;
+internal int a, b;
+int x;
 par/or do
     await a;
     await 10ms;
@@ -3438,7 +3472,7 @@ return x;
 
 Test { [[
 input int Start;
-int a, b, x;
+internal int a, b, x;
 par/or do
     await a;
     await 10ms;
@@ -3463,7 +3497,8 @@ return x;
 
 Test { [[
 input int Start;
-int a, b, x;
+internal int a, b;
+int x;
 par/or do
     await a;
     await 10ms;
@@ -4203,7 +4238,8 @@ end;
 
 Test { [[
 input int Start;
-int a,x;
+internal int a;
+int x;
 par/or do
     await Start;
     par/and do
@@ -4227,7 +4263,7 @@ return x;
 -- EX.02: trig e await depois de loop
 Test { [[
 input int A;
-int a;
+internal int a;
 loop do
     par/and do
         await A;
@@ -4243,7 +4279,7 @@ end;
 
 Test { [[
 input int Start;
-int a;
+internal int a;
 par do
     loop do
         par/or do
@@ -4267,7 +4303,7 @@ end;
 
 Test { [[
 input int Start;
-int a;
+internal int a;
 par do
     loop do
         par/and do
@@ -4288,7 +4324,7 @@ end;
 
 Test { [[
 input int A;
-int a, d, e, i, j;
+internal int a, d, e, i, j;
 par/and do
     await A;
     emit a=1;
@@ -4308,7 +4344,7 @@ return d + e;
 }
 
 Test { [[
-int a;
+internal int a;
 par do
     emit a=1;
 with
@@ -4323,7 +4359,8 @@ end;
 }
 
 Test { [[
-int a,v;
+internal int a;
+int v;
 loop do
     par do
         v = a;
@@ -4337,7 +4374,8 @@ end;
 }
 Test { [[
 input int A;
-int a,b,v;
+internal int b;
+int a,v;
 par do
     loop do
         v = a;
@@ -4352,7 +4390,7 @@ end;
 }
 Test { [[
 input int A,B;
-int a;
+internal int a;
 par do
     par do
         await A;
@@ -4373,7 +4411,8 @@ end;
 }
 
 Test { [[
-int a, b;
+internal int a;
+int b;
 par/or do
     b = await a;
 with
@@ -4387,7 +4426,8 @@ return 0;
 }
 
 Test { [[
-int a,b;
+internal int a;
+int b;
 par/or do
     b = await a;
 with
@@ -4405,7 +4445,8 @@ return 0;
 
 Test { [[
 input int Start;
-int b,i;
+internal int b;
+int i;
 par/or do
     await Start;
     emit b=1;
@@ -4422,7 +4463,7 @@ return i;
 }
 Test { [[
 input int Start;
-int b,c;
+internal int b,c;
 par/or do
     await Start;
     emit b=1;
@@ -4498,7 +4539,7 @@ return ret;
 
 Test { [[
 input int A;
-int a;
+internal int a;
 loop do
     int v = await A;
     if v==2 then
@@ -4516,7 +4557,7 @@ end;
 
 Test { [[
 input int A;
-int a;
+internal int a;
 loop do
     int v = await A;
     if v==2 then
@@ -5035,7 +5076,7 @@ end;
 }
 Test { [[
 input int B,C;
-int a;
+internal int a;
 par do
     await B;
     a = 1;
@@ -5058,7 +5099,7 @@ end;
 }
 Test { [[
 input int Start, C;
-int a;
+internal int a;
 par do
     await Start;
     emit a=1;
@@ -5082,7 +5123,7 @@ end;
 }
 Test { [[
 input int Start;
-int a;
+internal int a;
 par do
     await Start;
     emit a=1;
@@ -5097,7 +5138,7 @@ end;
 }
 Test { [[
 input int B,C;
-int a;
+internal int a;
 par/or do
     await B;
     emit a=5;
@@ -5121,7 +5162,7 @@ return a;
 }
 Test { [[
 input int Start;
-int a;
+internal int a;
 par do
     await Start;
     emit a=1;
@@ -5141,7 +5182,7 @@ end;
 }
 Test { [[
 input int Start, C;
-int a;
+internal int a;
 par do
     await Start;
     emit a=1;
@@ -5163,7 +5204,7 @@ end
 }
 Test { [[
 input int B,C;
-int a;
+internal int a;
 par do
     await B;
     a = 1;
@@ -5188,7 +5229,7 @@ end;
 }
 Test { [[
 input int B,C;
-int a;
+internal int a;
 par do
     await B;
     a = 1;
@@ -5345,7 +5386,7 @@ return 1;
     run = 1,
 }
 Test { [[
-int a;
+internal int a;
 par/or do
     a = 1;
 with
@@ -5365,7 +5406,7 @@ return a;
 }
 Test { [[
 input int B;
-int a;
+internal int a;
 par do
     await B;
     a = 1;
@@ -5460,7 +5501,7 @@ end;
 }
 
 Test { [[
-int a;
+internal int a;
 par/or do
     await a;
 with
@@ -5475,7 +5516,7 @@ return a;
     --trig_wo = 1,
 }
 Test { [[
-int a;
+internal int a;
 par/or do
     emit a=1;
 with
@@ -5487,7 +5528,7 @@ return a;
     run = 1,
 }
 Test { [[
-int a,b;
+internal int a,b;
 par/or do
     emit a=1;
     a = 2;
@@ -5500,7 +5541,7 @@ return a+b;
     run = 7,
 }
 Test { [[
-int a, b;
+internal int a, b;
 par/or do
     emit a=2;
 with
@@ -5512,7 +5553,7 @@ return a+b;
     run = 5,
 }
 Test { [[
-int a;
+internal int a;
 int v = par do
     emit a=1;
     return a;
@@ -5578,7 +5619,7 @@ end;
 }
 Test { [[
 input int A;
-int a;
+internal int a;
 await A;
 emit a=1;
 await A;
@@ -5593,7 +5634,7 @@ return a;
 }
 Test { [[
 input int A;
-int a;
+internal int a;
 par/or do
     loop do
         await A;
@@ -5612,7 +5653,7 @@ return a;
 }
 Test { [[
 input int Start;
-int a;
+internal int a;
 par do
     await Start;
     emit a=1;
@@ -5633,7 +5674,7 @@ end;
 }
 Test { [[
 input int Start;
-int a;
+internal int a;
 par/or do
     await Start;
     emit a=1;
@@ -5795,7 +5836,7 @@ return v;
     }
 }
 Test { [[
-int a, b, c, d;
+internal int a, b, c, d;
 par/or do
     par/and do
         await a;
@@ -5830,7 +5871,7 @@ return 0;
     --trig_wo = 3,
 }
 Test { [[
-int a, b, c;
+internal int a, b, c;
 par/or do
     par/or do
         await a;
@@ -5855,7 +5896,7 @@ return 0;
     --trig_wo = 3,
 }
 Test { [[
-int a, b, c;
+internal int a, b, c;
 par/or do
     par do
         await a;
@@ -5880,7 +5921,7 @@ return 0;
     --trig_wo = 3,
 }
 Test { [[
-int a;
+internal int a;
 par/or do
     emit a=1;
 with
@@ -5894,7 +5935,7 @@ return 0;
     --trig_wo = 2,
 }
 Test { [[
-int a;
+internal int a;
 par/or do
     emit a=1;
     await a;
@@ -5908,7 +5949,7 @@ return 0;
     --trig_wo = 2,
 }
 Test { [[
-int a;
+internal int a;
 par do
     emit a=1;
 with
@@ -6087,7 +6128,7 @@ loop do
     break;
 end;
 ]],
-    parser = false,
+    parser = "ERR : line 4 : after `;' : expected `end'",
 }
 
 Test { [[
@@ -6915,7 +6956,7 @@ c = d + 1;
 await A;
 return c;
 ]],
-    parser = false,
+    parser = "ERR : line 3 : after `par' : expected `do'",
 }
 
 Test { [[
@@ -6938,7 +6979,7 @@ return c;
 
     -- FRP
 Test { [[
-int a,b;
+internal int a,b;
 par/or do
     emit a=2;
 with
@@ -6952,7 +6993,7 @@ return a + b;
 
 Test { [[
 input int A;
-int counter = 0;
+internal int counter = 0;
 par/and do
     loop do
         await A;
@@ -6976,7 +7017,7 @@ end;
 }
 
 Test { [[
-int a;
+internal int a;
 emit a=8;
 return a;
 ]],
@@ -6985,7 +7026,7 @@ return a;
 }
 
 Test { [[
-int a;
+internal int a;
 par/and do
     emit a=9;
 with
@@ -7002,7 +7043,7 @@ end;
 
 Test { [[
 input int A;
-int a,b;
+internal int a,b;
 int v;
 par/or do
     v = await A;
@@ -7032,7 +7073,8 @@ return v;
 
 Test { [[
 input int D, E;
-int a, b, c;
+internal int a, b;
+int c;
 par/or do
     await D;
     par/or do
@@ -7067,7 +7109,8 @@ end;
 
 Test { [[
 input int A,B;
-int a,v,b;
+internal int a,b;
+int v;
 par/or do
     par/and do
         int v = await A;
@@ -7095,7 +7138,8 @@ end;
 
 Test { [[
 input int A, B;
-int a,b,v;
+internal int a,b;
+int v;
 par/or do
     par/and do
         a = await A;
@@ -7150,7 +7194,7 @@ end;
 -- EX.07: o `and` executa 2 vezes
 Test { [[
 input int D;
-int a;
+internal int a;
 loop do
     int v = await D;
     emit a=a+v;
@@ -7164,7 +7208,7 @@ end;
 
 Test { [[
 input int A, D, E;
-int a, b, c;
+internal int a, b, c;
 par/or do
     a = 0;
     loop do
@@ -7203,7 +7247,7 @@ end;
     -- Exemplo apresentacao RSSF
 Test { [[
 input int A, C;
-int b, d, e;
+internal int b, d, e;
 par/and do
     loop do
         await A;
@@ -7314,7 +7358,7 @@ end;
 }
 Test { [[
 input int A;
-int a;
+internal int a;
 par/and do
     await A;
     emit a=1;
@@ -7333,7 +7377,7 @@ return a;
 -- EX.01: dois triggers no mesmo ciclo
 Test { [[
 input int A;
-int a;
+internal int a;
 par/and do
     await A;
     emit a=1;
@@ -7350,7 +7394,7 @@ return a;
 -- EX.03: trig/await + await
 Test { [[
 input int A;
-int a;
+internal int a;
 par/and do
     await A;
     emit a=1;
@@ -7366,7 +7410,7 @@ end;
 -- EX.03: trig/await + await
 Test { [[
 input int A;
-int a, b;
+internal int a, b;
 par/and do
     await A;
     par/or do
@@ -7399,7 +7443,7 @@ return 0;
 -- EX.03: trig/await + await
 Test { [[
 input int A;
-int a,b;
+internal int a,b;
 par/and do
     await A;
     par/or do
@@ -7431,7 +7475,7 @@ return 0;
 
 Test { [[
 input int A;
-int a;
+internal int a;
 par/and do
     await A;
     emit a=1;
@@ -7454,7 +7498,7 @@ return 0;
 
 Test { [[
 input int A;
-int a;
+internal int a;
 par/and do
     await A;
     emit a=1;
@@ -7495,7 +7539,7 @@ return v;
 
 Test { [[
 input int A;
-int a;
+internal int a;
 par/and do
     await A;
     emit a=8;
@@ -7512,7 +7556,7 @@ return 0;
 }
 Test { [[
 input int A,B;
-int a;
+internal int a;
 par/and do
     par/or do
         await A;
@@ -7537,7 +7581,7 @@ return 0;
 
 Test { [[
 input int A, B, C;
-int a;
+internal int a;
 par/and do
     par/or do
         await A;
@@ -7560,7 +7604,7 @@ return a;
 
 Test { [[
 input int A;
-int a,b;
+internal int a,b;
 par/and do
     await A;
     emit a=1;
@@ -7600,7 +7644,7 @@ return d;
     },
 }
 Test { [[
-int a;
+internal int a;
 par/and do
     emit a=1;
 with
@@ -7621,7 +7665,7 @@ return 0;
     unreach = 2,
 }
 Test { [[
-int a;
+internal int a;
 par/and do
     emit a=1;
 with
@@ -7659,7 +7703,7 @@ return 0;
 Test { [[
 input int Start;
 int v = 0;
-int a,b;
+internal int a,b;
 par/or do
     loop do
         par/or do
@@ -7686,7 +7730,7 @@ end;
 Test { [[
 input int Start;
 int v = 0;
-int a, b;
+internal int a, b;
 par/or do
     loop do
         await a;
@@ -7706,7 +7750,7 @@ end;
 Test { [[
 input int Start;
 int v = 0;
-int a, b;
+internal int a, b;
 par/or do
     loop do
         par/or do
@@ -7867,7 +7911,8 @@ end;
 
 Test { [[
 input int F;
-int draw, x, occurring, vis, sleeping;
+internal int draw, occurring, vis, sleeping;
+int x;
 par do
     await F;
     return vis;
@@ -7915,7 +7960,8 @@ end;
 
 Test { [[
 input int Start;
-int a, b, v=0;
+internal int a, b;
+int v=0;
 par/or do
     loop do
         await a;
@@ -7945,7 +7991,8 @@ return 0;
 
 Test { [[
 input int Start;
-int a, v1, v2;
+internal int a;
+int v1, v2;
 par/and do
     par/or do
         await Start;
@@ -7969,7 +8016,7 @@ return v1 + v2;
 
 Test { [[
 input int Start;
-int a;
+internal int a;
 par/or do
     loop do
         await a;
@@ -7992,7 +8039,7 @@ return a;
 
 Test { [[
 input int Start;
-int a, b;
+internal int a, b;
 par/or do
     loop do
         await b;
@@ -8021,7 +8068,7 @@ return b;
 
 Test { [[
 input int Start;
-int a;
+internal int a;
 par/or do
     await Start;
     emit a=0;
@@ -8037,7 +8084,7 @@ return a;
 
 Test { [[
 input int Start;
-int a,b;
+internal int a,b;
 par/or do
     await Start;
     emit a=0;
@@ -8058,7 +8105,7 @@ return a;
 
 Test { [[
 input int A, F;
-int c = 0;
+internal int c = 0;
 par do
     loop do
         await A;
@@ -8079,7 +8126,7 @@ end;
 
 Test { [[
 input int Start;
-int a;
+internal int a;
 par do
     loop do
         await Start;
@@ -8104,7 +8151,7 @@ end;
 
 Test { [[
 input int Start;
-int a;
+internal int a;
 par do
     loop do
         await Start;
@@ -8125,7 +8172,7 @@ end;
 
 Test { [[
 input int A;
-int a, c;
+internal int a, c;
 par/or do
     loop do
         a = await c;
@@ -8143,7 +8190,7 @@ return a;
 
 Test { [[
 input int Start;
-int a, b, c;
+internal int a, b, c;
 par/or do
     loop do
         await c;
@@ -8169,7 +8216,7 @@ return a;
 Test { [[
 input int A, F;
 int i = 0;
-int a, b;
+internal int a, b;
 par do
     par do
         loop do
@@ -8201,8 +8248,8 @@ end;
 
 Test { [[
 input int F;
-int x = 0;
-int y = 0;
+internal int x = 0;
+internal int y = 0;
 int a = 0;
 int b = 0;
 int c = 0;
@@ -8236,7 +8283,7 @@ end;
 
 Test { [[
 input int Start;
-int a, b, c;
+internal int a, b, c;
 int x = 0;
 int y = 0;
 par/or do
@@ -8268,8 +8315,8 @@ return x + y;
 
 Test { [[
 input int F;
-int x = 0;
-int y = 0;
+internal int x = 0;
+internal int y = 0;
 int a = 0;
 int b = 0;
 int c = 0;
@@ -8312,7 +8359,7 @@ end;
 
 Test { [[
 input int Start;
-int a, b;
+internal int a, b;
 par/and do
     await Start;
     emit a=1;
@@ -8327,7 +8374,8 @@ return b;
 }
 Test { [[
 input int Start;
-int a, b;
+internal int a;
+int b;
 par/or do
     await Start;
     emit a=1;
@@ -8345,7 +8393,7 @@ return b;
 
 Test { [[
 input int Start;
-int a;
+internal int a;
 par do
     await a;
     emit a=1;
@@ -8364,7 +8412,7 @@ end;
 
 Test { [[
 input int Start;
-int a, b;
+internal int a, b;
 par/or do
     loop do
         await a;
@@ -8387,8 +8435,8 @@ return a;
 
 Test { [[
 input int Start;
-int a, x;
-x = 0;
+internal int a;
+int x = 0;
 par do
     await Start;
     emit a = 1;
@@ -8405,8 +8453,8 @@ end
 }
 Test { [[
 input int Start;
-int a, x;
-x = 0;
+internal int a;
+int x = 0;
 par do
     await Start;
     emit a = 1;
@@ -8423,8 +8471,8 @@ end
 }
 Test { [[
 input int Start;
-int a, x;
-x = 0;
+internal int a;
+int x = 0;
 par do
     emit a = 1;
     return x;
@@ -8441,7 +8489,7 @@ end
 }
 Test { [[
 input int Start;
-int a, x;
+internal int a, x;
 x = 0;
 par do
     await Start;
@@ -8463,7 +8511,7 @@ end
 
 Test { [[
 input int Start;
-int a, x, y, vis;
+internal int a, x, y, vis;
 par/or do
     par/and do
         await Start;
@@ -8495,7 +8543,7 @@ end;
 
 Test { [[
 input int Start, F;
-int x, w, y, z, a, vis;
+internal int x, w, y, z, a, vis;
 par do
     loop do
         par/or do
@@ -8531,7 +8579,7 @@ end;
 
     -- SCOPE / BLOCK
 
-Test { [[do end;]],         parser=false }
+Test { [[do end;]], parser="ERR : line 1 : after `do' : invalid statement (or C identifier?)" }
 Test { [[do int a; end;]],  dfa='missing return statement' }
 Test { [[
 do
@@ -8659,8 +8707,16 @@ return i;
 }
 
 Test { [[
+internal a;
+return 0;
+]],
+    parser = "ERR : line 1 : after `a' : expected identifier",
+}
+
+Test { [[
 input int Start, A;
-int ret, a;
+int ret;
+internal int a;
 par/or do
     do
         int a = 0;
@@ -8696,7 +8752,7 @@ Test { [[
 input int Start;
 int ret;
 par/or do
-    int a;
+    internal int a;
     par/or do
         await Start;
         emit a=5;
@@ -8706,7 +8762,7 @@ par/or do
         ret = a;
     end;
 with
-    int a;
+    internal int a;
     await a;
     // unreachable
     ret = 0;
@@ -8857,11 +8913,11 @@ async do
 end;
 return a;
 ]],
-    parser = false,
+    parser = "ERR : line 4 : after `=' : expected expression",
 }
 
 Test { [[
-int a;
+internal int a;
 async do
     emit a=1;
 end;
@@ -8870,7 +8926,7 @@ return 0;
     async='not permitted inside async'
 }
 Test { [[
-int a;
+internal int a;
 async do
     await a;
 end;
@@ -9363,8 +9419,8 @@ return a;
 
     -- ARRAYS
 
-Test { [[output int[1] E; return 0;]],
-    parser = false,
+Test { [[input int[1] E; return 0;]],
+    parser = "ERR : line 1 : after `int' : expected identifier",
 }
 Test { [[int[0] v; return 0;]],
     env='invalid array dimension'
@@ -9399,10 +9455,42 @@ return v[i+1];
     run = 5
 }
 
+Test { [[
+void a;
+void[1] b;
+]],
+    env = "ERR : line 1 : invalid type",
+}
+
+Test { [[
+int a;
+void[1] b;
+]],
+    env = "ERR : line 2 : invalid type",
+}
+
+Test { [[
+C do
+    typedef struct {
+        int v[10];
+        int c;
+    } T;
+end
+
+_T[10] vec;
+int i = 110;
+
+vec[3].v[5] = 10;
+vec[9].c = 100;
+return i + vec[9].c + vec[3].v[5];
+]],
+    run = 220,
+}
+
 Test { [[int[2] v; await v;     return 0;]], env='event "v" is not declared' }
 Test { [[int[2] v; emit v;    return 0;]], env='event "v" is not declared' }
-Test { [[int[2] v; await v[0];  return 0;]], parser=false }
-Test { [[int[2] v; emit v[0]; return 0;]], parser=false }
+Test { [[int[2] v; await v[0];  return 0;]], parser="ERR : line 1 : after `v' : expected `;'" }
+Test { [[int[2] v; emit v[0]; return 0;]], parser="ERR : line 1 : after `v' : expected `;'" }
 Test { [[int[2] v; v=v; return 0;]], exps='invalid attribution' }
 Test { [[int v; return v[1];]], exps='cannot index a non array' }
 Test { [[int[2] v; return v[v];]], exps='invalid array index' }
@@ -9454,7 +9542,7 @@ C do
 end
 return 1;
 ]],
-    parser = false,
+    parser = "ERR : line 2 : after `\"' : expected `\"'",
 }
 
 Test { [[
@@ -9475,7 +9563,7 @@ end
 A = 1;
 return 1;
 ]],
-    parser = false,
+    parser = "ERR : line 4 : before `A' : invalid statement (or C identifier?)",
 }
 
 Test { [[
@@ -9494,7 +9582,7 @@ end
 cahr v = emit A=1;
 return 0;
 ]],
-    parser = false,
+    parser = "ERR : line 4 : after `=' : expected expression",
 }
 
 Test { [[
@@ -9606,7 +9694,7 @@ end
 void v = _VD(10);
 return v;
 ]],
-    exps = 'invalid return value'
+    env = 'ERR : line 5 : invalid type'
 }
 
 Test { [[
@@ -10099,7 +10187,7 @@ return 0;
 }
 
 Test { [[
-deterministic _f0, _printf, _f1, _assert, _f2;
+deterministic _printf with _assert;
 C do #include <assert.h> end
 par/and do
     _printf("END: 1\n");
@@ -10335,6 +10423,130 @@ return v.a;
     run = 40,
 }
 
+Test { [[
+]],
+    parser = "ERR : line 1 : after `BOF' : invalid statement (or C identifier?)",
+}
+
+-- Exps
+
+Test { [[int a = ]],
+    parser = "ERR : line 1 : after `=' : expected expression",
+}
+
+Test { [[return]],
+    parser = "ERR : line 1 : after `return' : expected expression",
+}
+
+Test { [[return()]],
+    parser = "ERR : line 1 : after `(' : expected expression",
+}
+
+Test { [[return 1+;]],
+    parser = "ERR : line 1 : before `+' : expected `;'",
+}
+
+Test { [[if then]],
+    parser = "ERR : line 1 : after `if' : expected expression",
+}
+
+Test { [[b = ;]],
+    parser = "ERR : line 1 : after `=' : expected expression",
+}
+
+
+Test { [[
+
+
+return 1
+
++
+
+
+;
+]],
+    parser = "ERR : line 5 : before `+' : expected `;'"
+}
+
+Test { [[
+int a;
+a = do
+    int b;
+end
+]],
+    parser = "ERR : line 4 : after `end' : expected `;'",
+}
+
+-- ASYNC
+
+Test { [[
+async do
+
+    par/or do
+        int a;
+    with
+        int b;
+    end
+end
+]],
+    async = "ERR : line 3 : not permitted inside async",
+}
+Test { [[
+async do
+
+
+    par/and do
+        int a;
+    with
+        int b;
+    end
+end
+]],
+    async = "ERR : line 4 : not permitted inside async",
+}
+Test { [[
+async do
+    par do
+        int a;
+    with
+        int b;
+    end
+end
+]],
+    async = "ERR : line 2 : not permitted inside async",
+}
+
+-- DFA
+
+Test { [[
+int a;
+]],
+    dfa = "ERR : line 2 : missing return statement",
+}
+
+Test { [[
+int a;
+a = do
+    int b;
+end;
+]],
+    dfa = "ERR : line 4 : missing return statement",
+}
+
+Test { [[
+int a;
+par/or do
+    a = 1;
+with
+    a = 2;
+end;
+return a;
+]],
+    nd_acc = 1,
+}
+
+print('COUNT', COUNT)
+
 do return end
 
     -- SUSPEND
@@ -10406,12 +10618,12 @@ int in A,F;
 int ret;
 ]]
 
-Test { [[{<T1> O }]],    parser=false }
+Test { [[{<T1> O }]],    parser="oioioioioi" }
 Test { [[{<T1> O; 1 }]], run=1 }
 Test { [[{<T1> O; ~Start; O.a }]], run=666 }
 Test { [[{<T1> O1,O2; 1 }]], run=1, unreach=1 }
-Test { [[{<T1> o; 1 }]], parser=false }
-Test { [[{<T1> A; A }]], parser=false }
+Test { [[{<T1> o; 1 }]], parser="oioioioioi" }
+Test { [[{<T1> A; A }]], parser="oioioioioi" }
 Test { [[{int a; <T1> O; 1 }]], run=1, unreach=1 }
 Test { [[{int a; <T1> O; 1 }]], run=1, unreach=1 }
 Test { [[{int a; <T2> O1,O2; 1 }]], run=1, unreach=1 }

@@ -6,6 +6,7 @@ _C = {
 local types = {
     void=true,
     int=true,
+    u64=true, s64=true,
     u32=true, s32=true,
     u16=true, s16=true,
     u8=true,  s8=true,
@@ -54,17 +55,16 @@ F = {
     end,
 
     Dcl_det = function (me)
-        for i=1, #me do
-            local id1 = me[i][1]
-            local t1 = _C.dets[id1] or {}
-            _C.dets[id1] = t1
-            for j=i+1, #me do
-                local id2 = me[j][1]
-                local t2 = _C.dets[id2] or {}
-                _C.dets[id2] = t2
-                t1[id2] = true
-                t2[id1] = true
-            end
+        local id1 = me[1][1]
+        local t1 = _C.dets[id1] or {}
+        _C.dets[id1] = t1
+        for i=2, #me do
+            local id2 = me[i][1]
+            local t2 = _C.dets[id2] or {}
+            _C.dets[id2] = t2
+
+            t1[id2] = true
+            t2[id1] = true
         end
     end,
 }

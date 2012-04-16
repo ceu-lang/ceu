@@ -346,15 +346,11 @@ break;
         LINE(me, 'GTES['..async.gte..'] = '..lb_cnt..';')
         LINE(me, 'qins_async('..async.gte..');')
         LINE(me, [[
-#if N_TIMERS > 1
-    TIME_now += ]]..exp.val..[[;
-    { int status;
-      while ((status=ceu_go_time(ret, TIME_now)) == -1);
-      return status;
-    }
-#else
-    return 0;
-#endif
+TIME_now += ]]..exp.val..[[;
+{ int status;
+  while ((status=ceu_go_time(ret, TIME_now)) == -1);
+  return status;
+}
 ]])
         LABEL_out(me, lb_cnt)
     end,
