@@ -1,34 +1,37 @@
-include(`leds.m4')
-include(`radio.m4')
-include(`serial.m4')
+C do
+    enum {
+        UART_QUEUE_LEN = 12,
+        RADIO_QUEUE_LEN = 12,
+    };
 
-define(`SERIAL_LEN', `5')
-message_t[SERIAL_LEN] serialBuf;
-u8 serialIn  = 0;
-u8 serialOut = 0;
-u8 serialTot = 0;
+    message_t  uartQueueBufs[UART_QUEUE_LEN];
+    message_t  * ONE_NOK uartQueue[UART_QUEUE_LEN];
+    uint8_t    uartIn, uartOut;
+    bool       uartBusy, uartFull;
 
-define(`RADIO_LEN', `5')
-message_t[RADIO_LEN] radioBuf;
-u8 radioIn  = 0;
-u8 radioOut = 0;
-u8 radioTot = 0;
+    message_t  radioQueueBufs[RADIO_QUEUE_LEN];
+    message_t  * ONE_NOK radioQueue[RADIO_QUEUE_LEN];
+    uint8_t    radioIn, radioOut;
+    bool       radioBusy, radioFull;
+end
 
 par/and do
-    RADIO_START(1s);
+    _Radio_start();
+    await Radio_startDone;
 with
-    SERIAL_START(1s);
-end;
+    _Serial_start();
+    await Serial_startDone;
+end
 
 par do
     loop do
         message_t* p = await Radio_receive;
         _Leds_led1Toggle();
-        if serialTot == SERIAL_LEN then
+        if serialTot == 5 then
             _Leds_led2Toggle();
         else
             serialBuf[serialIn] = *p;
-            serialIn = (serialIn+1) % SERIAL_LEN;
+            serialIn = (serialIn+1) % 5;
             emit serialTot = serialTot + 1;
         end;
     end;
@@ -39,7 +42,7 @@ with
         else
             int len = _Radio_payloadLength(&serialBuf[serialOut]);
             SERIAL_SEND(1s, &serialBuf[serialOut], len);
-            serialOut = (serialOut+1) % SERIAL_LEN;
+            serialOut = (serialOut+1) % 5;
             serialTot = serialTot - 1;
         end;
     end;
@@ -52,11 +55,11 @@ with
     loop do
         message_t* p = await Serial_receive;
         _Leds_led0Toggle();
-        if radioTot == RADIO_LEN then
+        if radioTot == 5 then
             _Leds_led2Toggle();
         else
             radioBuf[radioIn] = *p;
-            radioIn = (radioIn+1) % RADIO_LEN;
+            radioIn = (radioIn+1) % 5;
             emit radioTot = radioTot + 1;
         end;
     end;
@@ -67,7 +70,7 @@ with
         else
             int len = _Serial_payloadLength(&radioBuf[radioOut]);
             RADIO_SEND(1s, _AM_BROADCAST_ADDR, &radioBuf[radioOut], len);
-            radioOut = (radioOut+1) % RADIO_LEN;
+            radioOut = (radioOut+1) % 5;
             radioTot = radioTot - 1;
         end;
     end;
