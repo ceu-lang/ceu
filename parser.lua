@@ -45,10 +45,13 @@ end
 local _V2NAME = {
     _Exp = 'expression',
     _Stmts = 'statement',
-    Evt = 'event',
+    Ext = 'event',
+    Int = 'event',
     ID_int  = 'identifier',
     ID_ext  = 'identifier',
     ID_type = 'type',
+    _Dcl_var = 'declaration',
+    _Dcl_int = 'declaration',
 }
 local EV = function (rule)
     return V(rule) + m.Cmt(P'',
@@ -80,6 +83,7 @@ KEYS = P'do'+'end'+'async'+'return'
      + 'input'+'internal' -- TODO: types
      + 'sizeof'+'null'+'call'
      + 'pure'+'deterministic'
+     + 'class'
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
 local S = V'_SPACES'
@@ -100,10 +104,11 @@ _GG = { [1] = K'' *S* V'_Stmts' *S* (P(-1) + EM'expected EOF')
              + V'_StmtBlock'              * (S*K';')^0 *S* V'_Stmts'^-1
 
     , _LstStmtBlock = V'ParEver'
-    , _LstStmt      = V'Return'   + V'Break'  + V'AwaitN' + V'ParEver'
+    , _LstStmt      = V'Return' + V'Break' + V'AwaitN' + V'ParEver'
 
     , _Stmt = V'Nothing'
-            + V'AwaitT'   + V'AwaitE' + V'_Emit'
+            + V'AwaitT'   + V'AwaitExt' + V'AwaitInt'
+            + V'EmitT'    + V'EmitExt'  + V'EmitInt'
             + V'_Dcl_ext' + V'_Dcl_int' + V'_Dcl_var'
             + V'Dcl_det'  + V'_Dcl_pure'
             + V'_Set'     + V'CallStmt' -- must be after Set
@@ -123,16 +128,9 @@ _GG = { [1] = K'' *S* V'_Stmts' *S* (P(-1) + EM'expected EOF')
                     V'__Dcl_var' * (S*K','*S*V'__Dcl_var')^0
     , __Dcl_var = V'ID_int' *S* (V'_Sets' + Cc(false)*Cc(false))
 
-    , _Dcl_int  = K'internal' *S* EV'ID_type' *S*
-                    V'__Dcl_int' * (S*K','*S*V'__Dcl_int')^0
-    , __Dcl_int = EV'ID_int' *S* (V'_Sets' + Cc(false)*Cc(false))
-
-    , _Dcl_ext  = K'input'    *S* EV'ID_type' *S*
-                    EV'ID_ext' * (S*K','*S*EV'ID_ext')^0
-
     , _Set  = V'_Exp' *S* V'_Sets'
     , _Sets = K'=' *S* (
-                Cc'SetStmt'  * (V'AwaitT'+V'AwaitE') +
+                Cc'SetStmt'  * (V'AwaitT'+V'AwaitExt'+V'AwaitInt') +
                 Cc'SetBlock' * V'_SetBlock' +
                 Cc'SetExp'   * V'_Exp' +
                 EM'expected expression'
@@ -167,13 +165,10 @@ _GG = { [1] = K'' *S* V'_Stmts' *S* (P(-1) + EM'expected EOF')
                 EK'end'
     , Break   = K'break'
 
-    , _Emit   = V'EmitT' + V'EmitE'
     , EmitT   = K'emit' *S* (V'_Parens'+V'TIME')
-    , EmitE   = K'emit' *S* EV'Evt' * (S* K'=' *S* V'_Exp')^-1
 
-    , AwaitN  = K'await' *S* K'forever'             -- last stmt
-    , AwaitT  = K'await' *S* (V'_Parens'+V'TIME')
-    , AwaitE  = K'await' *S* EV'Evt'
+    , AwaitN   = K'await' *S* K'forever'             -- last stmt
+    , AwaitT   = K'await' *S* (V'_Parens'+V'TIME')
 
     , _Exp    = V'_1'
     , _1      = V'_2'  * (S* CK'||' *S* V'_2')^0
@@ -219,9 +214,22 @@ _GG = { [1] = K'' *S* V'_Stmts' *S* (P(-1) + EM'expected EOF')
                 (NUM * EM'expected <h,min,s,ms,us>')^-1
 
     , Var    = V'ID_int'
-    , Evt    = V'ID_int' + V'ID_ext'
-    , ID_int = #m.R'az' * CK(ID) -- int names start with lower
-    , ID_ext = #m.R'AZ' * CK(ID) -- ext names start with upper
+
+    , ID_ext   = #m.R'AZ' * CK(ID) -- ext names start with upper
+    , Ext      = V'ID_ext'
+    , AwaitExt = K'await' *S* EV'Ext'
+    , EmitExt  = K'emit' *S* EV'Ext' * (S* K'=' *S* V'_Exp')^-1
+    , _Dcl_ext = K'input' *S* EV'ID_type' *S*
+                    EV'ID_ext' * (S*K','*S*EV'ID_ext')^0
+
+    , ID_int   = #m.R'az' * CK(ID) -- int names start with lower
+    , Int      = V'ID_int'
+    , AwaitInt = K'await' *S* EV'Int'
+    , EmitInt  = K'emit' *S* EV'Int' * (S* K'=' *S* V'_Exp')^-1
+    , _Dcl_int = K'internal' *S* EV'ID_type' *S*
+                    V'__Dcl_int' * (S*K','*S*V'__Dcl_int')^0
+    , __Dcl_int= EV'ID_int' *S* (V'_Sets' + Cc(false)*Cc(false))
+
     , ID_c   = CK(P'_' * ID)
     , ID_type = CK(ID * (S*'*')^0) /
                   function (str)

@@ -4,7 +4,7 @@ _GATES = {
     trgs   = { 0 },     -- 0=all undefined should point to [0]
 }
 
-local INTS = {}         -- variables that are internal events
+local EVTS = {}         -- variables that are internal events
 
 function alloc (tp, n)
     local g = _GATES[tp]
@@ -15,7 +15,7 @@ end
 F = {
     Root = function (me)
         local TRG0 = 1          -- 0 is reserved for non-awaited events
-        for evt in pairs(INTS) do
+        for evt in pairs(EVTS) do
             evt.trg0 = TRG0
             TRG0 = TRG0 + 1 + #evt.trgs     -- trg0: { sz, t0,t1,... }
             _GATES.trgs[#_GATES.trgs+1] = #evt.trgs
@@ -45,25 +45,27 @@ F = {
         me.gte = alloc('n_gtes')
     end,
 
-    EmitE = function (me)
-        local acc,_ = unpack(me)
-        if acc.evt.dir == 'internal' then
-            me.gte_trg = alloc('n_gtes')
-            me.gte_cnt = alloc('n_gtes')
-        end
+    EmitInt = function (me)
+        me.gte_trg = alloc('n_gtes')
+        me.gte_cnt = alloc('n_gtes')
     end,
 
     AwaitT = function (me)
         me.gte = alloc('n_gtes')
     end,
-    AwaitE = function (me)
+
+    AwaitExt = function (me)
         local acc,_ = unpack(me)
         local evt = acc.evt
         me.gte = alloc('n_gtes')
-        INTS[evt] = true
         local t = evt.trgs or {}
         evt.trgs = t
         t[#t+1] = me.gte
+        EVTS[evt] = true
+    end,
+
+    AwaitInt = function (me)
+        F.AwaitExt(me)
     end,
 }
 

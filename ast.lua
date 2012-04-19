@@ -25,28 +25,16 @@ function _ITER (pred, inc)
         local id = pred
         pred = function(me) return me.id==id end
     end
-    if inc then
-        local i = 1
-        return function ()
-            for j=i, #stack do
-                local stmt = stack[j]
-                if pred(stmt) then
-                    i = j+1
-                    return stmt
-                end
-            end
-        end
-    else
-        local i = #stack
---DBG('===================')
-        return function ()
-            for j=i, 1, -1 do
-                local stmt = stack[j]
-                if pred(stmt) then
---DBG('oi', i)
-                    i = j-1
-                    return stmt
-                end
+    local from = (inc and 1) or #stack
+    local to   = (inc and #stack) or 1
+    local step = (inc and 1) or -1
+    local i = from
+    return function ()
+        for j=i, to, step do
+            local stmt = stack[j]
+            if pred(stmt) then
+                i = j+step
+                return stmt
             end
         end
     end
@@ -141,11 +129,13 @@ local C; C = {
     Break   = node('Break'),
     If      = node('If'),
 
-    AwaitN  = node('AwaitN'),
-    AwaitE  = node('AwaitE'),
-    AwaitT  = node('AwaitT'),
+    AwaitExt = node('AwaitExt'),
+    AwaitInt = node('AwaitInt'),
+    AwaitN   = node('AwaitN'),
+    AwaitT   = node('AwaitT'),
 
-    EmitE   = node('EmitE'),
+    EmitInt = node('EmitInt'),
+    EmitExt = node('EmitExt'),
     EmitT   = node('EmitT'),
 
     Dcl_det = node('Dcl_det'),
@@ -231,7 +221,8 @@ local C; C = {
     ExpList  = node('ExpList'),
 
     Var      = node('Var'),
-    Evt      = node('Evt'),
+    Ext      = node('Ext'),
+    Int      = node('Int'),
     ID_c     = node('Cid'),
     SIZEOF   = node('SIZEOF'),
     CONST    = node('CONST'),

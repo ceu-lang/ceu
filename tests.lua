@@ -62,10 +62,10 @@ Test { [[int a = 1;]],
     dfa = 'missing return statement',
 }
 Test { [[int a=1;int a; return a;]],
-    env = 'variable "a" already declared',
+    env = 'variable "a" is already declared',
 }
 Test { [[int a = 1,a; return a;]],
-    env = 'variable "a" already declared',
+    env = 'variable "a" is already declared',
 }
 Test { [[int a; a = b = 1]],
     parser = "ERR : line 1 : after `b' : expected `;'",
@@ -218,11 +218,12 @@ return 1;
 ]],
     parser="ERR : line 2 : before `A' : invalid statement (or C identifier?)"
 }
+
 Test { [[input  int A;]],
     dfa = 'missing return statement',
 }
 Test { [[input int A,A; return 0;]],
-    env = 'event "A" already declared',
+    env = 'event "A" is already declared',
 }
 Test { [[
 input int A,B,C;
@@ -8743,6 +8744,39 @@ with
 end;
 return a;
 ]],
+    env = 'ERR : line 10 : event "a" is not declared',
+}
+
+Test { [[
+input int Start, A;
+int ret;
+internal int a;
+par/or do
+    do
+        internal int a = 0;
+        par/or do
+            await Start;
+            par/or do
+                emit a=40;
+            with
+                nothing;
+            end;
+        with
+            await a;
+            ret = a;
+        end;
+    end;
+    do
+        internal int a = 0;
+        await a;
+        ret = a;
+    end;
+with
+    await Start;
+    a = await A;
+end;
+return a;
+]],
     nd_esc = 2,
     unreach = 3,
     run = { ['10~>A']=10 },
@@ -10608,7 +10642,76 @@ end
     },
 }
 
-    -- ORGANISMS
+    -- CLASSES
+
+Test { [[
+class T do
+end
+return 0;
+]],
+    parser = "ERR : line 1 : after `do' : invalid statement (or C identifier?)",
+}
+
+Test { [[
+class T do
+    nothing;
+end
+return 0;
+]],
+    run = 0,
+}
+
+Test { [[
+class T do
+    int v;
+end
+return 0;
+]],
+    run = 0,
+}
+
+Test { [[
+class T do
+    class T1 do int v; nothing; end
+    int v;
+    nothing;
+end
+return 0;
+]],
+    props = "ERR : line 2 : cannot nest classes",
+}
+
+do return end
+
+Test { [[
+class T has
+    interface with
+        int v;
+    body with
+        nothing;
+end
+return 0;
+]],
+    run = 0,
+}
+
+Test { [[
+class T has
+    interface with
+        int v;
+    body with
+        _printf("%d\n", v);
+end
+
+T t1, t2;
+t1.v = 1;
+t2.v = 2;
+execute t2;
+execute t1;
+return 0;
+]],
+    run = 0,
+}
 
 STR_DECLS = [[
 <T1> { int a ; 666=>a->prn->nl };

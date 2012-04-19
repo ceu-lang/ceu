@@ -89,7 +89,11 @@ F = {
         me.brk_awt_ret = true
     end,
 
-    AwaitE = function (me)
+    AwaitExt = function (me)
+        me.awaits = true
+        me.brk_awt_ret = true
+    end,
+    AwaitInt = function (me)
         me.awaits = true
         me.brk_awt_ret = true
     end,

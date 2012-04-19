@@ -9,13 +9,11 @@ F = {
         ASR(not _ITER'Async'(), me,'not permitted inside async')
     end,
 
-    EmitE = function (me)
-        local acc,_ = unpack(me)
-        if acc.evt.dir == 'internal' then
-            ASR(not _ITER'Async'(), me,'not permitted inside async')
-        else -- input
-            ASR(_ITER'Async'(), me, 'not permitted outside async')
-        end
+    EmitExt = function (me)
+        ASR(_ITER'Async'(), me, 'not permitted outside async')
+    end,
+    EmitInt = function (me)
+        ASR(not _ITER'Async'(), me,'not permitted inside async')
     end,
     EmitT = function (me)
         ASR(_ITER'Async'(), me,'not permitted outside async')
@@ -25,8 +23,10 @@ F = {
         ASR(not _ITER'Async'(), me,'not permitted inside async')
     end,
 
-    AwaitE = function (me)
-        local acc,_ = unpack(me)
+    AwaitExt = function (me)
+        ASR(not _ITER'Async'(), me,'not permitted inside async')
+    end,
+    AwaitInt = function (me)
         ASR(not _ITER'Async'(), me,'not permitted inside async')
     end,
     AwaitT = function (me)

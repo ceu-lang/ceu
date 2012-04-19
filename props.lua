@@ -41,8 +41,10 @@ local STMTS = {
     SetExp=true, SetBlock=true, SetStmt=true,
     Return=true, Async=true, Host=true,
     ParEver=true, ParOr=true, ParAnd=true, Loop=true,
-    Break=true, If=true, AwaitN=true, AwaitE=true, AwaitT=true, EmitE=true,
-    EmitT=true, CallStmt=true
+    Break=true, If=true,
+    CallStmt=true, AwaitN=true,
+    AwaitExt=true, AwaitInt=true, AwaitT=true,
+    EmitExt=true,  EmitInt=true,  EmitT=true,
 }
 
 F = {
@@ -115,12 +117,9 @@ F = {
         setret.rets[me] = true
     end,
 
-    EmitE = function (me)
-        local acc, exp = unpack(me)
-        if acc.evt.dir == 'internal' then
-            me.n_tracks = 2     -- awake/continuation
-            me.n_emits  = 1
-        end
+    EmitInt = function (me)
+        me.n_tracks = 2     -- awake/continuation
+        me.n_emits  = 1
     end,
 
     AwaitT = function (me)

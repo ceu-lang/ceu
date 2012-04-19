@@ -446,31 +446,35 @@ F = {
         end
     end,
 
-    EmitE = function (me)
+    EmitInt = function (me)
         local acc, exp = unpack(me)
-
         if exp then
             CONCAT(me, exp)
         end
         CONCAT(me, acc)
         local q = acc.nfa.f
 
-        if acc.evt.dir == 'internal' then
-            local qF = _NFA.node {
-                id = 'cont '..acc.evt.id,
-                isCnt = true,
-                toReach = true,
-            }
-            INS(me, '~>', qF)
-            q.toCnt = qF
-        end
+        local qF = _NFA.node {
+            id = 'cont '..acc.evt.id,
+            isCnt = true,
+            toReach = true,
+        }
+        INS(me, '~>', qF)
+        q.toCnt = qF
     end,
 
     AwaitN = function (me)
         INS(me, '', _NFA.node{id='~~'})
         INS(me, false, _NFA.node{id='***'})
     end,
-    AwaitE = function (me)
+
+    AwaitExt = function (me)
+        local acc = unpack(me)
+        F.AwaitInt(me)
+        _NFA.alphas[acc.evt] = true
+    end,
+
+    AwaitInt = function (me)
         local acc = unpack(me)
         INS(me, '', _NFA.node{id=acc.evt.id})
         CONCAT(me, acc)
@@ -490,10 +494,6 @@ F = {
                 isAwk = true,
             })
         bef.toAwk = aft
-
-        if acc.evt.dir == 'input' then
-            _NFA.alphas[acc.evt] = true
-        end
     end,
 
     AwaitT = function (me)
@@ -518,13 +518,11 @@ F = {
         bef.toAwk = aft
     end,
 
-    Evt = function (me)
-        if me.evt.dir == 'internal' then
-            if me.se == 'tr' then
-                INS(me, '', ACC(me.evt.var, me.evt.var.id, me.evt.var.tp, 'wr'))
-            end
-            INS(me, '', ACC(me.evt, me.evt.id, me.evt.tp, me.se))
+    Int = function (me)
+        if me.se == 'tr' then
+            INS(me, '', ACC(me.evt, me.evt.id, me.evt.tp, 'wr'))
         end
+        INS(me, '', ACC(me.evt, me.evt.id, me.evt.tp, me.se))
     end,
 
     Var = function (me)

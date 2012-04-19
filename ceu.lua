@@ -155,7 +155,7 @@ do
     do
         local str = ''
         local t = {}
-        for id, evt in pairs(_AST[1].evts) do   -- _AST[1] = first block
+        for id, evt in pairs(_ENV.inputs) do
             if evt.dir == 'input' then
                 t[#t+1] = '#define IO_'..id..' '..(evt.trg0 or 0)
             end

@@ -17,13 +17,13 @@ F = {
 
     SetStmt = function (me)
         local e1, stmt = unpack(me)
-        local evt = stmt[1].evt
         ASR(e1.lval and okAsync(e1), me, 'invalid attribution')
         e1.fst.se = 'wr'
         stmt.toset = e1
         if stmt.id == 'AwaitT' then
             ASR(_C.isNumeric(e1.tp), me, 'invalid attribution')
         else --'AwaitE'
+            local evt = stmt[1].evt
             ASR( _C.contains(e1.tp,evt.tp), me, 'invalid attribution')
         end
     end,
@@ -39,19 +39,20 @@ F = {
         ASR( _C.contains(e1.tp,e2.tp), me, 'invalid return value')
     end,
 
-    AwaitE = function (me)
+    AwaitInt = function (me)
         local acc = unpack(me)
-        if acc.evt.dir == 'internal' then
-            acc.se = 'aw'
-        end
+        acc.se = 'aw'
     end,
 
-    EmitE = function (me)
+    EmitExt = function (me)
         local acc, exp = unpack(me)
         ASR((not exp) or _C.contains(acc.evt.tp,exp.tp), me, 'invalid emit')
-        if acc.evt.dir == 'internal' then
-            acc.se = 'tr'
-        end
+    end,
+
+    EmitInt = function (me)
+        local acc, exp = unpack(me)
+        ASR((not exp) or _C.contains(acc.evt.tp,exp.tp), me, 'invalid emit')
+        acc.se = 'tr'
     end,
 
     CallStmt = function (me)
