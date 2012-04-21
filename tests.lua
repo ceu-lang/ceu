@@ -216,7 +216,7 @@ input int A;
 A=1;
 return 1;
 ]],
-    parser="ERR : line 2 : before `A' : invalid statement (or C identifier?)"
+    parser = "ERR : line 1 : after `;' : invalid statement (or C identifier?)"
 }
 
 Test { [[input  int A;]],
@@ -319,7 +319,7 @@ Test { [[int a; emit a=1; return a;]],
     env = 'ERR : line 1 : event "a" is not declared',
     --trig_wo = 1,
 }
-Test { [[internal int a; emit a=1; return a;]],
+Test { [[event int a; emit a=1; return a;]],
     run = 1,
     --trig_wo = 1,
 }
@@ -527,7 +527,7 @@ end
 }
 
 Test { [[
-internal int a;
+event int a;
 par/and do
     a = do
         return 1;
@@ -1088,7 +1088,7 @@ return 0;
 }
 
 Test { [[
-internal int a;
+event int a;
 par/and do
     await a;
 with
@@ -1300,7 +1300,7 @@ return a+f;
 -- INTERNAL EVENTS
 
 Test { [[
-internal int c;
+event int c;
 emit c=10;
 await c;
 return 0;
@@ -1312,7 +1312,7 @@ return 0;
 
 -- EX.06: 2 triggers
 Test { [[
-internal int c;
+event int c;
 emit c=10;
 emit c=10;
 return c;
@@ -1322,7 +1322,7 @@ return c;
 }
 
 Test { [[
-internal int a,b;
+event int a,b;
 a = 1;
 emit b=a;
 return b;
@@ -1335,7 +1335,7 @@ return b;
 
 Test { [[
 input int Start;
-internal int a = 3;
+event int a = 3;
 par do
     await Start;
     emit a=a;
@@ -2550,7 +2550,7 @@ return a;
 -- 1st to use Start
 Test { [[
 input int Start;
-internal int a;
+event int a;
 par/and do
     await Start;
     emit a=1;
@@ -2564,7 +2564,7 @@ return 10;
 
 Test { [[
 input int A;
-internal int b, c;
+event int b, c;
 par do
     await A;
     emit b=1;
@@ -2603,7 +2603,7 @@ end;
     forever = true,
 }
 Test { [[
-internal int a;
+event int a;
 par/or do
     return 1;
 with
@@ -2624,7 +2624,7 @@ return 0;
 }
 -- TODO: nd_flw?
 Test { [[
-internal int a;
+event int a;
 par/or do
     nothing;
 with
@@ -2643,7 +2643,7 @@ return 0;
     --trig_wo = 1,
 }
 Test { [[
-internal int a;
+event int a;
 par do
     return 1;
 with
@@ -2658,7 +2658,7 @@ end;
     --trig_wo = 1,
 }
 Test { [[
-internal int a;
+event int a;
 par do
     emit a=1;
     return 0;
@@ -2673,7 +2673,7 @@ end;
     run = 2,
 }
 Test { [[
-internal int a;
+event int a;
 par/or do
     emit a=1;
 with
@@ -2690,7 +2690,7 @@ return 0;
 
 Test { [[
 input int Start;
-internal int a;
+event int a;
 int v1=0,v2=0;
 await Start;
 par/or do
@@ -2708,7 +2708,7 @@ return v1+v2;
 
 Test { [[
 input int Start;
-internal int a;
+event int a;
 int v1=0,v2=0,v3=0;
 par/or do
     await Start;
@@ -2731,7 +2731,7 @@ return v1+v2+v3;
 -- 1st to escape and terminate
 Test { [[
 input int Start;
-internal int a;
+event int a;
 int ret;
 par/or do
     await Start;
@@ -3151,7 +3151,7 @@ return 1;
 
 Test { [[
 input int Start;
-internal int a,b,c;
+event int a,b,c;
 par/and do
     await Start;
     emit b=1;
@@ -3447,7 +3447,7 @@ return ret;
 
 Test { [[
 input int Start;
-internal int a, b;
+event int a, b;
 int x;
 par/or do
     await a;
@@ -3473,7 +3473,7 @@ return x;
 
 Test { [[
 input int Start;
-internal int a, b, x;
+event int a, b, x;
 par/or do
     await a;
     await 10ms;
@@ -3498,7 +3498,7 @@ return x;
 
 Test { [[
 input int Start;
-internal int a, b;
+event int a, b;
 int x;
 par/or do
     await a;
@@ -4239,7 +4239,7 @@ end;
 
 Test { [[
 input int Start;
-internal int a;
+event int a;
 int x;
 par/or do
     await Start;
@@ -4264,7 +4264,7 @@ return x;
 -- EX.02: trig e await depois de loop
 Test { [[
 input int A;
-internal int a;
+event int a;
 loop do
     par/and do
         await A;
@@ -4280,7 +4280,7 @@ end;
 
 Test { [[
 input int Start;
-internal int a;
+event int a;
 par do
     loop do
         par/or do
@@ -4304,7 +4304,7 @@ end;
 
 Test { [[
 input int Start;
-internal int a;
+event int a;
 par do
     loop do
         par/and do
@@ -4325,7 +4325,7 @@ end;
 
 Test { [[
 input int A;
-internal int a, d, e, i, j;
+event int a, d, e, i, j;
 par/and do
     await A;
     emit a=1;
@@ -4345,7 +4345,7 @@ return d + e;
 }
 
 Test { [[
-internal int a;
+event int a;
 par do
     emit a=1;
 with
@@ -4360,7 +4360,7 @@ end;
 }
 
 Test { [[
-internal int a;
+event int a;
 int v;
 loop do
     par do
@@ -4375,7 +4375,7 @@ end;
 }
 Test { [[
 input int A;
-internal int b;
+event int b;
 int a,v;
 par do
     loop do
@@ -4391,7 +4391,7 @@ end;
 }
 Test { [[
 input int A,B;
-internal int a;
+event int a;
 par do
     par do
         await A;
@@ -4412,7 +4412,7 @@ end;
 }
 
 Test { [[
-internal int a;
+event int a;
 int b;
 par/or do
     b = await a;
@@ -4427,7 +4427,7 @@ return 0;
 }
 
 Test { [[
-internal int a;
+event int a;
 int b;
 par/or do
     b = await a;
@@ -4446,7 +4446,7 @@ return 0;
 
 Test { [[
 input int Start;
-internal int b;
+event int b;
 int i;
 par/or do
     await Start;
@@ -4464,7 +4464,7 @@ return i;
 }
 Test { [[
 input int Start;
-internal int b,c;
+event int b,c;
 par/or do
     await Start;
     emit b=1;
@@ -4540,7 +4540,7 @@ return ret;
 
 Test { [[
 input int A;
-internal int a;
+event int a;
 loop do
     int v = await A;
     if v==2 then
@@ -4558,7 +4558,7 @@ end;
 
 Test { [[
 input int A;
-internal int a;
+event int a;
 loop do
     int v = await A;
     if v==2 then
@@ -5077,7 +5077,7 @@ end;
 }
 Test { [[
 input int B,C;
-internal int a;
+event int a;
 par do
     await B;
     a = 1;
@@ -5100,7 +5100,7 @@ end;
 }
 Test { [[
 input int Start, C;
-internal int a;
+event int a;
 par do
     await Start;
     emit a=1;
@@ -5124,7 +5124,7 @@ end;
 }
 Test { [[
 input int Start;
-internal int a;
+event int a;
 par do
     await Start;
     emit a=1;
@@ -5139,7 +5139,7 @@ end;
 }
 Test { [[
 input int B,C;
-internal int a;
+event int a;
 par/or do
     await B;
     emit a=5;
@@ -5163,7 +5163,7 @@ return a;
 }
 Test { [[
 input int Start;
-internal int a;
+event int a;
 par do
     await Start;
     emit a=1;
@@ -5183,7 +5183,7 @@ end;
 }
 Test { [[
 input int Start, C;
-internal int a;
+event int a;
 par do
     await Start;
     emit a=1;
@@ -5205,7 +5205,7 @@ end
 }
 Test { [[
 input int B,C;
-internal int a;
+event int a;
 par do
     await B;
     a = 1;
@@ -5230,7 +5230,7 @@ end;
 }
 Test { [[
 input int B,C;
-internal int a;
+event int a;
 par do
     await B;
     a = 1;
@@ -5387,7 +5387,7 @@ return 1;
     run = 1,
 }
 Test { [[
-internal int a;
+event int a;
 par/or do
     a = 1;
 with
@@ -5407,7 +5407,7 @@ return a;
 }
 Test { [[
 input int B;
-internal int a;
+event int a;
 par do
     await B;
     a = 1;
@@ -5502,7 +5502,7 @@ end;
 }
 
 Test { [[
-internal int a;
+event int a;
 par/or do
     await a;
 with
@@ -5517,7 +5517,7 @@ return a;
     --trig_wo = 1,
 }
 Test { [[
-internal int a;
+event int a;
 par/or do
     emit a=1;
 with
@@ -5529,7 +5529,7 @@ return a;
     run = 1,
 }
 Test { [[
-internal int a,b;
+event int a,b;
 par/or do
     emit a=1;
     a = 2;
@@ -5542,7 +5542,7 @@ return a+b;
     run = 7,
 }
 Test { [[
-internal int a, b;
+event int a, b;
 par/or do
     emit a=2;
 with
@@ -5554,7 +5554,7 @@ return a+b;
     run = 5,
 }
 Test { [[
-internal int a;
+event int a;
 int v = par do
     emit a=1;
     return a;
@@ -5620,7 +5620,7 @@ end;
 }
 Test { [[
 input int A;
-internal int a;
+event int a;
 await A;
 emit a=1;
 await A;
@@ -5635,7 +5635,7 @@ return a;
 }
 Test { [[
 input int A;
-internal int a;
+event int a;
 par/or do
     loop do
         await A;
@@ -5654,7 +5654,7 @@ return a;
 }
 Test { [[
 input int Start;
-internal int a;
+event int a;
 par do
     await Start;
     emit a=1;
@@ -5675,7 +5675,7 @@ end;
 }
 Test { [[
 input int Start;
-internal int a;
+event int a;
 par/or do
     await Start;
     emit a=1;
@@ -5837,7 +5837,7 @@ return v;
     }
 }
 Test { [[
-internal int a, b, c, d;
+event int a, b, c, d;
 par/or do
     par/and do
         await a;
@@ -5872,7 +5872,7 @@ return 0;
     --trig_wo = 3,
 }
 Test { [[
-internal int a, b, c;
+event int a, b, c;
 par/or do
     par/or do
         await a;
@@ -5897,7 +5897,7 @@ return 0;
     --trig_wo = 3,
 }
 Test { [[
-internal int a, b, c;
+event int a, b, c;
 par/or do
     par do
         await a;
@@ -5922,7 +5922,7 @@ return 0;
     --trig_wo = 3,
 }
 Test { [[
-internal int a;
+event int a;
 par/or do
     emit a=1;
 with
@@ -5936,7 +5936,7 @@ return 0;
     --trig_wo = 2,
 }
 Test { [[
-internal int a;
+event int a;
 par/or do
     emit a=1;
     await a;
@@ -5950,7 +5950,7 @@ return 0;
     --trig_wo = 2,
 }
 Test { [[
-internal int a;
+event int a;
 par do
     emit a=1;
 with
@@ -6980,7 +6980,7 @@ return c;
 
     -- FRP
 Test { [[
-internal int a,b;
+event int a,b;
 par/or do
     emit a=2;
 with
@@ -6994,7 +6994,7 @@ return a + b;
 
 Test { [[
 input int A;
-internal int counter = 0;
+event int counter = 0;
 par/and do
     loop do
         await A;
@@ -7018,7 +7018,7 @@ end;
 }
 
 Test { [[
-internal int a;
+event int a;
 emit a=8;
 return a;
 ]],
@@ -7027,7 +7027,7 @@ return a;
 }
 
 Test { [[
-internal int a;
+event int a;
 par/and do
     emit a=9;
 with
@@ -7044,7 +7044,7 @@ end;
 
 Test { [[
 input int A;
-internal int a,b;
+event int a,b;
 int v;
 par/or do
     v = await A;
@@ -7074,7 +7074,7 @@ return v;
 
 Test { [[
 input int D, E;
-internal int a, b;
+event int a, b;
 int c;
 par/or do
     await D;
@@ -7110,7 +7110,7 @@ end;
 
 Test { [[
 input int A,B;
-internal int a,b;
+event int a,b;
 int v;
 par/or do
     par/and do
@@ -7139,7 +7139,7 @@ end;
 
 Test { [[
 input int A, B;
-internal int a,b;
+event int a,b;
 int v;
 par/or do
     par/and do
@@ -7195,7 +7195,7 @@ end;
 -- EX.07: o `and` executa 2 vezes
 Test { [[
 input int D;
-internal int a;
+event int a;
 loop do
     int v = await D;
     emit a=a+v;
@@ -7209,7 +7209,7 @@ end;
 
 Test { [[
 input int A, D, E;
-internal int a, b, c;
+event int a, b, c;
 par/or do
     a = 0;
     loop do
@@ -7248,7 +7248,7 @@ end;
     -- Exemplo apresentacao RSSF
 Test { [[
 input int A, C;
-internal int b, d, e;
+event int b, d, e;
 par/and do
     loop do
         await A;
@@ -7359,7 +7359,7 @@ end;
 }
 Test { [[
 input int A;
-internal int a;
+event int a;
 par/and do
     await A;
     emit a=1;
@@ -7378,7 +7378,7 @@ return a;
 -- EX.01: dois triggers no mesmo ciclo
 Test { [[
 input int A;
-internal int a;
+event int a;
 par/and do
     await A;
     emit a=1;
@@ -7395,7 +7395,7 @@ return a;
 -- EX.03: trig/await + await
 Test { [[
 input int A;
-internal int a;
+event int a;
 par/and do
     await A;
     emit a=1;
@@ -7411,7 +7411,7 @@ end;
 -- EX.03: trig/await + await
 Test { [[
 input int A;
-internal int a, b;
+event int a, b;
 par/and do
     await A;
     par/or do
@@ -7444,7 +7444,7 @@ return 0;
 -- EX.03: trig/await + await
 Test { [[
 input int A;
-internal int a,b;
+event int a,b;
 par/and do
     await A;
     par/or do
@@ -7476,7 +7476,7 @@ return 0;
 
 Test { [[
 input int A;
-internal int a;
+event int a;
 par/and do
     await A;
     emit a=1;
@@ -7499,7 +7499,7 @@ return 0;
 
 Test { [[
 input int A;
-internal int a;
+event int a;
 par/and do
     await A;
     emit a=1;
@@ -7540,7 +7540,7 @@ return v;
 
 Test { [[
 input int A;
-internal int a;
+event int a;
 par/and do
     await A;
     emit a=8;
@@ -7557,7 +7557,7 @@ return 0;
 }
 Test { [[
 input int A,B;
-internal int a;
+event int a;
 par/and do
     par/or do
         await A;
@@ -7582,7 +7582,7 @@ return 0;
 
 Test { [[
 input int A, B, C;
-internal int a;
+event int a;
 par/and do
     par/or do
         await A;
@@ -7605,7 +7605,7 @@ return a;
 
 Test { [[
 input int A;
-internal int a,b;
+event int a,b;
 par/and do
     await A;
     emit a=1;
@@ -7645,7 +7645,7 @@ return d;
     },
 }
 Test { [[
-internal int a;
+event int a;
 par/and do
     emit a=1;
 with
@@ -7666,7 +7666,7 @@ return 0;
     unreach = 2,
 }
 Test { [[
-internal int a;
+event int a;
 par/and do
     emit a=1;
 with
@@ -7694,7 +7694,7 @@ return 0;
     (5) PROBLEM! (buffer overflow and execution)
     - Q_ASYNCS: similar to Q_TIMERS
     - Q_INTRA
-    (1) internal event triggers, await/cont go to Q
+    (1) event event triggers, await/cont go to Q
     (2) they are cancelled (par/or), both remain in Q
     (3) they cannot be reached in the same _intl_
     (4) so the gates are tested to 0, and halt
@@ -7704,7 +7704,7 @@ return 0;
 Test { [[
 input int Start;
 int v = 0;
-internal int a,b;
+event int a,b;
 par/or do
     loop do
         par/or do
@@ -7731,7 +7731,7 @@ end;
 Test { [[
 input int Start;
 int v = 0;
-internal int a, b;
+event int a, b;
 par/or do
     loop do
         await a;
@@ -7751,7 +7751,7 @@ end;
 Test { [[
 input int Start;
 int v = 0;
-internal int a, b;
+event int a, b;
 par/or do
     loop do
         par/or do
@@ -7912,7 +7912,7 @@ end;
 
 Test { [[
 input int F;
-internal int draw, occurring, vis, sleeping;
+event int draw, occurring, vis, sleeping;
 int x;
 par do
     await F;
@@ -7961,7 +7961,7 @@ end;
 
 Test { [[
 input int Start;
-internal int a, b;
+event int a, b;
 int v=0;
 par/or do
     loop do
@@ -7992,7 +7992,7 @@ return 0;
 
 Test { [[
 input int Start;
-internal int a;
+event int a;
 int v1, v2;
 par/and do
     par/or do
@@ -8017,7 +8017,7 @@ return v1 + v2;
 
 Test { [[
 input int Start;
-internal int a;
+event int a;
 par/or do
     loop do
         await a;
@@ -8040,7 +8040,7 @@ return a;
 
 Test { [[
 input int Start;
-internal int a, b;
+event int a, b;
 par/or do
     loop do
         await b;
@@ -8069,7 +8069,7 @@ return b;
 
 Test { [[
 input int Start;
-internal int a;
+event int a;
 par/or do
     await Start;
     emit a=0;
@@ -8085,7 +8085,7 @@ return a;
 
 Test { [[
 input int Start;
-internal int a,b;
+event int a,b;
 par/or do
     await Start;
     emit a=0;
@@ -8106,7 +8106,7 @@ return a;
 
 Test { [[
 input int A, F;
-internal int c = 0;
+event int c = 0;
 par do
     loop do
         await A;
@@ -8127,7 +8127,7 @@ end;
 
 Test { [[
 input int Start;
-internal int a;
+event int a;
 par do
     loop do
         await Start;
@@ -8152,7 +8152,7 @@ end;
 
 Test { [[
 input int Start;
-internal int a;
+event int a;
 par do
     loop do
         await Start;
@@ -8173,7 +8173,7 @@ end;
 
 Test { [[
 input int A;
-internal int a, c;
+event int a, c;
 par/or do
     loop do
         a = await c;
@@ -8191,7 +8191,7 @@ return a;
 
 Test { [[
 input int Start;
-internal int a, b, c;
+event int a, b, c;
 par/or do
     loop do
         await c;
@@ -8217,7 +8217,7 @@ return a;
 Test { [[
 input int A, F;
 int i = 0;
-internal int a, b;
+event int a, b;
 par do
     par do
         loop do
@@ -8249,8 +8249,8 @@ end;
 
 Test { [[
 input int F;
-internal int x = 0;
-internal int y = 0;
+event int x = 0;
+event int y = 0;
 int a = 0;
 int b = 0;
 int c = 0;
@@ -8284,7 +8284,7 @@ end;
 
 Test { [[
 input int Start;
-internal int a, b, c;
+event int a, b, c;
 int x = 0;
 int y = 0;
 par/or do
@@ -8316,8 +8316,8 @@ return x + y;
 
 Test { [[
 input int F;
-internal int x = 0;
-internal int y = 0;
+event int x = 0;
+event int y = 0;
 int a = 0;
 int b = 0;
 int c = 0;
@@ -8360,7 +8360,7 @@ end;
 
 Test { [[
 input int Start;
-internal int a, b;
+event int a, b;
 par/and do
     await Start;
     emit a=1;
@@ -8375,7 +8375,7 @@ return b;
 }
 Test { [[
 input int Start;
-internal int a;
+event int a;
 int b;
 par/or do
     await Start;
@@ -8394,7 +8394,7 @@ return b;
 
 Test { [[
 input int Start;
-internal int a;
+event int a;
 par do
     await a;
     emit a=1;
@@ -8413,7 +8413,7 @@ end;
 
 Test { [[
 input int Start;
-internal int a, b;
+event int a, b;
 par/or do
     loop do
         await a;
@@ -8436,7 +8436,7 @@ return a;
 
 Test { [[
 input int Start;
-internal int a;
+event int a;
 int x = 0;
 par do
     await Start;
@@ -8454,7 +8454,7 @@ end
 }
 Test { [[
 input int Start;
-internal int a;
+event int a;
 int x = 0;
 par do
     await Start;
@@ -8472,7 +8472,7 @@ end
 }
 Test { [[
 input int Start;
-internal int a;
+event int a;
 int x = 0;
 par do
     emit a = 1;
@@ -8490,7 +8490,7 @@ end
 }
 Test { [[
 input int Start;
-internal int a, x;
+event int a, x;
 x = 0;
 par do
     await Start;
@@ -8512,7 +8512,7 @@ end
 
 Test { [[
 input int Start;
-internal int a, x, y, vis;
+event int a, x, y, vis;
 par/or do
     par/and do
         await Start;
@@ -8544,7 +8544,7 @@ end;
 
 Test { [[
 input int Start, F;
-internal int x, w, y, z, a, vis;
+event int x, w, y, z, a, vis;
 par do
     loop do
         par/or do
@@ -8708,7 +8708,7 @@ return i;
 }
 
 Test { [[
-internal a;
+event a;
 return 0;
 ]],
     parser = "ERR : line 1 : after `a' : expected identifier",
@@ -8717,7 +8717,7 @@ return 0;
 Test { [[
 input int Start, A;
 int ret;
-internal int a;
+event int a;
 par/or do
     do
         int a = 0;
@@ -8750,10 +8750,10 @@ return a;
 Test { [[
 input int Start, A;
 int ret;
-internal int a;
+event int a;
 par/or do
     do
-        internal int a = 0;
+        event int a = 0;
         par/or do
             await Start;
             par/or do
@@ -8767,7 +8767,7 @@ par/or do
         end;
     end;
     do
-        internal int a = 0;
+        event int a = 0;
         await a;
         ret = a;
     end;
@@ -8786,7 +8786,7 @@ Test { [[
 input int Start;
 int ret;
 par/or do
-    internal int a;
+    event int a;
     par/or do
         await Start;
         emit a=5;
@@ -8796,7 +8796,7 @@ par/or do
         ret = a;
     end;
 with
-    internal int a;
+    event int a;
     await a;
     // unreachable
     ret = 0;
@@ -8951,7 +8951,7 @@ return a;
 }
 
 Test { [[
-internal int a;
+event int a;
 async do
     emit a=1;
 end;
@@ -8960,7 +8960,7 @@ return 0;
     async='not permitted inside async'
 }
 Test { [[
-internal int a;
+event int a;
 async do
     await a;
 end;
@@ -9421,7 +9421,7 @@ return 1;
 
 Test { [[
 int* ptr1;
-FILE* ptr2;
+_FILE* ptr2;
 ptr1 = ptr2;
 ptr2 = ptr1;
 return 1;
@@ -9597,7 +9597,7 @@ end
 A = 1;
 return 1;
 ]],
-    parser = "ERR : line 4 : before `A' : invalid statement (or C identifier?)",
+    parser = "ERR : line 3 : after `end' : invalid statement (or C identifier?)",
 }
 
 Test { [[

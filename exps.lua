@@ -176,12 +176,16 @@ F = {
         me.lval = exp.lval
     end,
 
+    Int = function (me)
+        F.Var(me)
+    end,
+
     Var = function (me)
         me.fst  = me
         me.tp   = me.var.tp
         me.lval = not me.var.arr    -- not .lval but has .fst
         me.se   = 'rd'
-        me.val  = _ENV.reg(me.var)
+        me.val  = me.var.off
     end,
 
     TIME = function (me)

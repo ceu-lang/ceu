@@ -298,8 +298,8 @@ if (ceu_out_pending()) {
     end,
 
     EmitExt = function (me)
-        local acc, exp = unpack(me)
-        local evt = acc.evt
+        local ext, exp = unpack(me)
+        local evt = ext.evt
         local lb_cnt = LABEL_gen('Async_cont')
         local async = _ITER'Async'()
         LINE(me, 'GTES['..async.gte..'] = '..lb_cnt..';')
@@ -314,12 +314,12 @@ if (ceu_out_pending()) {
     end,
 
     EmitInt = function (me)
-        local acc, exp = unpack(me)
-        local evt = acc.evt
+        local int, exp = unpack(me)
+        local evt = int.evt
 
         -- attribution
         if exp then
-            LINE(me, evt.val..' = '..exp.val..';')
+            LINE(me, int.val..' = '..exp.val..';')
         end
 
         -- emit
@@ -378,24 +378,24 @@ TIME_now += ]]..exp.val..[[;
         end
     end,
     AwaitExt = function (me)
-        local acc,_ = unpack(me)
-        local lb = LABEL_gen('Await_'..acc.evt.id)
+        local ext,_ = unpack(me)
+        local lb = LABEL_gen('Await_'..ext.evt.id)
         LINE(me, 'GTES['..me.gte..'] = '..lb..';')
         HALT(me)
         LABEL_out(me, lb)
         if me.toset then
             LINE(me, 'if (DATA)')
-            LINE(me, '\t'..me.toset.val..' = *('..acc.evt.tp..'*)DATA;')
+            LINE(me, '\t'..me.toset.val..' = *('..ext.evt.tp..'*)DATA;')
         end
     end,
     AwaitInt = function (me)
-        local acc,_ = unpack(me)
-        local lb = LABEL_gen('Await_'..acc.evt.id)
+        local int,_ = unpack(me)
+        local lb = LABEL_gen('Await_'..int.evt.id)
         LINE(me, 'GTES['..me.gte..'] = '..lb..';')
         HALT(me)
         LABEL_out(me, lb)
         if me.toset then
-            LINE(me, me.toset.val..' = '..acc.evt.val..';')
+            LINE(me, me.toset.val..' = '..int.val..';')
         end
     end,
 }

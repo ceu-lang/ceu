@@ -20,8 +20,7 @@ local f = function (s, i, tk)
         LST_i = i
         I2TK[i] = tk
     end
---DBG('f', tk, i, I2TK[i])
---DBG('f', ERR_i, LST_tki, LST_tk, i,tk)
+--DBG('f', i, tk, ERR_i, LST_i)
     return true
 end
 local K = function (patt)
@@ -47,6 +46,7 @@ local _V2NAME = {
     _Stmts = 'statement',
     Ext = 'event',
     Int = 'event',
+    Var = 'variable',
     ID_int  = 'identifier',
     ID_ext  = 'identifier',
     ID_type = 'type',
@@ -80,7 +80,7 @@ KEYS = P'do'+'end'+'async'+'return'
      + 'if'+'then'+'else'
      + 'await'+'forever'+'emit'+'now'
      + 'loop'+'break'+'nothing'
-     + 'input'+'internal' -- TODO: types
+     + 'input'+'output'+'event' -- TODO: types
      + 'sizeof'+'null'+'call'
      + 'pure'+'deterministic'
      + 'class'
@@ -88,6 +88,10 @@ KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
 local S = V'_SPACES'
 
+local ALL      = m.R'az' + '_' + m.R'AZ'
+local ALPHANUM = m.R'AZ' + '_' + m.R'09'
+local alphanum = m.R'az' + '_' + m.R'09'
+ID = ALL * (ALL+m.R'09')^0 - KEYS
 local ALPHA = m.R'az' + m.R'AZ' + '_'
 local ALPHANUM = ALPHA + m.R'09'
 ID = ALPHA * ALPHANUM^0
@@ -95,7 +99,7 @@ ID = ID - KEYS
 
 NUM  = CK(m.R'09'^1) / tonumber
 
-_GG = { [1] = K'' *S* V'_Stmts' *S* (P(-1) + EM'expected EOF')
+_GG = { [1] = CK'' *S* V'_Stmts' *S* (P(-1) + EM'expected EOF')
 
     , Block  = V'_Stmts'
     , _Stmts = V'_LstStmt'      *S* EK';' * (S*K';')^0
@@ -123,10 +127,6 @@ _GG = { [1] = K'' *S* V'_Stmts' *S* (P(-1) + EM'expected EOF')
     , _Dcl_pure = K'pure' *S* EV'ID_c' * (S* K',' *S* V'ID_c')^0
     , Dcl_det   = K'deterministic' *S* EV'ID_c' *S* EK'with' *S*
                     EV'ID_c' * (S* K',' *S* V'ID_c')^0
-
-    , _Dcl_var  = V'ID_type' *S* ('['*S*NUM*S*']' + Cc(false)) *S*
-                    V'__Dcl_var' * (S*K','*S*V'__Dcl_var')^0
-    , __Dcl_var = V'ID_int' *S* (V'_Sets' + Cc(false)*Cc(false))
 
     , _Set  = V'_Exp' *S* V'_Sets'
     , _Sets = K'=' *S* (
@@ -165,11 +165,6 @@ _GG = { [1] = K'' *S* V'_Stmts' *S* (P(-1) + EM'expected EOF')
                 EK'end'
     , Break   = K'break'
 
-    , EmitT   = K'emit' *S* (V'_Parens'+V'TIME')
-
-    , AwaitN   = K'await' *S* K'forever'             -- last stmt
-    , AwaitT   = K'await' *S* (V'_Parens'+V'TIME')
-
     , _Exp    = V'_1'
     , _1      = V'_2'  * (S* CK'||' *S* V'_2')^0
     , _2      = V'_3'  * (S* CK'&&' *S* V'_3')^0
@@ -192,7 +187,7 @@ _GG = { [1] = K'' *S* V'_Stmts' *S* (P(-1) + EM'expected EOF')
                 )^0
     , _13     = V'_Prim'
 
-    , _Prim   = V'_Parens' + V'Var'   + V'ID_c' + V'SIZEOF'
+    , _Prim   = V'_Parens' + V'Var'   + V'ID_c'   + V'SIZEOF'
               + V'NULL'    + V'CONST' + V'STRING' + V'NOW'
 
     , ExpList = ( V'_Exp'*(S*','*S*EV'_Exp')^0 )^-1
@@ -213,25 +208,37 @@ _GG = { [1] = K'' *S* V'_Stmts' *S* (P(-1) + EM'expected EOF')
                 (NUM * K'us'  + Cc(0)) *
                 (NUM * EM'expected <h,min,s,ms,us>')^-1
 
-    , Var    = V'ID_int'
-
-    , ID_ext   = #m.R'AZ' * CK(ID) -- ext names start with upper
-    , Ext      = V'ID_ext'
     , AwaitExt = K'await' *S* EV'Ext'
+    , AwaitInt = K'await' *S* EV'Int'
+    , AwaitN   = K'await' *S* K'forever'             -- last stmt
+    , AwaitT   = K'await' *S* (V'_Parens'+V'TIME')
+
+
     , EmitExt  = K'emit' *S* EV'Ext' * (S* K'=' *S* V'_Exp')^-1
-    , _Dcl_ext = K'input' *S* EV'ID_type' *S*
+    , EmitInt  = K'emit' *S* EV'Int' * (S* K'=' *S* V'_Exp')^-1
+    , EmitT    = K'emit' *S* (V'_Parens'+V'TIME')
+
+    , _Dcl_ext = (CK'input'+CK'output') *S* EV'ID_type' *S*
                     EV'ID_ext' * (S*K','*S*EV'ID_ext')^0
 
-    , ID_int   = #m.R'az' * CK(ID) -- int names start with lower
-    , Int      = V'ID_int'
-    , AwaitInt = K'await' *S* EV'Int'
-    , EmitInt  = K'emit' *S* EV'Int' * (S* K'=' *S* V'_Exp')^-1
-    , _Dcl_int = K'internal' *S* EV'ID_type' *S*
+    , _Dcl_int  = CK'event' *S* EV'ID_type' *S* Cc(false) *S*
                     V'__Dcl_int' * (S*K','*S*V'__Dcl_int')^0
-    , __Dcl_int= EV'ID_int' *S* (V'_Sets' + Cc(false)*Cc(false))
+    , __Dcl_int = EV'ID_int' *S* (V'_Sets' + Cc(false)*Cc(false))
 
-    , ID_c   = CK(P'_' * ID)
-    , ID_type = CK(ID * (S*'*')^0) /
+    , _Dcl_var  = Cc(false) * V'ID_type' *S* ('['*S*NUM*S*']'+Cc(false)) *S*
+                    V'__Dcl_var' * (S*K','*S*V'__Dcl_var')^0
+    , __Dcl_var = V'ID_var' *S* (V'_Sets' + Cc(false)*Cc(false))
+
+    , Ext      = V'ID_ext'
+    , Int      = V'ID_int'
+    , Var      = V'ID_var'
+
+    , ID_ext  = CK( m.R'AZ'*ALPHANUM^0 - KEYS )
+    , ID_int  = CK( m.R'az'*alphanum^0 - KEYS )
+    , ID_var  = CK( m.R'az'*alphanum^0 - KEYS )
+    , ID_c    = CK( P'_'*(alphanum+ALPHANUM)^0 - KEYS )
+    , ID_type = CK( ((P'_'*(alphanum+ALPHANUM)^0 + m.R'az'*alphanum^0 ) - KEYS)
+                        * (S*'*')^0 ) /
                   function (str)
                     return (string.gsub( (string.gsub(str,' ','')), '^_', '' ))
                   end

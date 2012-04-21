@@ -155,9 +155,11 @@ do
     do
         local str = ''
         local t = {}
-        for id, evt in pairs(_ENV.inputs) do
-            if evt.dir == 'input' then
-                t[#t+1] = '#define IO_'..id..' '..(evt.trg0 or 0)
+        for id, evt in pairs(_ENV.exts) do
+            if evt.input then
+                t[#t+1] = '#define IO_'..id..'  '..(evt.trg0 or 0)
+            else
+                t[#t+1] = '#define IO_'..id..' -'..(#t+1)
             end
         end
 
@@ -171,7 +173,7 @@ do
 
         if _OPTS.events then
             local f = io.open('_ceu_events.h','w')
-            f:write(table.concat(t,'\n'))
+            f:write(table.concat(t,'\n')..'\n')
             f:close()
             tpl = sub(tpl, '=== EVTS ===',
                            '#include "'.. _OPTS.events_file ..'"')

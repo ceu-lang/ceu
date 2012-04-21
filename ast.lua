@@ -106,10 +106,10 @@ function visit_aux (me, F)
 end
 
 local C; C = {
-    [1] = function (ln1,ln2, str, ...)
+    [1] = function (ln1,ln2, str, spc, ...) -- spc=CK''
         _AST = node('Root')(ln1,ln2, str,
                 node('Block')(ln1,ln2, str,
-                    node('Dcl_var')(ln1,ln2, str, 'int', false, '$ret'),
+                    node('Dcl_var')(ln1,ln2, str, false, 'int', false, '$ret'),
                     node('SetBlock')(ln1,ln2, str,
                         node('Var')(ln1,ln2, str, '$ret'),
                         node('Block')(ln1,ln2, str, ...))))
@@ -149,11 +149,11 @@ local C; C = {
         return unpack(ret)
     end,
 
-    _Dcl_var = function (ln1,ln2, str, tp, dim, ...)
+    _Dcl_var = function (ln1,ln2, str, isEvt, tp, dim, ...)
         local ret = {}
         local t = { ... }
         for i=1, #t, 3 do
-            ret[#ret+1] = node('Dcl_var')(ln1,ln2, str, tp, dim, t[i])
+            ret[#ret+1] = node('Dcl_var')(ln1,ln2, str, isEvt, tp, dim, t[i])
             if t[i+1] then
                 ret[#ret+1] = C._Set(ln1,ln2, str,
                                 node('Var')(ln1,ln2,str,t[i]),
@@ -164,11 +164,11 @@ local C; C = {
         return unpack(ret)
     end,
 
-    _Dcl_int = function (ln1,ln2, str, tp, ...)
+    _Dcl_int = function (ln1,ln2, str, isEvt, tp, dim, ...)
         local ret = {}
         local t = { ... }
         for i=1, #t, 3 do
-            ret[#ret+1] = node('Dcl_int')(ln1,ln2, str, tp, t[i])
+            ret[#ret+1] = node('Dcl_int')(ln1,ln2, str, isEvt, tp, dim, t[i])
             if t[i+1] then
                 ret[#ret+1] = C._Set(ln1,ln2, str,
                                 node('Var')(ln1,ln2,str,t[i]),
@@ -183,11 +183,11 @@ local C; C = {
         return node(id)(ln1,ln2, str, e1, e2)
     end,
 
-    _Dcl_ext = function (ln1,ln2, str, tp, ...)
+    _Dcl_ext = function (ln1,ln2, str, dir, tp, ...)
         local ret = {}
         local t = { ... }
         for i=1, #t do
-            ret[#ret+1] = node('Dcl_ext')(ln1,ln2, str, tp, t[i])
+            ret[#ret+1] = node('Dcl_ext')(ln1,ln2, str, dir, tp, t[i])
         end
         return unpack(ret)
     end,
