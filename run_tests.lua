@@ -29,7 +29,7 @@ Test = function (t)
     end
 
     -- LINES
-    _STR = PRE .. str_input
+    _STR = str_input
     --print(_STR)
     dofile 'lines.lua'
 
@@ -90,7 +90,7 @@ Test = function (t)
     if not check('code') then return end
 
     if T.run == false then
-        local str_all = PRE..str_input
+        local str_all = str_input
         --print(str_all)
         local ceu = assert(io.popen('./ceu - --output _ceu_code.c', 'w'))
         ceu:write(str_all)
@@ -99,7 +99,7 @@ Test = function (t)
 
     -- T.run = N
     elseif type(T.run) ~= 'table' then
-        local str_all = PRE..str_input
+        local str_all = str_input
         --print(str_all)
         local ceu = assert(io.popen('./ceu - --output _ceu_code.c', 'w'))
         --local ceu = assert(io.popen('lua ceu.lua - --output _ceu_code.c', 'w'))
@@ -113,7 +113,7 @@ Test = function (t)
         assert(ret==T.run..'', ret..' vs '..T.run..' expected')
 
     else
-        local str_all = PRE .. [[
+        local str_all = [[
             par/or do
                 ]]..str_input..[[
 
@@ -126,7 +126,7 @@ Test = function (t)
         ]]
         for input, ret2 in pairs(T.run) do
             input = string.gsub(input, '([^;]*)~>(%d[^;]*);?', 'emit %2;')
-            input = string.gsub(input, '[ ]*(%d+)[ ]*~>([^;]*);?', 'emit %2=%1;')
+            input = string.gsub(input, '[ ]*(%d+)[ ]*~>([^;]*);?', 'emit %2(%1);')
             input = string.gsub(input, '~>([^;]*);?', 'emit %1;')
             local all = string.gsub(str_all, '`EVTS', input)
             local ceu = assert(io.popen('./ceu - --output _ceu_code.c', 'w'))

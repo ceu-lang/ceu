@@ -12,25 +12,25 @@ local types = {
     u8=true,  s8=true,
 }
 
-function _C.isNumeric (tp)
-    return tp~='void' and (not _C.deref(tp)) or _C.ext(tp)
+function _C.isNumeric (tp, c)
+    return tp~='void' and types[tp] or (c and _C.ext(tp))
 end
 
-function _C.deref (tp)
-    return string.match(tp, '(.-)%*$') or _C.ext(tp)
+function _C.deref (tp, c)
+    return string.match(tp, '(.-)%*$') or (c and _C.ext(tp))
 end
 
 function _C.ext (tp)
     return (not types[tp]) and (not string.match(tp, '(.-)%*$')) and tp
 end
 
-function _C.contains (tp1, tp2)
+function _C.contains (tp1, tp2, c)
     local _tp1, _tp2 = _C.deref(tp1), _C.deref(tp2)
     if tp1 == tp2 then
         return true
     elseif _C.isNumeric(tp1) and _C.isNumeric(tp2) then
         return true
-    elseif _C.ext(tp1) or _C.ext(tp2) then
+    elseif c and (_C.ext(tp1) or _C.ext(tp2)) then
         return true
     elseif _tp1 and _tp2 then
         return tp1=='void*' or tp2=='void*'
@@ -38,10 +38,10 @@ function _C.contains (tp1, tp2)
     return false
 end
 
-function _C.max (tp1, tp2)
-    if _C.contains(tp1, tp2) then
+function _C.max (tp1, tp2, c)
+    if _C.contains(tp1, tp2, c) then
         return tp1
-    elseif _C.contains(tp2, tp1) then
+    elseif _C.contains(tp2, tp1, c) then
         return tp2
     else
         return nil

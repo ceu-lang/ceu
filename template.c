@@ -14,6 +14,7 @@
 // Macros that can be defined:
 // ceu_out_pending()   (1)
 // ceu_out_timer(ms)
+// ceu_out_event(id, len, data)
 // ASSERT
 
 typedef u64 tceu_time;
@@ -48,6 +49,12 @@ char VARS[N_VARS];
 u32 _extl_;
 u32 _extlmax_;  // needed for timers
 #endif
+
+int INT_v;
+int* INT_f (int v) {
+    INT_v = v;
+    return &INT_v;
+}
 
 /* TRACKS ***************************************************************/
 

@@ -24,7 +24,6 @@ function _NFA.node (ret)
     ret.stmt = ret.stmt or _ITER(isStmt)() or _AST
     ret.prio = ret.prio or PR_MAX
     ret.out  = {}
-    ret.inAsync = _ITER'Async'()
     return ret
 end
 
@@ -45,9 +44,9 @@ function qVSq (q1, q2)
     -- one escape (break/return) vs any one another
     -- (still has to check if q1.esc contains q2, not ready here, see dfa)
     if q1.esc then
-        return not (q2.keep or q2.inAsync)
+        return not q2.keep
     elseif q2.esc then
-        return not (q1.keep or q1.inAsync)
+        return not q1.keep
 
     elseif q1.f and q2.f then
         return not (_C.pures[q1.f] or _C.pures[q2.f] or
@@ -55,9 +54,9 @@ function qVSq (q1, q2)
 
     elseif q1.acc_se and q2.acc_se and ND[q1.acc_se][q2.acc_se] then
         if not q1.acc_id then
-            return _C.contains(q1.acc_tp, q2.acc_tp)
+            return _C.contains(q1.acc_tp, q2.acc_tp, true)
         elseif not q2.acc_id then
-            return _C.contains(q2.acc_tp, q1.acc_tp)
+            return _C.contains(q2.acc_tp, q1.acc_tp, true)
         else
             return q1.acc_id == q2.acc_id
         end
@@ -119,9 +118,6 @@ function INS (me, a, q)
 end
 
 function ACC (acc_id, acc_str, acc_tp, acc_se)
-    if _ITER'Async'() then
-        acc_se = 'no'
-    end
     return _NFA.node {
         id = acc_se..' '..acc_str,
         acc_id  = acc_id,
@@ -276,14 +272,6 @@ F = {
         local c, t, f = unpack(me)
         CONCAT(me, c)
 
-        if _ITER'Async'() then
-            CONCAT(me, t)
-            if f then
-                CONCAT(me, f)
-            end
-            return
-        end
-
         local qF = INS(me, nil, _NFA.node{ id='if-' })
         local qS = INS(me, '',
             _NFA.node {
@@ -314,11 +302,6 @@ F = {
     Loop = function (me)
         local body = unpack(me)
 
-        if _ITER'Async'() then
-            CONCAT(me, body)
-            return
-        end
-
         me.nd_join = false      -- dfa.lua may change it
 
         local qS = INS(me, '', _NFA.node{id='+loop',loop=me})
@@ -330,7 +313,10 @@ F = {
                 to = qS,
                 toReach = true,
             })
-        OUT(qL, '', qS)
+
+        if not _ITER'Async'() then
+            OUT(qL, '', qS)
+        end
 
         local qO = INS(me, false,
             _NFA.node {
@@ -346,10 +332,6 @@ F = {
     end,
 
     Break = function (me)
-        if _ITER'Async'() then
-            return
-        end
-
         local top = _ITER'Loop'()
         me.qBrk = INS(me, '',
             _NFA.node {
@@ -361,12 +343,12 @@ F = {
     end,
 
     Async = function (me)
-        local body = unpack(me)
-        local id = '@'..tostring(body)
+        local vars, blk = unpack(me)
         _NFA.alphas[me] = true
 
         local asy = INS(me, '', _NFA.node{id='asy'})
-        asy.inAsync = false     -- entry point
+        CONCAT(me, vars)
+        CONCAT(me, blk)
 
         local bef = INS(me, '',
             _NFA.node {
@@ -374,8 +356,6 @@ F = {
                 awt = me,
                 keep = true,
             })
-
-        CONCAT(me, body)
 
         local aft = INS(me, me,
             _NFA.node {
@@ -398,12 +378,25 @@ F = {
         CONCAT(me, me[1])
         local v = top[1].var
 
-        if _ITER'Async'() then
-            return
-        end
-
-        -- not on Async because it never runs concurrently
         INS(me, '', ACC(v, v.id, v.tp, 'wr'))
+
+        -- escape only after `async´ event
+        local async = _ITER'Async'()
+        if async then
+            local bef = INS(me, '',
+                _NFA.node {
+                    id  = '+asy',
+                    awt = async,
+                    keep = true,
+                })
+            local aft = INS(me, async,
+                _NFA.node {
+                id  = '-asy',
+                rem = set.new(bef),
+                    toReach = true,
+                })
+            bef.to = aft
+        end
 
         me.qRet = INS(me, '',
             _NFA.node {
@@ -418,11 +411,11 @@ F = {
         local e1, stmt = unpack(me)
         CONCAT(me, stmt)
 
-        if _ITER'Async'() then
-            return
-        end
-
         me.nd_join = false      -- dfa.lua may change it
+
+        if stmt.id=='Loop' or stmt.id=='Async' then
+            stmt.nfa.f.toReach = false
+        end
 
         local set =
             _NFA.node {
@@ -432,17 +425,10 @@ F = {
                 toReach = (e1.var.id ~= '$ret'),
             }
 
-        if stmt.id == 'Async' then
-            INS(me, '', set)    -- guaranteed to escape after asy-(me)->set
-        else
-            if stmt.id == 'Loop' then
-                stmt.nfa.f.toReach = false
-            end
-            INS(me, '', _NFA.node{ id='***',not_toReach=true })
-            INS(me, false, set)
-            for ret in pairs(me.rets) do
-                OUT(ret.qRet, '', set)
-            end
+        INS(me, '', _NFA.node{ id='***',not_toReach=true })
+        INS(me, false, set)
+        for ret in pairs(me.rets) do
+            OUT(ret.qRet, '', set)
         end
     end,
 
@@ -526,7 +512,7 @@ F = {
     end,
 
     Var = function (me)
-        INS(me, '', ACC(me.var, me.var.id, me.var.tp, me.se))
+        local n = INS(me, '', ACC(me.var, me.var.id, me.var.tp, me.se))
     end,
 
     Cid = function (me)
@@ -541,7 +527,7 @@ F = {
             CONCAT(me, exp)
 
             -- f(ptr_v)
-            local tp = _C.deref(exp.tp)
+            local tp = _C.deref(exp.tp, true)
             if tp then
                 if isPure then
                     INS(me, '', ACC(nil, '<'..exp.tp..'>', tp, 'rd'))

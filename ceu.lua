@@ -151,34 +151,39 @@ do
         tpl = sub(tpl, '=== LABELS ===', labels)
     end
 
+    -- TODO: assert names do not conflict
     -- EVENTS and FUNCTIONS used
     do
         local str = ''
         local t = {}
+        local outs = 0
         for id, evt in pairs(_ENV.exts) do
             if evt.input then
-                t[#t+1] = '#define IO_'..id..'  '..(evt.trg0 or 0)
+                str = str..'#define IO_'..id..' '..(evt.trg0 or 0)..'\n'
             else
-                t[#t+1] = '#define IO_'..id..' -'..(#t+1)
+                str = str..'#define IO_'..id..' '..outs..'\n'
+                outs = outs + 1
             end
         end
+        str = str..'#define IO_N_OUTPUTS '..outs..'\n'
 
         -- FUNCTIONS called
+        local funcs = 0
         for id in pairs(_EXPS.calls) do
             if id ~= '$anon' then
-                -- negative doesn't interfere with events
-                t[#t+1] = '#define IO'..id..' -'..(#t+1)
+                str = str..'#define IO'..id..' '..funcs..'\n'
+                funcs = funcs + 1
             end
         end
 
         if _OPTS.events then
             local f = io.open('_ceu_events.h','w')
-            f:write(table.concat(t,'\n')..'\n')
+            f:write(str)
             f:close()
             tpl = sub(tpl, '=== EVTS ===',
                            '#include "'.. _OPTS.events_file ..'"')
         else
-            tpl = sub(tpl, '=== EVTS ===', table.concat(t,'\n'))
+            tpl = sub(tpl, '=== EVTS ===', str)
         end
     end
 end

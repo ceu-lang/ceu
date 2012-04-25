@@ -243,7 +243,10 @@ F = {
     end,
 
     Async = function (me)
-        local blk = unpack(me)
+        local vars,blk = unpack(me)
+        for _, n in ipairs(vars) do
+            LINE(me, n.new.off..' = '..n.var.off..';')
+        end
         local lb = LABEL_gen('Async_'..me.gte)
         LINE(me, 'GTES['..me.gte..'] = '..lb..';')
         LINE(me, 'qins_async('..me.gte..');')
@@ -297,16 +300,29 @@ if (ceu_out_pending()) {
         HALT(me)
     end,
 
-    EmitExt = function (me)
+    EmitExtS = function (me)
         local ext, exp = unpack(me)
         local evt = ext.evt
+
+        if evt.output then
+            LINE(me, me.val..';')
+            return
+        end
+
+        assert(evt.input)
         local lb_cnt = LABEL_gen('Async_cont')
         local async = _ITER'Async'()
         LINE(me, 'GTES['..async.gte..'] = '..lb_cnt..';')
         LINE(me, 'qins_async('..async.gte..');')
         if exp then
-            LINE(me, '{ '..evt.tp..' data = '..exp.val..';')
-            LINE(me, 'return ceu_go_event(ret, IO_'..evt.id ..', &data); }')
+            if _C.deref(ext.evt.tp) then
+                LINE(me, 'return ceu_go_event(ret, IO_'..evt.id
+                        ..', (void*)'..exp.val..');')
+            else
+                LINE(me, 'return ceu_go_event(ret, IO_'..evt.id
+                        ..', (void*)INT_f('..exp.val..'));')
+            end
+
         else
             LINE(me, 'return ceu_go_event(ret, IO_'..evt.id ..', NULL);')
         end
@@ -384,8 +400,11 @@ TIME_now += ]]..exp.val..[[;
         HALT(me)
         LABEL_out(me, lb)
         if me.toset then
-            LINE(me, 'if (DATA)')
-            LINE(me, '\t'..me.toset.val..' = *('..ext.evt.tp..'*)DATA;')
+            if _C.deref(ext.evt.tp) then
+                LINE(me, '\t'..me.toset.val..' = ('..ext.evt.tp..')DATA;')
+            else
+                LINE(me, '\t'..me.toset.val..' = *((int*)DATA);')
+            end
         end
     end,
     AwaitInt = function (me)

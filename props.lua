@@ -44,7 +44,7 @@ local STMTS = {
     Break=true, If=true,
     CallStmt=true, AwaitN=true,
     AwaitExt=true, AwaitInt=true, AwaitT=true,
-    EmitExt=true,  EmitInt=true,  EmitT=true,
+    EmitExtS=true,  EmitInt=true,  EmitT=true,
 }
 
 F = {
@@ -97,10 +97,8 @@ F = {
         me.brks = {}
     end,
     Break = function (me)
-        local loop  = _ITER'Loop'()
-        local async = _ITER'Async'()
-        ASR(loop and (not async or loop.depth>async.depth),
-            me,'break without loop')
+        local loop = _ITER'Loop'()
+        ASR(loop, me,'break without loop')
         loop.brks[me] = true
     end,
 
@@ -109,12 +107,7 @@ F = {
         me.rets = {}
     end,
     Return = function (me)
-        local setret = _ITER'SetBlock'()
-        local async  = _ITER'Async'()
-        -- must have a setret between return and an async
-        ASR((not async) or async.depth<setret.depth or async.depth==setret.depth+1,
-            me, 'invalid return statement')
-        setret.rets[me] = true
+        _ITER'SetBlock'().rets[me] = true
     end,
 
     EmitInt = function (me)

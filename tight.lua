@@ -83,7 +83,7 @@ F = {
     end,
 
     Async = function (me)
-        local body = unpack(me)
+        local _,body = unpack(me)
         same(me, body)
         me.awaits = true
         me.brk_awt_ret = true

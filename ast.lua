@@ -81,7 +81,7 @@ end
 function visit_aux (me, F)
 --print(me.id, me, F)
     local pre, mid, pos = FF(F,me.id..'_pre'), FF(F,me.id), FF(F,me.id..'_pos')
-    local bef, aft = FF(F,me.id..'_bef'), FF(F,me.id..'_aft')
+    --local bef, aft = FF(F,me.id..'_bef'), FF(F,me.id..'_aft')
 
     if F.Node_pre then F.Node_pre(me) end
     if pre then pre(me) end
@@ -91,7 +91,7 @@ function visit_aux (me, F)
     for i, sub in ipairs(me) do
         if _ISNODE(sub) then
             sub.depth = me.depth + 1
-            if bef then bef(me, sub) end
+            --if bef then bef(me, sub) end
             visit_aux(sub, F)
             --if aft then aft(me, sub) end
         end
@@ -119,8 +119,10 @@ local C; C = {
     Block   = node('Block'),
     Nothing = node('Nothing'),
     Return  = node('Return'),
-    Async   = node('Async'),
     Host    = node('Host'),
+
+    Async   = node('Async'),
+    VarList = node('VarList'),
 
     ParEver = node('ParEver'),
     ParOr   = node('ParOr'),
@@ -134,8 +136,10 @@ local C; C = {
     AwaitN   = node('AwaitN'),
     AwaitT   = node('AwaitT'),
 
+    EmitExtE = node('EmitExtE'),
+    EmitExtS = node('EmitExtS'),
+
     EmitInt = node('EmitInt'),
-    EmitExt = node('EmitExt'),
     EmitT   = node('EmitT'),
 
     Dcl_det = node('Dcl_det'),

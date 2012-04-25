@@ -2,57 +2,88 @@ _EXPS = {
     calls = {}      -- { _printf=true, _myf=true, ... }
 }
 
-function okAsync (exp)
-    local async = _ITER'Async'()
-    return (not async) or (exp.fst.var and async.depth<exp.fst.var.blk.depth)
-end
-
 F = {
     SetExp = function (me)
         local e1, e2 = unpack(me)
-        ASR( e1.lval and _C.contains(e1.tp,e2.tp) and okAsync(e1),
+        ASR(e1.lval and _C.contains(e1.tp,e2.tp,true),
                 me, 'invalid attribution')
         e1.fst.se = 'wr'
     end,
 
     SetStmt = function (me)
         local e1, stmt = unpack(me)
-        ASR(e1.lval and okAsync(e1), me, 'invalid attribution')
+        ASR(e1.lval, me, 'invalid attribution')
         e1.fst.se = 'wr'
         stmt.toset = e1
         if stmt.id == 'AwaitT' then
-            ASR(_C.isNumeric(e1.tp), me, 'invalid attribution')
-        else --'AwaitE'
+            ASR(_C.isNumeric(e1.tp,true), me, 'invalid attribution')
+        else    -- AwaitInt / AwaitExt
             local evt = stmt[1].evt
-            ASR( _C.contains(e1.tp,evt.tp), me, 'invalid attribution')
+            ASR(_C.contains(e1.tp,evt.tp,true), me, 'invalid attribution')
         end
     end,
 
     SetBlock = function (me)
         local e1, _ = unpack(me)
-        ASR(e1.lval and okAsync(e1), me, 'invalid attribution')
+        ASR(e1.lval, me, 'invalid attribution')
         e1.fst.se = 'wr'
     end,
     Return = function (me)
         local e1 = _ITER'SetBlock'()[1]
         local e2 = unpack(me)
-        ASR( _C.contains(e1.tp,e2.tp), me, 'invalid return value')
+        ASR( _C.contains(e1.tp,e2.tp,true), me, 'invalid return value')
     end,
 
     AwaitInt = function (me)
-        local acc = unpack(me)
-        acc.se = 'aw'
+        local int = unpack(me)
+        int.se = 'aw'
     end,
 
-    EmitExt = function (me)
-        local acc, exp = unpack(me)
-        ASR((not exp) or _C.contains(acc.evt.tp,exp.tp), me, 'invalid emit')
+    EmitExtS = function (me)
+        local ext, exp = unpack(me)
+        if ext.evt.output then
+            F.EmitExtE(me)
+        end
+    end,
+    EmitExtE = function (me)
+        local ext, exp = unpack(me)
+        ASR(ext.evt.output, me, 'input emit has `void´ value')
+        me.tp = 'int'
+
+        if exp then
+            ASR(_C.contains(ext.evt.tp,exp.tp,true),
+                    me, "types do not match on `emit´")
+        else
+            ASR(ext.evt.tp=='void',
+                    me, "types do not match on `emit´")
+        end
+
+        local len, val
+        if exp then
+            len = 'sizeof('..ext.evt.tp..')'
+            if _C.deref(ext.evt.tp) then
+                val = exp.val
+            else
+                val = 'INT_f('..exp.val..')'
+            end
+        else
+            len = 0
+            val = 'NULL'
+        end
+        me.val = '\n'..[[
+#ifdef ceu_out_event
+    ceu_out_event(IO_]]..ext.evt.id..','..len..','..val..[[)
+#else
+    0
+#endif
+]]
     end,
 
     EmitInt = function (me)
-        local acc, exp = unpack(me)
-        ASR((not exp) or _C.contains(acc.evt.tp,exp.tp), me, 'invalid emit')
-        acc.se = 'tr'
+        local int, exp = unpack(me)
+        ASR((not exp) or _C.contains(int.evt.tp,exp.tp,true),
+                me, 'invalid emit')
+        int.se = 'tr'
     end,
 
     CallStmt = function (me)
@@ -76,8 +107,8 @@ F = {
 
     Op2_idx = function (me)
         local _, arr, idx = unpack(me)
-        local _arr = ASR(_C.deref(arr.tp), me, 'cannot index a non array')
-        ASR(_arr and _C.isNumeric(idx.tp), me, 'invalid array index')
+        local _arr = ASR(_C.deref(arr.tp,true), me, 'cannot index a non array')
+        ASR(_arr and _C.isNumeric(idx.tp,true), me, 'invalid array index')
         me.fst  = arr.fst
         me.tp   = _arr
         me.val  = '('..arr.val..'['..idx.val..'])'
@@ -88,7 +119,7 @@ F = {
         local op, e1, e2 = unpack(me)
         me.tp  = 'int'
         me.val = '('..e1.val..op..e2.val..')'
-        ASR(_C.isNumeric(e1.tp) and _C.isNumeric(e2.tp),
+        ASR(_C.isNumeric(e1.tp,true) and _C.isNumeric(e2.tp,true),
             me, 'invalid operands to binary "'..op..'"')
     end,
     ['Op2_-']  = 'Op2_int_int',
@@ -106,7 +137,8 @@ F = {
         local op, e1 = unpack(me)
         me.tp  = 'int'
         me.val = '('..op..e1.val..')'
-        ASR(_C.isNumeric(e1.tp), me, 'invalid operand to unary "'..op..'"')
+        ASR(_C.isNumeric(e1.tp,true),
+                me, 'invalid operand to unary "'..op..'"')
     end,
     ['Op1_~']  = 'Op1_int',
     ['Op1_-']  = 'Op1_int',
@@ -116,7 +148,8 @@ F = {
         local op, e1, e2 = unpack(me)
         me.tp  = 'int'
         me.val = '('..e1.val..op..e2.val..')'
-        ASR(_C.max(e1.tp,e2.tp), me, 'invalid operands to binary "'..op..'"')
+        ASR(_C.max(e1.tp,e2.tp,true),
+                me, 'invalid operands to binary "'..op..'"')
     end,
     ['Op2_=='] = 'Op2_same',
     ['Op2_!='] = 'Op2_same',
@@ -215,16 +248,19 @@ F = {
         me.tp   = 'char*'
         me.val  = me[1]
         me.lval = false
+        --me.isConst = true
     end,
     CONST = function (me)
         me.tp   = 'int'
         me.val  = me[1]
         me.lval = false
+        --me.isConst = true
     end,
     NULL = function (me)
         me.tp   = 'void*'
         me.val  = '((void *)0)'
         me.lval = false
+        --me.isConst = true
     end,
     NOW = function (me)
         me.tp   = 'u64'

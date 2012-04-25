@@ -112,7 +112,7 @@ _GG = { [1] = CK'' *S* V'_Stmts' *S* (P(-1) + EM'expected EOF')
 
     , _Stmt = V'Nothing'
             + V'AwaitT'   + V'AwaitExt' + V'AwaitInt'
-            + V'EmitT'    + V'EmitExt'  + V'EmitInt'
+            + V'EmitT'    + V'EmitExtS'  + V'EmitInt'
             + V'_Dcl_ext' + V'_Dcl_int' + V'_Dcl_var'
             + V'Dcl_det'  + V'_Dcl_pure'
             + V'_Set'     + V'CallStmt' -- must be after Set
@@ -141,7 +141,11 @@ _GG = { [1] = CK'' *S* V'_Stmts' *S* (P(-1) + EM'expected EOF')
 
     , Nothing = K'nothing'
     , _DoBlock= K'do' *S* V'Block' *S* EK'end'
-    , Async   = K'async' *S* EK'do' *S* V'Block' *S* EK'end'
+
+    , Async   = K'async' *S* V'VarList' *S* EK'do' *S*
+                    V'Block' *S*
+                EK'end'
+    , VarList = ( EK'(' *S* EV'Var' * (S* EK',' *S* EV'Var')^0 *S* EK')' )^-1
 
     , Return  = K'return' *S* EV'_Exp'
 
@@ -189,6 +193,7 @@ _GG = { [1] = CK'' *S* V'_Stmts' *S* (P(-1) + EM'expected EOF')
 
     , _Prim   = V'_Parens' + V'Var'   + V'ID_c'   + V'SIZEOF'
               + V'NULL'    + V'CONST' + V'STRING' + V'NOW'
+              + V'EmitExtE'
 
     , ExpList = ( V'_Exp'*(S*','*S*EV'_Exp')^0 )^-1
 
@@ -214,8 +219,10 @@ _GG = { [1] = CK'' *S* V'_Stmts' *S* (P(-1) + EM'expected EOF')
     , AwaitT   = K'await' *S* (V'_Parens'+V'TIME')
 
 
-    , EmitExt  = K'emit' *S* EV'Ext' * (S* K'=' *S* V'_Exp')^-1
-    , EmitInt  = K'emit' *S* EV'Int' * (S* K'=' *S* V'_Exp')^-1
+    , EmitExtS = V'EmitExt'
+    , EmitExtE = V'EmitExt'
+    , EmitExt  = K'emit' *S* EV'Ext' * (S* K'(' *S* V'_Exp' *S* EK')')^-1
+    , EmitInt  = K'emit' *S* EV'Int' * (S* K'(' *S* V'_Exp' *S* EK')')^-1
     , EmitT    = K'emit' *S* (V'_Parens'+V'TIME')
 
     , _Dcl_ext = (CK'input'+CK'output') *S* EV'ID_type' *S*
