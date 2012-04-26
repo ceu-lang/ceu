@@ -7,9 +7,9 @@ loop do
         u64 t = 1000;
         loop do
             _digitalWrite(13, _LOW);
-            await (t*1000);
+            await (t*1000LL);
             _digitalWrite(13, _HIGH);
-            await (t*1000);
+            await (t*1000LL);
             if t > 50 then
                 t = t - 10;
             end

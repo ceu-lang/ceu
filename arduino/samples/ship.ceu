@@ -182,8 +182,8 @@ with
         if read1==read2 && key!=read1 then
             key = read1;
             if key != _KEY_NONE then
-                async do
-                    emit Key = read1;
+                async (read1) do
+                    emit Key(read1);
                 end
             end
         end

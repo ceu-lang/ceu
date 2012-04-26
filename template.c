@@ -42,7 +42,6 @@ char ANDS[N_ANDS];      // TODO: bitfield
 tceu_lbl GTES[N_GTES];
 tceu_gte TRGS[] = { === TRGS === };
 
-#define PVAR(tp,reg) ((tp*)(VARS+reg))
 char VARS[N_VARS];
 
 #if N_TIMERS > 1
@@ -340,9 +339,9 @@ int ceu_go_polling (tceu_time now)
     if (ceu_go_init(&ret, now))
         return ret;
 
-#ifdef IO_Start
-    //*PVAL(int,IO_Start) = (argc>1) ? atoi(argv[1]) : 0;
-    if (ceu_go_event(&ret, IO_Start, NULL))
+#ifdef IN_Start
+    //*PVAL(int,IN_Start) = (argc>1) ? atoi(argv[1]) : 0;
+    if (ceu_go_event(&ret, IN_Start, NULL))
         return ret;
 #endif
 

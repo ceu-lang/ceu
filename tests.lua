@@ -212,7 +212,7 @@ input int A;
 A=1;
 return 1;
 ]],
-    parser = "ERR : line 1 : after `;' : invalid statement (or C identifier?)"
+    parser = "ERR : line 2 : before `A' : invalid statement (or C identifier?)",
 }
 
 Test { [[input  int A;]],
@@ -9847,7 +9847,7 @@ end
 A = 1;
 return 1;
 ]],
-    parser = "ERR : line 3 : after `end' : invalid statement (or C identifier?)",
+    parser = "ERR : line 4 : before `A' : invalid statement (or C identifier?)",
 }
 
 Test { [[

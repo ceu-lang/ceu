@@ -5,22 +5,5 @@ loop do
     await 100ms;
     _Photo_read();
     data = await Photo_readDone;
-
-    if data & 0100 then
-        _Leds_led2On();
-    else
-        _Leds_led2Off();
-    end
-
-    if data & 0010 then
-        _Leds_led1On();
-    else
-        _Leds_led1Off();
-    end
-
-    if data & 0001 then
-        _Leds_led0On();
-    else
-        _Leds_led0Off();
-    end
+    _Leds_set(data/100);
 end

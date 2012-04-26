@@ -1,5 +1,5 @@
-input _error_t    Radio_startDone;
-input _error_t    Radio_sendDone;
+input int         Radio_startDone;
+input int         Radio_sendDone;
 input _message_t* Radio_receive;
 
 C do

@@ -60,10 +60,12 @@ F = {
 
         local len, val
         if exp then
-            len = 'sizeof('..ext.evt.tp..')'
-            if _C.deref(ext.evt.tp) then
+            local tp = _C.deref(ext.evt.tp)
+            if tp then
+                len = 'sizeof('..tp..')'
                 val = exp.val
             else
+                len = 'sizeof('..ext.evt.tp..')'
                 val = 'INT_f('..exp.val..')'
             end
         else
@@ -72,7 +74,7 @@ F = {
         end
         me.val = '\n'..[[
 #ifdef ceu_out_event
-    ceu_out_event(IO_]]..ext.evt.id..','..len..','..val..[[)
+    ceu_out_event(OUT_]]..ext.evt.id..','..len..','..val..[[)
 #else
     0
 #endif

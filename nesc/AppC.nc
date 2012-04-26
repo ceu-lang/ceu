@@ -76,8 +76,8 @@ implementation
         old = call Timer.getNow() * 1000;
         now64 = old;
         ceu_go_init(NULL, now64);
-#ifdef IO_Start
-        ceu_go_event(NULL, IO_Start, NULL);
+#ifdef IN_Start
+        ceu_go_event(NULL, IN_Start, NULL);
 #endif
 
         // TODO: periodic nunca deixaria TOSSched queue vazia
@@ -111,29 +111,29 @@ implementation
 #ifdef IO_PHOTO
     event void Photo.readDone(error_t err, uint16_t val) {
         int v = val;
-        ceu_go_event(NULL, IO_Photo_readDone, &v);
+        ceu_go_event(NULL, IN_Photo_readDone, &v);
     }
 #endif // IO_PHOTO
 
 #ifdef IO_TEMP
     event void Temp.readDone(error_t err, uint16_t val) {
         int v = val;
-        ceu_go_event(NULL, IO_Temp_readDone, &v);
+        ceu_go_event(NULL, IN_Temp_readDone, &v);
     }
 #endif // IO_TEMP
 
 #ifdef IO_RADIO
     event void RadioControl.startDone (error_t err) {
-#ifdef IO_Radio_startDone
+#ifdef IN_Radio_startDone
         int v = err;
-        ceu_go_event(NULL, IO_Radio_startDone, &v);
+        ceu_go_event(NULL, IN_Radio_startDone, &v);
 #endif
     }
 
     event void RadioControl.stopDone (error_t err) {
-#ifdef IO_Radio_stopDone
+#ifdef IN_Radio_stopDone
         int v = err;
-        ceu_go_event(NULL, IO_Radio_stopDone, &v);
+        ceu_go_event(NULL, IN_Radio_stopDone, &v);
 #endif
     }
 
@@ -141,18 +141,18 @@ implementation
     //event void RadioSend.sendDone(message_t* msg, error_t err)
     {
         //dbg("APP", "sendDone: %d %d\n", data[0], data[1]);
-#ifdef IO_Radio_sendDone
+#ifdef IN_Radio_sendDone
         int v = err;
-        ceu_go_event(NULL, IO_Radio_sendDone, &v);
+        ceu_go_event(NULL, IN_Radio_sendDone, &v);
 #endif
     }
 
     event message_t* RadioReceive.receive[am_id_t id]
         (message_t* msg, void* payload, uint8_t nbytes)
     {
-#ifdef IO_Radio_receive
+#ifdef IN_Radio_receive
         void* ptr = msg;
-        ceu_go_event(NULL, IO_Radio_receive, &ptr);
+        ceu_go_event(NULL, IN_Radio_receive, &ptr);
 #endif
         return msg;
     }
@@ -161,35 +161,35 @@ implementation
 #ifdef IO_SERIAL
     event void SerialControl.startDone (error_t err)
     {
-#ifdef IO_Serial_startDone
+#ifdef IN_Serial_startDone
         int v = err;
-        ceu_go_event(NULL, IO_Serial_startDone, &v);
+        ceu_go_event(NULL, IN_Serial_startDone, &v);
 #endif
     }
 
     event void SerialControl.stopDone (error_t err)
     {
-#ifdef IO_Serial_stopDone
+#ifdef IN_Serial_stopDone
         int v = err;
-        ceu_go_event(NULL, IO_Serial_stopDone, &v);
+        ceu_go_event(NULL, IN_Serial_stopDone, &v);
 #endif
     }
 
     event void SerialSend.sendDone[am_id_t id](message_t* msg, error_t err)
     {
         //dbg("APP", "sendDone: %d %d\n", data[0], data[1]);
-#ifdef IO_Serial_sendDone
+#ifdef IN_Serial_sendDone
         int v = err;
-        ceu_go_event(NULL, IO_Serial_sendDone, &v);
+        ceu_go_event(NULL, IN_Serial_sendDone, &v);
 #endif
     }
     
     event message_t* SerialReceive.receive[am_id_t id]
         (message_t* msg, void* payload, uint8_t nbytes)
     {
-#ifdef IO_Serial_receive
+#ifdef IN_Serial_receive
         void* ptr = msg;
-        ceu_go_event(NULL, IO_Serial_receive, &ptr);
+        ceu_go_event(NULL, IN_Serial_receive, &ptr);
 #endif
         return msg;
     }

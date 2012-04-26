@@ -316,15 +316,15 @@ if (ceu_out_pending()) {
         LINE(me, 'qins_async('..async.gte..');')
         if exp then
             if _C.deref(ext.evt.tp) then
-                LINE(me, 'return ceu_go_event(ret, IO_'..evt.id
+                LINE(me, 'return ceu_go_event(ret, IN_'..evt.id
                         ..', (void*)'..exp.val..');')
             else
-                LINE(me, 'return ceu_go_event(ret, IO_'..evt.id
+                LINE(me, 'return ceu_go_event(ret, IN_'..evt.id
                         ..', (void*)INT_f('..exp.val..'));')
             end
 
         else
-            LINE(me, 'return ceu_go_event(ret, IO_'..evt.id ..', NULL);')
+            LINE(me, 'return ceu_go_event(ret, IN_'..evt.id ..', NULL);')
         end
         LABEL_out(me, lb_cnt)
     end,

@@ -83,7 +83,7 @@ else
 end
 _STR = inp:read'*a'
 
-if _OPTS.m4 then
+if _OPTS.m4 or _OPTS.m4_file then
     local m4 = assert(io.popen('m4 - > '.._OPTS.m4_file, 'w'))
     m4:write(_STR)
     m4:close()
@@ -151,7 +151,6 @@ do
         tpl = sub(tpl, '=== LABELS ===', labels)
     end
 
-    -- TODO: assert names do not conflict
     -- EVENTS and FUNCTIONS used
     do
         local str = ''
@@ -159,24 +158,24 @@ do
         local outs = 0
         for id, evt in pairs(_ENV.exts) do
             if evt.input then
-                str = str..'#define IO_'..id..' '..(evt.trg0 or 0)..'\n'
+                str = str..'#define IN_'..id..' '..(evt.trg0 or 0)..'\n'
             else
-                str = str..'#define IO_'..id..' '..outs..'\n'
+                str = str..'#define OUT_'..id..' '..outs..'\n'
                 outs = outs + 1
             end
         end
-        str = str..'#define IO_N_OUTPUTS '..outs..'\n'
+        str = str..'#define OUT_n '..outs..'\n'
 
         -- FUNCTIONS called
         local funcs = 0
         for id in pairs(_EXPS.calls) do
             if id ~= '$anon' then
-                str = str..'#define IO'..id..' '..funcs..'\n'
+                str = str..'#define FUNC'..id..' '..funcs..'\n'
                 funcs = funcs + 1
             end
         end
 
-        if _OPTS.events then
+        if _OPTS.events or _OPTS.events_file then
             local f = io.open('_ceu_events.h','w')
             f:write(str)
             f:close()

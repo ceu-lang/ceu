@@ -88,16 +88,13 @@ KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
 local S = V'_SPACES'
 
-local ALL      = m.R'az' + '_' + m.R'AZ'
+local Alpha    = m.R'az' + '_' + m.R'AZ'
+local Alphanum = Alpha + m.R'09'
 local ALPHANUM = m.R'AZ' + '_' + m.R'09'
 local alphanum = m.R'az' + '_' + m.R'09'
-ID = ALL * (ALL+m.R'09')^0 - KEYS
-local ALPHA = m.R'az' + m.R'AZ' + '_'
-local ALPHANUM = ALPHA + m.R'09'
-ID = ALPHA * ALPHANUM^0
-ID = ID - KEYS
 
-NUM  = CK(m.R'09'^1) / tonumber
+ID  = Alpha * Alphanum^0 - KEYS
+NUM = CK(m.R'09'^1) / tonumber
 
 _GG = { [1] = CK'' *S* V'_Stmts' *S* (P(-1) + EM'expected EOF')
 
@@ -240,12 +237,11 @@ _GG = { [1] = CK'' *S* V'_Stmts' *S* (P(-1) + EM'expected EOF')
     , Int      = V'ID_int'
     , Var      = V'ID_var'
 
-    , ID_ext  = CK( m.R'AZ'*ALPHANUM^0 - KEYS )
+    , ID_ext  = CK( m.R'AZ'*Alphanum^0 - KEYS )
     , ID_int  = CK( m.R'az'*alphanum^0 - KEYS )
     , ID_var  = CK( m.R'az'*alphanum^0 - KEYS )
-    , ID_c    = CK( P'_'*(alphanum+ALPHANUM)^0 - KEYS )
-    , ID_type = CK( ((P'_'*(alphanum+ALPHANUM)^0 + m.R'az'*alphanum^0 ) - KEYS)
-                        * (S*'*')^0 ) /
+    , ID_c    = CK(    P'_'*Alphanum^0 - KEYS )
+    , ID_type = CK(ID * (S*'*')^0) /
                   function (str)
                     return (string.gsub( (string.gsub(str,' ','')), '^_', '' ))
                   end
