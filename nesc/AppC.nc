@@ -151,8 +151,7 @@ implementation
         (message_t* msg, void* payload, uint8_t nbytes)
     {
 #ifdef IN_Radio_receive
-        void* ptr = msg;
-        ceu_go_event(NULL, IN_Radio_receive, &ptr);
+        ceu_go_event(NULL, IN_Radio_receive, msg);
 #endif
         return msg;
     }
@@ -188,8 +187,7 @@ implementation
         (message_t* msg, void* payload, uint8_t nbytes)
     {
 #ifdef IN_Serial_receive
-        void* ptr = msg;
-        ceu_go_event(NULL, IN_Serial_receive, &ptr);
+        ceu_go_event(NULL, IN_Serial_receive, msg);
 #endif
         return msg;
     }
