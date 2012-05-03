@@ -10,26 +10,27 @@ typedef struct {
     s16   input;
 } Recpt;
 
-Recpt OUT2RECPT[OUT_n];
+Recpt OUT2RECPT[OUT_n][100];    // TODO: 100 hardcoded
+int OUT2RECPT_n[OUT_n];
 
 int ceu_out_event_F (int id, int len, void* data) {
-    Recpt cur = OUT2RECPT[id];
-    if (cur.queue) {
+    int i;
+    for (i=0; i<OUT2RECPT_n[id]; i++) {
+        Recpt cur = OUT2RECPT[id][i];
         char _buf[MSGSIZE];
         *((s16*)_buf) = cur.input;
         memcpy(_buf+sizeof(s16), data, len);
-        if (mq_send(cur.queue, _buf, len+sizeof(s16), 0) == 0)
-            return 1;
+        if (mq_send(cur.queue, _buf, len+sizeof(s16), 0) != 0)
+            return 0;
     }
-    return 0;
+    return 1;
 }
 
 int main (int argc, char *argv[])
 {
     int i;
     for (i=0; i<OUT_n; i++) {
-        OUT2RECPT[i].queue = 0;
-        OUT2RECPT[i].input = 0;
+        OUT2RECPT_n[i] = 0;
     }
 
     mqd_t queue = mq_open(argv[1], O_RDWR);
@@ -71,12 +72,10 @@ int main (int argc, char *argv[])
                     if (id_out < OUT_n) {
                         mqd_t queue = mq_open(name, O_WRONLY|O_NONBLOCK);
                         if (queue != -1) {
-                            OUT2RECPT[id_out].input = *((s16*)(buf));
+                            Recpt* new = &OUT2RECPT[id_out][OUT2RECPT_n[id_out]++];
+                            new->queue = queue;
+                            new->input = *((s16*)(buf));
                             buf += sizeof(s16);
-                            Recpt cur = OUT2RECPT[id_out];
-                            if (cur.queue)
-                                mq_close(cur.queue);
-                            OUT2RECPT[id_out].queue = queue;
                             continue;
                         }
                     }

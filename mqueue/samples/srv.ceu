@@ -1,0 +1,46 @@
+input  int         Radio_startDone;
+input  _message_t* Radio_receive;
+output _message_t* Radio_send;
+
+input int Photo_readDone;
+
+loop do
+    int err = _Radio_start();
+    if err == _SUCCESS then
+        err = await Radio_startDone;
+        if err == _SUCCESS then
+            break;
+        end
+    end
+    await 1s;
+end
+_DBG("Radio started\n");
+
+int count = 0;
+
+loop do
+    int from;
+    loop do
+        _message_t* recvMsg = await Radio_receive;
+        if _Radio_getDestination(recvMsg) == _TOS_NODE_ID then
+            from = _Radio_getSource(recvMsg);
+            break;
+        end
+    end
+
+    count = count + 1;
+    _Leds_set(count);
+    _DBG("Requests = %d\n", count);
+
+    _message_t sendMsg;
+    int* v = _Radio_getPayload(&sendMsg, sizeof<int>);
+
+    _Photo_read();
+    *v = await Photo_readDone;
+    _DBG("Photo = %d\n", *v);
+
+    _Radio_setSource(&sendMsg, _TOS_NODE_ID);
+    _Radio_setDestination(&sendMsg, from);
+    emit Radio_send(&sendMsg);
+end
+

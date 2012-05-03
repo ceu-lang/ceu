@@ -62,7 +62,8 @@ end
 function app (app)
     app.start = _start
     app.kill  = _kill
-    app.queue = app.queue or '/'..app.name..'_'..os.time()..'_'..N()
+    app._name = string.gsub(app.name, '%s', '_')
+    app.queue = app.queue or '/'..app._name..'_'..os.time()..'_'..N()
 
     app.files.include = file2string(app.files.include or '')
     app.files.source  = file2string(app.files.source)
@@ -70,7 +71,7 @@ function app (app)
 
     local DEFS = [[
 C do /******/
-    #define CEU_DBG "]]..app.name..[["
+    #define CEU_DBG "]]..app._name..[["
 ]]
     for k, v in pairs(app.defines or {}) do
         DEFS = DEFS .. '#define '..k..' '..v..'\n'
