@@ -26,8 +26,6 @@ typedef s16 tceu_lbl;
 
 int go (int* ret);
 
-=== HOST ===
-
 enum {
     Inactive  = 0,
     Init      = 1,
@@ -35,6 +33,8 @@ enum {
 };
 
 === EVTS ===
+
+=== HOST ===
 
 void* DATA = NULL;
 

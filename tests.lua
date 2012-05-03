@@ -75,6 +75,9 @@ Test { [[return 1;2;]],
 Test { [[call 1;return 2;]],
     exps = 'invalid statement',
 }
+Test { [[int aAa; aAa=1; return aAa;]],
+    run = 1,
+}
 Test { [[int a; a=1; return a;]],
     run = 1,
 }
@@ -402,6 +405,17 @@ Test { [[
 output _char A;
 ]],
     env = "lines.lua:35: ERR : line 1 : invalid event type",
+}
+
+Test { [[
+C do
+    /******/
+    int end = 1;
+    /******/
+end
+return _end;
+]],
+    run = 1
 }
 
 Test { [[

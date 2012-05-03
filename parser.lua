@@ -238,8 +238,8 @@ _GG = { [1] = CK'' *S* V'_Stmts' *S* (P(-1) + EM'expected EOF')
     , Var      = V'ID_var'
 
     , ID_ext  = CK( m.R'AZ'*Alphanum^0 - KEYS )
-    , ID_int  = CK( m.R'az'*alphanum^0 - KEYS )
-    , ID_var  = CK( m.R'az'*alphanum^0 - KEYS )
+    , ID_int  = CK( m.R'az'*Alphanum^0 - KEYS )
+    , ID_var  = CK( m.R'az'*Alphanum^0 - KEYS )
     , ID_c    = CK(    P'_'*Alphanum^0 - KEYS )
     , ID_type = CK(ID * (S*'*')^0) /
                   function (str)

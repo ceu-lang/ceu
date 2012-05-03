@@ -73,7 +73,9 @@ F = {
             val = 'NULL'
         end
         me.val = '\n'..[[
-#ifdef ceu_out_event
+#if defined(ceu_out_event_]]..ext.evt.id..[[)
+    ceu_out_event_]]..ext.evt.id..'('..val..[[)
+#elif defined(ceu_out_event)
     ceu_out_event(OUT_]]..ext.evt.id..','..len..','..val..[[)
 #else
     0
