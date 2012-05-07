@@ -1,11 +1,11 @@
 all: qu.exe
-	./ceu $(CEUFILE) --events --output _ceu_code.c
+	./ceu $(CEUFILE) --m4 --dfa --events --output _ceu_code.c
 	gcc main.c $(CFLAGS) -lrt
 
 qu.exe: qu.c
-	gcc qu.c -o qu.exe -lrt
+	gcc qu.c -lrt -o qu.exe
 
 clean:
-	rm -f *.exe _ceu_*
+	rm -f *.exe _ceu_* *_m4
 
 .PHONY: all clean

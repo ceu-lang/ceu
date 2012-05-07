@@ -38,13 +38,26 @@ end
 
 _I2L = {}
 
-local line = 1
-local l = m.Cmt('\n',
+local CNT = 1
+local open = m.Cmt('{',
+    function ()
+        CNT = CNT - 1
+    end )
+local close = m.Cmt('}',
+    function ()
+        CNT = CNT + 1
+    end )
+
+local LINE = 1
+local line = m.Cmt('\n',
     function (s,i)
         for i=#_I2L, i do
-            _I2L[i] = line
+            _I2L[i] = LINE
         end
-        line = line + 1
+        if CNT > 0 then
+            LINE = LINE + 1
+        end
     end )
-local patt = (l + 1)^0
+
+local patt = (line + open + close + 1)^0
 patt:match(_STR..'\n')

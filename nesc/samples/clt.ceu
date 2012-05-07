@@ -1,0 +1,41 @@
+{ include(AM.m4) }
+
+{AM_retry(1s, AM_start)};
+_DBG("Radio started\n");
+
+event void received;
+
+loop do
+    par/or do
+        await 2s;
+
+    with
+        _message_t send_msg;
+        int v = 0;
+
+        int err = {AM_send(10, &send_msg, &v, int)};
+
+        int* pv;
+        _message_t* recv_msg = {AM_receive(pv, int)};
+        emit received;
+
+        _DBG("Received = %d\n", *pv);
+        _Leds_set(*pv/100);
+        await forever;
+
+    with
+        par/or do
+            await 1s;
+            _DBG("Timeout\n");
+            _Leds_set(0);
+            loop do
+                _Leds_led0Toggle();
+                await 100ms;
+            end
+            _Leds_set(0);
+        with
+            await received;
+        end
+        await forever;
+    end
+end

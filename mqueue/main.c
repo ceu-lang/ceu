@@ -53,12 +53,14 @@ int main (int argc, char *argv[])
 
     char _buf[MSGSIZE];
 
-    int async_cnt;
+    int async_cnt = 1;
 
     for (;;)
     {
         // TODO: timeout ser o valor exato do prox timer
-        struct timespec timeout = { tv_now.tv_sec, tv_now.tv_nsec+100000000 };   // 100ms
+        now += (async_cnt ? 0 : 50000); // 50ms
+        struct timespec timeout = { now / 1000000,
+                                    now % 1000000 * 1000 };
         while (mq_timedreceive(queue,_buf,sizeof(_buf),NULL,&timeout) != -1) {
             char* buf = _buf;
             int id_in = *((s16*)buf);
@@ -103,9 +105,10 @@ int main (int argc, char *argv[])
         if (ceu_go_time(&ret, now) == 1)
             goto END;
 
-        // TODO: incluir
-        //if (ceu_go_async(&ret,&async_cnt))
-            //return ret;
+#if N_ASYNCS > 0
+        if (ceu_go_async(&ret,&async_cnt))
+            return ret;
+#endif
     }
 
 END:

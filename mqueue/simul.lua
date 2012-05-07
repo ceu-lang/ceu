@@ -17,20 +17,6 @@ QU = {
     ASYNC = -11,
 }
 
-local _n = 0
-function N ()
-    _n = _n + 1
-    return _n
-end
-
-function file2string (str)
-    local f = io.open(str)
-    if f then
-        return f:read'*a'
-    end
-    return str
-end
-
 local H = [[
 C do
     /******/
@@ -59,15 +45,22 @@ C do
 end
 ]]
 
+local _names = {}
+
 function app (app)
+    assert(app.name,   'missing `name´')
+    assert(app.source, 'missing `source´')
+
+    app._name = string.gsub(app.name, '%s', '_')
+    assert(not _names[app._name], 'duplicate `name´')
+    _names[app._name] = true
+
+    app._exe   = app._name .. '.exe'
+    app._ceu   = '_'..app._name..'.ceu'
+    app._queue = app._queue or '/'..app._name
+
     app.start = _start
     app.kill  = _kill
-    app._name = string.gsub(app.name, '%s', '_')
-    app.queue = app.queue or '/'..app._name..'_'..os.time()..'_'..N()
-
-    app.files.include = file2string(app.files.include or '')
-    app.files.source  = file2string(app.files.source)
-    app.files.tmp     = '/tmp/ceu_'..N()..os.time()..'.ceu'
 
     local DEFS = [[
 C do /******/
@@ -77,19 +70,23 @@ C do /******/
         DEFS = DEFS .. '#define '..k..' '..v..'\n'
     end
     DEFS = DEFS .. '/******/ end\n'
-    app.files.include = DEFS .. H .. app.files.include
 
-    f = assert(io.open(app.files.tmp, 'w'))
-    f:write(app.files.include .. app.files.source)
+    app.source = '{' .. DEFS
+                     .. H
+              .. '}' .. app.source
+
+    f = assert(io.open(app._ceu, 'w'))
+    f:write(app.source)
     f:close()
-    DBG('===> Compiling '..app.name..'...')
-    assert(os.execute('./ceu '..app.files.tmp        ..
-                        ' --output      _ceu_code.c'   ..
-                        ' --events-file _ceu_events.h'
+    DBG('===> Compiling '..app._ceu..'...')
+    assert(os.execute('./ceu '..app._ceu
+                        .. ' --m4'
+                        .. ' --output _ceu_code.c'
+                        .. ' --events-file _ceu_events.h'
                      ) == 0)
-    assert(os.execute('gcc -o '..app.files.exec..' main.c -lrt'))
-    DBG('', 'tmp:',   app.files.tmp)
-    DBG('', 'queue:', app.queue)
+    assert(os.execute('gcc -o '..app._exe..' main.c -lrt')==0)
+
+    DBG('', 'queue:', app._queue)
 
     app.io = {}
     local str = assert(io.open('_ceu_events.h')):read'*a'
@@ -104,32 +101,33 @@ C do /******/
         DBG('','',evt, v)
     end
 
-    assert(os.execute('./qu.exe create '..app.queue) == 0)
+    assert(os.execute('./qu.exe create '..app._queue) == 0)
 
     return app
 end
 
 function link (app1,out, app2,inp)
-    DBG('===> Linking '..app1.queue..'/'..out..' -> '..app2.queue..'/'..inp)
-    os.execute('./qu.exe send '..app1.queue..' '..QU.LINK..' '..app1.io[out]
-                          ..' '..app2.queue..' '..app2.io[inp])
+    DBG('===> Linking '..app1._queue..'/'..out..' -> '..app2._queue..'/'..inp)
+    os.execute('./qu.exe send '..app1._queue..' '..QU.LINK..' '..app1.io[out]
+                          ..' '..app2._queue..' '..app2.io[inp])
 end
 
 function emit (app, inp, v)
-    DBG('===> Emit '..app.queue..'/'..inp..'('..v..')')
+    DBG('===> Emit '..app._queue..'/'..inp..'('..v..')')
     if inp > 0 then
-        os.execute('./qu.exe send '..app.queue..' '..app.io[inp]..' '..v)
+        os.execute('./qu.exe send '..app._queue..' '..app.io[inp]..' '..v)
     else
-        os.execute('./qu.exe send '..app.queue..' '..inp..' '..v)
+        os.execute('./qu.exe send '..app._queue..' '..inp..' '..v)
     end
 end
 
 function _start (app)
-    local exec = app.files.exec
     DBG('===> Executing '..app.name..'...')
-    os.execute('./'..exec..' '..app.queue..'&')
+    os.execute('./'..app._exe..' '..app._queue..'&')
 end
 
 function _kill (app)
-    os.execute('killall '..app.files.exec)
+    os.remove('/dev/mqueue/'..app._queue)
+    os.remove(app._ceu)
+    os.execute('killall '..app._exe)
 end

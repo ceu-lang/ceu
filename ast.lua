@@ -131,6 +131,37 @@ local C; C = {
     Break   = node('Break'),
     If      = node('If'),
 
+    _For = function (ln1,ln2, str, id, _i, _j, inc, s, blk)
+        local i = function() return node('Var')(ln1,ln2,str, id) end
+        local dcl_i = node('Dcl_var')(ln1,ln2,str, false, 'int', false, id)
+        dcl_i.read_only = true
+        local set_i = node('SetExp')(ln1,ln2,str, i(), _i)
+
+        local j = function() return node('Var')(ln1,ln2,str, '$j') end
+        local dcl_j = node('Dcl_var')(ln1,ln2,str, false, 'int', false, '$j')
+        local set_j = node('SetExp')(ln1,ln2,str, j(), _j)
+
+        s = s or node('CONST')(ln1,ln2,str, 1)
+
+        local op = (inc and '>') or '<'
+        local cmp = node('Op2_'..op)(ln1,ln2,str, op, i(), j())
+
+        local op = (inc and '+') or '-'
+        local nxt = node('SetExp')(ln1,ln2,str, i(),
+                        node('Op2_'..op)(ln1,ln2,str, op, i(), s))
+
+        local loop = node('Loop')(ln1,ln2,str,
+            node('If')(ln1,ln2,str, cmp,
+                node('Break')(ln1,ln2,str),
+                node('Block')(ln1,ln2,str, blk, nxt)))
+        loop.isFor = true
+
+        return node('Block')(ln1,ln2,str,
+                dcl_i, set_i,
+                dcl_j, set_j,
+                loop)
+    end,
+
     AwaitExt = node('AwaitExt'),
     AwaitInt = node('AwaitInt'),
     AwaitN   = node('AwaitN'),

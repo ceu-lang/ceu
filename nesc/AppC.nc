@@ -68,7 +68,7 @@ implementation
     u64 now64;
 
     int RET = 0;
-    #include "C2nesc.c"
+    #include "tinyos.c"
     #include "_ceu_code.tmp"
 
     event void Boot.booted ()

@@ -2,9 +2,7 @@ require 'simul'
 
 send = simul.app {
     name  = 'send',
-    files = {
-        exec   = 'send.exe',
-        source = [[
+    source = [[
 output int A;
 int v = 1;
 loop do
@@ -14,21 +12,17 @@ loop do
     v = v + 1;
 end
 ]],
-    }
 }
 
 recv = simul.app {
     name  = 'recv',
-    files = {
-        exec   = 'recv.exe',
-        source = [[
+    source = [[
 input int A;
 loop do
     int v = await A;
     _DBG("Received: %d\n", v);
 end
 ]],
-    }
 }
 
 simul.link(send,'OUT_A', recv,'IN_A')

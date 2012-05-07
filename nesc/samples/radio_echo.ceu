@@ -1,6 +1,7 @@
-input int         Radio_startDone;
-input int         Radio_sendDone;
-input _message_t* Radio_receive;
+input  int         Radio_startDone;
+input  int         Radio_sendDone;
+input  _message_t* Radio_receive;
+output _message_t* Radio_send;
 
 C do
     typedef struct {
@@ -35,12 +36,11 @@ with
         await 2s;
 
         loop do
-            int err = _Radio_send(_AM_BROADCAST_ADDR,&pkt_send,sizeof<_Msg>);
+            _Radio_setDestination(&pkt_send, _AM_BROADCAST_ADDR);
+            _Radio_setPayloadLength(&pkt_send, sizeof<_Msg>);
+            int err = emit Radio_send(&pkt_send);
             if err == _SUCCESS then
-                err = await Radio_sendDone;
-                if err == _SUCCESS then
-                    break;
-                end
+                break;
             end
             await 1s;
         end

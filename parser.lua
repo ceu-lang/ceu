@@ -83,7 +83,7 @@ KEYS = P'do'+'end'+'async'+'return'
      + 'input'+'output'+'event' -- TODO: types
      + 'sizeof'+'null'+'call'
      + 'pure'+'deterministic'
-     + 'class'
+     + 'set'+'for'
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
 local S = V'_SPACES'
@@ -116,10 +116,12 @@ _GG = { [1] = CK'' *S* V'_Stmts' *S* (P(-1) + EM'expected EOF')
 
     , _StmtBlock = V'_DoBlock' + V'Async'  + V'Host'
                  + V'ParOr'    + V'ParAnd'
-                 + V'If'       + V'Loop'
+                 + V'If'       + V'Loop'   + V'_For'
 
-    , _SetBlock = V'_DoBlock' + V'Async' + V'ParEver'
-                 + V'If'      + V'Loop'
+    , _SetBlock = K'set' *S* (
+                    V'_DoBlock' + V'Async' +
+                    V'ParEver'  + V'If'    + V'Loop'
+                )
 
     , _Dcl_pure = K'pure' *S* EV'ID_c' * (S* K',' *S* V'ID_c')^0
     , Dcl_det   = K'deterministic' *S* EV'ID_c' *S* EK'with' *S*
@@ -161,10 +163,20 @@ _GG = { [1] = CK'' *S* V'_Stmts' *S* (P(-1) + EM'expected EOF')
                 (EK'else' *S*
                     V'Block')^-1 *S*
                 EK'end'
+
     , Loop    = K'loop' *S* EK'do' *S*
                     V'Block' *S*
                 EK'end'
     , Break   = K'break'
+
+    , _For    = K'for' *S* EV'ID_var' *S* EK'=' *S*
+                    EV'_Exp' *S* EK',' *S*
+                    EV'_Exp' *S* (K',' *S*
+                    (K'-'*Cc(false)+Cc(true)) *S* EV'CONST'
+                        + Cc(true)*Cc(false)) *S*
+                    EK'do' *S*
+                        V'Block' *S*
+                    EK'end'
 
     , _Exp    = V'_1'
     , _1      = V'_2'  * (S* CK'||' *S* V'_2')^0
@@ -260,7 +272,7 @@ _GG = { [1] = CK'' *S* V'_Stmts' *S* (P(-1) + EM'expected EOF')
     , _CEND = m.Cmt(C(V'_CSEP') * m.Cb'mark',
                     function (s,i,a,b) return a == b end)
 
-    , _SPACES = (  m.S'\t\n\r '
+    , _SPACES = (  m.S'\t\n\r {}'
                 + ('//' * (P(1)-'\n')^0 * P'\n'^-1)
                 + V'_COMM'
                 )^0

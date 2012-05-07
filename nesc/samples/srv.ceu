@@ -1,0 +1,26 @@
+{ include(AM.m4) }
+
+input int Photo_readDone;
+
+{AM_retry(1s, AM_start)};
+_DBG("Radio started\n");
+
+int count = 0;
+
+loop do
+    int* pv;
+    _message_t* recv_msg = {AM_receive(pv, int)};
+    int src = _Radio_getSource(recv_msg);
+
+    count = count + 1;
+    _Leds_set(count);
+    //_DBG("Requests = %d\n", count);
+
+    _Photo_read();
+    int v = await Photo_readDone;
+    //_DBG("Photo = %d\n", v);
+
+    _message_t send_msg;
+    int err = {AM_send(src, &send_msg, &v, int)};
+end
+

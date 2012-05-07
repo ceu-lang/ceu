@@ -40,8 +40,8 @@ F = {
     Block_pre = function (me)
         me.vars = {}
 
-        local async = _ITER'Async'()
-        if async then
+        local async = _ITER()()
+        if async.id == 'Async' then
             local vars, blk = unpack(async)
             if vars then
                 for _, n in ipairs(vars) do

@@ -1,7 +1,7 @@
 DATE = `date +%F`
 
 all:
-	./ceu $(CEUFILE) --output _ceu_code.c
+	./ceu $(CEUFILE) --m4 --dfa --output _ceu_code.c
 	gcc main.c $(CFLAGS)
 
 clean:

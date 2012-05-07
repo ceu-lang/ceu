@@ -8,7 +8,6 @@ _OPTS = {
     events_file = '_ceu_events.h',
 
     m4          = false,
-    m4_file     = '/tmp/tmp.ceu',
 
     dfa         = false,
     dfa_viz     = false,
@@ -22,7 +21,6 @@ _OPTS_NPARAMS = {
     events_file = 1,
 
     m4          = 0,
-    m4_file     = 1,
 
     dfa         = 0,
     dfa_viz     = 0,
@@ -66,13 +64,10 @@ if not _OPTS.input then
         --dfa                    # performs DFA analysis (false)
         --dfa-viz                # generates DFA graph (false)
 
+        --m4                     # preprocess the input with `m4' (false)
 ]])
     os.exit(1)
 end
-        -- TODO: m4
-        --m4                     # preprocess the input with `m4' (false)
-        --m4-file <filename>     # m4 output file (`/tmp/tmp.ceu')
-
 
 -- INPUT
 local inp
@@ -83,12 +78,14 @@ else
 end
 _STR = inp:read'*a'
 
-if _OPTS.m4 or _OPTS.m4_file then
-    local m4 = assert(io.popen('m4 - > '.._OPTS.m4_file, 'w'))
+if _OPTS.m4 then
+    local m4_file = (_OPTS.input=='-' and '_tmp.ceu_m4') or _OPTS.input..'_m4'
+    local m4 = assert(io.popen('m4 - > '..m4_file, 'w'))
     m4:write(_STR)
     m4:close()
 
-    _STR = assert(io.open(_OPTS.m4_file)):read'*a'
+    _STR = assert(io.open(m4_file)):read'*a'
+    --os.remove(m4_file)
 end
 
 -- PARSE

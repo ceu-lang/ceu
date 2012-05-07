@@ -1,5 +1,7 @@
 // LEDS
 
+#define DBG(fmt,args...)
+
 #ifdef FUNC_Leds_set
 void Leds_set (uint8_t v) {
     call Leds.set(v);
@@ -107,6 +109,24 @@ uint8_t Radio_maxPayloadLength () {
 }
 #endif
 
+#ifdef FUNC_Radio_getSource
+am_addr_t Radio_getSource (message_t* msg) {
+    return call RadioAMPacket.source(msg);
+}
+#endif
+
+#ifdef FUNC_Radio_setSource
+void Radio_setSource (message_t* msg, am_addr_t addr) {
+    return call RadioAMPacket.setSource(msg, addr);
+}
+#endif
+
+#ifdef FUNC_Radio_getDestination
+am_addr_t Radio_getDestination (message_t* msg) {
+    return call RadioAMPacket.destination(msg);
+}
+#endif
+
 #ifdef FUNC_Radio_setDestination
 void Radio_setDestination (message_t* msg, am_addr_t addr) {
     return call RadioAMPacket.setDestination(msg, addr);
@@ -125,10 +145,13 @@ void Radio_setType (message_t* msg, am_id_t id) {
 }
 #endif
 
-#ifdef FUNC_Radio_send
-error_t Radio_send (am_addr_t addr, message_t *msg, uint8_t len)  {
-    am_id_t id = call RadioAMPacket.type(msg);
-    return call RadioSend.send[id](addr, msg, len);
+#ifdef OUT_Radio_send
+#define ceu_out_event_Radio_send Radio_send
+int Radio_send (message_t *msg)  {
+    am_id_t id     = call RadioAMPacket.type(msg);
+    am_addr_t addr = call RadioAMPacket.destination(msg);
+    int len        = call RadioPacket.payloadLength(msg);
+    return call RadioSend.send[id](addr, msg, len) == SUCCESS;
 }
 #endif
 

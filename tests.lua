@@ -510,7 +510,7 @@ Test { [[await forever; return 0;]],
 Test { [[emit 1ms; return 0;]], async='not permitted outside async' }
 Test { [[
 int a;
-a = async do
+a = set async do
     emit 1h;
 end;
 return a + 1;
@@ -520,7 +520,7 @@ return a + 1;
 
 Test { [[
 int a;
-a = async do
+a = set async do
     emit 1h;
     return 10;
 end;
@@ -669,7 +669,7 @@ end
 Test { [[
 event int a;
 par/and do
-    a = do
+    a = set do
         return 1;
     end;
 with
@@ -840,7 +840,7 @@ return a;
 }
 Test { [[
 input int A,B,F;
-int a =
+int a = set
     do
         par/or do
             par do
@@ -871,7 +871,7 @@ return a;
 
 Test { [[
 input int A,B,F;
-int a =
+int a = set
     do
         par/or do
             par do
@@ -1336,6 +1336,98 @@ return 1;
     }
 }
 
+-- FOR
+
+Test { [[
+int sum = 0;
+for i=1, 100 do
+    sum = sum + i;
+end
+return sum;
+]],
+    run = 5050,
+}
+-- TODO: set should raise an error
+--[=[
+Test { [[
+int sum = 0;
+for i=1, 100 do
+    i = 1;
+    sum = sum + i;
+end
+return sum;
+]],
+    run = 5050,
+}
+]=]
+Test { [[
+int sum = 5050;
+for i=100, 1, -1 do
+    sum = sum - i;
+end
+return sum;
+]],
+    run = 0,
+}
+Test { [[
+int sum = 5050;
+int v = 100;
+for i=100, 1, -1 do
+    v = i;
+    if sum == 4950 then
+        break;
+    end
+    sum = sum - i;
+end
+return v;
+]],
+    run = 99,
+}
+Test { [[
+input void A;
+int sum = 5050;
+int v = 100;
+for i=100, 1, -1 do
+    v = i;
+    if sum == 4950 then
+        break;
+    end
+    sum = sum - i;
+    await A;
+end
+return v;
+]],
+    run = {['~>A;~>A;~>A;~>A;~>A;~>A;~>A;~>A;~>A;~>A;']=99},
+}
+Test { [[
+int sum = 4;
+for i=1, 100, -1 do
+    sum = sum - i;
+end
+return sum;
+]],
+    run = 4,
+}
+Test { [[
+int sum = 4;
+for i=100, 1 do
+    sum = sum + i;
+end
+return sum;
+]],
+    run = 4,
+}
+Test { [[
+input void A, B;
+int sum = 0;
+for i=1, 10 do
+    await A;
+    sum = sum + 1;
+end
+return sum;
+]],
+    run = {['~>A;~>B;~>A;~>A;~>A;~>A;~>A;~>A;~>A;~>A;~>A;']=10},
+}
 Test { [[
 input int A,B,C,D,F;
 int ret;
@@ -1519,7 +1611,7 @@ return a;
 
 Test { [[
 input int A,B;
-int a =
+int a = set
     par do
         await A;
         if 1 then
@@ -1541,7 +1633,7 @@ return a;
 Test { [[
 input int A;
 int a;
-a = par do
+a = set par do
     if 1 then
         int v = await A;
         return v;
@@ -1560,7 +1652,7 @@ return a;
 Test { [[
 input int A;
 int a;
-a = par do
+a = set par do
     await A;
     if 1 then
         int v = await A;
@@ -1582,7 +1674,7 @@ return a;
 Test { [[
 input int A,B;
 int a,v;
-a = par do
+a = set par do
     if 1 then
         v = await A;
     else
@@ -1603,7 +1695,7 @@ return a;
 Test { [[
 input int A,B;
 int a,v;
-a = par do
+a = set par do
     if 1 then
         v = await A;
         return v;
@@ -3048,7 +3140,7 @@ end;
 
 Test { [[
 input int A;
-int a = par do
+int a = set par do
     await A;
     int v = 10;
     return a;
@@ -4032,7 +4124,7 @@ end;
     nd_acc = 5,
 }
 Test { [[
-int v = par do
+int v = set par do
             return 0;
         with
             return 0;
@@ -4052,7 +4144,7 @@ end;
 }
 Test { [[
 int a;
-int v = par do
+int v = set par do
             return 0;
         with
             return 0;
@@ -4068,7 +4160,7 @@ return a;
     nd_flw = 2,
 }
 Test { [[
-int v = par do
+int v = set par do
             return 1;
         with
             return 2;
@@ -4660,7 +4752,7 @@ return 0;
 
 Test { [[
 input int A,B;
-int ret =
+int ret = set
     loop do
         await A;
         par/or do
@@ -5695,7 +5787,7 @@ return a+b;
 }
 Test { [[
 event int a;
-int v = par do
+int v = set par do
     emit a(1);
     return a;
 with
@@ -5713,7 +5805,7 @@ return v;
 }
 Test { [[
 int a,v;
-v = par do
+v = set par do
     return 1;
 with
     return 1;
@@ -6505,7 +6597,7 @@ return v;
 Test { [[
 input int A,B,C,D;
 int a = 0;
-a = par do
+a = set par do
     par/and do
         await A;
     with
@@ -6526,7 +6618,7 @@ return a;
 Test { [[
 input int A,B,C,D;
 int a = 0;
-a = par do
+a = set par do
     par do
         await A;
         return a;
@@ -6548,7 +6640,7 @@ return a;
 Test { [[
 input int A,B,C,D;
 int a = 0;
-a = par do
+a = set par do
     par do
         await A;
         return a;
@@ -6695,7 +6787,7 @@ int a = 1;
 par/or do
     await B;
 with
-    int b =
+    int b = set
         loop do
             par/or do
                 await B;
@@ -6722,7 +6814,7 @@ int a = 1;
 par/or do
     await B;
 with
-    int b =
+    int b = set
         loop do
             par/or do
                 await B;
@@ -7088,7 +7180,7 @@ end;
 Test { [[
 input int A;
 int c = 2;
-int d = par/and do
+int d = set par/and do
         nothing;
     with
         return c;
@@ -7103,7 +7195,7 @@ return c;
 Test { [[
 input int A;
 int c = 2;
-int d = par do
+int d = set par do
         nothing;
     with
         return c;
@@ -7418,7 +7510,7 @@ par/or do
 with
     i = 1;
     loop do
-        int o =
+        int o = set
             par do
                 await C;
                 await C;
@@ -7951,7 +8043,7 @@ end;
 
 Test { [[
 int v=2;
-int ret =
+int ret = set
     async (v) do
         return v + 1;
     end;
@@ -7961,11 +8053,24 @@ return ret + v;
 }
 
 Test { [[
+int a = 0;
+async (a) do
+    a = 1;
+    do
+        nothing;
+    end
+end
+return a;
+]],
+    run = 0,
+}
+
+Test { [[
 input void F;
 int v=2;
 int ret;
 par/or do
-    ret =
+    ret = set
         async (v) do
             return v + 1;
         end;
@@ -9047,7 +9152,7 @@ return 0;
 }
 
 Test { [[
-int a = async do
+int a = set async do
     return 1;
 end;
 return a;
@@ -9080,7 +9185,7 @@ end;
 
 Test { [[
 par/and do
-    int a = async do
+    int a = set async do
         return 1;
     end;
 with
@@ -9116,8 +9221,8 @@ end;
 }
 
 Test { [[
-int a = async do
-    int a = do
+int a = set async do
+    int a = set do
         return 1;
     end;
     return a;
@@ -9131,7 +9236,7 @@ Test { [[
 input void A;
 int ret;
 par/or do
-   ret = async do
+   ret = set async do
       return 0;
     end;
 with
@@ -9276,7 +9381,7 @@ return _a+_b;
 }
 
 Test { [[
-int r = async do
+int r = set async do
     int i = 100;
     return i;
 end;
@@ -9286,7 +9391,7 @@ return r;
 }
 
 Test { [[
-int ret = async do
+int ret = set async do
     int i = 100;
     int sum = 10;
     sum = sum + i;
@@ -9303,7 +9408,7 @@ input int F;
 int ret = 0;
 int f;
 par/or do
-    ret = do
+    ret = set do
         int sum = 0;
         int i = 0;
         loop do
@@ -9333,7 +9438,7 @@ input int F;
 int ret = 0;
 int f;
 par/and do
-    ret = async do
+    ret = set async do
         int sum = 0;
         int i = 0;
         loop do
@@ -9359,7 +9464,7 @@ input int F;
 int ret = 0;
 int f;
 par/or do
-    ret = async do
+    ret = set async do
         int sum = 0;
         int i = 0;
         loop do
@@ -9417,7 +9522,7 @@ return 0;
 }
 
 Test { [[
-int ret = async do
+int ret = set async do
     int i = 100;
     i = i - 1;
     return i;
@@ -9428,7 +9533,7 @@ return ret;
 }
 
 Test { [[
-int ret = async do
+int ret = set async do
     int i = 100;
     loop do
         break;
@@ -9442,7 +9547,7 @@ return ret;
 }
 
 Test { [[
-int ret = async do
+int ret = set async do
     int i = 0;
     if i then
         i = 1;
@@ -9457,7 +9562,7 @@ return ret;
 }
 
 Test { [[
-int i =
+int i = set
 async do
     int i = 10;
     loop do
@@ -9489,7 +9594,7 @@ return i;
 }
 
 Test { [[
-int sum = async do
+int sum = set async do
     int i = 10;
     int sum = 0;
     loop do
@@ -9588,7 +9693,7 @@ Test { [[int  a;  int* pa=a; return a;]], exps='invalid attribution' }
 Test { [[int* pa; int a=pa;  return a;]], exps='invalid attribution' }
 Test { [[
 int a;
-int* pa = do
+int* pa = set do
     return a;
 end;
 return a;
@@ -9597,7 +9702,7 @@ return a;
 }
 Test { [[
 int* pa;
-int a = do
+int a = set do
     return pa;
 end;
 return a;
@@ -10746,7 +10851,7 @@ return 1
 
 Test { [[
 int a;
-a = do
+a = set do
     int b;
 end
 ]],
@@ -10802,7 +10907,7 @@ int a;
 
 Test { [[
 int a;
-a = do
+a = set do
     int b;
 end;
 ]],

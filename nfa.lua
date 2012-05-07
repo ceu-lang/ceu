@@ -314,10 +314,6 @@ F = {
                 toReach = true,
             })
 
-        if not _ITER'Async'() then
-            OUT(qL, '', qS)
-        end
-
         local qO = INS(me, false,
             _NFA.node {
                 id   = '-loop',
@@ -325,6 +321,14 @@ F = {
                 rem  = body.nfa.qs,
                 toReach = not me.isLastStmt,
             })
+
+        if not _ITER'Async'() then
+            if me.isFor then
+                OUT(qL, '', qO)
+            else
+                OUT(qL, '', qS)
+            end
+        end
 
         for brk in pairs(me.brks) do
             OUT(brk.qBrk, '', qO)
