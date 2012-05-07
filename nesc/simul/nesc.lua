@@ -23,9 +23,9 @@ function app (app)
     end
     VALS = VALS .. '/******/ end\n'
 
-    app.source = '{' .. VALS
+    app.source = '/*{-{*/' .. VALS
                      ..'C do #include "tinyos.c" end\n'
-              .. '}' .. app.source
+              .. '/*}-}*/' .. app.source
 
     local app = simul.app(app)
     return app

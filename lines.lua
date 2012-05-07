@@ -39,11 +39,11 @@ end
 _I2L = {}
 
 local CNT = 1
-local open = m.Cmt('{',
+local open = m.Cmt('/*{-{*/',
     function ()
         CNT = CNT - 1
     end )
-local close = m.Cmt('}',
+local close = m.Cmt('/*}-}*/',
     function ()
         CNT = CNT + 1
     end )

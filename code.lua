@@ -80,7 +80,7 @@ F = {
     end,
 
     Host = function (me)
-        HOST = HOST .. me[1]
+        HOST = HOST .. me[1] .. '\n'
     end,
 
     SetExp = function (me)

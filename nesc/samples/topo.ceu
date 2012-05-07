@@ -1,6 +1,6 @@
-{ include(AM.m4) }
+@include(AM.m4)
 
-{AM_retry(1s, AM_start)};
+@AM_retry(1s, @AM_start);
 _DBG("Radio started\n");
 
 define(N_NODES, 100)
@@ -8,7 +8,7 @@ define(N_NODES, 100)
 int [N_NODES] nodes;
 
 par/or do
-    {AM_topology(nodes, N_NODES, 100ms)};
+    @AM_topology(nodes, N_NODES, 100ms);
 with
     await 1s;
 end

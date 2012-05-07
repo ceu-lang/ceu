@@ -258,7 +258,6 @@ _GG = { [1] = CK'' *S* V'_Stmts' *S* (P(-1) + EM'expected EOF')
                     return (string.gsub( (string.gsub(str,' ','')), '^_', '' ))
                   end
 
-
     , STRING = CK( CK'"' * (P(1)-'"'-'\n')^0 * EK'"' )
 
     , Host    = P'C' *S* EK'do' * m.S' \n\t'^0 *
@@ -272,7 +271,7 @@ _GG = { [1] = CK'' *S* V'_Stmts' *S* (P(-1) + EM'expected EOF')
     , _CEND = m.Cmt(C(V'_CSEP') * m.Cb'mark',
                     function (s,i,a,b) return a == b end)
 
-    , _SPACES = (  m.S'\t\n\r {}'
+    , _SPACES = (  m.S'\t\n\r @'
                 + ('//' * (P(1)-'\n')^0 * P'\n'^-1)
                 + V'_COMM'
                 )^0

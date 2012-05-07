@@ -71,9 +71,9 @@ C do /******/
     end
     DEFS = DEFS .. '/******/ end\n'
 
-    app.source = '{' .. DEFS
+    app.source = '/*{-{*/' .. DEFS
                      .. H
-              .. '}' .. app.source
+              .. '/*}-}*/' .. app.source
 
     f = assert(io.open(app._ceu, 'w'))
     f:write(app.source)

@@ -124,7 +124,7 @@ par do
         _map_generate(pct);
         _redraw(step, ship, points);
         await Key;
-        win =
+        win = set
             par do
                 loop do
                     await (dt*1000LL);
