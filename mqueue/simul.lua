@@ -12,9 +12,10 @@ end
 module((...), package.seeall)
 
 QU = {
-    LINK  = -1,
-    TIME  = -10,
-    ASYNC = -11,
+    LINK   = -1,
+    UNLINK = -2,
+    TIME   = -10,
+    ASYNC  = -11,
 }
 
 local H = [[
@@ -45,15 +46,15 @@ C do
 end
 ]]
 
-local _names = {}
+APPS = {}
 
 function app (app)
     assert(app.name,   'missing `name´')
     assert(app.source, 'missing `source´')
 
     app._name = string.gsub(app.name, '%s', '_')
-    assert(not _names[app._name], 'duplicate `name´')
-    _names[app._name] = true
+    assert(not APPS[app._name], 'duplicate `name´')
+    APPS[app._name] = app
 
     app._exe   = app._name .. '.exe'
     app._ceu   = '_'..app._name..'.ceu'
@@ -112,6 +113,12 @@ function link (app1,out, app2,inp)
                           ..' '..app2._queue..' '..app2.io[inp])
 end
 
+function unlink (app1,out, app2,inp)
+    DBG('===> Unlinking '..app1._queue..'/'..out..' -> '..app2._queue..'/'..inp)
+    os.execute('./qu.exe send '..app1._queue..' '..QU.UNLINK..' '..app1.io[out]
+                          ..' '..app2._queue..' '..app2.io[inp])
+end
+
 function emit (app, inp, v)
     DBG('===> Emit '..app._queue..'/'..inp..'('..v..')')
     if inp > 0 then
@@ -130,4 +137,35 @@ function _kill (app)
     os.remove('/dev/mqueue/'..app._queue)
     os.remove(app._ceu)
     os.execute('killall '..app._exe)
+end
+
+function shell ()
+    for name, app in pairs(APPS) do
+        app:start()
+    end
+
+    while true do
+        io.write('> ' )
+        local str = io.read()
+        local cmd, p1, p2, p3, p4 = string.match(str, '(%S*) ?(%S*) ?(%S*) ?(%S*) ?(%S*)')
+
+        if cmd == 'quit' then
+            break
+
+        elseif cmd == 'link' then
+            link(APPS[p1],p2, APPS[p3],p4)
+
+        elseif cmd == 'unlink' then
+            unlink(APPS[p1],p2, APPS[p3],p4)
+
+        elseif cmd == 'kill' then
+            APPS[p1]:kill()
+        else
+            print('invalid command: "'..cmd..'" (type "quit" to terminate)')
+        end
+    end
+
+    for name, app in pairs(APPS) do
+        app:kill()
+    end
 end

@@ -8243,6 +8243,23 @@ end;
 }
 
 Test { [[
+input void A, B;
+int aa=0, bb=0;
+par/and do
+    await A;
+    int a = 1;
+    aa = a;
+with
+    int b = 3;
+    await B;
+    bb = b;
+end
+return aa+bb;
+]],
+    run = { ['~>A;~>B']=4 },
+}
+
+Test { [[
 input int F;
 event int draw, occurring, vis, sleeping;
 int x;

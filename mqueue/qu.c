@@ -31,7 +31,8 @@ int main (int argc, char *argv[])
     len += sizeof(s16);
 
     switch (id) {
-        case QU_LINK: {    // ./qu send BUF link OUT_ BUF IN_
+        case QU_LINK:
+        case QU_UNLINK: {    // ./qu send BUF (un)link OUT_ BUF IN_
             s16 out = atoi(argv[4]);
             memcpy(buf+len, &out, sizeof(s16));
             len += sizeof(s16);
