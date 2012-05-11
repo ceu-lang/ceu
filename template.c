@@ -27,6 +27,12 @@ typedef s16 tceu_lbl;
 int go (int* ret);
 
 enum {
+    CEU_TERM   = 0,
+    CEU_NONE   = 1,
+    CEU_TMREXP = 2,
+};
+
+enum {
     Inactive  = 0,
     Init      = 1,
 === LABELS ===
@@ -222,7 +228,7 @@ int ceu_go_async (int* ret, int* count)
     if (count)
         *count = async_cnt;
     if (async_cnt == 0)
-        return 0;
+        return CEU_NONE;
 
     spawn(Q_ASYNC[async_ini]);
     async_ini = (async_ini+1) % N_ASYNCS;
@@ -245,10 +251,10 @@ int ceu_go_time (int* ret, tceu_time now)
     TIME_now = now;
 
     if (!q_peek(&Q_TIMERS, &min))
-        return 0;
+        return CEU_NONE;
 
     if (min.phys > TIME_now)
-        return 0;
+        return CEU_NONE;
 
     q_remove(&Q_TIMERS,NULL);
 
@@ -277,7 +283,7 @@ int ceu_go_time (int* ret, tceu_time now)
 #else
 
     TIME_now = now;
-    return 0;
+    return CEU_NONE;
 #endif
 }
 
@@ -323,10 +329,10 @@ _SWITCH_:
 #if N_TIMERS > 1
     if (TIME_expired) {
         TIME_expired = 0;
-        return -1;
+        return CEU_TMREXP;
     }
 #endif
-    return 0;
+    return CEU_NONE;
 }
 
 int ceu_go_polling (tceu_time now)
@@ -336,18 +342,18 @@ int ceu_go_polling (tceu_time now)
     int async_cnt;
 #endif
 
-    if (ceu_go_init(&ret, now))
+    if (ceu_go_init(&ret, now) == CEU_TERM)
         return ret;
 
 #ifdef IN_Start
     //*PVAL(int,IN_Start) = (argc>1) ? atoi(argv[1]) : 0;
-    if (ceu_go_event(&ret, IN_Start, NULL))
+    if (ceu_go_event(&ret, IN_Start, NULL) == CEU_TERM)
         return ret;
 #endif
 
 #if N_ASYNCS > 0
     for (;;) {
-        if (ceu_go_async(&ret,&async_cnt))
+        if (ceu_go_async(&ret,&async_cnt) == CEU_TERM)
             return ret;
         if (async_cnt == 0)
             break;              // returns nothing!

@@ -48,7 +48,7 @@ int main (int argc, char *argv[])
 
         case QU_TIME:
         default: {  // ./qu send BUF IN_ INT
-            int v = atoi(argv[4]);
+            int v = ((argc>4) ? atoi(argv[4]) : 0);
             memcpy(buf+len, &v, sizeof(int));
             len += sizeof(int);
             break;

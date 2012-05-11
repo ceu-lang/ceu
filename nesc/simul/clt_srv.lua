@@ -35,16 +35,4 @@ for i=1, N do
     end
 end
 
-srv:start()
-for i=1,N do
-    local clt = _G['clt'..i]
-    clt:start()
-end
-
-io.read()
-
-srv:kill()
-for i=1,N do
-    local clt = _G['clt'..i]
-    clt:kill()
-end
+simul.shell()

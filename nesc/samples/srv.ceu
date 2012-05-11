@@ -1,15 +1,15 @@
-@include(AM.m4)
+@include(radio.m4)
 
 input int Photo_readDone;
 
-@AM_retry(1s, @AM_start);
+@RADIO_retry(1s, @RADIO_start);
 _DBG("Radio started\n");
 
 int count = 0;
 
 loop do
     int* pv;
-    _message_t* recv_msg = @AM_receive(pv, int);
+    _message_t* recv_msg = @RADIO_receive(0, pv, int);
     int src = _Radio_getSource(recv_msg);
 
     count = count + 1;
@@ -21,6 +21,6 @@ loop do
     //_DBG("Photo = %d\n", v);
 
     _message_t send_msg;
-    int err = @AM_send(src, &send_msg, &v, int);
+    int err = @RADIO_send_all(&send_msg, int, 0, src, &v);
 end
 

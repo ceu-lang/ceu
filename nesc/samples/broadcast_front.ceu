@@ -1,0 +1,48 @@
+changequote(<,>)
+changequote(`,´)
+
+@include(radio.m4);
+@include(DS.m4);
+
+@RADIO_retry(200ms, @RADIO_start);
+_DBG("Radio started\n");
+
+@define(N_NODES, 16);
+
+C do
+    typedef struct {
+        u32 seqno;
+        char str[15];
+    } Data;
+end
+
+event _Data* recv_new;
+event _Data* send_new;
+
+par/or do
+    @DS_broadcast_front(_Data, 10, 111, recv_new, send_new, 200ms);
+with
+    loop do
+        await recv_new;
+        _DBG("%d: %s\n", recv_new->seqno, recv_new->str);
+    end
+with
+    if _TOS_NODE_ID == 13 then
+        u32 seqno = 0;
+        loop do
+            await 1s;
+            _DBG("SENDING %d...\n", seqno);
+            _Data v;
+            v.seqno = seqno;
+            _sprintf(v.str, "seqno=%ld", seqno);
+            seqno = seqno + 1;
+            emit send_new(&v);
+            await 10s;
+            if seqno == 100 then
+                break;
+            end
+        end
+    else
+        await forever;
+    end
+end

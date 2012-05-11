@@ -23,22 +23,22 @@ C do
     /******/
     #include <stdarg.h>
 
-    void MQ (int id, int v) {
+    int MQ (int id, int v) {
         char buf[10];
         int len = 0;
         memcpy(buf, &id, sizeof(s16));
             len += sizeof(s16);
         memcpy(buf+len, &v, sizeof(int));
             len += sizeof(int);
-        mq_send(ceu_mqueue_mqd, buf, len, 0);
+        return mq_send(ceu_mqueue_mqd, buf, len, 0);
     }
 
     void DBG (char *fmt, ... )
     {
-        char tmp[128];
+        char tmp[1024];
         va_list args;
         va_start(args, fmt);
-        vsnprintf(tmp, 128, fmt, args);
+        vsnprintf(tmp, 1024, fmt, args);
         va_end(args);
         printf("[ %s ] %s", CEU_DBG, tmp);
     }
@@ -79,7 +79,7 @@ C do /******/
     f = assert(io.open(app._ceu, 'w'))
     f:write(app.source)
     f:close()
-    DBG('===> Compiling '..app._ceu..'...')
+    DBG('===> Compiling '..app._ceu..' (NO DFA!)...')
     assert(os.execute('./ceu '..app._ceu
                         .. ' --m4'
                         .. ' --output _ceu_code.c'
@@ -120,12 +120,9 @@ function unlink (app1,out, app2,inp)
 end
 
 function emit (app, inp, v)
-    DBG('===> Emit '..app._queue..'/'..inp..'('..v..')')
-    if inp > 0 then
-        os.execute('./qu.exe send '..app._queue..' '..app.io[inp]..' '..v)
-    else
-        os.execute('./qu.exe send '..app._queue..' '..inp..' '..v)
-    end
+    local evt = app.io[inp] or inp
+    DBG('===> Emit '..app._queue..'/'..inp..'['..evt..']('..v..')')
+    os.execute('./qu.exe send '..app._queue..' '..evt..' '..v)
 end
 
 function _start (app)
@@ -139,9 +136,12 @@ function _kill (app)
     os.execute('killall '..app._exe)
 end
 
-function shell ()
-    for name, app in pairs(APPS) do
-        app:start()
+function shell (start)
+    start = start~=false
+    if start then
+        for name, app in pairs(APPS) do
+            app:start()
+        end
     end
 
     while true do
@@ -152,14 +152,21 @@ function shell ()
         if cmd == 'quit' then
             break
 
+        elseif cmd == 'start' then
+            APPS[p1]:start()
+
+        elseif cmd == 'kill' then
+            APPS[p1]:kill()
+
+        elseif cmd == 'emit' then
+            emit(APPS[p1], p2, p3)
+
         elseif cmd == 'link' then
             link(APPS[p1],p2, APPS[p3],p4)
 
         elseif cmd == 'unlink' then
             unlink(APPS[p1],p2, APPS[p3],p4)
 
-        elseif cmd == 'kill' then
-            APPS[p1]:kill()
         else
             print('invalid command: "'..cmd..'" (type "quit" to terminate)')
         end

@@ -15,16 +15,16 @@ typedef struct _Link {
 Link* LINKS[OUT_n];
 
 int ceu_out_event_F (int id_out, int len, void* data) {
-    int i;
+    int cnt = 0;
     Link* cur;
     for (cur=LINKS[id_out]; cur; cur=cur->nxt) {
         char _buf[MSGSIZE];
         *((s16*)_buf) = cur->input;
         memcpy(_buf+sizeof(s16), data, len);
-        if (mq_send(cur->queue, _buf, len+sizeof(s16), 0) != 0)
-            return 0;
+        if (mq_send(cur->queue, _buf, len+sizeof(s16), 0) == 0)
+            cnt++;
     }
-    return 1;
+    return cnt;
 }
 
 int main (int argc, char *argv[])
@@ -34,7 +34,7 @@ int main (int argc, char *argv[])
         LINKS[i] = NULL;
     }
 
-    mqd_t queue = mq_open(argv[1], O_RDWR);
+    mqd_t queue = mq_open(argv[1], O_RDWR|O_NONBLOCK);
     ASR(queue != -1);
     ceu_mqueue_mqd = queue;
 
@@ -44,11 +44,11 @@ int main (int argc, char *argv[])
     clock_gettime(CLOCK_REALTIME, &tv_now);
     u64 now = (tv_now.tv_sec*1000000LL + tv_now.tv_nsec/1000);
 
-    if (ceu_go_init(&ret, now))
+    if (ceu_go_init(&ret, now) == CEU_TERM)
         goto END;
 
 #ifdef IN_Start
-    if (ceu_go_event(&ret, IN_Start, NULL))
+    if (ceu_go_event(&ret, IN_Start, NULL) == CEU_TERM)
         goto END;
 #endif
 
@@ -126,14 +126,14 @@ int main (int argc, char *argv[])
                 }
                 case QU_TIME: {
                     TIME_now += *((int*)(buf));
-                    int status;
-                    while ((status=ceu_go_time(&ret, TIME_now)) == -1);
-                    if (status == 1)
+                    int s;
+                    while ((s=ceu_go_time(&ret, TIME_now)) == CEU_TMREXP);
+                    if (s == CEU_TERM)
                         goto END;
                     break;
                 }
                 default:
-                    if (ceu_go_event(&ret, id_in, buf))
+                    if (ceu_go_event(&ret, id_in, buf) == CEU_TERM)
                         goto END;
                     break;
             }
@@ -141,11 +141,11 @@ int main (int argc, char *argv[])
 
         clock_gettime(CLOCK_REALTIME, &tv_now);
         now = (tv_now.tv_sec*1000000LL + tv_now.tv_nsec/1000);
-        if (ceu_go_time(&ret, now) == 1)
+        if (ceu_go_time(&ret, now) == CEU_TERM)
             goto END;
 
 #if N_ASYNCS > 0
-        if (ceu_go_async(&ret,&async_cnt))
+        if (ceu_go_async(&ret,&async_cnt) == CEU_TERM)
             return ret;
 #endif
     }

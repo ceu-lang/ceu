@@ -1,6 +1,6 @@
-@include(AM.m4)
+@include(radio.m4)
 
-@AM_retry(1s, @AM_start);
+@RADIO_retry(1s, @RADIO_start);
 _DBG("Radio started\n");
 
 event void received;
@@ -13,10 +13,10 @@ loop do
         _message_t send_msg;
         int v = 0;
 
-        int err = @AM_send(10, &send_msg, &v, int);
+        int err = @RADIO_send_all(&send_msg, int, 0, 10, &v);
 
         int* pv;
-        _message_t* recv_msg = @AM_receive(pv, int);
+        _message_t* recv_msg = @RADIO_receive(0, pv, int);
         emit received;
 
         _DBG("Received = %d\n", *pv);

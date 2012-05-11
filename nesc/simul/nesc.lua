@@ -25,6 +25,7 @@ function app (app)
 
     app.source = '/*{-{*/' .. VALS
                      ..'C do #include "tinyos.c" end\n'
+              .. '_srand(_time(_NULL)+_TOS_NODE_ID);\n'
               .. '/*}-}*/' .. app.source
 
     local app = simul.app(app)

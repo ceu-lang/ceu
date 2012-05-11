@@ -35,7 +35,7 @@ enum {
     ELAST    = 11  // Last enum value
 };
 
-#define TOSH_DATA_LENGTH 28
+#define TOSH_DATA_LENGTH 64
 #define TOS_BCAST_ADDR 0xFFFF
 
 typedef nx_struct {
@@ -111,9 +111,10 @@ int Radio_start ()
     static int n2 = 0;
     if (ret == SUCCESS) {
         if (n2 < CEU_SEQN_Radio_startDone)
-            MQ(IN_Radio_startDone, v2[n2++]);
+            ret = MQ(IN_Radio_startDone, v2[n2++]);
         else
-            MQ(IN_Radio_startDone, SUCCESS);
+            ret = MQ(IN_Radio_startDone, SUCCESS);
+        ret = ((ret==0) ? SUCCESS : EBUSY);
     }
 
     return ret;
@@ -154,6 +155,16 @@ void Leds_led0Toggle () {
 void Leds_set (u8 v) {
     //printf("Leds_set: %d\n", v);
 }
+
+#ifdef TOS_COLLISION
+#define ceu_out_event_Radio_send(a) Radio_send(a)
+int Radio_send (message_t* data) {
+    if (rand()%100 >= TOS_COLLISION)
+        return ceu_out_event_F(OUT_Radio_send, sizeof(message_t), data);
+    else
+        return 1;
+}
+#endif
 
 #ifdef FUNC_Photo_read
 int Photo_read ()

@@ -47,6 +47,7 @@ local _V2NAME = {
     Ext = 'event',
     Int = 'event',
     Var = 'variable',
+    ID_c  = 'identifier',
     ID_int  = 'identifier',
     ID_ext  = 'identifier',
     ID_type = 'type',
@@ -96,9 +97,9 @@ local alphanum = m.R'az' + '_' + m.R'09'
 ID  = Alpha * Alphanum^0 - KEYS
 NUM = CK(m.R'09'^1) / tonumber
 
-_GG = { [1] = CK'' *S* V'_Stmts' *S* (P(-1) + EM'expected EOF')
+_GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
 
-    , Block  = V'_Stmts'
+    , Block  = K';'^-1 *S* V'_Stmts'
     , _Stmts = V'_LstStmt'      *S* EK';' * (S*K';')^0
              + V'_LstStmtBlock'           * (S*K';')^0
              + V'_Stmt'         *S* EK';' * (S*K';')^0 *S* V'_Stmts'^-1

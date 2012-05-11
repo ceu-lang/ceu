@@ -1,0 +1,23 @@
+changequote(<,>)
+changequote(`,´)
+
+@include(bitmap.c);
+@include(radio.m4);
+@include(DS.m4);
+
+@RADIO_retry(200ms, @RADIO_start);
+_DBG("Radio started\n");
+
+@define(N_NODES, 16);
+
+u8[ eval(N_NODES/8) ] nodes;
+_bm_clear(nodes, N_NODES);
+
+@DS_neighbours(nodes, N_NODES, 100, 200ms, 1s);
+
+char[255] all;
+_bm_tostr(nodes, N_NODES, all);
+_DBG("0123456789012345\n");
+_DBG("%s\n\n", all);
+
+return 0;

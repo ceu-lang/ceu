@@ -74,7 +74,7 @@ F = {
         CONC(me, me[1])
         if not (_DFA and _DFA.forever) then
             LINE(me, 'if (ret) *ret = *((int*)VARS);')
-            LINE(me, 'return 1;')
+            LINE(me, 'return CEU_TERM;')
         end
         me.host = HOST
     end,
@@ -365,7 +365,7 @@ break;
         LINE(me, [[
 TIME_now += ]]..exp.val..[[;
 { int status;
-  while ((status=ceu_go_time(ret, TIME_now)) == -1);
+  while ((status=ceu_go_time(ret,TIME_now)) == CEU_TMREXP);
   return status;
 }
 ]])
