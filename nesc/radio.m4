@@ -23,7 +23,8 @@ set loop do
     _message_t* msg = await Radio_receive;
     int dst = _Radio_getDestination(msg);
     int tp  = _Radio_getType(msg);
-    if ((dst==_AM_BROADCAST_ADDR) || (dst==_TOS_NODE_ID)) && (tp==$1) then
+    if _Radio_start_on && (tp==$1) &&
+        ((dst==_AM_BROADCAST_ADDR) || (dst==_TOS_NODE_ID)) then
         $2 = <$3*> _Radio_getPayload(msg, sizeof<$3>);
         return msg;
     end

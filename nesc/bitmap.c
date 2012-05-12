@@ -46,4 +46,6 @@ C do
     }
 end
 
+pure _bm_idx, _bm_bit, _bm_isZero, _bm_tostr;
+
 /*}-}*/dnl

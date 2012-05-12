@@ -520,7 +520,11 @@ F = {
     end,
 
     Cid = function (me)
-        INS(me, '', ACC(me[1], me[1], me.tp, me.se))
+        local id = me[1]
+        -- assume UPPER ids as constants
+        if string.upper(id) ~= id then
+            INS(me, '', ACC(id, id, me.tp, me.se))
+        end
     end,
 
     Op2_call = function (me)

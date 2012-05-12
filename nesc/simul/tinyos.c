@@ -97,6 +97,7 @@ typedef nx_struct message_t {
 
 /* RADIO */
 
+int Radio_start_on = 0;
 int Radio_start ()
 {
     static int v1[] = CEU_SEQV_Radio_start;
@@ -117,6 +118,7 @@ int Radio_start ()
         ret = ((ret==0) ? SUCCESS : EBUSY);
     }
 
+    Radio_start_on = (ret==SUCCESS);
     return ret;
 }
 am_addr_t Radio_getSource (message_t* msg) {
@@ -159,6 +161,8 @@ void Leds_set (u8 v) {
 #ifdef TOS_COLLISION
 #define ceu_out_event_Radio_send(a) Radio_send(a)
 int Radio_send (message_t* data) {
+    if (!Radio_start_on)
+        return 0;
     if (rand()%100 >= TOS_COLLISION)
         return ceu_out_event_F(OUT_Radio_send, sizeof(message_t), data);
     else

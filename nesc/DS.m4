@@ -22,10 +22,11 @@ do
     $1[$2] buf;
     u32 buf_n = 0;
     par do
+        // awaits exactly the next message
         loop do
             $1* recv_v;
             _message_t* recv_msg = @RADIO_receive($3, recv_v, $1);
-            if buf_n == recv_v->seqno then
+            if buf_n == recv_v->seqno then  // TODO: % would restore lazy node
                 buf[buf_n%$2] = *recv_v;
                 recv_v = &buf[buf_n%$2];
                 emit $4(recv_v);
