@@ -1,5 +1,5 @@
 m = require 'lpeg'
-m.setmaxstack(200)
+m.setmaxstack(1000)
 
 function DBG (...)
     local t = {}

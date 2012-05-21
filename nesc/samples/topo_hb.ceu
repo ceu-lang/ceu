@@ -1,6 +1,3 @@
-changequote(<,>)
-changequote(`,´)
-
 @include(bitmap.c);
 @include(radio.m4);
 @include(DS.m4);
@@ -11,19 +8,23 @@ _DBG("Radio started\n");
 @define(N_NODES, 16);
 
 u8[ eval(N_NODES*N_NODES/8) ] topo;
-
 _bm_clear(topo, N_NODES*N_NODES);
 
 u8* neighs = &topo[_TOS_NODE_ID*N_NODES/8];
-@DS_neighbours(neighs, N_NODES, 100, 200ms, 10s);
+
+par/or do
+    @DS_neighbours(neighs, N_NODES, 100, 200ms);
+with
+    await 10s;
+end
 
 char[255] all;
 _bm_tostr(neighs, N_NODES, all);
 //_DBG("0123456789012345\n");
 _DBG("%s\n", all);
 
-/*** @DS_topology_hb_diam(250ms, topo, N_NODES, 101, 10); ***/
-@DS_topology_hb_ack(250ms, topo, N_NODES, 101);
+/*** @DS_topology_hb_diam(topo, N_NODES, 101, 250ms, 10); ***/
+@DS_topology_hb_ack(topo, N_NODES, 101, 250ms);
 _DBG("FIM!\n");
 
 //if _TOS_NODE_ID==8 || _TOS_NODE_ID==9 || _TOS_NODE_ID==6 then

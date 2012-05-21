@@ -1,5 +1,8 @@
 /*{-{*/
 
+changequote(<,>)
+changequote(`,´)
+
 dnl SORTING NETWORK
 dnl DOCUMENT: tol. a falhas
 dnl send sempre pode falhar
@@ -12,12 +15,12 @@ dnl     - pouca memoria
 dnl     - mesmo assim pode haver overflow
 
 define(DS_broadcast_front, `/*{-{*/
-dnl $1: data type
-dnl $2: buffer size
-dnl $3: AM type for broadcast messages
-dnl $4: event to emit on receiving
-dnl $5: event to await for sending
-dnl $6: update period
+dnl [ $1: type ]     data type being broadcast
+dnl [ $2: n_buffer ] max number of buffered messages
+dnl [ $3: am_type  ] AM message type for the protocol
+dnl [ $4: recv_evt ] event to emit on receiving
+dnl [ $5: send_evt ] event to await for sending
+dnl [ $6: front_ms ] frontier retry period
 do
     $1[$2] buf;
     u32 buf_n = 0;
@@ -25,7 +28,7 @@ do
         // awaits exactly the next message
         loop do
             $1* recv_v;
-            _message_t* recv_msg = @RADIO_receive($3, recv_v, $1);
+            _message_t* recv_msg = @RADIO_receive($3, $1, recv_v);
             if buf_n == recv_v->seqno then  // TODO: % would restore lazy node
                 buf[buf_n%$2] = *recv_v;
                 recv_v = &buf[buf_n%$2];
@@ -40,29 +43,28 @@ do
             buf_n = buf_n + 1;
         end
     with
-        // broadcasts requests from others frontiers
-        loop do
-            u32* recv_v;
-            _message_t* recv_msg = @RADIO_receive($3+1, recv_v, u32);
-            if *recv_v < buf_n then
-                _message_t send_msg;
-                int err = @RADIO_send_all(&send_msg, $1, $3,
-                                          _AM_BROADCAST_ADDR, &buf[*recv_v%$2]);
-            end
-        end
-    with
         // periodically broadcasts my frontier
         loop do
             await $6;
             _message_t send_msg;
             u32 v = buf_n;
-            int err = @RADIO_send_all(&send_msg, u32, $3+1,
-                                      _AM_BROADCAST_ADDR, &v);
+            int err = @RADIO_send_value(&send_msg, _AM_BROADCAST_ADDR,
+                                      $3+1, u32, &v);
+        end
+    with
+        // broadcasts requests from others frontiers
+        loop do
+            u32* recv_v;
+            _message_t* recv_msg = @RADIO_receive($3+1, u32, recv_v);
+            if *recv_v < buf_n then
+                _message_t send_msg;
+                int err = @RADIO_send_value(&send_msg, _AM_BROADCAST_ADDR,
+                                          $3, $1, &buf[*recv_v%$2]);
+            end
         end
     end
 end
 dnl SIMPLIFICACOES:
-dnl * Não há fila de sends. Envio assim que recebo.
 dnl * Aguardo somente o próximo 'seqno' e ignoro os outros.
 dnl   Eles serão reenviados pelos outros nós mesmo que eu os guarde,
 dnl   já que o meu UPDATE vai solicitar um menor ainda.
@@ -78,31 +80,31 @@ dnl recebimento em ordem!!
 /*}-}*/´)
 
 define(DS_topology_hb_ack, `/*{-{*/
-dnl $1: heartbeat period
-dnl $2: bitmap of nodes X nodes
-dnl $3: max number of nodes
-dnl $4: AM type for topology messages
+dnl [ $1: nodes ]     bitmap of nodes X nodes
+dnl [ $2: n_nodes ]   max number of nodes
+dnl [ $3: am_type ]   AM message type for the protocol
+dnl [ $4: heartbeat ] heartbeat period
 C do
     typedef nx_struct {
-        u8 v[eval($3*$3/8)];
+        u8 v[eval($2*$2/8)];
     } Topo;
 end
 do
     par/or do
         _message_t send_msg;
         loop do
-            await $1;
-            int err = @RADIO_send_all(&send_msg, _Topo, $4,
-                                      _AM_BROADCAST_ADDR, topo);
+            await $4;
+            int err = @RADIO_send_value(&send_msg, _AM_BROADCAST_ADDR,
+                                      $3, _Topo, $1);
         end
     with
         loop do
             _Topo* recv_v;
-            _message_t* recv_msg = @RADIO_receive($4, recv_v, _Topo);
-            _bm_or($2, recv_v->v, $3*$3);
+            _message_t* recv_msg = @RADIO_receive($3, _Topo, recv_v);
+            _bm_or($1, recv_v->v, $2*$2);
             int allActive = set do
-                for i=0, $3-1 do
-                    if _bm_isZero(&$2[i*$3/8], $3) then
+                for i=0, $2-1 do
+                    if _bm_isZero(&$1[i*$2/8], $2) then
                         return 0;
                     end
                 end
@@ -113,33 +115,23 @@ do
             end
         end
 
-        u8[eval($3/8)] pending;
-        _memcpy(pending, &$2[_TOS_NODE_ID*$3/8], $3/8);
+        u8[eval($2/8)] pending;
+        _memcpy(pending, &$1[_TOS_NODE_ID*$2/8], $2/8);
 
         par/or do
             loop do
                 _message_t msg;
-                u8 v = 0;                   // REQ
-                int err = @RADIO_send_all(&msg, u8, $4+1,
-                                          _AM_BROADCAST_ADDR, &v);
-                await $1;
+                int err = @RADIO_send_empty(&msg, _AM_BROADCAST_ADDR, $3+1);
+                await $4;
             end
         with
             loop do
-                if _bm_isZero(pending, $3) then
+                if _bm_isZero(pending, $2) then
                     break;
                 end
-                u8* recv_v;
-                _message_t* recv_msg = @RADIO_receive($4+1, recv_v, u8);
+                _message_t* recv_msg = @RADIO_receive_empty($3+1);
                 u16 src = _Radio_getSource(recv_msg);
-                if *recv_v == 0 then        // REQ
-                    _message_t msg;
-                    u8 v = 1;               // ACK
-                    int err = @RADIO_send_all(&msg, u8, $4+1,
-                                              _AM_BROADCAST_ADDR, &v);
-                else                        // ACK
-                    _bm_off(pending, src);
-                end
+                _bm_off(pending, src);
             end
         end
     end
@@ -148,29 +140,29 @@ dnl - Assume rede conectada no teste de terminação.
 /*}-}*/´)
 
 define(DS_topology_hb_diam, `/*{-{*/
-dnl $1: heartbeat period
-dnl $2: bitmap of nodes X nodes
-dnl $3: max number of nodes
-dnl $4: AM type for topology messages
-dnl $5: diameter
+dnl [ $1: nodes ]     bitmap of nodes X nodes
+dnl [ $2: n_nodes ]   max number of nodes
+dnl [ $3: am_type ]   AM message type for the protocol
+dnl [ $4: heartbeat ] heartbeat period
+dnl [ $5: diameter ]  network diameter
 C do
     typedef nx_struct {
-        u8 v[eval($3*$3/8)];
+        u8 v[eval($2*$2/8)];
     } Topo;
 end
 do
     par/or do
         _message_t send_msg;
         for i=1, $5 do
-            await $1;
-            int err = @RADIO_send_all(&send_msg, _Topo, $4,
-                                      _AM_BROADCAST_ADDR, topo);
+            await $4;
+            int err = @RADIO_send_value(&send_msg, _AM_BROADCAST_ADDR,
+                                      $3, _Topo, $1);
         end
     with
         loop do
             _Topo* recv_v;
-            _message_t* recv_msg = @RADIO_receive($4, recv_v, _Topo);
-            _bm_or(topo, recv_v->v, $3*$3);
+            _message_t* recv_msg = @RADIO_receive($3, _Topo, recv_v);
+            _bm_or($1, recv_v->v, $2*$2);
         end
     end
 end
@@ -182,34 +174,30 @@ dnl     atualização.
 /*}-}*/´)
 
 define(DS_neighbours, `/*{-{*/
-dnl $1: bitmap of nodes
-dnl $2: max number of nodes
-dnl $3: AM type for neighbours messages
-dnl $4: event for requesting again
-dnl $5: event for terminating
+dnl [ $1: nodes   ] bitmap of nodes
+dnl [ $2: n_nodes ] max number of nodes
+dnl [ $3: am_type ] AM message type for the protocol
+dnl [ $4: retry   ] event for retrying
 do
-    par/or do
-        await $5;
-    with
+    par do
         loop do
             _message_t send_msg;
-            u8 v;
-            int err = @RADIO_send_all(&send_msg,u8,$3,_AM_BROADCAST_ADDR,&v);
+            int err = @RADIO_send_empty(&send_msg,_AM_BROADCAST_ADDR,$3);
             await $4;
         end
     with
         loop do
-            char* v;
-            _message_t* recv_msg = @RADIO_receive($3, v, char);
-            _bm_on($1, _Radio_getSource(recv_msg));
+            _message_t* recv_msg = @RADIO_receive_empty($3);
+            u16 src = _Radio_getSource(recv_msg);
+            if src < $2 then
+                _bm_on($1, src);
+            end
         end
     end
 end
-dnl === FAULT TOLERANCE ===
-dnl * OK!
-dnl * Algoritmo não assume que links são confiáveis.
-dnl   - nó se anuncia a cada periodicamente
-dnl   - termina com evento externo
+dnl * Sends an am_type broadcast message every retry event
+dnl * Receives am_type messages / saves in nodes the source node
+dnl * It never terminates!
 /*}-}*/´)
 
 /*}-}*/dnl

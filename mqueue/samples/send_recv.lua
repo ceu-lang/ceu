@@ -1,19 +1,5 @@
 require 'simul'
 
-send = simul.app {
-    name  = 'send',
-    source = [[
-output int A;
-int v = 1;
-loop do
-    int ret = emit A(v);
-    _DBG("Sent: %d %d\n", ret, v);
-    await 1s;
-    v = v + 1;
-end
-]],
-}
-
 recv = simul.app {
     name  = 'recv',
     source = [[
@@ -25,12 +11,20 @@ end
 ]],
 }
 
-simul.link(send,'OUT_A', recv,'IN_A')
+send = simul.app {
+    name  = 'send',
+    source = [[
+output int B;
+int v = 1;
+loop do
+    int ret = emit B(v);
+    _DBG("Sent: %d %d\n", ret, v);
+    await 1s;
+    v = v + 1;
+end
+]],
+}
 
-send:start()
-recv:start()
+simul.link(send,'OUT_B', recv,'IN_A')
 
-io.read()
-
-send:kill()
-recv:kill()
+simul.shell()

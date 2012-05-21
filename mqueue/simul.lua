@@ -63,12 +63,14 @@ function app (app)
     app.start = _start
     app.kill  = _kill
 
+    local M4 = ''
     local DEFS = [[
 C do /******/
     #define CEU_DBG "]]..app._name..[["
 ]]
     for k, v in pairs(app.defines or {}) do
         DEFS = DEFS .. '#define '..k..' '..v..'\n'
+        M4 = M4 .. ' -D '..k..'='..v
     end
     DEFS = DEFS .. '/******/ end\n'
 
@@ -81,8 +83,8 @@ C do /******/
     f:close()
     DBG('===> Compiling '..app._ceu..' (NO DFA!)...')
     assert(os.execute('./ceu '..app._ceu
-                        --.. ' --dfa'
-                        .. ' --m4'
+                        --.. ' --dfa-viz'
+                        .. ' --m4-args "'..M4..'"'
                         .. ' --output _ceu_code.c'
                         .. ' --events-file _ceu_events.h'
                      ) == 0)

@@ -1,5 +1,8 @@
 /*{-{*/
 
+changequote(<,>)
+changequote(`,´)
+
 C do
     void bm_clear (u8* map, int len) {
         memset(map, 0, len/8);

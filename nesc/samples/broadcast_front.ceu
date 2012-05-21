@@ -1,6 +1,3 @@
-changequote(<,>)
-changequote(`,´)
-
 @include(radio.m4);
 @include(DS.m4);
 

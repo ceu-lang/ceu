@@ -1,6 +1,3 @@
-changequote(<,>)
-changequote(`,´)
-
 @include(bitmap.c);
 @include(radio.m4);
 @include(DS.m4);
@@ -13,7 +10,11 @@ _DBG("Radio started\n");
 u8[ eval(N_NODES/8) ] nodes;
 _bm_clear(nodes, N_NODES);
 
-@DS_neighbours(nodes, N_NODES, 100, 200ms, 1s);
+par/or do
+    @DS_neighbours(nodes, N_NODES, 100, 200ms);
+with
+    await 1s;
+end
 
 char[255] all;
 _bm_tostr(nodes, N_NODES, all);

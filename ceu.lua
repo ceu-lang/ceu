@@ -8,6 +8,7 @@ _OPTS = {
     events_file = '_ceu_events.h',
 
     m4          = false,
+    m4_args     = false,
 
     dfa         = false,
     dfa_viz     = false,
@@ -21,6 +22,7 @@ _OPTS_NPARAMS = {
     events_file = 1,
 
     m4          = 0,
+    m4_args     = 1,
 
     dfa         = 0,
     dfa_viz     = 0,
@@ -65,6 +67,7 @@ if not _OPTS.input then
         --dfa-viz                # generates DFA graph (false)
 
         --m4                     # preprocess the input with `m4' (false)
+        --m4-args                # preprocess the input with `m4' passing arguments in between `"´ (false)
 ]])
     os.exit(1)
 end
@@ -78,9 +81,10 @@ else
 end
 _STR = inp:read'*a'
 
-if _OPTS.m4 then
+if _OPTS.m4 or _OPTS.m4_args then
+    local args = _OPTS.m4_args and string.sub(_OPTS.m4_args, 2, -2) or ''   -- remove `"´
     local m4_file = (_OPTS.input=='-' and '_tmp.ceu_m4') or _OPTS.input..'_m4'
-    local m4 = assert(io.popen('m4 - > '..m4_file, 'w'))
+    local m4 = assert(io.popen('m4 '..args..' - > '..m4_file, 'w'))
     m4:write(_STR)
     m4:close()
 
@@ -104,7 +108,7 @@ do
     dofile 'async.lua'
     dofile 'gates.lua'
 
-    if _OPTS.dfa then
+    if _OPTS.dfa or _OPTS.dfa_viz then
         DBG('WRN : the DFA algorithm is exponential, this may take a while!')
         dofile 'nfa.lua'
         dofile 'dfa.lua'
