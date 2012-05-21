@@ -74,6 +74,8 @@ int Temp_read () {
 
 // RADIO
 
+int Radio_start_on = 1;
+
 #ifdef FUNC_Radio_start
 error_t Radio_start () {
     return call RadioControl.start();
@@ -133,8 +135,8 @@ void Radio_setDestination (message_t* msg, am_addr_t addr) {
 }
 #endif
 
-#ifdef FUNC_Radio_type
-am_id_t Radio_type (message_t* msg) {
+#ifdef FUNC_Radio_getType
+am_id_t Radio_getType (message_t* msg) {
     return call RadioAMPacket.type(msg);
 }
 #endif
