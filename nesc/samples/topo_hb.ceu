@@ -15,7 +15,7 @@ u8* neighs = &topo[_TOS_NODE_ID*N_NODES/8];
 par/or do
     @DS_neighbours(neighs, N_NODES, 100, 200ms);
 with
-    await 10s;
+    await 1s;
 end
 
 char[255] all;
@@ -24,7 +24,7 @@ _bm_tostr(neighs, N_NODES, all);
 _DBG("%s\n", all);
 
 /*** @DS_topology_hb_diam(topo, N_NODES, 101, 250ms, 10); ***/
-@DS_topology_hb_ack(topo, N_NODES, 101, 250ms);
+@DS_topology_hb_all(topo, N_NODES, 101, 250ms);
 _DBG("FIM!\n");
 
 //if _TOS_NODE_ID==8 || _TOS_NODE_ID==9 || _TOS_NODE_ID==6 then

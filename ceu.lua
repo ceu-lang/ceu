@@ -9,6 +9,7 @@ _OPTS = {
 
     m4          = false,
     m4_args     = false,
+    m4_join     = 'true',
 
     dfa         = false,
     dfa_viz     = false,
@@ -23,6 +24,7 @@ _OPTS_NPARAMS = {
 
     m4          = 0,
     m4_args     = 1,
+    m4_join     = 1,
 
     dfa         = 0,
     dfa_viz     = 0,

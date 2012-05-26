@@ -41,11 +41,15 @@ _I2L = {}
 local CNT = 1
 local open = m.Cmt('/*{-{*/',
     function ()
-        CNT = CNT - 1
+        if _OPTS.m4_join == 'true' then
+            CNT = CNT - 1
+        end
     end )
 local close = m.Cmt('/*}-}*/',
     function ()
-        CNT = CNT + 1
+        if _OPTS.m4_join == 'true' then
+            CNT = CNT + 1
+        end
     end )
 
 local LINE = 1

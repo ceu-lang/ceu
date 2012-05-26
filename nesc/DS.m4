@@ -79,7 +79,7 @@ dnl nao terei uma diff maior que buffer size entre o sender e o pior receiver
 dnl recebimento em ordem!!
 /*}-}*/´)
 
-define(DS_topology_hb_ack, `/*{-{*/
+define(DS_topology_hb_all, `/*{-{*/
 dnl [ $1: nodes ]     bitmap of nodes X nodes
 dnl [ $2: n_nodes ]   max number of nodes
 dnl [ $3: am_type ]   AM message type for the protocol
@@ -95,7 +95,7 @@ do
         loop do
             await $4;
             int err = @RADIO_send_value(&send_msg, _AM_BROADCAST_ADDR,
-                                      $3, _Topo, $1);
+                                        $3, _Topo, $1);
         end
     with
         loop do
