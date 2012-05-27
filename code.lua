@@ -386,7 +386,7 @@ TIME_now += ]]..exp.val..[[;
         local lb = LABEL_gen('Timer')
         CONC(me, exp)
         LINE(me, 'GTES['..me.gte..'] = '..lb..'; // open AwaitT')
-        LINE(me, 'qins_timer('..exp.val..', '..me.gte..');')
+        LINE(me, 'qins_timer('..exp.val..', '..me.timers_idx..');')
         HALT(me)
         LABEL_out(me, lb)
         if me.toset then

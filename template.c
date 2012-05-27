@@ -119,46 +119,38 @@ typedef struct {
     tceu_gte gte;
 } QTimer;
 
-int QTimer_prio (void* v1, void* v2) {
-    QTimer* t1 = (QTimer*) v1;
-    QTimer* t2 = (QTimer*) v2;
-    int ret = t1->phys < t2->phys  ||
-            (t1->phys == t2->phys  &&  t1->extl < t2->extl);
-    return ret;
+QTimer  TIMERS[N_TIMERS] = { === TIMERS === };
+QTimer* TMR_cur = NULL;
+
+int QTimer_lt (QTimer* tmr) {
+    if ( tmr->phys != 0 && (
+            (TMR_cur==NULL || tmr->phys<TMR_cur->phys ||
+                (tmr->phys==TMR_cur->phys  &&  tmr->extl<TMR_cur->extl))
+        )) {
+        TMR_cur = tmr;
+        return 1;
+    }
+    return 0;
 }
 
-Queue  Q_TIMERS;
-QTimer Q_TIMERS_BUF[N_TIMERS];
-
-void qins_timer (tceu_time ms, tceu_gte gte) {
-    int i;
-    QTimer v = { 0, _extl_, gte };
-
+void qins_timer (tceu_time ms, int idx) {
+    QTimer* tmr = &TIMERS[idx];
     s64 dt = ms - TIME_late;
-    v.phys = TIME_now + dt;
+    int nxt;
+
+    tmr->phys = TIME_now + dt;
+    tmr->extl = _extl_;
+    nxt = QTimer_lt(tmr);
 
     if (dt <= 0) { // already expired
         TIME_expired = 1;
     }
 #ifdef ceu_out_timer
-    else {         // check if out_timer is needed (empty Q or new minimum timer)
-        QTimer min;
-        if (!q_peek(&Q_TIMERS,&min) || (v.phys<min.phys))
+    else {         // check if out_timer is needed (no cur or new minimum timer)
+        if (new)
             ceu_out_timer(dt);
     }
 #endif
-
-
-    // TODO: inef
-    // TODO: create func and move calls to escapes
-    // checks if the gate is already on Q_TIMERS
-    for (i=1; i<=Q_TIMERS.n; i++) {
-        if (Q_TIMERS_BUF[i].gte == gte) {
-            q_remove_i(&Q_TIMERS, i, NULL);
-            break;
-        }
-    }
-    q_insert(&Q_TIMERS, &v);
 }
 #endif
 
@@ -200,7 +192,6 @@ int ceu_go_init (int* ret, u64 now)
 
     TIME_now  = now;
 #if N_TIMERS > 1
-    q_init(&Q_TIMERS, Q_TIMERS_BUF, N_TIMERS, sizeof(QTimer), QTimer_prio);
     TIME_late = 0;
     _extlmax_ = _extl_ = 0;
 #endif
@@ -246,39 +237,43 @@ int ceu_go_async (int* ret, int* count)
 int ceu_go_time (int* ret, tceu_time now)
 {
 #if N_TIMERS > 1
-    QTimer min, nxt;
+    int i;
+    tceu_time phys;
 
     TIME_now = now;
 
-    if (!q_peek(&Q_TIMERS, &min))
+    if (TMR_cur == NULL)
         return CEU_NONE;
 
-    if (min.phys > TIME_now)
+    phys   = TMR_cur->phys;
+    _extl_ = TMR_cur->extl;
+
+    if (phys > TIME_now)
         return CEU_NONE;
 
-    q_remove(&Q_TIMERS,NULL);
+    TIME_late = TIME_now - phys; // how much late the timer is
 
-    TIME_late = TIME_now - min.phys; // how much late the timer is
-    spawn(min.gte);
-
-    while (q_peek(&Q_TIMERS,&nxt))
+    // spawns all phys/ext
+    // finds the next TMR_cur
+    TMR_cur = NULL;
+    for (i=0; i<N_TIMERS; i++)
     {
-        // spawn all sharing min phys/ext time
-        if (nxt.phys==min.phys && nxt.extl==min.extl) {
-            q_remove(&Q_TIMERS, NULL);
-            spawn(nxt.gte);
+        QTimer* tmr = &TIMERS[i];
+        if (tmr->phys==phys && tmr->extl==_extl_) {
+            tmr->phys = 0;          // disables it
+            spawn(tmr->gte);        // spawns sharing phys/ext
         } else {
-            if (nxt.phys <= TIME_now)
-                TIME_expired = 1;                   // spawn in next cycle
-#ifdef ceu_out_timer
-            else
-                ceu_out_timer(nxt.phys - TIME_now); // not yet to spawn
-#endif
-            break;
+            QTimer_lt(tmr);         // check if this is the next
+            if (tmr->phys <= TIME_now)
+                TIME_expired = 1;   // spawn in next cycle
         }
     }
 
-    _extl_ = min.extl;
+#ifdef ceu_out_timer
+    if (TMR_cur!=NULL && !TIME_expired)
+        ceu_out_timer(TMR_cur->phys - TIME_now); // not yet to spawn
+#endif
+
     return go(ret);
 #else
 

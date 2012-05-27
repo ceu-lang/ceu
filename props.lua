@@ -1,5 +1,4 @@
 function same (me, sub)
-    me.n_timers = sub.n_timers
     me.n_tracks = sub.n_tracks
     me.n_asyncs = sub.n_asyncs
     me.n_emits  = sub.n_emits
@@ -7,7 +6,6 @@ end
 
 function MAX_all (me, t)
     t = t or me
-    me.n_timers = 0
     me.n_tracks = 0
     me.n_asyncs = 0
     me.n_emits  = 0
@@ -15,21 +13,18 @@ function MAX_all (me, t)
         me.n_tracks = MAX(me.n_tracks, sub.n_tracks)
         me.n_emits  = MAX(me.n_emits,  sub.n_emits)
         -- TODO: ADD_all
-        me.n_timers = me.n_timers + sub.n_timers
         me.n_asyncs = me.n_asyncs + sub.n_asyncs
     end
 end
 
 function ADD_all (me, t)
     t = t or me
-    me.n_timers = 0
     me.n_tracks = 0
     me.n_asyncs = 0
     me.n_emits  = 0
     for _, sub in ipairs(t) do
         me.n_tracks = me.n_tracks + sub.n_tracks
         me.n_emits  = me.n_emits  + sub.n_emits
-        me.n_timers = me.n_timers + sub.n_timers
         me.n_asyncs = me.n_asyncs + sub.n_asyncs
     end
 end
@@ -51,7 +46,6 @@ F = {
     Node_pre = function (me)
         me.prio = 0
 
-        me.n_timers = 0
         me.n_tracks = 1
         me.n_asyncs = 0
         me.n_emits  = 0
@@ -113,10 +107,6 @@ F = {
     EmitInt = function (me)
         me.n_tracks = 2     -- awake/continuation
         me.n_emits  = 1
-    end,
-
-    AwaitT = function (me)
-        me.n_timers = 1
     end,
 }
 

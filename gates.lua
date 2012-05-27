@@ -1,10 +1,11 @@
 _GATES = {
     n_ands  = 0,
     n_gtes  = 0,
-    trgs   = { 0 },     -- 0=all undefined should point to [0]
+    trgs    = { 0 },    -- 0=all undefined should point to [0]
+    timers  = { },      -- { gte1, gte2, ... }
 }
 
-local EVTS = {}         -- variables that are internal events
+local EVTS = {}
 
 function alloc (tp, n)
     local g = _GATES[tp]
@@ -52,6 +53,8 @@ F = {
 
     AwaitT = function (me)
         me.gte = alloc('n_gtes')
+        me.timers_idx = #_GATES.timers;
+        _GATES.timers[#_GATES.timers+1] = me.gte
     end,
 
     AwaitExt = function (me)

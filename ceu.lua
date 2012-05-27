@@ -133,7 +133,7 @@ do
         return string.sub(str, 1, i-1) .. to .. string.sub(str, e+1)
     end
 
-    tpl = sub(tpl, '=== N_TIMERS ===', _AST.n_timers)
+    tpl = sub(tpl, '=== N_TIMERS ===', #_GATES.timers)
     tpl = sub(tpl, '=== N_TRACKS ===', _AST.n_tracks)
     tpl = sub(tpl, '=== N_ASYNCS ===', _AST.n_asyncs)
     tpl = sub(tpl, '=== N_EMITS ===',  _AST.n_emits)
@@ -143,6 +143,15 @@ do
     tpl = sub(tpl, '=== N_VARS ===',   _ENV.n_vars)
     tpl = sub(tpl, '=== HOST ===',     _AST.host)
     tpl = sub(tpl, '=== CODE ===',     _AST.code)
+
+    -- TIMERS
+    do
+        local timers = '{ '
+        for i, gte in ipairs(_GATES.timers) do
+            _GATES.timers[i] = '{ 0, 0, '..gte..' }'
+        end
+        tpl = sub(tpl, '=== TIMERS ===', table.concat(_GATES.timers,','))
+    end
 
     -- LABELS
     do
