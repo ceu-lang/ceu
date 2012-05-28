@@ -21,9 +21,6 @@ typedef u64 tceu_time;
 typedef s16 tceu_gte;   // lbl=gte (must have the same sizes)
 typedef s16 tceu_lbl;
 
-#include "binheap.h"
-#include "binheap.c"
-
 int go (int* ret);
 
 enum {
@@ -68,32 +65,73 @@ typedef struct {
     tceu_lbl lbl;
 } QTrack;
 
-int QTrack_prio (void* v1, void* v2) {
-    return ((QTrack*)v1)->prio > ((QTrack*)v2)->prio;
-}
+QTrack TRACKS[N_TRACKS+1];    // 0 is reserved
+int    TRACKS_n = 0;
 
-Queue  Q_TRACKS;
-QTrack Q_TRACKS_BUF[N_TRACKS];
-
-void qins_track (s8 prio, tceu_lbl lbl) {
-    QTrack v = { prio, lbl };
-    q_insert(&Q_TRACKS, &v);
-}
-
-void qins_track_chk (s8 prio, tceu_lbl lbl) {
-    QTrack v = { prio, lbl };
+void trk_insert (int chk, s8 prio, tceu_lbl lbl)
+{
     int i;
-    for (i=1; i<=Q_TRACKS.n; i++)
-        if (lbl == Q_TRACKS_BUF[i].lbl)
-            return;
-    q_insert(&Q_TRACKS, &v);
+
+    if (chk) {
+        for (i=1; i<=TRACKS_n; i++)
+            if (lbl == TRACKS[i].lbl)
+                return;
+    }
+
+#ifdef ASSERT
+    ASSERT(TRACKS_n < N_TRACKS);
+#endif
+
+    for (i=++TRACKS_n; (i>1) && (prio>TRACKS[i/2].prio); i/=2)
+        TRACKS[i] = TRACKS[i/2];
+
+    TRACKS[i].prio = prio;
+    TRACKS[i].lbl  = lbl;
+}
+
+int trk_peek (QTrack* trk)
+{
+    if (TRACKS_n == 0)
+        return 0;
+    else {
+        *trk = TRACKS[1];
+        return 1;
+    }
+}
+
+int trk_remove (QTrack* trk)
+{
+    int i,cur;
+    QTrack* last;
+
+    if (TRACKS_n == 0)
+        return 0;
+
+    if (trk != NULL)
+        *trk = TRACKS[1];
+
+    last = &TRACKS[TRACKS_n--];
+
+    for (i=1; i*2<=TRACKS_n; i=cur)
+    {
+        cur = i * 2;
+        if (cur!=TRACKS_n && TRACKS[cur+1].prio>TRACKS[cur].prio)
+            cur++;
+
+        if (TRACKS[cur].prio>last->prio)
+            TRACKS[i] = TRACKS[cur];
+        else
+            break;
+    }
+    TRACKS[i] = *last;
+    return 1;
 }
 
 void spawn (tceu_gte gte)
 {
     tceu_lbl lbl = GTES[gte];
     if (lbl != Inactive) {
-        qins_track(PR_MAX, lbl);
+        trk_insert(0, PR_MAX, lbl);
         GTES[gte] = Inactive;
     }
 }
@@ -133,7 +171,7 @@ int QTimer_lt (QTimer* tmr) {
     return 0;
 }
 
-void qins_timer (tceu_time ms, int idx) {
+void tmr_enable (tceu_time ms, int idx) {
     QTimer* tmr = &TIMERS[idx];
     s64 dt = ms - TIME_late;
     int nxt;
@@ -162,7 +200,7 @@ int async_ini = 0;
 int async_end = 0;
 int async_cnt = 0;
 
-void qins_async (tceu_gte gte)
+void asy_insert (tceu_gte gte)
 {
     int i;
     // TODO: inef
@@ -188,15 +226,13 @@ int ceu_go_init (int* ret, u64 now)
 {
     memset(GTES, 0, N_GTES);
 
-    q_init(&Q_TRACKS, Q_TRACKS_BUF, N_TRACKS, sizeof(QTrack), QTrack_prio);
-
     TIME_now  = now;
 #if N_TIMERS > 1
     TIME_late = 0;
     _extlmax_ = _extl_ = 0;
 #endif
 
-    qins_track(PR_MAX, Init);
+    trk_insert(0, PR_MAX, Init);
 
     return go(ret);
 }
@@ -291,7 +327,7 @@ int go (int* ret)
     int _step_ = PR_MIN;
 #endif
 
-    while (q_remove(&Q_TRACKS,&trk))
+    while (trk_remove(&trk))
     {
 #if N_EMITS > 0
         if (trk.prio < 0) {
@@ -302,13 +338,13 @@ int go (int* ret)
                 int lbl = GTES[-trk.lbl];     // it is actually a gate
                 if (lbl != Inactive)
                     T[n++] = lbl;
-                if (!q_peek(&Q_TRACKS,&trk) || (trk.prio < _step_))
+                if (!trk_peek(&trk) || (trk.prio < _step_))
                     break;
                 else
-                    q_remove(&Q_TRACKS,NULL);
+                    trk_remove(NULL);
             }
             for (;n>0;)
-                qins_track(PR_MAX, T[--n]);
+                trk_insert(0, PR_MAX, T[--n]);
             continue;
         } else
 #endif

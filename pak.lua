@@ -27,19 +27,9 @@ subst 'dfa.lua'
 subst 'graphviz.lua'
 subst 'code.lua'
 
--- template.c, binheap.[hc]
+-- template.c
 do
     local tpl = assert(io.open'template.c'):read'*a'
-
-    local s, e = string.find(tpl, '#include "binheap.h"')
-    tpl = string.sub(tpl, 1, (s-1))
-            .. assert(io.open'binheap.h'):read'*a' ..
-          string.sub(tpl, (e+1))
-
-    local s, e = string.find(tpl, '#include "binheap.c"')
-    tpl = string.sub(tpl, 1, (s-1))
-            .. assert(io.open'binheap.c'):read'*a' ..
-          string.sub(tpl, (e+1))
 
     local s, e = string.find(fin, "assert%(io%.open'template%.c'%):read'%*a'")
     fin = string.sub(fin, 1, (s-1))

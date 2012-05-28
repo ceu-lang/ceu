@@ -110,9 +110,9 @@ F = {
         local top = _ITER'SetBlock'()
         LINE(me, top[1].val..' = '..exp.val..';')
         if top.nd_join then
-            LINE(me, 'qins_track_chk('..top.prio..','..top.lb_out..');')
+            LINE(me, 'trk_insert(1,'..top.prio..','..top.lb_out..');')
         else
-            LINE(me, 'qins_track('..top.prio..','..top.lb_out..');')
+            LINE(me, 'trk_insert(0,'..top.prio..','..top.lb_out..');')
         end
         HALT(me)
     end,
@@ -125,7 +125,7 @@ F = {
         COMM(me, 'ParEver ($0): spawn subs')
         for i, sub in ipairs(me) do
             lbls[i] = LABEL_gen('Sub_'..i)
-            LINE(me, 'qins_track(PR_MAX, '..lbls[i]..');')
+            LINE(me, 'trk_insert(0, PR_MAX, '..lbls[i]..');')
         end
         HALT(me)
 
@@ -146,7 +146,7 @@ F = {
         COMM(me, 'ParOr ($0): spawn subs')
         for i, sub in ipairs(me) do
             lbls[i] = LABEL_gen('Sub_'..i)
-            LINE(me, 'qins_track(PR_MAX, '..lbls[i]..');')
+            LINE(me, 'trk_insert(0, PR_MAX, '..lbls[i]..');')
         end
         HALT(me)
 
@@ -157,9 +157,9 @@ F = {
             CONC(me, sub)
             COMM(me, 'PAROR JOIN')
             if me.nd_join then
-                LINE(me, 'qins_track_chk('..me.prio..','..lb_ret..');')
+                LINE(me, 'trk_insert(1, '..me.prio..','..lb_ret..');')
             else
-                LINE(me, 'qins_track('..me.prio..','..lb_ret..');')
+                LINE(me, 'trk_insert(0, '..me.prio..','..lb_ret..');')
             end
             HALT(me)
         end
@@ -183,7 +183,7 @@ F = {
         COMM(me, 'ParAnd ($0): spawn subs')
         for i, sub in ipairs(me) do
             lbls[i] = LABEL_gen('Sub_'..i)
-            LINE(me, 'qins_track(PR_MAX, '..lbls[i]..');')
+            LINE(me, 'trk_insert(0, PR_MAX, '..lbls[i]..');')
         end
         HALT(me)
 
@@ -249,7 +249,7 @@ F = {
         end
         local lb = LABEL_gen('Async_'..me.gte)
         LINE(me, 'GTES['..me.gte..'] = '..lb..';')
-        LINE(me, 'qins_async('..me.gte..');')
+        LINE(me, 'asy_insert('..me.gte..');')
         HALT(me)
         LABEL_out(me, lb)
         CONC(me, blk)
@@ -276,7 +276,7 @@ if (ceu_out_pending()) {
 #endif
     // open async
     GTES[]]..async.gte..'] = '..lb_ini..[[;
-    qins_async(]]..async.gte..[[);
+    asy_insert(]]..async.gte..[[);
     break;
 }
 ]])
@@ -293,9 +293,9 @@ if (ceu_out_pending()) {
     Break = function (me)
         local top = _ITER'Loop'()
         if top.nd_join then
-            LINE(me, 'qins_track_chk('..top.prio..','..top.lb_out..');')
+            LINE(me, 'trk_insert(1, '..top.prio..','..top.lb_out..');')
         else
-            LINE(me, 'qins_track('..top.prio..','..top.lb_out..');')
+            LINE(me, 'trk_insert(0, '..top.prio..','..top.lb_out..');')
         end
         HALT(me)
     end,
@@ -313,7 +313,7 @@ if (ceu_out_pending()) {
         local lb_cnt = LABEL_gen('Async_cont')
         local async = _ITER'Async'()
         LINE(me, 'GTES['..async.gte..'] = '..lb_cnt..';')
-        LINE(me, 'qins_async('..async.gte..');')
+        LINE(me, 'asy_insert('..async.gte..');')
         if exp then
             if _C.deref(ext.evt.tp) then
                 LINE(me, 'return ceu_go_event(ret, IN_'..evt.id
@@ -345,8 +345,8 @@ if (ceu_out_pending()) {
 // Emit ]]..evt.id..[[;
 GTES[]]..me.gte_cnt..'] = '..lb_cnt..[[;
 GTES[]]..me.gte_trg..'] = '..lb_trg..[[;
-qins_track(_step_+1, -]]..me.gte_cnt..[[);
-qins_track(_step_+2, -]]..me.gte_trg..[[);
+trk_insert(0, _step_+1, -]]..me.gte_cnt..[[);
+trk_insert(0, _step_+2, -]]..me.gte_trg..[[);
 break;
 ]])
         LABEL_out(me, lb_trg)
@@ -361,7 +361,7 @@ break;
         local lb_cnt = LABEL_gen('Async_cont')
         --LINE(me, 'TIME_base += '..VAL(exp.ret)..';')
         LINE(me, 'GTES['..async.gte..'] = '..lb_cnt..';')
-        LINE(me, 'qins_async('..async.gte..');')
+        LINE(me, 'asy_insert('..async.gte..');')
         LINE(me, [[
 TIME_now += ]]..exp.val..[[;
 { int status;
@@ -386,7 +386,7 @@ TIME_now += ]]..exp.val..[[;
         local lb = LABEL_gen('Timer')
         CONC(me, exp)
         LINE(me, 'GTES['..me.gte..'] = '..lb..'; // open AwaitT')
-        LINE(me, 'qins_timer('..exp.val..', '..me.timers_idx..');')
+        LINE(me, 'tmr_enable('..exp.val..', '..me.timers_idx..');')
         HALT(me)
         LABEL_out(me, lb)
         if me.toset then
