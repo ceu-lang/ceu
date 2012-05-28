@@ -35,7 +35,7 @@ enum {
     ELAST    = 11  // Last enum value
 };
 
-#define TOSH_DATA_LENGTH 64
+#define TOSH_DATA_LENGTH 64         // TODO: larger than in TinyOS
 #define TOS_BCAST_ADDR 0xFFFF
 
 typedef nx_struct {

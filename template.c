@@ -52,6 +52,7 @@ u32 _extl_;
 u32 _extlmax_;  // needed for timers
 #endif
 
+// returns a pointer to the received value
 int INT_v;
 int* INT_f (int v) {
     INT_v = v;

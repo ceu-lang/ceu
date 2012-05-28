@@ -1,10 +1,6 @@
-changequote(<,>)
-changequote(`,´)
-
 @include(bitmap.c);
 @include(radio.m4);
 @include(DS.m4);
-@include(probeEcho.m4);
 
 C do
 	typedef nx_struct {
