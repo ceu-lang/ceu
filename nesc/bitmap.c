@@ -47,6 +47,14 @@ C do
             str[i] = '0' + bm_get(map,i);
         str[len] = '\0';
     }
+    
+    void bm_copy(u8* dest, u8* src, int len){
+        int i;
+
+        for(i = 0; i < len/8; i++){
+            dest[i] = src[i];
+        }   
+    }
 end
 
 pure _bm_idx, _bm_bit, _bm_isZero, _bm_tostr;
