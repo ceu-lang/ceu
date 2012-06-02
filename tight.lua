@@ -66,7 +66,7 @@ F = {
     Loop = function (me)
         local body = unpack(me)
         same(me, body)
-        if not (_ITER'Async'() or me.isFor) then
+        if not (_ITER'Async'() or me.isBounded) then
             ASR(body.brk_awt_ret, me,'tight loop')
         end
 

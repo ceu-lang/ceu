@@ -121,7 +121,7 @@ Test = function (t)
                 async do
                     `EVTS
                 end;
-                await forever;
+                await Forever;
             end;
         ]]
         for input, ret2 in pairs(T.run) do

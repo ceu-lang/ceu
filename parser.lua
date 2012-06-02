@@ -48,6 +48,7 @@ local _V2NAME = {
     Int = 'event',
     Var = 'variable',
     ID_c  = 'identifier',
+    ID_var  = 'identifier',
     ID_int  = 'identifier',
     ID_ext  = 'identifier',
     ID_type = 'type',
@@ -76,15 +77,14 @@ local EM = function (msg)
         end)
 end
 
-KEYS = P'do'+'end'+'async'+'return'
-     + 'par'+'par/or'+'par/and'+'with'
-     + 'if'+'then'+'else'
-     + 'await'+'forever'+'emit'+'now'
-     + 'loop'+'break'+'nothing'
-     + 'input'+'output'+'event' -- TODO: types
-     + 'sizeof'+'null'+'call'
-     + 'pure'+'deterministic'
-     + 'set'+'for'
+-- TODO: types
+KEYS = P'async'   + 'await'  + 'break'  + 'call'   + 'deterministic'
+     +  'do'      + 'emit'   + 'else'   + 'end'    + 'event'
+     +  'Forever' + 'input'  + 'if'     + 'loop'   + 'nothing'
+     +  'now'     + 'null'   + 'output' + 'par'    + 'par/and'
+     +  'par/or'  + 'pure'   + 'return' + 'set'    + 'sizeof'
+     +  'then'    + 'with'
+
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
 local S = V'_SPACES'
@@ -117,7 +117,7 @@ _GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
 
     , _StmtBlock = V'_DoBlock' + V'Async'  + V'Host'
                  + V'ParOr'    + V'ParAnd'
-                 + V'If'       + V'Loop'   + V'_For'
+                 + V'If'       + V'Loop'
 
     , _SetBlock = K'set' *S* (
                     V'_DoBlock' + V'Async' +
@@ -165,19 +165,13 @@ _GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
                     V'Block')^-1 *S*
                 EK'end'
 
-    , Loop    = K'loop' *S* EK'do' *S*
+    , Loop    = K'loop' *S*
+                    (V'ID_var'* (S*EK','*S*EV'_Exp' + Cc(false)) + 
+                        Cc(false)*Cc(false)) *S*
+                EK'do' *S*
                     V'Block' *S*
                 EK'end'
     , Break   = K'break'
-
-    , _For    = K'for' *S* EV'ID_var' *S* EK'=' *S*
-                    EV'_Exp' *S* EK',' *S*
-                    EV'_Exp' *S* (K',' *S*
-                    (K'-'*Cc(false)+Cc(true)) *S* EV'CONST'
-                        + Cc(true)*Cc(false)) *S*
-                    EK'do' *S*
-                        V'Block' *S*
-                    EK'end'
 
     , _Exp    = V'_1'
     , _1      = V'_2'  * (S* CK'||' *S* V'_2')^0
@@ -225,7 +219,7 @@ _GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
 
     , AwaitExt = K'await' *S* EV'Ext'
     , AwaitInt = K'await' *S* EV'Int'
-    , AwaitN   = K'await' *S* K'forever'             -- last stmt
+    , AwaitN   = K'await' *S* K'Forever'             -- last stmt
     , AwaitT   = K'await' *S* (V'_Parens'+V'TIME')
 
 

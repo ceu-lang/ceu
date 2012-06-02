@@ -497,13 +497,13 @@ Test { [[int a=await 10s; return a;]],
     }
 }
 
-Test { [[await forever;]],
+Test { [[await Forever;]],
     forever = true,
 }
-Test { [[await forever; await forever;]],
+Test { [[await Forever; await Forever;]],
     parser = "ERR : line 1 : after `;' : expected EOF",
 }
-Test { [[await forever; return 0;]],
+Test { [[await Forever; return 0;]],
     parser = "ERR : line 1 : after `;' : expected EOF",
 }
 
@@ -655,7 +655,7 @@ return v;
 
 Test { [[
 par/or do
-    await forever;
+    await Forever;
 with
     return 1;
 end
@@ -686,7 +686,7 @@ Test { [[
 input void A,B;
 par/or do
     await A;
-    await forever;
+    await Forever;
 with
     await B;
     return 1;
@@ -744,7 +744,7 @@ end
 
 Test { [[
 par do
-    await forever;
+    await Forever;
 with
     return 1;
 end;
@@ -757,7 +757,7 @@ Test { [[
 input void A,B;
 par do
     await A;
-    await forever;
+    await Forever;
 with
     await B;
     return 1;
@@ -827,7 +827,7 @@ par/or do
     with
         a = await B;
     end;
-    await forever;
+    await Forever;
 with
     await F;
 end;
@@ -888,7 +888,7 @@ int a = set
                 return v;
             end;
             // unreachable
-            await forever;
+            await Forever;
         with
             await F;
         end;
@@ -999,7 +999,7 @@ return 0;
 Test { [[
 loop do
     par do
-        await forever;
+        await Forever;
     with
         break;
     end;
@@ -1016,7 +1016,7 @@ input int A,B;
 loop do
     par do
         await A;
-        await forever;
+        await Forever;
     with
         await B;
         break;
@@ -1031,7 +1031,7 @@ return 1;
 Test { [[
 loop do
     par do
-        await forever;
+        await Forever;
     with
         return 1;
     end;
@@ -1048,7 +1048,7 @@ input int A,B;
 loop do
     par do
         await A;
-        await forever;
+        await Forever;
     with
         await B;
         return 1;
@@ -1131,7 +1131,7 @@ end;
 Test { [[
 loop do
     loop do
-        await forever;
+        await Forever;
     end;
 end;
 ]],
@@ -1340,8 +1340,8 @@ return 1;
 
 Test { [[
 int sum = 0;
-for i=1, 100 do
-    sum = sum + i;
+loop i, 100 do
+    sum = sum + (i+1);
 end
 return sum;
 ]],
@@ -1362,8 +1362,8 @@ return sum;
 ]=]
 Test { [[
 int sum = 5050;
-for i=100, 1, -1 do
-    sum = sum - i;
+loop i, 100 do
+    sum = sum - (i+1);
 end
 return sum;
 ]],
@@ -1371,13 +1371,13 @@ return sum;
 }
 Test { [[
 int sum = 5050;
-int v = 100;
-for i=100, 1, -1 do
+int v = 0;
+loop i, 100 do
     v = i;
-    if sum == 4950 then
+    if sum == 100 then
         break;
     end
-    sum = sum - i;
+    sum = sum - (i+1);
 end
 return v;
 ]],
@@ -1385,33 +1385,24 @@ return v;
 }
 Test { [[
 input void A;
-int sum = 5050;
-int v = 100;
-for i=100, 1, -1 do
+int sum = 0;
+int v = 0;
+loop i, 101 do
     v = i;
-    if sum == 4950 then
+    if sum == 6 then
         break;
     end
-    sum = sum - i;
+    sum = sum + i;
     await A;
 end
 return v;
 ]],
-    run = {['~>A;~>A;~>A;~>A;~>A;~>A;~>A;~>A;~>A;~>A;']=99},
+    run = {['~>A;~>A;~>A;~>A;~>A;~>A;~>A;~>A;~>A;~>A;']=4},
 }
 Test { [[
 int sum = 4;
-for i=1, 100, -1 do
+loop i, 0 do
     sum = sum - i;
-end
-return sum;
-]],
-    run = 4,
-}
-Test { [[
-int sum = 4;
-for i=100, 1 do
-    sum = sum + i;
 end
 return sum;
 ]],
@@ -1420,7 +1411,7 @@ return sum;
 Test { [[
 input void A, B;
 int sum = 0;
-for i=1, 10 do
+loop i, 10 do
     await A;
     sum = sum + 1;
 end
@@ -1488,7 +1479,7 @@ input int F;
 int a = 0;
 par do
     a = a + 1;
-    await forever;
+    await Forever;
 with
     await F;
     return a;
@@ -1844,7 +1835,7 @@ end;
 
 Test { [[
 par do
-    await forever;
+    await Forever;
 with
     return 10;
 end;
@@ -2620,7 +2611,7 @@ input int F;
 int a;
 par do
     await 5s;
-    await forever;
+    await Forever;
 with
     a = 0;
     loop do
@@ -3102,7 +3093,7 @@ loop do
                 break;
             end;
         end;
-        await forever;
+        await Forever;
     end;
 end;
 ]],
@@ -3694,7 +3685,7 @@ with
     await Start;
     emit b(1);
     x = 2;
-    await forever;
+    await Forever;
 end;
 return x;
 ]],
@@ -3719,7 +3710,7 @@ with
     emit b(1);
     emit a(b);
     x = 2;
-    await forever;
+    await Forever;
 end;
 return x;
 ]],
@@ -5897,7 +5888,7 @@ with
     return a;
 with
     await a;
-    await forever;
+    await Forever;
 end;
 ]],
     nd_esc = 1,
@@ -6324,7 +6315,7 @@ loop do
         with
             nothing;
         end;
-        await forever;
+        await Forever;
     end;
 end;
 return v1 + v2;
@@ -8189,7 +8180,7 @@ with
         emit P2(0);
         emit P2(1);
     end;
-    await forever;      // TODO: ele acha que o async termina
+    await Forever;      // TODO: ele acha que o async termina
 end;
 ]],
     run = 0,
@@ -8348,14 +8339,14 @@ par/and do
         await Start;
         emit a(10);
     with
-        await forever;
+        await Forever;
     end;
     v1 = a;
 with
     par/or do
         await a;
     with
-        await forever;
+        await Forever;
     end;
     v2 = a+1;
 end;
@@ -8425,7 +8416,7 @@ par/or do
 with
     await a;
     emit a(a+1);
-    await forever;
+    await Forever;
 end;
 return a;
 ]],
@@ -8442,11 +8433,11 @@ with
     await a;
     emit b(a+1);
     a = b + 1;
-    await forever;
+    await Forever;
 with
     await b;
     b = b + 1;
-    await forever;
+    await Forever;
 end;
 return a;
 ]],
@@ -8882,7 +8873,7 @@ with
     emit x(0);
     emit y(0);
     emit vis(1);
-    await forever;
+    await Forever;
 end;
 ]],
     --trig_wo = 2,

@@ -36,7 +36,7 @@ local STMTS = {
     SetExp=true, SetBlock=true, SetStmt=true,
     Return=true, Async=true, Host=true,
     ParEver=true, ParOr=true, ParAnd=true, Loop=true,
-    Break=true, If=true, For=true,
+    Break=true, If=true,
     CallStmt=true, AwaitN=true,
     AwaitExt=true, AwaitInt=true, AwaitT=true,
     EmitExtS=true,  EmitInt=true,  EmitT=true,

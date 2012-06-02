@@ -1,5 +1,5 @@
 all: qu.exe
-	./ceu $(CEUFILE) --m4 --dfa --events --output _ceu_code.c
+	./ceu $(CEUFILE) --m4 --events --output _ceu_code.c
 	gcc main.c $(CFLAGS) -lrt
 
 qu.exe: qu.c

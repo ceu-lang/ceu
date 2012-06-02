@@ -323,7 +323,7 @@ F = {
             })
 
         if not _ITER'Async'() then
-            if me.isFor then
+            if me.isBounded then
                 OUT(qL, '', qO)
             else
                 OUT(qL, '', qS)

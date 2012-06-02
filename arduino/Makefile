@@ -17,7 +17,7 @@ ceu: $(CEUCFILE)
 	touch *.pde *.ino
 
 $(CEUCFILE): $(CEUFILE)
-	./ceu $(CEUFILE) --m4 --dfa --output $(CEUCFILE)
+	./ceu $(CEUFILE) --m4 --output $(CEUCFILE)
 
 clean: _clean
 	rm -f _ceu_*.tmp

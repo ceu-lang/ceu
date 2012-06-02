@@ -103,7 +103,7 @@ do
             _message_t* recv_msg = @RADIO_receive($3, _Topo, recv_v);
             _bm_or($1, recv_v->v, $2*$2);
             int allActive = set do
-                for i=0, $2-1 do
+                loop i, $2 do
                     if _bm_isZero(&$1[i*$2/8], $2) then
                         return 0;
                     end
@@ -153,7 +153,7 @@ end
 do
     par/or do
         _message_t send_msg;
-        for i=1, $5 do
+        loop i, $5 do
             await $4;
             int err = @RADIO_send_value(&send_msg, _AM_BROADCAST_ADDR,
                                       $3, _Topo, $1);

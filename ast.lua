@@ -127,34 +127,38 @@ local C; C = {
     ParEver = node('ParEver'),
     ParOr   = node('ParOr'),
     ParAnd  = node('ParAnd'),
-    Loop    = node('Loop'),
-    Break   = node('Break'),
     If      = node('If'),
+    Break   = node('Break'),
+    Loop    = node('Loop'),
 
-    _For = function (ln1,ln2, str, id, _i, _j, inc, s, blk)
-        local i = function() return node('Var')(ln1,ln2,str, id) end
-        local dcl_i = node('Dcl_var')(ln1,ln2,str, false, 'int', false, id)
+    Loop = function (ln1,ln2, str, _i, _j, blk)
+        if not _i then
+            return node('Loop')(ln1,ln2,str, blk)
+        end
+
+        local i = function() return node('Var')(ln1,ln2,str, _i) end
+        local dcl_i = node('Dcl_var')(ln1,ln2,str, false, 'int', false, _i)
         dcl_i.read_only = true
-        local set_i = node('SetExp')(ln1,ln2,str, i(), _i)
+        local set_i = node('SetExp')(ln1,ln2,str, i(), node('CONST')(ln1,ln2,str, '0'))
+        local nxt_i = node('SetExp')(ln1,ln2,str, i(),
+                        node('Op2_+')(ln1,ln2,str, '+', i(), node('CONST')(ln1,ln2,str,'1')))
+
+        if not _j then
+            return node('Block')(ln1,ln2,str, dcl_i, set_i,
+                                    node('Loop')(ln1,ln2,str,blk))
+        end
 
         local j = function() return node('Var')(ln1,ln2,str, '$j') end
         local dcl_j = node('Dcl_var')(ln1,ln2,str, false, 'int', false, '$j')
         local set_j = node('SetExp')(ln1,ln2,str, j(), _j)
 
-        s = s or node('CONST')(ln1,ln2,str, 1)
-
-        local op = (inc and '>') or '<'
-        local cmp = node('Op2_'..op)(ln1,ln2,str, op, i(), j())
-
-        local op = (inc and '+') or '-'
-        local nxt = node('SetExp')(ln1,ln2,str, i(),
-                        node('Op2_'..op)(ln1,ln2,str, op, i(), s))
+        local cmp = node('Op2_>=')(ln1,ln2,str, '>=', i(), j())
 
         local loop = node('Loop')(ln1,ln2,str,
             node('If')(ln1,ln2,str, cmp,
                 node('Break')(ln1,ln2,str),
-                node('Block')(ln1,ln2,str, blk, nxt)))
-        loop.isFor = true
+                node('Block')(ln1,ln2,str, blk, nxt_i)))
+        loop.isBounded = (_j.id == 'CONST')
 
         return node('Block')(ln1,ln2,str,
                 dcl_i, set_i,
