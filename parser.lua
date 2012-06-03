@@ -161,8 +161,10 @@ _GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
 
     , If      = K'if' *S* EV'_Exp' *S* EK'then' *S*
                     V'Block' *S*
-                (EK'else' *S*
-                    V'Block')^-1 *S*
+                (K'elseif' *S* EV'_Exp' *S* EK'then' *S*
+                    V'Block')^0 *S*
+                (K'else' *S*
+                    V'Block' + Cc(false)) *S*
                 EK'end'
 
     , Loop    = K'loop' *S*

@@ -127,11 +127,19 @@ local C; C = {
     ParEver = node('ParEver'),
     ParOr   = node('ParOr'),
     ParAnd  = node('ParAnd'),
-    If      = node('If'),
-    Break   = node('Break'),
-    Loop    = node('Loop'),
 
-    Loop = function (ln1,ln2, str, _i, _j, blk)
+    If = function (ln1,ln2, str, ...)
+        local t = { ... }
+        local _else = t[#t]
+        for i=#t-1, 1, -2 do
+            local c, b = t[i-1], t[i]
+            _else = node('If')(ln1,ln2,str, c, b, _else)
+        end
+        return _else
+    end,
+
+    Break = node('Break'),
+    Loop  = function (ln1,ln2, str, _i, _j, blk)
         if not _i then
             return node('Loop')(ln1,ln2,str, blk)
         end

@@ -122,6 +122,40 @@ return 0;
 ]],
     run = 0,
 }
+Test { [[
+int a = 1;
+if a == 0 then
+    return 1;
+elseif a > 0 then
+    return 0;
+else
+    return 1;
+end
+return 0;
+]],
+    run = 0,
+}
+Test { [[
+int a = 1;
+if a == 0 then
+    return 0;
+elseif a < 0 then
+    return 0;
+else
+    a = a + 2;
+    if a < 0 then
+        return 0;
+    elseif a > 1 then
+        return 1;
+    else
+        return 0;
+    end
+    return 1;
+end
+return 0;
+]],
+    run = 1,
+}
 Test { [[if (2) then  else return 0; end;]],
     parser = "ERR : line 1 : after `then' : invalid statement (or C identifier?)",
 }
