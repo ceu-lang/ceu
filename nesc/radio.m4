@@ -219,7 +219,7 @@ dnl [ 3: n_nodes ]      length of the bitmap of neighbours
 dnl [ 4: neighbours ]   bitmap of neighbours
 dnl [ 5: timeout ]      retry timeout
 do
-    for dest=0,$3-1 do
+    loop dest, $3 do
         if _bm_get($4, dest) then
             _DBG("Is neighbour of %d!\n", dest);
             @RADIO_send_ack($1, dest, $2, $5); 
