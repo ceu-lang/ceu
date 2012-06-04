@@ -211,25 +211,31 @@ _GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
 
     , NOW  = CK'now'
     , NULL = CK'null'
-    , TIME = #NUM *
-                (NUM * K'h'   + Cc(0)) *
-                (NUM * K'min' + Cc(0)) *
-                (NUM * K's'   + Cc(0)) *
-                (NUM * K'ms'  + Cc(0)) *
-                (NUM * K'us'  + Cc(0)) *
-                (NUM * EM'expected <h,min,s,ms,us>')^-1
+
+    , TIMEK = #NUM *
+                (NUM * K'h'        + Cc(0)) *
+                (NUM * (K'm'-'ms') + Cc(0)) *
+                (NUM * K's'        + Cc(0)) *
+                (NUM * K'ms'       + Cc(0)) *
+                (NUM * K'us'       + Cc(0)) *
+                (NUM * K'ns'       + Cc(0)) *
+                (NUM * EM'expected <h,m,s,ms,us,ns>')^-1
+    , TIMEE = V'_Parens' *S* C(
+                    K'h' + (K'm'-'ms') + K's' + K'ms' + K'us' + K'ns'
+                  + EM'expected <h,m,s,ms,us,ns>'
+              )
 
     , AwaitExt = K'await' *S* EV'Ext'
     , AwaitInt = K'await' *S* EV'Int'
-    , AwaitN   = K'await' *S* K'Forever'             -- last stmt
-    , AwaitT   = K'await' *S* (V'_Parens'+V'TIME')
+    , AwaitN   = K'await' *S* K'Forever'
+    , AwaitT   = K'await' *S* (V'TIMEK'+V'TIMEE')
 
 
     , EmitExtS = V'EmitExt'
     , EmitExtE = V'EmitExt'
     , EmitExt  = K'emit' *S* EV'Ext' * (S* K'(' *S* V'_Exp' *S* EK')')^-1
     , EmitInt  = K'emit' *S* EV'Int' * (S* K'(' *S* V'_Exp' *S* EK')')^-1
-    , EmitT    = K'emit' *S* (V'_Parens'+V'TIME')
+    , EmitT    = K'emit' *S* (V'TIMEK'+V'TIMEE')
 
     , _Dcl_ext = (CK'input'+CK'output') *S* EV'ID_type' *S*
                     EV'ID_ext' * (S*K','*S*EV'ID_ext')^0

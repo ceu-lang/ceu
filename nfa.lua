@@ -487,14 +487,14 @@ F = {
     end,
 
     AwaitT = function (me)
-        local us = unpack(me)
-        us = (us.id=='TIME') and us.us or _TIME_undef
-        local us_id = ((us==_TIME_undef) and '??' or us)..'us'
+        local ns = unpack(me)
+        ns = (ns.id=='TIMEK') and ns.ns or _TIME_undef
+        local us_id = ((ns==_TIME_undef) and '??' or ns)..'ns'
         INS(me, '', _NFA.node{id=us_id})
         local bef = INS(me, '',
             _NFA.node {
                 id = '+'..us_id,
-                us = us,
+                ns = ns,
                 keep = true,
             })
 

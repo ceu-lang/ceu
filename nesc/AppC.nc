@@ -73,8 +73,8 @@ implementation
 
     event void Boot.booted ()
     {
-        old = call Timer.getNow() * 1000;
-        now64 = old;
+        old = call Timer.getNow();
+        now64 = old * 1000000LL;
         ceu_go_init(NULL, now64);
 #ifdef IN_Start
         ceu_go_event(NULL, IN_Start, NULL);
@@ -91,8 +91,8 @@ implementation
     
     event void Timer.fired ()
     {
-        u32 dt = call Timer.getNow()*1000 - old;
-        now64 += dt;
+        u32 dt = call Timer.getNow() - old;
+        now64 += dt*1000000LL;
         old   += dt;
         ceu_go_time(NULL, now64);
 #ifndef ceu_out_timer

@@ -518,16 +518,16 @@ input void A;
 await A;
 return now;
 ]],
-    run = { ['~>10ms; ~>A'] = 10000 }
+    run = { ['~>10ms; ~>A'] = 10000000 }
 }
 
 Test { [[await -1ms; return 0;]],
     parser = "ERR : line 1 : after `await' : expected event",
 }
-Test { [[int a=await 10s; return a;]],
+Test { [[u64 a=await 10s; return a==8000000000;]],
     run = {
         ['~>10s'] = 0,
-        ['~>9s ; ~>9s'] = 8000000,
+        ['~>9s ; ~>9s'] = 1,
     }
 }
 
@@ -593,24 +593,24 @@ return v;
     }
 }
 Test { [[
-int a = await 10min;
-a = await 20min;
+int a = await 10ms;
+a = await 20ms;
 return a;
 ]],
     run = {
-        ['~>20min ; ~>11min'] = 60000000,
-        ['~>20min ; ~>20min'] = 600000000,
+        ['~>20ms ; ~>11ms'] = 1000000,
+        ['~>20ms ; ~>20ms'] = 10000000,
     }
 }
 Test { [[
-int a = await 10s;
-a = await 40s;
+int a = await 10ns;
+a = await 40ns;
 return a;
 ]],
     run = {
-        ['~>20s ; ~>30s'] = 0,
-        ['~>30s ; ~>10s ; ~>10s'] = 0,
-        ['~>30s ; ~>10s ; ~>30s'] = 20000000,
+        ['~>20ns ; ~>30ns'] = 0,
+        ['~>30ns ; ~>10ns ; ~>10ns'] = 0,
+        ['~>30ns ; ~>10ns ; ~>30ns'] = 20,
     }
 }
 
@@ -628,7 +628,7 @@ par do
 with
     async do
         emit 5ms;
-        emit(5000);
+        emit(5000)ms;
     end
 end
 ]],
@@ -869,7 +869,7 @@ return a;
 ]],
     run = {
         ['1~>B; ~>20us; 1~>F'] = 1,
-        ['~>20us; 5~>B; 2~>F'] = 10,
+        ['~>20us; 5~>B; 2~>F'] = 10000,
     }
 }
 Test { [[
@@ -899,7 +899,7 @@ return a;
 ]],
     run = {
         ['1~>B; ~>20ms; 1~>F'] = 1,
-        ['~>20ms; 5~>B; 2~>F'] = 10000,
+        ['~>20ms; 5~>B; 2~>F'] = 10000000,
     }
 }
 
@@ -1996,33 +1996,33 @@ return 1;
 }
 Test { [[
 par do
-    int a = await 10s;
+    int a = await 10ms;
     return a;
 with
-    int b = await 10s;
+    int b = await 10ms;
     return b;
 end;
 ]],
     nd_flw = 2,
     nd_acc = 1,
     run = {
-        ['~>10s'] = 0,
-        ['~>20s'] = 10000000,
+        ['~>10ms'] = 0,
+        ['~>20ms'] = 10000000,
     }
 }
 Test { [[
 int a;
 par/or do
-    a = await 10s;
+    a = await 10ms;
 with
-    a = await 10s;
+    a = await 10ms;
 end;
 return a;
 ]],
     nd_acc = 1,
     run = {
-        ['~>10s'] = 0,
-        ['~>20s'] = 10000000,
+        ['~>10ms'] = 0,
+        ['~>20ms'] = 10000000,
     }
 }
 Test { [[
@@ -2044,8 +2044,8 @@ return a + b;
 Test { [[
 int a=0,b=0;
 par/or do
-    await (10);
-    await (10);
+    await (10)us;
+    await (10)us;
     a = 1;
 with
     await 20us;
@@ -2060,11 +2060,11 @@ return a + b;
 Test { [[
 int a=0,b=0;
 par/or do
-    await (10);
-    await (10);
+    await (10)us;
+    await (10)us;
     a = 1;
 with
-    await (20);
+    await (20)us;
     b = 1;
 end;
 return a + b;
@@ -2080,7 +2080,7 @@ par/or do
     await 10us;
     a = 1;
 with
-    await (20);
+    await (20)us;
     b = 1;
 end;
 return a + b;
@@ -2094,13 +2094,13 @@ int a,b;
 par/or do
     a = await 10us;
 with
-    b = await (10);
+    b = await (10)us;
 end;
 return a + b;
 ]],
     run = {
         ['~>10us'] = 0,
-        ['~>20us'] = 20,
+        ['~>20us'] = 20000,
     }
 }
 Test { [[
@@ -2109,7 +2109,7 @@ par do
     a = await 10ms;
     return a;
 with
-    b = await (10000);
+    b = await (10000)us;
     return b;
 end;
 ]],
@@ -2121,14 +2121,14 @@ int a=0,b=0;
 par/or do
     a = await 10ms;
 with
-    await (5000);
+    await (5)ms;
     b = await 2ms;
 end;
 return a+b;
 ]],
     run = {
-        ['~>10ms'] = 3000,
-        ['~>20ms'] = 13000,
+        ['~>10ms'] = 3000000,
+        ['~>20ms'] = 13000000,
     }
 }
 Test { [[
@@ -2137,7 +2137,7 @@ par do
     a = await 10us;
     return a;
 with
-    b = await (5);
+    b = await (5)us;
     await 5us;
     return b;
 end;
@@ -2151,7 +2151,7 @@ par do
     a = await 10us;
     return a;
 with
-    b = await (5);
+    b = await (5)us;
     await 10us;
     return b;
 end;
@@ -2233,7 +2233,7 @@ int a;
 loop do
     par/or do
         loop do
-            await (10);
+            await (10)us;
             await 10ms;
             if 1 then
                 a = 1;
@@ -2258,7 +2258,7 @@ loop do
     par/or do
         loop do
             await 10ms;
-            await (10);
+            await (10)us;
             if 1 then
                 break;
             end;
@@ -2278,7 +2278,7 @@ int a;
 loop do
     par/or do
         loop do
-            await (10);
+            await (10)us;
             await 10ms;
             if 1 then
                 break;
@@ -2300,7 +2300,7 @@ end;
 Test { [[
 loop do
     await 10ms;
-    await (10);
+    await (10)us;
     if 1 then
         break;
     end;
@@ -2314,7 +2314,7 @@ int a;
 par/or do
     loop do
         await 10ms;
-        await (10);
+        await (10)us;
         if 1 then
             break;
         end;
@@ -2351,7 +2351,7 @@ loop do
     par/or do
         loop do
             await 10ms;
-            await (10);
+            await (10)us;
             if 1 then
                 break;
             end;
@@ -2374,7 +2374,7 @@ int a;
 loop do
     par/or do
         loop do
-            await (10);
+            await (10)us;
             await 10ms;
             if 1 then
                 break;
@@ -2399,7 +2399,7 @@ par/or do
     a = await 10ms;
     return a;
 with
-    b = await (5);
+    b = await (5)us;
     await 11ms;
     return b;
 end;
@@ -2413,7 +2413,7 @@ par do
     a = await 10ms;
     return a;
 with
-    b = await (10000);
+    b = await (10000)us;
     return b;
 end;
 ]],
@@ -2421,7 +2421,7 @@ end;
     nd_acc = 1,
     run = {
         ['~>10ms'] = 0,
-        ['~>20ms'] = 10000,
+        ['~>20ms'] = 10000000,
     }
 }
 Test { [[
@@ -2429,13 +2429,13 @@ int a,b;
 par/and do
     a = await 10us;
 with
-    b = await (9);
+    b = await (9)us;
 end;
 return a+b;
 ]],
     run = {
-        ['~>10us'] = 1,
-        ['~>20us'] = 21,
+        ['~>10us'] = 1000,
+        ['~>20us'] = 21000,
     }
 }
 Test { [[
@@ -2444,10 +2444,10 @@ par do
     a = await 10us;
     return a;
 with
-    b = await (9);
+    b = await (9)us;
     return b;
 with
-    c = await (8);
+    c = await (8)us;
     return c;
 end;
 ]],
@@ -2459,15 +2459,15 @@ int a=0,b=0,c=0;
 par/or do
     a = await 10us;
 with
-    b = await (9);
+    b = await (9)us;
 with
-    c = await (8);
+    c = await (8)us;
 end;
 return a+b+c;
 ]],
     run = {
-        ['~>10us'] = 2,
-        ['~>20us'] = 12,
+        ['~>10us'] = 2000,
+        ['~>20us'] = 12000,
     }
 }
 Test { [[
@@ -2475,15 +2475,15 @@ int a,b,c;
 par/and do
     a = await 10ms;
 with
-    b = await (9000);
+    b = await (9000)us;
 with
-    c = await (8000);
+    c = await (8000)us;
 end;
 return a+b+c;
 ]],
     run = {
-        ['~>10ms'] = 3000,
-        ['~>20ms'] = 33000,
+        ['~>10ms'] = 3000000,
+        ['~>20ms'] = 33000000,
     }
 }
 Test { [[
@@ -2492,7 +2492,7 @@ par do
     a = await 10us;
     return a;
 with
-    b = await (10);
+    b = await (10)us;
     return b;
 with
     c = await 10us;
@@ -2506,18 +2506,23 @@ Test { [[
 u64 a,b;
 par do
     a = await 10h;
-    return a/1000;
+    return a/1000000;
 with
     b = await 20h;
-    return b/1000;
+    return b/1000000;
 end;
 ]],
     unreach = 1,
     run = {
         ['~>10h']  = 0,
         ['~>20h']  = 36000000,
-        ['~>200h'] = 684000000,
     }
+}
+Test { [[
+await 200h;
+return 0;
+]],
+    exps = 'constant is too big',
 }
 Test { [[
 int a = 2;
@@ -2539,7 +2544,7 @@ return a;
 Test { [[
 int a = 2;
 par/or do
-    await (10);
+    await (10)us;
 with
     await 20ms;
     a = 0;
@@ -2555,7 +2560,7 @@ return a;
 Test { [[
 int a = 2;
 par/or do
-    int b = await (10);
+    int b = await (10)us;
     a = b;
 with
     await 20ms;
@@ -2568,20 +2573,20 @@ return a;
 Test { [[
 u64 v1,v2;
 par do
-    v1 = await 50h;
-    return v1/1000;
+    v1 = await 50m;
+    return v1/1000000;
 with
-    await 10h;
-    v2 = await 40h;
-    return v2/1000;
+    await 10m;
+    v2 = await 40m;
+    return v2/1000000;
 end;
 ]],
     nd_flw = 2,
     nd_acc = 1,
     run = {
-        ['~>10h ; ~>10h ; ~>10h ; ~>10h ; ~>10h'] = 0,
-        ['~>20h ; ~>40h'] = 36000000,
-        ['~>40h ; ~>10h'] = 0,
+        ['~>10m ; ~>10m ; ~>10m ; ~>10m ; ~>10m'] = 0,
+        ['~>20m ; ~>40m'] = 600000,
+        ['~>40m ; ~>10m'] = 0,
     }
 }
 
@@ -2710,11 +2715,11 @@ end;
 ]],
     run = {
         ['~>1ms; ~>1ms; ~>1ms; ~>1ms; ~>1ms; 1~>F'] = 0,
-        ['~>1ms; ~>1ms; ~>1ms; ~>10ms; 1~>F'] = 45000,
-        ['~>1ms; ~>1ms; ~>2ms; 1~>F'] = 1000,
-        ['~>2ms; 1~>F'] = 1000,
-        ['~>2ms; ~>2ms; 1~>F'] = 2000,
-        ['~>4ms; 1~>F'] = 6000,
+        ['~>1ms; ~>1ms; ~>1ms; ~>10ms; 1~>F'] = 45000000,
+        ['~>1ms; ~>1ms; ~>2ms; 1~>F'] = 1000000,
+        ['~>2ms; 1~>F'] = 1000000,
+        ['~>2ms; ~>2ms; 1~>F'] = 2000000,
+        ['~>4ms; 1~>F'] = 6000000,
         ['1~>F'] = 0,
     }
 }
@@ -2725,12 +2730,12 @@ par do
     int v = await A;
     return v;
 with
-    int v = await (1);
+    int v = await (1)us;
     return v;
 end;
 ]],
     run = {
-        ['~>10us'] = 9,
+        ['~>10us'] = 9000,
         ['10~>A'] = 10,
     }
 }
@@ -2740,14 +2745,14 @@ int v;
 par/or do
     v = await 10us;
 with
-    v = await (1);
+    v = await (1)us;
 end;
 return v;
 ]],
     nd_acc = 1,
     run = {
         ['~>1us'] = 0,
-        ['~>20us'] = 19,
+        ['~>20us'] = 19000,
     }
 }
 
@@ -2757,12 +2762,12 @@ int a;
 par/or do
     a = await A;
 with
-    a = await (1);
+    a = await (1)us;
 end;
 return a;
 ]],
     run = {
-        ['~>10us'] = 9,
+        ['~>10us'] = 9000,
         ['10~>A'] = 10,
     }
 }
@@ -2779,7 +2784,7 @@ return a;
 ]],
     run = {
         ['~>30us'] = 0,
-        ['~>60us'] = 30,
+        ['~>60us'] = 30000,
         ['10~>A'] = 10,
     }
 }
@@ -2789,7 +2794,7 @@ Test { [[
 input int A, F;
 int a;
 par/or do
-    a = await 10min;
+    a = await 10m;
 with
     a = await A;
 end;
@@ -2798,9 +2803,9 @@ return a;
 ]],
     run = {
         ['1~>A  ; 1~>F'] = 1,
-        ['~>10min ; 1~>F'] = 0,
-        ['~>10min ; 1~>A ; 1~>F'] = 0,
-        ['1~>A  ; ~>10min; 1~>F'] = 1,
+        ['~>10m ; 1~>F'] = 0,
+        ['~>10m ; 1~>A ; 1~>F'] = 0,
+        ['1~>A  ; ~>10m; 1~>F'] = 1,
     }
 }
 
@@ -3368,8 +3373,8 @@ return a;
     run = {
         ['~>30ms ; 0~>A'] = 0,
         ['0~>A   ; ~>30ms'] = 0,
-        ['~>60ms ; 0~>A'] = 30000,
-        ['0~>A   ; ~>60ms'] = 30000,
+        ['~>60ms ; 0~>A'] = 30000000,
+        ['0~>A   ; ~>60ms'] = 30000000,
     }
 }
 
@@ -3395,7 +3400,7 @@ par/and do
     await 30ms;
 with
     await A;
-    await (30);
+    await (30)us;
 end;
 return 1;
 ]],
@@ -3483,9 +3488,9 @@ return dt;
 ]],
     unreach = 0,    -- TODO: timer kills timer
     run = {
-        ['~>30ms'] = 10000,
-        ['0~>A ; ~>40ms'] = 20000,
-        ['~>10ms ; 0~>A ; ~>40ms'] = 30000,
+        ['~>30ms'] = 10000000,
+        ['0~>A ; ~>40ms'] = 20000000,
+        ['~>10ms ; 0~>A ; ~>40ms'] = 30000000,
     }
 }
 Test { [[
@@ -3500,9 +3505,9 @@ end;
 return dt;
 ]],
     run = {
-        ['~>30us'] = 10,
+        ['~>30us'] = 10000,
         ['0~>A ; ~>10us'] = 0,
-        ['0~>A ; ~>13us'] = 3,
+        ['0~>A ; ~>13us'] = 3000,
     }
 }
 Test { [[
@@ -3519,9 +3524,9 @@ return dt;
 ]],
     unreach = 0,    -- TODO: timer kills timer
     run = {
-        ['~>30ms'] = 10000,
+        ['~>30ms'] = 10000000,
         ['~>12ms ; 0~>A ; ~>8ms'] = 0,
-        ['~>15ms ; 0~>A ; ~>10ms'] = 5000,
+        ['~>15ms ; 0~>A ; ~>10ms'] = 5000000,
     }
 }
 
@@ -3604,9 +3609,9 @@ return dt;
 ]],
     unreach = 0, -- TODO: timer kills timer
     run = {
-        ['~>30ms'] = 10000,
+        ['~>30ms'] = 10000000,
         ['~>12ms ; 0~>A ; ~>8ms'] = 0,
-        ['~>15ms ; 0~>A ; ~>10ms'] = 5000,
+        ['~>15ms ; 0~>A ; ~>10ms'] = 5000000,
     }
 }
 Test { [[
@@ -3617,14 +3622,14 @@ par/or do
     dt = await 20ms;
 with
     await B;
-    dt = await (20000);
+    dt = await (20)ms;
 end;
 return dt;
 ]],
     run = {
         ['~>30ms ; 0~>A ; ~>20ms'] = 0,
-        ['~>12ms ; 0~>A ; 0~>B ; ~>27ms'] = 7000,
-        ['~>12ms ; 0~>B ; ~>3ms ; 0~>A ; ~>20ms'] = 3000,
+        ['~>12ms ; 0~>A ; 0~>B ; ~>27ms'] = 7000000,
+        ['~>12ms ; 0~>B ; ~>3ms ; 0~>A ; ~>20ms'] = 3000000,
     }
 }
 
@@ -3643,8 +3648,8 @@ return dt;
 ]],
     nd_acc = 1,
     run = {
-        ['~>12ms ; 0~>A ; 0~>B ; ~>27ms'] = 7000,
-        ['~>12ms ; 0~>B ; 0~>A ; 0~>B ; ~>26ms'] = 6000,
+        ['~>12ms ; 0~>A ; 0~>B ; ~>27ms'] = 7000000,
+        ['~>12ms ; 0~>B ; 0~>A ; 0~>B ; ~>26ms'] = 6000000,
     }
 }
 
@@ -3661,14 +3666,14 @@ return dt;
 ]],
     unreach = 1, -- apos ~30
     run = {
-        ['~>12ms ; ~>17ms'] = 9000,
+        ['~>12ms ; ~>17ms'] = 9000000,
     }
 }
 Test { [[
 int dt;
 par/or do
     await 10us;
-    dt = await (10);
+    dt = await (10)us;
 with
     dt = await 30us;
 end;
@@ -3676,7 +3681,7 @@ return dt;
 ]],
     nd_acc = 1,
     run = {
-        ['~>12us ; ~>17us'] = 9,
+        ['~>12us ; ~>17us'] = 9000,
     }
 }
 
@@ -3931,14 +3936,14 @@ par/or do
         await A;
     with
         await B;
-        await (10);
+        await (10)us;
     end;
     await 10us;
     int v = a;
 with
     await A;
     await B;
-    await (20);
+    await (20)us;
     a = 1;
 end;
 return a;
@@ -4215,11 +4220,11 @@ return a;
 Test { [[
 int a;
 par/or do
-    await (10);
+    await (10)us;
     a = 1;
 with
-    await (5);
-    await (10);
+    await (5)us;
+    await (10)us;
     a = 2;
 end;
 return a;
@@ -4230,13 +4235,13 @@ Test { [[
 input int A;
 int a;
 par/or do
-    await (10);
+    await (10)us;
     await A;
     a = 1;
 with
-    await (5);
+    await (5)us;
     await A;
-    await (10);
+    await (10)us;
     await A;
     a = 2;
 end;
@@ -4248,11 +4253,11 @@ Test { [[
 input int A;
 int a;
 par/or do
-    await (10);
+    await (10)us;
     await A;
     a = 1;
 with
-    await (5);
+    await (5)us;
     await A;
     await A;
     a = 2;
@@ -4269,7 +4274,7 @@ par/or do
     await A;
     a = 1;
 with
-    await (5);
+    await (5)us;
     await A;
     await A;
     a = 2;
@@ -4282,7 +4287,7 @@ return a;
 Test { [[
 int a;
 par/or do
-    await (10);
+    await (10)us;
     await 10ms;
     a = 1;
 with
@@ -4340,7 +4345,7 @@ par/or do
     await A;
     a = 1;
 with
-    await (10);
+    await (10)us;
     await A;
     a = 2;
 end;
@@ -4353,11 +4358,11 @@ Test { [[
 input int A;
 int a;
 par/or do
-    await (10);
+    await (10)us;
     await A;
     a = 1;
 with
-    await (10);
+    await (10)us;
     await A;
     a = 2;
 end;
@@ -4387,7 +4392,7 @@ return a;
 
 Test { [[
 int a;
-await (10);
+await (10)us;
 par/or do
     await 10ms;
     a = 2;
@@ -4404,7 +4409,7 @@ Test { [[
 input int A;
 int a;
 par/or do
-    await (10);
+    await (10)us;
     a = 1;
     par/or do
         await 10ms;
@@ -4429,10 +4434,10 @@ input int A;
 int a;
 par/or do
     await A;
-    await (10);
+    await (10)us;
     a = 1;
 with
-    await (10);
+    await (10)us;
     a = 2;
 end;
 return a;
@@ -4468,7 +4473,7 @@ par do
     end;
 with
     loop do
-        await (200);
+        await (200)us;
         x = 2;
     end;
 end;
