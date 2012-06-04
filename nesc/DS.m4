@@ -206,7 +206,7 @@ dnl [ 2: n_nodes ] 	  number of nodes
 dnl [ 3: neighbours ] 	  bitmap of neighbours
 dnl [ 4: payload_type ]  payload type
 dnl [ 5: empty_payload ] empty payload
-dnl	[ 6: final_payload ] payload where the current state is stored
+dnl [ 6: final_payload ] payload where the current state is stored
 dnl [ 7: aggregator ]	  aggregation code
 dnl [ 8: iterator ]	  iteration code
 dnl [ 9: ack_timeout ]	  retry timeout for send_ack
@@ -220,7 +220,7 @@ end
 	
 do
 	u8 received_probe = 0;
-	int original_sender = 0;
+	int original_sender = -1;
 
 	if _TOS_NODE_ID == $1 then
 		_message_t probe;
@@ -228,35 +228,50 @@ do
 		received_probe = 1;
 		_memcpy(probe_payload, $5, sizeof<$4>);
 
-		int err = @RADIO_send(&probe, _AM_BROADCAST_ADDR);
+		@RADIO_broadcast_ack(&probe, $4, N_NODES, $3, $9);
 		_DBG("Initial broadcast sent from NODE %d\n", _TOS_NODE_ID);
 	end
 
-	par/or do
-		_message_t* recv_probe;
-		$4* recv_payload;
+	par/or do		
+        par/and do
+            _message_t* recv_probe;
+		    $4* recv_payload;
 
-		loop do
-			recv_probe = @RADIO_receive(_PROBE, $4, recv_payload);
-			_DBG("Received PROBE from NODE %d\n", _Radio_getSource(recv_probe));
-		
-			if received_probe == 0 then
-				received_probe = 1;
-				original_sender = _Radio_getSource(recv_probe);
-				_message_t forward_probe;
-				$4 forward_payload;
-				_memcpy(&forward_payload, recv_payload, sizeof<$4>);
+            if received_probe == 0 then
+                recv_probe = @RADIO_receive(_PROBE, $4, recv_payload);
 
-				int err = @RADIO_send_value(&forward_probe, _AM_BROADCAST_ADDR, _PROBE, $4, &forward_payload);
-			else
-				int source = _Radio_getSource(recv_probe);
-				_DBG("Sending EMPTY ECHO to NODE %d\n", _Radio_getSource(recv_probe));
-				_message_t echo;
+                received_probe = 1;
+                original_sender = _Radio_getSource(recv_probe);
+                _message_t forward_probe;
+                $4 *forward_payload;
 
-				int err = @RADIO_send_value(&echo, source, _ECHO, $4, $5);
-			end	
-		end		
-	with
+                forward_payload = @RADIO_msg(&forward_probe, _PROBE, $4);
+                _memcpy(forward_payload, recv_payload, sizeof<$4>);
+
+                @RADIO_broadcast_ack(&forward_probe, $4, $2, $3, $9);
+            end
+        with
+            _message_t* recv_probe;
+		    $4* recv_payload;
+            
+            loop do
+                await 100ms;
+                if received_probe == 1 then
+                    recv_probe = @RADIO_receive_ack(_PROBE, $4, recv_payload);
+                    _DBG("Received PROBE from NODE %d\n", _Radio_getSource(recv_probe));	
+            
+                    int source = _Radio_getSource(recv_probe);
+                    _DBG("Sending EMPTY ECHO to NODE %d\n", _Radio_getSource(recv_probe));
+                    _message_t echo;
+            
+                    _DBG("\n\tORIGINAL SENDER: %d\n\tSOURCE: %d\n", original_sender, source);	
+                    if original_sender != source then
+                        @RADIO_send_value_ack(&echo, source, _ECHO, $4, $5, $9);
+                    end    
+                end
+            end
+        end
+    with
 		int source;
 		u8 [ eval($2/8) ] neighs;
 
@@ -274,15 +289,22 @@ do
                 	recv_echo = @RADIO_receive(_ECHO, $4, recv_payload);
         	    	source = _Radio_getSource(recv_echo);
     	        	_DBG("Received ECHO from NODE %d with DATA %d\n", source, recv_payload->data);
-
+					
+					
+		
 	    	    	if _bm_get(neighs, source) then	
 		    	    	_bm_off(neighs, source);
-						// Aggregate
-                        $7($6, recv_payload);	
+				// Aggregate
+                        	$7($6, recv_payload);	
 
-                    	if _bm_isZero(neighs, $2) then
-                        	break;
-                    	end
+							char[255] all;
+					_bm_tostr(neighs, $2, all);
+					_DBG("0123456789ABCDEF\n");
+					_DBG("%s\n\n", all);
+
+                    		if _bm_isZero(neighs, $2) then
+                        		break;
+                    		end
             		end
             	end
        		with
@@ -297,7 +319,9 @@ do
 		if _TOS_NODE_ID != $1 then
 			_memcpy(&payload, $6, sizeof<$4>);
 					
-        	@RADIO_send_value_ack(&echo, original_sender, _ECHO, $4, &payload, $9);
+			_DBG("Sending FINAL ECHO to NODE %d with DATA %d\n", original_sender, payload.data);
+
+        		@RADIO_send_value_ack(&echo, original_sender, _ECHO, $4, &payload, $9);
 		end
 	end
 end

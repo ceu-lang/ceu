@@ -22,6 +22,7 @@ u8[ eval(N_NODES/8) ] nodes;
 _bm_clear(nodes, N_NODES);
 
 await 1s;
+
 par/or do
 	@DS_neighbours(nodes, N_NODES, 100, 200ms);
 with
@@ -34,17 +35,27 @@ C do
     }
 end
 
-await 500ms;
-@DS_probeEcho(_SERVER_ID, N_NODES, nodes, _Payload, &empty, &final, _aggr, `
-do
-	_Photo_read();
-	int sensor_data = await Photo_readDone;
-	final.data = final.data + sensor_data;
-end´, 500ms);
+char[255] all;
+_bm_tostr(nodes, N_NODES, all);
+_DBG("0123456789ABCDEF\n");
+_DBG("%s\n\n", all);
 
-if _TOS_NODE_ID == _SERVER_ID then	
-	_DBG("Final: %d\n", final.data);
-	_DBG("Average value: %f\n", (final.data/<float>N_NODES));
-end 
+// await 500ms;
+
+event void done;
+par/and do
+    @DS_probeEcho(_SERVER_ID, N_NODES, nodes, _Payload, &empty, &final, _aggr, `
+    do
+        _Photo_read();
+        int sensor_data = await Photo_readDone;
+        final.data = final.data + sensor_data;
+    end´, done, 500ms);
+with
+    await done;
+    if _TOS_NODE_ID == _SERVER_ID then	
+	    _DBG("Final: %d\n", final.data);
+        _DBG("Average value: %f\n", (final.data/<float>N_NODES));
+    end 
+end
 
 return 0;
