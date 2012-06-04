@@ -13,7 +13,7 @@ typedef uint8_t   u8;
 #include "_ceu_code.tmp"
 
 u32 old = micros();
-u64 now64 = old;
+u64 now64 = old * 1000;
 
 int V;
 
@@ -350,8 +350,8 @@ void loop()
     if (POLLING_INTERVAL > dt)
         delayMicroseconds(POLLING_INTERVAL-dt);
 #endif
-    now64 += dt;    // incrementing `dt´ avoids overflows
-    old   += dt;    // `old´ should overflow after 70mins
+    now64 += dt*1000; // incrementing `dt´ avoids overflows
+    old   += dt;      // `old´ should overflow after 70mins
     while (ceu_go_time(NULL, now64) == CEU_TMREXP);
 
 #if N_ASYNCS > 0

@@ -48,6 +48,7 @@ local _V2NAME = {
     Int = 'event',
     Var = 'variable',
     ID_c  = 'identifier',
+    ID_var  = 'identifier',
     ID_int  = 'identifier',
     ID_ext  = 'identifier',
     ID_type = 'type',
@@ -76,15 +77,14 @@ local EM = function (msg)
         end)
 end
 
-KEYS = P'do'+'end'+'async'+'return'
-     + 'par'+'par/or'+'par/and'+'with'
-     + 'if'+'then'+'else'
-     + 'await'+'forever'+'emit'+'now'
-     + 'loop'+'break'+'nothing'
-     + 'input'+'output'+'event' -- TODO: types
-     + 'sizeof'+'null'+'call'
-     + 'pure'+'deterministic'
-     + 'set'+'for'
+-- TODO: types
+KEYS = P'async'   + 'await'  + 'break'  + 'call'   + 'deterministic'
+     +  'do'      + 'emit'   + 'else'   + 'end'    + 'event'
+     +  'Forever' + 'input'  + 'if'     + 'loop'   + 'nothing'
+     +  'now'     + 'null'   + 'output' + 'par'    + 'par/and'
+     +  'par/or'  + 'pure'   + 'return' + 'set'    + 'sizeof'
+     +  'then'    + 'with'
+
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
 local S = V'_SPACES'
@@ -117,7 +117,7 @@ _GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
 
     , _StmtBlock = V'_DoBlock' + V'Async'  + V'Host'
                  + V'ParOr'    + V'ParAnd'
-                 + V'If'       + V'Loop'   + V'_For'
+                 + V'If'       + V'Loop'
 
     , _SetBlock = K'set' *S* (
                     V'_DoBlock' + V'Async' +
@@ -161,23 +161,19 @@ _GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
 
     , If      = K'if' *S* EV'_Exp' *S* EK'then' *S*
                     V'Block' *S*
-                (EK'else' *S*
-                    V'Block')^-1 *S*
+                (K'elseif' *S* EV'_Exp' *S* EK'then' *S*
+                    V'Block')^0 *S*
+                (K'else' *S*
+                    V'Block' + Cc(false)) *S*
                 EK'end'
 
-    , Loop    = K'loop' *S* EK'do' *S*
+    , Loop    = K'loop' *S*
+                    (V'ID_var'* (S*EK','*S*EV'_Exp' + Cc(false)) + 
+                        Cc(false)*Cc(false)) *S*
+                EK'do' *S*
                     V'Block' *S*
                 EK'end'
     , Break   = K'break'
-
-    , _For    = K'for' *S* EV'ID_var' *S* EK'=' *S*
-                    EV'_Exp' *S* EK',' *S*
-                    EV'_Exp' *S* (K',' *S*
-                    (K'-'*Cc(false)+Cc(true)) *S* EV'CONST'
-                        + Cc(true)*Cc(false)) *S*
-                    EK'do' *S*
-                        V'Block' *S*
-                    EK'end'
 
     , _Exp    = V'_1'
     , _1      = V'_2'  * (S* CK'||' *S* V'_2')^0
@@ -215,25 +211,31 @@ _GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
 
     , NOW  = CK'now'
     , NULL = CK'null'
-    , TIME = #NUM *
-                (NUM * K'h'   + Cc(0)) *
-                (NUM * K'min' + Cc(0)) *
-                (NUM * K's'   + Cc(0)) *
-                (NUM * K'ms'  + Cc(0)) *
-                (NUM * K'us'  + Cc(0)) *
-                (NUM * EM'expected <h,min,s,ms,us>')^-1
+
+    , TIMEK = #NUM *
+                (NUM * K'h'        + Cc(0)) *
+                (NUM * (K'm'-'ms') + Cc(0)) *
+                (NUM * K's'        + Cc(0)) *
+                (NUM * K'ms'       + Cc(0)) *
+                (NUM * K'us'       + Cc(0)) *
+                (NUM * K'ns'       + Cc(0)) *
+                (NUM * EM'expected <h,m,s,ms,us,ns>')^-1
+    , TIMEE = V'_Parens' *S* C(
+                    K'h' + (K'm'-'ms') + K's' + K'ms' + K'us' + K'ns'
+                  + EM'expected <h,m,s,ms,us,ns>'
+              )
 
     , AwaitExt = K'await' *S* EV'Ext'
     , AwaitInt = K'await' *S* EV'Int'
-    , AwaitN   = K'await' *S* K'forever'             -- last stmt
-    , AwaitT   = K'await' *S* (V'_Parens'+V'TIME')
+    , AwaitN   = K'await' *S* K'Forever'
+    , AwaitT   = K'await' *S* (V'TIMEK'+V'TIMEE')
 
 
     , EmitExtS = V'EmitExt'
     , EmitExtE = V'EmitExt'
     , EmitExt  = K'emit' *S* EV'Ext' * (S* K'(' *S* V'_Exp' *S* EK')')^-1
     , EmitInt  = K'emit' *S* EV'Int' * (S* K'(' *S* V'_Exp' *S* EK')')^-1
-    , EmitT    = K'emit' *S* (V'_Parens'+V'TIME')
+    , EmitT    = K'emit' *S* (V'TIMEK'+V'TIMEE')
 
     , _Dcl_ext = (CK'input'+CK'output') *S* EV'ID_type' *S*
                     EV'ID_ext' * (S*K','*S*EV'ID_ext')^0

@@ -2,6 +2,15 @@ _EXPS = {
     calls = {}      -- { _printf=true, _myf=true, ... }
 }
 
+local t2n = {
+    ns = 1,
+    us = 10^3,
+    ms = 10^6,
+     s = 10^9,
+     m = 60*10^9,
+     h = 60*60*10^9,
+}
+
 F = {
     SetExp = function (me)
         local e1, e2 = unpack(me)
@@ -225,13 +234,22 @@ F = {
         me.val  = me.var.off
     end,
 
-    TIME = function (me)
-        local h,m,s,ms,us = unpack(me)
+    TIMEK = function (me)
+        local h,m,s,ms,us,ns = unpack(me)
         me.tp   = 'int'
-        me.us   = us + ms*1000 + s*1000000 + m*60000000 + h*3600000000
-        me.val  = me.us .. 'LL'
+        me.ns   = ns*t2n.ns + us*t2n.us + ms*t2n.ms + s*t2n.s + m*t2n.m + h*t2n.h
+        ASR(not string.find(me.ns, 'e+'), me, 'constant is too big')
+        me.val  = me.ns .. 'LL'
         me.lval = false
-        ASR(me.us > 0, me,'must be >0')
+        ASR(me.ns > 0, me,'must be >0')
+    end,
+
+    TIMEE = function (me)
+        local exp, unit = unpack(me)
+        me.tp   = 'int'
+        me.ns   = nil
+        me.val  = exp.val .. '*' .. t2n[unit] .. 'LL'
+        me.lval = false
     end,
 
     Cid = function (me)

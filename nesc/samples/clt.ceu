@@ -21,7 +21,7 @@ loop do
 
         _DBG("Received = %d\n", *pv);
         _Leds_set(*pv/100);
-        await forever;
+        await Forever;
 
     with
         par/or do
@@ -36,6 +36,6 @@ loop do
         with
             await received;
         end
-        await forever;
+        await Forever;
     end
 end

@@ -24,18 +24,18 @@ _bm_tostr(neighs, N_NODES, all);
 _DBG("%s\n", all);
 
 /*** @DS_topology_hb_diam(topo, N_NODES, 101, 250ms, 10); ***/
-@DS_topology_hb_all(topo, N_NODES, 101, 250ms);
+@DS_topology_hb_ack(topo, N_NODES, 101, 250ms);
 _DBG("FIM!\n");
 
 //if _TOS_NODE_ID==8 || _TOS_NODE_ID==9 || _TOS_NODE_ID==6 then
 if _TOS_NODE_ID==6 then
     int count = 0;
     _DBG("      0123456789012345\n");
-    for i=0, N_NODES-1 do
+    loop i, N_NODES do
         char[256] str;
         _bm_tostr(&topo[i*N_NODES/8], N_NODES, str);
         _DBG("[%2d]: %s\n", i, str);
-        for j=0, N_NODES-1 do
+        loop j, N_NODES do
             if _bm_get(&topo[i*N_NODES/8], j) then
                 count = count + 1;
             end
@@ -44,4 +44,4 @@ if _TOS_NODE_ID==6 then
     _DBG("COUNT: %d\n", count);
 end
 
-await forever;
+await Forever;

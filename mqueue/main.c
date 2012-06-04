@@ -42,7 +42,7 @@ int main (int argc, char *argv[])
 
     struct timespec tv_now;
     clock_gettime(CLOCK_REALTIME, &tv_now);
-    u64 now = (tv_now.tv_sec*1000000LL + tv_now.tv_nsec/1000);
+    u64 now = (tv_now.tv_sec*1000000000LL + tv_now.tv_nsec);
 
     if (ceu_go_init(&ret, now) == CEU_TERM)
         goto END;
@@ -59,9 +59,9 @@ int main (int argc, char *argv[])
     for (;;)
     {
         // TODO: timeout ser o valor exato do prox timer
-        now += (async_cnt ? 0 : 50000); // 50ms
-        struct timespec timeout = { now / 1000000,
-                                    now % 1000000 * 1000 };
+        now += (async_cnt ? 0 : 50000000); // 50ms
+        struct timespec timeout = { now / 1000000000,
+                                    now % 1000 };
 
         while (mq_timedreceive(queue,_buf,sizeof(_buf),NULL,&timeout) != -1)
         {
@@ -140,7 +140,7 @@ int main (int argc, char *argv[])
         }
 
         clock_gettime(CLOCK_REALTIME, &tv_now);
-        now = (tv_now.tv_sec*1000000LL + tv_now.tv_nsec/1000);
+        now = (tv_now.tv_sec*1000000000LL + tv_now.tv_nsec);
         if (ceu_go_time(&ret, now) == CEU_TERM)
             goto END;
 

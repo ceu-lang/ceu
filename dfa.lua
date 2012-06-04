@@ -12,25 +12,25 @@ _DFA = {
 
 local _step_
 
-function NODE_time (old, us)
+function NODE_time (old, ns)
     if old.ref then
         old = old.ref   -- always get to the original q
     end
-    old.qs_dif = old.qs_dif or { [old.us]=old }
-    local new = old.qs_dif[us]
+    old.qs_dif = old.qs_dif or { [old.ns]=old }
+    local new = old.qs_dif[ns]
     if new then
         return new
     end
 
-    local us_id = (us==_TIME_undef) and '??' or us
+    local us_id = (ns==_TIME_undef) and '??' or ns
     new = _NFA.node {
-        id    = '+'..us_id..'us',
-        us    = us,
+        id    = '+'..us_id..'ns',
+        ns    = ns,
         keep  = true,
         toAwk = old.toAwk,
         ref   = old,
     }
-    old.qs_dif[us] = new
+    old.qs_dif[ns] = new
 
     -- includes the new node in all rems that old is present
     for x in pairs(_NFA.nodes) do
@@ -359,8 +359,8 @@ do
     -- MIN timer
     local min = set.fold(S.qs_awt, false,
         function(acc, q)
-            if q.us and q.us~=_TIME_undef and (acc==false or q.us<acc) then
-                return q.us
+            if q.ns and q.ns~=_TIME_undef and (acc==false or q.ns<acc) then
+                return q.ns
             else
                 return acc
             end
@@ -369,7 +369,7 @@ do
     -- all undefs + min (if existent)
     local qs_tmr = set.flatten(
                         set.filter(S.qs_awt,
-                            function(q) return q.us==_TIME_undef end))
+                            function(q) return q.ns==_TIME_undef end))
     if min then
         qs_tmr[#qs_tmr+1] = true
     end
@@ -393,24 +393,24 @@ do
             local changed = false
 
             for q, P in pairs(S.qs_awt) do
-                if q.us and P.t0==s.n then       -- must match starting S
+                if q.ns and P.t0==s.n then       -- must match starting S
                     local idx = qs_tmr[q]
-                    if (minOn and q.us==min) or
+                    if (minOn and q.ns==min) or
                         (idx and string.sub(tmr_bin,-idx,-idx)=='1') then
                         qs_togo[q.toAwk] = P        -- expiring timers
                         changed = true
-                    elseif q.us == _TIME_undef then
+                    elseif q.ns == _TIME_undef then
                         qs_togo[q] = P              -- unchanged
                     else
-                        local us, us_id
+                        local ns, us_id
                         if minOn then
-                            us = q.us - min
-                            us_id = us
+                            ns = q.ns - min
+                            us_id = ns
                         else
-                            us = _TIME_undef
+                            ns = _TIME_undef
                             us_id = '??'
                         end
-                        local new = NODE_time(q,us) -- copy q (with dif time)
+                        local new = NODE_time(q,ns) -- copy q (with dif time)
                         qs_togo[new] = P            -- non expiring timers
                         changed = true
                     end
@@ -421,7 +421,7 @@ do
             if changed then
                 DELTAS[#DELTAS+1] = {
                     id  = s.n..'/'..tmr_cur,
-                    us  = US,
+                    ns  = US,
                     t0 = s.n,
                     qs_togo = qs_togo,
                 }
@@ -443,7 +443,7 @@ do
         do
             local qs_togo = T.qs_togo
             local T = { id=T.id..'/'..ifs_cur, ifs_cur=ifs_cur,
-                        t0=T.t0, us=T.us, qs_togo={} }
+                        t0=T.t0, ns=T.ns, qs_togo={} }
 
             local qs_cur  = set.new()
             local qs_path = { t0=T.t0 } -- { t0=?, {q=?,prio=?,...}, ...  }
@@ -496,13 +496,13 @@ do
                             Q_spawn(q.to, qs_cur[q_and])
                         end
                     end
-                elseif q.us and (not qs_togo[q]) then
+                elseif q.ns and (not qs_togo[q]) then
                     -- keep starting S or set to S to be created
                     P.t0 = T.t0 or _DFA.n_states+1
-                    if T.us == _TIME_undef then
+                    if T.ns == _TIME_undef then
                         q = NODE_time(q, _TIME_undef)
                     end
---DBG(q.us, P.t0)
+--DBG(q.ns, P.t0)
                 elseif q.toCnt then
                     local p = Q_spawn(q.toCnt, nil, _step_+1)
                     p.trg = P
