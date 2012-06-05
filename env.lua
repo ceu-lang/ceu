@@ -4,8 +4,13 @@ _ENV = {
 }
 
 function newvar (me, blk, isEvt, tp, dim, id)
-    ASR(not blk.vars[id], me,
-        'variable "'..id..'" is already declared')
+    for b in _ITER'Block' do
+        local var = b.vars[id]
+        if var then
+            WRN(false, me,
+                'declaration of "'..id..'" hides the one at line '..var.ln[1])
+        end
+    end
 
     local var = {
         ln    = me.ln,

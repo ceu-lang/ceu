@@ -41,6 +41,15 @@ C do
         return 1;
     }
 
+    int bm_count (u8* map, int len) {
+        int ret = 0;
+        int i;
+        for (i=0; i<len; i++)
+            if (bm_get(map,i))
+                ret++;
+        return ret;
+    }
+
     void bm_tostr (u8* map, int len, char* str) {
         int i;
         for (i=0; i<len; i++)
@@ -48,12 +57,10 @@ C do
         str[len] = '\0';
     }
     
-    void bm_copy(u8* dest, u8* src, int len){
+    void bm_copy (u8* dst, u8* src, int len) {
         int i;
-
-        for(i = 0; i < len/8; i++){
-            dest[i] = src[i];
-        }   
+        for (i=0; i<len/8; i++)
+            dst[i] = src[i];
     }
 end
 

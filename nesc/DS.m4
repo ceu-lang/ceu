@@ -3,6 +3,34 @@
 changequote(<,>)
 changequote(`,´)
 
+define(DS_neighbours, `/*{-{*/
+dnl [ 1: msg_proto ] message protocol type
+dnl [ 2: evt_retry ] event for retrying
+dnl [ 3: neighs    ] bitmap of neighbours
+dnl [ 4: n_neighs  ] max number of neighbours
+do
+    _bm_clear($3, $4);
+    par do
+        loop do
+            _message_t msg_ng;
+            int err = @RADIO_send_empty(&msg_ng, _AM_BROADCAST_ADDR, $1);
+            await $2;
+        end
+    with
+        loop do
+            _message_t* msg_ng = @RADIO_receive_empty($1);
+            u16 src = _Radio_getSource(msg_ng);
+            if src < $4 then
+                _bm_on($3, src);
+            end
+        end
+    end
+end
+dnl * Sends an am_type broadcast message every retry event
+dnl * Receives am_type messages / saves in nodes the source node
+dnl * It never terminates!
+/*}-}*/´)
+
 dnl SORTING NETWORK
 dnl DOCUMENT: tol. a falhas
 dnl send sempre pode falhar
@@ -15,51 +43,51 @@ dnl     - pouca memoria
 dnl     - mesmo assim pode haver overflow
 
 define(DS_broadcast_front, `/*{-{*/
-dnl [ 1: type ]     data type being broadcast
-dnl [ 2: n_buffer ] max number of buffered messages
-dnl [ 3: am_type  ] AM message type for the protocol
-dnl [ 4: recv_evt ] event to emit on receiving
-dnl [ 5: send_evt ] event to await for sending
-dnl [ 6: front_ms ] frontier retry period
+dnl [ 1: msg_proto ] message protocol type
+dnl [ 2: pay_type  ] message payload type being broadcast
+dnl [ 3: n_buffer  ] max number of buffered messages
+dnl [ 4: front_ms  ] frontier retry period
+dnl [ 5: evt_recv  ] event to emit  net->app
+dnl [ 6: evt_send  ] event to await app->net
 do
-    $1[$2] buf;
+    $2[$3] buf;
     u32 buf_n = 0;
     par do
         // awaits exactly the next message
         loop do
-            $1* recv_v;
-            _message_t* recv_msg = @RADIO_receive($3, $1, recv_v);
+            $2* recv_v;
+            _message_t* msg_bcast = @RADIO_receive($1, $2, recv_v);
             if buf_n == recv_v->seqno then  // TODO: % would restore lazy node
-                buf[buf_n%$2] = *recv_v;
-                recv_v = &buf[buf_n%$2];
-                emit $4(recv_v);
+                buf[buf_n%$3] = *recv_v;
+                recv_v = &buf[buf_n%$3];
+                emit $5(recv_v);
                 buf_n = buf_n + 1;
             end
         end
     with
         loop do
-            $1* recv_v = await $5;
-            buf[buf_n%$2] = *recv_v;
+            $2* recv_v = await $6;
+            buf[buf_n%$3] = *recv_v;
             buf_n = buf_n + 1;
         end
     with
         // periodically broadcasts my frontier
         loop do
-            await $6;
-            _message_t send_msg;
+            await $4;
+            _message_t msg_bcast;
             u32 v = buf_n;
-            int err = @RADIO_send_value(&send_msg, _AM_BROADCAST_ADDR,
-                                      $3+1, u32, &v);
+            int err = @RADIO_send_value(&msg_bcast, _AM_BROADCAST_ADDR,
+                                        $1+1, u32, &v);
         end
     with
         // broadcasts requests from others frontiers
         loop do
             u32* recv_v;
-            _message_t* recv_msg = @RADIO_receive($3+1, u32, recv_v);
+            _message_t* msg_bcast = @RADIO_receive($1+1, u32, recv_v);
             if *recv_v < buf_n then
-                _message_t send_msg;
-                int err = @RADIO_send_value(&send_msg, _AM_BROADCAST_ADDR,
-                                          $3, $1, &buf[*recv_v%$2]);
+                _message_t msg_bcast;
+                int err = @RADIO_send_value(&msg_bcast, _AM_BROADCAST_ADDR,
+                                            $1, $2, &buf[*recv_v%$3]);
             end
         end
     end
@@ -79,32 +107,34 @@ dnl nao terei uma diff maior que buffer size entre o sender e o pior receiver
 dnl recebimento em ordem!!
 /*}-}*/´)
 
+dnl TODO: usar bcast_ack
 define(DS_topology_hb_ack, `/*{-{*/
-dnl [ 1: nodes ]     bitmap of nodes X nodes
-dnl [ 2: n_nodes ]   max number of nodes
-dnl [ 3: am_type ]   AM message type for the protocol
-dnl [ 4: heartbeat ] heartbeat period
+dnl [ 1: msg_proto ] message protocol type
+dnl [ 2: heartbeat ] heartbeat period
+dnl [ 3: nodes     ] bitmap of nodes X nodes
+dnl [ 4: n_nodes   ] max number of nodes
+dnl [ 5: evt_done  ] event emitted when topology is complete
 C do
     typedef nx_struct {
-        u8 v[eval($2*$2/8)];
+        u8 v[eval($4*$4/8)];
     } Topo;
 end
 do
     par/or do
-        _message_t send_msg;
+        _message_t msg_topo;
         loop do
-            await $4;
-            int err = @RADIO_send_value(&send_msg, _AM_BROADCAST_ADDR,
-                                      $3, _Topo, $1);
+            await $2;
+            int err = @RADIO_send_value(&msg_topo, _AM_BROADCAST_ADDR,
+                                        $1, _Topo, $3);
         end
     with
         loop do
             _Topo* recv_v;
-            _message_t* recv_msg = @RADIO_receive($3, _Topo, recv_v);
-            _bm_or($1, recv_v->v, $2*$2);
+            _message_t* msg_topo = @RADIO_receive($1, _Topo, recv_v);
+            _bm_or($3, recv_v->v, $4*$4);
             int allActive = set do
-                loop i, $2 do
-                    if _bm_isZero(&$1[i*$2/8], $2) then
+                loop i, $4 do
+                    if _bm_isZero(&$3[i*$4/8], $4) then
                         return 0;
                     end
                 end
@@ -115,24 +145,26 @@ do
             end
         end
 
-        u8[eval($2/8)] pending;
-        _memcpy(pending, &$1[_TOS_NODE_ID*$2/8], $2/8);
+        u8[eval($4/8)] pending;
+        _memcpy(pending, &$3[_TOS_NODE_ID*$4/8], $4/8);
 
-        par/or do
+        par do
             loop do
-                _message_t msg;
-                int err = @RADIO_send_empty(&msg, _AM_BROADCAST_ADDR, $3+1);
-                await $4;
+                _message_t msg_topo;
+                int err = @RADIO_send_empty(&msg_topo, _AM_BROADCAST_ADDR, 
+                $1+1);
+                await $2;
             end
         with
             loop do
-                if _bm_isZero(pending, $2) then
+                if _bm_isZero(pending, $4) then
                     break;
                 end
-                _message_t* recv_msg = @RADIO_receive_empty($3+1);
-                u16 src = _Radio_getSource(recv_msg);
+                _message_t* msg_topo = @RADIO_receive_empty($1+1);
+                u16 src = _Radio_getSource(msg_topo);
                 _bm_off(pending, src);
             end
+            emit $5;
         end
     end
 end
@@ -140,29 +172,29 @@ dnl - Assume rede conectada no teste de terminação.
 /*}-}*/´)
 
 define(DS_topology_hb_diam, `/*{-{*/
-dnl [ 1: nodes ]     bitmap of nodes X nodes
-dnl [ 2: n_nodes ]   max number of nodes
-dnl [ 3: am_type ]   AM message type for the protocol
-dnl [ 4: heartbeat ] heartbeat period
-dnl [ 5: diameter ]  network diameter
+dnl [ 1: msg_proto ] message protocol type
+dnl [ 2: diameter  ] network diameter
+dnl [ 3: heartbeat ] heartbeat period
+dnl [ 4: nodes     ] bitmap of nodes X nodes
+dnl [ 5: n_nodes   ] max number of nodes
 C do
     typedef nx_struct {
-        u8 v[eval($2*$2/8)];
+        u8 v[eval($5*$5/8)];
     } Topo;
 end
 do
     par/or do
-        _message_t send_msg;
-        loop i, $5 do
-            await $4;
-            int err = @RADIO_send_value(&send_msg, _AM_BROADCAST_ADDR,
-                                      $3, _Topo, $1);
+        _message_t msg_topo;
+        loop i, $2 do
+            await $3;
+            int err = @RADIO_send_value(&msg_topo, _AM_BROADCAST_ADDR,
+                                      $1, _Topo, $4);
         end
     with
         loop do
             _Topo* recv_v;
-            _message_t* recv_msg = @RADIO_receive($3, _Topo, recv_v);
-            _bm_or($1, recv_v->v, $2*$2);
+            _message_t* msg_topo = @RADIO_receive($1, _Topo, recv_v);
+            _bm_or($4, recv_v->v, $5*$5);
         end
     end
 end
@@ -173,161 +205,102 @@ dnl   - último send em N pode falhar: os nós ligados a N não recebem a últim
 dnl     atualização.
 /*}-}*/´)
 
-define(DS_neighbours, `/*{-{*/
-dnl [ 1: nodes   ] bitmap of nodes
-dnl [ 2: n_nodes ] max number of nodes
-dnl [ 3: am_type ] AM message type for the protocol
-dnl [ 4: retry   ] event for retrying
+define(DS_probe_echo, `/*{-{*/
+dnl [  1: msg_proto   ] message protocol type
+dnl [  2: pay_type    ] payload type
+dnl [  3: pay_final   ] aggregated payload
+dnl [  4: ack_timeout ] ack retries
+dnl [  5: neighs      ] bitmap of neighbours
+dnl [  6: n_nodes     ] number of nodes
+dnl [  7: f_neutral   ] function to neutralize a payload
+dnl [  8: f_aggr      ] function to aggregate payloads
+dnl [  9: evt_start   ] node ID that starts the probe
+dnl [ 10: evt_gather  ] gather event
+dnl [ 11: evt_done    ] event emitted when all echoes are received
 do
+    int parent;
+    //$7($3);         // f_neutral(pay_final)
+
     par do
-        loop do
-            _message_t send_msg;
-            int err = @RADIO_send_empty(&send_msg,_AM_BROADCAST_ADDR,$3);
-            await $4;
-        end
-    with
-        loop do
-            _message_t* recv_msg = @RADIO_receive_empty($3);
-            u16 src = _Radio_getSource(recv_msg);
-            if src < $2 then
-                _bm_on($1, src);
-            end
-        end
-    end
-end
-dnl * Sends an am_type broadcast message every retry event
-dnl * Receives am_type messages / saves in nodes the source node
-dnl * It never terminates!
-/*}-}*/´)
 
-define(DS_probeEcho, `/*{-{*/
-dnl [  1: server_id ] 	  ID for the server node
-dnl [  2: n_nodes ] 	  number of nodes
-dnl [  3: neighbours ] 	  bitmap of neighbours
-dnl [  4: payload_type ]  payload type
-dnl [  5: empty_payload ] empty payload
-dnl [  6: final_payload ] payload where the current state is stored
-dnl [  7: aggregator ]	  aggregation code
-dnl [  8: iterator ]	  iteration code
-dnl [  9: done ]          event emitted when all echoes are received
-dnl [ 10: ack_timeout ]	  retry timeout for send_ack
-
-C do
-	enum {
-		PROBE = 61,
-		ECHO = 62,
-	};
-end
-	
-do
-	u8 received_probe = 0;
-	int original_sender = -1;
-
-	if _TOS_NODE_ID == $1 then
-		_message_t probe;
-		$4* probe_payload = @RADIO_msg(&probe, _PROBE, $4);
-		received_probe = 1;
-		_memcpy(probe_payload, $5, sizeof<$4>);
-
-		@RADIO_broadcast_ack(&probe, $4, N_NODES, $3, $10);
-		_DBG("Initial broadcast sent from NODE %d\n", _TOS_NODE_ID);
-	end
-
-	par do		
-        par/and do
-            _message_t* recv_probe;
-		    $4* recv_payload;
-
-            if received_probe == 0 then
-                recv_probe = @RADIO_receive(_PROBE, $4, recv_payload);
-
-                received_probe = 1;
-                original_sender = _Radio_getSource(recv_probe);
-                _message_t forward_probe;
-                $4 *forward_payload;
-
-                forward_payload = @RADIO_msg(&forward_probe, _PROBE, $4);
-                _memcpy(forward_payload, recv_payload, sizeof<$4>);
-
-                @RADIO_broadcast_ack(&forward_probe, $4, $2, $3, $10);
-            end
+        // PROBE: first
+        par/or do
+            await $9;
+            parent = _TOS_NODE_ID;
         with
-            _message_t* recv_probe;
-		    $4* recv_payload;
-            
-            loop do
-                recv_probe = @RADIO_receive_ack(_PROBE, $4, recv_payload);
+            _message_t* msg_pb = @RADIO_receive_empty($1);
+            parent = _Radio_getSource(msg_pb);
+        end
 
-                if received_probe == 1 then
-                    _DBG("Received PROBE from NODE %d\n", _Radio_getSource(recv_probe));	
-            
-                    int source = _Radio_getSource(recv_probe);
-                    _DBG("Sending EMPTY ECHO to NODE %d\n", _Radio_getSource(recv_probe));
-                    _message_t echo;
-            
-                    _DBG("\n\tORIGINAL SENDER: %d\n\tSOURCE: %d\n", original_sender, source);	
-                    if original_sender != source then
-                        @RADIO_send_value_ack(&echo, source, _ECHO, $4, $5, $10);
-                    end    
+        // forward PROBE to all neighbours
+        _message_t msg_pb;
+        void* pay_pb = @RADIO_msg(&msg_pb, $1, NULL);
+        @RADIO_broadcast_ack(&msg_pb, $5, $6, $4);
+
+    with
+
+        // PROBE: subsequent
+        _message_t* msg_pb = @RADIO_receive_ack($1, NULL, NULL);
+
+        _message_t msg_empty;
+        $2* pay_pb = @RADIO_msg(&msg_empty, $1+1, $2);
+        $7(pay_pb);    // f_neutral(pay_pb)
+        
+        // send empty ECHO to !=parent
+        loop do
+            msg_pb = @RADIO_receive_ack($1, NULL, NULL);
+            int src = _Radio_getSource(msg_pb);
+            if src != parent then
+                @RADIO_send_ack(&msg_empty, src, $4);
+            end
+        end
+        // FOREVER
+
+    with
+
+        // ECHO: aggregate
+        u8 [ eval($6/8) ] missing;
+        _bm_copy(missing, $5, $6);
+        _bm_off(missing, parent);
+
+        par/and do
+            // aggregate from all !=parent
+            loop do
+                $2* pay_pb;
+                _message_t* msg_pb = @RADIO_receive($1+1, $2, pay_pb);
+                int src = _Radio_getSource(msg_pb);
+                if _bm_get(missing, src) then
+                    _bm_off(missing, src);
+                    $8($3, pay_pb);    // f_aggr(final, pay_pb)
+                    if _bm_isZero(missing, $6) then
+                        break;
+                    end
                 end
             end
-        end
-    with
-		int source;
-		u8 [ eval($2/8) ] neighs;
-
-		_bm_copy(neighs, $3, $2);
-
-		message_t * recv_echo;
-		message_t echo;
-		$4 * recv_payload;
-		$4 payload;
-
-		par/or do
-        	par/and do 
-            	// Tenta receber TODOS os ECHOES
-            	loop do
-                	recv_echo = @RADIO_receive(_ECHO, $4, recv_payload);
-        	    	source = _Radio_getSource(recv_echo);
-    	        	_DBG("Received ECHO from NODE %d with DATA %d\n", source, recv_payload->data);
-		
-	    	    	if _bm_get(neighs, source) then	
-		    	    	_bm_off(neighs, source);
-				        // Aggregate
-                        $7($6, recv_payload);	
-
-						char[255] all;
-					    _bm_tostr(neighs, $2, all);
-					    _DBG("0123456789ABCDEF\n");
-					    _DBG("%s\n\n", all);
-
-                    	if _bm_isZero(neighs, $2) then
-                            if _TOS_NODE_ID != $1 then
-			                    _memcpy(&payload, $6, sizeof<$4>);
-					
-			                    _DBG("Sending FINAL ECHO to NODE %d with DATA %d\n", original_sender, payload.data);
-
-        	                    @RADIO_send_value_ack(&echo, original_sender, _ECHO, $4, &payload, $10);
-		                    end
-
-                        	emit $9;
-                    	end
-            		end
-            	end
-       		with
-				// Iterate
-                $8;
-        	end
-    	with
-        	// Manda um ack à todos os motes que enviaram mensagens de tipo _ECHO
-            loop do
-                message_t * recv_echo;
-                $4 * recv_payload;
-        	    
-                recv_echo = @RADIO_receive_ack(_ECHO, $4, recv_payload);
+            // send to parent
+            if parent != _TOS_NODE_ID then
+                message_t msg_pb;
+                @RADIO_send_value_ack(&msg_pb, parent, $1+1, $2, $3, $4);
             end
-    	end 
-	end
+        with
+            // gather/aggregate my value
+            $2* pay_pb = await $10;
+            if pay_pb != null then
+                $8($3, pay_pb);        // f_aggr(final, pay_pb)
+            end
+        end
+
+        emit $11;
+
+    with
+
+        // ECHO: ack on receive
+        loop do
+            _message_t* msg_pb = @RADIO_receive_ack($1+1, NULL, NULL);
+        end
+        // FOREVER
+
+    end
 end
 /*}-}*/´)
 

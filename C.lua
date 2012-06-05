@@ -33,7 +33,7 @@ function _C.contains (tp1, tp2, c)
     elseif c and (_C.ext(tp1) or _C.ext(tp2)) then
         return true
     elseif _tp1 and _tp2 then
-        return tp1=='void*' or tp2=='void*'
+        return tp1=='void*' or tp2=='void*' or _C.contains(_tp1, _tp2, c)
     end
     return false
 end

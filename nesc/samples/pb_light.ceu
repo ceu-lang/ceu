@@ -1,0 +1,76 @@
+input int Photo_readDone;
+
+@include(bitmap.c);
+@include(radio.m4);
+@include(DS.m4);
+
+@RADIO_retry(200ms, @RADIO_start);
+
+@define(N_NODES, 16);
+
+C do
+    typedef nx_struct {
+        nx_uint16_t ack;
+        nx_uint8_t nodes;
+        nx_uint8_t data;
+    } Payload;
+    void neutral (Payload* p) {
+        p->nodes = 0;
+        p->data  = 0;
+    }
+    void aggr (Payload* p1, Payload *p2){
+        p1->nodes = p1->nodes + p2->nodes;
+        p1->data  = p1->data  + p2->data;
+    }
+end
+
+_Payload final;
+_neutral(&final);
+
+u8[ eval(N_NODES/8) ] neighs;
+
+par/or do
+    @DS_neighbours(100, 200ms, neighs, N_NODES);
+with
+    await 2s;
+end
+
+/*
+char[255] all;
+_bm_tostr(neighs, N_NODES, all);
+_DBG("0123456789ABCDEF\n");
+_DBG("%s\n\n", all);
+*/
+
+event void evt_start, evt_done;
+event _Payload* evt_gather;
+
+par/and do
+
+    @DS_probe_echo(50, _Payload, &final, 250ms, neighs, N_NODES,
+                    _neutral, _aggr, evt_start, evt_gather, evt_done);
+
+with
+
+    await 10ms;
+
+    if _TOS_NODE_ID == 0 then
+        emit evt_start;
+    end
+
+    _Photo_read();
+    _Payload local;
+    local.nodes = 1;
+    local.data  = await Photo_readDone;
+    emit evt_gather(&local);
+
+with
+
+    await evt_done;
+    if _TOS_NODE_ID == 0 then
+        _DBG("Final: %d\n", final.data*1000/final.nodes);
+    end 
+
+end
+
+return 0;

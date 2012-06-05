@@ -57,11 +57,13 @@ Test { [[int a = 1; return (a);]],
 Test { [[int a = 1;]],
     dfa = 'missing return statement',
 }
-Test { [[int a=1;int a; return a;]],
-    env = 'variable "a" is already declared',
+Test { [[int a=1;int a=0; return a;]],
+    --env = 'variable "a" is already declared',
+    run = 0,
 }
-Test { [[int a = 1,a; return a;]],
-    env = 'variable "a" is already declared',
+Test { [[int a=1,a=0; return a;]],
+    --env = 'variable "a" is already declared',
+    run = 0,
 }
 Test { [[int a; a = b = 1]],
     parser = "ERR : line 1 : after `b' : expected `;'",
@@ -229,7 +231,7 @@ else
     a=1;a=2; return 3;
 end;
 ]],
-	run = 3,
+    run = 3,
 }
 Test { [[
 int a = 0;
@@ -9823,7 +9825,7 @@ ptr1 = ptr2;
 ptr2 = ptr1;
 return 1;
 ]],
-    exps = 'invalid attribution',
+    run = 1,
 }
 Test { [[
 int* ptr1;
@@ -9832,7 +9834,7 @@ ptr1 = ptr2;
 ptr2 = ptr1;
 return 1;
 ]],
-    exps = 'invalid attribution',
+    run = 1,
 }
 
 Test { [[
@@ -9842,7 +9844,7 @@ ptr1 = ptr2;
 ptr2 = ptr1;
 return 1;
 ]],
-    exps = 'invalid attribution',
+    run = 1,
 }
 
 Test { [[
@@ -10796,6 +10798,20 @@ vs.b = 1;
 return vs.a + vs.b + sizeof<_s>;
 ]],
     run = 15,
+}
+
+Test { [[
+C do
+    typedef struct {
+        u16 ack;
+        u8 data[16];
+    } Payload;
+end
+_Payload final;
+u8* neighs = &(final.data[4]);
+return 1;
+]],
+    run = 1;
 }
 
 Test { [[

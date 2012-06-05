@@ -1,0 +1,64 @@
+@include(bitmap.c);
+@include(radio.m4);
+@include(DS.m4);
+
+@RADIO_retry(200ms, @RADIO_start);
+
+@define(N_NODES, 16);
+
+C do
+    typedef nx_struct {
+        nx_uint16_t ack;
+        u8 data[ eval(N_NODES*N_NODES/8) ];
+    } Payload;
+    void neutral (Payload* p) {
+        bm_clear(p->data, N_NODES*N_NODES);
+    }
+    void aggr (Payload* p1, Payload *p2){
+        bm_or(p1->data, p2->data, N_NODES*N_NODES);
+    }
+end
+
+_Payload final;
+_neutral(&final);
+
+u8* neighs = &(final.data[_TOS_NODE_ID*N_NODES/8]);
+
+par/or do
+    @DS_neighbours(100, 200ms, neighs, N_NODES);
+with
+    await 2s;
+end
+
+/*
+char[255] all;
+_bm_tostr(neighs, N_NODES, all);
+_DBG("0123456789012345\n");
+_DBG("%s\n\n", all);
+*/
+
+event void evt_start, evt_done;
+event _Payload* evt_gather;
+
+par do
+    @DS_probe_echo(50, _Payload, &final, 250ms, neighs, N_NODES,
+                    _neutral, _aggr, evt_start, evt_gather, evt_done);
+with
+    await 10ms;
+
+    if _TOS_NODE_ID == 1 then
+        emit evt_start;
+    end
+
+    emit evt_gather(null);
+with
+    await evt_done;
+    if _TOS_NODE_ID == 1 then
+        _DBG("    0123456789ABCDEF\n");
+        loop i, N_NODES do
+            char[255] all;
+            _bm_tostr(&(final.data[i * N_NODES/8]), N_NODES, all);
+            _DBG("[%2d] %s\n", i, all);
+        end
+    end
+end

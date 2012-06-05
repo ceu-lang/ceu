@@ -4,7 +4,7 @@ for i=0, 15 do
     _G['n'..i] = simul.app {
         defines = {
             TOS_NODE_ID = i,
-            TOS_COLLISION = 50,
+            --TOS_COLLISION = 50,
         },
         source = assert(io.open'../samples/neighbours.ceu'):read'*a',
     }

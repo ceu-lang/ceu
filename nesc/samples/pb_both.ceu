@@ -1,0 +1,110 @@
+input int Photo_readDone;
+
+@include(bitmap.c);
+@include(radio.m4);
+@include(DS.m4);
+
+@RADIO_retry(200ms, @RADIO_start);
+
+@define(N_NODES, 16);
+
+C do
+    typedef nx_struct {
+        nx_uint16_t ack;
+        nx_uint8_t nodes;
+        nx_uint8_t data;
+    } Pay1;
+    void neutral1 (Pay1* p) {
+        p->nodes = 0;
+        p->data  = 0;
+    }
+    void aggr1 (Pay1* p1, Pay1 *p2){
+        p1->nodes = p1->nodes + p2->nodes;
+        p1->data  = p1->data  + p2->data;
+    }
+end
+_Pay1 final1;
+_neutral1(&final1);
+
+C do
+    typedef nx_struct {
+        nx_uint16_t ack;
+        u8 data[ eval(N_NODES*N_NODES/8) ];
+    } Pay2;
+    void neutral2 (Pay2* p) {
+        bm_clear(p->data, N_NODES*N_NODES);
+    }
+    void aggr2 (Pay2* p1, Pay2 *p2){
+        bm_or(p1->data, p2->data, N_NODES*N_NODES);
+    }
+end
+_Pay2 final2;
+_neutral2(&final2);
+
+u8* neighs = &(final2.data[_TOS_NODE_ID*N_NODES/8]);
+
+par/or do
+    @DS_neighbours(100, 200ms, neighs, N_NODES);
+with
+    await 1s;
+    //await 10s;
+end
+
+/*
+char[255] all;
+_bm_tostr(neighs, N_NODES, all);
+_DBG("0123456789ABCDEF\n");
+_DBG("%s\n\n", all);
+*/
+
+event void evt_start, evt_done1, evt_done2;
+event _Pay1* evt_gather1;
+event _Pay2* evt_gather2;
+
+par/and do
+
+    @DS_probe_echo(50, _Pay1, &final1, 250ms, neighs, N_NODES,
+                    _neutral1, _aggr1, evt_start, evt_gather1, evt_done1);
+
+with
+
+    @DS_probe_echo(60, _Pay2, &final2, 250ms, neighs, N_NODES,
+                    _neutral2, _aggr2, evt_start, evt_gather2, evt_done2);
+
+with
+
+    await 10ms;
+
+    if _TOS_NODE_ID == 0 then
+        emit evt_start;
+    end
+
+    _Photo_read();
+    _Pay1 local;
+    local.nodes = 1;
+    local.data  = await Photo_readDone;
+    emit evt_gather1(&local);
+
+    emit evt_gather2(null);
+
+with
+
+    await evt_done1;
+    if _TOS_NODE_ID == 0 then
+        _DBG("Final: %d\n", final1.data*1000/final1.nodes);
+    end 
+
+with
+
+    await evt_done2;
+    if _TOS_NODE_ID == 0 then
+        _DBG("    0123456789ABCDEF\n");
+        loop i, N_NODES do
+            char[255] all;
+            _bm_tostr(&(final2.data[i * N_NODES/8]), N_NODES, all);
+            _DBG("[%2d] %s\n", i, all);
+        end
+    end
+end
+
+return 0;

@@ -7,17 +7,16 @@ _DBG("Radio started\n");
 
 @define(N_NODES, 16);
 
-u8[ eval(N_NODES/8) ] nodes;
-_bm_clear(nodes, N_NODES);
+u8[ eval(N_NODES/8) ] neighs;
 
 par/or do
-    @DS_neighbours(nodes, N_NODES, 100, 200ms);
+    @DS_neighbours(100, 200ms, neighs, N_NODES);
 with
     await 1s;
 end
 
 char[255] all;
-_bm_tostr(nodes, N_NODES, all);
+_bm_tostr(neighs, N_NODES, all);
 _DBG("0123456789012345\n");
 _DBG("%s\n\n", all);
 

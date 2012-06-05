@@ -17,7 +17,7 @@ event _Data* recv_new;
 event _Data* send_new;
 
 par/or do
-    @DS_broadcast_front(_Data, 10, 111, recv_new, send_new, 200ms);
+    @DS_broadcast_front(111, _Data, 10, 200ms, recv_new, send_new);
 with
     loop do
         await recv_new;
@@ -25,19 +25,14 @@ with
     end
 with
     if _TOS_NODE_ID == 13 then
-        u32 seqno = 0;
-        loop do
+        loop seqno, 20 do
             await 1s;
             _DBG("SENDING %d...\n", seqno);
             _Data v;
             v.seqno = seqno;
-            _sprintf(v.str, "seqno=%ld", seqno);
-            seqno = seqno + 1;
+            _sprintf(v.str, "seqno=%d", seqno);
             emit send_new(&v);
-            await 10s;
-            if seqno == 100 then
-                break;
-            end
+            await 2s;
         end
     else
         await Forever;
