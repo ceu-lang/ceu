@@ -174,41 +174,22 @@ F = {
         end
     end,
     ParEver = function (me)
-        local QS   = set.new()  -- only sub.qs
-
-        local qS = INS(me, '', _NFA.node{ id='+ever' })
-        local qF = INS(me, nil,
-            _NFA.node {
-                id  = '-ever',
-                not_toReach = true
-            })
-        me.nfa.f = qF
-
-        for _, sub in ipairs(me) do
-            local nfa = sub.nfa
-            PAR(QS, nfa.qs)
-
-            if nfa.s then
-                OUT(qS, '', nfa.s)
-                OUT(nfa.f, false, qF)
-            else
-                OUT(qS, false, qF)
-            end
-
-            QS = U(QS, nfa.qs)
-        end
-
-        me.nfa.qs = U(me.nfa.qs, QS)
+        F.ParAnd(me)
+        me.nfa.f.toReach = nil
+        local f = _NFA.node{id='-ever',not_toReach=true}
+        OUT(me.nfa.f, false, f)
+        me.nfa.f = f
+        me.nfa.qs[f] = true
     end,
 
     ParAnd = function (me)
         local QS   = set.new()  -- only sub.qs
         local ands = set.new()
 
-        local qS = INS(me, '', _NFA.node{ id='+and' })
+        local qS = INS(me, '', _NFA.node{ id='+'..me.id })
         local qF = INS(me, nil,
             _NFA.node {
-                id  = '-and',
+                id  = '-'..me.id,
                 rem = ands,
                 toReach = true
         })

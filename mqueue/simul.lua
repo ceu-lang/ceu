@@ -30,7 +30,7 @@ C do
             len += sizeof(s16);
         memcpy(buf+len, &v, sizeof(int));
             len += sizeof(int);
-        return mq_send(ceu_mqueue_mqd, buf, len, 0);
+        return mq_send(ceu_queue_write, buf, len, 0);
     }
 
     void DBG (char *fmt, ... )

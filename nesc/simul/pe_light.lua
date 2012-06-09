@@ -10,7 +10,7 @@ for i=0, 6 do
                 TOS_NODE_ID = i,
                 --TOS_COLLISION = 90,
             },
-            source = assert(io.open'../samples/pb_topo.ceu'):read'*a',
+            source = assert(io.open'../samples/pe_light.ceu'):read'*a',
         }
 end
 
@@ -22,6 +22,7 @@ simul.topology {
     [n4]  = { n1, n3, n5, },
     [n5]  = { n2, n4, n6, },
     [n6]  = { n1, n3, n5, },
-}
+}   
+
 
 simul.shell()

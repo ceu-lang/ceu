@@ -377,7 +377,6 @@ return(1);
 Test { [[
 output int A;
 if emit A(1) then
-_fprintf(_stderr,"oioioi\n");
     return 0;
 end
 return(1);
@@ -617,6 +616,75 @@ return a;
 }
 
 Test { [[
+par/and do
+    await 1s;
+with
+    await 1s;
+end
+par/and do
+    await Forever;
+with
+    await 1s;
+end
+return 0;
+]],
+    unreach = 1,
+    forever = true,
+}
+
+Test { [[
+par/or do
+    await 1s;
+with
+    await 1s;
+end
+par/or do
+    await 1s;
+with
+    await Forever;
+end
+par/or do
+    await Forever;
+with
+    await Forever;
+end
+return 0;
+]],
+    unreach = 1,
+    forever =  true,
+}
+
+Test { [[
+par do
+    await Forever;
+with
+    await 1s;
+end
+]],
+    forever = true,
+}
+
+Test { [[
+par do
+    await Forever;
+with
+    await Forever;
+end
+]],
+    forever = true,
+}
+
+Test { [[
+par do
+    await 1s;
+with
+    await 1s;
+end
+]],
+    forever = true,
+}
+
+Test { [[
 par do
     int v1,v2;
     par/or do
@@ -733,6 +801,16 @@ end;
     run = { ['~>A;~>B']=1, },
 }
 
+Test { [[
+par/and do
+    nothing;
+with
+    return 1;
+end
+]],
+    nd_flw = 1,
+    unreach = 1,
+}
 Test { [[
 par do
     nothing;

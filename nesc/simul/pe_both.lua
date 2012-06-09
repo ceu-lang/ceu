@@ -8,9 +8,9 @@ for i=0, 6 do
             },
             defines = {
                 TOS_NODE_ID = i,
-                --TOS_COLLISION = 90,
+                --TOS_COLLISION = 50,
             },
-            source = assert(io.open'../samples/pb_both.ceu'):read'*a',
+            source = assert(io.open'../samples/pe_both.ceu'):read'*a',
         }
 end
 

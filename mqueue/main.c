@@ -1,7 +1,7 @@
 #include <time.h>
 #include "common.h"
 
-mqd_t ceu_mqueue_mqd;
+mqd_t ceu_queue_write;
 #define ceu_out_event(a,b,c) ceu_out_event_F(a,b,c)
 #include "_ceu_code.c"
 
@@ -34,15 +34,22 @@ int main (int argc, char *argv[])
         LINKS[i] = NULL;
     }
 
-    mqd_t queue = mq_open(argv[1], O_RDWR|O_NONBLOCK);
-    ASR(queue != -1);
-    ceu_mqueue_mqd = queue;
+    mqd_t queue_read  = mq_open(argv[1], O_RDONLY);
+    mqd_t queue_write = mq_open(argv[1], O_WRONLY|O_NONBLOCK);
+    ASR(queue_read!=-1 && queue_write!=-1);
+    ceu_queue_write = queue_write;
 
     int ret = 0;
 
-    struct timespec tv_now;
-    clock_gettime(CLOCK_REALTIME, &tv_now);
-    u64 now = (tv_now.tv_sec*1000000000LL + tv_now.tv_nsec);
+#if N_ASYNCS > 0
+    int async_cnt = 1;
+#else
+    int async_cnt = 0;
+#endif
+
+    struct timespec ts_nxt;
+    clock_gettime(CLOCK_REALTIME, &ts_nxt);
+    tceu_time now = ts_nxt.tv_sec*1000000000LL + ts_nxt.tv_nsec;
 
     if (ceu_go_init(&ret, now) == CEU_TERM)
         goto END;
@@ -54,16 +61,36 @@ int main (int argc, char *argv[])
 
     char _buf[MSGSIZE];
 
-    int async_cnt = 1;
-
     for (;;)
     {
-        // TODO: timeout ser o valor exato do prox timer
-        now += (async_cnt ? 0 : 50000000); // 50ms
-        struct timespec timeout = { now / 1000000000,
-                                    now % 1000 };
+        clock_gettime(CLOCK_REALTIME, &ts_nxt);
+        if (async_cnt == 0) {
+#if N_TIMERS > 0
+            tceu_time* nxt = ceu_timer_nxt();
+            if (nxt == NULL) {
+#endif
+                ts_nxt.tv_sec += 100;
+#if N_TIMERS > 0
+            } else {
+                ts_nxt.tv_sec  = *nxt / 1000000000LL;
+                ts_nxt.tv_nsec = *nxt % 1000000000LL;
+            }
+#endif
+        }
+        now = ts_nxt.tv_sec*1000000000LL + ts_nxt.tv_nsec;
 
-        while (mq_timedreceive(queue,_buf,sizeof(_buf),NULL,&timeout) != -1)
+        if (mq_timedreceive(queue_read,_buf,sizeof(_buf),NULL,&ts_nxt) == -1)
+        {
+#if N_TIMERS > 0
+            if (ceu_go_time(&ret, now) == CEU_TERM)
+                goto END;
+#endif
+#if N_ASYNCS > 0
+            if (ceu_go_async(&ret,&async_cnt) == CEU_TERM)
+                return ret;
+#endif
+        }
+        else
         {
             char* buf = _buf;
             int id_in = *((s16*)buf);
@@ -137,21 +164,13 @@ int main (int argc, char *argv[])
                         goto END;
                     break;
             }
+
         }
-
-        clock_gettime(CLOCK_REALTIME, &tv_now);
-        now = (tv_now.tv_sec*1000000000LL + tv_now.tv_nsec);
-        if (ceu_go_time(&ret, now) == CEU_TERM)
-            goto END;
-
-#if N_ASYNCS > 0
-        if (ceu_go_async(&ret,&async_cnt) == CEU_TERM)
-            return ret;
-#endif
     }
 
 END:
-    mq_close(queue);
+    mq_close(queue_read);
+    mq_close(queue_write);
     return ret;
 }
 

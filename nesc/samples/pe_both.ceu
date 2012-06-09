@@ -11,8 +11,8 @@ input int Photo_readDone;
 C do
     typedef nx_struct {
         nx_uint16_t ack;
-        nx_uint8_t nodes;
-        nx_uint8_t data;
+        nx_uint8_t  nodes;
+        nx_uint8_t  data;
     } Pay1;
     void neutral1 (Pay1* p) {
         p->nodes = 0;
@@ -29,7 +29,7 @@ _neutral1(&final1);
 C do
     typedef nx_struct {
         nx_uint16_t ack;
-        u8 data[ eval(N_NODES*N_NODES/8) ];
+        nx_uint8_t  data[ eval(N_NODES*N_NODES/8) ];
     } Pay2;
     void neutral2 (Pay2* p) {
         bm_clear(p->data, N_NODES*N_NODES);

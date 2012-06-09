@@ -11,8 +11,8 @@ input int Photo_readDone;
 C do
     typedef nx_struct {
         nx_uint16_t ack;
-        nx_uint8_t nodes;
-        nx_uint8_t data;
+        nx_uint8_t  nodes;
+        nx_uint8_t  data;
     } Payload;
     void neutral (Payload* p) {
         p->nodes = 0;

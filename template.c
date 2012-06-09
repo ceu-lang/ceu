@@ -3,7 +3,7 @@
 #define PR_MAX  0x7F
 #define PR_MIN  (-0x7F)
 
-#define N_TIMERS    (1+ === N_TIMERS ===)
+#define N_TIMERS    (=== N_TIMERS ===)
 #define N_TRACKS    (1+ === N_TRACKS ===)
 #define N_ASYNCS    (=== N_ASYNCS ===)
 #define N_EMITS     (=== N_EMITS ===)
@@ -47,7 +47,7 @@ tceu_gte TRGS[] = { === TRGS === };
 
 char VARS[N_VARS];
 
-#if N_TIMERS > 1
+#if N_TIMERS > 0
 u32 _extl_;
 u32 _extlmax_;  // needed for timers
 #endif
@@ -148,7 +148,7 @@ void trigger (int trg)
 
 tceu_time TIME_now = 0;
 
-#if N_TIMERS > 1
+#if N_TIMERS > 0
 tceu_time TIME_late;
 int       TIME_expired = 0;
 
@@ -191,6 +191,13 @@ void tmr_enable (tceu_time ms, int idx) {
     }
 #endif
 }
+
+tceu_time* ceu_timer_nxt () {
+    if (TMR_cur == NULL)
+        return NULL;
+    else
+        return &TMR_cur->phys;
+}
 #endif
 
 /* ASYNCS ***************************************************************/
@@ -228,7 +235,7 @@ int ceu_go_init (int* ret, u64 now)
     memset(GTES, 0, N_GTES);
 
     TIME_now  = now;
-#if N_TIMERS > 1
+#if N_TIMERS > 0
     TIME_late = 0;
     _extlmax_ = _extl_ = 0;
 #endif
@@ -242,7 +249,7 @@ int ceu_go_event (int* ret, int id, void* data) {
     DATA = data;
     trigger(id);
 
-#if N_TIMERS > 1
+#if N_TIMERS > 0
     TIME_late = 0;
     _extl_ = ++_extlmax_;
 #endif
@@ -262,7 +269,7 @@ int ceu_go_async (int* ret, int* count)
     async_ini = (async_ini+1) % N_ASYNCS;
     async_cnt--;
 
-#if N_TIMERS > 1
+#if N_TIMERS > 0
     TIME_late = 0;
     _extl_ = ++_extlmax_;
 #endif
@@ -273,7 +280,7 @@ int ceu_go_async (int* ret, int* count)
 
 int ceu_go_time (int* ret, tceu_time now)
 {
-#if N_TIMERS > 1
+#if N_TIMERS > 0
     int i;
     tceu_time phys;
 
@@ -358,7 +365,7 @@ _SWITCH_:
         }
     }
 
-#if N_TIMERS > 1
+#if N_TIMERS > 0
     if (TIME_expired) {
         TIME_expired = 0;
         return CEU_TMREXP;
