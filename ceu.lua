@@ -7,9 +7,10 @@ _OPTS = {
     events      = false,
     events_file = '_ceu_events.h',
 
+    opt_join    = true,
+
     m4          = false,
     m4_args     = false,
-    m4_join     = 'true',
 
     dfa         = false,
     dfa_viz     = false,
@@ -22,9 +23,10 @@ _OPTS_NPARAMS = {
     events      = 0,
     events_file = 1,
 
+    opt_join    = 1,
+
     m4          = 0,
     m4_args     = 1,
-    m4_join     = 1,
 
     dfa         = 0,
     dfa_viz     = 0,
@@ -56,20 +58,23 @@ end
 if not _OPTS.input then
     io.stderr:write([[
 
-    ./ceu <filename>             # CEU input file (or `-' for stdin)
+    ./ceu <filename>             # ceu input file, or `-´ for stdin
 
         # optional parameters (default value in parenthesis)
 
         --output <filename>      # C output file (stdout)
 
         --events                 # declare events in a separate file (false)
-        --events-file <filename> # events output file (`_ceu_events.h')
+        --events-file <filename> # events output file (`_ceu_events.h´)
+
+        --opt-join               # join lines enclosed by /*{-{*/ and /*}-}*/
 
         --dfa                    # performs DFA analysis (false)
         --dfa-viz                # generates DFA graph (false)
 
-        --m4                     # preprocess the input with `m4' (false)
-        --m4-args                # preprocess the input with `m4' passing arguments in between `"´ (false)
+        --m4                     # preprocess the input with `m4´ (false)
+        --m4-args                # preprocess the input with `m4´ passing arguments in between `"´ (false)
+
 ]])
     os.exit(1)
 end
@@ -83,7 +88,7 @@ else
 end
 _STR = inp:read'*a'
 
-if _OPTS.m4 or _OPTS.m4_args or _OPTS.m4_join then
+if _OPTS.m4 or _OPTS.m4_args then
     local args = _OPTS.m4_args and string.sub(_OPTS.m4_args, 2, -2) or ''   -- remove `"´
     local m4_file = (_OPTS.input=='-' and '_tmp.ceu_m4') or _OPTS.input..'_m4'
     local m4 = assert(io.popen('m4 '..args..' - > '..m4_file, 'w'))

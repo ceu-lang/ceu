@@ -13,11 +13,10 @@
 
 // Macros that can be defined:
 // ceu_out_pending()   (1)
-// ceu_out_timer(ms)
+// ceu_out_timer(ns)
 // ceu_out_event(id, len, data)
 // ASSERT
 
-typedef u64 tceu_time;
 typedef s16 tceu_gte;   // lbl=gte (must have the same sizes)
 typedef s16 tceu_lbl;
 
@@ -48,7 +47,7 @@ tceu_gte TRGS[] = { === TRGS === };
 char VARS[N_VARS];
 
 #if N_TIMERS > 0
-u32 _extl_;
+u32 _extl_;     // TODO: suficiente?
 u32 _extlmax_;  // needed for timers
 #endif
 
@@ -146,14 +145,14 @@ void trigger (int trg)
 
 /* TIMERS ***************************************************************/
 
-tceu_time TIME_now = 0;
+u64 TIME_now = 0;
 
 #if N_TIMERS > 0
-tceu_time TIME_late;
-int       TIME_expired = 0;
+u64 TIME_late;
+int TIME_expired = 0;
 
 typedef struct {
-    tceu_time phys;
+    u64 phys;
     u32 extl;
     tceu_gte gte;
 } QTimer;
@@ -172,9 +171,9 @@ int QTimer_lt (QTimer* tmr) {
     return 0;
 }
 
-void tmr_enable (tceu_time ms, int idx) {
+void tmr_enable (u64 ns, int idx) {
     QTimer* tmr = &TIMERS[idx];
-    s64 dt = ms - TIME_late;
+    s64 dt = ns - TIME_late;
     int nxt;
 
     tmr->phys = TIME_now + dt;
@@ -192,7 +191,7 @@ void tmr_enable (tceu_time ms, int idx) {
 #endif
 }
 
-tceu_time* ceu_timer_nxt () {
+u64* ceu_timer_nxt () {
     if (TMR_cur == NULL)
         return NULL;
     else
@@ -278,11 +277,11 @@ int ceu_go_async (int* ret, int* count)
 }
 #endif
 
-int ceu_go_time (int* ret, tceu_time now)
+int ceu_go_time (int* ret, u64 now)
 {
 #if N_TIMERS > 0
     int i;
-    tceu_time phys;
+    u64 phys;
 
     TIME_now = now;
 
@@ -374,7 +373,7 @@ _SWITCH_:
     return CEU_NONE;
 }
 
-int ceu_go_polling (tceu_time now)
+int ceu_go_polling (u64 now)
 {
     int ret = 0;
 #if N_ASYNCS > 0

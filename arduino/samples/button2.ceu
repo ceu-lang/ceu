@@ -1,20 +1,24 @@
-input int PIN02_LOW;
-
-_pinMode(13, _OUTPUT);
+input  int PIN02;
+output int PIN13;
 
 loop do
     par/or do
         u64 t = 1000;
         loop do
-            _digitalWrite(13, _LOW);
+            emit PIN13(_LOW);
             await (t)ms;
-            _digitalWrite(13, _HIGH);
+            emit PIN13(_HIGH);
             await (t)ms;
-            if t > 50 then
-                t = t - 10;
+            if t >= 200 then
+                t = t - 100;
             end
         end
     with
-        await PIN02_LOW;
+        loop do
+            int v = await PIN02;
+            if v == _LOW then
+                break;
+            end
+        end
     end
 end

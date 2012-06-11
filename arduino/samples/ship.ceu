@@ -93,8 +93,8 @@ C do
 end
 
 _lcd.begin(16, 2);
-_pinMode(10, _OUTPUT);
-_digitalWrite(10, _LOW);
+output int PIN10;
+emit PIN10(_LOW);
 
 _randomSeed(_analogRead(12));
 

@@ -1,42 +1,42 @@
 const _OUTPUT, _LOW, _HIGH;
 
-_pinMode(11, _OUTPUT);
-_pinMode(12, _OUTPUT);
-_pinMode(13, _OUTPUT);
+output int PIN11;
+output int PIN12;
+output int PIN13;
 
 loop do
-    _digitalWrite(11, _LOW);
-    _digitalWrite(12, _LOW);
-    _digitalWrite(13, _LOW);
+    emit PIN11(_LOW);
+    emit PIN12(_LOW);
+    emit PIN13(_LOW);
     await 1s;
 
-    _digitalWrite(11, _HIGH);
+    emit PIN11(_HIGH);
     await 1s;
-    _digitalWrite(11, _LOW);
+    emit PIN11(_LOW);
 
-    _digitalWrite(12, _HIGH);
+    emit PIN12(_HIGH);
     await 500ms;
-    _digitalWrite(12, _LOW);
+    emit PIN12(_LOW);
 
-    _digitalWrite(13, _HIGH);
+    emit PIN13(_HIGH);
     await 250ms;
-    _digitalWrite(13, _LOW);
+    emit PIN13(_LOW);
     await 1s;
 
     par/and do
-        _digitalWrite(11, _HIGH);
+        emit PIN11(_HIGH);
         await 1s;
-        _digitalWrite(11, _LOW);
+        emit PIN11(_LOW);
         await 1s;
     with
-        _digitalWrite(12, _HIGH);
+        emit PIN12(_HIGH);
         await 500ms;
-        _digitalWrite(12, _LOW);
+        emit PIN12(_LOW);
         await 500ms;
     with
-        _digitalWrite(13, _HIGH);
+        emit PIN13(_HIGH);
         await 250ms;
-        _digitalWrite(13, _LOW);
+        emit PIN13(_LOW);
         await 250ms;
     end
 end
