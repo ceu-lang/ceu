@@ -389,7 +389,6 @@ C do
 end
 output int A;
 if emit A(1) then
-_fprintf(_stderr,"oioioi\n");
     return 0;
 end
 return(1);
@@ -768,6 +767,32 @@ end
     unreach = 1,
     nd_flw = 1,
     run = 1,
+}
+
+-- TODO: 3 opcoes:
+-- 1: nd_acc=1, como esta agora
+-- 2: nada de errado, ja que a=2 acontece antes do par/or reiniciar do loop
+-- 3: nd_flw=1
+Test { [[
+int a;
+loop do
+    par/or do
+        await 2s;
+    with
+        a = 1;
+        await Forever;
+    with
+        await 1s;
+        loop do
+            a = 2;
+            await 1s;
+        end
+    end
+end
+]],
+    nd_acc = 1,
+    unreach = 2,
+    forever = true,
 }
 
 Test { [[
@@ -1453,6 +1478,124 @@ return 1;
 -- FOR
 
 Test { [[
+input int A;
+int sum = 0;
+par/or do
+    loop i, 1+1 do
+        await A;
+    end
+    sum = 0;
+with
+    sum = 1;
+end
+return sum;
+]],
+    nd_acc = 1,
+    unreach = 2,
+    run = 1,
+}
+
+-- TODO: bounded
+--[=[
+Test { [[
+input int A;
+int sum = 0;
+par/or do
+    loop i, 1 do
+        await A;
+    end
+    sum = 0;
+with
+    sum = 1;
+end
+return sum;
+]],
+    unreach = 2,
+    run = 1,
+}
+
+Test { [[
+input int A;
+int sum = 0;
+par/or do
+    loop i, 2 do
+        await A;
+    end
+    sum = 0;
+with
+    await A;
+    await A;
+    sum = 1;
+end
+return sum;
+]],
+    nd_acc = 1,
+}
+
+Test { [[
+input int A;
+int sum = 0;
+par/or do
+    loop i, 3 do
+        await A;
+    end
+    sum = 0;
+with
+    await A;
+    await A;
+    sum = 1;
+end
+return sum;
+]],
+    run = { ['~>A;~>A'] = 1 },
+}
+
+Test { [[
+input int A;
+int sum = 0;
+par/or do
+    loop i, 1 do
+        await A;
+        async do
+            int a = 1;
+        end
+    end
+    sum = 0;
+with
+    sum = 1;
+end
+return sum;
+]],
+    run = 1,
+}
+
+Test { [[
+input int A;
+int sum = 0;
+par/or do
+    sum = 5;
+    loop i, 10 do
+        await A;
+        async do
+            int a = 1;
+        end
+    end
+    sum = 0;
+with
+    loop i, 2 do
+        async do
+            int a = 1;
+        end
+        sum = sum + 1;
+    end
+end
+return sum;
+]],
+    run = 7,
+}
+]=]
+
+Test { [[
 int sum = 0;
 loop i, 100 do
     sum = sum + (i+1);
@@ -1738,16 +1881,17 @@ return a;
 Test { [[
 input int A;
 int a;
-a = set par do
-    if 1 then
+a = set
+    par do
+        if 1 then
+            int v = await A;
+            return v;
+        end;
+        return 0;
+    with
         int v = await A;
         return v;
     end;
-    return 0;
-with
-    int v = await A;
-    return v;
-end;
 return a;
 ]],
     nd_acc = 1,
@@ -9508,6 +9652,85 @@ return _a+_b;
 }
 
 Test { [[
+C do
+    int a = 1;
+    int b;
+    int c;
+end
+const _a;
+deterministic _b with _c;
+par/and do
+    async do
+        _b = 1;
+    end
+with
+    async do
+        _a = 1;
+    end
+with
+    _c = 1;
+end
+return _a+_b+_c;
+]],
+    run = 3,
+}
+
+Test { [[
+C do
+    int a = 1;
+end
+int a;
+par/or do
+    _a = 1;
+with
+    a = 1;
+end
+return _a + a;
+]],
+    run = 2,
+    nd_acc = 1,
+}
+
+Test { [[
+C do
+    int a = 1;
+end
+int a;
+deterministic a with _a;
+par/or do
+    _a = 1;
+with
+    a = 1;
+end
+return _a + a;
+]],
+    run = 2,
+    nd_acc = 1,
+}
+
+Test { [[
+C do
+    int a = 1;
+    int b;
+    int c;
+end
+par/and do
+    async do
+        _b = 1;
+    end
+with
+    async do
+        _a = 1;
+    end
+with
+    _c = 1;
+end
+return _a+_b+_c;
+]],
+    nd_acc = 3,
+}
+
+Test { [[
 int r = set async do
     int i = 100;
     return i;
@@ -9703,6 +9926,39 @@ return i;
 ]],
     unreach = 1,
     run = 0,
+}
+
+Test { [[
+int i = set
+async do
+    int i = 10;
+    loop do
+        i = i - 1;
+        if !i then
+            break;
+        end;
+    end;
+    return 0;
+end;
+return i;
+]],
+    run = 0,
+}
+
+
+Test { [[
+int i = set
+async do
+    int i = 10;
+    loop do
+        i = i - 1;
+    end;
+    return 0;
+end;
+return i;
+]],
+    unreach = 3,
+    forever = true,
 }
 
 Test { [[
@@ -9945,6 +10201,85 @@ end;
 return a;
 ]],
     run = 1,
+}
+
+Test { [[
+int b = 1;
+int* a = &b;
+par/or do
+    b = 1;
+with
+    *a = 0;
+end
+return b;
+]],
+    nd_acc = 1,
+}
+
+Test { [[
+C do
+    void f (int* v) {
+        *v = 1;
+    }
+end
+int a, b;
+int* pb = &b;
+par/or do
+    a = 1;
+with
+    _f(&b);
+with
+    _f(&a);
+with
+    _f(pb);
+end
+return a + b;
+]],
+    run = 2,
+    nd_acc = 4,
+    nd_call = 3,
+}
+
+Test { [[
+pure _f;
+C do
+    void f (int* v) {
+        *v = 1;
+    }
+end
+int a, b;
+int* pb = &b;
+par/or do
+    a = 1;
+with
+    _f(&b);
+with
+    _f(&a);
+with
+    _f(pb);
+end
+return a + b;
+]],
+    run = 2,
+    nd_acc = 2,
+}
+
+Test { [[
+C do
+    void f (int* p) {
+        *p = 1;
+    }
+end
+int[2] a;
+int b;
+par/or do
+    b = 2;
+with
+    _f(a);
+end
+return a[0] + b;
+]],
+    run = 3,
 }
 
     -- ARRAYS
@@ -10448,6 +10783,18 @@ end;
 return 0;
 ]],
     nd_flw = 1,
+}
+Test { PRE .. [[
+int a;
+int* pa;
+par/or do
+    _f5(pa);
+with
+    return a;
+end;
+return 0;
+]],
+    nd_flw = 1,
     nd_acc = 1,
 }
 Test { PRE .. [[
@@ -10459,8 +10806,7 @@ with
 end;
 return 0;
 ]],
-    nd_acc = 1,     -- TODO: ref
-    --run = 0,
+    run = 0,
 }
 Test { PRE .. [[
 int a, b;
@@ -10471,8 +10817,7 @@ with
 end;
 return 0;
 ]],
-    nd_acc = 1,     -- TODO: ref
-    --run = 0,
+    run = 0,
 }
 
 Test { PRE .. [[
@@ -10484,8 +10829,7 @@ with
 end;
 return 0;
 ]],
-    nd_acc = 1,     -- TODO: ref
-    --run = 0,
+    run = 0,
 }
 Test { PRE .. [[
 int* pa;
@@ -10555,7 +10899,6 @@ with
 end;
 return a+b;
 ]],
-    nd_acc = 1,     -- TODO: ref
     nd_call = 1,
     run = 6,
 }
@@ -10601,8 +10944,7 @@ with
 end;
 return v1 + v2;
 ]],
-    nd_acc = 1,     -- TODO: ref
-    --run = 6,
+    run = 6,
 }
 
 Test { PRE .. [[
@@ -10616,9 +10958,8 @@ with
 end;
 return a+b;
 ]],
-    --run = 4,
+    run = 4,
     nd_call = 1,
-    nd_acc = 1,     -- TODO: ref
 }
 
 Test { PRE .. [[
@@ -10647,8 +10988,7 @@ with
 end;
 return a+a;
 ]],
-    --run = 4,
-    nd_acc = 1,     -- TODO: ref
+    run = 4,
 }
 
 Test { PRE .. [[
@@ -10719,6 +11059,35 @@ end
 return _a;
 ]],
     nd_acc = 1,
+}
+
+Test { [[
+const _HIGH, _LOW;
+par do
+    loop do
+        _digitalWrite(11, _HIGH);
+        await 1s;
+        _digitalWrite(11, _LOW);
+        await 1s;
+    end
+with
+    loop do
+        _digitalWrite(12, _HIGH);
+        await 500ms;
+        _digitalWrite(12, _LOW);
+        await 500ms;
+    end
+with
+    loop do
+        _digitalWrite(13, _HIGH);
+        await 250ms;
+        _digitalWrite(13, _LOW);
+        await 250ms;
+    end
+end
+]],
+    nd_call = 6,
+    forever = true,
 }
 
 Test { [[

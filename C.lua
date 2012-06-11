@@ -51,7 +51,7 @@ end
 F = {
     Dcl_pure = function (me)
         local cid = unpack(me)
-        _C.pures[cid[1]] = true
+        _C.pures[me.var or me.evt or cid[1]] = true
     end,
 
     Dcl_det = function (me)

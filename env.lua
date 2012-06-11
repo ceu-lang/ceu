@@ -4,11 +4,15 @@ _ENV = {
 }
 
 function newvar (me, blk, isEvt, tp, dim, id)
-    for b in _ITER'Block' do
-        local var = b.vars[id]
-        if var then
-            WRN(false, me,
-                'declaration of "'..id..'" hides the one at line '..var.ln[1])
+    for stmt in _ITER() do
+        if stmt.id == 'Async' then
+            break
+        elseif stmt.id == 'Block' then
+            local var = stmt.vars[id]
+            if var then
+                WRN(false, me,
+                    'declaration of "'..id..'" hides the one at line '..var.ln[1])
+            end
         end
     end
 

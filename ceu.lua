@@ -83,7 +83,7 @@ else
 end
 _STR = inp:read'*a'
 
-if _OPTS.m4 or _OPTS.m4_args then
+if _OPTS.m4 or _OPTS.m4_args or _OPTS.m4_join then
     local args = _OPTS.m4_args and string.sub(_OPTS.m4_args, 2, -2) or ''   -- remove `"´
     local m4_file = (_OPTS.input=='-' and '_tmp.ceu_m4') or _OPTS.input..'_m4'
     local m4 = assert(io.popen('m4 '..args..' - > '..m4_file, 'w'))

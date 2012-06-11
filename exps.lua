@@ -199,11 +199,13 @@ F = {
     ['Op1_&'] = function (me)
         local op, e1 = unpack(me)
         ASR(e1.lval, me, 'invalid operand to unary "&"')
-        me.fst = e1.fst
-        me.fst.se = 'no'   -- just getting the address
-        me.tp  = e1.tp..'*'
-        me.val = '('..op..e1.val..')'
+        me.tp   = e1.tp..'*'
+        me.val  = '('..op..e1.val..')'
         me.lval = false
+
+        me.fst     = e1.fst
+        me.fst.se  = 'no'   -- just getting the address
+        me.fst.ref = true
     end,
 
     ['Op2_.'] = function (me)
@@ -229,6 +231,7 @@ F = {
     Var = function (me)
         me.fst  = me
         me.tp   = me.var.tp
+        me.ref  = me.var.arr
         me.lval = not me.var.arr    -- not .lval but has .fst
         me.se   = 'rd'
         me.val  = me.var.off
@@ -268,6 +271,7 @@ F = {
 
     STRING = function (me)
         me.tp   = 'char*'
+        me.ref  = true
         me.val  = me[1]
         me.lval = false
         --me.isConst = true

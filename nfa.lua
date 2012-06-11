@@ -52,13 +52,19 @@ function qVSq (q1, q2)
         return not (_C.pures[q1.f] or _C.pures[q2.f] or
                         (_C.dets[q1.f] and _C.dets[q1.f][q2.f]))
 
-    elseif q1.acc_se and q2.acc_se and ND[q1.acc_se][q2.acc_se] then
-        if not q1.acc_id then
-            return _C.contains(q1.acc_tp, q2.acc_tp, true)
-        elseif not q2.acc_id then
-            return _C.contains(q2.acc_tp, q1.acc_tp, true)
+    elseif q1.se and q2.se then
+        if (not ND[q1.se][q2.se]) or _C.pures[q1.cmp] or _C.pures[q2.cmp] or
+                (_C.dets[q1.cmp] and _C.dets[q1.cmp][q2.cmp]) then
+            return false
+        end
+        local tp1 = (q1.deref and _C.deref(q1.acc.tp)) or q1.acc.tp
+        local tp2 = (q2.deref and _C.deref(q2.acc.tp)) or q2.acc.tp
+        if q1.deref or (q1.acc.id=='Cid') then
+            return _C.contains(tp1, tp2, true)
+        elseif q2.deref or (q2.acc.id=='Cid') then
+            return _C.contains(tp2, tp1, true)
         else
-            return q1.acc_id == q2.acc_id
+            return q1.cmp == q2.cmp
         end
     end
 end
@@ -117,13 +123,13 @@ function INS (me, a, q)
     return q
 end
 
-function ACC (acc_id, acc_str, acc_tp, acc_se)
+function ACC (acc, se, deref)
     return _NFA.node {
-        id = acc_se..' '..acc_str,
-        acc_id  = acc_id,
-        acc_str = acc_str,
-        acc_tp  = acc_tp,
-        acc_se  = acc_se,
+        id    = (acc.var and acc.var.id) or (acc.evt and acc.evt.id) or acc[1],
+        acc   = acc,
+        se    = se,
+        deref = deref,
+        cmp   = acc.var or acc.evt or acc[1],
     }
 end
 
@@ -291,7 +297,6 @@ F = {
         local qL = INS(me, '',
             _NFA.node {
                 id = '^loop',
-                to = qS,
                 toReach = true,
             })
 
@@ -361,9 +366,9 @@ F = {
     Return = function (me)
         local top = _ITER'SetBlock'()
         CONCAT(me, me[1])
-        local v = top[1].var
+        local v = top[1]
 
-        INS(me, '', ACC(v, v.id, v.tp, 'wr'))
+        INS(me, '', ACC(v, 'wr'))
 
         -- escape only after `async´ event
         local async = _ITER'Async'()
@@ -491,21 +496,18 @@ F = {
 
     Int = function (me)
         if me.se == 'tr' then
-            INS(me, '', ACC(me.evt, me.evt.id, me.evt.tp, 'wr'))
+            INS(me, '', ACC(me, 'wr'))
         end
-        INS(me, '', ACC(me.evt, me.evt.id, me.evt.tp, me.se))
+        INS(me, '', ACC(me, me.se))
     end,
 
     Var = function (me)
-        local n = INS(me, '', ACC(me.var, me.var.id, me.var.tp, me.se))
+        INS(me, '', ACC(me, me.se))
     end,
 
     Cid = function (me)
         local id = me[1]
-        -- assume UPPER ids as constants
-        if string.upper(id) ~= id then
-            INS(me, '', ACC(id, id, me.tp, me.se))
-        end
+        INS(me, '', ACC(me, me.se))
     end,
 
     Op2_call = function (me)
@@ -515,14 +517,12 @@ F = {
         for _, exp in ipairs(exps) do
             CONCAT(me, exp)
 
-            -- f(ptr_v)
+            -- f(ptr_v): ref=false
+            -- f(&v):    ref=true
             local tp = _C.deref(exp.tp, true)
-            if tp then
-                if isPure then
-                    INS(me, '', ACC(nil, '<'..exp.tp..'>', tp, 'rd'))
-                else
-                    INS(me, '', ACC(nil, '<'..exp.tp..'>', tp, 'wr'))
-                end
+            if exp.fst and tp then
+                INS(me, '', ACC(exp.fst, (isPure and 'rd' or 'wr'),
+                                not exp.fst.ref))
             end
         end
 
@@ -536,7 +536,7 @@ F = {
     ['Op1_*'] = function (me)
         local _, e1 = unpack(me)
         CONCAT(me, e1)
-        INS(me, '', ACC(nil, e1.tp, e1.tp, e1.fst.se))
+        INS(me, '', ACC(e1.fst, e1.fst.se, true))
     end,
 }
 

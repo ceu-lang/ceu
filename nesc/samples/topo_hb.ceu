@@ -2,6 +2,10 @@
 @include(radio.m4);
 @include(DS.m4);
 
+pure _DBG;
+deterministic _bm_tostr with
+              _Radio_setType, _Radio_setDestination, _Radio_setSource;
+
 @RADIO_retry(200ms, @RADIO_start);
 
 @define(N_NODES, 16);
@@ -26,12 +30,12 @@ _DBG("%s\n", all);
 event void done;
 
 par do
+    /***
     @DS_topology_hb_diam(101, 10, 250ms, topo, N_NODES);
     emit done;
-
-    /***
-    @DS_topology_hb_ack(101, 250ms, topo, N_NODES, done);
     ***/
+
+    @DS_topology_hb_ack(101, 250ms, topo, N_NODES, done);
 with
     await done;
     if _TOS_NODE_ID==6 then

@@ -10,6 +10,9 @@ input  int         Radio_sendDone;
 input  _message_t* Radio_receive;
 output _message_t* Radio_send;
 
+const _EBUSY, _SUCCESS, _TOS_NODE_ID, _AM_BROADCAST_ADDR;
+pure _Radio_getPayload;
+
 _nx_uint16_t radio_ack = 0;
 
 C do
@@ -186,7 +189,7 @@ do
 end    
 /*}-}*/´) 
 
-define(RADIO_broadcast_ack, `/*{-{*/
+define(RADIO_bcast_ack, `/*{-{*/
 dnl [ 1: msg_ref  ] message reference
 dnl [ 2: neighs   ] bitmap of neighbours
 dnl [ 3: n_nodes  ] length of the bitmap of neighbours

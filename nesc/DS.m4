@@ -42,7 +42,7 @@ dnl     - nos ligados a muitos nos
 dnl     - pouca memoria
 dnl     - mesmo assim pode haver overflow
 
-define(DS_broadcast_front, `/*{-{*/
+define(DS_bcast_front, `/*{-{*/
 dnl [ 1: msg_proto ] message protocol type
 dnl [ 2: pay_type  ] message payload type being broadcast
 dnl [ 3: n_buffer  ] max number of buffered messages
@@ -83,10 +83,10 @@ do
         // broadcasts requests from others frontiers
         loop do
             u32* recv_v;
-            _message_t* msg_bcast = @RADIO_receive($1+1, u32, recv_v);
+            _message_t* msg_bcast_rcv = @RADIO_receive($1+1, u32, recv_v);
             if *recv_v < buf_n then
-                _message_t msg_bcast;
-                int err = @RADIO_send_value(&msg_bcast, _AM_BROADCAST_ADDR,
+                _message_t msg_bcast_snd;
+                int err = @RADIO_send_value(&msg_bcast_snd, _AM_BROADCAST_ADDR,
                                             $1, $2, &buf[*recv_v%$3]);
             end
         end
@@ -235,7 +235,7 @@ do
         // forward PROBE to all neighbours
         _message_t msg_pb;
         void* pay_pb = @RADIO_msg(&msg_pb, $1, NULL);
-        @RADIO_broadcast_ack(&msg_pb, $5, $6, $4);
+        @RADIO_bcast_ack(&msg_pb, $5, $6, $4);
 
     with
 

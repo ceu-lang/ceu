@@ -156,8 +156,9 @@ local C; C = {
                                     node('Loop')(ln1,ln2,str,blk))
         end
 
-        local j = function() return node('Var')(ln1,ln2,str, '$j') end
-        local dcl_j = node('Dcl_var')(ln1,ln2,str, false, 'int', false, '$j')
+        local j_name = '$j'..tostring(blk)
+        local j = function() return node('Var')(ln1,ln2,str, j_name) end
+        local dcl_j = node('Dcl_var')(ln1,ln2,str, false, 'int', false, j_name)
         local set_j = node('SetExp')(ln1,ln2,str, j(), _j)
 
         local cmp = node('Op2_>=')(ln1,ln2,str, '>=', i(), j())

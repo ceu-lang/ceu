@@ -6,7 +6,7 @@ for i=0, 15 do
             TOS_NODE_ID = i,
             --TOS_COLLISION = 80,
         },
-        source = assert(io.open'../samples/broadcast_front.ceu'):read'*a',
+        source = assert(io.open'../samples/bcast_front.ceu'):read'*a',
     }
 end
 

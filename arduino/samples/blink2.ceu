@@ -1,3 +1,5 @@
+const _OUTPUT, _LOW, _HIGH;
+
 _pinMode(11, _OUTPUT);
 _pinMode(12, _OUTPUT);
 _pinMode(13, _OUTPUT);

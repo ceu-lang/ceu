@@ -78,12 +78,11 @@ local EM = function (msg)
 end
 
 -- TODO: types
-KEYS = P'async'   + 'await'  + 'break'  + 'call'   + 'deterministic'
-     +  'do'      + 'emit'   + 'else'   + 'end'    + 'event'
-     +  'Forever' + 'input'  + 'if'     + 'loop'   + 'nothing'
-     +  'now'     + 'null'   + 'output' + 'par'    + 'par/and'
-     +  'par/or'  + 'pure'   + 'return' + 'set'    + 'sizeof'
-     +  'then'    + 'with'
+KEYS = P'async'  + 'await'  + 'break'   + 'call'    + 'const' + 'deterministic'
+     +  'do'     + 'emit'   + 'else'    + 'end'     + 'event' +  'Forever'
+     +  'input'  + 'if'     + 'loop'    + 'nothing' +  'now'  + 'null'
+     +  'output' + 'par'    + 'par/and' + 'par/or'  + 'pure'  + 'return'
+     +  'set'    + 'sizeof' +  'then'   + 'with'
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
@@ -110,7 +109,7 @@ _GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
 
     , _Stmt = V'Nothing'
             + V'AwaitT'   + V'AwaitExt' + V'AwaitInt'
-            + V'EmitT'    + V'EmitExtS'  + V'EmitInt'
+            + V'EmitT'    + V'EmitExtS' + V'EmitInt'
             + V'_Dcl_ext' + V'_Dcl_int' + V'_Dcl_var'
             + V'Dcl_det'  + V'_Dcl_pure'
             + V'_Set'     + V'CallStmt' -- must be after Set
@@ -124,9 +123,10 @@ _GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
                     V'ParEver'  + V'If'    + V'Loop'
                 )
 
-    , _Dcl_pure = K'pure' *S* EV'ID_c' * (S* K',' *S* V'ID_c')^0
-    , Dcl_det   = K'deterministic' *S* EV'ID_c' *S* EK'with' *S*
-                    EV'ID_c' * (S* K',' *S* V'ID_c')^0
+    , __CVI     = V'ID_c' + V'Var' + V'Int'
+    , _Dcl_pure = (K'pure'+K'const') *S* EV'ID_c' * (S* K',' *S* V'ID_c')^0
+    , Dcl_det   = K'deterministic' *S* EV'__CVI' *S* EK'with' *S*
+                     EV'__CVI' * (S* K',' *S* EV'__CVI')^0
 
     , _Set  = V'_Exp' *S* V'_Sets'
     , _Sets = K'=' *S* (

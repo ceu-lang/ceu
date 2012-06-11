@@ -7,9 +7,9 @@ u64 t = 500;
 par/or do
     loop do
         _digitalWrite(13, _HIGH);
-        await (t*1000);
+        await (t)ms;
         _digitalWrite(13, _LOW);
-        await (t*1000);
+        await (t)ms;
     end
 with
     loop do

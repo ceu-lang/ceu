@@ -1,5 +1,9 @@
 @include(radio.m4)
 
+deterministic _Leds_led0Toggle with _memcpy,
+                _Radio_setDestination, _Radio_setType,
+                _Radio_setSource, _Radio_setPayloadLength;
+
 @RADIO_retry(1s, @RADIO_start);
 _DBG("Radio started\n");
 

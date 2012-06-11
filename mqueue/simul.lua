@@ -83,7 +83,7 @@ C do /******/
     f:close()
     DBG('===> Compiling '..app._ceu..' (NO DFA!)...')
     assert(os.execute('./ceu '..app._ceu
-                        --.. ' --dfa-viz'
+                        --.. ' --dfa'
                         .. ' --m4-args "'..M4..'"'
                         .. ' --output _ceu_code.c'
                         .. ' --events-file _ceu_events.h'

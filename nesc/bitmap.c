@@ -3,6 +3,8 @@
 changequote(<,>)
 changequote(`,´)
 
+pure _bm_get, _bm_idx, _bm_bit, _bm_isZero, _bm_count;
+
 C do
     void bm_clear (u8* map, int len) {
         memset(map, 0, len/8);
@@ -63,7 +65,5 @@ C do
             dst[i] = src[i];
     }
 end
-
-pure _bm_idx, _bm_bit, _bm_isZero, _bm_tostr;
 
 /*}-}*/dnl

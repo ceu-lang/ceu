@@ -1,3 +1,6 @@
+deterministic _Leds_led0Toggle with _Leds_led1Toggle, _Leds_led2Toggle;
+deterministic _Leds_led1Toggle with _Leds_led2Toggle;
+
 par do
     loop do
         await 250ms;

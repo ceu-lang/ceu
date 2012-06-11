@@ -17,7 +17,7 @@ event _Data* recv_new;
 event _Data* send_new;
 
 par/or do
-    @DS_broadcast_front(111, _Data, 10, 200ms, recv_new, send_new);
+    @DS_bcast_front(111, _Data, 10, 200ms, recv_new, send_new);
 with
     loop do
         await recv_new;
