@@ -3,7 +3,7 @@
 #define PR_MAX  0x7F
 #define PR_MIN  (-0x7F)
 
-#define N_TIMERS    (=== N_TIMERS ===)
+#define N_WCLOCKS   (=== N_WCLOCKS ===)
 #define N_TRACKS    (1+ === N_TRACKS ===)
 #define N_ASYNCS    (=== N_ASYNCS ===)
 #define N_EMITS     (=== N_EMITS ===)
@@ -13,9 +13,8 @@
 
 // Macros that can be defined:
 // ceu_out_pending()   (1)
-// ceu_out_timer(ns)
+// ceu_out_wclock(ns)
 // ceu_out_event(id, len, data)
-// ASSERT
 
 typedef s16 tceu_gte;   // lbl=gte (must have the same sizes)
 typedef s16 tceu_lbl;
@@ -23,9 +22,9 @@ typedef s16 tceu_lbl;
 int go (int* ret);
 
 enum {
-    CEU_TERM   = 0,
-    CEU_NONE   = 1,
-    CEU_TMREXP = 2,
+    CEU_RET_TERM   = 0,
+    CEU_RET_NONE   = 1,
+    CEU_RET_WCLOCK = 2,
 };
 
 enum {
@@ -34,7 +33,7 @@ enum {
 === LABELS ===
 };
 
-=== EVTS ===
+=== DEFS ===
 
 === HOST ===
 
@@ -46,9 +45,9 @@ tceu_gte TRGS[] = { === TRGS === };
 
 char VARS[N_VARS];
 
-#if N_TIMERS > 0
+#ifdef CEU_WCLOCKS
 u32 _extl_;     // TODO: suficiente?
-u32 _extlmax_;  // needed for timers
+u32 _extlmax_;  // needed for wclocks
 #endif
 
 // returns a pointer to the received value
@@ -77,10 +76,6 @@ void trk_insert (int chk, s8 prio, tceu_lbl lbl)
             if (lbl == TRACKS[i].lbl)
                 return;
     }
-
-#ifdef ASSERT
-    ASSERT(TRACKS_n < N_TRACKS);
-#endif
 
     for (i=++TRACKS_n; (i>1) && (prio>TRACKS[i/2].prio); i/=2)
         TRACKS[i] = TRACKS[i/2];
@@ -143,24 +138,24 @@ void trigger (int trg)
         spawn(TRGS[trg+i]);
 }
 
-/* TIMERS ***************************************************************/
+/* WCLOCKS ***************************************************************/
 
-u64 TIME_now = 0;
+u64 WCLOCK_now = 0;
 
-#if N_TIMERS > 0
-u64 TIME_late;
-int TIME_expired = 0;
+#ifdef CEU_WCLOCKS
+u64 WCLOCK_late;
+int WCLOCK_expired = 0;
 
 typedef struct {
     u64 phys;
     u32 extl;
     tceu_gte gte;
-} QTimer;
+} QWClock;
 
-QTimer  TIMERS[N_TIMERS] = { === TIMERS === };
-QTimer* TMR_cur = NULL;
+QWClock  WCLOCKS[N_WCLOCKS] = { === WCLOCKS === };
+QWClock* TMR_cur = NULL;
 
-int QTimer_lt (QTimer* tmr) {
+int QWClock_lt (QWClock* tmr) {
     if ( tmr->phys != 0 && (
             (TMR_cur==NULL || tmr->phys<TMR_cur->phys ||
                 (tmr->phys==TMR_cur->phys  &&  tmr->extl<TMR_cur->extl))
@@ -172,26 +167,26 @@ int QTimer_lt (QTimer* tmr) {
 }
 
 void tmr_enable (u64 ns, int idx) {
-    QTimer* tmr = &TIMERS[idx];
-    s64 dt = ns - TIME_late;
+    QWClock* tmr = &WCLOCKS[idx];
+    s64 dt = ns - WCLOCK_late;
     int nxt;
 
-    tmr->phys = TIME_now + dt;
+    tmr->phys = WCLOCK_now + dt;
     tmr->extl = _extl_;
-    nxt = QTimer_lt(tmr);
+    nxt = QWClock_lt(tmr);
 
     if (dt <= 0) { // already expired
-        TIME_expired = 1;
+        WCLOCK_expired = 1;
     }
-#ifdef ceu_out_timer
-    else {         // check if out_timer is needed (no cur or new minimum timer)
+#ifdef ceu_out_wclock
+    else {         // check if out_wclock is needed (no cur or new minimum wclock)
         if (new)
-            ceu_out_timer(dt);
+            ceu_out_wclock(dt);
     }
 #endif
 }
 
-u64* ceu_timer_nxt () {
+u64* ceu_wclock_nxt () {
     if (TMR_cur == NULL)
         return NULL;
     else
@@ -201,7 +196,7 @@ u64* ceu_timer_nxt () {
 
 /* ASYNCS ***************************************************************/
 
-#if N_ASYNCS > 0
+#ifdef CEU_ASYNCS
 tceu_gte Q_ASYNC[N_ASYNCS];
 int async_ini = 0;
 int async_end = 0;
@@ -221,9 +216,6 @@ void asy_insert (tceu_gte gte)
     Q_ASYNC[async_end++] = gte;
     async_end %= N_ASYNCS;
     async_cnt++;
-#ifdef ASSERT
-    ASSERT(async_cnt <= N_ASYNCS, 6);
-#endif
 }
 #endif
 
@@ -233,9 +225,9 @@ int ceu_go_init (int* ret, u64 now)
 {
     memset(GTES, 0, N_GTES);
 
-    TIME_now  = now;
-#if N_TIMERS > 0
-    TIME_late = 0;
+    WCLOCK_now  = now;
+#ifdef CEU_WCLOCKS
+    WCLOCK_late = 0;
     _extlmax_ = _extl_ = 0;
 #endif
 
@@ -248,28 +240,28 @@ int ceu_go_event (int* ret, int id, void* data) {
     DATA = data;
     trigger(id);
 
-#if N_TIMERS > 0
-    TIME_late = 0;
+#ifdef CEU_WCLOCKS
+    WCLOCK_late = 0;
     _extl_ = ++_extlmax_;
 #endif
 
     return go(ret);
 }
 
-#if N_ASYNCS > 0
+#ifdef CEU_ASYNCS
 int ceu_go_async (int* ret, int* count)
 {
     if (count)
         *count = async_cnt;
     if (async_cnt == 0)
-        return CEU_NONE;
+        return CEU_RET_NONE;
 
     spawn(Q_ASYNC[async_ini]);
     async_ini = (async_ini+1) % N_ASYNCS;
     async_cnt--;
 
-#if N_TIMERS > 0
-    TIME_late = 0;
+#ifdef CEU_WCLOCKS
+    WCLOCK_late = 0;
     _extl_ = ++_extlmax_;
 #endif
 
@@ -277,51 +269,51 @@ int ceu_go_async (int* ret, int* count)
 }
 #endif
 
-int ceu_go_time (int* ret, u64 now)
+int ceu_go_wclock (int* ret, u64 now)
 {
-#if N_TIMERS > 0
+#ifdef CEU_WCLOCKS
     int i;
     u64 phys;
 
-    TIME_now = now;
+    WCLOCK_now = now;
 
     if (TMR_cur == NULL)
-        return CEU_NONE;
+        return CEU_RET_NONE;
 
     phys   = TMR_cur->phys;
     _extl_ = TMR_cur->extl;
 
-    if (phys > TIME_now)
-        return CEU_NONE;
+    if (phys > WCLOCK_now)
+        return CEU_RET_NONE;
 
-    TIME_late = TIME_now - phys; // how much late the timer is
+    WCLOCK_late = WCLOCK_now - phys; // how much late the wclock is
 
     // spawns all phys/ext
     // finds the next TMR_cur
     TMR_cur = NULL;
-    for (i=0; i<N_TIMERS; i++)
+    for (i=0; i<N_WCLOCKS; i++)
     {
-        QTimer* tmr = &TIMERS[i];
+        QWClock* tmr = &WCLOCKS[i];
         if (tmr->phys==phys && tmr->extl==_extl_) {
             tmr->phys = 0;          // disables it
             spawn(tmr->gte);        // spawns sharing phys/ext
         } else {
-            QTimer_lt(tmr);         // check if this is the next
-            if (tmr->phys <= TIME_now)
-                TIME_expired = 1;   // spawn in next cycle
+            QWClock_lt(tmr);         // check if this is the next
+            if (tmr->phys <= WCLOCK_now)
+                WCLOCK_expired = 1;   // spawn in next cycle
         }
     }
 
-#ifdef ceu_out_timer
-    if (TMR_cur!=NULL && !TIME_expired)
-        ceu_out_timer(TMR_cur->phys - TIME_now); // not yet to spawn
+#ifdef ceu_out_wclock
+    if (TMR_cur!=NULL && !WCLOCK_expired)
+        ceu_out_wclock(TMR_cur->phys - WCLOCK_now); // not yet to spawn
 #endif
 
     return go(ret);
 #else
 
-    TIME_now = now;
-    return CEU_NONE;
+    WCLOCK_now = now;
+    return CEU_RET_NONE;
 #endif
 }
 
@@ -364,34 +356,34 @@ _SWITCH_:
         }
     }
 
-#if N_TIMERS > 0
-    if (TIME_expired) {
-        TIME_expired = 0;
-        return CEU_TMREXP;
+#ifdef CEU_WCLOCKS
+    if (WCLOCK_expired) {
+        WCLOCK_expired = 0;
+        return CEU_RET_WCLOCK;
     }
 #endif
-    return CEU_NONE;
+    return CEU_RET_NONE;
 }
 
-int ceu_go_polling (u64 now)
+int ceu_go_all (u64 now)
 {
     int ret = 0;
-#if N_ASYNCS > 0
+#ifdef CEU_ASYNCS
     int async_cnt;
 #endif
 
-    if (ceu_go_init(&ret, now) == CEU_TERM)
+    if (ceu_go_init(&ret, now) == CEU_RET_TERM)
         return ret;
 
 #ifdef IN_Start
     //*PVAL(int,IN_Start) = (argc>1) ? atoi(argv[1]) : 0;
-    if (ceu_go_event(&ret, IN_Start, NULL) == CEU_TERM)
+    if (ceu_go_event(&ret, IN_Start, NULL) == CEU_RET_TERM)
         return ret;
 #endif
 
-#if N_ASYNCS > 0
+#ifdef CEU_ASYNCS
     for (;;) {
-        if (ceu_go_async(&ret,&async_cnt) == CEU_TERM)
+        if (ceu_go_async(&ret,&async_cnt) == CEU_RET_TERM)
             return ret;
         if (async_cnt == 0)
             break;              // returns nothing!

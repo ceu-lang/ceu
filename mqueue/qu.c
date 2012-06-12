@@ -46,7 +46,7 @@ int main (int argc, char *argv[])
             break;
         }
 
-        case QU_TIME:
+        case QU_WCLOCK:
         default: {  // ./qu send BUF IN_ INT
             int v = ((argc>4) ? atoi(argv[4]) : 0);
             memcpy(buf+len, &v, sizeof(int));

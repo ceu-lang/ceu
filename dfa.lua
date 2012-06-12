@@ -12,7 +12,7 @@ _DFA = {
 
 local _step_
 
-function NODE_time (old, ns)
+function NODE_wclock (old, ns)
     if old.ref then
         old = old.ref   -- always get to the original q
     end
@@ -22,7 +22,7 @@ function NODE_time (old, ns)
         return new
     end
 
-    local us_id = (ns==_TIME_undef) and '??' or ns
+    local us_id = (ns==_WCLOCK_undef) and '??' or ns
     new = _NFA.node {
         id    = '+'..us_id..'ns',
         ns    = ns,
@@ -353,13 +353,13 @@ do
     end
 
     --------------------------------------------------
-    -- Time transitions
+    -- WClock transitions
     --------------------------------------------------
 
-    -- MIN timer
+    -- MIN wclock
     local min = set.fold(S.qs_awt, false,
         function(acc, q)
-            if q.ns and q.ns~=_TIME_undef and (acc==false or q.ns<acc) then
+            if q.ns and q.ns~=_WCLOCK_undef and (acc==false or q.ns<acc) then
                 return q.ns
             else
                 return acc
@@ -369,7 +369,7 @@ do
     -- all undefs + min (if existent)
     local qs_tmr = set.flatten(
                         set.filter(S.qs_awt,
-                            function(q) return q.ns==_TIME_undef end))
+                            function(q) return q.ns==_WCLOCK_undef end))
     if min then
         qs_tmr[#qs_tmr+1] = true
     end
@@ -380,13 +380,13 @@ do
     -- for all possible t0 states
     for s in pairs(_DFA.states)
     do
-        local tmr_cur = 1   -- at least one timer transition
+        local tmr_cur = 1   -- at least one wclock transition
         while tmr_cur < math.pow(2,#qs_tmr)
         do
             tmr_bin = dec2bin(tmr_cur)
             tmr_cur = tmr_cur + 1
             local minOn = min and (string.sub(tmr_bin,-#qs_tmr,-#qs_tmr)=='1')
-            local US    = minOn and min or _TIME_undef
+            local US    = minOn and min or _WCLOCK_undef
             local US_id = minOn and min or '??'
 
             local qs_togo = {}
@@ -397,9 +397,9 @@ do
                     local idx = qs_tmr[q]
                     if (minOn and q.ns==min) or
                         (idx and string.sub(tmr_bin,-idx,-idx)=='1') then
-                        qs_togo[q.toAwk] = P        -- expiring timers
+                        qs_togo[q.toAwk] = P        -- expiring wclocks
                         changed = true
-                    elseif q.ns == _TIME_undef then
+                    elseif q.ns == _WCLOCK_undef then
                         qs_togo[q] = P              -- unchanged
                     else
                         local ns, us_id
@@ -407,11 +407,11 @@ do
                             ns = q.ns - min
                             us_id = ns
                         else
-                            ns = _TIME_undef
+                            ns = _WCLOCK_undef
                             us_id = '??'
                         end
-                        local new = NODE_time(q,ns) -- copy q (with dif time)
-                        qs_togo[new] = P            -- non expiring timers
+                        local new = NODE_wclock(q,ns) -- copy q (with dif wclock)
+                        qs_togo[new] = P              -- non expiring wclocks
                         changed = true
                     end
                 else
@@ -455,7 +455,7 @@ do
             for q,pFr in pairs(qs_togo) do    -- must start with these
                 local pTo = Q_spawn(q, qs_path, PR_MAX+1)
                 qs_togo[q] = pTo
-                pTo.t0 = pFr.t0         -- used by timers
+                pTo.t0 = pFr.t0         -- used by wclocks
                 T.qs_togo[q] = { pFr, pTo }
             end
 
@@ -499,8 +499,8 @@ do
                 elseif q.ns and (not qs_togo[q]) then
                     -- keep starting S or set to S to be created
                     P.t0 = T.t0 or _DFA.n_states+1
-                    if T.ns == _TIME_undef then
-                        q = NODE_time(q, _TIME_undef)
+                    if T.ns == _WCLOCK_undef then
+                        q = NODE_wclock(q, _WCLOCK_undef)
                     end
 --DBG(q.ns, P.t0)
                 elseif q.toCnt then

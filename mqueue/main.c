@@ -41,7 +41,7 @@ int main (int argc, char *argv[])
 
     int ret = 0;
 
-#if N_ASYNCS > 0
+#ifdef CEU_ASYNCS
     int async_cnt = 1;
 #else
     int async_cnt = 0;
@@ -49,13 +49,13 @@ int main (int argc, char *argv[])
 
     struct timespec ts_nxt;
     clock_gettime(CLOCK_REALTIME, &ts_nxt);
-    tceu_time now = ts_nxt.tv_sec*1000000000LL + ts_nxt.tv_nsec;
+    u64 now = ts_nxt.tv_sec*1000000000LL + ts_nxt.tv_nsec;
 
-    if (ceu_go_init(&ret, now) == CEU_TERM)
+    if (ceu_go_init(&ret, now) == CEU_RET_TERM)
         goto END;
 
 #ifdef IN_Start
-    if (ceu_go_event(&ret, IN_Start, NULL) == CEU_TERM)
+    if (ceu_go_event(&ret, IN_Start, NULL) == CEU_RET_TERM)
         goto END;
 #endif
 
@@ -65,12 +65,12 @@ int main (int argc, char *argv[])
     {
         clock_gettime(CLOCK_REALTIME, &ts_nxt);
         if (async_cnt == 0) {
-#if N_TIMERS > 0
-            tceu_time* nxt = ceu_timer_nxt();
+#ifdef CEU_WCLOCKS
+            u64* nxt = ceu_wclock_nxt();
             if (nxt == NULL) {
 #endif
                 ts_nxt.tv_sec += 100;
-#if N_TIMERS > 0
+#ifdef CEU_WCLOCKS
             } else {
                 ts_nxt.tv_sec  = *nxt / 1000000000LL;
                 ts_nxt.tv_nsec = *nxt % 1000000000LL;
@@ -81,12 +81,12 @@ int main (int argc, char *argv[])
 
         if (mq_timedreceive(queue_read,_buf,sizeof(_buf),NULL,&ts_nxt) == -1)
         {
-#if N_TIMERS > 0
-            if (ceu_go_time(&ret, now) == CEU_TERM)
+#ifdef CEU_WCLOCKS
+            if (ceu_go_wclock(&ret, now) == CEU_RET_TERM)
                 goto END;
 #endif
-#if N_ASYNCS > 0
-            if (ceu_go_async(&ret,&async_cnt) == CEU_TERM)
+#ifdef CEU_ASYNCS
+            if (ceu_go_async(&ret,&async_cnt) == CEU_RET_TERM)
                 return ret;
 #endif
         }
@@ -151,16 +151,16 @@ int main (int argc, char *argv[])
 
                     break;
                 }
-                case QU_TIME: {
-                    TIME_now += *((int*)(buf));
+                case QU_WCLOCK: {
+                    WCLOCK_now += *((int*)(buf));
                     int s;
-                    while ((s=ceu_go_time(&ret, TIME_now)) == CEU_TMREXP);
-                    if (s == CEU_TERM)
+                    while ((s=ceu_go_wclock(&ret, WCLOCK_now)) == CEU_RET_WCLOCK);
+                    if (s == CEU_RET_TERM)
                         goto END;
                     break;
                 }
                 default:
-                    if (ceu_go_event(&ret, id_in, buf) == CEU_TERM)
+                    if (ceu_go_event(&ret, id_in, buf) == CEU_RET_TERM)
                         goto END;
                     break;
             }

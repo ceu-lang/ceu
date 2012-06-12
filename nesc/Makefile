@@ -12,9 +12,9 @@ BUILD_EXTRA_DEPS += ceu
 include $(MAKERULES)
 
 ceu:
-	@echo "======================================================="
-	./ceu $(CEUFILE) --m4 --events --output _ceu_code.tmp
-	@echo "======================================================="
+	@echo "===================================================================="
+	./ceu $(CEUFILE) --dfa --defs-file _ceu_defs.h --output _ceu_code.tmp
+	@echo "===================================================================="
 
 clean_ceu:
 	rm -f _ceu_*

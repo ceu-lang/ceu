@@ -16,7 +16,7 @@ typedef unsigned char   u8;
 enum {
     QU_LINK   = -1,
     QU_UNLINK = -2,
-    QU_TIME   = -10,
+    QU_WCLOCK = -10,
     QU_ASYNC  = -11,
 };
 

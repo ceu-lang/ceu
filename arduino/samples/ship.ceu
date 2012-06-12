@@ -8,7 +8,7 @@
  * $ /opt/arduino-1.0/libraries/LiquidCrystal/LiquidCrystal.* .
  *
  * Finally, run
- * $ make INOFILE=async.pde CEUFILE=ship.ceu
+ * $ make INOFILE=async.ino CEUFILE=ship.ceu
  *
  * Francisco Sant'Anna
  * http://www.lua.inf.puc-rio.br/~francisco/

@@ -74,7 +74,7 @@ F = {
         CONC(me, me[1])
         if not (_DFA and _DFA.forever) then
             LINE(me, 'if (ret) *ret = *((int*)VARS);')
-            LINE(me, 'return CEU_TERM;')
+            LINE(me, 'return CEU_RET_TERM;')
         end
         me.host = HOST
     end,
@@ -360,13 +360,13 @@ break;
         local exp = unpack(me)
         local async = _ITER'Async'()
         local lb_cnt = LABEL_gen('Async_cont')
-        --LINE(me, 'TIME_base += '..VAL(exp.ret)..';')
+        --LINE(me, 'WCLOCK_base += '..VAL(exp.ret)..';')
         LINE(me, 'GTES['..async.gte..'] = '..lb_cnt..';')
         LINE(me, 'asy_insert('..async.gte..');')
         LINE(me, [[
-TIME_now += ]]..exp.val..[[;
+WCLOCK_now += ]]..exp.val..[[;
 { int status;
-  while ((status=ceu_go_time(ret,TIME_now)) == CEU_TMREXP);
+  while ((status=ceu_go_wclock(ret,WCLOCK_now)) == CEU_RET_WCLOCK);
   return status;
 }
 ]])
@@ -384,14 +384,14 @@ TIME_now += ]]..exp.val..[[;
     end,
     AwaitT = function (me)
         local exp = unpack(me)
-        local lb = LABEL_gen('Timer')
+        local lb = LABEL_gen('WCLOCK')
         CONC(me, exp)
         LINE(me, 'GTES['..me.gte..'] = '..lb..'; // open AwaitT')
-        LINE(me, 'tmr_enable('..exp.val..', '..me.timers_idx..');')
+        LINE(me, 'tmr_enable('..exp.val..', '..me.wclocks_idx..');')
         HALT(me)
         LABEL_out(me, lb)
         if me.toset then
-            LINE(me, me.toset.val..' = TIME_late;')
+            LINE(me, me.toset.val..' = WCLOCK_late;')
         end
     end,
     AwaitExt = function (me)

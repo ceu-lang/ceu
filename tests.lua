@@ -459,24 +459,28 @@ C do
         int a;
         int b;
     } t;
-    #define ceu_out_event(a,b,c) F
-    int F (int id, int len, void* data) {
+    #define ceu_out_event(a,b,c) Fa(a,b,c)
+    int Fa (int id, int len, void* data) {
         assert(len == 8);
         t v = *((t*)data);
         return v.a - v.b;
     }
+    #define ceu_out_event_B(c) Fb(c)
+    int Fb (int* data) {
+        return *data - 1;
+    }
 end
 output _t* A;
+output int B;
 
 _t v;
 v.a = 1;
 v.b = -1;
-if emit A(v) then
-    return 0;
-end
-return(1);
+int a = emit A(&v);
+int b = emit B(5);
+return a + b;
 ]],
-    run=0
+    run = 6,
 }
 
 Test { [[

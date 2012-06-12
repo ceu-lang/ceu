@@ -1,4 +1,4 @@
-INOFILE ?= poll.pde
+INOFILE ?= poll.ino
 CEUFILE ?= samples/blink1.ceu
 
 ARDUINODIR = /opt/arduino-1.0
@@ -14,7 +14,7 @@ all: ceu _all
 
 ceu: $(CEUCFILE)
 	cp $(CEUCFILE) _ceu_code.tmp
-	touch *.pde *.ino
+	touch *.ino
 
 $(CEUCFILE): $(CEUFILE)
 	./ceu $(CEUFILE) --m4 --output $(CEUCFILE)

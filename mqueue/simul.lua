@@ -14,7 +14,7 @@ module((...), package.seeall)
 QU = {
     LINK   = -1,
     UNLINK = -2,
-    TIME   = -10,
+    WCLOCK = -10,
     ASYNC  = -11,
 }
 
@@ -86,14 +86,14 @@ C do /******/
                         --.. ' --dfa'
                         .. ' --m4-args "'..M4..'"'
                         .. ' --output _ceu_code.c'
-                        .. ' --events-file _ceu_events.h'
+                        .. ' --defs-file _ceu_defs.h'
                      ) == 0)
     assert(os.execute('gcc -o '..app._exe..' main.c -lrt')==0)
 
     DBG('', 'queue:', app._queue)
 
     app.io = {}
-    local str = assert(io.open('_ceu_events.h')):read'*a'
+    local str = assert(io.open('_ceu_defs.h')):read'*a'
     DBG('', 'inputs:')
     for evt, v in string.gmatch(str,'(IN_%u[^%s]*)%s+(%d+)\n') do
         app.io[evt] = v

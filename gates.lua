@@ -2,7 +2,7 @@ _GATES = {
     n_ands  = 0,
     n_gtes  = 0,
     trgs    = { 0 },    -- 0=all undefined should point to [0]
-    timers  = { },      -- { gte1, gte2, ... }
+    wclocks = { },      -- { gte1, gte2, ... }
 }
 
 local EVTS = {}
@@ -53,8 +53,8 @@ F = {
 
     AwaitT = function (me)
         me.gte = alloc('n_gtes')
-        me.timers_idx = #_GATES.timers;
-        _GATES.timers[#_GATES.timers+1] = me.gte
+        me.wclocks_idx = #_GATES.wclocks;
+        _GATES.wclocks[#_GATES.wclocks+1] = me.gte
     end,
 
     AwaitExt = function (me)

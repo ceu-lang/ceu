@@ -11,7 +11,7 @@ arduino: clean
 	lua pak.lua ; \
 	cd arduino/ ; \
 	mkdir -p ceu_arduino_$(DATE)/samples/ ; \
-	cp ceu README Makefile arduino.mk *.pde ceu_arduino_$(DATE)/ ; \
+	cp ceu README Makefile arduino.mk *.ino ceu_arduino_$(DATE)/ ; \
 	cp samples/*.ceu ceu_arduino_$(DATE)/samples/ ; \
 	tar hcvzf ceu_arduino_$(DATE).tgz ceu_arduino_$(DATE)/ ; \
 	rm -Rf ../../ceu_arduino_$(DATE)/ ; \

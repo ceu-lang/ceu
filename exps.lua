@@ -237,7 +237,7 @@ F = {
         me.val  = me.var.off
     end,
 
-    TIMEK = function (me)
+    WCLOCKK = function (me)
         local h,m,s,ms,us,ns = unpack(me)
         me.tp   = 'int'
         me.ns   = ns*t2n.ns + us*t2n.us + ms*t2n.ms + s*t2n.s + m*t2n.m + h*t2n.h
@@ -247,7 +247,7 @@ F = {
         ASR(me.ns > 0, me,'must be >0')
     end,
 
-    TIMEE = function (me)
+    WCLOCKE = function (me)
         local exp, unit = unpack(me)
         me.tp   = 'int'
         me.ns   = nil
@@ -290,7 +290,7 @@ F = {
     end,
     NOW = function (me)
         me.tp   = 'u64'
-        me.val  = 'TIME_now'
+        me.val  = 'WCLOCK_now'
         me.lval = false
     end,
 }

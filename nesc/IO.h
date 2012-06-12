@@ -1,6 +1,6 @@
 #ifndef IO_h
 
-#include "_ceu_events.h"
+#include "_ceu_defs.h"
 
 #if defined(FUNC_Leds_led0Off) || defined(FUNC_Leds_led1Off) || \
     defined(FUNC_Leds_led2Off) || defined(FUNC_Leds_led0On)  || \

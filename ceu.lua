@@ -1,27 +1,25 @@
 _CEU = true
 
 _OPTS = {
-    input       = nil,
-    output      = '-',
+    input     = nil,
+    output    = '-',
 
-    events      = false,
-    events_file = '_ceu_events.h',
+    defs_file = '_ceu_defs.h',
 
-    opt_join    = true,
+    opt_join  = true,
 
-    m4          = false,
-    m4_args     = false,
+    m4        = false,
+    m4_args   = false,
 
-    dfa         = false,
-    dfa_viz     = false,
+    dfa       = false,
+    dfa_viz   = false,
 }
 
 _OPTS_NPARAMS = {
     input       = nil,
     output      = 1,
 
-    events      = 0,
-    events_file = 1,
+    defs_file   = 1,
 
     opt_join    = 1,
 
@@ -58,22 +56,19 @@ end
 if not _OPTS.input then
     io.stderr:write([[
 
-    ./ceu <filename>             # ceu input file, or `-´ for stdin
-
-        # optional parameters (default value in parenthesis)
-
+    ./ceu <filename>             # Ceu input file, or `-´ for stdin
+    
         --output <filename>      # C output file (stdout)
-
-        --events                 # declare events in a separate file (false)
-        --events-file <filename> # events output file (`_ceu_events.h´)
-
-        --opt-join               # join lines enclosed by /*{-{*/ and /*}-}*/
-
+    
+        --defs-file <filename>   # defines constants & defines in a separate output file (no)
+    
+        --opt-join               # joins lines enclosed by /*{-{*/ and /*}-}*/ (true)
+    
         --dfa                    # performs DFA analysis (false)
         --dfa-viz                # generates DFA graph (false)
-
-        --m4                     # preprocess the input with `m4´ (false)
-        --m4-args                # preprocess the input with `m4´ passing arguments in between `"´ (false)
+    
+        --m4                     # preprocesses the input with `m4´ (false)
+        --m4-args                # preprocesses the input with `m4´ passing arguments in between `"´ (false)
 
 ]])
     os.exit(1)
@@ -138,7 +133,7 @@ do
         return string.sub(str, 1, i-1) .. to .. string.sub(str, e+1)
     end
 
-    tpl = sub(tpl, '=== N_TIMERS ===', #_GATES.timers)
+    tpl = sub(tpl, '=== N_WCLOCKS ===', #_GATES.wclocks)
     tpl = sub(tpl, '=== N_TRACKS ===', _AST.n_tracks)
     tpl = sub(tpl, '=== N_ASYNCS ===', _AST.n_asyncs)
     tpl = sub(tpl, '=== N_EMITS ===',  _AST.n_emits)
@@ -149,13 +144,13 @@ do
     tpl = sub(tpl, '=== HOST ===',     _AST.host)
     tpl = sub(tpl, '=== CODE ===',     _AST.code)
 
-    -- TIMERS
+    -- WCLOCKS
     do
-        local timers = '{ '
-        for i, gte in ipairs(_GATES.timers) do
-            _GATES.timers[i] = '{ 0, 0, '..gte..' }'
+        local wclocks = '{ '
+        for i, gte in ipairs(_GATES.wclocks) do
+            _GATES.wclocks[i] = '{ 0, 0, '..gte..' }'
         end
-        tpl = sub(tpl, '=== TIMERS ===', table.concat(_GATES.timers,','))
+        tpl = sub(tpl, '=== WCLOCKS ===', table.concat(_GATES.wclocks,','))
     end
 
     -- LABELS
@@ -168,8 +163,9 @@ do
         tpl = sub(tpl, '=== LABELS ===', labels)
     end
 
-    -- EVENTS and FUNCTIONS used
+    -- DEFINITIONS: constants & defines
     do
+        -- EVENTS
         local str = ''
         local t = {}
         local outs = 0
@@ -184,22 +180,28 @@ do
         str = str..'#define OUT_n '..outs..'\n'
 
         -- FUNCTIONS called
-        local funcs = 0
         for id in pairs(_EXPS.calls) do
             if id ~= '$anon' then
-                str = str..'#define FUNC'..id..' '..funcs..'\n'
-                funcs = funcs + 1
+                str = str..'#define FUNC'..id..'\n'
             end
         end
 
-        if _OPTS.events or _OPTS.events_file then
-            local f = io.open('_ceu_events.h','w')
+        -- DEFINES
+        if #_GATES.wclocks > 0 then
+            str = str .. '#define CEU_WCLOCKS\n'
+        end
+        if _AST.n_asyncs > 0 then
+            str = str .. '#define CEU_ASYNCS\n'
+        end
+
+        if _OPTS.defs_file then
+            local f = io.open(_OPTS.defs_file,'w')
             f:write(str)
             f:close()
-            tpl = sub(tpl, '=== EVTS ===',
-                           '#include "'.. _OPTS.events_file ..'"')
+            tpl = sub(tpl, '=== DEFS ===',
+                           '#include "'.. _OPTS.defs_file ..'"')
         else
-            tpl = sub(tpl, '=== EVTS ===', str)
+            tpl = sub(tpl, '=== DEFS ===', str)
         end
     end
 end

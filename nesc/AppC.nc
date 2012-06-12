@@ -4,10 +4,9 @@ typedef int32_t  s32;
 typedef uint32_t u32;
 typedef int16_t  s16;
 typedef uint16_t u16;
-typedef int8_t   s8;
-typedef uint8_t  u8;
+typedef int8_t    s8;
+typedef uint8_t   u8;
 
-typedef u32 tceu_time;
 typedef u16 tceu_reg;
 typedef u16 tceu_gte;
 typedef u16 tceu_trg;
@@ -16,11 +15,7 @@ typedef u16 tceu_lbl;
 /*
 // increases code size
 #define ceu_out_pending()   (!call Scheduler.isEmpty() || !q_isEmpty(&Q_EXTS))
-#define ceu_out_timer(ms)   call Timer.startOneShot(ms)
-
-//#include <assert.h>
-//#define ASSERT(x,v) if (!(x)) { call Leds.set(v); EXIT_ok=1; }
-#define ASSERT(x,v)
+#define ceu_out_wclock(ms)   call Timer.startOneShot(ms)
 */
 
 #include "IO.h"
@@ -81,10 +76,10 @@ implementation
 #endif
 
         // TODO: periodic nunca deixaria TOSSched queue vazia
-#ifndef ceu_out_timer
+#ifndef ceu_out_wclock
         call Timer.startOneShot(10);
 #endif
-#if N_ASYNCS > 0
+#ifdef CEU_ASYNCS
         call TimerAsync.startOneShot(10);
 #endif
     }
@@ -94,15 +89,15 @@ implementation
         u32 dt = call Timer.getNow() - old;
         now64 += dt*1000000LL;
         old   += dt;
-        ceu_go_time(NULL, now64);
-#ifndef ceu_out_timer
+        ceu_go_wclock(NULL, now64);
+#ifndef ceu_out_wclock
         call Timer.startOneShot(10);
 #endif
     }
 
     event void TimerAsync.fired ()
     {
-#if N_ASYNCS > 0
+#ifdef CEU_ASYNCS
         call TimerAsync.startOneShot(10);
         ceu_go_async(NULL,NULL);
 #endif

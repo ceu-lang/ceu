@@ -9,7 +9,7 @@ _NFA = {
     alphas  = set.new(), -- external events/asyncs found on the code
 }
 
-_TIME_undef = {}
+_WCLOCK_undef = {}
 
 local function isStmt (me)
     return me.isStmt
@@ -474,8 +474,8 @@ F = {
 
     AwaitT = function (me)
         local ns = unpack(me)
-        ns = (ns.id=='TIMEK') and ns.ns or _TIME_undef
-        local us_id = ((ns==_TIME_undef) and '??' or ns)..'ns'
+        ns = (ns.id=='WCLOCKK') and ns.ns or _WCLOCK_undef
+        local us_id = ((ns==_WCLOCK_undef) and '??' or ns)..'ns'
         INS(me, '', _NFA.node{id=us_id})
         local bef = INS(me, '',
             _NFA.node {

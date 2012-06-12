@@ -12,7 +12,7 @@ typedef uint8_t   u8;
 
 void setup ()
 {
-    ceu_go_polling(micros());
+    ceu_go_all(micros()*1000);
 }
 
 void loop()
