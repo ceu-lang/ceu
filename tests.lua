@@ -9661,7 +9661,7 @@ C do
     int b;
     int c;
 end
-const _a;
+constant _a;
 deterministic _b with _c;
 par/and do
     async do
@@ -11066,7 +11066,7 @@ return _a;
 }
 
 Test { [[
-const _HIGH, _LOW;
+constant _HIGH, _LOW;
 par do
     loop do
         _digitalWrite(11, _HIGH);

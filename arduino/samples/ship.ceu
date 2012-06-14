@@ -16,7 +16,7 @@
 
 input int Key;
 
-const _KEY_NONE, _KEY_RIGHT, _KEY_UP, _KEY_DOWN, _KEY_LEFT, _KEY_SELECT;
+constant _KEY_NONE, _KEY_RIGHT, _KEY_UP, _KEY_DOWN, _KEY_LEFT, _KEY_SELECT;
 pure _analog2key;
 deterministic _analogRead with _map_generate, _redraw;
 

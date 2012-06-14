@@ -10,7 +10,7 @@ input  int         Radio_sendDone;
 input  _message_t* Radio_receive;
 output _message_t* Radio_send;
 
-const _EBUSY, _SUCCESS, _TOS_NODE_ID, _AM_BROADCAST_ADDR;
+constant _EBUSY, _SUCCESS, _TOS_NODE_ID, _AM_BROADCAST_ADDR;
 pure _Radio_getPayload;
 
 _nx_uint16_t radio_ack = 0;

@@ -1,4 +1,4 @@
-const _OUTPUT, _LOW, _HIGH;
+constant _OUTPUT, _LOW, _HIGH;
 
 output int PIN11;
 output int PIN12;
