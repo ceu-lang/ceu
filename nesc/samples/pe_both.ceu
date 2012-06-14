@@ -46,8 +46,8 @@ u8* neighs = &(final2.data[_TOS_NODE_ID*N_NODES/8]);
 par/or do
     @DS_neighbours(100, 200ms, neighs, N_NODES);
 with
-    await 1s;
-    //await 10s;
+    //await 1s;
+    await 10s;
 end
 
 /*
