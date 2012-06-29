@@ -283,10 +283,14 @@ int ceu_go_wclock (int* ret, u64 now)
     phys   = TMR_cur->phys;
     _extl_ = TMR_cur->extl;
 
-    if (phys > WCLOCK_now)
+    if (phys > WCLOCK_now) {
+#ifdef ceu_out_wclock
+        ceu_out_wclock(phys - WCLOCK_now);  // not yet to spawn
+#endif
         return CEU_RET_NONE;
+    }
 
-    WCLOCK_late = WCLOCK_now - phys; // how much late the wclock is
+    WCLOCK_late = WCLOCK_now - phys;        // how much late the wclock is
 
     // spawns all phys/ext
     // finds the next TMR_cur
@@ -295,10 +299,10 @@ int ceu_go_wclock (int* ret, u64 now)
     {
         QWClock* tmr = &WCLOCKS[i];
         if (tmr->phys==phys && tmr->extl==_extl_) {
-            tmr->phys = 0;          // disables it
-            spawn(tmr->gte);        // spawns sharing phys/ext
+            tmr->phys = 0;         // disables it
+            spawn(tmr->gte);       // spawns sharing phys/ext
         } else {
-            QWClock_lt(tmr);         // check if this is the next
+            QWClock_lt(tmr);       // checks if this is the next (sets TMR_cur)
             if (tmr->phys <= WCLOCK_now)
                 WCLOCK_expired = 1;   // spawn in next cycle
         }
