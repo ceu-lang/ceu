@@ -139,10 +139,35 @@ do
     tpl = sub(tpl, '=== N_EMITS ===',  _AST.n_emits)
     tpl = sub(tpl, '=== N_GTES ===',   _GATES.n_gtes)
     tpl = sub(tpl, '=== N_ANDS ===',   _GATES.n_ands)
-    tpl = sub(tpl, '=== TRGS ===',     table.concat(_GATES.trgs,','))
     tpl = sub(tpl, '=== N_VARS ===',   _ENV.n_vars)
     tpl = sub(tpl, '=== HOST ===',     _AST.host)
     tpl = sub(tpl, '=== CODE ===',     _AST.code)
+    tpl = sub(tpl, '=== TRGS ===',     table.concat(_GATES.trgs,','))
+
+    -- TCEU_GTE / TCEU_LBL
+    do
+        -- TCEU_GTE
+        assert(_GATES.n_gtes <= 2^32)
+        local tp = 'u32'
+        if _GATES.n_gtes <= 2^8 then
+            tp = 'u8'
+        elseif _GATES.n_gtes <= 2^16 then
+            tp = 'u16'
+        end
+        tpl = sub(tpl, '=== TCEU_GTE ===', tp)
+
+        local n = MAX(_GATES.n_gtes, #_CODE.labels)
+        assert(n <= 2^32)
+        local tp = 'u32'
+        if n <= 2^8 then
+            tp = 'u8'
+        elseif n <= 2^16 then
+            tp = 'u16'
+        end
+        tpl = sub(tpl, '=== TCEU_LBL ===', tp)
+
+        DBG('# tceu_gte: '.._GATES.n_gtes..'  ||  tceu_lbl: '..#_CODE.labels)
+    end
 
     -- WCLOCKS
     do
@@ -157,8 +182,7 @@ do
     do
         local labels = ''
         for i, id in ipairs(_CODE.labels) do
-            -- i+1: (Inactive=0,Init=1,...)
-            labels = labels..'    '..id..' = '..(i+1)..',\n'
+            labels = labels..'    '..id..' = '..(i-1)..',\n'
         end
         tpl = sub(tpl, '=== LABELS ===', labels)
     end

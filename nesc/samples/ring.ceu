@@ -8,12 +8,13 @@
  * http://www.lua.inf.puc-rio.br/~francisco/
  */
 
-input int         Radio_startDone;
-input int         Radio_sendDone;
-input _message_t* Radio_receive;
+input  int         Radio_startDone;
+input  int         Radio_sendDone;
+input  _message_t* Radio_receive;
+output _message_t* Radio_send;
 
 pure _Radio_getPayload;
-deterministic _Radio_send with _Leds_set, _Leds_led0Toggle;
+deterministic _Radio_setDestination with _Leds_set, _Leds_led0Toggle;
 
 C do
     typedef struct {
@@ -41,7 +42,8 @@ par do
         _Leds_set(data->cnt);
         await 1s;
         data->cnt = data->cnt + 1;
-        _Radio_send((_TOS_NODE_ID+1)%3, msg, sizeof<_Cnt>);
+        _Radio_setDestination(msg, (_TOS_NODE_ID+1)%3);
+        emit Radio_send(msg);
     end
 with
     loop do
@@ -69,7 +71,8 @@ with
             _message_t msg;
             _Cnt* data = _Radio_getPayload(&msg, sizeof<_Cnt>);
             data->cnt = 1;
-            _Radio_send(1, &msg, sizeof<_Cnt>);
+            _Radio_setDestination(&msg, 1);
+            emit Radio_send(&msg);
             await retry;
         end
     else

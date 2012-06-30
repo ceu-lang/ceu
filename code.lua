@@ -1,5 +1,5 @@
 _CODE = {
-    labels = {},
+    labels = { 'Inactive', 'Init' },
 }
 
 local HOST = ''
@@ -346,8 +346,8 @@ if (ceu_out_pending()) {
 // Emit ]]..evt.id..[[;
 GTES[]]..me.gte_cnt..'] = '..lb_cnt..[[;
 GTES[]]..me.gte_trg..'] = '..lb_trg..[[;
-trk_insert(0, _step_+1, -]]..me.gte_cnt..[[);
-trk_insert(0, _step_+2, -]]..me.gte_trg..[[);
+trk_insert(0, _step_+1, ]]..me.gte_cnt..[[);
+trk_insert(0, _step_+2, ]]..me.gte_trg..[[);
 break;
 ]])
         LABEL_out(me, lb_trg)

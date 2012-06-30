@@ -16,8 +16,8 @@
 // ceu_out_wclock(ns)
 // ceu_out_event(id, len, data)
 
-typedef s16 tceu_gte;   // lbl=gte (must have the same sizes)
-typedef s16 tceu_lbl;
+typedef === TCEU_GTE === tceu_gte;   // |tceu_lbl|>=|tceu_gte|
+typedef === TCEU_LBL === tceu_lbl;
 
 int go (int* ret);
 
@@ -28,8 +28,6 @@ enum {
 };
 
 enum {
-    Inactive  = 0,
-    Init      = 1,
 === LABELS ===
 };
 
@@ -73,7 +71,7 @@ void trk_insert (int chk, s8 prio, tceu_lbl lbl)
 
     if (chk) {
         for (i=1; i<=TRACKS_n; i++)
-            if (lbl == TRACKS[i].lbl)
+            if (lbl==TRACKS[i].lbl && prio==TRACKS[i].prio)
                 return;
     }
 
@@ -338,7 +336,7 @@ int go (int* ret)
             int n = 0;
             _step_ = trk.prio;
             while (1) {
-                int lbl = GTES[-trk.lbl];     // it is actually a gate
+                tceu_lbl lbl = GTES[trk.lbl]; // trk.lbl is actually a gate
                 if (lbl != Inactive)
                     T[n++] = lbl;
                 if (!trk_peek(&trk) || (trk.prio < _step_))
