@@ -1,9 +1,7 @@
-typedef int64_t s64;
 typedef int32_t s32;
 typedef int16_t s16;
 typedef int8_t   s8;
 
-typedef uint64_t u64;
 typedef uint32_t u32;
 typedef uint16_t u16;
 typedef uint8_t   u8;
@@ -28,7 +26,6 @@ typedef uint8_t   u8;
 #include "_ceu_code.tmp"
 
 u32 old = micros();
-u64 now64 = old * 1000;
 
 int V;
 
@@ -132,7 +129,7 @@ void setup ()
     pinMode(13, OUTPUT);
 #endif
 
-    ceu_go_init(NULL, now64);
+    ceu_go_init(NULL);
 #ifdef IN_Start
     ceu_go_event(NULL, IN_Start, NULL);
 #endif
@@ -261,14 +258,17 @@ void loop()
     }
 #endif
 
-    u32 dt = micros() - old;    // no problems with `old´ overflow
+    u32 now = micros();
+    s32 dt = now - old;     // no problems with overflow
+    old = now;
+
 #ifdef POLLING_INTERVAL
     if (POLLING_INTERVAL > dt)
         delayMicroseconds(POLLING_INTERVAL-dt);
 #endif
-    now64 += dt*1000; // incrementing `dt´ avoids overflows
-    old   += dt;      // `old´ should overflow after 70mins
-    while (ceu_go_wclock(NULL, now64) == CEU_RET_WCLOCK);
+    int s = ceu_go_wclock(NULL, dt);
+    while (s == CEU_RET_WCLOCK)
+        s = ceu_go_wclock(NULL, 0);
 
 #ifdef CEU_ASYNCS
     ceu_go_async(NULL, NULL);

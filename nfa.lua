@@ -472,14 +472,14 @@ F = {
     end,
 
     AwaitT = function (me)
-        local ns = unpack(me)
-        ns = (ns.id=='WCLOCKK') and ns.ns or _WCLOCK_undef
-        local us_id = ((ns==_WCLOCK_undef) and '??' or ns)..'ns'
+        local us = unpack(me)
+        us = (us.id=='WCLOCKK') and us.us or _WCLOCK_undef
+        local us_id = ((us==_WCLOCK_undef) and '??' or us)..'us'
         INS(me, '', _NFA.node{id=us_id})
         local bef = INS(me, '',
             _NFA.node {
                 id = '+'..us_id,
-                ns = ns,
+                us = us,
                 keep = true,
             })
 

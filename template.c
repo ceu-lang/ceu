@@ -1,4 +1,5 @@
 #include <string.h>
+#include <limits.h>
 
 #define PR_MAX  0x7F
 #define PR_MIN  (-0x7F)
@@ -13,7 +14,7 @@
 
 // Macros that can be defined:
 // ceu_out_pending()   (1)
-// ceu_out_wclock(ns)
+// ceu_out_wclock(us)
 // ceu_out_event(id, len, data)
 
 typedef === TCEU_GTE === tceu_gte;   // |tceu_lbl|>=|tceu_gte|
@@ -165,14 +166,15 @@ void trigger (int trg)
 
 /* WCLOCKS ***************************************************************/
 
-u64 WCLOCK_now = 0;
-
 #ifdef CEU_WCLOCKS
-u64 WCLOCK_late;
+
+#define WCLOCK_DISABLED LONG_MAX
+
+s32 WCLOCK_late;
 int WCLOCK_expired = 0;
 
 typedef struct {
-    u64 phys;
+    s32 togo;
     u32 extl;
     tceu_gte gte;
 } QWClock;
@@ -181,9 +183,9 @@ QWClock  WCLOCKS[N_WCLOCKS] = { === WCLOCKS === };
 QWClock* TMR_cur = NULL;
 
 int QWClock_lt (QWClock* tmr) {
-    if ( tmr->phys != 0 && (
-            (TMR_cur==NULL || tmr->phys<TMR_cur->phys ||
-                (tmr->phys==TMR_cur->phys  &&  tmr->extl<TMR_cur->extl))
+    if ( tmr->togo != WCLOCK_DISABLED && (
+            (TMR_cur==NULL || tmr->togo<TMR_cur->togo ||
+                (tmr->togo==TMR_cur->togo  &&  tmr->extl<TMR_cur->extl))
         )) {
         TMR_cur = tmr;
         return 1;
@@ -191,32 +193,31 @@ int QWClock_lt (QWClock* tmr) {
     return 0;
 }
 
-void tmr_enable (u64 ns, int idx) {
+void tmr_enable (s32 us, int idx) {
     QWClock* tmr = &WCLOCKS[idx];
-    s64 dt = ns - WCLOCK_late;
-    int nxt;
-
-    tmr->phys = WCLOCK_now + dt;
-    tmr->extl = _extl_;
-    nxt = QWClock_lt(tmr);
-
-    if (dt <= 0) { // already expired
-        WCLOCK_expired = 1;
-    }
+    s32 dt = us - WCLOCK_late;
 #ifdef ceu_out_wclock
-    else {         // check if out_wclock is needed (no cur or new minimum wclock)
-        if (new)
+    int nxt;
+#endif
+
+    tmr->togo = dt;
+    tmr->extl = _extl_;
+#ifdef ceu_out_wclock
+    nxt = QWClock_lt(tmr);
+#else
+    QWClock_lt(tmr);
+#endif
+
+    if (dt <= 0)   // already expired
+        WCLOCK_expired = 1;
+
+#ifdef ceu_out_wclock
+    else           // check if out_wclock is needed (no cur or new minimum wclock)
+        if (nxt)
             ceu_out_wclock(dt);
-    }
 #endif
 }
 
-u64* ceu_wclock_nxt () {
-    if (TMR_cur == NULL)
-        return NULL;
-    else
-        return &TMR_cur->phys;
-}
 #endif
 
 /* ASYNCS ***************************************************************/
@@ -246,11 +247,10 @@ void asy_insert (tceu_gte gte)
 
 /**********************************************************************/
 
-int ceu_go_init (int* ret, u64 now)
+int ceu_go_init (int* ret)
 {
-    memset(GTES, 0, N_GTES);
+    memset(GTES, 0, N_GTES*sizeof(tceu_lbl));
 
-    WCLOCK_now  = now;
 #ifdef CEU_WCLOCKS
     WCLOCK_late = 0;
     _extlmax_ = _extl_ = 0;
@@ -294,54 +294,50 @@ int ceu_go_async (int* ret, int* count)
 }
 #endif
 
-int ceu_go_wclock (int* ret, u64 now)
+int ceu_go_wclock (int* ret, s32 dt)
 {
 #ifdef CEU_WCLOCKS
     int i;
-    u64 phys;
-
-    WCLOCK_now = now;
+    s32 togo = WCLOCK_DISABLED;
 
     if (TMR_cur == NULL)
         return CEU_RET_NONE;
 
-    phys   = TMR_cur->phys;
-    _extl_ = TMR_cur->extl;
-
-    if (phys > WCLOCK_now) {
-#ifdef ceu_out_wclock
-        ceu_out_wclock(phys - WCLOCK_now);  // not yet to spawn
-#endif
-        return CEU_RET_NONE;
+    if (TMR_cur->togo <= dt) {
+        togo   = TMR_cur->togo;
+        _extl_ = TMR_cur->extl;
+        WCLOCK_late = dt - TMR_cur->togo;   // how much late the wclock is
     }
 
-    WCLOCK_late = WCLOCK_now - phys;        // how much late the wclock is
-
-    // spawns all phys/ext
+    // spawns all togo/ext
     // finds the next TMR_cur
+    // decrements all togo
     TMR_cur = NULL;
     for (i=0; i<N_WCLOCKS; i++)
     {
         QWClock* tmr = &WCLOCKS[i];
-        if (tmr->phys==phys && tmr->extl==_extl_) {
-            tmr->phys = 0;         // disables it
-            spawn(tmr->gte);       // spawns sharing phys/ext
+        if (tmr->togo == WCLOCK_DISABLED)
+            continue;
+
+        if (tmr->togo==togo && tmr->extl==_extl_) {
+            tmr->togo = WCLOCK_DISABLED;// disables it
+            spawn(tmr->gte);            // spawns sharing phys/ext
         } else {
-            QWClock_lt(tmr);       // checks if this is the next (sets TMR_cur)
-            if (tmr->phys <= WCLOCK_now)
-                WCLOCK_expired = 1;   // spawn in next cycle
+            tmr->togo -= dt;
+            QWClock_lt(tmr);            // next? (sets TMR_cur)
+            if (tmr->togo <= 0)
+                WCLOCK_expired = 1;     // spawn in next cycle
         }
     }
 
 #ifdef ceu_out_wclock
     if (TMR_cur!=NULL && !WCLOCK_expired)
-        ceu_out_wclock(TMR_cur->phys - WCLOCK_now); // not yet to spawn
+        ceu_out_wclock(TMR_cur->togo);  // next to spawn
 #endif
 
     return go(ret);
-#else
 
-    WCLOCK_now = now;
+#else
     return CEU_RET_NONE;
 #endif
 }
@@ -394,14 +390,14 @@ _SWITCH_:
     return CEU_RET_NONE;
 }
 
-int ceu_go_all (u64 now)
+int ceu_go_all ()
 {
     int ret = 0;
 #ifdef CEU_ASYNCS
     int async_cnt;
 #endif
 
-    if (ceu_go_init(&ret, now) == CEU_RET_TERM)
+    if (ceu_go_init(&ret) == CEU_RET_TERM)
         return ret;
 
 #ifdef IN_Start

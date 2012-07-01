@@ -278,7 +278,6 @@ local C; C = {
     WCLOCKE  = node('WCLOCKE'),
     STRING   = node('STRING'),
     NULL     = node('NULL'),
-    NOW      = node('NOW'),
 }
 
 local function i2l (v)

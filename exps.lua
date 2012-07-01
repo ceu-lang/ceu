@@ -3,12 +3,11 @@ _EXPS = {
 }
 
 local t2n = {
-    ns = 1,
-    us = 10^3,
-    ms = 10^6,
-     s = 10^9,
-     m = 60*10^9,
-     h = 60*60*10^9,
+    us = 10^0,
+    ms = 10^3,
+     s = 10^6,
+     m = 60*10^6,
+     h = 60*60*10^6,
 }
 
 F = {
@@ -238,20 +237,20 @@ F = {
     end,
 
     WCLOCKK = function (me)
-        local h,m,s,ms,us,ns = unpack(me)
+        local h,m,s,ms,us = unpack(me)
         me.tp   = 'int'
-        me.ns   = ns*t2n.ns + us*t2n.us + ms*t2n.ms + s*t2n.s + m*t2n.m + h*t2n.h
-        ASR(not string.find(me.ns, 'e+'), me, 'constant is too big')
-        me.val  = me.ns .. 'LL'
+        me.us   = us*t2n.us + ms*t2n.ms + s*t2n.s + m*t2n.m + h*t2n.h
+        ASR(me.us <= 2000000000, me, 'constant is too big')
+        me.val  = me.us
         me.lval = false
-        ASR(me.ns > 0, me,'must be >0')
+        ASR(me.us > 0, me,'must be >0')
     end,
 
     WCLOCKE = function (me)
         local exp, unit = unpack(me)
         me.tp   = 'int'
-        me.ns   = nil
-        me.val  = exp.val .. '*' .. t2n[unit] .. 'LL'
+        me.us   = nil
+        me.val  = exp.val .. '*' .. t2n[unit]
         me.lval = false
     end,
 
@@ -287,11 +286,6 @@ F = {
         me.val  = '((void *)0)'
         me.lval = false
         --me.isConst = true
-    end,
-    NOW = function (me)
-        me.tp   = 'u64'
-        me.val  = 'WCLOCK_now'
-        me.lval = false
     end,
 }
 

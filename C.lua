@@ -6,7 +6,6 @@ _C = {
 local types = {
     void=true,
     int=true,
-    u64=true, s64=true,
     u32=true, s32=true,
     u16=true, s16=true,
     u8=true,  s8=true,

@@ -15,25 +15,25 @@ _DFA = {
 
 local _step_
 
-function NODE_wclock (old, ns)
+function NODE_wclock (old, us)
     if old.ref then
         old = old.ref   -- always get to the original q
     end
-    old.qs_dif = old.qs_dif or { [old.ns]=old }
-    local new = old.qs_dif[ns]
+    old.qs_dif = old.qs_dif or { [old.us]=old }
+    local new = old.qs_dif[us]
     if new then
         return new
     end
 
-    local us_id = (ns==_WCLOCK_undef) and '??' or ns
+    local us_id = (us==_WCLOCK_undef) and '??' or us
     new = _NFA.node {
-        id    = '+'..us_id..'ns',
-        ns    = ns,
+        id    = '+'..us_id..'us',
+        us    = us,
         keep  = true,
         toAwk = old.toAwk,
         ref   = old,
     }
-    old.qs_dif[ns] = new
+    old.qs_dif[us] = new
 
     -- includes the new node in all rems that old is present
     for x in pairs(_NFA.nodes) do
@@ -372,8 +372,8 @@ do
     -- MIN wclock
     local min = set.fold(S.qs_awt, false,
         function(acc, q)
-            if q.ns and q.ns~=_WCLOCK_undef and (acc==false or q.ns<acc) then
-                return q.ns
+            if q.us and q.us~=_WCLOCK_undef and (acc==false or q.us<acc) then
+                return q.us
             else
                 return acc
             end
@@ -382,7 +382,7 @@ do
     -- all undefs + min (if existent)
     local qs_tmr = set.flatten(
                         set.filter(S.qs_awt,
-                            function(q) return q.ns==_WCLOCK_undef end))
+                            function(q) return q.us==_WCLOCK_undef end))
     if min then
         qs_tmr[#qs_tmr+1] = true
     end
@@ -406,24 +406,24 @@ do
             local changed = false
 
             for q, P in pairs(S.qs_awt) do
-                if q.ns and P.t0==s.n then       -- must match starting S
+                if q.us and P.t0==s.n then       -- must match starting S
                     local idx = qs_tmr[q]
-                    if (minOn and q.ns==min) or
+                    if (minOn and q.us==min) or
                         (idx and string.sub(tmr_bin,-idx,-idx)=='1') then
                         qs_togo[q.toAwk] = P        -- expiring wclocks
                         changed = true
-                    elseif q.ns == _WCLOCK_undef then
+                    elseif q.us == _WCLOCK_undef then
                         qs_togo[q] = P              -- unchanged
                     else
-                        local ns, us_id
+                        local us, us_id
                         if minOn then
-                            ns = q.ns - min
-                            us_id = ns
+                            us = q.us - min
+                            us_id = us
                         else
-                            ns = _WCLOCK_undef
+                            us = _WCLOCK_undef
                             us_id = '??'
                         end
-                        local new = NODE_wclock(q,ns) -- copy q (with dif wclock)
+                        local new = NODE_wclock(q,us) -- copy q (with dif wclock)
                         qs_togo[new] = P              -- non expiring wclocks
                         changed = true
                     end
@@ -434,7 +434,7 @@ do
             if changed then
                 DELTAS[#DELTAS+1] = {
                     id  = s.n..'/'..tmr_cur,
-                    ns  = US,
+                    us  = US,
                     t0 = s.n,
                     qs_togo = qs_togo,
                 }
@@ -456,7 +456,7 @@ do
         do
             local qs_togo = T.qs_togo
             local T = { id=T.id..'/'..ifs_cur, ifs_cur=ifs_cur,
-                        t0=T.t0, ns=T.ns, qs_togo={} }
+                        t0=T.t0, us=T.us, qs_togo={} }
 
             local qs_cur  = set.new()
             local qs_path = { t0=T.t0 } -- { t0=?, {q=?,prio=?,...}, ...  }
@@ -509,13 +509,13 @@ do
                             Q_spawn(q.to, qs_cur[q_and])
                         end
                     end
-                elseif q.ns and (not qs_togo[q]) then
+                elseif q.us and (not qs_togo[q]) then
                     -- keep starting S or set to S to be created
                     P.t0 = T.t0 or _DFA.n_states+1
-                    if T.ns == _WCLOCK_undef then
+                    if T.us == _WCLOCK_undef then
                         q = NODE_wclock(q, _WCLOCK_undef)
                     end
---DBG(q.ns, P.t0)
+--DBG(q.us, P.t0)
                 elseif q.toCnt then
                     local p = Q_spawn(q.toCnt, nil, _step_+1)
                     p.trg = P

@@ -364,10 +364,10 @@ break;
         LINE(me, 'GTES['..async.gte..'] = '..lb_cnt..';')
         LINE(me, 'asy_insert('..async.gte..');')
         LINE(me, [[
-WCLOCK_now += ]]..exp.val..[[;
-{ int status;
-  while ((status=ceu_go_wclock(ret,WCLOCK_now)) == CEU_RET_WCLOCK);
-  return status;
+{ int s = ceu_go_wclock(ret,]]..exp.val..[[);
+  while (s == CEU_RET_WCLOCK)
+      s = ceu_go_wclock(ret, 0);
+  return s;
 }
 ]])
         LABEL_out(me, lb_cnt)

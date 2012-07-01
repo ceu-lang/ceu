@@ -15,7 +15,7 @@ typedef u16 tceu_lbl;
 /*
 // increases code size
 #define ceu_out_pending()   (!call Scheduler.isEmpty() || !q_isEmpty(&Q_EXTS))
-#define ceu_out_wclock(ms)   call Timer.startOneShot(ms)
+#define ceu_out_wclock(us)   call Timer.startOneShot(us)
 */
 
 #include "IO.h"
@@ -60,7 +60,6 @@ module AppC @safe()
 implementation
 {
     u32 old;
-    u64 now64;
 
     int RET = 0;
     #include "tinyos.c"
@@ -69,8 +68,7 @@ implementation
     event void Boot.booted ()
     {
         old = call Timer.getNow();
-        now64 = old * 1000000LL;
-        ceu_go_init(NULL, now64);
+        ceu_go_init(NULL);
 #ifdef IN_Start
         ceu_go_event(NULL, IN_Start, NULL);
 #endif
@@ -86,10 +84,10 @@ implementation
     
     event void Timer.fired ()
     {
-        u32 dt = call Timer.getNow() - old;
-        now64 += dt*1000000LL;
-        old   += dt;
-        ceu_go_wclock(NULL, now64);
+        u32 now = call Timer.getNow();
+        s32 dt = now - old;
+        old = now;
+        ceu_go_wclock(NULL, dt);
 #ifndef ceu_out_wclock
         call Timer.startOneShot(10);
 #endif

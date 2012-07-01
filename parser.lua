@@ -80,9 +80,9 @@ end
 -- TODO: types
 KEYS = P'async'  + 'await'  + 'break'   + 'call'    + 'constant' + 'deterministic'
      +  'do'     + 'emit'   + 'else'    + 'end'     + 'event'    +  'Forever'
-     +  'input'  + 'if'     + 'loop'    + 'nothing' +  'now'     + 'null'
-     +  'output' + 'par'    + 'par/and' + 'par/or'  + 'pure'     + 'return'
-     +  'set'    + 'sizeof' +  'then'   + 'with'
+     +  'input'  + 'if'     + 'loop'    + 'nothing' + 'null'     +  'output'
+     + 'par'    + 'par/and' + 'par/or'  + 'pure'    + 'return'   +  'set'
+     + 'sizeof' +  'then'   + 'with'
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
@@ -198,7 +198,7 @@ _GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
     , _13     = V'_Prim'
 
     , _Prim   = V'_Parens' + V'Var'   + V'ID_c'   + V'SIZEOF'
-              + V'NULL'    + V'CONST' + V'STRING' + V'NOW'
+              + V'NULL'    + V'CONST' + V'STRING'
               + V'EmitExtE'
 
     , ExpList = ( V'_Exp'*(S*','*S*EV'_Exp')^0 )^-1
@@ -209,7 +209,6 @@ _GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
     , CONST = CK( #m.R'09' * ALPHANUM^1 )
             + CK( "'" * (P(1)-"'")^0 * "'" )
 
-    , NOW  = CK'now'
     , NULL = CK'null'
 
     , WCLOCKK = #NUM *
@@ -218,11 +217,10 @@ _GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
                 (NUM * K's'        + Cc(0)) *
                 (NUM * K'ms'       + Cc(0)) *
                 (NUM * K'us'       + Cc(0)) *
-                (NUM * K'ns'       + Cc(0)) *
-                (NUM * EM'expected <h,m,s,ms,us,ns>')^-1
+                (NUM * EM'expected <h,m,s,ms,us>')^-1
     , WCLOCKE = V'_Parens' *S* C(
-                    K'h' + (K'm'-'ms') + K's' + K'ms' + K'us' + K'ns'
-                  + EM'expected <h,m,s,ms,us,ns>'
+                    K'h' + (K'm'-'ms') + K's' + K'ms' + K'us'
+                  + EM'expected <h,m,s,ms,us>'
               )
 
     , AwaitExt = K'await' *S* EV'Ext'
