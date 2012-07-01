@@ -41,11 +41,10 @@ local ND = {
 
 function qVSq (q1, q2)
 
-    -- one escape (break/return) vs any one another
-    -- (still has to check if q1.esc contains q2, not ready here, see dfa)
-    if q1.esc then
+    -- q1.esc (every esc is also join)
+    if q1.join then
         return not q2.keep
-    elseif q2.esc then
+    elseif q2.join then
         return not q1.keep
 
     elseif q1.f and q2.f then

@@ -8,6 +8,9 @@ _DFA = {
     forever   = false,
     n_unreach = 0,
     errs      = {},
+
+    -- at least one join (TRK_NOCHK) or prio (TRK_NOPRIO)
+    conc = { join=false, prio=false },
 }
 
 local _step_
@@ -205,20 +208,30 @@ end
                     not (P_path(p1,p2) or P_path(p2,p1)) then
 
                 -- concurrent join
-                if q1.join and (q1.join == q2.join) then
-                    q1.stmt.nd_join = true
-                    q2.stmt.nd_join = true
+                if q1.join or q2.join then
+                    _DFA.conc.prio = true
 
-                -- concurrent escape with any other stmt
-                elseif q1.esc or q2.esc then
-                    if q1.esc and q1.esc.nfa.qs[q2] then
-                        _DFA.nds.flw[#_DFA.nds.flw+1] = { p1, p2 }
+                    if q1.join == q2.join then
+                        _DFA.conc.join = true
+                        q1.join.nd_join = true
+                        q2.join.nd_join = true
                     end
-                    if q2.esc and q2.esc.nfa.qs[q1] then
-                        _DFA.nds.flw[#_DFA.nds.flw+1] = { p2, p1 }
+
+                    -- concurrent escape with any other (inner) stmt
+                    if q1.esc or q2.esc then
+                        if q1.esc and q1.esc.nfa.qs[q2] then
+                            _DFA.nds.flw[#_DFA.nds.flw+1] = { p1, p2 }
+                            _DFA.conc.join = true
+                            q1.join.nd_join = true
+                        end
+                        if q2.esc and q2.esc.nfa.qs[q1] then
+                            _DFA.nds.flw[#_DFA.nds.flw+1] = { p2, p1 }
+                            _DFA.conc.join = true
+                            q2.join.nd_join = true
+                        end
+                        p1.err = 'yellow'
+                        p2.err = 'yellow'
                     end
-                    p1.err = 'yellow'
-                    p2.err = 'yellow'
 
                 -- concurrent C call
                 elseif q1.f and q2.f then

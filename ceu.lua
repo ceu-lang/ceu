@@ -213,9 +213,19 @@ do
         -- DEFINES
         if #_GATES.wclocks > 0 then
             str = str .. '#define CEU_WCLOCKS\n'
+            DBG('# WCLOCKS')
         end
         if _AST.n_asyncs > 0 then
             str = str .. '#define CEU_ASYNCS\n'
+            DBG('# ASYNCS')
+        end
+        if _DFA and (not _DFA.conc.join) then
+            str = str .. '#define CEU_TRK_NOCHK\n'
+            DBG('# TRK_NOCHK')
+        end
+        if _DFA and (not _DFA.conc.prio) and (_AST.n_emits==0) then
+            str = str .. '#define CEU_TRK_NOPRIO\n'
+            DBG('# TRK_NOPRIO')
         end
 
         if _OPTS.defs_file then

@@ -58,47 +58,73 @@ int* INT_f (int v) {
 /* TRACKS ***************************************************************/
 
 typedef struct {
+#ifndef CEU_TRK_NOPRIO
     s8       prio;
+#endif
     tceu_lbl lbl;
 } QTrack;
 
-QTrack TRACKS[N_TRACKS+1];    // 0 is reserved
-int    TRACKS_n = 0;
+int TRACKS_n = 0;
 
+#ifdef CEU_TRK_NOPRIO
+QTrack TRACKS[N_TRACKS];
+#else
+QTrack TRACKS[N_TRACKS+1];  // 0 is reserved
+#endif
+
+#if   defined CEU_TRK_NOPRIO
+#define trk_insert(chk,prio,lbl) trk_insert_noprio(lbl)
+#elif defined CEU_TRK_NOCHK
+#define trk_insert(chk,prio,lbl) trk_insert_nochk(prio,lbl)
+#endif
+
+#if   defined CEU_TRK_NOPRIO
+void trk_insert_noprio (tceu_lbl lbl)
+#elif defined CEU_TRK_NOCHK
+void trk_insert_nochk (s8 prio, tceu_lbl lbl)
+#else
 void trk_insert (int chk, s8 prio, tceu_lbl lbl)
+#endif
 {
-    int i;
-
+#ifndef CEU_TRK_NOCHK
+    {int i;
     if (chk) {
         for (i=1; i<=TRACKS_n; i++)
             if (lbl==TRACKS[i].lbl && prio==TRACKS[i].prio)
                 return;
-    }
+    }}
+#endif
 
+#ifdef CEU_TRK_NOPRIO
+    TRACKS[TRACKS_n++].lbl = lbl;
+#else
+    {int i;
     for (i=++TRACKS_n; (i>1) && (prio>TRACKS[i/2].prio); i/=2)
         TRACKS[i] = TRACKS[i/2];
-
     TRACKS[i].prio = prio;
-    TRACKS[i].lbl  = lbl;
+    TRACKS[i].lbl  = lbl;}
+#endif
 }
 
+#if N_EMITS > 0
 int trk_peek (QTrack* trk)
 {
-    if (TRACKS_n == 0)
-        return 0;
-    else {
-        *trk = TRACKS[1];
-        return 1;
-    }
+    *trk = TRACKS[1];
+    return TRACKS_n > 0;
 }
+#endif
 
 int trk_remove (QTrack* trk)
 {
-    int i,cur;
-    QTrack* last;
-
     if (TRACKS_n == 0)
         return 0;
+
+#ifdef CEU_TRK_NOPRIO
+    *trk = TRACKS[--TRACKS_n];
+    return 1;
+#else
+    {int i,cur;
+    QTrack* last;
 
     if (trk != NULL)
         *trk = TRACKS[1];
@@ -117,7 +143,8 @@ int trk_remove (QTrack* trk)
             break;
     }
     TRACKS[i] = *last;
-    return 1;
+    return 1;}
+#endif
 }
 
 void spawn (tceu_gte gte)
