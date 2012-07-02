@@ -541,7 +541,7 @@ Test { [[emit 1ms; return 0;]], async='not permitted outside async' }
 Test { [[
 int a;
 a = set async do
-    emit 1m;
+    emit 1min;
 end;
 return a + 1;
 ]],
@@ -551,7 +551,7 @@ return a + 1;
 Test { [[
 int a;
 a = set async do
-    emit 1m;
+    emit 1min;
     return 10;
 end;
 return a + 1;
@@ -561,7 +561,7 @@ return a + 1;
 
 Test { [[
 async do
-    emit 1m;
+    emit 1min;
     return 10;
 end
 ]],
@@ -2725,21 +2725,21 @@ end;
 Test { [[
 s32 a,b;
 par do
-    a = await 10m;
+    a = await 10min;
     return a;
 with
-    b = await 20m;
+    b = await 20min;
     return b;
 end;
 ]],
     unreach = 1,
     run = {
-        ['~>10m']  = 0,
-        ['~>20m']  = 600000000,
+        ['~>10min']  = 0,
+        ['~>20min']  = 600000000,
     }
 }
 Test { [[
-await 35m;
+await 35min;
 return 0;
 ]],
     exps = 'constant is too big',
@@ -2793,20 +2793,20 @@ return a;
 Test { [[
 s32 v1,v2;
 par do
-    v1 = await 5m;
+    v1 = await 5min;
     return v1;
 with
-    await 1m;
-    v2 = await 4m;
+    await 1min;
+    v2 = await 4min;
     return v2;
 end;
 ]],
     nd_flw = 2,
     nd_acc = 1,
     run = {
-        ['~>1m ; ~>1m ; ~>1m ; ~>1m ; ~>1m'] = 0,
-        ['~>2m ; ~>4m'] = 60000000,
-        ['~>4m ; ~>1m'] = 0,
+        ['~>1min ; ~>1min ; ~>1min ; ~>1min ; ~>1min'] = 0,
+        ['~>2min ; ~>4min'] = 60000000,
+        ['~>4min ; ~>1min'] = 0,
     }
 }
 
@@ -3014,7 +3014,7 @@ Test { [[
 input int A, F;
 int a;
 par/or do
-    a = await 10m;
+    a = await 10min;
 with
     a = await A;
 end;
@@ -3023,9 +3023,9 @@ return a;
 ]],
     run = {
         ['1~>A  ; 1~>F'] = 1,
-        ['~>10m ; 1~>F'] = 0,
-        ['~>10m ; 1~>A ; 1~>F'] = 0,
-        ['1~>A  ; ~>10m; 1~>F'] = 1,
+        ['~>10min ; 1~>F'] = 0,
+        ['~>10min ; 1~>A ; 1~>F'] = 0,
+        ['1~>A  ; ~>10min; 1~>F'] = 1,
     }
 }
 

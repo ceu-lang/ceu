@@ -14,13 +14,13 @@ all: ceu _all
 
 ceu: $(CEUCFILE)
 	cp $(CEUCFILE) _ceu_code.tmp
-	touch *.ino
+	touch poll.ino async.ino
 
 $(CEUCFILE): $(CEUFILE)
 	./ceu $(CEUFILE) --m4 --output $(CEUCFILE)
 
 clean: _clean
-	rm -f _ceu_*.tmp
+	rm -f _ceu_*
 
 include arduino.mk
 

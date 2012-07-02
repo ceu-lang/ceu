@@ -38,8 +38,7 @@ with
         loop do
             _Radio_setDestination(&pkt_send, _AM_BROADCAST_ADDR);
             _Radio_setPayloadLength(&pkt_send, sizeof<_Msg>);
-            int err = emit Radio_send(&pkt_send);
-            if err == _SUCCESS then
+            if emit Radio_send(&pkt_send) then
                 break;
             end
             await 1s;

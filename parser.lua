@@ -212,15 +212,15 @@ _GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
     , NULL = CK'null'
 
     , WCLOCKK = #NUM *
-                (NUM * K'h'        + Cc(0)) *
-                (NUM * (K'm'-'ms') + Cc(0)) *
-                (NUM * K's'        + Cc(0)) *
-                (NUM * K'ms'       + Cc(0)) *
-                (NUM * K'us'       + Cc(0)) *
-                (NUM * EM'expected <h,m,s,ms,us>')^-1
+                (NUM * K'h'   + Cc(0)) *
+                (NUM * K'min' + Cc(0)) *
+                (NUM * K's'   + Cc(0)) *
+                (NUM * K'ms'  + Cc(0)) *
+                (NUM * K'us'  + Cc(0)) *
+                (NUM * EM'expected <h,min,s,ms,us>')^-1
     , WCLOCKE = V'_Parens' *S* C(
-                    K'h' + (K'm'-'ms') + K's' + K'ms' + K'us'
-                  + EM'expected <h,m,s,ms,us>'
+                    K'h' + K'min' + K's' + K'ms' + K'us'
+                  + EM'expected <h,min,s,ms,us>'
               )
 
     , AwaitExt = K'await' *S* EV'Ext'

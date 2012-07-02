@@ -72,6 +72,7 @@ with
             _Cnt* data = _Radio_getPayload(&msg, sizeof<_Cnt>);
             data->cnt = 1;
             _Radio_setDestination(&msg, 1);
+            _Radio_setPayloadLength(&msg, sizeof<_Cnt>);
             emit Radio_send(&msg);
             await retry;
         end

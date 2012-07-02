@@ -3,7 +3,7 @@ output int PIN13;
 
 loop do
     par/or do
-        u64 t = 1000;
+        int t = 1000;
         loop do
             emit PIN13(_LOW);
             await (t)ms;

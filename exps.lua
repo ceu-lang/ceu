@@ -3,11 +3,11 @@ _EXPS = {
 }
 
 local t2n = {
-    us = 10^0,
-    ms = 10^3,
-     s = 10^6,
-     m = 60*10^6,
-     h = 60*60*10^6,
+     us = 10^0,
+     ms = 10^3,
+      s = 10^6,
+    min = 60*10^6,
+      h = 60*60*10^6,
 }
 
 F = {
@@ -237,9 +237,9 @@ F = {
     end,
 
     WCLOCKK = function (me)
-        local h,m,s,ms,us = unpack(me)
+        local h,min,s,ms,us = unpack(me)
         me.tp   = 'int'
-        me.us   = us*t2n.us + ms*t2n.ms + s*t2n.s + m*t2n.m + h*t2n.h
+        me.us   = us*t2n.us + ms*t2n.ms + s*t2n.s + min*t2n.min + h*t2n.h
         ASR(me.us <= 2000000000, me, 'constant is too big')
         me.val  = me.us
         me.lval = false
@@ -250,7 +250,7 @@ F = {
         local exp, unit = unpack(me)
         me.tp   = 'int'
         me.us   = nil
-        me.val  = exp.val .. '*' .. t2n[unit]
+        me.val  = exp.val .. '*' .. t2n[unit] .. 'L'
         me.lval = false
     end,
 
