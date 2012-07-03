@@ -162,7 +162,7 @@ void trigger (int trg)
 
 #ifdef CEU_WCLOCKS
 
-#define WCLOCK_DISABLED LONG_MAX
+#define CEU_WCLOCK_NONE LONG_MAX
 
 s32 WCLOCK_late;
 
@@ -176,7 +176,7 @@ QWClock  WCLOCKS[N_WCLOCKS] = { === WCLOCKS === };
 QWClock* TMR_cur = NULL;
 
 int QWClock_lt (QWClock* tmr) {
-    if ( tmr->togo != WCLOCK_DISABLED && (
+    if ( tmr->togo != CEU_WCLOCK_NONE && (
             (!TMR_cur || tmr->togo<TMR_cur->togo ||
                 (tmr->togo==TMR_cur->togo  &&  tmr->extl<TMR_cur->extl))
         )) {
@@ -287,7 +287,7 @@ int ceu_go_wclock (int* ret, s32 dt)
 {
 #ifdef CEU_WCLOCKS
     int i;
-    s32 togo = WCLOCK_DISABLED;
+    s32 togo = CEU_WCLOCK_NONE;
 
     if (!TMR_cur)
         return 0;
@@ -305,11 +305,11 @@ int ceu_go_wclock (int* ret, s32 dt)
     for (i=0; i<N_WCLOCKS; i++)
     {
         QWClock* tmr = &WCLOCKS[i];
-        if (tmr->togo == WCLOCK_DISABLED)
+        if (tmr->togo == CEU_WCLOCK_NONE)
             continue;
 
         if (tmr->togo==togo && tmr->extl==_extl_) {
-            tmr->togo = WCLOCK_DISABLED;// disables it
+            tmr->togo = CEU_WCLOCK_NONE;// disables it
             spawn(tmr->gte);            // spawns sharing phys/ext
         } else {
             tmr->togo -= dt;
@@ -321,7 +321,7 @@ int ceu_go_wclock (int* ret, s32 dt)
     if (TMR_cur)
         ceu_out_wclock(TMR_cur->togo);
     else
-        ceu_out_wclock(WCLOCK_DISABLED);
+        ceu_out_wclock(CEU_WCLOCK_NONE);
 #endif
 
     return go(ret);

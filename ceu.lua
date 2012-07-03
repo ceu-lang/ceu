@@ -173,7 +173,7 @@ do
     do
         local wclocks = '{ '
         for i, gte in ipairs(_GATES.wclocks) do
-            _GATES.wclocks[i] = '{ WCLOCK_DISABLED, 0, '..gte..' }'
+            _GATES.wclocks[i] = '{ CEU_WCLOCK_NONE, 0, '..gte..' }'
         end
         tpl = sub(tpl, '=== WCLOCKS ===', table.concat(_GATES.wclocks,','))
     end

@@ -34,7 +34,7 @@ int ceu_out_event_F (int id_out, int len, void* data) {
 int main (int argc, char *argv[])
 {
 #ifdef CEU_WCLOCKS
-    DT = WCLOCK_DISABLED;
+    DT = CEU_WCLOCK_NONE;
 #endif
 
     int i;
@@ -78,7 +78,7 @@ int main (int argc, char *argv[])
 
         if (async_cnt == 0) {
 #ifdef CEU_WCLOCKS
-            if (DT == WCLOCK_DISABLED) {
+            if (DT == CEU_WCLOCK_NONE) {
 #endif
                 ts_now.tv_sec += 100;
 #ifdef CEU_WCLOCKS
@@ -166,7 +166,7 @@ int main (int argc, char *argv[])
                 case QU_WCLOCK: {
 #ifdef CEU_WCLOCKS
                     int s = ceu_go_wclock(&ret, *((int*)(buf)));
-                    while (!s && DT!=WCLOCK_DISABLED)
+                    while (!s && DT!=CEU_WCLOCK_NONE)
                         s = ceu_go_wclock(&ret, 0);
                     if (s)
                         goto END;
