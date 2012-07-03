@@ -20,7 +20,7 @@ $(CEUCFILE): $(CEUFILE)
 	./ceu $(CEUFILE) --m4 --output $(CEUCFILE)
 
 clean: _clean
-	rm -f _ceu_*
+	rm -f _ceu_* samples/*.ceu_m4
 
 include arduino.mk
 

@@ -6,6 +6,9 @@ all:
 
 clean:
 	rm -f *.exe _ceu_* ceu
+	cd mqueue/  && make clean
+	cd arduino/ && make clean
+	cd nesc/    && make clean
 
 arduino: clean
 	lua pak.lua ; \

@@ -1,8 +1,12 @@
 #include <time.h>
 #include "common.h"
 
-mqd_t ceu_queue_write;
 #define ceu_out_event(a,b,c) ceu_out_event_F(a,b,c)
+#define ceu_out_wclock(us) (DT=us)
+
+mqd_t ceu_queue_write;
+s32 DT;
+
 #include "_ceu_code.c"
 
 typedef struct _Link {
@@ -29,6 +33,10 @@ int ceu_out_event_F (int id_out, int len, void* data) {
 
 int main (int argc, char *argv[])
 {
+#ifdef CEU_WCLOCKS
+    DT = WCLOCK_DISABLED;
+#endif
+
     int i;
     for (i=0; i<OUT_n; i++) {
         LINKS[i] = NULL;
@@ -47,15 +55,14 @@ int main (int argc, char *argv[])
     int async_cnt = 0;
 #endif
 
-    struct timespec ts_nxt;
-    clock_gettime(CLOCK_REALTIME, &ts_nxt);
-    u64 now = ts_nxt.tv_sec*1000000000LL + ts_nxt.tv_nsec;
+    struct timespec ts_old;
+    clock_gettime(CLOCK_REALTIME, &ts_old);
 
-    if (ceu_go_init(&ret, now) == CEU_RET_TERM)
+    if (ceu_go_init(&ret))
         goto END;
 
 #ifdef IN_Start
-    if (ceu_go_event(&ret, IN_Start, NULL) == CEU_RET_TERM)
+    if (ceu_go_event(&ret, IN_Start, NULL))
         goto END;
 #endif
 
@@ -63,30 +70,35 @@ int main (int argc, char *argv[])
 
     for (;;)
     {
-        clock_gettime(CLOCK_REALTIME, &ts_nxt);
+        struct timespec ts_now;
+        clock_gettime(CLOCK_REALTIME, &ts_now);
+        s32 dt = (ts_now.tv_sec - ts_old.tv_sec)*1000000 +
+                 (ts_now.tv_nsec - ts_old.tv_nsec)/1000;
+        ts_old = ts_now;
+
         if (async_cnt == 0) {
 #ifdef CEU_WCLOCKS
-            u64* nxt = ceu_wclock_nxt();
-            if (nxt == NULL) {
+            if (DT == WCLOCK_DISABLED) {
 #endif
-                ts_nxt.tv_sec += 100;
+                ts_now.tv_sec += 100;
 #ifdef CEU_WCLOCKS
             } else {
-                ts_nxt.tv_sec  = *nxt / 1000000000LL;
-                ts_nxt.tv_nsec = *nxt % 1000000000LL;
+                u64 t = ts_now.tv_sec*1000000LL +  ts_now.tv_nsec%1000LL;
+                t += dt;
+                ts_now.tv_sec  = t / 1000000LL;
+                ts_now.tv_nsec = t % 1000000LL;
             }
 #endif
         }
-        now = ts_nxt.tv_sec*1000000000LL + ts_nxt.tv_nsec;
 
-        if (mq_timedreceive(queue_read,_buf,sizeof(_buf),NULL,&ts_nxt) == -1)
+        if (mq_timedreceive(queue_read,_buf,sizeof(_buf),NULL,&ts_now) == -1)
         {
 #ifdef CEU_WCLOCKS
-            if (ceu_go_wclock(&ret, now) == CEU_RET_TERM)
+            if (ceu_go_wclock(&ret, dt))
                 goto END;
 #endif
 #ifdef CEU_ASYNCS
-            if (ceu_go_async(&ret,&async_cnt) == CEU_RET_TERM)
+            if (ceu_go_async(&ret,&async_cnt))
                 return ret;
 #endif
         }
@@ -152,15 +164,17 @@ int main (int argc, char *argv[])
                     break;
                 }
                 case QU_WCLOCK: {
-                    WCLOCK_now += *((int*)(buf));
-                    int s;
-                    while ((s=ceu_go_wclock(&ret, WCLOCK_now)) == CEU_RET_WCLOCK);
-                    if (s == CEU_RET_TERM)
+#ifdef CEU_WCLOCKS
+                    int s = ceu_go_wclock(&ret, *((int*)(buf)));
+                    while (!s && DT!=WCLOCK_DISABLED)
+                        s = ceu_go_wclock(&ret, 0);
+                    if (s)
                         goto END;
+#endif
                     break;
                 }
                 default:
-                    if (ceu_go_event(&ret, id_in, buf) == CEU_RET_TERM)
+                    if (ceu_go_event(&ret, id_in, buf))
                         goto END;
                     break;
             }

@@ -74,7 +74,7 @@ F = {
         CONC(me, me[1])
         if not (_DFA and _DFA.forever) then
             LINE(me, 'if (ret) *ret = *((int*)VARS);')
-            LINE(me, 'return CEU_RET_TERM;')
+            LINE(me, 'return 1;')
         end
         me.host = HOST
     end,
@@ -364,11 +364,15 @@ break;
         LINE(me, 'GTES['..async.gte..'] = '..lb_cnt..';')
         LINE(me, 'asy_insert('..async.gte..');')
         LINE(me, [[
+#ifdef CEU_WCLOCKS
 { int s = ceu_go_wclock(ret,]]..exp.val..[[);
-  while (s == CEU_RET_WCLOCK)
+  while (!s && TMR_cur && TMR_cur->togo<=0)
       s = ceu_go_wclock(ret, 0);
   return s;
 }
+#else
+return 0;
+#endif
 ]])
         LABEL_out(me, lb_cnt)
     end,

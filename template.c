@@ -23,12 +23,6 @@ typedef === TCEU_LBL === tceu_lbl;
 int go (int* ret);
 
 enum {
-    CEU_RET_TERM   = 0,
-    CEU_RET_NONE   = 1,
-    CEU_RET_WCLOCK = 2,
-};
-
-enum {
 === LABELS ===
 };
 
@@ -127,7 +121,7 @@ int trk_remove (QTrack* trk)
     {int i,cur;
     QTrack* last;
 
-    if (trk != NULL)
+    if (trk)
         *trk = TRACKS[1];
 
     last = &TRACKS[TRACKS_n--];
@@ -171,7 +165,6 @@ void trigger (int trg)
 #define WCLOCK_DISABLED LONG_MAX
 
 s32 WCLOCK_late;
-int WCLOCK_expired = 0;
 
 typedef struct {
     s32 togo;
@@ -184,7 +177,7 @@ QWClock* TMR_cur = NULL;
 
 int QWClock_lt (QWClock* tmr) {
     if ( tmr->togo != WCLOCK_DISABLED && (
-            (TMR_cur==NULL || tmr->togo<TMR_cur->togo ||
+            (!TMR_cur || tmr->togo<TMR_cur->togo ||
                 (tmr->togo==TMR_cur->togo  &&  tmr->extl<TMR_cur->extl))
         )) {
         TMR_cur = tmr;
@@ -208,13 +201,9 @@ void tmr_enable (s32 us, int idx) {
     QWClock_lt(tmr);
 #endif
 
-    if (dt <= 0)   // already expired
-        WCLOCK_expired = 1;
-
 #ifdef ceu_out_wclock
-    else           // check if out_wclock is needed (no cur or new minimum wclock)
-        if (nxt)
-            ceu_out_wclock(dt);
+    if (nxt)
+        ceu_out_wclock(dt);
 #endif
 }
 
@@ -279,7 +268,7 @@ int ceu_go_async (int* ret, int* count)
     if (count)
         *count = async_cnt;
     if (async_cnt == 0)
-        return CEU_RET_NONE;
+        return 0;
 
     spawn(Q_ASYNC[async_ini]);
     async_ini = (async_ini+1) % N_ASYNCS;
@@ -300,8 +289,8 @@ int ceu_go_wclock (int* ret, s32 dt)
     int i;
     s32 togo = WCLOCK_DISABLED;
 
-    if (TMR_cur == NULL)
-        return CEU_RET_NONE;
+    if (!TMR_cur)
+        return 0;
 
     if (TMR_cur->togo <= dt) {
         togo   = TMR_cur->togo;
@@ -325,20 +314,20 @@ int ceu_go_wclock (int* ret, s32 dt)
         } else {
             tmr->togo -= dt;
             QWClock_lt(tmr);            // next? (sets TMR_cur)
-            if (tmr->togo <= 0)
-                WCLOCK_expired = 1;     // spawn in next cycle
         }
     }
 
 #ifdef ceu_out_wclock
-    if (TMR_cur!=NULL && !WCLOCK_expired)
-        ceu_out_wclock(TMR_cur->togo);  // next to spawn
+    if (TMR_cur)
+        ceu_out_wclock(TMR_cur->togo);
+    else
+        ceu_out_wclock(WCLOCK_DISABLED);
 #endif
 
     return go(ret);
 
 #else
-    return CEU_RET_NONE;
+    return 0;
 #endif
 }
 
@@ -381,13 +370,7 @@ _SWITCH_:
         }
     }
 
-#ifdef CEU_WCLOCKS
-    if (WCLOCK_expired) {
-        WCLOCK_expired = 0;
-        return CEU_RET_WCLOCK;
-    }
-#endif
-    return CEU_RET_NONE;
+    return 0;
 }
 
 int ceu_go_all ()
@@ -397,18 +380,18 @@ int ceu_go_all ()
     int async_cnt;
 #endif
 
-    if (ceu_go_init(&ret) == CEU_RET_TERM)
+    if (ceu_go_init(&ret))
         return ret;
 
 #ifdef IN_Start
     //*PVAL(int,IN_Start) = (argc>1) ? atoi(argv[1]) : 0;
-    if (ceu_go_event(&ret, IN_Start, NULL) == CEU_RET_TERM)
+    if (ceu_go_event(&ret, IN_Start, NULL))
         return ret;
 #endif
 
 #ifdef CEU_ASYNCS
     for (;;) {
-        if (ceu_go_async(&ret,&async_cnt) == CEU_RET_TERM)
+        if (ceu_go_async(&ret,&async_cnt))
             return ret;
         if (async_cnt == 0)
             break;              // returns nothing!
