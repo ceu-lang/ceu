@@ -258,17 +258,15 @@ void loop()
     }
 #endif
 
-    u32 now = micros();
-    s32 dt = now - old;     // no problems with overflow
-    old = now;
-
 #ifdef POLLING_INTERVAL
     if (POLLING_INTERVAL > dt)
         delayMicroseconds(POLLING_INTERVAL-dt);
 #endif
-    int s = ceu_go_wclock(NULL, dt);
-    while (s == CEU_RET_WCLOCK)
-        s = ceu_go_wclock(NULL, 0);
+
+    u32 now = micros();
+    s32 dt = now - old;     // no problems with overflow
+    old = now;
+    ceu_go_wclock(NULL, dt);
 
 #ifdef CEU_ASYNCS
     ceu_go_async(NULL, NULL);
