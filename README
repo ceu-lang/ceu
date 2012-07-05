@@ -3,11 +3,16 @@ higher-level and safer alternative to C.
 
 http://www.ceu-lang.org/
 
-This "standalone" distribution is intended to be used for the development of 
-Céu itself.
+Céu requires Lua and LPeg installed.
+
+http://www.lua.org/
+http://www.inf.puc-rio.br/~roberto/lpeg/
+
 As a kick-off, try running the following on the command line:
 
 $ ./run_tests
 
 For Céu distributions targeted at specific platforms (e.g. Arduino), consult 
-the website.
+the wiki.
+
+http://www.ceu-lang.org/wiki
