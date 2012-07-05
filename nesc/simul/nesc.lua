@@ -34,7 +34,9 @@ end
 
 function topology (T)
     for n1, t in pairs(T) do
+        assert(n1.io.OUT_Radio_send, n1.name..' has no Radio_send event')
         for _, n2 in ipairs(t) do
+            assert(n2.io.IN_Radio_receive, n2.name..' has no Radio_receive event')
             simul.link(n1,'OUT_Radio_send',  n2,'IN_Radio_receive')
         end
     end

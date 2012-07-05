@@ -14,6 +14,8 @@
  * http://www.lua.inf.puc-rio.br/~francisco/
  */
 
+@include(arduino.m4)
+
 input int Key;
 
 constant _KEY_NONE, _KEY_RIGHT, _KEY_UP, _KEY_DOWN, _KEY_LEFT, _KEY_SELECT;

@@ -3,14 +3,16 @@
 changequote(<,>)
 changequote(`,´)
 
-define(AM_TYPE_ACK, 0);
+@include(tinyos.m4)
+
+@define(AM_TYPE_ACK, 0);
 
 input  int         Radio_startDone;
 input  int         Radio_sendDone;
 input  _message_t* Radio_receive;
 output _message_t* Radio_send;
 
-constant _EBUSY, _SUCCESS, _TOS_NODE_ID, _AM_BROADCAST_ADDR;
+constant _AM_BROADCAST_ADDR;
 pure _Radio_getPayload;
 
 _nx_uint16_t radio_ack = 0;
@@ -21,7 +23,7 @@ C do
     } RADIO_ack_t;
 end
 
-define(RADIO_start, `/*{-{*/
+@define(RADIO_start, `/*{-{*/
 set do
     int err_srt = _Radio_start();
     if err_srt == _SUCCESS then
@@ -52,7 +54,7 @@ set loop do
 end
 /*}-}*/´)
 
-define(RADIO_receive_ack, `/*{-{*/
+@define(RADIO_receive_ack, `/*{-{*/
 dnl [ 1: msg_proto ] message protocol type
 dnl [ 2: pay_type  ] message payload type
 dnl [ 3: pay_ptr   ] message payload pointer
@@ -69,7 +71,7 @@ end
 /*}-}*/´)
 
 
-define(RADIO_receive_empty, `/*{-{*/
+@define(RADIO_receive_empty, `/*{-{*/
 dnl [ 1: msg_proto ] message protocol type
 set loop do
     _message_t* msg_rcv = await Radio_receive;
@@ -82,7 +84,7 @@ set loop do
 end
 /*}-}*/´)
 
-define(RADIO_msg, `/*{-{*/
+@define(RADIO_msg, `/*{-{*/
 dnl [ 1: msg_ref   ] message reference
 dnl [ 2: msg_proto ] message protocol type
 dnl [ 3: pay_type  ] message payload type
@@ -99,7 +101,7 @@ set do
 end
 /*}-}*/´)
 
-define(RADIO_send, `/*{-{*/
+@define(RADIO_send, `/*{-{*/
 dnl [ 1: msg_ref ] message reference
 dnl [ 2: msg_dst ] message destination address
 set do
@@ -112,7 +114,7 @@ set do
 end
 /*}-}*/´)
 
-define(RADIO_send_ack, `/*{-{*/
+@define(RADIO_send_ack, `/*{-{*/
 dnl [ 1: msg_ref ] message reference
 dnl [ 2: msg_dst ] message destination address
 dnl [ 3: timeout ] retry timeout
@@ -143,7 +145,7 @@ do
 end    
 /*}-}*/´)
 
-define(RADIO_send_empty, `/*{-{*/
+@define(RADIO_send_empty, `/*{-{*/
 dnl [ 1: msg_ref   ] message reference
 dnl [ 2: msg_dst   ] message destination address
 dnl [ 3: msg_proto ] message protocol type
@@ -154,7 +156,7 @@ set do
 end
 /*}-}*/´)
 
-define(RADIO_send_value, `/*{-{*/
+@define(RADIO_send_value, `/*{-{*/
 dnl [ 1: msg_ref   ] message reference
 dnl [ 2: msg_dst   ] message destination address
 dnl [ 3: msg_proto ] message protocol type
@@ -171,7 +173,7 @@ set do
 end
 /*}-}*/´)
 
-define(RADIO_send_value_ack, `/*{-{*/
+@define(RADIO_send_value_ack, `/*{-{*/
 dnl [ 1: msg_ref   ] message reference
 dnl [ 2: msg_dst   ] message destination address
 dnl [ 3: msg_proto ] message protocol type
@@ -189,7 +191,7 @@ do
 end    
 /*}-}*/´) 
 
-define(RADIO_bcast_ack, `/*{-{*/
+@define(RADIO_bcast_ack, `/*{-{*/
 dnl [ 1: msg_ref  ] message reference
 dnl [ 2: neighs   ] bitmap of neighbours
 dnl [ 3: n_nodes  ] length of the bitmap of neighbours
@@ -203,16 +205,4 @@ do
 end
 /*}-}*/´)
  
-define(RADIO_retry, `/*{-{*/
-dnl [ 1: timeout ] retry timeout
-dnl [ 2: cmd     ] Ceu code
-loop do
-    int err_retry = $2;
-    if err_retry == _SUCCESS then
-        break;
-    end
-    await $1;
-end
-/*}-}*/´)
-
 /*}-}*/dnl

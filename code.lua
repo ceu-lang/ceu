@@ -85,7 +85,7 @@ F = {
 
     SetExp = function (me)
         local e1, e2 = unpack(me)
-        COMM(me, 'SET: '..e1.fst[1])    -- Var or Cid
+        COMM(me, 'SET: '..e1.fst[1])    -- Var or C
         LINE(me, e1.val..' = '..e2.val..';')
     end,
 

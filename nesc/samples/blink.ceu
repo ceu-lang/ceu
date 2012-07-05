@@ -1,5 +1,4 @@
-deterministic _Leds_led0Toggle with _Leds_led1Toggle, _Leds_led2Toggle;
-deterministic _Leds_led1Toggle with _Leds_led2Toggle;
+@include(tinyos.m4)
 
 par do
     loop do

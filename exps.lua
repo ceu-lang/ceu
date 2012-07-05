@@ -113,7 +113,7 @@ F = {
             ps[i] = exp.val
         end
         me.val = f.val..'('..table.concat(ps,',')..')'
-        me.fid = (f.id=='Cid' and f[1]) or '$anon'
+        me.fid = (f.id=='C' and f[1]) or '$anon'
         _EXPS.calls[me.fid] = true
     end,
 
@@ -254,7 +254,7 @@ F = {
         me.lval = false
     end,
 
-    Cid = function (me)
+    C = function (me)
         me.fst  = me
         me.tp   = 'C'
         me.lval = true

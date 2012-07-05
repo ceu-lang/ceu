@@ -1,11 +1,8 @@
-input  int         Radio_startDone;
-input  int         Radio_sendDone;
-input  _message_t* Radio_receive;
-output _message_t* Radio_send;
+@include(radio.m4)
 
 C do
     typedef struct {
-        int cnt;
+        nx_uint16_t cnt;
     } Msg ;
 end
 

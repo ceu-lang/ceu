@@ -1,3 +1,5 @@
+@include(arduino.m4)
+
 input  int Start;
 input  int PIN02;
 output int PIN13;

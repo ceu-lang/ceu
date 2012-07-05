@@ -1,3 +1,5 @@
+@include(arduino.m4)
+
 output int PIN13;
 
 loop do

@@ -116,6 +116,31 @@ F = {
         end
         ASR(me.var, me, (str or 'variable')..' "'..id..'" is not declared')
     end,
+
+    Dcl_pure = function (me)
+        _C.pures[me[1]] = true
+    end,
+
+    Dcl_det = function (me)
+        local ID = function (v)
+            if type(v) == 'string' then
+                return v
+            else
+                return v.var
+            end
+        end
+        local id1 = ID(me[1])
+        local t1 = _C.dets[id1] or {}
+        _C.dets[id1] = t1
+        for i=2, #me do
+            local id2 = ID(me[i])
+            local t2 = _C.dets[id2] or {}
+            _C.dets[id2] = t2
+
+            t1[id2] = true
+            t2[id1] = true
+        end
+    end,
 }
 
 _VISIT(F)

@@ -1,4 +1,4 @@
-constant _OUTPUT, _LOW, _HIGH;
+@include(arduino.m4)
 
 output int PIN11;
 output int PIN12;

@@ -58,9 +58,9 @@ function qVSq (q1, q2)
         end
         local tp1 = (q1.deref and _C.deref(q1.acc.tp)) or q1.acc.tp
         local tp2 = (q2.deref and _C.deref(q2.acc.tp)) or q2.acc.tp
-        if q1.deref or (q1.acc.id=='Cid') then
+        if q1.deref or (q1.acc.id=='C') then
             return _C.contains(tp1, tp2, true)
-        elseif q2.deref or (q2.acc.id=='Cid') then
+        elseif q2.deref or (q2.acc.id=='C') then
             return _C.contains(tp2, tp1, true)
         else
             return q1.cmp == q2.cmp
@@ -128,8 +128,30 @@ function ACC (acc, se, deref)
         acc   = acc,
         se    = se,
         deref = deref,
-        cmp   = acc.var or acc.evt or acc[1],
+        cmp   = acc.var or acc[1],
     }
+end
+
+function CALL (me, id, exps)
+    local isPure = _C.pures[id]
+
+    for _, exp in ipairs(exps) do
+        CONCAT(me, exp)
+
+        -- f(ptr_v): ref=false
+        -- f(&v):    ref=true
+        local tp = _C.deref(exp.tp, true)
+        if exp.fst and tp then
+            INS(me, '', ACC(exp.fst, (isPure and 'rd' or 'wr'),
+                            not exp.fst.ref))
+        end
+    end
+
+    INS(me, '',
+        _NFA.node {
+            id = id,
+            f  = id,
+        })
 end
 
 F = {
@@ -504,32 +526,24 @@ F = {
         INS(me, '', ACC(me, me.se))
     end,
 
-    Cid = function (me)
+    C = function (me)
         local id = me[1]
         INS(me, '', ACC(me, me.se))
     end,
 
+    EmitExtS = function (me)
+        F.EmitExtE(me)
+    end,
+    EmitExtE = function (me)
+        local ext, exp = unpack(me)
+        if ext.evt.output then
+            CALL(me, ext.evt.id, exp and {exp} or {})
+        end
+    end,
+
     Op2_call = function (me)
         local _, f, exps = unpack(me)
-        local isPure = _C.pures[me.fid]
-
-        for _, exp in ipairs(exps) do
-            CONCAT(me, exp)
-
-            -- f(ptr_v): ref=false
-            -- f(&v):    ref=true
-            local tp = _C.deref(exp.tp, true)
-            if exp.fst and tp then
-                INS(me, '', ACC(exp.fst, (isPure and 'rd' or 'wr'),
-                                not exp.fst.ref))
-            end
-        end
-
-        INS(me, '',
-            _NFA.node {
-                id = me.fid,
-                f  = me.fid,
-            })
+        CALL(me, me.fid, exps)
     end,
 
     ['Op1_*'] = function (me)

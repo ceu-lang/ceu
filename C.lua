@@ -46,26 +46,3 @@ function _C.max (tp1, tp2, c)
         return nil
     end
 end
-
-F = {
-    Dcl_pure = function (me)
-        local cid = unpack(me)
-        _C.pures[me.var or me.evt or cid[1]] = true
-    end,
-
-    Dcl_det = function (me)
-        local id1 = me[1][1]
-        local t1 = _C.dets[id1] or {}
-        _C.dets[id1] = t1
-        for i=2, #me do
-            local id2 = me[i][1]
-            local t2 = _C.dets[id2] or {}
-            _C.dets[id2] = t2
-
-            t1[id2] = true
-            t2[id1] = true
-        end
-    end,
-}
-
-_VISIT(F)

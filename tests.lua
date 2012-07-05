@@ -9702,7 +9702,6 @@ end
 return _a + a;
 ]],
     run = 2,
-    nd_acc = 1,
 }
 
 Test { [[
@@ -11113,6 +11112,110 @@ end
 ]],
     nd_acc = 6,
     nd_call = 6,
+    forever = true,
+}
+
+Test { [[
+output int F;
+C do
+    void F() {};
+end
+par do
+    _F();
+with
+    emit F(1);
+end
+]],
+    nd_call = 1,
+    forever = true,
+}
+
+Test { [[
+output int F,G;
+C do
+    void F() {};
+end
+par do
+    _F();
+with
+    emit F(1);
+with
+    emit G(0);
+end
+]],
+    nd_call = 3,
+    forever = true,
+}
+
+Test { [[
+deterministic _F with F,G;
+output int F,G;
+C do
+    void F() {};
+end
+par do
+    _F();
+with
+    emit F(1);
+with
+    emit G(0);
+end
+]],
+    nd_call = 1,
+    forever = true,
+}
+
+Test { [[
+deterministic _F with F,G;
+output int* F,G;
+int a = 1;
+int* b;
+C do
+    void F (int v) {};
+end
+par do
+    _F(&a);
+with
+    emit F(b);
+with
+    emit G(&a);
+end
+]],
+    nd_call = 1,
+    nd_acc  = 3,
+    forever = true,
+}
+
+Test { [[
+pure _F;
+output int* F,G;
+int a = 1;
+int* b;
+C do
+    void F (int v) {};
+end
+par do
+    _F(&a);
+with
+    emit F(b);
+with
+    emit G(&a);
+end
+]],
+    nd_call = 1,
+    nd_acc  = 3,
+    forever = true,
+}
+
+Test { [[
+deterministic F with G;
+output void F,G;
+par do
+    emit F;
+with
+    emit G;
+end
+]],
     forever = true,
 }
 

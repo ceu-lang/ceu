@@ -54,6 +54,7 @@ local _V2NAME = {
     ID_type = 'type',
     _Dcl_var = 'declaration',
     _Dcl_int = 'declaration',
+    __ID = 'identifier',
 }
 local EV = function (rule)
     return V(rule) + m.Cmt(P'',
@@ -123,10 +124,10 @@ _GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
                     V'ParEver'  + V'If'    + V'Loop'
                 )
 
-    , __CVI     = V'ID_c' + V'Var' + V'Int'
+    , __ID      = V'ID_c' + V'ID_ext' + V'Var' + V'Int'
     , _Dcl_pure = (K'pure'+K'constant') *S* EV'ID_c' * (S* K',' *S* V'ID_c')^0
-    , Dcl_det   = K'deterministic' *S* EV'__CVI' *S* EK'with' *S*
-                     EV'__CVI' * (S* K',' *S* EV'__CVI')^0
+    , Dcl_det   = K'deterministic' *S* EV'__ID' *S* EK'with' *S*
+                     EV'__ID' * (S* K',' *S* EV'__ID')^0
 
     , _Set  = V'_Exp' *S* V'_Sets'
     , _Sets = K'=' *S* (
@@ -197,7 +198,7 @@ _GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
                 )^0
     , _13     = V'_Prim'
 
-    , _Prim   = V'_Parens' + V'Var'   + V'ID_c'   + V'SIZEOF'
+    , _Prim   = V'_Parens' + V'Var'   + V'C'   + V'SIZEOF'
               + V'NULL'    + V'CONST' + V'STRING'
               + V'EmitExtE'
 
@@ -249,6 +250,7 @@ _GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
     , Ext      = V'ID_ext'
     , Int      = V'ID_int'
     , Var      = V'ID_var'
+    , C        = V'ID_c'
 
     , ID_ext  = CK( m.R'AZ'*Alphanum^0 - KEYS )
     , ID_int  = CK( m.R'az'*Alphanum^0 - KEYS )
