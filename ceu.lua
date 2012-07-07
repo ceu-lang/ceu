@@ -60,7 +60,7 @@ if not _OPTS.input then
     
         --output <filename>      # C output file (stdout)
     
-        --defs-file <filename>   # defines constants & defines in a separate output file (no)
+        --defs-file <filename>   # defines constants in a separate output file (no)
     
         --opt-join               # joins lines enclosed by /*{-{*/ and /*}-}*/ (true)
     

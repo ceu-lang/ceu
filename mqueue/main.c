@@ -99,7 +99,7 @@ int main (int argc, char *argv[])
 #endif
 #ifdef CEU_ASYNCS
             if (ceu_go_async(&ret,&async_cnt))
-                return ret;
+                goto END;
 #endif
         }
         else
