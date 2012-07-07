@@ -2,7 +2,7 @@
 @include(radio.m4);
 @include(DS.m4);
 
-@RADIO_retry(200ms, @RADIO_start);
+@TOS_retry(200ms, @RADIO_start);
 _DBG("Radio started\n");
 
 @define(N_NODES, 16);

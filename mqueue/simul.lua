@@ -105,27 +105,27 @@ C do /******/
         DBG('','',evt, v)
     end
 
-    assert(os.execute('./qu.exe create '..app._queue) == 0)
+    assert(os.execute('./qu create '..app._queue) == 0)
 
     return app
 end
 
 function link (app1,out, app2,inp)
     DBG('===> Linking '..app1._queue..'/'..out..' -> '..app2._queue..'/'..inp)
-    os.execute('./qu.exe send '..app1._queue..' '..QU.LINK..' '..app1.io[out]
-                          ..' '..app2._queue..' '..app2.io[inp])
+    os.execute('./qu send '..app1._queue..' '..QU.LINK..' '..app1.io[out]
+                      ..' '..app2._queue..' '..app2.io[inp])
 end
 
 function unlink (app1,out, app2,inp)
     DBG('===> Unlinking '..app1._queue..'/'..out..' -> '..app2._queue..'/'..inp)
-    os.execute('./qu.exe send '..app1._queue..' '..QU.UNLINK..' '..app1.io[out]
-                          ..' '..app2._queue..' '..app2.io[inp])
+    os.execute('./qu send '..app1._queue..' '..QU.UNLINK..' '..app1.io[out]
+                      ..' '..app2._queue..' '..app2.io[inp])
 end
 
 function emit (app, inp, v)
     local evt = app.io[inp] or inp
     DBG('===> Emit '..app._queue..'/'..inp..'['..evt..']('..v..')')
-    os.execute('./qu.exe send '..app._queue..' '..evt..' '..v)
+    os.execute('./qu send '..app._queue..' '..evt..' '..v)
 end
 
 function _start (app)

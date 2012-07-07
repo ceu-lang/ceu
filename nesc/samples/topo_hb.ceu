@@ -6,7 +6,7 @@ pure _DBG;
 deterministic _bm_tostr with
               _Radio_setType, _Radio_setDestination, _Radio_setSource;
 
-@RADIO_retry(200ms, @RADIO_start);
+@TOS_retry(200ms, @RADIO_start);
 
 @define(N_NODES, 16);
 
