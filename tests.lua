@@ -3726,8 +3726,8 @@ return dt;
 ]],
     run = {
         ['~>30us'] = 10,
-        ['0~>A ; ~>10us'] = 0,
-        ['0~>A ; ~>13us'] = 3,
+        ['0~>A ; ~>12us'] = 0,
+        ['0~>A ; ~>13us'] = 1,
     }
 }
 Test { [[
@@ -3786,10 +3786,10 @@ end;
 return ret;
 ]],
     run = {
-        ['1~>A;~>20ms'] = 1,
-        ['1~>A;1~>B;~>20ms'] = 1,
-        ['1~>B;~>20ms'] = 2,
-        ['1~>B;1~>A;~>20ms'] = 2,
+        ['1~>A;~>25ms'] = 1,
+        ['1~>A;1~>B;~>25ms'] = 1,
+        ['1~>B;~>25ms'] = 2,
+        ['1~>B;1~>A;~>25ms'] = 2,
     }
 }
 
@@ -3808,10 +3808,10 @@ end;
 return ret;
 ]],
     run = {
-        ['1~>A;~>20ms'] = 1,
-        ['1~>A;1~>B;~>20ms'] = 1,
-        ['1~>B;~>20ms'] = 2,
-        ['1~>B;1~>A;~>20ms'] = 2,
+        ['1~>A;~>25ms'] = 1,
+        ['1~>A;1~>B;~>25ms'] = 1,
+        ['1~>B;~>25ms'] = 2,
+        ['1~>B;1~>A;~>25ms'] = 2,
     }
 }
 
@@ -3834,6 +3834,8 @@ return dt;
         ['~>15ms ; 0~>A ; ~>10ms'] = 5000,
     }
 }
+--[=[
+- mudanca de extl -> WCLOCK_late
 Test { [[
 input int A,B;
 int dt;
@@ -3852,24 +3854,50 @@ return dt;
         ['~>12ms ; 0~>B ; ~>3ms ; 0~>A ; ~>20ms'] = 3000,
     }
 }
+]=]
+
+Test { [[
+input int A,B;
+int dt;
+int ret = 10;
+par/or do
+    await A;
+    dt = await 20ms;
+    ret = 1;
+with
+    await B;
+    dt = await (20)ms;
+    ret = 2;
+end;
+return ret;
+]],
+    run = {
+        ['~>30ms ; 0~>A ; ~>25ms'] = 1,
+        ['~>12ms ; 0~>A ; 0~>B ; ~>27ms'] = 1,
+        ['~>12ms ; 0~>B ; ~>3ms ; 0~>A ; ~>20ms'] = 2,
+    }
+}
 
 Test { [[
 input int A, B;
 int dt;
+int ret = 10;
 par/or do
     await A;
     await B;
     dt = await 20ms;
+    ret = 1;
 with
     await B;
     dt = await 20ms;
+    ret = 2;
 end;
-return dt;
+return ret;
 ]],
-    nd_acc = 1,
+    nd_acc = 2,
     run = {
-        ['~>12ms ; 0~>A ; 0~>B ; ~>27ms'] = 7000,
-        ['~>12ms ; 0~>B ; 0~>A ; 0~>B ; ~>26ms'] = 6000,
+        ['~>12ms ; 0~>A ; 0~>B ; ~>27ms'] = 2,
+        ['~>12ms ; 0~>B ; 0~>A ; 0~>B ; ~>26ms'] = 2,
     }
 }
 
@@ -4143,8 +4171,8 @@ end;
 return a;
 ]],
     run = {
-        ['1~>A;~>10ms;1~>B;~>20ms'] = 0,
-        ['~>10ms;1~>B;~>20ms'] = 1,
+        ['1~>A;~>10ms;1~>B;~>25ms'] = 0,
+        ['~>10ms;1~>B;~>25ms'] = 1,
     }
 }
 
@@ -4740,7 +4768,7 @@ end;
 return x;
 ]],
     nd_acc = 2,  -- TODO: intl
-    run = { ['~>10ms']=5, ['~>20ms']=5 }
+    run = { ['~>15ms']=5, ['~>25ms']=5 }
 }
 
 -- EX.02: trig e await depois de loop
@@ -8410,7 +8438,7 @@ with
 end;
 ]],
     run = {
-        ['~>A; ~>A; ~>20ms; ~>F'] = 2,
+        ['~>A; ~>A; ~>25ms; ~>F'] = 2,
     }
 }
 

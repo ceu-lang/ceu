@@ -38,11 +38,6 @@ tceu_gte TRGS[] = { === TRGS === };
 
 char VARS[N_VARS];
 
-#ifdef CEU_WCLOCKS
-u32 _extl_;     // TODO: suficiente?
-u32 _extlmax_;  // needed for wclocks
-#endif
-
 // returns a pointer to the received value
 int INT_v;
 int* INT_f (int v) {
@@ -164,11 +159,10 @@ void trigger (int trg)
 
 #define CEU_WCLOCK_NONE LONG_MAX
 
-s32 WCLOCK_late;
+int WCLOCK_late;
 
 typedef struct {
     s32 togo;
-    u32 extl;
     tceu_gte gte;
 } QWClock;
 
@@ -176,10 +170,7 @@ QWClock  WCLOCKS[N_WCLOCKS] = { === WCLOCKS === };
 QWClock* TMR_cur = NULL;
 
 int QWClock_lt (QWClock* tmr) {
-    if ( tmr->togo != CEU_WCLOCK_NONE && (
-            (!TMR_cur || tmr->togo<TMR_cur->togo ||
-                (tmr->togo==TMR_cur->togo  &&  tmr->extl<TMR_cur->extl))
-        )) {
+    if (!TMR_cur || tmr->togo<TMR_cur->togo) {
         TMR_cur = tmr;
         return 1;
     }
@@ -194,7 +185,6 @@ void tmr_enable (s32 us, int idx) {
 #endif
 
     tmr->togo = dt;
-    tmr->extl = _extl_;
 #ifdef ceu_out_wclock
     nxt = QWClock_lt(tmr);
 #else
@@ -242,7 +232,6 @@ int ceu_go_init (int* ret)
 
 #ifdef CEU_WCLOCKS
     WCLOCK_late = 0;
-    _extlmax_ = _extl_ = 0;
 #endif
 
     trk_insert(0, PR_MAX, Init);
@@ -253,12 +242,9 @@ int ceu_go_init (int* ret)
 int ceu_go_event (int* ret, int id, void* data) {
     DATA = data;
     trigger(id);
-
 #ifdef CEU_WCLOCKS
-    WCLOCK_late = 0;
-    _extl_ = ++_extlmax_;
+    WCLOCK_late--;
 #endif
-
     return go(ret);
 }
 
@@ -275,10 +261,8 @@ int ceu_go_async (int* ret, int* count)
     async_cnt--;
 
 #ifdef CEU_WCLOCKS
-    WCLOCK_late = 0;
-    _extl_ = ++_extlmax_;
+    WCLOCK_late--;
 #endif
-
     return go(ret);
 }
 #endif
@@ -293,8 +277,7 @@ int ceu_go_wclock (int* ret, s32 dt)
         return 0;
 
     if (TMR_cur->togo <= dt) {
-        togo   = TMR_cur->togo;
-        _extl_ = TMR_cur->extl;
+        togo = TMR_cur->togo;
         WCLOCK_late = dt - TMR_cur->togo;   // how much late the wclock is
     }
 
@@ -308,12 +291,12 @@ int ceu_go_wclock (int* ret, s32 dt)
         if (tmr->togo == CEU_WCLOCK_NONE)
             continue;
 
-        if (tmr->togo==togo && tmr->extl==_extl_) {
-            tmr->togo = CEU_WCLOCK_NONE;// disables it
-            spawn(tmr->gte);            // spawns sharing phys/ext
+        if (tmr->togo == togo) {
+            tmr->togo = CEU_WCLOCK_NONE;    // disables it
+            spawn(tmr->gte);                // spawns sharing phys/ext
         } else {
             tmr->togo -= dt;
-            QWClock_lt(tmr);            // next? (sets TMR_cur)
+            QWClock_lt(tmr);                // next? (sets TMR_cur)
         }
     }
 
@@ -324,8 +307,9 @@ int ceu_go_wclock (int* ret, s32 dt)
         ceu_out_wclock(CEU_WCLOCK_NONE);
 #endif
 
-    return go(ret);
-
+    {int s = go(ret);
+    WCLOCK_late = 0;
+    return s;}
 #else
     return 0;
 #endif
