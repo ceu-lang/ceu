@@ -60,15 +60,15 @@ if not _OPTS.input then
     
         --output <filename>      # C output file (stdout)
     
-        --defs-file <filename>   # defines constants in a separate output file (no)
+        --defs-file <filename>   # define constants in a separate output file (no)
     
-        --opt-join               # joins lines enclosed by /*{-{*/ and /*}-}*/ (true)
+        --opt-join               # join lines enclosed by /*{-{*/ and /*}-}*/ (true)
+
+        --dfa                    # perform DFA analysis (false)
+        --dfa-viz                # generate DFA graph (false)
     
-        --dfa                    # performs DFA analysis (false)
-        --dfa-viz                # generates DFA graph (false)
-    
-        --m4                     # preprocesses the input with `m4´ (false)
-        --m4-args                # preprocesses the input with `m4´ passing arguments in between `"´ (false)
+        --m4                     # preprocess the input with `m4´ (false)
+        --m4-args                # preprocess the input with `m4´ passing arguments in between `"´ (false)
 
 ]])
     os.exit(1)
