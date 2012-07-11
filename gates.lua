@@ -26,6 +26,10 @@ F = {
         end
     end,
 
+    Finalize = function (me)
+        me.gte = alloc('n_gtes')
+    end,
+
     ParAnd_pre = function (me)
         me.and0 = alloc('n_ands', #me)
     end,

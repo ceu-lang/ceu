@@ -36,7 +36,7 @@ local STMTS = {
     SetExp=true, SetBlock=true, SetStmt=true,
     Return=true, Async=true, Host=true,
     ParEver=true, ParOr=true, ParAnd=true, Loop=true,
-    Break=true, If=true,
+    Break=true, If=true, Finalize=true,
     CallStmt=true, AwaitN=true,
     AwaitExt=true, AwaitInt=true, AwaitT=true,
     EmitExtS=true,  EmitInt=true,  EmitT=true,
@@ -44,8 +44,6 @@ local STMTS = {
 
 F = {
     Node_pre = function (me)
-        me.prio = 0
-
         me.n_tracks = 1
         me.n_asyncs = 0
         me.n_emits  = 0
@@ -62,8 +60,13 @@ F = {
 
     Block = MAX_all,
 
+    Finalize = function (me)
+        _AST.n_fins = (_AST.n_fins or 0) + 1
+    end,
+
     Async = function (me)
         me.n_asyncs = 1
+        ASR(not _ITER'Finalize'(), me, 'invalid inside a finalizer')
     end,
 
     If = function (me)
@@ -77,12 +80,6 @@ F = {
     ParOr   = ADD_all,
 
     ParOr_pre = function (me)
-        local f = function (stmt)
-            local id = stmt.id
-            return id=='SetBlock' or id=='ParOr' or id=='Loop'
-        end
-        local top = _ITER(f)()
-        me.prio = top and top.prio+1 or 1
         me.nd_join = true
     end,
 
@@ -94,6 +91,9 @@ F = {
         local loop = _ITER'Loop'()
         ASR(loop, me,'break without loop')
         loop.brks[me] = true
+
+        local fin = _ITER'Finalize'()
+        ASR(not fin or fin.depth<loop.depth, me, 'invalid inside a finalizer')
     end,
 
     SetBlock_pre = function (me)
@@ -101,7 +101,24 @@ F = {
         me.rets = {}
     end,
     Return = function (me)
-        _ITER'SetBlock'().rets[me] = true
+        local blk = _ITER'SetBlock'()
+        blk.rets[me] = true
+
+        local fin = _ITER'Finalize'()
+        ASR(not fin or fin.depth<blk.depth, me, 'invalid inside a finalizer')
+    end,
+
+    AwaitExt = function (me)
+        ASR(not _ITER'Finalize'(), me, 'invalid inside a finalizer')
+    end,
+    AwaitInt = function (me)
+        F.AwaitExt(me)
+    end,
+    AwaitN = function (me)
+        F.AwaitExt(me)
+    end,
+    AwaitT = function (me)
+        F.AwaitExt(me)
     end,
 
     EmitInt = function (me)

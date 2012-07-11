@@ -79,11 +79,11 @@ local EM = function (msg)
 end
 
 -- TODO: types
-KEYS = P'async'  + 'await'  + 'break'   + 'call'    + 'constant' + 'deterministic'
-     +  'do'     + 'emit'   + 'else'    + 'end'     + 'event'    +  'Forever'
-     +  'input'  + 'if'     + 'loop'    + 'nothing' + 'null'     +  'output'
-     + 'par'    + 'par/and' + 'par/or'  + 'pure'    + 'return'   +  'set'
-     + 'sizeof' +  'then'   + 'with'
+KEYS = P'async'   + 'await'  + 'break'   + 'call'    + 'constant' + 'deterministic'
+     +  'do'      + 'emit'   + 'else'    + 'end'     + 'event'    + 'finalize'
+     +  'Forever' + 'input'  + 'if'      + 'loop'    + 'nothing'  + 'null'
+     +  'output'  + 'par'    + 'par/and' + 'par/or'  + 'pure'     + 'return'
+     +  'set'     + 'sizeof' + 'then'    + 'with'
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
@@ -115,13 +115,13 @@ _GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
             + V'Dcl_det'  + V'_Dcl_pure'
             + V'_Set'     + V'CallStmt' -- must be after Set
 
-    , _StmtBlock = V'_DoBlock' + V'Async'  + V'Host'
-                 + V'ParOr'    + V'ParAnd'
-                 + V'If'       + V'Loop'
+    , _StmtBlock = V'Do'    + V'Async'  + V'Host'
+                 + V'ParOr' + V'ParAnd'
+                 + V'If'    + V'Loop'
 
     , _SetBlock = K'set' *S* (
-                    V'_DoBlock' + V'Async' +
-                    V'ParEver'  + V'If'    + V'Loop'
+                    V'Do'      + V'Async' +
+                    V'ParEver' + V'If'    + V'Loop'
                 )
 
     , __ID      = V'ID_c' + V'ID_ext' + V'Var' + V'Int'
@@ -141,7 +141,11 @@ _GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
                + EM'invalid statement (or C identifier?)'
 
     , Nothing = K'nothing'
-    , _DoBlock= K'do' *S* V'Block' *S* EK'end'
+
+    , _Block  = K';'^-1 *S* V'_Stmts'
+    , Do      = K'do' *S* Ct(V'_Block') *S*
+                    (K'finalize' *S* Ct(V'_Block') + Cc(false)) *S*
+                EK'end'
 
     , Async   = K'async' *S* V'VarList' *S* EK'do' *S*
                     V'Block' *S*

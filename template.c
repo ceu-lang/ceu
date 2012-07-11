@@ -49,7 +49,7 @@ int* INT_f (int v) {
 
 typedef struct {
 #ifndef CEU_TRK_NOPRIO
-    s8       prio;
+    s8 prio;
 #endif
     tceu_lbl lbl;
 } QTrack;
@@ -135,6 +135,13 @@ int trk_remove (QTrack* trk)
     TRACKS[i] = *last;
     return 1;}
 #endif
+}
+
+void spawn_prio (s8 prio, tceu_gte gte)
+{
+    tceu_lbl lbl = GTES[gte];
+    if (lbl != Inactive)
+        trk_insert(0, prio, lbl);
 }
 
 void spawn (tceu_gte gte)
@@ -346,6 +353,7 @@ int go (int* ret)
         } else
 #endif
             _lbl_ = trk.lbl;
+//fprintf(stderr,"TRK: %d\n", _lbl_);
 _SWITCH_:
         switch (_lbl_)
         {

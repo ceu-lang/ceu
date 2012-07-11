@@ -223,7 +223,8 @@ do
             str = str .. '#define CEU_TRK_NOCHK\n'
             DBG('# TRK_NOCHK')
         end
-        if _DFA and (not _DFA.conc.prio) and (_AST.n_emits==0) then
+        if _DFA and (not _DFA.conc.prio) and (_AST.n_emits==0)
+                and (_AST.n_fins==0) then
             str = str .. '#define CEU_TRK_NOPRIO\n'
             DBG('# TRK_NOPRIO')
         end

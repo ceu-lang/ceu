@@ -44,6 +44,10 @@ function COMM (me, comm)
 end
 
 function BLOCK_GATES (me)
+    if _DFA and (not _DFA.qs_reach[me.nfa.f]) then
+        return
+    end
+
     COMM(me, 'close gates')
     if me.n_gtes > 0 then
         LINE(me, 'memset(&GTES['..me.gte0..'], 0, ' ..
@@ -65,9 +69,24 @@ function LABEL_out (me, name)
     return name
 end
 
+function FINS (me)
+    if #me.fins == 0 then
+        return
+    end
+
+    local lbl = LABEL_gen('Back_Finalizer')
+    LINE(me, 'trk_insert(0,'..me.depth..','..lbl..');')
+    for _, fin in ipairs(me.fins) do
+        LINE(me, 'spawn_prio('..fin.depth..', '..fin.gte..');')
+    end
+    HALT(me)
+    LABEL_out(me, lbl)
+end
+
 F = {
     Node_pre = function (me)
         me.code = ''
+        me.fins = {}    -- Loop / ParOr / SetBlock
     end,
 
     Root = function (me)
@@ -102,23 +121,44 @@ F = {
         CONC(me, e2)
         HALT(me)        -- must escape with `return´
         LABEL_out(me, me.lb_out)
-        if (not _DFA) or _DFA.qs_reach[me.nfa.f] then
-            BLOCK_GATES(me)
-        end
+        FINS(me)
+        BLOCK_GATES(me)
     end,
     Return = function (me)
         local exp = unpack(me)
         local top = _ITER'SetBlock'()
         LINE(me, top[1].val..' = '..exp.val..';')
         if top.nd_join then
-            LINE(me, 'trk_insert(1,'..top.prio..','..top.lb_out..');')
+            LINE(me, 'trk_insert(1,'..top.depth..','..top.lb_out..');')
         else
-            LINE(me, 'trk_insert(0,'..top.prio..','..top.lb_out..');')
+            LINE(me, 'trk_insert(0,'..top.depth..','..top.lb_out..');')
         end
         HALT(me)
     end,
 
     Block = CONC_ALL,
+
+    Do = function (me)
+        local blk, fin = unpack(me)
+        if me.finalize then
+            LINE(me, 'GTES['..me.finalize.gte..'] = '..me.finalize.lbl..';')
+        end
+        CONC_ALL(me)
+    end,
+    Finalize = function (me)
+        me.lbl = LABEL_gen('Finalize')
+        LINE(me, 'GTES['..me.gte..'] = Inactive;')     -- normal termination
+        LABEL_out(me, me.lbl)
+        CONC_ALL(me)
+
+        -- halt if block is pending (do not proceed)
+        LINE(me, 'if (GTES['..me.gte..'] != Inactive)')
+        HALT(me)
+
+        for stmt in _ITER(pred_prio) do
+            stmt.fins[#stmt.fins+1] = me
+        end
+    end,
 
     ParEver = function (me)
         -- INITIAL code :: spawn subs
@@ -158,15 +198,16 @@ F = {
             CONC(me, sub)
             COMM(me, 'PAROR JOIN')
             if me.nd_join then
-                LINE(me, 'trk_insert(1, '..me.prio..','..lb_ret..');')
+                LINE(me, 'trk_insert(1, '..me.depth..','..lb_ret..');')
             else
-                LINE(me, 'trk_insert(0, '..me.prio..','..lb_ret..');')
+                LINE(me, 'trk_insert(0, '..me.depth..','..lb_ret..');')
             end
             HALT(me)
         end
 
         -- AFTER code :: block inner gates
         LABEL_out(me, lb_ret)
+        FINS(me)
         BLOCK_GATES(me)
     end,
 
@@ -285,18 +326,17 @@ if (ceu_out_pending()) {
         SWITCH(me, lb_ini)
 
         -- AFTER code :: block inner gates
-        if (not _DFA) or _DFA.qs_reach[me.nfa.f] then
-            LABEL_out(me, me.lb_out)
-            BLOCK_GATES(me)
-        end
+        LABEL_out(me, me.lb_out)
+        FINS(me)
+        BLOCK_GATES(me)
     end,
 
     Break = function (me)
         local top = _ITER'Loop'()
         if top.nd_join then
-            LINE(me, 'trk_insert(1, '..top.prio..','..top.lb_out..');')
+            LINE(me, 'trk_insert(1, '..top.depth..','..top.lb_out..');')
         else
-            LINE(me, 'trk_insert(0, '..top.prio..','..top.lb_out..');')
+            LINE(me, 'trk_insert(0, '..top.depth..','..top.lb_out..');')
         end
         HALT(me)
     end,

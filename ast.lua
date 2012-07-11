@@ -17,7 +17,12 @@ end
 
 stack = nil
 
+function pred_prio (me)
+    local id = me.id
+    return id=='SetBlock' or id=='ParOr' or id=='Loop'
+end
 function pred_true (me) return true end
+
 function _ITER (pred, inc)
     if pred == nil then
         pred = pred_true
@@ -65,7 +70,7 @@ end
 function _VISIT (F)
     assert(_AST)
     stack = {}
-    _AST.depth = 1
+    _AST.depth = 0
     return visit_aux(_AST, F)
 end
 
@@ -91,6 +96,7 @@ function visit_aux (me, F)
     for i, sub in ipairs(me) do
         if _ISNODE(sub) then
             sub.depth = me.depth + 1
+            ASR(sub.depth < 127, sub, 'max depth of 127')
             --if bef then bef(me, sub) end
             visit_aux(sub, F)
             --if aft then aft(me, sub) end
@@ -127,6 +133,15 @@ local C; C = {
     ParEver = node('ParEver'),
     ParOr   = node('ParOr'),
     ParAnd  = node('ParAnd'),
+
+    Do = function (ln1,ln2, str, t1, t2)
+        if t2 then
+            t1[#t1+1] = node('Finalize')(ln1,ln2, str, unpack(t2))
+        end
+        local n = node('Do')(ln1,ln2,str, node('Block')(ln1,ln2, str, unpack(t1)))
+        n.finalize = t2 and t1[#t1]
+        return n
+    end,
 
     If = function (ln1,ln2, str, ...)
         local t = { ... }

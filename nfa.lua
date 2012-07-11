@@ -249,7 +249,7 @@ F = {
         local qF = INS(me, nil,
             _NFA.node {
                 id   = '-or',
-                prio = me.prio,
+                prio = me.depth,
                 toReach = true
             })
         me.nfa.f = qF
@@ -324,7 +324,7 @@ F = {
         local qO = INS(me, false,
             _NFA.node {
                 id   = '-loop',
-                prio = me.prio,
+                prio = me.depth,
                 rem  = body.nfa.qs,
                 toReach = not me.isLastStmt,
             })
@@ -431,7 +431,7 @@ F = {
         local set =
             _NFA.node {
                 id   = '-ret',
-                prio = me.prio,
+                prio = me.depth,
                 rem  = stmt.nfa.qs,
                 toReach = (e1.var.id ~= '$ret'),
             }
