@@ -6,7 +6,7 @@ _OPTS = {
 
     defs_file = '_ceu_defs.h',
 
-    opt_join  = true,
+    join      = true,
 
     m4        = false,
     m4_args   = false,
@@ -21,7 +21,7 @@ _OPTS_NPARAMS = {
 
     defs_file   = 1,
 
-    opt_join    = 1,
+    join        = 0,
 
     m4          = 0,
     m4_args     = 1,
@@ -41,10 +41,16 @@ do
         _OPTS.input = '-'
 
     elseif string.sub(p, 1, 2) == '--' then
+        local no = false
         local opt = string.gsub(string.sub(p,3), '%-', '_')
+        if string.find(opt, '^no_') then
+            no = true
+            opt = string.sub(opt, 4)
+        end
         if _OPTS_NPARAMS[opt] == 0 then
-            _OPTS[opt] = true
+            _OPTS[opt] = not no
         else
+            local opt = string.gsub(string.sub(p,3), '%-', '_')
             _OPTS[opt] = params[i]
             i = i + 1
         end
@@ -56,19 +62,19 @@ end
 if not _OPTS.input then
     io.stderr:write([[
 
-    ./ceu <filename>             # Ceu input file, or `-´ for stdin
+    ./ceu <filename>              # Ceu input file, or `-´ for stdin
     
-        --output <filename>      # C output file (stdout)
+        --output <filename>       # C output file (stdout)
     
-        --defs-file <filename>   # define constants in a separate output file (no)
+        --defs-file <filename>    # define constants in a separate output file (no)
     
-        --opt-join               # join lines enclosed by /*{-{*/ and /*}-}*/ (true)
+        --join (--no-join)        # join lines enclosed by /*{-{*/ and /*}-}*/ (join)
 
-        --dfa                    # perform DFA analysis (false)
-        --dfa-viz                # generate DFA graph (false)
+        --dfa (--no-dfa)          # perform DFA analysis (no-dfa)
+        --dfa-viz (--no-dfa-viz)  # generate DFA graph (no-dfa-viz)
     
-        --m4                     # preprocess the input with `m4´ (false)
-        --m4-args                # preprocess the input with `m4´ passing arguments in between `"´ (false)
+        --m4 (--no-m4)            # preprocess the input with `m4´ (no-m4)
+        --m4-args                 # preprocess the input with `m4´ passing arguments in between `"´ (no)
 
 ]])
     os.exit(1)

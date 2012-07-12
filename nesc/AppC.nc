@@ -131,7 +131,6 @@ implementation
     }
 
     event void RadioSend.sendDone[am_id_t id](message_t* msg, error_t err)
-    //event void RadioSend.sendDone(message_t* msg, error_t err)
     {
         //dbg("APP", "sendDone: %d %d\n", data[0], data[1]);
 #ifdef IN_Radio_sendDone

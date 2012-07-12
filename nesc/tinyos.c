@@ -159,6 +159,8 @@ int Radio_send (message_t *msg)  {
 
 // SERIAL
 
+int Serial_start_on = 1;
+
 #ifdef FUNC_Serial_start
 error_t Serial_start () {
     return call SerialControl.start();
@@ -182,15 +184,60 @@ uint8_t Serial_payloadLength (message_t *msg) {
 }
 #endif
 
-#ifdef FUNC_setPayloadLength
+#ifdef FUNC_Serial_setPayloadLength
 void Serial_setPayloadLength (message_t* msg, uint8_t len) {
     return call SerialPacket.setPayloadLength(msg, len);
 }
 #endif
 
-#ifdef FUNC_Serial_send
-error_t Serial_send (message_t *msg, uint8_t len)  {
-    am_id_t id = call SerialAMPacket.type(msg);
-    return call SerialSend.send[id](0, msg, len);
+#ifdef FUNC_Serial_maxPayloadLength
+uint8_t Serial_maxPayloadLength () {
+    return call SerialPacket.maxPayloadLength();
+}
+#endif
+
+#ifdef FUNC_Serial_getSource
+am_addr_t Serial_getSource (message_t* msg) {
+    return call SerialAMPacket.source(msg);
+}
+#endif
+
+#ifdef FUNC_Serial_setSource
+void Serial_setSource (message_t* msg, am_addr_t addr) {
+    return call SerialAMPacket.setSource(msg, addr);
+}
+#endif
+
+#ifdef FUNC_Serial_getDestination
+am_addr_t Serial_getDestination (message_t* msg) {
+    return call SerialAMPacket.destination(msg);
+}
+#endif
+
+#ifdef FUNC_Serial_setDestination
+void Serial_setDestination (message_t* msg, am_addr_t addr) {
+    return call SerialAMPacket.setDestination(msg, addr);
+}
+#endif
+
+#ifdef FUNC_Serial_getType
+am_id_t Serial_getType (message_t* msg) {
+    return call SerialAMPacket.type(msg);
+}
+#endif
+
+#ifdef FUNC_Serial_setType
+void Serial_setType (message_t* msg, am_id_t id) {
+    call SerialAMPacket.setType(msg, id);
+}
+#endif
+
+#ifdef OUT_Serial_send
+#define ceu_out_event_Serial_send Serial_send
+int Serial_send (message_t *msg)  {
+    am_id_t id     = call SerialAMPacket.type(msg);
+    am_addr_t addr = call SerialAMPacket.destination(msg);
+    int len        = call SerialPacket.payloadLength(msg);
+    return call SerialSend.send[id](addr, msg, len) == SUCCESS;
 }
 #endif
