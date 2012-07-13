@@ -44,48 +44,16 @@ typedef nx_struct {
     nx_uint8_t length;
     nx_am_group_t group;
     nx_am_id_t type;
-} radio_header_t;
+} message_header_t;
 
 typedef nx_struct {
     nxle_uint16_t crc;
-} radio_footer_t;
+} message_footer_t;
 
 typedef nx_struct {
     nx_int8_t strength;
     nx_uint8_t ack;
     nx_uint16_t time;
-} radio_metadata_t;
-
-/*
-typedef nx_struct serial_header {
-    nx_am_addr_t dest;
-    nx_am_addr_t src;
-    nx_uint8_t length;
-    nx_am_group_t group;
-    nx_am_id_t type;
-} serial_header_t;
-
-typedef nx_struct serial_packet {
-    serial_header_t header;
-    nx_uint8_t data[];
-} serial_packet_t;
-
-typedef nx_struct serial_metadata {
-    nx_uint8_t ack;
-} serial_metadata_t;
-*/
-
-typedef union message_header {
-    radio_header_t  radio;
-    //serial_header_t serial;
-} message_header_t;
-
-typedef union message_footer {
-    radio_footer_t radio;
-} message_footer_t;
-
-typedef union message_metadata {
-    radio_metadata_t radio;
 } message_metadata_t;
 
 typedef nx_struct message_t {
@@ -95,7 +63,69 @@ typedef nx_struct message_t {
     message_metadata_t metadata;
 } message_t;
 
+/* SERIAL */
+
+#ifdef IO_SERIAL
+
+int Serial_start_on = 0;
+int Serial_start ()
+{
+    static int v1[] = CEU_SEQV_Serial_start;
+    static int n1 = 0;
+    int ret;
+    if (n1 < CEU_SEQN_Serial_start)
+        ret = v1[n1++];
+    else
+        ret = SUCCESS;
+
+    static int v2[] = CEU_SEQV_Serial_startDone;
+    static int n2 = 0;
+    if (ret == SUCCESS) {
+        if (n2 < CEU_SEQN_Serial_startDone)
+            ret = MQ(IN_Serial_startDone, v2[n2++]);
+        else
+            ret = MQ(IN_Serial_startDone, SUCCESS);
+        ret = ((ret==0) ? SUCCESS : EBUSY);
+    }
+
+    Serial_start_on = (ret==SUCCESS);
+    return ret;
+}
+am_addr_t Serial_getSource (message_t* msg) {
+    return msg->header.src;
+}
+void Serial_setSource (message_t* msg, am_addr_t to) {
+    msg->header.src = to;
+}
+am_addr_t Serial_getDestination (message_t* msg) {
+    return msg->header.dest;
+}
+void Serial_setDestination (message_t* msg, am_addr_t to) {
+    msg->header.dest = to;
+}
+am_id_t Serial_getType (message_t* msg) {
+    return msg->header.type;
+}
+void Serial_setType (message_t* msg, am_id_t id) {
+    msg->header.type = id;
+}
+void* Serial_getPayload (message_t* msg, u8 len) {
+    if (len <= TOSH_DATA_LENGTH) {
+        return msg->data;
+    }
+    else {
+        return NULL;
+    }
+}
+void Serial_setPayloadLength(message_t* msg, u8 len) {
+    msg->header.length = len;
+}
+
+#endif /* IO_SERIAL */
+
 /* RADIO */
+
+#ifdef IO_RADIO
 
 int Radio_start_on = 0;
 int Radio_start ()
@@ -122,22 +152,22 @@ int Radio_start ()
     return ret;
 }
 am_addr_t Radio_getSource (message_t* msg) {
-    return msg->header.radio.src;
+    return msg->header.src;
 }
 void Radio_setSource (message_t* msg, am_addr_t to) {
-    msg->header.radio.src = to;
+    msg->header.src = to;
 }
 am_addr_t Radio_getDestination (message_t* msg) {
-    return msg->header.radio.dest;
+    return msg->header.dest;
 }
 void Radio_setDestination (message_t* msg, am_addr_t to) {
-    msg->header.radio.dest = to;
+    msg->header.dest = to;
 }
 am_id_t Radio_getType (message_t* msg) {
-    return msg->header.radio.type;
+    return msg->header.type;
 }
 void Radio_setType (message_t* msg, am_id_t id) {
-    msg->header.radio.type = id;
+    msg->header.type = id;
 }
 void* Radio_getPayload (message_t* msg, u8 len) {
     if (len <= TOSH_DATA_LENGTH) {
@@ -148,14 +178,7 @@ void* Radio_getPayload (message_t* msg, u8 len) {
     }
 }
 void Radio_setPayloadLength(message_t* msg, u8 len) {
-    msg->header.radio.length = len;
-}
-
-void Leds_led0Toggle () {
-    //printf("Leds_led0Toggle\n");
-}
-void Leds_set (u8 v) {
-    //printf("Leds_set: %d\n", v);
+    msg->header.length = len;
 }
 
 #ifdef TOS_COLLISION
@@ -222,3 +245,80 @@ int Temp_read ()
 }
 #endif
 
+#endif /* IO_RADIO */
+
+/* LED */
+
+#ifdef IO_LEDS
+
+u8 leds = 0;
+
+void Leds_dbg () {
+    DBG("leds (%d %d %d)\n", (leds&(1<<2))>>2, (leds&(1<<1))>>1, leds&(1<<0));
+}
+
+#ifdef FUNC_Leds_set
+void Leds_set (int v) {
+    leds = v;
+    Leds_dbg();
+}
+#endif
+
+#ifdef FUNC_Leds_led0On
+void Leds_led0On () {
+    leds |= 1 << 0;
+    Leds_dbg();
+}
+#endif
+#ifdef FUNC_Leds_led0Off
+void Leds_led0Off () {
+    leds &= ~(1 << 0);
+    Leds_dbg();
+}
+#endif
+#ifdef FUNC_Leds_led0Toggle
+void Leds_led0Toggle () {
+    leds ^= 1 << 0;
+    Leds_dbg();
+}
+#endif
+
+#ifdef FUNC_Leds_led1On
+void Leds_led1On () {
+    leds |= 1 << 1;
+    Leds_dbg();
+}
+#endif
+#ifdef FUNC_Leds_led1Off
+void Leds_led1Off () {
+    leds &= ~(1 << 1);
+    Leds_dbg();
+}
+#endif
+#ifdef FUNC_Leds_led1Toggle
+void Leds_led1Toggle () {
+    leds ^= 1 << 1;
+    Leds_dbg();
+}
+#endif
+
+#ifdef FUNC_Leds_led2On
+void Leds_led2On () {
+    leds |= 1 << 2;
+    Leds_dbg();
+}
+#endif
+#ifdef FUNC_Leds_led2Off
+void Leds_led2Off () {
+    leds &= ~(1 << 2);
+    Leds_dbg();
+}
+#endif
+#ifdef FUNC_Leds_led2Toggle
+void Leds_led2Toggle () {
+    leds ^= 1 << 2;
+    Leds_dbg();
+}
+#endif
+
+#endif

@@ -87,7 +87,7 @@ implementation
         u32 now = call Timer.getNow();
         s32 dt = now - old;
         old = now;
-        ceu_go_wclock(NULL, dt*1000);
+        ceu_go_wclock(NULL, dt*976); // (1ms->976us in "binary" time)
 #ifndef ceu_out_wclock
         call Timer.startOneShot(10);
 #endif
@@ -131,7 +131,6 @@ implementation
     }
 
     event void RadioSend.sendDone[am_id_t id](message_t* msg, error_t err)
-    //event void RadioSend.sendDone(message_t* msg, error_t err)
     {
         //dbg("APP", "sendDone: %d %d\n", data[0], data[1]);
 #ifdef IN_Radio_sendDone
