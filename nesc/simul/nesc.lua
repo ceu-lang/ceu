@@ -5,13 +5,14 @@ module((...), package.seeall)
 setmetatable(_M, {__index=simul})
 
 function app (app)
-    assert(app.defines and app.defines.TOS_NODE_ID,
-            'missing `TOS_NODE_ID´')
+    app.defines = app.defines or {}
+    app.defines.TOS_NODE_ID = app.defines.TOS_NODE_ID or 0
     app.name = app.name or 'node_'..app.defines.TOS_NODE_ID
     app.values = app.values or {}
-    local vals = { 'Radio_start', 'Radio_startDone',
-                   'Photo_read',  'Photo_readDone',
-                   'Temp_read',   'Temp_readDone',   }
+    local vals = { 'Radio_start',  'Radio_startDone',
+                   'Serial_start', 'Serial_startDone',
+                   'Photo_read',   'Photo_readDone',
+                   'Temp_read',    'Temp_readDone',   }
     for _, k in ipairs(vals) do
         app.values[k] = app.values[k] or {}
     end
@@ -23,10 +24,16 @@ function app (app)
     end
     VALS = VALS .. '/******/ end\n'
 
-    app.source = '/*{-{*/' .. VALS
-                     ..'C do #include "tinyos.c" end\n'
-              .. '_srand(_time(_NULL)+_TOS_NODE_ID);\n'
-              .. '/*}-}*/' .. app.source
+    app.source = [[
+/*{-{*/
+]] .. VALS .. [[
+C do
+    #include "IO.h"
+    #include "tinyos.c"
+end
+_srand(_time(_NULL)+_TOS_NODE_ID);
+/*}-}*/
+]] .. app.source
 
     local app = simul.app(app)
     return app

@@ -65,6 +65,8 @@ typedef nx_struct message_t {
 
 /* SERIAL */
 
+#ifdef IO_SERIAL
+
 int Serial_start_on = 0;
 int Serial_start ()
 {
@@ -116,10 +118,14 @@ void* Serial_getPayload (message_t* msg, u8 len) {
     }
 }
 void Serial_setPayloadLength(message_t* msg, u8 len) {
-    msg->header. = len;
+    msg->header.length = len;
 }
 
+#endif /* IO_SERIAL */
+
 /* RADIO */
+
+#ifdef IO_RADIO
 
 int Radio_start_on = 0;
 int Radio_start ()
@@ -172,7 +178,7 @@ void* Radio_getPayload (message_t* msg, u8 len) {
     }
 }
 void Radio_setPayloadLength(message_t* msg, u8 len) {
-    msg->header. = len;
+    msg->header.length = len;
 }
 
 #ifdef TOS_COLLISION
@@ -239,3 +245,80 @@ int Temp_read ()
 }
 #endif
 
+#endif /* IO_RADIO */
+
+/* LED */
+
+#ifdef IO_LEDS
+
+u8 leds = 0;
+
+void Leds_dbg () {
+    DBG("leds (%d %d %d)\n", (leds&(1<<2))>>2, (leds&(1<<1))>>1, leds&(1<<0));
+}
+
+#ifdef FUNC_Leds_set
+void Leds_set (int v) {
+    leds = v;
+    Leds_dbg();
+}
+#endif
+
+#ifdef FUNC_Leds_led0On
+void Leds_led0On () {
+    leds |= 1 << 0;
+    Leds_dbg();
+}
+#endif
+#ifdef FUNC_Leds_led0Off
+void Leds_led0Off () {
+    leds &= ~(1 << 0);
+    Leds_dbg();
+}
+#endif
+#ifdef FUNC_Leds_led0Toggle
+void Leds_led0Toggle () {
+    leds ^= 1 << 0;
+    Leds_dbg();
+}
+#endif
+
+#ifdef FUNC_Leds_led1On
+void Leds_led1On () {
+    leds |= 1 << 1;
+    Leds_dbg();
+}
+#endif
+#ifdef FUNC_Leds_led1Off
+void Leds_led1Off () {
+    leds &= ~(1 << 1);
+    Leds_dbg();
+}
+#endif
+#ifdef FUNC_Leds_led1Toggle
+void Leds_led1Toggle () {
+    leds ^= 1 << 1;
+    Leds_dbg();
+}
+#endif
+
+#ifdef FUNC_Leds_led2On
+void Leds_led2On () {
+    leds |= 1 << 2;
+    Leds_dbg();
+}
+#endif
+#ifdef FUNC_Leds_led2Off
+void Leds_led2Off () {
+    leds &= ~(1 << 2);
+    Leds_dbg();
+}
+#endif
+#ifdef FUNC_Leds_led2Toggle
+void Leds_led2Toggle () {
+    leds ^= 1 << 2;
+    Leds_dbg();
+}
+#endif
+
+#endif

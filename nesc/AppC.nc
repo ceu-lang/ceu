@@ -87,7 +87,7 @@ implementation
         u32 now = call Timer.getNow();
         s32 dt = now - old;
         old = now;
-        ceu_go_wclock(NULL, dt*1000);
+        ceu_go_wclock(NULL, dt*976); // (1ms->976us in "binary" time)
 #ifndef ceu_out_wclock
         call Timer.startOneShot(10);
 #endif
