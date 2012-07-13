@@ -54,7 +54,8 @@ function _DUMP (me, spc)
     local ks = ''
     for k, v in pairs(me) do
         if type(k)~='number' then
-            ks = ks.. k..'='..string.sub(tostring(v),1,8)..','
+            v = string.gsub(string.sub(tostring(v),1,8),'\n','\\n')
+            ks = ks.. k..'='..v..','
         end
     end
     DBG(string.rep(' ',spc) .. me.id .. ' ('..ks..')')

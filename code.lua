@@ -86,7 +86,6 @@ end
 F = {
     Node_pre = function (me)
         me.code = ''
-        me.fins = {}    -- Loop / ParOr / SetBlock
     end,
 
     Root = function (me)
@@ -154,10 +153,6 @@ F = {
         -- halt if block is pending (do not proceed)
         LINE(me, 'if (GTES['..me.gte..'] != Inactive)')
         HALT(me)
-
-        for stmt in _ITER(pred_prio) do
-            stmt.fins[#stmt.fins+1] = me
-        end
     end,
 
     ParEver = function (me)

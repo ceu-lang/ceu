@@ -1,342 +1,5 @@
 --[===[
-
-Test { [[
-do
-    nothing;
-finalize
-    nothing;
-end
-return 1;
-]],
-    run = 1,
-}
-
-Test { [[
-do
-    nothing;
-finalize
-end
-]],
-    parser = "ERR : line 3 : after `finalize' : invalid statement (or C identifier?)",
-}
-
-Test { [[
-do
-finalize
-    nothing;
-end
-]],
-    parser = "ERR : line 1 : after `do' : invalid statement (or C identifier?)",
-}
-
-Test { [[
-do
-    int a;
-finalize
-    await Forever;
-end
-]],
-    props = "ERR : line 4 : invalid inside a finalizer",
-}
-
-Test { [[
-do
-    int a;
-finalize
-    async do
-        nothing;
-    end
-end
-]],
-    props = "ERR : line 4 : invalid inside a finalizer",
-}
-
-Test { [[
-do
-    int a;
-finalize
-    return 0;
-end
-]],
-    props = "ERR : line 4 : invalid inside a finalizer",
-}
-
-Test { [[
-loop do
-    do
-        int a;
-    finalize
-        break;
-    end
-end
-]],
-    props = "ERR : line 5 : invalid inside a finalizer",
-}
-
-Test { [[
-int ret = 0;
-do
-    int b;
-finalize
-    a = 1;
-    loop do
-        break;
-    end
-    ret = a;
-end
-return ret;
-]],
-    env = 'ERR : line 5 : variable "a" is not declared',
-}
-
-Test { [[
-int r = 0;
-do
-    int a;
-finalize
-    int b = set do return 2; end;
-    r = b;
-end
-return r;
-]],
-    run = 2;
-}
-
-Test { [[
-int r = 0;
-do
-    int a;
-finalize
-    int b = set do return 2; end;
-    r = b;
-end
-return r;
-]],
-    run = 2;
-}
-
-Test { [[
-int ret = 0;
-do
-    int a;
-finalize
-    a = 1;
-    ret = a;
-end
-return ret;
-]],
-    run = 1,
-}
-
-Test { [[
-int a;
-par/or do
-    do
-        int a;
-    finalize
-        a = 1;
-    end
-with
-    a = 2;
-end
-return a;
-]],
-    run = 2;
-}
-
-Test { [[
-int ret;
-par/or do
-    do
-        int a;
-    finalize
-        ret = 2;
-    end
-with
-    ret = 2;
-end
-return ret;
-]],
-    nd_acc = 1,
-    run = 2,
-}
-
-Test { [[
-input void A;
-int ret = 0;
-loop do
-    par/or do
-        do
-            await A;
-        finalize
-            ret = ret + 1;
-        end;
-        return 0;
-    with
-        break;
-    end
-end
-return ret;
-]],
-    nd_flw = 1,
-    run = 1,
-    unreach = 3,
-}
-
 --]===]
-Test { [[
-input void A, B;
-int ret = 1;
-par/or do
-    do
-        await A;
-    finalize
-        ret = 1;
-    end
-with
-    do
-        await B;
-    finalize
-        ret = 2;
-    end
-end
-return ret;
-]],
-    run = { ['~>A']=2, ['~>B']=1 },
-}
--- TODO: nd_acc = 3
-Test { [[
-input void A, B, C;
-int ret = 1;
-par/or do
-    do
-        await A;
-    finalize
-        ret = 1;
-    end
-with
-    do
-        await B;
-    finalize
-        ret = 2;
-    end
-with
-    do
-        await C;
-    finalize
-        ret = 3;
-    end
-end
-return ret;
-]],
-    nd_acc = 3,
-}
-
--- EMIT int
-do return end
-
-Test { [[
-input void A;
-int ret = 1;
-par/or do
-    do
-        ret = ret + 1;
-        do
-            await A;
-        finalize
-            ret = ret * 3;
-        end
-    finalize
-        ret = ret + 5;
-    end
-with
-    await A;
-    ret = ret * 2;
-end
-return ret;
-]],
-    nd_acc = 2,
-}
-
-Test { [[
-input void A;
-int ret = 1;
-par/or do
-    do
-        ret = ret + 1;
-        do
-            await A;
-        finalize
-            ret = ret * 3;
-        end
-    finalize
-        ret = ret + 5;
-    end
-with
-    await A;
-end
-ret = ret * 2;
-return ret;
-]],
-    run = { ['~>A']=22 },
-}
-
-Test { [[
-input void A, B;
-int ret = 1;
-par/or do
-    do
-        ret = ret + 1;
-        do
-            await A;
-            ret = ret * 100;
-        finalize
-            ret = ret * 3;
-        end
-    finalize
-        ret = ret + 5;
-    end
-with
-    await B;
-    ret = ret * 2;
-end
-return ret;
-]],
-    run = { ['~>B']=17, ['~>A']=605 },
-}
-
-Test { [[
-input void A,B;
-int ret = 0;
-loop do
-    do
-        par/or do
-            do
-                await B;
-                do
-                    int a;
-                    await B;
-                    ret = ret + 1;
-                finalize
-                    ret = ret + 2;
-                end
-            finalize
-                ret = ret + 3;
-            end
-        with
-            await A;
-            break;
-        end
-    finalize
-        ret = ret + 4;
-    end
-end
-return ret;
-]],
-    run = { ['~>A']=7 , ['~>B;~>B;~>A']=17, ['~>B;~>A']=9 },
-}
-
--- testes de PAR nd_acc/nd_flw
 
 Test { [[return(1);]], run=1 }
 Test { [[return (1);]], run=1 }
@@ -9811,6 +9474,373 @@ return ret;
     nd_esc = 1,
     unreach = 2,
     run = 5,
+}
+
+-- FINALIZE
+
+Test { [[
+do
+    nothing;
+finalize
+    nothing;
+end
+return 1;
+]],
+    run = 1,
+}
+
+Test { [[
+do
+    nothing;
+finalize
+end
+]],
+    parser = "ERR : line 3 : after `finalize' : invalid statement (or C identifier?)",
+}
+
+Test { [[
+do
+finalize
+    nothing;
+end
+]],
+    parser = "ERR : line 1 : after `do' : invalid statement (or C identifier?)",
+}
+
+Test { [[
+do
+    int a;
+finalize
+    await Forever;
+end
+]],
+    props = "ERR : line 4 : invalid inside a finalizer",
+}
+
+Test { [[
+do
+    int a;
+finalize
+    async do
+        nothing;
+    end
+end
+]],
+    props = "ERR : line 4 : invalid inside a finalizer",
+}
+
+Test { [[
+do
+    int a;
+finalize
+    return 0;
+end
+]],
+    props = "ERR : line 4 : invalid inside a finalizer",
+}
+
+Test { [[
+loop do
+    do
+        int a;
+    finalize
+        break;
+    end
+end
+]],
+    props = "ERR : line 5 : invalid inside a finalizer",
+}
+
+Test { [[
+int ret = 0;
+do
+    int b;
+finalize
+    a = 1;
+    loop do
+        break;
+    end
+    ret = a;
+end
+return ret;
+]],
+    env = 'ERR : line 5 : variable "a" is not declared',
+}
+
+Test { [[
+int r = 0;
+do
+    int a;
+finalize
+    int b = set do return 2; end;
+    r = b;
+end
+return r;
+]],
+    run = 2;
+}
+
+Test { [[
+int r = 0;
+do
+    int a;
+finalize
+    int b = set do return 2; end;
+    r = b;
+end
+return r;
+]],
+    run = 2;
+}
+
+Test { [[
+int ret = 0;
+do
+    int a;
+finalize
+    a = 1;
+    ret = a;
+end
+return ret;
+]],
+    run = 1,
+}
+
+Test { [[
+int a;
+par/or do
+    do
+        int a;
+    finalize
+        a = 1;
+    end
+with
+    a = 2;
+end
+return a;
+]],
+    run = 2;
+}
+
+Test { [[
+int ret;
+par/or do
+    do
+        int a;
+    finalize
+        ret = 2;
+    end
+with
+    ret = 2;
+end
+return ret;
+]],
+    nd_acc = 1,
+    run = 2,
+}
+
+Test { [[
+input void A;
+int ret = 0;
+loop do
+    par/or do
+        do
+            await A;
+        finalize
+            ret = ret + 1;
+        end;
+        return 0;
+    with
+        break;
+    end
+end
+return ret;
+]],
+    nd_flw = 1,
+    run = 1,
+    unreach = 3,
+}
+
+Test { [[
+input void A, B;
+int ret = 1;
+par/or do
+    do
+        await A;
+    finalize
+        ret = 1;
+    end
+with
+    do
+        await B;
+    finalize
+        ret = 2;
+    end
+end
+return ret;
+]],
+    run = { ['~>A']=2, ['~>B']=1 },
+}
+
+-- TODO: nd_acc = 3
+-- TODO: finalize
+--[=[
+Test { [[
+input void A, B, C;
+int ret = 1;
+par/or do
+    do
+        await A;
+    finalize
+        ret = 1;
+    end
+with
+    do
+        await B;
+    finalize
+        ret = 2;
+    end
+with
+    do
+        await C;
+    finalize
+        ret = 3;
+    end
+end
+return ret;
+]],
+    nd_acc = 3,
+}
+]=]
+
+Test { [[
+input void A, B, C;
+event void a;
+int ret = 1;
+par/or do
+    do
+        await A;
+    finalize
+        emit a;
+        ret = ret * 2;
+    end
+with
+    do
+        await B;
+    finalize
+        ret = ret + 5;
+    end
+with
+    loop do
+        await a;
+        ret = ret + 1;
+    end
+end
+return ret;
+]],
+    unreach = 1,
+    run = { ['~>A']=9, ['~>B']=6 },
+}
+
+Test { [[
+input void A;
+int ret = 1;
+par/or do
+    do
+        ret = ret + 1;
+        do
+            await A;
+        finalize
+            ret = ret * 3;
+        end
+    finalize
+        ret = ret + 5;
+    end
+with
+    await A;
+    ret = ret * 2;
+end
+return ret;
+]],
+    nd_acc = 2,
+}
+
+Test { [[
+input void A;
+int ret = 1;
+par/or do
+    do
+        ret = ret + 1;
+        do
+            await A;
+        finalize
+            ret = ret * 3;
+        end
+    finalize
+        ret = ret + 5;
+    end
+with
+    await A;
+end
+ret = ret * 2;
+return ret;
+]],
+    run = { ['~>A']=22 },
+}
+
+Test { [[
+input void A, B;
+int ret = 1;
+par/or do
+    do
+        ret = ret + 1;
+        do
+            await A;
+            ret = ret * 100;
+        finalize
+            ret = ret * 3;
+        end
+    finalize
+        ret = ret + 5;
+    end
+with
+    await B;
+    ret = ret * 2;
+end
+return ret;
+]],
+    run = { ['~>B']=17, ['~>A']=605 },
+}
+
+Test { [[
+input void A,B;
+int ret = 0;
+loop do
+    do
+        par/or do
+            do
+                await B;
+                do
+                    int a;
+                    await B;
+                    ret = ret + 1;
+                finalize
+                    ret = ret + 2;
+                end
+            finalize
+                ret = ret + 3;
+            end
+        with
+            await A;
+            break;
+        end
+    finalize
+        ret = ret + 4;
+    end
+end
+return ret;
+]],
+    run = { ['~>A']=7 , ['~>B;~>B;~>A']=17, ['~>B;~>A']=9 },
 }
 
     -- ASYNCHRONOUS

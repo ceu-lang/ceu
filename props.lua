@@ -36,7 +36,8 @@ local STMTS = {
     SetExp=true, SetBlock=true, SetStmt=true,
     Return=true, Async=true, Host=true,
     ParEver=true, ParOr=true, ParAnd=true, Loop=true,
-    Break=true, If=true, Finalize=true,
+    Break=true, If=true,
+    Do=true, Finalize=true,
     CallStmt=true, AwaitN=true,
     AwaitExt=true, AwaitInt=true, AwaitT=true,
     EmitExtS=true,  EmitInt=true,  EmitT=true,
@@ -62,6 +63,10 @@ F = {
 
     Finalize = function (me)
         _AST.n_fins = (_AST.n_fins or 0) + 1
+        for stmt in _ITER(pred_prio) do
+            stmt.fins[#stmt.fins+1] = me
+        end
+        MAX_all(me)
     end,
 
     Async = function (me)
@@ -81,6 +86,7 @@ F = {
 
     ParOr_pre = function (me)
         me.nd_join = true
+        me.fins = {}    -- Loop / ParOr / SetBlock
     end,
 
     Loop_pre = function (me)
