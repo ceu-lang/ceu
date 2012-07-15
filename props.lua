@@ -43,6 +43,8 @@ local STMTS = {
     EmitExtS=true,  EmitInt=true,  EmitT=true,
 }
 
+_AST.n_fins = 0
+
 F = {
     Node_pre = function (me)
         me.n_tracks = 1
@@ -62,7 +64,7 @@ F = {
     Block = MAX_all,
 
     Finalize = function (me)
-        _AST.n_fins = (_AST.n_fins or 0) + 1
+        _AST.n_fins = _AST.n_fins + 1
         for stmt in _ITER(pred_prio) do
             stmt.fins[#stmt.fins+1] = me
         end
