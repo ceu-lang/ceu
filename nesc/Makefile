@@ -13,7 +13,7 @@ include $(MAKERULES)
 
 ceu:
 	@echo "===================================================================="
-	./ceu $(CEUFILE) --m4 --defs-file _ceu_defs.h --output _ceu_code.tmp
+	./ceu $(CEUFILE) --m4 --tp-word 2 --tp-pointer 2 --tp-off 1 --tp-lbl 1 --defs-file _ceu_defs.h --output _ceu_code.tmp
 	@echo "===================================================================="
 
 clean_ceu:

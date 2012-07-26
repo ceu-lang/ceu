@@ -1,4 +1,6 @@
-_AST = nil
+_AST = {
+    root = nil
+}
 
 function node (id, min)
     min = min or 0
@@ -23,7 +25,7 @@ function pred_prio (me)
 end
 function pred_true (me) return true end
 
-function _ITER (pred, inc)
+function _AST.iter (pred, inc)
     if pred == nil then
         pred = pred_true
     elseif type(pred) == 'string' then
@@ -45,11 +47,11 @@ function _ITER (pred, inc)
     end
 end
 
-function _ISNODE (node)
+function _AST.isNode (node)
     return type(node)=='table' and node.id
 end
 
-function _DUMP (me, spc)
+function _AST.dump (me, spc)
     spc = spc or 0
     local ks = ''
     for k, v in pairs(me) do
@@ -60,19 +62,19 @@ function _DUMP (me, spc)
     end
     DBG(string.rep(' ',spc) .. me.id .. ' ('..ks..')')
     for i, sub in ipairs(me) do
-        if _ISNODE(sub) then
-            _DUMP(sub, spc+2)
+        if _AST.isNode(sub) then
+            _AST.dump(sub, spc+2)
         else
             DBG(string.rep(' ',spc+2) .. tostring(sub))
         end
     end
 end
 
-function _VISIT (F)
+function _AST.visit (F)
     assert(_AST)
     stack = {}
-    _AST.depth = 0
-    return visit_aux(_AST, F)
+    _AST.root.depth = 0
+    return visit_aux(_AST.root, F)
 end
 
 local function FF (F, str)
@@ -87,7 +89,7 @@ end
 function visit_aux (me, F)
 --print(me.id, me, F)
     local pre, mid, pos = FF(F,me.id..'_pre'), FF(F,me.id), FF(F,me.id..'_pos')
-    --local bef, aft = FF(F,me.id..'_bef'), FF(F,me.id..'_aft')
+    local bef, aft = FF(F,me.id..'_bef'), FF(F,me.id..'_aft')
 
     if F.Node_pre then F.Node_pre(me) end
     if pre then pre(me) end
@@ -95,12 +97,12 @@ function visit_aux (me, F)
     stack[#stack+1] = me
 
     for i, sub in ipairs(me) do
-        if _ISNODE(sub) then
+        if _AST.isNode(sub) then
             sub.depth = me.depth + 1
             ASR(sub.depth < 127, sub, 'max depth of 127')
-            --if bef then bef(me, sub) end
+            if bef then bef(me, sub) end
             visit_aux(sub, F)
-            --if aft then aft(me, sub) end
+            if aft then aft(me, sub) end
         end
     end
 
@@ -114,13 +116,13 @@ end
 
 local C; C = {
     [1] = function (ln1,ln2, str, spc, ...) -- spc=CK''
-        _AST = node('Root')(ln1,ln2, str,
+        _AST.root = node('Root')(ln1,ln2, str,
                 node('Block')(ln1,ln2, str,
                     node('Dcl_var')(ln1,ln2, str, false, 'int', false, '$ret'),
                     node('SetBlock')(ln1,ln2, str,
                         node('Var')(ln1,ln2, str, '$ret'),
-                        node('Block')(ln1,ln2, str, ...))))
-        return _AST
+                        ...)))  -- ...=Block
+        return _AST.root
     end,
 
     Block   = node('Block'),
@@ -202,6 +204,7 @@ local C; C = {
     EmitInt = node('EmitInt'),
     EmitT   = node('EmitT'),
 
+    Dcl_type = node('Dcl_type'),
     Dcl_det = node('Dcl_det'),
 
     _Dcl_pure = function (ln1,ln2, str, ...)
@@ -286,7 +289,6 @@ local C; C = {
 
     Var      = node('Var'),
     Ext      = node('Ext'),
-    Int      = node('Int'),
     C        = node('C'),
     SIZEOF   = node('SIZEOF'),
     CONST    = node('CONST'),

@@ -11,17 +11,16 @@ function subst (name)
 end
 
 subst 'set.lua'
-subst 'C.lua'
+subst 'tp.lua'
 
 subst 'lines.lua'
 subst 'parser.lua'
 subst 'ast.lua'
 subst 'env.lua'
+subst 'mem.lua'
 subst 'props.lua'
 subst 'tight.lua'
-subst 'exps.lua'
 subst 'async.lua'
-subst 'gates.lua'
 subst 'nfa.lua'
 subst 'dfa.lua'
 subst 'graphviz.lua'

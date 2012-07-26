@@ -41,7 +41,7 @@ F = {
         me.brk_awt_ret = false
     end,
     Node = function (me)
-        if (not F[me.id]) and _ISNODE(me[#me]) then
+        if (not F[me.id]) and _AST.isNode(me[#me]) then
             same(me, me[#me])
         end
     end,
@@ -66,7 +66,7 @@ F = {
     Loop = function (me)
         local body = unpack(me)
         same(me, body)
-        if not (_ITER'Async'() or me.isBounded) then
+        if not (_AST.iter'Async'() or me.isBounded) then
             ASR(body.brk_awt_ret, me,'tight loop')
         end
 
@@ -109,4 +109,4 @@ F = {
     end,
 }
 
-_VISIT(F)
+_AST.visit(F)

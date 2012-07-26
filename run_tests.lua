@@ -28,6 +28,13 @@ Test = function (t)
         return
     end
 
+    _OPTS = {
+        tp_word    = 4,
+        tp_pointer = 4,
+        tp_off     = 2,
+        tp_lbl     = 2,
+    }
+
     -- LINES
     _STR = str_input
     --print(_STR)
@@ -36,17 +43,22 @@ Test = function (t)
     -- PARSER
     if not check('parser') then return end
     if not check('ast')    then return end
-    --_DUMP(_AST)
-    if not check('C')      then return end
+    --_AST.dump(_AST.root)
+    if not check('tp')     then return end
     if not check('env')    then return end
+    if not check('mem')    then return end
+    if T.tot then
+        assert(T.tot==_MEM.max, 'mem '.._MEM.max)
+    end
+
     if not check('props')  then return end
     if not check('tight')  then return end
-    if not check('exps')   then return end
     if not check('async')  then return end
-    if not check('gates')  then return end
 
     -- GRAPH
 
+    if T.dfa then return end
+--[=[
     -- nfa
     if not check('nfa') then return end
     DBG('nfa', _NFA.n_nodes)
@@ -78,6 +90,7 @@ Test = function (t)
         assert(_DFA.forever == (T.forever or false),
             'forever '..tostring(_DFA.forever))
     end
+]=]
 
     -- RUN
     if T.run==nil then
@@ -89,10 +102,12 @@ Test = function (t)
 
     if not check('code') then return end
 
+    local CEU = './ceu - --dfa --tp-word 4 --tp-pointer 4 --tp-lbl 2 --tp-off 2 --output _ceu_code.c'
+
     if T.run == false then
         local str_all = str_input
         --print(str_all)
-        local ceu = assert(io.popen('./ceu - --dfa --output _ceu_code.c', 'w'))
+        local ceu = assert(io.popen(CEU, 'w'))
         ceu:write(str_all)
         ceu:close()
         assert(os.execute('gcc -std=c99 -o ceu.exe main.c 2>/dev/null') ~= 0)
@@ -101,13 +116,10 @@ Test = function (t)
     elseif type(T.run) ~= 'table' then
         local str_all = str_input
         --print(str_all)
-        local ceu = assert(io.popen('./ceu - --dfa --output _ceu_code.c', 'w'))
-        --local ceu = assert(io.popen('lua ceu.lua - --output _ceu_code.c', 'w'))
+        local ceu = assert(io.popen(CEU, 'w'))
         ceu:write(str_all)
         ceu:close()
         assert(os.execute('gcc -std=c99 -o ceu.exe main.c') == 0)
-        --print(os.execute("/tmp/ceu.exe")/256, T.run, str_input)
-        --assert(os.execute("/tmp/ceu.exe")/256 == T.run, str_input)
         local ret = io.popen('./ceu.exe'):read'*a'
         ret = string.match(ret, 'END: (.-)\n')
         assert(ret==T.run..'', ret..' vs '..T.run..' expected')
@@ -129,7 +141,7 @@ Test = function (t)
             input = string.gsub(input, '[ ]*(%d+)[ ]*~>([^;]*);?', 'emit %2(%1);')
             input = string.gsub(input, '~>([^;]*);?', 'emit %1;')
             local all = string.gsub(str_all, '`EVTS', input)
-            local ceu = assert(io.popen('./ceu - --dfa --output _ceu_code.c', 'w'))
+            local ceu = assert(io.popen(CEU, 'w'))
             --print(all)
             ceu:write(all)
             ceu:close()

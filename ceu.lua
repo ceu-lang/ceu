@@ -13,21 +13,31 @@ _OPTS = {
 
     dfa       = false,
     dfa_viz   = false,
+
+    tp_word    = 4,
+    tp_pointer = 4,
+    tp_off     = 2,
+    tp_lbl     = 2,
 }
 
 _OPTS_NPARAMS = {
-    input       = nil,
-    output      = 1,
+    input     = nil,
+    output    = 1,
 
-    defs_file   = 1,
+    defs_file = 1,
 
-    join        = 0,
+    join      = 0,
 
-    m4          = 0,
-    m4_args     = 1,
+    m4        = 0,
+    m4_args   = 1,
 
-    dfa         = 0,
-    dfa_viz     = 0,
+    dfa       = 0,
+    dfa_viz   = 0,
+
+    tp_word    = 1,
+    tp_pointer = 1,
+    tp_off     = 1,
+    tp_lbl     = 1,
 }
 
 local params = {...}
@@ -76,6 +86,11 @@ if not _OPTS.input then
         --m4 (--no-m4)            # preprocess the input with `m4´ (no-m4)
         --m4-args                 # preprocess the input with `m4´ passing arguments in between `"´ (no)
 
+        --tp-word                 # sizeof a word in bytes    (4)
+        --tp-pointer              # sizeof a pointer in bytes (4)
+        --tp-off                  # sizeof an offset in bytes (2)
+        --tp-lbl                  # sizeof a label in bytes   (2)
+
 ]])
     os.exit(1)
 end
@@ -108,14 +123,14 @@ do
     dofile 'parser.lua'
     dofile 'ast.lua'
     --ast.dump(ast.AST)
-    dofile 'C.lua'
+    dofile 'tp.lua'
     dofile 'env.lua'
+    dofile 'mem.lua'
     dofile 'props.lua'
     dofile 'tight.lua'
-    dofile 'exps.lua'
     dofile 'async.lua'
-    dofile 'gates.lua'
 
+--[=[
     if _OPTS.dfa or _OPTS.dfa_viz then
         DBG('WRN : the DFA algorithm is exponential, this may take a while!')
         dofile 'nfa.lua'
@@ -125,6 +140,7 @@ do
             dofile 'graphviz.lua'
         end
     end
+]=]
 
     dofile 'code.lua'
 end
@@ -139,49 +155,27 @@ do
         return string.sub(str, 1, i-1) .. to .. string.sub(str, e+1)
     end
 
-    tpl = sub(tpl, '=== N_WCLOCKS ===', #_GATES.wclocks)
-    tpl = sub(tpl, '=== N_TRACKS ===', _AST.n_tracks)
-    tpl = sub(tpl, '=== N_ASYNCS ===', _AST.n_asyncs)
-    tpl = sub(tpl, '=== N_EMITS ===',  _AST.n_emits)
-    tpl = sub(tpl, '=== N_GTES ===',   _GATES.n_gtes)
-    tpl = sub(tpl, '=== N_ANDS ===',   _GATES.n_ands)
-    tpl = sub(tpl, '=== N_VARS ===',   _ENV.n_vars)
-    tpl = sub(tpl, '=== HOST ===',     _AST.host)
-    tpl = sub(tpl, '=== CODE ===',     _AST.code)
-    tpl = sub(tpl, '=== TRGS ===',     table.concat(_GATES.trgs,','))
+    tpl = sub(tpl, '=== N_TRACKS ===',  _AST.root.n_tracks)
+    tpl = sub(tpl, '=== N_MEM ===',     _MEM.max)
 
-    -- TCEU_GTE / TCEU_LBL
+    tpl = sub(tpl, '=== HOST ===',      _CODE.host)
+    tpl = sub(tpl, '=== CODE ===',      _AST.root.code)
+
+    -- lbl >= off (EMITS)
+    local t = { [1]='u8', [2]='u16', [4]='u32' }
+    tpl = sub(tpl, '=== TCEU_OFF ===',  t[_ENV.types.tceu_off])
+    tpl = sub(tpl, '=== TCEU_LBL ===',  t[MAX(_ENV.types.tceu_lbl,_ENV.types.tceu_off)])
+
+    DBG('# mem: '.._MEM.max)
+    assert(_MEM.max < 2^(_ENV.types.tceu_off*8))
+    assert(#_CODE.labels < 2^(_ENV.types.tceu_lbl*8))
+
+    -- GTES
     do
-        -- TCEU_GTE
-        assert(_GATES.n_gtes <= 2^32)
-        local tp = 'u32'
-        if _GATES.n_gtes <= 2^8 then
-            tp = 'u8'
-        elseif _GATES.n_gtes <= 2^16 then
-            tp = 'u16'
-        end
-        tpl = sub(tpl, '=== TCEU_GTE ===', tp)
-
-        local n = MAX(_GATES.n_gtes, #_CODE.labels)
-        assert(n <= 2^32)
-        local tp = 'u32'
-        if n <= 2^8 then
-            tp = 'u8'
-        elseif n <= 2^16 then
-            tp = 'u16'
-        end
-        tpl = sub(tpl, '=== TCEU_LBL ===', tp)
-
-        DBG('# tceu_gte: '.._GATES.n_gtes..'  ||  tceu_lbl: '..#_CODE.labels)
-    end
-
-    -- WCLOCKS
-    do
-        local wclocks = '{ '
-        for i, gte in ipairs(_GATES.wclocks) do
-            _GATES.wclocks[i] = '{ CEU_WCLOCK_NONE, '..gte..' }'
-        end
-        tpl = sub(tpl, '=== WCLOCKS ===', table.concat(_GATES.wclocks,','))
+        tpl = sub(tpl, '=== CEU_WCLOCK0 ===', _MEM.gtes.wclock0)
+        tpl = sub(tpl, '=== CEU_ASYNC0 ===',  _MEM.gtes.async0)
+        tpl = sub(tpl, '=== CEU_EMIT0 ===',   _MEM.gtes.emit0)
+        tpl = sub(tpl, '=== CEU_FIN0 ===',    _MEM.gtes.fin0)
     end
 
     -- LABELS
@@ -199,38 +193,50 @@ do
         local str = ''
         local t = {}
         local outs = 0
-        for id, evt in pairs(_ENV.exts) do
-            if evt.input then
-                str = str..'#define IN_'..id..' '..(evt.trg0 or 0)..'\n'
+        for _, ext in ipairs(_ENV.exts) do
+            if ext.input then
+                str = str..'#define IN_'..ext.id..' '.._MEM.gtes[ext.n]..'\n'
             else
-                str = str..'#define OUT_'..id..' '..outs..'\n'
+                str = str..'#define OUT_'..ext.id..' '..outs..'\n'
                 outs = outs + 1
             end
         end
         str = str..'#define OUT_n '..outs..'\n'
 
         -- FUNCTIONS called
-        for id in pairs(_EXPS.calls) do
+        for id in pairs(_ENV.calls) do
             if id ~= '$anon' then
                 str = str..'#define FUNC'..id..'\n'
             end
         end
 
         -- DEFINES
-        if #_GATES.wclocks > 0 then
-            str = str .. '#define CEU_WCLOCKS\n'
+        if _PROPS.has_exts then
+            str = str .. '#define CEU_EXTS\n'
+            DBG('# EXTS')
+        end
+        if _PROPS.has_wclocks then
+            str = str .. '#define CEU_WCLOCKS '.._ENV.n_wclocks..'\n'
             DBG('# WCLOCKS')
         end
-        if _AST.n_asyncs > 0 then
-            str = str .. '#define CEU_ASYNCS\n'
+        if _PROPS.has_asyncs then
+            str = str .. '#define CEU_ASYNCS '.._ENV.n_asyncs..'\n'
             DBG('# ASYNCS')
+        end
+        if _PROPS.has_emits then
+            str = str .. '#define CEU_EMITS\n'
+            DBG('# EMITS')
+        end
+        if _PROPS.has_fins then
+            str = str .. '#define CEU_FINS\n'
+            DBG('# FINALIZERS')
         end
         if _DFA and (not _DFA.conc.join) then
             str = str .. '#define CEU_TRK_NOCHK\n'
             DBG('# TRK_NOCHK')
         end
-        if _DFA and (not _DFA.conc.prio) and (_AST.n_emits==0)
-                and (_AST.n_fins==0) then
+        if _DFA and (not _DFA.conc.prio) and (not _PROPS.has_emits)
+                and (not _PROPS.has_fins) then
             str = str .. '#define CEU_TRK_NOPRIO\n'
             DBG('# TRK_NOPRIO')
         end

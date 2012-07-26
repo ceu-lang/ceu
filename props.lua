@@ -1,31 +1,22 @@
-function same (me, sub)
+function SAME (me, sub)
     me.n_tracks = sub.n_tracks
-    me.n_asyncs = sub.n_asyncs
-    me.n_emits  = sub.n_emits
 end
 
 function MAX_all (me, t)
     t = t or me
     me.n_tracks = 0
-    me.n_asyncs = 0
-    me.n_emits  = 0
     for _, sub in ipairs(t) do
         me.n_tracks = MAX(me.n_tracks, sub.n_tracks)
-        me.n_emits  = MAX(me.n_emits,  sub.n_emits)
-        -- TODO: ADD_all
-        me.n_asyncs = me.n_asyncs + sub.n_asyncs
     end
 end
 
 function ADD_all (me, t)
     t = t or me
     me.n_tracks = 0
-    me.n_asyncs = 0
-    me.n_emits  = 0
     for _, sub in ipairs(t) do
-        me.n_tracks = me.n_tracks + sub.n_tracks
-        me.n_emits  = me.n_emits  + sub.n_emits
-        me.n_asyncs = me.n_asyncs + sub.n_asyncs
+        if _AST.isNode(sub) then
+            me.n_tracks = me.n_tracks + sub.n_tracks
+        end
     end
 end
 
@@ -43,37 +34,45 @@ local STMTS = {
     EmitExtS=true,  EmitInt=true,  EmitT=true,
 }
 
-_AST.n_fins = 0
+_PROPS = {
+    has_exts    = false,
+    has_wclocks = false,
+    has_asyncs  = false,
+    has_emits   = false,
+    has_fins    = false,
+}
 
 F = {
     Node_pre = function (me)
         me.n_tracks = 1
-        me.n_asyncs = 0
-        me.n_emits  = 0
 
         if STMTS[me.id] then
             me.isStmt = true
         end
     end,
     Node = function (me)
-        if (not F[me.id]) and _ISNODE(me[#me]) then
-            same(me, me[#me])
+        if (not F[me.id]) and _AST.isNode(me[#me]) then
+            SAME(me, me[#me])
         end
     end,
 
-    Block = MAX_all,
+    Root    = ADD_all,
+    Block   = MAX_all,
+    ParEver = ADD_all,
+    ParAnd  = ADD_all,
+    ParOr   = ADD_all,
+
+    Dcl_ext = function (me)
+        _PROPS.has_exts = true
+    end,
 
     Finalize = function (me)
-        _AST.n_fins = _AST.n_fins + 1
-        for stmt in _ITER(pred_prio) do
-            stmt.fins[#stmt.fins+1] = me
-        end
-        MAX_all(me)
+        _PROPS.has_fins = true
     end,
 
     Async = function (me)
-        me.n_asyncs = 1
-        ASR(not _ITER'Finalize'(), me, 'invalid inside a finalizer')
+        _PROPS.has_asyncs = true
+        ASR(not _AST.iter'Finalize'(), me, 'invalid inside a finalizer')
     end,
 
     If = function (me)
@@ -82,13 +81,8 @@ F = {
         MAX_all(me, {t,f})
     end,
 
-    ParEver = ADD_all,
-    ParAnd  = ADD_all,
-    ParOr   = ADD_all,
-
     ParOr_pre = function (me)
         me.nd_join = true
-        me.fins = {}    -- Loop / ParOr / SetBlock
     end,
 
     Loop_pre = function (me)
@@ -96,11 +90,11 @@ F = {
         me.brks = {}
     end,
     Break = function (me)
-        local loop = _ITER'Loop'()
+        local loop = _AST.iter'Loop'()
         ASR(loop, me,'break without loop')
         loop.brks[me] = true
 
-        local fin = _ITER'Finalize'()
+        local fin = _AST.iter'Finalize'()
         ASR(not fin or fin.depth<loop.depth, me, 'invalid inside a finalizer')
     end,
 
@@ -109,30 +103,27 @@ F = {
         me.rets = {}
     end,
     Return = function (me)
-        local blk = _ITER'SetBlock'()
+        local blk = _AST.iter'SetBlock'()
         blk.rets[me] = true
 
-        local fin = _ITER'Finalize'()
+        local fin = _AST.iter'Finalize'()
         ASR(not fin or fin.depth<blk.depth, me, 'invalid inside a finalizer')
     end,
 
     AwaitExt = function (me)
-        ASR(not _ITER'Finalize'(), me, 'invalid inside a finalizer')
+        ASR(not _AST.iter'Finalize'(), me, 'invalid inside a finalizer')
     end,
-    AwaitInt = function (me)
-        F.AwaitExt(me)
-    end,
-    AwaitN = function (me)
-        F.AwaitExt(me)
-    end,
+    AwaitInt = 'AwaitExt',
+    AwaitN   = 'AwaitExt',
     AwaitT = function (me)
         F.AwaitExt(me)
+        _PROPS.has_wclocks = true
     end,
 
     EmitInt = function (me)
-        me.n_tracks = 2     -- awake/continuation
-        me.n_emits  = 1
+        me.n_tracks = 2     -- continuation
+        _PROPS.has_emits = true
     end,
 }
 
-_VISIT(F)
+_AST.visit(F)

@@ -1,42 +1,45 @@
 #include <string.h>
 #include <limits.h>
 
-#define PR_MAX  0x7F
-#define PR_MIN  (-0x7F)
+#define PR_MAX 0x7F
+#define PR_MIN (-0x7F)
 
-#define N_WCLOCKS   (=== N_WCLOCKS ===)
-#define N_TRACKS    (1+ === N_TRACKS ===)
-#define N_ASYNCS    (=== N_ASYNCS ===)
-#define N_EMITS     (=== N_EMITS ===)
-#define N_GTES      (=== N_GTES ===)
-#define N_ANDS      (=== N_ANDS ===)
-#define N_VARS      (=== N_VARS ===)
+#define PTR(str,tp) ((tp)(MEM + str ))
+
+#define N_TRACKS (1+ === N_TRACKS ===)
+#define N_MEM    (=== N_MEM ===)
+
+#define CEU_WCLOCK0 === CEU_WCLOCK0 ===
+#define CEU_ASYNC0  === CEU_ASYNC0 ===
+#define CEU_EMIT0   === CEU_EMIT0 ===
+#define CEU_FIN0    === CEU_FIN0 ===
 
 // Macros that can be defined:
-// ceu_out_pending()   (1)
+// ceu_out_pending() (1)
 // ceu_out_wclock(us)
 // ceu_out_event(id, len, data)
 
-typedef === TCEU_GTE === tceu_gte;   // |tceu_lbl|>=|tceu_gte|
+typedef === TCEU_OFF === tceu_off;
 typedef === TCEU_LBL === tceu_lbl;
 
-int go (int* ret);
+=== DEFS ===
+
+typedef struct {
+    s32 togo;
+    tceu_lbl lbl;
+} tceu_wclock;
 
 enum {
 === LABELS ===
 };
 
-=== DEFS ===
+int go (int* ret);
 
 === HOST ===
 
 void* DATA = NULL;
 
-char ANDS[N_ANDS];      // TODO: bitfield
-tceu_lbl GTES[N_GTES];
-tceu_gte TRGS[] = { === TRGS === };
-
-char VARS[N_VARS];
+char MEM[N_MEM];
 
 // returns a pointer to the received value
 int INT_v;
@@ -52,14 +55,14 @@ typedef struct {
     s8 prio;
 #endif
     tceu_lbl lbl;
-} QTrack;
+} tceu_trk;
 
 int TRACKS_n = 0;
 
 #ifdef CEU_TRK_NOPRIO
-QTrack TRACKS[N_TRACKS];
+tceu_trk TRACKS[N_TRACKS];
 #else
-QTrack TRACKS[N_TRACKS+1];  // 0 is reserved
+tceu_trk TRACKS[N_TRACKS+1];  // 0 is reserved
 #endif
 
 #if   defined CEU_TRK_NOPRIO
@@ -96,15 +99,7 @@ void trk_insert (int chk, s8 prio, tceu_lbl lbl)
 #endif
 }
 
-#if N_EMITS > 0
-int trk_peek (QTrack* trk)
-{
-    *trk = TRACKS[1];
-    return TRACKS_n > 0;
-}
-#endif
-
-int trk_remove (QTrack* trk)
+int trk_remove (tceu_trk* trk)
 {
     if (TRACKS_n == 0)
         return 0;
@@ -114,7 +109,7 @@ int trk_remove (QTrack* trk)
     return 1;
 #else
     {int i,cur;
-    QTrack* last;
+    tceu_trk* last;
 
     if (trk)
         *trk = TRACKS[1];
@@ -137,28 +132,45 @@ int trk_remove (QTrack* trk)
 #endif
 }
 
-void spawn_prio (s8 prio, tceu_gte gte)
+void spawn (tceu_lbl* lbl)
 {
-    tceu_lbl lbl = GTES[gte];
-    if (lbl != Inactive)
-        trk_insert(0, prio, lbl);
-}
-
-void spawn (tceu_gte gte)
-{
-    tceu_lbl lbl = GTES[gte];
-    if (lbl != Inactive) {
-        trk_insert(0, PR_MAX, lbl);
-        GTES[gte] = Inactive;
+    if (*lbl != Inactive) {
+        trk_insert(0, PR_MAX, *lbl);
+        *lbl = Inactive;
     }
 }
 
-void trigger (int trg)
+void trigger (tceu_off off)
 {
     int i;
-    for (i=1 ; i<=((int)TRGS[trg]) ; i++)
-        spawn(TRGS[trg+i]);
+    int n = MEM[off];
+    for (i=0 ; i<n ; i++) {
+        spawn((tceu_lbl*)&MEM[off+1+(i*sizeof(tceu_lbl))]);
+    }
 }
+
+/* EMITS ***************************************************************/
+
+#ifdef CEU_EMITS
+int trk_peek (tceu_trk* trk)
+{
+    *trk = TRACKS[1];
+    return TRACKS_n > 0;
+}
+#endif
+
+/* FINS ***************************************************************/
+
+#ifdef CEU_FINS
+void ceu_fins (int i, int j)
+{
+    for (; i<j; i++) {
+        tceu_lbl* fin0 = PTR(CEU_FIN0,tceu_lbl*);
+        if (fin0[i] != Inactive)
+            trk_insert(0, PR_MAX-i, fin0[i]);
+    }
+}
+#endif
 
 /* WCLOCKS ***************************************************************/
 
@@ -168,15 +180,9 @@ void trigger (int trg)
 
 int WCLOCK_late;
 
-typedef struct {
-    s32 togo;
-    tceu_gte gte;
-} QWClock;
+tceu_wclock* TMR_cur = NULL;
 
-QWClock  WCLOCKS[N_WCLOCKS] = { === WCLOCKS === };
-QWClock* TMR_cur = NULL;
-
-int QWClock_lt (QWClock* tmr) {
+int ceu_wclock_lt (tceu_wclock* tmr) {
     if (!TMR_cur || tmr->togo<TMR_cur->togo) {
         TMR_cur = tmr;
         return 1;
@@ -184,18 +190,19 @@ int QWClock_lt (QWClock* tmr) {
     return 0;
 }
 
-void tmr_enable (s32 us, int idx) {
-    QWClock* tmr = &WCLOCKS[idx];
+void tmr_enable (int idx, s32 us, tceu_lbl lbl) {
+    tceu_wclock* tmr = &(PTR(CEU_WCLOCK0,tceu_wclock*)[idx]);
     s32 dt = us - WCLOCK_late;
 #ifdef ceu_out_wclock
     int nxt;
 #endif
 
     tmr->togo = dt;
+    tmr->lbl  = lbl;
 #ifdef ceu_out_wclock
-    nxt = QWClock_lt(tmr);
+    nxt = ceu_wclock_lt(tmr);
 #else
-    QWClock_lt(tmr);
+    ceu_wclock_lt(tmr);
 #endif
 
 #ifdef ceu_out_wclock
@@ -209,43 +216,21 @@ void tmr_enable (s32 us, int idx) {
 /* ASYNCS ***************************************************************/
 
 #ifdef CEU_ASYNCS
-tceu_gte Q_ASYNC[N_ASYNCS];
-int async_ini = 0;
-int async_end = 0;
-int async_cnt = 0;
-
-void asy_insert (tceu_gte gte)
-{
-    int i;
-    // TODO: inef
-    // TODO: create func and move calls to escapes
-    // checks if the gate is already on Q_ASYNC
-    for (i=async_ini; i!=async_end; i=(i+1)%N_ASYNCS) {
-        if (Q_ASYNC[i] == gte)
-            return;
-    }
-
-    Q_ASYNC[async_end++] = gte;
-    async_end %= N_ASYNCS;
-    async_cnt++;
-}
+int async_cur = 0;
 #endif
 
 /**********************************************************************/
 
 int ceu_go_init (int* ret)
 {
-    memset(GTES, 0, N_GTES*sizeof(tceu_lbl));
-
 #ifdef CEU_WCLOCKS
     WCLOCK_late = 0;
 #endif
-
     trk_insert(0, PR_MAX, Init);
-
     return go(ret);
 }
 
+#ifdef CEU_EXTS
 int ceu_go_event (int* ret, int id, void* data) {
     DATA = data;
     trigger(id);
@@ -254,23 +239,39 @@ int ceu_go_event (int* ret, int id, void* data) {
 #endif
     return go(ret);
 }
+#endif
 
 #ifdef CEU_ASYNCS
-int ceu_go_async (int* ret, int* count)
+int ceu_go_async (int* ret, int* pending)
 {
-    if (count)
-        *count = async_cnt;
-    if (async_cnt == 0)
-        return 0;
+    int i,s=0;
 
-    spawn(Q_ASYNC[async_ini]);
-    async_ini = (async_ini+1) % N_ASYNCS;
-    async_cnt--;
+    tceu_lbl* ASY0 = PTR(CEU_ASYNC0,tceu_lbl*);
 
+    for (i=0; i<CEU_ASYNCS; i++) {
+        int idx = (async_cur+i) % CEU_ASYNCS;
+        if (ASY0[idx] != Inactive) {
+            trk_insert(0, PR_MAX, ASY0[idx]);
+            ASY0[idx] = Inactive;
+            async_cur = (idx+1) % CEU_ASYNCS;
 #ifdef CEU_WCLOCKS
-    WCLOCK_late--;
+            WCLOCK_late--;
 #endif
-    return go(ret);
+            s = go(ret);
+            break;
+        }
+    }
+
+    if (pending != NULL) {
+        for (i=0; i<CEU_ASYNCS; i++) {
+            if (ASY0 != Inactive) {
+                *pending = 1;
+                break;
+            }
+        }
+    }
+
+    return s;
 }
 #endif
 
@@ -279,6 +280,8 @@ int ceu_go_wclock (int* ret, s32 dt)
 #ifdef CEU_WCLOCKS
     int i;
     s32 togo = CEU_WCLOCK_NONE;
+
+    tceu_wclock* CLK0 = PTR(CEU_WCLOCK0,tceu_wclock*);
 
     if (!TMR_cur)
         return 0;
@@ -292,18 +295,17 @@ int ceu_go_wclock (int* ret, s32 dt)
     // finds the next TMR_cur
     // decrements all togo
     TMR_cur = NULL;
-    for (i=0; i<N_WCLOCKS; i++)
+    for (i=0; i<CEU_WCLOCKS; i++)
     {
-        QWClock* tmr = &WCLOCKS[i];
-        if (tmr->togo == CEU_WCLOCK_NONE)
+        tceu_wclock* tmr = &CLK0[i];
+        if (tmr->lbl == Inactive)
             continue;
 
         if (tmr->togo == togo) {
-            tmr->togo = CEU_WCLOCK_NONE;    // disables it
-            spawn(tmr->gte);                // spawns sharing phys/ext
+            spawn(&tmr->lbl);               // spawns sharing phys/ext
         } else {
             tmr->togo -= dt;
-            QWClock_lt(tmr);                // next? (sets TMR_cur)
+            ceu_wclock_lt(tmr);             // next? (sets TMR_cur)
         }
     }
 
@@ -324,22 +326,23 @@ int ceu_go_wclock (int* ret, s32 dt)
 
 int go (int* ret)
 {
-    QTrack trk;
+    tceu_trk trk;
     int _lbl_;
 
-#if N_EMITS > 0
+#ifdef CEU_EMITS
     int _step_ = PR_MIN;
 #endif
 
     while (trk_remove(&trk))
     {
-#if N_EMITS > 0
+#ifdef CEU_EMITS
         if (trk.prio < 0) {
-            tceu_lbl T[N_EMITS];
+            tceu_lbl* EMT0 = PTR(CEU_EMIT0,tceu_lbl*);
+            tceu_lbl T[N_TRACKS];
             int n = 0;
             _step_ = trk.prio;
             while (1) {
-                tceu_lbl lbl = GTES[trk.lbl]; // trk.lbl is actually a gate
+                tceu_lbl lbl = EMT0[trk.lbl]; // trk.lbl is actually a off
                 if (lbl != Inactive)
                     T[n++] = lbl;
                 if (!trk_peek(&trk) || (trk.prio < _step_))
@@ -353,8 +356,8 @@ int go (int* ret)
         } else
 #endif
             _lbl_ = trk.lbl;
-//fprintf(stderr,"TRK: %d\n", _lbl_);
 _SWITCH_:
+//fprintf(stderr,"TRK: %d\n", _lbl_);
         switch (_lbl_)
         {
             case Init:

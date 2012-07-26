@@ -12,7 +12,7 @@ Test { [[return /*
 */ 1;]], run=1 }
 Test { [[return /**/* **/ 1;]], run=1 }
 Test { [[return /**/* */ 1;]],
-    parser = "ERR : line 1 : after `return' : expected expression" }
+    parser = "ERR : line 1 : after `return´ : expected expression" }
 
 Test { [[
 do do do do do do do do do do do do do do do do do do do do
@@ -71,7 +71,7 @@ Test { [[return (1<=2) + (1<2) + 2/1 - 2%3;]], run=2 }
 -- TODO: linux gcc only?
 --Test { [[return (~(~0b1010 & 0XF) | 0b0011 ^ 0B0010) & 0xF;]], run=11 }
 Test { [[int sizeof;]],
-    parser = "ERR : line 1 : before `int' : invalid statement (or C identifier?)",
+    parser = "ERR : line 1 : before `int´ : invalid statement (or C identifier?)",
 }
 Test { [[return sizeof<int>;]], run=4 }
 Test { [[return 1<2>3;]], run=0 }
@@ -80,10 +80,10 @@ Test { [[int a;]],
     dfa = 'missing return statement',
 }
 Test { [[a = 1; return a;]],
-    env = 'variable "a" is not declared',
+    env = 'variable/event "a" is not declared',
 }
 Test { [[int a; call a; return a;]],
-    exps = 'invalid statement',
+    env = 'invalid statement',
 }
 Test { [[int a; a = 1; return a;]],
     run = 1,
@@ -98,24 +98,24 @@ Test { [[int a = 1;]],
     dfa = 'missing return statement',
 }
 Test { [[int a=1;int a=0; return a;]],
-    --env = 'variable "a" is already declared',
+    --env = 'variable/event "a" is already declared',
     run = 0,
 }
 Test { [[int a=1,a=0; return a;]],
-    --env = 'variable "a" is already declared',
+    --env = 'variable/event "a" is already declared',
     run = 0,
 }
 Test { [[int a; a = b = 1]],
-    parser = "ERR : line 1 : after `b' : expected `;'",
+    parser = "ERR : line 1 : after `b´ : expected `;´",
 }
 Test { [[int a = b; return 0;]],
-    env = 'variable "b" is not declared',
+    env = 'variable/event "b" is not declared',
 }
 Test { [[return 1;2;]],
-    parser = "ERR : line 1 : after `;' : expected EOF",
+    parser = "ERR : line 1 : after `;´ : expected EOF",
 }
 Test { [[call 1;return 2;]],
-    exps = 'invalid statement',
+    env = 'invalid statement',
 }
 Test { [[int aAa; aAa=1; return aAa;]],
     run = 1,
@@ -136,7 +136,7 @@ Test { [[int a; a=1 ; nothing; nothing;]],
     dfa = 'missing return statement',
 }
 Test { [[int a; a=1 ; call a; return a;]],
-    exps = 'invalid statement',
+    env = 'invalid statement',
 }
 
     -- IF
@@ -199,7 +199,7 @@ return 0;
     run = 1,
 }
 Test { [[if (2) then  else return 0; end;]],
-    parser = "ERR : line 1 : after `then' : invalid statement (or C identifier?)",
+    parser = "ERR : line 1 : after `then´ : invalid statement (or C identifier?)",
 }
 
 -- IF vs SEQ priority
@@ -285,13 +285,13 @@ return a;
 
     -- EVENTS
 
-Test { [[input int A=1;]], parser="ERR : line 1 : after `A' : expected `;'" }
+Test { [[input int A=1;]], parser="ERR : line 1 : after `A´ : expected `;´" }
 Test { [[
 input int A;
 A=1;
 return 1;
 ]],
-    parser = "ERR : line 2 : before `A' : invalid statement (or C identifier?)",
+    parser = "ERR : line 2 : before `A´ : invalid statement (or C identifier?)",
 }
 
 Test { [[input  int A;]],
@@ -350,7 +350,7 @@ with
 end;
 return A;
 ]],
-    parser = "ERR : line 9 : after `return' : expected expression",
+    parser = "ERR : line 9 : after `return´ : expected expression",
 }
 
 Test { [[
@@ -381,12 +381,12 @@ return v;
 
 print'TODO: deveria dar erro!'
 Test { [[int a = a+1; return a;]],
-    --env = 'variable "a" is not declared',
+    --env = 'variable/event "a" is not declared',
     run = 1,
 }
 
 Test { [[int a; a = emit a(1); return a;]],
-    parser = "ERR : line 1 : after `emit' : expected event",
+    parser = "ERR : line 1 : after `emit´ : expected event",
     --trig_wo = 1,
 }
 
@@ -455,11 +455,20 @@ output _t* A;
 emit A(1);
 return(1);
 ]],
-    exps = "ERR : line 2 : types do not match on `emit´",
+    env = 'ERR : line 2 : non-matching types on `emit´',
 }
 Test { [[
 output int A;
 _t v;
+emit A(v);
+return(1);
+]],
+    env = 'ERR : line 2 : undeclared type `_t´',
+}
+Test { [[
+type _t = 1;
+output int A;
+_t v = 1;
 emit A(v);
 return(1);
 ]],
@@ -473,7 +482,7 @@ if emit A(&a) then
 end
 return(1);
 ]],
-    exps = "ERR : line 3 : types do not match on `emit´",
+    env = 'ERR : line 3 : non-matching types on `emit´',
 }
 Test { [[
 output _char A;
@@ -510,6 +519,7 @@ C do
         return *data - 1;
     }
 end
+type _t = 8;
 output _t* A;
 output int B;
 
@@ -531,7 +541,18 @@ end
 cahr v = emit A(1);
 return 0;
 ]],
-    exps = "ERR : line 5 : types do not match on `emit´",
+    env = 'ERR : line 5 : undeclared type',
+}
+Test { [[
+output void A;
+C do
+    void A (int v) {}
+end
+type _char = 1;
+_char v = emit A(1);
+return 0;
+]],
+    env = 'ERR : line 6 : non-matching types on `emit´',
 }
 
 Test { [[
@@ -547,7 +568,7 @@ return 0;
     -- WALL-CLOCK TIME
 
 Test { [[await 0ms; return 0;]],
-    exps = 'must be >0',
+    mem = 'ERR : line 1 : constant is out of range',
 }
 Test { [[
 input void A;
@@ -558,8 +579,16 @@ return 0;
 }
 
 Test { [[await -1ms; return 0;]],
-    parser = "ERR : line 1 : after `await' : expected event",
+    parser = "ERR : line 1 : after `await´ : expected event",
 }
+
+Test { [[await 1; return 0;]],
+    parser = 'ERR : line 1 : after `1´ : expected <h,min,s,ms,us>',
+}
+Test { [[await -1; return 0;]],
+    parser = 'ERR : line 1 : after `await´ : expected event',
+}
+
 Test { [[s32 a=await 10s; return a==8000000;]],
     run = {
         ['~>10s'] = 0,
@@ -571,10 +600,10 @@ Test { [[await Forever;]],
     forever = true,
 }
 Test { [[await Forever; await Forever;]],
-    parser = "ERR : line 1 : after `;' : expected EOF",
+    parser = "ERR : line 1 : after `;´ : expected EOF",
 }
 Test { [[await Forever; return 0;]],
-    parser = "ERR : line 1 : after `;' : expected EOF",
+    parser = "ERR : line 1 : after `;´ : expected EOF",
 }
 
 Test { [[emit 1ms; return 0;]], async='not permitted outside async' }
@@ -1072,7 +1101,7 @@ int a = set
 return a;
 ]],
     -- TODO: melhor seria: unexpected statement
-    parser = "ERR : line 17 : after `;' : expected `with'",
+    parser = "ERR : line 17 : after `;´ : expected `with´",
     --unreach = 1,
     run = {
         ['1~>B; ~>20ms; 1~>F'] = 1,
@@ -1267,8 +1296,8 @@ return a;
     tight = 'tight loop',
 }
 
-Test { [[break; return 1;]], parser="ERR : line 1 : after `;' : expected EOF" }
-Test { [[break; break;]], parser="ERR : line 1 : after `;' : expected EOF" }
+Test { [[break; return 1;]], parser="ERR : line 1 : after `;´ : expected EOF" }
+Test { [[break; break;]], parser="ERR : line 1 : after `;´ : expected EOF" }
 Test { [[loop do break; end; return 1;]], unreach=1, run=1 }
 Test { [[
 int ret;
@@ -2782,7 +2811,7 @@ Test { [[
 await 35min;
 return 0;
 ]],
-    exps = 'constant is too big',
+    mem = 'ERR : line 1 : constant is out of range',
 }
 Test { [[
 int a = 2;
@@ -6680,7 +6709,7 @@ loop do
     break;
 end;
 ]],
-    parser = "ERR : line 4 : after `;' : expected `end'",
+    parser = "ERR : line 4 : after `;´ : expected `end´",
 }
 
 Test { [[
@@ -7508,7 +7537,7 @@ c = d + 1;
 await A;
 return c;
 ]],
-    parser = "ERR : line 3 : after `par' : expected `do'",
+    parser = "ERR : line 3 : after `par´ : expected `do´",
 }
 
 Test { [[
@@ -9248,7 +9277,7 @@ end;
 
     -- SCOPE / BLOCK
 
-Test { [[do end;]], parser="ERR : line 1 : after `do' : invalid statement (or C identifier?)" }
+Test { [[do end;]], parser="ERR : line 1 : after `do´ : invalid statement (or C identifier?)" }
 Test { [[do int a; end;]],  dfa='missing return statement' }
 Test { [[
 do
@@ -9379,7 +9408,7 @@ Test { [[
 event a;
 return 0;
 ]],
-    parser = "ERR : line 1 : after `a' : expected identifier",
+    parser = "ERR : line 1 : after `a´ : expected identifier",
 }
 
 Test { [[
@@ -9495,7 +9524,7 @@ do
 finalize
 end
 ]],
-    parser = "ERR : line 3 : after `finalize' : invalid statement (or C identifier?)",
+    parser = "ERR : line 3 : after `finalize´ : invalid statement (or C identifier?)",
 }
 
 Test { [[
@@ -9504,7 +9533,7 @@ finalize
     nothing;
 end
 ]],
-    parser = "ERR : line 1 : after `do' : invalid statement (or C identifier?)",
+    parser = "ERR : line 1 : after `do´ : invalid statement (or C identifier?)",
 }
 
 Test { [[
@@ -9564,7 +9593,7 @@ finalize
 end
 return ret;
 ]],
-    env = 'ERR : line 5 : variable "a" is not declared',
+    env = 'ERR : line 5 : variable/event "a" is not declared',
 }
 
 Test { [[
@@ -9843,7 +9872,39 @@ return ret;
     run = { ['~>A']=7 , ['~>B;~>B;~>A']=17, ['~>B;~>A']=9 },
 }
 
+Test { [[
+int ret = 0;
+loop do
+    do
+        ret = ret + 1;
+        break;
+    finalize
+        ret = ret + 4;
+    end
+end
+return ret;
+]],
+    unreach = 1,
+    run = 5,
+}
+
     -- ASYNCHRONOUS
+
+Test { [[
+input void A;
+int ret;
+par/or do
+   ret = set async do
+      return 0;
+    end;
+with
+   await A;
+   ret = 1;
+end
+return ret;
+]],
+    run = { ['~>A']=0 },
+}
 
 Test { [[
 async do
@@ -9948,7 +10009,7 @@ with
 end
 return ret;
 ]],
-    run = { ['~>A']=1 },
+    run = { ['~>A']=0 },
 }
 
 Test { [[
@@ -9982,7 +10043,7 @@ async do
 end;
 return a;
 ]],
-    exps = "ERR : line 4 : input emit has `void´ value",
+    env = "ERR : line 4 : invalid input `emit´",
 }
 
 Test { [[
@@ -9992,7 +10053,7 @@ async do
 end;
 return 0;
 ]],
-    async='not permitted inside async'
+    async = 'ERR : line 3 : invalid access from async',
 }
 Test { [[
 event int a;
@@ -10001,7 +10062,7 @@ async do
 end;
 return 0;
 ]],
-    async='not permitted inside async'
+    async = 'ERR : line 3 : invalid access from async',
 }
 Test { [[
 async do
@@ -10474,19 +10535,67 @@ return 1;
     run = 1,
 }
 
+-- round-robin test
+Test { [[
+input void A;
+int ret = 0;
+par/or do
+    loop do
+        async do
+            emit A;
+        end
+        ret = ret + 1;
+    end
+with
+    par/and do
+        int v = set async do
+            int v;
+            loop i, 5 do
+                v = v + i;
+            end
+            return v;
+        end;
+        ret = ret + v;
+    with
+        int v = set async do
+            int v;
+            loop i, 5 do
+                v = v + i;
+            end
+            return v;
+        end;
+        ret = ret + v;
+    end
+end
+return ret;
+]],
+    unreach = 1,
+    run = 23,
+}
+
+-- HIDDEN
+Test { [[
+int a = 1;
+int* b = &a;
+int a = 0;
+return *b;
+]],
+    run = 1,
+}
+
     -- POINTERS & ARRAYS
 
 -- int_int
-Test { [[int*p; return p/10;]],  exps='invalid operands to binary "/"'}
-Test { [[int*p; return p|10;]],  exps='invalid operands to binary "|"'}
-Test { [[int*p; return p>>10;]], exps='invalid operands to binary ">>"'}
-Test { [[int*p; return p^10;]],  exps='invalid operands to binary "^"'}
-Test { [[int*p; return ~p;]],    exps='invalid operand to unary "~"'}
+Test { [[int*p; return p/10;]],  env='invalid operands to binary "/"'}
+Test { [[int*p; return p|10;]],  env='invalid operands to binary "|"'}
+Test { [[int*p; return p>>10;]], env='invalid operands to binary ">>"'}
+Test { [[int*p; return p^10;]],  env='invalid operands to binary "^"'}
+Test { [[int*p; return ~p;]],    env='invalid operand to unary "~"'}
 
 -- same
-Test { [[int*p; int a; return p==a;]], exps='invalid operands to binary "=="'}
-Test { [[int*p; int a; return p!=a;]], exps='invalid operands to binary "!="'}
-Test { [[int*p; int a; return p>a;]],  exps='invalid operands to binary ">"'}
+Test { [[int*p; int a; return p==a;]], env='invalid operands to binary "=="'}
+Test { [[int*p; int a; return p!=a;]], env='invalid operands to binary "!="'}
+Test { [[int*p; int a; return p>a;]],  env='invalid operands to binary ">"'}
 
 -- any
 Test { [[int*p; return p||10;]], run=1 }
@@ -10494,17 +10603,17 @@ Test { [[int*p; return p&&0;]],  run=0 }
 Test { [[int*p=null; return !p;]], run=1 }
 
 -- arith
-Test { [[int*p; return p+p;]],     exps='invalid operands to binary'}--TODO: "+"'}
-Test { [[int*p; return p+10;]],    exps='invalid operands to binary'}
-Test { [[int*p; return p+10&&0;]], exps='invalid operands to binary' }
+Test { [[int*p; return p+p;]],     env='invalid operands to binary'}--TODO: "+"'}
+Test { [[int*p; return p+10;]],    env='invalid operands to binary'}
+Test { [[int*p; return p+10&&0;]], env='invalid operands to binary' }
 
 -- ptr
-Test { [[int a; return *a;]], exps='invalid operand to unary "*"' }
-Test { [[int a; int*pa; (pa+10)=&a; return a;]], exps='invalid operands to binary'}
+Test { [[int a; return *a;]], env='invalid operand to unary "*"' }
+Test { [[int a; int*pa; (pa+10)=&a; return a;]], env='invalid operands to binary'}
 Test { [[int a; int*pa; a=1; pa=&a; *pa=3; return a;]], run=3 }
 
-Test { [[int  a;  int* pa=a; return a;]], exps='invalid attribution' }
-Test { [[int* pa; int a=pa;  return a;]], exps='invalid attribution' }
+Test { [[int  a;  int* pa=a; return a;]], env='invalid attribution' }
+Test { [[int* pa; int a=pa;  return a;]], env='invalid attribution' }
 Test { [[
 int a;
 int* pa = set do
@@ -10512,7 +10621,7 @@ int* pa = set do
 end;
 return a;
 ]],
-    exps='invalid return value'
+    env='invalid return value'
 }
 Test { [[
 int* pa;
@@ -10521,7 +10630,7 @@ int a = set do
 end;
 return a;
 ]],
-    exps='invalid return value'
+    env='invalid return value'
 }
 
 Test { [[
@@ -10537,6 +10646,7 @@ end;
 }
 
 Test { [[
+type _char = 1;
 int i;
 int* pi;
 _char c;
@@ -10716,16 +10826,16 @@ return a[0] + b;
     -- ARRAYS
 
 Test { [[input int[1] E; return 0;]],
-    parser = "ERR : line 1 : after `int' : expected identifier",
+    parser = "ERR : line 1 : after `int´ : expected identifier",
 }
 Test { [[int[0] v; return 0;]],
     env='invalid array dimension'
 }
 Test { [[int[2] v; return v;]],
-    exps = 'invalid return value'
+    env = 'invalid return value'
 }
 Test { [[u8[2] v; return &v;]],
-    exps = 'invalid operand to unary "&"',
+    env = 'invalid operand to unary "&"',
 }
 
 Test { [[int[2] v; v[0]=5; return v[0];]], run=5 }
@@ -10772,6 +10882,7 @@ C do
         int c;
     } T;
 end
+type _T = 44;
 
 _T[10] vec;
 int i = 110;
@@ -10785,11 +10896,11 @@ return i + vec[9].c + vec[3].v[5];
 
 Test { [[int[2] v; await v;     return 0;]], env='event "v" is not declared' }
 Test { [[int[2] v; emit v;    return 0;]], env='event "v" is not declared' }
-Test { [[int[2] v; await v[0];  return 0;]], parser="ERR : line 1 : after `v' : expected `;'" }
-Test { [[int[2] v; emit v[0]; return 0;]], parser="ERR : line 1 : after `v' : expected `;'" }
-Test { [[int[2] v; v=v; return 0;]], exps='invalid attribution' }
-Test { [[int v; return v[1];]], exps='cannot index a non array' }
-Test { [[int[2] v; return v[v];]], exps='invalid array index' }
+Test { [[int[2] v; await v[0];  return 0;]], parser="ERR : line 1 : after `v´ : expected `;´" }
+Test { [[int[2] v; emit v[0]; return 0;]], parser="ERR : line 1 : after `v´ : expected `;´" }
+Test { [[int[2] v; v=v; return 0;]], env='invalid attribution' }
+Test { [[int v; return v[1];]], env='cannot index a non array' }
+Test { [[int[2] v; return v[v];]], env='invalid array index' }
 
 Test { [[
 int[2] v ;
@@ -10838,7 +10949,7 @@ C do
 end
 return 1;
 ]],
-    parser = "ERR : line 2 : after `\"' : expected `\"'",
+    parser = "ERR : line 2 : after `\"´ : expected `\"´",
 }
 
 Test { [[
@@ -10859,7 +10970,7 @@ end
 A = 1;
 return 1;
 ]],
-    parser = "ERR : line 4 : before `A' : invalid statement (or C identifier?)",
+    parser = "ERR : line 4 : before `A´ : invalid statement (or C identifier?)",
 }
 
 Test { [[
@@ -11271,7 +11382,7 @@ end;
 return 1;
 ]],
     run = 1,     -- TODO: check_depth
-    --exps = 'invalid attribution',
+    --env = 'invalid attribution',
 }
 Test { PRE .. [[
 int a=1;
@@ -11668,7 +11779,8 @@ Test { [[_printf("END: 1%d\n",2); return 0;]], run=12 }
 Test { [[_printf("END: 1%d%d\n",2,3); return 0;]], run=123 }
 
 Test { [[
-char[10] str;
+type _char = 1;
+_char[10] str;
 _strncpy(str, "123", 4);
 _printf("END: %d %s\n", _strlen(str), str);
 return 0;
@@ -11677,10 +11789,11 @@ return 0;
 }
 
 Test { [[
-char[6] a; _strcpy(a, "Hello");
-char[2] b; _strcpy(b, " ");
-char[7] c; _strcpy(c, "World!");
-char[30] d;
+type _char = 1;
+_char[6] a; _strcpy(a, "Hello");
+_char[2] b; _strcpy(b, " ");
+_char[7] c; _strcpy(c, "World!");
+_char[30] d;
 
 int len = 0;
 _strcpy(d,a);
@@ -11774,6 +11887,7 @@ typedef struct {
     u8 c;
 } s;
 end
+type _s = 4;
 _s vs;
 vs.a = 10;
 vs.b = 1;
@@ -11789,6 +11903,7 @@ C do
         u8 data[16];
     } Payload;
 end
+type _Payload = 18;
 _Payload final;
 u8* neighs = &(final.data[4]);
 return 1;
@@ -11803,6 +11918,7 @@ typedef struct {
     int b;
 } s;
 end
+type _s = 8;
 _s vs;
 par/and do
     vs.a = 10;
@@ -11821,6 +11937,7 @@ typedef struct {
     int b;
 } s;
 end
+type _s = 8;
 _s vs;
 par/and do
     vs.a = 10;
@@ -11838,6 +11955,7 @@ C do
         int a;
     } mys;
 end
+type _mys = 4;
 _mys v;
 _mys* pv;
 pv = &v;
@@ -11851,33 +11969,33 @@ return v.a;
 
 Test { [[
 ]],
-    parser = "ERR : line 1 : after `BOF' : invalid statement (or C identifier?)",
+    parser = "ERR : line 1 : after `BOF´ : invalid statement (or C identifier?)",
 }
 
 -- Exps
 
 Test { [[int a = ]],
-    parser = "ERR : line 1 : after `=' : expected expression",
+    parser = "ERR : line 1 : after `=´ : expected expression",
 }
 
 Test { [[return]],
-    parser = "ERR : line 1 : after `return' : expected expression",
+    parser = "ERR : line 1 : after `return´ : expected expression",
 }
 
 Test { [[return()]],
-    parser = "ERR : line 1 : after `(' : expected expression",
+    parser = "ERR : line 1 : after `(´ : expected expression",
 }
 
 Test { [[return 1+;]],
-    parser = "ERR : line 1 : before `+' : expected `;'",
+    parser = "ERR : line 1 : before `+´ : expected `;´",
 }
 
 Test { [[if then]],
-    parser = "ERR : line 1 : after `if' : expected expression",
+    parser = "ERR : line 1 : after `if´ : expected expression",
 }
 
 Test { [[b = ;]],
-    parser = "ERR : line 1 : after `=' : expected expression",
+    parser = "ERR : line 1 : after `=´ : expected expression",
 }
 
 
@@ -11891,7 +12009,7 @@ return 1
 
 ;
 ]],
-    parser = "ERR : line 5 : before `+' : expected `;'"
+    parser = "ERR : line 5 : before `+´ : expected `;´"
 }
 
 Test { [[
@@ -11900,7 +12018,7 @@ a = set do
     int b;
 end
 ]],
-    parser = "ERR : line 4 : after `end' : expected `;'",
+    parser = "ERR : line 4 : after `end´ : expected `;´",
 }
 
 -- ASYNC
@@ -11971,6 +12089,238 @@ return a;
     nd_acc = 1,
 }
 
+    -- MEM
+
+--[[
+0-3: $ret
+]]
+
+Test { [[
+return 0;
+]],
+    tot = 4,
+    run = 0,
+}
+
+--[[
+0-18:
+     0-3: $ret
+    4-18: a..f
+]]
+
+Test { [[
+int a, b, c;
+u8 d, e, f;
+return 0;
+]],
+    tot = 19,
+    run = 0,
+}
+
+--[[
+0-15:       _Root
+     0-3:       $ret
+    4-15:       a,b,c
+     4-6:       d,e,f
+]]
+
+Test { [[
+do
+    int a, b, c;
+end
+u8 d, e, f;
+return 0;
+]],
+    tot = 16,
+    run = 0,
+}
+
+--[[
+0-15:       _Root
+     0-4:       $ret
+    4-15:       a..c
+     4-6:       d..f
+]]
+
+Test { [[
+do
+    int a, b, c;
+end
+do
+    u8 d, e, f;
+end
+return 0;
+]],
+    tot = 16,
+    run = 0,
+}
+
+Test { [[
+int ret = 0;
+do
+    s16 a=1, b=2, c=3;
+    ret = ret + a + b + c;
+    do
+        s8 a=10, b=20, c=30;
+        ret = ret + a + b + c;
+    end
+end
+u8 d=4, e=5, f=6;
+return ret + d + e + f;
+]],
+    tot = 17,
+    run = 81,
+}
+
+Test { [[
+int ret = 0;
+par/and do
+    ret = ret + 1;
+with
+    ret = ret + 1;
+with
+    ret = ret + 1;
+end
+par/and do
+    ret = ret + 1;
+with
+    ret = ret + 1;
+with
+    ret = ret + 1;
+end
+return ret;
+]],
+    tot = 11,
+    nd_acc = 6,
+    run = 6,
+}
+
+Test { [[
+int ret = 10;
+do
+    int v = -5;
+    ret = ret + v;
+end
+par/or do
+    int a = 1;
+    ret = ret + a;
+    par/and do
+        s8 a = 10;
+        ret = ret + a;
+    with
+        ret = ret + 1;
+    with
+        int b = 5;
+        ret = ret + b;
+    end
+with
+    u8 a=1, b=2, c=3;
+    ret = ret + a + b + c;
+end
+int a = 10;
+do
+    int v = -5;
+    ret = ret + v;
+end
+return ret+a;
+]],
+    nd_acc = 7,
+    tot = 28,
+    run = 33;
+}
+
+Test { [[
+input void A, B, C;
+s16 ret = 0;
+par do
+    s16 a = 10;
+    await A;
+    ret = ret + a;
+    a = 10;
+with
+    s16 a = 100;
+    await B;
+    ret = ret + a;
+with
+    s16 a = 1000;
+    await C;
+    ret = ret + a;
+end
+]],
+    tot = 21,
+    forever = true,
+}
+
+Test { [[
+input void A, B, C;
+s16 ret = 0;
+par/and do
+    s16 a = 10;
+    await A;
+    ret = ret + a;
+    a = 10;
+with
+    s16 a = 100;
+    await B;
+    ret = ret + a;
+with
+    s16 a = 1000;
+    await C;
+    ret = ret + a;
+end
+return ret;
+]],
+    tot = 24,
+    run = {
+        ['~>A;~>B;~>C'] = 1110,
+        ['~>B;~>A;~>C'] = 1110,
+        ['~>C;~>B;~>A'] = 1110,
+    }
+}
+Test { [[
+input void A, B, C;
+s16 ret = 0;
+par do
+    s16 a = 10;
+    await A;
+    ret = ret + a;
+    a = 10;
+    return ret;
+with
+    s16 a = 100;
+    await B;
+    ret = ret + a;
+with
+    loop do
+        s16 a = 1000;
+        await C;
+        ret = ret + a;
+    end
+end
+]],
+    tot = 21,
+    run = {
+        ['~>A;~>B;~>C'] = 10,
+        ['~>B;~>B;~>A;~>C'] = 110,
+        ['~>C;~>B;~>C;~>A'] = 2110,
+    }
+}
+
+Test { [[
+par do
+    do
+        do
+            int a;
+        end
+    end
+
+with
+    int b;
+end
+]],
+    tot = 12,
+    forever = true,
+}
 print('COUNT', COUNT)
 
 do return end
@@ -11984,7 +12334,7 @@ suspend on A do
 end
 return 0;
 ]],
-    exps = 'invalid suspend event type',
+    env = 'invalid suspend event type',
 }
 
 Test { [[
@@ -12033,172 +12383,3 @@ end
         ['~>C ; 1~>A ; 1~>B ; 1~>A ; 2~>B ; 0~>A ; 3~>B'] = 3,
     },
 }
-
-    -- CLASSES
-
-Test { [[
-class T do
-end
-return 0;
-]],
-    parser = "ERR : line 1 : after `do' : invalid statement (or C identifier?)",
-}
-
-Test { [[
-class T do
-    nothing;
-end
-return 0;
-]],
-    run = 0,
-}
-
-Test { [[
-class T do
-    int v;
-end
-return 0;
-]],
-    run = 0,
-}
-
-Test { [[
-class T do
-    class T1 do int v; nothing; end
-    int v;
-    nothing;
-end
-return 0;
-]],
-    props = "ERR : line 2 : cannot nest classes",
-}
-
-do return end
-
-Test { [[
-class T has
-    interface with
-        int v;
-    body with
-        nothing;
-end
-return 0;
-]],
-    run = 0,
-}
-
-Test { [[
-class T has
-    interface with
-        int v;
-    body with
-        _printf("%d\n", v);
-end
-
-T t1, t2;
-t1.v = 1;
-t2.v = 2;
-execute t2;
-execute t1;
-return 0;
-]],
-    run = 0,
-}
-
-STR_DECLS = [[
-<T1> { int a ; 666=>a->prn->nl };
-<T2> { int a,b; 0=>a=>b; (~a->inc=>a->prn->nl~>b)* };
-<T3> { int a ; 0=>a ; ~a->prn->nl };
-int in A,F;
-int ret;
-]]
-
-Test { [[{<T1> O }]],    parser="oioioioioi" }
-Test { [[{<T1> O; 1 }]], run=1 }
-Test { [[{<T1> O; ~Start; O.a }]], run=666 }
-Test { [[{<T1> O1,O2; 1 }]], run=1, unreach=1 }
-Test { [[{<T1> o; 1 }]], parser="oioioioioi" }
-Test { [[{<T1> A; A }]], parser="oioioioioi" }
-Test { [[{int a; <T1> O; 1 }]], run=1, unreach=1 }
-Test { [[{int a; <T1> O; 1 }]], run=1, unreach=1 }
-Test { [[{int a; <T2> O1,O2; 1 }]], run=1, unreach=1 }
-
-Test { [[
-{
-    <T3> O1, O2;
-    5  => O1.a;
-    10 => O2.a;
-    O1.a->inc=>O1.a;
-    (O1.a,O2.a)->add
-}
-]],
-    run = 16,
-}
-
---[=[
-<T4> {
-    int a ;
-    <T3> O1, O2 ;
-    0  => a;
-    5  => O1.a;
-    10 => O2.a;
-    O1.a->inc=>O1.a;
-    (O1.a,O2.a)->add => a;
-};
-Test { [[
-{
-    <T4> O1, O2;
-    ~Start;
-    O2.a->prn->nl->inc => O1.a->prn->nl;
-    O1.a->inc->inc => O1.a;
-    (O1.a,O2.a)->add
-}
-]],
-    run = 35,
-}
-]=]
-
-Test { [[
-{
-    <T3> O1, O2;
-    ~Start;
-    5  ~> O1.a;
-    10 ~> O2.a;
-    O1.a->inc=>O1.a;
-    (O1.a,O2.a)->add
-}
-]],
-    run = 16,
-}
-
-Test { [[
-{
-    int i;
-    <T2> O;
-    0=>i;
-    ~Start;
-    (
-        (~A ; ~> O.a)* ||
-        (~O.b => i)* ||
-        ~F ; i
-    )
-}
-]],
-    unreach = 1,
-    run = {
-        ['~>F'] = 0,
-        ['~>A ; ~>A; ~>F'] = 2,
-    },
-}
-
---[==[
-
-Test = { [[
-<T> { int a; ~a } ;
-{
-    <T> org;
-~Start ; 1~>org.a
-}
-]]}
-
-]==]

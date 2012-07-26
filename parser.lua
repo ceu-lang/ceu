@@ -35,7 +35,7 @@ local EK = function (tk)
         function (_,i)
             if i > ERR_i then
                 ERR_i = i
-                ERR_msg = 'expected `'..tk.."'"
+                ERR_msg = 'expected `'..tk.."´"
             end
             return false
         end)
@@ -45,8 +45,7 @@ local _V2NAME = {
     _Exp = 'expression',
     _Stmts = 'statement',
     Ext = 'event',
-    Int = 'event',
-    Var = 'variable',
+    Var = 'variable/event',
     ID_c  = 'identifier',
     ID_var  = 'identifier',
     ID_int  = 'identifier',
@@ -83,7 +82,7 @@ KEYS = P'async'   + 'await'  + 'break'   + 'call'    + 'constant' + 'determinist
      +  'do'      + 'emit'   + 'else'    + 'end'     + 'event'    + 'finalize'
      +  'Forever' + 'input'  + 'if'      + 'loop'    + 'nothing'  + 'null'
      +  'output'  + 'par'    + 'par/and' + 'par/or'  + 'pure'     + 'return'
-     +  'set'     + 'sizeof' + 'then'    + 'with'
+     +  'set'     + 'sizeof' + 'then'    + 'type'    + 'with'
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
@@ -109,10 +108,10 @@ _GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
     , _LstStmt      = V'Return' + V'Break' + V'AwaitN' + V'ParEver'
 
     , _Stmt = V'Nothing'
-            + V'AwaitT'   + V'AwaitExt' + V'AwaitInt'
-            + V'EmitT'    + V'EmitExtS' + V'EmitInt'
-            + V'_Dcl_ext' + V'_Dcl_int' + V'_Dcl_var'
-            + V'Dcl_det'  + V'_Dcl_pure'
+            + V'AwaitT'   + V'AwaitExt'  + V'AwaitInt'
+            + V'EmitT'    + V'EmitExtS'  + V'EmitInt'
+            + V'_Dcl_ext' + V'_Dcl_int'  + V'_Dcl_var'
+            + V'Dcl_det'  + V'_Dcl_pure' + V'Dcl_type'
             + V'_Set'     + V'CallStmt' -- must be after Set
 
     , _StmtBlock = V'Do'    + V'Async'  + V'Host'
@@ -124,10 +123,11 @@ _GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
                     V'ParEver' + V'If'    + V'Loop'
                 )
 
-    , __ID      = V'ID_c' + V'ID_ext' + V'Var' + V'Int'
+    , __ID      = V'ID_c' + V'ID_ext' + V'Var'
     , _Dcl_pure = (K'pure'+K'constant') *S* EV'ID_c' * (S* K',' *S* V'ID_c')^0
     , Dcl_det   = K'deterministic' *S* EV'__ID' *S* EK'with' *S*
                      EV'__ID' * (S* K',' *S* EV'__ID')^0
+    , Dcl_type  = K'type' *S* EV'ID_c' *S* EK'=' *S* NUM
 
     , _Set  = V'_Exp' *S* V'_Sets'
     , _Sets = K'=' *S* (
@@ -195,13 +195,13 @@ _GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
                  + (K'-'-'->')+'+'+'~'+'*')
                  + (K'<'*EV'ID_type'*Cc'cast'*K'>')
                  )*S)^0 * V'_12'
-    , _12     = V'_13' *S* (
-                    K'(' *S* Cc'call' *S* V'ExpList' *S* EK')' +
-                    K'[' *S* Cc'idx'  *S* V'_Exp'    *S* EK']' +
-                    CK(K'->' + '.')   *S* CK(ID)
-                )^0
+    , _12     = V'_13' *
+                    (S*(
+                        K'(' *S* Cc'call' *S* V'ExpList' *S* EK')' +
+                        K'[' *S* Cc'idx'  *S* V'_Exp'    *S* EK']' +
+                        CK(K'->' + '.')   *S* CK(ID)
+                    ))^0
     , _13     = V'_Prim'
-
     , _Prim   = V'_Parens' + V'Var'   + V'C'   + V'SIZEOF'
               + V'NULL'    + V'CONST' + V'STRING'
               + V'EmitExtE'
@@ -229,7 +229,7 @@ _GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
               )
 
     , AwaitExt = K'await' *S* EV'Ext'
-    , AwaitInt = K'await' *S* EV'Int'
+    , AwaitInt = K'await' *S* EV'Var'
     , AwaitN   = K'await' *S* K'Forever'
     , AwaitT   = K'await' *S* (V'WCLOCKK'+V'WCLOCKE')
 
@@ -237,7 +237,7 @@ _GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
     , EmitExtS = V'EmitExt'
     , EmitExtE = V'EmitExt'
     , EmitExt  = K'emit' *S* EV'Ext' * (S* K'(' *S* V'_Exp' *S* EK')')^-1
-    , EmitInt  = K'emit' *S* EV'Int' * (S* K'(' *S* V'_Exp' *S* EK')')^-1
+    , EmitInt  = K'emit' *S* EV'Var' * (S* K'(' *S* V'_Exp' *S* EK')')^-1
     , EmitT    = K'emit' *S* (V'WCLOCKK'+V'WCLOCKE')
 
     , _Dcl_ext = (CK'input'+CK'output') *S* EV'ID_type' *S*
@@ -252,17 +252,16 @@ _GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
     , __Dcl_var = V'ID_var' *S* (V'_Sets' + Cc(false)*Cc(false))
 
     , Ext      = V'ID_ext'
-    , Int      = V'ID_int'
     , Var      = V'ID_var'
     , C        = V'ID_c'
 
-    , ID_ext  = CK( m.R'AZ'*Alphanum^0 - KEYS )
-    , ID_int  = CK( m.R'az'*Alphanum^0 - KEYS )
-    , ID_var  = CK( m.R'az'*Alphanum^0 - KEYS )
-    , ID_c    = CK(    P'_'*Alphanum^0 - KEYS )
-    , ID_type = CK(ID * (S*'*')^0) /
-                  function (str)
-                    return (string.gsub( (string.gsub(str,' ','')), '^_', '' ))
+    , ID_ext  = CK(m.R'AZ'*Alphanum^0) - KEYS
+    , ID_int  = CK(m.R'az'*Alphanum^0) - KEYS
+    , ID_var  = CK(m.R'az'*Alphanum^0) - KEYS
+    , ID_c    = CK(  P'_' *Alphanum^0) - KEYS
+    , ID_type = CK(ID) * C((S*'*')^0) /
+                  function (id, star)
+                    return (string.gsub(id..star,' ',''))
                   end
 
     , STRING = CK( CK'"' * (P(1)-'"'-'\n')^0 * EK'"' )
@@ -294,7 +293,7 @@ function err ()
     local x = (ERR_i<LST_i) and 'before' or 'after'
 --DBG(LST_i, ERR_i, ERR_msg, _I2L[LST_i], I2TK[LST_i])
     return 'ERR : line '.._I2L[LST_i]..
-              ' : '..x..' `'..(I2TK[LST_i] or '?').."'"..
+              ' : '..x..' `'..(I2TK[LST_i] or '?').."´"..
               ' : '..ERR_msg
 end
 

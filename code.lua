@@ -1,12 +1,31 @@
 _CODE = {
     labels = { 'Inactive', 'Init' },
+    host   = '',
 }
 
-local HOST = ''
+function VAL (off, tp)
+    return '(*'..PTR(off,tp)..')'
+end
+
+function PTR (off, tp)
+    tp = tp or 'char*'
+    return '(('..tp..')(MEM+'..off..'))'
+end
+
+local _T = { wclock0='tceu_wclock*', async0='tceu_lbl*', emit0='tceu_lbl*', fin0='tceu_lbl*' }
+function PTR_GTE (str, tp)
+    tp = tp or _T[str] or 'u8*'
+    return PTR(_MEM.gtes[str], tp)
+end
+
+function PTR_EXT (i, gte, tp)
+    tp = tp or 'tceu_lbl*'
+    return '(('..tp..')('..PTR_GTE(i,'char*')..'+1+'..gte..'*'..'sizeof(tceu_lbl)))'
+end
 
 function CONC_ALL (me)
     for _, sub in ipairs(me) do
-        if _ISNODE(sub) then
+        if _AST.isNode(sub) then
             CONC(me, sub)
         end
     end
@@ -49,9 +68,59 @@ function BLOCK_GATES (me)
     end
 
     COMM(me, 'close gates')
-    if me.n_gtes > 0 then
-        LINE(me, 'memset(&GTES['..me.gte0..'], 0, ' ..
-            me.n_gtes..'*sizeof(tceu_lbl));')
+
+    local n = me.gtes.asyncs[2] - me.gtes.asyncs[1]
+    if n > 0 then
+        LINE(me, 'memset('..PTR_GTE('async0','char*')..' + '
+                    ..me.gtes.asyncs[1]..'*sizeof(tceu_lbl), 0, '
+                    ..n..'*sizeof(tceu_lbl));')
+    end
+
+    local n = me.gtes.wclocks[2] - me.gtes.wclocks[1]
+    if n > 0 then
+        LINE(me, 'memset('..PTR_GTE('wclock0','char*')..' + '
+                    ..me.gtes.wclocks[1]..'*sizeof(tceu_wclock), 0, '
+                    ..n..'*sizeof(tceu_wclock));')
+    end
+
+    local n = me.gtes.emits[2] - me.gtes.emits[1]
+    if n > 0 then
+        LINE(me, 'memset('..PTR_GTE('emit0','char*')..' + '
+                    ..me.gtes.emits[1]..'*sizeof(tceu_lbl), 0, '
+                    ..n..'*sizeof(tceu_lbl));')
+    end
+
+    for _, ext in pairs(_ENV.exts) do
+        local t = me.gtes[ext]
+        if t then
+            local n = t[2] - t[1]
+            if n > 0 then
+                LINE(me, 'memset('..PTR_EXT(ext.n,t[1],'char*')..', 0, '..n..'*sizeof(tceu_lbl));')
+            end
+        end
+    end
+
+    for blk in _AST.iter'Block' do
+        for _, var in ipairs(blk.vars) do
+            if me.gtes[var] then
+                local t = me.gtes[var]
+                local n = t[2] - t[1]
+                if n > 0 then
+                    LINE(me, 'memset(MEM+'..var.awt0..'+1+'
+                            ..t[1]..'*sizeof(tceu_lbl), 0, '
+                            ..n..'*sizeof(tceu_lbl));')
+                end
+            end
+        end
+    end
+
+    local n = me.gtes.fins[2] - me.gtes.fins[1]
+    if n > 0 then
+        local lbl = LABEL_gen('Back_Finalizer')
+        LINE(me, 'trk_insert(0,'..me.depth..','..lbl..');')
+        LINE(me, 'ceu_fins('..me.gtes.fins[1]..','..me.gtes.fins[2]..');')
+        HALT(me)
+        LABEL_out(me, lbl)
     end
 end
 
@@ -69,41 +138,32 @@ function LABEL_out (me, name)
     return name
 end
 
-function FINS (me)
-    if #me.fins == 0 then
-        return
-    end
-
-    local lbl = LABEL_gen('Back_Finalizer')
-    LINE(me, 'trk_insert(0,'..me.depth..','..lbl..');')
-    for _, fin in ipairs(me.fins) do
-        LINE(me, 'spawn_prio('..fin.depth..', '..fin.gte..');')
-    end
-    HALT(me)
-    LABEL_out(me, lbl)
-end
-
 F = {
     Node_pre = function (me)
         me.code = ''
     end,
 
     Root = function (me)
-        CONC(me, me[1])
+        LINE(me, 'memset(MEM, 0, '.._MEM.gtes.loc0..');')
+        for _,ext in ipairs(_ENV.exts) do
+            LINE(me, '*'..PTR_GTE(ext.n)..' = '..(_ENV.awaits[ext] or 0)..';')
+        end
+        CONC_ALL(me)
+
         if not (_DFA and _DFA.forever) then
-            LINE(me, 'if (ret) *ret = *((int*)VARS);')
+            local ret = _AST.root[1].vars[1]    -- $ret
+            LINE(me, 'if (ret) *ret = '..ret.val..';')
             LINE(me, 'return 1;')
         end
-        me.host = HOST
     end,
 
     Host = function (me)
-        HOST = HOST .. me[1] .. '\n'
+        _CODE.host = _CODE.host .. me[1] .. '\n'
     end,
 
     SetExp = function (me)
         local e1, e2 = unpack(me)
-        COMM(me, 'SET: '..e1.fst[1])    -- Var or C
+        COMM(me, 'SET: '..tostring(e1[1]))    -- Var or C
         LINE(me, e1.val..' = '..e2.val..';')
     end,
 
@@ -120,12 +180,11 @@ F = {
         CONC(me, e2)
         HALT(me)        -- must escape with `return´
         LABEL_out(me, me.lb_out)
-        FINS(me)
         BLOCK_GATES(me)
     end,
     Return = function (me)
         local exp = unpack(me)
-        local top = _ITER'SetBlock'()
+        local top = _AST.iter'SetBlock'()
         LINE(me, top[1].val..' = '..exp.val..';')
         if top.nd_join then
             LINE(me, 'trk_insert(1,'..top.depth..','..top.lb_out..');')
@@ -135,23 +194,32 @@ F = {
         HALT(me)
     end,
 
-    Block = CONC_ALL,
+    Block = function (me)
+        for _, var in ipairs(me.vars) do
+            if var.isEvt then
+                LINE(me, VAL(var.awt0)..' = '..var.n_awaits..';')  -- #gtes
+                LINE(me, 'memset(MEM+'..var.awt0..'+1, 0, '    -- gtes[i]=0
+                        ..(var.n_awaits*_ENV.types.tceu_lbl)..');')
+            end
+        end
+        CONC_ALL(me)
+    end,
 
     Do = function (me)
         local blk, fin = unpack(me)
         if me.finalize then
-            LINE(me, 'GTES['..me.finalize.gte..'] = '..me.finalize.lbl..';')
+            LINE(me, PTR_GTE'fin0'..'['..me.finalize.gte..'] = '..me.finalize.lbl..';')
         end
         CONC_ALL(me)
     end,
     Finalize = function (me)
         me.lbl = LABEL_gen('Finalize')
-        LINE(me, 'GTES['..me.gte..'] = Inactive;')     -- normal termination
+        LINE(me, PTR_GTE'fin0'..'['..me.gte..'] = Inactive;')     -- normal termination
         LABEL_out(me, me.lbl)
         CONC_ALL(me)
 
         -- halt if block is pending (do not proceed)
-        LINE(me, 'if (GTES['..me.gte..'] != Inactive)')
+        LINE(me, 'if ('..PTR_GTE'fin0'..'['..me.gte..'] != Inactive)')
         HALT(me)
     end,
 
@@ -202,7 +270,6 @@ F = {
 
         -- AFTER code :: block inner gates
         LABEL_out(me, lb_ret)
-        FINS(me)
         BLOCK_GATES(me)
     end,
 
@@ -210,10 +277,8 @@ F = {
         local lb_ret = LABEL_gen('ParAnd_join')
 
         -- close gates
-        if me.and0 then
-            COMM(me, 'close ParAnd gates')
-            LINE(me, 'memset(ANDS+'..me.and0..', 0, '..#me..');')
-        end
+        COMM(me, 'close ParAnd gates')
+        LINE(me, 'memset('..PTR(me.off)..', 0, '..#me..');')
 
         -- INITIAL code :: spawn subs
         local lbls = {}
@@ -229,21 +294,15 @@ F = {
             LINE(me, '')
             LINE(me, 'case '..lbls[i]..':', 0)
             CONC(me, sub)
-            if me.and0 then
-                LINE(me, 'ANDS['..(me.and0+i-1)..'] = 1; // open and')  -- open gate
-                SWITCH(me, lb_ret)
-            else
-                HALT(me)
-            end
+            LINE(me, VAL(me.off+i-1)..' = 1; // open and')  -- open gate
+            SWITCH(me, lb_ret)
         end
 
-        if me.and0 then
-            -- AFTER code :: test gates
-            LABEL_out(me, lb_ret)
-            for i, sub in ipairs(me) do
-                LINE(me, 'if (!ANDS['..(me.and0+i-1)..'])')
-                HALT(me)
-            end
+        -- AFTER code :: test gates
+        LABEL_out(me, lb_ret)
+        for i, sub in ipairs(me) do
+            LINE(me, 'if (!'..VAL(me.off+i-1)..')')
+            HALT(me)
         end
     end,
 
@@ -282,11 +341,10 @@ F = {
     Async = function (me)
         local vars,blk = unpack(me)
         for _, n in ipairs(vars) do
-            LINE(me, n.new.off..' = '..n.var.off..';')
+            LINE(me, n.new.val..' = '..n.var.val..';')
         end
         local lb = LABEL_gen('Async_'..me.gte)
-        LINE(me, 'GTES['..me.gte..'] = '..lb..';')
-        LINE(me, 'asy_insert('..me.gte..');')
+        LINE(me, PTR_GTE'async0'..'['..me.gte..'] = '..lb..';')
         HALT(me)
         LABEL_out(me, lb)
         CONC(me, blk)
@@ -303,7 +361,7 @@ F = {
 
         CONC(me, body)
 
-        local async = _ITER'Async'()
+        local async = _AST.iter'Async'()
         if async then
             LINE(me, [[
 #ifdef ceu_out_pending
@@ -311,9 +369,7 @@ if (ceu_out_pending()) {
 #else
 {
 #endif
-    // open async
-    GTES[]]..async.gte..'] = '..lb_ini..[[;
-    asy_insert(]]..async.gte..[[);
+    ]]..PTR_GTE'async0'..'['..async.gte..'] = '..lb_ini..[[;
     break;
 }
 ]])
@@ -322,12 +378,11 @@ if (ceu_out_pending()) {
 
         -- AFTER code :: block inner gates
         LABEL_out(me, me.lb_out)
-        FINS(me)
         BLOCK_GATES(me)
     end,
 
     Break = function (me)
-        local top = _ITER'Loop'()
+        local top = _AST.iter'Loop'()
         if top.nd_join then
             LINE(me, 'trk_insert(1, '..top.depth..','..top.lb_out..');')
         else
@@ -337,37 +392,36 @@ if (ceu_out_pending()) {
     end,
 
     EmitExtS = function (me)
-        local ext, exp = unpack(me)
-        local evt = ext.evt
+        local acc, exp = unpack(me)
+        local ext = acc.ext
 
-        if evt.output then
+        if ext.output then
             LINE(me, me.val..';')
             return
         end
 
-        assert(evt.input)
+        assert(ext.input)
         local lb_cnt = LABEL_gen('Async_cont')
-        local async = _ITER'Async'()
-        LINE(me, 'GTES['..async.gte..'] = '..lb_cnt..';')
-        LINE(me, 'asy_insert('..async.gte..');')
+        local async = _AST.iter'Async'()
+        LINE(me, PTR_GTE'async0'..'['..async.gte..'] = '..lb_cnt..';')
         if exp then
-            if _C.deref(ext.evt.tp) then
-                LINE(me, 'return ceu_go_event(ret, IN_'..evt.id
+            if _TP.deref(ext.tp) then
+                LINE(me, 'return ceu_go_event(ret, IN_'..ext.id
                         ..', (void*)'..exp.val..');')
             else
-                LINE(me, 'return ceu_go_event(ret, IN_'..evt.id
+                LINE(me, 'return ceu_go_event(ret, IN_'..ext.id
                         ..', (void*)INT_f('..exp.val..'));')
             end
 
         else
-            LINE(me, 'return ceu_go_event(ret, IN_'..evt.id ..', NULL);')
+            LINE(me, 'return ceu_go_event(ret, IN_'..ext.id ..', NULL);')
         end
         LABEL_out(me, lb_cnt)
     end,
 
     EmitInt = function (me)
         local int, exp = unpack(me)
-        local evt = int.evt
+        local var = int.var
 
         -- attribution
         if exp then
@@ -375,29 +429,27 @@ if (ceu_out_pending()) {
         end
 
         -- emit
-        local lb_cnt = LABEL_gen('Cnt_'..evt.id)
-        local lb_trg = LABEL_gen('Trg_'..evt.id)
+        local lb_cnt = LABEL_gen('Cnt_'..var.id)
+        local lb_awk = LABEL_gen('Awk_'..var.id)
         LINE(me, [[
-// Emit ]]..evt.id..[[;
-GTES[]]..me.gte_cnt..'] = '..lb_cnt..[[;
-GTES[]]..me.gte_trg..'] = '..lb_trg..[[;
-trk_insert(0, _step_+1, ]]..me.gte_cnt..[[);
-trk_insert(0, _step_+2, ]]..me.gte_trg..[[);
+// Emit ]]..var.id..';\n'..
+PTR_GTE'emit0'..'['..me.gte..    '] = '..lb_cnt..';\n'..
+PTR_GTE'emit0'..'['..(me.gte+1)..'] = '..lb_awk..[[;
+trk_insert(0, _step_+1, ]]..me.gte..[[);
+trk_insert(0, _step_+2, ]]..(me.gte+1)..[[);
 break;
 ]])
-        LABEL_out(me, lb_trg)
-        LINE(me, 'trigger('..(evt.trg0 or 0)..');')
+        LABEL_out(me, lb_awk)
+        LINE(me, 'trigger('..var.awt0..');')
         HALT(me)
         LABEL_out(me, lb_cnt)
     end,
 
     EmitT = function (me)
         local exp = unpack(me)
-        local async = _ITER'Async'()
+        local async = _AST.iter'Async'()
         local lb_cnt = LABEL_gen('Async_cont')
-        --LINE(me, 'WCLOCK_base += '..VAL(exp.ret)..';')
-        LINE(me, 'GTES['..async.gte..'] = '..lb_cnt..';')
-        LINE(me, 'asy_insert('..async.gte..');')
+        LINE(me, PTR_GTE'async0'..'['..async.gte..'] = '..lb_cnt..';')
         LINE(me, [[
 #ifdef CEU_WCLOCKS
 { int s = ceu_go_wclock(ret,]]..exp.val..[[);
@@ -425,8 +477,7 @@ return 0;
         local exp = unpack(me)
         local lb = LABEL_gen('WCLOCK')
         CONC(me, exp)
-        LINE(me, 'GTES['..me.gte..'] = '..lb..'; // open AwaitT')
-        LINE(me, 'tmr_enable('..exp.val..', '..me.wclocks_idx..');')
+        LINE(me, 'tmr_enable('..me.gte..', '..exp.val..', '..lb..');')
         HALT(me)
         LABEL_out(me, lb)
         if me.toset then
@@ -434,14 +485,14 @@ return 0;
         end
     end,
     AwaitExt = function (me)
-        local ext,_ = unpack(me)
-        local lb = LABEL_gen('Await_'..ext.evt.id)
-        LINE(me, 'GTES['..me.gte..'] = '..lb..';')
+        local acc,_ = unpack(me)
+        local lb = LABEL_gen('Await_'..acc.ext.id)
+        LINE(me, '*'..PTR_EXT(acc.ext.n,me.gte)..' = '..lb..';')
         HALT(me)
         LABEL_out(me, lb)
         if me.toset then
-            if _C.deref(ext.evt.tp) then
-                LINE(me, '\t'..me.toset.val..' = ('..ext.evt.tp..')DATA;')
+            if _TP.deref(acc.ext.tp) then
+                LINE(me, '\t'..me.toset.val..' = ('.._TP.no_(acc.ext.tp)..')DATA;')
             else
                 LINE(me, '\t'..me.toset.val..' = *((int*)DATA);')
             end
@@ -449,8 +500,9 @@ return 0;
     end,
     AwaitInt = function (me)
         local int,_ = unpack(me)
-        local lb = LABEL_gen('Await_'..int.evt.id)
-        LINE(me, 'GTES['..me.gte..'] = '..lb..';')
+        local lb = LABEL_gen('Await_'..int.var.id)
+        LINE(me, VAL(int.var.awt0+1+me.gte*_ENV.types.tceu_lbl, 'tceu_lbl*')
+                    ..' = '..lb..';')
         HALT(me)
         LABEL_out(me, lb)
         if me.toset then
@@ -459,4 +511,4 @@ return 0;
     end,
 }
 
-_VISIT(F)
+_AST.visit(F)
