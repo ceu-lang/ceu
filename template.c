@@ -6,13 +6,11 @@
 
 #define PTR(str,tp) ((tp)(CEU->mem + str ))
 
-#define N_TRACKS (1+ === N_TRACKS ===)
-#define N_MEM    (=== N_MEM ===)
-
-#define CEU_WCLOCK0 === CEU_WCLOCK0 ===
-#define CEU_ASYNC0  === CEU_ASYNC0 ===
-#define CEU_EMIT0   === CEU_EMIT0 ===
-#define CEU_FIN0    === CEU_FIN0 ===
+#define N_TRACKS    (=== N_TRACKS ===)
+#define CEU_WCLOCK0 (=== CEU_WCLOCK0 ===)
+#define CEU_ASYNC0  (=== CEU_ASYNC0 ===)
+#define CEU_EMIT0   (=== CEU_EMIT0 ===)
+#define CEU_FIN0    (=== CEU_FIN0 ===)
 
 // Macros that can be defined:
 // ceu_out_pending() (1)
@@ -45,7 +43,7 @@ int ceu_go (int* ret);
 === HOST ===
 
 typedef struct {
-    char            mem[N_MEM];
+    char            mem[=== N_MEM ===];
 
     int             tracks_n;
 #ifdef CEU_TRK_NOPRIO
@@ -71,6 +69,70 @@ typedef struct {
 
 tceu CEU_ = { 0, 0, 0, 0, 0, 0, 0, 0, 0};
 tceu* CEU = &CEU_;
+
+#ifdef CEU_EXTS
+// returns a pointer to the received value
+int* ceu_ext_f (int v) {
+    CEU->ext_int = v;
+    return &CEU->ext_int;
+}
+#endif
+
+#ifdef CEU_EMITS
+int ceu_track_peek (tceu_trk* trk)
+{
+    *trk = CEU->tracks[1];
+    return CEU->tracks_n > 0;
+}
+#endif
+
+#ifdef CEU_FINS
+void ceu_fins (int i, int j)
+{
+    for (; i<j; i++) {
+        tceu_lbl* fin0 = PTR(CEU_FIN0,tceu_lbl*);
+        if (fin0[i] != Inactive)
+            ceu_track_ins(0, PR_MAX-i, fin0[i]);
+    }
+}
+#endif
+
+#ifdef CEU_WCLOCKS
+
+#define CEU_WCLOCK_NONE LONG_MAX
+
+int ceu_wclock_lt (tceu_wclock* tmr) {
+    if (!CEU->wclk_cur || tmr->togo<CEU->wclk_cur->togo) {
+        CEU->wclk_cur = tmr;
+        return 1;
+    }
+    return 0;
+}
+
+void ceu_wclock_enable (int idx, s32 us, tceu_lbl lbl) {
+    tceu_wclock* tmr = &(PTR(CEU_WCLOCK0,tceu_wclock*)[idx]);
+    s32 dt = us - CEU->wclk_late;
+#ifdef ceu_out_wclock
+    int nxt;
+#endif
+
+    tmr->togo = dt;
+    tmr->lbl  = lbl;
+#ifdef ceu_out_wclock
+    nxt = ceu_wclock_lt(tmr);
+#else
+    ceu_wclock_lt(tmr);
+#endif
+
+#ifdef ceu_out_wclock
+    if (nxt)
+        ceu_out_wclock(dt);
+#endif
+}
+
+#endif
+
+/**********************************************************************/
 
 #if defined CEU_TRK_NOPRIO
 #define ceu_track_ins(chk,prio,lbl) ceu_track_ins_noprio(lbl)
@@ -171,66 +233,6 @@ void ceu_trigger (tceu_off off)
     }
 }
 
-/* EMITS ***************************************************************/
-
-#ifdef CEU_EMITS
-int ceu_track_peek (tceu_trk* trk)
-{
-    *trk = CEU->tracks[1];
-    return CEU->tracks_n > 0;
-}
-#endif
-
-/* FINS ***************************************************************/
-
-#ifdef CEU_FINS
-void ceu_fins (int i, int j)
-{
-    for (; i<j; i++) {
-        tceu_lbl* fin0 = PTR(CEU_FIN0,tceu_lbl*);
-        if (fin0[i] != Inactive)
-            ceu_track_ins(0, PR_MAX-i, fin0[i]);
-    }
-}
-#endif
-
-/* WCLOCKS ***************************************************************/
-
-#ifdef CEU_WCLOCKS
-
-#define CEU_WCLOCK_NONE LONG_MAX
-
-int ceu_wclock_lt (tceu_wclock* tmr) {
-    if (!CEU->wclk_cur || tmr->togo<CEU->wclk_cur->togo) {
-        CEU->wclk_cur = tmr;
-        return 1;
-    }
-    return 0;
-}
-
-void ceu_wclock_enable (int idx, s32 us, tceu_lbl lbl) {
-    tceu_wclock* tmr = &(PTR(CEU_WCLOCK0,tceu_wclock*)[idx]);
-    s32 dt = us - CEU->wclk_late;
-#ifdef ceu_out_wclock
-    int nxt;
-#endif
-
-    tmr->togo = dt;
-    tmr->lbl  = lbl;
-#ifdef ceu_out_wclock
-    nxt = ceu_wclock_lt(tmr);
-#else
-    ceu_wclock_lt(tmr);
-#endif
-
-#ifdef ceu_out_wclock
-    if (nxt)
-        ceu_out_wclock(dt);
-#endif
-}
-
-#endif
-
 /**********************************************************************/
 
 int ceu_go_init (int* ret)
@@ -240,12 +242,6 @@ int ceu_go_init (int* ret)
 }
 
 #ifdef CEU_EXTS
-// returns a pointer to the received value
-int* ceu_ext_f (int v) {
-    CEU->ext_int = v;
-    return &CEU->ext_int;
-}
-
 int ceu_go_event (int* ret, int id, void* data) {
     CEU->ext_data = data;
     ceu_trigger(id);
@@ -353,7 +349,7 @@ int ceu_go (int* ret)
 #ifdef CEU_EMITS
         if (trk.prio < 0) {
             tceu_lbl* EMT0 = PTR(CEU_EMIT0,tceu_lbl*);
-            tceu_lbl T[N_TRACKS];
+            tceu_lbl T[N_TRACKS+1];
             int n = 0;
             _step_ = trk.prio;
             while (1) {
