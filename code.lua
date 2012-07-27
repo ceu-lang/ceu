@@ -9,7 +9,7 @@ end
 
 function PTR (off, tp)
     tp = tp or 'char*'
-    return '(('..tp..')(MEM+'..off..'))'
+    return '(('..tp..')(CEU->mem+'..off..'))'
 end
 
 local _T = { wclock0='tceu_wclock*', async0='tceu_lbl*', emit0='tceu_lbl*', fin0='tceu_lbl*' }
@@ -106,7 +106,7 @@ function BLOCK_GATES (me)
                 local t = me.gtes[var]
                 local n = t[2] - t[1]
                 if n > 0 then
-                    LINE(me, 'memset(MEM+'..var.awt0..'+1+'
+                    LINE(me, 'memset(CEU->mem+'..var.awt0..'+1+'
                             ..t[1]..'*sizeof(tceu_lbl), 0, '
                             ..n..'*sizeof(tceu_lbl));')
                 end
@@ -117,7 +117,7 @@ function BLOCK_GATES (me)
     local n = me.gtes.fins[2] - me.gtes.fins[1]
     if n > 0 then
         local lbl = LABEL_gen('Back_Finalizer')
-        LINE(me, 'trk_insert(0,'..me.depth..','..lbl..');')
+        LINE(me, 'ceu_track_ins(0,'..me.depth..','..lbl..');')
         LINE(me, 'ceu_fins('..me.gtes.fins[1]..','..me.gtes.fins[2]..');')
         HALT(me)
         LABEL_out(me, lbl)
@@ -144,13 +144,13 @@ F = {
     end,
 
     Root = function (me)
-        LINE(me, 'memset(MEM, 0, '.._MEM.gtes.loc0..');')
+        LINE(me, 'memset(CEU->mem, 0, '.._MEM.gtes.loc0..');')
         for _,ext in ipairs(_ENV.exts) do
             LINE(me, '*'..PTR_GTE(ext.n)..' = '..(_ENV.awaits[ext] or 0)..';')
         end
         CONC_ALL(me)
 
-        if not (_DFA and _DFA.forever) then
+        if not (_SIMUL and _SIMUL.isForever) then
             local ret = _AST.root[1].vars[1]    -- $ret
             LINE(me, 'if (ret) *ret = '..ret.val..';')
             LINE(me, 'return 1;')
@@ -187,9 +187,9 @@ F = {
         local top = _AST.iter'SetBlock'()
         LINE(me, top[1].val..' = '..exp.val..';')
         if top.nd_join then
-            LINE(me, 'trk_insert(1,'..top.depth..','..top.lb_out..');')
+            LINE(me, 'ceu_track_ins(1,'..top.depth..','..top.lb_out..');')
         else
-            LINE(me, 'trk_insert(0,'..top.depth..','..top.lb_out..');')
+            LINE(me, 'ceu_track_ins(0,'..top.depth..','..top.lb_out..');')
         end
         HALT(me)
     end,
@@ -198,7 +198,7 @@ F = {
         for _, var in ipairs(me.vars) do
             if var.isEvt then
                 LINE(me, VAL(var.awt0)..' = '..var.n_awaits..';')  -- #gtes
-                LINE(me, 'memset(MEM+'..var.awt0..'+1, 0, '    -- gtes[i]=0
+                LINE(me, 'memset(CEU->mem+'..var.awt0..'+1, 0, '   -- gtes[i]=0
                         ..(var.n_awaits*_ENV.types.tceu_lbl)..');')
             end
         end
@@ -229,7 +229,7 @@ F = {
         COMM(me, 'ParEver ($0): spawn subs')
         for i, sub in ipairs(me) do
             lbls[i] = LABEL_gen('Sub_'..i)
-            LINE(me, 'trk_insert(0, PR_MAX, '..lbls[i]..');')
+            LINE(me, 'ceu_track_ins(0, PR_MAX, '..lbls[i]..');')
         end
         HALT(me)
 
@@ -250,7 +250,7 @@ F = {
         COMM(me, 'ParOr ($0): spawn subs')
         for i, sub in ipairs(me) do
             lbls[i] = LABEL_gen('Sub_'..i)
-            LINE(me, 'trk_insert(0, PR_MAX, '..lbls[i]..');')
+            LINE(me, 'ceu_track_ins(0, PR_MAX, '..lbls[i]..');')
         end
         HALT(me)
 
@@ -261,9 +261,9 @@ F = {
             CONC(me, sub)
             COMM(me, 'PAROR JOIN')
             if me.nd_join then
-                LINE(me, 'trk_insert(1, '..me.depth..','..lb_ret..');')
+                LINE(me, 'ceu_track_ins(1, '..me.depth..','..lb_ret..');')
             else
-                LINE(me, 'trk_insert(0, '..me.depth..','..lb_ret..');')
+                LINE(me, 'ceu_track_ins(0, '..me.depth..','..lb_ret..');')
             end
             HALT(me)
         end
@@ -285,7 +285,7 @@ F = {
         COMM(me, 'ParAnd ($0): spawn subs')
         for i, sub in ipairs(me) do
             lbls[i] = LABEL_gen('Sub_'..i)
-            LINE(me, 'trk_insert(0, PR_MAX, '..lbls[i]..');')
+            LINE(me, 'ceu_track_ins(0, PR_MAX, '..lbls[i]..');')
         end
         HALT(me)
 
@@ -384,9 +384,9 @@ if (ceu_out_pending()) {
     Break = function (me)
         local top = _AST.iter'Loop'()
         if top.nd_join then
-            LINE(me, 'trk_insert(1, '..top.depth..','..top.lb_out..');')
+            LINE(me, 'ceu_track_ins(1, '..top.depth..','..top.lb_out..');')
         else
-            LINE(me, 'trk_insert(0, '..top.depth..','..top.lb_out..');')
+            LINE(me, 'ceu_track_ins(0, '..top.depth..','..top.lb_out..');')
         end
         HALT(me)
     end,
@@ -410,7 +410,7 @@ if (ceu_out_pending()) {
                         ..', (void*)'..exp.val..');')
             else
                 LINE(me, 'return ceu_go_event(ret, IN_'..ext.id
-                        ..', (void*)INT_f('..exp.val..'));')
+                        ..', (void*)ceu_ext_f('..exp.val..'));')
             end
 
         else
@@ -435,12 +435,12 @@ if (ceu_out_pending()) {
 // Emit ]]..var.id..';\n'..
 PTR_GTE'emit0'..'['..me.gte..    '] = '..lb_cnt..';\n'..
 PTR_GTE'emit0'..'['..(me.gte+1)..'] = '..lb_awk..[[;
-trk_insert(0, _step_+1, ]]..me.gte..[[);
-trk_insert(0, _step_+2, ]]..(me.gte+1)..[[);
+ceu_track_ins(0, _step_+1, ]]..me.gte..[[);
+ceu_track_ins(0, _step_+2, ]]..(me.gte+1)..[[);
 break;
 ]])
         LABEL_out(me, lb_awk)
-        LINE(me, 'trigger('..var.awt0..');')
+        LINE(me, 'ceu_trigger('..var.awt0..');')
         HALT(me)
         LABEL_out(me, lb_cnt)
     end,
@@ -453,7 +453,7 @@ break;
         LINE(me, [[
 #ifdef CEU_WCLOCKS
 { int s = ceu_go_wclock(ret,]]..exp.val..[[);
-  while (!s && TMR_cur && TMR_cur->togo<=0)
+  while (!s && CEU->wclk_cur && CEU->wclk_cur->togo<=0)
       s = ceu_go_wclock(ret, 0);
   return s;
 }
@@ -477,11 +477,11 @@ return 0;
         local exp = unpack(me)
         local lb = LABEL_gen('WCLOCK')
         CONC(me, exp)
-        LINE(me, 'tmr_enable('..me.gte..', '..exp.val..', '..lb..');')
+        LINE(me, 'ceu_wclock_enable('..me.gte..', '..exp.val..', '..lb..');')
         HALT(me)
         LABEL_out(me, lb)
         if me.toset then
-            LINE(me, me.toset.val..' = WCLOCK_late;')
+            LINE(me, me.toset.val..' = CEU->wclk_late;')
         end
     end,
     AwaitExt = function (me)
@@ -492,9 +492,9 @@ return 0;
         LABEL_out(me, lb)
         if me.toset then
             if _TP.deref(acc.ext.tp) then
-                LINE(me, '\t'..me.toset.val..' = ('.._TP.no_(acc.ext.tp)..')DATA;')
+                LINE(me, '\t'..me.toset.val..' = ('.._TP.no_(acc.ext.tp)..')CEU->ext_data;')
             else
-                LINE(me, '\t'..me.toset.val..' = *((int*)DATA);')
+                LINE(me, '\t'..me.toset.val..' = *((int*)CEU->ext_data);')
             end
         end
     end,

@@ -47,29 +47,34 @@ Test = function (t)
     if not check('tp')     then return end
     if not check('env')    then return end
     if not check('mem')    then return end
+    if not check('props')  then return end
+    if not check('tight')  then return end
+    if not check('async')  then return end
+    if not check('code')   then return end
+
     if T.tot then
         assert(T.tot==_MEM.max, 'mem '.._MEM.max)
     end
 
-    if not check('props')  then return end
-    if not check('tight')  then return end
-    if not check('async')  then return end
+    if T.dfa then
+        return
+    end
 
-    -- GRAPH
-
-    if T.dfa then return end
+    -- SIMUL
 --[=[
-    -- nfa
-    if not check('nfa') then return end
-    DBG('nfa', _NFA.n_nodes)
-
-    -- dfa
     do
-        if not check('dfa') then return end
+        local CEU = './ceu - --output _ceu_code.c '
+                        .. '--tp-word 4 --tp-pointer 4 --tp-lbl 2 --tp-off 2'
+        local str_all = str_input
+        --print(str_all)
+        local ceu = assert(io.popen(CEU, 'w'))
+        ceu:write(str_all)
+        ceu:close()
+        assert(os.execute('gcc -std=c99 -o ceu.exe simul.c') == 0)
+        assert(os.execute('./ceu.exe _ceu_simul.lua') == 0)
+        dofile '_ceu_simul.lua'
 
-        dofile 'graphviz.lua' ; DBG('>>> VIZ')
-        DBG('dfa', _DFA.n_states)
-
+--[[
         assert(_DFA.nds.acc.tot == (T.nd_acc or 0),
             'nd_acc '.._DFA.nds.acc.tot)
 
@@ -86,9 +91,9 @@ Test = function (t)
             assert(_DFA.n_unreach == (T.unreach or 0),
                 'unreach '.._DFA.n_unreach)
         end
-
-        assert(_DFA.forever == (T.forever or false),
-            'forever '..tostring(_DFA.forever))
+]]
+        assert(_SIMUL.isForever == (T.forever or false),
+            'forever '..tostring(_SIMUL.forever))
     end
 ]=]
 
@@ -98,11 +103,8 @@ Test = function (t)
                 'missing run value')
         return
     end
---print'=============='
-
-    if not check('code') then return end
-
-    local CEU = './ceu - --dfa --tp-word 4 --tp-pointer 4 --tp-lbl 2 --tp-off 2 --output _ceu_code.c'
+    local CEU = './ceu - --simul-file _ceu_simul.lua --output _ceu_code.c '
+                    .. '--tp-word 4 --tp-pointer 4 --tp-lbl 2 --tp-off 2'
 
     if T.run == false then
         local str_all = str_input

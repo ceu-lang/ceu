@@ -21,9 +21,6 @@ subst 'mem.lua'
 subst 'props.lua'
 subst 'tight.lua'
 subst 'async.lua'
-subst 'nfa.lua'
-subst 'dfa.lua'
-subst 'graphviz.lua'
 subst 'code.lua'
 
 -- template.c

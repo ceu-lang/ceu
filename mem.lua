@@ -89,9 +89,9 @@ F = {
 
         local tp = _TP.no_(var.tp)
         if var.arr then
-            var.val = '(('..tp..')(MEM+'..var.off..'))'
+            var.val = '(('..tp..')(CEU->mem+'..var.off..'))'
         else
-            var.val = '(*(('..tp..'*)(MEM+'..var.off..')))'
+            var.val = '(*(('..tp..'*)(CEU->mem+'..var.off..')))'
         end
     end,
     Var = function (me)
@@ -116,7 +116,7 @@ F = {
                 val = exp.val
             else
                 len = 'sizeof('.._TP.no_(acc.ext.tp)..')'
-                val = 'INT_f('..exp.val..')'
+                val = 'ceu_ext_f('..exp.val..')'
             end
         else
             len = 0

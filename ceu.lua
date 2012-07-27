@@ -4,15 +4,13 @@ _OPTS = {
     input     = nil,
     output    = '-',
 
-    defs_file = '_ceu_defs.h',
+    defs_file  = '_ceu_defs.h',
+    simul_file = nil,
 
     join      = true,
 
     m4        = false,
     m4_args   = false,
-
-    dfa       = false,
-    dfa_viz   = false,
 
     tp_word    = 4,
     tp_pointer = 4,
@@ -24,15 +22,13 @@ _OPTS_NPARAMS = {
     input     = nil,
     output    = 1,
 
-    defs_file = 1,
+    defs_file  = 1,
+    simul_file = 1,
 
     join      = 0,
 
     m4        = 0,
     m4_args   = 1,
-
-    dfa       = 0,
-    dfa_viz   = 0,
 
     tp_word    = 1,
     tp_pointer = 1,
@@ -77,12 +73,10 @@ if not _OPTS.input then
         --output <filename>       # C output file (stdout)
     
         --defs-file <filename>    # define constants in a separate output file (no)
+        --simul-file <filename>   # file containing the simulation analysis (no)
     
         --join (--no-join)        # join lines enclosed by /*{-{*/ and /*}-}*/ (join)
 
-        --dfa (--no-dfa)          # perform DFA analysis (no-dfa)
-        --dfa-viz (--no-dfa-viz)  # generate DFA graph (no-dfa-viz)
-    
         --m4 (--no-m4)            # preprocess the input with `m4´ (no-m4)
         --m4-args                 # preprocess the input with `m4´ passing arguments in between `"´ (no)
 
@@ -129,20 +123,11 @@ do
     dofile 'props.lua'
     dofile 'tight.lua'
     dofile 'async.lua'
-
---[=[
-    if _OPTS.dfa or _OPTS.dfa_viz then
-        DBG('WRN : the DFA algorithm is exponential, this may take a while!')
-        dofile 'nfa.lua'
-        dofile 'dfa.lua'
-        DBG('# States  ||  nfa: '.._NFA.n_nodes..'  ||  dfa: '.._DFA.n_states)
-        if _OPTS.dfa_viz then
-            dofile 'graphviz.lua'
-        end
-    end
-]=]
-
     dofile 'code.lua'
+
+    if _OPTS.simul_file then
+        dofile(_OPTS.simul_file)
+    end
 end
 
 -- TEMPLATE
@@ -231,14 +216,13 @@ do
             str = str .. '#define CEU_FINS\n'
             DBG('# FINALIZERS')
         end
-        if _DFA and (not _DFA.conc.join) then
-            str = str .. '#define CEU_TRK_NOCHK\n'
-            DBG('# TRK_NOCHK')
-        end
-        if _DFA and (not _DFA.conc.prio) and (not _PROPS.has_emits)
-                and (not _PROPS.has_fins) then
+        if _SIMUL and (not _SIMUL.hasPrio) then
             str = str .. '#define CEU_TRK_NOPRIO\n'
             DBG('# TRK_NOPRIO')
+        end
+        if _SIMUL and (not _SIMUL.chkPrio) then
+            str = str .. '#define CEU_TRK_NOCHK\n'
+            DBG('# TRK_NOCHK')
         end
 
         if _OPTS.defs_file then
