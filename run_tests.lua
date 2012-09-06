@@ -24,8 +24,21 @@ Test = function (t)
     print('---', str_input)
     COUNT = COUNT + 1
 
+    --assert(T.todo == nil)
     if T.todo then
         return
+    end
+
+    local ok = not (T.parser or T.env or T.mem or
+                    T.props or T.tight or T.async)
+    if ok then
+        local CEU = './ceu - --output _ceu_code.c --simul-run _ceu_simul.lua '
+                        .. '--tp-word 4 --tp-pointer 4 --tp-lbl 2 --tp-off 2'
+        local ceu = assert(io.popen(CEU, 'w'))
+        ceu:write(str_input)
+        ceu:close()
+        assert(os.execute('gcc -std=c99 -o ceu.exe simul.c') == 0)
+        assert(os.execute('./ceu.exe _ceu_simul.lua') == 0)
     end
 
     _OPTS = {
@@ -33,6 +46,7 @@ Test = function (t)
         tp_pointer = 4,
         tp_off     = 2,
         tp_lbl     = 2,
+        simul_use  = '_ceu_simul.lua',
     }
 
     -- LINES
@@ -41,48 +55,46 @@ Test = function (t)
     dofile 'lines.lua'
 
     -- PARSER
-    if not check('parser') then return end
-    if not check('ast')    then return end
+    if not check('parser')   then return end
+    if not check('ast')      then return end
     --_AST.dump(_AST.root)
-    if not check('tp')     then return end
-    if not check('env')    then return end
-    if not check('mem')    then return end
-    if not check('props')  then return end
-    if not check('tight')  then return end
-    if not check('async')  then return end
-    if not check('code')   then return end
+    if not check('tp')       then return end
+    if not check('env')      then return end
+    if not check('mem')      then return end
+    if not check('props')    then return end
+    if not check('tight')    then return end
+    if not check('async')    then return end
+    if not check('labels')   then return end
+    if not check('analysis') then return end
+    if not check('code')     then return end
 
     if T.tot then
         assert(T.tot==_MEM.max, 'mem '.._MEM.max)
     end
 
-    if T.dfa then
-        return
-    end
-
     -- SIMUL
+    --if T.dfa then return end
 --[=[
+]=]
+    assert((not T.n_unreachs) and not (T.isForever)) -- move to simul
     do
-        local CEU = './ceu - --output _ceu_code.c '
-                        .. '--tp-word 4 --tp-pointer 4 --tp-lbl 2 --tp-off 2'
-        local str_all = str_input
-        --print(str_all)
-        local ceu = assert(io.popen(CEU, 'w'))
-        ceu:write(str_all)
-        ceu:close()
-        assert(os.execute('gcc -std=c99 -o ceu.exe simul.c') == 0)
-        assert(os.execute('./ceu.exe _ceu_simul.lua') == 0)
-        dofile '_ceu_simul.lua'
-
+        local _defs = { n_reachs=0, n_unreachs=0, isForever=false, nd_acc=0 }
+        local _no = { needsPrio=true, needsChk=true, n_states=true, n_tracks=true }
+        for k, v in pairs(_ANALYSIS) do
+            assert( (v==_defs[k] or _no[k]) and (T.simul==nil or T.simul[k]==nil)
+                    or (T.simul and T.simul[k]==v)
+                    or (T.simul and T.simul.nd_acc==_ANALYSIS.nd_acc),
+                            k..' = '..tostring(v))
+        end
+        if T.simul then
+            for k, v in pairs(T.simul) do
+                assert( v == _ANALYSIS[k],
+                            k..' = '..tostring(_ANALYSIS[k]))
+            end
+        end
 --[[
-        assert(_DFA.nds.acc.tot == (T.nd_acc or 0),
-            'nd_acc '.._DFA.nds.acc.tot)
-
         assert(_DFA.nds.call.tot == (T.nd_call or 0),
             'nd_call '.._DFA.nds.call.tot)
-
-        assert(_DFA.nds.flw.tot == (T.nd_flw or 0),
-            'nd_flw '.._DFA.nds.flw.tot)
 
         assert(_DFA.escs.tot == (T.nd_esc or 0),
             'nd_esc '.._DFA.escs.tot)
@@ -92,30 +104,26 @@ Test = function (t)
                 'unreach '.._DFA.n_unreach)
         end
 ]]
-        assert(_SIMUL.isForever == (T.forever or false),
-            'forever '..tostring(_SIMUL.forever))
     end
-]=]
 
     -- RUN
-    if T.run==nil then
-        assert(T.forever or T.nd_acc or T.nd_flw or T.nd_esc,
+
+    if T.run == false then
+        assert(T.simul.nd_acc>0)
+        return
+    end
+
+    if T.run == nil then
+        assert(T.simul and T.simul.isForever or T.simul.nd_acc,
+                -- or T.simul.nd_flw or T.simul.nd_esc,
                 'missing run value')
         return
     end
     local CEU = './ceu - --simul-file _ceu_simul.lua --output _ceu_code.c '
                     .. '--tp-word 4 --tp-pointer 4 --tp-lbl 2 --tp-off 2'
 
-    if T.run == false then
-        local str_all = str_input
-        --print(str_all)
-        local ceu = assert(io.popen(CEU, 'w'))
-        ceu:write(str_all)
-        ceu:close()
-        assert(os.execute('gcc -std=c99 -o ceu.exe main.c 2>/dev/null') ~= 0)
-
     -- T.run = N
-    elseif type(T.run) ~= 'table' then
+    if type(T.run) ~= 'table' then
         local str_all = str_input
         --print(str_all)
         local ceu = assert(io.popen(CEU, 'w'))

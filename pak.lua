@@ -21,6 +21,7 @@ subst 'mem.lua'
 subst 'props.lua'
 subst 'tight.lua'
 subst 'async.lua'
+subst 'labels.lua'
 subst 'code.lua'
 
 -- template.c

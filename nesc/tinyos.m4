@@ -3,6 +3,9 @@
 changequote(<,>)
 changequote(`,´)
 
+type _nx_uint16_t = 16;
+type _message_t   = 42;
+
 constant _EBUSY, _SUCCESS, _TOS_NODE_ID;
 
 deterministic _Leds_led0Toggle with _Leds_led1Toggle, _Leds_led2Toggle;

@@ -42,7 +42,7 @@ local EK = function (tk)
 end
 
 local _V2NAME = {
-    _Exp = 'expression',
+    Exp = 'expression',
     _Stmts = 'statement',
     Ext = 'event',
     Var = 'variable/event',
@@ -105,7 +105,7 @@ _GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
              + V'_StmtBlock'              * (S*K';')^0 *S* V'_Stmts'^-1
 
     , _LstStmtBlock = V'ParEver'
-    , _LstStmt      = V'Return' + V'Break' + V'AwaitN' + V'ParEver'
+    , _LstStmt      = V'_Return' + V'Break' + V'AwaitN' + V'ParEver'
 
     , _Stmt = V'Nothing'
             + V'AwaitT'   + V'AwaitExt'  + V'AwaitInt'
@@ -123,21 +123,21 @@ _GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
                     V'ParEver' + V'If'    + V'Loop'
                 )
 
-    , __ID      = V'ID_c' + V'ID_ext' + V'Var'
+    , __ID      = V'ID_c' + V'Ext' + V'Var'
     , _Dcl_pure = (K'pure'+K'constant') *S* EV'ID_c' * (S* K',' *S* V'ID_c')^0
     , Dcl_det   = K'deterministic' *S* EV'__ID' *S* EK'with' *S*
                      EV'__ID' * (S* K',' *S* EV'__ID')^0
     , Dcl_type  = K'type' *S* EV'ID_c' *S* EK'=' *S* NUM
 
-    , _Set  = V'_Exp' *S* V'_Sets'
+    , _Set  = V'Exp' *S* V'_Sets'
     , _Sets = K'=' *S* (
                 Cc'SetStmt'  * (V'AwaitT'+V'AwaitExt'+V'AwaitInt') +
                 Cc'SetBlock' * V'_SetBlock' +
-                Cc'SetExp'   * V'_Exp' +
+                Cc'SetExp'   * V'Exp' +
                 EM'expected expression'
               )
 
-    , CallStmt = (#V'ID_c' + K'call'*S) * V'_Exp'
+    , CallStmt = (#V'ID_c' + K'call'*S) * V'Exp'
                + EM'invalid statement (or C identifier?)'
 
     , Nothing = K'nothing'
@@ -152,7 +152,7 @@ _GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
                 EK'end'
     , VarList = ( EK'(' *S* EV'Var' * (S* EK',' *S* EV'Var')^0 *S* EK')' )^-1
 
-    , Return  = K'return' *S* EV'_Exp'
+    , _Return = K'return' *S* EV'Exp'
 
     , ParOr   = K'par/or' *S* EK'do' *S*
                     V'Block' * (S* EK'with' *S* V'Block')^1 *S*
@@ -164,22 +164,23 @@ _GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
                     V'Block' * (S* EK'with' *S* V'Block')^1 *S*
                 EK'end'
 
-    , If      = K'if' *S* EV'_Exp' *S* EK'then' *S*
+    , If      = K'if' *S* EV'Exp' *S* EK'then' *S*
                     V'Block' *S*
-                (K'elseif' *S* EV'_Exp' *S* EK'then' *S*
+                (K'elseif' *S* EV'Exp' *S* EK'then' *S*
                     V'Block')^0 *S*
                 (K'else' *S*
                     V'Block' + Cc(false)) *S*
                 EK'end'
 
     , Loop    = K'loop' *S*
-                    (V'ID_var'* (S*EK','*S*EV'_Exp' + Cc(false)) + 
+                    (V'ID_var'* (S*EK','*S*EV'Exp' + Cc(false)) + 
                         Cc(false)*Cc(false)) *S*
                 EK'do' *S*
                     V'Block' *S*
                 EK'end'
     , Break   = K'break'
 
+    , Exp     = V'_Exp'
     , _Exp    = V'_1'
     , _1      = V'_2'  * (S* CK'||' *S* V'_2')^0
     , _2      = V'_3'  * (S* CK'&&' *S* V'_3')^0
@@ -236,8 +237,8 @@ _GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
 
     , EmitExtS = V'EmitExt'
     , EmitExtE = V'EmitExt'
-    , EmitExt  = K'emit' *S* EV'Ext' * (S* K'(' *S* V'_Exp' *S* EK')')^-1
-    , EmitInt  = K'emit' *S* EV'Var' * (S* K'(' *S* V'_Exp' *S* EK')')^-1
+    , EmitExt  = K'emit' *S* EV'Ext' * (S* K'(' *S* V'Exp' *S* EK')')^-1
+    , EmitInt  = K'emit' *S* EV'Var' * (S* K'(' *S* V'Exp' *S* EK')')^-1
     , EmitT    = K'emit' *S* (V'WCLOCKK'+V'WCLOCKE')
 
     , _Dcl_ext = (CK'input'+CK'output') *S* EV'ID_type' *S*

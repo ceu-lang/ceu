@@ -19,14 +19,12 @@ F = {
 
     Return = function (me)
         local async  = _AST.iter'Async'()
-        -- must have a setret between return and an async
+        -- must have a setblk between return and an async
         if async then
-            local setret = _AST.iter'SetBlock'()
-            if async.depth == setret.depth+1 then
-                async.hasReturn = true
-            else
-                ASR(async.depth<setret.depth, me, 'invalid return statement')
-            end
+            local setblk = _AST.iter'SetBlock'()
+            ASR( async.depth == setblk.depth+1 or
+                 async.depth <  setblk.depth,
+                    me, 'invalid return statement')
         end
     end,
 
@@ -64,9 +62,14 @@ F = {
 
     Var = function (me)
         local async = _AST.iter'Async'()
-        local vars  = _AST.iter'VarList'()
-        if async and (not vars) then
-            ASR(async.depth<me.var.blk.depth, me, 'invalid access from async')
+        if async then
+            local setblk = _AST.iter'SetBlock'()
+            local var = setblk and (async.depth==setblk.depth+1) and 
+                            setblk[1][1].var
+            ASR(_AST.iter'VarList'() or
+                async.depth < me.var.blk.depth or
+                var == me.var,
+                    me, 'invalid access from async')
         end
     end,
 }

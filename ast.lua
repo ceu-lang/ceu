@@ -2,10 +2,12 @@ _AST = {
     root = nil
 }
 
+local MT = {}
+
 function node (id, min)
     min = min or 0
     return function (ln1,ln2, str, ...)
-        local node = { ... }
+        local node = setmetatable({ ... }, MT)
         if #node < min then
             return ...
         else
@@ -48,7 +50,20 @@ function _AST.iter (pred, inc)
 end
 
 function _AST.isNode (node)
-    return type(node)=='table' and node.id
+    return (getmetatable(node) == MT) and node.id
+end
+
+function _AST.copy (node, ln)
+    local ret = setmetatable({}, MT)
+    for k, v in pairs(node) do
+        if _AST.isNode(v) then
+            ret[k] = _AST.copy(v, ln)
+            ret[k].ln = ln or ret[k].ln
+        else
+            ret[k] = v
+        end
+    end
+    return ret
 end
 
 function _AST.dump (me, spc)
@@ -77,6 +92,10 @@ function _AST.visit (F)
     return visit_aux(_AST.root, F)
 end
 
+function EXP (n)
+    return node('Exp')(n.ln[1],n.ln[2],n.str,n)
+end
+
 local function FF (F, str)
     local f = F[str]
     if type(f) == 'string' then
@@ -87,7 +106,7 @@ local function FF (F, str)
 end
 
 function visit_aux (me, F)
---print(me.id, me, F)
+--DBG(me.id, me, F)
     local pre, mid, pos = FF(F,me.id..'_pre'), FF(F,me.id), FF(F,me.id..'_pos')
     local bef, aft = FF(F,me.id..'_bef'), FF(F,me.id..'_aft')
 
@@ -120,18 +139,29 @@ local C; C = {
                 node('Block')(ln1,ln2, str,
                     node('Dcl_var')(ln1,ln2, str, false, 'int', false, '$ret'),
                     node('SetBlock')(ln1,ln2, str,
-                        node('Var')(ln1,ln2, str, '$ret'),
+                        EXP(node('Var')(ln1,ln2, str, '$ret')),
                         ...)))  -- ...=Block
         return _AST.root
     end,
 
     Block   = node('Block'),
     Nothing = node('Nothing'),
-    Return  = node('Return'),
     Host    = node('Host'),
 
+    _Return = function (ln1,ln2, str, e2)
+        return node('Block')(ln1,ln2, str,
+                    node('SetExp')(ln1,ln2,str, false, e2),
+                    node('Return')(ln1,ln2,str))
+    end,
+
     Async   = node('Async'),
-    VarList = node('VarList'),
+    VarList = function (ln1,ln2, str, ...)
+        local t = { ... }
+        for i, var in ipairs(t) do
+            t[i] = EXP(var)
+        end
+        return node('VarList')(ln1,ln2, str, unpack(t))
+    end,
 
     ParEver = node('ParEver'),
     ParOr   = node('ParOr'),
@@ -162,12 +192,14 @@ local C; C = {
             return node('Loop')(ln1,ln2,str, blk)
         end
 
-        local i = function() return node('Var')(ln1,ln2,str, _i) end
+        local i = function() return EXP(node('Var')(ln1,ln2,str, _i)) end
         local dcl_i = node('Dcl_var')(ln1,ln2,str, false, 'int', false, _i)
         dcl_i.read_only = true
-        local set_i = node('SetExp')(ln1,ln2,str, i(), node('CONST')(ln1,ln2,str, '0'))
+        local set_i = node('SetExp')(ln1,ln2,str, i(),
+                                        EXP(node('CONST')(ln1,ln2,str, '0')))
         local nxt_i = node('SetExp')(ln1,ln2,str, i(),
-                        node('Op2_+')(ln1,ln2,str, '+', i(), node('CONST')(ln1,ln2,str,'1')))
+                        EXP(node('Op2_+')(ln1,ln2,str, '+', i(),
+                                node('CONST')(ln1,ln2,str,'1'))))
 
         if not _j then
             return node('Block')(ln1,ln2,str, dcl_i, set_i,
@@ -175,17 +207,18 @@ local C; C = {
         end
 
         local j_name = '$j'..tostring(blk)
-        local j = function() return node('Var')(ln1,ln2,str, j_name) end
+        local j = function() return EXP(node('Var')(ln1,ln2,str, j_name)) end
         local dcl_j = node('Dcl_var')(ln1,ln2,str, false, 'int', false, j_name)
         local set_j = node('SetExp')(ln1,ln2,str, j(), _j)
 
-        local cmp = node('Op2_>=')(ln1,ln2,str, '>=', i(), j())
+        local cmp = EXP(node('Op2_>=')(ln1,ln2,str, '>=', i(), j()))
 
         local loop = node('Loop')(ln1,ln2,str,
             node('If')(ln1,ln2,str, cmp,
                 node('Break')(ln1,ln2,str),
                 node('Block')(ln1,ln2,str, blk, nxt_i)))
-        loop.isBounded = (_j.id == 'CONST')
+        loop.isBounded = true
+        loop[1].isBounded = true    -- remind that the If is "artificial"
 
         return node('Block')(ln1,ln2,str,
                 dcl_i, set_i,
@@ -223,7 +256,7 @@ local C; C = {
             ret[#ret+1] = node('Dcl_var')(ln1,ln2, str, isEvt, tp, dim, t[i])
             if t[i+1] then
                 ret[#ret+1] = C._Set(ln1,ln2, str,
-                                node('Var')(ln1,ln2,str,t[i]),
+                                EXP(node('Var')(ln1,ln2,str,t[i])),
                                 t[i+1],
                                 t[i+2])
             end
@@ -238,7 +271,7 @@ local C; C = {
             ret[#ret+1] = node('Dcl_int')(ln1,ln2, str, isEvt, tp, dim, t[i])
             if t[i+1] then
                 ret[#ret+1] = C._Set(ln1,ln2, str,
-                                node('Var')(ln1,ln2,str,t[i]),
+                                EXP(node('Var')(ln1,ln2,str,t[i])),
                                 t[i+1],
                                 t[i+2])
             end
@@ -261,6 +294,7 @@ local C; C = {
 
     CallStmt = node('CallStmt'),
 
+    Exp = node('Exp'),
     _Exp = function (ln1,ln2, str, ...)
         local v1, v2, v3, v4 = ...
         if not v2 then          -- single value

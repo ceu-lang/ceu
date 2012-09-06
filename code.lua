@@ -36,29 +36,56 @@ function CONC (me, exp, tab)
     me.code = me.code .. string.gsub(exp.code, '(.-)\n', tab..'%1\n')
 end
 
+function ATTR (me, v1, v2)
+    if not _OPTS.simul_run then
+        LINE(me, v1..' = '..v2..';')
+    end
+end
+
+function EXP (me, e)
+    if _OPTS.simul_run and e.accs then
+        for _, acc in ipairs(e.accs) do
+DBG('CODE', me.id, acc[3])
+            SWITCH(me, acc.lbl)
+            CASE(me, acc.lbl)
+        end
+    end
+end
+
+function CASE (me, lbl)
+    LINE(me, 'case '..lbl.id..':', 0)
+end
+
 function LINE (me, line, spc)
     spc = spc or 4
     spc = string.rep(' ', spc)
     me.code = me.code .. spc .. line .. '\n'
 end
 
-function ATTR (me, v1, v2)
-    if v1 ~= v2 then
-        LINE(me, v1..' = '..v2..';')
+function HALT (me, emt)
+    if emt then
+        LINE(me, [[
+#ifdef CEU_SIMUL
+if (CEU->trk.emt)
+    ceu_sim_state_path(CEU->trk.lbl, CEU->trk.emt);
+#endif
+]])
     end
-end
-
-function HALT (me)
     LINE(me, 'break;')
 end
 
 function SWITCH (me, lbl)
-    LINE(me, '_lbl_ = '..lbl..';')
-    LINE(me, 'goto _SWITCH_;')
+    LINE(me, [[
+#ifdef CEU_SIMUL
+ceu_sim_state_path(CEU->trk.lbl, ]]..lbl.id..[[);
+CEU->trk.lbl = ]]..lbl.id..[[;
+#endif
+_lbl_ = ]]..lbl.id..[[;
+goto _SWITCH_;
+]])
 end
 
 function COMM (me, comm)
-    LINE(me,'')
     LINE(me, '/* '..comm..' */', 0)
 end
 
@@ -90,7 +117,7 @@ function BLOCK_GATES (me)
                     ..n..'*sizeof(tceu_lbl));')
     end
 
-    for _, ext in pairs(_ENV.exts) do
+    for _, ext in ipairs(_ENV.exts) do
         local t = me.gtes[ext]
         if t then
             local n = t[2] - t[1]
@@ -114,28 +141,12 @@ function BLOCK_GATES (me)
         end
     end
 
-    local n = me.gtes.fins[2] - me.gtes.fins[1]
-    if n > 0 then
-        local lbl = LABEL_gen('Back_Finalizer')
-        LINE(me, 'ceu_track_ins(0,'..me.depth..','..lbl..');')
+    if me.lbl_fin then
+        LINE(me, 'ceu_track_ins(0,'..me.lbl_fin.prio..','..me.lbl_fin.id..');')
         LINE(me, 'ceu_fins('..me.gtes.fins[1]..','..me.gtes.fins[2]..');')
         HALT(me)
-        LABEL_out(me, lbl)
+        CASE(me, me.lbl_fin)
     end
-end
-
-function LABEL_gen (name, ok)
-    name = name .. (ok and '' or '_'..#_CODE.labels)    -- unique name
-    _CODE.labels[#_CODE.labels+1] = name
-    --assert(#_CODE.labels+1 < XXX) -- TODO: limits
-    return name
-end
-
-function LABEL_out (me, name)
-    LINE(me,'', 0)
-    LINE(me, 'case '..name..':', 0)
-    LINE(me, ';')   -- ensures a non-void label-body (Arduino complains)
-    return name
 end
 
 F = {
@@ -150,7 +161,12 @@ F = {
         end
         CONC_ALL(me)
 
-        if not (_SIMUL and _SIMUL.isForever) then
+        if _OPTS.simul_run then
+            SWITCH(me, me.lbl)
+            CASE(me, me.lbl)
+        end
+
+        if not (_OPTS.simul_use and _ANALYSIS.isForever) then
             local ret = _AST.root[1].vars[1]    -- $ret
             LINE(me, 'if (ret) *ret = '..ret.val..';')
             LINE(me, 'return 1;')
@@ -164,33 +180,33 @@ F = {
     SetExp = function (me)
         local e1, e2 = unpack(me)
         COMM(me, 'SET: '..tostring(e1[1]))    -- Var or C
-        LINE(me, e1.val..' = '..e2.val..';')
+        EXP(me, e2)
+        EXP(me, e1)
+        ATTR(me, e1.val, e2.val)
     end,
 
     SetStmt = function (me)
         local e1, e2 = unpack(me)
         CONC(me, e2)
+        EXP(me, e1)     -- after awaking
     end,
 
-    SetBlock_pre = function (me)
-        me.lb_out = LABEL_gen('Set_out')
-    end,
     SetBlock = function (me)
-        local e1, e2 = unpack(me)
-        CONC(me, e2)
+        local _,blk = unpack(me)
+        CONC(me, blk)
+        if _OPTS.simul_run then
+            SWITCH(me, me.lbl_no)
+            CASE(me, me.lbl_no)
+        end
         HALT(me)        -- must escape with `return´
-        LABEL_out(me, me.lb_out)
+        CASE(me, me.lbl_out)
         BLOCK_GATES(me)
     end,
     Return = function (me)
-        local exp = unpack(me)
         local top = _AST.iter'SetBlock'()
-        LINE(me, top[1].val..' = '..exp.val..';')
-        if top.nd_join then
-            LINE(me, 'ceu_track_ins(1,'..top.depth..','..top.lb_out..');')
-        else
-            LINE(me, 'ceu_track_ins(0,'..top.depth..','..top.lb_out..');')
-        end
+        local chk = _ANALYSIS.needsChk and 1 or 0
+        LINE(me, 'ceu_track_ins('..chk..',' ..top.lbl_out.prio..','
+                    ..top.lbl_out.id..', CEU->trk.emt);')
         HALT(me)
     end,
 
@@ -208,101 +224,100 @@ F = {
     Do = function (me)
         local blk, fin = unpack(me)
         if me.finalize then
-            LINE(me, PTR_GTE'fin0'..'['..me.finalize.gte..'] = '..me.finalize.lbl..';')
+            LINE(me, PTR_GTE'fin0'..'['..me.finalize.gte..'] = '
+                        ..me.finalize.lbl.id..';')
         end
         CONC_ALL(me)
     end,
     Finalize = function (me)
-        me.lbl = LABEL_gen('Finalize')
         LINE(me, PTR_GTE'fin0'..'['..me.gte..'] = Inactive;')     -- normal termination
-        LABEL_out(me, me.lbl)
+        if _OPTS.simul_run then
+            SWITCH(me, me.lbl)
+        end
+        CASE(me, me.lbl)
         CONC_ALL(me)
 
         -- halt if block is pending (do not proceed)
-        LINE(me, 'if ('..PTR_GTE'fin0'..'['..me.gte..'] != Inactive)')
+        LINE(me, 'if ('..PTR_GTE'fin0'..'['..me.gte..'] != Inactive) {')
+        LINE(me, PTR_GTE'fin0'..'['..me.gte..'] = Inactive;')
+        HALT(me)
+        LINE(me, '}')
+    end,
+
+    _Par = function (me)
+        -- Ever/Or/And spawn subs
+        COMM(me, me.id..': spawn subs')
+        for i, sub in ipairs(me) do
+            LINE(me, 'ceu_track_ins(0, PR_MAX, '..me.lbls_in[i].id
+                        ..', CEU->trk.emt);')
+        end
         HALT(me)
     end,
 
-    ParEver = function (me)
-        -- INITIAL code :: spawn subs
-        local lbls = {}
-        COMM(me, 'ParEver ($0): spawn subs')
-        for i, sub in ipairs(me) do
-            lbls[i] = LABEL_gen('Sub_'..i)
-            LINE(me, 'ceu_track_ins(0, PR_MAX, '..lbls[i]..');')
-        end
-        HALT(me)
 
-        -- SUB[i] code :: sub / move to ret / jump to tests
+    ParEver = function (me)
+        if _OPTS.simul_run then
+            F.ParAnd(me)
+            SWITCH(me, me.lbl_no)
+            CASE(me, me.lbl_no)
+            HALT(me)
+            return
+        end
+
+        F._Par(me)
         for i, sub in ipairs(me) do
-            LINE(me, '')
-            LINE(me, 'case '..lbls[i]..':', 0)
+            CASE(me, me.lbls_in[i])
             CONC(me, sub)
+            if _OPTS.simul_run then
+                SWITCH(me, me.lbls_no[i])
+                CASE(me, me.lbls_no[i])
+            end
             HALT(me)
         end
     end,
 
     ParOr = function (me)
-        local lb_ret = LABEL_gen('ParOr_join')
+        F._Par(me)
 
-        -- INITIAL code :: spawn subs
-        local lbls = {}
-        COMM(me, 'ParOr ($0): spawn subs')
         for i, sub in ipairs(me) do
-            lbls[i] = LABEL_gen('Sub_'..i)
-            LINE(me, 'ceu_track_ins(0, PR_MAX, '..lbls[i]..');')
-        end
-        HALT(me)
-
-        -- SUB[i] code :: sub / move to ret / jump to tests
-        for i, sub in ipairs(me) do
-            LINE(me, '')
-            LINE(me, 'case '..lbls[i]..':', 0)
+            CASE(me, me.lbls_in[i])
             CONC(me, sub)
             COMM(me, 'PAROR JOIN')
-            if me.nd_join then
-                LINE(me, 'ceu_track_ins(1, '..me.depth..','..lb_ret..');')
-            else
-                LINE(me, 'ceu_track_ins(0, '..me.depth..','..lb_ret..');')
-            end
+            local chk = _ANALYSIS.needsChk and 1 or 0
+            LINE(me, 'ceu_track_ins('..chk..',' ..me.lbl_out.prio..','
+                        ..me.lbl_out.id..', CEU->trk.emt);')
             HALT(me)
         end
 
-        -- AFTER code :: block inner gates
-        LABEL_out(me, lb_ret)
+        CASE(me, me.lbl_out)
         BLOCK_GATES(me)
     end,
 
     ParAnd = function (me)
-        local lb_ret = LABEL_gen('ParAnd_join')
-
-        -- close gates
+        -- close AND gates
         COMM(me, 'close ParAnd gates')
         LINE(me, 'memset('..PTR(me.off)..', 0, '..#me..');')
 
-        -- INITIAL code :: spawn subs
-        local lbls = {}
-        COMM(me, 'ParAnd ($0): spawn subs')
-        for i, sub in ipairs(me) do
-            lbls[i] = LABEL_gen('Sub_'..i)
-            LINE(me, 'ceu_track_ins(0, PR_MAX, '..lbls[i]..');')
-        end
-        HALT(me)
+        F._Par(me)
 
-        -- SUB[i] code :: sub / move to ret / jump to tests
         for i, sub in ipairs(me) do
-            LINE(me, '')
-            LINE(me, 'case '..lbls[i]..':', 0)
+            CASE(me, me.lbls_in[i])
             CONC(me, sub)
+LINE(me, 'fprintf(stderr, "oioi\\n");')
             LINE(me, VAL(me.off+i-1)..' = 1; // open and')  -- open gate
-            SWITCH(me, lb_ret)
+            SWITCH(me, me.lbl_tst)
         end
 
         -- AFTER code :: test gates
-        LABEL_out(me, lb_ret)
+        CASE(me, me.lbl_tst)
         for i, sub in ipairs(me) do
             LINE(me, 'if (!'..VAL(me.off+i-1)..')')
             HALT(me)
+        end
+
+        if _OPTS.simul_run then
+            SWITCH(me, me.lbl_out)
+            CASE(me, me.lbl_out)
         end
     end,
 
@@ -310,56 +325,72 @@ F = {
         local c, t, f = unpack(me)
         -- TODO: If cond assert(c==ptr or int)
 
-        local lb_t = LABEL_gen('True')
-        local lb_f = f and LABEL_gen('False')
-        local lb_e = LABEL_gen('EndIf')
-
-        LINE(me, [[if (]]..c.val..[[) {]])
-        SWITCH(me, lb_t)
-
-        LINE(me, [[} else {]])
-        if lb_f then
-            SWITCH(me, lb_f)
+        if _OPTS.simul_run then
+            EXP(me, c)
+            local id = (me.lbl_f and me.lbl_f.id) or me.lbl_e.id
+            LINE(me, [[
+CEU_SIMUL_PRE(1);
+ceu_track_ins(0, PR_MAX, ]]..id..[[, CEU->trk.emt);
+CEU_SIMUL_POS();
+]])
+            SWITCH(me, me.lbl_t);
         else
-            SWITCH(me, lb_e)
-        end
-        LINE(me, [[}]])
+            LINE(me, [[if (]]..c.val..[[) {]])
+            SWITCH(me, me.lbl_t)
 
-        LABEL_out(me, lb_t)
+            LINE(me, [[} else {]])
+            if me.lbl_f then
+                SWITCH(me, me.lbl_f)
+            else
+                SWITCH(me, me.lbl_e)
+            end
+            LINE(me, [[}]])
+        end
+
+        CASE(me, me.lbl_t)
         CONC(me, t, 4)
-        SWITCH(me, lb_e)
+        SWITCH(me, me.lbl_e)
 
-        if lb_f then
-            LABEL_out(me, lb_f)
+        if me.lbl_f then
+            CASE(me, me.lbl_f)
             CONC(me, f, 4)
-            SWITCH(me, lb_e)
+            SWITCH(me, me.lbl_e)
         end
 
-        LABEL_out(me, lb_e)
+        CASE(me, me.lbl_e)
     end,
 
-    Async = function (me)
+    Async_pos = function (me)
         local vars,blk = unpack(me)
         for _, n in ipairs(vars) do
-            LINE(me, n.new.val..' = '..n.var.val..';')
+            ATTR(me, n.new.val, n[1].var.val)
+            EXP(me, n)
         end
-        local lb = LABEL_gen('Async_'..me.gte)
-        LINE(me, PTR_GTE'async0'..'['..me.gte..'] = '..lb..';')
+        LINE(me, PTR_GTE'async0'..'['..me.gte..'] = '..me.lbl.id..';')
         HALT(me)
-        LABEL_out(me, lb)
-        CONC(me, blk)
+        CASE(me, me.lbl)
+        if _OPTS.simul_run then
+            -- skip `blk´ on simulation
+            local set = _AST.iter()()       -- requires `Async_pos´
+            if set.id == 'SetBlock' then
+                SWITCH(me, set.lbl_out)
+            end
+        else
+            CONC(me, blk)
+        end
     end,
 
-    Loop_pre = function (me)
-        me.lb_out  = LABEL_gen('Loop_out')
-    end,
     Loop = function (me)
         local body = unpack(me)
 
         COMM(me, 'Loop ($0):')
-        local lb_ini = LABEL_out(me, LABEL_gen('Loop_ini'))
-
+        CASE(me, me.lbl_ini)
         CONC(me, body)
+
+        if _OPTS.simul_run then         -- verifies the loop does happen
+            SWITCH(me, me.lbl_mid)
+            CASE(me, me.lbl_mid)
+        end
 
         local async = _AST.iter'Async'()
         if async then
@@ -369,54 +400,62 @@ if (ceu_out_pending()) {
 #else
 {
 #endif
-    ]]..PTR_GTE'async0'..'['..async.gte..'] = '..lb_ini..[[;
+    ]]..PTR_GTE'async0'..'['..async.gte..'] = '..me.lbl_ini.id..[[;
     break;
 }
 ]])
         end
-        SWITCH(me, lb_ini)
+
+        -- a single iter is enough on simul a tight loop
+        if (not _OPTS.simul_run) or me.brk_awt_ret then
+            SWITCH(me, me.lbl_ini)
+        end
 
         -- AFTER code :: block inner gates
-        LABEL_out(me, me.lb_out)
+        CASE(me, me.lbl_out)
         BLOCK_GATES(me)
     end,
 
     Break = function (me)
         local top = _AST.iter'Loop'()
-        if top.nd_join then
-            LINE(me, 'ceu_track_ins(1, '..top.depth..','..top.lb_out..');')
-        else
-            LINE(me, 'ceu_track_ins(0, '..top.depth..','..top.lb_out..');')
-        end
+        local chk = _ANALYSIS.needsChk and 1 or 0
+        LINE(me, 'ceu_track_ins('..chk..',' ..top.lbl_out.prio..','
+                    ..top.lbl_out.id..', CEU->trk.emt);')
         HALT(me)
     end,
 
     EmitExtS = function (me)
-        local acc, exp = unpack(me)
-        local ext = acc.ext
+        local e1, e2 = unpack(me)
+        local ext = e1.ext
 
-        if ext.output then
+        if ext.output then  -- e1 not Exp
             LINE(me, me.val..';')
+            if _OPTS.simul_run then
+                if e2 then
+                    EXP(me, e2)
+                end
+                SWITCH(me, me.lbl_emt)
+                CASE(me, me.lbl_emt)
+            end
             return
         end
 
         assert(ext.input)
-        local lb_cnt = LABEL_gen('Async_cont')
         local async = _AST.iter'Async'()
-        LINE(me, PTR_GTE'async0'..'['..async.gte..'] = '..lb_cnt..';')
-        if exp then
+        LINE(me, PTR_GTE'async0'..'['..async.gte..'] = '..me.lbl_cnt.id..';')
+        if e2 then
             if _TP.deref(ext.tp) then
                 LINE(me, 'return ceu_go_event(ret, IN_'..ext.id
-                        ..', (void*)'..exp.val..');')
+                        ..', (void*)'..e2.val..');')
             else
                 LINE(me, 'return ceu_go_event(ret, IN_'..ext.id
-                        ..', (void*)ceu_ext_f('..exp.val..'));')
+                        ..', (void*)ceu_ext_f('..e2.val..'));')
             end
 
         else
             LINE(me, 'return ceu_go_event(ret, IN_'..ext.id ..', NULL);')
         end
-        LABEL_out(me, lb_cnt)
+        CASE(me, me.lbl_cnt)
     end,
 
     EmitInt = function (me)
@@ -425,31 +464,38 @@ if (ceu_out_pending()) {
 
         -- attribution
         if exp then
-            LINE(me, int.val..' = '..exp.val..';')
+            ATTR(me, int.val, exp.val)
+        end
+
+        if _OPTS.simul_run then -- int not Exp
+            if exp then
+                EXP(me, exp)
+            end
+            SWITCH(me, me.lbl_emt)
+            CASE(me, me.lbl_emt)
         end
 
         -- emit
-        local lb_cnt = LABEL_gen('Cnt_'..var.id)
-        local lb_awk = LABEL_gen('Awk_'..var.id)
         LINE(me, [[
 // Emit ]]..var.id..';\n'..
-PTR_GTE'emit0'..'['..me.gte..    '] = '..lb_cnt..';\n'..
-PTR_GTE'emit0'..'['..(me.gte+1)..'] = '..lb_awk..[[;
-ceu_track_ins(0, _step_+1, ]]..me.gte..[[);
-ceu_track_ins(0, _step_+2, ]]..(me.gte+1)..[[);
+PTR_GTE'emit0'..'['..me.gte..    '] = '..me.lbl_cnt.id..';\n'..
+PTR_GTE'emit0'..'['..(me.gte+1)..'] = '..me.lbl_awk.id..[[;
+ceu_track_ins(0, _step_+1, ]]..me.gte..[[, CEU->trk.emt);
+ceu_track_ins(0, _step_+2, ]]..(me.gte+1)..[[, CEU->trk.emt);
 break;
 ]])
-        LABEL_out(me, lb_awk)
-        LINE(me, 'ceu_trigger('..var.awt0..');')
+
+        CASE(me, me.lbl_awk)
+        LINE(me, 'ceu_trigger('..var.awt0..','..me.lbl_cnt.id..');')
         HALT(me)
-        LABEL_out(me, lb_cnt)
+        CASE(me, me.lbl_cnt)
     end,
 
     EmitT = function (me)
         local exp = unpack(me)
         local async = _AST.iter'Async'()
-        local lb_cnt = LABEL_gen('Async_cont')
-        LINE(me, PTR_GTE'async0'..'['..async.gte..'] = '..lb_cnt..';')
+        EXP(me, exp)
+        LINE(me, PTR_GTE'async0'..'['..async.gte..'] = '..me.lbl_cnt.id..';')
         LINE(me, [[
 #ifdef CEU_WCLOCKS
 { int s = ceu_go_wclock(ret,]]..exp.val..[[);
@@ -461,52 +507,62 @@ break;
 return 0;
 #endif
 ]])
-        LABEL_out(me, lb_cnt)
+        CASE(me, me.lbl_cnt)
     end,
 
     CallStmt = function (me)
         local call = unpack(me)
-        LINE(me, call.val..';')
+        if not _OPTS.simul_run then
+            LINE(me, call.val..';')
+        end
     end,
 
     AwaitN = function (me)
         COMM(me, 'Never')
-        HALT(me)
+        HALT(me, true)
     end,
     AwaitT = function (me)
         local exp = unpack(me)
-        local lb = LABEL_gen('WCLOCK')
         CONC(me, exp)
-        LINE(me, 'ceu_wclock_enable('..me.gte..', '..exp.val..', '..lb..');')
-        HALT(me)
-        LABEL_out(me, lb)
+
+        local val = exp.val
+        if _OPTS.simul_run and (exp.id=='WCLOCKE') then
+            val = 'CEU_WCLOCK_ANY'
+        end
+        LINE(me, 'ceu_wclock_enable('..me.gte..', '..val
+                    ..', '..me.lbl.id..');')
+
+        HALT(me, true)
+        CASE(me, me.lbl)
         if me.toset then
             LINE(me, me.toset.val..' = CEU->wclk_late;')
         end
     end,
     AwaitExt = function (me)
-        local acc,_ = unpack(me)
-        local lb = LABEL_gen('Await_'..acc.ext.id)
-        LINE(me, '*'..PTR_EXT(acc.ext.n,me.gte)..' = '..lb..';')
-        HALT(me)
-        LABEL_out(me, lb)
+        local e1,_ = unpack(me)
+        LINE(me, '*'..PTR_EXT(e1.ext.n,me.gte)..' = '..me.lbl.id..';')
+        HALT(me, true)
+        CASE(me, me.lbl)
         if me.toset then
-            if _TP.deref(acc.ext.tp) then
-                LINE(me, '\t'..me.toset.val..' = ('.._TP.no_(acc.ext.tp)..')CEU->ext_data;')
+            if _TP.deref(e1.ext.tp) then
+                ATTR(me, me.toset.val, '('.._TP.no_(e1.ext.tp)..')CEU->ext_data')
             else
-                LINE(me, '\t'..me.toset.val..' = *((int*)CEU->ext_data);')
+                ATTR(me, me.toset.val, '*((int*)CEU->ext_data)')
             end
         end
     end,
     AwaitInt = function (me)
         local int,_ = unpack(me)
-        local lb = LABEL_gen('Await_'..int.var.id)
         LINE(me, VAL(int.var.awt0+1+me.gte*_ENV.types.tceu_lbl, 'tceu_lbl*')
-                    ..' = '..lb..';')
-        HALT(me)
-        LABEL_out(me, lb)
+                    ..' = '..me.lbl.id..';')
+        if _OPTS.simul_run then -- int not Exp
+            SWITCH(me, me.lbl_awt)
+            CASE(me, me.lbl_awt)
+        end
+        HALT(me, true)
+        CASE(me, me.lbl)
         if me.toset then
-            LINE(me, me.toset.val..' = '..int.val..';')
+            ATTR(me, me.toset.val, int.val)
         end
     end,
 }

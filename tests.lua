@@ -1,7 +1,16 @@
 --[===[
 --]===]
 
-Test { [[return(1);]], run=1 }
+Test { [[return(1);]],
+    simul = {
+        needsPrio = false,
+        needsChk  = false,
+        isForever = false,
+        n_tracks  = 1,
+    },
+    run = 1,
+}
+
 Test { [[return (1);]], run=1 }
 Test { [[return 1;]], run=1 }
 
@@ -77,7 +86,10 @@ Test { [[return sizeof<int>;]], run=4 }
 Test { [[return 1<2>3;]], run=0 }
 
 Test { [[int a;]],
-    dfa = 'missing return statement',
+    simul = {
+        n_reachs = 1,
+        isForever = true,
+    }
 }
 Test { [[a = 1; return a;]],
     env = 'variable/event "a" is not declared',
@@ -95,7 +107,10 @@ Test { [[int a = 1; return (a);]],
     run = 1,
 }
 Test { [[int a = 1;]],
-    dfa = 'missing return statement',
+    simul = {
+        n_reachs = 1,
+        isForever = true,
+    }
 }
 Test { [[int a=1;int a=0; return a;]],
     --env = 'variable/event "a" is already declared',
@@ -133,7 +148,10 @@ Test { [[int a; a=1 ; a=a; return a;]],
     run = 1,
 }
 Test { [[int a; a=1 ; nothing; nothing;]],
-    dfa = 'missing return statement',
+    simul = {
+        n_reachs = 1,
+        isForever = true,
+    }
 }
 Test { [[int a; a=1 ; call a; return a;]],
     env = 'invalid statement',
@@ -142,19 +160,34 @@ Test { [[int a; a=1 ; call a; return a;]],
     -- IF
 
 Test { [[if 1 then return 1; end; return 0;]],
+    simul = {
+        isForever = false,
+        needsPrio = false,
+        needsChk  = false,
+        n_tracks  = 1,
+    },
     run = 1,
 }
 Test { [[if 0 then return 0; end  return 1;]],
     run = 1,
 }
 Test { [[if 0 then return 0; else return 1; end]],
+    simul = {
+        isForever = false,
+        needsPrio = false,
+        needsChk  = false,
+        n_tracks  = 1,
+    },
     run = 1,
 }
 Test { [[if (0) then return 0; else return 1; end;]],
     run = 1,
 }
 Test { [[if (1) then return (1); end]],
-    dfa = 'missing return statement',
+    simul = {
+        n_reachs = 1,
+    },
+    run = 1,
 }
 Test { [[
 if (0) then
@@ -211,11 +244,14 @@ Test { [[
 if 0 then
     return 1;
 else
-    if 0 then
+    if 1 then
         return 1;
     end
 end;]],
-    dfa = 'missing return statement',
+    simul = {
+        n_reachs = 1,
+    },
+    run = 1,
 }
 Test { [[
 if 0 then
@@ -227,6 +263,12 @@ else
         return 2;
     end
 end;]],
+    simul = {
+        isForever = false,
+        needsPrio = false,
+        needsChk  = false,
+        n_tracks  = 1,
+    },
     run = 2,
 }
 Test { [[
@@ -295,7 +337,10 @@ return 1;
 }
 
 Test { [[input  int A;]],
-    dfa = 'missing return statement',
+    simul = {
+        n_reachs = 1,
+        isForever = true,
+    },
 }
 Test { [[input int A,A; return 0;]],
     env = 'event "A" is already declared',
@@ -303,7 +348,10 @@ Test { [[input int A,A; return 0;]],
 Test { [[
 input int A,B,C;
 ]],
-    dfa = 'missing return statement',
+    simul = {
+        n_reachs = 1,
+        isForever = true,
+    },
 }
 
 Test { [[await A; return 0;]],
@@ -321,7 +369,13 @@ with
 end;
 return 10;
 ]],
-    run = 10
+    simul = {
+        isForever = false,
+        needsPrio = false,
+        needsChk  = false,
+        n_tracks  = 2,
+    },
+    run = 10,
 }
 
 Test { [[
@@ -365,7 +419,13 @@ with
 end;
 return v;
 ]],
-    run = 10
+    simul = {
+        isForever = false,
+        needsPrio = false,
+        needsChk  = false,
+        n_tracks  = 2,
+    },
+    run = 10,
 }
 
 Test { [[
@@ -469,10 +529,11 @@ Test { [[
 type _t = 1;
 output int A;
 _t v = 1;
+call v();
 emit A(v);
 return(1);
 ]],
-    run = false,
+    todo = 'simul fail',
 }
 Test { [[
 output int A;
@@ -565,6 +626,49 @@ return 0;
     env = 'event "A" is not declared',
 }
 
+Test { [[
+output void A, B;
+par/or do
+    emit A;
+with
+    emit A;
+end
+return 1;
+]],
+    simul = {
+        nd_acc = 1,
+    },
+    run = 1,
+}
+
+Test { [[
+output void A, B;
+par/or do
+    emit A;
+with
+    emit B;
+end
+return 1;
+]],
+    simul = {
+        nd_acc = 1,
+    },
+    run = 1,
+}
+
+Test { [[
+output void A, B;
+deterministic A with B;
+par/or do
+    emit A;
+with
+    emit B;
+end
+return 1;
+]],
+    run = 1,
+}
+
     -- WALL-CLOCK TIME
 
 Test { [[await 0ms; return 0;]],
@@ -590,14 +694,25 @@ Test { [[await -1; return 0;]],
 }
 
 Test { [[s32 a=await 10s; return a==8000000;]],
+    simul = {
+        isForever = false,
+        needsPrio = false,
+        needsChk  = false,
+        n_tracks  = 1,
+    },
     run = {
         ['~>10s'] = 0,
         ['~>9s ; ~>9s'] = 1,
-    }
+    },
 }
 
 Test { [[await Forever;]],
-    forever = true,
+    simul = {
+        isForever = true,
+        needsPrio = false,
+        needsChk  = false,
+        n_tracks  = 1,
+    },
 }
 Test { [[await Forever; await Forever;]],
     parser = "ERR : line 1 : after `;´ : expected EOF",
@@ -614,7 +729,23 @@ a = set async do
 end;
 return a + 1;
 ]],
-    dfa = 'missing return statement',
+    todo = 'async nao termina',
+    run = false,
+}
+
+Test { [[
+async do
+    nothing;
+end
+return 10;
+]],
+    simul = {
+        isForever = false,
+        needsPrio = false,
+        needsChk  = false,
+        n_tracks  = 1,
+    },
+    run = 10,
 }
 
 Test { [[
@@ -625,7 +756,13 @@ a = set async do
 end;
 return a + 1;
 ]],
-    run = 11
+    simul = {
+        isForever = false,
+        needsPrio = false,
+        needsChk  = false,
+        n_tracks  = 1,
+    },
+    run = 11,
 }
 
 Test { [[
@@ -634,7 +771,7 @@ async do
     return 10;
 end
 ]],
-    async = 'invalid return statement',
+    async = 'ERR : line 3 : invalid access from async',
 }
 
 -- Seq
@@ -692,8 +829,10 @@ with
 end
 return 0;
 ]],
-    unreach = 1,
-    forever = true,
+    simul = {
+        n_unreachs = 1,
+        isForever = true,
+    },
 }
 
 Test { [[
@@ -714,8 +853,10 @@ with
 end
 return 0;
 ]],
-    unreach = 1,
-    forever =  true,
+    simul = {
+        n_unreachs = 1,
+        isForever =  true,
+    },
 }
 
 Test { [[
@@ -725,7 +866,9 @@ with
     await 1s;
 end
 ]],
-    forever = true,
+    simul = {
+        isForever = true,
+    }
 }
 
 Test { [[
@@ -735,7 +878,9 @@ with
     await Forever;
 end
 ]],
-    forever = true,
+    simul = {
+        isForever = true,
+    },
 }
 
 Test { [[
@@ -745,7 +890,10 @@ with
     await 1s;
 end
 ]],
-    forever = true,
+    simul = {
+        n_reachs = 1,
+        isForever = true,
+    },
 }
 
 Test { [[
@@ -766,6 +914,12 @@ with
     end
 end
 ]],
+    simul = {
+        isForever = false,
+        needsPrio = true,
+        needsChk  = true,
+        n_tracks  = 3,
+    },
     run = 3,
 }
 
@@ -828,16 +982,43 @@ with
     return 1;
 end
 ]],
-    --dfa = 'unreachable statement',
-    unreach = 1,
-    nd_flw = 1,
+    simul = {
+        n_unreachs = 1,
+        --nd_flw = 1,
+    },
     run = 1,
 }
 
--- TODO: 3 opcoes:
--- 1: nd_acc=1, como esta agora
--- 2: nada de errado, ja que a=2 acontece antes do par/or reiniciar do loop
--- 3: nd_flw=1
+Test { [[
+input void F;
+int a = 0;
+loop do
+    par/or do
+        await 2s;
+    with
+        a = a + 1;
+        await F;
+        break;
+    with
+        await 1s;
+        loop do
+            a = a * 2;
+            await 1s;
+        end
+    end
+end
+return a;
+]],
+    simul = {
+        needsPrio = true,
+        needsChk  = false,
+        n_tracks  = 3,
+        n_unreachs = 1,
+        nd_acc = 1,         -- TODO: =0
+    },
+    run = { ['~>5s; ~>F']=42 },
+}
+
 Test { [[
 int a;
 loop do
@@ -855,9 +1036,14 @@ loop do
     end
 end
 ]],
-    nd_acc = 1,
-    unreach = 2,
-    forever = true,
+    simul = {
+        isForever = true,
+        needsPrio = true,
+        needsChk  = false,
+        n_tracks  = 3,
+        n_unreachs = 2,
+        nd_acc = 1,         -- TODO: =0
+    },
 }
 
 Test { [[
@@ -872,8 +1058,10 @@ with
 end;
 return 0;
 ]],
-    unreach = 2,
-    forever = true,
+    simul = {
+        n_unreachs = 2,
+        isForever = true,
+    },
 }
 
 Test { [[
@@ -886,8 +1074,9 @@ with
     return 1;
 end;
 ]],
-    unreach = 1,
-    --dfa = 'unreachable statement',
+    simul = {
+        n_unreachs = 1,
+    },
     run = { ['~>A;~>B']=1, },
 }
 
@@ -898,8 +1087,10 @@ with
     return 1;
 end
 ]],
-    nd_flw = 1,
-    unreach = 1,
+    simul = {
+        n_unreachs = 1,
+    },
+    run = 1,
 }
 Test { [[
 par do
@@ -908,7 +1099,7 @@ with
     return 1;
 end
 ]],
-    nd_flw = 1,
+    --nd_flw = 1,
     run = 1,
 }
 Test { [[
@@ -918,8 +1109,10 @@ with
     return 1;
 end
 ]],
-    unreach = 1,
-    nd_flw = 1,
+    simul = {
+        n_unreachs = 1,
+    },
+    --nd_flw = 1,
     run = 1,
 }
 Test { [[
@@ -941,8 +1134,11 @@ with
     return 1;
 end
 ]],
-    unreach = 1,
-    nd_flw = 1,
+    todo = 'async dos not execute',
+    simul = {
+        --n_unreachs = 1,
+        --nd_flw = 1,
+    },
     run = 1,
 }
 
@@ -987,7 +1183,9 @@ with
 end;
 return a;
 ]],
-    unreach = 1,
+    simul = {
+        n_unreachs = 1,
+    },
     run = { ['1~>A;1~>F']=513, ['2~>B;0~>F']=513 },
 }
 
@@ -998,8 +1196,10 @@ loop do
     await 2s;
 end;
 ]],
-    forever = true,
-    unreach = 1,
+    simul = {
+        isForever = true,
+        n_unreachs = 1,
+    },
 }
 
 Test { [[
@@ -1015,7 +1215,10 @@ with
     end;
 end;
 ]],
-    forever = true,
+    simul = {
+        n_unreachs = 2,  -- TODO: 0
+        isForever = true,
+    },
 }
 
 Test { [[
@@ -1102,7 +1305,7 @@ return a;
 ]],
     -- TODO: melhor seria: unexpected statement
     parser = "ERR : line 17 : after `;´ : expected `with´",
-    --unreach = 1,
+    --n_unreachs = 1,
     run = {
         ['1~>B; ~>20ms; 1~>F'] = 1,
         ['~>20ms; 5~>B; 2~>F'] = 10,
@@ -1158,7 +1361,9 @@ loop do
 end;
 return 1;
 ]],
-    unreach = 1,    -- re-loop
+    simul = {
+        n_unreachs = 1,    -- re-loop
+    },
     run = 1,
 }
 
@@ -1171,7 +1376,9 @@ loop do
 end;
 return 0;
 ]],
-    unreach = 2,
+    simul = {
+        n_unreachs = 2,
+    },
     run = 1,
 }
 
@@ -1184,7 +1391,9 @@ loop do
 end;
 return 0;
 ]],
-    unreach = 4,
+    simul = {
+        n_unreachs = 4,
+    },
     run = 1,
 }
 
@@ -1210,8 +1419,10 @@ loop do
 end;
 return 1;
 ]],
-    unreach = 1,
-    nd_flw = 1,
+    simul = {
+        n_unreachs = 1,
+        --nd_flw = 1,
+    },
     run = 1,
 }
 
@@ -1228,7 +1439,9 @@ loop do
 end;
 return 1;
 ]],
-    unreach = 1,
+    simul = {
+        n_unreachs = 1,
+    },
     run = { ['~>A;~>B']=1, }
 }
 
@@ -1240,10 +1453,12 @@ loop do
         return 1;
     end;
 end;
-return 1;   // unreach
+return 1;   // n_unreachs
 ]],
-    unreach = 2,
-    nd_flw =1,
+    simul = {
+        n_unreachs = 2,
+        --nd_flw =1,
+    },
     run = 1,
 }
 
@@ -1258,9 +1473,11 @@ loop do
         return 1;
     end;
 end;
-return 1;   // unreach
+return 1;   // n_unreachs
 ]],
-    unreach = 2,
+    simul = {
+        n_unreachs = 2,
+    },
     run = { ['~>A;~>B']=1, }
 }
 
@@ -1284,8 +1501,10 @@ loop do
     v = await A;
 end;
 ]],
-    unreach = 1,
-    forever = true,
+    simul = {
+        n_unreachs = 1,
+        isForever = true,
+    },
 }
 
 Test { [[
@@ -1298,7 +1517,12 @@ return a;
 
 Test { [[break; return 1;]], parser="ERR : line 1 : after `;´ : expected EOF" }
 Test { [[break; break;]], parser="ERR : line 1 : after `;´ : expected EOF" }
-Test { [[loop do break; end; return 1;]], unreach=1, run=1 }
+Test { [[loop do break; end; return 1;]],
+    simul = {
+        n_unreachs=1,
+    },
+    run=1
+}
 Test { [[
 int ret;
 loop do
@@ -1307,7 +1531,9 @@ loop do
 end;
 return ret;
 ]],
-    unreach = 1,
+    simul = {
+        n_unreachs = 1,
+    },
     run = 1,
 }
 
@@ -1339,8 +1565,10 @@ loop do
     end;
 end;
 ]],
-    unreach = 4,
-    forever = true,
+    simul = {
+        n_unreachs = 4,
+        isForever = true,
+    },
 }
 
 -- EX.05
@@ -1350,8 +1578,10 @@ loop do
     await A;
 end;
 ]],
-    unreach = 1,
-    forever = true,
+    simul = {
+        n_unreachs = 1,
+        isForever = true,
+    },
 }
 Test{ [[
 input int E;
@@ -1360,8 +1590,10 @@ loop do
     a = await E;
 end;
 ]],
-    unreach = 1,
-    forever = true,
+    simul = {
+        n_unreachs = 1,
+        isForever = true,
+    },
 }
 Test{ [[
 input int E;
@@ -1374,8 +1606,10 @@ loop do
     end;
 end;
 ]],
-    unreach = 1,
-    forever = true,
+    simul = {
+        n_unreachs = 1,
+        isForever = true,
+    },
 }
 Test { [[
 int a;
@@ -1481,8 +1715,10 @@ else
 end;
 return 0;
 ]],
-    unreach = 2,
-    forever = true,
+    simul = {
+        n_unreachs = 2,
+        isForever = true,
+    },
 }
 Test { [[
 input int A;
@@ -1492,8 +1728,10 @@ else
     loop do await A; end;
 end;
 ]],
-    unreach = 2,
-    forever = true,
+    simul = {
+        n_unreachs = 2,
+        isForever = true,
+    },
 }
 Test { [[
 input int A;
@@ -1555,13 +1793,13 @@ with
 end
 return sum;
 ]],
-    nd_acc = 1,
-    unreach = 2,
+    simul = {
+        nd_acc = 1,
+        n_unreachs = 2,
+    },
     run = 1,
 }
 
--- TODO: bounded
---[=[
 Test { [[
 input int A;
 int sum = 0;
@@ -1575,16 +1813,21 @@ with
 end
 return sum;
 ]],
-    unreach = 2,
+    simul = {
+        nd_acc = 1,
+        n_unreachs = 2,
+    },
     run = 1,
 }
 
 Test { [[
 input int A;
 int sum = 0;
+int ret = 0;
 par/or do
     loop i, 2 do
         await A;
+        ret = ret + 1;
     end
     sum = 0;
 with
@@ -1592,17 +1835,22 @@ with
     await A;
     sum = 1;
 end
-return sum;
+return ret;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
+    run = { ['~>A; ~>A; ~>A']=2 },
 }
 
 Test { [[
 input int A;
 int sum = 0;
+int ret = 0;
 par/or do
     loop i, 3 do
         await A;
+        ret = ret + 1;
     end
     sum = 0;
 with
@@ -1610,9 +1858,12 @@ with
     await A;
     sum = 1;
 end
-return sum;
+return ret;
 ]],
-    run = { ['~>A;~>A'] = 1 },
+    simul = {
+        nd_acc = 1,
+    },
+    run = { ['~>A;~>A'] = 2 },
 }
 
 Test { [[
@@ -1631,6 +1882,10 @@ with
 end
 return sum;
 ]],
+    simul = {
+        n_unreachs = 2,
+        nd_acc = 1,
+    },
     run = 1,
 }
 
@@ -1658,7 +1913,6 @@ return sum;
 ]],
     run = 7,
 }
-]=]
 
 Test { [[
 int sum = 0;
@@ -1669,8 +1923,6 @@ return sum;
 ]],
     run = 5050,
 }
--- TODO: set should raise an error
---[=[
 Test { [[
 int sum = 0;
 for i=1, 100 do
@@ -1679,9 +1931,9 @@ for i=1, 100 do
 end
 return sum;
 ]],
+    todo = 'set should raise an error',
     run = 5050,
 }
-]=]
 Test { [[
 int sum = 5050;
 loop i, 100 do
@@ -1792,7 +2044,9 @@ await A;
 await A;
 return a;
 ]],
-    unreach = 1,
+    simul = {
+        n_unreachs = 1,
+    },
     run = { ['0~>A;0~>A;0~>A'] = 1 }
 }
 
@@ -1807,7 +2061,13 @@ with
     return a;
 end;
 ]],
-    run = { ['~>10h; ~>10h ; 0~>F'] = 1 }
+    simul = {
+        isForever = false,
+        needsPrio = false,
+        needsChk  = false,
+        n_tracks  = 2,
+    },
+    run = { ['~>1min; ~>1min ; 0~>F'] = 1 },
 }
 
 Test { [[
@@ -1850,8 +2110,10 @@ emit c(10);
 await c;
 return 0;
 ]],
-    unreach = 1,
-    forever = true,
+    simul = {
+        n_unreachs = 1,
+        isForever = true,
+    },
     --trig_wo = 1,
 }
 
@@ -1892,6 +2154,9 @@ with
     end;
 end;
 ]],
+    simul = {
+        n_unreachs = 1,
+    },
     run = 4,
 }
 
@@ -1905,7 +2170,9 @@ with
 end;
 return ret;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
 }
 Test { [[
 input int A;
@@ -1919,7 +2186,10 @@ with
 end;
 return a;
 ]],
-    nd_acc  = 1,
+    simul = {
+        nd_acc  = 1,
+    },
+    run = { ['10~>A']=10 },
 }
 
 Test { [[
@@ -1938,9 +2208,11 @@ int a = set
     end;
 return a;
 ]],
-    unreach = 1,
-    nd_acc = 1,
-    nd_flw = 2,
+    simul = {
+        n_unreachs = 1,
+        nd_acc = 1,
+        --nd_flw = 2,
+    },
 }
 
 Test { [[
@@ -1959,8 +2231,10 @@ a = set
     end;
 return a;
 ]],
-    nd_acc = 1,
-    nd_flw = 3,
+    simul = {
+        nd_acc = 1,
+    --nd_flw = 3,
+    },
 }
 
 Test { [[
@@ -1980,9 +2254,12 @@ with
 end;
 return a;
 ]],
-    unreach = 1,
-    nd_acc  = 1,
-    nd_flw  = 2,
+    simul = {
+        n_unreachs = 1,
+        nd_acc  = 1,
+        --nd_flw  = 2,
+    },
+    run = { ['1~>A']=1 },
 }
 
 Test { [[
@@ -2002,8 +2279,10 @@ with
 end;
 return a;
 ]],
-    nd_acc = 1,
-    nd_flw = 2,
+    simul = {
+        nd_acc = 1,
+        --nd_flw = 2,
+    },
 }
 
 Test { [[
@@ -2024,13 +2303,16 @@ with
 end;
 return a;
 ]],
-    nd_acc = 1,
-    nd_flw = 2,
+    simul = {
+        nd_acc = 1,
+        --nd_flw = 2,
+    },
+    run = { ['1~>A']=1 },
 }
 
 Test { [[
 input int A;
-int a;
+int a = 0;
 par/or do
     if 1 then
         a = await A;
@@ -2042,7 +2324,10 @@ with
 end;
 return a;
 ]],
-    nd_acc  = 1,
+    simul = {
+        nd_acc  = 1,
+    },
+    run = 0,
 }
 
 Test { [[
@@ -2062,23 +2347,28 @@ return a + b;
 
 Test { [[
 input int A,B;
-int a,b;
+int a,b,c,d;
 par/or do
     par/and do
         a = await A;
     with
         b = await B;
     end;
+    c = 1;
 with
     par/and do
         b = await B;
     with
         a = await A;
     end;
+    d = 2;
 end;
-return a + b;
+return a + b + c + d;
 ]],
-    nd_acc = 2,
+    simul = {
+        nd_acc = 2,
+    },
+    run = { ['0~>A;5~>B']=8 },
 }
 
 Test { [[
@@ -2099,7 +2389,7 @@ return ret;
 
 Test { [[
 input int A,B;
-int a,b;
+int a=0,b=0;
 par/or do
     if 1 then
         a = await A;
@@ -2115,7 +2405,10 @@ with
 end;
 return a + b;
 ]],
-    nd_acc = 2,
+    simul = {
+        nd_acc = 2,
+    },
+    run = { ['1~>A;10~>B']=1 },
 }
 
 Test { [[
@@ -2125,8 +2418,10 @@ with
     return 2;
 end;
 ]],
-    nd_acc = 1,
-    nd_flw = 2,
+    simul = {
+        nd_acc = 1,
+        --nd_flw = 2,
+    },
 }
 Test { [[
 input int A;
@@ -2137,8 +2432,10 @@ with
     return 1;
 end;
 ]],
-    unreach = 1,
-    nd_flw = 1,
+    simul = {
+        n_unreachs = 1,
+        --nd_flw = 1,
+    },
     run = 1,
 }
 Test { [[
@@ -2151,8 +2448,10 @@ with
     return v;
 end;
 ]],
-    nd_flw = 2,
-    nd_acc = 1,
+    --nd_flw = 2,
+    simul = {
+        nd_acc = 1,
+    },
     run = { ['1~>A']=1, ['2~>A']=2 },
 }
 
@@ -2164,7 +2463,7 @@ with
 end;
 ]],
     run = 10,
-    nd_flw = 1,
+    --nd_flw = 1,
 }
 
 Test { [[
@@ -2292,8 +2591,10 @@ with
     return b;
 end;
 ]],
-    nd_flw = 2,
-    nd_acc = 1,
+    --nd_flw = 2,
+    simul = {
+        nd_acc = 1,
+    },
     run = {
         ['~>10ms'] = 0,
         ['~>20ms'] = 10000,
@@ -2308,7 +2609,9 @@ with
 end;
 return a;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
     run = {
         ['~>10ms'] = 0,
         ['~>20ms'] = 10000,
@@ -2402,8 +2705,10 @@ with
     return b;
 end;
 ]],
-    nd_acc = 1,
-    nd_flw = 2,
+    simul = {
+        nd_acc = 1,
+        --nd_flw = 2,
+    },
 }
 Test { [[
 int a=0,b=0;
@@ -2431,8 +2736,10 @@ with
     return b;
 end;
 ]],
-    nd_acc = 1,
-    nd_flw = 3,
+    simul = {
+        nd_acc = 1,
+        --nd_flw = 3,
+    },
 }
 Test { [[
 int a,b;
@@ -2446,7 +2753,9 @@ with
 end;
 ]],
     todo = 'await(x) pode ser 0?',  -- TIME_undef
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
 }
 
 Test { [[
@@ -2461,8 +2770,10 @@ with
 end
 return v;
 ]],
-    unreach = 1,
-    nd_acc = 1,
+    simul = {
+        n_unreachs = 1,
+        nd_acc = 1,
+    },
 }
 
 Test { [[
@@ -2478,9 +2789,11 @@ loop do
 end
 return v;
 ]],
-    nd_flw = 1,
+    --nd_flw = 1,
     run = 2,
-    unreach = 3,
+    simul = {
+        n_unreachs = 3,
+    },
 }
 
 Test { [[
@@ -2513,8 +2826,10 @@ loop do
     end
 end
 ]],
-    unreach = 1,
-    forever = true,
+    simul = {
+        n_unreachs = 1,
+        isForever = true,
+    },
 }
 Test { [[
 input int A;
@@ -2537,8 +2852,10 @@ loop do
     end
 end
 ]],
-    unreach = 2,
-    forever = true,
+    simul = {
+        n_unreachs = 2,
+        isForever = true,
+    },
 }
 Test { [[
 input int A;
@@ -2559,8 +2876,10 @@ loop do
     end;
 end;
 ]],
-    unreach = 2,
-    forever = true,
+    simul = {
+        n_unreachs = 2,
+        isForever = true,
+    },
 }
 Test { [[
 int a;
@@ -2582,9 +2901,12 @@ loop do
     end;
 end;
 ]],
-    nd_acc = 1,
-    unreach = 2,
-    forever = true,
+    todo = 'segfault em simul',
+    simul = {
+        n_unreachs = 2,
+        isForever = true,
+        nd_acc = 1,
+    },
 }
 Test { [[
 loop do
@@ -2597,6 +2919,22 @@ end;
 return 0;
 ]],
     run = { ['~>20ms'] = 0 }
+}
+Test { [[
+par do
+    loop do
+        await (20)ms;
+    end;
+with
+    loop do
+        await 20ms;
+    end;
+end;
+]],
+    simul = {
+        n_unreachs = 2,
+        isForever = true
+    },
 }
 Test { [[
 int a;
@@ -2615,10 +2953,13 @@ with
         a = 1;
     end;
 end;
-return 0;
+return a;
 ]],
-    nd_acc = 1,
-    unreach = 1,
+    simul = {
+        n_unreachs = 1,
+        nd_acc = 1,
+    },
+    run = { ['~>11ms']=1 },
 }
 Test { [[
 input int A;
@@ -2631,8 +2972,10 @@ loop do
     end;
 end;
 ]],
-    forever = true,
-    unreach = 1,
+    simul = {
+        n_unreachs = 1,
+        isForever = true,
+    },
 }
 Test { [[
 int a;
@@ -2654,9 +2997,12 @@ loop do
     end;
 end;
 ]],
-    nd_acc = 1,
-    unreach = 2,
-    forever = true,
+    todo = 'segfault em simul',
+    simul = {
+        n_unreachs = 2,
+        isForever = true,
+        nd_acc = 1,
+    },
 }
 Test { [[
 int a;
@@ -2678,9 +3024,12 @@ loop do
     end;
 end;
 ]],
-    nd_acc = 1,
-    unreach = 2,
-    forever = true,
+    todo = 'segfault em simul',
+    simul = {
+        n_unreachs = 2,
+        isForever = true,
+        nd_acc = 1,
+    },
 }
 Test { [[
 int a,b;
@@ -2694,7 +3043,9 @@ with
 end;
 ]],
     todo = 'await(x) pode ser <0?',  -- TIME_undef
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
 }
 Test { [[
 int a,b;
@@ -2706,8 +3057,10 @@ with
     return b;
 end;
 ]],
-    nd_flw = 2,
-    nd_acc = 1,
+    --nd_flw = 2,
+    simul = {
+        nd_acc = 1,
+    },
     run = {
         ['~>10ms'] = 0,
         ['~>20ms'] = 10000,
@@ -2740,8 +3093,10 @@ with
     return c;
 end;
 ]],
-    nd_flw = 6,
-    nd_acc = 3,
+    simul = {
+        nd_acc = 3,
+        --nd_flw = 6,
+    },
 }
 Test { [[
 int a=0,b=0,c=0;
@@ -2788,8 +3143,10 @@ with
     return c;
 end;
 ]],
-    nd_flw = 6,
-    nd_acc = 3,
+    simul = {
+        --nd_flw = 6,
+        nd_acc = 3,
+    },
 }
 Test { [[
 s32 a,b;
@@ -2801,7 +3158,9 @@ with
     return b;
 end;
 ]],
-    unreach = 1,
+    simul = {
+        n_unreachs = 1,
+    },
     run = {
         ['~>10min']  = 0,
         ['~>20min']  = 600000000,
@@ -2823,7 +3182,9 @@ with
 end;
 return a;
 ]],
-    unreach = 1,
+    simul = {
+        n_unreachs = 1,
+    },
     run = {
         ['~>10s'] = 2,
         ['~>20s'] = 2,
@@ -2857,7 +3218,9 @@ with
 end;
 return a;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
 }
 Test { [[
 s32 v1,v2;
@@ -2870,8 +3233,10 @@ with
     return v2;
 end;
 ]],
-    nd_flw = 2,
-    nd_acc = 1,
+    --nd_flw = 2,
+    simul = {
+        nd_acc = 1,
+    },
     run = {
         ['~>1min ; ~>1min ; ~>1min ; ~>1min ; ~>1min'] = 0,
         ['~>2min ; ~>4min'] = 60000000,
@@ -2887,8 +3252,10 @@ loop do
     await 10ms;
 end;
 ]],
-    unreach = 1,
-    forever = true,
+    simul = {
+        n_unreachs = 1,
+        isForever = true,
+    },
 }
 
 Test { [[
@@ -2898,8 +3265,10 @@ loop do
     await 10ms;
 end;
 ]],
-    unreach = 1,
-    forever = true,
+    simul = {
+        n_unreachs = 1,
+        isForever = true,
+    },
 }
 
 Test { [[
@@ -2910,8 +3279,10 @@ loop do
     await A;
 end;
 ]],
-    unreach = 1,
-    forever = true,
+    simul = {
+        n_unreachs = 1,
+        isForever = true,
+    },
 }
 
 Test { [[
@@ -2921,8 +3292,10 @@ loop do
     await A;
 end;
 ]],
-    unreach = 1,
-    forever = true,
+    simul = {
+        n_unreachs = 1,
+        isForever = true,
+    },
 }
 
 Test { [[
@@ -2930,8 +3303,10 @@ loop do
     await 10ms;
 end;
 ]],
-    unreach = 1,
-    forever = true,
+    simul = {
+        n_unreachs = 1,
+        isForever = true,
+    },
 }
 
 Test { [[
@@ -2951,6 +3326,9 @@ with
     return a;
 end;
 ]],
+    simul = {
+        n_unreachs = 1,
+    },
     run = { ['~>10s;~>F']=10 }
 }
 
@@ -2979,6 +3357,9 @@ do
     end;
 end;
 ]],
+    simul = {
+        n_unreachs = 3,
+    },
     run = {
         ['~>999ms; ~>F'] = 108,
         ['~>5s; ~>F'] = 555,
@@ -3002,6 +3383,9 @@ with
     return late;
 end;
 ]],
+    simul = {
+        n_unreachs = 1,
+    },
     run = {
         ['~>1ms; ~>1ms; ~>1ms; ~>1ms; ~>1ms; 1~>F'] = 0,
         ['~>1ms; ~>1ms; ~>1ms; ~>10ms; 1~>F'] = 45000,
@@ -3038,7 +3422,9 @@ with
 end;
 return v;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
     run = {
         ['~>1us'] = 0,
         ['~>20us'] = 19,
@@ -3131,8 +3517,11 @@ with
     return 0;
 end;
 ]],
-    nd_esc = 1,
-    unreach = 2,
+    simul = {
+        isForever = false,
+        n_unreachs = 2,
+        --nd_esc = 1,
+    },
     run = {
         ['0~>A ; 0~>A'] = 10,
     }
@@ -3149,9 +3538,11 @@ loop do
     end;
 end;
 ]],
-    nd_acc = 1,
-    unreach = 1,
-    forever = true,
+    simul = {
+        n_unreachs = 1,
+        isForever = true,
+        nd_acc = 1,
+    },
 }
 Test { [[
 event int a;
@@ -3166,9 +3557,11 @@ await a;
 // unreachable
 return 0;
 ]],
-    nd_esc = 1,
-    nd_flw = 1,
-    unreach = 3,
+    simul = {
+        n_unreachs = 3,
+        --nd_esc = 1,
+        --nd_flw = 1,
+    },
     run = 1,
     --dfa = 'unreachable statement',
     --trig_wo = 1,
@@ -3187,9 +3580,11 @@ await a;
 // unreachable
 return 0;
 ]],
-    nd_esc = 1,
-    unreach = 2,
-    forever = true,
+    simul = {
+        n_unreachs = 2,
+        isForever = true,
+        --nd_esc = 1,
+    },
     --dfa = 'unreachable statement',
     --trig_wo = 1,
 }
@@ -3202,9 +3597,11 @@ with
     // unreachable
 end;
 ]],
-    nd_esc = 1,
-    nd_flw = 1,
-    unreach = 1,
+    simul = {
+        n_unreachs = 1,
+        --nd_esc = 1,
+        --nd_flw = 1,
+    },
     run = 1,
     --trig_wo = 1,
 }
@@ -3217,10 +3614,12 @@ with
     return 2;
 end;
 ]],
-    nd_esc = 1,
-    nd_flw = 1,
-    unreach = 1,
-    --trig_wo = 1,
+    simul = {
+        n_unreachs = 1,
+        --nd_esc = 1,
+        --nd_flw = 1,
+        --trig_wo = 1,
+    },
     run = 2,
 }
 Test { [[
@@ -3233,9 +3632,11 @@ end;
 await a;
 return 0;
 ]],
-    nd_esc = 1,
-    unreach = 2,
-    forever = true,
+    simul = {
+        n_unreachs = 2,
+        --nd_esc = 1,
+        isForever = true,
+    },
     --trig_wo = 1,
 }
 
@@ -3252,8 +3653,10 @@ with
 end
 return v1+v2;
 ]],
-    nd_esc = 1,
-    unreach = 1,
+    simul = {
+        n_unreachs = 1,
+        --nd_esc = 1,
+    },
     run = 2,
 }
 
@@ -3274,8 +3677,10 @@ with
 end
 return v1+v2+v3;
 ]],
-    nd_esc = 1,
-    unreach = 2,
+    simul = {
+        n_unreachs = 2,
+        --nd_esc = 1,
+    },
     run = 2,
 }
 
@@ -3297,9 +3702,13 @@ with
 end;
 return ret;
 ]],
-    nd_esc = 2,
-    --nd_acc = 1,
-    unreach = 2,
+    simul = {
+        n_unreachs = 2,
+        --nd_esc = 2,
+        --nd_acc = 1,
+    },
+    todo = 'nd_acc = 1',
+    run = 3,
 }
 Test { [[
 input int A;
@@ -3312,8 +3721,11 @@ with
     return a;
 end;
 ]],
-    nd_acc = 4,
-    nd_flw = 2,
+    simul = {
+        nd_acc = 4,
+    --nd_flw = 2,
+    },
+    run = { ['5~>A']=5 },
 }
 Test { [[
 input int A;
@@ -3357,7 +3769,13 @@ with
 end;
 return a;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
+    run = {
+        ['1~>A'] = 10,
+        ['2~>A'] = 10,
+    }
 }
 
 Test { [[
@@ -3372,7 +3790,9 @@ with
 end;
 return a;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
 }
 
 Test { [[
@@ -3387,8 +3807,10 @@ with
 end;
 return a;
 ]],
-    nd_acc = 1,
-    nd_flw = 1,
+    simul = {
+        nd_acc = 1,
+    --nd_flw = 1,
+    },
 }
 
 Test { [[
@@ -3405,7 +3827,7 @@ loop do
 end;
 return 0;
 ]],
-    nd_flw = 1,
+    --nd_flw = 1,
     run = 0,
 }
 
@@ -3425,8 +3847,10 @@ loop do
     end;
 end;
 ]],
-    forever = true,
-    unreach = 2,
+    simul = {
+        n_unreachs = 2,
+        isForever = true,
+    },
 }
 
 Test { [[
@@ -3454,7 +3878,10 @@ with
     end;
 end;
 ]],
-    forever = true,
+    simul = {
+        isForever = true,
+        n_unreachs = 2,
+    },
 }
 
 Test { [[
@@ -3469,8 +3896,11 @@ with
 end;
 return a;
 ]],
-    nd_acc = 1,
-    nd_flw = 2,
+    todo = '"a"s deveriam ser diferentes',
+    simul = {
+        nd_acc = 1,
+        --nd_flw = 2,
+    },
 }
 
 Test { [[
@@ -3489,8 +3919,10 @@ with
 end;
 return a;
 ]],
-    nd_acc = 1,
-    nd_flw = 1,
+    simul = {
+        nd_acc = 1,
+        --nd_flw = 1,
+    },
 }
 
 Test { [[
@@ -3509,7 +3941,7 @@ with
 end;
 return a;
 ]],
-    nd_flw = 1,
+    --nd_flw = 1,
     run = {
         ['1~>B'] = 10,
         --['2~>A'] = 1,
@@ -3586,8 +4018,10 @@ loop do
 end;
 return v;
 ]],
-    nd_flw = 1,
-    unreach = 2,
+    simul = {
+        n_unreachs = 2,
+        --nd_flw = 1,
+    },
     run = {
         ['0~>B ; 0~>B ; 3~>A'] = 3,
     }
@@ -3606,9 +4040,11 @@ loop do
 end;
 return v;
 ]],
-    --dfa = 'unreachable statement',
-    nd_flw = 1,
-    unreach = 3,
+    simul = {
+        n_unreachs = 3,
+        --dfa = 'unreachable statement',
+        --nd_flw = 1,
+    },
     run = {
         ['0~>B ; 0~>B ; 3~>A'] = 3,
     }
@@ -3628,7 +4064,9 @@ loop do
 end;
 return v;
 ]],
-    nd_acc = 1,     -- TODO: should be 0
+    simul = {
+        nd_acc = 1,     -- TODO: should be 0
+    },
     run = {
         ['0~>B ; 0~>A ; 0~>B ; 0~>A ; 3~>A'] = 3,
     }
@@ -3642,7 +4080,9 @@ loop do
 end;
 return v;
 ]],
-    unreach = 1,
+    simul = {
+        n_unreachs = 1,
+    },
     run = {
         ['1~>A'] = 1,
         ['2~>A'] = 2,
@@ -3667,6 +4107,20 @@ return a;
     }
 }
 
+Test { [[
+input int A,B;
+par/and do
+    await A;
+with
+    await B;
+    await A;
+end;
+return 1;
+]],
+    run = {
+        ['1~>A ; 0~>B ; 0~>B ; 1~>A'] = 1,
+    }
+}
 Test { [[
 input int A;
 par/and do
@@ -3737,6 +4191,7 @@ with
 end;
 return a;
 ]],
+    todo = true,
     run = {
         ['~>30ms ; 0~>A ; ~>50ms'] = 2,
         ['0~>A ; ~>40ms'] = 2,
@@ -3744,6 +4199,7 @@ return a;
     }
 }
 
+-- tests AwaitT after Ext
 Test { [[
 input int A;
 int a;
@@ -3757,10 +4213,57 @@ with
 end;
 return a;
 ]],
+    todo = true,
     run = {
         ['~>30ms ; 0~>A ; ~>50ms'] = 2,
         ['0~>A ; ~>40ms'] = 2,
         ['0~>A ; ~>20ms ; ~>20ms'] = 2,
+    }
+}
+
+Test { [[
+input int A;
+int a;
+par/and do
+    await 30ms;
+    a = 1;
+with
+    await A;
+    await 30ms;
+    a = 2;
+end;
+return a;
+]],
+    todo = true,
+    run = {
+        ['~>30ms ; 0~>A ; ~>50ms'] = 2,
+        ['0~>A ; ~>40ms'] = 2,
+        ['0~>A ; ~>20ms ; ~>20ms'] = 2,
+    }
+}
+
+Test { [[
+input void A;
+int a;
+par/and do
+    await A;
+    await A;
+    await 100ms;
+    a = 1;
+with
+    await A;
+    await A;
+    await 10ms;
+    await A;
+    await 90ms;
+    a = 2;
+end;
+return a;
+]],
+    todo = true,
+    run = {
+        -- TODO: ext
+        ['~>A ; ~>A ; ~>12ms; ~>A; ~>91ms'] = 2,
     }
 }
 
@@ -3775,7 +4278,29 @@ with
 end;
 return dt;
 ]],
-    unreach = 0,    -- TODO: timer kills timer
+    simul = {
+        n_unreachs = 1,
+    },
+    run = {
+        ['~>30ms'] = 10000,
+        ['0~>A ; ~>40ms'] = 20000,
+        ['~>10ms ; 0~>A ; ~>40ms'] = 30000,
+    }
+}
+Test { [[
+input int A;
+int dt;
+par/or do
+    await A;
+    dt = await 20ms;
+with
+    dt = await 20ms;
+end;
+return dt;
+]],
+    simul = {
+        n_unreachs = 1,
+    },
     run = {
         ['~>30ms'] = 10000,
         ['0~>A ; ~>40ms'] = 20000,
@@ -3794,6 +4319,7 @@ end;
 return dt;
 ]],
     run = {
+        -- TODO: ext
         ['~>30us'] = 10,
         ['0~>A ; ~>12us'] = 0,
         ['0~>A ; ~>13us'] = 1,
@@ -3811,7 +4337,9 @@ with
 end;
 return dt;
 ]],
-    unreach = 0,    -- TODO: timer kills timer
+    simul = {
+        n_unreachs = 1,
+    },
     run = {
         ['~>30ms'] = 10000,
         ['~>12ms ; 0~>A ; ~>8ms'] = 0,
@@ -3832,7 +4360,8 @@ with
     return 2;
 end;
 ]],
-    unreach = 0,    -- TODO: timer kills timer
+    todo = true,
+    n_unreachs = 0,    -- TODO: timer kills timer
     run = {
         ['~>30us'] = 1,
         ['~>12us ; 0~>A ; ~>8us'] = 1,
@@ -3896,15 +4425,35 @@ with
 end;
 return dt;
 ]],
-    unreach = 0, -- TODO: timer kills timer
+    simul = {
+        n_unreachs = 1,
+    },
     run = {
         ['~>30ms'] = 10000,
         ['~>12ms ; 0~>A ; ~>8ms'] = 0,
         ['~>15ms ; 0~>A ; ~>10ms'] = 5000,
     }
 }
---[=[
-- mudanca de extl -> WCLOCK_late
+
+Test { [[
+input int A,B;
+int dt;
+par/or do
+    await A;
+    dt = await 20ms;
+with
+    await B;
+    dt = await 20ms;
+end;
+return dt;
+]],
+    run = {
+        ['~>30ms ; 0~>A ; ~>21ms'] = 997,
+        ['~>12ms ; 0~>A ; 0~>B ; ~>27ms'] = 6997,
+        ['~>12ms ; 0~>B ; ~>3ms ; 0~>A ; ~>20ms'] = 2997,
+    }
+}
+
 Test { [[
 input int A,B;
 int dt;
@@ -3918,12 +4467,11 @@ end;
 return dt;
 ]],
     run = {
-        ['~>30ms ; 0~>A ; ~>20ms'] = 0,
-        ['~>12ms ; 0~>A ; 0~>B ; ~>27ms'] = 7000,
-        ['~>12ms ; 0~>B ; ~>3ms ; 0~>A ; ~>20ms'] = 3000,
+        ['~>30ms ; 0~>A ; ~>21ms'] = 997,
+        ['~>12ms ; 0~>A ; 0~>B ; ~>27ms'] = 6997,
+        ['~>12ms ; 0~>B ; ~>3ms ; 0~>A ; ~>20ms'] = 2997,
     }
 }
-]=]
 
 Test { [[
 input int A,B;
@@ -3963,14 +4511,16 @@ with
 end;
 return ret;
 ]],
-    nd_acc = 2,
+    simul = {
+        nd_acc = 2,
+    },
     run = {
         ['~>12ms ; 0~>A ; 0~>B ; ~>27ms'] = 2,
         ['~>12ms ; 0~>B ; 0~>A ; 0~>B ; ~>26ms'] = 2,
     }
 }
 
--- Boa comparacao de unreach vs nd_flw para timers
+-- Boa comparacao de n_unreachs vs nd_flw para timers
 Test { [[
 int dt;
 par/or do
@@ -3981,7 +4531,9 @@ with
 end;
 return dt;
 ]],
-    unreach = 1, -- apos ~30
+    simul = {
+        n_unreachs = 1, -- apos ~30
+    },
     run = {
         ['~>12ms ; ~>17ms'] = 9000,
     }
@@ -3996,7 +4548,9 @@ with
 end;
 return dt;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
     run = {
         ['~>12us ; ~>17us'] = 9,
     }
@@ -4045,8 +4599,10 @@ with
 end;
 return x;
 ]],
-    nd_acc  = 1,    -- TODO: timer kills timer
-    unreach = 0,    -- TODO: timer kills timer
+    simul = {
+        nd_acc  = 1,    -- TODO: timer kills timer
+        n_unreachs = 0,    -- TODO: timer kills timer
+    },
     --run = { ['~>10ms']=0 },
 }
 
@@ -4070,8 +4626,10 @@ with
 end;
 return x;
 ]],
-    nd_acc = 1,     -- TODO: timer kills timer
-    unreach = 0,    -- TODO: timer kills timer
+    simul = {
+        nd_acc = 1,     -- TODO: timer kills timer
+    n_unreachs = 0,    -- TODO: timer kills timer
+    },
     --run = { ['~>10ms']=0 },   -- TODO: intl timer
 }
 
@@ -4095,7 +4653,9 @@ with
 end;
 return x;
 ]],
-    unreach = 4,
+    simul = {
+        n_unreachs = 4,
+    },
     run = 1,
 }
 
@@ -4113,8 +4673,10 @@ with
     return 2;
 end;
 ]],
-    nd_acc = 1,
-    nd_flw = 2,
+    simul = {
+        nd_acc = 1,
+    --nd_flw = 2,
+    },
 }
 
 Test { [[
@@ -4131,8 +4693,10 @@ with
     return 2;
 end;
 ]],
-    nd_acc = 1,
-    nd_flw = 2,
+    simul = {
+        nd_acc = 1,
+    --nd_flw = 2,
+    },
 }
 
 Test { [[
@@ -4156,8 +4720,10 @@ with
     return 2;
 end;
 ]],
-    nd_acc = 1,
-    nd_flw = 2,
+    simul = {
+        nd_acc = 1,
+    --nd_flw = 2,
+    },
 }
 
 Test { [[
@@ -4175,8 +4741,10 @@ with
 end;
 return a;
 ]],
-    unreach = 1,
+    simul = {
+        n_unreachs = 1,
     nd_acc = 1,
+    },
 }
 
 Test { [[
@@ -4197,7 +4765,9 @@ with
 end;
 return a;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
     run = {
         ['0~>A ; 0~>B ; ~>20ms'] = 0,
     }
@@ -4218,7 +4788,9 @@ with
 end;
 return a;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
 }
 
 Test { [[
@@ -4289,7 +4861,9 @@ with
 end;
 return a;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
 }
 
 Test { [[
@@ -4303,7 +4877,9 @@ with
 end;
 return a;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
 }
 
 Test { [[
@@ -4324,8 +4900,11 @@ with
     end;
 end;
 ]],
-    forever = true,
-    nd_acc = 1,
+    simul = {
+        n_unreachs = 2,
+        isForever = true,
+        nd_acc = 1,
+    },
 }
 
 Test { [[
@@ -4345,8 +4924,11 @@ with
     end;
 end;
 ]],
-    forever = true,
-    nd_acc = 1,       -- fiz na mao!
+    simul = {
+        n_unreachs = 2,
+        isForever = true,
+        nd_acc = 1,       -- fiz na mao!
+    },
 }
 -- bom exemplo de explosao de estados!!!
 Test { [[
@@ -4368,8 +4950,11 @@ with
     end;
 end;
 ]],
-    forever = true,
-    nd_acc = 1,       -- nao fiz na mao!!!
+    simul = {
+        n_unreachs = 2,
+        isForever = true,
+        nd_acc = 1,       -- nao fiz na mao!!!
+    },
 }
 
 -- EX.04: join
@@ -4416,7 +5001,9 @@ with
 end;
 return a;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
 }
 Test { [[
 input int A;
@@ -4439,7 +5026,9 @@ else
 end;
 return a;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
 }
 Test { [[
 input int A;
@@ -4467,8 +5056,11 @@ with
     end;
 end;
 ]],
-    forever = true,
-    nd_acc = 5,
+    simul = {
+        n_unreachs = 3,
+        isForever = true,
+        nd_acc = 5,
+    },
 }
 Test { [[
 int v = set par do
@@ -4486,8 +5078,10 @@ else
     end;
 end;
 ]],
-    nd_acc = 1,
-    nd_flw = 2,
+    simul = {
+        nd_acc = 1,
+    --nd_flw = 2,
+    },
 }
 Test { [[
 int a;
@@ -4503,8 +5097,10 @@ else
 end;
 return a;
 ]],
-    nd_acc = 1,
-    nd_flw = 2,
+    simul = {
+        nd_acc = 1,
+    --nd_flw = 2,
+    },
 }
 Test { [[
 int v = set par do
@@ -4514,8 +5110,10 @@ int v = set par do
         end;
 return v;
 ]],
-    nd_acc = 1,
-    nd_flw = 2,
+    simul = {
+        nd_acc = 1,
+    --nd_flw = 2,
+    },
 }
 
 Test { [[
@@ -4531,8 +5129,10 @@ with
 end;
 return a;
 ]],
-    nd_acc = 1,
-    unreach = 1,
+    simul = {
+        nd_acc = 1,
+    n_unreachs = 1,
+    },
 }
 Test { [[
 int a;
@@ -4546,25 +5146,9 @@ with
 end;
 return a;
 ]],
-    nd_acc = 1,
-}
-Test { [[
-input int A;
-int a;
-par/or do
-    await (10)us;
-    await A;
-    a = 1;
-with
-    await (5)us;
-    await A;
-    await (10)us;
-    await A;
-    a = 2;
-end;
-return a;
-]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
 }
 Test { [[
 input int A;
@@ -4576,12 +5160,34 @@ par/or do
 with
     await (5)us;
     await A;
+    await (10)us;
     await A;
     a = 2;
 end;
 return a;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
+}
+Test { [[
+input int A;
+int a;
+par/or do
+    await (10)us;
+    await A;
+    a = 1;
+with
+    await (5)us;
+    await A;
+    await A;
+    a = 2;
+end;
+return a;
+]],
+    simul = {
+        nd_acc = 1,
+    },
 }
 Test { [[
 input int A;
@@ -4598,7 +5204,9 @@ with
 end;
 return a;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
 }
 
 Test { [[
@@ -4613,7 +5221,9 @@ with
 end;
 return a;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
 }
 
 Test { [[
@@ -4632,7 +5242,9 @@ with
 end;
 return a;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
 }
 
 Test { [[
@@ -4651,7 +5263,9 @@ with
 end;
 return a;
 ]],
-    nd_acc = 0,
+    simul = {
+        nd_acc = 0,
+    },
 }
 
 Test { [[
@@ -4668,7 +5282,9 @@ with
 end;
 return a;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
 }
 
 Test { [[
@@ -4685,7 +5301,9 @@ with
 end;
 return a;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
 }
 
 Test { [[
@@ -4701,6 +5319,9 @@ with
 end;
 return a;
 ]],
+    simul = {
+        n_unreachs = 1,
+    },
     run = {
         ['~>10ms'] = 2,
         ['1~>A ; ~>10ms'] = 2,
@@ -4719,7 +5340,10 @@ with
 end
 return a;
 ]],
-    unreach = 1,
+    todo = 'wclk_any=0',
+    simul = {
+        n_unreachs = 1,
+    },
     run = { ['~>1s']=2 },
 }
 Test { [[
@@ -4743,7 +5367,10 @@ with
 end;
 return a;
 ]],
-    nd_acc = 3,
+    todo = 'wclk_any=0',
+    simul = {
+        nd_acc = 3,
+    },
 }
 
 Test { [[
@@ -4759,6 +5386,9 @@ with
 end;
 return a;
 ]],
+    simul = {
+        n_unreachs = 1,
+    },
     run = {
         ['~>10ms'] = 2,
         ['~>A ; ~>10ms'] = 2,
@@ -4778,7 +5408,9 @@ with
 end;
 return x;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
 }
 
 Test { [[
@@ -4795,9 +5427,11 @@ with
     end;
 end;
 ]],
-    forever = true,
-    nd_acc = 1,
-    nd_acc = 1,
+    simul = {
+        n_unreachs = 2,
+        isForever = true,
+        nd_acc = 1,
+    },
 }
 
 Test { [[
@@ -4812,8 +5446,11 @@ with
     end;
 end;
 ]],
-    forever = true,
-    nd_acc = 1,
+    simul = {
+        n_unreachs = 2,
+        isForever = true,
+        nd_acc = 1,
+    },
 }
 
 Test { [[
@@ -4836,7 +5473,9 @@ with
 end;
 return x;
 ]],
-    nd_acc = 2,  -- TODO: intl
+    simul = {
+        nd_acc = 2,  -- TODO: intl
+    },
     run = { ['~>15ms']=5, ['~>25ms']=5 }
 }
 
@@ -4853,8 +5492,46 @@ loop do
     end;
 end;
 ]],
-    unreach = 1,
-    forever = true,
+    simul = {
+        n_unreachs = 1,
+        isForever = true,
+    },
+}
+
+Test { [[
+event void a;
+par/or do
+    emit a;
+with
+    await a;
+end
+return 0;
+]],
+    simul = {
+        n_unreachs = 1,
+        nd_acc = 1,
+    },
+    run = 0,
+}
+
+Test { [[
+input void A;
+event void a;
+int ret = 0;
+par/or do
+    await A;
+    emit a;
+with
+    await a;
+    ret = 1;
+end
+ret = ret + 1;
+return ret;
+]],
+    simul = {
+        n_unreachs = 1,
+    },
+    run = { ['~>A']=2 },
 }
 
 Test { [[
@@ -4874,11 +5551,14 @@ with
     emit a(a);
 end;
 ]],
-    forever = true,
-    nd_esc = 1,
-    nd_acc = 1, -- EX.10: trig2 vs await1 loop
-    --trig_wo = 1,
-    unreach = 1,
+    todo = 'nd_acc=1',
+    simul = {
+        isForever = true,
+        --nd_esc = 1,
+        nd_acc = 1, -- EX.10: trig2 vs await1 loop
+        --trig_wo = 1,
+        n_unreachs = 2,
+    },
 }
 
 Test { [[
@@ -4898,8 +5578,11 @@ with
     emit a(a);
 end;
 ]],
-    forever = true,
-    --trig_wo = 1,
+    simul = {
+        n_unreachs = 1,
+        isForever = true,
+        --trig_wo = 1,
+    },
 }
 
 Test { [[
@@ -4931,11 +5614,13 @@ with
     return a;
 end;
 ]],
-    nd_esc = 1,
-    nd_flw = 1,
-    unreach = 1,
+    simul = {
+        --nd_esc = 1,
+    --nd_flw = 1,
+    n_unreachs = 1,
     --trig_wo = 1,
     nd_acc = 1,
+    },
 }
 
 Test { [[
@@ -4949,8 +5634,10 @@ loop do
     end;
 end;
 ]],
-    forever = true,
-    unreach = 3,
+    simul = {
+        isForever = true,
+        n_unreachs = 3,
+    },
 }
 Test { [[
 input int A;
@@ -4966,7 +5653,10 @@ with
     emit b(1);
 end;
 ]],
-    forever = true,
+    simul = {
+        n_unreachs = 1,
+        isForever = true,
+    },
 }
 Test { [[
 input int A,B;
@@ -4984,7 +5674,9 @@ with
     return v;
 end;
 ]],
-    unreach = 1,
+    simul = {
+        n_unreachs = 1,
+    },
     run = {
         ['0~>A ; 10~>B'] = 10,
     }
@@ -5000,9 +5692,11 @@ with
 end;
 return 0;
 ]],
-    unreach = 1,
+    simul = {
+        n_unreachs = 1,
     nd_acc = 1,
     --trig_wo = 1,
+    },
 }
 
 Test { [[
@@ -5017,10 +5711,12 @@ with
 end;
 return 0;
 ]],
-    nd_esc = 1,
-    unreach = 2,
+    simul = {
+        --nd_esc = 1,
+    n_unreachs = 2,
     nd_acc = 2,
     --trig_wo = 1,
+    },
 }
 
 Test { [[
@@ -5037,8 +5733,10 @@ with
 end;
 return i;
 ]],
-    nd_esc = 1,
-    unreach = 1,
+    simul = {
+        --nd_esc = 1,
+    n_unreachs = 1,
+    },
     run = 1,
 }
 Test { [[
@@ -5054,9 +5752,11 @@ with
 end;
 return c;
 ]],
-    nd_esc = 1,
-    unreach = 2,
+    simul = {
+        --nd_esc = 1,
+    n_unreachs = 2,
     --trig_wo = 1,
+    },
     run = 5,
 }
 Test { [[
@@ -5090,7 +5790,9 @@ loop do
 end;
 return 0;
 ]],
-    unreach = 1,
+    simul = {
+        n_unreachs = 1,
+    },
     run = {
         ['1~>B ; 4~>B'] = 10,
         ['3~>B ; 2~>B'] = 10,
@@ -5111,6 +5813,9 @@ int ret = set
     end;
 return ret;
 ]],
+    simul = {
+        n_unreachs = 1,
+    },
     run = {
         ['1~>A ; 5~>B'] = 5,
         ['1~>A ; 1~>A ; 3~>B ; 1~>A ; 5~>B'] = 5,
@@ -5128,8 +5833,10 @@ loop do
     emit a(v);
 end;
 ]],
-    --trig_wo = 1,
-    unreach = 1,
+    simul = {
+        --trig_wo = 1,
+    n_unreachs = 1,
+    },
     run = {
         ['0~>A ; 0~>A ; 3~>A ; 2~>A'] = 3,
     }
@@ -5173,6 +5880,9 @@ with
     end;
 end;
 ]],
+    simul = {
+        n_unreachs = 1,
+    },
     run = {
         ['0~>A ; 0~>A ; 0~>B'] = 2,
     }
@@ -5214,7 +5924,9 @@ with
 end;
 return ret;
 ]],
-    unreach = 1,
+    simul = {
+        n_unreachs = 1,
+    },
     run = {
         ['0~>A ; 0~>A ; 10~>A'] = 10,
         ['0~>B ; 0~>A ; 11~>B'] = 11,
@@ -5233,7 +5945,9 @@ with
 end;
 return v;
 ]],
-    nd_acc = 1,     -- should be 0
+    simul = {
+        nd_acc = 1,     -- should be 0
+    },
     run = {
         ['10~>A'] = 10,
         ['0~>B ; 10~>A'] = 10,
@@ -5277,7 +5991,9 @@ with
 end;
 return v;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
     run = {
         ['0~>C ; 10~>A'] = 10,
         ['0~>A ; 1~>C ; 5~>A ; 1~>B'] = 5,
@@ -5337,7 +6053,9 @@ end;
 return v;
 ]],
 --((~A;~B;~A)=>v&&(~C;~B;~C)=>v);v || (~A;~C;~B;~A;~C;~B)]],
-    unreach = 1,
+    simul = {
+        n_unreachs = 1,
+    },
     run = {
         ['0~>A ; 1~>C ; 5~>B ; 1~>A ; 1~>C ; 9~>B'] = 1,
     },
@@ -5362,7 +6080,9 @@ end;
 return v;
 ]],
 --(1?~A:~B) || (~A;1) || (~B;2)]],
-    nd_acc = 2,
+    simul = {
+        nd_acc = 2,
+    },
     run = {
         ['1~>A'] = 1,
         ['1~>B'] = 2,
@@ -5387,7 +6107,9 @@ end;
 return v;
 ]],
 --(1?~A:~B) || (~A;~B) || (~B;~A)]],
-    nd_acc = 2,
+    simul = {
+        nd_acc = 2,
+    },
     run = {
         ['0~>B ; 10~>A'] = 10,
         ['0~>B ; 9~>A'] = 9,
@@ -5407,7 +6129,9 @@ with
 end;
 return v;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
 }
 Test { [[
 input int A,B,C;
@@ -5430,7 +6154,9 @@ end;
 return v;
 ]],
 --(1?~A:~B) || (~A;~B;~C) || (~B;~A;~C)]],
-    unreach = 2,
+    simul = {
+        n_unreachs = 2,
+    },
     run = {
         ['0~>B ; 10~>A'] = 10,
     },
@@ -5448,8 +6174,10 @@ with
     return v;
 end;
 ]],
-    nd_flw = 1,
-    unreach = 2,
+    simul = {
+        n_unreachs = 3,
+        --nd_flw = 1,
+    },
     run = {
         ['0~>B ; 10~>A'] = 10,
     },
@@ -5525,8 +6253,10 @@ else
 end;
 return 1;
 ]],
-    unreach = 3,
-    forever = true,
+    simul = {
+        isForever = true,
+        n_unreachs = 3,
+    },
 }
 Test { [[
 par/or do
@@ -5549,7 +6279,10 @@ with
 end;
 ]],
 --1&&(~A)*]],
-    forever = true
+    simul = {
+        n_unreachs = 1,
+        isForever = true
+    },
 }
 Test { [[
 input int A,B;
@@ -5564,7 +6297,10 @@ with
 end;
 ]],
 --(~A)* && (~B)*]],
-    forever = true,
+    simul = {
+        n_unreachs = 2,
+        isForever = true,
+    },
 }
 Test { [[
 input int A,B,C;
@@ -5635,8 +6371,10 @@ with
 end;
 ]],
 --1=>a || a]],
-    nd_flw = 2,
+    simul = {
+        --nd_flw = 2,
     nd_acc = 2,
+    },
 }
 Test { [[
 input int B;
@@ -5651,8 +6389,10 @@ with
 end;
 ]],
 --(~B;1=>a) || (~B;a)]],
-    nd_acc = 2,
-    nd_flw = 2,
+    simul = {
+        nd_acc = 2,
+    --nd_flw = 2,
+    },
 }
 Test { [[
 input int B,C;
@@ -5673,9 +6413,11 @@ with
 end;
 ]],
 --(~B;1=>a) || ((~a||~B||~C); a)]],
-    unreach = 1,
+    simul = {
+        n_unreachs = 1,
     nd_acc = 2,
-    nd_flw = 2,
+    --nd_flw = 2,
+    },
 }
 Test { [[
 input int Start, C;
@@ -5695,10 +6437,12 @@ with
     return a;
 end;
 ]],
-    nd_acc = 1,
-    nd_flw = 1,
-    nd_esc = 2,
-    unreach = 2,    -- +1 C unreach
+    simul = {
+        nd_acc = 1,
+    --nd_flw = 1,
+    --nd_esc = 2,
+    n_unreachs = 2,    -- +1 C n_unreachs
+    },
     run = 1,
 }
 Test { [[
@@ -5712,9 +6456,79 @@ with
     return a;
 end;
 ]],
-    nd_esc = 1,
-    unreach = 1,
+    simul = {
+        n_unreachs = 1,
+        --nd_esc = 1,
+    },
     run = 1,
+}
+Test { [[
+input int B,C;
+event int a;
+par/or do
+    await B;
+    emit a(5);
+with
+    await a;
+    a = a + 1;
+end;
+return a;
+]],
+    simul = {
+        n_unreachs = 1,
+        --nd_esc = 1,
+    },
+    run = {
+        ['1~>B'] = 6,
+    },
+}
+Test { [[
+input int B,C;
+event int a;
+par/or do
+    await B;
+    emit a(5);
+with
+    par/and do
+        await a;
+    with
+        await a;
+    end
+    a = a + 1;
+end;
+return a;
+]],
+    simul = {
+        n_unreachs = 1,
+        --nd_esc = 1,
+    },
+    run = {
+        ['1~>B'] = 6,
+    },
+}
+Test { [[
+input int B;
+event int a;
+par/or do
+    await B;
+    emit a(5);
+with
+    par/and do
+        await B;
+    with
+        await a;
+    end
+    a = a + 1;
+end;
+return a;
+]],
+    simul = {
+        n_unreachs = 1,
+        --nd_esc = 1,
+    },
+    run = {
+        ['1~>B'] = 6,
+    },
 }
 Test { [[
 input int B,C;
@@ -5734,7 +6548,9 @@ with
 end;
 return a;
 ]],
-    nd_esc = 1,
+    simul = {
+        --nd_esc = 1,
+    },
     run = {
         ['1~>B'] = 5,
         ['2~>C; 1~>B'] = 6,
@@ -5756,8 +6572,10 @@ with
     return a;
 end;
 ]],
-    nd_esc = 1,
-    unreach = 1,
+    simul = {
+        --nd_esc = 1,
+    n_unreachs = 1,
+    },
     run = 1,
 }
 Test { [[
@@ -5778,8 +6596,10 @@ with
     return a;
 end
 ]],
-    nd_esc = 1,
-    nd_flw = 1,
+    simul = {
+        --nd_esc = 1,
+        --nd_flw = 1,
+    },
     run = 1,
 }
 Test { [[
@@ -5800,9 +6620,11 @@ with
 end;
 ]],
 --(~B;1=>a) || ((~a&&~B&&~C); a)]],
-    unreach = 1,
-    nd_flw = 1,
-    nd_flw = 1,
+    simul = {
+        n_unreachs = 1,
+    --nd_flw = 1,
+    --nd_flw = 1,
+    },
     run = {
         ['1~>B'] = 1,
     },
@@ -5826,9 +6648,11 @@ with
 end;
 ]],
 --(~B;1=>a) || ((~a&&~B&&~C); a)]],
-    --dfa = 'unreachable statement',
-    nd_flw = 1,
-    unreach = 2,
+    simul = {
+        --dfa = 'unreachable statement',
+    --nd_flw = 1,
+    n_unreachs = 2,
+    },
     run = {
         ['1~>B'] = 1,
     },
@@ -5851,9 +6675,11 @@ loop do
 end;
 return 1;
 ]],
-    --dfa = 'unreachable statement',
-    nd_flw = 1,
-    unreach = 3,
+    simul = {
+        --dfa = 'unreachable statement',
+    --nd_flw = 1,
+    n_unreachs = 3,
+    },
     run = 1,
 }
 
@@ -5868,8 +6694,10 @@ loop do
 end
 return 1;
 ]],
-    nd_flw = 2,
-    unreach = 2,
+    simul = {
+        --nd_flw = 2,
+    n_unreachs = 2,
+    },
     run = 1,
 }
 
@@ -5881,8 +6709,10 @@ with
     await A;
 end;
 ]],
-    unreach = 2,
-    nd_flw = 1,
+    simul = {
+        n_unreachs = 2,
+    --nd_flw = 1,
+    },
     run = 1,
 }
 Test { [[
@@ -5905,9 +6735,11 @@ loop do
 end;
 return 2;       // executes last
 ]],
-    --dfa = 'unreachable statement',
-    unreach = 5,
-    nd_flw = 3,
+    simul = {
+        --dfa = 'unreachable statement',
+    n_unreachs = 5,
+    --nd_flw = 3,
+    },
     run = 2,
 }
 
@@ -5927,8 +6759,10 @@ loop do
 end;
 return 2;   // executes last
 ]],
-    unreach = 2,
-    nd_flw = 3,
+    simul = {
+        n_unreachs = 2,
+    --nd_flw = 3,
+    },
     run = 2,
 }
 
@@ -5949,7 +6783,7 @@ loop do
 end;
 return 1;
 ]],
-    nd_flw = 1,
+    --nd_flw = 1,
     run = { ['~>A'] = 1, },
 }
 Test { [[
@@ -5981,9 +6815,11 @@ end;
 return a;
 ]],
 --1=>a || ( (~a||1);a )]],
-    unreach = 1,
-    nd_flw = 1,
+    simul = {
+        n_unreachs = 1,
+    --nd_flw = 1,
     nd_acc  = 1,
+    },
 }
 Test { [[
 input int B;
@@ -6003,9 +6839,11 @@ with
 end;
 ]],
 --(~B;1=>a) || (~B; (~a||1); a)]],
-    unreach = 1,
-    nd_flw = 2,
+    simul = {
+        n_unreachs = 1,
+    --nd_flw = 2,
     nd_acc = 2,
+    },
 }
 Test { [[
 int a = 0;
@@ -6016,8 +6854,10 @@ with
 end;
 ]],
 --0=>a ; (a||a)]],
-    nd_acc = 1,
-    nd_flw = 2,
+    simul = {
+        nd_acc = 1,
+    --nd_flw = 2,
+    },
 }
 Test { [[
 int a;
@@ -6028,8 +6868,10 @@ with
     return a;
 end;
 ]],
-    nd_acc = 2,
-    nd_flw = 2,
+    simul = {
+        nd_acc = 2,
+    --nd_flw = 2,
+    },
 }
 Test { [[
 int a;
@@ -6040,8 +6882,10 @@ with
     return a;
 end;
 ]],
-    nd_flw = 2,
+    simul = {
+        --nd_flw = 2,
     nd_acc = 2,
+    },
 }
 Test { [[
 int a;
@@ -6052,7 +6896,9 @@ with
 end;
 return a;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
 }
 Test { [[
 int a;
@@ -6065,7 +6911,9 @@ with
 end;
 return a;
 ]],
-    nd_acc = 3,
+    simul = {
+        nd_acc = 3,
+    },
 }
 Test { [[
 input int A;
@@ -6077,8 +6925,10 @@ with
     return v;
 end;
 ]],
-    nd_acc = 1,
-    nd_flw = 2,
+    simul = {
+        nd_acc = 1,
+    --nd_flw = 2,
+    },
 }
 
 Test { [[
@@ -6091,10 +6941,12 @@ end;
 return a;
 ]],
 --~a||1~>a]],
+    simul = {
+        nd_acc = 1,
     nd_acc = 1,
-    nd_acc = 1,
-    unreach = 1,
+    n_unreachs = 1,
     --trig_wo = 1,
+    },
 }
 Test { [[
 event int a;
@@ -6105,7 +6957,9 @@ with
 end;
 return a;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
     run = 1,
 }
 Test { [[
@@ -6147,9 +7001,11 @@ with
 end;
 return v;
 ]],
-    nd_acc = 12,
-    nd_flw = 6,
-    --trig_wo = 3,
+    simul = {
+        nd_acc = 8,
+        --nd_flw = 6,
+        --trig_wo = 3,
+    },
 }
 Test { [[
 int a,v;
@@ -6163,9 +7019,11 @@ end;
 return v;
 ]],
 --(1||1||1)~>a]],
-    nd_acc = 3,
-    nd_flw = 6,
+    simul = {
+        nd_acc = 3,
+    --nd_flw = 6,
     --trig_wo = 1,
+    },
 }
 Test { [[
 input int A;
@@ -6179,8 +7037,10 @@ with
 end;
 ]],
 --0=>a ; ((~A;a) || (~A;a))]],
-    nd_flw = 2,
+    simul = {
+        --nd_flw = 2,
     nd_acc = 1,
+    },
 }
 Test { [[
 input int A;
@@ -6195,8 +7055,10 @@ with
 end;
 ]],
 --(~A;a) || (~A;1=>a)]],
-    nd_flw = 2,
+    simul = {
+        --nd_flw = 2,
     nd_acc = 2,
+    },
 }
 Test { [[
 input int A;
@@ -6228,9 +7090,11 @@ with
 end;
 return a;
 ]],
-    nd_esc = 1,
-    unreach = 1,
+    simul = {
+        --nd_esc = 1,
+    n_unreachs = 1,
     nd_acc = 1,
+    },
 }
 Test { [[
 input int Start;
@@ -6248,9 +7112,11 @@ with
     await Forever;
 end;
 ]],
-    nd_esc = 1,
-    unreach = 1,
-    nd_flw = 1,
+    simul = {
+        --nd_esc = 1,
+    n_unreachs = 1,
+    --nd_flw = 1,
+    },
     run = 2,
 }
 Test { [[
@@ -6268,9 +7134,11 @@ with
 end;
 return a;
 ]],
-    nd_esc = 1,
-    unreach = 1,
-    nd_acc = 1,
+    simul = {
+        --nd_esc = 1,
+        n_unreachs = 1,
+        nd_acc = 1,
+    },
 }
 Test { [[
 input int A;
@@ -6290,8 +7158,11 @@ with
 end;
 ]],
 --(~A; (~A;v)*) && (~A;~A;2=>v)*]],
-    forever = true,
-    nd_acc = 1,
+    simul = {
+        n_unreachs = 2,
+        isForever = true,
+        nd_acc = 1,
+    },
 }
 Test { [[
 input int A;
@@ -6312,8 +7183,11 @@ with
 end;
 ]],
 --(~A;~A;1=>v)* && (~A;~A;~A;v)*]],
-    forever = true,
-    nd_acc = 1,
+    simul = {
+        n_unreachs = 2,
+        isForever = true,
+        nd_acc = 1,
+    },
 }
 Test { [[
 input int A, B;
@@ -6332,7 +7206,9 @@ end;
 return a;
 ]],
 --(~A||(~B;1=>a)) || (~A;~B;a)]],
-    unreach = 1,
+    simul = {
+        n_unreachs = 1,
+    },
     run = {
         ['3~>A'] = 3,
         ['1~>B'] = 1,
@@ -6353,8 +7229,10 @@ end;
 return a;
 ]],
 --(~A;~B;1=>a) || (~A;~B;a)]],
+    simul = {
+        nd_acc = 1,
     nd_acc = 1,
-    nd_acc = 1,
+    },
 }
 Test { [[
 input int A, B;
@@ -6445,11 +7323,10 @@ end;
 return 0;
 // unreachable
 ]],
-    --dfa = 'unreachable statement',
-    unreach = 6,
-    nd_acc = 3,
-    forever = true,
-    --trig_wo = 3,
+    simul = {
+        nd_acc = 3,
+        --trig_wo = 3,
+    },
 }
 Test { [[
 event int a, b, c;
@@ -6472,9 +7349,11 @@ with
 end;
 return 0;
 ]],
-    unreach = 4,
+    simul = {
+        n_unreachs = 4,
     nd_acc = 3,
     --trig_wo = 3,
+    },
 }
 Test { [[
 event int a, b, c;
@@ -6497,9 +7376,10 @@ with
 end;
 return 0;
 ]],
-    unreach = 3,
-    nd_acc = 3,
-    --trig_wo = 3,
+    simul = {
+        nd_acc = 3,
+        --trig_wo = 3,
+    },
 }
 Test { [[
 event int a;
@@ -6511,9 +7391,11 @@ with
 end;
 return 0;
 ]],
-    nd_acc = 2,
-    unreach = 1,
-    --trig_wo = 2,
+    simul = {
+        nd_acc = 1,
+        n_unreachs = 1,
+        --trig_wo = 2,
+    },
 }
 Test { [[
 event int a;
@@ -6525,9 +7407,11 @@ with
 end;
 return 0;
 ]],
-    nd_acc = 2,
-    unreach = 1,
-    --trig_wo = 2,
+    simul = {
+        nd_acc = 1,
+        n_unreachs = 1,
+        --trig_wo = 2,
+    },
 }
 Test { [[
 event int a;
@@ -6538,10 +7422,12 @@ with
     await a;
 end;
 ]],
-    nd_acc = 2,
-    unreach = 1,
-    --trig_wo = 2,
-    forever = true,
+    simul = {
+        isForever = true,
+        nd_acc = 1,
+        n_unreachs = 1,
+        --trig_wo = 2,
+    },
 }
 Test { [[
 input int B;
@@ -6554,8 +7440,10 @@ loop do
 end;
 return 1;
 ]],
-    unreach = 2,
-    nd_flw = 1,
+    simul = {
+        n_unreachs = 2,
+    --nd_flw = 1,
+    },
     run = 1,
 }
 Test { [[
@@ -6587,7 +7475,10 @@ with
     end;
 end;
 ]],
-    forever = true,
+    simul = {
+        n_unreachs = 1,
+        isForever = true,
+    },
 }
 
 Test { [[
@@ -6602,8 +7493,10 @@ with
 end;
 return x;
 ]],
+    simul = {
+        nd_acc = 1,
     nd_acc = 1,
-    nd_acc = 1,
+    },
 }
 
     -- PRIO
@@ -6635,8 +7528,10 @@ with
     return b+2;
 end;
 ]],
-    nd_flw = 2,
+    simul = {
+        --nd_flw = 2,
     nd_acc = 1,
+    },
 }
 
 Test { [[
@@ -6653,9 +7548,11 @@ loop do
 end;
 return v;
 ]],
-    unreach = 1,
-    nd_flw = 2,
+    simul = {
+        n_unreachs = 1,
+    --nd_flw = 2,
     nd_acc = 1,     -- should be 0
+    },
     run = {
         ['5~>A'] = 5,
     }
@@ -6677,8 +7574,10 @@ loop do
 end;
 return v1 + v2;
 ]],
-    unreach = 1,
-    nd_flw = 1,
+    simul = {
+        n_unreachs = 1,
+    --nd_flw = 1,
+    },
     run = 3,
 }
 Test { [[
@@ -6694,7 +7593,9 @@ loop do
 end;
 return v;
 ]],
-    unreach = 1,
+    simul = {
+        n_unreachs = 1,
+    },
     run = {
         ['5~>A'] = 5,
     }
@@ -6726,8 +7627,10 @@ loop do
 end;
 return v1 + v2;
 ]],
-    unreach = 1,
-    nd_flw = 2,
+    simul = {
+        n_unreachs = 1,
+        --nd_flw = 2,
+    },
     run = {
         ['5~>A'] = 10,
     }
@@ -6748,8 +7651,10 @@ loop do
 end;
 return 0;
 ]],
-    unreach = 1,
-    nd_flw = 1,
+    simul = {
+        n_unreachs = 1,
+    --nd_flw = 1,
+    },
     run = { ['1~>A']=0 },
 }
 
@@ -6768,8 +7673,10 @@ loop do
 end;
 return v1+v2+v3;
 ]],
-    unreach = 1,
-    nd_flw = 1,
+    simul = {
+        n_unreachs = 1,
+    --nd_flw = 1,
+    },
     run = {
         ['2~>A'] = 5,
     }
@@ -6799,8 +7706,10 @@ loop do
 end;
 return v1+v2+v3+v4+v5+v6;
 ]],
-    unreach = 2,
-    nd_flw = 2,
+    simul = {
+        n_unreachs = 2,
+    --nd_flw = 2,
+    },
     run = 21,
 }
 
@@ -6826,7 +7735,9 @@ loop do
 end;
 return v1+v2+v3+v4+v5+v6;
 ]],
-    unreach = 2,
+    simul = {
+        n_unreachs = 2,
+    },
     run = 21,
 }
 
@@ -6858,8 +7769,10 @@ loop do
 end;
 return v1+v2+v3+v4+v5+v6;
 ]],
-    unreach = 2,
-    nd_flw = 3,
+    simul = {
+        n_unreachs = 2,
+    --nd_flw = 3,
+    },
     run = { ['~>A'] = 21 },
 }
 
@@ -6889,7 +7802,9 @@ loop do
 end;
 return v1+v2+v3+v4+v5+v6;
 ]],
-    unreach = 2,
+    simul = {
+        n_unreachs = 2,
+    },
     run = { ['1~>A']=21 },
 }
 
@@ -6916,9 +7831,11 @@ end;
 // unreachable
 return v1+v2+v3+v4+v5+v6;
 ]],
-    unreach = 3,
+    simul = {
+        n_unreachs = 3,
     nd_acc = 1,
-    nd_flw = 3,
+    },
+    --nd_flw = 3,
 }
 
 Test { [[
@@ -7062,8 +7979,10 @@ end;
 a = a + 1;
 return a;
 ]],
-    unreach = 1,
-    nd_flw = 1,
+    simul = {
+        n_unreachs = 1,
+    --nd_flw = 1,
+    },
     run = { ['2~>B'] = 2 }
 }
 
@@ -7084,8 +8003,10 @@ end;
 a = a + 1;
 return a;
 ]],
-    unreach = 1,
-    nd_flw = 1,
+    simul = {
+        n_unreachs = 1,
+    --nd_flw = 1,
+    },
     run = { ['2~>B'] = 3 }
 }
 
@@ -7104,9 +8025,11 @@ loop do
 end;
 return b;
 ]],
-    --dfa = 'unreachable statement',
-    unreach = 2,
-    nd_flw = 2,
+    simul = {
+        --dfa = 'unreachable statement',
+    n_unreachs = 2,
+    --nd_flw = 2,
+    },
     run = { ['0~>B'] = 0 }
 }
 
@@ -7124,8 +8047,10 @@ loop do
 end;
 return b;
 ]],
-    unreach = 1,
-    nd_flw = 2,
+    simul = {
+        n_unreachs = 1,
+        --nd_flw = 2,
+    },
     run = { ['0~>B'] = 0 }
 }
 
@@ -7151,8 +8076,10 @@ with
 end;
 return a;
 ]],
-    nd_flw = 1,
-    unreach = 1,
+    simul = {
+        --nd_flw = 1,
+        n_unreachs = 2,
+    },
     run = { ['10~>B'] = 6 },
 }
 
@@ -7176,7 +8103,10 @@ with
 end;
 return a;
 ]],
-    nd_flw = 1,
+    simul = {
+        n_unreachs = 1,
+    --nd_flw = 1,
+    },
     run = { ['10~>B'] = 14 },
 }
 
@@ -7195,8 +8125,10 @@ loop do
 end;
 return a;
 ]],
-    unreach = 1,
-    nd_flw = 1,
+    simul = {
+        n_unreachs = 1,
+    --nd_flw = 1,
+    },
     run = { ['10~>B'] = 2 },
 }
 
@@ -7214,8 +8146,10 @@ loop do
 end;
 return a;
 ]],
-    unreach = 1,
-    nd_flw = 2,
+    simul = {
+        n_unreachs = 1,
+    --nd_flw = 2,
+    },
     run = { ['0~>B'] = 1 }
 }
 
@@ -7236,8 +8170,10 @@ loop do
 end;
 return a;
 ]],
-    nd_flw = 2,
-    unreach = 2,
+    simul = {
+        --nd_flw = 2,
+    n_unreachs = 2,
+    },
     run = { ['0~>B'] = 1 }
 }
 
@@ -7258,8 +8194,10 @@ loop do
 end;
 return a;
 ]],
-    nd_flw = 2,
-    unreach = 2,
+    simul = {
+        --nd_flw = 2,
+    n_unreachs = 2,
+    },
     run = { ['0~>B'] = 1 }
 }
 
@@ -7378,8 +8316,10 @@ loop do
 end;
 return v;
 ]],
-    nd_flw = 1,
-    unreach = 2,
+    simul = {
+        --nd_flw = 1,
+    n_unreachs = 2,
+    },
     run = { ['5~>A'] = 5, }
 }
 
@@ -7396,7 +8336,7 @@ loop do
 end;
 return v;
 ]],
-    nd_flw = 1,
+    --nd_flw = 1,
     run = { ['5~>A'] = 5, }
 }
 
@@ -7414,9 +8354,11 @@ with
     return v;
 end;
 ]],
-    unreach = 2,
+    simul = {
+        n_unreachs = 2,
     nd_acc = 1,
-    nd_flw = 2,
+    --nd_flw = 2,
+    },
 }
 
 Test { [[
@@ -7436,7 +8378,9 @@ with
 end;
 return v;
 ]],
-    nd_acc = 1, -- should be 0 (same evt)
+    simul = {
+        nd_acc = 1, -- should be 0 (same evt)
+    },
     run = {
         ['0~>B ; 5~>A'] = 5,
     }
@@ -7467,7 +8411,9 @@ with
 end;
 return b+c+d;
 ]],
-    unreach = 1,
+    simul = {
+        n_unreachs = 1,
+    },
     run = { ['0~>A'] = 9, }
 }
 
@@ -7495,7 +8441,7 @@ with
 end;
 return b+c+d;
 ]],
-    nd_flw = 1,
+    --nd_flw = 1,
     run = { ['0~>A'] = 9, }
 }
 
@@ -7519,7 +8465,9 @@ with
     return b;
 end;
 ]],
-    unreach = 2,
+    simul = {
+        n_unreachs = 2,
+    },
     run = {
         ['2~>C ; 1~>A ; 1~>D'] = 2,
     }
@@ -7552,7 +8500,7 @@ c = d + 1;
 await A;
 return c;
 ]],
-    nd_flw = 1,
+    --nd_flw = 1,
     run = {
         ['0~>A'] = 3,
     }
@@ -7593,8 +8541,10 @@ with
 end;
 // unreachable
 ]],
-    unreach = 5,
-    forever = true,
+    simul = {
+        isForever = true,
+        n_unreachs = 5,
+    },
 }
 
 Test { [[
@@ -7616,10 +8566,12 @@ with
     end;
 end;
 ]],
-    nd_acc = 1,
-    unreach = 4,
-    --trig_wo = 1,
-    forever = true,
+    simul = {
+        isForever = true,
+        nd_acc = 1,
+        n_unreachs = 4,
+        --trig_wo = 1,
+    },
 }
 
 Test { [[
@@ -7645,8 +8597,10 @@ with
 end;
 return v;
 ]],
-    unreach = 1,
+    simul = {
+        n_unreachs = 1,
     nd_acc = 0,
+    },
     run = {
         ['1~>A ; 1~>A'] = 1,
     }
@@ -7680,9 +8634,11 @@ with
     return c;
 end;
 ]],
-    unreach = 2,
+    simul = {
+        n_unreachs = 2,
     nd_acc = 0,
     --trig_wo = 1,
+    },
     run = {
         ['1~>D ; 1~>E'] = 13,
     }
@@ -7709,8 +8665,10 @@ with
     return b;
 end;
 ]],
-    nd_esc = 2,
-    unreach = 4,
+    simul = {
+        --nd_esc = 2,
+    n_unreachs = 4,
+    },
     run = {
         ['10~>A'] = 10,
         ['4~>B'] = 1,
@@ -7740,8 +8698,10 @@ with
 end;
 ]],
 --((~A~>a)=>v && ((~B,v);1~>b));v || ~a ||~b]],
-    nd_esc = 1,
-    unreach = 4,
+    simul = {
+        --nd_esc = 1,
+    n_unreachs = 4,
+    },
     run = {
         ['10~>A'] = 10,
         ['4~>B'] = 1,
@@ -7767,9 +8727,11 @@ with
 end;
 ]],
 --(~A;a||~B)* && ~B;~A=>a]],
-    unreach = 2,
-    forever = true,
-    nd_acc = 1,
+    simul = {
+        isForever = true,
+        nd_acc = 1,
+        n_unreachs = 2,
+    },
 }
 
 -- EX.07: o `and` executa 2 vezes
@@ -7782,9 +8744,11 @@ loop do
 end;
 ]],
 --((a,~D)->add~>a)*]],
-    forever = true,
-    unreach = 1,
-    --trig_wo = 1,
+    simul = {
+        isForever = true,
+        n_unreachs = 1,
+        --trig_wo = 1,
+    },
 }
 
 Test { [[
@@ -7817,8 +8781,9 @@ with
     return c;
 end;
 ]],
-    unreach = 4,
-    run = { {11,'D 1','D 1','A 3','D 1','A 8','E 1'} },
+    simul = {
+        n_unreachs = 4,
+    },
     --trig_wo = 1,
     run = {
         ['1~>D ; 1~>D ; 3~>A ; 1~>D ; 8~>A ; 1~>E'] = 11,
@@ -7843,9 +8808,11 @@ with
     end;
 end;
 ]],
-    unreach = 3,
-    forever = true,
-    --trig_wo = 2,
+    simul = {
+        isForever = true,
+        n_unreachs = 3,
+        --trig_wo = 2,
+    },
 }
 
     -- SLIDESHOW
@@ -7880,7 +8847,9 @@ with
     end;
 end;
 ]],
-    unreach = 2,
+    simul = {
+        n_unreachs = 2,
+    },
     run = {
         [ [[
 0~>C ; 0~>C ; 0~>C ;  // 2
@@ -7933,9 +8902,11 @@ with
     return a;
 end;
 ]],
-    unreach = 1,
+    simul = {
+        n_unreachs = 1,
     nd_acc = 1,
-    nd_flw = 1,
+    --nd_flw = 1,
+    },
 }
 Test { [[
 input int A;
@@ -7985,8 +8956,10 @@ with
     return 1;
 end;
 ]],
-    unreach = 2,
-    forever = true,
+    simul = {
+        isForever = true,
+        n_unreachs = 2,
+    },
 }
 -- EX.03: trig/await + await
 Test { [[
@@ -8017,8 +8990,10 @@ end;
 // unreachable
 return 0;
 ]],
-    unreach = 4,
-    forever = true,
+    simul = {
+        isForever = true,
+        n_unreachs = 4,
+    },
 }
 
 -- EX.03: trig/await + await
@@ -8050,8 +9025,10 @@ end;
 // unreachable
 return 0;
 ]],
-    unreach = 4,
-    forever = true,
+    simul = {
+        isForever = true,
+        n_unreachs = 4,
+    },
 }
 
 Test { [[
@@ -8072,9 +9049,11 @@ end;
 // unreachable
 return 0;
 ]],
-    unreach = 3,
-    forever = true,
-    nd_acc = 1,
+    simul = {
+        isForever = true,
+        --n_unreachs = 3,
+        nd_acc = 1,
+    },
 }
 
 Test { [[
@@ -8110,8 +9089,10 @@ with
 end;
 return v;
 ]],
-    unreach = 1,
+    simul = {
+        n_unreachs = 1,
     nd_acc = 1,     -- should be 0
+    },
     run = {
         ['5~>B ; 4~>B'] = 5,
         ['1~>A ; 0~>A ; 5~>B'] = 5,
@@ -8132,8 +9113,10 @@ end;
 // unreachable
 return 0;
 ]],
-    unreach = 2,
-    forever = true,
+    simul = {
+        isForever = true,
+        n_unreachs = 2,
+    },
 }
 Test { [[
 input int A,B;
@@ -8155,9 +9138,11 @@ with
 end;
 return 0;
 ]],
-    nd_acc = 1,
-    unreach = 2,
-    forever = true,
+    simul = {
+        --isForever = true,
+        nd_acc = 1,
+        --n_unreachs = 2,
+    },
 }
 
 Test { [[
@@ -8180,7 +9165,9 @@ with
 end;
 return a;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
 }
 
 Test { [[
@@ -8197,9 +9184,11 @@ with
 end;
 return 0;
 ]],
-    nd_esc = 1,
-    unreach = 2,
+    simul = {
+        --nd_esc = 1,
+    n_unreachs = 2,
     --trig_wo = 1,
+    },
     run = { ['1~>A'] = 1 }
 }
 
@@ -8240,10 +9229,12 @@ end;
 // unreachable
 return 0;
 ]],
-    forever = true,
-    nd_acc = 1,
-    --trig_wo = 1,
-    unreach = 2,
+    simul = {
+        --isForever = true,
+        nd_acc = 1,
+        --trig_wo = 1,
+        --n_unreachs = 2,
+    },
 }
 Test { [[
 event int a;
@@ -8258,9 +9249,11 @@ with
 end;
 return 0;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
     --trig_wo = 1,
-    unreach = 1,
+    n_unreachs = 1,
+    },
 }
 
 
@@ -8304,7 +9297,9 @@ with
     return v;
 end;
 ]],
-    unreach = 3,
+    simul = {
+        n_unreachs = 3,
+    },
     run = 1,
 }
 
@@ -8325,7 +9320,9 @@ with
 end;
 ]],
     run = 1,
-    unreach = 2,
+    simul = {
+        n_unreachs = 2,
+    },
 }
 
 Test { [[
@@ -8355,9 +9352,11 @@ with
     return v;
 end;
 ]],
-    nd_esc = 1,
+    --nd_esc = 1,
     run = 1,
-    unreach = 2,
+    simul = {
+        n_unreachs = 2,
+    },
 }
 
 Test { [[
@@ -8419,16 +9418,18 @@ int v=2;
 int ret;
 par/or do
     ret = set
-        async (v) do
+        async (v) do        // nd
             return v + 1;
         end;
 with
-    v = 3;
+    v = 3;                  // nd
     await F;
 end
 return ret + v;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
 }
 
 Test { [[
@@ -8457,6 +9458,9 @@ with
     return v1 + v2;
 end;
 ]],
+    simul = {
+        n_unreachs = 1,
+    },
     run = { ['1~>F']=2 },
 }
 
@@ -8506,6 +9510,9 @@ with
     return v;
 end;
 ]],
+    simul = {
+        n_unreachs = 1,
+    },
     run = {
         ['~>A; ~>A; ~>25ms; ~>F'] = 2,
     }
@@ -8541,7 +9548,9 @@ with
 end;
 ]],
     run = 0,
-    unreach = 1,
+    simul = {
+        n_unreachs = 2,
+    },
 }
 
     -- MISC
@@ -8585,9 +9594,11 @@ loop do
     end;
 end;
 ]],
-    nd_acc = 3,
-    forever = true,
-    unreach = 4,
+    simul = {
+        nd_acc = 3,
+    isForever = true,
+    n_unreachs = 4,
+    },
 }
 
 Test { [[
@@ -8652,7 +9663,9 @@ with
     end;
 end;
 ]],
-    unreach = 6,
+    simul = {
+        n_unreachs = 6,
+    },
     run = { ['~>1000ms;1~>F'] = 1 }
 }
 
@@ -8681,7 +9694,9 @@ end;
 // unreachable
 return 0;
 ]],
-    unreach = 3,
+    simul = {
+        n_unreachs = 3,
+    },
     run = 4,
 }
 
@@ -8731,7 +9746,9 @@ with
 end;
 return a;
 ]],
-    unreach = 1,
+    simul = {
+        n_unreachs = 1,
+    },
     run = 7,
 }
 
@@ -8759,8 +9776,10 @@ with
 end;
 return b;
 ]],
-    nd_esc = 1,
-    unreach = 2,
+    simul = {
+        --nd_esc = 1,
+    n_unreachs = 2,
+    },
     run = 8,
 }
 
@@ -8819,6 +9838,9 @@ with
     return c;
 end;
 ]],
+    simul = {
+        n_unreachs = 2,
+    },
     run = { ['1~>A;1~>A;1~>A;1~>F'] = 3 },
 }
 
@@ -8841,9 +9863,11 @@ with
     return v1+v2;
 end;
 ]],
-    nd_esc = 1,
-    unreach = 3,
-    --trig_wo = 1,  -- unreach
+    simul = {
+        --nd_esc = 1,
+        n_unreachs = 4,
+        --trig_wo = 1,  -- n_unreachs
+    },
     run = 0,
 }
 
@@ -8863,8 +9887,10 @@ with
     return v1 + v2;
 end;
 ]],
-    nd_esc = 1,
-    unreach = 2,
+    simul = {
+        --nd_esc = 1,
+        n_unreachs = 3,
+    },
     run = 1,
 }
 
@@ -8882,7 +9908,9 @@ with
 end;
 return a;
 ]],
-    unreach = 1,
+    simul = {
+        n_unreachs = 1,
+    },
     run = { ['10~>A'] = 1 },
 }
 
@@ -8907,7 +9935,9 @@ with
 end;
 return a;
 ]],
-    unreach = 2,
+    simul = {
+        n_unreachs = 2,
+    },
     run = 1,
 }
 
@@ -8940,7 +9970,10 @@ with
     return i;
 end;
 ]],
-    --trig_wo = 1,
+    simul = {
+        n_unreachs = 3,
+        --trig_wo = 1,
+    },
     run = { ['1~>A;1~>A;1~>A;1~>A;1~>A;1~>F'] = 5 },
 }
 
@@ -8976,6 +10009,10 @@ with
     return c;
 end;
 ]],
+    simul = {
+        n_unreachs = 2,
+        --trig_wo = 1,
+    },
     run = { ['~>1100ms ; ~>F'] = 132 }
 }
 
@@ -9006,8 +10043,10 @@ with
 end;
 return x + y;
 ]],
-    unreach = 4,
-    nd_esc = 4,
+    simul = {
+        n_unreachs = 4,
+        --nd_esc = 4,
+    },
     run = 3,
 }
 
@@ -9044,6 +10083,9 @@ with
     return c;
 end;
 ]],
+    simul = {
+        n_unreachs = 2,
+    },
     run = {
         ['~>99ms;  ~>F'] = 0,
         ['~>199ms; ~>F'] = 3,
@@ -9084,8 +10126,10 @@ with
 end;
 return b;
 ]],
-    unreach = 1,
-    nd_esc = 1,
+    simul = {
+        n_unreachs = 1,
+    --nd_esc = 1,
+    },
     run = 2,
 }
 
@@ -9102,9 +10146,11 @@ with
     return a;
 end;
 ]],
-    nd_esc = 1,
-    unreach = 1,
+    simul = {
+        --nd_esc = 1,
+    n_unreachs = 1,
     --trig_wo = 1,
+    },
     run = 1,
 }
 
@@ -9125,9 +10171,11 @@ with
 end;
 return a;
 ]],
-    nd_esc = 2,
-    unreach = 4,
-    --trig_wo = 1,
+    simul = {
+        --nd_esc = 2,
+        n_unreachs = 4,
+        --trig_wo = 1,
+    },
     run = 2,
 }
 
@@ -9147,6 +10195,9 @@ with
     end
 end
 ]],
+    simul = {
+        n_unreachs = 1,
+    },
     run = 2,
 }
 Test { [[
@@ -9181,9 +10232,12 @@ with
     end
 end
 ]],
-    nd_acc = 1,
-    nd_flw = 1,
-    unreach = 2,
+    todo = 'emit->awake->loop->await',
+    simul = {
+        nd_acc = 1,
+        --nd_flw = 1,
+        n_unreachs = 2,
+    },
 }
 Test { [[
 input int Start;
@@ -9203,8 +10257,9 @@ with
     emit a;
 end
 ]],
-    nd_acc = 1,
-    unreach = 1,
+    simul = {
+        nd_acc = 1,
+    },
 }
 
 Test { [[
@@ -9233,10 +10288,12 @@ with
     await Forever;
 end;
 ]],
-    --trig_wo = 2,
-    nd_acc = 4,
-    unreach = 3,
-    forever = true,
+    simul = {
+        --trig_wo = 2,
+        nd_acc = 2,         -- todo: maybe more
+        n_unreachs = 3,
+        isForever = true,
+    },
 }
 
 Test { [[
@@ -9270,15 +10327,22 @@ with
     return a+x+y+z+w;
 end;
 ]],
-    --trig_wo = 2,
-    unreach = 2,
+    simul = {
+        --trig_wo = 2,
+        n_unreachs = 3,
+    },
     run = { ['1~>F']=7 },
 }
 
     -- SCOPE / BLOCK
 
 Test { [[do end;]], parser="ERR : line 1 : after `do´ : invalid statement (or C identifier?)" }
-Test { [[do int a; end;]],  dfa='missing return statement' }
+Test { [[do int a; end;]],
+    simul = {
+        n_reachs = 1,
+        isForever = true,
+    },
+}
 Test { [[
 do
     int a;
@@ -9378,7 +10442,9 @@ do
 end;
 return 0;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
 }
 
 Test { [[
@@ -9396,7 +10462,9 @@ end;
 await B;
 return i;
 ]],
-    unreach = 1,
+    simul = {
+        n_unreachs = 1,
+    },
     run = {
         ['~>B'] = 0,
         ['~>A ; ~>B'] = 0,
@@ -9474,8 +10542,10 @@ with
 end;
 return a;
 ]],
-    nd_esc = 2,
-    unreach = 3,
+    simul = {
+        --nd_esc = 2,
+    n_unreachs = 3,
+    },
     run = { ['10~>A']=10 },
 }
 
@@ -9500,8 +10570,10 @@ with
 end;
 return ret;
 ]],
-    nd_esc = 1,
-    unreach = 2,
+    simul = {
+        --nd_esc = 1,
+    n_unreachs = 2,
+    },
     run = 5,
 }
 
@@ -9664,7 +10736,9 @@ with
 end
 return ret;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
     run = 2,
 }
 
@@ -9685,9 +10759,11 @@ loop do
 end
 return ret;
 ]],
-    nd_flw = 1,
+    --nd_flw = 1,
     run = 1,
-    unreach = 3,
+    simul = {
+        n_unreachs = 3,
+    },
 }
 
 Test { [[
@@ -9711,9 +10787,6 @@ return ret;
     run = { ['~>A']=2, ['~>B']=1 },
 }
 
--- TODO: nd_acc = 3
--- TODO: finalize
---[=[
 Test { [[
 input void A, B, C;
 int ret = 1;
@@ -9738,9 +10811,10 @@ with
 end
 return ret;
 ]],
-    nd_acc = 3,
+    simul = {
+        nd_acc = 3,
+    },
 }
-]=]
 
 Test { [[
 input void A, B, C;
@@ -9767,7 +10841,9 @@ with
 end
 return ret;
 ]],
-    unreach = 1,
+    simul = {
+        n_unreachs = 1,
+    },
     run = { ['~>A']=9, ['~>B']=6 },
 }
 
@@ -9791,7 +10867,9 @@ with
 end
 return ret;
 ]],
-    nd_acc = 2,
+    simul = {
+        nd_acc = 2,
+    },
 }
 
 Test { [[
@@ -9884,7 +10962,9 @@ loop do
 end
 return ret;
 ]],
-    unreach = 1,
+    simul = {
+        n_unreachs = 1,
+    },
     run = 5,
 }
 
@@ -9956,9 +11036,11 @@ with
     return 2;
 end;
 ]],
-    nd_flw = 1,
+    --nd_flw = 1,
     run = 2,
-    unreach = 3,
+    simul = {
+        n_unreachs = 3,
+    },
 }
 
 Test { [[
@@ -9973,7 +11055,9 @@ end;
 return a;
 ]],
     async = 'invalid access from async',
-    --nd_acc = 1,
+    simul = {
+        --nd_acc = 1,
+    },
 }
 
 Test { [[
@@ -10141,7 +11225,9 @@ with
 end
 return _a+_b;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
 }
 
 Test { [[
@@ -10181,7 +11267,9 @@ end
 return _a + a;
 ]],
     run = 2,
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
 }
 
 Test { [[
@@ -10219,7 +11307,9 @@ with
 end
 return _a+_b+_c;
 ]],
-    nd_acc = 3,
+    simul = {
+        nd_acc = 3,
+    },
 }
 
 Test { [[
@@ -10384,7 +11474,9 @@ int ret = set async do
 end;
 return ret;
 ]],
-    unreach = 1,
+    simul = {
+        n_unreachs = 1,
+    },
     run = 100,
 }
 
@@ -10416,7 +11508,9 @@ async do
 end;
 return i;
 ]],
-    unreach = 1,
+    simul = {
+        n_unreachs = 1,
+    },
     run = 0,
 }
 
@@ -10449,8 +11543,12 @@ async do
 end;
 return i;
 ]],
-    unreach = 3,
-    forever = true,
+    simul = {
+        n_unreachs = 3,
+    isForever = false,
+    },
+    dfa = true,
+    todo = true,    -- no simulation for async
 }
 
 Test { [[
@@ -10482,7 +11580,9 @@ int sum = set async do
 end;
 return sum;
 ]],
-    unreach = 1,
+    simul = {
+        n_unreachs = 1,
+    },
     run = 55,
 }
 
@@ -10531,7 +11631,9 @@ with
 end;
 return 1;
 ]],
-    unreach = 1,
+    simul = {
+        n_unreachs = 1,
+    },
     run = 1,
 }
 
@@ -10569,7 +11671,9 @@ with
 end
 return ret;
 ]],
-    unreach = 1,
+    simul = {
+        n_unreachs = 1,
+    },
     run = 23,
 }
 
@@ -11140,7 +12244,7 @@ with
 end
 return v;
 ]],
-    unreach = 1,
+    n_unreachs = 1,
     run = 10,
 }
 
@@ -11324,7 +12428,7 @@ with
 end;
 return 0;
 ]],
-    nd_flw = 1,
+    --nd_flw = 1,
 }
 Test { PRE .. [[
 int a;
@@ -11336,7 +12440,7 @@ with
 end;
 return 0;
 ]],
-    nd_flw = 1,
+    --nd_flw = 1,
     nd_acc = 1,
 }
 Test { PRE .. [[
@@ -11428,7 +12532,7 @@ with
     return a;
 end;
 ]],
-    nd_flw = 2,
+    --nd_flw = 2,
     nd_acc = 1,
 }
 
@@ -11629,7 +12733,7 @@ with
 end
 ]],
     nd_call = 6,
-    forever = true,
+    isForever = true,
 }
 
 Test { [[
@@ -11658,7 +12762,7 @@ end
 ]],
     nd_acc = 6,
     nd_call = 6,
-    forever = true,
+    isForever = true,
 }
 
 Test { [[
@@ -11673,7 +12777,7 @@ with
 end
 ]],
     nd_call = 1,
-    forever = true,
+    isForever = true,
 }
 
 Test { [[
@@ -11690,7 +12794,7 @@ with
 end
 ]],
     nd_call = 3,
-    forever = true,
+    isForever = true,
 }
 
 Test { [[
@@ -11708,7 +12812,7 @@ with
 end
 ]],
     nd_call = 1,
-    forever = true,
+    isForever = true,
 }
 
 Test { [[
@@ -11729,7 +12833,7 @@ end
 ]],
     nd_call = 1,
     nd_acc  = 3,
-    forever = true,
+    isForever = true,
 }
 
 Test { [[
@@ -11750,7 +12854,7 @@ end
 ]],
     nd_call = 1,
     nd_acc  = 3,
-    forever = true,
+    isForever = true,
 }
 
 Test { [[
@@ -11762,7 +12866,7 @@ with
     emit G;
 end
 ]],
-    forever = true,
+    isForever = true,
 }
 
     -- STRINGS
@@ -12065,7 +13169,10 @@ end
 Test { [[
 int a;
 ]],
-    dfa = "ERR : line 2 : missing return statement",
+    simul = {
+        n_reachs = 1,
+        isForever = true,
+    },
 }
 
 Test { [[
@@ -12074,7 +13181,10 @@ a = set do
     int b;
 end;
 ]],
-    dfa = "ERR : line 4 : missing return statement",
+    simul = {
+        n_reachs = 2,
+        isForever = true,
+    },
 }
 
 Test { [[
@@ -12248,7 +13358,7 @@ with
 end
 ]],
     tot = 21,
-    forever = true,
+    isForever = true,
 }
 
 Test { [[
@@ -12319,7 +13429,7 @@ with
 end
 ]],
     tot = 12,
-    forever = true,
+    isForever = true,
 }
 print('COUNT', COUNT)
 

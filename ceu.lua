@@ -5,7 +5,10 @@ _OPTS = {
     output    = '-',
 
     defs_file  = '_ceu_defs.h',
-    simul_file = nil,
+
+    simul     = nil,
+    simul_run = nil,
+    simul_use = nil,
 
     join      = true,
 
@@ -23,7 +26,10 @@ _OPTS_NPARAMS = {
     output    = 1,
 
     defs_file  = 1,
-    simul_file = 1,
+
+    simul     = 1,
+    simul_run = 1,
+    simul_use = 1,
 
     join      = 0,
 
@@ -68,26 +74,46 @@ end
 if not _OPTS.input then
     io.stderr:write([[
 
-    ./ceu <filename>              # Ceu input file, or `-´ for stdin
+    ./ceu <filename>           # Ceu input file, or `-´ for stdin
     
-        --output <filename>       # C output file (stdout)
+        --output <filename>    # C output file (stdout)
     
-        --defs-file <filename>    # define constants in a separate output file (no)
-        --simul-file <filename>   # file containing the simulation analysis (no)
-    
-        --join (--no-join)        # join lines enclosed by /*{-{*/ and /*}-}*/ (join)
+        --defs-file <filename> # define constants in a separate output file (no)
 
-        --m4 (--no-m4)            # preprocess the input with `m4´ (no-m4)
-        --m4-args                 # preprocess the input with `m4´ passing arguments in between `"´ (no)
+        --simul     <filename> # ...
+        --simul-run <filename> # ...
+        --simul-use <filename> # ...
+    
+        --join (--no-join)     # join lines enclosed by /*{-{*/ and /*}-}*/ (join)
 
-        --tp-word                 # sizeof a word in bytes    (4)
-        --tp-pointer              # sizeof a pointer in bytes (4)
-        --tp-off                  # sizeof an offset in bytes (2)
-        --tp-lbl                  # sizeof a label in bytes   (2)
+        --m4 (--no-m4)         # preprocess the input with `m4´ (no-m4)
+        --m4-args              # preprocess the input with `m4´ passing arguments in between `"´ (no)
+
+        --tp-word              # sizeof a word in bytes    (4)
+        --tp-pointer           # sizeof a pointer in bytes (4)
+        --tp-off               # sizeof an offset in bytes (2)
+        --tp-lbl               # sizeof a label in bytes   (2)
 
 ]])
     os.exit(1)
 end
+
+if _OPTS.simul then
+    assert(_OPTS.simul_use==nil and _OPTS.simul_run==nil,
+        'invalid simulation invocation')
+    local params = table.concat(params)
+    do
+        params = string.gsub(params, '--simul [^ ]*', '')
+        os.execute('./ceu '..params..' --simul-run '.._OPTS.simul)
+        assert(os.execute('gcc -std=c99 -o ceu.exe simul.c') == 0)
+        assert(os.execute('./ceu.exe _ceu_simul.lua') == 0)
+    end
+    _OPTS.simul_use = _OPTS.simul
+    _OPTS.simul = nil
+end
+
+assert(_OPTS.simul_use==nil or _OPTS.simul_run==nil,
+        'invalid simulation invocation')
 
 -- INPUT
 local inp
@@ -123,11 +149,9 @@ do
     dofile 'props.lua'
     dofile 'tight.lua'
     dofile 'async.lua'
+    dofile 'labels.lua'
+    dofile 'analysis.lua'
     dofile 'code.lua'
-
-    if _OPTS.simul_file then
-        dofile(_OPTS.simul_file)
-    end
 end
 
 -- TEMPLATE
@@ -140,7 +164,7 @@ do
         return string.sub(str, 1, i-1) .. to .. string.sub(str, e+1)
     end
 
-    tpl = sub(tpl, '=== N_TRACKS ===',  _AST.root.n_tracks)
+    tpl = sub(tpl, '=== N_TRACKS ===',  _ANALYSIS.n_tracks)
     tpl = sub(tpl, '=== N_MEM ===',     _MEM.max)
 
     tpl = sub(tpl, '=== HOST ===',      _CODE.host)
@@ -153,24 +177,16 @@ do
 
     DBG('# mem: '.._MEM.max)
     assert(_MEM.max < 2^(_ENV.types.tceu_off*8))
-    assert(#_CODE.labels < 2^(_ENV.types.tceu_lbl*8))
 
     -- GTES
-    do
-        tpl = sub(tpl, '=== CEU_WCLOCK0 ===', _MEM.gtes.wclock0)
-        tpl = sub(tpl, '=== CEU_ASYNC0 ===',  _MEM.gtes.async0)
-        tpl = sub(tpl, '=== CEU_EMIT0 ===',   _MEM.gtes.emit0)
-        tpl = sub(tpl, '=== CEU_FIN0 ===',    _MEM.gtes.fin0)
-    end
+    tpl = sub(tpl, '=== CEU_WCLOCK0 ===', _MEM.gtes.wclock0)
+    tpl = sub(tpl, '=== CEU_ASYNC0 ===',  _MEM.gtes.async0)
+    tpl = sub(tpl, '=== CEU_EMIT0 ===',   _MEM.gtes.emit0)
+    tpl = sub(tpl, '=== CEU_FIN0 ===',    _MEM.gtes.fin0)
 
     -- LABELS
-    do
-        local labels = ''
-        for i, id in ipairs(_CODE.labels) do
-            labels = labels..'    '..id..' = '..(i-1)..',\n'
-        end
-        tpl = sub(tpl, '=== LABELS ===', labels)
-    end
+    tpl = sub(tpl, '=== N_LABELS ===', #_LABELS.list)
+    tpl = sub(tpl, '=== LABELS ===',   _LABELS.code)
 
     -- DEFINITIONS: constants & defines
     do
@@ -178,15 +194,21 @@ do
         local str = ''
         local t = {}
         local outs = 0
+        local ins  = {}
         for _, ext in ipairs(_ENV.exts) do
             if ext.input then
                 str = str..'#define IN_'..ext.id..' '.._MEM.gtes[ext.n]..'\n'
+                ins[#ins+1] = _MEM.gtes[ext.n]
             else
                 str = str..'#define OUT_'..ext.id..' '..outs..'\n'
                 outs = outs + 1
             end
         end
         str = str..'#define OUT_n '..outs..'\n'
+        if _OPTS.simul_run then
+            str = str..'#define IN_n '..#ins..'\n'
+            str = str .. 'int IN_vec[] = { '..table.concat(ins,',')..' };\n'
+        end
 
         -- FUNCTIONS called
         for id in pairs(_ENV.calls) do
@@ -216,13 +238,13 @@ do
             str = str .. '#define CEU_FINS\n'
             DBG('# FINALIZERS')
         end
-        if _SIMUL and (not _SIMUL.hasPrio) then
-            str = str .. '#define CEU_TRK_NOPRIO\n'
-            DBG('# TRK_NOPRIO')
+        if _ANALYSIS.needsPrio then
+            str = str .. '#define CEU_TRK_PRIO\n'
+            DBG('# TRK_PRIO')
         end
-        if _SIMUL and (not _SIMUL.chkPrio) then
-            str = str .. '#define CEU_TRK_NOCHK\n'
-            DBG('# TRK_NOCHK')
+        if _ANALYSIS.needsChk then
+            str = str .. '#define CEU_TRK_CHK\n'
+            DBG('# TRK_CHK')
         end
 
         if _OPTS.defs_file then

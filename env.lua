@@ -30,7 +30,8 @@ _ENV = {
         pointer  = _OPTS.tp_pointer,
         tceu_off = _OPTS.tp_off,
         tceu_lbl = _OPTS.tp_lbl,
-        tceu_wclock = ceil(4 + _OPTS.tp_lbl),
+        tceu_wclock = ceil(4 + _OPTS.tp_lbl        -- TODO: perda de memoria
+                          + (_OPTS.simul_run and 4 or 0)),
     },
     calls = {},     -- { _printf=true, _myf=true, ... }
 
@@ -39,6 +40,9 @@ _ENV = {
     n_emits   = 0,
     n_fins    = 0,
     awaits    = {},
+
+    pures = set.new(),
+    dets  = {},
 }
 
 function newvar (me, blk, isEvt, tp, dim, id)
@@ -80,7 +84,7 @@ F = {
             local vars, blk = unpack(async)
             if vars then
                 for _, n in ipairs(vars) do
-                    local var = n.var
+                    local var = n[1].var
                     ASR(not var.arr, vars, 'invalid argument')
                     n.new = newvar(vars, blk, false, var.tp, nil, var.id)
                 end
@@ -99,7 +103,7 @@ F = {
             id    = id,
             n     = #_ENV.exts,
             tp    = tp,
-            isEvt = true,
+            isEvt = 'ext',
             [dir] = true,
         }
         _ENV.exts[id] = me.ext
@@ -109,7 +113,7 @@ F = {
     Dcl_int = 'Dcl_var',
     Dcl_var = function (me)
         local isEvt, tp, dim, id, exp = unpack(me)
-        me.var = newvar(me, _AST.iter'Block'(), isEvt, tp, dim, id)
+        me.var = newvar(me, _AST.iter'Block'(), isEvt and 'int', tp, dim, id)
     end,
 
     Ext = function (me)
@@ -140,7 +144,7 @@ F = {
     end,
 
     Dcl_pure = function (me)
-        _TP.pures[me[1]] = true
+        _ENV.pures[me[1]] = true
     end,
 
     Dcl_det = function (me)
@@ -148,16 +152,16 @@ F = {
             if type(v) == 'string' then
                 return v
             else
-                return v.var
+                return v.var or v.ext
             end
         end
         local id1 = ID(me[1])
-        local t1 = _TP.dets[id1] or {}
-        _TP.dets[id1] = t1
+        local t1 = _ENV.dets[id1] or {}
+        _ENV.dets[id1] = t1
         for i=2, #me do
             local id2 = ID(me[i])
-            local t2 = _TP.dets[id2] or {}
-            _TP.dets[id2] = t2
+            local t2 = _ENV.dets[id2] or {}
+            _ENV.dets[id2] = t2
 
             t1[id2] = true
             t2[id1] = true
@@ -165,8 +169,8 @@ F = {
     end,
 
     AwaitExt = function (me)
-        local acc,_ = unpack(me)
-        local ext = acc.ext
+        local e1,_ = unpack(me)
+        local ext = e1.ext
         me.gte = (_ENV.awaits[ext] or 0)
         _ENV.awaits[ext] = (_ENV.awaits[ext] or 0) + 1
     end,
@@ -196,21 +200,21 @@ F = {
     end,
 
     EmitExtS = function (me)
-        local acc, exp = unpack(me)
-        if acc.ext.output then
+        local e1, _ = unpack(me)
+        if e1.ext.output then
             F.EmitExtE(me)
         end
     end,
     EmitExtE = function (me)
-        local acc, exp = unpack(me)
-        ASR(acc.ext.output, me, 'invalid input `emit´')
+        local e1, e2 = unpack(me)
+        ASR(e1.ext.output, me, 'invalid input `emit´')
         me.tp = 'int'
 
-        if exp then
-            ASR(_TP.contains(acc.ext.tp,exp.tp,true),
+        if e2 then
+            ASR(_TP.contains(e1.ext.tp,e2.tp,true),
                     me, "non-matching types on `emit´")
         else
-            ASR(acc.ext.tp=='void',
+            ASR(e1.ext.tp=='void',
                     me, "missing parameters on `emit´")
         end
     end,
@@ -270,8 +274,12 @@ F = {
 
     --------------------------------------------------------------------------
 
+    SetExp_pre = function (me)
+        me[1] = me[1] or _AST.copy(_AST.iter'SetBlock'()[1], me.ln)
+    end,
     SetExp = function (me)
         local e1, e2 = unpack(me)
+DBG('set', e1.id, e2.id)
         ASR(e1.lval and _TP.contains(e1.tp,e2.tp,true),
                 me, 'invalid attribution')
     end,
@@ -288,23 +296,17 @@ F = {
         end
     end,
 
-    SetBlock = function (me)
-        local e1, _ = unpack(me)
-        ASR(e1.lval, me, 'invalid attribution')
-        F.ParOr(me)
-    end,
-    Return = function (me)
-        local e1 = _AST.iter'SetBlock'()[1]
-        local e2 = unpack(me)
-        ASR( _TP.contains(e1.tp,e2.tp,true), me, 'invalid return value')
-    end,
-
     CallStmt = function (me)
         local call = unpack(me)
-        ASR(call.id == 'Op2_call', me, 'invalid statement')
+        ASR(call[1].id == 'Op2_call', me, 'invalid statement')
     end,
 
     --------------------------------------------------------------------------
+
+    Exp = function (me)
+        me.lval = me[1].lval
+        me.tp   = me[1].tp
+    end,
 
     Op2_call = function (me)
         local _, f, exps = unpack(me)

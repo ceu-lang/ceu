@@ -1,7 +1,4 @@
-_TP = {
-    pures = set.new(),
-    dets  = {},
-}
+_TP = {}
 
 local types = {
     void=true,

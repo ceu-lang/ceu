@@ -24,11 +24,15 @@ local t2n = {
 F = {
     Root_pre = function (me)
         _MEM.gtes.wclock0 = alloc(_ENV.n_wclocks * _ENV.types.tceu_wclock)
+DBG('wclock0', _MEM.gtes.wclock0)
         _MEM.gtes.async0  = alloc(_ENV.n_asyncs  * _ENV.types.tceu_lbl)
+DBG('async0', _MEM.gtes.wclock0)
         _MEM.gtes.emit0   = alloc(_ENV.n_emits   * _ENV.types.tceu_lbl)
+DBG('fin0', _MEM.gtes.wclock0)
         _MEM.gtes.fin0    = alloc(_ENV.n_fins    * _ENV.types.tceu_lbl)
         for _, ext in ipairs(_ENV.exts) do
             _MEM.gtes[ext.n] = alloc(1 + (_ENV.awaits[ext] or 0)*_ENV.types.tceu_lbl)
+DBG(ext.id, _MEM.gtes[ext.n])
         end
         _MEM.gtes.loc0 = alloc(0)
     end,
@@ -70,6 +74,18 @@ F = {
     end,
     ParAnd = 'Block',
 
+    -- for simul_run, ParEver behaves like ParAnd (n_reachs)
+    ParEver_pre = function (me)
+        if _OPTS.simul_run then
+            F.ParAnd_pre(me)
+        end
+    end,
+    ParEver = function (me)
+        if _OPTS.simul_run then
+            F.Block(me)
+        end
+    end,
+
     Dcl_int = 'Dcl_var',
     Dcl_var = function (me)
         local var = me.var
@@ -81,7 +97,11 @@ F = {
         else
             max = _ENV.types[var.tp]
         end
-        var.off = alloc(max)
+        if _OPTS.simul_run then
+            var.off = 0
+        else
+            var.off = alloc(max)
+        end
         if var.isEvt then
             var.awt0 = alloc(1)
             alloc(_ENV.types.tceu_lbl*var.n_awaits)
@@ -96,41 +116,66 @@ F = {
     end,
     Var = function (me)
         me.val = me.var.val
+        me.accs = { {me.var,'rd',
+                    'variable/event `'..me.var.id..'´ (line '..me.ln[1]..')'} }
+    end,
+    AwaitInt = function (me)
+        local e = unpack(me)
+        e.accs[1][2] = 'aw'
+    end,
+    EmitInt = function (me)
+        local e1, e2 = unpack(me)
+        e1.accs[1][2] = 'tr'
     end,
 
     --------------------------------------------------------------------------
 
+    SetStmt  = 'SetExp',
+    SetExp = function (me)
+        local e1, e2 = unpack(me)
+        e1.accs[1][2] = 'wr'
+    end,
+
     EmitExtS = function (me)
-        local acc, exp = unpack(me)
-        if acc.ext.output then
+        local e1, _ = unpack(me)
+        if e1.ext.output then
             F.EmitExtE(me)
         end
     end,
     EmitExtE = function (me)
-        local acc, exp = unpack(me)
+        local e1, e2 = unpack(me)
         local len, val
-        if exp then
-            local tp = _TP.deref(acc.ext.tp)
+        if e2 then
+            local tp = _TP.deref(e1.ext.tp)
             if tp then
                 len = 'sizeof('.._TP.no_(tp)..')'
-                val = exp.val
+                val = e2.val
             else
-                len = 'sizeof('.._TP.no_(acc.ext.tp)..')'
-                val = 'ceu_ext_f('..exp.val..')'
+                len = 'sizeof('.._TP.no_(e1.ext.tp)..')'
+                val = 'ceu_ext_f('..e2.val..')'
             end
         else
             len = 0
             val = 'NULL'
         end
         me.val = '\n'..[[
-#if defined(ceu_out_event_]]..acc.ext.id..[[)
-    ceu_out_event_]]..acc.ext.id..'('..val..[[)
+#if defined(ceu_out_event_]]..e1.ext.id..[[)
+    ceu_out_event_]]..e1.ext.id..'('..val..[[)
 #elif defined(ceu_out_event)
-    ceu_out_event(OUT_]]..acc.ext.id..','..len..','..val..[[)
+    ceu_out_event(OUT_]]..e1.ext.id..','..len..','..val..[[)
 #else
     0
 #endif
 ]]
+    end,
+    Ext = function (me)
+        me.accs = { {me.ext,'tr',
+                    'event `'..me.ext.id..'´ (line '..me.ln[1]..')'} }
+    end,
+
+    Exp = function (me)
+        me.val  = me[1].val
+        me.accs = me[1].accs
     end,
 
     Op2_call = function (me)
@@ -183,6 +228,7 @@ F = {
     ['Op2_.'] = function (me)
         local op, e1, id = unpack(me)
         me.val  = '('..e1.val..op..id..')'
+        me.accs = e1.accs
     end,
 
     Op2_cast = function (me)
@@ -205,6 +251,8 @@ F = {
 
     C = function (me)
         me.val = string.sub(me[1], 2)
+        me.accs = { {me[1],'rd',
+                    'symbol `'..me[1]..'´ (line '..me.ln[1]..')'} }
     end,
     SIZEOF = function (me)
         me.val = 'sizeof('.._TP.no_(me[1])..')'
