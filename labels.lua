@@ -38,14 +38,6 @@ local ND = {
 }
 
 F = {
-    Exp = function (me)
-        if me.accs then
-            for _, acc in ipairs(me.accs) do
-                acc.lbl = new{'Exp', acc=acc}
-            end
-        end
-    end,
-
     Root_pre = function (me)
         new{'Inactive', true}
         new{'Init', true}
@@ -136,7 +128,7 @@ F = {
     EmitExtS = function (me)
         local e1 = unpack(me)
         if e1.ext.output then   -- e1 not Exp
-            me.lbl_emt = new{'Emit_'..e1.ext.id, acc=e1.accs[1]}
+            me.lbl_emt = new{'Emit_'..e1.ext.id}
         end
         me.lbl_cnt = new{'Async_cont'}
     end,
@@ -146,7 +138,7 @@ F = {
 
     EmitInt = function (me)
         local int = unpack(me)
-        me.lbl_emt = new{'Emit_'..int.var.id, acc=int.accs[1]} -- int not Exp
+        me.lbl_emt = new{'Emit_'..int.var.id}
         me.lbl_cnt = new{'Cnt_'..int.var.id, to_reach=true} -- TODO: why?
         me.lbl_awk = new{'Awk_'..int.var.id}
     end,
@@ -160,7 +152,7 @@ F = {
     end,
     AwaitExt = function (me)
         local int = unpack(me)
-        me.lbl_awt = new{'Await_'..me[1][1], acc=int.accs[1]}
+        me.lbl_awt = new{'Await_'..me[1][1]}
         me.lbl = new{'Awake_'..me[1][1], to_reach=true }
     end,
     AwaitInt = 'AwaitExt',

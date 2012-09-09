@@ -6,10 +6,6 @@ _OPTS = {
 
     defs_file  = '_ceu_defs.h',
 
-    simul     = nil,
-    simul_run = nil,
-    simul_use = nil,
-
     join      = true,
 
     m4        = false,
@@ -26,10 +22,6 @@ _OPTS_NPARAMS = {
     output    = 1,
 
     defs_file  = 1,
-
-    simul     = 1,
-    simul_run = 1,
-    simul_use = 1,
 
     join      = 0,
 
@@ -80,10 +72,6 @@ if not _OPTS.input then
     
         --defs-file <filename> # define constants in a separate output file (no)
 
-        --simul     <filename> # ...
-        --simul-run <filename> # ...
-        --simul-use <filename> # ...
-    
         --join (--no-join)     # join lines enclosed by /*{-{*/ and /*}-}*/ (join)
 
         --m4 (--no-m4)         # preprocess the input with `m4´ (no-m4)
@@ -97,23 +85,6 @@ if not _OPTS.input then
 ]])
     os.exit(1)
 end
-
-if _OPTS.simul then
-    assert(_OPTS.simul_use==nil and _OPTS.simul_run==nil,
-        'invalid simulation invocation')
-    local params = table.concat(params)
-    do
-        params = string.gsub(params, '--simul [^ ]*', '')
-        os.execute('./ceu '..params..' --simul-run '.._OPTS.simul)
-        assert(os.execute('gcc -std=c99 -o ceu.exe simul.c') == 0)
-        assert(os.execute('./ceu.exe _ceu_simul.lua') == 0)
-    end
-    _OPTS.simul_use = _OPTS.simul
-    _OPTS.simul = nil
-end
-
-assert(_OPTS.simul_use==nil or _OPTS.simul_run==nil,
-        'invalid simulation invocation')
 
 -- INPUT
 local inp
@@ -150,7 +121,6 @@ do
     dofile 'tight.lua'
     dofile 'async.lua'
     dofile 'labels.lua'
-    dofile 'analysis.lua'
     dofile 'code.lua'
 end
 
@@ -185,7 +155,6 @@ do
     tpl = sub(tpl, '=== CEU_FIN0 ===',    _MEM.gtes.fin0)
 
     -- LABELS
-    tpl = sub(tpl, '=== N_LABELS ===', #_LABELS.list)
     tpl = sub(tpl, '=== LABELS ===',   _LABELS.code)
 
     -- DEFINITIONS: constants & defines
@@ -205,10 +174,6 @@ do
             end
         end
         str = str..'#define OUT_n '..outs..'\n'
-        if _OPTS.simul_run then
-            str = str..'#define IN_n '..#ins..'\n'
-            str = str .. 'int IN_vec[] = { '..table.concat(ins,',')..' };\n'
-        end
 
         -- FUNCTIONS called
         for id in pairs(_ENV.calls) do
@@ -239,11 +204,11 @@ do
             DBG('# FINALIZERS')
         end
         if _ANALYSIS.needsPrio then
-            str = str .. '#define CEU_TRK_PRIO\n'
+            --str = str .. '#define CEU_TRK_PRIO\n'
             DBG('# TRK_PRIO')
         end
         if _ANALYSIS.needsChk then
-            str = str .. '#define CEU_TRK_CHK\n'
+            --str = str .. '#define CEU_TRK_CHK\n'
             DBG('# TRK_CHK')
         end
 

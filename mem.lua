@@ -24,15 +24,11 @@ local t2n = {
 F = {
     Root_pre = function (me)
         _MEM.gtes.wclock0 = alloc(_ENV.n_wclocks * _ENV.types.tceu_wclock)
-DBG('wclock0', _MEM.gtes.wclock0)
         _MEM.gtes.async0  = alloc(_ENV.n_asyncs  * _ENV.types.tceu_lbl)
-DBG('async0', _MEM.gtes.wclock0)
         _MEM.gtes.emit0   = alloc(_ENV.n_emits   * _ENV.types.tceu_lbl)
-DBG('fin0', _MEM.gtes.wclock0)
         _MEM.gtes.fin0    = alloc(_ENV.n_fins    * _ENV.types.tceu_lbl)
         for _, ext in ipairs(_ENV.exts) do
             _MEM.gtes[ext.n] = alloc(1 + (_ENV.awaits[ext] or 0)*_ENV.types.tceu_lbl)
-DBG(ext.id, _MEM.gtes[ext.n])
         end
         _MEM.gtes.loc0 = alloc(0)
     end,
@@ -116,16 +112,12 @@ DBG(ext.id, _MEM.gtes[ext.n])
     end,
     Var = function (me)
         me.val = me.var.val
-        me.accs = { {me.var,'rd',
-                    'variable/event `'..me.var.id..'´ (line '..me.ln[1]..')'} }
     end,
     AwaitInt = function (me)
         local e = unpack(me)
-        e.accs[1][2] = 'aw'
     end,
     EmitInt = function (me)
         local e1, e2 = unpack(me)
-        e1.accs[1][2] = 'tr'
     end,
 
     --------------------------------------------------------------------------
@@ -133,7 +125,7 @@ DBG(ext.id, _MEM.gtes[ext.n])
     SetStmt  = 'SetExp',
     SetExp = function (me)
         local e1, e2 = unpack(me)
-        e1.accs[1][2] = 'wr'
+        e1 = e1 or _AST.iter'SetBlock'()[1]
     end,
 
     EmitExtS = function (me)
@@ -168,14 +160,9 @@ DBG(ext.id, _MEM.gtes[ext.n])
 #endif
 ]]
     end,
-    Ext = function (me)
-        me.accs = { {me.ext,'tr',
-                    'event `'..me.ext.id..'´ (line '..me.ln[1]..')'} }
-    end,
 
     Exp = function (me)
         me.val  = me[1].val
-        me.accs = me[1].accs
     end,
 
     Op2_call = function (me)
@@ -228,7 +215,6 @@ DBG(ext.id, _MEM.gtes[ext.n])
     ['Op2_.'] = function (me)
         local op, e1, id = unpack(me)
         me.val  = '('..e1.val..op..id..')'
-        me.accs = e1.accs
     end,
 
     Op2_cast = function (me)
@@ -251,8 +237,6 @@ DBG(ext.id, _MEM.gtes[ext.n])
 
     C = function (me)
         me.val = string.sub(me[1], 2)
-        me.accs = { {me[1],'rd',
-                    'symbol `'..me[1]..'´ (line '..me.ln[1]..')'} }
     end,
     SIZEOF = function (me)
         me.val = 'sizeof('.._TP.no_(me[1])..')'

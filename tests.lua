@@ -657,8 +657,8 @@ return 1;
 }
 
 Test { [[
-output void A, B;
 deterministic A with B;
+output void A, B;
 par/or do
     emit A;
 with
@@ -1044,6 +1044,18 @@ end
         n_unreachs = 2,
         nd_acc = 1,         -- TODO: =0
     },
+}
+
+Test { [[
+int a = set do
+    int a = set do
+        return 1;
+    end;
+    return a;
+end;
+return a;
+]],
+    run = 1
 }
 
 Test { [[
@@ -10992,7 +11004,7 @@ async do
 end;
 return 0;
 ]],
-    async = 'invalid return statement',
+    async = 'invalid access from async',
 }
 
 Test { [[
@@ -11002,6 +11014,26 @@ end;
 return a;
 ]],
     run = 1,
+}
+
+Test { [[
+int a=12, b;
+async (a) do
+    a = 1;
+end;
+return a;
+]],
+    run = 12,
+}
+Test { [[
+int a,b;
+async (b) do
+    a = 1;
+end;
+return a;
+]],
+    async = 'invalid access from async',
+    --run = 1,
 }
 
 Test { [[
@@ -11024,7 +11056,7 @@ with
     return 2;
 end;
 ]],
-    async = 'invalid return statement',
+    async = 'invalid access from async',
 }
 
 Test { [[
@@ -11065,7 +11097,7 @@ async do
     return 1+2;
 end;
 ]],
-    async = 'invalid return statement',
+    async = 'invalid access from async',
 }
 
 Test { [[
@@ -11231,13 +11263,13 @@ return _a+_b;
 }
 
 Test { [[
+constant _a;
+deterministic _b with _c;
 C do
     int a = 1;
     int b;
     int c;
 end
-constant _a;
-deterministic _b with _c;
 par/and do
     async do
         _b = 1;
@@ -11285,7 +11317,7 @@ with
 end
 return _a + a;
 ]],
-    run = 2,
+    parser = 'ERR : line 5 : after `deterministic´ : expected identifier',
 }
 
 Test { [[
@@ -11725,7 +11757,7 @@ int* pa = set do
 end;
 return a;
 ]],
-    env='invalid return value'
+    env='invalid attribution'
 }
 Test { [[
 int* pa;
@@ -11734,7 +11766,7 @@ int a = set do
 end;
 return a;
 ]],
-    env='invalid return value'
+    env='invalid attribution'
 }
 
 Test { [[
@@ -11858,7 +11890,9 @@ with
 end
 return b;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
 }
 
 Test { [[
@@ -11881,8 +11915,10 @@ end
 return a + b;
 ]],
     run = 2,
-    nd_acc = 4,
-    nd_call = 3,
+    simul = {
+        nd_acc = 4,
+        nd_call = 3,
+    },
 }
 
 Test { [[
@@ -11906,7 +11942,9 @@ end
 return a + b;
 ]],
     run = 2,
-    nd_acc = 2,
+    simul = {
+        nd_acc = 2,
+    },
 }
 
 Test { [[
@@ -11936,7 +11974,7 @@ Test { [[int[0] v; return 0;]],
     env='invalid array dimension'
 }
 Test { [[int[2] v; return v;]],
-    env = 'invalid return value'
+    env = 'invalid attribution'
 }
 Test { [[u8[2] v; return &v;]],
     env = 'invalid operand to unary "&"',
@@ -12317,8 +12355,10 @@ with
 end;
 return _idx(va,0) + _idx(va,1);
 ]],
-    nd_acc = 1,
-    nd_call = 1,
+    simul = {
+        nd_acc = 1,
+        nd_call = 1,
+    },
 }
 Test { PRE .. [[
 par/and do
@@ -12328,7 +12368,9 @@ with
 end;
 return _idx(va,0) + _idx(va,1);
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
 }
 Test { PRE .. [[
 _set(va,0,1);
@@ -12395,7 +12437,9 @@ with
 end;
 return 0;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
 }
 Test { PRE .. [[
 int a;
@@ -12406,7 +12450,9 @@ with
 end;
 return 0;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
 }
 Test { PRE .. [[
 int a, b;
@@ -12417,10 +12463,12 @@ with
 end;
 return 0;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
 }
 Test { PRE .. [[
-int a;
+int a = 10;
 par/or do
     _f5(&a);
 with
@@ -12428,7 +12476,10 @@ with
 end;
 return 0;
 ]],
-    --nd_flw = 1,
+    --run = 10,
+    simul = {
+        nd_flw = 1,
+    }
 }
 Test { PRE .. [[
 int a;
@@ -12441,7 +12492,9 @@ end;
 return 0;
 ]],
     --nd_flw = 1,
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
 }
 Test { PRE .. [[
 int a, b;
@@ -12509,7 +12562,9 @@ with
 end;
 return 0;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
 }
 Test { PRE .. [[
 int a;
@@ -12521,7 +12576,9 @@ with
 end;
 return a;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
 }
 Test { PRE .. [[
 int a;
@@ -12533,7 +12590,9 @@ with
 end;
 ]],
     --nd_flw = 2,
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
 }
 
 Test { PRE .. [[
@@ -12560,8 +12619,10 @@ with
 end;
 return v1 + v2;
 ]],
-    nd_acc = 1,     -- 2 (1/stmt)
-    nd_call = 1,
+    simul = {
+        nd_acc = 1,     -- 2 (1/stmt)
+        nd_call = 1,
+    },
 }
 
 Test { PRE .. [[
@@ -12575,8 +12636,10 @@ with
 end;
 return v1 + v2;
 ]],
-    nd_acc = 1,     -- TODO: const
-    nd_call = 1,
+    simul = {
+        nd_acc = 1,     -- TODO: const
+        nd_call = 1,
+    },
 }
 
 Test { PRE .. [[
@@ -12619,8 +12682,10 @@ with
 end;
 return a+a;
 ]],
-    nd_acc = 1,
-    nd_call = 1,
+    simul = {
+        nd_acc = 1,
+        nd_call = 1,
+    },
 }
 
 Test { PRE .. [[
@@ -12649,8 +12714,10 @@ with
 end;
 return v1+v2;
 ]],
-    nd_acc = 1,
-    nd_call = 1,
+    simul = {
+        nd_acc = 1,
+        nd_call = 1,
+    },
 }
 
 Test { PRE .. [[
@@ -12665,7 +12732,9 @@ with
 end;
 return v1+v2;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
 }
 
 Test { [[
@@ -12704,7 +12773,9 @@ with
 end
 return _a;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
 }
 
 Test { [[
@@ -12732,8 +12803,10 @@ with
     end
 end
 ]],
-    nd_call = 6,
-    isForever = true,
+    simul = {
+        nd_call = 6,
+        isForever = true,
+    },
 }
 
 Test { [[
@@ -12760,9 +12833,11 @@ with
     end
 end
 ]],
-    nd_acc = 6,
-    nd_call = 6,
-    isForever = true,
+    simul = {
+        nd_acc = 6,
+        nd_call = 6,
+        isForever = true,
+    },
 }
 
 Test { [[
@@ -12776,8 +12851,10 @@ with
     emit F(1);
 end
 ]],
-    nd_call = 1,
-    isForever = true,
+    simul = {
+        nd_call = 1,
+        isForever = true,
+    },
 }
 
 Test { [[
@@ -12793,8 +12870,10 @@ with
     emit G(0);
 end
 ]],
-    nd_call = 3,
-    isForever = true,
+    simul = {
+        nd_call = 3,
+        isForever = true,
+    },
 }
 
 Test { [[
@@ -12811,13 +12890,15 @@ with
     emit G(0);
 end
 ]],
-    nd_call = 1,
-    isForever = true,
+    simul = {
+        nd_call = 1,
+        isForever = true,
+    },
 }
 
 Test { [[
-deterministic _F with F,G;
 output int* F,G;
+deterministic _F with F,G;
 int a = 1;
 int* b;
 C do
@@ -12831,9 +12912,11 @@ with
     emit G(&a);
 end
 ]],
-    nd_call = 1,
-    nd_acc  = 3,
-    isForever = true,
+    simul = {
+        nd_call = 1,
+        nd_acc  = 3,
+        isForever = true,
+    },
 }
 
 Test { [[
@@ -12852,9 +12935,11 @@ with
     emit G(&a);
 end
 ]],
-    nd_call = 1,
-    nd_acc  = 3,
-    isForever = true,
+    simul = {
+        nd_call = 1,
+        nd_acc  = 3,
+        isForever = true,
+    },
 }
 
 Test { [[
@@ -12866,7 +12951,9 @@ with
     emit G;
 end
 ]],
-    isForever = true,
+    simul = {
+        isForever = true,
+    },
 }
 
     -- STRINGS
@@ -12966,7 +13053,9 @@ with
 end;
 return 0;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
 }
 Test { [[
 int[2] v;
@@ -12978,7 +13067,9 @@ with
 end;
 return 0;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
 }
 
 -- STRUCTS
@@ -13031,7 +13122,9 @@ with
 end;
 return vs.a;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
 }
 
 Test { [[
@@ -13050,7 +13143,9 @@ with
 end;
 return vs.a;
 ]],
-    nd_acc = 1,     -- TODO: struct
+    simul = {
+        nd_acc = 1,     -- TODO: struct
+    },
 }
 
 Test { [[
@@ -13196,7 +13291,9 @@ with
 end;
 return a;
 ]],
-    nd_acc = 1,
+    simul = {
+        nd_acc = 1,
+    },
 }
 
     -- MEM
@@ -13301,7 +13398,9 @@ end
 return ret;
 ]],
     tot = 11,
-    nd_acc = 6,
+    simul = {
+        nd_acc = 6,
+    },
     run = 6,
 }
 
@@ -13334,9 +13433,11 @@ do
 end
 return ret+a;
 ]],
-    nd_acc = 7,
-    tot = 28,
-    run = 33;
+    simul = {
+        nd_acc = 7,
+        tot = 28,
+        run = 33;
+    },
 }
 
 Test { [[
@@ -13357,8 +13458,10 @@ with
     ret = ret + a;
 end
 ]],
-    tot = 21,
-    isForever = true,
+    simul = {
+        tot = 21,
+        isForever = true,
+    },
 }
 
 Test { [[
@@ -13428,8 +13531,10 @@ with
     int b;
 end
 ]],
-    tot = 12,
-    isForever = true,
+    simul = {
+        tot = 12,
+        isForever = true,
+    }
 }
 print('COUNT', COUNT)
 

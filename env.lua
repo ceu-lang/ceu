@@ -148,18 +148,11 @@ F = {
     end,
 
     Dcl_det = function (me)
-        local ID = function (v)
-            if type(v) == 'string' then
-                return v
-            else
-                return v.var or v.ext
-            end
-        end
-        local id1 = ID(me[1])
+        local id1 = me[1]
         local t1 = _ENV.dets[id1] or {}
         _ENV.dets[id1] = t1
         for i=2, #me do
-            local id2 = ID(me[i])
+            local id2 = me[i]
             local t2 = _ENV.dets[id2] or {}
             _ENV.dets[id2] = t2
 
@@ -274,12 +267,9 @@ F = {
 
     --------------------------------------------------------------------------
 
-    SetExp_pre = function (me)
-        me[1] = me[1] or _AST.copy(_AST.iter'SetBlock'()[1], me.ln)
-    end,
     SetExp = function (me)
         local e1, e2 = unpack(me)
-DBG('set', e1.id, e2.id)
+        e1 = e1 or _AST.iter'SetBlock'()[1]
         ASR(e1.lval and _TP.contains(e1.tp,e2.tp,true),
                 me, 'invalid attribution')
     end,

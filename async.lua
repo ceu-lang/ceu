@@ -17,17 +17,6 @@ F = {
         end
     end,
 
-    Return = function (me)
-        local async  = _AST.iter'Async'()
-        -- must have a setblk between return and an async
-        if async then
-            local setblk = _AST.iter'SetBlock'()
-            ASR( async.depth == setblk.depth+1 or
-                 async.depth <  setblk.depth,
-                    me, 'invalid return statement')
-        end
-    end,
-
     EmitExtS = function (me)
         if _AST.iter'Async'() then
             ASR(me[1].ext.input,  me, 'not permitted outside async')
@@ -60,15 +49,20 @@ F = {
         ASR(not _AST.iter'Async'(), me,'not permitted inside async')
     end,
 
+    SetExp = function (me)
+        local e1, e2 = unpack(me)
+        local async = _AST.iter'Async'()
+        if async and (not e1) then
+            ASR( async.depth <= _AST.iter'SetBlock'().depth+1,
+                    me, 'invalid access from async')
+        end
+    end,
+
     Var = function (me)
         local async = _AST.iter'Async'()
         if async then
-            local setblk = _AST.iter'SetBlock'()
-            local var = setblk and (async.depth==setblk.depth+1) and 
-                            setblk[1][1].var
-            ASR(_AST.iter'VarList'() or
-                async.depth < me.var.blk.depth or
-                var == me.var,
+            ASR(_AST.iter'VarList'() or             -- param list
+                async.depth < me.var.blk.depth,     -- var is declared inside
                     me, 'invalid access from async')
         end
     end,

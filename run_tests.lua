@@ -31,22 +31,11 @@ Test = function (t)
 
     local ok = not (T.parser or T.env or T.mem or
                     T.props or T.tight or T.async)
-    if ok then
-        local CEU = './ceu - --output _ceu_code.c --simul-run _ceu_simul.lua '
-                        .. '--tp-word 4 --tp-pointer 4 --tp-lbl 2 --tp-off 2'
-        local ceu = assert(io.popen(CEU, 'w'))
-        ceu:write(str_input)
-        ceu:close()
-        assert(os.execute('gcc -std=c99 -o ceu.exe simul.c') == 0)
-        assert(os.execute('./ceu.exe _ceu_simul.lua') == 0)
-    end
-
     _OPTS = {
         tp_word    = 4,
         tp_pointer = 4,
         tp_off     = 2,
         tp_lbl     = 2,
-        simul_use  = '_ceu_simul.lua',
     }
 
     -- LINES
@@ -65,7 +54,6 @@ Test = function (t)
     if not check('tight')    then return end
     if not check('async')    then return end
     if not check('labels')   then return end
-    if not check('analysis') then return end
     if not check('code')     then return end
 
     if T.tot then
@@ -75,7 +63,6 @@ Test = function (t)
     -- SIMUL
     --if T.dfa then return end
 --[=[
-]=]
     assert((not T.n_unreachs) and not (T.isForever)) -- move to simul
     do
         local _defs = { n_reachs=0, n_unreachs=0, isForever=false, nd_acc=0 }
@@ -105,21 +92,22 @@ Test = function (t)
         end
 ]]
     end
+]=]
 
     -- RUN
 
     if T.run == false then
-        assert(T.simul.nd_acc>0)
+        --assert(T.simul.nd_acc>0)
         return
     end
 
     if T.run == nil then
-        assert(T.simul and T.simul.isForever or T.simul.nd_acc,
-                -- or T.simul.nd_flw or T.simul.nd_esc,
+        assert(T.simul and T.simul.isForever or T.simul.nd_acc
+                or T.simul.nd_flw, -- or T.simul.nd_esc,
                 'missing run value')
         return
     end
-    local CEU = './ceu - --simul-file _ceu_simul.lua --output _ceu_code.c '
+    local CEU = './ceu - --output _ceu_code.c '
                     .. '--tp-word 4 --tp-pointer 4 --tp-lbl 2 --tp-off 2'
 
     -- T.run = N
@@ -138,7 +126,6 @@ Test = function (t)
         local str_all = [[
             par/or do
                 ]]..str_input..[[
-
             with
                 async do
                     `EVTS
