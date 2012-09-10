@@ -204,11 +204,11 @@ do
             DBG('# FINALIZERS')
         end
         if _ANALYSIS.needsPrio then
-            --str = str .. '#define CEU_TRK_PRIO\n'
+            str = str .. '#define CEU_TRK_PRIO\n'
             DBG('# TRK_PRIO')
         end
         if _ANALYSIS.needsChk then
-            --str = str .. '#define CEU_TRK_CHK\n'
+            str = str .. '#define CEU_TRK_CHK\n'
             DBG('# TRK_CHK')
         end
 

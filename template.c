@@ -68,7 +68,7 @@ typedef struct {
     char            mem[N_MEM];
 } tceu;
 
-tceu CEU_ = { 0, 0,
+tceu CEU_ = { 0, {},
 #ifdef CEU_EXTS
     0, 0,
 #endif
@@ -78,7 +78,7 @@ tceu CEU_ = { 0, 0,
 #ifdef CEU_ASYNCS
     0,
 #endif
-    0
+    {}
 };
 tceu* CEU = &CEU_;
 
@@ -283,7 +283,7 @@ int ceu_go_async (int* ret, int* pending)
 
     if (pending != NULL) {
         for (i=0; i<CEU_ASYNCS; i++) {
-            if (ASY0 != Inactive) {
+            if (ASY0[i] != Inactive) {
                 *pending = 1;
                 break;
             }
@@ -299,7 +299,6 @@ int ceu_go_wclock (int* ret, s32 dt)
 #ifdef CEU_WCLOCKS
     int i;
     s32 min_togo = CEU_WCLOCK_NONE;
-fprintf(stderr, "WCLK\n");
 
     tceu_wclock* CLK0 = PTR(CEU_WCLOCK0,tceu_wclock*);
 
