@@ -46,9 +46,7 @@ do do do do do do do do do do do do do do do do do do do do
 do do do do do do do do do do do do do do do do do do do do
 do do do do do do do do do do do do do do do do do do do do
 do do do do do do do do do do do do do do do do do do do do
-do do do do do do do do do do do do do do do do do do do do
     nothing;
-end end end end end end end end end end end end end end end end end end end end
 end end end end end end end end end end end end end end end end end end end end
 end end end end end end end end end end end end end end end end end end end end
 end end end end end end end end end end end end end end end end end end end end
@@ -721,7 +719,7 @@ Test { [[await Forever; return 0;]],
     parser = "ERR : line 1 : after `;´ : expected EOF",
 }
 
-Test { [[emit 1ms; return 0;]], async='not permitted outside async' }
+Test { [[emit 1ms; return 0;]], props='not permitted outside `async´' }
 Test { [[
 int a;
 a = set async do
@@ -771,7 +769,7 @@ async do
     return 10;
 end
 ]],
-    async = 'ERR : line 3 : invalid access from async',
+    props = 'ERR : line 3 : invalid access from async',
 }
 
 -- Seq
@@ -1501,7 +1499,7 @@ loop do
 end;
 return 1;
 ]],
-    async = 'break without loop',
+    props = 'break without loop',
 }
 
 Test { [[
@@ -2170,6 +2168,24 @@ end;
         n_unreachs = 1,
     },
     run = 4,
+}
+
+Test { [[
+int ret = 0;
+event int a = 3;
+par/or do
+    await a;
+    ret = ret + 1;
+with
+    ret = 5;
+end
+emit a;
+return ret;
+]],
+    simul = {
+        n_unreachs = 1,
+    },
+    run = 5,
 }
 
 Test { [[
@@ -9397,7 +9413,7 @@ with
     return v1 + v2;
 end;
 ]],
-    async = "ERR : line 8 : invalid access from async",
+    props = "ERR : line 8 : invalid access from async",
 }
 
 Test { [[
@@ -9502,7 +9518,7 @@ with
     return v1 + v2;
 end;
 ]],
-    async = "ERR : line 8 : invalid access from async",
+    props = "ERR : line 8 : invalid access from async",
 }
 
 Test { [[
@@ -10594,26 +10610,38 @@ return ret;
 Test { [[
 do
     nothing;
-finalize
+finally
     nothing;
 end
 return 1;
 ]],
-    run = 1,
+    --run = 1,
+    tight = "ERR : line 1 : `do-finally´ body must await",
 }
 
 Test { [[
 do
     nothing;
-finalize
+finally
+    return 1;
 end
+return 0;
 ]],
-    parser = "ERR : line 3 : after `finalize´ : invalid statement (or C identifier?)",
+    props = 'ERR : line 4 : not permitted inside `finally´',
 }
 
 Test { [[
 do
-finalize
+    nothing;
+finally
+end
+]],
+    parser = "ERR : line 3 : after `finally´ : invalid statement (or C identifier?)",
+}
+
+Test { [[
+do
+finally
     nothing;
 end
 ]],
@@ -10623,52 +10651,52 @@ end
 Test { [[
 do
     int a;
-finalize
+finally
     await Forever;
 end
 ]],
-    props = "ERR : line 4 : invalid inside a finalizer",
+    props = "ERR : line 4 : not permitted inside `finally´",
 }
 
 Test { [[
 do
     int a;
-finalize
+finally
     async do
         nothing;
     end
 end
 ]],
-    props = "ERR : line 4 : invalid inside a finalizer",
+    props = "ERR : line 4 : not permitted inside `finally´",
 }
 
 Test { [[
 do
     int a;
-finalize
+finally
     return 0;
 end
 ]],
-    props = "ERR : line 4 : invalid inside a finalizer",
+    props = "ERR : line 4 : not permitted inside `finally´",
 }
 
 Test { [[
 loop do
     do
         int a;
-    finalize
+    finally
         break;
     end
 end
 ]],
-    props = "ERR : line 5 : invalid inside a finalizer",
+    props = "ERR : line 5 : not permitted inside `finally´",
 }
 
 Test { [[
 int ret = 0;
 do
     int b;
-finalize
+finally
     a = 1;
     loop do
         break;
@@ -10684,39 +10712,84 @@ Test { [[
 int r = 0;
 do
     int a;
-finalize
-    int b = set do return 2; end;
-    r = b;
+finally
+    a = set do return 2; end;
+    r = a;
 end
 return r;
 ]],
-    run = 2;
+    props = "ERR : line 5 : not permitted inside `finally´",
 }
 
 Test { [[
 int r = 0;
 do
     int a;
-finalize
-    int b = set do return 2; end;
+finally
+    int b = 1;
     r = b;
 end
 return r;
 ]],
-    run = 2;
+    props = "ERR : line 5 : not permitted inside `finally´",
+}
+
+Test { [[
+int ret = 0;
+do
+    nothing;
+finally
+    int a = 1;
+end
+return ret;
+]],
+    props = "ERR : line 5 : not permitted inside `finally´",
+}
+
+Test { [[
+int ret;
+do
+    int a = 1;
+    nothing;
+finally
+    a = a + 1;
+    ret = a;
+end
+return ret;
+]],
+    tight = "ERR : line 2 : `do-finally´ body must await",
+    --run = 2,
+}
+
+Test { [[
+int ret;
+do
+    int a = 1;
+    if 1 then
+        await 1s;
+    end
+finally
+    a = a + 1;
+    ret = a;
+end
+return ret;
+]],
+    tight = "ERR : line 2 : `do-finally´ body must await",
+    --run = 2,
 }
 
 Test { [[
 int ret = 0;
 do
     int a;
-finalize
+finally
     a = 1;
     ret = a;
 end
 return ret;
 ]],
-    run = 1,
+    tight = "ERR : line 2 : `do-finally´ body must await",
+    --run = 1,
 }
 
 Test { [[
@@ -10724,7 +10797,7 @@ int a;
 par/or do
     do
         int a;
-    finalize
+    finally
         a = 1;
     end
 with
@@ -10732,18 +10805,20 @@ with
 end
 return a;
 ]],
-    run = 2;
+    tight = "ERR : line 3 : `do-finally´ body must await",
+    --run = 2;
 }
 
 Test { [[
 int ret;
 par/or do
     do
-        int a;
-    finalize
+        await 1s;
+    finally
         ret = 2;
     end
 with
+    await 1s;
     ret = 2;
 end
 return ret;
@@ -10751,7 +10826,7 @@ return ret;
     simul = {
         nd_acc = 1,
     },
-    run = 2,
+    run = { ['~>1s']=2 },
 }
 
 Test { [[
@@ -10761,7 +10836,7 @@ loop do
     par/or do
         do
             await A;
-        finalize
+        finally
             ret = ret + 1;
         end;
         return 0;
@@ -10771,9 +10846,9 @@ loop do
 end
 return ret;
 ]],
-    --nd_flw = 1,
     run = 1,
     simul = {
+        nd_flw = 1,
         n_unreachs = 3,
     },
 }
@@ -10784,13 +10859,13 @@ int ret = 1;
 par/or do
     do
         await A;
-    finalize
+    finally
         ret = 1;
     end
 with
     do
         await B;
-    finalize
+    finally
         ret = 2;
     end
 end
@@ -10805,19 +10880,19 @@ int ret = 1;
 par/or do
     do
         await A;
-    finalize
+    finally
         ret = 1;
     end
 with
     do
         await B;
-    finalize
+    finally
         ret = 2;
     end
 with
     do
         await C;
-    finalize
+    finally
         ret = 3;
     end
 end
@@ -10828,6 +10903,8 @@ return ret;
     },
 }
 
+-- TODO: emit int?
+--[=[
 Test { [[
 input void A, B, C;
 event void a;
@@ -10835,14 +10912,14 @@ int ret = 1;
 par/or do
     do
         await A;
-    finalize
+    finally
         emit a;
         ret = ret * 2;
     end
 with
     do
         await B;
-    finalize
+    finally
         ret = ret + 5;
     end
 with
@@ -10858,6 +10935,7 @@ return ret;
     },
     run = { ['~>A']=9, ['~>B']=6 },
 }
+]=]
 
 Test { [[
 input void A;
@@ -10867,10 +10945,10 @@ par/or do
         ret = ret + 1;
         do
             await A;
-        finalize
+        finally
             ret = ret * 3;
         end
-    finalize
+    finally
         ret = ret + 5;
     end
 with
@@ -10892,10 +10970,10 @@ par/or do
         ret = ret + 1;
         do
             await A;
-        finalize
+        finally
             ret = ret * 3;
         end
-    finalize
+    finally
         ret = ret + 5;
     end
 with
@@ -10916,10 +10994,10 @@ par/or do
         do
             await A;
             ret = ret * 100;
-        finalize
+        finally
             ret = ret * 3;
         end
-    finalize
+    finally
         ret = ret + 5;
     end
 with
@@ -10943,17 +11021,17 @@ loop do
                     int a;
                     await B;
                     ret = ret + 1;
-                finalize
+                finally
                     ret = ret + 2;
                 end
-            finalize
+            finally
                 ret = ret + 3;
             end
         with
             await A;
             break;
         end
-    finalize
+    finally
         ret = ret + 4;
     end
 end
@@ -10968,7 +11046,23 @@ loop do
     do
         ret = ret + 1;
         break;
-    finalize
+    finally
+        ret = ret + 4;
+    end
+end
+return ret;
+]],
+    tight = "ERR : line 3 : `do-finally´ body must await",
+}
+
+Test { [[
+int ret = 0;
+loop do
+    do
+        await 1s;
+        ret = ret + 1;
+        break;
+    finally
         ret = ret + 4;
     end
 end
@@ -10977,8 +11071,97 @@ return ret;
     simul = {
         n_unreachs = 1,
     },
-    run = 5,
+    run = { ['~>1s']=5 },
 }
+
+Test { [[
+int ret = set do
+    int ret = 0;
+    loop do
+        do
+            await 1s;
+            ret = ret + 1;
+            return ret * 2;
+        finally
+            ret = ret + 4;  // executed after `return´ assigns to outer `ret´
+        end
+    end
+end;
+return ret;
+]],
+    simul = {
+        n_unreachs = 1,
+    },
+    run = { ['~>1s']=2 },
+}
+
+Test { [[
+int ret = 0;
+par/or do
+    await 1s;
+with
+    do
+        await 1s;
+    finally
+        ret = ret + 1;
+    end
+end
+return ret;
+]],
+    simul = {
+        nd_acc = 1,
+    },
+    run = { ['~>1s']=1, },
+}
+
+Test { [[
+int ret = 10;
+par/or do
+    await 500ms;
+with
+    par/or do
+        await 1s;
+    with
+        do
+            await 1s;
+        finally
+            ret = ret + 1;
+        end
+    end
+end
+return ret;
+]],
+    simul = {
+        n_unreach = 2,
+    },
+    run = { ['~>1s']=11, },
+}
+
+Test { [[
+int ret = 10;
+par/or do
+    await 500ms;
+with
+    par/or do
+        await 1s;
+    with
+        do
+            await 250ms;
+            ret = ret + 1;
+        finally
+            ret = ret + 1;
+        end
+    end
+end
+return ret;
+]],
+    simul = {
+        n_unreach = 3,  -- 500ms,1s,finally
+    },
+    run = { ['~>1s']=12 },
+}
+
+-- TODO: bounded loop on finally
 
     -- ASYNCHRONOUS
 
@@ -11004,7 +11187,7 @@ async do
 end;
 return 0;
 ]],
-    async = 'invalid access from async',
+    props = 'invalid access from async',
 }
 
 Test { [[
@@ -11032,7 +11215,7 @@ async (b) do
 end;
 return a;
 ]],
-    async = 'invalid access from async',
+    props = 'invalid access from async',
     --run = 1,
 }
 
@@ -11043,7 +11226,7 @@ async do
 end;
 return a;
 ]],
-    async = 'invalid access from async',
+    props = 'invalid access from async',
     --run = 1,
 }
 
@@ -11056,7 +11239,7 @@ with
     return 2;
 end;
 ]],
-    async = 'invalid access from async',
+    props = 'invalid access from async',
 }
 
 Test { [[
@@ -11086,7 +11269,7 @@ with
 end;
 return a;
 ]],
-    async = 'invalid access from async',
+    props = 'invalid access from async',
     simul = {
         --nd_acc = 1,
     },
@@ -11097,7 +11280,7 @@ async do
     return 1+2;
 end;
 ]],
-    async = 'invalid access from async',
+    props = 'invalid access from async',
 }
 
 Test { [[
@@ -11147,7 +11330,7 @@ async do
 end;
 return a;
 ]],
-    async = 'invalid access from async',
+    props = 'invalid access from async',
     --run=1
 }
 
@@ -11169,7 +11352,7 @@ async do
 end;
 return 0;
 ]],
-    async = 'ERR : line 3 : invalid access from async',
+    props = 'ERR : line 3 : invalid access from async',
 }
 Test { [[
 event int a;
@@ -11178,7 +11361,7 @@ async do
 end;
 return 0;
 ]],
-    async = 'ERR : line 3 : invalid access from async',
+    props = 'ERR : line 3 : invalid access from async',
 }
 Test { [[
 async do
@@ -11186,7 +11369,7 @@ async do
 end;
 return 0;
 ]],
-    async='not permitted inside async'
+    props='not permitted inside `async´'
 }
 Test { [[
 input int X;
@@ -11196,7 +11379,7 @@ end;
 emit X(1);
 return 0;
 ]],
-  async='not permitted outside async'
+  props='not permitted outside `async´'
 }
 Test { [[
 async do
@@ -11205,7 +11388,7 @@ async do
     end;
 end;
 ]],
-    async='not permitted inside async'
+    props='not permitted inside `async´'
 }
 Test { [[
 async do
@@ -11216,7 +11399,7 @@ async do
     end;
 end;
 ]],
-    async='not permitted inside async'
+    props='not permitted inside `async´'
 }
 
 Test { [[
@@ -11227,7 +11410,7 @@ loop do
 end;
 return 0;
 ]],
-    async='break without loop'
+    props='break without loop'
 }
 
 Test { [[
@@ -11595,7 +11778,7 @@ async do
 end;
 return i;
 ]],
-    async = 'invalid access from async',
+    props = 'invalid access from async',
 }
 
 Test { [[
@@ -13232,7 +13415,7 @@ async do
     end
 end
 ]],
-    async = "ERR : line 3 : not permitted inside async",
+    props = "ERR : line 3 : not permitted inside `async´",
 }
 Test { [[
 async do
@@ -13245,7 +13428,7 @@ async do
     end
 end
 ]],
-    async = "ERR : line 4 : not permitted inside async",
+    props = "ERR : line 4 : not permitted inside `async´",
 }
 Test { [[
 async do
@@ -13256,7 +13439,7 @@ async do
     end
 end
 ]],
-    async = "ERR : line 2 : not permitted inside async",
+    props = "ERR : line 2 : not permitted inside `async´",
 }
 
 -- DFA

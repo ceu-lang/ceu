@@ -20,59 +20,67 @@ function ADD_all (me, t)
     end
 end
 
-local STMTS = {
-    Block=true, Nothing=true,
-    Dcl_var=true, Dcl_int=true, Dcl_ext=true,
-    Dcl_pure=true, Dcl_det=true,
-    SetExp=true, SetBlock=true, SetStmt=true,
-    Return=true, Async=true, Host=true,
-    ParEver=true, ParOr=true, ParAnd=true, Loop=true,
-    Break=true, If=true,
-    Do=true, Finalize=true,
-    CallStmt=true, AwaitN=true,
-    AwaitExt=true, AwaitInt=true, AwaitT=true,
-    EmitExtS=true,  EmitInt=true,  EmitT=true,
-}
-
 _PROPS = {
     has_exts    = false,
     has_wclocks = false,
     has_asyncs  = false,
     has_emits   = false,
-    has_fins    = false,
+}
+
+local NO_fin = {
+    DoFinally=true, Finally=true,
+    Host=true, Return=true, Async=true,
+    ParEver=true, ParOr=true, ParAnd=true,
+    AwaitExt=true, AwaitInt=true, AwaitN=true, AwaitT=true,
+    EmitExtE=true, EmitExtS=true, EmitInt=true, EmitT=true,
+    Dcl_type=true, Dcl_det=true, Dcl_var=true, Dcl_int=true, Dcl_ext=true,
+}
+
+local NO_async = {
+    ParEver=true, ParOr=true, ParAnd=true,
+    EmitInt=true,
+    Async=true,
+    AwaitExt=true, AwaitInt=true, AwaitN=true, AwaitT=true,
 }
 
 F = {
     Node_pre = function (me)
         me.n_tracks = 1
-
-        if STMTS[me.id] then
-            me.isStmt = true
-        end
     end,
     Node = function (me)
-        if (not F[me.id]) and _AST.isNode(me[#me]) then
+        if (not F[me.tag]) and _AST.isNode(me[#me]) then
             SAME(me, me[#me])
+        end
+        if NO_fin[me.tag] then
+            ASR(not _AST.iter'Finally'(), me, 'not permitted inside `finally´')
+        end
+        if NO_async[me.tag] then
+            ASR(not _AST.iter'Async'(), me,'not permitted inside `async´')
         end
     end,
 
     Root    = ADD_all,
     Block   = MAX_all,
+    BlockN  = MAX_all,
     ParEver = ADD_all,
     ParAnd  = ADD_all,
     ParOr   = ADD_all,
+
+    Finally = function (me)
+        for n in _AST.iter(_AST.pred_prio) do
+            if not n.fins then
+                n.fins = node('BlockN')(n.ln,n.str)
+            end
+            n.fins[#n.fins+1] = _AST.copy(me.emt)
+        end
+    end,
 
     Dcl_ext = function (me)
         _PROPS.has_exts = true
     end,
 
-    Finalize = function (me)
-        _PROPS.has_fins = true
-    end,
-
     Async = function (me)
         _PROPS.has_asyncs = true
-        ASR(not _AST.iter'Finalize'(), me, 'invalid inside a finalizer')
     end,
 
     If = function (me)
@@ -91,11 +99,17 @@ F = {
     end,
     Break = function (me)
         local loop = _AST.iter'Loop'()
-        ASR(loop, me,'break without loop')
+        ASR(loop, me, 'break without loop')
         loop.brks[me] = true
 
-        local fin = _AST.iter'Finalize'()
-        ASR(not fin or fin.depth<loop.depth, me, 'invalid inside a finalizer')
+        local fin = _AST.iter'Finally'()
+        ASR(not fin or fin.depth<loop.depth, me, 'not permitted inside `finally´')
+
+        local async = _AST.iter'Async'()
+        if async then
+            local loop = _AST.iter'Loop'()
+            ASR(loop.depth>async.depth, me, 'break without loop')
+        end
     end,
 
     SetBlock_pre = function (me)
@@ -105,24 +119,47 @@ F = {
     Return = function (me)
         local blk = _AST.iter'SetBlock'()
         blk.rets[me] = true
-
-        local fin = _AST.iter'Finalize'()
-        ASR(not fin or fin.depth<blk.depth, me, 'invalid inside a finalizer')
     end,
 
-    AwaitExt = function (me)
-        ASR(not _AST.iter'Finalize'(), me, 'invalid inside a finalizer')
-    end,
-    AwaitInt = 'AwaitExt',
-    AwaitN   = 'AwaitExt',
     AwaitT = function (me)
-        F.AwaitExt(me)
         _PROPS.has_wclocks = true
     end,
 
     EmitInt = function (me)
         me.n_tracks = 2     -- continuation
         _PROPS.has_emits = true
+    end,
+
+    EmitExtS = function (me)
+        if _AST.iter'Async'() then
+            ASR(me[1].ext.input,  me, 'not permitted inside `async´')
+        else
+            ASR(me[1].ext.output, me, 'not permitted outside `async´')
+        end
+    end,
+    EmitExtE = function (me)
+        F.EmitExtS(me)
+    end,
+    EmitT = function (me)
+        ASR(_AST.iter'Async'(), me,'not permitted outside `async´')
+    end,
+
+    SetExp = function (me)
+        local e1, e2 = unpack(me)
+        local async = _AST.iter'Async'()
+        if async and (not e1) then
+            ASR( async.depth <= _AST.iter'SetBlock'().depth+1,
+                    me, 'invalid access from async')
+        end
+    end,
+
+    Var = function (me)
+        local async = _AST.iter'Async'()
+        if async then
+            ASR(_AST.iter'VarList'() or             -- param list
+                async.depth < me.var.blk.depth,     -- var is declared inside
+                    me, 'invalid access from async')
+        end
     end,
 }
 

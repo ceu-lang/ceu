@@ -3,54 +3,53 @@ _AST = {
 }
 
 local MT = {}
+local STACK = nil
+local FIN = 1     -- next fin
 
-function node (id, min)
+function _AST.isNode (node)
+    return (getmetatable(node) == MT) and node.tag
+end
+
+function node (tag, min)
     min = min or 0
-    return function (ln1,ln2, str, ...)
+    return function (ln, ...)
         local node = setmetatable({ ... }, MT)
         if #node < min then
             return ...
         else
-            node.ln  = {ln1, ln2}
-            node.str = str
-            node.id  = id
+            node.ln  = ln
+            node.tag = tag
             return node
         end
     end
 end
 
-stack = nil
-
-function pred_prio (me)
-    local id = me.id
-    return id=='SetBlock' or id=='ParOr' or id=='Loop'
+function _AST.pred_prio (me)
+    local tag = me.tag
+    return tag=='SetBlock' or tag=='ParOr' or tag=='Loop'
 end
-function pred_true (me) return true end
+function _AST.pred_true (me) return true end
 
 function _AST.iter (pred, inc)
     if pred == nil then
-        pred = pred_true
+        pred = _AST.pred_true
     elseif type(pred) == 'string' then
-        local id = pred
-        pred = function(me) return me.id==id end
+        local tag = pred
+        pred = function(me) return me.tag==tag end
     end
-    local from = (inc and 1) or #stack
-    local to   = (inc and #stack) or 1
+    local from = (inc and 1) or #STACK
+    local to   = (inc and #STACK) or 1
     local step = (inc and 1) or -1
     local i = from
     return function ()
         for j=i, to, step do
-            local stmt = stack[j]
+            local stmt = STACK[j]
             if pred(stmt) then
                 i = j+step
                 return stmt
             end
         end
     end
-end
-
-function _AST.isNode (node)
-    return (getmetatable(node) == MT) and node.id
 end
 
 function _AST.copy (node, ln)
@@ -75,7 +74,7 @@ function _AST.dump (me, spc)
             ks = ks.. k..'='..v..','
         end
     end
-    DBG(string.rep(' ',spc) .. me.id .. ' ('..ks..')')
+    DBG(string.rep(' ',spc) .. me.tag .. ' ('..ks..')')
     for i, sub in ipairs(me) do
         if _AST.isNode(sub) then
             _AST.dump(sub, spc+2)
@@ -87,13 +86,13 @@ end
 
 function _AST.visit (F)
     assert(_AST)
-    stack = {}
+    STACK = {}
     _AST.root.depth = 0
     return visit_aux(_AST.root, F)
 end
 
 function EXP (n)
-    return node('Exp')(n.ln[1],n.ln[2],n.str,n)
+    return node('Exp')(n.ln,n)
 end
 
 local function FF (F, str)
@@ -106,14 +105,14 @@ local function FF (F, str)
 end
 
 function visit_aux (me, F)
---DBG(me.id, me, F)
-    local pre, mid, pos = FF(F,me.id..'_pre'), FF(F,me.id), FF(F,me.id..'_pos')
-    local bef, aft = FF(F,me.id..'_bef'), FF(F,me.id..'_aft')
+--DBG(me.tag, me, F)
+    local pre, mid, pos = FF(F,me.tag..'_pre'), FF(F,me.tag), FF(F,me.tag..'_pos')
+    local bef, aft = FF(F,me.tag..'_bef'), FF(F,me.tag..'_aft')
 
     if F.Node_pre then F.Node_pre(me) end
     if pre then pre(me) end
 
-    stack[#stack+1] = me
+    STACK[#STACK+1] = me
 
     for i, sub in ipairs(me) do
         if _AST.isNode(sub) then
@@ -125,8 +124,17 @@ function visit_aux (me, F)
         end
     end
 
+    -- TODO!!!
+    if me.fins then
+        me.fins.depth = me.depth + 1
+        ASR(me.fins.depth < 127, me.fins, 'max depth of 127')
+        if bef then bef(me, me.fins) end
+        visit_aux(me.fins, F)
+        if aft then aft(me, me.fins) end
+    end
+
     if mid then mid(me) end
-    stack[#stack] = nil
+    STACK[#STACK] = nil
     if pos then pos(me) end
 
     if F.Node then F.Node(me) end
@@ -134,93 +142,138 @@ function visit_aux (me, F)
 end
 
 local C; C = {
-    [1] = function (ln1,ln2, str, spc, ...) -- spc=CK''
-        _AST.root = node('Root')(ln1,ln2, str,
-                node('Block')(ln1,ln2, str,
-                    node('Dcl_var')(ln1,ln2, str, false, 'int', false, '$ret'),
-                    node('SetBlock')(ln1,ln2, str,
-                        EXP(node('Var')(ln1,ln2, str, '$ret')),
-                        ...)))  -- ...=Block
+    [1] = function (ln, spc, ...) -- spc=CK''
+        local blk = node('Block')(ln)
+        blk[#blk+1] = node('Dcl_var')(ln, false, 'int', false, '$ret')
+        for i=1, FIN-1 do
+            blk[#blk+1] = node('Dcl_var')(ln,true,'void',false,'$fin_'..i)
+        end
+        blk[#blk+1] = node('SetBlock')(ln,
+                        EXP(node('Var')(ln, '$ret')),
+                        ...)  -- ...=Block
+
+        _AST.root = node('Root')(ln, blk)
         return _AST.root
     end,
 
     Block   = node('Block'),
+    BlockN  = node('BlockN'),
     Nothing = node('Nothing'),
     Host    = node('Host'),
 
-    _Return = function (ln1,ln2, str, e2)
-        return node('Block')(ln1,ln2, str,
-                    node('SetExp')(ln1,ln2,str, false, e2),
-                    node('Return')(ln1,ln2,str))
+    _Return = function (ln, e2)
+        return node('BlockN')(ln,
+                    node('SetExp')(ln, false, e2),
+                    node('Return')(ln))
     end,
 
     Async   = node('Async'),
-    VarList = function (ln1,ln2, str, ...)
+    VarList = function (ln, ...)
         local t = { ... }
         for i, var in ipairs(t) do
             t[i] = EXP(var)
         end
-        return node('VarList')(ln1,ln2, str, unpack(t))
+        return node('VarList')(ln, unpack(t))
     end,
 
     ParEver = node('ParEver'),
     ParOr   = node('ParOr'),
     ParAnd  = node('ParAnd'),
 
-    Do = function (ln1,ln2, str, t1, t2)
-        if t2 then
-            t1[#t1+1] = node('Finalize')(ln1,ln2, str, unpack(t2))
+    _Do = function (ln, b1, b2)
+        if not b2 then
+            return node('Block')(ln, b1)
         end
-        local n = node('Do')(ln1,ln2,str, node('Block')(ln1,ln2, str, unpack(t1)))
-        n.finalize = t2 and t1[#t1]
-        return n
+
+        local evt = '$fin_'..FIN
+        local awt = node('AwaitInt')(ln,
+                        node('Var')(ln, evt))
+        local emt = node('EmitInt')(ln,
+                        node('Var')(ln, evt))
+        FIN = FIN + 1
+
+        b1[#b1+1] = emt
+        local dofin = node('DoFinally')(ln,b1)
+
+        local fin = node('Finally')(ln, b2)
+        fin.emt = emt
+
+        return node('Block')(ln,
+                node('ParOr')(ln,
+                    dofin,
+                    node('BlockN')(ln,
+                        awt,
+                        fin,
+                        node('AwaitN')(ln))))
+--[=[
+        do
+            <A>
+        finally
+            <B>
+        end
+
+        // becomes
+
+        event void $1;
+        do
+            par/or do
+                <A>
+                emit $1;
+                <B>         // only if <A> may not await
+            with
+                await $1;
+                <B>
+                await Forever;
+            end
+        end
+]=]
     end,
 
-    If = function (ln1,ln2, str, ...)
+    If = function (ln, ...)
         local t = { ... }
         local _else = t[#t]
         for i=#t-1, 1, -2 do
             local c, b = t[i-1], t[i]
-            _else = node('If')(ln1,ln2,str, c, b, _else)
+            _else = node('If')(ln, c, b, _else)
         end
         return _else
     end,
 
     Break = node('Break'),
-    Loop  = function (ln1,ln2, str, _i, _j, blk)
+    Loop  = function (ln, _i, _j, blk)
         if not _i then
-            return node('Loop')(ln1,ln2,str, blk)
+            return node('Loop')(ln, blk)
         end
 
-        local i = function() return EXP(node('Var')(ln1,ln2,str, _i)) end
-        local dcl_i = node('Dcl_var')(ln1,ln2,str, false, 'int', false, _i)
+        local i = function() return EXP(node('Var')(ln, _i)) end
+        local dcl_i = node('Dcl_var')(ln, false, 'int', false, _i)
         dcl_i.read_only = true
-        local set_i = node('SetExp')(ln1,ln2,str, i(),
-                                        EXP(node('CONST')(ln1,ln2,str, '0')))
-        local nxt_i = node('SetExp')(ln1,ln2,str, i(),
-                        EXP(node('Op2_+')(ln1,ln2,str, '+', i(),
-                                node('CONST')(ln1,ln2,str,'1'))))
+        local set_i = node('SetExp')(ln, i(),
+                                        EXP(node('CONST')(ln, '0')))
+        local nxt_i = node('SetExp')(ln, i(),
+                        EXP(node('Op2_+')(ln, '+', i(),
+                                node('CONST')(ln,'1'))))
 
         if not _j then
-            return node('Block')(ln1,ln2,str, dcl_i, set_i,
-                                    node('Loop')(ln1,ln2,str,blk))
+            return node('Block')(ln, dcl_i, set_i,
+                                    node('Loop')(ln,blk))
         end
 
         local j_name = '$j'..tostring(blk)
-        local j = function() return EXP(node('Var')(ln1,ln2,str, j_name)) end
-        local dcl_j = node('Dcl_var')(ln1,ln2,str, false, 'int', false, j_name)
-        local set_j = node('SetExp')(ln1,ln2,str, j(), _j)
+        local j = function() return EXP(node('Var')(ln, j_name)) end
+        local dcl_j = node('Dcl_var')(ln, false, 'int', false, j_name)
+        local set_j = node('SetExp')(ln, j(), _j)
 
-        local cmp = EXP(node('Op2_>=')(ln1,ln2,str, '>=', i(), j()))
+        local cmp = EXP(node('Op2_>=')(ln, '>=', i(), j()))
 
-        local loop = node('Loop')(ln1,ln2,str,
-            node('If')(ln1,ln2,str, cmp,
-                node('Break')(ln1,ln2,str),
-                node('Block')(ln1,ln2,str, blk, nxt_i)))
+        local loop = node('Loop')(ln,
+            node('If')(ln, cmp,
+                node('Break')(ln),
+                node('BlockN')(ln, blk, nxt_i)))
         loop.isBounded = true
         loop[1].isBounded = true    -- remind that the If is "artificial"
 
-        return node('Block')(ln1,ln2,str,
+        return node('Block')(ln,
                 dcl_i, set_i,
                 dcl_j, set_j,
                 loop)
@@ -240,23 +293,23 @@ local C; C = {
     Dcl_type = node('Dcl_type'),
     Dcl_det = node('Dcl_det'),
 
-    _Dcl_pure = function (ln1,ln2, str, ...)
+    _Dcl_pure = function (ln, ...)
         local ret = {}
         local t = { ... }
         for i=1, #t do
-            ret[#ret+1] = node('Dcl_pure')(ln1,ln2, str, t[i])
+            ret[#ret+1] = node('Dcl_pure')(ln, t[i])
         end
         return unpack(ret)
     end,
 
-    _Dcl_var = function (ln1,ln2, str, isEvt, tp, dim, ...)
+    _Dcl_var = function (ln, isEvt, tp, dim, ...)
         local ret = {}
         local t = { ... }
         for i=1, #t, 3 do
-            ret[#ret+1] = node('Dcl_var')(ln1,ln2, str, isEvt, tp, dim, t[i])
+            ret[#ret+1] = node('Dcl_var')(ln, isEvt, tp, dim, t[i])
             if t[i+1] then
-                ret[#ret+1] = C._Set(ln1,ln2, str,
-                                EXP(node('Var')(ln1,ln2,str,t[i])),
+                ret[#ret+1] = C._Set(ln,
+                                EXP(node('Var')(ln,t[i])),
                                 t[i+1],
                                 t[i+2])
             end
@@ -264,14 +317,14 @@ local C; C = {
         return unpack(ret)
     end,
 
-    _Dcl_int = function (ln1,ln2, str, isEvt, tp, dim, ...)
+    _Dcl_int = function (ln, isEvt, tp, dim, ...)
         local ret = {}
         local t = { ... }
         for i=1, #t, 3 do
-            ret[#ret+1] = node('Dcl_int')(ln1,ln2, str, isEvt, tp, dim, t[i])
+            ret[#ret+1] = node('Dcl_int')(ln, isEvt, tp, dim, t[i])
             if t[i+1] then
-                ret[#ret+1] = C._Set(ln1,ln2, str,
-                                EXP(node('Var')(ln1,ln2,str,t[i])),
+                ret[#ret+1] = C._Set(ln,
+                                EXP(node('Var')(ln,t[i])),
                                 t[i+1],
                                 t[i+2])
             end
@@ -279,15 +332,15 @@ local C; C = {
         return unpack(ret)
     end,
 
-    _Set = function (ln1,ln2, str, e1, id, e2)
-        return node(id)(ln1,ln2, str, e1, e2)
+    _Set = function (ln, e1, tag, e2)
+        return node(tag)(ln, e1, e2)
     end,
 
-    _Dcl_ext = function (ln1,ln2, str, dir, tp, ...)
+    _Dcl_ext = function (ln, dir, tp, ...)
         local ret = {}
         local t = { ... }
         for i=1, #t do
-            ret[#ret+1] = node('Dcl_ext')(ln1,ln2, str, dir, tp, t[i])
+            ret[#ret+1] = node('Dcl_ext')(ln, dir, tp, t[i])
         end
         return unpack(ret)
     end,
@@ -295,25 +348,25 @@ local C; C = {
     CallStmt = node('CallStmt'),
 
     Exp = node('Exp'),
-    _Exp = function (ln1,ln2, str, ...)
+    _Exp = function (ln, ...)
         local v1, v2, v3, v4 = ...
         if not v2 then          -- single value
             return v1
         elseif v1==true then    -- unary expression
             -- v1=true, v2=op, v3=exp
-            return node('Op1_'..v2)(ln1,ln2, str, v2,
-                                    C._Exp(ln1,ln2, str, select(3,...)))
+            return node('Op1_'..v2)(ln, v2,
+                                    C._Exp(ln, select(3,...)))
         else                    -- binary expression
             -- v1=e1, v2=op, v3=e2, v4=?
             if v2 == '->' then
-                return C._Exp(ln1,ln2, str,
-                    node('Op2_.')(ln1,ln2, str,'.',
-                                    node('Op1_*')(ln1,ln2,str,'*',v1), v3),
+                return C._Exp(ln,
+                    node('Op2_.')(ln, '.',
+                                    node('Op1_*')(ln,'*',v1), v3),
                     select(4,...)
                 )
             else
-                return C._Exp(ln1,ln2, str,
-                    node('Op2_'..v2)(ln1,ln2, str, v2, v1, v3),
+                return C._Exp(ln,
+                    node('Op2_'..v2)(ln, v2, v1, v3),
                     select(4,...)
                 )
             end
@@ -336,18 +389,13 @@ local function i2l (v)
     return _I2L[v]
 end
 
-local lines = function (...)
-    local t = { ... }   -- TODO: inef
-    return t[1], t[#t], unpack(t, 2, #t-1)
-end
-
 for rule, f in pairs(C) do
-    _GG[rule] = (m.Cp()/i2l) * m.C(_GG[rule]) * (m.Cp()/i2l) / lines / f
+    _GG[rule] = (m.Cp()/i2l) * _GG[rule] / f
 end
 
 for i=1, 12 do
-    local id = '_'..i
-    _GG[id] = (m.Cp()/i2l) * m.C(_GG[id]) * (m.Cp()/i2l) / lines / C._Exp
+    local tag = '_'..i
+    _GG[tag] = (m.Cp()/i2l) * _GG[tag] / C._Exp
 end
 
 _GG = m.P(_GG):match(_STR)

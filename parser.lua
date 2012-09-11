@@ -80,7 +80,7 @@ end
 
 -- TODO: types
 KEYS = P'async'   + 'await'  + 'break'   + 'call'    + 'constant' + 'deterministic'
-     +  'do'      + 'emit'   + 'else'    + 'end'     + 'event'    + 'finalize'
+     +  'do'      + 'emit'   + 'else'    + 'end'     + 'event'    + 'finally'
      +  'Forever' + 'input'  + 'if'      + 'loop'    + 'nothing'  + 'null'
      +  'output'  + 'par'    + 'par/and' + 'par/or'  + 'pure'     + 'return'
      +  'set'     + 'sizeof' + 'then'    + 'type'    + 'with'
@@ -100,6 +100,8 @@ NUM = CK(m.R'09'^1) / tonumber
 _GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
 
     , Block  = K';'^-1 *S* V'_Stmts'
+    , BlockN = K';'^-1 *S* V'_Stmts'
+
     , _Stmts = V'_LstStmt'      *S* EK';' * (S*K';')^0
              + V'_LstStmtBlock'           * (S*K';')^0
              + V'_Stmt'         *S* EK';' * (S*K';')^0 *S* V'_Stmts'^-1
@@ -115,12 +117,12 @@ _GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
             + V'Dcl_det'  + V'_Dcl_pure' + V'Dcl_type'
             + V'_Set'     + V'CallStmt' -- must be after Set
 
-    , _StmtBlock = V'Do'    + V'Async'  + V'Host'
+    , _StmtBlock = V'_Do'   + V'Async'  + V'Host'
                  + V'ParOr' + V'ParAnd'
                  + V'If'    + V'Loop'
 
     , _SetBlock = K'set' *S* (
-                    V'Do'      + V'Async' +
+                    V'_Do'     + V'Async' +
                     V'ParEver' + V'If'    + V'Loop'
                 )
 
@@ -143,9 +145,8 @@ _GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
 
     , Nothing = K'nothing'
 
-    , _Block  = K';'^-1 *S* V'_Stmts'
-    , Do      = K'do' *S* Ct(V'_Block') *S*
-                    (K'finalize' *S* Ct(V'_Block') + Cc(false)) *S*
+    , _Do     = K'do' *S* V'BlockN' *S*
+                    (K'finally'*S*V'BlockN' + Cc(false)) *S*
                 EK'end'
 
     , Async   = K'async' *S* V'VarList' *S* EK'do' *S*

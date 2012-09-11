@@ -19,12 +19,6 @@ function new (lbl)
     return lbl
 end
 
-function fin (me)
-    if me.gtes.fins[2] > me.gtes.fins[1] then
-        me.lbl_fin = new{me.id..'_Back_Finalizer', prio=me.depth}
-    end
-end
-
 function isConcurrent (i, j)
     return _SIMUL.isConcurrent[ (i-1)*#_LABELS.list + j ]
 end
@@ -59,17 +53,12 @@ F = {
         if me[1][1][1] ~= '$ret' then
             me.lbl_out.to_reach = true
         end
-        fin(me)
-    end,
-
-    Finalize = function (me)
-        me.lbl = new{'Finalize'}
     end,
 
     _Par_pre = function (me)
         me.lbls_in  = {}
         for i, sub in ipairs(me) do
-            me.lbls_in[i] = new{me.id..'_sub_'..i}
+            me.lbls_in[i] = new{me.tag..'_sub_'..i}
             sub.lbls_all = {}
         end
     end,
@@ -82,7 +71,6 @@ F = {
     ParOr_pre = function (me)
         F._Par_pre(me)
         me.lbl_out = new{'ParOr_out', prio=me.depth, to_reach=true}
-        fin(me)
     end,
     ParAnd_pre = function (me)
         F._Par_pre(me)
@@ -122,7 +110,6 @@ F = {
         me.lbl_ini = new{'Loop_ini'}
         me.lbl_mid = new{'Loop_mid', to_reach=true}
         me.lbl_out = new{'Loop_out', to_reach=true, prio=me.depth}
-        fin(me)
     end,
 
     EmitExtS = function (me)
@@ -139,12 +126,12 @@ F = {
     EmitInt = function (me)
         local int = unpack(me)
         me.lbl_emt = new{'Emit_'..int.var.id}
-        me.lbl_cnt = new{'Cnt_'..int.var.id, to_reach=true} -- TODO: why?
+        me.lbl_cnt = new{'Cnt_'..int.var.id, to_reach=true} -- TODO: why to_reach?
         me.lbl_awk = new{'Awk_'..int.var.id}
     end,
 
     AwaitT = function (me)
-        if me[1].id == 'WCLOCKE' then
+        if me[1].tag == 'WCLOCKE' then
             me.lbl = new{'Awake_'..me[1][1][1], to_reach=true}
         else
             me.lbl = new{'Awake_'..me[1].us,    to_reach=true}

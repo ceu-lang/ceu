@@ -41,14 +41,22 @@ F = {
         me.brk_awt_ret = false
     end,
     Node = function (me)
-        if (not F[me.id]) and _AST.isNode(me[#me]) then
+        if (not F[me.tag]) and _AST.isNode(me[#me]) then
             SAME(me, me[#me])
         end
     end,
 
     Block   = OR_all,
+    BlockN  = OR_all,
+
     ParEver = OR_all,
     ParAnd  = OR_all,
+
+    DoFinally = function (me)
+        OR_all(me)
+        ASR(me.awaits, me, '`do-finally´ body must await')
+    end,
+    Finally = OR_all,
 
     If = function (me)
         local c, t, f = unpack(me)

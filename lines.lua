@@ -17,14 +17,14 @@ function MAX (v1, v2)
 end
 
 function WRN (cond, me, msg)
-    local ln = (type(me)=='number' and me) or me.ln[1]
+    local ln = (type(me)=='number' and me) or me.ln
     if not cond then
         DBG('WRN : line '..ln..' : '..msg)
     end
     return cond
 end
 function ASR (cond, me, msg)
-    local ln = (type(me)=='number' and me) or me.ln[1]
+    local ln = (type(me)=='number' and me) or me.ln
     if _CEU then
         if not cond then
             DBG('ERR : line '..ln..' : '..msg)

@@ -19,7 +19,7 @@ function PTR (off, tp)
     return '(('..tp..')(CEU->mem+'..off..'))'
 end
 
-local _T = { wclock0='tceu_wclock*', async0='tceu_lbl*', emit0='tceu_lbl*', fin0='tceu_lbl*' }
+local _T = { wclock0='tceu_wclock*', async0='tceu_lbl*', emit0='tceu_lbl*' }
 function PTR_GTE (str, tp)
     tp = tp or _T[str] or 'u8*'
     return PTR(_MEM.gtes[str], tp)
@@ -73,12 +73,13 @@ function COMM (me, comm)
 end
 
 function BLOCK_GATES (me)
-    if _DFA and (not _DFA.qs_reach[me.nfa.f]) then
-        return
+    if me.fins then
+        CONC(me, me.fins)
     end
 
     COMM(me, 'close gates')
 
+    -- do not resume inner ASYNCS
     local n = me.gtes.asyncs[2] - me.gtes.asyncs[1]
     if n > 0 then
         LINE(me, 'memset('..PTR_GTE('async0','char*')..' + '
@@ -86,6 +87,7 @@ function BLOCK_GATES (me)
                     ..n..'*sizeof(tceu_lbl));')
     end
 
+    -- do not resume inner WCLOCKS
     local n = me.gtes.wclocks[2] - me.gtes.wclocks[1]
     if n > 0 then
         LINE(me, 'memset('..PTR_GTE('wclock0','char*')..' + '
@@ -93,6 +95,7 @@ function BLOCK_GATES (me)
                     ..n..'*sizeof(tceu_wclock));')
     end
 
+    -- do not resume inner EMITS continuations (await/emit)
     local n = me.gtes.emits[2] - me.gtes.emits[1]
     if n > 0 then
         LINE(me, 'memset('..PTR_GTE('emit0','char*')..' + '
@@ -100,6 +103,7 @@ function BLOCK_GATES (me)
                     ..n..'*sizeof(tceu_lbl));')
     end
 
+    -- stop awaiting inner EXTS
     for _, ext in ipairs(_ENV.exts) do
         local t = me.gtes[ext]
         if t then
@@ -110,6 +114,7 @@ function BLOCK_GATES (me)
         end
     end
 
+    -- stop awaiting inner internal events
     for blk in _AST.iter'Block' do
         for _, var in ipairs(blk.vars) do
             if me.gtes[var] then
@@ -122,13 +127,6 @@ function BLOCK_GATES (me)
                 end
             end
         end
-    end
-
-    if me.lbl_fin then
-        LINE(me, 'ceu_track_ins(0,'..me.lbl_fin.prio..','..me.lbl_fin.id..');')
-        LINE(me, 'ceu_fins('..me.gtes.fins[1]..','..me.gtes.fins[2]..');')
-        HALT(me)
-        CASE(me, me.lbl_fin)
     end
 end
 
@@ -193,29 +191,13 @@ F = {
         CONC_ALL(me)
     end,
 
-    Do = function (me)
-        local blk, fin = unpack(me)
-        if me.finalize then
-            LINE(me, PTR_GTE'fin0'..'['..me.finalize.gte..'] = '
-                        ..me.finalize.lbl.id..';')
-        end
-        CONC_ALL(me)
-    end,
-    Finalize = function (me)
-        LINE(me, PTR_GTE'fin0'..'['..me.gte..'] = Inactive;')     -- normal termination
-        CASE(me, me.lbl)
-        CONC_ALL(me)
-
-        -- halt if block is pending (do not proceed)
-        LINE(me, 'if ('..PTR_GTE'fin0'..'['..me.gte..'] != Inactive) {')
-        LINE(me, PTR_GTE'fin0'..'['..me.gte..'] = Inactive;')
-        HALT(me)
-        LINE(me, '}')
-    end,
+    BlockN    = CONC_ALL,
+    DoFinally = CONC_ALL,
+    Finally   = CONC_ALL,
 
     _Par = function (me)
         -- Ever/Or/And spawn subs
-        COMM(me, me.id..': spawn subs')
+        COMM(me, me.tag..': spawn subs')
         for i, sub in ipairs(me) do
             LINE(me, 'ceu_track_ins(0, PR_MAX, '..me.lbls_in[i].id ..');')
         end

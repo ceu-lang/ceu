@@ -26,7 +26,6 @@ F = {
         _MEM.gtes.wclock0 = alloc(_ENV.n_wclocks * _ENV.types.tceu_wclock)
         _MEM.gtes.async0  = alloc(_ENV.n_asyncs  * _ENV.types.tceu_lbl)
         _MEM.gtes.emit0   = alloc(_ENV.n_emits   * _ENV.types.tceu_lbl)
-        _MEM.gtes.fin0    = alloc(_ENV.n_fins    * _ENV.types.tceu_lbl)
         for _, ext in ipairs(_ENV.exts) do
             _MEM.gtes[ext.n] = alloc(1 + (_ENV.awaits[ext] or 0)*_ENV.types.tceu_lbl)
         end
@@ -35,7 +34,7 @@ F = {
 
     Block_pre = function (me)
         local async = _AST.iter()()
-        if async.id == 'Async' then
+        if async.tag == 'Async' then
             local vars, blk = unpack(async)
             if vars then
                 for _, n in ipairs(vars) do

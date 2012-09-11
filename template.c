@@ -11,7 +11,6 @@
 #define CEU_WCLOCK0 (=== CEU_WCLOCK0 ===)
 #define CEU_ASYNC0  (=== CEU_ASYNC0 ===)
 #define CEU_EMIT0   (=== CEU_EMIT0 ===)
-#define CEU_FIN0    (=== CEU_FIN0 ===)
 
 // Macros that can be defined:
 // ceu_out_pending() (1)
@@ -192,17 +191,6 @@ int ceu_track_peek (tceu_trk* trk)
 }
 #endif
 
-#ifdef CEU_FINS
-void ceu_fins (int i, int j)
-{
-    for (; i<j; i++) {
-        tceu_lbl* fin0 = PTR(CEU_FIN0,tceu_lbl*);
-        if (fin0[i] != Inactive)
-            ceu_track_ins(0, PR_MAX-i, fin0[i]);
-    }
-}
-#endif
-
 #ifdef CEU_WCLOCKS
 
 #define CEU_WCLOCK_NONE LONG_MAX
@@ -371,7 +359,7 @@ int ceu_go (int* ret)
                     ceu_track_rem(NULL);
             }
             for (;n>0;)
-                ceu_track_ins(0, PR_MAX, T[--n]);
+                ceu_track_ins(1, PR_MAX, T[--n]);
             continue;
         } else
 #endif

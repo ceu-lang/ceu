@@ -1,7 +1,6 @@
 #!/usr/bin/env lua
 
 dofile 'pak.lua'
-dofile 'set.lua'
 
 COUNT = 0
 T = nil
@@ -30,7 +29,7 @@ Test = function (t)
     end
 
     local ok = not (T.parser or T.env or T.mem or
-                    T.props or T.tight or T.async)
+                    T.props or T.tight)
     _OPTS = {
         tp_word    = 4,
         tp_pointer = 4,
@@ -52,7 +51,6 @@ Test = function (t)
     if not check('mem')      then return end
     if not check('props')    then return end
     if not check('tight')    then return end
-    if not check('async')    then return end
     if not check('labels')   then return end
     if not check('code')     then return end
 

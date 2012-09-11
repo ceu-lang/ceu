@@ -10,7 +10,6 @@ function subst (name)
           string.sub(fin, (e+1))
 end
 
-subst 'set.lua'
 subst 'tp.lua'
 
 subst 'lines.lua'
@@ -20,7 +19,6 @@ subst 'env.lua'
 subst 'mem.lua'
 subst 'props.lua'
 subst 'tight.lua'
-subst 'async.lua'
 subst 'labels.lua'
 subst 'code.lua'
 

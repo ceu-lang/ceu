@@ -38,21 +38,20 @@ _ENV = {
     n_asyncs  = 0,
     n_wclocks = 0,
     n_emits   = 0,
-    n_fins    = 0,
     awaits    = {},
 
-    pures = set.new(),
+    pures = {},
     dets  = {},
 }
 
 function newvar (me, blk, isEvt, tp, dim, id)
     for stmt in _AST.iter() do
-        if stmt.id == 'Async' then
+        if stmt.tag == 'Async' then
             break
-        elseif stmt.id == 'Block' then
+        elseif stmt.tag == 'Block' then
             for _, var in ipairs(stmt.vars) do
                 WRN(var.id~=id, me,
-                    'declaration of "'..id..'" hides the one at line '..var.ln[1])
+                    'declaration of "'..id..'" hides the one at line '..var.ln)
             end
         end
     end
@@ -80,7 +79,7 @@ F = {
     Block_pre = function (me)
         me.vars = {}
         local async = _AST.iter()()
-        if async.id == 'Async' then
+        if async.tag == 'Async' then
             local vars, blk = unpack(async)
             if vars then
                 for _, n in ipairs(vars) do
@@ -223,7 +222,6 @@ F = {
             asyncs  = { _ENV.n_asyncs,  nil },
             wclocks = { _ENV.n_wclocks, nil },
             emits   = { _ENV.n_emits,   nil },
-            fins    = { _ENV.n_fins,    nil },
         }
 
         for _, ext in ipairs(_ENV.exts) do
@@ -232,7 +230,9 @@ F = {
 
         for blk in _AST.iter'Block' do
             for _, var in ipairs(blk.vars) do
-                me.gtes[var] = { var.n_awaits, nil }
+                if var.isEvt then
+                    me.gtes[var] = { var.n_awaits, nil }
+                end
             end
         end
     end,
@@ -240,7 +240,6 @@ F = {
         me.gtes.asyncs[2]  = _ENV.n_asyncs
         me.gtes.wclocks[2] = _ENV.n_wclocks
         me.gtes.emits[2]   = _ENV.n_emits
-        me.gtes.fins[2]    = _ENV.n_fins
 
         for _, ext in ipairs(_ENV.exts) do
             local t = me.gtes[ext]
@@ -251,7 +250,9 @@ F = {
 
         for blk in _AST.iter'Block' do
             for _, var in ipairs(blk.vars) do
-                me.gtes[var][2] = var.n_awaits
+                if var.isEvt then
+                    me.gtes[var][2] = var.n_awaits
+                end
             end
         end
     end,
@@ -259,11 +260,6 @@ F = {
     Loop         = 'ParOr',
     SetBlock_pre = 'ParOr_pre',
     SetBlock     = 'ParOr',
-
-    Finalize = function (me)
-        me.gte = _ENV.n_fins
-        _ENV.n_fins = _ENV.n_fins + 1
-    end,
 
     --------------------------------------------------------------------------
 
@@ -278,7 +274,7 @@ F = {
         local e1, stmt = unpack(me)
         ASR(e1.lval, me, 'invalid attribution')
         stmt.toset = e1
-        if stmt.id == 'AwaitT' then
+        if stmt.tag == 'AwaitT' then
             ASR(_TP.isNumeric(e1.tp,true), me, 'invalid attribution')
         else    -- AwaitInt / AwaitExt
             local evt = stmt[1].var or stmt[1].ext
@@ -288,7 +284,7 @@ F = {
 
     CallStmt = function (me)
         local call = unpack(me)
-        ASR(call[1].id == 'Op2_call', me, 'invalid statement')
+        ASR(call[1].tag == 'Op2_call', me, 'invalid statement')
     end,
 
     --------------------------------------------------------------------------

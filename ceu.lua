@@ -108,8 +108,6 @@ end
 
 -- PARSE
 do
-    dofile 'set.lua'
-
     dofile 'lines.lua'
     dofile 'parser.lua'
     dofile 'ast.lua'
@@ -119,7 +117,6 @@ do
     dofile 'mem.lua'
     dofile 'props.lua'
     dofile 'tight.lua'
-    dofile 'async.lua'
     dofile 'labels.lua'
     dofile 'code.lua'
 end
@@ -152,7 +149,6 @@ do
     tpl = sub(tpl, '=== CEU_WCLOCK0 ===', _MEM.gtes.wclock0)
     tpl = sub(tpl, '=== CEU_ASYNC0 ===',  _MEM.gtes.async0)
     tpl = sub(tpl, '=== CEU_EMIT0 ===',   _MEM.gtes.emit0)
-    tpl = sub(tpl, '=== CEU_FIN0 ===',    _MEM.gtes.fin0)
 
     -- LABELS
     tpl = sub(tpl, '=== LABELS ===',   _LABELS.code)
@@ -198,10 +194,6 @@ do
         if _PROPS.has_emits then
             str = str .. '#define CEU_EMITS\n'
             DBG('# EMITS')
-        end
-        if _PROPS.has_fins then
-            str = str .. '#define CEU_FINS\n'
-            DBG('# FINALIZERS')
         end
         if _ANALYSIS.needsPrio then
             str = str .. '#define CEU_TRK_PRIO\n'
