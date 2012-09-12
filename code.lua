@@ -5,7 +5,7 @@ _CODE = {
 
 _ANALYSIS = {
     n_tracks  = _AST.root.n_tracks,
-    needsPrio = true,
+    needsPrio = true,   -- force BLOCK_GATES
     needsChk  = true,
     isForever = false,
 }
@@ -38,9 +38,10 @@ function CONC_ALL (me)
     end
 end
 
-function CONC (me, exp, tab)
+function CONC (me, sub, tab)
+    sub = sub or me[1]
     tab = string.rep(' ', tab or 0)
-    me.code = me.code .. string.gsub(exp.code, '(.-)\n', tab..'%1\n')
+    me.code = me.code .. string.gsub(sub.code, '(.-)\n', tab..'%1\n')
 end
 
 function ATTR (me, v1, v2)
@@ -73,6 +74,8 @@ function COMM (me, comm)
 end
 
 function BLOCK_GATES (me)
+    --do return end
+
     if me.fins then
         CONC(me, me.fins)
     end
@@ -191,9 +194,8 @@ F = {
         CONC_ALL(me)
     end,
 
-    BlockN    = CONC_ALL,
-    DoFinally = CONC_ALL,
-    Finally   = CONC_ALL,
+    BlockN  = CONC_ALL,
+    Finally = CONC,
 
     _Par = function (me)
         -- Ever/Or/And spawn subs

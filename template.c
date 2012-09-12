@@ -349,15 +349,13 @@ int ceu_go (int* ret)
             tceu_lbl T[N_TRACKS+1];
             int n = 0;
             _step_ = trk.prio;
-            while (1) {
-                tceu_lbl lbl = EMT0[trk.lbl]; // trk.lbl is actually a off
+            do {
+                tceu_lbl lbl = EMT0[trk.lbl]; // trk.lbl is actually an offset
                 if (lbl != Inactive)
                     T[n++] = lbl;
-                if (!ceu_track_peek(&trk) || (trk.prio < _step_))
-                    break;
-                else
-                    ceu_track_rem(NULL);
-            }
+            } while ( ceu_track_peek(&trk) &&
+                      (trk.prio>=_step_)   &&
+                      ceu_track_rem(NULL) );
             for (;n>0;)
                 ceu_track_ins(1, PR_MAX, T[--n]);
             continue;

@@ -27,6 +27,7 @@ function AND_all (me, t)
 end
 
 function SAME (me, sub)
+    sub = sub or me[1]
     me.awaits  = sub.awaits
     me.breaks  = sub.breaks
     me.returns = sub.returns
@@ -52,11 +53,7 @@ F = {
     ParEver = OR_all,
     ParAnd  = OR_all,
 
-    DoFinally = function (me)
-        OR_all(me)
-        ASR(me.awaits, me, '`do-finally´ body must await')
-    end,
-    Finally = OR_all,
+    Finally = SAME,
 
     If = function (me)
         local c, t, f = unpack(me)

@@ -28,12 +28,12 @@ _PROPS = {
 }
 
 local NO_fin = {
-    DoFinally=true, Finally=true,
+    Finally=true,
     Host=true, Return=true, Async=true,
     ParEver=true, ParOr=true, ParAnd=true,
     AwaitExt=true, AwaitInt=true, AwaitN=true, AwaitT=true,
-    EmitExtE=true, EmitExtS=true, EmitInt=true, EmitT=true,
-    Dcl_type=true, Dcl_det=true, Dcl_var=true, Dcl_int=true, Dcl_ext=true,
+    --EmitExtE=true, EmitExtS=true, EmitInt=true, EmitT=true,
+    --Dcl_type=true, Dcl_det=true, Dcl_var=true, Dcl_int=true, Dcl_ext=true,
 }
 
 local NO_async = {

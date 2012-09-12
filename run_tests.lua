@@ -40,16 +40,16 @@ Test = function (t)
     -- LINES
     _STR = str_input
     --print(_STR)
+    dofile 'tp.lua'
     dofile 'lines.lua'
 
     -- PARSER
     if not check('parser')   then return end
     if not check('ast')      then return end
     --_AST.dump(_AST.root)
-    if not check('tp')       then return end
     if not check('env')      then return end
-    if not check('mem')      then return end
     if not check('props')    then return end
+    if not check('mem')      then return end
     if not check('tight')    then return end
     if not check('labels')   then return end
     if not check('code')     then return end

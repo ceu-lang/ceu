@@ -2171,6 +2171,25 @@ end;
 }
 
 Test { [[
+event int a = 3;
+par do
+    delay;
+    emit a(a);
+    return a;
+with
+    loop do
+        int v = await a;
+        a = v+1;
+    end;
+end;
+]],
+    simul = {
+        n_unreachs = 1,
+    },
+    run = 4,
+}
+
+Test { [[
 int ret = 0;
 event int a = 3;
 par/or do
@@ -3528,6 +3547,31 @@ return 10;
 }
 
 Test { [[
+event int a;
+par/and do
+    delay;
+    emit a(1);
+with
+    await a;
+end;
+return 10;
+]],
+    run = 10,
+}
+Test { [[
+event int a;
+par/and do
+    await a;
+with
+    delay;
+    emit a(1);
+end;
+return 10;
+]],
+    run = 10,
+}
+
+Test { [[
 input int A;
 event int b, c;
 par do
@@ -3689,6 +3733,25 @@ return v1+v2;
 }
 
 Test { [[
+event int a;
+int v1=0,v2=0;
+delay;
+par/or do
+    emit a(2);
+    v1 = 2;
+with
+    v2 = 2;
+end
+return v1+v2;
+]],
+    simul = {
+        n_unreachs = 1,
+        --nd_esc = 1,
+    },
+    run = 2,
+}
+
+Test { [[
 input int Start;
 event int a;
 int v1=0,v2=0,v3=0;
@@ -3702,6 +3765,29 @@ with
 with
     await a;
     v3 = 2;
+end
+return v1+v2+v3;
+]],
+    simul = {
+        n_unreachs = 2,
+        --nd_esc = 1,
+    },
+    run = 2,
+}
+
+Test { [[
+event int a;
+int v1=0,v2=0,v3=0;
+par/or do
+    delay;
+    emit a(2);
+    v1 = 2;
+with
+    await a;
+    v3 = 2;
+with
+    delay;
+    v2 = 2;
 end
 return v1+v2+v3;
 ]],
@@ -3738,6 +3824,59 @@ return ret;
     todo = 'nd_acc = 1',
     run = 3,
 }
+
+-- 1st to escape and terminate
+Test { [[
+event int a;
+int ret;
+par/or do
+    delay;
+    par/or do
+        emit a(2);
+    with
+        ret = 3;
+    end;
+with
+    await a;
+    ret = a + 1;
+end;
+return ret;
+]],
+    simul = {
+        n_unreachs = 2,
+        --nd_esc = 2,
+        --nd_acc = 1,
+    },
+    todo = 'nd_acc = 1',
+    run = 3,
+}
+
+-- 1st to escape and terminate
+Test { [[
+event int a;
+int ret;
+par/or do
+    await a;
+    ret = a + 1;
+with
+    delay;
+    par/or do
+        emit a(2);
+    with
+        ret = 3;
+    end;
+end;
+return ret;
+]],
+    simul = {
+        n_unreachs = 2,
+        --nd_esc = 2,
+        --nd_acc = 1,
+    },
+    todo = 'nd_acc = 1',
+    run = 3,
+}
+
 Test { [[
 input int A;
 int a;
@@ -4182,6 +4321,8 @@ return 1;
     }
 }
 
+-- TODO: Start: substitute to delay
+-- todos os anteriores ja foram substituidos
 Test { [[
 input int Start;
 event int a,b,c;
@@ -10615,8 +10756,7 @@ finally
 end
 return 1;
 ]],
-    --run = 1,
-    tight = "ERR : line 1 : `do-finally´ body must await",
+    run = 1,
 }
 
 Test { [[
@@ -10725,25 +10865,26 @@ Test { [[
 int r = 0;
 do
     int a;
+    await 1s;
 finally
     int b = 1;
     r = b;
 end
 return r;
 ]],
-    props = "ERR : line 5 : not permitted inside `finally´",
+    run = { ['~>1s']=1 },
 }
 
 Test { [[
 int ret = 0;
 do
-    nothing;
+    await 1s;
 finally
     int a = 1;
 end
 return ret;
 ]],
-    props = "ERR : line 5 : not permitted inside `finally´",
+    run = { ['~>1s']=0 },
 }
 
 Test { [[
@@ -10757,25 +10898,20 @@ finally
 end
 return ret;
 ]],
-    tight = "ERR : line 2 : `do-finally´ body must await",
-    --run = 2,
+    run = 2,
 }
 
 Test { [[
 int ret;
 do
     int a = 1;
-    if 1 then
-        await 1s;
-    end
 finally
     a = a + 1;
     ret = a;
 end
 return ret;
 ]],
-    tight = "ERR : line 2 : `do-finally´ body must await",
-    --run = 2,
+    run = 2,
 }
 
 Test { [[
@@ -10788,8 +10924,7 @@ finally
 end
 return ret;
 ]],
-    tight = "ERR : line 2 : `do-finally´ body must await",
-    --run = 1,
+    run = 1,
 }
 
 Test { [[
@@ -10805,8 +10940,7 @@ with
 end
 return a;
 ]],
-    tight = "ERR : line 3 : `do-finally´ body must await",
-    --run = 2;
+    run = 2;
 }
 
 Test { [[
@@ -10903,8 +11037,6 @@ return ret;
     },
 }
 
--- TODO: emit int?
---[=[
 Test { [[
 input void A, B, C;
 event void a;
@@ -10933,9 +11065,8 @@ return ret;
     simul = {
         n_unreachs = 1,
     },
-    run = { ['~>A']=9, ['~>B']=6 },
+    run = { ['~>A']=9, ['~>B']=14 },
 }
-]=]
 
 Test { [[
 input void A;
@@ -11052,7 +11183,7 @@ loop do
 end
 return ret;
 ]],
-    tight = "ERR : line 3 : `do-finally´ body must await",
+    run = 5,
 }
 
 Test { [[
@@ -13483,12 +13614,22 @@ return a;
 
 --[[
 0-3: $ret
+  4: $delay
 ]]
+
+Test { [[
+await Forever;
+]],
+    tot = 5,    -- TODO: 0
+    simul = {
+        isForever = true,
+    }
+}
 
 Test { [[
 return 0;
 ]],
-    tot = 4,
+    tot = 5,
     run = 0,
 }
 
@@ -13496,6 +13637,7 @@ return 0;
 0-18:
      0-3: $ret
     4-18: a..f
+      19: $delay
 ]]
 
 Test { [[
@@ -13503,7 +13645,7 @@ int a, b, c;
 u8 d, e, f;
 return 0;
 ]],
-    tot = 19,
+    tot = 20,
     run = 0,
 }
 
@@ -13512,6 +13654,7 @@ return 0;
      0-3:       $ret
     4-15:       a,b,c
      4-6:       d,e,f
+      16:       $delay
 ]]
 
 Test { [[
@@ -13521,7 +13664,7 @@ end
 u8 d, e, f;
 return 0;
 ]],
-    tot = 16,
+    tot = 17,
     run = 0,
 }
 
@@ -13530,6 +13673,7 @@ return 0;
      0-4:       $ret
     4-15:       a..c
      4-6:       d..f
+      16:       $delay
 ]]
 
 Test { [[
@@ -13541,7 +13685,7 @@ do
 end
 return 0;
 ]],
-    tot = 16,
+    tot = 17,
     run = 0,
 }
 
@@ -13558,7 +13702,7 @@ end
 u8 d=4, e=5, f=6;
 return ret + d + e + f;
 ]],
-    tot = 17,
+    tot = 18,
     run = 81,
 }
 
@@ -13580,7 +13724,7 @@ with
 end
 return ret;
 ]],
-    tot = 11,
+    tot = 12,
     simul = {
         nd_acc = 6,
     },
@@ -13618,7 +13762,7 @@ return ret+a;
 ]],
     simul = {
         nd_acc = 7,
-        tot = 28,
+        tot = 29,
         run = 33;
     },
 }
@@ -13642,7 +13786,7 @@ with
 end
 ]],
     simul = {
-        tot = 21,
+        tot = 22,
         isForever = true,
     },
 }
@@ -13666,7 +13810,7 @@ with
 end
 return ret;
 ]],
-    tot = 24,
+    tot = 25,
     run = {
         ['~>A;~>B;~>C'] = 1110,
         ['~>B;~>A;~>C'] = 1110,
@@ -13694,7 +13838,7 @@ with
     end
 end
 ]],
-    tot = 21,
+    tot = 22,
     run = {
         ['~>A;~>B;~>C'] = 10,
         ['~>B;~>B;~>A;~>C'] = 110,
@@ -13715,7 +13859,7 @@ with
 end
 ]],
     simul = {
-        tot = 12,
+        tot = 13,
         isForever = true,
     }
 }

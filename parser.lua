@@ -84,6 +84,7 @@ KEYS = P'async'   + 'await'  + 'break'   + 'call'    + 'constant' + 'determinist
      +  'Forever' + 'input'  + 'if'      + 'loop'    + 'nothing'  + 'null'
      +  'output'  + 'par'    + 'par/and' + 'par/or'  + 'pure'     + 'return'
      +  'set'     + 'sizeof' + 'then'    + 'type'    + 'with'
+     +  'delay' -- TODO: put in alpha order
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
@@ -112,7 +113,7 @@ _GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
 
     , _Stmt = V'Nothing'
             + V'AwaitT'   + V'AwaitExt'  + V'AwaitInt'
-            + V'EmitT'    + V'EmitExtS'  + V'EmitInt'
+            + V'EmitT'    + V'EmitExtS'  + V'EmitInt'  + V'_Delay'
             + V'_Dcl_ext' + V'_Dcl_int'  + V'_Dcl_var'
             + V'Dcl_det'  + V'_Dcl_pure' + V'Dcl_type'
             + V'_Set'     + V'CallStmt' -- must be after Set
@@ -237,11 +238,12 @@ _GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
     , AwaitT   = K'await' *S* (V'WCLOCKK'+V'WCLOCKE')
 
 
+    , EmitT    = K'emit' *S* (V'WCLOCKK'+V'WCLOCKE')
     , EmitExtS = V'EmitExt'
     , EmitExtE = V'EmitExt'
     , EmitExt  = K'emit' *S* EV'Ext' * (S* K'(' *S* V'Exp' *S* EK')')^-1
     , EmitInt  = K'emit' *S* EV'Var' * (S* K'(' *S* V'Exp' *S* EK')')^-1
-    , EmitT    = K'emit' *S* (V'WCLOCKK'+V'WCLOCKE')
+    , _Delay   = K'delay'
 
     , _Dcl_ext = (CK'input'+CK'output') *S* EV'ID_type' *S*
                     EV'ID_ext' * (S*K','*S*EV'ID_ext')^0

@@ -108,14 +108,15 @@ end
 
 -- PARSE
 do
+    dofile 'tp.lua'
+
     dofile 'lines.lua'
     dofile 'parser.lua'
     dofile 'ast.lua'
     --ast.dump(ast.AST)
-    dofile 'tp.lua'
     dofile 'env.lua'
-    dofile 'mem.lua'
     dofile 'props.lua'
+    dofile 'mem.lua'
     dofile 'tight.lua'
     dofile 'labels.lua'
     dofile 'code.lua'
