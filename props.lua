@@ -108,7 +108,7 @@ F = {
         local async = _AST.iter'Async'()
         if async then
             local loop = _AST.iter'Loop'()
-            ASR(loop.depth>async.depth, me, 'break without loop')
+            ASR(loop.depth>async.depth, me, '`break´ without loop')
         end
     end,
 
@@ -119,6 +119,12 @@ F = {
     Return = function (me)
         local blk = _AST.iter'SetBlock'()
         blk.rets[me] = true
+
+        local async = _AST.iter'Async'()
+        if async then
+            local setblk = _AST.iter'SetBlock'()
+            ASR(async.depth<=setblk.depth+1, me, '`return´ without block')
+        end
     end,
 
     AwaitT = function (me)
@@ -146,6 +152,8 @@ F = {
 
     SetExp = function (me)
         local e1, e2 = unpack(me)
+        e1 = e1 or _AST.copy(_AST.iter'SetBlock'()[1])
+        me[1] = e1
         local async = _AST.iter'Async'()
         if async and (not e1) then
             ASR( async.depth <= _AST.iter'SetBlock'().depth+1,

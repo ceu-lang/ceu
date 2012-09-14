@@ -146,6 +146,8 @@ local C; C = {
         local blk = node('Block')(ln)
         blk[#blk+1] = node('Dcl_var')(ln, false, 'int',  false, '$ret')
         blk[#blk+1] = node('Dcl_var')(ln, true,  'void', false, '$delay')
+        blk[#blk+1] = node('Dcl_det')(ln, node('Var')(ln,'$delay'),
+                                          node('Var')(ln,'$delay'))
         for i=1, FIN-1 do
             blk[#blk+1] = node('Dcl_var')(ln,true,'void',false,'$fin_'..i)
         end

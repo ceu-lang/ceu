@@ -7,7 +7,7 @@ typedef unsigned long  u32;
 typedef unsigned short u16;
 typedef unsigned char   u8;
 
-#include "_ceu_code.c"
+#include "_ceu_code.cceu"
 
 int main (int argc, char *argv[])
 {

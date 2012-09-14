@@ -63,7 +63,7 @@ implementation
 
     int RET = 0;
     #include "tinyos.c"
-    #include "_ceu_code.tmp"
+    #include "_ceu_code.cceu"
 
     event void Boot.booted ()
     {

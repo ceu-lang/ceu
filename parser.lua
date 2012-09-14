@@ -127,7 +127,7 @@ _GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
                     V'ParEver' + V'If'    + V'Loop'
                 )
 
-    , __ID      = V'ID_c' + V'ID_ext' --+ V'Var'
+    , __ID      = V'ID_c' + V'ID_ext' + V'Var'
     , _Dcl_pure = (K'pure'+K'constant') *S* EV'ID_c' * (S* K',' *S* V'ID_c')^0
     , Dcl_det   = K'deterministic' *S* EV'__ID' *S* EK'with' *S*
                      EV'__ID' * (S* K',' *S* EV'__ID')^0

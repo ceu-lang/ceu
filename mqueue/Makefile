@@ -1,5 +1,5 @@
 all:
-	./ceu $(CEUFILE) --m4 --output _ceu_code.c
+	./ceu $(CEUFILE) --m4
 	gcc main.c $(CFLAGS) -lrt
 
 clean:

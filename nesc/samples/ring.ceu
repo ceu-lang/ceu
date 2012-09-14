@@ -8,13 +8,7 @@
  * http://www.lua.inf.puc-rio.br/~francisco/
  */
 
-input  int         Radio_startDone;
-input  int         Radio_sendDone;
-input  _message_t* Radio_receive;
-output _message_t* Radio_send;
-
-pure _Radio_getPayload;
-deterministic _Radio_setDestination with _Leds_set, _Leds_led0Toggle;
+@include(radio.m4)
 
 C do
     typedef struct {

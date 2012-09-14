@@ -111,12 +111,17 @@ F = {
     end,
     Var = function (me)
         me.val = me.var.val
+        me.accs = { {me.var,'rd',
+                    'variable/event `'..me.var.id..'´ (line '..me.ln..')'} }
+
     end,
     AwaitInt = function (me)
         local e = unpack(me)
+        e.accs[1][2] = 'aw'
     end,
     EmitInt = function (me)
         local e1, e2 = unpack(me)
+        e1.accs[1][2] = 'tr'
     end,
 
     --------------------------------------------------------------------------
@@ -124,7 +129,7 @@ F = {
     SetStmt  = 'SetExp',
     SetExp = function (me)
         local e1, e2 = unpack(me)
-        e1 = e1 or _AST.iter'SetBlock'()[1]
+        e1.accs[1][2] = 'wr'
     end,
 
     EmitExtS = function (me)
@@ -160,8 +165,14 @@ F = {
 ]]
     end,
 
+    Ext = function (me)
+        me.accs = { {me.ext.id,'tr',
+                    'event `'..me.ext.id..'´ (line '..me.ln..')'} }
+    end,
+
     Exp = function (me)
         me.val  = me[1].val
+        me.accs = me[1].accs
     end,
 
     Op2_call = function (me)
@@ -170,12 +181,12 @@ F = {
         for i, exp in ipairs(exps) do
             ps[i] = exp.val
         end
-        me.val = f.val..'('..table.concat(ps,',')..')'
+        me.val  = f.val..'('..table.concat(ps,',')..')'
     end,
 
     Op2_idx = function (me)
         local _, arr, idx = unpack(me)
-        me.val  = '('..arr.val..'['..idx.val..'])'
+        me.val = '('..arr.val..'['..idx.val..'])'
     end,
 
     Op2_any = function (me)
@@ -214,6 +225,7 @@ F = {
     ['Op2_.'] = function (me)
         local op, e1, id = unpack(me)
         me.val  = '('..e1.val..op..id..')'
+        me.accs = e1.accs
     end,
 
     Op2_cast = function (me)
@@ -236,6 +248,8 @@ F = {
 
     C = function (me)
         me.val = string.sub(me[1], 2)
+        me.accs = { {me[1],'rd',
+                    'symbol `'..me[1]..'´ (line '..me.ln..')'} }
     end,
     SIZEOF = function (me)
         me.val = 'sizeof('.._TP.no_(me[1])..')'

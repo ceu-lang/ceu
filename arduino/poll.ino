@@ -23,7 +23,7 @@ typedef uint8_t   u8;
 #define ceu_out_event_PIN12(v) digitalWrite(12, *v)
 #define ceu_out_event_PIN13(v) digitalWrite(13, *v)
 
-#include "_ceu_code.tmp"
+#include "_ceu_code.cceu"
 
 u32 old = micros();
 

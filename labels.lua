@@ -6,9 +6,9 @@ _LABELS = {
 function new (lbl)
     lbl.id = lbl[1] .. (lbl[2] and '' or '_' .. #_LABELS.list)
     _LABELS.list[lbl] = true
+    lbl.n = #_LABELS.list                   -- starts from 0
     _LABELS.list[#_LABELS.list+1] = lbl
-    lbl.n = #_LABELS.list
-    lbl.par = {}    -- { [lblK]=true }
+    lbl.par = {}                            -- { [lblK]=true }
 
     for n in _AST.iter() do
         if n.lbls_all then
@@ -19,19 +19,15 @@ function new (lbl)
     return lbl
 end
 
-function isConcurrent (i, j)
-    return _SIMUL.isConcurrent[ (i-1)*#_LABELS.list + j ]
-end
-
-local ND = {
-    tr  = { tr=true,  wr=true,  rd=true,  aw=true  },
-    wr  = { tr=true,  wr=true,  rd=true,  aw=false },
-    rd  = { tr=true,  wr=true,  rd=false, aw=false },
-    aw  = { tr=true,  wr=false, rd=false, aw=false },
-    no  = {},   -- never ND ('ref') (or no se stmts ('nothing')
-}
-
 F = {
+    Exp = function (me)
+        if me.accs then
+            for _, acc in ipairs(me.accs) do
+                acc.lbl = new{'Exp', acc=acc}
+            end
+        end
+    end,
+
     Root_pre = function (me)
         new{'Inactive', true}
         new{'Init', true}
@@ -43,13 +39,15 @@ F = {
 
         -- enum of labels
         for i, lbl in ipairs(_LABELS.list) do
-            _LABELS.code = _LABELS.code..'    '..lbl.id..' = '..(i-1)..',\n'
+            _LABELS.code = _LABELS.code..'    '..lbl.id..' = '..lbl.n..',\n'
         end
     end,
 
     SetBlock_pre = function (me)
-        me.lbl_no  = new{'SetBlock_no', to_reach=false}
-        me.lbl_out = new{'Set_out', prio=me.depth}
+        me.lbl_no  = new{'SetBlock_no', to_reach=false,
+                        me=me, err='end of block'}
+        me.lbl_out = new{'Set_out', prio=me.depth,
+                        me=me, err='`return´ from block'}
         if me[1][1][1] ~= '$ret' then
             me.lbl_out.to_reach = true
         end
@@ -66,16 +64,19 @@ F = {
         F._Par_pre(me)
         me.lbl_tst = new{'ParEver_chk'}
         me.lbl_out = new{'ParEver_out'}
-        me.lbl_no  = new{'ParEver_no', to_reach=false}
+        me.lbl_no  = new{'ParEver_no', to_reach=false,
+                        me=me, err='end of `par´'}
     end,
     ParOr_pre = function (me)
         F._Par_pre(me)
-        me.lbl_out = new{'ParOr_out', prio=me.depth, to_reach=true}
+        me.lbl_out = new{'ParOr_out', prio=me.depth, to_reach=true,
+                        me=me, err='end of `par/or´'}
     end,
     ParAnd_pre = function (me)
         F._Par_pre(me)
         me.lbl_tst = new{'ParAnd_chk'}
-        me.lbl_out = new{'ParAnd_out', to_reach=true}
+        me.lbl_out = new{'ParAnd_out', to_reach=true,
+                        me=me, err='end of `par/and´'}
     end,
 
     ParEver = function (me)
@@ -102,20 +103,27 @@ F = {
         me.lbl_e = new{'EndIf'}
     end,
 
+    Async_pre = function (me)
+        me.lbls_all = {}
+    end,
     Async = function (me)
         me.lbl = new{'Async_'..me.gte}
+        for lbl in pairs(me.lbls_all) do
+            lbl.to_reach = nil              -- they are not simulated
+        end
     end,
 
     Loop_pre = function (me)
         me.lbl_ini = new{'Loop_ini'}
-        me.lbl_mid = new{'Loop_mid', to_reach=true}
-        me.lbl_out = new{'Loop_out', to_reach=true, prio=me.depth}
+        me.lbl_mid = new{'Loop_mid', to_reach=true,
+                        me=me, err='`loop´ iteration'}
+        me.lbl_out = new{'Loop_out', prio=me.depth }
     end,
 
     EmitExtS = function (me)
         local e1 = unpack(me)
         if e1.ext.output then   -- e1 not Exp
-            me.lbl_emt = new{'Emit_'..e1.ext.id}
+            me.lbl_emt = new{'Emit_'..e1.ext.id, acc=e1.accs[1]}
         end
         me.lbl_cnt = new{'Async_cont'}
     end,
@@ -125,24 +133,36 @@ F = {
 
     EmitInt = function (me)
         local int = unpack(me)
-        me.lbl_emt = new{'Emit_'..int.var.id}
-        me.lbl_cnt = new{'Cnt_'..int.var.id, to_reach=true} -- TODO: why to_reach?
+        me.lbl_emt = new{'Emit_'..int.var.id, acc=int.accs[1]} -- int not Exp
+        me.lbl_cnt = new{'Cnt_'..int.var.id, to_reach=true,
+                        me=me, err='continuation of `emit´'}
         me.lbl_awk = new{'Awk_'..int.var.id}
+
+        -- TODO
+        if string.sub(int.var.id,1,1) == '$' then
+            me.lbl_cnt.to_reach = nil
+        end
     end,
 
     AwaitT = function (me)
         if me[1].tag == 'WCLOCKE' then
-            me.lbl = new{'Awake_'..me[1][1][1], to_reach=true}
+            me.lbl = new{'Awake_'..me[1][1][1], to_reach=true,
+                        me=me, err='awake of `await´'}
         else
-            me.lbl = new{'Awake_'..me[1].us,    to_reach=true}
+            me.lbl = new{'Awake_'..me[1].us, to_reach=true,
+                        me=me, err='awake of `await´'}
         end
     end,
     AwaitExt = function (me)
-        local int = unpack(me)
-        me.lbl_awt = new{'Await_'..me[1][1]}
-        me.lbl = new{'Awake_'..me[1][1], to_reach=true }
+        me.lbl = new{'Awake_'..me[1][1], to_reach=true,
+                    me=me, err='awake of `await´'}
     end,
-    AwaitInt = 'AwaitExt',
+    AwaitInt = function (me)
+        local int = unpack(me)
+        me.lbl_awt = new{'Await_'..me[1][1], acc=int.accs[1]}
+        me.lbl = new{'Awake_'..me[1][1], to_reach=true,
+                    me=me, err='awake of `await´'}
+    end,
 }
 
 _AST.visit(F)

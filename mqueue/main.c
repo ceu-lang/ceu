@@ -7,7 +7,7 @@
 mqd_t ceu_queue_write;
 s32 DT;
 
-#include "_ceu_code.c"
+#include "_ceu_code.cceu"
 
 typedef struct _Link {
     mqd_t queue;

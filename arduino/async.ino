@@ -8,7 +8,7 @@ typedef uint32_t u32;
 typedef uint16_t u16;
 typedef uint8_t   u8;
 
-#include "_ceu_code.tmp"
+#include "_ceu_code.cceu"
 
 void setup ()
 {

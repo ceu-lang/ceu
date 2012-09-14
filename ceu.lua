@@ -2,9 +2,14 @@ _CEU = true
 
 _OPTS = {
     input     = nil,
-    output    = '-',
+    output    = '_ceu_code.cceu',
 
     defs_file  = '_ceu_defs.h',
+
+    simul      = false,
+    simul_run  = false,
+    simul_use  = false,
+    simul_file = '_ceu_simul.lua',
 
     join      = true,
 
@@ -22,6 +27,11 @@ _OPTS_NPARAMS = {
     output    = 1,
 
     defs_file  = 1,
+
+    simul      = 0,
+    simul_run  = 0,
+    simul_use  = 0,
+    simul_file = 1,
 
     join      = 0,
 
@@ -72,6 +82,11 @@ if not _OPTS.input then
     
         --defs-file <filename> # define constants in a separate output file (no)
 
+        --simul                 # TODO
+        --simul-run             # TODO
+        --simul-use             # TODO
+        --simul-file <filename> # TODO
+
         --join (--no-join)     # join lines enclosed by /*{-{*/ and /*}-}*/ (join)
 
         --m4 (--no-m4)         # preprocess the input with `m4´ (no-m4)
@@ -85,6 +100,25 @@ if not _OPTS.input then
 ]])
     os.exit(1)
 end
+
+if _OPTS.simul then
+    assert((not _OPTS.simul_use) and (not _OPTS.simul_run)
+            and _OPTS.input~='-',
+        'invalid simulation invocation')
+    local params = table.concat(params,' ')
+    do
+        params = string.gsub(params, '--simul[^ ]*', '')
+        os.execute('./ceu '..params..
+                    ' --simul-run --simul-file '.._OPTS.simul_file)
+        assert(os.execute('gcc -std=c99 -o ceu.exe simul.c') == 0)
+        assert(os.execute('./ceu.exe '.._OPTS.simul_file) == 0)
+    end
+    _OPTS.simul_use = true
+    _OPTS.simul = false
+end
+
+assert(not (_OPTS.simul_use and _OPTS.simul_run),
+        'invalid simulation invocation')
 
 -- INPUT
 local inp
@@ -119,8 +153,20 @@ do
     dofile 'mem.lua'
     dofile 'tight.lua'
     dofile 'labels.lua'
+    dofile 'analysis.lua'
     dofile 'code.lua'
 end
+
+local tps = { [1]='u8', [2]='u16', [4]='u32' }
+
+local ALL = {
+    n_tracks = _ANALYSIS.n_tracks,
+    n_mem = _MEM.max,
+    tceu_off = tps[_ENV.types.tceu_off],
+    tceu_lbl = tps[MAX(_ENV.types.tceu_lbl,_ENV.types.tceu_off)],
+}
+
+assert(_MEM.max < 2^(_ENV.types.tceu_off*8))
 
 -- TEMPLATE
 local tpl
@@ -132,19 +178,15 @@ do
         return string.sub(str, 1, i-1) .. to .. string.sub(str, e+1)
     end
 
-    tpl = sub(tpl, '=== N_TRACKS ===',  _ANALYSIS.n_tracks)
-    tpl = sub(tpl, '=== N_MEM ===',     _MEM.max)
+    tpl = sub(tpl, '=== N_TRACKS ===',  ALL.n_tracks)
+    tpl = sub(tpl, '=== N_MEM ===',     ALL.n_mem)
 
-    tpl = sub(tpl, '=== HOST ===',      _CODE.host)
+    tpl = sub(tpl, '=== HOST ===',      (_OPTS.simul_run and '') or _CODE.host)
     tpl = sub(tpl, '=== CODE ===',      _AST.root.code)
 
     -- lbl >= off (EMITS)
-    local t = { [1]='u8', [2]='u16', [4]='u32' }
-    tpl = sub(tpl, '=== TCEU_OFF ===',  t[_ENV.types.tceu_off])
-    tpl = sub(tpl, '=== TCEU_LBL ===',  t[MAX(_ENV.types.tceu_lbl,_ENV.types.tceu_off)])
-
-    DBG('# mem: '.._MEM.max)
-    assert(_MEM.max < 2^(_ENV.types.tceu_off*8))
+    tpl = sub(tpl, '=== TCEU_OFF ===',  ALL.tceu_off)
+    tpl = sub(tpl, '=== TCEU_LBL ===',  ALL.tceu_lbl)
 
     -- GTES
     tpl = sub(tpl, '=== CEU_WCLOCK0 ===', _MEM.gtes.wclock0)
@@ -152,6 +194,7 @@ do
     tpl = sub(tpl, '=== CEU_EMIT0 ===',   _MEM.gtes.emit0)
 
     -- LABELS
+    tpl = sub(tpl, '=== N_LABELS ===', #_LABELS.list)
     tpl = sub(tpl, '=== LABELS ===',   _LABELS.code)
 
     -- DEFINITIONS: constants & defines
@@ -171,6 +214,10 @@ do
             end
         end
         str = str..'#define OUT_n '..outs..'\n'
+        if _OPTS.simul_run then
+            str = str..'#define IN_n '..#ins..'\n'
+            str = str .. 'int IN_vec[] = { '..table.concat(ins,',')..' };\n'
+        end
 
         -- FUNCTIONS called
         for id in pairs(_ENV.calls) do
@@ -182,27 +229,27 @@ do
         -- DEFINES
         if _PROPS.has_exts then
             str = str .. '#define CEU_EXTS\n'
-            DBG('# EXTS')
+            ALL.exts = true
         end
         if _PROPS.has_wclocks then
             str = str .. '#define CEU_WCLOCKS '.._ENV.n_wclocks..'\n'
-            DBG('# WCLOCKS')
+            ALL.wclocks = true
         end
         if _PROPS.has_asyncs then
             str = str .. '#define CEU_ASYNCS '.._ENV.n_asyncs..'\n'
-            DBG('# ASYNCS')
+            ALL.asyncs = true
         end
         if _PROPS.has_emits then
             str = str .. '#define CEU_EMITS\n'
-            DBG('# EMITS')
+            ALL.emits = true
         end
         if _ANALYSIS.needsPrio then
             str = str .. '#define CEU_TRK_PRIO\n'
-            DBG('# TRK_PRIO')
+            ALL.prio = true
         end
         if _ANALYSIS.needsChk then
             str = str .. '#define CEU_TRK_CHK\n'
-            DBG('# TRK_CHK')
+            ALL.chk = true
         end
 
         if _OPTS.defs_file then
@@ -216,6 +263,17 @@ do
         end
     end
 end
+
+local t = {}
+for k,v in pairs(ALL) do
+    if v == true then
+        t[#t+1] = k
+    else
+        t[#t+1] = k..'='..v
+    end
+end
+table.sort(t)
+DBG('[ '..table.concat(t,' | ')..' ]')
 
 -- OUTPUT
 local out

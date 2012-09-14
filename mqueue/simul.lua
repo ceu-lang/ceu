@@ -85,7 +85,6 @@ C do /******/
     assert(os.execute('./ceu '..app._ceu
                         --.. ' --dfa'
                         .. ' --m4-args "'..M4..'"'
-                        .. ' --output _ceu_code.c'
                         .. ' --defs-file _ceu_defs.h'
                      ) == 0)
     assert(os.execute('gcc -o '..app._exe..' main.c -lrt')==0)

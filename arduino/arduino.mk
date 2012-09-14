@@ -139,7 +139,6 @@ $(error There is more than one .pde or .ino file in this directory!)
 endif
 TARGET := $(basename $(INOFILE))
 SOURCES := $(INOFILE) \
-	$(wildcard *.c *.cc *.cpp) \
 	$(wildcard $(addprefix util/, *.c *.cc *.cpp)) \
 	$(wildcard $(addprefix utility/, *.c *.cc *.cpp))
 # automatically determine included libraries

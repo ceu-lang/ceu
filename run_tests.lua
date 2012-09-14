@@ -20,7 +20,7 @@ end
 Test = function (t)
     T = t
     local str_input = T[1]
-    print('---', str_input)
+    print('\n=============\n---\n'..str_input..'\n---\n')
     COUNT = COUNT + 1
 
     --assert(T.todo == nil)
@@ -30,11 +30,23 @@ Test = function (t)
 
     local ok = not (T.parser or T.env or T.mem or
                     T.props or T.tight)
+    if ok then
+        local CEU = './ceu - --simul-run '
+                        .. '--tp-word 4 --tp-pointer 4 --tp-lbl 2 --tp-off 2'
+        local ceu = assert(io.popen(CEU, 'w'))
+        ceu:write(str_input)
+        ceu:close()
+        assert(os.execute('gcc -std=c99 -o ceu.exe simul.c') == 0)
+        assert(os.execute('./ceu.exe _ceu_simul.lua') == 0)
+    end
+
     _OPTS = {
         tp_word    = 4,
         tp_pointer = 4,
         tp_off     = 2,
         tp_lbl     = 2,
+        simul_use  = true,
+        simul_file = '_ceu_simul.lua',
     }
 
     -- LINES
@@ -52,6 +64,7 @@ Test = function (t)
     if not check('mem')      then return end
     if not check('tight')    then return end
     if not check('labels')   then return end
+    if not check('analysis') then return end
     if not check('code')     then return end
 
     if T.tot then
@@ -60,7 +73,6 @@ Test = function (t)
 
     -- SIMUL
     --if T.dfa then return end
---[=[
     assert((not T.n_unreachs) and not (T.isForever)) -- move to simul
     do
         local _defs = { n_reachs=0, n_unreachs=0, isForever=false, nd_acc=0 }
@@ -90,31 +102,34 @@ Test = function (t)
         end
 ]]
     end
+--[=[
 ]=]
 
     -- RUN
 
     if T.run == false then
-        --assert(T.simul.nd_acc>0)
+        assert(T.simul.nd_acc>0)
         return
     end
 
     if T.run == nil then
-        assert(T.simul and T.simul.isForever or T.simul.nd_acc
-                or T.simul.nd_flw, -- or T.simul.nd_esc,
+        assert(T.simul and T.simul.isForever or T.simul.nd_acc,
+                -- or T.simul.nd_flw or T.simul.nd_esc,
                 'missing run value')
         return
     end
-    local CEU = './ceu - --output _ceu_code.c '
+
+    local CEU = './ceu _ceu_tmp.ceu --simul '
                     .. '--tp-word 4 --tp-pointer 4 --tp-lbl 2 --tp-off 2'
 
     -- T.run = N
     if type(T.run) ~= 'table' then
         local str_all = str_input
-        --print(str_all)
-        local ceu = assert(io.popen(CEU, 'w'))
+        print(str_all)
+        local ceu = assert(io.open('_ceu_tmp.ceu', 'w'))
         ceu:write(str_all)
         ceu:close()
+        assert(os.execute(CEU))
         assert(os.execute('gcc -std=c99 -o ceu.exe main.c') == 0)
         local ret = io.popen('./ceu.exe'):read'*a'
         ret = string.match(ret, 'END: (.-)\n')
@@ -127,19 +142,19 @@ Test = function (t)
             with
                 async do
                     `EVTS
-                end;
+                end
                 await Forever;
-            end;
+            end
         ]]
         for input, ret2 in pairs(T.run) do
             input = string.gsub(input, '([^;]*)~>(%d[^;]*);?', 'emit %2;')
             input = string.gsub(input, '[ ]*(%d+)[ ]*~>([^;]*);?', 'emit %2(%1);')
             input = string.gsub(input, '~>([^;]*);?', 'emit %1;')
             local all = string.gsub(str_all, '`EVTS', input)
-            local ceu = assert(io.popen(CEU, 'w'))
-            --print(all)
+            local ceu = assert(io.open('_ceu_tmp.ceu', 'w'))
             ceu:write(all)
             ceu:close()
+            assert(os.execute(CEU))
             assert(os.execute('gcc -std=c99 -o ceu.exe main.c') == 0)
             local ret = io.popen('./ceu.exe'):read'*a'
             ret = string.match(ret, 'END: (%-?%d+)')

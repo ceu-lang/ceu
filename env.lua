@@ -75,6 +75,16 @@ function newvar (me, blk, isEvt, tp, dim, id)
     return var
 end
 
+-- identifiers for ID_c / ID_ext (allow to be defined after annotations)
+-- variables for Var
+function det2id (v)
+    if type(v) == 'string' then
+        return v
+    else
+        return v.var
+    end
+end
+
 F = {
     Block_pre = function (me)
         me.vars = {}
@@ -147,14 +157,13 @@ F = {
     end,
 
     Dcl_det = function (me)
-        local id1 = me[1]
+        local id1 = det2id(me[1])
         local t1 = _ENV.dets[id1] or {}
         _ENV.dets[id1] = t1
         for i=2, #me do
-            local id2 = me[i]
+            local id2 = det2id(me[i])
             local t2 = _ENV.dets[id2] or {}
             _ENV.dets[id2] = t2
-
             t1[id2] = true
             t2[id1] = true
         end
@@ -297,7 +306,7 @@ F = {
     Op2_call = function (me)
         local _, f, exps = unpack(me)
         me.tp = '_'
-        me.fid = (f.id=='_' and f[1]) or '$anon'
+        me.fid = (f.tag=='C' and f[1]) or '$anon'
         _ENV.calls[me.fid] = true
     end,
 
