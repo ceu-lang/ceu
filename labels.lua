@@ -107,10 +107,11 @@ F = {
         me.lbls_all = {}
     end,
     Async = function (me)
-        me.lbl = new{'Async_'..me.gte}
         for lbl in pairs(me.lbls_all) do
-            lbl.to_reach = nil              -- they are not simulated
+            lbl.to_reach = nil                          -- they are not simulated
         end
+        me.lbl = new{'Async_'..me.gte, to_reach=true,   -- after `for´ above
+                    me=me, err='`async´'}
     end,
 
     Loop_pre = function (me)
@@ -123,7 +124,7 @@ F = {
     EmitExtS = function (me)
         local e1 = unpack(me)
         if e1.ext.output then   -- e1 not Exp
-            me.lbl_emt = new{'Emit_'..e1.ext.id, acc=e1.accs[1]}
+            me.lbl_emt = new{'Emit_'..e1.ext.id, acc=e1.acc}
         end
         me.lbl_cnt = new{'Async_cont'}
     end,
@@ -138,7 +139,7 @@ F = {
                         me=me, err='continuation of `emit´'}
         me.lbl_awk = new{'Awk_'..int.var.id}
 
-        -- TODO
+        -- TODO: events the user did not define
         if string.sub(int.var.id,1,1) == '$' then
             me.lbl_cnt.to_reach = nil
         end

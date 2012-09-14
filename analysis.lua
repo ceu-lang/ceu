@@ -56,11 +56,12 @@ for _,lbl in ipairs(_LABELS.list) do
 end
 
 local ND = {
-    tr  = { tr=true,  wr=true,  rd=true,  aw=true  },
-    wr  = { tr=true,  wr=true,  rd=true,  aw=false },
-    rd  = { tr=true,  wr=true,  rd=false, aw=false },
-    aw  = { tr=true,  wr=false, rd=false, aw=false },
-    no  = {},   -- never ND ('ref') (or no se stmts ('nothing')
+    cl  = { cl=true, tr=true,  wr=true,  rd=true,  aw=true  },
+    tr  = { cl=true, tr=true,  wr=true,  rd=true,  aw=true  },
+    wr  = { cl=true, tr=true,  wr=true,  rd=true,  aw=false },
+    rd  = { cl=true, tr=true,  wr=true,  rd=false, aw=false },
+    aw  = { cl=true, tr=true,  wr=false, rd=false, aw=false },
+    no  = {},   -- never ND ('ref')
 }
 
 -- "nd_acc": i/j are concurrent, and have incomp. acc
@@ -70,10 +71,14 @@ for i=1, N_LABELS do
         local l2 = _LABELS.list[j]
         if l1.acc and l2.acc then
         if l1.par[l2] and isConc(l1,l2) then
-            local id1, md1, str1 = unpack(l1.acc)
-            local id2, md2, str2 = unpack(l2.acc)
-            local _id = (id1==id2) or   -- str vs str (C/Ext vs C/Ext)
-                        (type(id1)=='string' and type(id2)=='string')
+            local id1, md1, tp1, any1, str1 = unpack(l1.acc)
+            local id2, md2, tp2, any2, str2 = unpack(l2.acc)
+--DBG('===')
+--DBG(l1.acc, id1, md1, tp1, any1, str1)
+--DBG(l2.acc, id2, md2, tp2, any2, str2)
+            local _id = (id1==id2) or (md1=='cl' and md2=='cl') or
+                        (any1 and _TP.contains(tp1,tp2)) or
+                        (any2 and _TP.contains(tp2,tp1))
             local _dt = _ENV.dets[id1] and _ENV.dets[id1][id2] or
                         _ENV.pures[id1] or _ENV.pures[id2]
 --DBG(id1, id2, _id, _dt)

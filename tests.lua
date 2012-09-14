@@ -1011,7 +1011,7 @@ return a;
         needsPrio = true,
         needsChk  = false,
         n_tracks  = 3,
-        nd_acc = 1,         -- TODO: =0
+        nd_acc = 3,         -- TODO: =0
     },
     run = { ['~>5s; ~>F']=42 },
 }
@@ -1884,7 +1884,7 @@ end
 return sum;
 ]],
     simul = {
-        n_unreachs = 2,
+        n_unreachs = 3,
         nd_acc = 1,
     },
     run = 1,
@@ -11412,7 +11412,7 @@ end;
     --nd_flw = 1,
     run = 2,
     simul = {
-        n_unreachs = 2,
+        n_unreachs = 3,
     },
 }
 
@@ -11640,9 +11640,6 @@ end
 return _a + _b;
 ]],
     run = 2,
-    simul = {
-        nd_acc = 1,
-    },
 }
 
 Test { [[
@@ -11658,9 +11655,6 @@ end
 return _a + a;
 ]],
     run = 2,
-    simul = {
-        nd_acc = 1,
-    },
 }
 
 Test { [[
@@ -11676,7 +11670,7 @@ with
 end
 return _a + a;
 ]],
-    parser = 'ERR : line 5 : after `deterministic´ : expected identifier',
+    run = 2,
 }
 
 Test { [[
@@ -11698,6 +11692,7 @@ with
 end
 return _a+_b+_c;
 ]],
+    todo = 'nd in async',
     simul = {
         nd_acc = 3,
     },
@@ -11866,7 +11861,7 @@ end;
 return ret;
 ]],
     simul = {
-        n_unreachs = 1,
+        --n_unreachs = 1,       -- TODO: loop iter
     },
     run = 100,
 }
@@ -11899,9 +11894,6 @@ async do
 end;
 return i;
 ]],
-    simul = {
-        n_unreachs = 1,
-    },
     run = 0,
 }
 
@@ -11971,9 +11963,6 @@ int sum = set async do
 end;
 return sum;
 ]],
-    simul = {
-        n_unreachs = 1,
-    },
     run = 55,
 }
 
@@ -12063,7 +12052,7 @@ end
 return ret;
 ]],
     simul = {
-        n_unreachs = 1,
+        --n_unreachs = 1,       -- TODO: async
     },
     run = 23,
 }
@@ -12255,6 +12244,21 @@ return b;
 }
 
 Test { [[
+int b = 1;
+int c = 2;
+int* a = &c;
+deterministic b with a, c;
+par/or do
+    b = 1;
+with
+    *a = 3;
+end
+return *a+b+c;
+]],
+    run = 7,
+}
+
+Test { [[
 C do
     void f (int* v) {
         *v = 1;
@@ -12275,8 +12279,7 @@ return a + b;
 ]],
     run = 2,
     simul = {
-        nd_acc = 4,
-        nd_call = 3,
+        nd_acc = 7,
     },
 }
 
@@ -12641,7 +12644,9 @@ with
 end
 return v;
 ]],
-    n_unreachs = 1,
+    simul = {
+        n_unreachs = 1,
+    },
     run = 10,
 }
 
@@ -12715,8 +12720,7 @@ end;
 return _idx(va,0) + _idx(va,1);
 ]],
     simul = {
-        nd_acc = 1,
-        nd_call = 1,
+        nd_acc = 2,
     },
 }
 Test { PRE .. [[
@@ -12835,9 +12839,9 @@ with
 end;
 return 0;
 ]],
-    --run = 10,
+    run = false,
     simul = {
-        nd_flw = 1,
+        --nd_flw = 1,
     }
 }
 Test { PRE .. [[
@@ -12922,7 +12926,7 @@ end;
 return 0;
 ]],
     simul = {
-        nd_acc = 1,
+        nd_acc = 2, -- TODO: scope of v vs pa
     },
 }
 Test { PRE .. [[
@@ -12950,7 +12954,7 @@ end;
 ]],
     --nd_flw = 2,
     simul = {
-        nd_acc = 1,
+        nd_acc = 2, -- TODO: $ret vs anything is DET
     },
 }
 
@@ -12963,7 +12967,9 @@ with
 end;
 return a+b;
 ]],
-    nd_call = 1,
+    simul = {
+        nd_acc = 1,
+    },
     run = 6,
 }
 
@@ -12979,8 +12985,7 @@ end;
 return v1 + v2;
 ]],
     simul = {
-        nd_acc = 1,     -- 2 (1/stmt)
-        nd_call = 1,
+        nd_acc = 3,
     },
 }
 
@@ -12996,8 +13001,7 @@ end;
 return v1 + v2;
 ]],
     simul = {
-        nd_acc = 1,     -- TODO: const
-        nd_call = 1,
+        nd_acc = 3,     -- TODO: f2 is const
     },
 }
 
@@ -13027,7 +13031,9 @@ end;
 return a+b;
 ]],
     run = 4,
-    nd_call = 1,
+    simul= {
+        nd_acc = 1,
+    },
 }
 
 Test { PRE .. [[
@@ -13042,8 +13048,7 @@ end;
 return a+a;
 ]],
     simul = {
-        nd_acc = 1,
-        nd_call = 1,
+        nd_acc = 2,
     },
 }
 
@@ -13074,8 +13079,7 @@ end;
 return v1+v2;
 ]],
     simul = {
-        nd_acc = 1,
-        nd_call = 1,
+        nd_acc = 3,
     },
 }
 
@@ -13104,7 +13108,9 @@ with
 end
 return 0;
 ]],
-    nd_call = 1,
+    simul= {
+        nd_acc = 1,
+    },
     run = false,
 }
 
@@ -13163,7 +13169,7 @@ with
 end
 ]],
     simul = {
-        nd_call = 6,
+        nd_acc = 6,
         isForever = true,
     },
 }
@@ -13193,8 +13199,7 @@ with
 end
 ]],
     simul = {
-        nd_acc = 6,
-        nd_call = 6,
+        nd_acc = 24,        -- TODO: nao conferi
         isForever = true,
     },
 }
@@ -13211,7 +13216,7 @@ with
 end
 ]],
     simul = {
-        nd_call = 1,
+        nd_acc = 1,
         isForever = true,
     },
 }
@@ -13230,7 +13235,7 @@ with
 end
 ]],
     simul = {
-        nd_call = 3,
+        nd_acc = 3,
         isForever = true,
     },
 }
@@ -13250,7 +13255,7 @@ with
 end
 ]],
     simul = {
-        nd_call = 1,
+        nd_acc = 1,
         isForever = true,
     },
 }
@@ -13272,8 +13277,7 @@ with
 end
 ]],
     simul = {
-        nd_call = 1,
-        nd_acc  = 3,
+        nd_acc = 4,
         isForever = true,
     },
 }
@@ -13295,8 +13299,7 @@ with
 end
 ]],
     simul = {
-        nd_call = 1,
-        nd_acc  = 3,
+        nd_acc = 4,
         isForever = true,
     },
 }
@@ -13311,6 +13314,7 @@ with
 end
 ]],
     simul = {
+        n_reachs = 1,
         isForever = true,
     },
 }
@@ -13636,7 +13640,8 @@ a = set do
 end;
 ]],
     simul = {
-        n_reachs = 2,
+        n_reachs = 1,
+        n_unreachs = 1,
         isForever = true,
     },
 }
@@ -13771,7 +13776,7 @@ return ret;
 ]],
     tot = 12,
     simul = {
-        nd_acc = 6,
+        nd_acc = 18,
     },
     run = 6,
 }
@@ -13806,10 +13811,10 @@ end
 return ret+a;
 ]],
     simul = {
-        nd_acc = 7,
-        tot = 29,
-        run = 33;
+        nd_acc = 21,
     },
+    tot = 29,
+    run = 33;
 }
 
 Test { [[
@@ -13831,9 +13836,10 @@ with
 end
 ]],
     simul = {
-        tot = 22,
         isForever = true,
+        n_reachs = 1,
     },
+    tot = 22,
 }
 
 Test { [[
@@ -13904,9 +13910,10 @@ with
 end
 ]],
     simul = {
-        tot = 13,
         isForever = true,
-    }
+        n_reachs = 1,
+    },
+    tot = 13,
 }
 print('COUNT', COUNT)
 

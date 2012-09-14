@@ -108,7 +108,7 @@ Test = function (t)
     -- RUN
 
     if T.run == false then
-        assert(T.simul.nd_acc>0)
+        --assert(T.simul.nd_acc>0)
         return
     end
 

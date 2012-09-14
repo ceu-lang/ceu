@@ -481,6 +481,7 @@ return 0;
 
     CallStmt = function (me)
         local call = unpack(me)
+        EXP(me, call)
         if not _OPTS.simul_run then
             LINE(me, call.val..';')
         end
