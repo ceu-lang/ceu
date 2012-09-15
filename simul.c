@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <assert.h>
+#include <stdlib.h>
 
 typedef long  s32;
 typedef short s16;
@@ -12,14 +13,18 @@ typedef unsigned char   u8;
 
 #include "_ceu_code.cceu"
 
-tceu_sim_state* ceu_sim_state_new (int copy)
+int ceu_sim_state_new (int copy)
 {
-    assert(S.n_states < CEU_SIMUL_N_STATES);
-    tceu_sim_state* s = &S.states[S.n_states];
+    if (S.states_tot == S.states_max) {
+        fprintf(stderr, "WRN : analysis : number of states > %d\n",
+                S.states_max);
+        S.states_max *= 2;
+        S.states = realloc(S.states, S.states_max*sizeof(tceu_sim_state));
+    }
+    tceu_sim_state* s = &S.states[S.states_tot];
     s->ceu = *CEU;
-
     if (copy) {
-        *s = *S.state_cur;
+        *s = S.states[S.states_cur];
     } else {
         memset(s->isChild, 0, N_LABELS*N_LABELS);
     }
@@ -27,23 +32,15 @@ tceu_sim_state* ceu_sim_state_new (int copy)
 //S.file = stderr;
 //ceu_sim_state_dump(s);
 //S.file = S.file_orig;
-//if (S.state_cur)
-    //fprintf(stderr,"CREATED: %d from %d\n", S.n_states, S.state_cur->n);
+//if (S.states_cur)
+    //fprintf(stderr,"CREATED: %d from %d\n", S.states_tot, S.states_cur->n);
 //else
-    //fprintf(stderr,"CREATED: %d from %d\n", S.n_states, 0);
-    ceu_sim_state_setcur(s);
-    s->n = S.n_states;
-    S.n_states++;
+    //fprintf(stderr,"CREATED: %d from %d\n", S.states_tot, 0);
+    s->n = S.states_tot++;
 //S.file = stderr;
-//ceu_sim_state_dump(S.state_cur);
+//ceu_sim_state_dump(S.states_cur);
 //S.file = S.file_orig;
-    return s;
-}
-
-void ceu_sim_state_setcur (tceu_sim_state* cur)
-{
-    S.state_cur = cur;
-    CEU = &cur->ceu;
+    return s->n;
 }
 
 void ceu_sim_state_path (tceu_lbl fr, tceu_lbl to)
@@ -51,7 +48,7 @@ void ceu_sim_state_path (tceu_lbl fr, tceu_lbl to)
 //fprintf(stderr,"PATH: %d -> %d\n", fr, to);
     S.isReach[to] = 1;
 
-    tceu_sim_state* s = S.state_cur;
+    tceu_sim_state* s = &S.states[S.states_cur];
     s->isChild[fr][fr] = 1;
     s->isChild[to][to] = 1;
     for (int i=0; i<N_LABELS; i++)
@@ -60,7 +57,7 @@ void ceu_sim_state_path (tceu_lbl fr, tceu_lbl to)
 
 void ceu_sim_state_flush ()
 {
-    tceu_sim_state* s = S.state_cur;
+    tceu_sim_state* s = &S.states[S.states_cur];
     for (int i=0; i<N_LABELS; i++) {
         for (int j=0; j<N_LABELS; j++) {
             S.isConc[i][j] |=
@@ -142,7 +139,7 @@ void ceu_sim_state_end ()
 #endif
 
 /*
-tceu_sim_state* s = S.state_cur;
+tceu_sim_state* s = S.states_cur;
 fprintf(stderr,">>> END: %d (min %d)\n", s->n, min);
 S.file = stderr;
 ceu_sim_state_dump(s);
@@ -178,7 +175,7 @@ void ceu_sim_dump () {
 /*
     fprintf(S.file, "--[=[\n");
     fprintf(S.file, "  states = {\n");
-    for (int i=0; i<S.n_states; i++)
+    for (int i=0; i<S.states_tot; i++)
         ceu_sim_state_dump(&S.states[i]);
     fprintf(S.file, "  }\n");
     fprintf(S.file, "--]=]\n");
@@ -187,7 +184,7 @@ void ceu_sim_dump () {
 
 void ceu_sim_iter ()
 {
-//fprintf(stderr,">>> ITER: %d\n", S.state_cur->n);
+//fprintf(stderr,">>> ITER: %d\n", S.states_cur->n);
 
 #ifdef CEU_EXTS
     for (int i=0; i<IN_n; i++) {
@@ -256,21 +253,22 @@ void ceu_sim_iter ()
     }
 #endif
 
-//fprintf(stderr,"<<< ITER: %d\n", S.state_cur->n);
+//fprintf(stderr,"<<< ITER: %d\n", S.states_cur->n);
 }
 
 int main (int argc, char *argv[])
 {
     int ret;
+    S.states = malloc(S.states_max*sizeof(tceu_sim_state));
     memset(S.isReach, 0, N_LABELS);
     memset(S.isConc,  0, N_LABELS*N_LABELS);
     S.file_orig = fopen(argv[1], "w");
     S.file      = S.file_orig;
     memset(CEU->mem, 0, N_MEM);
 
-    tceu_sim_state* s = ceu_sim_state_new(0);
-    S.state_nxt++;
-//fprintf(stderr,"=== GO: %d\n", s->n);
+    S.states_cur = ceu_sim_state_new(0);
+    S.states_nxt++;
+//fprintf(stderr,"=== GO: %d\n", S.states[S.states_cur].n);
     int term = ceu_go_init(NULL);
     ceu_sim_state_end();
 
@@ -289,24 +287,24 @@ int main (int argc, char *argv[])
 //S.file = S.file_orig;
 //fprintf(stderr,"<<< XXXX\n");
 
-        S.state_nxt++;
-        if (S.state_nxt == S.n_states)
+        S.states_nxt++;
+        if (S.states_nxt == S.states_tot)
             break;
-        ceu_sim_state_setcur(&S.states[S.state_nxt]);
-//fprintf(stderr,"=== GO: %d %d\n", S.state_cur->n, CEU->lbl);
+        S.states_cur = S.states_nxt;
+//fprintf(stderr,"=== GO: %d %d\n", S.states_cur->n, CEU->lbl);
 //S.file = stderr;
-//ceu_sim_state_dump(S.state_cur);
+//ceu_sim_state_dump(S.states_cur);
 //S.file = S.file_orig;
         int term = ceu_go(NULL);
         ceu_sim_state_end();
 
         int K;
-        if (ceu_sim_equal_N(S.state_nxt, &K)) {
-            //S.n_states--;
-            //S.states[S.state_nxt] = S.states[S.n_states];
-            //S.states[S.state_nxt].n = S.state_nxt;
-//fprintf(stderr,"=== REP: %d %d\n", S.state_nxt, K);
-            //S.state_nxt--;
+        if (ceu_sim_equal_N(S.states_nxt, &K)) {
+            //S.states_tot--;
+            //S.states[S.states_nxt] = S.states[S.states_tot];
+            //S.states[S.states_nxt].n = S.states_nxt;
+//fprintf(stderr,"=== REP: %d %d\n", S.states_nxt, K);
+            //S.states_nxt--;
             continue;
         }
 

@@ -85,6 +85,12 @@ typedef struct {
 #include "simul.h"
 #endif
 
+#ifdef CEU_SIMUL
+#define CEU ((S.states_cur==-1) ? &CEU_ : (&S.states[S.states_cur].ceu))
+#else
+#define CEU (&CEU_)
+#endif
+
 tceu CEU_ = { 0, {},
 #ifdef CEU_EXTS
     0, 0,
@@ -103,7 +109,6 @@ tceu CEU_ = { 0, {},
 #endif
     {}
 };
-tceu* CEU = &CEU_;
 
 /**********************************************************************/
 
