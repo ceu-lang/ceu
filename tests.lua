@@ -2793,6 +2793,50 @@ end;
 }
 
 Test { [[
+par do
+    loop do
+        loop do
+            await 1s;
+        end
+    end
+with
+    loop do
+        await 500ms;
+        async do
+            nothing;
+        end
+    end
+end
+]],
+    simul = {
+        isForever = true,
+        n_unreachs = 1,
+    }
+}
+Test { [[
+par do
+    loop do
+        await 1s;
+        loop do
+            await 1s;
+        end
+    end
+with
+    loop do
+        await 1s;
+        async do
+            nothing;
+        end
+    end
+end
+]],
+    simul = {
+        isForever = true,
+        n_unreachs = 1,
+    }
+}
+
+Test { [[
 int v;
 par/or do
     loop do
@@ -13915,6 +13959,90 @@ end
     },
     tot = 13,
 }
+
+-- BIG // FULL // COMPLETE
+Test { [[
+input int Key;
+if 1 then return 50; end
+par do
+    int pct, dt, step, ship, points;
+    int win = 0;
+    loop do
+        if win then
+            // next phase (faster, harder, keep points)
+            step = 0;
+            ship = 0;
+            if dt > 100 then
+                dt = dt - 50;
+            end
+            if pct > 10 then
+                pct = pct - 1;
+            end
+        else
+            // restart
+            pct    = 35;    // map generator (10 out of 35 for a '#')
+            dt     = 500;   // game speed (500ms/step)
+            step   = 0;     // current step
+            ship   = 0;     // ship position (0=up, 1=down)
+            points = 0;     // number of steps alive
+        end
+        await Key;
+        win = set
+            par do
+                loop do
+                    await (dt)ms;
+                    step = step + 1;
+
+                    if step == 1 then
+                        return 1;           // finish line
+                    end
+                    points = points + 1;
+                end
+            with
+                loop do
+                    int key = await Key;
+                    if key == 1 then
+                        ship = 0;
+                    end
+                    if key == 1 then
+                        ship = 1;
+                    end
+                end
+            end;
+        par/or do
+            await 1s;
+            await Key;
+        with
+            if !win then
+                loop do
+                    await 100ms;
+                    await 100ms;
+                end
+            end
+        end
+    end
+with
+    int key = 1;
+    loop do
+        int read1 = 1;
+            read1 = 1;
+        await 50ms;
+        int read2 = 1;
+            read2 = 1;
+        if read1==read2 && key!=read1 then
+            key = read1;
+            if key != 1 then
+                async (read1) do
+                    emit Key(read1);
+                end
+            end
+        end
+    end
+end
+]],
+    run = 50,
+}
+
 print('COUNT', COUNT)
 
 do return end

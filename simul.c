@@ -14,9 +14,9 @@ typedef unsigned char   u8;
 
 tceu_sim_state* ceu_sim_state_new (int copy)
 {
+    assert(S.n_states < CEU_SIMUL_N_STATES);
     tceu_sim_state* s = &S.states[S.n_states];
     s->ceu = *CEU;
-    assert(S.n_states <= 1024);
 
     if (copy) {
         *s = *S.state_cur;
@@ -111,7 +111,7 @@ void ceu_sim_state_dump (tceu_sim_state* s)
 
     fprintf(S.file, "      mem = { ");
     for (int i=0; i<N_MEM; i++)
-        fprintf(S.file, "%2d, ", s->ceu.mem[i]);
+        fprintf(S.file, "%2d,", s->ceu.mem[i]);
     fprintf(S.file, " },\n");
 
     fprintf(S.file, "  path:\n");
@@ -128,21 +128,22 @@ void ceu_sim_state_end ()
 {
     // normalize wclock exts
 #ifdef CEU_WCLOCKS
-    int min = 255;
+    int min = INT_MAX;
     for (int i=0; i<CEU_WCLOCKS; i++) {
         tceu_wclock* tmr = &(PTR(CEU_WCLOCK0,tceu_wclock*)[i]);
-        if (tmr->ext < min)
+        if ((tmr->lbl != Inactive) && (tmr->ext < min))
             min = tmr->ext;
     }
     for (int i=0; i<CEU_WCLOCKS; i++) {
         tceu_wclock* tmr = &(PTR(CEU_WCLOCK0,tceu_wclock*)[i]);
-        tmr->ext -= min;
+        if (tmr->lbl != Inactive)
+            tmr->ext -= min;
     }
 #endif
 
 /*
 tceu_sim_state* s = S.state_cur;
-fprintf(stderr,">>> END: %d\n", s->n);
+fprintf(stderr,">>> END: %d (min %d)\n", s->n, min);
 S.file = stderr;
 ceu_sim_state_dump(s);
 S.file = S.file_orig;

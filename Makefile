@@ -1,7 +1,7 @@
 DATE = `date +%F`
 
 all:
-	./ceu $(CEUFILE) --m4
+	./ceu $(CEUFILE) --m4 --simul
 	gcc main.c $(CFLAGS)
 
 clean:

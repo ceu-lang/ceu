@@ -378,6 +378,7 @@ int ceu_go_wclock (int* ret, s32 dt)
         CEU->wclk_late = dt - CEU->wclk_cur->togo;   // how much late the wclock is
 #ifdef CEU_SIMUL
         min_ext = CEU->wclk_cur->ext;
+        CEU->wclk_ext  = min_ext;
         CEU->wclk_late = 0;
 #endif
     }
@@ -400,10 +401,11 @@ int ceu_go_wclock (int* ret, s32 dt)
         if (tmr->togo == CEU_WCLOCK_ANY)
             continue;
         if ( tmr->togo==min_togo && tmr->ext==min_ext) {
-            tmr->togo = 0;
+            tmr->ext = 0;
 #else
         if ( tmr->togo==min_togo ) {
 #endif
+            tmr->togo = 0;
             ceu_spawn(&tmr->lbl);           // spawns sharing phys/ext
         } else {
             tmr->togo -= dt;
@@ -429,6 +431,7 @@ int ceu_go_wclock (int* ret, s32 dt)
                 tceu_wclock* _tmr = &(PTR(CEU_WCLOCK0,tceu_wclock*)[ arr[j] ]);
                 ceu_spawn(&_tmr->lbl);
                 _tmr->togo = 0;
+                _tmr->ext  = 0;
             }
         }
         CEU_SIMUL_POS();

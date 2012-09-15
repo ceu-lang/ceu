@@ -1,3 +1,5 @@
+#define CEU_SIMUL_N_STATES 4096
+
 #define CEU_SIMUL_PRE(cpy)              \
 {                                       \
     tceu_sim_state* old = S.state_cur;  \
@@ -25,7 +27,7 @@ typedef struct {
     u8 isConc[N_LABELS][N_LABELS];
 
     tceu_sim_state* state_cur;
-    tceu_sim_state  states[1024];
+    tceu_sim_state  states[CEU_SIMUL_N_STATES];
     int n_states;
     int state_nxt;
     int data;
