@@ -8,6 +8,8 @@ local types = {
     u8=true,  s8=true,
 }
 
+-- TODO: enforce passing parameter `c´ to isNumeric/deref/contains/max ?
+
 function _TP.no_ (tp)
     return (string.gsub(tp, '^_', ''))
 end

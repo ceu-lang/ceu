@@ -78,13 +78,15 @@ local EM = function (msg)
         end)
 end
 
--- TODO: types
-KEYS = P'async'   + 'await'  + 'break'   + 'call'    + 'constant' + 'deterministic'
+TYPES = P'void' + 'int' + 'u8' + 'u16' + 'u32' + 's8' + 's16' + 's32'
+
+KEYS = P'async'   + 'await'  + 'break'   + 'constant' + 'deterministic'
      +  'do'      + 'emit'   + 'else'    + 'end'     + 'event'    + 'finally'
      +  'Forever' + 'input'  + 'if'      + 'loop'    + 'nothing'  + 'null'
      +  'output'  + 'par'    + 'par/and' + 'par/or'  + 'pure'     + 'return'
      +  'set'     + 'sizeof' + 'then'    + 'type'    + 'with'
      +  'delay' -- TODO: put in alpha order
+     + TYPES
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
@@ -117,6 +119,7 @@ _GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
             + V'_Dcl_ext' + V'_Dcl_int'  + V'_Dcl_var'
             + V'Dcl_det'  + V'_Dcl_pure' + V'Dcl_type'
             + V'_Set'     + V'CallStmt' -- must be after Set
+            + EM'invalid statement (missing `_´?)'
 
     , _StmtBlock = V'_Do'   + V'Async'  + V'Host'
                  + V'ParOr' + V'ParAnd'
@@ -141,8 +144,10 @@ _GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
                 EM'expected expression'
               )
 
-    , CallStmt = (#V'ID_c' + K'call'*S) * V'Exp'
-               + EM'invalid statement (or C identifier?)'
+    , CallStmt = m.Cmt(V'Exp',
+                    function (s,i,...)
+                        return (string.sub(s,i-1,i-1)==')'), ...
+                    end)
 
     , Nothing = K'nothing'
 
@@ -238,10 +243,12 @@ _GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
     , AwaitT   = K'await' *S* (V'WCLOCKK'+V'WCLOCKE')
 
 
+    , _EmitExt = K'emit' *S* EV'Ext' * (S* K'(' *S* V'Exp'^-1 *S* EK')')^-1
+    , EmitExtS = V'_EmitExt'
+    , EmitExtE = V'_EmitExt'
+
     , EmitT    = K'emit' *S* (V'WCLOCKK'+V'WCLOCKE')
-    , EmitExtS = V'EmitExt'
-    , EmitExtE = V'EmitExt'
-    , EmitExt  = K'emit' *S* EV'Ext' * (S* K'(' *S* V'Exp' *S* EK')')^-1
+
     , EmitInt  = K'emit' *S* EV'Var' * (S* K'(' *S* V'Exp' *S* EK')')^-1
     , _Delay   = K'delay'
 
@@ -254,7 +261,7 @@ _GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
 
     , _Dcl_var  = Cc(false) * V'ID_type' *S* ('['*S*NUM*S*']'+Cc(false)) *S*
                     V'__Dcl_var' * (S*K','*S*V'__Dcl_var')^0
-    , __Dcl_var = V'ID_var' *S* (V'_Sets' + Cc(false)*Cc(false))
+    , __Dcl_var = EV'ID_var' *S* (V'_Sets' + Cc(false)*Cc(false))
 
     , Ext      = V'ID_ext'
     , Var      = V'ID_var'
@@ -263,8 +270,8 @@ _GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
     , ID_ext  = CK(m.R'AZ'*Alphanum^0) - KEYS
     , ID_int  = CK(m.R'az'*Alphanum^0) - KEYS
     , ID_var  = CK(m.R'az'*Alphanum^0) - KEYS
-    , ID_c    = CK(  P'_' *Alphanum^0) - KEYS
-    , ID_type = CK(ID) * C((S*'*')^0) /
+    , ID_c    = CK(  P'_' *Alphanum^0)
+    , ID_type = (CK(TYPES)+V'ID_c') * C((S*'*')^0) /
                   function (id, star)
                     return (string.gsub(id..star,' ',''))
                   end

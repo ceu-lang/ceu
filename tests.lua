@@ -77,8 +77,14 @@ Test { [[return 2>1 && 10!=0;]], run=1 }
 Test { [[return (1<=2) + (1<2) + 2/1 - 2%3;]], run=2 }
 -- TODO: linux gcc only?
 --Test { [[return (~(~0b1010 & 0XF) | 0b0011 ^ 0B0010) & 0xF;]], run=11 }
+Test { [[nt a;]],
+    parser = "ERR : line 1 : before `nt´ : invalid statement (missing `_´?)",
+}
+Test { [[nt sizeof;]],
+    parser = "ERR : line 1 : before `nt´ : invalid statement (missing `_´?)",
+}
 Test { [[int sizeof;]],
-    parser = "ERR : line 1 : before `int´ : invalid statement (or C identifier?)",
+    parser = "ERR : line 1 : after `int´ : expected identifier",
 }
 Test { [[return sizeof<int>;]], run=4 }
 Test { [[return 1<2>3;]], run=0 }
@@ -91,9 +97,6 @@ Test { [[int a;]],
 }
 Test { [[a = 1; return a;]],
     env = 'variable/event "a" is not declared',
-}
-Test { [[int a; call a; return a;]],
-    env = 'invalid statement',
 }
 Test { [[int a; a = 1; return a;]],
     run = 1,
@@ -127,9 +130,6 @@ Test { [[int a = b; return 0;]],
 Test { [[return 1;2;]],
     parser = "ERR : line 1 : after `;´ : expected EOF",
 }
-Test { [[call 1;return 2;]],
-    env = 'invalid statement',
-}
 Test { [[int aAa; aAa=1; return aAa;]],
     run = 1,
 }
@@ -151,10 +151,6 @@ Test { [[int a; a=1 ; nothing; nothing;]],
         isForever = true,
     }
 }
-Test { [[int a; a=1 ; call a; return a;]],
-    env = 'invalid statement',
-}
-
     -- IF
 
 Test { [[if 1 then return 1; end; return 0;]],
@@ -230,7 +226,7 @@ return 0;
     run = 1,
 }
 Test { [[if (2) then  else return 0; end;]],
-    parser = "ERR : line 1 : after `then´ : invalid statement (or C identifier?)",
+    parser = "ERR : line 1 : after `then´ : invalid statement (missing `_´?)",
 }
 
 -- IF vs SEQ priority
@@ -331,7 +327,7 @@ input int A;
 A=1;
 return 1;
 ]],
-    parser = "ERR : line 2 : before `A´ : invalid statement (or C identifier?)",
+    parser = "ERR : line 1 : after `;´ : invalid statement (missing `_´?)",
 }
 
 Test { [[input  int A;]],
@@ -463,7 +459,7 @@ Test { [[
 output xxx A;
 return(1);
 ]],
-    env = "ERR : line 1 : invalid event type",
+    parser = "ERR : line 1 : after `output´ : expected type",
 }
 Test { [[
 output int A;
@@ -499,14 +495,14 @@ output t A;
 emit A(1);
 return(1);
 ]],
-    env = "ERR : line 1 : invalid event type",
+    parser = 'ERR : line 1 : after `output´ : expected type',
 }
 Test { [[
 output t A;
 emit A(1);
 return(1);
 ]],
-    env = "ERR : line 1 : invalid event type",
+    parser = 'ERR : line 1 : after `output´ : expected type',
 }
 Test { [[
 output _t* A;
@@ -524,14 +520,19 @@ return(1);
     env = 'ERR : line 2 : undeclared type `_t´',
 }
 Test { [[
-type _t = 1;
-output int A;
-_t v = 1;
-call v();
-emit A(v);
-return(1);
+C do
+    void f (int* a) {
+        *a = 10;
+    }
+    typedef void (*t)(int*);
+end
+type _t = 4;
+_t v = _f;
+int a;
+v(&a);
+return(a);
 ]],
-    todo = 'simul fail',
+    run = 10,
 }
 Test { [[
 output int A;
@@ -593,14 +594,23 @@ return a + b;
 }
 
 Test { [[
+type _char = 1;
 output void A;
 C do
     void A (int v) {}
 end
-cahr v = emit A(1);
+_cahr v = emit A(1);
 return 0;
 ]],
-    env = 'ERR : line 5 : undeclared type',
+    env = 'ERR : line 6 : undeclared type `_cahr´',
+}
+Test { [[
+type _char = 1;
+output void A;
+_char v = emit A();
+return v;
+]],
+    run = 0,
 }
 Test { [[
 output void A;
@@ -2748,11 +2758,27 @@ par/or do
     a = await 10ms;
 with
     await (5)ms;
+    b = await (2)ms;
+end;
+return a+b;
+]],
+    --todo = '10ms should be reachable',
+    run = {
+        ['~>10ms'] = 3000,
+        ['~>20ms'] = 13000,
+    }
+}
+Test { [[
+int a=0,b=0;
+par/or do
+    a = await 10ms;
+with
+    await (5)ms;
     b = await 2ms;
 end;
 return a+b;
 ]],
-    todo = '10ms should be reachable',
+    --todo = '10ms should be reachable',
     run = {
         ['~>10ms'] = 3000,
         ['~>20ms'] = 13000,
@@ -10566,7 +10592,7 @@ end;
 
     -- SCOPE / BLOCK
 
-Test { [[do end;]], parser="ERR : line 1 : after `do´ : invalid statement (or C identifier?)" }
+Test { [[do end;]], parser="ERR : line 1 : after `do´ : invalid statement (missing `_´?)" }
 Test { [[do int a; end;]],
     simul = {
         n_reachs = 1,
@@ -10706,7 +10732,7 @@ Test { [[
 event a;
 return 0;
 ]],
-    parser = "ERR : line 1 : after `a´ : expected identifier",
+    parser = 'ERR : line 1 : after `event´ : expected type',
 }
 
 Test { [[
@@ -10837,7 +10863,7 @@ do
 finally
 end
 ]],
-    parser = "ERR : line 3 : after `finally´ : invalid statement (or C identifier?)",
+    parser = "ERR : line 3 : after `finally´ : invalid statement (missing `_´?)",
 }
 
 Test { [[
@@ -10846,7 +10872,7 @@ finally
     nothing;
 end
 ]],
-    parser = "ERR : line 1 : after `do´ : invalid statement (or C identifier?)",
+    parser = "ERR : line 1 : after `do´ : invalid statement (missing `_´?)",
 }
 
 Test { [[
@@ -12222,7 +12248,7 @@ return 1;
 }
 
 Test { [[
-char* ptr1;
+_char* ptr1;
 int* ptr2;
 ptr1 = ptr2;
 ptr2 = ptr1;
@@ -12232,7 +12258,7 @@ return 1;
 }
 Test { [[
 int* ptr1;
-char* ptr2;
+_char* ptr2;
 ptr1 = ptr2;
 ptr2 = ptr1;
 return 1;
@@ -12518,7 +12544,7 @@ end
 A = 1;
 return 1;
 ]],
-    parser = "ERR : line 4 : before `A´ : invalid statement (or C identifier?)",
+    parser = "ERR : line 3 : after `end´ : invalid statement (missing `_´?)",
 }
 
 Test { [[
@@ -13365,7 +13391,7 @@ end
 
     -- STRINGS
 
-Test { [[char* a = "Abcd12" ; return 1;]], run=1 }
+Test { [[_char* a = "Abcd12" ; return 1;]], run=1 }
 Test { [[
 _printf("END: %s\n", "Abcd12");
 return 0;
@@ -13575,7 +13601,7 @@ return v.a;
 
 Test { [[
 ]],
-    parser = "ERR : line 1 : after `BOF´ : invalid statement (or C identifier?)",
+    parser = "ERR : line 1 : after `BOF´ : invalid statement (missing `_´?)",
 }
 
 -- Exps
