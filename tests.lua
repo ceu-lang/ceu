@@ -2,7 +2,7 @@
 --]===]
 
 Test { [[return(1);]],
-    simul = {
+    ana = {
         needsPrio = false,
         needsChk  = false,
         isForever = false,
@@ -90,7 +90,7 @@ Test { [[return sizeof<int>;]], run=4 }
 Test { [[return 1<2>3;]], run=0 }
 
 Test { [[int a;]],
-    simul = {
+    ana = {
         n_reachs = 1,
         isForever = true,
     }
@@ -108,7 +108,7 @@ Test { [[int a = 1; return (a);]],
     run = 1,
 }
 Test { [[int a = 1;]],
-    simul = {
+    ana = {
         n_reachs = 1,
         isForever = true,
     }
@@ -146,7 +146,7 @@ Test { [[int a; a=1 ; a=a; return a;]],
     run = 1,
 }
 Test { [[int a; a=1 ; nothing; nothing;]],
-    simul = {
+    ana = {
         n_reachs = 1,
         isForever = true,
     }
@@ -154,7 +154,7 @@ Test { [[int a; a=1 ; nothing; nothing;]],
     -- IF
 
 Test { [[if 1 then return 1; end; return 0;]],
-    simul = {
+    ana = {
         isForever = false,
         needsPrio = false,
         needsChk  = false,
@@ -166,7 +166,7 @@ Test { [[if 0 then return 0; end  return 1;]],
     run = 1,
 }
 Test { [[if 0 then return 0; else return 1; end]],
-    simul = {
+    ana = {
         isForever = false,
         needsPrio = false,
         needsChk  = false,
@@ -178,7 +178,7 @@ Test { [[if (0) then return 0; else return 1; end;]],
     run = 1,
 }
 Test { [[if (1) then return (1); end]],
-    simul = {
+    ana = {
         n_reachs = 1,
     },
     run = 1,
@@ -242,7 +242,7 @@ else
         return 1;
     end
 end;]],
-    simul = {
+    ana = {
         n_reachs = 1,
     },
     run = 1,
@@ -257,7 +257,7 @@ else
         return 2;
     end
 end;]],
-    simul = {
+    ana = {
         isForever = false,
         needsPrio = false,
         needsChk  = false,
@@ -331,7 +331,7 @@ return 1;
 }
 
 Test { [[input  int A;]],
-    simul = {
+    ana = {
         n_reachs = 1,
         isForever = true,
     },
@@ -342,7 +342,7 @@ Test { [[input int A,A; return 0;]],
 Test { [[
 input int A,B,C;
 ]],
-    simul = {
+    ana = {
         n_reachs = 1,
         isForever = true,
     },
@@ -363,7 +363,7 @@ with
 end;
 return 10;
 ]],
-    simul = {
+    ana = {
         isForever = false,
         needsPrio = false,
         needsChk  = false,
@@ -413,7 +413,7 @@ with
 end;
 return v;
 ]],
-    simul = {
+    ana = {
         isForever = false,
         needsPrio = false,
         needsChk  = false,
@@ -643,7 +643,7 @@ with
 end
 return 1;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
     run = 1,
@@ -658,7 +658,7 @@ with
 end
 return 1;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
     run = 1,
@@ -702,7 +702,7 @@ Test { [[await -1; return 0;]],
 }
 
 Test { [[s32 a=await 10s; return a==8000000;]],
-    simul = {
+    ana = {
         isForever = false,
         needsPrio = false,
         needsChk  = false,
@@ -715,7 +715,7 @@ Test { [[s32 a=await 10s; return a==8000000;]],
 }
 
 Test { [[await Forever;]],
-    simul = {
+    ana = {
         isForever = true,
         needsPrio = false,
         needsChk  = false,
@@ -747,7 +747,7 @@ async do
 end
 return 10;
 ]],
-    simul = {
+    ana = {
         isForever = false,
         needsPrio = false,
         needsChk  = false,
@@ -764,7 +764,7 @@ a = async do
 end;
 return a + 1;
 ]],
-    simul = {
+    ana = {
         isForever = false,
         needsPrio = false,
         needsChk  = false,
@@ -837,7 +837,7 @@ with
 end
 return 0;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
         isForever = true,
     },
@@ -861,7 +861,7 @@ with
 end
 return 0;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
         isForever =  true,
     },
@@ -874,7 +874,7 @@ with
     await 1s;
 end
 ]],
-    simul = {
+    ana = {
         isForever = true,
     }
 }
@@ -886,7 +886,7 @@ with
     await Forever;
 end
 ]],
-    simul = {
+    ana = {
         isForever = true,
     },
 }
@@ -898,7 +898,7 @@ with
     await 1s;
 end
 ]],
-    simul = {
+    ana = {
         n_reachs = 1,
         isForever = true,
     },
@@ -922,7 +922,7 @@ with
     end
 end
 ]],
-    simul = {
+    ana = {
         isForever = false,
         needsPrio = true,
         needsChk  = true,
@@ -990,7 +990,7 @@ with
     return 1;
 end
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
         --nd_flw = 1,
     },
@@ -1017,7 +1017,7 @@ loop do
 end
 return a;
 ]],
-    simul = {
+    ana = {
         needsPrio = true,
         needsChk  = false,
         n_tracks  = 3,
@@ -1043,7 +1043,7 @@ loop do
     end
 end
 ]],
-    simul = {
+    ana = {
         isForever = true,
         needsPrio = true,
         needsChk  = false,
@@ -1076,7 +1076,7 @@ with
 end;
 return 0;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 2,
         isForever = true,
     },
@@ -1092,7 +1092,7 @@ with
     return 1;
 end;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     },
     run = { ['~>A;~>B']=1, },
@@ -1105,7 +1105,7 @@ with
     return 1;
 end
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     },
     run = 1,
@@ -1127,7 +1127,7 @@ with
     return 1;
 end
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     },
     --nd_flw = 1,
@@ -1153,7 +1153,7 @@ with
 end
 ]],
     todo = 'async dos not execute',
-    simul = {
+    ana = {
         --n_unreachs = 1,
         --nd_flw = 1,
     },
@@ -1201,7 +1201,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     },
     run = { ['1~>A;1~>F']=513, ['2~>B;0~>F']=513 },
@@ -1214,7 +1214,7 @@ loop do
     await 2s;
 end;
 ]],
-    simul = {
+    ana = {
         isForever = true,
     },
 }
@@ -1232,7 +1232,7 @@ with
     end;
 end;
 ]],
-    simul = {
+    ana = {
         isForever = true,
     },
 }
@@ -1375,7 +1375,7 @@ loop do
 end;
 return 1;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,    -- re-loop
     },
     run = 1,
@@ -1390,7 +1390,7 @@ loop do
 end;
 return 0;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     },
     run = 1,
@@ -1405,7 +1405,7 @@ loop do
 end;
 return 0;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 2,
     },
     run = 1,
@@ -1433,7 +1433,7 @@ loop do
 end;
 return 1;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
         --nd_flw = 1,
     },
@@ -1453,7 +1453,7 @@ loop do
 end;
 return 1;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     },
     run = { ['~>A;~>B']=1, }
@@ -1469,7 +1469,7 @@ loop do
 end;
 return 1;   // n_unreachs
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
         --nd_flw =1,
     },
@@ -1489,7 +1489,7 @@ loop do
 end;
 return 1;   // TODO: n_unreachs
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     },
     run = { ['~>A;~>B']=1, }
@@ -1515,7 +1515,7 @@ loop do
     v = await A;
 end;
 ]],
-    simul = {
+    ana = {
         isForever = true,
     },
 }
@@ -1531,7 +1531,7 @@ return a;
 Test { [[break; return 1;]], parser="ERR : line 1 : after `;´ : expected EOF" }
 Test { [[break; break;]], parser="ERR : line 1 : after `;´ : expected EOF" }
 Test { [[loop do break; end; return 1;]],
-    simul = {
+    ana = {
         n_unreachs=1,
     },
     run=1
@@ -1544,7 +1544,7 @@ loop do
 end;
 return ret;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     },
     run = 1,
@@ -1578,7 +1578,7 @@ loop do
     end;
 end;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 2,
         isForever = true,
     },
@@ -1591,7 +1591,7 @@ loop do
     await A;
 end;
 ]],
-    simul = {
+    ana = {
         isForever = true,
     },
 }
@@ -1602,7 +1602,7 @@ loop do
     a = await E;
 end;
 ]],
-    simul = {
+    ana = {
         isForever = true,
     },
 }
@@ -1617,7 +1617,7 @@ loop do
     end;
 end;
 ]],
-    simul = {
+    ana = {
         isForever = true,
     },
 }
@@ -1725,7 +1725,7 @@ else
 end;
 return 0;   // TODO
 ]],
-    simul = {
+    ana = {
         isForever = true,
     },
 }
@@ -1737,7 +1737,7 @@ else
     loop do await A; end;
 end;
 ]],
-    simul = {
+    ana = {
         isForever = true,
     },
 }
@@ -1802,7 +1802,7 @@ end
 return sum;
 ]],
     todo = 'for',
-    simul = {
+    ana = {
         nd_acc = 1,
         n_unreachs = 1,
     },
@@ -1822,7 +1822,7 @@ with
 end
 return sum;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
         n_unreachs = 2,
     },
@@ -1846,7 +1846,7 @@ with
 end
 return ret;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
     run = { ['~>A; ~>A; ~>A']=2 },
@@ -1869,7 +1869,7 @@ with
 end
 return ret;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
     run = { ['~>A;~>A'] = 2 },
@@ -1891,7 +1891,7 @@ with
 end
 return sum;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 3,
         nd_acc = 1,
     },
@@ -2053,7 +2053,7 @@ await A;
 await A;
 return a;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     },
     run = { ['0~>A;0~>A;0~>A'] = 1 }
@@ -2070,7 +2070,7 @@ with
     return a;
 end;
 ]],
-    simul = {
+    ana = {
         isForever = false,
         needsPrio = false,
         needsChk  = false,
@@ -2119,7 +2119,7 @@ emit c(10);
 await c;
 return 0;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
         isForever = true,
     },
@@ -2194,7 +2194,7 @@ end
 emit a;
 return ret;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     },
     run = 5,
@@ -2210,7 +2210,7 @@ with
 end;
 return ret;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
 }
@@ -2226,7 +2226,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         nd_acc  = 1,
     },
     run = { ['10~>A']=10 },
@@ -2247,7 +2247,7 @@ int a = par do
     end;
 return a;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
         nd_acc = 1,
         --nd_flw = 2,
@@ -2269,7 +2269,7 @@ a = par do
     end;
 return a;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     --nd_flw = 3,
     },
@@ -2292,7 +2292,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
         nd_acc  = 1,
         --nd_flw  = 2,
@@ -2317,7 +2317,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
         --nd_flw = 2,
     },
@@ -2341,7 +2341,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
         --nd_flw = 2,
     },
@@ -2362,7 +2362,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         nd_acc  = 1,
     },
     run = 0,
@@ -2403,7 +2403,7 @@ with
 end;
 return a + b + c + d;
 ]],
-    simul = {
+    ana = {
         nd_acc = 2,
     },
     run = { ['0~>A;5~>B']=8 },
@@ -2443,7 +2443,7 @@ with
 end;
 return a + b;
 ]],
-    simul = {
+    ana = {
         nd_acc = 2,
     },
     run = { ['1~>A;10~>B']=1 },
@@ -2456,7 +2456,7 @@ with
     return 2;
 end;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
         --nd_flw = 2,
     },
@@ -2470,7 +2470,7 @@ with
     return 1;
 end;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
         --nd_flw = 1,
     },
@@ -2487,7 +2487,7 @@ with
 end;
 ]],
     --nd_flw = 2,
-    simul = {
+    ana = {
         nd_acc = 1,
     },
     run = { ['1~>A']=1, ['2~>A']=2 },
@@ -2630,7 +2630,7 @@ with
 end;
 ]],
     --nd_flw = 2,
-    simul = {
+    ana = {
         nd_acc = 1,
     },
     run = {
@@ -2647,7 +2647,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
     run = {
@@ -2743,7 +2743,7 @@ with
     return b;
 end;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
         --nd_flw = 2,
     },
@@ -2792,7 +2792,7 @@ with
 end;
 ]],
     todo = '5us should be reachable',
-    simul = {
+    ana = {
         nd_acc = 1,
         --nd_flw = 3,
     },
@@ -2809,7 +2809,7 @@ with
 end;
 ]],
     todo = 'await(x) pode ser 0?',  -- TIME_undef
-    simul = {
+    ana = {
         nd_acc = 1,
     },
 }
@@ -2830,7 +2830,7 @@ with
     end
 end
 ]],
-    simul = {
+    ana = {
         isForever = true,
         n_unreachs = 1,
     }
@@ -2852,7 +2852,7 @@ with
     end
 end
 ]],
-    simul = {
+    ana = {
         isForever = true,
         n_unreachs = 1,
     }
@@ -2870,7 +2870,7 @@ with
 end
 return v;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
         nd_acc = 1,
     },
@@ -2891,7 +2891,7 @@ return v;
 ]],
     --nd_flw = 1,
     run = 2,
-    simul = {
+    ana = {
         n_unreachs = 3,
     },
 }
@@ -2926,7 +2926,7 @@ loop do
     end
 end
 ]],
-    simul = {
+    ana = {
         isForever = true,
     },
 }
@@ -2951,7 +2951,7 @@ loop do
     end
 end
 ]],
-    simul = {
+    ana = {
         isForever = true,
     },
 }
@@ -2974,7 +2974,7 @@ loop do
     end;
 end;
 ]],
-    simul = {
+    ana = {
         isForever = true,
     },
 }
@@ -2999,7 +2999,7 @@ loop do
 end;
 ]],
     todo = 'segfault em simul',
-    simul = {
+    ana = {
         isForever = true,
         nd_acc = 1,
     },
@@ -3027,7 +3027,7 @@ with
     end;
 end;
 ]],
-    simul = {
+    ana = {
         isForever = true
     },
 }
@@ -3051,7 +3051,7 @@ end;
 return a;
 ]],
     todo = 'segfault',
-    simul = {
+    ana = {
         nd_acc = 1,
     },
     run = { ['~>11ms']=1 },
@@ -3067,7 +3067,7 @@ loop do
     end;
 end;
 ]],
-    simul = {
+    ana = {
         isForever = true,
     },
 }
@@ -3092,7 +3092,7 @@ loop do
 end;
 ]],
     todo = 'segfault em simul',
-    simul = {
+    ana = {
         isForever = true,
         nd_acc = 1,
     },
@@ -3118,7 +3118,7 @@ loop do
 end;
 ]],
     todo = 'segfault em simul',
-    simul = {
+    ana = {
         isForever = true,
         nd_acc = 1,
     },
@@ -3135,7 +3135,7 @@ with
 end;
 ]],
     todo = 'await(x) pode ser <0?',  -- TIME_undef
-    simul = {
+    ana = {
         nd_acc = 1,
     },
 }
@@ -3150,7 +3150,7 @@ with
 end;
 ]],
     --nd_flw = 2,
-    simul = {
+    ana = {
         nd_acc = 1,
     },
     run = {
@@ -3186,7 +3186,7 @@ with
 end;
 ]],
     todo = '10,9 should be reachable',
-    simul = {
+    ana = {
         nd_acc = 3,
         --nd_flw = 6,
     },
@@ -3237,7 +3237,7 @@ with
     return c;
 end;
 ]],
-    simul = {
+    ana = {
         --nd_flw = 6,
         nd_acc = 3,
     },
@@ -3252,7 +3252,7 @@ with
     return b;
 end;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     },
     run = {
@@ -3276,7 +3276,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     },
     run = {
@@ -3314,7 +3314,7 @@ end;
 return a;
 ]],
     todo = '20 should be reach',
-    simul = {
+    ana = {
         nd_acc = 1,
     },
 }
@@ -3330,7 +3330,7 @@ with
 end;
 ]],
     --nd_flw = 2,
-    simul = {
+    ana = {
         nd_acc = 1,
     },
     run = {
@@ -3348,7 +3348,7 @@ loop do
     await 10ms;
 end;
 ]],
-    simul = {
+    ana = {
         isForever = true,
     },
 }
@@ -3360,7 +3360,7 @@ loop do
     await 10ms;
 end;
 ]],
-    simul = {
+    ana = {
         isForever = true,
     },
 }
@@ -3373,7 +3373,7 @@ loop do
     await A;
 end;
 ]],
-    simul = {
+    ana = {
         isForever = true,
     },
 }
@@ -3385,7 +3385,7 @@ loop do
     await A;
 end;
 ]],
-    simul = {
+    ana = {
         isForever = true,
     },
 }
@@ -3395,7 +3395,7 @@ loop do
     await 10ms;
 end;
 ]],
-    simul = {
+    ana = {
         isForever = true,
     },
 }
@@ -3505,7 +3505,7 @@ end;
 return v;
 ]],
     todo = 'nd_acc',
-    simul = {
+    ana = {
         nd_acc = 1,
     },
     run = {
@@ -3625,7 +3625,7 @@ with
     return 0;
 end;
 ]],
-    simul = {
+    ana = {
         isForever = false,
         n_unreachs = 2,
         --nd_esc = 1,
@@ -3646,7 +3646,7 @@ loop do
     end;
 end;
 ]],
-    simul = {
+    ana = {
         isForever = true,
         nd_acc = 1,
     },
@@ -3664,7 +3664,7 @@ await a;
 // unreachable
 return 0;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 3,
         --nd_esc = 1,
         --nd_flw = 1,
@@ -3687,7 +3687,7 @@ await a;
 // unreachable
 return 0;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 2,
         isForever = true,
         --nd_esc = 1,
@@ -3704,7 +3704,7 @@ with
     // unreachable
 end;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
         --nd_esc = 1,
         --nd_flw = 1,
@@ -3721,7 +3721,7 @@ with
     return 2;
 end;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
         --nd_esc = 1,
         --nd_flw = 1,
@@ -3739,7 +3739,7 @@ end;
 await a;
 return 0;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 2,
         --nd_esc = 1,
         isForever = true,
@@ -3760,7 +3760,7 @@ with
 end
 return v1+v2;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
         --nd_esc = 1,
     },
@@ -3779,7 +3779,7 @@ with
 end
 return v1+v2;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
         --nd_esc = 1,
     },
@@ -3803,7 +3803,7 @@ with
 end
 return v1+v2+v3;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 2,
         --nd_esc = 1,
     },
@@ -3826,7 +3826,7 @@ with
 end
 return v1+v2+v3;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 2,
         --nd_esc = 1,
     },
@@ -3851,7 +3851,7 @@ with
 end;
 return ret;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 2,
         --nd_esc = 2,
         --nd_acc = 1,
@@ -3877,7 +3877,7 @@ with
 end;
 return ret;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 2,
         --nd_esc = 2,
         --nd_acc = 1,
@@ -3903,7 +3903,7 @@ with
 end;
 return ret;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 2,
         --nd_esc = 2,
         --nd_acc = 1,
@@ -3923,7 +3923,7 @@ with
     return a;
 end;
 ]],
-    simul = {
+    ana = {
         nd_acc = 4,
     --nd_flw = 2,
     },
@@ -3971,7 +3971,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
     run = {
@@ -3992,7 +3992,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
 }
@@ -4009,7 +4009,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     --nd_flw = 1,
     },
@@ -4049,7 +4049,7 @@ loop do
     end;
 end;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
         isForever = true,
     },
@@ -4080,7 +4080,7 @@ with
     end;
 end;
 ]],
-    simul = {
+    ana = {
         isForever = true,
     },
 }
@@ -4098,7 +4098,7 @@ end;
 return a;
 ]],
     todo = '"a"s deveriam ser diferentes',
-    simul = {
+    ana = {
         nd_acc = 1,
         --nd_flw = 2,
     },
@@ -4120,7 +4120,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
         --nd_flw = 1,
     },
@@ -4219,7 +4219,7 @@ loop do
 end;
 return v;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 2,
         --nd_flw = 1,
     },
@@ -4241,7 +4241,7 @@ loop do
 end;
 return v;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 3,
         --dfa = 'unreachable statement',
         --nd_flw = 1,
@@ -4265,7 +4265,7 @@ loop do
 end;
 return v;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,     -- TODO: should be 0
     },
     run = {
@@ -4281,7 +4281,7 @@ loop do
 end;
 return v;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     },
     run = {
@@ -4481,7 +4481,7 @@ with
 end;
 return dt;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     },
     run = {
@@ -4501,7 +4501,7 @@ with
 end;
 return dt;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     },
     run = {
@@ -4540,7 +4540,7 @@ with
 end;
 return dt;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     },
     run = {
@@ -4628,7 +4628,7 @@ with
 end;
 return dt;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     },
     run = {
@@ -4714,7 +4714,7 @@ with
 end;
 return ret;
 ]],
-    simul = {
+    ana = {
         nd_acc = 2,
     },
     run = {
@@ -4734,7 +4734,7 @@ with
 end;
 return dt;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1, -- apos ~30
     },
     run = {
@@ -4752,7 +4752,7 @@ end;
 return dt;
 ]],
     todo = '30 should be reach',
-    simul = {
+    ana = {
         nd_acc = 1,
     },
     run = {
@@ -4803,7 +4803,7 @@ with
 end;
 return x;
 ]],
-    simul = {
+    ana = {
         nd_acc  = 1,    -- TODO: timer kills timer
         n_unreachs = 0,    -- TODO: timer kills timer
     },
@@ -4830,7 +4830,7 @@ with
 end;
 return x;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,     -- TODO: timer kills timer
     n_unreachs = 0,    -- TODO: timer kills timer
     },
@@ -4857,7 +4857,7 @@ with
 end;
 return x;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 4,
     },
     run = 1,
@@ -4877,7 +4877,7 @@ with
     return 2;
 end;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     --nd_flw = 2,
     },
@@ -4897,7 +4897,7 @@ with
     return 2;
 end;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     --nd_flw = 2,
     },
@@ -4924,7 +4924,7 @@ with
     return 2;
 end;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     --nd_flw = 2,
     },
@@ -4945,7 +4945,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
     nd_acc = 1,
     },
 }
@@ -4968,7 +4968,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
     run = {
@@ -4991,7 +4991,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
 }
@@ -5065,7 +5065,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
 }
@@ -5081,7 +5081,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
 }
@@ -5104,7 +5104,7 @@ with
     end;
 end;
 ]],
-    simul = {
+    ana = {
         isForever = true,
         nd_acc = 1,
     },
@@ -5127,7 +5127,7 @@ with
     end;
 end;
 ]],
-    simul = {
+    ana = {
         isForever = true,
         nd_acc = 1,       -- fiz na mao!
     },
@@ -5152,7 +5152,7 @@ with
     end;
 end;
 ]],
-    simul = {
+    ana = {
         isForever = true,
         nd_acc = 1,       -- nao fiz na mao!!!
     },
@@ -5202,7 +5202,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
 }
@@ -5227,7 +5227,7 @@ else
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
 }
@@ -5257,7 +5257,7 @@ with
     end;
 end;
 ]],
-    simul = {
+    ana = {
         isForever = true,
         nd_acc = 5,
     },
@@ -5278,7 +5278,7 @@ else
     end;
 end;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     --nd_flw = 2,
     },
@@ -5297,7 +5297,7 @@ else
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     --nd_flw = 2,
     },
@@ -5310,7 +5310,7 @@ int v = par do
         end;
 return v;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     --nd_flw = 2,
     },
@@ -5329,7 +5329,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
 }
@@ -5346,7 +5346,7 @@ end;
 return a;
 ]],
     todo = '10 should be reach',
-    simul = {
+    ana = {
         nd_acc = 1,
     },
 }
@@ -5366,7 +5366,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
 }
@@ -5385,7 +5385,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
 }
@@ -5404,7 +5404,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
 }
@@ -5422,7 +5422,7 @@ end;
 return a;
 ]],
     todo = '10 should be reach',
-    simul = {
+    ana = {
         nd_acc = 1,
     },
 }
@@ -5443,7 +5443,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
 }
@@ -5464,7 +5464,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         nd_acc = 0,
     },
 }
@@ -5483,7 +5483,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
 }
@@ -5502,7 +5502,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
 }
@@ -5520,7 +5520,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     },
     run = {
@@ -5542,7 +5542,7 @@ end
 return a;
 ]],
     todo = 'wclk_any=0',
-    simul = {
+    ana = {
         n_unreachs = 1,
     },
     run = { ['~>1s']=2 },
@@ -5569,7 +5569,7 @@ end;
 return a;
 ]],
     todo = 'wclk_any=0',
-    simul = {
+    ana = {
         nd_acc = 3,
     },
 }
@@ -5587,7 +5587,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     },
     run = {
@@ -5609,7 +5609,7 @@ with
 end;
 return x;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
 }
@@ -5628,7 +5628,7 @@ with
     end;
 end;
 ]],
-    simul = {
+    ana = {
         isForever = true,
         nd_acc = 1,
     },
@@ -5646,7 +5646,7 @@ with
     end;
 end;
 ]],
-    simul = {
+    ana = {
         isForever = true,
         nd_acc = 1,
     },
@@ -5672,7 +5672,7 @@ with
 end;
 return x;
 ]],
-    simul = {
+    ana = {
         nd_acc = 2,  -- TODO: intl
     },
     run = { ['~>15ms']=5, ['~>25ms']=5 }
@@ -5691,7 +5691,7 @@ loop do
     end;
 end;
 ]],
-    simul = {
+    ana = {
         isForever = true,
     },
 }
@@ -5705,7 +5705,7 @@ with
 end
 return 0;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
         nd_acc = 1,
     },
@@ -5726,7 +5726,7 @@ end
 ret = ret + 1;
 return ret;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     },
     run = { ['~>A']=2 },
@@ -5750,7 +5750,7 @@ with
 end;
 ]],
     todo = 'nd_acc=1',
-    simul = {
+    ana = {
         isForever = true,
         --nd_esc = 1,
         nd_acc = 1, -- EX.10: trig2 vs await1 loop
@@ -5776,7 +5776,7 @@ with
     emit a(a);
 end;
 ]],
-    simul = {
+    ana = {
         isForever = true,
         --trig_wo = 1,
     },
@@ -5811,7 +5811,7 @@ with
     return a;
 end;
 ]],
-    simul = {
+    ana = {
         --nd_esc = 1,
     --nd_flw = 1,
     n_unreachs = 1,
@@ -5831,7 +5831,7 @@ loop do
     end;
 end;
 ]],
-    simul = {
+    ana = {
         isForever = true,
         n_unreachs = 2,
     },
@@ -5850,7 +5850,7 @@ with
     emit b(1);
 end;
 ]],
-    simul = {
+    ana = {
         isForever = true,
     },
 }
@@ -5870,7 +5870,7 @@ with
     return v;
 end;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     },
     run = {
@@ -5888,7 +5888,7 @@ with
 end;
 return 0;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     nd_acc = 1,
     --trig_wo = 1,
@@ -5907,7 +5907,7 @@ with
 end;
 return 0;
 ]],
-    simul = {
+    ana = {
         --nd_esc = 1,
     n_unreachs = 2,
     nd_acc = 2,
@@ -5929,7 +5929,7 @@ with
 end;
 return i;
 ]],
-    simul = {
+    ana = {
         --nd_esc = 1,
     n_unreachs = 1,
     },
@@ -5948,7 +5948,7 @@ with
 end;
 return c;
 ]],
-    simul = {
+    ana = {
         --nd_esc = 1,
     n_unreachs = 2,
     --trig_wo = 1,
@@ -6022,7 +6022,7 @@ loop do
     emit a(v);
 end;
 ]],
-    simul = {
+    ana = {
         --trig_wo = 1,
     },
     run = {
@@ -6109,7 +6109,7 @@ with
 end;
 return ret;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     },
     run = {
@@ -6130,7 +6130,7 @@ with
 end;
 return v;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,     -- should be 0
     },
     run = {
@@ -6176,7 +6176,7 @@ with
 end;
 return v;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
     run = {
@@ -6238,7 +6238,7 @@ end;
 return v;
 ]],
 --((~A;~B;~A)=>v&&(~C;~B;~C)=>v);v || (~A;~C;~B;~A;~C;~B)]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     },
     run = {
@@ -6265,7 +6265,7 @@ end;
 return v;
 ]],
 --(1?~A:~B) || (~A;1) || (~B;2)]],
-    simul = {
+    ana = {
         nd_acc = 2,
     },
     run = {
@@ -6292,7 +6292,7 @@ end;
 return v;
 ]],
 --(1?~A:~B) || (~A;~B) || (~B;~A)]],
-    simul = {
+    ana = {
         nd_acc = 2,
     },
     run = {
@@ -6314,7 +6314,7 @@ with
 end;
 return v;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
 }
@@ -6339,7 +6339,7 @@ end;
 return v;
 ]],
 --(1?~A:~B) || (~A;~B;~C) || (~B;~A;~C)]],
-    simul = {
+    ana = {
         n_unreachs = 2,
     },
     run = {
@@ -6359,7 +6359,7 @@ with
     return v;
 end;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 2,
         --nd_flw = 1,
     },
@@ -6438,7 +6438,7 @@ else
 end;
 return 1;
 ]],
-    simul = {
+    ana = {
         isForever = true,
         n_unreachs = 2,
     },
@@ -6464,7 +6464,7 @@ with
 end;
 ]],
 --1&&(~A)*]],
-    simul = {
+    ana = {
         isForever = true
     },
 }
@@ -6481,7 +6481,7 @@ with
 end;
 ]],
 --(~A)* && (~B)*]],
-    simul = {
+    ana = {
         isForever = true,
     },
 }
@@ -6554,7 +6554,7 @@ with
 end;
 ]],
 --1=>a || a]],
-    simul = {
+    ana = {
         --nd_flw = 2,
     nd_acc = 2,
     },
@@ -6572,7 +6572,7 @@ with
 end;
 ]],
 --(~B;1=>a) || (~B;a)]],
-    simul = {
+    ana = {
         nd_acc = 2,
     --nd_flw = 2,
     },
@@ -6596,7 +6596,7 @@ with
 end;
 ]],
 --(~B;1=>a) || ((~a||~B||~C); a)]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     nd_acc = 2,
     --nd_flw = 2,
@@ -6620,7 +6620,7 @@ with
     return a;
 end;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     --nd_flw = 1,
     --nd_esc = 2,
@@ -6639,7 +6639,7 @@ with
     return a;
 end;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
         --nd_esc = 1,
     },
@@ -6657,7 +6657,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
         --nd_esc = 1,
     },
@@ -6681,7 +6681,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
         --nd_esc = 1,
     },
@@ -6705,7 +6705,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
         --nd_esc = 1,
     },
@@ -6731,7 +6731,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         --nd_esc = 1,
     },
     run = {
@@ -6755,7 +6755,7 @@ with
     return a;
 end;
 ]],
-    simul = {
+    ana = {
         --nd_esc = 1,
     n_unreachs = 1,
     },
@@ -6779,7 +6779,7 @@ with
     return a;
 end
 ]],
-    simul = {
+    ana = {
         --nd_esc = 1,
         --nd_flw = 1,
     },
@@ -6803,7 +6803,7 @@ with
 end;
 ]],
 --(~B;1=>a) || ((~a&&~B&&~C); a)]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     --nd_flw = 1,
     --nd_flw = 1,
@@ -6831,7 +6831,7 @@ with
 end;
 ]],
 --(~B;1=>a) || ((~a&&~B&&~C); a)]],
-    simul = {
+    ana = {
         --dfa = 'unreachable statement',
     --nd_flw = 1,
     n_unreachs = 2,
@@ -6858,7 +6858,7 @@ loop do
 end;
 return 1;
 ]],
-    simul = {
+    ana = {
         --dfa = 'unreachable statement',
     --nd_flw = 1,
     n_unreachs = 3,
@@ -6877,7 +6877,7 @@ loop do
 end
 return 1;
 ]],
-    simul = {
+    ana = {
         --nd_flw = 2,
     n_unreachs = 2,
     },
@@ -6892,7 +6892,7 @@ with
     await A;
 end;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 2,
     --nd_flw = 1,
     },
@@ -6918,7 +6918,7 @@ loop do
 end;
 return 2;       // executes last
 ]],
-    simul = {
+    ana = {
         --dfa = 'unreachable statement',
     n_unreachs = 5,
     --nd_flw = 3,
@@ -6942,7 +6942,7 @@ loop do
 end;
 return 2;   // executes last
 ]],
-    simul = {
+    ana = {
         n_unreachs = 2,
     --nd_flw = 3,
     },
@@ -6998,7 +6998,7 @@ end;
 return a;
 ]],
 --1=>a || ( (~a||1);a )]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     --nd_flw = 1,
     nd_acc  = 1,
@@ -7022,7 +7022,7 @@ with
 end;
 ]],
 --(~B;1=>a) || (~B; (~a||1); a)]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     --nd_flw = 2,
     nd_acc = 2,
@@ -7037,7 +7037,7 @@ with
 end;
 ]],
 --0=>a ; (a||a)]],
-    simul = {
+    ana = {
         nd_acc = 1,
     --nd_flw = 2,
     },
@@ -7051,7 +7051,7 @@ with
     return a;
 end;
 ]],
-    simul = {
+    ana = {
         nd_acc = 2,
     --nd_flw = 2,
     },
@@ -7065,7 +7065,7 @@ with
     return a;
 end;
 ]],
-    simul = {
+    ana = {
         --nd_flw = 2,
     nd_acc = 2,
     },
@@ -7079,7 +7079,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
 }
@@ -7094,7 +7094,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         nd_acc = 3,
     },
 }
@@ -7108,7 +7108,7 @@ with
     return v;
 end;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     --nd_flw = 2,
     },
@@ -7124,7 +7124,7 @@ end;
 return a;
 ]],
 --~a||1~>a]],
-    simul = {
+    ana = {
         nd_acc = 1,
     nd_acc = 1,
     n_unreachs = 1,
@@ -7140,7 +7140,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
     run = 1,
@@ -7184,7 +7184,7 @@ with
 end;
 return v;
 ]],
-    simul = {
+    ana = {
         nd_acc = 6,
         --nd_flw = 6,
         --trig_wo = 3,
@@ -7202,7 +7202,7 @@ end;
 return v;
 ]],
 --(1||1||1)~>a]],
-    simul = {
+    ana = {
         nd_acc = 3,
     --nd_flw = 6,
     --trig_wo = 1,
@@ -7220,7 +7220,7 @@ with
 end;
 ]],
 --0=>a ; ((~A;a) || (~A;a))]],
-    simul = {
+    ana = {
         --nd_flw = 2,
     nd_acc = 1,
     },
@@ -7238,7 +7238,7 @@ with
 end;
 ]],
 --(~A;a) || (~A;1=>a)]],
-    simul = {
+    ana = {
         --nd_flw = 2,
     nd_acc = 2,
     },
@@ -7273,7 +7273,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         --nd_esc = 1,
     nd_acc = 1,
     },
@@ -7294,7 +7294,7 @@ with
     await Forever;
 end;
 ]],
-    simul = {
+    ana = {
         --nd_esc = 1,
     n_unreachs = 1,
     --nd_flw = 1,
@@ -7316,7 +7316,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         --nd_esc = 1,
         n_unreachs = 1,
         nd_acc = 1,
@@ -7340,7 +7340,7 @@ with
 end;
 ]],
 --(~A; (~A;v)*) && (~A;~A;2=>v)*]],
-    simul = {
+    ana = {
         isForever = true,
         nd_acc = 1,
     },
@@ -7364,7 +7364,7 @@ with
 end;
 ]],
 --(~A;~A;1=>v)* && (~A;~A;~A;v)*]],
-    simul = {
+    ana = {
         isForever = true,
         nd_acc = 1,
     },
@@ -7386,7 +7386,7 @@ end;
 return a;
 ]],
 --(~A||(~B;1=>a)) || (~A;~B;a)]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     },
     run = {
@@ -7409,7 +7409,7 @@ end;
 return a;
 ]],
 --(~A;~B;1=>a) || (~A;~B;a)]],
-    simul = {
+    ana = {
         nd_acc = 1,
     nd_acc = 1,
     },
@@ -7503,7 +7503,7 @@ end;
 return 0;
 // unreachable
 ]],
-    simul = {
+    ana = {
         nd_acc = 3,
         --trig_wo = 3,
     },
@@ -7529,7 +7529,7 @@ with
 end;
 return 0;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 4,
     nd_acc = 3,
     --trig_wo = 3,
@@ -7556,7 +7556,7 @@ with
 end;
 return 0;
 ]],
-    simul = {
+    ana = {
         nd_acc = 3,
         --trig_wo = 3,
     },
@@ -7571,7 +7571,7 @@ with
 end;
 return 0;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
         n_unreachs = 1,
         --trig_wo = 2,
@@ -7587,7 +7587,7 @@ with
 end;
 return 0;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
         n_unreachs = 1,
         --trig_wo = 2,
@@ -7602,7 +7602,7 @@ with
     await a;
 end;
 ]],
-    simul = {
+    ana = {
         isForever = true,
         nd_acc = 1,
         n_unreachs = 1,
@@ -7620,7 +7620,7 @@ loop do
 end;
 return 1;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 2,
     --nd_flw = 1,
     },
@@ -7655,7 +7655,7 @@ with
     end;
 end;
 ]],
-    simul = {
+    ana = {
         isForever = true,
     },
 }
@@ -7672,7 +7672,7 @@ with
 end;
 return x;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     nd_acc = 1,
     },
@@ -7707,7 +7707,7 @@ with
     return b+2;
 end;
 ]],
-    simul = {
+    ana = {
         --nd_flw = 2,
     nd_acc = 1,
     },
@@ -7727,7 +7727,7 @@ loop do
 end;
 return v;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     --nd_flw = 2,
     nd_acc = 1,     -- should be 0
@@ -7753,7 +7753,7 @@ loop do
 end;
 return v1 + v2;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     --nd_flw = 1,
     },
@@ -7772,7 +7772,7 @@ loop do
 end;
 return v;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     },
     run = {
@@ -7806,7 +7806,7 @@ loop do
 end;
 return v1 + v2;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
         --nd_flw = 2,
     },
@@ -7830,7 +7830,7 @@ loop do
 end;
 return 0;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     --nd_flw = 1,
     },
@@ -7852,7 +7852,7 @@ loop do
 end;
 return v1+v2+v3;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     --nd_flw = 1,
     },
@@ -7885,7 +7885,7 @@ loop do
 end;
 return v1+v2+v3+v4+v5+v6;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 2,
     --nd_flw = 2,
     },
@@ -7914,7 +7914,7 @@ loop do
 end;
 return v1+v2+v3+v4+v5+v6;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 2,
     },
     run = 21,
@@ -7948,7 +7948,7 @@ loop do
 end;
 return v1+v2+v3+v4+v5+v6;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 2,
     --nd_flw = 3,
     },
@@ -7981,7 +7981,7 @@ loop do
 end;
 return v1+v2+v3+v4+v5+v6;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 2,
     },
     run = { ['1~>A']=21 },
@@ -8010,7 +8010,7 @@ end;
 // unreachable
 return v1+v2+v3+v4+v5+v6;   // TODO: unreach
 ]],
-    simul = {
+    ana = {
         n_unreachs = 2,
     nd_acc = 1,
     },
@@ -8158,7 +8158,7 @@ end;
 a = a + 1;
 return a;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     --nd_flw = 1,
     },
@@ -8182,7 +8182,7 @@ end;
 a = a + 1;
 return a;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     --nd_flw = 1,
     },
@@ -8204,7 +8204,7 @@ loop do
 end;
 return b;
 ]],
-    simul = {
+    ana = {
         --dfa = 'unreachable statement',
     n_unreachs = 2,
     --nd_flw = 2,
@@ -8226,7 +8226,7 @@ loop do
 end;
 return b;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
         --nd_flw = 2,
     },
@@ -8254,7 +8254,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         --nd_flw = 1,
         n_unreachs = 1,
     },
@@ -8280,7 +8280,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
     --nd_flw = 1,
     },
     run = { ['10~>B'] = 14 },
@@ -8301,7 +8301,7 @@ loop do
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     --nd_flw = 1,
     },
@@ -8322,7 +8322,7 @@ loop do
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     --nd_flw = 2,
     },
@@ -8346,7 +8346,7 @@ loop do
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         --nd_flw = 2,
     n_unreachs = 2,
     },
@@ -8370,7 +8370,7 @@ loop do
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         --nd_flw = 2,
     n_unreachs = 2,
     },
@@ -8492,7 +8492,7 @@ loop do
 end;
 return v;
 ]],
-    simul = {
+    ana = {
         --nd_flw = 1,
     n_unreachs = 2,
     },
@@ -8530,7 +8530,7 @@ with
     return v;
 end;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 2,
     nd_acc = 1,
     --nd_flw = 2,
@@ -8554,7 +8554,7 @@ with
 end;
 return v;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1, -- should be 0 (same evt)
     },
     run = {
@@ -8587,7 +8587,7 @@ with
 end;
 return b+c+d;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     },
     run = { ['0~>A'] = 9, }
@@ -8641,7 +8641,7 @@ with
     return b;
 end;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     },
     run = {
@@ -8715,7 +8715,7 @@ with
 end;
 // unreachable
 ]],
-    simul = {
+    ana = {
         isForever = true,
         n_unreachs = 3,
     },
@@ -8740,7 +8740,7 @@ with
     end;
 end;
 ]],
-    simul = {
+    ana = {
         isForever = true,
         nd_acc = 1,
         --n_unreachs = 4,   -- depends on awt/emt
@@ -8759,7 +8759,7 @@ with
     end;
 end;
 ]],
-    simul = {
+    ana = {
         isForever = true,
         n_unreachs = 1,
     },
@@ -8821,7 +8821,7 @@ with
     return c;
 end;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
         nd_acc = 0,
         --trig_wo = 1,
@@ -8852,7 +8852,7 @@ with
     return b;
 end;
 ]],
-    simul = {
+    ana = {
         --nd_esc = 2,
     n_unreachs = 4,
     },
@@ -8885,7 +8885,7 @@ with
 end;
 ]],
 --((~A~>a)=>v && ((~B,v);1~>b));v || ~a ||~b]],
-    simul = {
+    ana = {
         --nd_esc = 1,
     n_unreachs = 4,
     },
@@ -8914,7 +8914,7 @@ with
 end;
 ]],
 --(~A;a||~B)* && ~B;~A=>a]],
-    simul = {
+    ana = {
         isForever = true,
         nd_acc = 1,
         n_unreachs = 1,
@@ -8931,7 +8931,7 @@ loop do
 end;
 ]],
 --((a,~D)->add~>a)*]],
-    simul = {
+    ana = {
         isForever = true,
         --trig_wo = 1,
     },
@@ -8967,7 +8967,7 @@ with
     return c;
 end;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     },
     --trig_wo = 1,
@@ -8994,7 +8994,7 @@ with
     end;
 end;
 ]],
-    simul = {
+    ana = {
         isForever = true,
         n_unreachs = 1,
         --trig_wo = 2,
@@ -9032,7 +9032,7 @@ with
     end;
 end;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     },
     run = {
@@ -9087,7 +9087,7 @@ with
     return a;
 end;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     nd_acc = 1,
     --nd_flw = 1,
@@ -9141,7 +9141,7 @@ with
     return 1;
 end;
 ]],
-    simul = {
+    ana = {
         isForever = true,
         n_unreachs = 2,
     },
@@ -9175,7 +9175,7 @@ end;
 // unreachable
 return 0;
 ]],
-    simul = {
+    ana = {
         isForever = true,
         n_unreachs = 4,
     },
@@ -9210,7 +9210,7 @@ end;
 // unreachable
 return 0;
 ]],
-    simul = {
+    ana = {
         isForever = true,
         n_unreachs = 4,
     },
@@ -9234,7 +9234,7 @@ end;
 // unreachable
 return 0;
 ]],
-    simul = {
+    ana = {
         isForever = true,
         --n_unreachs = 3,
         nd_acc = 1,
@@ -9274,7 +9274,7 @@ with
 end;
 return v;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     nd_acc = 1,     -- should be 0
     },
@@ -9298,7 +9298,7 @@ end;
 // unreachable
 return 0;
 ]],
-    simul = {
+    ana = {
         isForever = true,
         n_unreachs = 2,
     },
@@ -9323,7 +9323,7 @@ with
 end;
 return 0;
 ]],
-    simul = {
+    ana = {
         --isForever = true,
         nd_acc = 1,
         --n_unreachs = 2,
@@ -9350,7 +9350,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
 }
@@ -9369,7 +9369,7 @@ with
 end;
 return 0;
 ]],
-    simul = {
+    ana = {
         --nd_esc = 1,
     n_unreachs = 2,
     --trig_wo = 1,
@@ -9414,7 +9414,7 @@ end;
 // unreachable
 return 0;
 ]],
-    simul = {
+    ana = {
         --isForever = true,
         nd_acc = 1,
         --trig_wo = 1,
@@ -9434,7 +9434,7 @@ with
 end;
 return 0;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     --trig_wo = 1,
     n_unreachs = 1,
@@ -9482,7 +9482,7 @@ with
     return v;
 end;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     },
     run = 1,
@@ -9505,7 +9505,7 @@ with
 end;
 ]],
     run = 1,
-    simul = {
+    ana = {
         n_unreachs = 1,
     },
 }
@@ -9539,7 +9539,7 @@ end;
 ]],
     --nd_esc = 1,
     run = 1,
-    simul = {
+    ana = {
         n_unreachs = 1,
     },
 }
@@ -9610,7 +9610,7 @@ with
 end
 return ret + v;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
 }
@@ -9768,7 +9768,7 @@ loop do
     end;
 end;
 ]],
-    simul = {
+    ana = {
         nd_acc = 3,
         isForever = true,
     },
@@ -9836,7 +9836,7 @@ with
     end;
 end;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     },
     run = { ['~>1000ms;1~>F'] = 1 }
@@ -9865,7 +9865,7 @@ end;
 // unreachable
 return 0;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     },
     run = 4,
@@ -9944,7 +9944,7 @@ with
 end;
 return b;
 ]],
-    simul = {
+    ana = {
         --nd_esc = 1,
         n_unreachs = 1,
     },
@@ -10028,7 +10028,7 @@ with
     return v1+v2;
 end;
 ]],
-    simul = {
+    ana = {
         --nd_esc = 1,
         n_unreachs = 3,
         --trig_wo = 1,  -- n_unreachs
@@ -10052,7 +10052,7 @@ with
     return v1 + v2;
 end;
 ]],
-    simul = {
+    ana = {
         --nd_esc = 1,
         n_unreachs = 2,
     },
@@ -10194,7 +10194,7 @@ with
 end;
 return x + y;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 4,
         --nd_esc = 4,
     },
@@ -10274,7 +10274,7 @@ with
 end;
 return b;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     --nd_esc = 1,
     },
@@ -10294,7 +10294,7 @@ with
     return a;
 end;
 ]],
-    simul = {
+    ana = {
         --nd_esc = 1,
     n_unreachs = 1,
     --trig_wo = 1,
@@ -10319,7 +10319,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         --nd_esc = 2,
         n_unreachs = 3,
         --trig_wo = 1,
@@ -10378,7 +10378,7 @@ with
 end
 ]],
     todo = 'emit->awake->loop->await',
-    simul = {
+    ana = {
         nd_acc = 1,
         --nd_flw = 1,
         n_unreachs = 1,
@@ -10402,7 +10402,7 @@ with
     emit a;
 end
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
 }
@@ -10432,7 +10432,7 @@ with
     await Forever;
 end;
 ]],
-    simul = {
+    ana = {
         --trig_wo = 2,
         n_unreachs = 2,
         isForever = true,
@@ -10465,7 +10465,7 @@ with
     return ret;
 end;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
         --trig_wo = 2,
         n_unreachs = 2,
@@ -10502,7 +10502,7 @@ with
     return ret;
 end;
 ]],
-    simul = {
+    ana = {
         --trig_wo = 2,
         n_unreachs = 1,
     },
@@ -10535,7 +10535,7 @@ with
     await Forever;
 end;
 ]],
-    simul = {
+    ana = {
         --trig_wo = 2,
         n_unreachs = 2,
         isForever = true,
@@ -10573,7 +10573,7 @@ with
     return a+x+y+z+w;
 end;
 ]],
-    simul = {
+    ana = {
         --trig_wo = 2,
         n_unreachs = 2,
     },
@@ -10584,7 +10584,7 @@ end;
 
 Test { [[do end;]], parser="ERR : line 1 : after `do´ : invalid statement (missing `_´?)" }
 Test { [[do int a; end;]],
-    simul = {
+    ana = {
         n_reachs = 1,
         isForever = true,
     },
@@ -10688,7 +10688,7 @@ do
 end;
 return 0;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
 }
@@ -10708,7 +10708,7 @@ end;
 await B;
 return i;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     },
     run = {
@@ -10788,7 +10788,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         --nd_esc = 2,
     n_unreachs = 3,
     },
@@ -10816,7 +10816,7 @@ with
 end;
 return ret;
 ]],
-    simul = {
+    ana = {
         --nd_esc = 1,
     n_unreachs = 2,
     },
@@ -11017,7 +11017,7 @@ with
 end
 return a;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,      -- TODO: delay/emit
     },
     run = 2;
@@ -11037,7 +11037,7 @@ with
 end
 return ret;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
         --nd_acc = 1,         -- TODO: delay/emit
     },
@@ -11062,7 +11062,7 @@ end
 return ret;
 ]],
     run = 1,
-    simul = {
+    ana = {
         --nd_flw = 1,
         n_unreachs = 4,     -- TODO: delay/emit
     },
@@ -11114,7 +11114,7 @@ end
 return ret;
 ]],
     todo = 'finalizers do not run in parallel',
-    simul = {
+    ana = {
         nd_acc = 3,
     },
     run = { ['~>A']=0, ['~>B']=0, ['~>C']=0 },
@@ -11168,7 +11168,7 @@ with
 end
 return ret;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 2,
     },
     run = { ['~>A']=17 },
@@ -11194,7 +11194,7 @@ end
 ret = ret * 2;
 return ret;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 2,
     },
     run = { ['~>A']=22 },
@@ -11267,7 +11267,7 @@ loop do
 end
 return ret;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 2,
     },
     run = 5,
@@ -11286,7 +11286,7 @@ loop do
 end
 return ret;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 2,
     },
     run = { ['~>1s']=5 },
@@ -11307,7 +11307,7 @@ int ret = do
 end;
 return ret;
 ]],
-    simul = {
+    ana = {
     n_unreachs = 2,
     },
     run = { ['~>1s']=2 },
@@ -11326,7 +11326,7 @@ with
 end
 return ret;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     },
     run = { ['~>1s']=1, },
@@ -11349,7 +11349,7 @@ with
 end
 return ret;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 4,  -- 1s,1s,or,fin
     },
     run = { ['~>1s']=11, },
@@ -11373,7 +11373,7 @@ with
 end
 return ret;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 2,  -- 500ms,1s
     },
     run = { ['~>1s']=12 },
@@ -11471,7 +11471,7 @@ end;
 ]],
     --nd_flw = 1,
     run = 2,
-    simul = {
+    ana = {
         n_unreachs = 3,
     },
 }
@@ -11488,7 +11488,7 @@ end;
 return a;
 ]],
     props = 'invalid access from async',
-    simul = {
+    ana = {
         --nd_acc = 1,
     },
 }
@@ -11659,7 +11659,7 @@ end
 return _a+_b;
 ]],
     todo = 'async is not simulated',
-    simul = {
+    ana = {
         nd_acc = 1,
     },
 }
@@ -11753,7 +11753,7 @@ end
 return _a+_b+_c;
 ]],
     todo = 'nd in async',
-    simul = {
+    ana = {
         nd_acc = 3,
     },
 }
@@ -11920,7 +11920,7 @@ int ret = async do
 end;
 return ret;
 ]],
-    simul = {
+    ana = {
         --n_unreachs = 1,       -- TODO: loop iter
     },
     run = 100,
@@ -11983,7 +11983,7 @@ int i = async do
 end;
 return i;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 3,
         isForever = false,
     },
@@ -12068,7 +12068,7 @@ with
 end;
 return 1;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     },
     run = 1,
@@ -12108,7 +12108,7 @@ with
 end
 return ret;
 ]],
-    simul = {
+    ana = {
         --n_unreachs = 1,       -- TODO: async
     },
     run = 23,
@@ -12295,7 +12295,7 @@ with
 end
 return b;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
 }
@@ -12335,7 +12335,7 @@ end
 return a + b;
 ]],
     run = 2,
-    simul = {
+    ana = {
         nd_acc = 7,
     },
 }
@@ -12361,7 +12361,7 @@ end
 return a + b;
 ]],
     run = 2,
-    simul = {
+    ana = {
         nd_acc = 2,
     },
 }
@@ -12701,7 +12701,7 @@ with
 end
 return v;
 ]],
-    simul = {
+    ana = {
         n_unreachs = 1,
     },
     run = 10,
@@ -12776,7 +12776,7 @@ with
 end;
 return _idx(va,0) + _idx(va,1);
 ]],
-    simul = {
+    ana = {
         nd_acc = 2,
     },
 }
@@ -12788,7 +12788,7 @@ with
 end;
 return _idx(va,0) + _idx(va,1);
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
 }
@@ -12857,7 +12857,7 @@ with
 end;
 return 0;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
 }
@@ -12870,7 +12870,7 @@ with
 end;
 return 0;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
 }
@@ -12883,7 +12883,7 @@ with
 end;
 return 0;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
 }
@@ -12897,7 +12897,7 @@ end;
 return 0;
 ]],
     run = false,
-    simul = {
+    ana = {
         --nd_flw = 1,
     }
 }
@@ -12912,7 +12912,7 @@ end;
 return 0;
 ]],
     --nd_flw = 1,
-    simul = {
+    ana = {
         nd_acc = 1,
     },
 }
@@ -12982,7 +12982,7 @@ with
 end;
 return 0;
 ]],
-    simul = {
+    ana = {
         nd_acc = 2, -- TODO: scope of v vs pa
     },
 }
@@ -12996,7 +12996,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
 }
@@ -13010,7 +13010,7 @@ with
 end;
 ]],
     --nd_flw = 2,
-    simul = {
+    ana = {
         nd_acc = 2, -- TODO: $ret vs anything is DET
     },
 }
@@ -13024,7 +13024,7 @@ with
 end;
 return a+b;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
     run = 6,
@@ -13041,7 +13041,7 @@ with
 end;
 return v1 + v2;
 ]],
-    simul = {
+    ana = {
         nd_acc = 3,
     },
 }
@@ -13057,7 +13057,7 @@ with
 end;
 return v1 + v2;
 ]],
-    simul = {
+    ana = {
         nd_acc = 3,     -- TODO: f2 is const
     },
 }
@@ -13088,7 +13088,7 @@ end;
 return a+b;
 ]],
     run = 4,
-    simul= {
+    ana = {
         nd_acc = 1,
     },
 }
@@ -13104,7 +13104,7 @@ with
 end;
 return a+a;
 ]],
-    simul = {
+    ana = {
         nd_acc = 2,
     },
 }
@@ -13135,7 +13135,7 @@ with
 end;
 return v1+v2;
 ]],
-    simul = {
+    ana = {
         nd_acc = 3,
     },
 }
@@ -13152,7 +13152,7 @@ with
 end;
 return v1+v2;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
 }
@@ -13165,7 +13165,7 @@ with
 end
 return 0;
 ]],
-    simul= {
+    ana = {
         nd_acc = 1,
     },
     run = false,
@@ -13195,7 +13195,7 @@ with
 end
 return _a;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
 }
@@ -13225,7 +13225,7 @@ with
     end
 end
 ]],
-    simul = {
+    ana = {
         nd_acc = 6,
         isForever = true,
     },
@@ -13255,7 +13255,7 @@ with
     end
 end
 ]],
-    simul = {
+    ana = {
         nd_acc = 24,        -- TODO: nao conferi
         isForever = true,
     },
@@ -13272,7 +13272,7 @@ with
     emit F(1);
 end
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
         isForever = true,
     },
@@ -13291,7 +13291,7 @@ with
     emit G(0);
 end
 ]],
-    simul = {
+    ana = {
         nd_acc = 3,
         isForever = true,
     },
@@ -13311,7 +13311,7 @@ with
     emit G(0);
 end
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
         isForever = true,
     },
@@ -13333,7 +13333,7 @@ with
     emit G(&a);
 end
 ]],
-    simul = {
+    ana = {
         nd_acc = 4,
         isForever = true,
     },
@@ -13355,7 +13355,7 @@ with
     emit G(&a);
 end
 ]],
-    simul = {
+    ana = {
         nd_acc = 4,
         isForever = true,
     },
@@ -13370,7 +13370,7 @@ with
     emit G;
 end
 ]],
-    simul = {
+    ana = {
         n_reachs = 1,
         isForever = true,
     },
@@ -13473,7 +13473,7 @@ with
 end;
 return 0;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
 }
@@ -13487,7 +13487,7 @@ with
 end;
 return 0;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
 }
@@ -13542,7 +13542,7 @@ with
 end;
 return vs.a;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
 }
@@ -13563,7 +13563,7 @@ with
 end;
 return vs.a;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,     -- TODO: struct
     },
 }
@@ -13684,7 +13684,7 @@ end
 Test { [[
 int a;
 ]],
-    simul = {
+    ana = {
         n_reachs = 1,
         isForever = true,
     },
@@ -13696,7 +13696,7 @@ a = do
     int b;
 end;
 ]],
-    simul = {
+    ana = {
         n_reachs = 1,
         n_unreachs = 1,
         isForever = true,
@@ -13712,7 +13712,7 @@ with
 end;
 return a;
 ]],
-    simul = {
+    ana = {
         nd_acc = 1,
     },
 }
@@ -13728,7 +13728,7 @@ Test { [[
 await Forever;
 ]],
     tot = 5,    -- TODO: 0
-    simul = {
+    ana = {
         isForever = true,
     }
 }
@@ -13832,7 +13832,7 @@ end
 return ret;
 ]],
     tot = 12,
-    simul = {
+    ana = {
         nd_acc = 18,
     },
     run = 6,
@@ -13867,7 +13867,7 @@ do
 end
 return ret+a;
 ]],
-    simul = {
+    ana = {
         nd_acc = 21,
     },
     tot = 29,
@@ -13892,7 +13892,7 @@ with
     ret = ret + a;
 end
 ]],
-    simul = {
+    ana = {
         isForever = true,
         n_reachs = 1,
     },
@@ -13966,7 +13966,7 @@ with
     int b;
 end
 ]],
-    simul = {
+    ana = {
         isForever = true,
         n_reachs = 1,
     },

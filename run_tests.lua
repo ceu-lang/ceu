@@ -31,13 +31,13 @@ Test = function (t)
     local ok = not (T.parser or T.env or T.mem or
                     T.props or T.tight)
     if ok then
-        local CEU = './ceu - --simul-run '
+        local CEU = './ceu - --analysis-run '
                         .. '--tp-word 4 --tp-pointer 4 --tp-lbl 2 --tp-off 2'
         local ceu = assert(io.popen(CEU, 'w'))
         ceu:write(str_input)
         ceu:close()
-        assert(os.execute('gcc -std=c99 -o ceu.exe simul.c') == 0)
-        assert(os.execute('./ceu.exe _ceu_simul.lua') == 0)
+        assert(os.execute('gcc -std=c99 -o ceu.exe analysis.c') == 0)
+        assert(os.execute('./ceu.exe _ceu_analysis.lua') == 0)
     end
 
     _OPTS = {
@@ -45,8 +45,8 @@ Test = function (t)
         tp_pointer = 4,
         tp_off     = 2,
         tp_lbl     = 2,
-        simul_use  = true,
-        simul_file = '_ceu_simul.lua',
+        analysis_use  = true,
+        analysis_file = '_ceu_analysis.lua',
     }
 
     -- LINES
@@ -71,20 +71,20 @@ Test = function (t)
         assert(T.tot==_MEM.max, 'mem '.._MEM.max)
     end
 
-    -- SIMUL
+    -- ANALYSIS
     --if T.dfa then return end
-    assert((not T.n_unreachs) and not (T.isForever)) -- move to simul
+    assert((not T.n_unreachs) and not (T.isForever)) -- move to analysis
     do
         local _defs = { n_reachs=0, n_unreachs=0, isForever=false, nd_acc=0 }
         local _no = { needsPrio=true, needsChk=true, n_states=true, n_tracks=true }
         for k, v in pairs(_ANALYSIS) do
-            assert( (v==_defs[k] or _no[k]) and (T.simul==nil or T.simul[k]==nil)
-                    or (T.simul and T.simul[k]==v)
-                    or (T.simul and T.simul.nd_acc==_ANALYSIS.nd_acc),
+            assert( (v==_defs[k] or _no[k]) and (T.ana==nil or T.ana[k]==nil)
+                    or (T.ana and T.ana[k]==v)
+                    or (T.ana and T.ana.nd_acc==_ANALYSIS.nd_acc),
                             k..' = '..tostring(v))
         end
-        if T.simul then
-            for k, v in pairs(T.simul) do
+        if T.ana then
+            for k, v in pairs(T.ana) do
                 assert( v == _ANALYSIS[k],
                             k..' = '..tostring(_ANALYSIS[k]))
             end
@@ -108,18 +108,18 @@ Test = function (t)
     -- RUN
 
     if T.run == false then
-        --assert(T.simul.nd_acc>0)
+        --assert(T.ana.nd_acc>0)
         return
     end
 
     if T.run == nil then
-        assert(T.simul and T.simul.isForever or T.simul.nd_acc,
-                -- or T.simul.nd_flw or T.simul.nd_esc,
+        assert(T.ana and T.ana.isForever or T.ana.nd_acc,
+                -- or T.ana.nd_flw or T.ana.nd_esc,
                 'missing run value')
         return
     end
 
-    local CEU = './ceu _ceu_tmp.ceu --simul '
+    local CEU = './ceu _ceu_tmp.ceu --analysis '
                     .. '--tp-word 4 --tp-pointer 4 --tp-lbl 2 --tp-off 2'
 
     -- T.run = N

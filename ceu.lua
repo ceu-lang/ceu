@@ -6,10 +6,10 @@ _OPTS = {
 
     defs_file  = '_ceu_defs.h',
 
-    simul      = false,
-    simul_run  = false,
-    simul_use  = false,
-    simul_file = '_ceu_simul.lua',
+    analysis      = false,
+    analysis_run  = false,
+    analysis_use  = false,
+    analysis_file = '_ceu_analysis.lua',
 
     join      = true,
 
@@ -28,10 +28,10 @@ _OPTS_NPARAMS = {
 
     defs_file  = 1,
 
-    simul      = 0,
-    simul_run  = 0,
-    simul_use  = 0,
-    simul_file = 1,
+    analysis      = 0,
+    analysis_run  = 0,
+    analysis_use  = 0,
+    analysis_file = 1,
 
     join      = 0,
 
@@ -82,10 +82,10 @@ if not _OPTS.input then
     
         --defs-file <filename> # define constants in a separate output file (no)
 
-        --simul                 # TODO
-        --simul-run             # TODO
-        --simul-use             # TODO
-        --simul-file <filename> # TODO
+        --analysis                 # TODO
+        --analysis-run             # TODO
+        --analysis-use             # TODO
+        --analysis-file <filename> # TODO
 
         --join (--no-join)     # join lines enclosed by /*{-{*/ and /*}-}*/ (join)
 
@@ -101,24 +101,24 @@ if not _OPTS.input then
     os.exit(1)
 end
 
-if _OPTS.simul then
-    assert((not _OPTS.simul_use) and (not _OPTS.simul_run)
+if _OPTS.analysis then
+    assert((not _OPTS.analysis_use) and (not _OPTS.analysis_run)
             and _OPTS.input~='-',
-        'invalid simulation invocation')
+        'invalid analysis invocation')
     local params = table.concat(params,' ')
     do
-        params = string.gsub(params, '--simul[^ ]*', '')
+        params = string.gsub(params, '--analysis[^ ]*', '')
         os.execute('./ceu '..params..
-                    ' --simul-run --simul-file '.._OPTS.simul_file)
-        assert(os.execute('gcc -std=c99 -o ceu.exe simul.c') == 0)
-        assert(os.execute('./ceu.exe '.._OPTS.simul_file) == 0)
+                    ' --analysis-run --analysis-file '.._OPTS.analysis_file)
+        assert(os.execute('gcc -std=c99 -o ceu.exe analysis.c') == 0)
+        assert(os.execute('./ceu.exe '.._OPTS.analysis_file) == 0)
     end
-    _OPTS.simul_use = true
-    _OPTS.simul = false
+    _OPTS.analysis_use = true
+    _OPTS.analysis = false
 end
 
-assert(not (_OPTS.simul_use and _OPTS.simul_run),
-        'invalid simulation invocation')
+assert(not (_OPTS.analysis_use and _OPTS.analysis_run),
+        'invalid analysis invocation')
 
 -- INPUT
 local inp
@@ -181,7 +181,7 @@ do
     tpl = sub(tpl, '=== N_TRACKS ===',  ALL.n_tracks)
     tpl = sub(tpl, '=== N_MEM ===',     ALL.n_mem)
 
-    tpl = sub(tpl, '=== HOST ===',      (_OPTS.simul_run and '') or _CODE.host)
+    tpl = sub(tpl, '=== HOST ===',      (_OPTS.analysis_run and '') or _CODE.host)
     tpl = sub(tpl, '=== CODE ===',      _AST.root.code)
 
     -- lbl >= off (EMITS)
@@ -214,7 +214,7 @@ do
             end
         end
         str = str..'#define OUT_n '..outs..'\n'
-        if _OPTS.simul_run then
+        if _OPTS.analysis_run then
             str = str..'#define IN_n '..#ins..'\n'
             str = str .. 'int IN_vec[] = { '..table.concat(ins,',')..' };\n'
         end

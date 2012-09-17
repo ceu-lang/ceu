@@ -8,19 +8,19 @@ BOARD = uno
 
 CEUCFILE = _ceu_$(notdir $(CEUFILE)).cceu
 
-.PHONY: all all_sim ceu_nosim ceu_sim ino clean
+.PHONY: all all_analysis ceu_noanalysis ceu_analysis ino clean
 
-all: ceu_nosim ino _all
-sim: ceu_sim ino _all
+all: ceu_noanalysis ino _all
+all_analysis: ceu_analysis ino _all
 
-ceu_nosim:
+ceu_noanalysis:
 	./ceu $(CEUFILE) --m4 --tp-word 2 --tp-pointer 2 --tp-lbl 1 --tp-off 1
 
-ceu_sim:
-	./ceu $(CEUFILE) --m4 --tp-word 4 --tp-pointer 4 --tp-lbl 2 --tp-off 2 --simul-run
-	gcc -std=c99 -o _ceu_sim.exe simul.c
-	./_ceu_sim.exe _ceu_simul.lua
-	./ceu $(CEUFILE) --m4 --tp-word 2 --tp-pointer 2 --tp-lbl 1 --tp-off 1 --simul-use
+ceu_analysis:
+	./ceu $(CEUFILE) --m4 --tp-word 4 --tp-pointer 4 --tp-lbl 2 --tp-off 2 --analysis-run
+	gcc -std=c99 -o _ceu_analysis.exe analysis.c
+	./_ceu_analysis.exe _ceu_analysis.lua
+	./ceu $(CEUFILE) --m4 --tp-word 2 --tp-pointer 2 --tp-lbl 1 --tp-off 1 --analysis-use
 
 ino:
 	touch poll.ino async.ino

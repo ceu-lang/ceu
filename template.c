@@ -12,7 +12,7 @@
 #define CEU_ASYNC0  (=== CEU_ASYNC0 ===)
 #define CEU_EMIT0   (=== CEU_EMIT0 ===)
 
-#ifdef CEU_SIMUL
+#ifdef CEU_ANA
 #define N_LABELS    (=== N_LABELS ===)
 #endif
 
@@ -28,7 +28,7 @@ typedef === TCEU_LBL === tceu_lbl;
 
 typedef struct {
     s32 togo;
-#ifdef CEU_SIMUL
+#ifdef CEU_ANA
     u32 ext;        // not needed if ext/wclk are intercalated
 #endif
     tceu_lbl lbl;
@@ -65,7 +65,7 @@ typedef struct {
 #ifdef CEU_WCLOCKS
     int             wclk_late;
     tceu_wclock*    wclk_cur;
-#ifdef CEU_SIMUL
+#ifdef CEU_ANA
     u32             wclk_ext;
     s8              wclk_any;
 #endif
@@ -75,17 +75,17 @@ typedef struct {
     int             async_cur;
 #endif
 
-#ifdef CEU_SIMUL
+#ifdef CEU_ANA
     tceu_lbl        lbl;
 #endif
     char            mem[N_MEM];
 } tceu;
 
-#ifdef CEU_SIMUL
-#include "simul.h"
+#ifdef CEU_ANA
+#include "analysis.h"
 #endif
 
-#ifdef CEU_SIMUL
+#ifdef CEU_ANA
 #define CEU ((S.states_cur==-1) ? &CEU_ : (&S.states[S.states_cur].ceu))
 #else
 #define CEU (&CEU_)
@@ -97,14 +97,14 @@ tceu CEU_ = { 0, {},
 #endif
 #ifdef CEU_WCLOCKS
     0, 0,
-#ifdef CEU_SIMUL
+#ifdef CEU_ANA
     0, 0,
 #endif
 #endif
 #ifdef CEU_ASYNCS
     0,
 #endif
-#ifdef CEU_SIMUL
+#ifdef CEU_ANA
     0,
 #endif
     {}
@@ -130,16 +130,16 @@ tceu CEU_ = { 0, {},
     #endif
 #endif
 {
-#ifdef CEU_SIMUL
+#ifdef CEU_ANA
     if (prio >= 0)
-        ceu_sim_state_path(CEU->lbl, lbl);
+        ceu_ana_state_path(CEU->lbl, lbl);
 #endif
 #ifdef CEU_TRK_CHK
     {int i;
     if (chk) {
         for (i=1; i<=CEU->tracks_n; i++) {   // TODO: avoids (lbl vs emt_gte)
             if (lbl==CEU->tracks[i].lbl && prio==CEU->tracks[i].prio) {
-#ifdef CEU_SIMUL
+#ifdef CEU_ANA
                 S.needsChk = 1;
 #endif
                 return;
@@ -157,7 +157,7 @@ tceu CEU_ = { 0, {},
 #else
     CEU->tracks[CEU->tracks_n++].lbl = lbl;
 #endif
-#ifdef CEU_SIMUL
+#ifdef CEU_ANA
     if (CEU->tracks_n > S.n_tracks)
         S.n_tracks = CEU->tracks_n;
 #endif
@@ -235,11 +235,11 @@ int ceu_track_peek (tceu_trk* trk)
 
 #define CEU_WCLOCK_NONE LONG_MAX
 
-#ifdef CEU_SIMUL
+#ifdef CEU_ANA
 #define CEU_WCLOCK_ANY (LONG_MAX-1)
 #endif
 
-#ifdef CEU_SIMUL
+#ifdef CEU_ANA
 int ceu_wclock_lt (tceu_wclock* tmr) {
     return 0;
 }
@@ -260,7 +260,7 @@ void ceu_wclock_enable (int idx, s32 us, tceu_lbl lbl) {
     int nxt;
 #endif
 
-#ifdef CEU_SIMUL
+#ifdef CEU_ANA
     tmr->togo = (CEU->wclk_any ? CEU_WCLOCK_ANY : dt);
     tmr->ext  = CEU->wclk_ext;
 #else
@@ -286,7 +286,7 @@ void ceu_wclock_enable (int idx, s32 us, tceu_lbl lbl) {
 
 int ceu_go_init (int* ret)
 {
-#ifdef CEU_SIMUL
+#ifdef CEU_ANA
     CEU->lbl = 0;
 #endif
     ceu_track_ins(0, PR_MAX, Init);
@@ -299,7 +299,7 @@ int ceu_go_event (int* ret, int id, void* data)
     CEU->ext_data = data;
     ceu_trigger(id);
 
-#ifdef CEU_SIMUL
+#ifdef CEU_ANA
     CEU->lbl = 0;
 #ifdef CEU_WCLOCKS
     CEU->wclk_ext++;
@@ -325,20 +325,20 @@ int ceu_go_async (int* ret, int* pending)
     for (i=0; i<CEU_ASYNCS; i++) {
         int idx = (CEU->async_cur+i) % CEU_ASYNCS;
         if (ASY0[idx] != Inactive) {
-#ifdef CEU_SIMUL
-            CEU_SIMUL_PRE(0);
+#ifdef CEU_ANA
+            CEU_ANA_PRE(0);
             CEU->lbl = 0;
             tceu_lbl* ASY0 = PTR(CEU_ASYNC0,tceu_lbl*);
 #endif
             ceu_track_ins(0, PR_MAX, ASY0[idx]);
             ASY0[idx] = Inactive;
             CEU->async_cur = (idx+1) % CEU_ASYNCS;
-#ifdef CEU_SIMUL
+#ifdef CEU_ANA
 #ifdef CEU_WCLOCKS
             CEU->wclk_ext++;
             CEU->wclk_any = 0;
 #endif
-            CEU_SIMUL_POS();
+            CEU_ANA_POS();
             s = 0;   // don't break (all at once)
 #else
 #ifdef CEU_WCLOCKS
@@ -368,7 +368,7 @@ int ceu_go_wclock (int* ret, s32 dt)
 #ifdef CEU_WCLOCKS
     int i;
     s32 min_togo = CEU_WCLOCK_NONE;
-#ifdef CEU_SIMUL
+#ifdef CEU_ANA
     u32 min_ext = 0;
     CEU->lbl = 0;
 #endif
@@ -381,7 +381,7 @@ int ceu_go_wclock (int* ret, s32 dt)
     if (CEU->wclk_cur->togo <= dt) {
         min_togo = CEU->wclk_cur->togo;
         CEU->wclk_late = dt - CEU->wclk_cur->togo;   // how much late the wclock is
-#ifdef CEU_SIMUL
+#ifdef CEU_ANA
         min_ext = CEU->wclk_cur->ext;
         CEU->wclk_ext  = min_ext;
         CEU->wclk_late = 0;
@@ -393,7 +393,7 @@ int ceu_go_wclock (int* ret, s32 dt)
     // decrements all togo
     CEU->wclk_cur = NULL;
 
-#ifdef CEU_SIMUL
+#ifdef CEU_ANA
     if (dt != CEU_WCLOCK_ANY)
 #endif
     for (i=0; i<CEU_WCLOCKS; i++)
@@ -402,7 +402,7 @@ int ceu_go_wclock (int* ret, s32 dt)
         if (tmr->lbl == Inactive)
             continue;
 
-#ifdef CEU_SIMUL
+#ifdef CEU_ANA
         if (tmr->togo == CEU_WCLOCK_ANY)
             continue;
         if ( tmr->togo==min_togo && tmr->ext==min_ext) {
@@ -418,7 +418,7 @@ int ceu_go_wclock (int* ret, s32 dt)
         }
     }
 
-#ifdef CEU_SIMUL
+#ifdef CEU_ANA
     // traverse CEU_WCLOCK_ANY
     u8 arr[CEU_WCLOCKS];
     u8 arr_n = 0;
@@ -430,7 +430,7 @@ int ceu_go_wclock (int* ret, s32 dt)
     }
     for (int i=1; i<(1<<arr_n); i++)
     {
-        CEU_SIMUL_PRE(1);
+        CEU_ANA_PRE(1);
         for (int j=0; j<arr_n; j++) {
             if (i & (1<<j)) {
                 tceu_wclock* _tmr = &(PTR(CEU_WCLOCK0,tceu_wclock*)[ arr[j] ]);
@@ -439,7 +439,7 @@ int ceu_go_wclock (int* ret, s32 dt)
                 _tmr->ext  = 0;
             }
         }
-        CEU_SIMUL_POS();
+        CEU_ANA_POS();
     }
 
     return 0;
@@ -486,8 +486,8 @@ int ceu_go (int* ret)
             } while ( ceu_track_peek(&trk) &&
                       (trk.prio>=_step_)   &&
                       ceu_track_rem(NULL) );
-#ifdef CEU_SIMUL
-            ceu_sim_state_flush();
+#ifdef CEU_ANA
+            ceu_ana_state_flush();
             CEU->lbl = 0;
 #endif
             for (;n>0;)
@@ -497,7 +497,7 @@ int ceu_go (int* ret)
 #endif
         _lbl_ = trk.lbl;
 _SWITCH_:
-#ifdef CEU_SIMUL
+#ifdef CEU_ANA
         CEU->lbl = _lbl_;
 #endif
 //fprintf(stderr,"TRK: %d\n", _lbl_);

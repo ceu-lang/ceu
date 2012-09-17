@@ -31,7 +31,7 @@ _ENV = {
         tceu_off = _OPTS.tp_off,
         tceu_lbl = _OPTS.tp_lbl,
         tceu_wclock = ceil(4 + _OPTS.tp_lbl        -- TODO: perda de memoria
-                          + (_OPTS.simul_run and 4 or 0)),
+                          + (_OPTS.analysis_run and 4 or 0)),
     },
     calls = {},     -- { _printf=true, _myf=true, ... }
 

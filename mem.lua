@@ -77,14 +77,14 @@ F = {
     end,
     ParAnd = 'Block',
 
-    -- for simul_run, ParEver behaves like ParAnd (n_reachs)
+    -- for analysis_run, ParEver behaves like ParAnd (n_reachs)
     ParEver_pre = function (me)
-        if _OPTS.simul_run then
+        if _OPTS.analysis_run then
             F.ParAnd_pre(me)
         end
     end,
     ParEver = function (me)
-        if _OPTS.simul_run then
+        if _OPTS.analysis_run then
             F.Block(me)
         end
     end,
@@ -100,7 +100,7 @@ F = {
         else
             max = _ENV.types[var.tp]
         end
-        if _OPTS.simul_run then
+        if _OPTS.analysis_run then
             var.off = 0
         else
             var.off = alloc(max)

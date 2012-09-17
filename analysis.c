@@ -2,26 +2,29 @@
 #include <assert.h>
 #include <stdlib.h>
 
-typedef long  s32;
-typedef short s16;
-typedef char   s8;
-typedef unsigned long  u32;
-typedef unsigned short u16;
-typedef unsigned char   u8;
+#include <stdint.h>
+typedef int64_t  s64;
+typedef int32_t  s32;
+typedef int16_t  s16;
+typedef int8_t    s8;
+typedef uint64_t u64;
+typedef uint32_t u32;
+typedef uint16_t u16;
+typedef uint8_t   u8;
 
-#define CEU_SIMUL
+#define CEU_ANA
 
 #include "_ceu_code.cceu"
 
-int ceu_sim_state_new (int copy)
+int ceu_ana_state_new (int copy)
 {
     if (S.states_tot == S.states_max) {
         fprintf(stderr, "WRN : analysis : number of states > %d\n",
                 S.states_max);
         S.states_max *= 2;
-        S.states = realloc(S.states, S.states_max*sizeof(tceu_sim_state));
+        S.states = realloc(S.states, S.states_max*sizeof(tceu_ana_state));
     }
-    tceu_sim_state* s = &S.states[S.states_tot];
+    tceu_ana_state* s = &S.states[S.states_tot];
     s->ceu = *CEU;
     if (copy) {
         *s = S.states[S.states_cur];
@@ -30,7 +33,7 @@ int ceu_sim_state_new (int copy)
     }
 
 //S.file = stderr;
-//ceu_sim_state_dump(s);
+//ceu_ana_state_dump(s);
 //S.file = S.file_orig;
 //if (S.states_cur)
     //fprintf(stderr,"CREATED: %d from %d\n", S.states_tot, S.states_cur->n);
@@ -38,26 +41,26 @@ int ceu_sim_state_new (int copy)
     //fprintf(stderr,"CREATED: %d from %d\n", S.states_tot, 0);
     s->n = S.states_tot++;
 //S.file = stderr;
-//ceu_sim_state_dump(S.states_cur);
+//ceu_ana_state_dump(S.states_cur);
 //S.file = S.file_orig;
     return s->n;
 }
 
-void ceu_sim_state_path (tceu_lbl fr, tceu_lbl to)
+void ceu_ana_state_path (tceu_lbl fr, tceu_lbl to)
 {
 //fprintf(stderr,"PATH: %d -> %d\n", fr, to);
     S.isReach[to] = 1;
 
-    tceu_sim_state* s = &S.states[S.states_cur];
+    tceu_ana_state* s = &S.states[S.states_cur];
     s->isChild[fr][fr] = 1;
     s->isChild[to][to] = 1;
     for (int i=0; i<N_LABELS; i++)
         s->isChild[to][i] |= s->isChild[fr][i];
 }
 
-void ceu_sim_state_flush ()
+void ceu_ana_state_flush ()
 {
-    tceu_sim_state* s = &S.states[S.states_cur];
+    tceu_ana_state* s = &S.states[S.states_cur];
     for (int i=0; i<N_LABELS; i++) {
         for (int j=0; j<N_LABELS; j++) {
             S.isConc[i][j] |=
@@ -69,9 +72,9 @@ void ceu_sim_state_flush ()
     memset(s->isChild, 0, N_LABELS*N_LABELS);
 }
 
-int ceu_sim_equal (int n1, int n2) {
-    tceu_sim_state* s1 = &S.states[n1];
-    tceu_sim_state* s2 = &S.states[n2];
+int ceu_ana_equal (int n1, int n2) {
+    tceu_ana_state* s1 = &S.states[n1];
+    tceu_ana_state* s2 = &S.states[n2];
 
 /*
     fprintf(stderr, ">>>>>>>>>>>\n");
@@ -91,10 +94,10 @@ int ceu_sim_equal (int n1, int n2) {
     return (memcmp(s1->ceu.mem, s2->ceu.mem, N_MEM) == 0);
 }
 
-int ceu_sim_equal_N (int N, int* K) {
+int ceu_ana_equal_N (int N, int* K) {
     for (int i=0; i<N; i++) {
-//fprintf(stderr, "EQ: %d %d = %d\n", N, i, ceu_sim_equal(N,i));
-        if (ceu_sim_equal(N, i)) {
+//fprintf(stderr, "EQ: %d %d = %d\n", N, i, ceu_ana_equal(N,i));
+        if (ceu_ana_equal(N, i)) {
             *K = i;
             return 1;
         }
@@ -102,7 +105,7 @@ int ceu_sim_equal_N (int N, int* K) {
     return 0;
 }
 
-void ceu_sim_state_dump (tceu_sim_state* s)
+void ceu_ana_state_dump (tceu_ana_state* s)
 {
     fprintf(S.file, "    { n=%d,\n", s->n);
 
@@ -121,7 +124,7 @@ void ceu_sim_state_dump (tceu_sim_state* s)
     fprintf(S.file, "\n\n");
 }
 
-void ceu_sim_state_end ()
+void ceu_ana_state_end ()
 {
     // normalize wclock exts
 #ifdef CEU_WCLOCKS
@@ -139,19 +142,19 @@ void ceu_sim_state_end ()
 #endif
 
 /*
-tceu_sim_state* s = S.states_cur;
+tceu_ana_state* s = S.states_cur;
 fprintf(stderr,">>> END: %d (min %d)\n", s->n, min);
 S.file = stderr;
-ceu_sim_state_dump(s);
+ceu_ana_state_dump(s);
 S.file = S.file_orig;
 fprintf(stderr,"<<< END: %d\n", s->n);
 */
 
-    ceu_sim_state_flush();
+    ceu_ana_state_flush();
 }
 
-void ceu_sim_dump () {
-    fprintf(S.file, "_SIMUL = {\n");
+void ceu_ana_dump () {
+    fprintf(S.file, "return {\n");
 
     fprintf(S.file, "  needsChk = %s,\n", (S.needsChk ? "true" : "false"));
     fprintf(S.file, "  n_tracks = %d,\n", S.n_tracks);
@@ -176,13 +179,13 @@ void ceu_sim_dump () {
     fprintf(S.file, "--[=[\n");
     fprintf(S.file, "  states = {\n");
     for (int i=0; i<S.states_tot; i++)
-        ceu_sim_state_dump(&S.states[i]);
+        ceu_ana_state_dump(&S.states[i]);
     fprintf(S.file, "  }\n");
     fprintf(S.file, "--]=]\n");
 */
 }
 
-void ceu_sim_iter ()
+void ceu_ana_iter ()
 {
 //fprintf(stderr,">>> ITER: %d\n", S.states_cur->n);
 
@@ -198,9 +201,9 @@ void ceu_sim_iter ()
             }
         }
         if (go) {
-            CEU_SIMUL_PRE(0);
+            CEU_ANA_PRE(0);
             ceu_go_event(NULL, I, &S.data);
-            CEU_SIMUL_POS();
+            CEU_ANA_POS();
         }
     }
 #endif
@@ -225,10 +228,10 @@ void ceu_sim_iter ()
     }
     if (CEU->wclk_cur) {
 //fprintf(stderr,">>> togo: %d\n", CEU->wclk_cur->togo);
-        CEU_SIMUL_PRE(0);
+        CEU_ANA_PRE(0);
         CEU->wclk_any = 0;
         ceu_go_wclock(NULL, CEU->wclk_cur->togo);
-        CEU_SIMUL_POS();
+        CEU_ANA_POS();
 //fprintf(stderr,"<<< togo\n");
     }
 
@@ -245,10 +248,10 @@ void ceu_sim_iter ()
     }
     if (CEU->wclk_cur) {
 //fprintf(stderr,">>> any\n");
-        CEU_SIMUL_PRE(0);
+        CEU_ANA_PRE(0);
         CEU->wclk_any = 1;
         ceu_go_wclock(NULL, CEU_WCLOCK_ANY);
-        CEU_SIMUL_POS();
+        CEU_ANA_POS();
 //fprintf(stderr,"<<< any\n");
     }
 #endif
@@ -259,31 +262,31 @@ void ceu_sim_iter ()
 int main (int argc, char *argv[])
 {
     int ret;
-    S.states = malloc(S.states_max*sizeof(tceu_sim_state));
+    S.states = malloc(S.states_max*sizeof(tceu_ana_state));
     memset(S.isReach, 0, N_LABELS);
     memset(S.isConc,  0, N_LABELS*N_LABELS);
     S.file_orig = fopen(argv[1], "w");
     S.file      = S.file_orig;
     memset(CEU->mem, 0, N_MEM);
 
-    S.states_cur = ceu_sim_state_new(0);
+    S.states_cur = ceu_ana_state_new(0);
     S.states_nxt++;
 //fprintf(stderr,"=== GO: %d\n", S.states[S.states_cur].n);
     int term = ceu_go_init(NULL);
-    ceu_sim_state_end();
+    ceu_ana_state_end();
 
 //S.file = stderr;
-//ceu_sim_state_dump(s);
+//ceu_ana_state_dump(s);
 //S.file = S.file_orig;
 
     if (!term)
-        ceu_sim_iter();
+        ceu_ana_iter();
 
     while (1)
     {
 //fprintf(stderr,">>> XXXX\n");
 //S.file = stderr;
-//ceu_sim_state_dump(&S.states[0]);
+//ceu_ana_state_dump(&S.states[0]);
 //S.file = S.file_orig;
 //fprintf(stderr,"<<< XXXX\n");
 
@@ -293,13 +296,13 @@ int main (int argc, char *argv[])
         S.states_cur = S.states_nxt;
 //fprintf(stderr,"=== GO: %d %d\n", S.states_cur->n, CEU->lbl);
 //S.file = stderr;
-//ceu_sim_state_dump(S.states_cur);
+//ceu_ana_state_dump(S.states_cur);
 //S.file = S.file_orig;
         int term = ceu_go(NULL);
-        ceu_sim_state_end();
+        ceu_ana_state_end();
 
         int K;
-        if (ceu_sim_equal_N(S.states_nxt, &K)) {
+        if (ceu_ana_equal_N(S.states_nxt, &K)) {
             //S.states_tot--;
             //S.states[S.states_nxt] = S.states[S.states_tot];
             //S.states[S.states_nxt].n = S.states_nxt;
@@ -309,10 +312,10 @@ int main (int argc, char *argv[])
         }
 
         if (!term)
-            ceu_sim_iter();
+            ceu_ana_iter();
     }
 
-    ceu_sim_dump();
+    ceu_ana_dump();
     fclose(S.file);
     return 0;
 }
