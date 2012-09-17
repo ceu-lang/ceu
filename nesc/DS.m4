@@ -132,7 +132,7 @@ do
             _Topo* recv_v;
             _message_t* msg_topo = @RADIO_receive($1, _Topo, recv_v);
             _bm_or($3, recv_v->v, $4*$4);
-            int allActive = set do
+            int allActive = do
                 loop i, $4 do
                     if _bm_isZero(&$3[i*$4/8], $4) then
                         return 0;

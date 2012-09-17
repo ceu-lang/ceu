@@ -17,7 +17,7 @@ send = simul.app {
 output int B;
 int v = 1;
 loop do
-    int vv = set
+    int vv =
         async (v) do
             int ret = 0;
             loop i, v do

@@ -80,12 +80,12 @@ end
 
 TYPES = P'void' + 'int' + 'u8' + 'u16' + 'u32' + 's8' + 's16' + 's32'
 
-KEYS = P'async'   + 'await'  + 'break'   + 'constant' + 'deterministic'
-     +  'do'      + 'emit'   + 'else'    + 'end'     + 'event'    + 'finally'
-     +  'Forever' + 'input'  + 'if'      + 'loop'    + 'nothing'  + 'null'
-     +  'output'  + 'par'    + 'par/and' + 'par/or'  + 'pure'     + 'return'
-     +  'set'     + 'sizeof' + 'then'    + 'type'    + 'with'
-     +  'delay' -- TODO: put in alpha order
+KEYS = P'async' + 'await'   + 'break'   + 'constant' + 'delay'
+     + 'deterministic'      +  'do'     + 'emit'     + 'else'
+     + 'end'    + 'event'   + 'finally' + 'Forever'  + 'input'
+     + 'if'     + 'loop'    + 'nothing' + 'null'     + 'output'
+     + 'par'    + 'par/and' + 'par/or'  + 'pure'     + 'return'
+     + 'sizeof' + 'then'    + 'type'    + 'with'
      + TYPES
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
@@ -125,10 +125,8 @@ _GG = { [1] = CK'' *S* V'Block' *S* (P(-1) + EM'expected EOF')
                  + V'ParOr' + V'ParAnd'
                  + V'If'    + V'Loop'
 
-    , _SetBlock = K'set' *S* (
-                    V'_Do'     + V'Async' +
-                    V'ParEver' + V'If'    + V'Loop'
-                )
+    , _SetBlock = ( V'_Do'     + V'Async' +
+                    V'ParEver' + V'If'    + V'Loop' )
 
     , __ID      = V'ID_c' + V'ID_ext' + V'Var'
     , _Dcl_pure = (K'pure'+K'constant') *S* EV'ID_c' * (S* K',' *S* V'ID_c')^0

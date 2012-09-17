@@ -123,7 +123,7 @@ do
     radio_ack = radio_ack + 1;
     msg_ack->ack = radio_ack;
  
-    int v = set
+    int v =
         loop do
             par/or do
                 int err_ack = @RADIO_send($1, $2);
