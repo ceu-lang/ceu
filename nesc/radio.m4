@@ -24,7 +24,7 @@ C do
 end
 
 @define(RADIO_start, `/*{-{*/
-set do
+do
     int err_srt = _Radio_start();
     if err_srt == _SUCCESS then
         err_srt = await Radio_startDone;
@@ -38,7 +38,7 @@ define(RADIO_receive, `/*{-{*/
 dnl [ 1: msg_proto ] message protocol type
 dnl [ 2: pay_type  ] message payload type
 dnl [ 3: pay_ptr   ] message payload pointer
-set loop do
+loop do
     _message_t* msg_rcv = await Radio_receive;
     int dst = _Radio_getDestination(msg_rcv);
     int tp  = _Radio_getType(msg_rcv);
@@ -58,7 +58,7 @@ end
 dnl [ 1: msg_proto ] message protocol type
 dnl [ 2: pay_type  ] message payload type
 dnl [ 3: pay_ptr   ] message payload pointer
-set do
+do
     message_t* msg_ack = @RADIO_receive($1, $2, $3);
     _RADIO_ack_t* pay_ack = _Radio_getPayload(msg_ack, sizeof<_RADIO_ack_t>);
     if pay_ack != null then
@@ -73,7 +73,7 @@ end
 
 @define(RADIO_receive_empty, `/*{-{*/
 dnl [ 1: msg_proto ] message protocol type
-set loop do
+loop do
     _message_t* msg_rcv = await Radio_receive;
     int dst = _Radio_getDestination(msg_rcv);
     int tp  = _Radio_getType(msg_rcv);
@@ -88,7 +88,7 @@ end
 dnl [ 1: msg_ref   ] message reference
 dnl [ 2: msg_proto ] message protocol type
 dnl [ 3: pay_type  ] message payload type
-set do
+do
     _Radio_setSource($1, _TOS_NODE_ID);
     _Radio_setType($1, $2);
     @ifelse($3, NULL,
@@ -104,7 +104,7 @@ end
 @define(RADIO_send, `/*{-{*/
 dnl [ 1: msg_ref ] message reference
 dnl [ 2: msg_dst ] message destination address
-set do
+do
     _Radio_setDestination($1, $2);
     if emit Radio_send($1) then
         return _SUCCESS;
@@ -149,7 +149,7 @@ end
 dnl [ 1: msg_ref   ] message reference
 dnl [ 2: msg_dst   ] message destination address
 dnl [ 3: msg_proto ] message protocol type
-set do
+do
     void* pay_snd = @RADIO_msg($1, $3, NULL);
     int err_snd = @RADIO_send($1, $2);
     return err_snd;
@@ -162,7 +162,7 @@ dnl [ 2: msg_dst   ] message destination address
 dnl [ 3: msg_proto ] message protocol type
 dnl [ 4: pay_type  ] message payload type
 dnl [ 5: pay_ref   ] message payload reference
-set do
+do
     $4* pay_snd = @RADIO_msg($1, $3, $4);
     if pay_snd == _NULL then
         return _ESIZE;

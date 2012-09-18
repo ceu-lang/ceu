@@ -49,5 +49,5 @@ tceu_sim S = {
 int  ceu_ana_state_new (int copy);
 void ceu_ana_state_path (tceu_lbl fr, tceu_lbl to);
 void ceu_ana_state_flush ();
-void ceu_ana_state_dump (tceu_ana_state* s);
+void ceu_ana_state_dump (int n);
 void ceu_ana_dump ();

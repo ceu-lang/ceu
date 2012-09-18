@@ -16,16 +16,7 @@ C do
     } Cnt;
 end
 
-loop do
-    int err = _Radio_start();
-    if err == _SUCCESS then
-        err = await Radio_startDone;
-        if err == _SUCCESS then
-            break;
-        end
-    end
-    await 1s;
-end
+@TOS_retry(1s, @RADIO_start);
 
 event void retry;
 

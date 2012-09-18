@@ -32,16 +32,9 @@ int ceu_ana_state_new (int copy)
         memset(s->isChild, 0, N_LABELS*N_LABELS);
     }
 
-//S.file = stderr;
-//ceu_ana_state_dump(s);
-//S.file = S.file_orig;
-//if (S.states_cur)
-    //fprintf(stderr,"CREATED: %d from %d\n", S.states_tot, S.states_cur->n);
-//else
-    //fprintf(stderr,"CREATED: %d from %d\n", S.states_tot, 0);
     s->n = S.states_tot++;
 //S.file = stderr;
-//ceu_ana_state_dump(S.states_cur);
+//ceu_ana_state_dump(s->n);
 //S.file = S.file_orig;
     return s->n;
 }
@@ -105,8 +98,10 @@ int ceu_ana_equal_N (int N, int* K) {
     return 0;
 }
 
-void ceu_ana_state_dump (tceu_ana_state* s)
+void ceu_ana_state_dump (int n)
 {
+    tceu_ana_state* s = &S.states[n];
+
     fprintf(S.file, "    { n=%d,\n", s->n);
 
     fprintf(S.file, "      mem = { ");
@@ -126,18 +121,36 @@ void ceu_ana_state_dump (tceu_ana_state* s)
 
 void ceu_ana_state_end ()
 {
-    // normalize wclock exts
+    // TODO: very inefficient
+    // normalize wclock exts (TODO: alternatives?)
 #ifdef CEU_WCLOCKS
-    int min = INT_MAX;
-    for (int i=0; i<CEU_WCLOCKS; i++) {
-        tceu_wclock* tmr = &(PTR(CEU_WCLOCK0,tceu_wclock*)[i]);
-        if ((tmr->lbl != Inactive) && (tmr->ext < min))
-            min = tmr->ext;
-    }
-    for (int i=0; i<CEU_WCLOCKS; i++) {
-        tceu_wclock* tmr = &(PTR(CEU_WCLOCK0,tceu_wclock*)[i]);
-        if (tmr->lbl != Inactive)
-            tmr->ext -= min;
+    int nxt = 0;
+    for (;;) {
+        int min = INT_MAX;
+        int max = 0;
+        for (int i=0; i<CEU_WCLOCKS; i++) {
+            tceu_wclock* tmr = &(PTR(CEU_WCLOCK0,tceu_wclock*)[i]);
+            if (tmr->lbl == Inactive)
+                continue;
+            if ((tmr->ext < min) && (tmr->ext >= nxt))
+                min = tmr->ext;
+        }
+        for (int i=0; i<CEU_WCLOCKS; i++) {
+            tceu_wclock* tmr = &(PTR(CEU_WCLOCK0,tceu_wclock*)[i]);
+            if (tmr->lbl == Inactive)
+                continue;
+            if (tmr->ext < nxt)
+                continue;
+            tmr->ext -= (min-nxt);
+            if (tmr->ext > max)
+                max = tmr->ext;
+        }
+        nxt++;
+//fprintf(stderr, "out %d %d\n", nxt, max);
+        if (nxt >= max) {
+            CEU->wclk_ext = nxt;
+            break;
+        }
     }
 #endif
 

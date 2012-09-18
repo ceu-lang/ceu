@@ -233,10 +233,10 @@ int ceu_track_peek (tceu_trk* trk)
 
 #ifdef CEU_WCLOCKS
 
-#define CEU_WCLOCK_NONE LONG_MAX
+#define CEU_WCLOCK_NONE INT32_MAX
 
 #ifdef CEU_ANA
-#define CEU_WCLOCK_ANY (LONG_MAX-1)
+#define CEU_WCLOCK_ANY (INT32_MAX-1)
 #endif
 
 #ifdef CEU_ANA

@@ -2758,7 +2758,6 @@ with
 end;
 return a+b;
 ]],
-    --todo = '10ms should be reachable',
     run = {
         ['~>10ms'] = 3000,
         ['~>20ms'] = 13000,
@@ -2774,7 +2773,6 @@ with
 end;
 return a+b;
 ]],
-    --todo = '10ms should be reachable',
     run = {
         ['~>10ms'] = 3000,
         ['~>20ms'] = 13000,
@@ -2791,7 +2789,6 @@ with
     return b;
 end;
 ]],
-    todo = '5us should be reachable',
     ana = {
         nd_acc = 1,
         --nd_flw = 3,
@@ -2808,10 +2805,61 @@ with
     return b;
 end;
 ]],
-    todo = 'await(x) pode ser 0?',  -- TIME_undef
     ana = {
-        nd_acc = 1,
+        nd_acc = 1,     -- TODO: =0 (await(5) cannot be 0)
     },
+}
+
+Test { [[
+input void A;
+int v1=0, v2=0;
+par/or do
+    await 1s;
+    v1 = v1 + 1;
+with
+    loop do
+        par/or do
+            await 1s;
+        with
+            await A;
+        end
+        v2 = v2 + 1;
+    end
+end
+return v1 + v2;
+]],
+    run = { ['~>A;~>A;~>A;~>A;~>A;~>1s']=6 }
+}
+
+Test { [[
+input void A;
+int v1=0, v2=0, v3=0;
+par/or do
+    await 1s;
+    v1 = v1 + 1;
+with
+    loop do
+        par/or do
+            await 1s;
+        with
+            await A;
+        end
+        v2 = v2 + 1;
+    end
+with
+    loop do
+        par/or do
+            await 1s;
+        with
+            await A;
+            await A;
+        end
+        v3 = v3 + 1;
+    end
+end
+return v1 + v2 + v3;
+]],
+    run = { ['~>A;~>A;~>A;~>A;~>A;~>1s']=8 }
 }
 
 Test { [[
@@ -2979,6 +3027,25 @@ end;
     },
 }
 Test { [[
+int v;
+par/or do
+    await 10ms;
+    v = 10;
+with
+    await (1)ms;
+    await 10ms;
+    v = 0;
+end
+return v;
+]],
+    todo = 'nd_acc should be 0',
+    simul = {
+        n_unreachs = 1,
+    },
+    run = 10,
+}
+
+Test { [[
 int a;
 loop do
     par/or do
@@ -2998,7 +3065,6 @@ loop do
     end;
 end;
 ]],
-    todo = 'segfault em simul',
     ana = {
         isForever = true,
         nd_acc = 1,
@@ -3050,7 +3116,6 @@ with
 end;
 return a;
 ]],
-    todo = 'segfault',
     ana = {
         nd_acc = 1,
     },
@@ -3091,7 +3156,6 @@ loop do
     end;
 end;
 ]],
-    todo = 'segfault em simul',
     ana = {
         isForever = true,
         nd_acc = 1,
@@ -3117,7 +3181,6 @@ loop do
     end;
 end;
 ]],
-    todo = 'segfault em simul',
     ana = {
         isForever = true,
         nd_acc = 1,
@@ -3185,7 +3248,6 @@ with
     return c;
 end;
 ]],
-    todo = '10,9 should be reachable',
     ana = {
         nd_acc = 3,
         --nd_flw = 6,
@@ -3202,7 +3264,6 @@ with
 end;
 return a+b+c;
 ]],
-    todo = '10,9 should be reachable',
     run = {
         ['~>10us'] = 2,
         ['~>20us'] = 12,
@@ -3295,7 +3356,6 @@ with
 end;
 return a;
 ]],
-    todo = '20 should be reach',
     run = {
         ['~>10ms'] = 2,
         ['~>20ms'] = 2,
@@ -3313,7 +3373,6 @@ with
 end;
 return a;
 ]],
-    todo = '20 should be reach',
     ana = {
         nd_acc = 1,
     },
@@ -3504,7 +3563,6 @@ with
 end;
 return v;
 ]],
-    todo = 'nd_acc',
     ana = {
         nd_acc = 1,
     },
@@ -3854,9 +3912,8 @@ return ret;
     ana = {
         n_unreachs = 2,
         --nd_esc = 2,
-        --nd_acc = 1,
+        nd_acc = 0,         -- TODO: should it be =1?
     },
-    todo = 'nd_acc = 1',
     run = 3,
 }
 
@@ -3880,9 +3937,8 @@ return ret;
     ana = {
         n_unreachs = 2,
         --nd_esc = 2,
-        --nd_acc = 1,
+        nd_acc = 0,         -- TODO: should it be =1?
     },
-    todo = 'nd_acc = 1',
     run = 3,
 }
 
@@ -3906,9 +3962,8 @@ return ret;
     ana = {
         n_unreachs = 2,
         --nd_esc = 2,
-        --nd_acc = 1,
+        nd_acc = 0,         -- TODO: should it be =1?
     },
-    todo = 'nd_acc = 1',
     run = 3,
 }
 
@@ -4394,7 +4449,6 @@ with
 end;
 return a;
 ]],
-    todo = true,
     run = {
         ['~>30ms ; 0~>A ; ~>50ms'] = 2,
         ['0~>A ; ~>40ms'] = 2,
@@ -4416,7 +4470,6 @@ with
 end;
 return a;
 ]],
-    todo = true,
     run = {
         ['~>30ms ; 0~>A ; ~>50ms'] = 2,
         ['0~>A ; ~>40ms'] = 2,
@@ -4437,7 +4490,6 @@ with
 end;
 return a;
 ]],
-    todo = true,
     run = {
         ['~>30ms ; 0~>A ; ~>50ms'] = 2,
         ['0~>A ; ~>40ms'] = 2,
@@ -4463,7 +4515,6 @@ with
 end;
 return a;
 ]],
-    todo = true,
     run = {
         -- TODO: ext
         ['~>A ; ~>A ; ~>12ms; ~>A; ~>91ms'] = 2,
@@ -4563,8 +4614,9 @@ with
     return 2;
 end;
 ]],
-    todo = true,
-    n_unreachs = 0,    -- TODO: timer kills timer
+    ana = {
+        n_unreachs = 1,
+    },
     run = {
         ['~>30us'] = 1,
         ['~>12us ; 0~>A ; ~>8us'] = 1,
@@ -4751,7 +4803,6 @@ with
 end;
 return dt;
 ]],
-    todo = '30 should be reach',
     ana = {
         nd_acc = 1,
     },
@@ -5040,7 +5091,6 @@ with
 end;
 return a;
 ]],
-    todo = '20 should be reach',
     run = {
         ['0~>A ; 0~>B ; ~>21us'] = 0,
     }
@@ -5345,7 +5395,6 @@ with
 end;
 return a;
 ]],
-    todo = '10 should be reach',
     ana = {
         nd_acc = 1,
     },
@@ -5421,7 +5470,6 @@ with
 end;
 return a;
 ]],
-    todo = '10 should be reach',
     ana = {
         nd_acc = 1,
     },
@@ -5749,11 +5797,10 @@ with
     emit a(a);
 end;
 ]],
-    todo = 'nd_acc=1',
     ana = {
         isForever = true,
         --nd_esc = 1,
-        nd_acc = 1, -- EX.10: trig2 vs await1 loop
+        nd_acc = 1, -- (trig2 vs await1 loop)
         --trig_wo = 1,
         n_unreachs = 1,
     },
@@ -10364,10 +10411,10 @@ end
     run = 2,
 }
 Test { [[
-input int Start;
 event int a;
 int x = 0;
 par do
+    delay;
     emit a ( 1);
     return x;
 with
@@ -10377,11 +10424,10 @@ with
     end
 end
 ]],
-    todo = 'emit->awake->loop->await',
     ana = {
-        nd_acc = 1,
+        nd_acc = 0,     -- TODO =1?
         --nd_flw = 1,
-        n_unreachs = 1,
+        n_unreachs = 0,
     },
 }
 Test { [[
