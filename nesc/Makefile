@@ -7,7 +7,7 @@ SENSORBOARD = mts300
 PFLAGS += -fno-strict-aliasing # required for accessing VARS
 PFLAGS += -DCC2420_DEF_RFPOWER=3
 
-BUILD_EXTRA_DEPS += ceu_analysis
+BUILD_EXTRA_DEPS += ceu_noanalysis
 
 include $(MAKERULES)
 
@@ -24,7 +24,7 @@ ceu_analysis:
 	./ceu $(CEUFILE) --m4 --tp-word 2 --tp-pointer 2 --tp-lbl 1 --tp-off 1 --defs-file _ceu_defs.h --analysis-use
 	@echo "===================================================================="
 
-clean_ceu:
+ceu_clean:
 	rm -f _ceu_*
 
-.PHONY: ceu
+.PHONY: ceu_noanalysis ceu_analysis ceu_clean

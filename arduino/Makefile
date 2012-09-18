@@ -8,10 +8,10 @@ BOARD = uno
 
 CEUCFILE = _ceu_$(notdir $(CEUFILE)).cceu
 
-.PHONY: all all_analysis ceu_noanalysis ceu_analysis ino clean
+.PHONY: all analysis ceu_noanalysis ceu_analysis ino clean
 
 all: ceu_noanalysis ino _all
-all_analysis: ceu_analysis ino _all
+analysis: ceu_analysis ino _all
 
 ceu_noanalysis:
 	./ceu $(CEUFILE) --m4 --tp-word 2 --tp-pointer 2 --tp-lbl 1 --tp-off 1

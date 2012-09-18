@@ -126,7 +126,11 @@ void ceu_ana_state_end ()
 #ifdef CEU_WCLOCKS
     int nxt = 0;
     for (;;) {
+#ifdef __cplusplus
+        int min = 0x7fff;       // TODO
+#else
         int min = INT_MAX;
+#endif
         int max = 0;
         for (int i=0; i<CEU_WCLOCKS; i++) {
             tceu_wclock* tmr = &(PTR(CEU_WCLOCK0,tceu_wclock*)[i]);
