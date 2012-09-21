@@ -79,7 +79,7 @@ function _AST.dump (me, spc)
         if _AST.isNode(sub) then
             _AST.dump(sub, spc+2)
         else
-            DBG(string.rep(' ',spc+2) .. tostring(sub))
+            DBG(string.rep(' ',spc+2) .. '['..tostring(sub)..']')
         end
     end
 end
@@ -161,7 +161,6 @@ local C; C = {
 
     Block   = node('Block'),
     BlockN  = node('BlockN'),
-    Nothing = node('Nothing'),
     Host    = node('Host'),
 
     _Return = function (ln, e2)

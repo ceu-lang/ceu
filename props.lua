@@ -4,7 +4,7 @@ end
 
 function MAX_all (me, t)
     t = t or me
-    me.n_tracks = 0
+    me.n_tracks = 1
     for _, sub in ipairs(t) do
         me.n_tracks = MAX(me.n_tracks, sub.n_tracks)
     end

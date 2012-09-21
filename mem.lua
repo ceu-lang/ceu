@@ -41,17 +41,35 @@ F = {
     end,
 
     Block_pre = function (me)
-        local async = _AST.iter()()
-        if async.tag == 'Async' then
-            local vars, blk = unpack(async)
-            if vars then
-                for _, n in ipairs(vars) do
-                    F.Dcl_var{ var=n.new }
-                end
+        me.off = _MEM.off
+
+        for _, var in ipairs(me.vars) do
+            local len
+            if var.arr then
+                len = _ENV.types[_TP.deref(var.tp)] * var.arr
+            elseif _TP.deref(var.tp) then
+                len = _ENV.types.pointer
+            else
+                len = _ENV.types[var.tp]
+            end
+            if _OPTS.analysis_run then
+                var.off = 0
+            else
+                var.off = alloc(len)
+            end
+            if var.isEvt then
+                var.awt0 = alloc(1)
+                alloc(_ENV.types.tceu_lbl*var.n_awaits)
+            end
+
+            local tp = _TP.no_(var.tp)
+            if var.arr then
+                var.val = '(('..tp..')(CEU->mem+'..var.off..'))'
+            else
+                var.val = '(*(('..tp..'*)(CEU->mem+'..var.off..')))'
             end
         end
 
-        me.off = _MEM.off
         me.max = _MEM.off
     end,
     Block = function (me)
@@ -89,34 +107,6 @@ F = {
         end
     end,
 
-    Dcl_int = 'Dcl_var',
-    Dcl_var = function (me)
-        local var = me.var
-        local max
-        if var.arr then
-            max = _ENV.types[_TP.deref(var.tp)] * var.arr
-        elseif _TP.deref(var.tp) then
-            max = _ENV.types.pointer
-        else
-            max = _ENV.types[var.tp]
-        end
-        if _OPTS.analysis_run then
-            var.off = 0
-        else
-            var.off = alloc(max)
-        end
-        if var.isEvt then
-            var.awt0 = alloc(1)
-            alloc(_ENV.types.tceu_lbl*var.n_awaits)
-        end
-
-        local tp = _TP.no_(var.tp)
-        if var.arr then
-            var.val = '(('..tp..')(CEU->mem+'..var.off..'))'
-        else
-            var.val = '(*(('..tp..'*)(CEU->mem+'..var.off..')))'
-        end
-    end,
     Var = function (me)
         me.val = me.var.val
         me.accs = { {me.var, (me.var.arr and 'no') or 'rd', me.var.tp, false,

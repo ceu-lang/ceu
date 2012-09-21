@@ -194,8 +194,7 @@ F = {
     end,
     Return = function (me)
         local top = _AST.iter'SetBlock'()
-        local chk = _ANALYSIS.needsChk and 1 or 0
-        LINE(me, 'ceu_track_ins('..chk..',' ..top.lbl_out.prio..','
+        LINE(me, 'ceu_track_ins(1,' ..top.lbl_out.prio..','
                     ..top.lbl_out.id..');')
         HALT(me)
     end,
@@ -253,8 +252,7 @@ F = {
             CASE(me, me.lbls_in[i])
             CONC(me, sub)
             COMM(me, 'PAROR JOIN')
-            local chk = _ANALYSIS.needsChk and 1 or 0
-            LINE(me, 'ceu_track_ins('..chk..',' ..me.lbl_out.prio..','
+            LINE(me, 'ceu_track_ins(1,' ..me.lbl_out.prio..','
                         ..me.lbl_out.id..');')
             HALT(me)
         end
@@ -386,8 +384,7 @@ if (ceu_out_pending()) {
 
     Break = function (me)
         local top = _AST.iter'Loop'()
-        local chk = _ANALYSIS.needsChk and 1 or 0
-        LINE(me, 'ceu_track_ins('..chk..',' ..top.lbl_out.prio..','
+        LINE(me, 'ceu_track_ins(1,' ..top.lbl_out.prio..','
                     ..top.lbl_out.id..');')
         HALT(me)
     end,
