@@ -17,11 +17,11 @@ constant _EBUSY, _SUCCESS, _TOS_NODE_ID;
 pure _Radio_getPayload,  _Radio_maxPayloadLength;
 pure _Serial_getPayload, _Serial_maxPayloadLength;
 
-deterministic _Leds_led0Toggle with _Leds_led1Toggle, _Leds_led1On, _Leds_led1Off;
+deterministic _Leds_led0Toggle with _Leds_led1Toggle, _Leds_led1On, _Leds_led1Off,
                                     _Leds_led2Toggle, _Leds_led2On, _Leds_led2Off;
-deterministic _Leds_led0On     with _Leds_led1Toggle, _Leds_led1On, _Leds_led1Off;
+deterministic _Leds_led0On     with _Leds_led1Toggle, _Leds_led1On, _Leds_led1Off,
                                     _Leds_led2Toggle, _Leds_led2On, _Leds_led2Off;
-deterministic _Leds_led0Off    with _Leds_led1Toggle, _Leds_led1On, _Leds_led1Off;
+deterministic _Leds_led0Off    with _Leds_led1Toggle, _Leds_led1On, _Leds_led1Off,
                                     _Leds_led2Toggle, _Leds_led2On, _Leds_led2Off;
 deterministic _Leds_led1Toggle with _Leds_led2Toggle, _Leds_led2On, _Leds_led2Off;
 deterministic _Leds_led1On     with _Leds_led2Toggle, _Leds_led2On, _Leds_led2Off;
