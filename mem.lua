@@ -180,6 +180,8 @@ F = {
         me.accs = {}
         accs_join(me, f)
         f.accs[1][2] = 'cl'
+        ASR((not _OPTS.c_calls) or _OPTS.c_calls[f.val],
+            me, 'C calls are disabled')
         for i, exp in ipairs(exps) do
             ps[i] = exp.val
             accs_join(me, exp)

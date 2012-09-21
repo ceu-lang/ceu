@@ -12,6 +12,7 @@ _OPTS = {
     analysis_file = '_ceu_analysis.lua',
 
     join      = true,
+    c_calls   = false,
 
     m4        = false,
     m4_args   = false,
@@ -34,6 +35,7 @@ _OPTS_NPARAMS = {
     analysis_file = 1,
 
     join      = 0,
+    c_calls   = 1,
 
     m4        = 0,
     m4_args   = 1,
@@ -65,7 +67,7 @@ do
             _OPTS[opt] = not no
         else
             local opt = string.gsub(string.sub(p,3), '%-', '_')
-            _OPTS[opt] = params[i]
+            _OPTS[opt] = string.match(params[i], "%'?(.*)%'?")
             i = i + 1
         end
 
@@ -88,6 +90,7 @@ if not _OPTS.input then
         --analysis-file <filename> # TODO
 
         --join (--no-join)     # join lines enclosed by /*{-{*/ and /*}-}*/ (join)
+        --c-calls              # TODO
 
         --m4 (--no-m4)         # preprocess the input with `m4´ (no-m4)
         --m4-args              # preprocess the input with `m4´ passing arguments in between `"´ (no)
@@ -119,6 +122,16 @@ end
 
 assert(not (_OPTS.analysis_use and _OPTS.analysis_run),
         'invalid analysis invocation')
+
+-- C_CALLS
+if _OPTS.c_calls then
+    local t = {}
+    for v in string.gmatch(_OPTS.c_calls, "(%w+)") do
+        t[v] = true
+    end
+    _OPTS.c_calls = t
+end
+
 
 -- INPUT
 local inp
