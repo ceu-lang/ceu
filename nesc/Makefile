@@ -13,15 +13,15 @@ include $(MAKERULES)
 
 ceu_noanalysis:
 	@echo "===================================================================="
-	./ceu $(CEUFILE) --m4 --tp-word 2 --tp-pointer 2 --tp-lbl 1 --tp-off 1 --defs-file _ceu_defs.h
+	./ceu $(CEUFILE) --m4 --tp-word 2 --tp-pointer 2 --defs-file _ceu_defs.h
 	@echo "===================================================================="
 
 ceu_analysis:
 	@echo "===================================================================="
-	./ceu $(CEUFILE) --m4 --tp-word 4 --tp-pointer 4 --tp-lbl 2 --tp-off 2 --defs-file _ceu_defs.h --analysis-run
+	./ceu $(CEUFILE) --m4 --tp-word 4 --tp-pointer 4 --defs-file _ceu_defs.h --analysis-run
 	gcc -std=c99 -o _ceu_analysis.exe analysis.c
 	./_ceu_analysis.exe _ceu_analysis.lua
-	./ceu $(CEUFILE) --m4 --tp-word 2 --tp-pointer 2 --tp-lbl 1 --tp-off 1 --defs-file _ceu_defs.h --analysis-use
+	./ceu $(CEUFILE) --m4 --tp-word 2 --tp-pointer 2 --defs-file _ceu_defs.h --analysis-use
 	@echo "===================================================================="
 
 ceu_clean:

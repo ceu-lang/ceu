@@ -31,8 +31,7 @@ Test = function (t)
     local ok = not (T.parser or T.env or T.mem or
                     T.props or T.tight)
     if ok then
-        local CEU = './ceu - --analysis-run '
-                        .. '--tp-word 4 --tp-pointer 4 --tp-lbl 2 --tp-off 2'
+        local CEU = './ceu - --analysis-run --tp-word 4 --tp-pointer 4'
         local ceu = assert(io.popen(CEU, 'w'))
         ceu:write(str_input)
         ceu:close()
@@ -119,8 +118,7 @@ Test = function (t)
         return
     end
 
-    local CEU = './ceu _ceu_tmp.ceu --analysis '
-                    .. '--tp-word 4 --tp-pointer 4 --tp-lbl 2 --tp-off 2'
+    local CEU = './ceu _ceu_tmp.ceu --analysis --tp-word 4 --tp-pointer 4'
 
     -- T.run = N
     if type(T.run) ~= 'table' then

@@ -14,13 +14,13 @@ all: ceu_noanalysis ino _all
 analysis: ceu_analysis ino _all
 
 ceu_noanalysis:
-	./ceu $(CEUFILE) --m4 --tp-word 2 --tp-pointer 2 --tp-lbl 1 --tp-off 1
+	./ceu $(CEUFILE) --m4 --tp-word 2 --tp-pointer 2
 
 ceu_analysis:
-	./ceu $(CEUFILE) --m4 --tp-word 4 --tp-pointer 4 --tp-lbl 2 --tp-off 2 --analysis-run
+	./ceu $(CEUFILE) --m4 --tp-word 4 --tp-pointer 4 --analysis-run
 	gcc -std=c99 -o _ceu_analysis.exe analysis.c
 	./_ceu_analysis.exe _ceu_analysis.lua
-	./ceu $(CEUFILE) --m4 --tp-word 2 --tp-pointer 2 --tp-lbl 1 --tp-off 1 --analysis-use
+	./ceu $(CEUFILE) --m4 --tp-word 2 --tp-pointer 2 --analysis-use
 
 ino:
 	touch poll.ino async.ino
