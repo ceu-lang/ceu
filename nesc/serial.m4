@@ -13,7 +13,7 @@ output _message_t* Serial_send;
 pure _Serial_getPayload;
 
 @define(SERIAL_start, `/*{-{*/
-set do
+do
     int err_srt = _Serial_start();
     if err_srt == _SUCCESS then
         err_srt = await Serial_startDone;
@@ -27,7 +27,7 @@ define(SERIAL_receive, `/*{-{*/
 dnl [ 1: msg_proto ] message protocol type
 dnl [ 2: pay_type  ] message payload type
 dnl [ 3: pay_ptr   ] message payload pointer
-set loop do
+loop do
     _message_t* msg_rcv = await Serial_receive;
     int dst = _Serial_getDestination(msg_rcv);
     int tp  = _Serial_getType(msg_rcv);
@@ -45,7 +45,7 @@ end
 
 @define(SERIAL_receive_empty, `/*{-{*/
 dnl [ 1: msg_proto ] message protocol type
-set loop do
+loop do
     _message_t* msg_rcv = await Serial_receive;
     int dst = _Serial_getDestination(msg_rcv);
     int tp  = _Serial_getType(msg_rcv);
@@ -60,7 +60,7 @@ end
 dnl [ 1: msg_ref   ] message reference
 dnl [ 2: msg_proto ] message protocol type
 dnl [ 3: pay_type  ] message payload type
-set do
+do
     _Serial_setSource($1, _TOS_NODE_ID);
     _Serial_setType($1, $2);
     @ifelse($3, NULL,
@@ -76,7 +76,7 @@ end
 @define(SERIAL_send, `/*{-{*/
 dnl [ 1: msg_ref ] message reference
 dnl [ 2: msg_dst ] message destination address
-set do
+do
     _Serial_setDestination($1, $2);
     if emit Serial_send($1) then
         return _SUCCESS;
@@ -90,7 +90,7 @@ end
 dnl [ 1: msg_ref   ] message reference
 dnl [ 2: msg_dst   ] message destination address
 dnl [ 3: msg_proto ] message protocol type
-set do
+do
     void* pay_snd = @SERIAL_msg($1, $3, NULL);
     int err_snd = @SERIAL_send($1, $2);
     return err_snd;
@@ -103,7 +103,7 @@ dnl [ 2: msg_dst   ] message destination address
 dnl [ 3: msg_proto ] message protocol type
 dnl [ 4: pay_type  ] message payload type
 dnl [ 5: pay_ref   ] message payload reference
-set do
+do
     $4* pay_snd = @SERIAL_msg($1, $3, $4);
     if pay_snd == _NULL then
         return _ESIZE;

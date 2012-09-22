@@ -24,6 +24,8 @@ C do
     }
 end
 
+type _Payload = 4;
+
 _Payload final;
 _neutral(&final);
 

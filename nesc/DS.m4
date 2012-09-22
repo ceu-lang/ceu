@@ -279,7 +279,7 @@ do
             end
             // send to parent
             if parent != _TOS_NODE_ID then
-                message_t msg_pb;
+                _message_t msg_pb;
                 @RADIO_send_value_ack(&msg_pb, parent, $1+1, $2, $3, $4);
             end
         with

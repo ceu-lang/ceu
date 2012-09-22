@@ -8,6 +8,8 @@ C do
     } Msg ;
 end
 
+type _Msg = 2;
+
 par/and do
     @TOS_retry(200ms, @RADIO_start);
 with

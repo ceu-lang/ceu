@@ -59,10 +59,10 @@ dnl [ 1: msg_proto ] message protocol type
 dnl [ 2: pay_type  ] message payload type
 dnl [ 3: pay_ptr   ] message payload pointer
 do
-    message_t* msg_ack = @RADIO_receive($1, $2, $3);
+    _message_t* msg_ack = @RADIO_receive($1, $2, $3);
     _RADIO_ack_t* pay_ack = _Radio_getPayload(msg_ack, sizeof<_RADIO_ack_t>);
     if pay_ack != null then
-        message_t ack;
+        _message_t ack;
         int err_ack = @RADIO_send_value(&ack, _Radio_getSource(msg_ack), 
                                     AM_TYPE_ACK, _RADIO_ack_t, &pay_ack->ack);
     end
@@ -130,7 +130,7 @@ do
                 if err_ack == _SUCCESS then
                     loop do
                         _RADIO_ack_t* ret_pay;
-                        message_t* ret_msg = @RADIO_receive(AM_TYPE_ACK, _RADIO_ack_t, ret_pay);
+                        _message_t* ret_msg = @RADIO_receive(AM_TYPE_ACK, _RADIO_ack_t, ret_pay);
                         if ret_pay->ack == msg_ack->ack then
                             return msg_ack->ack;
                         end

@@ -23,6 +23,7 @@ C do
         p1->data  = p1->data  + p2->data;
     }
 end
+type _Pay1 = 4;
 _Pay1 final1;
 _neutral1(&final1);
 
@@ -38,6 +39,7 @@ C do
         bm_or(p1->data, p2->data, N_NODES*N_NODES);
     }
 end
+type _Pay2 = @eval(2+N_NODES*N_NODES/8);
 _Pay2 final2;
 _neutral2(&final2);
 
@@ -51,7 +53,7 @@ with
 end
 
 /*
-char[255] all;
+u8[255] all;
 _bm_tostr(neighs, N_NODES, all);
 _DBG("0123456789ABCDEF\n");
 _DBG("%s\n\n", all);
@@ -100,7 +102,7 @@ with
     if _TOS_NODE_ID == 0 then
         _DBG("    0123456789ABCDEF\n");
         loop i, N_NODES do
-            char[255] all;
+            u8[255] all;
             _bm_tostr(&(final2.data[i * N_NODES/8]), N_NODES, all);
             _DBG("[%2d] %s\n", i, all);
         end

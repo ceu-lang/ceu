@@ -21,6 +21,8 @@ C do
     } Msg ;
 end
 
+type _Msg = 2;
+
 @TOS_retry(200ms, @SERIAL_start);
 
 par do

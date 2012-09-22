@@ -15,7 +15,7 @@ with
     await 1s;
 end
 
-char[255] all;
+u8[255] all;
 _bm_tostr(neighs, N_NODES, all);
 _DBG("0123456789012345\n");
 _DBG("%s\n\n", all);

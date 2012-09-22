@@ -9,9 +9,11 @@ _DBG("Radio started\n");
 C do
     typedef struct {
         u32 seqno;
-        char str[15];
+        u8 str[15];
     } Data;
 end
+
+type _Data = 19;
 
 event _Data* recv_new;
 event _Data* send_new;

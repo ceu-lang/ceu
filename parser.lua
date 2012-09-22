@@ -103,11 +103,11 @@ NUM = CK(m.R'09'^1) / tonumber
 
 _GG = { [1] = CK'' * V'Block' * P(-1)-- + EM'expected EOF')
 
-    , _Block = ( V'_Stmt' * EK';' +
-                 V'_StmtB' * (K';'^-1)
+    , _Block = ( V'_Stmt' * EK';'^1 +
+                 V'_StmtB' * (K';'^0)
                )^0
-             * ( V'_LstStmt' * EK';' +
-                 V'_LstStmtB' * (K';'^-1)
+             * ( V'_LstStmt' * EK';'^1 +
+                 V'_LstStmtB' * (K';'^0)
                )^-1
     , Block  = V'_Block'
     , BlockN = V'_Block'
@@ -246,7 +246,7 @@ _GG = { [1] = CK'' * V'Block' * P(-1)-- + EM'expected EOF')
 
     , EmitT    = K'emit' * (V'WCLOCKK'+V'WCLOCKE')
 
-    , EmitInt  = K'emit' * EV'Var' * (K'(' * V'Exp' * EK')')^-1
+    , EmitInt  = K'emit' * EV'Var' * (K'(' * V'Exp'^-1 * EK')')^-1
     , _Delay   = K'delay'
 
     , _Dcl_ext = (CK'input'+CK'output') * EV'ID_type' *

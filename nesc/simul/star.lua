@@ -6,9 +6,7 @@ srv = simul.app {
         TOS_NODE_ID = 10,
     },
     source = [[
-input  int         Radio_startDone;
-input  _message_t* Radio_receive;
-output _message_t* Radio_send;
+@include(radio.m4);
 
 C do
     typedef struct {
@@ -30,9 +28,7 @@ local clts = {}
 local N = 5
 
 clt_source = [[
-input  int         Radio_startDone;
-input  _message_t* Radio_receive;
-output _message_t* Radio_send;
+@include(radio.m4);
 
 C do
     typedef struct {

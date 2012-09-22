@@ -19,6 +19,8 @@ C do
     }
 end
 
+type _Payload = @eval(2+N_NODES*N_NODES/8);
+
 _Payload final;
 _neutral(&final);
 
@@ -56,7 +58,7 @@ with
     if _TOS_NODE_ID == 1 then
         _DBG("    0123456789ABCDEF\n");
         loop i, N_NODES do
-            char[255] all;
+            u8[255] all;
             _bm_tostr(&(final.data[i * N_NODES/8]), N_NODES, all);
             _DBG("[%2d] %s\n", i, all);
         end

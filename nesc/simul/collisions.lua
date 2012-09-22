@@ -10,7 +10,7 @@ recv = simul.app {
 int err = @RADIO_start();
 loop do
     u8* cnt;
-    message_t* msg = @RADIO_receive(0, u8, cnt);
+    _message_t* msg = @RADIO_receive(0, u8, cnt);
     _DBG("recv: %d\n", *cnt);
 end
 ]]
@@ -28,7 +28,7 @@ int err = @RADIO_start();
 u8 cnt = 0;
 loop do
     await 1s;
-    message_t msg;
+    _message_t msg;
     int err = @RADIO_send_value(&msg, _AM_BROADCAST_ADDR, 0, u8, &cnt);
     _DBG("send: %d\n", cnt);
     cnt = cnt + 1;
