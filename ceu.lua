@@ -144,7 +144,7 @@ _STR = inp:read'*a'
 
 if _OPTS.m4 or _OPTS.m4_args then
     local args = _OPTS.m4_args and string.sub(_OPTS.m4_args, 2, -2) or ''   -- remove `"´
-    local m4_file = (_OPTS.input=='-' and '_tmp.ceu_m4') or _OPTS.input..'_m4'
+    local m4_file = (_OPTS.input=='-' and '_ceu_tmp.ceu_m4') or _OPTS.input..'_m4'
     local m4 = assert(io.popen('m4 '..args..' - > '..m4_file, 'w'))
     m4:write(_STR)
     m4:close()

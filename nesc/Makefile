@@ -25,6 +25,6 @@ ceu_analysis:
 	@echo "===================================================================="
 
 ceu_clean:
-	rm -f _ceu_*
+	rm -f _ceu_* samples/*_m4
 
 .PHONY: ceu_noanalysis ceu_analysis ceu_clean

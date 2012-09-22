@@ -103,11 +103,11 @@ NUM = CK(m.R'09'^1) / tonumber
 
 _GG = { [1] = CK'' * V'Block' * P(-1)-- + EM'expected EOF')
 
-    , _Block = ( V'_Stmt' * EK';'^1 +
-                 V'_StmtB' * (K';'^0)
+    , _Block = ( V'_Stmt' * (EK';'*K';'^0) +
+                 V'_StmtB' * (K';'^-1*K';'^0)
                )^0
-             * ( V'_LstStmt' * EK';'^1 +
-                 V'_LstStmtB' * (K';'^0)
+             * ( V'_LstStmt' * (EK';'*K';'^0) +
+                 V'_LstStmtB' * (K';'^-1*K';'^0)
                )^-1
     , Block  = V'_Block'
     , BlockN = V'_Block'
