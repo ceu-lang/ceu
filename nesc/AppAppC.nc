@@ -8,7 +8,9 @@ implementation
 {
     components MainC, AppC, SchedulerBasicP;
     components new TimerMilliC() as Timer;
+#ifdef CEU_ASYNCS
     components new TimerMilliC() as TimerAsync;
+#endif
 
 #ifdef IO_LEDS
     components LedsC;
@@ -32,7 +34,9 @@ implementation
     AppC.Scheduler -> SchedulerBasicP;
     AppC.Boot  -> MainC;
     AppC.Timer -> Timer;
+#ifdef CEU_ASYNCS
     AppC.TimerAsync -> TimerAsync;
+#endif
 
 #ifdef IO_LEDS
     AppC.Leds  -> LedsC;

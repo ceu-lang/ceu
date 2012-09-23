@@ -15,8 +15,8 @@ typedef u16 tceu_lbl;
 /*
 // increases code size
 #define ceu_out_pending()   (!call Scheduler.isEmpty() || !q_isEmpty(&Q_EXTS))
-#define ceu_out_wclock(us)   call Timer.startOneShot(us)
 */
+#define ceu_out_wclock(us)  call Timer.startOneShot(us/1024)
 
 #include "IO.h"
 #include "Timer.h"
@@ -26,7 +26,9 @@ module AppC @safe()
     uses interface Boot;
     uses interface Scheduler;
     uses interface Timer<TMilli> as Timer;
+#ifdef CEU_ASYNCS
     uses interface Timer<TMilli> as TimerAsync;
+#endif
 
 #ifdef IO_LEDS
     uses interface Leds;
@@ -93,13 +95,13 @@ implementation
 #endif
     }
 
+#ifdef CEU_ASYNCS
     event void TimerAsync.fired ()
     {
-#ifdef CEU_ASYNCS
         call TimerAsync.startOneShot(10);
         ceu_go_async(NULL,NULL);
-#endif
     }
+#endif
 
 #ifdef IO_PHOTO
     event void Photo.readDone(error_t err, uint16_t val) {

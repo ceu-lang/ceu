@@ -26,7 +26,7 @@ ino:
 	touch poll.ino async.ino
 
 clean: _clean
-	rm -f _ceu_* samples/*.ceu_m4 *.hex *.o
+	rm -f _ceu_* *.ceu_m4 samples/*.ceu_m4 *.hex *.o
 
 include arduino.mk
 
