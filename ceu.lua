@@ -277,6 +277,8 @@ do
     end
 end
 
+--[[
+-- outputs compilation parameters
 local t = {}
 for k,v in pairs(ALL) do
     if v == true then
@@ -287,6 +289,7 @@ for k,v in pairs(ALL) do
 end
 table.sort(t)
 DBG('[ '..table.concat(t,' | ')..' ]')
+]]
 
 -- OUTPUT
 local out
