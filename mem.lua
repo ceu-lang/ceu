@@ -115,10 +115,17 @@ F = {
     AwaitInt = function (me)
         local e = unpack(me)
         e.accs[1][2] = 'aw'
+        if string.sub(e.var.id,1,4) == '$fin' then
+            e.accs[1][2] = 'no'
+        end
+
     end,
     EmitInt = function (me)
         local e1, e2 = unpack(me)
         e1.accs[1][2] = 'tr'
+        if string.sub(e1.var.id,1,4) == '$fin' then
+            e1.accs[1][2] = 'no'
+        end
     end,
 
     --------------------------------------------------------------------------

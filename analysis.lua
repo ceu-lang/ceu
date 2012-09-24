@@ -76,14 +76,13 @@ for i=1, N_LABELS do
 --DBG('===')
 --DBG(l1.acc, id1, md1, tp1, any1, str1)
 --DBG(l2.acc, id2, md2, tp2, any2, str2)
-            local _id = (id1==id2) or (md1=='cl' and md2=='cl') or
+            local nd  = (id1==id2) or (md1=='cl' and md2=='cl') or
                         (any1 and _TP.contains(tp1,tp2)) or
                         (any2 and _TP.contains(tp2,tp1))
-            local _dt = _ENV.dets[id1] and _ENV.dets[id1][id2] or
+            local det = _ENV.dets[id1] and _ENV.dets[id1][id2] or
                         _ENV.pures[id1] or _ENV.pures[id2]
 --DBG(id1, id2, _id, _dt)
-            local _md = ND[md1][md2]
-            if _id and (not _dt) and _md then
+            if nd and (not det) and ND[md1][md2] then
                 DBG('WRN : nondeterminism : '..str1..' vs '..str2)
                 _ANALYSIS.nd_acc = _ANALYSIS.nd_acc + 1
             end

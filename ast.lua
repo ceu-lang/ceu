@@ -145,9 +145,6 @@ local C; C = {
     [1] = function (ln, spc, ...) -- spc=CK''
         local blk = node('Block')(ln)
         blk[#blk+1] = node('Dcl_var')(ln, false, 'int',  false, '$ret')
-        blk[#blk+1] = node('Dcl_var')(ln, true,  'void', false, '$delay')
-        blk[#blk+1] = node('Dcl_det')(ln, node('Var')(ln,'$delay'),
-                                          node('Var')(ln,'$delay'))
         for i=1, FIN-1 do
             blk[#blk+1] = node('Dcl_var')(ln,true,'void',false,'$fin_'..i)
         end
@@ -194,38 +191,32 @@ local C; C = {
                         node('Var')(ln, evt))
         FIN = FIN + 1
 
-        table.insert(b1, 1, node('EmitInt')(ln, node('Var')(ln,'$delay')))
         b1[#b1+1] = emt
 
         local fin = node('Finally')(ln, b2)
         fin.emt = emt
 
         return node('Block')(ln,
-                node('ParOr')(ln,
+                node('ParAnd')(ln,
                     b1,
-                    node('BlockN')(ln,
-                        awt,
-                        fin,
-                        node('AwaitN')(ln))))
+                    node('BlockN')(ln, awt, fin)))
 --[=[
         do
-            <A>
+            <b1>
         finally
-            <B>
+            <b2>
         end
 
         // becomes
 
         event void $1;
         do
-            par/or do
-                delay;
+            par/and do
                 <b1>
                 emit $1;
             with
                 await $1;
                 <b2>
-                await Forever;
             end
         end
 ]=]
@@ -288,13 +279,8 @@ local C; C = {
 
     EmitExtE = node('EmitExtE'),
     EmitExtS = node('EmitExtS'),
-
     EmitT   = node('EmitT'),
-
     EmitInt = node('EmitInt'),
-    _Delay  = function (ln)
-        return node('EmitInt')(ln, node('Var')(ln, '$delay'))
-    end,
 
     Dcl_type = node('Dcl_type'),
     Dcl_det = node('Dcl_det'),

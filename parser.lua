@@ -82,13 +82,12 @@ end
 
 TYPES = P'void' + 'int' + 'u8' + 'u16' + 'u32' + 's8' + 's16' + 's32'
 
-KEYS = P'async' + 'await'   + 'break'   + 'constant' + 'C'
-     + 'delay'  + 'deterministic'       +  'do'      + 'emit'
-     + 'else'   + 'end'     + 'event'   + 'finally'  + 'Forever'
-     + 'input'  + 'if'      + 'loop'    + 'null'     + 'output'
-     + 'par'    + 'par/and' + 'par/or'  + 'pure'     + 'return'
-     + 'sizeof' + 'then'    + 'type'    + 'with'
-
+KEYS = P'async'  + 'await'  + 'break'   + 'constant' + 'C'
+     + 'deterministic'      +  'do'     + 'emit'     + 'else'
+     + 'end'     + 'event'  + 'finally' + 'Forever'  + 'input'
+     + 'if'      + 'loop'   + 'null'    + 'output'   + 'par'
+     + 'par/and' + 'par/or' + 'pure'    + 'return'   + 'sizeof'
+     + 'then'    + 'type'   + 'with'
      + TYPES
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
@@ -113,7 +112,7 @@ _GG = { [1] = CK'' * V'Block' * P(-1)-- + EM'expected EOF')
     , BlockN = V'_Block'
 
     , _Stmt = V'AwaitT'   + V'AwaitExt'  + V'AwaitInt'
-            + V'EmitT'    + V'EmitExtS'  + V'EmitInt'  + V'_Delay'
+            + V'EmitT'    + V'EmitExtS'  + V'EmitInt'
             + V'_Dcl_ext' + V'_Dcl_int'  + V'_Dcl_var'
             + V'Dcl_det'  + V'_Dcl_pure' + V'Dcl_type'
             + V'_Set'     + V'CallStmt' -- must be after Set
@@ -247,7 +246,6 @@ _GG = { [1] = CK'' * V'Block' * P(-1)-- + EM'expected EOF')
     , EmitT    = K'emit' * (V'WCLOCKK'+V'WCLOCKE')
 
     , EmitInt  = K'emit' * EV'Var' * (K'(' * V'Exp'^-1 * EK')')^-1
-    , _Delay   = K'delay'
 
     , _Dcl_ext = (CK'input'+CK'output') * EV'ID_type' *
                     EV'ID_ext' * (K','*EV'ID_ext')^0

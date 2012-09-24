@@ -139,8 +139,7 @@ F = {
                         me=me, err='continuation of `emit´'}
         me.lbl_awk = new{'Awk_'..int.var.id}
 
-        -- TODO: events the user did not define
-        if string.sub(int.var.id,1,1) == '$' then
+        if string.sub(int.var.id,1,4) == '$fin' then
             me.lbl_cnt.to_reach = nil
         end
     end,

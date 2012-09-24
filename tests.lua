@@ -459,7 +459,6 @@ do
 end
 event void e;
 par do
-    delay;
     emit e;
     return 1;
 with
@@ -468,6 +467,7 @@ with
 end
 ]],
     ana = {
+        nd_acc = 1,
         n_unreachs = 1,
     },
     run = 2,
@@ -2178,7 +2178,6 @@ end;
 Test { [[
 event int a = 3;
 par do
-    delay;
     emit a(a);
     return a;
 with
@@ -2188,6 +2187,9 @@ with
     end;
 end;
 ]],
+    ana = {
+        nd_acc = 1,
+    },
     run = 4,
 }
 
@@ -3646,13 +3648,15 @@ return 10;
 Test { [[
 event int a;
 par/and do
-    delay;
     emit a(1);
 with
     await a;
 end;
 return 10;
 ]],
+    ana = {
+        nd_acc = 1,
+    },
     run = 10,
 }
 Test { [[
@@ -3660,11 +3664,13 @@ event int a;
 par/and do
     await a;
 with
-    delay;
     emit a(1);
 end;
 return 10;
 ]],
+    ana = {
+        nd_acc = 1,
+    },
     run = 10,
 }
 
@@ -3829,7 +3835,6 @@ return v1+v2;
 Test { [[
 event int a;
 int v1=0,v2=0;
-delay;
 par/or do
     emit a(2);
     v1 = 2;
@@ -3873,20 +3878,19 @@ Test { [[
 event int a;
 int v1=0,v2=0,v3=0;
 par/or do
-    delay;
     emit a(2);
     v1 = 2;
 with
     await a;
     v3 = 2;
 with
-    delay;
     v2 = 2;
 end
 return v1+v2+v3;
 ]],
     ana = {
         n_unreachs = 2,
+        nd_acc = 1,
         --nd_esc = 1,
     },
     run = 2,
@@ -3923,7 +3927,6 @@ Test { [[
 event int a;
 int ret;
 par/or do
-    delay;
     par/or do
         emit a(2);
     with
@@ -3938,7 +3941,7 @@ return ret;
     ana = {
         n_unreachs = 2,
         --nd_esc = 2,
-        nd_acc = 0,         -- TODO: should it be =1?
+        nd_acc = 1,
     },
     run = 3,
 }
@@ -3951,7 +3954,6 @@ par/or do
     await a;
     ret = a + 1;
 with
-    delay;
     par/or do
         emit a(2);
     with
@@ -3963,7 +3965,7 @@ return ret;
     ana = {
         n_unreachs = 2,
         --nd_esc = 2,
-        nd_acc = 0,         -- TODO: should it be =1?
+        nd_acc = 1,
     },
     run = 3,
 }
@@ -5780,12 +5782,26 @@ return ret;
 }
 
 Test { [[
-input int Start;
+event void a;
+loop do
+    par/and do
+        emit a;
+    with
+        await a;
+    end
+end
+]],
+    todo = 'TIGHT',
+    ana = {
+        tight = true,
+    },
+}
+
+Test { [[
 event int a;
 par do
     loop do
         par/or do
-            await Start;
             emit a(1);
         with
             await a;
@@ -5796,13 +5812,7 @@ with
     emit a(a);
 end;
 ]],
-    ana = {
-        isForever = true,
-        --nd_esc = 1,
-        nd_acc = 1, -- (trig2 vs await1 loop)
-        --trig_wo = 1,
-        n_unreachs = 1,
-    },
+    tight = 'ERR : line 3 : tight loop',
 }
 
 Test { [[
@@ -5932,13 +5942,14 @@ par/or do
 with
     emit a(3);
 end;
-return 0;
+return a+b;
 ]],
     ana = {
         n_unreachs = 1,
-    nd_acc = 1,
-    --trig_wo = 1,
+        nd_acc = 1,
+        --trig_wo = 1,
     },
+    run = 6,
 }
 
 Test { [[
@@ -5955,9 +5966,9 @@ return 0;
 ]],
     ana = {
         --nd_esc = 1,
-    n_unreachs = 2,
-    nd_acc = 2,
-    --trig_wo = 1,
+        n_unreachs = 2,
+        nd_acc = 2,
+        --trig_wo = 1,
     },
 }
 
@@ -7158,11 +7169,11 @@ return a;
 ]],
 --~a||1~>a]],
     ana = {
+        n_unreachs = 1,
         nd_acc = 1,
-    nd_acc = 1,
-    n_unreachs = 1,
-    --trig_wo = 1,
+        --trig_wo = 1,
     },
+    run = 1,
 }
 Test { [[
 event int a;
@@ -7307,9 +7318,10 @@ end;
 return a;
 ]],
     ana = {
+        nd_acc = 1,
         --nd_esc = 1,
-    nd_acc = 1,
     },
+    run = { ['1~>A;1~>A']=1 },
 }
 Test { [[
 input int Start;
@@ -7510,15 +7522,12 @@ event int a, b, c, d;
 par/or do
     par/and do
         await a;
-        // unreachable
     with
         await b;
-        // unreachable
     with
         await c;
-        // unreachable
     end;
-    // unreachable
+    await d;
 with
     par/or do
         emit b(1);
@@ -7527,17 +7536,15 @@ with
     with
         emit c(3);
     end;
-    await d;
-    // unreachable
+    emit d(4);
 end;
-// unreachable
-return 0;
-// unreachable
+return a+b+c+d;
 ]],
     ana = {
         nd_acc = 3,
-        --trig_wo = 3,
+        n_unreachs = 1,
     },
+    run = 10,
 }
 Test { [[
 event int a, b, c;
@@ -7558,13 +7565,13 @@ with
         emit c(30);
     end;
 end;
-return 0;
+return a+b+c;
 ]],
     ana = {
+        nd_acc = 3,
         n_unreachs = 4,
-    nd_acc = 3,
-    --trig_wo = 3,
     },
+    run = 60,
 }
 Test { [[
 event int a, b, c;
@@ -7585,12 +7592,14 @@ with
         emit c(30);
     end;
 end;
-return 0;
+return a+b+c;
 ]],
     ana = {
         nd_acc = 3,
+        n_reachs = 1,
         --trig_wo = 3,
     },
+    run = 60,
 }
 Test { [[
 event int a;
@@ -8753,9 +8762,9 @@ with
 end;
 ]],
     ana = {
-        isForever = true,
         nd_acc = 1,
-        --n_unreachs = 4,   -- depends on awt/emt
+        isForever = true,
+        n_unreachs = 1,
         --trig_wo = 1,
     },
 }
@@ -8763,7 +8772,6 @@ end;
 Test { [[
 event int a;
 par/and do
-    delay;
     emit a(9);
 with
     loop do
@@ -8772,6 +8780,7 @@ with
 end;
 ]],
     ana = {
+        nd_acc = 1,
         isForever = true,
         n_unreachs = 1,
     },
@@ -9241,15 +9250,14 @@ with
 with
     await A;
     await a;
-    // unreachable
 end;
 // unreachable
 return 0;
 ]],
     ana = {
-        isForever = true,
-        --n_unreachs = 3,
         nd_acc = 1,
+        isForever = true,
+        n_unreachs = 2,
     },
 }
 
@@ -9332,13 +9340,14 @@ with
     end;
     await a;
 end;
-return 0;
+return 10;
 ]],
     ana = {
-        --isForever = true,
         nd_acc = 1,
+        --isForever = true,
         --n_unreachs = 2,
     },
+    run = { ['1~>B']=10 },
 }
 
 Test { [[
@@ -9350,7 +9359,7 @@ par/and do
     with
         await B;
     end;
-    emit a(1);
+    emit a(10);
 with
     par/or do
         await Z;
@@ -9364,6 +9373,7 @@ return a;
     ana = {
         nd_acc = 1,
     },
+    run = { ['1~>B']=10 },
 }
 
 Test { [[
@@ -9382,8 +9392,8 @@ return 0;
 ]],
     ana = {
         --nd_esc = 1,
-    n_unreachs = 2,
-    --trig_wo = 1,
+        n_unreachs = 2,
+        --trig_wo = 1,
     },
     run = { ['1~>A'] = 1 }
 }
@@ -9418,17 +9428,13 @@ with
     with
     end;
     await a;
-    // unreachable
 end;
-// unreachable
-return 0;
+return a;
 ]],
     ana = {
-        --isForever = true,
         nd_acc = 1,
-        --trig_wo = 1,
-        --n_unreachs = 2,
     },
+    run = 1,
 }
 Test { [[
 event int a;
@@ -9440,13 +9446,13 @@ with
         await a;
     end;
 end;
-return 0;
+return a;
 ]],
     ana = {
         nd_acc = 1,
-    --trig_wo = 1,
-    n_unreachs = 1,
+        n_unreachs = 1,
     },
+    run = 1,
 }
 
 
@@ -10374,7 +10380,6 @@ Test { [[
 event int a;
 int x = 0;
 par do
-    delay;
     emit a ( 1);
     return x;
 with
@@ -10385,19 +10390,17 @@ with
 end
 ]],
     ana = {
-        nd_acc = 0,     -- TODO =1?
+        nd_acc = 1,
         --nd_flw = 1,
         n_unreachs = 0,
     },
 }
 Test { [[
-input int Start;
 event int a, x;
 x = 0;
-par do
-    await Start;
+par/or do
     emit a( 1);
-    return x;
+    // unreachable
 with
     await a;
     x = x + 1;
@@ -10406,18 +10409,21 @@ with
 with
     await a;
     emit a;
+    // unreachable
 end
+return x;
 ]],
     ana = {
-        nd_acc = 1,
+        nd_acc = 3,
+        n_unreachs = 2,
     },
+    run = 2,
 }
 
 Test { [[
 event int a, x, y, vis;
 par/or do
     par/and do
-        delay;
         emit x(1);
         emit y(1);
     with
@@ -10430,7 +10436,6 @@ par/or do
         end;
     end;
 with
-    delay;
     emit a(1);
     emit x(0);
     emit y(0);
@@ -10439,6 +10444,7 @@ with
 end;
 ]],
     ana = {
+        nd_acc = 1,
         --trig_wo = 2,
         n_unreachs = 2,
         isForever = true,
@@ -10446,13 +10452,12 @@ end;
 }
 
 Test { [[
-event int x, y;
+event void x, y;
 int ret = 0;
 par/or do
     par/and do
-        delay;
-        emit x(1);
-        emit y(1);
+        emit x;
+        emit y;
     with
         loop do
             par/or do
@@ -10460,23 +10465,22 @@ par/or do
                 ret = 1;
             with
                 await y;
-                ret = 0;
+                ret = 10;
             end;
         end;
     end;
 with
-    delay;
-    delay;
-    emit x(0);
-    return ret;
+    emit x;
+    emit y;
 end;
+return ret;
 ]],
     ana = {
-        nd_acc = 1,
+        nd_acc = 4,
         --trig_wo = 2,
-        n_unreachs = 2,
+        n_unreachs = 1,
     },
-    run = 0,
+    run = 10,
 }
 
 Test { [[
@@ -10484,7 +10488,6 @@ event int a, x, y;
 int ret = 0;
 par do
     par/and do
-        delay;
         emit x(1);
         emit y(1);
     with
@@ -10497,7 +10500,6 @@ par do
         end;
     end;
 with
-    delay;
     ret = ret + 1;
     emit a(1);
     ret = ret * 2;
@@ -10509,6 +10511,7 @@ with
 end;
 ]],
     ana = {
+        nd_acc = 1,
         --trig_wo = 2,
         n_unreachs = 1,
     },
@@ -10856,11 +10859,9 @@ Test { [[
 do
 finally
 end
+return 0;
 ]],
-    ana = {
-        n_reachs = 1,
-        isForever = true,
-    },
+    run = 0,
 }
 
 Test { [[
@@ -11014,7 +11015,7 @@ end
 return a;
 ]],
     ana = {
-        n_unreachs = 1,      -- TODO: delay/emit
+        n_unreachs = 1,
     },
     run = 2;
 }
@@ -11035,7 +11036,7 @@ return ret;
 ]],
     ana = {
         n_unreachs = 1,
-        --nd_acc = 1,         -- TODO: delay/emit
+        --nd_acc = 1,         -- TODO: emit
     },
     run = { ['~>1s']=3 },
 }
@@ -11060,7 +11061,7 @@ return ret;
     run = 1,
     ana = {
         --nd_flw = 1,
-        n_unreachs = 4,     -- TODO: delay/emit
+        n_unreachs = 4,     -- TODO: emit
     },
 }
 
@@ -11304,7 +11305,7 @@ end;
 return ret;
 ]],
     ana = {
-    n_unreachs = 2,
+        n_unreachs = 2,
     },
     run = { ['~>1s']=2 },
 }
@@ -13714,13 +13715,12 @@ return a;
 
 --[[
 0-3: $ret
-  4: $delay
 ]]
 
 Test { [[
 await Forever;
 ]],
-    tot = 5,    -- TODO: 0
+    tot = 4,
     ana = {
         isForever = true,
     }
@@ -13729,7 +13729,7 @@ await Forever;
 Test { [[
 return 0;
 ]],
-    tot = 5,
+    tot = 4,
     run = 0,
 }
 
@@ -13737,7 +13737,6 @@ return 0;
 0-18:
      0-3: $ret
     4-18: a..f
-      19: $delay
 ]]
 
 Test { [[
@@ -13745,7 +13744,7 @@ int a, b, c;
 u8 d, e, f;
 return 0;
 ]],
-    tot = 20,
+    tot = 19,
     run = 0,
 }
 
@@ -13754,7 +13753,6 @@ return 0;
      0-3:       $ret
     4-15:       a,b,c
      4-6:       d,e,f   // TODO: first
-      16:       $delay
 ]]
 
 Test { [[
@@ -13764,7 +13762,7 @@ end
 u8 d, e, f;
 return 0;
 ]],
-    tot = 20,
+    tot = 19,
     run = 0,
 }
 
@@ -13773,7 +13771,6 @@ return 0;
      0-4:       $ret
     4-15:       a..c
      4-6:       d..f
-      16:       $delay
 ]]
 
 Test { [[
@@ -13785,7 +13782,7 @@ do
 end
 return 0;
 ]],
-    tot = 17,
+    tot = 16,
     run = 0,
 }
 
@@ -13802,7 +13799,7 @@ end
 u8 d=4, e=5, f=6;
 return ret + d + e + f;
 ]],
-    tot = 21,
+    tot = 20,
     run = 81,
 }
 
@@ -13824,7 +13821,7 @@ with
 end
 return ret;
 ]],
-    tot = 12,
+    tot = 11,
     ana = {
         nd_acc = 18,
     },
@@ -13863,7 +13860,7 @@ return ret+a;
     ana = {
         nd_acc = 21,
     },
-    tot = 29,
+    tot = 28,
     run = 33;
 }
 
@@ -13889,7 +13886,7 @@ end
         isForever = true,
         n_reachs = 1,
     },
-    tot = 22,
+    tot = 21,
 }
 
 Test { [[
@@ -13911,7 +13908,7 @@ with
 end
 return ret;
 ]],
-    tot = 25,
+    tot = 24,
     run = {
         ['~>A;~>B;~>Z'] = 1110,
         ['~>B;~>A;~>Z'] = 1110,
@@ -13939,7 +13936,7 @@ with
     end
 end
 ]],
-    tot = 22,
+    tot = 21,
     run = {
         ['~>A;~>B;~>Z'] = 10,
         ['~>B;~>B;~>A;~>Z'] = 110,
@@ -13963,7 +13960,7 @@ end
         isForever = true,
         n_reachs = 1,
     },
-    tot = 13,
+    tot = 12,
 }
 
 -- BIG // FULL // COMPLETE
