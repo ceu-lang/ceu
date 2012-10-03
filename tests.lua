@@ -25,6 +25,14 @@ Test { [[return /**/* */ 1;]],
 
 Test { [[
 do do do do do do do do do do do do do do do do do do do do
+end end end end end end end end end end end end end end end end end end end end
+return 1;
+]],
+    run = 1
+}
+
+Test { [[
+do do do do do do do do do do do do do do do do do do do do
 do do do do do do do do do do do do do do do do do do do do
 do do do do do do do do do do do do do do do do do do do do
 end end end end end end end end end end end end end end end end end end end end
@@ -32,6 +40,7 @@ end end end end end end end end end end end end end end end end end end end end
 end end end end end end end end end end end end end end end end end end end end
 return 1;
 ]],
+    --env = 'ERR : line 2 : max depth of 127',
     run = 1
 }
 
@@ -1723,6 +1732,27 @@ end;
 return 0;
 ]],
     tight='tight loop'
+}
+
+Test { [[
+input void F;
+event void a,b;
+par/or do
+    loop do
+        par/and do
+            await a;
+        with
+            emit b;
+            emit a;
+        end
+    end
+    return 5;
+with
+    await F;
+end
+return 1;
+]],
+    tight = 'ERR : line 4 : tight loop',
 }
 
 Test { [[
@@ -4164,7 +4194,7 @@ return a;
 
 Test { [[
 input int A,B;
-int a;
+int a = 5;
 par/or do
     par/or do
         await A;
@@ -4178,6 +4208,30 @@ with
 end;
 return a;
 ]],
+    run = { ['~>A']=5, ['~>B']=10 },
+    ana = {
+        nd_acc = 1,
+        --nd_flw = 1,
+    },
+}
+
+Test { [[
+input int A,B;
+int a = 5;
+par/or do
+    par/and do
+        await A;
+    with
+        await B;
+    end;
+    a = 10;
+with
+    await A;
+    return a;
+end;
+return a;
+]],
+    run = { ['~>A']=5, ['~>B;~>A']=5 },
     ana = {
         nd_acc = 1,
         --nd_flw = 1,
@@ -7719,6 +7773,44 @@ return x;
 
     -- PRIO
 
+-- prios
+Test { [[
+int ret = 10;
+loop do
+    par/or do
+    with
+        break;
+    end
+    ret = 5;
+    await 1s;
+end
+return ret;
+]],
+    ana = {
+        n_unreachs = 2,
+    },
+    run = 5,
+}
+
+Test { [[
+int ret = 10;
+loop do
+    par/or do
+        return 100;
+    with
+        break;
+    end
+    ret = 5;
+    await 1s;
+end
+return ret;
+]],
+    ana = {
+        n_unreachs = 3,
+    },
+    run = 10,
+}
+
 Test { [[
 int a = 0;
 par/or do
@@ -8653,6 +8745,7 @@ par/or do
     loop do
         int v;
         par/and do
+            await A;
         with
             v = await A;
         end;
@@ -8670,6 +8763,28 @@ end;
     run = {
         ['2~>Z ; 1~>A ; 1~>D'] = 2,
     }
+}
+
+Test { [[
+input int A,Z,D;
+int b;
+par/or do
+    b = 0;
+    loop do
+        int v;
+        par/and do
+        with
+            v = await A;
+        end;
+        b = 1 + v;
+    end;
+with
+    await Z;
+    await D;
+    return b;
+end;
+]],
+    tight = 'ERR : line 5 : tight loop',
 }
 
 Test { [[

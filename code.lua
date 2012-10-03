@@ -373,7 +373,7 @@ if (ceu_out_pending()) {
         end
 
         -- a single iter is enough on analysis a tight loop
-        if (not _OPTS.analysis_run) or me.brk_awt_ret then
+        if (not _OPTS.analysis_run) or me.blocks then
             SWITCH(me, me.lbl_ini)
         end
 

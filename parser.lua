@@ -82,12 +82,11 @@ end
 
 TYPES = P'void' + 'int' + 'u8' + 'u16' + 'u32' + 's8' + 's16' + 's32'
 
-KEYS = P'async'  + 'await'  + 'break'   + 'constant' + 'C'
-     + 'deterministic'      +  'do'     + 'emit'     + 'else'
-     + 'end'     + 'event'  + 'finally' + 'Forever'  + 'input'
-     + 'if'      + 'loop'   + 'null'    + 'output'   + 'par'
-     + 'par/and' + 'par/or' + 'pure'    + 'return'   + 'sizeof'
-     + 'then'    + 'type'   + 'with'
+KEYS = P'async'  + 'await'   + 'break'   + 'constant' + 'C' + 'deterministic'
+     + 'do'      + 'emit'    + 'else'    + 'elseif'   + 'end'  + 'event'
+     + 'finally' + 'Forever' + 'input'   + 'if'       + 'loop' + 'null'
+     + 'output'  + 'par'     + 'par/and' + 'par/or'   + 'pure' + 'return'
+     + 'sizeof'  + 'then'    + 'type'    + 'with'
      + TYPES
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')

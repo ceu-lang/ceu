@@ -14,22 +14,44 @@ typedef uint8_t   u8;
 
 #define CEU_ANA
 
+#define BM(l,c) (l*N_LABELS+c)
+#include <string.h>
+void bm_clear (u8* map, int len) {
+    memset(map, 0, len/8);
+}
+int bm_idx (int pos) {
+    return pos/8;
+}
+int bm_bit (int pos) {
+    return pos%8;
+}
+int bm_get (u8* map, int pos) {
+    return map[bm_idx(pos)]>>bm_bit(pos) &1;
+}
+void bm_on (u8* map, int pos) {
+    map[bm_idx(pos)] = map[bm_idx(pos)] | 1<<bm_bit(pos);
+}
+void bm_off (u8* map, int pos) {
+    map[bm_idx(pos)] = map[bm_idx(pos)] & ~(1<<bm_bit(pos));
+}
+
 #include "_ceu_code.cceu"
 
 int ceu_ana_state_new (int copy)
 {
     if (S.states_tot == S.states_max) {
-        fprintf(stderr, "WRN : analysis : number of states > %d\n",
-                S.states_max);
+        fprintf(stderr, "WRN : analysis : number of states > %d (%d bytes)\n",
+                S.states_max, S.states_max*sizeof(tceu_ana_state));
         S.states_max *= 2;
         S.states = realloc(S.states, S.states_max*sizeof(tceu_ana_state));
+        assert(S.states != NULL);
     }
     tceu_ana_state* s = &S.states[S.states_tot];
     s->ceu = *CEU;
     if (copy) {
         *s = S.states[S.states_cur];
     } else {
-        memset(s->isChild, 0, N_LABELS*N_LABELS);
+        bm_clear(s->isChild, N_LABELS*N_LABELS);
     }
 
     s->n = S.states_tot++;
@@ -45,10 +67,12 @@ void ceu_ana_state_path (tceu_lbl fr, tceu_lbl to)
     S.isReach[to] = 1;
 
     tceu_ana_state* s = &S.states[S.states_cur];
-    s->isChild[fr][fr] = 1;
-    s->isChild[to][to] = 1;
-    for (int i=0; i<N_LABELS; i++)
-        s->isChild[to][i] |= s->isChild[fr][i];
+    bm_on(s->isChild, BM(fr,fr));
+    bm_on(s->isChild, BM(to,to));
+    for (int i=0; i<N_LABELS; i++) {
+        if (!bm_get(s->isChild,BM(to,i)) && bm_get(s->isChild,BM(fr,i)))
+            bm_on(s->isChild,BM(to,i));
+    }
 }
 
 void ceu_ana_state_flush ()
@@ -57,12 +81,14 @@ void ceu_ana_state_flush ()
     for (int i=0; i<N_LABELS; i++) {
         for (int j=0; j<N_LABELS; j++) {
             S.isConc[i][j] |=
-                (s->isChild[i][i] && s->isChild[j][j] &&
-                 !s->isChild[i][j] && !s->isChild[j][i]);
+                (bm_get(s->isChild,BM(i,i)) &&
+                 bm_get(s->isChild,BM(j,j)) &&
+                 !bm_get(s->isChild,BM(i,j)) &&
+                 !bm_get(s->isChild,BM(j,i)));
             S.isConc[j][i] |= S.isConc[i][j];
         }
     }
-    memset(s->isChild, 0, N_LABELS*N_LABELS);
+    bm_clear(s->isChild, N_LABELS*N_LABELS);
 }
 
 int ceu_ana_equal (int n1, int n2) {
@@ -113,7 +139,7 @@ void ceu_ana_state_dump (int n)
     for (int i=0; i<N_LABELS; i++) {
         fprintf(S.file, "    ");
         for (int j=0; j<N_LABELS; j++)
-            fprintf(S.file, "%d", s->isChild[i][j]);
+            fprintf(S.file, "%d", bm_get(s->isChild,BM(i,j)));
         fprintf(S.file, "\n");
     }
     fprintf(S.file, "\n\n");

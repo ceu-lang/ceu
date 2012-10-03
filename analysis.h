@@ -16,7 +16,7 @@ typedef struct {
 typedef struct {
     int  n;
     tceu ceu;
-    u8 isChild[N_LABELS][N_LABELS];
+    u8 isChild[N_LABELS*N_LABELS/8+1];
 } tceu_ana_state;
 
 typedef struct {
