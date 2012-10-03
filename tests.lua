@@ -4208,7 +4208,7 @@ with
 end;
 return a;
 ]],
-    run = { ['~>A']=5, ['~>B']=10 },
+    run = { ['~>A']=10, ['~>B']=10 },
     ana = {
         nd_acc = 1,
         --nd_flw = 1,
@@ -4231,7 +4231,7 @@ with
 end;
 return a;
 ]],
-    run = { ['~>A']=5, ['~>B;~>A']=5 },
+    run = { ['~>A']=5, ['~>B;~>A']=10 },
     ana = {
         nd_acc = 1,
         --nd_flw = 1,
@@ -14164,11 +14164,11 @@ print('COUNT', COUNT)
 
 do return end
 
-    -- SUSPEND
+    -- PAUSE
 
 Test { [[
 input void A;
-suspend on A do
+pause/on A do
 end
 return 0;
 ]],
@@ -14177,7 +14177,7 @@ return 0;
 
 Test { [[
 input int A;
-suspend on A do
+pause/on A do
 end
 return 1;
 ]],
@@ -14187,7 +14187,7 @@ return 1;
 Test { [[
 input int A;
 input int B;
-suspend on A do
+pause/on A do
     int v = await B;
     return v;
 end
@@ -14206,7 +14206,7 @@ Test { [[
 input int  A;
 input int  B;
 input void Z;
-suspend on A do
+pause/on A do
     await Z;
 _printf("oi\n");
     int v = await B;
