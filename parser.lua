@@ -88,6 +88,7 @@ KEYS = P'async'  + 'await'   + 'break'   + 'constant' + 'C' + 'deterministic'
      + 'output'  + 'par'     + 'par/and' + 'par/or'   + 'pure' + 'return'
      + 'sizeof'  + 'then'    + 'type'    + 'with'
      + TYPES
+     + 'pause/on'
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
@@ -120,6 +121,7 @@ _GG = { [1] = CK'' * V'Block' * P(-1)-- + EM'expected EOF')
     , _StmtB = V'_Do'   + V'Async'  + V'Host'
              + V'ParOr' + V'ParAnd'
              + V'If'    + V'Loop'
+             + V'Pause'
 
     , _LstStmt  = V'_Return' + V'Break' + V'AwaitN'
     , _LstStmtB = V'ParEver'
@@ -182,6 +184,8 @@ _GG = { [1] = CK'' * V'Block' * P(-1)-- + EM'expected EOF')
                     V'Block' *
                 EK'end'
     , Break   = K'break'
+
+    , Pause   = K'pause/on' * (EV'Ext'+EV'Var') * EK'do' * V'Block' * EK'end'
 
     , Exp     = V'_Exp'
     , _Exp    = V'_1'

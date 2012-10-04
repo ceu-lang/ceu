@@ -81,6 +81,9 @@ function COMM (me, comm)
 end
 
 function BLOCK_GATES (me)
+    -- TODO: test if out is reachable, test if has inner parallel
+    -- in both cases, no need to run anything
+
     if me.fins then
         CONC(me, me.fins)
     end
@@ -135,6 +138,32 @@ function BLOCK_GATES (me)
                 end
             end
         end
+    end
+end
+
+function PAUSE (me, N, PTR)
+    if me.more then
+        LINE(me, [[
+{ int i;
+for (i=0; i<]]..N..[[; i++) {
+    if (]]..PTR..'['..i..']'..[[ >= Init) {
+        ]]..PTR..'['..i..']'..[[ = Init-1;
+    } else {
+        ]]..PTR..'['..i..']'..[[--;
+    }
+} }
+]])
+    else
+        LINE(me, [[
+{ int i;
+for (i=0; i<]]..N..[[; i++) {
+    if (]]..PTR..'['..i..']'..[[ >= Init) {
+        ]]..PTR..'['..i..']'..[[ = Init-1;
+    } else {
+        ]]..PTR..'['..i..']'..[[--;
+    }
+} }
+]])
     end
 end
 
@@ -481,6 +510,63 @@ return 0;
         EXP(me, call)
         if not _OPTS.analysis_run then
             LINE(me, call.val..';')
+        end
+    end,
+
+    Pause = function (me)
+        -- pause inner ASYNCS
+        local n = me.gtes.asyncs[2] - me.gtes.asyncs[1]
+        LINE(me, [[
+{ int i;
+for (i=0; i<]]..n..[[; i++) {
+    if (]]..PTR_GTE('async0','tceu_lbl*')..'['..i..[[] >= Init) {
+        ]]..PTR_GTE('async0','tceu_lbl*')..'['..i..[[] = Init-1;
+    } else {
+        ]]..PTR_GTE('async0','tceu_lbl*')..'['..i..[[]--;
+    }
+} }
+]])
+
+        -- do not resume inner WCLOCKS
+        local n = me.gtes.wclocks[2] - me.gtes.wclocks[1]
+        if n > 0 then
+            LINE(me, 'memset('..PTR_GTE('wclock0','char*')..' + '
+                        ..me.gtes.wclocks[1]..'*sizeof(tceu_wclock), 0, '
+                        ..n..'*sizeof(tceu_wclock));')
+        end
+
+        -- do not resume inner EMITS continuations (await/emit)
+        local n = me.gtes.emits[2] - me.gtes.emits[1]
+        if n > 0 then
+            LINE(me, 'memset('..PTR_GTE('emit0','char*')..' + '
+                        ..me.gtes.emits[1]..'*sizeof(tceu_lbl), 0, '
+                        ..n..'*sizeof(tceu_lbl));')
+        end
+
+        -- stop awaiting inner EXTS
+        for _, ext in ipairs(_ENV.exts) do
+            local t = me.gtes[ext]
+            if t then
+                local n = t[2] - t[1]
+                if n > 0 then
+                    LINE(me, 'memset('..PTR_EXT(ext.n,t[1],'char*')..', 0, '..n..'*sizeof(tceu_lbl));')
+                end
+            end
+        end
+
+        -- stop awaiting inner internal events
+        for blk in _AST.iter'Block' do
+            for _, var in ipairs(blk.vars) do
+                if me.gtes[var] then
+                    local t = me.gtes[var]
+                    local n = t[2] - t[1]
+                    if n > 0 then
+                        LINE(me, 'memset(CEU->mem+'..var.awt0..'+1+'
+                                ..t[1]..'*sizeof(tceu_lbl), 0, '
+                                ..n..'*sizeof(tceu_lbl));')
+                    end
+                end
+            end
         end
     end,
 

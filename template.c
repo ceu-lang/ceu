@@ -198,7 +198,7 @@ int ceu_track_rem (tceu_trk* trk)
 
 void ceu_spawn (tceu_lbl* lbl)
 {
-    if (*lbl != Inactive) {
+    if (*lbl >= Init) {
         ceu_track_ins(0, PR_MAX, *lbl);
         *lbl = Inactive;
     }
@@ -332,7 +332,7 @@ int ceu_go_async (int* ret, int* pending)
 
     for (i=0; i<CEU_ASYNCS; i++) {
         int idx = (CEU->async_cur+i) % CEU_ASYNCS;
-        if (ASY0[idx] != Inactive) {
+        if (ASY0[idx] >= Init) {
 #ifdef CEU_ANA
             CEU_ANA_PRE(0);
             CEU->lbl = 0;
@@ -360,7 +360,7 @@ int ceu_go_async (int* ret, int* pending)
 
     if (pending != NULL) {
         for (i=0; i<CEU_ASYNCS; i++) {
-            if (ASY0[i] != Inactive) {
+            if (ASY0[i] >= Init) {
                 *pending = 1;
                 break;
             }
@@ -407,7 +407,7 @@ int ceu_go_wclock (int* ret, s32 dt)
     for (i=0; i<CEU_WCLOCKS; i++)
     {
         tceu_wclock* tmr = &CLK0[i];
-        if (tmr->lbl == Inactive)
+        if (tmr->lbl < Init)
             continue;
 
 #ifdef CEU_ANA
@@ -489,7 +489,7 @@ int ceu_go (int* ret)
             _step_ = trk.prio;
             do {
                 tceu_lbl lbl = EMT0[trk.lbl]; // trk.lbl is actually an offset
-                if (lbl != Inactive)
+                if (lbl >= Init)
                     T[n++] = lbl;
             } while ( ceu_track_peek(&trk) &&
                       (trk.prio>=_step_)   &&

@@ -1,5 +1,4 @@
 --[===[
---]===]
 
 Test { [[return(1);]],
     ana = {
@@ -14172,7 +14171,7 @@ pause/on A do
 end
 return 0;
 ]],
-    env = 'invalid suspend event type',
+    env = 'ERR : line 2 : invalid attribution',     -- TODO: msg
 }
 
 Test { [[
@@ -14181,15 +14180,61 @@ pause/on A do
 end
 return 1;
 ]],
+    ana = {
+        n_unreachs = 4,     -- TODO: 1 (pause)
+    },
     run = 1,
 }
 
+--]===]
 Test { [[
 input int A;
 input int B;
 pause/on A do
     int v = await B;
     return v;
+end
+]],
+    ana = {
+        n_unreachs = 1,
+    },
+    run = {
+        ['1~>B'] = 1,
+        ['0~>A ; 1~>B'] = 1,
+        ['1~>A ; 1~>B ; 0~>A ; 3~>B'] = 3,
+        ['1~>A ; 1~>B ; 0~>A ; 1~>A ; 2~>B ; 0~>A ; 3~>B'] = 3,
+        ['1~>A ; 1~>B ; 0~>A ; 1~>A ; 0~>A ; 3~>B'] = 3,
+        ['1~>A ; 1~>B ; 1~>A ; 2~>B ; 0~>A ; 3~>B'] = 3,
+    },
+}
+do return end
+
+Test { [[
+input int A,B;
+pause/on A do
+    pause/on A do
+        int v = await B;
+        return v;
+    end
+end
+]],
+    run = {
+        ['1~>B'] = 1,
+        ['0~>A ; 1~>B'] = 1,
+        ['1~>A ; 1~>B ; 0~>A ; 3~>B'] = 3,
+        ['1~>A ; 1~>B ; 0~>A ; 1~>A ; 2~>B ; 0~>A ; 3~>B'] = 3,
+        ['1~>A ; 1~>B ; 0~>A ; 1~>A ; 0~>A ; 3~>B'] = 3,
+        ['1~>A ; 1~>B ; 1~>A ; 2~>B ; 0~>A ; 3~>B'] = 3,
+    },
+}
+
+Test { [[
+input int A, B, Z;
+pause/on A do
+    pause/on Z do
+        int v = await B;
+        return v;
+    end
 end
 ]],
     run = {
@@ -14208,7 +14253,7 @@ input int  B;
 input void Z;
 pause/on A do
     await Z;
-_printf("oi\n");
+_fprintf(_stderr,"oi\n");
     int v = await B;
     return v;
 end

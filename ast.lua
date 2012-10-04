@@ -272,6 +272,61 @@ local C; C = {
                 loop)
     end,
 
+    Pause = function (ln, evt, blk)
+        local idLess = tostring(evt)
+        local awtLess = evt.tag=='Ext' and node('AwaitExt')(ln,evt)
+                                       or node('AwaitInt')(ln,evt)
+        local pseLess = node('Pause')(ln)
+        pseLess.blk = blk
+        pseLess.more = false
+
+        local loopLess =
+            node('Loop')(ln,
+                node('Block')(ln,
+                    node('Dcl_var')(ln, false,'int',false,'$pse_'..idLess),
+                    C._Set(ln, EXP(node('Var')(ln,'$pse_'..idLess)), 'SetStmt', awtLess),
+                    node('If')(ln, EXP(node('Var')(ln,'$pse_'..idLess)),
+                        pseLess,
+                        node('Break')(ln))))
+
+        local idMore = tostring(blk)
+        local awtMore = evt.tag=='Ext' and node('AwaitExt')(ln,evt)
+                                       or node('AwaitInt')(ln,evt)
+        local pseMore = node('Pause')(ln)
+        pseMore.blk = blk
+        pseMore.more = true
+
+        local loopMore =
+            node('Loop')(ln,
+                node('Block')(ln,
+                    node('Dcl_var')(ln, false,'int',false,'$pse_'..idMore),
+                    C._Set(ln, EXP(node('Var')(ln,'$pse_'..idMore)), 'SetStmt', awtMore),
+                    node('If')(ln, EXP(node('Var')(ln,'$pse_'..idMore)),
+                        pseMore,
+                        loopLess)))
+
+        return node('ParOr')(ln, blk, loopMore)
+--[=[
+        par/or do
+            <blk>
+        with
+            loop do
+                int v = await <evt>;
+                if v then
+                    <OFF-->
+                    loop do
+                        v = await <evt>
+                        if !v then
+                            <OFF++>
+                            break;
+                        end
+                    end
+                end
+            end
+        end
+]=]
+    end,
+
     AwaitExt = node('AwaitExt'),
     AwaitInt = node('AwaitInt'),
     AwaitN   = node('AwaitN'),

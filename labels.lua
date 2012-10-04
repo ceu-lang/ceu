@@ -1,6 +1,7 @@
 _LABELS = {
-    list = {},  -- { [lbl]={}, [i]=lbl }
+    list = {},      -- { [lbl]={}, [i]=lbl }
     code = '',
+    gte2lbl = {},   --
 }
 
 function new (lbl)
@@ -156,6 +157,7 @@ F = {
     AwaitExt = function (me)
         me.lbl = new{'Awake_'..me[1][1], to_reach=true,
                     me=me, err='awake of `await´'}
+        _LABELS.gte2lbl[me.gte] = me.lbl.n
     end,
     AwaitInt = function (me)
         local int = unpack(me)
