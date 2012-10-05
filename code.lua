@@ -37,9 +37,9 @@ function CONC (me, sub, tab)
     me.code = me.code .. string.gsub(sub.code, '(.-)\n', tab..'%1\n')
 end
 
-function ATTR (me, v1, v2)
+function ATTR (me, n1, n2)
     if not _OPTS.analysis_run then
-        LINE(me, v1..' = '..v2..';')
+        LINE(me, n1.val..' = '..n2.val..';')
     end
 end
 
@@ -83,10 +83,6 @@ end
 function BLOCK_GATES (me)
     -- TODO: test if out is reachable, test if has inner parallel
     -- in both cases, no need to run anything
-
-    if me.fins then
-        CONC(me, me.fins)
-    end
 
     COMM(me, 'close gates')
 
@@ -201,12 +197,13 @@ F = {
         COMM(me, 'SET: '..tostring(e1[1]))    -- Var or C
         EXP(me, e2)
         EXP(me, e1)
-        ATTR(me, e1.val, e2.val)
+        ATTR(me, e1, e2)
     end,
 
-    SetStmt = function (me)
+    SetAwait = function (me)
         local e1, e2 = unpack(me)
         CONC(me, e2)
+        ATTR(me, e1, e2.ret)
         EXP(me, e1)     -- after awaking
     end,
 
@@ -358,7 +355,7 @@ CEU_ANA_POS();
     Async_pos = function (me)
         local vars,blk = unpack(me)
         for _, n in ipairs(vars) do
-            ATTR(me, n.new.val, n[1].var.val)
+            ATTR(me, n.new, n[1].var)
             EXP(me, n)
         end
         LINE(me, PTR_GTE'async0'..'['..me.gte..'] = '..me.lbl.id..';')
@@ -459,7 +456,7 @@ if (ceu_out_pending()) {
 
         -- attribution
         if exp then
-            ATTR(me, int.val, exp.val)
+            ATTR(me, int, exp)
         end
 
         if _OPTS.analysis_run then -- int not Exp
@@ -514,60 +511,8 @@ return 0;
     end,
 
     Pause = function (me)
-        -- pause inner ASYNCS
-        local n = me.gtes.asyncs[2] - me.gtes.asyncs[1]
-        LINE(me, [[
-{ int i;
-for (i=0; i<]]..n..[[; i++) {
-    if (]]..PTR_GTE('async0','tceu_lbl*')..'['..i..[[] >= Init) {
-        ]]..PTR_GTE('async0','tceu_lbl*')..'['..i..[[] = Init-1;
-    } else {
-        ]]..PTR_GTE('async0','tceu_lbl*')..'['..i..[[]--;
-    }
-} }
-]])
-
-        -- do not resume inner WCLOCKS
-        local n = me.gtes.wclocks[2] - me.gtes.wclocks[1]
-        if n > 0 then
-            LINE(me, 'memset('..PTR_GTE('wclock0','char*')..' + '
-                        ..me.gtes.wclocks[1]..'*sizeof(tceu_wclock), 0, '
-                        ..n..'*sizeof(tceu_wclock));')
-        end
-
-        -- do not resume inner EMITS continuations (await/emit)
-        local n = me.gtes.emits[2] - me.gtes.emits[1]
-        if n > 0 then
-            LINE(me, 'memset('..PTR_GTE('emit0','char*')..' + '
-                        ..me.gtes.emits[1]..'*sizeof(tceu_lbl), 0, '
-                        ..n..'*sizeof(tceu_lbl));')
-        end
-
-        -- stop awaiting inner EXTS
-        for _, ext in ipairs(_ENV.exts) do
-            local t = me.gtes[ext]
-            if t then
-                local n = t[2] - t[1]
-                if n > 0 then
-                    LINE(me, 'memset('..PTR_EXT(ext.n,t[1],'char*')..', 0, '..n..'*sizeof(tceu_lbl));')
-                end
-            end
-        end
-
-        -- stop awaiting inner internal events
-        for blk in _AST.iter'Block' do
-            for _, var in ipairs(blk.vars) do
-                if me.gtes[var] then
-                    local t = me.gtes[var]
-                    local n = t[2] - t[1]
-                    if n > 0 then
-                        LINE(me, 'memset(CEU->mem+'..var.awt0..'+1+'
-                                ..t[1]..'*sizeof(tceu_lbl), 0, '
-                                ..n..'*sizeof(tceu_lbl));')
-                    end
-                end
-            end
-        end
+        local exp, blk = unpack(me)
+        CONC(me,blk)
     end,
 
     AwaitN = function (me)
@@ -587,22 +532,12 @@ for (i=0; i<]]..n..[[; i++) {
 
         HALT(me, true)
         CASE(me, me.lbl)
-        if me.toset then
-            LINE(me, me.toset.val..' = CEU->wclk_late;')
-        end
     end,
     AwaitExt = function (me)
         local e1,_ = unpack(me)
         LINE(me, '*'..PTR_EXT(e1.ext.n,me.gte)..' = '..me.lbl.id..';')
         HALT(me, true)
         CASE(me, me.lbl)
-        if me.toset then
-            if _TP.deref(e1.ext.tp) then
-                ATTR(me, me.toset.val, '('.._TP.no_(e1.ext.tp)..')CEU->ext_data')
-            else
-                ATTR(me, me.toset.val, '*((int*)CEU->ext_data)')
-            end
-        end
     end,
     AwaitInt = function (me)
         local int,_ = unpack(me)
@@ -614,9 +549,6 @@ for (i=0; i<]]..n..[[; i++) {
         end
         HALT(me, true)
         CASE(me, me.lbl)
-        if me.toset then
-            ATTR(me, me.toset.val, int.val)
-        end
     end,
 }
 

@@ -28,7 +28,7 @@ _PROPS = {
 }
 
 local NO_fin = {
-    Finally=true,
+    Finally=true, Break=true,
     Host=true, Return=true, Async=true,
     ParEver=true, ParOr=true, ParAnd=true,
     AwaitExt=true, AwaitInt=true, AwaitN=true, AwaitT=true,
@@ -65,15 +65,6 @@ F = {
     ParEver = ADD_all,
     ParAnd  = ADD_all,
     ParOr   = ADD_all,
-
-    Finally = function (me)
-        for n in _AST.iter(_AST.pred_prio) do
-            if not n.fins then
-                n.fins = node('BlockN')(n.ln,n.str)
-            end
-            n.fins[#n.fins+1] = _AST.copy(me.emt)
-        end
-    end,
 
     Dcl_ext = function (me)
         _PROPS.has_exts = true
@@ -152,8 +143,6 @@ F = {
 
     SetExp = function (me)
         local e1, e2 = unpack(me)
-        e1 = e1 or _AST.copy(_AST.iter'SetBlock'()[1])
-        me[1] = e1
         local async = _AST.iter'Async'()
         if async and (not e1) then
             ASR( async.depth <= _AST.iter'SetBlock'().depth+1,
@@ -164,8 +153,9 @@ F = {
     Var = function (me)
         local async = _AST.iter'Async'()
         if async then
-            ASR(_AST.iter'VarList'() or             -- param list
-                async.depth < me.var.blk.depth,     -- var is declared inside
+            ASR(_AST.iter'VarList'() or         -- param list
+                me.ret or                       -- var assigned on return
+                async.depth < me.var.blk.depth, -- var is declared inside
                     me, 'invalid access from async')
         end
     end,

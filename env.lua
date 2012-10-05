@@ -133,7 +133,8 @@ F = {
 
     Var = function (me)
         local id = unpack(me)
-        for blk in _AST.iter('Block') do
+        local blk = me.blk or _AST.iter('Block')()
+        while blk do
             for i=#blk.vars, 1, -1 do   -- n..1 (hidden vars)
                 local var = blk.vars[i]
                 if var.id == id then
@@ -143,6 +144,7 @@ F = {
                     return
                 end
             end
+            blk = blk.par
         end
         ASR(false, me, 'variable/event "'..id..'" is not declared')
     end,
@@ -167,6 +169,12 @@ F = {
             t1[id2] = true
             t2[id1] = true
         end
+    end,
+
+    Pause = function (me)
+        local exp, _ = unpack(me)
+        ASR(exp.var.isEvt, me, 'event "'..exp.var.id..'" is not declared')
+        ASR(_TP.isNumeric(exp.var.tp), me, 'event type must be numeric')
     end,
 
     AwaitExt = function (me)
@@ -279,14 +287,13 @@ F = {
                 me, 'invalid attribution')
     end,
 
-    SetStmt = function (me)
-        local e1, stmt = unpack(me)
+    SetAwait = function (me)
+        local e1, awt = unpack(me)
         ASR(e1.lval, me, 'invalid attribution')
-        stmt.toset = e1
-        if stmt.tag == 'AwaitT' then
+        if awt.ret.tag == 'AwaitT' then
             ASR(_TP.isNumeric(e1.tp,true), me, 'invalid attribution')
         else    -- AwaitInt / AwaitExt
-            local evt = stmt[1].var or stmt[1].ext
+            local evt = awt.ret[1].var or awt.ret[1].ext
             ASR(_TP.contains(e1.tp,evt.tp,true), me, 'invalid attribution')
         end
     end,
@@ -395,6 +402,7 @@ F = {
         me.lval = false
     end,
     WCLOCKE = 'WCLOCKK',
+    WCLOCKR = 'WCLOCKK',
 
     C = function (me)
         me.tp   = '_'

@@ -160,7 +160,7 @@ do
     dofile 'lines.lua'
     dofile 'parser.lua'
     dofile 'ast.lua'
-    --ast.dump(ast.AST)
+    --_AST.dump(_AST.root)
     dofile 'env.lua'
     dofile 'props.lua'
     dofile 'mem.lua'

@@ -160,14 +160,14 @@ void ceu_ana_state_end ()
         int max = 0;
         for (int i=0; i<CEU_WCLOCKS; i++) {
             tceu_wclock* tmr = &(PTR(CEU_WCLOCK0,tceu_wclock*)[i]);
-            if (tmr->lbl < Init)
+            if (tmr->lbl == Inactive)
                 continue;
             if ((tmr->ext < min) && (tmr->ext >= nxt))
                 min = tmr->ext;
         }
         for (int i=0; i<CEU_WCLOCKS; i++) {
             tceu_wclock* tmr = &(PTR(CEU_WCLOCK0,tceu_wclock*)[i]);
-            if (tmr->lbl < Init)
+            if (tmr->lbl == Inactive)
                 continue;
             if (tmr->ext < nxt)
                 continue;
@@ -261,7 +261,7 @@ void ceu_ana_iter ()
     tceu_wclock* CLK0 = PTR(CEU_WCLOCK0,tceu_wclock*);
     for (int i=0; i<CEU_WCLOCKS; i++) {
         tceu_wclock* tmr = &CLK0[i];
-        if (tmr->lbl < Init)
+        if (tmr->lbl == Inactive)
             continue;
         if (tmr->togo == CEU_WCLOCK_ANY)
             continue;
@@ -282,7 +282,7 @@ void ceu_ana_iter ()
     CEU->wclk_cur = NULL;
     for (int i=0; i<CEU_WCLOCKS; i++) {
         tceu_wclock* tmr = &CLK0[i];
-        if (tmr->lbl < Init)
+        if (tmr->lbl == Inactive)
             continue;
         if (tmr->togo != CEU_WCLOCK_ANY)
             continue;

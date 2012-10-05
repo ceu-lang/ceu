@@ -118,7 +118,7 @@ F = {
         if string.sub(e.var.id,1,4) == '$fin' then
             e.accs[1][2] = 'no'
         end
-
+        me.val = e.val
     end,
     EmitInt = function (me)
         local e1, e2 = unpack(me)
@@ -130,7 +130,7 @@ F = {
 
     --------------------------------------------------------------------------
 
-    SetStmt  = 'SetExp',
+    SetAwait = 'SetExp',
     SetExp = function (me)
         local e1, e2 = unpack(me)
         e1.accs[1][2] = 'wr'
@@ -174,6 +174,17 @@ F = {
     0
 #endif
 ]]
+    end,
+    AwaitExt = function (me)
+        local e1 = unpack(me)
+        if _TP.deref(e1.ext.tp) then
+            me.val = '(('.._TP.no_(e1.ext.tp)..')CEU->ext_data)'
+        else
+            me.val = '*((int*)CEU->ext_data)'
+        end
+    end,
+    AwaitT = function (me)
+        me.val = 'CEU->wclk_late'
     end,
 
     Exp = function (me)
@@ -283,6 +294,10 @@ F = {
         me.us   = nil
         me.val  = exp.val .. '*' .. t2n[unit] .. 'L'
         me.accs = exp.accs
+    end,
+
+    WCLOCKR = function (me)
+        me.val = 'PTR(CEU_WCLOCK0,tceu_wclock*)['..me.awt.gte..'].togo'
     end,
 
     C = function (me)

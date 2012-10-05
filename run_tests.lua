@@ -28,7 +28,7 @@ Test = function (t)
         return
     end
 
-    local ok = not (T.parser or T.env or T.mem or
+    local ok = not (T.parser or T.ast or T.env or T.mem or
                     T.props or T.tight)
     if ok then
         local CEU = './ceu - --analysis-run --tp-word 4 --tp-pointer 4'

@@ -1,4 +1,5 @@
 --[===[
+--]===]
 
 Test { [[return(1);]],
     ana = {
@@ -39,7 +40,7 @@ end end end end end end end end end end end end end end end end end end end end
 end end end end end end end end end end end end end end end end end end end end
 return 1;
 ]],
-    --env = 'ERR : line 2 : max depth of 127',
+    --ast = 'ERR : line 2 : max depth of 127',
     run = 1
 }
 
@@ -62,7 +63,7 @@ end end end end end end end end end end end end end end end end end end end end
 end end end end end end end end end end end end end end end end end end end end
 return 1;
 ]],
-    env = 'ERR : line 4 : max depth of 127',
+    ast = 'ERR : line 4 : max depth of 127',
 }
 
 Test { [[return 0;]], run=0 }
@@ -11119,6 +11120,21 @@ Test { [[
 int a;
 par/or do
     do
+    finally
+        a = 1;
+    end
+with
+    a = 2;
+end
+return a;
+]],
+    run = 1;
+}
+
+Test { [[
+int a;
+par/or do
+    do
         int a;
     finally
         a = 1;
@@ -11128,9 +11144,6 @@ with
 end
 return a;
 ]],
-    ana = {
-        n_unreachs = 1,
-    },
     run = 2;
 }
 
@@ -11148,10 +11161,6 @@ with
 end
 return ret;
 ]],
-    ana = {
-        n_unreachs = 1,
-        --nd_acc = 1,         -- TODO: emit
-    },
     run = { ['~>1s']=3 },
 }
 
@@ -11279,9 +11288,6 @@ with
 end
 return ret;
 ]],
-    ana = {
-        n_unreachs = 2,
-    },
     run = { ['~>A']=17 },
 }
 
@@ -11305,9 +11311,6 @@ end
 ret = ret * 2;
 return ret;
 ]],
-    ana = {
-        n_unreachs = 2,
-    },
     run = { ['~>A']=22 },
 }
 
@@ -11437,9 +11440,6 @@ with
 end
 return ret;
 ]],
-    ana = {
-        n_unreachs = 1,
-    },
     run = { ['~>1s']=1, },
 }
 
@@ -14159,10 +14159,6 @@ end
     run = 50,
 }
 
-print('COUNT', COUNT)
-
-do return end
-
     -- PAUSE
 
 Test { [[
@@ -14171,28 +14167,40 @@ pause/on A do
 end
 return 0;
 ]],
-    env = 'ERR : line 2 : invalid attribution',     -- TODO: msg
+    parser = 'ERR : line 2 : after `pause/on´ : expected variable/event',
 }
 
 Test { [[
-input int A;
-pause/on A do
+event void a;
+pause/on a do
+end
+return 0;
+]],
+    env = 'ERR : line 2 : event type must be numeric',
+}
+
+Test { [[
+event int a;
+pause/on a do
 end
 return 1;
 ]],
-    ana = {
-        n_unreachs = 4,     -- TODO: 1 (pause)
-    },
     run = 1,
 }
 
---]===]
 Test { [[
-input int A;
-input int B;
-pause/on A do
-    int v = await B;
-    return v;
+input int A, B;
+event int a;
+par/or do
+    loop do
+        int v = await A;
+        emit a(v);
+    end
+with
+    pause/on a do
+        int v = await B;
+        return v;
+    end
 end
 ]],
     ana = {
@@ -14207,16 +14215,24 @@ end
         ['1~>A ; 1~>B ; 1~>A ; 2~>B ; 0~>A ; 3~>B'] = 3,
     },
 }
-do return end
 
 Test { [[
 input int A,B;
-pause/on A do
-    pause/on A do
-        int v = await B;
-        return v;
+event int a;
+int ret = 0;
+par/or do
+    loop do
+        int v = await A;
+        emit a(v);
+    end
+with
+    pause/on a do
+        pause/on a do
+            ret = await B;
+        end
     end
 end
+return ret;
 ]],
     run = {
         ['1~>B'] = 1,
@@ -14230,20 +14246,31 @@ end
 
 Test { [[
 input int A, B, Z;
-pause/on A do
-    pause/on Z do
+event int a, b;
+int ret = 0;
+par/or do
+    loop do
+        int v = await A;
+        emit a(v);
+    end
+with
+    loop do
         int v = await B;
-        return v;
+        emit b(v);
+    end
+with
+    pause/on a do
+        pause/on b do
+            ret = await Z;
+        end
     end
 end
+return ret;
 ]],
     run = {
-        ['1~>B'] = 1,
-        ['0~>A ; 1~>B'] = 1,
-        ['1~>A ; 1~>B ; 0~>A ; 3~>B'] = 3,
-        ['1~>A ; 1~>B ; 0~>A ; 1~>A ; 2~>B ; 0~>A ; 3~>B'] = 3,
-        ['1~>A ; 1~>B ; 0~>A ; 1~>A ; 0~>A ; 3~>B'] = 3,
-        ['1~>A ; 1~>B ; 1~>A ; 2~>B ; 0~>A ; 3~>B'] = 3,
+        ['1~>Z'] = 1,
+        ['1~>A ; 10~>Z ; 1~>B ; 10~>Z ; 0~>B ; 10~>Z ; 0~>A ; 5~>Z'] = 5,
+        ['1~>A ; 1~>B ; 0~>B ; 10~>Z ; 0~>A ; 1~>B ; 5~>Z ; 0~>B ; 100~>Z'] = 100,
     },
 }
 
@@ -14251,12 +14278,20 @@ Test { [[
 input int  A;
 input int  B;
 input void Z;
-pause/on A do
-    await Z;
-_fprintf(_stderr,"oi\n");
-    int v = await B;
-    return v;
+event int a;
+int ret = 0;
+par/or do
+    loop do
+        int v = await A;
+        emit a(v);
+    end
+with
+    pause/on a do
+        await Z;
+        ret = await B;
+    end
 end
+return ret;
 ]],
     run = {
         ['~>Z ; 1~>B'] = 1,
@@ -14265,3 +14300,54 @@ end
         ['~>Z ; 1~>A ; 1~>B ; 1~>A ; 2~>B ; 0~>A ; 3~>B'] = 3,
     },
 }
+
+Test { [[
+input int  A;
+input void Z;
+event int a;
+int ret = 0;
+par/or do
+    emit a(1);
+    await A;
+with
+    pause/on a do
+        do
+            await Z;
+        finally
+            ret = 10;
+        end
+    end
+end
+return ret;
+]],
+    run = {
+        ['1~>A'] = 10,
+    },
+}
+
+Test { [[
+input int  A;
+input void Z;
+event int a;
+int ret = 0;
+par/or do
+    loop do
+        int v = await A;
+        emit a(v);
+    end
+with
+    pause/on a do
+        await 9s;
+    end
+    ret = 9;
+with
+    await 10s;
+    ret = 10;
+end
+return ret;
+]],
+    run = {
+        ['1~>A ; ~>5s ; 0~>A ; ~>5s'] = 10,
+    },
+}
+print('COUNT', COUNT)

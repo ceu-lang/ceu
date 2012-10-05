@@ -4,7 +4,7 @@ _AST = {
 
 local MT = {}
 local STACK = nil
-local FIN = 1     -- next fin
+local FIN = 0     -- cur fin
 
 function _AST.isNode (node)
     return (getmetatable(node) == MT) and node.tag
@@ -109,8 +109,8 @@ function visit_aux (me, F)
     local pre, mid, pos = FF(F,me.tag..'_pre'), FF(F,me.tag), FF(F,me.tag..'_pos')
     local bef, aft = FF(F,me.tag..'_bef'), FF(F,me.tag..'_aft')
 
-    if F.Node_pre then F.Node_pre(me) end
-    if pre then pre(me) end
+    if F.Node_pre then me=(F.Node_pre(me) or me) end
+    if pre then me=(pre(me) or me) end
 
     STACK[#STACK+1] = me
 
@@ -119,25 +119,16 @@ function visit_aux (me, F)
             sub.depth = me.depth + 1
             ASR(sub.depth < 127, sub, 'max depth of 127')
             if bef then bef(me, sub) end
-            visit_aux(sub, F)
+            me[i] = visit_aux(sub, F)
             if aft then aft(me, sub) end
         end
     end
 
-    -- TODO!!!
-    if me.fins then
-        me.fins.depth = me.depth + 1
-        ASR(me.fins.depth < 127, me.fins, 'max depth of 127')
-        if bef then bef(me, me.fins) end
-        visit_aux(me.fins, F)
-        if aft then aft(me, me.fins) end
-    end
-
-    if mid then mid(me) end
+    if mid then me=(mid(me) or me) end
     STACK[#STACK] = nil
-    if pos then pos(me) end
+    if pos then me=(pos(me) or me) end
 
-    if F.Node then F.Node(me) end
+    if F.Node then me=(F.Node(me) or me) end
     return me
 end
 
@@ -145,7 +136,7 @@ local C; C = {
     [1] = function (ln, spc, ...) -- spc=CK''
         local blk = node('Block')(ln)
         blk[#blk+1] = node('Dcl_var')(ln, false, 'int',  false, '$ret')
-        for i=1, FIN-1 do
+        for i=1, FIN do
             blk[#blk+1] = node('Dcl_var')(ln,true,'void',false,'$fin_'..i)
         end
         blk[#blk+1] = node('SetBlock')(ln,
@@ -160,11 +151,7 @@ local C; C = {
     BlockN  = node('BlockN'),
     Host    = node('Host'),
 
-    _Return = function (ln, e2)
-        return node('BlockN')(ln,
-                    node('SetExp')(ln, false, e2),
-                    node('Return')(ln))
-    end,
+    _Return = node('_Return'),
 
     Async   = node('Async'),
     VarList = function (ln, ...)
@@ -184,17 +171,13 @@ local C; C = {
             return node('Block')(ln, b1)
         end
 
-        local evt = '$fin_'..FIN
-        local awt = node('AwaitInt')(ln,
-                        node('Var')(ln, evt))
-        local emt = node('EmitInt')(ln,
-                        node('Var')(ln, evt))
         FIN = FIN + 1
-
-        b1[#b1+1] = emt
-
         local fin = node('Finally')(ln, b2)
-        fin.emt = emt
+        fin.n = FIN
+
+        local evt = '$fin_'..FIN
+        local awt = node('AwaitInt')(ln, node('Var')(ln, evt))
+        b1[#b1+1] = node('EmitInt')(ln, node('Var')(ln, evt))
 
         return node('Block')(ln,
                 node('ParAnd')(ln,
@@ -272,6 +255,9 @@ local C; C = {
                 loop)
     end,
 
+    Pause = node('Pause'),
+
+--[=[
     Pause = function (ln, evt, blk)
         local idLess = tostring(evt)
         local awtLess = evt.tag=='Ext' and node('AwaitExt')(ln,evt)
@@ -284,7 +270,7 @@ local C; C = {
             node('Loop')(ln,
                 node('Block')(ln,
                     node('Dcl_var')(ln, false,'int',false,'$pse_'..idLess),
-                    C._Set(ln, EXP(node('Var')(ln,'$pse_'..idLess)), 'SetStmt', awtLess),
+                    C._Set(ln, EXP(node('Var')(ln,'$pse_'..idLess)), 'SetAwait', awtLess),
                     node('If')(ln, EXP(node('Var')(ln,'$pse_'..idLess)),
                         pseLess,
                         node('Break')(ln))))
@@ -300,13 +286,13 @@ local C; C = {
             node('Loop')(ln,
                 node('Block')(ln,
                     node('Dcl_var')(ln, false,'int',false,'$pse_'..idMore),
-                    C._Set(ln, EXP(node('Var')(ln,'$pse_'..idMore)), 'SetStmt', awtMore),
+                    C._Set(ln, EXP(node('Var')(ln,'$pse_'..idMore)), 'SetAwait', awtMore),
                     node('If')(ln, EXP(node('Var')(ln,'$pse_'..idMore)),
                         pseMore,
                         loopLess)))
 
         return node('ParOr')(ln, blk, loopMore)
---[=[
+--[[
         par/or do
             <blk>
         with
@@ -324,8 +310,9 @@ local C; C = {
                 end
             end
         end
-]=]
+]]
     end,
+]=]
 
     AwaitExt = node('AwaitExt'),
     AwaitInt = node('AwaitInt'),
@@ -334,8 +321,8 @@ local C; C = {
 
     EmitExtE = node('EmitExtE'),
     EmitExtS = node('EmitExtS'),
-    EmitT   = node('EmitT'),
-    EmitInt = node('EmitInt'),
+    EmitT    = node('EmitT'),
+    EmitInt  = node('EmitInt'),
 
     Dcl_type = node('Dcl_type'),
     Dcl_det = node('Dcl_det'),
@@ -446,3 +433,187 @@ for i=1, 12 do
 end
 
 _GG = m.P(_GG):match(_STR)
+
+-------------------------------------------------------------------------------
+
+function PSE_cndor (me)
+    local cnd
+    for pse in _AST.iter('Pause') do
+        local int = unpack(pse)
+        int = EXP(node('Var')(me.ln,int[1]))
+        cnd = cnd and EXP(node('Op2_||')(me.ln, '||', cnd, int))
+            or int
+    end
+    return cnd
+end
+
+function PSE_paror (me)
+    local par = node('ParOr')(me.ln)
+    for pse in _AST.iter('Pause') do
+        local int = unpack(pse)
+        par[#par+1] = node('AwaitInt')(me.ln, node('Var')(me.ln,int[1]))
+    end
+    return par
+end
+
+F = {
+    Block_pre = function (me)
+        me.par = _AST.iter'Block'()
+    end,
+
+    SetBlock_pre = function (me)
+        me.blk = _AST.iter'Block'()
+    end,
+    _Return = function (me)
+        local set = _AST.iter'SetBlock'()
+        local e2 = unpack(me)
+        local var = node('Var')(me.ln,set[1][1][1])
+        var.blk = set.blk
+        var.ret = true
+
+        local blk = node('BlockN')(me.ln)
+        blk[#blk+1] = node('SetExp')(me.ln, EXP(var), e2)
+
+        -- Finalizer
+        for i=1, FIN do
+            blk[#blk+1] = node('EmitInt')(blk.ln,
+                            node('Var')(blk.ln, '$fin_'..i))
+        end
+
+        blk[#blk+1] = node('Return')(me.ln)
+        return blk
+    end,
+
+    SetAwait = function (me)
+        local _, awt = unpack(me)
+        awt.ret = awt.ret or awt
+    end,
+
+    AwaitExt = 'AwaitInt',
+    AwaitInt = function (me)
+        if not _AST.iter('Pause')() or
+           string.find(me[1][1], '$fin_') then
+            return
+        end
+        local cnd = PSE_cndor(me)
+        cnd = EXP(node('Op1_!')(me.ln, '!', cnd))
+        local n = node('Loop')(me.ln,
+                    node('BlockN')(me.ln, me,
+                        node('If')(me.ln, cnd, node('Break')(me.ln))))
+        n.ret = me
+        return n
+--[[
+    loop do
+        await X;
+        if ! (evt1 || .. || evtN) then
+            break;
+        end
+    end
+]]
+    end,
+
+    AwaitT = function (me)
+        if not _AST.iter('Pause')() then
+            return me
+        end
+        local ln = me.ln
+
+        local DT = unpack(me)
+        me[1] = node('WCLOCKE')(ln, EXP(node('Var')(ln,'$dt')), 'us')
+
+        local REM = node('WCLOCKR')(ln)
+        REM.awt = me
+
+        local L1 = node('Loop')(ln,
+                    node('BlockN')(ln,
+                        PSE_paror(me),
+                        node('If')(ln, PSE_cndor(me), node('Break')(ln))))
+
+        local L2 = node('Loop')(ln,
+                    node('BlockN')(ln,
+                        PSE_paror(me),
+                        node('If')(ln,
+                            EXP(node('Op1_!')(ln,'!',PSE_cndor(me))),
+                            node('Break')(ln))))
+
+        local L0 = node('Loop')(ln,
+                    node('BlockN')(ln,
+                        node('ParOr')(ln, me, L1),
+                        node('SetExp')(ln,
+                            EXP(node('Var')(ln,'$dt')),
+                            DT),
+                        node('If')(ln,
+                            EXP(node('Op1_!')(ln,'!', EXP(node('Var')(ln,'$dt'))),
+                            node('Break')(ln))),
+                        L2))
+
+        local blk = node('Block')(ln,
+                        node('Dcl_var')(ln, false, 'u32',  false, '$dt'),
+                        node('SetExp')(ln,
+                            EXP(node('Var')(ln,'$dt')),
+                            REM),
+                        L0)
+        blk.par = _AST.iter('Block')()
+        return blk
+--[[
+    u32 $dt = e1;
+
+    -- LOOP 0
+    loop do
+        par/or do
+            await ($dt);
+        with
+            -- LOOP 1
+            loop do
+                par/or do
+                    await pse1;
+                with
+                    await pseN;
+                end
+                if pse1 || pseN then
+                    break;
+                end
+            end
+        end
+
+        $dt = XXX;
+        if !dt then
+            break;
+        end
+
+        -- LOOP 2
+        loop do
+            par/or do
+                await pse1;
+            with
+                await pseN;
+            end
+            if !(pse1 || pseN) then
+                break;
+            end
+        end
+    end
+]]
+    end,
+
+    -- Finalizer
+    ParOr = function (me)
+        for i, sub in ipairs(me) do
+            for i=1, FIN do
+                sub[#sub+1] = node('EmitInt')(sub.ln,
+                                node('Var')(sub.ln, '$fin_'..i))
+            end
+        end
+    end,
+    Break = function (me)
+        local blk = node('BlockN')(me.ln)
+        for i=1, FIN do
+            blk[#blk+1] = node('EmitInt')(blk.ln,
+                            node('Var')(blk.ln, '$fin_'..i))
+        end
+        blk[#blk+1] = me
+        return blk
+    end,
+}
+
+_AST.visit(F)

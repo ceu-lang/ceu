@@ -137,7 +137,7 @@ _GG = { [1] = CK'' * V'Block' * P(-1)-- + EM'expected EOF')
 
     , _Set  = V'Exp' * V'_Sets'
     , _Sets = K'=' * (
-                Cc'SetStmt'  * (V'AwaitT'+V'AwaitExt'+V'AwaitInt') +
+                Cc'SetAwait' * (V'AwaitT'+V'AwaitExt'+V'AwaitInt') +
                 Cc'SetBlock' * V'_SetBlock' +
                 Cc'SetExp'   * V'Exp' +
                 EM'expression'
@@ -185,8 +185,6 @@ _GG = { [1] = CK'' * V'Block' * P(-1)-- + EM'expected EOF')
                 EK'end'
     , Break   = K'break'
 
-    , Pause   = K'pause/on' * (EV'Ext'+EV'Var') * EK'do' * V'Block' * EK'end'
-
     , Exp     = V'_Exp'
     , _Exp    = V'_1'
     , _1      = V'_2'  * (CK'||' * V'_2')^0
@@ -231,16 +229,17 @@ _GG = { [1] = CK'' * V'Block' * P(-1)-- + EM'expected EOF')
                 (NUM * K'ms'  + Cc(0)) *
                 (NUM * K'us'  + Cc(0)) *
                 (NUM * EM'<h,min,s,ms,us>')^-1
-    , WCLOCKE = V'_Parens' * C(
+    , WCLOCKE = K'(' * V'Exp' * EK')' * C(
                     K'h' + K'min' + K's' + K'ms' + K'us'
                   + EM'<h,min,s,ms,us>'
               )
+
+    , Pause    = K'pause/on' * EV'Var' * EK'do' * V'Block' * EK'end'
 
     , AwaitExt = K'await' * EV'Ext'
     , AwaitInt = K'await' * EV'Var'
     , AwaitN   = K'await' * K'Forever'
     , AwaitT   = K'await' * (V'WCLOCKK'+V'WCLOCKE')
-
 
     , _EmitExt = K'emit' * EV'Ext' * (K'(' * V'Exp'^-1 * EK')')^-1
     , EmitExtS = V'_EmitExt'
