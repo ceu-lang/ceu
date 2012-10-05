@@ -498,7 +498,8 @@ F = {
         local cnd = PSE_cndor(me)
         cnd = EXP(node('Op1_!')(me.ln, '!', cnd))
         local n = node('Loop')(me.ln,
-                    node('BlockN')(me.ln, me,
+                    node('BlockN')(me.ln,
+                        me,
                         node('If')(me.ln, cnd, node('Break')(me.ln))))
         n.ret = me
         return n
@@ -527,7 +528,12 @@ F = {
         local L1 = node('Loop')(ln,
                     node('BlockN')(ln,
                         PSE_paror(me),
-                        node('If')(ln, PSE_cndor(me), node('Break')(ln))))
+                        node('If')(ln, PSE_cndor(me),
+                            node('BlockN')(ln,
+                                node('SetExp')(ln,
+                                    EXP(node('Var')(ln,'$dt')),
+                                    REM),
+                                node('Break')(ln)))))
 
         local L2 = node('Loop')(ln,
                     node('BlockN')(ln,
@@ -538,22 +544,19 @@ F = {
 
         local L0 = node('Loop')(ln,
                     node('BlockN')(ln,
-                        node('ParOr')(ln, me, L1),
-                        node('SetExp')(ln,
-                            EXP(node('Var')(ln,'$dt')),
-                            DT),
-                        node('If')(ln,
-                            EXP(node('Op1_!')(ln,'!', EXP(node('Var')(ln,'$dt'))),
-                            node('Break')(ln))),
+                        node('ParOr')(ln,
+                            node('BlockN')(ln, me, node('Break')(ln)),
+                            L1),
                         L2))
 
         local blk = node('Block')(ln,
                         node('Dcl_var')(ln, false, 'u32',  false, '$dt'),
                         node('SetExp')(ln,
                             EXP(node('Var')(ln,'$dt')),
-                            REM),
+                            DT),
                         L0)
         blk.par = _AST.iter('Block')()
+        blk.ret = me
         return blk
 --[[
     u32 $dt = e1;
@@ -562,6 +565,7 @@ F = {
     loop do
         par/or do
             await ($dt);
+            break;
         with
             -- LOOP 1
             loop do
@@ -571,14 +575,10 @@ F = {
                     await pseN;
                 end
                 if pse1 || pseN then
+                    $dt = TMR.togo;
                     break;
                 end
             end
-        end
-
-        $dt = XXX;
-        if !dt then
-            break;
         end
 
         -- LOOP 2

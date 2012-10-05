@@ -14346,8 +14346,73 @@ with
 end
 return ret;
 ]],
+    ana = {
+        nd_acc = 1,     -- TODO: 0
+    },
     run = {
         ['1~>A ; ~>5s ; 0~>A ; ~>5s'] = 10,
     },
 }
+
+Test { [[
+input int  A,B,F;
+input void Z;
+event int a;
+int ret = 50;
+par/or do
+    loop do
+        int v = await A;
+        emit a(v);
+    end
+with
+    pause/on a do
+        ret = await B;
+    end
+with
+    await F;
+end
+return ret;
+]],
+    run = {
+        ['1~>A ; 10~>B ; 1~>F'] = 50,
+    },
+}
+
+Test { [[
+input void F;
+par/or do
+    await F;
+with
+    await 1us;
+end
+int v = await 1us;
+return v;
+]],
+    run = { ['~>F; ~>4us; ~>F']=1 }
+}
+
+Test { [[
+input int  A;
+input void Z;
+event int a;
+int ret = 0;
+par/or do
+    loop do
+        int v = await A;
+        emit a(v);
+    end
+with
+    pause/on a do
+        ret = await 9us;
+    end
+end
+return ret;
+]],
+    run = {
+        ['0~>A;0~>A;~>19us'] = 10,
+        ['1~>A;~>1s;0~>A;~>19us'] = 8,
+        ['1~>A ; ~>5us ; 0~>A ; ~>5us ; 1~>A ; ~>5us ; 0~>A ; ~>9us'] = 1,
+    },
+}
+
 print('COUNT', COUNT)

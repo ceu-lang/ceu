@@ -461,6 +461,7 @@ int ceu_go_wclock (int* ret, s32 dt)
 #endif
 
     {int s = ceu_go(ret);
+    CEU->wclk_late = 0;
     return s;}
 
 #endif

@@ -524,7 +524,8 @@ return 0;
         CONC(me, exp)
 
         local val = exp.val
-        if _OPTS.analysis_run and (exp.tag=='WCLOCKE') then
+        if _OPTS.analysis_run and
+            (exp.tag=='WCLOCKE' or exp.tag=='WCLOCKR') then
             val = 'CEU_WCLOCK_ANY'
         end
         LINE(me, 'ceu_wclock_enable('..me.gte..', '..val
