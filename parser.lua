@@ -83,12 +83,12 @@ end
 TYPES = P'void' + 'int' + 'u8' + 'u16' + 'u32' + 's8' + 's16' + 's32'
 
 KEYS = P'async'  + 'await'   + 'break'   + 'constant' + 'C' + 'deterministic'
-     + 'do'      + 'emit'    + 'else'    + 'elseif'   + 'end'  + 'event'
+     + 'do'      + 'emit'    + 'else'    + 'else/if'   + 'end'  + 'event'
      + 'finally' + 'Forever' + 'input'   + 'if'       + 'loop' + 'null'
      + 'output'  + 'par'     + 'par/and' + 'par/or'   + 'pure' + 'return'
      + 'sizeof'  + 'then'    + 'type'    + 'with'
      + TYPES
-     + 'pause/on'
+     + 'pause/if'
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
@@ -171,7 +171,7 @@ _GG = { [1] = CK'' * V'Block' * P(-1)-- + EM'expected EOF')
 
     , If      = K'if' * EV'Exp' * EK'then' *
                     V'Block' *
-                (K'elseif' * EV'Exp' * EK'then' *
+                (K'else/if' * EV'Exp' * EK'then' *
                     V'Block')^0 *
                 (K'else' *
                     V'Block' + Cc(false)) *
@@ -234,7 +234,7 @@ _GG = { [1] = CK'' * V'Block' * P(-1)-- + EM'expected EOF')
                   + EM'<h,min,s,ms,us>'
               )
 
-    , Pause    = K'pause/on' * EV'Var' * EK'do' * V'Block' * EK'end'
+    , Pause    = K'pause/if' * EV'Var' * EK'do' * V'Block' * EK'end'
 
     , AwaitExt = K'await' * EV'Ext'
     , AwaitInt = K'await' * EV'Var'

@@ -201,7 +201,7 @@ Test { [[
 int a = 1;
 if a == 0 then
     return 1;
-elseif a > 0 then
+else/if a > 0 then
     return 0;
 else
     return 1;
@@ -214,13 +214,13 @@ Test { [[
 int a = 1;
 if a == 0 then
     return 0;
-elseif a < 0 then
+else/if a < 0 then
     return 0;
 else
     a = a + 2;
     if a < 0 then
         return 0;
-    elseif a > 1 then
+    else/if a > 1 then
         return 1;
     else
         return 0;
@@ -14163,16 +14163,16 @@ end
 
 Test { [[
 input void A;
-pause/on A do
+pause/if A do
 end
 return 0;
 ]],
-    parser = 'ERR : line 2 : after `pause/on´ : expected variable/event',
+    parser = 'ERR : line 2 : after `pause/if´ : expected variable/event',
 }
 
 Test { [[
 event void a;
-pause/on a do
+pause/if a do
 end
 return 0;
 ]],
@@ -14181,7 +14181,7 @@ return 0;
 
 Test { [[
 event int a;
-pause/on a do
+pause/if a do
 end
 return 1;
 ]],
@@ -14197,7 +14197,7 @@ par/or do
         emit a(v);
     end
 with
-    pause/on a do
+    pause/if a do
         int v = await B;
         return v;
     end
@@ -14226,8 +14226,8 @@ par/or do
         emit a(v);
     end
 with
-    pause/on a do
-        pause/on a do
+    pause/if a do
+        pause/if a do
             ret = await B;
         end
     end
@@ -14259,8 +14259,8 @@ with
         emit b(v);
     end
 with
-    pause/on a do
-        pause/on b do
+    pause/if a do
+        pause/if b do
             ret = await Z;
         end
     end
@@ -14286,7 +14286,7 @@ par/or do
         emit a(v);
     end
 with
-    pause/on a do
+    pause/if a do
         await Z;
         ret = await B;
     end
@@ -14310,7 +14310,7 @@ par/or do
     emit a(1);
     await A;
 with
-    pause/on a do
+    pause/if a do
         do
             await Z;
         finally
@@ -14336,7 +14336,7 @@ par/or do
         emit a(v);
     end
 with
-    pause/on a do
+    pause/if a do
         await 9s;
     end
     ret = 9;
@@ -14365,7 +14365,7 @@ par/or do
         emit a(v);
     end
 with
-    pause/on a do
+    pause/if a do
         ret = await B;
     end
 with
@@ -14402,7 +14402,7 @@ par/or do
         emit a(v);
     end
 with
-    pause/on a do
+    pause/if a do
         ret = await 9us;
     end
 end
