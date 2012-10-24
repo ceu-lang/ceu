@@ -304,11 +304,6 @@ F = {
 
     --------------------------------------------------------------------------
 
-    Exp = function (me)
-        me.lval = me[1].lval
-        me.tp   = me[1].tp
-    end,
-
     Op2_call = function (me)
         local _, f, exps = unpack(me)
         me.tp = '_'
