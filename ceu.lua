@@ -6,11 +6,6 @@ _OPTS = {
 
     defs_file  = '_ceu_defs.h',
 
-    analysis      = false,
-    analysis_run  = false,
-    analysis_use  = false,
-    analysis_file = '_ceu_analysis.lua',
-
     join      = true,
     c_calls   = false,
 
@@ -28,11 +23,6 @@ _OPTS_NPARAMS = {
     output    = 1,
 
     defs_file  = 1,
-
-    analysis      = 0,
-    analysis_run  = 0,
-    analysis_use  = 0,
-    analysis_file = 1,
 
     join      = 0,
     c_calls   = 1,
@@ -84,11 +74,6 @@ if not _OPTS.input then
     
         --defs-file <filename> # define constants in a separate output file (no)
 
-        --analysis                 # TODO
-        --analysis-run             # TODO
-        --analysis-use             # TODO
-        --analysis-file <filename> # TODO
-
         --join (--no-join)     # join lines enclosed by /*{-{*/ and /*}-}*/ (join)
         --c-calls              # TODO
 
@@ -103,25 +88,6 @@ if not _OPTS.input then
 ]])
     os.exit(1)
 end
-
-if _OPTS.analysis then
-    assert((not _OPTS.analysis_use) and (not _OPTS.analysis_run)
-            and _OPTS.input~='-',
-        'invalid analysis invocation')
-    local params = table.concat(params,' ')
-    do
-        params = string.gsub(params, '--analysis[^ ]*', '')
-        os.execute('./ceu '..params..
-                    ' --analysis-run --analysis-file '.._OPTS.analysis_file)
-        assert(os.execute('gcc -std=c99 -o ceu.exe analysis.c') == 0)
-        assert(os.execute('./ceu.exe '.._OPTS.analysis_file) == 0)
-    end
-    _OPTS.analysis_use = true
-    _OPTS.analysis = false
-end
-
-assert(not (_OPTS.analysis_use and _OPTS.analysis_run),
-        'invalid analysis invocation')
 
 -- C_CALLS
 if _OPTS.c_calls then
@@ -166,14 +132,13 @@ do
     dofile 'mem.lua'
     dofile 'tight.lua'
     dofile 'labels.lua'
-    dofile 'analysis.lua'
     dofile 'code.lua'
 end
 
 local tps = { [1]='u8', [2]='u16', [4]='u32' }
 
 local ALL = {
-    n_tracks = _ANALYSIS.n_tracks,
+    n_tracks = _AST.root.n_tracks,
     n_mem = _MEM.max,
     tceu_off = tps[_ENV.types.tceu_off],
     tceu_lbl = tps[MAX(_ENV.types.tceu_lbl,_ENV.types.tceu_off)],
@@ -194,7 +159,7 @@ do
     tpl = sub(tpl, '=== N_TRACKS ===',  ALL.n_tracks)
     tpl = sub(tpl, '=== N_MEM ===',     ALL.n_mem)
 
-    tpl = sub(tpl, '=== HOST ===',      (_OPTS.analysis_run and '') or _CODE.host)
+    tpl = sub(tpl, '=== HOST ===',      _CODE.host)
     tpl = sub(tpl, '=== CODE ===',      _AST.root.code)
 
     -- lbl >= off (EMITS)
@@ -207,7 +172,6 @@ do
     tpl = sub(tpl, '=== CEU_EMIT0 ===',   _MEM.gtes.emit0)
 
     -- LABELS
-    tpl = sub(tpl, '=== N_LABELS ===', #_LABELS.list)
     tpl = sub(tpl, '=== LABELS ===',   _LABELS.code)
 
     -- DEFINITIONS: constants & defines
@@ -227,10 +191,6 @@ do
             end
         end
         str = str..'#define OUT_n '..outs..'\n'
-        if _OPTS.analysis_run then
-            str = str..'#define IN_n '..#ins..'\n'
-            str = str .. 'int IN_vec[] = { '..table.concat(ins,',')..' };\n'
-        end
 
         -- FUNCTIONS called
         for id in pairs(_ENV.calls) do
@@ -256,14 +216,11 @@ do
             str = str .. '#define CEU_EMITS\n'
             ALL.emits = true
         end
-        if _ANALYSIS.needsPrio then
-            str = str .. '#define CEU_TRK_PRIO\n'
-            ALL.prio = true
-        end
-        if _ANALYSIS.needsChk then
-            str = str .. '#define CEU_TRK_CHK\n'
-            ALL.chk = true
-        end
+
+        str = str .. '#define CEU_TRK_PRIO\n'
+        ALL.prio = true
+        str = str .. '#define CEU_TRK_CHK\n'
+        ALL.chk = true
 
         if _OPTS.defs_file then
             local f = io.open(_OPTS.defs_file,'w')

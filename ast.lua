@@ -91,10 +91,6 @@ function _AST.visit (F)
     return visit_aux(_AST.root, F)
 end
 
-function EXP (n)
-    return node('Exp')(n.ln,n)
-end
-
 local function FF (F, str)
     local f = F[str]
     if type(f) == 'string' then
@@ -140,7 +136,7 @@ local C; C = {
             blk[#blk+1] = node('Dcl_var')(ln,true,'void',false,'$fin_'..i)
         end
         blk[#blk+1] = node('SetBlock')(ln,
-                        EXP(node('Var')(ln, '$ret')),
+                        node('Var')(ln, '$ret'),
                         ...)  -- ...=Block
 
         _AST.root = node('Root')(ln, blk)
@@ -157,7 +153,7 @@ local C; C = {
     VarList = function (ln, ...)
         local t = { ... }
         for i, var in ipairs(t) do
-            t[i] = EXP(var)
+            t[i] = var
         end
         return node('VarList')(ln, unpack(t))
     end,
@@ -221,14 +217,13 @@ local C; C = {
             return node('Loop')(ln, blk)
         end
 
-        local i = function() return EXP(node('Var')(ln, _i)) end
+        local i = function() return node('Var')(ln, _i) end
         local dcl_i = node('Dcl_var')(ln, false, 'int', false, _i)
         dcl_i.read_only = true
-        local set_i = node('SetExp')(ln, i(),
-                                        EXP(node('CONST')(ln, '0')))
+        local set_i = node('SetExp')(ln, i(), node('CONST')(ln, '0'))
         local nxt_i = node('SetExp')(ln, i(),
-                        EXP(node('Op2_+')(ln, '+', i(),
-                                node('CONST')(ln,'1'))))
+                        node('Op2_+')(ln, '+', i(),
+                            node('CONST')(ln,'1')))
 
         if not _j then
             return node('Block')(ln, dcl_i, set_i,
@@ -236,11 +231,11 @@ local C; C = {
         end
 
         local j_name = '$j'..tostring(blk)
-        local j = function() return EXP(node('Var')(ln, j_name)) end
+        local j = function() return node('Var')(ln, j_name) end
         local dcl_j = node('Dcl_var')(ln, false, 'int', false, j_name)
         local set_j = node('SetExp')(ln, j(), _j)
 
-        local cmp = EXP(node('Op2_>=')(ln, '>=', i(), j()))
+        local cmp = node('Op2_>=')(ln, '>=', i(), j())
 
         local loop = node('Loop')(ln,
             node('If')(ln, cmp,
@@ -270,8 +265,8 @@ local C; C = {
             node('Loop')(ln,
                 node('Block')(ln,
                     node('Dcl_var')(ln, false,'int',false,'$pse_'..idLess),
-                    C._Set(ln, EXP(node('Var')(ln,'$pse_'..idLess)), 'SetAwait', awtLess),
-                    node('If')(ln, EXP(node('Var')(ln,'$pse_'..idLess)),
+                    C._Set(ln, node('Var')(ln,'$pse_'..idLess), 'SetAwait', awtLess),
+                    node('If')(ln, node('Var')(ln,'$pse_'..idLess),
                         pseLess,
                         node('Break')(ln))))
 
@@ -286,8 +281,8 @@ local C; C = {
             node('Loop')(ln,
                 node('Block')(ln,
                     node('Dcl_var')(ln, false,'int',false,'$pse_'..idMore),
-                    C._Set(ln, EXP(node('Var')(ln,'$pse_'..idMore)), 'SetAwait', awtMore),
-                    node('If')(ln, EXP(node('Var')(ln,'$pse_'..idMore)),
+                    C._Set(ln, node('Var')(ln,'$pse_'..idMore), 'SetAwait', awtMore),
+                    node('If')(ln, node('Var')(ln,'$pse_'..idMore),
                         pseMore,
                         loopLess)))
 
@@ -343,7 +338,7 @@ local C; C = {
             ret[#ret+1] = node('Dcl_var')(ln, isEvt, tp, dim, t[i])
             if t[i+1] then
                 ret[#ret+1] = C._Set(ln,
-                                EXP(node('Var')(ln,t[i])),
+                                node('Var')(ln,t[i]),
                                 t[i+1],
                                 t[i+2])
             end
@@ -358,7 +353,7 @@ local C; C = {
             ret[#ret+1] = node('Dcl_int')(ln, isEvt, tp, dim, t[i])
             if t[i+1] then
                 ret[#ret+1] = C._Set(ln,
-                                EXP(node('Var')(ln,t[i])),
+                                node('Var')(ln,t[i]),
                                 t[i+1],
                                 t[i+2])
             end
@@ -381,7 +376,6 @@ local C; C = {
 
     CallStmt = node('CallStmt'),
 
-    Exp = node('Exp'),
     _Exp = function (ln, ...)
         local v1, v2, v3, v4 = ...
         if not v2 then          -- single value
@@ -440,8 +434,8 @@ function PSE_cndor (me)
     local cnd
     for pse in _AST.iter('Pause') do
         local int = unpack(pse)
-        int = EXP(node('Var')(me.ln,int[1]))
-        cnd = cnd and EXP(node('Op2_||')(me.ln, '||', cnd, int))
+        int = node('Var')(me.ln,int[1])
+        cnd = cnd and node('Op2_||')(me.ln, '||', cnd, int)
             or int
     end
     return cnd
@@ -467,12 +461,12 @@ F = {
     _Return = function (me)
         local set = _AST.iter'SetBlock'()
         local e2 = unpack(me)
-        local var = node('Var')(me.ln,set[1][1][1])
+        local var = node('Var')(me.ln,set[1][1])
         var.blk = set.blk
         var.ret = true
 
         local blk = node('BlockN')(me.ln)
-        blk[#blk+1] = node('SetExp')(me.ln, EXP(var), e2)
+        blk[#blk+1] = node('SetExp')(me.ln, var, e2)
 
         -- Finalizer
         for i=1, FIN do
@@ -496,7 +490,7 @@ F = {
             return
         end
         local cnd = PSE_cndor(me)
-        cnd = EXP(node('Op1_!')(me.ln, '!', cnd))
+        cnd = node('Op1_!')(me.ln, '!', cnd)
         local n = node('Loop')(me.ln,
                     node('BlockN')(me.ln,
                         me,
@@ -520,7 +514,7 @@ F = {
         local ln = me.ln
 
         local DT = unpack(me)
-        me[1] = node('WCLOCKE')(ln, EXP(node('Var')(ln,'$dt')), 'us')
+        me[1] = node('WCLOCKE')(ln, node('Var')(ln,'$dt'), 'us')
 
         local REM = node('WCLOCKR')(ln)
         REM.awt = me
@@ -531,7 +525,7 @@ F = {
                         node('If')(ln, PSE_cndor(me),
                             node('BlockN')(ln,
                                 node('SetExp')(ln,
-                                    EXP(node('Var')(ln,'$dt')),
+                                    node('Var')(ln,'$dt'),
                                     REM),
                                 node('Break')(ln)))))
 
@@ -539,7 +533,7 @@ F = {
                     node('BlockN')(ln,
                         PSE_paror(me),
                         node('If')(ln,
-                            EXP(node('Op1_!')(ln,'!',PSE_cndor(me))),
+                            node('Op1_!')(ln,'!',PSE_cndor(me)),
                             node('Break')(ln))))
 
         local L0 = node('Loop')(ln,
@@ -552,7 +546,7 @@ F = {
         local blk = node('Block')(ln,
                         node('Dcl_var')(ln, false, 'u32',  false, '$dt'),
                         node('SetExp')(ln,
-                            EXP(node('Var')(ln,'$dt')),
+                            node('Var')(ln,'$dt'),
                             DT),
                         L0)
         blk.par = _AST.iter('Block')()

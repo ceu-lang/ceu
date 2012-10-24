@@ -20,7 +20,6 @@ subst 'props.lua'
 subst 'mem.lua'
 subst 'tight.lua'
 subst 'labels.lua'
-subst 'analysis.lua'
 subst 'code.lua'
 
 -- template.c

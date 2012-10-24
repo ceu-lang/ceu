@@ -38,18 +38,7 @@ function CONC (me, sub, tab)
 end
 
 function ATTR (me, n1, n2)
-    if not _OPTS.analysis_run then
-        LINE(me, n1.val..' = '..n2.val..';')
-    end
-end
-
-function EXP (me, e)
-    if _OPTS.analysis_run and e.accs then
-        for _, acc in ipairs(e.accs) do
-            SWITCH(me, acc.lbl)
-            CASE(me, acc.lbl)
-        end
-    end
+    LINE(me, n1.val..' = '..n2.val..';')
 end
 
 function CASE (me, lbl)
@@ -69,9 +58,6 @@ end
 function SWITCH (me, lbl)
     LINE(me, [[
 _lbl_ = ]]..lbl.id..[[;
-#ifdef CEU_ANA
-ceu_ana_state_path(CEU->lbl, _lbl_);
-#endif
 goto _SWITCH_;
 ]])
 end
@@ -175,16 +161,9 @@ F = {
         end
         CONC_ALL(me)
 
-        if _OPTS.analysis_run then
-            SWITCH(me, me.lbl)
-            CASE(me, me.lbl)
-        end
-
-        if not (_OPTS.analysis_use and _ANALYSIS.isForever) then
-            local ret = _AST.root[1].vars[1]    -- $ret
-            LINE(me, 'if (ret) *ret = '..ret.val..';')
-            LINE(me, 'return 1;')
-        end
+        local ret = _AST.root[1].vars[1]    -- $ret
+        LINE(me, 'if (ret) *ret = '..ret.val..';')
+        LINE(me, 'return 1;')
         HALT(me)
     end,
 
@@ -195,8 +174,6 @@ F = {
     SetExp = function (me)
         local e1, e2 = unpack(me)
         COMM(me, 'SET: '..tostring(e1[1]))    -- Var or C
-        EXP(me, e2)
-        EXP(me, e1)
         ATTR(me, e1, e2)
     end,
 
@@ -204,16 +181,11 @@ F = {
         local e1, e2 = unpack(me)
         CONC(me, e2)
         ATTR(me, e1, e2.ret)
-        EXP(me, e1)     -- after awaking
     end,
 
     SetBlock = function (me)
         local _,blk = unpack(me)
         CONC(me, blk)
-        if _OPTS.analysis_run then
-            SWITCH(me, me.lbl_no)
-            CASE(me, me.lbl_no)
-        end
         HALT(me)        -- must escape with `return´
         CASE(me, me.lbl_out)
         BLOCK_GATES(me)
@@ -250,23 +222,10 @@ F = {
 
 
     ParEver = function (me)
-        -- behave as ParAnd, but halt on termination (TODO: +ROM)
-        if _OPTS.analysis_run then
-            F.ParAnd(me)
-            SWITCH(me, me.lbl_no)
-            CASE(me, me.lbl_no)
-            HALT(me)
-            return
-        end
-
         F._Par(me)
         for i, sub in ipairs(me) do
             CASE(me, me.lbls_in[i])
             CONC(me, sub)
-            if _OPTS.analysis_run then
-                SWITCH(me, me.lbls_no[i])
-                CASE(me, me.lbls_no[i])
-            end
             HALT(me)
         end
     end,
@@ -307,38 +266,22 @@ F = {
             LINE(me, 'if (!'..VAL(me.off+i-1)..')')
             HALT(me)
         end
-
-        if _OPTS.analysis_run then
-            SWITCH(me, me.lbl_out)
-            CASE(me, me.lbl_out)
-        end
     end,
 
     If = function (me)
         local c, t, f = unpack(me)
         -- TODO: If cond assert(c==ptr or int)
 
-        if _OPTS.analysis_run then
-            EXP(me, c)
-            local id = (me.lbl_f and me.lbl_f.id) or me.lbl_e.id
-            LINE(me, [[
-CEU_ANA_PRE(1);
-ceu_track_ins(0, PR_MAX, ]]..id..[[);
-CEU_ANA_POS();
-]])
-            SWITCH(me, me.lbl_t);
-        else
-            LINE(me, [[if (]]..c.val..[[) {]])
-            SWITCH(me, me.lbl_t)
+        LINE(me, [[if (]]..c.val..[[) {]])
+        SWITCH(me, me.lbl_t)
 
-            LINE(me, [[} else {]])
-            if me.lbl_f then
-                SWITCH(me, me.lbl_f)
-            else
-                SWITCH(me, me.lbl_e)
-            end
-            LINE(me, [[}]])
+        LINE(me, [[} else {]])
+        if me.lbl_f then
+            SWITCH(me, me.lbl_f)
+        else
+            SWITCH(me, me.lbl_e)
         end
+        LINE(me, [[}]])
 
         CASE(me, me.lbl_t)
         CONC(me, t, 4)
@@ -355,21 +298,12 @@ CEU_ANA_POS();
     Async_pos = function (me)
         local vars,blk = unpack(me)
         for _, n in ipairs(vars) do
-            ATTR(me, n.new, n[1].var)
-            EXP(me, n)
+            ATTR(me, n.new, n.var)
         end
         LINE(me, PTR_GTE'async0'..'['..me.gte..'] = '..me.lbl.id..';')
         HALT(me)
         CASE(me, me.lbl)
-        if _OPTS.analysis_run then
-            -- skip `blk´ on analysis
-            local set = _AST.iter()()       -- requires `Async_pos´
-            if set.tag == 'SetBlock' then
-                SWITCH(me, set.lbl_out)
-            end
-        else
-            CONC(me, blk)
-        end
+        CONC(me, blk)
     end,
 
     Loop = function (me)
@@ -378,11 +312,6 @@ CEU_ANA_POS();
         COMM(me, 'Loop ($0):')
         CASE(me, me.lbl_ini)
         CONC(me, body)
-
-        if _OPTS.analysis_run then         -- verifies the loop "loops"
-            SWITCH(me, me.lbl_mid)
-            CASE(me, me.lbl_mid)
-        end
 
         local async = _AST.iter'Async'()
         if async then
@@ -398,10 +327,7 @@ if (ceu_out_pending()) {
 ]])
         end
 
-        -- a single iter is enough on analysis a tight loop
-        if (not _OPTS.analysis_run) or me.blocks then
-            SWITCH(me, me.lbl_ini)
-        end
+        SWITCH(me, me.lbl_ini)
 
         -- AFTER code :: block inner gates
         CASE(me, me.lbl_out)
@@ -420,22 +346,14 @@ if (ceu_out_pending()) {
         local ext = e1.ext
 
         if ext.output then  -- e1 not Exp
-            if _OPTS.analysis_run then
-                if e2 then
-                    EXP(me, e2)
-                end
-                SWITCH(me, me.lbl_emt)
-                CASE(me, me.lbl_emt)
-            else
-                LINE(me, me.val..';')
-            end
+            LINE(me, me.val..';')
             return
         end
 
         assert(ext.input)
         local async = _AST.iter'Async'()
         LINE(me, PTR_GTE'async0'..'['..async.gte..'] = '..me.lbl_cnt.id..';')
-        if e2 and (not _OPTS.analysis_run) then
+        if e2 then
             if _TP.deref(ext.tp) then
                 LINE(me, 'return ceu_go_event(ret, IN_'..ext.id
                         ..', (void*)'..e2.val..');')
@@ -459,14 +377,6 @@ if (ceu_out_pending()) {
             ATTR(me, int, exp)
         end
 
-        if _OPTS.analysis_run then -- int not Exp
-            if exp then
-                EXP(me, exp)
-            end
-            SWITCH(me, me.lbl_emt)
-            CASE(me, me.lbl_emt)
-        end
-
         -- emit
         LINE(me, [[
 // Emit ]]..var.id..';\n'..
@@ -486,7 +396,6 @@ break;
     EmitT = function (me)
         local exp = unpack(me)
         local async = _AST.iter'Async'()
-        EXP(me, exp)
         LINE(me, PTR_GTE'async0'..'['..async.gte..'] = '..me.lbl_cnt.id..';')
         LINE(me, [[
 #ifdef CEU_WCLOCKS
@@ -504,10 +413,7 @@ return 0;
 
     CallStmt = function (me)
         local call = unpack(me)
-        EXP(me, call)
-        if not _OPTS.analysis_run then
-            LINE(me, call.val..';')
-        end
+        LINE(me, call.val..';')
     end,
 
     Pause = function (me)
@@ -524,10 +430,6 @@ return 0;
         CONC(me, exp)
 
         local val = exp.val
-        if _OPTS.analysis_run and
-            (exp.tag=='WCLOCKE' or exp.tag=='WCLOCKR') then
-            val = 'CEU_WCLOCK_ANY'
-        end
         LINE(me, 'ceu_wclock_enable('..me.gte..', '..val
                     ..', '..me.lbl.id..');')
 
@@ -544,10 +446,6 @@ return 0;
         local int,_ = unpack(me)
         LINE(me, VAL(int.var.awt0+1+me.gte*_ENV.types.tceu_lbl, 'tceu_lbl*')
                     ..' = '..me.lbl.id..';')
-        if _OPTS.analysis_run then -- int not Exp
-            SWITCH(me, me.lbl_awt)
-            CASE(me, me.lbl_awt)
-        end
         HALT(me, true)
         CASE(me, me.lbl)
     end,

@@ -52,11 +52,7 @@ F = {
             else
                 len = _ENV.types[var.tp]
             end
-            if _OPTS.analysis_run then
-                var.off = 0
-            else
-                var.off = alloc(len)
-            end
+            var.off = alloc(len)
             if var.isEvt then
                 var.awt0 = alloc(1)
                 alloc(_ENV.types.tceu_lbl*var.n_awaits)
@@ -94,18 +90,6 @@ F = {
         me.off = alloc(#me)        -- TODO: bitmap?
     end,
     ParAnd = 'Block',
-
-    -- for analysis_run, ParEver behaves like ParAnd (n_reachs)
-    ParEver_pre = function (me)
-        if _OPTS.analysis_run then
-            F.ParAnd_pre(me)
-        end
-    end,
-    ParEver = function (me)
-        if _OPTS.analysis_run then
-            F.Block(me)
-        end
-    end,
 
     Var = function (me)
         me.val = me.var.val

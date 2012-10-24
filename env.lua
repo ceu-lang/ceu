@@ -30,8 +30,7 @@ _ENV = {
         pointer  = _OPTS.tp_pointer,
         tceu_off = _OPTS.tp_off,
         tceu_lbl = _OPTS.tp_lbl,
-        tceu_wclock = ceil(4 + _OPTS.tp_lbl        -- TODO: perda de memoria
-                          + (_OPTS.analysis_run and 4 or 0)),
+        tceu_wclock = ceil(4 + _OPTS.tp_lbl), -- TODO: perda de memoria
     },
     calls = {},     -- { _printf=true, _myf=true, ... }
 
@@ -93,7 +92,7 @@ F = {
             local vars, blk = unpack(async)
             if vars then
                 for _, n in ipairs(vars) do
-                    local var = n[1].var
+                    local var = n.var
                     ASR(not var.arr, vars, 'invalid argument')
                     n.new = newvar(vars, blk, false, var.tp, nil, var.id)
                 end
@@ -300,7 +299,7 @@ F = {
 
     CallStmt = function (me)
         local call = unpack(me)
-        ASR(call[1].tag == 'Op2_call', me, 'invalid statement')
+        ASR(call.tag == 'Op2_call', me, 'invalid statement')
     end,
 
     --------------------------------------------------------------------------

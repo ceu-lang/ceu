@@ -44,7 +44,6 @@ local EK = function (tk)
 end
 
 local _V2NAME = {
-    Exp = 'expression',
     _Exp = 'expression',
     _Stmt = 'statement',
     Ext = 'event',
@@ -135,15 +134,15 @@ _GG = { [1] = CK'' * V'Block' * P(-1)-- + EM'expected EOF')
                      EV'__ID' * (K',' * EV'__ID')^0
     , Dcl_type  = K'type' * EV'ID_c' * EK'=' * NUM
 
-    , _Set  = V'Exp' * V'_Sets'
+    , _Set  = V'_Exp' * V'_Sets'
     , _Sets = K'=' * (
                 Cc'SetAwait' * (V'AwaitT'+V'AwaitExt'+V'AwaitInt') +
                 Cc'SetBlock' * V'_SetBlock' +
-                Cc'SetExp'   * V'Exp' +
+                Cc'SetExp'   * V'_Exp' +
                 EM'expression'
               )
 
-    , CallStmt = m.Cmt(V'Exp',
+    , CallStmt = m.Cmt(V'_Exp',
                     function (s,i,...)
                         return (string.sub(s,i-1,i-1)==')'), ...
                     end)
@@ -157,7 +156,7 @@ _GG = { [1] = CK'' * V'Block' * P(-1)-- + EM'expected EOF')
                 EK'end'
     , VarList = ( EK'(' * EV'Var' * (EK',' * EV'Var')^0 * EK')' )^-1
 
-    , _Return = K'return' * EV'Exp'
+    , _Return = K'return' * EV'_Exp'
 
     , ParOr   = K'par/or' * EK'do' *
                     V'Block' * (EK'with' * V'Block')^1 *
@@ -169,23 +168,22 @@ _GG = { [1] = CK'' * V'Block' * P(-1)-- + EM'expected EOF')
                     V'Block' * (EK'with' * V'Block')^1 *
                 EK'end'
 
-    , If      = K'if' * EV'Exp' * EK'then' *
+    , If      = K'if' * EV'_Exp' * EK'then' *
                     V'Block' *
-                (K'else/if' * EV'Exp' * EK'then' *
+                (K'else/if' * EV'_Exp' * EK'then' *
                     V'Block')^0 *
                 (K'else' *
                     V'Block' + Cc(false)) *
                 EK'end'
 
     , Loop    = K'loop' *
-                    (V'ID_var'* (EK','*EV'Exp' + Cc(false)) +
+                    (V'ID_var'* (EK','*EV'_Exp' + Cc(false)) +
                         Cc(false)*Cc(false)) *
                 EK'do' *
                     V'Block' *
                 EK'end'
     , Break   = K'break'
 
-    , Exp     = V'_Exp'
     , _Exp    = V'_1'
     , _1      = V'_2'  * (CK'||' * V'_2')^0
     , _2      = V'_3'  * (CK'&&' * V'_3')^0
@@ -229,7 +227,7 @@ _GG = { [1] = CK'' * V'Block' * P(-1)-- + EM'expected EOF')
                 (NUM * K'ms'  + Cc(0)) *
                 (NUM * K'us'  + Cc(0)) *
                 (NUM * EM'<h,min,s,ms,us>')^-1
-    , WCLOCKE = K'(' * V'Exp' * EK')' * C(
+    , WCLOCKE = K'(' * V'_Exp' * EK')' * C(
                     K'h' + K'min' + K's' + K'ms' + K'us'
                   + EM'<h,min,s,ms,us>'
               )
@@ -241,13 +239,13 @@ _GG = { [1] = CK'' * V'Block' * P(-1)-- + EM'expected EOF')
     , AwaitN   = K'await' * K'Forever'
     , AwaitT   = K'await' * (V'WCLOCKK'+V'WCLOCKE')
 
-    , _EmitExt = K'emit' * EV'Ext' * (K'(' * V'Exp'^-1 * EK')')^-1
+    , _EmitExt = K'emit' * EV'Ext' * (K'(' * V'_Exp'^-1 * EK')')^-1
     , EmitExtS = V'_EmitExt'
     , EmitExtE = V'_EmitExt'
 
     , EmitT    = K'emit' * (V'WCLOCKK'+V'WCLOCKE')
 
-    , EmitInt  = K'emit' * EV'Var' * (K'(' * V'Exp'^-1 * EK')')^-1
+    , EmitInt  = K'emit' * EV'Var' * (K'(' * V'_Exp'^-1 * EK')')^-1
 
     , _Dcl_ext = (CK'input'+CK'output') * EV'ID_type' *
                     EV'ID_ext' * (K','*EV'ID_ext')^0

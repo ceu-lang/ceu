@@ -147,7 +147,7 @@ F = {
 
     AwaitT = function (me)
         if me[1].tag == 'WCLOCKE' then
-            me.lbl = new{'Awake_'..me[1][1][1][1], to_reach=true,
+            me.lbl = new{'Awake_'..me[1][1][1], to_reach=true,
                         me=me, err='awake of `await´'}
         else
             me.lbl = new{'Awake_'..me[1].us, to_reach=true,

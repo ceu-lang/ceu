@@ -28,24 +28,11 @@ Test = function (t)
         return
     end
 
-    local ok = not (T.parser or T.ast or T.env or T.mem or
-                    T.props or T.tight)
-    if ok then
-        local CEU = './ceu - --analysis-run --tp-word 4 --tp-pointer 4'
-        local ceu = assert(io.popen(CEU, 'w'))
-        ceu:write(str_input)
-        ceu:close()
-        assert(os.execute('gcc -std=c99 -o ceu.exe analysis.c') == 0)
-        assert(os.execute('./ceu.exe _ceu_analysis.lua') == 0)
-    end
-
     _OPTS = {
         tp_word    = 4,
         tp_pointer = 4,
         tp_off     = 2,
         tp_lbl     = 2,
-        analysis_use  = true,
-        analysis_file = '_ceu_analysis.lua',
     }
 
     -- LINES
@@ -63,46 +50,11 @@ Test = function (t)
     if not check('mem')      then return end
     if not check('tight')    then return end
     if not check('labels')   then return end
-    if not check('analysis') then return end
     if not check('code')     then return end
 
     if T.tot then
         assert(T.tot==_MEM.max, 'mem '.._MEM.max)
     end
-
-    -- ANALYSIS
-    --if T.dfa then return end
-    assert((not T.n_unreachs) and not (T.isForever)) -- move to analysis
-    do
-        local _defs = { n_reachs=0, n_unreachs=0, isForever=false, nd_acc=0 }
-        local _no = { needsPrio=true, needsChk=true, n_states=true, n_tracks=true }
-        for k, v in pairs(_ANALYSIS) do
-            assert( (v==_defs[k] or _no[k]) and (T.ana==nil or T.ana[k]==nil)
-                    or (T.ana and T.ana[k]==v)
-                    or (T.ana and T.ana.nd_acc==_ANALYSIS.nd_acc),
-                            k..' = '..tostring(v))
-        end
-        if T.ana then
-            for k, v in pairs(T.ana) do
-                assert( v == _ANALYSIS[k],
-                            k..' = '..tostring(_ANALYSIS[k]))
-            end
-        end
---[[
-        assert(_DFA.nds.call.tot == (T.nd_call or 0),
-            'nd_call '.._DFA.nds.call.tot)
-
-        assert(_DFA.escs.tot == (T.nd_esc or 0),
-            'nd_esc '.._DFA.escs.tot)
-
-        if not _DFA.nd_stop then
-            assert(_DFA.n_unreach == (T.unreach or 0),
-                'unreach '.._DFA.n_unreach)
-        end
-]]
-    end
---[=[
-]=]
 
     -- RUN
 
@@ -118,7 +70,7 @@ Test = function (t)
         return
     end
 
-    local CEU = './ceu _ceu_tmp.ceu --analysis --tp-word 4 --tp-pointer 4'
+    local CEU = './ceu _ceu_tmp.ceu --tp-word 4 --tp-pointer 4'
 
     -- T.run = N
     if type(T.run) ~= 'table' then
