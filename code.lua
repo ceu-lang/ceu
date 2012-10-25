@@ -218,7 +218,7 @@ F = {
         for _, n in ipairs(vars) do
             ATTR(me, n.new, n.var)
         end
-        LINE(me, 'ceu_lst_ins(_ASYNC, '..me.lbl.id..', 0);')
+        LINE(me, 'ceu_lst_ins(IN__ASYNC, '..me.lbl.id..', 0);')
         HALT(me)
         CASE(me, me.lbl)
         CONC(me, blk)
@@ -239,7 +239,7 @@ if (ceu_out_pending()) {
 #else
 {
 #endif
-    ceu_lst_ins(_ASYNC, ]]..me.lbl_ini.id..[[, 0);
+    ceu_lst_ins(IN__ASYNC, ]]..me.lbl_ini.id..[[, 0);
     break;
 }
 ]])
@@ -270,7 +270,7 @@ if (ceu_out_pending()) {
 
         assert(ext.input)
         local async = _AST.iter'Async'()
-        LINE(me, 'ceu_lst_ins(_ASYNC, '..me.lbl_cnt.id..', 0);')
+        LINE(me, 'ceu_lst_ins(IN__ASYNC, '..me.lbl_cnt.id..', 0);')
         if e2 then
             if _TP.deref(ext.tp) then
                 LINE(me, 'return ceu_go_event(ret, IN_'..ext.id
@@ -312,7 +312,7 @@ break;
     EmitT = function (me)
         local exp = unpack(me)
         local async = _AST.iter'Async'()
-        LINE(me, 'ceu_lst_ins(_ASYNC, '..me.lbl_cnt.id..', 0);')
+        LINE(me, 'ceu_lst_ins(IN__ASYNC, '..me.lbl_cnt.id..', 0);')
         LINE(me, [[
 #ifdef CEU_WCLOCKS
 { int s = ceu_go_wclock(ret,]]..exp.val..[[);
@@ -353,7 +353,7 @@ return 0;
     end,
     AwaitExt = function (me)
         local e1,_ = unpack(me)
-        LINE(me, 'ceu_lst_ins('..e1.ext.n..', '..me.lbl.id..', 0);')
+        LINE(me, 'ceu_lst_ins(IN_'..e1.ext.id..', '..me.lbl.id..', 0);')
         HALT(me, true)
         CASE(me, me.lbl)
     end,

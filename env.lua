@@ -10,7 +10,6 @@ _ENV = {
         --[N-1]={_ASYNC},
         --[N]={_WCLOCK},
     },
-    code = '',
 
     types = {
         void = 0,
@@ -86,15 +85,8 @@ end
 F = {
     Root = function (me)
         -- enum of events
-        _ENV.evts[#_ENV.evts+1] = {id='_WCLOCK', n=#_ENV.evts}
-        _ENV.evts[#_ENV.evts+1] = {id='_ASYNC',  n=#_ENV.evts}
-        for i, evt in ipairs(_ENV.evts) do
-            if evt.isEvt == 'int' then
-                _ENV.code = _ENV.code..'    '..evt.id..evt.n..' = '..evt.n..',\n'
-            else
-                _ENV.code = _ENV.code..'    '..evt.id..' = '..evt.n..',\n'
-            end
-        end
+        _ENV.evts[#_ENV.evts+1] = {id='_WCLOCK', n=#_ENV.evts, input=true}
+        _ENV.evts[#_ENV.evts+1] = {id='_ASYNC',  n=#_ENV.evts, input=true}
         _ENV.types.tceu_nevt = _TP.n2bytes(#_ENV.evts)
     end,
 

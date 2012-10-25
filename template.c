@@ -45,10 +45,6 @@ typedef struct {
 } tceu_lst;
 
 enum {
-=== EVTS ===
-};
-
-enum {
 === LABELS ===
 };
 
@@ -236,7 +232,7 @@ int ceu_track_peek (tceu_trk* trk)
 
 void ceu_wclock_enable (s32 us, tceu_nlbl lbl) {
     s32 dt = us - CEU.wclk_late;
-    ceu_lst_ins(_WCLOCK, lbl, dt);
+    ceu_lst_ins(IN__WCLOCK, lbl, dt);
     if (CEU.wclk_min==CEU_WCLOCK_NONE || CEU.wclk_min>dt) {
         CEU.wclk_min = dt;
 #ifdef ceu_out_wclock
@@ -283,7 +279,7 @@ int ceu_go_async (int* ret, int* pending)
 {
     int s;
 
-    ceu_lst_go(_ASYNC);
+    ceu_lst_go(IN__ASYNC);
 #ifdef CEU_WCLOCKS
     CEU.wclk_late--;
 #endif
@@ -294,7 +290,7 @@ int ceu_go_async (int* ret, int* pending)
         tceu_nlst i;
         *pending = 0;
         for (i=0 ; i<CEU.lsts_n ; i++) {
-            if (CEU.lsts[i].evt == _ASYNC) {
+            if (CEU.lsts[i].evt == IN__ASYNC) {
                 *pending = 1;
                 break;
             }
@@ -326,7 +322,7 @@ int ceu_go_wclock (int* ret, s32 dt)
 
     for (i=0; i<CEU.lsts_n; i++)
     {
-        if (CEU.lsts[i].evt != _WCLOCK)
+        if (CEU.lsts[i].evt != IN__WCLOCK)
             continue;
 
         if (CEU.lsts[i].togo == min_togo) {

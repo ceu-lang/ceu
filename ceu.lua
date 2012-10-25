@@ -153,7 +153,6 @@ do
     tpl = sub(tpl, '=== TCEU_NEVT ===',  tps[_ENV.types.tceu_nevt])
     tpl = sub(tpl, '=== TCEU_NLBL ===',  tps[_ENV.types.tceu_nlbl])
 
-    tpl = sub(tpl, '=== EVTS ===',   _ENV.code)
     tpl = sub(tpl, '=== LABELS ===', _LBLS.code)
     tpl = sub(tpl, '=== HOST ===',   _CODE.host)
     tpl = sub(tpl, '=== CODE ===',   _AST.root.code)
