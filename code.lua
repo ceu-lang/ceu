@@ -1,27 +1,6 @@
 _CODE = {
-    labels = { 'Inactive', 'Init' },
-    host   = '',
+    host = '',
 }
-
-function VAL (off, tp)
-    return '(*'..PTR(off,tp)..')'
-end
-
-function PTR (off, tp)
-    tp = tp or 'char*'
-    return '(('..tp..')(CEU->mem+'..off..'))'
-end
-
-local _T = { wclock0='tceu_wclock*', async0='tceu_lbl*', emit0='tceu_lbl*' }
-function PTR_GTE (str, tp)
-    tp = tp or _T[str] or 'u8*'
-    return PTR(_MEM.gtes[str], tp)
-end
-
-function PTR_EXT (i, gte, tp)
-    tp = tp or 'tceu_lbl*'
-    return '(('..tp..')('..PTR_GTE(i,'char*')..'+1+'..gte..'*'..'sizeof(tceu_lbl)))'
-end
 
 function CONC_ALL (me)
     for _, sub in ipairs(me) do
@@ -57,7 +36,7 @@ end
 
 function SWITCH (me, lbl)
     LINE(me, [[
-_lbl_ = ]]..lbl.id..[[;
+_trk_.lbl = ]]..lbl.id..[[;
 goto _SWITCH_;
 ]])
 end
@@ -67,60 +46,11 @@ function COMM (me, comm)
 end
 
 function BLOCK_GATES (me)
-    -- TODO: test if out is reachable, test if has inner parallel
-    -- in both cases, no need to run anything
-
     COMM(me, 'close gates')
 
-    -- do not resume inner ASYNCS
-    local n = me.gtes.asyncs[2] - me.gtes.asyncs[1]
-    if n > 0 then
-        LINE(me, 'memset('..PTR_GTE('async0','char*')..' + '
-                    ..me.gtes.asyncs[1]..'*sizeof(tceu_lbl), 0, '
-                    ..n..'*sizeof(tceu_lbl));')
-    end
+    LINE(me, 'ceu_lst_clr('..me.lbls[1]..','..me.lbls[2]..');')
+    LINE(me, 'ceu_track_clr('..me.lbls[1]..','..me.lbls[2]..');')
 
-    -- do not resume inner WCLOCKS
-    local n = me.gtes.wclocks[2] - me.gtes.wclocks[1]
-    if n > 0 then
-        LINE(me, 'memset('..PTR_GTE('wclock0','char*')..' + '
-                    ..me.gtes.wclocks[1]..'*sizeof(tceu_wclock), 0, '
-                    ..n..'*sizeof(tceu_wclock));')
-    end
-
-    -- do not resume inner EMITS continuations (await/emit)
-    local n = me.gtes.emits[2] - me.gtes.emits[1]
-    if n > 0 then
-        LINE(me, 'memset('..PTR_GTE('emit0','char*')..' + '
-                    ..me.gtes.emits[1]..'*sizeof(tceu_lbl), 0, '
-                    ..n..'*sizeof(tceu_lbl));')
-    end
-
-    -- stop awaiting inner EXTS
-    for _, ext in ipairs(_ENV.exts) do
-        local t = me.gtes[ext]
-        if t then
-            local n = t[2] - t[1]
-            if n > 0 then
-                LINE(me, 'memset('..PTR_EXT(ext.n,t[1],'char*')..', 0, '..n..'*sizeof(tceu_lbl));')
-            end
-        end
-    end
-
-    -- stop awaiting inner internal events
-    for blk in _AST.iter'Block' do
-        for _, var in ipairs(blk.vars) do
-            if me.gtes[var] then
-                local t = me.gtes[var]
-                local n = t[2] - t[1]
-                if n > 0 then
-                    LINE(me, 'memset(CEU->mem+'..var.awt0..'+1+'
-                            ..t[1]..'*sizeof(tceu_lbl), 0, '
-                            ..n..'*sizeof(tceu_lbl));')
-                end
-            end
-        end
-    end
 end
 
 function PAUSE (me, N, PTR)
@@ -155,10 +85,6 @@ F = {
     end,
 
     Root = function (me)
-        LINE(me, 'memset(CEU->mem, 0, '.._MEM.gtes.loc0..');')
-        for _,ext in ipairs(_ENV.exts) do
-            LINE(me, '*'..PTR_GTE(ext.n)..' = '..(_ENV.awaits[ext] or 0)..';')
-        end
         CONC_ALL(me)
 
         local ret = _AST.root[1].vars[1]    -- $ret
@@ -197,17 +123,7 @@ F = {
         HALT(me)
     end,
 
-    Block = function (me)
-        for _, var in ipairs(me.vars) do
-            if var.isEvt then
-                LINE(me, VAL(var.awt0)..' = '..var.n_awaits..';')  -- #gtes
-                LINE(me, 'memset(CEU->mem+'..var.awt0..'+1, 0, '   -- gtes[i]=0
-                        ..(var.n_awaits*_ENV.types.tceu_lbl)..');')
-            end
-        end
-        CONC_ALL(me)
-    end,
-
+    Block   = CONC_ALL,
     BlockN  = CONC_ALL,
     Finally = CONC,
 
@@ -249,21 +165,20 @@ F = {
     ParAnd = function (me)
         -- close AND gates
         COMM(me, 'close ParAnd gates')
-        LINE(me, 'memset('..PTR(me.off)..', 0, '..#me..');')
-
+        LINE(me, 'memset(PTR('..me.off..',u8*), 0, '..#me..');')
         F._Par(me)
 
         for i, sub in ipairs(me) do
             CASE(me, me.lbls_in[i])
             CONC(me, sub)
-            LINE(me, VAL(me.off+i-1)..' = 1; // open and')  -- open gate
+            LINE(me, '*PTR('..(me.off+i-1)..',u8*) = 1; // open and')  -- open gate
             SWITCH(me, me.lbl_tst)
         end
 
         -- AFTER code :: test gates
         CASE(me, me.lbl_tst)
         for i, sub in ipairs(me) do
-            LINE(me, 'if (!'..VAL(me.off+i-1)..')')
+            LINE(me, 'if (!*PTR('..(me.off+i-1)..',u8*))')
             HALT(me)
         end
     end,
@@ -300,7 +215,7 @@ F = {
         for _, n in ipairs(vars) do
             ATTR(me, n.new, n.var)
         end
-        LINE(me, PTR_GTE'async0'..'['..me.gte..'] = '..me.lbl.id..';')
+        LINE(me, 'ceu_lst_ins(_ASYNC, '..me.lbl.id..', 0);')
         HALT(me)
         CASE(me, me.lbl)
         CONC(me, blk)
@@ -321,7 +236,7 @@ if (ceu_out_pending()) {
 #else
 {
 #endif
-    ]]..PTR_GTE'async0'..'['..async.gte..'] = '..me.lbl_ini.id..[[;
+    ceu_lst_ins(_ASYNC, ]]..me.lbl_ini.id..[[, 0);
     break;
 }
 ]])
@@ -352,7 +267,7 @@ if (ceu_out_pending()) {
 
         assert(ext.input)
         local async = _AST.iter'Async'()
-        LINE(me, PTR_GTE'async0'..'['..async.gte..'] = '..me.lbl_cnt.id..';')
+        LINE(me, 'ceu_lst_ins(_ASYNC, '..me.lbl_cnt.id..', 0);')
         if e2 then
             if _TP.deref(ext.tp) then
                 LINE(me, 'return ceu_go_event(ret, IN_'..ext.id
@@ -379,16 +294,14 @@ if (ceu_out_pending()) {
 
         -- emit
         LINE(me, [[
-// Emit ]]..var.id..';\n'..
-PTR_GTE'emit0'..'['..me.gte..    '] = '..me.lbl_cnt.id..';\n'..
-PTR_GTE'emit0'..'['..(me.gte+1)..'] = '..me.lbl_awk.id..[[;
-ceu_track_ins(0, _step_+1, ]]..me.gte..[[);
-ceu_track_ins(0, _step_+2, ]]..(me.gte+1)..[[);
+// Emit ]]..var.id..';\n'..[[
+ceu_track_ins(0, _step_+2, ]]..me.lbl_awk.id..[[);
+ceu_track_ins(0, _step_+1, ]]..me.lbl_cnt.id..[[);
 break;
 ]])
 
         CASE(me, me.lbl_awk)
-        LINE(me, 'ceu_trigger('..var.awt0..');')
+        LINE(me, 'ceu_lst_go('..var.n..');')
         HALT(me)
         CASE(me, me.lbl_cnt)
     end,
@@ -396,11 +309,11 @@ break;
     EmitT = function (me)
         local exp = unpack(me)
         local async = _AST.iter'Async'()
-        LINE(me, PTR_GTE'async0'..'['..async.gte..'] = '..me.lbl_cnt.id..';')
+        LINE(me, 'ceu_lst_ins(_ASYNC, '..me.lbl_cnt.id..', 0);')
         LINE(me, [[
 #ifdef CEU_WCLOCKS
 { int s = ceu_go_wclock(ret,]]..exp.val..[[);
-  while (!s && CEU->wclk_cur && CEU->wclk_cur->togo<=0)
+  while (!s && CEU.wclk_min<=0)
       s = ceu_go_wclock(ret, 0);
   return s;
 }
@@ -430,22 +343,20 @@ return 0;
         CONC(me, exp)
 
         local val = exp.val
-        LINE(me, 'ceu_wclock_enable('..me.gte..', '..val
-                    ..', '..me.lbl.id..');')
+        LINE(me, 'ceu_wclock_enable('..val..', '..me.lbl.id..');')
 
         HALT(me, true)
         CASE(me, me.lbl)
     end,
     AwaitExt = function (me)
         local e1,_ = unpack(me)
-        LINE(me, '*'..PTR_EXT(e1.ext.n,me.gte)..' = '..me.lbl.id..';')
+        LINE(me, 'ceu_lst_ins('..e1.ext.n..', '..me.lbl.id..', 0);')
         HALT(me, true)
         CASE(me, me.lbl)
     end,
     AwaitInt = function (me)
         local int,_ = unpack(me)
-        LINE(me, VAL(int.var.awt0+1+me.gte*_ENV.types.tceu_lbl, 'tceu_lbl*')
-                    ..' = '..me.lbl.id..';')
+        LINE(me, 'ceu_lst_ins('..int.var.n..', '..me.lbl.id..', 0);')
         HALT(me, true)
         CASE(me, me.lbl)
     end,

@@ -47,8 +47,6 @@ F = {
     ParEver = OR_all,
     ParAnd  = AND_all,
 
-    Finally = SAME,
-
     If = function (me)
         local c, t, f = unpack(me)
         t = t or c

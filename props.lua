@@ -1,21 +1,25 @@
 function SAME (me, sub)
-    me.n_tracks = sub.n_tracks
+    for k,v in pairs(sub.ns) do
+        me.ns[k] = v
+    end
 end
 
 function MAX_all (me, t)
     t = t or me
-    me.n_tracks = 1
     for _, sub in ipairs(t) do
-        me.n_tracks = MAX(me.n_tracks, sub.n_tracks)
+        for k,v in pairs(sub.ns) do
+            me.ns[k] = MAX(me.ns[k] or 0, v)
+        end
     end
 end
 
 function ADD_all (me, t)
     t = t or me
-    me.n_tracks = 0
     for _, sub in ipairs(t) do
         if _AST.isNode(sub) then
-            me.n_tracks = me.n_tracks + sub.n_tracks
+            for k,v in pairs(sub.ns) do
+                me.ns[k] = (me.ns[k] or 0) + v
+            end
         end
     end
 end
@@ -45,11 +49,14 @@ local NO_async = {
 
 F = {
     Node_pre = function (me)
-        me.n_tracks = 1
+        me.ns = {
+            tracks = 1,
+            awaits = 0,
+        }
     end,
     Node = function (me)
         if (not F[me.tag]) and _AST.isNode(me[#me]) then
-            SAME(me, me[#me])
+            SAME(me, me[#me])   -- last node
         end
         if NO_fin[me.tag] then
             ASR(not _AST.iter'Finally'(), me, 'not permitted inside `finally´')
@@ -59,7 +66,12 @@ F = {
         end
     end,
 
-    Root    = ADD_all,
+    Root = function (me)
+        SAME(me, me[#me])
+        _ENV.types.tceu_nlst = _TP.n2bytes(me.ns.awaits)
+        _ENV.types.tceu_ntrk = _TP.n2bytes(me.ns.tracks)
+    end,
+
     Block   = MAX_all,
     BlockN  = MAX_all,
     ParEver = ADD_all,
@@ -72,6 +84,7 @@ F = {
 
     Async = function (me)
         _PROPS.has_asyncs = true
+        me.ns.awaits = 1
     end,
 
     If = function (me)
@@ -120,11 +133,22 @@ F = {
 
     AwaitT = function (me)
         _PROPS.has_wclocks = true
+        me.ns.awaits = 1
+    end,
+
+    AwaitExt = function (me)
+        local e1 = unpack(me)
+        me.ns.awaits = 1
+    end,
+
+    AwaitInt = function (me)
+        local e1 = unpack(me)
+        me.ns.awaits = 1
     end,
 
     EmitInt = function (me)
-        me.n_tracks = 2     -- continuation
         _PROPS.has_emits = true
+        me.ns.tracks = 2     -- continuation
     end,
 
     EmitExtS = function (me)

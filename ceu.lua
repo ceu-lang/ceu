@@ -14,8 +14,6 @@ _OPTS = {
 
     tp_word    = 4,
     tp_pointer = 4,
-    tp_off     = 2,
-    tp_lbl     = 2,
 }
 
 _OPTS_NPARAMS = {
@@ -32,8 +30,6 @@ _OPTS_NPARAMS = {
 
     tp_word    = 1,
     tp_pointer = 1,
-    tp_off     = 1,
-    tp_lbl     = 1,
 }
 
 local params = {...}
@@ -82,8 +78,6 @@ if not _OPTS.input then
 
         --tp-word              # sizeof a word in bytes    (4)
         --tp-pointer           # sizeof a pointer in bytes (4)
-        --tp-off               # sizeof an offset in bytes (2)
-        --tp-lbl               # sizeof a label in bytes   (2)
 
 ]])
     os.exit(1)
@@ -127,24 +121,17 @@ do
     dofile 'parser.lua'
     dofile 'ast.lua'
     --_AST.dump(_AST.root)
+    dofile 'tight.lua'
     dofile 'env.lua'
     dofile 'props.lua'
-    dofile 'mem.lua'
-    dofile 'tight.lua'
     dofile 'labels.lua'
+    dofile 'mem.lua'
     dofile 'code.lua'
 end
 
-local tps = { [1]='u8', [2]='u16', [4]='u32' }
+local tps = { [0]='void', [1]='u8', [2]='u16', [4]='u32' }
 
-local ALL = {
-    n_tracks = _AST.root.n_tracks,
-    n_mem = _MEM.max,
-    tceu_off = tps[_ENV.types.tceu_off],
-    tceu_lbl = tps[MAX(_ENV.types.tceu_lbl,_ENV.types.tceu_off)],
-}
-
-assert(_MEM.max < 2^(_ENV.types.tceu_off*8))
+assert(_MEM.max < 2^(_ENV.types.tceu_noff*8))
 
 -- TEMPLATE
 local tpl
@@ -156,23 +143,20 @@ do
         return string.sub(str, 1, i-1) .. to .. string.sub(str, e+1)
     end
 
-    tpl = sub(tpl, '=== N_TRACKS ===',  ALL.n_tracks)
-    tpl = sub(tpl, '=== N_MEM ===',     ALL.n_mem)
+    tpl = sub(tpl, '=== CEU_NMEM ===',     _MEM.max)
+    tpl = sub(tpl, '=== CEU_NTRACKS ===',  _AST.root.ns.tracks)
+    tpl = sub(tpl, '=== CEU_NLSTS ===',    _AST.root.ns.awaits)
 
-    tpl = sub(tpl, '=== HOST ===',      _CODE.host)
-    tpl = sub(tpl, '=== CODE ===',      _AST.root.code)
+    tpl = sub(tpl, '=== TCEU_NOFF ===',  tps[_ENV.types.tceu_noff])
+    tpl = sub(tpl, '=== TCEU_NTRK ===',  tps[_ENV.types.tceu_ntrk])
+    tpl = sub(tpl, '=== TCEU_NLST ===',  tps[_ENV.types.tceu_nlst])
+    tpl = sub(tpl, '=== TCEU_NEVT ===',  tps[_ENV.types.tceu_nevt])
+    tpl = sub(tpl, '=== TCEU_NLBL ===',  tps[_ENV.types.tceu_nlbl])
 
-    -- lbl >= off (EMITS)
-    tpl = sub(tpl, '=== TCEU_OFF ===',  ALL.tceu_off)
-    tpl = sub(tpl, '=== TCEU_LBL ===',  ALL.tceu_lbl)
-
-    -- GTES
-    tpl = sub(tpl, '=== CEU_WCLOCK0 ===', _MEM.gtes.wclock0)
-    tpl = sub(tpl, '=== CEU_ASYNC0 ===',  _MEM.gtes.async0)
-    tpl = sub(tpl, '=== CEU_EMIT0 ===',   _MEM.gtes.emit0)
-
-    -- LABELS
-    tpl = sub(tpl, '=== LABELS ===',   _LABELS.code)
+    tpl = sub(tpl, '=== EVTS ===',   _ENV.code)
+    tpl = sub(tpl, '=== LABELS ===', _LBLS.code)
+    tpl = sub(tpl, '=== HOST ===',   _CODE.host)
+    tpl = sub(tpl, '=== CODE ===',   _AST.root.code)
 
     -- DEFINITIONS: constants & defines
     do
@@ -180,13 +164,11 @@ do
         local str = ''
         local t = {}
         local outs = 0
-        local ins  = {}
-        for _, ext in ipairs(_ENV.exts) do
-            if ext.input then
-                str = str..'#define IN_'..ext.id..' '.._MEM.gtes[ext.n]..'\n'
-                ins[#ins+1] = _MEM.gtes[ext.n]
-            else
-                str = str..'#define OUT_'..ext.id..' '..outs..'\n'
+        for _, evt in ipairs(_ENV.evts) do
+            if evt.input then
+                str = str..'#define IN_'..evt.id..' '..evt.n..'\n'
+            elseif evt.output then
+                str = str..'#define OUT_'..evt.id..' '..outs..'\n'
                 outs = outs + 1
             end
         end
@@ -202,25 +184,19 @@ do
         -- DEFINES
         if _PROPS.has_exts then
             str = str .. '#define CEU_EXTS\n'
-            ALL.exts = true
         end
         if _PROPS.has_wclocks then
-            str = str .. '#define CEU_WCLOCKS '.._ENV.n_wclocks..'\n'
-            ALL.wclocks = true
+            str = str .. '#define CEU_WCLOCKS\n'
         end
         if _PROPS.has_asyncs then
-            str = str .. '#define CEU_ASYNCS '.._ENV.n_asyncs..'\n'
-            ALL.asyncs = true
+            str = str .. '#define CEU_ASYNCS\n'
         end
         if _PROPS.has_emits then
             str = str .. '#define CEU_EMITS\n'
-            ALL.emits = true
         end
 
         str = str .. '#define CEU_TRK_PRIO\n'
-        ALL.prio = true
         str = str .. '#define CEU_TRK_CHK\n'
-        ALL.chk = true
 
         if _OPTS.defs_file then
             local f = io.open(_OPTS.defs_file,'w')
@@ -234,19 +210,33 @@ do
     end
 end
 
---[[
--- outputs compilation parameters
-local t = {}
-for k,v in pairs(ALL) do
-    if v == true then
-        t[#t+1] = k
-    else
-        t[#t+1] = k..'='..v
+if _OPTS.verbose or true then
+    local T = {
+        mem  = _MEM.max,
+        trks = _AST.root.ns.tracks,
+        lsts = _AST.root.ns.awaits,
+        evts = #_ENV.evts,
+        lbls = #_LBLS.list,
+
+        exts    = _PROPS.has_exts,
+        wclocks = _PROPS.has_wclocks,
+        asyncs  = _PROPS.has_asyncs,
+        emits   = _PROPS.has_emits,
+
+        prio = true,
+        chk  = true,
+    }
+    local t = {}
+    for k, v in pairs(T) do
+        if v == true then
+            t[#t+1] = k
+        elseif v then
+            t[#t+1] = k..'='..v
+        end
     end
+    table.sort(t)
+    DBG('[ '..table.concat(t,' | ')..' ]')
 end
-table.sort(t)
-DBG('[ '..table.concat(t,' | ')..' ]')
-]]
 
 -- OUTPUT
 local out

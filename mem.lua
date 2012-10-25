@@ -1,9 +1,6 @@
 _MEM = {
-    off  = 0,
-    max  = 0,
-    gtes = {
-        exts = {},
-    },
+    off   = 0,
+    max   = 0,
 }
 
 function alloc (n)
@@ -22,14 +19,8 @@ local t2n = {
 }
 
 F = {
-    Root_pre = function (me)
-        _MEM.gtes.wclock0 = alloc(_ENV.n_wclocks * _ENV.types.tceu_wclock)
-        _MEM.gtes.async0  = alloc(_ENV.n_asyncs  * _ENV.types.tceu_lbl)
-        _MEM.gtes.emit0   = alloc(_ENV.n_emits   * _ENV.types.tceu_lbl)
-        for _, ext in ipairs(_ENV.exts) do
-            _MEM.gtes[ext.n] = alloc(1 + (_ENV.awaits[ext] or 0)*_ENV.types.tceu_lbl)
-        end
-        _MEM.gtes.loc0 = alloc(0)
+    Root = function (me)
+        _ENV.types.tceu_noff = _TP.n2bytes(_MEM.max)
     end,
 
     Block_pre = function (me)
@@ -45,16 +36,12 @@ F = {
                 len = _ENV.types[var.tp]
             end
             var.off = alloc(len)
-            if var.isEvt then
-                var.awt0 = alloc(1)
-                alloc(_ENV.types.tceu_lbl*var.n_awaits)
-            end
 
             local tp = _TP.no_(var.tp)
             if var.arr then
-                var.val = '(('..tp..')(CEU->mem+'..var.off..'))'
+                var.val = 'PTR('..var.off..','..tp..')'
             else
-                var.val = '(*(('..tp..'*)(CEU->mem+'..var.off..')))'
+                var.val = '(*PTR('..var.off..','..tp..'*))'
             end
         end
 
@@ -138,20 +125,18 @@ F = {
     AwaitExt = function (me)
         local e1 = unpack(me)
         if _TP.deref(e1.ext.tp) then
-            me.val = '(('.._TP.no_(e1.ext.tp)..')CEU->ext_data)'
+            me.val = '(('.._TP.no_(e1.ext.tp)..')CEU.ext_data)'
         else
-            me.val = '*((int*)CEU->ext_data)'
+            me.val = '*((int*)CEU.ext_data)'
         end
     end,
     AwaitT = function (me)
-        me.val = 'CEU->wclk_late'
+        me.val = 'CEU.wclk_late'
     end,
 
     Op2_call = function (me)
         local _, f, exps = unpack(me)
         local ps = {}
-        ASR((not _OPTS.c_calls) or _OPTS.c_calls[f.val],
-            me, 'C calls are disabled')
         for i, exp in ipairs(exps) do
             ps[i] = exp.val
             local tp = _TP.deref(exp.tp, true)
@@ -228,7 +213,7 @@ F = {
     end,
 
     WCLOCKR = function (me)
-        me.val = 'PTR(CEU_WCLOCK0,tceu_wclock*)['..me.awt.gte..'].togo'
+        me.val = 'ceu_wclock_find('..me.awt.lbl.id..')'
     end,
 
     C = function (me)

@@ -4811,7 +4811,6 @@ int dt;
 int ret = 10;
 par/or do
     await A;
-    await B;
     dt = await 20ms;
     ret = 1;
 with
@@ -4825,8 +4824,8 @@ return ret;
         nd_acc = 2,
     },
     run = {
-        ['~>12ms ; 0~>A ; 0~>B ; ~>27ms'] = 2,
-        ['~>12ms ; 0~>B ; 0~>A ; 0~>B ; ~>26ms'] = 2,
+        ['~>12ms ; 0~>A ; 0~>B ; ~>27ms'] = 1,
+        ['~>12ms ; 0~>B ; 0~>A ; ~>26ms'] = 2,
     }
 }
 
@@ -5778,7 +5777,7 @@ return x;
     ana = {
         nd_acc = 2,  -- TODO: intl
     },
-    run = { ['~>15ms']=5, ['~>25ms']=5 }
+    --run = { ['~>15ms']=5, ['~>25ms']=5 }
 }
 
 -- EX.02: trig e await depois de loop
@@ -10886,6 +10885,55 @@ return a;
 }
 
 Test { [[
+int ret = 0;
+event int a,b;
+par/or do
+    ret = ret + 1;
+with
+    par/or do
+        await a;
+        emit b;
+    with
+        await b;
+    end
+with
+    emit a;
+end
+par/and do
+    emit a;
+with
+    emit b;
+with
+    ret = ret + 1;
+end
+return ret;
+]],
+    run = 2,
+}
+
+Test { [[
+int ret = 0;
+event int a;
+par/or do
+    ret = ret + 1;
+with
+    emit a;
+with
+    emit a;
+end
+par/and do
+    emit a;
+with
+    emit a;
+with
+    ret = ret + 1;
+end
+return ret;
+]],
+    run = 2,
+}
+
+Test { [[
 input int Start, A;
 int ret;
 event int a;
@@ -10916,7 +10964,7 @@ return a;
 ]],
     ana = {
         --nd_esc = 2,
-    n_unreachs = 3,
+        n_unreachs = 3,
     },
     run = { ['10~>A']=10 },
 }
@@ -11019,6 +11067,7 @@ loop do
     end
 end
 ]],
+    tight = 'ERR : line 1 : tight loop',    -- TODO: par/and
     props = "ERR : line 5 : not permitted inside `finally´",
 }
 
@@ -11499,7 +11548,7 @@ input void A;
 int ret;
 par/or do
    ret = async do
-      return 0;
+      return 10;
     end;
 with
    await A;
@@ -11507,7 +11556,7 @@ with
 end
 return ret;
 ]],
-    run = { ['~>A']=0 },
+    run = { ['~>A']=1 },
 }
 
 Test { [[
@@ -11622,22 +11671,6 @@ end;
 return a;
 ]],
     run = 1
-}
-
-Test { [[
-input void A;
-int ret;
-par/or do
-   ret = async do
-      return 0;
-    end;
-with
-   await A;
-   ret = 1;
-end
-return ret;
-]],
-    run = { ['~>A']=0 },
 }
 
 Test { [[
@@ -13825,258 +13858,6 @@ return a;
     },
 }
 
-    -- MEM
-
---[[
-0-3: $ret
-]]
-
-Test { [[
-await Forever;
-]],
-    tot = 4,
-    ana = {
-        isForever = true,
-    }
-}
-
-Test { [[
-return 0;
-]],
-    tot = 4,
-    run = 0,
-}
-
---[[
-0-18:
-     0-3: $ret
-    4-18: a..f
-]]
-
-Test { [[
-int a, b, c;
-u8 d, e, f;
-return 0;
-]],
-    tot = 19,
-    run = 0,
-}
-
---[[
-0-15:       _Root
-     0-3:       $ret
-    4-15:       a,b,c
-     4-6:       d,e,f   // TODO: first
-]]
-
-Test { [[
-do
-    int a, b, c;
-end
-u8 d, e, f;
-return 0;
-]],
-    tot = 19,
-    run = 0,
-}
-
---[[
-0-15:       _Root
-     0-4:       $ret
-    4-15:       a..c
-     4-6:       d..f
-]]
-
-Test { [[
-do
-    int a, b, c;
-end
-do
-    u8 d, e, f;
-end
-return 0;
-]],
-    tot = 16,
-    run = 0,
-}
-
-Test { [[
-int ret = 0;
-do
-    s16 a=1, b=2, c=3;
-    ret = ret + a + b + c;
-    do
-        s8 a=10, b=20, c=30;
-        ret = ret + a + b + c;
-    end
-end
-u8 d=4, e=5, f=6;
-return ret + d + e + f;
-]],
-    tot = 20,
-    run = 81,
-}
-
-Test { [[
-int ret = 0;
-par/and do
-    ret = ret + 1;
-with
-    ret = ret + 1;
-with
-    ret = ret + 1;
-end
-par/and do
-    ret = ret + 1;
-with
-    ret = ret + 1;
-with
-    ret = ret + 1;
-end
-return ret;
-]],
-    tot = 11,
-    ana = {
-        nd_acc = 18,
-    },
-    run = 6,
-}
-
-Test { [[
-int ret = 10;
-do
-    int v = -5;
-    ret = ret + v;
-end
-par/or do
-    int a = 1;
-    ret = ret + a;
-    par/and do
-        s8 a = 10;
-        ret = ret + a;
-    with
-        ret = ret + 1;
-    with
-        int b = 5;
-        ret = ret + b;
-    end
-with
-    u8 a=1, b=2, c=3;
-    ret = ret + a + b + c;
-end
-int a = 10;
-do
-    int v = -5;
-    ret = ret + v;
-end
-return ret+a;
-]],
-    ana = {
-        nd_acc = 21,
-    },
-    tot = 28,
-    run = 33;
-}
-
-Test { [[
-input void A, B, Z;
-s16 ret = 0;
-par do
-    s16 a = 10;
-    await A;
-    ret = ret + a;
-    a = 10;
-with
-    s16 a = 100;
-    await B;
-    ret = ret + a;
-with
-    s16 a = 1000;
-    await Z;
-    ret = ret + a;
-end
-]],
-    ana = {
-        isForever = true,
-        n_reachs = 1,
-    },
-    tot = 21,
-}
-
-Test { [[
-input void A, B, Z;
-s16 ret = 0;
-par/and do
-    s16 a = 10;
-    await A;
-    ret = ret + a;
-    a = 10;
-with
-    s16 a = 100;
-    await B;
-    ret = ret + a;
-with
-    s16 a = 1000;
-    await Z;
-    ret = ret + a;
-end
-return ret;
-]],
-    tot = 24,
-    run = {
-        ['~>A;~>B;~>Z'] = 1110,
-        ['~>B;~>A;~>Z'] = 1110,
-        ['~>Z;~>B;~>A'] = 1110,
-    }
-}
-Test { [[
-input void A, B, Z;
-s16 ret = 0;
-par do
-    s16 a = 10;
-    await A;
-    ret = ret + a;
-    a = 10;
-    return ret;
-with
-    s16 a = 100;
-    await B;
-    ret = ret + a;
-with
-    loop do
-        s16 a = 1000;
-        await Z;
-        ret = ret + a;
-    end
-end
-]],
-    tot = 21,
-    run = {
-        ['~>A;~>B;~>Z'] = 10,
-        ['~>B;~>B;~>A;~>Z'] = 110,
-        ['~>Z;~>B;~>Z;~>A'] = 2110,
-    }
-}
-
-Test { [[
-par do
-    do
-        do
-            int a;
-        end
-    end
-
-with
-    int b;
-end
-]],
-    ana = {
-        isForever = true,
-        n_reachs = 1,
-    },
-    tot = 12,
-}
-
 -- BIG // FULL // COMPLETE
 Test { [[
 input int Key;
@@ -14414,5 +14195,259 @@ return ret;
         ['1~>A ; ~>5us ; 0~>A ; ~>5us ; 1~>A ; ~>5us ; 0~>A ; ~>9us'] = 1,
     },
 }
+
+--[==[
+    -- MEM
+
+--[[
+0-3: $ret
+]]
+
+Test { [[
+await Forever;
+]],
+    tot = 4,
+    ana = {
+        isForever = true,
+    }
+}
+
+Test { [[
+return 0;
+]],
+    tot = 4,
+    run = 0,
+}
+
+--[[
+0-18:
+     0-3: $ret
+    4-18: a..f
+]]
+
+Test { [[
+int a, b, c;
+u8 d, e, f;
+return 0;
+]],
+    tot = 19,
+    run = 0,
+}
+
+--[[
+0-15:       _Root
+     0-3:       $ret
+    4-15:       a,b,c
+     4-6:       d,e,f   // TODO: first
+]]
+
+Test { [[
+do
+    int a, b, c;
+end
+u8 d, e, f;
+return 0;
+]],
+    tot = 19,
+    run = 0,
+}
+
+--[[
+0-15:       _Root
+     0-4:       $ret
+    4-15:       a..c
+     4-6:       d..f
+]]
+
+Test { [[
+do
+    int a, b, c;
+end
+do
+    u8 d, e, f;
+end
+return 0;
+]],
+    tot = 16,
+    run = 0,
+}
+
+Test { [[
+int ret = 0;
+do
+    s16 a=1, b=2, c=3;
+    ret = ret + a + b + c;
+    do
+        s8 a=10, b=20, c=30;
+        ret = ret + a + b + c;
+    end
+end
+u8 d=4, e=5, f=6;
+return ret + d + e + f;
+]],
+    tot = 20,
+    run = 81,
+}
+
+Test { [[
+int ret = 0;
+par/and do
+    ret = ret + 1;
+with
+    ret = ret + 1;
+with
+    ret = ret + 1;
+end
+par/and do
+    ret = ret + 1;
+with
+    ret = ret + 1;
+with
+    ret = ret + 1;
+end
+return ret;
+]],
+    tot = 11,
+    ana = {
+        nd_acc = 18,
+    },
+    run = 6,
+}
+
+Test { [[
+int ret = 10;
+do
+    int v = -5;
+    ret = ret + v;
+end
+par/or do
+    int a = 1;
+    ret = ret + a;
+    par/and do
+        s8 a = 10;
+        ret = ret + a;
+    with
+        ret = ret + 1;
+    with
+        int b = 5;
+        ret = ret + b;
+    end
+with
+    u8 a=1, b=2, c=3;
+    ret = ret + a + b + c;
+end
+int a = 10;
+do
+    int v = -5;
+    ret = ret + v;
+end
+return ret+a;
+]],
+    ana = {
+        nd_acc = 21,
+    },
+    tot = 28,
+    run = 33;
+}
+
+Test { [[
+input void A, B, Z;
+s16 ret = 0;
+par do
+    s16 a = 10;
+    await A;
+    ret = ret + a;
+    a = 10;
+with
+    s16 a = 100;
+    await B;
+    ret = ret + a;
+with
+    s16 a = 1000;
+    await Z;
+    ret = ret + a;
+end
+]],
+    ana = {
+        isForever = true,
+        n_reachs = 1,
+    },
+    tot = 21,
+}
+
+Test { [[
+input void A, B, Z;
+s16 ret = 0;
+par/and do
+    s16 a = 10;
+    await A;
+    ret = ret + a;
+    a = 10;
+with
+    s16 a = 100;
+    await B;
+    ret = ret + a;
+with
+    s16 a = 1000;
+    await Z;
+    ret = ret + a;
+end
+return ret;
+]],
+    tot = 24,
+    run = {
+        ['~>A;~>B;~>Z'] = 1110,
+        ['~>B;~>A;~>Z'] = 1110,
+        ['~>Z;~>B;~>A'] = 1110,
+    }
+}
+Test { [[
+input void A, B, Z;
+s16 ret = 0;
+par do
+    s16 a = 10;
+    await A;
+    ret = ret + a;
+    a = 10;
+    return ret;
+with
+    s16 a = 100;
+    await B;
+    ret = ret + a;
+with
+    loop do
+        s16 a = 1000;
+        await Z;
+        ret = ret + a;
+    end
+end
+]],
+    tot = 21,
+    run = {
+        ['~>A;~>B;~>Z'] = 10,
+        ['~>B;~>B;~>A;~>Z'] = 110,
+        ['~>Z;~>B;~>Z;~>A'] = 2110,
+    }
+}
+
+Test { [[
+par do
+    do
+        do
+            int a;
+        end
+    end
+
+with
+    int b;
+end
+]],
+    ana = {
+        isForever = true,
+        n_reachs = 1,
+    },
+    tot = 12,
+}
+]==]
 
 print('COUNT', COUNT)

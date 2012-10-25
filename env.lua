@@ -1,25 +1,17 @@
-local function ceil (v)
-    local w = _OPTS.tp_word
-    while true do
-        if v % w == 0 then
-            return v
-        else
-            v = v + 1
-        end
-    end
-end
-
 _OPTS.tp_word    = assert(tonumber(_OPTS.tp_word),
     'missing `--tp-word´ parameter')
 _OPTS.tp_pointer = assert(tonumber(_OPTS.tp_pointer),
     'missing `--tp-pointer´ parameter')
-_OPTS.tp_off     = assert(tonumber(_OPTS.tp_off),
-    'missing `--tp-off´ parameter')
-_OPTS.tp_lbl     = assert(tonumber(_OPTS.tp_lbl),
-    'missing `--tp-lbl´ parameter')
 
 _ENV = {
-    exts = {},
+    evts = {
+        --[1]=ext1,  [ext1.id]=ext1.
+        --[2]=int1,
+        --[N-1]={_ASYNC},
+        --[N]={_WCLOCK},
+    },
+    code = '',
+
     types = {
         void = 0,
 
@@ -28,16 +20,18 @@ _ENV = {
 
         int      = _OPTS.tp_word,
         pointer  = _OPTS.tp_pointer,
-        tceu_off = _OPTS.tp_off,
-        tceu_lbl = _OPTS.tp_lbl,
-        tceu_wclock = ceil(4 + _OPTS.tp_lbl), -- TODO: perda de memoria
+
+        tceu_noff = nil,    -- mem.lua
+        tceu_ntrk = nil,    -- props.lua
+        tceu_nlst = nil,    -- props.lua
+        tceu_nevt = nil,    -- env.lua
+        tceu_nlbl = nil,    -- labels.lua
+
+        -- TODO: apagar?
+        --tceu_lst  = 8,    -- TODO
+        --TODOtceu_wclock = _TP.ceil(4 + _OPTS.tp_lbl), -- TODO: perda de memoria
     },
     calls = {},     -- { _printf=true, _myf=true, ... }
-
-    n_asyncs  = 0,
-    n_wclocks = 0,
-    n_emits   = 0,
-    awaits    = {},
 
     pures = {},
     dets  = {},
@@ -71,6 +65,11 @@ function newvar (me, blk, isEvt, tp, dim, id)
     }
     blk.vars[#blk.vars+1] = var
 
+    if isEvt then
+        var.n = #_ENV.evts
+        _ENV.evts[#_ENV.evts+1] = var
+    end
+
     return var
 end
 
@@ -85,6 +84,20 @@ function det2id (v)
 end
 
 F = {
+    Root = function (me)
+        -- enum of events
+        _ENV.evts[#_ENV.evts+1] = {id='_WCLOCK', n=#_ENV.evts}
+        _ENV.evts[#_ENV.evts+1] = {id='_ASYNC',  n=#_ENV.evts}
+        for i, evt in ipairs(_ENV.evts) do
+            if evt.isEvt == 'int' then
+                _ENV.code = _ENV.code..'    '..evt.id..evt.n..' = '..evt.n..',\n'
+            else
+                _ENV.code = _ENV.code..'    '..evt.id..' = '..evt.n..',\n'
+            end
+        end
+        _ENV.types.tceu_nevt = _TP.n2bytes(#_ENV.evts)
+    end,
+
     Block_pre = function (me)
         me.vars = {}
         local async = _AST.iter()()
@@ -102,20 +115,20 @@ F = {
 
     Dcl_ext = function (me)
         local dir, tp, id = unpack(me)
-        ASR(not _ENV.exts[id], me, 'event "'..id..'" is already declared')
+        ASR(not _ENV.evts[id], me, 'event "'..id..'" is already declared')
         ASR(tp=='void' or tp=='int' or _TP.deref(tp),
                 me, 'invalid event type')
 
         me.ext = {
             ln    = me.ln,
             id    = id,
-            n     = #_ENV.exts,
+            n     = #_ENV.evts,
             tp    = tp,
             isEvt = 'ext',
             [dir] = true,
         }
-        _ENV.exts[id] = me.ext
-        _ENV.exts[#_ENV.exts+1] = me.ext
+        _ENV.evts[id] = me.ext
+        _ENV.evts[#_ENV.evts+1] = me.ext
     end,
 
     Dcl_int = 'Dcl_var',
@@ -126,7 +139,7 @@ F = {
 
     Ext = function (me)
         local id = unpack(me)
-        me.ext = ASR(_ENV.exts[id],
+        me.ext = ASR(_ENV.evts[id],
             me, 'event "'..id..'" is not declared')
     end,
 
@@ -176,25 +189,11 @@ F = {
         ASR(_TP.isNumeric(exp.var.tp), me, 'event type must be numeric')
     end,
 
-    AwaitExt = function (me)
-        local e1,_ = unpack(me)
-        local ext = e1.ext
-        me.gte = (_ENV.awaits[ext] or 0)
-        _ENV.awaits[ext] = (_ENV.awaits[ext] or 0) + 1
-    end,
-
     AwaitInt = function (me)
         local exp,_ = unpack(me)
         local var = exp.var
         ASR(var and var.isEvt, me,
                 'event "'..(var and var.id or '?')..'" is not declared')
-        me.gte = var.n_awaits
-        var.n_awaits = var.n_awaits + 1
-    end,
-
-    AwaitT = function (me)
-        me.gte = _ENV.n_wclocks
-        _ENV.n_wclocks = _ENV.n_wclocks + 1
     end,
 
     EmitInt = function (me)
@@ -202,9 +201,6 @@ F = {
         ASR(e1.var.isEvt, me, 'event "'..e1.var.id..'" is not declared')
         ASR(((not e2) or _TP.contains(e1.var.tp,e2.tp,true)),
                 me, 'invalid emit')
-
-        me.gte = _ENV.n_emits
-        _ENV.n_emits = _ENV.n_emits + 2     -- (cnt/awk)
     end,
 
     EmitExtS = function (me)
@@ -226,56 +222,6 @@ F = {
                     me, "missing parameters on `emit´")
         end
     end,
-
-    Async = function (me)
-        me.gte = _ENV.n_asyncs
-        _ENV.n_asyncs = _ENV.n_asyncs + 1
-    end,
-
-    -- gates for cleaning
-    ParOr_pre = function (me)
-        me.gtes = {
-            asyncs  = { _ENV.n_asyncs,  nil },
-            wclocks = { _ENV.n_wclocks, nil },
-            emits   = { _ENV.n_emits,   nil },
-        }
-
-        for _, ext in ipairs(_ENV.exts) do
-            me.gtes[ext] = { _ENV.awaits[ext] or 0, nil }
-        end
-
-        for blk in _AST.iter'Block' do
-            for _, var in ipairs(blk.vars) do
-                if var.isEvt then
-                    me.gtes[var] = { var.n_awaits, nil }
-                end
-            end
-        end
-    end,
-    ParOr = function (me)
-        me.gtes.asyncs[2]  = _ENV.n_asyncs
-        me.gtes.wclocks[2] = _ENV.n_wclocks
-        me.gtes.emits[2]   = _ENV.n_emits
-
-        for _, ext in ipairs(_ENV.exts) do
-            local t = me.gtes[ext]
-            if t then
-                t[2] = _ENV.awaits[ext] or 0
-            end
-        end
-
-        for blk in _AST.iter'Block' do
-            for _, var in ipairs(blk.vars) do
-                if var.isEvt then
-                    me.gtes[var][2] = var.n_awaits
-                end
-            end
-        end
-    end,
-    Loop_pre     = 'ParOr_pre',
-    Loop         = 'ParOr',
-    SetBlock_pre = 'ParOr_pre',
-    SetBlock     = 'ParOr',
 
     --------------------------------------------------------------------------
 
@@ -308,6 +254,8 @@ F = {
         local _, f, exps = unpack(me)
         me.tp = '_'
         me.fid = (f.tag=='C' and f[1]) or '$anon'
+        ASR((not _OPTS.c_calls) or _OPTS.c_calls[me.fid],
+            me, 'C calls are disabled')
         _ENV.calls[me.fid] = true
     end,
 

@@ -8,6 +8,28 @@ local types = {
     u8=true,  s8=true,
 }
 
+function _TP.n2bytes (n)
+    if n < 2^8 then
+        return 1
+    elseif n < 2^16 then
+        return 2
+    elseif n < 2^32 then
+        return 4
+    end
+    error'out of bounds'
+end
+
+function _TP.ceil (v)
+    local w = _OPTS.tp_word
+    while true do
+        if v % w == 0 then
+            return v
+        else
+            v = v + 1
+        end
+    end
+end
+
 -- TODO: enforce passing parameter `c´ to isNumeric/deref/contains/max ?
 
 function _TP.no_ (tp)
