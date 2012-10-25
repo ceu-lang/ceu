@@ -48,9 +48,12 @@ end
 function BLOCK_GATES (me)
     COMM(me, 'close gates')
 
-    LINE(me, 'ceu_lst_clr('..me.lbls[1]..','..me.lbls[2]..');')
-    LINE(me, 'ceu_track_clr('..me.lbls[1]..','..me.lbls[2]..');')
-
+    if me.ns.awaits > 0 then
+        LINE(me, 'ceu_lst_clr('..me.lbls[1]..','..me.lbls[2]..');')
+    end
+    if me.ns.emits > 0 then
+        LINE(me, 'ceu_track_clr('..me.lbls[1]..','..me.lbls[2]..');')
+    end
 end
 
 function PAUSE (me, N, PTR)

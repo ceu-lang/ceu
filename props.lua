@@ -52,6 +52,7 @@ F = {
         me.ns = {
             tracks = 1,
             awaits = 0,
+            emits  = 0,     -- code.lua (BLOCK_GATES)
         }
     end,
     Node = function (me)
@@ -149,6 +150,7 @@ F = {
     EmitInt = function (me)
         _PROPS.has_emits = true
         me.ns.tracks = 2     -- continuation
+        me.ns.emits  = 1
     end,
 
     EmitExtS = function (me)

@@ -14,7 +14,7 @@
 #endif
 #endif
 
-#define PTR(off,tp) ((tp)(CEU.mem + off ))
+#define PTR(off,tp) ((tp)(CEU.mem + off))
 
 #define CEU_NMEM       (=== CEU_NMEM ===)
 #define CEU_NTRACKS    (=== CEU_NTRACKS ===)
