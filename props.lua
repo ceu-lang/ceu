@@ -67,6 +67,10 @@ F = {
         end
     end,
 
+    Execute = function (me)
+        SAME(me, me.var.cls)
+    end,
+
     Root = function (me)
         SAME(me, me[#me])
         _ENV.types.tceu_nlst = _TP.n2bytes(me.ns.awaits)

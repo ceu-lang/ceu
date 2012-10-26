@@ -45,8 +45,8 @@ Test = function (t)
     if not check('parser')   then return end
     if not check('ast')      then return end
     --_AST.dump(_AST.root)
-    if not check('tight')    then return end
     if not check('env')      then return end
+    if not check('tight')    then return end
     if not check('props')    then return end
     if not check('labels')   then return end
     if not check('mem')      then return end
@@ -93,7 +93,7 @@ Test = function (t)
                 async do
                     `EVTS
                 end
-                await Forever;
+                await FOREVER;
             end
         ]]
         for input, ret2 in pairs(T.run) do

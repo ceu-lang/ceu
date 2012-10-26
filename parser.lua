@@ -53,6 +53,7 @@ local _V2NAME = {
     ID_int  = 'identifier',
     ID_ext  = 'identifier',
     ID_type = 'type',
+    ID_cls  = 'identifier',
     _Dcl_var = 'declaration',
     _Dcl_int = 'declaration',
     __ID = 'identifier',
@@ -83,11 +84,13 @@ TYPES = P'void' + 'int' + 'u8' + 'u16' + 'u32' + 's8' + 's16' + 's32'
 
 KEYS = P'async'  + 'await'   + 'break'   + 'constant' + 'C' + 'deterministic'
      + 'do'      + 'emit'    + 'else'    + 'else/if'   + 'end'  + 'event'
-     + 'finally' + 'Forever' + 'input'   + 'if'       + 'loop' + 'null'
+     + 'finally' + 'FOREVER' + 'input'   + 'if'       + 'loop' + 'null'
      + 'output'  + 'par'     + 'par/and' + 'par/or'   + 'pure' + 'return'
      + 'sizeof'  + 'then'    + 'type'    + 'with'
      + TYPES
      + 'pause/if'
+     + 'class'
+     + 'execute'
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
@@ -96,10 +99,10 @@ local Alphanum = Alpha + m.R'09'
 local ALPHANUM = m.R'AZ' + '_' + m.R'09'
 local alphanum = m.R'az' + '_' + m.R'09'
 
-ID  = Alpha * Alphanum^0 - KEYS
+ID  = Alpha * Alphanum^0 -- - KEYS
 NUM = CK(m.R'09'^1) / tonumber
 
-_GG = { [1] = CK'' * V'Block' * P(-1)-- + EM'expected EOF')
+_GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
 
     , _Block = ( V'_Stmt' * (EK';'*K';'^0) +
                  V'_StmtB' * (K';'^-1*K';'^0)
@@ -115,12 +118,14 @@ _GG = { [1] = CK'' * V'Block' * P(-1)-- + EM'expected EOF')
             + V'_Dcl_ext' + V'_Dcl_int'  + V'_Dcl_var'
             + V'Dcl_det'  + V'_Dcl_pure' + V'Dcl_type'
             + V'_Set'     + V'CallStmt' -- must be after Set
+            + V'Execute'
             + EM'statement (missing `_´?)'
 
     , _StmtB = V'_Do'   + V'Async'  + V'Host'
              + V'ParOr' + V'ParAnd'
              + V'If'    + V'Loop'
              + V'Pause'
+             + V'Dcl_cls'
 
     , _LstStmt  = V'_Return' + V'Break' + V'AwaitN'
     , _LstStmtB = V'ParEver'
@@ -203,7 +208,7 @@ _GG = { [1] = CK'' * V'Block' * P(-1)-- + EM'expected EOF')
                     (
                         K'(' * Cc'call' * V'ExpList' * EK')' +
                         K'[' * Cc'idx'  * V'_Exp'    * EK']' +
-                        CK(K'->' + K'.') * CK(ID)
+                        (CK'->' + CK'.') * CK(ID)
                     )^0
     , _13     = V'_Prim'
     , _Prim   = V'_Parens' + V'Var'   + V'C'   + V'SIZEOF'
@@ -235,8 +240,8 @@ _GG = { [1] = CK'' * V'Block' * P(-1)-- + EM'expected EOF')
     , Pause    = K'pause/if' * EV'Var' * EK'do' * V'Block' * EK'end'
 
     , AwaitExt = K'await' * EV'Ext'
-    , AwaitInt = K'await' * EV'Var'
-    , AwaitN   = K'await' * K'Forever'
+    , AwaitInt = K'await' * EV'_Exp'
+    , AwaitN   = K'await' * K'FOREVER'
     , AwaitT   = K'await' * (V'WCLOCKK'+V'WCLOCKE')
 
     , _EmitExt = K'emit' * EV'Ext' * (K'(' * V'_Exp'^-1 * EK')')^-1
@@ -245,7 +250,7 @@ _GG = { [1] = CK'' * V'Block' * P(-1)-- + EM'expected EOF')
 
     , EmitT    = K'emit' * (V'WCLOCKK'+V'WCLOCKE')
 
-    , EmitInt  = K'emit' * EV'Var' * (K'(' * V'_Exp'^-1 * EK')')^-1
+    , EmitInt  = K'emit' * EV'_Exp' * (K'=' * V'_Exp')^-1
 
     , _Dcl_ext = (CK'input'+CK'output') * EV'ID_type' *
                     EV'ID_ext' * (K','*EV'ID_ext')^0
@@ -258,15 +263,21 @@ _GG = { [1] = CK'' * V'Block' * P(-1)-- + EM'expected EOF')
                     V'__Dcl_var' * (K','*V'__Dcl_var')^0
     , __Dcl_var = EV'ID_var' * (V'_Sets' + Cc(false)*Cc(false))
 
+    , Dcl_cls   = K'class' * EV'ID_cls' *S* EK'do' *
+                    V'Block' *
+                  EK'end'
+    , Execute   = K'execute' *S* EV'Var'
+
     , Ext      = V'ID_ext'
     , Var      = V'ID_var'
     , C        = V'ID_c'
 
-    , ID_ext  = CK(m.R'AZ'*Alphanum^0) - KEYS
+    , ID_cls  = CK(m.R'AZ'*alphanum^0) - KEYS
+    , ID_ext  = CK(m.R'AZ'*ALPHANUM^0) - KEYS
     , ID_int  = CK(m.R'az'*Alphanum^0) - KEYS
     , ID_var  = CK(m.R'az'*Alphanum^0) - KEYS
     , ID_c    = CK(  P'_' *Alphanum^0)
-    , ID_type = (CK(TYPES)+V'ID_c') * C(K'*'^0) /
+    , ID_type = (CK(TYPES)+V'ID_c'+V'ID_cls') * C(K'*'^0) /
                   function (id, star)
                     return (string.gsub(id..star,' ',''))
                   end

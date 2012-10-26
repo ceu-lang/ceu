@@ -4,6 +4,11 @@ _OPTS.tp_pointer = assert(tonumber(_OPTS.tp_pointer),
     'missing `--tp-pointer´ parameter')
 
 _ENV = {
+    clss  = {},
+    calls = {},     -- { _printf=true, _myf=true, ... }
+    pures = {},
+    dets  = {},
+
     evts = {
         --[1]=ext1,  [ext1.id]=ext1.
         --[2]=int1,
@@ -30,11 +35,11 @@ _ENV = {
         --tceu_lst  = 8,    -- TODO
         --TODOtceu_wclock = _TP.ceil(4 + _OPTS.tp_lbl), -- TODO: perda de memoria
     },
-    calls = {},     -- { _printf=true, _myf=true, ... }
-
-    pures = {},
-    dets  = {},
 }
+
+function CLS ()
+    return _AST.iter'Dcl_cls'()
+end
 
 function newvar (me, blk, isEvt, tp, dim, id)
     for stmt in _AST.iter() do
@@ -48,21 +53,31 @@ function newvar (me, blk, isEvt, tp, dim, id)
         end
     end
 
-    ASR(_TP.deref(tp) or _ENV.types[tp], me,
+    ASR(_TP.deref(tp) or _ENV.types[tp] or _ENV.clss[tp], me,
             'undeclared type `'..tp..'´')
     ASR(tp~='void' or isEvt, me, 'invalid type')
     ASR((not dim) or dim>0, me, 'invalid array dimension')
 
+    local cls = _ENV.clss[tp]
+    if cls then
+        ASR(cls~=_AST.iter'Dcl_cls'() and isEvt==false and dim==false, me,
+                'invalid declaration')
+    end
+
     local var = {
         ln    = me.ln,
         id    = id,
+        cls   = cls,
         tp    = (dim and tp..'*') or tp,
         blk   = blk,
         isEvt = isEvt,
         arr   = dim,
-        n_awaits = 0,
     }
     blk.vars[#blk.vars+1] = var
+
+    if not blk.vars[id] then
+        blk.vars[id] = var      -- first from block (used by orgs)
+    end
 
     if isEvt then
         var.n = #_ENV.evts
@@ -105,6 +120,22 @@ F = {
         end
     end,
 
+    Dcl_cls_pre = function (me)
+        local id, blk = unpack(me)
+        me.id  = id
+        me.blk = blk
+        ASR(not _ENV.clss[id], me, 'class "'..id..'" is already declared')
+        _ENV.clss[id] = me
+        _ENV.clss[#_ENV.clss+1] = me
+    end,
+
+    Execute = function (me)
+        local var = unpack(me)
+        me.var = var.var
+        ASR( _ENV.clss[var.tp], me,
+                'cannot execute a `'..var.tp..'´ expression')
+    end,
+
     Dcl_ext = function (me)
         local dir, tp, id = unpack(me)
         ASR(not _ENV.evts[id], me, 'event "'..id..'" is already declared')
@@ -144,7 +175,7 @@ F = {
                 if var.id == id then
                     me.var  = var
                     me.tp   = var.tp
-                    me.lval = (not var.arr)
+                    me.lval = (not var.arr) and (not var.cls)
                     return
                 end
             end
@@ -190,7 +221,9 @@ F = {
 
     EmitInt = function (me)
         local e1, e2 = unpack(me)
-        ASR(e1.var.isEvt, me, 'event "'..e1.var.id..'" is not declared')
+        local var = e1.var
+        ASR(var and var.isEvt, me,
+                'event "'..(var and var.id or '?')..'" is not declared')
         ASR(((not e2) or _TP.contains(e1.var.tp,e2.tp,true)),
                 me, 'invalid emit')
     end,
@@ -321,8 +354,18 @@ F = {
 
     ['Op2_.'] = function (me)
         local op, e1, id = unpack(me)
-        me.tp   = '_'
-        me.lval = true
+        local cls = _ENV.clss[e1.tp]
+        if cls then
+            local var = ASR(cls.blk.vars[id], me,
+                            'variable/event "'..id..'" is not declared')
+            me.org  = e1
+            me.var  = var
+            me.lval = (not var.arr) and (not var.cls)
+            me.tp   = var.tp
+        else
+            me.tp   = '_'
+            me.lval = true
+        end
     end,
 
     Op2_cast = function (me)
@@ -366,3 +409,4 @@ F = {
 }
 
 _AST.visit(F)
+_ROOT = _ENV.clss._Root

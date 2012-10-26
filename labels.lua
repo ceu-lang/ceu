@@ -26,20 +26,21 @@ F = {
         me.lbls[2] = #_LBLS.list-1
     end,
 
-    Root_pre = function (me)
-        new{'Init', true}
-    end,
-
     Root = function (me)
-        --TODO: assert(#_LBLS.list < 2^(_ENV.types.tceu_nlbl*8))
-        me.lbl = new{'Exit'}
-
         -- enum of labels
         for i, lbl in ipairs(_LBLS.list) do
             _LBLS.code = _LBLS.code..'    '..lbl.id..' = '..lbl.n..',\n'
         end
 
         _ENV.types.tceu_nlbl = _TP.n2bytes(#_LBLS.list)
+    end,
+
+    Dcl_cls = function (me)
+        me.lbl = new{'Class_'..me.id, true}
+    end,
+    Execute = function (me)
+        local cls = CLS()
+        me.lbl = new{'Execute_cont'}
     end,
 
     SetBlock_pre = function (me)
@@ -107,7 +108,7 @@ F = {
     end,
     AwaitInt = function (me)
         local int = unpack(me)
-        me.lbl = new{'Awake_'..me[1][1]}
+        me.lbl = new{'Awake_'..int.var.id}
     end,
 }
 

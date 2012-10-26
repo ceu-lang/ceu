@@ -121,8 +121,8 @@ do
     dofile 'parser.lua'
     dofile 'ast.lua'
     --_AST.dump(_AST.root)
-    dofile 'tight.lua'
     dofile 'env.lua'
+    dofile 'tight.lua'
     dofile 'props.lua'
     dofile 'labels.lua'
     dofile 'mem.lua'
@@ -131,7 +131,7 @@ end
 
 local tps = { [0]='void', [1]='u8', [2]='u16', [4]='u32' }
 
-assert(_MEM.max < 2^(_ENV.types.tceu_noff*8))
+assert(_ROOT.mem.max < 2^(_ENV.types.tceu_noff*8))
 
 -- TEMPLATE
 local tpl
@@ -143,7 +143,7 @@ do
         return string.sub(str, 1, i-1) .. to .. string.sub(str, e+1)
     end
 
-    tpl = sub(tpl, '=== CEU_NMEM ===',     _MEM.max)
+    tpl = sub(tpl, '=== CEU_NMEM ===',     _ROOT.mem.max)
     tpl = sub(tpl, '=== CEU_NTRACKS ===',  _AST.root.ns.tracks)
     tpl = sub(tpl, '=== CEU_NLSTS ===',    _AST.root.ns.awaits)
 
@@ -211,7 +211,7 @@ end
 
 if _OPTS.verbose or true then
     local T = {
-        mem  = _MEM.max,
+        mem  = _ROOT.mem.max,
         trks = _AST.root.ns.tracks,
         lsts = _AST.root.ns.awaits,
         evts = #_ENV.evts,

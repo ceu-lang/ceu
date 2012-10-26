@@ -44,6 +44,12 @@ F = {
     Block   = OR_all,
     BlockN  = OR_all,
 
+    Execute = function (me)
+        local org = unpack(me)
+        local cls = _ENV.clss[org.tp]
+        SAME(me, cls.blk)
+    end,
+
     ParEver = OR_all,
     ParAnd  = AND_all,
 

@@ -1,6 +1,814 @@
 --[===[
 --]===]
 
+    -- CLASSES / ORGS
+
+Test { [[
+class T do
+end
+return 0;
+]],
+    run = 0,
+}
+
+Test { [[
+class T do
+    int v;
+end
+return 0;
+]],
+    run = 0,
+}
+
+Test { [[
+class T do
+    class T1 do int v; end
+    int v;
+end
+return 0;
+]],
+    run = 0, -- TODO
+    --props = 'ERR : line 2 : must be in top-level',
+}
+
+Test { [[
+class T do
+end
+T[5] a;
+return 0;
+]],
+    env = 'ERR : line 3 : invalid declaration',
+}
+
+Test { [[
+class T do
+end
+event T a;
+return 0;
+]],
+    env = 'ERR : line 3 : invalid declaration',
+}
+
+Test { [[
+class T do
+end
+T a = 1;
+return 0;
+]],
+    env = 'ERR : line 3 : invalid attribution',
+}
+
+Test { [[
+class T do
+    int a;
+    T b;
+end
+T aa;
+return 0;
+]],
+    env = 'ERR : line 3 : invalid declaration',
+}
+
+Test { [[
+class T do
+end
+T a;
+return 0;
+]],
+    run = 0,
+}
+
+Test { [[
+class T do
+end
+T a;
+a.v = 0;
+return a.v;
+]],
+    env = 'ERR : line 4 : variable/event "v" is not declared',
+}
+
+Test { [[
+class T do
+    int a;
+end
+T aa;
+aa.b = 1;
+return 0;
+]],
+    env = 'ERR : line 5 : variable/event "b" is not declared',
+}
+
+Test { [[
+class T do
+    int v;
+end
+T a;
+a.v = 5;
+return a.v;
+]],
+    run = 5,
+}
+
+Test { [[
+class T do
+    int v;
+end
+do
+    T a;
+    a.v = 5;
+end
+a.v = 5;
+return a.v;
+]],
+    env = 'ERR : line 8 : variable/event "a" is not declared',
+}
+
+Test { [[
+class T3 do
+    int v3;
+end
+class T2 do
+    T3 t3;
+    int v;
+end
+class T do
+    int v,v2;
+    T2 x;
+end
+T a;
+a.v = 5;
+a.x.v = 5;
+a.v2 = 10;
+a.x.t3.v3 = 15;
+return a . v + a.x .v + a .v2 + a.x  .  t3 . v3;
+]],
+    run = 35,
+}
+
+Test { [[
+int a;
+execute a;
+]],
+    env = 'ERR : line 2 : cannot execute a `int´',
+}
+
+Test { [[
+int v;
+class T do
+    int v;
+    v = 5;
+end
+T a;
+execute a;
+v = a.v;
+a.v = 4;
+return a.v + v;
+]],
+    run = 9,
+}
+
+Test { [[
+class T do
+    int v;
+    v = 5;
+end
+do
+    T a;
+    execute a;
+    int v = a.v;
+    a.v = 4;
+    return a.v + v;
+end
+]],
+    run = 9,
+}
+
+-- TODO: par de executes
+Test { [[
+class T do
+    int v;
+    v = 5;
+end
+do
+    T a;
+    par/and do
+        execute a;
+    with
+        execute a;
+    end
+    int v = a.v;
+    a.v = 4;
+    return a.v + v;
+end
+]],
+    run = 9,
+}
+
+Test { [[
+class T do
+    int v;
+    v = 5;
+end
+T a;
+execute a;
+int v = a.v;
+a.v = 4;
+return a.v + v;
+]],
+    run = 9,
+}
+
+Test { [[
+int ret = 0;
+do
+    int a;
+    do
+        class T do
+            a = 1;
+        end
+        T v;
+        execute v;
+    end
+    ret = a;
+end
+return ret;
+]],
+    env = 'ERR : line 6 : variable/event "a" is not declared',
+    --props = 'ERR : line 5 : must be in top-level',
+}
+
+Test { [[
+do
+    int a;
+    do
+        class T do
+            a = 1;
+        end
+    end
+end
+T v;
+execute v;
+return 0;
+]],
+    env = 'ERR : line 5 : variable/event "a" is not declared',
+    --props = 'ERR : line 4 : must be in top-level',
+}
+
+Test { [[
+int a;
+do
+    do
+        class T do
+            a = 1;
+            b = 1;
+        end
+    end
+end
+int b;
+T v;
+execute v;
+return a;
+]],
+    env = 'ERR : line 5 : variable/event "a" is not declared',
+    --env = 'ERR : line 6 : variable/event "b" is not declared',
+}
+
+Test { [[
+int a;
+int b;
+do
+    do
+        class T do
+            a = 1;
+            b = 3;
+        end
+    end
+end
+do
+    int a;
+end
+do
+    int b;
+    do
+        T v;
+        execute v;
+    end
+end
+return a+b;
+]],
+    env = 'ERR : line 6 : variable/event "a" is not declared',
+    --props = 'ERR : line 5 : must be in top-level',
+    --env = 'ERR : line 17 : class "T" is not declared',
+}
+
+Test { [[
+int a;
+int b;
+class T do
+    a = 1;
+    b = 3;
+end
+do
+    int a;
+end
+do
+    int b;
+    do
+        T v;
+        execute v;
+    end
+end
+return a+b;
+]],
+    env = 'ERR : line 4 : variable/event "a" is not declared',
+    --run = 4,
+}
+
+Test { [[
+class T do
+    int v;
+end
+
+T t1, t2;
+t1.v = 1;
+t2.v = 2;
+execute t2;
+execute t1;
+return t1.v+t2.v;
+]],
+    run = 3,
+}
+
+Test { [[
+input int START;
+class T do
+end
+T aa;
+loop do
+    execute aa;
+end
+]],
+    tight = 'ERR : line 5 : tight loop',
+}
+
+Test { [[
+class T do
+    await 1s;
+end
+T aa;
+execute aa;
+return 10;
+]],
+    run = { ['~>1s']=10 },
+}
+
+Test { [[
+do
+    class T do
+        await 1s;
+    end
+end
+T aa;
+execute aa;
+return 10;
+]],
+    run = { ['~>1s']=10 },
+}
+
+Test { [[
+input int F;
+do
+    class T do
+        int v = await F;
+    end
+end
+T aa;
+execute aa;
+return aa.v;
+]],
+    run = { ['10~>F']=10 },
+}
+
+Test { [[
+class T do
+    await 1s;
+end
+T aa;
+loop do
+    execute aa;
+end
+]],
+    ana = {
+        isForever = true
+    }
+}
+
+Test { [[
+input void F;
+class T1 do
+    await 1s;
+end
+class T do
+    T1 a;
+    execute a;
+    await 1s;
+end
+int ret = 10;
+par/or do
+    do
+        T aa;
+        execute aa;
+    end
+    ret = ret + 1;
+with
+    await F;
+end
+await F;
+return ret;
+]],
+    run = {
+        ['~>F;~>5s;~>F'] = 10,
+        ['~>1s;~>F;~>F;~>1s'] = 10,
+        ['~>1s;~>F;~>1s;~>F'] = 10,
+        ['~>1s;~>1s;~>F'] = 11,
+    },
+}
+Test { [[
+input void F;
+class T1 do
+    await 1s;
+end
+class T do
+    T1 a;
+    execute a;
+    await 1s;
+end
+int ret = 10;
+T aa;
+par/or do
+    do
+        execute aa;
+    end
+    ret = ret + 1;
+with
+    await F;
+end
+await F;
+return ret;
+]],
+    run = {
+        ['~>F;~>5s;~>F'] = 10,
+        ['~>1s;~>F;~>F;~>1s'] = 10,
+        ['~>1s;~>F;~>1s;~>F'] = 10,
+        ['~>1s;~>1s;~>F'] = 11,
+    },
+}
+
+Test { [[
+input void F;
+class T do
+    input void E;
+    par/or do
+        await 1s;
+    with
+        await E;
+    end
+    await 1s;
+end
+int ret = 10;
+par/or do
+    do
+        T aa;
+        execute aa;
+    end
+    ret = ret + 1;
+with
+    await F;
+end
+await F;
+return ret;
+]],
+    run = {
+        ['~>F;~>5s;~>F'] = 10,
+        ['~>1s;~>F;~>F;~>1s'] = 10,
+        ['~>1s;~>F;~>1s;~>F'] = 10,
+        ['~>1s;~>1s;~>F'] = 11,
+        ['~>1s;~>E;~>1s;~>F'] = 11,
+    },
+}
+
+Test { [[
+input void F;
+class T1 do
+    await 1s;
+end
+class T do
+    input void E;
+    par/or do
+        T1 a;
+        execute a;
+    with
+        await E;
+    end
+    await 1s;
+end
+int ret = 10;
+par/or do
+    do
+        T aa;
+        execute aa;
+    end
+    ret = ret + 1;
+with
+    await F;
+end
+await F;
+return ret;
+]],
+    run = {
+        ['~>F;~>5s;~>F'] = 10,
+        ['~>1s;~>F;~>F;~>1s'] = 10,
+        ['~>1s;~>F;~>1s;~>F'] = 10,
+        ['~>1s;~>1s;~>F'] = 11,
+        ['~>1s;~>E;~>1s;~>F'] = 11,
+    },
+}
+
+Test { [[
+input void F;
+class T do
+    await 1s;
+end
+T aa;
+int ret = 10;
+par/or do
+    execute aa;
+    ret = ret + 1;
+with
+    await F;
+end
+await F;
+return ret;
+]],
+    run = {
+        ['~>1s;~>F'] = 11,
+        ['~>F;~>1s;~>F'] = 10,
+    },
+}
+
+Test { [[
+input void F;
+class T do
+    await 1s;
+end
+T aa;
+int ret = 0;
+par/or do
+    loop do
+        execute aa;
+        ret = ret + 1;
+    end
+with
+    await F;
+end
+return ret;
+]],
+    run = { ['~>5s;~>F'] = 5 },
+}
+
+Test { [[
+input void A;
+class T do
+    int v = 0;
+    loop do
+        await A;
+        v = v + 1;
+    end
+end
+T aa;
+par do
+    execute aa;
+with
+    await A;
+    if aa.v == 3 then
+        return aa.v;
+    end
+end
+]],
+    ana = {
+        nd_acc = 1,
+    },
+}
+
+Test { [[
+input int START;
+class T do
+    event int a;
+    emit a=10;
+    a = 5;
+end
+T aa;
+execute aa;
+return aa.a;
+]],
+    run = 5,
+}
+
+Test { [[
+input int START;
+class T do
+    event int a;
+    emit a=10;
+    a = 5;
+end
+T aa;
+par/or do
+    execute aa;
+with
+end
+return aa.a;
+]],
+    run = 10,
+}
+
+Test { [[
+input int START;
+class T do
+    event int a;
+    par/or do
+        emit a=10;
+        a = 5;
+    with
+        await a;
+        a = 7;
+    end
+end
+T aa;
+execute aa;
+return aa.a;
+]],
+    run = 7,
+}
+
+Test { [[
+input int START;
+class T do
+    event int a;
+    par/and do
+        emit a=10;
+        a = 5;
+    with
+        await a;
+        a = 7;
+    end
+end
+T aa;
+execute aa;
+return aa.a;
+]],
+    run = 5,
+}
+
+Test { [[
+input int START;
+class T do
+    event int a;
+    par/or do
+        emit a=10;
+        a = 5;
+    with
+        await a;
+        a = 7;
+    end
+end
+T aa;
+par/or do
+    execute aa;
+with
+end
+return aa.a;
+]],
+    run = 10,
+}
+
+Test { [[
+input void A,B;
+int a = 0;
+do
+    u8 a = 1;
+end
+par/and do
+    await A;
+    a = a + 1;
+with
+    await B;
+    a = a + 1;
+end
+return a;
+]],
+    run = { ['~>B;~>A']=2 },
+}
+
+Test { [[
+input int START, F;
+class T do
+    event int a;
+    par/or do
+        a = await START;
+        emit a;
+    with
+        await 10s;
+        await a;
+        a = 7;
+    end
+end
+T aa;
+execute aa;
+await F;
+return aa.a;
+]],
+    run = {
+        ['11~>START;~>10s;~>F'] = 11,
+        ['~>10s;11~>START;~>F'] = 7,
+    },
+}
+
+Test { [[
+class T do
+    event int a, b;
+    par/and do
+        await a;
+        emit b;
+    with
+        await b;
+    end
+    a = 5;
+    b = 4;
+end
+T aa;
+
+int ret;
+par/or do
+    execute aa;
+    ret = 1;
+with
+    emit aa.a;
+    ret = 2;
+end
+return ret + aa.a + aa.b;
+]],
+    run = 10,
+}
+
+Test { [[
+class T do
+    event int a;
+    emit a=100;
+    a = 5;
+end
+T aa;
+par/or do
+    execute aa;
+    aa.a = 10;
+with
+    await aa.a;
+end
+return aa.a;
+]],
+    run = 100,
+}
+
+Test { [[
+class T do
+    event int e;
+    if e == 1 then
+        emit e;
+    end
+end
+T a1, a2;
+int ret = 0;
+par/or do
+    par/and do
+        a1.e = 1;
+        execute a1;
+        ret = 1;
+    with
+        a2.e = 2;
+        execute a2;
+        ret = 1;
+    end
+with
+    await a2.e;
+    ret = 100;
+end
+return ret;
+]],
+    run = 1,
+}
+
+--do return end
+
 Test { [[return(1);]],
     ana = {
         needsPrio = false,
@@ -336,7 +1144,7 @@ input int A;
 A=1;
 return 1;
 ]],
-    parser = "ERR : line 1 : after `;´ : expected statement (missing `_´?)",
+    parser = 'ERR : line 2 : after `A´ : expected identifier',
 }
 
 Test { [[input  int A;]],
@@ -448,16 +1256,16 @@ Test { [[int a = a+1; return a;]],
     run = 1,
 }
 
-Test { [[int a; a = emit a(1); return a;]],
+Test { [[int a; a = emit a=1; return a;]],
     parser = "ERR : line 1 : after `emit´ : expected event",
     --trig_wo = 1,
 }
 
-Test { [[int a; emit a(1); return a;]],
+Test { [[int a; emit a=1; return a;]],
     env = 'ERR : line 1 : event "a" is not declared',
     --trig_wo = 1,
 }
-Test { [[event int a; emit a(1); return a;]],
+Test { [[event int a; emit a=1; return a;]],
     run = 1,
     --trig_wo = 1,
 }
@@ -721,14 +1529,15 @@ return 0;
 }
 
 Test { [[await -1ms; return 0;]],
-    parser = "ERR : line 1 : after `await´ : expected event",
+    --parser = "ERR : line 1 : after `await´ : expected event",
+    parser = 'ERR : line 1 : after `1´ : expected `;´',
 }
 
 Test { [[await 1; return 0;]],
     parser = 'ERR : line 1 : after `1´ : expected <h,min,s,ms,us>',
 }
 Test { [[await -1; return 0;]],
-    parser = 'ERR : line 1 : after `await´ : expected event',
+    env = 'ERR : line 1 : event "?" is not declared',
 }
 
 Test { [[s32 a=await 10s; return a==8000000;]],
@@ -744,7 +1553,7 @@ Test { [[s32 a=await 10s; return a==8000000;]],
     },
 }
 
-Test { [[await Forever;]],
+Test { [[await FOREVER;]],
     ana = {
         isForever = true,
         needsPrio = false,
@@ -752,10 +1561,10 @@ Test { [[await Forever;]],
         n_tracks  = 1,
     },
 }
-Test { [[await Forever; await Forever;]],
+Test { [[await FOREVER; await FOREVER;]],
     parser = "ERR : line 1 : before `;´ : expected event",
 }
-Test { [[await Forever; return 0;]],
+Test { [[await FOREVER; return 0;]],
     parser = "ERR : line 1 : before `;´ : expected event",
 }
 
@@ -860,7 +1669,7 @@ with
     await 1s;
 end
 par/and do
-    await Forever;
+    await FOREVER;
 with
     await 1s;
 end
@@ -881,12 +1690,12 @@ end
 par/or do
     await 1s;
 with
-    await Forever;
+    await FOREVER;
 end
 par/or do
-    await Forever;
+    await FOREVER;
 with
-    await Forever;
+    await FOREVER;
 end
 return 0;
 ]],
@@ -898,7 +1707,7 @@ return 0;
 
 Test { [[
 par do
-    await Forever;
+    await FOREVER;
 with
     await 1s;
 end
@@ -910,9 +1719,9 @@ end
 
 Test { [[
 par do
-    await Forever;
+    await FOREVER;
 with
-    await Forever;
+    await FOREVER;
 end
 ]],
     ana = {
@@ -1014,7 +1823,7 @@ return v;
 
 Test { [[
 par/or do
-    await Forever;
+    await FOREVER;
 with
     return 1;
 end
@@ -1062,7 +1871,7 @@ loop do
         await 2s;
     with
         a = 1;
-        await Forever;
+        await FOREVER;
     with
         await 1s;
         loop do
@@ -1114,7 +1923,7 @@ Test { [[
 input void A,B;
 par/or do
     await A;
-    await Forever;
+    await FOREVER;
 with
     await B;
     return 1;
@@ -1188,7 +1997,7 @@ end
 
 Test { [[
 par do
-    await Forever;
+    await FOREVER;
 with
     return 1;
 end;
@@ -1201,7 +2010,7 @@ Test { [[
 input void A,B;
 par do
     await A;
-    await Forever;
+    await FOREVER;
 with
     await B;
     return 1;
@@ -1276,7 +2085,7 @@ par/or do
     with
         a = await B;
     end;
-    await Forever;
+    await FOREVER;
 with
     await F;
 end;
@@ -1335,7 +2144,7 @@ int a = do
                 return v;
             end;
             // unreachable
-            await Forever;
+            await FOREVER;
         with
             await F;
         end;
@@ -1452,7 +2261,7 @@ return 0;
 Test { [[
 loop do
     par do
-        await Forever;
+        await FOREVER;
     with
         break;
     end;
@@ -1471,7 +2280,7 @@ input int A,B;
 loop do
     par do
         await A;
-        await Forever;
+        await FOREVER;
     with
         await B;
         break;
@@ -1488,7 +2297,7 @@ return 1;
 Test { [[
 loop do
     par do
-        await Forever;
+        await FOREVER;
     with
         return 1;
     end;
@@ -1507,7 +2316,7 @@ input int A,B;
 loop do
     par do
         await A;
-        await Forever;
+        await FOREVER;
     with
         await B;
         return 1;
@@ -1600,7 +2409,7 @@ end;
 Test { [[
 loop do
     loop do
-        await Forever;
+        await FOREVER;
     end;
 end;
 ]],
@@ -2103,7 +2912,7 @@ input int F;
 int a = 0;
 par do
     a = a + 1;
-    await Forever;
+    await FOREVER;
 with
     await F;
     return a;
@@ -2154,7 +2963,7 @@ return a+f;
 
 Test { [[
 event int c;
-emit c(10);
+emit c=10;
 await c;
 return 0;
 ]],
@@ -2168,8 +2977,8 @@ return 0;
 -- EX.06: 2 triggers
 Test { [[
 event int c;
-emit c(10);
-emit c(10);
+emit c=10;
+emit c=10;
 return c;
 ]],
     run = 10,
@@ -2179,7 +2988,7 @@ return c;
 Test { [[
 event int a,b;
 a = 1;
-emit b(a);
+emit b=a;
 return b;
 ]],
     run = 1,
@@ -2189,11 +2998,9 @@ return b;
 -- ParOr
 
 Test { [[
-input int Start;
 event int a = 3;
 par do
-    await Start;
-    emit a(a);
+    emit a=a;
     return a;
 with
     loop do
@@ -2208,7 +3015,7 @@ end;
 Test { [[
 event int a = 3;
 par do
-    emit a(a);
+    emit a=a;
     return a;
 with
     loop do
@@ -2536,7 +3343,7 @@ end;
 
 Test { [[
 par do
-    await Forever;
+    await FOREVER;
 with
     return 10;
 end;
@@ -3499,7 +4306,7 @@ input int F;
 int a;
 par do
     await 5s;
-    await Forever;
+    await FOREVER;
 with
     a = 0;
     loop do
@@ -3660,13 +4467,10 @@ return a;
     }
 }
 
--- 1st to use Start
 Test { [[
-input int Start;
 event int a;
 par/and do
-    await Start;
-    emit a(1);
+    emit a=1;
 with
     await a;
 end;
@@ -3678,7 +4482,7 @@ return 10;
 Test { [[
 event int a;
 par/and do
-    emit a(1);
+    emit a=1;
 with
     await a;
 end;
@@ -3694,7 +4498,7 @@ event int a;
 par/and do
     await a;
 with
-    emit a(1);
+    emit a=1;
 end;
 return 10;
 ]],
@@ -3709,13 +4513,13 @@ input int A;
 event int b, c;
 par do
     await A;
-    emit b(1);
+    emit b=1;
     await c;
     return 10;
 with
     await b;
     await A;
-    emit c(10);
+    emit c=10;
     // unreachable
     await c;
     // unreachable
@@ -3753,7 +4557,7 @@ event int a;
 par/or do
     return 1;
 with
-    emit a(1);
+    emit a=1;
     // unreachable
 end;
 // unreachable
@@ -3775,7 +4579,7 @@ Test { [[
 event int a;
 par/or do
 with
-    emit a(1);
+    emit a=1;
     // unreachable
 end;
 // unreachable
@@ -3796,7 +4600,7 @@ event int a;
 par do
     return 1;
 with
-    emit a(1);
+    emit a=1;
     // unreachable
 end;
 ]],
@@ -3811,7 +4615,7 @@ end;
 Test { [[
 event int a;
 par do
-    emit a(1);
+    emit a=1;
     return 0;
 with
     return 2;
@@ -3828,7 +4632,7 @@ end;
 Test { [[
 event int a;
 par/or do
-    emit a(1);
+    emit a=1;
 with
 end;
 await a;
@@ -3843,12 +4647,10 @@ return 0;
 }
 
 Test { [[
-input int Start;
 event int a;
 int v1=0,v2=0;
-await Start;
 par/or do
-    emit a(2);
+    emit a=2;
     v1 = 2;
 with
     v2 = 2;
@@ -3866,7 +4668,7 @@ Test { [[
 event int a;
 int v1=0,v2=0;
 par/or do
-    emit a(2);
+    emit a=2;
     v1 = 2;
 with
     v2 = 2;
@@ -3881,15 +4683,12 @@ return v1+v2;
 }
 
 Test { [[
-input int Start;
 event int a;
 int v1=0,v2=0,v3=0;
 par/or do
-    await Start;
-    emit a(2);
+    emit a=2;
     v1 = 2;
 with
-    await Start;
     v2 = 2;
 with
     await a;
@@ -3908,7 +4707,7 @@ Test { [[
 event int a;
 int v1=0,v2=0,v3=0;
 par/or do
-    emit a(2);
+    emit a=2;
     v1 = 2;
 with
     await a;
@@ -3928,13 +4727,11 @@ return v1+v2+v3;
 
 -- 1st to escape and terminate
 Test { [[
-input int Start;
 event int a;
 int ret;
 par/or do
-    await Start;
     par/or do
-        emit a(2);
+        emit a=2;
     with
         ret = 3;
     end;
@@ -3958,7 +4755,7 @@ event int a;
 int ret;
 par/or do
     par/or do
-        emit a(2);
+        emit a=2;
     with
         ret = 3;
     end;
@@ -3985,7 +4782,7 @@ par/or do
     ret = a + 1;
 with
     par/or do
-        emit a(2);
+        emit a=2;
     with
         ret = 3;
     end;
@@ -4133,7 +4930,7 @@ loop do
                 break;
             end;
         end;
-        await Forever;
+        await FOREVER;
     end;
 end;
 ]],
@@ -4467,15 +5264,11 @@ return 1;
     }
 }
 
--- TODO: Start: substitute to delay
--- todos os anteriores ja foram substituidos
 Test { [[
-input int Start;
 event int a,b,c;
 par/and do
-    await Start;
-    emit b(1);
-    emit c(1);
+    emit b=1;
+    emit c=1;
 with
     await b;
     par/or do
@@ -4888,7 +5681,6 @@ return ret;
 }
 
 Test { [[
-input int Start;
 event int a, b;
 int x;
 par/or do
@@ -4897,14 +5689,13 @@ par/or do
     x = 0;
 with
     await b;
-    emit a(b);
+    emit a=b;
     await 10ms;
     x = 1;
 with
-    await Start;
-    emit b(1);
+    emit b=1;
     x = 2;
-    await Forever;
+    await FOREVER;
 end;
 return x;
 ]],
@@ -4916,7 +5707,6 @@ return x;
 }
 
 Test { [[
-input int Start;
 event int a, b, x;
 par/or do
     await a;
@@ -4927,11 +5717,10 @@ with
     await 10ms;
     x = 1;
 with
-    await Start;
-    emit b(1);
-    emit a(b);
+    emit b=1;
+    emit a=b;
     x = 2;
-    await Forever;
+    await FOREVER;
 end;
 return x;
 ]],
@@ -4943,7 +5732,6 @@ return x;
 }
 
 Test { [[
-input int Start;
 event int a, b;
 int x;
 par/or do
@@ -4955,7 +5743,6 @@ with
     await 10ms;
     x = 0;
 with
-    await Start;
     b = 1;
     a = b;
     x = a;
@@ -5755,11 +6542,9 @@ end;
 }
 
 Test { [[
-input int Start;
 event int a;
 int x;
 par/or do
-    await Start;
     par/and do
         await 10ms;
         x = 4;
@@ -5787,7 +6572,7 @@ event int a;
 loop do
     par/and do
         await A;
-        emit a(1);
+        emit a=1;
     with
         await a;
     end;
@@ -5855,40 +6640,17 @@ event int a;
 par do
     loop do
         par/or do
-            emit a(1);
+            emit a=1;
         with
             await a;
         end;
     end;
 with
     await a;
-    emit a(a);
+    emit a=a;
 end;
 ]],
     tight = 'ERR : line 3 : tight loop',
-}
-
-Test { [[
-input int Start;
-event int a;
-par do
-    loop do
-        par/and do
-            await Start;
-            emit a(1);
-        with
-            await a;
-        end;
-    end;
-with
-    await a;
-    emit a(a);
-end;
-]],
-    ana = {
-        isForever = true,
-        --trig_wo = 1,
-    },
 }
 
 Test { [[
@@ -5896,13 +6658,13 @@ input int A;
 event int a, d, e, i, j;
 par/and do
     await A;
-    emit a(1);
+    emit a=1;
 with
     d = await a;
-    emit i(5);
+    emit i=5;
 with
     e = await a;
-    emit j(6);
+    emit j=6;
 end;
 return d + e;
 ]],
@@ -5915,7 +6677,7 @@ return d + e;
 Test { [[
 event int a;
 par do
-    emit a(1);
+    emit a=1;
 with
     return a;
 end;
@@ -5956,7 +6718,7 @@ par do
     end;
 with
     await A;
-    emit b(1);
+    emit b=1;
 end;
 ]],
     ana = {
@@ -5969,7 +6731,7 @@ event int a;
 par do
     par do
         await A;
-        emit a(1);
+        emit a=1;
     with
         await a;
         await a;
@@ -5993,7 +6755,7 @@ int b;
 par/or do
     b = await a;
 with
-    emit a(3);
+    emit a=3;
 end;
 return a+b;
 ]],
@@ -6011,7 +6773,7 @@ int b;
 par/or do
     b = await a;
 with
-    emit a(3);
+    emit a=3;
 with
     a = b;
 end;
@@ -6026,12 +6788,10 @@ return 0;
 }
 
 Test { [[
-input int Start;
 event int b;
 int i;
 par/or do
-    await Start;
-    emit b(1);
+    emit b=1;
     i = 2;
 with
     await b;
@@ -6046,15 +6806,13 @@ return i;
     run = 1,
 }
 Test { [[
-input int Start;
 event int b,c;
 par/or do
-    await Start;
-    emit b(1);
+    emit b=1;
     await c;
 with
     await b;
-    emit c(5);
+    emit c=5;
 end;
 return c;
 ]],
@@ -6128,7 +6886,7 @@ loop do
     if v==2 then
         return a;
     end;
-    emit a(v);
+    emit a=v;
 end;
 ]],
     ana = {
@@ -6151,7 +6909,7 @@ loop do
             break;
         end;
     end;
-    emit a(v);
+    emit a=v;
 end;
 return a-1;
 ]],
@@ -6709,17 +7467,15 @@ end;
     },
 }
 Test { [[
-input int Start, Z;
+input int Z;
 event int a;
 par do
-    await Start;
-    emit a(1);
+    emit a=1;
     return 0;
 with
     par/or do
         await a;
     with
-        await Start;
     with
         await Z;
     end;
@@ -6735,11 +7491,9 @@ end;
     run = 1,
 }
 Test { [[
-input int Start;
 event int a;
 par do
-    await Start;
-    emit a(1);
+    emit a=1;
 with
     await a;
     return a;
@@ -6756,7 +7510,7 @@ input int B,Z;
 event int a;
 par/or do
     await B;
-    emit a(5);
+    emit a=5;
 with
     await a;
     a = a + 1;
@@ -6776,7 +7530,7 @@ input int B,Z;
 event int a;
 par/or do
     await B;
-    emit a(5);
+    emit a=5;
 with
     par/and do
         await a;
@@ -6800,7 +7554,7 @@ input int B;
 event int a;
 par/or do
     await B;
-    emit a(5);
+    emit a=5;
 with
     par/and do
         await B;
@@ -6824,7 +7578,7 @@ input int B,Z;
 event int a;
 par/or do
     await B;
-    emit a(5);
+    emit a=5;
 with
     par/and do
         await a;
@@ -6846,17 +7600,14 @@ return a;
     },
 }
 Test { [[
-input int Start;
 event int a;
 par do
-    await Start;
-    emit a(1);
+    emit a=1;
     return a;
 with
     par/and do
         await a;
     with
-        await Start;
     end;
     return a;
 end;
@@ -6868,17 +7619,15 @@ end;
     run = 1,
 }
 Test { [[
-input int Start, Z;
+input int Z;
 event int a;
 par do
-    await Start;
-    emit a(1);
+    emit a=1;
     return a;
 with
     par/and do
         await a;
     with
-        await Start;
     with
         await Z;
     end;
@@ -7216,7 +7965,7 @@ event int a;
 par/or do
     await a;
 with
-    emit a(1);
+    emit a=1;
 end;
 return a;
 ]],
@@ -7231,9 +7980,9 @@ return a;
 Test { [[
 event int a;
 par/or do
-    emit a(1);
+    emit a=1;
 with
-    emit a(1);
+    emit a=1;
 end;
 return a;
 ]],
@@ -7245,10 +7994,10 @@ return a;
 Test { [[
 event int a,b;
 par/or do
-    emit a(1);
+    emit a=1;
     a = 2;
 with
-    emit b(1);
+    emit b=1;
     b = 5;
 end;
 return a+b;
@@ -7258,9 +8007,9 @@ return a+b;
 Test { [[
 event int a, b;
 par/or do
-    emit a(2);
+    emit a=2;
 with
-    emit b(3);
+    emit b=3;
 end;
 return a+b;
 ]],
@@ -7270,13 +8019,13 @@ return a+b;
 Test { [[
 event int a;
 int v = par do
-    emit a(1);
+    emit a=1;
     return a;
 with
-    emit a(1);
+    emit a=1;
     return a;
 with
-    emit a(1);
+    emit a=1;
     return a;
 end;
 return v;
@@ -7344,9 +8093,9 @@ Test { [[
 input int A;
 event int a;
 await A;
-emit a(1);
+emit a=1;
 await A;
-emit a(1);
+emit a=1;
 return a;
 ]],
 --~A;1~>a;~A;1~>a]],
@@ -7361,7 +8110,7 @@ event int a;
 par/or do
     loop do
         await A;
-        emit a(1);
+        emit a=1;
     end;
 with
     await A;
@@ -7377,11 +8126,9 @@ return a;
     run = { ['1~>A;1~>A']=1 },
 }
 Test { [[
-input int Start;
 event int a;
 par do
-    await Start;
-    emit a(1);
+    emit a=1;
     return a;
 with
     await a;
@@ -7389,7 +8136,7 @@ with
     return a;
 with
     await a;
-    await Forever;
+    await FOREVER;
 end;
 ]],
     ana = {
@@ -7400,11 +8147,9 @@ end;
     run = 2,
 }
 Test { [[
-input int Start;
 event int a;
 par/or do
-    await Start;
-    emit a(1);
+    emit a=1;
 with
     await a;
     a = a + 1;
@@ -7583,13 +8328,13 @@ par/or do
     await d;
 with
     par/or do
-        emit b(1);
+        emit b=1;
     with
-        emit a(2);
+        emit a=2;
     with
-        emit c(3);
+        emit c=3;
     end;
-    emit d(4);
+    emit d=4;
 end;
 return a+b+c+d;
 ]],
@@ -7611,11 +8356,11 @@ par/or do
     end;
 with
     par/or do
-        emit a(10);
+        emit a=10;
     with
-        emit b(20);
+        emit b=20;
     with
-        emit c(30);
+        emit c=30;
     end;
 end;
 return a+b+c;
@@ -7638,11 +8383,11 @@ par/or do
     end;
 with
     par/or do
-        emit a(10);
+        emit a=10;
     with
-        emit b(20);
+        emit b=20;
     with
-        emit c(30);
+        emit c=30;
     end;
 end;
 return a+b+c;
@@ -7657,9 +8402,9 @@ return a+b+c;
 Test { [[
 event int a;
 par/or do
-    emit a(1);
+    emit a=1;
 with
-    emit a(1);
+    emit a=1;
     await a;
 end;
 return 0;
@@ -7673,10 +8418,10 @@ return 0;
 Test { [[
 event int a;
 par/or do
-    emit a(1);
+    emit a=1;
     await a;
 with
-    emit a(1);
+    emit a=1;
 end;
 return 0;
 ]],
@@ -7689,9 +8434,9 @@ return 0;
 Test { [[
 event int a;
 par do
-    emit a(1);
+    emit a=1;
 with
-    emit a(1);
+    emit a=1;
     await a;
 end;
 ]],
@@ -7874,7 +8619,7 @@ loop do
             v2 = 2;
         with
         end;
-        await Forever;
+        await FOREVER;
     end;
 end;
 return v1 + v2;
@@ -8821,9 +9566,9 @@ return c;
 Test { [[
 event int a,b;
 par/or do
-    emit a(2);
+    emit a=2;
 with
-    emit b(5);
+    emit b=5;
 end;
 return a + b;
 ]],
@@ -8858,7 +9603,7 @@ end;
 
 Test { [[
 event int a;
-emit a(8);
+emit a=8;
 return a;
 ]],
     run = 8,
@@ -8868,7 +9613,7 @@ return a;
 Test { [[
 event int a;
 par/and do
-    emit a(9);
+    emit a=9;
 with
     loop do
         await a;
@@ -8886,7 +9631,7 @@ end;
 Test { [[
 event int a;
 par/and do
-    emit a(9);
+    emit a=9;
 with
     loop do
         await a;
@@ -8907,9 +9652,9 @@ int v;
 par/or do
     v = await A;
     par/or do
-        emit a(1);
+        emit a=1;
     with
-        emit b(1);
+        emit b=1;
     end;
     v = await A;
 with
@@ -8935,9 +9680,9 @@ int c;
 par/or do
     await D;
     par/or do
-        emit a(8);
+        emit a=8;
     with
-        emit b(5);
+        emit b=5;
     end;
     int v = await D;
     return v;
@@ -8973,10 +9718,10 @@ int v;
 par/or do
     par/and do
         int v = await A;
-        emit a(v);
+        emit a=v;
     with
         await B;
-        emit b(1);
+        emit b=1;
     end;
     return v;
 with
@@ -9008,7 +9753,7 @@ par/or do
         return v;
     with
         await B;
-        emit b(1);
+        emit b=1;
         return v;
     end;
 with
@@ -9062,7 +9807,7 @@ input int D;
 event int a;
 loop do
     int v = await D;
-    emit a(a+v);
+    emit a=a+v;
 end;
 ]],
 --((a,~D)->add~>a)*]],
@@ -9079,13 +9824,13 @@ par/or do
     a = 0;
     loop do
         int v = await A;
-        emit a(v);
+        emit a=v;
     end;
 with
     b = 0;
     loop do
         int v = await D;
-        emit b(v+b);
+        emit b=v+b;
     end;
 with
     c = 0;
@@ -9095,7 +9840,7 @@ with
         with
             await b;
         end;
-        emit c(a+b);
+        emit c=a+b;
     end;
 with
     await E;
@@ -9118,14 +9863,14 @@ event int b, d, e;
 par/and do
     loop do
         await A;
-        emit b(0);
+        emit b=0;
         int v = await Z;
-        emit d(v);
+        emit d=v;
     end;
 with
     loop do
         await d;
-        emit e(d);
+        emit e=d;
     end;
 end;
 ]],
@@ -9233,7 +9978,7 @@ input int A;
 event int a;
 par/and do
     await A;
-    emit a(1);
+    emit a=1;
 with
     await a;
 with
@@ -9252,10 +9997,10 @@ input int A;
 event int a;
 par/and do
     await A;
-    emit a(1);
+    emit a=1;
 with
     await a;
-    emit a(a);
+    emit a=a;
 end;
 return a;
 ]],
@@ -9269,7 +10014,7 @@ input int A;
 event int a;
 par/and do
     await A;
-    emit a(1);
+    emit a=1;
 with
     await a;
     await a;
@@ -9288,9 +10033,9 @@ event int a, b;
 par/and do
     await A;
     par/or do
-        emit a(1);
+        emit a=1;
     with
-        emit b(1);
+        emit b=1;
     end;
 with
     par/or do
@@ -9323,9 +10068,9 @@ event int a,b;
 par/and do
     await A;
     par/or do
-        emit a(1);
+        emit a=1;
     with
-        emit b(1);
+        emit b=1;
     end;
 with
     par/and do
@@ -9356,7 +10101,7 @@ input int A;
 event int a;
 par/and do
     await A;
-    emit a(1);
+    emit a=1;
 with
     await a;
     await a;
@@ -9380,8 +10125,8 @@ input int A;
 event int a;
 par/and do
     await A;
-    emit a(1);
-    emit a(3);
+    emit a=1;
+    emit a=3;
 with
     await a;
     await a;
@@ -9423,7 +10168,7 @@ input int A;
 event int a;
 par/and do
     await A;
-    emit a(8);
+    emit a=8;
 with
     await a;
     await a;
@@ -9446,7 +10191,7 @@ par/and do
     with
         await B;
     end;
-    emit a(1);
+    emit a=1;
 with
     par/and do
     with
@@ -9473,7 +10218,7 @@ par/and do
     with
         await B;
     end;
-    emit a(10);
+    emit a=10;
 with
     par/or do
         await Z;
@@ -9495,8 +10240,8 @@ input int A;
 event int a,b;
 par/and do
     await A;
-    emit a(1);
-    emit b(1);
+    emit a=1;
+    emit b=1;
 with
     await a;
     await b;
@@ -9536,7 +10281,7 @@ return d;
 Test { [[
 event int a;
 par/and do
-    emit a(1);
+    emit a=1;
 with
     par/or do
     with
@@ -9553,7 +10298,7 @@ return a;
 Test { [[
 event int a;
 par/and do
-    emit a(1);
+    emit a=1;
 with
     par/or do
     with
@@ -9588,7 +10333,6 @@ return a;
 ]]
 
 Test { [[
-input int Start;
 int v = 0;
 event int a,b;
 par/or do
@@ -9603,7 +10347,6 @@ par/or do
         end;
     end;
 with
-    await Start;
     emit b;
     emit b;
     emit a;
@@ -9617,18 +10360,16 @@ end;
 }
 
 Test { [[
-input int Start;
 int v = 0;
 event int a, b;
 par/or do
     loop do
         await a;
-        emit b(a);
+        emit b=a;
         v = v + 1;
     end
 with
-    await Start;
-    emit a(1);
+    emit a=1;
     return v;
 end;
 ]],
@@ -9639,14 +10380,13 @@ end;
 }
 
 Test { [[
-input int Start;
 int v = 0;
 event int a, b;
 par/or do
     loop do
         par/or do
             await a;
-            emit b(a);
+            emit b=a;
             v = v + 1;
         with
             loop do
@@ -9658,10 +10398,9 @@ par/or do
         end;
     end;
 with
-    await Start;
-    emit a(1);
-    emit a(1);
-    emit a(0);
+    emit a=1;
+    emit a=1;
+    emit a=0;
     return v;
 end;
 ]],
@@ -9848,7 +10587,7 @@ with
         emit P2(0);
         emit P2(1);
     end;
-    await Forever;      // TODO: ele acha que o async termina
+    await FOREVER;      // TODO: ele acha que o async termina
 end;
 ]],
     run = 0,
@@ -9951,14 +10690,14 @@ with
     with
         loop do
             await 100ms;
-            emit draw(1);
+            emit draw=1;
         end;
     with
         loop do
             await 100ms;
-            emit sleeping(1);
+            emit sleeping=1;
             await 100ms;
-            emit occurring(1);
+            emit occurring=1;
         end;
     end;
 end;
@@ -9970,13 +10709,12 @@ end;
 }
 
 Test { [[
-input int Start;
 event int a, b;
 int v=0;
 par/or do
     loop do
         await a;
-        emit b(1);
+        emit b=1;
         v = 4;
     end;
 with
@@ -9985,8 +10723,7 @@ with
         v = 3;
     end;
 with
-    await Start;
-    emit a(1);
+    emit a=1;
     return v;
 end;
 // unreachable
@@ -10001,22 +10738,20 @@ return 0;
     -- SYNC TRIGGER
 
 Test { [[
-input int Start;
 event int a;
 int v1, v2;
 par/and do
     par/or do
-        await Start;
-        emit a(10);
+        emit a=10;
     with
-        await Forever;
+        await FOREVER;
     end;
     v1 = a;
 with
     par/or do
         await a;
     with
-        await Forever;
+        await FOREVER;
     end;
     v2 = a+1;
 end;
@@ -10026,7 +10761,6 @@ return v1 + v2;
 }
 
 Test { [[
-input int Start;
 event int a;
 par/or do
     loop do
@@ -10034,13 +10768,12 @@ par/or do
         a = a + 1;
     end;
 with
-    await Start;
-    emit a(1);
-    emit a(a);
-    emit a(a);
-    emit a(a);
-    emit a(a);
-    emit a(a);
+    emit a=1;
+    emit a=a;
+    emit a=a;
+    emit a=a;
+    emit a=a;
+    emit a=a;
 end;
 return a;
 ]],
@@ -10048,7 +10781,6 @@ return a;
 }
 
 Test { [[
-input int Start;
 event int a, b;
 par/or do
     loop do
@@ -10057,16 +10789,15 @@ par/or do
     end;
 with
     await a;
-    emit b(1);
-    emit b(b);
-    emit b(b);
-    emit b(b);
-    emit b(b);
-    emit b(b);
-    emit b(b);
+    emit b=1;
+    emit b=b;
+    emit b=b;
+    emit b=b;
+    emit b=b;
+    emit b=b;
+    emit b=b;
 with
-    await Start;
-    emit a(1);
+    emit a=1;
     b = 0;
 end;
 return b;
@@ -10079,15 +10810,13 @@ return b;
 }
 
 Test { [[
-input int Start;
 event int a;
 par/or do
-    await Start;
-    emit a(0);
+    emit a=0;
 with
     await a;
-    emit a(a+1);
-    await Forever;
+    emit a=a+1;
+    await FOREVER;
 end;
 return a;
 ]],
@@ -10095,20 +10824,18 @@ return a;
 }
 
 Test { [[
-input int Start;
 event int a,b;
 par/or do
-    await Start;
-    emit a(0);
+    emit a=0;
 with
     await a;
-    emit b(a+1);
+    emit b=a+1;
     a = b + 1;
-    await Forever;
+    await FOREVER;
 with
     await b;
     b = b + 1;
-    await Forever;
+    await FOREVER;
 end;
 return a;
 ]],
@@ -10121,7 +10848,7 @@ event int c = 0;
 par do
     loop do
         await A;
-        emit c(c);
+        emit c=c;
     end;
 with
     loop do
@@ -10137,13 +10864,12 @@ end;
 }
 
 Test { [[
-input int Start;
 event int a;
 par do
     loop do
-        await Start;
-        emit a(0);
-        emit a(a+1);
+        emit a=0;
+        emit a=a+1;
+        await 10s;
     end;
 with
     int v1,v2;
@@ -10164,13 +10890,12 @@ end;
 }
 
 Test { [[
-input int Start;
 event int a;
 par do
     loop do
-        await Start;
-        emit a(0);
-        emit a(a+1);
+        emit a=0;
+        emit a=a+1;
+        await 10s;
     end;
 with
     int v1,v2;
@@ -10195,7 +10920,7 @@ par/or do
     end;
 with
     await A;
-    emit c(1);
+    emit c=1;
     a = c;
 end;
 return a;
@@ -10204,12 +10929,11 @@ return a;
 }
 
 Test { [[
-input int Start;
 event int a, b, c;
 par/or do
     loop do
         await c;
-        emit b(c+1);
+        emit b=c+1;
         a = b;
     end;
 with
@@ -10218,8 +10942,7 @@ with
         a = b + 1;
     end;
 with
-    await Start;
-    emit c(1);
+    emit c=1;
     a = c;
 end;
 return a;
@@ -10235,19 +10958,19 @@ par do
     par do
         loop do
             int v = await A;
-            emit a(v);
+            emit a=v;
         end;
     with
         loop do
             await a;
-            emit b(a);
+            emit b=a;
             await a;
-            emit b(a);
+            emit b=a;
         end;
     with
         loop do
             await b;
-            emit a(b);
+            emit a=b;
             i = i + 1;
         end;
     end;
@@ -10270,9 +10993,9 @@ par do
     loop do
         await 100ms;
         par/or do
-            emit x(x+1);
+            emit x=x+1;
         with
-            emit y(y+1);
+            emit y=y+1;
         end;
     end;
 with
@@ -10295,20 +11018,18 @@ end;
 }
 
 Test { [[
-input int Start;
 event int a, b, c;
 int x = 0;
 int y = 0;
 par/or do
-    await Start;
-    emit a(0);
+    emit a=0;
 with
     await b;
-    emit c(0);
+    emit c=0;
 with
     par/or do
         await a;
-        emit b(0);
+        emit b=0;
     with
         par/or do
             await b;
@@ -10339,9 +11060,9 @@ par do
     loop do
         await 100ms;
         par/or do
-            emit x(x+1);
+            emit x=x+1;
         with
-            emit y(y+1);
+            emit y=y+1;
         end;
         c = c + 1;
     end;
@@ -10373,11 +11094,9 @@ end;
 }
 
 Test { [[
-input int Start;
 event int a, b;
 par/and do
-    await Start;
-    emit a(1);
+    emit a=1;
     b = a;
 with
     await a;
@@ -10388,12 +11107,10 @@ return b;
     run = 1,
 }
 Test { [[
-input int Start;
 event int a;
 int b;
 par/or do
-    await Start;
-    emit a(1);
+    emit a=1;
     b = a;
 with
     await a;
@@ -10409,15 +11126,13 @@ return b;
 }
 
 Test { [[
-input int Start;
 event int a;
 par do
     await a;
-    emit a(1);
+    emit a=1;
     return a;
 with
-    await Start;
-    emit a(2);
+    emit a=2;
     return a;
 end;
 ]],
@@ -10430,19 +11145,17 @@ end;
 }
 
 Test { [[
-input int Start;
 event int a, b;
 par/or do
     loop do
         await a;
-        emit b(1);
+        emit b=1;
     end;
 with
-    await Start;
-    emit a(1);
+    emit a=1;
 with
     await b;
-    emit a(2);
+    emit a=2;
 end;
 return a;
 ]],
@@ -10455,13 +11168,11 @@ return a;
 }
 
 Test { [[
-input int Start;
 event int a;
 int x = 0;
 par do
-    await Start;
-    emit a(1);
-    emit a(2);
+    emit a=1;
+    emit a=2;
     return x;
 with
     loop do
@@ -10473,13 +11184,11 @@ end
     run = 2,
 }
 Test { [[
-input int Start;
 event int a;
 int x = 0;
 par do
-    await Start;
-    emit a(1);
-    emit a(2);
+    emit a=1;
+    emit a=2;
     return x;
 with
     await a;
@@ -10494,7 +11203,7 @@ Test { [[
 event int a;
 int x = 0;
 par do
-    emit a ( 1);
+    emit a = 1;
     return x;
 with
     loop do
@@ -10513,7 +11222,7 @@ Test { [[
 event int a, x;
 x = 0;
 par/or do
-    emit a( 1);
+    emit a= 1;
     // unreachable
 with
     await a;
@@ -10538,8 +11247,8 @@ Test { [[
 event int a, x, y, vis;
 par/or do
     par/and do
-        emit x(1);
-        emit y(1);
+        emit x=1;
+        emit y=1;
     with
         loop do
             par/or do
@@ -10550,11 +11259,11 @@ par/or do
         end;
     end;
 with
-    emit a(1);
-    emit x(0);
-    emit y(0);
-    emit vis(1);
-    await Forever;
+    emit a=1;
+    emit x=0;
+    emit y=0;
+    emit vis=1;
+    await FOREVER;
 end;
 ]],
     ana = {
@@ -10602,8 +11311,8 @@ event int a, x, y;
 int ret = 0;
 par do
     par/and do
-        emit x(1);
-        emit y(1);
+        emit x=1;
+        emit y=1;
     with
         par/or do
             await x;
@@ -10615,11 +11324,11 @@ par do
     end;
 with
     ret = ret + 1;
-    emit a(1);
+    emit a=1;
     ret = ret * 2;
-    emit x(0);
+    emit x=0;
     ret = ret + 1;
-    emit y(0);
+    emit y=0;
     ret = ret * 2;
     return ret;
 end;
@@ -10633,13 +11342,11 @@ end;
 }
 
 Test { [[
-input int Start;
 event int a, x, y, vis;
 par/or do
     par/and do
-        await Start;
-        emit x(1);
-        emit y(1);
+        emit x=1;
+        emit y=1;
     with
         loop do
             par/or do
@@ -10650,12 +11357,11 @@ par/or do
         end;
     end;
 with
-    await Start;
-    emit a(1);
-    emit x(0);
-    emit y(0);
-    emit vis(1);
-    await Forever;
+    emit a=1;
+    emit x=0;
+    emit y=0;
+    emit vis=1;
+    await FOREVER;
 end;
 ]],
     ana = {
@@ -10666,7 +11372,7 @@ end;
 }
 
 Test { [[
-input int Start, F;
+input int F;
 event int x, w, y, z, a, vis;
 par do
     loop do
@@ -10686,11 +11392,10 @@ par do
         a = a + 1;
     end;
 with
-    await Start;
-    emit a(1);
-    emit y(1);
-    emit z(1);
-    emit vis(1);
+    emit a=1;
+    emit y=1;
+    emit z=1;
+    emit vis=1;
 with
     await F;
     return a+x+y+z+w;
@@ -10853,16 +11558,14 @@ return 0;
 }
 
 Test { [[
-input int Start, A;
 int ret;
 event int a;
 par/or do
     do
         int a = 0;
         par/or do
-            await Start;
             par/or do
-                emit a(40);
+                emit a=40;
             with
             end;
         with
@@ -10876,12 +11579,11 @@ par/or do
         ret = a;
     end;
 with
-    await Start;
     a = await A;
 end;
 return a;
 ]],
-    env = 'ERR : line 10 : event "a" is not declared',
+    env = 'ERR : line 8 : event "a" is not declared',
 }
 
 Test { [[
@@ -10934,16 +11636,15 @@ return ret;
 }
 
 Test { [[
-input int Start, A;
+input int A;
 int ret;
 event int a;
 par/or do
     do
         event int a = 0;
         par/or do
-            await Start;
             par/or do
-                emit a(40);
+                emit a=40;
             with
             end;
         with
@@ -10957,7 +11658,6 @@ par/or do
         ret = a;
     end;
 with
-    await Start;
     a = await A;
 end;
 return a;
@@ -10970,13 +11670,11 @@ return a;
 }
 
 Test { [[
-input int Start;
 int ret;
 par/or do
     event int a;
     par/or do
-        await Start;
-        emit a(5);
+        emit a=5;
         // unreachable
     with
         await a;
@@ -11031,7 +11729,7 @@ Test { [[
 do
     int a;
 finally
-    await Forever;
+    await FOREVER;
 end
 ]],
     props = "ERR : line 4 : not permitted inside `finally´",
@@ -11710,7 +12408,7 @@ return a;
 Test { [[
 event int a;
 async do
-    emit a(1);
+    emit a=1;
 end;
 return 0;
 ]],
@@ -12595,8 +13293,8 @@ return i + vec[9].c + vec[3].v[5];
 
 Test { [[int[2] v; await v;     return 0;]], env='event "v" is not declared' }
 Test { [[int[2] v; emit v;    return 0;]], env='event "v" is not declared' }
-Test { [[int[2] v; await v[0];  return 0;]], parser="ERR : line 1 : after `v´ : expected `;´" }
-Test { [[int[2] v; emit v[0]; return 0;]], parser="ERR : line 1 : after `v´ : expected `;´" }
+Test { [[int[2] v; await v[0];  return 0;]], env='ERR : line 1 : event "?" is not declared'}
+Test { [[int[2] v; emit v[0]; return 0;]], env='event "?" is not declared' }
 Test { [[int[2] v; v=v; return 0;]], env='invalid attribution' }
 Test { [[int v; return v[1];]], env='cannot index a non array' }
 Test { [[int[2] v; return v[v];]], env='invalid array index' }
@@ -12669,7 +13367,7 @@ end
 A = 1;
 return 1;
 ]],
-    parser = "ERR : line 3 : after `end´ : expected statement (missing `_´?)",
+    parser = 'ERR : line 4 : after `A´ : expected identifier',
 }
 
 Test { [[
@@ -13860,7 +14558,7 @@ return a;
 
 -- BIG // FULL // COMPLETE
 Test { [[
-input int Key;
+input int KEY;
 if 1 then return 50; end
 par do
     int pct, dt, step, ship, points;
@@ -13884,7 +14582,7 @@ par do
             ship   = 0;     // ship position (0=up, 1=down)
             points = 0;     // number of steps alive
         end
-        await Key;
+        await KEY;
         win = par do
                 loop do
                     await (dt)ms;
@@ -13897,7 +14595,7 @@ par do
                 end
             with
                 loop do
-                    int key = await Key;
+                    int key = await KEY;
                     if key == 1 then
                         ship = 0;
                     end
@@ -13908,7 +14606,7 @@ par do
             end;
         par/or do
             await 1s;
-            await Key;
+            await KEY;
         with
             if !win then
                 loop do
@@ -13930,7 +14628,7 @@ with
             key = read1;
             if key != 1 then
                 async (read1) do
-                    emit Key(read1);
+                    emit KEY(read1);
                 end
             end
         end
@@ -13975,7 +14673,7 @@ event int a;
 par/or do
     loop do
         int v = await A;
-        emit a(v);
+        emit a=v;
     end
 with
     pause/if a do
@@ -14004,7 +14702,7 @@ int ret = 0;
 par/or do
     loop do
         int v = await A;
-        emit a(v);
+        emit a=v;
     end
 with
     pause/if a do
@@ -14032,12 +14730,12 @@ int ret = 0;
 par/or do
     loop do
         int v = await A;
-        emit a(v);
+        emit a=v;
     end
 with
     loop do
         int v = await B;
-        emit b(v);
+        emit b=v;
     end
 with
     pause/if a do
@@ -14064,7 +14762,7 @@ int ret = 0;
 par/or do
     loop do
         int v = await A;
-        emit a(v);
+        emit a=v;
     end
 with
     pause/if a do
@@ -14088,7 +14786,7 @@ input void Z;
 event int a;
 int ret = 0;
 par/or do
-    emit a(1);
+    emit a=1;
     await A;
 with
     pause/if a do
@@ -14114,7 +14812,7 @@ int ret = 0;
 par/or do
     loop do
         int v = await A;
-        emit a(v);
+        emit a=v;
     end
 with
     pause/if a do
@@ -14143,7 +14841,7 @@ int ret = 50;
 par/or do
     loop do
         int v = await A;
-        emit a(v);
+        emit a=v;
     end
 with
     pause/if a do
@@ -14180,7 +14878,7 @@ int ret = 0;
 par/or do
     loop do
         int v = await A;
-        emit a(v);
+        emit a=v;
     end
 with
     pause/if a do
@@ -14204,7 +14902,7 @@ return ret;
 ]]
 
 Test { [[
-await Forever;
+await FOREVER;
 ]],
     tot = 4,
     ana = {

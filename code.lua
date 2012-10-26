@@ -48,37 +48,13 @@ end
 function BLOCK_GATES (me)
     COMM(me, 'close gates')
 
+    -- TODO: otimization for { T a; execute a } (org ranges)
+
     if me.ns.awaits > 0 then
-        LINE(me, 'ceu_lst_clr('..me.lbls[1]..','..me.lbls[2]..');')
+        LINE(me, 'ceu_lst_clr(_trk_.org,'..me.lbls[1]..','..me.lbls[2]..');')
     end
     if me.ns.emits > 0 then
-        LINE(me, 'ceu_track_clr('..me.lbls[1]..','..me.lbls[2]..');')
-    end
-end
-
-function PAUSE (me, N, PTR)
-    if me.more then
-        LINE(me, [[
-{ int i;
-for (i=0; i<]]..N..[[; i++) {
-    if (]]..PTR..'['..i..']'..[[ >= Init) {
-        ]]..PTR..'['..i..']'..[[ = Init-1;
-    } else {
-        ]]..PTR..'['..i..']'..[[--;
-    }
-} }
-]])
-    else
-        LINE(me, [[
-{ int i;
-for (i=0; i<]]..N..[[; i++) {
-    if (]]..PTR..'['..i..']'..[[ >= Init) {
-        ]]..PTR..'['..i..']'..[[ = Init-1;
-    } else {
-        ]]..PTR..'['..i..']'..[[--;
-    }
-} }
-]])
+        LINE(me, 'ceu_track_clr(_trk_.org,'..me.lbls[1]..','..me.lbls[2]..');')
     end
 end
 
@@ -88,12 +64,40 @@ F = {
     end,
 
     Root = function (me)
+        for _, cls in ipairs(_ENV.clss) do
+            CONC(me, cls)
+        end
+    end,
+
+    Dcl_cls = function (me)
+        CASE(me, me.lbl)
+
         CONC_ALL(me)
 
-        local ret = _AST.root[1].vars[1]    -- $ret
-        LINE(me, 'if (ret) *ret = '..ret.val..';')
-        LINE(me, 'return 1;')
-        HALT(me)
+        if me == _ROOT then
+            local ret = me.blk.vars[1]    -- $ret
+            LINE(me, 'if (ret) *ret = '..ret.val..';')
+            LINE(me, 'return 1;')
+            HALT(me)
+        else
+            LINE(me, [[
+_trk_.lbl = *PTR_org(]]..me.mem.back..[[,tceu_nlbl*); // par cnt
+_trk_.org = *PTR_org(]]..me.mem.par.. [[,tceu_noff*); // par org
+goto _SWITCH_;
+]])
+        end
+    end,
+
+    Execute = function (me)
+        local cls = CLS()
+        LINE(me, [[{
+tceu_noff par = _trk_.org;
+_trk_.org += ]]..me.var.off..[[;                                // new org
+*PTR_org(]]..cls.mem.par.. [[,tceu_noff*) = par;                // par org
+*PTR_org(]]..cls.mem.back..[[,tceu_nlbl*) = ]]..me.lbl.id..[[;  // par cnt
+}]])
+        SWITCH(me, me.var.cls.lbl)
+        CASE(me, me.lbl)
     end,
 
     Host = function (me)
@@ -122,7 +126,7 @@ F = {
     Return = function (me)
         local top = _AST.iter'SetBlock'()
         LINE(me, 'ceu_track_ins(1,' ..top.lbl_out.prio..','
-                    ..top.lbl_out.id..');')
+                    ..'_trk_.org,'..top.lbl_out.id..');')
         HALT(me)
     end,
 
@@ -134,7 +138,7 @@ F = {
         -- Ever/Or/And spawn subs
         COMM(me, me.tag..': spawn subs')
         for i, sub in ipairs(me) do
-            LINE(me, 'ceu_track_ins(0, PR_MAX, '..me.lbls_in[i].id ..');')
+            LINE(me, 'ceu_track_ins(0,PR_MAX,_trk_.org,'..me.lbls_in[i].id..');')
         end
         HALT(me)
     end,
@@ -157,7 +161,7 @@ F = {
             CONC(me, sub)
             COMM(me, 'PAROR JOIN')
             LINE(me, 'ceu_track_ins(1,' ..me.lbl_out.prio..','
-                        ..me.lbl_out.id..');')
+                        ..'_trk_.org,'..me.lbl_out.id..');')
             HALT(me)
         end
 
@@ -168,20 +172,20 @@ F = {
     ParAnd = function (me)
         -- close AND gates
         COMM(me, 'close ParAnd gates')
-        LINE(me, 'memset(PTR('..me.off..',u8*), 0, '..#me..');')
+        LINE(me, 'memset(PTR_org('..me.off..',u8*), 0, '..#me..');')
         F._Par(me)
 
         for i, sub in ipairs(me) do
             CASE(me, me.lbls_in[i])
             CONC(me, sub)
-            LINE(me, '*PTR('..(me.off+i-1)..',u8*) = 1; // open and')  -- open gate
+            LINE(me, '*PTR_org('..(me.off+i-1)..',u8*) = 1; // open and')  -- open gate
             SWITCH(me, me.lbl_tst)
         end
 
         -- AFTER code :: test gates
         CASE(me, me.lbl_tst)
         for i, sub in ipairs(me) do
-            LINE(me, 'if (!*PTR('..(me.off+i-1)..',u8*))')
+            LINE(me, 'if (!*PTR_org('..(me.off+i-1)..',u8*))')
             HALT(me)
         end
     end,
@@ -218,7 +222,7 @@ F = {
         for _, n in ipairs(vars) do
             ATTR(me, n.new, n.var)
         end
-        LINE(me, 'ceu_lst_ins(IN__ASYNC, '..me.lbl.id..', 0);')
+        LINE(me, 'ceu_lst_ins(IN__ASYNC, 0, _trk_.org, '..me.lbl.id..', 0);')
         HALT(me)
         CASE(me, me.lbl)
         CONC(me, blk)
@@ -239,7 +243,7 @@ if (ceu_out_pending()) {
 #else
 {
 #endif
-    ceu_lst_ins(IN__ASYNC, ]]..me.lbl_ini.id..[[, 0);
+    ceu_lst_ins(IN__ASYNC, 0, _trk_.org, ]]..me.lbl_ini.id..[[, 0);
     break;
 }
 ]])
@@ -255,7 +259,7 @@ if (ceu_out_pending()) {
     Break = function (me)
         local top = _AST.iter'Loop'()
         LINE(me, 'ceu_track_ins(1,' ..top.lbl_out.prio..','
-                    ..top.lbl_out.id..');')
+                    ..'_trk_.org,'..top.lbl_out.id..');')
         HALT(me)
     end,
 
@@ -270,7 +274,7 @@ if (ceu_out_pending()) {
 
         assert(ext.input)
         local async = _AST.iter'Async'()
-        LINE(me, 'ceu_lst_ins(IN__ASYNC, '..me.lbl_cnt.id..', 0);')
+        LINE(me, 'ceu_lst_ins(IN__ASYNC, 0, _trk_.org, '..me.lbl_cnt.id..', 0);')
         if e2 then
             if _TP.deref(ext.tp) then
                 LINE(me, 'return ceu_go_event(ret, IN_'..ext.id
@@ -298,13 +302,14 @@ if (ceu_out_pending()) {
         -- emit
         LINE(me, [[
 // Emit ]]..var.id..';\n'..[[
-ceu_track_ins(0, _step_+2, ]]..me.lbl_awk.id..[[);
-ceu_track_ins(0, _step_+1, ]]..me.lbl_cnt.id..[[);
+ceu_track_ins(0, _step_+2, _trk_.org, ]]..me.lbl_awk.id..[[);
+ceu_track_ins(0, _step_+1, _trk_.org, ]]..me.lbl_cnt.id..[[);
 break;
 ]])
 
         CASE(me, me.lbl_awk)
-        LINE(me, 'ceu_lst_go('..var.n..');')
+        local org = (int.org and int.org.val) or '_trk_.org'
+        LINE(me, 'ceu_lst_go('..var.n..','..org..'); //oioioi')
         HALT(me)
         CASE(me, me.lbl_cnt)
     end,
@@ -312,7 +317,7 @@ break;
     EmitT = function (me)
         local exp = unpack(me)
         local async = _AST.iter'Async'()
-        LINE(me, 'ceu_lst_ins(IN__ASYNC, '..me.lbl_cnt.id..', 0);')
+        LINE(me, 'ceu_lst_ins(IN__ASYNC, 0, _trk_.org, '..me.lbl_cnt.id..', 0);')
         LINE(me, [[
 #ifdef CEU_WCLOCKS
 { int s = ceu_go_wclock(ret,]]..exp.val..[[);
@@ -346,20 +351,21 @@ return 0;
         CONC(me, exp)
 
         local val = exp.val
-        LINE(me, 'ceu_wclock_enable('..val..', '..me.lbl.id..');')
+        LINE(me, 'ceu_wclock_enable('..val..', _trk_.org, '..me.lbl.id..');')
 
         HALT(me, true)
         CASE(me, me.lbl)
     end,
     AwaitExt = function (me)
         local e1,_ = unpack(me)
-        LINE(me, 'ceu_lst_ins(IN_'..e1.ext.id..', '..me.lbl.id..', 0);')
+        LINE(me, 'ceu_lst_ins(IN_'..e1.ext.id..', 0, _trk_.org, '..me.lbl.id..', 0);')
         HALT(me, true)
         CASE(me, me.lbl)
     end,
     AwaitInt = function (me)
         local int,_ = unpack(me)
-        LINE(me, 'ceu_lst_ins('..int.var.n..', '..me.lbl.id..', 0);')
+        local org = (int.org and int.org.val) or '_trk_.org'
+        LINE(me, 'ceu_lst_ins('..int.var.n..','..org..', _trk_.org, '..me.lbl.id..', 0);')
         HALT(me, true)
         CASE(me, me.lbl)
     end,

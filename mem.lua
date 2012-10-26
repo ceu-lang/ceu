@@ -1,12 +1,7 @@
-_MEM = {
-    off   = 0,
-    max   = 0,
-}
-
-function alloc (n)
-    local cur = _MEM.off
-    _MEM.off = _MEM.off + n
-    _MEM.max = MAX(_MEM.max, _MEM.off)
+function alloc (mem, n)
+    local cur = mem.off
+    mem.off = mem.off + n
+    mem.max = MAX(mem.max, mem.off)
     return cur
 end
 
@@ -20,45 +15,59 @@ local t2n = {
 
 F = {
     Root = function (me)
-        _ENV.types.tceu_noff = _TP.n2bytes(_MEM.max)
+        _ENV.types.tceu_noff = _TP.n2bytes(_ROOT.mem.max)
+    end,
+
+    Dcl_cls_pre = function (me)
+        me.mem = { off=0, max=0 }
+        me.mem.par  = alloc(me.mem, 4)
+        -- TODO: _ENV.types.tceu_noff) -- org offset to parent
+        me.mem.back = alloc(me.mem, _ENV.types.tceu_nlbl) -- finish lbl end,
     end,
 
     Block_pre = function (me)
-        me.off = _MEM.off
+        local mem = CLS().mem
+        me.off = mem.off
 
         for _, var in ipairs(me.vars) do
             local len
-            if var.arr then
+            if var.cls then
+                len = var.cls.mem.max
+            elseif var.arr then
                 len = _ENV.types[_TP.deref(var.tp)] * var.arr
             elseif _TP.deref(var.tp) then
                 len = _ENV.types.pointer
             else
                 len = _ENV.types[var.tp]
             end
-            var.off = alloc(len)
+            var.off = alloc(mem, len)
 
             local tp = _TP.no_(var.tp)
-            if var.arr then
-                var.val = 'PTR('..var.off..','..tp..')'
+            if var.cls then
+                var.val = var.off
+            elseif var.arr then
+                var.val = 'PTR_org('..var.off..','..tp..')'
             else
-                var.val = '(*PTR('..var.off..','..tp..'*))'
+                var.val = '(*PTR_org('..var.off..','..tp..'*))'
             end
         end
 
-        me.max = _MEM.off
+        me.max = mem.off
     end,
     Block = function (me)
+        local mem = CLS().mem
         for blk in _AST.iter'Block' do
-            blk.max = MAX(blk.max, _MEM.off)
+            blk.max = MAX(blk.max, mem.off)
         end
-        _MEM.off = me.off
+        mem.off = me.off
     end,
 
     ParEver_aft = function (me, sub)
         me.lst = sub.max
     end,
     ParEver_bef = function (me, sub)
-        _MEM.off = me.lst or _MEM.off
+        local mem = CLS().mem
+        mem.off = me.lst or mem.off
     end,
     ParOr_aft  = 'ParEver_aft',
     ParOr_bef  = 'ParEver_bef',
@@ -66,7 +75,7 @@ F = {
     ParAnd_bef = 'ParEver_bef',
 
     ParAnd_pre = function (me)
-        me.off = alloc(#me)        -- TODO: bitmap?
+        me.off = alloc(CLS().mem, #me)        -- TODO: bitmap?
     end,
     ParAnd = 'Block',
 
@@ -96,8 +105,6 @@ F = {
     end,
     EmitExtE = function (me)
         local e1, e2 = unpack(me)
-        e1.acc = {e1.ext.id, 'cl', '_', false,
-                    'event `'..e1.ext.id..'´ (line '..me.ln..')'}
         local len, val
         if e2 then
             local tp = _TP.deref(e1.ext.tp, true)
@@ -191,7 +198,21 @@ F = {
 
     ['Op2_.'] = function (me)
         local op, e1, id = unpack(me)
-        me.val  = '('..e1.val..op..id..')'
+        me.accs = e1.accs
+
+        if me.org then
+            local tp = _TP.no_(me.var.tp)
+            local off = '('..e1.val..' + '..me.var.off..')'
+            if me.var.cls then
+                me.val  = off
+            elseif me.var.arr then
+                me.val = 'PTR('..off..','..tp..'*)'
+            else
+                me.val = '(*PTR('..off..','..tp..'*))'
+            end
+        else
+            me.val  = '('..e1.val..op..id..')'
+        end
     end,
 
     Op2_cast = function (me)
@@ -213,7 +234,7 @@ F = {
     end,
 
     WCLOCKR = function (me)
-        me.val = 'ceu_wclock_find('..me.awt.lbl.id..')'
+        me.val = 'ceu_wclock_find(_trk_.org, '..me.awt.lbl.id..')'
     end,
 
     C = function (me)

@@ -128,6 +128,8 @@ function visit_aux (me, F)
     return me
 end
 
+local TOP = {}
+
 local C; C = {
     [1] = function (ln, spc, ...) -- spc=CK''
         local blk = node('Block')(ln)
@@ -136,12 +138,20 @@ local C; C = {
             blk[#blk+1] = node('Dcl_var')(ln,true,'void',false,'$fin_'..i)
         end
         blk[#blk+1] = node('SetBlock')(ln,
-                        node('Var')(ln, '$ret'),
-                        ...)  -- ...=Block
+                        node('Var')(ln,'$ret'),
+                        node('BlockN')(ln,...))--unpack(stmts)))
 
-        _AST.root = node('Root')(ln, blk)
+        table.sort(TOP, function(n1,n2) return n1.tag>n2.tag end) -- Dcl_ext > Dcl_cls
+        TOP[#TOP+1] = node('Dcl_cls')(ln,'_Root',blk)
+
+        _AST.root = node('Root')(ln, unpack(TOP))
         return _AST.root
     end,
+
+    Dcl_cls = function (ln, id, blk)
+        TOP[#TOP+1] = node('Dcl_cls')(ln,id,blk)
+    end,
+    Execute = node('Execute'),
 
     Block   = node('Block'),
     BlockN  = node('BlockN'),
@@ -366,12 +376,9 @@ local C; C = {
     end,
 
     _Dcl_ext = function (ln, dir, tp, ...)
-        local ret = {}
-        local t = { ... }
-        for i=1, #t do
-            ret[#ret+1] = node('Dcl_ext')(ln, dir, tp, t[i])
+        for _, v in ipairs{...} do
+            TOP[#TOP+1] = node('Dcl_ext')(ln, dir, tp, v)
         end
-        return unpack(ret)
     end,
 
     CallStmt = node('CallStmt'),
@@ -452,7 +459,9 @@ end
 
 F = {
     Block_pre = function (me)
-        me.par = _AST.iter'Block'()
+        local blk = _AST.iter'Block'()
+        local cls = _AST.iter'Dcl_cls'()
+        me.par = blk and (cls.depth < blk.depth) and blk
     end,
 
     SetBlock_pre = function (me)
