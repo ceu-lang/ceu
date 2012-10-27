@@ -141,17 +141,27 @@ local C; C = {
                         node('Var')(ln,'$ret'),
                         node('BlockN')(ln,...))--unpack(stmts)))
 
-        table.sort(TOP, function(n1,n2) return n1.tag>n2.tag end) -- Dcl_ext > Dcl_cls
+        --table.sort(TOP, function(n1,n2) return (n1.tag=='Dcl_cls') end)
         TOP[#TOP+1] = node('Dcl_cls')(ln,'_Root',blk)
 
         _AST.root = node('Root')(ln, unpack(TOP))
         return _AST.root
     end,
 
+    _Dcl_ext = function (ln, dir, tp, ...)
+        for _, v in ipairs{...} do
+            TOP[#TOP+1] = node('Dcl_ext')(ln, dir, tp, v)
+        end
+    end,
+
+    Dcl_type = function (...)
+        TOP[#TOP+1] = node('Dcl_type')(...)
+    end,
+
     Dcl_cls = function (ln, id, blk)
         TOP[#TOP+1] = node('Dcl_cls')(ln,id,blk)
     end,
-    Execute = node('Execute'),
+    Exec = node('Exec'),
 
     Block   = node('Block'),
     BlockN  = node('BlockN'),
@@ -329,18 +339,6 @@ local C; C = {
     EmitT    = node('EmitT'),
     EmitInt  = node('EmitInt'),
 
-    Dcl_type = node('Dcl_type'),
-    Dcl_det = node('Dcl_det'),
-
-    _Dcl_pure = function (ln, ...)
-        local ret = {}
-        local t = { ... }
-        for i=1, #t do
-            ret[#ret+1] = node('Dcl_pure')(ln, t[i])
-        end
-        return unpack(ret)
-    end,
-
     _Dcl_var = function (ln, isEvt, tp, dim, ...)
         local ret = {}
         local t = { ... }
@@ -373,12 +371,6 @@ local C; C = {
 
     _Set = function (ln, e1, tag, e2)
         return node(tag)(ln, e1, e2)
-    end,
-
-    _Dcl_ext = function (ln, dir, tp, ...)
-        for _, v in ipairs{...} do
-            TOP[#TOP+1] = node('Dcl_ext')(ln, dir, tp, v)
-        end
     end,
 
     CallStmt = node('CallStmt'),

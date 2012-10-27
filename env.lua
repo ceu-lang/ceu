@@ -6,8 +6,6 @@ _OPTS.tp_pointer = assert(tonumber(_OPTS.tp_pointer),
 _ENV = {
     clss  = {},
     calls = {},     -- { _printf=true, _myf=true, ... }
-    pures = {},
-    dets  = {},
 
     evts = {
         --[1]=ext1,  [ext1.id]=ext1.
@@ -19,13 +17,12 @@ _ENV = {
     types = {
         void = 0,
 
-        u8=1, u16=2, u32=4,
-        s8=1, s16=2, s32=4,
+        u8=1, u16=2, u32=4, u64=8,
+        s8=1, s16=2, s32=4, s64=8,
 
         int      = _OPTS.tp_word,
         pointer  = _OPTS.tp_pointer,
 
-        tceu_noff = nil,    -- mem.lua
         tceu_ntrk = nil,    -- props.lua
         tceu_nlst = nil,    -- props.lua
         tceu_nevt = nil,    -- env.lua
@@ -53,14 +50,17 @@ function newvar (me, blk, isEvt, tp, dim, id)
         end
     end
 
-    ASR(_TP.deref(tp) or _ENV.types[tp] or _ENV.clss[tp], me,
-            'undeclared type `'..tp..'´')
     ASR(tp~='void' or isEvt, me, 'invalid type')
     ASR((not dim) or dim>0, me, 'invalid array dimension')
 
+    tp = (dim and tp..'*') or tp
+
+    ASR(_TP.deref(tp) or _ENV.types[tp] or _ENV.clss[tp], me,
+            'undeclared type `'..tp..'´')
+
     local cls = _ENV.clss[tp]
     if cls then
-        ASR(cls~=_AST.iter'Dcl_cls'() and isEvt==false and dim==false, me,
+        ASR(cls~=_AST.iter'Dcl_cls'() and isEvt==false, me,
                 'invalid declaration')
     end
 
@@ -68,7 +68,7 @@ function newvar (me, blk, isEvt, tp, dim, id)
         ln    = me.ln,
         id    = id,
         cls   = cls,
-        tp    = (dim and tp..'*') or tp,
+        tp    = tp,
         blk   = blk,
         isEvt = isEvt,
         arr   = dim,
@@ -85,16 +85,6 @@ function newvar (me, blk, isEvt, tp, dim, id)
     end
 
     return var
-end
-
--- identifiers for ID_c / ID_ext (allow to be defined after annotations)
--- variables for Var
-function det2id (v)
-    if type(v) == 'string' then
-        return v
-    else
-        return v.var
-    end
 end
 
 F = {
@@ -129,11 +119,11 @@ F = {
         _ENV.clss[#_ENV.clss+1] = me
     end,
 
-    Execute = function (me)
-        local var = unpack(me)
-        me.var = var.var
-        ASR( _ENV.clss[var.tp], me,
-                'cannot execute a `'..var.tp..'´ expression')
+    Exec = function (me)
+        local exp = unpack(me)
+        me.cls = _ENV.clss[exp.tp]
+        ASR(me.cls, me,
+                'cannot execute a `'..exp.tp..'´ expression')
     end,
 
     Dcl_ext = function (me)
@@ -191,19 +181,6 @@ F = {
 
     Dcl_pure = function (me)
         _ENV.pures[me[1]] = true
-    end,
-
-    Dcl_det = function (me)
-        local id1 = det2id(me[1])
-        local t1 = _ENV.dets[id1] or {}
-        _ENV.dets[id1] = t1
-        for i=2, #me do
-            local id2 = det2id(me[i])
-            local t2 = _ENV.dets[id2] or {}
-            _ENV.dets[id2] = t2
-            t1[id2] = true
-            t2[id1] = true
-        end
     end,
 
     Pause = function (me)
@@ -286,10 +263,10 @@ F = {
 
     Op2_idx = function (me)
         local _, arr, idx = unpack(me)
-        local _arr = ASR(_TP.deref(arr.tp,true), me, 'cannot index a non array')
-        ASR(_arr and _TP.isNumeric(idx.tp,true), me, 'invalid array index')
-        me.tp   = _arr
-        me.lval = true
+        local tp = ASR(_TP.deref(arr.tp,true), me, 'cannot index a non array')
+        ASR(tp and _TP.isNumeric(idx.tp,true), me, 'invalid array index')
+        me.tp = tp
+        me.lval = (not _ENV.clss[tp])
     end,
 
     Op2_int_int = function (me)
@@ -347,7 +324,7 @@ F = {
 
     ['Op1_&'] = function (me)
         local op, e1 = unpack(me)
-        ASR(e1.lval, me, 'invalid operand to unary "&"')
+        ASR(_ENV.clss[e1.tp] or e1.lval, me, 'invalid operand to unary "&"')
         me.tp   = e1.tp..'*'
         me.lval = false
     end,

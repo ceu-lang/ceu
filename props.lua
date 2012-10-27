@@ -67,8 +67,8 @@ F = {
         end
     end,
 
-    Execute = function (me)
-        SAME(me, me.var.cls)
+    Exec = function (me)
+        SAME(me, me.cls)
     end,
 
     Root = function (me)

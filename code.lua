@@ -81,22 +81,23 @@ F = {
             HALT(me)
         else
             LINE(me, [[
-_trk_.lbl = *PTR_org(]]..me.mem.back..[[,tceu_nlbl*); // par cnt
-_trk_.org = *PTR_org(]]..me.mem.par.. [[,tceu_noff*); // par org
+_trk_.lbl = *PTR_org(tceu_nlbl*,]]..me.mem.back..[[); // par cnt
+_trk_.org = *PTR_org(void**,]]..me.mem.par.. [[);     // par org
 goto _SWITCH_;
 ]])
         end
     end,
 
-    Execute = function (me)
+    Exec = function (me)
         local cls = CLS()
+        local e1 = unpack(me)
         LINE(me, [[{
-tceu_noff par = _trk_.org;
-_trk_.org += ]]..me.var.off..[[;                                // new org
-*PTR_org(]]..cls.mem.par.. [[,tceu_noff*) = par;                // par org
-*PTR_org(]]..cls.mem.back..[[,tceu_nlbl*) = ]]..me.lbl.id..[[;  // par cnt
+void* par = _trk_.org;
+_trk_.org = ]]..e1.val..[[;                                     // new org
+*PTR_org(void**,]]..cls.mem.par.. [[) = par;                    // par org
+*PTR_org(tceu_nlbl*,]]..cls.mem.back..[[) = ]]..me.lbl.id..[[;  // par cnt
 }]])
-        SWITCH(me, me.var.cls.lbl)
+        SWITCH(me, me.cls.lbl)
         CASE(me, me.lbl)
     end,
 
@@ -172,20 +173,20 @@ _trk_.org += ]]..me.var.off..[[;                                // new org
     ParAnd = function (me)
         -- close AND gates
         COMM(me, 'close ParAnd gates')
-        LINE(me, 'memset(PTR_org('..me.off..',u8*), 0, '..#me..');')
+        LINE(me, 'memset(PTR_org(u8*,'..me.off..'), 0, '..#me..');')
         F._Par(me)
 
         for i, sub in ipairs(me) do
             CASE(me, me.lbls_in[i])
             CONC(me, sub)
-            LINE(me, '*PTR_org('..(me.off+i-1)..',u8*) = 1; // open and')  -- open gate
+            LINE(me, '*PTR_org(u8*,'..(me.off+i-1)..') = 1; // open and')  -- open gate
             SWITCH(me, me.lbl_tst)
         end
 
         -- AFTER code :: test gates
         CASE(me, me.lbl_tst)
         for i, sub in ipairs(me) do
-            LINE(me, 'if (!*PTR_org('..(me.off+i-1)..',u8*))')
+            LINE(me, 'if (!*PTR_org(u8*,'..(me.off+i-1)..'))')
             HALT(me)
         end
     end,
@@ -222,7 +223,7 @@ _trk_.org += ]]..me.var.off..[[;                                // new org
         for _, n in ipairs(vars) do
             ATTR(me, n.new, n.var)
         end
-        LINE(me, 'ceu_lst_ins(IN__ASYNC, 0, _trk_.org, '..me.lbl.id..', 0);')
+        LINE(me, 'ceu_lst_ins(IN__ASYNC,NULL,_trk_.org,'..me.lbl.id..',0);')
         HALT(me)
         CASE(me, me.lbl)
         CONC(me, blk)
@@ -243,7 +244,7 @@ if (ceu_out_pending()) {
 #else
 {
 #endif
-    ceu_lst_ins(IN__ASYNC, 0, _trk_.org, ]]..me.lbl_ini.id..[[, 0);
+    ceu_lst_ins(IN__ASYNC,NULL,_trk_.org,]]..me.lbl_ini.id..[[,0);
     break;
 }
 ]])
@@ -274,7 +275,7 @@ if (ceu_out_pending()) {
 
         assert(ext.input)
         local async = _AST.iter'Async'()
-        LINE(me, 'ceu_lst_ins(IN__ASYNC, 0, _trk_.org, '..me.lbl_cnt.id..', 0);')
+        LINE(me, 'ceu_lst_ins(IN__ASYNC,NULL,_trk_.org,'..me.lbl_cnt.id..',0);')
         if e2 then
             if _TP.deref(ext.tp) then
                 LINE(me, 'return ceu_go_event(ret, IN_'..ext.id
@@ -317,12 +318,13 @@ break;
     EmitT = function (me)
         local exp = unpack(me)
         local async = _AST.iter'Async'()
-        LINE(me, 'ceu_lst_ins(IN__ASYNC, 0, _trk_.org, '..me.lbl_cnt.id..', 0);')
+        LINE(me, 'ceu_lst_ins(IN__ASYNC,NULL,_trk_.org,'..me.lbl_cnt.id..',0);')
         LINE(me, [[
 #ifdef CEU_WCLOCKS
-{ int s = ceu_go_wclock(ret,]]..exp.val..[[);
-  while (!s && CEU.wclk_min<=0)
-      s = ceu_go_wclock(ret, 0);
+{ s32 nxt;
+  int s = ceu_go_wclock(ret,]]..exp.val..[[, &nxt);
+  while (nxt <= 0)
+      s = ceu_go_wclock(ret, 0, &nxt);
   return s;
 }
 #else
@@ -358,14 +360,14 @@ return 0;
     end,
     AwaitExt = function (me)
         local e1,_ = unpack(me)
-        LINE(me, 'ceu_lst_ins(IN_'..e1.ext.id..', 0, _trk_.org, '..me.lbl.id..', 0);')
+        LINE(me, 'ceu_lst_ins(IN_'..e1.ext.id..',NULL,_trk_.org,'..me.lbl.id..',0);')
         HALT(me, true)
         CASE(me, me.lbl)
     end,
     AwaitInt = function (me)
         local int,_ = unpack(me)
         local org = (int.org and int.org.val) or '_trk_.org'
-        LINE(me, 'ceu_lst_ins('..int.var.n..','..org..', _trk_.org, '..me.lbl.id..', 0);')
+        LINE(me, 'ceu_lst_ins('..int.var.n..','..org..',_trk_.org,'..me.lbl.id..',0);')
         HALT(me, true)
         CASE(me, me.lbl)
     end,

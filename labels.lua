@@ -38,9 +38,9 @@ F = {
     Dcl_cls = function (me)
         me.lbl = new{'Class_'..me.id, true}
     end,
-    Execute = function (me)
+    Exec = function (me)
         local cls = CLS()
-        me.lbl = new{'Execute_cont'}
+        me.lbl = new{'Exec_ret'}
     end,
 
     SetBlock_pre = function (me)

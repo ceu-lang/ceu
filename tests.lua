@@ -4,6 +4,63 @@
     -- CLASSES / ORGS
 
 Test { [[
+input void T;
+int ret = 0;
+par/or do
+    loop do
+        int late = await 10ms;
+        ret = ret + late;
+        _assert(late <= 10000);
+    end
+with
+    loop do
+        int i = 0;
+        int t;
+        par/or do
+            t = await 1s;
+        with
+            loop do
+                await T;
+                i = i + 1;
+            end
+        end
+    end
+with
+    async do
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+    end
+end
+return ret;
+]],
+    run = 72000,
+}
+
+Test { [[
 class T do
 end
 return 0;
@@ -37,7 +94,7 @@ end
 T[5] a;
 return 0;
 ]],
-    env = 'ERR : line 3 : invalid declaration',
+    run = 0,
 }
 
 Test { [[
@@ -148,7 +205,7 @@ return a . v + a.x .v + a .v2 + a.x  .  t3 . v3;
 
 Test { [[
 int a;
-execute a;
+exec a;
 ]],
     env = 'ERR : line 2 : cannot execute a `int´',
 }
@@ -160,7 +217,7 @@ class T do
     v = 5;
 end
 T a;
-execute a;
+exec a;
 v = a.v;
 a.v = 4;
 return a.v + v;
@@ -175,7 +232,7 @@ class T do
 end
 do
     T a;
-    execute a;
+    exec a;
     int v = a.v;
     a.v = 4;
     return a.v + v;
@@ -193,9 +250,9 @@ end
 do
     T a;
     par/and do
-        execute a;
+        exec a;
     with
-        execute a;
+        exec a;
     end
     int v = a.v;
     a.v = 4;
@@ -211,7 +268,7 @@ class T do
     v = 5;
 end
 T a;
-execute a;
+exec a;
 int v = a.v;
 a.v = 4;
 return a.v + v;
@@ -228,7 +285,7 @@ do
             a = 1;
         end
         T v;
-        execute v;
+        exec v;
     end
     ret = a;
 end
@@ -248,7 +305,7 @@ do
     end
 end
 T v;
-execute v;
+exec v;
 return 0;
 ]],
     env = 'ERR : line 5 : variable/event "a" is not declared',
@@ -267,7 +324,7 @@ do
 end
 int b;
 T v;
-execute v;
+exec v;
 return a;
 ]],
     env = 'ERR : line 5 : variable/event "a" is not declared',
@@ -292,7 +349,7 @@ do
     int b;
     do
         T v;
-        execute v;
+        exec v;
     end
 end
 return a+b;
@@ -316,7 +373,7 @@ do
     int b;
     do
         T v;
-        execute v;
+        exec v;
     end
 end
 return a+b;
@@ -333,8 +390,8 @@ end
 T t1, t2;
 t1.v = 1;
 t2.v = 2;
-execute t2;
-execute t1;
+exec t2;
+exec t1;
 return t1.v+t2.v;
 ]],
     run = 3,
@@ -346,7 +403,7 @@ class T do
 end
 T aa;
 loop do
-    execute aa;
+    exec aa;
 end
 ]],
     tight = 'ERR : line 5 : tight loop',
@@ -357,7 +414,7 @@ class T do
     await 1s;
 end
 T aa;
-execute aa;
+exec aa;
 return 10;
 ]],
     run = { ['~>1s']=10 },
@@ -370,7 +427,7 @@ do
     end
 end
 T aa;
-execute aa;
+exec aa;
 return 10;
 ]],
     run = { ['~>1s']=10 },
@@ -384,7 +441,7 @@ do
     end
 end
 T aa;
-execute aa;
+exec aa;
 return aa.v;
 ]],
     run = { ['10~>F']=10 },
@@ -396,7 +453,7 @@ class T do
 end
 T aa;
 loop do
-    execute aa;
+    exec aa;
 end
 ]],
     ana = {
@@ -411,14 +468,14 @@ class T1 do
 end
 class T do
     T1 a;
-    execute a;
+    exec a;
     await 1s;
 end
 int ret = 10;
 par/or do
     do
         T aa;
-        execute aa;
+        exec aa;
     end
     ret = ret + 1;
 with
@@ -441,14 +498,14 @@ class T1 do
 end
 class T do
     T1 a;
-    execute a;
+    exec a;
     await 1s;
 end
 int ret = 10;
 T aa;
 par/or do
     do
-        execute aa;
+        exec aa;
     end
     ret = ret + 1;
 with
@@ -480,7 +537,7 @@ int ret = 10;
 par/or do
     do
         T aa;
-        execute aa;
+        exec aa;
     end
     ret = ret + 1;
 with
@@ -507,7 +564,7 @@ class T do
     input void E;
     par/or do
         T1 a;
-        execute a;
+        exec a;
     with
         await E;
     end
@@ -517,7 +574,7 @@ int ret = 10;
 par/or do
     do
         T aa;
-        execute aa;
+        exec aa;
     end
     ret = ret + 1;
 with
@@ -543,7 +600,7 @@ end
 T aa;
 int ret = 10;
 par/or do
-    execute aa;
+    exec aa;
     ret = ret + 1;
 with
     await F;
@@ -566,7 +623,7 @@ T aa;
 int ret = 0;
 par/or do
     loop do
-        execute aa;
+        exec aa;
         ret = ret + 1;
     end
 with
@@ -588,7 +645,7 @@ class T do
 end
 T aa;
 par do
-    execute aa;
+    exec aa;
 with
     await A;
     if aa.v == 3 then
@@ -609,7 +666,7 @@ class T do
     a = 5;
 end
 T aa;
-execute aa;
+exec aa;
 return aa.a;
 ]],
     run = 5,
@@ -624,7 +681,7 @@ class T do
 end
 T aa;
 par/or do
-    execute aa;
+    exec aa;
 with
 end
 return aa.a;
@@ -645,7 +702,7 @@ class T do
     end
 end
 T aa;
-execute aa;
+exec aa;
 return aa.a;
 ]],
     run = 7,
@@ -664,7 +721,7 @@ class T do
     end
 end
 T aa;
-execute aa;
+exec aa;
 return aa.a;
 ]],
     run = 5,
@@ -684,7 +741,7 @@ class T do
 end
 T aa;
 par/or do
-    execute aa;
+    exec aa;
 with
 end
 return aa.a;
@@ -724,7 +781,7 @@ class T do
     end
 end
 T aa;
-execute aa;
+exec aa;
 await F;
 return aa.a;
 ]],
@@ -750,7 +807,7 @@ T aa;
 
 int ret;
 par/or do
-    execute aa;
+    exec aa;
     ret = 1;
 with
     emit aa.a;
@@ -769,7 +826,7 @@ class T do
 end
 T aa;
 par/or do
-    execute aa;
+    exec aa;
     aa.a = 10;
 with
     await aa.a;
@@ -791,11 +848,11 @@ int ret = 0;
 par/or do
     par/and do
         a1.e = 1;
-        execute a1;
+        exec a1;
         ret = 1;
     with
         a2.e = 2;
-        execute a2;
+        exec a2;
         ret = 1;
     end
 with
@@ -805,6 +862,260 @@ end
 return ret;
 ]],
     run = 1,
+}
+
+Test { [[
+class T do
+    u8 a = 1;
+end
+T a, b;
+C do
+    int f (char* a, char* b) {
+        return *a + *b;
+    }
+end
+exec a;
+exec b;
+return _f(a+5,b+5);
+]],
+    run = 2,
+}
+
+Test { [[
+class T do
+    int v = 10;
+end
+T a;
+T* ptr;
+ptr = a;
+exec *ptr;
+return ptr->v + a.v;
+]],
+    run = 20,
+}
+
+Test { [[
+class T do
+    int v = 10;
+    event void e, f;
+    await e;
+    emit f;
+    v = 100;
+end
+T a;
+T* ptr;
+ptr = a;
+int ret = 0;
+par/and do
+    exec *ptr;
+    ret = ret + 1;
+with
+    emit ptr->e;
+    ret = ret + 1;
+with
+    await ptr->f;
+    ret = ret + 1;
+end
+return ret + ptr->v + a.v;
+]],
+    run = 203,
+}
+
+Test { [[
+class T do
+    int v = 10;
+    event void e, f;
+    await e;
+    emit f;
+    v = 100;
+end
+T[2] ts;
+int ret = 0;
+par/and do
+    exec ts[0];
+    ret = ret + 1;
+with
+    exec ts[1];
+    ret = ret + 1;
+with
+    emit ts[0].e;
+    ret = ret + 1;
+with
+    await ts[0].f;
+    ret = ret + 1;
+with
+    emit ts[1].e;
+    ret = ret + 1;
+with
+    await ts[1].f;
+    ret = ret + 1;
+end
+return ret + ts[0].v + ts[1].v;
+]],
+    run = 206,
+}
+
+Test { [[
+input void F, B;
+
+s16 x = 10;
+
+par/or do
+    loop do
+        par/or do
+            loop do
+                await 10ms;
+                x = x + 1;
+            end
+        with
+            await B;
+        end
+        par/or do
+            loop do
+                await 10ms;
+                x = x - 1;
+            end
+        with
+            await B;
+        end
+    end
+with
+    await F;
+with
+    async do
+        emit B;
+        emit 10ms;
+        emit F;
+    end
+end
+return x;
+]],
+    run = 9,
+}
+
+Test { [[
+input int  BUTTON;
+input void F;
+
+class Rect do
+    s16 x;
+    s16 y;
+    event int go;
+
+    loop do
+        par/or do
+            loop do
+                await 10ms;
+                x = x + 1;
+            end
+        with
+            await go;
+        end
+        par/or do
+            loop do
+                await 10ms;
+                y = y + 1;
+            end
+        with
+            await go;
+        end
+        par/or do
+            loop do
+                await 10ms;
+                x = x - 1;
+            end
+        with
+            await go;
+        end
+        par/or do
+            loop do
+                await 10ms;
+                y = y - 1;
+            end
+        with
+            await go;
+        end
+    end
+end
+
+Rect[2] rs;
+rs[0].x = 10;
+rs[0].y = 50;
+rs[1].x = 100;
+rs[1].y = 300;
+
+par/or do
+    par do
+        exec rs[0];
+    with
+        exec rs[1];
+    end
+with
+    loop do
+        int i = await BUTTON;
+        emit rs[i].go;
+    end
+with
+    await F;
+with
+    async do
+        emit 100ms;
+    end
+    _assert(rs[0].x==20 && rs[0].y==50 && rs[1].x==110 && rs[1].y==300);
+
+    async do
+        emit BUTTON(0);
+        emit 100ms;
+    end
+    //_fprintf(_stderr, "(%d %d) vs (%d %d)\n", rs[0].x, rs[0].y, rs[1].x, rs[1].y);
+    _assert(rs[0].x==20 && rs[0].y==60 && rs[1].x==120 && rs[1].y==300);
+
+    async do
+        emit BUTTON(1);
+        emit 100ms;
+    end
+    //_fprintf(_stderr, "(%d %d) vs (%d %d)\n", rs[0].x, rs[0].y, rs[1].x, rs[1].y);
+    _assert(rs[0].x==20 && rs[0].y==70 && rs[1].x==120 && rs[1].y==310);
+
+    async do
+        emit BUTTON(1);
+        emit 100ms;
+    end
+    //_fprintf(_stderr, "(%d %d) vs (%d %d)\n", rs[0].x, rs[0].y, rs[1].x, rs[1].y);
+    _assert(rs[0].x==20 && rs[0].y==80 && rs[1].x==110 && rs[1].y==310);
+
+    async do
+        emit BUTTON(1);
+        emit 99ms;
+    end
+    //_fprintf(_stderr, "(%d %d) vs (%d %d)\n", rs[0].x, rs[0].y, rs[1].x, rs[1].y);
+    _assert(rs[0].x==20 && rs[0].y==89 && rs[1].x==110 && rs[1].y==301);
+
+    async do
+        emit BUTTON(0);
+        emit 1ms;
+    end
+    //_fprintf(_stderr, "(%d %d) vs (%d %d)\n", rs[0].x, rs[0].y, rs[1].x, rs[1].y);
+    _assert(rs[0].x==20 && rs[0].y==89 && rs[1].x==110 && rs[1].y==300);
+
+    async do
+        emit 18ms;
+    end
+    //_fprintf(_stderr, "(%d %d) vs (%d %d)\n", rs[0].x, rs[0].y, rs[1].x, rs[1].y);
+    _assert(rs[0].x==19 && rs[0].y==89 && rs[1].x==110 && rs[1].y==299);
+
+    async do
+        emit BUTTON(0);
+        emit BUTTON(1);
+        emit 1s;
+    end
+    //_fprintf(_stderr, "(%d %d) vs (%d %d)\n", rs[0].x, rs[0].y, rs[1].x, rs[1].y);
+    _assert(rs[0].x==19 && rs[0].y==-11 && rs[1].x==210 && rs[1].y==299);
+
+end
+return 100;
+]],
+    run = 100,
 }
 
 --do return end
@@ -1512,6 +1823,7 @@ with
 end
 return 1;
 ]],
+    todo = true,
     run = 1,
 }
 
@@ -1987,7 +2299,7 @@ with
     return 1;
 end
 ]],
-    todo = 'async dos not execute',
+    todo = 'async dos not exec',
     ana = {
         --n_unreachs = 1,
         --nd_flw = 1,
@@ -3672,7 +3984,7 @@ with
 end
 return v1 + v2;
 ]],
-    run = { ['~>A;~>A;~>A;~>A;~>A;~>1s']=6 }
+    run = { ['~>A;~>1ms;~>A;~>1ms;~>A;~>1ms;~>A;~>1ms;~>A;~>1ms;~>1s']=6 }
 }
 
 Test { [[
@@ -3703,7 +4015,7 @@ with
 end
 return v1 + v2 + v3;
 ]],
-    run = { ['~>A;~>A;~>A;~>A;~>A;~>1s']=8 }
+    run = { ['~>A;~>1ms;~>A;~>1ms;~>A;~>1ms;~>A;~>1ms;~>A;~>1s']=8 }
 }
 
 Test { [[
@@ -5320,8 +5632,8 @@ return a;
 ]],
     run = {
         ['~>30ms ; 0~>A ; ~>50ms'] = 2,
-        ['0~>A ; ~>40ms'] = 2,
-        ['0~>A ; ~>20ms ; ~>20ms'] = 2,
+        ['~>1us; 0~>A ; ~>40ms'] = 2,
+        ['~>1us; 0~>A ; ~>20ms ; ~>20ms'] = 2,
     }
 }
 
@@ -5364,7 +5676,6 @@ end;
 return a;
 ]],
     run = {
-        -- TODO: ext
         ['~>A ; ~>A ; ~>12ms; ~>A; ~>91ms'] = 2,
     }
 }
@@ -5421,10 +5732,9 @@ end;
 return dt;
 ]],
     run = {
-        -- TODO: ext
         ['~>30us'] = 10,
-        ['0~>A ; ~>12us'] = 0,
-        ['0~>A ; ~>13us'] = 1,
+        ['~>1us ; 0~>A ; ~>12us'] = 2,
+        ['~>1us ; 0~>A ; ~>13us'] = 3,
     }
 }
 Test { [[
@@ -5487,10 +5797,10 @@ end;
 return ret;
 ]],
     run = {
-        ['1~>A;~>25ms'] = 1,
-        ['1~>A;1~>B;~>25ms'] = 1,
-        ['1~>B;~>25ms'] = 2,
-        ['1~>B;1~>A;~>25ms'] = 2,
+        ['~>1us; 1~>A;~>25ms'] = 1,
+        ['~>1us; 1~>A;~>1us; 1~>B;~>25ms'] = 1,
+        ['~>1us; 1~>B;~>25ms'] = 2,
+        ['~>1us; 1~>B;~>1us; 1~>A;~>25ms'] = 2,
     }
 }
 
@@ -5509,10 +5819,10 @@ end;
 return ret;
 ]],
     run = {
-        ['1~>A;~>25ms'] = 1,
-        ['1~>A;1~>B;~>25ms'] = 1,
-        ['1~>B;~>25ms'] = 2,
-        ['1~>B;1~>A;~>25ms'] = 2,
+        ['~>1us; 1~>A;~>25ms'] = 1,
+        ['~>1us; 1~>A;~>1us; 1~>B;~>25ms'] = 1,
+        ['~>1us; 1~>B;~>25ms'] = 2,
+        ['~>1us; 1~>B;~>1us; 1~>A;~>25ms'] = 2,
     }
 }
 
@@ -5551,9 +5861,9 @@ end;
 return dt;
 ]],
     run = {
-        ['~>30ms ; 0~>A ; ~>21ms'] = 997,
-        ['~>12ms ; 0~>A ; 0~>B ; ~>27ms'] = 6997,
-        ['~>12ms ; 0~>B ; ~>3ms ; 0~>A ; ~>20ms'] = 2997,
+        ['~>30ms ; 0~>A ; ~>21ms'] = 1000,
+        ['~>12ms ; 0~>A ; ~>1us; 0~>B ; ~>27ms'] = 7001,
+        ['~>12ms ; 0~>B ; ~>3ms ; 0~>A ; ~>20ms'] = 3000,
     }
 }
 
@@ -5570,9 +5880,9 @@ end;
 return dt;
 ]],
     run = {
-        ['~>30ms ; 0~>A ; ~>21ms'] = 997,
-        ['~>12ms ; 0~>A ; 0~>B ; ~>27ms'] = 6997,
-        ['~>12ms ; 0~>B ; ~>3ms ; 0~>A ; ~>20ms'] = 2997,
+        ['~>30ms ; 0~>A ; ~>21ms'] = 1000,
+        ['~>12ms ; 0~>A ; ~>1ms ; 0~>B ; ~>27ms'] = 8000,
+        ['~>12ms ; 0~>B ; ~>3ms ; 0~>A ; ~>20ms'] = 3000,
     }
 }
 
@@ -5593,7 +5903,7 @@ return ret;
 ]],
     run = {
         ['~>30ms ; 0~>A ; ~>25ms'] = 1,
-        ['~>12ms ; 0~>A ; 0~>B ; ~>27ms'] = 1,
+        ['~>12ms ; 0~>A ; ~>1ms ; 0~>B ; ~>27ms'] = 1,
         ['~>12ms ; 0~>B ; ~>3ms ; 0~>A ; ~>20ms'] = 2,
     }
 }
@@ -5617,8 +5927,8 @@ return ret;
         nd_acc = 2,
     },
     run = {
-        ['~>12ms ; 0~>A ; 0~>B ; ~>27ms'] = 1,
-        ['~>12ms ; 0~>B ; 0~>A ; ~>26ms'] = 2,
+        ['~>12ms ; 0~>A ; ~>1ms ; 0~>B ; ~>27ms'] = 1,
+        ['~>12ms ; 0~>B ; ~>1ms ; 0~>A ; ~>26ms'] = 2,
     }
 }
 
@@ -5673,10 +5983,10 @@ end;
 return ret;
 ]],
     run = {
-        ['0~>A ; 0~>B ; ~>21ms'] = 0,
-        ['0~>B ; 0~>A ; ~>21ms'] = 1,
-        ['0~>A ; 0~>B ; ~>21ms'] = 0,
-        ['0~>B ; 0~>A ; ~>21ms'] = 1,
+        ['0~>A ; ~>1ms ; 0~>B ; ~>21ms'] = 0,
+        ['0~>B ; ~>1ms ; 0~>A ; ~>21ms'] = 1,
+        ['0~>A ; ~>1ms ; 0~>B ; ~>21ms'] = 0,
+        ['0~>B ; ~>1ms ; 0~>A ; ~>21ms'] = 1,
     }
 }
 
@@ -5864,7 +6174,7 @@ return a;
         nd_acc = 1,
     },
     run = {
-        ['0~>A ; 0~>B ; ~>20ms'] = 0,
+        ['0~>A ; ~>1ms ; 0~>B ; ~>20ms'] = 0,
     }
 }
 
@@ -12524,6 +12834,7 @@ with
 end
 return _a+_b+_c;
 ]],
+    todo = true,
     run = 3,
 }
 
@@ -12569,6 +12880,7 @@ with
 end
 return _a + a;
 ]],
+    todo = true,
     run = 2,
 }
 
@@ -13148,6 +13460,7 @@ with
 end
 return *a+b+c;
 ]],
+    todo = true,
     run = 7,
 }
 
@@ -13196,6 +13509,7 @@ with
 end
 return a + b;
 ]],
+    todo = true,
     run = 2,
     ana = {
         nd_acc = 2,
@@ -13573,6 +13887,8 @@ return _f2(&v[0],&v[1]) + _f1(v) + _f1(&v[0]);
 ]],
     run = 39,
 }
+
+--[=[
 
 PRE = [[
 C do
@@ -14017,8 +14333,10 @@ with
 end
 return 0;
 ]],
+    todo = true,
     run = 1,
 }
+--]=]
 
 Test { [[
 C do
@@ -14061,6 +14379,7 @@ with
     end
 end
 ]],
+    todo = true,
     ana = {
         nd_acc = 6,
         isForever = true,
@@ -14147,6 +14466,7 @@ with
     emit G(0);
 end
 ]],
+    todo = true,
     ana = {
         nd_acc = 1,
         isForever = true,
@@ -14169,6 +14489,7 @@ with
     emit G(&a);
 end
 ]],
+    todo = true,
     ana = {
         nd_acc = 4,
         isForever = true,
@@ -14191,6 +14512,7 @@ with
     emit G(&a);
 end
 ]],
+    todo = true,
     ana = {
         nd_acc = 4,
         isForever = true,
@@ -14206,6 +14528,7 @@ with
     emit G;
 end
 ]],
+    todo = true,
     ana = {
         n_reachs = 1,
         isForever = true,
@@ -14867,7 +15190,7 @@ end
 int v = await 1us;
 return v;
 ]],
-    run = { ['~>F; ~>4us; ~>F']=1 }
+    run = { ['~>1us; ~>F; ~>4us; ~>F']=3 }
 }
 
 Test { [[
@@ -14888,9 +15211,9 @@ end
 return ret;
 ]],
     run = {
-        ['0~>A;0~>A;~>19us'] = 10,
-        ['1~>A;~>1s;0~>A;~>19us'] = 8,
-        ['1~>A ; ~>5us ; 0~>A ; ~>5us ; 1~>A ; ~>5us ; 0~>A ; ~>9us'] = 1,
+        ['~>1us;0~>A;~>1us;0~>A;~>19us'] = 12,
+        ['~>1us;1~>A;~>1s;0~>A;~>19us'] = 11,
+        ['~>1us;1~>A ; ~>5us ; 0~>A ; ~>5us ; 1~>A ; ~>5us ; 0~>A ; ~>9us'] = 6,
     },
 }
 

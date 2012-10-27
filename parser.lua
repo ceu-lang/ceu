@@ -82,15 +82,15 @@ end
 
 TYPES = P'void' + 'int' + 'u8' + 'u16' + 'u32' + 's8' + 's16' + 's32'
 
-KEYS = P'async'  + 'await'   + 'break'   + 'constant' + 'C' + 'deterministic'
+KEYS = P'async'  + 'await'   + 'break'   + 'C'
      + 'do'      + 'emit'    + 'else'    + 'else/if'   + 'end'  + 'event'
      + 'finally' + 'FOREVER' + 'input'   + 'if'       + 'loop' + 'null'
-     + 'output'  + 'par'     + 'par/and' + 'par/or'   + 'pure' + 'return'
+     + 'output'  + 'par'     + 'par/and' + 'par/or'   + 'return'
      + 'sizeof'  + 'then'    + 'type'    + 'with'
      + TYPES
      + 'pause/if'
      + 'class'
-     + 'execute'
+     + 'exec'
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
@@ -116,9 +116,9 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
     , _Stmt = V'AwaitT'   + V'AwaitExt'  + V'AwaitInt'
             + V'EmitT'    + V'EmitExtS'  + V'EmitInt'
             + V'_Dcl_ext' + V'_Dcl_int'  + V'_Dcl_var'
-            + V'Dcl_det'  + V'_Dcl_pure' + V'Dcl_type'
+            + V'Dcl_type'
             + V'_Set'     + V'CallStmt' -- must be after Set
-            + V'Execute'
+            + V'Exec'
             + EM'statement (missing `_´?)'
 
     , _StmtB = V'_Do'   + V'Async'  + V'Host'
@@ -134,9 +134,6 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
                     V'ParEver' + V'If'    + V'Loop' )
 
     , __ID      = V'ID_c' + V'ID_ext' + V'Var'
-    , _Dcl_pure = (K'pure'+K'constant') * EV'ID_c' * (K',' * V'ID_c')^0
-    , Dcl_det   = K'deterministic' * EV'__ID' * EK'with' *
-                     EV'__ID' * (K',' * EV'__ID')^0
     , Dcl_type  = K'type' * EV'ID_c' * EK'=' * NUM
 
     , _Set  = V'_Exp' * V'_Sets'
@@ -266,7 +263,7 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
     , Dcl_cls   = K'class' * EV'ID_cls' *S* EK'do' *
                     V'Block' *
                   EK'end'
-    , Execute   = K'execute' *S* EV'Var'
+    , Exec      = K'exec' *S* EV'_Exp'
 
     , Ext      = V'ID_ext'
     , Var      = V'ID_var'

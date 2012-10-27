@@ -44,9 +44,9 @@ F = {
     Block   = OR_all,
     BlockN  = OR_all,
 
-    Execute = function (me)
-        local org = unpack(me)
-        local cls = _ENV.clss[org.tp]
+    Exec = function (me)
+        local exp = unpack(me)
+        local cls = _ENV.clss[exp.tp]
         SAME(me, cls.blk)
     end,
 

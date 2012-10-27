@@ -14,14 +14,9 @@ local t2n = {
 }
 
 F = {
-    Root = function (me)
-        _ENV.types.tceu_noff = _TP.n2bytes(_ROOT.mem.max)
-    end,
-
     Dcl_cls_pre = function (me)
         me.mem = { off=0, max=0 }
-        me.mem.par  = alloc(me.mem, 4)
-        -- TODO: _ENV.types.tceu_noff) -- org offset to parent
+        me.mem.par  = alloc(me.mem, _ENV.types.pointer)
         me.mem.back = alloc(me.mem, _ENV.types.tceu_nlbl) -- finish lbl end,
     end,
 
@@ -34,7 +29,8 @@ F = {
             if var.cls then
                 len = var.cls.mem.max
             elseif var.arr then
-                len = _ENV.types[_TP.deref(var.tp)] * var.arr
+                len = var.arr * (_ENV.types[_TP.deref(var.tp)] or 
+                                  _ENV.clss[_TP.deref(var.tp)].mem.max)
             elseif _TP.deref(var.tp) then
                 len = _ENV.types.pointer
             else
@@ -44,11 +40,18 @@ F = {
 
             local tp = _TP.no_(var.tp)
             if var.cls then
-                var.val = var.off
+                var.val = 'PTR_org(void*,'..var.off..')'
             elseif var.arr then
-                var.val = 'PTR_org('..var.off..','..tp..')'
+                if _ENV.clss[_TP.deref(tp)] then
+                    tp = 'void*'
+                end
+                var.val = 'PTR_org('..tp..','..var.off..')'
             else
-                var.val = '(*PTR_org('..var.off..','..tp..'*))'
+                if _ENV.clss[_TP.deref(tp)] then
+                    var.val = '(*PTR_org(void**,'..var.off..')) /*oi*/'
+                else
+                    var.val = '(*PTR_org('..tp..'*,'..var.off..'))'
+                end
             end
         end
 
@@ -146,14 +149,18 @@ F = {
         local ps = {}
         for i, exp in ipairs(exps) do
             ps[i] = exp.val
-            local tp = _TP.deref(exp.tp, true)
         end
         me.val = f.val..'('..table.concat(ps,',')..')'
     end,
 
     Op2_idx = function (me)
         local _, arr, idx = unpack(me)
-        me.val = '('..arr.val..'['..idx.val..'])'
+        local cls = _ENV.clss[me.tp]
+        if cls then
+            me.val = '('..arr.val..'+('..idx.val..'*'..cls.mem.max..'))'
+        else
+            me.val = '('..arr.val..'['..idx.val..'])'
+        end
     end,
 
     Op2_any = function (me)
@@ -189,11 +196,19 @@ F = {
 
     ['Op1_*'] = function (me)
         local op, e1 = unpack(me)
-        me.val = '('..op..e1.val..')'
+        if _ENV.clss[_TP.deref(e1.tp)] then
+            me.val = e1.val
+        else
+            me.val = '('..op..e1.val..')'
+        end
     end,
     ['Op1_&'] = function (me)
         local op, e1 = unpack(me)
-        me.val = '('..op..e1.val..')'
+        if _ENV.clss[e1.tp] then
+            me.val = e1.val
+        else
+            me.val = '('..op..e1.val..')'
+        end
     end,
 
     ['Op2_.'] = function (me)
@@ -206,9 +221,9 @@ F = {
             if me.var.cls then
                 me.val  = off
             elseif me.var.arr then
-                me.val = 'PTR('..off..','..tp..'*)'
+                me.val = 'PTR('..tp..'*,'..off..')'
             else
-                me.val = '(*PTR('..off..','..tp..'*))'
+                me.val = '(*PTR('..tp..'*,'..off..'))'
             end
         else
             me.val  = '('..e1.val..op..id..')'

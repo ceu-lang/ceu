@@ -131,8 +131,6 @@ end
 
 local tps = { [0]='void', [1]='u8', [2]='u16', [4]='u32' }
 
-assert(_ROOT.mem.max < 2^(_ENV.types.tceu_noff*8))
-
 -- TEMPLATE
 local tpl
 do
@@ -147,7 +145,6 @@ do
     tpl = sub(tpl, '=== CEU_NTRACKS ===',  _AST.root.ns.tracks)
     tpl = sub(tpl, '=== CEU_NLSTS ===',    _AST.root.ns.awaits)
 
-    tpl = sub(tpl, '=== TCEU_NOFF ===',  tps[_ENV.types.tceu_noff])
     tpl = sub(tpl, '=== TCEU_NTRK ===',  tps[_ENV.types.tceu_ntrk])
     tpl = sub(tpl, '=== TCEU_NLST ===',  tps[_ENV.types.tceu_nlst])
     tpl = sub(tpl, '=== TCEU_NEVT ===',  tps[_ENV.types.tceu_nevt])
