@@ -186,7 +186,7 @@ void ceu_track_clr (void* org, tceu_nlbl l1, tceu_nlbl l2) {
     tceu_ntrk i;
     for (i=1; i<=CEU.tracks_n; i++) {
         tceu_trk* trk = &CEU.tracks[i];
-        if ( trk->lbl>=l1 && trk->lbl<=l2
+        if ( trk->org==org && trk->lbl>=l1 && trk->lbl<=l2
         ||   trk->org!=org && ceu_XXX(trk->org,org,l1,l2) ) {
             ceu_track_rem(NULL,i);
             i--;

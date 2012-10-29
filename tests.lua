@@ -1,64 +1,39 @@
 --[===[
 --]===]
 
-    -- CLASSES / ORGS
-
 Test { [[
-input void T;
-int ret = 0;
-par/or do
-    loop do
-        int late = await 10ms;
-        ret = ret + late;
-        _assert(late <= 10000);
-    end
-with
-    loop do
-        int i = 0;
-        int t;
-        par/or do
-            t = await 1s;
-        with
-            loop do
-                await T;
-                i = i + 1;
-            end
-        end
-    end
-with
-    async do
-        emit 12ms;
-        emit T;
-        emit 12ms;
-        emit T;
-        emit 12ms;
-        emit T;
-        emit 12ms;
-        emit T;
-        emit 12ms;
-        emit T;
-        emit 12ms;
-        emit T;
-        emit 12ms;
-        emit T;
-        emit 12ms;
-        emit T;
-        emit 12ms;
-        emit T;
-        emit 12ms;
-        emit T;
-        emit 12ms;
-        emit T;
-        emit 12ms;
-        emit T;
-        emit 12ms;
-        emit T;
-    end
+class T do
+    int v = 10;
+    event void e, f;
+_fprintf(_stderr,"oioi\n");
+    await e;
+    emit f;
+    v = 100;
 end
-return ret;
+T[2] ts;
+int ret = 0;
+par/and do
+    exec ts;
+    ret = ret + 1;
+with
+    emit ts[0].e;
+    ret = ret + 1;
+with
+    await ts[0].f;
+    ret = ret + 1;
+with
+    emit ts[1].e;
+    ret = ret + 1;
+with
+    await ts[1].f;
+    ret = ret + 1;
+end
+return ret + ts[0].v + ts[1].v;
 ]],
-    run = 72000,
+    run = 205,
 }
+
+    -- CLASSES / ORGS
 
 Test { [[
 class T do
@@ -3090,6 +3065,7 @@ loop i, 100 do
 end
 return sum;
 ]],
+    tight = true,
     run = 5050,
 }
 Test { [[
@@ -3100,6 +3076,7 @@ for i=1, 100 do
 end
 return sum;
 ]],
+    tight = true,
     todo = 'should raise an error',
     run = 5050,
 }
@@ -3110,6 +3087,7 @@ loop i, 100 do
 end
 return sum;
 ]],
+    tight = true,
     run = 0,
 }
 Test { [[
@@ -3124,6 +3102,7 @@ loop i, 100 do
 end
 return v;
 ]],
+    tight = true,
     run = 99,
 }
 Test { [[
@@ -3149,6 +3128,7 @@ loop i, 0 do
 end
 return sum;
 ]],
+    tight = true,
     run = 4,
 }
 Test { [[
@@ -4777,6 +4757,63 @@ return a;
         ['~>10min ; 1~>A ; 1~>F'] = 0,
         ['1~>A  ; ~>10min; 1~>F'] = 1,
     }
+}
+
+Test { [[
+input void T;
+int ret = 0;
+par/or do
+    loop do
+        int late = await 10ms;
+        ret = ret + late;
+        _assert(late <= 10000);
+    end
+with
+    loop do
+        int i = 0;
+        int t;
+        par/or do
+            t = await 1s;
+        with
+            loop do
+                await T;
+                i = i + 1;
+            end
+        end
+    end
+with
+    async do
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+    end
+end
+return ret;
+]],
+    run = 72000,
 }
 
 Test { [[

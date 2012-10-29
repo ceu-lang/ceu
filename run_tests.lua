@@ -44,9 +44,10 @@ Test = function (t)
     -- PARSER
     if not check('parser')   then return end
     if not check('ast')      then return end
-    --_AST.dump(_AST.root)
     if not check('env')      then return end
-    if not check('tight')    then return end
+    --_AST.dump(_AST.root)
+    --if not check('tight')    then return end
+    dofile 'tight.lua'
     if not check('props')    then return end
     if not check('labels')   then return end
     if not check('mem')      then return end
@@ -56,6 +57,9 @@ Test = function (t)
         assert(T.tot==_MEM.max, 'mem '.._MEM.max)
     end
 
+    -- TODO
+    assert((T.tight and true) == (_AST.root.tight or nil))
+
     -- RUN
 
     if T.run == false then
@@ -64,7 +68,8 @@ Test = function (t)
     end
 
     if T.run == nil then
-        assert(T.ana and T.ana.isForever or T.ana.nd_acc,
+        assert(T.tight or
+               T.ana and (T.ana.isForever or T.ana.nd_acc),
                 -- or T.ana.nd_flw or T.ana.nd_esc,
                 'missing run value')
         return

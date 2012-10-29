@@ -121,6 +121,18 @@ F = {
 
     Exec = function (me)
         local exp = unpack(me)
+
+        if exp.var and exp.var.arr and _ENV.clss[_TP.deref(exp.tp)] then
+            local t = {}
+            for i=0, exp.var.arr-1 do
+                t[#t+1] = _AST.node('Exec')(me.ln,
+                            _AST.node('Op2_idx')(me.ln, 'idx', exp, _AST.node('CONST')(me.ln, i)))
+            end
+            local par = _AST.node('ParAnd')(me.ln,unpack(t))
+            par.depth = me.depth
+            return _AST.visit_aux(par, F)
+        end
+
         me.cls = _ENV.clss[exp.tp]
         ASR(me.cls, me,
                 'cannot execute a `'..exp.tp..'´ expression')

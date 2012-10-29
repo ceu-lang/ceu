@@ -57,11 +57,7 @@ F = {
         local c, t, f = unpack(me)
         t = t or c
         f = f or c
-        if me.isBounded then
-            SAME(me, f)
-        else
-            AND_all(me, {t,f})
-        end
+        AND_all(me, {t,f})
     end,
 
     ParOr = AND_all,
@@ -72,8 +68,9 @@ F = {
     Loop = function (me)
         local body = unpack(me)
         SAME(me, body)
-        ASR(_AST.iter'Async'() or me.isBounded or body.blocks,
-                me,'tight loop')
+        _AST.root.tight = _AST.root.tight or
+            not WRN(_AST.iter'Async'() or body.blocks,
+                    me,'tight loop')
         me.blocks = body.awaits or body.returns
     end,
 

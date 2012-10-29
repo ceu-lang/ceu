@@ -10,7 +10,7 @@ function _AST.isNode (node)
     return (getmetatable(node) == MT) and node.tag
 end
 
-function node (tag, min)
+function _AST.node (tag, min)
     min = min or 0
     return function (ln, ...)
         local node = setmetatable({ ... }, MT)
@@ -23,6 +23,7 @@ function node (tag, min)
         end
     end
 end
+local node = _AST.node
 
 function _AST.pred_prio (me)
     local tag = me.tag
@@ -84,13 +85,6 @@ function _AST.dump (me, spc)
     end
 end
 
-function _AST.visit (F)
-    assert(_AST)
-    STACK = {}
-    _AST.root.depth = 0
-    return visit_aux(_AST.root, F)
-end
-
 local function FF (F, str)
     local f = F[str]
     if type(f) == 'string' then
@@ -100,7 +94,7 @@ local function FF (F, str)
     return f
 end
 
-function visit_aux (me, F)
+local function visit_aux (me, F)
 --DBG(me.tag, me, F)
     local pre, mid, pos = FF(F,me.tag..'_pre'), FF(F,me.tag), FF(F,me.tag..'_pos')
     local bef, aft = FF(F,me.tag..'_bef'), FF(F,me.tag..'_aft')
@@ -126,6 +120,14 @@ function visit_aux (me, F)
 
     if F.Node then me=(F.Node(me) or me) end
     return me
+end
+_AST.visit_aux = visit_aux
+
+function _AST.visit (F)
+    assert(_AST)
+    STACK = {}
+    _AST.root.depth = 0
+    return visit_aux(_AST.root, F)
 end
 
 local TOP = {}
@@ -261,8 +263,6 @@ local C; C = {
             node('If')(ln, cmp,
                 node('Break')(ln),
                 node('BlockN')(ln, blk, nxt_i)))
-        loop.isBounded = true
-        loop[1].isBounded = true    -- remind that the If is "artificial"
 
         return node('Block')(ln,
                 dcl_i, set_i,
