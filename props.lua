@@ -29,6 +29,8 @@ _PROPS = {
     has_wclocks = false,
     has_asyncs  = false,
     has_emits   = false,
+    has_pses    = false,
+    has_fins    = false,
 }
 
 local NO_fin = {
@@ -67,17 +69,22 @@ F = {
         end
     end,
 
-    Exec = function (me)
-        SAME(me, me.cls)
-    end,
-
     Root = function (me)
         SAME(me, me[#me])
         _ENV.types.tceu_nlst = _TP.n2bytes(me.ns.awaits)
         _ENV.types.tceu_ntrk = _TP.n2bytes(me.ns.tracks)
     end,
 
-    Block   = MAX_all,
+    Block = function (me)
+        MAX_all(me)
+        local t = { me }
+        for _, var in ipairs(me.vars) do
+            if var.cls then
+                t[#t+1] = var.cls
+            end
+        end
+        ADD_all(me, t)
+    end,
     BlockN  = MAX_all,
     ParEver = ADD_all,
     ParAnd  = ADD_all,
@@ -85,6 +92,14 @@ F = {
 
     Dcl_ext = function (me)
         _PROPS.has_exts = true
+    end,
+
+    Pause = function (me)
+        _PROPS.has_pses = true
+    end,
+
+    Finally = function (me)
+        _PROPS.has_fins = true
     end,
 
     Async = function (me)

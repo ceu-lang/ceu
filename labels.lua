@@ -5,6 +5,8 @@ _LBLS = {
 
 function new (lbl)
     lbl.id = lbl[1] .. (lbl[2] and '' or '_' .. #_LBLS.list)
+    lbl.id = string.gsub(lbl.id, '%.','_')
+    lbl.id = string.gsub(lbl.id, '%$','_')
     _LBLS.list[lbl] = true
     lbl.n = #_LBLS.list                   -- starts from 0
     _LBLS.list[#_LBLS.list+1] = lbl
@@ -37,10 +39,6 @@ F = {
 
     Dcl_cls = function (me)
         me.lbl = new{'Class_'..me.id, true}
-    end,
-    Exec = function (me)
-        local cls = CLS()
-        me.lbl = new{'Exec_ret'}
     end,
 
     SetBlock_pre = function (me)

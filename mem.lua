@@ -16,8 +16,6 @@ local t2n = {
 F = {
     Dcl_cls_pre = function (me)
         me.mem = { off=0, max=0 }
-        me.mem.par  = alloc(me.mem, _ENV.types.pointer)
-        me.mem.back = alloc(me.mem, _ENV.types.tceu_nlbl) -- finish lbl end,
     end,
 
     Block_pre = function (me)
@@ -81,6 +79,10 @@ F = {
         me.off = alloc(CLS().mem, #me)        -- TODO: bitmap?
     end,
     ParAnd = 'Block',
+
+    This = function (me)
+        me.val = 'PTR_org(void*,0)'
+    end,
 
     Var = function (me)
         me.val = me.var.val
@@ -223,7 +225,11 @@ F = {
             elseif me.var.arr then
                 me.val = 'PTR('..tp..'*,'..off..')'
             else
-                me.val = '(*PTR('..tp..'*,'..off..'))'
+                if _ENV.clss[_TP.deref(tp)] then
+                    me.val = '(*PTR(void**,'..off..'))'
+                else
+                    me.val = '(*PTR('..tp..'*,'..off..'))'
+                end
             end
         else
             me.val  = '('..e1.val..op..id..')'

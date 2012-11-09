@@ -1,42 +1,90 @@
 --[===[
 --]===]
 
+--[=[
+-- TODO: all with tight loops
 Test { [[
-class T do
-    int v = 10;
-    event void e, f;
-_fprintf(_stderr,"oioi\n");
-    await e;
-    emit f;
-    v = 100;
+event void e, f;
+par do
+    loop do
+        par/or do
+            await f;
+        with
+            emit e;
+            await FOREVER;
+        end
+    end
+with
+    loop do
+        par/or do
+            emit f;
+        with
+            await f;
+        end
+        await e;
+    end
 end
-T[2] ts;
-int ret = 0;
-par/and do
-    exec ts;
-    ret = ret + 1;
-with
-    emit ts[0].e;
-    ret = ret + 1;
-with
-    await ts[0].f;
-    ret = ret + 1;
-with
-    emit ts[1].e;
-    ret = ret + 1;
-with
-    await ts[1].f;
-    ret = ret + 1;
-end
-return ret + ts[0].v + ts[1].v;
 ]],
-    run = 205,
+    run = 0
 }
+
+Test { [[
+event void e, f;
+par do
+    loop do
+        par/or do
+            emit e;
+            await FOREVER;
+        with
+            await f;
+        end
+    end
+with
+    loop do
+        await e;
+        par/or do
+            emit f;
+        with
+            await f;
+        end
+    end
+end
+]],
+    run = 0
+}
+
+Test { [[
+event void e, k1, k2;
+par do
+    loop do
+        par/or do
+            emit e;
+            await FOREVER;
+        with
+            await k1;
+        end
+        emit k2;
+    end
+with
+    loop do
+        await e;
+        par/or do
+            emit k1;
+        with
+            await k2;
+        end
+    end
+end
+]],
+    run = 0
+}
+]=]
 
     -- CLASSES / ORGS
 
 Test { [[
-class T do
+class T with
+do
 end
 return 0;
 ]],
@@ -44,8 +92,9 @@ return 0;
 }
 
 Test { [[
-class T do
+class T with
     int v;
+do
 end
 return 0;
 ]],
@@ -53,8 +102,9 @@ return 0;
 }
 
 Test { [[
-class T do
-    class T1 do int v; end
+class T with
+do
+    class T1 with int v; do end
     int v;
 end
 return 0;
@@ -64,7 +114,20 @@ return 0;
 }
 
 Test { [[
-class T do
+class T with
+do
+    class T1 with do int v; end
+    int v;
+end
+return 0;
+]],
+    run = 0, -- TODO
+    --props = 'ERR : line 2 : must be in top-level',
+}
+
+Test { [[
+class T with
+do
 end
 T[5] a;
 return 0;
@@ -73,36 +136,40 @@ return 0;
 }
 
 Test { [[
-class T do
+class T with
+do
 end
 event T a;
 return 0;
 ]],
-    env = 'ERR : line 3 : invalid declaration',
+    env = 'ERR : line 4 : invalid declaration',
 }
 
 Test { [[
-class T do
+class T with
+do
 end
 T a = 1;
 return 0;
 ]],
-    env = 'ERR : line 3 : invalid attribution',
+    env = 'ERR : line 4 : invalid attribution',
 }
 
 Test { [[
-class T do
+class T with
+do
     int a;
     T b;
 end
 T aa;
 return 0;
 ]],
-    env = 'ERR : line 3 : invalid declaration',
+    env = 'ERR : line 4 : invalid declaration',
 }
 
 Test { [[
-class T do
+class T with
+do
 end
 T a;
 return 0;
@@ -111,29 +178,44 @@ return 0;
 }
 
 Test { [[
-class T do
+class T with
+do
 end
 T a;
 a.v = 0;
 return a.v;
 ]],
-    env = 'ERR : line 4 : variable/event "v" is not declared',
+    env = 'ERR : line 5 : variable/event "v" is not declared',
 }
 
 Test { [[
-class T do
+class T with
     int a;
+do
 end
 T aa;
 aa.b = 1;
 return 0;
 ]],
-    env = 'ERR : line 5 : variable/event "b" is not declared',
+    env = 'ERR : line 6 : variable/event "b" is not declared',
 }
 
 Test { [[
-class T do
+class T with
+do
     int v;
+end
+T a;
+a.v = 5;
+return a.v;
+]],
+    env = 'ERR : line 6 : variable/event "v" is not declared',
+}
+
+Test { [[
+class T with
+    int v;
+do
 end
 T a;
 a.v = 5;
@@ -143,8 +225,9 @@ return a.v;
 }
 
 Test { [[
-class T do
+class T with
     int v;
+do
 end
 do
     T a;
@@ -153,20 +236,34 @@ end
 a.v = 5;
 return a.v;
 ]],
-    env = 'ERR : line 8 : variable/event "a" is not declared',
+    env = 'ERR : line 9 : variable/event "a" is not declared',
 }
 
 Test { [[
-class T3 do
-    int v3;
+int a=8;
+do
+    int a = 1;
+    this.a = this.a + 5;
 end
-class T2 do
+return a;
+]],
+    env = 'ERR : line 4 : invalid `this´',
+}
+
+Test { [[
+class T3 with
+    int v3;
+do
+end
+class T2 with
     T3 t3;
     int v;
+do
 end
-class T do
+class T with
     int v,v2;
     T2 x;
+do
 end
 T a;
 a.v = 5;
@@ -182,13 +279,33 @@ Test { [[
 int a;
 exec a;
 ]],
-    env = 'ERR : line 2 : cannot execute a `int´',
+    --env = 'ERR : line 2 : cannot execute a `int´',
+    env = 'ERR : line 2 : event "?" is not declared',
+}
+
+Test { [[
+int a;
+spawn a;
+]],
+    env = 'ERR : line 2 : cannot spawn a `int´',
 }
 
 Test { [[
 int v;
-class T do
+class T with
     int v;
+    v = 5;
+do
+end
+]],
+    parser = 'ERR : line 3 : before `;´ : expected statement (missing `_´?)',
+}
+
+Test { [[
+int v;
+class T with
+    int v;
+do
     v = 5;
 end
 T a;
@@ -201,9 +318,47 @@ return a.v + v;
 }
 
 Test { [[
-class T do
+int v;
+class T with
+    event void e;
+do
+    emit e;
+end
+T a;
+loop i,3 do
+    par/and do
+        exec a;
+    with
+        await a.e;
+        v = v + 1;
+    end
+end
+return v;
+]],
+    run = 3,
+}
+
+Test { [[
+int v;
+class T with
     int v;
+do
     v = 5;
+end
+T a;
+spawn a;
+v = a.v;
+a.v = 4;
+return a.v + v;
+]],
+    run = 9,
+}
+
+Test { [[
+class T with
+    int v;
+do
+    this.v = 5;
 end
 do
     T a;
@@ -216,10 +371,49 @@ end
     run = 9,
 }
 
--- TODO: par de executes
 Test { [[
-class T do
+class T with
     int v;
+do
+    this.v = 5;
+end
+do
+    T a;
+    spawn a;
+    int v = a.v;
+    a.v = 4;
+    return a.v + v;
+end
+]],
+    run = 9,
+}
+
+Test { [[
+class T with
+    int v;
+do
+    v = 5;
+end
+do
+    T a;
+    par/and do
+        spawn a;
+    with
+        spawn a;
+    end
+    int v = a.v;
+    a.v = 4;
+    return a.v + v;
+end
+]],
+    todo = 'par de spawn',
+    run = 9,
+}
+
+Test { [[
+class T with
+    int v;
+do
     v = 5;
 end
 do
@@ -234,12 +428,14 @@ do
     return a.v + v;
 end
 ]],
+    todo = 'par de exec',
     run = 9,
 }
 
 Test { [[
-class T do
+class T with
     int v;
+do
     v = 5;
 end
 T a;
@@ -256,7 +452,8 @@ int ret = 0;
 do
     int a;
     do
-        class T do
+        class T with
+        do
             a = 1;
         end
         T v;
@@ -266,7 +463,7 @@ do
 end
 return ret;
 ]],
-    env = 'ERR : line 6 : variable/event "a" is not declared',
+    env = 'ERR : line 7 : variable/event "a" is not declared',
     --props = 'ERR : line 5 : must be in top-level',
 }
 
@@ -274,7 +471,8 @@ Test { [[
 do
     int a;
     do
-        class T do
+        class T with
+        do
             a = 1;
         end
     end
@@ -283,7 +481,7 @@ T v;
 exec v;
 return 0;
 ]],
-    env = 'ERR : line 5 : variable/event "a" is not declared',
+    env = 'ERR : line 6 : variable/event "a" is not declared',
     --props = 'ERR : line 4 : must be in top-level',
 }
 
@@ -291,7 +489,8 @@ Test { [[
 int a;
 do
     do
-        class T do
+        class T with
+        do
             a = 1;
             b = 1;
         end
@@ -302,7 +501,7 @@ T v;
 exec v;
 return a;
 ]],
-    env = 'ERR : line 5 : variable/event "a" is not declared',
+    env = 'ERR : line 6 : variable/event "a" is not declared',
     --env = 'ERR : line 6 : variable/event "b" is not declared',
 }
 
@@ -311,7 +510,8 @@ int a;
 int b;
 do
     do
-        class T do
+        class T with
+        do
             a = 1;
             b = 3;
         end
@@ -329,7 +529,7 @@ do
 end
 return a+b;
 ]],
-    env = 'ERR : line 6 : variable/event "a" is not declared',
+    env = 'ERR : line 7 : variable/event "a" is not declared',
     --props = 'ERR : line 5 : must be in top-level',
     --env = 'ERR : line 17 : class "T" is not declared',
 }
@@ -337,7 +537,8 @@ return a+b;
 Test { [[
 int a;
 int b;
-class T do
+class T with
+do
     a = 1;
     b = 3;
 end
@@ -353,13 +554,14 @@ do
 end
 return a+b;
 ]],
-    env = 'ERR : line 4 : variable/event "a" is not declared',
+    env = 'ERR : line 5 : variable/event "a" is not declared',
     --run = 4,
 }
 
 Test { [[
-class T do
+class T with
     int v;
+do
 end
 
 T t1, t2;
@@ -373,19 +575,65 @@ return t1.v+t2.v;
 }
 
 Test { [[
-input int START;
-class T do
+class T with
+    int v;
+do
+end
+
+T t1, t2;
+t1.v = 1;
+t2.v = 2;
+spawn t2;
+spawn t1;
+return t1.v+t2.v;
+]],
+    run = 3,
+}
+
+Test { [[
+class T with
+do
 end
 T aa;
 loop do
     exec aa;
 end
 ]],
+    todo = 'tight loop',
     tight = 'ERR : line 5 : tight loop',
 }
 
 Test { [[
-class T do
+class T with
+do
+    await 10s;
+end
+T aa;
+loop do
+    spawn aa;
+end
+]],
+    tight = 'ERR : line 6 : tight loop',
+}
+
+Test { [[
+class T with
+do
+    await 10s;
+end
+T aa;
+loop do
+    exec aa;
+end
+]],
+    ana = {
+        isForever = true,
+    },
+}
+
+Test { [[
+class T with
+do
     await 1s;
 end
 T aa;
@@ -397,7 +645,8 @@ return 10;
 
 Test { [[
 do
-    class T do
+    class T with
+do
         await 1s;
     end
 end
@@ -409,10 +658,21 @@ return 10;
 }
 
 Test { [[
+class T with
+    int v = await F;
+do
+end
+]],
+    parser = 'ERR : line 2 : after `v´ : expected `;´',
+}
+
+Test { [[
 input int F;
 do
-    class T do
-        int v = await F;
+    class T with
+        int v;
+    do
+        v = await F;
     end
 end
 T aa;
@@ -423,7 +683,8 @@ return aa.v;
 }
 
 Test { [[
-class T do
+class T with
+do
     await 1s;
 end
 T aa;
@@ -438,13 +699,18 @@ end
 
 Test { [[
 input void F;
-class T1 do
+class T1 with
+do
     await 1s;
+    _fprintf(_stderr,"oioi\n");
 end
-class T do
+class T with
+do
     T1 a;
     exec a;
+    _fprintf(_stderr,"okoko\n");
     await 1s;
+    _fprintf(_stderr,"tctc\n");
 end
 int ret = 10;
 par/or do
@@ -460,6 +726,120 @@ await F;
 return ret;
 ]],
     run = {
+        --['~>F;~>5s;~>F'] = 10,
+        --['~>1s;~>F;~>F;~>1s'] = 10,
+        --['~>1s;~>F;~>1s;~>F'] = 10,
+        ['~>1s;~>1s;~>F'] = 11,
+    },
+}
+
+-- TODO:
+error'oi'
+Test { [[
+input void A, F;
+event void e;
+int v = 1;
+par/or do
+    do
+        await A;
+        v = v + 3;
+    finally
+        v = v + 1;
+        emit e;
+        v = v * 2;
+    end
+with
+    await e;
+    v = v * 3;
+with
+    await F;
+    v = v * 5;
+end
+return v;
+]],
+    run = {
+        ['~>F'] = 18,
+        ['~>A'] = 15,
+    }
+}
+
+Test { [[
+input void A, F;
+class T with
+do
+    event void e;
+    int v = 1;
+    do
+        await A;
+        v = v + 3;
+    finally
+        v = v + 1;
+        emit e;
+        v = v * 2;
+    end
+end
+T t;
+par/or do
+    do
+        exec t;
+    finally
+        t.v = t.v * 10;
+    end
+with
+    await t.e;
+    v = v * 3;
+with
+    await F;
+    v = v * 5;
+end
+]],
+    run = {
+        ['~>F'] = 18,
+        ['~>A'] = 15,
+    }
+}
+
+--MEMORY OVERFLOW
+error'oi'
+Test { [[
+class T with
+do
+    int v = 1;
+end
+T a, b;
+spawn a;
+spawn b;
+return a.v + b.v;
+]],
+    run = 2,
+}
+
+Test { [[
+input void F;
+class T1 with
+do
+    await 1s;
+end
+class T with
+do
+    T1 a;
+    spawn a;
+    await 1s;
+end
+int ret = 10;
+par/or do
+    do
+        T aa;
+        spawn aa;
+    end
+    ret = ret + 1;
+with
+    await F;
+end
+await F;
+return ret;
+]],
+    run = {
         ['~>F;~>5s;~>F'] = 10,
         ['~>1s;~>F;~>F;~>1s'] = 10,
         ['~>1s;~>F;~>1s;~>F'] = 10,
@@ -468,10 +848,12 @@ return ret;
 }
 Test { [[
 input void F;
-class T1 do
+class T1 with
+do
     await 1s;
 end
-class T do
+class T with
+do
     T1 a;
     exec a;
     await 1s;
@@ -499,7 +881,8 @@ return ret;
 
 Test { [[
 input void F;
-class T do
+class T with
+do
     input void E;
     par/or do
         await 1s;
@@ -532,10 +915,12 @@ return ret;
 
 Test { [[
 input void F;
-class T1 do
+class T1 with
+do
     await 1s;
 end
-class T do
+class T with
+do
     input void E;
     par/or do
         T1 a;
@@ -569,7 +954,8 @@ return ret;
 
 Test { [[
 input void F;
-class T do
+class T with
+do
     await 1s;
 end
 T aa;
@@ -591,7 +977,8 @@ return ret;
 
 Test { [[
 input void F;
-class T do
+class T with
+do
     await 1s;
 end
 T aa;
@@ -611,8 +998,10 @@ return ret;
 
 Test { [[
 input void A;
-class T do
-    int v = 0;
+class T with
+    int v;
+do
+    v = 0;
     loop do
         await A;
         v = v + 1;
@@ -634,9 +1023,9 @@ end
 }
 
 Test { [[
-input int START;
-class T do
+class T with
     event int a;
+do
     emit a=10;
     a = 5;
 end
@@ -648,9 +1037,9 @@ return aa.a;
 }
 
 Test { [[
-input int START;
-class T do
+class T with
     event int a;
+do
     emit a=10;
     a = 5;
 end
@@ -661,16 +1050,17 @@ with
 end
 return aa.a;
 ]],
+    todo = 'par/or termina o exec',
     run = 10,
 }
 
 Test { [[
-input int START;
-class T do
+class T with
     event int a;
+do
     par/or do
         emit a=10;
-        a = 5;
+        this.a = 5;
     with
         await a;
         a = 7;
@@ -684,11 +1074,11 @@ return aa.a;
 }
 
 Test { [[
-input int START;
-class T do
+class T with
     event int a;
+do
     par/and do
-        emit a=10;
+        emit this.a=10;
         a = 5;
     with
         await a;
@@ -703,14 +1093,14 @@ return aa.a;
 }
 
 Test { [[
-input int START;
-class T do
+class T with
     event int a;
+do
     par/or do
         emit a=10;
         a = 5;
     with
-        await a;
+        await this.a;
         a = 7;
     end
 end
@@ -721,6 +1111,7 @@ with
 end
 return aa.a;
 ]],
+    todo = 'par/or termina o exec',
     run = 10,
 }
 
@@ -743,12 +1134,13 @@ return a;
 }
 
 Test { [[
-input int START, F;
-class T do
+input int START,F;
+class T with
     event int a;
+do
     par/or do
         a = await START;
-        emit a;
+        emit this.a;
     with
         await 10s;
         await a;
@@ -767,8 +1159,9 @@ return aa.a;
 }
 
 Test { [[
-class T do
+class T with
     event int a, b;
+do
     par/and do
         await a;
         emit b;
@@ -790,12 +1183,15 @@ with
 end
 return ret + aa.a + aa.b;
 ]],
+    todo = 'XXX',
+    todo = 'problemas c/ exec aa vs emit aa.a',
     run = 10,
 }
 
 Test { [[
-class T do
+class T with
     event int a;
+do
     emit a=100;
     a = 5;
 end
@@ -812,10 +1208,11 @@ return aa.a;
 }
 
 Test { [[
-class T do
+class T with
     event int e;
+do
     if e == 1 then
-        emit e;
+        emit this.e;
     end
 end
 T a1, a2;
@@ -840,8 +1237,10 @@ return ret;
 }
 
 Test { [[
-class T do
-    u8 a = 1;
+class T with
+    u8 a;
+do
+    a = 1;
 end
 T a, b;
 C do
@@ -853,12 +1252,15 @@ exec a;
 exec b;
 return _f(a+5,b+5);
 ]],
+    todo = 'inseguro',
     run = 2,
 }
 
 Test { [[
-class T do
-    int v = 10;
+class T with
+    int v;
+do
+    v = 10;
 end
 T a;
 T* ptr;
@@ -870,9 +1272,11 @@ return ptr->v + a.v;
 }
 
 Test { [[
-class T do
-    int v = 10;
+class T with
     event void e, f;
+    int v;
+do
+    v = 10;
     await e;
     emit f;
     v = 100;
@@ -893,13 +1297,16 @@ with
 end
 return ret + ptr->v + a.v;
 ]],
+    todo = 'XXX',
     run = 203,
 }
 
 Test { [[
-class T do
-    int v = 10;
+class T with
+    int v;
     event void e, f;
+do
+    v = 10;
     await e;
     emit f;
     v = 100;
@@ -927,6 +1334,7 @@ with
 end
 return ret + ts[0].v + ts[1].v;
 ]],
+    todo = 'XXX',
     run = 206,
 }
 
@@ -968,14 +1376,16 @@ return x;
     run = 9,
 }
 
+TODO PAREI DE TESTAR AQUI
 Test { [[
 input int  BUTTON;
 input void F;
 
-class Rect do
+class Rect with
     s16 x;
     s16 y;
     event int go;
+do
 
     loop do
         par/or do
@@ -1091,6 +1501,77 @@ end
 return 100;
 ]],
     run = 100,
+}
+
+Test { [[
+input void A,X;
+event int a;
+int ret = 0;
+
+class T with
+    event void v;
+do
+    await A;
+    emit v;
+end
+
+T[2] ts;
+
+par/or do
+    pause/if a do
+        exec ts;
+    end
+with
+    par do
+        await ts[0].v;
+        ret = ret + 1;
+    with
+        await ts[1].v;
+        ret = ret + 1;
+    end
+with
+    emit a=1;
+    await X;
+    emit a=0;
+    ret = 10;
+    await FOREVER;
+end
+return ret;
+]],
+    run = { ['~>A; ~>X; ~>A']=12 }
+}
+
+Test { [[
+class T with
+    int v;
+    event void e, f;
+do
+    v = 10;
+    await e;
+    emit f;
+    v = 100;
+end
+T[2] ts;
+int ret = 0;
+par/and do
+    exec ts;
+    ret = ret + 1;
+with
+    emit ts[0].e;
+    ret = ret + 1;
+with
+    await ts[0].f;
+    ret = ret + 1;
+with
+    emit ts[1].e;
+    ret = ret + 1;
+with
+    await ts[1].f;
+    ret = ret + 1;
+end
+return ret + ts[0].v + ts[1].v;
+]],
+    run = 205,
 }
 
 --do return end
@@ -15015,7 +15496,8 @@ pause/if a do
 end
 return 0;
 ]],
-    env = 'ERR : line 2 : event type must be numeric',
+    --env = 'ERR : line 2 : event type must be numeric',
+    env = 'ERR : line 2 : invalid operands to binary "!="',
 }
 
 Test { [[
@@ -15049,12 +15531,15 @@ end
         ['1~>B'] = 1,
         ['0~>A ; 1~>B'] = 1,
         ['1~>A ; 1~>B ; 0~>A ; 3~>B'] = 3,
+        ['1~>A ; 1~>A ; 1~>B ; 0~>A ; 3~>B'] = 3,
+        ['1~>A ; 1~>B ; 1~>B ; 0~>A ; 3~>B'] = 3,
         ['1~>A ; 1~>B ; 0~>A ; 1~>A ; 2~>B ; 0~>A ; 3~>B'] = 3,
         ['1~>A ; 1~>B ; 0~>A ; 1~>A ; 0~>A ; 3~>B'] = 3,
         ['1~>A ; 1~>B ; 1~>A ; 2~>B ; 0~>A ; 3~>B'] = 3,
     },
 }
 
+-- TODO: nesting with same event
 Test { [[
 input int A,B;
 event int a;
@@ -15076,10 +15561,10 @@ return ret;
     run = {
         ['1~>B'] = 1,
         ['0~>A ; 1~>B'] = 1,
-        ['1~>A ; 1~>B ; 0~>A ; 3~>B'] = 3,
-        ['1~>A ; 1~>B ; 0~>A ; 1~>A ; 2~>B ; 0~>A ; 3~>B'] = 3,
-        ['1~>A ; 1~>B ; 0~>A ; 1~>A ; 0~>A ; 3~>B'] = 3,
-        ['1~>A ; 1~>B ; 1~>A ; 2~>B ; 0~>A ; 3~>B'] = 3,
+        ['1~>A ; 1~>B ; 0~>A ; 0~>A ; 3~>B'] = 3,
+        ['1~>A ; 1~>B ; 0~>A ; 1~>A ; 2~>B ; 0~>A ; 0~>A ; 3~>B'] = 3,
+        ['1~>A ; 1~>B ; 0~>A ; 1~>A ; 0~>A ; 0~>A ; 3~>B'] = 3,
+        ['1~>A ; 1~>B ; 1~>A ; 2~>B ; 0~>A ; 0~>A ; 3~>B'] = 3,
     },
 }
 

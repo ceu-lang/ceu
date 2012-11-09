@@ -5,6 +5,7 @@ _AST = {
 local MT = {}
 local STACK = nil
 local FIN = 0     -- cur fin
+local TOP = {}
 
 function _AST.isNode (node)
     return (getmetatable(node) == MT) and node.tag
@@ -130,22 +131,9 @@ function _AST.visit (F)
     return visit_aux(_AST.root, F)
 end
 
-local TOP = {}
-
 local C; C = {
     [1] = function (ln, spc, ...) -- spc=CK''
-        local blk = node('Block')(ln)
-        blk[#blk+1] = node('Dcl_var')(ln, false, 'int',  false, '$ret')
-        for i=1, FIN do
-            blk[#blk+1] = node('Dcl_var')(ln,true,'void',false,'$fin_'..i)
-        end
-        blk[#blk+1] = node('SetBlock')(ln,
-                        node('Var')(ln,'$ret'),
-                        node('BlockN')(ln,...))--unpack(stmts)))
-
-        --table.sort(TOP, function(n1,n2) return (n1.tag=='Dcl_cls') end)
-        TOP[#TOP+1] = node('Dcl_cls')(ln,'_Root',blk)
-
+        C.Dcl_cls(ln, 'Main', node('BlockN')(ln), node('Block')(ln,...))
         _AST.root = node('Root')(ln, unpack(TOP))
         return _AST.root
     end,
@@ -160,13 +148,107 @@ local C; C = {
         TOP[#TOP+1] = node('Dcl_type')(...)
     end,
 
-    Dcl_cls = function (ln, id, blk)
-        TOP[#TOP+1] = node('Dcl_cls')(ln,id,blk)
+    Dcl_cls = function (ln, id, defs, blk)
+        if id == 'Main' then
+            blk = node('Block')(ln,
+                    node('Dcl_var')(ln, false, 'int', false, '$ret'),
+                    defs,
+                    node('SetBlock')(ln,
+                        node('Var')(ln,'$ret'),
+                        blk))
+        else
+            blk = node('Block')(ln,
+                    node('Dcl_var')(ln, true, 'void', false, '$go_start'),
+                    node('Dcl_var')(ln, true, 'void', false, '$go_kill'),
+                    node('Dcl_var')(ln, true, 'void', false, '$ok_return'),
+                    defs,
+                    node('Loop')(ln,
+                        node('BlockN')(ln,
+                            node('AwaitInt')(ln, node('Var')(ln,'$go_start')),
+                            node('ParOr')(ln,
+                                node('BlockN')(ln,
+                                    blk,
+                                    node('EmitInt')(ln,
+                                        node('Var')(ln,'$ok_return'))),
+                                node('AwaitInt')(ln, node('Var')(ln,'$go_kill'))))))
+        end
+
+        for i=1, FIN do
+            defs[#defs+1] = node('Dcl_var')(ln,true,'void',false,'$fin_'..i)
+        end
+
+        local cls = node('Dcl_cls')(ln,id,blk)
+        cls.n_fins = FIN
+        FIN = 0
+        TOP[#TOP+1] = cls
     end,
-    Exec = node('Exec'),
+    --[[
+    class T do
+        <blk>
+    end
+    // becomes //
+    class T
+        event void $go_start;
+        event void $go_kill;
+        event void $ok_return;
+        <defs>
+    do
+        loop do
+            await $go_start;
+            par/or do
+                <blk>
+                emit $ok_return;
+            with
+                await $go_kill;
+            end
+        end
+    end
+    ]]
+
+    This  = node('This'),
+
+    _Spawn = function (ln, exp)
+        error 'oi'
+    end,
+
+    _Exec = function (ln, exp)
+        return C._Do(ln,
+                node('BlockN')(ln,
+                    node('ParOr')(ln,
+                        node('BlockN')(ln,
+                            node('EmitInt')(ln,
+                                node('Op2_.')(ln, '.',
+                                    _AST.copy(exp),
+                                    '$go_start')),
+                            node('AwaitN')(ln)),
+                        node('AwaitInt')(ln,
+                            node('Op2_.')(ln, '.',
+                                _AST.copy(exp),
+                                '$ok_return'))),
+                node('BlockN')(ln,
+                    node('EmitInt')(ln,
+                        node('Op2_.')(ln, '.',
+                            _AST.copy(exp),
+                            '$go_kill')))))
+    end,
+    --[[
+    exec <exp>;
+    // becomes //
+    do
+        par/or do
+            emit <exp>.$go_start;
+            await FOREVER;
+        with
+            await <exp>.$ok_return;
+        end
+    finally
+        emit <exp>.$go_kill;
+    end
+    ]]
 
     Block   = node('Block'),
     BlockN  = node('BlockN'),
+    _BlockD = node('BlockN'),
     Host    = node('Host'),
 
     _Return = node('_Return'),
@@ -242,10 +324,9 @@ local C; C = {
         local i = function() return node('Var')(ln, _i) end
         local dcl_i = node('Dcl_var')(ln, false, 'int', false, _i)
         dcl_i.read_only = true
-        local set_i = node('SetExp')(ln, i(), node('CONST')(ln, '0'))
+        local set_i = node('SetExp')(ln, i(), node('CONST')(ln,'0'))
         local nxt_i = node('SetExp')(ln, i(),
-                        node('Op2_+')(ln, '+', i(),
-                            node('CONST')(ln,'1')))
+                        node('Op2_+')(ln, '+', i(), node('CONST')(ln,'1')))
 
         if not _j then
             return node('Block')(ln, dcl_i, set_i,
@@ -270,63 +351,45 @@ local C; C = {
                 loop)
     end,
 
-    Pause = node('Pause'),
-
---[=[
     Pause = function (ln, evt, blk)
-        local idLess = tostring(evt)
-        local awtLess = evt.tag=='Ext' and node('AwaitExt')(ln,evt)
-                                       or node('AwaitInt')(ln,evt)
-        local pseLess = node('Pause')(ln)
-        pseLess.blk = blk
-        pseLess.more = false
-
-        local loopLess =
-            node('Loop')(ln,
-                node('Block')(ln,
-                    node('Dcl_var')(ln, false,'int',false,'$pse_'..idLess),
-                    C._Set(ln, node('Var')(ln,'$pse_'..idLess), 'SetAwait', awtLess),
-                    node('If')(ln, node('Var')(ln,'$pse_'..idLess),
-                        pseLess,
-                        node('Break')(ln))))
-
-        local idMore = tostring(blk)
-        local awtMore = evt.tag=='Ext' and node('AwaitExt')(ln,evt)
-                                       or node('AwaitInt')(ln,evt)
-        local pseMore = node('Pause')(ln)
-        pseMore.blk = blk
-        pseMore.more = true
-
-        local loopMore =
-            node('Loop')(ln,
-                node('Block')(ln,
-                    node('Dcl_var')(ln, false,'int',false,'$pse_'..idMore),
-                    C._Set(ln, node('Var')(ln,'$pse_'..idMore), 'SetAwait', awtMore),
-                    node('If')(ln, node('Var')(ln,'$pse_'..idMore),
-                        pseMore,
-                        loopLess)))
-
-        return node('ParOr')(ln, blk, loopMore)
---[[
+        local id = '$pse_'..tostring(evt)
+        local var = node('Var')(ln,id)
+        local pse1 = node('Pause')(ln, '1')
+        local pse2 = node('Pause')(ln, '-1')
+        pse1.blk = blk
+        pse1.evt = evt
+        pse2.blk = blk
+        pse2.evt = evt
+        return
+            node('ParOr')(ln, blk,
+                node('BlockN')(ln,
+                    node('Dcl_var')(ln, false, 'int', false, id),
+                    node('SetExp')(ln, var, node('CONST')(ln,'0')),
+                    node('Loop')(ln,
+                        node('BlockN')(ln,
+                            node('AwaitInt')(ln, evt),
+                            node('If')(ln, node('Op2_!=')(ln,'!=',var,evt),
+                                node('BlockN')(ln,
+                                    node('SetExp')(ln, var, evt),
+                                    node('If')(ln, evt, pse1, pse2)))))))
+    end,
+--[=[
         par/or do
             <blk>
         with
+            int $pse = 0;
             loop do
-                int v = await <evt>;
-                if v then
-                    <OFF-->
-                    loop do
-                        v = await <evt>
-                        if !v then
-                            <OFF++>
-                            break;
-                        end
+                await <evt>;
+                if $pse != <evt> then
+                    $pse = <evt>;
+                    if evt then
+                        <PSE++>;
+                    else
+                        <PSE-->;
                     end
                 end
             end
         end
-]]
-    end,
 ]=]
 
     AwaitExt = node('AwaitExt'),
@@ -339,6 +402,7 @@ local C; C = {
     EmitT    = node('EmitT'),
     EmitInt  = node('EmitInt'),
 
+    _Dcl_var_no = function(...) return C._Dcl_var(...) end,
     _Dcl_var = function (ln, isEvt, tp, dim, ...)
         local ret = {}
         local t = { ... }
@@ -354,6 +418,7 @@ local C; C = {
         return unpack(ret)
     end,
 
+    _Dcl_int_no = function(...) return C._Dcl_int(...) end,
     _Dcl_int = function (ln, isEvt, tp, dim, ...)
         local ret = {}
         local t = { ... }
@@ -387,8 +452,7 @@ local C; C = {
             -- v1=e1, v2=op, v3=e2, v4=?
             if v2 == '->' then
                 return C._Exp(ln,
-                    node('Op2_.')(ln, '.',
-                                    node('Op1_*')(ln,'*',v1), v3),
+                    node('Op2_.')(ln, '.', node('Op1_*')(ln,'*',v1), v3),
                     select(4,...)
                 )
             else
@@ -429,24 +493,8 @@ _GG = m.P(_GG):match(_STR)
 
 -------------------------------------------------------------------------------
 
-function PSE_cndor (me)
-    local cnd
-    for pse in _AST.iter('Pause') do
-        local int = unpack(pse)
-        int = node('Var')(me.ln,int[1])
-        cnd = cnd and node('Op2_||')(me.ln, '||', cnd, int)
-            or int
-    end
-    return cnd
-end
-
-function PSE_paror (me)
-    local par = node('ParOr')(me.ln)
-    for pse in _AST.iter('Pause') do
-        local int = unpack(pse)
-        par[#par+1] = node('AwaitInt')(me.ln, node('Var')(me.ln,int[1]))
-    end
-    return par
+function CLS ()
+    return _AST.iter'Dcl_cls'()
 end
 
 F = {
@@ -484,117 +532,10 @@ F = {
         awt.ret = awt.ret or awt
     end,
 
-    AwaitExt = 'AwaitInt',
-    AwaitInt = function (me)
-        if not _AST.iter('Pause')() or
-           string.find(me[1][1], '$fin_') then
-            return
-        end
-        local cnd = PSE_cndor(me)
-        cnd = node('Op1_!')(me.ln, '!', cnd)
-        local n = node('Loop')(me.ln,
-                    node('BlockN')(me.ln,
-                        me,
-                        node('If')(me.ln, cnd, node('Break')(me.ln))))
-        n.ret = me
-        return n
---[[
-    loop do
-        await X;
-        if ! (evt1 || .. || evtN) then
-            break;
-        end
-    end
-]]
-    end,
-
-    AwaitT = function (me)
-        if not _AST.iter('Pause')() then
-            return me
-        end
-        local ln = me.ln
-
-        local DT = unpack(me)
-        me[1] = node('WCLOCKE')(ln, node('Var')(ln,'$dt'), 'us')
-
-        local REM = node('WCLOCKR')(ln)
-        REM.awt = me
-
-        local L1 = node('Loop')(ln,
-                    node('BlockN')(ln,
-                        PSE_paror(me),
-                        node('If')(ln, PSE_cndor(me),
-                            node('BlockN')(ln,
-                                node('SetExp')(ln,
-                                    node('Var')(ln,'$dt'),
-                                    REM),
-                                node('Break')(ln)))))
-
-        local L2 = node('Loop')(ln,
-                    node('BlockN')(ln,
-                        PSE_paror(me),
-                        node('If')(ln,
-                            node('Op1_!')(ln,'!',PSE_cndor(me)),
-                            node('Break')(ln))))
-
-        local L0 = node('Loop')(ln,
-                    node('BlockN')(ln,
-                        node('ParOr')(ln,
-                            node('BlockN')(ln, me, node('Break')(ln)),
-                            L1),
-                        L2))
-
-        local blk = node('Block')(ln,
-                        node('Dcl_var')(ln, false, 'u32',  false, '$dt'),
-                        node('SetExp')(ln,
-                            node('Var')(ln,'$dt'),
-                            DT),
-                        L0)
-        blk.par = _AST.iter('Block')()
-        blk.ret = me
-        return blk
---[[
-    u32 $dt = e1;
-
-    -- LOOP 0
-    loop do
-        par/or do
-            await ($dt);
-            break;
-        with
-            -- LOOP 1
-            loop do
-                par/or do
-                    await pse1;
-                with
-                    await pseN;
-                end
-                if pse1 || pseN then
-                    $dt = TMR.togo;
-                    break;
-                end
-            end
-        end
-
-        -- LOOP 2
-        loop do
-            par/or do
-                await pse1;
-            with
-                await pseN;
-            end
-            if !(pse1 || pseN) then
-                break;
-            end
-        end
-    end
-]]
-    end,
-
     -- Finalizer
     ParOr = function (me)
         for i, sub in ipairs(me) do
-            for i=1, FIN do
+            for i=1, CLS().n_fins do
                 sub[#sub+1] = node('EmitInt')(sub.ln,
                                 node('Var')(sub.ln, '$fin_'..i))
             end
@@ -602,7 +543,7 @@ F = {
     end,
     Break = function (me)
         local blk = node('BlockN')(me.ln)
-        for i=1, FIN do
+        for i=1, CLS().n_fins do
             blk[#blk+1] = node('EmitInt')(blk.ln,
                             node('Var')(blk.ln, '$fin_'..i))
         end

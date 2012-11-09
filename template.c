@@ -20,6 +20,12 @@
 #define CEU_NTRACKS    (=== CEU_NTRACKS ===)
 #define CEU_NLSTS      (=== CEU_NLSTS ===)
 
+#ifdef CEU_FINS
+#ifdef CEU_PSES
+#define CEU_NLBLS      (=== CEU_NLBLS ===)
+#endif
+#endif
+
 // Macros that can be defined:
 // ceu_out_pending() (1)
 // ceu_out_wclock(us)
@@ -40,10 +46,13 @@ typedef struct {
 
 // TODO: union
 typedef struct {
-    tceu_nevt evt;
     void*     src;
     void*     org;
+    tceu_nevt evt;
     tceu_nlbl lbl;
+#ifdef CEU_PSES
+    u8        pse;
+#endif
     s32 togo;
 } tceu_lst;
 
@@ -73,6 +82,12 @@ typedef struct {
     s32         wclk_min;
 #endif
 
+#ifdef CEU_FINS
+#ifdef CEU_PSES
+    u8          lbl2fin[CEU_NLBLS];
+#endif
+#endif
+
     tceu_nlst   lsts_n;
     tceu_lst    lsts[CEU_NLSTS];
 
@@ -86,6 +101,11 @@ tceu CEU = {
 #endif
 #ifdef CEU_WCLOCKS
     0, CEU_WCLOCK_NONE,
+#endif
+#ifdef CEU_FINS
+#ifdef CEU_PSES
+    { === LBL2FIN === },
+#endif
 #endif
     0, {},
     {}
@@ -169,25 +189,11 @@ int ceu_track_rem (tceu_trk* trk, tceu_ntrk N)
 #endif
 }
 
-// TODO: only if escape contains an execute
-int ceu_XXX (void* cur, void* org, tceu_nlbl l1, tceu_nlbl l2) {
-    void* par = *PTR(void**,cur);
-    if (cur == CEU.mem) {
-        return 0;                   // root org, no parent
-    } else if (par == org) {
-        tceu_nlbl lbl = *PTR(tceu_nlbl*,(cur+sizeof(void*)));
-        return lbl>=l1 && lbl<=l2;
-    } else {
-        return ceu_XXX(par, org, l1, l2);
-    }
-}
-
 void ceu_track_clr (void* org, tceu_nlbl l1, tceu_nlbl l2) {
     tceu_ntrk i;
     for (i=1; i<=CEU.tracks_n; i++) {
         tceu_trk* trk = &CEU.tracks[i];
-        if ( trk->org==org && trk->lbl>=l1 && trk->lbl<=l2
-        ||   trk->org!=org && ceu_XXX(trk->org,org,l1,l2) ) {
+        if (trk->org==org && trk->lbl>=l1 && trk->lbl<=l2) {
             ceu_track_rem(NULL,i);
             i--;
         }
@@ -197,11 +203,15 @@ void ceu_track_clr (void* org, tceu_nlbl l1, tceu_nlbl l2) {
 /**********************************************************************/
 
 void ceu_lst_ins (tceu_nevt evt, void* src, void* org, tceu_nlbl lbl, s32 togo) {
-    CEU.lsts[CEU.lsts_n].evt = evt;
-    CEU.lsts[CEU.lsts_n].src = src;
-    CEU.lsts[CEU.lsts_n].org = org;
-    CEU.lsts[CEU.lsts_n].lbl = lbl;
-    CEU.lsts[CEU.lsts_n].togo = togo;
+    tceu_lst* lst = &CEU.lsts[CEU.lsts_n];
+    lst->src = src;
+    lst->org = org;
+    lst->evt = evt;
+    lst->lbl = lbl;
+#ifdef CEU_PSES
+    lst->pse = 0;
+#endif
+    lst->togo = togo;
     CEU.lsts_n++;
     assert(CEU.lsts_n <= CEU_NLSTS);        // TODO: remove
 }
@@ -210,16 +220,37 @@ void ceu_lst_clr (void* org, tceu_nlbl l1, tceu_nlbl l2) {
     tceu_nlst i;
     for (i=0 ; i<CEU.lsts_n ; i++) {
         tceu_lst* lst = &CEU.lsts[i];
-        if ( lst->org==org && lst->lbl>=l1 && lst->lbl<=l2
-        ||   ceu_XXX(lst->org,org,l1,l2) ) {
+        if (lst->org==org && lst->lbl>=l1 && lst->lbl<=l2) {
             CEU.lsts_n--;
             if (i < CEU.lsts_n) {
-                CEU.lsts[i] = CEU.lsts[CEU.lsts_n];
+                *lst = CEU.lsts[CEU.lsts_n];
                 i--;
             }
         }
     }
 }
+
+#ifdef CEU_PSES
+void ceu_lst_pse (void* org, tceu_nlbl l1, tceu_nlbl l2, int inc) {
+    tceu_nlst i;
+    for (i=0 ; i<CEU.lsts_n ; i++) {
+        tceu_lst* lst = &CEU.lsts[i];
+#ifdef CEU_FINS
+        if (!CEU.lbl2fin[lst->lbl])
+#endif
+        if (lst->lbl && lst->org==org && lst->lbl>=l1 && lst->lbl<=l2) {
+            lst->pse += inc;
+#ifdef CEU_WCLOCKS
+            if (lst->pse==0 && lst->evt==IN__WCLOCK) {
+                if ( CEU.wclk_min==CEU_WCLOCK_NONE
+                  || CEU.wclk_min>lst->togo )
+                    CEU.wclk_min = lst->togo;
+            }
+#endif
+        }
+    }
+}
+#endif
 
 void ceu_lst_go (tceu_nevt evt, void* src)
 {
@@ -227,12 +258,18 @@ void ceu_lst_go (tceu_nevt evt, void* src)
     for (i=0 ; i<CEU.lsts_n ; i++) {
         tceu_lst* lst = &CEU.lsts[i];
         if (lst->evt==evt && lst->src==src) {
-            ceu_track_ins(0, PR_MAX, lst->org, lst->lbl);
-            (CEU.lsts_n)--;
-            if (i < CEU.lsts_n) {
-                *lst = CEU.lsts[CEU.lsts_n];
-                i--;
+#ifdef CEU_PSES
+            if (lst->pse == 0) {
+#endif
+                ceu_track_ins(0, PR_MAX, lst->org, lst->lbl);
+                (CEU.lsts_n)--;
+                if (i < CEU.lsts_n) {
+                    *lst = CEU.lsts[CEU.lsts_n];
+                    i--;
+                }
+#ifdef CEU_PSES
             }
+#endif
         }
     }
 }
@@ -284,7 +321,7 @@ s32 ceu_wclock_find (void* org, tceu_nlbl lbl) {
 
 int ceu_go_init (int* ret)
 {
-    ceu_track_ins(0, PR_MAX, CEU.mem, Class__Root);
+    ceu_track_ins(0, PR_MAX, CEU.mem, Class_Main);
     return ceu_go(ret);
 }
 
@@ -352,21 +389,39 @@ int ceu_go_wclock (int* ret, s32 dt, s32* nxt)
 
     for (i=0; i<CEU.lsts_n; i++)
     {
-        if (CEU.lsts[i].evt != IN__WCLOCK)
+        tceu_lst* lst = &CEU.lsts[i];
+
+        if (lst->evt != IN__WCLOCK)
             continue;
 
-        if (CEU.lsts[i].togo == min_togo) {
-            ceu_track_ins(0, PR_MAX, CEU.lsts[i].org, CEU.lsts[i].lbl);
+// TODO: teste para dar erro aqui
+/*
+#ifdef CEU_PSES
+        if (lst->pse > 0) {
+            if ( CEU.wclk_min==CEU_WCLOCK_NONE
+              || CEU.wclk_min>lst->togo )
+                CEU.wclk_min = lst->togo;
+            continue;
+        }
+#endif
+*/
+#ifdef CEU_PSES
+        if (lst->pse > 0)
+            continue;
+#endif
+
+        if (lst->togo == min_togo) {
+            ceu_track_ins(0, PR_MAX, lst->org, lst->lbl);
             CEU.lsts_n--;
             if (i < CEU.lsts_n) {
-                CEU.lsts[i] = CEU.lsts[CEU.lsts_n];
+                *lst = CEU.lsts[CEU.lsts_n];
                 i--;
             }
         } else {
-            CEU.lsts[i].togo -= dt;
+            lst->togo -= dt;
             if ( CEU.wclk_min==CEU_WCLOCK_NONE
-              || CEU.wclk_min>CEU.lsts[i].togo )
-                CEU.wclk_min = CEU.lsts[i].togo;
+              || CEU.wclk_min>lst->togo )
+                CEU.wclk_min = lst->togo;
         }
     }
 

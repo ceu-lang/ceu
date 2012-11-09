@@ -80,7 +80,9 @@ local EM = function (msg)
         end)
 end
 
-TYPES = P'void' + 'int' + 'u8' + 'u16' + 'u32' + 's8' + 's16' + 's32'
+TYPES = P'void' + 'int'
+      + 'u8' + 'u16' + 'u32' + 'u64'
+      + 's8' + 's16' + 's32' + 's64'
 
 KEYS = P'async'  + 'await'   + 'break'   + 'C'
      + 'do'      + 'emit'    + 'else'    + 'else/if'   + 'end'  + 'event'
@@ -90,7 +92,8 @@ KEYS = P'async'  + 'await'   + 'break'   + 'C'
      + TYPES
      + 'pause/if'
      + 'class'
-     + 'exec'
+     + 'exec' + 'spawn'
+     + 'this'
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
@@ -112,13 +115,15 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
                )^-1
     , Block  = V'_Block'
     , BlockN = V'_Block'
+    , _BlockD = ( (V'_Dcl_int_no'+V'_Dcl_var_no') * (EK';'*K';'^0) )^0
 
     , _Stmt = V'AwaitT'   + V'AwaitExt'  + V'AwaitInt'
             + V'EmitT'    + V'EmitExtS'  + V'EmitInt'
-            + V'_Dcl_ext' + V'_Dcl_int'  + V'_Dcl_var'
+            + V'_Dcl_ext'
+            + V'_Dcl_int' + V'_Dcl_var'
             + V'Dcl_type'
             + V'_Set'     + V'CallStmt' -- must be after Set
-            + V'Exec'
+            + V'_Exec'    + V'_Spawn'
             + EM'statement (missing `_´?)'
 
     , _StmtB = V'_Do'   + V'Async'  + V'Host'
@@ -153,9 +158,7 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
                     (K'finally'*V'BlockN' + Cc(false)) *
                 EK'end'
 
-    , Async   = K'async' * V'VarList' * EK'do' *
-                    V'Block' *
-                EK'end'
+    , Async   = K'async' * V'VarList' * V'_Do'
     , VarList = ( EK'(' * EV'Var' * (EK',' * EV'Var')^0 * EK')' )^-1
 
     , _Return = K'return' * EV'_Exp'
@@ -181,9 +184,7 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
     , Loop    = K'loop' *
                     (V'ID_var'* (EK','*EV'_Exp' + Cc(false)) +
                         Cc(false)*Cc(false)) *
-                EK'do' *
-                    V'Block' *
-                EK'end'
+                V'_Do'
     , Break   = K'break'
 
     , _Exp    = V'_1'
@@ -211,6 +212,7 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
     , _Prim   = V'_Parens' + V'Var'   + V'C'   + V'SIZEOF'
               + V'NULL'    + V'CONST' + V'STRING'
               + V'EmitExtE'
+              + V'This'
 
     , ExpList = ( V'_Exp'*(K','*EV'_Exp')^0 )^-1
 
@@ -234,7 +236,7 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
                   + EM'<h,min,s,ms,us>'
               )
 
-    , Pause    = K'pause/if' * EV'Var' * EK'do' * V'Block' * EK'end'
+    , Pause    = K'pause/if' * EV'Var' * V'_Do'
 
     , AwaitExt = K'await' * EV'Ext'
     , AwaitInt = K'await' * EV'_Exp'
@@ -260,10 +262,18 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
                     V'__Dcl_var' * (K','*V'__Dcl_var')^0
     , __Dcl_var = EV'ID_var' * (V'_Sets' + Cc(false)*Cc(false))
 
-    , Dcl_cls   = K'class' * EV'ID_cls' *S* EK'do' *
-                    V'Block' *
-                  EK'end'
-    , Exec      = K'exec' *S* EV'_Exp'
+    , _Dcl_int_no  = CK'event' * EV'ID_type' * Cc(false) *
+                       EV'__Dcl_int_no' * (K','*V'__Dcl_int')^0
+    , __Dcl_int_no = EV'ID_int' * (Cc(false)*Cc(false))
+
+    , _Dcl_var_no  = Cc(false) * V'ID_type' * (K'['*NUM*K']'+Cc(false)) *
+                       V'__Dcl_var_no' * (K','*V'__Dcl_var')^0
+    , __Dcl_var_no = EV'ID_var' * (Cc(false)*Cc(false))
+
+    , Dcl_cls = K'class' * EV'ID_cls' * EK'with' * V'_BlockD' * V'_Do'
+    , _Exec   = K'exec'  * EV'_Exp'
+    , _Spawn  = K'spawn' * EV'_Exp'
+    , This    = K'this'
 
     , Ext      = V'ID_ext'
     , Var      = V'ID_var'

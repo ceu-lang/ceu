@@ -141,9 +141,10 @@ do
         return string.sub(str, 1, i-1) .. to .. string.sub(str, e+1)
     end
 
-    tpl = sub(tpl, '=== CEU_NMEM ===',     _ROOT.mem.max)
+    tpl = sub(tpl, '=== CEU_NMEM ===',     _MAIN.mem.max)
     tpl = sub(tpl, '=== CEU_NTRACKS ===',  _AST.root.ns.tracks)
     tpl = sub(tpl, '=== CEU_NLSTS ===',    _AST.root.ns.awaits)
+    tpl = sub(tpl, '=== CEU_NLBLS ===',    #_LBLS.list)
 
     tpl = sub(tpl, '=== TCEU_NTRK ===',  tps[_ENV.types.tceu_ntrk])
     tpl = sub(tpl, '=== TCEU_NLST ===',  tps[_ENV.types.tceu_nlst])
@@ -154,61 +155,73 @@ do
     tpl = sub(tpl, '=== HOST ===',   _CODE.host)
     tpl = sub(tpl, '=== CODE ===',   _AST.root.code)
 
-    -- DEFINITIONS: constants & defines
-    do
-        -- EVENTS
-        local str = ''
+    -- LBL2FIN
+    if _PROPS.has_pses and _PROPS.has_fins then
         local t = {}
-        local outs = 0
-        for _, evt in ipairs(_ENV.evts) do
-            if evt.input then
-                str = str..'#define IN_'..evt.id..' '..evt.n..'\n'
-            elseif evt.output then
-                str = str..'#define OUT_'..evt.id..' '..outs..'\n'
-                outs = outs + 1
-            end
+        for _, lbl in ipairs(_LBLS.list) do
+            t[#t+1] = (string.find(lbl.id,'__fin') and 1) or 0
         end
-        str = str..'#define OUT_n '..outs..'\n'
+        tpl = sub(tpl, '=== LBL2FIN ===', table.concat(t,','))
+    end
 
-        -- FUNCTIONS called
-        for id in pairs(_ENV.calls) do
-            if id ~= '$anon' then
-                str = str..'#define FUNC'..id..'\n'
-            end
+    -- EVENTS
+    local str = ''
+    local t = {}
+    local outs = 0
+    for _, evt in ipairs(_ENV.evts) do
+        if evt.input then
+            str = str..'#define IN_'..evt.id..' '..evt.n..'\n'
+        elseif evt.output then
+            str = str..'#define OUT_'..evt.id..' '..outs..'\n'
+            outs = outs + 1
         end
+    end
+    str = str..'#define OUT_n '..outs..'\n'
 
-        -- DEFINES
-        if _PROPS.has_exts then
-            str = str .. '#define CEU_EXTS\n'
+    -- FUNCTIONS called
+    for id in pairs(_ENV.calls) do
+        if id ~= '$anon' then
+            str = str..'#define FUNC'..id..'\n'
         end
-        if _PROPS.has_wclocks then
-            str = str .. '#define CEU_WCLOCKS\n'
-        end
-        if _PROPS.has_asyncs then
-            str = str .. '#define CEU_ASYNCS\n'
-        end
-        if _PROPS.has_emits then
-            str = str .. '#define CEU_EMITS\n'
-        end
+    end
 
-        str = str .. '#define CEU_TRK_PRIO\n'
-        str = str .. '#define CEU_TRK_CHK\n'
+    -- DEFINES
+    if _PROPS.has_exts then
+        str = str .. '#define CEU_EXTS\n'
+    end
+    if _PROPS.has_wclocks then
+        str = str .. '#define CEU_WCLOCKS\n'
+    end
+    if _PROPS.has_asyncs then
+        str = str .. '#define CEU_ASYNCS\n'
+    end
+    if _PROPS.has_emits then
+        str = str .. '#define CEU_EMITS\n'
+    end
+    if _PROPS.has_pses then
+        str = str .. '#define CEU_PSES\n'
+    end
+    if _PROPS.has_fins then
+        str = str .. '#define CEU_FINS\n'
+    end
 
-        if _OPTS.defs_file then
-            local f = io.open(_OPTS.defs_file,'w')
-            f:write(str)
-            f:close()
-            tpl = sub(tpl, '=== DEFS ===',
-                           '#include "'.. _OPTS.defs_file ..'"')
-        else
-            tpl = sub(tpl, '=== DEFS ===', str)
-        end
+    str = str .. '#define CEU_TRK_PRIO\n'
+    str = str .. '#define CEU_TRK_CHK\n'
+
+    if _OPTS.defs_file then
+        local f = io.open(_OPTS.defs_file,'w')
+        f:write(str)
+        f:close()
+        tpl = sub(tpl, '=== DEFS ===',
+                       '#include "'.. _OPTS.defs_file ..'"')
+    else
+        tpl = sub(tpl, '=== DEFS ===', str)
     end
 end
 
 if _OPTS.verbose or true then
     local T = {
-        mem  = _ROOT.mem.max,
+        mem  = _MAIN.mem.max,
         trks = _AST.root.ns.tracks,
         lsts = _AST.root.ns.awaits,
         evts = #_ENV.evts,

@@ -74,31 +74,18 @@ F = {
 
         CONC_ALL(me)
 
-        if me == _ROOT then
-            local ret = me.blk.vars[1]    -- $ret
+        if me == _MAIN then
+            local ret = _ENV.getvar('$ret', me.blk)
             LINE(me, 'if (ret) *ret = '..ret.val..';')
             LINE(me, 'return 1;')
             HALT(me)
-        else
-            LINE(me, [[
-_trk_.lbl = *PTR_org(tceu_nlbl*,]]..me.mem.back..[[); // par cnt
-_trk_.org = *PTR_org(void**,]]..me.mem.par.. [[);     // par org
-goto _SWITCH_;
-]])
         end
     end,
 
-    Exec = function (me)
-        local cls = CLS()
-        local e1 = unpack(me)
-        LINE(me, [[{
-void* par = _trk_.org;
-_trk_.org = ]]..e1.val..[[;                                     // new org
-*PTR_org(void**,]]..cls.mem.par.. [[) = par;                    // par org
-*PTR_org(tceu_nlbl*,]]..cls.mem.back..[[) = ]]..me.lbl.id..[[;  // par cnt
-}]])
-        SWITCH(me, me.cls.lbl)
-        CASE(me, me.lbl)
+    Dcl_var = function (me)
+        if me.var.cls then
+            LINE(me, 'ceu_track_ins(0,PR_MAX,'..me.var.val..','..me.var.cls.lbl.id..');')
+        end
     end,
 
     Host = function (me)
@@ -310,7 +297,7 @@ break;
 
         CASE(me, me.lbl_awk)
         local org = (int.org and int.org.val) or '_trk_.org'
-        LINE(me, 'ceu_lst_go('..var.n..','..org..'); //oioioi')
+        LINE(me, 'ceu_lst_go('..var.n..','..org..');')
         HALT(me)
         CASE(me, me.lbl_cnt)
     end,
@@ -340,8 +327,9 @@ return 0;
     end,
 
     Pause = function (me)
-        local exp, blk = unpack(me)
-        CONC(me,blk)
+        local inc = unpack(me)
+        LINE(me, 'ceu_lst_pse(_trk_.org, '
+                    ..me.blk.lbls[1]..','..me.blk.lbls[2]..','..inc..');')
     end,
 
     AwaitN = function (me)

@@ -34,10 +34,6 @@ _ENV = {
     },
 }
 
-function CLS ()
-    return _AST.iter'Dcl_cls'()
-end
-
 function newvar (me, blk, isEvt, tp, dim, id)
     for stmt in _AST.iter() do
         if stmt.tag == 'Async' then
@@ -87,6 +83,18 @@ function newvar (me, blk, isEvt, tp, dim, id)
     return var
 end
 
+function _ENV.getvar (id, blk)
+    while blk do
+        for i=#blk.vars, 1, -1 do   -- n..1 (hidden vars)
+            local var = blk.vars[i]
+            if var.id == id then
+                return var
+            end
+        end
+        blk = blk.par
+    end
+end
+
 F = {
     Root = function (me)
         -- enum of events
@@ -119,23 +127,10 @@ F = {
         _ENV.clss[#_ENV.clss+1] = me
     end,
 
-    Exec = function (me)
-        local exp = unpack(me)
-
-        if exp.var and exp.var.arr and _ENV.clss[_TP.deref(exp.tp)] then
-            local t = {}
-            for i=0, exp.var.arr-1 do
-                t[#t+1] = _AST.node('Exec')(me.ln,
-                            _AST.node('Op2_idx')(me.ln, 'idx', exp, _AST.node('CONST')(me.ln, i)))
-            end
-            local par = _AST.node('ParAnd')(me.ln,unpack(t))
-            par.depth = me.depth
-            return _AST.visit_aux(par, F)
-        end
-
-        me.cls = _ENV.clss[exp.tp]
-        ASR(me.cls, me,
-                'cannot execute a `'..exp.tp..'´ expression')
+    This = function (me)
+        me.tp   = CLS().id
+        me.lval = false
+        ASR(me.tp~='Main', me, 'invalid `this´')
     end,
 
     Dcl_ext = function (me)
@@ -171,19 +166,11 @@ F = {
     Var = function (me)
         local id = unpack(me)
         local blk = me.blk or _AST.iter('Block')()
-        while blk do
-            for i=#blk.vars, 1, -1 do   -- n..1 (hidden vars)
-                local var = blk.vars[i]
-                if var.id == id then
-                    me.var  = var
-                    me.tp   = var.tp
-                    me.lval = (not var.arr) and (not var.cls)
-                    return
-                end
-            end
-            blk = blk.par
-        end
-        ASR(false, me, 'variable/event "'..id..'" is not declared')
+        local var = _ENV.getvar(id, blk)
+        ASR(var, me, 'variable/event "'..id..'" is not declared')
+        me.var  = var
+        me.tp   = var.tp
+        me.lval = (not var.arr) and (not var.cls)
     end,
 
     Dcl_type = function (me)
@@ -193,12 +180,6 @@ F = {
 
     Dcl_pure = function (me)
         _ENV.pures[me[1]] = true
-    end,
-
-    Pause = function (me)
-        local exp, _ = unpack(me)
-        ASR(exp.var.isEvt, me, 'event "'..exp.var.id..'" is not declared')
-        ASR(_TP.isNumeric(exp.var.tp), me, 'event type must be numeric')
     end,
 
     AwaitInt = function (me)
@@ -398,4 +379,4 @@ F = {
 }
 
 _AST.visit(F)
-_ROOT = _ENV.clss._Root
+_MAIN = _ENV.clss.Main
