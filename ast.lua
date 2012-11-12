@@ -276,7 +276,7 @@ local C; C = {
         fin.n = FIN
 
         local evt = '$fin_'..FIN
-        local awt = node('AwaitInt')(ln, node('Var')(ln, evt))
+        local awt = node('AwaitInt')(ln, node('Var')(ln, evt), true)
         b1[#b1+1] = node('EmitInt')(ln, node('Var')(ln, evt))
 
         return node('Block')(ln,

@@ -63,15 +63,10 @@ Test = function (t)
     -- RUN
 
     if T.run == false then
-        --assert(T.ana.nd_acc>0)
         return
     end
-
     if T.run == nil then
-        assert(T.tight or
-               T.ana and (T.ana.isForever or T.ana.nd_acc),
-                -- or T.ana.nd_flw or T.ana.nd_esc,
-                'missing run value')
+        assert(T.tight or T.ana, 'missing run value')
         return
     end
 

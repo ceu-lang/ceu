@@ -1,84 +1,4 @@
 --[===[
---]===]
-
---[=[
--- TODO: all with tight loops
-Test { [[
-event void e, f;
-par do
-    loop do
-        par/or do
-            await f;
-        with
-            emit e;
-            await FOREVER;
-        end
-    end
-with
-    loop do
-        par/or do
-            emit f;
-        with
-            await f;
-        end
-        await e;
-    end
-end
-]],
-    run = 0
-}
-
-Test { [[
-event void e, f;
-par do
-    loop do
-        par/or do
-            emit e;
-            await FOREVER;
-        with
-            await f;
-        end
-    end
-with
-    loop do
-        await e;
-        par/or do
-            emit f;
-        with
-            await f;
-        end
-    end
-end
-]],
-    run = 0
-}
-
-Test { [[
-event void e, k1, k2;
-par do
-    loop do
-        par/or do
-            emit e;
-            await FOREVER;
-        with
-            await k1;
-        end
-        emit k2;
-    end
-with
-    loop do
-        await e;
-        par/or do
-            emit k1;
-        with
-            await k2;
-        end
-    end
-end
-]],
-    run = 0
-}
-]=]
 
     -- CLASSES / ORGS
 
@@ -284,13 +204,6 @@ exec a;
 }
 
 Test { [[
-int a;
-spawn a;
-]],
-    env = 'ERR : line 2 : cannot spawn a `int´',
-}
-
-Test { [[
 int v;
 class T with
     int v;
@@ -339,22 +252,6 @@ return v;
 }
 
 Test { [[
-int v;
-class T with
-    int v;
-do
-    v = 5;
-end
-T a;
-spawn a;
-v = a.v;
-a.v = 4;
-return a.v + v;
-]],
-    run = 9,
-}
-
-Test { [[
 class T with
     int v;
 do
@@ -368,45 +265,6 @@ do
     return a.v + v;
 end
 ]],
-    run = 9,
-}
-
-Test { [[
-class T with
-    int v;
-do
-    this.v = 5;
-end
-do
-    T a;
-    spawn a;
-    int v = a.v;
-    a.v = 4;
-    return a.v + v;
-end
-]],
-    run = 9,
-}
-
-Test { [[
-class T with
-    int v;
-do
-    v = 5;
-end
-do
-    T a;
-    par/and do
-        spawn a;
-    with
-        spawn a;
-    end
-    int v = a.v;
-    a.v = 4;
-    return a.v + v;
-end
-]],
-    todo = 'par de spawn',
     run = 9,
 }
 
@@ -576,22 +434,6 @@ return t1.v+t2.v;
 
 Test { [[
 class T with
-    int v;
-do
-end
-
-T t1, t2;
-t1.v = 1;
-t2.v = 2;
-spawn t2;
-spawn t1;
-return t1.v+t2.v;
-]],
-    run = 3,
-}
-
-Test { [[
-class T with
 do
 end
 T aa;
@@ -601,19 +443,6 @@ end
 ]],
     todo = 'tight loop',
     tight = 'ERR : line 5 : tight loop',
-}
-
-Test { [[
-class T with
-do
-    await 10s;
-end
-T aa;
-loop do
-    spawn aa;
-end
-]],
-    tight = 'ERR : line 6 : tight loop',
 }
 
 Test { [[
@@ -733,8 +562,6 @@ return ret;
     },
 }
 
--- TODO:
-error'oi'
 Test { [[
 input void A, F;
 event void e;
@@ -799,53 +626,6 @@ end
     }
 }
 
---MEMORY OVERFLOW
-error'oi'
-Test { [[
-class T with
-do
-    int v = 1;
-end
-T a, b;
-spawn a;
-spawn b;
-return a.v + b.v;
-]],
-    run = 2,
-}
-
-Test { [[
-input void F;
-class T1 with
-do
-    await 1s;
-end
-class T with
-do
-    T1 a;
-    spawn a;
-    await 1s;
-end
-int ret = 10;
-par/or do
-    do
-        T aa;
-        spawn aa;
-    end
-    ret = ret + 1;
-with
-    await F;
-end
-await F;
-return ret;
-]],
-    run = {
-        ['~>F;~>5s;~>F'] = 10,
-        ['~>1s;~>F;~>F;~>1s'] = 10,
-        ['~>1s;~>F;~>1s;~>F'] = 10,
-        ['~>1s;~>1s;~>F'] = 11,
-    },
-}
 Test { [[
 input void F;
 class T1 with
@@ -1376,7 +1156,7 @@ return x;
     run = 9,
 }
 
-TODO PAREI DE TESTAR AQUI
+--TODO PAREI DE TESTAR AQUI
 Test { [[
 input int  BUTTON;
 input void F;
@@ -1574,7 +1354,145 @@ return ret + ts[0].v + ts[1].v;
     run = 205,
 }
 
---do return end
+Test { [[
+int a;
+spawn a;
+]],
+    env = 'ERR : line 2 : cannot spawn a `int´',
+}
+
+Test { [[
+int v;
+class T with
+    int v;
+do
+    v = 5;
+end
+T a;
+spawn a;
+v = a.v;
+a.v = 4;
+return a.v + v;
+]],
+    run = 9,
+}
+
+Test { [[
+class T with
+    int v;
+do
+    this.v = 5;
+end
+do
+    T a;
+    spawn a;
+    int v = a.v;
+    a.v = 4;
+    return a.v + v;
+end
+]],
+    run = 9,
+}
+
+Test { [[
+class T with
+    int v;
+do
+    v = 5;
+end
+do
+    T a;
+    par/and do
+        spawn a;
+    with
+        spawn a;
+    end
+    int v = a.v;
+    a.v = 4;
+    return a.v + v;
+end
+]],
+    todo = 'par de spawn',
+    run = 9,
+}
+
+Test { [[
+class T with
+    int v;
+do
+end
+
+T t1, t2;
+t1.v = 1;
+t2.v = 2;
+spawn t2;
+spawn t1;
+return t1.v+t2.v;
+]],
+    run = 3,
+}
+
+-- TODO: MEMORY OVERFLOW
+Test { [[
+class T with
+do
+    await 10s;
+end
+T aa;
+loop do
+    spawn aa;
+end
+]],
+    tight = 'ERR : line 6 : tight loop',
+}
+
+Test { [[
+class T with
+do
+    int v = 1;
+end
+T a, b;
+spawn a;
+spawn b;
+return a.v + b.v;
+]],
+    run = 2,
+}
+
+Test { [[
+input void F;
+class T1 with
+do
+    await 1s;
+end
+class T with
+do
+    T1 a;
+    spawn a;
+    await 1s;
+end
+int ret = 10;
+par/or do
+    do
+        T aa;
+        spawn aa;
+    end
+    ret = ret + 1;
+with
+    await F;
+end
+await F;
+return ret;
+]],
+    run = {
+        ['~>F;~>5s;~>F'] = 10,
+        ['~>1s;~>F;~>F;~>1s'] = 10,
+        ['~>1s;~>F;~>1s;~>F'] = 10,
+        ['~>1s;~>1s;~>F'] = 11,
+    },
+}
+do return end
+--]===]
 
 Test { [[return(1);]],
     ana = {
@@ -2038,11 +1956,13 @@ Test { [[event int a; emit a=1; return a;]],
 }
 
 Test { [[
+input void START;
 do
     int v = 0;
 end
 event void e;
 par do
+    await START;
     emit e;
     return 1;
 with
@@ -3771,8 +3691,10 @@ return b;
 -- ParOr
 
 Test { [[
+input void START;
 event int a = 3;
 par do
+    await START;
     emit a=a;
     return a;
 with
@@ -3786,8 +3708,10 @@ end;
 }
 
 Test { [[
+input void START;
 event int a = 3;
 par do
+    await START;
     emit a=a;
     return a;
 with
@@ -5298,25 +5222,44 @@ return ret;
 }
 
 Test { [[
+input void START;
 event int a;
-par/and do
-    emit a=1;
+int ret = 1;
+par/or do
+    await START;
+    emit a=10;
 with
-    await a;
+    ret = await a;
 end;
-return 10;
+return ret;
 ]],
     run = 10,
 }
 
 Test { [[
 event int a;
-par/and do
-    emit a=1;
+int ret = 1;
+par/or do
+    emit a=10;
 with
-    await a;
+    ret = await a;
 end;
-return 10;
+return ret;
+]],
+    run = 1,
+}
+
+Test { [[
+input void START;
+event int a;
+int ret = 1;
+par/and do
+    await START;
+    emit a=10;
+with
+    ret = await a;
+end;
+return ret;
 ]],
     ana = {
         nd_acc = 1,
@@ -5335,7 +5278,7 @@ return 10;
     ana = {
         nd_acc = 1,
     },
-    run = 10,
+    run = 0,
 }
 
 Test { [[
@@ -6095,8 +6038,10 @@ return 1;
 }
 
 Test { [[
+input void START;
 event int a,b,c;
 par/and do
+    await START;
     emit b=1;
     emit c=1;
 with
@@ -7578,11 +7523,13 @@ end;
 }
 
 Test { [[
+input void START;
 event int a;
 int b;
 par/or do
     b = await a;
 with
+    await START;
     emit a=3;
 end;
 return a+b;
@@ -7616,9 +7563,11 @@ return 0;
 }
 
 Test { [[
+input void START;
 event int b;
 int i;
 par/or do
+    await START;
     emit b=1;
     i = 2;
 with
@@ -7634,8 +7583,10 @@ return i;
     run = 1,
 }
 Test { [[
+input void START;
 event int b,c;
 par/or do
+    await START;
     emit b=1;
     await c;
 with
@@ -8319,8 +8270,10 @@ end;
     run = 1,
 }
 Test { [[
+input void START;
 event int a;
 par do
+    await START;
     emit a=1;
 with
     await a;
@@ -8933,12 +8886,13 @@ return a;
     },
 }
 Test { [[
+input void START;
 input int A;
 event int a;
 par/or do
     loop do
-        await A;
-        emit a=1;
+        int v = await A;
+        emit a=v;
     end;
 with
     await A;
@@ -8951,11 +8905,13 @@ return a;
         nd_acc = 1,
         --nd_esc = 1,
     },
-    run = { ['1~>A;1~>A']=1 },
+    run = { ['1~>A;2~>A;3~>A']=3 },
 }
 Test { [[
+input void START;
 event int a;
 par do
+    await START;
     emit a=1;
     return a;
 with
@@ -10961,7 +10917,24 @@ with
 end;
 return a;
 ]],
-    run = { ['1~>A']=3 }
+    run = { ['1~>A']=0 }
+}
+
+Test { [[
+input int A;
+event int a;
+par/or do
+    await A;
+    emit a=1;
+    emit a=3;
+with
+    await a;
+    await a;
+    a = a + 1;
+end;
+return a;
+]],
+    run = { ['1~>A;1~>A']=3 }
 }
 
 Test { [[
@@ -11011,6 +10984,7 @@ return 0;
     },
 }
 Test { [[
+input void START;
 input int A,B;
 event int a;
 par/and do
@@ -11019,6 +10993,7 @@ par/and do
     with
         await B;
     end;
+    await B;
     emit a=1;
 with
     par/and do
@@ -11034,7 +11009,7 @@ return 10;
         --isForever = true,
         --n_unreachs = 2,
     },
-    run = { ['1~>B']=10 },
+    run = { ['1~>B;~>B']=10 },
 }
 
 Test { [[
@@ -11046,6 +11021,7 @@ par/and do
     with
         await B;
     end;
+    await B;
     emit a=10;
 with
     par/or do
@@ -11060,7 +11036,7 @@ return a;
     ana = {
         nd_acc = 1,
     },
-    run = { ['1~>B']=10 },
+    run = { ['1~>B;~>B']=10 },
 }
 
 Test { [[
@@ -11069,6 +11045,7 @@ event int a,b;
 par/and do
     await A;
     emit a=1;
+    await A;
     emit b=1;
 with
     await a;
@@ -11082,7 +11059,7 @@ return 0;
         n_unreachs = 2,
         --trig_wo = 1,
     },
-    run = { ['1~>A'] = 1 }
+    run = { ['1~>A;~>A'] = 1 }
 }
 
 Test { [[
@@ -11107,8 +11084,10 @@ return d;
     },
 }
 Test { [[
+input void START;
 event int a;
 par/and do
+    await START;
     emit a=1;
 with
     par/or do
@@ -11161,6 +11140,7 @@ return a;
 ]]
 
 Test { [[
+input void START, A;
 int v = 0;
 event int a,b;
 par/or do
@@ -11175,8 +11155,10 @@ par/or do
         end;
     end;
 with
+    await START;
     emit b;
     emit b;
+    await A;
     emit a;
     return v;
 end;
@@ -11184,10 +11166,11 @@ end;
     ana = {
         n_unreachs = 1,
     },
-    run = 1,
+    run = { ['~>A']=1 },
 }
 
 Test { [[
+input void START;
 int v = 0;
 event int a, b;
 par/or do
@@ -11197,6 +11180,7 @@ par/or do
         v = v + 1;
     end
 with
+    await START;
     emit a=1;
     return v;
 end;
@@ -11208,6 +11192,7 @@ end;
 }
 
 Test { [[
+input void START,A;
 int v = 0;
 event int a, b;
 par/or do
@@ -11226,14 +11211,17 @@ par/or do
         end;
     end;
 with
+    await START;
     emit a=1;
+    await A;
     emit a=1;
+    await A;
     emit a=0;
     return v;
 end;
 ]],
     --nd_esc = 1,
-    run = 1,
+    run = { ['~>A;~>A'] = 1 },
     ana = {
         n_unreachs = 1,
     },
@@ -11537,6 +11525,7 @@ end;
 }
 
 Test { [[
+input void START;
 event int a, b;
 int v=0;
 par/or do
@@ -11551,6 +11540,7 @@ with
         v = 3;
     end;
 with
+    await START;
     emit a=1;
     return v;
 end;
@@ -11566,10 +11556,12 @@ return 0;
     -- SYNC TRIGGER
 
 Test { [[
+input void START;
 event int a;
 int v1, v2;
 par/and do
     par/or do
+        await START;
         emit a=10;
     with
         await FOREVER;
@@ -11589,6 +11581,7 @@ return v1 + v2;
 }
 
 Test { [[
+input void START,A;
 event int a;
 par/or do
     loop do
@@ -11596,6 +11589,7 @@ par/or do
         a = a + 1;
     end;
 with
+    await START;
     emit a=1;
     emit a=a;
     emit a=a;
@@ -11605,10 +11599,38 @@ with
 end;
 return a;
 ]],
-    run = 7,
+    run = 2,
 }
 
 Test { [[
+input void START,A;
+event int a;
+par/or do
+    loop do
+        await a;
+        a = a + 1;
+    end;
+with
+    await START;
+    emit a=1;
+    await A;
+    emit a=a;
+    await A;
+    emit a=a;
+    await A;
+    emit a=a;
+    await A;
+    emit a=a;
+    await A;
+    emit a=a;
+end;
+return a;
+]],
+    run = { ['~>A;~>A;~>A;~>A;~>A'] = 7, },
+}
+
+Test { [[
+input void START, A;
 event int a, b;
 par/or do
     loop do
@@ -11618,13 +11640,20 @@ par/or do
 with
     await a;
     emit b=1;
+    await A;
     emit b=b;
+    await A;
     emit b=b;
+    await A;
     emit b=b;
+    await A;
     emit b=b;
+    await A;
     emit b=b;
+    await A;
     emit b=b;
 with
+    await START;
     emit a=1;
     b = 0;
 end;
@@ -11634,12 +11663,14 @@ return b;
         --nd_esc = 1,
         n_unreachs = 1,
     },
-    run = 8,
+    run = 0,
 }
 
 Test { [[
+input void START;
 event int a;
 par/or do
+    await START;
     emit a=0;
 with
     await a;
@@ -11652,8 +11683,10 @@ return a;
 }
 
 Test { [[
+input void START;
 event int a,b;
 par/or do
+    await START;
     emit a=0;
 with
     await a;
@@ -11671,6 +11704,7 @@ return a;
 }
 
 Test { [[
+input void START;
 input int A, F;
 event int c = 0;
 par do
@@ -11692,9 +11726,11 @@ end;
 }
 
 Test { [[
+input void START;
 event int a;
 par do
     loop do
+        await START;
         emit a=0;
         emit a=a+1;
         await 10s;
@@ -11718,10 +11754,13 @@ end;
 }
 
 Test { [[
+input void START, A;
 event int a;
 par do
     loop do
+        await START;
         emit a=0;
+        await A;
         emit a=a+1;
         await 10s;
     end;
@@ -11736,7 +11775,7 @@ end;
         --nd_esc = 1,
         n_unreachs = 2,
     },
-    run = 1,
+    run = { ['~>A']=1 },
 }
 
 Test { [[
@@ -11846,10 +11885,12 @@ end;
 }
 
 Test { [[
+input void START;
 event int a, b, c;
 int x = 0;
 int y = 0;
 par/or do
+    await START;
     emit a=0;
 with
     await b;
@@ -11922,8 +11963,10 @@ end;
 }
 
 Test { [[
+input void START;
 event int a, b;
 par/and do
+    await START;
     emit a=1;
     b = a;
 with
@@ -11935,9 +11978,11 @@ return b;
     run = 1,
 }
 Test { [[
+input void START;
 event int a;
 int b;
 par/or do
+    await START;
     emit a=1;
     b = a;
 with
@@ -11954,12 +11999,14 @@ return b;
 }
 
 Test { [[
+input void START;
 event int a;
 par do
     await a;
     emit a=1;
     return a;
 with
+    await START;
     emit a=2;
     return a;
 end;
@@ -11973,6 +12020,7 @@ end;
 }
 
 Test { [[
+input void START;
 event int a, b;
 par/or do
     loop do
@@ -11980,6 +12028,7 @@ par/or do
         emit b=1;
     end;
 with
+    await START;
     emit a=1;
 with
     await b;
@@ -11996,9 +12045,11 @@ return a;
 }
 
 Test { [[
+input void START;
 event int a;
 int x = 0;
 par do
+    await START;
     emit a=1;
     emit a=2;
     return x;
@@ -12009,13 +12060,16 @@ with
     end
 end
 ]],
-    run = 2,
+    run = 1,
 }
 Test { [[
+input void START, A;
 event int a;
 int x = 0;
 par do
+    await START;
     emit a=1;
+    await A;
     emit a=2;
     return x;
 with
@@ -12025,7 +12079,7 @@ with
     x = x + 1;
 end
 ]],
-    run = 2,
+    run = {['~>A']=2,},
 }
 Test { [[
 event int a;
@@ -12047,9 +12101,11 @@ end
     },
 }
 Test { [[
+input void START;
 event int a, x;
 x = 0;
 par/or do
+    await START;
     emit a= 1;
     // unreachable
 with
@@ -12068,7 +12124,7 @@ return x;
         nd_acc = 3,
         n_unreachs = 2,
     },
-    run = 2,
+    run = 1,
 }
 
 Test { [[
@@ -12103,10 +12159,12 @@ end;
 }
 
 Test { [[
+input void START;
 event void x, y;
 int ret = 0;
 par/or do
     par/and do
+        await START;
         emit x;
         emit y;
     with
@@ -12121,6 +12179,7 @@ par/or do
         end;
     end;
 with
+    await START;
     emit x;
     emit y;
 end;
@@ -12131,14 +12190,16 @@ return ret;
         --trig_wo = 2,
         n_unreachs = 1,
     },
-    run = 10,
+    run = 1,
 }
 
 Test { [[
+input void START;
 event int a, x, y;
 int ret = 0;
 par do
     par/and do
+        await START;
         emit x=1;
         emit y=1;
     with
@@ -12151,6 +12212,7 @@ par do
         end;
     end;
 with
+    await START;
     ret = ret + 1;
     emit a=1;
     ret = ret * 2;
@@ -12200,6 +12262,7 @@ end;
 }
 
 Test { [[
+input void START;
 input int F;
 event int x, w, y, z, a, vis;
 par do
@@ -12220,6 +12283,7 @@ par do
         a = a + 1;
     end;
 with
+    await START;
     emit a=1;
     emit y=1;
     emit z=1;
@@ -12233,7 +12297,7 @@ end;
         --trig_wo = 2,
         n_unreachs = 2,
     },
-    run = { ['1~>F']=7 },
+    run = { ['1~>F']=5 },
 }
 
     -- SCOPE / BLOCK
@@ -12498,10 +12562,12 @@ return a;
 }
 
 Test { [[
+input void START;
 int ret;
 par/or do
     event int a;
     par/or do
+        await START;
         emit a=5;
         // unreachable
     with
@@ -15737,6 +15803,83 @@ return ret;
         ['~>1us;1~>A;~>1s;0~>A;~>19us'] = 11,
         ['~>1us;1~>A ; ~>5us ; 0~>A ; ~>5us ; 1~>A ; ~>5us ; 0~>A ; ~>9us'] = 6,
     },
+}
+
+-- TIGHT LOOPS
+Test { [[
+event void e, f;
+par do
+    loop do
+        par/or do
+            await f;
+        with
+            emit e;
+            await FOREVER;
+        end
+    end
+with
+    loop do
+        par/or do
+            emit f;
+        with
+            await f;
+        end
+        await e;
+    end
+end
+]],
+    run = 0
+}
+
+Test { [[
+event void e, f;
+par do
+    loop do
+        par/or do
+            emit e;
+            await FOREVER;
+        with
+            await f;
+        end
+    end
+with
+    loop do
+        await e;
+        par/or do
+            emit f;
+        with
+            await f;
+        end
+    end
+end
+]],
+    run = 0
+}
+
+Test { [[
+event void e, k1, k2;
+par do
+    loop do
+        par/or do
+            emit e;
+            await FOREVER;
+        with
+            await k1;
+        end
+        emit k2;
+    end
+with
+    loop do
+        await e;
+        par/or do
+            emit k1;
+        with
+            await k2;
+        end
+    end
+end
+]],
+    run = 0
 }
 
 --[==[

@@ -28,6 +28,10 @@ F = {
         me.lbls[2] = #_LBLS.list-1
     end,
 
+    Root_pre = function (me)
+        new{'Inactive', true}
+    end,
+
     Root = function (me)
         -- enum of labels
         for i, lbl in ipairs(_LBLS.list) do
@@ -90,8 +94,8 @@ F = {
 
     EmitInt = function (me)
         local int = unpack(me)
-        me.lbl_cnt = new{'Cnt_'..int.var.id}
-        me.lbl_awk = new{'Awk_'..int.var.id}
+        me.lbl_mch = new{'Emit_mch_'..int.var.id}
+        me.lbl_cnt = new{'Emit_cnt_'..int.var.id}
     end,
 
     AwaitT = function (me)
@@ -106,7 +110,8 @@ F = {
     end,
     AwaitInt = function (me)
         local int = unpack(me)
-        me.lbl = new{'Awake_'..int.var.id}
+        me.lbl_awt = new{'Await_'..me[1][1]}
+        me.lbl_awk = new{'Awake_'..me[1][1]}
     end,
 }
 

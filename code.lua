@@ -46,6 +46,7 @@ function COMM (me, comm)
 end
 
 function BLOCK_GATES (me)
+    CASE(me, me.lbl_out)
     COMM(me, 'close gates')
 
     -- TODO: otimization for { T a; execute a } (org ranges)
@@ -53,6 +54,7 @@ function BLOCK_GATES (me)
     if me.ns.awaits > 0 then
         LINE(me, 'ceu_lst_clr(_trk_.org,'..me.lbls[1]..','..me.lbls[2]..');')
     end
+
     if me.ns.emits > 0 then
         LINE(me, 'ceu_track_clr(_trk_.org,'..me.lbls[1]..','..me.lbls[2]..');')
     end
@@ -84,7 +86,8 @@ F = {
 
     Dcl_var = function (me)
         if me.var.cls then
-            LINE(me, 'ceu_track_ins(0,PR_MAX,'..me.var.val..','..me.var.cls.lbl.id..');')
+            LINE(me, 'ceu_track_ins(CEU.stack, CEU_TREE_MAX,'
+                        ..me.var.val..', 0, '..me.var.cls.lbl.id..');')
         end
     end,
 
@@ -108,13 +111,12 @@ F = {
         local _,blk = unpack(me)
         CONC(me, blk)
         HALT(me)        -- must escape with `return´
-        CASE(me, me.lbl_out)
         BLOCK_GATES(me)
     end,
     Return = function (me)
         local top = _AST.iter'SetBlock'()
-        LINE(me, 'ceu_track_ins(1,' ..top.lbl_out.prio..','
-                    ..'_trk_.org,'..top.lbl_out.id..');')
+        LINE(me, 'ceu_track_ins(CEU.stack, ' ..top.lbl_out.prio..','
+                    ..'_trk_.org, 1, '..top.lbl_out.id..');')
         HALT(me)
     end,
 
@@ -126,7 +128,8 @@ F = {
         -- Ever/Or/And spawn subs
         COMM(me, me.tag..': spawn subs')
         for i, sub in ipairs(me) do
-            LINE(me, 'ceu_track_ins(0,PR_MAX,_trk_.org,'..me.lbls_in[i].id..');')
+            LINE(me, 'ceu_track_ins(CEU.stack,CEU_TREE_MAX,_trk_.org,0,'
+                        ..me.lbls_in[i].id..');')
         end
         HALT(me)
     end,
@@ -143,17 +146,14 @@ F = {
 
     ParOr = function (me)
         F._Par(me)
-
         for i, sub in ipairs(me) do
             CASE(me, me.lbls_in[i])
             CONC(me, sub)
             COMM(me, 'PAROR JOIN')
-            LINE(me, 'ceu_track_ins(1,' ..me.lbl_out.prio..','
-                        ..'_trk_.org,'..me.lbl_out.id..');')
+            LINE(me, 'ceu_track_ins(CEU.stack, ' ..me.lbl_out.prio..','
+                        ..'_trk_.org, 1, '..me.lbl_out.id..');')
             HALT(me)
         end
-
-        CASE(me, me.lbl_out)
         BLOCK_GATES(me)
     end,
 
@@ -238,17 +238,25 @@ if (ceu_out_pending()) {
         end
 
         SWITCH(me, me.lbl_ini)
-
-        -- AFTER code :: block inner gates
-        CASE(me, me.lbl_out)
         BLOCK_GATES(me)
     end,
 
     Break = function (me)
         local top = _AST.iter'Loop'()
-        LINE(me, 'ceu_track_ins(1,' ..top.lbl_out.prio..','
-                    ..'_trk_.org,'..top.lbl_out.id..');')
+        LINE(me, 'ceu_track_ins(CEU.stack, ' ..top.lbl_out.prio..','
+                    ..'_trk_.org, 1, '..top.lbl_out.id..');')
         HALT(me)
+    end,
+
+    Pause = function (me)
+        local inc = unpack(me)
+        LINE(me, 'ceu_lst_pse(_trk_.org, '
+                    ..me.blk.lbls[1]..','..me.blk.lbls[2]..','..inc..');')
+    end,
+
+    CallStmt = function (me)
+        local call = unpack(me)
+        LINE(me, call.val..';')
     end,
 
     EmitExtS = function (me)
@@ -278,30 +286,6 @@ if (ceu_out_pending()) {
         CASE(me, me.lbl_cnt)
     end,
 
-    EmitInt = function (me)
-        local int, exp = unpack(me)
-        local var = int.var
-
-        -- attribution
-        if exp then
-            ATTR(me, int, exp)
-        end
-
-        -- emit
-        LINE(me, [[
-// Emit ]]..var.id..';\n'..[[
-ceu_track_ins(0, _step_+2, _trk_.org, ]]..me.lbl_awk.id..[[);
-ceu_track_ins(0, _step_+1, _trk_.org, ]]..me.lbl_cnt.id..[[);
-break;
-]])
-
-        CASE(me, me.lbl_awk)
-        local org = (int.org and int.org.val) or '_trk_.org'
-        LINE(me, 'ceu_lst_go('..var.n..','..org..');')
-        HALT(me)
-        CASE(me, me.lbl_cnt)
-    end,
-
     EmitT = function (me)
         local exp = unpack(me)
         local async = _AST.iter'Async'()
@@ -321,17 +305,54 @@ return 0;
         CASE(me, me.lbl_cnt)
     end,
 
-    CallStmt = function (me)
-        local call = unpack(me)
-        LINE(me, call.val..';')
+    EmitInt = function (me)
+        local int, exp = unpack(me)
+
+        -- attribution
+        if exp then
+            ATTR(me, int, exp)
+        end
+
+        -- defer match: reaction must have a higher stack depth
+        LINE(me, 'ceu_track_ins(CEU.stack+2, CEU_TREE_MAX, _trk_.org, 0,'
+                    ..me.lbl_mch.id..');')
+        -- defer continuation: all trails must react before I resume
+        LINE(me, 'ceu_track_ins(CEU.stack+1, CEU_TREE_MAX, _trk_.org, 0,'
+                    ..me.lbl_cnt.id..');')
+        HALT(me)
+
+        -- emit
+        CASE(me, me.lbl_mch)
+        local org = (int.org and int.org.val) or '_trk_.org'
+        LINE(me, 'ceu_lst_go('..int.var.n..','..org..');')
+        HALT(me)
+
+        -- continuation
+        CASE(me, me.lbl_cnt)
     end,
 
-    Pause = function (me)
-        local inc = unpack(me)
-        LINE(me, 'ceu_lst_pse(_trk_.org, '
-                    ..me.blk.lbls[1]..','..me.blk.lbls[2]..','..inc..');')
-    end,
+    AwaitInt = function (me)
+        local int, zero = unpack(me)
+        COMM(me, 'emit '..int.var.id)
 
+        local org = (int.org and int.org.val) or '_trk_.org'
+
+        -- defer await: can only react once (0=defer_to_end_of_reaction)
+        if not zero then
+            LINE(me, 'ceu_track_ins(0, CEU_TREE_MAX, _trk_.org, 0,'
+                        ..me.lbl_awt.id..');')
+            HALT(me)
+        end
+
+        -- await
+        CASE(me, me.lbl_awt)
+        LINE(me, 'ceu_lst_ins('..int.var.n..','..org
+                    ..',_trk_.org,'..me.lbl_awk.id..',0);')
+        HALT(me)
+
+        -- awake
+        CASE(me, me.lbl_awk)
+    end,
     AwaitN = function (me)
         COMM(me, 'Never')
         HALT(me, true)
@@ -349,13 +370,6 @@ return 0;
     AwaitExt = function (me)
         local e1,_ = unpack(me)
         LINE(me, 'ceu_lst_ins(IN_'..e1.ext.id..',NULL,_trk_.org,'..me.lbl.id..',0);')
-        HALT(me, true)
-        CASE(me, me.lbl)
-    end,
-    AwaitInt = function (me)
-        local int,_ = unpack(me)
-        local org = (int.org and int.org.val) or '_trk_.org'
-        LINE(me, 'ceu_lst_ins('..int.var.n..','..org..',_trk_.org,'..me.lbl.id..',0);')
         HALT(me, true)
         CASE(me, me.lbl)
     end,

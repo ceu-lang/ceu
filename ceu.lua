@@ -196,7 +196,7 @@ do
         str = str .. '#define CEU_ASYNCS\n'
     end
     if _PROPS.has_emits then
-        str = str .. '#define CEU_EMITS\n'
+        str = str .. '#define CEU_STACK\n'
     end
     if _PROPS.has_pses then
         str = str .. '#define CEU_PSES\n'
@@ -205,8 +205,10 @@ do
         str = str .. '#define CEU_FINS\n'
     end
 
-    str = str .. '#define CEU_TRK_PRIO\n'
-    str = str .. '#define CEU_TRK_CHK\n'
+    -- TODO: goto _OPTS
+    str = str .. '#define CEU_DEBUG\n'
+    str = str .. '#define CEU_TREE\n'
+    str = str .. '#define CEU_TREE_CHK\n'
 
     if _OPTS.defs_file then
         local f = io.open(_OPTS.defs_file,'w')
@@ -232,8 +234,8 @@ if _OPTS.verbose or true then
         asyncs  = _PROPS.has_asyncs,
         emits   = _PROPS.has_emits,
 
-        prio = true,
-        chk  = true,
+        tree     = true,    -- TODO: goto _OPTS
+        tree_chk = true,    -- TODO: goto _OPTS
     }
     local t = {}
     for k, v in pairs(T) do

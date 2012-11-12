@@ -77,10 +77,10 @@ F = {
 
     Block = function (me)
         MAX_all(me)
-        local t = { me }
+        local t = { }
         for _, var in ipairs(me.vars) do
             if var.cls then
-                t[#t+1] = var.cls
+                t[#t+1] = var.cls       -- each org is spawned in parallel
             end
         end
         ADD_all(me, t)
