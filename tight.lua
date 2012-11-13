@@ -45,7 +45,7 @@ F = {
     BlockN  = OR_all,
 
     ParEver = OR_all,
-    ParAnd  = AND_all,
+    ParAnd  = OR_all,
 
     If = function (me)
         local c, t, f = unpack(me)
@@ -90,8 +90,11 @@ F = {
         me.blocks = true
     end,
     AwaitInt = function (me)
-        me.awaits = true
-        me.blocks = true
+        local _, zero = unpack(me)
+        if not zero then
+            me.awaits = true
+            me.blocks = true
+        end
     end,
     AwaitT = function (me)
         me.awaits = true

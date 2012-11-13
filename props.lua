@@ -81,6 +81,13 @@ F = {
         for _, var in ipairs(me.vars) do
             if var.cls then
                 t[#t+1] = var.cls       -- each org is spawned in parallel
+            elseif var.arr then
+                local cls = _ENV.clss[_TP.deref(var.tp)]
+                if cls then
+                    for i=1, var.arr do
+                        t[#t+1] = cls
+                    end
+                end
             end
         end
         ADD_all(me, t)
@@ -162,7 +169,6 @@ F = {
     end,
 
     AwaitInt = function (me)
-        local e1 = unpack(me)
         me.ns.awaits = 1
     end,
 

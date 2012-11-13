@@ -71,9 +71,7 @@ function newvar (me, blk, isEvt, tp, dim, id)
     }
     blk.vars[#blk.vars+1] = var
 
-    if not blk.vars[id] then
-        blk.vars[id] = var      -- first from block (used by orgs)
-    end
+    blk.vars[id] = var -- last from interface (may redeclare go/ok)
 
     if isEvt then
         var.n = #_ENV.evts

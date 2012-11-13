@@ -92,7 +92,6 @@ KEYS = P'async'  + 'await'   + 'break'   + 'C'
      + TYPES
      + 'pause/if'
      + 'class'
-     + 'exec' + 'spawn'
      + 'this'
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
@@ -123,7 +122,6 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
             + V'_Dcl_int' + V'_Dcl_var'
             + V'Dcl_type'
             + V'_Set'     + V'CallStmt' -- must be after Set
-            + V'_Exec'    + V'_Spawn'
             + EM'statement (missing `_´?)'
 
     , _StmtB = V'_Do'   + V'Async'  + V'Host'
@@ -271,8 +269,6 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
     , __Dcl_var_no = EV'ID_var' * (Cc(false)*Cc(false))
 
     , Dcl_cls = K'class' * EV'ID_cls' * EK'with' * V'_BlockD' * V'_Do'
-    , _Exec   = K'exec'  * EV'_Exp'
-    , _Spawn  = K'spawn' * EV'_Exp'
     , This    = K'this'
 
     , Ext      = V'ID_ext'

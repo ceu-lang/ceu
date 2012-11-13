@@ -158,19 +158,35 @@ local C; C = {
                         blk))
         else
             blk = node('Block')(ln,
-                    node('Dcl_var')(ln, true, 'void', false, '$go_start'),
-                    node('Dcl_var')(ln, true, 'void', false, '$go_kill'),
-                    node('Dcl_var')(ln, true, 'void', false, '$ok_return'),
+                    node('Dcl_var')(ln, true,  'void', false, 'go'),
+                    node('Dcl_var')(ln, true,  'void', false, 'go_kill'),
+                    node('Dcl_var')(ln, true,  'void', false, 'ok'),
+                    node('Dcl_var')(ln, false, 'int',  false, 'going'),
                     defs,
+                    node('SetExp')(ln, node('Var')(ln,'going'),
+                                       node('CONST')(ln,'0')),
+                    node('AwaitInt')(ln, node('Var')(ln,'go'), true),
                     node('Loop')(ln,
                         node('BlockN')(ln,
-                            node('AwaitInt')(ln, node('Var')(ln,'$go_start')),
-                            node('ParOr')(ln,
-                                node('BlockN')(ln,
-                                    blk,
-                                    node('EmitInt')(ln,
-                                        node('Var')(ln,'$ok_return'))),
-                                node('AwaitInt')(ln, node('Var')(ln,'$go_kill'))))))
+                            node('SetExp')(ln, node('Var')(ln,'going'),
+                                               node('CONST')(ln,'1')),
+                            node('ParAnd')(ln,
+                                node('ParOr')(ln,
+                                    node('BlockN')(ln,
+                                        blk,
+                                        node('SetExp')(ln,
+                                            node('Var')(ln,'going'),
+                                            node('CONST')(ln,'0')),
+                                        node('EmitInt')(ln,
+                                            node('Var')(ln,'ok'))),
+                                    node('BlockN')(ln,
+                                        node('AwaitInt')(ln,
+                                            node('Var')(ln,'go_kill')),
+                                        node('SetExp')(ln,
+                                            node('Var')(ln,'going'),
+                                            node('CONST')(ln,'0')))),
+                                node('AwaitInt')(ln, node('Var')(ln,'go'),
+                                                     true)))))
         end
 
         for i=1, FIN do
@@ -188,63 +204,33 @@ local C; C = {
     end
     // becomes //
     class T
-        event void $go_start;
-        event void $go_kill;
-        event void $ok_return;
+        event void go;
+        event void go_kill;
+        event void ok;
+        int going;
         <defs>
     do
+        going = 0;
+        await/0 go;
         loop do
-            await $go_start;
-            par/or do
-                <blk>
-                emit $ok_return;
+            going = 1;
+            par/and do
+                par/or do
+                    <blk>
+                    going = 0;
+                    emit ok;
+                with
+                    await go_kill;
+                    going = 0;
+                end
             with
-                await $go_kill;
+                await/0 go;
             end
         end
     end
     ]]
 
     This  = node('This'),
-
-    _Spawn = function (ln, exp)
-        error 'oi'
-    end,
-
-    _Exec = function (ln, exp)
-        return C._Do(ln,
-                node('BlockN')(ln,
-                    node('ParOr')(ln,
-                        node('BlockN')(ln,
-                            node('EmitInt')(ln,
-                                node('Op2_.')(ln, '.',
-                                    _AST.copy(exp),
-                                    '$go_start')),
-                            node('AwaitN')(ln)),
-                        node('AwaitInt')(ln,
-                            node('Op2_.')(ln, '.',
-                                _AST.copy(exp),
-                                '$ok_return'))),
-                node('BlockN')(ln,
-                    node('EmitInt')(ln,
-                        node('Op2_.')(ln, '.',
-                            _AST.copy(exp),
-                            '$go_kill')))))
-    end,
-    --[[
-    exec <exp>;
-    // becomes //
-    do
-        par/or do
-            emit <exp>.$go_start;
-            await FOREVER;
-        with
-            await <exp>.$ok_return;
-        end
-    finally
-        emit <exp>.$go_kill;
-    end
-    ]]
 
     Block   = node('Block'),
     BlockN  = node('BlockN'),
@@ -503,6 +489,23 @@ F = {
         local cls = _AST.iter'Dcl_cls'()
         me.par = blk and (cls.depth < blk.depth) and blk
     end,
+
+    --TODO
+    --[[
+    exec <exp>;
+    // becomes //
+    do
+        par/or do
+            emit <exp>.$go_start;
+            await FOREVER;
+        with
+            await <exp>.$ok_return;
+        end
+    finally
+        emit <exp>.$go_kill;
+    end
+    ]]
+
 
     SetBlock_pre = function (me)
         me.blk = _AST.iter'Block'()

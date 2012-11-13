@@ -57,8 +57,8 @@ Test = function (t)
         assert(T.tot==_MEM.max, 'mem '.._MEM.max)
     end
 
-    -- TODO
-    assert((T.tight and true) == (_AST.root.tight or nil))
+    assert(_AST.root.tight and T.tight or
+           not (_AST.root.tight or T.tight))
 
     -- RUN
 

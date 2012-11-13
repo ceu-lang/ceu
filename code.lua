@@ -88,6 +88,15 @@ F = {
         if me.var.cls then
             LINE(me, 'ceu_track_ins(CEU.stack, CEU_TREE_MAX,'
                         ..me.var.val..', 0, '..me.var.cls.lbl.id..');')
+        elseif me.var.arr then
+            local cls = _ENV.clss[_TP.deref(me.var.tp)]
+            if cls then
+                for i=0, me.var.arr-1 do
+                    LINE(me, 'ceu_track_ins(CEU.stack, CEU_TREE_MAX,'
+                                ..me.var.val..'+'..i..'*'..cls.mem.max
+                                ..', 0, '..cls.lbl.id..');')
+                end
+            end
         end
     end,
 
