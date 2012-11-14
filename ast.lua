@@ -161,32 +161,17 @@ local C; C = {
                     node('Dcl_var')(ln, true,  'void', false, 'go'),
                     node('Dcl_var')(ln, true,  'void', false, 'go_kill'),
                     node('Dcl_var')(ln, true,  'void', false, 'ok'),
-                    node('Dcl_var')(ln, false, 'int',  false, 'going'),
                     defs,
-                    node('SetExp')(ln, node('Var')(ln,'going'),
-                                       node('CONST')(ln,'0')),
-                    node('AwaitInt')(ln, node('Var')(ln,'go'), true),
-                    node('Loop')(ln,
+                    node('AwaitInt')(ln, node('Var')(ln,'go')),
+                    node('ParOr')(ln,
                         node('BlockN')(ln,
-                            node('SetExp')(ln, node('Var')(ln,'going'),
-                                               node('CONST')(ln,'1')),
-                            node('ParAnd')(ln,
-                                node('ParOr')(ln,
-                                    node('BlockN')(ln,
-                                        blk,
-                                        node('SetExp')(ln,
-                                            node('Var')(ln,'going'),
-                                            node('CONST')(ln,'0')),
-                                        node('EmitInt')(ln,
-                                            node('Var')(ln,'ok'))),
-                                    node('BlockN')(ln,
-                                        node('AwaitInt')(ln,
-                                            node('Var')(ln,'go_kill')),
-                                        node('SetExp')(ln,
-                                            node('Var')(ln,'going'),
-                                            node('CONST')(ln,'0')))),
-                                node('AwaitInt')(ln, node('Var')(ln,'go'),
-                                                     true)))))
+                            blk,
+                            node('EmitInt')(ln,
+                                node('Var')(ln,'ok'))),
+                        node('BlockN')(ln,
+                            node('AwaitInt')(ln,
+                                node('Var')(ln,'go_kill')))),
+                    node('AwaitN')(ln))
         end
 
         for i=1, FIN do
@@ -207,26 +192,16 @@ local C; C = {
         event void go;
         event void go_kill;
         event void ok;
-        int going;
         <defs>
     do
-        going = 0;
-        await/0 go;
-        loop do
-            going = 1;
-            par/and do
-                par/or do
-                    <blk>
-                    going = 0;
-                    emit ok;
-                with
-                    await go_kill;
-                    going = 0;
-                end
-            with
-                await/0 go;
-            end
+        await go;
+        par/or do
+            <blk>
+            emit ok;
+        with
+            await go_kill;
         end
+        await FOREVER;
     end
     ]]
 

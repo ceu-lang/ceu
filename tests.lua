@@ -9,7 +9,6 @@ do
 end
 return 0;
 ]],
-    tight = true,
     run = 0,
 }
 
@@ -20,7 +19,6 @@ do
 end
 return 0;
 ]],
-    tight = true,
     run = 0,
 }
 
@@ -32,7 +30,6 @@ do
 end
 return 0;
 ]],
-    tight = true,
     run = 0, -- TODO
     --props = 'ERR : line 2 : must be in top-level',
 }
@@ -45,7 +42,6 @@ do
 end
 return 0;
 ]],
-    tight = true,
     run = 0, -- TODO
     --props = 'ERR : line 2 : must be in top-level',
 }
@@ -57,7 +53,6 @@ end
 T[5] a;
 return 0;
 ]],
-    tight = true,
     run = 0,
 }
 
@@ -100,7 +95,6 @@ end
 T a;
 return 0;
 ]],
-    tight = true,
     run = 0,
 }
 
@@ -148,7 +142,6 @@ T a;
 a.v = 5;
 return a.v;
 ]],
-    tight = true,
     run = 5,
 }
 
@@ -200,7 +193,6 @@ a.v2 = 10;
 a.x.t3.v3 = 15;
 return a . v + a.x .v + a .v2 + a.x  .  t3 . v3;
 ]],
-    tight = true,
     run = 35,
 }
 
@@ -216,6 +208,7 @@ end
 }
 
 Test { [[
+input void START;
 int v;
 class T with
     int v;
@@ -223,16 +216,17 @@ do
     v = 5;
 end
 T a;
+await START;
 emit a.go;
 v = a.v;
 a.v = 4;
 return a.v + v;
 ]],
-    tight = true,
     run = 9,
 }
 
 Test { [[
+input void START;
 input void A,F;
 int v;
 class T with
@@ -242,6 +236,7 @@ do
     emit e;
 end
 T a;
+await START;
 par/or do
     loop i,3 do
         par/and do
@@ -258,30 +253,59 @@ with
 end
 return v;
 ]],
-    run = { ['~>A;~>A;~>A;~>F']=3 },
+    run = { ['~>A;~>A;~>A;~>F']=1 },
 }
 
 Test { [[
+input void START;
 input void A,F;
 int v;
 class T with
     event void e;
 do
-    await A;
-    emit e;
+    loop do
+        await A;
+        emit e;
+    end
 end
 T a;
-loop i,3 do
-    par/or do
+await START;
+emit a.go;
+par/or do
+    loop i,3 do
         par/and do
-            emit a.go;
-        with
             await a.e;
             v = v + 1;
+        with
+            await a.ok;
         end
-    with
-        await a.ok;
     end
+with
+    await F;
+end
+return v;
+]],
+    run = { ['~>A;~>A;~>A;~>F']=1 },
+}
+
+Test { [[
+input void START;
+input void A,F;
+int v;
+class T with
+    event void e;
+do
+    loop do
+        await A;
+        emit e;
+    end
+end
+T a;
+await START;
+emit a.go;
+loop i,3 do
+    await a.e;
+    v = v + 1;
 end
 return v;
 ]],
@@ -289,6 +313,7 @@ return v;
 }
 
 Test { [[
+input void START;
 class T with
     int v;
 do
@@ -296,17 +321,18 @@ do
 end
 do
     T a;
+    await START;
     emit a.go;
     int v = a.v;
     a.v = 4;
     return a.v + v;
 end
 ]],
-    tight = true,
     run = 9,
 }
 
 Test { [[
+input void START;
 class T with
     int v;
 do
@@ -314,6 +340,7 @@ do
 end
 do
     T a;
+    await START;
     par/and do
         emit a.go;
     with
@@ -324,11 +351,11 @@ do
     return a.v + v;
 end
 ]],
-    tight = true,
     run = 9,
 }
 
 Test { [[
+input void START;
 class T with
     event int a;
 do
@@ -337,54 +364,30 @@ do
 end
 T aa;
     par/or do
+        await START;
         emit aa.go;
-        if aa.going then
-            await FOREVER;
-        end
     with
         await aa.ok;
     end
 return aa.a;
 ]],
-    tight = true,
     run = 5,
 }
 
 Test { [[
-class T with
-    event int a;
-do
-    emit a=10;
-    a = 5;
-end
-T aa;
-par/or do
-    emit aa.go;
-    if aa.going then
-        await FOREVER;
-    end
-with
-    await aa.ok;
-end
-return aa.a;
-]],
-    tight = true,
-    run = 5,
-}
-
-Test { [[
+input void START;
 class T with
     int v;
 do
     v = 5;
 end
 T a;
+    await START;
 emit a.go;
 int v = a.v;
 a.v = 4;
 return a.v + v;
 ]],
-    tight = true,
     run = 9,
 }
 
@@ -512,7 +515,6 @@ emit t2.go;
 emit t1.go;
 return t1.v+t2.v;
 ]],
-    tight = true,
     run = 3,
 }
 
@@ -529,35 +531,14 @@ end
 }
 
 Test { [[
-class T with
-do
-    await 10s;
-end
-T aa;
-int ret = 0;
-loop i, 10 do
-    par/and do
-        emit aa.go;
-    with
-        await aa.ok;
-    end
-    ret = ret + 1;
-end
-return ret;
-]],
-    ana = {
-        isForever = true,
-    },
-    run = { ['~>100s'] = 10 },
-}
-
-Test { [[
+input void START;
 class T with
 do
     await 1s;
 end
 T aa;
 par/and do
+    await START;
     emit aa.go;
 with
     await aa.ok;
@@ -568,6 +549,7 @@ return 10;
 }
 
 Test { [[
+input void START;
 do
     class T with
 do
@@ -576,6 +558,7 @@ do
 end
 T aa;
 par/and do
+    await START;
     emit aa.go;
 with
     await aa.ok;
@@ -595,6 +578,7 @@ end
 }
 
 Test { [[
+input void START;
 input int F;
 do
     class T with
@@ -605,6 +589,7 @@ do
 end
 T aa;
 par/and do
+    await START;
     emit aa.go;
 with
     await aa.ok;
@@ -634,16 +619,20 @@ end
 }
 
 Test { [[
+input void START;
 input void F;
 class T1 with
 do
-    await 1s;
-    _fprintf(_stderr,"oioi\n");
+    loop do
+        await 1s;
+        emit this.ok;
+    end
 end
 class T with
 do
     T1 a;
     par/and do
+        await 1ms;
         emit a.go;
     with
         await a.ok;
@@ -655,6 +644,7 @@ par/or do
     do
         T aa;
         par/and do
+            await START;
             emit aa.go;
         with
             await aa.ok;
@@ -671,11 +661,12 @@ return ret;
         ['~>F;~>5s;~>F'] = 10,
         ['~>1s;~>F;~>F;~>1s'] = 10,
         ['~>1s;~>F;~>1s;~>F'] = 10,
-        ['~>1s;~>1s;~>F'] = 11,
+        ['~>1s;~>2s;~>F'] = 11,
     },
 }
 
 Test { [[
+input void START;
 input void F;
 class T1 with
 do
@@ -685,6 +676,7 @@ class T with
 do
     T1 a;
     par/and do
+        await (0)ms;
         emit a.go;
     with
         await a.ok;
@@ -696,6 +688,7 @@ T aa;
 par/or do
     do
         par/and do
+            await START;
             emit aa.go;
         with
             await aa.ok;
@@ -717,6 +710,7 @@ return ret;
 }
 
 Test { [[
+input void START;
 input void F;
 class T with
 do
@@ -733,6 +727,7 @@ par/or do
     do
         T aa;
         par/and do
+            await START;
             emit aa.go;
         with
             await aa.ok;
@@ -755,6 +750,7 @@ return ret;
 }
 
 Test { [[
+input void START;
 input void F;
 class T1 with
 do
@@ -766,6 +762,7 @@ do
     par/or do
         T1 a;
         par/and do
+            await (0)ms;
             emit a.go;
         with
             await a.ok;
@@ -780,6 +777,7 @@ par/or do
     do
         T aa;
         par/and do
+            await START;
             emit aa.go;
         with
             await aa.ok;
@@ -802,6 +800,7 @@ return ret;
 }
 
 Test { [[
+input void START;
 input void F;
 class T with
 do
@@ -811,6 +810,7 @@ T aa;
 int ret = 10;
 par/or do
     par/and do
+        await START;
         emit aa.go;
     with
         await aa.ok;
@@ -829,16 +829,21 @@ return ret;
 }
 
 Test { [[
+input void START;
 input void F;
 class T with
 do
-    await 1s;
+    loop do
+        await 1s;
+        emit this.ok;
+    end
 end
 T aa;
 int ret = 0;
 par/or do
     loop do
         par/and do
+            await (0)ms;
             emit aa.go;
         with
             await aa.ok;
@@ -884,6 +889,7 @@ end
 }
 
 Test { [[
+input void START;
 input void A;
 class T with
     event int a;
@@ -899,6 +905,7 @@ do
 end
 T aa;
 par/and do
+    await START;
     emit aa.go;
 with
     await aa.ok;
@@ -909,6 +916,7 @@ return aa.a;
 }
 
 Test { [[
+input void START;
 class T with
     event int a;
 do
@@ -921,6 +929,7 @@ do
     end
 end
 T aa;
+await START;
 emit aa.go;
 return aa.a;
 ]],
@@ -946,15 +955,18 @@ return a;
 }
 
 Test { [[
+input void START;
 class T with
-    int v;
+    int v, going;
 do
+    going = 1;
     v = 10;
 end
 T a;
 T* ptr;
 ptr = a;
 par/or do
+    await START;
     emit ptr->go;
     if ptr->going then
         await FOREVER;
@@ -964,7 +976,6 @@ with
 end
 return ptr->v + a.v;
 ]],
-    tight = true,
     run = 20,
 }
 
@@ -1203,7 +1214,6 @@ end
 return aa.a;
 ]],
     todo = 'par/or termina o exec',
-    tight = true,
     run = 10,
 }
 
@@ -1226,7 +1236,6 @@ end
 return aa.a;
 ]],
     todo = 'par/or termina o exec',
-    tight = true,
     run = 10,
 }
 
@@ -3404,24 +3413,18 @@ return 0;
 }
 
 Test { [[
-input void F;
+input void START;
 event void a,b;
-par/or do
-    loop do
         par/and do
             await a;
         with
+            await START;
             emit b;
             emit a;
         end
-    end
     return 5;
-with
-    await F;
-end
-return 1;
 ]],
-    tight = 'ERR : line 4 : tight loop',
+    run = 5,
 }
 
 Test { [[
@@ -10484,7 +10487,7 @@ with
     return b;
 end;
 ]],
-    tight = 'ERR : line 5 : tight loop',
+    run = { ['1~>A;~>Z;2~>A;~>D']=3 },
 }
 
 Test { [[

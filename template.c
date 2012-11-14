@@ -253,7 +253,17 @@ void ceu_lst_ins (tceu_nevt evt, void* src, void* org, tceu_nlbl lbl, s32 togo) 
 #endif
     lst->togo = togo;
     CEU.lsts_n++;
-    assert(CEU.lsts_n <= CEU_NLSTS);        // TODO: remove
+#ifdef CEU_DEBUG
+/*
+fprintf(stderr, "======== lsts (%d)\n", CEU.lsts_n);
+for (int i=0; i<CEU.lsts_n; i++) {
+    tceu_lst* lst = &CEU.lsts[i];
+    fprintf(stderr,"LST: src.%p org=%p e.%d l.%d\n",
+                lst->src, lst->org, lst->evt, lst->lbl);
+}
+*/
+    assert(CEU.lsts_n <= CEU_NLSTS);
+#endif
 }
 
 void ceu_lst_clr (void* org, tceu_nlbl l1, tceu_nlbl l2) {
@@ -366,9 +376,6 @@ int ceu_go_event (int* ret, tceu_nevt id, void* data)
 #endif
     ceu_lst_go(id, 0);
 
-#ifdef CEU_WCLOCKS
-    //CEU.wclk_late--;
-#endif
     return ceu_go(ret);
 }
 #endif

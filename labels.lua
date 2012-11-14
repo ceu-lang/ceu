@@ -5,6 +5,7 @@ _LBLS = {
 
 function new (lbl)
     lbl.id = lbl[1] .. (lbl[2] and '' or '_' .. #_LBLS.list)
+    lbl.id = string.gsub(lbl.id, '%*','_')
     lbl.id = string.gsub(lbl.id, '%.','_')
     lbl.id = string.gsub(lbl.id, '%$','_')
     _LBLS.list[lbl] = true
