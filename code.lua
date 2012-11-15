@@ -49,14 +49,13 @@ function BLOCK_GATES (me)
     CASE(me, me.lbl_out)
     COMM(me, 'close gates')
 
-    -- TODO: otimization for { T a; execute a } (org ranges)
+    LINE(me, 'ceu_clr(_trk_.org,' ..me.lbls[1]..','..me.lbls[2]..','
+                ..me.ns.orgs..','..me.ns.emits..','..me.ns.awaits..','
+                ..me.ns.fins..','..me.lbl_out2.id..');')
 
-    if me.ns.awaits > 0 then
-        LINE(me, 'ceu_lst_clr(_trk_.org,'..me.lbls[1]..','..me.lbls[2]..');')
-    end
-
-    if me.ns.emits > 0 then
-        LINE(me, 'ceu_track_clr(_trk_.org,'..me.lbls[1]..','..me.lbls[2]..');')
+    if me.ns.fins>0 or me.ns.orgs>0 then
+        HALT(me)
+        CASE(me, me.lbl_out2)
     end
 end
 
@@ -73,15 +72,13 @@ F = {
 
     Dcl_cls = function (me)
         CASE(me, me.lbl)
-
         CONC_ALL(me)
-
         if me == _MAIN then
             local ret = _ENV.getvar('$ret', me.blk)
             LINE(me, 'if (ret) *ret = '..ret.val..';')
             LINE(me, 'return 1;')
-            HALT(me)
         end
+        HALT(me)
     end,
 
     Host = function (me)
@@ -89,22 +86,44 @@ F = {
     end,
 
     Block = function (me)
+        -- spawn orgs
         for _, var in ipairs(me.vars) do
             if var.cls then
-                LINE(me, 'ceu_track_ins(CEU.stack, CEU_TREE_MAX,'
-                            ..var.val..', 0, '..var.cls.lbl.id..');')
+                LINE(me, [[{
+void* org0 = ]]..var.val..[[;
+ceu_track_ins(CEU.stack, CEU_TREE_MAX, org0, 0,]]..var.cls.lbl.id..[[);
+*((void**)(org0+]]..var.cls.mem.par_org..[[)) = _trk_.org;
+*((tceu_nlbl*)(org0+]]..var.cls.mem.par_lbl..[[)) = ]]..var.lbl_par.id..[[;
+}]])
             elseif var.arr then
                 local cls = _ENV.clss[_TP.deref(var.tp)]
                 if cls then
                     for i=0, var.arr-1 do
-                        LINE(me, 'ceu_track_ins(CEU.stack, CEU_TREE_MAX,'
-                                    ..var.val..'+'..i..'*'..cls.mem.max
-                                    ..', 0, '..cls.lbl.id..');')
+                LINE(me, [[{
+void* org0 = ]]..var.val..'+'..i..'*'..cls.mem.max..[[;
+ceu_track_ins(CEU.stack, CEU_TREE_MAX, org0, 0,]]..cls.lbl.id..[[);
+*((void**)(org0+]]..cls.mem.par_org..[[)) = _trk_.org;
+*((tceu_nlbl*)(org0+]]..cls.mem.par_lbl..[[)) = ]]..var.lbl_par.id..[[;
+}]])
                     end
                 end
             end
         end
+
         CONC_ALL(me)
+
+        -- finalize orgs
+        if me.ns.orgs > 0 then
+            LINE(me, 'ceu_track_ins(CEU.stack,'..me.lbl_out.prio..','
+                        ..'_trk_.org, 0,'..me.lbl_out.id..');')
+            HALT(me)
+            CASE(me, me.lbl_out)
+            LINE(me, 'ceu_clr(_trk_.org,' ..me.lbls[1]..','..me.lbls[2]..','
+                    ..me.ns.orgs..','..me.ns.emits..','..me.ns.awaits..','
+                    ..me.ns.fins..','..me.lbl_out2.id..');')
+            HALT(me)
+            CASE(me, me.lbl_out2)
+        end
     end,
 
     BlockN  = CONC_ALL,

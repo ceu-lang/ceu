@@ -34,6 +34,10 @@ _ENV = {
     },
 }
 
+function CLS ()
+    return _AST.iter'Dcl_cls'()
+end
+
 function newvar (me, blk, isEvt, tp, dim, id)
     for stmt in _AST.iter() do
         if stmt.tag == 'Async' then

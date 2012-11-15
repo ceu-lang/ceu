@@ -42,12 +42,27 @@ F = {
         _ENV.types.tceu_nlbl = _TP.n2bytes(#_LBLS.list)
     end,
 
+    Block = function (me)
+        -- TODO: inneficient
+        if me.ns.orgs > 0 then
+            me.lbl_out  = new{'Block_out', prio=me.depth}
+            me.lbl_out2 = new{'Block_out2'}
+        end
+    end,
+
     Dcl_cls = function (me)
         me.lbl = new{'Class_'..me.id, true}
     end,
 
+    Dcl_var = function (me)
+        if me.var.cls or (me.var.arr and _ENV.clss[_TP.deref(me.var.tp)]) then
+            me.var.lbl_par = new{'Par'}
+        end
+    end,
+
     SetBlock_pre = function (me)
-        me.lbl_out = new{'Set_out', prio=me.depth}
+        me.lbl_out  = new{'Set_out',  prio=me.depth}
+        me.lbl_out2 = new{'Set_out2'}
     end,
 
     _Par_pre = function (me)
@@ -62,7 +77,8 @@ F = {
     end,
     ParOr_pre = function (me)
         F._Par_pre(me)
-        me.lbl_out = new{'ParOr_out', prio=me.depth}
+        me.lbl_out  = new{'ParOr_out',  prio=me.depth}
+        me.lbl_out2 = new{'ParOr_out2'}
     end,
     ParAnd_pre = function (me)
         F._Par_pre(me)
@@ -82,8 +98,9 @@ F = {
     end,
 
     Loop_pre = function (me)
-        me.lbl_ini = new{'Loop_ini'}
-        me.lbl_out = new{'Loop_out', prio=me.depth }
+        me.lbl_ini  = new{'Loop_ini'}
+        me.lbl_out  = new{'Loop_out',  prio=me.depth }
+        me.lbl_out2 = new{'Loop_out2'}
     end,
 
     EmitExtS = function (me)

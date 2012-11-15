@@ -16,6 +16,8 @@ local t2n = {
 F = {
     Dcl_cls_pre = function (me)
         me.mem = { off=0, max=0 }
+        me.mem.par_org  = alloc(me.mem, _ENV.types.pointer)  -- parent org/lbl
+        me.mem.par_lbl = alloc(me.mem, _ENV.types.tceu_nlbl) -- for ceu_clr_*
     end,
 
     Block_pre = function (me)

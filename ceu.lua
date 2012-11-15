@@ -156,7 +156,7 @@ do
     tpl = sub(tpl, '=== CODE ===',   _AST.root.code)
 
     -- LBL2FIN
-    if _PROPS.has_pses and _PROPS.has_fins then
+    if _PROPS.has_fins then
         local t = {}
         for _, lbl in ipairs(_LBLS.list) do
             t[#t+1] = (string.find(lbl.id,'__fin') and 1) or 0

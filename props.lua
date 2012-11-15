@@ -38,8 +38,7 @@ local NO_fin = {
     Host=true, Return=true, Async=true,
     ParEver=true, ParOr=true, ParAnd=true,
     AwaitExt=true, AwaitInt=true, AwaitN=true, AwaitT=true,
-    --EmitExtE=true, EmitExtS=true, EmitInt=true, EmitT=true,
-    --Dcl_type=true, Dcl_det=true, Dcl_var=true, Dcl_int=true, Dcl_ext=true,
+    EmitInt=true,
 }
 
 local NO_async = {
@@ -54,7 +53,9 @@ F = {
         me.ns = {
             tracks = 1,
             awaits = 0,
-            emits  = 0,     -- code.lua (BLOCK_GATES)
+            emits  = 0,
+            fins   = 0,
+            orgs   = 0,
         }
     end,
     Node = function (me)
@@ -101,12 +102,21 @@ F = {
         _PROPS.has_exts = true
     end,
 
+    Dcl_var = function (me)
+        if me.var.cls then
+            me.ns.orgs = 1
+        elseif me.var.arr and _ENV.clss[_TP.deref(me.var.tp)] then
+            me.ns.orgs = me.var.arr
+        end
+    end,
+
     Pause = function (me)
         _PROPS.has_pses = true
     end,
 
     Finally = function (me)
         _PROPS.has_fins = true
+        me.ns.fins = 1
     end,
 
     Async = function (me)

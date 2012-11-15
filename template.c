@@ -21,9 +21,7 @@
 #define CEU_NLSTS      (=== CEU_NLSTS ===)
 
 #ifdef CEU_FINS
-#ifdef CEU_PSES
 #define CEU_NLBLS      (=== CEU_NLBLS ===)
-#endif
 #endif
 
 // Macros that can be defined:
@@ -91,9 +89,7 @@ typedef struct {
 #endif
 
 #ifdef CEU_FINS
-#ifdef CEU_PSES
     u8          lbl2fin[CEU_NLBLS];
-#endif
 #endif
 
     tceu_nlst   lsts_n;
@@ -114,9 +110,7 @@ tceu CEU = {
     0, CEU_WCLOCK_NONE,
 #endif
 #ifdef CEU_FINS
-#ifdef CEU_PSES
     { === LBL2FIN === },
-#endif
 #endif
     0, {},
     {}
@@ -227,12 +221,25 @@ int ceu_track_rem (tceu_trk* trk, tceu_ntrk N)
 #endif
 }
 
+int ceu_clr_child (void* cur, void* org, tceu_nlbl l1, tceu_nlbl l2) {
+    void* par = *PTR(void**,cur);
+    if (cur == CEU.mem) {
+        return 0;                   // root org, no parent
+    } else if (par == org) {
+        tceu_nlbl lbl = *PTR(tceu_nlbl*,(cur+sizeof(void*)));
+        return lbl>=l1 && lbl<=l2;
+    } else {
+        return ceu_clr_child(par, org, l1, l2);
+    }
+}
+
 #ifdef CEU_STACK
-void ceu_track_clr (void* org, tceu_nlbl l1, tceu_nlbl l2) {
+void ceu_track_clr (int child, void* org, tceu_nlbl l1, tceu_nlbl l2) {
     int i;
     for (i=1; i<=CEU.tracks_n; i++) {
         tceu_trk* trk = &CEU.tracks[i];
-        if (trk->org==org && trk->lbl>=l1 && trk->lbl<=l2) {
+        if ( trk->org==org && trk->lbl>=l1 && trk->lbl<=l2
+        ||   child && trk->org!=org && ceu_clr_child(trk->org,org,l1,l2) ) {
             ceu_track_rem(NULL, i);
             i--;
         }
@@ -266,11 +273,39 @@ for (int i=0; i<CEU.lsts_n; i++) {
 #endif
 }
 
-void ceu_lst_clr (void* org, tceu_nlbl l1, tceu_nlbl l2) {
+void ceu_lst_go (tceu_nevt evt, void* src)
+{
     tceu_nlst i;
     for (i=0 ; i<CEU.lsts_n ; i++) {
         tceu_lst* lst = &CEU.lsts[i];
-        if (lst->org==org && lst->lbl>=l1 && lst->lbl<=l2) {
+        if (lst->evt==evt && lst->src==src) {
+#ifdef CEU_PSES
+            if (lst->pse == 0) {
+#endif
+                ceu_track_ins(CEU.stack, CEU_TREE_MAX, lst->org, 0, lst->lbl);
+                (CEU.lsts_n)--;
+                if (i < CEU.lsts_n) {
+                    *lst = CEU.lsts[CEU.lsts_n];
+                    i--;
+                }
+#ifdef CEU_PSES
+            }
+#endif
+        }
+    }
+}
+
+void ceu_lst_clr (int child, void* org, tceu_nlbl l1, tceu_nlbl l2) {
+    tceu_nlst i;
+    for (i=0 ; i<CEU.lsts_n ; i++) {
+        tceu_lst* lst = &CEU.lsts[i];
+        if ( lst->org==org && lst->lbl>=l1 && lst->lbl<=l2
+        ||   child && lst->org!=org && ceu_clr_child(lst->org,org,l1,l2) ) {
+#ifdef CEU_FINS
+            if (CEU.lbl2fin[lst->lbl]) { // always trigger finally's
+                ceu_track_ins(CEU.stack, CEU_TREE_MAX, lst->org, 0, lst->lbl);
+            }
+#endif
             CEU.lsts_n--;
             if (i < CEU.lsts_n) {
                 *lst = CEU.lsts[CEU.lsts_n];
@@ -302,26 +337,22 @@ void ceu_lst_pse (void* org, tceu_nlbl l1, tceu_nlbl l2, int inc) {
 }
 #endif
 
-void ceu_lst_go (tceu_nevt evt, void* src)
+void ceu_clr (void* org, tceu_nlbl l1, tceu_nlbl l2,
+                int hasOrg, int hasEmt, int hasAwt, int hasFin,
+                tceu_nlbl lbl_out)
 {
-    tceu_nlst i;
-    for (i=0 ; i<CEU.lsts_n ; i++) {
-        tceu_lst* lst = &CEU.lsts[i];
-        if (lst->evt==evt && lst->src==src) {
-#ifdef CEU_PSES
-            if (lst->pse == 0) {
+#ifdef CEU_STACK
+    if (hasOrg || hasEmt)
+        ceu_track_clr(hasOrg, org, l1, l2);
 #endif
-                ceu_track_ins(CEU.stack, CEU_TREE_MAX, lst->org, 0, lst->lbl);
-                (CEU.lsts_n)--;
-                if (i < CEU.lsts_n) {
-                    *lst = CEU.lsts[CEU.lsts_n];
-                    i--;
-                }
-#ifdef CEU_PSES
-            }
-#endif
-        }
-    }
+
+    // must be after track_clr (fins)
+    if (hasOrg || hasAwt || hasFin)
+        ceu_lst_clr(hasOrg, org, l1, l2);
+
+    // finalizers must execute before the continuation
+    if (hasOrg || hasFin)
+        ceu_track_ins(CEU.stack, CEU_TREE_MAX-1, org, 0, lbl_out);
 }
 
 /**********************************************************************/

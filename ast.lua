@@ -157,21 +157,7 @@ local C; C = {
                         node('Var')(ln,'$ret'),
                         blk))
         else
-            blk = node('Block')(ln,
-                    node('Dcl_var')(ln, true,  'void', false, 'go'),
-                    node('Dcl_var')(ln, true,  'void', false, 'go_kill'),
-                    node('Dcl_var')(ln, true,  'void', false, 'ok'),
-                    defs,
-                    node('AwaitInt')(ln, node('Var')(ln,'go')),
-                    node('ParOr')(ln,
-                        node('BlockN')(ln,
-                            blk,
-                            node('EmitInt')(ln,
-                                node('Var')(ln,'ok'))),
-                        node('BlockN')(ln,
-                            node('AwaitInt')(ln,
-                                node('Var')(ln,'go_kill')))),
-                    node('AwaitN')(ln))
+            blk = node('Block')(ln, defs, blk)
         end
 
         for i=1, FIN do
@@ -183,27 +169,6 @@ local C; C = {
         FIN = 0
         TOP[#TOP+1] = cls
     end,
-    --[[
-    class T do
-        <blk>
-    end
-    // becomes //
-    class T
-        event void go;
-        event void go_kill;
-        event void ok;
-        <defs>
-    do
-        await go;
-        par/or do
-            <blk>
-            emit ok;
-        with
-            await go_kill;
-        end
-        await FOREVER;
-    end
-    ]]
 
     This  = node('This'),
 
@@ -253,13 +218,13 @@ local C; C = {
 
         // becomes
 
-        event void $1;
+        event void $fin;
         do
             par/and do
                 <b1>
-                emit $1;
+                emit $fin;
             with
-                await $1;
+                await/0 $fin;
                 <b2>
             end
         end
@@ -343,7 +308,7 @@ local C; C = {
                 await <evt>;
                 if $pse != <evt> then
                     $pse = <evt>;
-                    if evt then
+                    if <evt> then
                         <PSE++>;
                     else
                         <PSE-->;
@@ -452,35 +417,12 @@ end
 
 _GG = m.P(_GG):match(_STR)
 
--------------------------------------------------------------------------------
-
-function CLS ()
-    return _AST.iter'Dcl_cls'()
-end
-
 F = {
     Block_pre = function (me)
         local blk = _AST.iter'Block'()
         local cls = _AST.iter'Dcl_cls'()
         me.par = blk and (cls.depth < blk.depth) and blk
     end,
-
-    --TODO
-    --[[
-    exec <exp>;
-    // becomes //
-    do
-        par/or do
-            emit <exp>.$go_start;
-            await FOREVER;
-        with
-            await <exp>.$ok_return;
-        end
-    finally
-        emit <exp>.$go_kill;
-    end
-    ]]
-
 
     SetBlock_pre = function (me)
         me.blk = _AST.iter'Block'()
@@ -495,12 +437,6 @@ F = {
         local blk = node('BlockN')(me.ln)
         blk[#blk+1] = node('SetExp')(me.ln, var, e2)
 
-        -- Finalizer
-        for i=1, FIN do
-            blk[#blk+1] = node('EmitInt')(blk.ln,
-                            node('Var')(blk.ln, '$fin_'..i))
-        end
-
         blk[#blk+1] = node('Return')(me.ln)
         return blk
     end,
@@ -508,25 +444,6 @@ F = {
     SetAwait = function (me)
         local _, awt = unpack(me)
         awt.ret = awt.ret or awt
-    end,
-
-    -- Finalizer
-    ParOr = function (me)
-        for i, sub in ipairs(me) do
-            for i=1, CLS().n_fins do
-                sub[#sub+1] = node('EmitInt')(sub.ln,
-                                node('Var')(sub.ln, '$fin_'..i))
-            end
-        end
-    end,
-    Break = function (me)
-        local blk = node('BlockN')(me.ln)
-        for i=1, CLS().n_fins do
-            blk[#blk+1] = node('EmitInt')(blk.ln,
-                            node('Var')(blk.ln, '$fin_'..i))
-        end
-        blk[#blk+1] = me
-        return blk
     end,
 }
 
