@@ -13,11 +13,11 @@ local I2TK
 
 local f = function (s, i, tk)
     if tk == '' then
-        tk = 'BOF'
+        tk = '<BOF>'
         LST_i = 1           -- restart parsing
         ERR_i = 0           -- ERR_i < 1st i
         ERR_msg = '?'
-        I2TK = { [1]='BOF' }
+        I2TK = { [1]='<BOF>' }
     elseif i > LST_i then
         LST_i = i
         I2TK[i] = tk
@@ -85,7 +85,7 @@ TYPES = P'void' + 'int'
       + 's8' + 's16' + 's32' + 's64'
 
 KEYS = P'async'  + 'await'   + 'break'   + 'C'
-     + 'do'      + 'emit'    + 'else'    + 'else/if'   + 'end'  + 'event'
+     + 'do'      + 'emit'    + 'else'    + 'else/if'  + 'end'  + 'event'
      + 'finally' + 'FOREVER' + 'input'   + 'if'       + 'loop' + 'null'
      + 'output'  + 'par'     + 'par/and' + 'par/or'   + 'return'
      + 'sizeof'  + 'then'    + 'type'    + 'with'
@@ -93,6 +93,7 @@ KEYS = P'async'  + 'await'   + 'break'   + 'C'
      + 'pause/if'
      + 'class'
      + 'this'
+     + 'new'
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
@@ -121,7 +122,7 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
             + V'_Dcl_ext'
             + V'_Dcl_int' + V'_Dcl_var'
             + V'Dcl_type'
-            + V'_Set'     + V'CallStmt' -- must be after Set
+            + V'_Set'     + V'CallStmt' -- respect this order
             + EM'statement (missing `_´?)'
 
     , _StmtB = V'_Do'   + V'Async'  + V'Host'
@@ -144,6 +145,7 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
                 Cc'SetAwait' * (V'AwaitT'+V'AwaitExt'+V'AwaitInt') +
                 Cc'SetBlock' * V'_SetBlock' +
                 Cc'SetExp'   * V'_Exp' +
+                Cc'SetNew'   * K'new' * V'ID_cls' +
                 EM'expression'
               )
 

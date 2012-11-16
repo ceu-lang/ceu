@@ -151,6 +151,9 @@ do
     tpl = sub(tpl, '=== TCEU_NEVT ===',  tps[_ENV.types.tceu_nevt])
     tpl = sub(tpl, '=== TCEU_NLBL ===',  tps[_ENV.types.tceu_nlbl])
 
+    tpl = sub(tpl, '=== CEU_CLS_PAR_ORG ===',  _MEM.cls.par_org)
+    tpl = sub(tpl, '=== CEU_CLS_PAR_LBL ===',  _MEM.cls.par_lbl)
+
     tpl = sub(tpl, '=== LABELS ===', _LBLS.code)
     tpl = sub(tpl, '=== HOST ===',   _CODE.host)
     tpl = sub(tpl, '=== CODE ===',   _AST.root.code)
@@ -203,6 +206,9 @@ do
     end
     if _PROPS.has_fins then
         str = str .. '#define CEU_FINS\n'
+    end
+    if _PROPS.has_news then
+        str = str .. '#define CEU_NEWS\n'
     end
 
     -- TODO: goto _OPTS

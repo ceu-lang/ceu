@@ -55,8 +55,8 @@ F = {
     end,
 
     Dcl_var = function (me)
-        if me.var.cls or (me.var.arr and _ENV.clss[_TP.deref(me.var.tp)]) then
-            me.var.lbl_par = new{'Par'}
+        if me.var.cls or _ENV.clss[_TP.deref(me.var.tp)] then
+            me.var.lbl_par = new{'Par_org'}
         end
     end,
 

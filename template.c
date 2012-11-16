@@ -1,8 +1,15 @@
+=== DEFS ===
+
 #include <string.h>
 #include <limits.h>
-#include <assert.h>
 
-=== DEFS ===
+#ifdef CEU_DEBUG
+#include <assert.h>
+#endif
+
+#ifdef CEU_NEWS
+#include <stdlib.h>
+#endif
 
 #define CEU_STACK_MIN 0x01    // min prio for `stack´
 #define CEU_TREE_MAX 0xFF     // max prio for `tree´
@@ -16,9 +23,9 @@
 #define PTR(tp,off)     ((tp)(off))
 #define PTR_org(tp,off) ((tp)(_trk_.org + off))
 
-#define CEU_NMEM       (=== CEU_NMEM ===)
-#define CEU_NTRACKS    (=== CEU_NTRACKS ===)
-#define CEU_NLSTS      (=== CEU_NLSTS ===)
+#define CEU_NMEM       (=== CEU_NMEM ===+1000)
+#define CEU_NTRACKS    (=== CEU_NTRACKS === + 1000)
+#define CEU_NLSTS      (=== CEU_NLSTS === + 1000)
 
 #ifdef CEU_FINS
 #define CEU_NLBLS      (=== CEU_NLBLS ===)
@@ -222,11 +229,11 @@ int ceu_track_rem (tceu_trk* trk, tceu_ntrk N)
 }
 
 int ceu_clr_child (void* cur, void* org, tceu_nlbl l1, tceu_nlbl l2) {
-    void* par = *PTR(void**,cur);
+    void* par = *PTR(void**,cur+(=== CEU_CLS_PAR_ORG ===));
     if (cur == CEU.mem) {
         return 0;                   // root org, no parent
     } else if (par == org) {
-        tceu_nlbl lbl = *PTR(tceu_nlbl*,(cur+sizeof(void*)));
+        tceu_nlbl lbl = *PTR(tceu_nlbl*,(cur+(=== CEU_CLS_PAR_LBL ===)));
         return lbl>=l1 && lbl<=l2;
     } else {
         return ceu_clr_child(par, org, l1, l2);
@@ -295,16 +302,16 @@ void ceu_lst_go (tceu_nevt evt, void* src)
     }
 }
 
-void ceu_lst_clr (int child, void* org, tceu_nlbl l1, tceu_nlbl l2) {
+void ceu_lst_clr (int child, void* org, tceu_nlbl l1, tceu_nlbl l2, u8 tree) {
     tceu_nlst i;
     for (i=0 ; i<CEU.lsts_n ; i++) {
         tceu_lst* lst = &CEU.lsts[i];
         if ( lst->org==org && lst->lbl>=l1 && lst->lbl<=l2
         ||   child && lst->org!=org && ceu_clr_child(lst->org,org,l1,l2) ) {
 #ifdef CEU_FINS
-            if (CEU.lbl2fin[lst->lbl]) { // always trigger finally's
-                ceu_track_ins(CEU.stack, CEU_TREE_MAX, lst->org, 0, lst->lbl);
-            }
+            u8 fin = CEU.lbl2fin[lst->lbl];
+            if (fin)   // always trigger finally's
+                ceu_track_ins(CEU.stack, tree+fin, lst->org, 0, lst->lbl);
 #endif
             CEU.lsts_n--;
             if (i < CEU.lsts_n) {
@@ -339,7 +346,7 @@ void ceu_lst_pse (void* org, tceu_nlbl l1, tceu_nlbl l2, int inc) {
 
 void ceu_clr (void* org, tceu_nlbl l1, tceu_nlbl l2,
                 int hasOrg, int hasEmt, int hasAwt, int hasFin,
-                tceu_nlbl lbl_out)
+                tceu_nlbl lbl_out, u8 tree)
 {
 #ifdef CEU_STACK
     if (hasOrg || hasEmt)
@@ -348,11 +355,11 @@ void ceu_clr (void* org, tceu_nlbl l1, tceu_nlbl l2,
 
     // must be after track_clr (fins)
     if (hasOrg || hasAwt || hasFin)
-        ceu_lst_clr(hasOrg, org, l1, l2);
+        ceu_lst_clr(hasOrg, org, l1, l2, tree);
 
     // finalizers must execute before the continuation
     if (hasOrg || hasFin)
-        ceu_track_ins(CEU.stack, CEU_TREE_MAX-1, org, 0, lbl_out);
+        ceu_track_ins(CEU.stack, tree, org, 0, lbl_out);
 }
 
 /**********************************************************************/

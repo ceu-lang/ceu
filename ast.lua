@@ -165,12 +165,13 @@ local C; C = {
         end
 
         local cls = node('Dcl_cls')(ln,id,blk)
+        cls.fin = blk[2].fin
         cls.n_fins = FIN
         FIN = 0
         TOP[#TOP+1] = cls
     end,
 
-    This  = node('This'),
+    This = node('This'),
 
     Block   = node('Block'),
     BlockN  = node('BlockN'),
@@ -205,10 +206,12 @@ local C; C = {
         local awt = node('AwaitInt')(ln, node('Var')(ln, evt), true)
         b1[#b1+1] = node('EmitInt')(ln, node('Var')(ln, evt))
 
-        return node('Block')(ln,
-                node('ParAnd')(ln,
-                    b1,
-                    node('BlockN')(ln, awt, fin)))
+        local blk = node('Block')(ln,
+                        node('ParAnd')(ln,
+                            b1,
+                            node('BlockN')(ln, awt, fin)))
+        blk.fin = fin
+        return blk
 --[=[
         do
             <b1>
@@ -339,6 +342,7 @@ local C; C = {
                                 node('Var')(ln,t[i]),
                                 t[i+1],
                                 t[i+2])
+                ret[#ret].isDcl = true
             end
         end
         return unpack(ret)
@@ -355,6 +359,7 @@ local C; C = {
                                 node('Var')(ln,t[i]),
                                 t[i+1],
                                 t[i+2])
+                ret[#ret].isDcl = true
             end
         end
         return unpack(ret)

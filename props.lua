@@ -31,10 +31,11 @@ _PROPS = {
     has_emits   = false,
     has_pses    = false,
     has_fins    = false,
+    has_news    = false,
 }
 
 local NO_fin = {
-    Finally=true, Break=true,
+    Finally=true,
     Host=true, Return=true, Async=true,
     ParEver=true, ParOr=true, ParAnd=true,
     AwaitExt=true, AwaitInt=true, AwaitN=true, AwaitT=true,
@@ -108,6 +109,11 @@ F = {
         elseif me.var.arr and _ENV.clss[_TP.deref(me.var.tp)] then
             me.ns.orgs = me.var.arr
         end
+    end,
+
+    SetNew = function (me)
+        _PROPS.has_news = true
+        me.ns.orgs = 1
     end,
 
     Pause = function (me)

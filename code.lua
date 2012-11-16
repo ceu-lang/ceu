@@ -45,13 +45,13 @@ function COMM (me, comm)
     LINE(me, '/* '..comm..' */', 0)
 end
 
-function BLOCK_GATES (me)
+function CEU_CLR (me)
     CASE(me, me.lbl_out)
-    COMM(me, 'close gates')
+    COMM(me, 'CEU_CLR')
 
     LINE(me, 'ceu_clr(_trk_.org,' ..me.lbls[1]..','..me.lbls[2]..','
                 ..me.ns.orgs..','..me.ns.emits..','..me.ns.awaits..','
-                ..me.ns.fins..','..me.lbl_out2.id..');')
+                ..me.ns.fins..','..me.lbl_out2.id..', _trk_.tree);')
 
     if me.ns.fins>0 or me.ns.orgs>0 then
         HALT(me)
@@ -81,6 +81,23 @@ F = {
         HALT(me)
     end,
 
+    SetNew = function (me)
+        local exp, _ = unpack(me)
+        local org = (exp.org and exp.org.val) or '_trk_.org'
+        LINE(me, [[{
+void* org0;
+]]..exp.val..' = malloc('..me.cls.mem.max..[[);
+org0 = ]]..exp.val..[[;
+if (org0) {
+    ceu_track_ins(CEU.stack, CEU_TREE_MAX, org0, 0,]]..me.cls.lbl.id..[[);
+    *((u8*)       (org0+]].._MEM.cls.dyn..    [[)) = 1;
+    *((void**)    (org0+]].._MEM.cls.par_org..[[)) = ]]..org..[[;
+    *((tceu_nlbl*)(org0+]].._MEM.cls.par_lbl..[[)) = ]]
+        ..exp.var.lbl_par.id..[[;
+}
+}]])
+    end,
+
     Host = function (me)
         _CODE.host = _CODE.host .. me[1] .. '\n'
     end,
@@ -92,8 +109,9 @@ F = {
                 LINE(me, [[{
 void* org0 = ]]..var.val..[[;
 ceu_track_ins(CEU.stack, CEU_TREE_MAX, org0, 0,]]..var.cls.lbl.id..[[);
-*((void**)(org0+]]..var.cls.mem.par_org..[[)) = _trk_.org;
-*((tceu_nlbl*)(org0+]]..var.cls.mem.par_lbl..[[)) = ]]..var.lbl_par.id..[[;
+*((u8*)       (org0+]].._MEM.cls.dyn..    [[)) = 0;
+*((void**)    (org0+]].._MEM.cls.par_org..[[)) = _trk_.org;
+*((tceu_nlbl*)(org0+]].._MEM.cls.par_lbl..[[)) = ]]..var.lbl_par.id..[[;
 }]])
             elseif var.arr then
                 local cls = _ENV.clss[_TP.deref(var.tp)]
@@ -102,8 +120,9 @@ ceu_track_ins(CEU.stack, CEU_TREE_MAX, org0, 0,]]..var.cls.lbl.id..[[);
                 LINE(me, [[{
 void* org0 = ]]..var.val..'+'..i..'*'..cls.mem.max..[[;
 ceu_track_ins(CEU.stack, CEU_TREE_MAX, org0, 0,]]..cls.lbl.id..[[);
-*((void**)(org0+]]..cls.mem.par_org..[[)) = _trk_.org;
-*((tceu_nlbl*)(org0+]]..cls.mem.par_lbl..[[)) = ]]..var.lbl_par.id..[[;
+*((u8*)       (org0+]].._MEM.cls.dyn..    [[)) = 0;
+*((void**)    (org0+]].._MEM.cls.par_org..[[)) = _trk_.org;
+*((tceu_nlbl*)(org0+]].._MEM.cls.par_lbl..[[)) = ]]..var.lbl_par.id..[[;
 }]])
                     end
                 end
@@ -117,17 +136,20 @@ ceu_track_ins(CEU.stack, CEU_TREE_MAX, org0, 0,]]..cls.lbl.id..[[);
             LINE(me, 'ceu_track_ins(CEU.stack,'..me.lbl_out.prio..','
                         ..'_trk_.org, 0,'..me.lbl_out.id..');')
             HALT(me)
-            CASE(me, me.lbl_out)
-            LINE(me, 'ceu_clr(_trk_.org,' ..me.lbls[1]..','..me.lbls[2]..','
-                    ..me.ns.orgs..','..me.ns.emits..','..me.ns.awaits..','
-                    ..me.ns.fins..','..me.lbl_out2.id..');')
-            HALT(me)
-            CASE(me, me.lbl_out2)
+            CEU_CLR(me)
         end
     end,
 
     BlockN  = CONC_ALL,
-    Finally = CONC,
+    Finally = function (me)
+        CONC_ALL(me)
+        if CLS().fin == me then
+            LINE(me, [[
+if (*PTR_org(u8*,]].._MEM.cls.dyn..[[)) {
+    free(_trk_.org);
+}]])
+        end
+    end,
 
     SetExp = function (me)
         local e1, e2 = unpack(me)
@@ -145,7 +167,7 @@ ceu_track_ins(CEU.stack, CEU_TREE_MAX, org0, 0,]]..cls.lbl.id..[[);
         local _,blk = unpack(me)
         CONC(me, blk)
         HALT(me)        -- must escape with `return´
-        BLOCK_GATES(me)
+        CEU_CLR(me)
     end,
     Return = function (me)
         local top = _AST.iter'SetBlock'()
@@ -184,7 +206,7 @@ ceu_track_ins(CEU.stack, CEU_TREE_MAX, org0, 0,]]..cls.lbl.id..[[);
                         ..'_trk_.org, 1, '..me.lbl_out.id..');')
             HALT(me)
         end
-        BLOCK_GATES(me)
+        CEU_CLR(me)
     end,
 
     ParAnd = function (me)
@@ -268,7 +290,7 @@ if (ceu_out_pending()) {
         end
 
         SWITCH(me, me.lbl_ini)
-        BLOCK_GATES(me)
+        CEU_CLR(me)
     end,
 
     Break = function (me)

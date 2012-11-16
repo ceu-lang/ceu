@@ -73,8 +73,8 @@ function newvar (me, blk, isEvt, tp, dim, id)
         isEvt = isEvt,
         arr   = dim,
     }
-    blk.vars[#blk.vars+1] = var
 
+    blk.vars[#blk.vars+1] = var
     blk.vars[id] = var -- last from interface (may redeclare go/ok)
 
     if isEvt then
@@ -135,6 +135,19 @@ F = {
         ASR(me.tp~='Main', me, 'invalid `this´')
     end,
 
+    SetNew = function (me)
+        local exp, id_cls = unpack(me)
+        me.cls = ASR(_ENV.clss[id_cls], me,
+                        'class "'..id_cls..'" is not declared')
+        ASR(me.cls.fin, me,
+                'class "'..me.cls.id..'" must contain `finally´')
+        me.cls.has_new = true
+
+        ASR((not me.isDcl) and exp.lval
+            and _TP.contains(exp.tp,me.cls.id..'*'),
+                me, 'invalid attribution')
+    end,
+
     Dcl_ext = function (me)
         local dir, tp, id = unpack(me)
         ASR(not _ENV.evts[id], me, 'event "'..id..'" is already declared')
@@ -161,8 +174,8 @@ F = {
 
     Ext = function (me)
         local id = unpack(me)
-        me.ext = ASR(_ENV.evts[id],
-            me, 'event "'..id..'" is not declared')
+        me.ext = ASR(_ENV.evts[id], me,
+                    'event "'..id..'" is not declared')
     end,
 
     Var = function (me)

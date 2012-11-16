@@ -4,50 +4,136 @@
     -- CLASSES / ORGS
 
 Test { [[
-C do
-    static int V = 0;
-end
-input void F;
-class T with
-    // nothing
-do
-    do
-        await F;
-    finally
-        _V = 100;
-    end
-end
-do
-    T t;
-end
-return _V;
+new i;
 ]],
-    run = 100,
+    parser = 'ERR : line 1 : after `<BOF>´ : expected statement (missing `_´?)',
+}
+Test { [[
+_f(new T);
+]],
+    parser = 'ERR : line 1 : after `(´ : expected `)´',
 }
 
 Test { [[
-C do
-    static int V = 0;
-end
-input void F;
-class T with
-    // nothing
-do
-    do
-        await F;
-    finally
-        _V = 100;
-    end
-end
-par/or do
-    T t;
-    await F;
-with
-    // nothing;
-end
-return _V;
+class T with do end
+T* a;
+a = new U;
 ]],
-    run = 100,
+    env = 'ERR : line 3 : class "U" is not declared'
+}
+
+Test { [[
+class T with do end
+T* t;
+t = new T;
+]],
+    env = 'ERR : line 3 : class "T" must contain `finally´',
+}
+
+Test { [[
+class T with do finally end
+T* a = new T;
+]],
+    env = 'ERR : line 2 : invalid attribution',
+}
+
+Test { [[
+class T with do end
+class U with do finally end
+T* a;
+a = new U;
+]],
+    env = 'ERR : line 4 : invalid attribution',
+}
+
+Test { [[
+input void START;
+C do
+    int V = 0;
+end
+
+class T with
+    int a;
+do
+    a = 10;
+finally
+    _V = 1;
+end
+
+int ret = 0;
+
+do
+    T* o;
+    o = new T;
+    await START;
+    ret = o->a;
+end
+
+return ret + _V;
+]],
+    run = 11,
+}
+
+Test { [[
+input void START, F;
+C do
+    int V = 0;
+end
+
+class T with
+    int a;
+do
+    a = 10;
+    await 1s;
+finally
+    _V = 1;
+end
+
+int ret = 0;
+
+par/or do
+    T* o;
+    o = new T;
+    await START;
+    ret = o->a;
+with
+    await F;
+end
+
+return ret + _V;
+]],
+    run = { ['~>F']=11 },
+}
+
+Test { [[
+input void START, F;
+C do
+    int V = 0;
+end
+
+class T with
+    int a;
+do
+    a = 10;
+    await 1s;
+finally
+    _V = 1;
+end
+
+int ret = 0;
+
+T* o;
+par/or do
+    o = new T;
+    await START;
+    ret = o->a;
+with
+    await F;
+end
+
+return ret + _V;    // V still 0
+]],
+    run = { ['~>F']=10 },
 }
 
 Test { [[
@@ -1008,6 +1094,42 @@ return a;
 }
 
 Test { [[
+class T with do end
+T a;
+T* p = a;
+]],
+    env = 'ERR : line 3 : invalid attribution',
+}
+
+Test { [[
+C do
+    int c, d;
+end
+
+class T with
+    int a;
+do
+end
+
+int i;
+i = 10;
+int* pi = &i;
+
+T t;
+t.a = 10;
+T* p = &t;
+//_fprintf(_stderr, "%p %p\n", &t, p);
+//_fprintf(_stderr, "%p %p\n", t, *p);
+_c = t.a;
+//_fprintf(_stderr,"C=%d\n", _c);
+_d = p->a;
+//_fprintf(_stderr,"D=%d\n", _d);
+return p->a + t.a + _c + _d;
+]],
+    run = 40,
+}
+
+Test { [[
 input void START;
 class T with
     event void ok, go;
@@ -1020,7 +1142,7 @@ do
 end
 T a;
 T* ptr;
-ptr = a;
+ptr = &a;
 par/or do
     await START;
     emit a.go;
@@ -1085,6 +1207,7 @@ do
     loop do
         par/or do
             loop do
+_fprintf(_stderr, "loop %p %p %d\n", this, &this.x, this.x);
                 await 10ms;
                 x = x + 1;
             end
@@ -1123,6 +1246,10 @@ rs[0].x = 10;
 rs[0].y = 50;
 rs[1].x = 100;
 rs[1].y = 300;
+_fprintf(_stderr,"%p %p %p %p\n",
+    &rs[0], &rs[0].x, &rs[1], &rs[1].x);
+_fprintf(_stderr,"%d %d %d %d\n",
+    rs[0].x, rs[0].y, rs[1].x, rs[1].y);
 
 par/or do
     loop do
@@ -1135,7 +1262,10 @@ with
     async do
         emit 100ms;
     end
+_fprintf(_stderr,"%d %d %d %d\n",
+    rs[0].x, rs[0].y, rs[1].x, rs[1].y);
     _assert(rs[0].x==20 && rs[0].y==50 && rs[1].x==110 && rs[1].y==300);
+_fprintf(_stderr,"oioi\n");
 
     async do
         emit BUTTON(0);
@@ -1353,7 +1483,7 @@ do
 end
 T a;
 T* ptr;
-ptr = a;
+ptr = &a;
 int ret = 0;
 par/and do
     par/and do
@@ -1550,6 +1680,53 @@ return ret;
 }
 
 Test { [[
+C do
+    static int V = 0;
+end
+input void F;
+class T with
+    // nothing
+do
+    do
+        await F;
+    finally
+        _V = 100;
+    end
+end
+do
+    T t;
+end
+return _V;
+]],
+    run = 100,
+}
+
+Test { [[
+C do
+    static int V = 0;
+end
+input void F;
+class T with
+    // nothing
+do
+    do
+        await F;
+    finally
+        _V = 100;
+    end
+end
+par/or do
+    T t;
+    await F;
+with
+    // nothing;
+end
+return _V;
+]],
+    run = 100,
+}
+
+Test { [[
 input void A, F, START;
 C do
     int V = 0;
@@ -1631,6 +1808,44 @@ return ret + _V;        // * reads after
         ['~>F'] = 6,
         ['~>A'] = 13,
     }
+}
+
+Test { [[
+C do
+    int V = 1;
+end
+
+class V with
+do
+finally
+    _V = 10;
+end
+
+class U with
+    V* v;
+do
+end
+
+class T with
+    U* u;
+do
+    await 1s;
+    u->v = new V;
+end
+
+do
+    U u;
+    do
+        T t;
+        t.u = &u;
+        await 1s;
+    end
+    _assert(_V == 1);
+end
+_assert(_V == 10);
+return _V;
+]],
+    run = { ['~>1s']=10, }
 }
 
 -- todo pause hierarquico dentro de um org
@@ -14374,24 +14589,6 @@ return a + b;
     },
 }
 
-Test { [[
-C do
-    void f (int* p) {
-        *p = 1;
-    }
-end
-int[2] a;
-int b;
-par/or do
-    b = 2;
-with
-    _f(a);
-end
-return a[0] + b;
-]],
-    run = 3,
-}
-
     -- ARRAYS
 
 Test { [[input int[1] E; return 0;]],
@@ -14407,7 +14604,13 @@ Test { [[u8[2] v; return &v;]],
     env = 'invalid operand to unary "&"',
 }
 
-Test { [[int[2] v; v[0]=5; return v[0];]], run=5 }
+Test { [[
+int[2] v;
+v[0] = 5;
+return v[0];
+]],
+    run = 5
+}
 
 Test { [[
 int[2] v;
@@ -14476,6 +14679,24 @@ int[2] v ;
 return v == &v[0] ;
 ]],
     run = 1,
+}
+
+Test { [[
+C do
+    void f (int* p) {
+        *p = 1;
+    }
+end
+int[2] a;
+int b;
+par/or do
+    b = 2;
+with
+    _f(a);
+end
+return a[0] + b;
+]],
+    run = 3,
 }
 
     -- C FUNCS BLOCK

@@ -1,3 +1,11 @@
+_MEM = {
+    cls = {         -- offsets inside a class
+        dyn = 0,                        -- 1
+        par_org = 1,                    -- _ENV.types.pointer
+        par_lbl = 1+_ENV.types.pointer, -- _ENV.types.tceu_nlbl
+    }
+}
+
 function alloc (mem, n)
     local cur = mem.off
     mem.off = mem.off + n
@@ -16,8 +24,9 @@ local t2n = {
 F = {
     Dcl_cls_pre = function (me)
         me.mem = { off=0, max=0 }
-        me.mem.par_org  = alloc(me.mem, _ENV.types.pointer)  -- parent org/lbl
-        me.mem.par_lbl = alloc(me.mem, _ENV.types.tceu_nlbl) -- for ceu_clr_*
+        alloc(me.mem, 1)                    -- dynamically allocated?
+        alloc(me.mem, _ENV.types.pointer)   -- parent org/lbl
+        alloc(me.mem, _ENV.types.tceu_nlbl) -- for ceu_clr_*
     end,
 
     Block_pre = function (me)
@@ -29,8 +38,10 @@ F = {
             if var.cls then
                 len = var.cls.mem.max
             elseif var.arr then
-                len = var.arr * (_ENV.types[_TP.deref(var.tp)] or 
-                                  _ENV.clss[_TP.deref(var.tp)].mem.max)
+                local _tp = _TP.deref(var.tp)
+                len = var.arr * (_TP.deref(_tp) and _ENV.types.pointer
+                                 or _ENV.types[_tp]
+                                 or _ENV.clss[_tp].mem.max)
             elseif _TP.deref(var.tp) then
                 len = _ENV.types.pointer
             else
@@ -38,20 +49,9 @@ F = {
             end
             var.off = alloc(mem, len)
 
-            local tp = _TP.no_(var.tp)
-            if var.cls then
-                var.val = 'PTR_org(void*,'..var.off..')'
-            elseif var.arr then
-                if _ENV.clss[_TP.deref(tp)] then
-                    tp = 'void*'
-                end
-                var.val = 'PTR_org('..tp..','..var.off..')'
-            else
-                if _ENV.clss[_TP.deref(tp)] then
-                    var.val = '(*PTR_org(void**,'..var.off..')) /*oi*/'
-                else
-                    var.val = '(*PTR_org('..tp..'*,'..var.off..'))'
-                end
+            var.val = '(*PTR_org('.._TP.c(var.tp)..'*,'..var.off..'))'
+            if var.arr or var.cls then
+                var.val = '(('.._TP.c(var.tp)..')(&'..var.val..'))'
             end
         end
 
@@ -116,10 +116,10 @@ F = {
         if e2 then
             local tp = _TP.deref(e1.ext.tp, true)
             if tp then
-                len = 'sizeof('.._TP.no_(tp)..')'
+                len = 'sizeof('.._TP.c(tp)..')'
                 val = e2.val
             else
-                len = 'sizeof('.._TP.no_(e1.ext.tp)..')'
+                len = 'sizeof('.._TP.c(e1.ext.tp)..')'
                 val = 'ceu_ext_f('..e2.val..')'
             end
         else
@@ -139,7 +139,7 @@ F = {
     AwaitExt = function (me)
         local e1 = unpack(me)
         if _TP.deref(e1.ext.tp) then
-            me.val = '(('.._TP.no_(e1.ext.tp)..')CEU.ext_data)'
+            me.val = '(('.._TP.c(e1.ext.tp)..')CEU.ext_data)'
         else
             me.val = '*((int*)CEU.ext_data)'
         end
@@ -162,6 +162,8 @@ F = {
         local cls = _ENV.clss[me.tp]
         if cls then
             me.val = '('..arr.val..'+('..idx.val..'*'..cls.mem.max..'))'
+            me.val = '*(('.._TP.c(me.tp)..'*)'..me.val..')'
+            me.val = '(('.._TP.c(me.tp)..')(&'..me.val..'))'
         else
             me.val = '('..arr.val..'['..idx.val..'])'
         end
@@ -200,10 +202,9 @@ F = {
 
     ['Op1_*'] = function (me)
         local op, e1 = unpack(me)
+        me.val = '('..op..e1.val..')'
         if _ENV.clss[_TP.deref(e1.tp)] then
-            me.val = e1.val
-        else
-            me.val = '('..op..e1.val..')'
+            me.val = '(('.._TP.c(me.tp)..')(&'..me.val..'))'
         end
     end,
     ['Op1_&'] = function (me)
@@ -216,31 +217,23 @@ F = {
     end,
 
     ['Op2_.'] = function (me)
-        local op, e1, id = unpack(me)
-        me.accs = e1.accs
-
         if me.org then
-            local tp = _TP.no_(me.var.tp)
-            local off = '('..e1.val..' + '..me.var.off..')'
-            if me.var.cls then
-                me.val  = off
-            elseif me.var.arr then
-                me.val = 'PTR('..tp..'*,'..off..')'
+            if me.var.cls or me.var.arr then
+                me.val = '(('.._TP.c(me.var.tp)..')'
+                                ..'('..me.org.val..'+'..me.var.off..'))'
             else
-                if _ENV.clss[_TP.deref(tp)] then
-                    me.val = '(*PTR(void**,'..off..'))'
-                else
-                    me.val = '(*PTR('..tp..'*,'..off..'))'
-                end
+                me.val = '(*(('.._TP.c(me.var.tp)..'*)'
+                                ..'('..me.org.val..'+'..me.var.off..')))'
             end
         else
+            local op, e1, id = unpack(me)
             me.val  = '('..e1.val..op..id..')'
         end
     end,
 
     Op2_cast = function (me)
         local _, tp, exp = unpack(me)
-        me.val = '(('.._TP.no_(tp)..')'..exp.val..')'
+        me.val = '(('.._TP.c(tp)..')'..exp.val..')'
     end,
 
     WCLOCKK = function (me)
@@ -264,7 +257,7 @@ F = {
         me.val = string.sub(me[1], 2)
     end,
     SIZEOF = function (me)
-        me.val = 'sizeof('.._TP.no_(me[1])..')'
+        me.val = 'sizeof('.._TP.c(me[1])..')'
     end,
     STRING = function (me)
         me.val = me[1]

@@ -3,6 +3,7 @@ _TP = {}
 local types = {
     void=true,
     int=true,
+    u64=true, s64=true,
     u32=true, s32=true,
     u16=true, s16=true,
     u8=true,  s8=true,
@@ -32,8 +33,8 @@ end
 
 -- TODO: enforce passing parameter `c´ to isNumeric/deref/contains/max ?
 
-function _TP.no_ (tp)
-    return (string.gsub(tp, '^_', ''))
+function _TP.c (tp)
+    return (string.gsub(string.gsub(tp,'^%u%w*','void*'), '^_', ''))
 end
 
 function _TP.isNumeric (tp, c)
@@ -41,11 +42,13 @@ function _TP.isNumeric (tp, c)
 end
 
 function _TP.deref (tp, c)
-    return string.match(tp, '(.-)%*$') or (c and _TP.ext(tp))
+    return string.match(tp,'(.-)%*$')
+            or (c and _TP.ext(tp))
 end
 
 function _TP.ext (tp)
-    return (not types[tp]) and (not string.match(tp, '(.-)%*$')) and tp
+    return (string.sub(tp,1,1) == '_') and
+            (not string.match(tp, '(.-)%*$')) and tp
 end
 
 function _TP.contains (tp1, tp2, c)
