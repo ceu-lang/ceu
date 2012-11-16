@@ -90,9 +90,14 @@ void* org0;
 org0 = ]]..exp.val..[[;
 if (org0) {
     ceu_trk_ins(CEU.stack, CEU_TREE_MAX, org0, 0,]]..me.cls.lbl.id..[[);
-    *((u8*)       (org0+]].._MEM.cls.dyn..    [[)) = 1;
-    *((void**)    (org0+]].._MEM.cls.par_org..[[)) = ]]..org..[[;
-    *((tceu_nlbl*)(org0+]].._MEM.cls.par_lbl..[[)) = ]]
+#ifdef CEU_IFCS
+    *((tceu_ncls*)(org0+]]..(_MEM.cls.cls or '')..[[)) = ]]..me.cls.n..[[;
+#endif
+#ifdef CEU_NEWS
+    *((u8*)       (org0+]]..(_MEM.cls.dyn or '')..[[)) = 1;
+#endif
+    *((void**)    (org0+]].._MEM.cls.par_org..[[))     = ]]..org..[[;
+    *((tceu_nlbl*)(org0+]].._MEM.cls.par_lbl..[[))     = ]]
         ..exp.var.lbl_par.id..[[;
 }
 }]])
@@ -109,9 +114,14 @@ if (org0) {
                 LINE(me, [[{
 void* org0 = ]]..var.val..[[;
 ceu_trk_ins(CEU.stack, CEU_TREE_MAX, org0, 0,]]..var.cls.lbl.id..[[);
-*((u8*)       (org0+]].._MEM.cls.dyn..    [[)) = 0;
-*((void**)    (org0+]].._MEM.cls.par_org..[[)) = _trk_.org;
-*((tceu_nlbl*)(org0+]].._MEM.cls.par_lbl..[[)) = ]]..var.lbl_par.id..[[;
+#ifdef CEU_IFCS
+*((tceu_ncls*)(org0+]]..(_MEM.cls.cls or '')..[[)) = ]]..var.cls.n..[[;
+#endif
+#ifdef CEU_NEWS
+*((u8*)       (org0+]]..(_MEM.cls.dyn or '')..[[)) = 0;
+#endif
+*((void**)    (org0+]].._MEM.cls.par_org..[[))     = _trk_.org;
+*((tceu_nlbl*)(org0+]].._MEM.cls.par_lbl..[[))     = ]]..var.lbl_par.id..[[;
 }]])
             elseif var.arr then
                 local cls = _ENV.clss[_TP.deref(var.tp)]
@@ -120,9 +130,14 @@ ceu_trk_ins(CEU.stack, CEU_TREE_MAX, org0, 0,]]..var.cls.lbl.id..[[);
                 LINE(me, [[{
 void* org0 = ]]..var.val..'+'..i..'*'..cls.mem.max..[[;
 ceu_trk_ins(CEU.stack, CEU_TREE_MAX, org0, 0,]]..cls.lbl.id..[[);
-*((u8*)       (org0+]].._MEM.cls.dyn..    [[)) = 0;
-*((void**)    (org0+]].._MEM.cls.par_org..[[)) = _trk_.org;
-*((tceu_nlbl*)(org0+]].._MEM.cls.par_lbl..[[)) = ]]..var.lbl_par.id..[[;
+#ifdef CEU_IFCS
+*((tceu_ncls*)(org0+]]..(_MEM.cls.cls or '')..[[)) = ]]..cls.n..[[;
+#endif
+#ifdef CEU_NEWS
+*((u8*)       (org0+]]..(_MEM.cls.dyn or '')..[[)) = 0;
+#endif
+*((void**)    (org0+]].._MEM.cls.par_org..[[))     = _trk_.org;
+*((tceu_nlbl*)(org0+]].._MEM.cls.par_lbl..[[))     = ]]..var.lbl_par.id..[[;
 }]])
                     end
                 end
@@ -145,9 +160,11 @@ ceu_trk_ins(CEU.stack, CEU_TREE_MAX, org0, 0,]]..cls.lbl.id..[[);
         CONC_ALL(me)
         if CLS().fin == me then
             LINE(me, [[
-if (*PTR_org(u8*,]].._MEM.cls.dyn..[[)) {
+#ifdef CEU_NEWS
+if (*PTR_org(u8*,]]..(_MEM.cls.dyn or '')..[[))
     free(_trk_.org);
-}]])
+#endif
+]])
         end
     end,
 
@@ -376,7 +393,7 @@ return 0;
         -- emit
         CASE(me, me.lbl_mch)
         local org = (int.org and int.org.val) or '_trk_.org'
-        LINE(me, 'ceu_lst_go('..int.var.n..','..org..');')
+        LINE(me, 'ceu_lst_go('..int.var.off..','..org..');')
         HALT(me)
 
         -- continuation
@@ -398,7 +415,7 @@ return 0;
 
         -- await
         CASE(me, me.lbl_awt)
-        LINE(me, 'ceu_lst_ins('..int.var.n..','..org
+        LINE(me, 'ceu_lst_ins('..int.var.off..','..org
                     ..',_trk_.org,'..me.lbl_awk.id..',0);')
         HALT(me)
 

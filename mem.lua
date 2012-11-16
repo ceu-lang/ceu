@@ -1,10 +1,24 @@
 _MEM = {
-    cls = {         -- offsets inside a class
-        dyn = 0,                        -- 1
-        par_org = 1,                    -- _ENV.types.pointer
-        par_lbl = 1+_ENV.types.pointer, -- _ENV.types.tceu_nlbl
-    }
+    cls = {},       -- offsets inside a class
+    evt_off = 0,    -- max event offset in a class
 }
+
+
+do  -- _MEM.cls
+    local off = 0
+    if _PROPS.has_news then
+        _MEM.cls.dyn = off
+        off = off + 1
+    end
+    if _PROPS.has_ifcs then
+        _MEM.cls.cls = off
+        off = off + _ENV.types.tceu_ncls
+    end
+    _MEM.cls.par_org = off
+    off = off + _ENV.types.pointer
+    _MEM.cls.par_lbl = off
+    off = off + _ENV.types.tceu_nlbl
+end
 
 function alloc (mem, n)
     local cur = mem.off
@@ -22,9 +36,18 @@ local t2n = {
 }
 
 F = {
+    Root = function (me)
+        _ENV.types.tceu_nevt = _TP.n2bytes(_MEM.evt_off+#_ENV.exts)
+    end,
+
     Dcl_cls_pre = function (me)
         me.mem = { off=0, max=0 }
-        alloc(me.mem, 1)                    -- dynamically allocated?
+        if _PROPS.has_news then
+            alloc(me.mem, 1)                -- dynamically allocated?
+        end
+        if _PROPS.has_ifcs then
+            alloc(me.mem, _ENV.types.tceu_ncls) -- cls N
+        end
         alloc(me.mem, _ENV.types.pointer)   -- parent org/lbl
         alloc(me.mem, _ENV.types.tceu_nlbl) -- for ceu_clr_*
     end,
@@ -47,11 +70,19 @@ F = {
             else
                 len = _ENV.types[var.tp]
             end
+
             var.off = alloc(mem, len)
 
             var.val = '(*PTR_org('.._TP.c(var.tp)..'*,'..var.off..'))'
             if var.arr or var.cls then
                 var.val = '(('.._TP.c(var.tp)..')(&'..var.val..'))'
+            end
+
+            if var.isEvt then
+                if len == 0 then
+                    alloc(mem, 1)   -- dummy offset to avoid conflict
+                end
+                _MEM.evt_off = MAX(_MEM.evt_off, var.off)
             end
         end
 
@@ -218,9 +249,19 @@ F = {
 
     ['Op2_.'] = function (me)
         if me.org then
+            if _ENV.clss[me.org.tp].is_ifc then
+                -- off = IFC[org.cls][var.n]
+                me.var.off = 'CEU.ifcs['
+                        ..'(*PTR(tceu_ncls*,('..me.org.val..'+'
+                                .._MEM.cls.cls..')))'
+                        ..']['
+                            .._ENV.ifcs[me.var.id_ifc]
+                        ..']'
+            end
+
             if me.var.cls or me.var.arr then
                 me.val = '(('.._TP.c(me.var.tp)..')'
-                                ..'('..me.org.val..'+'..me.var.off..'))'
+                            ..'('..me.org.val..'+'..me.var.off..'))'
             else
                 me.val = '(*(('.._TP.c(me.var.tp)..'*)'
                                 ..'('..me.org.val..'+'..me.var.off..')))'
@@ -234,6 +275,7 @@ F = {
     Op2_cast = function (me)
         local _, tp, exp = unpack(me)
         me.val = '(('.._TP.c(tp)..')'..exp.val..')'
+        -- TODO: assert for orgs
     end,
 
     WCLOCKK = function (me)

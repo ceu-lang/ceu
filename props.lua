@@ -32,6 +32,7 @@ _PROPS = {
     has_pses    = false,
     has_fins    = false,
     has_news    = false,
+    has_ifcs    = false,
 }
 
 local NO_fin = {
@@ -98,6 +99,14 @@ F = {
     ParEver = ADD_all,
     ParAnd  = ADD_all,
     ParOr   = ADD_all,
+
+    Dcl_cls = function (me)
+        if me.is_ifc then
+            _PROPS.has_ifcs = true
+        else
+            SAME(me, me[#me])
+        end
+    end,
 
     Dcl_ext = function (me)
         _PROPS.has_exts = true

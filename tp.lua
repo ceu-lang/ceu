@@ -33,6 +33,12 @@ end
 
 -- TODO: enforce passing parameter `c´ to isNumeric/deref/contains/max ?
 
+function _TP.cls (tp)
+    local cls, ptr = string.match(tp, '^(%u%w*)(%**)')
+    cls = cls and _ENV.clss and _ENV.clss[cls]
+    return cls, ptr
+end
+
 function _TP.c (tp)
     return (string.gsub(string.gsub(tp,'^%u%w*','void*'), '^_', ''))
 end
@@ -60,6 +66,11 @@ function _TP.contains (tp1, tp2, c)
     elseif c and (_TP.ext(tp1) or _TP.ext(tp2)) then
         return true
     elseif _tp1 and _tp2 then
+        local cls1 = _TP.cls(_tp1)
+        local cls2 = _TP.cls(_tp2)
+        if cls1 and cls2 then
+            return cls1.is_ifc and _ENV.ifc_vs_cls(cls1,cls2)
+        end
         return tp1=='void*' or tp2=='void*' or _TP.contains(_tp1, _tp2, c)
     end
     return false

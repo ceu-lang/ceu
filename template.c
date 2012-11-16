@@ -32,6 +32,11 @@
 #define CEU_NLBLS      (=== CEU_NLBLS ===)
 #endif
 
+#ifdef CEU_IFCS
+#define CEU_NCLS       (=== CEU_NCLS ===)
+#define CEU_NIFCS      (=== CEU_NIFCS ===)
+#endif
+
 // Macros that can be defined:
 // ceu_out_pending() (1)
 // ceu_out_wclock(us)
@@ -41,6 +46,11 @@ typedef === TCEU_NTRK === tceu_ntrk;    // max number of tracks
 typedef === TCEU_NLST === tceu_nlst;    // max number of event listeners
 typedef === TCEU_NEVT === tceu_nevt;    // max number of event ids
 typedef === TCEU_NLBL === tceu_nlbl;    // max number of label ids
+
+#ifdef CEU_IFCS
+typedef === TCEU_NCLS === tceu_ncls;    // max number of classes
+typedef === TCEU_NOFF === tceu_noff;    // max offset in an iface
+#endif
 
 typedef struct {
     void*     org;
@@ -103,6 +113,10 @@ typedef struct {
     u8          lbl2fin[CEU_NLBLS];
 #endif
 
+#ifdef CEU_IFCS
+    tceu_noff   ifcs[CEU_NCLS][CEU_NIFCS];
+#endif
+
     tceu_nlst   lsts_n;
     tceu_nlst   lsts_nmax;
 #ifdef CEU_NEWS
@@ -132,6 +146,9 @@ tceu CEU = {
 #endif
 #ifdef CEU_FINS
     { === LBL2FIN === },
+#endif
+#ifdef CEU_IFCS
+    { === IFCS === },
 #endif
     0,
 #ifdef CEU_NEWS

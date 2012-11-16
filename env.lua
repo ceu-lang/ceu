@@ -4,14 +4,14 @@ _OPTS.tp_pointer = assert(tonumber(_OPTS.tp_pointer),
     'missing `--tp-pointer´ parameter')
 
 _ENV = {
-    clss  = {},
+    clss  = {},     -- { [1]=cls, ... [cls]=0 }
     calls = {},     -- { _printf=true, _myf=true, ... }
+    ifcs  = {},     -- { [1]='A', [2]='B', A=0, B=1, ... }
 
-    evts = {
-        --[1]=ext1,  [ext1.id]=ext1.
-        --[2]=int1,
-        --[N-1]={_ASYNC},
-        --[N]={_WCLOCK},
+    exts = {
+        --[1]=ext1,         [ext1.id]=ext1.
+        --[N-1]={_ASYNC},   [id]={},
+        --[N]={_WCLOCK},    [id]={},
     },
 
     types = {
@@ -25,8 +25,9 @@ _ENV = {
 
         tceu_ntrk = nil,    -- props.lua
         tceu_nlst = nil,    -- props.lua
-        tceu_nevt = nil,    -- env.lua
+        tceu_nevt = nil,    -- mem.lua
         tceu_nlbl = nil,    -- labels.lua
+        tceu_ncls = nil,    -- env.lua
 
         -- TODO: apagar?
         --tceu_lst  = 8,    -- TODO
@@ -36,6 +37,50 @@ _ENV = {
 
 function CLS ()
     return _AST.iter'Dcl_cls'()
+end
+
+function var2ifc (var)
+    return table.concat({
+        var.id,
+        var.tp,
+        tostring(var.isEvt),
+        tostring(var.arr),
+    }, '$')
+end
+
+function _ENV.ifc_vs_cls (ifc, cls)
+    -- check if they have been checked
+    ifc.matches = ifc.matches or {}
+    if ifc.matches[cls] ~= nil then
+        return ifc.matches[cls]
+    end
+
+    -- check if they match
+    local t = {}
+    for _, v1 in ipairs(ifc.blk.vars) do
+        v1.id_ifc = v1.id_ifc or var2ifc(v1)
+        v2 = cls.blk.vars[v1.id]
+        if v2 then
+            v2.id_ifc = v2.id_ifc or var2ifc(v2)
+        end
+
+        if v2 and (v1.id_ifc==v2.id_ifc) then
+            t[v1.id] = v1.id_ifc
+        else
+            ifc.matches[cls] = false
+            return false
+        end
+    end
+
+    -- yes, they match
+    ifc.matches[cls] = true
+    for id, id_ifc in pairs(t) do
+        if not _ENV.ifcs[id_ifc] then
+            _ENV.ifcs[id_ifc] = #_ENV.ifcs
+            _ENV.ifcs[#_ENV.ifcs+1] = id_ifc
+        end
+    end
+    return true
 end
 
 function newvar (me, blk, isEvt, tp, dim, id)
@@ -52,6 +97,8 @@ function newvar (me, blk, isEvt, tp, dim, id)
 
     ASR(tp~='void' or isEvt, me, 'invalid type')
     ASR((not dim) or dim>0, me, 'invalid array dimension')
+    ASR(not (_ENV.clss[tp] and _ENV.clss[tp].is_ifc), me,
+        'cannot instantiate an interface')
 
     tp = (dim and tp..'*') or tp
 
@@ -75,12 +122,7 @@ function newvar (me, blk, isEvt, tp, dim, id)
     }
 
     blk.vars[#blk.vars+1] = var
-    blk.vars[id] = var -- last from interface (may redeclare go/ok)
-
-    if isEvt then
-        var.n = #_ENV.evts
-        _ENV.evts[#_ENV.evts+1] = var
-    end
+    blk.vars[id] = var -- TODO: last/first/error?
 
     return var
 end
@@ -99,10 +141,15 @@ end
 
 F = {
     Root = function (me)
-        -- enum of events
-        _ENV.evts[#_ENV.evts+1] = {id='_WCLOCK', n=#_ENV.evts, input=true}
-        _ENV.evts[#_ENV.evts+1] = {id='_ASYNC',  n=#_ENV.evts, input=true}
-        _ENV.types.tceu_nevt = _TP.n2bytes(#_ENV.evts)
+        _ENV.types.tceu_ncls = _TP.n2bytes(#_ENV.clss)
+
+        local ext = {id='_WCLOCK', input=true}
+        _ENV.exts[#_ENV.exts+1] = ext
+        _ENV.exts[ext.id] = ext
+
+        local ext = {id='_ASYNC', input=true}
+        _ENV.exts[#_ENV.exts+1] = ext
+        _ENV.exts[ext.id] = ext
     end,
 
     Block_pre = function (me)
@@ -121,12 +168,18 @@ F = {
     end,
 
     Dcl_cls_pre = function (me)
-        local id, blk = unpack(me)
-        me.id  = id
-        me.blk = blk
-        ASR(not _ENV.clss[id], me, 'class "'..id..'" is already declared')
+        local ifc, id, blk = unpack(me)
+        me.is_ifc = ifc
+        me.id     = id
+        me.blk    = blk
+        ASR(not _ENV.clss[id], me,
+                'interface/class "'..id..'" is already declared')
+
         _ENV.clss[id] = me
-        _ENV.clss[#_ENV.clss+1] = me
+        if (not me.is_ifc) then     -- do not include ifcs (code/CEU.ifaces)
+            me.n = #_ENV.clss       -- TODO: remove Main?
+            _ENV.clss[#_ENV.clss+1] = me
+        end
     end,
 
     This = function (me)
@@ -139,6 +192,7 @@ F = {
         local exp, id_cls = unpack(me)
         me.cls = ASR(_ENV.clss[id_cls], me,
                         'class "'..id_cls..'" is not declared')
+        ASR(not me.cls.is_ifc, me, 'cannot instantiate an interface')
         ASR(me.cls.fin, me,
                 'class "'..me.cls.id..'" must contain `finally´')
         me.cls.has_new = true
@@ -150,20 +204,19 @@ F = {
 
     Dcl_ext = function (me)
         local dir, tp, id = unpack(me)
-        ASR(not _ENV.evts[id], me, 'event "'..id..'" is already declared')
+        ASR(not _ENV.exts[id], me, 'event "'..id..'" is already declared')
         ASR(tp=='void' or tp=='int' or _TP.deref(tp),
                 me, 'invalid event type')
 
         me.ext = {
             ln    = me.ln,
             id    = id,
-            n     = #_ENV.evts,
             tp    = tp,
             isEvt = 'ext',
             [dir] = true,
         }
-        _ENV.evts[id] = me.ext
-        _ENV.evts[#_ENV.evts+1] = me.ext
+        _ENV.exts[#_ENV.exts+1] = me.ext
+        _ENV.exts[id] = me.ext
     end,
 
     Dcl_int = 'Dcl_var',
@@ -174,7 +227,7 @@ F = {
 
     Ext = function (me)
         local id = unpack(me)
-        me.ext = ASR(_ENV.evts[id], me,
+        me.ext = ASR(_ENV.exts[id], me,
                     'event "'..id..'" is not declared')
     end,
 

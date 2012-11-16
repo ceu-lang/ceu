@@ -133,7 +133,7 @@ end
 
 local C; C = {
     [1] = function (ln, spc, ...) -- spc=CK''
-        C.Dcl_cls(ln, 'Main', node('BlockN')(ln), node('Block')(ln,...))
+        C.Dcl_cls(ln, false, 'Main', node('BlockN')(ln), node('Block')(ln,...))
         _AST.root = node('Root')(ln, unpack(TOP))
         return _AST.root
     end,
@@ -148,7 +148,8 @@ local C; C = {
         TOP[#TOP+1] = node('Dcl_type')(...)
     end,
 
-    Dcl_cls = function (ln, id, defs, blk)
+    Dcl_ifc = function (...) return C.Dcl_cls(...) end,
+    Dcl_cls = function (ln, is_ifc, id, defs, blk)
         if id == 'Main' then
             blk = node('Block')(ln,
                     node('Dcl_var')(ln, false, 'int', false, '$ret'),
@@ -160,15 +161,18 @@ local C; C = {
             blk = node('Block')(ln, defs, blk)
         end
 
-        for i=1, FIN do
-            defs[#defs+1] = node('Dcl_var')(ln,true,'void',false,'$fin_'..i)
-        end
-
-        local cls = node('Dcl_cls')(ln,id,blk)
-        cls.fin = blk[2].fin
-        cls.n_fins = FIN
-        FIN = 0
+        local cls = node('Dcl_cls')(ln, is_ifc, id, blk)
         TOP[#TOP+1] = cls
+
+        if not is_ifc then
+            for i=1, FIN do
+                defs[#defs+1] =
+                    node('Dcl_var')(ln,true,'void',false,'$fin_'..i)
+            end
+            cls.fin = blk[2].fin
+            cls.n_fins = FIN
+            FIN = 0
+        end
     end,
 
     This = node('This'),

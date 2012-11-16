@@ -6,7 +6,7 @@ function OR_all (me, t)
     for _, sub in ipairs(t) do
         me.awaits  = me.awaits  or sub.awaits
         me.returns = me.returns or sub.returns
-        me.blocks  = me.blocks or sub.blocks
+        me.blocks  = me.blocks  or sub.blocks
     end
 end
 
@@ -18,12 +18,11 @@ function AND_all (me, t)
     for _, sub in ipairs(t) do
         me.awaits  = me.awaits  and sub.awaits
         me.returns = me.returns and sub.returns
-        me.blocks  = me.blocks and sub.blocks
+        me.blocks  = me.blocks  and sub.blocks
     end
 end
 
 function SAME (me, sub)
-    sub = sub or me[1]
     me.awaits  = sub.awaits
     me.returns = sub.returns
     me.blocks  = sub.blocks

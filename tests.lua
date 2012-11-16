@@ -1,6 +1,302 @@
 --[===[
 --]===]
 
+Test { [[
+input void START;
+
+interface I with
+    event int e;
+end
+
+class T with
+    event int e;
+do
+    await e;
+    e = 100;
+end
+
+T t;
+I* i = &t;
+
+await START;
+emit i->e;
+return i->e;
+]],
+    run = 100,
+}
+
+Test { [[
+input void START;
+
+interface I with
+    event int e, f;
+end
+
+class T with
+    event int e, f;
+do
+    int v = await e;
+    emit f=v;
+end
+
+T t1, t2;
+I* i1 = &t1;
+I* i2 = &t2;
+
+int ret = 0;
+par/and do
+    await START;
+    emit i1->e=7;
+with
+    int v = await i1->f;
+    ret = ret + v;
+with
+    await START;
+    emit i2->e=6;
+with
+    int v = await i2->f;
+    ret = ret + v;
+end
+return ret;
+]],
+    run = 13,
+}
+
+Test { [[
+interface I with
+    event int a;
+end
+return 10;
+]],
+    run = 10;
+}
+
+Test { [[
+interface I with
+    event int a;
+end
+I t;
+return 10;
+]],
+    env = 'ERR : line 4 : cannot instantiate an interface',
+}
+
+Test { [[
+interface I with
+    event int a;
+end
+I[10] t;
+return 10;
+]],
+    env = 'ERR : line 4 : cannot instantiate an interface',
+}
+
+Test { [[
+interface I with
+    event int a;
+end
+I* t;
+t = new I;
+return 10;
+]],
+    env = 'ERR : line 5 : cannot instantiate an interface',
+}
+
+Test { [[
+class T with
+do
+end
+
+interface I with
+    event int a;
+end
+
+I* i;
+T t;
+i = &t;
+return 10;
+]],
+    env = 'ERR : line 11 : invalid attribution',
+}
+
+Test { [[
+class T with
+    event void a;
+do
+end
+
+interface I with
+    event int a;
+end
+
+I* i;
+T t;
+i = &t;
+return 10;
+]],
+    env = 'ERR : line 12 : invalid attribution',
+}
+
+Test { [[
+class T with
+    event int a;
+do
+end
+
+interface I with
+    event int a;
+end
+
+I* i;
+T t;
+i = t;
+return 10;
+]],
+    env = 'ERR : line 12 : invalid attribution',
+}
+
+Test { [[
+class T with
+    event int a;
+do
+end
+
+interface I with
+    event int a;
+end
+
+I* i;
+T t;
+i = &t;
+return 10;
+]],
+    run = 10;
+}
+
+Test { [[
+class T with
+    event int a;
+do
+end
+
+interface I with
+    event int a;
+end
+interface J with
+    event int a;
+end
+
+I* i;
+T t;
+i = &t;
+J* j = i;
+return 10;
+]],
+    run = 10;
+}
+
+Test { [[
+class T with
+    event int a;
+do
+end
+
+interface I with
+    event int a;
+end
+interface J with
+    event int* a;
+end
+
+I* i;
+T t;
+i = &t;
+J* j = i;
+return 10;
+]],
+    env = 'ERR : line 16 : invalid attribution',
+}
+
+Test { [[
+class T with
+    int v;
+    int* x;
+    event int a;
+do
+    a = 10;
+end
+
+interface I with
+    event int a;
+end
+interface J with
+    event int a;
+    int v;
+end
+
+I* i;
+T t;
+i = &t;
+J* j = i;
+return 0;
+]],
+    env = 'ERR : line 20 : invalid attribution',
+}
+
+Test { [[
+input void START;
+class T with
+    event int a;
+do
+    a = 10;
+end
+
+interface I with
+    event int a;
+end
+interface J with
+    event int a;
+end
+
+I* i;
+T t;
+i = &t;
+J* j = i;
+await START;
+return i->a + j->a + t.a;
+]],
+    run = 30,
+}
+
+Test { [[
+input void START;
+class T with
+    int v;
+    int* x;
+    event int a;
+do
+    a = 10;
+    v = 1;
+end
+
+interface I with
+    event int a;
+    int v;
+end
+interface J with
+    event int a;
+end
+
+I* i;
+T t;
+i = &t;
+J* j = i;
+await START;
+return i->a + j->a + t.a + i->v + t.v;
+]],
+    run = 32,
+}
+
     -- CLASSES / ORGS
 
 Test { [[
@@ -13301,7 +13597,10 @@ with
 end
 return ret;
 ]],
-    run = { ['~>A']=2, ['~>B']=1 },
+    run = {
+        ['~>A']=2,
+        ['~>B']=1
+    },
 }
 
 Test { [[

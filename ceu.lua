@@ -146,10 +146,11 @@ do
     tpl = sub(tpl, '=== CEU_NLSTS ===',    _AST.root.ns.awaits)
     tpl = sub(tpl, '=== CEU_NLBLS ===',    #_LBLS.list)
 
-    tpl = sub(tpl, '=== TCEU_NTRK ===',  tps[_ENV.types.tceu_ntrk])
-    tpl = sub(tpl, '=== TCEU_NLST ===',  tps[_ENV.types.tceu_nlst])
-    tpl = sub(tpl, '=== TCEU_NEVT ===',  tps[_ENV.types.tceu_nevt])
-    tpl = sub(tpl, '=== TCEU_NLBL ===',  tps[_ENV.types.tceu_nlbl])
+    -- TODO: u32 p/ has_news
+    tpl = sub(tpl, '=== TCEU_NTRK ===', tps[_ENV.types.tceu_ntrk])
+    tpl = sub(tpl, '=== TCEU_NLST ===', tps[_ENV.types.tceu_nlst])
+    tpl = sub(tpl, '=== TCEU_NEVT ===', tps[_ENV.types.tceu_nevt])
+    tpl = sub(tpl, '=== TCEU_NLBL ===', tps[_ENV.types.tceu_nlbl])
 
     tpl = sub(tpl, '=== CEU_CLS_PAR_ORG ===',  _MEM.cls.par_org)
     tpl = sub(tpl, '=== CEU_CLS_PAR_LBL ===',  _MEM.cls.par_lbl)
@@ -167,17 +168,46 @@ do
         tpl = sub(tpl, '=== LBL2FIN ===', table.concat(t,','))
     end
 
+    -- IFACES
+    if _PROPS.has_ifcs then
+        local T = {}
+        local off_max = 0
+        for _, cls in ipairs(_ENV.clss) do
+            local t = {}
+            for i=1, #_ENV.ifcs do
+                t[i] = 0
+            end
+            for _, var in ipairs(cls.blk.vars) do
+                local i = _ENV.ifcs[var.id_ifc]
+                if i then
+                    t[i+1] = var.off
+                    if var.off > off_max then
+                        off_max = var.off
+                    end
+                end
+            end
+            T[#T+1] = '{'..table.concat(t,',')..'}'
+        end
+        tpl = sub(tpl, '=== TCEU_NCLS ===', tps[_ENV.types.tceu_ncls])
+        tpl = sub(tpl, '=== TCEU_NOFF ===', tps[_TP.n2bytes(off_max)])
+        tpl = sub(tpl, '=== CEU_NCLS ===',  #_ENV.clss)
+        tpl = sub(tpl, '=== CEU_NIFCS ===', #_ENV.ifcs)
+        tpl = sub(tpl, '=== IFCS ===', table.concat(T,','))
+    end
+
     -- EVENTS
     local str = ''
     local t = {}
     local outs = 0
-    for _, evt in ipairs(_ENV.evts) do
+    for i, evt in ipairs(_ENV.exts) do
         if evt.input then
-            str = str..'#define IN_'..evt.id..' '..evt.n..'\n'
-        elseif evt.output then
+            str = str..'#define IN_'..evt.id..' '
+                    ..(_MEM.evt_off+i)..'\n'
+        else
             str = str..'#define OUT_'..evt.id..' '..outs..'\n'
             outs = outs + 1
         end
+        assert(evt.output or evt.input)
     end
     str = str..'#define OUT_n '..outs..'\n'
 
@@ -210,6 +240,9 @@ do
     if _PROPS.has_news then
         str = str .. '#define CEU_NEWS\n'
     end
+    if _PROPS.has_ifcs then
+        str = str .. '#define CEU_IFCS\n'
+    end
 
     -- TODO: goto _OPTS
     str = str .. '#define CEU_DEBUG\n'
@@ -232,7 +265,7 @@ if _OPTS.verbose or true then
         mem  = _MAIN.mem.max,
         trks = _AST.root.ns.tracks,
         lsts = _AST.root.ns.awaits,
-        evts = #_ENV.evts,
+        evts = _MEM.evt_off+#_ENV.exts,
         lbls = #_LBLS.list,
 
         exts    = _PROPS.has_exts,

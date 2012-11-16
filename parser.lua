@@ -91,9 +91,7 @@ KEYS = P'async'  + 'await'   + 'break'   + 'C'
      + 'sizeof'  + 'then'    + 'type'    + 'with'
      + TYPES
      + 'pause/if'
-     + 'class'
-     + 'this'
-     + 'new'
+     + 'interface' + 'class' + 'this' + 'new'
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
@@ -129,7 +127,7 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
              + V'ParOr' + V'ParAnd'
              + V'If'    + V'Loop'
              + V'Pause'
-             + V'Dcl_cls'
+             + V'Dcl_ifc' + V'Dcl_cls'
 
     , _LstStmt  = V'_Return' + V'Break' + V'AwaitN'
     , _LstStmtB = V'ParEver'
@@ -270,8 +268,11 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
                        V'__Dcl_var_no' * (K','*V'__Dcl_var')^0
     , __Dcl_var_no = EV'ID_var' * (Cc(false)*Cc(false))
 
-    , Dcl_cls = K'class' * EV'ID_cls' * EK'with' * V'_BlockD' * V'_Do'
-    , This    = K'this'
+    , Dcl_ifc = K'interface' * Cc(true)  * EV'ID_cls' * EK'with'
+                        * V'_BlockD' * EK'end'
+    , Dcl_cls = K'class'     * Cc(false) * EV'ID_cls' * EK'with'
+                        * V'_BlockD' * V'_Do'
+    , This      = K'this'
 
     , Ext      = V'ID_ext'
     , Var      = V'ID_var'
