@@ -23,9 +23,10 @@
 #define PTR(tp,off)     ((tp)(off))
 #define PTR_org(tp,off) ((tp)(_trk_.org + off))
 
-#define CEU_NMEM       (=== CEU_NMEM ===+1000)
-#define CEU_NTRACKS    (=== CEU_NTRACKS === + 1000)
-#define CEU_NLSTS      (=== CEU_NLSTS === + 1000)
+#define MAX(x,y) ((x>y)?x:y)
+#define CEU_NMEM       (=== CEU_NMEM ===)
+#define CEU_NTRACKS    (MAX(1,=== CEU_NTRACKS ===))
+#define CEU_NLSTS      (MAX(1,=== CEU_NLSTS ===))
 
 #ifdef CEU_FINS
 #define CEU_NLBLS      (=== CEU_NLBLS ===)
@@ -73,15 +74,18 @@ int ceu_go (int* ret);
 === HOST ===
 
 typedef struct {
-    tceu_ntrk   tracks_n;
+    tceu_ntrk   trks_n;
+    tceu_ntrk   trks_nmax;
 
-#if defined(CEU_STACK) || defined(CEU_TREE)
-    tceu_trk    tracks[CEU_NTRACKS+1];  // 0 is reserved
+#if   defined(CEU_NEWS)
+    tceu_trk*   trks;
+#elif defined(CEU_STACK) || defined(CEU_TREE)
+    tceu_trk    trks[CEU_NTRACKS+1];  // 0 is reserved
 #else
-    tceu_trk    tracks[CEU_NTRACKS];
+    tceu_trk    trks[CEU_NTRACKS];
 #endif
 
-//#ifdef CEU_STACK      // TODO
+//#ifdef CEU_STACK              // TODO
     u8              stack;
 //#endif
 
@@ -100,14 +104,24 @@ typedef struct {
 #endif
 
     tceu_nlst   lsts_n;
+    tceu_nlst   lsts_nmax;
+#ifdef CEU_NEWS
+    tceu_lst*   lsts;
+#else
     tceu_lst    lsts[CEU_NLSTS];
+#endif
 
     char        mem[CEU_NMEM];
 } tceu;
 
 tceu CEU = {
-    0, {},
-//#ifdef CEU_STACK      // TODO
+    0,
+#ifdef CEU_NEWS
+    CEU_NTRACKS*2, NULL,
+#else
+    CEU_NTRACKS,   {},
+#endif
+//#ifdef CEU_STACK              // TODO
     CEU_STACK_MIN,
 //#endif
 #ifdef CEU_EXTS
@@ -119,14 +133,19 @@ tceu CEU = {
 #ifdef CEU_FINS
     { === LBL2FIN === },
 #endif
-    0, {},
+    0,
+#ifdef CEU_NEWS
+    CEU_NLSTS*2, NULL,
+#else
+    CEU_NLSTS,   {},
+#endif
     {}
 };
 
 /**********************************************************************/
 
 #if defined(CEU_STACK) || defined(CEU_TREE)
-int ceu_track_cmp (tceu_trk* trk1, tceu_trk* trk2) {
+int ceu_trk_cmp (tceu_trk* trk1, tceu_trk* trk2) {
 #ifdef CEU_STACK
     if (trk1->stack != trk2->stack) {
         if (trk1->stack == CEU.stack)
@@ -142,13 +161,13 @@ int ceu_track_cmp (tceu_trk* trk1, tceu_trk* trk2) {
 }
 #endif
 
-void ceu_track_ins (u8 stack, u8 tree, void* org, int chk, tceu_nlbl lbl)
+void ceu_trk_ins (u8 stack, u8 tree, void* org, int chk, tceu_nlbl lbl)
 {
 #ifdef CEU_TREE_CHK
     {tceu_ntrk i;
     if (chk) {
-        for (i=1; i<=CEU.tracks_n; i++) {
-            if (org==CEU.tracks[i].org && lbl==CEU.tracks[i].lbl) {
+        for (i=1; i<=CEU.trks_n; i++) {
+            if (org==CEU.trks[i].org && lbl==CEU.trks[i].lbl) {
                 return;
             }
         }
@@ -170,32 +189,47 @@ void ceu_track_ins (u8 stack, u8 tree, void* org, int chk, tceu_nlbl lbl)
         lbl
     };
 
-    for ( i = ++CEU.tracks_n;
-          (i>1) && ceu_track_cmp(&trk,&CEU.tracks[i/2]);
-          i /= 2)
-        CEU.tracks[i] = CEU.tracks[i/2];
-    CEU.tracks[i] = trk;
-}
-#else // defined(CEU_TREE) || defined(CEU_STACK)
-    CEU.tracks[CEU.tracks_n++].org = org;
-    CEU.tracks[CEU.tracks_n++].lbl = lbl;
+#ifdef CEU_NEWS
+    if (CEU.trks_n == CEU.trks_nmax) {
+        u32 nmax;
+        void* new;
+        for (nmax=CEU.trks_nmax*2; nmax>CEU.trks_nmax; nmax/=2) {
+            new = realloc(CEU.trks, nmax*sizeof(tceu_trk) + sizeof(tceu_trk));
+            if (new)
+                break;
+        }
+        CEU.trks_nmax = nmax;
+        CEU.trks = new;           // assert below
+    }
 #endif
-#ifdef CEU_DEBUG
+
+#if defined(CEU_DEBUG) || defined(CEU_NEWS)
 /*
     fprintf(stderr, "======== %d\n", CEU.stack);
-    for (int i=1; i<=CEU.tracks_n; i++) {
-        tceu_trk* trk = &CEU.tracks[i];
+    for (int i=1; i<=CEU.trks_n; i++) {
+        tceu_trk* trk = &CEU.trks[i];
         fprintf(stderr,"LST: o.%p s.%d/t.%d l.%d\n",
                     trk->org, trk->stack, trk->tree, trk->lbl);
     }
 */
-    assert(CEU.tracks_n <= CEU_NTRACKS);        // TODO: remove
+    assert(CEU.trks_n < CEU.trks_nmax);
+#endif
+
+    for ( i = ++CEU.trks_n;
+          (i>1) && ceu_trk_cmp(&trk,&CEU.trks[i/2]);
+          i /= 2)
+        CEU.trks[i] = CEU.trks[i/2];
+    CEU.trks[i] = trk;
+}
+#else // defined(CEU_TREE) || defined(CEU_STACK)
+    CEU.trks[CEU.trks_n].org = org;
+    CEU.trks[CEU.trks_n++].lbl = lbl;
 #endif
 }
 
-int ceu_track_rem (tceu_trk* trk, tceu_ntrk N)
+int ceu_trk_rem (tceu_trk* trk, tceu_ntrk N)
 {
-    if (CEU.tracks_n == 0)
+    if (CEU.trks_n == 0)
         return 0;
 
 #ifdef CEU_TREE
@@ -203,27 +237,27 @@ int ceu_track_rem (tceu_trk* trk, tceu_ntrk N)
     tceu_trk* last;
 
     if (trk)
-        *trk = CEU.tracks[N];
+        *trk = CEU.trks[N];
 
-    last = &CEU.tracks[CEU.tracks_n--];
+    last = &CEU.trks[CEU.trks_n--];
 
-    for (i=N; i*2<=CEU.tracks_n; i=cur)
+    for (i=N; i*2<=CEU.trks_n; i=cur)
     {
         cur = i * 2;
-        if (cur!=CEU.tracks_n &&
-            ceu_track_cmp(&CEU.tracks[cur+1], &CEU.tracks[cur]))
+        if (cur!=CEU.trks_n &&
+            ceu_trk_cmp(&CEU.trks[cur+1], &CEU.trks[cur]))
             cur++;
 
-        if (ceu_track_cmp(&CEU.tracks[cur],last))
-            CEU.tracks[i] = CEU.tracks[cur];
+        if (ceu_trk_cmp(&CEU.trks[cur],last))
+            CEU.trks[i] = CEU.trks[cur];
         else
             break;
     }
-    CEU.tracks[i] = *last;
+    CEU.trks[i] = *last;
     return 1;}
 #else
     if (trk)
-        *trk = CEU.tracks[--CEU.tracks_n];
+        *trk = CEU.trks[--CEU.trks_n];
     return 1;
 #endif
 }
@@ -241,13 +275,13 @@ int ceu_clr_child (void* cur, void* org, tceu_nlbl l1, tceu_nlbl l2) {
 }
 
 #ifdef CEU_STACK
-void ceu_track_clr (int child, void* org, tceu_nlbl l1, tceu_nlbl l2) {
+void ceu_trk_clr (int child, void* org, tceu_nlbl l1, tceu_nlbl l2) {
     int i;
-    for (i=1; i<=CEU.tracks_n; i++) {
-        tceu_trk* trk = &CEU.tracks[i];
+    for (i=1; i<=CEU.trks_n; i++) {
+        tceu_trk* trk = &CEU.trks[i];
         if ( trk->org==org && trk->lbl>=l1 && trk->lbl<=l2
         ||   child && trk->org!=org && ceu_clr_child(trk->org,org,l1,l2) ) {
-            ceu_track_rem(NULL, i);
+            ceu_trk_rem(NULL, i);
             i--;
         }
     }
@@ -257,6 +291,32 @@ void ceu_track_clr (int child, void* org, tceu_nlbl l1, tceu_nlbl l2) {
 /**********************************************************************/
 
 void ceu_lst_ins (tceu_nevt evt, void* src, void* org, tceu_nlbl lbl, s32 togo) {
+#ifdef CEU_NEWS
+    if (CEU.lsts_n == CEU.lsts_nmax) {
+        u32 nmax;
+        void* new;
+        for (nmax=CEU.lsts_nmax*2; nmax>CEU.lsts_nmax; nmax/=2 ) {
+            new = realloc(CEU.lsts, nmax*sizeof(tceu_lst));
+            if (new)
+                break;
+        }
+        CEU.lsts_nmax = nmax;
+        CEU.lsts = new;           // assert below
+    }
+#endif
+
+#if defined(CEU_DEBUG) || defined(CEU_NEWS)
+/*
+fprintf(stderr, "======== lsts (%d)\n", CEU.lsts_n);
+for (int i=0; i<CEU.lsts_n; i++) {
+    tceu_lst* lst = &CEU.lsts[i];
+    fprintf(stderr,"LST: src.%p org=%p e.%d l.%d\n",
+                lst->src, lst->org, lst->evt, lst->lbl);
+}
+*/
+    assert(CEU.lsts_n < CEU.lsts_nmax);
+#endif
+
     tceu_lst* lst = &CEU.lsts[CEU.lsts_n];
     lst->src = src;
     lst->org = org;
@@ -267,17 +327,6 @@ void ceu_lst_ins (tceu_nevt evt, void* src, void* org, tceu_nlbl lbl, s32 togo) 
 #endif
     lst->togo = togo;
     CEU.lsts_n++;
-#ifdef CEU_DEBUG
-/*
-fprintf(stderr, "======== lsts (%d)\n", CEU.lsts_n);
-for (int i=0; i<CEU.lsts_n; i++) {
-    tceu_lst* lst = &CEU.lsts[i];
-    fprintf(stderr,"LST: src.%p org=%p e.%d l.%d\n",
-                lst->src, lst->org, lst->evt, lst->lbl);
-}
-*/
-    assert(CEU.lsts_n <= CEU_NLSTS);
-#endif
 }
 
 void ceu_lst_go (tceu_nevt evt, void* src)
@@ -289,7 +338,7 @@ void ceu_lst_go (tceu_nevt evt, void* src)
 #ifdef CEU_PSES
             if (lst->pse == 0) {
 #endif
-                ceu_track_ins(CEU.stack, CEU_TREE_MAX, lst->org, 0, lst->lbl);
+                ceu_trk_ins(CEU.stack, CEU_TREE_MAX, lst->org, 0, lst->lbl);
                 (CEU.lsts_n)--;
                 if (i < CEU.lsts_n) {
                     *lst = CEU.lsts[CEU.lsts_n];
@@ -311,7 +360,7 @@ void ceu_lst_clr (int child, void* org, tceu_nlbl l1, tceu_nlbl l2, u8 tree) {
 #ifdef CEU_FINS
             u8 fin = CEU.lbl2fin[lst->lbl];
             if (fin)   // always trigger finally's
-                ceu_track_ins(CEU.stack, tree+fin, lst->org, 0, lst->lbl);
+                ceu_trk_ins(CEU.stack, tree+fin, lst->org, 0, lst->lbl);
 #endif
             CEU.lsts_n--;
             if (i < CEU.lsts_n) {
@@ -350,16 +399,16 @@ void ceu_clr (void* org, tceu_nlbl l1, tceu_nlbl l2,
 {
 #ifdef CEU_STACK
     if (hasOrg || hasEmt)
-        ceu_track_clr(hasOrg, org, l1, l2);
+        ceu_trk_clr(hasOrg, org, l1, l2);
 #endif
 
-    // must be after track_clr (fins)
+    // must be after trk_clr (fins)
     if (hasOrg || hasAwt || hasFin)
         ceu_lst_clr(hasOrg, org, l1, l2, tree);
 
     // finalizers must execute before the continuation
     if (hasOrg || hasFin)
-        ceu_track_ins(CEU.stack, tree, org, 0, lbl_out);
+        ceu_trk_ins(CEU.stack, tree, org, 0, lbl_out);
 }
 
 /**********************************************************************/
@@ -401,7 +450,12 @@ s32 ceu_wclock_find (void* org, tceu_nlbl lbl) {
 
 int ceu_go_init (int* ret)
 {
-    ceu_track_ins(CEU_STACK_MIN, CEU_TREE_MAX, CEU.mem, 0, Class_Main);
+#ifdef CEU_NEWS
+    CEU.trks = malloc(CEU.trks_nmax*sizeof(tceu_trk) + sizeof(tceu_trk));
+    CEU.lsts = malloc(CEU.lsts_nmax*sizeof(tceu_lst));
+    assert(CEU.trks!=NULL && CEU.lsts!=NULL);
+#endif
+    ceu_trk_ins(CEU_STACK_MIN, CEU_TREE_MAX, CEU.mem, 0, Class_Main);
     return ceu_go(ret);
 }
 
@@ -494,7 +548,7 @@ int ceu_go_wclock (int* ret, s32 dt, s32* nxt)
 #endif
 
         if (lst->togo == min_togo) {
-            ceu_track_ins(CEU_STACK_MIN, CEU_TREE_MAX, lst->org, 0, lst->lbl);
+            ceu_trk_ins(CEU_STACK_MIN, CEU_TREE_MAX, lst->org, 0, lst->lbl);
             CEU.lsts_n--;
             if (i < CEU.lsts_n) {
                 *lst = CEU.lsts[CEU.lsts_n];
@@ -528,7 +582,7 @@ int ceu_go (int* ret)
     CEU.stack = CEU_STACK_MIN;
 #endif
 
-    while (ceu_track_rem(&_trk_,1))
+    while (ceu_trk_rem(&_trk_,1))
     {
 #ifdef CEU_STACK
         if (_trk_.stack != CEU.stack)

@@ -89,7 +89,7 @@ void* org0;
 ]]..exp.val..' = malloc('..me.cls.mem.max..[[);
 org0 = ]]..exp.val..[[;
 if (org0) {
-    ceu_track_ins(CEU.stack, CEU_TREE_MAX, org0, 0,]]..me.cls.lbl.id..[[);
+    ceu_trk_ins(CEU.stack, CEU_TREE_MAX, org0, 0,]]..me.cls.lbl.id..[[);
     *((u8*)       (org0+]].._MEM.cls.dyn..    [[)) = 1;
     *((void**)    (org0+]].._MEM.cls.par_org..[[)) = ]]..org..[[;
     *((tceu_nlbl*)(org0+]].._MEM.cls.par_lbl..[[)) = ]]
@@ -108,7 +108,7 @@ if (org0) {
             if var.cls then
                 LINE(me, [[{
 void* org0 = ]]..var.val..[[;
-ceu_track_ins(CEU.stack, CEU_TREE_MAX, org0, 0,]]..var.cls.lbl.id..[[);
+ceu_trk_ins(CEU.stack, CEU_TREE_MAX, org0, 0,]]..var.cls.lbl.id..[[);
 *((u8*)       (org0+]].._MEM.cls.dyn..    [[)) = 0;
 *((void**)    (org0+]].._MEM.cls.par_org..[[)) = _trk_.org;
 *((tceu_nlbl*)(org0+]].._MEM.cls.par_lbl..[[)) = ]]..var.lbl_par.id..[[;
@@ -119,7 +119,7 @@ ceu_track_ins(CEU.stack, CEU_TREE_MAX, org0, 0,]]..var.cls.lbl.id..[[);
                     for i=0, var.arr-1 do
                 LINE(me, [[{
 void* org0 = ]]..var.val..'+'..i..'*'..cls.mem.max..[[;
-ceu_track_ins(CEU.stack, CEU_TREE_MAX, org0, 0,]]..cls.lbl.id..[[);
+ceu_trk_ins(CEU.stack, CEU_TREE_MAX, org0, 0,]]..cls.lbl.id..[[);
 *((u8*)       (org0+]].._MEM.cls.dyn..    [[)) = 0;
 *((void**)    (org0+]].._MEM.cls.par_org..[[)) = _trk_.org;
 *((tceu_nlbl*)(org0+]].._MEM.cls.par_lbl..[[)) = ]]..var.lbl_par.id..[[;
@@ -133,7 +133,7 @@ ceu_track_ins(CEU.stack, CEU_TREE_MAX, org0, 0,]]..cls.lbl.id..[[);
 
         -- finalize orgs
         if me.ns.orgs > 0 then
-            LINE(me, 'ceu_track_ins(CEU.stack,'..me.lbl_out.prio..','
+            LINE(me, 'ceu_trk_ins(CEU.stack,'..me.lbl_out.prio..','
                         ..'_trk_.org, 0,'..me.lbl_out.id..');')
             HALT(me)
             CEU_CLR(me)
@@ -171,7 +171,7 @@ if (*PTR_org(u8*,]].._MEM.cls.dyn..[[)) {
     end,
     Return = function (me)
         local top = _AST.iter'SetBlock'()
-        LINE(me, 'ceu_track_ins(CEU.stack, ' ..top.lbl_out.prio..','
+        LINE(me, 'ceu_trk_ins(CEU.stack, ' ..top.lbl_out.prio..','
                     ..'_trk_.org, 1, '..top.lbl_out.id..');')
         HALT(me)
     end,
@@ -180,7 +180,7 @@ if (*PTR_org(u8*,]].._MEM.cls.dyn..[[)) {
         -- Ever/Or/And spawn subs
         COMM(me, me.tag..': spawn subs')
         for i, sub in ipairs(me) do
-            LINE(me, 'ceu_track_ins(CEU.stack,CEU_TREE_MAX,_trk_.org,0,'
+            LINE(me, 'ceu_trk_ins(CEU.stack,CEU_TREE_MAX,_trk_.org,0,'
                         ..me.lbls_in[i].id..');')
         end
         HALT(me)
@@ -202,7 +202,7 @@ if (*PTR_org(u8*,]].._MEM.cls.dyn..[[)) {
             CASE(me, me.lbls_in[i])
             CONC(me, sub)
             COMM(me, 'PAROR JOIN')
-            LINE(me, 'ceu_track_ins(CEU.stack, ' ..me.lbl_out.prio..','
+            LINE(me, 'ceu_trk_ins(CEU.stack, ' ..me.lbl_out.prio..','
                         ..'_trk_.org, 1, '..me.lbl_out.id..');')
             HALT(me)
         end
@@ -295,7 +295,7 @@ if (ceu_out_pending()) {
 
     Break = function (me)
         local top = _AST.iter'Loop'()
-        LINE(me, 'ceu_track_ins(CEU.stack, ' ..top.lbl_out.prio..','
+        LINE(me, 'ceu_trk_ins(CEU.stack, ' ..top.lbl_out.prio..','
                     ..'_trk_.org, 1, '..top.lbl_out.id..');')
         HALT(me)
     end,
@@ -366,10 +366,10 @@ return 0;
         end
 
         -- defer match: reaction must have a higher stack depth
-        LINE(me, 'ceu_track_ins(CEU.stack+2, CEU_TREE_MAX, _trk_.org, 0,'
+        LINE(me, 'ceu_trk_ins(CEU.stack+2, CEU_TREE_MAX, _trk_.org, 0,'
                     ..me.lbl_mch.id..');')
         -- defer continuation: all trails must react before I resume
-        LINE(me, 'ceu_track_ins(CEU.stack+1, CEU_TREE_MAX, _trk_.org, 0,'
+        LINE(me, 'ceu_trk_ins(CEU.stack+1, CEU_TREE_MAX, _trk_.org, 0,'
                     ..me.lbl_cnt.id..');')
         HALT(me)
 
@@ -391,7 +391,7 @@ return 0;
 
         -- defer await: can only react once (0=defer_to_end_of_reaction)
         if not zero then
-            LINE(me, 'ceu_track_ins(0, CEU_TREE_MAX, _trk_.org, 0,'
+            LINE(me, 'ceu_trk_ins(0, CEU_TREE_MAX, _trk_.org, 0,'
                         ..me.lbl_awt.id..');')
             HALT(me)
         end

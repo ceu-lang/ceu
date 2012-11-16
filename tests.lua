@@ -4,139 +4,6 @@
     -- CLASSES / ORGS
 
 Test { [[
-new i;
-]],
-    parser = 'ERR : line 1 : after `<BOF>´ : expected statement (missing `_´?)',
-}
-Test { [[
-_f(new T);
-]],
-    parser = 'ERR : line 1 : after `(´ : expected `)´',
-}
-
-Test { [[
-class T with do end
-T* a;
-a = new U;
-]],
-    env = 'ERR : line 3 : class "U" is not declared'
-}
-
-Test { [[
-class T with do end
-T* t;
-t = new T;
-]],
-    env = 'ERR : line 3 : class "T" must contain `finally´',
-}
-
-Test { [[
-class T with do finally end
-T* a = new T;
-]],
-    env = 'ERR : line 2 : invalid attribution',
-}
-
-Test { [[
-class T with do end
-class U with do finally end
-T* a;
-a = new U;
-]],
-    env = 'ERR : line 4 : invalid attribution',
-}
-
-Test { [[
-input void START;
-C do
-    int V = 0;
-end
-
-class T with
-    int a;
-do
-    a = 10;
-finally
-    _V = 1;
-end
-
-int ret = 0;
-
-do
-    T* o;
-    o = new T;
-    await START;
-    ret = o->a;
-end
-
-return ret + _V;
-]],
-    run = 11,
-}
-
-Test { [[
-input void START, F;
-C do
-    int V = 0;
-end
-
-class T with
-    int a;
-do
-    a = 10;
-    await 1s;
-finally
-    _V = 1;
-end
-
-int ret = 0;
-
-par/or do
-    T* o;
-    o = new T;
-    await START;
-    ret = o->a;
-with
-    await F;
-end
-
-return ret + _V;
-]],
-    run = { ['~>F']=11 },
-}
-
-Test { [[
-input void START, F;
-C do
-    int V = 0;
-end
-
-class T with
-    int a;
-do
-    a = 10;
-    await 1s;
-finally
-    _V = 1;
-end
-
-int ret = 0;
-
-T* o;
-par/or do
-    o = new T;
-    await START;
-    ret = o->a;
-with
-    await F;
-end
-
-return ret + _V;    // V still 0
-]],
-    run = { ['~>F']=10 },
-}
-
-Test { [[
 class T with
 do
 end
@@ -1808,6 +1675,162 @@ return ret + _V;        // * reads after
         ['~>F'] = 6,
         ['~>A'] = 13,
     }
+}
+
+Test { [[
+class T with
+do
+    par/or do
+        await 10s;
+    with
+        await 10s;
+    with
+        await 10s;
+    end
+finally
+end
+T* t;
+do
+    t = new T;
+    t = new T;
+    t = new T;
+end
+return 10;
+]],
+    run = 10;
+}
+
+Test { [[
+new i;
+]],
+    parser = 'ERR : line 1 : after `<BOF>´ : expected statement (missing `_´?)',
+}
+Test { [[
+_f(new T);
+]],
+    parser = 'ERR : line 1 : after `(´ : expected `)´',
+}
+
+Test { [[
+class T with do end
+T* a;
+a = new U;
+]],
+    env = 'ERR : line 3 : class "U" is not declared'
+}
+
+Test { [[
+class T with do end
+T* t;
+t = new T;
+]],
+    env = 'ERR : line 3 : class "T" must contain `finally´',
+}
+
+Test { [[
+class T with do finally end
+T* a = new T;
+]],
+    env = 'ERR : line 2 : invalid attribution',
+}
+
+Test { [[
+class T with do end
+class U with do finally end
+T* a;
+a = new U;
+]],
+    env = 'ERR : line 4 : invalid attribution',
+}
+
+Test { [[
+input void START;
+C do
+    int V = 0;
+end
+
+class T with
+    int a;
+do
+    a = 10;
+finally
+    _V = 1;
+end
+
+int ret = 0;
+
+do
+    T* o;
+    o = new T;
+    await START;
+    ret = o->a;
+end
+
+return ret + _V;
+]],
+    run = 11,
+}
+
+Test { [[
+input void START, F;
+C do
+    int V = 0;
+end
+
+class T with
+    int a;
+do
+    a = 10;
+    await 1s;
+finally
+    _V = 1;
+end
+
+int ret = 0;
+
+par/or do
+    T* o;
+    o = new T;
+    await START;
+    ret = o->a;
+with
+    await F;
+end
+
+return ret + _V;
+]],
+    run = { ['~>F']=11 },
+}
+
+Test { [[
+input void START, F;
+C do
+    int V = 0;
+end
+
+class T with
+    int a;
+do
+    a = 10;
+    await 1s;
+finally
+    _V = 1;
+end
+
+int ret = 0;
+
+T* o;
+par/or do
+    o = new T;
+    await START;
+    ret = o->a;
+with
+    await F;
+end
+
+return ret + _V;    // V still 0
+]],
+    run = { ['~>F']=10 },
 }
 
 Test { [[
