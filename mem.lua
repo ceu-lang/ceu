@@ -217,7 +217,11 @@ F = {
         for i, exp in ipairs(exps) do
             ps[i] = exp.val
         end
-        me.val = f.val..'('..table.concat(ps,',')..')'
+        if f.org then
+            me.val = f.val..'('..f.org.val..','..table.concat(ps,',')..')'
+        else
+            me.val = f.val..'('..table.concat(ps,',')..')'
+        end
     end,
 
     Op2_idx = function (me)
@@ -283,7 +287,11 @@ F = {
         if me.org then
             local cls = _ENV.clss[me.org.tp]
             local pre = (cls.is_ifc and 'IFC_') or 'CLS_'
-            me.val = pre..cls.id..'_'..me.var.id..'('..me.org.val..')'
+            if me.c then
+                me.val = me.c[2]
+            else
+                me.val = pre..cls.id..'_'..me.var.id..'('..me.org.val..')'
+            end
         else
             local op, e1, id = unpack(me)
             me.val  = '('..e1.val..op..id..')'

@@ -140,7 +140,7 @@ local C; C = {
 
     Block   = node('Block'),
     BlockN  = node('BlockN'),
-    _BlockD = node('BlockN'),
+    BlockI  = node('BlockI'),
     Host    = node('Host'),
 
     _Return = node('_Return'),
@@ -302,18 +302,22 @@ local C; C = {
         end
     end,
 
-    _Dcl_c = function (ln, ...)
-        --local ret = {}
+    _Dcl_c_ifc = function (ln, ...)
+        local ret = {}
         local t = { ... }
         for i=1, #t, 3 do
-            TOP[#TOP+1] = node('Dcl_c')(ln, t[i], t[i+1], t[i+2])
-            --ret[#ret+1] = node('Dcl_c')(ln, t[i], t[i+1], t[i+2])
+            ret[#ret+1] = node('Dcl_c')(ln, t[i], t[i+1], t[i+2])
         end
-        --return unpack(ret)
+        return unpack(ret)
+    end,
+    _Dcl_c = function (ln, ...)
+        local ret = { C._Dcl_c_ifc(ln, ...) }
+        for _, t in ipairs(ret) do
+            TOP[#TOP+1] = t
+        end
     end,
 
-
-    _Dcl_var_no = function(...) return C._Dcl_var(...) end,
+    _Dcl_var_ifc = function(...) return C._Dcl_var(...) end,
     _Dcl_var = function (ln, isEvt, tp, dim, ...)
         local ret = {}
         local t = { ... }
@@ -330,7 +334,7 @@ local C; C = {
         return unpack(ret)
     end,
 
-    _Dcl_int_no = function(...) return C._Dcl_int(...) end,
+    _Dcl_int_ifc = function(...) return C._Dcl_int(...) end,
     _Dcl_int = function (ln, isEvt, tp, dim, ...)
         local ret = {}
         local t = { ... }
@@ -348,16 +352,16 @@ local C; C = {
     end,
 
     Dcl_ifc = function (...) return C.Dcl_cls(...) end,
-    Dcl_cls = function (ln, is_ifc, id, defs, blk)
+    Dcl_cls = function (ln, is_ifc, id, ifc, blk)
         if id == 'Main' then
             blk = node('Block')(ln,
                     node('Dcl_var')(ln, false, 'int', false, '$ret'),
-                    defs,
+                    ifc,
                     node('SetBlock')(ln,
                         node('Var')(ln,'$ret'),
                         blk))
         else
-            blk = node('Block')(ln, defs, blk)
+            blk = node('Block')(ln, ifc, blk)
         end
 
         local cls = node('Dcl_cls')(ln, is_ifc, id, blk)
@@ -365,7 +369,7 @@ local C; C = {
 
         if not is_ifc then
             for i=1, FIN do
-                defs[#defs+1] =
+                ifc[#ifc+1] =
                     node('Dcl_var')(ln,true,'void',false,'$fin_'..i)
             end
             cls.fin = blk[2].fin

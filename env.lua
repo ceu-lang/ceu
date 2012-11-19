@@ -279,6 +279,10 @@ F = {
 
     Dcl_c = function (me)
         local tag, id, len = unpack(me)
+        if _AST.iter'BlockI'() then
+            local cls = CLS()
+            id = ((cls.is_ifc and 'IFC_') or 'CLS_')..cls.id..'_'..id
+        end
         _ENV.c[id] = { tag, id, len }
     end,
 
@@ -437,12 +441,21 @@ F = {
         local op, e1, id = unpack(me)
         local cls = _ENV.clss[e1.tp]
         if cls then
-            local var = ASR(cls.blk.vars[id], me,
-                            'variable/event "'..id..'" is not declared')
             me.org  = e1
-            me.var  = var
-            me.lval = (not var.arr) and (not var.cls)
-            me.tp   = var.tp
+
+            if _TP.ext(id) then
+                local id = ((cls.is_ifc and 'IFC_') or 'CLS_')..cls.id..'_'..id
+                me.c = _ENV.c[id]
+                me.lval = true
+                me.tp   = '_'
+                ASR(me.c and (me.c[1]=='var' or me.c[1]=='func'), me,
+                    'C symbol "'..id..'" is not declared')
+            else
+                me.var  = ASR(cls.blk.vars[id], me,
+                            'variable/event "'..id..'" is not declared')
+                me.lval = (not me.var.arr) and (not me.var.cls)
+                me.tp   = me.var.tp
+            end
         else
             me.tp   = '_'
             me.lval = true

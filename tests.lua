@@ -2,6 +2,63 @@
 --]===]
 
 Test { [[
+interface I with
+    int v;
+    external _f(), _a;      // TODO: refuse _a
+end
+return 10;
+]],
+    run = 10,
+}
+
+Test { [[
+class T with
+    int v;
+    external _f(), _t=10;   // TODO: refuse _t
+do
+end
+return 10;
+]],
+    run = 10,
+}
+
+Test { [[
+external _fprintf(), _stderr;
+C do
+    void CLS_T__f (void* org, int v) {
+        //fprintf(stderr, "oioi\n");
+        CLS_T_v(org) += v;
+    }
+    void IFC_I__f (void* org, int v) {
+        //fprintf(stderr, "tctct\n");
+        IFC_I_v(org) += v;
+    }
+end
+
+interface I with
+    int v;
+    external _f();
+end
+
+class T with
+    int v;
+    external _f();
+do
+    v = 50;
+    this._f(10);
+    //_fprintf(_stderr, "T: %d\n", this.v);
+end
+
+T t;
+I* i = &t;
+i:_f(100);
+//_fprintf(_stderr, "O: %d\n", t.v);
+return i:v;
+]],
+    run = 160,
+}
+
+Test { [[
 external _V;
 C do
     int V = 1;

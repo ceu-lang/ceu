@@ -114,7 +114,8 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
                )^-1
     , Block  = V'_Block'
     , BlockN = V'_Block'
-    , _BlockD = ( (V'_Dcl_int_no'+V'_Dcl_var_no') * (EK';'*K';'^0) )^0
+    , BlockI = ( (V'_Dcl_int_ifc'+V'_Dcl_var_ifc'+V'_Dcl_c_ifc')
+              * (EK';'*K';'^0) )^0
 
     , _Stmt = V'AwaitT'   + V'AwaitExt'  + V'AwaitInt'
             + V'EmitT'    + V'EmitExtS'  + V'EmitInt'
@@ -246,10 +247,11 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
 
     , EmitInt  = K'emit' * EV'_Exp' * (K'=' * V'_Exp')^-1
 
-    , __Dcl_c = Cc'type' * V'ID_c' * K'='  * NUM
-              + Cc'func' * V'ID_c' * '()' * Cc(false)
-              + Cc'var'  * V'ID_c'        * Cc(false)
-    , _Dcl_c = K'external' * EV'__Dcl_c' * (K',' * EV'__Dcl_c')^0
+    , __Dcl_c    = Cc'type' * V'ID_c' * K'='  * NUM
+                 + Cc'func' * V'ID_c' * '()' * Cc(false)
+                 + Cc'var'  * V'ID_c'        * Cc(false)
+    , _Dcl_c     = K'external' * EV'__Dcl_c' * (K',' * EV'__Dcl_c')^0
+    , _Dcl_c_ifc = K'external' * EV'__Dcl_c' * (K',' * EV'__Dcl_c')^0
 
     , _Dcl_ext = (CK'input'+CK'output') * EV'ID_type' *
                     EV'ID_ext' * (K','*EV'ID_ext')^0
@@ -262,18 +264,18 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
                     V'__Dcl_var' * (K','*V'__Dcl_var')^0
     , __Dcl_var = EV'ID_var' * (V'_Sets' + Cc(false)*Cc(false))
 
-    , _Dcl_int_no  = CK'event' * EV'ID_type' * Cc(false) *
-                       EV'__Dcl_int_no' * (K','*V'__Dcl_int')^0
-    , __Dcl_int_no = EV'ID_int' * (Cc(false)*Cc(false))
+    , _Dcl_int_ifc  = CK'event' * EV'ID_type' * Cc(false) *
+                       EV'__Dcl_int_ifc' * (K','*V'__Dcl_int')^0
+    , __Dcl_int_ifc = EV'ID_int' * (Cc(false)*Cc(false))
 
-    , _Dcl_var_no  = Cc(false) * V'ID_type' * (K'['*NUM*K']'+Cc(false)) *
-                       V'__Dcl_var_no' * (K','*V'__Dcl_var')^0
-    , __Dcl_var_no = EV'ID_var' * (Cc(false)*Cc(false))
+    , _Dcl_var_ifc  = Cc(false) * V'ID_type' * (K'['*NUM*K']'+Cc(false)) *
+                       V'__Dcl_var_ifc' * (K','*V'__Dcl_var')^0
+    , __Dcl_var_ifc = EV'ID_var' * (Cc(false)*Cc(false))
 
     , Dcl_ifc = K'interface' * Cc(true)  * EV'ID_cls' * EK'with'
-                        * V'_BlockD' * EK'end'
+                        * V'BlockI' * EK'end'
     , Dcl_cls = K'class'     * Cc(false) * EV'ID_cls' * EK'with'
-                        * V'_BlockD' * V'_Do'
+                        * V'BlockI' * V'_Do'
     , Global  = K'global'
     , This    = K'this'
 
