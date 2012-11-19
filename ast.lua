@@ -138,46 +138,6 @@ local C; C = {
         return _AST.root
     end,
 
-    _Dcl_ext = function (ln, dir, tp, ...)
-        for _, v in ipairs{...} do
-            TOP[#TOP+1] = node('Dcl_ext')(ln, dir, tp, v)
-        end
-    end,
-
-    Dcl_type = function (...)
-        TOP[#TOP+1] = node('Dcl_type')(...)
-    end,
-
-    Dcl_ifc = function (...) return C.Dcl_cls(...) end,
-    Dcl_cls = function (ln, is_ifc, id, defs, blk)
-        if id == 'Main' then
-            blk = node('Block')(ln,
-                    node('Dcl_var')(ln, false, 'int', false, '$ret'),
-                    defs,
-                    node('SetBlock')(ln,
-                        node('Var')(ln,'$ret'),
-                        blk))
-        else
-            blk = node('Block')(ln, defs, blk)
-        end
-
-        local cls = node('Dcl_cls')(ln, is_ifc, id, blk)
-        TOP[#TOP+1] = cls
-
-        if not is_ifc then
-            for i=1, FIN do
-                defs[#defs+1] =
-                    node('Dcl_var')(ln,true,'void',false,'$fin_'..i)
-            end
-            cls.fin = blk[2].fin
-            cls.n_fins = FIN
-            FIN = 0
-        end
-    end,
-
-    Global = node('Global'),
-    This   = node('This'),
-
     Block   = node('Block'),
     BlockN  = node('BlockN'),
     _BlockD = node('BlockN'),
@@ -336,6 +296,23 @@ local C; C = {
     EmitT    = node('EmitT'),
     EmitInt  = node('EmitInt'),
 
+    _Dcl_ext = function (ln, dir, tp, ...)
+        for _, v in ipairs{...} do
+            TOP[#TOP+1] = node('Dcl_ext')(ln, dir, tp, v)
+        end
+    end,
+
+    _Dcl_c = function (ln, ...)
+        --local ret = {}
+        local t = { ... }
+        for i=1, #t, 3 do
+            TOP[#TOP+1] = node('Dcl_c')(ln, t[i], t[i+1], t[i+2])
+            --ret[#ret+1] = node('Dcl_c')(ln, t[i], t[i+1], t[i+2])
+        end
+        --return unpack(ret)
+    end,
+
+
     _Dcl_var_no = function(...) return C._Dcl_var(...) end,
     _Dcl_var = function (ln, isEvt, tp, dim, ...)
         local ret = {}
@@ -369,6 +346,36 @@ local C; C = {
         end
         return unpack(ret)
     end,
+
+    Dcl_ifc = function (...) return C.Dcl_cls(...) end,
+    Dcl_cls = function (ln, is_ifc, id, defs, blk)
+        if id == 'Main' then
+            blk = node('Block')(ln,
+                    node('Dcl_var')(ln, false, 'int', false, '$ret'),
+                    defs,
+                    node('SetBlock')(ln,
+                        node('Var')(ln,'$ret'),
+                        blk))
+        else
+            blk = node('Block')(ln, defs, blk)
+        end
+
+        local cls = node('Dcl_cls')(ln, is_ifc, id, blk)
+        TOP[#TOP+1] = cls
+
+        if not is_ifc then
+            for i=1, FIN do
+                defs[#defs+1] =
+                    node('Dcl_var')(ln,true,'void',false,'$fin_'..i)
+            end
+            cls.fin = blk[2].fin
+            cls.n_fins = FIN
+            FIN = 0
+        end
+    end,
+
+    Global = node('Global'),
+    This   = node('This'),
 
     _Set = function (ln, e1, tag, e2)
         return node(tag)(ln, e1, e2)

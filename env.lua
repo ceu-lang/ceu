@@ -14,7 +14,7 @@ _ENV = {
         --[N]={_WCLOCK},    [id]={},
     },
 
-    types = {
+    c = {
         void = 0,
 
         u8=1, u16=2, u32=4, u64=8,
@@ -23,17 +23,25 @@ _ENV = {
         int      = _OPTS.tp_word,
         pointer  = _OPTS.tp_pointer,
 
-        tceu_ntrk = nil,    -- props.lua
-        tceu_nlst = nil,    -- props.lua
-        tceu_nevt = nil,    -- mem.lua
-        tceu_nlbl = nil,    -- labels.lua
-        tceu_ncls = nil,    -- env.lua
+        tceu_ntrk = true,    -- props.lua
+        tceu_nlst = true,    -- props.lua
+        tceu_nevt = true,    -- mem.lua
+        tceu_nlbl = true,    -- labels.lua
+        tceu_ncls = true,    -- env.lua
 
         -- TODO: apagar?
         --tceu_lst  = 8,    -- TODO
         --TODOtceu_wclock = _TP.ceil(4 + _OPTS.tp_lbl), -- TODO: perda de memoria
     },
 }
+
+for k, v in pairs(_ENV.c) do
+    if v == true then
+        _ENV.c[k] = { 'type', k, nil }
+    else
+        _ENV.c[k] = { 'type', k, v }
+    end
+end
 
 function CLS ()
     return _AST.iter'Dcl_cls'()
@@ -92,8 +100,9 @@ function newvar (me, blk, isEvt, tp, dim, id)
     tp = (dim and tp..'*') or tp
 
     local tp_raw = _TP.raw(tp)
-    ASR(_TP.deref(tp) or _ENV.types[tp_raw] or _ENV.clss[tp_raw], me,
-            'undeclared type `'..tp_raw..'´')   -- TODO: reject _TP.deref
+    local c = _ENV.c[tp_raw]
+    ASR(_TP.deref(tp) or _ENV.clss[tp_raw] or (c and c[1]=='type'),
+        me, 'undeclared type `'..tp_raw..'´')   -- TODO: reject _TP.deref
 
     local cls = _ENV.clss[tp]
     if cls then
@@ -132,7 +141,7 @@ end
 
 F = {
     Root = function (me)
-        _ENV.types.tceu_ncls = _TP.n2bytes(#_ENV.clss)
+        _ENV.c.tceu_ncls[3] = _TP.n2bytes(#_ENV.clss)
 
         local ext = {id='_WCLOCK', input=true}
         _ENV.exts[#_ENV.exts+1] = ext
@@ -268,9 +277,9 @@ F = {
         me.lval = (not var.arr) and (not var.cls)
     end,
 
-    Dcl_type = function (me)
-        local id, len = unpack(me)
-        _ENV.types[id] = len
+    Dcl_c = function (me)
+        local tag, id, len = unpack(me)
+        _ENV.c[id] = { tag, id, len }
     end,
 
     Dcl_pure = function (me)
@@ -343,7 +352,14 @@ F = {
     Op2_call = function (me)
         local _, f, exps = unpack(me)
         me.tp = '_'
-        me.fid = (f.tag=='C' and f[1]) or '$anon'
+        if f.tag == 'C' then
+            local c = _ENV.c[ f[1] ]
+            ASR(c and c[1]=='func', me,
+            'C function "'..(f[1])..'" is not declared')
+            me.fid = f[1]
+        else
+            me.fid = '$anon'
+        end
         ASR((not _OPTS.c_calls) or _OPTS.c_calls[me.fid],
             me, 'C calls are disabled')
         _ENV.calls[me.fid] = true
@@ -447,6 +463,10 @@ F = {
     WCLOCKR = 'WCLOCKK',
 
     C = function (me)
+        local id = unpack(me)
+        local c = _ENV.c[id]
+        ASR(c and (c[1]=='var' or c[1]=='func'), me,
+            'C symbol "'..id..'" is not declared')
         me.tp   = '_'
         me.lval = true
     end,

@@ -2,6 +2,7 @@
 --]===]
 
 Test { [[
+external _V;
 C do
     int V = 1;
 end
@@ -81,6 +82,7 @@ end
 }
 
 Test { [[
+external _attr();
 C do
     void attr (void* org) {
         IFC_Global_a(GLOBAL) = CLS_T_a(org) + 1;
@@ -95,13 +97,13 @@ class T with
 do
     a = global:a;
     _attr(this);
-    a = a + _IFC_Global_a(_GLOBAL) + _CLS_T_a(this);
+    a = a + global:a + this.a;
 end
 int a = 10;
 do
     T t;
     t.a = t.a + a;
-    return t.a + _IFC_Global_a(this);;
+    return t.a + global:a;
 end
 ]],
     run = 53,
@@ -1075,6 +1077,7 @@ T* p = a;
 }
 
 Test { [[
+external _c, _d;
 C do
     int c, d;
 end
@@ -1169,6 +1172,7 @@ return x;
 }
 
 Test { [[
+external _fprintf(), _stderr(), _assert();
 input int  BUTTON;
 input void F;
 
@@ -1180,7 +1184,7 @@ do
     loop do
         par/or do
             loop do
-_fprintf(_stderr, "loop %p %p %d\n", this, &this.x, this.x);
+//_fprintf(_stderr, "loop %p %p %d\n", this, &this.x, this.x);
                 await 10ms;
                 x = x + 1;
             end
@@ -1219,10 +1223,10 @@ rs[0].x = 10;
 rs[0].y = 50;
 rs[1].x = 100;
 rs[1].y = 300;
-_fprintf(_stderr,"%p %p %p %p\n",
-    &rs[0], &rs[0].x, &rs[1], &rs[1].x);
-_fprintf(_stderr,"%d %d %d %d\n",
-    rs[0].x, rs[0].y, rs[1].x, rs[1].y);
+//_fprintf(_stderr,"%p %p %p %p\n",
+    //&rs[0], &rs[0].x, &rs[1], &rs[1].x);
+//_fprintf(_stderr,"%d %d %d %d\n",
+    //rs[0].x, rs[0].y, rs[1].x, rs[1].y);
 
 par/or do
     loop do
@@ -1235,10 +1239,10 @@ with
     async do
         emit 100ms;
     end
-_fprintf(_stderr,"%d %d %d %d\n",
-    rs[0].x, rs[0].y, rs[1].x, rs[1].y);
+//_fprintf(_stderr,"%d %d %d %d\n",
+    //rs[0].x, rs[0].y, rs[1].x, rs[1].y);
     _assert(rs[0].x==20 && rs[0].y==50 && rs[1].x==110 && rs[1].y==300);
-_fprintf(_stderr,"oioi\n");
+//_fprintf(_stderr,"oioi\n");
 
     async do
         emit BUTTON(0);
@@ -1410,6 +1414,7 @@ return ret + aa.a + aa.b;
 }
 
 Test { [[
+external _f();
 input void START;
 class T with
     event int e, ok, go, b;
@@ -1653,6 +1658,7 @@ return ret;
 }
 
 Test { [[
+external _V;
 C do
     static int V = 0;
 end
@@ -1675,6 +1681,7 @@ return _V;
 }
 
 Test { [[
+external _V;
 C do
     static int V = 1;
 end
@@ -1700,6 +1707,7 @@ return _V;
 }
 
 Test { [[
+external _V;
 C do
     static int V = 0;
 end
@@ -1725,6 +1733,7 @@ return _V;
 }
 
 Test { [[
+external _V;
 input void A, F, START;
 C do
     int V = 0;
@@ -1765,6 +1774,7 @@ return t.v + _V;        // * reads before
 }
 
 Test { [[
+external _V;
 input void A, F, START;
 C do
     int V = 0;
@@ -1875,6 +1885,7 @@ a = new U;
 }
 
 Test { [[
+external _V;
 input void START;
 C do
     int V = 0;
@@ -1904,6 +1915,7 @@ return ret + _V;
 
 Test { [[
 input void START, F;
+external _V;
 C do
     int V = 0;
 end
@@ -1935,6 +1947,7 @@ return ret + _V;
 
 Test { [[
 input void START, F;
+external _V;
 C do
     int V = 0;
 end
@@ -1965,6 +1978,7 @@ return ret + _V;    // V still 0
 }
 
 Test { [[
+external _V, _assert();
 C do
     int V = 1;
 end
@@ -2180,6 +2194,7 @@ return 0;
 -- INTERFACES / IFACES / IFCES
 
 Test { [[
+external _ptr;
 C do
     void* ptr;
 end
@@ -2194,6 +2209,7 @@ return 10;
 }
 
 Test { [[
+external _ptr;
 C do
     void* ptr;
 end
@@ -2207,6 +2223,7 @@ return 10;
 }
 
 Test { [[
+external _ptr;
 C do
     void* ptr;
 end
@@ -3075,7 +3092,22 @@ C do
     }
     typedef void (*t)(int*);
 end
-type _t = 4;
+external _t = 4;
+_t v = _f;
+int a;
+v(&a);
+return(a);
+]],
+    env = 'ERR : line 8 : C symbol "_f" is not declared',
+}
+Test { [[
+C do
+    void f (int* a) {
+        *a = 10;
+    }
+    typedef void (*t)(int*);
+end
+external _t=4, _f();
 _t v = _f;
 int a;
 v(&a);
@@ -3105,6 +3137,7 @@ C do
     int end = 1;
     /******/
 end
+external _end;
 return _end;
 ]],
     run = 1
@@ -3128,7 +3161,7 @@ C do
         return *data - 1;
     }
 end
-type _t = 8;
+external _t = 8;
 output _t* A;
 output int B;
 int a, b;
@@ -3144,7 +3177,7 @@ return a + b;
 }
 
 Test { [[
-type _char = 1;
+external _char = 1;
 output void A;
 C do
     void A (int v) {}
@@ -3155,7 +3188,7 @@ return 0;
     env = 'ERR : line 6 : undeclared type `_cahr´',
 }
 Test { [[
-type _char = 1;
+external _char = 1;
 output void A;
 _char v = emit A();
 return v;
@@ -3167,7 +3200,7 @@ output void A;
 C do
     void A (int v) {}
 end
-type _char = 1;
+external _char = 1;
 _char v = emit A(1);
 return 0;
 ]],
@@ -6184,6 +6217,7 @@ return a;
 }
 
 Test { [[
+external _assert();
 input void T;
 int ret = 0;
 par/or do
@@ -14469,6 +14503,7 @@ return 0;
 }
 
 Test { [[
+external _a;
 C do
     int a;
 end
@@ -14481,6 +14516,7 @@ return _a;
 }
 
 Test { [[
+external _a;
 C do
     int a, b;
 end
@@ -14527,6 +14563,7 @@ return _a+_b+_c;
 }
 
 Test { [[
+external _a,_b;
 C do
     int a=1,b=1;
 end
@@ -14541,6 +14578,7 @@ return _a + _b;
 }
 
 Test { [[
+external _a,_b;
 C do
     int a = 1;
 end
@@ -15023,7 +15061,7 @@ end;
 }
 
 Test { [[
-type _char = 1;
+external _char = 1;
 int i;
 int* pi;
 _char c;
@@ -15153,6 +15191,7 @@ return *a+b+c;
 }
 
 Test { [[
+external _f();
 C do
     void f (int* v) {
         *v = 1;
@@ -15269,7 +15308,7 @@ C do
         int c;
     } T;
 end
-type _T = 44;
+external _T = 44;
 
 _T[10] vec;
 int i = 110;
@@ -15297,6 +15336,7 @@ return v == &v[0] ;
 }
 
 Test { [[
+external _f();
 C do
     void f (int* p) {
         *p = 1;
@@ -15317,6 +15357,7 @@ return a[0] + b;
     -- C FUNCS BLOCK
 
 Test { [[
+external _V;
 C do
     int V[2][2] = { {1, 2}, {3, 4} };
 end
@@ -15328,6 +15369,7 @@ return _V[1][0] + _V[0][1];
 }
 
 Test { [[
+external _END;
 C do
     int END = 1;
 end
@@ -15398,6 +15440,18 @@ return 0;
 }
 
 Test { [[
+external _A;
+C do
+    void A (int v) {}
+end
+_A();
+return 0;
+]],
+    env = 'ERR : line 5 : C function "_A" is not declared',
+}
+
+Test { [[
+external _A();
 C do
     void A (int v) {}
 end
@@ -15408,6 +15462,7 @@ return 0;
 }
 
 Test { [[
+external _A();
 C do
     void A () {}
 end
@@ -15422,6 +15477,7 @@ Test { [[emit A(10); return 0;]],
 }
 
 Test { [[
+external _Const();
 C do
     int Const () {
         return -10;
@@ -15434,6 +15490,7 @@ return ret;
 }
 
 Test { [[
+external _ID();
 C do
     int ID (int v) {
         return v;
@@ -15445,6 +15502,7 @@ return _ID(10);
 }
 
 Test { [[
+external _ID();
 C do
     int ID (int v) {
         return v;
@@ -15457,6 +15515,7 @@ return v;
 }
 
 Test { [[
+external _VD();
 C do
     void VD (int v) {
     }
@@ -15468,6 +15527,7 @@ return 1;
 }
 
 Test { [[
+external _VD();
 C do
     void VD (int v) {
     }
@@ -15490,6 +15550,7 @@ return v;
 }
 
 Test { [[
+external _NEG();
 C do
     int NEG (int v) {
         return -v;
@@ -15501,6 +15562,7 @@ return _NEG(10);
 }
 
 Test { [[
+external _NEG();
 C do
     int NEG (int v) {
         return -v;
@@ -15513,6 +15575,7 @@ return v;
 }
 
 Test { [[
+external _ID();
 C do
     int ID (int v) {
         return v;
@@ -15531,6 +15594,7 @@ return v;
 }
 
 Test { [[
+external _ID();
 C do
     int ID (int v) {
         return v;
@@ -15552,6 +15616,7 @@ return v;
 }
 
 Test { [[
+external _Z1();
 C do int Z1 (int a) { return a; } end
 input int A;
 int c;
@@ -15566,6 +15631,7 @@ return c;
 }
 
 Test { [[
+external _f1(), _f2();
 C do
     int f1 (u8* v) {
         return v[0]+v[1];
@@ -16033,6 +16099,7 @@ return 0;
 --]=]
 
 Test { [[
+external _a;
 C do
     int a;
 end
@@ -16081,6 +16148,7 @@ end
 }
 
 Test { [[
+external _LOW, _HIGH, _digitalWrite();
 par do
     loop do
         _digitalWrite(11, _HIGH);
@@ -16111,6 +16179,7 @@ end
 }
 
 Test { [[
+external _F();
 output int F;
 C do
     void F() {};
@@ -16128,6 +16197,7 @@ end
 }
 
 Test { [[
+external _F();
 output int F,G;
 C do
     void F() {};
@@ -16147,6 +16217,7 @@ end
 }
 
 Test { [[
+external _F();
 deterministic _F with F,G;
 output int F,G;
 C do
@@ -16168,6 +16239,7 @@ end
 }
 
 Test { [[
+external _F();
 output int* F,G;
 deterministic _F with F,G;
 int a = 1;
@@ -16191,6 +16263,7 @@ end
 }
 
 Test { [[
+external _F();
 pure _F;
 output int* F,G;
 int a = 1;
@@ -16214,6 +16287,7 @@ end
 }
 
 Test { [[
+external _F();
 deterministic F with G;
 output void F,G;
 par do
@@ -16233,17 +16307,26 @@ end
 
 Test { [[_char* a = "Abcd12" ; return 1;]], run=1 }
 Test { [[
+external _printf();
 _printf("END: %s\n", "Abcd12");
 return 0;
 ]],
     run='Abcd12',
 }
-Test { [[return _strlen("123");]], run=3 }
-Test { [[_printf("END: 1%d\n",2); return 0;]], run=12 }
-Test { [[_printf("END: 1%d%d\n",2,3); return 0;]], run=123 }
+Test { [[
+external _strncpy(), _printf(), _strlen();
+return _strlen("123");
+]], run=3 }
+Test { [[
+external _printf();
+_printf("END: 1%d\n",2); return 0;]], run=12 }
+Test { [[
+external _printf();
+_printf("END: 1%d%d\n",2,3); return 0;]], run=123 }
 
 Test { [[
-type _char = 1;
+external _strncpy(), _printf(), _strlen();
+external _char = 1;
 _char[10] str;
 _strncpy(str, "123", 4);
 _printf("END: %d %s\n", _strlen(str), str);
@@ -16253,7 +16336,8 @@ return 0;
 }
 
 Test { [[
-type _char = 1;
+external _strncpy(), _printf(), _strlen(), _strcpy();
+external _char = 1;
 _char[6] a; _strcpy(a, "Hello");
 _char[2] b; _strcpy(b, " ");
 _char[7] c; _strcpy(c, "World!");
@@ -16270,6 +16354,7 @@ return 0;
 }
 
 Test { [[
+external _const_1();
 C do
     int const_1 () {
         return 1;
@@ -16281,6 +16366,7 @@ return _const_1();
 }
 
 Test { [[
+external _const_1();
 C do
     int const_1 () {
         return 1;
@@ -16292,6 +16378,7 @@ return _const_1() + _const_1();
 }
 
 Test { [[
+external _inv();
 C do
     int inv (int v) {
         return -v;
@@ -16305,6 +16392,7 @@ return a;
 }
 
 Test { [[
+external _id();
 C do
     int id (int v) {
         return v;
@@ -16355,7 +16443,7 @@ typedef struct {
     u8 c;
 } s;
 end
-type _s = 4;
+external _s = 4;
 _s vs;
 vs.a = 10;
 vs.b = 1;
@@ -16371,7 +16459,7 @@ C do
         u8 data[16];
     } Payload;
 end
-type _Payload = 18;
+external _Payload = 18;
 _Payload final;
 u8* neighs = &(final.data[4]);
 return 1;
@@ -16386,7 +16474,7 @@ typedef struct {
     int b;
 } s;
 end
-type _s = 8;
+external _s = 8;
 _s vs;
 par/and do
     vs.a = 10;
@@ -16407,7 +16495,7 @@ typedef struct {
     int b;
 } s;
 end
-type _s = 8;
+external _s = 8;
 _s vs;
 par/and do
     vs.a = 10;
@@ -16427,7 +16515,7 @@ C do
         int a;
     } mys;
 end
-type _mys = 4;
+external _mys = 4;
 _mys v;
 _mys* pv;
 pv = &v;

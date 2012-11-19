@@ -56,7 +56,7 @@ local _V2NAME = {
     ID_cls  = 'identifier',
     _Dcl_var = 'declaration',
     _Dcl_int = 'declaration',
-    __ID = 'identifier',
+    _Dcl_c   = 'declaration',
 }
 local EV = function (rule)
     return V(rule) + m.Cmt(P'',
@@ -88,7 +88,7 @@ KEYS = P'async'  + 'await'   + 'break'   + 'C'
      + 'do'      + 'emit'    + 'else'    + 'else/if'  + 'end'  + 'event'
      + 'finally' + 'FOREVER' + 'input'   + 'if'       + 'loop' + 'null'
      + 'output'  + 'par'     + 'par/and' + 'par/or'   + 'return'
-     + 'sizeof'  + 'then'    + 'type'    + 'with'
+     + 'sizeof'  + 'then'    + 'external' + 'with'
      + TYPES
      + 'pause/if'
      + 'interface' + 'class' + 'new'
@@ -118,9 +118,8 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
 
     , _Stmt = V'AwaitT'   + V'AwaitExt'  + V'AwaitInt'
             + V'EmitT'    + V'EmitExtS'  + V'EmitInt'
-            + V'_Dcl_ext'
+            + V'_Dcl_c'   + V'_Dcl_ext'
             + V'_Dcl_int' + V'_Dcl_var'
-            + V'Dcl_type'
             + V'_Set'     + V'CallStmt' -- respect this order
             + EM'statement (missing `_´?)'
 
@@ -135,9 +134,6 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
 
     , _SetBlock = ( V'_Do'     + V'Async' +
                     V'ParEver' + V'If'    + V'Loop' )
-
-    , __ID      = V'ID_c' + V'ID_ext' + V'Var'
-    , Dcl_type  = K'type' * EV'ID_c' * EK'=' * NUM
 
     , _Set  = V'_Exp' * V'_Sets'
     , _Sets = K'=' * (
@@ -249,6 +245,11 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
     , EmitT    = K'emit' * (V'WCLOCKK'+V'WCLOCKE')
 
     , EmitInt  = K'emit' * EV'_Exp' * (K'=' * V'_Exp')^-1
+
+    , __Dcl_c = Cc'type' * V'ID_c' * K'='  * NUM
+              + Cc'func' * V'ID_c' * '()' * Cc(false)
+              + Cc'var'  * V'ID_c'        * Cc(false)
+    , _Dcl_c = K'external' * EV'__Dcl_c' * (K',' * EV'__Dcl_c')^0
 
     , _Dcl_ext = (CK'input'+CK'output') * EV'ID_type' *
                     EV'ID_ext' * (K','*EV'ID_ext')^0

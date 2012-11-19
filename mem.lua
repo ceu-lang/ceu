@@ -13,12 +13,12 @@ do  -- _MEM.cls
     end
     if _PROPS.has_ifcs then
         _MEM.cls.cls = off
-        off = off + _ENV.types.tceu_ncls
+        off = off + _ENV.c.tceu_ncls[3]
     end
     _MEM.cls.par_org = off
-    off = off + _ENV.types.pointer
+    off = off + _ENV.c.pointer[3]
     _MEM.cls.par_lbl = off
-    off = off + _ENV.types.tceu_nlbl
+    off = off + _ENV.c.tceu_nlbl[3]
 end
 
 function alloc (mem, n)
@@ -38,7 +38,7 @@ local t2n = {
 
 F = {
     Root = function (me)
-        _ENV.types.tceu_nevt = _TP.n2bytes(_MEM.evt_off+#_ENV.exts)
+        _ENV.c.tceu_nevt[3] = _TP.n2bytes(_MEM.evt_off+#_ENV.exts)
 
         -- cls/ifc accessors
         local accs = {}
@@ -61,8 +61,8 @@ F = {
                 if not (var.cls or var.arr) then
                     val = '(*'..val..')'
                 end
-                accs[#accs+1] = '#define '..pre..'_'..cls.id..'_'
-                                    ..var.id..'(org) '..val
+                local id = pre..'_'..cls.id..'_'..var.id
+                accs[#accs+1] = '#define '..id..'(org) '..val
             end
         end
         _MEM.code_accs = table.concat(accs,'\n')
@@ -74,10 +74,10 @@ F = {
             alloc(me.mem, 1)                -- dynamically allocated?
         end
         if _PROPS.has_ifcs then
-            alloc(me.mem, _ENV.types.tceu_ncls) -- cls N
+            alloc(me.mem, _ENV.c.tceu_ncls[3]) -- cls N
         end
-        alloc(me.mem, _ENV.types.pointer)   -- parent org/lbl
-        alloc(me.mem, _ENV.types.tceu_nlbl) -- for ceu_clr_*
+        alloc(me.mem, _ENV.c.pointer[3])   -- parent org/lbl
+        alloc(me.mem, _ENV.c.tceu_nlbl[3]) -- for ceu_clr_*
     end,
 
     Block_pre = function (me)
@@ -90,13 +90,13 @@ F = {
                 len = var.cls.mem.max
             elseif var.arr then
                 local _tp = _TP.deref(var.tp)
-                len = var.arr * (_TP.deref(_tp) and _ENV.types.pointer
-                                 or _ENV.types[_tp]
-                                 or _ENV.clss[_tp].mem.max)
+                len = var.arr * (_TP.deref(_tp) and _ENV.c.pointer[3]
+                             or (_ENV.c[_tp] and _ENV.c[_tp][3])
+                             or (_ENV.clss[_tp] and _ENV.clss[_tp].mem.max))
             elseif _TP.deref(var.tp) then
-                len = _ENV.types.pointer
+                len = _ENV.c.pointer[3]
             else
-                len = _ENV.types[var.tp]
+                len = _ENV.c[var.tp][3]
             end
 
             var.off = alloc(mem, len)
