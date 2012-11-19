@@ -113,6 +113,7 @@ function newvar (me, blk, isEvt, tp, dim, id)
 
     blk.vars[#blk.vars+1] = var
     blk.vars[id] = var -- TODO: last/first/error?
+    -- TODO: warning in C (hides)
 
     return var
 end
@@ -141,10 +142,11 @@ F = {
         _ENV.exts[#_ENV.exts+1] = ext
         _ENV.exts[ext.id] = ext
 
-        local ifcs = {}                 -- TODO: _ENV.ifaces
+        -- matches all ifc vs cls
+        local ifcs = {}
         for _,cls in pairs(_ENV.clss) do
             if cls.is_ifc then
-                ifcs[#ifcs+1] = cls
+                ifcs[#ifcs+1] = cls -- hold all ifcs for matching below
             end
         end
         for _, ifc in ipairs(ifcs) do

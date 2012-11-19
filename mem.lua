@@ -1,6 +1,7 @@
 _MEM = {
     cls = {},       -- offsets inside a class
     evt_off = 0,    -- max event offset in a class
+    code_accs = nil,
 }
 
 
@@ -38,6 +39,33 @@ local t2n = {
 F = {
     Root = function (me)
         _ENV.types.tceu_nevt = _TP.n2bytes(_MEM.evt_off+#_ENV.exts)
+
+        -- cls/ifc accessors
+        local accs = {}
+        for _,cls in pairs(_ENV.clss) do
+            for _, var in ipairs(cls.blk.vars) do
+                local pre = (cls.is_ifc and 'IFC') or 'CLS'
+                local off
+                if cls.is_ifc then
+                    -- off = IFC[org.cls][var.n]
+                    off = 'CEU.ifcs['
+                            ..'(*PTR(tceu_ncls*,(org+'
+                                    .._MEM.cls.cls..')))'
+                            ..']['
+                                .._ENV.ifcs[var.id_ifc]
+                            ..']'
+                else
+                    off = var.off
+                end
+                local val = '(('.._TP.c(var.tp..'*')..')(org+'..off..'))'
+                if not (var.cls or var.arr) then
+                    val = '(*'..val..')'
+                end
+                accs[#accs+1] = '#define '..pre..'_'..cls.id..'_'
+                                    ..var.id..'(org) '..val
+            end
+        end
+        _MEM.code_accs = table.concat(accs,'\n')
     end,
 
     Dcl_cls_pre = function (me)
@@ -114,7 +142,7 @@ F = {
     ParAnd = 'Block',
 
     Global = function (me)
-        me.val = '&CEU.mem'
+        me.val = '&GLOBAL'
     end,
 
     This = function (me)
@@ -253,23 +281,9 @@ F = {
 
     ['Op2_.'] = function (me)
         if me.org then
-            if _ENV.clss[me.org.tp].is_ifc then
-                -- off = IFC[org.cls][var.n]
-                me.var.off = 'CEU.ifcs['
-                        ..'(*PTR(tceu_ncls*,('..me.org.val..'+'
-                                .._MEM.cls.cls..')))'
-                        ..']['
-                            .._ENV.ifcs[me.var.id_ifc]
-                        ..']'
-            end
-
-            if me.var.cls or me.var.arr then
-                me.val = '(('.._TP.c(me.var.tp)..')'
-                            ..'('..me.org.val..'+'..me.var.off..'))'
-            else
-                me.val = '(*(('.._TP.c(me.var.tp)..'*)'
-                                ..'('..me.org.val..'+'..me.var.off..')))'
-            end
+            local cls = _ENV.clss[me.org.tp]
+            local pre = (cls.is_ifc and 'IFC_') or 'CLS_'
+            me.val = pre..cls.id..'_'..me.var.id..'('..me.org.val..')'
         else
             local op, e1, id = unpack(me)
             me.val  = '('..e1.val..op..id..')'

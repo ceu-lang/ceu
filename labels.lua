@@ -1,6 +1,7 @@
 _LBLS = {
     list = {},      -- { [lbl]={}, [i]=lbl }
-    code = '',
+    code_enum = '',
+    code_fins = '',
 }
 
 function new (lbl)
@@ -30,12 +31,20 @@ F = {
     end,
 
     Root = function (me)
+        _ENV.types.tceu_nlbl = _TP.n2bytes(#_LBLS.list)
+
         -- enum of labels
         for i, lbl in ipairs(_LBLS.list) do
-            _LBLS.code = _LBLS.code..'    '..lbl.id..' = '..lbl.n..',\n'
+            _LBLS.code_enum = _LBLS.code_enum..'    '
+                                ..lbl.id..' = '..lbl.n..',\n'
         end
 
-        _ENV.types.tceu_nlbl = _TP.n2bytes(#_LBLS.list)
+        -- labels which are finalizers
+        local t = {}
+        for _, lbl in ipairs(_LBLS.list) do
+            t[#t+1] = (string.find(lbl.id,'__fin') and 1) or 0
+        end
+        _LBLS.code_fins = table.concat(t,',')
     end,
 
     SetNew = function (me)

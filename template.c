@@ -37,6 +37,8 @@
 #define CEU_NIFCS      (=== CEU_NIFCS ===)
 #endif
 
+#define GLOBAL CEU.mem
+
 // Macros that can be defined:
 // ceu_out_pending() (1)
 // ceu_out_wclock(us)
@@ -74,12 +76,10 @@ typedef struct {
 } tceu_lst;
 
 enum {
-=== LABELS ===
+=== LABELS_ENUM ===
 };
 
 int ceu_go (int* ret);
-
-=== HOST ===
 
 typedef struct {
     u8          stack;
@@ -138,7 +138,7 @@ tceu CEU = {
     0, CEU_WCLOCK_NONE,
 #endif
 #ifdef CEU_FINS
-    { === LBL2FIN === },
+    { === LABELS_FINS === },
 #endif
 #ifdef CEU_IFCS
     { === IFCS === },
@@ -151,6 +151,10 @@ tceu CEU = {
 #endif
     {}
 };
+
+=== CLS_ACCS ===
+
+=== HOST ===
 
 /**********************************************************************/
 

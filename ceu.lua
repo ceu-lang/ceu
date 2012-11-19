@@ -155,18 +155,12 @@ do
     tpl = sub(tpl, '=== CEU_CLS_PAR_ORG ===',  _MEM.cls.par_org)
     tpl = sub(tpl, '=== CEU_CLS_PAR_LBL ===',  _MEM.cls.par_lbl)
 
-    tpl = sub(tpl, '=== LABELS ===', _LBLS.code)
-    tpl = sub(tpl, '=== HOST ===',   _CODE.host)
-    tpl = sub(tpl, '=== CODE ===',   _AST.root.code)
+    tpl = sub(tpl, '=== LABELS_ENUM ===', _LBLS.code_enum)
+    tpl = sub(tpl, '=== LABELS_FINS ===', _LBLS.code_fins)
 
-    -- LBL2FIN
-    if _PROPS.has_fins then
-        local t = {}
-        for _, lbl in ipairs(_LBLS.list) do
-            t[#t+1] = (string.find(lbl.id,'__fin') and 1) or 0
-        end
-        tpl = sub(tpl, '=== LBL2FIN ===', table.concat(t,','))
-    end
+    tpl = sub(tpl, '=== HOST ===',     _CODE.host)
+    tpl = sub(tpl, '=== CLS_ACCS ===', _MEM.code_accs)
+    tpl = sub(tpl, '=== CODE ===',     _AST.root.code)
 
     -- IFACES
     if _PROPS.has_ifcs then

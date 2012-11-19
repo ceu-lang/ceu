@@ -80,6 +80,33 @@ end
     run = 20,
 }
 
+Test { [[
+C do
+    void attr (void* org) {
+        IFC_Global_a(GLOBAL) = CLS_T_a(org) + 1;
+    }
+end
+
+interface Global with
+    int a;
+end
+class T with
+    int a;
+do
+    a = global:a;
+    _attr(this);
+    a = a + _IFC_Global_a(_GLOBAL) + _CLS_T_a(this);
+end
+int a = 10;
+do
+    T t;
+    t.a = t.a + a;
+    return t.a + _IFC_Global_a(this);;
+end
+]],
+    run = 53,
+}
+
     -- CLASSES / ORGS
 
 Test { [[
