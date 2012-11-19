@@ -2,299 +2,82 @@
 --]===]
 
 Test { [[
-input void START;
+C do
+    int V = 1;
+end
 
-interface I with
-    event int e;
+class J with
+do
+    _V = _V * 2;
 end
 
 class T with
-    event int e;
 do
-    await e;
-    e = 100;
+    J j;
+    _V = _V + 1;
 end
 
 T t;
-I* i = &t;
-
-await START;
-emit i->e;
-return i->e;
-]],
-    run = 100,
-}
-
-Test { [[
-input void START;
-
-interface I with
-    event int e, f;
-end
-
-class T with
-    event int e, f;
-do
-    int v = await e;
-    emit f=v;
-end
-
-T t1, t2;
-I* i1 = &t1;
-I* i2 = &t2;
-
-int ret = 0;
-par/and do
-    await START;
-    emit i1->e=7;
-with
-    int v = await i1->f;
-    ret = ret + v;
-with
-    await START;
-    emit i2->e=6;
-with
-    int v = await i2->f;
-    ret = ret + v;
-end
-return ret;
-]],
-    run = 13,
-}
-
-Test { [[
-interface I with
-    event int a;
-end
-return 10;
-]],
-    run = 10;
-}
-
-Test { [[
-interface I with
-    event int a;
-end
-I t;
-return 10;
-]],
-    env = 'ERR : line 4 : cannot instantiate an interface',
-}
-
-Test { [[
-interface I with
-    event int a;
-end
-I[10] t;
-return 10;
-]],
-    env = 'ERR : line 4 : cannot instantiate an interface',
-}
-
-Test { [[
-interface I with
-    event int a;
-end
-I* t;
-t = new I;
-return 10;
-]],
-    env = 'ERR : line 5 : cannot instantiate an interface',
-}
-
-Test { [[
-class T with
-do
-end
-
-interface I with
-    event int a;
-end
-
-I* i;
+_V = _V*3;
 T t;
-i = &t;
-return 10;
+_V = _V*3;
+T t;
+_V = _V*3;
+return _V;
 ]],
-    env = 'ERR : line 11 : invalid attribution',
+    run = 297;
 }
 
 Test { [[
 class T with
-    event void a;
+    int a;
 do
+    a = global:a;
 end
-
-interface I with
-    event int a;
-end
-
-I* i;
+int a = 10;
 T t;
-i = &t;
-return 10;
+t.a = t.a + a;
+return t.a;
 ]],
-    env = 'ERR : line 12 : invalid attribution',
+    env = 'ERR : line 4 : interface "Global" is not defined',
 }
 
 Test { [[
+interface Global with
+    int a;
+end
 class T with
-    event int a;
+    int a;
 do
+    a = global:a;
 end
-
-interface I with
-    event int a;
+do
+    int a = 10;
+    T t;
+    t.a = t.a + a;
+    return t.a;
 end
-
-I* i;
-T t;
-i = t;
-return 10;
 ]],
-    env = 'ERR : line 12 : invalid attribution',
+    env = 'ERR : line 1 : interface "Global" must be implemented by class "Main"',
 }
 
 Test { [[
+interface Global with
+    int a;
+end
 class T with
-    event int a;
+    int a;
 do
+    a = global:a;
 end
-
-interface I with
-    event int a;
-end
-
-I* i;
-T t;
-i = &t;
-return 10;
-]],
-    run = 10;
-}
-
-Test { [[
-class T with
-    event int a;
+int a = 10;
 do
+    T t;
+    t.a = t.a + a;
+    return t.a;
 end
-
-interface I with
-    event int a;
-end
-interface J with
-    event int a;
-end
-
-I* i;
-T t;
-i = &t;
-J* j = i;
-return 10;
 ]],
-    run = 10;
-}
-
-Test { [[
-class T with
-    event int a;
-do
-end
-
-interface I with
-    event int a;
-end
-interface J with
-    event int* a;
-end
-
-I* i;
-T t;
-i = &t;
-J* j = i;
-return 10;
-]],
-    env = 'ERR : line 16 : invalid attribution',
-}
-
-Test { [[
-class T with
-    int v;
-    int* x;
-    event int a;
-do
-    a = 10;
-end
-
-interface I with
-    event int a;
-end
-interface J with
-    event int a;
-    int v;
-end
-
-I* i;
-T t;
-i = &t;
-J* j = i;
-return 0;
-]],
-    env = 'ERR : line 20 : invalid attribution',
-}
-
-Test { [[
-input void START;
-class T with
-    event int a;
-do
-    a = 10;
-end
-
-interface I with
-    event int a;
-end
-interface J with
-    event int a;
-end
-
-I* i;
-T t;
-i = &t;
-J* j = i;
-await START;
-return i->a + j->a + t.a;
-]],
-    run = 30,
-}
-
-Test { [[
-input void START;
-class T with
-    int v;
-    int* x;
-    event int a;
-do
-    a = 10;
-    v = 1;
-end
-
-interface I with
-    event int a;
-    int v;
-end
-interface J with
-    event int a;
-end
-
-I* i;
-T t;
-i = &t;
-J* j = i;
-await START;
-return i->a + j->a + t.a + i->v + t.v;
-]],
-    run = 32,
+    run = 20,
 }
 
     -- CLASSES / ORGS
@@ -460,11 +243,11 @@ Test { [[
 int a=8;
 do
     int a = 1;
-    this.a = this.a + 5;
+    this.a = this.a + a + 5;
 end
 return a;
 ]],
-    env = 'ERR : line 4 : invalid `this´',
+    run = 14,
 }
 
 Test { [[
@@ -1285,9 +1068,9 @@ T* p = &t;
 //_fprintf(_stderr, "%p %p\n", t, *p);
 _c = t.a;
 //_fprintf(_stderr,"C=%d\n", _c);
-_d = p->a;
+_d = p:a;
 //_fprintf(_stderr,"D=%d\n", _d);
-return p->a + t.a + _c + _d;
+return p:a + t.a + _c + _d;
 ]],
     run = 40,
 }
@@ -1309,13 +1092,13 @@ ptr = &a;
 par/or do
     await START;
     emit a.go;
-    if ptr->going then
+    if ptr:going then
         await FOREVER;
     end
 with
-    await ptr->ok;
+    await ptr:ok;
 end
-return ptr->v + a.v;
+return ptr:v + a.v;
 ]],
     run = 20,
 }
@@ -1544,7 +1327,7 @@ with
 end
 return aa.a;
 ]],
-    run = 10,
+    run = 5,
 }
 
 Test { [[
@@ -1565,7 +1348,7 @@ with
 end
 return aa.a;
 ]],
-    run = 10,
+    run = 5,
 }
 
 Test { [[
@@ -1651,20 +1434,20 @@ int ret = 0;
 par/and do
     par/and do
         await START;
-        emit ptr->go;
+        emit ptr:go;
     with
-        await ptr->ok;
+        await ptr:ok;
     end
     ret = ret + 1;
 with
         await B;
-    emit ptr->e;
+    emit ptr:e;
     ret = ret + 1;
 with
-    await ptr->f;
+    await ptr:f;
     ret = ret + 1;
 end
-return ret + ptr->v + a.v;
+return ret + ptr:v + a.v;
 ]],
     run = { ['~>B']=203, }
 }
@@ -1866,12 +1649,12 @@ return _V;
 
 Test { [[
 C do
-    static int V = 0;
+    static int V = 1;
 end
 input void F;
 class T with
-    // nothing
 do
+    _V = 10;
     do
         await F;
     finally
@@ -1883,6 +1666,31 @@ par/or do
     await F;
 with
     // nothing;
+end
+return _V;
+]],
+    run = 1,
+}
+
+Test { [[
+C do
+    static int V = 0;
+end
+input void START;
+class T with
+    // nothing
+do
+    do
+        await START;
+    finally
+        _V = 100;
+    end
+end
+par/or do
+    T t;
+    await START;
+with
+    await START;
 end
 return _V;
 ]],
@@ -2059,7 +1867,7 @@ do
     T* o;
     o = new T;
     await START;
-    ret = o->a;
+    ret = o:a;
 end
 
 return ret + _V;
@@ -2088,7 +1896,7 @@ par/or do
     T* o;
     o = new T;
     await START;
-    ret = o->a;
+    ret = o:a;
 with
     await F;
 end
@@ -2119,7 +1927,7 @@ T* o;
 par/or do
     o = new T;
     await START;
-    ret = o->a;
+    ret = o:a;
 with
     await F;
 end
@@ -2136,6 +1944,7 @@ end
 
 class V with
 do
+    _V = 20;
 finally
     _V = 10;
 end
@@ -2149,7 +1958,7 @@ class T with
     U* u;
 do
     await 1s;
-    u->v = new V;
+    u:v = new V;
 end
 
 do
@@ -2161,54 +1970,47 @@ do
     end
     _assert(_V == 1);
 end
-_assert(_V == 10);
+_assert(_V == 1);
 return _V;
 ]],
-    run = { ['~>1s']=10, }
+    run = { ['~>1s']=1, }
 }
 
--- todo pause hierarquico dentro de um org
 Test { [[
 input void A,X, START;
-event int a;
+event int a=0;
 int ret = 0;
 
 class T with
     event void v, ok, go;
 do
-_fprintf(_stderr,"1\n");
     await A;
-_fprintf(_stderr,"2\n");
     emit v;
     emit ok;
 end
 
-T[2] ts;
-
 par/or do
     pause/if a do
-        par/and do
-            await ts[0].ok;
-_fprintf(_stderr,"4\n");
+        T[2] ts;
+        par/or do
+            par/and do
+                await ts[0].ok;
+            with
+                await ts[1].ok;
+            end
         with
-            await ts[1].ok;
-_fprintf(_stderr,"4\n");
+            par do
+                await ts[0].v;
+                ret = ret + 1;
+            with
+                await ts[1].v;
+                ret = ret + 1;
+            end
         end
-    end
-with
-    par do
-        await ts[0].v;
-_fprintf(_stderr,"3\n");
-        ret = ret + 1;
-    with
-        await ts[1].v;
-_fprintf(_stderr,"3\n");
-        ret = ret + 1;
     end
 with
     await START;
     emit a=1;
-_fprintf(_stderr,"5\n");
     await X;
     emit a=0;
     ret = 10;
@@ -2216,8 +2018,476 @@ _fprintf(_stderr,"5\n");
 end
 return ret;
 ]],
-    todo = true,
     run = { ['~>A; ~>X; ~>A']=12 }
+}
+
+--[=[
+-- todo pause hierarquico dentro de um org
+Test { [[
+input int SDL_KEYDOWN;
+input int SDL_MOUSEBUTTONDOWN;
+
+class Global with
+    int rects_n;
+do
+    rects_n = 0;
+end
+Global glb;
+
+class Rect with
+    Global* glb;
+    int v;
+    event int pse;
+do
+    pse = 0;
+    glb:rects_n = glb:rects_n + 1;
+
+    par/or do
+        pause/if pse do
+            loop do
+                await 20ms;
+                this.v = v + 1;
+                if v > 500 then
+                    break;
+                end
+            end
+        end
+    with
+        loop do
+            int but = await CLICK;
+            if but == this.v then
+                emit pse=!pse;
+            end
+        end
+    end
+finally
+    glb:rects_n = glb:rects_n - 1;
+end
+
+event int pse_all = 0;
+
+par/or do
+    loop do
+        par/or do
+            pause/if pse_all do
+                Rect* r;
+                loop do
+                    int pos = await CREATE;
+                    if glb.rects_n<10 then
+                        r = new Rect;
+                        r:glb = &glb;
+                        r:v = pos;
+                    end
+                end
+            end
+        with
+            loop do
+                _SDL_KeyboardEvent* key = await SDL_KEYDOWN;
+                if key:keysym.sym == _SDLK_ESCAPE then
+                    break;
+                end
+            end
+        end
+    end
+with
+    loop do
+        _SDL_KeyboardEvent* key = await SDL_KEYDOWN;
+        if key:keysym.sym == _SDLK_p then
+            emit pse_all = !pse_all;
+_printf("PSE %d\n", pse_all);
+        end
+    end
+with
+    loop do
+        await SDL_DT;
+
+        _SDL_SetRenderDrawColor(ren, 0, 0, 0, 0);
+        _SDL_RenderClear(ren);
+
+        loop i, glb.rects_n do
+            Rect* r = glb.rects[i];
+            _SDL_SetRenderDrawColor(ren, 0, 255, 0, 0);
+            if r:pse then
+                _SDL_RenderDrawRect(ren, &r:rect);
+            else
+                _SDL_RenderFillRect(ren, &r:rect);
+            end
+        end
+
+        _SDL_RenderPresent(ren);
+    end
+with
+    loop do
+        int i = 0;
+        int t;
+        par/or do
+            t = await 1s;
+        with
+            loop do
+                await SDL_DT;
+                i = i + 1;
+            end
+        end
+        //_printf("FPS: %d (%d)\n", i, t/1000);
+    end
+with
+    await SDL_QUIT;
+end
+
+_SDL_DestroyRenderer(ren);
+_SDL_DestroyWindow(win);
+_SDL_Quit();
+
+C do
+    int contains (SDL_Rect* r, s16 x, s16 y) {
+        return (x >= r->x) && (x <= r->x+r->w)
+            && (y >= r->y) && (y <= r->y+r->h);
+    }
+end
+
+return 0;
+]]
+}
+]=]
+
+-- INTERFACES / IFACES / IFCES
+
+Test { [[
+C do
+    void* ptr;
+end
+interface I with
+    event void e;
+end
+J* i = _ptr;
+return 10;
+]],
+    --env = 'ERR : line 7 : undeclared type `J´',
+    run = 10,
+}
+
+Test { [[
+C do
+    void* ptr;
+end
+interface I with
+    event void e;
+end
+I* i = _ptr;
+return 10;
+]],
+    run = 10;
+}
+
+Test { [[
+C do
+    void* ptr;
+end
+interface I with
+    event int e;
+end
+I* i = <I*> _ptr;
+return 10;
+]],
+    run = 10;
+}
+
+Test { [[
+input void START;
+
+interface I with
+    event int e;
+end
+
+class T with
+    event int e;
+do
+    await e;
+    e = 100;
+end
+
+T t;
+I* i = &t;
+
+await START;
+emit i:e;
+return i:e;
+]],
+    run = 100,
+}
+
+Test { [[
+input void START;
+
+interface I with
+    event int e, f;
+end
+
+class T with
+    event int e, f;
+do
+    int v = await e;
+    emit f=v;
+end
+
+T t1, t2;
+I* i1 = &t1;
+I* i2 = &t2;
+
+//_fprintf(_stderr, "%p %p %p %p\n", t1,&t1, i1, &i1);
+
+int ret = 0;
+par/and do
+    await START;
+    emit i1:e=7;
+with
+    int v = await i1:f;
+    ret = ret + v;
+with
+    await START;
+    emit i2:e=6;
+with
+    int v = await i2:f;
+    ret = ret + v;
+end
+return ret;
+]],
+    run = 13,
+}
+
+Test { [[
+interface I with
+    event int a;
+end
+return 10;
+]],
+    run = 10;
+}
+
+Test { [[
+interface I with
+    event int a;
+end
+I t;
+return 10;
+]],
+    env = 'ERR : line 4 : cannot instantiate an interface',
+}
+
+Test { [[
+interface I with
+    event int a;
+end
+I[10] t;
+return 10;
+]],
+    env = 'ERR : line 4 : cannot instantiate an interface',
+}
+
+Test { [[
+interface I with
+    event int a;
+end
+I* t;
+t = new I;
+return 10;
+]],
+    env = 'ERR : line 5 : cannot instantiate an interface',
+}
+
+Test { [[
+class T with
+do
+end
+
+interface I with
+    event int a;
+end
+
+I* i;
+T t;
+i = &t;
+return 10;
+]],
+    env = 'ERR : line 11 : invalid attribution',
+}
+
+Test { [[
+class T with
+    event void a;
+do
+end
+
+interface I with
+    event int a;
+end
+
+I* i;
+T t;
+i = &t;
+return 10;
+]],
+    env = 'ERR : line 12 : invalid attribution',
+}
+
+Test { [[
+class T with
+    event int a;
+do
+end
+
+interface I with
+    event int a;
+end
+
+I* i;
+T t;
+i = t;
+return 10;
+]],
+    env = 'ERR : line 12 : invalid attribution',
+}
+
+Test { [[
+class T with
+    event int a;
+do
+end
+
+interface I with
+    event int a;
+end
+
+I* i;
+T t;
+i = &t;
+return 10;
+]],
+    run = 10;
+}
+
+Test { [[
+class T with
+    event int a;
+do
+end
+
+interface I with
+    event int a;
+end
+interface J with
+    event int a;
+end
+
+I* i;
+T t;
+i = &t;
+J* j = i;
+return 10;
+]],
+    run = 10;
+}
+
+Test { [[
+class T with
+    event int a;
+do
+end
+
+interface I with
+    event int a;
+end
+interface J with
+    event int* a;
+end
+
+I* i;
+T t;
+i = &t;
+J* j = i;
+return 10;
+]],
+    env = 'ERR : line 16 : invalid attribution',
+}
+
+Test { [[
+class T with
+    int v;
+    int* x;
+    event int a;
+do
+    a = 10;
+end
+
+interface I with
+    event int a;
+end
+interface J with
+    event int a;
+    int v;
+end
+
+I* i;
+T t;
+i = &t;
+J* j = i;
+return 0;
+]],
+    env = 'ERR : line 20 : invalid attribution',
+}
+
+Test { [[
+input void START;
+class T with
+    event int a;
+do
+    a = 10;
+end
+
+interface I with
+    event int a;
+end
+interface J with
+    event int a;
+end
+
+I* i;
+T t;
+i = &t;
+J* j = i;
+await START;
+return i:a + j:a + t.a;
+]],
+    run = 30,
+}
+
+Test { [[
+input void START;
+class T with
+    int v;
+    int* x;
+    event int a;
+do
+    a = 10;
+    v = 1;
+end
+
+interface I with
+    event int a;
+    int v;
+end
+interface J with
+    event int a;
+end
+
+I* i;
+T t;
+i = &t;
+J* j = i;
+await START;
+return i:a + j:a + t.a + i:v + t.v;
+]],
+    run = 32,
 }
 
 --do return end
@@ -9983,7 +10253,7 @@ loop do
 end;
 return v;
 ]],
---(((0,~A);(1)^) || ~B->asr)*]],
+--(((0,~A);(1)^) || ~B:asr)*]],
     run = {
         ['4~>A'] = 4,
         ['1~>B ; 3~>A'] = 3,
@@ -11316,7 +11586,7 @@ loop do
     emit a=a+v;
 end;
 ]],
---((a,~D)->add~>a)*]],
+--((a,~D):add~>a)*]],
     ana = {
         isForever = true,
         --trig_wo = 1,
@@ -13539,17 +13809,13 @@ int ret;
 par/or do
     do
         await 1s;
-_fprintf(_stderr,"0\n");
     finally
-_fprintf(_stderr,"1\n");
         ret = 3;
     end
 with
     await 1s;
-_fprintf(_stderr,"2\n");
     ret = 2;
 end
-_fprintf(_stderr,"3\n");
 return ret;
 ]],
     run = { ['~>1s']=3 },
@@ -16140,7 +16406,7 @@ _mys* pv;
 pv = &v;
 v.a = 10;
 (*pv).a = 20;
-pv->a = pv->a + v.a;
+pv:a = pv:a + v.a;
 return v.a;
 ]],
     run = 40,

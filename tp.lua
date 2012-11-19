@@ -33,14 +33,18 @@ end
 
 -- TODO: enforce passing parameter `c´ to isNumeric/deref/contains/max ?
 
+function _TP.raw (tp)
+    return (string.match(tp, '^([_%w]*)%**'))
+end
+
 function _TP.cls (tp)
-    local cls, ptr = string.match(tp, '^(%u%w*)(%**)')
+    local cls, ptr = string.match(tp, '^(%u[_%w]*)(%**)')
     cls = cls and _ENV.clss and _ENV.clss[cls]
     return cls, ptr
 end
 
 function _TP.c (tp)
-    return (string.gsub(string.gsub(tp,'^%u%w*','void*'), '^_', ''))
+    return (string.gsub(string.gsub(tp,'^%u[_%w]*','void*'), '^_', ''))
 end
 
 function _TP.isNumeric (tp, c)

@@ -54,9 +54,7 @@ typedef === TCEU_NOFF === tceu_noff;    // max offset in an iface
 
 typedef struct {
     void*     org;
-#ifdef CEU_STACK
     u8 stack;
-#endif
 #ifdef CEU_TREE
     u8 tree;
 #endif
@@ -84,20 +82,17 @@ int ceu_go (int* ret);
 === HOST ===
 
 typedef struct {
+    u8          stack;
     tceu_ntrk   trks_n;
     tceu_ntrk   trks_nmax;
 
 #if   defined(CEU_NEWS)
     tceu_trk*   trks;
-#elif defined(CEU_STACK) || defined(CEU_TREE)
+#elif defined(CEU_TREE)
     tceu_trk    trks[CEU_NTRACKS+1];  // 0 is reserved
 #else
     tceu_trk    trks[CEU_NTRACKS];
 #endif
-
-//#ifdef CEU_STACK              // TODO
-    u8              stack;
-//#endif
 
 #ifdef CEU_EXTS
     void*       ext_data;
@@ -129,15 +124,13 @@ typedef struct {
 } tceu;
 
 tceu CEU = {
+    CEU_STACK_MIN,
     0,
 #ifdef CEU_NEWS
     CEU_NTRACKS*2, NULL,
 #else
     CEU_NTRACKS,   {},
 #endif
-//#ifdef CEU_STACK              // TODO
-    CEU_STACK_MIN,
-//#endif
 #ifdef CEU_EXTS
     0, 0,
 #endif
@@ -161,9 +154,8 @@ tceu CEU = {
 
 /**********************************************************************/
 
-#if defined(CEU_STACK) || defined(CEU_TREE)
+#if defined(CEU_TREE)
 int ceu_trk_cmp (tceu_trk* trk1, tceu_trk* trk2) {
-#ifdef CEU_STACK
     if (trk1->stack != trk2->stack) {
         if (trk1->stack == CEU.stack)
             return 1;
@@ -171,7 +163,6 @@ int ceu_trk_cmp (tceu_trk* trk1, tceu_trk* trk2) {
             return 0;
         return (trk1->stack > trk2->stack);
     }
-#endif
 #ifdef CEU_TREE
     return (trk1->tree > trk2->tree);
 #endif
@@ -191,15 +182,13 @@ void ceu_trk_ins (u8 stack, u8 tree, void* org, int chk, tceu_nlbl lbl)
     }}
 #endif
 
-#if defined(CEU_TREE) || defined(CEU_STACK)
+#ifdef CEU_TREE
 {
     tceu_ntrk i;
 
     tceu_trk trk = {
         org,
-#ifdef CEU_STACK
         stack,
-#endif
 #ifdef CEU_TREE
         tree,
 #endif
@@ -238,7 +227,7 @@ void ceu_trk_ins (u8 stack, u8 tree, void* org, int chk, tceu_nlbl lbl)
         CEU.trks[i] = CEU.trks[i/2];
     CEU.trks[i] = trk;
 }
-#else // defined(CEU_TREE) || defined(CEU_STACK)
+#else // defined(CEU_TREE)
     CEU.trks[CEU.trks_n].org = org;
     CEU.trks[CEU.trks_n++].lbl = lbl;
 #endif
@@ -291,7 +280,6 @@ int ceu_clr_child (void* cur, void* org, tceu_nlbl l1, tceu_nlbl l2) {
     }
 }
 
-#ifdef CEU_STACK
 void ceu_trk_clr (int child, void* org, tceu_nlbl l1, tceu_nlbl l2) {
     int i;
     for (i=1; i<=CEU.trks_n; i++) {
@@ -303,7 +291,6 @@ void ceu_trk_clr (int child, void* org, tceu_nlbl l1, tceu_nlbl l2) {
         }
     }
 }
-#endif
 
 /**********************************************************************/
 
@@ -376,8 +363,8 @@ void ceu_lst_clr (int child, void* org, tceu_nlbl l1, tceu_nlbl l2, u8 tree) {
         ||   child && lst->org!=org && ceu_clr_child(lst->org,org,l1,l2) ) {
 #ifdef CEU_FINS
             u8 fin = CEU.lbl2fin[lst->lbl];
-            if (fin)   // always trigger finally's
-                ceu_trk_ins(CEU.stack, tree+fin, lst->org, 0, lst->lbl);
+            if (fin)   // always trigger finalizers // TODO: respect any order?
+                ceu_trk_ins(CEU.stack, tree, lst->org, 0, lst->lbl);
 #endif
             CEU.lsts_n--;
             if (i < CEU.lsts_n) {
@@ -389,14 +376,15 @@ void ceu_lst_clr (int child, void* org, tceu_nlbl l1, tceu_nlbl l2, u8 tree) {
 }
 
 #ifdef CEU_PSES
-void ceu_lst_pse (void* org, tceu_nlbl l1, tceu_nlbl l2, int inc) {
+void ceu_lst_pse (int child, void* org, tceu_nlbl l1, tceu_nlbl l2, int inc) {
     tceu_nlst i;
     for (i=0 ; i<CEU.lsts_n ; i++) {
         tceu_lst* lst = &CEU.lsts[i];
 #ifdef CEU_FINS
         if (!CEU.lbl2fin[lst->lbl])
 #endif
-        if (lst->lbl && lst->org==org && lst->lbl>=l1 && lst->lbl<=l2) {
+        if ( lst->org==org && lst->lbl>=l1 && lst->lbl<=l2
+        ||   child && lst->org!=org && ceu_clr_child(lst->org,org,l1,l2) ) {
             lst->pse += inc;
 #ifdef CEU_WCLOCKS
             if (lst->pse==0 && lst->evt==IN__WCLOCK) {
@@ -409,24 +397,6 @@ void ceu_lst_pse (void* org, tceu_nlbl l1, tceu_nlbl l2, int inc) {
     }
 }
 #endif
-
-void ceu_clr (void* org, tceu_nlbl l1, tceu_nlbl l2,
-                int hasOrg, int hasEmt, int hasAwt, int hasFin,
-                tceu_nlbl lbl_out, u8 tree)
-{
-#ifdef CEU_STACK
-    if (hasOrg || hasEmt)
-        ceu_trk_clr(hasOrg, org, l1, l2);
-#endif
-
-    // must be after trk_clr (fins)
-    if (hasOrg || hasAwt || hasFin)
-        ceu_lst_clr(hasOrg, org, l1, l2, tree);
-
-    // finalizers must execute before the continuation
-    if (hasOrg || hasFin)
-        ceu_trk_ins(CEU.stack, tree, org, 0, lbl_out);
-}
 
 /**********************************************************************/
 
@@ -480,9 +450,7 @@ int ceu_go_init (int* ret)
 int ceu_go_event (int* ret, tceu_nevt id, void* data)
 {
     CEU.ext_data = data;
-#ifdef CEU_STACK
     CEU.stack = CEU_STACK_MIN;
-#endif
     ceu_lst_go(id, 0);
 
     return ceu_go(ret);
@@ -493,9 +461,7 @@ int ceu_go_event (int* ret, tceu_nevt id, void* data)
 int ceu_go_async (int* ret, int* pending)
 {
     int s;
-#ifdef CEU_STACK
     CEU.stack = CEU_STACK_MIN;
-#endif
     ceu_lst_go(IN__ASYNC, 0);
     s = ceu_go(ret);
 
@@ -521,9 +487,7 @@ int ceu_go_wclock (int* ret, s32 dt, s32* nxt)
     tceu_nlst i;
     s32 min_togo = CEU_WCLOCK_NONE;
 
-#ifdef CEU_STACK
     CEU.stack = CEU_STACK_MIN;
-#endif
 
     if (CEU.wclk_min == CEU_WCLOCK_NONE) {
         if (nxt)
@@ -595,18 +559,12 @@ int ceu_go (int* ret)
 {
     tceu_trk _trk_;
 
-#ifdef CEU_STACK
     CEU.stack = CEU_STACK_MIN;
-#endif
 
     while (ceu_trk_rem(&_trk_,1))
     {
-#ifdef CEU_STACK
         if (_trk_.stack != CEU.stack)
             CEU.stack = _trk_.stack;
-#endif
-        if (_trk_.lbl == Inactive)
-            continue;   // an escape may have cleared a `defer´ or `cont´
 
 _SWITCH_:
 #ifdef CEU_DEBUG

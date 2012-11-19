@@ -228,9 +228,6 @@ do
     if _PROPS.has_asyncs then
         str = str .. '#define CEU_ASYNCS\n'
     end
-    if _PROPS.has_emits then
-        str = str .. '#define CEU_STACK\n'
-    end
     if _PROPS.has_pses then
         str = str .. '#define CEU_PSES\n'
     end

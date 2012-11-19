@@ -113,8 +113,12 @@ F = {
     end,
     ParAnd = 'Block',
 
+    Global = function (me)
+        me.val = '&CEU.mem'
+    end,
+
     This = function (me)
-        me.val = 'PTR_org(void*,0)'
+        me.val = '_trk_.org'
     end,
 
     Var = function (me)

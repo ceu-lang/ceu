@@ -175,7 +175,8 @@ local C; C = {
         end
     end,
 
-    This = node('This'),
+    Global = node('Global'),
+    This   = node('This'),
 
     Block   = node('Block'),
     BlockN  = node('BlockN'),
@@ -385,7 +386,7 @@ local C; C = {
                                     C._Exp(ln, select(3,...)))
         else                    -- binary expression
             -- v1=e1, v2=op, v3=e2, v4=?
-            if v2 == '->' then
+            if v2 == ':' then
                 return C._Exp(ln,
                     node('Op2_.')(ln, '.', node('Op1_*')(ln,'*',v1), v3),
                     select(4,...)

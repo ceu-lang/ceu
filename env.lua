@@ -56,17 +56,12 @@ function _ENV.ifc_vs_cls (ifc, cls)
     end
 
     -- check if they match
-    local t = {}
     for _, v1 in ipairs(ifc.blk.vars) do
-        v1.id_ifc = v1.id_ifc or var2ifc(v1)
         v2 = cls.blk.vars[v1.id]
         if v2 then
             v2.id_ifc = v2.id_ifc or var2ifc(v2)
         end
-
-        if v2 and (v1.id_ifc==v2.id_ifc) then
-            t[v1.id] = v1.id_ifc
-        else
+        if (not v2) or (v1.id_ifc~=v2.id_ifc) then
             ifc.matches[cls] = false
             return false
         end
@@ -74,12 +69,6 @@ function _ENV.ifc_vs_cls (ifc, cls)
 
     -- yes, they match
     ifc.matches[cls] = true
-    for id, id_ifc in pairs(t) do
-        if not _ENV.ifcs[id_ifc] then
-            _ENV.ifcs[id_ifc] = #_ENV.ifcs
-            _ENV.ifcs[#_ENV.ifcs+1] = id_ifc
-        end
-    end
     return true
 end
 
@@ -102,8 +91,9 @@ function newvar (me, blk, isEvt, tp, dim, id)
 
     tp = (dim and tp..'*') or tp
 
-    ASR(_TP.deref(tp) or _ENV.types[tp] or _ENV.clss[tp], me,
-            'undeclared type `'..tp..'´')
+    local tp_raw = _TP.raw(tp)
+    ASR(_TP.deref(tp) or _ENV.types[tp_raw] or _ENV.clss[tp_raw], me,
+            'undeclared type `'..tp_raw..'´')   -- TODO: reject _TP.deref
 
     local cls = _ENV.clss[tp]
     if cls then
@@ -150,6 +140,23 @@ F = {
         local ext = {id='_ASYNC', input=true}
         _ENV.exts[#_ENV.exts+1] = ext
         _ENV.exts[ext.id] = ext
+
+        local ifcs = {}                 -- TODO: _ENV.ifaces
+        for _,cls in pairs(_ENV.clss) do
+            if cls.is_ifc then
+                ifcs[#ifcs+1] = cls
+            end
+        end
+        for _, ifc in ipairs(ifcs) do
+            for _, cls in ipairs(_ENV.clss) do
+                _ENV.ifc_vs_cls(ifc, cls)
+            end
+        end
+        local glb = _ENV.clss.Global
+        if glb then
+            ASR(glb.is_ifc and glb.matches[_ENV.clss.Main], me,
+                'interface "Global" must be implemented by class "Main"')
+        end
     end,
 
     Block_pre = function (me)
@@ -171,7 +178,7 @@ F = {
         local ifc, id, blk = unpack(me)
         me.is_ifc = ifc
         me.id     = id
-        me.blk    = blk
+        me.blk    = (id=='Main' and blk[3][2]) or blk
         ASR(not _ENV.clss[id], me,
                 'interface/class "'..id..'" is already declared')
 
@@ -181,11 +188,29 @@ F = {
             _ENV.clss[#_ENV.clss+1] = me
         end
     end,
+    Dcl_cls = function (me)
+        -- expose each field
+        if me.is_ifc then
+            for _, var in pairs(me.blk.vars) do
+                var.id_ifc = var.id_ifc or var2ifc(var)
+                if not _ENV.ifcs[var.id_ifc] then
+                    _ENV.ifcs[var.id_ifc] = #_ENV.ifcs
+                    _ENV.ifcs[#_ENV.ifcs+1] = var.id_ifc
+                end
+            end
+        end
+    end,
+
+    Global = function (me)
+        ASR(_ENV.clss.Global and _ENV.clss.Global.is_ifc, me,
+            'interface "Global" is not defined')
+        me.tp   = 'Global*'
+        me.lval = false
+    end,
 
     This = function (me)
         me.tp   = CLS().id
         me.lval = false
-        ASR(me.tp~='Main', me, 'invalid `this´')
     end,
 
     SetNew = function (me)

@@ -28,7 +28,6 @@ _PROPS = {
     has_exts    = false,
     has_wclocks = false,
     has_asyncs  = false,
-    has_emits   = false,
     has_pses    = false,
     has_fins    = false,
     has_news    = false,
@@ -55,7 +54,7 @@ F = {
         me.ns = {
             tracks = 1,
             awaits = 0,
-            emits  = 0,
+            stacks = 0,
             fins   = 0,
             orgs   = 0,
         }
@@ -80,6 +79,8 @@ F = {
 
     Block = function (me)
         MAX_all(me)
+
+        -- Block must ADD all these (they are spawned in par, not in seq)
         local t = { }
         for _, var in ipairs(me.vars) do
             if var.cls then
@@ -114,15 +115,23 @@ F = {
 
     Dcl_var = function (me)
         if me.var.cls then
-            me.ns.orgs = 1
+            me.ns.orgs   = 1
+            me.ns.stacks = 1    -- constructor contination
+            me.ns.tracks = 2
         elseif me.var.arr and _ENV.clss[_TP.deref(me.var.tp)] then
-            me.ns.orgs = me.var.arr
+            me.ns.orgs   = me.var.arr
+            me.ns.stacks = me.var.arr
+            me.ns.tracks = me.var.arr+1 -- constructor continuation
         end
     end,
 
     SetNew = function (me)
         _PROPS.has_news = true
-        me.ns.orgs = 1
+        SAME(me, me.cls)
+        -- overwrite these:
+        me.ns.orgs   = 1        -- here or any parent
+        me.ns.stacks = 1        -- constructor continuation
+        me.ns.tracks = 2
     end,
 
     Pause = function (me)
@@ -198,9 +207,8 @@ F = {
     end,
 
     EmitInt = function (me)
-        _PROPS.has_emits = true
+        me.ns.stacks = 1
         me.ns.tracks = 2     -- continuation
-        me.ns.emits  = 1
     end,
 
     EmitExtS = function (me)

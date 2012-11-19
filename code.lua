@@ -45,18 +45,52 @@ function COMM (me, comm)
     LINE(me, '/* '..comm..' */', 0)
 end
 
-function CEU_CLR (me)
-    CASE(me, me.lbl_out)
-    COMM(me, 'CEU_CLR')
+function CLEAR (me)
+    COMM(me, 'CLEAR')
 
-    LINE(me, 'ceu_clr(_trk_.org,' ..me.lbls[1]..','..me.lbls[2]..','
-                ..me.ns.orgs..','..me.ns.emits..','..me.ns.awaits..','
-                ..me.ns.fins..','..me.lbl_out2.id..', _trk_.tree);')
-
-    if me.ns.fins>0 or me.ns.orgs>0 then
-        HALT(me)
-        CASE(me, me.lbl_out2)
+    -- remove (lower) stacked tracks
+    if me.ns.stacks > 0 then
+        LINE(me, 'ceu_trk_clr('..me.ns.orgs..', _trk_.org, '
+                    ..me.lbls[1]..','..me.lbls[2]..');')
     end
+
+    -- must be after trk_clr (it may trigger fins)
+    if me.ns.awaits > 0 then
+        LINE(me, 'ceu_lst_clr('..me.ns.orgs..', _trk_.org, '
+                    ..me.lbls[1]..','..me.lbls[2]
+                    ..','..(me.lbl_out and me.lbl_out.prio or 'CEU_TREE_MAX')..');')
+    end
+
+    -- continue after finalizers
+    if me.ns.fins > 0 then
+        LINE(me, 'ceu_trk_ins(CEU.stack+1, CEU_TREE_MAX, _trk_.org, 0,'
+                    ..me.lbl_clr.id..');')
+        HALT(me)
+        CASE(me, me.lbl_clr)
+    end
+end
+
+function ORG (me, new, org0, cls, par_org, par_lbl)
+    COMM(me, 'ORG')
+    LINE(me, '{ void* org0 = '..org0..';')
+    if new then
+        LINE(me, 'if (org0) {')
+    end
+    LINE(me, [[
+    ceu_trk_ins(CEU.stack+2, CEU_TREE_MAX, org0, 0,]]..cls.lbl.id..[[);
+#ifdef CEU_IFCS
+    *((tceu_ncls*)(org0+]]..(_MEM.cls.cls or '')..[[)) = ]]..cls.n..[[;
+#endif
+#ifdef CEU_NEWS
+    *((u8*)       (org0+]]..(_MEM.cls.dyn or '')..[[)) = 1;
+#endif
+    *((void**)    (org0+]].._MEM.cls.par_org..[[))     = ]]..par_org..[[;
+    *((tceu_nlbl*)(org0+]].._MEM.cls.par_lbl..[[))     = ]]..par_lbl..[[;
+]])
+    if new then
+        LINE(me, '}')
+    end
+    LINE(me, '}')
 end
 
 F = {
@@ -72,6 +106,16 @@ F = {
 
     Dcl_cls = function (me)
         CASE(me, me.lbl)
+        if me == _MAIN then
+            LINE(me, [[
+#ifdef CEU_IFCS
+*((tceu_ncls*)(CEU.mem+]]..(_MEM.cls.cls or '')..[[)) = ]].._MAIN.n..[[;
+#endif
+#ifdef CEU_NEWS
+*((u8*)       (CEU.mem+]]..(_MEM.cls.dyn or '')..[[)) = 0;
+#endif
+]])
+        end
         CONC_ALL(me)
         if me == _MAIN then
             local ret = _ENV.getvar('$ret', me.blk)
@@ -81,77 +125,64 @@ F = {
         HALT(me)
     end,
 
-    SetNew = function (me)
-        local exp, _ = unpack(me)
-        local org = (exp.org and exp.org.val) or '_trk_.org'
-        LINE(me, [[{
-void* org0;
-]]..exp.val..' = malloc('..me.cls.mem.max..[[);
-org0 = ]]..exp.val..[[;
-if (org0) {
-    ceu_trk_ins(CEU.stack, CEU_TREE_MAX, org0, 0,]]..me.cls.lbl.id..[[);
-#ifdef CEU_IFCS
-    *((tceu_ncls*)(org0+]]..(_MEM.cls.cls or '')..[[)) = ]]..me.cls.n..[[;
-#endif
-#ifdef CEU_NEWS
-    *((u8*)       (org0+]]..(_MEM.cls.dyn or '')..[[)) = 1;
-#endif
-    *((void**)    (org0+]].._MEM.cls.par_org..[[))     = ]]..org..[[;
-    *((tceu_nlbl*)(org0+]].._MEM.cls.par_lbl..[[))     = ]]
-        ..exp.var.lbl_par.id..[[;
-}
-}]])
-    end,
-
     Host = function (me)
         _CODE.host = _CODE.host .. me[1] .. '\n'
     end,
 
-    Block = function (me)
+    SetNew = function (me)
+        local exp, _ = unpack(me)
+        local org = (exp.org and exp.org.val) or '_trk_.org'
+        ORG(me, true,
+                exp.val..' = malloc('..me.cls.mem.max..')',
+                me.cls,
+                org,
+                exp.var.lbl_par.id)
+        LINE(me, 'ceu_trk_ins(CEU.stack+1, CEU_TREE_MAX, _trk_.org, 0,'
+                    ..me.lbl_cnt.id..');')
+        HALT(me)
+        CASE(me, me.lbl_cnt)
+    end,
+
+    Block_pre = function (me)
         -- spawn orgs
-        for _, var in ipairs(me.vars) do
-            if var.cls then
-                LINE(me, [[{
-void* org0 = ]]..var.val..[[;
-ceu_trk_ins(CEU.stack, CEU_TREE_MAX, org0, 0,]]..var.cls.lbl.id..[[);
-#ifdef CEU_IFCS
-*((tceu_ncls*)(org0+]]..(_MEM.cls.cls or '')..[[)) = ]]..var.cls.n..[[;
-#endif
-#ifdef CEU_NEWS
-*((u8*)       (org0+]]..(_MEM.cls.dyn or '')..[[)) = 0;
-#endif
-*((void**)    (org0+]].._MEM.cls.par_org..[[))     = _trk_.org;
-*((tceu_nlbl*)(org0+]].._MEM.cls.par_lbl..[[))     = ]]..var.lbl_par.id..[[;
-}]])
-            elseif var.arr then
-                local cls = _ENV.clss[_TP.deref(var.tp)]
-                if cls then
-                    for i=0, var.arr-1 do
-                LINE(me, [[{
-void* org0 = ]]..var.val..'+'..i..'*'..cls.mem.max..[[;
-ceu_trk_ins(CEU.stack, CEU_TREE_MAX, org0, 0,]]..cls.lbl.id..[[);
-#ifdef CEU_IFCS
-*((tceu_ncls*)(org0+]]..(_MEM.cls.cls or '')..[[)) = ]]..cls.n..[[;
-#endif
-#ifdef CEU_NEWS
-*((u8*)       (org0+]]..(_MEM.cls.dyn or '')..[[)) = 0;
-#endif
-*((void**)    (org0+]].._MEM.cls.par_org..[[))     = _trk_.org;
-*((tceu_nlbl*)(org0+]].._MEM.cls.par_lbl..[[))     = ]]..var.lbl_par.id..[[;
-}]])
+        if me.ns.orgs > 0 then
+            local yes = false
+            for _, var in ipairs(me.vars) do
+                if var.cls then
+                    yes = true
+                    ORG(me, false,
+                            var.val,
+                            var.cls,
+                            '_trk_.org',
+                            var.lbl_par.id)
+                elseif var.arr then
+                    local cls = _ENV.clss[_TP.deref(var.tp)]
+                    if cls then
+                        yes = true
+                        for i=0, var.arr-1 do
+                            ORG(me, false,
+                                    var.val..'+'..i..'*'..cls.mem.max,
+                                    cls,
+                                    '_trk_.org',
+                                    var.lbl_par.id)
+                        end
                     end
                 end
             end
+            if yes then
+                LINE(me, 'ceu_trk_ins(CEU.stack+1, CEU_TREE_MAX, _trk_.org, 0,'
+                            ..me.lbl_cnt.id..');')
+                HALT(me)
+                CASE(me, me.lbl_cnt)
+            end
         end
-
+    end,
+    Block = function (me)
         CONC_ALL(me)
 
-        -- finalize orgs
+        -- finalize orgs (they were spawned in parallel)
         if me.ns.orgs > 0 then
-            LINE(me, 'ceu_trk_ins(CEU.stack,'..me.lbl_out.prio..','
-                        ..'_trk_.org, 0,'..me.lbl_out.id..');')
-            HALT(me)
-            CEU_CLR(me)
+            CLEAR(me)
         end
     end,
 
@@ -184,7 +215,8 @@ if (*PTR_org(u8*,]]..(_MEM.cls.dyn or '')..[[))
         local _,blk = unpack(me)
         CONC(me, blk)
         HALT(me)        -- must escape with `return´
-        CEU_CLR(me)
+        CASE(me, me.lbl_out)
+        CLEAR(me)
     end,
     Return = function (me)
         local top = _AST.iter'SetBlock'()
@@ -223,7 +255,8 @@ if (*PTR_org(u8*,]]..(_MEM.cls.dyn or '')..[[))
                         ..'_trk_.org, 1, '..me.lbl_out.id..');')
             HALT(me)
         end
-        CEU_CLR(me)
+        CASE(me, me.lbl_out)
+        CLEAR(me)
     end,
 
     ParAnd = function (me)
@@ -307,7 +340,8 @@ if (ceu_out_pending()) {
         end
 
         SWITCH(me, me.lbl_ini)
-        CEU_CLR(me)
+        CASE(me, me.lbl_out)
+        CLEAR(me)
     end,
 
     Break = function (me)
@@ -319,7 +353,7 @@ if (ceu_out_pending()) {
 
     Pause = function (me)
         local inc = unpack(me)
-        LINE(me, 'ceu_lst_pse(_trk_.org, '
+        LINE(me, 'ceu_lst_pse('..me.blk.ns.orgs..', _trk_.org, '
                     ..me.blk.lbls[1]..','..me.blk.lbls[2]..','..inc..');')
     end,
 

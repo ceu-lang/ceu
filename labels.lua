@@ -29,10 +29,6 @@ F = {
         me.lbls[2] = #_LBLS.list-1
     end,
 
-    Root_pre = function (me)
-        new{'Inactive', true}
-    end,
-
     Root = function (me)
         -- enum of labels
         for i, lbl in ipairs(_LBLS.list) do
@@ -42,11 +38,13 @@ F = {
         _ENV.types.tceu_nlbl = _TP.n2bytes(#_LBLS.list)
     end,
 
+    SetNew = function (me)
+        me.lbl_cnt = new{'New_cont'}
+    end,
     Block = function (me)
-        -- TODO: inneficient
         if me.ns.orgs > 0 then
-            me.lbl_out  = new{'Block_out', prio=me.depth}
-            me.lbl_out2 = new{'Block_out2'}
+            me.lbl_cnt = new{'New_cont'}
+            me.lbl_clr = new{'Block_clr'}
         end
     end,
 
@@ -61,8 +59,8 @@ F = {
     end,
 
     SetBlock_pre = function (me)
-        me.lbl_out  = new{'Set_out',  prio=me.depth}
-        me.lbl_out2 = new{'Set_out2'}
+        me.lbl_out = new{'Set_out',  prio=me.depth}
+        me.lbl_clr = new{'Set_clr'}
     end,
 
     _Par_pre = function (me)
@@ -77,8 +75,8 @@ F = {
     end,
     ParOr_pre = function (me)
         F._Par_pre(me)
-        me.lbl_out  = new{'ParOr_out',  prio=me.depth}
-        me.lbl_out2 = new{'ParOr_out2'}
+        me.lbl_out = new{'ParOr_out',  prio=me.depth}
+        me.lbl_clr = new{'ParOr_clr'}
     end,
     ParAnd_pre = function (me)
         F._Par_pre(me)
@@ -98,9 +96,9 @@ F = {
     end,
 
     Loop_pre = function (me)
-        me.lbl_ini  = new{'Loop_ini'}
-        me.lbl_out  = new{'Loop_out',  prio=me.depth }
-        me.lbl_out2 = new{'Loop_out2'}
+        me.lbl_ini = new{'Loop_ini'}
+        me.lbl_out = new{'Loop_out',  prio=me.depth }
+        me.lbl_clr = new{'Loop_clr'}
     end,
 
     EmitExtS = function (me)

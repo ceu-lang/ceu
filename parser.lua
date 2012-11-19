@@ -91,7 +91,8 @@ KEYS = P'async'  + 'await'   + 'break'   + 'C'
      + 'sizeof'  + 'then'    + 'type'    + 'with'
      + TYPES
      + 'pause/if'
-     + 'interface' + 'class' + 'this' + 'new'
+     + 'interface' + 'class' + 'new'
+     + 'global' + 'this'
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
@@ -194,23 +195,23 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
     , _6      = V'_7'  * ((CK'!='+CK'==') * V'_7')^0
     , _7      = V'_8'  * ((CK'<='+CK'>='+(CK'<'-'<<')+(CK'>'-'>>')) * V'_8')^0
     , _8      = V'_9'  * ((CK'>>'+CK'<<') * V'_9')^0
-    , _9      = V'_10' * ((CK'+'+(CK'-'-'->')) * V'_10')^0
+    , _9      = V'_10' * ((CK'+'+CK'-') * V'_10')^0
     , _10     = V'_11' * ((CK'*'+(CK'/'-'//'-'/*')+CK'%') * V'_11')^0
     , _11     = ( Cc(true) * ( (CK'!'-'!=') +  (CK'&'-'&&')
-                             + (CK'-'-'->')+CK'+'+CK'~'+CK'*' )
+                             + CK'-'+CK'+'+CK'~'+CK'*' )
                   + (K'<'*EV'ID_type'*Cc'cast'*K'>')
                 )^0 * V'_12'
     , _12     = V'_13' *
                     (
                         K'(' * Cc'call' * V'ExpList' * EK')' +
                         K'[' * Cc'idx'  * V'_Exp'    * EK']' +
-                        (CK'->' + CK'.') * CK(ID)
+                        (CK':' + CK'.') * CK(ID)
                     )^0
     , _13     = V'_Prim'
     , _Prim   = V'_Parens' + V'Var'   + V'C'   + V'SIZEOF'
               + V'NULL'    + V'CONST' + V'STRING'
               + V'EmitExtE'
-              + V'This'
+              + V'Global' + V'This'
 
     , ExpList = ( V'_Exp'*(K','*EV'_Exp')^0 )^-1
 
@@ -272,16 +273,17 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
                         * V'_BlockD' * EK'end'
     , Dcl_cls = K'class'     * Cc(false) * EV'ID_cls' * EK'with'
                         * V'_BlockD' * V'_Do'
-    , This      = K'this'
+    , Global  = K'global'
+    , This    = K'this'
 
-    , Ext      = V'ID_ext'
-    , Var      = V'ID_var'
-    , C        = V'ID_c'
+    , Ext     = V'ID_ext'
+    , Var     = V'ID_var'
+    , C       = V'ID_c'
 
     , ID_cls  = CK(m.R'AZ'*alphanum^0) - KEYS
     , ID_ext  = CK(m.R'AZ'*ALPHANUM^0) - KEYS
-    , ID_int  = CK(m.R'az'*Alphanum^0) - KEYS
-    , ID_var  = CK(m.R'az'*Alphanum^0) - KEYS
+    , ID_int  = CK(m.R'az'*(Alphanum+'?')^0) - KEYS
+    , ID_var  = CK(m.R'az'*(Alphanum+'?')^0) - KEYS
     , ID_c    = CK(  P'_' *Alphanum^0)
     , ID_type = (CK(TYPES)+V'ID_c'+V'ID_cls') * C(K'*'^0) /
                   function (id, star)
