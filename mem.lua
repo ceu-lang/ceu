@@ -62,7 +62,8 @@ F = {
                     val = '(*'..val..')'
                 end
                 local id = pre..'_'..cls.id..'_'..var.id
-                accs[#accs+1] = '#define '..id..'(org) '..val
+                accs[#accs+1] = '#define '..id..'_off(org) '..off
+                accs[#accs+1] = '#define '..id..'(org) '    ..val
             end
         end
         _MEM.code_accs = table.concat(accs,'\n')
@@ -81,7 +82,15 @@ F = {
     end,
 
     Block_pre = function (me)
-        local mem = CLS().mem
+        local cls = CLS()
+        if cls.is_ifc then
+            cls.mem.off = 0
+            cls.mem.max = 0
+            me.max = 0
+            return
+        end
+
+        local mem = cls.mem
         me.off = mem.off
 
         for _, var in ipairs(me.vars) do
@@ -290,6 +299,7 @@ F = {
             if me.c then
                 me.val = me.c[2]
             else
+                me.off = pre..cls.id..'_'..me.var.id..'_off('..me.org.val..')'
                 me.val = pre..cls.id..'_'..me.var.id..'('..me.org.val..')'
             end
         else
@@ -298,8 +308,8 @@ F = {
         end
     end,
 
-    Op2_cast = function (me)
-        local _, tp, exp = unpack(me)
+    Op1_cast = function (me)
+        local tp, exp = unpack(me)
         me.val = '(('.._TP.c(tp)..')'..exp.val..')'
         -- TODO: assert for orgs
     end,

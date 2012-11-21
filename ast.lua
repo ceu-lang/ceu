@@ -364,18 +364,16 @@ local C; C = {
             blk = node('Block')(ln, ifc, blk)
         end
 
-        local cls = node('Dcl_cls')(ln, is_ifc, id, blk)
-        TOP[#TOP+1] = cls
-
         if not is_ifc then
             for i=1, FIN do
                 ifc[#ifc+1] =
                     node('Dcl_var')(ln,true,'void',false,'$fin_'..i)
             end
-            cls.fin = blk[2].fin
-            cls.n_fins = FIN
             FIN = 0
         end
+
+        local cls = node('Dcl_cls')(ln, is_ifc, id, blk)
+        TOP[#TOP+1] = cls
     end,
 
     Global = node('Global'),
@@ -393,7 +391,8 @@ local C; C = {
             return v1
         elseif v1==true then    -- unary expression
             -- v1=true, v2=op, v3=exp
-            return node('Op1_'..v2)(ln, v2,
+            local op = (string.match(v2,'^[%w_]') and 'cast') or v2
+            return node('Op1_'..op)(ln, v2,
                                     C._Exp(ln, select(3,...)))
         else                    -- binary expression
             -- v1=e1, v2=op, v3=e2, v4=?

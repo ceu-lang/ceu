@@ -63,7 +63,7 @@ F = {
 
     Dcl_var = function (me)
         if me.var.cls or _ENV.clss[_TP.deref(me.var.tp)] then
-            me.var.lbl_par = new{'Par_org'}
+            me.var.lbl_cnt = new{'Par_org'}
         end
     end,
 

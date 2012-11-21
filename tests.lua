@@ -2,6 +2,79 @@
 --]===]
 
 Test { [[
+input void START;
+interface Global with
+    event int a;
+end
+event int a;
+class U with
+    event int a;
+do
+end
+class T with
+    event int a;
+    Global* g;
+do
+    await START;
+    emit g:a = 10;
+end
+U u;
+Global* g = &u;
+T t;
+t.g = &u;
+int v = await g:a;
+return v;
+]],
+    run = 10,
+}
+Test { [[
+input void START;
+interface Global with
+    event int a;
+end
+event int a;
+class T with
+    event int a;
+do
+    await START;
+    emit global:a = 10;
+end
+T t;
+int v = await a;
+return v;
+]],
+    run = 10,
+}
+Test { [[
+input void START;
+external _fprintf(), _stderr;
+interface Global with
+    event int a;
+end
+event int a;
+class T with
+    event int a;
+do
+    a = await global:a;
+end
+T t;
+await START;
+emit a = 10;
+return t.a;
+]],
+    run = 10,
+}
+
+Test { [[
+int b = 10;
+int* a = <int*> &b;
+int* c = &b;
+return *a + *c;
+]],
+    run = 20;
+}
+
+Test { [[
 interface I with
     int v;
     external _f(), _a;      // TODO: refuse _a
@@ -83,7 +156,7 @@ T t;
 _V = _V*3;
 return _V;
 ]],
-    run = 297;
+    run = 345;
 }
 
 Test { [[
@@ -1921,8 +1994,56 @@ Test { [[
 class T with do end
 T* t;
 t = new T;
+return 10;
 ]],
-    env = 'ERR : line 3 : class "T" must contain `finally´',
+    run = 10,
+}
+
+Test { [[
+class T with do end
+do
+    T* t;
+    t = new T;
+end
+return 10;
+]],
+    run = 10,
+}
+
+Test { [[
+class T with do end
+T* t1;
+do
+    T t2;
+    t1 = &t2;
+end
+return 10;
+]],
+    env = 'ERR : line 5 : block at line 3 must contain `finally´',
+}
+
+Test { [[
+class T with do end
+T* t1;
+do
+    T t2;
+    t1 = &t2;
+finally
+end
+return 10;
+]],
+    run = 10,
+}
+
+Test { [[
+class T with do end
+T* t;
+do
+    t = new T;
+end
+return 10;
+]],
+    run = 10,
 }
 
 Test { [[
@@ -2261,8 +2382,7 @@ end
 J* i = _ptr;
 return 10;
 ]],
-    --env = 'ERR : line 7 : undeclared type `J´',
-    run = 10,
+    env = 'ERR : line 8 : undeclared type `J´',
 }
 
 Test { [[
@@ -15166,6 +15286,7 @@ return 1;
 }
 
 Test { [[
+external _char=1;
 _char* ptr1;
 int* ptr2;
 ptr1 = ptr2;
@@ -15175,6 +15296,7 @@ return 1;
     run = 1,
 }
 Test { [[
+external _char=1;
 int* ptr1;
 _char* ptr2;
 ptr1 = ptr2;
@@ -15185,6 +15307,7 @@ return 1;
 }
 
 Test { [[
+external _FILE=0;
 int* ptr1;
 _FILE* ptr2;
 ptr1 = ptr2;
@@ -16362,7 +16485,9 @@ end
 
     -- STRINGS
 
-Test { [[_char* a = "Abcd12" ; return 1;]], run=1 }
+Test { [[
+external _char=1;
+_char* a = "Abcd12" ; return 1;]], run=1 }
 Test { [[
 external _printf();
 _printf("END: %s\n", "Abcd12");

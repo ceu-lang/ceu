@@ -101,8 +101,10 @@ function newvar (me, blk, isEvt, tp, dim, id)
 
     local tp_raw = _TP.raw(tp)
     local c = _ENV.c[tp_raw]
-    ASR(_TP.deref(tp) or _ENV.clss[tp_raw] or (c and c[1]=='type'),
-        me, 'undeclared type `'..tp_raw..'´')   -- TODO: reject _TP.deref
+    ASR(_ENV.clss[tp_raw] or (c and c[1]=='type'),
+        me, 'undeclared type `'..tp_raw..'´')
+    --ASR(_TP.deref(tp) or _ENV.clss[tp_raw] or (c and c[1]=='type'),
+        --me, 'undeclared type `'..tp_raw..'´')   -- TODO: reject _TP.deref
 
     local cls = _ENV.clss[tp]
     if cls then
@@ -217,11 +219,15 @@ F = {
             'interface "Global" is not defined')
         me.tp   = 'Global*'
         me.lval = false
+        me.fst  = me
+        me.blk  = CLS().blk
     end,
 
     This = function (me)
         me.tp   = CLS().id
         me.lval = false
+        me.fst  = me
+        me.blk  = CLS().blk
     end,
 
     SetNew = function (me)
@@ -229,8 +235,6 @@ F = {
         me.cls = ASR(_ENV.clss[id_cls], me,
                         'class "'..id_cls..'" is not declared')
         ASR(not me.cls.is_ifc, me, 'cannot instantiate an interface')
-        ASR(me.cls.fin, me,
-                'class "'..me.cls.id..'" must contain `finally´')
         me.cls.has_new = true
 
         ASR((not me.isDcl) and exp.lval
@@ -275,6 +279,7 @@ F = {
         me.var  = var
         me.tp   = var.tp
         me.lval = (not var.arr) and (not var.cls)
+        me.fst  = var
     end,
 
     Dcl_c = function (me)
@@ -333,6 +338,13 @@ F = {
         e1 = e1 or _AST.iter'SetBlock'()[1]
         ASR(e1.lval and _TP.contains(e1.tp,e2.tp,true),
                 me, 'invalid attribution')
+
+        if e2.fst and _TP.deref(e2.tp) then
+            local blk1 = (e1.fst=='_' and _AST.root) or e1.fst.blk
+            local blk2 = (e2.fst=='_' and _AST.root) or e2.fst.blk
+            ASR(blk1.depth>=blk2.depth or blk2.fin, me,
+                'block at line '..blk2.ln..' must contain `finally´')
+        end
     end,
 
     SetAwait = function (me)
@@ -375,6 +387,7 @@ F = {
         ASR(tp and _TP.isNumeric(idx.tp,true), me, 'invalid array index')
         me.tp = tp
         me.lval = (not _ENV.clss[tp])
+        me.fst  = arr.fst
     end,
 
     Op2_int_int = function (me)
@@ -427,6 +440,7 @@ F = {
         local op, e1 = unpack(me)
         me.tp   = _TP.deref(e1.tp)
         me.lval = true
+        me.fst  = e1.fst
         ASR(me.tp, me, 'invalid operand to unary "*"')
     end,
 
@@ -435,45 +449,41 @@ F = {
         ASR(_ENV.clss[e1.tp] or e1.lval, me, 'invalid operand to unary "&"')
         me.tp   = e1.tp..'*'
         me.lval = false
+        me.fst  = e1.fst
     end,
 
     ['Op2_.'] = function (me)
         local op, e1, id = unpack(me)
         local cls = _ENV.clss[e1.tp]
         if cls then
-            me.org  = e1
+            me.org = e1
 
             if _TP.ext(id) then
                 local id = ((cls.is_ifc and 'IFC_') or 'CLS_')..cls.id..'_'..id
                 me.c = _ENV.c[id]
-                me.lval = true
                 me.tp   = '_'
-                ASR(me.c and (me.c[1]=='var' or me.c[1]=='func'), me,
-                    'C symbol "'..id..'" is not declared')
+                me.lval = false
+                ASR(me.c and me.c[1]=='func', me,
+                    'C function "'..id..'" is not declared')
             else
                 me.var  = ASR(cls.blk.vars[id], me,
                             'variable/event "'..id..'" is not declared')
-                me.lval = (not me.var.arr) and (not me.var.cls)
                 me.tp   = me.var.tp
+                me.lval = true
             end
         else
             me.tp   = '_'
             me.lval = true
         end
+        me.fst = e1.fst
     end,
 
-    Op2_cast = function (me)
-        local _, tp, exp = unpack(me)
+    Op1_cast = function (me)
+        local tp, exp = unpack(me)
         me.tp   = tp
         me.lval = exp.lval
+        me.fst  = exp.fst
     end,
-
-    WCLOCKK = function (me)
-        me.tp   = 'int'
-        me.lval = false
-    end,
-    WCLOCKE = 'WCLOCKK',
-    WCLOCKR = 'WCLOCKK',
 
     C = function (me)
         local id = unpack(me)
@@ -481,27 +491,40 @@ F = {
         ASR(c and (c[1]=='var' or c[1]=='func'), me,
             'C symbol "'..id..'" is not declared')
         me.tp   = '_'
-        me.lval = true
+        me.lval = '_'
+        me.fst  = '_'
     end,
+
+    WCLOCKK = function (me)
+        me.tp   = 'int'
+        me.lval = false
+        me.fst  = false
+    end,
+    WCLOCKE = 'WCLOCKK',
+    WCLOCKR = 'WCLOCKK',
 
     SIZEOF = function (me)
         me.tp   = 'int'
         me.lval = false
+        me.fst  = false
     end,
 
     STRING = function (me)
         me.tp   = 'char*'
         me.lval = false
+        me.fst  = false
         --me.isConst = true
     end,
     CONST = function (me)
         me.tp   = 'int'
         me.lval = false
+        me.fst  = false
         --me.isConst = true
     end,
     NULL = function (me)
         me.tp   = 'void*'
         me.lval = false
+        me.fst  = false
         --me.isConst = true
     end,
 }

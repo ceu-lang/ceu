@@ -52,8 +52,8 @@ local _V2NAME = {
     ID_var  = 'identifier',
     ID_int  = 'identifier',
     ID_ext  = 'identifier',
-    ID_type = 'type',
     ID_cls  = 'identifier',
+    ID_type = 'type',
     _Dcl_var = 'declaration',
     _Dcl_int = 'declaration',
     _Dcl_c   = 'declaration',
@@ -194,9 +194,9 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
     , _8      = V'_9'  * ((CK'>>'+CK'<<') * V'_9')^0
     , _9      = V'_10' * ((CK'+'+CK'-') * V'_10')^0
     , _10     = V'_11' * ((CK'*'+(CK'/'-'//'-'/*')+CK'%') * V'_11')^0
-    , _11     = ( Cc(true) * ( (CK'!'-'!=') +  (CK'&'-'&&')
-                             + CK'-'+CK'+'+CK'~'+CK'*' )
-                  + (K'<'*EV'ID_type'*Cc'cast'*K'>')
+    , _11     = ( Cc(true) * ( (CK'!'-'!=') + (CK'&'-'&&')
+                             + CK'-'+CK'+'+CK'~'+CK'*'
+                             + (K'<'*EV'ID_type'*K'>') )
                 )^0 * V'_12'
     , _12     = V'_13' *
                     (
@@ -250,8 +250,8 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
     , __Dcl_c    = Cc'type' * V'ID_c' * K'='  * NUM
                  + Cc'func' * V'ID_c' * '()' * Cc(false)
                  + Cc'var'  * V'ID_c'        * Cc(false)
-    , _Dcl_c     = K'external' * EV'__Dcl_c' * (K',' * EV'__Dcl_c')^0
-    , _Dcl_c_ifc = K'external' * EV'__Dcl_c' * (K',' * EV'__Dcl_c')^0
+    , _Dcl_c     = K'external' * V'__Dcl_c' * (K',' * V'__Dcl_c')^0
+    , _Dcl_c_ifc = K'external' * V'__Dcl_c' * (K',' * V'__Dcl_c')^0
 
     , _Dcl_ext = (CK'input'+CK'output') * EV'ID_type' *
                     EV'ID_ext' * (K','*EV'ID_ext')^0

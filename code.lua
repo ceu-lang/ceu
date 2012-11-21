@@ -136,46 +136,42 @@ F = {
                 exp.val..' = malloc('..me.cls.mem.max..')',
                 me.cls,
                 org,
-                exp.var.lbl_par.id)
+                exp.var.lbl_cnt.id)
         LINE(me, 'ceu_trk_ins(CEU.stack+1, CEU_TREE_MAX, _trk_.org, 0,'
                     ..me.lbl_cnt.id..');')
         HALT(me)
         CASE(me, me.lbl_cnt)
     end,
 
-    Block_pre = function (me)
+    Dcl_var = function (me)
+        local var = me.var
+        if not (var.cls or (var.arr and _ENV.clss[_TP.deref(var.tp)])) then
+            return
+        end
+
         -- spawn orgs
-        if me.ns.orgs > 0 then
-            local yes = false
-            for _, var in ipairs(me.vars) do
-                if var.cls then
-                    yes = true
+        if var.cls then
+            ORG(me, false,
+                    var.val,
+                    var.cls,
+                    '_trk_.org',
+                    var.lbl_cnt.id)
+        elseif var.arr then
+            local cls = _ENV.clss[_TP.deref(var.tp)]
+            if cls then
+                for i=0, var.arr-1 do
                     ORG(me, false,
-                            var.val,
-                            var.cls,
+                            var.val..'+'..i..'*'..cls.mem.max,
+                            cls,
                             '_trk_.org',
-                            var.lbl_par.id)
-                elseif var.arr then
-                    local cls = _ENV.clss[_TP.deref(var.tp)]
-                    if cls then
-                        yes = true
-                        for i=0, var.arr-1 do
-                            ORG(me, false,
-                                    var.val..'+'..i..'*'..cls.mem.max,
-                                    cls,
-                                    '_trk_.org',
-                                    var.lbl_par.id)
-                        end
-                    end
+                            var.lbl_cnt.id)
                 end
             end
-            if yes then
-                LINE(me, 'ceu_trk_ins(CEU.stack+1, CEU_TREE_MAX, _trk_.org, 0,'
-                            ..me.lbl_cnt.id..');')
-                HALT(me)
-                CASE(me, me.lbl_cnt)
-            end
         end
+        LINE(me, 'ceu_trk_ins(CEU.stack+1, CEU_TREE_MAX, _trk_.org, 0,'
+                    ..var.lbl_cnt.id..');')
+        HALT(me)
+        CASE(me, var.lbl_cnt)
     end,
     Block = function (me)
         CONC_ALL(me)
@@ -427,7 +423,7 @@ return 0;
         -- emit
         CASE(me, me.lbl_mch)
         local org = (int.org and int.org.val) or '_trk_.org'
-        LINE(me, 'ceu_lst_go('..int.var.off..','..org..');')
+        LINE(me, 'ceu_lst_go('..(int.off or int.var.off)..','..org..');')
         HALT(me)
 
         -- continuation
@@ -449,7 +445,7 @@ return 0;
 
         -- await
         CASE(me, me.lbl_awt)
-        LINE(me, 'ceu_lst_ins('..int.var.off..','..org
+        LINE(me, 'ceu_lst_ins('..(int.off or int.var.off)..','..org
                     ..',_trk_.org,'..me.lbl_awk.id..',0);')
         HALT(me)
 
