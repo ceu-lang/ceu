@@ -194,14 +194,14 @@ do
     local t = {}
     local outs = 0
     for i, evt in ipairs(_ENV.exts) do
-        if evt.input then
+        if evt.pre == 'input' then
             str = str..'#define IN_'..evt.id..' '
                     ..(_MEM.evt_off+i)..'\n'
         else
             str = str..'#define OUT_'..evt.id..' '..outs..'\n'
             outs = outs + 1
         end
-        assert(evt.output or evt.input)
+        assert(evt.pre=='input' or evt.pre=='output')
     end
     str = str..'#define OUT_n '..outs..'\n'
 

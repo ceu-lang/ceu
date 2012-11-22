@@ -216,7 +216,7 @@ local C; C = {
         end
 
         local i = function() return node('Var')(ln, _i) end
-        local dcl_i = node('Dcl_var')(ln, false, 'int', false, _i)
+        local dcl_i = node('Dcl_var')(ln, 'var', 'int', false, _i)
         dcl_i.read_only = true
         local set_i = node('SetExp')(ln, i(), node('CONST')(ln,'0'))
         local nxt_i = node('SetExp')(ln, i(),
@@ -229,7 +229,7 @@ local C; C = {
 
         local j_name = '$j'..tostring(blk)
         local j = function() return node('Var')(ln, j_name) end
-        local dcl_j = node('Dcl_var')(ln, false, 'int', false, j_name)
+        local dcl_j = node('Dcl_var')(ln, 'var', 'int', false, j_name)
         local set_j = node('SetExp')(ln, j(), _j)
 
         local cmp = node('Op2_>=')(ln, '>=', i(), j())
@@ -257,7 +257,7 @@ local C; C = {
         return
             node('ParOr')(ln, blk,
                 node('BlockN')(ln,
-                    node('Dcl_var')(ln, false, 'int', false, id),
+                    node('Dcl_var')(ln, 'var', 'int', false, id),
                     node('SetExp')(ln, var, node('CONST')(ln,'0')),
                     node('Loop')(ln,
                         node('BlockN')(ln,
@@ -318,11 +318,11 @@ local C; C = {
     end,
 
     _Dcl_var_ifc = function(...) return C._Dcl_var(...) end,
-    _Dcl_var = function (ln, isEvt, tp, dim, ...)
+    _Dcl_var = function (ln, pre, tp, dim, ...)
         local ret = {}
         local t = { ... }
         for i=1, #t, 3 do
-            ret[#ret+1] = node('Dcl_var')(ln, isEvt, tp, dim, t[i])
+            ret[#ret+1] = node('Dcl_var')(ln, pre, tp, dim, t[i])
             if t[i+1] then
                 ret[#ret+1] = C._Set(ln,
                                 node('Var')(ln,t[i]),
@@ -335,11 +335,11 @@ local C; C = {
     end,
 
     _Dcl_int_ifc = function(...) return C._Dcl_int(...) end,
-    _Dcl_int = function (ln, isEvt, tp, dim, ...)
+    _Dcl_int = function (ln, pre, tp, dim, ...)
         local ret = {}
         local t = { ... }
         for i=1, #t, 3 do
-            ret[#ret+1] = node('Dcl_int')(ln, isEvt, tp, dim, t[i])
+            ret[#ret+1] = node('Dcl_int')(ln, pre, tp, dim, t[i])
             if t[i+1] then
                 ret[#ret+1] = C._Set(ln,
                                 node('Var')(ln,t[i]),
@@ -391,7 +391,11 @@ local C; C = {
             return v1
         elseif v1==true then    -- unary expression
             -- v1=true, v2=op, v3=exp
-            local op = (string.match(v2,'^[%w_]') and 'cast') or v2
+            local op = v2
+            if not (op=='not' or op=='&' or op=='-'
+                 or op=='+' or op=='~' or op=='*') then
+                op = 'cast'
+            end
             return node('Op1_'..op)(ln, v2,
                                     C._Exp(ln, select(3,...)))
         else                    -- binary expression

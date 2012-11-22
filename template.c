@@ -42,6 +42,7 @@
 // Macros that can be defined:
 // ceu_out_pending() (1)
 // ceu_out_wclock(us)
+// ceu_out_async(has)
 // ceu_out_event(id, len, data)
 
 typedef === TCEU_NTRK === tceu_ntrk;    // max number of tracks
@@ -437,6 +438,15 @@ s32 ceu_wclock_find (void* org, tceu_nlbl lbl) {
 
 #endif
 
+#ifdef CEU_ASYNCS
+void ceu_async_enable (void* org, tceu_nlbl lbl) {
+    ceu_lst_ins(IN__ASYNC, NULL, org, lbl, 0);
+#ifdef ceu_out_async
+        ceu_out_async(1);
+#endif
+}
+#endif
+
 /**********************************************************************/
 
 int ceu_go_init (int* ret)
@@ -469,18 +479,34 @@ int ceu_go_async (int* ret, int* pending)
     ceu_lst_go(IN__ASYNC, 0);
     s = ceu_go(ret);
 
+#ifdef ceu_out_async
+    int has = 0;
+#else
     if (pending != NULL)
+#endif
     {
         tceu_nlst i;
-        *pending = 0;
+#ifdef ceu_out_async
+        if (pending)
+#endif
+            *pending = 0;
         for (i=0 ; i<CEU.lsts_n ; i++) {
             if (CEU.lsts[i].evt == IN__ASYNC) {
-                *pending = 1;
+#ifdef ceu_out_async
+                if (pending)
+#endif
+                    *pending = 1;
+#ifdef ceu_out_async
+                has = 1;
+#endif
                 break;
             }
         }
     }
 
+#ifdef ceu_out_async
+    ceu_out_async(has);
+#endif
     return s;
 }
 #endif
@@ -496,6 +522,9 @@ int ceu_go_wclock (int* ret, s32 dt, s32* nxt)
     if (CEU.wclk_min == CEU_WCLOCK_NONE) {
         if (nxt)
             *nxt = CEU_WCLOCK_NONE;
+#ifdef ceu_out_wclock
+        ceu_out_wclock(CEU_WCLOCK_NONE);
+#endif
         return 0;
     }
 
@@ -550,11 +579,17 @@ int ceu_go_wclock (int* ret, s32 dt, s32* nxt)
     {int s = ceu_go(ret);
     if (nxt)
         *nxt = CEU.wclk_min;
+#ifdef ceu_out_wclock
+    ceu_out_wclock(CEU.wclk_min);
+#endif
     CEU.wclk_late = 0;
     return s;}
 
 #else
     *nxt = CEU_WCLOCK_NONE;
+#ifdef ceu_out_wclock
+    ceu_out_wclock(CEU_WCLOCK_NONE);
+#endif
     return 0;
 #endif
 }

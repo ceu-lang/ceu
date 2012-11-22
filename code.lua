@@ -308,7 +308,7 @@ if (*PTR_org(u8*,]]..(_MEM.cls.dyn or '')..[[))
         for _, n in ipairs(vars) do
             ATTR(me, n.new, n.var)
         end
-        LINE(me, 'ceu_lst_ins(IN__ASYNC,NULL,_trk_.org,'..me.lbl.id..',0);')
+        LINE(me, 'ceu_async_enable(_trk_.org,'..me.lbl.id..');')
         HALT(me)
         CASE(me, me.lbl)
         CONC(me, blk)
@@ -329,7 +329,7 @@ if (ceu_out_pending()) {
 #else
 {
 #endif
-    ceu_lst_ins(IN__ASYNC,NULL,_trk_.org,]]..me.lbl_ini.id..[[,0);
+    ceu_async_enable(_trk_.org,]]..me.lbl_ini.id..[[);
     break;
 }
 ]])
@@ -362,14 +362,14 @@ if (ceu_out_pending()) {
         local e1, e2 = unpack(me)
         local ext = e1.ext
 
-        if ext.output then  -- e1 not Exp
+        if ext.pre == 'output' then  -- e1 not Exp
             LINE(me, me.val..';')
             return
         end
 
-        assert(ext.input)
+        assert(ext.pre == 'input')
         local async = _AST.iter'Async'()
-        LINE(me, 'ceu_lst_ins(IN__ASYNC,NULL,_trk_.org,'..me.lbl_cnt.id..',0);')
+        LINE(me, 'ceu_async_enable(_trk_.org,'..me.lbl_cnt.id..');')
         if e2 then
             if _TP.deref(ext.tp) then
                 LINE(me, 'return ceu_go_event(ret, IN_'..ext.id
@@ -388,7 +388,7 @@ if (ceu_out_pending()) {
     EmitT = function (me)
         local exp = unpack(me)
         local async = _AST.iter'Async'()
-        LINE(me, 'ceu_lst_ins(IN__ASYNC,NULL,_trk_.org,'..me.lbl_cnt.id..',0);')
+        LINE(me, 'ceu_async_enable(_trk_.org,'..me.lbl_cnt.id..');')
         LINE(me, [[
 #ifdef CEU_WCLOCKS
 { s32 nxt;

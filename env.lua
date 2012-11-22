@@ -51,7 +51,7 @@ function var2ifc (var)
     return table.concat({
         var.id,
         var.tp,
-        tostring(var.isEvt),
+        tostring(var.pre),
         tostring(var.arr),
     }, '$')
 end
@@ -80,7 +80,7 @@ function _ENV.ifc_vs_cls (ifc, cls)
     return true
 end
 
-function newvar (me, blk, isEvt, tp, dim, id)
+function newvar (me, blk, pre, tp, dim, id)
     for stmt in _AST.iter() do
         if stmt.tag == 'Async' then
             break
@@ -92,19 +92,19 @@ function newvar (me, blk, isEvt, tp, dim, id)
         end
     end
 
-    ASR(tp~='void' or isEvt, me, 'invalid type')
-    ASR((not dim) or dim>0, me, 'invalid array dimension')
-    ASR(not (_ENV.clss[tp] and _ENV.clss[tp].is_ifc), me,
-        'cannot instantiate an interface')
-
-    tp = (dim and tp..'*') or tp
-
     local tp_raw = _TP.raw(tp)
     local c = _ENV.c[tp_raw]
+    local isEvt = (pre ~= 'var')
+
     ASR(_ENV.clss[tp_raw] or (c and c[1]=='type'),
         me, 'undeclared type `'..tp_raw..'´')
-    --ASR(_TP.deref(tp) or _ENV.clss[tp_raw] or (c and c[1]=='type'),
-        --me, 'undeclared type `'..tp_raw..'´')   -- TODO: reject _TP.deref
+    ASR(not (_ENV.clss[tp] and _ENV.clss[tp].is_ifc), me,
+        'cannot instantiate an interface')
+    ASR(_TP.deref(tp) or (not c) or (tp=='void' and isEvt) or c[3]>0, me,
+        'cannot instantiate type "'..tp..'"')
+    ASR((not dim) or dim>0, me, 'invalid array dimension')
+
+    tp = (dim and tp..'*') or tp
 
     local cls = _ENV.clss[tp]
     if cls then
@@ -118,6 +118,7 @@ function newvar (me, blk, isEvt, tp, dim, id)
         cls   = cls,
         tp    = tp,
         blk   = blk,
+        pre   = pre,
         isEvt = isEvt,
         arr   = dim,
     }
@@ -145,11 +146,11 @@ F = {
     Root = function (me)
         _ENV.c.tceu_ncls[3] = _TP.n2bytes(#_ENV.clss)
 
-        local ext = {id='_WCLOCK', input=true}
+        local ext = {id='_WCLOCK', pre='input'}
         _ENV.exts[#_ENV.exts+1] = ext
         _ENV.exts[ext.id] = ext
 
-        local ext = {id='_ASYNC', input=true}
+        local ext = {id='_ASYNC', pre='input'}
         _ENV.exts[#_ENV.exts+1] = ext
         _ENV.exts[ext.id] = ext
 
@@ -252,8 +253,8 @@ F = {
             ln    = me.ln,
             id    = id,
             tp    = tp,
-            isEvt = 'ext',
-            [dir] = true,
+            pre   = dir,
+            isEvt = true,
         }
         _ENV.exts[#_ENV.exts+1] = me.ext
         _ENV.exts[id] = me.ext
@@ -261,8 +262,8 @@ F = {
 
     Dcl_int = 'Dcl_var',
     Dcl_var = function (me)
-        local isEvt, tp, dim, id, exp = unpack(me)
-        me.var = newvar(me, _AST.iter'Block'(), isEvt and 'int', tp, dim, id)
+        local pre, tp, dim, id, exp = unpack(me)
+        me.var = newvar(me, _AST.iter'Block'(), pre, tp, dim, id)
     end,
 
     Ext = function (me)
@@ -313,13 +314,13 @@ F = {
 
     EmitExtS = function (me)
         local e1, _ = unpack(me)
-        if e1.ext.output then
+        if e1.ext.pre == 'output' then
             F.EmitExtE(me)
         end
     end,
     EmitExtE = function (me)
         local e1, e2 = unpack(me)
-        ASR(e1.ext.output, me, 'invalid input `emit´')
+        ASR(e1.ext.pre == 'output', me, 'invalid input `emit´')
         me.tp = 'int'
 
         if e2 then
@@ -432,9 +433,9 @@ F = {
     Op2_any = function (me)
         me.tp  = 'int'
     end,
-    ['Op2_||'] = 'Op2_any',
-    ['Op2_&&'] = 'Op2_any',
-    ['Op1_!']  = 'Op2_any',
+    ['Op2_or']  = 'Op2_any',
+    ['Op2_and'] = 'Op2_any',
+    ['Op1_not'] = 'Op2_any',
 
     ['Op1_*'] = function (me)
         local op, e1 = unpack(me)
@@ -489,7 +490,7 @@ F = {
         local id = unpack(me)
         local c = _ENV.c[id]
         ASR(c and (c[1]=='var' or c[1]=='func'), me,
-            'C symbol "'..id..'" is not declared')
+            'C variable/function "'..id..'" is not declared')
         me.tp   = '_'
         me.lval = '_'
         me.fst  = '_'
@@ -516,10 +517,12 @@ F = {
         --me.isConst = true
     end,
     CONST = function (me)
+        local v = unpack(me)
         me.tp   = 'int'
         me.lval = false
         me.fst  = false
         --me.isConst = true
+        ASR(string.sub(v,1,1)=="'" or tonumber(v), me, 'malformed number')
     end,
     NULL = function (me)
         me.tp   = 'void*'

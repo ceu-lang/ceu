@@ -36,6 +36,11 @@ local t2n = {
       h = 60*60*10^6,
 }
 
+local _ceu2c = { ['or']='||', ['and']='&&', ['not']='!' }
+local function ceu2c (op)
+    return _ceu2c[op] or op
+end
+
 F = {
     Root = function (me)
         _ENV.c.tceu_nevt[3] = _TP.n2bytes(_MEM.evt_off+#_ENV.exts)
@@ -178,7 +183,7 @@ F = {
 
     EmitExtS = function (me)
         local e1, _ = unpack(me)
-        if e1.ext.output then
+        if e1.ext.pre == 'output' then
             F.EmitExtE(me)
         end
     end,
@@ -247,38 +252,38 @@ F = {
 
     Op2_any = function (me)
         local op, e1, e2 = unpack(me)
-        me.val = '('..e1.val..op..e2.val..')'
+        me.val = '('..e1.val..ceu2c(op)..e2.val..')'
     end,
-    ['Op2_-']  = 'Op2_any',
-    ['Op2_+']  = 'Op2_any',
-    ['Op2_%']  = 'Op2_any',
-    ['Op2_*']  = 'Op2_any',
-    ['Op2_/']  = 'Op2_any',
-    ['Op2_|']  = 'Op2_any',
-    ['Op2_&']  = 'Op2_any',
-    ['Op2_<<'] = 'Op2_any',
-    ['Op2_>>'] = 'Op2_any',
-    ['Op2_^']  = 'Op2_any',
-    ['Op2_=='] = 'Op2_any',
-    ['Op2_!='] = 'Op2_any',
-    ['Op2_>='] = 'Op2_any',
-    ['Op2_<='] = 'Op2_any',
-    ['Op2_>']  = 'Op2_any',
-    ['Op2_<']  = 'Op2_any',
-    ['Op2_||'] = 'Op2_any',
-    ['Op2_&&'] = 'Op2_any',
+    ['Op2_-']   = 'Op2_any',
+    ['Op2_+']   = 'Op2_any',
+    ['Op2_%']   = 'Op2_any',
+    ['Op2_*']   = 'Op2_any',
+    ['Op2_/']   = 'Op2_any',
+    ['Op2_|']   = 'Op2_any',
+    ['Op2_&']   = 'Op2_any',
+    ['Op2_<<']  = 'Op2_any',
+    ['Op2_>>']  = 'Op2_any',
+    ['Op2_^']   = 'Op2_any',
+    ['Op2_==']  = 'Op2_any',
+    ['Op2_!=']  = 'Op2_any',
+    ['Op2_>=']  = 'Op2_any',
+    ['Op2_<=']  = 'Op2_any',
+    ['Op2_>']   = 'Op2_any',
+    ['Op2_<']   = 'Op2_any',
+    ['Op2_or']  = 'Op2_any',
+    ['Op2_and'] = 'Op2_any',
 
     Op1_any = function (me)
         local op, e1 = unpack(me)
-        me.val = '('..op..e1.val..')'
+        me.val = '('..ceu2c(op)..e1.val..')'
     end,
-    ['Op1_~'] = 'Op1_any',
-    ['Op1_-'] = 'Op1_any',
-    ['Op1_!'] = 'Op1_any',
+    ['Op1_~']   = 'Op1_any',
+    ['Op1_-']   = 'Op1_any',
+    ['Op1_not'] = 'Op1_any',
 
     ['Op1_*'] = function (me)
         local op, e1 = unpack(me)
-        me.val = '('..op..e1.val..')'
+        me.val = '('..ceu2c(op)..e1.val..')'
         if _ENV.clss[_TP.deref(e1.tp)] then
             me.val = '(('.._TP.c(me.tp)..')(&'..me.val..'))'
         end
@@ -288,7 +293,7 @@ F = {
         if _ENV.clss[e1.tp] then
             me.val = e1.val
         else
-            me.val = '('..op..e1.val..')'
+            me.val = '('..ceu2c(op)..e1.val..')'
         end
     end,
 
@@ -304,7 +309,7 @@ F = {
             end
         else
             local op, e1, id = unpack(me)
-            me.val  = '('..e1.val..op..id..')'
+            me.val  = '('..e1.val..ceu2c(op)..id..')'
         end
     end,
 

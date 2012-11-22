@@ -1,244 +1,6 @@
 --[===[
 --]===]
 
-Test { [[
-input void START;
-interface Global with
-    event int a;
-end
-event int a;
-class U with
-    event int a;
-do
-end
-class T with
-    event int a;
-    Global* g;
-do
-    await START;
-    emit g:a = 10;
-end
-U u;
-Global* g = &u;
-T t;
-t.g = &u;
-int v = await g:a;
-return v;
-]],
-    run = 10,
-}
-Test { [[
-input void START;
-interface Global with
-    event int a;
-end
-event int a;
-class T with
-    event int a;
-do
-    await START;
-    emit global:a = 10;
-end
-T t;
-int v = await a;
-return v;
-]],
-    run = 10,
-}
-Test { [[
-input void START;
-external _fprintf(), _stderr;
-interface Global with
-    event int a;
-end
-event int a;
-class T with
-    event int a;
-do
-    a = await global:a;
-end
-T t;
-await START;
-emit a = 10;
-return t.a;
-]],
-    run = 10,
-}
-
-Test { [[
-int b = 10;
-int* a = <int*> &b;
-int* c = &b;
-return *a + *c;
-]],
-    run = 20;
-}
-
-Test { [[
-interface I with
-    int v;
-    external _f(), _a;      // TODO: refuse _a
-end
-return 10;
-]],
-    run = 10,
-}
-
-Test { [[
-class T with
-    int v;
-    external _f(), _t=10;   // TODO: refuse _t
-do
-end
-return 10;
-]],
-    run = 10,
-}
-
-Test { [[
-external _fprintf(), _stderr;
-C do
-    void CLS_T__f (void* org, int v) {
-        //fprintf(stderr, "oioi\n");
-        CLS_T_v(org) += v;
-    }
-    void IFC_I__f (void* org, int v) {
-        //fprintf(stderr, "tctct\n");
-        IFC_I_v(org) += v;
-    }
-end
-
-interface I with
-    int v;
-    external _f();
-end
-
-class T with
-    int v;
-    external _f();
-do
-    v = 50;
-    this._f(10);
-    //_fprintf(_stderr, "T: %d\n", this.v);
-end
-
-T t;
-I* i = &t;
-i:_f(100);
-//_fprintf(_stderr, "O: %d\n", t.v);
-return i:v;
-]],
-    run = 160,
-}
-
-Test { [[
-external _V;
-C do
-    int V = 1;
-end
-
-class J with
-do
-    _V = _V * 2;
-end
-
-class T with
-do
-    J j;
-    _V = _V + 1;
-end
-
-T t;
-_V = _V*3;
-T t;
-_V = _V*3;
-T t;
-_V = _V*3;
-return _V;
-]],
-    run = 345;
-}
-
-Test { [[
-class T with
-    int a;
-do
-    a = global:a;
-end
-int a = 10;
-T t;
-t.a = t.a + a;
-return t.a;
-]],
-    env = 'ERR : line 4 : interface "Global" is not defined',
-}
-
-Test { [[
-interface Global with
-    int a;
-end
-class T with
-    int a;
-do
-    a = global:a;
-end
-do
-    int a = 10;
-    T t;
-    t.a = t.a + a;
-    return t.a;
-end
-]],
-    env = 'ERR : line 1 : interface "Global" must be implemented by class "Main"',
-}
-
-Test { [[
-interface Global with
-    int a;
-end
-class T with
-    int a;
-do
-    a = global:a;
-end
-int a = 10;
-do
-    T t;
-    t.a = t.a + a;
-    return t.a;
-end
-]],
-    run = 20,
-}
-
-Test { [[
-external _attr();
-C do
-    void attr (void* org) {
-        IFC_Global_a(GLOBAL) = CLS_T_a(org) + 1;
-    }
-end
-
-interface Global with
-    int a;
-end
-class T with
-    int a;
-do
-    a = global:a;
-    _attr(this);
-    a = a + global:a + this.a;
-end
-int a = 10;
-do
-    T t;
-    t.a = t.a + a;
-    return t.a + global:a;
-end
-]],
-    run = 53,
-}
-
     -- CLASSES / ORGS
 
 Test { [[
@@ -252,7 +14,7 @@ return 0;
 
 Test { [[
 class T with
-    int v;
+    var int v;
 do
 end
 return 0;
@@ -263,8 +25,8 @@ return 0;
 Test { [[
 class T with
 do
-    class T1 with int v; do end
-    int v;
+    class T1 with var int v; do end
+    var int v;
 end
 return 0;
 ]],
@@ -275,8 +37,8 @@ return 0;
 Test { [[
 class T with
 do
-    class T1 with do int v; end
-    int v;
+    class T1 with do var int v; end
+    var int v;
 end
 return 0;
 ]],
@@ -288,7 +50,7 @@ Test { [[
 class T with
 do
 end
-T[5] a;
+var T[5] a;
 return 0;
 ]],
     run = 0,
@@ -308,7 +70,7 @@ Test { [[
 class T with
 do
 end
-T a = 1;
+var T a = 1;
 return 0;
 ]],
     env = 'ERR : line 4 : invalid attribution',
@@ -317,10 +79,10 @@ return 0;
 Test { [[
 class T with
 do
-    int a;
-    T b;
+    var int a;
+    var T b;
 end
-T aa;
+var T aa;
 return 0;
 ]],
     env = 'ERR : line 4 : invalid declaration',
@@ -330,7 +92,7 @@ Test { [[
 class T with
 do
 end
-T a;
+var T a;
 return 0;
 ]],
     run = 0,
@@ -340,7 +102,7 @@ Test { [[
 class T with
 do
 end
-T a;
+var T a;
 a.v = 0;
 return a.v;
 ]],
@@ -349,10 +111,10 @@ return a.v;
 
 Test { [[
 class T with
-    int a;
+    var int a;
 do
 end
-T aa;
+var T aa;
 aa.b = 1;
 return 0;
 ]],
@@ -362,9 +124,9 @@ return 0;
 Test { [[
 class T with
 do
-    int v;
+    var int v;
 end
-T a;
+var T a;
 a.v = 5;
 return a.v;
 ]],
@@ -373,10 +135,10 @@ return a.v;
 
 Test { [[
 class T with
-    int v;
+    var int v;
 do
 end
-T a;
+var T a;
 a.v = 5;
 return a.v;
 ]],
@@ -385,11 +147,11 @@ return a.v;
 
 Test { [[
 class T with
-    int v;
+    var int v;
 do
 end
 do
-    T a;
+    var T a;
     a.v = 5;
 end
 a.v = 5;
@@ -399,9 +161,48 @@ return a.v;
 }
 
 Test { [[
-int a=8;
+class T with
+    var int v;
+    external _f(), _t=10;   // TODO: refuse _t
 do
-    int a = 1;
+end
+return 10;
+]],
+    run = 10,
+}
+
+Test { [[
+external _V;
+C do
+    int V = 1;
+end
+
+class J with
+do
+    _V = _V * 2;
+end
+
+class T with
+do
+    var J j;
+    _V = _V + 1;
+end
+
+var T t;
+_V = _V*3;
+var T t;
+_V = _V*3;
+var T t;
+_V = _V*3;
+return _V;
+]],
+    run = 345;
+}
+
+Test { [[
+var int a=8;
+do
+    var int a = 1;
     this.a = this.a + a + 5;
 end
 return a;
@@ -411,20 +212,20 @@ return a;
 
 Test { [[
 class T3 with
-    int v3;
+    var int v3;
 do
 end
 class T2 with
-    T3 t3;
-    int v;
+    var T3 t3;
+    var int v;
 do
 end
 class T with
-    int v,v2;
-    T2 x;
+    var int v,v2;
+    var T2 x;
 do
 end
-T a;
+var T a;
 a.v = 5;
 a.x.v = 5;
 a.v2 = 10;
@@ -435,25 +236,25 @@ return a . v + a.x .v + a .v2 + a.x  .  t3 . v3;
 }
 
 Test { [[
-int v;
+var int v;
 class T with
-    int v;
+    var int v;
     v = 5;
 do
 end
 ]],
-    parser = 'ERR : line 3 : before `;´ : expected statement (missing `_´?)',
+    parser = 'ERR : line 3 : before `;´ : expected statement',
 }
 
 Test { [[
 input void START;
-int v;
+var int v;
 class T with
-    int v;
+    var int v;
 do
     v = 5;
 end
-T a;
+var T a;
 await START;
 v = a.v;
 a.v = 4;
@@ -465,7 +266,7 @@ return a.v + v;
 Test { [[
 input void START;
 input void A,F;
-int v;
+var int v = 0;
 class T with
     event void e, ok, go;
 do
@@ -473,7 +274,7 @@ do
     emit e;
     emit ok;
 end
-T a;
+var T a;
 await START;
 par/or do
     loop i,3 do
@@ -497,7 +298,7 @@ return v;
 Test { [[
 input void START;
 input void A,F;
-int v;
+var int v;
 class T with
     event void e, ok;
 do
@@ -505,7 +306,7 @@ do
     emit e;
     emit ok;
 end
-T a;
+var T a;
 await START;
 par/or do
     loop i,3 do
@@ -527,7 +328,7 @@ return v;
 Test { [[
 input void START;
 input void A,F;
-int v;
+var int v;
 class T with
     event void e;
 do
@@ -537,7 +338,7 @@ do
     end
 end
 await START;
-T a;
+var T a;
 par/or do
     loop i,3 do
         await a.e;
@@ -554,7 +355,7 @@ return v;
 Test { [[
 input void START;
 input void A,F;
-int v;
+var int v;
 class T with
     event void e;
 do
@@ -563,7 +364,7 @@ do
         emit e;
     end
 end
-T a;
+var T a;
 await START;
 loop i,3 do
     await a.e;
@@ -577,14 +378,14 @@ return v;
 Test { [[
 input void START;
 class T with
-    int v;
+    var int v;
 do
     this.v = 5;
 end
 do
-    T a;
+    var T a;
     await START;
-    int v = a.v;
+    var int v = a.v;
     a.v = 4;
     return a.v + v;
 end
@@ -596,20 +397,20 @@ Test { [[
 input void START;
 class T with
     event void go;
-    int v;
+    var int v;
 do
     await go;
     v = 5;
 end
 do
-    T a;
+    var T a;
     await START;
     par/and do
         emit a.go;
     with
         emit a.go;
     end
-    int v = a.v;
+    var int v = a.v;
     a.v = 4;
     return a.v + v;
 end
@@ -627,7 +428,7 @@ do
     a = 5;
     emit ok;
 end
-T aa;
+var T aa;
     par/or do
         await START;
         emit aa.go;
@@ -642,13 +443,13 @@ return aa.a;
 Test { [[
 input void START;
 class T with
-    int v;
+    var int v;
 do
     v = 5;
 end
-T a;
+var T a;
     await START;
-int v = a.v;
+var int v = a.v;
 a.v = 4;
 return a.v + v;
 ]],
@@ -656,15 +457,15 @@ return a.v + v;
 }
 
 Test { [[
-int ret = 0;
+var int ret = 0;
 do
-    int a;
+    var int a;
     do
         class T with
         do
             a = 1;
         end
-        T v;
+        var T v;
         emit v.go;
     end
     ret = a;
@@ -677,7 +478,7 @@ return ret;
 
 Test { [[
 do
-    int a;
+    var int a;
     do
         class T with
         do
@@ -685,7 +486,7 @@ do
         end
     end
 end
-T v;
+var T v;
 emit v.go;
 return 0;
 ]],
@@ -694,7 +495,7 @@ return 0;
 }
 
 Test { [[
-int a;
+var int a;
 do
     do
         class T with
@@ -704,8 +505,8 @@ do
         end
     end
 end
-int b;
-T v;
+var int b;
+var T v;
 emit v.go;
 return a;
 ]],
@@ -714,8 +515,8 @@ return a;
 }
 
 Test { [[
-int a;
-int b;
+var int a;
+var int b;
 do
     do
         class T with
@@ -726,12 +527,12 @@ do
     end
 end
 do
-    int a;
+    var int a;
 end
 do
-    int b;
+    var int b;
     do
-        T v;
+        var T v;
         emit v.go;
     end
 end
@@ -743,20 +544,20 @@ return a+b;
 }
 
 Test { [[
-int a;
-int b;
+var int a;
+var int b;
 class T with
 do
     a = 1;
     b = 3;
 end
 do
-    int a;
+    var int a;
 end
 do
-    int b;
+    var int b;
     do
-        T v;
+        var T v;
         emit v.go;
     end
 end
@@ -768,11 +569,11 @@ return a+b;
 
 Test { [[
 class T with
-    int v;
+    var int v;
 do
 end
 
-T t1, t2;
+var T t1, t2;
 t1.v = 1;
 t2.v = 2;
 return t1.v+t2.v;
@@ -785,7 +586,7 @@ class T with
     event void go;
 do
 end
-T aa;
+var T aa;
 loop do
     emit aa.go;
 end
@@ -802,7 +603,7 @@ do
     await 1s;
     emit ok;
 end
-T aa;
+var T aa;
 par/and do
     await START;
     emit aa.go;
@@ -824,7 +625,7 @@ do
     emit ok;
 end
 end
-T aa;
+var T aa;
 par/and do
     await START;
 with
@@ -837,7 +638,7 @@ return 10;
 
 Test { [[
 class T with
-    int v = await F;
+    var int v = await F;
 do
 end
 ]],
@@ -850,13 +651,13 @@ input int F;
 do
     class T with
         event void ok;
-        int v;
+        var int v;
     do
         v = await F;
         emit ok;
     end
 end
-T aa;
+var T aa;
 par/and do
     await START;
 with
@@ -881,7 +682,7 @@ end
 class T with
     event void ok;
 do
-    T1 a;
+    var T1 a;
     par/and do
         await 1ms;
     with
@@ -890,10 +691,10 @@ do
     await 1s;
     emit ok;
 end
-int ret = 10;
+var int ret = 10;
 par/or do
     do
-        T aa;
+        var T aa;
         par/and do
             await START;
         with
@@ -927,7 +728,7 @@ end
 class T with
     event void ok;
 do
-    T1 a;
+    var T1 a;
     par/and do
         await (0)ms;
     with
@@ -936,8 +737,8 @@ do
     await 1s;
     emit ok;
 end
-int ret = 10;
-T aa;
+var int ret = 10;
+var T aa;
 par/or do
     do
         par/and do
@@ -976,10 +777,10 @@ do
     await 1s;
     emit ok;
 end
-int ret = 10;
+var int ret = 10;
 par/or do
     do
-        T aa;
+        var T aa;
         await aa.ok;
     end
     ret = ret + 1;
@@ -1012,7 +813,7 @@ class T with
 do
     input void E;
     par/or do
-        T1 a;
+        var T1 a;
         par/and do
             await (0)ms;
         with
@@ -1024,10 +825,10 @@ do
     await 1s;
     emit ok;
 end
-int ret = 10;
+var int ret = 10;
 par/or do
     do
-        T aa;
+        var T aa;
             await aa.ok;
     end
     ret = ret + 1;
@@ -1055,8 +856,8 @@ do
     await 1s;
     emit ok;
 end
-T aa;
-int ret = 10;
+var T aa;
+var int ret = 10;
 par/or do
     par/and do
         await START;
@@ -1087,8 +888,8 @@ do
         emit this.ok;
     end
 end
-T aa;
-int ret = 0;
+var T aa;
+var int ret = 0;
 par/or do
     loop do
         par/and do
@@ -1109,7 +910,7 @@ return ret;
 Test { [[
 input void A;
 class T with
-    int v;
+    var int v;
     event void ok;
 do
     v = 0;
@@ -1118,7 +919,7 @@ do
         v = v + 1;
     end
 end
-T aa;
+var T aa;
 par do
         await aa.ok;
 with
@@ -1149,7 +950,7 @@ do
     end
     emit ok;
 end
-T aa;
+var T aa;
 par/and do
     await START;
 with
@@ -1173,7 +974,7 @@ do
         a = 7;
     end
 end
-T aa;
+var T aa;
 await START;
 return aa.a;
 ]],
@@ -1182,9 +983,9 @@ return aa.a;
 
 Test { [[
 input void A,B;
-int a = 0;
+var int a = 0;
 do
-    u8 a = 1;
+    var u8 a = 1;
 end
 par/and do
     await A;
@@ -1200,8 +1001,8 @@ return a;
 
 Test { [[
 class T with do end
-T a;
-T* p = a;
+var T a;
+var T* p = a;
 ]],
     env = 'ERR : line 3 : invalid attribution',
 }
@@ -1213,17 +1014,17 @@ C do
 end
 
 class T with
-    int a;
+    var int a;
 do
 end
 
-int i;
+var int i;
 i = 10;
-int* pi = &i;
+var int* pi = &i;
 
-T t;
+var T t;
 t.a = 10;
-T* p = &t;
+var T* p = &t;
 //_fprintf(_stderr, "%p %p\n", &t, p);
 //_fprintf(_stderr, "%p %p\n", t, *p);
 _c = t.a;
@@ -1239,15 +1040,15 @@ Test { [[
 input void START;
 class T with
     event void ok, go;
-    int v, going;
+    var int v, going;
 do
     await go;
     going = 1;
     v = 10;
     emit ok;
 end
-T a;
-T* ptr;
+var T a;
+var T* ptr;
 ptr = &a;
 par/or do
     await START;
@@ -1266,7 +1067,7 @@ return ptr:v + a.v;
 Test { [[
 input void F, B;
 
-s16 x = 10;
+var s16 x = 10;
 
 par/or do
     loop do
@@ -1307,8 +1108,8 @@ input int  BUTTON;
 input void F;
 
 class Rect with
-    s16 x;
-    s16 y;
+    var s16 x;
+    var s16 y;
     event int go;
 do
     loop do
@@ -1348,7 +1149,7 @@ do
     end
 end
 
-Rect[2] rs;
+var Rect[2] rs;
 rs[0].x = 10;
 rs[0].y = 50;
 rs[1].x = 100;
@@ -1360,7 +1161,7 @@ rs[1].y = 300;
 
 par/or do
     loop do
-        int i = await BUTTON;
+        var int i = await BUTTON;
         emit rs[i].go;
     end
 with
@@ -1371,7 +1172,7 @@ with
     end
 //_fprintf(_stderr,"%d %d %d %d\n",
     //rs[0].x, rs[0].y, rs[1].x, rs[1].y);
-    _assert(rs[0].x==20 && rs[0].y==50 && rs[1].x==110 && rs[1].y==300);
+    _assert(rs[0].x==20 and rs[0].y==50 and rs[1].x==110 and rs[1].y==300);
 //_fprintf(_stderr,"oioi\n");
 
     async do
@@ -1379,41 +1180,41 @@ with
         emit 100ms;
     end
     //_fprintf(_stderr, "(%d %d) vs (%d %d)\n", rs[0].x, rs[0].y, rs[1].x, rs[1].y);
-    _assert(rs[0].x==20 && rs[0].y==60 && rs[1].x==120 && rs[1].y==300);
+    _assert(rs[0].x==20 and rs[0].y==60 and rs[1].x==120 and rs[1].y==300);
 
     async do
         emit BUTTON(1);
         emit 100ms;
     end
     //_fprintf(_stderr, "(%d %d) vs (%d %d)\n", rs[0].x, rs[0].y, rs[1].x, rs[1].y);
-    _assert(rs[0].x==20 && rs[0].y==70 && rs[1].x==120 && rs[1].y==310);
+    _assert(rs[0].x==20 and rs[0].y==70 and rs[1].x==120 and rs[1].y==310);
 
     async do
         emit BUTTON(1);
         emit 100ms;
     end
     //_fprintf(_stderr, "(%d %d) vs (%d %d)\n", rs[0].x, rs[0].y, rs[1].x, rs[1].y);
-    _assert(rs[0].x==20 && rs[0].y==80 && rs[1].x==110 && rs[1].y==310);
+    _assert(rs[0].x==20 and rs[0].y==80 and rs[1].x==110 and rs[1].y==310);
 
     async do
         emit BUTTON(1);
         emit 99ms;
     end
     //_fprintf(_stderr, "(%d %d) vs (%d %d)\n", rs[0].x, rs[0].y, rs[1].x, rs[1].y);
-    _assert(rs[0].x==20 && rs[0].y==89 && rs[1].x==110 && rs[1].y==301);
+    _assert(rs[0].x==20 and rs[0].y==89 and rs[1].x==110 and rs[1].y==301);
 
     async do
         emit BUTTON(0);
         emit 1ms;
     end
     //_fprintf(_stderr, "(%d %d) vs (%d %d)\n", rs[0].x, rs[0].y, rs[1].x, rs[1].y);
-    _assert(rs[0].x==20 && rs[0].y==89 && rs[1].x==110 && rs[1].y==300);
+    _assert(rs[0].x==20 and rs[0].y==89 and rs[1].x==110 and rs[1].y==300);
 
     async do
         emit 18ms;
     end
     //_fprintf(_stderr, "(%d %d) vs (%d %d)\n", rs[0].x, rs[0].y, rs[1].x, rs[1].y);
-    _assert(rs[0].x==19 && rs[0].y==89 && rs[1].x==110 && rs[1].y==299);
+    _assert(rs[0].x==19 and rs[0].y==89 and rs[1].x==110 and rs[1].y==299);
 
     async do
         emit BUTTON(0);
@@ -1421,7 +1222,7 @@ with
         emit 1s;
     end
     //_fprintf(_stderr, "(%d %d) vs (%d %d)\n", rs[0].x, rs[0].y, rs[1].x, rs[1].y);
-    _assert(rs[0].x==19 && rs[0].y==-11 && rs[1].x==210 && rs[1].y==299);
+    _assert(rs[0].x==19 and rs[0].y==-11 and rs[1].x==210 and rs[1].y==299);
 
 end
 return 100;
@@ -1441,8 +1242,8 @@ do
     await (0)ms;
     emit ok;
 end
-T a1, a2;
-int ret = 0;
+var T a1, a2;
+var int ret = 0;
 await START;
 par/or do
     par/and do
@@ -1477,7 +1278,7 @@ do
         a = 7;
     end
 end
-T aa;
+var T aa;
 par/or do
     par/and do
         emit aa.go;
@@ -1498,7 +1299,7 @@ do
     emit a=10;
     a = 5;
 end
-T aa;
+var T aa;
 par/or do
     par/and do
         emit aa.go;
@@ -1527,9 +1328,9 @@ do
     b = 4;
     emit ok;
 end
-T aa;
+var T aa;
 
-int ret;
+var int ret;
 par/or do
         await aa.ok;
     ret = 1;
@@ -1548,13 +1349,13 @@ external _f();
 input void START;
 class T with
     event int e, ok, go, b;
-    u8 a;
+    var u8 a;
 do
     await go;
     a = 1;
     emit ok;
 end
-T a, b;
+var T a, b;
 C do
     int f (char* a, char* b) {
         return *a + *b;
@@ -1581,7 +1382,7 @@ input void START,B;
 class T with
     event int e, ok, go, b;
     event void e, f;
-    int v;
+    var int v;
 do
     v = 10;
     await e;
@@ -1589,10 +1390,10 @@ do
     v = 100;
     emit ok;
 end
-T a;
-T* ptr;
+var T a;
+var T* ptr;
 ptr = &a;
-int ret = 0;
+var int ret = 0;
 par/and do
     par/and do
         await START;
@@ -1617,7 +1418,7 @@ return ret + ptr:v + a.v;
 Test { [[
 input void START, B;
 class T with
-    int v;
+    var int v;
     event int e, ok, go, b;
     event void e, f;
 do
@@ -1628,8 +1429,8 @@ do
     v = 100;
     emit ok;
 end
-T[2] ts;
-int ret = 0;
+var T[2] ts;
+var int ret = 0;
 par/and do
     par/and do
         await START;
@@ -1681,7 +1482,7 @@ do
     end
     emit ok;
 end
-T aa;
+var T aa;
 await aa.ok;
 await F;
 return aa.a;
@@ -1695,7 +1496,7 @@ return aa.a;
 Test { [[
 input void START;
 class T with
-    int v;
+    var int v;
     event void e, f, ok;
 do
     v = 10;
@@ -1705,8 +1506,8 @@ do
     v = 100;
     emit ok;
 end
-T[2] ts;
-int ret = 0;
+var T[2] ts;
+var int ret = 0;
 par/and do
     par/and do
         await ts[0].ok;
@@ -1737,11 +1538,11 @@ return ret + ts[0].v + ts[1].v;
 Test { [[
 input void START;
 class T with
-    int v;
+    var int v;
 do
     v = 1;
 end
-T a, b;
+var T a, b;
 await START;
 return a.v + b.v;
 ]],
@@ -1760,16 +1561,16 @@ end
 class T with
     event void ok;
 do
-    T1 a;
+    var T1 a;
     await a.ok;
     await 1s;
     emit ok;
 end
-int ret = 10;
+var int ret = 10;
 await START;
 par/or do
     do
-        T aa;
+        var T aa;
         await aa.ok;
     end
     ret = ret + 1;
@@ -1803,7 +1604,7 @@ do
     end
 end
 do
-    T t;
+    var T t;
 end
 return _V;
 ]],
@@ -1826,7 +1627,7 @@ do
     end
 end
 par/or do
-    T t;
+    var T t;
     await F;
 with
     // nothing;
@@ -1852,7 +1653,7 @@ do
     end
 end
 par/or do
-    T t;
+    var T t;
     await START;
 with
     await START;
@@ -1870,7 +1671,7 @@ C do
 end
 class T with
     event void e, ok;
-    int v;
+    var int v;
 do
     v = 1;
     await A;
@@ -1880,7 +1681,7 @@ do
 finally
     _V = _V + 1;        // * writes after
 end
-T t;
+var T t;
 await START;
 par/or do
     do
@@ -1911,7 +1712,7 @@ C do
 end
 class T with
     event void e, ok;
-    int v;
+    var int v;
 do
     v = 1;
     await A;
@@ -1922,9 +1723,9 @@ finally
     _V = _V + 1;        // * writes before
 end
 await START;
-int ret;
+var int ret;
 do
-    T t;
+    var T t;
     par/or do
         do
             await t.ok;
@@ -1960,7 +1761,7 @@ do
     end
 finally
 end
-T* t;
+var T* t;
 do
     t = new T;
     t = new T;
@@ -1974,7 +1775,7 @@ return 10;
 Test { [[
 new i;
 ]],
-    parser = 'ERR : line 1 : after `<BOF>´ : expected statement (missing `_´?)',
+    parser = 'ERR : line 1 : after `<BOF>´ : expected statement',
 }
 Test { [[
 _f(new T);
@@ -1984,7 +1785,7 @@ _f(new T);
 
 Test { [[
 class T with do end
-T* a;
+var T* a;
 a = new U;
 ]],
     env = 'ERR : line 3 : class "U" is not declared'
@@ -1992,7 +1793,7 @@ a = new U;
 
 Test { [[
 class T with do end
-T* t;
+var T* t;
 t = new T;
 return 10;
 ]],
@@ -2002,7 +1803,7 @@ return 10;
 Test { [[
 class T with do end
 do
-    T* t;
+    var T* t;
     t = new T;
 end
 return 10;
@@ -2012,9 +1813,9 @@ return 10;
 
 Test { [[
 class T with do end
-T* t1;
+var T* t1;
 do
-    T t2;
+    var T t2;
     t1 = &t2;
 end
 return 10;
@@ -2024,9 +1825,9 @@ return 10;
 
 Test { [[
 class T with do end
-T* t1;
+var T* t1;
 do
-    T t2;
+    var T t2;
     t1 = &t2;
 finally
 end
@@ -2037,7 +1838,7 @@ return 10;
 
 Test { [[
 class T with do end
-T* t;
+var T* t;
 do
     t = new T;
 end
@@ -2048,7 +1849,7 @@ return 10;
 
 Test { [[
 class T with do finally end
-T* a = new T;
+var T* a = new T;
 ]],
     env = 'ERR : line 2 : invalid attribution',
 }
@@ -2056,7 +1857,7 @@ T* a = new T;
 Test { [[
 class T with do end
 class U with do finally end
-T* a;
+var T* a;
 a = new U;
 ]],
     env = 'ERR : line 4 : invalid attribution',
@@ -2070,17 +1871,17 @@ C do
 end
 
 class T with
-    int a;
+    var int a;
 do
     a = 10;
 finally
     _V = 1;
 end
 
-int ret = 0;
+var int ret = 0;
 
 do
-    T* o;
+    var T* o;
     o = new T;
     await START;
     ret = o:a;
@@ -2099,7 +1900,7 @@ C do
 end
 
 class T with
-    int a;
+    var int a;
 do
     a = 10;
     await 1s;
@@ -2107,10 +1908,10 @@ finally
     _V = 1;
 end
 
-int ret = 0;
+var int ret = 0;
 
 par/or do
-    T* o;
+    var T* o;
     o = new T;
     await START;
     ret = o:a;
@@ -2131,7 +1932,7 @@ C do
 end
 
 class T with
-    int a;
+    var int a;
 do
     a = 10;
     await 1s;
@@ -2139,9 +1940,9 @@ finally
     _V = 1;
 end
 
-int ret = 0;
+var int ret = 0;
 
-T* o;
+var T* o;
 par/or do
     o = new T;
     await START;
@@ -2169,21 +1970,21 @@ finally
 end
 
 class U with
-    V* v;
+    var V* v;
 do
 end
 
 class T with
-    U* u;
+    var U* u;
 do
     await 1s;
     u:v = new V;
 end
 
 do
-    U u;
+    var U u;
     do
-        T t;
+        var T t;
         t.u = &u;
         await 1s;
     end
@@ -2198,7 +1999,7 @@ return _V;
 Test { [[
 input void A,X, START;
 event int a=0;
-int ret = 0;
+var int ret = 0;
 
 class T with
     event void v, ok, go;
@@ -2210,7 +2011,7 @@ end
 
 par/or do
     pause/if a do
-        T[2] ts;
+        var T[2] ts;
         par/or do
             par/and do
                 await ts[0].ok;
@@ -2275,7 +2076,7 @@ do
         loop do
             int but = await CLICK;
             if but == this.v then
-                emit pse=!pse;
+                emit pse=not pse;
             end
         end
     end
@@ -2312,7 +2113,7 @@ with
     loop do
         _SDL_KeyboardEvent* key = await SDL_KEYDOWN;
         if key:keysym.sym == _SDLK_p then
-            emit pse_all = !pse_all;
+            emit pse_all = not pse_all;
 _printf("PSE %d\n", pse_all);
         end
     end
@@ -2359,8 +2160,8 @@ _SDL_Quit();
 
 C do
     int contains (SDL_Rect* r, s16 x, s16 y) {
-        return (x >= r->x) && (x <= r->x+r->w)
-            && (y >= r->y) && (y <= r->y+r->h);
+        return (x >= r->x) and (x <= r->x+r->w)
+            and (y >= r->y) and (y <= r->y+r->h);
     }
 end
 
@@ -2379,7 +2180,7 @@ end
 interface I with
     event void e;
 end
-J* i = _ptr;
+var J* i = _ptr;
 return 10;
 ]],
     env = 'ERR : line 8 : undeclared type `J´',
@@ -2393,7 +2194,7 @@ end
 interface I with
     event void e;
 end
-I* i = _ptr;
+var I* i = _ptr;
 return 10;
 ]],
     run = 10;
@@ -2407,7 +2208,7 @@ end
 interface I with
     event int e;
 end
-I* i = <I*> _ptr;
+var I* i = <I*> _ptr;
 return 10;
 ]],
     run = 10;
@@ -2427,8 +2228,8 @@ do
     e = 100;
 end
 
-T t;
-I* i = &t;
+var T t;
+var I* i = &t;
 
 await START;
 emit i:e;
@@ -2447,28 +2248,28 @@ end
 class T with
     event int e, f;
 do
-    int v = await e;
+    var int v = await e;
     emit f=v;
 end
 
-T t1, t2;
-I* i1 = &t1;
-I* i2 = &t2;
+var T t1, t2;
+var I* i1 = &t1;
+var I* i2 = &t2;
 
 //_fprintf(_stderr, "%p %p %p %p\n", t1,&t1, i1, &i1);
 
-int ret = 0;
+var int ret = 0;
 par/and do
     await START;
     emit i1:e=7;
 with
-    int v = await i1:f;
+    var int v = await i1:f;
     ret = ret + v;
 with
     await START;
     emit i2:e=6;
 with
-    int v = await i2:f;
+    var int v = await i2:f;
     ret = ret + v;
 end
 return ret;
@@ -2487,9 +2288,208 @@ return 10;
 
 Test { [[
 interface I with
+end
+var I[10] a;
+]],
+    env = 'ERR : line 3 : cannot instantiate an interface',
+}
+
+Test { [[
+input void START;
+interface Global with
+    event int a?;
+end
+event int a?;
+class U with
+    event int a?;
+do
+end
+class T with
+    event int a?;
+    var Global* g;
+do
+    await START;
+    emit g:a? = 10;
+end
+var U u;
+var Global* g = &u;
+var T t;
+t.g = &u;
+var int v = await g:a?;
+return v;
+]],
+    run = 10,
+}
+
+Test { [[
+input void START;
+interface Global with
     event int a;
 end
-I t;
+event int a;
+class T with
+    event int a;
+do
+    await START;
+    emit global:a = 10;
+end
+var T t;
+var int v = await a;
+return v;
+]],
+    run = 10,
+}
+Test { [[
+input void START;
+external _fprintf(), _stderr;
+interface Global with
+    event int a;
+end
+event int a;
+class T with
+    event int a;
+do
+    a = await global:a;
+end
+var T t;
+await START;
+emit a = 10;
+return t.a;
+]],
+    run = 10,
+}
+
+Test { [[
+interface I with
+    var int v;
+    external _f(), _a;      // TODO: refuse _a
+end
+return 10;
+]],
+    run = 10,
+}
+
+Test { [[
+external _fprintf(), _stderr;
+C do
+    void CLS_T__f (void* org, int v) {
+        //fprintf(stderr, "oioi\n");
+        CLS_T_v(org) += v;
+    }
+    void IFC_I__f (void* org, int v) {
+        //fprintf(stderr, "tctct\n");
+        IFC_I_v(org) += v;
+    }
+end
+
+interface I with
+    var int v;
+    external _f();
+end
+
+class T with
+    var int v;
+    external _f();
+do
+    v = 50;
+    this._f(10);
+    //_fprintf(_stderr, "T: %d\n", this.v);
+end
+
+var T t;
+var I* i = &t;
+i:_f(100);
+//_fprintf(_stderr, "O: %d\n", t.v);
+return i:v;
+]],
+    run = 160,
+}
+
+Test { [[
+class T with
+    var int a;
+do
+    a = global:a;
+end
+var int a = 10;
+var T t;
+t.a = t.a + a;
+return t.a;
+]],
+    env = 'ERR : line 4 : interface "Global" is not defined',
+}
+
+Test { [[
+interface Global with
+    var int a;
+end
+class T with
+    var int a;
+do
+    a = global:a;
+end
+do
+    var int a = 10;
+    var T t;
+    t.a = t.a + a;
+    return t.a;
+end
+]],
+    env = 'ERR : line 1 : interface "Global" must be implemented by class "Main"',
+}
+
+Test { [[
+interface Global with
+    var int a;
+end
+class T with
+    var int a;
+do
+    a = global:a;
+end
+var int a = 10;
+do
+    var T t;
+    t.a = t.a + a;
+    return t.a;
+end
+]],
+    run = 20,
+}
+
+Test { [[
+external _attr();
+C do
+    void attr (void* org) {
+        IFC_Global_a(GLOBAL) = CLS_T_a(org) + 1;
+    }
+end
+
+interface Global with
+    var int a;
+end
+class T with
+    var int a;
+do
+    a = global:a;
+    _attr(this);
+    a = a + global:a + this.a;
+end
+var int a = 10;
+do
+    var T t;
+    t.a = t.a + a;
+    return t.a + global:a;
+end
+]],
+    run = 53,
+}
+
+Test { [[
+interface I with
+    event int a;
+end
+var I t;
 return 10;
 ]],
     env = 'ERR : line 4 : cannot instantiate an interface',
@@ -2499,7 +2499,7 @@ Test { [[
 interface I with
     event int a;
 end
-I[10] t;
+var I[10] t;
 return 10;
 ]],
     env = 'ERR : line 4 : cannot instantiate an interface',
@@ -2509,7 +2509,7 @@ Test { [[
 interface I with
     event int a;
 end
-I* t;
+var I* t;
 t = new I;
 return 10;
 ]],
@@ -2525,8 +2525,8 @@ interface I with
     event int a;
 end
 
-I* i;
-T t;
+var I* i;
+var T t;
 i = &t;
 return 10;
 ]],
@@ -2543,8 +2543,8 @@ interface I with
     event int a;
 end
 
-I* i;
-T t;
+var I* i;
+var T t;
 i = &t;
 return 10;
 ]],
@@ -2561,8 +2561,8 @@ interface I with
     event int a;
 end
 
-I* i;
-T t;
+var I* i;
+var T t;
 i = t;
 return 10;
 ]],
@@ -2579,8 +2579,8 @@ interface I with
     event int a;
 end
 
-I* i;
-T t;
+var I* i;
+var T t;
 i = &t;
 return 10;
 ]],
@@ -2600,10 +2600,10 @@ interface J with
     event int a;
 end
 
-I* i;
-T t;
+var I* i;
+var T t;
 i = &t;
-J* j = i;
+var J* j = i;
 return 10;
 ]],
     run = 10;
@@ -2622,10 +2622,10 @@ interface J with
     event int* a;
 end
 
-I* i;
-T t;
+var I* i;
+var T t;
 i = &t;
-J* j = i;
+var J* j = i;
 return 10;
 ]],
     env = 'ERR : line 16 : invalid attribution',
@@ -2633,8 +2633,8 @@ return 10;
 
 Test { [[
 class T with
-    int v;
-    int* x;
+    var int v;
+    var int* x;
     event int a;
 do
     a = 10;
@@ -2645,13 +2645,13 @@ interface I with
 end
 interface J with
     event int a;
-    int v;
+    var int v;
 end
 
-I* i;
-T t;
+var I* i;
+var T t;
 i = &t;
-J* j = i;
+var J* j = i;
 return 0;
 ]],
     env = 'ERR : line 20 : invalid attribution',
@@ -2672,10 +2672,10 @@ interface J with
     event int a;
 end
 
-I* i;
-T t;
+var I* i;
+var T t;
 i = &t;
-J* j = i;
+var J* j = i;
 await START;
 return i:a + j:a + t.a;
 ]],
@@ -2685,8 +2685,8 @@ return i:a + j:a + t.a;
 Test { [[
 input void START;
 class T with
-    int v;
-    int* x;
+    var int v;
+    var int* x;
     event int a;
 do
     a = 10;
@@ -2695,16 +2695,16 @@ end
 
 interface I with
     event int a;
-    int v;
+    var int v;
 end
 interface J with
     event int a;
 end
 
-I* i;
-T t;
+var I* i;
+var T t;
 i = &t;
-J* j = i;
+var J* j = i;
 await START;
 return i:a + j:a + t.a + i:v + t.v;
 ]],
@@ -2788,25 +2788,25 @@ Test { [[return 'A';]], run=65, }
 Test { [[return (((1)));]], run=1 }
 Test { [[return 1+2*3;]], run=7 }
 Test { [[return 1==2;]], run=0 }
-Test { [[return 0 || 10;]], run=1 }
-Test { [[return 0 && 10;]], run=0 }
-Test { [[return 2>1 && 10!=0;]], run=1 }
+Test { [[return 0  or  10;]], run=1 }
+Test { [[return 0 and 10;]], run=0 }
+Test { [[return 2>1 and 10!=0;]], run=1 }
 Test { [[return (1<=2) + (1<2) + 2/1 - 2%3;]], run=2 }
 -- TODO: linux gcc only?
 --Test { [[return (~(~0b1010 & 0XF) | 0b0011 ^ 0B0010) & 0xF;]], run=11 }
 Test { [[nt a;]],
-    parser = "ERR : line 1 : before `nt´ : expected statement (missing `_´?)",
+    parser = "ERR : line 1 : before `nt´ : expected statement",
 }
 Test { [[nt sizeof;]],
-    parser = "ERR : line 1 : before `nt´ : expected statement (missing `_´?)",
+    parser = "ERR : line 1 : before `nt´ : expected statement",
 }
-Test { [[int sizeof;]],
+Test { [[var int sizeof;]],
     parser = "ERR : line 1 : after `int´ : expected identifier",
 }
 Test { [[return sizeof<int>;]], run=4 }
 Test { [[return 1<2>3;]], run=0 }
 
-Test { [[int a;]],
+Test { [[var int a;]],
     ana = {
         n_reachs = 1,
         isForever = true,
@@ -2816,59 +2816,89 @@ Test { [[int a;]],
 Test { [[a = 1; return a;]],
     env = 'variable/event "a" is not declared',
 }
-Test { [[int a; a = 1; return a;]],
+Test { [[var int a; a = 1; return a;]],
     run = 1,
 }
-Test { [[int a = 1; return a;]],
+Test { [[var int a = 1; return a;]],
     run = 1,
 }
-Test { [[int a = 1; return (a);]],
+Test { [[var int a = 1; return (a);]],
     run = 1,
 }
-Test { [[int a = 1;]],
+Test { [[var int a = 1;]],
     ana = {
         n_reachs = 1,
         isForever = true,
     }
 }
-Test { [[int a=1;int a=0; return a;]],
+Test { [[var int a=1;var int a=0; return a;]],
     --env = 'variable/event "a" is already declared',
     run = 0,
 }
-Test { [[int a=1,a=0; return a;]],
+Test { [[var int a=1,a=0; return a;]],
     --env = 'variable/event "a" is already declared',
     run = 0,
 }
-Test { [[int a; a = b = 1]],
+Test { [[var int a; a = b = 1]],
     parser = "ERR : line 1 : after `b´ : expected `;´",
 }
-Test { [[int a = b; return 0;]],
+Test { [[var int a = b; return 0;]],
     env = 'variable/event "b" is not declared',
 }
 Test { [[return 1;2;]],
     parser = "ERR : line 1 : before `;´ : expected statement",
 }
-Test { [[int aAa; aAa=1; return aAa;]],
+Test { [[var int aAa; aAa=1; return aAa;]],
     run = 1,
 }
-Test { [[int a; a=1; return a;]],
+Test { [[var int a; a=1; return a;]],
     run = 1,
 }
-Test { [[int a; a=1; a=2; return a;]],
+Test { [[var int a; a=1; a=2; return a;]],
     run = 2,
 }
-Test { [[int a; a=1; return a;]],
+Test { [[var int a; a=1; return a;]],
     run = 1,
 }
-Test { [[int a; a=1 ; a=a; return a;]],
+Test { [[var int a; a=1 ; a=a; return a;]],
     run = 1,
 }
-Test { [[int a; a=1 ; ]],
+Test { [[var int a; a=1 ; ]],
     ana = {
         n_reachs = 1,
         isForever = true,
     }
 }
+
+Test { [[
+external _abc = 0;
+event void a;
+var _abc a;
+]],
+    env = 'ERR : line 3 : cannot instantiate type "_abc"',
+}
+
+Test { [[
+input void A;
+var int a? = 1;
+a_ = 2;
+return a?;
+]],
+    run = 2,
+}
+
+Test { [[
+return 0x1 + 0X1 + 001;
+]],
+    run = 3,
+}
+
+Test { [[
+return 0x1 + 0X1 + 0a01;
+]],
+    env = 'ERR : line 1 : malformed number',
+}
+
     -- IF
 
 Test { [[if 1 then return 1; end; return 0;]],
@@ -2910,7 +2940,7 @@ return 0;
     run = 0,
 }
 Test { [[
-int a = 1;
+var int a = 1;
 if a == 0 then
     return 1;
 else/if a > 0 then
@@ -2923,7 +2953,7 @@ return 0;
     run = 0,
 }
 Test { [[
-int a = 1;
+var int a = 1;
 if a == 0 then
     return 0;
 else/if a < 0 then
@@ -2951,7 +2981,7 @@ Test { [[if (2) then  else return 0; end;]],
 }
 
 -- IF vs SEQ priority
-Test { [[if 1 then int a; return 2; else return 3; end;]],
+Test { [[if 1 then var int a; return 2; else return 3; end;]],
     run = 2,
 }
 
@@ -2987,8 +3017,8 @@ end;]],
     run = 2,
 }
 Test { [[
-int a = 0;
-int b = a;
+var int a = 0;
+var int b = a;
 if b then
     return 1;
 else
@@ -2998,7 +3028,7 @@ end;
     run = 2,
 }
 Test { [[
-int a;
+var int a;
 if 0 then
     a = 1;
 else
@@ -3009,7 +3039,7 @@ return a;
     run = 2,
 }
 Test { [[
-int a;
+var int a;
 if 1 then
     a = 1;
     if 1 then
@@ -3021,7 +3051,7 @@ return a;
     run = 2,
 }
 Test { [[
-int a;
+var int a;
 if 0 then
     return 1;
 else
@@ -3031,7 +3061,7 @@ end;
     run = 3,
 }
 Test { [[
-int a = 0;
+var int a = 0;
 if (0) then
     a = 1;
 end
@@ -3048,7 +3078,7 @@ input int A;
 A=1;
 return 1;
 ]],
-    parser = 'ERR : line 2 : after `A´ : expected identifier',
+    parser = 'ERR : line 1 : after `;´ : expected statement',
 }
 
 Test { [[input  int A;]],
@@ -3095,7 +3125,7 @@ return 10;
 
 Test { [[
 input int A;
-int ret;
+var int ret;
 par/or do
     ret = await A;
 with
@@ -3124,7 +3154,7 @@ return A;
 
 Test { [[
 input int A;
-int v;
+var int v;
 par/and do
     v = await A;
 with
@@ -3145,7 +3175,7 @@ return v;
 
 Test { [[
 input int A;
-int v = await A;
+var int v = await A;
 return v;
 ]],
     run = {
@@ -3155,17 +3185,17 @@ return v;
 }
 
 print'TODO: deveria dar erro!'
-Test { [[int a = a+1; return a;]],
+Test { [[var int a = a+1; return a;]],
     --env = 'variable/event "a" is not declared',
     run = 1,
 }
 
-Test { [[int a; a = emit a=1; return a;]],
+Test { [[var int a; a = emit a=1; return a;]],
     parser = "ERR : line 1 : after `emit´ : expected event",
     --trig_wo = 1,
 }
 
-Test { [[int a; emit a=1; return a;]],
+Test { [[var int a; emit a=1; return a;]],
     env = 'ERR : line 1 : event "a" is not declared',
     --trig_wo = 1,
 }
@@ -3177,7 +3207,7 @@ Test { [[event int a; emit a=1; return a;]],
 Test { [[
 input void START;
 do
-    int v = 0;
+    var int v = 0;
 end
 event void e;
 par do
@@ -3256,7 +3286,7 @@ return(1);
 }
 Test { [[
 output int A;
-_t v;
+var _t v;
 emit A(v);
 return(1);
 ]],
@@ -3270,12 +3300,12 @@ C do
     typedef void (*t)(int*);
 end
 external _t = 4;
-_t v = _f;
-int a;
+var _t v = _f;
+var int a;
 v(&a);
 return(a);
 ]],
-    env = 'ERR : line 8 : C symbol "_f" is not declared',
+    env = 'ERR : line 8 : C variable/function "_f" is not declared',
 }
 Test { [[
 C do
@@ -3285,8 +3315,8 @@ C do
     typedef void (*t)(int*);
 end
 external _t=4, _f();
-_t v = _f;
-int a;
+var _t v = _f;
+var int a;
 v(&a);
 return(a);
 ]],
@@ -3294,7 +3324,7 @@ return(a);
 }
 Test { [[
 output int A;
-int a;
+var int a;
 if emit A(&a) then
     return 0;
 end
@@ -3341,9 +3371,9 @@ end
 external _t = 8;
 output _t* A;
 output int B;
-int a, b;
+var int a, b;
 
-_t v;
+var _t v;
 v.a = 1;
 v.b = -1;
 a = emit A(&v);
@@ -3359,7 +3389,7 @@ output void A;
 C do
     void A (int v) {}
 end
-_cahr v = emit A(1);
+var _cahr v = emit A(1);
 return 0;
 ]],
     env = 'ERR : line 6 : undeclared type `_cahr´',
@@ -3367,7 +3397,7 @@ return 0;
 Test { [[
 external _char = 1;
 output void A;
-_char v = emit A();
+var _char v = emit A();
 return v;
 ]],
     run = 0,
@@ -3378,7 +3408,7 @@ C do
     void A (int v) {}
 end
 external _char = 1;
-_char v = emit A(1);
+var _char v = emit A(1);
 return 0;
 ]],
     env = 'ERR : line 6 : non-matching types on `emit´',
@@ -3463,7 +3493,7 @@ Test { [[await -1; return 0;]],
     env = 'ERR : line 1 : event "?" is not declared',
 }
 
-Test { [[s32 a=await 10s; return a==8000000;]],
+Test { [[var s32 a=await 10s; return a==8000000;]],
     ana = {
         isForever = false,
         needsPrio = false,
@@ -3493,7 +3523,7 @@ Test { [[await FOREVER; return 0;]],
 
 Test { [[emit 1ms; return 0;]], props='not permitted outside `async´' }
 Test { [[
-int a;
+var int a;
 a = async do
     emit 1min;
 end;
@@ -3518,7 +3548,7 @@ return 10;
 }
 
 Test { [[
-int a;
+var int a;
 a = async do
     emit 1min;
     return 10;
@@ -3547,7 +3577,7 @@ end
 
 Test { [[
 input int A;
-int v = await A;
+var int v = await A;
 return v;
 ]],
     run = { ['10~>A']=10 },
@@ -3555,7 +3585,7 @@ return v;
 Test { [[
 input int A,B;
 await A;
-int v = await B;
+var int v = await B;
 return v;
 ]],
     run = {
@@ -3564,7 +3594,7 @@ return v;
     }
 }
 Test { [[
-int a = await 10ms;
+var int a = await 10ms;
 a = await 20ms;
 return a;
 ]],
@@ -3574,7 +3604,7 @@ return a;
     }
 }
 Test { [[
-int a = await 10us;
+var int a = await 10us;
 a = await 40us;
 return a;
 ]],
@@ -3667,7 +3697,7 @@ end
 
 Test { [[
 par do
-    int v1,v2;
+    var int v1,v2;
     par/or do
         await 10ms;
         v1 = 1;
@@ -3696,7 +3726,7 @@ Test { [[
 input int A;
 await A;
 await A;
-int v = await A;
+var int v = await A;
 return v;
 ]],
     run  = {
@@ -3706,7 +3736,7 @@ return v;
 
 Test { [[
 input int A,B;
-int ret;
+var int ret;
 if 1 then
     ret = await A;
 else
@@ -3722,7 +3752,7 @@ return ret;
 
 Test { [[
 input int A;
-int v;
+var int v;
 if 1 then
     v = await A;
 end;
@@ -3735,7 +3765,7 @@ return v;
 
 Test { [[
 input int A;
-int v;
+var int v;
 if 0 then
     v = await A;
 end;
@@ -3760,7 +3790,7 @@ end
 
 Test { [[
 input void F;
-int a = 0;
+var int a = 0;
 loop do
     par/or do
         await 2s;
@@ -3788,7 +3818,7 @@ return a;
 }
 
 Test { [[
-int a;
+var int a;
 loop do
     par/or do
         await 2s;
@@ -3814,8 +3844,8 @@ end
 }
 
 Test { [[
-int a = do
-    int a = do
+var int a = do
+    var int a = do
         return 1;
     end;
     return a;
@@ -3945,7 +3975,7 @@ end;
 -- testa BUG do ParOr que da clean em ParOr que ja terminou
 Test { [[
 input int A,B,F;
-int a;
+var int a;
 par/or do
     await A;
 with
@@ -3997,7 +4027,7 @@ end;
 
 Test { [[
 input int A,B,F;
-int a;
+var int a;
 par/or do
     par/or do
         par/or do
@@ -4021,19 +4051,19 @@ return a;
 }
 Test { [[
 input int A,B,F;
-int a = do
+var int a = do
         par/or do
             par do
-                int v;
+                var int v;
                 par/or do
-                    int v = await 10ms;
+                    var int v = await 10ms;
                     return v;
                 with
                     v = await A;
                 end;
                 return v;
             with
-                int v = await B;
+                var int v = await B;
                 return v;
             end;
         with
@@ -4051,19 +4081,19 @@ return a;
 
 Test { [[
 input int A,B,F;
-int a = do
+var int a = do
         par/or do
             par do
-                int v;
+                var int v;
                 par/or do
-                    int v = await 10ms;
+                    var int v = await 10ms;
                     return v;
                 with
                     v = await A;
                 end;
                 return v;
             with
-                int v = await B;
+                var int v = await B;
                 return v;
             end;
             // unreachable
@@ -4103,7 +4133,7 @@ return 100;
 
 Test { [[
 input int A;
-int b;
+var int b;
 if 1 then
     await A;
     b = 1;
@@ -4266,8 +4296,8 @@ return 1;
 
 Test { [[
 input int A;
-int v;
-int a;
+var int v;
+var int a;
 loop do
     a = 0;
     v = await A;
@@ -4279,7 +4309,7 @@ end;
 }
 
 Test { [[
-int a;
+var int a;
 loop do a=1; end;
 return a;
 ]],
@@ -4295,7 +4325,7 @@ Test { [[loop do break; end; return 1;]],
     run=1
 }
 Test { [[
-int ret;
+var int ret;
 loop do
     ret = 1;
     break;
@@ -4309,7 +4339,7 @@ return ret;
 }
 
 Test { [[
-int a;
+var int a;
 loop do
     loop do
         a = 1;
@@ -4355,7 +4385,7 @@ end;
 }
 Test{ [[
 input int E;
-int a;
+var int a;
 loop do
     a = await E;
 end;
@@ -4367,7 +4397,7 @@ end;
 Test{ [[
 input int E;
 loop do
-    int v = await E;
+    var int v = await E;
     if v then
     else
     end;
@@ -4378,7 +4408,7 @@ end;
     },
 }
 Test { [[
-int a;
+var int a;
 loop do
     if 0 then
         a = 0;
@@ -4453,7 +4483,7 @@ return 0;
 }
 Test { [[
 input int A;
-int a;
+var int a;
 a = 0;
 loop do
     par/or do
@@ -4536,7 +4566,7 @@ return 1;
 Test { [[
 input int F, A;
 loop do
-    int v = await F;
+    var int v = await F;
     if v then
         await A;
     else
@@ -4555,7 +4585,7 @@ return 1;
 
 Test { [[
 input int A;
-int sum = 0;
+var int sum = 0;
 par/or do
     loop i, 1+1 do
         await A;
@@ -4576,7 +4606,7 @@ return sum;
 
 Test { [[
 input int A;
-int sum = 0;
+var int sum = 0;
 par/or do
     loop i, 1 do
         await A;
@@ -4596,8 +4626,8 @@ return sum;
 
 Test { [[
 input int A;
-int sum = 0;
-int ret = 0;
+var int sum = 0;
+var int ret = 0;
 par/or do
     loop i, 2 do
         await A;
@@ -4619,8 +4649,8 @@ return ret;
 
 Test { [[
 input int A;
-int sum = 0;
-int ret = 0;
+var int sum = 0;
+var int ret = 0;
 par/or do
     loop i, 3 do
         await A;
@@ -4642,12 +4672,12 @@ return ret;
 
 Test { [[
 input int A;
-int sum = 0;
+var int sum = 0;
 par/or do
     loop i, 1 do
         await A;
         async do
-            int a = 1;
+            var int a = 1;
         end
     end
     sum = 0;
@@ -4665,20 +4695,20 @@ return sum;
 
 Test { [[
 input int A;
-int sum = 0;
+var int sum = 0;
 par/or do
     sum = 5;
     loop i, 10 do
         await A;
         async do
-            int a = 1;
+            var int a = 1;
         end
     end
     sum = 0;
 with
     loop i, 2 do
         async do
-            int a = 1;
+            var int a = 1;
         end
         sum = sum + 1;
     end
@@ -4689,7 +4719,7 @@ return sum;
 }
 
 Test { [[
-int sum = 0;
+var int sum = 0;
 loop i, 100 do
     sum = sum + (i+1);
 end
@@ -4699,7 +4729,7 @@ return sum;
     run = 5050,
 }
 Test { [[
-int sum = 0;
+var int sum = 0;
 for i=1, 100 do
     i = 1;
     sum = sum + i;
@@ -4711,7 +4741,7 @@ return sum;
     run = 5050,
 }
 Test { [[
-int sum = 5050;
+var int sum = 5050;
 loop i, 100 do
     sum = sum - (i+1);
 end
@@ -4721,8 +4751,8 @@ return sum;
     run = 0,
 }
 Test { [[
-int sum = 5050;
-int v = 0;
+var int sum = 5050;
+var int v = 0;
 loop i, 100 do
     v = i;
     if sum == 100 then
@@ -4737,8 +4767,8 @@ return v;
 }
 Test { [[
 input void A;
-int sum = 0;
-int v = 0;
+var int sum = 0;
+var int v = 0;
 loop i, 101 do
     v = i;
     if sum == 6 then
@@ -4752,7 +4782,7 @@ return v;
     run = {['~>A;~>A;~>A;~>A;~>A;~>A;~>A;~>A;~>A;~>A;']=4},
 }
 Test { [[
-int sum = 4;
+var int sum = 4;
 loop i, 0 do
     sum = sum - i;
 end
@@ -4763,7 +4793,7 @@ return sum;
 }
 Test { [[
 input void A, B;
-int sum = 0;
+var int sum = 0;
 loop i, 10 do
     await A;
     sum = sum + 1;
@@ -4774,7 +4804,7 @@ return sum;
 }
 Test { [[
 input int A,B,Z,D,F;
-int ret;
+var int ret;
 par/and do
     ret = await A;
 with
@@ -4787,7 +4817,7 @@ return ret;
 
 Test { [[
 input int A,B,Z,D,F;
-int ret;
+var int ret;
 par/or do
     par/and do
         ret = await A;
@@ -4813,7 +4843,7 @@ return ret;
 
 Test { [[
 input int A;
-int a = 0;
+var int a = 0;
 loop do
     await A;
     a = a + 1;
@@ -4831,7 +4861,7 @@ return a;
 
 Test { [[
 input int F;
-int a = 0;
+var int a = 0;
 par do
     a = a + 1;
     await FOREVER;
@@ -4851,7 +4881,7 @@ end;
 
 Test { [[
 input int A;
-int a = await A;
+var int a = await A;
 await A;
 return a;
 ]],
@@ -4860,8 +4890,8 @@ return a;
 
 Test { [[
 input int A;
-int a = await A;
-int b = await A;
+var int a = await A;
+var int b = await A;
 return a + b;
 ]],
     run = { ['10~>A;20~>A']=30, ['3~>A;0~>A;0~>A']=3 }
@@ -4870,7 +4900,7 @@ return a + b;
 -- A changes twice, but first value must be used
 Test { [[
 input int A,F;
-int a,f;
+var int a,f;
 par/and do
     a = await A;
 with
@@ -4928,7 +4958,7 @@ par do
     return a;
 with
     loop do
-        int v = await a;
+        var int v = await a;
         a = v+1;
     end;
 end;
@@ -4945,7 +4975,7 @@ par do
     return a;
 with
     loop do
-        int v = await a;
+        var int v = await a;
         a = v+1;
     end;
 end;
@@ -4957,7 +4987,7 @@ end;
 }
 
 Test { [[
-int ret = 0;
+var int ret = 0;
 event int a = 3;
 par/or do
     await a;
@@ -4975,8 +5005,8 @@ return ret;
 }
 
 Test { [[
-int[2] v;
-int ret;
+var int[2] v;
+var int ret;
 par/or do
     ret = v[0];
 with
@@ -4990,7 +5020,7 @@ return ret;
 }
 Test { [[
 input int A;
-int a;
+var int a;
 par/or do
     if 1 then
         a = await A;
@@ -5008,7 +5038,7 @@ return a;
 
 Test { [[
 input int A,B;
-int a = par do
+var int a = par do
         await A;
         if 1 then
             await B;
@@ -5016,7 +5046,7 @@ int a = par do
         end;
         return 0;
     with
-        int v = await A;
+        var int v = await A;
         return v;
     end;
 return a;
@@ -5030,15 +5060,15 @@ return a;
 
 Test { [[
 input int A;
-int a;
+var int a;
 a = par do
         if 1 then
-            int v = await A;
+            var int v = await A;
             return v;
         end;
         return 0;
     with
-        int v = await A;
+        var int v = await A;
         return v;
     end;
 return a;
@@ -5051,17 +5081,17 @@ return a;
 
 Test { [[
 input int A;
-int a;
+var int a;
 a = par do
     await A;
     if 1 then
-        int v = await A;
+        var int v = await A;
         // unreachable
         return v;
     end;
     return 0;
 with
-    int v = await A;
+    var int v = await A;
     return v;
 end;
 return a;
@@ -5076,7 +5106,7 @@ return a;
 
 Test { [[
 input int A,B;
-int a,v;
+var int a,v;
 a = par do
     if 1 then
         v = await A;
@@ -5086,7 +5116,7 @@ a = par do
     end;
     return 0;
 with
-    int v = await A;
+    var int v = await A;
     return v;
 end;
 return a;
@@ -5099,7 +5129,7 @@ return a;
 
 Test { [[
 input int A,B;
-int a,v;
+var int a,v;
 a = par do
     if 1 then
         v = await A;
@@ -5110,7 +5140,7 @@ a = par do
     end;
     return 0;
 with
-    int v = await A;
+    var int v = await A;
     return v;
 end;
 return a;
@@ -5124,13 +5154,13 @@ return a;
 
 Test { [[
 input int A;
-int a = 0;
+var int a = 0;
 par/or do
     if 1 then
         a = await A;
     end;
 with
-    if ! 1 then
+    if not 1 then
         a = await A;
     end;
 end;
@@ -5144,7 +5174,7 @@ return a;
 
 Test { [[
 input int A;
-int a, b;
+var int a, b;
 par/and do
     a = await A;
     a = a + 1;
@@ -5159,7 +5189,7 @@ return a + b;
 
 Test { [[
 input int A,B;
-int a,b,c,d;
+var int a,b,c,d;
 par/or do
     par/and do
         a = await A;
@@ -5185,12 +5215,12 @@ return a + b + c + d;
 
 Test { [[
 input int A,B;
-int a,b,ret;
+var int a,b,ret;
 par/and do
     await A;
     a = 1+2+3+4;
 with
-    int v = await B;
+    var int v = await B;
     b = 100+v;
     ret = a + b;
 end;
@@ -5201,7 +5231,7 @@ return ret;
 
 Test { [[
 input int A,B;
-int a=0,b=0;
+var int a=0,b=0;
 par/or do
     if 1 then
         a = await A;
@@ -5253,10 +5283,10 @@ end;
 Test { [[
 input int A;
 par do
-    int v = await A;
+    var int v = await A;
     return v;
 with
-    int v = await A;
+    var int v = await A;
     return v;
 end;
 ]],
@@ -5281,13 +5311,13 @@ end;
 Test { [[
 input int A,B,Z;
 par do
-    int v = await A;
+    var int v = await A;
     return v;
 with
-    int v = await B;
+    var int v = await B;
     return v;
 with
-    int v = await Z;
+    var int v = await Z;
     return v;
 end;
 ]],
@@ -5313,10 +5343,10 @@ Test { [[
 input int A,B;
 par do
     await A;
-    int v = await A;
+    var int v = await A;
     return v;
 with
-    int v = await B;
+    var int v = await B;
     return v;
 end;
 ]],
@@ -5331,10 +5361,10 @@ Test { [[
 input int A,B;
 await A;
 par do
-    int v = await A;
+    var int v = await A;
     return v;
 with
-    int v = await B;
+    var int v = await B;
     return v;
 end;
 ]],
@@ -5347,11 +5377,11 @@ Test { [[
 input int A,B,Z;
 par do
     await A;
-    int v = await B;
+    var int v = await B;
     return v;
 with
     await A;
-    int v = await Z;
+    var int v = await Z;
     return v;
 end;
 ]],
@@ -5364,10 +5394,10 @@ Test { [[
 input int A,B,Z;
 await A;
 par do
-    int v = await B;
+    var int v = await B;
     return v;
 with
-    int v = await Z;
+    var int v = await Z;
     return v;
 end;
 ]],
@@ -5392,10 +5422,10 @@ return 1;
 }
 Test { [[
 par do
-    int a = await 10ms;
+    var int a = await 10ms;
     return a;
 with
-    int b = await 10ms;
+    var int b = await 10ms;
     return b;
 end;
 ]],
@@ -5409,7 +5439,7 @@ end;
     }
 }
 Test { [[
-int a;
+var int a;
 par/or do
     a = await 10ms;
 with
@@ -5426,7 +5456,7 @@ return a;
     }
 }
 Test { [[
-int a=0,b=0;
+var int a=0,b=0;
 par/or do
     await 10us;
     await 10us;
@@ -5442,7 +5472,7 @@ return a + b;
     }
 }
 Test { [[
-int a=0,b=0;
+var int a=0,b=0;
 par/or do
     await (10)us;
     await (10)us;
@@ -5458,7 +5488,7 @@ return a + b;
     }
 }
 Test { [[
-int a=0,b=0;
+var int a=0,b=0;
 par/or do
     await (10)us;
     await (10)us;
@@ -5474,7 +5504,7 @@ return a + b;
     }
 }
 Test { [[
-int a=0,b=0;
+var int a=0,b=0;
 par/or do
     await 10us;
     await 10us;
@@ -5490,7 +5520,7 @@ return a + b;
     }
 }
 Test { [[
-int a,b;
+var int a,b;
 par/or do
     a = await 10us;
 with
@@ -5504,7 +5534,7 @@ return a + b;
     }
 }
 Test { [[
-int a,b;
+var int a,b;
 par do
     a = await 10ms;
     return a;
@@ -5519,7 +5549,7 @@ end;
     },
 }
 Test { [[
-int a=0,b=0;
+var int a=0,b=0;
 par/or do
     a = await 10ms;
 with
@@ -5534,7 +5564,7 @@ return a+b;
     }
 }
 Test { [[
-int a=0,b=0;
+var int a=0,b=0;
 par/or do
     a = await 10ms;
 with
@@ -5549,7 +5579,7 @@ return a+b;
     }
 }
 Test { [[
-int a,b;
+var int a,b;
 par do
     a = await 10us;
     return a;
@@ -5565,7 +5595,7 @@ end;
     },
 }
 Test { [[
-int a,b;
+var int a,b;
 par do
     a = await 10us;
     return a;
@@ -5582,7 +5612,7 @@ end;
 
 Test { [[
 input void A;
-int v1=0, v2=0;
+var int v1=0, v2=0;
 par/or do
     await 1s;
     v1 = v1 + 1;
@@ -5603,7 +5633,7 @@ return v1 + v2;
 
 Test { [[
 input void A;
-int v1=0, v2=0, v3=0;
+var int v1=0, v2=0, v3=0;
 par/or do
     await 1s;
     v1 = v1 + 1;
@@ -5675,7 +5705,7 @@ end
 }
 
 Test { [[
-int v;
+var int v;
 par/or do
     loop do
         break;
@@ -5693,7 +5723,7 @@ return v;
 }
 
 Test { [[
-int v = 1;
+var int v = 1;
 loop do
     par/or do
         break;
@@ -5714,7 +5744,7 @@ return v;
 
 Test { [[
 input int A;
-int a;
+var int a;
 loop do
     par/or do
         await 10ms;
@@ -5731,7 +5761,7 @@ return 0;
 }
 Test { [[
 input void A,B;
-int a;
+var int a;
 loop do
     par/or do
         await B;
@@ -5748,7 +5778,7 @@ end
 }
 Test { [[
 input int A;
-int a;
+var int a;
 loop do
     par/or do
         loop do
@@ -5773,7 +5803,7 @@ end
 }
 Test { [[
 input int A;
-int a;
+var int a;
 loop do
     par/or do
         loop do
@@ -5795,7 +5825,7 @@ end;
     },
 }
 Test { [[
-int v;
+var int v;
 par/or do
     await 10ms;
     v = 10;
@@ -5814,7 +5844,7 @@ return v;
 }
 
 Test { [[
-int a;
+var int a;
 loop do
     par/or do
         loop do
@@ -5866,7 +5896,7 @@ end;
     },
 }
 Test { [[
-int a;
+var int a;
 par/or do
     loop do
         await 10ms;
@@ -5905,7 +5935,7 @@ end;
     },
 }
 Test { [[
-int a;
+var int a;
 loop do
     par/or do
         loop do
@@ -5930,7 +5960,7 @@ end;
     },
 }
 Test { [[
-int a;
+var int a;
 loop do
     par/or do
         loop do
@@ -5955,7 +5985,7 @@ end;
     },
 }
 Test { [[
-int a,b;
+var int a,b;
 par/or do
     a = await 10ms;
     return a;
@@ -5971,7 +6001,7 @@ end;
     },
 }
 Test { [[
-int a,b;
+var int a,b;
 par do
     a = await 10ms;
     return a;
@@ -5990,7 +6020,7 @@ end;
     }
 }
 Test { [[
-int a,b;
+var int a,b;
 par/and do
     a = await 10us;
 with
@@ -6004,7 +6034,7 @@ return a+b;
     }
 }
 Test { [[
-int a,b,c;
+var int a,b,c;
 par do
     a = await 10us;
     return a;
@@ -6022,7 +6052,7 @@ end;
     },
 }
 Test { [[
-int a=0,b=0,c=0;
+var int a=0,b=0,c=0;
 par/or do
     a = await 10us;
 with
@@ -6038,7 +6068,7 @@ return a+b+c;
     }
 }
 Test { [[
-int a,b,c;
+var int a,b,c;
 par/and do
     a = await 10ms;
 with
@@ -6054,7 +6084,7 @@ return a+b+c;
     }
 }
 Test { [[
-int a,b,c;
+var int a,b,c;
 par do
     a = await 10us;
     return a;
@@ -6072,7 +6102,7 @@ end;
     },
 }
 Test { [[
-s32 a,b;
+var s32 a,b;
 par do
     a = await 10min;
     return a;
@@ -6096,7 +6126,7 @@ return 0;
     mem = 'ERR : line 1 : constant is out of range',
 }
 Test { [[
-int a = 2;
+var int a = 2;
 par/or do
     await 10s;
 with
@@ -6115,7 +6145,7 @@ return a;
     }
 }
 Test { [[
-int a = 2;
+var int a = 2;
 par/or do
     await (10)us;
 with
@@ -6131,9 +6161,9 @@ return a;
     }
 }
 Test { [[
-int a = 2;
+var int a = 2;
 par/or do
-    int b = await (10)us;
+    var int b = await (10)us;
     a = b;
 with
     await 20ms;
@@ -6146,7 +6176,7 @@ return a;
     },
 }
 Test { [[
-s32 v1,v2;
+var s32 v1,v2;
 par do
     v1 = await 5min;
     return v1;
@@ -6229,7 +6259,7 @@ end;
 
 Test { [[
 input int F;
-int a;
+var int a;
 par do
     await 5s;
     await FOREVER;
@@ -6250,7 +6280,7 @@ end;
 Test { [[
 input int F;
 do
-    int a=0, b=0, c=0;
+    var int a=0, b=0, c=0;
     par do
         loop do
             await 10ms;
@@ -6283,8 +6313,8 @@ end;
 
 Test { [[
 input int F;
-int late = 0;
-int v;
+var int late = 0;
+var int v;
 par do
     loop do
         v = await 1ms;
@@ -6309,10 +6339,10 @@ end;
 Test { [[
 input int A;
 par do
-    int v = await A;
+    var int v = await A;
     return v;
 with
-    int v = await (1)us;
+    var int v = await (1)us;
     return v;
 end;
 ]],
@@ -6323,7 +6353,7 @@ end;
 }
 
 Test { [[
-int v;
+var int v;
 par/or do
     v = await 10us;
 with
@@ -6342,7 +6372,7 @@ return v;
 
 Test { [[
 input int A;
-int a;
+var int a;
 par/or do
     a = await A;
 with
@@ -6358,7 +6388,7 @@ return a;
 
 Test { [[
 input int A;
-int a;
+var int a;
 par/or do
     a = await 30us;
 with
@@ -6376,7 +6406,7 @@ return a;
 -- 1st to test timer clean
 Test { [[
 input int A, F;
-int a;
+var int a;
 par/or do
     a = await 10min;
 with
@@ -6396,17 +6426,17 @@ return a;
 Test { [[
 external _assert();
 input void T;
-int ret = 0;
+var int ret = 0;
 par/or do
     loop do
-        int late = await 10ms;
+        var int late = await 10ms;
         ret = ret + late;
         _assert(late <= 10000);
     end
 with
     loop do
-        int i = 0;
-        int t;
+        var int i = 0;
+        var int t;
         par/or do
             t = await 1s;
         with
@@ -6454,7 +6484,7 @@ return ret;
 Test { [[
 input void START;
 event int a;
-int ret = 1;
+var int ret = 1;
 par/or do
     await START;
     emit a=10;
@@ -6468,7 +6498,7 @@ return ret;
 
 Test { [[
 event int a;
-int ret = 1;
+var int ret = 1;
 par/or do
     emit a=10;
 with
@@ -6482,7 +6512,7 @@ return ret;
 Test { [[
 input void START;
 event int a;
-int ret = 1;
+var int ret = 1;
 par/and do
     await START;
     emit a=10;
@@ -6541,7 +6571,7 @@ end;
 
 Test { [[
 input int A;
-int a = 1;
+var int a = 1;
 loop do
     par/or do
         a = await A;
@@ -6651,7 +6681,7 @@ return 0;
 
 Test { [[
 event int a;
-int v1=0,v2=0;
+var int v1=0,v2=0;
 par/or do
     emit a=2;
     v1 = 2;
@@ -6669,7 +6699,7 @@ return v1+v2;
 
 Test { [[
 event int a;
-int v1=0,v2=0;
+var int v1=0,v2=0;
 par/or do
     emit a=2;
     v1 = 2;
@@ -6687,7 +6717,7 @@ return v1+v2;
 
 Test { [[
 event int a;
-int v1=0,v2=0,v3=0;
+var int v1=0,v2=0,v3=0;
 par/or do
     emit a=2;
     v1 = 2;
@@ -6708,7 +6738,7 @@ return v1+v2+v3;
 
 Test { [[
 event int a;
-int v1=0,v2=0,v3=0;
+var int v1=0,v2=0,v3=0;
 par/or do
     emit a=2;
     v1 = 2;
@@ -6731,7 +6761,7 @@ return v1+v2+v3;
 -- 1st to escape and terminate
 Test { [[
 event int a;
-int ret;
+var int ret;
 par/or do
     par/or do
         emit a=2;
@@ -6755,7 +6785,7 @@ return ret;
 -- 1st to escape and terminate
 Test { [[
 event int a;
-int ret;
+var int ret;
 par/or do
     par/or do
         emit a=2;
@@ -6779,7 +6809,7 @@ return ret;
 -- 1st to escape and terminate
 Test { [[
 event int a;
-int ret;
+var int ret;
 par/or do
     await a;
     ret = a + 1;
@@ -6802,7 +6832,7 @@ return ret;
 
 Test { [[
 input int A;
-int a;
+var int a;
 par do
     a = await A;
     return a;
@@ -6819,7 +6849,7 @@ end;
 }
 Test { [[
 input int A;
-int a;
+var int a;
 par/or do
     a = await A;
 with
@@ -6834,7 +6864,7 @@ return a;
 }
 Test { [[
 input int A;
-int a;
+var int a;
 par/or do
     await A;
 with
@@ -6849,13 +6879,13 @@ return a;
 }
 Test { [[
 input int A;
-int a;
+var int a;
 par/or do
     await A;
     a = 10;
 with
     await A;
-    int v = a;
+    var int v = a;
 end;
 return a;
 ]],
@@ -6870,7 +6900,7 @@ return a;
 
 Test { [[
 input int A;
-int a;
+var int a;
 par/or do
     await A;
     a = 10;
@@ -6887,7 +6917,7 @@ return a;
 
 Test { [[
 input int A;
-int a;
+var int a;
 par/or do
     await A;
     a = 10;
@@ -6975,9 +7005,9 @@ end;
 
 Test { [[
 input int A;
-int a = par do
+var int a = par do
     await A;
-    int v = 10;
+    var int v = 10;
     return a;
 with
     await A;
@@ -6994,7 +7024,7 @@ return a;
 
 Test { [[
 input int A,B;
-int a = 5;
+var int a = 5;
 par/or do
     par/or do
         await A;
@@ -7017,7 +7047,7 @@ return a;
 
 Test { [[
 input int A,B;
-int a = 5;
+var int a = 5;
 par/or do
     par/and do
         await A;
@@ -7040,10 +7070,10 @@ return a;
 
 Test { [[
 input int A,B;
-int a = 0;
+var int a = 0;
 par/or do
     par/or do
-        int v = await A;
+        var int v = await A;
         return v;
     with
         await B;
@@ -7063,7 +7093,7 @@ return a;
 
 Test { [[
 input int A, Z;
-int v;
+var int v;
 loop do
     par/or do
         await A;
@@ -7081,7 +7111,7 @@ return v;
 }
 Test { [[
 input int A,B,Z;
-int v;
+var int v;
 loop do
     par/or do
         await A;
@@ -7100,7 +7130,7 @@ return v;
 }
 Test { [[
 input int A,B,Z;
-int v;
+var int v;
 loop do
     par/or do
         await A;
@@ -7119,7 +7149,7 @@ return v;
 }
 Test { [[
 input int A,B;
-int v;
+var int v;
 loop do
     par do
         await A;
@@ -7141,7 +7171,7 @@ return v;
 }
 Test { [[
 input int A,B;
-int v;
+var int v;
 loop do
     par/or do
         await A;
@@ -7164,7 +7194,7 @@ return v;
 }
 Test { [[
 input int A, B;
-int v;
+var int v;
 loop do
     par/or do
         v = await A;
@@ -7186,7 +7216,7 @@ return v;
 }
 Test{ [[
 input int A;
-int v;
+var int v;
 loop do
     v = await A;
     break;
@@ -7204,7 +7234,7 @@ return v;
 
 Test { [[
 input int A;
-int a;
+var int a;
 par/and do
     a = await 30ms;
 with
@@ -7291,7 +7321,7 @@ return c;
 
 Test { [[
 input int A;
-int a;
+var int a;
 par/and do
     await 30ms;
     a = 1;
@@ -7312,7 +7342,7 @@ return a;
 -- tests AwaitT after Ext
 Test { [[
 input int A;
-int a;
+var int a;
 par/and do
     await A;
     await 30ms;
@@ -7332,7 +7362,7 @@ return a;
 
 Test { [[
 input int A;
-int a;
+var int a;
 par/and do
     await 30ms;
     a = 1;
@@ -7352,7 +7382,7 @@ return a;
 
 Test { [[
 input void A;
-int a;
+var int a;
 par/and do
     await A;
     await A;
@@ -7375,7 +7405,7 @@ return a;
 
 Test { [[
 input int A;
-int dt;
+var int dt;
 par/or do
     dt = await 20ms;
 with
@@ -7395,7 +7425,7 @@ return dt;
 }
 Test { [[
 input int A;
-int dt;
+var int dt;
 par/or do
     await A;
     dt = await 20ms;
@@ -7415,7 +7445,7 @@ return dt;
 }
 Test { [[
 input int A;
-int dt;
+var int dt;
 par/or do
     dt = await 20us;
 with
@@ -7432,7 +7462,7 @@ return dt;
 }
 Test { [[
 input int A;
-int dt;
+var int dt;
 par/or do
     dt = await 20ms;
 with
@@ -7454,7 +7484,7 @@ return dt;
 
 Test { [[
 input int A;
-int dt;
+var int dt;
 par do
     dt = await 20us;
     return 1;
@@ -7477,7 +7507,7 @@ end;
 
 Test { [[
 input int A,B;
-int ret;
+var int ret;
 par/or do
     await A;
     await 20ms;
@@ -7499,7 +7529,7 @@ return ret;
 
 Test { [[
 input int A,B;
-int ret;
+var int ret;
 par/or do
     await B;
     await 20ms;
@@ -7521,7 +7551,7 @@ return ret;
 
 Test { [[
 input int A;
-int dt;
+var int dt;
 par/or do
     dt = await 20ms;
 with
@@ -7543,7 +7573,7 @@ return dt;
 
 Test { [[
 input int A,B;
-int dt;
+var int dt;
 par/or do
     await A;
     dt = await 20ms;
@@ -7562,7 +7592,7 @@ return dt;
 
 Test { [[
 input int A,B;
-int dt;
+var int dt;
 par/or do
     await A;
     dt = await 20ms;
@@ -7581,8 +7611,8 @@ return dt;
 
 Test { [[
 input int A,B;
-int dt;
-int ret = 10;
+var int dt;
+var int ret = 10;
 par/or do
     await A;
     dt = await 20ms;
@@ -7603,8 +7633,8 @@ return ret;
 
 Test { [[
 input int A, B;
-int dt;
-int ret = 10;
+var int dt;
+var int ret = 10;
 par/or do
     await A;
     dt = await 20ms;
@@ -7627,7 +7657,7 @@ return ret;
 
 -- Boa comparacao de n_unreachs vs nd_flw para timers
 Test { [[
-int dt;
+var int dt;
 par/or do
     await 10ms;
     dt = await 10ms;
@@ -7644,7 +7674,7 @@ return dt;
     }
 }
 Test { [[
-int dt;
+var int dt;
 par/or do
     await 10us;
     dt = await (10)us;
@@ -7663,7 +7693,7 @@ return dt;
 
 Test { [[
 input int A,B;
-int ret;
+var int ret;
 par/or do
     await A;
     await 10ms;
@@ -7685,7 +7715,7 @@ return ret;
 
 Test { [[
 event int a, b;
-int x;
+var int x;
 par/or do
     await a;
     await 10ms;
@@ -7736,7 +7766,7 @@ return x;
 
 Test { [[
 event int a, b;
-int x;
+var int x;
 par/or do
     await a;
     await 10ms;
@@ -7827,7 +7857,7 @@ end;
 
 Test { [[
 input int A;
-int a;
+var int a;
 par/or do
     loop do
         a = 1;
@@ -7847,7 +7877,7 @@ return a;
 
 Test { [[
 input int A,B;
-int a = 0;
+var int a = 0;
 par/or do
     par/or do
         await A;
@@ -7855,7 +7885,7 @@ par/or do
         await B;
     end;
     await 10ms;
-    int v = a;
+    var int v = a;
 with
     await B;
     await 10ms;
@@ -7873,12 +7903,12 @@ return a;
 
 Test { [[
 input int A,B;
-int a = 0;
+var int a = 0;
 par/or do
     await A;
     await B;
     await 10ms;
-    int v = a;
+    var int v = a;
 with
     await B;
     await 10ms;
@@ -7893,7 +7923,7 @@ return a;
 
 Test { [[
 input int A,B;
-int a = 0;
+var int a = 0;
 par/or do
     par/and do
         await A;
@@ -7901,7 +7931,7 @@ par/or do
         await B;
         await 10ms;
     end;
-    int v = a;
+    var int v = a;
 with
     await B;
     await 20ms;
@@ -7917,7 +7947,7 @@ return a;
 
 Test { [[
 input int A,B;
-int a = 0;
+var int a = 0;
 par/or do
     par/or do
         await A;
@@ -7926,7 +7956,7 @@ par/or do
         await (10)us;
     end;
     await 10us;
-    int v = a;
+    var int v = a;
 with
     await A;
     await B;
@@ -7941,7 +7971,7 @@ return a;
 }
 Test { [[
 input int A,B;
-int a;
+var int a;
 par/or do
     par/and do
         await A;
@@ -7950,7 +7980,7 @@ par/or do
         await 10ms;
     end;
     await 10ms;
-    int v = a;
+    var int v = a;
 with
     await A;
     await B;
@@ -7965,10 +7995,10 @@ return a;
 }
 
 Test { [[
-int a;
+var int a;
 par/or do
     await 10ms;
-    int v = a;
+    var int v = a;
 with
     await 10ms;
     a = 1;
@@ -7982,7 +8012,7 @@ return a;
 
 Test { [[
 input int A;
-int v;
+var int v;
 par do
     loop do
         await A;
@@ -8006,7 +8036,7 @@ end;
 
 Test { [[
 input int A,B;
-int v;
+var int v;
 par do
     loop do
         await A;
@@ -8029,7 +8059,7 @@ end;
 -- bom exemplo de explosao de estados!!!
 Test { [[
 input int A,B;
-int v;
+var int v;
 par do
     loop do
         await A;
@@ -8055,7 +8085,7 @@ end;
 -- EX.04: join
 Test { [[
 input int A,B;
-int a;
+var int a;
 par/and do
     par/or do
         await A;
@@ -8077,14 +8107,14 @@ return a;
 
 Test { [[
 input int A;
-int a;
+var int a;
 par/and do
     if a then
         await A;
     else
         await A;
         await A;
-        int v = a;
+        var int v = a;
     end;
 with
     await A;
@@ -8102,14 +8132,14 @@ return a;
 }
 Test { [[
 input int A;
-int a;
+var int a;
 if a then
     await A;
 else
     par/and do
         await A;
         await A;
-        int v = a;
+        var int v = a;
     with
         await A;
         a = await A;
@@ -8127,7 +8157,7 @@ return a;
 }
 Test { [[
 input int A;
-int a;
+var int a;
 par do
     loop do
         if a then
@@ -8135,7 +8165,7 @@ par do
         else
             await A;
             await A;
-            int v = a;
+            var int v = a;
         end;
     end;
 with
@@ -8157,7 +8187,7 @@ end;
     },
 }
 Test { [[
-int v = par do
+var int v = par do
             return 0;
         with
             return 0;
@@ -8178,8 +8208,8 @@ end;
     },
 }
 Test { [[
-int a;
-int v = par do
+var int a;
+var int v = par do
             return 0;
         with
             return 0;
@@ -8197,7 +8227,7 @@ return a;
     },
 }
 Test { [[
-int v = par do
+var int v = par do
             return 1;
         with
             return 2;
@@ -8211,7 +8241,7 @@ return v;
 }
 
 Test { [[
-int a;
+var int a;
 par/or do
     loop do
         await 10ms;
@@ -8228,7 +8258,7 @@ return a;
     },
 }
 Test { [[
-int a;
+var int a;
 par/or do
     await (10)us;
     a = 1;
@@ -8245,7 +8275,7 @@ return a;
 }
 Test { [[
 input int A;
-int a;
+var int a;
 par/or do
     await (10)us;
     await A;
@@ -8265,7 +8295,7 @@ return a;
 }
 Test { [[
 input int A;
-int a;
+var int a;
 par/or do
     await (10)us;
     await A;
@@ -8284,7 +8314,7 @@ return a;
 }
 Test { [[
 input int A;
-int a;
+var int a;
 par/or do
     await 10ms;
     await A;
@@ -8303,7 +8333,7 @@ return a;
 }
 
 Test { [[
-int a;
+var int a;
 par/or do
     await (10)us;
     await 10ms;
@@ -8320,7 +8350,7 @@ return a;
 }
 
 Test { [[
-int a;
+var int a;
 par/or do
     loop do
         await 10ms;
@@ -8341,7 +8371,7 @@ return a;
 }
 
 Test { [[
-int a;
+var int a;
 par/or do
     loop do
         await 11ms;
@@ -8363,7 +8393,7 @@ return a;
 
 Test { [[
 input int A;
-int a;
+var int a;
 par/or do
     await 10ms;
     await A;
@@ -8382,7 +8412,7 @@ return a;
 
 Test { [[
 input int A;
-int a;
+var int a;
 par/or do
     await (10)us;
     await A;
@@ -8401,7 +8431,7 @@ return a;
 
 Test { [[
 input int A;
-int a;
+var int a;
 par/or do
     await A;
     await 10ms;
@@ -8422,7 +8452,7 @@ return a;
 }
 
 Test { [[
-int a;
+var int a;
 await (10)us;
 par/or do
     await 10ms;
@@ -8441,7 +8471,7 @@ return a;
 }
 Test { [[
 input int A;
-int a;
+var int a;
 par/or do
     await (10)us;
     a = 1;
@@ -8468,7 +8498,7 @@ return a;
 
 Test { [[
 input int A;
-int a;
+var int a;
 par/or do
     await A;
     await (10)us;
@@ -8489,7 +8519,7 @@ return a;
 }
 
 Test { [[
-int x;
+var int x;
 par/or do
     await 12ms;
     x = 0;
@@ -8507,7 +8537,7 @@ return x;
 }
 
 Test { [[
-int x;
+var int x;
 par do
     loop do
         await 10ms;
@@ -8527,7 +8557,7 @@ end;
 }
 
 Test { [[
-int x;
+var int x;
 par do
     loop do
         x = await 10ms;
@@ -8546,7 +8576,7 @@ end;
 
 Test { [[
 event int a;
-int x;
+var int x;
 par/or do
     par/and do
         await 10ms;
@@ -8554,7 +8584,7 @@ par/or do
     with
         emit a;
     end;
-    int v = x;
+    var int v = x;
 with
     await a;
     await 10ms;
@@ -8605,7 +8635,7 @@ return 0;
 Test { [[
 input void A;
 event void a;
-int ret = 0;
+var int ret = 0;
 par/or do
     await A;
     emit a;
@@ -8696,7 +8726,7 @@ end;
 
 Test { [[
 event int a;
-int v;
+var int v;
 loop do
     par do
         v = a;
@@ -8713,7 +8743,7 @@ end;
 Test { [[
 input int A;
 event int b;
-int a,v;
+var int a,v;
 par do
     loop do
         v = a;
@@ -8740,7 +8770,7 @@ par do
         await a;
     end;
 with
-    int v = await B;
+    var int v = await B;
     return v;
 end;
 ]],
@@ -8755,7 +8785,7 @@ end;
 Test { [[
 input void START;
 event int a;
-int b;
+var int b;
 par/or do
     b = await a;
 with
@@ -8774,7 +8804,7 @@ return a+b;
 
 Test { [[
 event int a;
-int b;
+var int b;
 par/or do
     b = await a;
 with
@@ -8795,7 +8825,7 @@ return 0;
 Test { [[
 input void START;
 event int b;
-int i;
+var int i;
 par/or do
     await START;
     emit b=1;
@@ -8834,9 +8864,9 @@ return c;
 }
 Test { [[
 input int A;
-int ret;
+var int ret;
 loop do
-    int v = await A;
+    var int v = await A;
     if v == 5 then
         ret = 10;
         break;
@@ -8852,9 +8882,9 @@ return ret;
 }
 Test { [[
 input int B;
-int a = 0;
+var int a = 0;
 loop do
-    int b = await B;
+    var int b = await B;
     a = a + b;
     if a == 5 then
         return 10;
@@ -8870,12 +8900,12 @@ return 0;   // TODO
 
 Test { [[
 input int A,B;
-int ret = loop do
+var int ret = loop do
         await A;
         par/or do
             await A;
         with
-            int v = await B;
+            var int v = await B;
             return v;
         end;
     end;
@@ -8891,7 +8921,7 @@ Test { [[
 input int A;
 event int a;
 loop do
-    int v = await A;
+    var int v = await A;
     if v==2 then
         return a;
     end;
@@ -8910,7 +8940,7 @@ Test { [[
 input int A;
 event int a;
 loop do
-    int v = await A;
+    var int v = await A;
     if v==2 then
         return a;
     else
@@ -8931,7 +8961,7 @@ return a-1;
 
 Test { [[
 input int A,B;
-int a = 0;
+var int a = 0;
 par do
     await B;
     return a;
@@ -8972,7 +9002,7 @@ return 1;
 
 Test { [[
 input int A,B;
-int ret;
+var int ret;
 par/or do
     par/or do await A; with await B; end;
     par/or do await A; with await B; end;
@@ -8997,7 +9027,7 @@ return ret;
 
 Test { [[
 input int A,B;
-int v;
+var int v;
 par/or do
     v = await A;
 with
@@ -9017,7 +9047,7 @@ return v;
 
 Test { [[
 input int A,B,Z;
-int ret;
+var int ret;
 par/or do
     par/or do
         ret = await A;
@@ -9039,7 +9069,7 @@ return ret;
 
 Test { [[
 input int A,B,Z;
-int v;
+var int v;
 par/or do
     par/and do
         v = await A;
@@ -9063,7 +9093,7 @@ return v;
 
 Test { [[
 input int A,B,Z;
-int v;
+var int v;
 par/or do
     par/and do
         await A;
@@ -9083,7 +9113,6 @@ with
 end;
 return v;
 ]],
---((~A;~B;~A)=>v&&(~Z;~B;~Z));v || (~A;~Z;~B;~B;~Z)]],
     run = {
         ['0~>A ; 1~>Z ; 5~>B ; 1~>B ; 9~>Z'] = 9,
         ['0~>A ; 1~>Z ; 1~>B ; 5~>A ; 9~>Z'] = 5,
@@ -9092,7 +9121,7 @@ return v;
 
 Test { [[
 input int A,B,Z;
-int v;
+var int v;
 par/or do
     par/and do
         await A;
@@ -9113,7 +9142,6 @@ with
 end;
 return v;
 ]],
---((~A;~B;~A)=>v&&(~Z;~B;~Z)=>v);v || (~A;~Z;~B;~A;~Z;~B)]],
     ana = {
         n_unreachs = 1,
     },
@@ -9124,7 +9152,7 @@ return v;
 
 Test { [[
 input int A,B;
-int v;
+var int v;
 par/or do
     if 1 then
         v = await A;
@@ -9140,7 +9168,6 @@ with
 end;
 return v;
 ]],
---(1?~A:~B) || (~A;1) || (~B;2)]],
     ana = {
         nd_acc = 2,
     },
@@ -9151,7 +9178,7 @@ return v;
 }
 Test { [[
 input int A,B;
-int v;
+var int v;
 par/or do
     if 1 then
         v = await A;
@@ -9167,7 +9194,6 @@ with
 end;
 return v;
 ]],
---(1?~A:~B) || (~A;~B) || (~B;~A)]],
     ana = {
         nd_acc = 2,
     },
@@ -9178,7 +9204,7 @@ return v;
 }
 Test { [[
 input int A,B,Z;
-int v;
+var int v;
 par/or do
     await A;
     await B;
@@ -9196,7 +9222,7 @@ return v;
 }
 Test { [[
 input int A,B,Z;
-int v;
+var int v;
 par/or do
     if 1 then
         v = await A;
@@ -9214,7 +9240,6 @@ with
 end;
 return v;
 ]],
---(1?~A:~B) || (~A;~B;~Z) || (~B;~A;~Z)]],
     ana = {
         n_unreachs = 2,
     },
@@ -9227,11 +9252,11 @@ input int A,B;
 par do
     loop do
         await A;
-        int v = await B;
+        var int v = await B;
         return v;
     end;
 with
-    int v = await A;
+    var int v = await A;
     return v;
 end;
 ]],
@@ -9245,7 +9270,7 @@ end;
 }
 Test { [[
 input int A,B;
-int v;
+var int v;
 loop do
     par/or do
         await A;
@@ -9256,14 +9281,13 @@ loop do
 end;
 return v;
 ]],
---(~A || ~B^)*]],
     run = {
         ['0~>A ; 0~>A ; 10~>B'] = 10,
     },
 }
 Test { [[
 input int A,B,Z;
-int a;
+var int a;
 par do
     loop do
         if a then
@@ -9280,7 +9304,6 @@ with
     return a;
 end;
 ]],
---((a?~A^:~B))* || (~B;~Z)]],
     run = {
         ['0~>B ; 10~>Z'] = 10,
     },
@@ -9289,10 +9312,10 @@ end;
 Test { [[
 input int A,B;
 if 11 then
-    int v = await A;
+    var int v = await A;
     return v;
 else
-    int v = await B;
+    var int v = await B;
     return v;
 end;
 ]],
@@ -9336,7 +9359,7 @@ with
     end;
 end;
 ]],
---1&&(~A)*]],
+--1and(~A)*]],
     ana = {
         isForever = true
     },
@@ -9353,14 +9376,14 @@ with
     end;
 end;
 ]],
---(~A)* && (~B)*]],
+--(~A)* and (~B)*]],
     ana = {
         isForever = true,
     },
 }
 Test { [[
 input int A,B,Z;
-int v;
+var int v;
 loop do
     v = await A;
     if v then
@@ -9381,7 +9404,7 @@ return v;
 
 Test { [[
 input int A,B,Z,D,E,F,G,H,I,J,K,L;
-int v;
+var int v;
 par/or do
     await A;
 with
@@ -9391,7 +9414,7 @@ await Z;
 await D;
 await E;
 await F;
-int g = await G;
+var int g = await G;
 if g then
     await H;
 else
@@ -9408,7 +9431,6 @@ loop do
 end;
 return v;
 ]],
---(~A||~B); ~Z; (~D,~E); ~F; ((~G)?~H:~I); ~J; ((~K||~L^))*]],
     run = {
         ['0~>A ; 0~>Z ; 0~>D ; 0~>E ; 0~>F ; 0~>G ; 0~>I ; 0~>J ; 0~>K ; 10~>L'] = 10,
         ['0~>B ; 0~>Z ; 0~>D ; 0~>E ; 0~>F ; 1~>G ; 0~>H ; 0~>J ; 0~>K ; 11~>L'] = 11,
@@ -9418,7 +9440,7 @@ return v;
 -- NONDET
 
 Test { [[
-int a;
+var int a;
 par do
     a = 1;
     return 1;
@@ -9426,7 +9448,6 @@ with
     return a;
 end;
 ]],
---1=>a || a]],
     ana = {
         --nd_flw = 2,
     nd_acc = 2,
@@ -9434,7 +9455,7 @@ end;
 }
 Test { [[
 input int B;
-int a;
+var int a;
 par do
     await B;
     a = 1;
@@ -9444,7 +9465,6 @@ with
     return a;
 end;
 ]],
---(~B;1=>a) || (~B;a)]],
     ana = {
         nd_acc = 2,
     --nd_flw = 2,
@@ -9468,7 +9488,6 @@ with
     return a;
 end;
 ]],
---(~B;1=>a) || ((~a||~B||~Z); a)]],
     ana = {
         n_unreachs = 1,
     nd_acc = 2,
@@ -9668,7 +9687,6 @@ with
     end;
 end;
 ]],
---(~B;1=>a) || ((~a&&~B&&~Z); a)]],
     ana = {
         n_unreachs = 1,
     --nd_flw = 1,
@@ -9696,7 +9714,6 @@ with
     return a;
 end;
 ]],
---(~B;1=>a) || ((~a&&~B&&~Z); a)]],
     ana = {
         --dfa = 'unreachable statement',
     --nd_flw = 1,
@@ -9855,7 +9872,6 @@ with
 end;
 return a;
 ]],
---1=>a || ( (~a||1);a )]],
     ana = {
         n_unreachs = 1,
     --nd_flw = 1,
@@ -9878,7 +9894,6 @@ with
     return a;
 end;
 ]],
---(~B;1=>a) || (~B; (~a||1); a)]],
     ana = {
         n_unreachs = 1,
     --nd_flw = 2,
@@ -9886,21 +9901,20 @@ end;
     },
 }
 Test { [[
-int a = 0;
+var int a = 0;
 par do
     return a;
 with
     return a;
 end;
 ]],
---0=>a ; (a||a)]],
     ana = {
         nd_acc = 1,
     --nd_flw = 2,
     },
 }
 Test { [[
-int a;
+var int a;
 par do
     return a;
 with
@@ -9914,7 +9928,7 @@ end;
     },
 }
 Test { [[
-int a;
+var int a;
 par do
     a = 1;
     return a;
@@ -9928,7 +9942,7 @@ end;
     },
 }
 Test { [[
-int a;
+var int a;
 par/or do
     a = 1;
 with
@@ -9941,7 +9955,7 @@ return a;
     },
 }
 Test { [[
-int a;
+var int a;
 par/or do
     a = 1;
 with
@@ -9958,10 +9972,10 @@ return a;
 Test { [[
 input int A;
 par do
-    int v = await A;
+    var int v = await A;
     return v;
 with
-    int v = await A;
+    var int v = await A;
     return v;
 end;
 ]],
@@ -9980,7 +9994,6 @@ with
 end;
 return a;
 ]],
---~a||1~>a]],
     ana = {
         n_unreachs = 1,
         nd_acc = 1,
@@ -10029,7 +10042,7 @@ return a+b;
 }
 Test { [[
 event int a;
-int v = par do
+var int v = par do
     emit a=1;
     return a;
 with
@@ -10048,7 +10061,7 @@ return v;
     },
 }
 Test { [[
-int a,v;
+var int a,v;
 v = par do
     return 1;
 with
@@ -10058,7 +10071,6 @@ with
 end;
 return v;
 ]],
---(1||1||1)~>a]],
     ana = {
         nd_acc = 3,
     --nd_flw = 6,
@@ -10067,7 +10079,7 @@ return v;
 }
 Test { [[
 input int A;
-int a = 0;
+var int a = 0;
 par do
     await A;
     return a;
@@ -10076,7 +10088,6 @@ with
     return a;
 end;
 ]],
---0=>a ; ((~A;a) || (~A;a))]],
     ana = {
         --nd_flw = 2,
     nd_acc = 1,
@@ -10084,7 +10095,7 @@ end;
 }
 Test { [[
 input int A;
-int a;
+var int a;
 par do
     await A;
     return a;
@@ -10094,7 +10105,6 @@ with
     return a;
 end;
 ]],
---(~A;a) || (~A;1=>a)]],
     ana = {
         --nd_flw = 2,
     nd_acc = 2,
@@ -10121,7 +10131,7 @@ input int A;
 event int a;
 par/or do
     loop do
-        int v = await A;
+        var int v = await A;
         emit a=v;
     end;
 with
@@ -10169,7 +10179,7 @@ with
     a = a + 1;
 with
     await a;
-    int v = a;
+    var int v = a;
 end;
 return a;
 ]],
@@ -10181,12 +10191,12 @@ return a;
 }
 Test { [[
 input int A;
-int v;
+var int v;
 par do
     await A;
     loop do
         await A;
-        int a = v;
+        var int a = v;
     end;
 with
     loop do
@@ -10196,7 +10206,7 @@ with
     end;
 end;
 ]],
---(~A; (~A;v)*) && (~A;~A;2=>v)*]],
+--(~A; (~A;v)*) and (~A;~A;2=>v)*]],
     ana = {
         isForever = true,
         nd_acc = 1,
@@ -10204,7 +10214,7 @@ end;
 }
 Test { [[
 input int A;
-int v;
+var int v;
 par do
     loop do
         await A;
@@ -10220,7 +10230,7 @@ with
     end;
 end;
 ]],
---(~A;~A;1=>v)* && (~A;~A;~A;v)*]],
+--(~A;~A;1=>v)* and (~A;~A;~A;v)*]],
     ana = {
         isForever = true,
         nd_acc = 1,
@@ -10228,21 +10238,20 @@ end;
 }
 Test { [[
 input int A, B;
-int a;
+var int a;
 par/or do
-    int v = await A;
+    var int v = await A;
     a = v;
 with
-    int v = await B;
+    var int v = await B;
     a = v;
 with
     await A;
     await B;
-    int v = a;
+    var int v = a;
 end;
 return a;
 ]],
---(~A||(~B;1=>a)) || (~A;~B;a)]],
     ana = {
         n_unreachs = 1,
     },
@@ -10253,19 +10262,18 @@ return a;
 }
 Test { [[
 input int A, B;
-int a;
+var int a;
 par/or do
     await A;
     await B;
     a = 1;
 with
     await A;
-    int v = await B;
+    var int v = await B;
     a = v;
 end;
 return a;
 ]],
---(~A;~B;1=>a) || (~A;~B;a)]],
     ana = {
         nd_acc = 1,
     nd_acc = 1,
@@ -10273,7 +10281,7 @@ return a;
 }
 Test { [[
 input int A, B;
-int a;
+var int a;
 par/or do
     await A;
     a = 3;
@@ -10284,7 +10292,6 @@ end;
 await B;
 return a;
 ]],
---((~A;3=>a)||(~B;1=>a)) ; ~B ; a]],
     run = {
         ['3~>A ; 5~>B'] = 3,
         ['3~>A ; 5~>B ; 5~>B'] = 3,
@@ -10295,7 +10302,7 @@ return a;
 
 Test { [[
 input int A, B, Z;
-int v;
+var int v;
 par/or do
     v = await A;
 with
@@ -10307,7 +10314,6 @@ with
 end;
 return v;
 ]],
---~A||(~B||~Z)]],
     run = {
         ['10~>A ; 1~>A'] = 10,
         ['9~>B'] = 9,
@@ -10319,10 +10325,9 @@ input int A;
 par/or do
 with
 end;
-int v = await A;
+var int v = await A;
 return v;
 ]],
---(1||2);~A]],
     run = {
         ['10~>A ; 1~>A'] = 10,
         ['9~>A'] = 9,
@@ -10480,7 +10485,7 @@ return 1;
 }
 Test { [[
 input int A, B;
-int v;
+var int v;
 loop do
     par/or do
         v = await A;
@@ -10491,7 +10496,6 @@ loop do
 end;
 return v;
 ]],
---(((0,~A);(1)^) || ~B:asr)*]],
     run = {
         ['4~>A'] = 4,
         ['1~>B ; 3~>A'] = 3,
@@ -10512,7 +10516,7 @@ end;
 }
 
 Test { [[
-int x;
+var int x;
 par/or do
     await 8ms;
     x = 0;
@@ -10533,7 +10537,7 @@ return x;
 
 -- prios
 Test { [[
-int ret = 10;
+var int ret = 10;
 loop do
     par/or do
     with
@@ -10551,7 +10555,7 @@ return ret;
 }
 
 Test { [[
-int ret = 10;
+var int ret = 10;
 loop do
     par/or do
         return 100;
@@ -10570,7 +10574,7 @@ return ret;
 }
 
 Test { [[
-int a = 0;
+var int a = 0;
 par/or do
     par/or do
     with
@@ -10585,7 +10589,7 @@ return a;
 }
 
 Test { [[
-int b;
+var int b;
 par do
     return 3;
 with
@@ -10601,7 +10605,7 @@ end;
 
 Test { [[
 input int A;
-int v;
+var int v;
 loop do
     par do
         v = await A;
@@ -10623,7 +10627,7 @@ return v;
     }
 }
 Test { [[
-int v1=0, v2=0;
+var int v1=0, v2=0;
 loop do
     par do
         v1 = 1;
@@ -10646,7 +10650,7 @@ return v1 + v2;
 }
 Test { [[
 input int A;
-int v;
+var int v;
 loop do
     par do
         v = await A;
@@ -10678,7 +10682,7 @@ end;
 
 Test { [[
 input int A;
-int v1=0,v2=0;
+var int v1=0,v2=0;
 loop do
     par do
         v1 = await A;
@@ -10701,7 +10705,7 @@ return v1 + v2;
 
 Test { [[
 input int A;
-int v1=0, v2=0;
+var int v1=0, v2=0;
 loop do
     par/or do
         await A;
@@ -10723,7 +10727,7 @@ return 0;
 
 Test { [[
 input int A;
-int v1=0, v2=0, v3=0;
+var int v1=0, v2=0, v3=0;
 loop do
     par/or do
         v1 = await A;
@@ -10746,7 +10750,7 @@ return v1+v2+v3;
 }
 
 Test { [[
-int v1=0,v2=0,v3=0,v4=0,v5=0,v6=0;
+var int v1=0,v2=0,v3=0,v4=0,v5=0,v6=0;
 loop do
     par/or do
         v1 = 1;
@@ -10777,7 +10781,7 @@ return v1+v2+v3+v4+v5+v6;
 }
 
 Test { [[
-int v1=0,v2=0,v3=0,v4=0,v5=0,v6=0;
+var int v1=0,v2=0,v3=0,v4=0,v5=0,v6=0;
 loop do
     par/or do
         v1 = 1;
@@ -10806,7 +10810,7 @@ return v1+v2+v3+v4+v5+v6;
 
 Test { [[
 input int A;
-int v1=0,v2=0,v3=0,v4=0,v5=0,v6=0;
+var int v1=0,v2=0,v3=0,v4=0,v5=0,v6=0;
 loop do
     par/or do
         await A;
@@ -10841,7 +10845,7 @@ return v1+v2+v3+v4+v5+v6;
 
 Test { [[
 input int A;
-int v1=0,v2=0,v3=0,v4=0,v5=0,v6=0;
+var int v1=0,v2=0,v3=0,v4=0,v5=0,v6=0;
 loop do
     par/or do
         await A;
@@ -10872,7 +10876,7 @@ return v1+v2+v3+v4+v5+v6;
 }
 
 Test { [[
-int v1=0,v2=0,v3=0,v4=0,v5=0,v6=0;
+var int v1=0,v2=0,v3=0,v4=0,v5=0,v6=0;
 loop do
     par do
         return 1;           // acc 1
@@ -10903,7 +10907,7 @@ return v1+v2+v3+v4+v5+v6;   // TODO: unreach
 
 Test { [[
 input int A,B;
-int v;
+var int v;
 loop do
     await A;
     par/or do
@@ -10915,7 +10919,6 @@ loop do
 end;
 return v;
 ]],
---( ~A ; (~A||~B^) )*]],
     run = {
         ['1~>A ; 5~>B'] = 5,
         ['1~>A ; 1~>A ; 3~>B ; 1~>A ; 5~>B'] = 5,
@@ -10924,7 +10927,7 @@ return v;
 
 Test { [[
 input int A,B,Z,D;
-int a = 0;
+var int a = 0;
 a = par do
     par/and do
         await A;
@@ -10945,7 +10948,7 @@ return a;
 
 Test { [[
 input int A,B,Z,D;
-int a = 0;
+var int a = 0;
 a = par do
     par do
         await A;
@@ -10967,7 +10970,7 @@ return a;
 
 Test { [[
 input int A,B,Z,D;
-int a = 0;
+var int a = 0;
 a = par do
     par do
         await A;
@@ -10990,7 +10993,7 @@ return a;
 
 Test { [[
 input int B;
-int a = 0;
+var int a = 0;
 par/or do
     par/or do
         await B;
@@ -11008,7 +11011,7 @@ return a;
 
 Test { [[
 input int B;
-int a = 0;
+var int a = 0;
 par/or do
     par/or do
         await B;
@@ -11026,13 +11029,13 @@ return a;
 
 Test { [[
 input int B;
-int a = 1;
-int b;
+var int a = 1;
+var int b;
 loop do
     par/or do
         await B;
     with
-        int v = await B;
+        var int v = await B;
         b = v;
         break;
     end;
@@ -11051,7 +11054,7 @@ return a;
 
 Test { [[
 input int B;
-int a = 0;
+var int a = 0;
 loop do
     par/or do
         await B;
@@ -11075,7 +11078,7 @@ return a;
 
 Test { [[
 input int B;
-int b = 0;
+var int b = 0;
 loop do
     par/and do
         await B;
@@ -11098,7 +11101,7 @@ return b;
 
 Test { [[
 input int B;
-int b = 0;
+var int b = 0;
 loop do
     par do
         await B;
@@ -11119,16 +11122,16 @@ return b;
 
 Test { [[
 input int B;
-int a = 1;
+var int a = 1;
 par/or do
     await B;
 with
-    int b = loop do
+    var int b = loop do
             par/or do
                 await B;
                             // prio 1
             with
-                int v = await B;
+                var int v = await B;
                 return v;   // prio 1
             end;
             a = a + 1;
@@ -11147,15 +11150,15 @@ return a;
 
 Test { [[
 input int B;
-int a = 1;
+var int a = 1;
 par/or do
     await B;
 with
-    int b = loop do
+    var int b = loop do
             par/or do
                 await B;
             with
-                int v = await B;
+                var int v = await B;
                 return v;
             end;
             a = a + 1;
@@ -11172,7 +11175,7 @@ return a;
 
 Test { [[
 input int B;
-int a = 1;
+var int a = 1;
 loop do
     par/or do
         await B;
@@ -11194,7 +11197,7 @@ return a;
 
 Test { [[
 input int B;
-int a = 1;
+var int a = 1;
 loop do
     par do
         await B;
@@ -11215,7 +11218,7 @@ return a;
 
 Test { [[
 input int B;
-int a = 1;
+var int a = 1;
 loop do
     par/or do
         await B;
@@ -11239,7 +11242,7 @@ return a;
 
 Test { [[
 input int B;
-int a = 1;
+var int a = 1;
 loop do
     par/and do
         await B;
@@ -11264,8 +11267,8 @@ return a;
 -- pode inserir 2x na fila
 Test { [[
 input int B;
-int b;
-int a = 2;
+var int b;
+var int a = 2;
 par/or do
 with
     a = a + 1;
@@ -11281,7 +11284,7 @@ return a;
 }
 Test { [[
 input int B;
-int a = 2;
+var int a = 2;
 par/and do
 with
     par/and do
@@ -11298,7 +11301,7 @@ return a;
     }
 }
 Test { [[
-int a;
+var int a;
 a = 2;
 par/and do
 with
@@ -11312,7 +11315,7 @@ return a;
     run = 4,
 }
 Test { [[
-int a;
+var int a;
 a = 2;
 par/or do
 with
@@ -11327,7 +11330,7 @@ return a;
 }
 
 Test { [[
-int a, b, c, d, e, f;
+var int a, b, c, d, e, f;
 par/and do
     a = 1;
 with
@@ -11355,7 +11358,7 @@ return a+b+c+d+e+f;
 -- EX.12: gates do AND podem conflitar com ret do loop
 Test { [[
 input int A;
-int v;
+var int v;
 loop do
     par/and do
         v = await A;
@@ -11375,7 +11378,7 @@ return v;
 
 Test { [[
 input int A;
-int v;
+var int v;
 loop do
     par/or do
         v = await A;
@@ -11392,7 +11395,7 @@ return v;
 
 Test { [[
 input int A;
-int v;
+var int v;
 par/or do
     loop do
         v = await A;
@@ -11400,7 +11403,7 @@ par/or do
     end;
     return v;
 with
-    int v = await A;
+    var int v = await A;
     return v;
 end;
 ]],
@@ -11413,7 +11416,7 @@ end;
 
 Test { [[
 input int A,B;
-int v;
+var int v;
 par/or do
     loop do
         par/or do
@@ -11439,7 +11442,7 @@ return v;
 -- Testa prio em DFA.lua
 Test { [[
 input int A;
-int b,c,d;
+var int b,c,d;
 par/or do
     par/and do
         loop do
@@ -11469,7 +11472,7 @@ return b+c+d;
 
 Test { [[
 input int A;
-int b,c,d;
+var int b,c,d;
 par/or do
     par/and do
         loop do
@@ -11497,11 +11500,11 @@ return b+c+d;
 
 Test { [[
 input int A,Z,D;
-int b;
+var int b;
 par/or do
     b = 0;
     loop do
-        int v;
+        var int v;
         par/and do
             await A;
         with
@@ -11525,11 +11528,11 @@ end;
 
 Test { [[
 input int A,Z,D;
-int b;
+var int b;
 par/or do
     b = 0;
     loop do
-        int v;
+        var int v;
         par/and do
         with
             v = await A;
@@ -11547,8 +11550,8 @@ end;
 
 Test { [[
 input int A;
-int c = 2;
-int d = par/and do
+var int c = 2;
+var int d = par/and do
     with
         return c;
     end;
@@ -11561,8 +11564,8 @@ return c;
 
 Test { [[
 input int A;
-int c = 2;
-int d = par do
+var int c = 2;
+var int d = par do
     with
         return c;
     end;
@@ -11662,7 +11665,7 @@ end;
 Test { [[
 input int A;
 event int a,b;
-int v;
+var int v;
 par/or do
     v = await A;
     par/or do
@@ -11690,7 +11693,7 @@ return v;
 Test { [[
 input int D, E;
 event int a, b;
-int c;
+var int c;
 par/or do
     await D;
     par/or do
@@ -11698,7 +11701,7 @@ par/or do
     with
         emit b=5;
     end;
-    int v = await D;
+    var int v = await D;
     return v;
 with
     c = 0;
@@ -11728,10 +11731,10 @@ end;
 Test { [[
 input int A,B;
 event int a,b;
-int v;
+var int v;
 par/or do
     par/and do
-        int v = await A;
+        var int v = await A;
         emit a=v;
     with
         await B;
@@ -11759,7 +11762,7 @@ end;
 Test { [[
 input int A, B;
 event int a,b;
-int v;
+var int v;
 par/or do
     par/and do
         a = await A;
@@ -11778,7 +11781,6 @@ with
     return b;
 end;
 ]],
---((~A~>a)=>v && ((~B,v);1~>b));v || ~a ||~b]],
     ana = {
         --nd_esc = 1,
     n_unreachs = 4,
@@ -11792,12 +11794,12 @@ end;
 -- EX.08: join pode tirar o A da espera
 Test { [[
 input int A, B;
-int a;
+var int a;
 par/and do
     loop do
         par/or do
             await A;
-            int x = a;
+            var int x = a;
         with
             await B;
         end;
@@ -11807,7 +11809,6 @@ with
     a = await A;
 end;
 ]],
---(~A;a||~B)* && ~B;~A=>a]],
     ana = {
         isForever = true,
         nd_acc = 1,
@@ -11820,7 +11821,7 @@ Test { [[
 input int D;
 event int a;
 loop do
-    int v = await D;
+    var int v = await D;
     emit a=a+v;
 end;
 ]],
@@ -11837,13 +11838,13 @@ event int a, b, c;
 par/or do
     a = 0;
     loop do
-        int v = await A;
+        var int v = await A;
         emit a=v;
     end;
 with
     b = 0;
     loop do
-        int v = await D;
+        var int v = await D;
         emit b=v+b;
     end;
 with
@@ -11878,7 +11879,7 @@ par/and do
     loop do
         await A;
         emit b=0;
-        int v = await Z;
+        var int v = await Z;
         emit d=v;
     end;
 with
@@ -11898,20 +11899,20 @@ end;
     -- SLIDESHOW
 Test { [[
 input int A,Z,D;
-int i;
+var int i;
 par/or do
     await A;
     return i;
 with
     i = 1;
     loop do
-        int o = par do
+        var int o = par do
                 await Z;
                 await Z;
-                int c = await Z;
+                var int c = await Z;
                 return c;
             with
-                int d = await D;
+                var int d = await D;
                 return d;
             end;
         if o == 0 then
@@ -11946,7 +11947,7 @@ end;
 
 Test { [[
 input int A, B, Z, D;
-int v;
+var int v;
 par/and do
     par/and do
         v = await A;
@@ -11969,7 +11970,7 @@ return v;
 }
 Test { [[
 input int A;
-int a;
+var int a;
 par/and do
     a = await A;
 with
@@ -12169,7 +12170,7 @@ return a;
 
 Test { [[
 input int A, B;
-int v;
+var int v;
 par/and do
     par/or do
         v = await A;
@@ -12294,7 +12295,7 @@ return 0;
 
 Test { [[
 input int A, B, Z, D, E;
-int d;
+var int d;
 par/or do
     await A;
 with
@@ -12371,7 +12372,7 @@ return a;
 
 Test { [[
 input void START, A;
-int v = 0;
+var int v = 0;
 event int a,b;
 par/or do
     loop do
@@ -12401,7 +12402,7 @@ end;
 
 Test { [[
 input void START;
-int v = 0;
+var int v = 0;
 event int a, b;
 par/or do
     loop do
@@ -12447,7 +12448,7 @@ return 1;
 
 Test { [[
 input void START,A;
-int v = 0;
+var int v = 0;
 event int a, b;
 par/or do
     loop do
@@ -12483,18 +12484,18 @@ end;
 
 Test { [[
 input int A,B,X,F;
-int v1=0,v2=0;
+var int v1=0,v2=0;
 par do
     loop do
         par/or do
             await B;
             async do
-                int v = v1 + 1;
+                var int v = v1 + 1;
             end;
         with
             await B;
             async do
-                int v = v2 + 1;
+                var int v = v2 + 1;
             end;
         with
             await A;
@@ -12511,8 +12512,8 @@ end;
 }
 
 Test { [[
-int v=2;
-int ret = async (v) do
+var int v=2;
+var int ret = async (v) do
         return v + 1;
     end;
 return ret + v;
@@ -12521,7 +12522,7 @@ return ret + v;
 }
 
 Test { [[
-int a = 0;
+var int a = 0;
 async (a) do
     a = 1;
     do
@@ -12534,8 +12535,8 @@ return a;
 
 Test { [[
 input void F;
-int v=2;
-int ret;
+var int v=2;
+var int ret;
 par/or do
     ret = async (v) do        // nd
             return v + 1;
@@ -12553,18 +12554,18 @@ return ret + v;
 
 Test { [[
 input int A,B,X,F;
-int v1=0,v2=0;
+var int v1=0,v2=0;
 par do
     loop do
         par/or do
             await B;
             async (v1) do
-                int v = v1 + 1;
+                var int v = v1 + 1;
             end;
         with
             await B;
             async (v2) do
-                int v = v2 + 1;
+                var int v = v2 + 1;
             end;
         with
             await A;
@@ -12582,18 +12583,18 @@ end;
 
 Test { [[
 input int A,B,X,F;
-int v1=0,v2=0;
+var int v1=0,v2=0;
 par do
     loop do
         par/or do
             await B;
             async do
-                int v = v1 + 1;
+                var int v = v1 + 1;
             end;
         with
             await B;
             async do
-                int v = v2 + 1;
+                var int v = v2 + 1;
             end;
         with
             await A;
@@ -12611,7 +12612,7 @@ end;
 
 Test { [[
 input int A,F;
-int v;
+var int v;
 par do
     loop do
         par/or do
@@ -12636,7 +12637,7 @@ input int P2;
 par do
     loop do
         par/or do
-            int p2 = await P2;
+            var int p2 = await P2;
             if p2 == 1 then
                 return 0;
             end;
@@ -12666,7 +12667,7 @@ end;
     -- MISC
 
 Test { [[
-int v;
+var int v;
 loop do
     par/and do
         par/or do
@@ -12712,13 +12713,13 @@ end;
 
 Test { [[
 input void A, B;
-int aa=0, bb=0;
+var int aa=0, bb=0;
 par/and do
     await A;
-    int a = 1;
+    var int a = 1;
     aa = a;
 with
-    int b = 3;
+    var int b = 3;
     await B;
     bb = b;
 end
@@ -12730,7 +12731,7 @@ return aa+bb;
 Test { [[
 input int F;
 event int draw, occurring, vis, sleeping;
-int x;
+var int x;
 par do
     await F;
     return vis;
@@ -12781,7 +12782,7 @@ end;
 Test { [[
 input void START;
 event int a, b;
-int v=0;
+var int v=0;
 par/or do
     loop do
         await a;
@@ -12812,7 +12813,7 @@ return 0;
 Test { [[
 input void START;
 event int a;
-int v1, v2;
+var int v1, v2;
 par/and do
     par/or do
         await START;
@@ -12990,7 +12991,7 @@ par do
         await 10s;
     end;
 with
-    int v1,v2;
+    var int v1,v2;
     par/and do
         v1 = await a;
     with
@@ -13019,7 +13020,7 @@ par do
         await 10s;
     end;
 with
-    int v1,v2;
+    var int v1,v2;
     v1 = await a;
     v2 = await a;
     return v1 + v2;
@@ -13073,12 +13074,12 @@ return a;
 
 Test { [[
 input int A, F;
-int i = 0;
+var int i = 0;
 event int a, b;
 par do
     par do
         loop do
-            int v = await A;
+            var int v = await A;
             emit a=v;
         end;
     with
@@ -13107,9 +13108,9 @@ Test { [[
 input int F;
 event int x = 0;
 event int y = 0;
-int a = 0;
-int b = 0;
-int c = 0;
+var int a = 0;
+var int b = 0;
+var int c = 0;
 par do
     loop do
         await 100ms;
@@ -13141,8 +13142,8 @@ end;
 Test { [[
 input void START;
 event int a, b, c;
-int x = 0;
-int y = 0;
+var int x = 0;
+var int y = 0;
 par/or do
     await START;
     emit a=0;
@@ -13176,9 +13177,9 @@ Test { [[
 input int F;
 event int x = 0;
 event int y = 0;
-int a = 0;
-int b = 0;
-int c = 0;
+var int a = 0;
+var int b = 0;
+var int c = 0;
 par do
     loop do
         await 100ms;
@@ -13234,7 +13235,7 @@ return b;
 Test { [[
 input void START;
 event int a;
-int b;
+var int b;
 par/or do
     await START;
     emit a=1;
@@ -13301,7 +13302,7 @@ return a;
 Test { [[
 input void START;
 event int a;
-int x = 0;
+var int x = 0;
 par do
     await START;
     emit a=1;
@@ -13319,7 +13320,7 @@ end
 Test { [[
 input void START, A;
 event int a;
-int x = 0;
+var int x = 0;
 par do
     await START;
     emit a=1;
@@ -13337,7 +13338,7 @@ end
 }
 Test { [[
 event int a;
-int x = 0;
+var int x = 0;
 par do
     emit a = 1;
     return x;
@@ -13415,7 +13416,7 @@ end;
 Test { [[
 input void START;
 event void x, y;
-int ret = 0;
+var int ret = 0;
 par/or do
     par/and do
         await START;
@@ -13450,7 +13451,7 @@ return ret;
 Test { [[
 input void START;
 event int a, x, y;
-int ret = 0;
+var int ret = 0;
 par do
     par/and do
         await START;
@@ -13562,7 +13563,7 @@ Test { [[do end;]],
         isForever = true,
     },
 }
-Test { [[do int a; end;]],
+Test { [[do var int a; end;]],
     ana = {
         n_reachs = 1,
         isForever = true,
@@ -13570,7 +13571,7 @@ Test { [[do int a; end;]],
 }
 Test { [[
 do
-    int a;
+    var int a;
     return 1;
 end;
 ]],
@@ -13579,9 +13580,9 @@ end;
 
 Test { [[
 do
-    int a = 1;
+    var int a = 1;
     do
-        int a = 0;
+        var int a = 0;
     end;
     return a;
 end;
@@ -13592,14 +13593,14 @@ end;
 Test { [[
 input int A, B;
 do
-    int a = 1;
-    int tot = 0;
+    var int a = 1;
+    var int tot = 0;
     par/and do
-        int a = 2;
+        var int a = 2;
         await A;
         tot = tot + a;
     with
-        int a = 5;
+        var int a = 5;
         await B;
         tot = tot + a;
     end;
@@ -13611,8 +13612,8 @@ end;
 
 Test { [[
 do
-    int a = 1;
-    int b = 0;
+    var int a = 1;
+    var int b = 0;
     do
         return a + b;
     end;
@@ -13624,7 +13625,7 @@ end;
 Test { [[
 input int A, B;
 do
-    int a = 0;
+    var int a = 0;
     par/or do
         await A;
         a = 1;
@@ -13641,9 +13642,9 @@ end;
 
 Test { [[
 input int A, B;
-int a;
+var int a;
 par/or do
-    int a;
+    var int a;
     await A;
     a = 1;
     await A;
@@ -13658,7 +13659,7 @@ return a;
 
 Test { [[
 do
-    int b;
+    var int b;
     par/or do
         do b=1; end;
     with
@@ -13674,7 +13675,7 @@ return 0;
 
 Test { [[
 input int A, B;
-int i;
+var int i;
 do
     par/or do
         i = 0;
@@ -13704,11 +13705,11 @@ return 0;
 }
 
 Test { [[
-int ret;
+var int ret;
 event int a;
 par/or do
     do
-        int a = 0;
+        var int a = 0;
         par/or do
             par/or do
                 emit a=40;
@@ -13720,7 +13721,7 @@ par/or do
         end;
     end;
     do
-        int a = 0;
+        var int a = 0;
         await a;
         ret = a;
     end;
@@ -13733,7 +13734,7 @@ return a;
 }
 
 Test { [[
-int ret = 0;
+var int ret = 0;
 event int a,b;
 par/or do
     ret = ret + 1;
@@ -13760,7 +13761,7 @@ return ret;
 }
 
 Test { [[
-int ret = 0;
+var int ret = 0;
 event int a;
 par/or do
     ret = ret + 1;
@@ -13783,7 +13784,7 @@ return ret;
 
 Test { [[
 input int A;
-int ret;
+var int ret;
 event int a;
 par/or do
     do
@@ -13817,7 +13818,7 @@ return a;
 
 Test { [[
 input void START;
-int ret;
+var int ret;
 par/or do
     event int a;
     par/or do
@@ -13875,7 +13876,7 @@ return 0;
 
 Test { [[
 do
-    int a;
+    var int a;
 finally
     await FOREVER;
 end
@@ -13885,7 +13886,7 @@ end
 
 Test { [[
 do
-    int a;
+    var int a;
 finally
     async do
     end
@@ -13896,7 +13897,7 @@ end
 
 Test { [[
 do
-    int a;
+    var int a;
 finally
     return 0;
 end
@@ -13907,7 +13908,7 @@ end
 Test { [[
 loop do
     do
-        int a;
+        var int a;
     finally
         break;
     end
@@ -13918,9 +13919,9 @@ end
 }
 
 Test { [[
-int ret = 0;
+var int ret = 0;
 do
-    int b;
+    var int b;
 finally
     a = 1;
     loop do
@@ -13934,9 +13935,9 @@ return ret;
 }
 
 Test { [[
-int r = 0;
+var int r = 0;
 do
-    int a;
+    var int a;
 finally
     a = do return 2; end;
     r = a;
@@ -13947,12 +13948,12 @@ return r;
 }
 
 Test { [[
-int r = 0;
+var int r = 0;
 do
-    int a;
+    var int a;
     await 1s;
 finally
-    int b = 1;
+    var int b = 1;
     r = b;
 end
 return r;
@@ -13961,11 +13962,11 @@ return r;
 }
 
 Test { [[
-int ret = 0;
+var int ret = 0;
 do
     await 1s;
 finally
-    int a = 1;
+    var int a = 1;
 end
 return ret;
 ]],
@@ -13973,9 +13974,9 @@ return ret;
 }
 
 Test { [[
-int ret;
+var int ret;
 do
-    int a = 1;
+    var int a = 1;
 finally
     a = a + 1;
     ret = a;
@@ -13986,9 +13987,9 @@ return ret;
 }
 
 Test { [[
-int ret;
+var int ret;
 do
-    int a = 1;
+    var int a = 1;
 finally
     a = a + 1;
     ret = a;
@@ -13999,9 +14000,9 @@ return ret;
 }
 
 Test { [[
-int ret = 0;
+var int ret = 0;
 do
-    int a;
+    var int a;
 finally
     a = 1;
     ret = a;
@@ -14012,7 +14013,7 @@ return ret;
 }
 
 Test { [[
-int a;
+var int a;
 par/or do
     do
     finally
@@ -14027,10 +14028,10 @@ return a;
 }
 
 Test { [[
-int a;
+var int a;
 par/or do
     do
-        int a;
+        var int a;
     finally
         a = 1;
     end
@@ -14043,7 +14044,7 @@ return a;
 }
 
 Test { [[
-int ret;
+var int ret;
 par/or do
     do
         await 1s;
@@ -14061,7 +14062,7 @@ return ret;
 
 Test { [[
 input void A;
-int ret = 0;
+var int ret = 0;
 loop do
     par/or do
         do
@@ -14085,7 +14086,7 @@ return ret;
 
 Test { [[
 input void A, B;
-int ret = 1;
+var int ret = 1;
 par/or do
     do
         await A;
@@ -14109,7 +14110,7 @@ return ret;
 
 Test { [[
 input void A, B, Z;
-int ret = 1;
+var int ret = 1;
 par/or do
     do
         await A;
@@ -14141,7 +14142,7 @@ return ret;
 Test { [[
 input void A, B, Z;
 event void a;
-int ret = 1;
+var int ret = 1;
 par/or do
     do
         await A;
@@ -14169,7 +14170,7 @@ return ret;
 Test { [[
 input void A, B, Z;
 event void a;
-int ret = 1;
+var int ret = 1;
 par/or do
     do
         await A;
@@ -14199,7 +14200,7 @@ return ret;
 
 Test { [[
 input void A;
-int ret = 1;
+var int ret = 1;
 par/or do
     do
         ret = ret + 1;
@@ -14222,7 +14223,7 @@ return ret;
 
 Test { [[
 input void A;
-int ret = 1;
+var int ret = 1;
 par/or do
     do
         ret = ret + 1;
@@ -14245,7 +14246,7 @@ return ret;
 
 Test { [[
 input void A, B;
-int ret = 1;
+var int ret = 1;
 par/or do
     do
         ret = ret + 1;
@@ -14269,14 +14270,14 @@ return ret;
 
 Test { [[
 input void A,B;
-int ret = 0;
+var int ret = 0;
 loop do
     do
         par/or do
             do
                 await B;
                 do
-                    int a;
+                    var int a;
                     await B;
                     ret = ret + 1;
                 finally
@@ -14299,7 +14300,7 @@ return ret;
 }
 
 Test { [[
-int ret = 0;
+var int ret = 0;
 loop do
     do
         ret = ret + 1;
@@ -14317,7 +14318,7 @@ return ret;
 }
 
 Test { [[
-int ret = 0;
+var int ret = 0;
 loop do
     do
         await 1s;
@@ -14336,8 +14337,8 @@ return ret;
 }
 
 Test { [[
-int ret = do
-    int ret = 0;
+var int ret = do
+    var int ret = 0;
     loop do
         do
             await 1s;
@@ -14357,7 +14358,7 @@ return ret;
 }
 
 Test { [[
-int ret = 0;
+var int ret = 0;
 par/or do
     await 1s;
 with
@@ -14373,7 +14374,7 @@ return ret;
 }
 
 Test { [[
-int ret = 10;
+var int ret = 10;
 par/or do
     await 500ms;
 with
@@ -14396,7 +14397,7 @@ return ret;
 }
 
 Test { [[
-int ret = 10;
+var int ret = 10;
 par/or do
     await 500ms;
 with
@@ -14422,7 +14423,7 @@ return ret;
 Test { [[
 input void A, F;
 event void e;
-int v = 1;
+var int v = 1;
 par/or do
     do
         await A;
@@ -14452,7 +14453,7 @@ return v;
 
 Test { [[
 input void A;
-int ret;
+var int ret;
 par/or do
    ret = async do
       return 10;
@@ -14476,7 +14477,7 @@ return 0;
 }
 
 Test { [[
-int a = async do
+var int a = async do
     return 1;
 end;
 return a;
@@ -14485,7 +14486,7 @@ return a;
 }
 
 Test { [[
-int a=12, b;
+var int a=12, b;
 async (a) do
     a = 1;
 end;
@@ -14494,7 +14495,7 @@ return a;
     run = 12,
 }
 Test { [[
-int a,b;
+var int a,b;
 async (b) do
     a = 1;
 end;
@@ -14505,7 +14506,7 @@ return a;
 }
 
 Test { [[
-int a;
+var int a;
 async do
     a = 1;
 end;
@@ -14529,7 +14530,7 @@ end;
 
 Test { [[
 par/and do
-    int a = async do
+    var int a = async do
         return 1;
     end;
 with
@@ -14544,7 +14545,7 @@ end;
 }
 
 Test { [[
-int a;
+var int a;
 par/and do
     async do
         a = 1;
@@ -14569,8 +14570,8 @@ end;
 }
 
 Test { [[
-int a = async do
-    int a = do
+var int a = async do
+    var int a = do
         return 1;
     end;
     return a;
@@ -14592,7 +14593,7 @@ return 0;
 
 Test { [[
 input int A;
-int a;
+var int a;
 async do
     a = 1;
     emit A(a);
@@ -14605,7 +14606,7 @@ return a;
 
 Test { [[
 input void A;
-int a;
+var int a;
 async do
     a = emit A;
 end;
@@ -14759,7 +14760,7 @@ external _a,_b;
 C do
     int a = 1;
 end
-int a;
+var int a;
 par/or do
     _a = 1;
 with
@@ -14774,7 +14775,7 @@ Test { [[
 C do
     int a = 1;
 end
-int a;
+var int a;
 deterministic a with _a;
 par/or do
     _a = 1;
@@ -14813,8 +14814,8 @@ return _a+_b+_c;
 }
 
 Test { [[
-int r = async do
-    int i = 100;
+var int r = async do
+    var int i = 100;
     return i;
 end;
 return r;
@@ -14823,9 +14824,9 @@ return r;
 }
 
 Test { [[
-int ret = async do
-    int i = 100;
-    int sum = 10;
+var int ret = async do
+    var int i = 100;
+    var int sum = 10;
     sum = sum + i;
     return sum;
 end;
@@ -14837,12 +14838,12 @@ return ret;
 -- sync version
 Test { [[
 input int F;
-int ret = 0;
-int f;
+var int ret = 0;
+var int f;
 par/or do
     ret = do
-        int sum = 0;
-        int i = 0;
+        var int sum = 0;
+        var int i = 0;
         loop do
             sum = sum + i;
             if i == 100 then
@@ -14867,12 +14868,12 @@ return ret+f;
 
 Test { [[
 input int F;
-int ret = 0;
-int f;
+var int ret = 0;
+var int f;
 par/and do
     ret = async do
-        int sum = 0;
-        int i = 0;
+        var int sum = 0;
+        var int i = 0;
         loop do
             sum = sum + i;
             if i == 100 then
@@ -14893,12 +14894,12 @@ return ret+f;
 
 Test { [[
 input int F;
-int ret = 0;
-int f;
+var int ret = 0;
+var int f;
 par/or do
     ret = async do
-        int sum = 0;
-        int i = 0;
+        var int sum = 0;
+        var int i = 0;
         loop do
             sum = sum + i;
             if i == 100 then
@@ -14953,8 +14954,8 @@ return 0;
 }
 
 Test { [[
-int ret = async do
-    int i = 100;
+var int ret = async do
+    var int i = 100;
     i = i - 1;
     return i;
 end;
@@ -14964,8 +14965,8 @@ return ret;
 }
 
 Test { [[
-int ret = async do
-    int i = 100;
+var int ret = async do
+    var int i = 100;
     loop do
         break;
     end;
@@ -14980,8 +14981,8 @@ return ret;
 }
 
 Test { [[
-int ret = async do
-    int i = 0;
+var int ret = async do
+    var int i = 0;
     if i then
         i = 1;
     else
@@ -14995,11 +14996,11 @@ return ret;
 }
 
 Test { [[
-int i = async do
-    int i = 10;
+var int i = async do
+    var int i = 10;
     loop do
         i = i - 1;
-        if !i then
+        if not i then
             return i;
         end;
     end;
@@ -15010,11 +15011,11 @@ return i;
 }
 
 Test { [[
-int i = async do
-    int i = 10;
+var int i = async do
+    var int i = 10;
     loop do
         i = i - 1;
-        if !i then
+        if not i then
             break;
         end;
     end;
@@ -15027,8 +15028,8 @@ return i;
 
 
 Test { [[
-int i = async do
-    int i = 10;
+var int i = async do
+    var int i = 10;
     loop do
         i = i - 1;
     end;
@@ -15045,11 +15046,11 @@ return i;
 }
 
 Test { [[
-int i = 10;
+var int i = 10;
 async do
     loop do
         i = i - 1;
-        if !i then
+        if not i then
             break;
         end;
     end;
@@ -15060,13 +15061,13 @@ return i;
 }
 
 Test { [[
-int sum = async do
-    int i = 10;
-    int sum = 0;
+var int sum = async do
+    var int i = 10;
+    var int sum = 0;
     loop do
         sum = sum + i;
         i = i - 1;
-        if !i then
+        if not i then
             return sum;
         end;
     end;
@@ -15093,7 +15094,7 @@ end;
 
 Test { [[
 input int A, B;
-int a = 0;
+var int a = 0;
 par/or do
     async do
     end;
@@ -15128,7 +15129,7 @@ return 1;
 -- round-robin test
 Test { [[
 input void A;
-int ret = 0;
+var int ret = 0;
 par/or do
     loop do
         async do
@@ -15138,8 +15139,8 @@ par/or do
     end
 with
     par/and do
-        int v = async do
-            int v;
+        var int v = async do
+            var int v;
             loop i, 5 do
                 v = v + i;
             end
@@ -15147,8 +15148,8 @@ with
         end;
         ret = ret + v;
     with
-        int v = async do
-            int v;
+        var int v = async do
+            var int v;
             loop i, 5 do
                 v = v + i;
             end
@@ -15167,9 +15168,9 @@ return ret;
 
 -- HIDDEN
 Test { [[
-int a = 1;
-int* b = &a;
-int a = 0;
+var int a = 1;
+var int* b = &a;
+var int a = 0;
 return *b;
 ]],
     run = 1,
@@ -15178,37 +15179,41 @@ return *b;
     -- POINTERS & ARRAYS
 
 -- int_int
-Test { [[int*p; return p/10;]],  env='invalid operands to binary "/"'}
-Test { [[int*p; return p|10;]],  env='invalid operands to binary "|"'}
-Test { [[int*p; return p>>10;]], env='invalid operands to binary ">>"'}
-Test { [[int*p; return p^10;]],  env='invalid operands to binary "^"'}
-Test { [[int*p; return ~p;]],    env='invalid operand to unary "~"'}
+Test { [[var int*p; return p/10;]],  env='invalid operands to binary "/"'}
+Test { [[var int*p; return p|10;]],  env='invalid operands to binary "|"'}
+Test { [[var int*p; return p>>10;]], env='invalid operands to binary ">>"'}
+Test { [[var int*p; return p^10;]],  env='invalid operands to binary "^"'}
+Test { [[var int*p; return ~p;]],    env='invalid operand to unary "~"'}
 
 -- same
-Test { [[int*p; int a; return p==a;]], env='invalid operands to binary "=="'}
-Test { [[int*p; int a; return p!=a;]], env='invalid operands to binary "!="'}
-Test { [[int*p; int a; return p>a;]],  env='invalid operands to binary ">"'}
+Test { [[var int*p; var int a; return p==a;]],
+        env='invalid operands to binary "=="'}
+Test { [[var int*p; var int a; return p!=a;]],
+        env='invalid operands to binary "!="'}
+Test { [[var int*p; var int a; return p>a;]],
+        env='invalid operands to binary ">"'}
 
 -- any
-Test { [[int*p; return p||10;]], run=1 }
-Test { [[int*p; return p&&0;]],  run=0 }
-Test { [[int*p=null; return !p;]], run=1 }
+Test { [[var int*p; return p or 10;]], run=1 }
+Test { [[var int*p; return p and 0;]],  run=0 }
+Test { [[var int*p=null; return not p;]], run=1 }
 
 -- arith
-Test { [[int*p; return p+p;]],     env='invalid operands to binary'}--TODO: "+"'}
-Test { [[int*p; return p+10;]],    env='invalid operands to binary'}
-Test { [[int*p; return p+10&&0;]], env='invalid operands to binary' }
+Test { [[var int*p; return p+p;]],     env='invalid operands to binary'}--TODO: "+"'}
+Test { [[var int*p; return p+10;]],    env='invalid operands to binary'}
+Test { [[var int*p; return p+10 and 0;]], env='invalid operands to binary' }
 
 -- ptr
-Test { [[int a; return *a;]], env='invalid operand to unary "*"' }
-Test { [[int a; int*pa; (pa+10)=&a; return a;]], env='invalid operands to binary'}
-Test { [[int a; int*pa; a=1; pa=&a; *pa=3; return a;]], run=3 }
+Test { [[var int a; return *a;]], env='invalid operand to unary "*"' }
+Test { [[var int a; var int*pa; (pa+10)=&a; return a;]],
+        env='invalid operands to binary'}
+Test { [[var int a; var int*pa; a=1; pa=&a; *pa=3; return a;]], run=3 }
 
-Test { [[int  a;  int* pa=a; return a;]], env='invalid attribution' }
-Test { [[int* pa; int a=pa;  return a;]], env='invalid attribution' }
+Test { [[var int  a;  var int* pa=a; return a;]], env='invalid attribution' }
+Test { [[var int* pa; var int a=pa;  return a;]], env='invalid attribution' }
 Test { [[
-int a;
-int* pa = do
+var int a;
+var int* pa = do
     return a;
 end;
 return a;
@@ -15216,8 +15221,8 @@ return a;
     env='invalid attribution'
 }
 Test { [[
-int* pa;
-int a = do
+var int* pa;
+var int a = do
     return pa;
 end;
 return a;
@@ -15226,7 +15231,7 @@ return a;
 }
 
 Test { [[
-int* a;
+var int* a;
 a = null;
 if a then
     return 1;
@@ -15239,10 +15244,10 @@ end;
 
 Test { [[
 external _char = 1;
-int i;
-int* pi;
-_char c;
-_char* pc;
+var int i;
+var int* pi;
+var _char c;
+var _char* pc;
 i = c;
 c = i;
 i = <int> c;
@@ -15253,8 +15258,8 @@ return 10;
 }
 
 Test { [[
-int* ptr1;
-void* ptr2;
+var int* ptr1;
+var void* ptr2;
 if 1 then
     ptr2 = ptr1;
 else
@@ -15266,8 +15271,8 @@ return 1;
 }
 
 Test { [[
-int* ptr1;
-void* ptr2;
+var int* ptr1;
+var void* ptr2;
 ptr1 = ptr2;
 ptr2 = ptr1;
 return 1;
@@ -15276,8 +15281,8 @@ return 1;
 }
 
 Test { [[
-void* ptr1;
-int* ptr2;
+var void* ptr1;
+var int* ptr2;
 ptr1 = ptr2;
 ptr2 = ptr1;
 return 1;
@@ -15287,8 +15292,8 @@ return 1;
 
 Test { [[
 external _char=1;
-_char* ptr1;
-int* ptr2;
+var _char* ptr1;
+var int* ptr2;
 ptr1 = ptr2;
 ptr2 = ptr1;
 return 1;
@@ -15297,8 +15302,8 @@ return 1;
 }
 Test { [[
 external _char=1;
-int* ptr1;
-_char* ptr2;
+var int* ptr1;
+var _char* ptr2;
 ptr1 = ptr2;
 ptr2 = ptr1;
 return 1;
@@ -15308,8 +15313,8 @@ return 1;
 
 Test { [[
 external _FILE=0;
-int* ptr1;
-_FILE* ptr2;
+var int* ptr1;
+var _FILE* ptr2;
 ptr1 = ptr2;
 ptr2 = ptr1;
 return 1;
@@ -15318,8 +15323,8 @@ return 1;
 }
 
 Test { [[
-int a = 1;
-int* b = &a;
+var int a = 1;
+var int* b = &a;
 *b = 2;
 return a;
 ]],
@@ -15327,8 +15332,8 @@ return a;
 }
 
 Test { [[
-int a;
-int* pa;
+var int a;
+var int* pa;
 par/or do
     a = 1;
 with
@@ -15340,8 +15345,8 @@ return a;
 }
 
 Test { [[
-int b = 1;
-int* a = &b;
+var int b = 1;
+var int* a = &b;
 par/or do
     b = 1;
 with
@@ -15355,9 +15360,9 @@ return b;
 }
 
 Test { [[
-int b = 1;
-int c = 2;
-int* a = &c;
+var int b = 1;
+var int c = 2;
+var int* a = &c;
 deterministic b with a, c;
 par/or do
     b = 1;
@@ -15377,8 +15382,8 @@ C do
         *v = 1;
     }
 end
-int a, b;
-int* pb = &b;
+var int a, b;
+var int* pb = &b;
 par/or do
     a = 1;
 with
@@ -15403,8 +15408,8 @@ C do
         *v = 1;
     }
 end
-int a, b;
-int* pb = &b;
+var int a, b;
+var int* pb = &b;
 par/or do
     a = 1;
 with
@@ -15423,23 +15428,44 @@ return a + b;
     },
 }
 
+Test { [[
+var int b = 10;
+var int* a = <int*> &b;
+var int* c = &b;
+return *a + *c;
+]],
+    run = 20;
+}
+
     -- ARRAYS
 
 Test { [[input int[1] E; return 0;]],
     parser = "ERR : line 1 : after `int´ : expected identifier",
 }
-Test { [[int[0] v; return 0;]],
+Test { [[var int[0] v; return 0;]],
     env='invalid array dimension'
 }
-Test { [[int[2] v; return v;]],
+Test { [[var int[2] v; return v;]],
     env = 'invalid attribution'
 }
-Test { [[u8[2] v; return &v;]],
+Test { [[var u8[2] v; return &v;]],
     env = 'invalid operand to unary "&"',
 }
 
 Test { [[
-int[2] v;
+void[10] a;
+]],
+    parser = 'ERR : line 1 : after `<BOF>´ : expected statement',
+}
+
+Test { [[
+var void[10] a;
+]],
+    env = 'ERR : line 1 : cannot instantiate type "void"',
+}
+
+Test { [[
+var int[2] v;
 v[0] = 5;
 return v[0];
 ]],
@@ -15447,7 +15473,7 @@ return v[0];
 }
 
 Test { [[
-int[2] v;
+var int[2] v;
 v[0] = 1;
 v[1] = 1;
 return v[0] + v[1];
@@ -15456,8 +15482,8 @@ return v[0] + v[1];
 }
 
 Test { [[
-int[2] v;
-int i;
+var int[2] v;
+var int i;
 v[0] = 0;
 v[1] = 5;
 v[0] = 0;
@@ -15468,17 +15494,17 @@ return v[i+1];
 }
 
 Test { [[
-void a;
-void[1] b;
+var void a;
+var void[1] b;
 ]],
-    env = "ERR : line 1 : invalid type",
+    env = 'ERR : line 1 : cannot instantiate type "void"',
 }
 
 Test { [[
-int a;
-void[1] b;
+var int a;
+var void[1] b;
 ]],
-    env = "ERR : line 2 : invalid type",
+    env = 'ERR : line 2 : cannot instantiate type "void"',
 }
 
 Test { [[
@@ -15490,8 +15516,8 @@ C do
 end
 external _T = 44;
 
-_T[10] vec;
-int i = 110;
+var _T[10] vec;
+var int i = 110;
 
 vec[3].v[5] = 10;
 vec[9].c = 100;
@@ -15500,16 +15526,20 @@ return i + vec[9].c + vec[3].v[5];
     run = 220,
 }
 
-Test { [[int[2] v; await v;     return 0;]], env='event "v" is not declared' }
-Test { [[int[2] v; emit v;    return 0;]], env='event "v" is not declared' }
-Test { [[int[2] v; await v[0];  return 0;]], env='ERR : line 1 : event "?" is not declared'}
-Test { [[int[2] v; emit v[0]; return 0;]], env='event "?" is not declared' }
-Test { [[int[2] v; v=v; return 0;]], env='invalid attribution' }
-Test { [[int v; return v[1];]], env='cannot index a non array' }
-Test { [[int[2] v; return v[v];]], env='invalid array index' }
+Test { [[var int[2] v; await v;     return 0;]],
+        env='event "v" is not declared' }
+Test { [[var int[2] v; emit v;    return 0;]],
+        env='event "v" is not declared' }
+Test { [[var int[2] v; await v[0];  return 0;]],
+        env='ERR : line 1 : event "?" is not declared'}
+Test { [[var int[2] v; emit v[0]; return 0;]],
+        env='event "?" is not declared' }
+Test { [[var int[2] v; v=v; return 0;]], env='invalid attribution' }
+Test { [[var int v; return v[1];]], env='cannot index a non array' }
+Test { [[var int[2] v; return v[v];]], env='invalid array index' }
 
 Test { [[
-int[2] v ;
+var int[2] v ;
 return v == &v[0] ;
 ]],
     run = 1,
@@ -15522,8 +15552,8 @@ C do
         *p = 1;
     }
 end
-int[2] a;
-int b;
+var int[2] a;
+var int b;
 par/or do
     b = 2;
 with
@@ -15553,7 +15583,7 @@ external _END;
 C do
     int END = 1;
 end
-if ! _END-1 then
+if not  _END-1 then
     return 1;
 else
     return 0;
@@ -15597,7 +15627,7 @@ end
 A = 1;
 return 1;
 ]],
-    parser = 'ERR : line 4 : after `A´ : expected identifier',
+    parser = 'ERR : line 3 : after `end´ : expected statement'
 }
 
 Test { [[
@@ -15646,7 +15676,7 @@ external _A();
 C do
     void A () {}
 end
-int v = _A();
+var int v = _A();
 return v;
 ]],
     run = false,
@@ -15663,7 +15693,7 @@ C do
         return -10;
     }
 end
-int ret = _Const();
+var int ret = _Const();
 return ret;
 ]],
     run = -10
@@ -15688,7 +15718,7 @@ C do
         return v;
     }
 end
-int v = _ID(10);
+var int v = _ID(10);
 return v;
 ]],
     run = 10
@@ -15712,7 +15742,7 @@ C do
     void VD (int v) {
     }
 end
-int ret = _VD(10);
+var int ret = _VD(10);
 return ret;
 ]],
     run = false,
@@ -15723,10 +15753,10 @@ C do
     void VD (int v) {
     }
 end
-void v = _VD(10);
+var void v = _VD(10);
 return v;
 ]],
-    env = 'ERR : line 5 : invalid type'
+    env = 'line 5 : cannot instantiate type "void"',
 }
 
 Test { [[
@@ -15748,7 +15778,7 @@ C do
         return -v;
     }
 end
-int v = _NEG(10);
+var int v = _NEG(10);
 return v;
 ]],
     run = -10
@@ -15762,7 +15792,7 @@ C do
     }
 end
 input int A;
-int v;
+var int v;
 par/and do
     await A;
 with
@@ -15781,7 +15811,7 @@ C do
     }
 end
 input int A;
-int v;
+var int v;
 par/or do
     await A;
 with
@@ -15799,7 +15829,7 @@ Test { [[
 external _Z1();
 C do int Z1 (int a) { return a; } end
 input int A;
-int c;
+var int c;
 _Z1(3);
 c = await A;
 return c;
@@ -15820,7 +15850,7 @@ C do
         return *v1+*v2;
     }
 end
-u8[2] v;
+var u8[2] v;
 v[0] = 8;
 v[1] = 5;
 return _f2(&v[0],&v[1]) + _f1(v) + _f1(&v[0]);
@@ -16487,7 +16517,7 @@ end
 
 Test { [[
 external _char=1;
-_char* a = "Abcd12" ; return 1;]], run=1 }
+var _char* a = "Abcd12" ; return 1;]], run=1 }
 Test { [[
 external _printf();
 _printf("END: %s\n", "Abcd12");
@@ -16509,7 +16539,7 @@ _printf("END: 1%d%d\n",2,3); return 0;]], run=123 }
 Test { [[
 external _strncpy(), _printf(), _strlen();
 external _char = 1;
-_char[10] str;
+var _char[10] str;
 _strncpy(str, "123", 4);
 _printf("END: %d %s\n", _strlen(str), str);
 return 0;
@@ -16520,12 +16550,12 @@ return 0;
 Test { [[
 external _strncpy(), _printf(), _strlen(), _strcpy();
 external _char = 1;
-_char[6] a; _strcpy(a, "Hello");
-_char[2] b; _strcpy(b, " ");
-_char[7] c; _strcpy(c, "World!");
-_char[30] d;
+var _char[6] a; _strcpy(a, "Hello");
+var _char[2] b; _strcpy(b, " ");
+var _char[7] c; _strcpy(c, "World!");
+var _char[30] d;
 
-int len = 0;
+var int len = 0;
 _strcpy(d,a);
 _strcpy(&d[_strlen(d)], b);
 _strcpy(&d[_strlen(d)], c);
@@ -16566,7 +16596,7 @@ C do
         return -v;
     }
 end
-int a;
+var int a;
 a = _inv(_inv(1));
 return a;
 ]],
@@ -16580,7 +16610,7 @@ C do
         return v;
     }
 end
-int a;
+var int a;
 a = _id(1);
 return a;
 ]],
@@ -16588,7 +16618,7 @@ return a;
 }
 
 Test { [[
-int[2] v;
+var int[2] v;
 par/or do
     v[0] = 1;
 with
@@ -16601,8 +16631,8 @@ return 0;
     },
 }
 Test { [[
-int[2] v;
-int i,j;
+var int[2] v;
+var int i,j;
 par/or do
     v[j] = 1;
 with
@@ -16626,7 +16656,7 @@ typedef struct {
 } s;
 end
 external _s = 4;
-_s vs;
+var _s vs;
 vs.a = 10;
 vs.b = 1;
 return vs.a + vs.b + sizeof<_s>;
@@ -16642,8 +16672,8 @@ C do
     } Payload;
 end
 external _Payload = 18;
-_Payload final;
-u8* neighs = &(final.data[4]);
+var _Payload final;
+var u8* neighs = &(final.data[4]);
 return 1;
 ]],
     run = 1;
@@ -16657,7 +16687,7 @@ typedef struct {
 } s;
 end
 external _s = 8;
-_s vs;
+var _s vs;
 par/and do
     vs.a = 10;
 with
@@ -16678,7 +16708,7 @@ typedef struct {
 } s;
 end
 external _s = 8;
-_s vs;
+var _s vs;
 par/and do
     vs.a = 10;
 with
@@ -16698,8 +16728,8 @@ C do
     } mys;
 end
 external _mys = 4;
-_mys v;
-_mys* pv;
+var _mys v;
+var _mys* pv;
 pv = &v;
 v.a = 10;
 (*pv).a = 20;
@@ -16719,7 +16749,7 @@ Test { [[
 
 -- Exps
 
-Test { [[int a = ]],
+Test { [[var int a = ]],
     parser = "ERR : line 1 : after `=´ : expected expression",
 }
 
@@ -16758,9 +16788,9 @@ return 1
 }
 
 Test { [[
-int a;
+var int a;
 a = do
-    int b;
+    var int b;
 end
 ]],
     parser = "ERR : line 4 : after `end´ : expected `;´",
@@ -16772,9 +16802,9 @@ Test { [[
 async do
 
     par/or do
-        int a;
+        var int a;
     with
-        int b;
+        var int b;
     end
 end
 ]],
@@ -16785,9 +16815,9 @@ async do
 
 
     par/and do
-        int a;
+        var int a;
     with
-        int b;
+        var int b;
     end
 end
 ]],
@@ -16796,9 +16826,9 @@ end
 Test { [[
 async do
     par do
-        int a;
+        var int a;
     with
-        int b;
+        var int b;
     end
 end
 ]],
@@ -16808,7 +16838,7 @@ end
 -- DFA
 
 Test { [[
-int a;
+var int a;
 ]],
     ana = {
         n_reachs = 1,
@@ -16817,9 +16847,9 @@ int a;
 }
 
 Test { [[
-int a;
+var int a;
 a = do
-    int b;
+    var int b;
 end;
 ]],
     ana = {
@@ -16830,7 +16860,7 @@ end;
 }
 
 Test { [[
-int a;
+var int a;
 par/or do
     a = 1;
 with
@@ -16848,8 +16878,8 @@ Test { [[
 input int KEY;
 if 1 then return 50; end
 par do
-    int pct, dt, step, ship, points;
-    int win = 0;
+    var int pct, dt, step, ship, points;
+    var int win = 0;
     loop do
         if win then
             // next phase (faster, harder, keep points)
@@ -16882,7 +16912,7 @@ par do
                 end
             with
                 loop do
-                    int key = await KEY;
+                    var int key = await KEY;
                     if key == 1 then
                         ship = 0;
                     end
@@ -16895,7 +16925,7 @@ par do
             await 1s;
             await KEY;
         with
-            if !win then
+            if not win then
                 loop do
                     await 100ms;
                     await 100ms;
@@ -16904,14 +16934,14 @@ par do
         end
     end
 with
-    int key = 1;
+    var int key = 1;
     loop do
-        int read1 = 1;
+        var int read1 = 1;
             read1 = 1;
         await 50ms;
-        int read2 = 1;
+        var int read2 = 1;
             read2 = 1;
-        if read1==read2 && key!=read1 then
+        if read1==read2 and key!=read1 then
             key = read1;
             if key != 1 then
                 async (read1) do
@@ -16960,12 +16990,12 @@ input int A, B;
 event int a;
 par/or do
     loop do
-        int v = await A;
+        var int v = await A;
         emit a=v;
     end
 with
     pause/if a do
-        int v = await B;
+        var int v = await B;
         return v;
     end
 end
@@ -16989,10 +17019,10 @@ end
 Test { [[
 input int A,B;
 event int a;
-int ret = 0;
+var int ret = 0;
 par/or do
     loop do
-        int v = await A;
+        var int v = await A;
         emit a=v;
     end
 with
@@ -17017,15 +17047,15 @@ return ret;
 Test { [[
 input int A, B, Z;
 event int a, b;
-int ret = 0;
+var int ret = 0;
 par/or do
     loop do
-        int v = await A;
+        var int v = await A;
         emit a=v;
     end
 with
     loop do
-        int v = await B;
+        var int v = await B;
         emit b=v;
     end
 with
@@ -17049,10 +17079,10 @@ input int  A;
 input int  B;
 input void Z;
 event int a;
-int ret = 0;
+var int ret = 0;
 par/or do
     loop do
-        int v = await A;
+        var int v = await A;
         emit a=v;
     end
 with
@@ -17075,7 +17105,7 @@ Test { [[
 input int  A;
 input void Z;
 event int a;
-int ret = 0;
+var int ret = 0;
 par/or do
     emit a=1;
     await A;
@@ -17099,10 +17129,10 @@ Test { [[
 input int  A;
 input void Z;
 event int a;
-int ret = 0;
+var int ret = 0;
 par/or do
     loop do
-        int v = await A;
+        var int v = await A;
         emit a=v;
     end
 with
@@ -17128,10 +17158,10 @@ Test { [[
 input int  A,B,F;
 input void Z;
 event int a;
-int ret = 50;
+var int ret = 50;
 par/or do
     loop do
-        int v = await A;
+        var int v = await A;
         emit a=v;
     end
 with
@@ -17155,7 +17185,7 @@ par/or do
 with
     await 1us;
 end
-int v = await 1us;
+var int v = await 1us;
 return v;
 ]],
     run = { ['~>1us; ~>F; ~>4us; ~>F']=3 }
@@ -17165,10 +17195,10 @@ Test { [[
 input int  A;
 input void Z;
 event int a;
-int ret = 0;
+var int ret = 0;
 par/or do
     loop do
-        int v = await A;
+        var int v = await A;
         emit a=v;
     end
 with

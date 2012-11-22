@@ -93,6 +93,9 @@ KEYS = P'async'  + 'await'   + 'break'   + 'C'
      + 'pause/if'
      + 'interface' + 'class' + 'new'
      + 'global' + 'this'
+     + 'await/0'
+     + 'or' + 'and' + 'not'
+     + 'var'
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
@@ -101,7 +104,6 @@ local Alphanum = Alpha + m.R'09'
 local ALPHANUM = m.R'AZ' + '_' + m.R'09'
 local alphanum = m.R'az' + '_' + m.R'09'
 
-ID  = Alpha * Alphanum^0 -- - KEYS
 NUM = CK(m.R'09'^1) / tonumber
 
 _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
@@ -122,7 +124,7 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
             + V'_Dcl_c'   + V'_Dcl_ext'
             + V'_Dcl_int' + V'_Dcl_var'
             + V'_Set'     + V'CallStmt' -- respect this order
-            + EM'statement (missing `_´?)'
+            + EM'statement'-- (missing `_´?)'
 
     , _StmtB = V'_Do'   + V'Async'  + V'Host'
              + V'ParOr' + V'ParAnd'
@@ -184,25 +186,28 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
     , Break   = K'break'
 
     , _Exp    = V'_1'
-    , _1      = V'_2'  * (CK'||' * V'_2')^0
-    , _2      = V'_3'  * (CK'&&' * V'_3')^0
+    , _1      = V'_2'  * (CK'or'  * V'_2')^0
+    , _2      = V'_3'  * (CK'and' * V'_3')^0
     , _3      = V'_4'  * ((CK'|'-'||') * V'_4')^0
     , _4      = V'_5'  * (CK'^' * V'_5')^0
-    , _5      = V'_6'  * ((CK'&'-'&&') * V'_6')^0
+    , _5      = V'_6'  * (CK'&' * V'_6')^0
     , _6      = V'_7'  * ((CK'!='+CK'==') * V'_7')^0
     , _7      = V'_8'  * ((CK'<='+CK'>='+(CK'<'-'<<')+(CK'>'-'>>')) * V'_8')^0
     , _8      = V'_9'  * ((CK'>>'+CK'<<') * V'_9')^0
     , _9      = V'_10' * ((CK'+'+CK'-') * V'_10')^0
     , _10     = V'_11' * ((CK'*'+(CK'/'-'//'-'/*')+CK'%') * V'_11')^0
-    , _11     = ( Cc(true) * ( (CK'!'-'!=') + (CK'&'-'&&')
-                             + CK'-'+CK'+'+CK'~'+CK'*'
+    , _11     = ( Cc(true) * ( CK'not' + CK'&' + CK'-' + CK'+' + CK'~' + CK'*'
                              + (K'<'*EV'ID_type'*K'>') )
                 )^0 * V'_12'
     , _12     = V'_13' *
                     (
                         K'(' * Cc'call' * V'ExpList' * EK')' +
                         K'[' * Cc'idx'  * V'_Exp'    * EK']' +
-                        (CK':' + CK'.') * CK(ID)
+                        (CK':' + CK'.')
+                            * (CK(Alpha * (Alphanum+'?')^0) /
+                                function (id)
+                                    return (string.gsub(id,'%?','_'))
+                                end)
                     )^0
     , _13     = V'_Prim'
     , _Prim   = V'_Parens' + V'Var'   + V'C'   + V'SIZEOF'
@@ -215,7 +220,7 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
     , _Parens  = K'(' * EV'_Exp' * EK')'
 
     , SIZEOF = K'sizeof' * EK'<' * EV'ID_type' * EK'>'
-    , CONST = CK( #m.R'09' * ALPHANUM^1 )
+    , CONST = CK( #m.R'09' * (m.R'09'+m.S'xX'+m.R'AF'+m.R'af')^1 )
             + CK( "'" * (P(1)-"'")^0 * "'" )
 
     , NULL = CK'null'
@@ -235,7 +240,8 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
     , Pause    = K'pause/if' * EV'Var' * V'_Do'
 
     , AwaitExt = K'await' * EV'Ext'
-    , AwaitInt = K'await' * EV'_Exp'
+    , AwaitInt = K'await'  * EV'_Exp' * Cc(false)
+               + K'await/0'* EV'_Exp' * Cc(true)
     , AwaitN   = K'await' * K'FOREVER'
     , AwaitT   = K'await' * (V'WCLOCKK'+V'WCLOCKE')
 
@@ -260,7 +266,7 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
                     V'__Dcl_int' * (K','*V'__Dcl_int')^0
     , __Dcl_int = EV'ID_int' * (V'_Sets' + Cc(false)*Cc(false))
 
-    , _Dcl_var  = Cc(false) * V'ID_type' * (K'['*NUM*K']'+Cc(false)) *
+    , _Dcl_var  = CK'var' * EV'ID_type' * (K'['*NUM*K']'+Cc(false)) *
                     V'__Dcl_var' * (K','*V'__Dcl_var')^0
     , __Dcl_var = EV'ID_var' * (V'_Sets' + Cc(false)*Cc(false))
 
@@ -268,7 +274,7 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
                        EV'__Dcl_int_ifc' * (K','*V'__Dcl_int')^0
     , __Dcl_int_ifc = EV'ID_int' * (Cc(false)*Cc(false))
 
-    , _Dcl_var_ifc  = Cc(false) * V'ID_type' * (K'['*NUM*K']'+Cc(false)) *
+    , _Dcl_var_ifc  = CK'var' * EV'ID_type' * (K'['*NUM*K']'+Cc(false)) *
                        V'__Dcl_var_ifc' * (K','*V'__Dcl_var')^0
     , __Dcl_var_ifc = EV'ID_var' * (Cc(false)*Cc(false))
 
@@ -283,10 +289,11 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
     , Var     = V'ID_var'
     , C       = V'ID_c'
 
-    , ID_cls  = CK(m.R'AZ'*alphanum^0) - KEYS
-    , ID_ext  = CK(m.R'AZ'*ALPHANUM^0) - KEYS
-    , ID_int  = CK(m.R'az'*(Alphanum+'?')^0) - KEYS
-    , ID_var  = CK(m.R'az'*(Alphanum+'?')^0) - KEYS
+    , ID_cls  = -KEYS * CK(m.R'AZ'*alphanum^0)
+    , ID_ext  = -KEYS * CK(m.R'AZ'*ALPHANUM^0)
+    , ID_var  = -KEYS * CK(m.R'az'*(Alphanum+'?')^0)
+                    / function(id) return (string.gsub(id,'%?','_')) end
+    , ID_int  = V'ID_var'
     , ID_c    = CK(  P'_' *Alphanum^0)
     , ID_type = (CK(TYPES)+V'ID_c'+V'ID_cls') * C(K'*'^0) /
                   function (id, star)
