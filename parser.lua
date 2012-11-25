@@ -139,7 +139,7 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
                     V'ParEver' + V'If'    + V'Loop' )
 
     , _Set  = V'_Exp' * V'_Sets'
-    , _Sets = K'=' * (
+    , _Sets = (CK'=' + CK':=') * (
                 Cc'SetAwait' * (V'AwaitT'+V'AwaitExt'+V'AwaitInt') +
                 Cc'SetBlock' * V'_SetBlock' +
                 Cc'SetExp'   * V'_Exp' +
@@ -264,19 +264,19 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
 
     , _Dcl_int  = CK'event' * EV'ID_type' * Cc(false) *
                     V'__Dcl_int' * (K','*V'__Dcl_int')^0
-    , __Dcl_int = EV'ID_int' * (V'_Sets' + Cc(false)*Cc(false))
+    , __Dcl_int = EV'ID_int' * (V'_Sets' + Cc(false)*Cc(false)*Cc(false))
 
     , _Dcl_var  = CK'var' * EV'ID_type' * (K'['*NUM*K']'+Cc(false)) *
                     V'__Dcl_var' * (K','*V'__Dcl_var')^0
-    , __Dcl_var = EV'ID_var' * (V'_Sets' + Cc(false)*Cc(false))
+    , __Dcl_var = EV'ID_var' * (V'_Sets' + Cc(false)*Cc(false)*Cc(false))
 
     , _Dcl_int_ifc  = CK'event' * EV'ID_type' * Cc(false) *
                        EV'__Dcl_int_ifc' * (K','*V'__Dcl_int')^0
-    , __Dcl_int_ifc = EV'ID_int' * (Cc(false)*Cc(false))
+    , __Dcl_int_ifc = EV'ID_int' * (Cc(false)*Cc(false)*Cc(false))
 
     , _Dcl_var_ifc  = CK'var' * EV'ID_type' * (K'['*NUM*K']'+Cc(false)) *
                        V'__Dcl_var_ifc' * (K','*V'__Dcl_var')^0
-    , __Dcl_var_ifc = EV'ID_var' * (Cc(false)*Cc(false))
+    , __Dcl_var_ifc = EV'ID_var' * (Cc(false)*Cc(false)*Cc(false))
 
     , Dcl_ifc = K'interface' * Cc(true)  * EV'ID_cls' * EK'with'
                         * V'BlockI' * EK'end'

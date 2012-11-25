@@ -5,15 +5,6 @@
 
 Test { [[
 class T with
-do
-end
-return 0;
-]],
-    run = 0,
-}
-
-Test { [[
-class T with
     var int v;
 do
 end
@@ -1025,12 +1016,8 @@ var int* pi = &i;
 var T t;
 t.a = 10;
 var T* p = &t;
-//_fprintf(_stderr, "%p %p\n", &t, p);
-//_fprintf(_stderr, "%p %p\n", t, *p);
 _c = t.a;
-//_fprintf(_stderr,"C=%d\n", _c);
 _d = p:a;
-//_fprintf(_stderr,"D=%d\n", _d);
 return p:a + t.a + _c + _d;
 ]],
     run = 40,
@@ -1103,7 +1090,7 @@ return x;
 }
 
 Test { [[
-external _fprintf(), _stderr(), _assert();
+external _assert();
 input int  BUTTON;
 input void F;
 
@@ -1115,7 +1102,6 @@ do
     loop do
         par/or do
             loop do
-//_fprintf(_stderr, "loop %p %p %d\n", this, &this.x, this.x);
                 await 10ms;
                 x = x + 1;
             end
@@ -1154,10 +1140,6 @@ rs[0].x = 10;
 rs[0].y = 50;
 rs[1].x = 100;
 rs[1].y = 300;
-//_fprintf(_stderr,"%p %p %p %p\n",
-    //&rs[0], &rs[0].x, &rs[1], &rs[1].x);
-//_fprintf(_stderr,"%d %d %d %d\n",
-    //rs[0].x, rs[0].y, rs[1].x, rs[1].y);
 
 par/or do
     loop do
@@ -1170,50 +1152,41 @@ with
     async do
         emit 100ms;
     end
-//_fprintf(_stderr,"%d %d %d %d\n",
-    //rs[0].x, rs[0].y, rs[1].x, rs[1].y);
     _assert(rs[0].x==20 and rs[0].y==50 and rs[1].x==110 and rs[1].y==300);
-//_fprintf(_stderr,"oioi\n");
 
     async do
         emit BUTTON(0);
         emit 100ms;
     end
-    //_fprintf(_stderr, "(%d %d) vs (%d %d)\n", rs[0].x, rs[0].y, rs[1].x, rs[1].y);
     _assert(rs[0].x==20 and rs[0].y==60 and rs[1].x==120 and rs[1].y==300);
 
     async do
         emit BUTTON(1);
         emit 100ms;
     end
-    //_fprintf(_stderr, "(%d %d) vs (%d %d)\n", rs[0].x, rs[0].y, rs[1].x, rs[1].y);
     _assert(rs[0].x==20 and rs[0].y==70 and rs[1].x==120 and rs[1].y==310);
 
     async do
         emit BUTTON(1);
         emit 100ms;
     end
-    //_fprintf(_stderr, "(%d %d) vs (%d %d)\n", rs[0].x, rs[0].y, rs[1].x, rs[1].y);
     _assert(rs[0].x==20 and rs[0].y==80 and rs[1].x==110 and rs[1].y==310);
 
     async do
         emit BUTTON(1);
         emit 99ms;
     end
-    //_fprintf(_stderr, "(%d %d) vs (%d %d)\n", rs[0].x, rs[0].y, rs[1].x, rs[1].y);
     _assert(rs[0].x==20 and rs[0].y==89 and rs[1].x==110 and rs[1].y==301);
 
     async do
         emit BUTTON(0);
         emit 1ms;
     end
-    //_fprintf(_stderr, "(%d %d) vs (%d %d)\n", rs[0].x, rs[0].y, rs[1].x, rs[1].y);
     _assert(rs[0].x==20 and rs[0].y==89 and rs[1].x==110 and rs[1].y==300);
 
     async do
         emit 18ms;
     end
-    //_fprintf(_stderr, "(%d %d) vs (%d %d)\n", rs[0].x, rs[0].y, rs[1].x, rs[1].y);
     _assert(rs[0].x==19 and rs[0].y==89 and rs[1].x==110 and rs[1].y==299);
 
     async do
@@ -1221,7 +1194,6 @@ with
         emit BUTTON(1);
         emit 1s;
     end
-    //_fprintf(_stderr, "(%d %d) vs (%d %d)\n", rs[0].x, rs[0].y, rs[1].x, rs[1].y);
     _assert(rs[0].x==19 and rs[0].y==-11 and rs[1].x==210 and rs[1].y==299);
 
 end
@@ -1589,6 +1561,18 @@ return ret;
 }
 
 Test { [[
+class T with
+do
+finally
+    if 1 then
+    end
+end
+return 1;
+]],
+    run = 1,
+}
+
+Test { [[
 external _V;
 C do
     static int V = 0;
@@ -1750,6 +1734,26 @@ return ret + _V;        // * reads after
 }
 
 Test { [[
+class T with do end
+do
+var T* t;
+t = new T;
+end
+return 10;
+]],
+    run = 10,
+}
+
+Test { [[
+class T with do finally end
+var T* t;
+t = new T;
+return 10;
+]],
+    run = 10,
+}
+
+Test { [[
 class T with
 do
     par/or do
@@ -1789,15 +1793,6 @@ var T* a;
 a = new U;
 ]],
     env = 'ERR : line 3 : class "U" is not declared'
-}
-
-Test { [[
-class T with do end
-var T* t;
-t = new T;
-return 10;
-]],
-    run = 10,
 }
 
 Test { [[
@@ -1954,6 +1949,65 @@ end
 return ret + _V;    // V still 0
 ]],
     run = { ['~>F']=10 },
+}
+
+Test { [[
+class V with
+do
+finally
+end
+
+var V* v;
+v = new V;
+await 1s;
+
+return 10;
+]],
+    run = { ['~>1s']=10, }
+}
+
+Test { [[
+class V with
+do
+finally
+end
+
+class U with
+    var V* v;
+do
+end
+
+class T with
+    var U u;
+do
+    u.v = new V;
+end
+
+var T t;
+return 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class V with
+do
+finally
+end
+
+class T with
+    var V* v;
+do
+    await 1s;
+    v = new V;
+end
+
+var T t;
+await 1s;
+return 1;
+
+]],
+    run = { ['~>1s']=1, }
 }
 
 Test { [[
@@ -2256,8 +2310,6 @@ var T t1, t2;
 var I* i1 = &t1;
 var I* i2 = &t2;
 
-//_fprintf(_stderr, "%p %p %p %p\n", t1,&t1, i1, &i1);
-
 var int ret = 0;
 par/and do
     await START;
@@ -2341,7 +2393,6 @@ return v;
 }
 Test { [[
 input void START;
-external _fprintf(), _stderr;
 interface Global with
     event int a;
 end
@@ -2370,14 +2421,11 @@ return 10;
 }
 
 Test { [[
-external _fprintf(), _stderr;
 C do
     void CLS_T__f (void* org, int v) {
-        //fprintf(stderr, "oioi\n");
         CLS_T_v(org) += v;
     }
     void IFC_I__f (void* org, int v) {
-        //fprintf(stderr, "tctct\n");
         IFC_I_v(org) += v;
     }
 end
@@ -2393,13 +2441,11 @@ class T with
 do
     v = 50;
     this._f(10);
-    //_fprintf(_stderr, "T: %d\n", this.v);
 end
 
 var T t;
 var I* i = &t;
 i:_f(100);
-//_fprintf(_stderr, "O: %d\n", t.v);
 return i:v;
 ]],
     run = 160,
@@ -2811,6 +2857,13 @@ Test { [[var int a;]],
         n_reachs = 1,
         isForever = true,
     }
+}
+
+Test { [[
+var int a, b;
+return 10;
+]],
+    run = 10,
 }
 
 Test { [[a = 1; return a;]],
@@ -13974,6 +14027,17 @@ return ret;
 }
 
 Test { [[
+do
+finally
+    if 1 then
+    end
+end
+return 1;
+]],
+    run = 1,
+}
+
+Test { [[
 var int ret;
 do
     var int a = 1;
@@ -15435,6 +15499,52 @@ var int* c = &b;
 return *a + *c;
 ]],
     run = 20;
+}
+
+Test { [[
+external _f();
+C do
+    int* f () {
+        int a = 10;
+        return &a;
+    }
+end
+var int* p = _f();
+return *p;
+]],
+    env = 'ERR : line 8 : block at line 1 must contain `finally´',
+}
+Test { [[
+external _f();
+C do
+    int a;
+    int* f () {
+        a = 10;
+        return &a;
+    }
+end
+var int* p := _f();
+return *p;
+]],
+    run = 10,
+}
+Test { [[
+external _f();
+C do
+    int A = 10;
+    int* f () {
+        return &A;
+    }
+end
+var int a;
+do
+    var int* p = _f();
+finally
+    a = *p;
+end
+return a;
+]],
+    run = 10,
 }
 
     -- ARRAYS

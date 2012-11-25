@@ -7,10 +7,6 @@ _MEM = {
 
 do  -- _MEM.cls
     local off = 0
-    if _PROPS.has_news then
-        _MEM.cls.dyn = off
-        off = off + 1
-    end
     if _PROPS.has_ifcs then
         _MEM.cls.cls = off
         off = off + _ENV.c.tceu_ncls[3]

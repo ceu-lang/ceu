@@ -5,6 +5,8 @@ dofile 'pak.lua'
 COUNT = 0
 T = nil
 
+VALGRIND = ...
+
 function check (mod)
     assert(T[mod]==nil or T[mod]==false or type(T[mod])=='string')
     local ok, msg = pcall(dofile, mod..'.lua')
@@ -44,8 +46,8 @@ Test = function (t)
     -- PARSER
     if not check('parser')   then return end
     if not check('ast')      then return end
-    if not check('env')      then return end
     --_AST.dump(_AST.root)
+    if not check('env')      then return end
     --if not check('tight')    then return end
     dofile 'tight.lua'
     if not check('props')    then return end
@@ -71,6 +73,8 @@ Test = function (t)
     end
 
     local CEU = './ceu _ceu_tmp.ceu --tp-word 4 --tp-pointer 4'
+    local EXE = (VALGRIND=='false' and './ceu.exe')
+             or 'valgrind -q --leak-check=full ./ceu.exe 2>&1'
 
     -- T.run = N
     if type(T.run) ~= 'table' then
@@ -81,7 +85,8 @@ Test = function (t)
         ceu:close()
         assert(os.execute(CEU))
         assert(os.execute('gcc -std=c99 -o ceu.exe main.c') == 0)
-        local ret = io.popen('./ceu.exe'):read'*a'
+        local ret = io.popen(EXE):read'*a'
+        assert(not string.find(ret, '==%d+=='), 'valgrind error')
         ret = string.match(ret, 'END: (.-)\n')
         assert(ret==T.run..'', ret..' vs '..T.run..' expected')
 
@@ -106,7 +111,8 @@ Test = function (t)
             ceu:close()
             assert(os.execute(CEU))
             assert(os.execute('gcc -std=c99 -o ceu.exe main.c') == 0)
-            local ret = io.popen('./ceu.exe'):read'*a'
+            local ret = io.popen(EXE):read'*a'
+            assert(not string.find(ret, '==%d+=='), 'valgrind error')
             ret = string.match(ret, 'END: (%-?%d+)')
             assert(tonumber(ret)==ret2, ret..' vs '..ret2..' expected')
         end

@@ -48,22 +48,29 @@ end
 function CLEAR (me)
     COMM(me, 'CLEAR')
 
+    local orgs_news = '('..me.ns.orgs..'||'..me.ns.news..')'
+    local tree_max  = (me.lbl_out and me.lbl_out.prio) or 'CEU_TREE_MAX'
+
     -- remove (lower) stacked tracks
     if me.ns.stacks > 0 then
-        LINE(me, 'ceu_trk_clr('..me.ns.orgs..', _trk_.org, '
+        LINE(me, 'ceu_trk_clr('..orgs_news..', _trk_.org, '
                     ..me.lbls[1]..','..me.lbls[2]..');')
     end
 
-    -- must be after trk_clr (it may trigger fins)
-    if me.ns.awaits > 0 then
-        LINE(me, 'ceu_lst_clr('..me.ns.orgs..', _trk_.org, '
+    -- trk_clr -> lst_clr (lst_clr may free orgs in trks)
+
+    -- clear internal awaits and trigger finally's
+    if me.ns.awaits>0 or me.ns.news>0 then -- (orgs with awts are also covered)
+        LINE(me, 'ceu_lst_clr('..orgs_news..', _trk_.org, '
                     ..me.lbls[1]..','..me.lbls[2]
-                    ..','..(me.lbl_out and me.lbl_out.prio or 'CEU_TREE_MAX')..');')
+                    ..','..tree_max..');')
     end
 
     -- continue after finalizers
-    if me.ns.fins > 0 then
-        LINE(me, 'ceu_trk_ins(CEU.stack+1, CEU_TREE_MAX, _trk_.org, 0,'
+    if me.ns.fins>0 or me.ns.news>0 then   -- (orgs with fins are also covered)
+        LINE(me, 'ceu_trk_ins(CEU.stack,'
+                    ..tree_max
+                    ..', _trk_.org, 0,'
                     ..me.lbl_clr.id..');')
         HALT(me)
         CASE(me, me.lbl_clr)
@@ -75,14 +82,12 @@ function ORG (me, new, org0, cls, par_org, par_lbl)
     LINE(me, '{ void* org0 = '..org0..';')
     if new then
         LINE(me, 'if (org0) {')
+        LINE(me, '  ceu_lst_ins(0, org0, org0, '..cls.lbl_fin.id..',0);')
     end
     LINE(me, [[
     ceu_trk_ins(CEU.stack+2, CEU_TREE_MAX, org0, 0,]]..cls.lbl.id..[[);
 #ifdef CEU_IFCS
     *((tceu_ncls*)(org0+]]..(_MEM.cls.cls or '')..[[)) = ]]..cls.n..[[;
-#endif
-#ifdef CEU_NEWS
-    *((u8*)       (org0+]]..(_MEM.cls.dyn or '')..[[)) = 1;
 #endif
     *((void**)    (org0+]].._MEM.cls.par_org..[[))     = ]]..par_org..[[;
     *((tceu_nlbl*)(org0+]].._MEM.cls.par_lbl..[[))     = ]]..par_lbl..[[;
@@ -111,18 +116,23 @@ F = {
 #ifdef CEU_IFCS
 *((tceu_ncls*)(CEU.mem+]]..(_MEM.cls.cls or '')..[[)) = ]].._MAIN.n..[[;
 #endif
-#ifdef CEU_NEWS
-*((u8*)       (CEU.mem+]]..(_MEM.cls.dyn or '')..[[)) = 0;
-#endif
 ]])
         end
         CONC_ALL(me)
+
         if me == _MAIN then
             local ret = _ENV.getvar('$ret', me.blk)
             LINE(me, 'if (ret) *ret = '..ret.val..';')
             LINE(me, 'return 1;')
         end
+
         HALT(me)
+
+        if me.has_news then
+            CASE(me, me.lbl_fin)
+            LINE(me, 'free(_trk_.org);')
+            HALT(me)
+        end
     end,
 
     Host = function (me)
@@ -177,23 +187,14 @@ F = {
         CONC_ALL(me)
 
         -- finalize orgs (they were spawned in parallel)
-        if me.ns.orgs > 0 then
+        if me.ns.orgs>0 or me.ns.news>0 then
             CLEAR(me)
         end
     end,
 
+    BlockI  = CONC_ALL,
     BlockN  = CONC_ALL,
-    Finally = function (me)
-        CONC_ALL(me)
-        if CLS().fin == me then
-            LINE(me, [[
-#ifdef CEU_NEWS
-if (*PTR_org(u8*,]]..(_MEM.cls.dyn or '')..[[))
-    free(_trk_.org);
-#endif
-]])
-        end
-    end,
+    Finally = CONC_ALL,
 
     SetExp = function (me)
         local e1, e2 = unpack(me)
@@ -252,7 +253,9 @@ if (*PTR_org(u8*,]]..(_MEM.cls.dyn or '')..[[))
             HALT(me)
         end
         CASE(me, me.lbl_out)
-        CLEAR(me)
+        if not me.no_clear then
+            CLEAR(me)
+        end
     end,
 
     ParAnd = function (me)
@@ -349,7 +352,8 @@ if (ceu_out_pending()) {
 
     Pause = function (me)
         local inc = unpack(me)
-        LINE(me, 'ceu_lst_pse('..me.blk.ns.orgs..', _trk_.org, '
+        LINE(me, 'ceu_lst_pse('..me.blk.ns.orgs..'||'..me.blk.ns.news
+                    ..', _trk_.org, '
                     ..me.blk.lbls[1]..','..me.blk.lbls[2]..','..inc..');')
     end,
 

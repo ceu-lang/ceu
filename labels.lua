@@ -5,7 +5,7 @@ _LBLS = {
 }
 
 function new (lbl)
-    lbl.id = lbl[1] .. (lbl[2] and '' or '_' .. #_LBLS.list)
+    lbl.id = lbl[1] .. (lbl[2] and '' or '_'..CLS().id..'_'..#_LBLS.list)
     lbl.id = string.gsub(lbl.id, '%*','_')
     lbl.id = string.gsub(lbl.id, '%.','_')
     lbl.id = string.gsub(lbl.id, '%$','_')
@@ -42,7 +42,7 @@ F = {
         -- labels which are finalizers
         local t = {}
         for _, lbl in ipairs(_LBLS.list) do
-            t[#t+1] = (string.find(lbl.id,'__fin') and 1) or 0
+            t[#t+1] = (string.find(lbl.id,'__fin') and lbl.depth) or 0
         end
         _LBLS.code_fins = table.concat(t,',')
     end,
@@ -51,14 +51,15 @@ F = {
         me.lbl_cnt = new{'New_cont'}
     end,
     Block = function (me)
-        if me.ns.orgs > 0 then
-            me.lbl_cnt = new{'New_cont'}
-            me.lbl_clr = new{'Block_clr'}
-        end
+        me.lbl_cnt = new{'New_cont'}
+        me.lbl_clr = new{'Block_clr'}
     end,
 
     Dcl_cls = function (me)
         me.lbl = new{'Class_'..me.id, true}
+        if me.has_news then
+            me.lbl_fin = new{'Class__fin_'..me.id, depth=me.depth}
+        end
     end,
 
     Dcl_var = function (me)
@@ -137,6 +138,9 @@ F = {
         local int = unpack(me)
         me.lbl_awt = new{'Await_'..me[1][1]}
         me.lbl_awk = new{'Awake_'..me[1][1]}
+        if string.find(me.lbl_awk.id,'__fin') then
+            me.lbl_awk.depth = me.depth
+        end
     end,
 }
 

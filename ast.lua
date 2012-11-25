@@ -4,7 +4,6 @@ _AST = {
 
 local MT = {}
 local STACK = nil
-local FIN = 0     -- cur fin
 local TOP = {}
 
 function _AST.isNode (node)
@@ -163,19 +162,23 @@ local C; C = {
             return node('Block')(ln, b1)
         end
 
-        FIN = FIN + 1
-        local fin = node('Finally')(ln, b2)
-        fin.n = FIN
-
-        local evt = '$fin_'..FIN
-        local awt = node('AwaitInt')(ln, node('Var')(ln, evt), true)
-        b1[#b1+1] = node('EmitInt')(ln, node('Var')(ln, evt))
-
+        -- TODO: avoid <b2> repetition (C func?)
+        local id  = '$fin_' .. string.match(tostring(b2),'0x([%d%w]+)')
+        local var = node('Var')(ln, id)
+        local fin = node('Finally')(ln, _AST.copy(b2))
         local blk = node('Block')(ln,
-                        node('ParAnd')(ln,
-                            b1,
-                            node('BlockN')(ln, awt, fin)))
-        blk.fin = fin
+                        node('Dcl_var')(ln, true, 'u8', false, id),
+                        node('SetExp')(ln, var, node('CONST')(ln,'1')),
+                        node('ParOr')(ln,
+                            node('BlockN')(ln,
+                                b1,
+                                b2,
+                                node('SetExp')(ln, var, node('CONST')(ln,'0'))),
+                            node('BlockN')(ln,
+                                node('AwaitInt')(ln, var, true),
+                                node('If')(ln, var, fin),
+                                node('AwaitN')(ln))))
+        blk.fin  = fin   -- env.lua checks for blocks requiring finally's
         return blk
 --[=[
         do
@@ -186,14 +189,20 @@ local C; C = {
 
         // becomes
 
-        event void $fin;
         do
-            par/and do
+            event u8 $fin;
+            $fin = 1;
+            par/or do
                 <b1>
-                emit $fin;
+                <b2>
+                $fin = 0;
             with
                 await/0 $fin;
-                <b2>
+                if $fin then
+                    <fin>
+                        <b2>
+                end
+                await FOREVER;
             end
         end
 ]=]
@@ -321,30 +330,33 @@ local C; C = {
     _Dcl_var = function (ln, pre, tp, dim, ...)
         local ret = {}
         local t = { ... }
-        for i=1, #t, 3 do
+        for i=1, #t, 4 do
             ret[#ret+1] = node('Dcl_var')(ln, pre, tp, dim, t[i])
             if t[i+1] then
                 ret[#ret+1] = C._Set(ln,
-                                node('Var')(ln,t[i]),
-                                t[i+1],
-                                t[i+2])
+                                node('Var')(ln,t[i]),   -- var
+                                t[i+1],                 -- op
+                                t[i+2],                 -- tag
+                                t[i+3])                 -- exp
                 ret[#ret].isDcl = true
             end
         end
         return unpack(ret)
     end,
 
+    -- TODO: unify with _Dcl_var
     _Dcl_int_ifc = function(...) return C._Dcl_int(...) end,
     _Dcl_int = function (ln, pre, tp, dim, ...)
         local ret = {}
         local t = { ... }
-        for i=1, #t, 3 do
+        for i=1, #t, 4 do
             ret[#ret+1] = node('Dcl_int')(ln, pre, tp, dim, t[i])
             if t[i+1] then
                 ret[#ret+1] = C._Set(ln,
-                                node('Var')(ln,t[i]),
-                                t[i+1],
-                                t[i+2])
+                                node('Var')(ln,t[i]),   -- var
+                                t[i+1],                 -- op
+                                t[i+2],                 -- tag
+                                t[i+3])                 -- exp
                 ret[#ret].isDcl = true
             end
         end
@@ -352,35 +364,30 @@ local C; C = {
     end,
 
     Dcl_ifc = function (...) return C.Dcl_cls(...) end,
-    Dcl_cls = function (ln, is_ifc, id, ifc, blk)
+    Dcl_cls = function (ln, is_ifc, id, ifc, body)
+        local blk = node('Block')(ln, ifc, body)
+        local new = blk
         if id == 'Main' then
-            blk = node('Block')(ln,
+            new = node('Block')(ln,
                     node('Dcl_var')(ln, false, 'int', false, '$ret'),
-                    ifc,
                     node('SetBlock')(ln,
                         node('Var')(ln,'$ret'),
                         blk))
-        else
-            blk = node('Block')(ln, ifc, blk)
         end
 
+        local cls = node('Dcl_cls')(ln, is_ifc, id, new)
+        cls.blk = (id=='Main' and body) or blk  -- top-most block for `this´
         if not is_ifc then
-            for i=1, FIN do
-                ifc[#ifc+1] =
-                    node('Dcl_var')(ln,true,'void',false,'$fin_'..i)
-            end
-            FIN = 0
+            cls.fin = body.fin
         end
-
-        local cls = node('Dcl_cls')(ln, is_ifc, id, blk)
         TOP[#TOP+1] = cls
     end,
 
     Global = node('Global'),
     This   = node('This'),
 
-    _Set = function (ln, e1, tag, e2)
-        return node(tag)(ln, e1, e2)
+    _Set = function (ln, e1, op, tag, e2)
+        return node(tag)(ln, e1, e2, op==':=')
     end,
 
     CallStmt = node('CallStmt'),

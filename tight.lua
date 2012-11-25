@@ -4,9 +4,11 @@ function OR_all (me, t)
     me.returns = false
     me.blocks  = false
     for _, sub in ipairs(t) do
-        me.awaits  = me.awaits  or sub.awaits
-        me.returns = me.returns or sub.returns
-        me.blocks  = me.blocks  or sub.blocks
+        if _AST.isNode(sub) then
+            me.awaits  = me.awaits  or sub.awaits
+            me.returns = me.returns or sub.returns
+            me.blocks  = me.blocks  or sub.blocks
+        end
     end
 end
 
@@ -16,9 +18,11 @@ function AND_all (me, t)
     me.returns = true
     me.blocks  = true
     for _, sub in ipairs(t) do
-        me.awaits  = me.awaits  and sub.awaits
-        me.returns = me.returns and sub.returns
-        me.blocks  = me.blocks  and sub.blocks
+        if _AST.isNode(sub) then
+            me.awaits  = me.awaits  and sub.awaits
+            me.returns = me.returns and sub.returns
+            me.blocks  = me.blocks  and sub.blocks
+        end
     end
 end
 
@@ -35,8 +39,8 @@ F = {
         me.blocks  = false
     end,
     Node = function (me)
-        if (not F[me.tag]) and _AST.isNode(me[#me]) then
-            SAME(me, me[#me])
+        if not F[me.tag] then
+            OR_all(me)
         end
     end,
 

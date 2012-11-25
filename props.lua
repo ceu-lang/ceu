@@ -7,8 +7,10 @@ end
 function MAX_all (me, t)
     t = t or me
     for _, sub in ipairs(t) do
-        for k,v in pairs(sub.ns) do
-            me.ns[k] = MAX(me.ns[k] or 0, v)
+        if _AST.isNode(sub) then
+            for k,v in pairs(sub.ns) do
+                me.ns[k] = MAX(me.ns[k] or 0, v)
+            end
         end
     end
 end
@@ -57,11 +59,12 @@ F = {
             stacks = 0,
             fins   = 0,
             orgs   = 0,
+            news   = 0,
         }
     end,
     Node = function (me)
-        if (not F[me.tag]) and _AST.isNode(me[#me]) then
-            SAME(me, me[#me])   -- last node
+        if not F[me.tag] then
+            MAX_all(me)
         end
         if NO_fin[me.tag] then
             ASR(not _AST.iter'Finally'(), me, 'not permitted inside `finally´')
@@ -127,11 +130,15 @@ F = {
 
     SetNew = function (me)
         _PROPS.has_news = true
+        _PROPS.has_fins = true
+        me.cls.has_news = true
         SAME(me, me.cls)
         -- overwrite these:
-        me.ns.orgs   = 1        -- here or any parent
+        --me.ns.orgs   = 1        -- here or any parent
+        me.ns.news   = 1
         me.ns.stacks = 1        -- constructor continuation
         me.ns.tracks = 2
+        me.ns.fins   = 1        -- free
     end,
 
     Pause = function (me)

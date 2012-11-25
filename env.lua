@@ -192,7 +192,6 @@ F = {
         local ifc, id, blk = unpack(me)
         me.is_ifc = ifc
         me.id     = id
-        me.blk    = (id=='Main' and blk[3][2]) or blk
         ASR(not _ENV.clss[id], me,
                 'interface/class "'..id..'" is already declared')
 
@@ -236,8 +235,6 @@ F = {
         me.cls = ASR(_ENV.clss[id_cls], me,
                         'class "'..id_cls..'" is not declared')
         ASR(not me.cls.is_ifc, me, 'cannot instantiate an interface')
-        me.cls.has_new = true
-
         ASR((not me.isDcl) and exp.lval
             and _TP.contains(exp.tp,me.cls.id..'*'),
                 me, 'invalid attribution')
@@ -335,16 +332,27 @@ F = {
     --------------------------------------------------------------------------
 
     SetExp = function (me)
-        local e1, e2 = unpack(me)
+        local e1, e2, no_fin = unpack(me)
         e1 = e1 or _AST.iter'SetBlock'()[1]
         ASR(e1.lval and _TP.contains(e1.tp,e2.tp,true),
                 me, 'invalid attribution')
 
-        if e2.fst and _TP.deref(e2.tp) then
+        if no_fin then
+            return              -- no `finally´ required
+        end
+
+        if _TP.deref(e1.tp) then
             local blk1 = (e1.fst=='_' and _AST.root) or e1.fst.blk
-            local blk2 = (e2.fst=='_' and _AST.root) or e2.fst.blk
-            ASR(blk1.depth>=blk2.depth or blk2.fin, me,
-                'block at line '..blk2.ln..' must contain `finally´')
+            if e2.fst and e2.fst~='_' then
+                local blk2 = e2.fst.blk
+                ASR(blk2.fin or blk2.depth<=blk1.depth, me,
+                    'block at line '..blk2.ln..' must contain `finally´')
+                -- int a; pa=&a;    -- `a´ termination must consider `pa´
+            else
+                ASR(blk1.fin or e2.tag~='Op2_call', me,
+                    'block at line '..blk1.ln..' must contain `finally´')
+                -- int* pa = _f();   -- `pa´ termination must consider `_f´
+            end
         end
     end,
 
@@ -368,7 +376,8 @@ F = {
 
     Op2_call = function (me)
         local _, f, exps = unpack(me)
-        me.tp = '_'
+        me.tp  = '_'
+        me.fst = '_'
         if f.tag == 'C' then
             local c = _ENV.c[ f[1] ]
             ASR(c and c[1]=='func', me,
@@ -514,21 +523,18 @@ F = {
         me.tp   = 'char*'
         me.lval = false
         me.fst  = false
-        --me.isConst = true
     end,
     CONST = function (me)
         local v = unpack(me)
         me.tp   = 'int'
         me.lval = false
         me.fst  = false
-        --me.isConst = true
         ASR(string.sub(v,1,1)=="'" or tonumber(v), me, 'malformed number')
     end,
     NULL = function (me)
         me.tp   = 'void*'
         me.lval = false
         me.fst  = false
-        --me.isConst = true
     end,
 }
 
