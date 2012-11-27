@@ -289,7 +289,7 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
     , Var     = V'ID_var'
     , C       = V'ID_c'
 
-    , ID_cls  = -KEYS * CK(m.R'AZ'*alphanum^0)
+    , ID_cls  = -KEYS * CK(m.R'AZ'*Alphanum^0)
     , ID_ext  = -KEYS * CK(m.R'AZ'*ALPHANUM^0)
     , ID_var  = -KEYS * CK(m.R'az'*(Alphanum+'?')^0)
                     / function(id) return (string.gsub(id,'%?','_')) end
