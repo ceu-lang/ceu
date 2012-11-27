@@ -79,7 +79,7 @@ end
 
 function ORG (me, new, org0, cls, par_org, par_lbl)
     COMM(me, 'ORG')
-    LINE(me, '{ void* org0 = '..org0..';')
+    LINE(me, '{ char* org0 = '..org0..';')
     if new then
         LINE(me, 'if (org0) {')
         LINE(me, '  ceu_lst_ins(0, org0, org0, '..cls.lbl_fin.id..',0);')
@@ -89,7 +89,7 @@ function ORG (me, new, org0, cls, par_org, par_lbl)
 #ifdef CEU_IFCS
     *((tceu_ncls*)(org0+]]..(_MEM.cls.cls or '')..[[)) = ]]..cls.n..[[;
 #endif
-    *((void**)    (org0+]].._MEM.cls.par_org..[[))     = ]]..par_org..[[;
+    *((char**)    (org0+]].._MEM.cls.par_org..[[))     = ]]..par_org..[[;
     *((tceu_nlbl*)(org0+]].._MEM.cls.par_lbl..[[))     = ]]..par_lbl..[[;
 ]])
     if new then
@@ -171,7 +171,7 @@ F = {
             if cls then
                 for i=0, var.arr-1 do
                     ORG(me, false,
-                            var.val..'+'..i..'*'..cls.mem.max,
+                            '(((char*)'..var.val..')+'..i..'*'..cls.mem.max..')',
                             cls,
                             '_trk_.org',
                             var.lbl_cnt.id)
@@ -184,6 +184,9 @@ F = {
         CASE(me, var.lbl_cnt)
     end,
     Block = function (me)
+        if CLS().is_ifc then
+            return
+        end
         CONC_ALL(me)
 
         -- finalize orgs (they were spawned in parallel)

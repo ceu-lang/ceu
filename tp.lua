@@ -9,6 +9,15 @@ local types = {
     u8=true,  s8=true,
 }
 
+function _TP.align (n, b)
+    b = b or 4              -- TODO: _OPTS.align
+    if n%b > 0 then
+        return n + b-n%b
+    else
+        return n
+    end
+end
+
 function _TP.n2bytes (n)
     if n < 2^8 then
         return 1
@@ -44,7 +53,8 @@ function _TP.cls (tp)
 end
 
 function _TP.c (tp)
-    return (string.gsub(string.gsub(tp,'^%u[_%w]*','void*'), '^_', ''))
+    -- class->char* // _tp->tp
+    return (string.gsub(string.gsub(tp,'^%u[_%w]*','char*'), '^_', ''))
 end
 
 function _TP.isNumeric (tp, c)
@@ -57,7 +67,7 @@ function _TP.deref (tp, c)
 end
 
 function _TP.ext (tp)
-    return (string.sub(tp,1,1) == '_') and
+    return (string.sub(tp,1,1) == '_') and              -- TODO: remove '*'
             (not string.match(tp, '(.-)%*$')) and tp
 end
 

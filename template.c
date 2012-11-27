@@ -56,16 +56,16 @@ typedef === TCEU_NOFF === tceu_noff;    // max offset in an iface
 #endif
 
 typedef struct {
-    void*     org;
-    u8 stack;
-    u8 tree;
+    char*     org;
+    u8        stack;
+    u8        tree;
     tceu_nlbl lbl;
 } tceu_trk;
 
 // TODO: union
 typedef struct {
-    void*     src;
-    void*     org;
+    char*     src;
+    char*     org;
     tceu_nevt evt;
     tceu_nlbl lbl;
 #ifdef CEU_PSES
@@ -87,6 +87,8 @@ int ceu_go_free (int* ret);
 #endif
 
 typedef struct {
+    char        mem[CEU_NMEM];
+
 #ifdef CEU_EXTS
     void*       ext_data;
     int         ext_int;
@@ -125,10 +127,10 @@ typedef struct {
 #endif
 
     u8          stack;
-    char        mem[CEU_NMEM];
 } tceu;
 
 tceu CEU = {
+    {},
 #ifdef CEU_EXTS
     0, 0,
 #endif
@@ -148,8 +150,7 @@ tceu CEU = {
     0, CEU_NTRACKS,   {},
     0, CEU_NLSTS,   {},
 #endif
-    CEU_STACK_MIN,
-    {}
+    CEU_STACK_MIN
 };
 
 === CLS_ACCS ===
@@ -169,7 +170,7 @@ int ceu_trk_cmp (tceu_trk* trk1, tceu_trk* trk2) {
     return (trk1->tree > trk2->tree);
 }
 
-void ceu_trk_ins (u8 stack, u8 tree, void* org, int chk, tceu_nlbl lbl)
+void ceu_trk_ins (u8 stack, u8 tree, char* org, int chk, tceu_nlbl lbl)
 {
     tceu_ntrk i;
     tceu_trk trk = {
@@ -192,7 +193,7 @@ void ceu_trk_ins (u8 stack, u8 tree, void* org, int chk, tceu_nlbl lbl)
 #ifdef CEU_NEWS
     if (CEU.trks_n == CEU.trks_nmax) {
         u32 nmax;
-        void* new;
+        tceu_trk* new;
         for (nmax=CEU.trks_nmax*2; nmax>CEU.trks_nmax; nmax/=2) {
             new = realloc(CEU.trks, nmax*sizeof(tceu_trk) + sizeof(tceu_trk));
             if (new)
@@ -205,10 +206,10 @@ void ceu_trk_ins (u8 stack, u8 tree, void* org, int chk, tceu_nlbl lbl)
 
 #if defined(CEU_DEBUG) || defined(CEU_NEWS)
 /*
-    fprintf(stderr, "======== %d\n", CEU.stack);
+    fprintf(stderr, "======== TRKS: %d %d\n", CEU.trks_n, CEU.trks_nmax);
     for (int i=1; i<=CEU.trks_n; i++) {
         tceu_trk* trk = &CEU.trks[i];
-        fprintf(stderr,"LST: o.%p s.%d/t.%d l.%d\n",
+        fprintf(stderr,"trk: o.%p s.%d/t.%d l.%d\n",
                     trk->org, trk->stack, trk->tree, trk->lbl);
     }
 */
@@ -251,8 +252,8 @@ int ceu_trk_rem (tceu_trk* trk, tceu_ntrk N)
     return 1;
 }
 
-int ceu_clr_child (void* cur, void* org, tceu_nlbl l1, tceu_nlbl l2) {
-    void* par = *PTR(void**,cur+(=== CEU_CLS_PAR_ORG ===));
+int ceu_clr_child (char* cur, char* org, tceu_nlbl l1, tceu_nlbl l2) {
+    char* par = *PTR(char**,cur+(=== CEU_CLS_PAR_ORG ===));
     if (cur == CEU.mem) {
         return 0;                   // root org, no parent
     } else if (par == org) {
@@ -263,7 +264,7 @@ int ceu_clr_child (void* cur, void* org, tceu_nlbl l1, tceu_nlbl l2) {
     }
 }
 
-void ceu_trk_clr (int child, void* org, tceu_nlbl l1, tceu_nlbl l2) {
+void ceu_trk_clr (int child, char* org, tceu_nlbl l1, tceu_nlbl l2) {
     int i;
     for (i=1; i<=CEU.trks_n; i++) {
         tceu_trk* trk = &CEU.trks[i];
@@ -277,11 +278,12 @@ void ceu_trk_clr (int child, void* org, tceu_nlbl l1, tceu_nlbl l2) {
 
 /**********************************************************************/
 
-void ceu_lst_ins (tceu_nevt evt, void* src, void* org, tceu_nlbl lbl, s32 togo) {
+void ceu_lst_ins (tceu_nevt evt, char* src, char* org, tceu_nlbl lbl, s32 togo) 
+{
 #ifdef CEU_NEWS
     if (CEU.lsts_n == CEU.lsts_nmax) {
         u32 nmax;
-        void* new;
+        tceu_lst* new;
         for (nmax=CEU.lsts_nmax*2; nmax>CEU.lsts_nmax; nmax/=2 ) {
             new = realloc(CEU.lsts, nmax*sizeof(tceu_lst));
             if (new)
@@ -316,7 +318,7 @@ for (int i=0; i<CEU.lsts_n; i++) {
     CEU.lsts_n++;
 }
 
-void ceu_lst_go (tceu_nevt evt, void* src)
+void ceu_lst_go (tceu_nevt evt, char* src)
 {
     tceu_nlst i;
     for (i=0 ; i<CEU.lsts_n ; i++) {
@@ -338,7 +340,7 @@ void ceu_lst_go (tceu_nevt evt, void* src)
     }
 }
 
-void ceu_lst_clr (int child, void* org, tceu_nlbl l1, tceu_nlbl l2, u8 tree) {
+void ceu_lst_clr (int child, char* org, tceu_nlbl l1, tceu_nlbl l2, u8 tree) {
     tceu_nlst i;
     for (i=0 ; i<CEU.lsts_n ; i++) {
         tceu_lst* lst = &CEU.lsts[i];
@@ -361,7 +363,7 @@ void ceu_lst_clr (int child, void* org, tceu_nlbl l1, tceu_nlbl l2, u8 tree) {
 }
 
 #ifdef CEU_PSES
-void ceu_lst_pse (int child, void* org, tceu_nlbl l1, tceu_nlbl l2, int inc) {
+void ceu_lst_pse (int child, char* org, tceu_nlbl l1, tceu_nlbl l2, int inc) {
     tceu_nlst i;
     for (i=0 ; i<CEU.lsts_n ; i++) {
         tceu_lst* lst = &CEU.lsts[i];
@@ -395,7 +397,7 @@ int* ceu_ext_f (int v) {
 
 #ifdef CEU_WCLOCKS
 
-void ceu_wclock_enable (s32 us, void* org, tceu_nlbl lbl) {
+void ceu_wclock_enable (s32 us, char* org, tceu_nlbl lbl) {
     s32 dt = us - CEU.wclk_late;
     ceu_lst_ins(IN__WCLOCK, NULL, org, lbl, dt);
     if (CEU.wclk_min==CEU_WCLOCK_NONE || CEU.wclk_min>dt) {
@@ -406,7 +408,7 @@ void ceu_wclock_enable (s32 us, void* org, tceu_nlbl lbl) {
     }
 }
 
-s32 ceu_wclock_find (void* org, tceu_nlbl lbl) {
+s32 ceu_wclock_find (char* org, tceu_nlbl lbl) {
     tceu_nlst i;
     for (i=0 ; i<CEU.lsts_n ; i++) {
         if (CEU.lsts[i].org==org && CEU.lsts[i].lbl==lbl) {
@@ -419,7 +421,7 @@ s32 ceu_wclock_find (void* org, tceu_nlbl lbl) {
 #endif
 
 #ifdef CEU_ASYNCS
-void ceu_async_enable (void* org, tceu_nlbl lbl) {
+void ceu_async_enable (char* org, tceu_nlbl lbl) {
     ceu_lst_ins(IN__ASYNC, NULL, org, lbl, 0);
 #ifdef ceu_out_async
         ceu_out_async(1);
@@ -601,7 +603,9 @@ int ceu_go_nofree (int* ret)
 
 _SWITCH_:
 #ifdef CEU_DEBUG
-//fprintf(stderr,"TRK: o.%p s.%d/t.%d/l.%d\n",
+//__android_log_print(4, "MTG_LIFE",
+//fprintf(stderr,
+    //"TRK: o.%p s.%d/t.%d/l.%d\n",
         //_trk_.org, _trk_.stack, _trk_.tree, _trk_.lbl);
 #endif
 

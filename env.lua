@@ -121,6 +121,7 @@ function newvar (me, blk, pre, tp, dim, id)
         pre   = pre,
         isEvt = isEvt,
         arr   = dim,
+        val   = '0',     -- TODO: workaround: dummy value for interfaces
     }
 
     blk.vars[#blk.vars+1] = var

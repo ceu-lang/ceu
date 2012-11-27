@@ -19,7 +19,7 @@ end
 
 function alloc (mem, n)
     local cur = mem.off
-    mem.off = mem.off + n
+    mem.off = mem.off + _TP.align(n)
     mem.max = MAX(mem.max, mem.off)
     return cur
 end
@@ -58,9 +58,13 @@ F = {
                 else
                     off = var.off
                 end
-                local val = '(('.._TP.c(var.tp..'*')..')(org+'..off..'))'
-                if not (var.cls or var.arr) then
-                    val = '(*'..val..')'
+
+                if var.cls or var.arr then
+                    val = '(('.._TP.c(var.tp)..')(org+'..off..'))'
+                elseif _ENV.clss[_TP.raw(var.tp)] then  -- TODO: not completely understood
+                    val = '(*(('.._TP.c(var.tp)..')(org+'..off..')))'
+                else
+                    val = '(*(('.._TP.c(var.tp..'*')..')(org+'..off..')))'
                 end
                 local id = pre..'_'..cls.id..'_'..var.id
                 accs[#accs+1] = '#define '..id..'_off(org) '..off
@@ -111,9 +115,12 @@ F = {
 
             var.off = alloc(mem, len)
 
-            var.val = '(*PTR_org('.._TP.c(var.tp)..'*,'..var.off..'))'
-            if var.arr or var.cls then
-                var.val = '(('.._TP.c(var.tp)..')(&'..var.val..'))'
+            if var.cls or var.arr then
+                var.val = 'PTR_org('.._TP.c(var.tp)..','..var.off..')'
+            elseif _ENV.clss[_TP.raw(var.tp)] then  -- TODO: not completely understood
+                var.val = '(*PTR_org('.._TP.c(var.tp)..','..var.off..'))'
+            else
+                var.val = '(*PTR_org('.._TP.c(var.tp)..'*,'..var.off..'))'
             end
 
             if var.isEvt then
@@ -228,19 +235,17 @@ F = {
             ps[i] = exp.val
         end
         if f.org then
-            me.val = f.val..'('..f.org.val..','..table.concat(ps,',')..')'
-        else
-            me.val = f.val..'('..table.concat(ps,',')..')'
+            table.insert(ps, 1, f.org.val)
         end
+        me.val = f.val..'('..table.concat(ps,',')..')'
     end,
 
     Op2_idx = function (me)
         local _, arr, idx = unpack(me)
         local cls = _ENV.clss[me.tp]
         if cls then
-            me.val = '('..arr.val..'+('..idx.val..'*'..cls.mem.max..'))'
-            me.val = '*(('.._TP.c(me.tp)..'*)'..me.val..')'
-            me.val = '(('.._TP.c(me.tp)..')(&'..me.val..'))'
+            me.val = '(((char*)'..arr.val..')+('..idx.val..'*'..cls.mem.max..'))'
+            me.val = '(('.._TP.c(me.tp)..')'..me.val..')'
         else
             me.val = '('..arr.val..'['..idx.val..'])'
         end

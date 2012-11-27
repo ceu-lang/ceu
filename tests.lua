@@ -1,6 +1,107 @@
 --[===[
 --]===]
 
+Test { [[
+class Sm with
+    var int id;
+do
+end
+
+class Image_media with
+    var Sm sm;
+do
+end
+
+var Image_media img1;
+    img1.sm.id = 10;
+
+var Image_media img2;
+    img2.sm.id = 12;
+
+var Image_media img3;
+    img3.sm.id = 11;
+
+return img1.sm.id + img2.sm.id + img3.sm.id;
+]],
+    run = 33;
+}
+Test { [[
+class Sm with
+    var int id;
+do
+end
+
+class Image_media with
+    var Sm sm;
+do
+    par do with with with with end
+end
+
+var Image_media img1;
+    img1.sm.id = 10;
+
+var Image_media img2;
+    img2.sm.id = 12;
+
+var Image_media img3;
+    img3.sm.id = 11;
+
+return img1.sm.id + img2.sm.id + img3.sm.id;
+]],
+    run = 33;
+}
+
+Test { [[
+class Sm with
+do
+end
+interface Media with
+    var Sm sm;
+end
+return 10;
+]],
+    run = 10;
+}
+
+Test { [[
+class T with
+    var int v;
+do
+end
+
+var T t;
+    t.v = 10;
+var T* p = &t;
+return p:v;
+]],
+    run = 10,
+}
+Test { [[
+C do
+    int IFC_I__ins (void* org) {
+        return IFC_I_v(org);
+    }
+end
+
+interface I with
+    var int v;
+    external _ins();
+end
+
+class T with
+    var int v;
+    external _ins();
+do
+end
+
+var T t;
+    t.v = 10;
+var I* i = &t;
+return i:_ins();
+]],
+    run = 10,
+}
+
     -- CLASSES / ORGS
 
 Test { [[
@@ -1104,6 +1205,8 @@ do
             loop do
                 await 10ms;
                 x = x + 1;
+external _stderr, _fprintf();
+_fprintf(_stderr, "this=%p, &this.x=%p\n", this, &this.x);
             end
         with
             await go;
@@ -1141,6 +1244,10 @@ rs[0].y = 50;
 rs[1].x = 100;
 rs[1].y = 300;
 
+external _stderr, _fprintf();
+_fprintf(_stderr, "&rs[0]=%p, &rs[0].x=%p\n", &rs[0], &rs[0].x);
+_fprintf(_stderr, "&rs[1]=%p, &rs[1].x=%p\n", &rs[1], &rs[1].x);
+
 par/or do
     loop do
         var int i = await BUTTON;
@@ -1152,6 +1259,7 @@ with
     async do
         emit 100ms;
     end
+    _assert(rs[1].x==110);
     _assert(rs[0].x==20 and rs[0].y==50 and rs[1].x==110 and rs[1].y==300);
 
     async do
