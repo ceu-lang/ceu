@@ -9,12 +9,12 @@ do  -- _MEM.cls
     local off = 0
     if _PROPS.has_ifcs then
         _MEM.cls.cls = off
-        off = off + _ENV.c.tceu_ncls[3]
+        off = off + _ENV.c.tceu_ncls.len
     end
     _MEM.cls.par_org = off
-    off = off + _ENV.c.pointer[3]
+    off = off + _ENV.c.pointer.len
     _MEM.cls.par_lbl = off
-    off = off + _ENV.c.tceu_nlbl[3]
+    off = off + _ENV.c.tceu_nlbl.len
 end
 
 function alloc (mem, n)
@@ -39,7 +39,7 @@ end
 
 F = {
     Root = function (me)
-        _ENV.c.tceu_nevt[3] = _TP.n2bytes(_MEM.evt_off+#_ENV.exts)
+        _ENV.c.tceu_nevt.len = _TP.n2bytes(_MEM.evt_off+#_ENV.exts)
 
         -- cls/ifc accessors
         local accs = {}
@@ -80,10 +80,10 @@ F = {
             alloc(me.mem, 1)                -- dynamically allocated?
         end
         if _PROPS.has_ifcs then
-            alloc(me.mem, _ENV.c.tceu_ncls[3]) -- cls N
+            alloc(me.mem, _ENV.c.tceu_ncls.len) -- cls N
         end
-        alloc(me.mem, _ENV.c.pointer[3])   -- parent org/lbl
-        alloc(me.mem, _ENV.c.tceu_nlbl[3]) -- for ceu_clr_*
+        alloc(me.mem, _ENV.c.pointer.len)   -- parent org/lbl
+        alloc(me.mem, _ENV.c.tceu_nlbl.len) -- for ceu_clr_*
     end,
 
     Block_pre = function (me)
@@ -104,13 +104,13 @@ F = {
                 len = var.cls.mem.max
             elseif var.arr then
                 local _tp = _TP.deref(var.tp)
-                len = var.arr * (_TP.deref(_tp) and _ENV.c.pointer[3]
-                             or (_ENV.c[_tp] and _ENV.c[_tp][3])
+                len = var.arr * (_TP.deref(_tp) and _ENV.c.pointer.len
+                             or (_ENV.c[_tp] and _ENV.c[_tp].len)
                              or (_ENV.clss[_tp] and _ENV.clss[_tp].mem.max))
             elseif _TP.deref(var.tp) then
-                len = _ENV.c.pointer[3]
+                len = _ENV.c.pointer.len
             else
-                len = _ENV.c[var.tp][3]
+                len = _ENV.c[var.tp].len
             end
 
             var.off = alloc(mem, len)
@@ -303,7 +303,7 @@ F = {
             local cls = _ENV.clss[me.org.tp]
             local pre = (cls.is_ifc and 'IFC_') or 'CLS_'
             if me.c then
-                me.val = me.c[2]
+                me.val = me.c.id
             else
                 me.off = pre..cls.id..'_'..me.var.id..'_off('..me.org.val..')'
                 me.val = pre..cls.id..'_'..me.var.id..'('..me.org.val..')'

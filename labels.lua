@@ -31,7 +31,7 @@ F = {
     end,
 
     Root = function (me)
-        _ENV.c.tceu_nlbl[3] = _TP.n2bytes(#_LBLS.list)
+        _ENV.c.tceu_nlbl.len = _TP.n2bytes(#_LBLS.list)
 
         -- enum of labels
         for i, lbl in ipairs(_LBLS.list) do

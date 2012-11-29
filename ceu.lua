@@ -147,10 +147,10 @@ do
     tpl = sub(tpl, '=== CEU_NLBLS ===',    #_LBLS.list)
 
     -- TODO: u32 p/ has_news
-    tpl = sub(tpl, '=== TCEU_NTRK ===', tps[_ENV.c.tceu_ntrk[3]])
-    tpl = sub(tpl, '=== TCEU_NLST ===', tps[_ENV.c.tceu_nlst[3]])
-    tpl = sub(tpl, '=== TCEU_NEVT ===', tps[_ENV.c.tceu_nevt[3]])
-    tpl = sub(tpl, '=== TCEU_NLBL ===', tps[_ENV.c.tceu_nlbl[3]])
+    tpl = sub(tpl, '=== TCEU_NTRK ===', tps[_ENV.c.tceu_ntrk.len])
+    tpl = sub(tpl, '=== TCEU_NLST ===', tps[_ENV.c.tceu_nlst.len])
+    tpl = sub(tpl, '=== TCEU_NEVT ===', tps[_ENV.c.tceu_nevt.len])
+    tpl = sub(tpl, '=== TCEU_NLBL ===', tps[_ENV.c.tceu_nlbl.len])
 
     tpl = sub(tpl, '=== CEU_CLS_PAR_ORG ===',  _MEM.cls.par_org)
     tpl = sub(tpl, '=== CEU_CLS_PAR_LBL ===',  _MEM.cls.par_lbl)
@@ -182,7 +182,7 @@ do
             end
             T[#T+1] = '{'..table.concat(t,',')..'}'
         end
-        tpl = sub(tpl, '=== TCEU_NCLS ===', tps[_ENV.c.tceu_ncls[3]])
+        tpl = sub(tpl, '=== TCEU_NCLS ===', tps[_ENV.c.tceu_ncls.len])
         tpl = sub(tpl, '=== TCEU_NOFF ===', tps[_TP.n2bytes(off_max)])
         tpl = sub(tpl, '=== CEU_NCLS ===',  #_ENV.clss)
         tpl = sub(tpl, '=== CEU_NIFCS ===', #_ENV.ifcs)

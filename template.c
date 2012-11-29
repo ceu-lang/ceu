@@ -567,11 +567,7 @@ int ceu_go_wclock (int* ret, s32 dt, s32* nxt)
     CEU.wclk_late = 0;
     return s;}
 
-#else
-    *nxt = CEU_WCLOCK_NONE;
-#ifdef ceu_out_wclock
-    ceu_out_wclock(CEU_WCLOCK_NONE);
-#endif
+#else   // CEU_WCLOCKS
     return 0;
 #endif
 }

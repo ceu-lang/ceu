@@ -85,12 +85,33 @@ end
 
 interface I with
     var int v;
-    external _ins();
 end
 
 class T with
     var int v;
-    external _ins();
+do
+end
+
+var T t;
+    t.v = 10;
+var I* i = &t;
+return t._ins();
+]],
+    env = 'ERR : line 19 : C function "CLS_T__ins" is not declared',
+}
+Test { [[
+C do
+    int IFC_I__ins (void* org) {
+        return IFC_I_v(org);
+    }
+end
+
+interface I with
+    var int v;
+end
+
+class T with
+    var int v;
 do
 end
 
@@ -99,7 +120,63 @@ var T t;
 var I* i = &t;
 return i:_ins();
 ]],
-    run = 10,
+    env = 'ERR : line 19 : C function "IFC_I__ins" is not declared',
+}
+Test { [[
+C do
+    int IFC_I__ins (void* org) {
+        return IFC_I_v(org);
+    }
+end
+
+interface I with
+    var int v;
+    external nohold _ins();
+end
+
+class T with
+    var int v;
+do
+end
+
+var T t;
+    t.v = 10;
+var I* i = &t;
+return i:_ins() + t._ins();;
+]],
+    env = 'ERR : line 20 : C function "CLS_T__ins" is not declared',
+}
+
+Test { [[
+C do
+    int IFC_I__ins (void* org) {
+        return IFC_I_v(org);
+    }
+end
+
+C do
+    int CLS_T__ins (void* org) {
+        return CLS_T_v(org);
+    }
+end
+
+interface I with
+    var int v;
+    external nohold _ins();
+end
+
+class T with
+    var int v;
+    external nohold _ins();
+do
+end
+
+var T t;
+    t.v = 10;
+var I* i = &t;
+return i:_ins() + t._ins();
+]],
+    run = 20,
 }
 
     -- CLASSES / ORGS
@@ -1205,8 +1282,8 @@ do
             loop do
                 await 10ms;
                 x = x + 1;
-external _stderr, _fprintf();
-_fprintf(_stderr, "this=%p, &this.x=%p\n", this, &this.x);
+//external _stderr, _fprintf();
+//_fprintf(_stderr, "this=%p, &this.x=%p\n", this, &this.x);
             end
         with
             await go;
@@ -1244,9 +1321,9 @@ rs[0].y = 50;
 rs[1].x = 100;
 rs[1].y = 300;
 
-external _stderr, _fprintf();
-_fprintf(_stderr, "&rs[0]=%p, &rs[0].x=%p\n", &rs[0], &rs[0].x);
-_fprintf(_stderr, "&rs[1]=%p, &rs[1].x=%p\n", &rs[1], &rs[1].x);
+//external _stderr, _fprintf();
+//_fprintf(_stderr, "&rs[0]=%p, &rs[0].x=%p\n", &rs[0], &rs[0].x);
+//_fprintf(_stderr, "&rs[1]=%p, &rs[1].x=%p\n", &rs[1], &rs[1].x);
 
 par/or do
     loop do
@@ -1425,7 +1502,7 @@ return ret + aa.a + aa.b;
 }
 
 Test { [[
-external _f();
+external nohold _f();
 input void START;
 class T with
     event int e, ok, go, b;
@@ -2540,12 +2617,12 @@ end
 
 interface I with
     var int v;
-    external _f();
+    external nohold _f();
 end
 
 class T with
     var int v;
-    external _f();
+    external nohold _f();
 do
     v = 50;
     this._f(10);
@@ -2612,7 +2689,7 @@ end
 }
 
 Test { [[
-external _attr();
+external nohold _attr();
 C do
     void attr (void* org) {
         IFC_Global_a(GLOBAL) = CLS_T_a(org) + 1;
@@ -3475,13 +3552,89 @@ C do
     }
     typedef void (*t)(int*);
 end
-external _t=4, _f();
+external _t=4;
+external nohold _f();
 var _t v = _f;
-var int a;
-v(&a);
-return(a);
+var int ret;
+do
+    var int a;
+    v(&a);
+    ret = a;
+finally
+end
+return(ret);
 ]],
     run = 10,
+}
+Test { [[
+external _t=4, _A;
+external _f();
+C do
+    int* A = NULL;;
+    void f (int* a) {
+        A = a;
+    }
+    typedef void (*t)(int*);
+end
+var int ret = 0;
+if _A then
+    ret = ret + *_A;
+end
+do
+    var int a = 10;;
+    var _t v = _f;
+    v(&a);
+    if _A then
+        a = a + *_A;
+    end
+finally
+    ret = ret + a;
+    _A = null;
+end
+if _A then
+    ret = ret + *_A;
+end
+return(ret);
+]],
+    run = 20,
+}
+Test { [[
+input void START;
+external _t=4, _A;
+external _f();
+C do
+    int* A = NULL;;
+    void f (int* a) {
+        A = a;
+    }
+    typedef void (*t)(int*);
+end
+var int ret = 0;
+if _A then
+    ret = ret + *_A;
+end
+par/or do
+    do
+        var int a = 10;;
+        var _t v = _f;
+        v(&a);
+        if _A then
+            a = a + *_A;
+        end
+        await FOREVER;
+    finally
+        ret = ret + a;
+        _A = null;
+    end
+with
+    await START;
+end
+if _A then
+    ret = ret + *_A;
+end
+return(ret);
+]],
+    run = 20,
 }
 Test { [[
 output int A;
@@ -15548,7 +15701,7 @@ return *a+b+c;
 }
 
 Test { [[
-external _f();
+external nohold _f();
 C do
     void f (int* v) {
         *v = 1;
@@ -15631,7 +15784,35 @@ C do
         return &a;
     }
 end
+var int* p = _f();
+return *p;
+]],
+    env = 'ERR : line 9 : block at line 1 must contain `finally´',
+}
+Test { [[
+external _f();
+C do
+    int a;
+    int* f () {
+        a = 10;
+        return &a;
+    }
+end
 var int* p := _f();
+return *p;
+]],
+    run = 10,
+}
+Test { [[
+external pure _f();
+C do
+    int a;
+    int* f () {
+        a = 10;
+        return &a;
+    }
+end
+var int* p = _f();
 return *p;
 ]],
     run = 10,
@@ -15764,7 +15945,7 @@ return v == &v[0] ;
 }
 
 Test { [[
-external _f();
+external nohold _f();
 C do
     void f (int* p) {
         *p = 1;
@@ -16059,7 +16240,7 @@ return c;
 }
 
 Test { [[
-external _f1(), _f2();
+external nohold _f1(), _f2();
 C do
     int f1 (u8* v) {
         return v[0]+v[1];
@@ -16755,7 +16936,7 @@ external _printf();
 _printf("END: 1%d%d\n",2,3); return 0;]], run=123 }
 
 Test { [[
-external _strncpy(), _printf(), _strlen();
+external nohold _strncpy(), _printf(), _strlen();
 external _char = 1;
 var _char[10] str;
 _strncpy(str, "123", 4);
@@ -16766,7 +16947,7 @@ return 0;
 }
 
 Test { [[
-external _strncpy(), _printf(), _strlen(), _strcpy();
+external nohold _strncpy(), _printf(), _strlen(), _strcpy();
 external _char = 1;
 var _char[6] a; _strcpy(a, "Hello");
 var _char[2] b; _strcpy(b, " ");

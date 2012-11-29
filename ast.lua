@@ -311,11 +311,11 @@ local C; C = {
         end
     end,
 
-    _Dcl_c_ifc = function (ln, ...)
+    _Dcl_c_ifc = function (ln, mod, ...)
         local ret = {}
         local t = { ... }
-        for i=1, #t, 3 do
-            ret[#ret+1] = node('Dcl_c')(ln, t[i], t[i+1], t[i+2])
+        for i=1, #t, 3 do   -- pure/const/false, type/func/var, id, len
+            ret[#ret+1] = node('Dcl_c')(ln, mod, t[i], t[i+1], t[i+2])
         end
         return unpack(ret)
     end,
@@ -466,7 +466,7 @@ F = {
         var.ret = true
 
         local blk = node('BlockN')(me.ln)
-        blk[#blk+1] = node('SetExp')(me.ln, var, e2)
+        blk[#blk+1] = node('SetExp')(me.ln, var, e2, set[3])
 
         blk[#blk+1] = node('Return')(me.ln)
         return blk

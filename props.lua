@@ -76,8 +76,8 @@ F = {
 
     Root = function (me)
         SAME(me, me[#me])
-        _ENV.c.tceu_nlst[3] = _TP.n2bytes(me.ns.awaits)
-        _ENV.c.tceu_ntrk[3] = _TP.n2bytes(me.ns.tracks)
+        _ENV.c.tceu_nlst.len = _TP.n2bytes(me.ns.awaits)
+        _ENV.c.tceu_ntrk.len = _TP.n2bytes(me.ns.tracks)
     end,
 
     Block = function (me)

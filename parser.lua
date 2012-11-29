@@ -56,6 +56,7 @@ local _V2NAME = {
     ID_type = 'type',
     _Dcl_var = 'declaration',
     _Dcl_int = 'declaration',
+    __Dcl_c  = 'declaration',
     _Dcl_c   = 'declaration',
 }
 local EV = function (rule)
@@ -96,6 +97,7 @@ KEYS = P'async'  + 'await'   + 'break'   + 'C'
      + 'await/0'
      + 'or' + 'and' + 'not'
      + 'var'
+     + 'pure' + 'constant' + 'nohold'
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
@@ -124,7 +126,8 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
             + V'_Dcl_c'   + V'_Dcl_ext'
             + V'_Dcl_int' + V'_Dcl_var'
             + V'_Set'     + V'CallStmt' -- respect this order
-            + EM'statement'-- (missing `_´?)'
+            --+ EM'statement'-- (missing `_´?)'
+            + EM'statement (usually a missing `var´ or `_´ C prefix'
 
     , _StmtB = V'_Do'   + V'Async'  + V'Host'
              + V'ParOr' + V'ParAnd'
@@ -253,11 +256,14 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
 
     , EmitInt  = K'emit' * EV'_Exp' * (K'=' * V'_Exp')^-1
 
-    , __Dcl_c    = Cc'type' * V'ID_c' * K'='  * NUM
+    , __Dcl_c    = Cc'type' * V'ID_c' * K'=' * NUM
                  + Cc'func' * V'ID_c' * '()' * Cc(false)
                  + Cc'var'  * V'ID_c'        * Cc(false)
-    , _Dcl_c     = K'external' * V'__Dcl_c' * (K',' * V'__Dcl_c')^0
-    , _Dcl_c_ifc = K'external' * V'__Dcl_c' * (K',' * V'__Dcl_c')^0
+    , _Dcl_c_ifc = K'external' * (CK'pure'+CK'constant'+CK'nohold'+Cc(false))
+                 * EV'__Dcl_c' * (K',' * EV'__Dcl_c')^0
+    , _Dcl_c     = K'external' * (CK'pure'+CK'constant'+CK'nohold'+Cc(false))
+                 * EV'__Dcl_c' * (K',' * EV'__Dcl_c')^0
+
 
     , _Dcl_ext = (CK'input'+CK'output') * EV'ID_type' *
                     EV'ID_ext' * (K','*EV'ID_ext')^0

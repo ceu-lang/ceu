@@ -1,9 +1,0 @@
-input int Photo_readDone;
-int data;
-
-loop do
-    await 100ms;
-    _Photo_read();
-    data = await Photo_readDone;
-    _Leds_set(data/100);
-end

@@ -37,9 +37,9 @@ _ENV = {
 
 for k, v in pairs(_ENV.c) do
     if v == true then
-        _ENV.c[k] = { 'type', k, nil }
+        _ENV.c[k] = { tag='type', id=k, len=nil }
     else
-        _ENV.c[k] = { 'type', k, v }
+        _ENV.c[k] = { tag='type', id=k, len=v }
     end
 end
 
@@ -96,11 +96,11 @@ function newvar (me, blk, pre, tp, dim, id)
     local c = _ENV.c[tp_raw]
     local isEvt = (pre ~= 'var')
 
-    ASR(_ENV.clss[tp_raw] or (c and c[1]=='type'),
+    ASR(_ENV.clss[tp_raw] or (c and c.tag=='type'),
         me, 'undeclared type `'..tp_raw..'´')
     ASR(not (_ENV.clss[tp] and _ENV.clss[tp].is_ifc), me,
         'cannot instantiate an interface')
-    ASR(_TP.deref(tp) or (not c) or (tp=='void' and isEvt) or c[3]>0, me,
+    ASR(_TP.deref(tp) or (not c) or (tp=='void' and isEvt) or c.len>0, me,
         'cannot instantiate type "'..tp..'"')
     ASR((not dim) or dim>0, me, 'invalid array dimension')
 
@@ -145,7 +145,7 @@ end
 
 F = {
     Root = function (me)
-        _ENV.c.tceu_ncls[3] = _TP.n2bytes(#_ENV.clss)
+        _ENV.c.tceu_ncls.len = _TP.n2bytes(#_ENV.clss)
 
         local ext = {id='_WCLOCK', pre='input'}
         _ENV.exts[#_ENV.exts+1] = ext
@@ -282,12 +282,12 @@ F = {
     end,
 
     Dcl_c = function (me)
-        local tag, id, len = unpack(me)
+        local mod, tag, id, len = unpack(me)
         if _AST.iter'BlockI'() then
             local cls = CLS()
             id = ((cls.is_ifc and 'IFC_') or 'CLS_')..cls.id..'_'..id
         end
-        _ENV.c[id] = { tag, id, len }
+        _ENV.c[id] = { tag=tag, id=id, len=len, mod=mod }
     end,
 
     Dcl_pure = function (me)
@@ -350,7 +350,7 @@ F = {
                     'block at line '..blk2.ln..' must contain `finally´')
                 -- int a; pa=&a;    -- `a´ termination must consider `pa´
             else
-                ASR(blk1.fin or e2.tag~='Op2_call', me,
+                ASR(blk1.fin or e2.tag~='Op2_call' or e2.c.mod=='pure', me,
                     'block at line '..blk1.ln..' must contain `finally´')
                 -- int* pa = _f();   -- `pa´ termination must consider `_f´
             end
@@ -380,16 +380,31 @@ F = {
         me.tp  = '_'
         me.fst = '_'
         if f.tag == 'C' then
-            local c = _ENV.c[ f[1] ]
-            ASR(c and c[1]=='func', me,
-            'C function "'..(f[1])..'" is not declared')
-            me.fid = f[1]
+            me.c = _ENV.c[ f[1] ]
+        elseif f.tag == 'Op2_.' then
+            me.c = f.c
         else
-            me.fid = '$anon'
+            me.c = { tag='func', id='$anon', mod=nil }
         end
-        ASR((not _OPTS.c_calls) or _OPTS.c_calls[me.fid],
+        ASR(me.c.tag=='func', me,
+            'C function "'..(me.c.id)..'" is not declared')
+        _ENV.calls[me.c.id] = true
+        ASR((not _OPTS.c_calls) or _OPTS.c_calls[me.c.id],
             me, 'C calls are disabled')
-        _ENV.calls[me.fid] = true
+        if not (me.c and (me.c.mod=='pure' or me.c.mod=='nohold')) then
+            if f.org then
+                exps = { f.org, unpack(exps) }
+            end
+            for _, exp in ipairs(exps) do
+                if (_TP.deref(exp.tp) or _ENV.clss[_TP.raw(exp.tp)])
+                and exp.fst then
+                    local blk = (exp.fst=='_' and _AST.root) or exp.fst.blk
+                    ASR(blk.fin, me,
+                        'block at line '..blk.ln..' must contain `finally´')
+                    -- int* pa; _f(pa); -- `pa´ termination must consider `_f´
+                end
+            end
+        end
     end,
 
     Op2_idx = function (me)
@@ -449,7 +464,7 @@ F = {
 
     ['Op1_*'] = function (me)
         local op, e1 = unpack(me)
-        me.tp   = _TP.deref(e1.tp)
+        me.tp   = _TP.deref(e1.tp, true)
         me.lval = true
         me.fst  = e1.fst
         ASR(me.tp, me, 'invalid operand to unary "*"')
@@ -474,7 +489,7 @@ F = {
                 me.c = _ENV.c[id]
                 me.tp   = '_'
                 me.lval = false
-                ASR(me.c and me.c[1]=='func', me,
+                ASR(me.c and me.c.tag=='func', me,
                     'C function "'..id..'" is not declared')
             else
                 me.var  = ASR(cls.blk.vars[id], me,
@@ -499,7 +514,7 @@ F = {
     C = function (me)
         local id = unpack(me)
         local c = _ENV.c[id]
-        ASR(c and (c[1]=='var' or c[1]=='func'), me,
+        ASR(c and (c.tag=='var' or c.tag=='func'), me,
             'C variable/function "'..id..'" is not declared')
         me.tp   = '_'
         me.lval = '_'
