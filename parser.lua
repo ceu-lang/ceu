@@ -85,19 +85,17 @@ TYPES = P'void' + 'int'
       + 'u8' + 'u16' + 'u32' + 'u64'
       + 's8' + 's16' + 's32' + 's64'
 
-KEYS = P'async'  + 'await'   + 'break'   + 'C'
-     + 'do'      + 'emit'    + 'else'    + 'else/if'  + 'end'  + 'event'
-     + 'finally' + 'FOREVER' + 'input'   + 'if'       + 'loop' + 'null'
-     + 'output'  + 'par'     + 'par/and' + 'par/or'   + 'return'
-     + 'sizeof'  + 'then'    + 'external' + 'with'
+KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'C'
+     + 'constant' + 'deterministic'         + 'do'       + 'else'
+     + 'else/if'  + 'emit'     + 'end'      + 'event'    --+ 'external'
+     + 'finally'  + 'FOREVER'  + 'if'       + 'input'    + 'loop'
+     + 'nohold'   + 'not'      + 'null'     + 'or'       + 'output'
+     + 'par'      + 'par/and'  + 'par/or'   + 'pause/if' + 'pure'
+     + 'return'   + 'sizeof'   + 'then'     + 'var'      + 'with'
      + TYPES
-     + 'pause/if'
-     + 'interface' + 'class' + 'new'
-     + 'global' + 'this'
-     + 'await/0'
-     + 'or' + 'and' + 'not'
-     + 'var'
-     + 'pure' + 'constant' + 'nohold'
+-- ceu-orgs only
+     + 'await/0'  + 'class'    + 'global'   + 'interface'
+     + 'new'      + 'this'
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
@@ -259,9 +257,9 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
     , __Dcl_c    = Cc'type' * V'ID_c' * K'=' * NUM
                  + Cc'func' * V'ID_c' * '()' * Cc(false)
                  + Cc'var'  * V'ID_c'        * Cc(false)
-    , _Dcl_c_ifc = K'external' * (CK'pure'+CK'constant'+CK'nohold'+Cc(false))
+    , _Dcl_c_ifc = K'C' * (CK'pure'+CK'constant'+CK'nohold'+Cc(false))
                  * EV'__Dcl_c' * (K',' * EV'__Dcl_c')^0
-    , _Dcl_c     = K'external' * (CK'pure'+CK'constant'+CK'nohold'+Cc(false))
+    , _Dcl_c     = K'C' * (CK'pure'+CK'constant'+CK'nohold'+Cc(false))
                  * EV'__Dcl_c' * (K',' * EV'__Dcl_c')^0
 
 
