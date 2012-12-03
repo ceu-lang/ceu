@@ -53,8 +53,10 @@ function _TP.cls (tp)
 end
 
 function _TP.c (tp)
-    -- class->char* // _tp->tp
-    return (string.gsub(string.gsub(tp,'^%u[_%w]*','char*'), '^_', ''))
+    -- _tp->tp
+    -- class->char*
+    -- class*->char* (too!)
+    return (string.gsub(string.gsub(tp,'^%u[_%w]*%*?','char*'), '^_', ''))
 end
 
 function _TP.isNumeric (tp, c)

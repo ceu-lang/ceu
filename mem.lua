@@ -61,8 +61,6 @@ F = {
 
                 if var.cls or var.arr then
                     val = '(('.._TP.c(var.tp)..')(org+'..off..'))'
-                elseif _ENV.clss[_TP.raw(var.tp)] then  -- TODO: not completely understood
-                    val = '(*(('.._TP.c(var.tp)..')(org+'..off..')))'
                 else
                     val = '(*(('.._TP.c(var.tp..'*')..')(org+'..off..')))'
                 end
@@ -117,8 +115,6 @@ F = {
 
             if var.cls or var.arr then
                 var.val = 'PTR_org('.._TP.c(var.tp)..','..var.off..')'
-            elseif _ENV.clss[_TP.raw(var.tp)] then  -- TODO: not completely understood
-                var.val = '(*PTR_org('.._TP.c(var.tp)..','..var.off..'))'
             else
                 var.val = '(*PTR_org('.._TP.c(var.tp)..'*,'..var.off..'))'
             end

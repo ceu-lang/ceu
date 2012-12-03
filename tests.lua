@@ -2,6 +2,33 @@
 --]===]
 
 Test { [[
+class T with
+do
+end
+var T* t;
+t = new T;
+return t.v;
+]],
+    env = 'ERR : line 6 : not a struct',
+}
+
+Test { [[
+class T with
+    var int v;
+do
+end
+
+var T*[10] ts;
+var T* t;
+t = new T;
+t:v = 10;
+ts[0] = t;
+return t:v + ts[0]:v;
+]],
+    run = 20,
+}
+
+Test { [[
 class Sm with
     var int id;
 do

@@ -379,17 +379,21 @@ F = {
         local _, f, exps = unpack(me)
         me.tp  = '_'
         me.fst = '_'
+        local id
         if f.tag == 'C' then
-            me.c = _ENV.c[ f[1] ]
+            id   = f[1]
+            me.c = _ENV.c[id]
         elseif f.tag == 'Op2_.' then
+            id   = f.id
             me.c = f.c
         else
-            me.c = { tag='func', id='$anon', mod=nil }
+            id = '$anon'
+            me.c = { tag='func', id=id, mod=nil }
         end
-        ASR(me.c.tag=='func', me,
-            'C function "'..(me.c.id)..'" is not declared')
-        _ENV.calls[me.c.id] = true
-        ASR((not _OPTS.c_calls) or _OPTS.c_calls[me.c.id],
+        ASR(me.c and me.c.tag=='func', me,
+            'C function "'..id..'" is not declared')
+        _ENV.calls[id] = true
+        ASR((not _OPTS.c_calls) or _OPTS.c_calls[id],
             me, 'C calls are disabled')
         if not (me.c and (me.c.mod=='pure' or me.c.mod=='nohold')) then
             if f.org then
@@ -481,6 +485,7 @@ F = {
     ['Op2_.'] = function (me)
         local op, e1, id = unpack(me)
         local cls = _ENV.clss[e1.tp]
+        me.id = id
         if cls then
             me.org = e1
 
@@ -498,6 +503,7 @@ F = {
                 me.lval = true
             end
         else
+            ASR(_TP.ext(e1.tp), me, 'not a struct')
             me.tp   = '_'
             me.lval = true
         end

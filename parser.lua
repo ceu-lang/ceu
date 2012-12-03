@@ -125,7 +125,7 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
             + V'_Dcl_int' + V'_Dcl_var'
             + V'_Set'     + V'CallStmt' -- respect this order
             --+ EM'statement'-- (missing `_´?)'
-            + EM'statement (usually a missing `var´ or `_´ C prefix'
+            + EM'statement (usually a missing `var´ or `_´ C prefix)'
 
     , _StmtB = V'_Do'   + V'Async'  + V'Host'
              + V'ParOr' + V'ParAnd'

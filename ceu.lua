@@ -86,7 +86,7 @@ end
 -- C_CALLS
 if _OPTS.c_calls then
     local t = {}
-    for v in string.gmatch(_OPTS.c_calls, "(%w+)") do
+    for v in string.gmatch(_OPTS.c_calls, "([_%w]+)") do
         t[v] = true
     end
     _OPTS.c_calls = t
@@ -241,7 +241,7 @@ do
     str = str .. '#define CEU_TREE_CHK\n'
 
     if _OPTS.defs_file then
-        local f = io.open(_OPTS.defs_file,'w')
+        local f = assert(io.open(_OPTS.defs_file,'w'))
         f:write(str)
         f:close()
         tpl = sub(tpl, '=== DEFS ===',
