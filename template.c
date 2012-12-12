@@ -12,7 +12,7 @@
 #endif
 
 #define CEU_STACK_MIN 0x01    // min prio for `stack´
-#define CEU_TREE_MAX 0x7F     // max prio for `tree´
+#define CEU_TREE_MAX  0x7F    // max prio for `tree´
 
 #ifdef __cplusplus
 #define CEU_WCLOCK_NONE 0x7fffffffL     // TODO
@@ -318,7 +318,7 @@ for (int i=0; i<CEU.lsts_n; i++) {
     CEU.lsts_n++;
 }
 
-void ceu_lst_go (tceu_nevt evt, char* src)
+int ceu_lst_go (tceu_nevt evt, char* src, int single)
 {
     tceu_nlst i;
     for (i=0 ; i<CEU.lsts_n ; i++) {
@@ -333,11 +333,14 @@ void ceu_lst_go (tceu_nevt evt, char* src)
                     *lst = CEU.lsts[CEU.lsts_n];
                     i--;
                 }
+                if (single)
+                    return 1;
 #ifdef CEU_PSES
             }
 #endif
         }
     }
+    return 0;
 }
 
 void ceu_lst_clr (int child, char* org, tceu_nlbl l1, tceu_nlbl l2, u8 tree) {
@@ -348,7 +351,7 @@ void ceu_lst_clr (int child, char* org, tceu_nlbl l1, tceu_nlbl l2, u8 tree) {
         ||   child && lst->org!=org && ceu_clr_child(lst->org,org,l1,l2) ) {
 #ifdef CEU_FINS
             // always trigger finalizers
-            // (tree+lbl) guarantees they all run before the out continuation
+            // (tree+lbl) guarantees they all run before the enclosing continuation
             u8 t = CEU.lbl2fin[lst->lbl];
             if (t)
                 ceu_trk_ins(CEU.stack, tree+t, lst->org, 0, lst->lbl);
@@ -447,7 +450,7 @@ int ceu_go_event (int* ret, tceu_nevt id, void* data)
 {
     CEU.ext_data = data;
     CEU.stack = CEU_STACK_MIN;
-    ceu_lst_go(id, 0);
+    ceu_lst_go(id, 0, 0);
 
     return ceu_go(ret);
 }
@@ -456,38 +459,16 @@ int ceu_go_event (int* ret, tceu_nevt id, void* data)
 #ifdef CEU_ASYNCS
 int ceu_go_async (int* ret, int* pending)
 {
-    int s;
+    int s, more;
     CEU.stack = CEU_STACK_MIN;
-    ceu_lst_go(IN__ASYNC, 0);
+    more = ceu_lst_go(IN__ASYNC, 0, 1);
     s = ceu_go(ret);
 
-#ifdef ceu_out_async
-    int has = 0;
-#else
     if (pending != NULL)
-#endif
-    {
-        tceu_nlst i;
-#ifdef ceu_out_async
-        if (pending)
-#endif
-            *pending = 0;
-        for (i=0 ; i<CEU.lsts_n ; i++) {
-            if (CEU.lsts[i].evt == IN__ASYNC) {
-#ifdef ceu_out_async
-                if (pending)
-#endif
-                    *pending = 1;
-#ifdef ceu_out_async
-                has = 1;
-#endif
-                break;
-            }
-        }
-    }
+        *pending = more;
 
 #ifdef ceu_out_async
-    ceu_out_async(has);
+    ceu_out_async(more);
 #endif
     return s;
 }
@@ -599,7 +580,6 @@ int ceu_go_nofree (int* ret)
 
 _SWITCH_:
 #ifdef CEU_DEBUG
-//__android_log_print(4, "MTG_LIFE",
 //fprintf(stderr,
     //"TRK: o.%p s.%d/t.%d/l.%d\n",
         //_trk_.org, _trk_.stack, _trk_.tree, _trk_.lbl);

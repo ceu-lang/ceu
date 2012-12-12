@@ -50,6 +50,9 @@ F = {
     SetNew = function (me)
         me.lbl_cnt = new{'New_cont'}
     end,
+    Free = function (me)
+        me.lbl_clr = new{'Free_clr'}
+    end,
     Block = function (me)
         me.lbl_cnt = new{'New_cont'}
         me.lbl_clr = new{'Block_clr'}
@@ -58,12 +61,12 @@ F = {
     Dcl_cls = function (me)
         me.lbl = new{'Class_'..me.id, true}
         if me.has_news then
-            me.lbl_fin = new{'Class__fin_'..me.id, depth=me.depth}
+            me.lbl_free = new{'Class__fin_'..me.id, depth=1} -- 1=last to execute
         end
     end,
 
     Dcl_var = function (me)
-        if me.var.cls or _ENV.clss[_TP.deref(me.var.tp)] then
+        if me.var.cls or _ENV.clss[_TP.raw(me.var.tp)] or me.var.tp=='void*' then
             me.var.lbl_cnt = new{'Par_org'}
         end
     end,

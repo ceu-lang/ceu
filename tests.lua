@@ -1,211 +1,6 @@
 --[===[
 --]===]
 
-Test { [[
-class T with
-do
-end
-var T* t;
-t = new T;
-return t.v;
-]],
-    env = 'ERR : line 6 : not a struct',
-}
-
-Test { [[
-class T with
-    var int v;
-do
-end
-
-var T*[10] ts;
-var T* t;
-t = new T;
-t:v = 10;
-ts[0] = t;
-return t:v + ts[0]:v;
-]],
-    run = 20,
-}
-
-Test { [[
-class Sm with
-    var int id;
-do
-end
-
-class Image_media with
-    var Sm sm;
-do
-end
-
-var Image_media img1;
-    img1.sm.id = 10;
-
-var Image_media img2;
-    img2.sm.id = 12;
-
-var Image_media img3;
-    img3.sm.id = 11;
-
-return img1.sm.id + img2.sm.id + img3.sm.id;
-]],
-    run = 33;
-}
-Test { [[
-class Sm with
-    var int id;
-do
-end
-
-class Image_media with
-    var Sm sm;
-do
-    par do with with with with end
-end
-
-var Image_media img1;
-    img1.sm.id = 10;
-
-var Image_media img2;
-    img2.sm.id = 12;
-
-var Image_media img3;
-    img3.sm.id = 11;
-
-return img1.sm.id + img2.sm.id + img3.sm.id;
-]],
-    run = 33;
-}
-
-Test { [[
-class Sm with
-do
-end
-interface Media with
-    var Sm sm;
-end
-return 10;
-]],
-    run = 10;
-}
-
-Test { [[
-class T with
-    var int v;
-do
-end
-
-var T t;
-    t.v = 10;
-var T* p = &t;
-return p:v;
-]],
-    run = 10,
-}
-Test { [[
-C do
-    int IFC_I__ins (void* org) {
-        return IFC_I_v(org);
-    }
-end
-
-interface I with
-    var int v;
-end
-
-class T with
-    var int v;
-do
-end
-
-var T t;
-    t.v = 10;
-var I* i = &t;
-return t._ins();
-]],
-    env = 'ERR : line 19 : C function "CLS_T__ins" is not declared',
-}
-Test { [[
-C do
-    int IFC_I__ins (void* org) {
-        return IFC_I_v(org);
-    }
-end
-
-interface I with
-    var int v;
-end
-
-class T with
-    var int v;
-do
-end
-
-var T t;
-    t.v = 10;
-var I* i = &t;
-return i:_ins();
-]],
-    env = 'ERR : line 19 : C function "IFC_I__ins" is not declared',
-}
-Test { [[
-C do
-    int IFC_I__ins (void* org) {
-        return IFC_I_v(org);
-    }
-end
-
-interface I with
-    var int v;
-    C nohold _ins();
-end
-
-class T with
-    var int v;
-do
-end
-
-var T t;
-    t.v = 10;
-var I* i = &t;
-return i:_ins() + t._ins();;
-]],
-    env = 'ERR : line 20 : C function "CLS_T__ins" is not declared',
-}
-
-Test { [[
-C do
-    int IFC_I__ins (void* org) {
-        return IFC_I_v(org);
-    }
-end
-
-C do
-    int CLS_T__ins (void* org) {
-        return CLS_T_v(org);
-    }
-end
-
-interface I with
-    var int v;
-    C nohold _ins();
-end
-
-class T with
-    var int v;
-    C nohold _ins();
-do
-end
-
-var T t;
-    t.v = 10;
-var I* i = &t;
-return i:_ins() + t._ins();
-]],
-    run = 20,
-}
-
     -- CLASSES / ORGS
 
 Test { [[
@@ -761,6 +556,70 @@ return a+b;
 ]],
     env = 'ERR : line 5 : variable/event "a" is not declared',
     --run = 4,
+}
+
+Test { [[
+class Sm with
+    var int id;
+do
+end
+
+class Image_media with
+    var Sm sm;
+do
+end
+
+var Image_media img1;
+    img1.sm.id = 10;
+
+var Image_media img2;
+    img2.sm.id = 12;
+
+var Image_media img3;
+    img3.sm.id = 11;
+
+return img1.sm.id + img2.sm.id + img3.sm.id;
+]],
+    run = 33;
+}
+Test { [[
+class Sm with
+    var int id;
+do
+end
+
+class Image_media with
+    var Sm sm;
+do
+    par do with with with with end
+end
+
+var Image_media img1;
+    img1.sm.id = 10;
+
+var Image_media img2;
+    img2.sm.id = 12;
+
+var Image_media img3;
+    img3.sm.id = 11;
+
+return img1.sm.id + img2.sm.id + img3.sm.id;
+]],
+    run = 33;
+}
+
+Test { [[
+class T with
+    var int v;
+do
+end
+
+var T t;
+    t.v = 10;
+var T* p = &t;
+return p:v;
+]],
+    run = 10,
 }
 
 Test { [[
@@ -2019,24 +1878,187 @@ return 10;
 }
 
 Test { [[
-class T with do end
-var T* t1;
+class T with
+    var int* a1;
 do
-    var T t2;
-    t1 = &t2;
+    var int* a2;
+    a1 = a2;
 end
 return 10;
 ]],
-    env = 'ERR : line 5 : block at line 3 must contain `finally´',
+    run = 10,
+}
+
+Test { [[
+class T with do end
+var T* a = null;
+free a;
+return 10;
+]],
+    run = 10,
+}
+
+-- TODO: tests for `free´:
+-- remove from tracks
+-- invalid pointers
+Test { [[
+class T with do end
+var T a;
+free a;
+return 0;
+]],
+    env = 'ERR : line 3 : invalid `free´',
+}
+
+Test { [[
+var int* b;
+var int* a ::= b;
+return a;
+]],
+    env = 'ERR : line 2 : invalid attribution',
+}
+
+Test { [[
+class T with do end;
+var T a;
+var T* b;
+b ::= &a;
+]],
+    env = 'ERR : line 4 : invalid attribution',
+}
+
+Test { [[
+class T with do end;
+var T* a = new T;
+var T* b;
+b ::= a;
+return 10;
+]],
+    run = 10;
+}
+
+Test { [[
+class T with
+    var int v;
+do
+end
+
+var T* a;
+do
+    var T* b = new T;
+    b:v = 10;
+    a = b;
+end
+return a:v;
+]],
+    env = 'ERR : line 10 : block at line 7 must contain `finally´',
+}
+
+Test { [[
+class T with
+    var int v;
+do
+end
+
+var T* a;
+var T aa;
+do
+    var T* b = new T;
+    b:v = 10;
+    a = b;
+finally
+    aa.v = b:v;
+    a = &aa;
+end
+return a:v;
+]],
+    run = 10,
+}
+
+Test { [[
+C _V;
+C do
+    int V = 0;
+end
+class T with
+    var int v;
+do
+    await FOREVER;
+finally
+    _V = 10;
+end
+
+var T* a;
+var T aa;
+do
+    var T* b = new T;
+    b:v = 10;
+    a := b;
+end
+return _V;
+]],
+    run = 10,
+}
+
+Test { [[
+C _V;
+C do
+    int V = 5;
+end
+class T with
+    var int v;
+do
+    await FOREVER;
+finally
+    _V = 10;
+end
+
+var T* a;
+do
+    var T* b = new T;
+    b:v = 10;
+    a ::= b;
+end
+return _V;
+]],
+    run = 5,
+}
+Test { [[
+class T with
+    var int* i1;
+do
+    var int i2;
+    i1 = &i2;
+end
+var T a;
+return 10;
+]],
+    run = 10,
 }
 
 Test { [[
 class T with do end
 var T* t1;
 do
+do
+    var T t2;
+    t1 = &t2;
+end
+end
+return 10;
+]],
+    env = 'ERR : line 6 : block at line 4 must contain `finally´',
+}
+
+Test { [[
+class T with do end
+var T* t1;
+do
+do
     var T t2;
     t1 = &t2;
 finally
+end
 end
 return 10;
 ]],
@@ -2057,8 +2079,9 @@ return 10;
 Test { [[
 class T with do finally end
 var T* a = new T;
+return 10;
 ]],
-    env = 'ERR : line 2 : invalid attribution',
+    run = 10,
 }
 
 Test { [[
@@ -2260,6 +2283,141 @@ _assert(_V == 1);
 return _V;
 ]],
     run = { ['~>1s']=1, }
+}
+
+Test { [[
+C _assert();
+C _V;
+C do
+    int V = 10;
+end
+class T with
+do
+    await 500ms;
+    _V = _V - 1;
+finally
+    _V = _V - 1;
+end
+
+do
+    var T* a;
+    a = new T;
+    free a;
+    _assert(_V == 9);
+    await 1s;
+end
+
+return _V;
+]],
+    run = { ['~>1s']=9 },
+}
+
+Test { [[
+C _assert();
+C _X, _Y;
+C do
+    int X = 0;
+    int Y = 0;
+end
+
+class T with
+do
+    _X = _X + 1;
+    await FOREVER;
+finally
+    _Y = _Y + 1;
+end
+
+do
+    var T* ptr = null;
+    loop i, 100 do
+        if ptr != null then
+            free ptr;
+        end
+        ptr = new T;
+    end
+    _assert(_X == 100 and _Y == 99);
+end
+
+_assert(_X == 100 and _Y == 100);
+return 10;
+]],
+    tight = true,
+    run = 10,
+}
+
+-- TODO: mem out e mem ever
+--[=[
+Test { [[
+var void* ptr;
+class T with
+do
+end
+loop i, 100000 do
+    ptr = new T;
+end
+return 10;
+]],
+    tight = true,
+    run = 10;
+}
+]=]
+
+Test { [[
+C _V, _assert();
+C do
+    int V = 0;
+end
+class T with
+    var int v;
+do
+    await FOREVER;
+finally
+    loop i, 0 do
+        do break; end
+    end
+    _V = _V + this.v;
+end
+do
+    var T* p;
+    p = new T;
+    p:v = 1;
+    p = new T;
+    p:v = 1;
+    p = new T;
+    p:v = 1;
+end
+_assert(_V == 3);
+return _V;
+]],
+    run = 3,
+}
+
+Test { [[
+class T with
+do
+end
+var T* t;
+t = new T;
+return t.v;
+]],
+    env = 'ERR : line 6 : not a struct',
+}
+
+Test { [[
+class T with
+    var int v;
+do
+end
+
+var T*[10] ts;
+var T* t;
+t = new T;
+t:v = 10;
+ts[0] = t;
+return t:v + ts[0]:v;
+]],
+    run = 20,
 }
 
 Test { [[
@@ -2967,6 +3125,151 @@ await START;
 return i:a + j:a + t.a + i:v + t.v;
 ]],
     run = 32,
+}
+
+Test { [[
+class Sm with
+do
+end
+interface Media with
+    var Sm sm;
+end
+return 10;
+]],
+    run = 10;
+}
+
+Test { [[
+interface I with
+    var int a;
+end
+class T with
+    interface J;
+do
+    a = 10;
+end
+var T t;
+return t.a;
+]],
+    env = 'ERR : line 5 : class "J" is not declared',
+}
+
+Test { [[
+interface I with
+    var int a;
+end
+class T with
+    interface I;
+do
+    a = 10;
+end
+var T t;
+return t.a;
+]],
+    run = 10,
+}
+
+Test { [[
+C do
+    int IFC_I__ins (void* org) {
+        return IFC_I_v(org);
+    }
+end
+
+interface I with
+    var int v;
+end
+
+class T with
+    var int v;
+do
+end
+
+var T t;
+    t.v = 10;
+var I* i = &t;
+return t._ins();
+]],
+    env = 'ERR : line 19 : C function "CLS_T__ins" is not declared',
+}
+Test { [[
+C do
+    int IFC_I__ins (void* org) {
+        return IFC_I_v(org);
+    }
+end
+
+interface I with
+    var int v;
+end
+
+class T with
+    var int v;
+do
+end
+
+var T t;
+    t.v = 10;
+var I* i = &t;
+return i:_ins();
+]],
+    env = 'ERR : line 19 : C function "IFC_I__ins" is not declared',
+}
+Test { [[
+C do
+    int IFC_I__ins (void* org) {
+        return IFC_I_v(org);
+    }
+end
+
+interface I with
+    var int v;
+    C nohold _ins();
+end
+
+class T with
+    var int v;
+do
+end
+
+var T t;
+    t.v = 10;
+var I* i = &t;
+return i:_ins() + t._ins();;
+]],
+    env = 'ERR : line 20 : C function "CLS_T__ins" is not declared',
+}
+
+Test { [[
+C do
+    int IFC_I__ins (void* org) {
+        return IFC_I_v(org);
+    }
+end
+
+C do
+    int CLS_T__ins (void* org) {
+        return CLS_T_v(org);
+    }
+end
+
+interface I with
+    var int v;
+    C nohold _ins();
+end
+
+class T with
+    var int v;
+    C nohold _ins();
+do
+end
+
+var T t;
+    t.v = 10;
+var I* i = &t;
+return i:_ins() + t._ins();
+]],
+    run = 20,
 }
 
 --do return end
@@ -15512,6 +15815,7 @@ with
 end
 return ret;
 ]],
+    todo = 'algo now is nondet',
     ana = {
         --n_unreachs = 1,       -- TODO: async
     },
@@ -15816,6 +16120,14 @@ return *p;
 ]],
     env = 'ERR : line 9 : block at line 1 must contain `finally´',
 }
+
+Test { [[
+var int a := 1;
+return a;
+]],
+    env = 'ERR : line 1 : invalid attribution',
+}
+
 Test { [[
 C _f();
 C do
@@ -15991,6 +16303,16 @@ return a[0] + b;
 }
 
     -- C FUNCS BLOCK
+
+Test { [[
+C _printf();
+do
+    _printf("oi\n");
+end
+return 10;
+]],
+    run = 10;
+}
 
 Test { [[
 C _V;

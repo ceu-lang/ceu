@@ -193,6 +193,9 @@ F = {
         local ifc, id, blk = unpack(me)
         me.is_ifc = ifc
         me.id     = id
+        if id == 'Main' then
+            _MAIN = me
+        end
         ASR(not _ENV.clss[id], me,
                 'interface/class "'..id..'" is already declared')
 
@@ -231,14 +234,10 @@ F = {
         me.blk  = CLS().blk
     end,
 
-    SetNew = function (me)
-        local exp, id_cls = unpack(me)
-        me.cls = ASR(_ENV.clss[id_cls], me,
-                        'class "'..id_cls..'" is not declared')
-        ASR(not me.cls.is_ifc, me, 'cannot instantiate an interface')
-        ASR((not me.isDcl) and exp.lval
-            and _TP.contains(exp.tp,me.cls.id..'*'),
-                me, 'invalid attribution')
+    Free = function (me)
+        local exp = unpack(me)
+        local _tp = _TP.deref(exp.tp)
+        ASR(_tp and _ENV.clss[_tp], me, 'invalid `free´')
     end,
 
     Dcl_ext = function (me)
@@ -262,6 +261,16 @@ F = {
     Dcl_var = function (me)
         local pre, tp, dim, id, exp = unpack(me)
         me.var = newvar(me, _AST.iter'Block'(), pre, tp, dim, id)
+    end,
+
+    Dcl_imp = function (me)
+        local id = unpack(me)
+        local cls = ASR(_ENV.clss[id], me,
+                        'class "'..id..'" is not declared')
+        for _, var in ipairs(cls.blk.vars) do
+            local tp = (var.dim and _TP.deref(var.tp)) or var.tp
+            newvar(me, _AST.iter'Block'(), var.pre, tp, var.arr, var.id)
+        end
     end,
 
     Ext = function (me)
@@ -333,28 +342,38 @@ F = {
     --------------------------------------------------------------------------
 
     SetExp = function (me)
-        local e1, e2, no_fin = unpack(me)
+        local e1, e2, op = unpack(me)
         e1 = e1 or _AST.iter'SetBlock'()[1]
         ASR(e1.lval and _TP.contains(e1.tp,e2.tp,true),
                 me, 'invalid attribution')
 
-        if no_fin then
-            return              -- no `finally´ required
-        end
+        local err = false
+        local msg
 
         if _TP.deref(e1.tp) then
             local blk1 = (e1.fst=='_' and _AST.root) or e1.fst.blk
             if e2.fst and e2.fst~='_' then
                 local blk2 = e2.fst.blk
-                ASR(blk2.fin or blk2.depth<=blk1.depth, me,
-                    'block at line '..blk2.ln..' must contain `finally´')
+                err = not (blk2.fin or blk2.depth<=blk1.depth
+                            or (CLS()~=_MAIN and -- first block vs iface
+                                blk2.depth==CLS().blk.depth+1))
+                msg = 'block at line '..blk2.ln..' must contain `finally´'
                 -- int a; pa=&a;    -- `a´ termination must consider `pa´
             else
-                ASR(blk1.fin or e2.tag~='Op2_call' or e2.c.mod=='pure', me,
-                    'block at line '..blk1.ln..' must contain `finally´')
+                err = not (blk1.fin or e2.tag~='Op2_call' or e2.c.mod=='pure')
+                msg = 'block at line '..blk1.ln..' must contain `finally´'
                 -- int* pa = _f();   -- `pa´ termination must consider `_f´
             end
         end
+        ASR((not err) or op~='=', me, msg or '')
+
+       -- ensures that `:=´ is used correctly
+        ASR(err or (op~=':='), me, 'invalid attribution')
+
+       -- ensures that `::=´ is used correctly (not lval == &ref)
+        local _tp2 = _TP.deref(e2.tp)
+        ASR(op~='::=' or (_tp2 and _ENV.clss[_tp2] and e2.lval),
+            me, 'invalid attribution')
     end,
 
     SetAwait = function (me)
@@ -366,6 +385,15 @@ F = {
             local evt = awt.ret[1].var or awt.ret[1].ext
             ASR(_TP.contains(e1.tp,evt.tp,true), me, 'invalid attribution')
         end
+    end,
+
+    SetNew = function (me)
+        local exp, id_cls = unpack(me)
+        me.cls = ASR(_ENV.clss[id_cls], me,
+                        'class "'..id_cls..'" is not declared')
+        ASR(not me.cls.is_ifc, me, 'cannot instantiate an interface')
+        ASR(exp.lval and _TP.contains(exp.tp,me.cls.id..'*'),
+                me, 'invalid attribution')
     end,
 
     CallStmt = function (me)
@@ -561,4 +589,3 @@ F = {
 }
 
 _AST.visit(F)
-_MAIN = _ENV.clss.Main

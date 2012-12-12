@@ -146,9 +146,14 @@ do
     tpl = sub(tpl, '=== CEU_NLSTS ===',    _AST.root.ns.awaits)
     tpl = sub(tpl, '=== CEU_NLBLS ===',    #_LBLS.list)
 
-    -- TODO: u32 p/ has_news
-    tpl = sub(tpl, '=== TCEU_NTRK ===', tps[_ENV.c.tceu_ntrk.len])
-    tpl = sub(tpl, '=== TCEU_NLST ===', tps[_ENV.c.tceu_nlst.len])
+    if _PROPS.has_news then
+        tpl = sub(tpl, '=== TCEU_NTRK ===', tps[_ENV.c.u32.len])
+        tpl = sub(tpl, '=== TCEU_NLST ===', tps[_ENV.c.u32.len])
+    else
+        tpl = sub(tpl, '=== TCEU_NTRK ===', tps[_ENV.c.tceu_ntrk.len])
+        tpl = sub(tpl, '=== TCEU_NLST ===', tps[_ENV.c.tceu_nlst.len])
+    end
+
     tpl = sub(tpl, '=== TCEU_NEVT ===', tps[_ENV.c.tceu_nevt.len])
     tpl = sub(tpl, '=== TCEU_NLBL ===', tps[_ENV.c.tceu_nlbl.len])
 

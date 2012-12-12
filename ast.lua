@@ -178,7 +178,7 @@ local C; C = {
                                 node('AwaitInt')(ln, var, true),
                                 node('If')(ln, var, fin),
                                 node('AwaitN')(ln))))
-        blk.fin  = fin   -- env.lua checks for blocks requiring finally's
+        blk.fin = fin   -- env.lua checks for blocks requiring finally's
         return blk
 --[=[
         do
@@ -338,7 +338,6 @@ local C; C = {
                                 t[i+1],                 -- op
                                 t[i+2],                 -- tag
                                 t[i+3])                 -- exp
-                ret[#ret].isDcl = true
             end
         end
         return unpack(ret)
@@ -357,8 +356,16 @@ local C; C = {
                                 t[i+1],                 -- op
                                 t[i+2],                 -- tag
                                 t[i+3])                 -- exp
-                ret[#ret].isDcl = true
             end
+        end
+        return unpack(ret)
+    end,
+
+    _Dcl_imp_ifc = function (ln, ...)
+        local ret = {}
+        local t = { ... }
+        for _, ifc in ipairs(t) do
+            ret[#ret+1] = node('Dcl_imp')(ln, ifc)
         end
         return unpack(ret)
     end,
@@ -378,16 +385,17 @@ local C; C = {
         local cls = node('Dcl_cls')(ln, is_ifc, id, new)
         cls.blk = (id=='Main' and body) or blk  -- top-most block for `this´
         if not is_ifc then
-            cls.fin = body.fin
+            cls.fin = body.fin  -- used by free()
         end
         TOP[#TOP+1] = cls
     end,
 
     Global = node('Global'),
     This   = node('This'),
+    Free   = node('Free'),
 
     _Set = function (ln, e1, op, tag, e2)
-        return node(tag)(ln, e1, e2, op==':=')
+        return node(tag)(ln, e1, e2, op)
     end,
 
     CallStmt = node('CallStmt'),

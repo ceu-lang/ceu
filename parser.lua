@@ -95,7 +95,7 @@ KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'C'
      + TYPES
 -- ceu-orgs only
      + 'await/0'  + 'class'    + 'global'   + 'interface'
-     + 'new'      + 'this'
+     + 'free'     + 'new'      + 'this'
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
@@ -116,7 +116,7 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
                )^-1
     , Block  = V'_Block'
     , BlockN = V'_Block'
-    , BlockI = ( (V'_Dcl_int_ifc'+V'_Dcl_var_ifc'+V'_Dcl_c_ifc')
+    , BlockI = ( (V'_Dcl_int_ifc'+V'_Dcl_var_ifc'+V'_Dcl_c_ifc'+V'_Dcl_imp_ifc')
               * (EK';'*K';'^0) )^0
 
     , _Stmt = V'AwaitT'   + V'AwaitExt'  + V'AwaitInt'
@@ -124,6 +124,7 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
             + V'_Dcl_c'   + V'_Dcl_ext'
             + V'_Dcl_int' + V'_Dcl_var'
             + V'_Set'     + V'CallStmt' -- respect this order
+            + V'Free'
             --+ EM'statement'-- (missing `_´?)'
             + EM'statement (usually a missing `var´ or `_´ C prefix)'
 
@@ -140,13 +141,15 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
                     V'ParEver' + V'If'    + V'Loop' )
 
     , _Set  = V'_Exp' * V'_Sets'
-    , _Sets = (CK'=' + CK':=') * (
+    , _Sets = (CK'=' + CK':=' + CK'::=') * (
                 Cc'SetAwait' * (V'AwaitT'+V'AwaitExt'+V'AwaitInt') +
                 Cc'SetBlock' * V'_SetBlock' +
                 Cc'SetExp'   * V'_Exp' +
                 Cc'SetNew'   * K'new' * V'ID_cls' +
                 EM'expression'
               )
+
+    , Free = K'free' * V'_Exp'
 
     , CallStmt = m.Cmt(V'_Exp',
                     function (s,i,...)
@@ -262,7 +265,6 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
     , _Dcl_c     = K'C' * (CK'pure'+CK'constant'+CK'nohold'+Cc(false))
                  * EV'__Dcl_c' * (K',' * EV'__Dcl_c')^0
 
-
     , _Dcl_ext = (CK'input'+CK'output') * EV'ID_type' *
                     EV'ID_ext' * (K','*EV'ID_ext')^0
 
@@ -281,6 +283,8 @@ _GG = { [1] = CK'' * V'_Block' * P(-1)-- + EM'expected EOF')
     , _Dcl_var_ifc  = CK'var' * EV'ID_type' * (K'['*NUM*K']'+Cc(false)) *
                        V'__Dcl_var_ifc' * (K','*V'__Dcl_var')^0
     , __Dcl_var_ifc = EV'ID_var' * (Cc(false)*Cc(false)*Cc(false))
+
+    , _Dcl_imp_ifc = K'interface' * EV'ID_cls' * (K',' * EV'ID_cls')^0
 
     , Dcl_ifc = K'interface' * Cc(true)  * EV'ID_cls' * EK'with'
                         * V'BlockI' * EK'end'
