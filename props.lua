@@ -54,8 +54,8 @@ local NO_async = {
 F = {
     Node_pre = function (me)
         me.ns = {
-            tracks = 1,
-            awaits = 0,
+            trks_n = 1,
+            lsts_n = 0,
             stacks = 0,
             fins   = 0,
             orgs   = 0,
@@ -76,8 +76,8 @@ F = {
 
     Root = function (me)
         SAME(me, me[#me])
-        _ENV.c.tceu_nlst.len = _TP.n2bytes(me.ns.awaits)
-        _ENV.c.tceu_ntrk.len = _TP.n2bytes(me.ns.tracks)
+        _ENV.c.tceu_nlst.len = _TP.n2bytes(me.ns.lsts_n)
+        _ENV.c.tceu_ntrk.len = _TP.n2bytes(me.ns.trks_n)
     end,
 
     Block = function (me)
@@ -119,12 +119,12 @@ F = {
     Dcl_var = function (me)
         if me.var.cls then
             me.ns.orgs   = 1
-            me.ns.stacks = 1    -- constructor contination
-            me.ns.tracks = 2
+            me.ns.stacks = 1    -- constructor continuation
+            me.ns.trks_n = 2
         elseif me.var.arr and _ENV.clss[_TP.deref(me.var.tp)] then
             me.ns.orgs   = me.var.arr
             me.ns.stacks = me.var.arr
-            me.ns.tracks = me.var.arr+1 -- constructor continuation
+            me.ns.trks_n = me.var.arr+1 -- constructor continuation
         end
     end,
 
@@ -137,7 +137,7 @@ F = {
         --me.ns.orgs   = 1        -- here or any parent
         me.ns.news   = 1
         me.ns.stacks = 1        -- constructor continuation
-        me.ns.tracks = 2
+        me.ns.trks_n = 2
         me.ns.fins   = 1        -- free
     end,
 
@@ -145,14 +145,18 @@ F = {
         _PROPS.has_pses = true
     end,
 
-    Finally = function (me)
+    BlockF = function (me)
         _PROPS.has_fins = true
-        me.ns.fins = 1
+        local b1, _ = unpack(me)
+        MAX_all(me)
+        me.ns.fins   = me.ns.fins   + 1
+        me.ns.trks_n = me.ns.trks_n + 1    -- implicit await in parallel
+        me.ns.lsts_n = me.ns.lsts_n + 1    -- implicit await in parallel
     end,
 
     Async = function (me)
         _PROPS.has_asyncs = true
-        me.ns.awaits = 1
+        me.ns.lsts_n = 1
     end,
 
     If = function (me)
@@ -201,21 +205,21 @@ F = {
 
     AwaitT = function (me)
         _PROPS.has_wclocks = true
-        me.ns.awaits = 1
+        me.ns.lsts_n = 1
     end,
 
     AwaitExt = function (me)
         local e1 = unpack(me)
-        me.ns.awaits = 1
+        me.ns.lsts_n = 1
     end,
 
     AwaitInt = function (me)
-        me.ns.awaits = 1
+        me.ns.lsts_n = 1
     end,
 
     EmitInt = function (me)
         me.ns.stacks = 1
-        me.ns.tracks = 2     -- continuation
+        me.ns.trks_n = 2     -- continuation
     end,
 
     EmitExtS = function (me)

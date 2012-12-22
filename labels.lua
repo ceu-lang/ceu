@@ -42,7 +42,7 @@ F = {
         -- labels which are finalizers
         local t = {}
         for _, lbl in ipairs(_LBLS.list) do
-            t[#t+1] = (string.find(lbl.id,'__fin') and lbl.depth) or 0
+            t[#t+1] = string.find(lbl.id,'__fin') and assert(lbl.depth) or 0
         end
         _LBLS.code_fins = table.concat(t,',')
     end,
@@ -58,16 +58,21 @@ F = {
         me.lbl_clr = new{'Block_clr'}
     end,
 
+    BlockF = function (me)
+        me.lbl_fin = new{'Fin__fin', depth=me.depth}
+        me.lbl_cnt = new{'Fin_cnt'}
+    end,
+
     Dcl_cls = function (me)
         me.lbl = new{'Class_'..me.id, true}
         if me.has_news then
-            me.lbl_free = new{'Class__fin_'..me.id, depth=1} -- 1=last to execute
+            me.lbl_free = new{'Class__fin_'..me.id, depth=me.depth}
         end
     end,
 
     Dcl_var = function (me)
         if me.var.cls or _ENV.clss[_TP.raw(me.var.tp)] or me.var.tp=='void*' then
-            me.var.lbl_cnt = new{'Par_org'}
+            me.var.lbl_cnt = new{'Dcl_cnt'}
         end
     end,
 
@@ -141,9 +146,6 @@ F = {
         local int = unpack(me)
         me.lbl_awt = new{'Await_'..me[1][1]}
         me.lbl_awk = new{'Awake_'..me[1][1]}
-        if string.find(me.lbl_awk.id,'__fin') then
-            me.lbl_awk.depth = me.depth
-        end
     end,
 }
 

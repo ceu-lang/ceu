@@ -60,7 +60,7 @@ function CLEAR (me)
     -- trk_clr -> lst_clr (lst_clr may free orgs in trks)
 
     -- clear internal awaits and trigger finally's
-    if me.ns.awaits>0 or me.ns.news>0 then -- (orgs with awts are also covered)
+    if me.ns.lsts_n>0 or me.ns.news>0 then -- (orgs with awts are also covered)
         LINE(me, 'ceu_lst_clr('..orgs_news..', _trk_.org, '
                     ..me.lbls[1]..','..me.lbls[2]
                     ..','..tree_max..');')
@@ -208,14 +208,29 @@ if (]]..exp.val..[[ != NULL) {
         CONC_ALL(me)
 
         -- finalize orgs (they were spawned in parallel)
-        if me.ns.orgs>0 or me.ns.news>0 then
+        if me.ns.fins>0 or me.ns.orgs>0 or me.ns.news>0 then
             CLEAR(me)
         end
     end,
 
     BlockI  = CONC_ALL,
     BlockN  = CONC_ALL,
+
+    BlockF = function (me)
+        local b1, fin = unpack(me)
+
+        LINE(me, 'ceu_lst_ins(0,_trk_.org,_trk_.org,'..me.lbl_fin.id..',0);')
+        CONC(me, b1)
+        SWITCH(me, me.lbl_cnt)
+
+        CASE(me, me.lbl_fin)
+        CONC(me, fin)
+        HALT(me)
+
+        CASE(me, me.lbl_cnt)
+    end,
     Finally = CONC_ALL,
+
 
     SetExp = function (me)
         local e1, e2, op = unpack(me)

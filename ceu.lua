@@ -142,8 +142,8 @@ do
     end
 
     tpl = sub(tpl, '=== CEU_NMEM ===',     _MAIN.mem.max)
-    tpl = sub(tpl, '=== CEU_NTRACKS ===',  _AST.root.ns.tracks)
-    tpl = sub(tpl, '=== CEU_NLSTS ===',    _AST.root.ns.awaits)
+    tpl = sub(tpl, '=== CEU_NTRACKS ===',  _AST.root.ns.trks_n)
+    tpl = sub(tpl, '=== CEU_NLSTS ===',    _AST.root.ns.lsts_n)
     tpl = sub(tpl, '=== CEU_NLBLS ===',    #_LBLS.list)
 
     if _PROPS.has_news then
@@ -258,8 +258,8 @@ end
 if _OPTS.verbose or true then
     local T = {
         mem  = _MAIN.mem.max,
-        trks = _AST.root.ns.tracks,
-        lsts = _AST.root.ns.awaits,
+        trks = _AST.root.ns.trks_n,
+        lsts = _AST.root.ns.lsts_n,
         evts = _MEM.evt_off+#_ENV.exts,
         lbls = #_LBLS.list,
 

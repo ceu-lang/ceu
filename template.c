@@ -357,9 +357,8 @@ void ceu_lst_clr (int child, char* org, tceu_nlbl l1, tceu_nlbl l2, u8 tree) {
             // (+2) guarantess they run before CLEAR and `free´
             // (t) guarantees they all run in order
             u8 t = CEU.lbl2fin[lst->lbl];
-            if (t){
+            if (t)
                 ceu_trk_ins(CEU.stack+1, t, lst->org, 0, lst->lbl);
-}
 #endif
             CEU.lsts_n--;
             if (i < CEU.lsts_n) {

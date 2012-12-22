@@ -162,50 +162,11 @@ local C; C = {
             return node('Block')(ln, b1)
         end
 
-        -- TODO: avoid <b2> repetition (C func?)
-        local id  = '$fin_' .. string.match(tostring(b2),'0x([%d%w]+)')
-        local var = node('Var')(ln, id)
-        local fin = node('Finally')(ln, _AST.copy(b2))
-        local blk = node('Block')(ln,
-                        node('Dcl_var')(ln, true, 'u8', false, id),
-                        node('SetExp')(ln, var, node('CONST')(ln,'1')),
-                        node('ParOr')(ln,
-                            node('BlockN')(ln,
-                                b1,
-                                b2,
-                                node('SetExp')(ln, var, node('CONST')(ln,'0'))),
-                            node('BlockN')(ln,
-                                node('AwaitInt')(ln, var, true),
-                                node('If')(ln, var, fin),
-                                node('AwaitN')(ln))))
+        local fin = node('BlockF')(ln, b1, node('Finally')(ln,b2))
+        local blk = node('Block')(ln, fin)
         blk.fin = fin   -- env.lua checks for blocks requiring finally's
+
         return blk
---[=[
-        do
-            <b1>
-        finally
-            <b2>
-        end
-
-        // becomes
-
-        do
-            event u8 $fin;
-            $fin = 1;
-            par/or do
-                <b1>
-                <b2>
-                $fin = 0;
-            with
-                await/0 $fin;
-                if $fin then
-                    <fin>
-                        <b2>
-                end
-                await FOREVER;
-            end
-        end
-]=]
     end,
 
     If = function (ln, ...)
