@@ -5,6 +5,8 @@
 
 #ifdef CEU_DEBUG
 #include <assert.h>
+#include <signal.h>
+#include <stdlib.h>
 #endif
 
 #ifdef CEU_NEWS
@@ -12,7 +14,7 @@
 #endif
 
 #define CEU_STACK_MIN 0x01    // min prio for `stack´
-#define CEU_TREE_MAX  0x7F    // max prio for `tree´
+#define CEU_TREE_MAX  0xFF    // max prio for `tree´
 
 #ifdef __cplusplus
 #define CEU_WCLOCK_NONE 0x7fffffffL     // TODO
@@ -57,7 +59,7 @@ typedef === TCEU_NOFF === tceu_noff;    // max offset in an iface
 
 typedef struct {
     char*     org;
-    u8        stack;
+    u32       stack;
     u8        tree;
     tceu_nlbl lbl;
 } tceu_trk;
@@ -107,6 +109,10 @@ typedef struct {
     tceu_noff   ifcs[CEU_NCLS][CEU_NIFCS];
 #endif
 
+#ifdef CEU_DEBUG
+    tceu_trk    trk;
+#endif
+
 #ifdef CEU_NEWS
     int         trks_n;
     int         trks_nmax;
@@ -126,7 +132,7 @@ typedef struct {
     tceu_lst    lsts[CEU_NLSTS];
 #endif
 
-    u8          stack;
+    u32         stack;      // TODO: test to fail with u8
 } tceu;
 
 tceu CEU = {
@@ -142,6 +148,9 @@ tceu CEU = {
 #endif
 #ifdef CEU_IFCS
     { === IFCS === },
+#endif
+#ifdef CEU_DEBUG
+    {},
 #endif
 #ifdef CEU_NEWS
     0, CEU_NTRACKS*2, NULL,
@@ -160,17 +169,11 @@ tceu CEU = {
 /**********************************************************************/
 
 int ceu_trk_cmp (tceu_trk* trk1, tceu_trk* trk2) {
-    if (trk1->stack != trk2->stack) {
-        if (trk1->stack == CEU.stack)
-            return 1;
-        if (trk2->stack == CEU.stack)
-            return 0;
-        return (trk1->stack > trk2->stack);
-    }
-    return (trk1->tree > trk2->tree);
+    return (trk1->stack > trk2->stack) ||
+           (trk1->stack == trk2->stack && trk1->tree > trk2->tree);
 }
 
-void ceu_trk_ins (u8 stack, u8 tree, char* org, int chk, tceu_nlbl lbl)
+void ceu_trk_ins (u32 stack, u8 tree, char* org, int chk, tceu_nlbl lbl)
 {
     tceu_ntrk i;
     tceu_trk trk = {
@@ -351,10 +354,12 @@ void ceu_lst_clr (int child, char* org, tceu_nlbl l1, tceu_nlbl l2, u8 tree) {
         ||   child && lst->org!=org && ceu_clr_child(lst->org,org,l1,l2) ) {
 #ifdef CEU_FINS
             // always trigger finalizers
-            // (tree+lbl) guarantees they all run before the enclosing continuation
+            // (+2) guarantess they run before CLEAR and `free´
+            // (t) guarantees they all run in order
             u8 t = CEU.lbl2fin[lst->lbl];
-            if (t)
-                ceu_trk_ins(CEU.stack, tree+t, lst->org, 0, lst->lbl);
+            if (t){
+                ceu_trk_ins(CEU.stack+1, t, lst->org, 0, lst->lbl);
+}
 #endif
             CEU.lsts_n--;
             if (i < CEU.lsts_n) {
@@ -434,8 +439,19 @@ void ceu_async_enable (char* org, tceu_nlbl lbl) {
 
 /**********************************************************************/
 
+#ifdef CEU_DEBUG
+void ceu_segfault (int sig_num) {
+    fprintf(stderr, "SEGFAULT on %d\n", CEU.trk.lbl);
+    exit(0);
+}
+#endif
+
 int ceu_go_init (int* ret)
 {
+#ifdef CEU_DEBUG
+    signal(SIGSEGV, ceu_segfault);
+#endif
+
 #ifdef CEU_NEWS
     CEU.trks = malloc(CEU.trks_nmax*sizeof(tceu_trk) + sizeof(tceu_trk));
     CEU.lsts = malloc(CEU.lsts_nmax*sizeof(tceu_lst));
@@ -580,6 +596,7 @@ int ceu_go_nofree (int* ret)
 
 _SWITCH_:
 #ifdef CEU_DEBUG
+    CEU.trk = _trk_;
 //fprintf(stderr,
     //"TRK: o.%p s.%d/t.%d/l.%d\n",
         //_trk_.org, _trk_.stack, _trk_.tree, _trk_.lbl);

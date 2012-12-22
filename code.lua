@@ -85,7 +85,7 @@ function ORG (me, new, org0, cls, par_org, par_lbl)
         LINE(me, '  ceu_lst_ins(0, org0, org0, '..cls.lbl_free.id..',0);')
     end
     LINE(me, [[
-    ceu_trk_ins(CEU.stack+2, CEU_TREE_MAX, org0, 0,]]..cls.lbl.id..[[);
+    ceu_trk_ins(CEU.stack+1, CEU_TREE_MAX, org0, 0,]]..cls.lbl.id..[[);
 #ifdef CEU_IFCS
     *((tceu_ncls*)(org0+]]..(_MEM.cls.cls or '')..[[)) = ]]..cls.n..[[;
 #endif
@@ -147,7 +147,7 @@ F = {
                 me.cls,
                 org,
                 (exp.fst or exp.var).lbl_cnt.id)
-        LINE(me, 'ceu_trk_ins(CEU.stack+1, CEU_TREE_MAX, _trk_.org, 0,'
+        LINE(me, 'ceu_trk_ins(CEU.stack, CEU_TREE_MAX, _trk_.org, 0,'
                     ..me.lbl_cnt.id..');')
         HALT(me)
         CASE(me, me.lbl_cnt)
@@ -196,7 +196,7 @@ if (]]..exp.val..[[ != NULL) {
                 end
             end
         end
-        LINE(me, 'ceu_trk_ins(CEU.stack+1, CEU_TREE_MAX, _trk_.org, 0,'
+        LINE(me, 'ceu_trk_ins(CEU.stack, CEU_TREE_MAX, _trk_.org, 0,'
                     ..var.lbl_cnt.id..');')
         HALT(me)
         CASE(me, var.lbl_cnt)
@@ -373,6 +373,7 @@ if (ceu_out_pending()) {
         if _AST.iter'Finally'() then
             SWITCH(me, top.lbl_out)     -- can't use prios inside a `finally´
         else
+            -- TODO: breaks w/o par may switch
             LINE(me, 'ceu_trk_ins(CEU.stack, ' ..top.lbl_out.prio..','
                         ..'_trk_.org, 1, '..top.lbl_out.id..');')
         end
@@ -426,7 +427,7 @@ if (ceu_out_pending()) {
 #ifdef CEU_WCLOCKS
 { s32 nxt;
   int s = ceu_go_wclock(ret,]]..exp.val..[[, &nxt);
-  while (nxt <= 0)
+  while (!s && nxt<=0)
       s = ceu_go_wclock(ret, 0, &nxt);
   return s;
 }
@@ -445,11 +446,11 @@ return 0;
             ATTR(me, int, exp)
         end
 
-        -- defer match: reaction must have a higher stack depth
-        LINE(me, 'ceu_trk_ins(CEU.stack+2, CEU_TREE_MAX, _trk_.org, 0,'
-                    ..me.lbl_mch.id..');')
-        -- defer continuation: all trails must react before I resume
+        -- matching has highest priority
         LINE(me, 'ceu_trk_ins(CEU.stack+1, CEU_TREE_MAX, _trk_.org, 0,'
+                    ..me.lbl_mch.id..');')
+        -- then the continuation (together with all pending trails)
+        LINE(me, 'ceu_trk_ins(CEU.stack, CEU_TREE_MAX, _trk_.org, 0,'
                     ..me.lbl_cnt.id..');')
         HALT(me)
 

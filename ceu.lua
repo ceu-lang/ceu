@@ -241,8 +241,7 @@ do
     end
 
     -- TODO: goto _OPTS
-    str = str .. '#define CEU_DEBUG\n'
-    str = str .. '#define CEU_TREE\n'
+    --str = str .. '#define CEU_DEBUG\n'
     str = str .. '#define CEU_TREE_CHK\n'
 
     if _OPTS.defs_file then

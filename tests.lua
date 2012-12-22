@@ -1678,7 +1678,7 @@ do
     do
         await F;
     finally
-        _V = 100;
+        _V = _V + 100;
     end
 end
 par/or do
@@ -1689,7 +1689,7 @@ with
 end
 return _V;
 ]],
-    run = 1,
+    run = 110,      -- TODO: stack change
 }
 
 Test { [[
@@ -2277,12 +2277,12 @@ do
         t.u = &u;
         await 1s;
     end
-    _assert(_V == 1);
+    _assert(_V == 10);
 end
-_assert(_V == 1);
+_assert(_V == 10);
 return _V;
 ]],
-    run = { ['~>1s']=1, }
+    run = { ['~>1s']=10, }       -- TODO: stack change
 }
 
 Test { [[
@@ -3336,7 +3336,7 @@ end end end end end end end end end end end end end end end end end end end end
 end end end end end end end end end end end end end end end end end end end end
 return 1;
 ]],
-    ast = 'ERR : line 4 : max depth of 127',
+    ast = 'ERR : line 7 : max depth of 0xFF',
 }
 
 Test { [[return 0;]], run=0 }
@@ -7338,25 +7338,7 @@ return v1+v2;
         n_unreachs = 1,
         --nd_esc = 1,
     },
-    run = 2,
-}
-
-Test { [[
-event int a;
-var int v1=0,v2=0;
-par/or do
-    emit a=2;
-    v1 = 2;
-with
-    v2 = 2;
-end
-return v1+v2;
-]],
-    ana = {
-        n_unreachs = 1,
-        --nd_esc = 1,
-    },
-    run = 2,
+    run = 4,        -- TODO: stack change
 }
 
 Test { [[
@@ -7377,7 +7359,7 @@ return v1+v2+v3;
         n_unreachs = 2,
         --nd_esc = 1,
     },
-    run = 2,
+    run = 4,        -- TODO: stack change
 }
 
 Test { [[
@@ -7399,7 +7381,7 @@ return v1+v2+v3;
         nd_acc = 1,
         --nd_esc = 1,
     },
-    run = 2,
+    run = 4,        -- TODO: stack change
 }
 
 -- 1st to escape and terminate
@@ -12368,7 +12350,7 @@ end;
         --trig_wo = 1,
     },
     run = {
-        ['1~>D ; 1~>E'] = 13,
+        ['1~>D ; 1~>E'] = 8,    -- TODO: stack change (8 or 5)
     }
 }
 
@@ -13780,7 +13762,7 @@ with
     return c;
 end;
 ]],
-    run = { ['~>1100ms ; ~>F'] = 132 }
+    run = { ['~>1100ms ; ~>F'] = 66 }   -- TODO: stack change
 }
 
 Test { [[
@@ -13814,7 +13796,7 @@ return x + y;
         n_unreachs = 4,
         --nd_esc = 4,
     },
-    run = 3,
+    run = 6,    -- TODO: stack change (6 or 3)
 }
 
 Test { [[
@@ -13850,7 +13832,8 @@ with
     return c;
 end;
 ]],
-    run = {
+    run = false,    -- TODO: stack change (ND)
+    run1 = {
         ['~>99ms;  ~>F'] = 0,
         ['~>199ms; ~>F'] = 3,
         ['~>299ms; ~>F'] = 10,
@@ -14127,7 +14110,8 @@ end;
         --trig_wo = 2,
         n_unreachs = 1,
     },
-    run = 18,
+    run = false,        -- TODO: stack change (ND)
+    --run = 18,
 }
 
 Test { [[

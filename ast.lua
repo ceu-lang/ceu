@@ -107,7 +107,7 @@ local function visit_aux (me, F)
     for i, sub in ipairs(me) do
         if _AST.isNode(sub) then
             sub.depth = me.depth + 1
-            ASR(sub.depth < 127, sub, 'max depth of 127')
+            ASR(sub.depth < 0xFF, sub, 'max depth of 0xFF')
             if bef then bef(me, sub) end
             me[i] = visit_aux(sub, F)
             if aft then aft(me, sub) end
