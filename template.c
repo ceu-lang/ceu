@@ -321,7 +321,7 @@ for (int i=0; i<CEU.lsts_n; i++) {
     CEU.lsts_n++;
 }
 
-int ceu_lst_go (tceu_nevt evt, char* src, int single)
+int ceu_lst_go (u32 stack, tceu_nevt evt, char* src, int single)
 {
     tceu_nlst i;
     for (i=0 ; i<CEU.lsts_n ; i++) {
@@ -330,7 +330,7 @@ int ceu_lst_go (tceu_nevt evt, char* src, int single)
 #ifdef CEU_PSES
             if (lst->pse == 0) {
 #endif
-                ceu_trk_ins(CEU.stack, CEU_TREE_MAX, lst->org, 0, lst->lbl);
+                ceu_trk_ins(stack, CEU_TREE_MAX, lst->org, 0, lst->lbl);
                 (CEU.lsts_n)--;
                 if (i < CEU.lsts_n) {
                     *lst = CEU.lsts[CEU.lsts_n];
@@ -464,8 +464,7 @@ int ceu_go_init (int* ret)
 int ceu_go_event (int* ret, tceu_nevt id, void* data)
 {
     CEU.ext_data = data;
-    CEU.stack = CEU_STACK_MIN;
-    ceu_lst_go(id, 0, 0);
+    ceu_lst_go(CEU_STACK_MIN, id, 0, 0);
 
     return ceu_go(ret);
 }
@@ -475,8 +474,7 @@ int ceu_go_event (int* ret, tceu_nevt id, void* data)
 int ceu_go_async (int* ret, int* pending)
 {
     int s, more;
-    CEU.stack = CEU_STACK_MIN;
-    more = ceu_lst_go(IN__ASYNC, 0, 1);
+    more = ceu_lst_go(CEU_STACK_MIN, IN__ASYNC, 0, 1);
     s = ceu_go(ret);
 
     if (pending != NULL)
@@ -494,8 +492,6 @@ int ceu_go_wclock (int* ret, s32 dt, s32* nxt)
 #ifdef CEU_WCLOCKS
     tceu_nlst i;
     s32 min_togo = CEU_WCLOCK_NONE;
-
-    CEU.stack = CEU_STACK_MIN;
 
     if (CEU.wclk_min == CEU_WCLOCK_NONE) {
         if (nxt)
@@ -585,8 +581,6 @@ int ceu_go_free (int* ret)
 int ceu_go_nofree (int* ret)
 {
     tceu_trk _trk_;
-
-    CEU.stack = CEU_STACK_MIN;
 
     while (ceu_trk_rem(&_trk_,1))
     {

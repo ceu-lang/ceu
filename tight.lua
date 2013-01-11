@@ -45,7 +45,7 @@ F = {
     end,
 
     Block   = OR_all,
-    BlockN  = OR_all,
+    Stmts   = OR_all,
 
     ParEver = OR_all,
     ParAnd  = OR_all,

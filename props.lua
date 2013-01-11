@@ -37,7 +37,7 @@ _PROPS = {
 }
 
 local NO_fin = {
-    Finally=true,
+    Finalize=true, Finally=true,
     Host=true, Return=true, Async=true,
     ParEver=true, ParOr=true, ParAnd=true,
     AwaitExt=true, AwaitInt=true, AwaitN=true, AwaitT=true,
@@ -60,6 +60,7 @@ F = {
             fins   = 0,
             orgs   = 0,
             news   = 0,
+            [':='] = 0,
         }
     end,
     Node = function (me)
@@ -67,7 +68,8 @@ F = {
             MAX_all(me)
         end
         if NO_fin[me.tag] then
-            ASR(not _AST.iter'Finally'(), me, 'not permitted inside `finally´')
+            ASR(not _AST.iter'Finally'(), me,
+                'not permitted inside `finalize´')
         end
         if NO_async[me.tag] then
             ASR(not _AST.iter'Async'(), me,'not permitted inside `async´')
@@ -81,9 +83,18 @@ F = {
     end,
 
     Block = function (me)
+        local blk = unpack(me)
+
         MAX_all(me)
 
-        -- Block must ADD all these (they are spawned in par, not in seq)
+        if me.fins then
+            _PROPS.has_fins = true
+            me.ns.fins   = me.ns.fins   + 1
+            me.ns.trks_n = me.ns.trks_n + 1    -- implicit await in parallel
+            me.ns.lsts_n = me.ns.lsts_n + 1    -- implicit await in parallel
+        end
+
+        -- Block must ADD all orgs (they are spawned in par, not in seq)
         local t = { }
         for _, var in ipairs(me.vars) do
             if var.cls then
@@ -99,7 +110,7 @@ F = {
         end
         ADD_all(me, t)
     end,
-    BlockN  = MAX_all,
+    Stmts   = MAX_all,
     ParEver = ADD_all,
     ParAnd  = ADD_all,
     ParOr   = ADD_all,
@@ -145,15 +156,6 @@ F = {
         _PROPS.has_pses = true
     end,
 
-    BlockF = function (me)
-        _PROPS.has_fins = true
-        local b1, _ = unpack(me)
-        MAX_all(me)
-        me.ns.fins   = me.ns.fins   + 1
-        me.ns.trks_n = me.ns.trks_n + 1    -- implicit await in parallel
-        me.ns.lsts_n = me.ns.lsts_n + 1    -- implicit await in parallel
-    end,
-
     Async = function (me)
         _PROPS.has_asyncs = true
         me.ns.lsts_n = 1
@@ -179,7 +181,9 @@ F = {
         loop.brks[me] = true
 
         local fin = _AST.iter'Finally'()
-        ASR(not fin or fin.depth<loop.depth, me, 'not permitted inside `finally´')
+        ASR(not fin or fin.depth<loop.depth, me,
+                'not permitted inside `finalize´')
+        -- TODO: same for return
 
         local async = _AST.iter'Async'()
         if async then
@@ -237,7 +241,10 @@ F = {
     end,
 
     SetExp = function (me)
-        local e1, e2 = unpack(me)
+        local e1, e2, op = unpack(me)
+        if op == ':=' then
+            me.ns[':='] = me.ns[':='] + 1
+        end
         local async = _AST.iter'Async'()
         if async and (not e1) then
             ASR( async.depth <= _AST.iter'SetBlock'().depth+1,

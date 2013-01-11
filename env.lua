@@ -347,33 +347,49 @@ F = {
         ASR(e1.lval and _TP.contains(e1.tp,e2.tp,true),
                 me, 'invalid attribution')
 
-        local err = false
-        local msg
+        if op == ':=' then
+           -- ensures that `:=´ is used correctly (not lval == &ref)
+            local _tp2 = _TP.deref(e2.tp)
+            ASR(_tp2 and _ENV.clss[_tp2] and e2.lval,
+                    me, 'invalid attribution')
+            return
+        end
+
+        local req = false
 
         if _TP.deref(e1.tp) then
             local blk1 = (e1.fst=='_' and _AST.root) or e1.fst.blk
             if e2.fst and e2.fst~='_' then
                 local blk2 = e2.fst.blk
-                err = not (blk2.fin or blk2.depth<=blk1.depth
-                            or (CLS()~=_MAIN and -- first block vs iface
-                                blk2.depth==CLS().blk.depth+1))
-                msg = 'block at line '..blk2.ln..' must contain `finally´'
+
                 -- int a; pa=&a;    -- `a´ termination must consider `pa´
+                req = blk2.depth > blk1.depth and
+                        blk2.depth ~= CLS().blk.depth+2
+                req = req and blk2
             else
-                err = not (blk1.fin or e2.tag~='Op2_call' or e2.c.mod=='pure')
-                msg = 'block at line '..blk1.ln..' must contain `finally´'
                 -- int* pa = _f();   -- `pa´ termination must consider `_f´
+                req = (e2.tag=='Op2_call' and e2.c.mod~='pure')
+                req = req and blk1
             end
         end
-        ASR((not err) or op~='=', me, msg or '')
+        ASR((not req) or me.fin, me, 'attribution requires `finalize´')
+        ASR((not me.fin) or req, me, 'invalid `finalize´')
 
-       -- ensures that `:=´ is used correctly
-        ASR(err or (op~=':='), me, 'invalid attribution')
+        if me.fin then
+            req.fins = req.fins or {}
+            table.insert(req.fins, 1, me.fin)
+        end
+    end,
 
-       -- ensures that `::=´ is used correctly (not lval == &ref)
-        local _tp2 = _TP.deref(e2.tp)
-        ASR(op~='::=' or (_tp2 and _ENV.clss[_tp2] and e2.lval),
-            me, 'invalid attribution')
+    Finalize_pre = function (me)
+        local set, fin = unpack(me)
+        if set then
+            set.fin = fin
+        else
+            local blk = _AST.iter'Block'()
+            blk.fins = blk.fins or {}
+            table.insert(blk.fins, 1, fin)
+        end
     end,
 
     SetAwait = function (me)
@@ -404,7 +420,7 @@ F = {
     --------------------------------------------------------------------------
 
     Op2_call = function (me)
-        local _, f, exps = unpack(me)
+        local _, f, exps, fin = unpack(me)
         me.tp  = '_'
         me.fst = '_'
         local id
@@ -418,24 +434,38 @@ F = {
             id = '$anon'
             me.c = { tag='func', id=id, mod=nil }
         end
-        ASR(me.c and me.c.tag=='func', me,
-            'C function "'..id..'" is not declared')
-        _ENV.calls[id] = true
+
         ASR((not _OPTS.c_calls) or _OPTS.c_calls[id],
             me, 'C calls are disabled')
+
+        ASR(me.c and me.c.tag=='func', me,
+            'C function "'..id..'" is not declared')
+
+        _ENV.calls[id] = true
+
+        local req = false
+
         if not (me.c and (me.c.mod=='pure' or me.c.mod=='nohold')) then
             if f.org then
                 exps = { f.org, unpack(exps) }
             end
             for _, exp in ipairs(exps) do
-                if (_TP.deref(exp.tp) or _ENV.clss[_TP.raw(exp.tp)])
-                and exp.fst then
-                    local blk = (exp.fst=='_' and _AST.root) or exp.fst.blk
-                    ASR(blk.fin, me,
-                        'block at line '..blk.ln..' must contain `finally´')
-                    -- int* pa; _f(pa); -- `pa´ termination must consider `_f´
-                end
+                -- int* pa; _f(pa); -- `pa´ termination must consider `_f´
+                local r = exp.fst and (_TP.deref(exp.tp) or
+                                   _ENV.clss[_TP.raw(exp.tp)])
+                r = r and ((exp.fst=='_' and _AST.root) or exp.fst.blk)
+                ASR( (not r) or (not req) or (r==req),
+                        me, 'invalid call (multiple scopes)')
+                req = req or r
             end
+        end
+
+        ASR((not req) or fin, me, 'call requires `finalize´')
+        ASR((not fin) or req, me, 'invalid `finalize´')
+
+        if fin then
+            req.fins = req.fins or {}
+            table.insert(req.fins, 1, fin)
         end
     end,
 

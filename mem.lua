@@ -96,6 +96,9 @@ F = {
         local mem = cls.mem
         me.off = mem.off
 
+        -- TODO: bitmap?
+        me.off_fins = alloc(CLS().mem, (me.fins and #me.fins) or 0)
+
         for _, var in ipairs(me.vars) do
             local len
             if var.cls then
@@ -112,6 +115,7 @@ F = {
             end
 
             var.off = alloc(mem, len)
+--DBG(var.id, var.off)
 
             if var.cls or var.arr then
                 var.val = 'PTR_org('.._TP.c(var.tp)..','..var.off..')'

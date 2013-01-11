@@ -2,8 +2,9 @@ _CODE = {
     host = '',
 }
 
-function CONC_ALL (me)
-    for _, sub in ipairs(me) do
+function CONC_ALL (me, t)
+    t = t or me
+    for _, sub in ipairs(t) do
         if _AST.isNode(sub) then
             CONC(me, sub)
         end
@@ -48,9 +49,10 @@ end
 function CLEAR (me)
     COMM(me, 'CLEAR')
 
-    local orgs_news = '('..me.ns.orgs..'||'..me.ns.news..')'
+    local orgs_news = '('..me.ns.orgs..'||'..me.ns.news..'||'..me.ns[':=']..')'
     local tree_max  = (me.lbl_out and me.lbl_out.prio) or 'CEU_TREE_MAX'
 
+    -- (TODO: is this needed for CLEAR from blocks?)
     -- remove (lower) stacked tracks
     if me.ns.stacks > 0 then
         LINE(me, 'ceu_trk_clr('..orgs_news..', _trk_.org, '
@@ -59,15 +61,19 @@ function CLEAR (me)
 
     -- trk_clr -> lst_clr (lst_clr may free orgs in trks)
 
-    -- clear internal awaits and trigger finally's
-    if me.ns.lsts_n>0 or me.ns.news>0 then -- (orgs with awts are also covered)
+    -- (orgs with fins are also covered)
+    local fins_ = me.ns.fins>0 or me.ns.news>0 or me.ns[':=']>0
+
+    -- clear internal awaits and trigger finalize's
+    -- (TODO: is this needed for CLEAR from blocks? (if fins_==false?))
+    if fins_ or me.ns.lsts_n>0 then -- (orgs with awts are also covered)
         LINE(me, 'ceu_lst_clr('..orgs_news..', _trk_.org, '
                     ..me.lbls[1]..','..me.lbls[2]
                     ..','..tree_max..');')
     end
 
     -- continue after finalizers
-    if me.ns.fins>0 or me.ns.news>0 then   -- (orgs with fins are also covered)
+    if fins_ then
         LINE(me, 'ceu_trk_ins(CEU.stack,'
                     ..tree_max
                     ..', _trk_.org, 0,'
@@ -161,7 +167,7 @@ F = {
 if (]]..exp.val..[[ != NULL) {
     // remove (lower) stacked tracks
     ceu_trk_clr(1, ]]..exp.val..[[, ]]..lbls..[[);
-    // clear internal awaits and trigger finally's
+    // clear internal awaits and trigger finalize's
     ceu_lst_clr(1, ]]..exp.val..[[, ]]..lbls..[[, CEU_TREE_MAX);
     // continue after finalizers
     ceu_trk_ins(CEU.stack, CEU_TREE_MAX, _trk_.org, 0, ]]..me.lbl_clr.id..[[);
@@ -201,45 +207,81 @@ if (]]..exp.val..[[ != NULL) {
         HALT(me)
         CASE(me, var.lbl_cnt)
     end,
+
+    Block_pre = function (me)
+        if not me.fins then
+            return
+        end
+        for i, fin in ipairs(me.fins) do
+            fin.idx = me.off_fins + i - 1
+        end
+    end,
+
     Block = function (me)
+        local blk = unpack(me)
+
         if CLS().is_ifc then
             return
         end
-        CONC_ALL(me)
 
-        -- finalize orgs (they were spawned in parallel)
-        if me.ns.fins>0 or me.ns.orgs>0 or me.ns.news>0 then
-            CLEAR(me)
+        if me.fins then
+            COMM(me, 'FINALIZE')
+            LINE(me, 'ceu_lst_ins(0,_trk_.org,_trk_.org,'..me.lbl_fin.id..',0);')
+            LINE(me, 'memset(PTR_org(u8*,'..me.off_fins..'), 0, '..#me.fins..');')
         end
+
+        CONC(me, blk)
+
+        if me.fins then
+            SWITCH(me, me.lbl_fin_cnt)
+            CASE(me, me.lbl_fin)
+
+            for i, fin in ipairs(me.fins) do
+                LINE(me, 'if (*PTR_org(u8*,'..(me.off_fins+i-1)..')) {')
+                SWITCH(me, fin.lbl_true)
+                LINE(me, '} else {')
+                SWITCH(me, fin.lbl_false)
+                LINE(me, '}')
+
+                CASE(me, fin.lbl_true)
+                CONC(me, fin)
+                CASE(me, fin.lbl_false)
+            end
+
+            HALT(me)
+            CASE(me, me.lbl_fin_cnt)
+        end
+        CLEAR(me)
     end,
 
-    BlockI  = CONC_ALL,
-    BlockN  = CONC_ALL,
-
-    BlockF = function (me)
-        local b1, fin = unpack(me)
-
-        LINE(me, 'ceu_lst_ins(0,_trk_.org,_trk_.org,'..me.lbl_fin.id..',0);')
-        CONC(me, b1)
-        SWITCH(me, me.lbl_cnt)
-
-        CASE(me, me.lbl_fin)
-        CONC(me, fin)
-        HALT(me)
-
-        CASE(me, me.lbl_cnt)
+    Finalize = function (me)
+        -- enable finalize
+        local set,fin = unpack(me)
+        LINE(me, '*PTR_org(u8*,'..fin.idx..') = 1;')
+        if set then
+            CONC(me, set)
+        end
     end,
     Finally = CONC_ALL,
 
+    Stmts  = CONC_ALL,
+    BlockI = CONC_ALL,
 
     SetExp = function (me)
-        local e1, e2, op = unpack(me)
+        local e1, e2, op, fin = unpack(me)
         COMM(me, 'SET: '..tostring(e1[1]))    -- Var or C
-        if op == '::=' then
+        if op == ':=' then
+            LINE(me, '*((char**)('..e2.val..'+'.._MEM.cls.par_org..
+                    ')) = '..((e1.org and e1.org.val) or '_trk_.org')..';')
             LINE(me, '*((tceu_nlbl*)('..e2.val..'+'.._MEM.cls.par_lbl..
                     ')) = '..(e1.fst or e1.var).lbl_cnt.id..';')
         end
         ATTR(me, e1, e2)
+
+        -- enable finalize
+        if fin then
+            LINE(me, '*PTR_org(u8*,'..fin.idx..') = 1;')
+        end
     end,
 
     SetAwait = function (me)
@@ -293,9 +335,7 @@ if (]]..exp.val..[[ != NULL) {
             HALT(me)
         end
         CASE(me, me.lbl_out)
-        if not me.no_clear then
-            CLEAR(me)
-        end
+        CLEAR(me)
     end,
 
     ParAnd = function (me)
@@ -386,7 +426,7 @@ if (ceu_out_pending()) {
     Break = function (me)
         local top = _AST.iter'Loop'()
         if _AST.iter'Finally'() then
-            SWITCH(me, top.lbl_out)     -- can't use prios inside a `finally´
+            SWITCH(me, top.lbl_out)     -- can't use prios inside a `finalize´
         else
             -- TODO: breaks w/o par may switch
             LINE(me, 'ceu_trk_ins(CEU.stack, ' ..top.lbl_out.prio..','
@@ -461,21 +501,12 @@ return 0;
             ATTR(me, int, exp)
         end
 
-        -- matching has highest priority
-        LINE(me, 'ceu_trk_ins(CEU.stack+1, CEU_TREE_MAX, _trk_.org, 0,'
-                    ..me.lbl_mch.id..');')
-        -- then the continuation (together with all pending trails)
-        LINE(me, 'ceu_trk_ins(CEU.stack, CEU_TREE_MAX, _trk_.org, 0,'
-                    ..me.lbl_cnt.id..');')
-        HALT(me)
-
-        -- emit
-        CASE(me, me.lbl_mch)
         local org = (int.org and int.org.val) or '_trk_.org'
-        LINE(me, 'ceu_lst_go('..(int.off or int.var.off)..','..org..',0);')
+        LINE(me, 'ceu_lst_go(CEU.stack+1,'..(int.off or int.var.off)
+                    ..','..org..',0);')     -- emit
+        LINE(me, 'ceu_trk_ins(CEU.stack, CEU_TREE_MAX, _trk_.org, 0,'
+                    ..me.lbl_cnt.id..');')  -- continuation
         HALT(me)
-
-        -- continuation
         CASE(me, me.lbl_cnt)
     end,
 

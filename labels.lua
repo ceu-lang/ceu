@@ -54,13 +54,18 @@ F = {
         me.lbl_clr = new{'Free_clr'}
     end,
     Block = function (me)
-        me.lbl_cnt = new{'New_cont'}
-        me.lbl_clr = new{'Block_clr'}
-    end,
+        local blk = unpack(me)
 
-    BlockF = function (me)
-        me.lbl_fin = new{'Fin__fin', depth=me.depth}
-        me.lbl_cnt = new{'Fin_cnt'}
+        if me.fins then
+            me.lbl_fin     = new{'Block__fin', depth=me.depth}
+            me.lbl_fin_cnt = new{'Block_fin_cnt'}
+            for _, fin in ipairs(me.fins) do
+                fin.lbl_true  = new{'Finalize_true'}
+                fin.lbl_false = new{'Finalize_false'}
+            end
+        end
+
+        me.lbl_clr = new{'Block_clr'}
     end,
 
     Dcl_cls = function (me)

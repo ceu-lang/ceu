@@ -132,15 +132,20 @@ end
 
 local C; C = {
     [1] = function (ln, spc, ...) -- spc=CK''
-        C.Dcl_cls(ln, false, 'Main', node('BlockN')(ln), node('Block')(ln,...))
+        C.Dcl_cls(ln, false, 'Main', node('Stmts')(ln),
+                                     node('Stmts')(ln,...))
         _AST.root = node('Root')(ln, unpack(TOP))
         return _AST.root
     end,
 
-    Block   = node('Block'),
-    BlockN  = node('BlockN'),
     BlockI  = node('BlockI'),
+    Stmts   = node('Stmts'),
+    Nothing = node('Nothing'),
+    Block   = node('Block'),
     Host    = node('Host'),
+
+    Finalize = node('Finalize'),
+    Finally  = node('Finally'),
 
     _Return = node('_Return'),
 
@@ -156,18 +161,6 @@ local C; C = {
     ParEver = node('ParEver'),
     ParOr   = node('ParOr'),
     ParAnd  = node('ParAnd'),
-
-    _Do = function (ln, b1, b2)
-        if not b2 then
-            return node('Block')(ln, b1)
-        end
-
-        local fin = node('BlockF')(ln, b1, node('Finally')(ln,b2))
-        local blk = node('Block')(ln, fin)
-        blk.fin = fin   -- env.lua checks for blocks requiring finally's
-
-        return blk
-    end,
 
     If = function (ln, ...)
         local t = { ... }
@@ -193,8 +186,9 @@ local C; C = {
                         node('Op2_+')(ln, '+', i(), node('CONST')(ln,'1')))
 
         if not _j then
-            return node('Block')(ln, dcl_i, set_i,
-                                    node('Loop')(ln,blk))
+            return node('Block')(ln,
+                    node('Stmts')(ln, dcl_i, set_i,
+                                    node('Loop')(ln,blk)))
         end
 
         local j_name = '$j'..tostring(blk)
@@ -207,12 +201,13 @@ local C; C = {
         local loop = node('Loop')(ln,
             node('If')(ln, cmp,
                 node('Break')(ln),
-                node('BlockN')(ln, blk, nxt_i)))
+                node('Stmts')(ln, blk, nxt_i)))
 
         return node('Block')(ln,
-                dcl_i, set_i,
-                dcl_j, set_j,
-                loop)
+                node('Stmts')(ln,
+                    dcl_i, set_i,
+                    dcl_j, set_j,
+                    loop))
     end,
 
     Pause = function (ln, evt, blk)
@@ -226,14 +221,14 @@ local C; C = {
         pse2.evt = evt
         return
             node('ParOr')(ln, blk,
-                node('BlockN')(ln,
+                node('Stmts')(ln,
                     node('Dcl_var')(ln, 'var', 'int', false, id),
                     node('SetExp')(ln, var, node('CONST')(ln,'0')),
                     node('Loop')(ln,
-                        node('BlockN')(ln,
+                        node('Stmts')(ln,
                             node('AwaitInt')(ln, evt),
                             node('If')(ln, node('Op2_!=')(ln,'!=',var,evt),
-                                node('BlockN')(ln,
+                                node('Stmts')(ln,
                                     node('SetExp')(ln, var, evt),
                                     node('If')(ln, evt, pse1, pse2)))))))
     end,
@@ -332,22 +327,20 @@ local C; C = {
     end,
 
     Dcl_ifc = function (...) return C.Dcl_cls(...) end,
-    Dcl_cls = function (ln, is_ifc, id, ifc, body)
-        local blk = node('Block')(ln, ifc, body)
-        local new = blk
+    Dcl_cls = function (ln, is_ifc, id, blk_ifc, blk_body)
+        local blk = node('Block')(ln, node('Stmts')(ln,blk_ifc,blk_body))
+        local this = blk
         if id == 'Main' then
-            new = node('Block')(ln,
-                    node('Dcl_var')(ln, false, 'int', false, '$ret'),
-                    node('SetBlock')(ln,
-                        node('Var')(ln,'$ret'),
-                        blk))
+            blk = node('Block')(ln,
+                    node('Stmts')(ln,
+                        node('Dcl_var')(ln, false, 'int', false, '$ret'),
+                        node('SetBlock')(ln,
+                            node('Var')(ln,'$ret'),
+                            blk)))
         end
 
-        local cls = node('Dcl_cls')(ln, is_ifc, id, new)
-        cls.blk = (id=='Main' and body) or blk  -- top-most block for `this´
-        if not is_ifc then
-            cls.fin = body.fin  -- used by free()
-        end
+        local cls = node('Dcl_cls')(ln, is_ifc, id, blk)
+        cls.blk = this  -- top-most block for `this´
         TOP[#TOP+1] = cls
     end,
 
@@ -380,6 +373,11 @@ local C; C = {
                 return C._Exp(ln,
                     node('Op2_.')(ln, '.', node('Op1_*')(ln,'*',v1), v3),
                     select(4,...)
+                )
+            elseif v2 == 'call' then
+                return C._Exp(ln,
+                    node('Op2_'..v2)(ln, v2, v1, v3, v4),
+                    select(5,...)
                 )
             else
                 return C._Exp(ln,
@@ -434,7 +432,7 @@ F = {
         var.blk = set.blk
         var.ret = true
 
-        local blk = node('BlockN')(me.ln)
+        local blk = node('Stmts')(me.ln)
         blk[#blk+1] = node('SetExp')(me.ln, var, e2, set[3])
 
         blk[#blk+1] = node('Return')(me.ln)
