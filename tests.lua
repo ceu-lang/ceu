@@ -198,6 +198,21 @@ do
 end
 return a;
 ]],
+    env = 'ERR : line 4 : invalid access',
+    --run = 14,
+}
+
+Test { [[
+class T with
+    var int a;
+do
+    this.a = 8;
+    var int a = 1;
+    this.a = this.a + a + 5;
+end
+var T t;
+return t.a;
+]],
     run = 14,
 }
 
@@ -1643,6 +1658,7 @@ do
     do
         finalize with
             _V = 100;
+        end
         await F;
     end
 end
@@ -1666,6 +1682,7 @@ do
     do
         finalize with
             _V = _V + 100;
+        end
         await F;
     end
 end
@@ -1692,6 +1709,7 @@ do
     do
         finalize with
             _V = 100;
+        end
         await START;
     end
 end
@@ -1718,6 +1736,7 @@ class T with
 do
     finalize with
         _V = _V + 1;        // * writes after
+    end
     v = 1;
     await A;
     v = v + 3;
@@ -1730,6 +1749,7 @@ par/or do
     do
         finalize with
             _V = _V*10;
+        end
         await t.ok;
     end
 with
@@ -1759,6 +1779,7 @@ class T with
 do
     finalize with
         _V = _V + 1;        // * writes before
+    end
     v = 1;
     await A;
     v = v + 3;
@@ -1773,6 +1794,7 @@ do
         do
             finalize with
                 _V = _V*10;
+            end
             await t.ok;
         end
     with
@@ -1958,7 +1980,8 @@ do
         do
             aa.v = b:v;
             a = &aa;
-        end;
+        end
+    end
 end
 return a:v;
 ]],
@@ -1975,6 +1998,7 @@ class T with
 do
     finalize with
         _V = 10;
+    end
     await FOREVER;
 end
 
@@ -1987,6 +2011,7 @@ do
         a = b;
     with
         nothing;
+    end
 end
 return _V;
 ]],
@@ -2003,6 +2028,7 @@ class T with
 do
     finalize with
         _V = 10;
+    end
     await FOREVER;
 end
 
@@ -2053,6 +2079,7 @@ do
         t1 = &t2;
     with
         nothing;
+    end
 end
 end
 return 10;
@@ -2100,6 +2127,7 @@ class T with
 do
     finalize with
         _V = 1;
+    end
     a = 10;
 end
 
@@ -2129,6 +2157,7 @@ class T with
 do
     finalize with
         _V = 1;
+    end
     a = 10;
     await 1s;
 end
@@ -2161,6 +2190,7 @@ class T with
 do
     finalize with
         _V = 1;
+    end
     a = 10;
     await 1s;
 end
@@ -2209,6 +2239,7 @@ do
         v = _f();
     with
         _V = _V+1;
+    end
     await FOREVER;
 end
 
@@ -2246,6 +2277,7 @@ do
         v = _f();
     with
         _V = _V+1;
+    end
     await FOREVER;
 end
 
@@ -2287,6 +2319,7 @@ do
         v = _f();
     with
         _V = _V+1;
+    end
     await FOREVER;
 end
 
@@ -2384,6 +2417,7 @@ class T with
 do
     finalize with
         _V = _V - 1;
+    end
     await 500ms;
     _V = _V - 1;
 end
@@ -2413,6 +2447,7 @@ class T with
 do
     finalize with
         _Y = _Y + 1;
+    end
     _X = _X + 1;
     await FOREVER;
 end
@@ -2466,7 +2501,8 @@ do
                 do break; end
             end
             _V = _V + this.v;
-        end;
+        end
+    end
     await FOREVER;
 end
 do
@@ -2832,6 +2868,85 @@ var int v = await g:a?;
 return v;
 ]],
     run = 10,
+}
+
+Test { [[
+interface I with
+end
+
+interface Global with
+    var I* t;
+end
+
+class T with
+do
+    global:t = &this;
+end
+
+var I* t;
+
+return 1;
+]],
+    env = 'ERR : line 10 : attribution requires `finalize´'
+}
+
+Test { [[
+interface Global with
+    var int* a;
+end
+var int* a;
+var int* b;
+b = global:a;
+do
+    var int* c;
+    c = global:a;
+end
+return 1;
+]],
+    run = 1,
+}
+Test { [[
+interface Global with
+    var int* a;
+end
+var int* a;
+var int* b;
+global:a = b;       // don't use global
+do
+    var int* c;
+    global:a = c;
+end
+return 1;
+]],
+    env = 'ERR : line 6 : attribution requires `finalize´',
+}
+Test { [[
+interface Global with
+    var int* a;
+end
+class T with
+do
+    var int* b;
+    b = global:a;
+end
+var int* a;
+return 1;
+]],
+    run = 1,
+}
+Test { [[
+interface Global with
+    var int* a;
+end
+class T with
+do
+    var int* b;
+    global:a = b;
+end
+var int* a;
+return 1;
+]],
+    env = 'ERR : line 7 : attribution requires `finalize´'
 }
 
 Test { [[
@@ -3981,7 +4096,7 @@ var int ret;
 do
     var int a;
     v(&a)
-        finalize with nothing;
+        finalize with nothing; end;
     ret = a;
 end
 return(ret);
@@ -4010,6 +4125,7 @@ do
             do
                 ret = ret + a;
                 _A = null;
+        end
             end;
     if _A then
         a = a + *_A;
@@ -4045,6 +4161,7 @@ par/or do
                 do
                     ret = ret + a;
                     _A = null;
+            end
                 end;
         if _A then
             a = a + *_A;
@@ -14572,7 +14689,7 @@ return ret;
 
 Test { [[
 do
-finalize with nothing;
+finalize with nothing; end
 end
 return 1;
 ]],
@@ -14582,6 +14699,7 @@ return 1;
 Test { [[
 finalize with
     do return 1; end;
+end
 return 0;
 ]],
     props = 'ERR : line 2 : not permitted inside `finalize´',
@@ -14595,6 +14713,7 @@ do
         a = _f();
     with
         do await FOREVER; end;
+    end
 end
 ]],
     props = "ERR : line 7 : not permitted inside `finalize´",
@@ -14609,6 +14728,7 @@ do
     with
         async do
         end;
+    end
 end
 ]],
     props = "ERR : line 7 : not permitted inside `finalize´",
@@ -14622,6 +14742,7 @@ do
         a = _f();
     with
         do return 0; end;
+    end
 end
 ]],
     props = "ERR : line 7 : not permitted inside `finalize´",
@@ -14636,6 +14757,7 @@ loop do
             a = b;
         with
             do break; end;
+        end
     end
 end
 ]],
@@ -14655,6 +14777,7 @@ do
             end
             ret = a;
         end;
+    end
 end
 return ret;
 ]],
@@ -14670,6 +14793,7 @@ do
         a = _f();
     with
         var int b = do return 2; end;       // TODO: why not?
+    end
     r = 1;
 end
 return r;
@@ -14680,6 +14804,7 @@ return r;
 Test { [[
 C _f();
 _f() finalize with nothing;
+    end;
 return 1;
 ]],
     env = 'ERR : line 2 : invalid `finalize´',
@@ -14690,9 +14815,11 @@ var int v = 0;
 do
     finalize with
         v = v * 2;
+    end
     v = v + 1;
     finalize with
         v = v + 3;
+    end
 end
 return v;
 ]],
@@ -14705,6 +14832,7 @@ C do void f () {} end
 
 var void* p;
 _f(p) finalize with nothing;
+    end;
 return 1;
 ]],
     run = 1,
@@ -14716,6 +14844,7 @@ C do void f () {} end
 
 var void* p;
 _f(p!=null) finalize with nothing;
+    end;
 return 1;
 ]],
     env = 'ERR : line 5 : invalid `finalize´',
@@ -14744,9 +14873,11 @@ do
     if 1 then
         finalize with
             ret = ret + 1;
+    end
     else
         finalize with
             ret = ret + 2;
+    end
     end
 end
 return ret;
@@ -14764,11 +14895,13 @@ do
             pa = &v;
         with
             ret = ret + 1;
+    end
     else
         finalize
             pa = &v;
         with
             ret = ret + 2;
+    end
     end
 end
 return ret;
@@ -14786,6 +14919,7 @@ do
             var int b = 1;
             r = b;
         end;
+    end
 end
 return r;
 ]],
@@ -14798,6 +14932,7 @@ do
     await 1s;
     finalize with
         var int a = 1;
+    end
 end
 return ret;
 ]],
@@ -14809,6 +14944,7 @@ do
     finalize with
         if 1 then
         end;
+    end
 end
 return 1;
 ]],
@@ -14824,6 +14960,7 @@ do
             a = a + 1;
             ret = a;
         end;
+    end
 end
 return ret;
 ]],
@@ -14839,6 +14976,7 @@ do
             a = a + 1;
             ret = a;
         end;
+    end
 end
 return ret;
 ]],
@@ -14854,6 +14992,7 @@ do
             a = 1;
             ret = a;
         end;
+    end
 end
 return ret;
 ]],
@@ -14865,6 +15004,7 @@ var int a;
 par/or do
     finalize with
         a = 1;
+    end
 with
     a = 2;
 end
@@ -14882,6 +15022,7 @@ par/or do
         finalize with
             a = 1;
     end
+    end
 with
     a = 2;
 end
@@ -14898,6 +15039,7 @@ par/or do
         await 1s;
         finalize with
             ret = 3;
+    end
     end
 with
     await 1s;
@@ -14918,6 +15060,7 @@ loop do
             await A;
             finalize with
                 ret = ret + 1;
+    end
         end;
         return 0;
     with
@@ -14937,6 +15080,7 @@ loop do
         do
             finalize with
                 ret = ret + 1;
+    end
             await A;
         end;
         return 0;
@@ -14956,6 +15100,7 @@ par/or do
     do
         finalize with
             ret = 1;
+    end
         await A;
     end
 with
@@ -14963,6 +15108,7 @@ with
         await B;
         finalize with
             ret = 2;
+    end
     end
 end
 return ret;
@@ -14982,17 +15128,20 @@ par/or do
         finalize with
             ret = 1;
     end
+    end
 with
     do
         await B;
         finalize with
             ret = 2;
     end
+    end
 with
     do
         await Z;
         finalize with
             ret = 3;
+    end
     end
 end
 return ret;
@@ -15015,6 +15164,7 @@ par/or do
             do
                 emit a;
                 ret = ret * 2;
+    end
             end;
     end
 with
@@ -15022,6 +15172,7 @@ with
         await B;
         finalize with
             ret = ret + 5;
+    end
     end
 with
     loop do
@@ -15042,6 +15193,7 @@ par/or do
     do
         finalize with
             ret = ret * 2;
+    end
         await A;
         emit a;
     end
@@ -15049,6 +15201,7 @@ with
     do
         finalize with
             ret = ret + 5;
+    end
         await B;
     end
 with
@@ -15075,9 +15228,11 @@ par/or do
             await A;
             finalize with
                 ret = ret * 3;
+    end
         end
         finalize with
             ret = ret + 5;
+    end
     end
 with
     await A;
@@ -15099,9 +15254,11 @@ par/or do
             await A;
             finalize with
                 ret = ret * 3;
+    end
         end
         finalize with
             ret = ret + 5;
+    end
     end
 with
     await A;
@@ -15119,10 +15276,12 @@ par/or do
     do
         finalize with
             ret = ret + 5;
+    end
         ret = ret + 1;
         do
             finalize with
                 ret = ret * 3;
+    end
             await A;
             ret = ret * 100;
         end
@@ -15143,14 +15302,17 @@ loop do
     do
         finalize with
             ret = ret + 4;
+    end
         par/or do
             do
                 finalize with
                     ret = ret + 3;
+    end
                 await B;
                 do
                     finalize with
                         ret = ret + 2;
+    end
                     var int a;
                     await B;
                     ret = ret + 1;
@@ -15176,6 +15338,7 @@ loop do
         finalize with
             ret = ret + 4;
     end
+    end
 end
 return ret;
 ]],
@@ -15189,6 +15352,7 @@ loop do
         ret = ret + 1;
         finalize with
             ret = ret + 4;
+    end
         break;
     end
 end
@@ -15210,6 +15374,7 @@ loop do
         finalize with
             ret = ret + 4;
     end
+    end
 end
 return ret;
 ]],
@@ -15224,6 +15389,7 @@ loop do
         ret = ret + 1;
         finalize with
             ret = ret + 4;
+    end
         break;
     end
 end
@@ -15245,6 +15411,7 @@ var int ret = do
             do return ret * 2; end
             finalize with
                 ret = ret + 4;  // executed after `return´ assigns to outer `ret´
+    end
         end
     end
 end;
@@ -15265,6 +15432,7 @@ var int ret = do
             ret = ret + 1;
             finalize with
                 ret = ret + 4;  // executed after `return´ assigns to outer `ret´
+    end
             return ret * 2;
         end
     end
@@ -15287,6 +15455,7 @@ with
         finalize with
             ret = ret + 1;
     end
+    end
 end
 return ret;
 ]],
@@ -15304,6 +15473,7 @@ with
         do
             finalize with
                 ret = ret + 1;
+    end
             await 1s;
         end
     end
@@ -15327,6 +15497,7 @@ with
         do
             finalize with
                 ret = ret + 1;
+    end
             await 250ms;
             ret = ret + 1;
         end
@@ -15351,6 +15522,7 @@ par/or do
                 v = v + 1;
                 v = v * 2;
             end;
+    end
         await A;
         v = v + 3;
     end
@@ -16395,6 +16567,7 @@ finalize
     p = _f();
 with
     nothing;
+end
 return *p;
 ]],
     run = 10,
@@ -16413,6 +16586,7 @@ finalize
     p = _f();
 with
     nothing;
+end
 return *p;
 ]],
     run = 10,
@@ -16426,7 +16600,12 @@ C do
         return &a;
     }
 end
-var int* p = _f();
+var int* p;
+finalize
+    p = _f();
+with
+    nothing;
+end
 return *p;
 ]],
     run = 10,
@@ -16446,6 +16625,7 @@ do
         p = _f();
     with
         a = *p;
+end
 end
 return a;
 ]],
@@ -16468,6 +16648,7 @@ do
             p = _f();
         with
             a = a + *p;
+end
     end
     a = 0;
 end
@@ -18162,6 +18343,7 @@ with
     pause/if a do
         finalize with
             ret = 10;
+    end
         await Z;
     end
 end

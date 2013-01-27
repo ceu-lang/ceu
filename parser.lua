@@ -125,18 +125,18 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
              + V'_Dcl_c'   + V'_Dcl_ext'
              + V'_Dcl_int' + V'_Dcl_var'
              + V'_Set'
-             + V'Finalize'
              + V'Free'
              + V'Nothing'
              + V'CallStmt' -- last
              --+ EM'statement'-- (missing `_´?)'
-             + EM'statement (usually a missing `var´ or `_´ C prefix)'
+             + EM'statement (usually a missing `var´ or C prefix `_´)'
 
     , _StmtB = V'_Do'   + V'Async'  + V'Host'
              + V'ParOr' + V'ParAnd'
              + V'If'    + V'Loop'
              + V'Pause'
              + V'Dcl_ifc' + V'Dcl_cls'
+             + V'Finalize'
 
     , _LstStmt  = V'_Return' + V'Break' + V'AwaitN'
     , _LstStmtB = V'ParEver'
@@ -154,8 +154,8 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
               )
 
     , Finalize = K'finalize' * (V'_Set'*EK';'*K';'^0 + Cc(false))
-               * EK'with' * EV'Finally'
-    , Finally  = (V'_StmtS' + V'_StmtB')
+               * EK'with' * EV'Finally' * EK'end'
+    , Finally  = V'Block'
 
     , Free = K'free' * V'_Exp'
 
@@ -210,7 +210,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , _12     = V'_13' *
                     (
                         K'(' * Cc'call' * V'ExpList' * EK')' *
-                            ( EK'finalize' * EK'with' * V'Finally'
+                            ( EK'finalize' * EK'with' * V'Finally' * EK'end'
                             + Cc(false)) +
                         K'[' * Cc'idx'  * V'_Exp'    * EK']' +
                         (CK':' + CK'.')

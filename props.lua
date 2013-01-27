@@ -32,6 +32,7 @@ _PROPS = {
     has_asyncs  = false,
     has_pses    = false,
     has_fins    = false,
+    has_orgs    = false,
     has_news    = false,
     has_ifcs    = false,
 }
@@ -116,6 +117,7 @@ F = {
     ParOr   = ADD_all,
 
     Dcl_cls = function (me)
+        _PROPS.has_orgs = _PROPS.has_orgs or me~=_MAIN
         if me.is_ifc then
             _PROPS.has_ifcs = true
         else
@@ -179,6 +181,19 @@ F = {
         local loop = _AST.iter'Loop'()
         ASR(loop, me, 'break without loop')
         loop.brks[me] = true
+        loop.has_break = true
+
+        -- loops w/ breaks in parallel needs CLEAR
+        for n in _AST.iter() do
+            if n.tag == 'Loop' then
+                break
+            elseif n.tag == 'ParEver' or
+                   n.tag == 'ParAnd' or
+                   n.tag == 'ParOr' then
+                loop.needs_clr = true
+                break
+            end
+        end
 
         local fin = _AST.iter'Finally'()
         ASR(not fin or fin.depth<loop.depth, me,
@@ -199,6 +214,18 @@ F = {
     Return = function (me)
         local blk = _AST.iter'SetBlock'()
         blk.rets[me] = true
+
+        -- setblock w/ returs in parallel needs CLEAR
+        for n in _AST.iter() do
+            if n.tag == 'SetBlock' then
+                break
+            elseif n.tag == 'ParEver' or
+                   n.tag == 'ParAnd' or
+                   n.tag == 'ParOr' then
+                blk.needs_clr = true
+                break
+            end
+        end
 
         local async = _AST.iter'Async'()
         if async then

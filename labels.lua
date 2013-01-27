@@ -120,8 +120,10 @@ F = {
 
     Loop_pre = function (me)
         me.lbl_ini = new{'Loop_ini'}
-        me.lbl_out = new{'Loop_out',  prio=me.depth }
-        me.lbl_clr = new{'Loop_clr'}
+        if me.has_break then
+            me.lbl_out = new{'Loop_out',  prio=me.depth }
+            me.lbl_clr = new{'Loop_clr'}
+        end
     end,
 
     EmitExtS = function (me)

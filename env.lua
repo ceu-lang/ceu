@@ -224,10 +224,11 @@ F = {
         me.tp   = 'Global*'
         me.lval = false
         me.fst  = me
-        me.blk  = CLS().blk
+        me.blk  = true --_MAIN.blk
     end,
 
     This = function (me)
+        ASR(CLS() ~= _MAIN, me, 'invalid access')
         me.tp   = CLS().id
         me.lval = false
         me.fst  = me
@@ -361,21 +362,25 @@ F = {
             local blk1 = (e1.fst=='_' and _AST.root) or e1.fst.blk
             if e2.fst and e2.fst~='_' then
                 local blk2 = e2.fst.blk
+                if blk2 then
+                    local d1 = (blk1==true and 0) or blk1.depth
+                    local d2 = (blk2==true and 0) or blk2.depth
 
-                -- int a; pa=&a;    -- `a´ termination must consider `pa´
-                req = blk2.depth > blk1.depth and
-                        blk2.depth ~= CLS().blk.depth+2
+                    -- int a; pa=&a;    -- `a´ termination must consider `pa´
+                    req = d2 > d1 and
+                            (d1~=2 or d2>4)  -- iface vs 1st-body
+                end
                 req = req and blk2
             else
                 -- int* pa = _f();   -- `pa´ termination must consider `_f´
-                req = (e2.tag=='Op2_call' and e2.c.mod~='pure')
+                req = (e2.tag=='Op2_call')-- TODO: and e2.c.mod~='pure')
                 req = req and blk1
             end
         end
         ASR((not req) or me.fin, me, 'attribution requires `finalize´')
         ASR((not me.fin) or req, me, 'invalid `finalize´')
 
-        if me.fin then
+        if me.fin and me.fin.active then
             req.fins = req.fins or {}
             table.insert(req.fins, 1, me.fin)
         end
@@ -383,9 +388,12 @@ F = {
 
     Finalize_pre = function (me)
         local set, fin = unpack(me)
+        assert(fin[1].tag == 'Block')
+        assert(fin[1][1].tag == 'Stmts')
+        fin.active = #fin[1][1]>1 or fin[1][1][1].tag~='Nothing'
         if set then
             set.fin = fin
-        else
+        elseif fin.active then
             local blk = _AST.iter'Block'()
             blk.fins = blk.fins or {}
             table.insert(blk.fins, 1, fin)
@@ -463,7 +471,7 @@ F = {
         ASR((not req) or fin, me, 'call requires `finalize´')
         ASR((not fin) or req, me, 'invalid `finalize´')
 
-        if fin then
+        if fin and fin.active then
             req.fins = req.fins or {}
             table.insert(req.fins, 1, fin)
         end

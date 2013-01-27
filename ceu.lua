@@ -218,26 +218,20 @@ do
     end
 
     -- DEFINES
-    if _PROPS.has_exts then
-        str = str .. '#define CEU_EXTS\n'
-    end
-    if _PROPS.has_wclocks then
-        str = str .. '#define CEU_WCLOCKS\n'
-    end
-    if _PROPS.has_asyncs then
-        str = str .. '#define CEU_ASYNCS\n'
-    end
-    if _PROPS.has_pses then
-        str = str .. '#define CEU_PSES\n'
-    end
-    if _PROPS.has_fins then
-        str = str .. '#define CEU_FINS\n'
-    end
-    if _PROPS.has_news then
-        str = str .. '#define CEU_NEWS\n'
-    end
-    if _PROPS.has_ifcs then
-        str = str .. '#define CEU_IFCS\n'
+    local t = {
+        has_exts    = 'CEU_EXTS',
+        has_wclocks = 'CEU_WCLOCKS',
+        has_asyncs  = 'CEU_ASYNCS',
+        has_pses    = 'CEU_PSES',
+        has_fins    = 'CEU_FINS',
+        has_orgs    = 'CEU_ORGS',
+        has_news    = 'CEU_NEWS',
+        has_ifcs    = 'CEU_IFCS',
+    }
+    for k, s in pairs(t) do
+        if _PROPS[k] then
+            str = str .. '#define ' .. s .. '\n'
+        end
     end
 
     -- TODO: goto _OPTS
@@ -266,7 +260,11 @@ if _OPTS.verbose or true then
         exts    = _PROPS.has_exts,
         wclocks = _PROPS.has_wclocks,
         asyncs  = _PROPS.has_asyncs,
-        emits   = _PROPS.has_emits,
+        pses    = _PROPS.has_pses,
+        fins    = _PROPS.has_fins,
+        orgs    = _PROPS.has_orgs,
+        news    = _PROPS.has_news,
+        ifcs    = _PROPS.has_ifcs,
 
         tree     = true,    -- TODO: goto _OPTS
         tree_chk = true,    -- TODO: goto _OPTS
