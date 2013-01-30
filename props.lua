@@ -24,6 +24,11 @@ function ADD_all (me, t)
             end
         end
     end
+    if me.tag == 'ParOr' or
+       me.tag == 'ParAnd' or
+       me.tag == 'ParEver' then
+        me.ns.trks_n = MAX(me.ns.trks_n-1,1)     -- switch for last
+    end
 end
 
 _PROPS = {
@@ -57,7 +62,6 @@ F = {
         me.ns = {
             trks_n = 1,
             lsts_n = 0,
-            stacks = 0,
             fins   = 0,
             orgs   = 0,
             news   = 0,
@@ -132,12 +136,10 @@ F = {
     Dcl_var = function (me)
         if me.var.cls then
             me.ns.orgs   = 1
-            me.ns.stacks = 1    -- constructor continuation
-            me.ns.trks_n = 2
+            me.ns.trks_n = 1
         elseif me.var.arr and _ENV.clss[_TP.deref(me.var.tp)] then
             me.ns.orgs   = me.var.arr
-            me.ns.stacks = me.var.arr
-            me.ns.trks_n = me.var.arr+1 -- constructor continuation
+            me.ns.trks_n = me.var.arr
         end
     end,
 
@@ -149,7 +151,6 @@ F = {
         -- overwrite these:
         --me.ns.orgs   = 1        -- here or any parent
         me.ns.news   = 1
-        me.ns.stacks = 1        -- constructor continuation
         me.ns.trks_n = 2
         me.ns.fins   = 1        -- free
     end,
@@ -249,8 +250,7 @@ F = {
     end,
 
     EmitInt = function (me)
-        me.ns.stacks = 1
-        me.ns.trks_n = 2     -- continuation
+        --me.ns.trks_n = 2     -- continuation
     end,
 
     EmitExtS = function (me)

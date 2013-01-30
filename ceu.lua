@@ -236,7 +236,7 @@ do
 
     -- TODO: goto _OPTS
     --str = str .. '#define CEU_DEBUG\n'
-    str = str .. '#define CEU_TREE_CHK\n'
+    str = str .. '#define CEU_DETERMINISTIC\n'
 
     if _OPTS.defs_file then
         local f = assert(io.open(_OPTS.defs_file,'w'))
@@ -265,9 +265,6 @@ if _OPTS.verbose or true then
         orgs    = _PROPS.has_orgs,
         news    = _PROPS.has_news,
         ifcs    = _PROPS.has_ifcs,
-
-        tree     = true,    -- TODO: goto _OPTS
-        tree_chk = true,    -- TODO: goto _OPTS
     }
     local t = {}
     for k, v in pairs(T) do

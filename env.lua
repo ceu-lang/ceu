@@ -258,9 +258,9 @@ F = {
         _ENV.exts[id] = me.ext
     end,
 
-    Dcl_int = 'Dcl_var',
-    Dcl_var = function (me)
-        local pre, tp, dim, id, exp = unpack(me)
+    Dcl_int_pre = 'Dcl_var_pre',
+    Dcl_var_pre = function (me)
+        local pre, tp, dim, id = unpack(me)
         me.var = newvar(me, _AST.iter'Block'(), pre, tp, dim, id)
     end,
 

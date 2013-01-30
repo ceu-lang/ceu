@@ -50,9 +50,6 @@ F = {
     SetNew = function (me)
         me.lbl_cnt = new{'New_cont'}
     end,
-    Free = function (me)
-        me.lbl_clr = new{'Free_clr'}
-    end,
     Block = function (me)
         local blk = unpack(me)
 
@@ -64,8 +61,6 @@ F = {
                 fin.lbl_false = new{'Finalize_false'}
             end
         end
-
-        me.lbl_clr = new{'Block_clr'}
     end,
 
     Dcl_cls = function (me)
@@ -83,7 +78,6 @@ F = {
 
     SetBlock_pre = function (me)
         me.lbl_out = new{'Set_out',  prio=me.depth}
-        me.lbl_clr = new{'Set_clr'}
     end,
 
     _Par_pre = function (me)
@@ -99,7 +93,6 @@ F = {
     ParOr_pre = function (me)
         F._Par_pre(me)
         me.lbl_out = new{'ParOr_out',  prio=me.depth}
-        me.lbl_clr = new{'ParOr_clr'}
     end,
     ParAnd_pre = function (me)
         F._Par_pre(me)
@@ -122,7 +115,6 @@ F = {
         me.lbl_ini = new{'Loop_ini'}
         if me.has_break then
             me.lbl_out = new{'Loop_out',  prio=me.depth }
-            me.lbl_clr = new{'Loop_clr'}
         end
     end,
 
@@ -135,7 +127,6 @@ F = {
 
     EmitInt = function (me)
         local int = unpack(me)
-        me.lbl_mch = new{'Emit_mch_'..int.var.id}
         me.lbl_cnt = new{'Emit_cnt_'..int.var.id}
     end,
 
@@ -151,7 +142,7 @@ F = {
     end,
     AwaitInt = function (me)
         local int = unpack(me)
-        me.lbl_awt = new{'Await_'..me[1][1]}
+        --me.lbl_awt = new{'Await_'..me[1][1]}
         me.lbl_awk = new{'Awake_'..me[1][1]}
     end,
 }

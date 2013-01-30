@@ -19,8 +19,9 @@ end
 
 function alloc (mem, n)
     local cur = mem.off
-    mem.off = mem.off + _TP.align(n)
+    mem.off = mem.off + n-- + _TP.align(n)    -- TODO
     mem.max = MAX(mem.max, mem.off)
+--DBG(mem, n, mem.max)
     return cur
 end
 
@@ -83,6 +84,9 @@ F = {
         alloc(me.mem, _ENV.c.pointer.len)   -- parent org/lbl
         alloc(me.mem, _ENV.c.tceu_nlbl.len) -- for ceu_clr_*
     end,
+    Dcl_cls = function (me)
+        DBG(me.id, me.mem.max, me.ns.trks_n)
+    end,
 
     Block_pre = function (me)
         local cls = CLS()
@@ -115,7 +119,7 @@ F = {
             end
 
             var.off = alloc(mem, len)
---DBG(var.id, var.off)
+--DBG(var.id, var.off, len)
 
             if var.cls or var.arr then
                 var.val = 'PTR_org('.._TP.c(var.tp)..','..var.off..')'

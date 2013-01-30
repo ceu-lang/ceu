@@ -1,6 +1,43 @@
 --[===[
 --]===]
 
+Test { [[
+class T with
+    var int a, b;
+do
+end
+
+var T y;
+
+var T x with
+    x.a = 10;
+end
+
+return x.a;
+]],
+    run = 10,
+}
+
+Test { [[
+class T with
+    var int a, b;
+do
+end
+
+var T[2] y with
+    y[0].a = 10;
+    y[1].a = 20;
+end
+
+var T x with
+    x.a = 30;
+end
+
+return x.a + y[0].a + y[1].a;
+]],
+    run = 60,
+}
+
     -- CLASSES / ORGS
 
 Test { [[
@@ -1985,6 +2022,7 @@ do
 end
 return a:v;
 ]],
+    todo = 'free runs after block fin (correct leak!)',
     run = 10,
 }
 
@@ -4552,7 +4590,7 @@ end
 
 Test { [[
 par do
-    var int v1,v2;
+    var int v1=4,v2=4;
     par/or do
         await 10ms;
         v1 = 1;
@@ -4574,7 +4612,9 @@ end
         needsChk  = true,
         n_tracks  = 3,
     },
-    run = 3,
+    run = 5,
+    --run = 3,
+    --todo = 'nd kill',
 }
 
 Test { [[
@@ -4669,7 +4709,8 @@ return a;
         n_tracks  = 3,
         nd_acc = 3,         -- TODO: =0
     },
-    run = { ['~>5s; ~>F']=42 },
+    run = { ['~>5s; ~>F']=14 },
+    --run = { ['~>5s; ~>F']=42 },
 }
 
 Test { [[
@@ -5500,6 +5541,7 @@ return ret;
         nd_acc = 1,
     },
     run = { ['~>A; ~>A; ~>A']=2 },
+    --todo = 'nd kill',
 }
 
 Test { [[
@@ -5523,6 +5565,7 @@ return ret;
         nd_acc = 1,
     },
     run = { ['~>A;~>A'] = 2 },
+    --todo = 'nd kill',
 }
 
 Test { [[
@@ -6065,7 +6108,9 @@ return a + b + c + d;
     ana = {
         nd_acc = 2,
     },
-    run = { ['0~>A;5~>B']=8 },
+    run = { ['0~>A;5~>B']=6 },
+    --run = { ['0~>A;5~>B']=8 },
+    --todo = 'nd kill',
 }
 
 Test { [[
@@ -6323,8 +6368,10 @@ end;
 return a + b;
 ]],
     run = {
-        ['~>20us'] = 2,
-    }
+        ['~>20us'] = 1,
+        --['~>20us'] = 2,
+    },
+    --todo = 'nd kill',
 }
 Test { [[
 var int a=0,b=0;
@@ -6338,8 +6385,10 @@ with
 end;
 return a + b;
 ]],
+    --todo = 'nd kill',
     run = {
-        ['~>20us'] = 2,
+        --['~>20us'] = 2,
+        ['~>20us'] = 1,
     }
 }
 Test { [[
@@ -6354,8 +6403,10 @@ with
 end;
 return a + b;
 ]],
+    --todo = 'nd kill',
     run = {
-        ['~>20us'] = 2,
+        ['~>20us'] = 1,
+        --['~>20us'] = 2,
     }
 }
 Test { [[
@@ -6370,12 +6421,14 @@ with
 end;
 return a + b;
 ]],
+    --todo = 'nd kill',
     run = {
-        ['~>20us'] = 2,
+        ['~>20us'] = 1,
+        --['~>20us'] = 2,
     }
 }
 Test { [[
-var int a,b;
+var int a=100,b=100;
 par/or do
     a = await 10us;
 with
@@ -6383,9 +6436,12 @@ with
 end;
 return a + b;
 ]],
+    --todo = 'nd kill',
     run = {
-        ['~>10us'] = 0,
-        ['~>20us'] = 20,
+        --['~>10us'] = 0,
+        ['~>10us'] = 100,
+        --['~>20us'] = 20,
+        ['~>20us'] = 110,
     }
 }
 Test { [[
@@ -6591,7 +6647,8 @@ end
 return v;
 ]],
     --nd_flw = 1,
-    run = 2,
+    run = 1,
+    --run = 2,
     ana = {
         n_unreachs = 3,
     },
@@ -7461,6 +7518,7 @@ return 0;
     run = 1,
     --dfa = 'unreachable statement',
     --trig_wo = 1,
+    --todo = 'nd kill',
 }
 -- TODO: nd_flw?
 Test { [[
@@ -7550,7 +7608,9 @@ return v1+v2;
         n_unreachs = 1,
         --nd_esc = 1,
     },
-    run = 4,        -- TODO: stack change
+    --run = 4,        -- TODO: stack change
+    run = 2,
+    --todo = 'nd kill',
 }
 
 Test { [[
@@ -7571,7 +7631,9 @@ return v1+v2+v3;
         n_unreachs = 2,
         --nd_esc = 1,
     },
-    run = 4,        -- TODO: stack change
+    --run = 4,        -- TODO: stack change
+    run = 2,
+    --todo = 'nd kill',
 }
 
 Test { [[
@@ -7593,13 +7655,29 @@ return v1+v2+v3;
         nd_acc = 1,
         --nd_esc = 1,
     },
-    run = 4,        -- TODO: stack change
+    --run = 4,        -- TODO: stack change
+    run = 2,
+    --todo = 'nd kill',
+}
+
+
+Test { [[
+var int ret = 0;
+par/or do
+    ret = 1;
+with
+    ret = 2;
+end
+ret = ret * 2;
+return ret;
+]],
+    run = 2,
 }
 
 -- 1st to escape and terminate
 Test { [[
 event int a;
-var int ret;
+var int ret=9;
 par/or do
     par/or do
         emit a=2;
@@ -7617,13 +7695,14 @@ return ret;
         --nd_esc = 2,
         nd_acc = 0,         -- TODO: should it be =1?
     },
-    run = 3,
+    --run = 3,
+    run = 9,
 }
 
 -- 1st to escape and terminate
 Test { [[
 event int a;
-var int ret;
+var int ret=9;
 par/or do
     par/or do
         emit a=2;
@@ -7641,13 +7720,14 @@ return ret;
         --nd_esc = 2,
         nd_acc = 1,
     },
-    run = 3,
+    --run = 3,
+    run = 9,
 }
 
 -- 1st to escape and terminate
 Test { [[
 event int a;
-var int ret;
+var int ret=9;
 par/or do
     await a;
     ret = a + 1;
@@ -7665,7 +7745,8 @@ return ret;
         --nd_esc = 2,
         nd_acc = 1,
     },
-    run = 3,
+    --run = 3,
+    run = 9,
 }
 
 Test { [[
@@ -7698,11 +7779,12 @@ return a;
     run = {
         ['1~>A'] = 1,
         ['2~>A'] = 2,
-    }
+    },
+    --todo = 'nd kill',
 }
 Test { [[
 input int A;
-var int a;
+var int a=10;
 par/or do
     await A;
 with
@@ -7711,8 +7793,10 @@ end;
 return a;
 ]],
     run = {
-        ['1~>A'] = 1,
-        ['2~>A'] = 2,
+        --['1~>A'] = 1,
+        --['2~>A'] = 2,
+        ['1~>A'] = 10,
+        ['2~>A'] = 10,
     }
 }
 Test { [[
@@ -7733,7 +7817,8 @@ return a;
     run = {
         ['1~>A'] = 10,
         ['2~>A'] = 10,
-    }
+    },
+    --todo = 'nd kill',
 }
 
 Test { [[
@@ -7881,6 +7966,7 @@ return a;
         nd_acc = 1,
         --nd_flw = 1,
     },
+    --todo = 'nd kill',
 }
 
 Test { [[
@@ -7904,6 +7990,7 @@ return a;
         nd_acc = 1,
         --nd_flw = 1,
     },
+    --todo = 'nd kill',
 }
 
 Test { [[
@@ -8172,8 +8259,8 @@ return a;
 ]],
     run = {
         ['~>30ms ; 0~>A ; ~>50ms'] = 2,
-        ['0~>A ; ~>40ms'] = 2,
-        ['0~>A ; ~>20ms ; ~>20ms'] = 2,
+        ['~>1ms ; 0~>A ; ~>40ms'] = 2,
+        ['~>1ms ; 0~>A ; ~>20ms ; ~>20ms'] = 2,
     }
 }
 
@@ -8213,8 +8300,8 @@ return a;
 ]],
     run = {
         ['~>30ms ; 0~>A ; ~>50ms'] = 2,
-        ['0~>A ; ~>40ms'] = 2,
-        ['0~>A ; ~>20ms ; ~>20ms'] = 2,
+        ['~>1ms ; 0~>A ; ~>40ms'] = 2,
+        ['~>1ms ; 0~>A ; ~>20ms ; ~>20ms'] = 2,
     }
 }
 
@@ -9894,7 +9981,7 @@ par/or do
     end;
 with
     await Z;
-    await A;
+    ret = await A;
 end;
 return ret;
 ]],
@@ -10337,7 +10424,7 @@ input int Z;
 event int a;
 par do
     emit a=1;
-    return 0;
+    return 10;
 with
     par/or do
         await a;
@@ -10354,7 +10441,9 @@ end;
     --nd_esc = 2,
     n_unreachs = 2,    -- +1 C n_unreachs
     },
-    run = 1,
+    --run = 1,
+    run = 10,
+    --todo = 'nd kill',
 }
 Test { [[
 input void START;
@@ -10438,12 +10527,14 @@ return a;
         --nd_esc = 1,
     },
     run = {
-        ['1~>B'] = 6,
+        --['1~>B'] = 6,
+        ['1~>B'] = 5,
     },
+    --todo = 'nd kill',
 }
 Test { [[
 input int B,Z;
-event int a;
+event int a=0;
 par/or do
     await B;
     emit a=5;
@@ -10463,8 +10554,10 @@ return a;
         --nd_esc = 1,
     },
     run = {
+        --['1~>B'] = 5,
+        --['2~>Z; 1~>B'] = 6,
         ['1~>B'] = 5,
-        ['2~>Z; 1~>B'] = 6,
+        ['2~>Z; 1~>B'] = 5,
     },
 }
 Test { [[
@@ -10854,7 +10947,7 @@ return a;
     run = 1,
 }
 Test { [[
-event int a,b;
+event int a=2,b=2;
 par/or do
     emit a=1;
     a = 2;
@@ -10864,10 +10957,11 @@ with
 end;
 return a+b;
 ]],
-    run = 7,
+    --run = 7,
+    run = 4,
 }
 Test { [[
-event int a, b;
+event int a=0, b=0;
 par/or do
     emit a=2;
 with
@@ -10876,7 +10970,8 @@ end;
 return a+b;
 ]],
     --trig_wo = 2,
-    run = 5,
+    --run = 5,
+    run = 2,
 }
 Test { [[
 event int a;
@@ -11173,7 +11268,7 @@ return v;
     }
 }
 Test { [[
-event int a, b, c, d;
+event int a=0, b=0, c=0, d=0;
 par/or do
     par/and do
         await a;
@@ -11199,10 +11294,11 @@ return a+b+c+d;
         nd_acc = 3,
         n_unreachs = 1,
     },
-    run = 10,
+    --run = 10,
+    run = 5,
 }
 Test { [[
-event int a, b, c;
+event int a=0, b=0, c=0;
 par/or do
     par/or do
         await a;
@@ -11226,10 +11322,11 @@ return a+b+c;
         nd_acc = 3,
         n_unreachs = 4,
     },
-    run = 60,
+    --run = 60,
+    run = 10,
 }
 Test { [[
-event int a, b, c;
+event int a=0, b=0, c=0;
 par/or do
     par do
         await a;
@@ -11254,7 +11351,8 @@ return a+b+c;
         n_reachs = 1,
         --trig_wo = 3,
     },
-    run = 60,
+    --run = 60,
+    run = 10,
 }
 Test { [[
 event int a;
@@ -11382,7 +11480,7 @@ loop do
         break;
     end
     ret = 5;
-    await 1s;
+    return ret;
 end
 return ret;
 ]],
@@ -11408,7 +11506,8 @@ return ret;
     ana = {
         n_unreachs = 3,
     },
-    run = 10,
+    --run = 10,
+    run = 100,
 }
 
 Test { [[
@@ -11484,7 +11583,8 @@ return v1 + v2;
         n_unreachs = 1,
     --nd_flw = 1,
     },
-    run = 3,
+    --run = 3,
+    run = 1,
 }
 Test { [[
 input int A;
@@ -11538,7 +11638,8 @@ return v1 + v2;
         --nd_flw = 2,
     },
     run = {
-        ['5~>A'] = 10,
+        --['5~>A'] = 10,
+        ['5~>A'] = 5,
     }
 }
 
@@ -11584,7 +11685,8 @@ return v1+v2+v3;
     --nd_flw = 1,
     },
     run = {
-        ['2~>A'] = 5,
+        --['2~>A'] = 5,
+        ['2~>A'] = 3,
     }
 }
 
@@ -11616,7 +11718,8 @@ return v1+v2+v3+v4+v5+v6;
         n_unreachs = 2,
     --nd_flw = 2,
     },
-    run = 21,
+    --run = 21,
+    run = 1,
 }
 
 Test { [[
@@ -11644,7 +11747,8 @@ return v1+v2+v3+v4+v5+v6;
     ana = {
         n_unreachs = 2,
     },
-    run = 21,
+    --run = 21,
+    run = 7,
 }
 
 Test { [[
@@ -11679,7 +11783,8 @@ return v1+v2+v3+v4+v5+v6;
         n_unreachs = 2,
     --nd_flw = 3,
     },
-    run = { ['~>A'] = 21 },
+    --run = { ['~>A'] = 21 },
+    run = { ['~>A'] = 1 },
 }
 
 Test { [[
@@ -11711,7 +11816,8 @@ return v1+v2+v3+v4+v5+v6;
     ana = {
         n_unreachs = 2,
     },
-    run = { ['1~>A']=21 },
+    --run = { ['1~>A']=21 },
+    run = { ['1~>A']=7 },
 }
 
 Test { [[
@@ -11912,7 +12018,8 @@ return a;
         n_unreachs = 1,
     --nd_flw = 1,
     },
-    run = { ['2~>B'] = 3 }
+    --run = { ['2~>B'] = 3 }
+    run = { ['2~>B'] = 2 }
 }
 
 Test { [[
@@ -11984,7 +12091,8 @@ return a;
         --nd_flw = 1,
         n_unreachs = 1,
     },
-    run = { ['10~>B'] = 6 },
+    --run = { ['10~>B'] = 6 },
+    run = { ['10~>B'] = 1 },
 }
 
 Test { [[
@@ -12009,7 +12117,8 @@ return a;
     ana = {
     --nd_flw = 1,
     },
-    run = { ['10~>B'] = 14 },
+    --run = { ['10~>B'] = 14 },
+    run = { ['10~>B'] = 1 },
 }
 
 Test { [[
@@ -12118,7 +12227,8 @@ await B;
 return a;
 ]],
     run = {
-        ['0~>B'] = 6,
+        --['0~>B'] = 6,
+        ['0~>B'] = 4,
     }
 }
 Test { [[
@@ -12306,7 +12416,8 @@ return b+c+d;
     ana = {
         n_unreachs = 1,
     },
-    run = { ['0~>A'] = 9, }
+    --run = { ['0~>A'] = 9, }
+    run = { ['0~>A'] = 6, }
 }
 
 Test { [[
@@ -12334,7 +12445,8 @@ end;
 return b+c+d;
 ]],
     --nd_flw = 1,
-    run = { ['0~>A'] = 9, }
+    --run = { ['0~>A'] = 9, }
+    run = { ['0~>A'] = 3, }
 }
 
 Test { [[
@@ -12420,7 +12532,7 @@ return c;
 
     -- FRP
 Test { [[
-event int a,b;
+event int a=0,b=0;
 par/or do
     emit a=2;
 with
@@ -12428,7 +12540,8 @@ with
 end;
 return a + b;
 ]],
-    run    = 7,
+    --run    = 7,
+    run    = 2,
     --trig_wo = 2,
 }
 
@@ -12983,11 +13096,10 @@ par/and do
     emit a=3;
 with
     await a;
-    await a;
 end;
 return a;
 ]],
-    run = { ['1~>A']=0 }
+    run = { ['1~>A']=3 }
 }
 
 Test { [[
@@ -13288,6 +13400,7 @@ return 1;
 Test { [[
 input void START,A;
 var int v = 0;
+var int x = 0;
 event int a, b;
 par/or do
     loop do
@@ -13303,6 +13416,7 @@ par/or do
                 end;
             end;
         end;
+        x = x + 1;
     end;
 with
     await START;
@@ -13311,11 +13425,13 @@ with
     emit a=1;
     await A;
     emit a=0;
-    return v;
+    return v+x;
 end;
+return 10;
 ]],
     --nd_esc = 1,
-    run = { ['~>A;~>A'] = 1 },
+    --run = { ['~>A;~>A'] = 1 },
+    run = { ['~>A;~>A'] = 4 },
     ana = {
         n_unreachs = 1,
     },
@@ -15276,12 +15392,12 @@ par/or do
     do
         finalize with
             ret = ret + 5;
-    end
+        end
         ret = ret + 1;
         do
             finalize with
                 ret = ret * 3;
-    end
+            end
             await A;
             ret = ret * 100;
         end
@@ -15459,7 +15575,7 @@ with
 end
 return ret;
 ]],
-    run = { ['~>1s']=1, },
+    run = { ['~>1s']=0, },
 }
 
 Test { [[
@@ -15854,7 +15970,7 @@ C _a,_b;
 C do
     int a = 1;
 end
-var int a;
+var int a=0;
 par/or do
     _a = 1;
 with
@@ -15862,7 +15978,7 @@ with
 end
 return _a + a;
 ]],
-    run = 2,
+    run = 1,
 }
 
 Test { [[
@@ -16479,7 +16595,7 @@ C do
 end
 var int a, b;
 var int* pb = &b;
-par/or do
+par/and do
     a = 1;
 with
     _f(&b);
@@ -16493,6 +16609,59 @@ return a + b;
     run = 2,
     ana = {
         nd_acc = 7,
+    },
+}
+
+Test { [[
+C nohold _f();
+C do
+    void f (int* v) {
+        *v = 1;
+    }
+end
+var int a, b;
+var int* pb = &b;
+par/or do
+    a = 1;
+with
+    _f(&b);
+with
+    _f(&a);
+with
+    _f(pb);
+end
+return a + b;
+]],
+    run = 1,
+    ana = {
+        nd_acc = 7,
+    },
+}
+
+Test { [[
+pure _f;
+C do
+    void f (int* v) {
+        *v = 1;
+    }
+end
+var int a, b;
+var int* pb = &b;
+par/and do
+    a = 1;
+with
+    _f(&b);
+with
+    _f(&a);
+with
+    _f(pb);
+end
+return a + b;
+]],
+    todo = true,
+    run = 2,
+    ana = {
+        nd_acc = 2,
     },
 }
 
@@ -16517,7 +16686,7 @@ end
 return a + b;
 ]],
     todo = true,
-    run = 2,
+    run = 1,
     ana = {
         nd_acc = 2,
     },
@@ -16774,7 +16943,7 @@ C do
 end
 var int[2] a;
 var int b;
-par/or do
+par/and do
     b = 2;
 with
     _f(a);
@@ -16782,6 +16951,25 @@ end
 return a[0] + b;
 ]],
     run = 3,
+}
+
+Test { [[
+C nohold _f();
+C do
+    void f (int* p) {
+        *p = 1;
+    }
+end
+var int[2] a;
+var int b;
+par/or do
+    b = 2;
+with
+    _f(a);
+end
+return a[0] + b;
+]],
+    run = 2,
 }
 
     -- C FUNCS BLOCK

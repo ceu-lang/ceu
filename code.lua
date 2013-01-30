@@ -50,7 +50,6 @@ function CLEAR (me)
     COMM(me, 'CLEAR')
 
     local orgs_news = '('..me.ns.orgs..'||'..me.ns.news..'||'..me.ns[':=']..')'
-    local tree_max  = (me.lbl_out and me.lbl_out.prio) or 'CEU_TREE_MAX'
     -- (orgs with fins are also covered)
     local fins = me.ns.fins>0 or me.ns.news>0 or me.ns[':=']>0
 
@@ -59,46 +58,44 @@ function CLEAR (me)
     -- loops/setblocks w/o ret/brk in parallel are not required to clr
     me.needs_clr = me.tag=='ParOr' or me.needs_clr
 
-    -- remove (lower) stacked tracks
-    if fins or (me.needs_clr and me.ns.stacks>0) then
+    -- remove pending tracks in parallel
+    if fins or me.needs_clr then    -- first remove tracks to kill
         LINE(me, 'ceu_trk_clr('..orgs_news..', _trk_.org, '
                     ..me.lbls[1]..','..me.lbls[2]..');')
     end
 
-    -- trk_clr -> lst_clr (lst_clr may free orgs in trks)
-
-    -- clear internal awaits and trigger finalize's
     if fins or (me.needs_clr and me.ns.lsts_n>0) then
         LINE(me, 'ceu_lst_clr('..orgs_news..', _trk_.org, '
                     ..me.lbls[1]..','..me.lbls[2]..');')
     end
-
-    -- continue after finalizers
-    if fins then
-        LINE(me, 'ceu_trk_ins(CEU.stack,'
-                    ..tree_max
-                    ..', _trk_.org, 0,'
-                    ..me.lbl_clr.id..');')
-        HALT(me)
-        CASE(me, me.lbl_clr)
-    end
 end
 
-function ORG (me, new, org0, cls, par_org, par_lbl)
+function ORG (me, new, org0, cls, par_org, par_lbl, isArr)
     COMM(me, 'ORG')
     LINE(me, '{ char* org0 = '..org0..';')
     if new then
         LINE(me, 'if (org0) {')
         LINE(me, '  ceu_lst_ins(0, org0, org0, '..cls.lbl_free.id..',0);')
     end
+    if isArr then
+        LINE(me, [[
+    ceu_trk_ins(org0, ]]..cls.lbl.id..[[);
+]])
+    end
     LINE(me, [[
-    ceu_trk_ins(CEU.stack+1, CEU_TREE_MAX, org0, 0,]]..cls.lbl.id..[[);
 #ifdef CEU_IFCS
     *((tceu_ncls*)(org0+]]..(_MEM.cls.cls or '')..[[)) = ]]..cls.n..[[;
 #endif
     *((char**)    (org0+]].._MEM.cls.par_org..[[))     = ]]..par_org..[[;
     *((tceu_nlbl*)(org0+]].._MEM.cls.par_lbl..[[))     = ]]..par_lbl..[[;
 ]])
+    if not isArr then
+        LINE(me, [[
+    _trk_.org = org0;
+    _trk_.lbl = ]]..cls.lbl.id..[[;
+    goto _SWITCH_;
+]])
+    end
     if new then
         LINE(me, '}')
     end
@@ -129,8 +126,17 @@ F = {
 
         if me == _MAIN then
             local ret = _ENV.getvar('$ret', me.blk)
-            LINE(me, 'if (ret) *ret = '..ret.val..';')
-            LINE(me, 'return 1;')
+            LINE(me, [[
+#ifdef CEU_NEWS
+    free(CEU.lsts);
+    free(CEU.trks);
+    CEU.lsts = NULL;    // subsequent events have no effect
+    CEU.trks = NULL;
+#endif
+#ifdef ceu_out_end
+    ceu_out_end(]]..ret.val..[[);
+#endif
+]])
         end
 
         HALT(me)
@@ -149,13 +155,12 @@ F = {
     SetNew = function (me)
         local exp, _ = unpack(me)
         local org = (exp.org and exp.org.val) or '_trk_.org'
+        LINE(me, 'ceu_trk_ins(_trk_.org, '..me.lbl_cnt.id..');')
         ORG(me, true,
                 exp.val..' = malloc('..me.cls.mem.max..')',
                 me.cls,
                 org,
                 (exp.fst or exp.var).lbl_cnt.id)
-        LINE(me, 'ceu_trk_ins(CEU.stack, CEU_TREE_MAX, _trk_.org, 0,'
-                    ..me.lbl_cnt.id..');')
         HALT(me)
         CASE(me, me.lbl_cnt)
     end,
@@ -170,21 +175,24 @@ if (]]..exp.val..[[ != NULL) {
     ceu_trk_clr(1, ]]..exp.val..[[, ]]..lbls..[[);
     // clear internal awaits and trigger finalize's
     ceu_lst_clr(1, ]]..exp.val..[[, ]]..lbls..[[);
-    // continue after finalizers
-    ceu_trk_ins(CEU.stack, CEU_TREE_MAX, _trk_.org, 0, ]]..me.lbl_clr.id..[[);
-    break;
 }
 ]])
-        CASE(me, me.lbl_clr)
     end,
 
     Dcl_var = function (me)
+        local _,_,_,_,init = unpack(me)
+
+        if init then
+            CONC(me, init)
+        end
+
         local var = me.var
         if not (var.cls or (var.arr and _ENV.clss[_TP.deref(var.tp)])) then
             return
         end
 
         -- spawn orgs
+        LINE(me, 'ceu_trk_ins(_trk_.org, '..var.lbl_cnt.id..');')
         if var.cls then
             ORG(me, false,
                     var.val,
@@ -199,12 +207,11 @@ if (]]..exp.val..[[ != NULL) {
                             '(((char*)'..var.val..')+'..i..'*'..cls.mem.max..')',
                             cls,
                             '_trk_.org',
-                            var.lbl_cnt.id)
+                            var.lbl_cnt.id,
+                            true)   -- isArr
                 end
             end
         end
-        LINE(me, 'ceu_trk_ins(CEU.stack, CEU_TREE_MAX, _trk_.org, 0,'
-                    ..var.lbl_cnt.id..');')
         HALT(me)
         CASE(me, var.lbl_cnt)
     end,
@@ -236,6 +243,7 @@ if (]]..exp.val..[[ != NULL) {
             SWITCH(me, me.lbl_fin_cnt)
             CASE(me, me.lbl_fin)
 
+            -- TODO: normal if? (no control inside finally)
             for i, fin in ipairs(me.fins) do
                 LINE(me, 'if (*PTR_org(u8*,'..(me.off_fins+i-1)..')) {')
                 SWITCH(me, fin.lbl_true)
@@ -300,22 +308,42 @@ if (]]..exp.val..[[ != NULL) {
         CLEAR(me)
     end,
     Return = function (me)
-        local top = _AST.iter'SetBlock'()
-        LINE(me, 'ceu_trk_ins(CEU.stack, ' ..top.lbl_out.prio..','
-                    ..'_trk_.org, 1, '..top.lbl_out.id..');')
-        HALT(me)
+        SWITCH(me, _AST.iter'SetBlock'().lbl_out)
     end,
 
     _Par = function (me)
         -- Ever/Or/And spawn subs
         COMM(me, me.tag..': spawn subs')
-        for i, sub in ipairs(me) do
-            LINE(me, 'ceu_trk_ins(CEU.stack,CEU_TREE_MAX,_trk_.org,0,'
-                        ..me.lbls_in[i].id..');')
+        for i=#me, 1, -1 do     -- stacked execution
+            if i == 1 then
+                SWITCH(me, me.lbls_in[i])
+            else
+                LINE(me, 'ceu_trk_ins(_trk_.org,'..me.lbls_in[i].id..');')
+            end
         end
-        HALT(me)
+        --HALT(me)
     end,
 
+--[=[
+    _Par = function (me)
+        -- Ever/Or/And spawn subs
+        COMM(me, me.tag..': spawn subs')
+        LINE(me, [[{
+int killed = 0;
+]])
+        for i=1, #me do
+            LINE(me, [[
+                if (!killed)
+                    //killed = ceu_go_go(_trk_.org,]]..me.lbls_in[i].id..[[);
+                    ceu_go_go(_trk_.org,]]..me.lbls_in[i].id..[[);
+]])
+        end
+        LINE(me, [[
+}
+break;
+]])
+    end,
+]=]
 
     ParEver = function (me)
         F._Par(me)
@@ -332,9 +360,7 @@ if (]]..exp.val..[[ != NULL) {
             CASE(me, me.lbls_in[i])
             CONC(me, sub)
             COMM(me, 'PAROR JOIN')
-            LINE(me, 'ceu_trk_ins(CEU.stack, ' ..me.lbl_out.prio..','
-                        ..'_trk_.org, 1, '..me.lbl_out.id..');')
-            HALT(me)
+            SWITCH(me, me.lbl_out)
         end
         CASE(me, me.lbl_out)
         CLEAR(me)
@@ -428,15 +454,7 @@ if (ceu_out_pending()) {
     end,
 
     Break = function (me)
-        local top = _AST.iter'Loop'()
-        if _AST.iter'Finally'() then
-            SWITCH(me, top.lbl_out)     -- can't use prios inside a `finalize´
-        else
-            -- TODO: breaks w/o par may switch
-            LINE(me, 'ceu_trk_ins(CEU.stack, ' ..top.lbl_out.prio..','
-                        ..'_trk_.org, 1, '..top.lbl_out.id..');')
-        end
-        HALT(me)
+        SWITCH(me, _AST.iter'Loop'().lbl_out)
     end,
 
     Pause = function (me)
@@ -465,16 +483,17 @@ if (ceu_out_pending()) {
         LINE(me, 'ceu_async_enable(_trk_.org,'..me.lbl_cnt.id..');')
         if e2 then
             if _TP.deref(ext.tp) then
-                LINE(me, 'return ceu_go_event(ret, IN_'..ext.id
+                LINE(me, 'ceu_go_event(IN_'..ext.id
                         ..', (void*)'..e2.val..');')
             else
-                LINE(me, 'return ceu_go_event(ret, IN_'..ext.id
+                LINE(me, 'ceu_go_event(IN_'..ext.id
                         ..', (void*)ceu_ext_f('..e2.val..'));')
             end
 
         else
-            LINE(me, 'return ceu_go_event(ret, IN_'..ext.id ..', NULL);')
+            LINE(me, 'ceu_go_event(IN_'..ext.id ..', NULL);')
         end
+        HALT(me)
         CASE(me, me.lbl_cnt)
     end,
 
@@ -485,13 +504,14 @@ if (ceu_out_pending()) {
         LINE(me, [[
 #ifdef CEU_WCLOCKS
 { s32 nxt;
-  int s = ceu_go_wclock(ret,]]..exp.val..[[, &nxt);
-  while (!s && nxt<=0)
-      s = ceu_go_wclock(ret, 0, &nxt);
-  return s;
+  ceu_go_wclock(]]..exp.val..[[, &nxt);
+  while (nxt<=0) {
+      ceu_go_wclock(0, &nxt);
+}
+  break;
 }
 #else
-return 0;
+break;
 #endif
 ]])
         CASE(me, me.lbl_cnt)
@@ -506,34 +526,20 @@ return 0;
         end
 
         local org = (int.org and int.org.val) or '_trk_.org'
-        LINE(me, 'ceu_lst_go(CEU.stack+1,'..(int.off or int.var.off)
-                    ..','..org..');')     -- emit
-        LINE(me, 'ceu_trk_ins(CEU.stack, CEU_TREE_MAX, _trk_.org, 0,'
-                    ..me.lbl_cnt.id..');')  -- continuation
+        LINE(me, 'ceu_trk_ins(_trk_.org, '..me.lbl_cnt.id..');')  -- continuation
+        LINE(me, 'ceu_lst_go('..(int.off or int.var.off)..','..org..',0);') -- emit
         HALT(me)
         CASE(me, me.lbl_cnt)
     end,
 
     AwaitInt = function (me)
         local int, zero = unpack(me)
+        assert(not zero) -- TODO: remove await/0
         COMM(me, 'emit '..int.var.id)
-
         local org = (int.org and int.org.val) or '_trk_.org'
-
-        -- defer await: can only react once (0=defer_to_end_of_reaction)
-        if not zero then
-            LINE(me, 'ceu_trk_ins(0, CEU_TREE_MAX, _trk_.org, 0,'
-                        ..me.lbl_awt.id..');')
-            HALT(me)
-        end
-
-        -- await
-        CASE(me, me.lbl_awt)
         LINE(me, 'ceu_lst_ins('..(int.off or int.var.off)..','..org
                     ..',_trk_.org,'..me.lbl_awk.id..',0);')
         HALT(me)
-
-        -- awake
         CASE(me, me.lbl_awk)
     end,
     AwaitN = function (me)
