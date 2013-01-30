@@ -337,10 +337,6 @@ F = {
         me.val  = exp.val .. '*' .. t2n[unit] .. 'L'
     end,
 
-    WCLOCKR = function (me)
-        me.val = 'ceu_wclock_find(_trk_.org, '..me.awt.lbl.id..')'
-    end,
-
     C = function (me)
         me.val = string.sub(me[1], 2)
     end,

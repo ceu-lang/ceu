@@ -503,13 +503,11 @@ if (ceu_out_pending()) {
         LINE(me, 'ceu_async_enable(_trk_.org,'..me.lbl_cnt.id..');')
         LINE(me, [[
 #ifdef CEU_WCLOCKS
-{ s32 nxt;
-  ceu_go_wclock(]]..exp.val..[[, &nxt);
-  while (nxt<=0) {
-      ceu_go_wclock(0, &nxt);
+ceu_go_wclock(]]..exp.val..[[);
+while (CEU.wclk_min <= 0) {
+    ceu_go_wclock(0);
 }
-  break;
-}
+break;
 #else
 break;
 #endif

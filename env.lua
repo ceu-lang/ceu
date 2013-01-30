@@ -599,7 +599,6 @@ F = {
         me.fst  = false
     end,
     WCLOCKE = 'WCLOCKK',
-    WCLOCKR = 'WCLOCKK',
 
     SIZEOF = function (me)
         me.tp   = 'int'
