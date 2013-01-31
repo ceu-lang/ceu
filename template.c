@@ -73,16 +73,22 @@ typedef struct {
 } tceu_trk;
 
 typedef struct {
-#ifdef CEU_ORGS
-    char*     src;
-    char*     org;
-#endif
     tceu_nevt evt;
     tceu_nlbl lbl;
+#ifdef CEU_ORGS
+    char*     org;
+#endif
+    union {
+#ifdef CEU_ORGS
+        char* src;
+#endif
+#ifdef CEU_WCLOCKS
+        s32   togo;           // TODO: mem (even for non wclocks)
+#endif
+    };
 #ifdef CEU_PSES
     u8        pse;
 #endif
-    s32 togo;           // TODO: mem (even for non wclocks)
 } tceu_lst;
 
 enum {
@@ -171,11 +177,11 @@ tceu CEU = {
 
 /**********************************************************************/
 
-void ceu_go_go_f (char* org, tceu_nlbl lbl);
+void ceu_call_f (char* org, tceu_nlbl lbl);
 #ifdef CEU_ORGS
-#define ceu_go_go(a,b) ceu_go_go_f(a,b)
+#define ceu_call(a,b) ceu_call_f(a,b)
 #else
-#define ceu_go_go(a,b) ceu_go_go_f(NULL,b)
+#define ceu_call(a,b) ceu_call_f(NULL,b)
 #endif
 
 void ceu_wclock_min (s32 us, int out);
@@ -281,7 +287,6 @@ void ceu_lst_ins (tceu_nevt evt, char* src, char* org, tceu_nlbl lbl, s32 togo)
 
     tceu_lst* lst = &CEU.lsts[CEU.lsts_n++];
 #ifdef CEU_ORGS
-    lst->src = src;
     lst->org = org;
 #endif
     lst->evt = evt;
@@ -289,7 +294,16 @@ void ceu_lst_ins (tceu_nevt evt, char* src, char* org, tceu_nlbl lbl, s32 togo)
 #ifdef CEU_PSES
     lst->pse = 0;
 #endif
-    lst->togo = togo;
+    if (evt != IN__WCLOCK) {
+#ifdef CEU_ORGS
+        lst->src = src;
+#endif
+    }
+#ifdef CEU_WCLOCKS
+    else {
+        lst->togo = togo;
+    }
+#endif
 }
 #ifndef CEU_ORGS
 #define ceu_lst_ins(a,b,c,d,e) ceu_lst_ins(a,NULL,NULL,d,e)
@@ -315,22 +329,26 @@ void ceu_lst_go (tceu_nevt evt, char* src, int reset)
         CEU.lsts_ncur = CEU.lsts_n;
 
     // decreasing: first listeners execute first
-    for (i=CEU.lsts_ncur-1 ; i>=0 ; i--) {
+    for (i=CEU.lsts_ncur-1 ; i>=0 ; i--)
+    {
         tceu_lst* lst = &CEU.lsts[i];
-#ifdef CEU_ORGS
-        if (lst->evt!=evt || lst->src!=src)
-            continue;
-#else
+
         if (lst->evt!=evt)
             continue;
-#endif
+
 #ifdef CEU_PSES
         if (lst->pse > 0)
             continue;
 #endif
 
+        if (evt != IN__WCLOCK) {
+#ifdef CEU_ORGS
+            if (lst->src != src)
+                continue;
+#endif
+        }
 #ifdef CEU_WCLOCKS
-        if (evt == IN__WCLOCK) {
+        else {
             if (lst->togo !=  min) {
                 lst->togo -= CEU.wclk_dt;
                 ceu_wclock_min(lst->togo, 0);
@@ -339,7 +357,7 @@ void ceu_lst_go (tceu_nevt evt, char* src, int reset)
         }
 #endif
 
-        ceu_trk_ins(lst->org, lst->lbl);  // ceu_go_go pode remover lst
+        ceu_trk_ins(lst->org, lst->lbl);
         CEU.lsts_n--;
         CEU.lsts_ncur--;
 #ifdef CEU_DETERMINISTIC
@@ -380,7 +398,7 @@ void ceu_lst_clr (int child, char* org, tceu_nlbl l1, tceu_nlbl l2) {
             // always trigger finalizers
 //fprintf(stderr, "rem: %d=%d\n", lst->lbl, CEU.lbl2fin[lst->lbl]);
             if (CEU.lbl2fin[lst->lbl])
-                ceu_go_go(lst->org, lst->lbl);
+                ceu_call(lst->org, lst->lbl);
 #endif
             CEU.lsts_n--;
             if (i < CEU.lsts_ncur)
@@ -495,7 +513,7 @@ void ceu_go_init ()
     CEU.lsts = malloc(CEU.lsts_nmax*sizeof(tceu_lst));
     assert(CEU.trks!=NULL && CEU.lsts!=NULL);
 #endif
-    ceu_go_go(CEU.mem, Class_Main);
+    ceu_trk_ins(CEU.mem, Class_Main);
     ceu_go();
 }
 
@@ -537,7 +555,7 @@ void ceu_go_wclock (s32 dt)
 #endif   // CEU_WCLOCKS
 }
 
-void ceu_go_go_f (char* org, tceu_nlbl lbl)
+void ceu_call_f (char* org, tceu_nlbl lbl)
 {
 #ifdef CEU_ORGS
     tceu_trk _trk_ = {org,lbl};
@@ -580,8 +598,8 @@ void ceu_go ()
 {
     while (CEU.trks_n > 0) {
         CEU.trks_n--;
-        ceu_go_go(CEU.trks[CEU.trks_n].org,
-                  CEU.trks[CEU.trks_n].lbl);
+        ceu_call(CEU.trks[CEU.trks_n].org,
+                 CEU.trks[CEU.trks_n].lbl);
     }
 }
 

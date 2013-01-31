@@ -27,7 +27,7 @@ function ADD_all (me, t)
     if me.tag == 'ParOr' or
        me.tag == 'ParAnd' or
        me.tag == 'ParEver' then
-        me.ns.trks_n = MAX(me.ns.trks_n-1,1)     -- switch for last
+       me.ns.trks_n = MAX(me.ns.trks_n-1,1)     -- switch for last
     end
 end
 
@@ -95,7 +95,6 @@ F = {
         if me.fins then
             _PROPS.has_fins = true
             me.ns.fins   = me.ns.fins   + 1
-            me.ns.trks_n = me.ns.trks_n + 1    -- implicit await in parallel
             me.ns.lsts_n = me.ns.lsts_n + 1    -- implicit await in parallel
         end
 
