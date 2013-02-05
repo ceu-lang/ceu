@@ -2,32 +2,44 @@ function SAME (me, sub)
     for k,v in pairs(sub.ns) do
         me.ns[k] = v
     end
+    for k,v in pairs(sub.has) do
+        me.has[k] = v
+    end
+end
+
+function OR_all (me, t)
+    t = t or me
+    for _, sub in ipairs(t) do
+        if _AST.isNode(sub) then
+            for k,v in pairs(sub.has) do
+                me.has[k] = me.has[k] or v
+            end
+        end
+    end
 end
 
 function MAX_all (me, t)
     t = t or me
+    OR_all(me, t)
     for _, sub in ipairs(t) do
         if _AST.isNode(sub) then
-            for k,v in pairs(sub.ns) do
-                me.ns[k] = MAX(me.ns[k] or 0, v)
-            end
+            me.ns.lsts = MAX(me.ns.lsts, sub.ns.lsts)
+            me.ns.trks = MAX(me.ns.trks, sub.ns.trks)
         end
     end
 end
 
-function ADD_all (me, t)
+function ADD_all (me, t, keep)
     t = t or me
+    OR_all(me, t)
+    if not keep then
+        me.ns.trks = 0
+    end
     for _, sub in ipairs(t) do
         if _AST.isNode(sub) then
-            for k,v in pairs(sub.ns) do
-                me.ns[k] = (me.ns[k] or 0) + v
-            end
+            me.ns.lsts = me.ns.lsts + sub.ns.lsts
+            me.ns.trks = me.ns.trks + sub.ns.trks
         end
-    end
-    if me.tag == 'ParOr' or
-       me.tag == 'ParAnd' or
-       me.tag == 'ParEver' then
-       me.ns.trks_n = MAX(me.ns.trks_n-1,1)     -- switch for last
     end
 end
 
@@ -60,15 +72,17 @@ local NO_async = {
 F = {
     Node_pre = function (me)
         me.ns = {
-            trks_n = 1,
-            lsts_n = 0,
-            fins   = 0,
-            orgs   = 0,
-            news   = 0,
-            [':='] = 0,
+            trks = 1,
+            lsts = 0,
+        }
+        me.has = {
+            fins = false,
+            orgs = false,
+            news = false,
+            chg  = false,
         }
     end,
-    Node = function (me)
+    Node_pos = function (me)
         if not F[me.tag] then
             MAX_all(me)
         end
@@ -83,19 +97,19 @@ F = {
 
     Root = function (me)
         SAME(me, me[#me])
-        _ENV.c.tceu_nlst.len = _TP.n2bytes(me.ns.lsts_n)
-        _ENV.c.tceu_ntrk.len = _TP.n2bytes(me.ns.trks_n)
+        _ENV.c.tceu_nlst.len = _TP.n2bytes(me.ns.lsts)
+        _ENV.c.tceu_ntrk.len = _TP.n2bytes(me.ns.trks)
     end,
 
     Block = function (me)
-        local blk = unpack(me)
+        local stmts = unpack(me)
 
-        MAX_all(me)
+        SAME(me, stmts)
 
         if me.fins then
             _PROPS.has_fins = true
-            me.ns.fins   = me.ns.fins   + 1
-            me.ns.lsts_n = me.ns.lsts_n + 1    -- implicit await in parallel
+            me.has.fins = true
+            me.ns.lsts  = me.ns.lsts + 1    -- implicit await in parallel
         end
 
         -- Block must ADD all orgs (they are spawned in par, not in seq)
@@ -112,7 +126,7 @@ F = {
                 end
             end
         end
-        ADD_all(me, t)
+        ADD_all(me, t, true)
     end,
     Stmts   = MAX_all,
     ParEver = ADD_all,
@@ -126,6 +140,7 @@ F = {
         else
             SAME(me, me[#me])
         end
+DBG(me.id, me.ns.trks)
     end,
 
     Dcl_ext = function (me)
@@ -133,25 +148,18 @@ F = {
     end,
 
     Dcl_var = function (me)
-        if me.var.cls then
-            me.ns.orgs   = 1
-            me.ns.trks_n = 1
-        elseif me.var.arr and _ENV.clss[_TP.deref(me.var.tp)] then
-            me.ns.orgs   = me.var.arr
-            me.ns.trks_n = me.var.arr
-        end
+        me.has.orgs = me.var.cls or
+                      me.var.arr and _ENV.clss[_TP.deref(me.var.tp)]
     end,
 
     SetNew = function (me)
         _PROPS.has_news = true
         _PROPS.has_fins = true
-        me.cls.has_news = true
+        me.cls.has_news = true      -- TODO has.news?
         SAME(me, me.cls)
         -- overwrite these:
-        --me.ns.orgs   = 1        -- here or any parent
-        me.ns.news   = 1
-        me.ns.trks_n = 2
-        me.ns.fins   = 1        -- free
+        me.has.news   = true
+        me.has.fins   = true      -- free
     end,
 
     Pause = function (me)
@@ -160,7 +168,7 @@ F = {
 
     Async = function (me)
         _PROPS.has_asyncs = true
-        me.ns.lsts_n = 1
+        me.ns.lsts = 1
     end,
 
     If = function (me)
@@ -236,20 +244,21 @@ F = {
 
     AwaitT = function (me)
         _PROPS.has_wclocks = true
-        me.ns.lsts_n = 1
+        me.ns.lsts = 1
     end,
 
     AwaitExt = function (me)
-        local e1 = unpack(me)
-        me.ns.lsts_n = 1
+        local ext = unpack(me)
+        if not _AWAITS.t[ext.ext] then
+            me.ns.lsts = 1
+        end
     end,
 
     AwaitInt = function (me)
-        me.ns.lsts_n = 1
-    end,
-
-    EmitInt = function (me)
-        --me.ns.trks_n = 2     -- continuation
+        local int = unpack(me)
+        if not _AWAITS.t[int.var] then
+            me.ns.lsts = 1
+        end
     end,
 
     EmitExtS = function (me)
@@ -269,7 +278,7 @@ F = {
     SetExp = function (me)
         local e1, e2, op = unpack(me)
         if op == ':=' then
-            me.ns[':='] = me.ns[':='] + 1
+            me.has.chg = true
         end
         local async = _AST.iter'Async'()
         if async and (not e1) then

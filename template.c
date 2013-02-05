@@ -43,10 +43,6 @@
 
 #define GLOBAL CEU.mem
 
-int CEU_MOD (int x, int m) {
-    return (x>=0) ? x%m : (x+m)%m;
-}
-
 // Macros that can be defined:
 // ceu_out_pending() (1)
 // ceu_out_wclock(us)
@@ -222,6 +218,7 @@ void ceu_trk_ins (char* org, tceu_nlbl lbl)
 #endif
 
 #ifdef CEU_ORGS
+#ifndef CEU_ORGS_GLOBAL
 int ceu_clr_child (char* cur, char* org, tceu_nlbl l1, tceu_nlbl l2) {
     char* par = *PTR(char**,cur+(=== CEU_CLS_PAR_ORG ===));
     if (cur == CEU.mem) {
@@ -234,6 +231,7 @@ int ceu_clr_child (char* cur, char* org, tceu_nlbl l1, tceu_nlbl l2) {
     }
 }
 #endif
+#endif
 
 void ceu_trk_clr (int child, char* org, tceu_nlbl l1, tceu_nlbl l2) {
     int i;
@@ -242,7 +240,10 @@ void ceu_trk_clr (int child, char* org, tceu_nlbl l1, tceu_nlbl l2) {
         tceu_trk* trk = &CEU.trks[i];
 #ifdef CEU_ORGS
         if ( (trk->org==org && trk->lbl>=l1 && trk->lbl<=l2)
-        ||   (child && trk->org!=org && ceu_clr_child(trk->org,org,l1,l2)) ) {
+#ifndef CEU_ORGS_GLOBAL
+        ||   (child && trk->org!=org && ceu_clr_child(trk->org,org,l1,l2))
+#endif
+        ) {
 #else
         if (trk->lbl>=l1 && trk->lbl<=l2) {
 #endif
@@ -317,7 +318,7 @@ void ceu_lst_go (tceu_nevt evt, char* src, int reset)
 #endif
 
 #ifdef CEU_WCLOCKS
-    s32 min;
+    s32 min;    // always init'ed (ignore gcc warning)
     if (evt == IN__WCLOCK) {
         min = MIN(CEU.wclk_min, CEU.wclk_dt);
         CEU.wclk_min = CEU_WCLOCK_NONE;
@@ -349,7 +350,7 @@ void ceu_lst_go (tceu_nevt evt, char* src, int reset)
         }
 #ifdef CEU_WCLOCKS
         else {
-            if (lst->togo !=  min) {
+            if (lst->togo != min) {
                 lst->togo -= CEU.wclk_dt;
                 ceu_wclock_min(lst->togo, 0);
                 continue;
@@ -390,7 +391,10 @@ void ceu_lst_clr (int child, char* org, tceu_nlbl l1, tceu_nlbl l2) {
         tceu_lst* lst = &CEU.lsts[i];
 #ifdef CEU_ORGS
         if ( (lst->org==org && lst->lbl>=l1 && lst->lbl<=l2)
-        ||   (child && lst->org!=org && ceu_clr_child(lst->org,org,l1,l2)) ) {
+#ifndef CEU_ORGS_GLOBAL
+        ||   (child && lst->org!=org && ceu_clr_child(lst->org,org,l1,l2))
+#endif
+        ) {
 #else
         if (lst->lbl>=l1 && lst->lbl<=l2) {
 #endif
@@ -428,7 +432,10 @@ void ceu_lst_pse (int child, char* org, tceu_nlbl l1, tceu_nlbl l2, int inc) {
 #endif
 #ifdef CEU_ORGS
         if ( lst->org==org && lst->lbl>=l1 && lst->lbl<=l2
-        ||   child && lst->org!=org && ceu_clr_child(lst->org,org,l1,l2) ) {
+#ifndef CEU_ORGS_GLOBAL
+        ||   child && lst->org!=org && ceu_clr_child(lst->org,org,l1,l2)
+#endif
+        ) {
 #else
         if (lst->lbl>=l1 && lst->lbl<=l2) {
 #endif
@@ -521,7 +528,11 @@ void ceu_go_init ()
 void ceu_go_event (tceu_nevt id, void* data)
 {
     CEU.ext_data = data;
-    ceu_lst_go(id, 0, 1);
+    switch (id) {
+        === EVENTS ===
+        default:
+            ceu_lst_go(id, 0, 1);
+    }
     ceu_go();
 }
 #endif

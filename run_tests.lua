@@ -46,14 +46,19 @@ Test = function (t)
     -- PARSER
     if not check('parser')   then return end
     if not check('ast')      then return end
-    --_AST.dump(_AST.root)
     if not check('env')      then return end
     --if not check('tight')    then return end
     dofile 'tight.lua'
+    dofile 'awaits.lua'
+    --_AST.dump(_AST.root)
     if not check('props')    then return end
     if not check('labels')   then return end
     if not check('mem')      then return end
     if not check('code')     then return end
+
+    if T.awaits then
+        assert(T.awaits==_AWAITS.n, 'awaits '.._AWAITS.n)
+    end
 
     if T.tot then
         assert(T.tot==_MEM.max, 'mem '.._MEM.max)

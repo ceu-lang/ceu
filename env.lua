@@ -33,6 +33,8 @@ _ENV = {
         --tceu_lst  = 8,    -- TODO
         --TODOtceu_wclock = _TP.ceil(4 + _OPTS.tp_lbl), -- TODO: perda de memoria
     },
+
+    orgs_global = true,
 }
 
 for k, v in pairs(_ENV.c) do
@@ -64,8 +66,8 @@ function _ENV.ifc_vs_cls (ifc, cls)
     end
 
     -- check if they match
-    for _, v1 in ipairs(ifc.blk.vars) do
-        v2 = cls.blk.vars[v1.id]
+    for _, v1 in ipairs(ifc.blk_ifc.vars) do
+        v2 = cls.blk_ifc.vars[v1.id]
         if v2 then
             v2.id_ifc = v2.id_ifc or var2ifc(v2)
         end
@@ -193,6 +195,7 @@ F = {
         local ifc, id, blk = unpack(me)
         me.is_ifc = ifc
         me.id     = id
+        me.is_glb = true
         if id == 'Main' then
             _MAIN = me
         end
@@ -208,7 +211,7 @@ F = {
     Dcl_cls = function (me)
         -- expose each field
         if me.is_ifc then
-            for _, var in pairs(me.blk.vars) do
+            for _, var in pairs(me.blk_ifc.vars) do
                 var.id_ifc = var.id_ifc or var2ifc(var)
                 if not _ENV.ifcs[var.id_ifc] then
                     _ENV.ifcs[var.id_ifc] = #_ENV.ifcs
@@ -232,7 +235,7 @@ F = {
         me.tp   = CLS().id
         me.lval = false
         me.fst  = me
-        me.blk  = CLS().blk
+        me.blk  = CLS().blk_ifc
     end,
 
     Free = function (me)
@@ -262,13 +265,22 @@ F = {
     Dcl_var_pre = function (me)
         local pre, tp, dim, id = unpack(me)
         me.var = newvar(me, _AST.iter'Block'(), pre, tp, dim, id)
+
+        local cls = me.var.cls or
+                    me.var.arr and _ENV.clss[_TP.deref(me.var.tp)]
+        if cls then
+            local blk = CLS().blk_body
+            cls.is_glb = cls.is_glb and
+                            (not blk) or _AST.iter'Block'().depth<=blk.depth
+            _ENV.orgs_global = _ENV.orgs_global and cls.is_glb
+        end
     end,
 
     Dcl_imp = function (me)
         local id = unpack(me)
         local cls = ASR(_ENV.clss[id], me,
                         'class "'..id..'" is not declared')
-        for _, var in ipairs(cls.blk.vars) do
+        for _, var in ipairs(cls.blk_ifc.vars) do
             local tp = (var.dim and _TP.deref(var.tp)) or var.tp
             newvar(me, _AST.iter'Block'(), var.pre, tp, var.arr, var.id)
         end
@@ -353,6 +365,7 @@ F = {
             local _tp2 = _TP.deref(e2.tp)
             ASR(_tp2 and _ENV.clss[_tp2] and e2.lval,
                     me, 'invalid attribution')
+            _ENV.orgs_global = false    -- TODO: too conservative?
             return
         end
 
@@ -367,8 +380,10 @@ F = {
                     local d2 = (blk2==true and 0) or blk2.depth
 
                     -- int a; pa=&a;    -- `a´ termination must consider `pa´
-                    req = d2 > d1 and
-                            (d1~=2 or d2>4)  -- iface vs 1st-body
+                    req = d2 > d1 and (
+                            blk1 == true or             -- `pa´ global
+                            d2 > CLS().blk_body.depth   -- `a´ not top-level
+                    )
                 end
                 req = req and blk2
             else
@@ -418,6 +433,7 @@ F = {
         ASR(not me.cls.is_ifc, me, 'cannot instantiate an interface')
         ASR(exp.lval and _TP.contains(exp.tp,me.cls.id..'*'),
                 me, 'invalid attribution')
+        _ENV.orgs_global = false  -- TODO: too conservative?
     end,
 
     CallStmt = function (me)
@@ -563,7 +579,7 @@ F = {
                 ASR(me.c and me.c.tag=='func', me,
                     'C function "'..id..'" is not declared')
             else
-                me.var  = ASR(cls.blk.vars[id], me,
+                me.var  = ASR(cls.blk_ifc.vars[id], me,
                             'variable/event "'..id..'" is not declared')
                 me.tp   = me.var.tp
                 me.lval = true

@@ -75,6 +75,8 @@ function _AST.dump (me, spc)
             ks = ks.. k..'='..v..','
         end
     end
+    --local t=0; for _ in pairs(me.aw.t) do t=t+1 end
+    --ks = 'n='..(me.aw.n or '?')..',t='..t..',ever='..(me.aw.forever_ and 1 or 0)
     DBG(string.rep(' ',spc) .. me.tag .. ' ('..ks..')')
     for i, sub in ipairs(me) do
         if _AST.isNode(sub) then
@@ -115,10 +117,11 @@ local function visit_aux (me, F)
     end
 
     if mid then me=(mid(me) or me) end
+    if F.Node then me=(F.Node(me) or me) end
     STACK[#STACK] = nil
     if pos then me=(pos(me) or me) end
+    if F.Node_pos then me=(F.Node_pos(me) or me) end
 
-    if F.Node then me=(F.Node(me) or me) end
     return me
 end
 _AST.visit_aux = visit_aux
@@ -342,7 +345,8 @@ local C; C = {
         end
 
         local cls = node('Dcl_cls')(ln, is_ifc, id, blk)
-        cls.blk = this  -- top-most block for `this´
+        cls.blk_ifc = this  -- top-most block for `this´
+        cls.blk_body  = blk_body
         TOP[#TOP+1] = cls
     end,
 

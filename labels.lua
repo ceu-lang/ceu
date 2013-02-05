@@ -71,8 +71,16 @@ F = {
     end,
 
     Dcl_var = function (me)
-        if me.var.cls or _ENV.clss[_TP.raw(me.var.tp)] or me.var.tp=='void*' then
-            me.var.lbl_cnt = new{'Dcl_cnt'}
+        local var = me.var
+        if var.cls then
+            var.lbl_cnt = new{'Dcl_cnt'}
+        elseif var.arr and _ENV.clss[_TP.deref(var.tp)] then
+            var.lbl_cnt = {}
+            for i=1, var.arr do
+                var.lbl_cnt[#var.lbl_cnt+1] = new{'Dcl_cnt'}
+            end
+        elseif _ENV.clss[_TP.raw(var.tp)] or var.tp=='void*' then
+            var.lbl_cnt = new{'Dcl_cnt'}    -- used by `new´
         end
     end,
 
@@ -138,12 +146,20 @@ F = {
         end
     end,
     AwaitExt = function (me)
-        me.lbl = new{'Awake_'..me[1][1]}
+        local e = unpack(me);
+        me.lbl = new{'Awake_'..e.ext.id}
+        local t = _AWAITS.t[e.ext]
+        if t then
+            t[#t+1] = me.lbl
+        end
     end,
     AwaitInt = function (me)
         local int = unpack(me)
-        --me.lbl_awt = new{'Await_'..me[1][1]}
-        me.lbl_awk = new{'Awake_'..me[1][1]}
+        me.lbl_awk = new{'Awake_'..int.var.id}
+        local t = _AWAITS.t[int.var]
+        if t then
+            t[#t+1] = me.lbl
+        end
     end,
 }
 

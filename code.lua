@@ -49,9 +49,12 @@ end
 function CLEAR (me)
     COMM(me, 'CLEAR')
 
-    local orgs_news = '('..me.ns.orgs..'||'..me.ns.news..'||'..me.ns[':=']..')'
+    local has_orgs = me.has.orgs and 1 or 0
+    local has_news = me.has.news and 1 or 0
+    local has_chg  = me.has.chg  and 1 or 0
+    local orgs_news = '('..has_orgs..'||'..has_news..'||'..has_chg..')'
     -- (orgs with fins are also covered)
-    local fins = me.ns.fins>0 or me.ns.news>0 or me.ns[':=']>0
+    local fins = me.has.fins or me.has.news or me.has.chg
 
     -- needs_clr:
     -- blocks w/o fins (or w/ orgs/fins) are not required to clr
@@ -64,38 +67,35 @@ function CLEAR (me)
                     ..me.lbls[1]..','..me.lbls[2]..');')
     end
 
-    if fins or (me.needs_clr and me.ns.lsts_n>0) then
+    if fins or (me.needs_clr and me.ns.lsts>0) then
         LINE(me, 'ceu_lst_clr('..orgs_news..', _trk_.org, '
                     ..me.lbls[1]..','..me.lbls[2]..');')
     end
 end
 
-function ORG (me, new, org0, cls, par_org, par_lbl, isArr)
+function ORG (me, new, org0, cls, par_org, par_lbl)
     COMM(me, 'ORG')
     LINE(me, '{ char* org0 = '..org0..';')
     if new then
         LINE(me, 'if (org0) {')
         LINE(me, '  ceu_lst_ins(0, org0, org0, '..cls.lbl_free.id..',0);')
     end
-    if isArr then
-        LINE(me, [[
-    ceu_trk_ins(org0, ]]..cls.lbl.id..[[);
-]])
-    end
     LINE(me, [[
 #ifdef CEU_IFCS
     *((tceu_ncls*)(org0+]]..(_MEM.cls.cls or '')..[[)) = ]]..cls.n..[[;
 #endif
+]])
+    if not _ENV.orgs_global then
+        LINE(me, [[
     *((char**)    (org0+]].._MEM.cls.par_org..[[))     = ]]..par_org..[[;
     *((tceu_nlbl*)(org0+]].._MEM.cls.par_lbl..[[))     = ]]..par_lbl..[[;
 ]])
-    if not isArr then
-        LINE(me, [[
+    end
+    LINE(me, [[
     _trk_.org = org0;
     _trk_.lbl = ]]..cls.lbl.id..[[;
     goto _SWITCH_;
 ]])
-    end
     if new then
         LINE(me, '}')
     end
@@ -125,7 +125,7 @@ F = {
         CONC_ALL(me)
 
         if me == _MAIN then
-            local ret = _ENV.getvar('$ret', me.blk)
+            local ret = _ENV.getvar('$ret', me.blk_ifc)
             LINE(me, [[
 #ifdef CEU_NEWS
     free(CEU.lsts);
@@ -183,37 +183,34 @@ if (]]..exp.val..[[ != NULL) {
         local _,_,_,_,init = unpack(me)
 
         if init then
-            CONC(me, init)
+            CONC(me, init)      -- initialization for orgs
         end
 
         local var = me.var
-        if not (var.cls or (var.arr and _ENV.clss[_TP.deref(var.tp)])) then
-            return
-        end
 
         -- spawn orgs
-        LINE(me, 'ceu_trk_ins(_trk_.org, '..var.lbl_cnt.id..');')
         if var.cls then
+            LINE(me, 'ceu_trk_ins(_trk_.org, '..var.lbl_cnt.id..');')
             ORG(me, false,
                     var.val,
                     var.cls,
                     '_trk_.org',
                     var.lbl_cnt.id)
+            CASE(me, var.lbl_cnt)
         elseif var.arr then
             local cls = _ENV.clss[_TP.deref(var.tp)]
             if cls then
-                for i=0, var.arr-1 do
+                for i=1, var.arr do
+                    LINE(me, 'ceu_trk_ins(_trk_.org, '..var.lbl_cnt[i].id..');')
                     ORG(me, false,
-                            '(((char*)'..var.val..')+'..i..'*'..cls.mem.max..')',
+                            '(((char*)'..var.val..')+'..(i-1)..'*'..cls.mem.max..')',
                             cls,
                             '_trk_.org',
-                            var.lbl_cnt.id,
-                            true)   -- isArr
+                            var.lbl_cnt[i].id)
+                    CASE(me, var.lbl_cnt[i])
                 end
             end
         end
-        HALT(me)
-        CASE(me, var.lbl_cnt)
     end,
 
     Block_pre = function (me)
@@ -459,7 +456,9 @@ if (ceu_out_pending()) {
 
     Pause = function (me)
         local inc = unpack(me)
-        LINE(me, 'ceu_lst_pse('..me.blk.ns.orgs..'||'..me.blk.ns.news
+        local has_orgs = me.blk.has.orgs and 1 or 0
+        local has_news = me.blk.has.news and 1 or 0
+        LINE(me, 'ceu_lst_pse('..has_orgs..'||'..has_news
                     ..', _trk_.org, '
                     ..me.blk.lbls[1]..','..me.blk.lbls[2]..','..inc..');')
     end,
@@ -525,18 +524,28 @@ break;
 
         local org = (int.org and int.org.val) or '_trk_.org'
         LINE(me, 'ceu_trk_ins(_trk_.org, '..me.lbl_cnt.id..');')  -- continuation
-        LINE(me, 'ceu_lst_go('..(int.off or int.var.off)..','..org..',0);') -- emit
+
+        local t = _AWAITS.t[int.var]
+        if t then
+            for i=#t, 1, -1 do
+                LINE(me, 'ceu_trk_ins('..org..','..t[i].id..');')
+            end
+        else
+            LINE(me, 'ceu_lst_go('..(int.off or int.var.off)..','..org..',0);') 
+        end
+
         HALT(me)
         CASE(me, me.lbl_cnt)
     end,
 
     AwaitInt = function (me)
-        local int, zero = unpack(me)
-        assert(not zero) -- TODO: remove await/0
-        COMM(me, 'emit '..int.var.id)
-        local org = (int.org and int.org.val) or '_trk_.org'
-        LINE(me, 'ceu_lst_ins('..(int.off or int.var.off)..','..org
-                    ..',_trk_.org,'..me.lbl_awk.id..',0);')
+        local int, glb = unpack(me)
+        COMM(me, 'await '..int.var.id)
+        if not _AWAITS.t[int.var] then
+            local org = (int.org and int.org.val) or '_trk_.org'
+            LINE(me, 'ceu_lst_ins('..(int.off or int.var.off)..','..org
+                        ..',_trk_.org,'..me.lbl_awk.id..',0);')
+        end
         HALT(me)
         CASE(me, me.lbl_awk)
     end,
@@ -555,8 +564,11 @@ break;
         CASE(me, me.lbl)
     end,
     AwaitExt = function (me)
-        local e1,_ = unpack(me)
-        LINE(me, 'ceu_lst_ins(IN_'..e1.ext.id..',NULL,_trk_.org,'..me.lbl.id..',0);')
+        local e,_ = unpack(me)
+        if not _AWAITS.t[e.ext] then
+            LINE(me, 'ceu_lst_ins(IN_'..e.ext.id..',NULL,_trk_.org,'
+                        ..me.lbl.id..',0);')
+        end
         HALT(me, true)
         CASE(me, me.lbl)
     end,

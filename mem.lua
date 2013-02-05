@@ -11,10 +11,12 @@ do  -- _MEM.cls
         _MEM.cls.cls = off
         off = off + _ENV.c.tceu_ncls.len
     end
-    _MEM.cls.par_org = off
-    off = off + _ENV.c.pointer.len
-    _MEM.cls.par_lbl = off
-    off = off + _ENV.c.tceu_nlbl.len
+    if not _ENV.orgs_global then
+        _MEM.cls.par_org = off
+        off = off + _ENV.c.pointer.len
+        _MEM.cls.par_lbl = off
+        off = off + _ENV.c.tceu_nlbl.len
+    end
 end
 
 function alloc (mem, n)
@@ -45,7 +47,7 @@ F = {
         -- cls/ifc accessors
         local accs = {}
         for _,cls in pairs(_ENV.clss) do
-            for _, var in ipairs(cls.blk.vars) do
+            for _, var in ipairs(cls.blk_ifc.vars) do
                 local pre = (cls.is_ifc and 'IFC') or 'CLS'
                 local off
                 if cls.is_ifc then
@@ -81,8 +83,10 @@ F = {
         if _PROPS.has_ifcs then
             alloc(me.mem, _ENV.c.tceu_ncls.len) -- cls N
         end
-        alloc(me.mem, _ENV.c.pointer.len)   -- parent org/lbl
-        alloc(me.mem, _ENV.c.tceu_nlbl.len) -- for ceu_clr_*
+        if not _ENV.orgs_global then
+            alloc(me.mem, _ENV.c.pointer.len)   -- parent org/lbl
+            alloc(me.mem, _ENV.c.tceu_nlbl.len) -- for ceu_clr_*
+        end
     end,
     Dcl_cls = function (me)
         DBG(me.id, me.mem.max, me.ns.trks_n)
@@ -127,8 +131,9 @@ F = {
                 var.val = '(*PTR_org('.._TP.c(var.tp)..'*,'..var.off..'))'
             end
 
-            if var.isEvt then
+            if var.isEvt and (not _AWAITS.t[var]) then
                 if len == 0 then
+-- TODO!!!
                     alloc(mem, 1)   -- dummy offset to avoid conflict
                 end
                 _MEM.evt_off = MAX(_MEM.evt_off, var.off)

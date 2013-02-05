@@ -120,9 +120,10 @@ do
     dofile 'lines.lua'
     dofile 'parser.lua'
     dofile 'ast.lua'
-    --_AST.dump(_AST.root)
     dofile 'env.lua'
     dofile 'tight.lua'
+    dofile 'awaits.lua'
+    --_AST.dump(_AST.root)
     dofile 'props.lua'
     dofile 'labels.lua'
     dofile 'mem.lua'
@@ -142,8 +143,8 @@ do
     end
 
     tpl = sub(tpl, '=== CEU_NMEM ===',     _MAIN.mem.max)
-    tpl = sub(tpl, '=== CEU_NTRACKS ===',  _AST.root.ns.trks_n)
-    tpl = sub(tpl, '=== CEU_NLSTS ===',    _AST.root.ns.lsts_n)
+    tpl = sub(tpl, '=== CEU_NTRACKS ===',  _AST.root.ns.trks)
+    tpl = sub(tpl, '=== CEU_NLSTS ===',    _AST.root.ns.lsts)
     tpl = sub(tpl, '=== CEU_NLBLS ===',    #_LBLS.list)
 
     if _PROPS.has_news then
@@ -157,8 +158,10 @@ do
     tpl = sub(tpl, '=== TCEU_NEVT ===', tps[_ENV.c.tceu_nevt.len])
     tpl = sub(tpl, '=== TCEU_NLBL ===', tps[_ENV.c.tceu_nlbl.len])
 
-    tpl = sub(tpl, '=== CEU_CLS_PAR_ORG ===',  _MEM.cls.par_org)
-    tpl = sub(tpl, '=== CEU_CLS_PAR_LBL ===',  _MEM.cls.par_lbl)
+    if not _ENV.orgs_global then
+        tpl = sub(tpl, '=== CEU_CLS_PAR_ORG ===',  _MEM.cls.par_org)
+        tpl = sub(tpl, '=== CEU_CLS_PAR_LBL ===',  _MEM.cls.par_lbl)
+    end
 
     tpl = sub(tpl, '=== LABELS_ENUM ===', _LBLS.code_enum)
     tpl = sub(tpl, '=== LABELS_FINS ===', _LBLS.code_fins)
@@ -176,7 +179,7 @@ do
             for i=1, #_ENV.ifcs do
                 t[i] = 0
             end
-            for _, var in ipairs(cls.blk.vars) do
+            for _, var in ipairs(cls.blk_ifc.vars) do
                 local i = _ENV.ifcs[var.id_ifc]
                 if i then
                     t[i+1] = var.off
@@ -210,6 +213,22 @@ do
     end
     str = str..'#define OUT_n '..outs..'\n'
 
+    local exts = ''
+    for ext, t in pairs(_AWAITS.t) do
+        if ext.pre=='input' then
+            exts = exts .. [[
+                case IN_]]..ext.id..[[:
+            ]]
+            for i=#t, 1, -1 do
+                exts = exts .. [[
+                    ceu_trk_ins(0, ]]..t[i].id..[[);
+                    break;
+                ]]
+            end
+        end
+    end
+    tpl = sub(tpl, '=== EVENTS ===', exts)
+
     -- FUNCTIONS called
     for id in pairs(_ENV.calls) do
         if id ~= '$anon' then
@@ -238,6 +257,10 @@ do
     --str = str .. '#define CEU_DEBUG\n'
     str = str .. '#define CEU_DETERMINISTIC\n'
 
+    if _ENV.orgs_global then
+        str = str .. '#define CEU_ORGS_GLOBAL\n'
+    end
+
     if _OPTS.defs_file then
         local f = assert(io.open(_OPTS.defs_file,'w'))
         f:write(str)
@@ -252,8 +275,8 @@ end
 if _OPTS.verbose or true then
     local T = {
         mem  = _MAIN.mem.max,
-        trks = _AST.root.ns.trks_n,
-        lsts = _AST.root.ns.lsts_n,
+        trks = _AST.root.ns.trks,
+        lsts = _AST.root.ns.lsts,
         evts = _MEM.evt_off+#_ENV.exts,
         lbls = #_LBLS.list,
 
@@ -265,6 +288,9 @@ if _OPTS.verbose or true then
         orgs    = _PROPS.has_orgs,
         news    = _PROPS.has_news,
         ifcs    = _PROPS.has_ifcs,
+
+        orgs_glb = _ENV.orgs_global,
+        awts_glb = _AWAITS.n,
     }
     local t = {}
     for k, v in pairs(T) do
