@@ -44,11 +44,11 @@ F = {
         end
     end,
 
-    Block   = OR_all,
     Stmts   = OR_all,
 
     ParEver = OR_all,
     ParAnd  = OR_all,
+    ParOr   = AND_all,
 
     If = function (me)
         local c, t, f = unpack(me)
@@ -56,8 +56,6 @@ F = {
         f = f or c
         AND_all(me, {t,f})
     end,
-
-    ParOr = AND_all,
 
     Break = function (me)
         me.blocks = true

@@ -221,8 +221,7 @@ do
             ]]
             for i=#t, 1, -1 do
                 exts = exts .. [[
-                    ceu_trk_ins(0, ]]..t[i].id..[[);
-                    break;
+                    ceu_call(0, ]]..t[i].id..[[);
                 ]]
             end
         end

@@ -22,6 +22,7 @@ end
 Test = function (t)
     T = t
     local str_input = T[1]
+    --local str_input = 'C _fprintf(), _stderr;'..T[1]
     print('\n=============\n---\n'..str_input..'\n---\n')
     COUNT = COUNT + 1
 
@@ -37,13 +38,10 @@ Test = function (t)
         tp_lbl     = 2,
     }
 
-    -- LINES
     _STR = str_input
-    --print(_STR)
     dofile 'tp.lua'
     dofile 'lines.lua'
 
-    -- PARSER
     if not check('parser')   then return end
     if not check('ast')      then return end
     if not check('env')      then return end

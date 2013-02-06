@@ -30,6 +30,9 @@ F = {
         me.lbls[2] = #_LBLS.list-1
     end,
 
+    Root_pre = function (me)
+        local inactive = new{'Inactive', true}
+    end,
     Root = function (me)
         _ENV.c.tceu_nlbl.len = _TP.n2bytes(#_LBLS.list)
 

@@ -35,7 +35,12 @@ function HALT (me, emt)
     LINE(me, 'break;')
 end
 
-function SWITCH (me, lbl)
+function SWITCH (me, lbl, org)
+    if org then
+        LINE(me, [[
+_trk_.org = ]]..org..[[;
+]])
+    end
     LINE(me, [[
 _trk_.lbl = ]]..lbl.id..[[;
 goto _SWITCH_;
@@ -75,10 +80,14 @@ end
 
 function ORG (me, new, org0, cls, par_org, par_lbl)
     COMM(me, 'ORG')
-    LINE(me, '{ char* org0 = '..org0..';')
+    LINE(me, [[
+{ char* org0 = ]]..org0..[[;
+]])
     if new then
-        LINE(me, 'if (org0) {')
-        LINE(me, '  ceu_lst_ins(0, org0, org0, '..cls.lbl_free.id..',0);')
+        LINE(me, [[
+if (org0) {
+    ceu_lst_ins(0, org0, org0, ]]..cls.lbl_free.id..[[,0);
+]])
     end
     LINE(me, [[
 #ifdef CEU_IFCS
@@ -92,14 +101,16 @@ function ORG (me, new, org0, cls, par_org, par_lbl)
 ]])
     end
     LINE(me, [[
-    _trk_.org = org0;
-    _trk_.lbl = ]]..cls.lbl.id..[[;
-    goto _SWITCH_;
+    ceu_call(org0, ]]..cls.lbl.id..[[); // TODO: assumes calling is not killed
 ]])
     if new then
-        LINE(me, '}')
+        LINE(me, [[
+}
+]])
     end
-    LINE(me, '}')
+    LINE(me, [[
+}
+]])
 end
 
 F = {
@@ -154,15 +165,11 @@ F = {
 
     SetNew = function (me)
         local exp, _ = unpack(me)
-        local org = (exp.org and exp.org.val) or '_trk_.org'
-        LINE(me, 'ceu_trk_ins(_trk_.org, '..me.lbl_cnt.id..');')
         ORG(me, true,
                 exp.val..' = malloc('..me.cls.mem.max..')',
                 me.cls,
-                org,
+                (exp.org and exp.org.val) or '_trk_.org',
                 (exp.fst or exp.var).lbl_cnt.id)
-        HALT(me)
-        CASE(me, me.lbl_cnt)
     end,
 
     Free = function (me)
@@ -190,24 +197,20 @@ if (]]..exp.val..[[ != NULL) {
 
         -- spawn orgs
         if var.cls then
-            LINE(me, 'ceu_trk_ins(_trk_.org, '..var.lbl_cnt.id..');')
             ORG(me, false,
                     var.val,
                     var.cls,
                     '_trk_.org',
                     var.lbl_cnt.id)
-            CASE(me, var.lbl_cnt)
         elseif var.arr then
             local cls = _ENV.clss[_TP.deref(var.tp)]
             if cls then
                 for i=1, var.arr do
-                    LINE(me, 'ceu_trk_ins(_trk_.org, '..var.lbl_cnt[i].id..');')
                     ORG(me, false,
                             '(((char*)'..var.val..')+'..(i-1)..'*'..cls.mem.max..')',
                             cls,
                             '_trk_.org',
                             var.lbl_cnt[i].id)
-                    CASE(me, var.lbl_cnt[i])
                 end
             end
         end
@@ -311,36 +314,19 @@ if (]]..exp.val..[[ != NULL) {
     _Par = function (me)
         -- Ever/Or/And spawn subs
         COMM(me, me.tag..': spawn subs')
-        for i=#me, 1, -1 do     -- stacked execution
-            if i == 1 then
+        for i=1, #me do
+            if i == #me then
                 SWITCH(me, me.lbls_in[i])
             else
-                LINE(me, 'ceu_trk_ins(_trk_.org,'..me.lbls_in[i].id..');')
+                LINE(me, [[
+ceu_trk_push(_trk_.org, ]]..me.lbls_in[i].id..[[);
+ceu_call(_trk_.org,]]..me.lbls_in[i].id..[[);
+if (! ceu_trk_pop())
+    break;
+]])
             end
         end
-        --HALT(me)
     end,
-
---[=[
-    _Par = function (me)
-        -- Ever/Or/And spawn subs
-        COMM(me, me.tag..': spawn subs')
-        LINE(me, [[{
-int killed = 0;
-]])
-        for i=1, #me do
-            LINE(me, [[
-                if (!killed)
-                    //killed = ceu_go_go(_trk_.org,]]..me.lbls_in[i].id..[[);
-                    ceu_go_go(_trk_.org,]]..me.lbls_in[i].id..[[);
-]])
-        end
-        LINE(me, [[
-}
-break;
-]])
-    end,
-]=]
 
     ParEver = function (me)
         F._Par(me)
@@ -523,19 +509,17 @@ break;
         end
 
         local org = (int.org and int.org.val) or '_trk_.org'
-        LINE(me, 'ceu_trk_ins(_trk_.org, '..me.lbl_cnt.id..');')  -- continuation
 
         local t = _AWAITS.t[int.var]
+        LINE(me, 'ceu_trk_push(_trk_.org,'..me.lbl_cnt.id..');')
         if t then
             for i=#t, 1, -1 do
-                LINE(me, 'ceu_trk_ins('..org..','..t[i].id..');')
+                LINE(me, 'ceu_call('..org..','..t[i].id..');')
             end
         else
             LINE(me, 'ceu_lst_go('..(int.off or int.var.off)..','..org..',0);') 
         end
-
-        HALT(me)
-        CASE(me, me.lbl_cnt)
+        LINE(me, 'if (! ceu_trk_pop()) break;')
     end,
 
     AwaitInt = function (me)
