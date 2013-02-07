@@ -97,6 +97,7 @@ F = {
 
     Root = function (me)
         SAME(me, me[#me])
+--me.ns.trks = 5
         _ENV.c.tceu_nlst.len = _TP.n2bytes(me.ns.lsts)
         _ENV.c.tceu_ntrk.len = _TP.n2bytes(me.ns.trks)
     end,
@@ -259,6 +260,10 @@ DBG(me.id, me.ns.trks)
         if not _AWAITS.t[int.var] then
             me.ns.lsts = 1
         end
+    end,
+
+    EmitInt = function (me)
+        me.ns.trks = 1
     end,
 
     EmitExtS = function (me)

@@ -185,8 +185,10 @@ local C; C = {
         local dcl_i = node('Dcl_var')(ln, 'var', 'int', false, _i)
         dcl_i.read_only = true
         local set_i = node('SetExp')(ln, i(), node('CONST')(ln,'0'))
+        set_i.read_only = true  -- overcome read_only
         local nxt_i = node('SetExp')(ln, i(),
                         node('Op2_+')(ln, '+', i(), node('CONST')(ln,'1')))
+        nxt_i.read_only = true
 
         if not _j then
             return node('Block')(ln,

@@ -219,11 +219,14 @@ do
             exts = exts .. [[
                 case IN_]]..ext.id..[[:
             ]]
-            for i=#t, 1, -1 do
+            for _, lbl in ipairs(t) do
                 exts = exts .. [[
-                    ceu_call(0, ]]..t[i].id..[[);
+                    ceu_call(0, ]]..lbl.id..[[);
                 ]]
             end
+            exts = exts .. [[
+                break;
+            ]]
         end
     end
     tpl = sub(tpl, '=== EVENTS ===', exts)

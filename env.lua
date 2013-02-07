@@ -265,6 +265,7 @@ F = {
     Dcl_var_pre = function (me)
         local pre, tp, dim, id = unpack(me)
         me.var = newvar(me, _AST.iter'Block'(), pre, tp, dim, id)
+        me.var.read_only = me.read_only
 
         local cls = me.var.cls or
                     me.var.arr and _ENV.clss[_TP.deref(me.var.tp)]
@@ -359,6 +360,9 @@ F = {
         e1 = e1 or _AST.iter'SetBlock'()[1]
         ASR(e1.lval and _TP.contains(e1.tp,e2.tp,true),
                 me, 'invalid attribution')
+
+        ASR(me.read_only or (not e1.fst.read_only),
+                me, 'read-only variable')
 
         if op == ':=' then
            -- ensures that `:=´ is used correctly (not lval == &ref)

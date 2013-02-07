@@ -73,7 +73,7 @@ function CLEAR (me)
     end
 
     if fins or (me.needs_clr and me.ns.lsts>0) then
-        LINE(me, 'ceu_lst_clr('..orgs_news..', _trk_.org, '
+        LINE(me, 'ceu_lsts_clr('..orgs_news..', _trk_.org, '
                     ..me.lbls[1]..','..me.lbls[2]..');')
     end
 end
@@ -86,7 +86,7 @@ function ORG (me, new, org0, cls, par_org, par_lbl)
     if new then
         LINE(me, [[
 if (org0) {
-    ceu_lst_ins(0, org0, org0, ]]..cls.lbl_free.id..[[,0);
+    ceu_lsts_ins(0, org0, org0, ]]..cls.lbl_free.id..[[,0);
 ]])
     end
     LINE(me, [[
@@ -181,7 +181,7 @@ if (]]..exp.val..[[ != NULL) {
     // remove (lower) stacked tracks
     ceu_trk_clr(1, ]]..exp.val..[[, ]]..lbls..[[);
     // clear internal awaits and trigger finalize's
-    ceu_lst_clr(1, ]]..exp.val..[[, ]]..lbls..[[);
+    ceu_lsts_clr(1, ]]..exp.val..[[, ]]..lbls..[[);
 }
 ]])
     end,
@@ -233,7 +233,8 @@ if (]]..exp.val..[[ != NULL) {
 
         if me.fins then
             COMM(me, 'FINALIZE')
-            LINE(me, 'ceu_lst_ins(0,_trk_.org,_trk_.org,'..me.lbl_fin.id..',0);')
+            LINE(me, 'ceu_lsts_ins(0,_trk_.org,_trk_.org,'..
+                        me.lbl_fin.id..',0);')
             LINE(me, 'memset(PTR_org(u8*,'..me.off_fins..'), 0, '..#me.fins..');')
         end
 
@@ -444,7 +445,7 @@ if (ceu_out_pending()) {
         local inc = unpack(me)
         local has_orgs = me.blk.has.orgs and 1 or 0
         local has_news = me.blk.has.news and 1 or 0
-        LINE(me, 'ceu_lst_pse('..has_orgs..'||'..has_news
+        LINE(me, 'ceu_lsts_pse('..has_orgs..'||'..has_news
                     ..', _trk_.org, '
                     ..me.blk.lbls[1]..','..me.blk.lbls[2]..','..inc..');')
     end,
@@ -510,15 +511,17 @@ break;
 
         local org = (int.org and int.org.val) or '_trk_.org'
 
-        local t = _AWAITS.t[int.var]
         LINE(me, 'ceu_trk_push(_trk_.org,'..me.lbl_cnt.id..');')
+
+        local t = _AWAITS.t[int.var]
         if t then
-            for i=#t, 1, -1 do
-                LINE(me, 'ceu_call('..org..','..t[i].id..');')
+            for _, lbl in ipairs(t) do
+                LINE(me, 'ceu_call('..org..','..lbl.id..');')
             end
         else
-            LINE(me, 'ceu_lst_go('..(int.off or int.var.off)..','..org..',0);') 
+            LINE(me, 'ceu_lsts_go('..(int.off or int.var.off)..','..org..');')
         end
+
         LINE(me, 'if (! ceu_trk_pop()) break;')
     end,
 
@@ -527,7 +530,7 @@ break;
         COMM(me, 'await '..int.var.id)
         if not _AWAITS.t[int.var] then
             local org = (int.org and int.org.val) or '_trk_.org'
-            LINE(me, 'ceu_lst_ins('..(int.off or int.var.off)..','..org
+            LINE(me, 'ceu_lsts_ins('..(int.off or int.var.off)..','..org
                         ..',_trk_.org,'..me.lbl_awk.id..',0);')
         end
         HALT(me)
@@ -550,7 +553,7 @@ break;
     AwaitExt = function (me)
         local e,_ = unpack(me)
         if not _AWAITS.t[e.ext] then
-            LINE(me, 'ceu_lst_ins(IN_'..e.ext.id..',NULL,_trk_.org,'
+            LINE(me, 'ceu_lsts_ins(IN_'..e.ext.id..',NULL,_trk_.org,'
                         ..me.lbl.id..',0);')
         end
         HALT(me, true)

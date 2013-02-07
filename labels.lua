@@ -31,7 +31,7 @@ F = {
     end,
 
     Root_pre = function (me)
-        local inactive = new{'Inactive', true}
+        local inactive = new{'CEU_INACTIVE', true}
     end,
     Root = function (me)
         _ENV.c.tceu_nlbl.len = _TP.n2bytes(#_LBLS.list)
@@ -161,7 +161,7 @@ F = {
         me.lbl_awk = new{'Awake_'..int.var.id}
         local t = _AWAITS.t[int.var]
         if t then
-            t[#t+1] = me.lbl
+            t[#t+1] = me.lbl_awk
         end
     end,
 }

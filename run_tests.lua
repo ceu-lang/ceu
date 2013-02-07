@@ -45,8 +45,7 @@ Test = function (t)
     if not check('parser')   then return end
     if not check('ast')      then return end
     if not check('env')      then return end
-    --if not check('tight')    then return end
-    dofile 'tight.lua'
+    if not check('tight')    then return end
     dofile 'awaits.lua'
     --_AST.dump(_AST.root)
     if not check('props')    then return end
@@ -62,8 +61,8 @@ Test = function (t)
         assert(T.tot==_MEM.max, 'mem '.._MEM.max)
     end
 
-    assert(_AST.root.tight and T.tight or
-           not (_AST.root.tight or T.tight))
+    assert(_TIGHT and T.loop or
+           not (_TIGHT or T.loop))
 
     -- RUN
 
@@ -71,7 +70,7 @@ Test = function (t)
         return
     end
     if T.run == nil then
-        assert(T.tight or T.ana, 'missing run value')
+        assert(T.loop or T.ana, 'missing run value')
         return
     end
 
@@ -94,8 +93,9 @@ Test = function (t)
         assert(ret==T.run..'', ret..' vs '..T.run..' expected')
 
     else
-        local str_all = [[
-            par/or do
+        local par = (T.awaits and T.awaits>0 and 'par') or 'par/or'
+        local str_all =
+            par .. [[do
                 ]]..str_input..[[
             with
                 async do
