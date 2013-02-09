@@ -219,9 +219,11 @@ do
             exts = exts .. [[
                 case IN_]]..ext.id..[[:
             ]]
-            for _, lbl in ipairs(t) do
+            -- last listeners are stacked first
+            for i=#t, 1, -1 do
+                local lbl = t[i]
                 exts = exts .. [[
-                    ceu_call(0, ]]..lbl.id..[[);
+                    ceu_trk_push(0, ]]..lbl.id..[[);
                 ]]
             end
             exts = exts .. [[
@@ -291,8 +293,8 @@ if _OPTS.verbose or true then
         news    = _PROPS.has_news,
         ifcs    = _PROPS.has_ifcs,
 
-        orgs_glb = _ENV.orgs_global,
-        awts_glb = _AWAITS.n,
+        glb_orgs = _ENV.orgs_global,
+        glb_awts = _AWAITS.n,
     }
     local t = {}
     for k, v in pairs(T) do

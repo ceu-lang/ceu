@@ -78,7 +78,7 @@ function CLEAR (me)
     end
 end
 
-function ORG (me, new, org0, cls, par_org, par_lbl)
+function ORG (me, new, org0, cls, par_org, par_lbl, lbl_cnt)
     COMM(me, 'ORG')
     LINE(me, [[
 { char* org0 = ]]..org0..[[;
@@ -97,12 +97,13 @@ if (org0) {
     if not _ENV.orgs_global then
         LINE(me, [[
     *((char**)    (org0+]].._MEM.cls.par_org..[[))     = ]]..par_org..[[;
-    *((tceu_nlbl*)(org0+]].._MEM.cls.par_lbl..[[))     = ]]..par_lbl..[[;
+    *((tceu_nlbl*)(org0+]].._MEM.cls.par_lbl..[[))     = ]]..par_lbl.id..[[;
 ]])
     end
     LINE(me, [[
-    ceu_call(org0, ]]..cls.lbl.id..[[); // TODO: assumes calling is not killed
+    ceu_trk_push(_trk_.org, ]]..(lbl_cnt or par_lbl).id..[[);
 ]])
+    SWITCH(me, cls.lbl, 'org0')
     if new then
         LINE(me, [[
 }
@@ -111,6 +112,7 @@ if (org0) {
     LINE(me, [[
 }
 ]])
+    CASE(me, (lbl_cnt or par_lbl))
 end
 
 F = {
@@ -169,7 +171,8 @@ F = {
                 exp.val..' = malloc('..me.cls.mem.max..')',
                 me.cls,
                 (exp.org and exp.org.val) or '_trk_.org',
-                (exp.fst or exp.var).lbl_cnt.id)
+                (exp.fst or exp.var).lbl_cnt,
+                me.lbl_cnt)
     end,
 
     Free = function (me)
@@ -201,7 +204,7 @@ if (]]..exp.val..[[ != NULL) {
                     var.val,
                     var.cls,
                     '_trk_.org',
-                    var.lbl_cnt.id)
+                    var.lbl_cnt)
         elseif var.arr then
             local cls = _ENV.clss[_TP.deref(var.tp)]
             if cls then
@@ -210,7 +213,7 @@ if (]]..exp.val..[[ != NULL) {
                             '(((char*)'..var.val..')+'..(i-1)..'*'..cls.mem.max..')',
                             cls,
                             '_trk_.org',
-                            var.lbl_cnt[i].id)
+                            var.lbl_cnt[i])
                 end
             end
         end
@@ -315,16 +318,12 @@ if (]]..exp.val..[[ != NULL) {
     _Par = function (me)
         -- Ever/Or/And spawn subs
         COMM(me, me.tag..': spawn subs')
-        for i=1, #me do
-            if i == #me then
+        -- last listeners are stacked first
+        for i=#me, 1, -1 do
+            if i == 1 then
                 SWITCH(me, me.lbls_in[i])
             else
-                LINE(me, [[
-ceu_trk_push(_trk_.org, ]]..me.lbls_in[i].id..[[);
-ceu_call(_trk_.org,]]..me.lbls_in[i].id..[[);
-if (! ceu_trk_pop())
-    break;
-]])
+                LINE(me, 'ceu_trk_push(_trk_.org,'..me.lbls_in[i].id..');')
             end
         end
     end,
@@ -515,14 +514,17 @@ break;
 
         local t = _AWAITS.t[int.var]
         if t then
-            for _, lbl in ipairs(t) do
-                LINE(me, 'ceu_call('..org..','..lbl.id..');')
+            -- last listeners are stacked first
+            for i=#t, 1, -1 do
+                local lbl = t[i]
+                LINE(me, 'ceu_trk_push('..org..','..lbl.id..');')
             end
         else
             LINE(me, 'ceu_lsts_go('..(int.off or int.var.off)..','..org..');')
         end
 
-        LINE(me, 'if (! ceu_trk_pop()) break;')
+        HALT(me)
+        CASE(me, me.lbl_cnt)
     end,
 
     AwaitInt = function (me)

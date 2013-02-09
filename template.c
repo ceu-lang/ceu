@@ -69,7 +69,7 @@ typedef struct {
 } tceu_trk;
 
 typedef struct {
-    tceu_nevt evt;
+    tceu_nevt evt;      // TODO: save this byte
     tceu_nlbl lbl;
 #ifdef CEU_ORGS
     char*     org;
@@ -82,7 +82,7 @@ typedef struct {
             u8    on;
         };
 #ifdef CEU_WCLOCKS
-        s32   togo;           // TODO: mem (even for non wclocks)
+        s32   togo;
 #endif
     };
 #ifdef CEU_PSES
@@ -185,6 +185,7 @@ void ceu_wclock_min (s32 us, int out);
 
 /**********************************************************************/
 
+//int xxx = 0;
 void ceu_trk_push (char* org, tceu_nlbl lbl)
 {
     tceu_trk trk = {
@@ -213,15 +214,12 @@ void ceu_trk_push (char* org, tceu_nlbl lbl)
 #endif
 
     CEU.trks[CEU.trks_n++] = trk;
+    //if (CEU.trks_n > xxx)
+        //xxx = CEU.trks_n;
 }
 #ifndef CEU_ORGS
 #define ceu_trk_push(a,b) ceu_trk_push(NULL,b)
 #endif
-
-int ceu_trk_pop ()
-{
-    return CEU.trks[--CEU.trks_n].lbl;
-}
 
 #ifdef CEU_ORGS
 #ifndef CEU_ORGS_GLOBAL
@@ -252,7 +250,13 @@ void ceu_trk_clr (int child, char* org, tceu_nlbl l1, tceu_nlbl l2) {
 #else
         if (trk->lbl>=l1 && trk->lbl<=l2) {
 #endif
-            trk->lbl = 0;
+            // remove killed tracks
+            // TODO: expensive
+            int j;
+            CEU.trks_n--;
+            for (j=i; j<CEU.trks_n; j++)
+                CEU.trks[j] = CEU.trks[j+1];
+            i--;    // shifted all up to current position: repeat
         }
     }
 }
@@ -322,79 +326,69 @@ void ceu_lsts_ins (tceu_nevt evt, char* src, char* org, tceu_nlbl lbl, s32 togo)
 
 void ceu_lsts_go (tceu_nevt evt, char* src)
 {
-    int i = 0;
+    int i;
 #ifdef CEU_DETERMINISTIC
     int j;
 #endif
-#ifdef CEU_WCLOCKS
-    s32 min;    // always init'ed (ignore gcc warning)
-#endif
 
 #ifdef CEU_WCLOCKS
+    s32 min;    // always init'ed (ignore gcc warning)
     if (evt == IN__WCLOCK) {
-        min = CEU.wclk_min - CEU.wclk_dt;
+        min = MIN(CEU.wclk_min, CEU.wclk_dt);
         CEU.wclk_min = CEU_WCLOCK_NONE;
-        for (i=0; i<CEU.lsts_n; i++) {       // TODO: loop repeated
-            tceu_lst* lst = &CEU.lsts[i];
-            if (lst->evt!=IN__WCLOCK)
-                continue;
-#ifdef CEU_PSES
-            if (lst->pse > 0)
-                continue;
-#endif
-            lst->togo -= CEU.wclk_dt;
-        }
     }
 #endif
 
-    // first listeners execute first
-    for (i=0; i<CEU.lsts_n; i++)
+    // last listeners are stacked first
+    for (i=CEU.lsts_n-1; i>=0; i--)
     {
-        tceu_lst lst = CEU.lsts[i];
+        tceu_lst* lst = &CEU.lsts[i];
 
-        if (lst.evt!=evt)
+        if (lst->evt != evt)
             continue;
 
 #ifdef CEU_PSES
-        if (lst.pse > 0)
+        if (lst->pse > 0)
             continue;
 #endif
 
 #ifdef CEU_WCLOCKS
         if (evt == IN__WCLOCK) {
-            if (min>0 || lst.togo!=min) {
-                ceu_wclock_min(lst.togo, 0);
+            if (lst->togo != min) {
+                lst->togo -= CEU.wclk_dt;
+                ceu_wclock_min(lst->togo, 0);
                 continue;
             }
         }
         else
 #endif
         {
-            if (!lst.on)
+            if (! lst->on)
                 continue;
 #ifdef CEU_ORGS
-            if (lst.src != src)
+            if (lst->src != src)
                 continue;
 #endif
         }
 
+        ceu_trk_push(lst->org, lst->lbl);
         CEU.lsts_n--;
+
 #ifdef CEU_DETERMINISTIC
         for (j=i; j<CEU.lsts_n; j++)
             CEU.lsts[j] = CEU.lsts[j+1];
 #else
         if (i < CEU.lsts_n)
-            CEU.lsts[i] = CEU.lsts[CEU.lsts_n];
+            *lst = CEU.lsts[CEU.lsts_n];
 #endif
-        i = -1;                                 // TODO: loop repeated
-        ceu_call(lst.org, lst.lbl);
+
 #ifdef CEU_ASYNCS
+#ifdef ceu_out_async
         if (evt == IN__ASYNC) {
-            #ifdef ceu_out_async
             ceu_out_async(1);
-            #endif
-            return;
+            //return;           // TODO: should take 1st not last!
         }
+#endif
 #endif
     }
 }
@@ -523,6 +517,8 @@ void ceu_segfault (int sig_num) {
 }
 #endif
 
+void ceu_go ();     // TODO: place here?
+
 void ceu_go_init ()
 {
 #ifdef CEU_DEBUG
@@ -534,7 +530,8 @@ void ceu_go_init ()
     CEU.lsts = malloc(CEU.lsts_nmax*sizeof(tceu_lst));
     assert(CEU.trks!=NULL && CEU.lsts!=NULL);
 #endif
-    ceu_call(CEU.mem, Class_Main);
+    ceu_trk_push(CEU.mem, Class_Main);
+    ceu_go();
 }
 
 #ifdef CEU_EXTS
@@ -547,6 +544,7 @@ void ceu_go_event (tceu_nevt id, void* data)
         default:
             ceu_lsts_go(id, 0);
     }
+    ceu_go();
 }
 #endif
 
@@ -555,6 +553,7 @@ void ceu_go_async ()
 {
     ceu_lsts_adj();
     ceu_lsts_go(IN__ASYNC, 0);
+    ceu_go();
 }
 #endif
 
@@ -571,6 +570,7 @@ void ceu_go_wclock (s32 dt)
 
     CEU.wclk_dt = dt;
     ceu_lsts_go(IN__WCLOCK, 0);
+    ceu_go();
 
 #ifdef ceu_out_wclock
     ceu_out_wclock(CEU.wclk_min);
@@ -602,6 +602,15 @@ fprintf(stderr, "TRK:%d l.%d\n", CEU.lsts_n, _trk_.lbl);
 #endif
     switch (_trk_.lbl) {
         === CODE ===
+    }
+}
+
+void ceu_go ()
+{
+    while (CEU.trks_n > 0) {
+        CEU.trks_n--;
+        ceu_call(CEU.trks[CEU.trks_n].org,
+                 CEU.trks[CEU.trks_n].lbl);
     }
 }
 

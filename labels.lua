@@ -31,7 +31,7 @@ F = {
     end,
 
     Root_pre = function (me)
-        local inactive = new{'CEU_INACTIVE', true}
+        --new{'CEU_INACTIVE', true}
     end,
     Root = function (me)
         _ENV.c.tceu_nlbl.len = _TP.n2bytes(#_LBLS.list)

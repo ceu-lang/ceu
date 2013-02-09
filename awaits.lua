@@ -53,15 +53,15 @@ DBG'==============='
             if cls.aw.forever_ and cls.is_glb then
                 for awt in pairs(cls.aw.t) do
                     local id = awt[1].var or awt[1].ext
-                    _AWAITS.t[id] = {}
-                    ALL[awt] = nil
+                    _AWAITS.t[id] = {}  -- new glb candidate
+                    ALL[awt] = nil      -- remove them from non-glb
                 end
             end
         end
         for awt in pairs(ALL) do
             local id = awt[1].var or awt[1].ext
             if _AWAITS.t[id] then
-                _AWAITS.t[id] = nil
+                _AWAITS.t[id] = nil     -- remove non-glb from glb
             end
         end
         for id in pairs(_AWAITS.t) do
@@ -140,6 +140,9 @@ DBG'==============='
                 U(me.aw.t, sub.aw.t)
             end
         end
+        if me.aw.n == 0 then
+            me.aw.n = 1 -- assumes it always awaits (avoid tight loops)
+        end
     end,
 
 -- TODO: breaks e rets dentro de ParEver, Loop
@@ -165,6 +168,9 @@ DBG'==============='
         if not me.aw.forever_ then
             me.aw.n = 2
             me.aw.t = {}
+        end
+        if me.aw.n == 0 then
+            me.aw.n = 1 -- assumes it always awaits (avoid tight loops)
         end
     end,
 
