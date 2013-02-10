@@ -1,20 +1,20 @@
 _MEM = {
     cls = {},       -- offsets inside a class
     evt_off = 0,    -- max event offset in a class
-    code_accs = nil,
+    code_clss = nil,
 }
 
 
 do  -- _MEM.cls
     local off = 0
     if _PROPS.has_ifcs then
-        _MEM.cls.cls = off
+        _MEM.cls.idx_cls = off
         off = off + _ENV.c.tceu_ncls.len
     end
     if not _ENV.orgs_global then
-        _MEM.cls.par_org = off
+        _MEM.cls.idx_org = off
         off = off + _ENV.c.pointer.len
-        _MEM.cls.par_lbl = off
+        _MEM.cls.idx_lbl = off
         off = off + _ENV.c.tceu_nlbl.len
     end
 end
@@ -45,16 +45,23 @@ F = {
         _ENV.c.tceu_nevt.len = _TP.n2bytes(_MEM.evt_off+#_ENV.exts)
 
         -- cls/ifc accessors
-        local accs = {}
-        for _,cls in pairs(_ENV.clss) do
+        local code = {}
+        for _,cls in ipairs(_ENV.clss) do
+            local pre = (cls.is_ifc and 'IFC') or 'CLS'
+
+            code[#code+1] = [[
+                typedef struct {
+                    char data[]]..cls.mem.max..[[];
+                } ]]..pre..'_'..cls.id..[[;
+            ]]
+
             for _, var in ipairs(cls.blk_ifc.vars) do
-                local pre = (cls.is_ifc and 'IFC') or 'CLS'
                 local off
                 if cls.is_ifc then
                     -- off = IFC[org.cls][var.n]
                     off = 'CEU.ifcs['
                             ..'(*PTR(tceu_ncls*,(org+'
-                                    .._MEM.cls.cls..')))'
+                                    .._MEM.cls.idx_cls..')))'
                             ..']['
                                 .._ENV.ifcs[var.id_ifc]
                             ..']'
@@ -68,11 +75,11 @@ F = {
                     val = '(*(('.._TP.c(var.tp..'*')..')(org+'..off..')))'
                 end
                 local id = pre..'_'..cls.id..'_'..var.id
-                accs[#accs+1] = '#define '..id..'_off(org) '..off
-                accs[#accs+1] = '#define '..id..'(org) '    ..val
+                code[#code+1] = '#define '..id..'_off(org) '..off
+                code[#code+1] = '#define '..id..'(org) '    ..val
             end
         end
-        _MEM.code_accs = table.concat(accs,'\n')
+        _MEM.code_clss = table.concat(code,'\n')
     end,
 
     Dcl_cls_pre = function (me)
@@ -325,8 +332,19 @@ F = {
 
     Op1_cast = function (me)
         local tp, exp = unpack(me)
-        me.val = '(('.._TP.c(tp)..')'..exp.val..')'
-        -- TODO: assert for orgs
+        local val = exp.val
+
+        local _tp = _TP.deref(tp)
+        local cls = _tp and _ENV.clss[_tp]
+        if cls and (not cls.is_ifc) and _PROPS.has_ifcs then
+            val = '((' ..
+                    '*PTR(tceu_ncls*,'..(val..'+'.._MEM.cls.idx_cls)..')'..
+                    '==' ..
+                    cls.n ..
+                    ') ?  '..val..' : NULL)'
+        end
+
+        me.val = '(('.._TP.c(tp)..')'..val..')'
     end,
 
     WCLOCKK = function (me)

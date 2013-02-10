@@ -5,6 +5,9 @@ _OPTS.tp_pointer = assert(tonumber(_OPTS.tp_pointer),
 
 _ENV = {
     clss  = {},     -- { [1]=cls, ... [cls]=0 }
+    clss_ifc = {},
+    clss_cls = {},
+
     calls = {},     -- { _printf=true, _myf=true, ... }
     ifcs  = {},     -- { [1]='A', [2]='B', A=0, B=1, ... }
 
@@ -101,7 +104,7 @@ function newvar (me, blk, pre, tp, dim, id)
 
     ASR(_ENV.clss[tp_raw] or (c and c.tag=='type'),
         me, 'undeclared type `'..tp_raw..'´')
-    ASR(not (_ENV.clss[tp] and _ENV.clss[tp].is_ifc), me,
+    ASR(not _ENV.clss_ifc[tp], me,
         'cannot instantiate an interface')
     ASR(_TP.deref(tp) or (not c) or (tp=='void' and isEvt) or c.len>0, me,
         'cannot instantiate type "'..tp..'"')
@@ -148,7 +151,7 @@ end
 
 F = {
     Root = function (me)
-        _ENV.c.tceu_ncls.len = _TP.n2bytes(#_ENV.clss)
+        _ENV.c.tceu_ncls.len = _TP.n2bytes(#_ENV.clss_cls)
 
         local ext = {id='_WCLOCK', pre='input'}
         _ENV.exts[#_ENV.exts+1] = ext
@@ -159,14 +162,8 @@ F = {
         _ENV.exts[ext.id] = ext
 
         -- matches all ifc vs cls
-        local ifcs = {}
-        for _,cls in pairs(_ENV.clss) do
-            if cls.is_ifc then
-                ifcs[#ifcs+1] = cls -- hold all ifcs for matching below
-            end
-        end
-        for _, ifc in ipairs(ifcs) do
-            for _, cls in ipairs(_ENV.clss) do
+        for _, ifc in ipairs(_ENV.clss_ifc) do
+            for _, cls in ipairs(_ENV.clss_cls) do
                 _ENV.ifc_vs_cls(ifc, cls)
             end
         end
@@ -204,9 +201,15 @@ F = {
                 'interface/class "'..id..'" is already declared')
 
         _ENV.clss[id] = me
-        if (not me.is_ifc) then     -- do not include ifcs (code/CEU.ifaces)
-            me.n = #_ENV.clss       -- TODO: remove Main?
-            _ENV.clss[#_ENV.clss+1] = me
+        _ENV.clss[#_ENV.clss+1] = me
+
+        if me.is_ifc then
+            _ENV.clss_ifc[id] = me
+            _ENV.clss_ifc[#_ENV.clss_ifc+1] = me
+        else
+            me.n = #_ENV.clss_cls   -- TODO: remove Main?
+            _ENV.clss_cls[id] = me
+            _ENV.clss_cls[#_ENV.clss_cls+1] = me
         end
     end,
     Dcl_cls = function (me)

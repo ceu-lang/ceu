@@ -159,22 +159,22 @@ do
     tpl = sub(tpl, '=== TCEU_NLBL ===', tps[_ENV.c.tceu_nlbl.len])
 
     if not _ENV.orgs_global then
-        tpl = sub(tpl, '=== CEU_CLS_PAR_ORG ===',  _MEM.cls.par_org)
-        tpl = sub(tpl, '=== CEU_CLS_PAR_LBL ===',  _MEM.cls.par_lbl)
+        tpl = sub(tpl, '=== CEU_CLS_PAR_ORG ===',  _MEM.cls.idx_org)
+        tpl = sub(tpl, '=== CEU_CLS_PAR_LBL ===',  _MEM.cls.idx_lbl)
     end
 
     tpl = sub(tpl, '=== LABELS_ENUM ===', _LBLS.code_enum)
     tpl = sub(tpl, '=== LABELS_FINS ===', _LBLS.code_fins)
 
     tpl = sub(tpl, '=== HOST ===',     _CODE.host)
-    tpl = sub(tpl, '=== CLS_ACCS ===', _MEM.code_accs)
+    tpl = sub(tpl, '=== CLS_ACCS ===', _MEM.code_clss)
     tpl = sub(tpl, '=== CODE ===',     _AST.root.code)
 
     -- IFACES
     if _PROPS.has_ifcs then
         local T = {}
         local off_max = 0
-        for _, cls in ipairs(_ENV.clss) do
+        for _, cls in ipairs(_ENV.clss_cls) do
             local t = {}
             for i=1, #_ENV.ifcs do
                 t[i] = 0
@@ -192,7 +192,7 @@ do
         end
         tpl = sub(tpl, '=== TCEU_NCLS ===', tps[_ENV.c.tceu_ncls.len])
         tpl = sub(tpl, '=== TCEU_NOFF ===', tps[_TP.n2bytes(off_max)])
-        tpl = sub(tpl, '=== CEU_NCLS ===',  #_ENV.clss)
+        tpl = sub(tpl, '=== CEU_NCLS ===',  #_ENV.clss_cls)
         tpl = sub(tpl, '=== CEU_NIFCS ===', #_ENV.ifcs)
         tpl = sub(tpl, '=== IFCS ===', table.concat(T,','))
     end

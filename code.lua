@@ -92,13 +92,13 @@ if (org0) {
     end
     LINE(me, [[
 #ifdef CEU_IFCS
-    *((tceu_ncls*)(org0+]]..(_MEM.cls.cls or '')..[[)) = ]]..cls.n..[[;
+    *((tceu_ncls*)(org0+]]..(_MEM.cls.idx_cls or '')..[[)) = ]]..cls.n..[[;
 #endif
 ]])
     if not _ENV.orgs_global then
         LINE(me, [[
-    *((char**)    (org0+]].._MEM.cls.par_org..[[))     = ]]..par_org..[[;
-    *((tceu_nlbl*)(org0+]].._MEM.cls.par_lbl..[[))     = ]]..par_lbl.id..[[;
+    *((char**)    (org0+]].._MEM.cls.idx_org..[[))     = ]]..par_org..[[;
+    *((tceu_nlbl*)(org0+]].._MEM.cls.idx_lbl..[[))     = ]]..par_lbl.id..[[;
 ]])
     end
     LINE(me, [[
@@ -122,7 +122,7 @@ F = {
     end,
 
     Root = function (me)
-        for _, cls in ipairs(_ENV.clss) do
+        for _, cls in ipairs(_ENV.clss_cls) do
             CONC(me, cls)
         end
     end,
@@ -132,7 +132,7 @@ F = {
         if me == _MAIN then
             LINE(me, [[
 #ifdef CEU_IFCS
-*((tceu_ncls*)(CEU.mem+]]..(_MEM.cls.cls or '')..[[)) = ]].._MAIN.n..[[;
+*((tceu_ncls*)(CEU.mem+]]..(_MEM.cls.idx_cls or '')..[[)) = ]].._MAIN.n..[[;
 #endif
 ]])
         end
@@ -289,9 +289,9 @@ if (]]..exp.val..[[ != NULL) {
         local e1, e2, op, fin = unpack(me)
         COMM(me, 'SET: '..tostring(e1[1]))    -- Var or C
         if op == ':=' then
-            LINE(me, '*((char**)('..e2.val..'+'.._MEM.cls.par_org..
+            LINE(me, '*((char**)('..e2.val..'+'.._MEM.cls.idx_org..
                     ')) = '..((e1.org and e1.org.val) or '_trk_.org')..';')
-            LINE(me, '*((tceu_nlbl*)('..e2.val..'+'.._MEM.cls.par_lbl..
+            LINE(me, '*((tceu_nlbl*)('..e2.val..'+'.._MEM.cls.idx_lbl..
                     ')) = '..(e1.fst or e1.var).lbl_cnt.id..';')
         end
         ATTR(me, e1, e2)
