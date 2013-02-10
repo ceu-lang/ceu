@@ -52,11 +52,23 @@ function _TP.cls (tp)
     return cls, ptr
 end
 
+--[[
 function _TP.c (tp)
     -- _tp->tp
     -- class->char*
     -- class*->char* (too!)
     return (string.gsub(string.gsub(tp,'^%u[_%w]*%*?','char*'), '^_', ''))
+end
+]]
+
+function _TP.c (tp)
+    -- _tp->tp
+    if _ENV.clss_ifc[_TP.noptr(tp)] then
+        tp = 'IFC_'..tp..'*'
+    elseif _ENV.clss_cls[_TP.noptr(tp)] then
+        tp = 'CLS_'..tp..'*'
+    end
+    return (string.gsub(tp,'^_', ''))
 end
 
 function _TP.isNumeric (tp, c)

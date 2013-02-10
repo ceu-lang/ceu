@@ -227,11 +227,11 @@ do
                     vals[#vals+1] = 'CEU.mem'
                 else
                     for _, var in ipairs(cls.glbs) do
-                        local val = string.gsub(var.val, 'PTR_org', 'PTR_glb')
+                        local val = string.gsub(var.val, 'PTR_cur', 'PTR_glb')
                         if var.arr then
                             for i=1, var.arr do
-                                local v = '(((char*)'..val..')+('..(i-1)..'*'..
-                                            cls.mem.max..'))'
+                                local v = 'PTR_org(void*,'..val..',('..
+                                            (i-1)..'*'..cls.mem.max..'))'
                                 vals[#vals+1] = v
                             end
                         else

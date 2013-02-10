@@ -28,7 +28,8 @@ end
 function LINE (me, line, spc)
     spc = spc or 4
     spc = string.rep(' ', spc)
-    me.code = me.code .. '#line '..me.ln..'\n'..
+    me.code = me.code ..
+                '#line '..me.ln..'\n'..
                 spc .. line .. '\n'
 end
 
@@ -82,7 +83,7 @@ end
 function ORG (me, new, org0, cls, par_org, par_lbl, lbl_cnt)
     COMM(me, 'ORG')
     LINE(me, [[
-{ char* org0 = ]]..org0..[[;
+{ void* org0 = ]]..org0..[[;
 ]])
     if new then
         LINE(me, [[
@@ -97,8 +98,8 @@ if (org0) {
 ]])
     if not _ENV.orgs_global then
         LINE(me, [[
-    *((char**)    (org0+]].._MEM.cls.idx_org..[[))     = ]]..par_org..[[;
-    *((tceu_nlbl*)(org0+]].._MEM.cls.idx_lbl..[[))     = ]]..par_lbl.id..[[;
+    *PTR_org(void**,     org0, ]].._MEM.cls.idx_org..[[) = ]]..par_org..[[;
+    *PTR_org(tceu_nlbl*, org0, ]].._MEM.cls.idx_lbl..[[) = ]]..par_lbl.id..[[;
 ]])
     end
     LINE(me, [[
@@ -214,7 +215,8 @@ if (]]..exp.val..[[ != NULL) {
             if cls then
                 for i=1, var.arr do
                     ORG(me, false,
-                            '(((char*)'..var.val..')+'..(i-1)..'*'..cls.mem.max..')',
+                            'PTR_org(void*,'..var.val..','..
+                                            (i-1)..'*'..cls.mem.max..')',
                             cls,
                             '_trk_.org',
                             var.lbl_cnt[i])
@@ -242,7 +244,8 @@ if (]]..exp.val..[[ != NULL) {
             COMM(me, 'FINALIZE')
             LINE(me, 'ceu_lsts_ins(0,_trk_.org,_trk_.org,'..
                         me.lbl_fin.id..',0);')
-            LINE(me, 'memset(PTR_org(u8*,'..me.off_fins..'), 0, '..#me.fins..');')
+            LINE(me, 'memset(PTR_cur(u8*,'..me.off_fins..'), 0, '..
+                        #me.fins..');')
         end
 
         CONC(me, blk)
@@ -253,7 +256,7 @@ if (]]..exp.val..[[ != NULL) {
 
             -- TODO: normal if? (no control inside finally)
             for i, fin in ipairs(me.fins) do
-                LINE(me, 'if (*PTR_org(u8*,'..(me.off_fins+i-1)..')) {')
+                LINE(me, 'if (*PTR_cur(u8*,'..(me.off_fins+i-1)..')) {')
                 SWITCH(me, fin.lbl_true)
                 LINE(me, '} else {')
                 SWITCH(me, fin.lbl_false)
@@ -274,7 +277,7 @@ if (]]..exp.val..[[ != NULL) {
         -- enable finalize
         local set,fin = unpack(me)
         if fin.active then
-            LINE(me, '*PTR_org(u8*,'..fin.idx..') = 1;')
+            LINE(me, '*PTR_cur(u8*,'..fin.idx..') = 1;')
         end
         if set then
             CONC(me, set)
@@ -289,16 +292,16 @@ if (]]..exp.val..[[ != NULL) {
         local e1, e2, op, fin = unpack(me)
         COMM(me, 'SET: '..tostring(e1[1]))    -- Var or C
         if op == ':=' then
-            LINE(me, '*((char**)('..e2.val..'+'.._MEM.cls.idx_org..
-                    ')) = '..((e1.org and e1.org.val) or '_trk_.org')..';')
-            LINE(me, '*((tceu_nlbl*)('..e2.val..'+'.._MEM.cls.idx_lbl..
-                    ')) = '..(e1.fst or e1.var).lbl_cnt.id..';')
+            LINE(me, '*PTR_org(void**,'..e2.val..','.._MEM.cls.idx_org..
+                     ') = '..((e1.org and e1.org.val) or '_trk_.org')..';')
+            LINE(me, '*PTR_org(tceu_nlbl*,'..e2.val..','.._MEM.cls.idx_lbl..
+                     ') = '..(e1.fst or e1.var).lbl_cnt.id..';')
         end
         ATTR(me, e1, e2)
 
         -- enable finalize
         if fin and fin.active then
-            LINE(me, '*PTR_org(u8*,'..fin.idx..') = 1;')
+            LINE(me, '*PTR_cur(u8*,'..fin.idx..') = 1;')
         end
     end,
 
@@ -356,20 +359,20 @@ if (]]..exp.val..[[ != NULL) {
     ParAnd = function (me)
         -- close AND gates
         COMM(me, 'close ParAnd gates')
-        LINE(me, 'memset(PTR_org(u8*,'..me.off..'), 0, '..#me..');')
+        LINE(me, 'memset(PTR_cur(u8*,'..me.off..'), 0, '..#me..');')
         F._Par(me)
 
         for i, sub in ipairs(me) do
             CASE(me, me.lbls_in[i])
             CONC(me, sub)
-            LINE(me, '*PTR_org(u8*,'..(me.off+i-1)..') = 1; // open and')  -- open gate
+            LINE(me, '*PTR_cur(u8*,'..(me.off+i-1)..') = 1; // open and')  -- open gate
             SWITCH(me, me.lbl_tst)
         end
 
         -- AFTER code :: test gates
         CASE(me, me.lbl_tst)
         for i, sub in ipairs(me) do
-            LINE(me, 'if (!*PTR_org(u8*,'..(me.off+i-1)..'))')
+            LINE(me, 'if (!*PTR_cur(u8*,'..(me.off+i-1)..'))')
             HALT(me)
         end
     end,

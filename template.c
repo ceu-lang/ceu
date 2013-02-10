@@ -20,12 +20,12 @@
 #define CEU_WCLOCK_NONE INT32_MAX
 #endif
 
-#define PTR(tp,off)     ((tp)(off))
 #define PTR_glb(tp,off) ((tp)(CEU.mem + off))
+#define PTR_org(tp,org,off) ((tp)(((char*)(org)) + off))
 #ifdef CEU_ORGS
-#define PTR_org(tp,off) ((tp)(_trk_.org + off))
+#define PTR_cur(tp,off) ((tp)(_trk_.org + off))
 #else
-#define PTR_org(tp,off) ((tp)(CEU.mem + off))
+#define PTR_cur(tp,off) ((tp)(CEU.mem + off))
 #endif
 
 #define MIN(x,y) ((x<y)?x:y)
@@ -65,7 +65,7 @@ typedef === TCEU_NOFF === tceu_noff;    // max offset in an iface
 
 typedef struct {
 #ifdef CEU_ORGS
-    char*     org;
+    void*     org;
 #endif
     tceu_nlbl lbl;
 } tceu_trk;
@@ -74,12 +74,12 @@ typedef struct {
     tceu_nevt evt;      // TODO: save this byte
     tceu_nlbl lbl;
 #ifdef CEU_ORGS
-    char*     org;
+    void*     org;
 #endif
     union {
         struct {
 #ifdef CEU_ORGS
-            char* src;
+            void* src;
 #endif
             u8    on;
         };
@@ -176,7 +176,7 @@ tceu CEU = {
 
 /**********************************************************************/
 
-void ceu_call_f (char* org, tceu_nlbl lbl);
+void ceu_call_f (void* org, tceu_nlbl lbl);
 #ifdef CEU_ORGS
 #define ceu_call(a,b) ceu_call_f(a,b)
 #else
@@ -188,7 +188,7 @@ void ceu_wclock_min (s32 us, int out);
 /**********************************************************************/
 
 //int xxx = 0;
-void ceu_trk_push (char* org, tceu_nlbl lbl)
+void ceu_trk_push (void* org, tceu_nlbl lbl)
 {
     tceu_trk trk = {
 #ifdef CEU_ORGS
@@ -225,12 +225,12 @@ void ceu_trk_push (char* org, tceu_nlbl lbl)
 
 #ifdef CEU_ORGS
 #ifndef CEU_ORGS_GLOBAL
-int ceu_clr_child (char* cur, char* org, tceu_nlbl l1, tceu_nlbl l2) {
-    char* par = *PTR(char**,cur+(=== CEU_CLS_PAR_ORG ===));
+int ceu_clr_child (void* cur, void* org, tceu_nlbl l1, tceu_nlbl l2) {
+    void* par = *PTR_org(void**,cur,(=== CEU_CLS_PAR_ORG ===));
     if (cur == CEU.mem) {
         return 0;                   // root org, no parent
     } else if (par == org) {
-        tceu_nlbl lbl = *PTR(tceu_nlbl*,(cur+(=== CEU_CLS_PAR_LBL ===)));
+        tceu_nlbl lbl = *PTR_org(tceu_nlbl*,cur,(=== CEU_CLS_PAR_LBL ===));
         return lbl>=l1 && lbl<=l2;
     } else {
         return ceu_clr_child(par, org, l1, l2);
@@ -239,7 +239,7 @@ int ceu_clr_child (char* cur, char* org, tceu_nlbl l1, tceu_nlbl l2) {
 #endif
 #endif
 
-void ceu_trk_clr (int child, char* org, tceu_nlbl l1, tceu_nlbl l2) {
+void ceu_trk_clr (int child, void* org, tceu_nlbl l1, tceu_nlbl l2) {
     int i;
     for (i=0; i<CEU.trks_n; i++) {
         tceu_trk* trk = &CEU.trks[i];
@@ -279,7 +279,8 @@ void ceu_lsts_adj ()
     }
 }
 
-void ceu_lsts_ins (tceu_nevt evt, char* src, char* org, tceu_nlbl lbl, s32 togo)
+void ceu_lsts_ins (tceu_nevt evt, void* src, void* org,
+                   tceu_nlbl lbl, s32 togo)
 {
 #ifdef CEU_NEWS
     if (CEU.lsts_n == CEU.lsts_nmax) {
@@ -326,7 +327,7 @@ void ceu_lsts_ins (tceu_nevt evt, char* src, char* org, tceu_nlbl lbl, s32 togo)
 #define ceu_lsts_ins(a,b,c,d,e) ceu_lsts_ins(a,NULL,NULL,d,e)
 #endif
 
-void ceu_lsts_go (tceu_nevt evt, char* src)
+void ceu_lsts_go (tceu_nevt evt, void* src)
 {
     int i;
 #ifdef CEU_DETERMINISTIC
@@ -398,7 +399,7 @@ void ceu_lsts_go (tceu_nevt evt, char* src)
 #define ceu_lsts_go(a,b) ceu_lsts_go(a,NULL)
 #endif
 
-void ceu_lsts_clr (int child, char* org, tceu_nlbl l1, tceu_nlbl l2) {
+void ceu_lsts_clr (int child, void* org, tceu_nlbl l1, tceu_nlbl l2) {
     int i;
 #ifdef CEU_DETERMINISTIC
     int j;
@@ -435,7 +436,7 @@ void ceu_lsts_clr (int child, char* org, tceu_nlbl l1, tceu_nlbl l2) {
 #endif
 
 #ifdef CEU_PSES
-void ceu_lsts_pse (int child, char* org, tceu_nlbl l1, tceu_nlbl l2, int inc) {
+void ceu_lsts_pse (int child, void* org, tceu_nlbl l1, tceu_nlbl l2, int inc) {
     tceu_nlst i;
     for (i=0 ; i<CEU.lsts_n ; i++) {
         tceu_lst* lst = &CEU.lsts[i];
@@ -487,7 +488,7 @@ void ceu_wclock_min (s32 us, int out) {
     }
 }
 
-void ceu_wclock_enable (s32 us, char* org, tceu_nlbl lbl) {
+void ceu_wclock_enable (s32 us, void* org, tceu_nlbl lbl) {
     s32 dt = us - CEU.wclk_late;
     ceu_lsts_ins(IN__WCLOCK, NULL, org, lbl, dt);
     ceu_wclock_min(dt, 1);
@@ -499,7 +500,7 @@ void ceu_wclock_enable (s32 us, char* org, tceu_nlbl lbl) {
 #endif
 
 #ifdef CEU_ASYNCS
-void ceu_async_enable (char* org, tceu_nlbl lbl) {
+void ceu_async_enable (void* org, tceu_nlbl lbl) {
     ceu_lsts_ins(IN__ASYNC, NULL, org, lbl, 0);
 #ifdef ceu_out_async
         ceu_out_async(1);
@@ -582,7 +583,7 @@ void ceu_go_wclock (s32 dt)
 #endif   // CEU_WCLOCKS
 }
 
-void ceu_call_f (char* org, tceu_nlbl lbl)
+void ceu_call_f (void* org, tceu_nlbl lbl)
 {
 #ifdef CEU_ORGS
     tceu_trk _trk_ = {org,lbl};

@@ -60,8 +60,7 @@ F = {
                 if cls.is_ifc then
                     -- off = IFC[org.cls][var.n]
                     off = 'CEU.ifcs['
-                            ..'(*PTR(tceu_ncls*,(org+'
-                                    .._MEM.cls.idx_cls..')))'
+                            ..'(*PTR_org(tceu_ncls*,org,'.._MEM.cls.idx_cls..'))'
                             ..']['
                                 .._ENV.ifcs[var.id_ifc]
                             ..']'
@@ -70,9 +69,9 @@ F = {
                 end
 
                 if var.cls or var.arr then
-                    val = '(('.._TP.c(var.tp)..')(org+'..off..'))'
+                    val = 'PTR_org('.._TP.c(var.tp)..',org,'..off..')'
                 else
-                    val = '(*(('.._TP.c(var.tp..'*')..')(org+'..off..')))'
+                    val = '(*PTR_org('.._TP.c(var.tp..'*')..',org,'..off..'))'
                 end
                 local id = pre..'_'..cls.id..'_'..var.id
                 code[#code+1] = '#define '..id..'_off(org) '..off
@@ -133,9 +132,9 @@ F = {
 --DBG(var.id, var.off, len)
 
             if var.cls or var.arr then
-                var.val = 'PTR_org('.._TP.c(var.tp)..','..var.off..')'
+                var.val = 'PTR_cur('.._TP.c(var.tp)..','..var.off..')'
             else
-                var.val = '(*PTR_org('.._TP.c(var.tp)..'*,'..var.off..'))'
+                var.val = '(*PTR_cur('.._TP.c(var.tp)..'*,'..var.off..'))'
             end
 
             if var.isEvt and (not _AWAITS.t[var]) then
@@ -198,6 +197,9 @@ F = {
     SetAwait = 'SetExp',
     SetExp = function (me)
         local e1, e2 = unpack(me)
+        if e1.tp ~= '_' then
+            e2.val = '('.._TP.c(e1.tp)..')('..e2.val..')'
+        end
     end,
 
     EmitExtS = function (me)
@@ -260,7 +262,7 @@ F = {
         local _, arr, idx = unpack(me)
         local cls = _ENV.clss[me.tp]
         if cls then
-            me.val = '(((char*)'..arr.val..')+('..idx.val..'*'..cls.mem.max..'))'
+            me.val = 'PTR_org(void*,'..arr.val..',('..idx.val..'*'..cls.mem.max..'))'
             me.val = '(('.._TP.c(me.tp)..')'..me.val..')'
         else
             me.val = '('..arr.val..'['..idx.val..'])'
@@ -338,7 +340,7 @@ F = {
         local cls = _tp and _ENV.clss[_tp]
         if cls and (not cls.is_ifc) and _PROPS.has_ifcs then
             val = '((' ..
-                    '*PTR(tceu_ncls*,'..(val..'+'.._MEM.cls.idx_cls)..')'..
+                    '*PTR_org(tceu_ncls*,'..val..','.._MEM.cls.idx_cls..')'..
                     '==' ..
                     cls.n ..
                     ') ?  '..val..' : NULL)'
