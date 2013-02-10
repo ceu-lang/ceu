@@ -95,7 +95,7 @@ Test = function (t)
     else
         local par = (T.awaits and T.awaits>0 and 'par') or 'par/or'
         local str_all =
-            par .. [[do
+            par .. [[ do
                 ]]..str_input..[[
             with
                 async do

@@ -97,7 +97,7 @@ F = {
 
     Root = function (me)
         SAME(me, me[#me])
---me.ns.trks = 5
+--me.ns.trks = 9
         _ENV.c.tceu_nlst.len = _TP.n2bytes(me.ns.lsts)
         _ENV.c.tceu_ntrk.len = _TP.n2bytes(me.ns.trks)
     end,
@@ -141,7 +141,7 @@ F = {
         else
             SAME(me, me[#me])
         end
-DBG(me.id, me.ns.trks)
+--DBG(me.id, me.ns.trks)
     end,
 
     Dcl_ext = function (me)

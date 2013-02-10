@@ -221,10 +221,29 @@ do
             ]]
             -- last listeners are stacked first
             for i=#t, 1, -1 do
-                local lbl = t[i]
-                exts = exts .. [[
-                    ceu_trk_push(0, ]]..lbl.id..[[);
-                ]]
+                local cls, lbl = unpack(t[i])
+                local vals = {}
+                if #cls.glbs == 0 then
+                    vals[#vals+1] = 'CEU.mem'
+                else
+                    for _, var in ipairs(cls.glbs) do
+                        local val = string.gsub(var.val, 'PTR_org', 'PTR_glb')
+                        if var.arr then
+                            for i=1, var.arr do
+                                local v = '(((char*)'..val..')+('..(i-1)..'*'..
+                                            cls.mem.max..'))'
+                                vals[#vals+1] = v
+                            end
+                        else
+                            vals[#vals+1] = val
+                        end
+                    end
+                end
+                for _,val in ipairs(vals) do
+                    exts = exts .. [[
+                        ceu_trk_push(]]..val..[[, ]]..lbl.id..[[);
+                    ]]
+                end
             end
             exts = exts .. [[
                 break;
@@ -274,6 +293,8 @@ do
     else
         tpl = sub(tpl, '=== DEFS ===', str)
     end
+
+    tpl = sub(tpl, '=== FILENAME ===', _OPTS.input)
 end
 
 if _OPTS.verbose or true then

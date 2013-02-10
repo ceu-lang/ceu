@@ -304,7 +304,10 @@ local C; C = {
         return unpack(ret)
     end,
 
-    Dcl_org = node('Dcl_var'),
+    Dcl_org = function (ln, pre, tp, dim, id, blk)
+        local dcl = node('Dcl_var')(ln, pre, tp, dim, id)
+        return node('Dcl_org')(ln, dcl, blk)
+    end,
 
     -- TODO: unify with _Dcl_var
     _Dcl_int_ifc = function(...) return C._Dcl_int(...) end,

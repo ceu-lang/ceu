@@ -230,7 +230,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
 
     , _Parens  = K'(' * EV'_Exp' * EK')'
 
-    , SIZEOF = K'sizeof' * EK'<' * EV'ID_type' * EK'>'
+    , SIZEOF = K'sizeof' * EK'<' * EV'ID_type' * (K','*EV'ID_type')^0 * EK'>'
     , CONST = CK( #m.R'09' * (m.R'09'+m.S'xX'+m.R'AF'+m.R'af')^1 )
             + CK( "'" * (P(1)-"'")^0 * "'" )
 
@@ -265,7 +265,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
 
     , EmitInt  = K'emit' * EV'_Exp' * (K'=' * V'_Exp')^-1
 
-    , __Dcl_c    = Cc'type' * V'ID_c' * K'=' * NUM
+    , __Dcl_c    = Cc'type' * V'ID_c' * K'=' * V'_Exp'
                  + Cc'func' * V'ID_c' * '()' * Cc(false)
                  + Cc'var'  * V'ID_c'        * Cc(false)
     , _Dcl_c_ifc = K'C' * (CK'pure'+CK'constant'+CK'nohold'+Cc(false))
@@ -281,20 +281,20 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , __Dcl_int = EV'ID_int' * (V'_Sets' +
                                 Cc(false)*Cc(false)*Cc(false))
 
-    , _Dcl_var  = CK'var' * EV'ID_type' * (K'['*NUM*K']'+Cc(false)) *
+    , _Dcl_var  = CK'var' * EV'ID_type' * (K'['*V'_Exp'*K']'+Cc(false)) *
                     V'__Dcl_var' * (K','*V'__Dcl_var')^0 * -K'with'
     , __Dcl_var = EV'ID_var' * (V'_Sets' +
                                 Cc(false)*Cc(false)*Cc(false))
 
     -- single org / org[] with initialization
-    , Dcl_org   = CK'var' * EV'ID_cls' * (K'['*NUM*K']'+Cc(false)) *
+    , Dcl_org   = CK'var' * EV'ID_cls' * (K'['*V'_Exp'*K']'+Cc(false)) *
                     EV'ID_var' * EK'with' * V'Block' * EK'end'
 
     , _Dcl_int_ifc  = CK'event' * EV'ID_type' * Cc(false) *
                        EV'__Dcl_int_ifc' * (K','*V'__Dcl_int')^0
     , __Dcl_int_ifc = EV'ID_int' * (Cc(false)*Cc(false)*Cc(false))
 
-    , _Dcl_var_ifc  = CK'var' * EV'ID_type' * (K'['*NUM*K']'+Cc(false)) *
+    , _Dcl_var_ifc  = CK'var' * EV'ID_type' * (K'['*V'_Exp'*K']'+Cc(false)) *
                        V'__Dcl_var_ifc' * (K','*V'__Dcl_var')^0
     , __Dcl_var_ifc = EV'ID_var' * (Cc(false)*Cc(false)*Cc(false))
 
@@ -328,8 +328,8 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
 
     , STRING = CK( CK'"' * (P(1)-'"'-'\n')^0 * EK'"' )
 
-    , Host    = K'C' * (#EK'do')*'do' * m.S' \n\t'^0 *
-                    ( C(V'_C') + C((P(1)-'end')^0) )
+    , Host    = K'C' * (#EK'do')*'do' * --m.S' \n\t'^0 *
+                    ( C(V'_C') + C((P(1)-(m.S'\t\n\r '*'end'*'\n'))^0) )
                 *S* EK'end'
 
     --, _C = '/******/' * (P(1)-'/******/')^0 * '/******/'

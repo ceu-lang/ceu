@@ -20,6 +20,7 @@ _ENV = {
         u8=1, u16=2, u32=4, u64=8,
         s8=1, s16=2, s32=4, s64=8,
 
+        word     = _OPTS.tp_word,
         int      = _OPTS.tp_word,
         pointer  = _OPTS.tp_pointer,
 
@@ -94,7 +95,7 @@ function newvar (me, blk, pre, tp, dim, id)
         end
     end
 
-    local tp_raw = _TP.raw(tp)
+    local tp_raw = _TP.noptr(tp)
     local c = _ENV.c[tp_raw]
     local isEvt = (pre ~= 'var')
 
@@ -195,7 +196,7 @@ F = {
         local ifc, id, blk = unpack(me)
         me.is_ifc = ifc
         me.id     = id
-        me.is_glb = true
+        me.glbs   = {}
         if id == 'Main' then
             _MAIN = me
         end
@@ -261,19 +262,23 @@ F = {
         _ENV.exts[id] = me.ext
     end,
 
-    Dcl_int_pre = 'Dcl_var_pre',
-    Dcl_var_pre = function (me)
+    Dcl_int = 'Dcl_var',
+    Dcl_var = function (me)
         local pre, tp, dim, id = unpack(me)
-        me.var = newvar(me, _AST.iter'Block'(), pre, tp, dim, id)
+        ASR((not dim) or tonumber(dim.sval), me, 'invalid static expression')
+        me.var = newvar(me, _AST.iter'Block'(), pre, tp, dim and dim.sval, id)
         me.var.read_only = me.read_only
 
         local cls = me.var.cls or
                     me.var.arr and _ENV.clss[_TP.deref(me.var.tp)]
         if cls then
             local blk = CLS().blk_body
-            cls.is_glb = cls.is_glb and
-                            (not blk) or _AST.iter'Block'().depth<=blk.depth
-            _ENV.orgs_global = _ENV.orgs_global and cls.is_glb
+            cls.glbs = ((not blk) or _AST.iter'Block'().depth<=blk.depth)
+                        and cls.glbs
+            if cls.glbs then
+                cls.glbs[#cls.glbs+1] = me.var
+            end
+            _ENV.orgs_global = cls.glbs and _ENV.orgs_global
         end
     end,
 
@@ -306,6 +311,7 @@ F = {
 
     Dcl_c = function (me)
         local mod, tag, id, len = unpack(me)
+        len = ASR((not len) or len.sval, me, 'invalid static expression')
         if _AST.iter'BlockI'() then
             local cls = CLS()
             id = ((cls.is_ifc and 'IFC_') or 'CLS_')..cls.id..'_'..id
@@ -480,7 +486,7 @@ F = {
             for _, exp in ipairs(exps) do
                 -- int* pa; _f(pa); -- `pa´ termination must consider `_f´
                 local r = exp.fst and (_TP.deref(exp.tp) or
-                                   _ENV.clss[_TP.raw(exp.tp)])
+                                   _ENV.clss[_TP.noptr(exp.tp)])
                 r = r and ((exp.fst=='_' and _AST.root) or exp.fst.blk)
                 ASR( (not r) or (not req) or (r==req),
                         me, 'invalid call (multiple scopes)')
@@ -511,6 +517,11 @@ F = {
         me.tp  = 'int'
         ASR(_TP.isNumeric(e1.tp,true) and _TP.isNumeric(e2.tp,true),
             me, 'invalid operands to binary "'..op..'"')
+
+        if e1.sval and e2.sval then
+            local v = loadstring('return '..e1.sval..op..e2.sval)
+            me.sval = v and tonumber(v())
+        end
     end,
     ['Op2_-']  = 'Op2_int_int',
     ['Op2_+']  = 'Op2_int_int',
@@ -528,6 +539,10 @@ F = {
         me.tp  = 'int'
         ASR(_TP.isNumeric(e1.tp,true),
                 me, 'invalid operand to unary "'..op..'"')
+        if e1.sval then
+            local v = loadstring(op..e1.sval)
+            me.sval = v and tonumber(v())
+        end
     end,
     ['Op1_~']  = 'Op1_int',
     ['Op1_-']  = 'Op1_int',
@@ -624,6 +639,23 @@ F = {
         me.tp   = 'int'
         me.lval = false
         me.fst  = false
+
+        local tp = unpack(me)
+        local sz = 0
+        for _,tp in ipairs(me) do
+            local t = _TP.deref(tp) and _ENV.c.pointer or _ENV.c[tp]
+            local i = ASR(t and t.len, me, 'undeclared type '..tp)
+
+            local r = _ENV.c.word.len - sz%_ENV.c.word.len
+            if r<_ENV.c.word.len and i>r then
+                sz = sz + r     -- align if i breaks alignment
+            end
+            sz = sz + i
+        end
+        if #me > 1 then         -- align structs
+            sz = _TP.align(sz)
+        end
+        me.sval = sz
     end,
 
     STRING = function (me)
@@ -636,6 +668,7 @@ F = {
         me.tp   = 'int'
         me.lval = false
         me.fst  = false
+        me.sval = tonumber(v)
         ASR(string.sub(v,1,1)=="'" or tonumber(v), me, 'malformed number')
     end,
     NULL = function (me)

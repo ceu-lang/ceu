@@ -48,9 +48,8 @@ F = {
 ]]
 
     Root = function (me)
-DBG'==============='
         for _, cls in ipairs(me) do
-            if cls.aw.forever_ and cls.is_glb then
+            if cls.aw.forever_ and cls.glbs then
                 for awt in pairs(cls.aw.t) do
                     local id = awt[1].var or awt[1].ext
                     _AWAITS.t[id] = {}  -- new glb candidate
@@ -64,11 +63,18 @@ DBG'==============='
                 _AWAITS.t[id] = nil     -- remove non-glb from glb
             end
         end
+
+        local t = {}
         for id in pairs(_AWAITS.t) do
             _AWAITS.n = _AWAITS.n + 1
-            DBG('AWAIT', id.id)
+            t[#t+1] = id.id
         end
-DBG'==============='
+        DBG('Global awaits: ', table.concat(t,', '))
+
+        -- disable global awaits
+        --for id in pairs(_AWAITS.t) do
+            --_AWAITS.t[id] = nil
+        --end
     end,
 
     Stmts = function (me)
@@ -182,7 +188,11 @@ DBG'==============='
         me.aw.t[me] = true
         ALL[me] = true
     end,
-    AwaitInt = 'AwaitExt',
+    AwaitInt = function (me)
+        if (not me[1].org) or (me[1].org.tag=='This') then   -- only local awaits
+            F.AwaitExt(me)
+        end
+    end,
     Async = function (me)
         me.aw.n = 1
     end,

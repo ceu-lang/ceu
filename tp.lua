@@ -10,7 +10,7 @@ local types = {
 }
 
 function _TP.align (n, b)
-    b = b or 4              -- TODO: _OPTS.align
+    b = b or _ENV.c.word.len
     if n%b > 0 then
         return n + b-n%b
     else
@@ -42,7 +42,7 @@ end
 
 -- TODO: enforce passing parameter `c´ to isNumeric/deref/contains/max ?
 
-function _TP.raw (tp)
+function _TP.noptr (tp)
     return (string.match(tp, '^([_%w]*)%**'))
 end
 

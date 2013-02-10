@@ -1,3 +1,4 @@
+#line 0 "=== FILENAME ==="
 === DEFS ===
 
 #include <string.h>
@@ -20,6 +21,7 @@
 #endif
 
 #define PTR(tp,off)     ((tp)(off))
+#define PTR_glb(tp,off) ((tp)(CEU.mem + off))
 #ifdef CEU_ORGS
 #define PTR_org(tp,off) ((tp)(_trk_.org + off))
 #else
@@ -332,7 +334,7 @@ void ceu_lsts_go (tceu_nevt evt, char* src)
 #endif
 
 #ifdef CEU_WCLOCKS
-    s32 min;    // always init'ed (ignore gcc warning)
+    s32 min=0;    // TODO: always init'ed (ignore gcc warning)
     if (evt == IN__WCLOCK) {
         min = MIN(CEU.wclk_min, CEU.wclk_dt);
         CEU.wclk_min = CEU_WCLOCK_NONE;

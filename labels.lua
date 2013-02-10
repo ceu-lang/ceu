@@ -5,10 +5,15 @@ _LBLS = {
 }
 
 function new (lbl)
-    lbl.id = lbl[1] .. (lbl[2] and '' or '_'..CLS().id..'_'..#_LBLS.list)
-    lbl.id = string.gsub(lbl.id, '%*','_')
-    lbl.id = string.gsub(lbl.id, '%.','_')
-    lbl.id = string.gsub(lbl.id, '%$','_')
+    if lbl[2] then
+        lbl.id = lbl[1]
+    else
+        lbl.id = CLS().id..'_'..lbl[1]..'_'..#_LBLS.list
+    end
+    lbl.id = string.gsub(lbl.id, '%*','')
+    lbl.id = string.gsub(lbl.id, '%.','')
+    lbl.id = string.gsub(lbl.id, '%$','')
+    lbl.id = string.gsub(lbl.id, '%%','')
     _LBLS.list[lbl] = true
     lbl.n = #_LBLS.list                   -- starts from 0
     _LBLS.list[#_LBLS.list+1] = lbl
@@ -82,7 +87,7 @@ F = {
             for i=1, var.arr do
                 var.lbl_cnt[#var.lbl_cnt+1] = new{'Dcl_cnt'}
             end
-        elseif _ENV.clss[_TP.raw(var.tp)] or var.tp=='void*' then
+        elseif _ENV.clss[_TP.noptr(var.tp)] or var.tp=='void*' then
             var.lbl_cnt = new{'Dcl_cnt'}    -- used by `new´
         end
     end,
@@ -142,18 +147,14 @@ F = {
     end,
 
     AwaitT = function (me)
-        if me[1].tag == 'WCLOCKE' then
-            me.lbl = new{'Awake_'..me[1][1][1]}
-        else
-            me.lbl = new{'Awake_'..me[1][1]}
-        end
+        me.lbl = new{'Awake_DT'}
     end,
     AwaitExt = function (me)
         local e = unpack(me);
         me.lbl = new{'Awake_'..e.ext.id}
         local t = _AWAITS.t[e.ext]
         if t then
-            t[#t+1] = me.lbl
+            t[#t+1] = { CLS(), me.lbl }
         end
     end,
     AwaitInt = function (me)

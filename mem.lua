@@ -89,7 +89,7 @@ F = {
         end
     end,
     Dcl_cls = function (me)
-        DBG(me.id, me.mem.max, me.ns.trks_n)
+        DBG(string.format('%8s',me.id), me.mem.max, me.ns.trks)
     end,
 
     Block_pre = function (me)
@@ -133,7 +133,7 @@ F = {
 
             if var.isEvt and (not _AWAITS.t[var]) then
                 if len == 0 then
--- TODO!!!
+-- TODO!!
                     alloc(mem, 1)   -- dummy offset to avoid conflict
                 end
                 _MEM.evt_off = MAX(_MEM.evt_off, var.off)
@@ -346,7 +346,7 @@ F = {
         me.val = string.sub(me[1], 2)
     end,
     SIZEOF = function (me)
-        me.val = 'sizeof('.._TP.c(me[1])..')'
+        me.val = me.sval --'sizeof('.._TP.c(me[1])..')'
     end,
     STRING = function (me)
         me.val = me[1]

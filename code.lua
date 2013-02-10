@@ -28,7 +28,8 @@ end
 function LINE (me, line, spc)
     spc = spc or 4
     spc = string.rep(' ', spc)
-    me.code = me.code .. spc .. line .. '\n'
+    me.code = me.code .. '#line '..me.ln..'\n'..
+                spc .. line .. '\n'
 end
 
 function HALT (me, emt)
@@ -162,7 +163,9 @@ F = {
     end,
 
     Host = function (me)
-        _CODE.host = _CODE.host .. me[1] .. '\n'
+        _CODE.host = _CODE.host ..
+            '#line '..(me.ln+1)..'\n' ..
+            me[1] .. '\n'
     end,
 
     SetNew = function (me)
@@ -189,15 +192,16 @@ if (]]..exp.val..[[ != NULL) {
 ]])
     end,
 
-    Dcl_var = function (me)
-        local _,_,_,_,init = unpack(me)
-
-        if init then
-            CONC(me, init)      -- initialization for orgs
+    Dcl_org = function (me)
+        local dcl,init = unpack(me)
+        if init then      -- initialization for orgs
+            CONC(me, init)
         end
+        CONC(me, dcl)
+    end,
 
+    Dcl_var = function (me)
         local var = me.var
-
         -- spawn orgs
         if var.cls then
             ORG(me, false,
