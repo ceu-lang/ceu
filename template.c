@@ -74,7 +74,7 @@ typedef struct {
     union {
         struct {
 #ifdef CEU_ORGS
-            void* src;
+            void* src_org;
 #endif
             u8    on;
         };
@@ -85,7 +85,7 @@ typedef struct {
     tceu_nevt evt;      // TODO: save this byte
     tceu_nlbl lbl;
 #ifdef CEU_ORGS
-    void*     org;
+    void*     dst_org;
 #endif
 #ifdef CEU_PSES
     u8        pse;
@@ -279,7 +279,7 @@ void ceu_lsts_adj ()
     }
 }
 
-void ceu_lsts_ins (tceu_nevt evt, void* src, void* org,
+void ceu_lsts_ins (tceu_nevt evt, void* src_org, void* dst_org,
                    tceu_nlbl lbl, s32 togo)
 {
     tceu_lst* lst;
@@ -303,11 +303,11 @@ void ceu_lsts_ins (tceu_nevt evt, void* src, void* org,
 #endif
 
     lst = &CEU.lsts[CEU.lsts_n++];
-#ifdef CEU_ORGS
-    lst->org = org;
-#endif
     lst->evt = evt;
     lst->lbl = lbl;
+#ifdef CEU_ORGS
+    lst->dst_org = dst_org;
+#endif
 #ifdef CEU_PSES
     lst->pse = 0;
 #endif
@@ -320,7 +320,7 @@ void ceu_lsts_ins (tceu_nevt evt, void* src, void* org,
 #endif
     {
 #ifdef CEU_ORGS
-        lst->src = src;
+        lst->src_org = src_org;
 #endif
         lst->on  = togo;
     }
@@ -329,7 +329,7 @@ void ceu_lsts_ins (tceu_nevt evt, void* src, void* org,
 #define ceu_lsts_ins(a,b,c,d,e) ceu_lsts_ins(a,NULL,NULL,d,e)
 #endif
 
-void ceu_lsts_go (tceu_nevt evt, void* src)
+void ceu_lsts_go (tceu_nevt evt, void* org)
 {
     int i;
 #ifdef CEU_DETERMINISTIC
@@ -371,12 +371,12 @@ void ceu_lsts_go (tceu_nevt evt, void* src)
             if (! lst->on)
                 continue;
 #ifdef CEU_ORGS
-            if (lst->src != src)
+            if (lst->src_org != org)
                 continue;
 #endif
         }
 
-        ceu_trk_push(lst->org, lst->lbl);
+        ceu_trk_push(lst->dst_org, lst->lbl);
         CEU.lsts_n--;
 
 #ifdef CEU_DETERMINISTIC
@@ -409,9 +409,10 @@ void ceu_lsts_clr (int child, void* org, tceu_nlbl l1, tceu_nlbl l2) {
     for (i=CEU.lsts_n-1; i>=0; i--) {      // finalizers: last->first
         tceu_lst* lst = &CEU.lsts[i];
 #ifdef CEU_ORGS
-        if ( (lst->org==org && lst->lbl>=l1 && lst->lbl<=l2)
+        if ( (lst->dst_org==org && lst->lbl>=l1 && lst->lbl<=l2)
 #ifndef CEU_ORGS_GLOBAL
-        ||   (child && lst->org!=org && ceu_clr_child(lst->org,org,l1,l2))
+        ||   (child && lst->dst_org!=org &&
+                ceu_clr_child(lst->dst_org,org,l1,l2))
 #endif
         ) {
 #else
@@ -419,7 +420,7 @@ void ceu_lsts_clr (int child, void* org, tceu_nlbl l1, tceu_nlbl l2) {
 #endif
 #ifdef CEU_FINS
             if (CEU.lbl2fin[lst->lbl])
-                ceu_call(lst->org, lst->lbl);
+                ceu_call(lst->dst_org, lst->lbl);
 #endif
             CEU.lsts_n--;
 #ifdef CEU_DETERMINISTIC
@@ -446,9 +447,10 @@ void ceu_lsts_pse (int child, void* org, tceu_nlbl l1, tceu_nlbl l2, int inc) {
         if (!CEU.lbl2fin[lst->lbl])
 #endif
 #ifdef CEU_ORGS
-        if ( lst->org==org && lst->lbl>=l1 && lst->lbl<=l2
+        if ( lst->dst_org==org && lst->lbl>=l1 && lst->lbl<=l2
 #ifndef CEU_ORGS_GLOBAL
-        ||   child && lst->org!=org && ceu_clr_child(lst->org,org,l1,l2)
+        ||   child && lst->dst_org!=org &&
+                ceu_clr_child(lst->dst_org,org,l1,l2)
 #endif
         ) {
 #else
