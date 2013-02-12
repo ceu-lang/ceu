@@ -138,6 +138,7 @@ do
     tpl = assert(io.open'template.c'):read'*a'
 
     local sub = function (str, from, to)
+        assert(to, from)
         local i,e = string.find(str, from)
         return string.sub(str, 1, i-1) .. to .. string.sub(str, e+1)
     end
@@ -145,7 +146,6 @@ do
     tpl = sub(tpl, '=== CEU_NMEM ===',     _MAIN.mem.max)
     tpl = sub(tpl, '=== CEU_NTRACKS ===',  _AST.root.ns.trks)
     tpl = sub(tpl, '=== CEU_NLSTS ===',    _AST.root.ns.lsts)
-    tpl = sub(tpl, '=== CEU_NLBLS ===',    #_LBLS.list)
 
     if _PROPS.has_news then
         tpl = sub(tpl, '=== TCEU_NTRK ===', tps[_ENV.c.u32.len])
@@ -164,7 +164,6 @@ do
     end
 
     tpl = sub(tpl, '=== LABELS_ENUM ===', _LBLS.code_enum)
-    tpl = sub(tpl, '=== LABELS_FINS ===', _LBLS.code_fins)
 
     tpl = sub(tpl, '=== HOST ===',     _CODE.host)
     tpl = sub(tpl, '=== CLS_ACCS ===', _MEM.code_clss)
@@ -198,19 +197,24 @@ do
     end
 
     -- EVENTS
+    -- inputs: [evt_off+1...) (including _FIN,_WCLOCK,_ASYNC)
+    --          cannot overlap w/ internal events
     local str = ''
     local t = {}
+    --local ins  = 0
     local outs = 0
     for i, evt in ipairs(_ENV.exts) do
         if evt.pre == 'input' then
             str = str..'#define IN_'..evt.id..' '
                     ..(_MEM.evt_off+i)..'\n'
+            --ins = ins + 1
         else
             str = str..'#define OUT_'..evt.id..' '..outs..'\n'
             outs = outs + 1
         end
         assert(evt.pre=='input' or evt.pre=='output')
     end
+    --str = str..'#define IN_n  '..ins..'\n'
     str = str..'#define OUT_n '..outs..'\n'
 
     local exts = ''

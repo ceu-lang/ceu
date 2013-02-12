@@ -1,6 +1,6 @@
 _MEM = {
-    cls = {},       -- offsets inside a class
-    evt_off = 0,    -- max event offset in a class
+    cls = {},       -- offsets for fixed fields inside classes
+    evt_off = 0,    -- max event index among all classes
     code_clss = nil,
 }
 
@@ -137,9 +137,9 @@ F = {
                 var.val = '(*PTR_cur('.._TP.c(var.tp)..'*,'..var.off..'))'
             end
 
+            -- we use offsets for events because of interfaces
             if var.isEvt and (not _AWAITS.t[var]) then
                 if len == 0 then
--- TODO!!
                     alloc(mem, 1)   -- dummy offset to avoid conflict
                 end
                 _MEM.evt_off = MAX(_MEM.evt_off, var.off)

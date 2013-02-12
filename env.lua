@@ -150,8 +150,10 @@ function _ENV.getvar (id, blk)
 end
 
 F = {
-    Root = function (me)
-        _ENV.c.tceu_ncls.len = _TP.n2bytes(#_ENV.clss_cls)
+    Root_pre = function (me)
+        local ext = {id='_FIN', pre='input'}
+        _ENV.exts[#_ENV.exts+1] = ext
+        _ENV.exts[ext.id] = ext
 
         local ext = {id='_WCLOCK', pre='input'}
         _ENV.exts[#_ENV.exts+1] = ext
@@ -160,6 +162,10 @@ F = {
         local ext = {id='_ASYNC', pre='input'}
         _ENV.exts[#_ENV.exts+1] = ext
         _ENV.exts[ext.id] = ext
+    end,
+
+    Root = function (me)
+        _ENV.c.tceu_ncls.len = _TP.n2bytes(#_ENV.clss_cls)
 
         -- matches all ifc vs cls
         for _, ifc in ipairs(_ENV.clss_ifc) do
@@ -183,7 +189,7 @@ F = {
                 for _, n in ipairs(vars) do
                     local var = n.var
                     ASR(not var.arr, vars, 'invalid argument')
-                    n.new = newvar(vars, blk, false, var.tp, nil, var.id)
+                    n.new = newvar(vars, blk, 'var', var.tp, nil, var.id)
                 end
             end
         end
@@ -649,6 +655,7 @@ F = {
             local t = _TP.deref(tp) and _ENV.c.pointer or _ENV.c[tp]
             local i = ASR(t and t.len, me, 'undeclared type '..tp)
 
+-- TODO: probably wrong
             local r = _ENV.c.word.len - sz%_ENV.c.word.len
             if r<_ENV.c.word.len and i>r then
                 sz = sz + r     -- align if i breaks alignment

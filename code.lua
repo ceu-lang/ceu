@@ -88,7 +88,7 @@ function ORG (me, new, org0, cls, par_org, par_lbl, lbl_cnt)
     if new then
         LINE(me, [[
 if (org0) {
-    ceu_lsts_ins(0, org0, org0, ]]..cls.lbl_free.id..[[,0);
+    ceu_lsts_ins(IN__FIN, org0, org0, ]]..cls.lbl_free.id..[[,0);
 ]])
     end
     LINE(me, [[
@@ -242,7 +242,7 @@ if (]]..exp.val..[[ != NULL) {
 
         if me.fins then
             COMM(me, 'FINALIZE')
-            LINE(me, 'ceu_lsts_ins(0,_trk_.org,_trk_.org,'..
+            LINE(me, 'ceu_lsts_ins(IN__FIN,_trk_.org,_trk_.org,'..
                         me.lbl_fin.id..',0);')
             LINE(me, 'memset(PTR_cur(u8*,'..me.off_fins..'), 0, '..
                         #me.fins..');')
@@ -527,7 +527,8 @@ break;
                 LINE(me, 'ceu_trk_push('..org..','..lbl.id..');')
             end
         else
-            LINE(me, 'ceu_lsts_go('..(int.off or int.var.off)..','..org..');')
+            LINE(me, 'ceu_lsts_go('..(int.off or int.var.off)
+                        ..','..org..');')
         end
 
         HALT(me)

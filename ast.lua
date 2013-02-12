@@ -343,7 +343,7 @@ local C; C = {
         if id == 'Main' then
             blk = node('Block')(ln,
                     node('Stmts')(ln,
-                        node('Dcl_var')(ln, false, 'int', false, '$ret'),
+                        node('Dcl_var')(ln, 'var', 'int', false, '$ret'),
                         node('SetBlock')(ln,
                             node('Var')(ln,'$ret'),
                             blk)))

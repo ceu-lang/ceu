@@ -34,10 +34,6 @@
 #define CEU_NTRACKS    (MAX(1,=== CEU_NTRACKS ===))
 #define CEU_NLSTS      (MAX(1,=== CEU_NLSTS ===))
 
-#ifdef CEU_FINS
-#define CEU_NLBLS      (=== CEU_NLBLS ===)
-#endif
-
 #ifdef CEU_IFCS
 #define CEU_NCLS       (=== CEU_NCLS ===)
 #define CEU_NIFCS      (=== CEU_NIFCS ===)
@@ -63,12 +59,63 @@ typedef === TCEU_NCLS === tceu_ncls;    // max number of classes
 typedef === TCEU_NOFF === tceu_noff;    // max offset in an iface
 #endif
 
+// align all structs 1 byte
+// TODO: verify defaults for microcontrollers
+#pragma pack(push)
+#pragma pack(1)
+
 typedef struct {
 #ifdef CEU_ORGS
     void*     org;
 #endif
     tceu_nlbl lbl;
 } tceu_trk;
+
+/* tceu_lst_ types */
+/*
+#ifdef CEU_WCLOCKS
+typedef struct {
+    tceu_nevt evt;      // 1?
+    tceu_nlbl lbl;      // 1?
+#ifdef CEU_ORGS
+    void*     dst_org;  // 2
+#endif
+    s32       togo;     // 4
+#ifdef CEU_PSES
+    u8        pse;      // 1-
+#endif
+} tceu_lst_wclock;      // 8*
+#endif
+
+#ifdef CEU_EXTS
+typedef struct {
+    tceu_nevt evt;      // 1?
+    tceu_nlbl lbl;      // 1?
+#ifdef CEU_ORGS
+    void*     dst_org;  // 2
+#endif
+#ifdef CEU_PSES
+    u8        pse;      // 1-
+#endif
+} tceu_lst_ext;         // 4*
+#endif
+
+#ifdef CEU_INT
+typedef struct {
+    tceu_nevt evt;      // 1?
+    tceu_nlbl lbl;      // 1?
+#ifdef CEU_ORGS
+    void*     dst_org;  // 2
+    void*     src_org;  // 2
+#endif
+#endif
+    u8        on;       // 1
+#ifdef CEU_PSES
+    u8        pse;      // 1-
+#endif
+} tceu_lst_int;         // 7*
+#endif
+*/
 
 typedef struct {
     union {
@@ -106,10 +153,6 @@ typedef struct {
     int         wclk_late;
     s32         wclk_min;
     s32         wclk_dt;
-#endif
-
-#ifdef CEU_FINS
-    u8          lbl2fin[CEU_NLBLS];
 #endif
 
 #ifdef CEU_IFCS
@@ -151,9 +194,6 @@ tceu CEU = {
 #ifdef CEU_WCLOCKS
     0, CEU_WCLOCK_NONE, 0,
 #endif
-#ifdef CEU_FINS
-    { === LABELS_FINS === },
-#endif
 #ifdef CEU_IFCS
     { === IFCS === },
 #endif
@@ -169,6 +209,8 @@ tceu CEU = {
 #endif
     {}
 };
+
+#pragma pack(pop)
 
 === CLS_ACCS ===
 
@@ -419,7 +461,7 @@ void ceu_lsts_clr (int child, void* org, tceu_nlbl l1, tceu_nlbl l2) {
         if (lst->lbl>=l1 && lst->lbl<=l2) {
 #endif
 #ifdef CEU_FINS
-            if (CEU.lbl2fin[lst->lbl])
+            if (lst->evt == IN__FIN)
                 ceu_call(lst->dst_org, lst->lbl);
 #endif
             CEU.lsts_n--;
@@ -444,7 +486,8 @@ void ceu_lsts_pse (int child, void* org, tceu_nlbl l1, tceu_nlbl l2, int inc) {
     for (i=0 ; i<CEU.lsts_n ; i++) {
         tceu_lst* lst = &CEU.lsts[i];
 #ifdef CEU_FINS
-        if (!CEU.lbl2fin[lst->lbl])
+        if (lst->evt == IN__FIN)
+            continue;
 #endif
 #ifdef CEU_ORGS
         if ( lst->dst_org==org && lst->lbl>=l1 && lst->lbl<=l2
@@ -453,9 +496,9 @@ void ceu_lsts_pse (int child, void* org, tceu_nlbl l1, tceu_nlbl l2, int inc) {
                 ceu_clr_child(lst->dst_org,org,l1,l2)
 #endif
         ) {
-#else
+#else // CEU_ORGS
         if (lst->lbl>=l1 && lst->lbl<=l2) {
-#endif
+#endif // CEU_ORGS
             lst->pse += inc;
 #ifdef CEU_WCLOCKS
             if (lst->pse==0 && lst->evt==IN__WCLOCK)
