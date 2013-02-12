@@ -63,10 +63,16 @@ end
 
 function _TP.c (tp)
     -- _tp->tp
-    if _ENV.clss_ifc[_TP.noptr(tp)] then
-        tp = 'IFC_'..tp..'*'
-    elseif _ENV.clss_cls[_TP.noptr(tp)] then
-        tp = 'CLS_'..tp..'*'
+    local cls = _ENV.clss[_TP.noptr(tp)]
+    if cls then
+        if cls.is_ifc then
+            tp = 'IFC_'..tp
+        else
+            tp = 'CLS_'..tp
+        end
+        if not _TP.deref(tp) then
+            tp = tp..'*'
+        end
     end
     return (string.gsub(tp,'^_', ''))
 end
@@ -80,9 +86,9 @@ function _TP.deref (tp, c)
             or (c and _TP.ext(tp))
 end
 
-function _TP.ext (tp)
-    return (string.sub(tp,1,1) == '_') and              -- TODO: remove '*'
-            (not string.match(tp, '(.-)%*$')) and tp
+function _TP.ext (tp, loc)
+    return (tp=='_' and '_') or
+            (loc and (not _TP.deref(tp)) and (string.sub(tp,1,1) == '_') and tp)
 end
 
 function _TP.contains (tp1, tp2, c)

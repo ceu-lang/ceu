@@ -71,11 +71,6 @@ typedef struct {
 } tceu_trk;
 
 typedef struct {
-    tceu_nevt evt;      // TODO: save this byte
-    tceu_nlbl lbl;
-#ifdef CEU_ORGS
-    void*     org;
-#endif
     union {
         struct {
 #ifdef CEU_ORGS
@@ -87,6 +82,11 @@ typedef struct {
         s32   togo;
 #endif
     };
+    tceu_nevt evt;      // TODO: save this byte
+    tceu_nlbl lbl;
+#ifdef CEU_ORGS
+    void*     org;
+#endif
 #ifdef CEU_PSES
     u8        pse;
 #endif
@@ -282,6 +282,8 @@ void ceu_lsts_adj ()
 void ceu_lsts_ins (tceu_nevt evt, void* src, void* org,
                    tceu_nlbl lbl, s32 togo)
 {
+    tceu_lst* lst;
+
 #ifdef CEU_NEWS
     if (CEU.lsts_n == CEU.lsts_nmax) {
         u32 nmax;
@@ -300,7 +302,7 @@ void ceu_lsts_ins (tceu_nevt evt, void* src, void* org,
     assert(CEU.lsts_n < CEU.lsts_nmax);
 #endif
 
-    tceu_lst* lst = &CEU.lsts[CEU.lsts_n++];
+    lst = &CEU.lsts[CEU.lsts_n++];
 #ifdef CEU_ORGS
     lst->org = org;
 #endif
@@ -538,7 +540,7 @@ void ceu_go_init ()
 }
 
 #ifdef CEU_EXTS
-void ceu_go_event (tceu_nevt id, void* data)
+void ceu_go_event (int id, void* data)
 {
     ceu_lsts_adj();
     CEU.ext_data = data;
@@ -594,6 +596,8 @@ void ceu_call_f (void* org, tceu_nlbl lbl)
 _SWITCH_:
 #ifdef CEU_DEBUG
     CEU.trk = _trk_;
+#endif
+
 /*
 #ifdef CEU_ORGS
 fprintf(stderr, "TRK: o.%p / l.%d\n", _trk_.org, _trk_.lbl);
@@ -602,7 +606,6 @@ fprintf(stderr, "TRK:%d l.%d\n", CEU.lsts_n, _trk_.lbl);
 #endif
 */
 
-#endif
     switch (_trk_.lbl) {
         === CODE ===
     }

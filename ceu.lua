@@ -103,7 +103,7 @@ end
 _STR = inp:read'*a'
 
 if _OPTS.m4 or _OPTS.m4_args then
-    local args = _OPTS.m4_args and string.sub(_OPTS.m4_args, 2, -2) or ''   -- remove `"´
+    local args = _OPTS.m4_args or ''
     local m4_file = (_OPTS.input=='-' and '_ceu_tmp.ceu_m4') or _OPTS.input..'_m4'
     local m4 = assert(io.popen('m4 '..args..' - > '..m4_file, 'w'))
     m4:write(_STR)
@@ -286,7 +286,13 @@ do
 
     if _OPTS.defs_file then
         local f = assert(io.open(_OPTS.defs_file,'w'))
-        f:write(str)
+        local h = [[
+void ceu_go_init ();
+void ceu_go_event (int id, void* data);
+void ceu_go_async ();
+void ceu_go_wclock (s32 dt);
+]]
+        f:write(h..str)
         f:close()
         tpl = sub(tpl, '=== DEFS ===',
                        '#include "'.. _OPTS.defs_file ..'"')

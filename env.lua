@@ -400,7 +400,7 @@ F = {
                 end
                 req = req and blk2
             else
-                -- int* pa = _f();   -- `pa´ termination must consider `_f´
+                -- int* pa = _fopen();  -- `pa´ termination must consider ret
                 req = (e2.tag=='Op2_call')-- TODO: and e2.c.mod~='pure')
                 req = req and blk1
             end
@@ -593,7 +593,7 @@ F = {
         if cls then
             me.org = e1
 
-            if _TP.ext(id) then
+            if _TP.ext(id,true) then
                 local id = ((cls.is_ifc and 'IFC_') or 'CLS_')..cls.id..'_'..id
                 me.c = _ENV.c[id]
                 me.tp   = '_'
@@ -607,7 +607,7 @@ F = {
                 me.lval = true
             end
         else
-            ASR(_TP.ext(e1.tp), me, 'not a struct')
+            ASR(_TP.ext(e1.tp,true), me, 'not a struct')
             me.tp   = '_'
             me.lval = true
         end
@@ -662,7 +662,7 @@ F = {
     end,
 
     STRING = function (me)
-        me.tp   = 'char*'
+        me.tp   = '_char*'
         me.lval = false
         me.fst  = false
     end,
