@@ -196,10 +196,18 @@ local C; C = {
                                     node('Loop')(ln,blk)))
         end
 
-        local j_name = '$j'..tostring(blk)
-        local j = function() return node('Var')(ln, j_name) end
-        local dcl_j = node('Dcl_var')(ln, 'var', 'int', false, j_name)
-        local set_j = node('SetExp')(ln, j(), _j)
+        local dcl_j, set_j, j
+
+        if _j.tag == 'CONST' then
+            j = function () return _j end
+            dcl_j = node('Nothingt')(ln)
+            set_j = node('Nothingt')(ln)
+        else
+            local j_name = '$j'..tostring(blk)
+            j = function() return node('Var')(ln, j_name) end
+            dcl_j = node('Dcl_var')(ln, 'var', 'int', false, j_name)
+            set_j = node('SetExp')(ln, j(), _j)
+        end
 
         local cmp = node('Op2_>=')(ln, '>=', i(), j())
 

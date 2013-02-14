@@ -129,7 +129,7 @@ F = {
             end
 
             var.off = alloc(mem, len)
---DBG(var.id, var.off, len)
+DBG('', string.format('%8s',var.id), len)
 
             if var.cls or var.arr then
                 var.val = 'PTR_cur('.._TP.c(var.tp)..','..var.off..')'
@@ -218,7 +218,7 @@ F = {
                 val = e2.val
             else
                 len = 'sizeof('.._TP.c(e1.ext.tp)..')'
-                val = 'ceu_ext_f('..e2.val..')'
+                val = 'ceu_ext_f(&_ceu_int_,'..e2.val..')'
             end
         else
             len = 0
@@ -237,9 +237,9 @@ F = {
     AwaitExt = function (me)
         local e1 = unpack(me)
         if _TP.deref(e1.ext.tp) then
-            me.val = '(('.._TP.c(e1.ext.tp)..')CEU.ext_data)'
+            me.val = '(('.._TP.c(e1.ext.tp)..')_ceu_data_)'
         else
-            me.val = '*((int*)CEU.ext_data)'
+            me.val = '*((int*)_ceu_data_)'
         end
     end,
     AwaitT = function (me)

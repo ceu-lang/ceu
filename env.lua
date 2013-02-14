@@ -407,7 +407,7 @@ F = {
                 req = req and blk2
             else
                 -- int* pa = _fopen();  -- `pa´ termination must consider ret
-                req = (e2.tag=='Op2_call')-- TODO: and e2.c.mod~='pure')
+                req = (e2.tag=='Op2_call' and e2.c.mod~='pure')
                 req = req and blk1
             end
         end
@@ -657,14 +657,14 @@ F = {
 
 -- TODO: probably wrong
             local r = _ENV.c.word.len - sz%_ENV.c.word.len
-            if r<_ENV.c.word.len and i>r then
-                sz = sz + r     -- align if i breaks alignment
-            end
+            --if r<_ENV.c.word.len and i>r then
+                --sz = sz + r     -- align if i breaks alignment
+            --end
             sz = sz + i
         end
-        if #me > 1 then         -- align structs
-            sz = _TP.align(sz)
-        end
+        --if #me > 1 then         -- align structs
+            --sz = _TP.align(sz)
+        --end
         me.sval = sz
     end,
 

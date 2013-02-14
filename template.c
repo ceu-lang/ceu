@@ -44,7 +44,6 @@
 // Macros that can be defined:
 // ceu_out_pending() (1)
 // ceu_out_wclock(us)
-// ceu_out_async(has)
 // ceu_out_event(id, len, data)
 // ceu_out_end(v)
 
@@ -65,10 +64,10 @@ typedef === TCEU_NOFF === tceu_noff;    // max offset in an iface
 #pragma pack(1)
 
 typedef struct {
+    tceu_nlbl lbl;
 #ifdef CEU_ORGS
     void*     org;
 #endif
-    tceu_nlbl lbl;
 } tceu_trk;
 
 /* tceu_lst_ types */
@@ -144,15 +143,9 @@ enum {
 };
 
 typedef struct {
-#ifdef CEU_EXTS
-    void*       ext_data;
-    int         ext_int;
-#endif
-
 #ifdef CEU_WCLOCKS
     int         wclk_late;
     s32         wclk_min;
-    s32         wclk_dt;
 #endif
 
 #ifdef CEU_IFCS
@@ -188,11 +181,8 @@ typedef struct {
 // TODO: fields that need no initialization?
 
 tceu CEU = {
-#ifdef CEU_EXTS
-    0, 0,
-#endif
 #ifdef CEU_WCLOCKS
-    0, CEU_WCLOCK_NONE, 0,
+    0, CEU_WCLOCK_NONE,
 #endif
 #ifdef CEU_IFCS
     { === IFCS === },
@@ -218,11 +208,11 @@ tceu CEU = {
 
 /**********************************************************************/
 
-void ceu_call_f (void* org, tceu_nlbl lbl);
+void ceu_call_f (void* data, tceu_nlbl lbl, void* org);
 #ifdef CEU_ORGS
-#define ceu_call(a,b) ceu_call_f(a,b)
+#define ceu_call(a,b,c) ceu_call_f(a,b,c)
 #else
-#define ceu_call(a,b) ceu_call_f(NULL,b)
+#define ceu_call(a,b,c) ceu_call_f(a,b,NULL)
 #endif
 
 void ceu_wclock_min (s32 us, int out);
@@ -230,13 +220,13 @@ void ceu_wclock_min (s32 us, int out);
 /**********************************************************************/
 
 //int xxx = 0;
-void ceu_trk_push (void* org, tceu_nlbl lbl)
+void ceu_trk_push (tceu_nlbl lbl, void* org)
 {
     tceu_trk trk = {
+        lbl,
 #ifdef CEU_ORGS
-        org,
+        org
 #endif
-        lbl
     };
 
 #ifdef CEU_NEWS
@@ -262,7 +252,7 @@ void ceu_trk_push (void* org, tceu_nlbl lbl)
         //xxx = CEU.trks_n;
 }
 #ifndef CEU_ORGS
-#define ceu_trk_push(a,b) ceu_trk_push(NULL,b)
+#define ceu_trk_push(a,b) ceu_trk_push(a,NULL)
 #endif
 
 #ifdef CEU_ORGS
@@ -371,8 +361,9 @@ void ceu_lsts_ins (tceu_nevt evt, void* src_org, void* dst_org,
 #define ceu_lsts_ins(a,b,c,d,e) ceu_lsts_ins(a,NULL,NULL,d,e)
 #endif
 
-void ceu_lsts_go (tceu_nevt evt, void* org)
+int ceu_lsts_go (tceu_nevt evt, s32 us, void* org)
 {
+    int ret = 0;
     int i;
 #ifdef CEU_DETERMINISTIC
     int j;
@@ -381,7 +372,7 @@ void ceu_lsts_go (tceu_nevt evt, void* org)
 #ifdef CEU_WCLOCKS
     s32 min=0;    // TODO: always init'ed (ignore gcc warning)
     if (evt == IN__WCLOCK) {
-        min = MIN(CEU.wclk_min, CEU.wclk_dt);
+        min = MIN(CEU.wclk_min, us);
         CEU.wclk_min = CEU_WCLOCK_NONE;
     }
 #endif
@@ -402,7 +393,7 @@ void ceu_lsts_go (tceu_nevt evt, void* org)
 #ifdef CEU_WCLOCKS
         if (evt == IN__WCLOCK) {
             if (lst->togo != min) {
-                lst->togo -= CEU.wclk_dt;
+                lst->togo -= us;
                 ceu_wclock_min(lst->togo, 0);
                 continue;
             }
@@ -418,7 +409,8 @@ void ceu_lsts_go (tceu_nevt evt, void* org)
 #endif
         }
 
-        ceu_trk_push(lst->dst_org, lst->lbl);
+        ret++;
+        ceu_trk_push(lst->lbl, lst->dst_org);
         CEU.lsts_n--;
 
 #ifdef CEU_DETERMINISTIC
@@ -428,19 +420,11 @@ void ceu_lsts_go (tceu_nevt evt, void* org)
         if (i < CEU.lsts_n)
             *lst = CEU.lsts[CEU.lsts_n];
 #endif
-
-#ifdef CEU_ASYNCS
-#ifdef ceu_out_async
-        if (evt == IN__ASYNC) {
-            ceu_out_async(1);
-            //return;           // TODO: should take 1st not last!
-        }
-#endif
-#endif
     }
+    return ret;
 }
 #ifndef CEU_ORGS
-#define ceu_lsts_go(a,b) ceu_lsts_go(a,NULL)
+#define ceu_lsts_go(a,b,c) ceu_lsts_go(a,b,NULL)
 #endif
 
 void ceu_lsts_clr (int child, void* org, tceu_nlbl l1, tceu_nlbl l2) {
@@ -462,7 +446,7 @@ void ceu_lsts_clr (int child, void* org, tceu_nlbl l1, tceu_nlbl l2) {
 #endif
 #ifdef CEU_FINS
             if (lst->evt == IN__FIN)
-                ceu_call(lst->dst_org, lst->lbl);
+                ceu_call(NULL, lst->lbl, lst->dst_org);
 #endif
             CEU.lsts_n--;
 #ifdef CEU_DETERMINISTIC
@@ -514,14 +498,6 @@ void ceu_lsts_pse (int child, void* org, tceu_nlbl l1, tceu_nlbl l2, int inc) {
 
 /**********************************************************************/
 
-#ifdef CEU_EXTS
-// returns a pointer to the received value
-int* ceu_ext_f (int v) {
-    CEU.ext_int = v;
-    return &CEU.ext_int;
-}
-#endif
-
 #ifdef CEU_WCLOCKS
 
 void ceu_wclock_min (s32 us, int out) {
@@ -567,9 +543,9 @@ void ceu_segfault (int sig_num) {
 }
 #endif
 
-void ceu_go ();     // TODO: place here?
+void ceu_go (void* data);     // TODO: place here?
 
-void ceu_go_init ()
+int ceu_go_init ()
 {
 #ifdef CEU_DEBUG
     signal(SIGSEGV, ceu_segfault);
@@ -580,35 +556,40 @@ void ceu_go_init ()
     CEU.lsts = malloc(CEU.lsts_nmax*sizeof(tceu_lst));
     assert(CEU.trks!=NULL && CEU.lsts!=NULL);
 #endif
-    ceu_trk_push(CEU.mem, Class_Main);
-    ceu_go();
+    ceu_trk_push(Class_Main, CEU.mem);
+    ceu_go(NULL);
+    return 1;
 }
 
 #ifdef CEU_EXTS
-void ceu_go_event (int id, void* data)
+int ceu_go_event (int id, void* data)
 {
+    int ret = 0;
     ceu_lsts_adj();
-    CEU.ext_data = data;
     switch (id) {
         === EVENTS ===
         default:
-            ceu_lsts_go(id, 0);
+            ret = ceu_lsts_go(id, 0, 0);
     }
-    ceu_go();
+    ceu_go(data);
+    return ret;
 }
 #endif
 
 #ifdef CEU_ASYNCS
-void ceu_go_async ()
+int ceu_go_async ()
 {
+    int ret;
     ceu_lsts_adj();
-    ceu_lsts_go(IN__ASYNC, 0);
-    ceu_go();
+    ret = ceu_lsts_go(IN__ASYNC, 0, 0);
+    ceu_go(NULL);
+    return ret;
 }
 #endif
 
-void ceu_go_wclock (s32 dt)
+int ceu_go_wclock (s32 dt)
 {
+    int ret = 0;
     ceu_lsts_adj();
 
 #ifdef CEU_WCLOCKS
@@ -618,9 +599,8 @@ void ceu_go_wclock (s32 dt)
     if (CEU.wclk_min <= dt)
         CEU.wclk_late = dt - CEU.wclk_min;   // how much late the wclock is
 
-    CEU.wclk_dt = dt;
-    ceu_lsts_go(IN__WCLOCK, 0);
-    ceu_go();
+    ret = ceu_lsts_go(IN__WCLOCK, dt, 0);
+    ceu_go(NULL);
 
 #ifdef ceu_out_wclock
     ceu_out_wclock(CEU.wclk_min);
@@ -628,14 +608,26 @@ void ceu_go_wclock (s32 dt)
     CEU.wclk_late = 0;
 
 #endif   // CEU_WCLOCKS
+    return ret;
 }
 
-void ceu_call_f (void* org, tceu_nlbl lbl)
+#ifdef CEU_EXTS
+// returns a pointer to the received value
+int* ceu_ext_f (int* data, int v) {
+    *data = v;
+    return data;
+}
+#endif
+
+void ceu_call_f (void* _ceu_data_, tceu_nlbl _ceu_lbl_, void* _ceu_org_)
 {
 #ifdef CEU_ORGS
-    tceu_trk _trk_ = {org,lbl};
+    tceu_trk _trk_ = {_ceu_lbl_, _ceu_org_};
 #else
-    tceu_trk _trk_ = {lbl};
+    tceu_trk _trk_ = {_ceu_lbl_};
+#endif
+#ifdef CEU_EXTS
+    int _ceu_int_;
 #endif
 
 _SWITCH_:
@@ -656,12 +648,13 @@ fprintf(stderr, "TRK:%d l.%d\n", CEU.lsts_n, _trk_.lbl);
     }
 }
 
-void ceu_go ()
+void ceu_go (void* data)
 {
     while (CEU.trks_n > 0) {
         CEU.trks_n--;
-        ceu_call(CEU.trks[CEU.trks_n].org,
-                 CEU.trks[CEU.trks_n].lbl);
+        ceu_call(data,
+                 CEU.trks[CEU.trks_n].lbl,
+                 CEU.trks[CEU.trks_n].org);
     }
 }
 

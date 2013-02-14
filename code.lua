@@ -103,7 +103,7 @@ if (org0) {
 ]])
     end
     LINE(me, [[
-    ceu_trk_push(_trk_.org, ]]..(lbl_cnt or par_lbl).id..[[);
+    ceu_trk_push(]]..(lbl_cnt or par_lbl).id..[[,_trk_.org);
 ]])
     SWITCH(me, cls.lbl, 'org0')
     if new then
@@ -330,7 +330,7 @@ if (]]..exp.val..[[ != NULL) {
             if i == 1 then
                 SWITCH(me, me.lbls_in[i])
             else
-                LINE(me, 'ceu_trk_push(_trk_.org,'..me.lbls_in[i].id..');')
+                LINE(me, 'ceu_trk_push('..me.lbls_in[i].id..', _trk_.org);')
             end
         end
     end,
@@ -479,7 +479,7 @@ if (ceu_out_pending()) {
                         ..', (void*)'..e2.val..');')
             else
                 LINE(me, 'ceu_go_event(IN_'..ext.id
-                        ..', (void*)ceu_ext_f('..e2.val..'));')
+                        ..', (void*)ceu_ext_f(&_ceu_int_,'..e2.val..'));')
             end
 
         else
@@ -517,18 +517,18 @@ break;
 
         local org = (int.org and int.org.val) or '_trk_.org'
 
-        LINE(me, 'ceu_trk_push(_trk_.org,'..me.lbl_cnt.id..');')
+        LINE(me, 'ceu_trk_push('..me.lbl_cnt.id..', _trk_.org);')
 
         local t = _AWAITS.t[int.var]
         if t then
             -- last listeners are stacked first
             for i=#t, 1, -1 do
                 local lbl = t[i]
-                LINE(me, 'ceu_trk_push('..org..','..lbl.id..');')
+                LINE(me, 'ceu_trk_push('..lbl.id..','..org..');')
             end
         else
             LINE(me, 'ceu_lsts_go('..(int.off or int.var.off)
-                        ..','..org..');')
+                        ..',0,'..org..');')
         end
 
         HALT(me)
