@@ -594,7 +594,7 @@ int ceu_go_wclock (s32 dt)
 
 #ifdef CEU_WCLOCKS
     if (CEU.wclk_min == CEU_WCLOCK_NONE)
-        return;
+        return 0;
 
     if (CEU.wclk_min <= dt)
         CEU.wclk_late = dt - CEU.wclk_min;   // how much late the wclock is

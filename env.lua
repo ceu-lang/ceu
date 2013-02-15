@@ -494,10 +494,13 @@ F = {
             end
             for _, exp in ipairs(exps) do
                 -- int* pa; _f(pa); -- `pa´ termination must consider `_f´
-                local r = exp.fst and (_TP.deref(exp.tp) or
-                                   _ENV.clss[_TP.noptr(exp.tp)])
+                local r = exp.fst and (
+                             _TP.deref(exp.tp)
+                          or (_TP.ext(exp.tp) and (not exp.c or
+                                                   exp.c.mod~='constant'))
+                          or _ENV.clss[_TP.noptr(exp.tp)])
                 r = r and ((exp.fst=='_' and _AST.root) or exp.fst.blk)
-                ASR( (not r) or (not req) or (r==req),
+                WRN( (not r) or (not req) or (r==req),
                         me, 'invalid call (multiple scopes)')
                 req = req or r
             end
@@ -635,6 +638,7 @@ F = {
         me.tp   = '_'
         me.lval = '_'
         me.fst  = '_'
+        me.c    = c
     end,
 
     WCLOCKK = function (me)

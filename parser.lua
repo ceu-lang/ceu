@@ -97,6 +97,7 @@ KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'C'
      + 'await/0'  + 'class'    + 'global'   + 'interface'
      + 'free'     + 'new'      + 'this'
      + 'nothing'
+     + 'continue'
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
@@ -139,8 +140,8 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
              + V'Finalize'
              + V'Dcl_org'
 
-    , _LstStmt  = V'_Return' + V'Break' + V'AwaitN'
-    , _LstStmtB = V'ParEver'
+    , _LstStmt  = V'_Return' + V'Break' + V'_Continue' + V'AwaitN'
+    , _LstStmtB = V'ParEver' + V'_Continue'
 
     , _SetBlock = ( V'_Do'     + V'Async' +
                     V'ParEver' + V'If'    + V'Loop' )
@@ -186,13 +187,14 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
                     V'Block')^0 *
                 (K'else' *
                     V'Block' + Cc(false)) *
-                EK'end'
+                EK'end'-- - V'_Continue'
 
     , Loop    = K'loop' *
                     (V'ID_var'* (EK','*EV'_Exp' + Cc(false)) +
                         Cc(false)*Cc(false)) *
                 V'_Do'
-    , Break   = K'break'
+    , Break    = K'break'
+    , _Continue = K'continue'
 
     , _Exp    = V'_1'
     , _1      = V'_2'  * (CK'or'  * V'_2')^0

@@ -175,10 +175,13 @@ local C; C = {
         return _else
     end,
 
+    _Continue = node('_Continue'),
     Break = node('Break'),
     Loop  = function (ln, _i, _j, blk)
         if not _i then
-            return node('Loop')(ln, blk)
+            local n = node('Loop')(ln, blk)
+            n.blk = blk     -- continue
+            return n
         end
 
         local i = function() return node('Var')(ln, _i) end
@@ -191,9 +194,10 @@ local C; C = {
         nxt_i.read_only = true
 
         if not _j then
+            local n = node('Loop')(ln,blk)
+            n.blk = blk     -- continue
             return node('Block')(ln,
-                    node('Stmts')(ln, dcl_i, set_i,
-                                    node('Loop')(ln,blk)))
+                    node('Stmts')(ln, dcl_i, set_i, n))
         end
 
         local dcl_j, set_j, j
@@ -212,9 +216,13 @@ local C; C = {
         local cmp = node('Op2_>=')(ln, '>=', i(), j())
 
         local loop = node('Loop')(ln,
-            node('If')(ln, cmp,
-                node('Break')(ln),
-                node('Stmts')(ln, blk, nxt_i)))
+                        node('Stmts')(ln,
+                            node('If')(ln, cmp,
+                                node('Break')(ln),
+                                false),
+                            blk,
+                            nxt_i))
+        loop.blk = blk      -- continue
 
         return node('Block')(ln,
                 node('Stmts')(ln,
@@ -461,6 +469,37 @@ F = {
     SetAwait = function (me)
         local _, awt = unpack(me)
         awt.ret = awt.ret or awt
+    end,
+
+    _Continue = function (me)
+        local _if  = _AST.iter('If')()
+        local loop = _AST.iter('Loop')()
+        ASR(_if and loop,
+            me, 'invalid `continue´')
+
+        loop.continue = _if
+        ASR( _if[3]==false             and   -- no else
+            me.depth  == _if.depth+3   and   -- If->Block->Stmts->Continue
+             _if.depth == loop.blk.depth+2 , -- Block->Stmts->If
+            me, 'invalid `continue´')
+        return node('Nothing')(me.ln)
+    end,
+    Loop = function (me)
+        if not me.continue then
+            return
+        end
+
+        local stmts = me.blk[1]
+        for i, n in ipairs(stmts) do
+            if n == me.continue then
+                local _else = node('Stmts')(n.ln)
+                n[3] = _else
+                for j=i+1, #stmts do
+                    _else[#_else+1] = stmts[j]
+                    stmts[j] = nil
+                end
+            end
+        end
     end,
 }
 
