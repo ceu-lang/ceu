@@ -22,7 +22,7 @@ function ATTR (me, n1, n2)
 end
 
 function CASE (me, lbl)
-    LINE(me, 'case '..lbl.id..':', 0)
+    LINE(me, 'case '..lbl.id..':;', 0)
 end
 
 function LINE (me, line, spc)
@@ -34,17 +34,17 @@ function LINE (me, line, spc)
 end
 
 function HALT (me, emt)
-    LINE(me, 'break;')
+    LINE(me, 'return;')
 end
 
 function SWITCH (me, lbl, org)
     if org then
         LINE(me, [[
-_trk_.org = ]]..org..[[;
+_ceu_org_ = ]]..org..[[;
 ]])
     end
     LINE(me, [[
-_trk_.lbl = ]]..lbl.id..[[;
+_ceu_lbl_ = ]]..lbl.id..[[;
 goto _SWITCH_;
 ]])
 end
@@ -70,12 +70,12 @@ function CLEAR (me)
 
     -- remove pending tracks in parallel
     if fins or me.needs_clr then    -- first remove tracks to kill
-        LINE(me, 'ceu_trk_clr('..orgs_news..', _trk_.org, '
+        LINE(me, 'ceu_trk_clr('..orgs_news..', _ceu_org_, '
                     ..me.lbls[1]..','..me.lbls[2]..');')
     end
 
     if fins or (me.needs_clr and me.ns.lsts>0) then
-        LINE(me, 'ceu_lsts_clr('..orgs_news..', _trk_.org, '
+        LINE(me, 'ceu_lsts_clr('..orgs_news..', _ceu_org_, '
                     ..me.lbls[1]..','..me.lbls[2]..');')
     end
 end
@@ -83,34 +83,27 @@ end
 function ORG (me, new, org0, cls, par_org, par_lbl, lbl_cnt)
     COMM(me, 'ORG')
     LINE(me, [[
-{ void* org0 = ]]..org0..[[;
+{
+    void* _ceu_org_new_ = ]]..org0..[[;
+    ceu_trk_push(]]..(lbl_cnt or par_lbl).id..[[,_ceu_org_);
 ]])
     if new then
         LINE(me, [[
-if (org0) {
-    ceu_lsts_ins(IN__FIN, org0, org0, ]]..cls.lbl_free.id..[[,0);
+    if (_ceu_org_new_ == NULL)
+        return;
+    ceu_lsts_ins(IN__FIN, _ceu_org_new_, _ceu_org_new_, ]] ..
+        cls.lbl_free.id..[[,0);
 ]])
     end
-    LINE(me, [[
-#ifdef CEU_IFCS
-    *((tceu_ncls*)(org0+]]..(_MEM.cls.idx_cls or '')..[[)) = ]]..cls.n..[[;
-#endif
-]])
     if not _ENV.orgs_global then
         LINE(me, [[
-    *PTR_org(void**,     org0, ]].._MEM.cls.idx_org..[[) = ]]..par_org..[[;
-    *PTR_org(tceu_nlbl*, org0, ]].._MEM.cls.idx_lbl..[[) = ]]..par_lbl.id..[[;
+    *PTR_org(void**,     _ceu_org_new_, ]].._MEM.cls.idx_org ..
+        [[) = ]]..par_org..[[;
+    *PTR_org(tceu_nlbl*, _ceu_org_new_, ]].._MEM.cls.idx_lbl ..
+        [[) = ]]..par_lbl.id..[[;
 ]])
     end
-    LINE(me, [[
-    ceu_trk_push(]]..(lbl_cnt or par_lbl).id..[[,_trk_.org);
-]])
-    SWITCH(me, cls.lbl, 'org0')
-    if new then
-        LINE(me, [[
-}
-]])
-    end
+    SWITCH(me, cls.lbl, '_ceu_org_new_')
     LINE(me, [[
 }
 ]])
@@ -129,14 +122,18 @@ F = {
     end,
 
     Dcl_cls = function (me)
+        if me.is_ifc then
+            CONC_ALL(me)
+            return
+        end
+
         CASE(me, me.lbl)
-        if me == _MAIN then
-            LINE(me, [[
+        LINE(me, [[
 #ifdef CEU_IFCS
-*((tceu_ncls*)(CEU.mem+]]..(_MEM.cls.idx_cls or '')..[[)) = ]].._MAIN.n..[[;
+*PTR_org(tceu_ncls*, _ceu_org_, ]]..(_MEM.cls.idx_cls or '')..[[) = ]]..me.n..[[;
 #endif
 ]])
-        end
+
         CONC_ALL(me)
 
         if me == _MAIN then
@@ -158,7 +155,7 @@ F = {
 
         if me.has_news then
             CASE(me, me.lbl_free)
-            LINE(me, 'free(_trk_.org);')
+            LINE(me, 'free(_ceu_org_);')
             HALT(me)
         end
     end,
@@ -174,7 +171,7 @@ F = {
         ORG(me, true,
                 exp.val..' = malloc('..me.cls.mem.max..')',
                 me.cls,
-                (exp.org and exp.org.val) or '_trk_.org',
+                (exp.org and exp.org.val) or '_ceu_org_',
                 (exp.fst or exp.var).lbl_cnt,
                 me.lbl_cnt)
     end,
@@ -208,7 +205,7 @@ if (]]..exp.val..[[ != NULL) {
             ORG(me, false,
                     var.val,
                     var.cls,
-                    '_trk_.org',
+                    '_ceu_org_',
                     var.lbl_cnt)
         elseif var.arr then
             local cls = _ENV.clss[_TP.deref(var.tp)]
@@ -218,7 +215,7 @@ if (]]..exp.val..[[ != NULL) {
                             'PTR_org(void*,'..var.val..','..
                                             (i-1)..'*'..cls.mem.max..')',
                             cls,
-                            '_trk_.org',
+                            '_ceu_org_',
                             var.lbl_cnt[i])
                 end
             end
@@ -242,7 +239,7 @@ if (]]..exp.val..[[ != NULL) {
 
         if me.fins then
             COMM(me, 'FINALIZE')
-            LINE(me, 'ceu_lsts_ins(IN__FIN,_trk_.org,_trk_.org,'..
+            LINE(me, 'ceu_lsts_ins(IN__FIN,_ceu_org_,_ceu_org_,'..
                         me.lbl_fin.id..',0);')
             LINE(me, 'memset(PTR_cur(u8*,'..me.off_fins..'), 0, '..
                         #me.fins..');')
@@ -293,7 +290,7 @@ if (]]..exp.val..[[ != NULL) {
         COMM(me, 'SET: '..tostring(e1[1]))    -- Var or C
         if op == ':=' then
             LINE(me, '*PTR_org(void**,'..e2.val..','.._MEM.cls.idx_org..
-                     ') = '..((e1.org and e1.org.val) or '_trk_.org')..';')
+                     ') = '..((e1.org and e1.org.val) or '_ceu_org_')..';')
             LINE(me, '*PTR_org(tceu_nlbl*,'..e2.val..','.._MEM.cls.idx_lbl..
                      ') = '..(e1.fst or e1.var).lbl_cnt.id..';')
         end
@@ -330,7 +327,7 @@ if (]]..exp.val..[[ != NULL) {
             if i == 1 then
                 SWITCH(me, me.lbls_in[i])
             else
-                LINE(me, 'ceu_trk_push('..me.lbls_in[i].id..', _trk_.org);')
+                LINE(me, 'ceu_trk_push('..me.lbls_in[i].id..', _ceu_org_);')
             end
         end
     end,
@@ -381,27 +378,13 @@ if (]]..exp.val..[[ != NULL) {
         local c, t, f = unpack(me)
         -- TODO: If cond assert(c==ptr or int)
 
-        LINE(me, [[if (]]..c.val..[[) {]])
-        SWITCH(me, me.lbl_t)
-
-        LINE(me, [[} else {]])
-        if me.lbl_f then
-            SWITCH(me, me.lbl_f)
-        else
-            SWITCH(me, me.lbl_e)
-        end
-        LINE(me, [[}]])
-
-        CASE(me, me.lbl_t)
-        CONC(me, t, 4)
-        SWITCH(me, me.lbl_e)
-
-        if me.lbl_f then
-            CASE(me, me.lbl_f)
-            CONC(me, f, 4)
-            SWITCH(me, me.lbl_e)
-        end
-        CASE(me, me.lbl_e)
+        LINE(me, [[
+if (]]..c.val..[[) {
+]]    ..t.code..[[
+} else {
+]]    ..(f and f.code or '')..[[
+}
+]])
     end,
 
     Async_pos = function (me)
@@ -409,7 +392,7 @@ if (]]..exp.val..[[ != NULL) {
         for _, n in ipairs(vars) do
             ATTR(me, n.new, n.var)
         end
-        LINE(me, 'ceu_async_enable(_trk_.org,'..me.lbl.id..');')
+        LINE(me, 'ceu_async_enable(_ceu_org_,'..me.lbl.id..');')
         HALT(me)
         CASE(me, me.lbl)
         CONC(me, blk)
@@ -418,10 +401,8 @@ if (]]..exp.val..[[ != NULL) {
     Loop = function (me)
         local body = unpack(me)
 
-        COMM(me, 'Loop ($0):')
-        CASE(me, me.lbl_ini)
-        CONC(me, body)
-
+        LINE(me, 'for (;;) {')
+        CONC(me)
         local async = _AST.iter'Async'()
         if async then
             LINE(me, [[
@@ -430,21 +411,21 @@ if (ceu_out_pending()) {
 #else
 {
 #endif
-    ceu_async_enable(_trk_.org,]]..me.lbl_ini.id..[[);
-    break;
+    ceu_async_enable(_ceu_org_,]]..me.lbl_asy.id..[[);
+    return;
 }
 ]])
+            CASE(me, me.lbl_asy)
         end
+        LINE(me, '}')
 
-        SWITCH(me, me.lbl_ini)
         if me.has_break then
-            CASE(me, me.lbl_out)
             CLEAR(me)
         end
     end,
 
     Break = function (me)
-        SWITCH(me, _AST.iter'Loop'().lbl_out)
+        LINE(me, 'break;')
     end,
 
     Pause = function (me)
@@ -452,7 +433,7 @@ if (ceu_out_pending()) {
         local has_orgs = me.blk.has.orgs and 1 or 0
         local has_news = me.blk.has.news and 1 or 0
         LINE(me, 'ceu_lsts_pse('..has_orgs..'||'..has_news
-                    ..', _trk_.org, '
+                    ..', _ceu_org_, '
                     ..me.blk.lbls[1]..','..me.blk.lbls[2]..','..inc..');')
     end,
 
@@ -472,7 +453,7 @@ if (ceu_out_pending()) {
 
         assert(ext.pre == 'input')
         local async = _AST.iter'Async'()
-        LINE(me, 'ceu_async_enable(_trk_.org,'..me.lbl_cnt.id..');')
+        LINE(me, 'ceu_async_enable(_ceu_org_,'..me.lbl_cnt.id..');')
         if e2 then
             if _TP.deref(ext.tp) then
                 LINE(me, 'ceu_go_event(IN_'..ext.id
@@ -492,16 +473,16 @@ if (ceu_out_pending()) {
     EmitT = function (me)
         local exp = unpack(me)
         local async = _AST.iter'Async'()
-        LINE(me, 'ceu_async_enable(_trk_.org,'..me.lbl_cnt.id..');')
+        LINE(me, 'ceu_async_enable(_ceu_org_,'..me.lbl_cnt.id..');')
         LINE(me, [[
 #ifdef CEU_WCLOCKS
 ceu_go_wclock(]]..exp.val..[[);
 while (CEU.wclk_min <= 0) {
     ceu_go_wclock(0);
 }
-break;
+return;
 #else
-break;
+return;
 #endif
 ]])
         CASE(me, me.lbl_cnt)
@@ -515,9 +496,9 @@ break;
             ATTR(me, int, exp)
         end
 
-        local org = (int.org and int.org.val) or '_trk_.org'
+        local org = (int.org and int.org.val) or '_ceu_org_'
 
-        LINE(me, 'ceu_trk_push('..me.lbl_cnt.id..', _trk_.org);')
+        LINE(me, 'ceu_trk_push('..me.lbl_cnt.id..', _ceu_org_);')
 
         local t = _AWAITS.t[int.var]
         if t then
@@ -539,9 +520,9 @@ break;
         local int, glb = unpack(me)
         COMM(me, 'await '..int.var.id)
         if not _AWAITS.t[int.var] then
-            local org = (int.org and int.org.val) or '_trk_.org'
+            local org = (int.org and int.org.val) or '_ceu_org_'
             LINE(me, 'ceu_lsts_ins('..(int.off or int.var.off)..','..org
-                        ..',_trk_.org,'..me.lbl_awk.id..',0);')
+                        ..',_ceu_org_,'..me.lbl_awk.id..',0);')
         end
         HALT(me)
         CASE(me, me.lbl_awk)
@@ -555,7 +536,7 @@ break;
         CONC(me, exp)
 
         local val = exp.val
-        LINE(me, 'ceu_wclock_enable('..val..', _trk_.org, '..me.lbl.id..');')
+        LINE(me, 'ceu_wclock_enable('..val..', _ceu_org_, '..me.lbl.id..');')
 
         HALT(me, true)
         CASE(me, me.lbl)
@@ -563,7 +544,7 @@ break;
     AwaitExt = function (me)
         local e,_ = unpack(me)
         if not _AWAITS.t[e.ext] then
-            LINE(me, 'ceu_lsts_ins(IN_'..e.ext.id..',NULL,_trk_.org,'
+            LINE(me, 'ceu_lsts_ins(IN_'..e.ext.id..',NULL,_ceu_org_,'
                         ..me.lbl.id..',0);')
         end
         HALT(me, true)

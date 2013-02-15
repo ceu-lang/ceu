@@ -116,19 +116,14 @@ F = {
         me.lbl_out = new{'ParAnd_out'}
     end,
 
-    If = function (me)
-        local c, t, f = unpack(me)
-        me.lbl_t = new{'True'}
-        me.lbl_f = f and new{'False'}
-        me.lbl_e = new{'EndIf'}
-    end,
-
     Async = function (me)
         me.lbl = new{'Async'}
     end,
 
     Loop_pre = function (me)
-        me.lbl_ini = new{'Loop_ini'}
+        if _AST.iter'Async'() then
+            me.lbl_asy = new{'Async_cnt'}
+        end
         if me.has_break then
             me.lbl_out = new{'Loop_out',  prio=me.depth }
         end

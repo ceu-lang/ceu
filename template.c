@@ -23,7 +23,7 @@
 #define PTR_glb(tp,off) ((tp)(CEU.mem + off))
 #define PTR_org(tp,org,off) ((tp)(((char*)(org)) + off))
 #ifdef CEU_ORGS
-#define PTR_cur(tp,off) ((tp)(_trk_.org + off))
+#define PTR_cur(tp,off) ((tp)(_ceu_org_ + off))
 #else
 #define PTR_cur(tp,off) ((tp)(CEU.mem + off))
 #endif
@@ -361,7 +361,7 @@ void ceu_lsts_ins (tceu_nevt evt, void* src_org, void* dst_org,
 #define ceu_lsts_ins(a,b,c,d,e) ceu_lsts_ins(a,NULL,NULL,d,e)
 #endif
 
-int ceu_lsts_go (tceu_nevt evt, s32 us, void* org)
+int ceu_lsts_go (tceu_nevt evt, s32 us, void* src_org)
 {
     int ret = 0;
     int i;
@@ -404,7 +404,7 @@ int ceu_lsts_go (tceu_nevt evt, s32 us, void* org)
             if (! lst->on)
                 continue;
 #ifdef CEU_ORGS
-            if (lst->src_org != org)
+            if (lst->src_org != src_org)
                 continue;
 #endif
         }
@@ -538,7 +538,11 @@ void ceu_async_enable (void* org, tceu_nlbl lbl) {
 
 #ifdef CEU_DEBUG
 void ceu_segfault (int sig_num) {
+#ifdef CEU_ORGS
+    fprintf(stderr, "SEGFAULT on %p : %d\n", CEU.trk.org, CEU.trk.lbl);
+#else
     fprintf(stderr, "SEGFAULT on %d\n", CEU.trk.lbl);
+#endif
     exit(0);
 }
 #endif
@@ -556,7 +560,7 @@ int ceu_go_init ()
     CEU.lsts = malloc(CEU.lsts_nmax*sizeof(tceu_lst));
     assert(CEU.trks!=NULL && CEU.lsts!=NULL);
 #endif
-    ceu_trk_push(Class_Main, CEU.mem);
+    ceu_trk_push(Class_Main, &CEU.mem);
     ceu_go(NULL);
     return 1;
 }
@@ -569,7 +573,7 @@ int ceu_go_event (int id, void* data)
     switch (id) {
         === EVENTS ===
         default:
-            ret = ceu_lsts_go(id, 0, 0);
+            ret = ceu_lsts_go(id, 0, NULL);
     }
     ceu_go(data);
     return ret;
@@ -581,7 +585,7 @@ int ceu_go_async ()
 {
     int ret;
     ceu_lsts_adj();
-    ret = ceu_lsts_go(IN__ASYNC, 0, 0);
+    ret = ceu_lsts_go(IN__ASYNC, 0, NULL);
     ceu_go(NULL);
     return ret;
 }
@@ -599,7 +603,7 @@ int ceu_go_wclock (s32 dt)
     if (CEU.wclk_min <= dt)
         CEU.wclk_late = dt - CEU.wclk_min;   // how much late the wclock is
 
-    ret = ceu_lsts_go(IN__WCLOCK, dt, 0);
+    ret = ceu_lsts_go(IN__WCLOCK, dt, NULL);
     ceu_go(NULL);
 
 #ifdef ceu_out_wclock
@@ -621,29 +625,31 @@ int* ceu_ext_f (int* data, int v) {
 
 void ceu_call_f (void* _ceu_data_, tceu_nlbl _ceu_lbl_, void* _ceu_org_)
 {
-#ifdef CEU_ORGS
-    tceu_trk _trk_ = {_ceu_lbl_, _ceu_org_};
-#else
-    tceu_trk _trk_ = {_ceu_lbl_};
-#endif
 #ifdef CEU_EXTS
     int _ceu_int_;
 #endif
 
 _SWITCH_:
 #ifdef CEU_DEBUG
-    CEU.trk = _trk_;
+{
+#ifdef CEU_ORGS
+    tceu_trk _ceu_trk_ = {_ceu_lbl_, _ceu_org_};
+#else
+    tceu_trk _ceu_trk_ = {_ceu_lbl_};
+#endif
+    CEU.trk = _ceu_trk_;
+}
 #endif
 
 /*
 #ifdef CEU_ORGS
-fprintf(stderr, "TRK: o.%p / l.%d\n", _trk_.org, _trk_.lbl);
+fprintf(stderr, "TRK: o.%p / l.%d\n", _ceu_org_, _ceu_lbl_);
 #else
-fprintf(stderr, "TRK:%d l.%d\n", CEU.lsts_n, _trk_.lbl);
+fprintf(stderr, "TRK: l.%d\n", _ceu_lbl_);
 #endif
 */
 
-    switch (_trk_.lbl) {
+    switch (_ceu_lbl_) {
         === CODE ===
     }
 }
