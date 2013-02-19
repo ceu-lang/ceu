@@ -49,6 +49,7 @@
 // ceu_out_end(v)
 
 typedef === TCEU_NLBL === tceu_nlbl;    // (x) number of trails
+typedef === TCEU_NTRL === tceu_ntrl;    // (x) number of orgs
 
 #ifdef CEU_IFCS
 typedef === TCEU_NCLS === tceu_ncls;    // (x) number of instances
@@ -69,14 +70,12 @@ typedef struct {
 #endif
 } tceu_trail;
 
-typedef struct {
-    u8 id;
-    union {
-        void*   ptr;
-        int     v;
-        s32     dt;
-    };
-} tceu_evt;
+typedef union {
+    void*   ptr;        // exts
+    void*   org;        // ints
+    //int     v;
+    s32     dt;         // wclocks
+} tceu_evt_param;
 
 enum {
 === LABELS_ENUM ===
@@ -96,35 +95,20 @@ typedef struct {
     tceu_trail  trail;        // segfault printf
 #endif
 
-#ifdef CEU_NEWS     // uses `int´ (dynamic)
     #ifdef CEU_WCLOCKS
-    int         wclks_nmax;             // TODO: mem (const)
-    s32         wclks[CEU_NWCLOCKS];
+    int         wclocks_nmax;             // TODO: mem (const)
+    s32         wclocks[CEU_NWCLOCKS];
     #endif
 
+    #ifdef CEU_ORGS
     #ifdef CEU_INTS
     int         ints_nmax;             // TODO: mem (const)
-    u8          ints[CEU_NINTS];        // TODO: bitfield?
+    void*       ints[CEU_NINTS];
     #endif
-
-    int         trails_nmax;              // rename to trls_*
-    tceu_trail* trails;
-
-#else
-    #ifdef CEU_WCLOCKS
-    int         wclks_nmax;             // TODO: mem (const)
-    s32         wclks[CEU_NWCLOCKS];
-    #endif
-
-    #ifdef CEU_INTS
-    int         ints_nmax;             // TODO: mem (const)
-    u8          ints[CEU_NINTS];        // TODO: bitfield?
     #endif
 
     int         trails_nmax;              // TODO: mem (const)
     tceu_trail  trails[CEU_NTRAILS];
-
-#endif
 
     char        mem[CEU_NMEM];
 } tceu;
@@ -141,23 +125,15 @@ tceu CEU = {
 #ifdef CEU_DEBUG
     {},
 #endif
-#ifdef CEU_NEWS
-    #ifdef CEU_WCLOCKS
-    CEU_NWCLOCKS*2, NULL,
-    #endif
-    #ifdef CEU_INTS
-    CEU_NINTS*2,    NULL,
-    #endif
-    CEU_NTRAILS*2,  NULL,
-#else
-    #ifdef CEU_WCLOCKS
+#ifdef CEU_WCLOCKS
     CEU_NWCLOCKS,{},
-    #endif
-    #ifdef CEU_INTS
-    CEU_NINTS,   {},
-    #endif
-    CEU_NTRAILS, {},
 #endif
+#ifdef CEU_ORGS
+#ifdef CEU_INTS
+    CEU_NINTS,   {},
+#endif
+#endif
+    CEU_NTRAILS, {},
     {}                          // TODO: o q ele gera?
 };
 
@@ -169,26 +145,127 @@ tceu CEU = {
 
 /**********************************************************************/
 
-void ceu_call_f (tceu_evt* evt, tceu_nlbl lbl, void* org);
+void ceu_call_f (u8 evt_id, tceu_evt_param evt_p,
+                 tceu_nlbl lbl, void* org);
 #ifdef CEU_ORGS
-#define ceu_call(a,b,c) ceu_call_f(a,b,c)
+#define ceu_call(a,b,c,d) ceu_call_f(a,b,c,d)
 #else
-#define ceu_call(a,b,c) ceu_call_f(a,b,NULL)
+#define ceu_call(a,b,c,d) ceu_call_f(a,b,c,NULL)
 #endif
 
 /**********************************************************************/
 
+tceu_trail* ceu_trails_get (int idx, void* org) {
+#ifdef CEU_ORGS
+    return &CEU.trails[
+                *PTR_org(tceu_ntrl*,org,=== CEU_CLS_TRAIL0 ===) + idx
+            ];
+#else
+    return &CEU.trails[idx];
+#endif
+}
+#ifndef CEU_ORGS
+#define ceu_trails_get(a,b) ceu_trails_get(a,NULL)
+#endif
+
+#ifdef CEU_WCLOCKS
+void ceu_wclocks_min (s32 dt, int out) {
+    if (CEU.wclk_min > dt) {
+        CEU.wclk_min = dt;
+#ifdef ceu_out_wclock
+        if (out)
+            ceu_out_wclock(dt);
+#endif
+    }
+}
+
+s32* ceu_wclocks_get (int idx, void* org) {
+#ifdef CEU_ORGS
+    return &CEU.wclocks[
+                *PTR_org(tceu_ntrl*,org,=== CEU_CLS_WCLOCK0 ===) + idx
+            ];
+#else
+    return &CEU.wclocks[idx];
+#endif
+}
+#ifndef CEU_ORGS
+#define ceu_wclocks_get(a,b) ceu_wclocks_get(a,NULL)
+#endif
+#endif
+
+#ifdef CEU_ORGS
+#ifdef CEU_INTS
+void** ceu_ints_get (int idx, void* org) {
+#ifdef CEU_ORGS
+    return &CEU.ints[
+                *PTR_org(tceu_ntrl*,org,=== CEU_CLS_INT0 ===) + idx
+            ];
+#else
+    return &CEU.ints[idx];
+#endif
+}
+#ifndef CEU_ORGS
+#define ceu_ints_get(a,b) ceu_ints_get(a,NULL)
+#endif
+#endif
+#endif
+
+void ceu_trails_set (int idx, tceu_nlbl lbl, void* org) {
+#ifdef CEU_ORGS
+    tceu_trail* trl = ceu_trails_get(idx, org);
+    trl->lbl = lbl;
+    trl->org = org;
+#else
+    CEU.trails[idx].lbl = lbl;
+#endif
+}
+#ifndef CEU_ORGS
+#define ceu_trails_set(a,b,c) ceu_trails_set(a,b,NULL)
+#endif
+
+void ceu_trails_set_evt (u8 evt_id, tceu_evt_param evt_p, int evt_idx,
+                         int idx, tceu_nlbl lbl, void* org)
+{
+    ceu_trails_set(idx, lbl, org);
+
+#ifdef CEU_WCLOCKS
+    if (evt_id == IN__WCLOCK) {
+        s32 dt_ = evt_p.dt - CEU.wclk_late;
+        *ceu_wclocks_get(evt_idx,org) = dt_;
+        ceu_wclocks_min(dt_, 1);
+    }
+#endif
+
+#ifdef CEU_ASYNCS
+#ifdef ceu_out_async
+    if (evt_id == IN__ASYNC) {
+        ceu_out_async(1);
+    }
+#endif
+#endif
+
+#ifdef CEU_ORGS
+#ifdef CEU_INTS
+    if (evt_id <= IN__FIN) {
+        *ceu_ints_get(evt_idx,org) = evt_p.org;
+    }
+#endif
+#endif
+}
+#ifndef CEU_ORGS
+#define ceu_trails_set_evt(a,b,c,d,e,f) ceu_trails_set_evt(a,b,c,d,e,NULL)
+#endif
+
+
 void ceu_trails_clr (int t1, int t2, void* org) {
     int i;
-#ifdef CEU_FINS
-    tceu_evt evt = { IN__FIN, NULL };
-#endif
     for (i=t2; i>=t1; i--) {    // lst fins first
 #ifdef CEU_FINS
-fprintf(stderr, "FIN[%d] %d\n", i, CEU.trails[i].lbl);
-        ceu_call(&evt, CEU.trails[i].lbl, org);
+        ceu_call(IN__FIN, (tceu_evt_param)NULL,
+            ceu_trails_get(i,org)->lbl,
+            ceu_trails_get(i,org)->org);
 #endif
-        CEU.trails[i].lbl = CEU_INACTIVE;
+        ceu_trails_get(i,org)->lbl = CEU_INACTIVE;
     }
 }
 #ifndef CEU_ORGS
@@ -203,12 +280,13 @@ void ceu_trails_on ()
     }
 }
 
-int ceu_trails_go (tceu_evt* evt)
+int ceu_trails_go (u8 evt_id, tceu_evt_param evt_p)
 {
     int i;
     for (i=0; i<CEU.trails_nmax; i++) {
         if (CEU.trails[i].on && CEU.trails[i].lbl!=CEU_INACTIVE)
-            ceu_call(evt, CEU.trails[i].lbl, CEU.trails[i].org);
+            ceu_call(evt_id, evt_p,
+                     CEU.trails[i].lbl, CEU.trails[i].org);
     }
     return 1;   // TODO: remove
 }
@@ -236,7 +314,7 @@ void ceu_lsts_pse (int child, void* org, tceu_nlbl l1, tceu_nlbl l2, int inc) {
             lst->pse += inc;
 #ifdef CEU_WCLOCKS
             if (lst->pse==0 && lst->evt==IN__WCLOCK)
-                ceu_wclock_min(lst->togo, 1);
+                ceu_wclocks_min(lst->togo, 1);
 #endif
         }
     }
@@ -244,40 +322,6 @@ void ceu_lsts_pse (int child, void* org, tceu_nlbl l1, tceu_nlbl l2, int inc) {
 }
 #ifndef CEU_ORGS
 #define ceu_lsts_pse(a,b,c,d,e) ceu_lsts_pse(a,NULL,c,d,e)
-#endif
-#endif
-
-/**********************************************************************/
-
-#ifdef CEU_WCLOCKS
-
-void ceu_wclock_min (s32 dt, int out) {
-    if (CEU.wclk_min > dt) {
-        CEU.wclk_min = dt;
-#ifdef ceu_out_wclock
-        if (out)
-            ceu_out_wclock(dt);
-#endif
-    }
-}
-
-void ceu_wclock_enable (int idx, s32 dt) {
-    s32 dt_ = dt - CEU.wclk_late;
-    CEU.wclks[idx] = dt_;
-    ceu_wclock_min(dt_, 1);
-}
-
-#endif
-
-#ifdef CEU_ASYNCS
-void ceu_async_enable (void* org, tceu_nlbl lbl) {
-    // TODO
-#ifdef ceu_out_async
-    ceu_out_async(1);
-#endif
-}
-#ifndef CEU_ORGS
-#define ceu_async_enable(a,b) ceu_async_enable(NULL,b)
 #endif
 #endif
 
@@ -306,21 +350,18 @@ int ceu_go_init ()
     CEU.trails = malloc(CEU.trails_nmax*sizeof(tceu_trail));
     assert(CEU.trails!=NULL);
 #endif
-    ceu_call(NULL, Class_Main, &CEU.mem);
+    ceu_call(0,(tceu_evt_param)NULL, Class_Main, &CEU.mem);
     return 1;
 }
+
+// TODO: ret
 
 #ifdef CEU_EXTS
 int ceu_go_event (int id, void* data)
 {
     int ret = 0;
     ceu_trails_on();
-    /*
-        === EVENTS ===
-    */
-    { tceu_evt evt = { id, data };
-      ret = ceu_trails_go(&evt); }
-    //ceu_go(data);
+    ret = ceu_trails_go(id, (tceu_evt_param)data);
     return ret;
 }
 #endif
@@ -330,9 +371,7 @@ int ceu_go_async ()
 {
     int ret;
     ceu_trails_on();
-    { tceu_evt evt = { IN__ASYNC, NULL };
-      ret = ceu_trails_go(&evt); }
-    //ceu_go(NULL);
+    ret = ceu_trails_go(IN__ASYNC, (tceu_evt_param)NULL);
     return ret;
 }
 #endif
@@ -353,12 +392,12 @@ int ceu_go_wclock (s32 dt)
         int i;
         s32 min = CEU.wclk_min;
         CEU.wclk_min = CEU_WCLOCK_INACTIVE;
-        for (i=0; i<CEU.wclks_nmax; i++) {
-            if ( (min<=dt) && (CEU.wclks[i]==min) ) {
-                CEU.wclks[i] = CEU_WCLOCK_EXPIRED;
-            } else if (CEU.wclks[i] < CEU_WCLOCK_EXPIRED) {
-                CEU.wclks[i] -= dt;
-                ceu_wclock_min(CEU.wclks[i], 0);
+        for (i=0; i<CEU.wclocks_nmax; i++) {
+            if ( (min<=dt) && (CEU.wclocks[i]==min) ) {
+                CEU.wclocks[i] = CEU_WCLOCK_EXPIRED;
+            } else if (CEU.wclocks[i] < CEU_WCLOCK_EXPIRED) {
+                CEU.wclocks[i] -= dt;
+                ceu_wclocks_min(CEU.wclocks[i], 0);
             }
         }
 #ifdef ceu_out_wclock
@@ -367,8 +406,7 @@ int ceu_go_wclock (s32 dt)
 #endif
     }
 
-    { tceu_evt evt = { IN__WCLOCK, NULL };
-      ret = ceu_trails_go(&evt); }
+    ret = ceu_trails_go(IN__WCLOCK, (tceu_evt_param)NULL);
     //ceu_go(NULL);
 
 #ifdef ceu_out_wclock
@@ -405,7 +443,8 @@ void ceu_go_all (int* ret_end)
 #endif
 }
 
-void ceu_call_f (tceu_evt* _ceu_evt_, tceu_nlbl _ceu_lbl_, void* _ceu_org_)
+void ceu_call_f (u8 _ceu_evt_id_, tceu_evt_param _ceu_evt_p_,
+                 tceu_nlbl _ceu_lbl_, void* _ceu_org_)
 {
 #ifdef CEU_EXTS
     int _ceu_int_;

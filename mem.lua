@@ -11,11 +11,15 @@ do  -- _MEM.cls
         _MEM.cls.idx_cls = off
         off = off + _ENV.c.tceu_ncls.len
     end
-    if not _ENV.orgs_global then
-        _MEM.cls.idx_org = off
-        off = off + _ENV.c.pointer.len
-        _MEM.cls.idx_lbl = off
-        off = off + _ENV.c.tceu_nlbl.len
+    _MEM.cls.idx_trail0 = off
+    off = off + _ENV.c.tceu_ntrl.len
+    if _PROPS.has_wclocks then
+        _MEM.cls.idx_wclock0 = off
+        off = off + _ENV.c.tceu_ntrl.len
+    end
+    if _PROPS.has_ints then
+        _MEM.cls.idx_int0 = off
+        off = off + _ENV.c.tceu_ntrl.len
     end
 end
 
@@ -89,13 +93,16 @@ F = {
         if _PROPS.has_ifcs then
             alloc(me.mem, _ENV.c.tceu_ncls.len) -- cls N
         end
-        if not _ENV.orgs_global then
-            alloc(me.mem, _ENV.c.pointer.len)   -- parent org/lbl
-            alloc(me.mem, _ENV.c.tceu_nlbl.len) -- for ceu_clr_*
+        alloc(me.mem, _ENV.c.tceu_ntrl.len)     -- trail0
+        if _PROPS.has_wclocks then
+            alloc(me.mem, _ENV.c.tceu_ntrl.len)     -- wclock0
+        end
+        if _PROPS.has_ints then
+            alloc(me.mem, _ENV.c.tceu_ntrl.len)     -- int0
         end
     end,
     Dcl_cls = function (me)
-        DBG(string.format('%8s',me.id), me.mem.max, me.ns.trks)
+        DBG(string.format('%8s',me.id), me.mem.max, me.ns.trails)
     end,
 
     Block_pre = function (me)
@@ -237,9 +244,9 @@ DBG('', string.format('%8s',var.id), len)
     AwaitExt = function (me)
         local e1 = unpack(me)
         if _TP.deref(e1.ext.tp) then
-            me.val = '(('.._TP.c(e1.ext.tp)..')_ceu_evt_->ptr)'
+            me.val = '(('.._TP.c(e1.ext.tp)..')_ceu_evt_p_.ptr)'
         else
-            me.val = '*((int*)_ceu_evt_->ptr)'
+            me.val = '*((int*)_ceu_evt_p_.ptr)'  -- TODO
         end
     end,
     AwaitT = function (me)
@@ -359,7 +366,7 @@ DBG('', string.format('%8s',var.id), len)
     WCLOCKE = function (me)
         local exp, unit = unpack(me)
         me.us   = nil
-        me.val  = exp.val .. '*' .. t2n[unit] .. 'L'
+        me.val  = exp.val .. '*' .. t2n[unit]-- .. 'L'
     end,
 
     C = function (me)

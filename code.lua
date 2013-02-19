@@ -39,13 +39,14 @@ fprintf(stderr, "TRK: l.%d\n",]]
 ]])
 end
 
-function CASE2 (me, evt, lbl)
+function CASE2 (me, evt_id, evt_p, evt_idx, lbl)
     LINE(me, [[
-CEU.trails[ ]]..me.trails[1]..[[ ].lbl = ]]..lbl.id..[[;
+ceu_trails_set_evt(]]..evt_id..',(tceu_evt_param)('..evt_p..'),'..evt_idx..','
+                     ..me.trails[1]..','..lbl.id..[[,_ceu_org_);
 return;
 
 case ]]..lbl.id..[[:
-    if (_ceu_evt_->id != ]]..evt..[[)
+    if (_ceu_evt_id_ != ]]..evt_id..[[)
         return;
 ]])
 end
@@ -112,13 +113,32 @@ function CLEAR (me)
 ]]
 end
 
-function ORG (me, new, org0, cls, par_org, par_lbl, lbl_cnt)
+function ORG (me, cls, org0, trail0, wclock0, int0)
     COMM(me, 'ORG')
     LINE(me, [[
 {
     void* _ceu_org_new_ = ]]..org0..[[;
-    ceu_trk_push(]]..(lbl_cnt or par_lbl).id..[[,_ceu_org_);
+    *PTR_org(tceu_ntrl*, _ceu_org_new_, ]].._MEM.cls.idx_trail0 ..
+        [[) = ]]..trail0..[[;
 ]])
+    if _PROPS.has_wclocks then
+        LINE(me, [[
+    *PTR_org(tceu_ntrl*, _ceu_org_new_, ]].._MEM.cls.idx_wclock0 ..
+        [[) = ]]..wclock0..[[;
+]])
+    end
+    if _PROPS.has_ints then
+        LINE(me, [[
+    *PTR_org(tceu_ntrl*, _ceu_org_new_, ]].._MEM.cls.idx_int0 ..
+        [[) = ]]..int0..[[;
+]])
+    end
+    LINE(me, [[
+    ceu_call(_ceu_evt_id_,_ceu_evt_p_,]]..cls.lbl.id..[[,_ceu_org_new_);
+    // TODO: test cnt
+}
+]])
+--[=[
     if new then
         LINE(me, [[
     if (_ceu_org_new_ == NULL)
@@ -127,19 +147,7 @@ function ORG (me, new, org0, cls, par_org, par_lbl, lbl_cnt)
         cls.lbl_free.id..[[,0);
 ]])
     end
-    if not _ENV.orgs_global then
-        LINE(me, [[
-    *PTR_org(void**,     _ceu_org_new_, ]].._MEM.cls.idx_org ..
-        [[) = ]]..par_org..[[;
-    *PTR_org(tceu_nlbl*, _ceu_org_new_, ]].._MEM.cls.idx_lbl ..
-        [[) = ]]..par_lbl.id..[[;
-]])
-    end
-    SWITCH(me, cls.lbl, '_ceu_org_new_')
-    LINE(me, [[
-}
-]])
-    CASE(me, (lbl_cnt or par_lbl))
+]=]
 end
 
 F = {
@@ -163,10 +171,10 @@ F = {
         if me == _MAIN then
             LINE(me, [[
 memset(CEU.trails, CEU_INACTIVE, ]]..me.ns.trails..[[*sizeof(tceu_trail));
-CEU.trails[0].lbl = CEU_PENDING;
 ]])
         end
         LINE(me, [[
+ceu_trails_set(0, CEU_PENDING, _ceu_org_);
 #ifdef CEU_IFCS
 *PTR_org(tceu_ncls*, _ceu_org_, ]]..(_MEM.cls.idx_cls or '')..[[) = ]]..me.n..[[;
 #endif
@@ -204,6 +212,7 @@ CEU.trails[0].lbl = CEU_PENDING;
             me[1] .. '\n'
     end,
 
+--[=[
     SetNew = function (me)
         local exp, _ = unpack(me)
         ORG(me, true,
@@ -227,6 +236,7 @@ if (]]..exp.val..[[ != NULL) {
 }
 ]])
     end,
+]=]
 
     Dcl_org = function (me)
         local dcl,init = unpack(me)
@@ -240,21 +250,19 @@ if (]]..exp.val..[[ != NULL) {
         local var = me.var
         -- spawn orgs
         if var.cls then
-            ORG(me, false,
+            ORG(me, var.cls,
                     var.val,
-                    var.cls,
-                    '_ceu_org_',
-                    var.lbl_cnt)
+                    var.trails[1], var.wclocks[1], var.ints[1])
         elseif var.arr then
             local cls = _ENV.clss[_TP.deref(var.tp)]
             if cls then
                 for i=1, var.arr do
-                    ORG(me, false,
+                    ORG(me, cls,
                             'PTR_org(void*,'..var.val..','..
                                             (i-1)..'*'..cls.mem.max..')',
-                            cls,
-                            '_ceu_org_',
-                            var.lbl_cnt[i])
+                            var.trails [1] + (i-1)*cls.ns.trails,
+                            var.wclocks[1] + (i-1)*cls.ns.wclocks,
+                            var.ints   [1] + (i-1)*cls.ns.ints)
                 end
             end
         end
@@ -278,7 +286,7 @@ if (]]..exp.val..[[ != NULL) {
         if me.fins then
             LINE(me, [[
 //  FINALIZE
-CEU.trails[ ]]..me.fins.trails[1]..[[ ].lbl = ]]..me.lbl_fin.id..[[;
+ceu_trails_set(]]..me.fins.trails[1]..','..me.lbl_fin.id..[[,_ceu_org_);
 memset(PTR_cur(u8*,]]..me.off_fins..'), 0, '..#me.fins..[[);
 ]])
         end
@@ -289,7 +297,7 @@ memset(PTR_cur(u8*,]]..me.off_fins..'), 0, '..#me.fins..[[);
             SWITCH(me, me.lbl_fin_cnt)
             CASE(me, me.lbl_fin)
             LINE(me, [[
-if (_ceu_evt_->id != IN__FIN)
+if (_ceu_evt_id_ != IN__FIN)
     return;
 ]])
             DEBUG_TRAILS(me)
@@ -326,12 +334,14 @@ if (*PTR_cur(u8*,]]..(me.off_fins+i-1)..[[)) {
     SetExp = function (me)
         local e1, e2, op, fin = unpack(me)
         COMM(me, 'SET: '..tostring(e1[1]))    -- Var or C
+--[=[
         if op == ':=' then
             LINE(me, '*PTR_org(void**,'..e2.val..','.._MEM.cls.idx_org..
                      ') = '..((e1.org and e1.org.val) or '_ceu_org_')..';')
             LINE(me, '*PTR_org(tceu_nlbl*,'..e2.val..','.._MEM.cls.idx_lbl..
                      ') = '..(e1.fst or e1.var).lbl_cnt.id..';')
         end
+]=]
         ATTR(me, e1, e2)
 
         -- enable finalize
@@ -362,7 +372,7 @@ if (*PTR_cur(u8*,]]..(me.off_fins+i-1)..[[)) {
         COMM(me, me.tag..': spawn subs')
         for i=1, #me do
             LINE(me, [[
-CEU.trails[ ]]..me[i].trails[1]..[[ ].lbl = CEU_PENDING;
+ceu_trails_set(]]..me[i].trails[1]..[[, CEU_PENDING, _ceu_org_);
 ]])
         end
         for i=1, #me do
@@ -371,8 +381,8 @@ CEU.trails[ ]]..me[i].trails[1]..[[ ].lbl = CEU_PENDING;
             else
                 DEBUG_TRAILS(me, me.lbls_in[i])
                 LINE(me, [[
-ceu_call(_ceu_evt_, ]]..me.lbls_in[i].id..[[, _ceu_org_);
-if (CEU.trails[ ]]..me[i+1].trails[1]..[[ ].lbl != CEU_PENDING)
+ceu_call(_ceu_evt_id_, _ceu_evt_p_, ]]..me.lbls_in[i].id..[[, _ceu_org_);
+if (ceu_trails_get(]]..me[i+1].trails[1]..[[,_ceu_org_)->lbl != CEU_PENDING)
     return;
 ]])
             end
@@ -385,7 +395,7 @@ if (CEU.trails[ ]]..me[i+1].trails[1]..[[ ].lbl != CEU_PENDING)
             CASE(me, me.lbls_in[i])
             CONC(me, sub)
             LINE(me, [[
-CEU.trails[ ]]..sub.trails[1]..[[ ].lbl = CEU_INACTIVE;
+ceu_trails_set(]]..sub.trails[1]..[[, CEU_INACTIVE, _ceu_org_);
 ]])
             HALT(me)
         end
@@ -413,7 +423,7 @@ CEU.trails[ ]]..sub.trails[1]..[[ ].lbl = CEU_INACTIVE;
             CASE(me, me.lbls_in[i])
             CONC(me, sub)
             LINE(me, [[
-CEU.trails[ ]]..sub.trails[1]..[[ ].lbl = CEU_INACTIVE;
+ceu_trails_set(]]..sub.trails[1]..[[,CEU_INACTIVE,_ceu_org_);
 *PTR_cur(u8*,]]..(me.off+i-1)..[[) = 1; // open and gate
 ]])
             SWITCH(me, me.lbl_tst)
@@ -456,7 +466,7 @@ for (;;) {
     {
 #endif
 ]])
-            CASE2(me, 'IN__ASYNC', me.lbl_asy)
+            CASE2(me, 'IN__ASYNC', 0, 0, me.lbl_asy)
             LINE(me, [[
     }
 ]])
@@ -511,14 +521,14 @@ for (;;) {
             LINE(me, 'ceu_go_event(IN_'..ext.id ..', NULL);')
         end
 
-        CASE2(me, 'IN__ASYNC', me.lbl_cnt)
+        CASE2(me, 'IN__ASYNC', 0, 0, me.lbl_cnt)
         DEBUG_TRAILS(me)
     end,
 
     EmitT = function (me)
         local exp = unpack(me)
         LINE(me, [[
-CEU.trails[ ]]..me.trails[1]..[[ ].lbl = ]]..me.lbl_cnt.id..[[;
+ceu_trails_set(]]..me.trails[1]..','..me.lbl_cnt.id..[[,_ceu_org_);
 #ifdef CEU_WCLOCKS
 ceu_go_wclock(]]..exp.val..[[);
 while (CEU.wclk_min <= 0) {
@@ -529,7 +539,7 @@ return;
 return;
 #endif
 case ]]..me.lbl_cnt.id..[[:
-    if (_ceu_evt_->id != IN__ASYNC)
+    if (_ceu_evt_id_ != IN__ASYNC)
         return;
 ]])
     end,
@@ -545,29 +555,26 @@ case ]]..me.lbl_cnt.id..[[:
         local org = (int.org and int.org.val) or '_ceu_org_'
 
         LINE(me, [[
-CEU.trails[ ]]..me.trails[1]..[[ ].lbl = CEU_PENDING;
-{ tceu_evt evt = { ]]..(int.off or int.var.off)..[[, NULL }; // NULL=>org
-  ceu_trails_go(&evt); }
-if (CEU.trails[ ]]..me.trails[1]..[[ ].lbl != CEU_PENDING)
+ceu_trails_set(]]..me.trails[1]..[[,CEU_PENDING,_ceu_org_);
+ceu_trails_go(]]..(int.off or int.var.off)
+                ..',(tceu_evt_param)(void*)'..org..[[);
+if (ceu_trails_get(]]..me.trails[1]..[[,_ceu_org_)->lbl != CEU_PENDING)
     return;
 ]])
     end,
 
     AwaitN = function (me)
         LINE(me, [[
-CEU.trails[ ]]..me.trails[1]..[[ ].lbl = CEU_INACTIVE;
+ceu_trails_set(]]..me.trails[1]..[[,CEU_INACTIVE,_ceu_org_);
 return;
 ]])
     end,
 
     AwaitT = function (me)
         local exp,_ = unpack(me)
+        CASE2(me, 'IN__WCLOCK', exp.val, me.wclocks[1], me.lbl)
         LINE(me, [[
-ceu_wclock_enable(]]..me.wclocks[1]..','..exp.val..[[);
-]])
-        CASE2(me, 'IN__WCLOCK', me.lbl)
-        LINE(me, [[
-if (CEU.wclks[ ]]..me.wclocks[1]..[[ ] != CEU_WCLOCK_EXPIRED)
+if (*ceu_wclocks_get(]]..me.wclocks[1]..[[,_ceu_org_) != CEU_WCLOCK_EXPIRED)
     return;
 ]])
         DEBUG_TRAILS(me)
@@ -575,15 +582,19 @@ if (CEU.wclks[ ]]..me.wclocks[1]..[[ ] != CEU_WCLOCK_EXPIRED)
 
     AwaitInt = function (me)
         local int,_ = unpack(me)
+        local org = (int.org and int.org.val) or '_ceu_org_'
+
         LINE(me, [[
-CEU.trails[ ]]..me.trails[1]..[[ ].on = 0;
+ceu_trails_get(]]..me.trails[1]..[[,_ceu_org_)->on = 0;
 ]])
-        CASE2(me, (int.off or int.var.off), me.lbl)
+        CASE2(me, (int.off or int.var.off), '(void*)'..org, me.ints[1], me.lbl)
         LINE(me, [[
-if (!CEU.trails[ ]]..me.trails[1]..[[ ].on)
+if (! ceu_trails_get(]]..me.trails[1]..[[,_ceu_org_)->on)
     return;
-]])
-        LINE(me, [[
+#ifdef CEU_ORGS
+if (*ceu_ints_get(]]..me.ints[1]..[[,_ceu_org_) != _ceu_evt_p_.org)
+    return;
+#endif
 // TODO: until cond
 ]])
         DEBUG_TRAILS(me)
@@ -592,9 +603,9 @@ if (!CEU.trails[ ]]..me.trails[1]..[[ ].on)
     AwaitExt = function (me)
         local e,_ = unpack(me)
         LINE(me, [[
-CEU.trails[ ]]..me.trails[1]..[[ ].on = 0;
+ceu_trails_get(]]..me.trails[1]..[[,_ceu_org_)->on = 0;
 ]])
-        CASE2(me, 'IN_'..e.ext.id, me.lbl)
+        CASE2(me, 'IN_'..e.ext.id, 0, 0, me.lbl)
         LINE(me, [[
 // TODO: until cond
 ]])
@@ -606,11 +617,10 @@ CEU.trails[ ]]..me.trails[1]..[[ ].on = 0;
         for _, n in ipairs(vars) do
             ATTR(me, n.new, n.var)
         end
-        CASE2(me, 'IN__ASYNC', me.lbl)
+        CASE2(me, 'IN__ASYNC', 0, 0, me.lbl)
         DEBUG_TRAILS(me)
         CONC(me, blk)
     end,
 }
--- TODO: rom -> mem, fazendo o teste do evt->id no lst_go
 
 _AST.visit(F)

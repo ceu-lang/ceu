@@ -149,6 +149,17 @@ do
     tpl = sub(tpl, '=== CEU_NINTS ===',    _AST.root.ns.ints)
 
     tpl = sub(tpl, '=== TCEU_NLBL ===', tps[_ENV.c.tceu_nlbl.len])
+    tpl = sub(tpl, '=== TCEU_NTRL ===', tps[_ENV.c.tceu_ntrl.len])
+
+    if _PROPS.has_orgs then
+        tpl = sub(tpl, '=== CEU_CLS_TRAIL0 ===',  _MEM.cls.idx_trail0)
+        if _PROPS.has_wclocks then
+            tpl = sub(tpl, '=== CEU_CLS_WCLOCK0 ===', _MEM.cls.idx_wclock0)
+        end
+        if _PROPS.has_ints then
+            tpl = sub(tpl, '=== CEU_CLS_INT0 ===',    _MEM.cls.idx_int0)
+        end
+    end
 
     tpl = sub(tpl, '=== LABELS_ENUM ===', _LBLS.code_enum)
 

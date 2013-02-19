@@ -28,6 +28,8 @@ _ENV = {
         pointer  = _OPTS.tp_pointer,
 
         tceu_nlbl = true,    -- labels.lua
+        tceu_ntrl = true,    -- props.lua
+
         tceu_ncls = true,    -- env.lua
 
         -- TODO: apagar?

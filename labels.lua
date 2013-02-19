@@ -56,9 +56,11 @@ F = {
         _LBLS.code_fins = table.concat(t,',')
     end,
 
+--[=[
     SetNew = function (me)
         me.lbl_cnt = new{'New_cont'}
     end,
+]=]
     Block = function (me)
         local blk = unpack(me)
 
@@ -75,6 +77,7 @@ F = {
         end
     end,
 
+--[=[
     Dcl_var = function (me)
         local var = me.var
         if var.cls then
@@ -88,6 +91,7 @@ F = {
             var.lbl_cnt = new{'Dcl_cnt'}    -- used by `new´
         end
     end,
+]=]
 
     SetBlock_pre = function (me)
         me.lbl_out = new{'Set_out',  prio=me.depth}
@@ -131,11 +135,6 @@ F = {
     end,
     EmitT = function (me)
         me.lbl_cnt = new{'Async_cont'}
-    end,
-
-    EmitInt = function (me)
-        local int = unpack(me)
-        me.lbl_cnt = new{'Emit_cnt_'..int.var.id}
     end,
 
     AwaitT = function (me)

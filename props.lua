@@ -58,6 +58,11 @@ local NO_async = {
 }
 
 F = {
+    Root = function (me)
+        _ENV.c.tceu_ntrl.len = _TP.n2bytes(me.ns.trails)
+        MAX_all(me)
+    end,
+
     Node_pre = function (me)
         me.ns = {
             trails  = 1,
@@ -88,11 +93,9 @@ F = {
     Block = function (me)
         local stmts = unpack(me)
 
-        SAME(me, stmts)
+        local t = { stmts }
 
         -- Block must ADD all orgs (they are spawned in par, not in seq)
---[=[
-        local t = { }
         for _, var in ipairs(me.vars) do
             if var.cls then
                 t[#t+1] = var.cls       -- each org is spawned in parallel
@@ -105,8 +108,8 @@ F = {
                 end
             end
         end
+
         F.ParOr(me, t)
-]=]
 
         if me.fins then
             _PROPS.has_fins = true
