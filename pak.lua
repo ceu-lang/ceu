@@ -17,10 +17,10 @@ subst 'parser.lua'
 subst 'ast.lua'
 subst 'env.lua'
 subst 'tight.lua'
-subst 'awaits.lua'
 subst 'props.lua'
-subst 'mem.lua'
+subst 'trails.lua'
 subst 'labels.lua'
+subst 'mem.lua'
 subst 'code.lua'
 
 -- template.c

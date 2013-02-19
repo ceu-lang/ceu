@@ -77,6 +77,7 @@ function _AST.dump (me, spc)
     end
     --local t=0; for _ in pairs(me.aw.t) do t=t+1 end
     --ks = 'n='..(me.aw.n or '?')..',t='..t..',ever='..(me.aw.forever_ and 1 or 0)
+    --ks = table.concat(me.trails,'-')
     DBG(string.rep(' ',spc) .. me.tag .. ' ('..ks..')')
     for i, sub in ipairs(me) do
         if _AST.isNode(sub) then
@@ -110,9 +111,9 @@ local function visit_aux (me, F)
         if _AST.isNode(sub) then
             sub.depth = me.depth + 1
             ASR(sub.depth < 0xFF, sub, 'max depth of 0xFF')
-            if bef then bef(me, sub) end
+            if bef then bef(me, sub, i) end
             me[i] = visit_aux(sub, F)
-            if aft then aft(me, sub) end
+            if aft then aft(me, sub, i) end
         end
     end
 

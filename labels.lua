@@ -36,7 +36,8 @@ F = {
     end,
 
     Root_pre = function (me)
-        --new{'CEU_INACTIVE', true}
+        new{'CEU_INACTIVE', true}
+        new{'CEU_PENDING',  true}
     end,
     Root = function (me)
         _ENV.c.tceu_nlbl.len = _TP.n2bytes(#_LBLS.list)
@@ -64,10 +65,6 @@ F = {
         if me.fins then
             me.lbl_fin     = new{'Block__fin', depth=me.depth}
             me.lbl_fin_cnt = new{'Block_fin_cnt'}
-            for _, fin in ipairs(me.fins) do
-                fin.lbl_true  = new{'Finalize_true'}
-                fin.lbl_false = new{'Finalize_false'}
-            end
         end
     end,
 
@@ -147,18 +144,10 @@ F = {
     AwaitExt = function (me)
         local e = unpack(me);
         me.lbl = new{'Awake_'..e.ext.id}
-        local t = _AWAITS.t[e.ext]
-        if t then
-            t[#t+1] = { CLS(), me.lbl }
-        end
     end,
     AwaitInt = function (me)
         local int = unpack(me)
-        me.lbl_awk = new{'Awake_'..int.var.id}
-        local t = _AWAITS.t[int.var]
-        if t then
-            t[#t+1] = me.lbl_awk
-        end
+        me.lbl = new{'Awake_'..int.var.id}
     end,
 }
 

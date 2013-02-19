@@ -23,22 +23,9 @@ function MAX_all (me, t)
     OR_all(me, t)
     for _, sub in ipairs(t) do
         if _AST.isNode(sub) then
-            me.ns.lsts = MAX(me.ns.lsts, sub.ns.lsts)
-            me.ns.trks = MAX(me.ns.trks, sub.ns.trks)
-        end
-    end
-end
-
-function ADD_all (me, t, keep)
-    t = t or me
-    OR_all(me, t)
-    if not keep then
-        me.ns.trks = 0
-    end
-    for _, sub in ipairs(t) do
-        if _AST.isNode(sub) then
-            me.ns.lsts = me.ns.lsts + sub.ns.lsts
-            me.ns.trks = me.ns.trks + sub.ns.trks
+            for k,v in pairs(sub.ns) do
+                me.ns[k] = MAX(me.ns[k], v)
+            end
         end
     end
 end
@@ -46,6 +33,7 @@ end
 _PROPS = {
     has_exts    = false,
     has_wclocks = false,
+    has_ints    = false,
     has_asyncs  = false,
     has_pses    = false,
     has_fins    = false,
@@ -72,8 +60,9 @@ local NO_async = {
 F = {
     Node_pre = function (me)
         me.ns = {
-            trks = 1,
-            lsts = 0,
+            trails  = 1,
+            wclocks = 0,
+            ints    = 0,
         }
         me.has = {
             fins = false,
@@ -84,6 +73,7 @@ F = {
     end,
     Node_pos = function (me)
         if not F[me.tag] then
+            me.ns.trails = 1
             MAX_all(me)
         end
         if NO_fin[me.tag] then
@@ -95,25 +85,13 @@ F = {
         end
     end,
 
-    Root = function (me)
-        SAME(me, me[#me])
---me.ns.trks = 9
-        _ENV.c.tceu_nlst.len = _TP.n2bytes(me.ns.lsts)
-        _ENV.c.tceu_ntrk.len = _TP.n2bytes(me.ns.trks)
-    end,
-
     Block = function (me)
         local stmts = unpack(me)
 
         SAME(me, stmts)
 
-        if me.fins then
-            _PROPS.has_fins = true
-            me.has.fins = true
-            me.ns.lsts  = me.ns.lsts + 1    -- implicit await in parallel
-        end
-
         -- Block must ADD all orgs (they are spawned in par, not in seq)
+--[=[
         local t = { }
         for _, var in ipairs(me.vars) do
             if var.cls then
@@ -127,12 +105,31 @@ F = {
                 end
             end
         end
-        ADD_all(me, t, true)
+        F.ParOr(me, t)
+]=]
+
+        if me.fins then
+            _PROPS.has_fins = true
+            me.has.fins = true
+            me.ns.trails = me.ns.trails + 1 -- implicit await in parallel
+        end
     end,
     Stmts   = MAX_all,
-    ParEver = ADD_all,
-    ParAnd  = ADD_all,
-    ParOr   = ADD_all,
+
+    ParEver = 'ParOr',
+    ParAnd  = 'ParOr',
+    ParOr = function (me, t)
+        t = t or me
+        OR_all(me, t)
+        me.ns.trails = 0
+        for _, sub in ipairs(t) do
+            if _AST.isNode(sub) then
+                for k,v in pairs(sub.ns) do
+                    me.ns[k] = me.ns[k] + v
+                end
+            end
+        end
+    end,
 
     Dcl_cls = function (me)
         _PROPS.has_orgs = _PROPS.has_orgs or me~=_MAIN
@@ -141,7 +138,6 @@ F = {
         else
             SAME(me, me[#me])
         end
---DBG(me.id, me.ns.trks)
     end,
 
     Dcl_ext = function (me)
@@ -169,7 +165,6 @@ F = {
 
     Async = function (me)
         _PROPS.has_asyncs = true
-        me.ns.lsts = 1
     end,
 
     If = function (me)
@@ -245,25 +240,16 @@ F = {
 
     AwaitT = function (me)
         _PROPS.has_wclocks = true
-        me.ns.lsts = 1
-    end,
-
-    AwaitExt = function (me)
-        local ext = unpack(me)
-        if not _AWAITS.t[ext.ext] then
-            me.ns.lsts = 1
-        end
+        me.ns.wclocks = 1
     end,
 
     AwaitInt = function (me)
-        local int = unpack(me)
-        if not _AWAITS.t[int.var] then
-            me.ns.lsts = 1
-        end
+        _PROPS.has_ints = true
+        me.ns.ints = 1
     end,
 
     EmitInt = function (me)
-        me.ns.trks = 1
+        _PROPS.has_ints = true
     end,
 
     EmitExtS = function (me)

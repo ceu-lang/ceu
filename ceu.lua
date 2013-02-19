@@ -122,10 +122,10 @@ do
     dofile 'ast.lua'
     dofile 'env.lua'
     dofile 'tight.lua'
-    dofile 'awaits.lua'
-    --_AST.dump(_AST.root)
     dofile 'props.lua'
+    dofile 'trails.lua'
     dofile 'labels.lua'
+    --_AST.dump(_AST.root)
     dofile 'mem.lua'
     dofile 'code.lua'
 end
@@ -144,24 +144,11 @@ do
     end
 
     tpl = sub(tpl, '=== CEU_NMEM ===',     _MAIN.mem.max)
-    tpl = sub(tpl, '=== CEU_NTRACKS ===',  _AST.root.ns.trks)
-    tpl = sub(tpl, '=== CEU_NLSTS ===',    _AST.root.ns.lsts)
+    tpl = sub(tpl, '=== CEU_NTRAILS ===',  _AST.root.ns.trails)
+    tpl = sub(tpl, '=== CEU_NWCLOCKS ===', _AST.root.ns.wclocks)
+    tpl = sub(tpl, '=== CEU_NINTS ===',    _AST.root.ns.ints)
 
-    if _PROPS.has_news then
-        tpl = sub(tpl, '=== TCEU_NTRK ===', tps[_ENV.c.u32.len])
-        tpl = sub(tpl, '=== TCEU_NLST ===', tps[_ENV.c.u32.len])
-    else
-        tpl = sub(tpl, '=== TCEU_NTRK ===', tps[_ENV.c.tceu_ntrk.len])
-        tpl = sub(tpl, '=== TCEU_NLST ===', tps[_ENV.c.tceu_nlst.len])
-    end
-
-    tpl = sub(tpl, '=== TCEU_NEVT ===', tps[_ENV.c.tceu_nevt.len])
     tpl = sub(tpl, '=== TCEU_NLBL ===', tps[_ENV.c.tceu_nlbl.len])
-
-    if not _ENV.orgs_global then
-        tpl = sub(tpl, '=== CEU_CLS_PAR_ORG ===',  _MEM.cls.idx_org)
-        tpl = sub(tpl, '=== CEU_CLS_PAR_LBL ===',  _MEM.cls.idx_lbl)
-    end
 
     tpl = sub(tpl, '=== LABELS_ENUM ===', _LBLS.code_enum)
 
@@ -217,46 +204,6 @@ do
     --str = str..'#define IN_n  '..ins..'\n'
     str = str..'#define OUT_n '..outs..'\n'
 
-    local exts = ''
-    for ext, t in pairs(_AWAITS.t) do
-        if ext.pre=='input' then
-            exts = exts .. [[
-                case IN_]]..ext.id..[[:
-            ]]
-            -- last listeners are stacked first
-            for i=#t, 1, -1 do
-                local cls, lbl = unpack(t[i])
-                local vals = {}
-                if #cls.glbs == 0 then
-                    vals[#vals+1] = 'CEU.mem'
-                else
-                    for _, var in ipairs(cls.glbs) do
-                        local val = string.gsub(var.val, 'PTR_cur', 'PTR_glb')
-                        if var.arr then
-                            for i=1, var.arr do
-                                local v = 'PTR_org(void*,'..val..',('..
-                                            (i-1)..'*'..cls.mem.max..'))'
-                                vals[#vals+1] = v
-                            end
-                        else
-                            vals[#vals+1] = val
-                        end
-                    end
-                end
-                for _,val in ipairs(vals) do
-                    exts = exts .. [[
-                        ret++;
-                        ceu_trk_push(]]..lbl.id..[[, ]]..val..[[);
-                    ]]
-                end
-            end
-            exts = exts .. [[
-                break;
-            ]]
-        end
-    end
-    tpl = sub(tpl, '=== EVENTS ===', exts)
-
     -- FUNCTIONS called
     for id in pairs(_ENV.calls) do
         if id ~= '$anon' then
@@ -268,6 +215,7 @@ do
     local t = {
         has_exts    = 'CEU_EXTS',
         has_wclocks = 'CEU_WCLOCKS',
+        has_ints    = 'CEU_INTS',
         has_asyncs  = 'CEU_ASYNCS',
         has_pses    = 'CEU_PSES',
         has_fins    = 'CEU_FINS',
@@ -282,12 +230,8 @@ do
     end
 
     -- TODO: goto _OPTS
-    --str = str .. '#define CEU_DEBUG\n'
+    --str = str .. '#define CEU_DEBUG_TRAILS\n'
     str = str .. '#define CEU_DETERMINISTIC\n'
-
-    if _ENV.orgs_global then
-        str = str .. '#define CEU_ORGS_GLOBAL\n'
-    end
 
     if _OPTS.defs_file then
         local f = assert(io.open(_OPTS.defs_file,'w'))
@@ -311,7 +255,6 @@ end
 if _OPTS.verbose or true then
     local T = {
         mem  = _MAIN.mem.max,
-        trks = _AST.root.ns.trks,
         lsts = _AST.root.ns.lsts,
         evts = _MEM.evt_off+#_ENV.exts,
         lbls = #_LBLS.list,
@@ -324,9 +267,6 @@ if _OPTS.verbose or true then
         orgs    = _PROPS.has_orgs,
         news    = _PROPS.has_news,
         ifcs    = _PROPS.has_ifcs,
-
-        glb_orgs = _ENV.orgs_global,
-        glb_awts = _AWAITS.n,
     }
     local t = {}
     for k, v in pairs(T) do

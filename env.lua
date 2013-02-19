@@ -27,9 +27,6 @@ _ENV = {
         int      = _OPTS.tp_word,
         pointer  = _OPTS.tp_pointer,
 
-        tceu_ntrk = true,    -- props.lua
-        tceu_nlst = true,    -- props.lua
-        tceu_nevt = true,    -- mem.lua
         tceu_nlbl = true,    -- labels.lua
         tceu_ncls = true,    -- env.lua
 
@@ -37,8 +34,6 @@ _ENV = {
         --tceu_lst  = 8,    -- TODO
         --TODOtceu_wclock = _TP.ceil(4 + _OPTS.tp_lbl), -- TODO: perda de memoria
     },
-
-    orgs_global = true,
 }
 
 for k, v in pairs(_ENV.c) do
@@ -287,7 +282,6 @@ F = {
             if cls.glbs then
                 cls.glbs[#cls.glbs+1] = me.var
             end
-            _ENV.orgs_global = cls.glbs and _ENV.orgs_global
         end
     end,
 
@@ -384,7 +378,6 @@ F = {
             local _tp2 = _TP.deref(e2.tp)
             ASR(_tp2 and _ENV.clss[_tp2] and e2.lval,
                     me, 'invalid attribution')
-            _ENV.orgs_global = false    -- TODO: too conservative?
             return
         end
 
@@ -452,7 +445,6 @@ F = {
         ASR(not me.cls.is_ifc, me, 'cannot instantiate an interface')
         ASR(exp.lval and _TP.contains(exp.tp,me.cls.id..'*'),
                 me, 'invalid attribution')
-        _ENV.orgs_global = false  -- TODO: too conservative?
     end,
 
     CallStmt = function (me)

@@ -42,7 +42,7 @@ end
 
 F = {
     Root = function (me)
-        _ENV.c.tceu_nevt.len = _TP.n2bytes(_MEM.evt_off+#_ENV.exts)
+        ASR(_MEM.evt_off+#_ENV.exts, me, 'too many events')
 
         -- cls/ifc accessors
         local code = {}
@@ -138,7 +138,7 @@ DBG('', string.format('%8s',var.id), len)
             end
 
             -- we use offsets for events because of interfaces
-            if var.isEvt and (not _AWAITS.t[var]) then
+            if var.isEvt then
                 if len == 0 then
                     alloc(mem, 1)   -- dummy offset to avoid conflict
                 end
@@ -237,9 +237,9 @@ DBG('', string.format('%8s',var.id), len)
     AwaitExt = function (me)
         local e1 = unpack(me)
         if _TP.deref(e1.ext.tp) then
-            me.val = '(('.._TP.c(e1.ext.tp)..')_ceu_data_)'
+            me.val = '(('.._TP.c(e1.ext.tp)..')_ceu_evt_->ptr)'
         else
-            me.val = '*((int*)_ceu_data_)'
+            me.val = '*((int*)_ceu_evt_->ptr)'
         end
     end,
     AwaitT = function (me)

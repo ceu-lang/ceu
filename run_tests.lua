@@ -46,16 +46,12 @@ Test = function (t)
     if not check('ast')      then return end
     if not check('env')      then return end
     if not check('tight')    then return end
-    dofile 'awaits.lua'
-    --_AST.dump(_AST.root)
     if not check('props')    then return end
+    if not check('trails')   then return end
     if not check('labels')   then return end
+    --_AST.dump(_AST.root)
     if not check('mem')      then return end
     if not check('code')     then return end
-
-    if T.awaits then
-        assert(T.awaits==_AWAITS.n, 'awaits '.._AWAITS.n)
-    end
 
     if T.tot then
         assert(T.tot==_MEM.max, 'mem '.._MEM.max)
@@ -71,6 +67,11 @@ Test = function (t)
     end
     if T.run == nil then
         assert(T.loop or T.ana, 'missing run value')
+        return
+    end
+
+    -- TODO:
+    if _PROPS.has_pses or _PROPS.has_news then
         return
     end
 

@@ -25,11 +25,36 @@ function CASE (me, lbl)
     LINE(me, 'case '..lbl.id..':;', 0)
 end
 
+function DEBUG_TRAILS (me, lbl)
+    LINE(me, [[
+#ifdef CEU_DEBUG_TRAILS
+#ifdef CEU_ORGS
+fprintf(stderr, "TRK: o.%p / l.%d\n", _ceu_org_,]]
+    ..(lbl and lbl.id or '_ceu_lbl_')..[[);
+#else
+fprintf(stderr, "TRK: l.%d\n",]]
+    ..(lbl and lbl.id or '_ceu_lbl_')..[[);
+#endif
+#endif
+]])
+end
+
+function CASE2 (me, evt, lbl)
+    LINE(me, [[
+CEU.trails[ ]]..me.trails[1]..[[ ].lbl = ]]..lbl.id..[[;
+return;
+
+case ]]..lbl.id..[[:
+    if (_ceu_evt_->id != ]]..evt..[[)
+        return;
+]])
+end
+
 function LINE (me, line, spc)
     spc = spc or 4
     spc = string.rep(' ', spc)
     me.code = me.code ..
-                '#line '..me.ln..'\n'..
+                '//#line '..me.ln..'\n'..
                 spc .. line .. '\n'
 end
 
@@ -45,6 +70,9 @@ _ceu_org_ = ]]..org..[[;
     end
     LINE(me, [[
 _ceu_lbl_ = ]]..lbl.id..[[;
+]])
+    DEBUG_TRAILS(me)
+    LINE(me, [[
 goto _SWITCH_;
 ]])
 end
@@ -55,7 +83,10 @@ end
 
 function CLEAR (me)
     COMM(me, 'CLEAR')
+    LINE(me, 'ceu_trails_clr('..me.trails[1]..','..me.trails[2]..
+                                ', _ceu_org_);')
 
+--[[
     local has_orgs = me.has.orgs and 1 or 0
     local has_news = me.has.news and 1 or 0
     local has_chg  = me.has.chg  and 1 or 0
@@ -78,6 +109,7 @@ function CLEAR (me)
         LINE(me, 'ceu_lsts_clr('..orgs_news..', _ceu_org_, '
                     ..me.lbls[1]..','..me.lbls[2]..');')
     end
+]]
 end
 
 function ORG (me, new, org0, cls, par_org, par_lbl, lbl_cnt)
@@ -128,6 +160,12 @@ F = {
         end
 
         CASE(me, me.lbl)
+        if me == _MAIN then
+            LINE(me, [[
+memset(CEU.trails, CEU_INACTIVE, ]]..me.ns.trails..[[*sizeof(tceu_trail));
+CEU.trails[0].lbl = CEU_PENDING;
+]])
+        end
         LINE(me, [[
 #ifdef CEU_IFCS
 *PTR_org(tceu_ncls*, _ceu_org_, ]]..(_MEM.cls.idx_cls or '')..[[) = ]]..me.n..[[;
@@ -238,11 +276,11 @@ if (]]..exp.val..[[ != NULL) {
         end
 
         if me.fins then
-            COMM(me, 'FINALIZE')
-            LINE(me, 'ceu_lsts_ins(IN__FIN,_ceu_org_,_ceu_org_,'..
-                        me.lbl_fin.id..',0);')
-            LINE(me, 'memset(PTR_cur(u8*,'..me.off_fins..'), 0, '..
-                        #me.fins..');')
+            LINE(me, [[
+//  FINALIZE
+CEU.trails[ ]]..me.fins.trails[1]..[[ ].lbl = ]]..me.lbl_fin.id..[[;
+memset(PTR_cur(u8*,]]..me.off_fins..'), 0, '..#me.fins..[[);
+]])
         end
 
         CONC(me, blk)
@@ -250,24 +288,24 @@ if (]]..exp.val..[[ != NULL) {
         if me.fins then
             SWITCH(me, me.lbl_fin_cnt)
             CASE(me, me.lbl_fin)
-
-            -- TODO: normal if? (no control inside finally)
+            LINE(me, [[
+if (_ceu_evt_->id != IN__FIN)
+    return;
+]])
+            DEBUG_TRAILS(me)
             for i, fin in ipairs(me.fins) do
-                LINE(me, 'if (*PTR_cur(u8*,'..(me.off_fins+i-1)..')) {')
-                SWITCH(me, fin.lbl_true)
-                LINE(me, '} else {')
-                SWITCH(me, fin.lbl_false)
-                LINE(me, '}')
-
-                CASE(me, fin.lbl_true)
-                CONC(me, fin)
-                CASE(me, fin.lbl_false)
+                LINE(me, [[
+if (*PTR_cur(u8*,]]..(me.off_fins+i-1)..[[)) {
+]] .. fin.code .. [[
+}
+]])
             end
-
             HALT(me)
             CASE(me, me.lbl_fin_cnt)
         end
-        CLEAR(me)
+        if me.has.fins then
+            CLEAR(me)
+        end
     end,
 
     Finalize = function (me)
@@ -322,12 +360,21 @@ if (]]..exp.val..[[ != NULL) {
     _Par = function (me)
         -- Ever/Or/And spawn subs
         COMM(me, me.tag..': spawn subs')
-        -- last listeners are stacked first
-        for i=#me, 1, -1 do
-            if i == 1 then
+        for i=1, #me do
+            LINE(me, [[
+CEU.trails[ ]]..me[i].trails[1]..[[ ].lbl = CEU_PENDING;
+]])
+        end
+        for i=1, #me do
+            if i == #me then
                 SWITCH(me, me.lbls_in[i])
             else
-                LINE(me, 'ceu_trk_push('..me.lbls_in[i].id..', _ceu_org_);')
+                DEBUG_TRAILS(me, me.lbls_in[i])
+                LINE(me, [[
+ceu_call(_ceu_evt_, ]]..me.lbls_in[i].id..[[, _ceu_org_);
+if (CEU.trails[ ]]..me[i+1].trails[1]..[[ ].lbl != CEU_PENDING)
+    return;
+]])
             end
         end
     end,
@@ -337,6 +384,9 @@ if (]]..exp.val..[[ != NULL) {
         for i, sub in ipairs(me) do
             CASE(me, me.lbls_in[i])
             CONC(me, sub)
+            LINE(me, [[
+CEU.trails[ ]]..sub.trails[1]..[[ ].lbl = CEU_INACTIVE;
+]])
             HALT(me)
         end
     end,
@@ -362,7 +412,10 @@ if (]]..exp.val..[[ != NULL) {
         for i, sub in ipairs(me) do
             CASE(me, me.lbls_in[i])
             CONC(me, sub)
-            LINE(me, '*PTR_cur(u8*,'..(me.off+i-1)..') = 1; // open and')  -- open gate
+            LINE(me, [[
+CEU.trails[ ]]..sub.trails[1]..[[ ].lbl = CEU_INACTIVE;
+*PTR_cur(u8*,]]..(me.off+i-1)..[[) = 1; // open and gate
+]])
             SWITCH(me, me.lbl_tst)
         end
 
@@ -387,38 +440,30 @@ if (]]..c.val..[[) {
 ]])
     end,
 
-    Async_pos = function (me)
-        local vars,blk = unpack(me)
-        for _, n in ipairs(vars) do
-            ATTR(me, n.new, n.var)
-        end
-        LINE(me, 'ceu_async_enable(_ceu_org_,'..me.lbl.id..');')
-        HALT(me)
-        CASE(me, me.lbl)
-        CONC(me, blk)
-    end,
-
     Loop = function (me)
         local body = unpack(me)
 
-        LINE(me, 'for (;;) {')
+        LINE(me, [[
+for (;;) {
+]])
         CONC(me)
         local async = _AST.iter'Async'()
         if async then
             LINE(me, [[
 #ifdef ceu_out_pending
-if (ceu_out_pending()) {
+    if (ceu_out_pending()) {
 #else
-{
+    {
 #endif
-    ceu_async_enable(_ceu_org_,]]..me.lbl_asy.id..[[);
-    return;
+]])
+            CASE2(me, 'IN__ASYNC', me.lbl_asy)
+            LINE(me, [[
+    }
+]])
+        end
+        LINE(me, [[
 }
 ]])
-            CASE(me, me.lbl_asy)
-        end
-        LINE(me, '}')
-
         if me.has_break then
             CLEAR(me)
         end
@@ -452,8 +497,7 @@ if (ceu_out_pending()) {
         end
 
         assert(ext.pre == 'input')
-        local async = _AST.iter'Async'()
-        LINE(me, 'ceu_async_enable(_ceu_org_,'..me.lbl_cnt.id..');')
+
         if e2 then
             if _TP.deref(ext.tp) then
                 LINE(me, 'ceu_go_event(IN_'..ext.id
@@ -466,15 +510,15 @@ if (ceu_out_pending()) {
         else
             LINE(me, 'ceu_go_event(IN_'..ext.id ..', NULL);')
         end
-        HALT(me)
-        CASE(me, me.lbl_cnt)
+
+        CASE2(me, 'IN__ASYNC', me.lbl_cnt)
+        DEBUG_TRAILS(me)
     end,
 
     EmitT = function (me)
         local exp = unpack(me)
-        local async = _AST.iter'Async'()
-        LINE(me, 'ceu_async_enable(_ceu_org_,'..me.lbl_cnt.id..');')
         LINE(me, [[
+CEU.trails[ ]]..me.trails[1]..[[ ].lbl = ]]..me.lbl_cnt.id..[[;
 #ifdef CEU_WCLOCKS
 ceu_go_wclock(]]..exp.val..[[);
 while (CEU.wclk_min <= 0) {
@@ -484,8 +528,10 @@ return;
 #else
 return;
 #endif
+case ]]..me.lbl_cnt.id..[[:
+    if (_ceu_evt_->id != IN__ASYNC)
+        return;
 ]])
-        CASE(me, me.lbl_cnt)
     end,
 
     EmitInt = function (me)
@@ -498,58 +544,73 @@ return;
 
         local org = (int.org and int.org.val) or '_ceu_org_'
 
-        LINE(me, 'ceu_trk_push('..me.lbl_cnt.id..', _ceu_org_);')
+        LINE(me, [[
+CEU.trails[ ]]..me.trails[1]..[[ ].lbl = CEU_PENDING;
+{ tceu_evt evt = { ]]..(int.off or int.var.off)..[[, NULL }; // NULL=>org
+  ceu_trails_go(&evt); }
+if (CEU.trails[ ]]..me.trails[1]..[[ ].lbl != CEU_PENDING)
+    return;
+]])
+    end,
 
-        local t = _AWAITS.t[int.var]
-        if t then
-            -- last listeners are stacked first
-            for i=#t, 1, -1 do
-                local lbl = t[i]
-                LINE(me, 'ceu_trk_push('..lbl.id..','..org..');')
-            end
-        else
-            LINE(me, 'ceu_lsts_go('..(int.off or int.var.off)
-                        ..',0,'..org..');')
-        end
+    AwaitN = function (me)
+        LINE(me, [[
+CEU.trails[ ]]..me.trails[1]..[[ ].lbl = CEU_INACTIVE;
+return;
+]])
+    end,
 
-        HALT(me)
-        CASE(me, me.lbl_cnt)
+    AwaitT = function (me)
+        local exp,_ = unpack(me)
+        LINE(me, [[
+ceu_wclock_enable(]]..me.wclocks[1]..','..exp.val..[[);
+]])
+        CASE2(me, 'IN__WCLOCK', me.lbl)
+        LINE(me, [[
+if (CEU.wclks[ ]]..me.wclocks[1]..[[ ] != CEU_WCLOCK_EXPIRED)
+    return;
+]])
+        DEBUG_TRAILS(me)
     end,
 
     AwaitInt = function (me)
-        local int, glb = unpack(me)
-        COMM(me, 'await '..int.var.id)
-        if not _AWAITS.t[int.var] then
-            local org = (int.org and int.org.val) or '_ceu_org_'
-            LINE(me, 'ceu_lsts_ins('..(int.off or int.var.off)..','..org
-                        ..',_ceu_org_,'..me.lbl_awk.id..',0);')
-        end
-        HALT(me)
-        CASE(me, me.lbl_awk)
+        local int,_ = unpack(me)
+        LINE(me, [[
+CEU.trails[ ]]..me.trails[1]..[[ ].on = 0;
+]])
+        CASE2(me, (int.off or int.var.off), me.lbl)
+        LINE(me, [[
+if (!CEU.trails[ ]]..me.trails[1]..[[ ].on)
+    return;
+]])
+        LINE(me, [[
+// TODO: until cond
+]])
+        DEBUG_TRAILS(me)
     end,
-    AwaitN = function (me)
-        COMM(me, 'Never')
-        HALT(me, true)
-    end,
-    AwaitT = function (me)
-        local exp = unpack(me)
-        CONC(me, exp)
 
-        local val = exp.val
-        LINE(me, 'ceu_wclock_enable('..val..', _ceu_org_, '..me.lbl.id..');')
-
-        HALT(me, true)
-        CASE(me, me.lbl)
-    end,
     AwaitExt = function (me)
         local e,_ = unpack(me)
-        if not _AWAITS.t[e.ext] then
-            LINE(me, 'ceu_lsts_ins(IN_'..e.ext.id..',NULL,_ceu_org_,'
-                        ..me.lbl.id..',0);')
+        LINE(me, [[
+CEU.trails[ ]]..me.trails[1]..[[ ].on = 0;
+]])
+        CASE2(me, 'IN_'..e.ext.id, me.lbl)
+        LINE(me, [[
+// TODO: until cond
+]])
+        DEBUG_TRAILS(me)
+    end,
+
+    Async_pos = function (me)
+        local vars,blk = unpack(me)
+        for _, n in ipairs(vars) do
+            ATTR(me, n.new, n.var)
         end
-        HALT(me, true)
-        CASE(me, me.lbl)
+        CASE2(me, 'IN__ASYNC', me.lbl)
+        DEBUG_TRAILS(me)
+        CONC(me, blk)
     end,
 }
+-- TODO: rom -> mem, fazendo o teste do evt->id no lst_go
 
 _AST.visit(F)
