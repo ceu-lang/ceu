@@ -247,10 +247,10 @@ do
     if _OPTS.defs_file then
         local f = assert(io.open(_OPTS.defs_file,'w'))
         local h = [[
-int ceu_go_init ();
-int ceu_go_event (int id, void* data);
-int ceu_go_async ();
-int ceu_go_wclock (s32 dt);
+void ceu_go_init ();
+void ceu_go_event (int id, void* data);
+void ceu_go_async ();
+void ceu_go_wclock (s32 dt);
 ]]
         f:write(h..str)
         f:close()

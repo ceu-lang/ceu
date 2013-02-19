@@ -279,7 +279,7 @@ void ceu_trails_on ()
     }
 }
 
-int ceu_trails_go (u8 evt_id, tceu_evt_param evt_p)
+void ceu_trails_go (u8 evt_id, tceu_evt_param evt_p)
 {
     int i;
     for (i=0; i<CEU_NTRAILS; i++) {
@@ -287,7 +287,6 @@ int ceu_trails_go (u8 evt_id, tceu_evt_param evt_p)
             ceu_call(evt_id, evt_p,
                      CEU.trails[i].lbl, CEU.trails[i].org);
     }
-    return 1;   // TODO: remove
 }
 
 #ifdef CEU_PSES
@@ -339,7 +338,7 @@ void ceu_segfault (int sig_num) {
 
 //void ceu_go (void* data);     // TODO: place here?
 
-int ceu_go_init ()
+void ceu_go_init ()
 {
 #ifdef CEU_DEBUG
     signal(SIGSEGV, ceu_segfault);
@@ -352,39 +351,33 @@ int ceu_go_init ()
 #endif
 */
     ceu_call(0,(tceu_evt_param)NULL, Class_Main, &CEU.mem);
-    return 1;
 }
 
 // TODO: ret
 
 #ifdef CEU_EXTS
-int ceu_go_event (int id, void* data)
+void ceu_go_event (int id, void* data)
 {
-    int ret = 0;
     ceu_trails_on();
-    ret = ceu_trails_go(id, (tceu_evt_param)data);
-    return ret;
+    ceu_trails_go(id, (tceu_evt_param)data);
 }
 #endif
 
 #ifdef CEU_ASYNCS
-int ceu_go_async ()
+void ceu_go_async ()
 {
-    int ret;
     ceu_trails_on();
-    ret = ceu_trails_go(IN__ASYNC, (tceu_evt_param)NULL);
-    return ret;
+    ceu_trails_go(IN__ASYNC, (tceu_evt_param)NULL);
 }
 #endif
 
-int ceu_go_wclock (s32 dt)
+void ceu_go_wclock (s32 dt)
 {
-    int ret = 0;
     ceu_trails_on();
 
 #ifdef CEU_WCLOCKS
     if (CEU.wclk_min == CEU_WCLOCK_INACTIVE)
-        return 0;
+        return;
 
     if (CEU.wclk_min <= dt)
         CEU.wclk_late = dt - CEU.wclk_min;   // how much late the wclock is
@@ -407,8 +400,7 @@ int ceu_go_wclock (s32 dt)
 #endif
     }
 
-    ret = ceu_trails_go(IN__WCLOCK, (tceu_evt_param)NULL);
-    //ceu_go(NULL);
+    ceu_trails_go(IN__WCLOCK, (tceu_evt_param)NULL);
 
 #ifdef ceu_out_wclock
     ceu_out_wclock(CEU.wclk_min);
@@ -416,9 +408,10 @@ int ceu_go_wclock (s32 dt)
     CEU.wclk_late = 0;
 
 #endif   // CEU_WCLOCKS
-    return ret;
+    return;
 }
 
+// TODO
 #ifdef CEU_EXTS
 // returns a pointer to the received value
 int* ceu_ext_f (int* data, int v) {
