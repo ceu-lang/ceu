@@ -28,16 +28,6 @@ function AND_all (me, t)
     end
 end
 
-function PAR (f)
-    return
-    function (me)
-        for _, sub in ipairs(me) do
-            --ASR(sub.awaits, sub, 'parallel branch must await')
-        end
-        f(me)
-    end
-end
-
 function SAME (me, sub)
     me.awaits  = sub.awaits
     me.returns = sub.returns
@@ -58,9 +48,9 @@ F = {
 
     Stmts   = OR_all,
 
-    ParEver = PAR(OR_all),
-    ParAnd  = PAR(OR_all),
-    ParOr   = PAR(AND_all),
+    ParEver = OR_all,
+    ParAnd  = OR_all,
+    ParOr   = AND_all,
 
     If = function (me)
         local c, t, f = unpack(me)
@@ -103,11 +93,8 @@ F = {
         me.blocks = true
     end,
     AwaitInt = function (me)
-        local _, zero = unpack(me)
-        if not zero then
-            me.awaits = true
-            me.blocks = true
-        end
+        me.awaits = true
+        me.blocks = true
     end,
     AwaitT = function (me)
         me.awaits = true

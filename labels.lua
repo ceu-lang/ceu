@@ -77,22 +77,6 @@ F = {
         end
     end,
 
---[=[
-    Dcl_var = function (me)
-        local var = me.var
-        if var.cls then
-            var.lbl_cnt = new{'Dcl_cnt'}
-        elseif var.arr and _ENV.clss[_TP.deref(var.tp)] then
-            var.lbl_cnt = {}
-            for i=1, var.arr do
-                var.lbl_cnt[#var.lbl_cnt+1] = new{'Dcl_cnt'}
-            end
-        elseif _ENV.clss[_TP.noptr(var.tp)] or var.tp=='void*' then
-            var.lbl_cnt = new{'Dcl_cnt'}    -- used by `new´
-        end
-    end,
-]=]
-
     SetBlock_pre = function (me)
         me.lbl_out = new{'Set_out',  prio=me.depth}
     end,

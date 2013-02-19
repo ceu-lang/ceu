@@ -571,7 +571,7 @@ return;
     end,
 
     AwaitT = function (me)
-        local exp,_ = unpack(me)
+        local exp = unpack(me)
         CASE2(me, 'IN__WCLOCK', exp.val, me.wclocks[1], me.lbl)
         LINE(me, [[
 if (*ceu_wclocks_get(]]..me.wclocks[1]..[[,_ceu_org_) != CEU_WCLOCK_EXPIRED)
@@ -581,7 +581,7 @@ if (*ceu_wclocks_get(]]..me.wclocks[1]..[[,_ceu_org_) != CEU_WCLOCK_EXPIRED)
     end,
 
     AwaitInt = function (me)
-        local int,_ = unpack(me)
+        local int = unpack(me)
         local org = (int.org and int.org.val) or '_ceu_org_'
 
         LINE(me, [[

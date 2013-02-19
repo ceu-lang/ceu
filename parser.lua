@@ -94,7 +94,7 @@ KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'C'
      + 'return'   + 'sizeof'   + 'then'     + 'var'      + 'with'
      + TYPES
 -- ceu-orgs only
-     + 'await/0'  + 'class'    + 'global'   + 'interface'
+     + 'class'    + 'global'   + 'interface'
      + 'free'     + 'new'      + 'this'
      + 'nothing'
      + 'continue'
@@ -252,10 +252,8 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
 
     , Pause    = K'pause/if' * EV'Var' * V'_Do'
 
-    , AwaitExt = K'await'   * EV'Ext'  * Cc(false)
-               + K'await/0' * EV'Ext'  * Cc(true)
-    , AwaitInt = K'await'   * EV'_Exp' * Cc(false)
-               + K'await/0' * EV'_Exp' * Cc(true)
+    , AwaitExt = K'await' * EV'Ext'
+    , AwaitInt = K'await' * EV'_Exp'
     , AwaitN   = K'await' * K'FOREVER'
     , AwaitT   = K'await' * (V'WCLOCKK'+V'WCLOCKE')
 

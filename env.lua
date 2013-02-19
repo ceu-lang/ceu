@@ -329,7 +329,7 @@ F = {
     end,
 
     AwaitInt = function (me)
-        local exp,_ = unpack(me)
+        local exp = unpack(me)
         local var = exp.var
         ASR(var and var.isEvt, me,
                 'event "'..(var and var.id or '?')..'" is not declared')
