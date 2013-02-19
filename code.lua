@@ -208,7 +208,7 @@ ceu_trails_set(0, CEU_PENDING, _ceu_org_);
 
     Host = function (me)
         _CODE.host = _CODE.host ..
-            '#line '..(me.ln+1)..'\n' ..
+            '//#line '..(me.ln+1)..'\n' ..
             me[1] .. '\n'
     end,
 
@@ -371,6 +371,7 @@ if (*PTR_cur(u8*,]]..(me.off_fins+i-1)..[[)) {
         -- Ever/Or/And spawn subs
         COMM(me, me.tag..': spawn subs')
         for i=1, #me do
+            -- TODO: ROM: set/get only if can kill
             LINE(me, [[
 ceu_trails_set(]]..me[i].trails[1]..[[, CEU_PENDING, _ceu_org_);
 ]])
@@ -394,6 +395,7 @@ if (ceu_trails_get(]]..me[i+1].trails[1]..[[,_ceu_org_)->lbl != CEU_PENDING)
         for i, sub in ipairs(me) do
             CASE(me, me.lbls_in[i])
             CONC(me, sub)
+            -- TODO: ROM only if can terminate
             LINE(me, [[
 ceu_trails_set(]]..sub.trails[1]..[[, CEU_INACTIVE, _ceu_org_);
 ]])
@@ -554,6 +556,7 @@ case ]]..me.lbl_cnt.id..[[:
 
         local org = (int.org and int.org.val) or '_ceu_org_'
 
+        -- TODO: ROM: set/get only if can be killed
         LINE(me, [[
 ceu_trails_set(]]..me.trails[1]..[[,CEU_PENDING,_ceu_org_);
 ceu_trails_go(]]..(int.off or int.var.off)
@@ -572,7 +575,7 @@ return;
 
     AwaitT = function (me)
         local exp = unpack(me)
-        CASE2(me, 'IN__WCLOCK', exp.val, me.wclocks[1], me.lbl)
+        CASE2(me, 'IN__WCLOCK', '(s32)'..exp.val, me.wclocks[1], me.lbl)
         LINE(me, [[
 if (*ceu_wclocks_get(]]..me.wclocks[1]..[[,_ceu_org_) != CEU_WCLOCK_EXPIRED)
     return;
@@ -583,14 +586,8 @@ if (*ceu_wclocks_get(]]..me.wclocks[1]..[[,_ceu_org_) != CEU_WCLOCK_EXPIRED)
     AwaitInt = function (me)
         local int = unpack(me)
         local org = (int.org and int.org.val) or '_ceu_org_'
-
-        LINE(me, [[
-ceu_trails_get(]]..me.trails[1]..[[,_ceu_org_)->on = 0;
-]])
         CASE2(me, (int.off or int.var.off), '(void*)'..org, me.ints[1], me.lbl)
         LINE(me, [[
-if (! ceu_trails_get(]]..me.trails[1]..[[,_ceu_org_)->on)
-    return;
 #ifdef CEU_ORGS
 if (*ceu_ints_get(]]..me.ints[1]..[[,_ceu_org_) != _ceu_evt_p_.org)
     return;
@@ -602,9 +599,6 @@ if (*ceu_ints_get(]]..me.ints[1]..[[,_ceu_org_) != _ceu_evt_p_.org)
 
     AwaitExt = function (me)
         local e,_ = unpack(me)
-        LINE(me, [[
-ceu_trails_get(]]..me.trails[1]..[[,_ceu_org_)->on = 0;
-]])
         CASE2(me, 'IN_'..e.ext.id, 0, 0, me.lbl)
         LINE(me, [[
 // TODO: until cond

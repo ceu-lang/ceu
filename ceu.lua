@@ -266,9 +266,12 @@ end
 if _OPTS.verbose or true then
     local T = {
         mem  = _MAIN.mem.max,
-        lsts = _AST.root.ns.lsts,
         evts = _MEM.evt_off+#_ENV.exts,
         lbls = #_LBLS.list,
+
+        trls       = _AST.root.ns.trails,
+        trls_wclks = _AST.root.ns.wclocks,
+        trls_ints  = _AST.root.ns.ints,
 
         exts    = _PROPS.has_exts,
         wclocks = _PROPS.has_wclocks,
