@@ -17,10 +17,6 @@ do  -- _MEM.cls
         _MEM.cls.idx_wclock0 = off
         off = off + _ENV.c.tceu_ntrl.len
     end
-    if _PROPS.has_ints then
-        _MEM.cls.idx_int0 = off
-        off = off + _ENV.c.tceu_ntrl.len
-    end
 end
 
 function alloc (mem, n)
@@ -97,9 +93,6 @@ F = {
         alloc(me.mem, _ENV.c.tceu_ntrl.len)     -- trail0
         if _PROPS.has_wclocks then
             alloc(me.mem, _ENV.c.tceu_ntrl.len)     -- wclock0
-        end
-        if _PROPS.has_ints then
-            alloc(me.mem, _ENV.c.tceu_ntrl.len)     -- int0
         end
     end,
     Dcl_cls = function (me)

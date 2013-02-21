@@ -146,7 +146,6 @@ do
     tpl = sub(tpl, '=== CEU_NMEM ===',     _AST.root.mem.max)
     tpl = sub(tpl, '=== CEU_NTRAILS ===',  _AST.root.ns.trails)
     tpl = sub(tpl, '=== CEU_NWCLOCKS ===', _AST.root.ns.wclocks)
-    tpl = sub(tpl, '=== CEU_NINTS ===',    _AST.root.ns.ints)
 
     tpl = sub(tpl, '=== TCEU_NLBL ===', tps[_ENV.c.tceu_nlbl.len])
     tpl = sub(tpl, '=== TCEU_NTRL ===', tps[_ENV.c.tceu_ntrl.len])
@@ -155,9 +154,6 @@ do
         tpl = sub(tpl, '=== CEU_CLS_TRAIL0 ===',  _MEM.cls.idx_trail0)
         if _PROPS.has_wclocks then
             tpl = sub(tpl, '=== CEU_CLS_WCLOCK0 ===', _MEM.cls.idx_wclock0)
-        end
-        if _PROPS.has_ints then
-            tpl = sub(tpl, '=== CEU_CLS_INT0 ===',    _MEM.cls.idx_int0)
         end
     end
 
@@ -226,7 +222,6 @@ do
     local t = {
         has_exts    = 'CEU_EXTS',
         has_wclocks = 'CEU_WCLOCKS',
-        has_ints    = 'CEU_INTS',
         has_asyncs  = 'CEU_ASYNCS',
         has_pses    = 'CEU_PSES',
         has_fins    = 'CEU_FINS',
@@ -271,7 +266,6 @@ if _OPTS.verbose or true then
 
         trls       = _AST.root.ns.trails,
         trls_wclks = _AST.root.ns.wclocks,
-        trls_ints  = _AST.root.ns.ints,
 
         exts    = _PROPS.has_exts,
         wclocks = _PROPS.has_wclocks,

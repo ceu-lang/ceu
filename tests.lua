@@ -8,6 +8,14 @@ return a;
     run = 1,
 }
 
+Test { [[
+C _char=1;
+tmp _char a = <_char> 1;
+return <int>a;
+]],
+    run = 1,
+}
+
 --do return end
 
 Test { [[return(1);]],

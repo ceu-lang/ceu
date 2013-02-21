@@ -9,7 +9,6 @@ STATS = {
     mem     = 0,
     trails  = 0,
     wclocks = 0,
-    ints    = 0,
 }
 
 VALGRIND = ...
@@ -64,7 +63,6 @@ Test = function (t)
     STATS.mem     = STATS.mem     + _AST.root.mem.max
     STATS.trails  = STATS.trails  + _AST.root.ns.trails
     STATS.wclocks = STATS.wclocks + _AST.root.ns.wclocks
-    STATS.ints    = STATS.ints    + _AST.root.ns.ints
 
     if T.tot then
         assert(T.tot==_MEM.max, 'mem '.._MEM.max)
@@ -147,12 +145,10 @@ STATS = {
     mem     = ]]..STATS.mem    ..[[,
     trails  = ]]..STATS.trails ..[[,
     wclocks = ]]..STATS.wclocks..[[,
-    ints    = ]]..STATS.ints   ..[[,
 }
 ]])
 
-assert(STATS.count   ==  1057)
-assert(STATS.mem     ==  7619)
-assert(STATS.trails  ==  1954)
+assert(STATS.count   ==  1058)
+assert(STATS.mem     ==  7355)
+assert(STATS.trails  ==  1955)
 assert(STATS.wclocks ==   298)
-assert(STATS.ints    ==   295)

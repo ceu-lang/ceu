@@ -32,7 +32,6 @@
 #define CEU_NMEM       (=== CEU_NMEM ===)
 #define CEU_NTRAILS    (=== CEU_NTRAILS ===)
 #define CEU_NWCLOCKS   (=== CEU_NWCLOCKS ===)
-#define CEU_NINTS      (=== CEU_NINTS ===)
 
 #ifdef CEU_IFCS
 #define CEU_NCLS       (=== CEU_NCLS ===)
@@ -73,8 +72,8 @@ typedef struct {
 typedef union {
     void*   ptr;        // exts
     int     v;          // exts
-    void*   org;        // ints
     s32     dt;         // wclocks
+    void*   org;        // ints
 } tceu_evt_param;
 
 enum {
@@ -99,12 +98,6 @@ typedef struct {
     s32         wclocks[CEU_NWCLOCKS];
     #endif
 
-    #ifdef CEU_ORGS
-    #ifdef CEU_INTS
-    void*       ints[CEU_NINTS];
-    #endif
-    #endif
-
     tceu_trail  trails[CEU_NTRAILS];
 
     char        mem[CEU_NMEM];
@@ -124,11 +117,6 @@ tceu CEU = {
 #endif
 #ifdef CEU_WCLOCKS
     {},
-#endif
-#ifdef CEU_ORGS
-#ifdef CEU_INTS
-    {},
-#endif
 #endif
     {},
     {}                          // TODO: o q ele gera?
@@ -190,23 +178,6 @@ s32* ceu_wclocks_get (int idx, void* org) {
 #endif
 #endif
 
-#ifdef CEU_ORGS
-#ifdef CEU_INTS
-void** ceu_ints_get (int idx, void* org) {
-#ifdef CEU_ORGS
-    return &CEU.ints[
-                *PTR_org(tceu_ntrl*,org,=== CEU_CLS_INT0 ===) + idx
-            ];
-#else
-    return &CEU.ints[idx];
-#endif
-}
-#ifndef CEU_ORGS
-#define ceu_ints_get(a,b) ceu_ints_get(a,NULL)
-#endif
-#endif
-#endif
-
 void ceu_trails_set (int idx, tceu_nlbl lbl, void* org) {
 #ifdef CEU_ORGS
     tceu_trail* trl = ceu_trails_get(idx, org);
@@ -239,14 +210,6 @@ void ceu_trails_set_evt (u8 evt_id, tceu_evt_param evt_p, int evt_idx,
 #ifdef ceu_out_async
     if (evt_id == IN__ASYNC) {
         ceu_out_async(1);
-    }
-#endif
-#endif
-
-#ifdef CEU_ORGS
-#ifdef CEU_INTS
-    if (evt_id <= IN__FIN) {
-        *ceu_ints_get(evt_idx,org) = evt_p.org;
     }
 #endif
 #endif

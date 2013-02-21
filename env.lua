@@ -90,7 +90,7 @@ function newvar (me, blk, pre, tp, dim, id)
         elseif stmt.tag == 'Block' then
             for _, var in ipairs(stmt.vars) do
                 ASR(var.id~=id or var.blk~=blk, me,
-                    'variable/event "a" is already declared at line '..var.ln)
+                    'variable/event "'..var.id..'" is already declared at line '..var.ln)
                 WRN(var.id~=id, me,
                     'declaration of "'..id..'" hides the one at line '..var.ln)
             end
