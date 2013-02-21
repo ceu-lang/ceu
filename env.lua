@@ -89,6 +89,8 @@ function newvar (me, blk, pre, tp, dim, id)
             break
         elseif stmt.tag == 'Block' then
             for _, var in ipairs(stmt.vars) do
+                ASR(var.id~=id or var.blk~=blk, me,
+                    'variable/event "a" is already declared at line '..var.ln)
                 WRN(var.id~=id, me,
                     'declaration of "'..id..'" hides the one at line '..var.ln)
             end
@@ -97,7 +99,7 @@ function newvar (me, blk, pre, tp, dim, id)
 
     local tp_raw = _TP.noptr(tp)
     local c = _ENV.c[tp_raw]
-    local isEvt = (pre ~= 'var')
+    local isEvt = (pre == 'event')
 
     ASR(_ENV.clss[tp_raw] or (c and c.tag=='type'),
         me, 'undeclared type `'..tp_raw..'´')

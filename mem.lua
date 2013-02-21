@@ -47,6 +47,7 @@ end
 F = {
     Root = function (me)
         ASR(_MEM.evt_off+#_ENV.exts, me, 'too many events')
+        me.mem = _MAIN.mem
 
         -- cls/ifc accessors
         local code = {}
@@ -122,7 +123,9 @@ F = {
 
         for _, var in ipairs(me.vars) do
             local len
-            if var.cls then
+            if var.pre == 'tmp' then
+                len = 0
+            elseif var.cls then
                 len = var.cls.mem.max
             elseif var.arr then
                 local _tp = _TP.deref(var.tp)
@@ -138,7 +141,9 @@ F = {
             var.off = alloc(mem, len)
 DBG('', string.format('%8s',var.id), len)
 
-            if var.cls or var.arr then
+            if var.pre == 'tmp' then
+                var.val = '__ceu_'..var.id
+            elseif var.cls or var.arr then
                 var.val = 'PTR_cur('.._TP.c(var.tp)..','..var.off..')'
             else
                 var.val = '(*PTR_cur('.._TP.c(var.tp)..'*,'..var.off..'))'

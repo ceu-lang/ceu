@@ -2,8 +2,15 @@
 
 dofile 'pak.lua'
 
-COUNT = 0
 T = nil
+
+STATS = {
+    count   = 0,
+    mem     = 0,
+    trails  = 0,
+    wclocks = 0,
+    ints    = 0,
+}
 
 VALGRIND = ...
 
@@ -24,7 +31,6 @@ Test = function (t)
     local str_input = T[1]
     --local str_input = 'C _fprintf(), _stderr;'..T[1]
     print('\n=============\n---\n'..str_input..'\n---\n')
-    COUNT = COUNT + 1
 
     --assert(T.todo == nil)
     if T.todo then
@@ -42,6 +48,8 @@ Test = function (t)
     dofile 'tp.lua'
     dofile 'lines.lua'
 
+    STATS.count = STATS.count   + 1
+
     if not check('parser')   then return end
     if not check('ast')      then return end
     if not check('env')      then return end
@@ -52,6 +60,11 @@ Test = function (t)
     --_AST.dump(_AST.root)
     if not check('mem')      then return end
     if not check('code')     then return end
+
+    STATS.mem     = STATS.mem     + _AST.root.mem.max
+    STATS.trails  = STATS.trails  + _AST.root.ns.trails
+    STATS.wclocks = STATS.wclocks + _AST.root.ns.wclocks
+    STATS.ints    = STATS.ints    + _AST.root.ns.ints
 
     if T.tot then
         assert(T.tot==_MEM.max, 'mem '.._MEM.max)
@@ -124,4 +137,22 @@ Test = function (t)
 end
 
 dofile 'tests.lua'
-print('Number of tests: '..COUNT)
+
+print([[
+
+=====================================
+
+STATS = {
+    count   = ]]..STATS.count  ..[[,
+    mem     = ]]..STATS.mem    ..[[,
+    trails  = ]]..STATS.trails ..[[,
+    wclocks = ]]..STATS.wclocks..[[,
+    ints    = ]]..STATS.ints   ..[[,
+}
+]])
+
+assert(STATS.count   ==  1057)
+assert(STATS.mem     ==  7619)
+assert(STATS.trails  ==  1954)
+assert(STATS.wclocks ==   298)
+assert(STATS.ints    ==   295)

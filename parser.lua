@@ -98,6 +98,7 @@ KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'C'
      + 'free'     + 'new'      + 'this'
      + 'nothing'
      + 'continue'
+     + 'tmp'
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
@@ -281,8 +282,10 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , __Dcl_int = EV'ID_int' * (V'_Sets' +
                                 Cc(false)*Cc(false)*Cc(false))
 
-    , _Dcl_var  = CK'var' * EV'ID_type' * (K'['*V'_Exp'*K']'+Cc(false)) *
-                    V'__Dcl_var' * (K','*V'__Dcl_var')^0 * -K'with'
+    , _Dcl_var  = (CK'var' + CK'tmp')
+                * EV'ID_type' * (K'['*V'_Exp'*K']'+Cc(false))
+                * V'__Dcl_var' * (K','*V'__Dcl_var')^0 * -K'with'
+
     , __Dcl_var = EV'ID_var' * (V'_Sets' +
                                 Cc(false)*Cc(false)*Cc(false))
 

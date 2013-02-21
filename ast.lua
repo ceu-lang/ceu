@@ -77,7 +77,7 @@ function _AST.dump (me, spc)
     end
     --local t=0; for _ in pairs(me.aw.t) do t=t+1 end
     --ks = 'n='..(me.aw.n or '?')..',t='..t..',ever='..(me.aw.forever_ and 1 or 0)
-    --ks = table.concat(me.trails,'-')
+    ks = table.concat(me.trails,'-')
     DBG(string.rep(' ',spc) .. me.tag .. ' ('..ks..')')
     for i, sub in ipairs(me) do
         if _AST.isNode(sub) then
@@ -360,9 +360,9 @@ local C; C = {
         if id == 'Main' then
             blk = node('Block')(ln,
                     node('Stmts')(ln,
-                        node('Dcl_var')(ln, 'var', 'int', false, '$ret'),
+                        node('Dcl_var')(ln, 'tmp', 'int', false, '_ret'),
                         node('SetBlock')(ln,
-                            node('Var')(ln,'$ret'),
+                            node('Var')(ln,'_ret'),
                             blk)))
         end
 

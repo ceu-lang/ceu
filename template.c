@@ -1,4 +1,4 @@
-//#line 0 "=== FILENAME ==="
+#line 0 "=== FILENAME ==="
 === DEFS ===
 
 #include <string.h>

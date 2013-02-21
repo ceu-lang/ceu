@@ -1,6 +1,13 @@
 --[===[
 --]===]
 
+Test { [[
+tmp int a = 1;
+return a;
+]],
+    run = 1,
+}
+
 --do return end
 
 Test { [[return(1);]],
@@ -129,12 +136,13 @@ Test { [[var int a = 1;]],
     }
 }
 Test { [[var int a=1;var int a=0; return a;]],
-    --env = 'variable/event "a" is already declared',
+    env = 'ERR : line 1 : variable/event "a" is already declared at line 1',
+}
+Test { [[do var int a=1; end var int a=0; return a;]],
     run = 0,
 }
 Test { [[var int a=1,a=0; return a;]],
-    --env = 'variable/event "a" is already declared',
-    run = 0,
+    env = 'ERR : line 1 : variable/event "a" is already declared at line 1',
 }
 Test { [[var int a; a = b = 1]],
     parser = "ERR : line 1 : after `b´ : expected `;´",
@@ -170,9 +178,17 @@ Test { [[var int a; a=1 ; ]],
 Test { [[
 C _abc = 0;
 event void a;
-var _abc a;
+var _abc b;
 ]],
     env = 'ERR : line 3 : cannot instantiate type "_abc"',
+}
+
+Test { [[
+C _abc = 0;
+event void a;
+var _abc a;
+]],
+    env = 'ERR : line 3 : variable/event "a" is already declared at line 2',
 }
 
 Test { [[
@@ -472,7 +488,7 @@ return v;
 
 Test { [[
 input int A;
-var int v = await A;
+tmp int v = await A;
 return v;
 ]],
     run = {
@@ -1773,7 +1789,7 @@ end;
 Test{ [[
 input int E;
 loop do
-    var int v = await E;
+    tmp int v = await E;
     if v then
     else
     end;
@@ -2712,7 +2728,7 @@ par/and do
     await A;
     a = 1+2+3+4;
 with
-    var int v = await B;
+    tmp int v = await B;
     b = 100+v;
     ret = a + b;
 end;
@@ -3667,7 +3683,7 @@ return a;
 Test { [[
 var int a = 2;
 par/or do
-    var int b = await (10)us;
+    tmp int b = await (10)us;
     a = b;
 with
     await 20ms;
@@ -3933,7 +3949,7 @@ input void T;
 var int ret = 0;
 par/or do
     loop do
-        var int late = await 10ms;
+        tmp int late = await 10ms;
         ret = ret + late;
         _assert(late <= 10000);
     end
@@ -6383,7 +6399,7 @@ Test { [[
 input int A;
 var int ret;
 loop do
-    var int v = await A;
+    tmp int v = await A;
     if v == 5 then
         ret = 10;
         break;
@@ -6401,7 +6417,7 @@ Test { [[
 input int B;
 var int a = 0;
 loop do
-    var int b = await B;
+    tmp int b = await B;
     a = a + b;
     if a == 5 then
         return 10;
@@ -6457,7 +6473,7 @@ Test { [[
 input int A;
 event int a;
 loop do
-    var int v = await A;
+    tmp int v = await A;
     if v==2 then
         return a;
     else
@@ -6931,7 +6947,7 @@ await Z;
 await D;
 await E;
 await F;
-var int g = await G;
+tmp int g = await G;
 if g then
     await H;
 else
@@ -7656,7 +7672,7 @@ input int A;
 event int a;
 par/or do
     loop do
-        var int v = await A;
+        tmp int v = await A;
         emit a=v;
     end;
 with
@@ -8572,7 +8588,7 @@ loop do
     par/or do
         await B;
     with
-        var int v = await B;
+        tmp int v = await B;
         b = v;
         break;
     end;
@@ -10184,7 +10200,7 @@ input int P2;
 par do
     loop do
         par/or do
-            var int p2 = await P2;
+            tmp int p2 = await P2;
             if p2 == 1 then
                 return 0;
             end;
@@ -13138,7 +13154,9 @@ return ret;
 Test { [[
 var int a = 1;
 var int* b = &a;
+do
 var int a = 0;
+end
 return *b;
 ]],
     run = 1,
@@ -15175,7 +15193,7 @@ par do
                 end
             with
                 loop do
-                    var int key = await KEY;
+                    tmp int key = await KEY;
                     if key == 1 then
                         ship = 0;
                     end
@@ -15447,7 +15465,7 @@ par/or do
 with
     await 1us;
 end
-var int v = await 1us;
+tmp int v = await 1us;
 return v;
 ]],
     run = { ['~>1us; ~>F; ~>4us; ~>F']=3 }
@@ -15832,11 +15850,11 @@ do
     _V = _V + 1;
 end
 
-var T t;
+var T t1;
 _V = _V*3;
-var T t;
+var T t2;
 _V = _V*3;
-var T t;
+var T t3;
 _V = _V*3;
 return _V;
 ]],
@@ -17196,7 +17214,7 @@ return _f(&a.a,&b.a);
 Test { [[
 input void START,B;
 class T with
-    event int e, ok, go, b;
+    event int ok, go, b;
     event void e, f;
     var int v;
 do
@@ -19360,7 +19378,7 @@ par do
     end
 with
     loop do
-        var int v = await b.i;
+        tmp int v = await b.i;
         emit b.x=v+1;
         _ret_val = _ret_val + b.i*2;
         _ret_end = 1;
@@ -20047,5 +20065,3 @@ end
     tot = 12,
 }
 ]==]
-
-print('COUNT', COUNT)

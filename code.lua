@@ -55,7 +55,7 @@ function LINE (me, line, spc)
     spc = spc or 4
     spc = string.rep(' ', spc)
     me.code = me.code ..
-                '//#line '..me.ln..'\n'..
+                '#line '..me.ln..'\n'..
                 spc .. line .. '\n'
 end
 
@@ -183,16 +183,12 @@ ceu_trails_set(0, CEU_PENDING, _ceu_org_);
         CONC_ALL(me)
 
         if me == _MAIN then
-            local ret = _ENV.getvar('$ret', me.blk_ifc)
             LINE(me, [[
 #ifdef CEU_NEWS
     free(CEU.lsts);
     free(CEU.trks);
     CEU.lsts = NULL;    // subsequent events have no effect
     CEU.trks = NULL;
-#endif
-#ifdef ceu_out_end
-    ceu_out_end(]]..ret.val..[[);
 #endif
 ]])
         end
@@ -208,7 +204,7 @@ ceu_trails_set(0, CEU_PENDING, _ceu_org_);
 
     Host = function (me)
         _CODE.host = _CODE.host ..
-            '//#line '..(me.ln+1)..'\n' ..
+            '#line '..(me.ln+1)..'\n' ..
             me[1] .. '\n'
     end,
 
@@ -274,6 +270,13 @@ if (]]..exp.val..[[ != NULL) {
                 fin.idx = me.off_fins + i - 1
             end
         end
+        LINE(me, '{')
+        for _, var in ipairs(me.vars) do
+            if var.pre == 'tmp' then
+                ASR(not var.arr, me, 'temporary arrays are not yet supported')
+                LINE(me, var.tp..' __ceu_'..var.id..';')
+            end
+        end
     end,
 
     Block = function (me)
@@ -314,6 +317,7 @@ if (*PTR_cur(u8*,]]..(me.off_fins+i-1)..[[)) {
         if me.has.fins then
             CLEAR(me)
         end
+        LINE(me, '}')
     end,
 
     Finalize = function (me)
@@ -343,6 +347,13 @@ if (*PTR_cur(u8*,]]..(me.off_fins+i-1)..[[)) {
         end
 ]=]
         ATTR(me, e1, e2)
+        if e1.tag=='Var' and e1.var.id=='_ret' then
+            LINE(me, [[
+#ifdef ceu_out_end
+    ceu_out_end(]]..e1.val..[[);
+#endif
+]])
+        end
 
         -- enable finalize
         if fin and fin.active then

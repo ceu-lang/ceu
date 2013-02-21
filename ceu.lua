@@ -143,7 +143,7 @@ do
         return string.sub(str, 1, i-1) .. to .. string.sub(str, e+1)
     end
 
-    tpl = sub(tpl, '=== CEU_NMEM ===',     _MAIN.mem.max)
+    tpl = sub(tpl, '=== CEU_NMEM ===',     _AST.root.mem.max)
     tpl = sub(tpl, '=== CEU_NTRAILS ===',  _AST.root.ns.trails)
     tpl = sub(tpl, '=== CEU_NWCLOCKS ===', _AST.root.ns.wclocks)
     tpl = sub(tpl, '=== CEU_NINTS ===',    _AST.root.ns.ints)
@@ -265,7 +265,7 @@ end
 
 if _OPTS.verbose or true then
     local T = {
-        mem  = _MAIN.mem.max,
+        mem  = _AST.root.mem.max,
         evts = _MEM.evt_off+#_ENV.exts,
         lbls = #_LBLS.list,
 
