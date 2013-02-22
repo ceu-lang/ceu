@@ -144,6 +144,11 @@ F = {
         else
             SAME(me, me[#me])
         end
+--[[
+        if me.aw.t and #me.aw.t>0 then -- +1 trail for all global awaits
+            --me.ns.trails = me.ns.trails + 1
+        end
+]]
     end,
 
     Dcl_ext = function (me)

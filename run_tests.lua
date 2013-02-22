@@ -53,6 +53,7 @@ Test = function (t)
     if not check('ast')      then return end
     if not check('env')      then return end
     if not check('tight')    then return end
+    --dofile 'awaits.lua'
     if not check('props')    then return end
     if not check('trails')   then return end
     if not check('labels')   then return end
@@ -62,6 +63,12 @@ Test = function (t)
 
     STATS.mem     = STATS.mem     + _AST.root.mem.max
     STATS.trails  = STATS.trails  + _AST.root.ns.trails
+
+--[[
+    if T.awaits then
+        assert(T.awaits==_AWAITS.n, 'awaits '.._AWAITS.n)
+    end
+]]
 
     if T.tot then
         assert(T.tot==_MEM.max, 'mem '.._MEM.max)

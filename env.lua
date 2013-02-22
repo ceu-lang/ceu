@@ -273,6 +273,8 @@ F = {
         me.var = newvar(me, _AST.iter'Block'(), pre, tp, dim and dim.sval, id)
         me.var.read_only = me.read_only
 
+--[=[
+-- TODO: remove!
         local cls = me.var.cls or
                     me.var.arr and _ENV.clss[_TP.deref(me.var.tp)]
         if cls then
@@ -283,6 +285,7 @@ F = {
                 cls.glbs[#cls.glbs+1] = me.var
             end
         end
+]=]
     end,
 
     Dcl_imp = function (me)

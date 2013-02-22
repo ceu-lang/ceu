@@ -19518,6 +19518,8 @@ end
     run = { ['~>A; ~>A']=2 },
 }
 
+--do return end
+
 -- GLOBAL AWAITS (deprecated)
 
 Test { [[
@@ -19670,7 +19672,7 @@ loop do
     end
 end
 ]],
-    awaits = 0,
+    awaits = 1,
     run = false,
 }
 
@@ -19715,9 +19717,10 @@ with
     end
 end
 ]],
-    awaits = 1,
+    awaits = 3,
     run = false,
 }
+--do return end
 
 Test { [[
 input int A, B;
@@ -19817,7 +19820,7 @@ with
 end
 ]],
     run = false,
-    awaits = 0,
+    awaits = 2,
 }
 
 --[==[

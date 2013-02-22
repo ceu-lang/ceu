@@ -122,6 +122,7 @@ do
     dofile 'ast.lua'
     dofile 'env.lua'
     dofile 'tight.lua'
+    --dofile 'awaits.lua'
     dofile 'props.lua'
     dofile 'trails.lua'
     dofile 'labels.lua'

@@ -6,8 +6,13 @@ function SAME (me, sub)
 end
 
 function U (s1, s2)
+    for i, v in ipairs(s2) do
+        s1[#s1+1] = v
+    end
     for k,v in pairs(s2) do
-        s1[k] = v
+        if type(k) ~= 'number' then
+            s1[k] = v
+        end
     end
 end
 
@@ -15,11 +20,8 @@ function MIN (a, b)
     return (a < b) and a or b
 end
 
-local ALL = {}
-
 _AWAITS = {
     n = 0,      -- number of global awaits
-    t = {},     -- [id]={} --> [id]={l1,l2,...}
 }
 
 F = {
@@ -37,6 +39,14 @@ F = {
             end
         end
     end,
+
+    Root = function (me)
+        for _, cls in ipairs(me) do
+            _AWAITS.n = _AWAITS.n + #cls.aw.t
+        end
+    end,
+
+-- TODO: remove all!
 --[[
     Node_pos = function (me)
         if me.aw.n == 1 then
@@ -45,7 +55,6 @@ F = {
             end
         end
     end,
-]]
 
     Root = function (me)
         for _, cls in ipairs(me) do
@@ -76,6 +85,7 @@ F = {
             --_AWAITS.t[id] = nil
         --end
     end,
+]]
 
     Stmts = function (me)
         local last = me[#me]
@@ -183,18 +193,22 @@ F = {
     SetAwait = function (me)
         SAME(me, me[2])
     end,
--- TODO: include AwaitT
+
+    AwaitT   = 'AwaitExt',
+    AwaitInt = 'AwaitExt',
     AwaitExt = function (me)
         me.aw.n = 1
-        me.aw.t[me] = true
-        ALL[me] = true
+        me.aw.t[ #me.aw.t+1 ] = me
     end,
+--[=[
+-- TODO: remove
     AwaitInt = function (me)
         if (not me[1].org) or (me[1].org.tag=='This') then   -- only local awaits
 -- TODO: why?
             F.AwaitExt(me)
         end
     end,
+]=]
     Async = function (me)
         me.aw.n = 1
     end,

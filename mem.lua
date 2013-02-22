@@ -92,7 +92,19 @@ F = {
         end
     end,
     Dcl_cls = function (me)
-DBG(string.format('%8s',me.id), me.mem.max, me.ns.trails, me.ns.wclocks)
+DBG('===', me.id)
+DBG('', 'mem', me.mem.max)
+DBG('', 'trl', me.ns.trails)
+DBG('', 'clk', me.ns.wclocks)
+DBG('======================')
+--[[
+local glb = {}
+for i,v in ipairs(me.aw.t) do
+    local ID = v[1].var or v[1].ext
+    glb[#glb+1] = ID.id
+end
+DBG('', 'glb', '{'..table.concat(glb,',')..'}')
+]]
     end,
 
     Block_pre = function (me)
