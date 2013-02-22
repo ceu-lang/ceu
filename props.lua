@@ -109,7 +109,7 @@ F = {
             end
         end
 
-        F.ParOr(me, t)
+        F.ParOr(me, t, true)        -- TODO: xxx
 
         if me.fins then
             _PROPS.has_fins = true
@@ -121,14 +121,17 @@ F = {
 
     ParEver = 'ParOr',
     ParAnd  = 'ParOr',
-    ParOr = function (me, t)
+    ParOr = function (me, t, xxx)   -- TODO: xxx
         t = t or me
         OR_all(me, t)
         me.ns.trails = 0
-        for _, sub in ipairs(t) do
+        for i, sub in ipairs(t) do
             if _AST.isNode(sub) then
                 for k,v in pairs(sub.ns) do
-                    me.ns[k] = me.ns[k] + v
+                    -- TODO: xxx (don't add wclocks from local orgs)
+                    if (not xxx) or k~='wclocks' or i==1 then
+                        me.ns[k] = me.ns[k] + v
+                    end
                 end
             end
         end

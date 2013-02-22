@@ -62,7 +62,6 @@ Test = function (t)
 
     STATS.mem     = STATS.mem     + _AST.root.mem.max
     STATS.trails  = STATS.trails  + _AST.root.ns.trails
-    STATS.wclocks = STATS.wclocks + _AST.root.ns.wclocks
 
     if T.tot then
         assert(T.tot==_MEM.max, 'mem '.._MEM.max)
@@ -144,11 +143,9 @@ STATS = {
     count   = ]]..STATS.count  ..[[,
     mem     = ]]..STATS.mem    ..[[,
     trails  = ]]..STATS.trails ..[[,
-    wclocks = ]]..STATS.wclocks..[[,
 }
 ]])
 
 assert(STATS.count   ==  1058)
-assert(STATS.mem     ==  7355)
+assert(STATS.mem     ==  8349)
 assert(STATS.trails  ==  1955)
-assert(STATS.wclocks ==   298)

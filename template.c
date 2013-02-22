@@ -148,6 +148,7 @@ tceu_trail* ceu_trails_get (int idx, void* org) {
 #endif
 
 #ifdef CEU_WCLOCKS
+
 void ceu_wclocks_min (s32 dt, int out) {
     if (CEU.wclk_min > dt) {
         CEU.wclk_min = dt;
@@ -157,7 +158,17 @@ void ceu_wclocks_min (s32 dt, int out) {
 #endif
     }
 }
-#endif
+
+int ceu_wclocks_not (s32* t, s32 dt) {
+    if (*t>CEU.wclk_min_tmp || *t>dt) {
+        *t -= dt;
+        ceu_wclocks_min(*t, 0);
+        return 1;
+    }
+    return 0;
+}
+
+#endif  // CEU_WCLOCKS
 
 void ceu_trails_set (int idx, tceu_nlbl lbl, void* org) {
 #ifdef CEU_ORGS

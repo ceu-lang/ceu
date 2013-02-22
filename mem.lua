@@ -92,7 +92,7 @@ F = {
         end
     end,
     Dcl_cls = function (me)
-        DBG(string.format('%8s',me.id), me.mem.max, me.ns.trails)
+DBG(string.format('%8s',me.id), me.mem.max, me.ns.trails, me.ns.wclocks)
     end,
 
     Block_pre = function (me)

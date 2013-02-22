@@ -572,15 +572,10 @@ return;
         local exp = unpack(me)
         local wclk = CLS().mem.wclock0 + (me.wclocks[1]*4)
         CASE2(me, 'IN__WCLOCK', '(s32)'..exp.val, wclk, me.lbl)
-        LINE(me, [[{
-s32* _ceu_dt = PTR_cur(s32*,]]..wclk..[[);
-if (*_ceu_dt > CEU.wclk_min_tmp
-||  *_ceu_dt > _ceu_evt_p_.dt) {
-    *_ceu_dt -= _ceu_evt_p_.dt;
-    ceu_wclocks_min(*_ceu_dt, 0);
+        LINE(me, [[
+if (ceu_wclocks_not(PTR_cur(s32*,]]..wclk..[[), _ceu_evt_p_.dt))
     return;
-}
-}]])
+]])
         DEBUG_TRAILS(me)
     end,
 

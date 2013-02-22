@@ -49,7 +49,7 @@ F = {
                 var.trails  = { t0, t0+ n*cls.ns.trails  -1 }
                     t0 = t0 + n*cls.ns.trails
                 var.wclocks = { w0, w0+ n*cls.ns.wclocks -1 }
-                    w0 = w0 + n*cls.ns.wclocks
+                    --w0 = w0 + n*cls.ns.wclocks    (TODO: xxx in props.lua)
             end
         end
 
