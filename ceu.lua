@@ -145,16 +145,12 @@ do
 
     tpl = sub(tpl, '=== CEU_NMEM ===',     _AST.root.mem.max)
     tpl = sub(tpl, '=== CEU_NTRAILS ===',  _AST.root.ns.trails)
-    tpl = sub(tpl, '=== CEU_NWCLOCKS ===', _AST.root.ns.wclocks)
 
     tpl = sub(tpl, '=== TCEU_NLBL ===', tps[_ENV.c.tceu_nlbl.len])
     tpl = sub(tpl, '=== TCEU_NTRL ===', tps[_ENV.c.tceu_ntrl.len])
 
     if _PROPS.has_orgs then
         tpl = sub(tpl, '=== CEU_CLS_TRAIL0 ===',  _MEM.cls.idx_trail0)
-        if _PROPS.has_wclocks then
-            tpl = sub(tpl, '=== CEU_CLS_WCLOCK0 ===', _MEM.cls.idx_wclock0)
-        end
     end
 
     tpl = sub(tpl, '=== LABELS_ENUM ===', _LBLS.code_enum)
@@ -265,7 +261,6 @@ if _OPTS.verbose or true then
         lbls = #_LBLS.list,
 
         trls       = _AST.root.ns.trails,
-        trls_wclks = _AST.root.ns.wclocks,
 
         exts    = _PROPS.has_exts,
         wclocks = _PROPS.has_wclocks,

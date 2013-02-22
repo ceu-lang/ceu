@@ -13,10 +13,6 @@ do  -- _MEM.cls
     end
     _MEM.cls.idx_trail0 = off
     off = off + _ENV.c.tceu_ntrl.len
-    if _PROPS.has_wclocks then
-        _MEM.cls.idx_wclock0 = off
-        off = off + _ENV.c.tceu_ntrl.len
-    end
 end
 
 function alloc (mem, n)
@@ -92,7 +88,7 @@ F = {
         end
         alloc(me.mem, _ENV.c.tceu_ntrl.len)     -- trail0
         if _PROPS.has_wclocks then
-            alloc(me.mem, _ENV.c.tceu_ntrl.len)     -- wclock0
+            me.mem.wclock0 = alloc(me.mem, me.ns.wclocks*4)
         end
     end,
     Dcl_cls = function (me)
@@ -131,7 +127,17 @@ F = {
                 len = _ENV.c[var.tp].len
             end
 
+            -- we use offsets for events because of interfaces
+            if var.isEvt and len==0 then
+                len = 1
+            end
+
             var.off = alloc(mem, len)
+
+            if var.isEvt then
+                _MEM.evt_off = MAX(_MEM.evt_off, var.off)
+            end
+
 DBG('', string.format('%8s',var.id), len)
 
             if var.pre == 'tmp' then
@@ -140,14 +146,6 @@ DBG('', string.format('%8s',var.id), len)
                 var.val = 'PTR_cur('.._TP.c(var.tp)..','..var.off..')'
             else
                 var.val = '(*PTR_cur('.._TP.c(var.tp)..'*,'..var.off..'))'
-            end
-
-            -- we use offsets for events because of interfaces
-            if var.isEvt then
-                if len == 0 then
-                    alloc(mem, 1)   -- dummy offset to avoid conflict
-                end
-                _MEM.evt_off = MAX(_MEM.evt_off, var.off)
             end
         end
 

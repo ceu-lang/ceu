@@ -31,10 +31,6 @@ _ENV = {
         tceu_ntrl = true,    -- props.lua
 
         tceu_ncls = true,    -- env.lua
-
-        -- TODO: apagar?
-        --tceu_lst  = 8,    -- TODO
-        --TODOtceu_wclock = _TP.ceil(4 + _OPTS.tp_lbl), -- TODO: perda de memoria
     },
 }
 

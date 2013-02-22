@@ -22,16 +22,16 @@
 #define CEU_WCLOCK_EXPIRED (CEU_WCLOCK_INACTIVE-1)
 
 #define PTR_glb(tp,off) ((tp)(CEU.mem + off))
-#define PTR_org(tp,org,off) ((tp)(((char*)(org)) + off))
 #ifdef CEU_ORGS
+#define PTR_org(tp,org,off) ((tp)(((char*)(org)) + off))
 #define PTR_cur(tp,off) ((tp)(_ceu_org_ + off))
 #else
+#define PTR_org(tp,org,off) ((tp)(CEU.mem + off))
 #define PTR_cur(tp,off) ((tp)(CEU.mem + off))
 #endif
 
 #define CEU_NMEM       (=== CEU_NMEM ===)
 #define CEU_NTRAILS    (=== CEU_NTRAILS ===)
-#define CEU_NWCLOCKS   (=== CEU_NWCLOCKS ===)
 
 #ifdef CEU_IFCS
 #define CEU_NCLS       (=== CEU_NCLS ===)
@@ -84,6 +84,7 @@ typedef struct {
 #ifdef CEU_WCLOCKS
     int         wclk_late;
     s32         wclk_min;
+    s32         wclk_min_tmp;
 #endif
 
 #ifdef CEU_IFCS
@@ -94,10 +95,6 @@ typedef struct {
     tceu_trail  trail;        // segfault printf
 #endif
 
-    #ifdef CEU_WCLOCKS
-    s32         wclocks[CEU_NWCLOCKS];
-    #endif
-
     tceu_trail  trails[CEU_NTRAILS];
 
     char        mem[CEU_NMEM];
@@ -107,15 +104,12 @@ typedef struct {
 
 tceu CEU = {
 #ifdef CEU_WCLOCKS
-    0, CEU_WCLOCK_INACTIVE,
+    0, CEU_WCLOCK_INACTIVE, CEU_WCLOCK_INACTIVE,
 #endif
 #ifdef CEU_IFCS
     { === IFCS === },
 #endif
 #ifdef CEU_DEBUG
-    {},
-#endif
-#ifdef CEU_WCLOCKS
     {},
 #endif
     {},
@@ -163,19 +157,6 @@ void ceu_wclocks_min (s32 dt, int out) {
 #endif
     }
 }
-
-s32* ceu_wclocks_get (int idx, void* org) {
-#ifdef CEU_ORGS
-    return &CEU.wclocks[
-                *PTR_org(tceu_ntrl*,org,=== CEU_CLS_WCLOCK0 ===) + idx
-            ];
-#else
-    return &CEU.wclocks[idx];
-#endif
-}
-#ifndef CEU_ORGS
-#define ceu_wclocks_get(a,b) ceu_wclocks_get(a,NULL)
-#endif
 #endif
 
 void ceu_trails_set (int idx, tceu_nlbl lbl, void* org) {
@@ -201,7 +182,7 @@ void ceu_trails_set_evt (u8 evt_id, tceu_evt_param evt_p, int evt_idx,
 #ifdef CEU_WCLOCKS
     if (evt_id == IN__WCLOCK) {
         s32 dt_ = evt_p.dt - CEU.wclk_late;
-        *ceu_wclocks_get(evt_idx,org) = dt_;
+        *PTR_org(s32*,org,evt_idx) = dt_;
         ceu_wclocks_min(dt_, 1);
     }
 #endif
@@ -339,38 +320,24 @@ void ceu_go_wclock (s32 dt)
     ceu_trails_on();
 
 #ifdef CEU_WCLOCKS
-    if (CEU.wclk_min == CEU_WCLOCK_INACTIVE)
-        return;
 
     if (CEU.wclk_min <= dt)
         CEU.wclk_late = dt - CEU.wclk_min;   // how much late the wclock is
 
-    {
-        int i;
-        s32 min = CEU.wclk_min;
-        CEU.wclk_min = CEU_WCLOCK_INACTIVE;
-        for (i=0; i<CEU_NWCLOCKS; i++) {
-            if ( (min<=dt) && (CEU.wclocks[i]==min) ) {
-                CEU.wclocks[i] = CEU_WCLOCK_EXPIRED;
-            } else if (CEU.wclocks[i] < CEU_WCLOCK_EXPIRED) {
-                CEU.wclocks[i] -= dt;
-                ceu_wclocks_min(CEU.wclocks[i], 0);
-            }
-        }
-#ifdef ceu_out_wclock
-        if (CEU.wclk_min != CEU_WCLOCK_INACTIVE)
-            ceu_out_wclock(CEU.wclk_min);   // only signal after all
-#endif
-    }
+    CEU.wclk_min_tmp = CEU.wclk_min;
+    CEU.wclk_min     = CEU_WCLOCK_INACTIVE;
 
-    ceu_trails_go(IN__WCLOCK, (tceu_evt_param)NULL);
+    ceu_trails_go(IN__WCLOCK, (tceu_evt_param)dt);
 
 #ifdef ceu_out_wclock
-    ceu_out_wclock(CEU.wclk_min);
+    if (CEU.wclk_min != CEU_WCLOCK_INACTIVE)
+        ceu_out_wclock(CEU.wclk_min);   // only signal after all
 #endif
+
     CEU.wclk_late = 0;
 
 #endif   // CEU_WCLOCKS
+
     return;
 }
 

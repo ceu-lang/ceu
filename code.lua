@@ -113,21 +113,13 @@ function CLEAR (me)
 ]]
 end
 
-function ORG (me, cls, org0, trail0, wclock0)
+function ORG (me, cls, org0, trail0)
     COMM(me, 'ORG')
     LINE(me, [[
 {
     void* _ceu_org_new_ = ]]..org0..[[;
     *PTR_org(tceu_ntrl*, _ceu_org_new_, ]].._MEM.cls.idx_trail0 ..
         [[) = ]]..trail0..[[;
-]])
-    if _PROPS.has_wclocks then
-        LINE(me, [[
-    *PTR_org(tceu_ntrl*, _ceu_org_new_, ]].._MEM.cls.idx_wclock0 ..
-        [[) = ]]..wclock0..[[;
-]])
-    end
-    LINE(me, [[
     ceu_call(_ceu_evt_id_,_ceu_evt_p_,]]..cls.lbl.id..[[,_ceu_org_new_);
     // TODO: test cnt
 }
@@ -242,7 +234,7 @@ if (]]..exp.val..[[ != NULL) {
         if var.cls then
             ORG(me, var.cls,
                     var.val,
-                    var.trails[1], var.wclocks[1])
+                    var.trails[1])
         elseif var.arr then
             local cls = _ENV.clss[_TP.deref(var.tp)]
             if cls then
@@ -250,8 +242,7 @@ if (]]..exp.val..[[ != NULL) {
                     ORG(me, cls,
                             'PTR_org(void*,'..var.val..','..
                                             (i-1)..'*'..cls.mem.max..')',
-                            var.trails [1] + (i-1)*cls.ns.trails,
-                            var.wclocks[1] + (i-1)*cls.ns.wclocks)
+                            var.trails [1] + (i-1)*cls.ns.trails)
                 end
             end
         end
@@ -579,11 +570,17 @@ return;
 
     AwaitT = function (me)
         local exp = unpack(me)
-        CASE2(me, 'IN__WCLOCK', '(s32)'..exp.val, me.wclocks[1], me.lbl)
-        LINE(me, [[
-if (*ceu_wclocks_get(]]..me.wclocks[1]..[[,_ceu_org_) != CEU_WCLOCK_EXPIRED)
+        local wclk = CLS().mem.wclock0 + (me.wclocks[1]*4)
+        CASE2(me, 'IN__WCLOCK', '(s32)'..exp.val, wclk, me.lbl)
+        LINE(me, [[{
+s32* _ceu_dt = PTR_cur(s32*,]]..wclk..[[);
+if (*_ceu_dt > CEU.wclk_min_tmp
+||  *_ceu_dt > _ceu_evt_p_.dt) {
+    *_ceu_dt -= _ceu_evt_p_.dt;
+    ceu_wclocks_min(*_ceu_dt, 0);
     return;
-]])
+}
+}]])
         DEBUG_TRAILS(me)
     end,
 
