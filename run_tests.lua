@@ -154,5 +154,5 @@ STATS = {
 ]])
 
 assert(STATS.count   ==  1058)
-assert(STATS.mem     ==  8349)
+assert(STATS.mem     ==  12556)  -- 8349 (no align)
 assert(STATS.trails  ==  1955)

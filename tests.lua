@@ -144,13 +144,15 @@ Test { [[var int a = 1;]],
     }
 }
 Test { [[var int a=1;var int a=0; return a;]],
-    env = 'ERR : line 1 : variable/event "a" is already declared at line 1',
+    --env = 'ERR : line 1 : variable/event "a" is already declared at line 1',
+    run = 0,
 }
 Test { [[do var int a=1; end var int a=0; return a;]],
     run = 0,
 }
 Test { [[var int a=1,a=0; return a;]],
-    env = 'ERR : line 1 : variable/event "a" is already declared at line 1',
+    --env = 'ERR : line 1 : variable/event "a" is already declared at line 1',
+    run = 0,
 }
 Test { [[var int a; a = b = 1]],
     parser = "ERR : line 1 : after `b´ : expected `;´",
@@ -196,7 +198,8 @@ C _abc = 0;
 event void a;
 var _abc a;
 ]],
-    env = 'ERR : line 3 : variable/event "a" is already declared at line 2',
+    --env = 'ERR : line 3 : variable/event "a" is already declared at line 2',
+    env = 'ERR : line 3 : cannot instantiate type "_abc"',
 }
 
 Test { [[
@@ -15622,7 +15625,7 @@ end
 C _V;
 return _V;
 ]],
-    run = 9,    -- +1 trail0
+    run = 12,    -- +1 trail0 (+3 align)
 }
 
 Test { [[
@@ -15640,7 +15643,7 @@ end
 C _V;
 return _V;
 ]],
-    run = 10,   -- +1 cls
+    run = 12,   -- +1 cls / +1 trl / +2 align
 }
 
 Test { [[

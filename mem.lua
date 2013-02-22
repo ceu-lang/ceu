@@ -16,8 +16,9 @@ do  -- _MEM.cls
 end
 
 function alloc (mem, n)
+    mem.off = _TP.align(mem.off,n)
     local cur = mem.off
-    mem.off = mem.off + n-- + _TP.align(n)    -- TODO
+    mem.off = cur + n
     mem.max = MAX(mem.max, mem.off)
 --DBG(mem, n, mem.max)
     return cur
@@ -150,10 +151,10 @@ DBG('', 'glb', '{'..table.concat(glb,',')..'}')
                 _MEM.evt_off = MAX(_MEM.evt_off, var.off)
             end
 
-DBG('', string.format('%8s',var.id), len)
+DBG('', string.format('%8s',var.id), len, var.off)
 
             if var.pre == 'tmp' then
-                var.val = '__ceu_'..var.id
+                var.val = '__ceu_'..var.id..'_'..string.gsub(tostring(var),': ','')
             elseif var.cls or var.arr then
                 var.val = 'PTR_cur('.._TP.c(var.tp)..','..var.off..')'
             else

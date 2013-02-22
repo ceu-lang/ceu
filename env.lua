@@ -85,8 +85,9 @@ function newvar (me, blk, pre, tp, dim, id)
             break
         elseif stmt.tag == 'Block' then
             for _, var in ipairs(stmt.vars) do
-                ASR(var.id~=id or var.blk~=blk, me,
-                    'variable/event "'..var.id..'" is already declared at line '..var.ln)
+                --ASR(var.id~=id or var.blk~=blk, me,
+                    --'variable/event "'..var.id..
+                    --'" is already declared at --line '..var.ln)
                 WRN(var.id~=id, me,
                     'declaration of "'..id..'" hides the one at line '..var.ln)
             end
@@ -653,12 +654,7 @@ F = {
         for _,tp in ipairs(me) do
             local t = _TP.deref(tp) and _ENV.c.pointer or _ENV.c[tp]
             local i = ASR(t and t.len, me, 'undeclared type '..tp)
-
--- TODO: probably wrong
-            local r = _ENV.c.word.len - sz%_ENV.c.word.len
-            --if r<_ENV.c.word.len and i>r then
-                --sz = sz + r     -- align if i breaks alignment
-            --end
+-- TODO: alignment / packed?
             sz = sz + i
         end
         --if #me > 1 then         -- align structs

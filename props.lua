@@ -67,7 +67,7 @@ F = {
         me.ns = {
             trails  = 1,
             wclocks = 0,
-            ints    = 0,
+            --ints    = 0,
         }
         me.has = {
             fins = false,
@@ -256,7 +256,7 @@ F = {
 
     AwaitInt = function (me)
         --_PROPS.has_ints = true
-        me.ns.ints = 1
+        --me.ns.ints = 1
     end,
 
     EmitInt = function (me)

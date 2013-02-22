@@ -9,13 +9,12 @@ local types = {
     u8=true,  s8=true,
 }
 
-function _TP.align (n, b)
-    b = b or _ENV.c.word.len
-    if n%b > 0 then
-        return n + b-n%b
-    else
-        return n
+function _TP.align (off, len)
+    local r = off % len
+    if r > 0 then
+        off = off + (len-r)
     end
+    return off
 end
 
 function _TP.n2bytes (n)

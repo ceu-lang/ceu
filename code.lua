@@ -258,7 +258,7 @@ if (]]..exp.val..[[ != NULL) {
         for _, var in ipairs(me.vars) do
             if var.pre == 'tmp' then
                 ASR(not var.arr, me, 'temporary arrays are not yet supported')
-                LINE(me, _TP.c(var.tp)..' __ceu_'..var.id..';')
+                LINE(me, _TP.c(var.tp)..' '..var.val..';')
             end
         end
     end,
