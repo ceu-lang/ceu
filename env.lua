@@ -654,12 +654,8 @@ F = {
         for _,tp in ipairs(me) do
             local t = _TP.deref(tp) and _ENV.c.pointer or _ENV.c[tp]
             local i = ASR(t and t.len, me, 'undeclared type '..tp)
--- TODO: alignment / packed?
-            sz = sz + i
+            sz = _TP.align(sz,i) + i
         end
-        --if #me > 1 then         -- align structs
-            --sz = _TP.align(sz)
-        --end
         me.sval = sz
     end,
 

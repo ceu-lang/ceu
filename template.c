@@ -57,8 +57,8 @@ typedef === TCEU_NOFF === tceu_noff;    // (x) number of clss x ifcs
 
 // align all structs 1 byte
 // TODO: verify defaults for microcontrollers
-#pragma pack(push)
-#pragma pack(1)
+//#pragma pack(push)
+//#pragma pack(1)
 
 typedef struct {
     //tceu_nevt evt;    // TODO: -ROM/-CPU/-on
@@ -116,7 +116,7 @@ tceu CEU = {
     {}                          // TODO: o q ele gera?
 };
 
-#pragma pack(pop)
+//#pragma pack(pop)
 
 === CLS_ACCS ===
 

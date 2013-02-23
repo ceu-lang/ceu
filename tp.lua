@@ -9,7 +9,13 @@ local types = {
     u8=true,  s8=true,
 }
 
-function _TP.align (off, len)
+function _TP.align (off, len, word)
+    word = word or _ENV.c.word.len
+    if len > word then
+        len = word              -- maximum adjust is the word size
+    elseif len == 0 then
+        len = 1                 -- minimum alignment
+    end
     local r = off % len
     if r > 0 then
         off = off + (len-r)

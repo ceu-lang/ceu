@@ -16,6 +16,7 @@ do  -- _MEM.cls
 end
 
 function alloc (mem, n)
+--DBG(mem.off, n, _TP.align(mem.off,n))
     mem.off = _TP.align(mem.off,n)
     local cur = mem.off
     mem.off = cur + n
@@ -82,14 +83,18 @@ F = {
     Dcl_cls_pre = function (me)
         me.mem = { off=0, max=0 }
         if _PROPS.has_news then
+DBG'TODO'
             alloc(me.mem, 1)                -- dynamically allocated?
         end
         if _PROPS.has_ifcs then
-            alloc(me.mem, _ENV.c.tceu_ncls.len) -- cls N
+            local off = alloc(me.mem, _ENV.c.tceu_ncls.len) -- cls N
+DBG('', string.format('%8s','cls'), off, _ENV.c.tceu_ncls.len)
         end
-        alloc(me.mem, _ENV.c.tceu_ntrl.len)     -- trail0
+        local off = alloc(me.mem, _ENV.c.tceu_ntrl.len)     -- trail0
+DBG('', string.format('%8s','trl0'), off, _ENV.c.tceu_ntrl.len)
         if _PROPS.has_wclocks then
             me.mem.wclock0 = alloc(me.mem, me.ns.wclocks*4)
+DBG('', string.format('%8s','clk0'), me.mem.wclock0, me.ns.wclocks*4)
         end
     end,
     Dcl_cls = function (me)
@@ -151,7 +156,7 @@ DBG('', 'glb', '{'..table.concat(glb,',')..'}')
                 _MEM.evt_off = MAX(_MEM.evt_off, var.off)
             end
 
-DBG('', string.format('%8s',var.id), len, var.off)
+DBG('', string.format('%8s',var.id), var.off, len)
 
             if var.pre == 'tmp' then
                 var.val = '__ceu_'..var.id..'_'..string.gsub(tostring(var),': ','')
