@@ -226,17 +226,16 @@ void ceu_trails_clr (int t1, int t2, void* org) {
 #define ceu_trails_clr(a,b,c) ceu_trails_clr(a,b,NULL)
 #endif
 
-void ceu_trails_on ()
-{
-    int i;
-    for (i=0; i<CEU_NTRAILS; i++) {
-        CEU.trails[i].on = 1;
-    }
-}
-
 void ceu_trails_go (u8 evt_id, tceu_evt_param evt_p)
 {
     int i;
+
+    if (evt_id > IN__FIN) {
+        for (i=0; i<CEU_NTRAILS; i++) {
+            CEU.trails[i].on = 1;
+        }
+    }
+
     for (i=0; i<CEU_NTRAILS; i++) {
         if (CEU.trails[i].on && CEU.trails[i].lbl!=CEU_INACTIVE)
             ceu_call(evt_id, evt_p,
@@ -313,7 +312,6 @@ void ceu_go_init ()
 #ifdef CEU_EXTS
 void ceu_go_event (int id, void* data)
 {
-    ceu_trails_on();
     ceu_trails_go(id, (tceu_evt_param)data);
 }
 #endif
@@ -321,15 +319,12 @@ void ceu_go_event (int id, void* data)
 #ifdef CEU_ASYNCS
 void ceu_go_async ()
 {
-    ceu_trails_on();
     ceu_trails_go(IN__ASYNC, (tceu_evt_param)NULL);
 }
 #endif
 
 void ceu_go_wclock (s32 dt)
 {
-    ceu_trails_on();
-
 #ifdef CEU_WCLOCKS
 
     if (CEU.wclk_min <= dt)
