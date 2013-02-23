@@ -5,16 +5,6 @@ _MEM = {
 }
 
 
-do  -- _MEM.cls
-    local off = 0
-    if _PROPS.has_ifcs then
-        _MEM.cls.idx_cls = off
-        off = off + _ENV.c.tceu_ncls.len
-    end
-    _MEM.cls.idx_trail0 = off
-    off = off + _ENV.c.tceu_ntrl.len
-end
-
 function alloc (mem, n)
 --DBG(mem.off, n, _TP.align(mem.off,n))
     mem.off = _TP.align(mem.off,n)
@@ -82,16 +72,17 @@ F = {
 
     Dcl_cls_pre = function (me)
         me.mem = { off=0, max=0 }
-        if _PROPS.has_news then
-DBG'TODO'
-            alloc(me.mem, 1)                -- dynamically allocated?
-        end
+
+        local off = alloc(me.mem, _ENV.c.tceu_ntrl.len)     -- trail0
+        _MEM.cls.idx_trail0 = off           -- same off for all orgs
+DBG('', string.format('%8s','trl0'), off, _ENV.c.tceu_ntrl.len)
+
         if _PROPS.has_ifcs then
             local off = alloc(me.mem, _ENV.c.tceu_ncls.len) -- cls N
+            _MEM.cls.idx_cls = off          -- same off for all orgs
 DBG('', string.format('%8s','cls'), off, _ENV.c.tceu_ncls.len)
         end
-        local off = alloc(me.mem, _ENV.c.tceu_ntrl.len)     -- trail0
-DBG('', string.format('%8s','trl0'), off, _ENV.c.tceu_ntrl.len)
+
         if _PROPS.has_wclocks then
             me.mem.wclock0 = alloc(me.mem, me.ns.wclocks*4)
 DBG('', string.format('%8s','clk0'), me.mem.wclock0, me.ns.wclocks*4)
@@ -144,19 +135,26 @@ DBG('', 'glb', '{'..table.concat(glb,',')..'}')
             else
                 len = _ENV.c[var.tp].len
             end
+            var.len = len
+        end
 
+        -- sort offsets in descending order to optimize alignment
+        -- TODO: previous org metadata
+        local sorted = { unpack(me.vars) }
+        table.sort(sorted, function(v1,v2) return v1.len>v2.len end)
+        for _, var in ipairs(sorted) do
             -- we use offsets for events because of interfaces
-            if var.isEvt and len==0 then
-                len = 1
+            if var.isEvt and var.len==0 then
+                var.len = 1
             end
 
-            var.off = alloc(mem, len)
+            var.off = alloc(mem, var.len)
 
             if var.isEvt then
                 _MEM.evt_off = MAX(_MEM.evt_off, var.off)
             end
 
-DBG('', string.format('%8s',var.id), var.off, len)
+DBG('', string.format('%8s',var.id), var.off, var.len)
 
             if var.pre == 'tmp' then
                 var.val = '__ceu_'..var.id..'_'..string.gsub(tostring(var),': ','')
