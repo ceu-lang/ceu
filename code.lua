@@ -442,7 +442,7 @@ ceu_trails_set(]]..sub.trails[1]..[[,CEU_INACTIVE,_ceu_org_);
 if (]]..c.val..[[) {
 ]]    ..t.code..[[
 } else {
-]]    ..(f and f.code or '')..[[
+]]    ..f.code..[[
 }
 ]])
     end,

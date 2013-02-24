@@ -180,7 +180,6 @@ F = {
 
     If = function (me)
         local c, t, f = unpack(me)
-        f = f or c
         MAX_all(me, {t,f})
     end,
 

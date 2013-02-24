@@ -25,6 +25,10 @@ function _AST.node (tag, min)
 end
 local node = _AST.node
 
+function _AST.pred_par (me)
+    local tag = me.tag
+    return tag=='ParOr' or tag=='ParAnd' or tag=='ParEver'
+end
 function _AST.pred_prio (me)
     local tag = me.tag
     return tag=='SetBlock' or tag=='ParOr' or tag=='Loop'
@@ -77,7 +81,14 @@ function _AST.dump (me, spc)
     end
     --local t=0; for _ in pairs(me.aw.t) do t=t+1 end
     --ks = 'n='..(me.aw.n or '?')..',t='..t..',ever='..(me.aw.forever_ and 1 or 0)
-    ks = table.concat(me.trails,'-')
+    --ks = table.concat(me.trails,'-')
+    local f = function(v) return type(v)=='table' and v.id or tostring(v) end
+    local t = {}
+    for k in pairs(me.ana.pre) do t[#t+1]=f(k) end
+    ks = '['..table.concat(t,',')..']'
+    local t = {}
+    for k in pairs(me.ana.pos) do t[#t+1]=f(k) end
+    ks = ks..'['..table.concat(t,',')..']'
     DBG(string.rep(' ',spc) .. me.tag .. ' ('..ks..')')
     for i, sub in ipairs(me) do
         if _AST.isNode(sub) then
@@ -168,7 +179,7 @@ local C; C = {
 
     If = function (ln, ...)
         local t = { ... }
-        local _else = t[#t]
+        local _else = t[#t] or node('Nothing')(ln)
         for i=#t-1, 1, -2 do
             local c, b = t[i-1], t[i]
             _else = node('If')(ln, c, b, _else)
@@ -220,7 +231,7 @@ local C; C = {
                         node('Stmts')(ln,
                             node('If')(ln, cmp,
                                 node('Break')(ln),
-                                false),
+                                node('Nothing')(ln)),
                             blk,
                             nxt_i))
         loop.blk = blk      -- continue
@@ -252,7 +263,8 @@ local C; C = {
                             node('If')(ln, node('Op2_!=')(ln,'!=',var,evt),
                                 node('Stmts')(ln,
                                     node('SetExp')(ln, var, evt),
-                                    node('If')(ln, evt, pse1, pse2)))))))
+                                    node('If')(ln, evt, pse1, pse2)),
+                                node('Nothing')(ln))))))
     end,
 --[=[
         par/or do
@@ -479,7 +491,7 @@ F = {
             me, 'invalid `continue´')
 
         loop.continue = _if
-        ASR( _if[3]==false             and   -- no else
+        ASR( _if[3].tag=='Nothing'     and   -- no else
             me.depth  == _if.depth+3   and   -- If->Block->Stmts->Continue
              _if.depth == loop.blk.depth+2 , -- Block->Stmts->If
             me, 'invalid `continue´')

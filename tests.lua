@@ -20,10 +20,7 @@ return <int>a;
 
 Test { [[return(1);]],
     ana = {
-        needsPrio = false,
-        needsChk  = false,
         isForever = false,
-        n_tracks  = 1,
     },
     run = 1,
 }
@@ -228,9 +225,6 @@ return 0x1 + 0X1 + 0a01;
 Test { [[if 1 then return 1; end; return 0;]],
     ana = {
         isForever = false,
-        needsPrio = false,
-        needsChk  = false,
-        n_tracks  = 1,
     },
     run = 1,
 }
@@ -240,9 +234,6 @@ Test { [[if 0 then return 0; end  return 1;]],
 Test { [[if 0 then return 0; else return 1; end]],
     ana = {
         isForever = false,
-        needsPrio = false,
-        needsChk  = false,
-        n_tracks  = 1,
     },
     run = 1,
 }
@@ -334,9 +325,6 @@ else
 end;]],
     ana = {
         isForever = false,
-        needsPrio = false,
-        needsChk  = false,
-        n_tracks  = 1,
     },
     run = 2,
 }
@@ -440,13 +428,9 @@ return 10;
 ]],
     ana = {
         isForever = false,
-        needsPrio = false,
-        needsChk  = false,
-        n_tracks  = 2,
     },
     run = 10,
 }
-
 Test { [[
 input int A;
 var int ret;
@@ -490,9 +474,6 @@ return v;
 ]],
     ana = {
         isForever = false,
-        needsPrio = false,
-        needsChk  = false,
-        n_tracks  = 2,
     },
     run = 10,
 }
@@ -544,8 +525,7 @@ with
 end
 ]],
     ana = {
-        nd_acc = 1,
-        n_unreachs = 1,
+        --n_unreachs = 1,
     },
     run = 2,
 }
@@ -745,7 +725,7 @@ return 1;
 ]],
     --loop = 'ERR : line 3 : parallel branch must await',
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
     run = 1,
 }
@@ -760,7 +740,7 @@ end
 return 1;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
     run = 1,
 }
@@ -807,9 +787,6 @@ Test { [[await -1; return 0;]],
 Test { [[var s32 a=await 10s; return a==8000000;]],
     ana = {
         isForever = false,
-        needsPrio = false,
-        needsChk  = false,
-        n_tracks  = 1,
     },
     run = {
         ['~>10s'] = 0,
@@ -820,9 +797,6 @@ Test { [[var s32 a=await 10s; return a==8000000;]],
 Test { [[await FOREVER;]],
     ana = {
         isForever = true,
-        needsPrio = false,
-        needsChk  = false,
-        n_tracks  = 1,
     },
 }
 Test { [[await FOREVER; await FOREVER;]],
@@ -851,9 +825,6 @@ return 10;
 ]],
     ana = {
         isForever = false,
-        needsPrio = false,
-        needsChk  = false,
-        n_tracks  = 1,
     },
     run = 10,
 }
@@ -868,9 +839,6 @@ return a + 1;
 ]],
     ana = {
         isForever = false,
-        needsPrio = false,
-        needsChk  = false,
-        n_tracks  = 1,
     },
     run = 11,
 }
@@ -1056,9 +1024,6 @@ end
 ]],
     ana = {
         isForever = false,
-        needsPrio = true,
-        needsChk  = true,
-        n_tracks  = 3,
     },
     run = 5,
     --run = 3,
@@ -1152,10 +1117,7 @@ end
 return a;
 ]],
     ana = {
-        needsPrio = true,
-        needsChk  = false,
-        n_tracks  = 3,
-        nd_acc = 3,         -- TODO: =0
+        n_acc = 3,         -- TODO: =0
     },
     run = { ['~>5s; ~>F']=14 },
     --run = { ['~>5s; ~>F']=42 },
@@ -1180,10 +1142,7 @@ end
 ]],
     ana = {
         isForever = true,
-        needsPrio = true,
-        needsChk  = false,
-        n_tracks  = 3,
-        nd_acc = 1,         -- TODO: =0
+        n_acc = 1,         -- TODO: =0
     },
 }
 
@@ -2001,7 +1960,7 @@ return sum;
 ]],
     todo = 'for',
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
         n_unreachs = 1,
     },
     run = 1,
@@ -2021,7 +1980,7 @@ end
 return sum;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
         n_unreachs = 2,
     },
     run = 1,
@@ -2045,7 +2004,7 @@ end
 return ret;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
     run = { ['~>A; ~>A; ~>A']=2 },
     --todo = 'nd kill',
@@ -2069,7 +2028,7 @@ end
 return ret;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
     run = { ['~>A;~>A'] = 2 },
     --todo = 'nd kill',
@@ -2093,7 +2052,7 @@ return sum;
 ]],
     ana = {
         n_unreachs = 3,
-        nd_acc = 1,
+        n_acc = 1,
     },
     run = 1,
 }
@@ -2277,9 +2236,6 @@ end;
 ]],
     ana = {
         isForever = false,
-        needsPrio = false,
-        needsChk  = false,
-        n_tracks  = 2,
     },
     run = { ['~>1min; ~>1min ; 0~>F'] = 1 },
 }
@@ -2404,7 +2360,7 @@ with
 end;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
     run = 4,
 }
@@ -2438,7 +2394,7 @@ end;
 return ret;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 Test { [[
@@ -2454,7 +2410,7 @@ end;
 return a;
 ]],
     ana = {
-        nd_acc  = 1,
+        n_acc  = 1,
     },
     run = { ['10~>A']=10 },
 }
@@ -2476,7 +2432,7 @@ return a;
 ]],
     ana = {
         n_unreachs = 1,
-        nd_acc = 1,
+        n_acc = 1,
         --nd_flw = 2,
     },
 }
@@ -2497,7 +2453,7 @@ a = par do
 return a;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     --nd_flw = 3,
     },
 }
@@ -2521,7 +2477,7 @@ return a;
 ]],
     ana = {
         n_unreachs = 1,
-        nd_acc  = 1,
+        n_acc  = 1,
         --nd_flw  = 2,
     },
     run = { ['1~>A']=1 },
@@ -2563,7 +2519,7 @@ end;
 return a;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
         --nd_flw = 2,
     },
 }
@@ -2587,7 +2543,7 @@ end;
 return a;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
         --nd_flw = 2,
     },
     run = { ['1~>A']=1 },
@@ -2657,7 +2613,7 @@ end;
 return a;
 ]],
     ana = {
-        nd_acc  = 1,
+        n_acc  = 1,
     },
     run = 0,
 }
@@ -2725,7 +2681,7 @@ end;
 return a + b + c + d;
 ]],
     ana = {
-        nd_acc = 2,
+        n_acc = 2,
     },
     run = { ['0~>A;5~>B']=6 },
     --run = { ['0~>A;5~>B']=8 },
@@ -2767,7 +2723,7 @@ end;
 return a + b;
 ]],
     ana = {
-        nd_acc = 2,
+        n_acc = 2,
     },
     run = { ['1~>A;10~>B']=1 },
 }
@@ -2780,7 +2736,7 @@ with
 end;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
         --nd_flw = 2,
     },
 }
@@ -2811,7 +2767,7 @@ end;
 ]],
     --nd_flw = 2,
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
     run = { ['1~>A']=1, ['2~>A']=2 },
 }
@@ -2950,7 +2906,7 @@ end;
 ]],
     --nd_flw = 2,
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
     run = {
         ['~>10ms'] = 0,
@@ -2967,7 +2923,7 @@ end;
 return a;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
     run = {
         ['~>10ms'] = 0,
@@ -3074,7 +3030,7 @@ with
 end;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
         --nd_flw = 2,
     },
 }
@@ -3120,7 +3076,7 @@ with
 end;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
         --nd_flw = 3,
     },
 }
@@ -3136,7 +3092,7 @@ with
 end;
 ]],
     ana = {
-        nd_acc = 1,     -- TODO: =0 (await(5) cannot be 0)
+        n_acc = 1,     -- TODO: =0 (await(5) cannot be 0)
     },
 }
 
@@ -3248,7 +3204,7 @@ return v;
 ]],
     ana = {
         n_unreachs = 1,
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 
@@ -3367,7 +3323,7 @@ with
 end
 return v;
 ]],
-    todo = 'nd_acc should be 0',
+    todo = 'n_acc should be 0',
     simul = {
         n_unreachs = 1,
     },
@@ -3396,7 +3352,7 @@ end;
 ]],
     ana = {
         isForever = true,
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 Test { [[
@@ -3446,7 +3402,7 @@ end;
 return a;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
     run = { ['~>11ms']=1 },
 }
@@ -3487,7 +3443,7 @@ end;
 ]],
     ana = {
         isForever = true,
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 Test { [[
@@ -3512,7 +3468,7 @@ end;
 ]],
     ana = {
         isForever = true,
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 Test { [[
@@ -3528,7 +3484,7 @@ end;
 ]],
     todo = 'await(x) pode ser <0?',  -- TIME_undef
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 Test { [[
@@ -3543,7 +3499,7 @@ end;
 ]],
     --nd_flw = 2,
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
     run = {
         ['~>10ms'] = 0,
@@ -3578,7 +3534,7 @@ with
 end;
 ]],
     ana = {
-        nd_acc = 3,
+        n_acc = 3,
         --nd_flw = 6,
     },
 }
@@ -3629,7 +3585,7 @@ end;
 ]],
     ana = {
         --nd_flw = 6,
-        nd_acc = 3,
+        n_acc = 3,
     },
 }
 Test { [[
@@ -3703,7 +3659,7 @@ end;
 return a;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 Test { [[
@@ -3719,7 +3675,7 @@ end;
 ]],
     --nd_flw = 2,
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
     run = {
         ['~>1min ; ~>1min ; ~>1min ; ~>1min ; ~>1min'] = 0,
@@ -3893,7 +3849,7 @@ end;
 return v;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
     run = {
         ['~>1us'] = 0,
@@ -4053,7 +4009,7 @@ end;
 return ret;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
     run = 10,
 }
@@ -4067,7 +4023,7 @@ end;
 return 10;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
     run = 0,
 }
@@ -4113,7 +4069,7 @@ end;
 ]],
     ana = {
         isForever = true,
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 Test { [[
@@ -4271,7 +4227,7 @@ return v1+v2+v3;
 ]],
     ana = {
         n_unreachs = 2,
-        nd_acc = 1,
+        n_acc = 1,
         --nd_esc = 1,
     },
     --run = 4,        -- TODO: stack change
@@ -4312,7 +4268,7 @@ return ret;
     ana = {
         n_unreachs = 2,
         --nd_esc = 2,
-        nd_acc = 0,         -- TODO: should it be =1?
+        n_acc = 0,         -- TODO: should it be =1?
     },
     --run = 3,
     run = 9,
@@ -4337,7 +4293,7 @@ return ret;
     ana = {
         n_unreachs = 2,
         --nd_esc = 2,
-        nd_acc = 1,
+        n_acc = 1,
     },
     --run = 3,
     run = 9,
@@ -4362,7 +4318,7 @@ return ret;
     ana = {
         n_unreachs = 2,
         --nd_esc = 2,
-        nd_acc = 1,
+        n_acc = 1,
     },
     --run = 3,
     run = 9,
@@ -4380,7 +4336,7 @@ with
 end;
 ]],
     ana = {
-        nd_acc = 4,
+        n_acc = 4,
     --nd_flw = 2,
     },
     run = { ['5~>A']=5 },
@@ -4431,7 +4387,7 @@ end;
 return a;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
     run = {
         ['1~>A'] = 10,
@@ -4453,7 +4409,7 @@ end;
 return a;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 
@@ -4470,7 +4426,7 @@ end;
 return a;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     --nd_flw = 1,
     },
 }
@@ -4559,7 +4515,7 @@ return a;
 ]],
     todo = '"a"s deveriam ser diferentes',
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
         --nd_flw = 2,
     },
 }
@@ -4582,7 +4538,7 @@ return a;
 ]],
     run = { ['~>A']=10, ['~>B']=10 },
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
         --nd_flw = 1,
     },
     --todo = 'nd kill',
@@ -4606,7 +4562,7 @@ return a;
 ]],
     run = { ['~>A']=5, ['~>B;~>A']=10 },
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
         --nd_flw = 1,
     },
     --todo = 'nd kill',
@@ -4752,7 +4708,7 @@ end;
 return v;
 ]],
     ana = {
-        nd_acc = 1,     -- TODO: should be 0
+        n_acc = 1,     -- TODO: should be 0
     },
     run = {
         ['0~>B ; 0~>A ; 0~>B ; 0~>A ; 3~>A'] = 3,
@@ -5191,7 +5147,7 @@ end;
 return ret;
 ]],
     ana = {
-        nd_acc = 2,
+        n_acc = 2,
     },
     run = {
         ['~>12ms ; 0~>A ; ~>1ms ; 0~>B ; ~>27ms'] = 1,
@@ -5228,7 +5184,7 @@ end;
 return dt;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
     run = {
         ['~>12us ; ~>17us'] = 9,
@@ -5277,7 +5233,7 @@ end;
 return x;
 ]],
     ana = {
-        nd_acc  = 1,    -- TODO: timer kills timer
+        n_acc  = 1,    -- TODO: timer kills timer
         n_unreachs = 0,    -- TODO: timer kills timer
     },
     --run = { ['~>10ms']=0 },
@@ -5302,7 +5258,7 @@ end;
 return x;
 ]],
     ana = {
-        nd_acc = 1,     -- TODO: timer kills timer
+        n_acc = 1,     -- TODO: timer kills timer
     n_unreachs = 0,    -- TODO: timer kills timer
     },
     --run = { ['~>10ms']=0 },   -- TODO: intl timer
@@ -5347,7 +5303,7 @@ with
 end;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     --nd_flw = 2,
     },
 }
@@ -5367,7 +5323,7 @@ with
 end;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     --nd_flw = 2,
     },
 }
@@ -5394,7 +5350,7 @@ with
 end;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     --nd_flw = 2,
     },
 }
@@ -5415,7 +5371,7 @@ end;
 return a;
 ]],
     ana = {
-    nd_acc = 1,
+    n_acc = 1,
     },
 }
 
@@ -5438,7 +5394,7 @@ end;
 return a;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
     run = {
         ['0~>A ; ~>1ms ; 0~>B ; ~>20ms'] = 0,
@@ -5461,7 +5417,7 @@ end;
 return a;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 
@@ -5534,7 +5490,7 @@ end;
 return a;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 
@@ -5550,7 +5506,7 @@ end;
 return a;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 
@@ -5574,7 +5530,7 @@ end;
 ]],
     ana = {
         isForever = true,
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 
@@ -5597,7 +5553,7 @@ end;
 ]],
     ana = {
         isForever = true,
-        nd_acc = 1,       -- fiz na mao!
+        n_acc = 1,       -- fiz na mao!
     },
 }
 -- bom exemplo de explosao de estados!!!
@@ -5622,7 +5578,7 @@ end;
 ]],
     ana = {
         isForever = true,
-        nd_acc = 1,       -- nao fiz na mao!!!
+        n_acc = 1,       -- nao fiz na mao!!!
     },
 }
 
@@ -5671,7 +5627,7 @@ end;
 return a;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 Test { [[
@@ -5696,7 +5652,7 @@ end;
 return a;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 Test { [[
@@ -5727,7 +5683,7 @@ end;
 ]],
     ana = {
         isForever = true,
-        nd_acc = 5,
+        n_acc = 5,
     },
 }
 Test { [[
@@ -5747,7 +5703,7 @@ else
 end;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     --nd_flw = 2,
     },
 }
@@ -5766,7 +5722,7 @@ end;
 return a;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     --nd_flw = 2,
     },
 }
@@ -5779,7 +5735,7 @@ var int v = par do
 return v;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     --nd_flw = 2,
     },
 }
@@ -5798,7 +5754,7 @@ end;
 return a;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 Test { [[
@@ -5814,27 +5770,7 @@ end;
 return a;
 ]],
     ana = {
-        nd_acc = 1,
-    },
-}
-Test { [[
-input int A;
-var int a;
-par/or do
-    await (10)us;
-    await A;
-    a = 1;
-with
-    await (5)us;
-    await A;
-    await (10)us;
-    await A;
-    a = 2;
-end;
-return a;
-]],
-    ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 Test { [[
@@ -5847,13 +5783,33 @@ par/or do
 with
     await (5)us;
     await A;
+    await (10)us;
     await A;
     a = 2;
 end;
 return a;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
+    },
+}
+Test { [[
+input int A;
+var int a;
+par/or do
+    await (10)us;
+    await A;
+    a = 1;
+with
+    await (5)us;
+    await A;
+    await A;
+    a = 2;
+end;
+return a;
+]],
+    ana = {
+        n_acc = 1,
     },
 }
 Test { [[
@@ -5872,7 +5828,7 @@ end;
 return a;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 
@@ -5889,7 +5845,7 @@ end;
 return a;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 
@@ -5910,7 +5866,7 @@ end;
 return a;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 
@@ -5931,7 +5887,7 @@ end;
 return a;
 ]],
     ana = {
-        nd_acc = 0,
+        n_acc = 0,
     },
 }
 
@@ -5950,7 +5906,7 @@ end;
 return a;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 
@@ -5969,7 +5925,7 @@ end;
 return a;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 
@@ -6036,7 +5992,7 @@ return a;
 ]],
     todo = 'wclk_any=0',
     ana = {
-        nd_acc = 3,
+        n_acc = 3,
     },
 }
 
@@ -6076,7 +6032,7 @@ end;
 return x;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 
@@ -6096,7 +6052,7 @@ end;
 ]],
     ana = {
         isForever = true,
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 
@@ -6114,7 +6070,7 @@ end;
 ]],
     ana = {
         isForever = true,
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 
@@ -6137,7 +6093,7 @@ end;
 return x;
 ]],
     ana = {
-        nd_acc = 2,  -- TODO: intl
+        n_acc = 2,  -- TODO: intl
     },
     --run = { ['~>15ms']=5, ['~>25ms']=5 }
 }
@@ -6171,7 +6127,7 @@ return 0;
 ]],
     ana = {
         n_unreachs = 1,
-        nd_acc = 1,
+        n_acc = 1,
     },
     run = 0,
 }
@@ -6264,7 +6220,7 @@ end;
     --nd_flw = 1,
     n_unreachs = 1,
     --trig_wo = 1,
-    nd_acc = 1,
+    n_acc = 1,
     },
 }
 
@@ -6340,7 +6296,7 @@ return a+b;
 ]],
     ana = {
         n_unreachs = 1,
-        nd_acc = 1,
+        n_acc = 1,
         --trig_wo = 1,
     },
     run = 6,
@@ -6361,7 +6317,7 @@ return 0;
     ana = {
         --nd_esc = 1,
         n_unreachs = 2,
-        nd_acc = 2,
+        n_acc = 2,
         --trig_wo = 1,
     },
 }
@@ -6581,7 +6537,7 @@ end;
 return v;
 ]],
     ana = {
-        nd_acc = 1,     -- should be 0
+        n_acc = 1,     -- should be 0
     },
     run = {
         ['10~>A'] = 10,
@@ -6627,7 +6583,7 @@ end;
 return v;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
     run = {
         ['0~>Z ; 10~>A'] = 10,
@@ -6713,7 +6669,7 @@ end;
 return v;
 ]],
     ana = {
-        nd_acc = 2,
+        n_acc = 2,
     },
     run = {
         ['1~>A'] = 1,
@@ -6739,7 +6695,7 @@ end;
 return v;
 ]],
     ana = {
-        nd_acc = 2,
+        n_acc = 2,
     },
     run = {
         ['0~>B ; 10~>A'] = 10,
@@ -6761,7 +6717,7 @@ end;
 return v;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 Test { [[
@@ -6994,7 +6950,7 @@ end;
 ]],
     ana = {
         --nd_flw = 2,
-    nd_acc = 2,
+    n_acc = 2,
     },
 }
 Test { [[
@@ -7010,7 +6966,7 @@ with
 end;
 ]],
     ana = {
-        nd_acc = 2,
+        n_acc = 2,
     --nd_flw = 2,
     },
 }
@@ -7034,7 +6990,7 @@ end;
 ]],
     ana = {
         n_unreachs = 1,
-    nd_acc = 2,
+    n_acc = 2,
     --nd_flw = 2,
     },
 }
@@ -7055,7 +7011,7 @@ with
 end;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     --nd_flw = 1,
     --nd_esc = 2,
     n_unreachs = 2,    -- +1 C n_unreachs
@@ -7425,7 +7381,7 @@ return a;
     ana = {
         n_unreachs = 1,
     --nd_flw = 1,
-    nd_acc  = 1,
+    n_acc  = 1,
     },
 }
 Test { [[
@@ -7447,7 +7403,7 @@ end;
     ana = {
         n_unreachs = 1,
     --nd_flw = 2,
-    nd_acc = 2,
+    n_acc = 2,
     },
 }
 Test { [[
@@ -7459,7 +7415,7 @@ with
 end;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     --nd_flw = 2,
     },
 }
@@ -7473,7 +7429,7 @@ with
 end;
 ]],
     ana = {
-        nd_acc = 2,
+        n_acc = 2,
     --nd_flw = 2,
     },
 }
@@ -7488,7 +7444,7 @@ end;
 ]],
     ana = {
         --nd_flw = 2,
-    nd_acc = 2,
+    n_acc = 2,
     },
 }
 Test { [[
@@ -7501,7 +7457,7 @@ end;
 return a;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 Test { [[
@@ -7516,7 +7472,7 @@ end;
 return a;
 ]],
     ana = {
-        nd_acc = 3,
+        n_acc = 3,
     },
 }
 Test { [[
@@ -7530,7 +7486,7 @@ with
 end;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     --nd_flw = 2,
     },
 }
@@ -7546,7 +7502,7 @@ return a;
 ]],
     ana = {
         n_unreachs = 1,
-        nd_acc = 1,
+        n_acc = 1,
         --trig_wo = 1,
     },
     run = 1,
@@ -7561,7 +7517,7 @@ end;
 return a;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
     run = 1,
 }
@@ -7607,7 +7563,7 @@ end;
 return v;
 ]],
     ana = {
-        nd_acc = 6,
+        n_acc = 6,
         --nd_flw = 6,
         --trig_wo = 3,
     },
@@ -7624,7 +7580,7 @@ end;
 return v;
 ]],
     ana = {
-        nd_acc = 3,
+        n_acc = 3,
     --nd_flw = 6,
     --trig_wo = 1,
     },
@@ -7642,7 +7598,7 @@ end;
 ]],
     ana = {
         --nd_flw = 2,
-    nd_acc = 1,
+    n_acc = 1,
     },
 }
 Test { [[
@@ -7659,7 +7615,7 @@ end;
 ]],
     ana = {
         --nd_flw = 2,
-    nd_acc = 2,
+    n_acc = 2,
     },
 }
 Test { [[
@@ -7694,7 +7650,7 @@ end;
 return a;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
         --nd_esc = 1,
     },
     run = { ['1~>A;2~>A;3~>A']=3 },
@@ -7738,7 +7694,7 @@ return a;
     ana = {
         --nd_esc = 1,
         n_unreachs = 1,
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 Test { [[
@@ -7761,7 +7717,7 @@ end;
 --(~A; (~A;v)*) and (~A;~A;2=>v)*]],
     ana = {
         isForever = true,
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 Test { [[
@@ -7785,7 +7741,7 @@ end;
 --(~A;~A;1=>v)* and (~A;~A;~A;v)*]],
     ana = {
         isForever = true,
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 Test { [[
@@ -7827,8 +7783,8 @@ end;
 return a;
 ]],
     ana = {
-        nd_acc = 1,
-    nd_acc = 1,
+        n_acc = 1,
+    n_acc = 1,
     },
 }
 Test { [[
@@ -7910,7 +7866,7 @@ end;
 return a+b+c+d;
 ]],
     ana = {
-        nd_acc = 3,
+        n_acc = 3,
         n_unreachs = 1,
     },
     --run = 10,
@@ -7938,7 +7894,7 @@ end;
 return a+b+c;
 ]],
     ana = {
-        nd_acc = 3,
+        n_acc = 3,
         n_unreachs = 4,
     },
     --run = 60,
@@ -7966,7 +7922,7 @@ end;
 return a+b+c;
 ]],
     ana = {
-        nd_acc = 3,
+        n_acc = 3,
         n_reachs = 1,
         --trig_wo = 3,
     },
@@ -7984,7 +7940,7 @@ end;
 return 0;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
         n_unreachs = 1,
         --trig_wo = 2,
     },
@@ -8000,7 +7956,7 @@ end;
 return 0;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
         n_unreachs = 1,
         --trig_wo = 2,
     },
@@ -8016,7 +7972,7 @@ end;
 ]],
     ana = {
         isForever = true,
-        nd_acc = 1,
+        n_acc = 1,
         n_unreachs = 1,
         --trig_wo = 2,
     },
@@ -8083,8 +8039,8 @@ end;
 return x;
 ]],
     ana = {
-        nd_acc = 1,
-    nd_acc = 1,
+        n_acc = 1,
+    n_acc = 1,
     },
 }
 
@@ -8155,7 +8111,7 @@ end;
 ]],
     ana = {
         --nd_flw = 2,
-    nd_acc = 1,
+    n_acc = 1,
     },
 }
 
@@ -8176,7 +8132,7 @@ return v;
     ana = {
         n_unreachs = 1,
     --nd_flw = 2,
-    nd_acc = 1,     -- should be 0
+    n_acc = 1,     -- should be 0
     },
     run = {
         ['5~>A'] = 5,
@@ -8464,7 +8420,7 @@ return v1+v2+v3+v4+v5+v6;   // TODO: unreach
 ]],
     ana = {
         n_unreachs = 2,
-    nd_acc = 1,
+    n_acc = 1,
     },
     --nd_flw = 3,
 }
@@ -8977,7 +8933,7 @@ end;
 ]],
     ana = {
         n_unreachs = 2,
-    nd_acc = 1,
+    n_acc = 1,
     --nd_flw = 2,
     },
 }
@@ -9000,7 +8956,7 @@ end;
 return v;
 ]],
     ana = {
-        nd_acc = 1, -- should be 0 (same evt)
+        n_acc = 1, -- should be 0 (same evt)
     },
     run = {
         ['0~>B ; 5~>A'] = 5,
@@ -9209,7 +9165,7 @@ with
 end;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
         isForever = true,
         n_unreachs = 1,
         --trig_wo = 1,
@@ -9227,7 +9183,7 @@ with
 end;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
         isForever = true,
         n_unreachs = 1,
     },
@@ -9291,7 +9247,7 @@ end;
 ]],
     ana = {
         n_unreachs = 1,
-        nd_acc = 0,
+        n_acc = 0,
         --trig_wo = 1,
     },
     run = {
@@ -9382,7 +9338,7 @@ end;
 ]],
     ana = {
         isForever = true,
-        nd_acc = 1,
+        n_acc = 1,
         n_unreachs = 1,
     },
 }
@@ -9555,7 +9511,7 @@ end;
 ]],
     ana = {
         n_unreachs = 1,
-    nd_acc = 1,
+    n_acc = 1,
     --nd_flw = 1,
     },
 }
@@ -9700,7 +9656,7 @@ end;
 return 0;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
         isForever = true,
         n_unreachs = 2,
     },
@@ -9757,7 +9713,7 @@ return v;
 ]],
     ana = {
         n_unreachs = 1,
-    nd_acc = 1,     -- should be 0
+    n_acc = 1,     -- should be 0
     },
     run = {
         ['5~>B ; 4~>B'] = 5,
@@ -9806,7 +9762,7 @@ end;
 return 10;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
         --isForever = true,
         --n_unreachs = 2,
     },
@@ -9835,7 +9791,7 @@ end;
 return a;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
     run = { ['1~>B;~>B']=10 },
 }
@@ -9899,7 +9855,7 @@ end;
 return a;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
     run = 1,
 }
@@ -9916,7 +9872,7 @@ end;
 return a;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
         n_unreachs = 1,
     },
     run = 1,
@@ -10122,7 +10078,7 @@ end
 return ret + v;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 
@@ -10280,7 +10236,7 @@ loop do
 end;
 ]],
     ana = {
-        nd_acc = 3,
+        n_acc = 3,
         isForever = true,
     },
 }
@@ -10925,7 +10881,7 @@ with
 end
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
         --nd_flw = 1,
         n_unreachs = 0,
     },
@@ -10951,7 +10907,7 @@ end
 return x;
 ]],
     ana = {
-        nd_acc = 3,
+        n_acc = 3,
         n_unreachs = 2,
     },
     run = 1,
@@ -10981,7 +10937,7 @@ with
 end;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
         --trig_wo = 2,
         n_unreachs = 2,
         isForever = true,
@@ -11016,7 +10972,7 @@ end;
 return ret;
 ]],
     ana = {
-        nd_acc = 4,
+        n_acc = 4,
         --trig_wo = 2,
         n_unreachs = 1,
     },
@@ -11054,7 +11010,7 @@ with
 end;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
         --trig_wo = 2,
         n_unreachs = 1,
     },
@@ -11245,7 +11201,7 @@ end;
 return 0;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 
@@ -11950,7 +11906,7 @@ return ret;
 ]],
     todo = 'finalizers do not run in parallel',
     ana = {
-        nd_acc = 3,
+        n_acc = 3,
     },
     run = { ['~>A']=0, ['~>B']=0, ['~>Z']=0 },
 }
@@ -12551,7 +12507,7 @@ return a;
 ]],
     props = 'invalid access from async',
     ana = {
-        --nd_acc = 1,
+        --n_acc = 1,
     },
 }
 
@@ -12705,7 +12661,7 @@ return _a+_b;
 ]],
     todo = 'async is not simulated',
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 
@@ -12803,7 +12759,7 @@ return _a+_b+_c;
 ]],
     todo = 'nd in async',
     ana = {
-        nd_acc = 3,
+        n_acc = 3,
     },
 }
 
@@ -13375,7 +13331,7 @@ end
 return b;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 
@@ -13417,7 +13373,7 @@ return a + b;
 ]],
     run = 2,
     ana = {
-        nd_acc = 7,
+        n_acc = 7,
     },
 }
 
@@ -13443,7 +13399,7 @@ return a + b;
 ]],
     run = 1,
     ana = {
-        nd_acc = 7,
+        n_acc = 7,
     },
 }
 
@@ -13470,7 +13426,7 @@ return a + b;
     todo = true,
     run = 2,
     ana = {
-        nd_acc = 2,
+        n_acc = 2,
     },
 }
 
@@ -13497,7 +13453,7 @@ return a + b;
     todo = true,
     run = 1,
     ana = {
-        nd_acc = 2,
+        n_acc = 2,
     },
 }
 
@@ -14122,7 +14078,7 @@ end;
 return _idx(va,0) + _idx(va,1);
 ]],
     ana = {
-        nd_acc = 2,
+        n_acc = 2,
     },
 }
 Test { PRE .. [[
@@ -14134,7 +14090,7 @@ end;
 return _idx(va,0) + _idx(va,1);
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 Test { PRE .. [[
@@ -14203,7 +14159,7 @@ end;
 return 0;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 Test { PRE .. [[
@@ -14216,7 +14172,7 @@ end;
 return 0;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 Test { PRE .. [[
@@ -14229,7 +14185,7 @@ end;
 return 0;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 Test { PRE .. [[
@@ -14258,7 +14214,7 @@ return 0;
 ]],
     --nd_flw = 1,
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 Test { PRE .. [[
@@ -14328,7 +14284,7 @@ end;
 return 0;
 ]],
     ana = {
-        nd_acc = 2, -- TODO: scope of v vs pa
+        n_acc = 2, -- TODO: scope of v vs pa
     },
 }
 Test { PRE .. [[
@@ -14342,7 +14298,7 @@ end;
 return a;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 Test { PRE .. [[
@@ -14356,7 +14312,7 @@ end;
 ]],
     --nd_flw = 2,
     ana = {
-        nd_acc = 2, -- TODO: $ret vs anything is DET
+        n_acc = 2, -- TODO: $ret vs anything is DET
     },
 }
 
@@ -14370,7 +14326,7 @@ end;
 return a+b;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
     run = 6,
 }
@@ -14387,7 +14343,7 @@ end;
 return v1 + v2;
 ]],
     ana = {
-        nd_acc = 3,
+        n_acc = 3,
     },
 }
 
@@ -14403,7 +14359,7 @@ end;
 return v1 + v2;
 ]],
     ana = {
-        nd_acc = 3,     -- TODO: f2 is const
+        n_acc = 3,     -- TODO: f2 is const
     },
 }
 
@@ -14434,7 +14390,7 @@ return a+b;
 ]],
     run = 4,
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 
@@ -14450,7 +14406,7 @@ end;
 return a+a;
 ]],
     ana = {
-        nd_acc = 2,
+        n_acc = 2,
     },
 }
 
@@ -14481,7 +14437,7 @@ end;
 return v1+v2;
 ]],
     ana = {
-        nd_acc = 3,
+        n_acc = 3,
     },
 }
 
@@ -14498,7 +14454,7 @@ end;
 return v1+v2;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 
@@ -14511,7 +14467,7 @@ end
 return 0;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
     run = false,
 }
@@ -14544,7 +14500,7 @@ end
 return _a;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 
@@ -14575,7 +14531,7 @@ end
 ]],
     todo = true,
     ana = {
-        nd_acc = 6,
+        n_acc = 6,
         isForever = true,
     },
 }
@@ -14606,7 +14562,7 @@ with
 end
 ]],
     ana = {
-        nd_acc = 24,        -- TODO: nao conferi
+        n_acc = 24,        -- TODO: nao conferi
         isForever = true,
     },
     env = 'line 4 : call requires `finalize´',
@@ -14639,7 +14595,7 @@ with
 end
 ]],
     ana = {
-        nd_acc = 24,        -- TODO: nao conferi
+        n_acc = 24,        -- TODO: nao conferi
         isForever = true,
     },
 }
@@ -14657,7 +14613,7 @@ with
 end
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
         isForever = true,
     },
 }
@@ -14677,7 +14633,7 @@ with
 end
 ]],
     ana = {
-        nd_acc = 3,
+        n_acc = 3,
         isForever = true,
     },
 }
@@ -14699,7 +14655,7 @@ end
 ]],
     todo = true,
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
         isForever = true,
     },
 }
@@ -14723,7 +14679,7 @@ end
 ]],
     todo = true,
     ana = {
-        nd_acc = 4,
+        n_acc = 4,
         isForever = true,
     },
 }
@@ -14747,7 +14703,7 @@ end
 ]],
     todo = true,
     ana = {
-        nd_acc = 4,
+        n_acc = 4,
         isForever = true,
     },
 }
@@ -14901,7 +14857,7 @@ end;
 return 0;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 Test { [[
@@ -14915,7 +14871,7 @@ end;
 return 0;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 
@@ -14988,7 +14944,7 @@ end;
 return vs.a;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 
@@ -15009,7 +14965,7 @@ end;
 return vs.a;
 ]],
     ana = {
-        nd_acc = 1,     -- TODO: struct
+        n_acc = 1,     -- TODO: struct
     },
 }
 
@@ -15161,7 +15117,7 @@ end;
 return a;
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 
@@ -15438,7 +15394,7 @@ end
 return ret;
 ]],
     ana = {
-        nd_acc = 1,     -- TODO: 0
+        n_acc = 1,     -- TODO: 0
     },
     run = {
         ['1~>A ; ~>5s ; 0~>A ; ~>5s'] = 10,
@@ -16786,7 +16742,7 @@ with
 end
 ]],
     ana = {
-        nd_acc = 1,
+        n_acc = 1,
     },
 }
 
@@ -19939,7 +19895,7 @@ return ret;
 ]],
     tot = 11,
     ana = {
-        nd_acc = 18,
+        n_acc = 18,
     },
     run = 6,
 }
@@ -19974,7 +19930,7 @@ end
 return ret+a;
 ]],
     ana = {
-        nd_acc = 21,
+        n_acc = 21,
     },
     tot = 28,
     run = 33;

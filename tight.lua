@@ -54,8 +54,6 @@ F = {
 
     If = function (me)
         local c, t, f = unpack(me)
-        t = t or c
-        f = f or c
         AND_all(me, {t,f})
     end,
 
