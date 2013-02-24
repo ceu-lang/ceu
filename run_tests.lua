@@ -59,6 +59,7 @@ Test = function (t)
     if not check('labels')   then return end
     --_AST.dump(_AST.root)
     if not check('mem')      then return end
+    if not check('val')      then return end
     if not check('code')     then return end
 
     STATS.mem     = STATS.mem     + _AST.root.mem.max

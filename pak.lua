@@ -22,6 +22,7 @@ subst 'props.lua'
 subst 'trails.lua'
 subst 'labels.lua'
 subst 'mem.lua'
+subst 'val.lua'
 subst 'code.lua'
 
 -- template.c

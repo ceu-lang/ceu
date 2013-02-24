@@ -128,6 +128,7 @@ do
     dofile 'labels.lua'
     --_AST.dump(_AST.root)
     dofile 'mem.lua'
+    dofile 'val.lua'
     dofile 'code.lua'
 end
 
