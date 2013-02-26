@@ -8,7 +8,7 @@ STATS = {
     count   = 0,
     mem     = 0,
     trails  = 0,
-    wclocks = 0,
+    bytes   = 0,
 }
 
 VALGRIND = ...
@@ -52,14 +52,15 @@ Test = function (t)
     if not check('parser')   then return end
     if not check('ast')      then return end
     if not check('env')      then return end
+    --_AST.dump(_AST.root)
     if not check('tight')    then return end
     --dofile 'awaits.lua'
     if not check('props')    then return end
     if not check('trails')   then return end
     if not check('labels')   then return end
-    --_AST.dump(_AST.root)
     if not check('mem')      then return end
     if not check('val')      then return end
+    dofile 'ana.lua'
     if not check('code')     then return end
 
     STATS.mem     = STATS.mem     + _AST.root.mem.max
@@ -77,6 +78,28 @@ Test = function (t)
 
     assert(_TIGHT and T.loop or
            not (_TIGHT or T.loop))
+
+    -- ANALYSIS
+--[[
+    _AST.dump(_AST.root)
+    assert((not T.n_unreachs) and not (T.isForever)) -- move to analysis
+    do
+        local _defs = { n_reachs=0, n_unreachs=0, isForever=false, n_acc=0 }
+        local _no = { needsTree=true, needsChk=true, n_states=true, n_tracks=true }
+        for k, v in pairs(_ANA) do
+            assert( (v==_defs[k] or _no[k]) and (T.ana==nil or T.ana[k]==nil)
+                    or (T.ana and T.ana[k]==v),
+                    --or (T.ana and T.ana.n_acc==_ANALYSIS.n_acc),
+                            k..' = '..tostring(v))
+        end
+        if T.ana then
+            for k, v in pairs(T.ana) do
+                assert( v == _ANA[k],
+                            k..' = '..tostring(_ANA[k]))
+            end
+        end
+    end
+]]
 
     -- RUN
 
@@ -139,6 +162,11 @@ Test = function (t)
             assert(tonumber(ret)==ret2, ret..' vs '..ret2..' expected')
         end
     end
+
+    local f = io.popen('du -b ceu.exe')
+    local n = string.match(f:read'*a', '(%d+)')
+    STATS.bytes = STATS.bytes + n
+    f:close()
 end
 
 dofile 'tests.lua'
@@ -151,9 +179,11 @@ STATS = {
     count   = ]]..STATS.count  ..[[,
     mem     = ]]..STATS.mem    ..[[,
     trails  = ]]..STATS.trails ..[[,
+    bytes   = ]]..STATS.bytes  ..[[,
 }
 ]])
 
-assert(STATS.count   ==  1058)
-assert(STATS.mem     ==  10855)  -- 8349 (no align)
-assert(STATS.trails  ==  1957)
+assert(STATS.count   ==  1062)
+assert(STATS.mem     ==  8592
+assert(STATS.trails  ==  1960)
+assert(STATS.bytes   ==  6053857)

@@ -2,6 +2,54 @@
 --]===]
 
 Test { [[
+var u8[255] vec;
+event void  e;
+return 1;
+]],
+    run = 1,
+}
+
+local evts = ''
+for i=1, 256 do
+    evts = evts .. 'event u8 e'..i..';\n'
+end
+Test { [[
+]]..evts..[[
+return 1;
+]],
+    mem = 'ERR : line 1 : too many events',
+}
+
+Test { [[
+C _char=1;
+tmp u8[10] v1;
+tmp _char[10] v2;
+
+loop i, 10 do
+    v1[i] = i;
+    v2[i] = <_char> (i*2);
+end
+
+var int ret = 0;
+loop i, 10 do
+    ret = ret + <u8>v2[i] - v1[i];
+end
+
+return ret;
+]],
+    loop = 1,
+    run = 45,
+}
+
+Test { [[
+C _message_t = 52;
+C _t = sizeof<_message_t, u8>;
+return sizeof<_t>;
+]],
+    run = 53,
+}
+
+Test { [[
 tmp int a = 1;
 return a;
 ]],

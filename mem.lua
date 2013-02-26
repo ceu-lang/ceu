@@ -14,9 +14,17 @@ function alloc (mem, n)
     return cur
 end
 
+function pred_sort (v1, v2)
+    if v1.isEvt then
+        return (not v2.isEvt) or  (v1.len > v2.len)
+    else
+        return (not v2.isEvt) and (v1.len > v2.len)
+    end
+end
+
 F = {
     Root = function (me)
-        ASR(_MEM.evt_off+#_ENV.exts, me, 'too many events')
+        ASR(_MEM.evt_off+#_ENV.exts < 255, me, 'too many events')
         me.mem = _MAIN.mem
 
         -- cls/ifc accessors
@@ -59,9 +67,11 @@ F = {
     Dcl_cls_pre = function (me)
         me.mem = { off=0, max=0 }
 
-        local off = alloc(me.mem, _ENV.c.tceu_ntrl.len)     -- trail0
-        _MEM.cls.idx_trail0 = off           -- same off for all orgs
+        if _PROPS.has_orgs then
+            local off = alloc(me.mem, _ENV.c.tceu_ntrl.len)     -- trail0
+            _MEM.cls.idx_trail0 = off           -- same off for all orgs
 DBG('', string.format('%8s','trl0'), off, _ENV.c.tceu_ntrl.len)
+        end
 
         if _PROPS.has_ifcs then
             local off = alloc(me.mem, _ENV.c.tceu_ncls.len) -- cls N
@@ -125,9 +135,10 @@ DBG('', 'glb', '{'..table.concat(glb,',')..'}')
         end
 
         -- sort offsets in descending order to optimize alignment
+        -- but events first to optimize tceu_nevt
         -- TODO: previous org metadata
         local sorted = { unpack(me.vars) }
-        table.sort(sorted, function(v1,v2) return v1.len>v2.len end)
+        table.sort(sorted, pred_sort)
         for _, var in ipairs(sorted) do
             -- we use offsets for events because of interfaces
             if var.isEvt and var.len==0 then
