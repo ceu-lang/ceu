@@ -184,6 +184,6 @@ STATS = {
 ]])
 
 assert(STATS.count   ==  1062)
-assert(STATS.mem     ==  8592
+assert(STATS.mem     ==  8592)
 assert(STATS.trails  ==  1960)
 assert(STATS.bytes   ==  6053857)
