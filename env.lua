@@ -337,6 +337,7 @@ F = {
         me.var  = var
         me.tp   = var.tp
         me.lval = (not var.arr) and (not var.cls) and me
+        me.lval_ = me           -- TODO: arrays
         me.fst  = var
         if var.isEvt then
             me.evt = var
@@ -543,7 +544,8 @@ F = {
         local tp = ASR(_TP.deref(arr.tp,true), me, 'cannot index a non array')
         ASR(tp and _TP.isNumeric(idx.tp,true), me, 'invalid array index')
         me.tp = tp
-        me.lval = (not _ENV.clss[tp]) and arr
+--DBG('idx', arr.tag, arr.lval)
+        me.lval = (not _ENV.clss[tp]) and (arr.lval or arr)
         me.fst  = arr.fst
     end,
 
@@ -605,7 +607,7 @@ F = {
     ['Op1_*'] = function (me)
         local op, e1 = unpack(me)
         me.tp   = _TP.deref(e1.tp, true)
-        me.lval = e1
+        me.lval = e1.lval or e1
         me.fst  = e1.fst
         ASR(me.tp, me, 'invalid operand to unary "*"')
     end,
@@ -615,6 +617,7 @@ F = {
         ASR(_ENV.clss[e1.tp] or e1.lval, me, 'invalid operand to unary "&"')
         me.tp   = e1.tp..'*'
         me.lval = false
+        me.lval_ = e1.lval or e1        -- TODO
         me.fst  = e1.fst
     end,
 
@@ -633,18 +636,24 @@ F = {
                 ASR(me.c and me.c.tag=='func', me,
                     'C function "'..id..'" is not declared')
             else
-                me.var  = ASR(cls.blk_ifc.vars[id], me,
+                local var = ASR(cls.blk_ifc.vars[id], me,
                             'variable/event "'..id..'" is not declared')
-                if me.var.isEvt then
-                    me.evt = me.var
+                me[3] = _AST.node('Var')(me.ln)
+                me[3].var = var
+
+                me.org  = e1
+                me.var  = var
+                me.tp   = var.tp
+                me.lval = me[3]
+                if var.isEvt then
+                    me.evt    = me.var
+                    me[3].evt = var
                 end
-                me.tp   = me.var.tp
-                me.lval = e1
             end
         else
             ASR(_TP.ext(e1.tp,true), me, 'not a struct')
             me.tp   = '_'
-            me.lval = e1
+            me.lval = e1.lval or e1
         end
         me.fst = e1.fst
     end,

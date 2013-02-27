@@ -29,7 +29,7 @@ function par_isConc (pre1, pre2, T)
     for n1 in pairs(pre1) do
         for n2 in pairs(pre2) do
             if (n1 == n2) and (n1 ~= 'ASYNC') then
-DBG('===')
+--DBG('===')
 --DBG(n1, n2, n1.evt, n2.evt)
                 return true
             end
@@ -57,7 +57,7 @@ local function int2exts (pre, T)
         if type(int)=='table' and int.pre=='event' then
             more = true                     -- not converged
             for ext in pairs(T[int] or {}) do
-DBG('io', int.id, ext.id)
+--DBG('io', int.id, ext.id)
                 ret[ext] = true
             end
         else
@@ -77,11 +77,9 @@ function PAR (accs1, accs2, T)
         local pre1 = int2exts(acc1.pre, T)
         for _, acc2 in ipairs(accs2) do
             local pre2 = int2exts(acc2.pre, T)
-            --if par_isConc(acc1.pre,acc2.pre) then
             if par_isConc(pre1,pre2) then
     DBG(acc1.id, acc1.md, acc1.tp, acc1.any, acc1.err)
     DBG(acc2.id, acc2.md, acc2.tp, acc2.any, acc2.err)
-    DBG('===')
 
                 -- ids are compatible
                 local id_ = acc1.id == acc2.id
@@ -97,7 +95,7 @@ function PAR (accs1, accs2, T)
                 local c_ = c1 or c2
                         or (_ENV.dets[acc1.id] and _ENV.dets[acc1.id][acc2.id])
 
-    --DBG(acc1.id, acc2.id, id_)
+    --DBG(id_, c_,c1,c2, acc1.any,acc2.any)
                 if id_ and (not c_) and ND[acc1.md][acc2.md] then
                     DBG('WRN : nondeterminism : '..acc1.err..' vs '..acc2.err)
                     _ANA.n_acc = _ANA.n_acc + 1
@@ -118,7 +116,7 @@ local function emits2pres (me, i, j)
                     local t = ret[acc.id] or {}
                     ret[acc.id] = t
                     for e in pairs(acc.pre) do
-DBG('oi', acc.id.id, e.id)
+--DBG('oi', acc.id.id, e.id)
                         t[e] = true
                     end
                 end
@@ -186,8 +184,29 @@ F = {
 ]]
     end,
 
+    Op2_call = function (me)
+        local _, f, exps = unpack(me)
+        local ps = {}
+        f.lval.acc.md = 'cl'
+        for i, exp in ipairs(exps) do
+            local tp = _TP.deref(exp.tp, true)
+            if tp then
+                local v = exp.lval or exp.lval_
+                if v then   -- ignore constants
+--DBG(exp.tag, exp.lval)
+                    v.acc.any = exp.lval    -- f(&x) // a[N] f(a) // not "any"
+                    v.acc.md  = (me.c and me.c.mod=='pure' and 'rd') or 'wr'
+                    v.acc.tp  = tp
+                end
+            end
+        end
+    end,
+
     EmitInt = function (me)
         local e1, e2 = unpack(me)
+        e1.lval.acc.md = 'tr'
+--[[
+-- TODO: remove
         INS {
             pre = me.ana.pre,
             id  = e1.evt,
@@ -196,6 +215,7 @@ F = {
             any = false,
             err = 'event `'..e1.evt.id..'´ (line '..me.ln..')',
         }
+]]
         -- TODO: e2
     end,
 
@@ -204,7 +224,15 @@ F = {
         me[1].lval.acc.md = 'wr'
     end,
     AwaitInt = function (me)
-        me[1].acc.md = 'aw'
+        me[1].lval.acc.md = 'aw'
+    end,
+
+    ['Op1_*'] = function (me)
+        me.lval.acc.any = true
+        me.lval.acc.tp  = _TP.deref(me.lval.acc.tp,true)
+    end,
+    ['Op1_&'] = function (me)
+        me.lval_.acc.md = 'no'
     end,
 
     Var = function (me)
