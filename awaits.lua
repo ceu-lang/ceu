@@ -60,14 +60,14 @@ F = {
         for _, cls in ipairs(me) do
             if cls.aw.forever_ and cls.glbs then
                 for awt in pairs(cls.aw.t) do
-                    local id = awt[1].var or awt[1].ext
+                    local id = awt[1].evt
                     _AWAITS.t[id] = {}  -- new glb candidate
                     ALL[awt] = nil      -- remove them from non-glb
                 end
             end
         end
         for awt in pairs(ALL) do
-            local id = awt[1].var or awt[1].ext
+            local id = awt[1].evt
             if _AWAITS.t[id] then
                 _AWAITS.t[id] = nil     -- remove non-glb from glb
             end

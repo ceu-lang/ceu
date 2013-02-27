@@ -336,7 +336,7 @@ F = {
         ASR(var, me, 'variable/event "'..id..'" is not declared')
         me.var  = var
         me.tp   = var.tp
-        me.lval = (not var.arr) and (not var.cls)
+        me.lval = (not var.arr) and (not var.cls) and me
         me.fst  = var
         if var.isEvt then
             me.evt = var
@@ -543,7 +543,7 @@ F = {
         local tp = ASR(_TP.deref(arr.tp,true), me, 'cannot index a non array')
         ASR(tp and _TP.isNumeric(idx.tp,true), me, 'invalid array index')
         me.tp = tp
-        me.lval = (not _ENV.clss[tp])
+        me.lval = (not _ENV.clss[tp]) and arr
         me.fst  = arr.fst
     end,
 
@@ -605,7 +605,7 @@ F = {
     ['Op1_*'] = function (me)
         local op, e1 = unpack(me)
         me.tp   = _TP.deref(e1.tp, true)
-        me.lval = true
+        me.lval = e1
         me.fst  = e1.fst
         ASR(me.tp, me, 'invalid operand to unary "*"')
     end,
@@ -635,13 +635,16 @@ F = {
             else
                 me.var  = ASR(cls.blk_ifc.vars[id], me,
                             'variable/event "'..id..'" is not declared')
+                if me.var.isEvt then
+                    me.evt = me.var
+                end
                 me.tp   = me.var.tp
-                me.lval = true
+                me.lval = e1
             end
         else
             ASR(_TP.ext(e1.tp,true), me, 'not a struct')
             me.tp   = '_'
-            me.lval = true
+            me.lval = e1
         end
         me.fst = e1.fst
     end,
@@ -659,7 +662,7 @@ F = {
         ASR(c and (c.tag=='var' or c.tag=='func'), me,
             'C variable/function "'..id..'" is not declared')
         me.tp   = '_'
-        me.lval = '_'
+        me.lval = me
         me.fst  = '_'
         me.c    = c
     end,

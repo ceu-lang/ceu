@@ -121,12 +121,14 @@ do
     dofile 'parser.lua'
     dofile 'ast.lua'
     dofile 'env.lua'
+    dofile 'ana.lua'
+    dofile 'acc.lua'
+    --_AST.dump(_AST.root)
     dofile 'tight.lua'
     --dofile 'awaits.lua'
     dofile 'props.lua'
     dofile 'trails.lua'
     dofile 'labels.lua'
-    --_AST.dump(_AST.root)
     dofile 'mem.lua'
     dofile 'val.lua'
     dofile 'code.lua'

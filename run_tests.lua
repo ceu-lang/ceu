@@ -61,6 +61,7 @@ Test = function (t)
     if not check('mem')      then return end
     if not check('val')      then return end
     dofile 'ana.lua'
+    dofile 'acc.lua'
     if not check('code')     then return end
 
     STATS.mem     = STATS.mem     + _AST.root.mem.max
@@ -80,7 +81,6 @@ Test = function (t)
            not (_TIGHT or T.loop))
 
     -- ANALYSIS
---[[
     _AST.dump(_AST.root)
     assert((not T.n_unreachs) and not (T.isForever)) -- move to analysis
     do
@@ -99,6 +99,7 @@ Test = function (t)
             end
         end
     end
+--[[
 ]]
 
     -- RUN
@@ -183,7 +184,7 @@ STATS = {
 }
 ]])
 
-assert(STATS.count   ==  1062)
-assert(STATS.mem     ==  8592)
-assert(STATS.trails  ==  1960)
-assert(STATS.bytes   ==  6053857)
+assert(STATS.count  ==    1063)
+assert(STATS.mem    ==    8592)
+assert(STATS.trails ==    1962)
+assert(STATS.bytes  == 6061593)

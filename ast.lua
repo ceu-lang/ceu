@@ -92,7 +92,7 @@ function _AST.dump (me, spc)
     local t = {}
     for k in pairs(me.ana.pos) do t[#t+1]=f(k) end
     ks = ks..'['..table.concat(t,',')..']'
-    DBG(string.rep(' ',spc) .. me.tag .. ' ('..ks..')')
+    DBG(string.rep(' ',spc)..me.tag..' ('..me.ln..') '..ks)
     for i, sub in ipairs(me) do
         if _AST.isNode(sub) then
             _AST.dump(sub, spc+2)
@@ -220,8 +220,8 @@ local C; C = {
 
         if _j.tag == 'CONST' then
             j = function () return _j end
-            dcl_j = node('Nothingt')(ln)
-            set_j = node('Nothingt')(ln)
+            dcl_j = node('Nothing')(ln)
+            set_j = node('Nothing')(ln)
         else
             local j_name = '$j'..tostring(blk)
             j = function() return node('Var')(ln, j_name) end
@@ -239,6 +239,8 @@ local C; C = {
                             blk,
                             nxt_i))
         loop.blk = blk      -- continue
+        loop.isFor = true
+        loop[1][1].isFor = true
 
         return node('Block')(ln,
                 node('Stmts')(ln,

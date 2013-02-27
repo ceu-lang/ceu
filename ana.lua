@@ -1,3 +1,4 @@
+-- TODO: rename to flow
 _ANA = {
     isForever  = nil,
     n_reachs   = 0,      -- unexpected reaches
@@ -55,6 +56,12 @@ F = {
                 pre = me.ana.pre
             }
         else
+            -- broken sequences
+            if me[i-1].ana.pos[false] and (not me[i-1].ana.pre[false]) then
+                _ANA.n_unreachs = _ANA.n_unreachs + 1
+                me.__unreach = true
+                WRN(false, sub, 'statement is not reachable')
+            end
             sub.ana = {
                 pre = me[i-1].ana.pos
             }
@@ -104,6 +111,11 @@ F = {
     end,
 
     If = function (me)
+        if me.isFor then
+            me.ana.pos = me.ana.pre
+            return
+        end
+
         me.ana.pos = { [false]=true }
         for _, sub in ipairs{me[2],me[3]} do
             OR(me, sub)
@@ -119,12 +131,25 @@ F = {
         OR(top, me, true)
         me.ana.pos = { [false]=true }
 
+--[[
     -- short: for ParOr/Loop/SetBlock if any sub.pos is equal to me.pre,
     -- then we have a "short circuit"
 DBG(me.ana.pre, top.ana.pre)
         if me.ana.pre == top.ana.pre then
-            --error'oi'
+            for par in _AST.iter(_AST.pred_par) do
+                if par.depth < top.depth then
+                    break
+                end
+                for _, sub in ipairs(par) do
+DBG(sub.tag)
+                    if (not sub.ana.pos[false]) then
+                        _ANA.n_unreachs = _ANA.n_unreachs + 1
+                        sub.ana.pos = { [false]=true }
+                    end
+                end
+            end
         end
+]]
     end,
     SetBlock = function (me)
         local blk = me[2]
@@ -139,12 +164,32 @@ DBG(me.ana.pre, top.ana.pre)
     Loop_pre = 'SetBlock_pre',
     Break    = 'Return',
 
+    Loop = function (me)
+        if me.isFor then
+            me.ana.pos = me[1].ana.pos
+            return
+        end
+
+        if me[1].ana.pos[false] then
+            _ANA.n_unreachs = _ANA.n_unreachs + 1
+            WRN(false, me, '`loop´ iteration is not reachable')
+        end
+    end,
+
     Async = function (me)
         if me.ana.pre[false] then
             me.ana.pos = me.ana.pre
         else
             me.ana.pos = { [me]=true }
         end
+    end,
+
+    SetAwait = function (me)
+        local set, awt = unpack(me)
+        set.ana.pre = awt.ana.pos
+        set.ana.pos = awt.ana.pos
+        me.ana.pre = awt.ana.pre
+        me.ana.pos = set.ana.pos
     end,
 
     AwaitExt = function (me)

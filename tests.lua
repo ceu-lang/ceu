@@ -1,5 +1,4 @@
 --[===[
---]===]
 
 Test { [[
 var u8[255] vec;
@@ -803,7 +802,6 @@ with
 end
 return 1;
 ]],
-    todo = true,
     run = 1,
 }
 
@@ -975,6 +973,9 @@ with
 end
 return ret;
 ]],
+    ana = {
+        n_acc = 1,  -- false positive
+    },
     run = { ['~>1s; ~>F']=1 },
 }
 
@@ -1049,6 +1050,9 @@ with
     return 2;
 end
 ]],
+    ana = {
+        n_acc = 1,  -- false positive
+    },
     run = { ['~>2s']=1 }
 }
 
@@ -1218,8 +1222,8 @@ end;
 return 0;
 ]],
     ana = {
-        n_unreachs = 2,
-        isForever = true,
+        --n_unreachs = 2,
+        --isForever = true,
     },
 }
 
@@ -1267,7 +1271,7 @@ with
 end
 ]],
     ana = {
-        n_unreachs = 1,
+        --n_unreachs = 1,
     },
     --nd_flw = 1,
     run = 1,
@@ -1341,7 +1345,7 @@ end;
 return a;
 ]],
     ana = {
-        n_unreachs = 1,
+        --n_unreachs = 1,
     },
     run = { ['1~>A;1~>F']=513, ['2~>B;0~>F']=513 },
 }
@@ -1408,14 +1412,14 @@ var int a = do
                 var int v;
                 par/or do
                     var int v = await 10ms;
-                    return v;
+                    return v; //  8
                 with
                     v = await A;
                 end;
-                return v;
+                return v;     // 12
             with
                 var int v = await B;
-                return v;
+                return v;     // 15
             end;
         with
             await F;
@@ -1519,7 +1523,6 @@ return 1;
     },
     run = 1,
 }
-
 Test { [[
 input int A;
 loop do
@@ -1559,7 +1562,11 @@ loop do
 end;
 return 0;
 ]],
-    loop = 'tight loop'
+    ana = {
+        isForever = true,
+        n_unreachs = 1,
+    },
+    loop = 'tight loop',
 }
 
 Test { [[
@@ -1664,6 +1671,10 @@ var int a;
 loop do a=1; end;
 return a;
 ]],
+    ana = {
+        isForever = true,
+        n_unreachs = 1,
+    },
     loop = 'tight loop',
 }
 
@@ -1697,6 +1708,10 @@ loop do
     end;
 end;
 ]],
+    ana = {
+        isForever = true,
+        n_unreachs = 1,
+    },
     loop = 'tight loop'
 }
 
@@ -1707,7 +1722,11 @@ loop do
     end;
 end;
 ]],
-    loop = 'tight loop'
+    loop = 'tight loop',
+    ana = {
+        isForever = true,
+        n_unreachs = 1,
+    },
 }
 
 Test { [[
@@ -1764,7 +1783,11 @@ loop do
     await 1s;
 end
 ]],
-    loop = 'tight loop'
+    loop = 'tight loop',
+    ana = {
+        isForever = true,
+        --n_unreachs = 1,
+    },
 }
 
 Test { [[
@@ -1828,7 +1851,11 @@ loop do
 end;
 return a;
 ]],
-    loop = 'tight loop'
+    loop = 'tight loop',
+    ana = {
+        isForever = true,
+        n_unreachs = 1,
+    },
 }
 Test { [[
 loop do
@@ -1851,7 +1878,11 @@ with
 end;
 return 0;
 ]],
-    loop='tight loop'
+    loop='tight loop',
+    ana = {
+        isForever = true,
+        n_unreachs = 2,
+    },
 }
 
 Test { [[
@@ -1864,7 +1895,11 @@ with
 end;
 return 0;
 ]],
-    loop='tight loop'
+    loop='tight loop',
+    ana = {
+        isForever = true,
+        n_unreachs = 2,
+    },
 }
 
 Test { [[
@@ -1876,7 +1911,11 @@ with
 end;
 return 0;
 ]],
-    loop='tight loop'
+    loop='tight loop',
+    ana = {
+        isForever = true,
+        n_unreachs = 2,
+    },
 }
 
 Test { [[
@@ -1889,7 +1928,11 @@ loop do
 end;
 return 0;
 ]],
-    loop='tight loop'
+    loop='tight loop',
+    ana = {
+        isForever = true,
+        n_unreachs = 1,
+    },
 }
 Test { [[
 input int A;
@@ -1903,7 +1946,11 @@ loop do
 end;
 return 0;
 ]],
-    loop='tight loop'
+    loop='tight loop',
+    ana = {
+        isForever = true,
+        n_unreachs = 1,
+    },
 }
 
 Test { [[
@@ -1931,6 +1978,7 @@ end;
 return 0;   // TODO
 ]],
     ana = {
+        n_unreachs = 1,
         isForever = true,
     },
 }
@@ -2029,7 +2077,7 @@ return sum;
 ]],
     ana = {
         n_acc = 1,
-        n_unreachs = 2,
+        --n_unreachs = 2,
     },
     run = 1,
 }
@@ -2099,7 +2147,7 @@ end
 return sum;
 ]],
     ana = {
-        n_unreachs = 3,
+        --n_unreachs = 3,
         n_acc = 1,
     },
     run = 1,
@@ -2109,20 +2157,20 @@ Test { [[
 input int A;
 var int sum = 0;
 par/or do
-    sum = 5;
+    sum = 5;            // 4
     loop i, 10 do
         await A;
         async do
             var int a = 1;
         end
     end
-    sum = 0;
+    sum = 0;            // 11
 with
     loop i, 2 do
         async do
             var int a = 1;
         end
-        sum = sum + 1;
+        sum = sum + 1;  // 17
     end
 end
 return sum;
@@ -2339,6 +2387,87 @@ return a+f;
 
 -- INTERNAL EVENTS
 
+--]===]
+Test { [[
+input void START;
+var int ret;
+event void a,b;
+par/and do
+    await START;
+    emit a;
+with
+    await START;
+    emit b;
+with
+    await a;
+    ret = 1;
+with
+    await b;
+    ret = 2;
+end
+return ret;
+]],
+    run = 2,
+}
+
+Test { [[
+input void START;
+var int ret;
+event void a,b;
+par/and do
+    await START;
+    emit a;
+with
+    par/or do
+        await START;
+    with
+        await 1s;
+    end
+    emit b;
+with
+    await a;
+    ret = 1;
+with
+    par/or do
+        await b;
+    with
+        await 1s;
+    end
+    ret = 2;
+end
+return ret;
+]],
+    run = 2,
+}
+
+Test { [[
+input void START;
+var int ret;
+event void a,b,c,d;
+par/and do
+    await START;
+    emit a;
+with
+    await START;
+    emit b;
+with
+    await a;
+    emit c;
+with
+    await b;
+    emit d;
+with
+    await c;
+    ret = 1;
+with
+    await d;
+    ret = 2;
+end
+return ret;
+]],
+    run = 2,
+}
+
 Test { [[
 event int c;
 emit c=10;
@@ -2351,6 +2480,7 @@ return 0;
     },
     --trig_wo = 1,
 }
+do return end
 
 -- EX.06: 2 triggers
 Test { [[
