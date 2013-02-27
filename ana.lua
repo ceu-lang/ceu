@@ -90,8 +90,18 @@ F = {
                 return
             end
         end
+
+        -- like ParOr, but remove [true]
+        local onlyTrue = true
+        me.ana.pos = { [false]=true }
         for _, sub in ipairs(me) do
             OR(me, sub)
+            if not sub.ana.pos[true] then
+                onlyTrue = false
+            end
+        end
+        if not onlyTrue then
+            me.ana.pos[true] = nil
         end
     end,
 
@@ -197,7 +207,6 @@ DBG(sub.tag)
         if me.ana.pre[false] then
             me.ana.pos = me.ana.pre
         else
-DBG(me.tag, e.evt)
             me.ana.pos = { [e.evt or 'WCLOCK']=true }
         end
     end,

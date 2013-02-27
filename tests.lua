@@ -1,5 +1,4 @@
 --[===[
---]===]
 
 Test { [[
 var u8[255] vec;
@@ -467,6 +466,25 @@ input int A,B,Z;
 
 Test { [[await A; return 0;]],
     env = 'event "A" is not declared',
+}
+
+Test { [[
+input void A;
+await A;
+return 1;
+]],
+    run = false,
+}
+Test { [[
+input void A;
+par/and do
+    await A;
+with
+    nothing;
+end
+return 1;
+]],
+    run = false,
 }
 
 Test { [[
@@ -1963,14 +1981,14 @@ return 0;
 Test { [[
 input void START;
 event void a,b;
-        par/and do
-            await a;
-        with
-            await START;
-            emit b;
-            emit a;
-        end
-    return 5;
+par/and do
+    await a;
+with
+    await START;
+    emit b;
+    emit a;
+end
+return 5;
 ]],
     run = 5,
 }
@@ -2404,13 +2422,16 @@ with
     emit b;
 with
     await a;
-    ret = 1;
+    ret = 1;    // 12: nd
 with
     await b;
-    ret = 2;
+    ret = 2;    // 15: nd
 end
 return ret;
 ]],
+    ana = {
+        n_acc = 1,
+    },
     run = 2,
 }
 
@@ -2430,17 +2451,20 @@ with
     emit b;
 with
     await a;
-    ret = 1;
+    ret = 1;        // n_acc
 with
     par/or do
         await b;
     with
         await 1s;
     end
-    ret = 2;
+    ret = 2;        // n_acc
 end
 return ret;
 ]],
+    ana = {
+        n_acc = 1,
+    },
     run = 2,
 }
 
@@ -2462,13 +2486,16 @@ with
     emit d;
 with
     await c;
-    ret = 1;
+    ret = 1;    // 18: n_acc
 with
     await d;
-    ret = 2;
+    ret = 2;    // 21: n_acc
 end
 return ret;
 ]],
+    ana = {
+        n_acc = 1,
+    },
     run = 2,
 }
 
@@ -2479,12 +2506,11 @@ await c;
 return 0;
 ]],
     ana = {
-        n_unreachs = 1,
-        isForever = true,
+        --n_unreachs = 1,
+        --isForever = true,
     },
     --trig_wo = 1,
 }
-do return end
 
 -- EX.06: 2 triggers
 Test { [[
@@ -2541,9 +2567,6 @@ with
     end;
 end;
 ]],
-    ana = {
-        n_acc = 1,
-    },
     run = 4,
 }
 
@@ -2560,7 +2583,7 @@ emit a;
 return ret;
 ]],
     ana = {
-        n_unreachs = 1,
+        --n_unreachs = 1,
     },
     run = 5,
 }
@@ -2613,7 +2636,7 @@ var int a = par do
 return a;
 ]],
     ana = {
-        n_unreachs = 1,
+        --n_unreachs = 1,
         n_acc = 1,
         --nd_flw = 2,
     },
@@ -2648,18 +2671,18 @@ a = par do
     if 1 then
         var int v = await A;
         // unreachable
-        return v;
+        return v;               // 8
     end;
-    return 0;
+    return 0;                   // 10
 with
     var int v = await A;
-    return v;
+    return v;                   // 13
 end;
 return a;
 ]],
     ana = {
-        n_unreachs = 1,
-        n_acc  = 1,
+        --n_unreachs = 1,
+        n_acc  = 2,
         --nd_flw  = 2,
     },
     run = { ['1~>A']=1 },
@@ -2706,6 +2729,8 @@ return a;
     },
 }
 
+do return end
+--]===]
 Test { [[
 input int A,B;
 var int a,v;

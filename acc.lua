@@ -25,7 +25,7 @@ local ND = {
     no  = {},   -- never ND ('ref')
 }
 
-function par_isConc (pre1, pre2)
+function par_isConc (pre1, pre2, T)
     for n1 in pairs(pre1) do
         for n2 in pairs(pre2) do
             if (n1 == n2) and (n1 ~= 'ASYNC') then
@@ -48,11 +48,37 @@ end
     },
 ]]
 
-function PAR (accs1, accs2)
+-- {pre [A]=true, [a]=true } => {ret [A]=true, [aX]=true,[aY]=true }
+-- {T [a]={[X]=true,[Y]=true} } (emits2pres)
+local function int2exts (pre, T)
+    local ret = {}
+    local more = false                      -- converged
+    for int in pairs(pre) do
+        if type(int)=='table' and int.pre=='event' then
+            more = true                     -- not converged
+            for ext in pairs(T[int] or {}) do
+DBG('io', int.id, ext.id)
+                ret[ext] = true
+            end
+        else
+            ret[int] = true
+        end
+    end
+    if more then
+        return int2exts(ret, T)             -- not converged
+    else
+        return ret
+    end
+end
+
+function PAR (accs1, accs2, T)
     -- "n_acc": i/j are concurrent, and have incomp. acc
     for _, acc1 in ipairs(accs1) do
+        local pre1 = int2exts(acc1.pre, T)
         for _, acc2 in ipairs(accs2) do
-            if par_isConc(acc1.flw,acc2.flw) then
+            local pre2 = int2exts(acc2.pre, T)
+            --if par_isConc(acc1.pre,acc2.pre) then
+            if par_isConc(pre1,pre2) then
     DBG(acc1.id, acc1.md, acc1.tp, acc1.any, acc1.err)
     DBG(acc2.id, acc2.md, acc2.tp, acc2.any, acc2.err)
     DBG('===')
@@ -81,6 +107,27 @@ function PAR (accs1, accs2)
     end
 end
 
+-- {ret [a]={[X]=true,[Y]=true,[b]=true}}   -- events that emit a
+-- not emitted from i/j
+local function emits2pres (me, i, j)
+    local ret = {}
+    for k, sub in ipairs(me) do
+        if k~=i and k~=j then
+            for _, acc in ipairs(sub.ana.accs) do
+                if acc.md == 'tr' then
+                    local t = ret[acc.id] or {}
+                    ret[acc.id] = t
+                    for e in pairs(acc.pre) do
+DBG('oi', acc.id.id, e.id)
+                        t[e] = true
+                    end
+                end
+            end
+        end
+    end
+    return ret
+end
+
 F = {
     ParOr_pre = function (me)
         for _, sub in ipairs(me) do
@@ -94,7 +141,7 @@ F = {
         -- look for nondeterminism
         for i=1, #me do
             for j=i+1, #me do
-                PAR(me[i].ana.accs, me[j].ana.accs)
+                PAR(me[i].ana.accs, me[j].ana.accs, emits2pres(me,i,j))
             end
         end
 
@@ -119,7 +166,7 @@ F = {
     EmitExtE = function (me)
         local e1, e2 = unpack(me)
         INS {
-            flw = me.ana.pre,
+            pre = me.ana.pre,
             id  = e1.evt.id,    -- like functions (not table events)
             md  = 'cl',
             tp  = '_',
@@ -139,6 +186,20 @@ F = {
 ]]
     end,
 
+    EmitInt = function (me)
+        local e1, e2 = unpack(me)
+        INS {
+            pre = me.ana.pre,
+            id  = e1.evt,
+            md  = 'tr',
+            tp  = e1.evt.tp,
+            any = false,
+            err = 'event `'..e1.evt.id..'´ (line '..me.ln..')',
+        }
+        -- TODO: e2
+    end,
+
+    SetAwait = 'SetExp',
     SetExp = function (me)
         me[1].lval.acc.md = 'wr'
     end,
@@ -148,7 +209,7 @@ F = {
 
     Var = function (me)
         me.acc = INS {
-            flw = me.ana.pre,
+            pre = me.ana.pre,
             id  = me.var,
             md  = 'rd',
             tp  = me.var.tp,
@@ -159,7 +220,7 @@ F = {
 
     C = function (me)
         me.acc = INS {
-            flw = me.ana.pre,
+            pre = me.ana.pre,
             id  = me[1],
             md  = 'rd',
             tp  = '_',

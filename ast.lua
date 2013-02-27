@@ -83,7 +83,7 @@ function _AST.dump (me, spc)
     --ks = 'n='..(me.aw.n or '?')..',t='..t..',ever='..(me.aw.forever_ and 1 or 0)
     --ks = table.concat(me.trails,'-')
     local f = function(v)
-                return type(v)=='table' and v and v.evt and v.evt.id
+                return type(v)=='table' and v.id
                     or tostring(v)
               end
     local t = {}
