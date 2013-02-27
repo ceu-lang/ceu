@@ -180,7 +180,7 @@ DBG(sub.tag)
         if me.ana.pre[false] then
             me.ana.pos = me.ana.pre
         else
-            me.ana.pos = { [me]=true }
+            me.ana.pos = { ['ASYNC']=true }
         end
     end,
 
@@ -197,7 +197,8 @@ DBG(sub.tag)
         if me.ana.pre[false] then
             me.ana.pos = me.ana.pre
         else
-            me.ana.pos = { [me]=true }
+DBG(me.tag, e.evt)
+            me.ana.pos = { [e.evt or 'WCLOCK']=true }
         end
     end,
     AwaitInt = 'AwaitExt',

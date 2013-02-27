@@ -28,19 +28,10 @@ local ND = {
 function par_isConc (pre1, pre2)
     for n1 in pairs(pre1) do
         for n2 in pairs(pre2) do
-            if n1==true or n2==true then
-                if n1==true and n2==true then
-    DBG('===')
-DBG(n1, n2)
-                    return true
-                end
-            else
-                if n1.tag ~= 'Async' and
-                   n1[1].evt == n2[1].evt then
-    DBG('===')
-DBG(n1[1].evt, n2[1].evt)
-                    return true
-                end
+            if (n1 == n2) and (n1 ~= 'ASYNC') then
+DBG('===')
+--DBG(n1, n2, n1.evt, n2.evt)
+                return true
             end
         end
     end

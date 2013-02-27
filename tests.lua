@@ -1,4 +1,5 @@
 --[===[
+--]===]
 
 Test { [[
 var u8[255] vec;
@@ -312,6 +313,9 @@ else
 end
 return 0;
 ]],
+    ana = {
+        n_unreachs = 1,
+    },
     run = 0,
 }
 Test { [[
@@ -333,6 +337,9 @@ else
 end
 return 0;
 ]],
+    ana = {
+        n_unreachs = 2,
+    },
     run = 1,
 }
 Test { [[if (2) then  else return 0; end;]],
@@ -954,7 +961,7 @@ end
 return 0;
 ]],
     ana = {
-        n_unreachs = 1,
+        n_unreachs = 2,
         isForever = true,
     },
 }
@@ -998,7 +1005,7 @@ end
 return 0;
 ]],
     ana = {
-        n_unreachs = 1,
+        n_unreachs = 2,
         isForever =  true,
     },
 }
@@ -1169,7 +1176,7 @@ end
 return a;
 ]],
     ana = {
-        n_acc = 3,         -- TODO: =0
+        n_acc = 0,
     },
     run = { ['~>5s; ~>F']=14 },
     --run = { ['~>5s; ~>F']=42 },
@@ -1194,7 +1201,7 @@ end
 ]],
     ana = {
         isForever = true,
-        n_acc = 1,         -- TODO: =0
+        n_acc = 0,
     },
 }
 
@@ -1533,7 +1540,7 @@ end;
 return 0;
 ]],
     ana = {
-        n_unreachs = 1,
+        n_unreachs = 2,
     },
     run = 1,
 }
@@ -1548,7 +1555,7 @@ end;
 return 0;
 ]],
     ana = {
-        n_unreachs = 2,
+        n_unreachs = 3,
     },
     run = 1,
 }
@@ -1564,7 +1571,7 @@ return 0;
 ]],
     ana = {
         isForever = true,
-        n_unreachs = 1,
+        n_unreachs = 2,
     },
     loop = 'tight loop',
 }
@@ -1612,11 +1619,11 @@ loop do
     with
         return 1;
     end;
-end;
+end;        // n_unreachs
 return 1;   // n_unreachs
 ]],
     ana = {
-        n_unreachs = 1,
+        n_unreachs = 2,
         --nd_flw =1,
     },
     run = 1,
@@ -1632,11 +1639,11 @@ loop do
         await B;
         return 1;
     end;
-end;
-return 1;   // TODO: n_unreachs
+end;        // n_unreachs
+return 1;   // n_unreachs
 ]],
     ana = {
-        n_unreachs = 1,
+        n_unreachs = 2,
     },
     run = { ['~>A;~>B']=1, }
 }
@@ -2076,7 +2083,6 @@ end
 return sum;
 ]],
     ana = {
-        n_acc = 1,
         --n_unreachs = 2,
     },
     run = 1,
@@ -2148,7 +2154,6 @@ return sum;
 ]],
     ana = {
         --n_unreachs = 3,
-        n_acc = 1,
     },
     run = 1,
 }
@@ -2387,7 +2392,6 @@ return a+f;
 
 -- INTERNAL EVENTS
 
---]===]
 Test { [[
 input void START;
 var int ret;
