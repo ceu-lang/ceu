@@ -93,7 +93,7 @@ DBG('======================')
 --[[
 local glb = {}
 for i,v in ipairs(me.aw.t) do
-    local ID = v[1].var or v[1].ext
+    local ID = v[1].evt
     glb[#glb+1] = ID.id
 end
 DBG('', 'glb', '{'..table.concat(glb,',')..'}')

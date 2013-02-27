@@ -126,12 +126,9 @@ F = {
     end,
     AwaitExt = function (me)
         local e = unpack(me);
-        me.lbl = new{'Awake_'..e.ext.id}
+        me.lbl = new{'Awake_'..e.evt.id}
     end,
-    AwaitInt = function (me)
-        local int = unpack(me)
-        me.lbl = new{'Awake_'..int.var.id}
-    end,
+    AwaitInt = 'AwaitExt',
 }
 
 _AST.visit(F)

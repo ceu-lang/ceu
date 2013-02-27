@@ -32,6 +32,7 @@ _ENV = {
 
         tceu_ncls = true,    -- env.lua
     },
+    dets  = {},
 }
 
 for k, v in pairs(_ENV.c) do
@@ -145,19 +146,29 @@ function _ENV.getvar (id, blk)
     end
 end
 
+-- identifiers for ID_c / ID_ext (allow to be defined after annotations)
+-- variables for Var
+function det2id (v)
+    if type(v) == 'string' then
+        return v
+    else
+        return v.var
+    end
+end
+
 F = {
     Root_pre = function (me)
-        local ext = {id='_FIN', pre='input'}
-        _ENV.exts[#_ENV.exts+1] = ext
-        _ENV.exts[ext.id] = ext
+        local evt = {id='_FIN', pre='input'}
+        _ENV.exts[#_ENV.exts+1] = evt
+        _ENV.exts[evt.id] = evt
 
-        local ext = {id='_WCLOCK', pre='input'}
-        _ENV.exts[#_ENV.exts+1] = ext
-        _ENV.exts[ext.id] = ext
+        local evt = {id='_WCLOCK', pre='input'}
+        _ENV.exts[#_ENV.exts+1] = evt
+        _ENV.exts[evt.id] = evt
 
-        local ext = {id='_ASYNC', pre='input'}
-        _ENV.exts[#_ENV.exts+1] = ext
-        _ENV.exts[ext.id] = ext
+        local evt = {id='_ASYNC', pre='input'}
+        _ENV.exts[#_ENV.exts+1] = evt
+        _ENV.exts[evt.id] = evt
     end,
 
     Root = function (me)
@@ -227,6 +238,19 @@ F = {
         end
     end,
 
+    Dcl_det = function (me)                 -- TODO: verify in _ENV.c
+        local id1 = det2id(me[1])
+        local t1 = _ENV.dets[id1] or {}
+        _ENV.dets[id1] = t1
+        for i=2, #me do
+            local id2 = det2id(me[i])
+            local t2 = _ENV.dets[id2] or {}
+            _ENV.dets[id2] = t2
+            t1[id2] = true
+            t2[id1] = true
+        end
+    end,
+
     Global = function (me)
         ASR(_ENV.clss.Global and _ENV.clss.Global.is_ifc, me,
             'interface "Global" is not defined')
@@ -256,15 +280,15 @@ F = {
         ASR(tp=='void' or tp=='int' or _TP.deref(tp),
                 me, 'invalid event type')
 
-        me.ext = {
+        me.evt = {
             ln    = me.ln,
             id    = id,
             tp    = tp,
             pre   = dir,
             isEvt = true,
         }
-        _ENV.exts[#_ENV.exts+1] = me.ext
-        _ENV.exts[id] = me.ext
+        _ENV.exts[#_ENV.exts+1] = me.evt
+        _ENV.exts[id] = me.evt
     end,
 
     Dcl_int = 'Dcl_var',
@@ -301,7 +325,7 @@ F = {
 
     Ext = function (me)
         local id = unpack(me)
-        me.ext = ASR(_ENV.exts[id], me,
+        me.evt = ASR(_ENV.exts[id], me,
                     'event "'..id..'" is not declared')
     end,
 
@@ -314,6 +338,9 @@ F = {
         me.tp   = var.tp
         me.lval = (not var.arr) and (not var.cls)
         me.fst  = var
+        if var.isEvt then
+            me.evt = var
+        end
     end,
 
     Dcl_c = function (me)
@@ -348,20 +375,20 @@ F = {
 
     EmitExtS = function (me)
         local e1, _ = unpack(me)
-        if e1.ext.pre == 'output' then
+        if e1.evt.pre == 'output' then
             F.EmitExtE(me)
         end
     end,
     EmitExtE = function (me)
         local e1, e2 = unpack(me)
-        ASR(e1.ext.pre == 'output', me, 'invalid input `emit´')
+        ASR(e1.evt.pre == 'output', me, 'invalid input `emit´')
         me.tp = 'int'
 
         if e2 then
-            ASR(_TP.contains(e1.ext.tp,e2.tp,true),
+            ASR(_TP.contains(e1.evt.tp,e2.tp,true),
                     me, "non-matching types on `emit´")
         else
-            ASR(e1.ext.tp=='void',
+            ASR(e1.evt.tp=='void',
                     me, "missing parameters on `emit´")
         end
     end,
@@ -437,7 +464,7 @@ F = {
         if awt.ret.tag == 'AwaitT' then
             ASR(_TP.isNumeric(e1.tp,true), me, 'invalid attribution')
         else    -- AwaitInt / AwaitExt
-            local evt = awt.ret[1].var or awt.ret[1].ext
+            local evt = awt.ret[1].evt
             ASR(_TP.contains(e1.tp,evt.tp,true), me, 'invalid attribution')
         end
     end,

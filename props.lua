@@ -264,9 +264,9 @@ F = {
 
     EmitExtS = function (me)
         if _AST.iter'Async'() then
-            ASR(me[1].ext.pre=='input',  me, 'not permitted inside `async´')
+            ASR(me[1].evt.pre=='input',  me, 'not permitted inside `async´')
         else
-            ASR(me[1].ext.pre=='output', me, 'not permitted outside `async´')
+            ASR(me[1].evt.pre=='output', me, 'not permitted outside `async´')
         end
     end,
     EmitExtE = function (me)

@@ -55,7 +55,7 @@ F =
 
     EmitExtS = function (me)
         local e1, _ = unpack(me)
-        if e1.ext.pre == 'output' then
+        if e1.evt.pre == 'output' then
             F.EmitExtE(me)
         end
     end,
@@ -63,12 +63,12 @@ F =
         local e1, e2 = unpack(me)
         local len, val
         if e2 then
-            local tp = _TP.deref(e1.ext.tp, true)
+            local tp = _TP.deref(e1.evt.tp, true)
             if tp then
                 len = 'sizeof('.._TP.c(tp)..')'
                 val = e2.val
             else
-                len = 'sizeof('.._TP.c(e1.ext.tp)..')'
+                len = 'sizeof('.._TP.c(e1.evt.tp)..')'
                 val = 'ceu_ext_f(&_ceu_int_,'..e2.val..')'
             end
         else
@@ -76,10 +76,10 @@ F =
             val = 'NULL'
         end
         me.val = '\n'..[[
-#if defined(ceu_out_event_]]..e1.ext.id..[[)
-    ceu_out_event_]]..e1.ext.id..'('..val..[[)
+#if defined(ceu_out_event_]]..e1.evt.id..[[)
+    ceu_out_event_]]..e1.evt.id..'('..val..[[)
 #elif defined(ceu_out_event)
-    ceu_out_event(OUT_]]..e1.ext.id..','..len..','..val..[[)
+    ceu_out_event(OUT_]]..e1.evt.id..','..len..','..val..[[)
 #else
     0
 #endif
@@ -87,8 +87,8 @@ F =
     end,
     AwaitExt = function (me)
         local e1 = unpack(me)
-        if _TP.deref(e1.ext.tp) then
-            me.val = '(('.._TP.c(e1.ext.tp)..')_ceu_evt_p_.ptr)'
+        if _TP.deref(e1.evt.tp) then
+            me.val = '(('.._TP.c(e1.evt.tp)..')_ceu_evt_p_.ptr)'
         else
             me.val = '*((int*)_ceu_evt_p_.ptr)'  -- TODO
         end

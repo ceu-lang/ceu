@@ -82,7 +82,10 @@ function _AST.dump (me, spc)
     --local t=0; for _ in pairs(me.aw.t) do t=t+1 end
     --ks = 'n='..(me.aw.n or '?')..',t='..t..',ever='..(me.aw.forever_ and 1 or 0)
     --ks = table.concat(me.trails,'-')
-    local f = function(v) return type(v)=='table' and v.id or tostring(v) end
+    local f = function(v)
+                return type(v)=='table' and v[1] and v[1].evt and v[1].evt.id
+                    or tostring(v)
+              end
     local t = {}
     for k in pairs(me.ana.pre) do t[#t+1]=f(k) end
     ks = '['..table.concat(t,',')..']'
@@ -116,6 +119,7 @@ local function visit_aux (me, F)
     if F.Node_pre then me=(F.Node_pre(me) or me) end
     if pre then me=(pre(me) or me) end
 
+    me.__par = STACK[#STACK]
     STACK[#STACK+1] = me
 
     for i, sub in ipairs(me) do
@@ -315,6 +319,8 @@ local C; C = {
             TOP[#TOP+1] = t
         end
     end,
+
+    Dcl_det = node('Dcl_det'),
 
     _Dcl_var_ifc = function(...) return C._Dcl_var(...) end,
     _Dcl_var = function (ln, pre, tp, dim, ...)

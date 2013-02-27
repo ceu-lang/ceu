@@ -83,6 +83,17 @@ function COMM (me, comm)
 end
 
 function CLEAR (me)
+--[[
+usar me em vez de me[1].evt
+    local i = _AST.iter(_AST.pred_prio)
+    i()                 -- 1st is me
+    local top = i()     -- 2nd is top
+    if me.ana.pos == (top and top.ana.pos) then
+        error'oi'
+        return
+    end
+]]
+
     COMM(me, 'CLEAR')
     LINE(me, 'ceu_trails_clr('..me.trails[1]..','..me.trails[2]..
                                 ', _ceu_org_);')
@@ -257,8 +268,12 @@ if (]]..exp.val..[[ != NULL) {
         LINE(me, '{')
         for _, var in ipairs(me.vars) do
             if var.pre == 'tmp' then
-                ASR(not var.arr, me, 'temporary arrays are not yet supported')
-                LINE(me, _TP.c(var.tp)..' '..var.val..';')
+                if var.arr then
+                    LINE(me, _TP.c(_TP.deref(var.tp))
+                            ..' '..var.val..'['..var.arr..'];')
+                else
+                    LINE(me, _TP.c(var.tp)..' '..var.val..';')
+                end
             end
         end
     end,
@@ -496,26 +511,26 @@ for (;;) {
 
     EmitExtS = function (me)
         local e1, e2 = unpack(me)
-        local ext = e1.ext
+        local evt = e1.evt
 
-        if ext.pre == 'output' then  -- e1 not Exp
+        if evt.pre == 'output' then  -- e1 not Exp
             LINE(me, me.val..';')
             return
         end
 
-        assert(ext.pre == 'input')
+        assert(evt.pre == 'input')
 
         if e2 then
-            if _TP.deref(ext.tp) then
-                LINE(me, 'ceu_go_event(IN_'..ext.id
+            if _TP.deref(evt.tp) then
+                LINE(me, 'ceu_go_event(IN_'..evt.id
                         ..', (void*)'..e2.val..');')
             else
-                LINE(me, 'ceu_go_event(IN_'..ext.id
+                LINE(me, 'ceu_go_event(IN_'..evt.id
                         ..', (void*)ceu_ext_f(&_ceu_int_,'..e2.val..'));')
             end
 
         else
-            LINE(me, 'ceu_go_event(IN_'..ext.id ..', NULL);')
+            LINE(me, 'ceu_go_event(IN_'..evt.id ..', NULL);')
         end
 
         CASE2(me, 'IN__ASYNC', 0, 0, me.lbl_cnt)
@@ -554,7 +569,7 @@ case ]]..me.lbl_cnt.id..[[:
         -- TODO: ROM: set/get only if can be killed
         LINE(me, [[
 ceu_trails_set(]]..me.trails[1]..[[,CEU_PENDING,_ceu_org_);
-ceu_trails_go(]]..(int.off or int.var.off)
+ceu_trails_go(]]..(int.off or int.evt.off)
                 ..',(tceu_evt_param)(void*)'..org..[[);
 if (ceu_trails_get(]]..me.trails[1]..[[,_ceu_org_)->lbl != CEU_PENDING)
     return;
@@ -582,7 +597,7 @@ if (ceu_wclocks_not(PTR_cur(s32*,]]..wclk..[[), _ceu_evt_p_.dt))
     AwaitInt = function (me)
         local int = unpack(me)
         local org = (int.org and int.org.val) or '_ceu_org_'
-        CASE2(me, (int.off or int.var.off), 0, 0, me.lbl)
+        CASE2(me, (int.off or int.evt.off), 0, 0, me.lbl)
         LINE(me, [[
 #ifdef CEU_ORGS
 if (]]..org..[[ != _ceu_evt_p_.org)
@@ -595,7 +610,7 @@ if (]]..org..[[ != _ceu_evt_p_.org)
 
     AwaitExt = function (me)
         local e,_ = unpack(me)
-        CASE2(me, 'IN_'..e.ext.id, 0, 0, me.lbl)
+        CASE2(me, 'IN_'..e.evt.id, 0, 0, me.lbl)
         LINE(me, [[
 // TODO: until cond
 ]])

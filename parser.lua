@@ -127,6 +127,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
              + V'EmitT'    + V'EmitExtS'  + V'EmitInt'
              + V'_Dcl_c'   + V'_Dcl_ext'
              + V'_Dcl_int' + V'_Dcl_var'
+             + V'Dcl_det'
              + V'_Set'
              + V'Free'
              + V'Nothing'
@@ -266,6 +267,10 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , EmitT    = K'emit' * (V'WCLOCKK'+V'WCLOCKE')
 
     , EmitInt  = K'emit' * EV'_Exp' * (K'=' * V'_Exp')^-1
+
+    , __ID     = V'ID_c' + V'ID_ext' + V'Var'
+    , Dcl_det  = K'deterministic' * EV'__ID' * EK'with' *
+                     EV'__ID' * (K',' * EV'__ID')^0
 
     , __Dcl_c    = Cc'type' * V'ID_c' * K'=' * V'_Exp'
                  + Cc'func' * V'ID_c' * '()' * Cc(false)
