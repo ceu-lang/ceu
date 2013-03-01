@@ -1,6 +1,33 @@
 --[===[
 
 Test { [[
+input void A, B, Z;
+event void a;
+var int ret = 1;
+var _t* a;
+C _f();
+C _t = 0;
+par/or do
+    _f(a)
+        finalize with
+            ret = 1;    // DET
+        end;
+with
+    var _t* b;
+    _f(b)
+        finalize with
+            ret = 2;    // DET
+        end;
+end
+return ret;
+]],
+    ana = {
+        n_acc = 2,
+    },
+    run = false,
+}
+
+Test { [[
 input int A;
 var int a;
 par/or do
@@ -19,104 +46,58 @@ return a;
         n_acc = 1,
     },
 }
---]===]
 
 Test { [[
-input void START;
-event void a, b;
+input int A;
+var int a;
 par do
-    par do
-        await a;
-        return 1;
-    with
-        await b;
-        return 2;
+    loop do
+        par/or do
+            a = 1;
+            await A;
+        with
+            await A;
+            a = 2;
+        end;
     end
 with
-    await START;
-    emit b;
-with
-    await START;
-    emit a;
+    loop do
+        await A;
+        a = 3;
+    end
 end
 ]],
-    run = 2,
     ana = {
-        n_acc = 1,
+        isForever = true,
+        n_acc = 2,
     },
 }
 
 Test { [[
-C _char = 1;
-var _char* p;
-*(p:a) = <_char>1;
-return 1;
-]],
-    run = false,
-}
-
-Test { [[
-var u8[255] vec;
-event void  e;
-return 1;
-]],
-    run = 1,
-}
-
-local evts = ''
-for i=1, 256 do
-    evts = evts .. 'event u8 e'..i..';\n'
-end
-Test { [[
-]]..evts..[[
-return 1;
-]],
-    mem = 'ERR : line 1 : too many events',
-}
-
-Test { [[
-C _char=1;
-tmp u8[10] v1;
-tmp _char[10] v2;
-
-loop i, 10 do
-    v1[i] = i;
-    v2[i] = <_char> (i*2);
-end
-
+input void START;
+event int a, x, y;
 var int ret = 0;
-loop i, 10 do
-    ret = ret + <u8>v2[i] - v1[i];
+par do
+    par/or do
+        await y;
+        return 1;   // 12
+    with
+        await x;
+        return 2;   // 15
+    end;
+with
+    await START;
+    emit x=1;
+    emit y=1;
 end
-
-return ret;
 ]],
-    loop = 1,
-    run = 45,
+    ana = {
+        n_acc = 0,
+    },
+    run = 2;
 }
 
-Test { [[
-C _message_t = 52;
-C _t = sizeof<_message_t, u8>;
-return sizeof<_t>;
-]],
-    run = 53,
-}
-
-Test { [[
-tmp int a = 1;
-return a;
-]],
-    run = 1,
-}
-
-Test { [[
-C _char=1;
-tmp _char a = <_char> 1;
-return <int>a;
-]],
-    run = 1,
-}
+--]===]
 
 --do return end
 
@@ -2913,6 +2894,61 @@ end
     },
     awaits = 1,
     run = 1,
+}
+
+Test { [[
+input void START;
+event int a, x, y;
+var int ret = 0;
+par do
+    par/and do
+        await START;
+        emit x=1;   // 7
+        emit y=1;   // 8
+    with
+        par/or do
+            await y;
+            return 1;   // 12
+        with
+            await x;
+            return 2;   // 15
+        end;
+    end;
+with
+    await START;
+    emit x=1;       // 20
+    emit y=1;       // 21
+end
+]],
+    ana = {
+        n_acc = 3,
+    },
+    run = 2;
+}
+
+Test { [[
+input void START;
+event void a, b;
+par do
+    par do
+        await a;
+        return 1;
+    with
+        await b;
+        return 2;
+    end
+with
+    await START;
+    emit b;
+with
+    await START;
+    emit a;
+end
+]],
+    run = 2,
+    ana = {
+        n_acc = 1,
+    },
 }
 
 Test { [[
@@ -10933,7 +10969,7 @@ end;
 return a;
 ]],
     ana = {
-        n_acc = 2,
+        n_acc = 1,
     },
     run = 1,
 }
@@ -11233,17 +11269,17 @@ par/or do
 with
     await a;
     x = x + 1;
-    await a;
+    await a;        // 11
     x = x + 1;
 with
     await a;
-    emit a;
+    emit a;         // 15
     // unreachable
 end
 return x;
 ]],
     ana = {
-        n_acc = 3,
+        n_acc = 1,
         n_unreachs = 2,
     },
     run = 1,
@@ -11309,7 +11345,7 @@ end;
 return ret;
 ]],
     ana = {
-        n_acc = 0,      -- TODO
+        n_acc = 3,
         --n_acc = 4,
         --trig_wo = 2,
         n_unreachs = 1,
@@ -11324,15 +11360,15 @@ var int ret = 0;
 par do
     par/and do
         await START;
-        emit x=1;
-        emit y=1;
+        emit x=1;           // 7
+        emit y=1;           // 8
     with
         par/or do
             await x;
-            ret = ret + 3;
+            ret = ret + 3;  // 12
         with
             await y;
-            ret = 0;
+            ret = 0;        // 15
         end;
     end;
 with
@@ -11340,15 +11376,15 @@ with
     ret = ret + 1;
     emit a=1;
     ret = ret * 2;
-    emit x=0;
+    emit x=0;               // 7
     ret = ret + 1;
-    emit y=0;
+    emit y=0;               // 25
     ret = ret * 2;
     return ret;
 end;
 ]],
     ana = {
-        n_acc = 0,      -- TODO
+        n_acc = 4,
         --n_acc = 1,
         --trig_wo = 2,
         n_unreachs = 1,
@@ -11612,13 +11648,13 @@ par/or do
     ret = ret + 1;
 with
     par/or do
-        await a;
+        await a;    // 7
         emit b;
     with
         await b;
     end
 with
-    emit a;
+    emit a;         // 13
 end
 par/and do
     emit a;
@@ -11629,6 +11665,9 @@ with
 end
 return ret;
 ]],
+    ana = {
+        n_acc = 1,
+    },
     run = 2,
 }
 
@@ -12294,7 +12333,7 @@ var int ret = 1;
 par/or do
     do
         finalize with
-            ret = ret * 2;
+            ret = ret * 2;      // 7
     end
         await A;
         emit a;
@@ -12302,7 +12341,7 @@ par/or do
 with
     do
         finalize with
-            ret = ret + 5;
+            ret = ret + 5;      // 15
     end
         await B;
     end
@@ -12314,6 +12353,9 @@ with
 end
 return ret;
 ]],
+    ana = {
+        n_acc = 3,
+    },
     run = {
         ['~>A'] = 9,
         ['~>B'] = 12,
@@ -13951,6 +13993,15 @@ return a;
     run = 10,
 }
 
+Test { [[
+C _char = 1;
+var _char* p;
+*(p:a) = <_char>1;
+return 1;
+]],
+    run = false,
+}
+
     -- ARRAYS
 
 Test { [[input int[1] E; return 0;]],
@@ -14095,6 +14146,32 @@ end
 return a[0] + b;
 ]],
     run = 2,
+}
+
+Test { [[
+var u8[255] vec;
+event void  e;
+return 1;
+]],
+    run = 1,
+}
+
+local evts = ''
+for i=1, 256 do
+    evts = evts .. 'event u8 e'..i..';\n'
+end
+Test { [[
+]]..evts..[[
+return 1;
+]],
+    mem = 'ERR : line 1 : too many events',
+}
+
+Test { [[
+tmp int a = 1;
+return a;
+]],
+    run = 1,
 }
 
     -- C FUNCS BLOCK
@@ -15361,6 +15438,43 @@ Test { [[
     }
 }
 
+Test { [[
+C _char=1;
+tmp u8[10] v1;
+tmp _char[10] v2;
+
+loop i, 10 do
+    v1[i] = i;
+    v2[i] = <_char> (i*2);
+end
+
+var int ret = 0;
+loop i, 10 do
+    ret = ret + <u8>v2[i] - v1[i];
+end
+
+return ret;
+]],
+    loop = 1,
+    run = 45,
+}
+
+Test { [[
+C _message_t = 52;
+C _t = sizeof<_message_t, u8>;
+return sizeof<_t>;
+]],
+    run = 53,
+}
+
+Test { [[
+C _char=1;
+tmp _char a = <_char> 1;
+return <int>a;
+]],
+    run = 1,
+}
+
 -- Exps
 
 Test { [[var int a = ]],
@@ -15881,7 +15995,7 @@ event void e, f;
 par do
     loop do
         par/or do
-            emit e;
+            emit e;     // 8
 _ret_val = _ret_val + 5;
             await FOREVER;
         with
@@ -15890,19 +16004,19 @@ _ret_val = _ret_val + 5;
     end
 with
     loop do
-        await e;
+        await e;        // 17
 _ret_val = _ret_val + 11;
         par/or do
-            emit f;
+            emit f;     // 20
         with
-            await f;
+            await f;    // 22
         end
     end
 end
 ]],
     ana = {
         isForever = true,
-        n_acc = 1,
+        n_acc = 2,
     },
     awaits = 0,
     run = 6
@@ -16652,6 +16766,9 @@ var Image_media img3;
 
 return img1.sm.id + img2.sm.id + img3.sm.id;
 ]],
+    ana = {
+        n_reachs = 1,
+    },
     run = 33;
 }
 
@@ -16693,6 +16810,9 @@ loop do
     emit aa.go;
 end
 ]],
+    ana = {
+        isForever = true,
+    },
     loop = true,
 }
 
@@ -17127,7 +17247,7 @@ do
 end
 var T aa;
 par do
-        await aa.ok;
+    await aa.ok;
 with
     await A;
     if aa.v == 3 then
@@ -17137,6 +17257,7 @@ end
 ]],
     ana = {
         n_acc = 1,
+        n_reachs = 1,
     },
 }
 
