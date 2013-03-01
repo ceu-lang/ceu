@@ -1,6 +1,52 @@
 --[===[
 
 Test { [[
+input int A;
+var int a;
+par/or do
+    loop do
+        a = 1;
+        await A;
+    end;
+with
+    await A;
+    await A;
+    a = 1;
+end;
+return a;
+]],
+    ana = {
+        n_acc = 1,
+    },
+}
+--]===]
+
+Test { [[
+input void START;
+event void a, b;
+par do
+    par do
+        await a;
+        return 1;
+    with
+        await b;
+        return 2;
+    end
+with
+    await START;
+    emit b;
+with
+    await START;
+    emit a;
+end
+]],
+    run = 2,
+    ana = {
+        n_acc = 1,
+    },
+}
+
+Test { [[
 C _char = 1;
 var _char* p;
 *(p:a) = <_char>1;
@@ -599,10 +645,10 @@ event void e;
 par do
     await START;
     emit e;
-    return 1;
+    return 1;       // 9
 with
     await e;
-    return 2;
+    return 2;       // 12
 end
 ]],
     ana = {
@@ -2863,6 +2909,7 @@ end
 ]],
     ana = {
         isForever = true,
+        n_acc = 3,
     },
     awaits = 1,
     run = 1,
@@ -5490,19 +5537,19 @@ par/or do
     await 10ms;
     x = 0;
 with
-    await b;
+    await b;        // 8
     emit a=b;
     await 10ms;
     x = 1;
 with
-    emit b=1;
+    emit b=1;       // 13
     x = 2;
     await FOREVER;
 end;
 return x;
 ]],
     ana = {
-        n_acc  = 3,    -- TODO: timer kills timer
+        n_acc  = 2,    -- TODO: timer kills timer
         n_unreachs = 0,    -- TODO: timer kills timer
     },
     --run = { ['~>10ms']=0 },
@@ -5622,26 +5669,6 @@ end;
     ana = {
         n_acc = 1,
     --nd_flw = 2,
-    },
-}
-
-Test { [[
-input int A;
-var int a;
-par/or do
-    loop do
-        a = 1;
-        await A;
-    end;
-with
-    await A;
-    await A;
-    a = 1;
-end;
-return a;
-]],
-    ana = {
-        n_acc = 1,
     },
 }
 
@@ -6602,7 +6629,7 @@ return 0;
     ana = {
         --nd_esc = 1,
         --n_unreachs = 2,
-        n_acc = 3,
+        n_acc = 2,
         --trig_wo = 1,
     },
 }
@@ -7992,7 +8019,7 @@ return a;
     ana = {
         --nd_esc = 1,
         --n_unreachs = 1,
-        n_acc = 3,
+        n_acc = 2,
     },
 }
 Test { [[
@@ -9574,15 +9601,15 @@ par/or do
     return v;
 with
     v = await a;
-    return v;
+    return v;       // 15
 with
     await b;
-    return b;
+    return b;       // 18
 end;
 ]],
     ana = {
         --nd_esc = 2,
-    n_unreachs = 4,
+        n_unreachs = 4,
     },
     run = {
         ['10~>A'] = 10,
@@ -16602,7 +16629,6 @@ return img1.sm.id + img2.sm.id + img3.sm.id;
 ]],
     run = 33;
 }
---]===]
 Test { [[
 class Sm with
     var int id;

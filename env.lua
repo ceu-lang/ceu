@@ -256,6 +256,7 @@ F = {
             'interface "Global" is not defined')
         me.tp   = 'Global*'
         me.lval = false
+        -- TODO: ref = me ?
         me.fst  = me
         me.blk  = true --_MAIN.blk
     end,
@@ -264,6 +265,7 @@ F = {
         ASR(CLS() ~= _MAIN, me, 'invalid access')
         me.tp   = CLS().id
         me.lval = false
+        -- TODO: ref = me ?
         me.fst  = me
         me.blk  = CLS().blk_ifc
     end,
@@ -336,8 +338,8 @@ F = {
         ASR(var, me, 'variable/event "'..id..'" is not declared')
         me.var  = var
         me.tp   = var.tp
-        me.lval = (not var.arr) and (not var.cls) and me
-        me.lval_ = me           -- TODO: arrays
+        me.lval = (not var.arr) and (not var.cls)
+        me.ref  = me
         me.fst  = var
         if var.isEvt then
             me.evt = var
@@ -545,7 +547,8 @@ F = {
         ASR(tp and _TP.isNumeric(idx.tp,true), me, 'invalid array index')
         me.tp = tp
 --DBG('idx', arr.tag, arr.lval)
-        me.lval = (not _ENV.clss[tp]) and (arr.lval or arr)
+        me.lval = (not _ENV.clss[tp])
+        me.ref  = arr.ref
         me.fst  = arr.fst
     end,
 
@@ -607,7 +610,8 @@ F = {
     ['Op1_*'] = function (me)
         local op, e1 = unpack(me)
         me.tp   = _TP.deref(e1.tp, true)
-        me.lval = e1.lval or e1
+        me.lval = e1.lval
+        me.ref  = e1.ref
         me.fst  = e1.fst
         ASR(me.tp, me, 'invalid operand to unary "*"')
     end,
@@ -617,7 +621,7 @@ F = {
         ASR(_ENV.clss[e1.tp] or e1.lval, me, 'invalid operand to unary "&"')
         me.tp   = e1.tp..'*'
         me.lval = false
-        me.lval_ = e1.lval or e1        -- TODO
+        me.ref  = e1.ref
         me.fst  = e1.fst
     end,
 
@@ -644,7 +648,8 @@ F = {
                 me.org  = e1
                 me.var  = var
                 me.tp   = var.tp
-                me.lval = me[3]
+                me.lval = (not var.arr) and (not var.cls)
+                me.ref  = me[3]
                 if var.isEvt then
                     me.evt    = me.var
                     me[3].evt = var
@@ -653,7 +658,8 @@ F = {
         else
             ASR(_TP.ext(e1.tp,true), me, 'not a struct')
             me.tp   = '_'
-            me.lval = e1.lval or e1
+            me.lval = e1.lval
+            me.ref  = e1.ref
         end
         me.fst = e1.fst
     end,
@@ -662,6 +668,7 @@ F = {
         local tp, exp = unpack(me)
         me.tp   = tp
         me.lval = exp.lval
+        me.ref  = exp.ref
         me.fst  = exp.fst
     end,
 
@@ -671,7 +678,8 @@ F = {
         ASR(c and (c.tag=='var' or c.tag=='func'), me,
             'C variable/function "'..id..'" is not declared')
         me.tp   = '_'
-        me.lval = me
+        me.lval = true
+        me.ref  = me
         me.fst  = '_'
         me.c    = c
     end,
