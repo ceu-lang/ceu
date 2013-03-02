@@ -90,10 +90,9 @@ Test = function (t)
     assert((not T.unreachs) and not (T.isForever)) -- move to analysis
     do
         local _defs = { reachs=0, unreachs=0, isForever=false, acc=0, flw=0 }
-        local _no = { needsTree=true, needsChk=true, n_states=true, n_tracks=true }
         for k, v in pairs(_ANA) do
 if k ~= 'unreachs' then
-            assert( (v==_defs[k] or _no[k]) and (T.ana==nil or T.ana[k]==nil)
+            assert( v==_defs[k] and (T.ana==nil or T.ana[k]==nil)
                     or (T.ana and T.ana[k]==v),
                     --or (T.ana and T.ana.acc==_ANALYSIS.acc),
                             k..' = '..tostring(v))
@@ -190,5 +189,5 @@ STATS = {
 
 assert(STATS.count  ==    1087)
 assert(STATS.mem    ==    8840)
-assert(STATS.trails ==    2053)
-assert(STATS.bytes  == 6350784)
+assert(STATS.trails ==    2052)
+assert(STATS.bytes  == 6354307)

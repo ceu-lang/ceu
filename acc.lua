@@ -1,4 +1,5 @@
 _ANA.acc = 0      -- nd accesses
+_ANA.flw = 0      -- nd escapes
 
 -- any variable access calls this function
 -- to be inserted on parent Parallel sub[i] or Class
@@ -169,6 +170,36 @@ F = {
             err = 'symbol `'..me[1]..'´ (line '..me.ln..')',
         }
     end,
+
+    -- FLOW --
+
+    Break = function (me, TAG, PRE)
+        TAG = TAG or 'Loop'
+        PRE = PRE or me.ana.pre
+
+        for n in _AST.iter(_AST.pred_prio) do
+            me.acc = INS {
+                pre = PRE,
+                id  = n,        -- one for each node that I escape
+                md  = 'flw',
+                err = 'escape (line '..me.ln..')',
+            }
+            if n.tag == TAG then
+                break
+            end
+        end
+    end,
+    Return = function (me)
+        F.Break(me, 'SetBlock')
+    end,
+
+    Node = function (me)
+        if me.__par and me.__par.tag == 'ParOr' then
+            if not me.ana.pos[false] then
+                F.Break(me, 'ParOr', me.ana.pos)
+            end
+        end
+    end,
 }
 
 _AST.visit(F)
@@ -182,6 +213,8 @@ local ND = {
     rd  = { cl=true, tr=true,  wr=true,  rd=false, aw=false },
     aw  = { cl=true, tr=true,  wr=false, rd=false, aw=false },
     no  = {},   -- never ND ('ref')
+
+    flw = { flw=true }  -- flw vs flw only
 }
 
 local ALL = nil     -- holds all emits starting from top-most PAR
@@ -258,7 +291,7 @@ DBG(acc2.cls.id, acc2.id, acc2.md, acc2.tp, acc2.any, acc2.err)
 DBG(acc1.org and acc1.org.tag, acc2.org and acc2.org.tag)
 DBG'==============='
 ]]
-            if par_isConc(pre1,pre2) then
+            if par_isConc(pre1,pre2) and ND[acc1.md][acc2.md] then
 
                 -- this.x vs this.x (both accs bounded to cls)
                 local cls_ = (acc1.cls == cls) or
@@ -297,10 +330,13 @@ DBG'==============='
 
     --DBG(id_, c_,c1,c2, acc1.any,acc2.any)
                 if cls_ and org_ and id_ and (not c_)
-                and ND[acc1.md][acc2.md]
                 then
                     DBG('WRN : nondeterminism : '..acc1.err..' vs '..acc2.err)
-                    _ANA.acc = _ANA.acc + 1
+                    if acc1.md == 'flw' then
+                        _ANA.flw = _ANA.flw + 1
+                    else
+                        _ANA.acc = _ANA.acc + 1
+                    end
                 end
             end
         end
