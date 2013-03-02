@@ -87,21 +87,21 @@ Test = function (t)
 
     -- ANALYSIS
     --_AST.dump(_AST.root)
-    assert((not T.n_unreachs) and not (T.isForever)) -- move to analysis
+    assert((not T.unreachs) and not (T.isForever)) -- move to analysis
     do
-        local _defs = { n_reachs=0, n_unreachs=0, isForever=false, n_acc=0 }
+        local _defs = { reachs=0, unreachs=0, isForever=false, acc=0, flw=0 }
         local _no = { needsTree=true, needsChk=true, n_states=true, n_tracks=true }
         for k, v in pairs(_ANA) do
-if k ~= 'n_unreachs' then
+if k ~= 'unreachs' then
             assert( (v==_defs[k] or _no[k]) and (T.ana==nil or T.ana[k]==nil)
                     or (T.ana and T.ana[k]==v),
-                    --or (T.ana and T.ana.n_acc==_ANALYSIS.n_acc),
+                    --or (T.ana and T.ana.acc==_ANALYSIS.acc),
                             k..' = '..tostring(v))
 end
         end
         if T.ana then
             for k, v in pairs(T.ana) do
-if k ~= 'n_unreachs' then
+if k ~= 'unreachs' then
                 assert( v == _ANA[k],
                             k..' = '..tostring(_ANA[k]))
 end

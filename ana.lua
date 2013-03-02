@@ -1,11 +1,12 @@
 -- TODO: rename to flow
 _ANA = {
     isForever  = nil,
-    n_reachs   = 0,      -- unexpected reaches
-    n_unreachs = 0,      -- unexpected unreaches
+    reachs   = 0,      -- unexpected reaches
+    unreachs = 0,      -- unexpected unreaches
 }
 
 -- avoids counting twice (due to loops)
+-- TODO: remove
 local __inc = {}
 function INC (me, c)
     if __inc[me] then
@@ -81,9 +82,9 @@ F = {
         else
             -- broken sequences
             if me[i-1].ana.pos[false] and (not me[i-1].ana.pre[false]) then
-                --_ANA.n_unreachs = _ANA.n_unreachs + 1
+                --_ANA.unreachs = _ANA.unreachs + 1
                 me.__unreach = true
-                WRN( INC(me, 'n_unreachs'),
+                WRN( INC(me, 'unreachs'),
                      sub, 'statement is not reachable')
             end
             sub.ana = {
@@ -98,8 +99,8 @@ F = {
             OR(me, sub, true)
         end
         if me.ana.pos[false] then
-            --_ANA.n_unreachs = _ANA.n_unreachs + 1
-            WRN( INC(me, 'n_unreachs'),
+            --_ANA.unreachs = _ANA.unreachs + 1
+            WRN( INC(me, 'unreachs'),
                  me, 'at least one trail should terminate')
         end
     end,
@@ -110,8 +111,8 @@ F = {
         for _, sub in ipairs(me) do
             if sub.ana.pos[false] then
                 me.ana.pos = { [false]=true }
-                --_ANA.n_unreachs = _ANA.n_unreachs + 1
-                WRN( INC(me, 'n_unreachs'),
+                --_ANA.unreachs = _ANA.unreachs + 1
+                WRN( INC(me, 'unreachs'),
                      sub, 'trail should terminate')
                 return
             end
@@ -141,8 +142,8 @@ F = {
             end
         end
         if not ok then
-            --_ANA.n_reachs = _ANA.n_reachs + 1
-            WRN( INC(me, 'n_reachs'),
+            --_ANA.reachs = _ANA.reachs + 1
+            WRN( INC(me, 'reachs'),
                  me, 'all trails terminate')
         end
     end,
@@ -180,7 +181,7 @@ DBG(me.ana.pre, top.ana.pre)
                 for _, sub in ipairs(par) do
 DBG(sub.tag)
                     if (not sub.ana.pos[false]) then
-                        _ANA.n_unreachs = _ANA.n_unreachs + 1
+                        _ANA.unreachs = _ANA.unreachs + 1
                         sub.ana.pos = { [false]=true }
                     end
                 end
@@ -193,8 +194,8 @@ DBG(sub.tag)
         if   (not blk.ana.pos[false])
         and  (me[2].tag ~= 'Async')     -- async is assumed to terminate
         then
-            --_ANA.n_reachs = _ANA.n_reachs + 1
-            WRN( INC(me, 'n_reachs'),
+            --_ANA.reachs = _ANA.reachs + 1
+            WRN( INC(me, 'reachs'),
                  blk, 'missing `return´ statement for the block')
         end
     end,
@@ -209,8 +210,8 @@ DBG(sub.tag)
         end
 
         if me[1].ana.pos[false] then
-            --_ANA.n_unreachs = _ANA.n_unreachs + 1
-            WRN( INC(me, 'n_unreachs'),
+            --_ANA.unreachs = _ANA.unreachs + 1
+            WRN( INC(me, 'unreachs'),
                  me, '`loop´ iteration is not reachable')
         end
 

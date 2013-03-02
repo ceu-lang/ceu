@@ -1,4 +1,4 @@
-_ANA.n_acc = 0      -- nd accesses
+_ANA.acc = 0      -- nd accesses
 
 -- any variable access calls this function
 -- to be inserted on parent Parallel sub[i] or Class
@@ -188,7 +188,7 @@ local ALL = nil     -- holds all emits starting from top-most PAR
 
 --[[
     ana = {
-        n_acc = 1,  -- false positive
+        acc = 1,  -- false positive
     },
     ana = {
         isForever = true,
@@ -238,7 +238,7 @@ end
 function PAR (accs1, accs2, NO)
     local cls = CLS()
 
-    -- "n_acc": i/j are concurrent, and have incomp. acc
+    -- "acc": i/j are concurrent, and have incomp. acc
     -- accs need to be I-indexed
     for _, acc1 in ipairs(accs1) do
         local pre1 = int2exts(acc1.pre, NO)
@@ -300,7 +300,7 @@ DBG'==============='
                 and ND[acc1.md][acc2.md]
                 then
                     DBG('WRN : nondeterminism : '..acc1.err..' vs '..acc2.err)
-                    _ANA.n_acc = _ANA.n_acc + 1
+                    _ANA.acc = _ANA.acc + 1
                 end
             end
         end
