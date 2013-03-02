@@ -1,5 +1,6 @@
 --[===[
 
+
 Test { [[
 input void A, B, Z;
 event void a;
@@ -97,9 +98,9 @@ end
     run = 2;
 }
 
---]===]
 
 --do return end
+--]===]
 
 Test { [[return(1);]],
     ana = {
@@ -12055,8 +12056,6 @@ do
     await 1s;
     finalize with
         do
-C nohold _fprintf(), _stderr;
-_fprintf(_stderr, "oi\n");
             var int b = 1;
             r = b;
         end;
@@ -12416,18 +12415,15 @@ return ret;
 Test { [[
 input void A, B;
 var int ret = 1;
-C nohold _fprintf(), _stderr;
 par/or do
     do
         finalize with
             ret = ret + 5;
-_fprintf(_stderr, "1\n");
         end
         ret = ret + 1;
         do
             finalize with
                 ret = ret * 3;
-_fprintf(_stderr, "2\n");
             end
             await A;
             ret = ret * 100;
@@ -16071,9 +16067,26 @@ C do
     int V = sizeof(CLS_T);
 end
 C _V;
+var T t;
 return _V;
 ]],
-    run = 12,    -- +1 trail0 (+3 align)
+    run = 12,    -- 1 (trl0) 3 (align)  4 4
+}
+
+Test { [[
+class T with
+    var int x;
+do
+    var int v;
+end
+
+C do
+    int V = sizeof(CLS_T);
+end
+C _V;
+return _V;
+]],
+    run = 8,    -- 4 4 (no orgs)
 }
 
 Test { [[
@@ -16102,9 +16115,11 @@ end
 
 var T y;
 
-var T x with
+var T x;
     x.a = 10;
-end
+
+input void START;
+await START;
 
 return x.a;
 ]],
@@ -16116,9 +16131,8 @@ class T with
     var int a;
 do
 end
-var T x with
+var T x;
     x.a = 30;
-end
 
 return x.a;
 ]],
@@ -16130,14 +16144,12 @@ class T with
 do
 end
 
-var T[2] y with
+var T[2] y;
     y[0].a = 10;
     y[1].a = 20;
-end
 
-var T x with
+var T x;
     x.a = 30;
-end
 
 return x.a + y[0].a + y[1].a;
 ]],
@@ -16319,7 +16331,7 @@ end
 class T with
 do
     var J j;
-    _V = _V + 1;
+    _V = _V + 1;    // main class terminates before
 end
 
 var T t1;
@@ -16330,7 +16342,70 @@ var T t3;
 _V = _V*3;
 return _V;
 ]],
-    run = 345;
+    run = 27;
+}
+
+Test { [[
+C _V;
+C do
+    int V = 1;
+end
+
+class J with
+do
+    _V = _V * 2;    // T objs terminate before
+end
+
+class T with
+do
+    var J j;
+    _V = _V + 1;
+end
+
+input void START;
+
+var T t1;
+_V = _V*3;
+var T t2;
+_V = _V*3;
+var T t3;
+_V = _V*3;
+await START;
+return _V;
+]],
+    run = 30;
+}
+
+Test { [[
+C _V;
+C do
+    int V = 1;
+end
+
+class J with
+do
+    _V = _V * 2;
+end
+
+class T with
+do
+    var J j;
+    _V = _V + 1;
+    await FOREVER;
+end
+
+input void START;
+
+var T t1;
+_V = _V*3;
+var T t2;
+_V = _V*3;
+var T t3;
+_V = _V*3;
+await START;
+return _V;
+]],
+    run = 230;
 }
 
 Test { [[
@@ -16354,6 +16429,8 @@ do
     this.a = this.a + a + 5;
 end
 var T t;
+input void START;
+await START;
 return t.a;
 ]],
     run = 14,
@@ -16940,7 +17017,6 @@ return ret;
 }
 
 Test { [[
-C _fprintf(), _stderr;
 input void START;
 input void F;
 class T1 with
@@ -16992,10 +17068,44 @@ Test { [[
 input void START;
 input void F;
 class T1 with
+do
+end
+class T with
+do
+    var T1 a;
+    par/and do
+        await FOREVER;
+    with
+        await FOREVER;
+    end
+end
+var int ret = 10;
+var T aa;
+par/or do
+    par/and do
+        await START;
+    with
+        await FOREVER;
+    end
+with
+    await F;
+end
+return ret;
+]],
+    run = {
+        ['~>F'] = 10,
+    },
+}
+
+Test { [[
+input void START;
+input void F;
+class T1 with
     event void ok;
 do
     await 1s;
     emit ok;
+    await FOREVER;
 end
 class T with
     event void ok;
@@ -17008,6 +17118,7 @@ do
     end
     await 1s;
     emit ok;
+    await FOREVER;
 end
 var int ret = 10;
 var T aa;
@@ -17087,7 +17198,6 @@ return ret;
 Test { [[
 input void START;
 input void F;
-C nohold _fprintf(), _stderr;
 class T with
     event void ok;
 do
@@ -17097,7 +17207,6 @@ do
     with
         await E;
     end
-_fprintf(_stderr, "1\n");
     await 1s;
     emit ok;
 end
@@ -17109,9 +17218,7 @@ par/or do
     end
     ret = ret + 1;
 with
-_fprintf(_stderr, "oioi\n");
     await F;
-_fprintf(_stderr, "zzz\n");
 end
 await F;
 return ret;
@@ -17237,12 +17344,31 @@ Test { [[
 input void A;
 class T with
     var int v;
+do
+    await A;
+    v = 1;
+end
+var T a;
+await A;
+a.v = 2;
+return a.v;
+]],
+    ana = {
+        n_acc = 2,
+    },
+    run = { ['~>A']=2 },
+}
+
+Test { [[
+input void A;
+class T with
+    var int v;
     event void ok;
 do
     v = 0;
     loop do
         await A;
-        v = v + 1;
+        v = v + 1;      // 9
     end
 end
 var T aa;
@@ -17250,13 +17376,13 @@ par do
     await aa.ok;
 with
     await A;
-    if aa.v == 3 then
-        return aa.v;
+    if aa.v == 3 then   // 17
+        return aa.v;    // 18
     end
 end
 ]],
     ana = {
-        n_acc = 1,
+        n_acc = 2,
         n_reachs = 1,
     },
 }
@@ -17294,10 +17420,10 @@ class T with
     event int a;
 do
     par/and do
-        emit this.a=10;
+        emit this.a=10; // 6
         a = 5;
     with
-        await a;
+        await a;        // 9
         a = 7;
     end
 end
@@ -17305,6 +17431,9 @@ var T aa;
 await START;
 return aa.a;
 ]],
+    ana = {
+        n_acc = 1,
+    },
     run = 5,
 }
 
@@ -17426,6 +17555,188 @@ return x;
 }
 
 Test { [[
+class T with
+do
+    var int a = 1;
+end
+var T[2] ts;
+return 1;
+]],
+    run = 1,
+}
+Test { [[
+class T with
+    var int a;
+do
+end
+var T[2] ts;
+par/and do
+    ts[0].a = 10;   // 7
+with
+    ts[1].a = 20;   // 9
+end
+return ts[0].a + ts[1].a;
+]],
+    ana = {
+        n_acc = 1,
+    },
+    run = 30,
+}
+Test { [[
+class T with
+    var int a;
+do
+end
+var T t1, t2;
+par/and do
+    t1.a = 10;   // 7
+with
+    t2.a = 20;   // 9
+end
+return t1.a + t2.a;
+]],
+    run = 30,
+}
+Test { [[
+input void START;
+class T with
+    var int a;
+do
+    await START;
+    a = 0;
+end
+var T[2] ts;
+await START;
+par/and do
+    ts[0].a = 10;
+with
+    ts[1].a = 20;
+end
+return ts[0].a + ts[1].a;
+]],
+    ana = {
+        n_acc = 9,
+    },
+    run = 30,
+}
+Test { [[
+input void START;
+class T with
+    var int a;
+do
+    await START;
+    this.a = 0;
+end
+var T[2] ts;
+await START;
+par/and do
+    ts[0].a = 10;
+with
+    ts[1].a = 20;
+end
+return ts[0].a + ts[1].a;
+]],
+    ana = {
+        n_acc = 9,
+    },
+    run = 30,
+}
+Test { [[
+input void START;
+class T with
+    var int a;
+do
+    await START;
+    a = 0;
+end
+var T t1, t2;
+await START;
+par/and do
+    t1.a = 10;
+with
+    t2.a = 20;
+end
+return t1.a + t2.a;
+]],
+    ana = {
+        n_acc = 8,
+    },
+    run = 30,
+}
+Test { [[
+input void START;
+class T with
+    var int a;
+do
+    await START;
+    this.a = 0;
+end
+var T t1, t2;
+await START;
+par/and do
+    t1.a = 10;
+with
+    t2.a = 20;
+end
+return t1.a + t2.a;
+]],
+    ana = {
+        n_acc = 8,
+    },
+    run = 30,
+}
+Test { [[
+input void START;
+C nohold _f();
+C do
+    void f (void* t) {}
+end
+class T with
+do
+    await START;
+    _f(this);       // 9
+end
+var T[2] ts;
+await START;
+par/and do
+    _f(&ts[0]);     // 14
+with
+    _f(&ts[1]);     // 16
+end
+return 10;
+]],
+    ana = {
+        n_acc = 10,
+    },
+    run = 10,
+}
+Test { [[
+input void START;
+C nohold _f();
+C do
+    void f (void* t) {}
+end
+class T with
+do
+    await START;
+    _f(this);       // 9
+end
+var T t0,t1;
+await START;
+par/and do
+    _f(&t0);     // 14
+with
+    _f(&t1);     // 16
+end
+return 10;
+]],
+    ana = {
+        n_acc = 9,
+    },
+    run = 10,
+}
+
+Test { [[
 C _assert();
 input int  BUTTON;
 input void F;
@@ -17440,8 +17751,6 @@ do
             loop do
                 await 10ms;
                 x = x + 1;
-//C _stderr, _fprintf();
-//_fprintf(_stderr, "this=%p, &this.x=%p\n", this, &this.x);
             end
         with
             await go;
@@ -17479,9 +17788,6 @@ rs[0].y = 50;
 rs[1].x = 100;
 rs[1].y = 300;
 
-//C _stderr, _fprintf();
-//_fprintf(_stderr, "&rs[0]=%p, &rs[0].x=%p\n", &rs[0], &rs[0].x);
-//_fprintf(_stderr, "&rs[1]=%p, &rs[1].x=%p\n", &rs[1], &rs[1].x);
 
 par/or do
     loop do
@@ -17566,12 +17872,12 @@ par/or do
         a1.e = 1;
         emit a1.go;
         await a1.ok;
-        ret = 1;
+        ret = 1;        // 20
     with
         a2.e = 2;
         emit a2.go;
         await a2.ok;
-        ret = 1;
+        ret = 1;        // 25
     end
 with
     await a2.e;
@@ -17579,18 +17885,20 @@ with
 end
 return ret;
 ]],
+    ana = {
+        n_acc = 1,
+    },
     run = { ['~>1s']=1 },
 }
-
 Test { [[
 class T with
     event int a, go, ok;
 do
     par/or do
-        emit a=10;
+        emit a=10;      // 5
         a = 5;
     with
-        await this.a;
+        await this.a;   // 8
         a = 7;
     end
 end
@@ -17602,9 +17910,14 @@ par/or do
         await aa.ok;
     end
 with
+    input void START;
+    await START;
 end
 return aa.a;
 ]],
+    ana = {
+        n_acc = 1,
+    },
     run = 5,
 }
 
@@ -17623,6 +17936,8 @@ par/or do
         await aa.ok;
     end
 with
+    input void START;
+    await START;
 end
 return aa.a;
 ]],
@@ -17717,17 +18032,20 @@ par/and do
     with
         await ptr:ok;
     end
-    ret = ret + 1;
+    ret = ret + 1;      // 24
 with
         await B;
     emit ptr:e;
     ret = ret + 1;
 with
     await ptr:f;
-    ret = ret + 1;
+    ret = ret + 1;      // 31
 end
 return ret + ptr:v + a.v;
 ]],
+    ana = {
+        n_acc = 3,
+    },
     run = { ['~>B']=203, }
 }
 
@@ -17773,13 +18091,16 @@ with
 with
     await B;
     emit ts[1].e;
-    ret = ret + 1;
+    ret = ret + 1;              // 42
 with
     await ts[1].f;
-    ret = ret + 1;
+    ret = ret + 1;              // 45
 end
 return ret + ts[0].v + ts[1].v;
 ]],
+    ana = {
+        n_acc = 47,     -- TODO: not checked
+    },
     run = { ['~>B']=206, }
 }
 
@@ -17848,6 +18169,9 @@ with
 end
 return ret + ts[0].v + ts[1].v;
 ]],
+    ana = {
+        n_acc = 13,     -- TODO: not checked
+    },
     run = { ['~>1s']=205, }
 }
 
@@ -17922,6 +18246,8 @@ do
 end
 do
     var T t;
+    input void START;
+    await START;
 end
 return _V;
 ]],
@@ -19102,19 +19428,22 @@ var I* i2 = &t2;
 var int ret = 0;
 par/and do
     await START;
-    emit i1:e=7;
+    emit i1:e=7;            // 21
 with
     var int v = await i1:f;
     ret = ret + v;
 with
     await START;
-    emit i2:e=6;
+    emit i2:e=6;            // 27
 with
     var int v = await i2:f;
     ret = ret + v;
 end
 return ret;
 ]],
+    ana = {
+        n_acc = 1,
+    },
     run = 13,
 }
 
@@ -19313,6 +19642,8 @@ end
 
 var T t;
 var I* i = &t;
+input void START;
+await START;
 i:_f(100);
 return i:v;
 ]],
@@ -19327,6 +19658,8 @@ do
 end
 var int a = 10;
 var T t;
+input void START;
+await START;
 t.a = t.a + a;
 return t.a;
 ]],
@@ -19345,6 +19678,8 @@ end
 do
     var int a = 10;
     var T t;
+input void START;
+await START;
     t.a = t.a + a;
     return t.a;
 end
@@ -19364,6 +19699,8 @@ end
 var int a = 10;
 do
     var T t;
+input void START;
+await START;
     t.a = t.a + a;
     return t.a;
 end
@@ -19392,6 +19729,8 @@ end
 var int a = 10;
 do
     var T t;
+input void START;
+await START;
     t.a = t.a + a;
     return t.a + global:a;
 end
@@ -19662,6 +20001,8 @@ do
     a = 10;
 end
 var T t;
+input void START;
+await START;
 return t.a;
 ]],
     run = 10,
@@ -19779,10 +20120,12 @@ do
     _ret_val = 10;
     _ret_end = 1;
 end
-var T a with
-end;
+var T a;
 await FOREVER;
 ]],
+    ana = {
+        isForever = true,
+    },
     run = 10,
 }
 
@@ -19804,6 +20147,9 @@ async do
 end
 await FOREVER;
 ]],
+    ana = {
+        isForever = true,
+    },
     awaits = 1,
     run = 1,
 }
@@ -19827,6 +20173,9 @@ async do
 end
 await FOREVER;
 ]],
+    ana = {
+        isForever = true,
+    },
     awaits = 1,
     run = 10,
 }
@@ -19855,15 +20204,15 @@ par do
     loop do
         var int v = await a.i;
         emit a.x=v;
-        _ret_val = _ret_val + a.i;
-        _ret_end = 1;
+        _ret_val = _ret_val + a.i;      // 24
+        _ret_end = 1;                   // 25
     end
 with
     loop do
         tmp int v = await b.i;
         emit b.x=v+1;
-        _ret_val = _ret_val + b.i*2;
-        _ret_end = 1;
+        _ret_val = _ret_val + b.i*2;    // 31
+        _ret_end = 1;                   // 32
     end
 with
     async do
@@ -19872,6 +20221,10 @@ with
     await FOREVER;
 end
 ]],
+    ana = {
+        isForever = true,
+        n_acc = 4,
+    },
     awaits = 2,
     run = 24,
 }
@@ -19907,6 +20260,10 @@ with
     await FOREVER;
 end
 ]],
+    ana = {
+        isForever = true,
+        n_acc = 4,
+    },
     awaits = 1,
     run = 6,
 }
@@ -19926,6 +20283,10 @@ loop do
     end
 end
 ]],
+    ana = {
+        isForever = true,
+        n_acc = 3,
+    },
     run = { ['~>A']=1 },
 }
 
@@ -19948,6 +20309,10 @@ loop do
     end
 end
 ]],
+    ana = {
+        isForever = true,
+        n_acc = 3,
+    },
     run = 1,
 }
 
@@ -19972,6 +20337,10 @@ with
     end
 end
 ]],
+    ana = {
+        isForever = true,
+        n_acc = 7,
+    },
     awaits = 1,
     run = { ['~>A']=4 };
 }
@@ -19988,6 +20357,9 @@ loop do
     end
 end
 ]],
+    ana = {
+        isForever = true,
+    },
     awaits = 1,
     run = { ['~>A; ~>A']=2 },
 }
@@ -20005,6 +20377,9 @@ loop do
     await A;
 end
 ]],
+    ana = {
+        isForever = true,
+    },
     awaits = 0,
     run = false,
 }
@@ -20020,6 +20395,9 @@ loop do
     end
 end
 ]],
+    ana = {
+        isForever = true,
+    },
     awaits = 0,
     run = false,
 }
@@ -20032,6 +20410,9 @@ loop do
     end
 end
 ]],
+    ana = {
+        isForever = true,
+    },
     awaits = 0,
     loop = true,
     run = false,
@@ -20056,6 +20437,9 @@ loop do
 end
 await FOREVER;
 ]],
+    ana = {
+        isForever = true,
+    },
     awaits = 0,     -- stmts
     run = false,
 }
@@ -20067,6 +20451,9 @@ loop do
 end
 return 1;
 ]],
+    ana = {
+        isForever = true,
+    },
     awaits = 0,     -- stmts
     run = false,
 }
@@ -20091,6 +20478,9 @@ loop do
     end
 end
 ]],
+    ana = {
+        isForever = true,
+    },
     awaits = 2,
     run = { ['~>A;~>A; ~>B']=2 },
 }
@@ -20107,6 +20497,9 @@ input void A,B;
         end
     end
 ]],
+    ana = {
+        isForever = true,
+    },
     awaits = 2,
     run = false,
 }
@@ -20127,6 +20520,9 @@ loop do
     end
 end
 ]],
+    ana = {
+        isForever = true,
+    },
     awaits = 0,
     run = false,
 }
@@ -20146,6 +20542,9 @@ loop do
     end
 end
 ]],
+    ana = {
+        isForever = true,
+    },
     awaits = 1,
     run = false,
 }
@@ -20191,6 +20590,9 @@ with
     end
 end
 ]],
+    ana = {
+        isForever = true,
+    },
     awaits = 3,
     run = false,
 }
@@ -20237,6 +20639,9 @@ with
     end
 end
 ]],
+    ana = {
+        isForever = true,
+    },
     awaits = 1,
     run = false,
 }
@@ -20252,6 +20657,9 @@ loop do
     await D;
 end
 ]],
+    ana = {
+        isForever = true,
+    },
     awaits = 0,
     run = false,
 }
@@ -20272,6 +20680,9 @@ with
     await FOREVER;
 end
 ]],
+    ana = {
+        isForever = true,
+    },
     run = false,
     awaits = 1,
 }
@@ -20293,6 +20704,9 @@ with
     await FOREVER;
 end
 ]],
+    ana = {
+        isForever = true,
+    },
     run = false,
     awaits = 2,
 }

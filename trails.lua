@@ -34,6 +34,7 @@ F = {
         end
 
         -- ORGS
+--[[
         for _, var in ipairs(me.vars) do
             local cls, n
             if var.cls then
@@ -52,6 +53,7 @@ F = {
                     --w0 = w0 + n*cls.ns.wclocks    (TODO: xxx in props.lua)
             end
         end
+]]
 
         -- BLOCK
         me[1].trails  = { t0, me.trails [2] }

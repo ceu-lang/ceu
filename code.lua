@@ -28,6 +28,7 @@ end
 function DEBUG_TRAILS (me, lbl)
     LINE(me, [[
 #ifdef CEU_DEBUG_TRAILS
+{ int i;
 #ifdef CEU_ORGS
 fprintf(stderr, "TRK: o.%p / l.%d\n", _ceu_org_,]]
     ..(lbl and lbl.id or '_ceu_lbl_')..[[);
@@ -35,6 +36,11 @@ fprintf(stderr, "TRK: o.%p / l.%d\n", _ceu_org_,]]
 fprintf(stderr, "TRK: l.%d\n",]]
     ..(lbl and lbl.id or '_ceu_lbl_')..[[);
 #endif
+    fprintf(stderr, "TRLS: [");
+    for (i=0; i<CEU_NTRAILS; i++)
+        fprintf(stderr, "%d,", CEU.trails[i].lbl);
+    fprintf(stderr, "]\n");
+}
 #endif
 ]])
 end
@@ -124,29 +130,6 @@ usar me em vez de me[1].evt
 ]]
 end
 
-function ORG (me, cls, org0, trail0)
-    COMM(me, 'ORG')
-    LINE(me, [[
-{
-    void* _ceu_org_new_ = ]]..org0..[[;
-    *PTR_org(tceu_ntrl*, _ceu_org_new_, ]].._MEM.cls.idx_trail0 ..
-        [[) = ]]..trail0..[[;
-    ceu_call(_ceu_evt_id_,_ceu_evt_p_,]]..cls.lbl.id..[[,_ceu_org_new_);
-    // TODO: test cnt
-}
-]])
---[=[
-    if new then
-        LINE(me, [[
-    if (_ceu_org_new_ == NULL)
-        return;
-    ceu_lsts_ins(IN__FIN, _ceu_org_new_, _ceu_org_new_, ]] ..
-        cls.lbl_free.id..[[,0);
-]])
-    end
-]=]
-end
-
 F = {
     Node_pre = function (me)
         me.code = ''
@@ -190,7 +173,10 @@ ceu_trails_set(0, CEU_PENDING, _ceu_org_);
 ]])
         end
 
-        HALT(me)
+        LINE(me, [[
+ceu_trails_set(]]..me.trails[1]..[[,CEU_INACTIVE,_ceu_org_);
+return;
+]])
 
         if me.has_news then
             CASE(me, me.lbl_free)
@@ -231,32 +217,31 @@ if (]]..exp.val..[[ != NULL) {
     end,
 ]=]
 
-    Dcl_org = function (me)
-        local dcl,init = unpack(me)
-        if init then      -- initialization for orgs
-            CONC(me, init)
-        end
-        CONC(me, dcl)
-    end,
-
-    Dcl_var = function (me)
-        local var = me.var
-        -- spawn orgs
-        if var.cls then
-            ORG(me, var.cls,
-                    var.val,
-                    var.trails[1])
-        elseif var.arr then
-            local cls = _ENV.clss[_TP.deref(var.tp)]
-            if cls then
-                for i=1, var.arr do
-                    ORG(me, cls,
-                            'PTR_org(void*,'..var.val..','..
-                                            (i-1)..'*'..cls.mem.max..')',
-                            var.trails [1] + (i-1)*cls.ns.trails)
-                end
-            end
-        end
+    Org = function (me)
+        local idx = me.idx or 0
+        COMM(me, 'ORG')
+        LINE(me, [[
+{
+    void* _ceu_org_new_ =
+            PTR_org(void*,]]..me.var.val..','..idx..'*'..me.var.cls.mem.max..[[);
+    *PTR_org(tceu_ntrl*, _ceu_org_new_, ]].._MEM.cls.idx_trail0 ..
+        [[) = *PTR_cur(tceu_ntrl*,]].._MEM.cls.idx_trail0..') +'
+            ..me.trails[1]..[[;
+]])
+        SWITCH(me, me.var.cls.lbl, '_ceu_org_new_')
+        LINE(me, [[
+}
+]])
+--[=[
+    if new then
+        LINE(me, [[
+    if (_ceu_org_new_ == NULL)
+        return;
+    ceu_lsts_ins(IN__FIN, _ceu_org_new_, _ceu_org_new_, ]] ..
+        cls.lbl_free.id..[[,0);
+]])
+    end
+]=]
     end,
 
     Block_pre = function (me)

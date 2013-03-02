@@ -3,7 +3,7 @@ _AST = {
 }
 
 local MT = {}
-local STACK = nil
+local STACK = {}
 local TOP = {}
 
 function _AST.isNode (node)
@@ -82,6 +82,7 @@ function _AST.dump (me, spc)
     --local t=0; for _ in pairs(me.aw.t) do t=t+1 end
     --ks = 'n='..(me.aw.n or '?')..',t='..t..',ever='..(me.aw.forever_ and 1 or 0)
     --ks = table.concat(me.trails,'-')
+--
     local f = function(v)
                 return type(v)=='table' and v.id
                     or tostring(v)
@@ -92,6 +93,8 @@ function _AST.dump (me, spc)
     local t = {}
     for k in pairs(me.ana.pos) do t[#t+1]=f(k) end
     ks = ks..'['..table.concat(t,',')..']'
+--[[
+]]
     DBG(string.rep(' ',spc)..me.tag..' ('..me.ln..') '..ks)
     for i, sub in ipairs(me) do
         if _AST.isNode(sub) then
@@ -142,11 +145,11 @@ local function visit_aux (me, F)
 end
 _AST.visit_aux = visit_aux
 
-function _AST.visit (F)
+function _AST.visit (F, node)
     assert(_AST)
-    STACK = {}
+    --STACK = {}
     _AST.root.depth = 0
-    return visit_aux(_AST.root, F)
+    return visit_aux(node or _AST.root, F)
 end
 
 local C; C = {
@@ -339,11 +342,6 @@ local C; C = {
             end
         end
         return unpack(ret)
-    end,
-
-    Dcl_org = function (ln, pre, tp, dim, id, blk)
-        local dcl = node('Dcl_var')(ln, pre, tp, dim, id)
-        return node('Dcl_org')(ln, dcl, blk)
     end,
 
     -- TODO: unify with _Dcl_var

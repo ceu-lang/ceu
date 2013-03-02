@@ -1,22 +1,29 @@
 _ANA.n_acc = 0      -- nd accesses
 
--- any access calls this function to be inserted on parent Par[i]
-
+-- any variable access calls this function
+-- to be inserted on parent Parallel sub[i] or Class
 function iter (n)
     local par = n.__par and n.__par.tag
     return par=='ParOr' or par=='ParAnd' or par=='ParEver'
+        or n.tag=='Dcl_cls'
 end
-function INS (acc)
-    if not _AST.iter(_AST.pred_par)() then
-        return acc                          -- not in a PAR
-    end
 
+function INS (acc, exists)
+    if not exists then
+        acc.cls = CLS()                     -- cls that acc resides
+    end
     local n = _AST.iter(iter)()             -- child Block from PAR
-    n.ana.accs[#n.ana.accs+1] = acc
+    if n then
+        n.ana.accs[#n.ana.accs+1] = acc
+    end
     return acc
 end
 
 F = {
+-- accs need to be I-indexed (see PAR)
+    Dcl_cls_pre = function (me)
+        me.ana.accs = {}
+    end,
     ParOr_pre = function (me)
         for _, sub in ipairs(me) do
             sub.ana.accs = {}
@@ -30,13 +37,20 @@ F = {
         if _AST.iter(_AST.pred_par) then -- requires ParX_pos
             for _, sub in ipairs(me) do
                 for _,acc in ipairs(sub.ana.accs) do
-                    INS(acc)
+                    INS(acc, true)
                 end
             end
         end
     end,
     ParAnd_pos  = 'ParOr_pos',
     ParEver_pos = 'ParAnd_pos',
+
+    Org = function (me)
+        -- insert cls accs on my parent ParOr
+        for _,acc in ipairs(me.var.cls.ana.accs) do
+            INS(acc, true)
+        end
+    end,
 
     EmitExtS = function (me)
         local e1, _ = unpack(me)
@@ -77,7 +91,7 @@ F = {
                 local v = exp.ref
                 if v then   -- ignore constants
 --DBG(exp.tag, exp.ref)
-                    v.acc.any = exp.ref    -- f(&x) // a[N] f(a) // not "any"
+                    v.acc.any = exp.lval    -- f(&x) // a[N] f(a) // not "any"
                     v.acc.md  = (me.c and me.c.mod=='pure' and 'rd') or 'wr'
                     v.acc.tp  = tp
                 end
@@ -88,18 +102,6 @@ F = {
     EmitInt = function (me)
         local e1, e2 = unpack(me)
         e1.ref.acc.md = 'tr'
---[[
--- TODO: remove
-        INS {
-            pre = me.ana.pre,
-            id  = e1.evt,
-            md  = 'tr',
-            tp  = e1.evt.tp,
-            any = false,
-            err = 'event `'..e1.evt.id..'´ (line '..me.ln..')',
-        }
-]]
-        -- TODO: e2
     end,
 
     SetAwait = 'SetExp',
@@ -116,6 +118,34 @@ F = {
     end,
     ['Op1_&'] = function (me)
         me.ref.acc.md = 'no'
+    end,
+
+    ['Op2_.'] = function (me)
+        if me.org then
+            me.ref.acc.org = me.org.ref
+        end
+    end,
+
+    Global = function (me)
+        me.acc = INS {
+            pre = me.ana.pre,
+            id  = 'Global',
+            md  = 'rd',
+            tp  = me.tp,
+            any = true,
+            err = 'variable `global´ (line '..me.ln..')',
+        }
+    end,
+
+    This = function (me)
+        me.acc = INS {
+            pre = me.ana.pre,
+            id  = me,
+            md  = 'rd',
+            tp  = me.tp,
+            any = true,
+            err = 'variable `this´ (line '..me.ln..')',
+        }
     end,
 
     Var = function (me)
@@ -206,7 +236,10 @@ function par_isConc (pre1, pre2, T)
 end
 
 function PAR (accs1, accs2, NO)
+    local cls = CLS()
+
     -- "n_acc": i/j are concurrent, and have incomp. acc
+    -- accs need to be I-indexed
     for _, acc1 in ipairs(accs1) do
         local pre1 = int2exts(acc1.pre, NO)
         for _, acc2 in ipairs(accs2) do
@@ -219,11 +252,34 @@ end
 for k in pairs(pre2) do
     DBG('pre2', k~=true and k.id)
 end
+DBG('===============', cls.id)
+DBG(acc1.cls.id, acc1.id, acc1.md, acc1.tp, acc1.any, acc1.err)
+DBG(acc2.cls.id, acc2.id, acc2.md, acc2.tp, acc2.any, acc2.err)
+DBG(acc1.org and acc1.org.tag, acc2.org and acc2.org.tag)
 DBG'==============='
 ]]
-    --DBG(acc1.id, acc1.md, acc1.tp, acc1.any, acc1.err)
-    --DBG(acc2.id, acc2.md, acc2.tp, acc2.any, acc2.err)
             if par_isConc(pre1,pre2) then
+
+                -- this.x vs this.x (both accs bounded to cls)
+                local cls_ = (acc1.cls == cls) or
+                             (acc2.cls == cls)
+
+                -- a.x vs this.x
+                local _nil = {}
+                local o1 = (acc1.org or acc2.org)
+                o1 = o1 and o1.acc or _nil
+                local o2 = (acc2.org or acc1.org)
+                o2 = o2 and o2.acc or _nil
+
+                -- orgs are compatible
+                local org_ = (o1 == o2)
+                          or o1.any
+                          or o2.any
+
+                -- orgs are compatible
+                local org_ = o1.id == o2.id
+                          or o1.any
+                          or o2.any
 
                 -- ids are compatible
                 local id_ = acc1.id == acc2.id
@@ -240,7 +296,9 @@ DBG'==============='
                         or (_ENV.dets[acc1.id] and _ENV.dets[acc1.id][acc2.id])
 
     --DBG(id_, c_,c1,c2, acc1.any,acc2.any)
-                if id_ and (not c_) and ND[acc1.md][acc2.md] then
+                if cls_ and org_ and id_ and (not c_)
+                and ND[acc1.md][acc2.md]
+                then
                     DBG('WRN : nondeterminism : '..acc1.err..' vs '..acc2.err)
                     _ANA.n_acc = _ANA.n_acc + 1
                 end

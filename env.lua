@@ -109,7 +109,7 @@ function newvar (me, blk, pre, tp, dim, id)
 
     tp = (dim and tp..'*') or tp
 
-    local cls = _ENV.clss[tp]
+    local cls = _ENV.clss[tp] or (dim and _ENV.clss[_TP.deref(tp)])
     if cls then
         ASR(cls~=_AST.iter'Dcl_cls'() and isEvt==false, me,
                 'invalid declaration')
@@ -201,6 +201,32 @@ F = {
             end
         end
     end,
+    Block = function (me)
+        local par = _AST.node('ParOr')(me.ln)
+
+        for _, var in ipairs(me.vars) do
+            if var.cls then
+                if var.arr then
+                    for i=1, var.arr do
+                        local org = _AST.node('Org')(me.ln)
+                        org.var = var
+                        org.idx = (i-1)
+                        par[#par+1] = org
+                    end
+                else
+                    local org = _AST.node('Org')(me.ln)
+                    org.var = var
+                    par[#par+1] = org
+                end
+            end
+        end
+
+        -- at least one Org
+        if #par > 0 then
+            table.insert(par, 1, me[1]) -- run constructors first
+            me[1] = par                 -- Block => par/or => Stmts,o1,oN
+        end
+    end,
 
     Dcl_cls_pre = function (me)
         local ifc, id, blk = unpack(me)
@@ -256,7 +282,7 @@ F = {
             'interface "Global" is not defined')
         me.tp   = 'Global*'
         me.lval = false
-        -- TODO: ref = me ?
+        me.ref  = me
         me.fst  = me
         me.blk  = true --_MAIN.blk
     end,
@@ -265,7 +291,7 @@ F = {
         ASR(CLS() ~= _MAIN, me, 'invalid access')
         me.tp   = CLS().id
         me.lval = false
-        -- TODO: ref = me ?
+        me.ref  = me
         me.fst  = me
         me.blk  = CLS().blk_ifc
     end,
@@ -632,13 +658,16 @@ F = {
         if cls then
             me.org = e1
 
-            if _TP.ext(id,true) then
+            if string.sub(id,1,1)=='_' then
                 local id = ((cls.is_ifc and 'IFC_') or 'CLS_')..cls.id..'_'..id
-                me.c = _ENV.c[id]
+                local c = _ENV.c[id]
+                ASR(c and c.tag=='func', me,
+                        'C function "'..id..'" is not declared')
+                me[3] = _AST.node('C')(me.ln, id)
+                me.c    = c
                 me.tp   = '_'
                 me.lval = false
-                ASR(me.c and me.c.tag=='func', me,
-                    'C function "'..id..'" is not declared')
+                me.ref  = me[3]
             else
                 local var = ASR(cls.blk_ifc.vars[id], me,
                             'variable/event "'..id..'" is not declared')

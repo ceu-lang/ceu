@@ -120,12 +120,11 @@ DBG('', 'glb', '{'..table.concat(glb,',')..'}')
             if var.pre == 'tmp' then
                 len = 0
             elseif var.cls then
-                len = var.cls.mem.max
+                len = (var.arr or 1) * var.cls.mem.max
             elseif var.arr then
                 local _tp = _TP.deref(var.tp)
                 len = var.arr * (_TP.deref(_tp) and _ENV.c.pointer.len
-                             or (_ENV.c[_tp] and _ENV.c[_tp].len)
-                             or (_ENV.clss[_tp] and _ENV.clss[_tp].mem.max))
+                             or (_ENV.c[_tp] and _ENV.c[_tp].len))
             elseif _TP.deref(var.tp) then
                 len = _ENV.c.pointer.len
             else

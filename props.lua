@@ -91,26 +91,7 @@ F = {
     end,
 
     Block = function (me)
-        local stmts = unpack(me)
-
-        local t = { stmts }
-
-        -- Block must ADD all orgs (they are spawned in par, not in seq)
-        for _, var in ipairs(me.vars) do
-            if var.cls then
-                t[#t+1] = var.cls       -- each org is spawned in parallel
-            elseif var.arr then
-                local cls = _ENV.clss[_TP.deref(var.tp)]
-                if cls then
-                    for i=1, var.arr do
-                        t[#t+1] = cls
-                    end
-                end
-            end
-        end
-
-        F.ParOr(me, t, true)        -- TODO: xxx
-
+        SAME(me, me[1])
         if me.fins then
             _PROPS.has_fins = true
             me.has.fins = true
@@ -121,24 +102,19 @@ F = {
 
     ParEver = 'ParOr',
     ParAnd  = 'ParOr',
-    ParOr = function (me, t, xxx)   -- TODO: xxx
-        t = t or me
-        OR_all(me, t)
+    ParOr = function (me)
+        OR_all(me)
         me.ns.trails = 0
-        for i, sub in ipairs(t) do
+        for i, sub in ipairs(me) do
             if _AST.isNode(sub) then
                 for k,v in pairs(sub.ns) do
-                    -- TODO: xxx (don't add wclocks from local orgs)
-                    if (not xxx) or k~='wclocks' or i==1 then
-                        me.ns[k] = me.ns[k] + v
-                    end
+                    me.ns[k] = me.ns[k] + v
                 end
             end
         end
     end,
 
     Dcl_cls = function (me)
-        _PROPS.has_orgs = _PROPS.has_orgs or me~=_MAIN
         if me.is_ifc then
             _PROPS.has_ifcs = true
         else
@@ -149,6 +125,11 @@ F = {
             --me.ns.trails = me.ns.trails + 1
         end
 ]]
+    end,
+
+    Org = function (me)
+        _PROPS.has_orgs = true
+        me.ns.trails = me.var.cls.ns.trails
     end,
 
     Dcl_ext = function (me)

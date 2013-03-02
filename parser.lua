@@ -141,7 +141,6 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
              + V'Pause'
              + V'Dcl_ifc' + V'Dcl_cls'
              + V'Finalize'
-             + V'Dcl_org'
 
     , _LstStmt  = V'_Return' + V'Break' + V'_Continue' + V'AwaitN'
     , _LstStmtB = V'ParEver' + V'_Continue'
@@ -289,15 +288,12 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
                                 Cc(false)*Cc(false)*Cc(false))
 
     , _Dcl_var  = (CK'var' + CK'tmp')
-                * EV'ID_type' * (K'['*V'_Exp'*K']'+Cc(false))
-                * V'__Dcl_var' * (K','*V'__Dcl_var')^0 * -K'with'
+                * (EV'ID_type' + EV'ID_cls')
+                * (K'['*V'_Exp'*K']'+Cc(false))
+                * V'__Dcl_var' * (K','*V'__Dcl_var')^0
 
     , __Dcl_var = EV'ID_var' * (V'_Sets' +
                                 Cc(false)*Cc(false)*Cc(false))
-
-    -- single org / org[] with initialization
-    , Dcl_org   = CK'var' * EV'ID_cls' * (K'['*V'_Exp'*K']'+Cc(false)) *
-                    EV'ID_var' * EK'with' * V'Block' * EK'end'
 
     , _Dcl_int_ifc  = CK'event' * EV'ID_type' * Cc(false) *
                        EV'__Dcl_int_ifc' * (K','*V'__Dcl_int')^0
