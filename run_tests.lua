@@ -91,6 +91,7 @@ Test = function (t)
     do
         local _defs = { reachs=0, unreachs=0, isForever=false, acc=0, flw=0 }
         for k, v in pairs(_ANA) do
+-- TODO
 if k ~= 'flw' then
 if k ~= 'unreachs' then
             assert( v==_defs[k] and (T.ana==nil or T.ana[k]==nil)
@@ -191,7 +192,7 @@ STATS = {
 }
 ]])
 
-assert(STATS.count  ==    1087)
+assert(STATS.count  ==    1086)
 assert(STATS.mem    ==    8840)
-assert(STATS.trails ==    2052)
-assert(STATS.bytes  == 6354307)
+assert(STATS.trails ==    2050)
+assert(STATS.bytes  == 6039371)

@@ -365,11 +365,13 @@ if (*PTR_cur(u8*,]]..(me.off_fins+i-1)..[[)) {
     _Par = function (me)
         -- Ever/Or/And spawn subs
         COMM(me, me.tag..': spawn subs')
-        for i=1, #me do
-            -- TODO: ROM: set/get only if can kill
-            LINE(me, [[
-ceu_trails_set(]]..me[i].trails[1]..[[, CEU_PENDING, _ceu_org_);
+        for _, sub in ipairs(me) do
+            -- only if can be killed
+            if sub.needsChk then
+                LINE(me, [[
+ceu_trails_set(]]..sub.trails[1]..[[, CEU_PENDING, _ceu_org_);
 ]])
+            end
         end
         for i=1, #me do
             if i == #me then
@@ -378,9 +380,13 @@ ceu_trails_set(]]..me[i].trails[1]..[[, CEU_PENDING, _ceu_org_);
                 DEBUG_TRAILS(me, me.lbls_in[i])
                 LINE(me, [[
 ceu_call(_ceu_evt_id_, _ceu_evt_p_, ]]..me.lbls_in[i].id..[[, _ceu_org_);
+]])
+                if me[i+1].needsChk then
+                    LINE(me, [[
 if (ceu_trails_get(]]..me[i+1].trails[1]..[[,_ceu_org_)->lbl != CEU_PENDING)
     return;
 ]])
+                end
             end
         end
     end,
@@ -390,11 +396,14 @@ if (ceu_trails_get(]]..me[i+1].trails[1]..[[,_ceu_org_)->lbl != CEU_PENDING)
         for i, sub in ipairs(me) do
             CASE(me, me.lbls_in[i])
             CONC(me, sub)
-            -- TODO: ROM only if can terminate
-            LINE(me, [[
+
+            -- only if trail terminates
+            if not sub.ana.pos[false] then
+                LINE(me, [[
 ceu_trails_set(]]..sub.trails[1]..[[, CEU_INACTIVE, _ceu_org_);
 ]])
-            HALT(me)
+                HALT(me)
+            end
         end
     end,
 
