@@ -91,18 +91,22 @@ Test = function (t)
     do
         local _defs = { reachs=0, unreachs=0, isForever=false, acc=0, flw=0 }
         for k, v in pairs(_ANA) do
+if k ~= 'flw' then
 if k ~= 'unreachs' then
             assert( v==_defs[k] and (T.ana==nil or T.ana[k]==nil)
                     or (T.ana and T.ana[k]==v),
                     --or (T.ana and T.ana.acc==_ANALYSIS.acc),
                             k..' = '..tostring(v))
 end
+end
         end
         if T.ana then
             for k, v in pairs(T.ana) do
+if k ~= 'flw' then
 if k ~= 'unreachs' then
                 assert( v == _ANA[k],
                             k..' = '..tostring(_ANA[k]))
+end
 end
             end
         end

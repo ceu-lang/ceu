@@ -10,6 +10,11 @@ function _AST.isNode (node)
     return (getmetatable(node) == MT) and node.tag
 end
 
+function _AST.isChild (n1, n2)
+    return n1 == n2
+        or n2.__par and _AST.isChild(n1, n2.__par)
+end
+
 function _AST.node (tag, min)
     min = min or 0
     return function (ln, ...)

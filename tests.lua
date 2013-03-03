@@ -98,7 +98,7 @@ end
 }
 
 
---do return end
+do return end
 --]===]
 
 Test { [[return(1);]],
@@ -827,30 +827,13 @@ output void A, B;
 par/or do
     emit A;
 with
-    emit A;
-end
-return 1;
-]],
-    --loop = 'ERR : line 3 : parallel branch must await',
-    ana = {
-        acc = 1,
-        flw = 1,
-    },
-    run = 1,
-}
-
-Test { [[
-output void A, B;
-par/or do
-    emit A;
-with
     emit B;
 end
 return 1;
 ]],
     ana = {
         acc = 1,
-        flw = 1,
+        flw = 3,
     },
     run = 1,
 }
@@ -866,7 +849,7 @@ end
 return 1;
 ]],
     ana = {
-        flw = 1,
+        flw = 3,
     },
     run = 1,
 }
@@ -1029,19 +1012,19 @@ Test { [[
 input void F;
 var int ret = 0;
 par/or do
-    await 2s;
+    await 2s;   // 4
     ret = 10;
-    await F;
+    await F;    // 6
 with
-    await 1s;
+    await 1s;   // 8
     ret = 1;
-    await F;
+    await F;    // 10
 end
 return ret;
 ]],
     ana = {
         acc = 1,  -- false positive
-        flw = 1,
+        flw = 3,
     },
     run = { ['~>1s; ~>F']=1 },
 }
@@ -1052,10 +1035,10 @@ par/or do
 with
     await 1s;
 end
-par/or do
+par/or do           // false
     await 1s;
 with
-    await FOREVER;
+    await FOREVER;  // false
 end
 par/or do
     await FOREVER;
@@ -1067,7 +1050,7 @@ return 0;
     ana = {
         unreachs = 2,
         isForever =  true,
-        flw = 1,
+        flw = 4,    -- 1 is false positive
     },
 }
 
@@ -1112,15 +1095,15 @@ Test { [[
 par do
     await 1s;
     await 1s;
-    return 1;
+    return 1;   // 4
 with
     await 2s;
-    return 2;
+    return 2;   // 7
 end
 ]],
     ana = {
         acc = 1,
-        flw = 1,
+        flw = 4,
     },
     run = { ['~>2s']=1 }
 }
@@ -1145,7 +1128,7 @@ end
 ]],
     ana = {
         isForever = false,
-        flw = 1,
+        flw = 3,
     },
     run = 5,
     --run = 3,
@@ -1213,6 +1196,7 @@ end
 ]],
     ana = {
         unreachs = 1,
+        flw = 1,
     },
     run = 1,
 }
@@ -1221,23 +1205,24 @@ Test { [[
 input void F;
 var int a = 0;
 loop do
-    par/or do
+    par/or do       // 4
         await 2s;
     with
         a = a + 1;
         await F;
         break;
     with
-        await 1s;
+        await 1s;   // 11
         loop do
             a = a * 2;
-            await 1s;
+            await 1s;   // 14
         end
     end
 end
 return a;
 ]],
     ana = {
+        flw = 2,
         --acc = 3,      -- TODO: bad
     },
     run = { ['~>5s; ~>F']=14 },
@@ -1264,6 +1249,7 @@ end
     ana = {
         isForever = true,
         --acc = 1,
+        flw = 2,
     },
 }
 
@@ -1291,6 +1277,7 @@ end;
 return 0;
 ]],
     ana = {
+        flw = 1,
         --unreachs = 2,
         --isForever = true,
     },
@@ -1320,6 +1307,7 @@ end
 ]],
     ana = {
         unreachs = 1,
+        flw = 1,
     },
     run = 1,
 }
@@ -1330,6 +1318,9 @@ with
 end
 ]],
     run = 1,
+    ana = {
+        flw = 1,
+    },
 }
 Test { [[
 par do
@@ -1339,6 +1330,7 @@ with
 end
 ]],
     ana = {
+        flw = 1,
         --unreachs = 1,
     },
     run = 1,
@@ -1377,6 +1369,9 @@ with
 end;
 ]],
     run = 1,
+    ana = {
+        flw = 1,
+    },
 }
 
 Test { [[
@@ -1411,6 +1406,7 @@ return a;
 ]],
     ana = {
         --unreachs = 1,
+        flw = 1,
     },
     run = { ['1~>A;1~>F']=513, ['2~>B;0~>F']=513 },
 }
@@ -1646,6 +1642,7 @@ return 1;
 ]],
     ana = {
         unreachs = 1,
+        flw = 1,
     },
     run = 1,
 }
@@ -1681,6 +1678,7 @@ return 1;   // unreachs
 ]],
     ana = {
         unreachs = 2,
+        flw = 1,
     },
     run = 1,
 }
@@ -1995,6 +1993,7 @@ return 0;
     ana = {
         isForever = true,
         unreachs = 1,
+        flw = 1,
     },
 }
 Test { [[
@@ -2011,6 +2010,7 @@ return 0;
 ]],
     loop='tight loop',
     ana = {
+        flw = 1,
         isForever = true,
         unreachs = 1,
     },
@@ -2129,16 +2129,17 @@ Test { [[
 input int A;
 var int sum = 0;
 par/or do
-    loop i, 1 do
+    loop i, 1 do    // 4
         await A;
     end
     sum = 0;
 with
-    sum = 1;
+    sum = 1;        // 9
 end
 return sum;
 ]],
     ana = {
+        flw = 3,
         --unreachs = 2,
     },
     run = 1,
@@ -2163,7 +2164,7 @@ return ret;
 ]],
     ana = {
         acc = 1,
-        flw = 1,
+        flw = 5,    -- TODO: not checked
     },
     run = { ['~>A; ~>A; ~>A']=2 },
 }
@@ -2187,7 +2188,7 @@ return ret;
 ]],
     ana = {
         acc = 1,
-        flw = 1,
+        flw = 5,    -- TODO: not checked
     },
     run = { ['~>A;~>A'] = 2 },
     --todo = 'nd kill',
@@ -2210,6 +2211,7 @@ end
 return sum;
 ]],
     ana = {
+        flw = 3,
         --unreachs = 3,
     },
     run = 1,
@@ -2237,6 +2239,9 @@ with
 end
 return sum;
 ]],
+    ana = {
+        flw = 2,
+    },
     run = 7,
 }
 
@@ -2347,19 +2352,22 @@ par/or do
         ret = await B;
     end;
     par/or do
-        par/or do
+        par/or do               // 10
             ret = await B;
         with
-            ret = await Z;
+            ret = await Z;      // 13 (false w/ 10)
         end;
     with
-        ret = await D;
+        ret = await D;          // 16 (false w/10,9)
     end;
 with
     ret = await F;
 end;
 return ret;
 ]],
+    ana = {
+        flw = 3,    -- all false positives
+    },
     run = { ['1~>F'] = 1 }
 }
 
@@ -2503,7 +2511,7 @@ return ret;
 ]],
     ana = {
         acc = 1,
-        flw = 1,
+        flw = 3,
     },
     run = 2,
 }
@@ -2623,6 +2631,7 @@ emit a;
 return ret;
 ]],
     ana = {
+        flw = 1,
         --unreachs = 1,
     },
     run = 5,
@@ -2640,7 +2649,7 @@ return ret;
 ]],
     ana = {
         acc = 1,
-        flw = 1,
+        flw = 3,
     },
 }
 Test { [[
@@ -2657,7 +2666,7 @@ return a;
 ]],
     ana = {
         acc = 1,
-        flw = 1,
+        flw = 4,
     },
     run = { ['10~>A']=10 },
 }
@@ -2680,7 +2689,7 @@ return a;
     ana = {
         --unreachs = 1,
         acc = 1,
-        flw = 1,
+        flw = 3,
     },
 }
 
@@ -2701,9 +2710,11 @@ return a;
 ]],
     ana = {
         acc = 1,
-        flw = 1,
+        flw = 4,
     },
 }
+
+-- TODO: stopped checking flw here
 
 Test { [[
 input int A;

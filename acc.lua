@@ -62,7 +62,7 @@ F = {
     EmitExtE = function (me)
         local e1, e2 = unpack(me)
         INS {
-            pre = me.ana.pre,
+            path = me.ana.pre,
             id  = e1.evt.id,    -- like functions (not table events)
             md  = 'cl',
             tp  = '_',
@@ -111,6 +111,7 @@ F = {
     end,
     AwaitInt = function (me)
         me[1].ref.acc.md = 'aw'
+        F.AwaitExt(me)  -- flow
     end,
 
     ['Op1_*'] = function (me)
@@ -129,7 +130,7 @@ F = {
 
     Global = function (me)
         me.acc = INS {
-            pre = me.ana.pre,
+            path = me.ana.pre,
             id  = 'Global',
             md  = 'rd',
             tp  = me.tp,
@@ -140,7 +141,7 @@ F = {
 
     This = function (me)
         me.acc = INS {
-            pre = me.ana.pre,
+            path = me.ana.pre,
             id  = me,
             md  = 'rd',
             tp  = me.tp,
@@ -151,7 +152,7 @@ F = {
 
     Var = function (me)
         me.acc = INS {
-            pre = me.ana.pre,
+            path = me.ana.pre,
             id  = me.var,
             md  = 'rd',
             tp  = me.var.tp,
@@ -162,7 +163,7 @@ F = {
 
     C = function (me)
         me.acc = INS {
-            pre = me.ana.pre,
+            path = me.ana.pre,
             id  = me[1],
             md  = 'rd',
             tp  = '_',
@@ -176,30 +177,48 @@ F = {
     Break = function (me, TAG, PRE)
         TAG = TAG or 'Loop'
         PRE = PRE or me.ana.pre
-
-        for n in _AST.iter(_AST.pred_prio) do
-            me.acc = INS {
-                pre = PRE,
-                id  = n,        -- one for each node that I escape
-                md  = 'flw',
-                err = 'escape (line '..me.ln..')',
-            }
-            if n.tag == TAG then
-                break
-            end
-        end
+        local top = _AST.iter(TAG)()
+        INS {
+            path = PRE,
+            id  = top,
+            md  = 'esc',
+            err = 'escape (line '..top.ln..')',
+        }
     end,
     Return = function (me)
         F.Break(me, 'SetBlock')
     end,
-
     Node = function (me)
-        if me.__par and me.__par.tag == 'ParOr' then
+        local top = me.__par and me.__par.tag
+        if top == 'ParOr' then
             if not me.ana.pos[false] then
                 F.Break(me, 'ParOr', me.ana.pos)
             end
         end
+
+        if top=='ParOr' or top=='ParAnd' or top=='ParEver' then
+            if not me.ana.pre[false] then
+                INS {
+                    par  = me,          -- to be marked by PAR in case of ND
+                    path = me.ana.pre,
+                    id   = me.__par,
+                    md   = 'par',
+                    err  = 'par enter (line '..me.ln..')',
+                }
+            end
+        end
     end,
+
+    AwaitExt = function (me)
+        INS {
+            path = me.ana.pos,
+            id  = _AST.iter(TAG)(),
+            md  = 'awk',
+            err = 'awake (line '..me.ln..')',
+        }
+    end,
+    AwaitT = 'AwaitExt',
+    --AwaitInt = <see above>,
 }
 
 _AST.visit(F)
@@ -207,14 +226,20 @@ _AST.visit(F)
 ------------------------------------------------------------------------------
 
 local ND = {
-    cl  = { cl=true, tr=true,  wr=true,  rd=true,  aw=true  },
-    tr  = { cl=true, tr=true,  wr=true,  rd=true,  aw=true  },
-    wr  = { cl=true, tr=true,  wr=true,  rd=true,  aw=false },
-    rd  = { cl=true, tr=true,  wr=true,  rd=false, aw=false },
-    aw  = { cl=true, tr=true,  wr=false, rd=false, aw=false },
-    no  = {},   -- never ND ('ref')
+    acc = { par={},awk={},esc={},
+        cl  = { cl=true, tr=true,  wr=true,  rd=true,  aw=true  },
+        tr  = { cl=true, tr=true,  wr=true,  rd=true,  aw=true  },
+        wr  = { cl=true, tr=true,  wr=true,  rd=true,  aw=false },
+        rd  = { cl=true, tr=true,  wr=true,  rd=false, aw=false },
+        aw  = { cl=true, tr=true,  wr=false, rd=false, aw=false },
+        no  = {},   -- never ND ('ref')
+    },
 
-    flw = { flw=true }  -- flw vs flw only
+    flw = { cl={},tr={},wr={},rd={},aw={},no={},
+        par = { par=false, awk=false, esc=true },
+        awk = { par=false, awk=false, esc=true },
+        esc = { par=true,  awk=true,  esc=true },
+    },
 }
 
 local ALL = nil     -- holds all emits starting from top-most PAR
@@ -229,17 +254,17 @@ local ALL = nil     -- holds all emits starting from top-most PAR
     },
 ]]
 
--- {pre [A]=true, [a]=true } => {ret [A]=true, [aX]=true,[aY]=true }
+-- {path [A]=true, [a]=true } => {ret [A]=true, [aX]=true,[aY]=true }
 -- {T [a]={[X]=true,[Y]=true} } (emits2pres)
-local function int2exts (pre, NO, ret)
+local function int2exts (path, NO, ret)
     ret = ret or {}
 
     local more = false                  -- converged
-    for int in pairs(pre) do
+    for int in pairs(path) do
         if type(int)=='table' and int.pre=='event' then
             for emt_acc in pairs(ALL) do
                 if int==emt_acc.id and (not NO[emt_acc]) then
-                    for ext in pairs(emt_acc.pre) do
+                    for ext in pairs(emt_acc.path) do
                         if not ret[ext] then
                             more = true         -- not converged yet
                             ret[ext] = true     -- insert new ext
@@ -258,9 +283,9 @@ local function int2exts (pre, NO, ret)
     end
 end
 
-function par_isConc (pre1, pre2, T)
-    for n1 in pairs(pre1) do
-        for n2 in pairs(pre2) do
+function par_isConc (path1, path2, T)
+    for n1 in pairs(path1) do
+        for n2 in pairs(path2) do
             if (n1 == n2) and (n1 ~= 'ASYNC') then
                 return true
             end
@@ -268,73 +293,87 @@ function par_isConc (pre1, pre2, T)
     end
 end
 
+--local CACHE = setmetatable({},
+    --{__index=function(t,k) t[k]={} return t[k] end})
+
 function PAR (accs1, accs2, NO)
     local cls = CLS()
 
     -- "acc": i/j are concurrent, and have incomp. acc
     -- accs need to be I-indexed
     for _, acc1 in ipairs(accs1) do
-        local pre1 = int2exts(acc1.pre, NO)
+        local path1 = int2exts(acc1.path, NO)
         for _, acc2 in ipairs(accs2) do
-            local pre2 = int2exts(acc2.pre, NO)
+            local path2 = int2exts(acc2.path, NO)
+            if par_isConc(path1,path2) then
+                if ND.flw[acc1.md][acc2.md] then
+                    if _AST.isChild(acc1.id, acc2.id)
+                    or _AST.isChild(acc2.id, acc1.id)
+                    then
+                        DBG('WRN : nondeterminism : '..
+                                acc1.err..' vs '..acc2.err)
+                        _ANA.flw = _ANA.flw + 1
+                        if acc1.md == 'par' then
+                            acc1.par.needsChk = true
+                        end
+                        if acc2.md == 'par' then
+                            acc2.par.needsChk = true
+                        end
 --[[
 DBG'==============='
-for k in pairs(pre1) do
-    DBG('pre1', k~=true and k.id)
+DBG(acc1.cls.id, acc1, acc1.id, acc1.md, acc1.tp, acc1.any, acc1.err)
+for k in pairs(path1) do
+    DBG('path1', acc1.path, k~=true and k.id or k)
 end
-for k in pairs(pre2) do
-    DBG('pre2', k~=true and k.id)
+DBG(acc2.cls.id, acc2, acc2.id, acc2.md, acc2.tp, acc2.any, acc2.err)
+for k in pairs(path2) do
+    DBG('path2', acc2.path, k~=true and k.id or k)
 end
-DBG('===============', cls.id)
-DBG(acc1.cls.id, acc1.id, acc1.md, acc1.tp, acc1.any, acc1.err)
-DBG(acc2.cls.id, acc2.id, acc2.md, acc2.tp, acc2.any, acc2.err)
-DBG(acc1.org and acc1.org.tag, acc2.org and acc2.org.tag)
 DBG'==============='
 ]]
-            if par_isConc(pre1,pre2) and ND[acc1.md][acc2.md] then
+                    end
+                end
 
-                -- this.x vs this.x (both accs bounded to cls)
-                local cls_ = (acc1.cls == cls) or
-                             (acc2.cls == cls)
+                if ND.acc[acc1.md][acc2.md] then
+                    -- this.x vs this.x (both accs bounded to cls)
+                    local cls_ = (acc1.cls == cls) or
+                                 (acc2.cls == cls)
 
-                -- a.x vs this.x
-                local _nil = {}
-                local o1 = (acc1.org or acc2.org)
-                o1 = o1 and o1.acc or _nil
-                local o2 = (acc2.org or acc1.org)
-                o2 = o2 and o2.acc or _nil
+                    -- a.x vs this.x
+                    local _nil = {}
+                    local o1 = (acc1.org or acc2.org)
+                    o1 = o1 and o1.acc or _nil
+                    local o2 = (acc2.org or acc1.org)
+                    o2 = o2 and o2.acc or _nil
 
-                -- orgs are compatible
-                local org_ = (o1 == o2)
-                          or o1.any
-                          or o2.any
+                    -- orgs are compatible
+                    local org_ = (o1 == o2)
+                              or o1.any
+                              or o2.any
 
-                -- orgs are compatible
-                local org_ = o1.id == o2.id
-                          or o1.any
-                          or o2.any
+                    -- orgs are compatible
+                    local org_ = o1.id == o2.id
+                              or o1.any
+                              or o2.any
 
-                -- ids are compatible
-                local id_ = acc1.id == acc2.id
-                         or acc1.md=='cl' and acc2.md=='cl'
-                         or acc1.any and _TP.contains(acc1.tp,acc2.tp)
-                         or acc2.any and _TP.contains(acc2.tp,acc1.tp)
+                    -- ids are compatible
+                    local id_ = acc1.id == acc2.id
+                             or acc1.md=='cl' and acc2.md=='cl'
+                             or acc1.any and _TP.contains(acc1.tp,acc2.tp)
+                             or acc2.any and _TP.contains(acc2.tp,acc1.tp)
 
-                -- C's are det
-                local c1 = _ENV.c[acc1.id]
-                c1 = c1 and (c1.mod=='pure' or c1.mod=='constant')
-                local c2 = _ENV.c[acc2.id]
-                c2 = c2 and (c2.mod=='pure' or c2.mod=='constant')
-                local c_ = c1 or c2
-                        or (_ENV.dets[acc1.id] and _ENV.dets[acc1.id][acc2.id])
+                    -- C's are det
+                    local c1 = _ENV.c[acc1.id]
+                    c1 = c1 and (c1.mod=='pure' or c1.mod=='constant')
+                    local c2 = _ENV.c[acc2.id]
+                    c2 = c2 and (c2.mod=='pure' or c2.mod=='constant')
+                    local c_ = c1 or c2
+                            or (_ENV.dets[acc1.id] and _ENV.dets[acc1.id][acc2.id])
 
-    --DBG(id_, c_,c1,c2, acc1.any,acc2.any)
-                if cls_ and org_ and id_ and (not c_)
-                then
-                    DBG('WRN : nondeterminism : '..acc1.err..' vs '..acc2.err)
-                    if acc1.md == 'flw' then
-                        _ANA.flw = _ANA.flw + 1
-                    else
+        --DBG(id_, c_,c1,c2, acc1.any,acc2.any)
+                    if cls_ and org_ and id_ and (not c_)
+                    then
+                        DBG('WRN : nondeterminism : '..acc1.err..' vs '..acc2.err)
                         _ANA.acc = _ANA.acc + 1
                     end
                 end
@@ -379,7 +418,7 @@ G = {
                     end
                 end
                 for acc in pairs(ALL) do
-                    if acc.pre == me.ana.pre then
+                    if acc.path == me.ana.pre then
                         NO[acc] = true      -- instantaneous emit
                     end
                 end
