@@ -1,5 +1,6 @@
-_ANA.acc = 0      -- nd accesses
-_ANA.flw = 0      -- nd escapes
+_ANA.acc  = 0      -- nd accesses
+_ANA.flw  = 0      -- nd flows
+_ANA.kill = 0      -- nd kills
 
 -- any variable access calls this function
 -- to be inserted on parent Parallel sub[i] or Class
@@ -102,7 +103,8 @@ F = {
 
     EmitInt = function (me)
         local e1, e2 = unpack(me)
-        e1.ref.acc.md = 'tr'
+        e1.ref.acc.md   = 'tr'
+        e1.ref.acc.node = me        -- needsChk
     end,
 
     SetAwait = 'SetExp',
@@ -201,7 +203,7 @@ F = {
                 INS {
                     par  = me,          -- to be marked by PAR in case of ND
                     path = me.ana.pre,
-                    id   = me.__par,
+                    id   = me,--.__par,
                     md   = 'par',
                     err  = 'par enter (line '..me.ln..')',
                 }
@@ -212,7 +214,7 @@ F = {
     AwaitExt = function (me)
         INS {
             path = me.ana.pos,
-            id  = _AST.iter(TAG)(),
+            id  = me,--_AST.iter(TAG)(),
             md  = 'awk',
             err = 'awake (line '..me.ln..')',
         }
@@ -382,6 +384,21 @@ DBG'==============='
     end
 end
 
+function CHK_KILL (s1, s2)
+    for _, ana in ipairs(s1.ana.accs) do
+        if ana.md == 'tr' then
+            if s2.ana.pos[ana.id] or    -- terminates w/ same event
+               s2.ana.pos[false]  or    -- ~terminates (return/break)
+               s2.ana.pos[true]         -- terminates tight
+            then
+                DBG('WRN : kill : line '..s2.ln..' vs '..ana.err)
+                _ANA.kill = _ANA.kill + 1
+                ana.node.needsChk = true
+            end
+        end
+    end
+end
+
 G = {
 -- take all emits from top-level PAR
     ParOr_pre = function (me)
@@ -424,6 +441,9 @@ G = {
                 end
 
                 PAR(me[i].ana.accs, me[j].ana.accs, NO)
+
+                CHK_KILL(me[i], me[j])
+                CHK_KILL(me[j], me[i])
             end
         end
     end,

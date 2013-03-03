@@ -560,14 +560,24 @@ case ]]..me.lbl_cnt.id..[[:
 
         local org = (int.org and int.org.val) or '_ceu_org_'
 
-        -- TODO: ROM: set/get only if can be killed
-        LINE(me, [[
+        -- TODO: enable when awake chks event and sets PENDING
+        --if me.needsChk then
+            LINE(me, [[
 ceu_trails_set(]]..me.trails[1]..[[,CEU_PENDING,_ceu_org_);
+]])
+        --end
+
+        LINE(me, [[
 ceu_trails_go(]]..(int.off or int.evt.off)
                 ..',(tceu_evt_param)(void*)'..org..[[);
+]])
+
+        if me.needsChk then
+            LINE(me, [[
 if (ceu_trails_get(]]..me.trails[1]..[[,_ceu_org_)->lbl != CEU_PENDING)
     return;
 ]])
+        end
     end,
 
     AwaitN = function (me)

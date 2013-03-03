@@ -2745,17 +2745,20 @@ Test { [[
 input void START;
 event int e;
 var int v;
-par/or do
+par/or do           // 4
     await START;
-    emit e;
+    emit e;         // 6
     v = 1;
 with
-    await e;
+    await e;        // 9
     emit e;
     v = 2;
 end
 return v;
 ]],
+    ana = {
+        kill = 1,
+    },
     run = 2,
 }
 

@@ -89,9 +89,11 @@ Test = function (t)
     --_AST.dump(_AST.root)
     assert((not T.unreachs) and not (T.isForever)) -- move to analysis
     do
-        local _defs = { reachs=0, unreachs=0, isForever=false, acc=0, flw=0 }
+        local _defs = { reachs=0, unreachs=0, isForever=false,
+                        acc=0, flw=0, kill=0 }
         for k, v in pairs(_ANA) do
 -- TODO
+if k ~= 'kill' then
 if k ~= 'flw' then
 if k ~= 'unreachs' then
             assert( v==_defs[k] and (T.ana==nil or T.ana[k]==nil)
@@ -100,13 +102,16 @@ if k ~= 'unreachs' then
                             k..' = '..tostring(v))
 end
 end
+end
         end
         if T.ana then
             for k, v in pairs(T.ana) do
+if k ~= 'kill' then
 if k ~= 'flw' then
 if k ~= 'unreachs' then
                 assert( v == _ANA[k],
                             k..' = '..tostring(_ANA[k]))
+end
 end
 end
             end
