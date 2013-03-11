@@ -28,52 +28,6 @@ return ret;
 }
 
 Test { [[
-input int A;
-var int a;
-par/or do
-    loop do
-        a = 1;
-        await A;
-    end;
-with
-    await A;
-    await A;
-    a = 1;
-end;
-return a;
-]],
-    ana = {
-        acc = 1,
-    },
-}
-
-Test { [[
-input int A;
-var int a;
-par do
-    loop do
-        par/or do
-            a = 1;
-            await A;
-        with
-            await A;
-            a = 2;
-        end;
-    end
-with
-    loop do
-        await A;
-        a = 3;
-    end
-end
-]],
-    ana = {
-        isForever = true,
-        acc = 2,
-    },
-}
-
-Test { [[
 input void START;
 event int a, x, y;
 var int ret = 0;
@@ -97,8 +51,60 @@ end
     run = 2;
 }
 
+-- TODO: if ND comes from copy AND same loop, then ignore
+Test { [[
+input void F;
+var int a = 0;
+loop do
+    par/or do       // 4
+        await 2s;
+    with
+        a = a + 1;          // 7
+        await F;
+        break;
+    with
+        await 1s;   // 11
+        loop do
+            a = a * 2;      // 13
+            await 1s;   // 14
+        end
+    end
+end
+return a;
+]],
+    ana = {
+        flw = 2,
+        --acc = 3,      -- TODO: bad
+    },
+    run = { ['~>5s; ~>F']=14 },
+    --run = { ['~>5s; ~>F']=42 },
+}
 
-do return end
+Test { [[
+var int a;
+loop do
+    par/or do
+        await 2s;
+    with
+        a = 1;
+        await FOREVER;
+    with
+        await 1s;
+        loop do
+            a = 2;
+            await 1s;
+        end
+    end
+end
+]],
+    ana = {
+        isForever = true,
+        --acc = 1,
+        flw = 2,
+    },
+}
+
+--do return end
 --]===]
 
 Test { [[return(1);]],
@@ -230,6 +236,17 @@ Test { [[var int a=1;var int a=0; return a;]],
 Test { [[do var int a=1; end var int a=0; return a;]],
     run = 0,
 }
+
+Test { [[
+var int a=10;
+do
+    var int b=1;
+end
+return a;
+]],
+    run = 10,
+}
+
 Test { [[var int a=1,a=0; return a;]],
     --env = 'ERR : line 1 : variable/event "a" is already declared at line 1',
     run = 0,
@@ -597,9 +614,9 @@ return v;
     },
 }
 
-print'TODO: deveria dar erro!'
 Test { [[var int a = a+1; return a;]],
     --env = 'variable/event "a" is not declared',
+    todo = 'TODO: deveria dar erro!',
     run = 1,
 }
 
@@ -1199,58 +1216,6 @@ end
         flw = 1,
     },
     run = 1,
-}
-
-Test { [[
-input void F;
-var int a = 0;
-loop do
-    par/or do       // 4
-        await 2s;
-    with
-        a = a + 1;
-        await F;
-        break;
-    with
-        await 1s;   // 11
-        loop do
-            a = a * 2;
-            await 1s;   // 14
-        end
-    end
-end
-return a;
-]],
-    ana = {
-        flw = 2,
-        --acc = 3,      -- TODO: bad
-    },
-    run = { ['~>5s; ~>F']=14 },
-    --run = { ['~>5s; ~>F']=42 },
-}
-
-Test { [[
-var int a;
-loop do
-    par/or do
-        await 2s;
-    with
-        a = 1;
-        await FOREVER;
-    with
-        await 1s;
-        loop do
-            a = 2;
-            await 1s;
-        end
-    end
-end
-]],
-    ana = {
-        isForever = true,
-        --acc = 1,
-        flw = 2,
-    },
 }
 
 Test { [[
@@ -2154,11 +2119,11 @@ par/or do
         await A;
         ret = ret + 1;
     end
-    sum = 0;
+    sum = 0;    // 9
 with
     await A;
     await A;
-    sum = 1;
+    sum = 1;    // 13
 end
 return ret;
 ]],
@@ -2453,6 +2418,52 @@ end;
 return a+f;
 ]],
     run = { ['1~>A;5~>A;1~>F'] = 2 },
+}
+
+Test { [[
+input int A;
+var int a;
+par/or do
+    loop do
+        a = 1;
+        await A;
+    end;
+with
+    await A;
+    await A;
+    a = 1;
+end;
+return a;
+]],
+    ana = {
+        acc = 1,
+    },
+}
+
+Test { [[
+input int A;
+var int a;
+par do
+    loop do
+        par/or do
+            a = 1;      // 6
+            await A;
+        with
+            await A;
+            a = 2;      // 10
+        end;
+    end
+with
+    loop do
+        await A;
+        a = 3;          // 16
+    end
+end
+]],
+    ana = {
+        isForever = true,
+        acc = 3,
+    },
 }
 
 -- INTERNAL EVENTS
@@ -5219,8 +5230,8 @@ return a;
     },
     run = {
         ['~>30ms ; 0~>A ; ~>50ms'] = 2,
-        ['~>1ms ; 0~>A ; ~>40ms'] = 2,
-        ['~>1ms ; 0~>A ; ~>20ms ; ~>20ms'] = 2,
+        --['~>1ms ; 0~>A ; ~>40ms'] = 2,
+        --['~>1ms ; 0~>A ; ~>20ms ; ~>20ms'] = 2,
     }
 }
 
@@ -14348,7 +14359,7 @@ Test { [[
 ]]..evts..[[
 return 1;
 ]],
-    mem = 'ERR : line 1 : too many events',
+    env = 'ERR : line 1 : too many events',
 }
 
 Test { [[
@@ -16262,6 +16273,7 @@ C _V;
 var T t;
 return _V;
 ]],
+    todo = 'mutual deps',
     run = 12,    -- 1 (trl0) 3 (align)  4 4
 }
 
@@ -16278,6 +16290,7 @@ end
 C _V;
 return _V;
 ]],
+    todo = 'mutual deps',
     run = 8,    -- 4 4 (no orgs)
 }
 
@@ -16296,6 +16309,7 @@ end
 C _V;
 return _V;
 ]],
+    todo = 'mutual deps',
     run = 12,   -- +1 cls / +1 trl / +2 align
 }
 
@@ -16694,8 +16708,11 @@ do
 end
 var T a;
 await START;
+_fprintf(_stderr, "OI\n");
 par/or do
+C nohold _fprintf(),_stderr;
     loop i,3 do
+_fprintf(_stderr, "i=%d\n", i);
         par/and do
             emit a.go;
         with

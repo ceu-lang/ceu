@@ -1,4 +1,4 @@
-#line 0 "=== FILENAME ==="
+//#line 0 "=== FILENAME ==="
 === DEFS ===
 
 #include <string.h>
@@ -21,24 +21,17 @@
 #endif
 #define CEU_WCLOCK_EXPIRED (CEU_WCLOCK_INACTIVE-1)
 
-#define PTR_glb(tp,off) ((tp)(CEU.mem + off))
 #ifdef CEU_ORGS
-#define PTR_org(tp,org,off) ((tp)(((char*)(org)) + off))
-#define PTR_cur(tp,off) ((tp)(_ceu_org_ + off))
+#define PTR_org(org)    org
+#define PTR_cls(tp)     ((tp*)_ceu_org_)
 #else
-#define PTR_org(tp,org,off) ((tp)(CEU.mem + off))
-#define PTR_cur(tp,off) ((tp)(CEU.mem + off))
+#define PTR_org(org)    (&CEU.mem)
+#define PTR_cls(tp)     (&CEU.mem)
 #endif
 
-#define CEU_NMEM       (=== CEU_NMEM ===)
 #define CEU_NTRAILS    (=== CEU_NTRAILS ===)
 
-#ifdef CEU_IFCS
-#define CEU_NCLS       (=== CEU_NCLS ===)
-#define CEU_NIFCS      (=== CEU_NIFCS ===)
-#endif
-
-#define GLOBAL CEU.mem
+#define GLOBAL (&CEU.mem)
 
 // Macros that can be defined:
 // ceu_out_pending() (sync?)
@@ -51,8 +44,9 @@ typedef === TCEU_NLBL === tceu_nlbl;    // (x) number of trails
 typedef === TCEU_NTRL === tceu_ntrl;    // (x) number of orgs
 
 #ifdef CEU_IFCS
+#include <stddef.h>                     // offsetof
 typedef === TCEU_NCLS === tceu_ncls;    // (x) number of instances
-typedef === TCEU_NOFF === tceu_noff;    // (x) number of clss x ifcs
+typedef === TCEU_NFLDS === tceu_nfld;   // (x) number of clss x ifcs
 #endif
 
 // align all structs 1 byte
@@ -80,6 +74,10 @@ enum {
 === LABELS_ENUM ===
 };
 
+=== HOST ===
+
+=== CLSS ===
+
 typedef struct {
 #ifdef CEU_WCLOCKS
     int         wclk_late;
@@ -88,7 +86,7 @@ typedef struct {
 #endif
 
 #ifdef CEU_IFCS
-    tceu_noff   ifcs[CEU_NCLS][CEU_NIFCS];
+    tceu_nfld   ifcs[=== CEU_IFCS_NCLSS ===][=== CEU_IFCS_NIFCS ===];
 #endif
 
 #ifdef CEU_DEBUG
@@ -97,7 +95,8 @@ typedef struct {
 
     tceu_trail  trails[CEU_NTRAILS];
 
-    char        mem[CEU_NMEM];
+    CLS_Main    mem;
+    //char        mem[CEU_NMEM];
 } tceu;
 
 // TODO: fields that need no initialization?
@@ -118,10 +117,6 @@ tceu CEU = {
 
 //#pragma pack(pop)
 
-=== CLS_ACCS ===
-
-=== HOST ===
-
 /**********************************************************************/
 
 void ceu_call_f (u8 evt_id, tceu_evt_param evt_p,
@@ -136,9 +131,7 @@ void ceu_call_f (u8 evt_id, tceu_evt_param evt_p,
 
 tceu_trail* ceu_trails_get (int idx, void* org) {
 #ifdef CEU_ORGS
-    return &CEU.trails[
-                *PTR_org(tceu_ntrl*,org,=== CEU_CLS_TRAIL0 ===) + idx
-            ];
+    return &CEU.trails[ ((CLS_Main*)org)->trl0 + idx ];
 #else
     return &CEU.trails[idx];
 #endif
@@ -186,14 +179,15 @@ void ceu_trails_set (int idx, tceu_nlbl lbl, void* org) {
 #endif
 
 void ceu_trails_set_evt (u8 evt_id, tceu_evt_param evt_p, int evt_idx,
-                         int idx, tceu_nlbl lbl, void* org)
+                         int trl_idx, tceu_nlbl trl_lbl, CLS_Main* trl_org)
 {
-    ceu_trails_set(idx, lbl, org);
+    ceu_trails_set(trl_idx, trl_lbl, trl_org);
 
 #ifdef CEU_WCLOCKS
     if (evt_id == IN__WCLOCK) {
         s32 dt_ = evt_p.dt - CEU.wclk_late;
-        *PTR_org(s32*,org,evt_idx) = dt_;
+        //*PTR_org(s32*,org,evt_idx) = dt_;
+        PTR_org(trl_org)->wclks[evt_idx] = dt_;
         ceu_wclocks_min(dt_, 1);
     }
 #endif

@@ -147,26 +147,28 @@ do
         return string.sub(str, 1, i-1) .. to .. string.sub(str, e+1)
     end
 
-    tpl = sub(tpl, '=== CEU_NMEM ===',     _AST.root.mem.max)
+    --tpl = sub(tpl, '=== CEU_NMEM ===',     _AST.root.mem.max)
     tpl = sub(tpl, '=== CEU_NTRAILS ===',  _AST.root.ns.trails)
 
     tpl = sub(tpl, '=== TCEU_NLBL ===', tps[_ENV.c.tceu_nlbl.len])
     tpl = sub(tpl, '=== TCEU_NTRL ===', tps[_ENV.c.tceu_ntrl.len])
 
+--[[
     if _PROPS.has_orgs then
         tpl = sub(tpl, '=== CEU_CLS_TRAIL0 ===',  _MEM.cls.idx_trail0)
     end
+]]
 
     tpl = sub(tpl, '=== LABELS_ENUM ===', _LBLS.code_enum)
 
-    tpl = sub(tpl, '=== HOST ===',     _CODE.host)
-    tpl = sub(tpl, '=== CLS_ACCS ===', _MEM.code_clss)
-    tpl = sub(tpl, '=== CODE ===',     _AST.root.code)
+    tpl = sub(tpl, '=== HOST ===', _CODE.host)
+    tpl = sub(tpl, '=== CLSS ===', _MEM.structs)
+    tpl = sub(tpl, '=== CODE ===', _AST.root.code)
 
     -- IFACES
     if _PROPS.has_ifcs then
         local T = {}
-        local off_max = 0
+        local var_max = 0
         for _, cls in ipairs(_ENV.clss_cls) do
             local t = {}
             for i=1, #_ENV.ifcs do
@@ -175,23 +177,24 @@ do
             for _, var in ipairs(cls.blk_ifc.vars) do
                 local i = _ENV.ifcs[var.id_ifc]
                 if i then
-                    t[i+1] = var.off
-                    if var.off > off_max then
-                        off_max = var.off
+                    t[i+1] = 'offsetof('.._TP.c(cls.id)..','
+                                ..var.id..'_'..var.n..')'
+                    if var.n > var_max then
+                        var_max = var.n
                     end
                 end
             end
             T[#T+1] = '{'..table.concat(t,',')..'}'
         end
         tpl = sub(tpl, '=== TCEU_NCLS ===', tps[_ENV.c.tceu_ncls.len])
-        tpl = sub(tpl, '=== TCEU_NOFF ===', tps[_TP.n2bytes(off_max)])
-        tpl = sub(tpl, '=== CEU_NCLS ===',  #_ENV.clss_cls)
-        tpl = sub(tpl, '=== CEU_NIFCS ===', #_ENV.ifcs)
+        tpl = sub(tpl, '=== TCEU_NFLDS ===', tps[_TP.n2bytes(var_max)])
+        tpl = sub(tpl, '=== CEU_IFCS_NCLSS ===',  #_ENV.clss_cls)
+        tpl = sub(tpl, '=== CEU_IFCS_NIFCS ===', #_ENV.ifcs)
         tpl = sub(tpl, '=== IFCS ===', table.concat(T,','))
     end
 
     -- EVENTS
-    -- inputs: [evt_off+1...) (including _FIN,_WCLOCK,_ASYNC)
+    -- inputs: [max_evt+1...) (including _FIN,_WCLOCK,_ASYNC)
     --          cannot overlap w/ internal events
     local str = ''
     local t = {}
@@ -200,7 +203,7 @@ do
     for i, evt in ipairs(_ENV.exts) do
         if evt.pre == 'input' then
             str = str..'#define IN_'..evt.id..' '
-                    ..(_MEM.evt_off+i)..'\n'
+                    ..(_ENV.max_evt+i)..'\n'
             --ins = ins + 1
         else
             str = str..'#define OUT_'..evt.id..' '..outs..'\n'
@@ -260,8 +263,8 @@ end
 
 if _OPTS.verbose or true then
     local T = {
-        mem  = _AST.root.mem.max,
-        evts = _MEM.evt_off+#_ENV.exts,
+        --mem  = _AST.root.mem.max,
+        evts = _ENV.max_evt+#_ENV.exts,
         lbls = #_LBLS.list,
 
         trls       = _AST.root.ns.trails,

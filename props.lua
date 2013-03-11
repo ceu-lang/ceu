@@ -115,6 +115,7 @@ F = {
     end,
 
     Dcl_cls = function (me)
+        _PROPS.has_orgs = _PROPS.has_orgs or (me.id~='Main')
         if me.is_ifc then
             _PROPS.has_ifcs = true
         else
@@ -128,7 +129,6 @@ F = {
     end,
 
     Org = function (me)
-        _PROPS.has_orgs = true
         me.ns.trails = me.var.cls.ns.trails
     end,
 

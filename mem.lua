@@ -1,17 +1,9 @@
 _MEM = {
-    cls = {},       -- offsets for fixed fields inside classes
-    evt_off = 0,    -- max event index among all classes
-    code_clss = nil,
+    structs = {},
 }
 
-function alloc (mem, n)
---DBG(mem.off, n, _TP.align(mem.off,n))
-    mem.off = _TP.align(mem.off,n)
-    local cur = mem.off
-    mem.off = cur + n
-    mem.max = MAX(mem.max, mem.off)
---DBG(mem, n, mem.max)
-    return cur
+function SPC ()
+    return string.rep(' ',_AST.iter()().depth)
 end
 
 function pred_sort (v1, v2)
@@ -24,69 +16,46 @@ end
 
 F = {
     Root = function (me)
-        ASR(_MEM.evt_off+#_ENV.exts < 255, me, 'too many events')
-        me.mem = _MAIN.mem
-
-        -- cls/ifc accessors
-        local code = {}
-        for _,cls in ipairs(_ENV.clss) do
-            local pre = (cls.is_ifc and 'IFC') or 'CLS'
-
-            code[#code+1] = [[
-                typedef struct {
-                    char data[]]..cls.mem.max..[[];
-                } ]]..pre..'_'..cls.id..[[;
-            ]]
-
-            for _, var in ipairs(cls.blk_ifc.vars) do
-                local off
-                if cls.is_ifc then
-                    -- off = IFC[org.cls][var.n]
-                    off = 'CEU.ifcs['
-                            ..'(*PTR_org(tceu_ncls*,org,'.._MEM.cls.idx_cls..'))'
-                            ..']['
-                                .._ENV.ifcs[var.id_ifc]
-                            ..']'
-                else
-                    off = var.off
-                end
-
-                if var.cls or var.arr then
-                    val = 'PTR_org('.._TP.c(var.tp)..',org,'..off..')'
-                else
-                    val = '(*PTR_org('.._TP.c(var.tp..'*')..',org,'..off..'))'
-                end
-                local id = pre..'_'..cls.id..'_'..var.id
-                code[#code+1] = '#define '..id..'_off(org) '..off
-                code[#code+1] = '#define '..id..'(org) '    ..val
-            end
-        end
-        _MEM.code_clss = table.concat(code,'\n')
+        _MEM.structs = table.concat(_MEM.structs,'\n')
     end,
 
     Dcl_cls_pre = function (me)
-        me.mem = { off=0, max=0 }
+        me.struct = 'typedef struct {\n'
 
         if _PROPS.has_orgs then
-            local off = alloc(me.mem, _ENV.c.tceu_ntrl.len)     -- trail0
-            _MEM.cls.idx_trail0 = off           -- same off for all orgs
-DBG('', string.format('%8s','trl0'), off, _ENV.c.tceu_ntrl.len)
+            me.struct = me.struct..' tceu_ntrl trl0;\n'
         end
 
         if _PROPS.has_ifcs then
-            local off = alloc(me.mem, _ENV.c.tceu_ncls.len) -- cls N
-            _MEM.cls.idx_cls = off          -- same off for all orgs
-DBG('', string.format('%8s','cls'), off, _ENV.c.tceu_ncls.len)
+            me.struct = me.struct..' tceu_ncls cls;\n'
         end
 
         if _PROPS.has_wclocks then
-            me.mem.wclock0 = alloc(me.mem, me.ns.wclocks*4)
-DBG('', string.format('%8s','clk0'), me.mem.wclock0, me.ns.wclocks*4)
+            me.struct = me.struct..' s32 wclks['..me.ns.wclocks..'];\n'
         end
     end,
-    Dcl_cls = function (me)
+    Dcl_cls_pos = function (me)
+        if me.is_ifc then
+--[[
+            local union = 'union {\n'
+            for cls in pairs(me.matches) do
+                union = union..'  '.._TP.c(cls.id)..' _'..cls.id..';\n'
+            end
+            union = union .. '} '.._TP.c(me.id)..';\n'
+            _MEM.structs[#_MEM.structs+1] = union
+]]
+            _MEM.structs[#_MEM.structs+1] = 'typedef void '
+                                                .._TP.c(me.id)..'\n;'
+            return
+        end
+
+        me.struct = me.struct..'} '.._TP.c(me.id)..';\n'
+--DBG(me.struct)
+
+        _MEM.structs[#_MEM.structs+1] = me.struct
+
 DBG('===', me.id)
-DBG('', 'mem', me.mem.max)
+--DBG('', 'mem', me.mem.max)
 DBG('', 'trl', me.ns.trails)
 DBG('', 'clk', me.ns.wclocks)
 DBG('======================')
@@ -100,27 +69,24 @@ DBG('', 'glb', '{'..table.concat(glb,',')..'}')
 ]]
     end,
 
+    Stmts_pre = function (me)
+        local cls = CLS()
+        cls.struct = cls.struct..SPC()..'union {\n'
+    end,
+    Stmts_pos = function (me)
+        local cls = CLS()
+        cls.struct = cls.struct..SPC()..'};\n'
+    end,
+
     Block_pre = function (me)
         local cls = CLS()
-        if cls.is_ifc then
-            cls.mem.off = 0
-            cls.mem.max = 0
-            me.max = 0
-            return
-        end
-
-        local mem = cls.mem
-        me.off = mem.off
-
-        -- TODO: bitmap?
-        me.off_fins = alloc(CLS().mem, (me.fins and #me.fins) or 0)
 
         for _, var in ipairs(me.vars) do
             local len
-            if var.pre == 'tmp' then
+            if var.isTmp then
                 len = 0
             elseif var.cls then
-                len = (var.arr or 1) * var.cls.mem.max
+                len = (var.arr or 1) * 10   -- TODO: 10 = cls size
             elseif var.arr then
                 local _tp = _TP.deref(var.tp)
                 len = var.arr * (_TP.deref(_tp) and _ENV.c.pointer.len
@@ -133,51 +99,58 @@ DBG('', 'glb', '{'..table.concat(glb,',')..'}')
             var.len = len
         end
 
+        cls.struct = cls.struct..SPC()..'struct { // BLOCK ln='..me.ln..'\n'
+
         -- sort offsets in descending order to optimize alignment
         -- but events first to optimize tceu_nevt
         -- TODO: previous org metadata
         local sorted = { unpack(me.vars) }
         table.sort(sorted, pred_sort)
         for _, var in ipairs(sorted) do
-            -- we use offsets for events because of interfaces
-            if var.isEvt and var.len==0 then
-                var.len = 1
-            end
+            local tp = _TP.c(var.tp)
 
-            var.off = alloc(mem, var.len)
+--DBG('', string.format('%8s',var.id), var.len)
 
-            if var.isEvt then
-                _MEM.evt_off = MAX(_MEM.evt_off, var.off)
+-- TODO: events no more vars
+            local dcl
+            if var.tp ~= 'void' then
+                if var.arr then
+                    dcl = _TP.deref(tp)..' '..var.id
+                            ..'_'..var.n..'['..var.arr..']'
+                else
+                    dcl = tp..' '..var.id..'_'..var.n
+                end
+                cls.struct = cls.struct..SPC()..'  '..dcl..';\n'
             end
-DBG('', string.format('%8s',var.id), var.off, var.len)
         end
 
-        me.max = mem.off
-    end,
-    Block = function (me)
-        local mem = CLS().mem
-        for blk in _AST.iter'Block' do
-            blk.max = MAX(blk.max, mem.off)
+        if me.fins then
+            cls.struct = cls.struct..SPC()..'s8 fins_'..me.n
+                            ..'['..#me.fins..'];'
         end
-        mem.off = me.off
+    end,
+    Block_pos = function (me)
+        local cls = CLS()
+        cls.struct = cls.struct..SPC()..'};\n'
     end,
 
-    ParEver_aft = function (me, sub)
-        me.lst = sub.max
+    ParOr_pre = function (me)
+        local cls = CLS()
+        cls.struct = cls.struct..SPC()..'struct {\n'
     end,
-    ParEver_bef = function (me, sub)
-        local mem = CLS().mem
-        mem.off = me.lst or mem.off
+    ParOr_pos = function (me)
+        local cls = CLS()
+        cls.struct = cls.struct..SPC()..'};\n'
     end,
-    ParOr_aft  = 'ParEver_aft',
-    ParOr_bef  = 'ParEver_bef',
-    ParAnd_aft = 'ParEver_aft',
-    ParAnd_bef = 'ParEver_bef',
+    ParAnd_pre = 'ParOr_pre',
+    ParAnd_pos = 'ParOr_pos',
+    ParEver_pre = 'ParOr_pre',
+    ParEver_pos = 'ParOr_pos',
 
-    ParAnd_pre = function (me)
-        me.off = alloc(CLS().mem, #me)        -- TODO: bitmap?
+    ParAnd = function (me)
+        local cls = CLS()
+        cls.struct = cls.struct..SPC()..'s8 and_'..me.n..'['..#me..'];\n'
     end,
-    ParAnd = 'Block',
 }
 
 _AST.visit(F)

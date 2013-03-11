@@ -64,7 +64,7 @@ Test = function (t)
     dofile 'acc.lua'
     if not check('code')     then return end
 
-    STATS.mem     = STATS.mem     + _AST.root.mem.max
+    --STATS.mem     = STATS.mem     + _AST.root.mem.max
     STATS.trails  = STATS.trails  + _AST.root.ns.trails
 
 --[[
@@ -85,6 +85,7 @@ Test = function (t)
         return
     end
 
+--[[
     -- ANALYSIS
     --_AST.dump(_AST.root)
     assert((not T.unreachs) and not (T.isForever)) -- move to analysis
@@ -117,7 +118,6 @@ end
             end
         end
     end
---[[
 ]]
 
     -- RUN
@@ -191,13 +191,13 @@ print([[
 
 STATS = {
     count   = ]]..STATS.count  ..[[,
-    mem     = ]]..STATS.mem    ..[[,
     trails  = ]]..STATS.trails ..[[,
     bytes   = ]]..STATS.bytes  ..[[,
 }
 ]])
+    --mem     = ]]..STATS.mem    ..[[,
 
-assert(STATS.count  ==    1086)
-assert(STATS.mem    ==    8840)
-assert(STATS.trails ==    2050)
-assert(STATS.bytes  == 6039371)
+assert(STATS.count  ==    1089)
+assert(STATS.mem    ==    8876)
+assert(STATS.trails ==    2059)
+assert(STATS.bytes  == 6068990)

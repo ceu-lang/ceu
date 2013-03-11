@@ -11,21 +11,50 @@ local function ceu2c (op)
     return _ceu2c[op] or op
 end
 
+-- return reference for organisms
+function VAL (cls, val)
+    if cls then
+        return '(&'..val..')'
+    else
+        return val
+    end
+end
+
+-- organism is already a reference
+function REF (cls, val)
+    if cls then
+        return val
+    else
+        return '(&'..val..')'
+    end
+end
+
 F =
 {
     Block_pre = function (me)
-        if CLS().is_ifc then
+        local cls = CLS()
+        if cls.is_ifc then
             return
         end
         for _, var in ipairs(me.vars) do
-            if var.pre == 'tmp' then
-                var.val = '__ceu_'..var.id..'_'..string.gsub(tostring(var),': ','')
-            elseif var.cls or var.arr then
-                var.val = 'PTR_cur('.._TP.c(var.tp)..','..var.off..')'
+            if var.isTmp then
+                var.val = VAL(var.cls and (not var.arr), 
+                                '__ceu_'..var.id..'_'..var.n)
             else
-                var.val = '(*PTR_cur('.._TP.c(var.tp)..'*,'..var.off..'))'
+                var.val = VAL(var.cls and (not var.arr),
+                                'PTR_cls('.._TP.c(cls.id)..')->'..var.id..'_'..var.n)
             end
         end
+
+        if me.fins then
+            for i, fin in ipairs(me.fins) do
+                fin.idx = i - 1
+            end
+        end
+    end,
+
+    ParAnd = function (me)
+        me.val = 'PTR_cls('.._TP.c(CLS().id)..')->and_'..me.n
     end,
 
     Global = function (me)
@@ -33,7 +62,7 @@ F =
     end,
 
     This = function (me)
-        me.val = '_ceu_org_'
+        me.val = 'PTR_cls('.._TP.c(CLS().id)..')'
     end,
 
     Var = function (me)
@@ -111,13 +140,7 @@ F =
 
     Op2_idx = function (me)
         local _, arr, idx = unpack(me)
-        local cls = _ENV.clss[me.tp]
-        if cls then
-            me.val = 'PTR_org(void*,'..arr.val..',('..idx.val..'*'..cls.mem.max..'))'
-            me.val = '(('.._TP.c(me.tp)..')'..me.val..')'
-        else
-            me.val = '('..arr.val..'['..idx.val..'])'
-        end
+        me.val = VAL(_ENV.clss[me.tp], '('..arr.val..'['..idx.val..'])')
     end,
 
     Op2_any = function (me)
@@ -153,29 +176,31 @@ F =
 
     ['Op1_*'] = function (me)
         local op, e1 = unpack(me)
-        me.val = '('..ceu2c(op)..e1.val..')'
         if _ENV.clss[_TP.deref(e1.tp)] then
-            me.val = '(('.._TP.c(me.tp)..')(&'..me.val..'))'
+            me.val = e1.val
+            --me.val = '(('.._TP.c(me.tp)..')(&'..me.val..'))'
+        else
+            me.val = '('..ceu2c(op)..e1.val..')'
         end
     end,
     ['Op1_&'] = function (me)
         local op, e1 = unpack(me)
-        if _ENV.clss[e1.tp] then
-            me.val = e1.val
-        else
-            me.val = '('..ceu2c(op)..e1.val..')'
-        end
+        me.val = REF(_ENV.clss[e1.tp], e1.val)
     end,
 
     ['Op2_.'] = function (me)
         if me.org then
             local cls = _ENV.clss[me.org.tp]
-            local pre = (cls.is_ifc and 'IFC_') or 'CLS_'
             if me.c then
                 me.val = me.c.id
+            elseif cls.is_ifc then
+                local n   = '((CLS_Main*)'..me.org.val..')->cls'
+                me.off = 'CEU.ifcs['..n..']['.._ENV.ifcs[me.var.id_ifc]..']'
+                me.val = VAL(_ENV.clss[me.tp],
+                            '((char*)'..me.org.val..'+'..me.off..')')
             else
-                me.off = pre..cls.id..'_'..me.var.id..'_off('..me.org.val..')'
-                me.val = pre..cls.id..'_'..me.var.id..'('..me.org.val..')'
+                me.val = VAL(_ENV.clss[me.tp],
+                            me.org.val..'->'..me.var.id..'_'..me.var.n)
             end
         else
             local op, e1, id = unpack(me)
@@ -190,11 +215,8 @@ F =
         local _tp = _TP.deref(tp)
         local cls = _tp and _ENV.clss[_tp]
         if cls and (not cls.is_ifc) and _PROPS.has_ifcs then
-            val = '((' ..
-                    '*PTR_org(tceu_ncls*,'..val..','.._MEM.cls.idx_cls..')'..
-                    '==' ..
-                    cls.n ..
-                    ') ?  '..val..' : NULL)'
+            val = '((((CLS_Main*)'..val..')->cls == '
+                    ..cls.n..') ? '..val..' : NULL)'
         end
 
         me.val = '(('.._TP.c(tp)..')'..val..')'

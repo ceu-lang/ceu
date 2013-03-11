@@ -15,10 +15,13 @@ function _AST.isChild (n1, n2)
         or n2.__par and _AST.isChild(n1, n2.__par)
 end
 
+local _N = 0
 function _AST.node (tag, min)
     min = min or 0
     return function (ln, ...)
         local node = setmetatable({ ... }, MT)
+        node.n = _N
+        _N = _N + 1
         if #node < min then
             return ...
         else
@@ -78,16 +81,19 @@ end
 function _AST.dump (me, spc)
     spc = spc or 0
     local ks = ''
+--[[
     for k, v in pairs(me) do
         if type(k)~='number' then
             v = string.gsub(string.sub(tostring(v),1,8),'\n','\\n')
             ks = ks.. k..'='..v..','
         end
     end
+]]
     --local t=0; for _ in pairs(me.aw.t) do t=t+1 end
     --ks = 'n='..(me.aw.n or '?')..',t='..t..',ever='..(me.aw.forever_ and 1 or 0)
     --ks = table.concat(me.trails,'-')
 --
+--[[
     local f = function(v)
                 return type(v)=='table' and v.id
                     or tostring(v)
@@ -98,7 +104,6 @@ function _AST.dump (me, spc)
     local t = {}
     for k in pairs(me.ana.pos) do t[#t+1]=f(k) end
     ks = ks..'['..table.concat(t,',')..']'
---[[
 ]]
     DBG(string.rep(' ',spc)..me.tag..' ('..me.ln..') '..ks)
     for i, sub in ipairs(me) do
@@ -231,7 +236,7 @@ local C; C = {
             dcl_j = node('Nothing')(ln)
             set_j = node('Nothing')(ln)
         else
-            local j_name = '$j'..tostring(blk)
+            local j_name = '$j'..blk.n
             j = function() return node('Var')(ln, j_name) end
             dcl_j = node('Dcl_var')(ln, 'var', 'int', false, j_name)
             set_j = node('SetExp')(ln, j(), _j)
@@ -258,7 +263,7 @@ local C; C = {
     end,
 
     Pause = function (ln, evt, blk)
-        local id = '$pse_'..tostring(evt)
+        local id = '$pse_'..evt.n
         local var = node('Var')(ln,id)
         local pse1 = node('Pause')(ln, '1')
         local pse2 = node('Pause')(ln, '-1')
