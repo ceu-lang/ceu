@@ -204,6 +204,7 @@ DBG(sub.tag)
     Break    = 'Return',
 
     Loop = function (me)
+-- TODO: why?
         if me.isFor then
             me.ana.pos = me[1].ana.pos
             return
@@ -215,22 +216,13 @@ DBG(sub.tag)
                  me, '`loop´ iteration is not reachable')
         end
 
-        if me.__ana or me[1].ana.pos[false] then
-            return
+        -- pre = pre U pos
+        if not me[1].ana.pos[false] then
+            for k in pairs(me[1].ana.pos) do
+                me.ana.pre[k] = true
+            end
+            _AST.visit(F, me[1])
         end
-
-        -- join pos -> pre
-        me.__ana = true
-        local pre = {}
-        for k in pairs(me.ana.pre) do
-            pre[k] = true
-        end
-        for k in pairs(me[1].ana.pos) do
-            pre[k] = true
-        end
-        me.ana.pre = pre
-        --_AST.visit({Node_pre=function(me) me.ana=nil end}, me[1])
-        --_AST.visit(F, me)
     end,
 
     Async = function (me)
@@ -262,6 +254,15 @@ DBG(sub.tag)
 
     AwaitN = function (me)
         me.ana.pos = { [false]=true }
+    end,
+
+    Var = function (me)
+        local var = me.var
+        if var.isTmp == true then
+            var.isTmp = me.ana.pre
+        else
+            var.isTmp = (var.isTmp == me.ana.pre)
+        end
     end,
 }
 
