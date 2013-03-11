@@ -75,9 +75,9 @@ function _TP.c (tp)
         else
             tp = 'CLS_'..tp
         end
-        --if not _TP.deref(tp) then
-            --tp = tp..'*'
-        --end
+        if not _TP.deref(tp) then
+            tp = tp..'*'
+        end
     end
     return (string.gsub(tp,'^_', ''))
 end

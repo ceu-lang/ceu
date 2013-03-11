@@ -64,7 +64,7 @@ Test = function (t)
     dofile 'acc.lua'
     if not check('code')     then return end
 
-    --STATS.mem     = STATS.mem     + _AST.root.mem.max
+    STATS.mem     = STATS.mem     + _AST.root.mem.max
     STATS.trails  = STATS.trails  + _AST.root.ns.trails
 
 --[[
@@ -191,11 +191,11 @@ print([[
 
 STATS = {
     count   = ]]..STATS.count  ..[[,
+    mem     = ]]..STATS.mem    ..[[,
     trails  = ]]..STATS.trails ..[[,
     bytes   = ]]..STATS.bytes  ..[[,
 }
 ]])
-    --mem     = ]]..STATS.mem    ..[[,
 
 assert(STATS.count  ==    1089)
 assert(STATS.mem    ==    8876)

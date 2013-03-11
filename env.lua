@@ -27,14 +27,12 @@ _ENV = {
         int      = _OPTS.tp_word,
         pointer  = _OPTS.tp_pointer,
 
-        tceu_nlbl = true,    -- labels.lua
-        tceu_ntrl = true,    -- props.lua
-
         tceu_ncls = true,    -- env.lua
+
+        tceu_nlbl = true,    -- labels.lua
+        tceu_trail = 2,      -- TODO!!!
     },
     dets  = {},
-
-    max_evt = 0,
 }
 
 for k, v in pairs(_ENV.c) do
@@ -82,9 +80,6 @@ function _ENV.ifc_vs_cls (ifc, cls)
     return true
 end
 
-local _N = 0
-local _E = 0
-
 function newvar (me, blk, pre, tp, dim, id)
     for stmt in _AST.iter() do
         if stmt.tag == 'Async' then
@@ -128,18 +123,12 @@ function newvar (me, blk, pre, tp, dim, id)
         blk   = blk,
         pre   = pre,
         isEvt = isEvt,
-        evt_idx = isEvt and _E,
         --isTmp = (not cls) and (not isEvt),  -- default true (see ana.lua)
         isTmp = pre=='tmp',
         arr   = dim,
         val   = '0',     -- TODO: workaround: dummy value for interfaces
-        n     = _N,
     }
-
-    _N = _N + 1
-    if isEvt then
-        _E = _E + 1
-    end
+DBG(var.id, var.isTmp)
 
     blk.vars[#blk.vars+1] = var
     blk.vars[id] = var -- TODO: last/first/error?
@@ -187,7 +176,6 @@ F = {
 
     Root = function (me)
         _ENV.c.tceu_ncls.len = _TP.n2bytes(#_ENV.clss_cls)
-        ASR(_ENV.max_evt+#_ENV.exts <= 255, me, 'too many events')
 
         -- matches all ifc vs cls
         for _, ifc in ipairs(_ENV.clss_ifc) do
@@ -257,10 +245,6 @@ F = {
         _ENV.clss[id] = me
         _ENV.clss[#_ENV.clss+1] = me
 
-        -- restart variables/events counting
-        _N = 0
-        _E = 0
-
         if me.is_ifc then
             _ENV.clss_ifc[id] = me
             _ENV.clss_ifc[#_ENV.clss_ifc+1] = me
@@ -271,7 +255,6 @@ F = {
         end
     end,
     Dcl_cls = function (me)
-        _ENV.max_evt = MAX(_ENV.max_evt, _E)
         -- expose each field
         if me.is_ifc then
             for _, var in pairs(me.blk_ifc.vars) do
@@ -362,7 +345,6 @@ F = {
     end,
 
     Dcl_imp = function (me)
-error'oi'
         local id = unpack(me)
         local cls = ASR(_ENV.clss[id], me,
                         'class "'..id..'" is not declared')
@@ -490,7 +472,6 @@ error'oi'
 
         if me.fin and me.fin.active then
             req.fins = req.fins or {}
-            me.fin.blk = req
             table.insert(req.fins, 1, me.fin)
         end
     end,
@@ -505,7 +486,6 @@ error'oi'
         elseif fin.active then
             local blk = _AST.iter'Block'()
             blk.fins = blk.fins or {}
-            fin.blk = blk
             table.insert(blk.fins, 1, fin)
         end
     end,

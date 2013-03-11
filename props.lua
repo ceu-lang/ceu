@@ -59,7 +59,6 @@ local NO_async = {
 
 F = {
     Root = function (me)
-        _ENV.c.tceu_ntrl.len = _TP.n2bytes(me.ns.trails)
         MAX_all(me)
     end,
 
@@ -121,6 +120,7 @@ F = {
         else
             SAME(me, me[#me])
         end
+        ASR(me.ns.trails < 256, me, 'too many trails')
 --[[
         if me.aw.t and #me.aw.t>0 then -- +1 trail for all global awaits
             --me.ns.trails = me.ns.trails + 1

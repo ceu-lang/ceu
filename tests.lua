@@ -1,6 +1,16 @@
 --[===[
 
 Test { [[
+var int a=10;
+do
+    var int b=1;
+end
+return a;
+]],
+    run = 10,
+}
+
+Test { [[
 input void A, B, Z;
 event void a;
 var int ret = 1;
@@ -236,17 +246,6 @@ Test { [[var int a=1;var int a=0; return a;]],
 Test { [[do var int a=1; end var int a=0; return a;]],
     run = 0,
 }
-
-Test { [[
-var int a=10;
-do
-    var int b=1;
-end
-return a;
-]],
-    run = 10,
-}
-
 Test { [[var int a=1,a=0; return a;]],
     --env = 'ERR : line 1 : variable/event "a" is already declared at line 1',
     run = 0,
@@ -5230,8 +5229,8 @@ return a;
     },
     run = {
         ['~>30ms ; 0~>A ; ~>50ms'] = 2,
-        --['~>1ms ; 0~>A ; ~>40ms'] = 2,
-        --['~>1ms ; 0~>A ; ~>20ms ; ~>20ms'] = 2,
+        ['~>1ms ; 0~>A ; ~>40ms'] = 2,
+        ['~>1ms ; 0~>A ; ~>20ms ; ~>20ms'] = 2,
     }
 }
 
@@ -14359,7 +14358,7 @@ Test { [[
 ]]..evts..[[
 return 1;
 ]],
-    env = 'ERR : line 1 : too many events',
+    mem = 'ERR : line 1 : too many events',
 }
 
 Test { [[
@@ -16273,7 +16272,6 @@ C _V;
 var T t;
 return _V;
 ]],
-    todo = 'mutual deps',
     run = 12,    -- 1 (trl0) 3 (align)  4 4
 }
 
@@ -16290,8 +16288,7 @@ end
 C _V;
 return _V;
 ]],
-    todo = 'mutual deps',
-    run = 8,    -- 4 4 (no orgs)
+    run = 12,
 }
 
 Test { [[
@@ -16309,7 +16306,6 @@ end
 C _V;
 return _V;
 ]],
-    todo = 'mutual deps',
     run = 12,   -- +1 cls / +1 trl / +2 align
 }
 
@@ -16708,11 +16704,8 @@ do
 end
 var T a;
 await START;
-_fprintf(_stderr, "OI\n");
 par/or do
-C nohold _fprintf(),_stderr;
     loop i,3 do
-_fprintf(_stderr, "i=%d\n", i);
         par/and do
             emit a.go;
         with
