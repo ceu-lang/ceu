@@ -1,4 +1,12 @@
+-- needChk, quase nunca necessario
+-- desabilitar p/ ver o melhor resultado
+-- se o par/obj nao emit ou emite somente
+-- eventos definidos dentro (e fora da ifc), need=false
+-- ana.lua pode melhorar ja que teste so eh necessario
+-- para a parte tight [true]=true
+
 --[===[
+--]===]
 
 Test { [[
 var int a=10;
@@ -115,7 +123,6 @@ end
 }
 
 --do return end
---]===]
 
 Test { [[return(1);]],
     ana = {
@@ -16272,7 +16279,7 @@ C _V;
 var T t;
 return _V;
 ]],
-    run = 12,    -- 1 (trl0) 3 (align)  4 4
+    run = 12,    -- 2/2 (trl0) 4 (x) 4 (y)
 }
 
 Test { [[
@@ -16306,7 +16313,7 @@ end
 C _V;
 return _V;
 ]],
-    run = 12,   -- +1 cls / +1 trl / +2 align
+    run = 12,   -- 1/1 cls / 2 trl / 4 x / 4 v
 }
 
 Test { [[
@@ -16693,118 +16700,6 @@ return a.v + v;
 
 Test { [[
 input void START;
-input void A,F;
-var int v = 0;
-class T with
-    event void e, ok, go;
-do
-    await A;
-    emit e;
-    emit ok;
-end
-var T a;
-await START;
-par/or do
-    loop i,3 do
-        par/and do
-            emit a.go;
-        with
-            await a.e;
-            v = v + 1;
-        with
-            await a.ok;
-        end
-    end
-with
-    await F;
-end
-return v;
-]],
-    run = { ['~>A;~>A;~>A;~>F']=1 },
-}
-
-Test { [[
-input void START;
-input void A,F;
-var int v;
-class T with
-    event void e, ok;
-do
-    await A;
-    emit e;
-    emit ok;
-end
-var T a;
-await START;
-par/or do
-    loop i,3 do
-        par/and do
-            await a.e;
-            v = v + 1;
-        with
-            await a.ok;
-        end
-    end
-with
-    await F;
-end
-return v;
-]],
-    run = { ['~>A;~>A;~>A;~>F']=1 },
-}
-
-Test { [[
-input void START;
-input void A,F;
-var int v;
-class T with
-    event void e;
-do
-    loop do
-        await A;
-        emit e;
-    end
-end
-await START;
-var T a;
-par/or do
-    loop i,3 do
-        await a.e;
-        v = v + 1;
-    end
-with
-    await F;
-end
-return v;
-]],
-    run = { ['~>A;~>A;~>A;~>F']=3 },
-}
-
-Test { [[
-input void START;
-input void A,F;
-var int v;
-class T with
-    event void e;
-do
-    loop do
-        await A;
-        emit e;
-    end
-end
-var T a;
-await START;
-loop i,3 do
-    await a.e;
-    v = v + 1;
-end
-return v;
-]],
-    run = { ['~>A;~>A;~>A']=3 },
-}
-
-Test { [[
-input void START;
 class T with
     var int v;
 do
@@ -16819,6 +16714,24 @@ do
 end
 ]],
     run = 9,
+}
+
+Test { [[
+input void START, A;
+class T with
+    var int v;
+do
+    await START;
+    this.v = 5;
+end
+do
+    var T a;
+        a.v = 0;
+    await A;
+    return a.v;
+end
+]],
+    run = { ['~>A']=5} ,
 }
 
 Test { [[
@@ -17093,6 +17006,118 @@ end
         isForever = true,
     },
     loop = true,
+}
+
+Test { [[
+input void START;
+input void A,F;
+var int v = 0;
+class T with
+    event void e, ok, go;
+do
+    await A;
+    emit e;
+    emit ok;
+end
+var T a;
+await START;
+par/or do
+    loop i,3 do
+        par/and do
+            emit a.go;
+        with
+            await a.e;
+            v = v + 1;
+        with
+            await a.ok;
+        end
+    end
+with
+    await F;
+end
+return v;
+]],
+    run = { ['~>A;~>A;~>A;~>F']=1 },
+}
+
+Test { [[
+input void START;
+input void A,F;
+var int v;
+class T with
+    event void e, ok;
+do
+    await A;
+    emit e;
+    emit ok;
+end
+var T a;
+await START;
+par/or do
+    loop i,3 do
+        par/and do
+            await a.e;
+            v = v + 1;
+        with
+            await a.ok;
+        end
+    end
+with
+    await F;
+end
+return v;
+]],
+    run = { ['~>A;~>A;~>A;~>F']=1 },
+}
+
+Test { [[
+input void START;
+input void A,F;
+var int v;
+class T with
+    event void e;
+do
+    loop do
+        await A;
+        emit e;
+    end
+end
+await START;
+var T a;
+par/or do
+    loop i,3 do
+        await a.e;
+        v = v + 1;
+    end
+with
+    await F;
+end
+return v;
+]],
+    run = { ['~>A;~>A;~>A;~>F']=3 },
+}
+
+Test { [[
+input void START;
+input void A,F;
+var int v;
+class T with
+    event void e;
+do
+    loop do
+        await A;
+        emit e;
+    end
+end
+var T a;
+await START;
+loop i,3 do
+    await a.e;
+    v = v + 1;
+end
+return v;
+]],
+    run = { ['~>A;~>A;~>A']=3 },
 }
 
 Test { [[
@@ -19598,6 +19623,28 @@ Test { [[
 input void START;
 
 interface I with
+    var int e;
+end
+
+class T with
+    var int e;
+do
+    e = 100;
+end
+
+var T t;
+var I* i = &t;
+
+await START;
+return i:e;
+]],
+    run = 100,
+}
+
+Test { [[
+input void START;
+
+interface I with
     event int e;
 end
 
@@ -19619,15 +19666,18 @@ return i:e;
 }
 
 Test { [[
+C nohold _fprintf(), _stderr;
 input void START;
 
 interface I with
     event int e, f;
 end
 
+_fprintf(_stderr, "====\n");
 class T with
     event int e, f;
 do
+_fprintf(_stderr, "XXX: %p\n", this);
     var int v = await e;
     emit f=v;
 end
@@ -19639,13 +19689,13 @@ var I* i2 = &t2;
 var int ret = 0;
 par/and do
     await START;
-    emit i1:e=7;            // 21
+    emit i1:e=99;            // 21
 with
     var int v = await i1:f;
     ret = ret + v;
 with
     await START;
-    emit i2:e=6;            // 27
+    emit i2:e=66;            // 27
 with
     var int v = await i2:f;
     ret = ret + v;
@@ -19655,7 +19705,7 @@ return ret;
     ana = {
         acc = 1,
     },
-    run = 13,
+    run = 165,
 }
 
 Test { [[

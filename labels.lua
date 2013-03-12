@@ -40,7 +40,10 @@ F = {
         new{'CEU_PENDING',  true}
     end,
     Root = function (me)
-        _ENV.c.tceu_nlbl.len = _TP.n2bytes(#_LBLS.list)
+        -- 0, 1,-1, tot,-tot
+        -- <0 = off (for internal events)
+        _ENV.c.tceu_nlbl.len  = _TP.n2bytes(1+2 + #_LBLS.list*2)
+        _ENV.c.tceu_trail.len = _ENV.c.tceu_nlbl.len
 
         -- enum of labels
         for i, lbl in ipairs(_LBLS.list) do
@@ -75,6 +78,9 @@ F = {
         if me.has_news then
             me.lbl_free = new{'Class__fin_'..me.id, depth=me.depth}
         end
+    end,
+    Org = function (me)
+        me.lbl = new{'Org_'..me.var.id}
     end,
 
     SetBlock_pre = function (me)

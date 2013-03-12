@@ -29,8 +29,8 @@ _ENV = {
 
         tceu_ncls = true,    -- env.lua
 
-        tceu_nlbl = true,    -- labels.lua
-        tceu_trail = 2,      -- TODO!!!
+        tceu_nlbl  = true,    -- labels.lua
+        tceu_trail = true,    -- labels.lua (TODO: remove this type?)
     },
     dets  = {},
 }
@@ -162,6 +162,10 @@ end
 F = {
     Root_pre = function (me)
         local evt = {id='_FIN', pre='input'}
+        _ENV.exts[#_ENV.exts+1] = evt
+        _ENV.exts[evt.id] = evt
+
+        local evt = {id='_ON', pre='input'}
         _ENV.exts[#_ENV.exts+1] = evt
         _ENV.exts[evt.id] = evt
 

@@ -33,29 +33,6 @@ F = {
             me.fins.wclocks = { w0, w0-1 }
         end
 
-        -- ORGS
--- TODO: remove
---[[
-        for _, var in ipairs(me.vars) do
-            local cls, n
-            if var.cls then
-                cls = var.cls
-                n = 1
-            elseif var.arr then
-                cls = _ENV.clss[_TP.deref(var.tp)]
-                if cls then
-                    n = var.arr
-                end
-            end
-            if cls then
-                var.trails  = { t0, t0+ n*cls.ns.trails  -1 }
-                    t0 = t0 + n*cls.ns.trails
-                var.wclocks = { w0, w0+ n*cls.ns.wclocks -1 }
-                    --w0 = w0 + n*cls.ns.wclocks    (TODO: xxx in props.lua)
-            end
-        end
-]]
-
         -- BLOCK
         me[1].trails  = { t0, me.trails [2] }
         me[1].wclocks = { w0, me.wclocks[2] }

@@ -120,6 +120,7 @@ F = {
         else
             SAME(me, me[#me])
         end
+-- TODO: pq?
         ASR(me.ns.trails < 256, me, 'too many trails')
 --[[
         if me.aw.t and #me.aw.t>0 then -- +1 trail for all global awaits
@@ -129,7 +130,7 @@ F = {
     end,
 
     Org = function (me)
-        me.ns.trails = me.var.cls.ns.trails
+        --me.ns.trails = me.var.cls.ns.trails
     end,
 
     Dcl_ext = function (me)

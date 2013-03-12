@@ -134,7 +134,7 @@ do
     dofile 'code.lua'
 end
 
-local tps = { [0]='void', [1]='u8', [2]='u16', [4]='u32' }
+local tps = { [0]='void', [1]='8', [2]='16', [4]='32' }
 
 -- TEMPLATE
 local tpl
@@ -150,7 +150,7 @@ do
     tpl = sub(tpl, '=== CEU_NMEM ===',     _AST.root.mem.max)
     tpl = sub(tpl, '=== CEU_NTRAILS ===',  _AST.root.ns.trails)
 
-    tpl = sub(tpl, '=== TCEU_NLBL ===', tps[_ENV.c.tceu_nlbl.len])
+    tpl = sub(tpl, '=== TCEU_NLBL ===',    's'..tps[_ENV.c.tceu_nlbl.len])
 
     --if _PROPS.has_orgs then
     tpl = sub(tpl, '=== CEU_CLS_TRAIL0 ===',  _MEM.cls.idx_trail0)
@@ -182,8 +182,8 @@ do
             end
             T[#T+1] = '{'..table.concat(t,',')..'}'
         end
-        tpl = sub(tpl, '=== TCEU_NCLS ===', tps[_ENV.c.tceu_ncls.len])
-        tpl = sub(tpl, '=== TCEU_NOFF ===', tps[_TP.n2bytes(off_max)])
+        tpl = sub(tpl, '=== TCEU_NCLS ===', 'u'..tps[_ENV.c.tceu_ncls.len])
+        tpl = sub(tpl, '=== TCEU_NOFF ===', 'u'..tps[_TP.n2bytes(off_max)])
         tpl = sub(tpl, '=== CEU_NCLS ===',  #_ENV.clss_cls)
         tpl = sub(tpl, '=== CEU_NIFCS ===', #_ENV.ifcs)
         tpl = sub(tpl, '=== IFCS ===', table.concat(T,','))
