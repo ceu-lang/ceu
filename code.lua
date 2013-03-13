@@ -18,7 +18,7 @@ function CONC (me, sub, tab)
 end
 
 function ATTR (me, n1, n2)
-    LINE(me, n1.val..' = '..n2.val..';')
+    LINE(me, VAL(n1)..' = '..VAL(n2)..';')
 end
 
 function CASE (me, lbl)
@@ -205,7 +205,7 @@ if (]]..exp.val..[[ != NULL) {
     Org = function (me)
         local idx = me.idx or 0
         COMM(me, 'ORG')
-        local org = 'PTR_org(void*,'..me.var.val..','
+        local org = 'PTR_org(void*,'..VAL(me.var)..','
                         ..idx..'*'..me.var.cls.mem.max..')'
         LINE(me, [[
 ceu_trails_set(]]..me.trails[1]..','..me.lbl.id..[[,_ceu_org_);
@@ -240,9 +240,9 @@ case ]]..me.lbl.id..[[:
             if var.isTmp then
                 if var.arr then
                     LINE(me, _TP.c(_TP.deref(var.tp))
-                            ..' '..var.val..'['..var.arr..'];')
+                            ..' '..VAL(var)..'['..var.arr..'];')
                 else
-                    LINE(me, _TP.c(var.tp)..' '..var.val..';')
+                    LINE(me, _TP.c(var.tp)..' '..VAL(var)..';')
                 end
             end
         end
@@ -319,7 +319,7 @@ if (*PTR_cur(u8*,]]..(me.off_fins+i-1)..[[)) {
         if e1.tag=='Var' and e1.var.id=='_ret' then
             LINE(me, [[
 #ifdef ceu_out_end
-    ceu_out_end(]]..e1.val..[[);
+    ceu_out_end(]]..VAL(e1)..[[);
 #endif
 ]])
         end
@@ -352,11 +352,11 @@ if (*PTR_cur(u8*,]]..(me.off_fins+i-1)..[[)) {
         COMM(me, me.tag..': spawn subs')
         for _, sub in ipairs(me) do
             -- only if can be killed
-            if sub.needsChk then
+            --if sub.needsChk then
                 LINE(me, [[
 ceu_trails_set(]]..sub.trails[1]..[[, CEU_PENDING, _ceu_org_);
 ]])
-            end
+            --end
         end
         for i=1, #me do
             if i == #me then
@@ -366,12 +366,12 @@ ceu_trails_set(]]..sub.trails[1]..[[, CEU_PENDING, _ceu_org_);
                 LINE(me, [[
 ceu_call(_ceu_evt_id_, _ceu_evt_p_, ]]..me.lbls_in[i].id..[[, _ceu_org_);
 ]])
-                if me[i+1].needsChk then
+                --if me[i+1].needsChk then
                     LINE(me, [[
 if (ceu_trails_get(]]..me[i+1].trails[1]..[[,_ceu_org_)->lbl != CEU_PENDING)
     return;
 ]])
-                end
+                --end
             end
         end
     end,
@@ -433,7 +433,7 @@ ceu_trails_set(]]..sub.trails[1]..[[,CEU_INACTIVE,_ceu_org_);
         -- TODO: If cond assert(c==ptr or int)
 
         LINE(me, [[
-if (]]..c.val..[[) {
+if (]]..VAL(c)..[[) {
 ]]    ..t.code..[[
 } else {
 ]]    ..f.code..[[
@@ -490,7 +490,7 @@ for (;;) {
 
     CallStmt = function (me)
         local call = unpack(me)
-        LINE(me, call.val..';')
+        LINE(me, VAL(call)..';')
     end,
 
     EmitExtS = function (me)
@@ -498,7 +498,7 @@ for (;;) {
         local evt = e1.evt
 
         if evt.pre == 'output' then  -- e1 not Exp
-            LINE(me, me.val..';')
+            LINE(me, VAL(me)..';')
             return
         end
 
@@ -507,10 +507,10 @@ for (;;) {
         if e2 then
             if _TP.deref(evt.tp) then
                 LINE(me, 'ceu_go_event(IN_'..evt.id
-                        ..', (void*)'..e2.val..');')
+                        ..', (void*)'..VAL(e2)..');')
             else
                 LINE(me, 'ceu_go_event(IN_'..evt.id
-                        ..', (void*)ceu_ext_f(&_ceu_int_,'..e2.val..'));')
+                        ..', (void*)ceu_ext_f(&_ceu_int_,'..VAL(e2)..'));')
             end
 
         else
@@ -536,7 +536,7 @@ case ]]..me.lbl_cnt.id..[[:
         LINE(me, [[
 ceu_trails_set(]]..me.trails[1]..','..me.lbl_cnt.id..[[,_ceu_org_);
 #ifdef CEU_WCLOCKS
-ceu_go_wclock(]]..exp.val..[[);
+ceu_go_wclock(]]..VAL(exp)..[[);
 while (CEU.wclk_min <= 0) {
     ceu_go_wclock(0);
 }
@@ -553,10 +553,18 @@ case ]]..me.lbl_cnt.id..[[:
     EmitInt = function (me)
         local int, exp = unpack(me)
 
-        -- attribution
+        local param
         if exp then
-            ATTR(me, int, exp)
+            if _TP.deref(int.tp) then
+                param = 'ceu_evt_param_ptr('..VAL(exp)..')'
+            else
+                param = 'ceu_evt_param_v(ceu_ext_f(&_ceu_int_,'..VAL(exp)..'))'
+            end
+
+        else
+            param = 'ceu_evt_param_ptr(NULL)'
         end
+
 
         local org = (int.org and int.org.val) or '_ceu_org_'
 
@@ -567,19 +575,21 @@ ceu_trails_set(]]..me.trails[1]..[[,CEU_PENDING,_ceu_org_);
 ]])
         --end
 
-        LINE(me, [[
+        LINE(me, [[{
+]]..param..'\n'..[[
+#ifdef CEU_ORGS
+p.org = ]]..org..[[;
+#endif
 ceu_trails_go(]]..(int.off or int.evt.off)
-                ..',(tceu_evt_param)(void*)'..org..[[,
-              CEU.mem,
-              CEU_NTRAILS);
-]])
+                ..[[, &p, CEU.mem, CEU_NTRAILS);
+}]])
 
-        if me.needsChk then
+        --if me.needsChk then
             LINE(me, [[
 if (ceu_trails_get(]]..me.trails[1]..[[,_ceu_org_)->lbl != CEU_PENDING)
     return;
 ]])
-        end
+        --end
     end,
 
     AwaitN = function (me)
@@ -594,13 +604,13 @@ return;
         local wclk = CLS().mem.wclock0 + (me.wclocks[1]*4)
         LINE(me, [[
 ceu_trails_set(]]..me.trails[1]..', -'..me.lbl.id..[[, _ceu_org_);  // OFF
-ceu_trails_set_wclock( (s32)]]..exp.val..','..wclk..[[, _ceu_org_);
+ceu_trails_set_wclock( (s32)]]..VAL(exp)..','..wclk..[[, _ceu_org_);
 return;
 
 case ]]..me.lbl.id..[[:
     if (_ceu_evt_id_ != IN__WCLOCK)
         return;
-    if (ceu_wclocks_not(PTR_cur(s32*,]]..wclk..[[), _ceu_evt_p_.dt))
+    if (ceu_wclocks_not(PTR_cur(s32*,]]..wclk..[[), _ceu_evt_p_->dt))
         return;
 ]])
         DEBUG_TRAILS(me)
@@ -618,7 +628,7 @@ case ]]..me.lbl.id..[[:
     if (_ceu_evt_id_ != ]]..(int.off or int.evt.off)..[[)
         return;
 #ifdef CEU_ORGS
-    if (]]..org..[[ != _ceu_evt_p_.org)
+    if (]]..org..[[ != _ceu_evt_p_->org)
         return;
 #endif
 // TODO: until cond

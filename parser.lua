@@ -282,10 +282,10 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , _Dcl_ext = (CK'input'+CK'output') * EV'ID_type' *
                     EV'ID_ext' * (K','*EV'ID_ext')^0
 
-    , _Dcl_int  = CK'event' * EV'ID_type' * Cc(false) *
+    , _Dcl_int  = CK'event' * EV'ID_type' *
                     V'__Dcl_int' * (K','*V'__Dcl_int')^0
-    , __Dcl_int = EV'ID_int' * (V'_Sets' +
-                                Cc(false)*Cc(false)*Cc(false))
+    , __Dcl_int = EV'ID_int' --* (V'_Sets' +
+                             --   Cc(false)*Cc(false)*Cc(false))
 
     , _Dcl_var  = (CK'var' + CK'tmp')
                 * (EV'ID_type' + EV'ID_cls')
@@ -295,9 +295,9 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , __Dcl_var = EV'ID_var' * (V'_Sets' +
                                 Cc(false)*Cc(false)*Cc(false))
 
-    , _Dcl_int_ifc  = CK'event' * EV'ID_type' * Cc(false) *
-                       EV'__Dcl_int_ifc' * (K','*V'__Dcl_int')^0
-    , __Dcl_int_ifc = EV'ID_int' * (Cc(false)*Cc(false)*Cc(false))
+    , _Dcl_int_ifc  = CK'event' * EV'ID_type' *-- Cc(false) *
+                       EV'__Dcl_int_ifc' * (K','*V'__Dcl_int_ifc')^0
+    , __Dcl_int_ifc = EV'ID_int' --* (Cc(false)*Cc(false)*Cc(false))
 
     , _Dcl_var_ifc  = CK'var' * EV'ID_type' * (K'['*V'_Exp'*K']'+Cc(false)) *
                        V'__Dcl_var_ifc' * (K','*V'__Dcl_var')^0

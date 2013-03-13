@@ -66,12 +66,30 @@ typedef struct {
     tceu_nlbl lbl;
 } tceu_trail;
 
-typedef union {
-    void*   ptr;        // exts
-    int     v;          // exts
-    s32     dt;         // wclocks
-    void*   org;        // ints
+typedef struct {
+    union {
+        void*   ptr;        // exts/ints
+        int*    v;          // exts/ints
+        s32     dt;         // wclocks
+    };
+#ifdef CEU_INTS
+#ifdef CEU_ORGS
+    void*   org;            // ints
+#endif
+#endif
 } tceu_evt_param;
+
+#define ceu_evt_param_ptr(a)    \
+    tceu_evt_param p;           \
+    p.ptr = a;
+
+#define ceu_evt_param_v(a)      \
+    tceu_evt_param p;           \
+    p.v = a;
+
+#define ceu_evt_param_dt(a)     \
+    tceu_evt_param p;           \
+    p.dt = a;
 
 enum {
 === LABELS_ENUM ===
@@ -119,7 +137,7 @@ tceu CEU = {
 
 /**********************************************************************/
 
-void ceu_call_f (u8 evt_id, tceu_evt_param evt_p,
+void ceu_call_f (u8 evt_id, tceu_evt_param* evt_p,
                  tceu_nlbl lbl, void* org);
 #ifdef CEU_ORGS
 #define ceu_call(a,b,c,d) ceu_call_f(a,b,c,d)
@@ -181,7 +199,7 @@ void ceu_trails_clr (int t1, int t2, void* org) {
     int i;
     for (i=t2; i>=t1; i--) {    // lst fins first
 #ifdef CEU_FINS
-        ceu_call(IN__FIN, (tceu_evt_param)NULL,
+        ceu_call(IN__FIN, NULL,
             ceu_trails_get(i,org)->lbl, org);
 #endif
         ceu_trails_get(i,org)->lbl = CEU_INACTIVE;
@@ -191,7 +209,7 @@ void ceu_trails_clr (int t1, int t2, void* org) {
 #define ceu_trails_clr(a,b,c) ceu_trails_clr(a,b,NULL)
 #endif
 
-void ceu_trails_go (u8 evt_id, tceu_evt_param evt_p,
+void ceu_trails_go (u8 evt_id, tceu_evt_param* evt_p,
                     char* trl_org, u8 trl_n)
 {
     int i;
@@ -280,7 +298,7 @@ void ceu_go_init ()
     assert(CEU.trails!=NULL);
 #endif
 */
-    ceu_call(0,(tceu_evt_param)NULL, Class_Main, &CEU.mem);
+    ceu_call(0,NULL, Class_Main, &CEU.mem);
 }
 
 // TODO: ret
@@ -288,22 +306,24 @@ void ceu_go_init ()
 #ifdef CEU_EXTS
 void ceu_go_event (int id, void* data)
 {
-    ceu_trails_go(IN__ON, (tceu_evt_param)NULL, CEU.mem, CEU_NTRAILS);
-    ceu_trails_go(id,     (tceu_evt_param)data, CEU.mem, CEU_NTRAILS);
+    ceu_evt_param_ptr(data);
+    ceu_trails_go(IN__ON, NULL, CEU.mem, CEU_NTRAILS);
+    ceu_trails_go(id,     &p,   CEU.mem, CEU_NTRAILS);
 }
 #endif
 
 #ifdef CEU_ASYNCS
 void ceu_go_async ()
 {
-    ceu_trails_go(IN__ON,    (tceu_evt_param)NULL, CEU.mem, CEU_NTRAILS);
-    ceu_trails_go(IN__ASYNC, (tceu_evt_param)NULL, CEU.mem, CEU_NTRAILS);
+    ceu_trails_go(IN__ON,    NULL, CEU.mem, CEU_NTRAILS);
+    ceu_trails_go(IN__ASYNC, NULL, CEU.mem, CEU_NTRAILS);
 }
 #endif
 
 void ceu_go_wclock (s32 dt)
 {
 #ifdef CEU_WCLOCKS
+    ceu_evt_param_dt(dt);
 
     if (CEU.wclk_min <= dt)
         CEU.wclk_late = dt - CEU.wclk_min;   // how much late the wclock is
@@ -311,8 +331,8 @@ void ceu_go_wclock (s32 dt)
     CEU.wclk_min_tmp = CEU.wclk_min;
     CEU.wclk_min     = CEU_WCLOCK_INACTIVE;
 
-    ceu_trails_go(IN__ON,     (tceu_evt_param)NULL, CEU.mem, CEU_NTRAILS);
-    ceu_trails_go(IN__WCLOCK, (tceu_evt_param)dt,   CEU.mem, CEU_NTRAILS);
+    ceu_trails_go(IN__ON,     NULL, CEU.mem, CEU_NTRAILS);
+    ceu_trails_go(IN__WCLOCK, &p,   CEU.mem, CEU_NTRAILS);
 
 #ifdef ceu_out_wclock
     if (CEU.wclk_min != CEU_WCLOCK_INACTIVE)
@@ -327,7 +347,7 @@ void ceu_go_wclock (s32 dt)
 }
 
 // TODO
-#ifdef CEU_EXTS
+#if defined(CEU_EXTS) || defined(CEU_INTS)
 // returns a pointer to the received value
 int* ceu_ext_f (int* data, int v) {
     *data = v;
@@ -352,10 +372,10 @@ void ceu_go_all (int* ret_end)
 #endif
 }
 
-void ceu_call_f (u8 _ceu_evt_id_, tceu_evt_param _ceu_evt_p_,
+void ceu_call_f (u8 _ceu_evt_id_, tceu_evt_param* _ceu_evt_p_,
                  tceu_nlbl _ceu_lbl_, void* _ceu_org_)
 {
-#ifdef CEU_EXTS
+#if defined(CEU_EXTS) || defined(CEU_INTS)
     int _ceu_int_;
 #endif
 

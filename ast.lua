@@ -356,18 +356,11 @@ local C; C = {
 
     -- TODO: unify with _Dcl_var
     _Dcl_int_ifc = function(...) return C._Dcl_int(...) end,
-    _Dcl_int = function (ln, pre, tp, dim, ...)
+    _Dcl_int = function (ln, pre, tp, ...)
         local ret = {}
         local t = { ... }
-        for i=1, #t, 4 do
-            ret[#ret+1] = node('Dcl_int')(ln, pre, tp, dim, t[i])
-            if t[i+1] then
-                ret[#ret+1] = C._Set(ln,
-                                node('Var')(ln,t[i]),   -- var
-                                t[i+1],                 -- op
-                                t[i+2],                 -- tag
-                                t[i+3])                 -- exp
-            end
+        for i=1, #t do
+            ret[#ret+1] = node('Dcl_int')(ln, pre, tp, false, t[i])
         end
         return unpack(ret)
     end,

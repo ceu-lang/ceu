@@ -56,6 +56,12 @@ Test = function (t)
     if not check('tight')    then return end
     --dofile 'awaits.lua'
     if not check('props')    then return end
+
+    -- TODO:
+    if _PROPS.has_pses or _PROPS.has_news then
+        return
+    end
+
     if not check('trails')   then return end
     if not check('labels')   then return end
     if not check('mem')      then return end
@@ -79,11 +85,6 @@ Test = function (t)
 
     assert(_TIGHT and T.loop or
            not (_TIGHT or T.loop))
-
-    -- TODO:
-    if _PROPS.has_pses or _PROPS.has_news then
-        return
-    end
 
 --[[
     -- ANALYSIS
@@ -201,3 +202,18 @@ assert(STATS.count  ==    1089)
 assert(STATS.mem    ==    8876)
 assert(STATS.trails ==    2059)
 assert(STATS.bytes  == 6068990)
+--[[
+STATS = {
+    count   = 1096,
+    mem     = 11737,
+    trails  = 1920,
+    bytes   = 6306223,
+}
+STATS = {
+    count   = 1097,
+    mem     = 11836,
+    trails  = 1924,
+    bytes   = 6318060,
+}
+
+]]

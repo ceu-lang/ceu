@@ -33,7 +33,7 @@ end
 _PROPS = {
     has_exts    = false,
     has_wclocks = false,
-    --has_ints    = false,
+    has_ints    = false,
     has_asyncs  = false,
     has_pses    = false,
     has_fins    = false,
@@ -236,12 +236,12 @@ F = {
     end,
 
     AwaitInt = function (me)
-        --_PROPS.has_ints = true
+        _PROPS.has_ints = true
         --me.ns.ints = 1
     end,
 
     EmitInt = function (me)
-        --_PROPS.has_ints = true
+        _PROPS.has_ints = true
     end,
 
     EmitExtS = function (me)

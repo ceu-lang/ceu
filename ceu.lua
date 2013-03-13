@@ -221,6 +221,7 @@ do
     local t = {
         has_exts    = 'CEU_EXTS',
         has_wclocks = 'CEU_WCLOCKS',
+        has_ints    = 'CEU_INTS',
         has_asyncs  = 'CEU_ASYNCS',
         has_pses    = 'CEU_PSES',
         has_fins    = 'CEU_FINS',
@@ -267,6 +268,7 @@ if _OPTS.verbose or true then
 
         exts    = _PROPS.has_exts,
         wclocks = _PROPS.has_wclocks,
+        ints    = _PROPS.has_ints,
         asyncs  = _PROPS.has_asyncs,
         pses    = _PROPS.has_pses,
         fins    = _PROPS.has_fins,

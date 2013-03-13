@@ -330,6 +330,10 @@ F = {
     Dcl_var = function (me)
         local pre, tp, dim, id = unpack(me)
         ASR((not dim) or tonumber(dim.sval), me, 'invalid static expression')
+        if pre == 'event' then
+            ASR(tp=='void' or tp=='int' or _TP.deref(tp),
+                    me, 'invalid event type')
+        end
         me.var = newvar(me, _AST.iter'Block'(), pre, tp, dim and dim.sval, id)
         me.var.read_only = me.read_only
 

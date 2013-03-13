@@ -4,9 +4,10 @@ _MEM = {
     code_clss = nil,
 }
 
-function alloc (mem, n)
+function alloc (mem, n, al)
+    local al = al or n
 --DBG(mem.off, n, _TP.align(mem.off,n))
-    mem.off = _TP.align(mem.off,n)
+    mem.off = _TP.align(mem.off,al)
     local cur = mem.off
     mem.off = cur + n
     mem.max = MAX(mem.max, mem.off)
@@ -74,7 +75,8 @@ DBG('', string.format('%8s','cls'), off, _ENV.c.tceu_ncls.len)
         end
 
         --if _PROPS.has_orgs then
-        me.mem.trail0 = alloc(me.mem, me.ns.trails*_ENV.c.tceu_trail.len)
+        me.mem.trail0 = alloc(me.mem, me.ns.trails*_ENV.c.tceu_trail.len,
+                                      _ENV.c.tceu_trail.len)
         _MEM.cls.idx_trail0 = me.mem.trail0 -- same off for all orgs
 DBG('', string.format('%8s','trl0'), me.mem.trail0,
                                      me.ns.trails*_ENV.c.tceu_trail.len)
@@ -118,7 +120,7 @@ DBG('', 'glb', '{'..table.concat(glb,',')..'}')
 
         for _, var in ipairs(me.vars) do
             local len
-            if var.isTmp then
+            if var.isTmp or var.isEvt then
                 len = 0
             elseif var.cls then
                 len = (var.arr or 1) * var.cls.mem.max
@@ -141,8 +143,8 @@ DBG('', 'glb', '{'..table.concat(glb,',')..'}')
         table.sort(sorted, pred_sort)
         for _, var in ipairs(sorted) do
             -- we use offsets for events because of interfaces
-            if var.isEvt and var.len==0 then
-                var.len = 1
+            if var.isEvt then
+                var.len = 1     -- TODO
             end
 
             var.off = alloc(mem, var.len)
