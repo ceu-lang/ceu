@@ -128,7 +128,7 @@ function newvar (me, blk, pre, tp, dim, id)
         arr   = dim,
         val   = '0',     -- TODO: workaround: dummy value for interfaces
     }
-DBG(var.id, var.isTmp)
+--DBG(var.id, var.isTmp)
 
     blk.vars[#blk.vars+1] = var
     blk.vars[id] = var -- TODO: last/first/error?

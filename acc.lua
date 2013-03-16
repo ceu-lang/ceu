@@ -230,9 +230,9 @@ _AST.visit(F)
 local ND = {
     acc = { par={},awk={},esc={},
         cl  = { cl=true, tr=true,  wr=true,  rd=true,  aw=true  },
-        tr  = { cl=true, tr=true,  wr=true,  rd=true,  aw=true  },
-        wr  = { cl=true, tr=true,  wr=true,  rd=true,  aw=false },
-        rd  = { cl=true, tr=true,  wr=true,  rd=false, aw=false },
+        tr  = { cl=true, tr=true,  wr=false, rd=false, aw=true  },
+        wr  = { cl=true, tr=false, wr=true,  rd=true,  aw=false },
+        rd  = { cl=true, tr=false, wr=true,  rd=false, aw=false },
         aw  = { cl=true, tr=true,  wr=false, rd=false, aw=false },
         no  = {},   -- never ND ('ref')
     },

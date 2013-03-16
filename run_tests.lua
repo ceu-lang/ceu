@@ -204,16 +204,9 @@ assert(STATS.trails ==    2059)
 assert(STATS.bytes  == 6068990)
 --[[
 STATS = {
-    count   = 1096,
-    mem     = 11737,
-    trails  = 1920,
-    bytes   = 6306223,
-}
-STATS = {
     count   = 1097,
-    mem     = 11836,
-    trails  = 1924,
-    bytes   = 6318060,
+    mem     = 10252,
+    trails  = 1923,
+    bytes   = 6310234,
 }
-
 ]]

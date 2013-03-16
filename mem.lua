@@ -15,12 +15,16 @@ function alloc (mem, n, al)
     return cur
 end
 
+-- TODO: events should go first to optimize tceu_nevt
 function pred_sort (v1, v2)
+    return v1.len > v2.len
+--[[
     if v1.isEvt then
         return (not v2.isEvt) or  (v1.len > v2.len)
     else
         return (not v2.isEvt) and (v1.len > v2.len)
     end
+]]
 end
 
 F = {
@@ -39,6 +43,7 @@ F = {
                 } ]]..pre..'_'..cls.id..[[;
             ]]
 
+            -- TODO: separate vars/ints in two ifcs? (ifcs_vars/ifcs_ints)
             for _, var in ipairs(cls.blk_ifc.vars) do
                 local off
                 if cls.is_ifc then
@@ -52,14 +57,18 @@ F = {
                     off = var.off
                 end
 
-                if var.cls or var.arr then
+                if var.isEvt then
+                    val = nil
+                elseif var.cls or var.arr then
                     val = 'PTR_org('.._TP.c(var.tp)..',org,'..off..')'
                 else
                     val = '(*PTR_org('.._TP.c(var.tp..'*')..',org,'..off..'))'
                 end
                 local id = pre..'_'..cls.id..'_'..var.id
                 code[#code+1] = '#define '..id..'_off(org) '..off
-                code[#code+1] = '#define '..id..'(org) '    ..val
+                if val then
+                    code[#code+1] = '#define '..id..'(org) '..val
+                end
             end
         end
         _MEM.code_clss = table.concat(code,'\n')
@@ -137,22 +146,23 @@ DBG('', 'glb', '{'..table.concat(glb,',')..'}')
         end
 
         -- sort offsets in descending order to optimize alignment
-        -- but events first to optimize tceu_nevt
         -- TODO: previous org metadata
+        -- TODO: events should go first to optimize tceu_nevt
         local sorted = { unpack(me.vars) }
         table.sort(sorted, pred_sort)
         for _, var in ipairs(sorted) do
-            -- we use offsets for events because of interfaces
-            if var.isEvt then
-                var.len = 1     -- TODO
-            end
-
             var.off = alloc(mem, var.len)
+DBG('', string.format('%8s',var.id), var.off, var.len)
+        end
 
+        -- we use offsets for events because of interfaces
+        local off = alloc(mem, 0)
+        for _, var in pairs(sorted) do
             if var.isEvt then
+                var.off = off
+                off = off + 1
                 _MEM.evt_off = MAX(_MEM.evt_off, var.off)
             end
-DBG('', string.format('%8s',var.id), var.off, var.len)
         end
 
         me.max = mem.off
