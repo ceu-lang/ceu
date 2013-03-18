@@ -77,7 +77,6 @@ F = {
     end,
     Node_pos = function (me)
         if not F[me.tag] then
-            me.ns.trails = 1
             MAX_all(me)
         end
         if NO_fin[me.tag] then
@@ -158,6 +157,7 @@ F = {
 
     Async = function (me)
         _PROPS.has_asyncs = true
+        --me.ns.trails = 1
     end,
 
     If = function (me)
@@ -233,11 +233,18 @@ F = {
     AwaitT = function (me)
         _PROPS.has_wclocks = true
         me.ns.wclocks = 1
+        --me.ns.trails = 1
     end,
-
     AwaitInt = function (me)
         _PROPS.has_ints = true
         --me.ns.ints = 1
+        --me.ns.trails = 1
+    end,
+    AwaitExt = function (me)
+        --me.ns.trails = 1
+    end,
+    AwaitN = function (me)
+        --me.ns.trails = 1
     end,
 
     EmitInt = function (me)

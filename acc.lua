@@ -22,7 +22,7 @@ function INS (acc, exists)
 end
 
 F = {
--- accs need to be I-indexed (see PAR)
+-- accs need to be I-indexed (see CHK_ACC)
     Dcl_cls_pre = function (me)
         me.ana.accs = {}
     end,
@@ -201,7 +201,7 @@ F = {
         if top=='ParOr' or top=='ParAnd' or top=='ParEver' then
             if not me.ana.pre[false] then
                 INS {
-                    par  = me,          -- to be marked by PAR in case of ND
+                    par  = me,          -- to be marked by CHK_ACC in case of ND
                     path = me.ana.pre,
                     id   = me,--.__par,
                     md   = 'par',
@@ -298,7 +298,7 @@ end
 --local CACHE = setmetatable({},
     --{__index=function(t,k) t[k]={} return t[k] end})
 
-function PAR (accs1, accs2, NO)
+function CHK_ACC (accs1, accs2, NO)
     local cls = CLS()
 
     -- "acc": i/j are concurrent, and have incomp. acc
@@ -440,8 +440,7 @@ G = {
                     end
                 end
 
-                PAR(me[i].ana.accs, me[j].ana.accs, NO)
-
+                CHK_ACC(me[i].ana.accs, me[j].ana.accs, NO)
                 CHK_KILL(me[i], me[j])
                 CHK_KILL(me[j], me[i])
             end

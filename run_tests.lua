@@ -209,4 +209,10 @@ STATS = {
     trails  = 1923,
     bytes   = 6310234,
 }
+STATS = {
+    count   = 1092,
+    mem     = 10184,
+    trails  = 1911,
+    bytes   = 6090341,
+}
 ]]

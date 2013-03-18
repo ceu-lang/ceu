@@ -93,6 +93,7 @@ F = {
             return
         end
 
+        -- if the last runs forever, all previous must be tight
         if last.aw.forever_ then
             for i=1, #me-1 do
                 local sub = me[i]
@@ -103,6 +104,8 @@ F = {
                 end
             end
             SAME(me)
+
+        -- otherwise, add all
         else
             F.ParAnd(me)
         end

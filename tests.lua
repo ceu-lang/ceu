@@ -8,7 +8,84 @@
 -- ceu_evt_param em ceu_call p/ passar p/ o prox
 
 --[===[
---]===]
+
+Test { [[
+input void START;
+
+C _V, _assert();
+C do
+    #include <assert.h>
+    int V = 0;
+end
+
+interface Global with
+    event void e;
+end
+
+event void e;
+
+C nohold _fprintf(), _stderr;
+_fprintf(_stderr, "xxx = %d\n", _V);
+
+class T with
+do
+    await START;
+    emit global:e; // TODO: must also check if org trail is active
+    _V = 1;
+    _assert(0);
+end
+
+par/or do
+    await global:e;
+    _V = 2;
+with
+    var T t;
+    await FOREVER;
+end
+
+return _V;
+]],
+    todo = 'orgs cant kill themselves',
+    run = 2,
+}
+Test { [[
+input void START;
+
+C _V, _assert();
+C do
+    #include <assert.h>
+    int V = 0;
+end
+
+interface Global with
+    event void e;
+end
+
+C nohold _fprintf(), _stderr;
+class T with
+do
+    emit global:e; // TODO: must also check if org trail is active
+    _V = 1;
+    _assert(0);
+end
+
+event void e;
+
+par/or do
+    await global:e;
+    _V = 2;
+with
+    await START;
+    do
+        var T t;
+        await FOREVER;
+    end
+end
+return _V;
+]],
+    todo = 'orgs cant kill themselves',
+    run = 2;
+}
 
 Test { [[
 var int a=10;
@@ -125,6 +202,7 @@ end
 }
 
 --do return end
+--]===]
 
 Test { [[return(1);]],
     ana = {
@@ -663,6 +741,7 @@ with
 end
 ]],
     ana = {
+        kill = 1,
         --unreachs = 1,
     },
     run = 2,
@@ -1256,7 +1335,6 @@ end;
 return 0;
 ]],
     ana = {
-        flw = 1,
         --unreachs = 2,
         --isForever = true,
     },
@@ -19810,7 +19888,6 @@ return i:ee;
 }
 
 Test { [[
-C nohold _fprintf(), _stderr;
 input void START;
 
 interface I with
@@ -19818,14 +19895,12 @@ interface I with
     var int vv;
 end
 
-_fprintf(_stderr, "====\n");
 class T with
     event int e, f;
     var int vv;
 do
     var int v = await e;
     vv = v;
-_fprintf(_stderr, "VVV: %d %d\n", v, vv);
     emit f=v;
 end
 
@@ -19838,7 +19913,6 @@ par/and do
     emit i1:e=99;            // 21
 with
     var int v = await i1:f;
-_fprintf(_stderr, "XXX: %d %d\n", v, i1:vv);
     ret = ret + v;
 with
     await START;
