@@ -139,7 +139,7 @@ F = {
         LINE(me, [[
 memset(PTR_cur(char*,CEU_CLS_TRAIL0), CEU_INACTIVE, ]]
         ..me.ns.trails..[[*sizeof(tceu_trail));
-ceu_trails_set(0, CEU_PENDING, _ceu_org_);
+//ceu_trails_set(0, CEU_PENDING, _ceu_org_);
 #ifdef CEU_IFCS
 *PTR_cur(tceu_ncls*, ]]..(_MEM.cls.idx_cls or '')..[[) = ]]..me.n..[[;
 #endif
@@ -159,7 +159,7 @@ ceu_trails_set(0, CEU_PENDING, _ceu_org_);
         end
 
         LINE(me, [[
-ceu_trails_set(]]..me.trails[1]..[[,CEU_INACTIVE,_ceu_org_);
+//ceu_trails_set(]]..me.trails[1]..[[,CEU_INACTIVE,_ceu_org_);
 return;
 ]])
 
@@ -208,6 +208,7 @@ if (]]..exp.val..[[ != NULL) {
         local org = 'PTR_org(void*,'..VAL(me.var)..','
                         ..idx..'*'..me.var.cls.mem.max..')'
         LINE(me, [[
+// alaways point to me.lbl
 ceu_trails_set(]]..me.trails[1]..','..me.lbl.id..[[,_ceu_org_);
 
 // start organism
@@ -350,15 +351,25 @@ if (*PTR_cur(u8*,]]..(me.off_fins+i-1)..[[)) {
     _Par = function (me)
         -- Ever/Or/And spawn subs
         COMM(me, me.tag..': spawn subs')
-        for _, sub in ipairs(me) do
+        for i, sub in ipairs(me) do
             -- only if can be killed
             --if sub.needsChk then
+            if i > 1 then
                 LINE(me, [[
 ceu_trails_set(]]..sub.trails[1]..[[, CEU_PENDING, _ceu_org_);
 ]])
+            end
             --end
         end
-        for i=1, #me do
+        for i, sub in ipairs(me) do
+            if i > 1 then
+                --if me[i+1].needsChk then
+                    LINE(me, [[
+if (ceu_trails_get(]]..sub.trails[1]..[[,_ceu_org_)->lbl != CEU_PENDING)
+    return;
+]])
+                --end
+            end
             if i == #me then
                 SWITCH(me, me.lbls_in[i])
             else
@@ -366,12 +377,6 @@ ceu_trails_set(]]..sub.trails[1]..[[, CEU_PENDING, _ceu_org_);
                 LINE(me, [[
 ceu_call(_ceu_evt_id_, _ceu_evt_p_, ]]..me.lbls_in[i].id..[[, _ceu_org_);
 ]])
-                --if me[i+1].needsChk then
-                    LINE(me, [[
-if (ceu_trails_get(]]..me[i+1].trails[1]..[[,_ceu_org_)->lbl != CEU_PENDING)
-    return;
-]])
-                --end
             end
         end
     end,
