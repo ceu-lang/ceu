@@ -258,6 +258,8 @@ DBG(sub.tag)
 
     Var = function (me)
         local var = me.var
+-- TODO
+do return end
         if var.isTmp == true then
             var.isTmp = me.ana.pre
         else

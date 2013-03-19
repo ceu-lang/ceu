@@ -88,7 +88,7 @@ end
 
 function _TP.deref (tp, c)
     return string.match(tp,'(.-)%*$')
-            or (c and _TP.ext(tp))
+            or (c and _TP.ext(tp,c))
 end
 
 function _TP.ext (tp, loc)

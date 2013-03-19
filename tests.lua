@@ -14565,7 +14565,7 @@ var u8[255] vec;
 event void  e;
 return 1;
 ]],
-    mem = 'too many events',    -- TODO
+    --mem = 'too many events',    -- TODO
     run = 1,
 }
 

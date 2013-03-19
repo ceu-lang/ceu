@@ -15,16 +15,8 @@ function alloc (mem, n, al)
     return cur
 end
 
--- TODO: events should go first to optimize tceu_nevt
 function pred_sort (v1, v2)
     return v1.len > v2.len
---[[
-    if v1.isEvt then
-        return (not v2.isEvt) or  (v1.len > v2.len)
-    else
-        return (not v2.isEvt) and (v1.len > v2.len)
-    end
-]]
 end
 
 F = {
@@ -147,21 +139,34 @@ DBG('', 'glb', '{'..table.concat(glb,',')..'}')
 
         -- sort offsets in descending order to optimize alignment
         -- TODO: previous org metadata
-        -- TODO: events should go first to optimize tceu_nevt
         local sorted = { unpack(me.vars) }
         table.sort(sorted, pred_sort)
         for _, var in ipairs(sorted) do
-            var.off = alloc(mem, var.len)
+            if not var.isEvt then
+                var.off = alloc(mem, var.len)
 DBG('', string.format('%8s',var.id), var.off, var.len)
+            end
         end
 
+        -- events fill the gaps between variables
         -- we use offsets for events because of interfaces
-        local off = alloc(mem, 0)
-        for _, var in pairs(sorted) do
+        local off = 0
+        local i   = 1
+        local var = sorted[i]
+        local function nextOff ()
+            if var and (var.isEvt or off==var.off) then
+                i = i + 1
+                var = sorted[i]
+                return nextOff()
+            end
+            off = off + 1
+            _MEM.evt_off = MAX(_MEM.evt_off, off)
+            return off
+        end
+        for _, var in ipairs(sorted) do
             if var.isEvt then
-                var.off = off
-                off = off + 1
-                _MEM.evt_off = MAX(_MEM.evt_off, var.off)
+                var.off = nextOff()
+DBG('', string.format('%8s',var.id), var.off, var.len)
             end
         end
 

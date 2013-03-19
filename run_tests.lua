@@ -207,12 +207,12 @@ STATS = {
     count   = 1097,
     mem     = 10252,
     trails  = 1923,
-    bytes   = 6310234,
+    bytes   = 6310234,  -- ON/ceu_param
 }
 STATS = {
     count   = 1092,
     mem     = 10184,
     trails  = 1911,
-    bytes   = 6090341,
+    bytes   = 6090341,  -- invert par/chks
 }
 ]]
