@@ -1,6 +1,6 @@
-_ANA.acc  = 0      -- nd accesses
-_ANA.flw  = 0      -- nd flows
-_ANA.kill = 0      -- nd kills
+_ANA.ana.acc  = 0      -- nd accesses
+_ANA.ana.flw  = 0      -- nd flows
+_ANA.ana.kill = 0      -- nd kills
 
 -- any variable access calls this function
 -- to be inserted on parent Parallel sub[i] or Class
@@ -258,14 +258,14 @@ local ALL = nil     -- holds all emits starting from top-most PAR
 
 -- {path [A]=true, [a]=true } => {ret [A]=true, [aX]=true,[aY]=true }
 -- {T [a]={[X]=true,[Y]=true} } (emits2pres)
-local function int2exts (path, NO, ret)
+local function int2exts (path, NO_emts, ret)
     ret = ret or {}
 
     local more = false                  -- converged
     for int in pairs(path) do
-        if type(int)=='table' and int.pre=='event' then
+        if type(int)=='table' and int[1].pre=='event' then
             for emt_acc in pairs(ALL) do
-                if int==emt_acc.id and (not NO[emt_acc]) then
+                if int[1]==emt_acc.id and (not NO_emts[emt_acc]) then
                     for ext in pairs(emt_acc.path) do
                         if not ret[ext] then
                             more = true         -- not converged yet
@@ -279,16 +279,38 @@ local function int2exts (path, NO, ret)
         end
     end
     if more then
-        return int2exts(ret, NO, ret, cache) -- not converged
+        return int2exts(ret, NO_emts, ret, cache) -- not converged
     else
+        if next(ret)==nil then
+            ret[false] = true   -- include "never" if empty
+        end
         return ret
     end
 end
 
+function par_rem (path, NO_par)
+    for id in pairs(path) do
+        if NO_par[id] then
+if type(id)=='table' then
+    DBG('REM', id[1].id)
+end
+            path[id] = nil
+        end
+    end
+    if next(path)==nil then
+        path[true] = true       -- include "tight" became empty
+    end
+    return path
+end
+
 function par_isConc (path1, path2, T)
-    for n1 in pairs(path1) do
-        for n2 in pairs(path2) do
-            if (n1 == n2) and (n1 ~= 'ASYNC') then
+    for id1 in pairs(path1) do
+        for id2 in pairs(path2) do
+            if (id1 == false) then
+            elseif (id1 == id2) or
+                     (type(id1) == 'table') and (type(id2) == 'table') and
+                     (id1[1] == id2[1])
+            then
                 return true
             end
         end
@@ -298,15 +320,17 @@ end
 --local CACHE = setmetatable({},
     --{__index=function(t,k) t[k]={} return t[k] end})
 
-function CHK_ACC (accs1, accs2, NO)
+function CHK_ACC (accs1, accs2, NO_par, NO_emts)
     local cls = CLS()
 
     -- "acc": i/j are concurrent, and have incomp. acc
     -- accs need to be I-indexed
     for _, acc1 in ipairs(accs1) do
-        local path1 = int2exts(acc1.path, NO)
+        local path1 = int2exts(acc1.path, NO_emts)
+              path1 = par_rem(path1, NO_par)
         for _, acc2 in ipairs(accs2) do
-            local path2 = int2exts(acc2.path, NO)
+            local path2 = int2exts(acc2.path, NO_emts)
+                  path2 = par_rem(path2, NO_par)
             if par_isConc(path1,path2) then
                 if ND.flw[acc1.md][acc2.md] then
                     if _AST.isChild(acc1.id, acc2.id)
@@ -314,25 +338,13 @@ function CHK_ACC (accs1, accs2, NO)
                     then
                         DBG('WRN : nondeterminism : '..
                                 acc1.err..' vs '..acc2.err)
-                        _ANA.flw = _ANA.flw + 1
+                        _ANA.ana.flw = _ANA.ana.flw + 1
                         if acc1.md == 'par' then
                             acc1.par.needsChk = true
                         end
                         if acc2.md == 'par' then
                             acc2.par.needsChk = true
                         end
---[[
-DBG'==============='
-DBG(acc1.cls.id, acc1, acc1.id, acc1.md, acc1.tp, acc1.any, acc1.err)
-for k in pairs(path1) do
-    DBG('path1', acc1.path, k~=true and k.id or k)
-end
-DBG(acc2.cls.id, acc2, acc2.id, acc2.md, acc2.tp, acc2.any, acc2.err)
-for k in pairs(path2) do
-    DBG('path2', acc2.path, k~=true and k.id or k)
-end
-DBG'==============='
-]]
                     end
                 end
 
@@ -376,7 +388,19 @@ DBG'==============='
                     if cls_ and org_ and id_ and (not c_)
                     then
                         DBG('WRN : nondeterminism : '..acc1.err..' vs '..acc2.err)
-                        _ANA.acc = _ANA.acc + 1
+                        _ANA.ana.acc = _ANA.ana.acc + 1
+DBG'==============='
+DBG(acc1.cls.id, acc1, acc1.id, acc1.md, acc1.tp, acc1.any, acc1.err)
+for k in pairs(path1) do
+    DBG('path1', acc1.path, type(k)=='table' and k[1].id or k)
+end
+DBG(acc2.cls.id, acc2, acc2.id, acc2.md, acc2.tp, acc2.any, acc2.err)
+for k in pairs(path2) do
+    DBG('path2', acc2.path, type(k)=='table' and k[1].id or k)
+end
+DBG'==============='
+--[[
+]]
                     end
                 end
             end
@@ -387,12 +411,14 @@ end
 function CHK_KILL (s1, s2)
     for _, ana in ipairs(s1.ana.accs) do
         if ana.md == 'tr' then
+-- TODO
+DBG'TODO ana.id'
             if s2.ana.pos[ana.id] or    -- terminates w/ same event
                s2.ana.pos[false]  or    -- ~terminates (return/break)
                s2.ana.pos[true]         -- terminates tight
             then
                 DBG('WRN : kill : line '..s2.ln..' vs '..ana.err)
-                _ANA.kill = _ANA.kill + 1
+                _ANA.ana.kill = _ANA.ana.kill + 1
                 ana.node.needsChk = true
             end
         end
@@ -423,24 +449,37 @@ G = {
             for j=i+1, #me do
 
                 -- holds invalid emits
-                local NO = {}
+                local NO_emts = {}
                 for _,acc in ipairs(me[i].ana.accs) do
                     if acc.md == 'tr' then
-                        NO[acc] = true      -- same trail (happens bef or aft)
+                        NO_emts[acc] = true -- same trail (happens bef or aft)
                     end
                 end
                 for _,acc in ipairs(me[j].ana.accs) do
                     if acc.md == 'tr' then
-                        NO[acc] = true      -- same trail (happens bef or aft)
+                        NO_emts[acc] = true -- same trail (happens bef or aft)
                     end
                 end
                 for acc in pairs(ALL) do
                     if acc.path == me.ana.pre then
-                        NO[acc] = true      -- instantaneous emit
+                        NO_emts[acc] = true -- instantaneous emit
                     end
                 end
 
-                CHK_ACC(me[i].ana.accs, me[j].ana.accs, NO)
+DBG('oioioi', me.tag, me.ln)
+for k in pairs(me.ana.pre) do
+    if type(k)=='table' then
+        DBG(k[1].id)
+    else
+        DBG(k)
+    end
+end
+DBG'====='
+
+                CHK_ACC(me[i].ana.accs, me[j].ana.accs,
+                        me.ana.pre,
+                        --_ANA.union(me.ana.pre,me.ana.pos),
+                        NO_emts)
                 CHK_KILL(me[i], me[j])
                 CHK_KILL(me[j], me[i])
             end

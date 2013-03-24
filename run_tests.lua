@@ -86,14 +86,13 @@ Test = function (t)
     assert(_TIGHT and T.loop or
            not (_TIGHT or T.loop))
 
---[[
     -- ANALYSIS
     --_AST.dump(_AST.root)
-    assert((not T.unreachs) and not (T.isForever)) -- move to analysis
+    assert((not T.unreachs) and (not T.isForever)) -- move to analysis
     do
         local _defs = { reachs=0, unreachs=0, isForever=false,
                         acc=0, flw=0, kill=0 }
-        for k, v in pairs(_ANA) do
+        for k, v in pairs(_ANA.ana) do
 -- TODO
 if k ~= 'kill' then
 if k ~= 'flw' then
@@ -111,14 +110,15 @@ end
 if k ~= 'kill' then
 if k ~= 'flw' then
 if k ~= 'unreachs' then
-                assert( v == _ANA[k],
-                            k..' = '..tostring(_ANA[k]))
+                assert( v == _ANA.ana[k],
+                            k..' = '..tostring(_ANA.ana[k]))
 end
 end
 end
             end
         end
     end
+--[[
 ]]
 
     -- RUN

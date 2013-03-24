@@ -105,15 +105,15 @@ var _t* a;
 C _f();
 C _t = 0;
 par/or do
-    _f(a)
+    _f(a)               // 8
         finalize with
-            ret = 1;    // DET
+            ret = 1;    // DET: nested blks
         end;
 with
     var _t* b;
-    _f(b)
+    _f(b)               // 14
         finalize with
-            ret = 2;    // DET
+            ret = 2;    // DET: nested blocks
         end;
 end
 return ret;
@@ -138,8 +138,8 @@ par do
     end;
 with
     await START;
-    emit x=1;
-    emit y=1;
+    emit x=1;       // in seq
+    emit y=1;       // in seq
 end
 ]],
     ana = {
@@ -148,56 +148,49 @@ end
     run = 2;
 }
 
--- TODO: if ND comes from copy AND same loop, then ignore
 Test { [[
-input void F;
-var int a = 0;
-loop do
-    par/or do       // 4
-        await 2s;
-    with
-        a = a + 1;          // 7
-        await F;
-        break;
-    with
-        await 1s;   // 11
-        loop do
-            a = a * 2;      // 13
-            await 1s;   // 14
-        end
-    end
-end
+input int A;
+var int a;
+par/or do
+    loop do
+        a = 1;      // 5
+        await A;
+    end;
+with
+    await A;
+    await A;
+    a = 1;          // 11
+end;
 return a;
 ]],
     ana = {
-        flw = 2,
-        --acc = 3,      -- TODO: bad
+        acc = 1,
     },
-    run = { ['~>5s; ~>F']=14 },
-    --run = { ['~>5s; ~>F']=42 },
 }
 
 Test { [[
+input int A;
 var int a;
-loop do
-    par/or do
-        await 2s;
-    with
-        a = 1;
-        await FOREVER;
-    with
-        await 1s;
-        loop do
-            a = 2;
-            await 1s;
-        end
+par do
+    loop do
+        par/or do
+            a = 1;      // 6
+            await A;
+        with
+            await A;
+            a = 2;      // 10
+        end;
+    end
+with
+    loop do
+        await A;
+        a = 3;          // 16
     end
 end
 ]],
     ana = {
         isForever = true,
-        --acc = 1,
-        flw = 2,
+        acc = 2,        -- 6/16  10/16
     },
 }
 
@@ -1215,6 +1208,56 @@ end
         flw = 4,
     },
     run = { ['~>2s']=1 }
+}
+
+Test { [[
+input void F;
+var int a = 0;
+loop do
+    par/or do       // 4
+        await 2s;
+    with
+        a = a + 1;          // 7
+        await F;
+        break;
+    with
+        await 1s;   // 11
+        loop do
+            a = a * 2;      // 13
+            await 1s;   // 14
+        end
+    end
+end
+return a;
+]],
+    ana = {
+        flw = 2,
+    },
+    run = { ['~>5s; ~>F']=14 },
+}
+
+Test { [[
+var int a;
+loop do
+    par/or do
+        await 2s;
+    with
+        a = 1;
+        await FOREVER;
+    with
+        await 1s;
+        loop do
+            a = 2;
+            await 1s;
+        end
+    end
+end
+]],
+    ana = {
+        isForever = true,
+        --acc = 1,
+        flw = 2,
+    },
 }
 
 Test { [[
@@ -2526,52 +2569,6 @@ return a+f;
     run = { ['1~>A;5~>A;1~>F'] = 2 },
 }
 
-Test { [[
-input int A;
-var int a;
-par/or do
-    loop do
-        a = 1;
-        await A;
-    end;
-with
-    await A;
-    await A;
-    a = 1;
-end;
-return a;
-]],
-    ana = {
-        acc = 1,
-    },
-}
-
-Test { [[
-input int A;
-var int a;
-par do
-    loop do
-        par/or do
-            a = 1;      // 6
-            await A;
-        with
-            await A;
-            a = 2;      // 10
-        end;
-    end
-with
-    loop do
-        await A;
-        a = 3;          // 16
-    end
-end
-]],
-    ana = {
-        isForever = true,
-        acc = 3,
-    },
-}
-
 -- INTERNAL EVENTS
 
 Test { [[
@@ -2769,9 +2766,9 @@ event int a;
 var int aa = 3;
 par/or do
     await a;
-    ret = ret + 1;
+    ret = ret + 1;  // 6
 with
-    ret = 5;
+    ret = 5;        // 8
 end
 emit a;
 return ret;
@@ -3030,6 +3027,50 @@ return a;
         flw  = 1,
     },
     run = 0,
+}
+
+Test { [[
+input int B;
+event int a;
+var int aa;
+par do
+    await B;
+    return 1;
+with
+    await B;
+    par/or do
+    with
+    end;
+    return 2;
+end;
+]],
+    ana = {
+        --unreachs = 1,
+        flw = 1,
+        acc = 1,
+    },
+}
+Test { [[
+input int B;
+event int a;
+var int aa;
+par do
+    await B;
+    return 1;
+with
+    await B;
+    par/or do
+        return 2;
+    with
+    end;
+    return 3;
+end;
+]],
+    ana = {
+        --unreachs = 1,
+        flw = 1,
+        acc = 2,
+    },
 }
 
 -- internal glb awaits
@@ -3773,13 +3814,13 @@ loop do
             await (10)us;
             await 10ms;
             if 1 then
-                a = 1;
+                a = 1;      // 9
                 break;
             end
         end
     with
         loop do
-            a = 1;
+            a = 1;          // 15
             await A;
         end
     end
@@ -4549,16 +4590,16 @@ event int b, c;
 par do
     await A;
     emit b=1;
-    await c;
-    return 10;
+    await c;        // 6
+    return 10;      // 7
 with
     await b;
     await A;
-    emit c=10;
+    emit c=10;      // 11
     // unreachable
     await c;
     // unreachable
-    return 0;
+    return 0;       // 15
 end;
 ]],
     ana = {
@@ -6910,9 +6951,9 @@ Test { [[
 event int a;
 var int b;
 par/or do
-    b = await a;
+    b = await a;        // 4
 with
-    emit a=3;
+    emit a=3;           // 6
 with
     var int a = b;
 end;
@@ -6921,7 +6962,7 @@ return 0;
     ana = {
         flw = 1,
         --unreachs = 2,
-        acc = 2,
+        acc = 1,
         --trig_wo = 1,
     },
 }
@@ -7112,6 +7153,23 @@ return 1;
 }
 
     -- UNREACH
+
+Test { [[
+input int A,B;
+var int ret = 0;
+par/or do await A; with await B; end;
+par/or do
+    ret=await A;
+with
+    ret=await B;
+end;
+return ret;
+]],
+    run = {
+        ['1~>A;2~>B;1~>A'] = 2,
+        ['2~>B;1~>A;2~>B'] = 1,
+    },
+}
 
 Test { [[
 input int A,B;
@@ -7631,12 +7689,12 @@ input int Z;
 event int a;
 var int aa;
 par do
-    emit a=1;
+    emit a=1;       // 5
     aa = 1;
     return 10;
 with
     par/or do
-        await a;
+        await a;    // 10
     with
     with
         await Z;
@@ -7645,7 +7703,7 @@ with
 end;
 ]],
     ana = {
-        acc = 3,
+        acc = 1,
         flw = 1,
         --unreachs = 2,    -- +1 C unreachs
     },
@@ -7699,9 +7757,9 @@ par/or do
     emit a=5;
 with
     par/and do
-        aa = await a;
+        aa = await a;   // 9
     with
-        aa = await a;
+        aa = await a;   // 11
     end
     aa = aa + 1;
 end;
@@ -7710,6 +7768,7 @@ return aa;
     ana = {
         --unreachs = 1,
         --nd_esc = 1,
+        acc = 1,
     },
     run = {
         ['1~>B'] = 6,
@@ -7764,12 +7823,9 @@ end;
 return aa;
 ]],
     ana = {
-        acc = 2,
         flw = 1,
     },
     run = {
-        --['1~>B'] = 5,
-        --['2~>Z; 1~>B'] = 6,
         ['1~>B'] = 5,
         ['2~>Z; 1~>B'] = 5,
     },
@@ -8229,7 +8285,7 @@ end;
 return v;
 ]],
     ana = {
-        acc = 12, -- TODO: not checked
+        acc = 8, -- TODO: not checked
         flw = 3,
         --trig_wo = 3,
     },
@@ -10230,12 +10286,15 @@ par/and do
     await A;
     emit a=1;
 with
-    aa = await a;
+    aa = await a;   // 8
 with
-    aa=await a;
+    aa=await a;     // 10
 end;
 return aa;
 ]],
+    ana = {
+        acc = 1,
+    },
     run = {
         ['0~>A'] = 1,
     }
@@ -10999,14 +11058,14 @@ with
         loop do
             var int s;
             par/or do
-                s = await sleeping;
+                s = await sleeping;     // 21
             with
-                s = await sleeping;
+                s = await sleeping;     // 23
             end;
             if s== 0 then
-                vis = 1;                // 25
+                vis = 1;                // 26
             else
-                vis = 0;                // 27
+                vis = 0;                // 28
             end;
         end;
     with
@@ -11026,7 +11085,7 @@ end;
 ]],
     ana = {
         unreachs = 1,
-        acc = 2,
+        acc = 3,
         flw = 1,
     },
     run = { ['~>1000ms;1~>F'] = 1 }
@@ -19919,9 +19978,6 @@ with
 end
 return ret;
 ]],
-    ana = {
-        acc = 1,
-    },
     run = 99,
 }
 

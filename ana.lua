@@ -1,9 +1,25 @@
 -- TODO: rename to flow
 _ANA = {
-    isForever  = nil,
-    reachs   = 0,      -- unexpected reaches
-    unreachs = 0,      -- unexpected unreaches
+    ana = {
+        isForever  = nil,
+        reachs   = 0,      -- unexpected reaches
+        unreachs = 0,      -- unexpected unreaches
+    }
 }
+
+function _ANA.union (a, b, new)
+    if new then
+        local old = a
+        a = {}
+        for k in pairs(old) do
+            a[k] = true
+        end
+    end
+    for k in pairs(b) do
+        a[k] = true
+    end
+    return a
+end
 
 -- avoids counting twice (due to loops)
 -- TODO: remove
@@ -12,7 +28,7 @@ function INC (me, c)
     if __inc[me] then
         return true
     else
-        _ANA[c] = _ANA[c] + 1
+        _ANA.ana[c] = _ANA.ana[c] + 1
         __inc[me] = true
         return false
     end
@@ -41,7 +57,7 @@ local LST = {
 
 F = {
     Root_pos = function (me)
-        _ANA.isForever = not (not me.ana.pos[false])
+        _ANA.ana.isForever = not (not me.ana.pos[false])
     end,
 
     Node_pre = function (me)
@@ -67,7 +83,7 @@ F = {
 
     Dcl_cls_pre = function (me)
         if me ~= _MAIN then
-            me.ana.pre = { [me]=true }
+            me.ana.pre = { [me.id]=true }
         end
     end,
     Org = function (me)
@@ -76,17 +92,19 @@ F = {
 
     Stmts_bef = function (me, sub, i)
         if i == 1 then
+            -- first sub copies parent
             sub.ana = {
                 pre = me.ana.pre
             }
         else
             -- broken sequences
             if me[i-1].ana.pos[false] and (not me[i-1].ana.pre[false]) then
-                --_ANA.unreachs = _ANA.unreachs + 1
+                --_ANA.ana.unreachs = _ANA.ana.unreachs + 1
                 me.__unreach = true
                 WRN( INC(me, 'unreachs'),
                      sub, 'statement is not reachable')
             end
+            -- other subs follow previous
             sub.ana = {
                 pre = me[i-1].ana.pos
             }
@@ -99,7 +117,7 @@ F = {
             OR(me, sub, true)
         end
         if me.ana.pos[false] then
-            --_ANA.unreachs = _ANA.unreachs + 1
+            --_ANA.ana.unreachs = _ANA.ana.unreachs + 1
             WRN( INC(me, 'unreachs'),
                  me, 'at least one trail should terminate')
         end
@@ -111,7 +129,7 @@ F = {
         for _, sub in ipairs(me) do
             if sub.ana.pos[false] then
                 me.ana.pos = { [false]=true }
-                --_ANA.unreachs = _ANA.unreachs + 1
+                --_ANA.ana.unreachs = _ANA.ana.unreachs + 1
                 WRN( INC(me, 'unreachs'),
                      sub, 'trail should terminate')
                 return
@@ -142,7 +160,7 @@ F = {
             end
         end
         if not ok then
-            --_ANA.reachs = _ANA.reachs + 1
+            --_ANA.ana.reachs = _ANA.ana.reachs + 1
             WRN( INC(me, 'reachs'),
                  me, 'all trails terminate')
         end
@@ -181,7 +199,7 @@ DBG(me.ana.pre, top.ana.pre)
                 for _, sub in ipairs(par) do
 DBG(sub.tag)
                     if (not sub.ana.pos[false]) then
-                        _ANA.unreachs = _ANA.unreachs + 1
+                        _ANA.ana.unreachs = _ANA.ana.unreachs + 1
                         sub.ana.pos = { [false]=true }
                     end
                 end
@@ -194,7 +212,7 @@ DBG(sub.tag)
         if   (not blk.ana.pos[false])
         and  (me[2].tag ~= 'Async')     -- async is assumed to terminate
         then
-            --_ANA.reachs = _ANA.reachs + 1
+            --_ANA.ana.reachs = _ANA.ana.reachs + 1
             WRN( INC(me, 'reachs'),
                  blk, 'missing `return´ statement for the block')
         end
@@ -211,25 +229,24 @@ DBG(sub.tag)
         end
 
         if me[1].ana.pos[false] then
-            --_ANA.unreachs = _ANA.unreachs + 1
+            --_ANA.ana.unreachs = _ANA.ana.unreachs + 1
             WRN( INC(me, 'unreachs'),
                  me, '`loop´ iteration is not reachable')
         end
 
+--[[
         -- pre = pre U pos
         if not me[1].ana.pos[false] then
-            for k in pairs(me[1].ana.pos) do
-                me.ana.pre[k] = true
-            end
-            _AST.visit(F, me[1])
+            U(me[1], next(me.ana.pre), me[1].ana.pos)
         end
+]]
     end,
 
     Async = function (me)
         if me.ana.pre[false] then
             me.ana.pos = me.ana.pre
         else
-            me.ana.pos = { ['ASYNC']=true }
+            me.ana.pos = { ['ASYNC_'..me.n]=true }
         end
     end,
 
@@ -246,7 +263,8 @@ DBG(sub.tag)
         if me.ana.pre[false] then
             me.ana.pos = me.ana.pre
         else
-            me.ana.pos = { [e.evt or 'WCLOCK']=true }
+            -- use a table to differentiate each instance
+            me.ana.pos = { [{e.evt and e.evt or 'WCLOCK'}]=true }
         end
     end,
     AwaitInt = 'AwaitExt',
@@ -267,5 +285,18 @@ do return end
         end
     end,
 }
+
+-- if nested node is reachable from "pre", join with loop POS
+function U (root, pre, POS)
+    local t = {
+        Node = function (me)
+            if me.ana.pre[pre] then         -- if matches loop begin
+DBG('SIM', me.ln, pre)
+                me.ana.pre = _ANA.union(me.ana.pre, POS, true)
+            end
+        end,
+    }
+    _AST.visit(t, root)
+end
 
 _AST.visit(F)
