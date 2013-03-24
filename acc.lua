@@ -1,6 +1,6 @@
 _ANA.ana.acc  = 0      -- nd accesses
-_ANA.ana.flw  = 0      -- nd flows
-_ANA.ana.kill = 0      -- nd kills
+_ANA.ana.abrt  = 0      -- nd flows
+_ANA.ana.excpt = 0      -- nd excpt
 
 -- any variable access calls this function
 -- to be inserted on parent Parallel sub[i] or Class
@@ -39,7 +39,17 @@ F = {
         if _AST.iter(_AST.pred_par) then -- requires ParX_pos
             for _, sub in ipairs(me) do
                 for _,acc in ipairs(sub.ana.accs) do
-                    INS(acc, true)
+    -- check par/enter only against immediate pars
+                    if acc.md ~= 'par' then
+    -- check ParOr esc only against immediate pars
+                    if not (acc.md=='esc' and acc.id.tag=='ParOr') then
+    -- check Loop esc only against nested pars
+                    --if not (acc.md=='esc' and acc.id.tag=='Loop'
+                            --and acc.id.depth>me.depth) then
+                        INS(acc, true)
+                    --end
+                    end
+                    end
                 end
             end
         end
@@ -104,7 +114,8 @@ F = {
     EmitInt = function (me)
         local e1, e2 = unpack(me)
         e1.ref.acc.md   = 'tr'
-        e1.ref.acc.node = me        -- needsChk
+        e1.ref.acc.node = me        -- emtChk
+        me.emtChk = false
     end,
 
     SetAwait = 'SetExp',
@@ -184,7 +195,7 @@ F = {
             path = PRE,
             id  = top,
             md  = 'esc',
-            err = 'escape (line '..top.ln..')',
+            err = 'escape (line '..me.ln..')',
         }
     end,
     Return = function (me)
@@ -200,8 +211,8 @@ F = {
 
         if top=='ParOr' or top=='ParAnd' or top=='ParEver' then
             if not me.ana.pre[false] then
+                me.parChk = false           -- only chk if ND flw
                 INS {
-                    par  = me,          -- to be marked by CHK_ACC in case of ND
                     path = me.ana.pre,
                     id   = me,--.__par,
                     md   = 'par',
@@ -291,9 +302,6 @@ end
 function par_rem (path, NO_par)
     for id in pairs(path) do
         if NO_par[id] then
-if type(id)=='table' then
-    DBG('REM', id[1].id)
-end
             path[id] = nil
         end
     end
@@ -332,22 +340,25 @@ function CHK_ACC (accs1, accs2, NO_par, NO_emts)
             local path2 = int2exts(acc2.path, NO_emts)
                   path2 = par_rem(path2, NO_par)
             if par_isConc(path1,path2) then
+
+-- FLOW
                 if ND.flw[acc1.md][acc2.md] then
                     if _AST.isChild(acc1.id, acc2.id)
                     or _AST.isChild(acc2.id, acc1.id)
                     then
-                        DBG('WRN : nondeterminism : '..
+                        DBG('WRN : abortion : '..
                                 acc1.err..' vs '..acc2.err)
-                        _ANA.ana.flw = _ANA.ana.flw + 1
+                        _ANA.ana.abrt = _ANA.ana.abrt + 1
                         if acc1.md == 'par' then
-                            acc1.par.needsChk = true
+                            acc1.id.parChk = true
                         end
                         if acc2.md == 'par' then
-                            acc2.par.needsChk = true
+                            acc2.id.parChk = true
                         end
                     end
                 end
 
+-- ACC
                 if ND.acc[acc1.md][acc2.md] then
                     -- this.x vs this.x (both accs bounded to cls)
                     local cls_ = (acc1.cls == cls) or
@@ -389,6 +400,7 @@ function CHK_ACC (accs1, accs2, NO_par, NO_emts)
                     then
                         DBG('WRN : nondeterminism : '..acc1.err..' vs '..acc2.err)
                         _ANA.ana.acc = _ANA.ana.acc + 1
+--[[
 DBG'==============='
 DBG(acc1.cls.id, acc1, acc1.id, acc1.md, acc1.tp, acc1.any, acc1.err)
 for k in pairs(path1) do
@@ -399,7 +411,6 @@ for k in pairs(path2) do
     DBG('path2', acc2.path, type(k)=='table' and k[1].id or k)
 end
 DBG'==============='
---[[
 ]]
                     end
                 end
@@ -408,18 +419,27 @@ DBG'==============='
     end
 end
 
-function CHK_KILL (s1, s2)
+function _chk (n, id)
+    for k in pairs(n) do
+        if type(k)=='table' and k[1]==id then
+            return true
+        end
+    end
+    return false
+end
+
+-- TODO: join with CHK_ACC
+-- emits vs rets/ors/breaks (the problem is that emits are considered in par)
+function CHK_EXCPT (s1, s2, isOR)
     for _, ana in ipairs(s1.ana.accs) do
         if ana.md == 'tr' then
--- TODO
-DBG'TODO ana.id'
-            if s2.ana.pos[ana.id] or    -- terminates w/ same event
-               s2.ana.pos[false]  or    -- ~terminates (return/break)
-               s2.ana.pos[true]         -- terminates tight
+            if _chk(s2.ana.pos,ana.id) and isOR or -- terminates w/ same event
+               s2.ana.pos[false]=='esc' --or       -- ~terminates (return/break)
+               --s2.ana.pos[true]                 -- terminates tight
             then
-                DBG('WRN : kill : line '..s2.ln..' vs '..ana.err)
-                _ANA.ana.kill = _ANA.ana.kill + 1
-                ana.node.needsChk = true
+                DBG('WRN : exception : line '..s2.ln..' vs '..ana.err)
+                _ANA.ana.excpt = _ANA.ana.excpt + 1
+                ana.node.emtChk = true
             end
         end
     end
@@ -466,22 +486,12 @@ G = {
                     end
                 end
 
-DBG('oioioi', me.tag, me.ln)
-for k in pairs(me.ana.pre) do
-    if type(k)=='table' then
-        DBG(k[1].id)
-    else
-        DBG(k)
-    end
-end
-DBG'====='
-
                 CHK_ACC(me[i].ana.accs, me[j].ana.accs,
                         me.ana.pre,
                         --_ANA.union(me.ana.pre,me.ana.pos),
                         NO_emts)
-                CHK_KILL(me[i], me[j])
-                CHK_KILL(me[j], me[i])
+                CHK_EXCPT(me[i], me[j], me.tag=='ParOr')
+                CHK_EXCPT(me[j], me[i], me.tag=='ParOr')
             end
         end
     end,

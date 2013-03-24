@@ -193,7 +193,7 @@ F = {
         local top = _AST.iter((me.tag=='Return' and 'SetBlock') or 'Loop')()
         me.ana.pos = COPY(me.ana.pre)
         OR(top, me, true)
-        me.ana.pos = { [false]=true }
+        me.ana.pos = { [false]='esc' }   -- diff from [false]=true
 
 --[[
     -- short: for ParOr/Loop/SetBlock if any sub.pos is equal to me.pre,
@@ -313,7 +313,6 @@ function _ANA.union (root, pre, POS)
     local t = {
         Node = function (me)
             if me.ana.pre[pre] then         -- if matches loop begin
-DBG('SIM', me.ln, pre)
                 _union(me.ana.pre, POS, true)
             end
         end,

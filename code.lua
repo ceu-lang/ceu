@@ -352,23 +352,23 @@ if (*PTR_cur(u8*,]]..(me.off_fins+i-1)..[[)) {
         -- Ever/Or/And spawn subs
         COMM(me, me.tag..': spawn subs')
         for i, sub in ipairs(me) do
-            -- only if can be killed
-            --if sub.needsChk then
+            -- only if can be aborted
+            if sub.parChk ~= false then     -- nil means no analysis
             if i > 1 then
                 LINE(me, [[
 ceu_trails_set(]]..sub.trails[1]..[[, CEU_PENDING, _ceu_org_);
 ]])
             end
-            --end
+            end
         end
         for i, sub in ipairs(me) do
             if i > 1 then
-                --if me[i+1].needsChk then
+                if sub.parChk ~= false then -- nil means no analysis
                     LINE(me, [[
 if (ceu_trails_get(]]..sub.trails[1]..[[,_ceu_org_)->lbl != CEU_PENDING)
     return;
 ]])
-                --end
+                end
             end
             if i == #me then
                 SWITCH(me, me.lbls_in[i])
@@ -573,8 +573,9 @@ case ]]..me.lbl_cnt.id..[[:
 
         local org = (int.org and int.org.val) or '_ceu_org_'
 
-        -- TODO: enable when awake chks event and sets PENDING
-        --if me.needsChk then
+me.emtChk=true
+        -- needed for two emits nested
+        --if me.emtChk ~= false then      -- nil means no analysis
             LINE(me, [[
 ceu_trails_set(]]..me.trails[1]..[[,CEU_PENDING,_ceu_org_);
 ]])
@@ -589,12 +590,12 @@ ceu_trails_go(]]..(int.off or int.evt.off)
                 ..[[, &p, CEU.mem, CEU_NTRAILS);
 }]])
 
-        --if me.needsChk then
+        if me.emtChk ~= false then       -- nil means no analysis
             LINE(me, [[
 if (ceu_trails_get(]]..me.trails[1]..[[,_ceu_org_)->lbl != CEU_PENDING)
     return;
 ]])
-        --end
+        end
     end,
 
     AwaitN = function (me)
