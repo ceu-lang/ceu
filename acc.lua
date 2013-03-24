@@ -461,7 +461,7 @@ G = {
                     end
                 end
                 for acc in pairs(ALL) do
-                    if acc.path == me.ana.pre then
+                    if _ANA.CMP(acc.path, me.ana.pre) then
                         NO_emts[acc] = true -- instantaneous emit
                     end
                 end
@@ -487,6 +487,15 @@ DBG'====='
     end,
     ParAnd  = 'ParOr',
     ParEver = 'ParOr',
+
+-- TODO: workaround
+    -- Loop can only be repeated after nested PARs evaluate CHK_*
+    Loop = function (me)
+        -- pre = pre U pos
+        if not me[1].ana.pos[false] then
+            _ANA.union(me[1], next(me.ana.pre), me[1].ana.pos)
+        end
+    end,
 }
 
 _AST.visit(G)

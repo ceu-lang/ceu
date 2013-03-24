@@ -147,6 +147,7 @@ end
     },
     run = 2;
 }
+--]===]
 
 Test { [[
 input int A;
@@ -195,7 +196,6 @@ end
 }
 
 --do return end
---]===]
 
 Test { [[return(1);]],
     ana = {
@@ -5839,12 +5839,12 @@ Test { [[
 event int a, b;
 var int x;
 par/or do
-    await a;
+    await a;                // 4
     await 10ms;
     x = 0;
 with
     var int bb = await b;        // 8
-    emit a=bb;
+    emit a=bb;              // 9
     await 10ms;
     x = 1;
 with
@@ -6282,30 +6282,30 @@ input int A;
 var int a;
 par do
     loop do
-        if a then
+        if a then           // 5
             await A;
         else
             await A;
             await A;
-            var int v = a;
+            var int v = a;  // 10
         end;
     end;
 with
     loop do
         await A;
-        a = await A;
+        a = await A;        // 16
     end;
 with
     loop do
         await A;
         await A;
-        a = await A;
+        a = await A;        // 22
     end;
 end;
 ]],
     ana = {
         isForever = true,
-        acc = 3,
+        acc = 5,
     },
 }
 Test { [[
@@ -11015,7 +11015,7 @@ end;
 ]],
     ana = {
         --acc = 3,
-        acc = 6,
+        acc = 12,           -- TODO: not checked
         isForever = true,
     },
 }
@@ -11770,10 +11770,10 @@ par/or do
     with
         loop do
             par/or do
-                await x;
+                await x;    // 12
                 ret = 1;    // 13
             with
-                await y;
+                await y;    // 15
                 ret = 10;   // 16
             end;
         end;
@@ -11787,7 +11787,7 @@ return ret;
 ]],
     ana = {
         flw = 1,
-        acc = 3,
+        acc = 5,
         --acc = 4,
         --trig_wo = 2,
         unreachs = 1,
@@ -15509,7 +15509,7 @@ with
 end
 ]],
     ana = {
-        acc = 6,   -- TODO: loop
+        acc = 12,
         isForever = true,
     },
 }
@@ -17817,7 +17817,7 @@ class T with
 do
     loop do
         await 1s;
-        emit this.ok;
+        emit this.ok;       // 8
     end
 end
 var T aa;
@@ -17827,7 +17827,7 @@ par/or do
         par/and do
             await (0)ms;
         with
-            await aa.ok;
+            await aa.ok;    // 18
         end
         ret = ret + 1;
     end
@@ -17836,6 +17836,9 @@ with
 end
 return ret;
 ]],
+    ana = {
+        acc = 1,
+    },
     run = { ['~>5s;~>F'] = 5 },
 }
 

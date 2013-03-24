@@ -7,20 +7,6 @@ _ANA = {
     }
 }
 
-function _ANA.union (a, b, new)
-    if new then
-        local old = a
-        a = {}
-        for k in pairs(old) do
-            a[k] = true
-        end
-    end
-    for k in pairs(b) do
-        a[k] = true
-    end
-    return a
-end
-
 -- avoids counting twice (due to loops)
 -- TODO: remove
 local __inc = {}
@@ -51,6 +37,28 @@ function OR (me, sub, short)
     end
 end
 
+function COPY (n)
+    local ret = {}
+    for k in pairs(n) do
+        ret[k] = true
+    end
+    return ret
+end
+
+function _ANA.CMP (n1, n2)
+    for k1 in pairs(n1) do
+        if not n2[k1] then
+            return false
+        end
+    end
+    for k2 in pairs(n2) do
+        if not n1[k2] then
+            return false
+        end
+    end
+    return true
+end
+
 local LST = {
     Stmts=true, Block=true, Root=true, Dcl_cls=true,
 }
@@ -75,9 +83,9 @@ F = {
             return
         end
         if LST[me.tag] and me[#me] then
-            me.ana.pos = me[#me].ana.pos    -- copy lst child pos
+            me.ana.pos = COPY(me[#me].ana.pos)  -- copy lst child pos
         else
-            me.ana.pos = me.ana.pre         -- or copy own pre
+            me.ana.pos = COPY(me.ana.pre)       -- or copy own pre
         end
     end,
 
@@ -94,7 +102,7 @@ F = {
         if i == 1 then
             -- first sub copies parent
             sub.ana = {
-                pre = me.ana.pre
+                pre = COPY(me.ana.pre)
             }
         else
             -- broken sequences
@@ -106,7 +114,7 @@ F = {
             end
             -- other subs follow previous
             sub.ana = {
-                pre = me[i-1].ana.pos
+                pre = COPY(me[i-1].ana.pos)
             }
         end
     end,
@@ -168,7 +176,7 @@ F = {
 
     If = function (me)
         if me.isFor then
-            me.ana.pos = me.ana.pre
+            me.ana.pos = COPY(me.ana.pre)
             return
         end
 
@@ -183,7 +191,7 @@ F = {
     end,
     Return = function (me)
         local top = _AST.iter((me.tag=='Return' and 'SetBlock') or 'Loop')()
-        me.ana.pos = me.ana.pre
+        me.ana.pos = COPY(me.ana.pre)
         OR(top, me, true)
         me.ana.pos = { [false]=true }
 
@@ -224,7 +232,7 @@ DBG(sub.tag)
     Loop = function (me)
 -- TODO: why?
         if me.isFor then
-            me.ana.pos = me[1].ana.pos
+            me.ana.pos = COPY(me[1].ana.pos)
             return
         end
 
@@ -237,14 +245,14 @@ DBG(sub.tag)
 --[[
         -- pre = pre U pos
         if not me[1].ana.pos[false] then
-            U(me[1], next(me.ana.pre), me[1].ana.pos)
+            _AST.union(me[1], next(me.ana.pre), me[1].ana.pos)
         end
 ]]
     end,
 
     Async = function (me)
         if me.ana.pre[false] then
-            me.ana.pos = me.ana.pre
+            me.ana.pos = COPY(me.ana.pre)
         else
             me.ana.pos = { ['ASYNC_'..me.n]=true }
         end
@@ -252,16 +260,16 @@ DBG(sub.tag)
 
     SetAwait = function (me)
         local set, awt = unpack(me)
-        set.ana.pre = awt.ana.pos
-        set.ana.pos = awt.ana.pos
-        me.ana.pre = awt.ana.pre
-        me.ana.pos = set.ana.pos
+        set.ana.pre = COPY(awt.ana.pos)
+        set.ana.pos = COPY(awt.ana.pos)
+        me.ana.pre = COPY(awt.ana.pre)
+        me.ana.pos = COPY(set.ana.pos)
     end,
 
     AwaitExt = function (me)
         local e = unpack(me)
         if me.ana.pre[false] then
-            me.ana.pos = me.ana.pre
+            me.ana.pos = COPY(me.ana.pre)
         else
             -- use a table to differentiate each instance
             me.ana.pos = { [{e.evt and e.evt or 'WCLOCK'}]=true }
@@ -279,20 +287,34 @@ DBG(sub.tag)
 -- TODO
 do return end
         if var.isTmp == true then
-            var.isTmp = me.ana.pre
+            var.isTmp = COPY(me.ana.pre)
         else
-            var.isTmp = (var.isTmp == me.ana.pre)
+            var.isTmp = _ANA.CMP(var.isTmp, me.ana.pre)
         end
     end,
 }
 
+local _union = function (a, b, keep)
+    if not keep then
+        local old = a
+        a = {}
+        for k in pairs(old) do
+            a[k] = true
+        end
+    end
+    for k in pairs(b) do
+        a[k] = true
+    end
+    return a
+end
+
 -- if nested node is reachable from "pre", join with loop POS
-function U (root, pre, POS)
+function _ANA.union (root, pre, POS)
     local t = {
         Node = function (me)
             if me.ana.pre[pre] then         -- if matches loop begin
 DBG('SIM', me.ln, pre)
-                me.ana.pre = _ANA.union(me.ana.pre, POS, true)
+                _union(me.ana.pre, POS, true)
             end
         end,
     }
