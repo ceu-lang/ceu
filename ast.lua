@@ -236,7 +236,7 @@ local C; C = {
             dcl_j = node('Nothing')(ln)
             set_j = node('Nothing')(ln)
         else
-            local j_name = '$j'..blk.n
+            local j_name = '_j'..blk.n
             j = function() return node('Var')(ln, j_name) end
             dcl_j = node('Dcl_var')(ln, 'var', 'int', false, j_name)
             set_j = node('SetExp')(ln, j(), _j)
@@ -263,7 +263,7 @@ local C; C = {
     end,
 
     Pause = function (ln, evt, blk)
-        local id = '$pse_'..evt.n
+        local id = '_pse_'..evt.n
         local var = node('Var')(ln,id)
         local pse1 = node('Pause')(ln, '1')
         local pse2 = node('Pause')(ln, '-1')
@@ -289,11 +289,11 @@ local C; C = {
         par/or do
             <blk>
         with
-            int $pse = 0;
+            int _pse = 0;
             loop do
                 await <evt>;
-                if $pse != <evt> then
-                    $pse = <evt>;
+                if _pse != <evt> then
+                    _pse = <evt>;
                     if <evt> then
                         <PSE++>;
                     else

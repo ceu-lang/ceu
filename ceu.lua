@@ -129,6 +129,7 @@ do
     dofile 'props.lua'
     dofile 'trails.lua'
     dofile 'labels.lua'
+    dofile 'tmps.lua'
     dofile 'mem.lua'
     dofile 'val.lua'
     dofile 'code.lua'

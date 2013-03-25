@@ -144,7 +144,8 @@ DBG('', 'glb', '{'..table.concat(glb,',')..'}')
         for _, var in ipairs(sorted) do
             if not var.isEvt then
                 var.off = alloc(mem, var.len)
-DBG('', string.format('%8s',var.id), var.off, var.len)
+DBG('', string.format('%8s',var.id), var.off,
+                                     var.isTmp and '*' or var.len)
             end
         end
 

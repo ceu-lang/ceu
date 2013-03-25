@@ -172,6 +172,7 @@ F = {
     Loop_pre = function (me)
         F.ParOr_pre(me)
         me.brks = {}
+        me.noAwts = true
     end,
     Break = function (me)
         local loop = _AST.iter'Loop'()
@@ -230,21 +231,30 @@ F = {
         end
     end,
 
+    _loop = function (me)
+        for loop in _AST.iter'Loop' do
+            loop.noAwts = false
+        end
+    end,
     AwaitT = function (me)
         _PROPS.has_wclocks = true
         me.ns.wclocks = 1
         --me.ns.trails = 1
+        F._loop(me)
     end,
     AwaitInt = function (me)
         _PROPS.has_ints = true
         --me.ns.ints = 1
         --me.ns.trails = 1
+        F._loop(me)
     end,
     AwaitExt = function (me)
         --me.ns.trails = 1
+        F._loop(me)
     end,
     AwaitN = function (me)
         --me.ns.trails = 1
+        F._loop(me)
     end,
 
     EmitInt = function (me)

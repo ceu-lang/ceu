@@ -122,9 +122,9 @@ function newvar (me, blk, pre, tp, dim, id)
         tp    = tp,
         blk   = blk,
         pre   = pre,
+        inIfc = _AST.iter'BlockI'(),
         isEvt = isEvt,
-        --isTmp = (not cls) and (not isEvt),  -- default true (see ana.lua)
-        isTmp = pre=='tmp',
+        isTmp = false,
         arr   = dim,
         val   = '0',     -- TODO: workaround: dummy value for interfaces
     }

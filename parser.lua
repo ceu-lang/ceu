@@ -99,7 +99,7 @@ KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'C'
 -- TODO
      + 'nothing'
      + 'continue'
-     + 'tmp'
+     + 'until'
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
@@ -254,10 +254,13 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
 
     , Pause    = K'pause/if' * EV'Var' * V'_Do'
 
-    , AwaitExt = K'await' * EV'Ext'
-    , AwaitInt = K'await' * EV'_Exp'
     , AwaitN   = K'await' * K'FOREVER'
+
+    , __until  = K'until' * EV'_Exp'
+    , AwaitExt = K'await' * EV'Ext'  * (V'__until' + Cc(false))
+    , AwaitInt = K'await' * EV'_Exp' * (V'__until' + Cc(false))
     , AwaitT   = K'await' * (V'WCLOCKK'+V'WCLOCKE')
+                                     * (V'__until' + Cc(false))
 
     , _EmitExt = K'emit' * EV'Ext' * (K'(' * V'_Exp'^-1 * EK')')^-1
     , EmitExtS = V'_EmitExt'
@@ -287,7 +290,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , __Dcl_int = EV'ID_int' --* (V'_Sets' +
                              --   Cc(false)*Cc(false)*Cc(false))
 
-    , _Dcl_var  = (CK'var' + CK'tmp')
+    , _Dcl_var  = CK'var'
                 * (EV'ID_type' + EV'ID_cls')
                 * (K'['*V'_Exp'*K']'+Cc(false))
                 * V'__Dcl_var' * (K','*V'__Dcl_var')^0

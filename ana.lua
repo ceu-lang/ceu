@@ -4,7 +4,7 @@ _ANA = {
         isForever  = nil,
         reachs   = 0,      -- unexpected reaches
         unreachs = 0,      -- unexpected unreaches
-    }
+    },
 }
 
 -- avoids counting twice (due to loops)
@@ -194,26 +194,6 @@ F = {
         me.ana.pos = COPY(me.ana.pre)
         OR(top, me, true)
         me.ana.pos = { [false]='esc' }   -- diff from [false]=true
-
---[[
-    -- short: for ParOr/Loop/SetBlock if any sub.pos is equal to me.pre,
-    -- then we have a "short circuit"
-DBG(me.ana.pre, top.ana.pre)
-        if me.ana.pre == top.ana.pre then
-            for par in _AST.iter(_AST.pred_par) do
-                if par.depth < top.depth then
-                    break
-                end
-                for _, sub in ipairs(par) do
-DBG(sub.tag)
-                    if (not sub.ana.pos[false]) then
-                        _ANA.ana.unreachs = _ANA.ana.unreachs + 1
-                        sub.ana.pos = { [false]=true }
-                    end
-                end
-            end
-        end
-]]
     end,
     SetBlock = function (me)
         local blk = me[2]
@@ -241,13 +221,6 @@ DBG(sub.tag)
             WRN( INC(me, 'unreachs'),
                  me, '`loop´ iteration is not reachable')
         end
-
---[[
-        -- pre = pre U pos
-        if not me[1].ana.pos[false] then
-            _AST.union(me[1], next(me.ana.pre), me[1].ana.pos)
-        end
-]]
     end,
 
     Async = function (me)
@@ -266,31 +239,34 @@ DBG(sub.tag)
         me.ana.pos = COPY(set.ana.pos)
     end,
 
-    AwaitExt = function (me)
-        local e = unpack(me)
+    AwaitExt_aft = function (me, sub, i)
+        if i > 1 then
+            return
+        end
+
+        -- between Await and Until
+
+        local awt, cnd = unpack(me)
+
+        local t
         if me.ana.pre[false] then
-            me.ana.pos = COPY(me.ana.pre)
+            t = { [false]=true }
         else
             -- use a table to differentiate each instance
-            me.ana.pos = { [{e.evt and e.evt or 'WCLOCK'}]=true }
+            t = { [{awt.evt and awt.evt or 'WCLOCK'}]=true }
+        end
+        me.ana.pos = COPY(t)
+        if cnd then
+            cnd.ana = {
+                pre = COPY(t),
+            }
         end
     end,
-    AwaitInt = 'AwaitExt',
-    AwaitT   = 'AwaitExt',
+    AwaitInt_aft = 'AwaitExt_aft',
+    AwaitT_aft   = 'AwaitExt_aft',
 
     AwaitN = function (me)
         me.ana.pos = { [false]=true }
-    end,
-
-    Var = function (me)
-        local var = me.var
--- TODO
-do return end
-        if var.isTmp == true then
-            var.isTmp = COPY(me.ana.pre)
-        else
-            var.isTmp = _ANA.CMP(var.isTmp, me.ana.pre)
-        end
     end,
 }
 
@@ -308,6 +284,7 @@ local _union = function (a, b, keep)
     return a
 end
 
+-- TODO: remove
 -- if nested node is reachable from "pre", join with loop POS
 function _ANA.union (root, pre, POS)
     local t = {

@@ -52,6 +52,8 @@ Test = function (t)
     if not check('parser')   then return end
     if not check('ast')      then return end
     if not check('env')      then return end
+    dofile 'ana.lua'
+    dofile 'acc.lua'
     --_AST.dump(_AST.root)
     if not check('tight')    then return end
     --dofile 'awaits.lua'
@@ -64,10 +66,9 @@ Test = function (t)
 
     if not check('trails')   then return end
     if not check('labels')   then return end
+    if not check('tmps')     then return end
     if not check('mem')      then return end
     if not check('val')      then return end
-    dofile 'ana.lua'
-    dofile 'acc.lua'
     if not check('code')     then return end
 
     STATS.mem     = STATS.mem     + _AST.root.mem.max
@@ -94,27 +95,27 @@ Test = function (t)
                         acc=0, abrt=0, excpt=0 }
         for k, v in pairs(_ANA.ana) do
 -- TODO
---if k ~= 'excpt' then
---if k ~= 'abrt' then
+if k ~= 'excpt' then
+if k ~= 'abrt' then
 if k ~= 'unreachs' then
             assert( v==_defs[k] and (T.ana==nil or T.ana[k]==nil)
                     or (T.ana and T.ana[k]==v),
                     --or (T.ana and T.ana.acc==_ANALYSIS.acc),
                             k..' = '..tostring(v))
 end
---end
---end
+end
+end
         end
         if T.ana then
             for k, v in pairs(T.ana) do
---if k ~= 'excpt' then
---if k ~= 'abrt' then
+if k ~= 'excpt' then
+if k ~= 'abrt' then
 if k ~= 'unreachs' then
                 assert( v == _ANA.ana[k],
                             k..' = '..tostring(_ANA.ana[k]))
 end
---end
---end
+end
+end
             end
         end
     end
@@ -198,21 +199,12 @@ STATS = {
 }
 ]])
 
-assert(STATS.count  ==    1089)
-assert(STATS.mem    ==    8876)
-assert(STATS.trails ==    2059)
-assert(STATS.bytes  == 6068990)
+assert(STATS.count  ==    1108)
+assert(STATS.mem    ==    9038)
+assert(STATS.trails ==    1946)
+assert(STATS.bytes  == 5976824)
 --[[
 STATS = {
-    count   = 1097,
-    mem     = 10252,
-    trails  = 1923,
-    bytes   = 6310234,  -- ON/ceu_param
-}
-STATS = {
-    count   = 1092,
-    mem     = 10184,
-    trails  = 1911,
-    bytes   = 6090341,  -- invert par/chks
+    bytes = BIG,  -- ON/ceu_param
 }
 ]]

@@ -151,55 +151,51 @@ end
     run = 2;
 }
 
+--]===]
+--do return end
+
 Test { [[
-input void START;
-event void a, b, c, d;
-C _assert();
-var int v=0;
-par do
-    loop do
-        await START;
-        v = 0;
-        emit a;
-        v = 1;
-        return v;
-    end
-with
-    loop do
-        await a;
-        v = 2;
-    end
-end
+input int A;
+var int x = await A until x>10;
+return x;
 ]],
-    run = 1,
+    run = {
+        ['1~>A; 0~>A; 10~>A; 11~>A'] = 11,
+    },
 }
 
 Test { [[
-input void START;
-event void a, b, c, d;
-C _assert();
-var int v=0;
+input int A;
+var int v = 0;
 par do
-    loop do
-        await START;
-        emit a;         // killed
-        _assert(0);
-    end
+    await 10s until v;
+    return 10;
 with
-    loop do
-        await a;
-        return 1;       // kills emit a
-    end                 // unreach
+    await 10min;
+    v = 1;
 end
 ]],
     ana = {
-        unreachs = 1,
-        excpt = 1,
+        acc = 1,
     },
-    run = 1,
+    run = {
+        ['~>10min10s'] = 10,
+    },
 }
 
---do return end
+Test { [[
+input void START;
+var int h = 10;
+var int* p = &h;
+do
+    var int x = 0;
+    await START;
+    var int z = 0;
+end
+return *p;
+]],
+    run = 10;
+}
 
 Test { [[return(1);]],
     ana = {
@@ -639,7 +635,6 @@ return 10;
     },
     run = 10,
 }
---]===]
 Test { [[
 input int A;
 var int ret;
@@ -689,7 +684,7 @@ return v;
 
 Test { [[
 input int A;
-tmp int v = await A;
+var int v = await A;
 return v;
 ]],
     run = {
@@ -743,6 +738,54 @@ end
         --unreachs = 1,
     },
     run = 2,
+}
+
+Test { [[
+input void START;
+event void a, b, c, d;
+C _assert();
+var int v=0;
+par do
+    loop do
+        await START;
+        v = 0;
+        emit a;
+        v = 1;
+        return v;
+    end
+with
+    loop do
+        await a;
+        v = 2;
+    end
+end
+]],
+    run = 1,
+}
+
+Test { [[
+input void START;
+event void a, b, c, d;
+C _assert();
+var int v=0;
+par do
+    loop do
+        await START;
+        emit a;         // killed
+        _assert(0);
+    end
+with
+    loop do
+        await a;
+        return 1;       // kills emit a
+    end                 // unreach
+end
+]],
+    ana = {
+        unreachs = 1,
+        excpt = 1,
+    },
+    run = 1,
 }
 
     -- OUTPUT
@@ -2010,7 +2053,7 @@ end;
 Test{ [[
 input int E;
 loop do
-    tmp int v = await E;
+    var int v = await E;
     if v then
     else
     end;
@@ -2148,9 +2191,6 @@ end
 return 5;
 ]],
     run = 5,
-    ana = {
-        excpt = 1,
-    },
 }
 
 Test { [[
@@ -3265,7 +3305,7 @@ par/and do
     await A;
     a = 1+2+3+4;
 with
-    tmp int v = await B;
+    var int v = await B;
     b = 100+v;
     ret = a + b;
 end;
@@ -4268,7 +4308,7 @@ return a;
 Test { [[
 var int a = 2;
 par/or do
-    tmp int b = await (10)us;
+    var int b = await (10)us;
     a = b;
 with
     await 20ms;
@@ -4536,7 +4576,7 @@ input void T;
 var int ret = 0;
 par/or do
     loop do
-        tmp int late = await 10ms;
+        var int late = await 10ms;
         ret = ret + late;
         _assert(late <= 10000);
     end
@@ -4794,6 +4834,52 @@ return 0;
 }
 
 Test { [[
+var int v1=2,v2=3;
+par/or do
+with
+end
+return v1+v2;
+]],
+    run = 5,
+}
+Test { [[
+var int v1,v2;
+par/or do
+with
+end
+v1=2;
+v2=3;
+return v1+v2;
+]],
+    run = 5,
+}
+Test { [[
+var int v1,v2;
+do
+    par/or do
+    with
+    end
+    v1=2;
+    v2=3;
+end
+return v1+v2;
+]],
+    run = 5,
+}
+
+Test { [[
+var int v1=0,v2=0;
+par/and do
+    v1 = 3;
+with
+    v2 = 2;
+end
+return v1+v2;
+]],
+    run = 5,
+}
+
+Test { [[
 event int a;
 var int v1=0,v2=0;
 par/or do
@@ -4859,7 +4945,6 @@ return v1+v2+v3;
     run = 2,
 }
 
-
 Test { [[
 var int ret = 0;
 par/or do
@@ -4888,7 +4973,7 @@ par/or do
         ret = 3;
     end;
 with
-    tmp int aa = await a;
+    var int aa = await a;
     ret = aa + 1;
 end;
 return ret;
@@ -7016,7 +7101,6 @@ return b+b;
     run = 6,
 }
 
--- TODO: parei com abrt aqui!!!
 Test { [[
 event int a;
 var int b;
@@ -7030,7 +7114,7 @@ end;
 return 0;
 ]],
     ana = {
-        abrt = 1,
+        abrt = 5,
         --unreachs = 2,
         acc = 1,
         --trig_wo = 1,
@@ -7083,7 +7167,7 @@ Test { [[
 input int A;
 var int ret;
 loop do
-    tmp int v = await A;
+    var int v = await A;
     if v == 5 then
         ret = 10;
         break;
@@ -7101,7 +7185,7 @@ Test { [[
 input int B;
 var int a = 0;
 loop do
-    tmp int b = await B;
+    var int b = await B;
     a = a + b;
     if a == 5 then
         return 10;
@@ -7163,7 +7247,7 @@ input int A;
 event int a;
 var int aa;
 loop do
-    tmp int v = await A;
+    var int v = await A;
     if v==2 then
         return aa;
     else
@@ -7257,7 +7341,7 @@ end;
 return ret;
 ]],
     ana = {
-        abrt = 1,
+        abrt = 8,   -- TODO: not checked
         --unreachs = 1,
     },
     run = {
@@ -7280,7 +7364,7 @@ return v;
 ]],
     ana = {
         acc = 1,     -- should be 0
-        abrt = 1,
+        abrt = 3,
     },
     run = {
         ['10~>A'] = 10,
@@ -7305,7 +7389,7 @@ return ret;
 ]],
     ana = {
         acc = 1,
-        abrt = 1,
+        abrt = 3,
     },
     run = {
         ['0~>Z ; 10~>B'] = 10,
@@ -7331,7 +7415,7 @@ return v;
 ]],
     ana = {
         acc = 1,
-        abrt = 1,
+        abrt = 3,
     },
     run = {
         ['0~>Z ; 10~>A'] = 10,
@@ -7362,7 +7446,7 @@ end;
 return v;
 ]],
     ana = {
-        abrt = 1,
+        abrt = 6,   -- TODO: not checked
     },
     run = {
         ['0~>A ; 1~>Z ; 5~>B ; 1~>B ; 9~>Z'] = 9,
@@ -7394,6 +7478,7 @@ end;
 return v;
 ]],
     ana = {
+        abrt = 6,   -- TODO: not checked
         --unreachs = 1,
     },
     run = {
@@ -7421,7 +7506,7 @@ return v;
 ]],
     ana = {
         acc = 2,
-        abrt = 2,
+        abrt = 6,
     },
     run = {
         ['1~>A'] = 1,
@@ -7448,7 +7533,7 @@ return v;
 ]],
     ana = {
         acc = 2,
-        abrt = 2,
+        abrt = 10,
     },
     run = {
         ['0~>B ; 10~>A'] = 10,
@@ -7471,7 +7556,7 @@ return v;
 ]],
     ana = {
         acc = 1,
-        abrt = 1,
+        abrt = 3,
     },
 }
 Test { [[
@@ -7497,7 +7582,7 @@ return v;
     ana = {
         --unreachs = 2,
         acc = 1,
-        abrt = 1,
+        abrt = 7,   -- TODO: not checked
     },
     run = {
         ['0~>B ; 10~>A'] = 10,
@@ -7518,7 +7603,7 @@ end;
 ]],
     ana = {
         unreachs = 1,
-        --abrt = 1,
+        abrt = 1,
     },
     run = {
         ['0~>B ; 10~>A'] = 10,
@@ -7605,7 +7690,7 @@ end
 return 1;
 ]],
     ana = {
-        abrt = 1,
+        abrt = 3,
     },
     run = 1,
 }
@@ -7673,7 +7758,7 @@ await Z;
 await D;
 await E;
 await F;
-tmp int g = await G;
+var int g = await G;
 if g then
     await H;
 else
@@ -7708,7 +7793,7 @@ with
 end;
 ]],
     ana = {
-        abrt = 1,
+        abrt = 3,
     acc = 2,
     },
 }
@@ -7726,7 +7811,7 @@ end;
 ]],
     ana = {
         acc = 2,
-        abrt = 1,
+        abrt = 3,
     },
 }
 Test { [[
@@ -7750,7 +7835,7 @@ end;
 ]],
     ana = {
         --unreachs = 1,
-        abrt = 1,
+        abrt = 3,
         acc = 2,
     },
 }
@@ -7774,7 +7859,7 @@ end;
 ]],
     ana = {
         acc = 1,
-        abrt = 1,
+        abrt = 3,
         --unreachs = 2,    -- +1 C unreachs
     },
     --run = 1,
@@ -7849,12 +7934,12 @@ input int B;
 event int a;
 var int aa;
 par/or do
-    await B;
+    await B;        // 5
     emit a=5;
     aa = 5;
 with
-    par/and do
-        await B;
+    par/and do      // 9
+        await B;    // 10
     with
         await a;
     end
@@ -7865,7 +7950,7 @@ return aa;
     ana = {
         acc = 2,
         --unreachs = 1,
-        abrt = 1,
+        abrt = 3,
     },
     run = {
         --['1~>B'] = 6,
@@ -7893,7 +7978,7 @@ end;
 return aa;
 ]],
     ana = {
-        abrt = 1,
+        abrt = 3,
     },
     run = {
         ['1~>B'] = 5,
@@ -7905,9 +7990,9 @@ event int a;
 var int aa = 1;
 par do
     emit a=0;
-    return aa;
+    return aa;  // 5
 with
-    par/and do
+    par/and do  // 7
         aa = await a;
     with
     end;
@@ -7916,7 +8001,7 @@ end;
 ]],
     ana = {
         acc = 1,
-        --nd_esc = 1,
+        abrt = 1,
         --unreachs = 1,
     },
     run = 1,
@@ -7942,7 +8027,7 @@ end
     ana = {
         acc = 1,
         --nd_esc = 1,
-        --abrt = 1,
+        abrt = 1,
     },
     run = 1,
 }
@@ -7966,7 +8051,7 @@ end;
 ]],
     ana = {
         --unreachs = 1,
-        --abrt = 1,
+        abrt = 1,
         reachs = 1,
     },
     run = {
@@ -7993,7 +8078,7 @@ with
 end;
 ]],
     ana = {
-        abrt = 1,
+        abrt = 3,
         --unreachs = 2,
         acc = 2,
     },
@@ -8018,7 +8103,7 @@ end;
 return 1;
 ]],
     ana = {
-        abrt = 1,
+        abrt = 4,
         --unreachs = 3,
     },
     run = 1,
@@ -8036,7 +8121,7 @@ end
 return 1;
 ]],
     ana = {
-        abrt = 2,
+        abrt = 3,
         unreachs = 2,
     },
     run = 1,
@@ -8052,7 +8137,7 @@ end;
 ]],
     ana = {
         --unreachs = 2,
-        --abrt = 1,
+        abrt = 1,
         reachs = 1,
     },
     run = 1,
@@ -8079,7 +8164,7 @@ return 2;       // executes last
 ]],
     ana = {
         --unreachs = 5,
-        abrt = 2,
+        abrt = 4,
     },
     run = 2,
 }
@@ -8090,10 +8175,30 @@ loop do
     par do
         break;
     with
+        return 1;
+    with
+        await A;
+    end;
+end;
+return 2;   // executes last
+]],
+    ana = {
+        unreachs = 1,
+        abrt = 5,
+    },
+    run = 2,
+}
+
+Test { [[
+input int A;
+loop do
+    par do
+        break;          // 4
+    with
         par do
-            return 1;
+            return 1;   // 7
         with
-            await A;
+            await A;    // 9
             // unreachable
         end;
     end;
@@ -8102,7 +8207,7 @@ return 2;   // executes last
 ]],
     ana = {
         unreachs = 1,
-        abrt = 1,
+        abrt = 4,
     },
     run = 2,
 }
@@ -8123,7 +8228,7 @@ end;
 return 1;
 ]],
     ana = {
-        abrt = 2,
+        abrt = 6,       -- TODO: not checked
     },
     run = { ['~>A'] = 1, },
 }
@@ -8137,7 +8242,7 @@ end;
 return 1;
 ]],
     ana = {
-        abrt = 2,
+        abrt = 6,
     },
     run = 1,
 }
@@ -8157,7 +8262,7 @@ return aa;
 ]],
     ana = {
         --unreachs = 1,
-        abrt = 1,
+        abrt = 4,
         acc  = 1,
     },
 }
@@ -8180,7 +8285,7 @@ end;
 ]],
     ana = {
         --unreachs = 1,
-        abrt = 1,
+        abrt = 4,
         acc = 2,
     },
 }
@@ -8194,7 +8299,7 @@ end;
 ]],
     ana = {
         acc = 1,
-        abrt = 1,
+        abrt = 3,
     },
 }
 Test { [[
@@ -8208,7 +8313,7 @@ end;
 ]],
     ana = {
         acc = 2,
-        abrt = 1,
+        abrt = 3,
     },
 }
 Test { [[
@@ -8221,7 +8326,7 @@ with
 end;
 ]],
     ana = {
-        abrt = 1,
+        abrt = 3,
         acc = 2,
     },
 }
@@ -8235,7 +8340,7 @@ end;
 return a;
 ]],
     ana = {
-        abrt = 1,
+        abrt = 3,
         acc = 1,
     },
 }
@@ -8251,7 +8356,7 @@ end;
 return a;
 ]],
     ana = {
-        abrt = 3,
+        abrt = 9,
         acc = 3,
     },
 }
@@ -8267,7 +8372,7 @@ end;
 ]],
     ana = {
         acc = 1,
-        abrt = 1,
+        abrt = 3,
     },
 }
 
@@ -8283,6 +8388,7 @@ end;
 return aa;
 ]],
     ana = {
+        abrt = 1,
         --unreachs = 1,
         acc = 1,
         --trig_wo = 1,
@@ -8299,7 +8405,7 @@ end;
 return 1;
 ]],
     ana = {
-        abrt = 1,
+        abrt = 3,
         acc = 1,
     },
     run = 1,
@@ -8317,7 +8423,7 @@ end;
 return aa+bb;
 ]],
     ana = {
-        abrt = 1,
+        abrt = 3,
     },
     --run = 7,
     run = 4,
@@ -8332,7 +8438,7 @@ end;
 return a+b;
 ]],
     ana = {
-        abrt = 1,
+        abrt = 3,
     },
     --trig_wo = 2,
     --run = 5,
@@ -8356,7 +8462,7 @@ return v;
 ]],
     ana = {
         acc = 8, -- TODO: not checked
-        abrt = 3,
+        abrt = 9,
         --trig_wo = 3,
     },
 }
@@ -8373,7 +8479,7 @@ return v;
 ]],
     ana = {
         acc = 3,
-        abrt = 3,
+        abrt = 9,
     --trig_wo = 1,
     },
 }
@@ -8389,7 +8495,7 @@ with
 end;
 ]],
     ana = {
-        abrt = 1,
+        abrt = 3,
         acc = 1,
     },
 }
@@ -8406,7 +8512,7 @@ with
 end;
 ]],
     ana = {
-        abrt = 1,
+        abrt = 3,
         acc = 2,
     },
 }
@@ -8432,7 +8538,7 @@ event int a;
 var int ret;
 par/or do
     loop do
-        tmp int v = await A;
+        var int v = await A;
         emit a=v;
     end;
 with
@@ -8458,16 +8564,16 @@ par do
 with
     var int aa = await a;
     aa = aa + 1;
-    return aa;
+    return aa;      // 10
 with
-    await a;
+    await a;        // 12
     await FOREVER;
 end;
 ]],
     ana = {
         --nd_esc = 1,
         --unreachs = 1,
-        --abrt = 1,
+        abrt = 1,
     },
     run = 2,
 }
@@ -8490,6 +8596,7 @@ return aa;
         --nd_esc = 1,
         --unreachs = 1,
         acc = 2,
+        abrt = 2,
     },
 }
 Test { [[
@@ -8558,7 +8665,7 @@ return a;
     ana = {
         --unreachs = 1,
         acc = 1,
-        abrt = 1,
+        abrt = 4,
     },
     run = {
         ['3~>A'] = 3,
@@ -8581,7 +8688,7 @@ return a;
 ]],
     ana = {
         acc = 1,
-        abrt = 1,
+        abrt = 3,
     },
 }
 Test { [[
@@ -8634,7 +8741,7 @@ var int v = await A;
 return v;
 ]],
     ana = {
-        abrt = 1,
+        abrt = 3,
     },
     run = {
         ['10~>A ; 1~>A'] = 10,
@@ -8672,7 +8779,7 @@ return a+b+c+d;
 ]],
     ana = {
         acc = 3,
-        abrt = 3,
+        abrt = 10,  -- TODO: not checked
         --unreachs = 1,
     },
     --run = 10,
@@ -8705,7 +8812,7 @@ return aa+bb+cc;
 ]],
     ana = {
         acc = 3,
-        abrt = 3,
+        abrt = 10,  -- TODO: not checked
         --unreachs = 4,
     },
     --run = 60,
@@ -8734,7 +8841,7 @@ return 10;
 ]],
     ana = {
         acc = 3,
-        abrt = 3,
+        abrt = 10,  -- TODO: not checked
         reachs = 1,
         --trig_wo = 3,
     },
@@ -8753,6 +8860,7 @@ return 0;
 ]],
     ana = {
         acc = 2,
+        abrt = 1,
         --unreachs = 1,
         --trig_wo = 2,
     },
@@ -8769,6 +8877,7 @@ return 0;
 ]],
     ana = {
         acc = 2,
+        abrt = 1,
         --unreachs = 1,
         --trig_wo = 2,
     },
@@ -8803,7 +8912,7 @@ return 1;
 ]],
     ana = {
         unreachs = 1,
-        --abrt = 1,
+        abrt = 1,
     },
     run = 1,
 }
@@ -8853,7 +8962,7 @@ return x;
 ]],
     ana = {
         acc = 1,
-        abrt = 1,
+        abrt = 4,
     },
 }
 
@@ -8874,7 +8983,7 @@ return ret;
 ]],
     ana = {
         unreachs = 1,
-        abrt = 1,
+        abrt = 3,
     },
     run = 5,
 }
@@ -8893,7 +9002,7 @@ end
 return ret;
 ]],
     ana = {
-        abrt = 2,
+        abrt = 3,
         unreachs = 3,
     },
     --run = 10,
@@ -8913,7 +9022,7 @@ a = a + 1;
 return a;
 ]],
     ana = {
-        abrt = 2,
+        abrt = 6,
     },
     run = 2,
 }
@@ -8928,7 +9037,7 @@ with
 end;
 ]],
     ana = {
-        abrt = 1,
+        abrt = 3,
         acc = 1,
     },
 }
@@ -8949,7 +9058,7 @@ return v;
 ]],
     ana = {
         unreachs = 1,
-        abrt = 1,
+        abrt = 3,
         acc = 1,     -- should be 0
     },
     run = {
@@ -8974,7 +9083,7 @@ return v1 + v2;
 ]],
     ana = {
         unreachs = 1,
-        abrt = 1,
+        abrt = 4,
     },
     --run = 3,
     run = 1,
@@ -9028,7 +9137,7 @@ return v1 + v2;
 ]],
     ana = {
         unreachs = 1,
-        abrt = 1,
+        abrt = 3,
     },
     run = {
         --['5~>A'] = 10,
@@ -9053,7 +9162,7 @@ return 0;
 ]],
     ana = {
         unreachs = 1,
-        abrt = 1,
+        abrt = 3,
     },
     run = { ['1~>A']=0 },
 }
@@ -9075,7 +9184,7 @@ return v1+v2+v3;
 ]],
     ana = {
         unreachs = 1,
-        abrt = 1,
+        abrt = 3,
     },
     run = {
         --['2~>A'] = 5,
@@ -9083,6 +9192,7 @@ return v1+v2+v3;
     }
 }
 
+-- TODO: parei com abrt aqui!!!
 Test { [[
 var int v1=0,v2=0,v3=0,v4=0,v5=0,v6=0;
 loop do
@@ -9109,7 +9219,7 @@ return v1+v2+v3+v4+v5+v6;
 ]],
     ana = {
         unreachs = 2,
-        abrt = 2,
+        abrt = 6,
     },
     --run = 21,
     run = 1,
@@ -9139,7 +9249,7 @@ return v1+v2+v3+v4+v5+v6;
 ]],
     ana = {
         unreachs = 2,
-        abrt = 2,
+        abrt = 6,
     },
     --run = 21,
     run = 7,
@@ -9175,7 +9285,7 @@ return v1+v2+v3+v4+v5+v6;
 ]],
     ana = {
         unreachs = 2,
-        abrt = 2,
+        abrt = 6,
     },
     --run = { ['~>A'] = 21 },
     run = { ['~>A'] = 1 },
@@ -9209,7 +9319,7 @@ return v1+v2+v3+v4+v5+v6;
 ]],
     ana = {
         unreachs = 2,
-        abrt = 2,
+        abrt = 6,
     },
     --run = { ['1~>A']=21 },
     run = { ['1~>A']=7 },
@@ -9360,7 +9470,7 @@ loop do
     par/or do
         await B;
     with
-        tmp int v = await B;
+        var int v = await B;
         b = v;
         break;
     end;
@@ -11015,7 +11125,7 @@ input int P2;
 par do
     loop do
         par/or do
-            tmp int p2 = await P2;
+            var int p2 = await P2;
             if p2 == 1 then
                 return 0;
             end;
@@ -14710,7 +14820,7 @@ return 1;
 }
 
 Test { [[
-tmp int a = 1;
+var int a = 1;
 return a;
 ]],
     run = 1,
@@ -15985,8 +16095,8 @@ Test { [[
 
 Test { [[
 C _char=1;
-tmp u8[10] v1;
-tmp _char[10] v2;
+var u8[10] v1;
+var _char[10] v2;
 
 loop i, 10 do
     v1[i] = i;
@@ -16014,7 +16124,7 @@ return sizeof<_t>;
 
 Test { [[
 C _char=1;
-tmp _char a = <_char> 1;
+var _char a = <_char> 1;
 return <int>a;
 ]],
     run = 1,
@@ -16186,7 +16296,7 @@ par do
                 end
             with
                 loop do
-                    tmp int key = await KEY;
+                    var int key = await KEY;
                     if key == 1 then
                         ship = 0;
                     end
@@ -16458,7 +16568,7 @@ par/or do
 with
     await 1us;
 end
-tmp int v = await 1us;
+var int v = await 1us;
 return v;
 ]],
     run = { ['~>1us; ~>F; ~>4us; ~>F']=3 }
@@ -16620,7 +16730,7 @@ C _V;
 var T t;
 return _V;
 ]],
-    run = 12,    -- 2/2 (trl0) 4 (x) 4 (y)
+    run = 8,    -- 2/2 (trl0) 0 (x) 4 (y)
 }
 
 Test { [[
@@ -16636,7 +16746,7 @@ end
 C _V;
 return _V;
 ]],
-    run = 12,
+    run = 8,
 }
 
 Test { [[
@@ -16654,7 +16764,7 @@ end
 C _V;
 return _V;
 ]],
-    run = 12,   -- 1/1 cls / 2 trl / 4 x / 4 v
+    run = 8,   -- 1/1 cls / 2 trl / 0 x / 4 v
 }
 
 Test { [[
@@ -20865,7 +20975,7 @@ par do
     end
 with
     loop do
-        tmp int v = await b.i;
+        var int v = await b.i;
         emit b.x=v+1;
         _ret_val = _ret_val + b.ii*2;    // 31
         _ret_end = 1;                   // 32

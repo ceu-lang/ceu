@@ -77,45 +77,9 @@ function COMM (me, comm)
 end
 
 function CLEAR (me)
---[[
-usar me em vez de me[1].evt
-    local i = _AST.iter(_AST.pred_prio)
-    i()                 -- 1st is me
-    local top = i()     -- 2nd is top
-    if me.ana.pos == (top and top.ana.pos) then
-        error'oi'
-        return
-    end
-]]
-
     COMM(me, 'CLEAR')
     LINE(me, 'ceu_trails_clr('..me.trails[1]..','..me.trails[2]..
                                 ', _ceu_org_);')
-
---[[
-    local has_orgs = me.has.orgs and 1 or 0
-    local has_news = me.has.news and 1 or 0
-    local has_chg  = me.has.chg  and 1 or 0
-    local orgs_news = '('..has_orgs..'||'..has_news..'||'..has_chg..')'
-    -- (orgs with fins are also covered)
-    local fins = me.has.fins or me.has.news or me.has.chg
-
-    -- needs_clr:
-    -- blocks w/o fins (or w/ orgs/fins) are not required to clr
-    -- loops/setblocks w/o ret/brk in parallel are not required to clr
-    me.needs_clr = me.tag=='ParOr' or me.needs_clr
-
-    -- remove pending tracks in parallel
-    if fins or me.needs_clr then    -- first remove tracks to kill
-        LINE(me, 'ceu_trk_clr('..orgs_news..', _ceu_org_, '
-                    ..me.lbls[1]..','..me.lbls[2]..');')
-    end
-
-    if fins or (me.needs_clr and me.ns.lsts>0) then
-        LINE(me, 'ceu_lsts_clr('..orgs_news..', _ceu_org_, '
-                    ..me.lbls[1]..','..me.lbls[2]..');')
-    end
-]]
 end
 
 F = {
@@ -329,12 +293,6 @@ if (*PTR_cur(u8*,]]..(me.off_fins+i-1)..[[)) {
         if fin and fin.active then
             LINE(me, '*PTR_cur(u8*,'..fin.idx..') = 1;')
         end
-    end,
-
-    SetAwait = function (me)
-        local e1, e2 = unpack(me)
-        CONC(me, e2)
-        ATTR(me, e1, e2.ret)
     end,
 
     SetBlock = function (me)
@@ -598,6 +556,18 @@ if (ceu_trails_get(]]..me.trails[1]..[[,_ceu_org_)->lbl != CEU_PENDING)
         end
     end,
 
+    SetAwait = function (me)
+        CONC(me, me[2]) -- await code
+    end,
+    _SetAwait = function (me)
+        local set = _AST.iter'SetAwait'()
+        if not set then
+            return
+        end
+        local e1, e2 = unpack(set)
+        ATTR(me, e1, e2.ret)
+    end,
+
     AwaitN = function (me)
         LINE(me, [[
 ceu_trails_set(]]..me.trails[1]..[[,CEU_INACTIVE,_ceu_org_);
@@ -606,8 +576,11 @@ return;
     end,
 
     AwaitT = function (me)
-        local exp = unpack(me)
+        local exp, cnd = unpack(me)
         local wclk = CLS().mem.wclock0 + (me.wclocks[1]*4)
+        if cnd then
+            LINE(me, 'do {')
+        end
         LINE(me, [[
 ceu_trails_set(]]..me.trails[1]..', -'..me.lbl.id..[[, _ceu_org_);  // OFF
 ceu_trails_set_wclock( (s32)]]..VAL(exp)..','..wclk..[[, _ceu_org_);
@@ -620,10 +593,14 @@ case ]]..me.lbl.id..[[:
         return;
 ]])
         DEBUG_TRAILS(me)
+        F._SetAwait(me)
+        if cnd then
+            LINE(me, '} while (!('..cnd.val..'));')
+        end
     end,
 
     AwaitInt = function (me)
-        local int = unpack(me)
+        local int, cnd = unpack(me)
         local org = (int.org and int.org.val) or '_ceu_org_'
         LINE(me, [[
 //fprintf(stderr, "awt: %p %d\n", ]]..org..[[,]]..me.lbl.id..[[);
@@ -637,13 +614,19 @@ case ]]..me.lbl.id..[[:
     if (]]..org..[[ != _ceu_evt_p_->org)
         return;
 #endif
-// TODO: until cond
 ]])
         DEBUG_TRAILS(me)
+        F._SetAwait(me)
+        if cnd then
+            LINE(me, [[
+    if (! (]]..cnd.val..[[))
+        return;
+]])
+        end
     end,
 
     AwaitExt = function (me)
-        local e,_ = unpack(me)
+        local e, cnd = unpack(me)
         LINE(me, [[
 ceu_trails_set(]]..me.trails[1]..', -'..me.lbl.id..[[,_ceu_org_);   // OFF
 return;
@@ -651,9 +634,15 @@ return;
 case ]]..me.lbl.id..[[:
     if (_ceu_evt_id_ != IN_]]..e.evt.id..[[)
         return;
-// TODO: until cond
 ]])
         DEBUG_TRAILS(me)
+        F._SetAwait(me)
+        if cnd then
+            LINE(me, [[
+    if (! (]]..cnd.val..[[))
+        return;
+]])
+        end
     end,
 
     Async_pos = function (me)
