@@ -46,11 +46,10 @@ function COPY (n)
 end
 
 function _ANA.CMP (n1, n2)
-    for k1 in pairs(n1) do
-        if not n2[k1] then
-            return false
-        end
-    end
+    return _ANA.HAS(n1, n2) and _ANA.HAS(n2, n1)
+end
+
+function _ANA.HAS (n1, n2)
     for k2 in pairs(n2) do
         if not n1[k2] then
             return false

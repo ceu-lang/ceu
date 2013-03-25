@@ -76,8 +76,34 @@ function COMM (me, comm)
     LINE(me, '/* '..comm..' */', 0)
 end
 
+local _iter = function (n)
+    if n.tag == 'Block' and n.fins then
+        return true
+    end
+
+    if n.tag == 'SetBlock' and n.has_return then
+        return true
+    end
+
+    if n.tag == 'Loop' and n.has_break then
+        return true
+    end
+
+    n = n.__par
+    if n and (n.tag == 'ParOr') then
+        return true     -- par branch
+    end
+end
+
 function CLEAR (me)
-    COMM(me, 'CLEAR')
+DBG(me.tag, me.has.fins)
+    COMM(me, 'CLEAR: '..me.tag..' ('..me.ln..')')
+    if (not me.has.fins) and _ANA then   -- fin must execute before any stmt
+        local top = _AST.iter(_iter)()
+        if top and _ANA.CMP(top.ana.pos, me.ana.pos) then
+            return  -- top will clear (but blocks due to fins)
+        end
+    end
     LINE(me, 'ceu_trails_clr('..me.trails[1]..','..me.trails[2]..
                                 ', _ceu_org_);')
 end
@@ -213,7 +239,7 @@ case ]]..me.lbl.id..[[:
         end
     end,
 
-    Block = function (me)
+    Block_pos = function (me)
         local blk = unpack(me)
 
         if CLS().is_ifc then
@@ -248,7 +274,7 @@ if (*PTR_cur(u8*,]]..(me.off_fins+i-1)..[[)) {
             HALT(me)
             CASE(me, me.lbl_fin_cnt)
         end
-        if me.has.fins then
+        if me.fins then
             CLEAR(me)
         end
         LINE(me, '}')
@@ -295,12 +321,14 @@ if (*PTR_cur(u8*,]]..(me.off_fins+i-1)..[[)) {
         end
     end,
 
-    SetBlock = function (me)
+    SetBlock_pos = function (me)
         local _,blk = unpack(me)
         CONC(me, blk)
         HALT(me)        -- must escape with `return´
         CASE(me, me.lbl_out)
-        CLEAR(me)
+        if me.has_return then
+            CLEAR(me)
+        end
     end,
     Return = function (me)
         SWITCH(me, _AST.iter'SetBlock'().lbl_out)
@@ -355,7 +383,7 @@ ceu_trails_set(]]..sub.trails[1]..[[, CEU_INACTIVE, _ceu_org_);
         end
     end,
 
-    ParOr = function (me)
+    ParOr_pos = function (me)
         F._Par(me)
         for i, sub in ipairs(me) do
             CASE(me, me.lbls_in[i])
@@ -404,7 +432,7 @@ if (]]..VAL(c)..[[) {
 ]])
     end,
 
-    Loop = function (me)
+    Loop_pos = function (me)
         local body = unpack(me)
 
         LINE(me, [[

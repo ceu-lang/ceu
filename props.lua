@@ -129,7 +129,7 @@ F = {
     end,
 
     Org = function (me)
-        --me.ns.trails = me.var.cls.ns.trails
+        me.has.fins = me.var.cls.has.fins
     end,
 
     Dcl_ext = function (me)
@@ -211,6 +211,7 @@ F = {
     Return = function (me)
         local blk = _AST.iter'SetBlock'()
         blk.rets[me] = true
+        blk.has_return = true
 
         -- setblock w/ returs in parallel needs CLEAR
         for n in _AST.iter() do

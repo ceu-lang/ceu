@@ -151,8 +151,8 @@ end
     run = 2;
 }
 
+do return end
 --]===]
---do return end
 
 Test { [[
 input int A;
@@ -18915,6 +18915,25 @@ return ret;
         ['~>1s;~>F;~>1s;~>F'] = 10,
         ['~>1s;~>1s;~>F'] = 11,
     },
+}
+
+Test { [[
+C _V;
+C do
+    static int V = 0;
+end
+do
+    do
+        do
+            finalize with
+                _V = 100;
+            end
+        end
+    end
+end
+return _V;
+]],
+    run = 100;
 }
 
 Test { [[
