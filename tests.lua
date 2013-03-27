@@ -155,6 +155,35 @@ do return end
 --]===]
 
 Test { [[
+finalize with
+end
+return 1;
+]],
+    run = 1,
+}
+do return end
+
+Test { [[
+C _f(), _V;
+C do
+    int V;
+    void f (int* x) {
+        V = *x;
+    }
+end
+var int ret = 10;
+do
+    var int x = 5;
+    _f(&x) finalize with
+        _V = _V + 1;
+    end;
+end
+return ret + _V;
+]],
+    run = 16,
+}
+
+Test { [[
 input int A;
 var int x = await A until x>10;
 return x;

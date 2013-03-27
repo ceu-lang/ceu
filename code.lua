@@ -77,15 +77,15 @@ function COMM (me, comm)
 end
 
 local _iter = function (n)
-    if n.tag == 'Block' and n.fins then
+    if n.tag == 'Block' and n.needs_clr then
         return true
     end
 
-    if n.tag == 'SetBlock' and n.has_return then
+    if n.tag == 'SetBlock' and n.needs_clr then
         return true
     end
 
-    if n.tag == 'Loop' and n.has_break then
+    if n.tag == 'Loop' and n.needs_clr then
         return true
     end
 
@@ -96,14 +96,19 @@ local _iter = function (n)
 end
 
 function CLEAR (me)
-DBG(me.tag, me.has.fins)
     COMM(me, 'CLEAR: '..me.tag..' ('..me.ln..')')
+
+    if not me.needs_clr then
+        return
+    end
+
     if (not me.has.fins) and _ANA then   -- fin must execute before any stmt
         local top = _AST.iter(_iter)()
         if top and _ANA.CMP(top.ana.pos, me.ana.pos) then
             return  -- top will clear (but blocks due to fins)
         end
     end
+
     LINE(me, 'ceu_trails_clr('..me.trails[1]..','..me.trails[2]..
                                 ', _ceu_org_);')
 end
@@ -280,6 +285,13 @@ if (*PTR_cur(u8*,]]..(me.off_fins+i-1)..[[)) {
         LINE(me, '}')
     end,
 
+    -- TODO: more tests
+    Op2_call_pre = function (me)
+        local _, f, exps, fin = unpack(me)
+        if fin and fin.active then
+            LINE(_AST.iter'Stmts'(), '*PTR_cur(u8*,'..fin.idx..') = 1;  // XXX')
+        end
+    end,
     Finalize = function (me)
         -- enable finalize
         local set,fin = unpack(me)
@@ -388,11 +400,17 @@ ceu_trails_set(]]..sub.trails[1]..[[, CEU_INACTIVE, _ceu_org_);
         for i, sub in ipairs(me) do
             CASE(me, me.lbls_in[i])
             CONC(me, sub)
-            COMM(me, 'PAROR JOIN')
-            SWITCH(me, me.lbl_out)
+
+            if not (_ANA and sub.ana.pos[false]) then
+                COMM(me, 'PAROR JOIN')
+                SWITCH(me, me.lbl_out)
+            end
         end
-        CASE(me, me.lbl_out)
-        CLEAR(me)
+
+        if not (_ANA and me.ana.pos[false]) then
+            CASE(me, me.lbl_out)
+            CLEAR(me)
+        end
     end,
 
     ParAnd = function (me)

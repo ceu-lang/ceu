@@ -94,6 +94,7 @@ F = {
             _PROPS.has_fins = true
             me.has.fins = true
             me.ns.trails = me.ns.trails + 1 -- implicit await in parallel
+            me.needs_clr = true
         end
     end,
     Stmts   = MAX_all,
@@ -110,6 +111,7 @@ F = {
                 end
             end
         end
+        me.needs_clr = (me.tag == 'ParOr')
     end,
 
     Dcl_cls = function (me)
@@ -203,6 +205,12 @@ F = {
             ASR(loop.depth>async.depth, me, '`break´ without loop')
         end
     end,
+
+    Loop_pos = function (me)
+        F.Node_pos(me)
+        me.needs_clr = me.needs_clr or me.has.fins
+    end,
+    SetBlock_pos = 'Loop_pos',
 
     SetBlock_pre = function (me)
         F.ParOr_pre(me)

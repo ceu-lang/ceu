@@ -484,17 +484,27 @@ F = {
         end
     end,
 
-    Finalize_pre = function (me)
-        local set, fin = unpack(me)
+    Op2_call_pre = function (me)
+        local _, f, exps, fin = unpack(me)
+        if fin then
+            F.Finalize_pre(me, me, fin)
+        end
+    end,
+    Finalize_pre = function (me, set, fin)
+        if not fin then
+            set, fin = unpack(me)
+        end
         assert(fin[1].tag == 'Block')
         assert(fin[1][1].tag == 'Stmts')
-        fin.active = #fin[1][1]>1 or fin[1][1][1].tag~='Nothing'
+        fin.active = fin[1] and fin[1][1] and
+                        (#fin[1][1]>1 or
+                         fin[1][1][1] and fin[1][1][1].tag~='Nothing')
         if set then
-            set.fin = fin
+            set.fin = fin                   -- let call/set handle
         elseif fin.active then
             local blk = _AST.iter'Block'()
             blk.fins = blk.fins or {}
-            table.insert(blk.fins, 1, fin)
+            table.insert(blk.fins, 1, fin)  -- force finalize for this blk
         end
     end,
 
