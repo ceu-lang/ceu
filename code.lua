@@ -197,27 +197,45 @@ if (]]..exp.val..[[ != NULL) {
     end,
 ]=]
 
-    Org = function (me)
-        local idx = me.idx or 0
-        COMM(me, 'ORG')
-        local org = 'PTR_org(void*,'..VAL(me.var)..','
-                        ..idx..'*'..me.var.cls.mem.max..')'
+    Orgs = function (me)
+        COMM(me, 'ORGS')
         LINE(me, [[
 // alaways point to me.lbl
 ceu_trails_set(]]..me.trails[1]..','..me.lbl.id..[[,_ceu_org_);
-
-// start organism
-ceu_call(_ceu_evt_id_, _ceu_evt_p_, ]]
-            ..me.var.cls.lbl.id..','..org..[[);
-return;
-
-// awake organism
-case ]]..me.lbl.id..[[:
-//fprintf(stderr, "GO: %p\n", ]]..org..[[);
-    ceu_trails_go(_ceu_evt_id_, _ceu_evt_p_, ]]
-                ..org..', '..me.var.cls.ns.trails..[[);
-    return;
 ]])
+
+        -- start all orgs
+        for _, var in ipairs(me.vars) do
+            LINE(me, [[{
+int i;
+for (i=0; i<]]..(var.arr or 1)..[[; i++) {
+    // start organism
+    ceu_call(_ceu_evt_id_, _ceu_evt_p_, ]]
+            ..var.cls.lbl.id..','
+            ..'PTR_org(void*,'..VAL(var)..',i*'..var.cls.mem.max..[[));
+}
+}]])
+        end
+        LINE (me, 'return;')
+
+        -- awake all orgs
+        LINE(me, [[
+// awake organisms
+case ]]..me.lbl.id..[[:
+]])
+
+        for _, var in ipairs(me.vars) do
+            LINE(me, [[{
+int i;
+for (i=0; i<]]..(var.arr or 1)..[[; i++) {
+    // awake organism
+    ceu_trails_go(_ceu_evt_id_, _ceu_evt_p_,
+                PTR_org(void*,]]..VAL(var)..',i*'..var.cls.mem.max..'),'
+                ..var.cls.ns.trails..[[);
+}
+}]])
+        end
+        LINE (me, 'return;')
 --[=[
     if new then
         LINE(me, [[

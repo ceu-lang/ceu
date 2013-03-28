@@ -130,8 +130,10 @@ F = {
 ]]
     end,
 
-    Org = function (me)
-        me.has.fins = me.var.cls.has.fins
+    Orgs = function (me)
+        for _, var in ipairs(me.vars) do
+            me.has.fins = me.has.fins or var.cls.has.fins
+        end
     end,
 
     Dcl_ext = function (me)

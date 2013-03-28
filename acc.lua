@@ -57,10 +57,12 @@ F = {
     ParAnd_pos  = 'ParOr_pos',
     ParEver_pos = 'ParAnd_pos',
 
-    Org = function (me)
+    Orgs = function (me)
         -- insert cls accs on my parent ParOr
-        for _,acc in ipairs(me.var.cls.ana.accs) do
-            INS(acc, true)
+        for _, var in ipairs(me.vars) do
+            for _,acc in ipairs(var.cls.ana.accs) do
+                INS(acc, true)
+            end
         end
     end,
 
@@ -349,6 +351,18 @@ function CHK_ACC (accs1, accs2, NO_par, NO_emts)
                         DBG('WRN : abortion : '..
                                 acc1.err..' vs '..acc2.err)
                         _ANA.ana.abrt = _ANA.ana.abrt + 1
+--[[
+DBG'==============='
+DBG(acc1.cls.id, acc1, acc1.id, acc1.md, acc1.tp, acc1.any, acc1.err)
+for k in pairs(path1) do
+    DBG('path1', acc1.path, type(k)=='table' and k[1].id or k)
+end
+DBG(acc2.cls.id, acc2, acc2.id, acc2.md, acc2.tp, acc2.any, acc2.err)
+for k in pairs(path2) do
+    DBG('path2', acc2.path, type(k)=='table' and k[1].id or k)
+end
+DBG'==============='
+]]
                         if acc1.md == 'par' then
                             acc1.id.parChk = true
                         end
@@ -400,18 +414,6 @@ function CHK_ACC (accs1, accs2, NO_par, NO_emts)
                     then
                         DBG('WRN : nondeterminism : '..acc1.err..' vs '..acc2.err)
                         _ANA.ana.acc = _ANA.ana.acc + 1
---[[
-DBG'==============='
-DBG(acc1.cls.id, acc1, acc1.id, acc1.md, acc1.tp, acc1.any, acc1.err)
-for k in pairs(path1) do
-    DBG('path1', acc1.path, type(k)=='table' and k[1].id or k)
-end
-DBG(acc2.cls.id, acc2, acc2.id, acc2.md, acc2.tp, acc2.any, acc2.err)
-for k in pairs(path2) do
-    DBG('path2', acc2.path, type(k)=='table' and k[1].id or k)
-end
-DBG'==============='
-]]
                     end
                 end
             end
@@ -434,7 +436,7 @@ function CHK_EXCPT (s1, s2, isOR)
     for _, ana in ipairs(s1.ana.accs) do
         if ana.md == 'tr' then
             if _chk(s2.ana.pos,ana.id) and isOR or -- terminates w/ same event
-               s2.ana.pos[false]=='esc' --or       -- ~terminates (return/break)
+               s2.ana.pos[false] --or       -- ~terminates (return/break)
                --s2.ana.pos[true]                 -- terminates tight
             then
                 DBG('WRN : exception : line '..s2.ln..' vs '..ana.err)

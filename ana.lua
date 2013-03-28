@@ -93,8 +93,8 @@ F = {
             me.ana.pre = { [me.id]=true }
         end
     end,
-    Org = function (me)
-        me.ana.pos = { [false]=true }       -- an instance runs forever
+    Orgs = function (me)
+        me.ana.pos = { [false]=true }       -- orgs run forever
     end,
 
     Stmts_bef = function (me, sub, i)

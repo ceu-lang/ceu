@@ -209,29 +209,19 @@ F = {
         end
     end,
     Block = function (me)
-        local par = _AST.node('ParOr')(me.ln)
-
+        local orgs
         for _, var in ipairs(me.vars) do
             if var.cls then
-                if var.arr then
-                    for i=1, var.arr do
-                        local org = _AST.node('Org')(me.ln)
-                        org.var = var
-                        org.idx = (i-1)
-                        par[#par+1] = org
-                    end
-                else
-                    local org = _AST.node('Org')(me.ln)
-                    org.var = var
-                    par[#par+1] = org
+                if not orgs then
+                    orgs = _AST.node('Orgs')(me.ln)
+                    orgs.vars = {}
                 end
+                orgs.vars[#orgs.vars+1] = var
             end
         end
-
-        -- at least one Org
-        if #par > 0 then
-            table.insert(par, 1, me[1]) -- run constructors first
-            me[1] = par                 -- Block => par/or => Stmts,o1,oN
+        if orgs then
+             -- run constructors first
+            me[1] = _AST.node('ParOr')(me.ln, me[1], orgs)
         end
     end,
 

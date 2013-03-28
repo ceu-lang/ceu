@@ -161,7 +161,6 @@ return 1;
 ]],
     run = 1,
 }
-do return end
 
 Test { [[
 C _f(), _V;
@@ -18321,14 +18320,14 @@ end
 var T[2] ts;
 await START;
 par/and do
-    ts[0].a = 10;
+    ts[0].a = 10;   // 11
 with
-    ts[1].a = 20;
+    ts[1].a = 20;   // 13
 end
 return ts[0].a + ts[1].a;
 ]],
     ana = {
-        acc = 9,
+        acc = 5,
     },
     run = 30,
 }
@@ -18350,7 +18349,7 @@ end
 return ts[0].a + ts[1].a;
 ]],
     ana = {
-        acc = 9,
+        acc = 5,
     },
     run = 30,
 }
@@ -18419,7 +18418,7 @@ end
 return 10;
 ]],
     ana = {
-        acc = 10,
+        acc = 6,    -- TODO: not checked
     },
     run = 10,
 }
@@ -18566,45 +18565,6 @@ return 100;
 }
 
 Test { [[
-input void START;
-class T with
-    event int e, ok, go;
-    var int ee;
-do
-    await this.go;
-    if ee == 1 then
-        emit this.e;
-    end
-    await (0)ms;
-    emit ok;
-end
-var T a1, a2;
-var int ret = 0;
-await START;
-par/or do
-    par/and do
-        a1.ee = 1;
-        emit a1.go;
-        await a1.ok;
-        ret = 1;        // 20
-    with
-        a2.ee = 2;
-        emit a2.go;
-        await a2.ok;
-        ret = 1;        // 25
-    end
-with
-    await a2.e;
-    ret = 100;
-end
-return ret;
-]],
-    ana = {
-        acc = 1,
-    },
-    run = { ['~>1s']=1 },
-}
-Test { [[
 class T with
     event int a, go, ok;
     var int aa;
@@ -18692,6 +18652,45 @@ return ret + aa.aa + aa.bb;
     run = 10,
 }
 
+Test { [[
+input void START;
+class T with
+    event int e, ok, go;
+    var int ee;
+do
+    await this.go;
+    if ee == 1 then
+        emit this.e;
+    end
+    await (0)ms;
+    emit ok;
+end
+var T a1, a2;
+var int ret = 0;
+await START;
+par/or do
+    par/and do
+        a1.ee = 1;
+        emit a1.go;
+        await a1.ok;
+        ret = 1;        // 20
+    with
+        a2.ee = 2;
+        emit a2.go;
+        await a2.ok;
+        ret = 1;        // 25
+    end
+with
+    await a2.e;
+    ret = 100;
+end
+return ret;
+]],
+    ana = {
+        acc = 1,
+    },
+    run = { ['~>1s']=1 },
+}
 Test { [[
 C nohold _f();
 input void START;

@@ -79,8 +79,8 @@ F = {
             me.lbl_free = new{'Class__fin_'..me.id, depth=me.depth}
         end
     end,
-    Org = function (me)
-        me.lbl = new{'Org_'..me.var.id}
+    Orgs = function (me)
+        me.lbl = new{'Orgs'}
     end,
 
     SetBlock_pre = function (me)
