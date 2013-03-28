@@ -199,10 +199,10 @@ STATS = {
 }
 ]])
 
-assert(STATS.count  ==    1110)
-assert(STATS.mem    ==    9057)
-assert(STATS.trails ==    1948)
-assert(STATS.bytes  == 5885674)
+assert(STATS.count  ==    1111)
+assert(STATS.mem    ==    9018)
+assert(STATS.trails ==    1904)
+assert(STATS.bytes  == 5893312)
 --[[
 STATS = {
     bytes = BIG,  -- ON/ceu_param
