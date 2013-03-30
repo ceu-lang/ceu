@@ -123,7 +123,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
 
     , Nothing = K'nothing'
 
-    , _StmtS = V'AwaitT'   + V'AwaitExt'  + V'AwaitInt'
+    , _StmtS = V'AwaitS'   + V'AwaitT'    + V'AwaitExt'  + V'AwaitInt'
              + V'EmitT'    + V'EmitExtS'  + V'EmitInt'
              + V'_Dcl_c'   + V'_Dcl_ext'
              + V'_Dcl_int' + V'_Dcl_var'
@@ -150,7 +150,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
 
     , _Set  = V'_Exp' * V'_Sets'
     , _Sets = (CK'=' + CK':=') * (
-                Cc'SetAwait' * (V'AwaitT'+V'AwaitExt'+V'AwaitInt')
+                Cc'SetAwait' * (V'AwaitS'+V'AwaitT'+V'AwaitExt'+V'AwaitInt')
               + Cc'SetBlock' * V'_SetBlock'
               + Cc'SetExp'   * V'_Exp'
               + Cc'SetNew'   * K'new' * V'ID_cls'
@@ -260,6 +260,12 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , AwaitExt = K'await' * EV'Ext'  * (V'__until' + Cc(false))
     , AwaitInt = K'await' * EV'_Exp' * (V'__until' + Cc(false))
     , AwaitT   = K'await' * (V'WCLOCKK'+V'WCLOCKE')
+                                     * (V'__until' + Cc(false))
+
+    , __awaits = K'(' *
+                    (V'WCLOCKK' + V'WCLOCKE' + V'Ext' + EV'_Exp')
+                 * EK')'
+    , AwaitS   = K'await' * V'__awaits' * (EK'or' * V'__awaits')^1
                                      * (V'__until' + Cc(false))
 
     , _EmitExt = K'emit' * EV'Ext' * (K'(' * V'_Exp'^-1 * EK')')^-1

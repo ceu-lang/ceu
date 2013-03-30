@@ -46,7 +46,7 @@ local NO_fin = {
     Finalize=true, Finally=true,
     Host=true, Return=true, Async=true,
     ParEver=true, ParOr=true, ParAnd=true,
-    AwaitExt=true, AwaitInt=true, AwaitN=true, AwaitT=true,
+    AwaitS=true, AwaitExt=true, AwaitInt=true, AwaitN=true, AwaitT=true,
     EmitInt=true,
 }
 
@@ -54,7 +54,7 @@ local NO_async = {
     ParEver=true, ParOr=true, ParAnd=true,
     EmitInt=true,
     Async=true,
-    AwaitExt=true, AwaitInt=true, AwaitN=true, AwaitT=true,
+    AwaitS=true, AwaitExt=true, AwaitInt=true, AwaitN=true, AwaitT=true,
 }
 
 F = {
@@ -266,6 +266,17 @@ F = {
     AwaitN = function (me)
         --me.ns.trails = 1
         F._loop(me)
+    end,
+    AwaitS = function (me)
+        for _, awt in ipairs(me.awaits) do
+            if awt.isExp and F.AwaitInt then
+                F.AwaitInt(me)
+            elseif awt.tag=='Ext' and F.AwaitExt then
+                F.AwaitExt(me)
+            elseif F.AwaitT then
+                F.AwaitT(me)
+            end
+        end
     end,
 
     EmitInt = function (me)

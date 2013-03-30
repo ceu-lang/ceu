@@ -51,10 +51,10 @@ Test = function (t)
 
     if not check('parser')   then return end
     if not check('ast')      then return end
+    _AST.dump(_AST.root)
     if not check('env')      then return end
     dofile 'ana.lua'
     dofile 'acc.lua'
-    --_AST.dump(_AST.root)
     if not check('tight')    then return end
     --dofile 'awaits.lua'
     if not check('props')    then return end
@@ -199,10 +199,10 @@ STATS = {
 }
 ]])
 
-assert(STATS.count  ==    1111)
-assert(STATS.mem    ==    9018)
-assert(STATS.trails ==    1904)
-assert(STATS.bytes  == 5893312)
+assert(STATS.count  ==    1123)
+assert(STATS.mem    ==    9059)
+assert(STATS.trails ==    1911)
+assert(STATS.bytes  == 5940067)
 --[[
 STATS = {
     bytes = BIG,  -- ON/ceu_param

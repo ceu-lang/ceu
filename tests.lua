@@ -154,77 +154,6 @@ end
 do return end
 --]===]
 
-Test { [[
-finalize with
-end
-return 1;
-]],
-    run = 1,
-}
-
-Test { [[
-C _f(), _V;
-C do
-    int V;
-    void f (int* x) {
-        V = *x;
-    }
-end
-var int ret = 10;
-do
-    var int x = 5;
-    _f(&x) finalize with
-        _V = _V + 1;
-    end;
-end
-return ret + _V;
-]],
-    run = 16,
-}
-
-Test { [[
-input int A;
-var int x = await A until x>10;
-return x;
-]],
-    run = {
-        ['1~>A; 0~>A; 10~>A; 11~>A'] = 11,
-    },
-}
-
-Test { [[
-input int A;
-var int v = 0;
-par do
-    await 10s until v;
-    return 10;
-with
-    await 10min;
-    v = 1;
-end
-]],
-    ana = {
-        acc = 1,
-    },
-    run = {
-        ['~>10min10s'] = 10,
-    },
-}
-
-Test { [[
-input void START;
-var int h = 10;
-var int* p = &h;
-do
-    var int x = 0;
-    await START;
-    var int z = 0;
-end
-return *p;
-]],
-    run = 10;
-}
-
 Test { [[return(1);]],
     ana = {
         isForever = false,
@@ -13444,6 +13373,35 @@ return(ret);
 ]],
     run = 20,
 }
+
+Test { [[
+finalize with
+end
+return 1;
+]],
+    run = 1,
+}
+
+Test { [[
+C _f(), _V;
+C do
+    int V;
+    void f (int* x) {
+        V = *x;
+    }
+end
+var int ret = 10;
+do
+    var int x = 5;
+    _f(&x) finalize with
+        _V = _V + 1;
+    end;
+end
+return ret + _V;
+]],
+    run = 16,
+}
+
 -- TODO: bounded loop on finally
 
     -- ASYNCHRONOUS
@@ -14676,6 +14634,20 @@ var _char* p;
 return 1;
 ]],
     run = false,
+}
+
+Test { [[
+input void START;
+var int h = 10;
+var int* p = &h;
+do
+    var int x = 0;
+    await START;
+    var int z = 0;
+end
+return *p;
+]],
+    run = 10;
 }
 
     -- ARRAYS
@@ -21177,6 +21149,144 @@ end
     },
     awaits = 1,
     run = { ['~>A; ~>A']=2 },
+}
+
+-- UNTIL
+
+Test { [[
+input int A;
+var int x = await A until x>10;
+return x;
+]],
+    run = {
+        ['1~>A; 0~>A; 10~>A; 11~>A'] = 11,
+    },
+}
+
+Test { [[
+input int A;
+var int v = 0;
+par do
+    await 10s until v;
+    return 10;
+with
+    await 10min;
+    v = 1;
+end
+]],
+    ana = {
+        acc = 1,
+    },
+    run = {
+        ['~>10min10s'] = 10,
+    },
+}
+
+-- AWAITS // AWAIT MANY // SELECT
+
+Test { [[
+await (10ms);
+return 1;
+]],
+    parser = 'ERR : line 1 : after `)´ : expected `or´',
+}
+Test { [[
+await (10ms) or (20ms);
+return 1;
+]],
+    env = 'ERR : line 1 : invalid await: multiple timers',
+}
+Test { [[
+await ((10)ms);
+return 1;
+]],
+    parser = 'ERR : line 1 : after `)´ : expected `or´',
+}
+
+Test { [[
+await (e) or
+      (f);
+return 1;
+]],
+    env = 'ERR : line 1 : variable/event "e" is not declared',
+}
+
+Test { [[
+event void e;
+var int f;
+await (e) or
+      (f);
+return 1;
+]],
+    env = 'ERR : line 3 : event "f" is not declared',
+}
+
+Test { [[
+event void e;
+event int f;
+input void START;
+await (e) or
+      (f) or
+      (START);
+return 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input void START;
+await (10ms) or (START);
+return 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input void START;
+var int* x = await (10ms) or (START);
+return 1;
+]],
+    env = 'ERR : line 2 : invalid attribution',
+}
+
+Test { [[
+input void START;
+par/or do
+    loop do
+        await (START) or (START);
+    end
+with
+    await START;
+end
+return 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input void START;
+await (10ms) or (START)
+        until 1;
+return 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input void START;
+var int i = await (10ms) or (START)
+        until i==1;
+return i;
+]],
+    run = 1,
+}
+Test { [[
+input void START;
+var int i = await (10ms) or (START)
+        until i==0;
+return i+1;
+]],
+    run = {['~>10ms']=1},
 }
 
 --do return end

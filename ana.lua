@@ -238,6 +238,10 @@ F = {
         me.ana.pos = COPY(set.ana.pos)
     end,
 
+    AwaitS = function (me)
+        DBG'TODO - ana.lua - AwaitS'
+    end,
+
     AwaitExt_aft = function (me, sub, i)
         if i > 1 then
             return

@@ -56,7 +56,8 @@ F =
     SetExp = function (me)
         local e1, e2 = unpack(me)
         if e1.tp ~= '_' then
-            e2.val = '('.._TP.c(e1.tp)..')('..VAL(e2)..')'
+            VAL(e2)
+            --e2.val = '('.._TP.c(e1.tp)..')('..VAL(e2)..')'
         end
     end,
 
@@ -104,6 +105,9 @@ F =
     end,
     AwaitT = function (me)
         me.val = 'CEU.wclk_late'
+    end,
+    AwaitS = function (me)
+        me.val = '__ceu_'..me.n..'_AwaitS'
     end,
 
     Op2_call = function (me)

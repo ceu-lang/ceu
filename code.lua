@@ -621,7 +621,14 @@ if (ceu_trails_get(]]..me.trails[1]..[[,_ceu_org_)->lbl != CEU_PENDING)
     end,
 
     SetAwait = function (me)
-        CONC(me, me[2]) -- await code
+        local _, awt = unpack(me)
+        if awt.ret.tag == 'AwaitS' then
+            LINE(me, '{ int __ceu_'..awt.n..'_AwaitS;')
+        end
+        CONC(me, awt) -- await code
+        if awt.tag == 'AwaitS' then
+            LINE(me, '}')
+        end
     end,
     _SetAwait = function (me)
         local set = _AST.iter'SetAwait'()
@@ -706,6 +713,66 @@ case ]]..me.lbl.id..[[:
     if (! (]]..cnd.val..[[))
         return;
 ]])
+        end
+    end,
+
+    AwaitS = function (me)
+        local LBL_OUT = '__CEU_'..me.n..'_AWAITS'
+        local set = _AST.iter'SetAwait'()
+        if me._until then
+            LINE(me, 'do {')
+        end
+
+        for _, awt in ipairs(me.awaits) do
+            if awt.tag=='WCLOCKK' or awt.tag=='WCLOCKE' then
+                local wclk = CLS().mem.wclock0 + (me.wclocks[1]*4)
+                LINE(me, [[
+ceu_trails_set_wclock( (s32)]]..VAL(awt)..','..wclk..[[, _ceu_org_);
+]])
+            end
+        end
+
+        LINE(me, [[
+ceu_trails_set(]]..me.trails[1]..', -'..me.lbl.id..[[,_ceu_org_);   // OFF
+return;
+
+case ]]..me.lbl.id..[[:
+]])
+
+        for i, awt in ipairs(me.awaits) do
+            if awt.tag == 'Ext' then
+                LINE(me, [[
+                    if (_ceu_evt_id_ == IN_]]..awt.evt.id..[[) {
+                ]])
+            elseif awt.isExp then
+                local org = (awt.org and awt.org.val) or '_ceu_org_'
+                LINE(me, [[
+                    if ( (_ceu_evt_id_ == ]]..(awt.off or awt.evt.off)..[[)
+                    #ifdef CEU_ORGS
+                        && (]]..org..[[ != _ceu_evt_p_->org)
+                    #endif
+                    ) {
+                ]])
+            else -- WCLOCK
+                local wclk = CLS().mem.wclock0 + (me.wclocks[1]*4)
+                LINE(me, [[
+                    if ( (_ceu_evt_id_ == IN__WCLOCK)
+                    &&   (!ceu_wclocks_not(PTR_cur(s32*,]]..wclk..
+                            [[), _ceu_evt_p_->dt)) ) {
+                ]])
+            end
+            if set then
+                LINE(me, me.val..' = '..(i-1)..';')
+            end
+            LINE(me, 'goto '..LBL_OUT..';}')
+        end
+
+        LINE(me, 'return;')
+        LINE(me, LBL_OUT..':;')
+        DEBUG_TRAILS(me)
+        F._SetAwait(me)
+        if me._until then
+            LINE(me, '} while (!('..me._until.val..'));')
         end
     end,
 

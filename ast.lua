@@ -304,6 +304,14 @@ local C; C = {
         end
 ]=]
 
+    AwaitS = function (ln, ...)
+        local ret = node('AwaitS')(ln, ...)
+        ret.awaits = { ... }
+        ret._until = ret.awaits[#ret.awaits]
+        ret.awaits[#ret.awaits] = nil
+        return ret
+    end,
+
     AwaitExt = node('AwaitExt'),
     AwaitInt = node('AwaitInt'),
     AwaitN   = node('AwaitN'),
@@ -405,8 +413,9 @@ local C; C = {
 
     _Exp = function (ln, ...)
         local v1, v2, v3, v4 = ...
+        local ret
         if not v2 then          -- single value
-            return v1
+            ret = v1
         elseif v1==true then    -- unary expression
             -- v1=true, v2=op, v3=exp
             local op = v2
@@ -414,27 +423,29 @@ local C; C = {
                  or op=='+' or op=='~' or op=='*') then
                 op = 'cast'
             end
-            return node('Op1_'..op)(ln, v2,
+            ret = node('Op1_'..op)(ln, v2,
                                     C._Exp(ln, select(3,...)))
         else                    -- binary expression
             -- v1=e1, v2=op, v3=e2, v4=?
             if v2 == ':' then
-                return C._Exp(ln,
+                ret = C._Exp(ln,
                     node('Op2_.')(ln, '.', node('Op1_*')(ln,'*',v1), v3),
                     select(4,...)
                 )
             elseif v2 == 'call' then
-                return C._Exp(ln,
+                ret = C._Exp(ln,
                     node('Op2_'..v2)(ln, v2, v1, v3, v4),
                     select(5,...)
                 )
             else
-                return C._Exp(ln,
+                ret = C._Exp(ln,
                     node('Op2_'..v2)(ln, v2, v1, v3),
                     select(4,...)
                 )
             end
         end
+        ret.isExp = true
+        return ret
     end,
     ExpList  = node('ExpList'),
 

@@ -387,8 +387,20 @@ F = {
         _ENV.pures[me[1]] = true
     end,
 
-    AwaitInt = function (me)
-        local exp = unpack(me)
+    AwaitS = function (me)
+        local wclock
+        for _, awt in ipairs(me.awaits) do
+            if awt.isExp then
+                F.AwaitInt(me, awt)
+            elseif awt.tag~='Ext' then
+                ASR(not wclock, me,
+                    'invalid await: multiple timers')
+                wclock = true
+            end
+        end
+    end,
+    AwaitInt = function (me, exp)
+        local exp = exp or unpack(me)
         local var = exp.var
         ASR(var and var.isEvt, me,
                 'event "'..(var and var.id or '?')..'" is not declared')
@@ -502,6 +514,8 @@ F = {
         local e1, awt = unpack(me)
         ASR(e1.lval, me, 'invalid attribution')
         if awt.ret.tag == 'AwaitT' then
+            ASR(_TP.isNumeric(e1.tp,true), me, 'invalid attribution')
+        elseif awt.ret.tag == 'AwaitS' then
             ASR(_TP.isNumeric(e1.tp,true), me, 'invalid attribution')
         else    -- AwaitInt / AwaitExt
             local evt = awt.ret[1].evt

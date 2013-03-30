@@ -127,6 +127,9 @@ F = {
         me.lbl_cnt = new{'Async_cont'}
     end,
 
+    AwaitS = function (me)
+        me.lbl = new{'Awake_MANY'}
+    end,
     AwaitT = function (me)
         me.lbl = new{'Awake_DT'}
     end,
