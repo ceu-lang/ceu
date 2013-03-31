@@ -633,7 +633,7 @@ if (ceu_trails_get(]]..me.trails[1]..[[,_ceu_org_)->lbl != CEU_PENDING)
     end,
 
     AwaitN = function (me)
-        LINE(to, [[
+        LINE(me, [[
 ceu_trails_set(]]..me.trails[1]..[[,CEU_INACTIVE,_ceu_org_);
 return;
 ]])
