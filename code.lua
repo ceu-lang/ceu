@@ -53,7 +53,7 @@ function LINE (me, line, spc)
                 spc .. line .. '\n'
 end
 
-function HALT (me, emt)
+function HALT (me)
     LINE(me, 'return;')
 end
 
@@ -216,7 +216,7 @@ for (i=0; i<]]..(var.arr or 1)..[[; i++) {
 }
 }]])
         end
-        LINE (me, 'return;')
+        HALT(me)
 
         -- awake all orgs
         LINE(me, [[
@@ -235,7 +235,7 @@ for (i=0; i<]]..(var.arr or 1)..[[; i++) {
 }
 }]])
         end
-        LINE (me, 'return;')
+        HALT(me)
 --[=[
     if new then
         LINE(me, [[
@@ -368,8 +368,7 @@ if (*PTR_cur(u8*,]]..(me.off_fins+i-1)..[[)) {
         -- Ever/Or/And spawn subs
         COMM(me, me.tag..': spawn subs')
         for i, sub in ipairs(me) do
-            -- only if can be aborted
-            if sub.parChk ~= false then     -- nil means no analysis
+            if sub.parChk ~= false then -- only if can be aborted (nil=true)
             if i > 1 then
                 LINE(me, [[
 ceu_trails_set(]]..sub.trails[1]..[[, CEU_PENDING, _ceu_org_);
@@ -622,13 +621,7 @@ if (ceu_trails_get(]]..me.trails[1]..[[,_ceu_org_)->lbl != CEU_PENDING)
 
     SetAwait = function (me)
         local _, awt = unpack(me)
-        if awt.ret.tag == 'AwaitS' then
-            LINE(me, '{ int __ceu_'..awt.n..'_AwaitS;')
-        end
         CONC(me, awt) -- await code
-        if awt.tag == 'AwaitS' then
-            LINE(me, '}')
-        end
     end,
     _SetAwait = function (me)
         local set = _AST.iter'SetAwait'()
@@ -636,22 +629,20 @@ if (ceu_trails_get(]]..me.trails[1]..[[,_ceu_org_)->lbl != CEU_PENDING)
             return
         end
         local e1, e2 = unpack(set)
-        ATTR(me, e1, e2.ret)
+        ATTR(me, e1, set.awt)
     end,
 
     AwaitN = function (me)
-        LINE(me, [[
+        LINE(to, [[
 ceu_trails_set(]]..me.trails[1]..[[,CEU_INACTIVE,_ceu_org_);
 return;
 ]])
     end,
 
     AwaitT = function (me)
-        local exp, cnd = unpack(me)
+        local exp = unpack(me)
         local wclk = CLS().mem.wclock0 + (me.wclocks[1]*4)
-        if cnd then
-            LINE(me, 'do {')
-        end
+
         LINE(me, [[
 ceu_trails_set(]]..me.trails[1]..', -'..me.lbl.id..[[, _ceu_org_);  // OFF
 ceu_trails_set_wclock( (s32)]]..VAL(exp)..','..wclk..[[, _ceu_org_);
@@ -665,14 +656,12 @@ case ]]..me.lbl.id..[[:
 ]])
         DEBUG_TRAILS(me)
         F._SetAwait(me)
-        if cnd then
-            LINE(me, '} while (!('..cnd.val..'));')
-        end
     end,
 
     AwaitInt = function (me)
-        local int, cnd = unpack(me)
+        local int = unpack(me)
         local org = (int.org and int.org.val) or '_ceu_org_'
+
         LINE(me, [[
 //fprintf(stderr, "awt: %p %d\n", ]]..org..[[,]]..me.lbl.id..[[);
 ceu_trails_set(]]..me.trails[1]..',-'..me.lbl.id..[[,_ceu_org_);    // OFF
@@ -688,16 +677,10 @@ case ]]..me.lbl.id..[[:
 ]])
         DEBUG_TRAILS(me)
         F._SetAwait(me)
-        if cnd then
-            LINE(me, [[
-    if (! (]]..cnd.val..[[))
-        return;
-]])
-        end
     end,
 
     AwaitExt = function (me)
-        local e, cnd = unpack(me)
+        local e = unpack(me)
         LINE(me, [[
 ceu_trails_set(]]..me.trails[1]..', -'..me.lbl.id..[[,_ceu_org_);   // OFF
 return;
@@ -708,22 +691,13 @@ case ]]..me.lbl.id..[[:
 ]])
         DEBUG_TRAILS(me)
         F._SetAwait(me)
-        if cnd then
-            LINE(me, [[
-    if (! (]]..cnd.val..[[))
-        return;
-]])
-        end
     end,
 
     AwaitS = function (me)
         local LBL_OUT = '__CEU_'..me.n..'_AWAITS'
         local set = _AST.iter'SetAwait'()
-        if me._until then
-            LINE(me, 'do {')
-        end
 
-        for _, awt in ipairs(me.awaits) do
+        for _, awt in ipairs(me) do
             if awt.tag=='WCLOCKK' or awt.tag=='WCLOCKE' then
                 local wclk = CLS().mem.wclock0 + (me.wclocks[1]*4)
                 LINE(me, [[
@@ -739,7 +713,10 @@ return;
 case ]]..me.lbl.id..[[:
 ]])
 
-        for i, awt in ipairs(me.awaits) do
+        if set then
+            LINE(me, '{ int __ceu_'..me.n..'_AwaitS;')
+        end
+        for i, awt in ipairs(me) do
             if awt.tag == 'Ext' then
                 LINE(me, [[
                     if (_ceu_evt_id_ == IN_]]..awt.evt.id..[[) {
@@ -764,15 +741,15 @@ case ]]..me.lbl.id..[[:
             if set then
                 LINE(me, me.val..' = '..(i-1)..';')
             end
-            LINE(me, 'goto '..LBL_OUT..';}')
+            LINE(me, 'goto '..LBL_OUT..';}')    -- close my if
         end
 
-        LINE(me, 'return;')
+        HALT(me)
         LINE(me, LBL_OUT..':;')
         DEBUG_TRAILS(me)
         F._SetAwait(me)
-        if me._until then
-            LINE(me, '} while (!('..me._until.val..'));')
+        if set then
+            LINE(me, '}')
         end
     end,
 

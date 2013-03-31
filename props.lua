@@ -268,7 +268,7 @@ F = {
         F._loop(me)
     end,
     AwaitS = function (me)
-        for _, awt in ipairs(me.awaits) do
+        for _, awt in ipairs(me) do
             if awt.isExp and F.AwaitInt then
                 F.AwaitInt(me)
             elseif awt.tag=='Ext' and F.AwaitExt then

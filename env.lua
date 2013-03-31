@@ -389,7 +389,7 @@ F = {
 
     AwaitS = function (me)
         local wclock
-        for _, awt in ipairs(me.awaits) do
+        for _, awt in ipairs(me) do
             if awt.isExp then
                 F.AwaitInt(me, awt)
             elseif awt.tag~='Ext' then
@@ -513,12 +513,18 @@ F = {
     SetAwait = function (me)
         local e1, awt = unpack(me)
         ASR(e1.lval, me, 'invalid attribution')
-        if awt.ret.tag == 'AwaitT' then
+
+        if awt.tag == 'Loop' then
+            awt = awt[1][1]         -- await ... until
+        end
+        me.awt = awt                -- will need me.awt.val
+
+        if awt.tag == 'AwaitT' then
             ASR(_TP.isNumeric(e1.tp,true), me, 'invalid attribution')
-        elseif awt.ret.tag == 'AwaitS' then
+        elseif awt.tag == 'AwaitS' then
             ASR(_TP.isNumeric(e1.tp,true), me, 'invalid attribution')
         else    -- AwaitInt / AwaitExt
-            local evt = awt.ret[1].evt
+            local evt = awt[1].evt
             ASR(_TP.contains(e1.tp,evt.tp,true), me, 'invalid attribution')
         end
     end,

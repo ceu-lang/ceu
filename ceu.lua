@@ -238,7 +238,6 @@ do
 
     -- TODO: goto _OPTS
     --str = str .. '#define CEU_DEBUG_TRAILS\n'
-    str = str .. '#define CEU_DETERMINISTIC\n'
 
     if _OPTS.defs_file then
         local f = assert(io.open(_OPTS.defs_file,'w'))

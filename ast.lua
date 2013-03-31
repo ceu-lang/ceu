@@ -273,17 +273,18 @@ local C; C = {
         pse2.evt = evt
         return
             node('ParOr')(ln, blk,
-                node('Stmts')(ln,
-                    node('Dcl_var')(ln, 'var', 'int', false, id),
-                    node('SetExp')(ln, var, node('CONST')(ln,'0')),
-                    node('Loop')(ln,
-                        node('Stmts')(ln,
-                            node('AwaitInt')(ln, evt),
-                            node('If')(ln, node('Op2_!=')(ln,'!=',var,evt),
-                                node('Stmts')(ln,
-                                    node('SetExp')(ln, var, evt),
-                                    node('If')(ln, evt, pse1, pse2)),
-                                node('Nothing')(ln))))))
+                node('Block')(ln,
+                    node('Stmts')(ln,
+                        node('Dcl_var')(ln, 'var', 'int', false, id),
+                        node('SetExp')(ln, var, node('CONST')(ln,'0')),
+                        node('Loop')(ln,
+                            node('Stmts')(ln,
+                                node('AwaitInt')(ln, evt, false),
+                                node('If')(ln, node('Op2_!=')(ln,'!=',var,evt),
+                                    node('Stmts')(ln,
+                                        node('SetExp')(ln, var, evt),
+                                        node('If')(ln, evt, pse1, pse2)),
+                                    node('Nothing')(ln)))))))
     end,
 --[=[
         par/or do
@@ -304,18 +305,11 @@ local C; C = {
         end
 ]=]
 
-    AwaitS = function (ln, ...)
-        local ret = node('AwaitS')(ln, ...)
-        ret.awaits = { ... }
-        ret._until = ret.awaits[#ret.awaits]
-        ret.awaits[#ret.awaits] = nil
-        return ret
-    end,
-
     AwaitExt = node('AwaitExt'),
     AwaitInt = node('AwaitInt'),
     AwaitN   = node('AwaitN'),
     AwaitT   = node('AwaitT'),
+    AwaitS   = node('AwaitS'),
 
     EmitExtE = node('EmitExtE'),
     EmitExtS = node('EmitExtS'),
@@ -501,8 +495,25 @@ F = {
 
     SetAwait = function (me)
         local _, awt = unpack(me)
-        awt.ret = awt.ret or awt
+        --awt.ret = awt.ret or awt
     end,
+
+    AwaitT = function (me)
+        local cnd = me[#me]
+        me[#me] = nil   -- remove cnd
+        if not cnd then
+            return
+        end
+        return node('Loop')(me.ln,
+                node('Stmts')(me.ln,
+                    me,
+                    node('If')(me.ln, cnd,
+                        node('Break')(me.ln),
+                        node('Nothing')(me.ln))))
+    end,
+    AwaitExt = 'AwaitT',
+    AwaitInt = 'AwaitT',
+    AwaitS   = 'AwaitT',
 
     _Continue = function (me)
         local _if  = _AST.iter('If')()

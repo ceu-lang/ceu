@@ -52,13 +52,9 @@ F =
         me.val = me.var.val
     end,
 
-    SetAwait = 'SetExp',
     SetExp = function (me)
         local e1, e2 = unpack(me)
-        if e1.tp ~= '_' then
-            VAL(e2)
-            --e2.val = '('.._TP.c(e1.tp)..')('..VAL(e2)..')'
-        end
+        VAL(e2)     -- error on reads do internal events
     end,
 
     EmitExtS = function (me)
