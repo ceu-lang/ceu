@@ -355,6 +355,11 @@ int* ceu_ext_f (int* data, int v) {
 }
 #endif
 
+void ceu_stack_clr () {
+    int a[1000];
+    memset(a, 0, sizeof(a));
+}
+
 void ceu_go_all (int* ret_end)
 {
     ceu_go_init();
@@ -365,6 +370,9 @@ void ceu_go_all (int* ret_end)
 
 #ifdef CEU_ASYNCS
     for (;;) {
+#ifdef CEU_DEBUG
+        ceu_stack_clr();
+#endif
         ceu_go_async();
         if (*ret_end)
             return;

@@ -721,6 +721,21 @@ end
 }
 
 Test { [[
+input int E;
+var int x;
+loop do
+    var int tmp = await E;
+    if tmp == 0 then
+        break;              // non-ceu code might have cleared x on stack
+    end
+    x = tmp;
+end
+return x;
+]],
+    run = { ['1~>E; 2~>E;0~>E']=2 }
+}
+
+Test { [[
 input void START;
 event void a, b, c, d;
 C _assert();

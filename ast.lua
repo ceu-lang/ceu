@@ -504,12 +504,14 @@ F = {
         if not cnd then
             return
         end
-        return node('Loop')(me.ln,
-                node('Stmts')(me.ln,
-                    me,
-                    node('If')(me.ln, cnd,
-                        node('Break')(me.ln),
-                        node('Nothing')(me.ln))))
+        local loop = node('Loop')(me.ln,
+                        node('Stmts')(me.ln,
+                            me,
+                            node('If')(me.ln, cnd,
+                                node('Break')(me.ln),
+                                node('Nothing')(me.ln))))
+        loop.isAwaitUntil = true
+        return loop
     end,
     AwaitExt = 'AwaitT',
     AwaitInt = 'AwaitT',

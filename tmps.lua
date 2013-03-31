@@ -44,18 +44,34 @@ F = {
         end
 
         if not (v and _ANA.CMP(v,me.ana.pre)) then
-DBG('no', var.id)
             var.isTmp = false       -- found a Par or Await in the path
             return
         end
     end,
 
     Loop_pre = function (me)
-        if me.noAwts or _AST.iter'SetAwait'() then
-            return  -- (tight loop) or (await ... until)
+        if (me.noAwts and (not _AST.iter'Async'())) or
+            me.isAwaitUntil then
+            return      -- OK: (tight loop outside Async) or (await ... until)
         end
-        VARS = {}       -- a loop in between Dcl/Accs is dangerous
+        VARS = {}       -- NO: loop in between Dcl/Accs is dangerous
+        --[[
+            -- x is on the stack but may be written in two diff reactions
+            -- a non-ceu code can reuse the stack in between
+            input int E;
+            var int x;
+            loop do
+                var int tmp = await E;
+                if tmp == 0 then
+                    break;
+                end
+                x = tmp;
+            end
+            return x;
+        ]]
     end,
+--[[
+]]
 
     ParOr_pre = function (me)
         for var, v in pairs(VARS) do
