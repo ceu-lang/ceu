@@ -121,11 +121,14 @@ DBG('', 'glb', '{'..table.concat(glb,',')..'}')
 
         for _, var in ipairs(me.vars) do
             local len
-            if var.isTmp or var.isEvt then
-            --if var.isTmp then
+            --if var.isTmp or var.isEvt then
+--
+            if var.isTmp then
                 len = 0
-            --elseif var.isEvt then
-                --len = 1
+--
+            elseif var.isEvt then
+--
+                len = 1
             elseif var.cls then
                 len = (var.arr or 1) * var.cls.mem.max
             elseif var.arr then
@@ -146,17 +149,19 @@ DBG('', 'glb', '{'..table.concat(glb,',')..'}')
         table.sort(sorted, pred_sort)
         for _, var in ipairs(sorted) do
 --
-            if not var.isEvt then
+            --if not var.isEvt then
                 var.off = alloc(mem, var.len)
 DBG('', string.format('%8s',var.id), var.off,
                                      var.isTmp and '*' or var.len)
-            end
+            --end
 --
         end
-        --_MEM.evt_off = MAX(_MEM.evt_off, mem.off)
+--
+        _MEM.evt_off = MAX(_MEM.evt_off, mem.off)
 
         -- events fill the gaps between variables
         -- we use offsets for events because of interfaces
+--[[
         local off = 0
         local i   = 1
         local var = sorted[i]
@@ -176,7 +181,6 @@ DBG('', string.format('%8s',var.id), var.off,
 DBG('', string.format('%8s',var.id), var.off, var.len)
             end
         end
---[[
 ]]
 
         me.max = mem.off
