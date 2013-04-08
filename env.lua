@@ -31,6 +31,9 @@ _ENV = {
 
         tceu_nlbl  = true,    -- labels.lua
         tceu_trail = true,    -- labels.lua (TODO: remove this type?)
+
+        tceu_news_one = 2*_OPTS.tp_pointer,
+        tceu_news_blk = 4*_OPTS.tp_pointer,
     },
     dets  = {},
 }
@@ -109,7 +112,8 @@ function newvar (me, blk, pre, tp, dim, id)
 
     tp = (dim and tp..'*') or tp
 
-    local cls = _ENV.clss[tp] or (dim and _ENV.clss[_TP.deref(tp)])
+    local tp_ = _TP.deref(tp)
+    local cls = _ENV.clss[tp] or (dim and tp_ and _ENV.clss[tp_])
     if cls then
         ASR(cls~=_AST.iter'Dcl_cls'() and isEvt==false, me,
                 'invalid declaration')
@@ -210,6 +214,12 @@ F = {
     end,
     Block = function (me)
         local orgs
+
+        if me.has_news then
+            orgs = _AST.node('Orgs')(me.ln)
+            orgs.vars = {}
+        end
+
         for _, var in ipairs(me.vars) do
             if var.cls then
                 if not orgs then
@@ -220,8 +230,8 @@ F = {
             end
         end
         if orgs then
-             -- run constructors first
-            me[1] = _AST.node('ParOr')(me.ln, me[1], orgs)
+             -- await orgs first
+            me[1] = _AST.node('ParOr')(me.ln, orgs, me[1])
         end
     end,
 
@@ -438,21 +448,13 @@ F = {
     --------------------------------------------------------------------------
 
     SetExp = function (me)
-        local e1, e2, op = unpack(me)
+        local e1, e2 = unpack(me)
         e1 = e1 or _AST.iter'SetBlock'()[1]
         ASR(e1.lval and _TP.contains(e1.tp,e2.tp,true),
                 me, 'invalid attribution')
 
         ASR(me.read_only or (not e1.fst.read_only),
                 me, 'read-only variable')
-
-        if op == ':=' then
-           -- ensures that `:=´ is used correctly (not lval == &ref)
-            local _tp2 = _TP.deref(e2.tp)
-            ASR(_tp2 and _ENV.clss[_tp2] and e2.lval,
-                    me, 'invalid attribution')
-            return
-        end
 
         local req = false
 
@@ -529,10 +531,20 @@ F = {
         end
     end,
 
+    Free = function (me)
+        local exp = unpack(me)
+        local id = ASR(_TP.deref(exp.tp),
+                        me, 'invalid `free´')
+        me.cls = ASR( _ENV.clss[id],
+                      me, 'class "'..id..'" is not declared')
+    end,
+
     SetNew = function (me)
         local exp, id_cls = unpack(me)
+        exp.ref.var.blk.has_news = true
         me.cls = ASR(_ENV.clss[id_cls], me,
                         'class "'..id_cls..'" is not declared')
+        me.cls.has_news = true
         ASR(not me.cls.is_ifc, me, 'cannot instantiate an interface')
         ASR(exp.lval and _TP.contains(exp.tp,me.cls.id..'*'),
                 me, 'invalid attribution')

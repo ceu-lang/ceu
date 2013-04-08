@@ -72,7 +72,6 @@ F = {
             fins = false,
             orgs = false,
             news = false,
-            chg  = false,
         }
     end,
     Node_pos = function (me)
@@ -121,19 +120,12 @@ F = {
         else
             SAME(me, me[#me])
         end
--- TODO: pq?
         ASR(me.ns.trails < 256, me, 'too many trails')
 --[[
         if me.aw.t and #me.aw.t>0 then -- +1 trail for all global awaits
             --me.ns.trails = me.ns.trails + 1
         end
 ]]
-    end,
-
-    Orgs = function (me)
-        for _, var in ipairs(me.vars) do
-            me.has.fins = me.has.fins or var.cls.has.fins
-        end
     end,
 
     Dcl_ext = function (me)
@@ -145,14 +137,23 @@ F = {
                       me.var.arr and _ENV.clss[_TP.deref(me.var.tp)]
     end,
 
-    SetNew = function (me)
+    Free = function (me)
         _PROPS.has_news = true
         _PROPS.has_fins = true
         me.cls.has_news = true      -- TODO has.news?
-        SAME(me, me.cls)
         -- overwrite these:
         me.has.news   = true
-        me.has.fins   = true      -- free
+    end,
+    SetNew = function (me)
+        SAME(me, me.cls)
+        F.Free(me)
+        me.has.fins = me.cls.has.fins
+    end,
+
+    Orgs = function (me)
+        for _, var in ipairs(me.vars) do
+            me.has.fins = me.has.fins or var.cls.has.fins
+        end
     end,
 
     Pause = function (me)
@@ -298,10 +299,7 @@ F = {
     end,
 
     SetExp = function (me)
-        local e1, e2, op = unpack(me)
-        if op == ':=' then
-            me.has.chg = true
-        end
+        local e1, e2 = unpack(me)
         local async = _AST.iter'Async'()
         if async and (not e1) then
             ASR( async.depth <= _AST.iter'SetBlock'().depth+1,

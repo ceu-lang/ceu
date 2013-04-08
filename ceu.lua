@@ -153,9 +153,16 @@ do
 
     tpl = sub(tpl, '=== TCEU_NLBL ===',    's'..tps[_ENV.c.tceu_nlbl.len])
 
-    --if _PROPS.has_orgs then
+    if _PROPS.has_orgs then
+--[[
+        if _PROPS.has_news then
+            tpl = sub(tpl, '=== CEU_CLS_NEWS_PRV ===',  _MEM.cls.idx_news_prv)
+            tpl = sub(tpl, '=== CEU_CLS_NEWS_NXT ===',  _MEM.cls.idx_news_nxt)
+        end
+]]
+        tpl = sub(tpl, '=== CEU_CLS_TRAILN ===',  _MEM.cls.idx_trailN)
+    end
     tpl = sub(tpl, '=== CEU_CLS_TRAIL0 ===',  _MEM.cls.idx_trail0)
-    --end
 
     tpl = sub(tpl, '=== LABELS_ENUM ===', _LBLS.code_enum)
 

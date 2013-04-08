@@ -343,14 +343,13 @@ local C; C = {
     _Dcl_var = function (ln, pre, tp, dim, ...)
         local ret = {}
         local t = { ... }
-        for i=1, #t, 4 do
+        for i=1, #t, 3 do
             ret[#ret+1] = node('Dcl_var')(ln, pre, tp, dim, t[i])
             if t[i+1] then
                 ret[#ret+1] = C._Set(ln,
                                 node('Var')(ln,t[i]),   -- var
-                                t[i+1],                 -- op
-                                t[i+2],                 -- tag
-                                t[i+3])                 -- exp
+                                t[i+1],                 -- tag
+                                t[i+2])                 -- exp
             end
         end
         return unpack(ret)
@@ -399,8 +398,8 @@ local C; C = {
     This   = node('This'),
     Free   = node('Free'),
 
-    _Set = function (ln, e1, op, tag, e2)
-        return node(tag)(ln, e1, e2, op)
+    _Set = function (ln, e1, tag, e2)
+        return node(tag)(ln, e1, e2)
     end,
 
     CallStmt = node('CallStmt'),

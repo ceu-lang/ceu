@@ -149,7 +149,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
                     V'ParEver' + V'If'    + V'Loop' )
 
     , _Set  = V'_Exp' * V'_Sets'
-    , _Sets = (CK'=' + CK':=') * (
+    , _Sets = K'=' * (
                 Cc'SetAwait' * (V'AwaitS'+V'AwaitT'+V'AwaitExt'+V'AwaitInt')
               + Cc'SetBlock' * V'_SetBlock'
               + Cc'SetExp'   * V'_Exp'
@@ -252,7 +252,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
                   + EM'<h,min,s,ms,us>'
               )
 
-    , Pause    = K'pause/if' * EV'Var' * V'_Do'
+    , Pause    = K'pause/if' * EV'_Exp' * V'_Do'
 
     , AwaitN   = K'await' * K'FOREVER'
 
@@ -302,7 +302,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
                 * V'__Dcl_var' * (K','*V'__Dcl_var')^0
 
     , __Dcl_var = EV'ID_var' * (V'_Sets' +
-                                Cc(false)*Cc(false)*Cc(false))
+                                Cc(false)*Cc(false))
 
     , _Dcl_int_ifc  = CK'event' * EV'ID_type' *-- Cc(false) *
                        EV'__Dcl_int_ifc' * (K','*V'__Dcl_int_ifc')^0
@@ -310,7 +310,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
 
     , _Dcl_var_ifc  = CK'var' * EV'ID_type' * (K'['*V'_Exp'*K']'+Cc(false)) *
                        V'__Dcl_var_ifc' * (K','*V'__Dcl_var')^0
-    , __Dcl_var_ifc = EV'ID_var' * (Cc(false)*Cc(false)*Cc(false))
+    , __Dcl_var_ifc = EV'ID_var' * (Cc(false)*Cc(false))
 
     , _Dcl_imp_ifc = K'interface' * EV'ID_cls' * (K',' * EV'ID_cls')^0
 

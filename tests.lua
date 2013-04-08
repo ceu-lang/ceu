@@ -27,9 +27,6 @@ end
 
 event void e;
 
-C nohold _fprintf(), _stderr;
-_fprintf(_stderr, "xxx = %d\n", _V);
-
 class T with
 do
     await START;
@@ -64,7 +61,6 @@ interface Global with
     event void e;
 end
 
-C nohold _fprintf(), _stderr;
 class T with
 do
     emit global:e; // TODO: must also check if org trail is active
@@ -151,6 +147,7 @@ end
     run = 2;
 }
 
+error 'testar pause/if org.e'
 do return end
 --]===]
 
@@ -14536,13 +14533,6 @@ return *p;
 }
 
 Test { [[
-var int a := 1;
-return a;
-]],
-    env = 'ERR : line 1 : invalid attribution',
-}
-
-Test { [[
 C _f();
 C do
     int a;
@@ -16362,7 +16352,7 @@ pause/if A do
 end
 return 0;
 ]],
-    parser = 'ERR : line 2 : after `pause/if´ : expected variable/event',
+    parser = 'ERR : line 2 : after `pause/if´ : expected expression',
 }
 
 Test { [[
@@ -17006,7 +16996,7 @@ end
 class T with
 do
     var J j;
-    _V = _V + 1;    // main class terminates before
+    _V = _V + 1;
 end
 
 var T t1;
@@ -17017,7 +17007,7 @@ var T t3;
 _V = _V*3;
 return _V;
 ]],
-    run = 27;
+    run = 345;
 }
 
 Test { [[
@@ -17028,7 +17018,7 @@ end
 
 class J with
 do
-    _V = _V * 2;    // T objs terminate before
+    _V = _V * 2;
 end
 
 class T with
@@ -17048,7 +17038,7 @@ _V = _V*3;
 await START;
 return _V;
 ]],
-    run = 30;
+    run = 345;
 }
 
 Test { [[
@@ -17080,7 +17070,7 @@ _V = _V*3;
 await START;
 return _V;
 ]],
-    run = 230;
+    run = 345;
 }
 
 Test { [[
@@ -19130,11 +19120,39 @@ return ret + _V;        // * reads after
     }
 }
 
+-- NEW / FREE
+
+Test { [[
+class T with
+    var int a;
+do
+    this.a = 1;
+end
+var T* t = new T;
+return t:a;
+]],
+    run = 1,
+}
+
+Test { [[
+input void START;
+class T with
+    var int a;
+do
+    this.a = 1;
+end
+var T* t = new T;
+await START;
+return t:a;
+]],
+    run = 1,
+}
+
 Test { [[
 class T with do end
 do
-var T* t;
-t = new T;
+    var T* t;
+    t = new T;
 end
 return 10;
 ]],
@@ -19214,6 +19232,8 @@ return 10;
     run = 10,
 }
 
+-- FREE
+
 Test { [[
 class T with do end
 var T* a = null;
@@ -19221,6 +19241,58 @@ free a;
 return 10;
 ]],
     run = 10,
+}
+
+Test { [[
+class T with do end
+var T* a = new T;
+free a;
+return 10;
+]],
+    run = 10,
+}
+
+Test { [[
+class T with do end
+var T* a = new T;
+var T* b = new T;
+free a;
+free b;
+return 10;
+]],
+    run = 10,
+}
+
+Test { [[
+class T with do end
+var T* a = new T;
+var T* b = new T;
+free b;
+free a;
+return 10;
+]],
+    run = 10,
+}
+
+Test { [[
+C _V;
+C do
+    int V = 0;
+end
+class T with
+do
+    finalize with
+        _V = _V + 1;
+    end
+end
+
+var T* a = new T;
+var T* b = new T;
+free b;
+free a;
+return _V;
+]],
+    run = 2,
 }
 
 -- TODO: tests for `free´:
@@ -19236,27 +19308,21 @@ return 0;
 }
 
 Test { [[
-var int* b;
-var int* a := b;
-return a;
-]],
-    env = 'ERR : line 2 : invalid attribution',
-}
-
-Test { [[
 class T with do end;
 var T a;
 var T* b;
-b := &a;
+b = &a;
+return 1;
 ]],
-    env = 'ERR : line 4 : invalid attribution',
+    run = 1,
+    --env = 'ERR : line 4 : invalid attribution',
 }
 
 Test { [[
 class T with do end;
 var T* a = new T;
 var T* b;
-b := a;
+b = a;
 return 10;
 ]],
     run = 10;
@@ -19308,6 +19374,37 @@ return a:v;
 Test { [[
 C _V;
 C do
+    int V = 1;
+end
+class T with
+    var int v;
+do
+    finalize with
+        _V = 10;
+    end
+    await FOREVER;
+end
+
+var T* a;
+var T aa;
+do
+    var T* b = new T;
+    b:v = 10;
+    finalize
+        a = b;      // no more :=
+    with
+        nothing;
+    end
+end
+return _V;
+]],
+    run = 10,
+}
+
+Test { [[
+input void START;
+C _V;
+C do
     int V = 0;
 end
 class T with
@@ -19329,6 +19426,7 @@ do
     with
         nothing;
     end
+    await START;
 end
 return _V;
 ]],
@@ -19353,11 +19451,15 @@ var T* a;
 do
     var T* b = new T;
     b:v = 10;
-    a := b;
+    finalize
+        a = b;      // no more :=
+    with
+        nothing;
+    end
 end
 return _V;
 ]],
-    run = 5,
+    run = 10,
 }
 Test { [[
 class T with
@@ -19581,6 +19683,49 @@ return _V;
 }
 
 Test { [[
+input void START;
+C _f(), _V;
+C do
+    int V = 1;
+    int* f (){ return NULL; }
+end
+
+class V with
+do
+    var int* v;
+    finalize
+        v = _f();
+    with
+        _V = _V+1;
+    end
+    await FOREVER;
+end
+
+class U with
+    var V* v;
+do
+    var V* vv = new V;
+    await FOREVER;
+end
+
+class T with
+    var U u;
+do
+    u.v = new V;
+    await FOREVER;
+end
+
+do
+    var T t;
+end
+
+return _V;
+]],
+    run = 2,
+}
+
+Test { [[
+input void START;
 C _f(), _V;
 C do
     int V = 1;
@@ -19614,12 +19759,13 @@ end
 
 var T t;
 do
-    var V* v := t.u.v;
+    await START;
+    var V* v = t.u.v;   // no more :=
 end
 
 return _V;
 ]],
-    run = 2,
+    run = 1,
 }
 
 Test { [[
@@ -19657,12 +19803,12 @@ end
 var T t;
 do
     var U u;
-    u.v := t.u.v;
+    u.v = t.u.v;
 end
 
 return _V;
 ]],
-    run = 3,
+    run = 2,
 }
 
 Test { [[
@@ -19777,9 +19923,12 @@ do
         end
         ptr = new T;
     end
+C nohold _fprintf(), _stderr;
+_fprintf(_stderr, "V: %d %d\n", _X, _Y);
     _assert(_X == 100 and _Y == 99);
 end
 
+_fprintf(_stderr, "V: %d %d\n", _X, _Y);
 _assert(_X == 100 and _Y == 100);
 return 10;
 ]],
@@ -19827,14 +19976,14 @@ do
     p = new T;
     p:v = 1;
     p = new T;
-    p:v = 1;
+    p:v = 2;
     p = new T;
-    p:v = 1;
+    p:v = 3;
 end
-_assert(_V == 3);
+_assert(_V == 6);
 return _V;
 ]],
-    run = 3,
+    run = 6,
 }
 
 Test { [[

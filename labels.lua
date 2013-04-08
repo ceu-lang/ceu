@@ -75,9 +75,6 @@ F = {
 
     Dcl_cls = function (me)
         me.lbl = new{'Class_'..me.id, true}
-        if me.has_news then
-            me.lbl_free = new{'Class__fin_'..me.id, depth=me.depth}
-        end
     end,
     Orgs = function (me)
         me.lbl = new{'Orgs'}

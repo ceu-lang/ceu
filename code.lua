@@ -132,6 +132,9 @@ F = {
 
         CASE(me, me.lbl)
         LINE(me, [[
+#ifdef CEU_ORGS
+*PTR_cur(u8*,CEU_CLS_TRAILN) = ]]..me.ns.trails..[[;
+#endif
 memset(PTR_cur(char*,CEU_CLS_TRAIL0), CEU_INACTIVE, ]]
         ..me.ns.trails..[[*sizeof(tceu_trail));
 //ceu_trails_set(0, CEU_PENDING, _ceu_org_);
@@ -140,29 +143,22 @@ memset(PTR_cur(char*,CEU_CLS_TRAIL0), CEU_INACTIVE, ]]
 #endif
 ]])
 
-        CONC_ALL(me)
-
-        if me == _MAIN then
+--[=[
+        -- TODO: remove (ceu_news_ins does this)
+        if me.has_news then
             LINE(me, [[
-#ifdef CEU_NEWS
-    free(CEU.lsts);
-    free(CEU.trks);
-    CEU.lsts = NULL;    // subsequent events have no effect
-    CEU.trks = NULL;
-#endif
+//*PTR_cur(void**,]].._MEM.cls.idx_news_prv..[[) = NULL;
+//*PTR_cur(void**,]].._MEM.cls.idx_news_nxt..[[) = NULL;
 ]])
         end
+]=]
+
+        CONC_ALL(me)
 
         LINE(me, [[
 //ceu_trails_set(]]..me.trails[1]..[[,CEU_INACTIVE,_ceu_org_);
 return;
 ]])
-
-        if me.has_news then
-            CASE(me, me.lbl_free)
-            LINE(me, 'free(_ceu_org_);')
-            HALT(me)
-        end
     end,
 
     Host = function (me)
@@ -171,31 +167,60 @@ return;
             me[1] .. '\n'
     end,
 
---[=[
     SetNew = function (me)
         local exp, _ = unpack(me)
-        ORG(me, true,
-                exp.val..' = malloc('..me.cls.mem.max..')',
-                me.cls,
-                (exp.org and exp.org.val) or '_ceu_org_',
-                (exp.fst or exp.var).lbl_cnt,
-                me.lbl_cnt)
+        local org = (exp.org and exp.org.val) or '_ceu_org_'
+        LINE(me, [[
+]]..VAL(exp)..[[ = ceu_news_ins(
+    PTR_org(tceu_news_blk*,]]..org..','..exp.ref.var.blk.off_news..[[),
+    ]]..me.cls.mem.max..[[);
+ceu_call(_ceu_evt_id_, _ceu_evt_p_, ]]
+        ..me.cls.lbl.id..','
+        ..VAL(exp)..[[);
+// TODO: kill itself?
+]])
     end,
 
     Free = function (me)
         local exp = unpack(me)
-        local cls = _ENV.clss[ _TP.deref(exp.tp) ]
-        local lbls = table.concat(cls.lbls,',')
+        local lbls = table.concat(me.cls.lbls,',')
         LINE(me, [[
-if (]]..exp.val..[[ != NULL) {
-    // remove (lower) stacked tracks
-    ceu_trk_clr(1, ]]..exp.val..[[, ]]..lbls..[[);
-    // clear internal awaits and trigger finalize's
-    ceu_lsts_clr(1, ]]..exp.val..[[, ]]..lbls..[[);
+{
+    void* __ceu_org = ]]..VAL(exp)..[[;
+    if (__ceu_org != NULL) {
+]])
+        -- TODO: REMOVE (foi p/ ceu_news_rem)
+        --if me.cls.has.fins then
+            --LINE(me, [[
+        --ceu_trails_clr(]]..me.cls.trails[1]..','..me.cls.trails[2]
+            --..[[, __ceu_org);
+--]])
+        --end
+        LINE(me, [[
+        ceu_news_rem(__ceu_org);
+    }
 }
 ]])
     end,
-]=]
+
+    Dcl_var = function (me)
+        local var = me.var
+        if not var.cls then
+            return
+        end
+
+        -- start org
+        LINE(me, [[
+{
+    int i;
+    for (i=0; i<]]..(var.arr or 1)..[[; i++) {
+        // start organism
+        ceu_call(_ceu_evt_id_, _ceu_evt_p_, ]]
+                ..var.cls.lbl.id..','
+                ..'PTR_org(void*,'..VAL(var)..',i*'..var.cls.mem.max..[[));
+    }
+}]])
+    end,
 
     Orgs = function (me)
         COMM(me, 'ORGS')
@@ -203,19 +228,6 @@ if (]]..exp.val..[[ != NULL) {
 // alaways point to me.lbl
 ceu_trails_set(]]..me.trails[1]..','..me.lbl.id..[[,_ceu_org_);
 ]])
-
-        -- start all orgs
-        for _, var in ipairs(me.vars) do
-            LINE(me, [[{
-int i;
-for (i=0; i<]]..(var.arr or 1)..[[; i++) {
-    // start organism
-    ceu_call(_ceu_evt_id_, _ceu_evt_p_, ]]
-            ..var.cls.lbl.id..','
-            ..'PTR_org(void*,'..VAL(var)..',i*'..var.cls.mem.max..[[));
-}
-}]])
-        end
         HALT(me)
 
         -- awake all orgs
@@ -224,17 +236,29 @@ for (i=0; i<]]..(var.arr or 1)..[[; i++) {
 case ]]..me.lbl.id..[[:
 ]])
 
+        -- TODO: test w/o arr
         for _, var in ipairs(me.vars) do
-            LINE(me, [[{
-int i;
-for (i=0; i<]]..(var.arr or 1)..[[; i++) {
-    // awake organism
-    ceu_trails_go(_ceu_evt_id_, _ceu_evt_p_,
-                PTR_org(void*,]]..VAL(var)..',i*'..var.cls.mem.max..'),'
-                ..var.cls.ns.trails..[[);
-}
+            COMM(me, 'var: '..var.id)
+            LINE(me, [[
+{
+    int i;
+    for (i=0; i<]]..(var.arr or 1)..[[; i++) {
+        // awake organism
+// TODO: kill
+        ceu_trails_go(_ceu_evt_id_, _ceu_evt_p_,
+                PTR_org(void*,]]..VAL(var)..',i*'..var.cls.mem.max..[[));
+    }
 }]])
         end
+
+        local blk = _AST.iter'Block'()
+        if blk.has_news then
+            LINE(me, [[
+    ceu_news_go(_ceu_evt_id_, _ceu_evt_p_, 
+                PTR_cur(tceu_news_blk*,]]..blk.off_news..[[)->fst.nxt);
+]])
+        end
+
         HALT(me)
 --[=[
     if new then
@@ -249,7 +273,8 @@ for (i=0; i<]]..(var.arr or 1)..[[; i++) {
     end,
 
     Block_pre = function (me)
-        LINE(me, '{')
+        -- declare tmps
+        LINE(me, '{')       -- close in Block_pos
         for _, var in ipairs(me.vars) do
             if var.isTmp then
                 if var.arr then
@@ -259,6 +284,18 @@ for (i=0; i<]]..(var.arr or 1)..[[; i++) {
                     LINE(me, _TP.c(var.tp)..' '..VAL(var)..';')
                 end
             end
+        end
+
+        if me.has_news then
+            LINE(me, [[
+PTR_cur(tceu_news_blk*,]]..me.off_news..[[)->fst.prv = NULL;
+PTR_cur(tceu_news_blk*,]]..me.off_news..[[)->fst.nxt =
+    &(PTR_cur(tceu_news_blk*,]]..me.off_news..[[)->lst);
+
+PTR_cur(tceu_news_blk*,]]..me.off_news..[[)->lst.nxt = NULL;
+PTR_cur(tceu_news_blk*,]]..me.off_news..[[)->lst.prv =
+    &(PTR_cur(tceu_news_blk*,]]..me.off_news..[[)->fst);
+]])
         end
     end,
 
@@ -300,7 +337,13 @@ if (*PTR_cur(u8*,]]..(me.off_fins+i-1)..[[)) {
         if me.fins then
             CLEAR(me)
         end
-        LINE(me, '}')
+        if me.has_news then
+            LINE(me, [[
+ceu_news_rem_all(PTR_cur(tceu_news_blk*,]]..me.off_news..[[)->fst.nxt);
+]])
+        end
+        LINE(me, '}')       -- open in Block_pre
+-- TODO: free
     end,
 
     -- TODO: more tests
@@ -326,16 +369,8 @@ if (*PTR_cur(u8*,]]..(me.off_fins+i-1)..[[)) {
     BlockI = CONC_ALL,
 
     SetExp = function (me)
-        local e1, e2, op, fin = unpack(me)
+        local e1, e2, fin = unpack(me)
         COMM(me, 'SET: '..tostring(e1[1]))    -- Var or C
---[=[
-        if op == ':=' then
-            LINE(me, '*PTR_org(void**,'..e2.val..','.._MEM.cls.idx_org..
-                     ') = '..((e1.org and e1.org.val) or '_ceu_org_')..';')
-            LINE(me, '*PTR_org(tceu_nlbl*,'..e2.val..','.._MEM.cls.idx_lbl..
-                     ') = '..(e1.fst or e1.var).lbl_cnt.id..';')
-        end
-]=]
         ATTR(me, e1, e2)
         if e1.tag=='Var' and e1.var.id=='_ret' then
             LINE(me, [[
@@ -608,7 +643,7 @@ ceu_trails_set(]]..me.trails[1]..[[,CEU_PENDING,_ceu_org_);
 p.org = ]]..org..[[;
 #endif
 ceu_trails_go(]]..(int.off or int.evt.off)
-                ..[[, &p, CEU.mem, CEU_NTRAILS);
+                ..[[, &p, CEU.mem);
 }]])
 
         if me.emtChk ~= false then       -- nil means no analysis

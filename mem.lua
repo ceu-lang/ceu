@@ -69,24 +69,32 @@ F = {
     Dcl_cls_pre = function (me)
         me.mem = { off=0, max=0 }
 
+-- TODO: class dependent (class meta instead of obj)
+        if _PROPS.has_news then
+            -- MUST BE 1st in class (see ceu_news_*)
+            _MEM.cls.idx_news = alloc(me.mem, _ENV.c.tceu_news_one.len)
+        end
+
         if _PROPS.has_ifcs then
             local off = alloc(me.mem, _ENV.c.tceu_ncls.len) -- cls N
             _MEM.cls.idx_cls = off          -- same off for all orgs
 DBG('', string.format('%8s','cls'), off, _ENV.c.tceu_ncls.len)
         end
 
-        --if _PROPS.has_orgs then
+        if _PROPS.has_orgs then
+            _MEM.cls.idx_trailN = alloc(me.mem, 1)
+        end
         me.mem.trail0 = alloc(me.mem, me.ns.trails*_ENV.c.tceu_trail.len,
                                       _ENV.c.tceu_trail.len)
         _MEM.cls.idx_trail0 = me.mem.trail0 -- same off for all orgs
 DBG('', string.format('%8s','trl0'), me.mem.trail0,
                                      me.ns.trails*_ENV.c.tceu_trail.len)
-        --end
 
         if _PROPS.has_wclocks then
             me.mem.wclock0 = alloc(me.mem, me.ns.wclocks*4)
 DBG('', string.format('%8s','clk0'), me.mem.wclock0, me.ns.wclocks*4)
         end
+
     end,
     Dcl_cls = function (me)
 DBG('===', me.id)
@@ -117,7 +125,12 @@ DBG('', 'glb', '{'..table.concat(glb,',')..'}')
         me.off = mem.off
 
         -- TODO: bitmap?
-        me.off_fins = alloc(CLS().mem, (me.fins and #me.fins) or 0)
+        me.off_fins = alloc(CLS().mem,
+                                (me.fins and #me.fins) or 0)
+
+        if me.has_news then
+            me.off_news = alloc(CLS().mem, _ENV.c.tceu_news_blk.len)
+        end
 
         for _, var in ipairs(me.vars) do
             local len

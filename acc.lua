@@ -57,6 +57,12 @@ F = {
     ParAnd_pos  = 'ParOr_pos',
     ParEver_pos = 'ParAnd_pos',
 
+    SetNew = function (me)
+        for _,acc in ipairs(me.cls.ana.accs) do
+            INS(acc, true)
+        end
+    end,
+
     Orgs = function (me)
         -- insert cls accs on my parent ParOr
         for _, var in ipairs(me.vars) do

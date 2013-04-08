@@ -60,7 +60,7 @@ Test = function (t)
     if not check('props')    then return end
 
     -- TODO:
-    if _PROPS.has_pses or _PROPS.has_news then
+    if _PROPS.has_pses  then
         return
     end
 
@@ -199,13 +199,13 @@ STATS = {
 }
 ]])
 
-assert(STATS.count  ==    1124)
-assert(STATS.mem    ==    9584)
-assert(STATS.trails ==    1912)
-assert(STATS.bytes  == 6128691)
+assert(STATS.count  ==    1130)
+assert(STATS.mem    ==   11027)
+assert(STATS.trails ==    1995)
+assert(STATS.bytes  == 6507719)
 --[[
 STATS = {
-    mem   = BIG,  -- ints 1 byte
+    mem   = BIG,  -- ints 1 byte  //  trlN
     bytes = BIG,  -- ON/ceu_param
 }
 ]]
