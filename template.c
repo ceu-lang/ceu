@@ -36,6 +36,7 @@
 #ifdef CEU_ORGS
 //#define CEU_CLS_NEWS_PRV (=== CEU_CLS_NEWS_PRV ===)
 //#define CEU_CLS_NEWS_NXT (=== CEU_CLS_NEWS_NXT ===)
+#define CEU_CLS_FREE     (=== CEU_CLS_FREE ===)
 #define CEU_CLS_TRAILN   (=== CEU_CLS_TRAILN ===)
 #endif
 #define CEU_CLS_TRAIL0   (=== CEU_CLS_TRAIL0 ===)
@@ -259,6 +260,8 @@ typedef struct {
 void* ceu_news_ins (tceu_news_blk* blk, int len)
 {
     tceu_news_one* cur = malloc(len);
+    if (cur == NULL)
+        return NULL;
 
     (blk->lst.prv)->nxt = cur;
     cur->prv            = blk->lst.prv;

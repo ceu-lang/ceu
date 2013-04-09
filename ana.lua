@@ -59,7 +59,7 @@ function _ANA.HAS (n1, n2)
 end
 
 local LST = {
-    Stmts=true, Block=true, Root=true, Dcl_cls=true,
+    Do=true, Stmts=true, Block=true, Root=true, Dcl_cls=true,
 }
 
 F = {

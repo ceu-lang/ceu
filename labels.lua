@@ -59,11 +59,6 @@ F = {
         _LBLS.code_fins = table.concat(t,',')
     end,
 
---[=[
-    SetNew = function (me)
-        me.lbl_cnt = new{'New_cont'}
-    end,
-]=]
     Block = function (me)
         local blk = unpack(me)
 

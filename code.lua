@@ -118,6 +118,8 @@ F = {
         me.code = ''
     end,
 
+    Do = CONC_ALL,
+
     Root = function (me)
         for _, cls in ipairs(_ENV.clss_cls) do
             CONC(me, cls)
@@ -155,10 +157,14 @@ memset(PTR_cur(char*,CEU_CLS_TRAIL0), CEU_INACTIVE, ]]
 
         CONC_ALL(me)
 
-        LINE(me, [[
-//ceu_trails_set(]]..me.trails[1]..[[,CEU_INACTIVE,_ceu_org_);
-return;
+        if me.has_news then
+            LINE(me, [[
+if (*PTR_cur(u8*,CEU_CLS_FREE))
+    ceu_news_rem(_ceu_org_);
 ]])
+        end
+
+        HALT(me)
     end,
 
     Host = function (me)
@@ -167,26 +173,57 @@ return;
             me[1] .. '\n'
     end,
 
-    SetNew = function (me)
-        local exp, _, constr = unpack(me)
-        local org = (exp.org and exp.org.val) or '_ceu_org_'
-
+    _New = function (me, t)
         LINE(me, [[
-]]..VAL(exp)..[[ = ceu_news_ins(
-    PTR_org(tceu_news_blk*,]]..org..','..exp.ref.var.blk.off_news..[[),
-    ]]..me.cls.mem.max..[[);
+{
+    void* __ceu_org = ceu_news_ins(
+        PTR_org(tceu_news_blk*,]]..t.blk_org..','..t.blk_blk.off_news..[[),
+        ]]..t.cls.mem.max..[[);
 ]])
 
-        if constr then
-            CONC(me, constr)
+        if t.val then
+            LINE(me, t.val..' = __ceu_org;')
         end
 
         LINE(me, [[
-ceu_call(_ceu_evt_id_, _ceu_evt_p_, ]]
-        ..me.cls.lbl.id..','
-        ..VAL(exp)..[[);
-// TODO: kill itself?
+    if (__ceu_org != NULL) {
+        *PTR_org(u8*, __ceu_org, CEU_CLS_FREE) = ]]..t.free..[[;
 ]])
+
+        if t.constr then
+            CONC(me, t.constr)
+        end
+
+        LINE(me, [[
+        ceu_call(_ceu_evt_id_, _ceu_evt_p_, ]]..t.cls.lbl.id..[[, __ceu_org);
+        // TODO: kill itself?
+    }
+}
+]])
+    end,
+
+    SetNew = function (me)
+        local exp, _, constr = unpack(me)
+        F._New(me, {
+            blk_org = (exp.org and exp.org.val) or '_ceu_org_',
+            blk_blk = me.blk,
+            val     = VAL(exp),
+            cls     = me.cls,
+            free    = 0,
+            constr  = constr,
+        })
+    end,
+
+    Spawn = function (me)
+        local _, constr = unpack(me)
+        F._New(me, {
+            blk_org = '_ceu_org_',
+            blk_blk = me.blk,
+            val     = nil,
+            cls     = me.cls,
+            free    = 1,
+            constr  = constr,
+        })
     end,
 
     Free = function (me)
@@ -229,9 +266,18 @@ ceu_call(_ceu_evt_id_, _ceu_evt_p_, ]]
     int i;
     for (i=0; i<]]..(var.arr or 1)..[[; i++) {
         // start organism
-        ceu_call(_ceu_evt_id_, _ceu_evt_p_, ]]
-                ..var.cls.lbl.id..','
-                ..'PTR_org(void*,'..VAL(var)..',i*'..var.cls.mem.max..[[));
+        void* __ceu_org = PTR_org(void*,]] 
+                            ..VAL(var)..',i*'..var.cls.mem.max..[[);
+]])
+
+        if var.cls.has_news then
+            LINE(me, [[
+        *PTR_org(u8*, __ceu_org, CEU_CLS_FREE) = 0;
+]])
+        end
+
+        LINE(me, [[
+        ceu_call(_ceu_evt_id_, _ceu_evt_p_, ]]..var.cls.lbl.id..[[, __ceu_org);
     }
 }]])
     end,

@@ -100,6 +100,7 @@ KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'C'
      + 'nothing'
      + 'continue'
      + 'until'
+     + 'spawn'
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
@@ -119,6 +120,8 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
                  V'_LstStmtB' * (K';'^0)
                )^-1
     , Block  = V'Stmts'
+
+    , Do     = V'_Do'
     , _Do    = K'do' * V'Block' * K'end'
 
     , Nothing = K'nothing'
@@ -129,13 +132,13 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
              + V'_Dcl_int' + V'_Dcl_var'
              + V'Dcl_det'
              + V'_Set'
-             + V'Free'
+             + V'Free'     + V'Spawn'
              + V'Nothing'
              + V'CallStmt' -- last
              --+ EM'statement'-- (missing `_´?)'
              + EM'statement (usually a missing `var´ or C prefix `_´)'
 
-    , _StmtB = V'_Do'   + V'Async'  + V'Host'
+    , _StmtB = V'Do'    + V'Async'  + V'Host'
              + V'ParOr' + V'ParAnd'
              + V'If'    + V'Loop'
              + V'Pause'
@@ -145,7 +148,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , _LstStmt  = V'_Return' + V'Break' + V'_Continue' + V'AwaitN'
     , _LstStmtB = V'ParEver' + V'_Continue'
 
-    , _SetBlock = ( V'_Do'     + V'Async' +
+    , _SetBlock = ( V'Do'     + V'Async' +
                     V'ParEver' + V'If'    + V'Loop' )
 
     , _Set  = V'_Exp' * V'_Sets'
@@ -163,7 +166,9 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
                * EK'with' * EV'Finally' * EK'end'
     , Finally  = V'Block'
 
-    , Free = K'free' * V'_Exp'
+    , Free  = K'free'  * V'_Exp'
+    , Spawn = K'spawn' * EV'ID_cls'
+                 * (EK'with' * V'Dcl_constr' * EK'end' + Cc(false))
 
     , CallStmt = m.Cmt(V'_Exp',
                     function (s,i,...)

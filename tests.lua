@@ -149,6 +149,47 @@ end
 
 error 'testar pause/if org.e'
 do return end
+
+Test { [[
+C _V;
+C do
+    int V = 0;
+end
+C nohold _fprintf(), _stderr;
+class T with
+do
+    finalize with
+//_fprintf(_stderr, "oioi\n");
+        _V = _V + 1;
+    end
+    await FOREVER;
+end
+var int v = 0;
+do
+    loop i, 10 do
+        loop i, 10000 do
+            loop i, 10000 do
+                spawn T;
+                var int ok = 1;
+                if not ok then
+                    v = v + 1;
+                end
+            end
+        end
+    end
+
+    input void START;
+    await START;
+end
+C _assert();
+_assert(_V>0 and v>0);
+return _V+v;
+]],
+    loop = 1,
+    run = 1000000000,
+}
+
+do return end
 --]===]
 
 Test { [[return(1);]],
@@ -198,10 +239,6 @@ do do do do do do do do do do do do do do do do do do do do
 do do do do do do do do do do do do do do do do do do do do
 do do do do do do do do do do do do do do do do do do do do
 do do do do do do do do do do do do do do do do do do do do
-do do do do do do do do do do do do do do do do do do do do
-do do do do do do do do do do do do do do do do do do do do
-end end end end end end end end end end end end end end end end end end end end
-end end end end end end end end end end end end end end end end end end end end
 end end end end end end end end end end end end end end end end end end end end
 end end end end end end end end end end end end end end end end end end end end
 end end end end end end end end end end end end end end end end end end end end
@@ -210,7 +247,7 @@ end end end end end end end end end end end end end end end end end end end end
 end end end end end end end end end end end end end end end end end end end end
 return 1;
 ]],
-    ast = 'ERR : line 7 : max depth of 0xFF',
+    ast = 'ERR : line 5 : max depth of 0xFF',
 }
 
 Test { [[return 0;]], run=0 }
@@ -19333,6 +19370,69 @@ return t:b;
     run = 20,
 }
 
+-- SPAWN
+
+Test { [[
+class T with do end
+spawn T;
+]],
+    env = 'ERR : line 2 : `spawn´ requires enclosing `do ... end´',
+}
+
+Test { [[
+C _V;
+C do
+    int V = 0;
+end
+class T with
+do
+    _V = 10;
+end
+do
+    spawn U;
+end
+return _V;
+]],
+    env = 'ERR : line 10 : class "U" is not declared',
+}
+
+Test { [[
+C _V;
+C do
+    int V = 0;
+end
+class T with
+do
+    _V = 10;
+end
+do
+    spawn T;
+end
+return _V;
+]],
+    run = 10,
+}
+
+Test { [[
+C _V;
+C do
+    int V = 0;
+end
+class T with
+    var int a;
+do
+    _V = this.a;
+end
+do
+    spawn T with
+        this.a = 10;
+    end;
+end
+return _V;
+]],
+    run = 10,
+}
+
 -- FREE
 
 Test { [[
@@ -20103,8 +20203,6 @@ do
     _assert(_X == 100 and _Y == 99);
 end
 
-C nohold _fprintf(), _stderr;
-_fprintf(_stderr, "V: %d %d\n", _X, _Y);
 _assert(_X == 100 and _Y == 99);
 return 10;
 ]],

@@ -160,7 +160,10 @@ do
             tpl = sub(tpl, '=== CEU_CLS_NEWS_NXT ===',  _MEM.cls.idx_news_nxt)
         end
 ]]
-        tpl = sub(tpl, '=== CEU_CLS_TRAILN ===',  _MEM.cls.idx_trailN)
+        if _PROPS.has_news then
+            tpl = sub(tpl, '=== CEU_CLS_FREE ===',   _MEM.cls.idx_free)
+        end
+        tpl = sub(tpl, '=== CEU_CLS_TRAILN ===', _MEM.cls.idx_trailN)
     end
     tpl = sub(tpl, '=== CEU_CLS_TRAIL0 ===',  _MEM.cls.idx_trail0)
 

@@ -296,10 +296,14 @@ F = {
 
     This = function (me)
         local cls
+
+        local spw = _AST.iter'Spawn'()
         local set = _AST.iter'SetNew'()
         local dcl = _AST.iter'Dcl_var'()
 
-        if set then
+        if spw then
+            cls = _ENV.clss[ spw[1] ]   -- checked on Spawn
+        elseif set then
             cls = _ENV.clss[ set[2] ]   -- checked on SetExp
         elseif dcl then
             cls = _ENV.clss[ dcl[2] ]   -- checked on Dcl_var
@@ -543,14 +547,23 @@ F = {
     SetNew = function (me)
         local exp, id_cls = unpack(me)
 
-        me.cls = ASR(_ENV.clss[id_cls], me,
-                        'class "'..id_cls..'" is not declared')
+        F.Spawn(me, id_cls, exp.ref.var.blk)
+
+        ASR(exp.lval and _TP.contains(exp.tp,me.cls.id..'*'),
+                me, 'invalid attribution')
+    end,
+
+    Spawn = function (me, id, blk)
+        id = id or me[1]
+        me.cls = ASR(_ENV.clss[id], me,
+                        'class "'..id..'" is not declared')
         ASR(not me.cls.is_ifc, me, 'cannot instantiate an interface')
         me.cls.has_news = true
 
-        exp.ref.var.blk.has_news = true
-        ASR(exp.lval and _TP.contains(exp.tp,me.cls.id..'*'),
-                me, 'invalid attribution')
+        blk = blk or ASR(_AST.iter'Do'(),
+                        me, '`spawn´ requires enclosing `do ... end´')[1]
+        blk.has_news = true
+        me.blk = blk
     end,
 
     CallStmt = function (me)

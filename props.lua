@@ -161,6 +161,7 @@ F = {
         F.Free(me)
         me.has.fins = me.cls.has.fins
     end,
+    Spawn = 'SetNew',
 
     Orgs = function (me)
         for _, var in ipairs(me.vars) do

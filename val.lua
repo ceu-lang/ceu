@@ -45,10 +45,13 @@ F =
     end,
 
     This = function (me)
-        local set = _AST.iter'SetNew'()
+        local new = _AST.iter'SetNew'()
+        local spw = _AST.iter'Spawn'()
         local dcl = _AST.iter'Dcl_var'()
-        if set then
-            me.val = set[1].val
+        if new then
+            me.val = new[1].val
+        elseif spw then
+            me.val = '__ceu_org'
         elseif dcl then
             me.val = dcl.var.val
         else

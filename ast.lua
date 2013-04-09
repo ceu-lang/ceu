@@ -172,6 +172,7 @@ local C; C = {
 
     BlockI  = node('BlockI'),
     Stmts   = node('Stmts'),
+    Do      = node('Do'),
     Nothing = node('Nothing'),
     Block   = node('Block'),
     Host    = node('Host'),
@@ -403,6 +404,7 @@ local C; C = {
     Global = node('Global'),
     This   = node('This'),
     Free   = node('Free'),
+    Spawn  = node('Spawn'),
 
     _Set = function (ln, e1, tag, e2, constr)
         return node(tag)(ln, e1, e2, constr)

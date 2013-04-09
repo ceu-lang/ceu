@@ -73,6 +73,7 @@ F = {
         if _PROPS.has_news then
             -- MUST BE 1st in class (see ceu_news_*)
             _MEM.cls.idx_news = alloc(me.mem, _ENV.c.tceu_news_one.len)
+            _MEM.cls.idx_free = alloc(me.mem, 1)
         end
 
         if _PROPS.has_ifcs then
