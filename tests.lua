@@ -19379,7 +19379,7 @@ end
 class T with
     var int v;
 do
-    finalize with
+    finalize with   // does not enter
         _V = 10;
     end
     await FOREVER;
@@ -19398,7 +19398,7 @@ do
 end
 return _V;
 ]],
-    run = 10,
+    run = 1,
 }
 
 Test { [[
@@ -19441,6 +19441,35 @@ end
 class T with
     var int v;
 do
+    finalize with   // does not enter
+        _V = 10;
+    end
+    await FOREVER;
+end
+
+var T* a;
+do
+    var T* b = new T;
+    b:v = 10;
+    finalize
+        a = b;      // no more :=
+    with
+        nothing;
+    end
+end
+return _V;
+]],
+    run = 5,
+}
+Test { [[
+input void START;
+C _V;
+C do
+    int V = 5;
+end
+class T with
+    var int v;
+do
     finalize with
         _V = 10;
     end
@@ -19456,6 +19485,7 @@ do
     with
         nothing;
     end
+    await START;
 end
 return _V;
 ]],
@@ -19721,6 +19751,49 @@ end
 
 return _V;
 ]],
+    run = 1,
+}
+
+Test { [[
+input void START;
+C _f(), _V;
+C do
+    int V = 1;
+    int* f (){ return NULL; }
+end
+
+class V with
+do
+    var int* v;
+    finalize
+        v = _f();
+    with
+        _V = _V+1;
+    end
+    await FOREVER;
+end
+
+class U with
+    var V* v;
+do
+    var V* vv = new V;
+    await FOREVER;
+end
+
+class T with
+    var U u;
+do
+    u.v = new V;
+    await FOREVER;
+end
+
+do
+    var T t;
+    await START;
+end
+
+return _V;
+]],
     run = 2,
 }
 
@@ -19800,10 +19873,13 @@ do
     await FOREVER;
 end
 
+input void START;
+
 var T t;
 do
     var U u;
     u.v = t.u.v;
+    await START;
 end
 
 return _V;
@@ -19860,14 +19936,14 @@ do
     do
         var T t;
         t.u = &u;
-        await 1s;
+        await 2s;
     end
     _assert(_V == 10);
 end
 _assert(_V == 10);
 return _V;
 ]],
-    run = { ['~>1s']=10, }       -- TODO: stack change
+    run = { ['~>2s']=10, }       -- TODO: stack change
 }
 
 Test { [[
@@ -19921,15 +19997,14 @@ do
         if ptr != null then
             free ptr;
         end
-        ptr = new T;
+        ptr = new T;    // never starts
     end
-C nohold _fprintf(), _stderr;
-_fprintf(_stderr, "V: %d %d\n", _X, _Y);
     _assert(_X == 100 and _Y == 99);
 end
 
+C nohold _fprintf(), _stderr;
 _fprintf(_stderr, "V: %d %d\n", _X, _Y);
-_assert(_X == 100 and _Y == 100);
+_assert(_X == 100 and _Y == 99);
 return 10;
 ]],
     loop = true,
@@ -19979,6 +20054,8 @@ do
     p:v = 2;
     p = new T;
     p:v = 3;
+    input void START;
+    await START;
 end
 _assert(_V == 6);
 return _V;

@@ -230,8 +230,8 @@ F = {
             end
         end
         if orgs then
-             -- await orgs first
-            me[1] = _AST.node('ParOr')(me.ln, orgs, me[1])
+             -- awake blk first, then orgs
+            me[1] = _AST.node('ParOr')(me.ln, me[1], orgs)
         end
     end,
 

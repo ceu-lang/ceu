@@ -199,10 +199,10 @@ STATS = {
 }
 ]])
 
-assert(STATS.count  ==    1130)
-assert(STATS.mem    ==   11027)
-assert(STATS.trails ==    1995)
-assert(STATS.bytes  == 6507719)
+assert(STATS.count  ==    1132)
+assert(STATS.mem    ==   11127)
+assert(STATS.trails ==    2001)
+assert(STATS.bytes  == 6411875)
 --[[
 STATS = {
     mem   = BIG,  -- ints 1 byte  //  trlN

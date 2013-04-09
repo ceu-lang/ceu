@@ -274,7 +274,7 @@ void ceu_news_rem (void* org)
     cur->prv->nxt = cur->nxt;
     cur->nxt->prv = cur->prv;
 
-// TODO: -1
+    // [0, N-1]
     ceu_trails_clr(0, *PTR_org(u8*,org,CEU_CLS_TRAILN)-1, org);
     free(org);
 }

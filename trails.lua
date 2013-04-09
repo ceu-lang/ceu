@@ -5,8 +5,8 @@ end
 F = {
     Root_pre = 'Dcl_cls_pre',
     Dcl_cls_pre = function (me)
-        me.trails  = { 0, me.ns.trails -1 }
-        me.wclocks = { 0, me.ns.wclocks-1 }
+        me.trails  = { 0, me.ns.trails -1 }     -- [0, N]
+        me.wclocks = { 0, me.ns.wclocks-1 }     -- [0, N]
     end,
 
     Node = function (me)
