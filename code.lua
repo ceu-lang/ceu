@@ -168,12 +168,20 @@ return;
     end,
 
     SetNew = function (me)
-        local exp, _ = unpack(me)
+        local exp, _, constr = unpack(me)
         local org = (exp.org and exp.org.val) or '_ceu_org_'
+
         LINE(me, [[
 ]]..VAL(exp)..[[ = ceu_news_ins(
     PTR_org(tceu_news_blk*,]]..org..','..exp.ref.var.blk.off_news..[[),
     ]]..me.cls.mem.max..[[);
+]])
+
+        if constr then
+            CONC(me, constr)
+        end
+
+        LINE(me, [[
 ceu_call(_ceu_evt_id_, _ceu_evt_p_, ]]
         ..me.cls.lbl.id..','
         ..VAL(exp)..[[);
@@ -203,10 +211,16 @@ ceu_call(_ceu_evt_id_, _ceu_evt_p_, ]]
 ]])
     end,
 
+    Dcl_constr = CONC_ALL,
     Dcl_var = function (me)
+        local _,_,_,_,constr = unpack(me)
         local var = me.var
         if not var.cls then
             return
+        end
+
+        if constr then
+            CONC(me, constr)
         end
 
         -- start org

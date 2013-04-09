@@ -295,12 +295,27 @@ F = {
     end,
 
     This = function (me)
-        ASR(CLS() ~= _MAIN, me, 'invalid access')
-        me.tp   = CLS().id
+        local cls
+        local set = _AST.iter'SetNew'()
+        local dcl = _AST.iter'Dcl_var'()
+
+        if set then
+            cls = _ENV.clss[ set[2] ]   -- checked on SetExp
+        elseif dcl then
+            cls = _ENV.clss[ dcl[2] ]   -- checked on Dcl_var
+        else
+            cls = CLS()
+            ASR(cls ~= _MAIN, me, 'invalid access')
+        end
+        if not cls then
+            return
+        end
+
+        me.tp   = cls.id
         me.lval = false
         me.ref  = me
         me.fst  = me
-        me.blk  = CLS().blk_ifc
+        me.blk  = cls.blk_ifc
     end,
 
     Free = function (me)
@@ -336,20 +351,6 @@ F = {
         end
         me.var = newvar(me, _AST.iter'Block'(), pre, tp, dim and dim.sval, id)
         me.var.read_only = me.read_only
-
---[=[
--- TODO: remove!
-        local cls = me.var.cls or
-                    me.var.arr and _ENV.clss[_TP.deref(me.var.tp)]
-        if cls then
-            local blk = CLS().blk_body
-            cls.glbs = ((not blk) or _AST.iter'Block'().depth<=blk.depth)
-                        and cls.glbs
-            if cls.glbs then
-                cls.glbs[#cls.glbs+1] = me.var
-            end
-        end
-]=]
     end,
 
     Dcl_imp = function (me)
@@ -541,11 +542,13 @@ F = {
 
     SetNew = function (me)
         local exp, id_cls = unpack(me)
-        exp.ref.var.blk.has_news = true
+
         me.cls = ASR(_ENV.clss[id_cls], me,
                         'class "'..id_cls..'" is not declared')
-        me.cls.has_news = true
         ASR(not me.cls.is_ifc, me, 'cannot instantiate an interface')
+        me.cls.has_news = true
+
+        exp.ref.var.blk.has_news = true
         ASR(exp.lval and _TP.contains(exp.tp,me.cls.id..'*'),
                 me, 'invalid attribution')
     end,

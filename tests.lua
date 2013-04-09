@@ -666,8 +666,12 @@ Test { [[event int a=0; emit a=1; return a;]],
     parser = 'ERR : line 1 : after `a´ : expected `;´',
     --trig_wo = 1,
 }
-Test { [[event int a; emit a=1; return a;]],
-    val = 'ERR : line 1 : invalid expression',
+Test { [[
+event int a;
+emit a=1;
+return a;
+]],
+    val = 'ERR : line 3 : invalid expression',
     --run = 1,
     --trig_wo = 1,
 }
@@ -19230,6 +19234,103 @@ end
 return 10;
 ]],
     run = 10,
+}
+
+-- CONSTRUCTOR
+
+Test { [[
+var int a with
+    nothing;
+end;
+return 0;
+]],
+    parser = 'ERR : line 1 : after `a´ : expected `;´',
+}
+
+Test { [[
+class T with
+    var int a;
+    var int b;
+do
+    b = a * 2;
+end
+
+var T t1, t2 with
+    this.a = 10;
+end;
+
+return t1.b;
+]],
+    parser = 'ERR : line 8 : after `t2´ : expected `;´',
+}
+
+Test { [[
+class T with
+    var int a;
+    var int b;
+do
+    b = a * 2;
+end
+
+var T[2] t with
+    this.a = 10;
+end;
+
+return t.b;
+]],
+    parser = 'ERR : line 8 : after `t´ : expected `;´',
+}
+
+Test { [[
+class T with
+    var int a;
+    var int b;
+do
+    b = a * 2;
+end
+
+var T t with
+    await 1s;
+end;
+
+return t.b;
+]],
+    props = 'ERR : line 9 : not permitted inside a constructor',
+}
+
+Test { [[
+class T with
+    var int a;
+    var int b;
+do
+    b = a * 2;
+end
+
+var T t with
+    this.a = 10;
+end;
+
+return t.b;
+]],
+    run = 20,
+}
+
+Test { [[
+class T with
+    var int a;
+    var int b;
+do
+    b = a * 2;
+end
+
+var T* t =
+    new T with
+        this.a = 10;
+    end;
+
+return t:b;
+]],
+    run = 20,
 }
 
 -- FREE

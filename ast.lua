@@ -339,21 +339,27 @@ local C; C = {
 
     Dcl_det = node('Dcl_det'),
 
-    _Dcl_var_ifc = function(...) return C._Dcl_var(...) end,
-    _Dcl_var = function (ln, pre, tp, dim, ...)
+    _Dcl_var_ifc = function(...) return C._Dcl_var_2(...) end,
+    _Dcl_var_2 = function (ln, pre, tp, dim, ...)
         local ret = {}
         local t = { ... }
-        for i=1, #t, 3 do
+        -- id, tag, exp, constr
+        for i=1, #t, 4 do
             ret[#ret+1] = node('Dcl_var')(ln, pre, tp, dim, t[i])
             if t[i+1] then
                 ret[#ret+1] = C._Set(ln,
                                 node('Var')(ln,t[i]),   -- var
                                 t[i+1],                 -- tag
-                                t[i+2])                 -- exp
+                                t[i+2],                 -- exp
+                                t[i+3])                 -- constr
             end
         end
         return unpack(ret)
     end,
+    _Dcl_var_1 = function (ln, pre, tp, dim, id, constr)
+        return node('Dcl_var')(ln, pre, tp, dim, id, constr)
+    end,
+    Dcl_constr = node('Dcl_constr'),
 
     -- TODO: unify with _Dcl_var
     _Dcl_int_ifc = function(...) return C._Dcl_int(...) end,
@@ -382,7 +388,7 @@ local C; C = {
         if id == 'Main' then
             blk = node('Block')(ln,
                     node('Stmts')(ln,
-                        node('Dcl_var')(ln, 'tmp', 'int', false, '_ret'),
+                        node('Dcl_var')(ln, 'var', 'int', false, '_ret'),
                         node('SetBlock')(ln,
                             node('Var')(ln,'_ret'),
                             blk)))
@@ -398,8 +404,8 @@ local C; C = {
     This   = node('This'),
     Free   = node('Free'),
 
-    _Set = function (ln, e1, tag, e2)
-        return node(tag)(ln, e1, e2)
+    _Set = function (ln, e1, tag, e2, constr)
+        return node(tag)(ln, e1, e2, constr)
     end,
 
     CallStmt = node('CallStmt'),

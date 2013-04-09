@@ -51,10 +51,18 @@ local NO_fin = {
 }
 
 local NO_async = {
-    ParEver=true, ParOr=true, ParAnd=true,
-    EmitInt=true,
     Async=true,
+    ParEver=true, ParOr=true, ParAnd=true,
     AwaitS=true, AwaitExt=true, AwaitInt=true, AwaitN=true, AwaitT=true,
+    EmitInt=true,
+}
+
+local NO_constr = {
+    Finalize=true, Finally=true,
+    Host=true, Return=true, Async=true,
+    ParEver=true, ParOr=true, ParAnd=true,
+    AwaitS=true, AwaitExt=true, AwaitInt=true, AwaitN=true, AwaitT=true,
+    EmitInt=true,
 }
 
 F = {
@@ -84,6 +92,10 @@ F = {
         end
         if NO_async[me.tag] then
             ASR(not _AST.iter'Async'(), me,'not permitted inside `async´')
+        end
+        if NO_constr[me.tag] then
+            ASR(not _AST.iter'Dcl_constr'(),
+                    me,'not permitted inside a constructor')
         end
     end,
 

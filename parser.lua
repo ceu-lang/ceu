@@ -151,9 +151,11 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , _Set  = V'_Exp' * V'_Sets'
     , _Sets = K'=' * (
                 Cc'SetAwait' * (V'AwaitS'+V'AwaitT'+V'AwaitExt'+V'AwaitInt')
-              + Cc'SetBlock' * V'_SetBlock'
-              + Cc'SetExp'   * V'_Exp'
+                                                    * Cc(false)
+              + Cc'SetBlock' * V'_SetBlock'         * Cc(false) -- (constr)
+              + Cc'SetExp'   * V'_Exp'              * Cc(false)
               + Cc'SetNew'   * K'new' * V'ID_cls'
+                 * (EK'with' * V'Dcl_constr' * EK'end' + Cc(false))
               + EM'expression'
               )
 
@@ -296,13 +298,17 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , __Dcl_int = EV'ID_int' --* (V'_Sets' +
                              --   Cc(false)*Cc(false)*Cc(false))
 
-    , _Dcl_var  = CK'var'
-                * (EV'ID_type' + EV'ID_cls')
-                * (K'['*V'_Exp'*K']'+Cc(false))
-                * V'__Dcl_var' * (K','*V'__Dcl_var')^0
+    , _Dcl_var   = V'_Dcl_var_1' + V'_Dcl_var_2'
+    , _Dcl_var_2 = CK'var'
+                 * (EV'ID_type' + EV'ID_cls')
+                 * (K'['*V'_Exp'*K']'+Cc(false))
+                 * V'__Dcl_var' * (K','*V'__Dcl_var')^0
+    , _Dcl_var_1 = CK'var' * EV'ID_cls' * Cc(false) * EV'ID_var'
+                 * EK'with' * V'Dcl_constr' * EK'end'
+    , Dcl_constr = V'Block'
 
     , __Dcl_var = EV'ID_var' * (V'_Sets' +
-                                Cc(false)*Cc(false))
+                                Cc(false)*Cc(false)*Cc(false))
 
     , _Dcl_int_ifc  = CK'event' * EV'ID_type' *-- Cc(false) *
                        EV'__Dcl_int_ifc' * (K','*V'__Dcl_int_ifc')^0
@@ -310,7 +316,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
 
     , _Dcl_var_ifc  = CK'var' * EV'ID_type' * (K'['*V'_Exp'*K']'+Cc(false)) *
                        V'__Dcl_var_ifc' * (K','*V'__Dcl_var')^0
-    , __Dcl_var_ifc = EV'ID_var' * (Cc(false)*Cc(false))
+    , __Dcl_var_ifc = EV'ID_var' * (Cc(false)*Cc(false)*Cc(false))
 
     , _Dcl_imp_ifc = K'interface' * EV'ID_cls' * (K',' * EV'ID_cls')^0
 

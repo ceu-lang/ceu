@@ -45,7 +45,15 @@ F =
     end,
 
     This = function (me)
-        me.val = '_ceu_org_'
+        local set = _AST.iter'SetNew'()
+        local dcl = _AST.iter'Dcl_var'()
+        if set then
+            me.val = set[1].val
+        elseif dcl then
+            me.val = dcl.var.val
+        else
+            me.val = '_ceu_org_'
+        end
     end,
 
     Var = function (me)
