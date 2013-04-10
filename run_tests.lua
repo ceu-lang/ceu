@@ -1,5 +1,7 @@
 #!/usr/bin/env lua
 
+_RUNTESTS = true
+
 dofile 'pak.lua'
 
 T = nil
@@ -132,7 +134,7 @@ end
         return
     end
 
-    local CEU = './ceu _ceu_tmp.ceu --tp-word 4 --tp-pointer 4'
+    local CEU = './ceu _ceu_tmp.ceu --tp-word 4 --tp-pointer 4 --run-tests'
     local EXE = (VALGRIND=='false' and './ceu.exe')
              or 'valgrind -q --leak-check=full ./ceu.exe 2>&1'
 

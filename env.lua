@@ -553,6 +553,12 @@ F = {
                 me, 'invalid attribution')
     end,
 
+    SetSpawn = function (me)
+        local exp = unpack(me)
+        ASR(exp.lval and _TP.isNumeric(exp.tp,true),
+                me, 'invalid attribution')
+    end,
+
     Spawn = function (me, id, blk)
         id = id or me[1]
         me.cls = ASR(_ENV.clss[id], me,

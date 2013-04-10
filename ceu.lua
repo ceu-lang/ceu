@@ -49,7 +49,7 @@ do
             no = true
             opt = string.sub(opt, 4)
         end
-        if _OPTS_NPARAMS[opt] == 0 then
+        if _OPTS_NPARAMS[opt]==0 or _OPTS_NPARAMS[opt]==nil then
             _OPTS[opt] = not no
         else
             local opt = string.gsub(string.sub(p,3), '%-', '_')
@@ -248,6 +248,10 @@ do
 
     -- TODO: goto _OPTS
     --str = str .. '#define CEU_DEBUG_TRAILS\n'
+
+    if _OPTS.run_tests then
+        str = str .. '#define CEU_RUNTESTS\n'
+    end
 
     if _OPTS.defs_file then
         local f = assert(io.open(_OPTS.defs_file,'w'))

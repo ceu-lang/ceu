@@ -149,47 +149,6 @@ end
 
 error 'testar pause/if org.e'
 do return end
-
-Test { [[
-C _V;
-C do
-    int V = 0;
-end
-C nohold _fprintf(), _stderr;
-class T with
-do
-    finalize with
-//_fprintf(_stderr, "oioi\n");
-        _V = _V + 1;
-    end
-    await FOREVER;
-end
-var int v = 0;
-do
-    loop i, 10 do
-        loop i, 10000 do
-            loop i, 10000 do
-                spawn T;
-                var int ok = 1;
-                if not ok then
-                    v = v + 1;
-                end
-            end
-        end
-    end
-
-    input void START;
-    await START;
-end
-C _assert();
-_assert(_V>0 and v>0);
-return _V+v;
-]],
-    loop = 1,
-    run = 1000000000,
-}
-
-do return end
 --]===]
 
 Test { [[return(1);]],
@@ -893,7 +852,7 @@ return(1);
 Test { [[
 output _char A;
 ]],
-    env = "lines.lua:35: ERR : line 1 : invalid event type",
+    env = "ERR : line 1 : invalid event type",
 }
 
 Test { [[
@@ -19431,6 +19390,96 @@ end
 return _V;
 ]],
     run = 10,
+}
+
+Test { [[
+class T with do end
+do
+    var u8* x = spawn T;
+end
+]],
+    env = 'ERR : line 3 : invalid attribution',
+}
+
+Test { [[
+class T with do end
+var u8 ok;
+do
+    ok = spawn T;
+end
+return ok;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with do
+    await FOREVER;
+end
+var u8 ok;
+C _assert();
+do
+    loop i, 100 do
+        ok = spawn T;
+    end
+    _assert(ok == 1);
+    ok = spawn T;
+    _assert(ok == 0);
+end
+do
+    loop i, 100 do
+        ok = spawn T;
+    end
+    _assert(ok == 1);
+end
+do
+    loop i, 101 do
+        ok = spawn T;
+    end
+    _assert(ok == 0);
+end
+return ok;
+]],
+    loop = 1,
+    run = 0,
+}
+
+Test { [[
+C _V;
+C do
+    int V = 0;
+end
+C nohold _fprintf(), _stderr;
+class T with
+    var int inc;
+do
+    finalize with
+//_fprintf(_stderr, "oioi\n");
+        _V = _V + this.inc;
+    end
+    await FOREVER;
+end
+var int v = 0;
+do
+    loop i, 200 do
+        var int ok =
+            spawn T with
+                this.inc = 1;
+            end;
+        if not ok then
+            v = v + 1;
+        end
+    end
+
+    input void START;
+    await START;
+end
+C _assert();
+_assert(_V==100 and v==100);
+return _V+v;
+]],
+    loop = 1,
+    run = 200,
 }
 
 -- FREE

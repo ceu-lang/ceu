@@ -257,11 +257,21 @@ typedef struct {
     tceu_news_one lst;
 } tceu_news_blk;
 
+#ifdef CEU_RUNTESTS
+int __ceu_news = 0;
+#endif
+
 void* ceu_news_ins (tceu_news_blk* blk, int len)
 {
     tceu_news_one* cur = malloc(len);
     if (cur == NULL)
         return NULL;
+
+#ifdef CEU_RUNTESTS
+    if (__ceu_news >= 100)
+        return NULL;
+    __ceu_news++;
+#endif
 
     (blk->lst.prv)->nxt = cur;
     cur->prv            = blk->lst.prv;
@@ -280,6 +290,9 @@ void ceu_news_rem (void* org)
     // [0, N-1]
     ceu_trails_clr(0, *PTR_org(u8*,org,CEU_CLS_TRAILN)-1, org);
     free(org);
+#ifdef CEU_RUNTESTS
+        __ceu_news--;
+#endif
 }
 
 void ceu_news_rem_all (tceu_news_one* cur) {
@@ -289,6 +302,9 @@ void ceu_news_rem_all (tceu_news_one* cur) {
         //ceu_trails_clr(0, *PTR_org(u8*,org,CEU_CLS_TRAILN)-1, org);
         cur = cur->nxt;
         free(org);
+#ifdef CEU_RUNTESTS
+        __ceu_news--;
+#endif
     }
 }
 
@@ -417,7 +433,7 @@ int* ceu_ext_f (int* data, int v) {
 }
 #endif
 
-#ifdef CEU_DEBUG
+#ifdef CEU_RUNTESTS
 void ceu_stack_clr () {
     int a[1000];
     memset(a, 0, sizeof(a));
@@ -434,7 +450,7 @@ void ceu_go_all (int* ret_end)
 
 #ifdef CEU_ASYNCS
     for (;;) {
-#ifdef CEU_DEBUG
+#ifdef CEU_RUNTESTS
         ceu_stack_clr();
 #endif
         ceu_go_async();

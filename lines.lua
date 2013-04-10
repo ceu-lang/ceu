@@ -4,7 +4,11 @@ m.setmaxstack(1000)
 function DBG (...)
     local t = {}
     for i=1, select('#',...) do
-        t[#t+1] = tostring( select(i,...) )
+        if select(i,...) == nil then
+            t[#t+1] = debug.traceback()
+        else
+            t[#t+1] = tostring( select(i,...) )
+        end
     end
     if #t == 0 then
         t = { [1]=debug.traceback() }

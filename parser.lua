@@ -159,6 +159,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
               + Cc'SetExp'   * V'_Exp'              * Cc(false)
               + Cc'SetNew'   * K'new' * V'ID_cls'
                  * (EK'with' * V'Dcl_constr' * EK'end' + Cc(false))
+              + Cc'SetSpawn' * V'Spawn'
               + EM'expression'
               )
 

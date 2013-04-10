@@ -185,6 +185,10 @@ if (*PTR_cur(u8*,CEU_CLS_FREE))
             LINE(me, t.val..' = __ceu_org;')
         end
 
+        if _AST.iter'SetSpawn'() then
+            LINE(me, '__ceu_'..me.n..' = (__ceu_org != NULL);')
+        end
+
         LINE(me, [[
     if (__ceu_org != NULL) {
         *PTR_org(u8*, __ceu_org, CEU_CLS_FREE) = ]]..t.free..[[;
@@ -224,6 +228,21 @@ if (*PTR_cur(u8*,CEU_CLS_FREE))
             free    = 1,
             constr  = constr,
         })
+    end,
+
+    SetSpawn = function (me)
+        local exp, spw = unpack(me)
+        LINE(me, [[
+{
+    int __ceu_]]..spw.n..[[;
+]])
+
+        CONC(me, spw)
+
+        LINE(me, [[
+    ]]..VAL(exp)..[[ = __ceu_]]..spw.n..[[;
+}
+]])
     end,
 
     Free = function (me)
