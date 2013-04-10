@@ -72,6 +72,16 @@ goto _SWITCH_;
 ]])
 end
 
+function PAUSE (me)
+    for pse in _AST.iter'Pause' do
+        COMM(me, 'PAUSE: '..pse.dcl.var.id)
+        LINE(me, [[
+if (]]..VAL(pse.dcl.var)..[[)
+    return;
+]])
+    end
+end
+
 function COMM (me, comm)
     LINE(me, '/* '..comm..' */', 0)
 end
@@ -118,7 +128,12 @@ F = {
         me.code = ''
     end,
 
-    Do = CONC_ALL,
+    Do         = CONC_ALL,
+    Finally    = CONC_ALL,
+    Stmts      = CONC_ALL,
+    BlockI     = CONC_ALL,
+    Dcl_constr = CONC_ALL,
+    Pause      = CONC_ALL,
 
     Root = function (me)
         for _, cls in ipairs(_ENV.clss_cls) do
@@ -171,6 +186,9 @@ if (*PTR_cur(u8*,CEU_CLS_FREE))
         _CODE.host = _CODE.host ..
             '//#line '..(me.ln+1)..'\n' ..
             me[1] .. '\n'
+    end,
+    Host_raw = function (me)
+        LINE(me, me[1])
     end,
 
     _New = function (me, t)
@@ -267,7 +285,6 @@ if (*PTR_cur(u8*,CEU_CLS_FREE))
 ]])
     end,
 
-    Dcl_constr = CONC_ALL,
     Dcl_var = function (me)
         local _,_,_,_,constr = unpack(me)
         local var = me.var
@@ -314,6 +331,10 @@ ceu_trails_set(]]..me.trails[1]..','..me.lbl.id..[[,_ceu_org_);
 // awake organisms
 case ]]..me.lbl.id..[[:
 ]])
+
+        LINE(me, 'if (_ceu_evt_id_ != IN__FIN) {')
+        PAUSE(me)
+        LINE(me, '}')
 
         -- TODO: test w/o arr
         for _, var in ipairs(me.vars) do
@@ -442,10 +463,6 @@ ceu_news_rem_all(PTR_cur(tceu_news_blk*,]]..me.off_news..[[)->fst.nxt);
             CONC(me, set)
         end
     end,
-    Finally = CONC_ALL,
-
-    Stmts  = CONC_ALL,
-    BlockI = CONC_ALL,
 
     SetExp = function (me)
         local e1, e2, fin = unpack(me)
@@ -619,15 +636,6 @@ for (;;) {
         LINE(me, 'break;')
     end,
 
-    Pause = function (me)
-        local inc = unpack(me)
-        local has_orgs = me.blk.has.orgs and 1 or 0
-        local has_news = me.blk.has.news and 1 or 0
-        LINE(me, 'ceu_lsts_pse('..has_orgs..'||'..has_news
-                    ..', _ceu_org_, '
-                    ..me.blk.lbls[1]..','..me.blk.lbls[2]..','..inc..');')
-    end,
-
     CallStmt = function (me)
         local call = unpack(me)
         LINE(me, VAL(call)..';')
@@ -764,6 +772,9 @@ return;
 case ]]..me.lbl.id..[[:
     if (_ceu_evt_id_ != IN__WCLOCK)
         return;
+]])
+        PAUSE(me)
+        LINE(me, [[
     if (ceu_wclocks_not(PTR_cur(s32*,]]..me.off..[[), _ceu_evt_p_->dt))
         return;
 ]])
@@ -788,6 +799,7 @@ case ]]..me.lbl.id..[[:
         return;
 #endif
 ]])
+        PAUSE(me)
         DEBUG_TRAILS(me)
         F._SetAwait(me)
     end,
@@ -803,6 +815,7 @@ case ]]..me.lbl.id..[[:
         return;
 ]])
         DEBUG_TRAILS(me)
+        PAUSE(me)
         F._SetAwait(me)
     end,
 
@@ -825,6 +838,7 @@ return;
 case ]]..me.lbl.id..[[:
 ]])
 
+        PAUSE(me)
         if set then
             LINE(me, '{ int __ceu_'..me.n..'_AwaitS;')
         end

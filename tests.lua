@@ -174,30 +174,11 @@ return _V;
 error 'testar pause/if org.e'
 
 do return end
+--]===]
 
 -- OK: under tests but supposed to work
 
-Test { [[
-input void START;
-C _V;
-C do
-    int V = 1;
-end
-class T with
-do
-    await START;
-    _V = 10;
-end
-do
-    spawn T;
-    await START;
-end
-return _V;
-]],
-    run = 1,
-}
 --do return end
---]===]
 
 -- OK: well tested
 
@@ -16412,7 +16393,7 @@ end
 return 0;
 ]],
     --env = 'ERR : line 2 : event type must be numeric',
-    env = 'ERR : line 2 : invalid operands to binary "!="',
+    env = 'ERR : line 2 : invalid attribution',
 }
 
 Test { [[
@@ -16465,6 +16446,9 @@ par/or do
         emit a=v;
     end
 with
+C nohold _fprintf(), _stderr;
+_fprintf(_stderr, "3\n");
+
     pause/if a do
         pause/if a do
             ret = await B;
@@ -16474,7 +16458,7 @@ end
 return ret;
 ]],
     run = {
-        ['1~>B'] = 1,
+        ['1~>B;1~>B'] = 1,
         ['0~>A ; 1~>B'] = 1,
         ['1~>A ; 1~>B ; 0~>A ; 0~>A ; 3~>B'] = 3,
         ['1~>A ; 1~>B ; 0~>A ; 1~>A ; 2~>B ; 0~>A ; 0~>A ; 3~>B'] = 3,
@@ -16558,6 +16542,9 @@ with
 end
 return ret;
 ]],
+    ana = {
+        acc = 1,
+    },
     run = {
         ['1~>A'] = 10,
     },
@@ -16649,7 +16636,7 @@ return ret;
     run = {
         ['~>1us;0~>A;~>1us;0~>A;~>19us'] = 12,
         ['~>1us;1~>A;~>1s;0~>A;~>19us'] = 11,
-        ['~>1us;1~>A ; ~>5us ; 0~>A ; ~>5us ; 1~>A ; ~>5us ; 0~>A ; ~>9us'] = 6,
+        ['~>1us;1~>A;~>5us;0~>A;~>5us;1~>A;~>5us;0~>A;~>9us'] = 6,
     },
 }
 
@@ -19499,12 +19486,10 @@ C _V;
 C do
     int V = 0;
 end
-C nohold _fprintf(), _stderr;
 class T with
     var int inc;
 do
     finalize with
-//_fprintf(_stderr, "oioi\n");
         _V = _V + this.inc;
     end
     await FOREVER;
@@ -19530,6 +19515,26 @@ return _V+v;
 ]],
     loop = 1,
     run = 200,
+}
+
+Test { [[
+input void START;
+C _V;
+C do
+    int V = 1;
+end
+class T with
+do
+    await START;
+    _V = 10;
+end
+do
+    spawn T;
+    await START;
+end
+return _V;
+]],
+    run = 1,
 }
 
 -- FREE
@@ -20389,6 +20394,37 @@ return t:v + ts[0]:v;
 }
 
 Test { [[
+input void START;
+input int A,B;
+
+class T with
+    event int e;
+do
+    var int v = await A;
+    emit e=v;
+end
+
+event int a;
+
+var int ret;
+par/or do
+    pause/if a do
+        var T t;
+        ret = await t.e;
+    end
+with
+    await START;
+    emit a=1;
+    await B;
+    emit a=0;
+    await FOREVER;
+end
+return ret;
+]],
+    run = { ['10~>A; ~>B; 5~>A'] = 5 },
+}
+
+Test { [[
 input void A,X, START;
 event int a;//=0;
 var int ret = 0;
@@ -20430,136 +20466,16 @@ with
 end
 return ret;
 ]],
+    ana = {
+        reachs = 1,
+        acc = 3,
+    },
     run = { ['~>A; ~>X; ~>A']=12 }
 }
 
 --[=[
--- todo pause hierarquico dentro de um org
-Test { [[
-input int SDL_KEYDOWN;
-input int SDL_MOUSEBUTTONDOWN;
-
-class Global with
-    int rects_n;
-do
-    rects_n = 0;
-end
-Global glb;
-
-class Rect with
-    Global* glb;
-    int v;
-    event int pse;
-do
-    pse = 0;
-    glb:rects_n = glb:rects_n + 1;
-
-    par/or do
-        pause/if pse do
-            loop do
-                await 20ms;
-                this.v = v + 1;
-                if v > 500 then
-                    break;
-                end
-            end
-        end
-    with
-        loop do
-            int but = await CLICK;
-            if but == this.v then
-                emit pse=not pse;
-            end
-        end
-    end
-finally
-    glb:rects_n = glb:rects_n - 1;
-end
-
-event int pse_all = 0;
-
-par/or do
-    loop do
-        par/or do
-            pause/if pse_all do
-                Rect* r;
-                loop do
-                    int pos = await CREATE;
-                    if glb.rects_n<10 then
-                        r = new Rect;
-                        r:glb = &glb;
-                        r:v = pos;
-                    end
-                end
-            end
-        with
-            loop do
-                _SDL_KeyboardEvent* key = await SDL_KEYDOWN;
-                if key:keysym.sym == _SDLK_ESCAPE then
-                    break;
-                end
-            end
-        end
-    end
-with
-    loop do
-        _SDL_KeyboardEvent* key = await SDL_KEYDOWN;
-        if key:keysym.sym == _SDLK_p then
-            emit pse_all = not pse_all;
-_printf("PSE %d\n", pse_all);
-        end
-    end
-with
-    loop do
-        await SDL_DT;
-
-        _SDL_SetRenderDrawColor(ren, 0, 0, 0, 0);
-        _SDL_RenderClear(ren);
-
-        loop i, glb.rects_n do
-            Rect* r = glb.rects[i];
-            _SDL_SetRenderDrawColor(ren, 0, 255, 0, 0);
-            if r:pse then
-                _SDL_RenderDrawRect(ren, &r:rect);
-            else
-                _SDL_RenderFillRect(ren, &r:rect);
-            end
-        end
-
-        _SDL_RenderPresent(ren);
-    end
-with
-    loop do
-        int i = 0;
-        int t;
-        par/or do
-            t = await 1s;
-        with
-            loop do
-                await SDL_DT;
-                i = i + 1;
-            end
-        end
-        //_printf("FPS: %d (%d)\n", i, t/1000);
-    end
-with
-    await SDL_QUIT;
-end
-
-_SDL_DestroyRenderer(ren);
-_SDL_DestroyWindow(win);
-_SDL_Quit();
-
-C do
-    int contains (SDL_Rect* r, s16 x, s16 y) {
-        return (x >= r->x) and (x <= r->x+r->w)
-            and (y >= r->y) and (y <= r->y+r->h);
-    }
-end
-
-return 0;
-]]
-}
+-- TODO pause hierarquico dentro de um org
+-- SDL/samples/sdl4.ceu
 ]=]
 
 -- INTERFACES / IFACES / IFCES

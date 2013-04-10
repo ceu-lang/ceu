@@ -264,44 +264,45 @@ local C; C = {
     end,
 
     Pause = function (ln, evt, blk)
-        local id = '_pse_'..evt.n
-        local var = node('Var')(ln,id)
-        local pse1 = node('Pause')(ln, '1')
-        local pse2 = node('Pause')(ln, '-1')
-        pse1.blk = blk
-        pse1.evt = evt
-        pse2.blk = blk
-        pse2.evt = evt
+        local cur_id  = '_cur_'..blk.n
+        local cur_dcl = node('Dcl_var')(ln, 'var', 'u8', false, cur_id)
+
+        local PSE = node('Pause')(ln, blk)
+        PSE.dcl = cur_dcl
+
         return
-            node('ParOr')(ln, blk,
-                node('Block')(ln,
-                    node('Stmts')(ln,
-                        node('Dcl_var')(ln, 'var', 'int', false, id),
-                        node('SetExp')(ln, var, node('CONST')(ln,'0')),
+            node('Block')(ln,
+                node('Stmts')(ln,
+                    cur_dcl,    -- Dcl_var(cur_id)
+                    node('SetExp')(ln,
+                        node('Var')(ln, cur_id),
+                        node('CONST')(ln, '0')),
+                    node('ParOr')(ln,
                         node('Loop')(ln,
                             node('Stmts')(ln,
-                                node('AwaitInt')(ln, evt, false),
-                                node('If')(ln, node('Op2_!=')(ln,'!=',var,evt),
-                                    node('Stmts')(ln,
-                                        node('SetExp')(ln, var, evt),
-                                        node('If')(ln, evt, pse1, pse2)),
-                                    node('Nothing')(ln)))))))
+                                node('SetAwait')(ln,
+                                    node('Var')(ln, cur_id),
+                                    node('AwaitInt')(ln, evt, false),
+                                    false),
+                                node('If')(ln,
+                                    node('Var')(ln, cur_id),
+                                    node('Nothing')(ln),
+                                    node('Host_raw')(ln,
+                                        'ceu_go_wclock(0);')))),
+                        PSE)))
     end,
 --[=[
+        var u8 cur = 0;
         par/or do
-            <blk>
-        with
-            int _pse = 0;
             loop do
-                await <evt>;
-                if _pse != <evt> then
-                    _pse = <evt>;
-                    if <evt> then
-                        <PSE++>;
-                    else
-                        <PSE-->;
-                    end
+                cur = await <evt>;
+                if not cur then  // update CEU.wclk_min (TODO: better way?)
+                    ceu_go_wclocks(0);
                 end
+            end
+        with
+            pause/if (cur) do
+                <blk>
             end
         end
 ]=]

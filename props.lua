@@ -1,4 +1,5 @@
 function SAME (me, sub)
+    sub = sub or me[#me]
     for k,v in pairs(sub.ns) do
         me.ns[k] = v
     end
@@ -35,7 +36,6 @@ _PROPS = {
     has_wclocks = false,
     has_ints    = false,
     has_asyncs  = false,
-    has_pses    = false,
     has_fins    = false,
     has_orgs    = false,
     has_news    = false,
@@ -48,6 +48,7 @@ local NO_fin = {
     ParEver=true, ParOr=true, ParAnd=true,
     AwaitS=true, AwaitExt=true, AwaitInt=true, AwaitN=true, AwaitT=true,
     EmitInt=true,
+    Pause=true,
 }
 
 local NO_async = {
@@ -55,6 +56,7 @@ local NO_async = {
     ParEver=true, ParOr=true, ParAnd=true,
     AwaitS=true, AwaitExt=true, AwaitInt=true, AwaitN=true, AwaitT=true,
     EmitInt=true,
+    Pause=true,
 }
 
 local NO_constr = {
@@ -63,12 +65,15 @@ local NO_constr = {
     ParEver=true, ParOr=true, ParAnd=true,
     AwaitS=true, AwaitExt=true, AwaitInt=true, AwaitN=true, AwaitT=true,
     EmitInt=true,
+    Pause=true,
 }
 
 F = {
     Root = function (me)
         MAX_all(me)
     end,
+
+    Pause = SAME,
 
     Node_pre = function (me)
         me.ns = {
@@ -99,7 +104,7 @@ F = {
     end,
 
     Block = function (me)
-        SAME(me, me[1])
+        SAME(me)
         if me.fins then
             _PROPS.has_fins = true
             me.has.fins = true
@@ -129,7 +134,7 @@ F = {
         if me.is_ifc then
             _PROPS.has_ifcs = true
         else
-            SAME(me, me[#me])
+            SAME(me)
         end
         ASR(me.ns.trails < 256, me, 'too many trails')
 --[[
@@ -166,10 +171,6 @@ F = {
         for _, var in ipairs(me.vars) do
             me.has.fins = me.has.fins or var.cls.has.fins
         end
-    end,
-
-    Pause = function (me)
-        _PROPS.has_pses = true
     end,
 
     Async = function (me)

@@ -319,42 +319,6 @@ void ceu_news_go (u8 evt_id, tceu_evt_param* evt_p,
 
 /**********************************************************************/
 
-#ifdef CEU_PSES
-void ceu_lsts_pse (int child, void* org, tceu_nlbl l1, tceu_nlbl l2, int inc) {
-/*
-    int i;
-    for (i=0 ; i<CEU.lsts_n ; i++) {
-        tceu_trail* lst = &CEU.lsts[i];
-#ifdef CEU_FINS
-        if (lst->evt == IN__FIN)
-            continue;
-#endif
-#ifdef CEU_ORGS
-        if ( lst->dst_org==org && lst->lbl>=l1 && lst->lbl<=l2
-#ifndef CEU_ORGS_GLOBAL
-        ||   child && lst->dst_org!=org &&
-                ceu_clr_child(lst->dst_org,org,l1,l2)
-#endif
-        ) {
-#else // CEU_ORGS
-        if (lst->lbl>=l1 && lst->lbl<=l2) {
-#endif // CEU_ORGS
-            lst->pse += inc;
-#ifdef CEU_WCLOCKS
-            if (lst->pse==0 && lst->evt==IN__WCLOCK)
-                ceu_wclocks_min(lst->togo, 1);
-#endif
-        }
-    }
-*/
-}
-#ifndef CEU_ORGS
-#define ceu_lsts_pse(a,b,c,d,e) ceu_lsts_pse(a,NULL,c,d,e)
-#endif
-#endif
-
-/**********************************************************************/
-
 #ifdef CEU_DEBUG
 void ceu_segfault (int sig_num) {
 #ifdef CEU_ORGS

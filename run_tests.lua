@@ -53,18 +53,13 @@ Test = function (t)
 
     if not check('parser')   then return end
     if not check('ast')      then return end
-    --_AST.dump(_AST.root)
     if not check('env')      then return end
+    --_AST.dump(_AST.root)
     dofile 'ana.lua'
     dofile 'acc.lua'
     if not check('tight')    then return end
     --dofile 'awaits.lua'
     if not check('props')    then return end
-
-    -- TODO:
-    if _PROPS.has_pses  then
-        return
-    end
 
     if not check('trails')   then return end
     if not check('labels')   then return end
@@ -201,10 +196,10 @@ STATS = {
 }
 ]])
 
-assert(STATS.count  ==    1146)
-assert(STATS.mem    ==   11412)
+assert(STATS.count  ==    1148)
+assert(STATS.mem    ==   11635)
 assert(STATS.trails ==    2016)
-assert(STATS.bytes  == 6480347)
+assert(STATS.bytes  == 6619072)
 --[[
 STATS = {
     mem   = BIG,  -- ints 1 byte  //  trlN
