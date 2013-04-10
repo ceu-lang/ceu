@@ -755,17 +755,16 @@ return;
 
     AwaitT = function (me)
         local exp = unpack(me)
-        local wclk = CLS().mem.wclock0 + (me.wclocks[1]*4)
 
         LINE(me, [[
 ceu_trails_set(]]..me.trails[1]..', -'..me.lbl.id..[[, _ceu_org_);  // OFF
-ceu_trails_set_wclock( (s32)]]..VAL(exp)..','..wclk..[[, _ceu_org_);
+ceu_trails_set_wclock(PTR_cur(u32*,]]..me.off..'),'..VAL(exp)..[[);
 return;
 
 case ]]..me.lbl.id..[[:
     if (_ceu_evt_id_ != IN__WCLOCK)
         return;
-    if (ceu_wclocks_not(PTR_cur(s32*,]]..wclk..[[), _ceu_evt_p_->dt))
+    if (ceu_wclocks_not(PTR_cur(s32*,]]..me.off..[[), _ceu_evt_p_->dt))
         return;
 ]])
         DEBUG_TRAILS(me)
@@ -813,9 +812,8 @@ case ]]..me.lbl.id..[[:
 
         for _, awt in ipairs(me) do
             if awt.tag=='WCLOCKK' or awt.tag=='WCLOCKE' then
-                local wclk = CLS().mem.wclock0 + (me.wclocks[1]*4)
                 LINE(me, [[
-ceu_trails_set_wclock( (s32)]]..VAL(awt)..','..wclk..[[, _ceu_org_);
+ceu_trails_set_wclock(PTR_cur(u32*,]]..awt.off..'),'..VAL(awt)..[[);
 ]])
             end
         end
@@ -845,10 +843,9 @@ case ]]..me.lbl.id..[[:
                     ) {
                 ]])
             else -- WCLOCK
-                local wclk = CLS().mem.wclock0 + (me.wclocks[1]*4)
                 LINE(me, [[
                     if ( (_ceu_evt_id_ == IN__WCLOCK)
-                    &&   (!ceu_wclocks_not(PTR_cur(s32*,]]..wclk..
+                    &&   (!ceu_wclocks_not(PTR_cur(s32*,]]..awt.off..
                             [[), _ceu_evt_p_->dt)) ) {
                 ]])
             end

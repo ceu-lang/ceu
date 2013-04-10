@@ -73,7 +73,6 @@ F = {
     Node_pre = function (me)
         me.ns = {
             trails  = 1,
-            wclocks = 0,
             --ints    = 0,
         }
         me.has = {
@@ -263,7 +262,6 @@ F = {
     end,
     AwaitT = function (me)
         _PROPS.has_wclocks = true
-        me.ns.wclocks = 1
         --me.ns.trails = 1
         F._loop(me)
     end,
@@ -283,11 +281,11 @@ F = {
     end,
     AwaitS = function (me)
         for _, awt in ipairs(me) do
-            if awt.isExp and F.AwaitInt then
+            if awt.isExp then
                 F.AwaitInt(me)
-            elseif awt.tag=='Ext' and F.AwaitExt then
+            elseif awt.tag=='Ext' then
                 F.AwaitExt(me)
-            elseif F.AwaitT then
+            else
                 F.AwaitT(me)
             end
         end

@@ -182,14 +182,11 @@ int ceu_wclocks_not (s32* t, s32 dt) {
     return 0;
 }
 
-void ceu_trails_set_wclock (s32 dt, int idx, void* org) {
+void ceu_trails_set_wclock (s32* t, s32 dt) {
     s32 dt_ = dt - CEU.wclk_late;
-    *PTR_org(s32*,org,idx) = dt_;
+    *t = dt_;
     ceu_wclocks_min(dt_, 1);
 }
-#ifndef CEU_ORGS
-#define ceu_trails_set_wclock(a,b,c) ceu_trails_set_wclock(a,b,NULL)
-#endif
 
 #endif  // CEU_WCLOCKS
 
@@ -233,6 +230,7 @@ void ceu_trails_go (u8 evt_id, tceu_evt_param* evt_p, void* trl_org)
         }
     }
 
+// TODO: trl_vec is freed
     for (i=0; i<trl_n; i++) {
         if (trl_vec[i].lbl > CEU_INACTIVE) {    // avoid negatives
             ceu_call(evt_id, evt_p, trl_vec[i].lbl, trl_org);
@@ -312,8 +310,8 @@ void ceu_news_go (u8 evt_id, tceu_evt_param* evt_p,
                   tceu_news_one* cur) {
     while (cur->nxt != NULL) {
         void* org = (void*) cur;
-        ceu_trails_go(evt_id, evt_p, org);      // TODO: kill
         cur = cur->nxt;
+        ceu_trails_go(evt_id, evt_p, org);      // TODO: kill
     }
 }
 
@@ -384,6 +382,9 @@ void ceu_go_init ()
 #ifdef CEU_EXTS
 void ceu_go_event (int id, void* data)
 {
+#ifdef CEU_DEBUG_TRAILS
+    fprintf(stderr, "====== %d\n", id);
+#endif
     ceu_evt_param_ptr(data);
     ceu_trails_go(IN__ON, NULL, CEU.mem);
     ceu_trails_go(id,     &p,   CEU.mem);
@@ -393,6 +394,9 @@ void ceu_go_event (int id, void* data)
 #ifdef CEU_ASYNCS
 void ceu_go_async ()
 {
+#ifdef CEU_DEBUG_TRAILS
+    fprintf(stderr, "====== ASYNC\n");
+#endif
     ceu_trails_go(IN__ON,    NULL, CEU.mem);
     ceu_trails_go(IN__ASYNC, NULL, CEU.mem);
 }
@@ -401,6 +405,11 @@ void ceu_go_async ()
 void ceu_go_wclock (s32 dt)
 {
 #ifdef CEU_WCLOCKS
+
+#ifdef CEU_DEBUG_TRAILS
+    fprintf(stderr, "====== WCLOCK\n");
+#endif
+
     ceu_evt_param_dt(dt);
 
     if (CEU.wclk_min <= dt)

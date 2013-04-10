@@ -147,9 +147,59 @@ end
     run = 2;
 }
 
+Test { [[
+input void START;
+C _V;
+C do
+    int V = 1;
+end
+class T with
+do
+    par/or do
+        await START;
+    with
+        await START;    // valgrind error
+    end
+    _V = 10;
+end
+do
+    spawn T;
+    await 1s;
+end
+return _V;
+]],
+    run = { ['~>1s']=10 },
+}
+
 error 'testar pause/if org.e'
+
 do return end
+
+-- OK: under tests but supposed to work
+
+Test { [[
+input void START;
+C _V;
+C do
+    int V = 1;
+end
+class T with
+do
+    await START;
+    _V = 10;
+end
+do
+    spawn T;
+    await START;
+end
+return _V;
+]],
+    run = 1,
+}
+--do return end
 --]===]
+
+-- OK: well tested
 
 Test { [[return(1);]],
     ana = {

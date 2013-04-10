@@ -90,18 +90,11 @@ DBG('', string.format('%8s','cls'), off, _ENV.c.tceu_ncls.len)
         _MEM.cls.idx_trail0 = me.mem.trail0 -- same off for all orgs
 DBG('', string.format('%8s','trl0'), me.mem.trail0,
                                      me.ns.trails*_ENV.c.tceu_trail.len)
-
-        if _PROPS.has_wclocks then
-            me.mem.wclock0 = alloc(me.mem, me.ns.wclocks*4)
-DBG('', string.format('%8s','clk0'), me.mem.wclock0, me.ns.wclocks*4)
-        end
-
     end,
     Dcl_cls = function (me)
 DBG('===', me.id)
 DBG('', 'mem', me.mem.max)
 DBG('', 'trl', me.ns.trails)
-DBG('', 'clk', me.ns.wclocks)
 DBG('======================')
 --[[
 local glb = {}
@@ -111,6 +104,20 @@ for i,v in ipairs(me.aw.t) do
 end
 DBG('', 'glb', '{'..table.concat(glb,',')..'}')
 ]]
+    end,
+
+    Stmts_pre = function (me)
+        me.fst = CLS().mem.off
+        me.max = 0
+    end,
+    Stmts_bef = function (me)
+        CLS().mem.off = me.fst
+    end,
+    Stmts_aft = function (me)
+        me.max = MAX(me.max, CLS().mem.off)
+    end,
+    Stmts_pos = function (me)
+        CLS().mem.off = me.max
     end,
 
     Block_pre = function (me)
@@ -126,11 +133,11 @@ DBG('', 'glb', '{'..table.concat(glb,',')..'}')
         me.off = mem.off
 
         -- TODO: bitmap?
-        me.off_fins = alloc(CLS().mem,
+        me.off_fins = alloc(cls.mem,
                                 (me.fins and #me.fins) or 0)
 
         if me.has_news then
-            me.off_news = alloc(CLS().mem, _ENV.c.tceu_news_blk.len)
+            me.off_news = alloc(cls.mem, _ENV.c.tceu_news_blk.len)
         end
 
         for _, var in ipairs(me.vars) do
@@ -199,30 +206,24 @@ DBG('', string.format('%8s',var.id), var.off, var.len)
 
         me.max = mem.off
     end,
-    Block = function (me)
-        local mem = CLS().mem
-        for blk in _AST.iter'Block' do
-            blk.max = MAX(blk.max, mem.off)
-        end
-        mem.off = me.off
-    end,
-
-    ParEver_aft = function (me, sub)
-        me.lst = sub.max
-    end,
-    ParEver_bef = function (me, sub)
-        local mem = CLS().mem
-        mem.off = me.lst or mem.off
-    end,
-    ParOr_aft  = 'ParEver_aft',
-    ParOr_bef  = 'ParEver_bef',
-    ParAnd_aft = 'ParEver_aft',
-    ParAnd_bef = 'ParEver_bef',
 
     ParAnd_pre = function (me)
         me.off = alloc(CLS().mem, #me)        -- TODO: bitmap?
     end,
-    ParAnd = 'Block',
+
+    AwaitT = function (me)
+        me.off = alloc(CLS().mem, 4)
+    end,
+    AwaitS = function (me)
+        for _, awt in ipairs(me) do
+            if awt.isExp then
+            elseif awt.tag=='Ext' then
+            else
+                awt.off = alloc(CLS().mem, 4)
+            end
+        end
+    end,
+
 }
 
 _AST.visit(F)
