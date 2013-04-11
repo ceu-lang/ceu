@@ -165,11 +165,11 @@ end
 
 F = {
     Root_pre = function (me)
-        local evt = {id='_FIN', pre='input'}
+        local evt = {id='_NONE', pre='input'}
         _ENV.exts[#_ENV.exts+1] = evt
         _ENV.exts[evt.id] = evt
 
-        local evt = {id='_ON', pre='input'}
+        local evt = {id='_FIN', pre='input'}
         _ENV.exts[#_ENV.exts+1] = evt
         _ENV.exts[evt.id] = evt
 

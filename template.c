@@ -67,9 +67,11 @@ typedef === TCEU_NOFF === tceu_noff;    // (x) number of clss x ifcs
 //#pragma pack(push)
 //#pragma pack(1)
 
-// TODO: remove this type?
+#define CEU_MAX_STACK   255     // TODO
+
 typedef struct {
     tceu_nlbl lbl;
+    u8        stk;
 } tceu_trail;
 
 typedef struct {
@@ -143,12 +145,12 @@ tceu CEU = {
 
 /**********************************************************************/
 
-void ceu_call_f (u8 evt_id, tceu_evt_param* evt_p,
-                 tceu_nlbl lbl, void* org);
+void ceu_call_f (int _ceu_evt_id_, tceu_evt_param* _ceu_evt_p_,
+                 int _ceu_lbl_, int _ceu_stk_, void* _ceu_org_);
 #ifdef CEU_ORGS
-#define ceu_call(a,b,c,d) ceu_call_f(a,b,c,d)
+#define ceu_call(a,b,c,d,e) ceu_call_f(a,b,c,d,e)
 #else
-#define ceu_call(a,b,c,d) ceu_call_f(a,b,c,NULL)
+#define ceu_call(a,b,c,d,e) ceu_call_f(a,b,c,d,NULL)
 #endif
 
 /**********************************************************************/
@@ -190,29 +192,33 @@ void ceu_trails_set_wclock (s32* t, s32 dt) {
 
 #endif  // CEU_WCLOCKS
 
-void ceu_trails_set (int idx, tceu_nlbl lbl, void* org) {
+void ceu_trails_set (int idx, tceu_nlbl lbl, int stk, void* org) {
     tceu_trail* trl = ceu_trails_get(idx, org);
     trl->lbl = lbl;
+    trl->stk = stk;
 }
 #ifndef CEU_ORGS
-#define ceu_trails_set(a,b,c) ceu_trails_set(a,b,NULL)
+#define ceu_trails_set(a,b,c,d) ceu_trails_set(a,b,c,NULL)
 #endif
 
 void ceu_trails_clr (int t1, int t2, void* org) {
     int i;
     for (i=t2; i>=t1; i--) {    // lst fins first
+        tceu_trail* trl = ceu_trails_get(i,org);
 #ifdef CEU_FINS
-        ceu_call(IN__FIN, NULL,
-            ceu_trails_get(i,org)->lbl, org);
+        if (trl->stk == 0) {    // avoid pending trails
+            ceu_call(IN__FIN, NULL,
+                ceu_trails_get(i,org)->lbl, 0, org);
+        }
 #endif
-        ceu_trails_get(i,org)->lbl = CEU_INACTIVE;
+        trl->lbl = CEU_INACTIVE;
     }
 }
 #ifndef CEU_ORGS
 #define ceu_trails_clr(a,b,c) ceu_trails_clr(a,b,NULL)
 #endif
 
-void ceu_trails_go (u8 evt_id, tceu_evt_param* evt_p, void* trl_org)
+void ceu_trails_go (u8 evt_id, tceu_evt_param* evt_p, int stk, void* trl_org)
 {
     int i;
 
@@ -223,22 +229,30 @@ void ceu_trails_go (u8 evt_id, tceu_evt_param* evt_p, void* trl_org)
 #define trl_n   CEU_NTRAILS
 #endif
 
-    if (evt_id == IN__ON) {
-        for (i=0; i<trl_n; i++) {
-            if (trl_vec[i].lbl < 0)
-                trl_vec[i].lbl = -trl_vec[i].lbl;
-        }
-    }
+fprintf(stderr, "GO (%d): evt=%d stk=%d\n", trl_n, evt_id, stk);
 
-// TODO: trl_vec is freed
-    for (i=0; i<trl_n; i++) {
-        if (trl_vec[i].lbl > CEU_INACTIVE) {    // avoid negatives
-            ceu_call(evt_id, evt_p, trl_vec[i].lbl, trl_org);
+    for (i=0; i<trl_n; i++)   // TODO: trl_vec is freed
+    {
+fprintf(stderr, "\tTRY: i=%d stk=%d lbl=%d\n", i, trl_vec[i].stk, trl_vec[i].lbl);
+        if (stk == 0) {
+fprintf(stderr, "\t\tZERO\n");
+            trl_vec[i].stk = 0;     // new reaction reset stk
+        } else {
+            int my = trl_vec[i].stk;
+//fprintf(stderr, "\t\tmy: %d\n", my);
+            if (my!=0 && my!=stk)
+                continue;
         }
+
+        if (trl_vec[i].lbl == CEU_INACTIVE)
+            continue;               // TODO: lbl => unsigned
+
+fprintf(stderr, "\t\tAWK\n");
+        ceu_call(evt_id, evt_p, trl_vec[i].lbl, stk, trl_org);
     }
 }
 #ifndef CEU_ORGS
-#define ceu_trails_go(a,b,c) ceu_trails_go(a,b,NULL)
+#define ceu_trails_go(a,b,c,d) ceu_trails_go(a,b,c,NULL)
 #endif
 
 /**********************************************************************/
@@ -307,11 +321,11 @@ void ceu_news_rem_all (tceu_news_one* cur) {
 }
 
 void ceu_news_go (u8 evt_id, tceu_evt_param* evt_p,
-                  tceu_news_one* cur) {
+                  int stk, tceu_news_one* cur) {
     while (cur->nxt != NULL) {
         void* org = (void*) cur;
         cur = cur->nxt;
-        ceu_trails_go(evt_id, evt_p, org);      // TODO: kill
+        ceu_trails_go(evt_id, evt_p, stk, org);      // TODO: kill
     }
 }
 
@@ -338,7 +352,8 @@ void ceu_go_init ()
     signal(SIGSEGV, ceu_segfault);
 #endif
 
-    ceu_call(0,NULL, Class_Main, &CEU.mem);
+    ceu_call(IN__NONE, NULL, Class_Main, 1, &CEU.mem);
+    ceu_trails_go(IN__NONE, NULL, 1, &CEU.mem);
 }
 
 // TODO: ret
@@ -350,8 +365,8 @@ void ceu_go_event (int id, void* data)
     fprintf(stderr, "====== %d\n", id);
 #endif
     ceu_evt_param_ptr(data);
-    ceu_trails_go(IN__ON, NULL, CEU.mem);
-    ceu_trails_go(id,     &p,   CEU.mem);
+    ceu_trails_go(IN__NONE, NULL, 0, CEU.mem);
+    ceu_trails_go(id, &p,   1, CEU.mem);
 }
 #endif
 
@@ -361,8 +376,8 @@ void ceu_go_async ()
 #ifdef CEU_DEBUG_TRAILS
     fprintf(stderr, "====== ASYNC\n");
 #endif
-    ceu_trails_go(IN__ON,    NULL, CEU.mem);
-    ceu_trails_go(IN__ASYNC, NULL, CEU.mem);
+    ceu_trails_go(IN__NONE,  NULL, 0, CEU.mem);
+    ceu_trails_go(IN__ASYNC, NULL, 1, CEU.mem);
 }
 #endif
 
@@ -382,8 +397,8 @@ void ceu_go_wclock (s32 dt)
     CEU.wclk_min_tmp = CEU.wclk_min;
     CEU.wclk_min     = CEU_WCLOCK_INACTIVE;
 
-    ceu_trails_go(IN__ON,     NULL, CEU.mem);
-    ceu_trails_go(IN__WCLOCK, &p,   CEU.mem);
+    ceu_trails_go(IN__NONE,   NULL, 0, CEU.mem);
+    ceu_trails_go(IN__WCLOCK, &p,   1, CEU.mem);
 
 #ifdef ceu_out_wclock
     if (CEU.wclk_min != CEU_WCLOCK_INACTIVE)
@@ -433,8 +448,8 @@ void ceu_go_all (int* ret_end)
 #endif
 }
 
-void ceu_call_f (u8 _ceu_evt_id_, tceu_evt_param* _ceu_evt_p_,
-                 tceu_nlbl _ceu_lbl_, void* _ceu_org_)
+void ceu_call_f (int _ceu_evt_id_, tceu_evt_param* _ceu_evt_p_,
+                 int _ceu_lbl_, int _ceu_stk_, void* _ceu_org_)
 {
 #if defined(CEU_EXTS) || defined(CEU_INTS)
     int _ceu_int_;
@@ -448,6 +463,22 @@ _SWITCH_:
     CEU.trail_org = _ceu_org_;
 #endif
 }
+#endif
+
+#ifdef CEU_DEBUG_TRAILS
+#ifdef CEU_ORGS
+fprintf(stderr, "TRK: o.%p / l.%d\n", _ceu_org_, _ceu_lbl_);
+#else
+fprintf(stderr, "TRK: l.%d\n", _ceu_lbl_);
+#endif
+/*
+{ int i;
+    fprintf(stderr, "TRLS: [");
+    for (i=0; i<]]..CLS().ns.trails..[[; i++)
+        fprintf(stderr, "%d,", ceu_trails_get(i, _ceu_org_)->lbl);
+    fprintf(stderr, "]\n");
+}
+*/
 #endif
 
     switch (_ceu_lbl_) {

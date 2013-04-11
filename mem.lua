@@ -73,17 +73,23 @@ F = {
         if _PROPS.has_news then
             -- MUST BE 1st in class (see ceu_news_*)
             _MEM.cls.idx_news = alloc(me.mem, _ENV.c.tceu_news_one.len)
+DBG('', string.format('%8s','news'), _MEM.cls.idx_news,
+                                     _ENV.c.tceu_news_one.len)
             _MEM.cls.idx_free = alloc(me.mem, 1)
+DBG('', string.format('%8s','free'), _MEM.cls.idx_free, 1)
         end
 
         if _PROPS.has_ifcs then
-            local off = alloc(me.mem, _ENV.c.tceu_ncls.len) -- cls N
-            _MEM.cls.idx_cls = off          -- same off for all orgs
-DBG('', string.format('%8s','cls'), off, _ENV.c.tceu_ncls.len)
+            _MEM.cls.idx_cls = alloc(me.mem, _ENV.c.tceu_ncls.len) -- cls N
+DBG('', string.format('%8s','cls'), _MEM.cls.idx_cls,
+                                    _ENV.c.tceu_ncls.len)
         end
 
         if _PROPS.has_orgs then
+            -- TODO: disappear with metadata
             _MEM.cls.idx_trailN = alloc(me.mem, 1)
+DBG('', string.format('%8s','trlN'), _MEM.cls.idx_trailN, 1,
+                                     '('..me.ns.trails..')')
         end
         me.mem.trail0 = alloc(me.mem, me.ns.trails*_ENV.c.tceu_trail.len,
                                       _ENV.c.tceu_trail.len)

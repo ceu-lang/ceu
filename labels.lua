@@ -37,13 +37,12 @@ F = {
 
     Root_pre = function (me)
         new{'CEU_INACTIVE', true}
-        new{'CEU_PENDING',  true}
     end,
     Root = function (me)
         -- 0, 1,-1, tot,-tot
         -- <0 = off (for internal events)
         _ENV.c.tceu_nlbl.len  = _TP.n2bytes(1+2 + #_LBLS.list*2)
-        _ENV.c.tceu_trail.len = _ENV.c.tceu_nlbl.len
+        _ENV.c.tceu_trail.len = _ENV.c.tceu_nlbl.len + 1
 
         -- enum of labels
         for i, lbl in ipairs(_LBLS.list) do
@@ -72,7 +71,8 @@ F = {
         me.lbl = new{'Class_'..me.id, true}
     end,
     Orgs = function (me)
-        me.lbl = new{'Orgs'}
+        me.lbl     = new{'Orgs'}
+        me.lbl_cnt = new{'Orgs_cont'}
     end,
 
     SetBlock_pre = function (me)
@@ -82,7 +82,9 @@ F = {
     _Par_pre = function (me)
         me.lbls_in  = {}
         for i, sub in ipairs(me) do
-            me.lbls_in[i] = new{me.tag..'_sub_'..i}
+            if i > 1 then
+                me.lbls_in[i] = new{me.tag..'_sub_'..i}
+            end
         end
     end,
     ParEver_pre = function (me)
@@ -117,6 +119,14 @@ F = {
     end,
     EmitT = function (me)
         me.lbl_cnt = new{'Async_cont'}
+    end,
+    EmitInt = function (me)
+        me.lbl_cnt = new{'EmitInt_cont'}
+    end,
+    Dcl_var = function (me)
+        if me.var.cls then
+            me.lbl_cnt = new{'Org_cont'}
+        end
     end,
 
     AwaitS = function (me)

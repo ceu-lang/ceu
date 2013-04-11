@@ -13,90 +13,6 @@
 --[===[
 
 Test { [[
-input void START;
-
-C _V, _assert();
-C do
-    #include <assert.h>
-    int V = 0;
-end
-
-interface Global with
-    event void e;
-end
-
-event void e;
-
-class T with
-do
-    await START;
-    emit global:e; // TODO: must also check if org trail is active
-    _V = 1;
-    _assert(0);
-end
-
-par/or do
-    await global:e;
-    _V = 2;
-with
-    var T t;
-    await FOREVER;
-end
-
-return _V;
-]],
-    todo = 'orgs cant kill themselves',
-    run = 2,
-}
-Test { [[
-input void START;
-
-C _V, _assert();
-C do
-    #include <assert.h>
-    int V = 0;
-end
-
-interface Global with
-    event void e;
-end
-
-class T with
-do
-    emit global:e; // TODO: must also check if org trail is active
-    _V = 1;
-    _assert(0);
-end
-
-event void e;
-
-par/or do
-    await global:e;
-    _V = 2;
-with
-    await START;
-    do
-        var T t;
-        await FOREVER;
-    end
-end
-return _V;
-]],
-    todo = 'orgs cant kill themselves',
-    run = 2;
-}
-
-Test { [[
-var int a=10;
-do
-    var int b=1;
-end
-return a;
-]],
-    run = 10,
-}
-
-Test { [[
 input void A, B, Z;
 event void a;
 var int ret = 1;
@@ -174,11 +90,257 @@ return _V;
 error 'testar pause/if org.e'
 
 do return end
---]===]
 
 -- OK: under tests but supposed to work
 
---do return end
+Test { [[
+var int a=10;
+do
+    var int b=1;
+end
+return a;
+]],
+    run = 10,
+}
+
+Test { [[
+input void START;
+
+C _V, _assert();
+C do
+    #include <assert.h>
+    int V = 0;
+end
+
+interface Global with
+    event void e;
+end
+
+event void e;
+
+C pure _fprintf(), _stderr;
+
+class T with
+do
+    _fprintf(_stderr, "1\n");
+    await START;
+    _fprintf(_stderr, "3\n");
+    emit global:e; // TODO: must also check if org trail is active
+    _V = 1;
+    _assert(0);
+end
+
+par/or do
+    await global:e;
+    _V = 2;
+with
+    var T t;
+    await FOREVER;
+end
+
+return _V;
+]],
+    --ok = 'orgs cant kill themselves',
+    run = 2,
+}
+Test { [[
+input void START;
+
+C _V, _assert();
+C do
+    #include <assert.h>
+    int V = 0;
+end
+
+interface Global with
+    event void e;
+end
+
+class T with
+do
+    emit global:e; // TODO: must also check if org trail is active
+    _V = 1;
+    _assert(0);
+end
+
+event void e;
+
+par/or do
+    await global:e;
+    _V = 2;
+with
+    await START;
+    do
+        var T t;
+        await FOREVER;
+    end
+end
+return _V;
+]],
+    --ok = 'orgs cant kill themselves',
+    run = 2;
+}
+
+Test { [[
+input void START;
+
+C _V, _assert();
+C do
+    #include <assert.h>
+    int V = 0;
+end
+
+interface Global with
+    event void e;
+end
+
+class T with
+do
+    emit global:e; // TODO: must also check if org trail is active
+    _assert(0);
+    _V = 1;
+    _assert(0);
+end
+
+event void e;
+
+par/or do
+    await global:e;
+    _V = 2;
+with
+    await START;
+    do
+        var T t;
+        _assert(0);
+        await FOREVER;
+    end
+end
+return _V;
+]],
+    --ok = 'orgs cant kill themselves',
+    run = 2;
+}
+
+Test { [[
+input void START;
+
+C _X,_V, _assert();
+C do
+    #include <assert.h>
+    int V = 0;
+    int X = 0;
+end
+
+interface Global with
+    event void e;
+end
+
+class T with
+do
+    _assert(_X==0); // second T does not execute
+    _X = _X + 1;
+    emit global:e;
+    _assert(0);
+    _V = 1;
+    _assert(0);
+end
+
+event void e;
+
+par/or do
+    await global:e;
+    _V = 2;
+with
+    await START;
+    do
+        var T[2] t;
+        _assert(0);
+        await FOREVER;
+    end
+end
+return _V+_X;
+]],
+    --ok = 'orgs cant kill themselves',
+    run = 3;
+}
+
+Test { [[
+input void START;
+
+C _V, _assert();
+C do
+    #include <assert.h>
+    int V = 0;
+end
+
+class T with
+    var int x;
+    event void ok;
+do
+    await START;
+    emit  ok;
+    _assert(0);
+end
+
+var int ret=0;
+do
+    var T t with
+        this.x = 10;
+    end;
+    await t.ok;
+    ret = t.x;
+end
+return ret;
+]],
+    --ok = 'orgs cant kill themselves',
+    run = 10;
+}
+
+Test { [[
+input void START;
+
+C _V, _assert();
+C do
+    #include <assert.h>
+    int V = 0;
+end
+
+class T with
+    var int x;
+    event void ok;
+do
+    await START;
+    emit  ok;
+    _assert(0);
+end
+
+class U with
+    var int x;
+    event void ok;
+do
+    await START;
+    _assert(0);
+    emit  ok;
+end
+
+var int ret=0;
+do
+    var T t with
+        this.x = 10;
+    end;
+    var T u;
+    await t.ok;
+    ret = t.x;
+end
+return ret;
+]],
+    --ok = 'orgs cant kill themselves',
+    run = 10;
+}
+
+do return end
+
+--]===]
 
 -- OK: well tested
 
@@ -1156,6 +1318,87 @@ return 0;
         unreachs = 2,
         isForever = true,
     },
+}
+
+Test { [[
+var int ret;
+par/or do
+    ret = 1;
+with
+    ret = 2;
+end
+return ret;
+]],
+    ana = {
+        acc = 1,
+    },
+    run = 1,
+}
+
+Test { [[
+var int ret;
+par/or do
+    await FOREVER;
+with
+    ret = 2;
+end
+return ret;
+]],
+    run = 2,
+}
+
+Test { [[
+var int ret;
+par/or do
+    par/or do
+        await FOREVER;
+    with
+        ret = 1;
+    end
+with
+    ret = 2;
+end
+return ret;
+]],
+    ana = {
+        acc = 1,
+    },
+    run = 1,
+}
+
+Test { [[
+var int ret;
+par/or do
+    ret = 2;
+with
+    par/or do
+        await FOREVER;
+    with
+        ret = 1;
+    end
+end
+return ret;
+]],
+    ana = {
+        acc = 1,
+    },
+    run = 2,
+}
+
+Test { [[
+var int ret;
+par/or do
+    await FOREVER;
+with
+    par/or do
+        await FOREVER;
+    with
+        ret = 1;
+    end
+end
+return ret;
+]],
+    run = 1,
 }
 
 Test { [[
@@ -12829,7 +13072,7 @@ loop do
             await A;
             finalize with
                 ret = ret + 1;
-    end
+            end
         end;
         return 0;
     with
@@ -13071,23 +13314,50 @@ return ret;
 }
 
 Test { [[
+input void START;
+await START;
+par/or do
+    await START;
+with
+    await START;
+end
+return 1;
+]],
+    run = 0,
+}
+
+Test { [[
+input void START;
+await START;
+do
+    finalize with
+        var int ret = 1;
+    end
+    await START;
+end
+return 1;
+]],
+    run = 0,
+}
+
+Test { [[
 input void A,B;
 var int ret = 0;
 loop do
     do
         finalize with
             ret = ret + 4;
-    end
+        end
         par/or do
             do
                 finalize with
                     ret = ret + 3;
-    end
+                end
                 await B;
                 do
                     finalize with
                         ret = ret + 2;
-    end
+                    end
                     var int a;
                     await B;
                     ret = ret + 1;
@@ -13101,7 +13371,11 @@ loop do
 end
 return ret;
 ]],
-    run = { ['~>A']=7 , ['~>B;~>B;~>A']=17, ['~>B;~>A']=9 },
+    run = {
+        ['~>A']         =  7,
+        ['~>B;~>B;~>A'] = 17,
+        ['~>B;~>A']     =  9,
+    },
 }
 
 Test { [[
@@ -16446,8 +16720,6 @@ par/or do
         emit a=v;
     end
 with
-C nohold _fprintf(), _stderr;
-_fprintf(_stderr, "3\n");
 
     pause/if a do
         pause/if a do
@@ -18635,11 +18907,69 @@ return aa.aa;
 }
 
 Test { [[
+input void START;
+
+C _inc(), _V;
+C do
+    int V = 0;
+    void inc() { V++; }
+end
+
+_inc();
+event void x;
+emit x;
+await START;
+return _V;
+]],
+    run = 1,
+}
+
+Test { [[
     input void START;
 class T with
     event int a, ok, go, b;
     var int aa, bb;
 do
+
+    par/and do
+        await a;
+        emit b;
+    with
+        await b;
+    end
+    aa = 5;
+    bb = 4;
+    emit ok;
+end
+var T aa;
+
+C _inc(), _V;
+C do
+    int V = 0;
+    void inc() { V++; }
+end
+
+_inc();
+par/or do
+    await aa.ok;
+    _V = _V+1;
+with
+    await START;
+    emit aa.a;
+    _V = _V+2;
+end
+return _V + aa.aa + aa.bb;
+]],
+    run = 11,
+}
+
+Test { [[
+    input void START;
+class T with
+    event int a, ok, go, b;
+    var int aa, bb;
+do
+
     par/and do
         await a;
         emit b;
@@ -18654,10 +18984,10 @@ var T aa;
 
 var int ret;
 par/or do
-        await aa.ok;
+    await aa.ok;
     ret = 1;
 with
-        await START;
+    await START;
     emit aa.a;
     ret = 2;
 end
