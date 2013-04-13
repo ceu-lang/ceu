@@ -170,7 +170,9 @@ if (*PTR_cur(u8*,CEU_CLS_FREE))
 ]])
         end
 
-        HALT(me)
+        if not (_ANA and me.ana.pos[false]) then
+            HALT(me)
+        end
     end,
 
     Host = function (me)
@@ -290,6 +292,21 @@ if (*PTR_cur(u8*,CEU_CLS_FREE))
         end
 
         COMM(me, 'start org: '..var.id)
+
+        -- set listeners for orgs
+        LINE(me, [[
+{
+    int i;
+    for (i=0; i<]]..(var.arr or 1)..[[; i++) {
+        int idx = i + ]]..me.var.trails[1]..[[;
+        void* org = PTR_org(void*,]]..VAL(var)..', i*'..var.cls.mem.max..[[);
+        ceu_trails_set(idx, IN__ANY, org, 0);
+        *PTR_org(void**, org, CEU_CLS_CNT) =
+            &PTR_cur(tceu_trail*,CEU_CLS_TRAIL0)[idx+1];
+    }
+}
+]])
+
         for i=1, (var.arr or 1) do      -- TODO: 1 lbl for all
             COMM(me, 'start org: '..var.id..'['..i..']')
             LINE(me, [[
@@ -307,6 +324,8 @@ case ]]..var.lbl_srt[i].id..[[:;
 ]])
         end
 
+--[=[
+-- TODO: codigo perdido? (remove!)
         local blk = _AST.iter'Block'()
         if blk.has_news then
             LINE(me, [[
@@ -314,9 +333,11 @@ case ]]..var.lbl_srt[i].id..[[:;
                 PTR_cur(tceu_news_blk*,]]..blk.off_news..[[)->fst.nxt);
 ]])
         end
+]=]
 
     end,
 
+--[=[
     Orgs = function (me)
         COMM(me, 'ORGS')
 
@@ -384,6 +405,7 @@ case ]]..var.lbl_awk[i].id..[[:;
     goto ]]..no..[[;
 ]])
     end,
+]=]
 
     Block_pre = function (me)
         -- declare tmps
@@ -774,9 +796,8 @@ case ]]..me.lbl.id..[[:;
 ]])
         LINE(me, [[
 #ifdef CEU_ORGS
-    if (]]..org..[[ != _ceu_evt_.param.org)
+    if (]]..org..[[ != _ceu_evt_.org)
         goto ]]..no..[[;
-}
 #endif
 ]])
         PAUSE(me, no)

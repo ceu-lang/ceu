@@ -70,9 +70,11 @@ F = {
     Dcl_cls = function (me)
         me.lbl = new{'Class_'..me.id, true}
     end,
+--[[
     Orgs = function (me)
         me.lbl = new{'Orgs'}
     end,
+]]
 
     SetBlock_pre = function (me)
         me.lbl_out = new{'Set_out',  prio=me.depth}
@@ -122,6 +124,7 @@ F = {
     EmitInt = function (me)
         me.lbl_cnt = new{'EmitInt_cont'}
     end,
+--[[
     Dcl_var = function (me)
         if me.var.cls then
             me.var.lbl_srt = {}
@@ -132,6 +135,7 @@ F = {
             end
         end
     end,
+]]
 
     AwaitS = function (me)
         me.lbl = new{'Awake_MANY'}

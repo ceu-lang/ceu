@@ -18,7 +18,7 @@ F = {
     Block_pre = function (me)
         -- [ 1, N, M ] (fin, orgs, block)
 
-        me.trails  = me.trails  or _AST.iter(pred)().trails
+        me.trails = me.trails or _AST.iter(pred)().trails
 
         local t0 = me.trails[1]
 
@@ -28,8 +28,15 @@ F = {
                 t0 = t0 + 1
         end
 
+        for _, var in ipairs(me.vars) do
+            if var.cls then
+                var.trails = { t0, t0+(var.arr or 1)-1 }
+                    t0 = t0 + (var.arr or 1)
+            end
+        end
+
         -- BLOCK
-        me[1].trails  = { t0, me.trails [2] }
+        me[1].trails  = { t0, me.trails[2] }
     end,
 
     _Par_pre = function (me)

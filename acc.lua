@@ -64,6 +64,8 @@ F = {
         end
     end,
 
+-- TODO: usar o Dcl_var p/ isso
+--[=[
     Orgs = function (me)
         -- insert cls accs on my parent ParOr
         for _, var in ipairs(me.vars) do
@@ -72,6 +74,7 @@ F = {
             end
         end
     end,
+]=]
 
     EmitExtS = function (me)
         local e1, _ = unpack(me)

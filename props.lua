@@ -111,6 +111,14 @@ F = {
             me.ns.trails = me.ns.trails + 1 -- implicit await in parallel
             me.needs_clr = true
         end
+
+        -- one trail for each org
+        for _, var in ipairs(me.vars) do
+            if var.cls then
+                me.has.fins = me.has.fins or var.cls.has.fins
+                me.ns.trails = me.ns.trails + (var.arr or 1)
+            end
+        end
     end,
     Stmts   = MAX_all,
 
@@ -149,8 +157,7 @@ F = {
     end,
 
     Dcl_var = function (me)
-        me.has.orgs = me.var.cls or
-                      me.var.arr and _ENV.clss[_TP.deref(me.var.tp)]
+        me.has.orgs = me.var.cls
     end,
 
     Free = function (me)
@@ -166,12 +173,6 @@ F = {
         me.has.fins = me.cls.has.fins
     end,
     Spawn = 'SetNew',
-
-    Orgs = function (me)
-        for _, var in ipairs(me.vars) do
-            me.has.fins = me.has.fins or var.cls.has.fins
-        end
-    end,
 
     Async = function (me)
         _PROPS.has_asyncs = true

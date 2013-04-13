@@ -154,6 +154,7 @@ do
     tpl = sub(tpl, '=== TCEU_NLBL ===',    's'..tps[_ENV.c.tceu_nlbl.len])
 
     if _PROPS.has_orgs then
+        tpl = sub(tpl, '=== CEU_CLS_CNT ===',  _MEM.cls.idx_cnt)
 --[[
         if _PROPS.has_news then
             tpl = sub(tpl, '=== CEU_CLS_NEWS_PRV ===',  _MEM.cls.idx_news_prv)
@@ -246,7 +247,7 @@ do
     end
 
     -- TODO: goto _OPTS
-    str = str .. '#define CEU_DEBUG_TRAILS\n'
+    --str = str .. '#define CEU_DEBUG_TRAILS\n'
 
     if _OPTS.run_tests then
         str = str .. '#define CEU_RUNTESTS\n'
