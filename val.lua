@@ -84,7 +84,7 @@ F =
                 val = VAL(e2)
             else
                 len = 'sizeof('.._TP.c(e1.evt.tp)..')'
-                val = 'ceu_ext_f(&_ceu_int_,'..VAL(e2)..')'
+                val = VAL(e2)
             end
         else
             len = 0
@@ -105,9 +105,9 @@ F =
     AwaitExt = function (me)
         local e1 = unpack(me)
         if _TP.deref(e1.evt.tp) then
-            me.val = '(('.._TP.c(e1.evt.tp)..')_ceu_evt_p_->ptr)'
+            me.val = '(('.._TP.c(e1.evt.tp)..')_ceu_evt_.param.ptr)'
         else
-            me.val = '(*_ceu_evt_p_->v)'
+            me.val = '_ceu_evt_.param.v'
         end
     end,
     AwaitT = function (me)

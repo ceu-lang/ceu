@@ -71,8 +71,7 @@ F = {
         me.lbl = new{'Class_'..me.id, true}
     end,
     Orgs = function (me)
-        me.lbl     = new{'Orgs'}
-        me.lbl_cnt = new{'Orgs_cont'}
+        me.lbl = new{'Orgs'}
     end,
 
     SetBlock_pre = function (me)
@@ -125,7 +124,12 @@ F = {
     end,
     Dcl_var = function (me)
         if me.var.cls then
-            me.lbl_cnt = new{'Org_cont'}
+            me.var.lbl_srt = {}
+            me.var.lbl_awk = {}
+            for i=1, (me.var.arr or 1) do
+                me.var.lbl_srt[i] = new{'Start_'..me.var.id} -- TODO: 1 for all
+                me.var.lbl_awk[i] = new{'Awake_'..me.var.id} -- TODO: 1 for all
+            end
         end
     end,
 

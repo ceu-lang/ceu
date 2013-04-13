@@ -91,6 +91,8 @@ DBG('', string.format('%8s','cls'), _MEM.cls.idx_cls,
 DBG('', string.format('%8s','trlN'), _MEM.cls.idx_trailN, 1,
                                      '('..me.ns.trails..')')
         end
+
+        -- Class_Main also uses this
         me.mem.trail0 = alloc(me.mem, me.ns.trails*_ENV.c.tceu_trail.len,
                                       _ENV.c.tceu_trail.len)
         _MEM.cls.idx_trail0 = me.mem.trail0 -- same off for all orgs

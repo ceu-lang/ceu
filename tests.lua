@@ -118,13 +118,9 @@ end
 
 event void e;
 
-C pure _fprintf(), _stderr;
-
 class T with
 do
-    _fprintf(_stderr, "1\n");
     await START;
-    _fprintf(_stderr, "3\n");
     emit global:e; // TODO: must also check if org trail is active
     _V = 1;
     _assert(0);
@@ -339,8 +335,6 @@ return ret;
 }
 
 do return end
-
---]===]
 
 -- OK: well tested
 
@@ -1074,8 +1068,8 @@ C do
         return v.a - v.b;
     }
     #define ceu_out_event_B(c) Fb(c)
-    int Fb (int* data) {
-        return *data - 1;
+    int Fb (int data) {
+        return data - 1;
     }
 end
 C _t = 8;
@@ -10223,6 +10217,27 @@ end;
 }
 
 Test { [[
+input int A,Z;
+var int ret = 0;
+par/or do
+    loop do
+        par/and do
+        with
+            await A;
+        end;
+        ret = ret + 1;
+    end;
+with
+    await Z;
+end;
+return ret;
+]],
+    ana = {
+        unreachs = 1,
+    },
+    run = { ['~>A;~>A;~>Z']=2 },
+}
+Test { [[
 input int A,Z,D;
 var int b;
 par/or do
@@ -17040,6 +17055,7 @@ end
 C do
     int V = sizeof(CLS_T);
 end
+
 C _V;
 var T t;
 return _V;
@@ -17266,6 +17282,21 @@ return a.v;
 }
 
 Test { [[
+input void START;
+class T with
+    var int v;
+do
+    await FOREVER;
+end
+var T a;
+a.v = 5;
+await START;
+return a.v;
+]],
+    run = 5,
+}
+
+Test { [[
 class T with
     var int v;
 do
@@ -17350,6 +17381,35 @@ return _V;
     run = 345;
 }
 
+--]===]
+Test { [[
+class J with
+do
+end
+
+class T with
+do
+    var J j;
+    await FOREVER;
+end
+
+input void START;
+event void a;
+
+C pure _fprintf(), _stderr;
+var T t1;
+var T t2;
+    _fprintf(_stderr, "11111\n");
+emit a;
+    _fprintf(_stderr, "22222\n");
+await START;
+    _fprintf(_stderr, "33333\n");
+return 1;
+]],
+    run = 1;
+}
+do return end
+
 Test { [[
 C _V;
 C do
@@ -17381,7 +17441,6 @@ return _V;
 ]],
     run = 345;
 }
-
 Test { [[
 var int a=8;
 do

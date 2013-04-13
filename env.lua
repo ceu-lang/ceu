@@ -169,6 +169,10 @@ F = {
         _ENV.exts[#_ENV.exts+1] = evt
         _ENV.exts[evt.id] = evt
 
+        local evt = {id='_INIT', pre='input'}
+        _ENV.exts[#_ENV.exts+1] = evt
+        _ENV.exts[evt.id] = evt
+
         local evt = {id='_FIN', pre='input'}
         _ENV.exts[#_ENV.exts+1] = evt
         _ENV.exts[evt.id] = evt
@@ -230,8 +234,8 @@ F = {
             end
         end
         if orgs then
-             -- awake blk first, then orgs
-            me[1] = _AST.node('ParOr')(me.ln, me[1], orgs)
+             -- awakes orgs first, then blk
+            me[1] = _AST.node('ParOr')(me.ln, orgs, me[1])
         end
     end,
 
