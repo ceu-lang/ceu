@@ -45,7 +45,7 @@ F = {
         --_ENV.c.tceu_trail.len = MAX(_ENV.c.pointer.len,
                                     --_ENV.c.tceu_nlbl.len + 1) -- TODO:stk
                                 --+ 4 -- TODO:nevt
-        _ENV.c.tceu_trail.len = _ENV.c.pointer.len + 1
+        _ENV.c.tceu_trail.len = _ENV.c.pointer.len + 4
 
         -- enum of labels
         for i, lbl in ipairs(_LBLS.list) do

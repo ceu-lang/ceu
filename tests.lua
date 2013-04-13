@@ -17412,7 +17412,6 @@ return 1;
 ]],
     run = 1;
 }
-do return end
 
 Test { [[
 C _V;

@@ -60,11 +60,11 @@ end
 function GOTO (me, lbl, org)
     if org then
         LINE(me, [[
-_ceu_lst_.org = ]]..org..[[;
+_ceu_cur_.org = ]]..org..[[;
 ]])
     end
     LINE(me, [[
-_ceu_lst_.lbl = ]]..lbl.id..[[;
+_ceu_cur_.lbl = ]]..lbl.id..[[;
 goto _CEU_GOTO_;
 ]])
 end
@@ -117,7 +117,7 @@ function CLEAR (me)
     end
 
     LINE(me, 'ceu_trails_clr('..me.trails[1]..','..me.trails[2]..
-                                ', _ceu_lst_.org);')
+                                ', _ceu_cur_.org);')
 end
 
 F = {
@@ -166,7 +166,7 @@ F = {
         if me.has_news then
             LINE(me, [[
 if (*PTR_cur(u8*,CEU_CLS_FREE))
-    ceu_news_rem(_ceu_lst_.org);
+    ceu_news_rem(_ceu_cur_.org);
 ]])
         end
 
@@ -222,7 +222,7 @@ if (*PTR_cur(u8*,CEU_CLS_FREE))
     SetNew = function (me)
         local exp, _, constr = unpack(me)
         F._New(me, {
-            blk_org = (exp.org and exp.org.val) or '_ceu_lst_.org',
+            blk_org = (exp.org and exp.org.val) or '_ceu_cur_.org',
             blk_blk = me.blk,
             val     = VAL(exp),
             cls     = me.cls,
@@ -234,7 +234,7 @@ if (*PTR_cur(u8*,CEU_CLS_FREE))
     Spawn = function (me)
         local _, constr = unpack(me)
         F._New(me, {
-            blk_org = '_ceu_lst_.org',
+            blk_org = '_ceu_cur_.org',
             blk_blk = me.blk,
             val     = nil,
             cls     = me.cls,
@@ -294,10 +294,7 @@ if (*PTR_cur(u8*,CEU_CLS_FREE))
         COMM(me, 'start org: '..var.id)
 
         -- each org has its own trail on enclosing block
-DBG('trail', me.var.trails[1])
         LINE(me, [[
-{
-tceu_trail_* TRL;
 {
     int i;
     for (i=0; i<]]..(var.arr or 1)..[[; i++)
@@ -306,17 +303,14 @@ tceu_trail_* TRL;
         void* org = PTR_org(void*,]]..VAL(var)..', i*'..var.cls.mem.max..[[);
 
         // enable block trail with IN__ORG (always awake from now on)
-        tceu_trail_* trl = &PTR_cur(tceu_trail*, CEU_CLS_TRAIL0)[idx];
+        tceu_trail_* trl = &PTR_cur(tceu_trail_*, CEU_CLS_TRAIL0)[idx];
             trl->evt = IN__ORG;
             trl->org = org;
 
-        TRL = trl;
-fprintf(stderr, "ANTES %p %p\n", trl, trl->org);
-
         // link org with the next trail in the block
-        *PTR_org(void**, org, CEU_CLS_CNT) = _ceu_lst_.org;
+        *PTR_org(void**, org, CEU_CLS_CNT) = _ceu_cur_.org;
         *PTR_org(void**, org, CEU_CLS_CNT+sizeof(void*)) =
-            &PTR_cur(tceu_trail*,CEU_CLS_TRAIL0)[idx+1];
+            &PTR_cur(tceu_trail_*,CEU_CLS_TRAIL0)[idx+1];
 
         // reset org memory and do org.trail[0]=Class_XXX
         ceu_org_init(org, ]]
@@ -328,16 +322,13 @@ fprintf(stderr, "ANTES %p %p\n", trl, trl->org);
 // org[0] -> org[1] -> ... -> blk.trails[1]
 
 // hold current blk trail: set to my continuation
-fprintf(stderr, "XXXXX %p %p\n", TRL, TRL->org);
-_ceu_lst_.trl->evt = IN__ANY;
-fprintf(stderr, "XXXXX %p %p\n", TRL, TRL->org);
-_ceu_lst_.trl->lbl = ]]..me.lbl_cnt.id..[[;
-_ceu_lst_.trl->stk = _ceu_stk_;
+_ceu_cur_.trl->evt = IN__ANY;
+_ceu_cur_.trl->lbl = ]]..me.lbl_cnt.id..[[;
+_ceu_cur_.trl->stk = _ceu_stk_;
 
 // switch to ORG[0]
-_ceu_lst_.org = ]]..VAL(var)..[[;
+_ceu_cur_.org = ]]..VAL(var)..[[;
 goto _CEU_CALL_;
-}
 
 case ]]..me.lbl_cnt.id..[[:;
 ]])
@@ -379,7 +370,7 @@ case ]]..me.lbl_cnt.id..[[:;
 ]]..no..[[:
     // alaways point to me.lbl
     ceu_trails_set(]]..me.trails[1]..', IN__ANY, '..me.lbl.id..
-                   [[, 0, _ceu_lst_.org);   // always ready (stk=0)
+                   [[, 0, _ceu_cur_.org);   // always ready (stk=0)
 
 ]])
         HALT(me)
@@ -398,11 +389,11 @@ case ]]..me.lbl.id..[[:
                 COMM(me, 'awake org: '..var.id..'['..i..']')
                 LINE(me, [[
     ceu_trails_set(]]..me.trails[1]..', IN__ANY, '..var.lbl_awk[i].id..
-               [[, _ceu_stk_, _ceu_lst_.org);
+               [[, _ceu_stk_, _ceu_cur_.org);
     _CEU_STK_[_ceu_stk_++] = _ceu_evt_;
 
     // TRIGGER ORG[i]
-    _ceu_lst_.org = PTR_org(void*,]]..VAL(var)..','
+    _ceu_cur_.org = PTR_org(void*,]]..VAL(var)..','
                         ..((i-1)*var.cls.mem.max)..[[);
     goto _CEU_CALL_;
 
@@ -464,7 +455,7 @@ PTR_cur(tceu_news_blk*,]]..me.off_news..[[)->lst.prv =
 //  FINALIZE
 apagar
 ceu_trails_set(]]..me.fins.trails[1]..', IN__FIN, '..me.lbl_fin.id..
-               [[, CEU_MAX_STACK, _ceu_lst_.org);   // always ready
+               [[, CEU_MAX_STACK, _ceu_cur_.org);   // always ready
 memset(PTR_cur(u8*,]]..me.off_fins..'), 0, '..#me.fins..[[);
 ]])
         end
@@ -472,7 +463,7 @@ memset(PTR_cur(u8*,]]..me.off_fins..'), 0, '..#me.fins..[[);
         if me.trails[1] ~= blk.trails[1] then
             LINE(me, [[
 // switch to blk trail
-_ceu_lst_.trl = &PTR_cur(tceu_trail*, CEU_CLS_TRAIL0)[ ]]
+_ceu_cur_.trl = &PTR_cur(tceu_trail*, CEU_CLS_TRAIL0)[ ]]
                         ..blk.trails[1]..[[ ];
 ]])
         end
@@ -505,7 +496,7 @@ ceu_news_rem_all(PTR_cur(tceu_news_blk*,]]..me.off_news..[[)->fst.nxt);
         if not (_ANA and me.ana.pos[false]) then
             LINE(me, [[
 // switch to 1st trail
-_ceu_lst_.trl = &PTR_cur(tceu_trail*, CEU_CLS_TRAIL0)[ ]]
+_ceu_cur_.trl = &PTR_cur(tceu_trail*, CEU_CLS_TRAIL0)[ ]]
                         ..me.trails[1]..[[ ];
 ]])
         end
@@ -556,7 +547,7 @@ _ceu_lst_.trl = &PTR_cur(tceu_trail*, CEU_CLS_TRAIL0)[ ]]
             CLEAR(me)
             LINE(me, [[
 // switch to 1st trail
-_ceu_lst_.trl = &PTR_cur(tceu_trail*, CEU_CLS_TRAIL0)[ ]]
+_ceu_cur_.trl = &PTR_cur(tceu_trail*, CEU_CLS_TRAIL0)[ ]]
                         ..me.trails[1]..[[ ];
 ]])
         end
@@ -617,7 +608,7 @@ _ceu_lst_.trl = &PTR_cur(tceu_trail*, CEU_CLS_TRAIL0)[ ]]
             CLEAR(me)
             LINE(me, [[
 // switch to 1st trail
-_ceu_lst_.trl = &PTR_cur(tceu_trail*, CEU_CLS_TRAIL0)[ ]]
+_ceu_cur_.trl = &PTR_cur(tceu_trail*, CEU_CLS_TRAIL0)[ ]]
                         ..me.trails[1]..[[ ];
 ]])
         end
@@ -675,8 +666,8 @@ for (;;) {
 #else
     {
 #endif
-        _ceu_lst_.trl->evt = IN__ASYNC;
-        _ceu_lst_.trl->lbl = ]]..me.lbl_asy.id..[[;
+        _ceu_cur_.trl->evt = IN__ASYNC;
+        _ceu_cur_.trl->lbl = ]]..me.lbl_asy.id..[[;
 #ifdef ceu_out_async
         ceu_out_async(1);
 #endif
@@ -694,7 +685,7 @@ for (;;) {
             CLEAR(me)
             LINE(me, [[
 // switch to 1st trail
-_ceu_lst_.trl = &PTR_cur(tceu_trail*, CEU_CLS_TRAIL0)[ ]]
+_ceu_cur_.trl = &PTR_cur(tceu_trail*, CEU_CLS_TRAIL0)[ ]]
                         ..me.trails[1]..[[ ];
 ]])
         end
@@ -728,8 +719,8 @@ _ceu_lst_.trl = &PTR_cur(tceu_trail*, CEU_CLS_TRAIL0)[ ]]
         end
 
         LINE(me, [[
-_ceu_lst_.trl->evt = IN__ASYNC;
-_ceu_lst_.trl->lbl = ]]..me.lbl_cnt.id..[[;
+_ceu_cur_.trl->evt = IN__ASYNC;
+_ceu_cur_.trl->lbl = ]]..me.lbl_cnt.id..[[;
 #ifdef ceu_out_async
 ceu_out_async(1);
 #endif
@@ -744,8 +735,8 @@ case ]]..me.lbl_cnt.id..[[:;
     EmitT = function (me)
         local exp = unpack(me)
         LINE(me, [[
-_ceu_lst_.trl->evt = IN__ASYNC;
-_ceu_lst_.trl->lbl = ]]..me.lbl_cnt.id..[[;
+_ceu_cur_.trl->evt = IN__ASYNC;
+_ceu_cur_.trl->lbl = ]]..me.lbl_cnt.id..[[;
 #ifdef CEU_WCLOCKS
 ceu_go_wclock(]]..VAL(exp)..[[);
 while (CEU.wclk_min <= 0) {
@@ -769,9 +760,9 @@ case ]]..me.lbl_cnt.id..[[:;
         local field = exp and ((_TP.deref(int.tp) and 'ptr') or 'v')
 
         LINE(me, [[
-_ceu_lst_.trl->evt = IN__ANY;
-_ceu_lst_.trl->stk = _ceu_stk_;
-_ceu_lst_.trl->lbl = ]]..me.lbl_cnt.id..[[;
+_ceu_cur_.trl->evt = IN__ANY;
+_ceu_cur_.trl->stk = _ceu_stk_;
+_ceu_cur_.trl->lbl = ]]..me.lbl_cnt.id..[[;
 _CEU_STK_[_ceu_stk_++] = _ceu_evt_;
 
 // TRIGGER EVENT
@@ -784,7 +775,7 @@ _ceu_evt_.param.]]..field..' = '..VAL(exp)..[[;
         end
         LINE(me, [[
 #ifdef CEU_ORGS
-_ceu_evt_.org = ]]..((int.org and int.org.val) or '_ceu_lst_.org')..[[;
+_ceu_evt_.org = ]]..((int.org and int.org.val) or '_ceu_cur_.org')..[[;
 #endif
 goto _CEU_CALL_;
 
@@ -816,8 +807,8 @@ case ]]..me.lbl_cnt.id..[[:;
         LINE(me, [[
 ceu_trails_set_wclock(PTR_cur(u32*,]]..me.off..'),'..VAL(exp)..[[);
 ]]..no..[[:
-    _ceu_lst_.trl->evt = IN__WCLOCK;
-    _ceu_lst_.trl->lbl = ]]..me.lbl.id..[[;
+    _ceu_cur_.trl->evt = IN__WCLOCK;
+    _ceu_cur_.trl->lbl = ]]..me.lbl.id..[[;
 ]])
         HALT(me)
 
@@ -836,13 +827,13 @@ case ]]..me.lbl.id..[[:;
 
     AwaitInt = function (me)
         local int = unpack(me)
-        local org = (int.org and int.org.val) or '_ceu_lst_.org'
+        local org = (int.org and int.org.val) or '_ceu_cur_.org'
         local no = '_CEU_NO_'..me.n..'_'
 
         LINE(me, [[
 ]]..no..[[:
-    _ceu_lst_.trl->evt = ]]..(int.off or int.evt.off)..[[;
-    _ceu_lst_.trl->lbl = ]]..me.lbl.id..[[;
+    _ceu_cur_.trl->evt = ]]..(int.off or int.evt.off)..[[;
+    _ceu_cur_.trl->lbl = ]]..me.lbl.id..[[;
 ]])
         HALT(me)
 
@@ -865,8 +856,8 @@ case ]]..me.lbl.id..[[:;
         local no = '_CEU_NO_'..me.n..'_'
         LINE(me, [[
 ]]..no..[[:
-    _ceu_lst_.trl->evt = IN_]]..e.evt.id..[[;
-    _ceu_lst_.trl->lbl = ]]..me.lbl.id..[[;
+    _ceu_cur_.trl->evt = IN_]]..e.evt.id..[[;
+    _ceu_cur_.trl->lbl = ]]..me.lbl.id..[[;
 ]])
         HALT(me)
 
@@ -893,8 +884,8 @@ ceu_trails_set_wclock(PTR_cur(u32*,]]..awt.off..'),'..VAL(awt)..[[);
         local no = '_CEU_NO_'..me.n..'_'
         LINE(me, [[
 ]]..no..[[:
-    _ceu_lst_.trl->evt = IN__ANY;
-    _ceu_lst_.trl->lbl = ]]..me.lbl.id..[[;
+    _ceu_cur_.trl->evt = IN__ANY;
+    _ceu_cur_.trl->lbl = ]]..me.lbl.id..[[;
 ]])
         HALT(me)
 
@@ -912,7 +903,7 @@ case ]]..me.lbl.id..[[:;
                     if (_ceu_evt_.id == IN_]]..awt.evt.id..[[) {
                 ]])
             elseif awt.isExp then
-                local org = (awt.org and awt.org.val) or '_ceu_lst_.org'
+                local org = (awt.org and awt.org.val) or '_ceu_cur_.org'
                 LINE(me, [[
                     if ( (_ceu_evt_.id == ]]..(awt.off or awt.evt.off)..[[)
                     #ifdef CEU_ORGS
@@ -948,8 +939,8 @@ case ]]..me.lbl.id..[[:;
             ATTR(me, n.new, n.var)
         end
         LINE(me, [[
-_ceu_lst_.trl->evt = IN__ASYNC;
-_ceu_lst_.trl->lbl = ]]..me.lbl.id..[[;
+_ceu_cur_.trl->evt = IN__ASYNC;
+_ceu_cur_.trl->lbl = ]]..me.lbl.id..[[;
 #ifdef ceu_out_async
 ceu_out_async(1);
 #endif

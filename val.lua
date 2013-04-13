@@ -55,7 +55,7 @@ F =
         elseif dcl then
             me.val = dcl.var.val
         else
-            me.val = '_ceu_lst_.org'
+            me.val = '_ceu_cur_.org'
         end
     end,
 
