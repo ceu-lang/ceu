@@ -69,10 +69,6 @@ F = {
     Dcl_cls_pre = function (me)
         me.mem = { off=0, max=0 }
 
-        _MEM.cls.idx_cnt = alloc(me.mem, _ENV.c.pointer.len)
-DBG('', string.format('%8s','cnt'), _MEM.cls.idx_cnt,
-                                     _ENV.c.pointer.len)
-
 -- TODO: class dependent (class meta instead of obj)
         if _PROPS.has_news then
             -- MUST BE 1st in class (see ceu_news_*)
@@ -82,6 +78,10 @@ DBG('', string.format('%8s','news'), _MEM.cls.idx_news,
             _MEM.cls.idx_free = alloc(me.mem, 1)
 DBG('', string.format('%8s','free'), _MEM.cls.idx_free, 1)
         end
+
+        _MEM.cls.idx_cnt = alloc(me.mem, 2*_ENV.c.pointer.len)
+DBG('', string.format('%8s','cnt'), _MEM.cls.idx_cnt,
+                                     2*_ENV.c.pointer.len)
 
         if _PROPS.has_ifcs then
             _MEM.cls.idx_cls = alloc(me.mem, _ENV.c.tceu_ncls.len) -- cls N

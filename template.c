@@ -205,8 +205,7 @@ void ceu_trails_set_wclock (s32* t, s32 dt) {
 void ceu_trails_clr (int t1, int t2, void* org) {
     int i;
     for (i=t2; i>=t1; i--) {    // lst fins first
-        tceu_trail* trl = PTR_org(tceu_trail*, org,
-                            CEU_CLS_TRAIL0+i*sizeof(tceu_trail));
+        tceu_trail* trl = &PTR_org(tceu_trail*,org,CEU_CLS_TRAIL0)[i];
 #ifdef CEU_FINS
         ceu_go(IN__FIN, NULL, trl->lbl, 0, org);
 #endif
@@ -462,7 +461,11 @@ _CEU_CALL_:
         // TODO: .i -> .j
 
 #ifdef CEU_DEBUG_TRAILS
+#ifdef CEU_ORGS
+fprintf(stderr, "GO: evt=%d stk=%d org=%p\n", _ceu_evt_.id, _ceu_stk_, _ceu_lst_.org);
+#else
 fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
+#endif
 #endif
         for (;;)    // TRL
         {
@@ -478,21 +481,29 @@ fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
             {
 #ifdef CEU_ORGS
                 // check for next org
-                if (_ceu_lst_.org != CEU.mem)
-                    _ceu_lst_.trl = *PTR_cur(void**, CEU_CLS_CNT);
+                if (_ceu_lst_.org != CEU.mem) {
+                    _ceu_lst_.trl = *PTR_cur(void**, CEU_CLS_CNT+sizeof(void*));
+                    _ceu_lst_.org = *PTR_cur(void**, CEU_CLS_CNT);
+                }
                 else
 #endif
+                {
                     break;  // terminate current stack
+                }
             }
             {
                 // TODO: trl_vec is freed
                 tceu_trail* trl = _ceu_lst_.trl;
 #ifdef CEU_DEBUG_TRAILS
-fprintf(stderr, "\tTRY: stk=%d lbl=%d\n", trl->stk, trl->lbl);
+fprintf(stderr, "\tTRY: evt=%d stk=%d lbl=%d\n", trl->evt, trl->stk, trl->lbl);
 #endif
+#ifdef CEU_ORGS
                 if (trl->evt == IN__ORG) {
-                    assert(0);                  // goto org
+                    _ceu_lst_.org = ((tceu_trail_*)trl)->org;
+fprintf(stderr, "DEPOIS %p => %p\n", trl, _ceu_lst_.org);
+                    goto _CEU_CALL_;
                 }
+#endif
 
                 switch (_ceu_evt_.id)
                 {
@@ -518,9 +529,6 @@ fprintf(stderr, "\tTRY: stk=%d lbl=%d\n", trl->stk, trl->lbl);
                         }
                     }
                 }
-#ifdef CEU_DEBUG_TRAILS
-//fprintf(stderr, "\t\tAWK\n");
-#endif
             }
 _CEU_GOTO_:
 #ifdef CEU_DEBUG

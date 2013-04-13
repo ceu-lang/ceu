@@ -294,20 +294,32 @@ if (*PTR_cur(u8*,CEU_CLS_FREE))
         COMM(me, 'start org: '..var.id)
 
         -- each org has its own trail on enclosing block
-        -- first enable blk trail with IN__ORG (always awake from now on)
-        -- then, link it with the next trail in the block
-        -- finally, reset org memory and do org.trail[0]=Class_XXX
+DBG('trail', me.var.trails[1])
         LINE(me, [[
 {
+tceu_trail_* TRL;
+{
     int i;
-    for (i=0; i<]]..(var.arr or 1)..[[; i++) {
+    for (i=0; i<]]..(var.arr or 1)..[[; i++)
+    {
         int idx = ]]..me.var.trails[1]..[[ + i;
         void* org = PTR_org(void*,]]..VAL(var)..', i*'..var.cls.mem.max..[[);
-// TODO: unsafe typecast
-        ceu_trails_set(idx, IN__ORG, (int)org, CEU_MAX_STACK, _ceu_lst_.org); // trail on
-        *PTR_org(void**, org, CEU_CLS_CNT) =                // set cnt
+
+        // enable block trail with IN__ORG (always awake from now on)
+        tceu_trail_* trl = &PTR_cur(tceu_trail*, CEU_CLS_TRAIL0)[idx];
+            trl->evt = IN__ORG;
+            trl->org = org;
+
+        TRL = trl;
+fprintf(stderr, "ANTES %p %p\n", trl, trl->org);
+
+        // link org with the next trail in the block
+        *PTR_org(void**, org, CEU_CLS_CNT) = _ceu_lst_.org;
+        *PTR_org(void**, org, CEU_CLS_CNT+sizeof(void*)) =
             &PTR_cur(tceu_trail*,CEU_CLS_TRAIL0)[idx+1];
-        ceu_org_init(org, ]]                                -- initialize
+
+        // reset org memory and do org.trail[0]=Class_XXX
+        ceu_org_init(org, ]]
                     ..var.cls.ns.trails..','
                     ..var.cls.lbl.id..[[);
     }
@@ -316,12 +328,16 @@ if (*PTR_cur(u8*,CEU_CLS_FREE))
 // org[0] -> org[1] -> ... -> blk.trails[1]
 
 // hold current blk trail: set to my continuation
-ceu_trails_set(]]..me.trails[1]..', IN__ANY, '..me.lbl_cnt.id..
-           [[, _ceu_stk_, _ceu_lst_.org);
+fprintf(stderr, "XXXXX %p %p\n", TRL, TRL->org);
+_ceu_lst_.trl->evt = IN__ANY;
+fprintf(stderr, "XXXXX %p %p\n", TRL, TRL->org);
+_ceu_lst_.trl->lbl = ]]..me.lbl_cnt.id..[[;
+_ceu_lst_.trl->stk = _ceu_stk_;
 
-// swith to ORG[0]
+// switch to ORG[0]
 _ceu_lst_.org = ]]..VAL(var)..[[;
 goto _CEU_CALL_;
+}
 
 case ]]..me.lbl_cnt.id..[[:;
 ]])
@@ -453,6 +469,13 @@ memset(PTR_cur(u8*,]]..me.off_fins..'), 0, '..#me.fins..[[);
 ]])
         end
 
+        if me.trails[1] ~= blk.trails[1] then
+            LINE(me, [[
+// switch to blk trail
+_ceu_lst_.trl = &PTR_cur(tceu_trail*, CEU_CLS_TRAIL0)[ ]]
+                        ..blk.trails[1]..[[ ];
+]])
+        end
         CONC(me, blk)
 
         if me.fins then
@@ -479,11 +502,13 @@ ceu_news_rem_all(PTR_cur(tceu_news_blk*,]]..me.off_news..[[)->fst.nxt);
         LINE(me, '}')       -- open in Block_pre
 -- TODO: free
 
-        LINE(me, [[
+        if not (_ANA and me.ana.pos[false]) then
+            LINE(me, [[
 // switch to 1st trail
-_ceu_lst_.trl = PTR_cur(tceu_trail*, CEU_CLS_TRAIL0 + ]]
-                        ..me.trails[1]..[[*sizeof(tceu_trail));
+_ceu_lst_.trl = &PTR_cur(tceu_trail*, CEU_CLS_TRAIL0)[ ]]
+                        ..me.trails[1]..[[ ];
 ]])
+        end
     end,
 
     -- TODO: more tests
@@ -529,13 +554,12 @@ _ceu_lst_.trl = PTR_cur(tceu_trail*, CEU_CLS_TRAIL0 + ]]
         CASE(me, me.lbl_out)
         if me.has_return then
             CLEAR(me)
-        end
-
-        LINE(me, [[
+            LINE(me, [[
 // switch to 1st trail
-_ceu_lst_.trl = PTR_cur(tceu_trail*, CEU_CLS_TRAIL0 + ]]
-                        ..me.trails[1]..[[*sizeof(tceu_trail));
+_ceu_lst_.trl = &PTR_cur(tceu_trail*, CEU_CLS_TRAIL0)[ ]]
+                        ..me.trails[1]..[[ ];
 ]])
+        end
     end,
     Return = function (me)
         GOTO(me, _AST.iter'SetBlock'().lbl_out)
@@ -548,8 +572,8 @@ _ceu_lst_.trl = PTR_cur(tceu_trail*, CEU_CLS_TRAIL0 + ]]
             if i > 1 then
                 LINE(me, [[
 {
-    tceu_trail* trl = PTR_cur(tceu_trail*, CEU_CLS_TRAIL0 + ]]
-                            ..sub.trails[1]..[[*sizeof(tceu_trail));
+    tceu_trail* trl = &PTR_cur(tceu_trail*, CEU_CLS_TRAIL0)[ ]]
+                        ..sub.trails[1]..[[ ];
     trl->evt = IN__ANY;
     trl->lbl = ]]..me.lbls_in[i].id..[[;
     trl->stk = _ceu_stk_;
@@ -591,13 +615,12 @@ _ceu_lst_.trl = PTR_cur(tceu_trail*, CEU_CLS_TRAIL0 + ]]
         if not (_ANA and me.ana.pos[false]) then
             CASE(me, me.lbl_out)
             CLEAR(me)
-        end
-
-        LINE(me, [[
+            LINE(me, [[
 // switch to 1st trail
-_ceu_lst_.trl = PTR_cur(tceu_trail*, CEU_CLS_TRAIL0 + ]]
-                        ..me.trails[1]..[[*sizeof(tceu_trail));
+_ceu_lst_.trl = &PTR_cur(tceu_trail*, CEU_CLS_TRAIL0)[ ]]
+                        ..me.trails[1]..[[ ];
 ]])
+        end
     end,
 
     ParAnd = function (me)
@@ -669,12 +692,12 @@ for (;;) {
 ]])
         if me.has_break then
             CLEAR(me)
-        end
-        LINE(me, [[
+            LINE(me, [[
 // switch to 1st trail
-_ceu_lst_.trl = PTR_cur(tceu_trail*, CEU_CLS_TRAIL0 + ]]
-                        ..me.trails[1]..[[*sizeof(tceu_trail));
+_ceu_lst_.trl = &PTR_cur(tceu_trail*, CEU_CLS_TRAIL0)[ ]]
+                        ..me.trails[1]..[[ ];
 ]])
+        end
     end,
 
     Break = function (me)

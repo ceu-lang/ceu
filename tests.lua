@@ -758,9 +758,6 @@ return 1;
 }
 
 Test { [[
-C pure _fprintf(), _stderr;
-
-    //_fprintf(_stderr, "xxx %d\n", _sizeof(_yyy));
 input int A;
 par/or do
     await A;
@@ -17112,11 +17109,16 @@ end
 
 var T y;
 
+C pure _fprintf(), _stderr;
+    _fprintf(_stderr, "1\n");
+
 var T x;
+    _fprintf(_stderr, "2\n");
     x.a = 10;
 
 input void START;
 await START;
+    _fprintf(_stderr, "3\n");
 
 return x.a;
 ]],
