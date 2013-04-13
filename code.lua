@@ -26,7 +26,6 @@ function CASE (me, lbl)
 end
 
 function DEBUG_TRAILS (me, lbl)
--- TODO: remove
     LINE(me, [[
 #ifdef CEU_DEBUG_TRAILS
 fprintf(stderr, "\tOK!\n");
@@ -66,9 +65,6 @@ _ceu_lst_.org = ]]..org..[[;
     end
     LINE(me, [[
 _ceu_lst_.lbl = ]]..lbl.id..[[;
-]])
-    DEBUG_TRAILS(me)
-    LINE(me, [[
 goto _CEU_GOTO_;
 ]])
 end
@@ -174,7 +170,7 @@ if (*PTR_cur(u8*,CEU_CLS_FREE))
 ]])
         end
 
-        HALT(me, nil, true)
+        HALT(me)
     end,
 
     Host = function (me)
@@ -437,8 +433,6 @@ memset(PTR_cur(u8*,]]..me.off_fins..'), 0, '..#me.fins..[[);
         if me.fins then
             GOTO(me, me.lbl_fin_cnt)
             CASE(me, me.lbl_fin)
-            HALT(me, '(_ceu_evt_.id != IN__FIN)')
-            DEBUG_TRAILS(me)
             for i, fin in ipairs(me.fins) do
                 LINE(me, [[
 if (*PTR_cur(u8*,]]..(me.off_fins+i-1)..[[)) {
@@ -446,7 +440,7 @@ if (*PTR_cur(u8*,]]..(me.off_fins+i-1)..[[)) {
 }
 ]])
             end
-            HALT(me, nil, true)
+            HALT(me)
             CASE(me, me.lbl_fin_cnt)
         end
         if me.fins then
@@ -528,13 +522,12 @@ ceu_trails_set(]]..sub.trails[1]..', IN__ANY, '..me.lbls_in[i].id..
         for i, sub in ipairs(me) do
             if i > 1 then
                 CASE(me, me.lbls_in[i])
-                DEBUG_TRAILS(me)
             end
             CONC(me, sub)
 
             -- only if trail terminates
             if not sub.ana.pos[false] then
-                HALT(me, nil, true)
+                HALT(me)
             end
         end
     end,
@@ -544,7 +537,6 @@ ceu_trails_set(]]..sub.trails[1]..', IN__ANY, '..me.lbls_in[i].id..
         for i, sub in ipairs(me) do
             if i > 1 then
                 CASE(me, me.lbls_in[i])
-                DEBUG_TRAILS(me)
             end
             CONC(me, sub)
 
@@ -569,7 +561,6 @@ ceu_trails_set(]]..sub.trails[1]..', IN__ANY, '..me.lbls_in[i].id..
         for i, sub in ipairs(me) do
             if i > 1 then
                 CASE(me, me.lbls_in[i])
-                DEBUG_TRAILS(me)
             end
             CONC(me, sub)
             LINE(me, [[
@@ -624,7 +615,6 @@ for (;;) {
     }
     case ]]..me.lbl_asy.id..[[:;
 ]])
-            --HALT(me, '(_ceu_evt_.id != IN__ASYNC)')
         end
         LINE(me, [[
 }
@@ -673,8 +663,6 @@ ceu_out_async(1);
         LINE(me, [[
 case ]]..me.lbl_cnt.id..[[:;
 ]])
-        --HALT(me, '(_ceu_evt_.id != IN__ASYNC)')
-        DEBUG_TRAILS(me)
     end,
 
     EmitT = function (me)
@@ -697,7 +685,6 @@ while (CEU.wclk_min <= 0) {
 #endif
 case ]]..me.lbl_cnt.id..[[:;
 ]])
-        --HALT(me, '(_ceu_evt_.id != IN__ASYNC)')
     end,
 
     EmitInt = function (me)
@@ -742,7 +729,7 @@ case ]]..me.lbl_cnt.id..[[:;
     end,
 
     AwaitN = function (me)
-        HALT(me, nil, true)
+        HALT(me)
     end,
 
     AwaitT = function (me)
@@ -760,7 +747,6 @@ ceu_trails_set_wclock(PTR_cur(u32*,]]..me.off..'),'..VAL(exp)..[[);
         LINE(me, [[
 case ]]..me.lbl.id..[[:;
 ]])
-        --HALT(me, '(_ceu_evt_.id != IN__WCLOCK)')
 
         PAUSE(me, no)
         LINE(me, [[
@@ -786,7 +772,6 @@ case ]]..me.lbl.id..[[:;
         LINE(me, [[
 case ]]..me.lbl.id..[[:;
 ]])
-        --HALT(me, '(_ceu_evt_.id != '..(int.off or int.evt.off)..')')
         LINE(me, [[
 #ifdef CEU_ORGS
     if (]]..org..[[ != _ceu_evt_.param.org)
@@ -812,9 +797,8 @@ case ]]..me.lbl.id..[[:;
         LINE(me, [[
 case ]]..me.lbl.id..[[:;
 ]])
-        --HALT(me, '(_ceu_evt_.id != IN_'..e.evt.id..')')
-        DEBUG_TRAILS(me)
         PAUSE(me, no)
+        DEBUG_TRAILS(me)
         F._SetAwait(me)
     end,
 
@@ -899,8 +883,6 @@ ceu_out_async(1);
         LINE(me, [[
 case ]]..me.lbl.id..[[:;
 ]])
-        --HALT(me, '(_ceu_evt_.id != IN__ASYNC)')
-        DEBUG_TRAILS(me)
         CONC(me, blk)
     end,
 }
