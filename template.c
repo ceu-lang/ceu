@@ -497,7 +497,7 @@ _CEU_CALL_:
                 if (trl->lbl == CEU_INACTIVE)
                     goto _CEU_NEXT_;        // TODO: lbl => unsigned
                 _ceu_lst_.lbl = trl->lbl;
-                trl->lbl = CEU_INACTIVE;  // only w/ evt_id on trails
+                trl->lbl = CEU_INACTIVE;
 #ifdef CEU_DEBUG_TRAILS
 //fprintf(stderr, "\t\tAWK\n");
 #endif
@@ -516,8 +516,6 @@ fprintf(stderr, "TRK: l.%d\n", _ceu_lst_.lbl);
             switch (_ceu_lst_.lbl) {
                 === CODE ===
             }
-_CEU_HALT_:     // TODO: remove
-            //ceu_trails_set(_ceu_lst_.idx, CEU_INACTIVE, 0, _ceu_lst_.org);
 _CEU_NEXT_:     // TODO: rename to HALT
             _ceu_lst_.idx++;
         }

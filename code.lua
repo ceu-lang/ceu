@@ -42,13 +42,11 @@ function LINE (me, line, spc)
                 spc .. line .. '\n'
 end
 
-function HALT (me, cond, hlt)
--- TODO: remove hlt
-    hlt = (hlt and '_CEU_HALT_') or '_CEU_NEXT_'
+function HALT (me, cond)
     if cond then
         LINE(me, 'if ('..cond..') {')
     end
-    LINE(me, '\tgoto '..hlt..';')
+    LINE(me, '\tgoto _CEU_NEXT_;')
     if cond then
         LINE(me, '}')
     end
@@ -176,7 +174,6 @@ if (*PTR_cur(u8*,CEU_CLS_FREE))
 ]])
         end
 
-DBG('DCL', me.trails[1])
         HALT(me, nil, true)
     end,
 
@@ -449,9 +446,6 @@ if (*PTR_cur(u8*,]]..(me.off_fins+i-1)..[[)) {
 }
 ]])
             end
-            LINE(me, [[
-//ceu_trails_set(]]..me.fins.trails[1]..[[, CEU_INACTIVE, 0, _ceu_lst_.org);
-]])
             HALT(me, nil, true)
             CASE(me, me.lbl_fin_cnt)
         end
@@ -540,9 +534,6 @@ ceu_trails_set(]]..sub.trails[1]..', IN__ANY, '..me.lbls_in[i].id..
 
             -- only if trail terminates
             if not sub.ana.pos[false] then
-                LINE(me, [[
-//ceu_trails_set(]]..sub.trails[1]..[[, CEU_INACTIVE, 0, _ceu_lst_.org);
-]])
                 HALT(me, nil, true)
             end
         end
@@ -582,10 +573,6 @@ ceu_trails_set(]]..sub.trails[1]..', IN__ANY, '..me.lbls_in[i].id..
             end
             CONC(me, sub)
             LINE(me, [[
-// TODO: why not _ceu_lst_.idx?
-//fprintf(stderr, "........ %d %d\n", _ceu_lst_.idx,]]..sub.trails[1]..[[);
-//ceu_trails_set(_ceu_lst_.idx, CEU_INACTIVE, 0, _ceu_lst_.org);
-//ceu_trails_set(]]..sub.trails[1]..[[, CEU_INACTIVE, 0, _ceu_lst_.org);
 *PTR_cur(u8*,]]..(me.off+i-1)..[[) = 1; // open and gate
 ]])
             GOTO(me, me.lbl_tst)
@@ -755,10 +742,6 @@ case ]]..me.lbl_cnt.id..[[:;
     end,
 
     AwaitN = function (me)
-DBG('AWAITN', me.trails[1])
-        LINE(me, [[
-//ceu_trails_set(]]..me.trails[1]..[[, CEU_INACTIVE, 0, _ceu_lst_.org);
-]])
         HALT(me, nil, true)
     end,
 
