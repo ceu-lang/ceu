@@ -335,6 +335,7 @@ return ret;
 }
 
 do return end
+--]===]
 
 -- OK: well tested
 
@@ -757,6 +758,9 @@ return 1;
 }
 
 Test { [[
+C pure _fprintf(), _stderr;
+
+    //_fprintf(_stderr, "xxx %d\n", _sizeof(_yyy));
 input int A;
 par/or do
     await A;
@@ -17060,6 +17064,7 @@ C _V;
 var T t;
 return _V;
 ]],
+    todo = 'recalculate',
     run = 8,    -- 2/2 (trl0) 0 (x) 4 (y)
 }
 
@@ -17076,6 +17081,7 @@ end
 C _V;
 return _V;
 ]],
+    todo = 'recalculate',
     run = 8,
 }
 
@@ -17094,6 +17100,7 @@ end
 C _V;
 return _V;
 ]],
+    todo = 'recalculate',
     run = 8,   -- 1/1 cls / 2 trl / 0 x / 4 v
 }
 
@@ -17381,7 +17388,6 @@ return _V;
     run = 345;
 }
 
---]===]
 Test { [[
 class J with
 do
@@ -17396,14 +17402,10 @@ end
 input void START;
 event void a;
 
-C pure _fprintf(), _stderr;
 var T t1;
 var T t2;
-    _fprintf(_stderr, "11111\n");
 emit a;
-    _fprintf(_stderr, "22222\n");
 await START;
-    _fprintf(_stderr, "33333\n");
 return 1;
 ]],
     run = 1;

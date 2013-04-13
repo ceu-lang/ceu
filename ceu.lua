@@ -208,6 +208,10 @@ do
     local t = {}
     --local ins  = 0
     local outs = 0
+
+    -- TODO
+    str = str..'#define IN__NONE 0\n'
+
     for i, evt in ipairs(_ENV.exts) do
         if evt.pre == 'input' then
             str = str..'#define IN_'..evt.id..' '

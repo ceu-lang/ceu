@@ -59,6 +59,7 @@
 //typedef === TCEU_NEVT === tceu_nevt;    // (x) number of events
 typedef u8 tceu_nevt;    // (x) number of events
 
+// TODO: lbl => unsigned
 typedef === TCEU_NLBL === tceu_nlbl;    // (x) number of trails
 
 #ifdef CEU_IFCS
@@ -74,10 +75,17 @@ typedef === TCEU_NOFF === tceu_noff;    // (x) number of clss x ifcs
 #define CEU_MAX_STACK   255     // TODO
 
 typedef struct {
-    tceu_nlbl lbl;
     tceu_nevt evt;
+    tceu_nlbl lbl;
     u8        stk;
+    u8        _1;
+    u8        _2;
 } tceu_trail;
+
+typedef struct {
+    tceu_nevt evt;
+    void*     org;
+} tceu_trail_;
 
 typedef struct {
     union {
@@ -205,8 +213,16 @@ void ceu_trails_set_wclock (s32* t, s32 dt) {
 void ceu_trails_set (int idx, int evt, int lbl, int stk, void* org) {
     tceu_trail* trl = ceu_trails_get(idx, org);
     trl->evt = evt;
-    trl->lbl = lbl;
-    trl->stk = stk;
+#ifdef CEU_ORGS
+    if (evt == IN__ORG) {
+        ((tceu_trail*)trl)->org = (void*)lbl;
+    }
+    else
+#endif
+    {
+        trl->lbl = lbl;
+        trl->stk = stk;
+    }
 }
 #ifndef CEU_ORGS
 #define ceu_trails_set(a,b,c,d,e) ceu_trails_set(a,b,c,d,NULL)
@@ -219,7 +235,7 @@ void ceu_trails_clr (int t1, int t2, void* org) {
 #ifdef CEU_FINS
         ceu_go(IN__FIN, NULL, trl->lbl, 0, org);
 #endif
-        trl->lbl = CEU_INACTIVE;
+        trl->evt = IN__NONE;
     }
 }
 #ifndef CEU_ORGS
@@ -497,24 +513,29 @@ fprintf(stderr, "\tTRY: stk=%d lbl=%d\n", trl->stk, trl->lbl);
                     assert(0);                  // goto org
                 }
 
-                if (_ceu_evt_.id == IN__ANY) {
+                switch (_ceu_evt_.id)
+                {
+                    case IN__NONE:
+                        goto _CEU_NEXT_;
+
+                    case IN__ANY:
+                        trl->stk = 0;     // new reaction reset stk
 #ifdef CEU_DEBUG_TRAILS
 //fprintf(stderr, "\t\tZERO\n");
 #endif
-                    trl->stk = 0;     // new reaction reset stk
-                } else {
-                    // stk=0 (try to match) || stk==_stk_ (my turn)
-                    if (trl->stk!=0 && trl->stk!=_ceu_stk_)
                         goto _CEU_NEXT_;
+
+                    default: {
+                        // stk=0 (try to match) || stk==_stk_ (my turn)
+                        if ( (trl->stk==0       || trl->stk==_ceu_stk_)
+                        &&   (trl->evt==IN__ANY || trl->evt==_ceu_evt_.id) ) {
+                            _ceu_lst_.lbl = trl->lbl;
+                            trl->evt = IN__NONE;
+                        } else {
+                            goto _CEU_NEXT_;
+                        }
+                    }
                 }
-                if (trl->evt!=IN__ANY && trl->evt!=_ceu_evt_.id)
-                    goto _CEU_NEXT_;
-                if (trl->lbl == CEU_INACTIVE)
-                    goto _CEU_NEXT_;        // TODO: lbl => unsigned
-
-                _ceu_lst_.lbl = trl->lbl;
-                trl->lbl = CEU_INACTIVE;
-
 #ifdef CEU_DEBUG_TRAILS
 //fprintf(stderr, "\t\tAWK\n");
 #endif

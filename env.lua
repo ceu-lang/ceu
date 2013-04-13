@@ -165,7 +165,14 @@ end
 
 F = {
     Root_pre = function (me)
+        -- TODO: NONE=0
+
         local evt = {id='_ANY', pre='input'}
+        _ENV.exts[#_ENV.exts+1] = evt
+        _ENV.exts[evt.id] = evt
+
+        -- TODO: shared with _INIT?
+        local evt = {id='_ORG', pre='input'}
         _ENV.exts[#_ENV.exts+1] = evt
         _ENV.exts[evt.id] = evt
 

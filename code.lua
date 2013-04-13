@@ -300,7 +300,7 @@ if (*PTR_cur(u8*,CEU_CLS_FREE))
     for (i=0; i<]]..(var.arr or 1)..[[; i++) {
         int idx = i + ]]..me.var.trails[1]..[[;
         void* org = PTR_org(void*,]]..VAL(var)..', i*'..var.cls.mem.max..[[);
-        ceu_trails_set(idx, IN__ANY, org, 0);
+        ceu_trails_set(idx, IN__ORG, org, 0);
         *PTR_org(void**, org, CEU_CLS_CNT) =
             &PTR_cur(tceu_trail*,CEU_CLS_TRAIL0)[idx+1];
     }

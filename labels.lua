@@ -36,13 +36,16 @@ F = {
     end,
 
     Root_pre = function (me)
-        new{'CEU_INACTIVE', true}
+        --new{'CEU_INACTIVE', true}
     end,
     Root = function (me)
         -- 0, 1,-1, tot,-tot
         -- <0 = off (for internal events)
         _ENV.c.tceu_nlbl.len  = _TP.n2bytes(1+2 + #_LBLS.list*2)
-        _ENV.c.tceu_trail.len = _ENV.c.tceu_nlbl.len + 1 + 1 -- TODO:nevt
+        --_ENV.c.tceu_trail.len = MAX(_ENV.c.pointer.len,
+                                    --_ENV.c.tceu_nlbl.len + 1) -- TODO:stk
+                                --+ 4 -- TODO:nevt
+        _ENV.c.tceu_trail.len = _ENV.c.pointer.len + 1
 
         -- enum of labels
         for i, lbl in ipairs(_LBLS.list) do
