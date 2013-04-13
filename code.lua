@@ -842,8 +842,10 @@ case ]]..me.lbl.id..[[:;
 ]])
         LINE(me, [[
 #ifdef CEU_ORGS
-    if (]]..org..[[ != _ceu_evt_.org)
+    if (]]..org..[[ != _ceu_evt_.org) {
+        _ceu_cur_.trl->stk = CEU_MAX_STACK;
         goto ]]..no..[[;
+    }
 #endif
 ]])
         PAUSE(me, no)
@@ -870,6 +872,7 @@ case ]]..me.lbl.id..[[:;
     end,
 
     AwaitS = function (me)
+error'AwaitInt que falha tem que setar stk=MAX'
         local LBL_OUT = '__CEU_'..me.n..'_AWAITS'
         local set = _AST.iter'SetAwait'()
 

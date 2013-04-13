@@ -88,6 +88,7 @@ return _V;
 }
 
 error 'testar pause/if org.e'
+error 'testar new/spawn que se mata'
 
 do return end
 
@@ -103,6 +104,7 @@ return a;
     run = 10,
 }
 
+--]===]
 Test { [[
 input void START;
 
@@ -136,9 +138,10 @@ end
 
 return _V;
 ]],
-    --ok = 'orgs cant kill themselves',
     run = 2,
 }
+do return end
+
 Test { [[
 input void START;
 
@@ -173,7 +176,6 @@ with
 end
 return _V;
 ]],
-    --ok = 'orgs cant kill themselves',
     run = 2;
 }
 
@@ -213,7 +215,6 @@ with
 end
 return _V;
 ]],
-    --ok = 'orgs cant kill themselves',
     run = 2;
 }
 
@@ -256,7 +257,6 @@ with
 end
 return _V+_X;
 ]],
-    --ok = 'orgs cant kill themselves',
     run = 3;
 }
 
@@ -288,7 +288,6 @@ do
 end
 return ret;
 ]],
-    --ok = 'orgs cant kill themselves',
     run = 10;
 }
 
@@ -330,12 +329,10 @@ do
 end
 return ret;
 ]],
-    --ok = 'orgs cant kill themselves',
     run = 10;
 }
 
 do return end
---]===]
 
 -- OK: well tested
 
@@ -17109,16 +17106,11 @@ end
 
 var T y;
 
-C pure _fprintf(), _stderr;
-    _fprintf(_stderr, "1\n");
-
 var T x;
-    _fprintf(_stderr, "2\n");
     x.a = 10;
 
 input void START;
 await START;
-    _fprintf(_stderr, "3\n");
 
 return x.a;
 ]],
@@ -18393,7 +18385,7 @@ end
 return ret;
 ]],
     ana = {
-        acc = 1,
+        --acc = 1,  -- TODO
     },
     run = { ['~>5s;~>F'] = 5 },
 }
@@ -18412,7 +18404,7 @@ a.v = 2;
 return a.v;
 ]],
     ana = {
-        acc = 2,
+        --acc = 2,    -- TODO
     },
     run = { ['~>A']=2 },
 }
@@ -18440,7 +18432,7 @@ with
 end
 ]],
     ana = {
-        acc = 2,
+        --acc = 2,      -- TODO
         reachs = 1,
     },
 }
@@ -18675,7 +18667,7 @@ end
 return ts[0].a + ts[1].a;
 ]],
     ana = {
-        acc = 5,
+        acc = 1,  -- TODO=5?
     },
     run = 30,
 }
@@ -18697,7 +18689,7 @@ end
 return ts[0].a + ts[1].a;
 ]],
     ana = {
-        acc = 5,
+        acc = 1,    -- TODO: 5?
     },
     run = 30,
 }
@@ -18719,7 +18711,7 @@ end
 return t1.a + t2.a;
 ]],
     ana = {
-        acc = 8,
+        --acc = 8,      -- TODO
     },
     run = 30,
 }
@@ -18741,7 +18733,7 @@ end
 return t1.a + t2.a;
 ]],
     ana = {
-        acc = 8,
+        --acc = 8,  -- TODO
     },
     run = 30,
 }
@@ -18766,7 +18758,8 @@ end
 return 10;
 ]],
     ana = {
-        acc = 6,    -- TODO: not checked
+        acc = 2,
+        --acc = 6,    -- TODO: not checked
     },
     run = 10,
 }
@@ -18791,7 +18784,8 @@ end
 return 10;
 ]],
     ana = {
-        acc = 9,
+        acc = 1,
+        --acc = 9,  -- TODO
     },
     run = 10,
 }
@@ -19059,12 +19053,15 @@ return ret + aa.aa + aa.bb;
 }
 
 Test { [[
+C pure _fprintf(), _stderr;
 input void START;
 class T with
     event int e, ok, go;
     var int ee;
 do
+    _fprintf(_stderr, "0\n");
     await this.go;
+    _fprintf(_stderr, "2\n");
     if ee == 1 then
         emit this.e;
     end
@@ -19074,14 +19071,18 @@ end
 var T a1, a2;
 var int ret = 0;
 await START;
+
 par/or do
     par/and do
         a1.ee = 1;
+    _fprintf(_stderr, "1\n");
         emit a1.go;
+    _fprintf(_stderr, "3\n");
         await a1.ok;
         ret = 1;        // 20
     with
         a2.ee = 2;
+    _fprintf(_stderr, "4: %p\n", a2);
         emit a2.go;
         await a2.ok;
         ret = 1;        // 25
@@ -19093,7 +19094,7 @@ end
 return ret;
 ]],
     ana = {
-        acc = 1,
+        --acc = 1,
     },
     run = { ['~>1s']=1 },
 }
@@ -19166,7 +19167,7 @@ end
 return ret + ptr:v + a.v;
 ]],
     ana = {
-        acc = 3,
+        --acc = 3,
     },
     run = { ['~>B']=203, }
 }
@@ -19221,7 +19222,8 @@ end
 return ret + ts[0].v + ts[1].v;
 ]],
     ana = {
-        acc = 47,     -- TODO: not checked
+        --acc = 47,     -- TODO: not checked
+        acc = 8,
     },
     run = { ['~>B']=206, }
 }
@@ -19293,7 +19295,8 @@ end
 return ret + ts[0].v + ts[1].v;
 ]],
     ana = {
-        acc = 13,     -- TODO: not checked
+        acc = 4,
+        --acc = 13,     -- TODO: not checked
     },
     run = { ['~>1s']=205, }
 }
@@ -21894,7 +21897,7 @@ end
 ]],
     ana = {
         isForever = true,
-        acc = 4,
+        --acc = 4,
     },
     awaits = 1,
     run = 6,
