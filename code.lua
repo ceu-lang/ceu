@@ -304,7 +304,7 @@ if (*PTR_cur(u8*,CEU_CLS_FREE))
         int idx = ]]..me.var.trails[1]..[[ + i;
         void* org = PTR_org(void*,]]..VAL(var)..', i*'..var.cls.mem.max..[[);
 // TODO: unsafe typecast
-        ceu_trails_set(idx, IN__ORG, (int)org, 0, _ceu_lst_.org); // trail on
+        ceu_trails_set(idx, IN__ORG, (int)org, CEU_MAX_STACK, _ceu_lst_.org); // trail on
         *PTR_org(void**, org, CEU_CLS_CNT) =                // set cnt
             &PTR_cur(tceu_trail*,CEU_CLS_TRAIL0)[idx+1];
         ceu_org_init(org, ]]                                -- initialize
@@ -446,8 +446,9 @@ PTR_cur(tceu_news_blk*,]]..me.off_news..[[)->lst.prv =
         if me.fins then
             LINE(me, [[
 //  FINALIZE
+apagar
 ceu_trails_set(]]..me.fins.trails[1]..', IN__FIN, '..me.lbl_fin.id..
-               [[, 0, _ceu_lst_.org);   // always ready (stk=0)
+               [[, CEU_MAX_STACK, _ceu_lst_.org);   // always ready
 memset(PTR_cur(u8*,]]..me.off_fins..'), 0, '..#me.fins..[[);
 ]])
         end
@@ -477,6 +478,12 @@ ceu_news_rem_all(PTR_cur(tceu_news_blk*,]]..me.off_news..[[)->fst.nxt);
         end
         LINE(me, '}')       -- open in Block_pre
 -- TODO: free
+
+        LINE(me, [[
+// switch to 1st trail
+_ceu_lst_.trl = PTR_cur(tceu_trail*, CEU_CLS_TRAIL0 + ]]
+                        ..me.trails[1]..[[*sizeof(tceu_trail));
+]])
     end,
 
     -- TODO: more tests
@@ -523,6 +530,12 @@ ceu_news_rem_all(PTR_cur(tceu_news_blk*,]]..me.off_news..[[)->fst.nxt);
         if me.has_return then
             CLEAR(me)
         end
+
+        LINE(me, [[
+// switch to 1st trail
+_ceu_lst_.trl = PTR_cur(tceu_trail*, CEU_CLS_TRAIL0 + ]]
+                        ..me.trails[1]..[[*sizeof(tceu_trail));
+]])
     end,
     Return = function (me)
         GOTO(me, _AST.iter'SetBlock'().lbl_out)
@@ -534,8 +547,13 @@ ceu_news_rem_all(PTR_cur(tceu_news_blk*,]]..me.off_news..[[)->fst.nxt);
         for i, sub in ipairs(me) do
             if i > 1 then
                 LINE(me, [[
-ceu_trails_set(]]..sub.trails[1]..', IN__ANY, '..me.lbls_in[i].id..
-               [[, _ceu_stk_, _ceu_lst_.org);
+{
+    tceu_trail* trl = PTR_cur(tceu_trail*, CEU_CLS_TRAIL0 + ]]
+                            ..sub.trails[1]..[[*sizeof(tceu_trail));
+    trl->evt = IN__ANY;
+    trl->lbl = ]]..me.lbls_in[i].id..[[;
+    trl->stk = _ceu_stk_;
+}
 ]])
             end
         end
@@ -574,6 +592,12 @@ ceu_trails_set(]]..sub.trails[1]..', IN__ANY, '..me.lbls_in[i].id..
             CASE(me, me.lbl_out)
             CLEAR(me)
         end
+
+        LINE(me, [[
+// switch to 1st trail
+_ceu_lst_.trl = PTR_cur(tceu_trail*, CEU_CLS_TRAIL0 + ]]
+                        ..me.trails[1]..[[*sizeof(tceu_trail));
+]])
     end,
 
     ParAnd = function (me)
@@ -628,8 +652,8 @@ for (;;) {
 #else
     {
 #endif
-        ceu_trails_set(]]..me.trails[1]..', IN__ASYNC, '..me.lbl_asy.id..
-                       [[, _ceu_stk_, _ceu_lst_.org);
+        _ceu_lst_.trl->evt = IN__ASYNC;
+        _ceu_lst_.trl->lbl = ]]..me.lbl_asy.id..[[;
 #ifdef ceu_out_async
         ceu_out_async(1);
 #endif
@@ -646,6 +670,11 @@ for (;;) {
         if me.has_break then
             CLEAR(me)
         end
+        LINE(me, [[
+// switch to 1st trail
+_ceu_lst_.trl = PTR_cur(tceu_trail*, CEU_CLS_TRAIL0 + ]]
+                        ..me.trails[1]..[[*sizeof(tceu_trail));
+]])
     end,
 
     Break = function (me)
@@ -676,8 +705,8 @@ for (;;) {
         end
 
         LINE(me, [[
-ceu_trails_set(]]..me.trails[1]..', IN__ASYNC, '..me.lbl_cnt.id..
-               [[, _ceu_stk_, _ceu_lst_.org);
+_ceu_lst_.trl->evt = IN__ASYNC;
+_ceu_lst_.trl->lbl = ]]..me.lbl_cnt.id..[[;
 #ifdef ceu_out_async
 ceu_out_async(1);
 #endif
@@ -692,8 +721,8 @@ case ]]..me.lbl_cnt.id..[[:;
     EmitT = function (me)
         local exp = unpack(me)
         LINE(me, [[
-ceu_trails_set(]]..me.trails[1]..', IN__ASYNC, '..me.lbl_cnt.id..
-               [[, _ceu_stk_, _ceu_lst_.org);
+_ceu_lst_.trl->evt = IN__ASYNC;
+_ceu_lst_.trl->lbl = ]]..me.lbl_cnt.id..[[;
 #ifdef CEU_WCLOCKS
 ceu_go_wclock(]]..VAL(exp)..[[);
 while (CEU.wclk_min <= 0) {
@@ -717,8 +746,9 @@ case ]]..me.lbl_cnt.id..[[:;
         local field = exp and ((_TP.deref(int.tp) and 'ptr') or 'v')
 
         LINE(me, [[
-ceu_trails_set(]]..me.trails[1]..', IN__ANY, '..me.lbl_cnt.id..
-               [[, _ceu_stk_, _ceu_lst_.org);
+_ceu_lst_.trl->evt = IN__ANY;
+_ceu_lst_.trl->stk = _ceu_stk_;
+_ceu_lst_.trl->lbl = ]]..me.lbl_cnt.id..[[;
 _CEU_STK_[_ceu_stk_++] = _ceu_evt_;
 
 // TRIGGER EVENT
@@ -763,8 +793,8 @@ case ]]..me.lbl_cnt.id..[[:;
         LINE(me, [[
 ceu_trails_set_wclock(PTR_cur(u32*,]]..me.off..'),'..VAL(exp)..[[);
 ]]..no..[[:
-    ceu_trails_set(]]..me.trails[1]..', IN__WCLOCK, '..me.lbl.id..
-                   [[, CEU_MAX_STACK, _ceu_lst_.org);
+    _ceu_lst_.trl->evt = IN__WCLOCK;
+    _ceu_lst_.trl->lbl = ]]..me.lbl.id..[[;
 ]])
         HALT(me)
 
@@ -788,8 +818,8 @@ case ]]..me.lbl.id..[[:;
 
         LINE(me, [[
 ]]..no..[[:
-    ceu_trails_set(]]..me.trails[1]..','..(int.off or int.evt.off)
-                   ..','..me.lbl.id..[[, CEU_MAX_STACK, _ceu_lst_.org);
+    _ceu_lst_.trl->evt = ]]..(int.off or int.evt.off)..[[;
+    _ceu_lst_.trl->lbl = ]]..me.lbl.id..[[;
 ]])
         HALT(me)
 
@@ -812,8 +842,8 @@ case ]]..me.lbl.id..[[:;
         local no = '_CEU_NO_'..me.n..'_'
         LINE(me, [[
 ]]..no..[[:
-    ceu_trails_set(]]..me.trails[1]..', IN_'..e.evt.id..','..me.lbl.id..
-                   [[, CEU_MAX_STACK, _ceu_lst_.org);
+    _ceu_lst_.trl->evt = IN_]]..e.evt.id..[[;
+    _ceu_lst_.trl->lbl = ]]..me.lbl.id..[[;
 ]])
         HALT(me)
 
@@ -840,8 +870,8 @@ ceu_trails_set_wclock(PTR_cur(u32*,]]..awt.off..'),'..VAL(awt)..[[);
         local no = '_CEU_NO_'..me.n..'_'
         LINE(me, [[
 ]]..no..[[:
-    ceu_trails_set(]]..me.trails[1]..', IN__ANY, '..me.lbl.id..
-                   [[, CEU_MAX_STACK, _ceu_lst_.org);
+    _ceu_lst_.trl->evt = IN__ANY;
+    _ceu_lst_.trl->lbl = ]]..me.lbl.id..[[;
 ]])
         HALT(me)
 
@@ -895,8 +925,8 @@ case ]]..me.lbl.id..[[:;
             ATTR(me, n.new, n.var)
         end
         LINE(me, [[
-ceu_trails_set(]]..me.trails[1]..', IN__ASYNC, '..me.lbl.id..
-               [[, _ceu_stk_, _ceu_lst_.org);
+_ceu_lst_.trl->evt = IN__ASYNC;
+_ceu_lst_.trl->lbl = ]]..me.lbl.id..[[;
 #ifdef ceu_out_async
 ceu_out_async(1);
 #endif
