@@ -42,7 +42,7 @@ F = {
         -- 0, 1,-1, tot,-tot
         -- <0 = off (for internal events)
         _ENV.c.tceu_nlbl.len  = _TP.n2bytes(1+2 + #_LBLS.list*2)
-        _ENV.c.tceu_trail.len = _ENV.c.tceu_nlbl.len + 1
+        _ENV.c.tceu_trail.len = _ENV.c.tceu_nlbl.len + 1 + 1 -- TODO:nevt
 
         -- enum of labels
         for i, lbl in ipairs(_LBLS.list) do

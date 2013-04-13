@@ -74,6 +74,7 @@ typedef === TCEU_NOFF === tceu_noff;    // (x) number of clss x ifcs
 
 typedef struct {
     tceu_nlbl lbl;
+    tceu_nevt evt;
     u8        stk;
 } tceu_trail;
 
@@ -183,13 +184,13 @@ void ceu_wclocks_min (s32 dt, int out) {
     }
 }
 
-int ceu_wclocks_not (s32* t, s32 dt) {
+int ceu_wclocks_expired (s32* t, s32 dt) {
     if (*t>CEU.wclk_min_tmp || *t>dt) {
         *t -= dt;
         ceu_wclocks_min(*t, 0);
-        return 1;
+        return 0;
     }
-    return 0;
+    return 1;
 }
 
 void ceu_trails_set_wclock (s32* t, s32 dt) {
@@ -200,13 +201,14 @@ void ceu_trails_set_wclock (s32* t, s32 dt) {
 
 #endif  // CEU_WCLOCKS
 
-void ceu_trails_set (int idx, tceu_nlbl lbl, int stk, void* org) {
+void ceu_trails_set (int idx, int evt, int lbl, int stk, void* org) {
     tceu_trail* trl = ceu_trails_get(idx, org);
+    trl->evt = evt;
     trl->lbl = lbl;
     trl->stk = stk;
 }
 #ifndef CEU_ORGS
-#define ceu_trails_set(a,b,c,d) ceu_trails_set(a,b,c,NULL)
+#define ceu_trails_set(a,b,c,d,e) ceu_trails_set(a,b,c,d,NULL)
 #endif
 
 void ceu_trails_clr (int t1, int t2, void* org) {
@@ -322,7 +324,7 @@ void ceu_org_init (void* org, int n, tceu_nlbl lbl) {
 #else
     memset(CEU.mem, 0, CEU_NTRAILS*sizeof(tceu_trail));
 #endif
-    ceu_trails_set(0, lbl, 0, org);
+    ceu_trails_set(0, IN__ANY, lbl, 0, org);
 }
 
 /**********************************************************************/
@@ -440,7 +442,7 @@ void ceu_go (int __ceu_id, tceu_param* __ceu_p)
     // ceu_go_xxxx():
     else {
         // first set all awaiting: trl.stk=0
-        _ceu_evt_.id = IN__NONE;
+        _ceu_evt_.id = IN__ANY;
 
         // then stack external event
         if (__ceu_p)
@@ -462,7 +464,7 @@ _CEU_CALL_:
         // TODO: .i -> .j
 
 #ifdef CEU_DEBUG_TRAILS
-fprintf(stderr, "GO: org=%p evt=%d stk=%d\n", _ceu_lst_.org, _ceu_evt_.id, _ceu_stk_);
+//fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
 #endif
         for (;;)    // TRL
         {
@@ -478,11 +480,11 @@ fprintf(stderr, "GO: org=%p evt=%d stk=%d\n", _ceu_lst_.org, _ceu_evt_.id, _ceu_
                     &PTR_org(tceu_trail*,_ceu_lst_.org,CEU_CLS_TRAIL0)
                              [_ceu_lst_.idx];
 #ifdef CEU_DEBUG_TRAILS
-fprintf(stderr, "\tTRY: idx=%d stk=%d lbl=%d\n", _ceu_lst_.idx, trl->stk, trl->lbl);
+//fprintf(stderr, "\tTRY: idx=%d stk=%d lbl=%d\n", _ceu_lst_.idx, trl->stk, trl->lbl);
 #endif
-                if (_ceu_evt_.id == IN__NONE) {
+                if (_ceu_evt_.id == IN__ANY) {
 #ifdef CEU_DEBUG_TRAILS
-fprintf(stderr, "\t\tZERO\n");
+//fprintf(stderr, "\t\tZERO\n");
 #endif
                     trl->stk = 0;     // new reaction reset stk
                 } else {
@@ -490,12 +492,14 @@ fprintf(stderr, "\t\tZERO\n");
                     if (trl->stk!=0 && trl->stk!=_ceu_stk_)
                         goto _CEU_NEXT_;
                 }
+                if (trl->evt!=IN__ANY && trl->evt!=_ceu_evt_.id)
+                    goto _CEU_NEXT_;
                 if (trl->lbl == CEU_INACTIVE)
                     goto _CEU_NEXT_;        // TODO: lbl => unsigned
                 _ceu_lst_.lbl = trl->lbl;
-                //trl->lbl = CEU_INACTIVE;  // only w/ evt_id on trails
+                trl->lbl = CEU_INACTIVE;  // only w/ evt_id on trails
 #ifdef CEU_DEBUG_TRAILS
-fprintf(stderr, "\t\tAWK\n");
+//fprintf(stderr, "\t\tAWK\n");
 #endif
             }
 _CEU_GOTO_:
@@ -512,9 +516,9 @@ fprintf(stderr, "TRK: l.%d\n", _ceu_lst_.lbl);
             switch (_ceu_lst_.lbl) {
                 === CODE ===
             }
-_CEU_HALT_:
-            ceu_trails_set(_ceu_lst_.idx, CEU_INACTIVE, 0, _ceu_lst_.org);
-_CEU_NEXT_:
+_CEU_HALT_:     // TODO: remove
+            //ceu_trails_set(_ceu_lst_.idx, CEU_INACTIVE, 0, _ceu_lst_.org);
+_CEU_NEXT_:     // TODO: rename to HALT
             _ceu_lst_.idx++;
         }
 

@@ -26,6 +26,7 @@ function CASE (me, lbl)
 end
 
 function DEBUG_TRAILS (me, lbl)
+-- TODO: remove
     LINE(me, [[
 #ifdef CEU_DEBUG_TRAILS
 fprintf(stderr, "\tOK!\n");
@@ -42,6 +43,7 @@ function LINE (me, line, spc)
 end
 
 function HALT (me, cond, hlt)
+-- TODO: remove hlt
     hlt = (hlt and '_CEU_HALT_') or '_CEU_NEXT_'
     if cond then
         LINE(me, 'if ('..cond..') {')
@@ -73,10 +75,13 @@ goto _CEU_GOTO_;
 ]])
 end
 
-function PAUSE (me)
+function PAUSE (me, no)
     for pse in _AST.iter'Pause' do
         COMM(me, 'PAUSE: '..pse.dcl.var.id)
-        HALT(me, VAL(pse.dcl.var))
+        LINE(me, [[
+if (]]..VAL(pse.dcl.var)..[[)
+    goto ]]..no..[[;
+]])
     end
 end
 
@@ -295,14 +300,14 @@ DBG('DCL', me.trails[1])
         for i=1, (var.arr or 1) do      -- TODO: 1 lbl for all
             COMM(me, 'start org: '..var.id..'['..i..']')
             LINE(me, [[
-ceu_trails_set(]]..me.trails[1]..','..var.lbl_srt[i].id..
+ceu_trails_set(]]..me.trails[1]..', IN__ANY, '..var.lbl_srt[i].id..
            [[, _ceu_stk_, _ceu_lst_.org);
 _CEU_STK_[_ceu_stk_++] = _ceu_evt_;
 
 // TRIGGER ORG[i]
 _ceu_lst_.org = PTR_org(void*,]]..VAL(var)..','
                     ..((i-1)*var.cls.mem.max)..[[);
-ceu_trails_set(0, ]]..var.cls.lbl.id..[[, 0, _ceu_lst_.org);
+ceu_trails_set(0, IN__ANY, ]]..var.cls.lbl.id..[[, 0, _ceu_lst_.org);
 goto _CEU_CALL_;
 
 case ]]..var.lbl_srt[i].id..[[:;
@@ -337,10 +342,11 @@ case ]]..var.lbl_srt[i].id..[[:;
 ]])
         end
 
+        local no = '_CEU_NO_'..me.n..'_'
         LINE(me, [[
-for (;;) {
+]]..no..[[:
     // alaways point to me.lbl
-    ceu_trails_set(]]..me.trails[1]..','..me.lbl.id..
+    ceu_trails_set(]]..me.trails[1]..', IN__ANY, '..me.lbl.id..
                    [[, 0, _ceu_lst_.org);   // always ready (stk=0)
 
 ]])
@@ -351,7 +357,7 @@ case ]]..me.lbl.id..[[:
 ]])
 
         LINE(me, 'if (_ceu_evt_.id != IN__FIN) {')
-        PAUSE(me)
+        PAUSE(me, no)
         LINE(me, '}')
 
         for _, var in ipairs(me.vars) do
@@ -359,7 +365,7 @@ case ]]..me.lbl.id..[[:
             for i=1, (var.arr or 1) do      -- TODO: 1 lbl for all
                 COMM(me, 'awake org: '..var.id..'['..i..']')
                 LINE(me, [[
-    ceu_trails_set(]]..me.trails[1]..','..var.lbl_awk[i].id..
+    ceu_trails_set(]]..me.trails[1]..', IN__ANY, '..var.lbl_awk[i].id..
                [[, _ceu_stk_, _ceu_lst_.org);
     _CEU_STK_[_ceu_stk_++] = _ceu_evt_;
 
@@ -382,7 +388,7 @@ case ]]..var.lbl_awk[i].id..[[:;
         end
 
         LINE(me, [[
-}
+    goto ]]..no..[[;
 ]])
     end,
 
@@ -423,7 +429,7 @@ PTR_cur(tceu_news_blk*,]]..me.off_news..[[)->lst.prv =
         if me.fins then
             LINE(me, [[
 //  FINALIZE
-ceu_trails_set(]]..me.fins.trails[1]..','..me.lbl_fin.id..
+ceu_trails_set(]]..me.fins.trails[1]..', IN__FIN, '..me.lbl_fin.id..
                [[, 0, _ceu_lst_.org);   // always ready (stk=0)
 memset(PTR_cur(u8*,]]..me.off_fins..'), 0, '..#me.fins..[[);
 ]])
@@ -516,7 +522,7 @@ ceu_news_rem_all(PTR_cur(tceu_news_blk*,]]..me.off_news..[[)->fst.nxt);
         for i, sub in ipairs(me) do
             if i > 1 then
                 LINE(me, [[
-ceu_trails_set(]]..sub.trails[1]..','..me.lbls_in[i].id..
+ceu_trails_set(]]..sub.trails[1]..', IN__ANY, '..me.lbls_in[i].id..
                [[, _ceu_stk_, _ceu_lst_.org);
 ]])
             end
@@ -579,7 +585,7 @@ ceu_trails_set(]]..sub.trails[1]..','..me.lbls_in[i].id..
 // TODO: why not _ceu_lst_.idx?
 //fprintf(stderr, "........ %d %d\n", _ceu_lst_.idx,]]..sub.trails[1]..[[);
 //ceu_trails_set(_ceu_lst_.idx, CEU_INACTIVE, 0, _ceu_lst_.org);
-ceu_trails_set(]]..sub.trails[1]..[[, CEU_INACTIVE, 0, _ceu_lst_.org);
+//ceu_trails_set(]]..sub.trails[1]..[[, CEU_INACTIVE, 0, _ceu_lst_.org);
 *PTR_cur(u8*,]]..(me.off+i-1)..[[) = 1; // open and gate
 ]])
             GOTO(me, me.lbl_tst)
@@ -620,7 +626,7 @@ for (;;) {
 #else
     {
 #endif
-        ceu_trails_set(]]..me.trails[1]..','..me.lbl_asy.id..
+        ceu_trails_set(]]..me.trails[1]..', IN__ASYNC, '..me.lbl_asy.id..
                        [[, _ceu_stk_, _ceu_lst_.org);
 #ifdef ceu_out_async
         ceu_out_async(1);
@@ -629,9 +635,9 @@ for (;;) {
             HALT(me)
             LINE(me, [[
     }
-    case ]]..me.lbl_asy.id..[[:
+    case ]]..me.lbl_asy.id..[[:;
 ]])
-            HALT(me, '(_ceu_evt_.id != IN__ASYNC)')
+            --HALT(me, '(_ceu_evt_.id != IN__ASYNC)')
         end
         LINE(me, [[
 }
@@ -669,7 +675,7 @@ for (;;) {
         end
 
         LINE(me, [[
-ceu_trails_set(]]..me.trails[1]..','..me.lbl_cnt.id..
+ceu_trails_set(]]..me.trails[1]..', IN__ASYNC, '..me.lbl_cnt.id..
                [[, _ceu_stk_, _ceu_lst_.org);
 #ifdef ceu_out_async
 ceu_out_async(1);
@@ -678,16 +684,16 @@ ceu_out_async(1);
         HALT(me)
 
         LINE(me, [[
-case ]]..me.lbl_cnt.id..[[:
+case ]]..me.lbl_cnt.id..[[:;
 ]])
-        HALT(me, '(_ceu_evt_.id != IN__ASYNC)')
+        --HALT(me, '(_ceu_evt_.id != IN__ASYNC)')
         DEBUG_TRAILS(me)
     end,
 
     EmitT = function (me)
         local exp = unpack(me)
         LINE(me, [[
-ceu_trails_set(]]..me.trails[1]..','..me.lbl_cnt.id..
+ceu_trails_set(]]..me.trails[1]..', IN__ASYNC, '..me.lbl_cnt.id..
                [[, _ceu_stk_, _ceu_lst_.org);
 #ifdef CEU_WCLOCKS
 ceu_go_wclock(]]..VAL(exp)..[[);
@@ -702,9 +708,9 @@ while (CEU.wclk_min <= 0) {
         HALT(me)
         LINE(me, [[
 #endif
-case ]]..me.lbl_cnt.id..[[:
+case ]]..me.lbl_cnt.id..[[:;
 ]])
-        HALT(me, '(_ceu_evt_.id != IN__ASYNC)')
+        --HALT(me, '(_ceu_evt_.id != IN__ASYNC)')
     end,
 
     EmitInt = function (me)
@@ -713,7 +719,7 @@ case ]]..me.lbl_cnt.id..[[:
         local field = exp and ((_TP.deref(int.tp) and 'ptr') or 'v')
 
         LINE(me, [[
-ceu_trails_set(]]..me.trails[1]..','..me.lbl_cnt.id..
+ceu_trails_set(]]..me.trails[1]..', IN__ANY, '..me.lbl_cnt.id..
                [[, _ceu_stk_, _ceu_lst_.org);
 _CEU_STK_[_ceu_stk_++] = _ceu_evt_;
 
@@ -758,22 +764,26 @@ DBG('AWAITN', me.trails[1])
 
     AwaitT = function (me)
         local exp = unpack(me)
+        local no = '_CEU_NO_'..me.n..'_'
 
         LINE(me, [[
-ceu_trails_set(]]..me.trails[1]..','..me.lbl.id..
-               [[, CEU_MAX_STACK, _ceu_lst_.org);
 ceu_trails_set_wclock(PTR_cur(u32*,]]..me.off..'),'..VAL(exp)..[[);
+]]..no..[[:
+    ceu_trails_set(]]..me.trails[1]..', IN__WCLOCK, '..me.lbl.id..
+                   [[, CEU_MAX_STACK, _ceu_lst_.org);
 ]])
         HALT(me)
 
         LINE(me, [[
-case ]]..me.lbl.id..[[:
+case ]]..me.lbl.id..[[:;
 ]])
-        HALT(me, '(_ceu_evt_.id != IN__WCLOCK)')
+        --HALT(me, '(_ceu_evt_.id != IN__WCLOCK)')
 
-        PAUSE(me)
-        HALT(me, '(ceu_wclocks_not(PTR_cur(s32*,'..me.off
-                    ..'), _ceu_evt_.param.dt))')
+        PAUSE(me, no)
+        LINE(me, [[
+    if (!ceu_wclocks_expired(PTR_cur(s32*,]]..me.off..[[), _ceu_evt_.param.dt) )
+        goto ]]..no..[[;
+]])
         DEBUG_TRAILS(me)
         F._SetAwait(me)
     end,
@@ -781,43 +791,47 @@ case ]]..me.lbl.id..[[:
     AwaitInt = function (me)
         local int = unpack(me)
         local org = (int.org and int.org.val) or '_ceu_lst_.org'
+        local no = '_CEU_NO_'..me.n..'_'
 
         LINE(me, [[
-ceu_trails_set(]]..me.trails[1]..','..me.lbl.id..
-               [[, CEU_MAX_STACK, _ceu_lst_.org);
+]]..no..[[:
+    ceu_trails_set(]]..me.trails[1]..','..(int.off or int.evt.off)
+                   ..','..me.lbl.id..[[, CEU_MAX_STACK, _ceu_lst_.org);
 ]])
         HALT(me)
 
         LINE(me, [[
-case ]]..me.lbl.id..[[:
+case ]]..me.lbl.id..[[:;
 ]])
-        HALT(me, '(_ceu_evt_.id != '..(int.off or int.evt.off)..')')
+        --HALT(me, '(_ceu_evt_.id != '..(int.off or int.evt.off)..')')
         LINE(me, [[
 #ifdef CEU_ORGS
-]])
-        HALT(me, '('..org..' != _ceu_evt_.param.org)')
-        LINE(me, [[
+    if (]]..org..[[ != _ceu_evt_.param.org)
+        goto ]]..no..[[;
+}
 #endif
 ]])
-        PAUSE(me)
+        PAUSE(me, no)
         DEBUG_TRAILS(me)
         F._SetAwait(me)
     end,
 
     AwaitExt = function (me)
         local e = unpack(me)
+        local no = '_CEU_NO_'..me.n..'_'
         LINE(me, [[
-ceu_trails_set(]]..me.trails[1]..', '..me.lbl.id..
-               [[, CEU_MAX_STACK, _ceu_lst_.org);
+]]..no..[[:
+    ceu_trails_set(]]..me.trails[1]..', IN_'..e.evt.id..','..me.lbl.id..
+                   [[, CEU_MAX_STACK, _ceu_lst_.org);
 ]])
         HALT(me)
 
         LINE(me, [[
-case ]]..me.lbl.id..[[:
+case ]]..me.lbl.id..[[:;
 ]])
-        HALT(me, '(_ceu_evt_.id != IN_'..e.evt.id..')')
+        --HALT(me, '(_ceu_evt_.id != IN_'..e.evt.id..')')
         DEBUG_TRAILS(me)
-        PAUSE(me)
+        PAUSE(me, no)
         F._SetAwait(me)
     end,
 
@@ -833,17 +847,19 @@ ceu_trails_set_wclock(PTR_cur(u32*,]]..awt.off..'),'..VAL(awt)..[[);
             end
         end
 
+        local no = '_CEU_NO_'..me.n..'_'
         LINE(me, [[
-ceu_trails_set(]]..me.trails[1]..', '..me.lbl.id..
-               [[, CEU_MAX_STACK, _ceu_lst_.org);
+]]..no..[[:
+    ceu_trails_set(]]..me.trails[1]..', IN__ANY, '..me.lbl.id..
+                   [[, CEU_MAX_STACK, _ceu_lst_.org);
 ]])
         HALT(me)
 
         LINE(me, [[
-case ]]..me.lbl.id..[[:
+case ]]..me.lbl.id..[[:;
 ]])
 
-        PAUSE(me)
+        PAUSE(me, no)
         if set then
             LINE(me, '{ int __ceu_'..me.n..'_AwaitS;')
         end
@@ -889,7 +905,7 @@ case ]]..me.lbl.id..[[:
             ATTR(me, n.new, n.var)
         end
         LINE(me, [[
-ceu_trails_set(]]..me.trails[1]..','..me.lbl.id..
+ceu_trails_set(]]..me.trails[1]..', IN__ASYNC, '..me.lbl.id..
                [[, _ceu_stk_, _ceu_lst_.org);
 #ifdef ceu_out_async
 ceu_out_async(1);
@@ -898,9 +914,9 @@ ceu_out_async(1);
         HALT(me)
 
         LINE(me, [[
-case ]]..me.lbl.id..[[:
+case ]]..me.lbl.id..[[:;
 ]])
-        HALT(me, '(_ceu_evt_.id != IN__ASYNC)')
+        --HALT(me, '(_ceu_evt_.id != IN__ASYNC)')
         DEBUG_TRAILS(me)
         CONC(me, blk)
     end,
