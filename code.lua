@@ -293,36 +293,38 @@ if (*PTR_cur(u8*,CEU_CLS_FREE))
 
         COMM(me, 'start org: '..var.id)
 
-        -- set listeners for orgs
+        -- each org has its own trail on enclosing block
+        -- first enable blk trail with IN__ORG (always awake from now on)
+        -- then, link it with the next trail in the block
+        -- finally, reset org memory and do org.trail[0]=Class_XXX
         LINE(me, [[
 {
     int i;
     for (i=0; i<]]..(var.arr or 1)..[[; i++) {
-        int idx = i + ]]..me.var.trails[1]..[[;
+        int idx = ]]..me.var.trails[1]..[[ + i;
         void* org = PTR_org(void*,]]..VAL(var)..', i*'..var.cls.mem.max..[[);
-        ceu_trails_set(idx, IN__ORG, org, 0);
-        *PTR_org(void**, org, CEU_CLS_CNT) =
+// TODO: unsafe typecast
+        ceu_trails_set(idx, IN__ORG, (int)org, 0, _ceu_lst_.org); // trail on
+        *PTR_org(void**, org, CEU_CLS_CNT) =                // set cnt
             &PTR_cur(tceu_trail*,CEU_CLS_TRAIL0)[idx+1];
+        ceu_org_init(org, ]]                                -- initialize
+                    ..var.cls.ns.trails..','
+                    ..var.cls.lbl.id..[[);
     }
 }
-]])
 
-        for i=1, (var.arr or 1) do      -- TODO: 1 lbl for all
-            COMM(me, 'start org: '..var.id..'['..i..']')
-            LINE(me, [[
-ceu_trails_set(]]..me.trails[1]..', IN__ANY, '..var.lbl_srt[i].id..
+// org[0] -> org[1] -> ... -> blk.trails[1]
+
+// hold current blk trail: set to my continuation
+ceu_trails_set(]]..me.trails[1]..', IN__ANY, '..me.lbl_cnt.id..
            [[, _ceu_stk_, _ceu_lst_.org);
-_CEU_STK_[_ceu_stk_++] = _ceu_evt_;
 
-// TRIGGER ORG[i]
-_ceu_lst_.org = PTR_org(void*,]]..VAL(var)..','
-                    ..((i-1)*var.cls.mem.max)..[[);
-ceu_trails_set(0, IN__ANY, ]]..var.cls.lbl.id..[[, 0, _ceu_lst_.org);
+// swith to ORG[0]
+_ceu_lst_.org = ]]..VAL(var)..[[;
 goto _CEU_CALL_;
 
-case ]]..var.lbl_srt[i].id..[[:;
+case ]]..me.lbl_cnt.id..[[:;
 ]])
-        end
 
 --[=[
 -- TODO: codigo perdido? (remove!)

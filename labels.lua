@@ -127,18 +127,11 @@ F = {
     EmitInt = function (me)
         me.lbl_cnt = new{'EmitInt_cont'}
     end,
---[[
     Dcl_var = function (me)
         if me.var.cls then
-            me.var.lbl_srt = {}
-            me.var.lbl_awk = {}
-            for i=1, (me.var.arr or 1) do
-                me.var.lbl_srt[i] = new{'Start_'..me.var.id} -- TODO: 1 for all
-                me.var.lbl_awk[i] = new{'Awake_'..me.var.id} -- TODO: 1 for all
-            end
+            me.lbl_cnt = new{'Start_cnt'}
         end
     end,
-]]
 
     AwaitS = function (me)
         me.lbl = new{'Awake_MANY'}

@@ -34,7 +34,7 @@
 #define CEU_NTRAILS    (=== CEU_NTRAILS ===)
 
 #ifdef CEU_ORGS
-#define CEU_CLS_FREE     (=== CEU_CLS_CNT ===)
+#define CEU_CLS_CNT      (=== CEU_CLS_CNT ===)
 //#define CEU_CLS_NEWS_PRV (=== CEU_CLS_NEWS_PRV ===)
 //#define CEU_CLS_NEWS_NXT (=== CEU_CLS_NEWS_NXT ===)
 #define CEU_CLS_FREE     (=== CEU_CLS_FREE ===)
@@ -78,7 +78,7 @@ typedef struct {
     tceu_nevt evt;
     tceu_nlbl lbl;
     u8        stk;
-    u8        _1;
+    u8        _1;           // TODO
     u8        _2;
 } tceu_trail;
 
@@ -215,7 +215,8 @@ void ceu_trails_set (int idx, int evt, int lbl, int stk, void* org) {
     trl->evt = evt;
 #ifdef CEU_ORGS
     if (evt == IN__ORG) {
-        ((tceu_trail*)trl)->org = (void*)lbl;
+// TODO: unsafe typecast
+        ((tceu_trail_*)trl)->org = (void*)lbl;
     }
     else
 #endif
@@ -498,7 +499,7 @@ fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
 #ifdef CEU_ORGS
                 // check for next org
                 if (_ceu_lst_.org != CEU.mem)
-                    trl = *PTR_cur(void*, CEU_CLS_CNT); // start it
+                    _ceu_lst_.trl = *PTR_cur(void**, CEU_CLS_CNT);
                 else
 #endif
                     break;  // terminate current stack
