@@ -73,8 +73,16 @@ function PAUSE (me, no)
     for pse in _AST.iter'Pause' do
         COMM(me, 'PAUSE: '..pse.dcl.var.id)
         LINE(me, [[
-if (]]..VAL(pse.dcl.var)..[[)
+if (]]..VAL(pse.dcl.var)..[[) {
+]])
+        if me.tag == 'AwaitInt' then
+            LINE(me, [[
+    _ceu_cur_.trl->stk = CEU_MAX_STACK;
+]])
+        end
+        LINE(me, [[
     goto ]]..no..[[;
+}
 ]])
     end
 end
