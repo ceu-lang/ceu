@@ -344,8 +344,8 @@ if (CUR->toFree)
             trl->org = org;
 
         // link org with the next trail in the block
-        org->cnt1 = CUR;
-        org->cnt2 = &CUR->trls[idx+1];
+        org->par_org = CUR;
+        org->par_trl = &CUR->trls[idx];
 
         // reset org memory and do org.trail[0]=Class_XXX
         ceu_org_init(org, ]]

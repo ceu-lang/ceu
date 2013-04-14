@@ -123,8 +123,8 @@ typedef struct {
 typedef struct
 {
 #ifdef CEU_ORGS
-    void* cnt1;     // [blk: par org]  [new: nxt org]
-    void* cnt2;     // [blk: par trl]  [new: prv org]
+    void*     par_org;  // traversal
+    tceu_trl* par_trl;
 
 #ifdef CEU_IFCS
     tceu_ncls cls;  // class id
@@ -530,15 +530,18 @@ fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
 #ifdef CEU_NEWS
                         if (CUR->isDyn) {
                             // dyn org
+                            assert(0);
                         }
                         else
 #endif
                         {
                             // blk org
-                            _ceu_cur_.trl = (tceu_trl*)CUR->cnt2;
+                            _ceu_cur_.trl = CUR->par_trl;
                             if (_ceu_evt_.id == IN__CLR)
-                                _ceu_cur_.trl -= 2;     // Y->X [ X | org | Y ]
-                            _ceu_cur_.org = CUR->cnt1;
+                                _ceu_cur_.trl--;     // Y->X [ X | org | Y ]
+                            else
+                                _ceu_cur_.trl++;     // X->Y [ X | org | Y ]
+                            _ceu_cur_.org = CUR->par_org;
                         }
                         goto _CEU_CALLTRL_;
                     }

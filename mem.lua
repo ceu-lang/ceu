@@ -40,9 +40,7 @@ F = {
                 local off
                 if cls.is_ifc then
                     -- off = IFC[org.cls][var.n]
-                    off = 'CEU.ifcs['
-                            ..'(*PTR_org(tceu_ncls*,org,'.._MEM.cls.idx_cls..'))'
-                            ..']['
+                    off = 'CEU.ifcs[((tceu_org*)org)->cls]['
                                 .._ENV.ifcs[var.id_ifc]
                             ..']'
                 else

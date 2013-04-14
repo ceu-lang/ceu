@@ -91,6 +91,7 @@ error 'testar pause/if org.e'
 error 'testar new/spawn que se mata'
 
 do return end
+--]===]
 
 -- OK: under tests but supposed to work
 
@@ -19570,7 +19571,6 @@ return ret + _V;        // * reads after
 
 -- NEW / FREE
 
---]===]
 Test { [[
 class T with
     var int a;
