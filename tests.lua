@@ -92,7 +92,6 @@ error 'testar new/spawn que se mata'
 
 do return end
 
---]===]
 -- OK: under tests but supposed to work
 
 Test { [[
@@ -145,28 +144,21 @@ end
 
 event void e;
 
-C pure _fprintf(), _stderr;
 class T with
 do
-    _fprintf(_stderr, "2\n");
     await START;
-    _fprintf(_stderr, "3\n");
     emit global:e; // TODO: must also check if org trail is active
     _V = 1;
     _assert(0);
 end
 
 par/or do
-    _fprintf(_stderr, "0\n");
     await global:e;
-    _fprintf(_stderr, "4\n");
     _V = 2;
 with
-    _fprintf(_stderr, "1\n");
     var T t;
     await FOREVER;
 end
-    _fprintf(_stderr, "5\n");
 
 return _V;
 ]],
@@ -291,6 +283,7 @@ return _V+_X;
     run = 3;
 }
 
+--]===]
 Test { [[
 input void START;
 
@@ -362,6 +355,7 @@ return ret;
 ]],
     run = 10;
 }
+--do return end
 
 -- OK: well tested
 
@@ -20815,26 +20809,38 @@ Test { [[
 input void START;
 input int A,B;
 
+C pure _fprintf(), _stderr;
 class T with
     event int e;
 do
+    _fprintf(_stderr, "X\n");
     var int v = await A;
+    _fprintf(_stderr, "Y\n");
     emit e=v;
+    _fprintf(_stderr, "Z\n");
 end
 
 event int a;
 
 var int ret;
 par/or do
+    _fprintf(_stderr, "1\n");
     pause/if a do
+    _fprintf(_stderr, "2\n");
         var T t;
+    _fprintf(_stderr, "3\n");
         ret = await t.e;
+    _fprintf(_stderr, "4\n");
     end
 with
     await START;
+    _fprintf(_stderr, "a\n");
     emit a=1;
+    _fprintf(_stderr, "b\n");
     await B;
+    _fprintf(_stderr, "c\n");
     emit a=0;
+    _fprintf(_stderr, "d\n");
     await FOREVER;
 end
 return ret;

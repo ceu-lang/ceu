@@ -144,6 +144,15 @@ F = {
         me.lbl = new{'Awake_'..e.evt.id}
     end,
     AwaitInt = 'AwaitExt',
+
+    ParOr_pos = function (me)
+        if me.needs_clr then
+            me.lbl_clr = new{'Clear'}
+        end
+    end,
+    Block_pos    = 'ParOr_pos',
+    Loop_pos     = 'ParOr_pos',
+    SetBlock_pos = 'ParOr_pos',
 }
 
 _AST.visit(F)

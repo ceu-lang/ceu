@@ -37,10 +37,12 @@ function _AST.pred_par (me)
     local tag = me.tag
     return tag=='ParOr' or tag=='ParAnd' or tag=='ParEver'
 end
+--[[
 function _AST.pred_prio (me)
     local tag = me.tag
     return tag=='SetBlock' or tag=='ParOr' or tag=='Loop'
 end
+]]
 function _AST.pred_true (me) return true end
 
 function _AST.iter (pred, inc)

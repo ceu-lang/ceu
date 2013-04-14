@@ -124,8 +124,33 @@ function CLEAR (me)
         end
     end
 
-    LINE(me, 'ceu_trails_clr('..me.trails[1]..','..me.trails[2]..
-                                ', _ceu_cur_.org);')
+    --LINE(me, 'ceu_trails_clr('..me.trails[1]..','..me.trails[2]..
+                                --', _ceu_cur_.org);')
+
+    LINE(me, [[
+// trails[2] is guaranteed not to point to an ORG (which we also want to clear)
+{
+    tceu_trail* trl = &PTR_cur(tceu_trail*, CEU_CLS_TRAIL0)
+                                [ ]]..me.trails[2]..[[ ];
+    trl->evt = IN__ANY;
+    trl->stk = _ceu_stk_;
+    trl->lbl = ]]..me.lbl_clr.id..[[;
+}
+_CEU_STK_[_ceu_stk_++] = _ceu_evt_;
+
+// skip trails[2]
+_ceu_cur_.trl = &PTR_cur(tceu_trail*, CEU_CLS_TRAIL0)[ ]]..(me.trails[2]-1)..[[ ];
+_ceu_evt_.id = IN__CLR;
+#ifdef CEU_ORGS
+_ceu_clr_org_  = _ceu_cur_.org;
+#endif
+_ceu_clr_trl0_ = &PTR_cur(tceu_trail*, CEU_CLS_TRAIL0)
+                            [ ]]..(me.trails[1]-1)..[[ ];   // -1 is out
+
+goto _CEU_CALLTRL_;
+
+case ]]..me.lbl_clr.id..[[:;
+]])
 end
 
 F = {
@@ -387,7 +412,7 @@ case ]]..me.lbl_cnt.id..[[:;
 case ]]..me.lbl.id..[[:
 ]])
 
-        LINE(me, 'if (_ceu_evt_.id != IN__FIN) {')
+        LINE(me, 'if (_ceu_evt_.id != IN__CLR) {')
         PAUSE(me, no)
         LINE(me, '}')
 
@@ -461,9 +486,9 @@ PTR_cur(tceu_news_blk*,]]..me.off_news..[[)->lst.prv =
         if me.fins then
             LINE(me, [[
 //  FINALIZE
-apagar
-ceu_trails_set(]]..me.fins.trails[1]..', IN__FIN, '..me.lbl_fin.id..
-               [[, CEU_MAX_STACK, _ceu_cur_.org);   // always ready
+_ceu_cur_.trl->evt = IN__CLR;
+_ceu_cur_.trl->lbl = ]]..me.lbl_fin.id..[[;
+_ceu_cur_.trl->stk = CEU_MAX_STACK;
 memset(PTR_cur(u8*,]]..me.off_fins..'), 0, '..#me.fins..[[);
 ]])
         end

@@ -180,7 +180,7 @@ F = {
         _ENV.exts[#_ENV.exts+1] = evt
         _ENV.exts[evt.id] = evt
 
-        local evt = {id='_FIN', pre='input'}
+        local evt = {id='_CLR', pre='input'}
         _ENV.exts[#_ENV.exts+1] = evt
         _ENV.exts[evt.id] = evt
 

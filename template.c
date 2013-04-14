@@ -205,12 +205,13 @@ void ceu_trails_set_wclock (s32* t, s32 dt) {
 
 #endif  // CEU_WCLOCKS
 
+/*
 void ceu_trails_clr (int t1, int t2, void* org) {
     int i;
     for (i=t2; i>=t1; i--) {    // lst fins first
         tceu_trail* trl = &PTR_org(tceu_trail*,org,CEU_CLS_TRAIL0)[i];
 #ifdef CEU_FINS
-        ceu_go(IN__FIN, NULL, trl->lbl, 0, org);
+        ceu_go(IN__CLR, NULL, trl->lbl, 0, org);
 #endif
         trl->evt = IN__NONE;
         trl->stk = 0;
@@ -219,6 +220,7 @@ void ceu_trails_clr (int t1, int t2, void* org) {
 #ifndef CEU_ORGS
 #define ceu_trails_clr(a,b,c) ceu_trails_clr(a,b,NULL)
 #endif
+*/
 
 /**********************************************************************/
 
@@ -426,6 +428,11 @@ void ceu_go (int __ceu_id, tceu_param* __ceu_p)
     tceu_evt _ceu_evt_;       // current stack entry
     tceu_lst _ceu_cur_;       // current listener
 
+#ifdef CEU_ORGS
+    void*       _ceu_clr_org_;  // stop at this org
+#endif
+    tceu_trail* _ceu_clr_trl0_; //      at this trl
+
     // ceu_go_init(): nobody awaiting, jump reset
     if (__ceu_id == IN__INIT) {
         _ceu_evt_.id = IN__INIT;
@@ -449,8 +456,18 @@ void ceu_go (int __ceu_id, tceu_param* __ceu_p)
         _ceu_cur_.org = CEU.mem;    // on pop(), always restart
 #endif
 _CEU_CALL_:
-        _ceu_cur_.trl = PTR_cur(tceu_trail*,CEU_CLS_TRAIL0);
-        // TODO: .i -> .j
+        if (_ceu_evt_.id == IN__CLR)
+            _ceu_cur_.trl = &PTR_cur(tceu_trail*,CEU_CLS_TRAIL0)[
+#ifdef CEU_ORGS
+                                *PTR_cur(u8*,CEU_CLS_TRAILN)
+#else
+                                CEU_NTRAILS
+#endif
+                            -1];
+        else
+            _ceu_cur_.trl = PTR_cur(tceu_trail*,CEU_CLS_TRAIL0);
+
+_CEU_CALLTRL_:  // trl is already set (nxt/prv trail or CLR)
 
 #ifdef CEU_DEBUG_TRAILS
 #ifdef CEU_ORGS
@@ -461,28 +478,55 @@ fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
 #endif
         for (;;)    // TRL
         {
+            // clr is bounded to _trl0_ (set by code.lua)
+            if (
+                (_ceu_evt_.id == IN__CLR)
+#ifdef CEU_ORGS
+            &&  (_ceu_clr_org_ == _ceu_cur_.org)
+#endif
+            &&  (_ceu_cur_.trl == _ceu_clr_trl0_)
+            ) {
+fprintf(stderr, "OIOOI\n");
+                break;
+            }
+
             // check if all trails have been traversed
-            if (_ceu_cur_.trl ==
-                &PTR_cur(tceu_trail*,CEU_CLS_TRAIL0)[
-#ifdef CEU_ORGS
-                    *PTR_cur(u8*,CEU_CLS_TRAILN)
-#else
-                    CEU_NTRAILS
-#endif
-                ])
+            // traverse next org if applicable
             {
+                tceu_trail* cmp;
+                if (_ceu_evt_.id == IN__CLR) {
+                    cmp = PTR_cur(tceu_trail*,CEU_CLS_TRAIL0);
+                    cmp--;  // -1 is out
+                } else {
+                    cmp = &PTR_cur(tceu_trail*,CEU_CLS_TRAIL0)[
 #ifdef CEU_ORGS
-                // check for next org
-                if (_ceu_cur_.org != CEU.mem) {
-                    _ceu_cur_.trl = *PTR_cur(void**, CEU_CLS_CNT+sizeof(void*));
-                    _ceu_cur_.org = *PTR_cur(void**, CEU_CLS_CNT);
-                }
-                else
+                                *PTR_cur(u8*,CEU_CLS_TRAILN)
+#else
+                                CEU_NTRAILS
 #endif
+                            ];
+                }
+                if (_ceu_cur_.trl == cmp)
                 {
-                    break;  // terminate current stack
+#ifdef CEU_ORGS
+                    // check for next org
+                    if (_ceu_cur_.org != CEU.mem) {
+                        _ceu_cur_.trl = *PTR_cur(void**, 
+                                            CEU_CLS_CNT+sizeof(void*));
+                        if (_ceu_evt_.id == IN__CLR)
+                            _ceu_cur_.trl -= 2;     // Y->X [ X | org | Y ]
+fprintf(stderr, "OIOOI\n");
+                        _ceu_cur_.org = *PTR_cur(void**, CEU_CLS_CNT);
+                        goto _CEU_CALLTRL_;
+                    }
+                    else
+#endif
+                    {
+                        break;  // terminate current stack
+                    }
                 }
             }
+
             {
                 // TODO: trl_vec is freed
                 tceu_trail* trl = _ceu_cur_.trl;
@@ -516,6 +560,11 @@ fprintf(stderr, "\tTRY: evt=%d stk=%d lbl=%d\n", trl->evt, trl->stk, trl->lbl);
                             trl->evt = IN__NONE;      // no more awaiting
                             trl->stk = 0;             // no more awaking
                         } else {
+///TODO
+                            if (_ceu_evt_.id == IN__CLR) {
+                            trl->evt = IN__NONE;      // no more awaiting
+                            trl->stk = 0;             // no more awaking
+                            }
                             goto _CEU_NEXT_;
                         }
                     }
@@ -536,7 +585,10 @@ fprintf(stderr, "TRK: l.%d\n", _ceu_cur_.lbl);
                 === CODE ===
             }
 _CEU_NEXT_:
-            _ceu_cur_.trl++;
+            if (_ceu_evt_.id == IN__CLR)
+                _ceu_cur_.trl--;
+            else
+                _ceu_cur_.trl++;
         }
 
         if (_ceu_stk_ == 1)
