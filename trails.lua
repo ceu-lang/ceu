@@ -35,6 +35,11 @@ F = {
             end
         end
 
+        if me.has_news then
+            me.news_trails = { t0, t0 }
+                t0 = t0 + 1
+        end
+
         -- BLOCK
         me[1].trails  = { t0, me.trails[2] }
     end,

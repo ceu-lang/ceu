@@ -526,7 +526,7 @@ fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
                 {
 #ifdef CEU_ORGS
                     // check for next org
-                    if (CUR != CEU.mem) {
+                    if (CUR != (tceu_org*)CEU.mem) {
 #ifdef CEU_NEWS
                         if (CUR->isDyn) {
                             // dyn org
@@ -538,7 +538,7 @@ fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
                             _ceu_cur_.trl = (tceu_trl*)CUR->cnt2;
                             if (_ceu_evt_.id == IN__CLR)
                                 _ceu_cur_.trl -= 2;     // Y->X [ X | org | Y ]
-                            CUR = CUR->cnt1;
+                            _ceu_cur_.org = CUR->cnt1;
                         }
                         goto _CEU_CALLTRL_;
                     }
@@ -558,6 +558,11 @@ fprintf(stderr, "\tTRY: evt=%d stk=%d lbl=%d\n", trl->evt, trl->stk, trl->lbl);
 #endif
 #ifdef CEU_ORGS
                 if (trl->evt == IN__ORG) {
+#ifdef CEU_NEWS
+// lista encadeada de dyns
+                    if (((tceu_trl_*)trl)->org == NULL)
+                        goto _CEU_NEXT_;
+#endif
                     _ceu_cur_.org = ((tceu_trl_*)trl)->org;
                     goto _CEU_CALL_;
                 }

@@ -120,6 +120,11 @@ F = {
                 me.needs_clr = true
             end
         end
+
+-- TODO: ptr p/ 1o dyn
+        if me.has_news then
+            me.ns.trails = me.ns.trails + 1
+        end
     end,
     Stmts   = MAX_all,
 

@@ -19569,8 +19569,8 @@ return ret + _V;        // * reads after
 }
 
 -- NEW / FREE
---]===]
 
+--]===]
 Test { [[
 class T with
     var int a;
