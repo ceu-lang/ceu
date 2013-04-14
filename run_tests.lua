@@ -198,7 +198,7 @@ STATS = {
 
 assert(STATS.count  ==    1148)
 assert(STATS.mem    ==   11635)
-assert(STATS.trails ==    2016)
+assert(STATS.trails ==    2061)
 assert(STATS.bytes  == 6619072)
 --[[
 STATS = {
