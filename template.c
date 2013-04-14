@@ -486,7 +486,6 @@ fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
 #endif
             &&  (_ceu_cur_.trl == _ceu_clr_trl0_)
             ) {
-fprintf(stderr, "OIOOI\n");
                 break;
             }
 
@@ -515,7 +514,6 @@ fprintf(stderr, "OIOOI\n");
                                             CEU_CLS_CNT+sizeof(void*));
                         if (_ceu_evt_.id == IN__CLR)
                             _ceu_cur_.trl -= 2;     // Y->X [ X | org | Y ]
-fprintf(stderr, "OIOOI\n");
                         _ceu_cur_.org = *PTR_cur(void**, CEU_CLS_CNT);
                         goto _CEU_CALLTRL_;
                     }
@@ -540,35 +538,26 @@ fprintf(stderr, "\tTRY: evt=%d stk=%d lbl=%d\n", trl->evt, trl->stk, trl->lbl);
                 }
 #endif
 
-                switch (_ceu_evt_.id)
-                {
-                    case IN__NONE:
-                        goto _CEU_NEXT_;
-
-                    case IN__ANY:
-                        trl->stk = CEU_MAX_STACK;     // new reaction reset stk
-#ifdef CEU_DEBUG_TRAILS
-//fprintf(stderr, "\t\tZERO\n");
-#endif
-                        goto _CEU_NEXT_;
-
-                    default: {
-                        // stk=255 (try to match) || stk==_stk_ (my turn)
-                        if ( (trl->stk==CEU_MAX_STACK || trl->stk==_ceu_stk_)
-                        &&   (trl->evt==IN__ANY || trl->evt==_ceu_evt_.id) ) {
-                            _ceu_cur_.lbl = trl->lbl;
-                            trl->evt = IN__NONE;      // no more awaiting
-                            trl->stk = 0;             // no more awaking
-                        } else {
-///TODO
-                            if (_ceu_evt_.id == IN__CLR) {
-                            trl->evt = IN__NONE;      // no more awaiting
-                            trl->stk = 0;             // no more awaking
-                            }
-                            goto _CEU_NEXT_;
-                        }
-                    }
+                if (
+                    (_ceu_evt_.id != IN__CLR)
+                  &&
+                    (  (trl->stk!=CEU_MAX_STACK && trl->stk!=_ceu_stk_)
+                    || (trl->evt!=IN__ANY       && trl->evt!=_ceu_evt_.id) )
+                ) {
+                    if (_ceu_evt_.id == IN__ANY)
+                        trl->stk = CEU_MAX_STACK; // new reaction reset stk
+                    goto _CEU_NEXT_;
                 }
+
+                trl->stk = 0;             // no more awaking
+
+                if (_ceu_evt_.id==IN__CLR && trl->evt!=IN__CLR) {
+                    trl->evt = IN__NONE;  // no more awaiting
+                    goto _CEU_NEXT_;
+                }
+
+                trl->evt = IN__NONE;      // no more awaiting
+                _ceu_cur_.lbl = trl->lbl;
             }
 _CEU_GOTO_:
 #ifdef CEU_DEBUG

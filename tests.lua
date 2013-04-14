@@ -283,7 +283,6 @@ return _V+_X;
     run = 3;
 }
 
---]===]
 Test { [[
 input void START;
 
@@ -3424,6 +3423,7 @@ end;
 }
 
 -- internal glb awaits
+--]===]
 Test { [[
 input void START;
 event void a;

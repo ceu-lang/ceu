@@ -488,7 +488,7 @@ PTR_cur(tceu_news_blk*,]]..me.off_news..[[)->lst.prv =
 //  FINALIZE
 _ceu_cur_.trl->evt = IN__CLR;
 _ceu_cur_.trl->lbl = ]]..me.lbl_fin.id..[[;
-_ceu_cur_.trl->stk = CEU_MAX_STACK;
+//_ceu_cur_.trl->stk = CEU_MAX_STACK;   // never checked anyways
 memset(PTR_cur(u8*,]]..me.off_fins..'), 0, '..#me.fins..[[);
 ]])
         end
