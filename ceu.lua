@@ -153,21 +153,6 @@ do
 
     tpl = sub(tpl, '=== TCEU_NLBL ===',    's'..tps[_ENV.c.tceu_nlbl.len])
 
-    if _PROPS.has_orgs then
-        tpl = sub(tpl, '=== CEU_CLS_CNT ===',  _MEM.cls.idx_cnt)
---[[
-        if _PROPS.has_news then
-            tpl = sub(tpl, '=== CEU_CLS_NEWS_PRV ===',  _MEM.cls.idx_news_prv)
-            tpl = sub(tpl, '=== CEU_CLS_NEWS_NXT ===',  _MEM.cls.idx_news_nxt)
-        end
-]]
-        if _PROPS.has_news then
-            tpl = sub(tpl, '=== CEU_CLS_FREE ===',   _MEM.cls.idx_free)
-        end
-        tpl = sub(tpl, '=== CEU_CLS_TRAILN ===', _MEM.cls.idx_trailN)
-    end
-    tpl = sub(tpl, '=== CEU_CLS_TRAIL0 ===',  _MEM.cls.idx_trail0)
-
     tpl = sub(tpl, '=== LABELS_ENUM ===', _LBLS.code_enum)
 
     tpl = sub(tpl, '=== HOST ===',     _CODE.host)
@@ -251,7 +236,7 @@ do
     end
 
     -- TODO: goto _OPTS
-    --str = str .. '#define CEU_DEBUG_TRAILS\n'
+    str = str .. '#define CEU_DEBUG_TRAILS\n'
 
     if _OPTS.run_tests then
         str = str .. '#define CEU_RUNTESTS\n'

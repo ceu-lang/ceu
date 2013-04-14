@@ -130,8 +130,7 @@ function CLEAR (me)
     LINE(me, [[
 // trails[2] is guaranteed not to point to an ORG (which we also want to clear)
 {
-    tceu_trail* trl = &PTR_cur(tceu_trail*, CEU_CLS_TRAIL0)
-                                [ ]]..me.trails[2]..[[ ];
+    tceu_trl* trl = &CUR->trls[ ]]..me.trails[2]..[[ ];
     trl->evt = IN__ANY;
     trl->stk = _ceu_stk_;
     trl->lbl = ]]..me.lbl_clr.id..[[;
@@ -139,13 +138,12 @@ function CLEAR (me)
 _CEU_STK_[_ceu_stk_++] = _ceu_evt_;
 
 // skip trails[2]
-_ceu_cur_.trl = &PTR_cur(tceu_trail*, CEU_CLS_TRAIL0)[ ]]..(me.trails[2]-1)..[[ ];
+_ceu_cur_.trl = &CUR->trls[ ]]..(me.trails[2]-1)..[[ ];
 _ceu_evt_.id = IN__CLR;
 #ifdef CEU_ORGS
 _ceu_clr_org_  = _ceu_cur_.org;
 #endif
-_ceu_clr_trl0_ = &PTR_cur(tceu_trail*, CEU_CLS_TRAIL0)
-                            [ ]]..(me.trails[1]-1)..[[ ];   // -1 is out
+_ceu_clr_trl0_ = &CUR->trls[ ]]..(me.trails[1]-1)..[[ ];   // -1 is out
 
 goto _CEU_CALLTRL_;
 
@@ -180,7 +178,7 @@ F = {
         CASE(me, me.lbl)
         LINE(me, [[
 #ifdef CEU_IFCS
-*PTR_cur(tceu_ncls*, ]]..(_MEM.cls.idx_cls or '')..[[) = ]]..me.n..[[;
+CUR->cls = ]]..me.n..[[;
 #endif
 ]])
 
@@ -198,7 +196,8 @@ F = {
 
         if me.has_news then
             LINE(me, [[
-if (*PTR_cur(u8*,CEU_CLS_FREE))
+// TODO: continuacao LEAK
+if (CUR->toFree)
     ceu_news_rem(_ceu_cur_.org);
 ]])
         end
@@ -333,17 +332,17 @@ if (*PTR_cur(u8*,CEU_CLS_FREE))
     for (i=0; i<]]..(var.arr or 1)..[[; i++)
     {
         int idx = ]]..me.var.trails[1]..[[ + i;
-        void* org = PTR_org(void*,]]..VAL(var)..', i*'..var.cls.mem.max..[[);
+        tceu_org* org = PTR_org(tceu_org*,]]..VAL(var)..
+                            ', i*'..var.cls.mem.max..[[);
 
         // enable block trail with IN__ORG (always awake from now on)
-        tceu_trail_* trl = &PTR_cur(tceu_trail_*, CEU_CLS_TRAIL0)[idx];
+        tceu_trl_* trl = &CUR->trls[idx];
             trl->evt = IN__ORG;
             trl->org = org;
 
         // link org with the next trail in the block
-        *PTR_org(void**, org, CEU_CLS_CNT) = _ceu_cur_.org;
-        *PTR_org(void**, org, CEU_CLS_CNT+sizeof(void*)) =
-            &PTR_cur(tceu_trail_*,CEU_CLS_TRAIL0)[idx+1];
+        org->cnt1 = _ceu_cur_.org;
+        org->cnt2 = &CUR->trls[idx+1];
 
         // reset org memory and do org.trail[0]=Class_XXX
         ceu_org_init(org, ]]
@@ -496,8 +495,7 @@ memset(PTR_cur(u8*,]]..me.off_fins..'), 0, '..#me.fins..[[);
         if me.trails[1] ~= blk.trails[1] then
             LINE(me, [[
 // switch to blk trail
-_ceu_cur_.trl = &PTR_cur(tceu_trail*, CEU_CLS_TRAIL0)[ ]]
-                        ..blk.trails[1]..[[ ];
+_ceu_cur_.trl = &CUR->trls[ ]]..blk.trails[1]..[[ ];
 ]])
         end
         CONC(me, blk)
@@ -527,8 +525,7 @@ ceu_news_rem_all(PTR_cur(tceu_news_blk*,]]..me.off_news..[[)->fst.nxt);
         if not (_ANA and me.ana.pos[false]) then
             LINE(me, [[
 // switch to 1st trail
-_ceu_cur_.trl = &PTR_cur(tceu_trail*, CEU_CLS_TRAIL0)[ ]]
-                        ..me.trails[1]..[[ ];
+_ceu_cur_.trl = &CUR->trls[ ]]..me.trails[1]..[[ ];
 ]])
         end
     end,
@@ -578,8 +575,7 @@ _ceu_cur_.trl = &PTR_cur(tceu_trail*, CEU_CLS_TRAIL0)[ ]]
             CLEAR(me)
             LINE(me, [[
 // switch to 1st trail
-_ceu_cur_.trl = &PTR_cur(tceu_trail*, CEU_CLS_TRAIL0)[ ]]
-                        ..me.trails[1]..[[ ];
+_ceu_cur_.trl = &CUR->trls[ ]] ..me.trails[1]..[[ ];
 ]])
         end
     end,
@@ -594,8 +590,7 @@ _ceu_cur_.trl = &PTR_cur(tceu_trail*, CEU_CLS_TRAIL0)[ ]]
             if i > 1 then
                 LINE(me, [[
 {
-    tceu_trail* trl = &PTR_cur(tceu_trail*, CEU_CLS_TRAIL0)[ ]]
-                        ..sub.trails[1]..[[ ];
+    tceu_trl* trl = &CUR->trls[ ]]..sub.trails[1]..[[ ];
     trl->evt = IN__ANY;
     trl->lbl = ]]..me.lbls_in[i].id..[[;
     trl->stk = _ceu_stk_;
@@ -639,8 +634,7 @@ _ceu_cur_.trl = &PTR_cur(tceu_trail*, CEU_CLS_TRAIL0)[ ]]
             CLEAR(me)
             LINE(me, [[
 // switch to 1st trail
-_ceu_cur_.trl = &PTR_cur(tceu_trail*, CEU_CLS_TRAIL0)[ ]]
-                        ..me.trails[1]..[[ ];
+_ceu_cur_.trl = &CUR->trls[ ]]..me.trails[1]..[[ ];
 ]])
         end
     end,
@@ -716,8 +710,7 @@ for (;;) {
             CLEAR(me)
             LINE(me, [[
 // switch to 1st trail
-_ceu_cur_.trl = &PTR_cur(tceu_trail*, CEU_CLS_TRAIL0)[ ]]
-                        ..me.trails[1]..[[ ];
+_ceu_cur_.trl = &CUR->trls[ ]]..me.trails[1]..[[ ];
 ]])
         end
     end,

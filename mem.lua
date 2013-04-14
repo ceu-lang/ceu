@@ -69,39 +69,33 @@ F = {
     Dcl_cls_pre = function (me)
         me.mem = { off=0, max=0 }
 
--- TODO: class dependent (class meta instead of obj)
-        if _PROPS.has_news then
-            -- MUST BE 1st in class (see ceu_news_*)
-            _MEM.cls.idx_news = alloc(me.mem, _ENV.c.tceu_news_one.len)
-DBG('', string.format('%8s','news'), _MEM.cls.idx_news,
-                                     _ENV.c.tceu_news_one.len)
-            _MEM.cls.idx_free = alloc(me.mem, 1)
-DBG('', string.format('%8s','free'), _MEM.cls.idx_free, 1)
-        end
+        -- cnt1 / cnt2
+        local off = alloc(me.mem, 2*_ENV.c.pointer.len)
+DBG('', string.format('%8s','cnt'), off, 2*_ENV.c.pointer.len)
 
-        _MEM.cls.idx_cnt = alloc(me.mem, 2*_ENV.c.pointer.len)
-DBG('', string.format('%8s','cnt'), _MEM.cls.idx_cnt,
-                                     2*_ENV.c.pointer.len)
-
+        -- cls id
         if _PROPS.has_ifcs then
-            _MEM.cls.idx_cls = alloc(me.mem, _ENV.c.tceu_ncls.len) -- cls N
-DBG('', string.format('%8s','cls'), _MEM.cls.idx_cls,
-                                    _ENV.c.tceu_ncls.len)
+            off = alloc(me.mem, _ENV.c.tceu_ncls.len)
+DBG('', string.format('%8s','cls'), off, _ENV.c.tceu_ncls.len)
         end
 
+        -- is* flags
+        if _PROPS.has_news then
+            off = alloc(me.mem, 1)
+DBG('', string.format('%8s','free'), off, 1)
+        end
+
+        -- n trails
         if _PROPS.has_orgs then
             -- TODO: disappear with metadata
-            _MEM.cls.idx_trailN = alloc(me.mem, 1)
-DBG('', string.format('%8s','trlN'), _MEM.cls.idx_trailN, 1,
-                                     '('..me.ns.trails..')')
+            off = alloc(me.mem, 1)
+DBG('', string.format('%8s','trlN'), off, 1, '('..me.ns.trails..')')
         end
 
         -- Class_Main also uses this
-        me.mem.trail0 = alloc(me.mem, me.ns.trails*_ENV.c.tceu_trail.len,
-                                      _ENV.c.tceu_trail.len)
-        _MEM.cls.idx_trail0 = me.mem.trail0 -- same off for all orgs
-DBG('', string.format('%8s','trl0'), me.mem.trail0,
-                                     me.ns.trails*_ENV.c.tceu_trail.len)
+        off = alloc(me.mem, me.ns.trails*_ENV.c.tceu_trl.len,
+                                         _ENV.c.tceu_trl.len)
+DBG('', string.format('%8s','trls'), off, me.ns.trails*_ENV.c.tceu_trl.len)
     end,
     Dcl_cls = function (me)
 DBG('===', me.id)
