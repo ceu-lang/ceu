@@ -339,7 +339,7 @@ if (CUR->toFree)
 #endif
 
         // enable block trail with IN__ORG (always awake from now on)
-        tceu_trl_* trl = &CUR->trls[idx];
+        tceu_trl_* trl = (tceu_trl_*) &CUR->trls[idx];
             trl->evt = IN__ORG;
             trl->org = org;
 
@@ -488,8 +488,8 @@ PTR_cur(tceu_news_blk*,]]..me.off_news..[[)->lst.prv =
         if me.fins then
             LINE(me, [[
 //  FINALIZE
-_ceu_cur_.trl->evt = IN__CLR;
-_ceu_cur_.trl->lbl = ]]..me.lbl_fin.id..[[;
+CUR->trls[ ]]..me.fins.trails[1]..[[ ].evt = IN__CLR;
+CUR->trls[ ]]..me.fins.trails[1]..[[ ].lbl = ]]..me.lbl_fin.id..[[;
 //_ceu_cur_.trl->stk = CEU_MAX_STACK;   // never checked anyways
 memset(PTR_cur(u8*,]]..me.off_fins..'), 0, '..#me.fins..[[);
 ]])
