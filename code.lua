@@ -482,9 +482,7 @@ if (*PTR_cur(u8*,]]..(me.off_fins+i-1)..[[)) {
             HALT(me)
             CASE(me, me.lbl_fin_cnt)
         end
-        if me.fins then
-            CLEAR(me)
-        end
+        CLEAR(me)
         if me.has_news then
             LINE(me, [[
 ceu_news_rem_all(PTR_cur(tceu_news_blk*,]]..me.off_news..[[)->fst.nxt);
@@ -767,6 +765,9 @@ _CEU_STK_[_ceu_stk_++] = _ceu_evt_;
 
 // TRIGGER EVENT
 _ceu_evt_.id = ]]..(int.off or int.evt.off)..[[;
+#ifdef CEU_ORGS
+_ceu_evt_.org = ]]..((int.org and int.org.val) or '_ceu_cur_.org')..[[;
+#endif
 ]])
         if field then
             LINE(me, [[
@@ -775,7 +776,7 @@ _ceu_evt_.param.]]..field..' = '..VAL(exp)..[[;
         end
         LINE(me, [[
 #ifdef CEU_ORGS
-_ceu_evt_.org = ]]..((int.org and int.org.val) or '_ceu_cur_.org')..[[;
+_ceu_cur_.org = CEU.mem;
 #endif
 goto _CEU_CALL_;
 

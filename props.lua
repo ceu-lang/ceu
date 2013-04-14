@@ -117,6 +117,7 @@ F = {
             if var.cls then
                 me.has.fins = me.has.fins or var.cls.has.fins
                 me.ns.trails = me.ns.trails + (var.arr or 1)
+                me.needs_clr = true
             end
         end
     end,

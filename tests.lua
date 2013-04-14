@@ -92,6 +92,7 @@ error 'testar new/spawn que se mata'
 
 do return end
 
+--]===]
 -- OK: under tests but supposed to work
 
 Test { [[
@@ -104,7 +105,31 @@ return a;
     run = 10,
 }
 
---]===]
+Test { [[
+input void START;
+
+interface Global with
+    event void e;
+end
+
+event void e;
+
+class T with
+do
+    await START;
+    emit global:e; // TODO: must also check if org trail is active
+    C _assert();
+    _assert(0);
+end
+
+do
+    var T t;
+    await e;
+end
+return 2;
+]],
+    run = 2,
+}
 Test { [[
 input void START;
 
@@ -120,27 +145,33 @@ end
 
 event void e;
 
+C pure _fprintf(), _stderr;
 class T with
 do
+    _fprintf(_stderr, "2\n");
     await START;
+    _fprintf(_stderr, "3\n");
     emit global:e; // TODO: must also check if org trail is active
     _V = 1;
     _assert(0);
 end
 
 par/or do
+    _fprintf(_stderr, "0\n");
     await global:e;
+    _fprintf(_stderr, "4\n");
     _V = 2;
 with
+    _fprintf(_stderr, "1\n");
     var T t;
     await FOREVER;
 end
+    _fprintf(_stderr, "5\n");
 
 return _V;
 ]],
     run = 2,
 }
-do return end
 
 Test { [[
 input void START;
@@ -331,8 +362,6 @@ return ret;
 ]],
     run = 10;
 }
-
-do return end
 
 -- OK: well tested
 
@@ -19053,15 +19082,12 @@ return ret + aa.aa + aa.bb;
 }
 
 Test { [[
-C pure _fprintf(), _stderr;
 input void START;
 class T with
     event int e, ok, go;
     var int ee;
 do
-    _fprintf(_stderr, "0\n");
     await this.go;
-    _fprintf(_stderr, "2\n");
     if ee == 1 then
         emit this.e;
     end
@@ -19075,14 +19101,11 @@ await START;
 par/or do
     par/and do
         a1.ee = 1;
-    _fprintf(_stderr, "1\n");
         emit a1.go;
-    _fprintf(_stderr, "3\n");
         await a1.ok;
         ret = 1;        // 20
     with
         a2.ee = 2;
-    _fprintf(_stderr, "4: %p\n", a2);
         emit a2.go;
         await a2.ok;
         ret = 1;        // 25
