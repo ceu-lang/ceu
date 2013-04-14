@@ -131,7 +131,7 @@ typedef struct
 #endif
 
 #ifdef CEU_NEWS
-    u8 isNew:  1;       // created w/ new or spawn?
+    u8 isDyn:  1;       // created w/ new or spawn?
     u8 toFree: 1;       // free on termination?
 #endif
 
@@ -488,7 +488,7 @@ _CEU_CALLTRL_:  // trl is already set (nxt/prv trail or CLR)
 
 #ifdef CEU_DEBUG_TRAILS
 #ifdef CEU_ORGS
-fprintf(stderr, "GO: evt=%d stk=%d org=%p\n", _ceu_evt_.id, _ceu_stk_, _ceu_cur_.org);
+fprintf(stderr, "GO: evt=%d stk=%d org=%p\n", _ceu_evt_.id, _ceu_stk_, CUR);
 #else
 fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
 #endif
@@ -499,7 +499,7 @@ fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
             if (
                 (_ceu_evt_.id == IN__CLR)
 #ifdef CEU_ORGS
-            &&  (_ceu_clr_org_ == _ceu_cur_.org)
+            &&  (_ceu_clr_org_ == CUR)
 #endif
             &&  (_ceu_cur_.trl == _ceu_clr_trl0_)
             ) {
@@ -526,11 +526,20 @@ fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
                 {
 #ifdef CEU_ORGS
                     // check for next org
-                    if (_ceu_cur_.org != CEU.mem) {
-                        _ceu_cur_.trl = (tceu_trl*)CUR->cnt2;
-                        if (_ceu_evt_.id == IN__CLR)
-                            _ceu_cur_.trl -= 2;     // Y->X [ X | org | Y ]
-                        _ceu_cur_.org = CUR->cnt1;
+                    if (CUR != CEU.mem) {
+#ifdef CEU_NEWS
+                        if (CUR->isDyn) {
+                            // dyn org
+                        }
+                        else
+#endif
+                        {
+                            // blk org
+                            _ceu_cur_.trl = (tceu_trl*)CUR->cnt2;
+                            if (_ceu_evt_.id == IN__CLR)
+                                _ceu_cur_.trl -= 2;     // Y->X [ X | org | Y ]
+                            CUR = CUR->cnt1;
+                        }
                         goto _CEU_CALLTRL_;
                     }
                     else
@@ -580,7 +589,7 @@ _CEU_GOTO_:
     CEU.lst = _ceu_cur_;
 #ifdef CEU_DEBUG_TRAILS
 #ifdef CEU_ORGS
-fprintf(stderr, "TRK: o.%p / l.%d\n", _ceu_cur_.org, _ceu_cur_.lbl);
+fprintf(stderr, "TRK: o.%p / l.%d\n", CUR, _ceu_cur_.lbl);
 #else
 fprintf(stderr, "TRK: l.%d\n", _ceu_cur_.lbl);
 #endif

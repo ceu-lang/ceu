@@ -219,13 +219,13 @@ if (CUR->toFree)
     _New = function (me, t)
         LINE(me, [[
 {
-    void* __ceu_org = ceu_news_ins(
+    tceu_org* __ceu_org = ceu_news_ins(
         PTR_org(tceu_news_blk*,]]..t.blk_org..','..t.blk_blk.off_news..[[),
         ]]..t.cls.mem.max..[[);
 ]])
 
         if t.val then
-            LINE(me, t.val..' = __ceu_org;')
+            LINE(me, t.val..' = (void*)__ceu_org;')
         end
 
         if _AST.iter'SetSpawn'() then
@@ -234,7 +234,7 @@ if (CUR->toFree)
 
         LINE(me, [[
     if (__ceu_org != NULL) {
-        *PTR_org(u8*, __ceu_org, CEU_CLS_FREE) = ]]..t.free..[[;
+        __ceu_org->toFree = ]]..t.free..[[;
 ]])
 
         if t.constr then
@@ -334,6 +334,9 @@ if (CUR->toFree)
         int idx = ]]..me.var.trails[1]..[[ + i;
         tceu_org* org = PTR_org(tceu_org*,]]..VAL(var)..
                             ', i*'..var.cls.mem.max..[[);
+#ifdef CEU_NEWS
+        org->isDyn = 0;
+#endif
 
         // enable block trail with IN__ORG (always awake from now on)
         tceu_trl_* trl = &CUR->trls[idx];
@@ -341,7 +344,7 @@ if (CUR->toFree)
             trl->org = org;
 
         // link org with the next trail in the block
-        org->cnt1 = _ceu_cur_.org;
+        org->cnt1 = CUR;
         org->cnt2 = &CUR->trls[idx+1];
 
         // reset org memory and do org.trail[0]=Class_XXX
@@ -792,7 +795,7 @@ _CEU_STK_[_ceu_stk_++] = _ceu_evt_;
 // TRIGGER EVENT
 _ceu_evt_.id = ]]..(int.off or int.evt.off)..[[;
 #ifdef CEU_ORGS
-_ceu_evt_.org = ]]..((int.org and int.org.val) or '_ceu_cur_.org')..[[;
+_ceu_evt_.org = ]]..((int.org and int.org.val) or 'CUR')..[[;
 #endif
 ]])
         if field then
