@@ -439,9 +439,6 @@ void ceu_go (int __ceu_id, tceu_param* __ceu_p)
         // then stack external event
         if (__ceu_p)
             _CEU_STK_[_ceu_stk_].param = *__ceu_p;
-#ifdef CEU_ORGS
-        _CEU_STK_[_ceu_stk_].org = CEU.mem;
-#endif
         _CEU_STK_[_ceu_stk_].id  = __ceu_id;
         _ceu_stk_++;
     }
