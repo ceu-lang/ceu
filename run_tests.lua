@@ -61,11 +61,6 @@ Test = function (t)
     --dofile 'awaits.lua'
     if not check('props')    then return end
 
-    -- TODO:
-    if _PROPS.has_fins then
-        return
-    end
-
     if not check('trails')   then return end
     if not check('labels')   then return end
     if not check('tmps')     then return end

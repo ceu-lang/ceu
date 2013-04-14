@@ -91,6 +91,7 @@ error 'testar pause/if org.e'
 error 'testar new/spawn que se mata'
 
 do return end
+--]===]
 
 -- OK: under tests but supposed to work
 
@@ -354,7 +355,6 @@ return ret;
 ]],
     run = 10;
 }
---do return end
 
 -- OK: well tested
 
@@ -3423,7 +3423,6 @@ end;
 }
 
 -- internal glb awaits
---]===]
 Test { [[
 input void START;
 event void a;
