@@ -99,8 +99,10 @@ typedef struct {
 typedef struct {
     tceu_param  param;
     tceu_nevt   id;
+#ifdef CEU_INTS
 #ifdef CEU_ORGS
     void*       org;
+#endif
 #endif
 } tceu_evt;
 
@@ -418,19 +420,11 @@ void ceu_go_all (int* ret_end)
 
 void ceu_go (int __ceu_id, tceu_param* __ceu_p)
 {
-#if defined(CEU_EXTS) || defined(CEU_INTS)
-    int _ceu_int_;
-#endif
-
     tceu_evt _CEU_STK_[255];  // TODO: 255
     int      _ceu_stk_ = 1;   // points to next (TODO: 1=desperdicio)
 
     tceu_evt _ceu_evt_;       // current stack entry
     tceu_lst _ceu_cur_;       // current listener
-
-#ifdef CEU_ORGS
-    _ceu_evt_.org = CEU.mem;
-#endif
 
     // ceu_go_init(): nobody awaiting, jump reset
     if (__ceu_id == IN__INIT) {
