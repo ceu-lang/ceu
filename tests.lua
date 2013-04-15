@@ -106,256 +106,6 @@ return a;
     run = 10,
 }
 
-Test { [[
-input void START;
-
-interface Global with
-    event void e;
-end
-
-event void e;
-
-class T with
-do
-    await START;
-    emit global:e; // TODO: must also check if org trail is active
-    C _assert();
-    _assert(0);
-end
-
-do
-    var T t;
-    await e;
-end
-return 2;
-]],
-    run = 2,
-}
-Test { [[
-input void START;
-
-C _V, _assert();
-C do
-    #include <assert.h>
-    int V = 0;
-end
-
-interface Global with
-    event void e;
-end
-
-event void e;
-
-class T with
-do
-    await START;
-    emit global:e; // TODO: must also check if org trail is active
-    _V = 1;
-    _assert(0);
-end
-
-par/or do
-    await global:e;
-    _V = 2;
-with
-    var T t;
-    await FOREVER;
-end
-
-return _V;
-]],
-    run = 2,
-}
-
-Test { [[
-input void START;
-
-C _V, _assert();
-C do
-    #include <assert.h>
-    int V = 0;
-end
-
-interface Global with
-    event void e;
-end
-
-class T with
-do
-    emit global:e; // TODO: must also check if org trail is active
-    _V = 1;
-    _assert(0);
-end
-
-event void e;
-
-par/or do
-    await global:e;
-    _V = 2;
-with
-    await START;
-    do
-        var T t;
-        await FOREVER;
-    end
-end
-return _V;
-]],
-    run = 2;
-}
-
-Test { [[
-input void START;
-
-C _V, _assert();
-C do
-    #include <assert.h>
-    int V = 0;
-end
-
-interface Global with
-    event void e;
-end
-
-class T with
-do
-    emit global:e; // TODO: must also check if org trail is active
-    _assert(0);
-    _V = 1;
-    _assert(0);
-end
-
-event void e;
-
-par/or do
-    await global:e;
-    _V = 2;
-with
-    await START;
-    do
-        var T t;
-        _assert(0);
-        await FOREVER;
-    end
-end
-return _V;
-]],
-    run = 2;
-}
-
-Test { [[
-input void START;
-
-C _X,_V, _assert();
-C do
-    #include <assert.h>
-    int V = 0;
-    int X = 0;
-end
-
-interface Global with
-    event void e;
-end
-
-class T with
-do
-    _assert(_X==0); // second T does not execute
-    _X = _X + 1;
-    emit global:e;
-    _assert(0);
-    _V = 1;
-    _assert(0);
-end
-
-event void e;
-
-par/or do
-    await global:e;
-    _V = 2;
-with
-    await START;
-    do
-        var T[2] t;
-        _assert(0);
-        await FOREVER;
-    end
-end
-return _V+_X;
-]],
-    run = 3;
-}
-
-Test { [[
-input void START;
-
-C _V, _assert();
-C do
-    #include <assert.h>
-    int V = 0;
-end
-
-class T with
-    var int x;
-    event void ok;
-do
-    await START;
-    emit  ok;
-    _assert(0);
-end
-
-var int ret=0;
-do
-    var T t with
-        this.x = 10;
-    end;
-    await t.ok;
-    ret = t.x;
-end
-return ret;
-]],
-    run = 10;
-}
-
-Test { [[
-input void START;
-
-C _V, _assert();
-C do
-    #include <assert.h>
-    int V = 0;
-end
-
-class T with
-    var int x;
-    event void ok;
-do
-    await START;
-    emit  ok;
-    _assert(0);
-end
-
-class U with
-    var int x;
-    event void ok;
-do
-    await START;
-    _assert(0);
-    emit  ok;
-end
-
-var int ret=0;
-do
-    var T t with
-        this.x = 10;
-    end;
-    var T u;
-    await t.ok;
-    ret = t.x;
-end
-return ret;
-]],
-    run = 10;
-}
 --do return end
 
 -- OK: well tested
@@ -19570,6 +19320,258 @@ return ret + _V;        // * reads after
     }
 }
 
+-- KILL THEMSELVES
+
+Test { [[
+input void START;
+
+interface Global with
+    event void e;
+end
+
+event void e;
+
+class T with
+do
+    await START;
+    emit global:e; // TODO: must also check if org trail is active
+    C _assert();
+    _assert(0);
+end
+
+do
+    var T t;
+    await e;
+end
+return 2;
+]],
+    run = 2,
+}
+Test { [[
+input void START;
+
+C _V, _assert();
+C do
+    #include <assert.h>
+    int V = 0;
+end
+
+interface Global with
+    event void e;
+end
+
+event void e;
+
+class T with
+do
+    await START;
+    emit global:e; // TODO: must also check if org trail is active
+    _V = 1;
+    _assert(0);
+end
+
+par/or do
+    await global:e;
+    _V = 2;
+with
+    var T t;
+    await FOREVER;
+end
+
+return _V;
+]],
+    run = 2,
+}
+
+Test { [[
+input void START;
+
+C _V, _assert();
+C do
+    #include <assert.h>
+    int V = 0;
+end
+
+interface Global with
+    event void e;
+end
+
+class T with
+do
+    emit global:e; // TODO: must also check if org trail is active
+    _V = 1;
+    _assert(0);
+end
+
+event void e;
+
+par/or do
+    await global:e;
+    _V = 2;
+with
+    await START;
+    do
+        var T t;
+        await FOREVER;
+    end
+end
+return _V;
+]],
+    run = 2;
+}
+
+Test { [[
+input void START;
+
+C _V, _assert();
+C do
+    #include <assert.h>
+    int V = 0;
+end
+
+interface Global with
+    event void e;
+end
+
+class T with
+do
+    emit global:e; // TODO: must also check if org trail is active
+    _assert(0);
+    _V = 1;
+    _assert(0);
+end
+
+event void e;
+
+par/or do
+    await global:e;
+    _V = 2;
+with
+    await START;
+    do
+        var T t;
+        _assert(0);
+        await FOREVER;
+    end
+end
+return _V;
+]],
+    run = 2;
+}
+
+Test { [[
+input void START;
+
+C _X,_V, _assert();
+C do
+    #include <assert.h>
+    int V = 0;
+    int X = 0;
+end
+
+interface Global with
+    event void e;
+end
+
+class T with
+do
+    _assert(_X==0); // second T does not execute
+    _X = _X + 1;
+    emit global:e;
+    _assert(0);
+    _V = 1;
+    _assert(0);
+end
+
+event void e;
+
+par/or do
+    await global:e;
+    _V = 2;
+with
+    await START;
+    do
+        var T[2] t;
+        _assert(0);
+        await FOREVER;
+    end
+end
+return _V+_X;
+]],
+    run = 3;
+}
+
+Test { [[
+input void START;
+
+C _V, _assert();
+C do
+    #include <assert.h>
+    int V = 0;
+end
+
+class T with
+    var int x;
+    event void ok;
+do
+    await START;
+    emit  ok;
+    _assert(0);
+end
+
+var int ret=0;
+do
+    var T t with
+        this.x = 10;
+    end;
+    await t.ok;
+    ret = t.x;
+end
+return ret;
+]],
+    run = 10;
+}
+
+Test { [[
+input void START;
+
+C _V, _assert();
+C do
+    #include <assert.h>
+    int V = 0;
+end
+
+class T with
+    var int x;
+    event void ok;
+do
+    await START;
+    emit  ok;
+    _assert(0);
+end
+
+class U with
+    var int x;
+    event void ok;
+do
+    await START;
+    _assert(0);
+    emit  ok;
+end
+
+var int ret=0;
+do
+    var T t with
+        this.x = 10;
+    end;
+    var T u;
+    await t.ok;
+    ret = t.x;
+end
+return ret;
+]],
+    run = 10;
+}
 -- NEW / FREE
 
 Test { [[
@@ -19825,6 +19827,17 @@ return 10;
 Test { [[
 class T with do end
 var T* a = new T;
+free a;
+var T* b = new T;
+free b;
+return 10;
+]],
+    run = 10,
+}
+
+Test { [[
+class T with do end
+var T* a = new T;
 var T* b = new T;
 free a;
 free b;
@@ -19972,6 +19985,24 @@ do
     end
 end
 return ok;
+]],
+    loop = 1,
+    run = 1,
+}
+
+Test { [[
+class T with do
+    await FOREVER;
+end
+var u8 ok;
+C _assert();
+do
+    loop i, 100 do
+        ok = spawn T;
+    end
+    ok = spawn T;
+end
+return ok+1;
 ]],
     loop = 1,
     run = 1,
@@ -20839,25 +20870,19 @@ C _V;
 C do
     int V = 10;
 end
-C pure _fprintf(), _stderr, __ceu_dyns_;
 class T with
 do
     finalize with
         _V = _V - 1;
-_fprintf(_stderr, "3\n");
     end
-_fprintf(_stderr, "1\n");
     await 500ms;
-_fprintf(_stderr, "nononon\n");
     _V = _V - 1;
 end
 
 do
     var T* a;
     a = new T;
-_fprintf(_stderr, "2\n");
     free a;
-_fprintf(_stderr, "4\n");
     _assert(_V == 9);
     await 1s;
 end

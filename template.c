@@ -467,35 +467,36 @@ fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
                     if (CUR != (tceu_org*)CEU.mem) {
                         tceu_org* PAR = CUR->par_org;
                         _ceu_cur_.trl = CUR->par_trl;
-                        if (_ceu_evt_.id == IN__CLR) {
+                        if (_ceu_evt_.id != IN__CLR) {
+                            _ceu_cur_.trl++;     // X->Y [ X | org | Y ]
+                        } else {
                             _ceu_cur_.trl--;     // Y->X [ X | org | Y ]
 #ifdef CEU_NEWS
                             // re-link UP <-> DOWN
+                            if (CUR->isDyn)
                             {
                                 tceu_trl_* down = (tceu_trl_*)
                                                     &CUR->trls[CUR->n-1];
-                                if (down->evt == IN__ORG) {
+
+                                // HACK_1 (see code.lua)
+                                // test org!=NULL instead of evt==IN__ORG
+                                if (down->org != NULL) {
                                     ((tceu_trl_*)(CUR->par_trl))->org = down->org;
                                     down->org->par_org = CUR->par_org;
                                     down->org->par_trl = CUR->par_trl;
                                 } else {
                                     CUR->par_trl->evt = IN__NONE;
+                                    ((tceu_trl_*)(CUR->par_trl))->org = NULL;
                                 }
-                            }
-
-                            // free if "dyn" and completelly traversed
-                            // (i.e. _ceu_clr_org_ is not me)
-                            if (CUR->isDyn) {
+                                // free if "dyn" and completelly traversed
+                                // (i.e. _ceu_clr_org_ is not me)
 fprintf(stderr, "xFREE: %p\n", CUR);
-                                CUR->par_trl->evt = IN__NONE;
                                 free(CUR);
 #ifdef CEU_RUNTESTS
                                 _ceu_dyns_--;
 #endif
                             }
 #endif
-                        } else {
-                            _ceu_cur_.trl++;     // X->Y [ X | org | Y ]
                         }
                         _ceu_cur_.org = PAR;
                         goto _CEU_CALLTRL_;

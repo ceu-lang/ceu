@@ -223,8 +223,8 @@ fprintf(stderr, "MALLOC: %p\n", __ceu_org);
 #ifdef CEU_RUNTESTS
     _ceu_dyns_++;
     if (_ceu_dyns_ > CEU_MAX_DYNS) {
-        __ceu_org = NULL;
         free(__ceu_org);
+        __ceu_org = NULL;
         _ceu_dyns_--;
     }
 #endif
@@ -345,12 +345,17 @@ case ]]..me.lbl_cnt.id..[[:;
     {
         // TODO: assert isDyn
 
+        // TODO: HACK_1 (avoids next to also be freed)
+        tceu_trl_* down = (tceu_trl_*) &__ceu_org->trls[__ceu_org->n-1];
+        down->evt = IN__NONE;
+
+        // push my continuation
         _ceu_cur_.trl->evt = IN__ANY;
         _ceu_cur_.trl->stk = _ceu_stk_;
         _ceu_cur_.trl->lbl = ]]..me.lbl_clr.id..[[;
         _CEU_STK_[_ceu_stk_++] = _ceu_evt_;
 
-        // clear all __ceu_org from its parent  ] par_trl , par_trl ]
+        // clear all __ceu_org from its parent  ] par_trl-1 , par_trl ]
         // this will call free()
         _ceu_cur_.org  = _ceu_clr_org_ = __ceu_org->par_org;
         _ceu_cur_.trl  = __ceu_org->par_trl;
