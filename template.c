@@ -73,12 +73,12 @@ typedef struct {
     tceu_nlbl lbl;
     u8        stk;
     u8        _1;           // TODO
-    u32        _2;
+    u32       _2;
 } tceu_trl;
 
 typedef struct {
-    tceu_nevt evt;
-    void*     org;
+    tceu_nevt        evt;
+    struct tceu_org* org;
 } tceu_trl_;
 
 typedef struct {
@@ -120,11 +120,11 @@ typedef struct {
     tceu_param p;           \
     p.dt = a;
 
-typedef struct
+typedef struct tceu_org
 {
 #ifdef CEU_ORGS
-    void*     par_org;  // traversal
-    tceu_trl* par_trl;
+    struct tceu_org* par_org;  // traversal
+    tceu_trl*        par_trl;
 
 #ifdef CEU_IFCS
     tceu_ncls cls;  // class id
@@ -239,83 +239,10 @@ void ceu_trails_clr (int t1, int t2, void* org) {
 /**********************************************************************/
 
 #ifdef CEU_NEWS
-
-typedef struct tceu_news_one {
-    struct tceu_news_one* prv;
-    struct tceu_news_one* nxt;
-} tceu_news_one;
-
-typedef struct {
-    tceu_news_one fst;
-    tceu_news_one lst;
-} tceu_news_blk;
-
 #ifdef CEU_RUNTESTS
+// TODO
 int __ceu_news = 0;
 #endif
-
-void* ceu_news_ins (tceu_news_blk* blk, int len)
-{
-    tceu_news_one* cur = malloc(len);
-    if (cur == NULL)
-        return NULL;
-
-#ifdef CEU_RUNTESTS
-    if (__ceu_news >= 100)
-        return NULL;
-    __ceu_news++;
-#endif
-
-    (blk->lst.prv)->nxt = cur;
-    cur->prv            = blk->lst.prv;
-    cur->nxt            = &blk->lst;
-    blk->lst.prv        = cur;
-
-    return (void*) cur;
-}
-
-void ceu_news_rem (void* org)
-{
-/*
-    tceu_news_one* cur = (tceu_news_one*) org;
-    cur->prv->nxt = cur->nxt;
-    cur->nxt->prv = cur->prv;
-
-    // [0, N-1]
-    ceu_trails_clr(0, *PTR_org(u8*,org,CEU_CLS_TRAILN)-1, org);
-    free(org);
-#ifdef CEU_RUNTESTS
-        __ceu_news--;
-#endif
-*/
-}
-
-void ceu_news_rem_all (tceu_news_one* cur) {
-/*
-    while (cur->nxt != NULL) {
-        void* org = (void*) cur;
-        // block already clrs
-        //ceu_trails_clr(0, *PTR_org(u8*,org,CEU_CLS_TRAILN)-1, org);
-        cur = cur->nxt;
-        free(org);
-#ifdef CEU_RUNTESTS
-        __ceu_news--;
-#endif
-    }
-*/
-}
-
-void ceu_news_go (u8 evt_id, tceu_param* evt_p,
-                  int stk, tceu_news_one* cur) {
-/*
-    while (cur->nxt != NULL) {
-        void* org = (void*) cur;
-        cur = cur->nxt;
-        ceu_trails_go(evt_id, evt_p, stk, org);      // TODO: kill
-    }
-*/
-}
-
 #endif
 
 /**********************************************************************/
@@ -410,6 +337,24 @@ void ceu_go_wclock (s32 dt)
     return;
 }
 
+void ceu_go_all (int* ret_end)
+{
+    ceu_go_init();
+    if (*ret_end) return;
+
+#ifdef IN_START
+    ceu_go_event(IN_START, NULL);
+    if (*ret_end) return;
+#endif
+
+#ifdef CEU_ASYNCS
+    for (;;) {
+        ceu_go_async();
+        if (*ret_end) return;
+    }
+#endif
+}
+
 #ifdef CEU_RUNTESTS
 void ceu_stack_clr () {
     int a[1000];
@@ -417,28 +362,12 @@ void ceu_stack_clr () {
 }
 #endif
 
-void ceu_go_all (int* ret_end)
+void ceu_go (int __ceu_id, tceu_param* __ceu_p)
 {
-    ceu_go_init();
-
-#ifdef IN_START
-    ceu_go_event(IN_START, NULL);
-#endif
-
-#ifdef CEU_ASYNCS
-    for (;;) {
 #ifdef CEU_RUNTESTS
         ceu_stack_clr();
 #endif
-        ceu_go_async();
-        if (*ret_end)
-            return;
-    }
-#endif
-}
 
-void ceu_go (int __ceu_id, tceu_param* __ceu_p)
-{
     tceu_evt _CEU_STK_[255];  // TODO: 255
     int      _ceu_stk_ = 1;   // points to next (TODO: 1=desperdicio)
 
@@ -511,8 +440,7 @@ fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
             {
                 tceu_trl* cmp;
                 if (_ceu_evt_.id == IN__CLR) {
-                    cmp = &CUR->trls[0];
-                    cmp--;  // -1 is out
+                    cmp = &CUR->trls[-1];   // -1 is out
                 } else {
                     cmp = &CUR->trls[
 #ifdef CEU_ORGS
@@ -522,49 +450,51 @@ fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
 #endif
                             ];
                 }
+
+                // org has been completely traversed ?
                 if (_ceu_cur_.trl == cmp)
                 {
 #ifdef CEU_ORGS
                     // check for next org
                     if (CUR != (tceu_org*)CEU.mem) {
+                        tceu_org* nxt = CUR->par_org;
+                        _ceu_cur_.trl = CUR->par_trl;
+                        if (_ceu_evt_.id == IN__CLR) {
+                            _ceu_cur_.trl--;     // Y->X [ X | org | Y ]
 #ifdef CEU_NEWS
-                        if (CUR->isDyn) {
-                            // dyn org
-                            assert(0);
-                        }
-                        else
+                            if (CUR->isDyn) {
+                                CUR->par_trl->evt = IN__NONE;
+                                free(CUR);
+#ifdef CEU_RUNTESTS
+                                __ceu_news--;
 #endif
-                        {
-                            // blk org
-                            _ceu_cur_.trl = CUR->par_trl;
-                            if (_ceu_evt_.id == IN__CLR)
-                                _ceu_cur_.trl--;     // Y->X [ X | org | Y ]
-                            else
-                                _ceu_cur_.trl++;     // X->Y [ X | org | Y ]
-                            _ceu_cur_.org = CUR->par_org;
+                            }
+#endif
+                        } else {
+                            _ceu_cur_.trl++;     // X->Y [ X | org | Y ]
                         }
+                        _ceu_cur_.org = nxt;
                         goto _CEU_CALLTRL_;
                     }
                     else
 #endif
                     {
-                        break;  // terminate current stack
+                        break;  // reached CEU.mem: terminate current stack
                     }
                 }
+                // continue traversing it
             }
 
             {
-                // TODO: trl_vec is freed
+// TODO: trl_vec is freed
                 tceu_trl* trl = _ceu_cur_.trl;
 #ifdef CEU_DEBUG_TRAILS
 fprintf(stderr, "\tTRY: evt=%d stk=%d lbl=%d\n", trl->evt, trl->stk, trl->lbl);
 #endif
 #ifdef CEU_ORGS
                 if (trl->evt == IN__ORG) {
-#ifdef CEU_NEWS
-// lista encadeada de dyns
-                    if (((tceu_trl_*)trl)->org == NULL)
-                        goto _CEU_NEXT_;
+#ifdef CEU_DEBUG
+                    assert(((tceu_trl_*)trl)->org != NULL);
 #endif
                     _ceu_cur_.org = ((tceu_trl_*)trl)->org;
                     goto _CEU_CALL_;

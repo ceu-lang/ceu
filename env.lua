@@ -31,9 +31,6 @@ _ENV = {
 
         tceu_nlbl  = true,    -- labels.lua
         tceu_trl = true,    -- labels.lua (TODO: remove this type?)
-
-        tceu_news_one = 2*_OPTS.tp_pointer,
-        tceu_news_blk = 4*_OPTS.tp_pointer,
     },
     dets  = {},
 }

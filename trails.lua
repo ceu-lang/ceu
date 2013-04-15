@@ -18,7 +18,7 @@ F = {
     Block_pre = function (me)
         local blk = unpack(me)
 
-        -- [ 1, O, 1, B ] (fin, orgs, news, blk)
+        -- [ 1, O, 1, B ] (fin, orgs, dyns, blk)
 
         me.trails = me.trails or _AST.iter(pred)().trails
 
@@ -38,9 +38,9 @@ F = {
             end
         end
 
-        -- NEWS
+        -- DYNS
         if me.has_news then
-            me.news_trails = { t0, t0 }
+            me.dyn_trails = { t0, t0 }
                 t0 = t0 + 1
         end
 

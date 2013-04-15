@@ -77,8 +77,8 @@ F = {
 
     Node_pre = function (me)
         me.ns = {
-            trails  = 1,
-            --ints    = 0,
+            trails  = 1,        -- TODO: move to trails.lua
+            --ints    = 0,      --  after that MAX_all makes no sense
         }
         me.has = {
             fins = false,
@@ -121,9 +121,10 @@ F = {
             end
         end
 
--- TODO: ptr p/ 1o dyn
+        -- pointer to my first dyn-org child
         if me.has_news then
             me.ns.trails = me.ns.trails + 1
+            me.needs_clr = true
         end
     end,
     Stmts   = MAX_all,
@@ -150,12 +151,14 @@ F = {
         else
             SAME(me)
         end
+
+        -- pointer to next dyn-org from my parent block
+-- TODO
+        --if _PROPS.has_news then
+            me.ns.trails = me.ns.trails + 1     -- TODO: only  if exists new<T>
+        --end
+
         ASR(me.ns.trails < 256, me, 'too many trails')
---[[
-        if me.aw.t and #me.aw.t>0 then -- +1 trail for all global awaits
-            --me.ns.trails = me.ns.trails + 1
-        end
-]]
     end,
 
     Dcl_ext = function (me)

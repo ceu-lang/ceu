@@ -149,7 +149,7 @@ do
     end
 
     tpl = sub(tpl, '=== CEU_NMEM ===',     _AST.root.mem.max)
-    tpl = sub(tpl, '=== CEU_NTRAILS ===',  _AST.root.ns.trails)
+    tpl = sub(tpl, '=== CEU_NTRAILS ===',  _MAIN.ns.trails)
 
     tpl = sub(tpl, '=== TCEU_NLBL ===',    's'..tps[_ENV.c.tceu_nlbl.len])
 

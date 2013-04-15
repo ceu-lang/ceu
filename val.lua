@@ -213,11 +213,8 @@ F =
         local _tp = _TP.deref(tp)
         local cls = _tp and _ENV.clss[_tp]
         if cls and (not cls.is_ifc) and _PROPS.has_ifcs then
-            val = '((' ..
-                    '*PTR_org(tceu_ncls*,'..val..','.._MEM.cls.idx_cls..')'..
-                    '==' ..
-                    cls.n ..
-                    ') ?  '..val..' : NULL)'
+            val = '((((tceu_org*)'..val..')->cls == '..cls.n..') ? '
+                    ..val..' : NULL)'
         end
 
         me.val = '(('.._TP.c(tp)..')'..val..')'

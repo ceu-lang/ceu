@@ -140,11 +140,6 @@ DBG('', 'glb', '{'..table.concat(glb,',')..'}')
         me.off_fins = alloc(cls.mem,
                                 (me.fins and #me.fins) or 0)
 
--- TODO: fst/lst
-        if me.has_news then
-            me.off_news = alloc(cls.mem, _ENV.c.tceu_news_blk.len)
-        end
-
         for _, var in ipairs(me.vars) do
             local len
             if var.isTmp or var.isEvt then  --

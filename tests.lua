@@ -93,6 +93,7 @@ error 'testar new/spawn que se mata'
 do return end
 --]===]
 
+
 -- OK: under tests but supposed to work
 
 Test { [[
@@ -19778,6 +19779,81 @@ return t:b;
     run = 20,
 }
 
+-- FREE
+
+Test { [[
+class T with do end
+var T* a = null;
+free a;
+return 10;
+]],
+    run = 10,
+}
+
+Test { [[
+class T with do end
+var T* a = new T;
+free a;
+return 10;
+]],
+    run = 10,
+}
+
+Test { [[
+class T with do end
+var T* a = new T;
+var T* b = new T;
+free a;
+free b;
+return 10;
+]],
+    run = 10,
+}
+
+Test { [[
+class T with do end
+var T* a = new T;
+var T* b = new T;
+free b;
+free a;
+return 10;
+]],
+    run = 10,
+}
+
+Test { [[
+C _V;
+C do
+    int V = 0;
+end
+class T with
+do
+    finalize with
+        _V = _V + 1;
+    end
+end
+
+var T* a = new T;
+var T* b = new T;
+free b;
+free a;
+return _V;
+]],
+    run = 2,
+}
+
+-- TODO: tests for `free´:
+-- remove from tracks
+-- invalid pointers
+Test { [[
+class T with do end
+var T a;
+free a;
+return 0;
+]],
+    env = 'ERR : line 3 : invalid `free´',
+}
+
 -- SPAWN
 
 Test { [[
@@ -19868,10 +19944,28 @@ end
 var u8 ok;
 C _assert();
 do
+    loop i, 5 do
+        ok = spawn T;
+    end
+end
+return ok;
+]],
+    loop = 1,
+    run = 1,
+}
+
+Test { [[
+class T with do
+    await FOREVER;
+end
+var u8 ok;
+C _assert();
+do
     loop i, 100 do
         ok = spawn T;
     end
     _assert(ok == 1);
+    ok = spawn T;
     ok = spawn T;
     _assert(ok == 0);
 end
@@ -19946,82 +20040,7 @@ do
 end
 return _V;
 ]],
-    run = 1,
-}
-
--- FREE
-
-Test { [[
-class T with do end
-var T* a = null;
-free a;
-return 10;
-]],
     run = 10,
-}
-
-Test { [[
-class T with do end
-var T* a = new T;
-free a;
-return 10;
-]],
-    run = 10,
-}
-
-Test { [[
-class T with do end
-var T* a = new T;
-var T* b = new T;
-free a;
-free b;
-return 10;
-]],
-    run = 10,
-}
-
-Test { [[
-class T with do end
-var T* a = new T;
-var T* b = new T;
-free b;
-free a;
-return 10;
-]],
-    run = 10,
-}
-
-Test { [[
-C _V;
-C do
-    int V = 0;
-end
-class T with
-do
-    finalize with
-        _V = _V + 1;
-    end
-end
-
-var T* a = new T;
-var T* b = new T;
-free b;
-free a;
-return _V;
-]],
-    run = 2,
-}
-
--- TODO: tests for `free´:
--- remove from tracks
--- invalid pointers
-Test { [[
-class T with do end
-var T a;
-free a;
-return 0;
-]],
-    env = 'ERR : line 3 : invalid `free´',
 }
 
 Test { [[
@@ -20096,7 +20115,7 @@ end
 class T with
     var int v;
 do
-    finalize with   // does not enter
+    finalize with   // enters!
         _V = 10;
     end
     await FOREVER;
@@ -20115,7 +20134,7 @@ do
 end
 return _V;
 ]],
-    run = 1,
+    run = 10,
 }
 
 Test { [[
@@ -20158,7 +20177,7 @@ end
 class T with
     var int v;
 do
-    finalize with   // does not enter
+    finalize with   // enters!
         _V = 10;
     end
     await FOREVER;
@@ -20176,7 +20195,7 @@ do
 end
 return _V;
 ]],
-    run = 5,
+    run = 10,
 }
 Test { [[
 input void START;
@@ -20468,7 +20487,36 @@ end
 
 return _V;
 ]],
-    run = 1,
+    run = 3,
+}
+
+Test { [[
+input void START;
+
+C pure _fprintf(), _stderr, ___ceu_news;
+class V with
+do
+_fprintf(_stderr, "3\n");
+end
+
+class U with
+do
+_fprintf(_stderr, "2\n");
+    var V* vv = new V;
+_fprintf(_stderr, "4\n");
+end
+
+
+_fprintf(_stderr, "1\n");
+var U t;
+_fprintf(_stderr, "5\n");
+await START;
+
+C nohold _tceu_trl, _tceu_trl_, _sizeof();
+_fprintf(_stderr, "%d %d\n", _sizeof(_tceu_trl), _sizeof(_tceu_trl_));
+return 2;
+]],
+    run = 2,
 }
 
 Test { [[
@@ -20504,14 +20552,17 @@ do
     await FOREVER;
 end
 
+C pure _fprintf(), _stderr, ___ceu_news;
 do
     var T t;
+_fprintf(_stderr, "1\n");
     await START;
+_fprintf(_stderr, "%d\n", _V);
 end
 
 return _V;
 ]],
-    run = 2,
+    run = 3,
 }
 
 Test { [[
@@ -20714,12 +20765,12 @@ do
         if ptr != null then
             free ptr;
         end
-        ptr = new T;    // never starts
+        ptr = new T;
     end
     _assert(_X == 100 and _Y == 99);
 end
 
-_assert(_X == 100 and _Y == 99);
+_assert(_X == 100 and _Y == 100);
 return 10;
 ]],
     loop = true,
@@ -20805,42 +20856,32 @@ return t:v + ts[0]:v;
     run = 20,
 }
 
+DBG'TODO: recolocar pause p/ orgs'
+--[=[
 Test { [[
 input void START;
 input int A,B;
 
-C pure _fprintf(), _stderr;
 class T with
     event int e;
 do
-    _fprintf(_stderr, "X\n");
     var int v = await A;
-    _fprintf(_stderr, "Y\n");
     emit e=v;
-    _fprintf(_stderr, "Z\n");
 end
 
 event int a;
 
 var int ret;
 par/or do
-    _fprintf(_stderr, "1\n");
     pause/if a do
-    _fprintf(_stderr, "2\n");
         var T t;
-    _fprintf(_stderr, "3\n");
         ret = await t.e;
-    _fprintf(_stderr, "4\n");
     end
 with
     await START;
-    _fprintf(_stderr, "a\n");
     emit a=1;
-    _fprintf(_stderr, "b\n");
     await B;
-    _fprintf(_stderr, "c\n");
     emit a=0;
-    _fprintf(_stderr, "d\n");
     await FOREVER;
 end
 return ret;
@@ -20897,7 +20938,6 @@ return ret;
     run = { ['~>A; ~>X; ~>A']=12 }
 }
 
---[=[
 -- TODO pause hierarquico dentro de um org
 -- SDL/samples/sdl4.ceu
 ]=]
@@ -22100,6 +22140,7 @@ return 1;
     env = 'ERR : line 3 : event "f" is not declared',
 }
 
+--[=[
 Test { [[
 event void e;
 event int f;
@@ -22167,6 +22208,7 @@ return i+1;
 ]],
     run = {['~>10ms']=1},
 }
+]=]
 
 --do return end
 
