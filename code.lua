@@ -137,6 +137,8 @@ function CLEAR (me)
 }
 _CEU_STK_[_ceu_stk_++] = _ceu_evt_;
 
+fprintf(stderr, "CLEAR %p\n", CUR);
+
 // skip trails[2]
 _ceu_cur_.trl = &CUR->trls[ ]]..(me.trails[2]-1)..[[ ];
 #ifdef CEU_ORGS
@@ -183,13 +185,18 @@ CUR->cls = ]]..me.n..[[;
 
         CONC_ALL(me)
 
-        if me.has_news then
+-- TODO
+        --if i_am_instantiable then
             LINE(me, [[
-// TODO: continuacao LEAK
-//if (CUR->toFree)
-    //ceu_news_rem(_ceu_cur_.org);
+#ifdef CEU_NEWS
+if (CUR->toFree) {
 ]])
-        end
+            F.Free(me)
+            LINE(me, [[
+}
+#endif
+]])
+        --end
 
         if not (_ANA and me.ana.pos[false]) then
             HALT(me)
@@ -214,11 +221,11 @@ CUR->cls = ]]..me.n..[[;
 fprintf(stderr, "MALLOC: %p\n", __ceu_org);
 
 #ifdef CEU_RUNTESTS
-    __ceu_news++;
-    if (__ceu_news > 100) {
+    _ceu_dyns_++;
+    if (_ceu_dyns_ > CEU_MAX_DYNS) {
         __ceu_org = NULL;
         free(__ceu_org);
-        __ceu_news--;
+        _ceu_dyns_--;
     }
 #endif
 ]])
@@ -267,6 +274,7 @@ fprintf(stderr, "MALLOC: %p\n", __ceu_org);
         _ceu_cur_.trl->evt = IN__ANY;
         _ceu_cur_.trl->lbl = ]]..me.lbl_cnt.id..[[;
         _ceu_cur_.trl->stk = _ceu_stk_;
+        _CEU_STK_[_ceu_stk_++] = _ceu_evt_;
 
         // switch to ORG
         _ceu_cur_.org = __ceu_org;
@@ -319,43 +327,39 @@ case ]]..me.lbl_cnt.id..[[:;
 
     Free = function (me)
         local exp = unpack(me)
-        local lbls = table.concat(me.cls.lbls,',')
+
+        local cls, val
+        if me.tag == 'Free' then
+            cls = me.cls
+            val = VAL(exp)
+        else    -- Dcl_cls
+            cls = me
+            val = 'CUR'
+        end
+
+        local lbls = table.concat(cls.lbls,',')
         LINE(me, [[
 {
-    tceu_org* __ceu_org = (tceu_org*) ]]..VAL(exp)..[[;
+    tceu_org* __ceu_org = (tceu_org*) ]]..val..[[;
     if (__ceu_org != NULL)
     {
         // TODO: assert isDyn
-
-// TODO: check if CLR could do this automatically
-        // unlink __ceu_org
-        tceu_trl_* nxt = (tceu_trl_*) &__ceu_org->trls[ ]]..me.cls.trails[2]..[[ ];
-        if (nxt->evt == IN__ORG) {
-            ((tceu_trl_*)(__ceu_org->par_trl))->org = nxt->org;
-            nxt->org->par_org = __ceu_org->par_org;
-            nxt->org->par_trl = __ceu_org->par_trl;
-         } else {
-            __ceu_org->par_trl->evt = IN__NONE;
-         }
 
         _ceu_cur_.trl->evt = IN__ANY;
         _ceu_cur_.trl->stk = _ceu_stk_;
         _ceu_cur_.trl->lbl = ]]..me.lbl_clr.id..[[;
         _CEU_STK_[_ceu_stk_++] = _ceu_evt_;
 
-        // clear all __ceu_org  ] -1 , nxt ]
-        _ceu_cur_.org  = _ceu_clr_org_ = __ceu_org;
-        _ceu_cur_.trl  = nxt;
-        _ceu_clr_trl0_ = &__ceu_org->trls[-1];
+        // clear all __ceu_org from its parent  ] par_trl , par_trl ]
+        // this will call free()
+        _ceu_cur_.org  = _ceu_clr_org_ = __ceu_org->par_org;
+        _ceu_cur_.trl  = __ceu_org->par_trl;
+        _ceu_clr_trl0_ = __ceu_org->par_trl - 1;
         _ceu_evt_.id   = IN__CLR;
         goto _CEU_CALLTRL_;
     }
 }
 case ]]..me.lbl_clr.id..[[:;
-    free(]]..VAL(exp)..[[);
-#ifdef CEU_RUNTESTS
-    __ceu_news--;
-#endif
 ]])
     end,
 
@@ -382,7 +386,8 @@ case ]]..me.lbl_clr.id..[[:;
         tceu_org* org = PTR_org(tceu_org*,]]..VAL(var)..
                             ', i*'..var.cls.mem.max..[[);
 #ifdef CEU_NEWS
-        org->isDyn = 0;
+        org->isDyn  = 0;
+        org->toFree = 0;
 #endif
 
         // enable block trail with IN__ORG (always awake from now on)

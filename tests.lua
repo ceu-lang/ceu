@@ -19779,6 +19779,29 @@ return t:b;
     run = 20,
 }
 
+Test { [[
+C _V;
+C do
+    int V=0;
+end
+input void START;
+class T with
+do
+    par/or do
+    with
+    end
+    _V = _V + 1;
+    await START;
+    _V = _V + 1;
+end
+var T* t1 = new T;
+var T* t2 = new T;
+await START;
+return _V;
+]],
+    run = 4,
+}
+
 -- FREE
 
 Test { [[
@@ -19969,6 +19992,8 @@ do
     ok = spawn T;
     _assert(ok == 0);
 end
+C __ceu_dyns_;
+_assert(__ceu_dyns_ == 0);
 do
     loop i, 100 do
         ok = spawn T;
@@ -20493,27 +20518,20 @@ return _V;
 Test { [[
 input void START;
 
-C pure _fprintf(), _stderr, ___ceu_news;
 class V with
 do
-_fprintf(_stderr, "3\n");
 end
 
 class U with
 do
-_fprintf(_stderr, "2\n");
     var V* vv = new V;
-_fprintf(_stderr, "4\n");
 end
 
 
-_fprintf(_stderr, "1\n");
 var U t;
-_fprintf(_stderr, "5\n");
 await START;
 
 C nohold _tceu_trl, _tceu_trl_, _sizeof();
-_fprintf(_stderr, "%d %d\n", _sizeof(_tceu_trl), _sizeof(_tceu_trl_));
 return 2;
 ]],
     run = 2,
@@ -20552,12 +20570,9 @@ do
     await FOREVER;
 end
 
-C pure _fprintf(), _stderr, ___ceu_news;
 do
     var T t;
-_fprintf(_stderr, "1\n");
     await START;
-_fprintf(_stderr, "%d\n", _V);
 end
 
 return _V;
@@ -20676,6 +20691,104 @@ return 1;
 }
 
 Test { [[
+class V with
+do
+end
+
+input void START;
+class U with
+    var V* v;
+    event void x;
+do
+    loop do
+        await x;
+        v = new V;
+        break;
+    end
+end
+
+class T with
+    var U* u;
+do
+    await START;
+    //u:v = new V;
+    emit u:x;
+end
+
+do
+    var U u;
+    var T t;
+        t.u = &u;
+    await START;
+end
+
+return 10;
+]],
+    run = 10,
+}
+Test { [[
+class V with
+do
+end
+
+input void START;
+class U with
+    var V* v;
+do
+end
+
+class T with
+    var U* u;
+do
+    await START;
+    u:v = new V;
+end
+
+do
+    var U u;
+    var T t;
+        t.u = &u;
+    await START;
+end
+
+return 10;
+]],
+    --run = 10,
+    env = 'ERR : line 15 : invalid attribution',
+}
+Test { [[
+class V with
+do
+end
+
+input void A, START;
+class U with
+    var V* v;
+do
+    await A;
+end
+
+class T with
+    var U* u;
+do
+    await START;
+    u:v = new V;
+end
+
+do
+    var U u;
+    var T t;
+        t.u = &u;
+    await START;
+end
+
+return 10;
+]],
+    --run = { ['~>A']=10 },
+    env = 'ERR : line 16 : invalid attribution',
+}
+
+Test { [[
 C _V, _assert();
 C do
     int V = 1;
@@ -20701,7 +20814,7 @@ end
 
 do
     var U u;
-    do
+    do              // 26
         var T t;
         t.u = &u;
         await 2s;
@@ -20711,7 +20824,8 @@ end
 _assert(_V == 10);
 return _V;
 ]],
-    run = { ['~>2s']=10, }       -- TODO: stack change
+    --run = { ['~>2s']=10, }       -- TODO: stack change
+    env = 'ERR : line 23 : invalid attribution',
 }
 
 Test { [[
@@ -20720,19 +20834,25 @@ C _V;
 C do
     int V = 10;
 end
+C pure _fprintf(), _stderr, __ceu_dyns_;
 class T with
 do
     finalize with
         _V = _V - 1;
+_fprintf(_stderr, "3\n");
     end
+_fprintf(_stderr, "1\n");
     await 500ms;
+_fprintf(_stderr, "nononon\n");
     _V = _V - 1;
 end
 
 do
     var T* a;
     a = new T;
+_fprintf(_stderr, "2\n");
     free a;
+_fprintf(_stderr, "4\n");
     _assert(_V == 9);
     await 1s;
 end

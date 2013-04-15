@@ -241,7 +241,7 @@ void ceu_trails_clr (int t1, int t2, void* org) {
 #ifdef CEU_NEWS
 #ifdef CEU_RUNTESTS
 // TODO
-int __ceu_news = 0;
+int _ceu_dyns_ = 0;
 #endif
 #endif
 
@@ -340,18 +340,26 @@ void ceu_go_wclock (s32 dt)
 void ceu_go_all (int* ret_end)
 {
     ceu_go_init();
-    if (*ret_end) return;
+    if (*ret_end) goto _CEU_END_;
 
 #ifdef IN_START
     ceu_go_event(IN_START, NULL);
-    if (*ret_end) return;
+    if (*ret_end) goto _CEU_END_;
 #endif
 
 #ifdef CEU_ASYNCS
     for (;;) {
         ceu_go_async();
-        if (*ret_end) return;
+        if (*ret_end) goto _CEU_END_;
     }
+#endif
+
+_CEU_END_:;
+#ifdef CEU_NEWS
+#ifdef CEU_RUNTESTS
+    #define CEU_MAX_DYNS 100
+    assert(_ceu_dyns_ == 0);
+#endif
 #endif
 }
 
@@ -451,29 +459,45 @@ fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
                             ];
                 }
 
-                // org has been completely traversed ?
+                // org has been traversed to the end?
                 if (_ceu_cur_.trl == cmp)
                 {
 #ifdef CEU_ORGS
                     // check for next org
                     if (CUR != (tceu_org*)CEU.mem) {
-                        tceu_org* nxt = CUR->par_org;
+                        tceu_org* PAR = CUR->par_org;
                         _ceu_cur_.trl = CUR->par_trl;
                         if (_ceu_evt_.id == IN__CLR) {
                             _ceu_cur_.trl--;     // Y->X [ X | org | Y ]
 #ifdef CEU_NEWS
+                            // re-link UP <-> DOWN
+                            {
+                                tceu_trl_* down = (tceu_trl_*)
+                                                    &CUR->trls[CUR->n-1];
+                                if (down->evt == IN__ORG) {
+                                    ((tceu_trl_*)(CUR->par_trl))->org = down->org;
+                                    down->org->par_org = CUR->par_org;
+                                    down->org->par_trl = CUR->par_trl;
+                                } else {
+                                    CUR->par_trl->evt = IN__NONE;
+                                }
+                            }
+
+                            // free if "dyn" and completelly traversed
+                            // (i.e. _ceu_clr_org_ is not me)
                             if (CUR->isDyn) {
+fprintf(stderr, "xFREE: %p\n", CUR);
                                 CUR->par_trl->evt = IN__NONE;
                                 free(CUR);
 #ifdef CEU_RUNTESTS
-                                __ceu_news--;
+                                _ceu_dyns_--;
 #endif
                             }
 #endif
                         } else {
                             _ceu_cur_.trl++;     // X->Y [ X | org | Y ]
                         }
-                        _ceu_cur_.org = nxt;
+                        _ceu_cur_.org = PAR;
                         goto _CEU_CALLTRL_;
                     }
                     else
@@ -489,6 +513,11 @@ fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
 // TODO: trl_vec is freed
                 tceu_trl* trl = _ceu_cur_.trl;
 #ifdef CEU_DEBUG_TRAILS
+#ifdef CEU_ORGS
+if (trl->evt == IN__ORG)
+    fprintf(stderr, "\tTRY: evt=%d org=%p\n", trl->evt, ((tceu_trl_*)trl)->org);
+else
+#endif
 fprintf(stderr, "\tTRY: evt=%d stk=%d lbl=%d\n", trl->evt, trl->stk, trl->lbl);
 #endif
 #ifdef CEU_ORGS

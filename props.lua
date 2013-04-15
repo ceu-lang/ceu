@@ -115,6 +115,7 @@ F = {
         -- one trail for each org
         for _, var in ipairs(me.vars) do
             if var.cls then
+                me.has.news = me.has.news or var.cls.has.news
                 me.has.fins = me.has.fins or var.cls.has.fins
                 me.ns.trails = me.ns.trails + (var.arr or 1)
                 me.needs_clr = true
@@ -122,7 +123,7 @@ F = {
         end
 
         -- pointer to my first dyn-org child
-        if me.has_news then
+        if me.has.news then
             me.ns.trails = me.ns.trails + 1
             me.needs_clr = true
         end
@@ -154,8 +155,8 @@ F = {
 
         -- pointer to next dyn-org from my parent block
 -- TODO
-        --if _PROPS.has_news then
-            me.ns.trails = me.ns.trails + 1     -- TODO: only  if exists new<T>
+        --if i_am_instantiable then
+            me.ns.trails = me.ns.trails + 1
         --end
 
         ASR(me.ns.trails < 256, me, 'too many trails')
@@ -166,7 +167,10 @@ F = {
     end,
 
     Dcl_var = function (me)
-        me.has.orgs = me.var.cls
+        if me.var.cls then
+            me.has.orgs = true
+            me.has.news = me.var.cls.has.news
+        end
     end,
 
     Free = function (me)
@@ -235,6 +239,7 @@ F = {
     Loop_pos = function (me)
         F.Node_pos(me)
         me.needs_clr = me.needs_clr or me.has.fins
+        me.needs_clr = me.needs_clr or me.has.news
     end,
     SetBlock_pos = 'Loop_pos',
 

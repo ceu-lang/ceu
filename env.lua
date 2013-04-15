@@ -557,9 +557,11 @@ F = {
     SetNew = function (me)
         local exp, id_cls = unpack(me)
 
-        F.Spawn(me, id_cls, exp.ref.var.blk)
+        F.Spawn(me, id_cls, exp.ref.var.blk)    -- also sets me.cls
 
-        ASR(exp.lval and _TP.contains(exp.tp,me.cls.id..'*'),
+        ASR(exp.lval and _TP.contains(exp.tp,me.cls.id..'*')
+                         -- refuses (x.ptr = new T;)
+                     and _AST.isChild(CLS(),exp.ref.var.blk),
                 me, 'invalid attribution')
     end,
 

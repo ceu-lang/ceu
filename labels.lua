@@ -72,6 +72,10 @@ F = {
 
     Dcl_cls = function (me)
         me.lbl = new{'Class_'..me.id, true}
+-- TODO
+        --if i_am_instantiable then
+            me.lbl_clr = new{'Class_free_'..me.id}
+        --end
     end,
     SetNew = function (me)
         me.lbl_cnt = new{me.tag..'_cont'}
