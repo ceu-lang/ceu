@@ -20463,7 +20463,8 @@ end
 class T with
     var U u;
 do
-    u.v = new V;
+    //u.v = new V;
+    var V* v = new V;
     await FOREVER;
 end
 
@@ -20502,7 +20503,8 @@ end
 class T with
     var U u;
 do
-    u.v = new V;
+    //u.v = new V;
+    var V* v = new V;
     await FOREVER;
 end
 
@@ -20566,7 +20568,8 @@ end
 class T with
     var U u;
 do
-    u.v = new V;
+    //u.v = new V;
+    var V* v = new V;
     await FOREVER;
 end
 
@@ -20609,7 +20612,8 @@ end
 class T with
     var U u;
 do
-    u.v = new V;
+    //u.v = new V;
+    var V* v = new V;
     await FOREVER;
 end
 
@@ -20652,7 +20656,8 @@ end
 class T with
     var U u;
 do
-    u.v = new V;
+    //u.v = new V;
+    var V* v = new V;
     await FOREVER;
 end
 
@@ -20825,7 +20830,7 @@ _assert(_V == 10);
 return _V;
 ]],
     --run = { ['~>2s']=10, }       -- TODO: stack change
-    env = 'ERR : line 23 : invalid attribution',
+    env = 'ERR : line 21 : invalid attribution',
 }
 
 Test { [[
