@@ -51,12 +51,6 @@ function HALT (me, cond)
     end
 end
 
-function STACK (me)
-    LINE(me, [[
-TCEU_STACK(_CEU_STK_[_ceu_stk_], _
-]])
-end
-
 function GOTO (me, lbl, org)
     if org then
         LINE(me, [[
@@ -210,7 +204,65 @@ if (CUR->toFree) {
         LINE(me, me[1])
     end,
 
--- TODO: join / abstr w/ funcs / new<->blk
+    Dcl_var = function (me)
+        local _,_,_,_,constr = unpack(me)
+        local var = me.var
+        if not var.cls then
+            return
+        end
+
+        if constr then
+            CONC(me, constr)
+        end
+
+        COMM(me, 'start org: '..var.id)
+
+        -- each org has its own trail on enclosing block
+        LINE(me, [[
+{
+    int i;
+    for (i=0; i<]]..(var.arr or 1)..[[; i++)
+    {
+        int idx = ]]..me.var.trails[1]..[[ + i;
+        tceu_org* org = PTR_org(tceu_org*,]]..VAL(var)..
+                            ', i*'..var.cls.mem.max..[[);
+#ifdef CEU_NEWS
+        org->isDyn  = 0;
+        org->toFree = 0;
+#endif
+
+        // reset org memory and do org.trail[0]=Class_XXX
+        // links par <=> org
+        ceu_org_init(org, ]]
+                    ..var.cls.ns.trails..','
+                    ..var.cls.lbl.id..[[);
+
+        // par <=> org
+        // link org with the next trail in the block
+        org->par_org = CUR;
+        org->par_trl = &CUR->trls[idx];
+
+        // enables parent trail with IN__ORG (always awake from now on)
+        CUR->trls[idx].evt = IN__ORG;
+        CUR->trls[idx].org = org;
+    }
+}
+
+// org[0] -> org[1] -> ... -> blk.trails[1]
+
+// hold current blk trail: set to my continuation
+_ceu_cur_.trl->evt = IN__ANY;
+_ceu_cur_.trl->lbl = ]]..me.lbl_cnt.id..[[;
+_ceu_cur_.trl->stk = _ceu_stk_;
+_CEU_STK_[_ceu_stk_++] = _ceu_evt_;
+
+// switch to ORG[0]
+_ceu_cur_.org = ]]..VAL(var)..[[;
+goto _CEU_CALL_;
+
+case ]]..me.lbl_cnt.id..[[:;
+]])
+    end,
 
     _New = function (me, t)
         LINE(me, [[
@@ -241,24 +293,27 @@ if (CUR->toFree) {
         __ceu_org->isDyn  = 1;
         __ceu_org->toFree = ]]..t.toFree..[[;
 
-        // enable block trail with IN__ORG (always awake from now on)
-        tceu_trl* trl = &CUR->trls[ ]]..t.par_blk.dyn_trails[1]..[[ ];
-        tceu_org* org = CUR;
+        tceu_trl* par_trl = &CUR->trls[ ]]..t.par_blk.dyn_trails[1]..[[ ];
+        tceu_org* par_org = CUR;
 
-        while (trl->evt != IN__NONE) {
-            org = trl->org;
-            trl = &org->trls[org->n - 1];
+        while (par_trl->evt != IN__NONE) {
+            par_org = par_trl->org;
+            par_trl = &par_org->trls[par_org->n - 1];
         }
-
-        trl->evt = IN__ORG;
-        trl->org = __ceu_org;
-        __ceu_org->par_org = org;
-        __ceu_org->par_trl = trl;
 
         // reset org memory and do org.trail[0]=Class_XXX
         ceu_org_init(__ceu_org, ]]
                     ..t.cls.ns.trails..','
                     ..t.cls.lbl.id..[[);
+
+        // par <=> org
+        // link org with the next trail in the block
+        __ceu_org->par_org = par_org;
+        __ceu_org->par_trl = par_trl;
+
+        // enables parent trail with IN__ORG (always awake from now on)
+        par_trl->evt = IN__ORG;
+        par_trl->org = __ceu_org;
 ]])
 
         if t.constr then
@@ -342,8 +397,7 @@ case ]]..me.lbl_cnt.id..[[:;
         // TODO: assert isDyn
 
         // TODO: HACK_1 (avoids next to also be freed)
-        tceu_trl* down = &__ceu_org->trls[__ceu_org->n-1];
-        down->evt = IN__NONE;
+        __ceu_org->trls[__ceu_org->n-1].evt = IN__NONE;
 
         // push my continuation
         _ceu_cur_.trl->evt = IN__ANY;
@@ -361,64 +415,6 @@ case ]]..me.lbl_cnt.id..[[:;
     }
 }
 case ]]..me.lbl_clr.id..[[:;
-]])
-    end,
-
-    Dcl_var = function (me)
-        local _,_,_,_,constr = unpack(me)
-        local var = me.var
-        if not var.cls then
-            return
-        end
-
-        if constr then
-            CONC(me, constr)
-        end
-
-        COMM(me, 'start org: '..var.id)
-
-        -- each org has its own trail on enclosing block
-        LINE(me, [[
-{
-    int i;
-    for (i=0; i<]]..(var.arr or 1)..[[; i++)
-    {
-        int idx = ]]..me.var.trails[1]..[[ + i;
-        tceu_org* org = PTR_org(tceu_org*,]]..VAL(var)..
-                            ', i*'..var.cls.mem.max..[[);
-#ifdef CEU_NEWS
-        org->isDyn  = 0;
-        org->toFree = 0;
-#endif
-
-        // enable block trail with IN__ORG (always awake from now on)
-        tceu_trl* trl = &CUR->trls[idx];
-            trl->evt = IN__ORG;
-            trl->org = org;
-
-        // link org with the next trail in the block
-        org->par_org = CUR;
-        org->par_trl = &CUR->trls[idx];
-
-        // reset org memory and do org.trail[0]=Class_XXX
-        ceu_org_init(org, ]]
-                    ..var.cls.ns.trails..','
-                    ..var.cls.lbl.id..[[);
-    }
-}
-
-// org[0] -> org[1] -> ... -> blk.trails[1]
-
-// hold current blk trail: set to my continuation
-_ceu_cur_.trl->evt = IN__ANY;
-_ceu_cur_.trl->lbl = ]]..me.lbl_cnt.id..[[;
-_ceu_cur_.trl->stk = _ceu_stk_;
-
-// switch to ORG[0]
-_ceu_cur_.org = ]]..VAL(var)..[[;
-goto _CEU_CALL_;
-
-case ]]..me.lbl_cnt.id..[[:;
 ]])
     end,
 

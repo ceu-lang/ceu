@@ -243,7 +243,8 @@ void ceu_segfault (int sig_num) {
 
 /**********************************************************************/
 
-void ceu_org_init (tceu_org* org, int n, tceu_nlbl lbl) {
+void ceu_org_init (tceu_org* org, int n, tceu_nlbl lbl)
+{
     // { evt=0, stk=0, lbl=0 } for all trails
 #ifdef CEU_ORGS
     org->n = n;

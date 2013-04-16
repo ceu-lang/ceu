@@ -93,8 +93,27 @@ error 'testar new/spawn que se mata'
 do return end
 --]===]
 
-
 -- OK: under tests but supposed to work
+
+Test { [[
+C _V;
+C do
+    int V = 1;
+end;
+class T with
+do
+    event void e;
+    emit e;
+    _V = 10;
+end
+
+do
+    var T t;
+end
+return _V;
+]],
+    run = 10,
+}
 
 Test { [[
 var int a=10;
