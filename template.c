@@ -490,7 +490,7 @@ fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
                                 }
                                 // free if "dyn" and completelly traversed
                                 // (i.e. _ceu_clr_org_ is not me)
-fprintf(stderr, "xFREE: %p\n", CUR);
+//fprintf(stderr, "FREE: %p\n", CUR);
                                 free(CUR);
 #ifdef CEU_RUNTESTS
                                 _ceu_dyns_--;

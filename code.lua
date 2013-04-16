@@ -137,8 +137,6 @@ function CLEAR (me)
 }
 _CEU_STK_[_ceu_stk_++] = _ceu_evt_;
 
-fprintf(stderr, "CLEAR %p\n", CUR);
-
 // skip trails[2]
 _ceu_cur_.trl = &CUR->trls[ ]]..(me.trails[2]-1)..[[ ];
 #ifdef CEU_ORGS
@@ -218,7 +216,7 @@ if (CUR->toFree) {
         LINE(me, [[
 {
     tceu_org* __ceu_org = malloc(]]..t.cls.mem.max..[[);
-fprintf(stderr, "MALLOC: %p\n", __ceu_org);
+//fprintf(stderr, "MALLOC: %p\n", __ceu_org);
 
 #ifdef CEU_RUNTESTS
     _ceu_dyns_++;
