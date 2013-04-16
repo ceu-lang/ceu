@@ -55,7 +55,7 @@ F =
         elseif dcl then
             me.val = dcl.var.val
         else
-            me.val = '_ceu_org_'
+            me.val = '_ceu_cur_.org'
         end
     end,
 
@@ -84,7 +84,7 @@ F =
                 val = VAL(e2)
             else
                 len = 'sizeof('.._TP.c(e1.evt.tp)..')'
-                val = 'ceu_ext_f(&_ceu_int_,'..VAL(e2)..')'
+                val = VAL(e2)
             end
         else
             len = 0
@@ -105,9 +105,9 @@ F =
     AwaitExt = function (me)
         local e1 = unpack(me)
         if _TP.deref(e1.evt.tp) then
-            me.val = '(('.._TP.c(e1.evt.tp)..')_ceu_evt_p_->ptr)'
+            me.val = '(('.._TP.c(e1.evt.tp)..')_ceu_evt_.param.ptr)'
         else
-            me.val = '(*_ceu_evt_p_->v)'
+            me.val = '_ceu_evt_.param.v'
         end
     end,
     AwaitT = function (me)
@@ -213,11 +213,8 @@ F =
         local _tp = _TP.deref(tp)
         local cls = _tp and _ENV.clss[_tp]
         if cls and (not cls.is_ifc) and _PROPS.has_ifcs then
-            val = '((' ..
-                    '*PTR_org(tceu_ncls*,'..val..','.._MEM.cls.idx_cls..')'..
-                    '==' ..
-                    cls.n ..
-                    ') ?  '..val..' : NULL)'
+            val = '((((tceu_org*)'..val..')->cls == '..cls.n..') ? '
+                    ..val..' : NULL)'
         end
 
         me.val = '(('.._TP.c(tp)..')'..val..')'

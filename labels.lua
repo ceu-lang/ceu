@@ -36,14 +36,16 @@ F = {
     end,
 
     Root_pre = function (me)
-        new{'CEU_INACTIVE', true}
-        new{'CEU_PENDING',  true}
+        --new{'CEU_INACTIVE', true}
     end,
     Root = function (me)
         -- 0, 1,-1, tot,-tot
         -- <0 = off (for internal events)
         _ENV.c.tceu_nlbl.len  = _TP.n2bytes(1+2 + #_LBLS.list*2)
-        _ENV.c.tceu_trail.len = _ENV.c.tceu_nlbl.len
+        --_ENV.c.tceu_trl.len = MAX(_ENV.c.pointer.len,
+                                    --_ENV.c.tceu_nlbl.len + 1) -- TODO:stk
+                                --+ 4 -- TODO:nevt
+        _ENV.c.tceu_trl.len = _ENV.c.pointer.len + 4
 
         -- enum of labels
         for i, lbl in ipairs(_LBLS.list) do
@@ -70,9 +72,17 @@ F = {
 
     Dcl_cls = function (me)
         me.lbl = new{'Class_'..me.id, true}
+-- TODO
+        --if i_am_instantiable then
+            me.lbl_clr = new{'Class_free_'..me.id}
+        --end
     end,
-    Orgs = function (me)
-        me.lbl = new{'Orgs'}
+    SetNew = function (me)
+        me.lbl_cnt = new{me.tag..'_cont'}
+    end,
+    Spawn = 'SetNew',
+    Free  = function (me)
+        me.lbl_clr = new{'Free_clr'}
     end,
 
     SetBlock_pre = function (me)
@@ -82,7 +92,9 @@ F = {
     _Par_pre = function (me)
         me.lbls_in  = {}
         for i, sub in ipairs(me) do
-            me.lbls_in[i] = new{me.tag..'_sub_'..i}
+            if i > 1 then
+                me.lbls_in[i] = new{me.tag..'_sub_'..i}
+            end
         end
     end,
     ParEver_pre = function (me)
@@ -118,6 +130,14 @@ F = {
     EmitT = function (me)
         me.lbl_cnt = new{'Async_cont'}
     end,
+    EmitInt = function (me)
+        me.lbl_cnt = new{'EmitInt_cont'}
+    end,
+    Dcl_var = function (me)
+        if me.var.cls then
+            me.lbl_cnt = new{'Start_cnt'}
+        end
+    end,
 
     AwaitS = function (me)
         me.lbl = new{'Awake_MANY'}
@@ -130,6 +150,15 @@ F = {
         me.lbl = new{'Awake_'..e.evt.id}
     end,
     AwaitInt = 'AwaitExt',
+
+    ParOr_pos = function (me)
+        if me.needs_clr then
+            me.lbl_clr = new{'Clear'}
+        end
+    end,
+    Block_pos    = 'ParOr_pos',
+    Loop_pos     = 'ParOr_pos',
+    SetBlock_pos = 'ParOr_pos',
 }
 
 _AST.visit(F)

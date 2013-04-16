@@ -196,10 +196,17 @@ STATS = {
 }
 ]])
 
-assert(STATS.count  ==    1148)
-assert(STATS.mem    ==   11635)
-assert(STATS.trails ==    2061)
-assert(STATS.bytes  == 6619072)
+assert(STATS.count  ==    1162)
+assert(STATS.mem    ==   47159)
+assert(STATS.trails ==    3227)
+assert(STATS.bytes  == 6749132)
+
+-- TODO: antes de trail de 8 bytes
+--assert(STATS.count  ==    1157)
+--assert(STATS.mem    ==   14177)
+--assert(STATS.trails ==    2082)
+--assert(STATS.bytes  == 7610546)
+
 --[[
 STATS = {
     mem   = BIG,  -- ints 1 byte  //  trlN

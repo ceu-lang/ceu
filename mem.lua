@@ -40,9 +40,7 @@ F = {
                 local off
                 if cls.is_ifc then
                     -- off = IFC[org.cls][var.n]
-                    off = 'CEU.ifcs['
-                            ..'(*PTR_org(tceu_ncls*,org,'.._MEM.cls.idx_cls..'))'
-                            ..']['
+                    off = 'CEU.ifcs[((tceu_org*)org)->cls]['
                                 .._ENV.ifcs[var.id_ifc]
                             ..']'
                 else
@@ -69,27 +67,33 @@ F = {
     Dcl_cls_pre = function (me)
         me.mem = { off=0, max=0 }
 
--- TODO: class dependent (class meta instead of obj)
-        if _PROPS.has_news then
-            -- MUST BE 1st in class (see ceu_news_*)
-            _MEM.cls.idx_news = alloc(me.mem, _ENV.c.tceu_news_one.len)
-            _MEM.cls.idx_free = alloc(me.mem, 1)
-        end
+        -- cnt1 / cnt2
+        local off = alloc(me.mem, 2*_ENV.c.pointer.len)
+DBG('', string.format('%8s','cnt'), off, 2*_ENV.c.pointer.len)
 
+        -- cls id
         if _PROPS.has_ifcs then
-            local off = alloc(me.mem, _ENV.c.tceu_ncls.len) -- cls N
-            _MEM.cls.idx_cls = off          -- same off for all orgs
+            off = alloc(me.mem, _ENV.c.tceu_ncls.len)
 DBG('', string.format('%8s','cls'), off, _ENV.c.tceu_ncls.len)
         end
 
-        if _PROPS.has_orgs then
-            _MEM.cls.idx_trailN = alloc(me.mem, 1)
+        -- is* flags
+        if _PROPS.has_news then
+            off = alloc(me.mem, 1)
+DBG('', string.format('%8s','free'), off, 1)
         end
-        me.mem.trail0 = alloc(me.mem, me.ns.trails*_ENV.c.tceu_trail.len,
-                                      _ENV.c.tceu_trail.len)
-        _MEM.cls.idx_trail0 = me.mem.trail0 -- same off for all orgs
-DBG('', string.format('%8s','trl0'), me.mem.trail0,
-                                     me.ns.trails*_ENV.c.tceu_trail.len)
+
+        -- n trails
+        if _PROPS.has_orgs then
+            -- TODO: disappear with metadata
+            off = alloc(me.mem, 1)
+DBG('', string.format('%8s','trlN'), off, 1, '('..me.ns.trails..')')
+        end
+
+        -- Class_Main also uses this
+        off = alloc(me.mem, me.ns.trails*_ENV.c.tceu_trl.len,
+                                         _ENV.c.tceu_trl.len)
+DBG('', string.format('%8s','trls'), off, me.ns.trails*_ENV.c.tceu_trl.len)
     end,
     Dcl_cls = function (me)
 DBG('===', me.id)
@@ -136,20 +140,13 @@ DBG('', 'glb', '{'..table.concat(glb,',')..'}')
         me.off_fins = alloc(cls.mem,
                                 (me.fins and #me.fins) or 0)
 
-        if me.has_news then
-            me.off_news = alloc(cls.mem, _ENV.c.tceu_news_blk.len)
-        end
-
         for _, var in ipairs(me.vars) do
             local len
-            --if var.isTmp or var.isEvt then
---
-            if var.isTmp then
+            if var.isTmp or var.isEvt then  --
+            --if var.isTmp then --
                 len = 0
---
-            elseif var.isEvt then
---
-                len = 1
+            --elseif var.isEvt then --
+                --len = 1   --
             elseif var.cls then
                 len = (var.arr or 1) * var.cls.mem.max
             elseif var.arr then
@@ -169,20 +166,16 @@ DBG('', 'glb', '{'..table.concat(glb,',')..'}')
         local sorted = { unpack(me.vars) }
         table.sort(sorted, pred_sort)
         for _, var in ipairs(sorted) do
---
-            --if not var.isEvt then
+            if not var.isEvt then --
                 var.off = alloc(mem, var.len)
 DBG('', string.format('%8s',var.id), var.off,
                                      var.isTmp and '*' or var.len)
-            --end
---
+            end --
         end
---
-        _MEM.evt_off = MAX(_MEM.evt_off, mem.off)
+        --_MEM.evt_off = MAX(_MEM.evt_off, mem.off)   --
 
         -- events fill the gaps between variables
         -- we use offsets for events because of interfaces
---[[
         local off = 0
         local i   = 1
         local var = sorted[i]
@@ -202,6 +195,7 @@ DBG('', string.format('%8s',var.id), var.off,
 DBG('', string.format('%8s',var.id), var.off, var.len)
             end
         end
+--[[
 ]]
 
         me.max = mem.off

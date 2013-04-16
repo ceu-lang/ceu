@@ -149,23 +149,9 @@ do
     end
 
     tpl = sub(tpl, '=== CEU_NMEM ===',     _AST.root.mem.max)
-    tpl = sub(tpl, '=== CEU_NTRAILS ===',  _AST.root.ns.trails)
+    tpl = sub(tpl, '=== CEU_NTRAILS ===',  _MAIN.ns.trails)
 
     tpl = sub(tpl, '=== TCEU_NLBL ===',    's'..tps[_ENV.c.tceu_nlbl.len])
-
-    if _PROPS.has_orgs then
---[[
-        if _PROPS.has_news then
-            tpl = sub(tpl, '=== CEU_CLS_NEWS_PRV ===',  _MEM.cls.idx_news_prv)
-            tpl = sub(tpl, '=== CEU_CLS_NEWS_NXT ===',  _MEM.cls.idx_news_nxt)
-        end
-]]
-        if _PROPS.has_news then
-            tpl = sub(tpl, '=== CEU_CLS_FREE ===',   _MEM.cls.idx_free)
-        end
-        tpl = sub(tpl, '=== CEU_CLS_TRAILN ===', _MEM.cls.idx_trailN)
-    end
-    tpl = sub(tpl, '=== CEU_CLS_TRAIL0 ===',  _MEM.cls.idx_trail0)
 
     tpl = sub(tpl, '=== LABELS_ENUM ===', _LBLS.code_enum)
 
@@ -207,6 +193,10 @@ do
     local t = {}
     --local ins  = 0
     local outs = 0
+
+    -- TODO
+    str = str..'#define IN__NONE 0\n'
+
     for i, evt in ipairs(_ENV.exts) do
         if evt.pre == 'input' then
             str = str..'#define IN_'..evt.id..' '

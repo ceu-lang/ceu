@@ -13,90 +13,6 @@
 --[===[
 
 Test { [[
-input void START;
-
-C _V, _assert();
-C do
-    #include <assert.h>
-    int V = 0;
-end
-
-interface Global with
-    event void e;
-end
-
-event void e;
-
-class T with
-do
-    await START;
-    emit global:e; // TODO: must also check if org trail is active
-    _V = 1;
-    _assert(0);
-end
-
-par/or do
-    await global:e;
-    _V = 2;
-with
-    var T t;
-    await FOREVER;
-end
-
-return _V;
-]],
-    todo = 'orgs cant kill themselves',
-    run = 2,
-}
-Test { [[
-input void START;
-
-C _V, _assert();
-C do
-    #include <assert.h>
-    int V = 0;
-end
-
-interface Global with
-    event void e;
-end
-
-class T with
-do
-    emit global:e; // TODO: must also check if org trail is active
-    _V = 1;
-    _assert(0);
-end
-
-event void e;
-
-par/or do
-    await global:e;
-    _V = 2;
-with
-    await START;
-    do
-        var T t;
-        await FOREVER;
-    end
-end
-return _V;
-]],
-    todo = 'orgs cant kill themselves',
-    run = 2;
-}
-
-Test { [[
-var int a=10;
-do
-    var int b=1;
-end
-return a;
-]],
-    run = 10,
-}
-
-Test { [[
 input void A, B, Z;
 event void a;
 var int ret = 1;
@@ -172,11 +88,23 @@ return _V;
 }
 
 error 'testar pause/if org.e'
+error 'testar new/spawn que se mata'
 
 do return end
 --]===]
 
+
 -- OK: under tests but supposed to work
+
+Test { [[
+var int a=10;
+do
+    var int b=1;
+end
+return a;
+]],
+    run = 10,
+}
 
 --do return end
 
@@ -912,8 +840,8 @@ C do
         return v.a - v.b;
     }
     #define ceu_out_event_B(c) Fb(c)
-    int Fb (int* data) {
-        return *data - 1;
+    int Fb (int data) {
+        return data - 1;
     }
 end
 C _t = 8;
@@ -1156,6 +1084,87 @@ return 0;
         unreachs = 2,
         isForever = true,
     },
+}
+
+Test { [[
+var int ret;
+par/or do
+    ret = 1;
+with
+    ret = 2;
+end
+return ret;
+]],
+    ana = {
+        acc = 1,
+    },
+    run = 1,
+}
+
+Test { [[
+var int ret;
+par/or do
+    await FOREVER;
+with
+    ret = 2;
+end
+return ret;
+]],
+    run = 2,
+}
+
+Test { [[
+var int ret;
+par/or do
+    par/or do
+        await FOREVER;
+    with
+        ret = 1;
+    end
+with
+    ret = 2;
+end
+return ret;
+]],
+    ana = {
+        acc = 1,
+    },
+    run = 1,
+}
+
+Test { [[
+var int ret;
+par/or do
+    ret = 2;
+with
+    par/or do
+        await FOREVER;
+    with
+        ret = 1;
+    end
+end
+return ret;
+]],
+    ana = {
+        acc = 1,
+    },
+    run = 2,
+}
+
+Test { [[
+var int ret;
+par/or do
+    await FOREVER;
+with
+    par/or do
+        await FOREVER;
+    with
+        ret = 1;
+    end
+end
+return ret;
+]],
+    run = 1,
 }
 
 Test { [[
@@ -9980,6 +9989,27 @@ end;
 }
 
 Test { [[
+input int A,Z;
+var int ret = 0;
+par/or do
+    loop do
+        par/and do
+        with
+            await A;
+        end;
+        ret = ret + 1;
+    end;
+with
+    await Z;
+end;
+return ret;
+]],
+    ana = {
+        unreachs = 1,
+    },
+    run = { ['~>A;~>A;~>Z']=2 },
+}
+Test { [[
 input int A,Z,D;
 var int b;
 par/or do
@@ -12829,7 +12859,7 @@ loop do
             await A;
             finalize with
                 ret = ret + 1;
-    end
+            end
         end;
         return 0;
     with
@@ -13071,23 +13101,50 @@ return ret;
 }
 
 Test { [[
+input void START;
+await START;
+par/or do
+    await START;
+with
+    await START;
+end
+return 1;
+]],
+    run = 0,
+}
+
+Test { [[
+input void START;
+await START;
+do
+    finalize with
+        var int ret = 1;
+    end
+    await START;
+end
+return 1;
+]],
+    run = 0,
+}
+
+Test { [[
 input void A,B;
 var int ret = 0;
 loop do
     do
         finalize with
             ret = ret + 4;
-    end
+        end
         par/or do
             do
                 finalize with
                     ret = ret + 3;
-    end
+                end
                 await B;
                 do
                     finalize with
                         ret = ret + 2;
-    end
+                    end
                     var int a;
                     await B;
                     ret = ret + 1;
@@ -13101,7 +13158,11 @@ loop do
 end
 return ret;
 ]],
-    run = { ['~>A']=7 , ['~>B;~>B;~>A']=17, ['~>B;~>A']=9 },
+    run = {
+        ['~>A']         =  7,
+        ['~>B;~>B;~>A'] = 17,
+        ['~>B;~>A']     =  9,
+    },
 }
 
 Test { [[
@@ -16446,8 +16507,6 @@ par/or do
         emit a=v;
     end
 with
-C nohold _fprintf(), _stderr;
-_fprintf(_stderr, "3\n");
 
     pause/if a do
         pause/if a do
@@ -16768,10 +16827,12 @@ end
 C do
     int V = sizeof(CLS_T);
 end
+
 C _V;
 var T t;
 return _V;
 ]],
+    todo = 'recalculate',
     run = 8,    -- 2/2 (trl0) 0 (x) 4 (y)
 }
 
@@ -16788,6 +16849,7 @@ end
 C _V;
 return _V;
 ]],
+    todo = 'recalculate',
     run = 8,
 }
 
@@ -16806,6 +16868,7 @@ end
 C _V;
 return _V;
 ]],
+    todo = 'recalculate',
     run = 8,   -- 1/1 cls / 2 trl / 0 x / 4 v
 }
 
@@ -16994,6 +17057,21 @@ return a.v;
 }
 
 Test { [[
+input void START;
+class T with
+    var int v;
+do
+    await FOREVER;
+end
+var T a;
+a.v = 5;
+await START;
+return a.v;
+]],
+    run = 5,
+}
+
+Test { [[
 class T with
     var int v;
 do
@@ -17079,6 +17157,29 @@ return _V;
 }
 
 Test { [[
+class J with
+do
+end
+
+class T with
+do
+    var J j;
+    await FOREVER;
+end
+
+input void START;
+event void a;
+
+var T t1;
+var T t2;
+emit a;
+await START;
+return 1;
+]],
+    run = 1;
+}
+
+Test { [[
 C _V;
 C do
     int V = 1;
@@ -17109,7 +17210,6 @@ return _V;
 ]],
     run = 345;
 }
-
 Test { [[
 var int a=8;
 do
@@ -18059,7 +18159,7 @@ end
 return ret;
 ]],
     ana = {
-        acc = 1,
+        --acc = 1,  -- TODO
     },
     run = { ['~>5s;~>F'] = 5 },
 }
@@ -18078,7 +18178,7 @@ a.v = 2;
 return a.v;
 ]],
     ana = {
-        acc = 2,
+        --acc = 2,    -- TODO
     },
     run = { ['~>A']=2 },
 }
@@ -18106,7 +18206,7 @@ with
 end
 ]],
     ana = {
-        acc = 2,
+        --acc = 2,      -- TODO
         reachs = 1,
     },
 }
@@ -18341,7 +18441,7 @@ end
 return ts[0].a + ts[1].a;
 ]],
     ana = {
-        acc = 5,
+        acc = 1,  -- TODO=5?
     },
     run = 30,
 }
@@ -18363,7 +18463,7 @@ end
 return ts[0].a + ts[1].a;
 ]],
     ana = {
-        acc = 5,
+        acc = 1,    -- TODO: 5?
     },
     run = 30,
 }
@@ -18385,7 +18485,7 @@ end
 return t1.a + t2.a;
 ]],
     ana = {
-        acc = 8,
+        --acc = 8,      -- TODO
     },
     run = 30,
 }
@@ -18407,7 +18507,7 @@ end
 return t1.a + t2.a;
 ]],
     ana = {
-        acc = 8,
+        --acc = 8,  -- TODO
     },
     run = 30,
 }
@@ -18432,7 +18532,8 @@ end
 return 10;
 ]],
     ana = {
-        acc = 6,    -- TODO: not checked
+        acc = 2,
+        --acc = 6,    -- TODO: not checked
     },
     run = 10,
 }
@@ -18457,7 +18558,8 @@ end
 return 10;
 ]],
     ana = {
-        acc = 9,
+        acc = 1,
+        --acc = 9,  -- TODO
     },
     run = 10,
 }
@@ -18635,11 +18737,69 @@ return aa.aa;
 }
 
 Test { [[
+input void START;
+
+C _inc(), _V;
+C do
+    int V = 0;
+    void inc() { V++; }
+end
+
+_inc();
+event void x;
+emit x;
+await START;
+return _V;
+]],
+    run = 1,
+}
+
+Test { [[
     input void START;
 class T with
     event int a, ok, go, b;
     var int aa, bb;
 do
+
+    par/and do
+        await a;
+        emit b;
+    with
+        await b;
+    end
+    aa = 5;
+    bb = 4;
+    emit ok;
+end
+var T aa;
+
+C _inc(), _V;
+C do
+    int V = 0;
+    void inc() { V++; }
+end
+
+_inc();
+par/or do
+    await aa.ok;
+    _V = _V+1;
+with
+    await START;
+    emit aa.a;
+    _V = _V+2;
+end
+return _V + aa.aa + aa.bb;
+]],
+    run = 11,
+}
+
+Test { [[
+    input void START;
+class T with
+    event int a, ok, go, b;
+    var int aa, bb;
+do
+
     par/and do
         await a;
         emit b;
@@ -18654,10 +18814,10 @@ var T aa;
 
 var int ret;
 par/or do
-        await aa.ok;
+    await aa.ok;
     ret = 1;
 with
-        await START;
+    await START;
     emit aa.a;
     ret = 2;
 end
@@ -18682,6 +18842,7 @@ end
 var T a1, a2;
 var int ret = 0;
 await START;
+
 par/or do
     par/and do
         a1.ee = 1;
@@ -18701,7 +18862,7 @@ end
 return ret;
 ]],
     ana = {
-        acc = 1,
+        --acc = 1,
     },
     run = { ['~>1s']=1 },
 }
@@ -18774,7 +18935,7 @@ end
 return ret + ptr:v + a.v;
 ]],
     ana = {
-        acc = 3,
+        --acc = 3,
     },
     run = { ['~>B']=203, }
 }
@@ -18829,7 +18990,8 @@ end
 return ret + ts[0].v + ts[1].v;
 ]],
     ana = {
-        acc = 47,     -- TODO: not checked
+        --acc = 47,     -- TODO: not checked
+        acc = 8,
     },
     run = { ['~>B']=206, }
 }
@@ -18901,7 +19063,8 @@ end
 return ret + ts[0].v + ts[1].v;
 ]],
     ana = {
-        acc = 13,     -- TODO: not checked
+        acc = 4,
+        --acc = 13,     -- TODO: not checked
     },
     run = { ['~>1s']=205, }
 }
@@ -19157,6 +19320,258 @@ return ret + _V;        // * reads after
     }
 }
 
+-- KILL THEMSELVES
+
+Test { [[
+input void START;
+
+interface Global with
+    event void e;
+end
+
+event void e;
+
+class T with
+do
+    await START;
+    emit global:e; // TODO: must also check if org trail is active
+    C _assert();
+    _assert(0);
+end
+
+do
+    var T t;
+    await e;
+end
+return 2;
+]],
+    run = 2,
+}
+Test { [[
+input void START;
+
+C _V, _assert();
+C do
+    #include <assert.h>
+    int V = 0;
+end
+
+interface Global with
+    event void e;
+end
+
+event void e;
+
+class T with
+do
+    await START;
+    emit global:e; // TODO: must also check if org trail is active
+    _V = 1;
+    _assert(0);
+end
+
+par/or do
+    await global:e;
+    _V = 2;
+with
+    var T t;
+    await FOREVER;
+end
+
+return _V;
+]],
+    run = 2,
+}
+
+Test { [[
+input void START;
+
+C _V, _assert();
+C do
+    #include <assert.h>
+    int V = 0;
+end
+
+interface Global with
+    event void e;
+end
+
+class T with
+do
+    emit global:e; // TODO: must also check if org trail is active
+    _V = 1;
+    _assert(0);
+end
+
+event void e;
+
+par/or do
+    await global:e;
+    _V = 2;
+with
+    await START;
+    do
+        var T t;
+        await FOREVER;
+    end
+end
+return _V;
+]],
+    run = 2;
+}
+
+Test { [[
+input void START;
+
+C _V, _assert();
+C do
+    #include <assert.h>
+    int V = 0;
+end
+
+interface Global with
+    event void e;
+end
+
+class T with
+do
+    emit global:e; // TODO: must also check if org trail is active
+    _assert(0);
+    _V = 1;
+    _assert(0);
+end
+
+event void e;
+
+par/or do
+    await global:e;
+    _V = 2;
+with
+    await START;
+    do
+        var T t;
+        _assert(0);
+        await FOREVER;
+    end
+end
+return _V;
+]],
+    run = 2;
+}
+
+Test { [[
+input void START;
+
+C _X,_V, _assert();
+C do
+    #include <assert.h>
+    int V = 0;
+    int X = 0;
+end
+
+interface Global with
+    event void e;
+end
+
+class T with
+do
+    _assert(_X==0); // second T does not execute
+    _X = _X + 1;
+    emit global:e;
+    _assert(0);
+    _V = 1;
+    _assert(0);
+end
+
+event void e;
+
+par/or do
+    await global:e;
+    _V = 2;
+with
+    await START;
+    do
+        var T[2] t;
+        _assert(0);
+        await FOREVER;
+    end
+end
+return _V+_X;
+]],
+    run = 3;
+}
+
+Test { [[
+input void START;
+
+C _V, _assert();
+C do
+    #include <assert.h>
+    int V = 0;
+end
+
+class T with
+    var int x;
+    event void ok;
+do
+    await START;
+    emit  ok;
+    _assert(0);
+end
+
+var int ret=0;
+do
+    var T t with
+        this.x = 10;
+    end;
+    await t.ok;
+    ret = t.x;
+end
+return ret;
+]],
+    run = 10;
+}
+
+Test { [[
+input void START;
+
+C _V, _assert();
+C do
+    #include <assert.h>
+    int V = 0;
+end
+
+class T with
+    var int x;
+    event void ok;
+do
+    await START;
+    emit  ok;
+    _assert(0);
+end
+
+class U with
+    var int x;
+    event void ok;
+do
+    await START;
+    _assert(0);
+    emit  ok;
+end
+
+var int ret=0;
+do
+    var T t with
+        this.x = 10;
+    end;
+    var T u;
+    await t.ok;
+    ret = t.x;
+end
+return ret;
+]],
+    run = 10;
+}
 -- NEW / FREE
 
 Test { [[
@@ -19366,6 +19781,115 @@ return t:b;
     run = 20,
 }
 
+Test { [[
+C _V;
+C do
+    int V=0;
+end
+input void START;
+class T with
+do
+    par/or do
+    with
+    end
+    _V = _V + 1;
+    await START;
+    _V = _V + 1;
+end
+var T* t1 = new T;
+var T* t2 = new T;
+await START;
+return _V;
+]],
+    run = 4,
+}
+
+-- FREE
+
+Test { [[
+class T with do end
+var T* a = null;
+free a;
+return 10;
+]],
+    run = 10,
+}
+
+Test { [[
+class T with do end
+var T* a = new T;
+free a;
+return 10;
+]],
+    run = 10,
+}
+
+Test { [[
+class T with do end
+var T* a = new T;
+free a;
+var T* b = new T;
+free b;
+return 10;
+]],
+    run = 10,
+}
+
+Test { [[
+class T with do end
+var T* a = new T;
+var T* b = new T;
+free a;
+free b;
+return 10;
+]],
+    run = 10,
+}
+
+Test { [[
+class T with do end
+var T* a = new T;
+var T* b = new T;
+free b;
+free a;
+return 10;
+]],
+    run = 10,
+}
+
+Test { [[
+C _V;
+C do
+    int V = 0;
+end
+class T with
+do
+    finalize with
+        _V = _V + 1;
+    end
+end
+
+var T* a = new T;
+var T* b = new T;
+free b;
+free a;
+return _V;
+]],
+    run = 2,
+}
+
+-- TODO: tests for `free´:
+-- remove from tracks
+-- invalid pointers
+Test { [[
+class T with do end
+var T a;
+free a;
+return 0;
+]],
+    env = 'ERR : line 3 : invalid `free´',
+}
+
 -- SPAWN
 
 Test { [[
@@ -19456,13 +19980,51 @@ end
 var u8 ok;
 C _assert();
 do
+    loop i, 5 do
+        ok = spawn T;
+    end
+end
+return ok;
+]],
+    loop = 1,
+    run = 1,
+}
+
+Test { [[
+class T with do
+    await FOREVER;
+end
+var u8 ok;
+C _assert();
+do
+    loop i, 100 do
+        ok = spawn T;
+    end
+    ok = spawn T;
+end
+return ok+1;
+]],
+    loop = 1,
+    run = 1,
+}
+
+Test { [[
+class T with do
+    await FOREVER;
+end
+var u8 ok;
+C _assert();
+do
     loop i, 100 do
         ok = spawn T;
     end
     _assert(ok == 1);
     ok = spawn T;
+    ok = spawn T;
     _assert(ok == 0);
 end
+C __ceu_dyns_;
+_assert(__ceu_dyns_ == 0);
 do
     loop i, 100 do
         ok = spawn T;
@@ -19534,82 +20096,7 @@ do
 end
 return _V;
 ]],
-    run = 1,
-}
-
--- FREE
-
-Test { [[
-class T with do end
-var T* a = null;
-free a;
-return 10;
-]],
     run = 10,
-}
-
-Test { [[
-class T with do end
-var T* a = new T;
-free a;
-return 10;
-]],
-    run = 10,
-}
-
-Test { [[
-class T with do end
-var T* a = new T;
-var T* b = new T;
-free a;
-free b;
-return 10;
-]],
-    run = 10,
-}
-
-Test { [[
-class T with do end
-var T* a = new T;
-var T* b = new T;
-free b;
-free a;
-return 10;
-]],
-    run = 10,
-}
-
-Test { [[
-C _V;
-C do
-    int V = 0;
-end
-class T with
-do
-    finalize with
-        _V = _V + 1;
-    end
-end
-
-var T* a = new T;
-var T* b = new T;
-free b;
-free a;
-return _V;
-]],
-    run = 2,
-}
-
--- TODO: tests for `free´:
--- remove from tracks
--- invalid pointers
-Test { [[
-class T with do end
-var T a;
-free a;
-return 0;
-]],
-    env = 'ERR : line 3 : invalid `free´',
 }
 
 Test { [[
@@ -19684,7 +20171,7 @@ end
 class T with
     var int v;
 do
-    finalize with   // does not enter
+    finalize with   // enters!
         _V = 10;
     end
     await FOREVER;
@@ -19703,7 +20190,7 @@ do
 end
 return _V;
 ]],
-    run = 1,
+    run = 10,
 }
 
 Test { [[
@@ -19746,7 +20233,7 @@ end
 class T with
     var int v;
 do
-    finalize with   // does not enter
+    finalize with   // enters!
         _V = 10;
     end
     await FOREVER;
@@ -19764,7 +20251,7 @@ do
 end
 return _V;
 ]],
-    run = 5,
+    run = 10,
 }
 Test { [[
 input void START;
@@ -20007,7 +20494,8 @@ end
 class T with
     var U u;
 do
-    u.v = new V;
+    //u.v = new V;
+    var V* v = new V;
     await FOREVER;
 end
 
@@ -20046,7 +20534,8 @@ end
 class T with
     var U u;
 do
-    u.v = new V;
+    //u.v = new V;
+    var V* v = new V;
     await FOREVER;
 end
 
@@ -20056,48 +20545,27 @@ end
 
 return _V;
 ]],
-    run = 1,
+    run = 3,
 }
 
 Test { [[
 input void START;
-C _f(), _V;
-C do
-    int V = 1;
-    int* f (){ return NULL; }
-end
 
 class V with
 do
-    var int* v;
-    finalize
-        v = _f();
-    with
-        _V = _V+1;
-    end
-    await FOREVER;
 end
 
 class U with
-    var V* v;
 do
     var V* vv = new V;
-    await FOREVER;
 end
 
-class T with
-    var U u;
-do
-    u.v = new V;
-    await FOREVER;
-end
 
-do
-    var T t;
-    await START;
-end
+var U t;
+await START;
 
-return _V;
+C nohold _tceu_trl, _tceu_trl_, _sizeof();
+return 2;
 ]],
     run = 2,
 }
@@ -20131,7 +20599,52 @@ end
 class T with
     var U u;
 do
-    u.v = new V;
+    //u.v = new V;
+    var V* v = new V;
+    await FOREVER;
+end
+
+do
+    var T t;
+    await START;
+end
+
+return _V;
+]],
+    run = 3,
+}
+
+Test { [[
+input void START;
+C _f(), _V;
+C do
+    int V = 1;
+    int* f (){ return NULL; }
+end
+
+class V with
+do
+    var int* v;
+    finalize
+        v = _f();
+    with
+        _V = _V+1;
+    end
+    await FOREVER;
+end
+
+class U with
+    var V* v;
+do
+    var V* vv = new V;
+    await FOREVER;
+end
+
+class T with
+    var U u;
+do
+    //u.v = new V;
+    var V* v = new V;
     await FOREVER;
 end
 
@@ -20174,7 +20687,8 @@ end
 class T with
     var U u;
 do
-    u.v = new V;
+    //u.v = new V;
+    var V* v = new V;
     await FOREVER;
 end
 
@@ -20213,6 +20727,104 @@ return 1;
 }
 
 Test { [[
+class V with
+do
+end
+
+input void START;
+class U with
+    var V* v;
+    event void x;
+do
+    loop do
+        await x;
+        v = new V;
+        break;
+    end
+end
+
+class T with
+    var U* u;
+do
+    await START;
+    //u:v = new V;
+    emit u:x;
+end
+
+do
+    var U u;
+    var T t;
+        t.u = &u;
+    await START;
+end
+
+return 10;
+]],
+    run = 10,
+}
+Test { [[
+class V with
+do
+end
+
+input void START;
+class U with
+    var V* v;
+do
+end
+
+class T with
+    var U* u;
+do
+    await START;
+    u:v = new V;
+end
+
+do
+    var U u;
+    var T t;
+        t.u = &u;
+    await START;
+end
+
+return 10;
+]],
+    --run = 10,
+    env = 'ERR : line 15 : invalid attribution',
+}
+Test { [[
+class V with
+do
+end
+
+input void A, START;
+class U with
+    var V* v;
+do
+    await A;
+end
+
+class T with
+    var U* u;
+do
+    await START;
+    u:v = new V;
+end
+
+do
+    var U u;
+    var T t;
+        t.u = &u;
+    await START;
+end
+
+return 10;
+]],
+    --run = { ['~>A']=10 },
+    env = 'ERR : line 16 : invalid attribution',
+}
+
+Test { [[
 C _V, _assert();
 C do
     int V = 1;
@@ -20238,7 +20850,7 @@ end
 
 do
     var U u;
-    do
+    do              // 26
         var T t;
         t.u = &u;
         await 2s;
@@ -20248,7 +20860,8 @@ end
 _assert(_V == 10);
 return _V;
 ]],
-    run = { ['~>2s']=10, }       -- TODO: stack change
+    --run = { ['~>2s']=10, }       -- TODO: stack change
+    env = 'ERR : line 21 : invalid attribution',
 }
 
 Test { [[
@@ -20302,12 +20915,12 @@ do
         if ptr != null then
             free ptr;
         end
-        ptr = new T;    // never starts
+        ptr = new T;
     end
     _assert(_X == 100 and _Y == 99);
 end
 
-_assert(_X == 100 and _Y == 99);
+_assert(_X == 100 and _Y == 100);
 return 10;
 ]],
     loop = true,
@@ -20393,6 +21006,8 @@ return t:v + ts[0]:v;
     run = 20,
 }
 
+DBG'TODO: recolocar pause p/ orgs'
+--[=[
 Test { [[
 input void START;
 input int A,B;
@@ -20473,7 +21088,6 @@ return ret;
     run = { ['~>A; ~>X; ~>A']=12 }
 }
 
---[=[
 -- TODO pause hierarquico dentro de um org
 -- SDL/samples/sdl4.ceu
 ]=]
@@ -21502,7 +22116,7 @@ end
 ]],
     ana = {
         isForever = true,
-        acc = 4,
+        --acc = 4,
     },
     awaits = 1,
     run = 6,
@@ -21676,6 +22290,7 @@ return 1;
     env = 'ERR : line 3 : event "f" is not declared',
 }
 
+--[=[
 Test { [[
 event void e;
 event int f;
@@ -21743,6 +22358,7 @@ return i+1;
 ]],
     run = {['~>10ms']=1},
 }
+]=]
 
 --do return end
 

@@ -49,6 +49,10 @@ F = {
         end
     end,
 
+    EmitInt = function (me)
+        VARS = {}   -- NO: run in different ceu_call
+    end,
+
     Loop_pre = function (me)
         if (me.noAwts and (not _AST.iter'Async'())) or
             me.isAwaitUntil then

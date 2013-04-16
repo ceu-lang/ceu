@@ -30,10 +30,7 @@ _ENV = {
         tceu_ncls = true,    -- env.lua
 
         tceu_nlbl  = true,    -- labels.lua
-        tceu_trail = true,    -- labels.lua (TODO: remove this type?)
-
-        tceu_news_one = 2*_OPTS.tp_pointer,
-        tceu_news_blk = 4*_OPTS.tp_pointer,
+        tceu_trl = true,    -- labels.lua (TODO: remove this type?)
     },
     dets  = {},
 }
@@ -165,11 +162,22 @@ end
 
 F = {
     Root_pre = function (me)
-        local evt = {id='_FIN', pre='input'}
+        -- TODO: NONE=0
+
+        local evt = {id='_ANY', pre='input'}
         _ENV.exts[#_ENV.exts+1] = evt
         _ENV.exts[evt.id] = evt
 
-        local evt = {id='_ON', pre='input'}
+        -- TODO: shared with _INIT?
+        local evt = {id='_ORG', pre='input'}
+        _ENV.exts[#_ENV.exts+1] = evt
+        _ENV.exts[evt.id] = evt
+
+        local evt = {id='_INIT', pre='input'}
+        _ENV.exts[#_ENV.exts+1] = evt
+        _ENV.exts[evt.id] = evt
+
+        local evt = {id='_CLR', pre='input'}
         _ENV.exts[#_ENV.exts+1] = evt
         _ENV.exts[evt.id] = evt
 
@@ -212,6 +220,7 @@ F = {
             end
         end
     end,
+--[=[
     Block = function (me)
         local orgs
 
@@ -230,10 +239,11 @@ F = {
             end
         end
         if orgs then
-             -- awake blk first, then orgs
-            me[1] = _AST.node('ParOr')(me.ln, me[1], orgs)
+             -- awakes orgs first, then blk
+            me[1] = _AST.node('ParOr')(me.ln, orgs, me[1])
         end
     end,
+]=]
 
     Dcl_cls_pre = function (me)
         local ifc, id, blk = unpack(me)
@@ -547,9 +557,11 @@ F = {
     SetNew = function (me)
         local exp, id_cls = unpack(me)
 
-        F.Spawn(me, id_cls, exp.ref.var.blk)
+        F.Spawn(me, id_cls, exp.ref.var.blk)    -- also sets me.cls
 
-        ASR(exp.lval and _TP.contains(exp.tp,me.cls.id..'*'),
+        ASR(exp.lval and _TP.contains(exp.tp,me.cls.id..'*')
+                         -- refuses (x.ptr = new T;)
+                     and _AST.isChild(CLS(),exp.ref.var.blk),
                 me, 'invalid attribution')
     end,
 
