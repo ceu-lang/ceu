@@ -53,8 +53,8 @@ Test = function (t)
 
     if not check('parser')   then return end
     if not check('ast')      then return end
-    if not check('env')      then return end
     --_AST.dump(_AST.root)
+    if not check('env')      then return end
     dofile 'ana.lua'
     dofile 'acc.lua'
     if not check('tight')    then return end
@@ -196,16 +196,16 @@ STATS = {
 }
 ]])
 
-assert(STATS.count  ==    1165)
-assert(STATS.mem    ==   47351)
-assert(STATS.trails ==    3243)
-assert(STATS.bytes  == 6694686)
+assert(STATS.count  ==    1167)
+assert(STATS.mem    ==   47781)
+assert(STATS.trails ==    3278)
+assert(STATS.bytes  == 6944297)
 
 --[[
 -- TIME:
-real	2m18.379s
-user	1m34.206s
-sys	0m21.041s
+real	2m39.895s
+user	1m40.514s
+sys	0m21.805s
 ]]
 
 -- TODO: antes de trail de 8 bytes

@@ -259,6 +259,26 @@ void ceu_org_init (tceu_org* org, int n, tceu_nlbl lbl)
 
 /**********************************************************************/
 
+void ceu_pause (tceu_trl* trl, tceu_trl* trlF, int psed) {
+    int n;
+
+    do {
+        if (psed) {
+            if (trl->evt == IN__ORG)
+                trl->evt = IN__ORG_PSED;
+        } else {
+            if (trl->evt == IN__ORG_PSED)
+                trl->evt = IN__ORG;
+        }
+    } while (trl++ <= trlF);
+
+    if (!psed) {
+        ceu_go_wclock(0);   // TODO: hack
+    }
+}
+
+/**********************************************************************/
+
 void ceu_go_init ()
 {
 #ifdef CEU_DEBUG
@@ -505,7 +525,9 @@ else
 fprintf(stderr, "\tTRY: evt=%d stk=%d lbl=%d\n", trl->evt, trl->stk, trl->lbl);
 #endif
 #ifdef CEU_ORGS
-                if (trl->evt == IN__ORG) {
+                if ( trl->evt == IN__ORG
+                ||   (trl->evt==IN__ORG_PSED && _ceu_evt_.id==IN__CLR)
+                ) {
 #ifdef CEU_DEBUG
                     assert(trl->org != NULL);
 #endif

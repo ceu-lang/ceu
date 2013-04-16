@@ -107,7 +107,7 @@ function _AST.dump (me, spc)
     for k in pairs(me.ana.pos) do t[#t+1]=f(k) end
     ks = ks..'['..table.concat(t,',')..']'
 ]]
-    ks = me.ns.trails..' / '..tostring(me.needs_clr)
+    --ks = me.ns.trails..' / '..tostring(me.needs_clr)
     DBG(string.rep(' ',spc)..me.tag..' ('..me.ln..') '..ks)
     for i, sub in ipairs(me) do
         if _AST.isNode(sub) then
@@ -227,7 +227,10 @@ local C; C = {
         nxt_i.read_only = true
 
         if not _j then
-            local n = node('Loop')(ln,blk)
+            local n = node('Loop')(ln,
+                        node('Stmts')(ln,
+                            blk,
+                            nxt_i))
             n.blk = blk     -- continue
             return node('Block')(ln,
                     node('Stmts')(ln, dcl_i, set_i, n))
@@ -273,6 +276,11 @@ local C; C = {
         local PSE = node('Pause')(ln, blk)
         PSE.dcl = cur_dcl
 
+        local on  = node('PauseX')(ln, 1)
+            on.blk  = PSE
+        local off = node('PauseX')(ln, 0)
+            off.blk = PSE
+
         return
             node('Block')(ln,
                 node('Stmts')(ln,
@@ -289,18 +297,19 @@ local C; C = {
                                     false),
                                 node('If')(ln,
                                     node('Var')(ln, cur_id),
-                                    node('Nothing')(ln),
-                                    node('Host_raw')(ln,
-                                        'ceu_go_wclock(0);')))),
+                                    on,
+                                    off))),
                         PSE)))
     end,
 --[=[
-        var u8 cur = 0;
+        var u8 psed? = 0;
         par/or do
             loop do
-                cur = await <evt>;
-                if not cur then  // update CEU.wclk_min (TODO: better way?)
-                    ceu_go_wclocks(0);
+                psed? = await <evt>;
+                if psed? then
+                    PauseOff()
+                else
+                    PauseOn()
                 end
             end
         with

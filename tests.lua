@@ -91,7 +91,6 @@ error 'testar pause/if org.e'
 error 'testar new/spawn que se mata'
 
 do return end
---]===]
 
 -- OK: under tests but supposed to work
 
@@ -126,6 +125,7 @@ return a;
 }
 
 --do return end
+--]===]
 
 -- OK: well tested
 
@@ -21025,8 +21025,6 @@ return t:v + ts[0]:v;
     run = 20,
 }
 
-DBG'TODO: recolocar pause p/ orgs'
---[=[
 Test { [[
 input void START;
 input int A,B;
@@ -21102,14 +21100,94 @@ return ret;
 ]],
     ana = {
         reachs = 1,
-        acc = 3,
+        --acc = 3,  -- TODO
     },
     run = { ['~>A; ~>X; ~>A']=12 }
 }
 
+Test { [[
+C _V;
+C do
+    int V = 0;
+end
+
+class T with
+    var int c;
+do
+    finalize with
+        _V = _V + c;
+    end
+    await FOREVER;
+end
+
+par/or do
+    do
+        loop i do
+C nohold _fprintf(), _stderr;
+            spawn T with
+_fprintf(_stderr, "i=%d\n", i);
+                this.c = i;
+            end;
+            await 1s;
+        end
+    end
+with
+    await 5s;
+end
+
+return _V;
+]],
+    run = { ['~>5s']=15 },
+}
+
+Test { [[
+C _V;
+C do
+    int V = 0;
+end
+
+class T with
+    var int c;
+do
+    finalize with
+        _V = _V + c;
+    end
+    await FOREVER;
+end
+
+input int P;
+event int pse;
+
+par/or do
+    do
+        loop i do
+            pause/if pse do
+C nohold _fprintf(), _stderr;
+                spawn T with
+_fprintf(_stderr, "i=%d\n", i);
+                    this.c = i;
+                end;
+                await 1s;
+            end
+        end
+    end
+with
+    loop do
+        var int v = await P;
+        emit pse = v;
+_fprintf(_stderr, "v=%d\n", v);
+    end
+with
+    await 5s;
+end
+
+return _V;
+]],
+    run = { ['~>2s;1~>P;~>2s;0~>P;~>1s']=6 },
+}
+
 -- TODO pause hierarquico dentro de um org
 -- SDL/samples/sdl4.ceu
-]=]
 
 -- INTERFACES / IFACES / IFCES
 

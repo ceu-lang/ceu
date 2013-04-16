@@ -154,7 +154,6 @@ F = {
     Stmts      = CONC_ALL,
     BlockI     = CONC_ALL,
     Dcl_constr = CONC_ALL,
-    Pause      = CONC_ALL,
 
     Root = function (me)
         for _, cls in ipairs(_ENV.clss_cls) do
@@ -208,24 +207,24 @@ if (CUR->toFree) {
     _ORG = function (me, t)
         LINE(me, [[
 #ifdef CEU_NEWS
-        ]]..t.val..[[->isDyn  = ]]..t.isDyn..[[;
-        ]]..t.val..[[->toFree = ]]..t.toFree..[[;
+    ]]..t.val..[[->isDyn  = ]]..t.isDyn..[[;
+    ]]..t.val..[[->toFree = ]]..t.toFree..[[;
 #endif
 
-        // reset org memory and do org.trail[0]=Class_XXX
-        // links par <=> org
-        ceu_org_init(]]..t.val..[[, ]]
-                    ..t.cls.ns.trails..','
-                    ..t.cls.lbl.id..[[);
+    // reset org memory and do org.trail[0]=Class_XXX
+    // links par <=> org
+    ceu_org_init(]]..t.val..[[, ]]
+                ..t.cls.ns.trails..','
+                ..t.cls.lbl.id..[[);
 
-        // par <=> org
-        // link org with the next trail in the block
-        ]]..t.val..[[->par_org = ]]..t.par_org..[[;
-        ]]..t.val..[[->par_trl = ]]..t.par_trl..[[;
+    // par <=> org
+    // link org with the next trail in the block
+    ]]..t.val..[[->par_org = ]]..t.par_org..[[;
+    ]]..t.val..[[->par_trl = ]]..t.par_trl..[[;
 
-        // enables parent trail with IN__ORG (always awake from now on)
-        ]]..t.par_trl..[[->evt = IN__ORG;
-        ]]..t.par_trl..[[->org = ]]..t.val..[[;
+    // enables parent trail with IN__ORG (always awake from now on)
+    ]]..t.par_trl..[[->evt = IN__ORG;
+    ]]..t.par_trl..[[->org = ]]..t.val..[[;
 ]])
     end,
 
@@ -251,13 +250,14 @@ if (CUR->toFree) {
         int idx = ]]..me.var.trails[1]..[[ + i;
         tceu_org* org = PTR_org(tceu_org*,]]..VAL(var)..
                             ', i*'..var.cls.mem.max..[[);
+        tceu_trl* par_trl = &CUR->trls[idx];
 ]])
         F._ORG(me, {
             isDyn   = 0,
             toFree  = 0,
             cls     = var.cls,
             par_org = 'CUR',
-            par_trl = '(&CUR->trls[idx])',
+            par_trl = 'par_trl',
             val     = 'org',
         })
         LINE(me, [[
@@ -487,6 +487,16 @@ if (*PTR_cur(u8*,]]..(me.off_fins+i-1)..[[)) {
 _ceu_cur_.trl = &CUR->trls[ ]]..me.trails[1]..[[ ];
 ]])
         end
+    end,
+
+    Pause = CONC_ALL,
+    PauseX = function (me)
+        local psed = unpack(me)
+        LINE(me, [[
+ceu_pause(&CUR->trls[ ]]..me.blk.trails[1]..[[ ],
+          &CUR->trls[ ]]..me.blk.trails[2]..[[ ],
+        ]]..psed..[[);
+]])
     end,
 
     -- TODO: more tests
