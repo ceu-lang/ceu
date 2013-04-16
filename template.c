@@ -270,10 +270,11 @@ void ceu_pause (tceu_trl* trl, tceu_trl* trlF, int psed) {
             if (trl->evt == IN__ORG_PSED)
                 trl->evt = IN__ORG;
         }
-    } while (trl++ <= trlF);
+    } while (++trl <= trlF);
 
     if (!psed) {
-        ceu_go_wclock(0);   // TODO: hack
+        ceu_go_wclock(0);   // TODO: hack (recalculates MIN clock)
+                            // TODO: IN__WCLOCK=0 de trl => trlF
     }
 }
 
@@ -519,10 +520,11 @@ fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
 #ifdef CEU_DEBUG_TRAILS
 #ifdef CEU_ORGS
 if (trl->evt == IN__ORG)
-    fprintf(stderr, "\tTRY: evt=%d org=%p\n", trl->evt, trl->org);
+    fprintf(stderr, "\tTRY [%p] : evt=%d org=%p\n", trl, trl->evt, trl->org);
 else
 #endif
-fprintf(stderr, "\tTRY: evt=%d stk=%d lbl=%d\n", trl->evt, trl->stk, trl->lbl);
+fprintf(stderr, "\tTRY [%p] : evt=%d stk=%d lbl=%d\n", trl, trl->evt, trl->stk, 
+trl->lbl);
 #endif
 #ifdef CEU_ORGS
                 if ( trl->evt == IN__ORG

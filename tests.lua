@@ -21162,9 +21162,7 @@ par/or do
     do
         loop i do
             pause/if pse do
-C nohold _fprintf(), _stderr;
                 spawn T with
-_fprintf(_stderr, "i=%d\n", i);
                     this.c = i;
                 end;
                 await 1s;
@@ -21175,7 +21173,94 @@ with
     loop do
         var int v = await P;
         emit pse = v;
-_fprintf(_stderr, "v=%d\n", v);
+    end
+with
+    await 5s;
+end
+
+return _V;
+]],
+    run = { ['~>2s;1~>P;~>2s;0~>P;~>1s']=6 },
+}
+
+Test { [[
+C _V;
+C do
+    int V = 0;
+end
+
+class T with
+    var int c;
+do
+    finalize with
+        _V = _V + c;
+    end
+    await 5s;
+    _V = _V + 10;
+end
+
+input int P;
+event int pse;
+
+par/or do
+    do
+        loop i do
+            pause/if pse do
+                spawn T with
+                    this.c = i;
+                end;
+                await 1s;
+            end
+        end
+    end
+with
+    loop do
+        var int v = await P;
+        emit pse = v;
+    end
+with
+    await 5s;
+end
+
+return _V;
+]],
+    run = { ['~>2s;1~>P;~>2s;0~>P;~>1s']=16 },
+}
+
+Test { [[
+C _V;
+C do
+    int V = 0;
+end
+
+class T with
+    var int c;
+do
+    finalize with
+        _V = _V + c;
+    end
+    await 5s;
+    _V = _V + 10;
+end
+
+input int P;
+event int pse;
+
+par/or do
+    pause/if pse do
+        do
+            loop i do
+                spawn T with
+                    this.c = i;
+                end;
+                await 1s;
+            end
+        end
+    end
+with
+    loop do
+        var int v = await P;
+        emit pse = v;
     end
 with
     await 5s;
