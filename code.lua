@@ -204,6 +204,31 @@ if (CUR->toFree) {
         LINE(me, me[1])
     end,
 
+    -- TODO: real function?
+    _ORG = function (me, t)
+        LINE(me, [[
+#ifdef CEU_NEWS
+        ]]..t.val..[[->isDyn  = ]]..t.isDyn..[[;
+        ]]..t.val..[[->toFree = ]]..t.toFree..[[;
+#endif
+
+        // reset org memory and do org.trail[0]=Class_XXX
+        // links par <=> org
+        ceu_org_init(]]..t.val..[[, ]]
+                    ..t.cls.ns.trails..','
+                    ..t.cls.lbl.id..[[);
+
+        // par <=> org
+        // link org with the next trail in the block
+        ]]..t.val..[[->par_org = ]]..t.par_org..[[;
+        ]]..t.val..[[->par_trl = ]]..t.par_trl..[[;
+
+        // enables parent trail with IN__ORG (always awake from now on)
+        ]]..t.par_trl..[[->evt = IN__ORG;
+        ]]..t.par_trl..[[->org = ]]..t.val..[[;
+]])
+    end,
+
     Dcl_var = function (me)
         local _,_,_,_,constr = unpack(me)
         local var = me.var
@@ -226,25 +251,16 @@ if (CUR->toFree) {
         int idx = ]]..me.var.trails[1]..[[ + i;
         tceu_org* org = PTR_org(tceu_org*,]]..VAL(var)..
                             ', i*'..var.cls.mem.max..[[);
-#ifdef CEU_NEWS
-        org->isDyn  = 0;
-        org->toFree = 0;
-#endif
-
-        // reset org memory and do org.trail[0]=Class_XXX
-        // links par <=> org
-        ceu_org_init(org, ]]
-                    ..var.cls.ns.trails..','
-                    ..var.cls.lbl.id..[[);
-
-        // par <=> org
-        // link org with the next trail in the block
-        org->par_org = CUR;
-        org->par_trl = &CUR->trls[idx];
-
-        // enables parent trail with IN__ORG (always awake from now on)
-        CUR->trls[idx].evt = IN__ORG;
-        CUR->trls[idx].org = org;
+]])
+        F._ORG(me, {
+            isDyn   = 0,
+            toFree  = 0,
+            cls     = var.cls,
+            par_org = 'CUR',
+            par_trl = '(&CUR->trls[idx])',
+            val     = 'org',
+        })
+        LINE(me, [[
     }
 }
 
@@ -287,12 +303,14 @@ case ]]..me.lbl_cnt.id..[[:;
             LINE(me, '__ceu_'..me.n..' = (__ceu_org != NULL);') -- spw result
         end
 
+        t.val   = '__ceu_org'
+        t.isDyn = 1
+        t.par_org = 'par_org'
+        t.par_trl = 'par_trl'
+
         LINE(me, [[
     if (__ceu_org != NULL)
     {
-        __ceu_org->isDyn  = 1;
-        __ceu_org->toFree = ]]..t.toFree..[[;
-
         tceu_trl* par_trl = &CUR->trls[ ]]..t.par_blk.dyn_trails[1]..[[ ];
         tceu_org* par_org = CUR;
 
@@ -301,20 +319,8 @@ case ]]..me.lbl_cnt.id..[[:;
             par_trl = &par_org->trls[par_org->n - 1];
         }
 
-        // reset org memory and do org.trail[0]=Class_XXX
-        ceu_org_init(__ceu_org, ]]
-                    ..t.cls.ns.trails..','
-                    ..t.cls.lbl.id..[[);
-
-        // par <=> org
-        // link org with the next trail in the block
-        __ceu_org->par_org = par_org;
-        __ceu_org->par_trl = par_trl;
-
-        // enables parent trail with IN__ORG (always awake from now on)
-        par_trl->evt = IN__ORG;
-        par_trl->org = __ceu_org;
 ]])
+        F._ORG(me, t)
 
         if t.constr then
             CONC(me, t.constr)      -- constructor before executing
