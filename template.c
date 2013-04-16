@@ -68,18 +68,18 @@ typedef === TCEU_NOFF === tceu_noff;    // (x) number of clss x ifcs
 #define CEU_MAX_STACK   255     // TODO
 
 // TODO: 8 bytes!!!
-typedef struct {
+typedef union {
     tceu_nevt evt;
-    tceu_nlbl lbl;
-    u8        stk;
-    u8        _1;           // TODO
-    u32       _2;
+    struct {
+        tceu_nevt evt1;
+        tceu_nlbl lbl;
+        u8        stk;
+    };
+    struct {
+        tceu_nevt        evt2;
+        struct tceu_org* org;
+    };
 } tceu_trl;
-
-typedef struct {
-    tceu_nevt        evt;
-    struct tceu_org* org;
-} tceu_trl_;
 
 typedef struct {
     union {
@@ -218,23 +218,6 @@ void ceu_trails_set_wclock (s32* t, s32 dt) {
 }
 
 #endif  // CEU_WCLOCKS
-
-/*
-void ceu_trails_clr (int t1, int t2, void* org) {
-    int i;
-    for (i=t2; i>=t1; i--) {    // lst fins first
-        tceu_trl* trl = &PTR_org(tceu_trl*,org,CEU_CLS_TRAIL0)[i];
-#ifdef CEU_FINS
-        ceu_go(IN__CLR, NULL, trl->lbl, 0, org);
-#endif
-        trl->evt = IN__NONE;
-        trl->stk = 0;
-    }
-}
-#ifndef CEU_ORGS
-#define ceu_trails_clr(a,b,c) ceu_trails_clr(a,b,NULL)
-#endif
-*/
 
 /**********************************************************************/
 
@@ -475,18 +458,17 @@ fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
                             // re-link UP <-> DOWN
                             if (CUR->isDyn)
                             {
-                                tceu_trl_* down = (tceu_trl_*)
-                                                    &CUR->trls[CUR->n-1];
+                                tceu_trl* down = &CUR->trls[CUR->n-1];
 
                                 // HACK_1 (see code.lua)
                                 // test org!=NULL instead of evt==IN__ORG
                                 if (down->org != NULL) {
-                                    ((tceu_trl_*)(CUR->par_trl))->org = down->org;
+                                    CUR->par_trl->org = down->org;
                                     down->org->par_org = CUR->par_org;
                                     down->org->par_trl = CUR->par_trl;
                                 } else {
                                     CUR->par_trl->evt = IN__NONE;
-                                    ((tceu_trl_*)(CUR->par_trl))->org = NULL;
+                                    CUR->par_trl->org = NULL;
                                 }
                                 // free if "dyn" and completelly traversed
                                 // (i.e. _ceu_clr_org_ is not me)
@@ -516,7 +498,7 @@ fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
 #ifdef CEU_DEBUG_TRAILS
 #ifdef CEU_ORGS
 if (trl->evt == IN__ORG)
-    fprintf(stderr, "\tTRY: evt=%d org=%p\n", trl->evt, ((tceu_trl_*)trl)->org);
+    fprintf(stderr, "\tTRY: evt=%d org=%p\n", trl->evt, trl->org);
 else
 #endif
 fprintf(stderr, "\tTRY: evt=%d stk=%d lbl=%d\n", trl->evt, trl->stk, trl->lbl);
@@ -524,9 +506,9 @@ fprintf(stderr, "\tTRY: evt=%d stk=%d lbl=%d\n", trl->evt, trl->stk, trl->lbl);
 #ifdef CEU_ORGS
                 if (trl->evt == IN__ORG) {
 #ifdef CEU_DEBUG
-                    assert(((tceu_trl_*)trl)->org != NULL);
+                    assert(trl->org != NULL);
 #endif
-                    _ceu_cur_.org = ((tceu_trl_*)trl)->org;
+                    _ceu_cur_.org = trl->org;
                     goto _CEU_CALL_;
                 }
 #endif

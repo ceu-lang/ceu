@@ -242,20 +242,18 @@ if (CUR->toFree) {
         __ceu_org->toFree = ]]..t.toFree..[[;
 
         // enable block trail with IN__ORG (always awake from now on)
-        tceu_trl_* trl = (tceu_trl_*) &CUR->trls[
-                                        ]]..t.par_blk.dyn_trails[1]..[[
-                                      ];
+        tceu_trl* trl = &CUR->trls[ ]]..t.par_blk.dyn_trails[1]..[[ ];
         tceu_org* org = CUR;
 
         while (trl->evt != IN__NONE) {
             org = trl->org;
-            trl = (tceu_trl_*) &org->trls[org->n - 1];
+            trl = &org->trls[org->n - 1];
         }
 
         trl->evt = IN__ORG;
         trl->org = __ceu_org;
         __ceu_org->par_org = org;
-        __ceu_org->par_trl = (tceu_trl*)trl;
+        __ceu_org->par_trl = trl;
 
         // reset org memory and do org.trail[0]=Class_XXX
         ceu_org_init(__ceu_org, ]]
@@ -344,7 +342,7 @@ case ]]..me.lbl_cnt.id..[[:;
         // TODO: assert isDyn
 
         // TODO: HACK_1 (avoids next to also be freed)
-        tceu_trl_* down = (tceu_trl_*) &__ceu_org->trls[__ceu_org->n-1];
+        tceu_trl* down = &__ceu_org->trls[__ceu_org->n-1];
         down->evt = IN__NONE;
 
         // push my continuation
@@ -394,7 +392,7 @@ case ]]..me.lbl_clr.id..[[:;
 #endif
 
         // enable block trail with IN__ORG (always awake from now on)
-        tceu_trl_* trl = (tceu_trl_*) &CUR->trls[idx];
+        tceu_trl* trl = &CUR->trls[idx];
             trl->evt = IN__ORG;
             trl->org = org;
 

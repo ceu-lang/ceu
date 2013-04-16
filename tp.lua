@@ -9,12 +9,25 @@ local types = {
     u8=true,  s8=true,
 }
 
-function _TP.align (off, len, word)
-    word = word or _ENV.c.word.len
-    if len > word then
-        len = word              -- maximum adjust is the word size
+-- len aligned to word size
+function _TP.sizeof (len)
+    local al = len
+    if al > _ENV.c.word.len then
+        al = _ENV.c.word.len   -- maximum adjust is the word size
+    end
+    local r = len % al
+    if r > 0 then
+        len = len + (al-r)
+    end
+    return len
+end
+
+-- returns off/aligned + len
+function _TP.align (off, len)
+    if len > _ENV.c.word.len then
+        len = _ENV.c.word.len   -- maximum adjust is the word size
     elseif len == 0 then
-        len = 1                 -- minimum alignment
+        len = 1                 -- minimum alignment (TODO: why?)
     end
     local r = off % len
     if r > 0 then
@@ -22,6 +35,7 @@ function _TP.align (off, len, word)
     end
     return off
 end
+
 
 function _TP.n2bytes (n)
     if n < 2^8 then
