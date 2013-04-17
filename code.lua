@@ -270,7 +270,9 @@ if (CUR->toFree) {
 _ceu_cur_.trl->evt = IN__ANY;
 _ceu_cur_.trl->lbl = ]]..me.lbl_cnt.id..[[;
 _ceu_cur_.trl->stk = _ceu_stk_;
-_CEU_STK_[_ceu_stk_++] = _ceu_evt_;
+
+// not needed (org->trls[N] => blk)
+//_CEU_STK_[_ceu_stk_++] = _ceu_evt_;
 
 // switch to ORG[0]
 _ceu_cur_.org = ]]..VAL(var)..[[;
@@ -331,7 +333,9 @@ case ]]..me.lbl_cnt.id..[[:;
         _ceu_cur_.trl->evt = IN__ANY;
         _ceu_cur_.trl->lbl = ]]..me.lbl_cnt.id..[[;
         _ceu_cur_.trl->stk = _ceu_stk_;
-        _CEU_STK_[_ceu_stk_++] = _ceu_evt_;
+
+        // not needed (org->trls[N] => blk)
+        //_CEU_STK_[_ceu_stk_++] = _ceu_evt_;
 
         // switch to ORG
         _ceu_cur_.org = __ceu_org;

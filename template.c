@@ -414,7 +414,7 @@ void ceu_go (int __ceu_id, tceu_param* __ceu_p)
 #ifdef CEU_ORGS
         _ceu_cur_.org = CEU.mem;    // on pop(), always restart
 #endif
-_CEU_CALL_:
+_CEU_CALL_:     // restart from org->trls[0]
         if (_ceu_evt_.id == IN__CLR)
             _ceu_cur_.trl = &CUR->trls[
 #ifdef CEU_ORGS
@@ -426,7 +426,7 @@ _CEU_CALL_:
         else
             _ceu_cur_.trl = &CUR->trls[0];
 
-_CEU_CALLTRL_:  // trl is already set (nxt/prv trail or CLR)
+_CEU_CALLTRL_:  // restart from org->trls[i]
 
 #ifdef CEU_DEBUG_TRAILS
 #ifdef CEU_ORGS
