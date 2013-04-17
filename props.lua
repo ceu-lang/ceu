@@ -184,6 +184,8 @@ F = {
         SAME(me, me.cls)
         F.Free(me)
         me.has.fins = me.cls.has.fins
+        ASR(not _AST.iter'BlockI'(), me,
+                'not permitted inside an interface')
     end,
     Spawn = 'SetNew',
 
@@ -246,6 +248,8 @@ F = {
     SetBlock_pre = function (me)
         F.ParOr_pre(me)
         me.rets = {}
+        ASR(not _AST.iter'BlockI'(), me,
+                'not permitted inside an interface')
     end,
     Return = function (me)
         local blk = _AST.iter'SetBlock'()
@@ -332,6 +336,11 @@ F = {
             ASR( async.depth <= _AST.iter'SetBlock'().depth+1,
                     me, 'invalid access from async')
         end
+    end,
+
+    SetAwait = function (me)
+        ASR(not _AST.iter'BlockI'(), me,
+                'not permitted inside an interface')
     end,
 
     Var = function (me)

@@ -196,16 +196,16 @@ STATS = {
 }
 ]])
 
-assert(STATS.count  ==    1169)
-assert(STATS.mem    ==   48081)
-assert(STATS.trails ==    3308)
-assert(STATS.bytes  == 6952685)
+assert(STATS.count  ==    1171)
+assert(STATS.mem    ==   48445)
+assert(STATS.trails ==    3322)
+assert(STATS.bytes  == 6987663)
 
 --[[
 -- TIME:
-real	2m28.157s
-user	1m38.158s
-sys	0m21.465s
+real	2m25.583s
+user	1m37.158s
+sys	0m21.289s
 ]]
 
 -- TODO: antes de trail de 8 bytes

@@ -91,6 +91,7 @@ error 'testar pause/if org.e'
 error 'testar new/spawn que se mata'
 
 do return end
+--]===]
 
 -- OK: under tests but supposed to work
 
@@ -125,7 +126,6 @@ return a;
 }
 
 --do return end
---]===]
 
 -- OK: well tested
 
@@ -16940,7 +16940,23 @@ return x.a + y[0].a + y[1].a;
     run = 60,
 }
 
-    -- CLASSES / ORGS
+Test { [[
+class T with
+    var int a, b;
+do
+end
+
+var T[2] y with
+    this.a = 10;
+end;
+
+var T x;
+    x.a = 30;
+
+return x.a + y[0].a + y[1].a;
+]],
+    run = 50,
+}
 
 Test { [[
 class T with
@@ -17282,6 +17298,8 @@ return a . v + a.x .v + a .v2 + a.x  .  t3 . v3;
     run = 35,
 }
 
+-- TODO: XXXX
+--[==[
 Test { [[
 var int v;
 class T with
@@ -17290,8 +17308,74 @@ class T with
 do
 end
 ]],
-    parser = 'ERR : line 3 : before `;´ : expected statement',
+    parser = 'ERR : line 3 : before `;´ : expected identifier',
 }
+
+Test { [[
+var int v;
+class T with
+    var int v=5;
+do
+end
+var T t;
+return t.v;
+]],
+    run = 5,
+}
+
+Test { [[
+var int v;
+class T with
+    var int v=5;
+do
+end
+var T t with
+    this.v = 10;
+end;
+return t.v;
+]],
+    run = 10,
+}
+
+Test { [[
+var int v;
+class T with
+    var int v=5;
+do
+    this.v = 100;
+end
+var T t with
+    this.t = 10;
+end;
+return t.v;
+]],
+    run = 100,
+}
+
+Test { [[
+var int v;
+class U with
+    var int x = 10;
+do
+end
+
+class T with
+    var int v=5;
+    var U u with
+        u.x = 20;
+    end;
+do
+    this.v = 100;
+end
+var T t with
+    this.t = 10;
+end;
+return t.v + t.u.x;
+]],
+    run = 120,
+}
+do return end
+]==]
 
 Test { [[
 input void START;
@@ -17776,12 +17860,14 @@ return 10;
 }
 
 Test { [[
+input int F;
 class T with
     var int v = await F;
 do
 end
+return 0;
 ]],
-    parser = 'ERR : line 2 : after `v´ : expected `;´',
+    props = 'ERR : line 3 : not permitted inside an interface',
 }
 
 Test { [[
@@ -18634,7 +18720,6 @@ rs[0].x = 10;
 rs[0].y = 50;
 rs[1].x = 100;
 rs[1].y = 300;
-
 
 par/or do
     loop do
@@ -19538,11 +19623,12 @@ do
     _assert(0);
 end
 
-var int ret=0;
+var int ret=1;
 do
     var T t with
         this.x = 10;
     end;
+
     await t.ok;
     ret = t.x;
 end
@@ -19743,9 +19829,9 @@ var T[2] t with
     this.a = 10;
 end;
 
-return t.b;
+return t[0].b + t[1].b;
 ]],
-    parser = 'ERR : line 8 : after `t´ : expected `;´',
+    run = 40;
 }
 
 Test { [[
@@ -21111,10 +21197,12 @@ C do
     int V = 0;
 end
 
+C nohold _fprintf(), _stderr;
 class T with
     var int c;
 do
     finalize with
+_fprintf(_stderr, "FIN\n");
         _V = _V + c;
     end
     await FOREVER;
@@ -21123,9 +21211,8 @@ end
 par/or do
     do
         loop i do
-C nohold _fprintf(), _stderr;
             spawn T with
-_fprintf(_stderr, "i=%d\n", i);
+_fprintf(_stderr, "i=%d\n",i);
                 this.c = i;
             end;
             await 1s;

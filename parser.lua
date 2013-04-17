@@ -305,29 +305,26 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
                              --   Cc(false)*Cc(false)*Cc(false))
 
     , _Dcl_var   = V'_Dcl_var_1' + V'_Dcl_var_2'
+
     , _Dcl_var_2 = CK'var'
                  * (EV'ID_type' + EV'ID_cls')
-                 * (K'['*V'_Exp'*K']'+Cc(false))
+                 * (K'['*V'_Exp'*K']' + Cc(false))
                  * V'__Dcl_var' * (K','*V'__Dcl_var')^0
-    , _Dcl_var_1 = CK'var' * EV'ID_cls' * Cc(false) * EV'ID_var'
+
+    , _Dcl_var_1 = CK'var'
+                 * EV'ID_cls'
+                 * (K'['*V'_Exp'*K']' + Cc(false))
+                 * EV'ID_var'
                  * EK'with' * V'Dcl_constr' * EK'end'
-    , Dcl_constr = V'Block'
+    , Dcl_constr = V'Stmts'     -- TODO: Block?
 
     , __Dcl_var = EV'ID_var' * (V'_Sets' +
                                 Cc(false)*Cc(false)*Cc(false))
 
-    , _Dcl_int_ifc  = CK'event' * EV'ID_type' *-- Cc(false) *
-                       EV'__Dcl_int_ifc' * (K','*V'__Dcl_int_ifc')^0
-    , __Dcl_int_ifc = EV'ID_int' --* (Cc(false)*Cc(false)*Cc(false))
+    , _Dcl_imp = K'interface' * EV'ID_cls' * (K',' * EV'ID_cls')^0
 
-    , _Dcl_var_ifc  = CK'var' * EV'ID_type' * (K'['*V'_Exp'*K']'+Cc(false)) *
-                       V'__Dcl_var_ifc' * (K','*V'__Dcl_var')^0
-    , __Dcl_var_ifc = EV'ID_var' * (Cc(false)*Cc(false)*Cc(false))
-
-    , _Dcl_imp_ifc = K'interface' * EV'ID_cls' * (K',' * EV'ID_cls')^0
-
-    , BlockI = ( (V'_Dcl_int_ifc'+V'_Dcl_var_ifc'+
-                   V'_Dcl_c_ifc'+V'_Dcl_imp_ifc')
+    , BlockI = ( (V'_Dcl_int'+V'_Dcl_var'+
+                   V'_Dcl_c_ifc'+V'_Dcl_imp')
                * (EK';'*K';'^0) )^0
     , Dcl_ifc = K'interface' * Cc(true)  * EV'ID_cls' * EK'with'
                         * V'BlockI' * EK'end'

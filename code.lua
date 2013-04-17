@@ -205,27 +205,59 @@ if (CUR->toFree) {
 
     -- TODO: real function?
     _ORG = function (me, t)
-        LINE(me, [[
+        COMM(me, 'start org: '..t.id)
+
+        -- each org has its own trail on enclosing block
+        for i=1, t.arr do
+            LINE(me, [[
+{
+    tceu_org* org     = (tceu_org*) &]]..t.val..'['..(i-1)..']'..[[;
+    tceu_trl* par_trl = &(]]..t.par_trls..')['..(i-1)..']'..[[;
+
 #ifdef CEU_NEWS
-    ]]..t.val..[[->isDyn  = ]]..t.isDyn..[[;
-    ]]..t.val..[[->toFree = ]]..t.toFree..[[;
+    org->isDyn  = ]]..t.isDyn..[[;
+    org->toFree = ]]..t.toFree..[[;
 #endif
 
     // reset org memory and do org.trail[0]=Class_XXX
     // links par <=> org
-    ceu_org_init(]]..t.val..[[, ]]
+    ceu_org_init(org, ]]
                 ..t.cls.ns.trails..','
                 ..t.cls.lbl.id..[[);
 
     // par <=> org
     // link org with the next trail in the block
-    ]]..t.val..[[->par_org = ]]..t.par_org..[[;
-    ]]..t.val..[[->par_trl = ]]..t.par_trl..[[;
+    org->par_org = ]]..t.par_org..[[;
+    org->par_trl = par_trl;
 
     // enables parent trail with IN__ORG (always awake from now on)
-    ]]..t.par_trl..[[->evt = IN__ORG;
-    ]]..t.par_trl..[[->org = ]]..t.val..[[;
+    par_trl->evt = IN__ORG;
+    par_trl->org = org;
 ]])
+
+            if t.constr then
+                CONC(me, t.constr)      -- constructor before executing
+            end
+
+        LINE(me, [[
+// org[0] -> org[1] -> ... -> blk.trails[1]
+
+    // hold current blk trail: set to my continuation
+    _ceu_cur_.trl->evt = IN__ANY;
+    _ceu_cur_.trl->lbl = ]]..me.lbls_cnt[i].id..[[;
+    _ceu_cur_.trl->stk = _ceu_stk_;
+
+    // switch to ORG
+    _ceu_cur_.org = org;
+
+    // not needed (org->trls[n] => org->trls[n+1] => blk)
+    //_CEU_STK_[_ceu_stk_++] = _ceu_evt_;
+    goto _CEU_CALL_;
+}
+
+case ]]..me.lbls_cnt[i].id..[[:;
+]])
+        end
     end,
 
     Dcl_var = function (me)
@@ -235,51 +267,17 @@ if (CUR->toFree) {
             return
         end
 
-        if constr then
-            CONC(me, constr)
-        end
-
-        COMM(me, 'start org: '..var.id)
-
-        -- each org has its own trail on enclosing block
-        LINE(me, [[
-{
-    int i;
-    for (i=0; i<]]..(var.arr or 1)..[[; i++)
-    {
-        int idx = ]]..me.var.trails[1]..[[ + i;
-        tceu_org* org = PTR_org(tceu_org*,]]..VAL(var)..
-                            ', i*'..var.cls.mem.max..[[);
-        tceu_trl* par_trl = &CUR->trls[idx];
-]])
         F._ORG(me, {
-            isDyn   = 0,
-            toFree  = 0,
-            cls     = var.cls,
-            par_org = 'CUR',
-            par_trl = 'par_trl',
-            val     = 'org',
+            id       = var.id,
+            isDyn    = 0,
+            toFree   = 0,
+            cls      = var.cls,
+            par_org  = 'CUR',
+            par_trls = 'CUR->trls+'..me.var.trails[1],
+            val      = var.val,
+            constr   = constr,
+            arr      = var.arr or 1,
         })
-        LINE(me, [[
-    }
-}
-
-// org[0] -> org[1] -> ... -> blk.trails[1]
-
-// hold current blk trail: set to my continuation
-_ceu_cur_.trl->evt = IN__ANY;
-_ceu_cur_.trl->lbl = ]]..me.lbl_cnt.id..[[;
-_ceu_cur_.trl->stk = _ceu_stk_;
-
-// not needed (org->trls[N] => blk)
-//_CEU_STK_[_ceu_stk_++] = _ceu_evt_;
-
-// switch to ORG[0]
-_ceu_cur_.org = ]]..VAL(var)..[[;
-goto _CEU_CALL_;
-
-case ]]..me.lbl_cnt.id..[[:;
-]])
     end,
 
     _New = function (me, t)
@@ -305,45 +303,29 @@ case ]]..me.lbl_cnt.id..[[:;
             LINE(me, '__ceu_'..me.n..' = (__ceu_org != NULL);') -- spw result
         end
 
-        t.val   = '__ceu_org'
-        t.isDyn = 1
-        t.par_org = 'par_org'
-        t.par_trl = 'par_trl'
+        t.id       = 'dyn'
+        t.val      = '__ceu_org'
+        t.isDyn    = 1
+        t.par_org  = '__par_org'
+        t.par_trls = '__par_trl'
+        t.arr      = 1
 
         LINE(me, [[
     if (__ceu_org != NULL)
     {
-        tceu_trl* par_trl = &CUR->trls[ ]]..t.par_blk.dyn_trails[1]..[[ ];
-        tceu_org* par_org = CUR;
+        tceu_trl* __par_trl = &CUR->trls[ ]]..t.par_blk.dyn_trails[1]..[[ ];
+        tceu_org* __par_org = CUR;
 
-        while (par_trl->evt != IN__NONE) {
-            par_org = par_trl->org;
-            par_trl = &par_org->trls[par_org->n - 1];
+        while (__par_trl->evt != IN__NONE) {
+            __par_org = __par_trl->org;
+            __par_trl = &__par_org->trls[__par_org->n - 1];
         }
 
 ]])
         F._ORG(me, t)
-
-        if t.constr then
-            CONC(me, t.constr)      -- constructor before executing
-        end
-
         LINE(me, [[
-        // hold current blk trail: set to my continuation
-        _ceu_cur_.trl->evt = IN__ANY;
-        _ceu_cur_.trl->lbl = ]]..me.lbl_cnt.id..[[;
-        _ceu_cur_.trl->stk = _ceu_stk_;
-
-        // not needed (org->trls[N] => blk)
-        //_CEU_STK_[_ceu_stk_++] = _ceu_evt_;
-
-        // switch to ORG
-        _ceu_cur_.org = __ceu_org;
-        goto _CEU_CALL_;
     }
-    // continue if NULL
 }
-case ]]..me.lbl_cnt.id..[[:;
 ]])
     end,
 

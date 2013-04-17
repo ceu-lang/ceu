@@ -353,7 +353,6 @@ local C; C = {
 
     Dcl_det = node('Dcl_det'),
 
-    _Dcl_var_ifc = function(...) return C._Dcl_var_2(...) end,
     _Dcl_var_2 = function (ln, pre, tp, dim, ...)
         local ret = {}
         local t = { ... }
@@ -376,7 +375,6 @@ local C; C = {
     Dcl_constr = node('Dcl_constr'),
 
     -- TODO: unify with _Dcl_var
-    _Dcl_int_ifc = function(...) return C._Dcl_int(...) end,
     _Dcl_int = function (ln, pre, tp, ...)
         local ret = {}
         local t = { ... }
@@ -386,7 +384,7 @@ local C; C = {
         return unpack(ret)
     end,
 
-    _Dcl_imp_ifc = function (ln, ...)
+    _Dcl_imp = function (ln, ...)
         local ret = {}
         local t = { ... }
         for _, ifc in ipairs(t) do
