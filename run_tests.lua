@@ -196,10 +196,10 @@ STATS = {
 }
 ]])
 
-assert(STATS.count  ==    1171)
-assert(STATS.mem    ==   48445)
-assert(STATS.trails ==    3322)
-assert(STATS.bytes  == 6987663)
+assert(STATS.count  ==    1181)
+assert(STATS.mem    ==   49390)
+assert(STATS.trails ==    3373)
+assert(STATS.bytes  == 6943811)
 
 --[[
 -- TIME:

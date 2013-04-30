@@ -122,21 +122,21 @@ function CLEAR (me)
                                 --', _ceu_cur_.org);')
 
     LINE(me, [[
-// trails[2] is guaranteed not to point to an ORG (which we also want to clear)
+// trails[1] points to ORG blk
 {
-    tceu_trl* trl = &CUR->trls[ ]]..me.trails[2]..[[ ];
+    tceu_trl* trl = &CUR->trls[ ]]..me.trails[1]..[[ ];
     trl->evt = IN__ANY;
     trl->stk = _ceu_stk_;
     trl->lbl = ]]..me.lbl_clr.id..[[;
 }
 _CEU_STK_[_ceu_stk_++] = _ceu_evt_;
 
-// skip trails[2]
-_ceu_cur_.trl = &CUR->trls[ ]]..(me.trails[2]-1)..[[ ];
+// [ trails[1]+1, trails[2] )
+_ceu_cur_.trl = &CUR->trls[ ]]..(me.trails[1]+1)..[[ ];  // trails[1]+1 is in
 #ifdef CEU_ORGS
 _ceu_clr_org_  = _ceu_cur_.org;
 #endif
-_ceu_clr_trl0_ = &CUR->trls[ ]]..(me.trails[1]-1)..[[ ];   // -1 is out
+_ceu_clr_trlF_ = &CUR->trls[ ]]..(me.trails[2]+1)..[[ ]; // trails[2]+1 is out
 _ceu_evt_.id = IN__CLR;
 goto _CEU_CALLTRL_;
 
@@ -152,7 +152,6 @@ F = {
     Do         = CONC_ALL,
     Finally    = CONC_ALL,
     Stmts      = CONC_ALL,
-    BlockI     = CONC_ALL,
     Dcl_constr = CONC_ALL,
 
     Root = function (me)
@@ -161,16 +160,27 @@ F = {
         end
     end,
 
+    BlockI = CONC_ALL,
+    BlockI_pos = function (me)
+        me.code_ifc = me.code       -- see Dcl_cls
+        me.code = ''                -- avoid this code
+    end,
     Dcl_cls = function (me)
         if me.is_ifc then
             CONC_ALL(me)
             return
         end
 
+        if me.has_init then
+            CASE(me, me.lbl_init)
+            LINE(me, me.blk_ifc[1][1].code_ifc)   -- Block->Stmts->BlockI
+            HALT(me)
+        end
+
         CASE(me, me.lbl)
         LINE(me, [[
 #ifdef CEU_IFCS
-CUR->cls = ]]..me.n..[[;
+CUR->cls = ]]..me.n..[[;        // TODO: move to _ORG?
 #endif
 ]])
 
@@ -203,9 +213,26 @@ if (CUR->toFree) {
         LINE(me, me[1])
     end,
 
-    -- TODO: real function?
+    -- TODO: C function?
     _ORG = function (me, t)
         COMM(me, 'start org: '..t.id)
+
+        --[[
+class T with
+    <INIT>          -- 1    me.lbls_init[i].id
+    var int v = 0;
+do
+    <BODY>          -- 3    me.lbls_body[i].id
+end
+
+<...>               -- 0
+
+var T t with
+    <CONSTR>        -- 2    no lbl (cannot call anything)
+end;
+
+<CONT>              -- 4    me.lbls_cnt[i].id
+]]
 
         -- each org has its own trail on enclosing block
         for i=1, t.arr do
@@ -223,7 +250,7 @@ if (CUR->toFree) {
     // links par <=> org
     ceu_org_init(org, ]]
                 ..t.cls.ns.trails..','
-                ..t.cls.lbl.id..[[);
+                ..(t.cls.has_init and t.cls.lbl_init.id or t.cls.lbl.id)..[[);
 
     // par <=> org
     // link org with the next trail in the block
@@ -233,25 +260,46 @@ if (CUR->toFree) {
     // enables parent trail with IN__ORG (always awake from now on)
     par_trl->evt = IN__ORG;
     par_trl->org = org;
+
 ]])
+            if t.cls.has_init then
+                LINE(me, [[
+    // hold current blk trail: set to my continuation
+    _ceu_cur_.trl->evt = IN__ANY;
+    _ceu_cur_.trl->lbl = ]]..me.lbls_init[i].id..[[;
+    _ceu_cur_.trl->stk = _ceu_stk_;
+    _CEU_STK_[_ceu_stk_++] = _ceu_evt_;
+
+    // switch to ORG for INIT
+    _ceu_cur_.org = org;
+    goto _CEU_CALL_;
+}
+
+case ]]..me.lbls_init[i].id..[[:;
+    // BACK FROM INIT
+{
+    tceu_org* org = (tceu_org*) &]]..t.val..'['..(i-1)..']'..[[;
+]])
+            end
 
             if t.constr then
                 CONC(me, t.constr)      -- constructor before executing
             end
 
-        LINE(me, [[
-// org[0] -> org[1] -> ... -> blk.trails[1]
-
+            LINE(me, [[
     // hold current blk trail: set to my continuation
     _ceu_cur_.trl->evt = IN__ANY;
     _ceu_cur_.trl->lbl = ]]..me.lbls_cnt[i].id..[[;
     _ceu_cur_.trl->stk = _ceu_stk_;
+    _CEU_STK_[_ceu_stk_++] = _ceu_evt_;
 
     // switch to ORG
-    _ceu_cur_.org = org;
 
-    // not needed (org->trls[n] => org->trls[n+1] => blk)
-    //_CEU_STK_[_ceu_stk_++] = _ceu_evt_;
+    org->trls[0].evt = IN__ANY;
+    org->trls[0].lbl = ]]..t.cls.lbl.id..[[;
+    org->trls[0].stk = _ceu_stk_;
+
+    _ceu_cur_.org = org;
     goto _CEU_CALL_;
 }
 
@@ -273,7 +321,7 @@ case ]]..me.lbls_cnt[i].id..[[:;
             toFree   = 0,
             cls      = var.cls,
             par_org  = 'CUR',
-            par_trls = 'CUR->trls+'..me.var.trails[1],
+            par_trls = 'CUR->trls+'..var.trails[1],
             val      = var.val,
             constr   = constr,
             arr      = var.arr or 1,
@@ -397,11 +445,11 @@ case ]]..me.lbls_cnt[i].id..[[:;
         _ceu_cur_.trl->lbl = ]]..me.lbl_clr.id..[[;
         _CEU_STK_[_ceu_stk_++] = _ceu_evt_;
 
-        // clear all __ceu_org from its parent  ] par_trl-1 , par_trl ]
+        // clear all __ceu_org from its parent  [ par_trl, par_trl+1 [
         // this will call free()
         _ceu_cur_.org  = _ceu_clr_org_ = __ceu_org->par_org;
         _ceu_cur_.trl  = __ceu_org->par_trl;
-        _ceu_clr_trl0_ = __ceu_org->par_trl - 1;
+        _ceu_clr_trlF_ = __ceu_org->par_trl + 1;
         _ceu_evt_.id   = IN__CLR;
         goto _CEU_CALLTRL_;
     }
@@ -466,16 +514,18 @@ if (*PTR_cur(u8*,]]..(me.off_fins+i-1)..[[)) {
         CLEAR(me)
         LINE(me, '}')       -- open in Block_pre
 
+-- TODO: remove!
         if not (_ANA and me.ana.pos[false]) then
             LINE(me, [[
 // switch to 1st trail
 // TODO: only if not joining with outer prio
-_ceu_cur_.trl = &CUR->trls[ ]]..me.trails[1]..[[ ];
+//_ceu_cur_.trl = &CUR->trls[ ]]..me.trails[1]..[[ ];
 ]])
         end
     end,
 
     Pause = CONC_ALL,
+-- TODO: meaningful name
     PauseX = function (me)
         local psed = unpack(me)
         LINE(me, [[
@@ -618,6 +668,12 @@ _ceu_cur_.trl = &CUR->trls[ ]]..me.trails[1]..[[ ];
         for i, sub in ipairs(me) do
             HALT(me, '! *PTR_cur(u8*,'..(me.off+i-1)..')')
         end
+
+        LINE(me, [[
+// switch to 1st trail
+// TODO: only if not joining with outer prio
+_ceu_cur_.trl = &CUR->trls[ ]]..me.trails[1]..[[ ];
+]])
     end,
 
     If = function (me)

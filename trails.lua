@@ -18,17 +18,15 @@ F = {
     Block_pre = function (me)
         local blk = unpack(me)
 
-        -- [ 1, O, 1, B ] (fin, orgs, dyns, blk)
+        -- [ B, 1, O, 1 ] (fin, orgs, dyns, blk)
 
         me.trails = me.trails or _AST.iter(pred)().trails
 
         local t0 = me.trails[1]
 
-        -- FINS (before ORGS, must execute reversely after them)
-        if me.fins then
-            me.fins.trails  = { t0, t0  }
-                t0 = t0 + 1
-        end
+        -- BLOCK (must be first, see CLEAR in code.lua)
+        blk.trails = { t0, t0+blk.ns.trails-1 }
+            t0 = t0 + blk.ns.trails
 
         -- ORGS
         for _, var in ipairs(me.vars) do
@@ -44,9 +42,11 @@ F = {
                 t0 = t0 + 1
         end
 
-        -- BLOCK (must be last, see IN__CLR in code.lua)
-        blk.trails = { t0, t0+blk.ns.trails-1 }
-            t0 = t0 + blk.ns.trails
+        -- FINS (must be the last to proper nest fins)
+        if me.fins then
+            me.fins.trails  = { t0, t0  }
+                t0 = t0 + 1
+        end
     end,
 
     _Par_pre = function (me)

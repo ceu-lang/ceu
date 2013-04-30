@@ -40,8 +40,6 @@
 #define CEU_NIFCS      (=== CEU_NIFCS ===)
 #endif
 
-#define GLOBAL CEU.mem
-
 // Macros that can be defined:
 // ceu_out_pending() (sync?)
 // ceu_out_wclock(dt)
@@ -125,6 +123,7 @@ typedef struct tceu_org
 #ifdef CEU_ORGS
     struct tceu_org* par_org;  // traversal
     tceu_trl*        par_trl;
+
 
 #ifdef CEU_IFCS
     tceu_ncls cls;  // class id
@@ -243,7 +242,7 @@ void ceu_segfault (int sig_num) {
 
 /**********************************************************************/
 
-void ceu_org_init (tceu_org* org, int n, tceu_nlbl lbl)
+void ceu_org_init (tceu_org* org, int n, int lbl)
 {
     // { evt=0, stk=0, lbl=0 } for all trails
 #ifdef CEU_ORGS
@@ -251,6 +250,7 @@ void ceu_org_init (tceu_org* org, int n, tceu_nlbl lbl)
 #endif
     memset(&org->trls, 0, n*sizeof(tceu_trl));
     {
+        // trls[0] == blk.trails[1]
         org->trls[0].evt = IN__ANY;
         org->trls[0].lbl = lbl;
         org->trls[0].stk = CEU_MAX_STACK;
@@ -363,6 +363,7 @@ _CEU_END_:;
 #ifdef CEU_NEWS
 #ifdef CEU_RUNTESTS
     #define CEU_MAX_DYNS 100
+//fprintf(stderr, "XXX %d\n", _ceu_dyns_);
     assert(_ceu_dyns_ == 0);
 #endif
 #endif
@@ -390,7 +391,7 @@ void ceu_go (int __ceu_id, tceu_param* __ceu_p)
 #ifdef CEU_ORGS
     void*       _ceu_clr_org_;  // stop at this org
 #endif
-    tceu_trl* _ceu_clr_trl0_; //      at this trl
+    tceu_trl* _ceu_clr_trlF_; //      at this trl
 
     // ceu_go_init(): nobody awaiting, jump reset
     if (__ceu_id == IN__INIT) {
@@ -412,19 +413,12 @@ void ceu_go (int __ceu_id, tceu_param* __ceu_p)
     for (;;)    // STACK
     {
 #ifdef CEU_ORGS
+        // TODO: don't restart if kill is impossible (hold trl on stk)
         _ceu_cur_.org = CEU.mem;    // on pop(), always restart
 #endif
-_CEU_CALL_:     // restart from org->trls[0]
-        if (_ceu_evt_.id == IN__CLR)
-            _ceu_cur_.trl = &CUR->trls[
-#ifdef CEU_ORGS
-                                CUR->n
-#else
-                                CEU_NTRAILS
-#endif
-                            -1];
-        else
-            _ceu_cur_.trl = &CUR->trls[0];
+_CEU_CALL_:
+        // restart from org->trls[0]
+        _ceu_cur_.trl = &CUR->trls[0];
 
 _CEU_CALLTRL_:  // restart from org->trls[i]
 
@@ -437,94 +431,92 @@ fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
 #endif
         for (;;)    // TRL
         {
-            // clr is bounded to _trl0_ (set by code.lua)
+            // clr is bounded to _trlF_ (set by code.lua)
             if (
                 (_ceu_evt_.id == IN__CLR)
 #ifdef CEU_ORGS
             &&  (_ceu_clr_org_ == CUR)
 #endif
-            &&  (_ceu_cur_.trl == _ceu_clr_trl0_)
+            &&  (_ceu_cur_.trl == _ceu_clr_trlF_)
             ) {
                 break;
             }
 
             // check if all trails have been traversed
             // traverse next org if applicable
-            {
-                tceu_trl* cmp;
-                if (_ceu_evt_.id == IN__CLR) {
-                    cmp = &CUR->trls[-1];   // -1 is out
-                } else {
-                    cmp = &CUR->trls[
+
+            // org has been traversed to the end?
+            if (_ceu_cur_.trl ==
+                &CUR->trls[
 #ifdef CEU_ORGS
-                                CUR->n
+                    CUR->n
 #else
-                                CEU_NTRAILS
+                    CEU_NTRAILS
 #endif
-                            ];
-                }
-
-                // org has been traversed to the end?
-                if (_ceu_cur_.trl == cmp)
-                {
+                ])
+            {
 #ifdef CEU_ORGS
-                    // check for next org
-                    if (CUR != (tceu_org*)CEU.mem) {
-                        tceu_org* PAR = CUR->par_org;
-                        _ceu_cur_.trl = CUR->par_trl;
-                        if (_ceu_evt_.id != IN__CLR) {
-                            _ceu_cur_.trl++;     // X->Y [ X | org | Y ]
-                        } else {
-                            _ceu_cur_.trl--;     // Y->X [ X | org | Y ]
+                // check for next org
+                if (CUR != (tceu_org*)CEU.mem) {
+                    tceu_org* PAR = CUR->par_org;
+                    _ceu_cur_.trl = CUR->par_trl;
+                    _ceu_cur_.trl++;     // X->Y [ X | org | Y ]
+                    if (_ceu_evt_.id == IN__CLR) {
 #ifdef CEU_NEWS
-                            // re-link UP <-> DOWN
-                            if (CUR->isDyn)
-                            {
-                                tceu_trl* down = &CUR->trls[CUR->n-1];
+                        // re-link UP <-> DOWN
+                        if (CUR->isDyn)
+                        {
+                            tceu_trl* down = &CUR->trls[CUR->n-1];
 
-                                // HACK_1 (see code.lua)
-                                // test org!=NULL instead of evt==IN__ORG
-                                if (down->org != NULL) {
-                                    CUR->par_trl->org = down->org;
-                                    down->org->par_org = CUR->par_org;
-                                    down->org->par_trl = CUR->par_trl;
-                                } else {
-                                    CUR->par_trl->evt = IN__NONE;
-                                    CUR->par_trl->org = NULL;
-                                }
-                                // free if "dyn" and completelly traversed
-                                // (i.e. _ceu_clr_org_ is not me)
+                            // HACK_1 (see code.lua)
+                            // test org!=NULL instead of evt==IN__ORG
+                            if (down->org != NULL) {
+                                CUR->par_trl->org = down->org;
+                                down->org->par_org = CUR->par_org;
+                                down->org->par_trl = CUR->par_trl;
+                            } else {
+                                CUR->par_trl->evt = IN__NONE;
+                                CUR->par_trl->org = NULL;
+                            }
+                            // free if "dyn" and completelly traversed
+                            if (_ceu_clr_org_ != _ceu_cur_.org) {
 //fprintf(stderr, "FREE: %p\n", CUR);
                                 free(CUR);
 #ifdef CEU_RUNTESTS
                                 _ceu_dyns_--;
 #endif
                             }
-#endif
                         }
-                        _ceu_cur_.org = PAR;
-                        goto _CEU_CALLTRL_;
-                    }
-                    else
+                        else
 #endif
-                    {
-                        break;  // reached CEU.mem: terminate current stack
+                        {
+                                CUR->par_trl->evt = IN__NONE;
+                                CUR->par_trl->org = NULL;
+                        }
                     }
+                    _ceu_cur_.org = PAR;
+                    goto _CEU_CALLTRL_;
                 }
-                // continue traversing it
+                else
+#endif
+                {
+                    break;  // reached CEU.mem: terminate current stack
+                }
             }
 
+            // continue traversing it
+
             {
-// TODO: trl_vec is freed
                 tceu_trl* trl = _ceu_cur_.trl;
 #ifdef CEU_DEBUG_TRAILS
 #ifdef CEU_ORGS
 if (trl->evt == IN__ORG)
-    fprintf(stderr, "\tTRY [%p] : evt=%d org=%p\n", trl, trl->evt, trl->org);
+    fprintf(stderr, "\tTRY [%p] : evt=%d org=%p\n",
+                    trl, trl->evt, trl->org);
 else
 #endif
-fprintf(stderr, "\tTRY [%p] : evt=%d stk=%d lbl=%d\n", trl, trl->evt, trl->stk, 
-trl->lbl);
+fprintf(stderr, "\tTRY [%p] : evt=%d stk=%d lbl=%d\n",
+                    trl, trl->evt, trl->stk, trl->lbl);
 #endif
 #ifdef CEU_ORGS
                 if ( trl->evt == IN__ORG
@@ -574,10 +566,7 @@ fprintf(stderr, "TRK: l.%d\n", _ceu_cur_.lbl);
                 === CODE ===
             }
 _CEU_NEXT_:
-            if (_ceu_evt_.id == IN__CLR)
-                _ceu_cur_.trl--;
-            else
-                _ceu_cur_.trl++;
+            _ceu_cur_.trl++;
         }
 
         if (_ceu_stk_ == 1)

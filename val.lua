@@ -41,7 +41,7 @@ F =
     end,
 
     Global = function (me)
-        me.val = '&GLOBAL'
+        me.val = '&CEU.mem'
     end,
 
     This = function (me)
@@ -189,9 +189,17 @@ F =
                 me.val = me.c.id
             elseif me.var.isEvt then
                 me.val = nil    -- cannot be used as variable
-                me.off = pre..cls.id..'_'..me.var.id..'_off('..VAL(me.org)..')'
+                if cls.id == 'Global' then
+                    me.off = pre..cls.id..'_'..me.var.id..'_off()'
+                else
+                    me.off = pre..cls.id..'_'..me.var.id..'_off('..VAL(me.org)..')'
+                end
             else
-                me.val = pre..cls.id..'_'..me.var.id..'('..VAL(me.org)..')'
+                if cls.id == 'Global' then
+                    me.val = pre..cls.id..'_'..me.var.id..'()'
+                else
+                    me.val = pre..cls.id..'_'..me.var.id..'('..VAL(me.org)..')'
+                end
             end
         else
             local op, e1, id = unpack(me)

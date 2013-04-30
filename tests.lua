@@ -16946,8 +16946,10 @@ class T with
 do
 end
 
+var int i = 0;
 var T[2] y with
-    this.a = 10;
+    i = i + 1;
+    this.a = i*10;
 end;
 
 var T x;
@@ -16955,7 +16957,7 @@ var T x;
 
 return x.a + y[0].a + y[1].a;
 ]],
-    run = 50,
+    run = 60,
 }
 
 Test { [[
@@ -17298,8 +17300,6 @@ return a . v + a.x .v + a .v2 + a.x  .  t3 . v3;
     run = 35,
 }
 
--- TODO: XXXX
---[==[
 Test { [[
 var int v;
 class T with
@@ -17345,7 +17345,7 @@ do
     this.v = 100;
 end
 var T t with
-    this.t = 10;
+    this.v = 10;
 end;
 return t.v;
 ]],
@@ -17353,6 +17353,7 @@ return t.v;
 }
 
 Test { [[
+
 var int v;
 class U with
     var int x = 10;
@@ -17362,20 +17363,18 @@ end
 class T with
     var int v=5;
     var U u with
-        u.x = 20;
+        this.x = 20;
     end;
 do
     this.v = 100;
 end
 var T t with
-    this.t = 10;
+    this.v = 10;
 end;
 return t.v + t.u.x;
 ]],
     run = 120,
 }
-do return end
-]==]
 
 Test { [[
 input void START;
@@ -18161,16 +18160,20 @@ return ret;
 Test { [[
 input void START;
 input void F;
+C nohold _fprintf(), _stderr;
 class T1 with
     event void ok;
 do
     await 1s;
+_fprintf(_stderr, "2\n");
     emit ok;
+_fprintf(_stderr, "4\n");
 end
 class T with
     event void ok;
 do
     input void E;
+_fprintf(_stderr, "1\n");
     par/or do
         var T1 a;
         par/and do
@@ -18181,6 +18184,7 @@ do
     with
         await E;
     end
+_fprintf(_stderr, "3\n");
     await 1s;
     emit ok;
 end
@@ -18188,7 +18192,7 @@ var int ret = 10;
 par/or do
     do
         var T aa;
-            await aa.ok;
+        await aa.ok;
     end
     ret = ret + 1;
 with
@@ -18204,6 +18208,7 @@ return ret;
         ['~>1s;~>1s;~>F'] = 11,
         ['~>1s;~>E;~>1s;~>F'] = 11,
     },
+    --run = { ['~>1s']=0 },
 }
 
 Test { [[
@@ -19906,7 +19911,7 @@ var T* t2 = new T;
 await START;
 return _V;
 ]],
-    run = 4,
+    run = 2,
 }
 
 -- FREE
@@ -19960,6 +19965,25 @@ free a;
 return 10;
 ]],
     run = 10,
+}
+
+Test { [[
+C _V;
+C do
+    int V = 0;
+end
+class T with
+do
+    finalize with
+        _V = _V + 1;
+    end
+end
+
+var T* a = new T;
+free a;
+return _V;
+]],
+    run = 1,
 }
 
 Test { [[
@@ -20193,6 +20217,25 @@ end
 class T with
 do
     await START;
+    _V = 10;
+end
+do
+    spawn T;
+    await START;
+end
+return _V;
+]],
+    run = 1,
+}
+
+Test { [[
+input void START;
+C _V;
+C do
+    int V = 1;
+end
+class T with
+do
     _V = 10;
 end
 do
@@ -20572,6 +20615,29 @@ return 10;
 }
 
 Test { [[
+
+class V with
+do
+end
+
+class U with
+    var V* v;
+do
+    var V* vv = new V;
+end
+
+class T with
+    var U u;
+do
+end
+
+var T t;
+return 1;
+]],
+    run = 1,
+}
+
+Test { [[
 C _f(), _V;
 C do
     int V = 1;
@@ -20608,6 +20674,43 @@ var T t;
 return _V;
 ]],
     run = 1,
+}
+
+Test { [[
+input void START;
+C _f(), _V;
+C do
+    int V = 1;
+end
+
+class V with
+do
+    finalize with
+        _V = _V+1;
+    end
+    await FOREVER;
+end
+
+class U with
+    var V v;
+do
+    var V* vv = new V;
+    await FOREVER;
+end
+
+class T with
+    var U u;
+do
+    await FOREVER;
+end
+
+do
+    var T t;
+end
+
+return _V;
+]],
+    run = 3,
 }
 
 Test { [[
@@ -21197,12 +21300,10 @@ C do
     int V = 0;
 end
 
-C nohold _fprintf(), _stderr;
 class T with
     var int c;
 do
     finalize with
-_fprintf(_stderr, "FIN\n");
         _V = _V + c;
     end
     await FOREVER;
@@ -21212,7 +21313,6 @@ par/or do
     do
         loop i do
             spawn T with
-_fprintf(_stderr, "i=%d\n",i);
                 this.c = i;
             end;
             await 1s;
@@ -21306,12 +21406,56 @@ with
         emit pse = v;
     end
 with
-    await 5s;
+    await 5s;   // terminates before first spawn
 end
 
 return _V;
 ]],
-    run = { ['~>2s;1~>P;~>2s;0~>P;~>1s']=16 },
+    run = { ['~>2s;1~>P;~>2s;0~>P;~>1s']=6 },
+}
+
+Test { [[
+C _V;
+C do
+    int V = 0;
+end
+
+class T with
+    var int c;
+do
+    finalize with
+        _V = _V + c;
+    end
+    await 5s;
+    _V = _V + 10;
+end
+
+input int P;
+event int pse;
+
+par/or do
+    do
+        loop i do
+            pause/if pse do
+                spawn T with
+                    this.c = i;
+                end;
+                await 1s;
+            end
+        end
+    end
+with
+    loop do
+        var int v = await P;
+        emit pse = v;
+    end
+with
+    await 6s;
+end
+
+return _V;
+]],
+    run = { ['~>2s;1~>P;~>2s;0~>P;~>2s']=20 },
 }
 
 Test { [[
@@ -21829,7 +21973,7 @@ Test { [[
 C nohold _attr();
 C do
     void attr (void* org) {
-        IFC_Global_a(GLOBAL) = CLS_T_a(org) + 1;
+        IFC_Global_a() = CLS_T_a(org) + 1;
     }
 end
 

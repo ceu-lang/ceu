@@ -72,6 +72,9 @@ F = {
 
     Dcl_cls = function (me)
         me.lbl = new{'Class_'..me.id, true}
+        if me.has_init then
+            me.lbl_init = new{'Class_Init_'..me.id}
+        end
 -- TODO
         --if i_am_instantiable then
             me.lbl_clr = new{'Class_free_'..me.id}
@@ -79,6 +82,9 @@ F = {
     end,
     SetNew = function (me)
         me.lbls_cnt = { new{me.tag..'_cont'} }
+        if me.cls.has_init then
+            me.lbls_init = { new{'Init_cnt'} }
+        end
     end,
     Spawn = 'SetNew',
     Free  = function (me)
@@ -90,7 +96,7 @@ F = {
     end,
 
     _Par_pre = function (me)
-        me.lbls_in  = {}
+        me.lbls_in = {}
         for i, sub in ipairs(me) do
             if i > 1 then
                 me.lbls_in[i] = new{me.tag..'_sub_'..i}
@@ -135,6 +141,13 @@ F = {
     end,
     Dcl_var = function (me)
         if me.var.cls then
+            if me.var.cls.has_init then
+                me.lbls_init = {}
+                for i=1, (me.var.arr or 1) do
+                    me.lbls_init[i] = new{'Init_cnt'}
+                end
+            end
+
             me.lbls_cnt = {}
             for i=1, (me.var.arr or 1) do
                 me.lbls_cnt[i] = new{'Start_cnt'}

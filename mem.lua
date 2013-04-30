@@ -36,11 +36,15 @@ F = {
             ]]
 
             -- TODO: separate vars/ints in two ifcs? (ifcs_vars/ifcs_ints)
-            for _, var in ipairs(cls.blk_ifc.vars) do
+            for _, var in ipairs(cls.blk_ifc.vars)
+            do
+                local org = (cls.id=='Global' and '((tceu_org*)CEU.mem)')
+                            or '((tceu_org*)org)'
+
                 local off
                 if cls.is_ifc then
                     -- off = IFC[org.cls][var.n]
-                    off = 'CEU.ifcs[((tceu_org*)org)->cls]['
+                    off = 'CEU.ifcs['..org..'->cls]['
                                 .._ENV.ifcs[var.id_ifc]
                             ..']'
                 else
@@ -50,14 +54,16 @@ F = {
                 if var.isEvt then
                     val = nil
                 elseif var.cls or var.arr then
-                    val = 'PTR_org('.._TP.c(var.tp)..',org,'..off..')'
+                    val = 'PTR_org('.._TP.c(var.tp)..','..org..','..off..')'
                 else
-                    val = '(*PTR_org('.._TP.c(var.tp..'*')..',org,'..off..'))'
+                    val = '(*PTR_org('.._TP.c(var.tp..'*')..','..org..','..off..'))'
                 end
+
                 local id = pre..'_'..cls.id..'_'..var.id
-                code[#code+1] = '#define '..id..'_off(org) '..off
+                local org = (cls.id=='Global' and '') or 'org'
+                code[#code+1] = '#define '..id..'_off('..org..') '..off
                 if val then
-                    code[#code+1] = '#define '..id..'(org) '..val
+                    code[#code+1] = '#define '..id..'('..org..') '..val
                 end
             end
         end

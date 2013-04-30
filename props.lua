@@ -170,6 +170,9 @@ F = {
         if me.var.cls then
             me.has.orgs = true
             me.has.news = me.var.cls.has.news
+            if _AST.iter'BlockI'() then
+                CLS().has_init = true   -- code for init (before constr)
+            end
         end
     end,
 
@@ -335,6 +338,10 @@ F = {
         if async and (not e1) then
             ASR( async.depth <= _AST.iter'SetBlock'().depth+1,
                     me, 'invalid access from async')
+        end
+
+        if _AST.iter'BlockI'() then
+            CLS().has_init = true   -- code for init (before constr)
         end
     end,
 
