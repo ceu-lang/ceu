@@ -199,13 +199,13 @@ STATS = {
 assert(STATS.count  ==    1181)
 assert(STATS.mem    ==   49390)
 assert(STATS.trails ==    3373)
-assert(STATS.bytes  == 6943811)
+assert(STATS.bytes  == 6931523)
 
 --[[
 -- TIME:
-real	2m25.583s
-user	1m37.158s
-sys	0m21.289s
+real	2m20.931s
+user	1m36.222s
+sys	0m21.637s
 ]]
 
 -- TODO: antes de trail de 8 bytes
