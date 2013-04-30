@@ -22375,6 +22375,90 @@ return i:_ins() + t._ins();
     run = 20,
 }
 
+Test { [[
+interface F with
+    C nohold _f();
+    var int i=10;
+end
+]],
+    env = 'ERR : line 3 : invalid attribution',
+}
+
+Test { [[
+interface F with
+    C nohold _f();
+    var int i;
+end
+
+C do
+    void IFC_F__f (void* org, int i) {
+        IFC_F_i(org) += i;
+    }
+    void CLS_T__f (void* org, int i) {
+        CLS_T_i(org) += i;
+    }
+end
+
+class T with
+    var int i=10;   // 1
+    interface F;
+do
+    this._f(1);
+end
+
+var T t1;
+
+var F* f = &t1;
+f:_f(3);
+
+return t1.i + f:i;
+]],
+    run = 28,
+}
+
+Test { [[
+interface F with
+    C nohold _f();
+    var int i;
+end
+
+C do
+    void IFC_F__f (void* org, int i) {
+        IFC_F_i(org) += i;
+    }
+    void CLS_T__f (void* org, int i) {
+        CLS_T_i(org) += i;
+    }
+end
+
+class T with
+    interface F;
+    var int i=10;   // 2
+do
+    this._f(1);
+end
+
+var T t1;
+
+var F* f = &t1;
+f:_f(3);
+
+return t1.i + f:i;
+]],
+    run = 28,
+}
+
+Test { [[
+class T with do end
+class U with
+    interface T;
+do
+end
+return 0;
+]],
+    env = 'ERR : line 3 : `T´ is not an interface',
+}
+
 -- RET_VAL / RET_END
 
 Test { [[

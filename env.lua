@@ -116,6 +116,11 @@ function newvar (me, blk, pre, tp, dim, id)
                 'invalid declaration')
     end
 
+    local inIfc = _AST.iter'BlockI'()
+    if inIfc and blk.vars[id] then
+        return blk.vars[id]
+    end
+
     local var = {
         ln    = me.ln,
         id    = id,
@@ -123,7 +128,7 @@ function newvar (me, blk, pre, tp, dim, id)
         tp    = tp,
         blk   = blk,
         pre   = pre,
-        inIfc = _AST.iter'BlockI'(),
+        inIfc = inIfc,
         isEvt = isEvt,
         isTmp = false,
         arr   = dim,
@@ -253,7 +258,7 @@ F = {
         local ifc, id, blk = unpack(me)
         me.is_ifc = ifc
         me.id     = id
-        me.glbs   = {}
+        me.cs     = ifc and {}      -- C decls
         if id == 'Main' then
             _MAIN = me
         end
@@ -373,11 +378,19 @@ F = {
 
     Dcl_imp = function (me)
         local id = unpack(me)
-        local cls = ASR(_ENV.clss[id], me,
+        local ifc = ASR(_ENV.clss[id], me,
                         'class "'..id..'" is not declared')
-        for _, var in ipairs(cls.blk_ifc.vars) do
+        ASR(ifc.is_ifc, me, '`'..id..'´ is not an interface')
+
+        for _, var in ipairs(ifc.blk_ifc.vars) do
             local tp = (var.dim and _TP.deref(var.tp)) or var.tp
             newvar(me, _AST.iter'Block'(), var.pre, tp, var.arr, var.id)
+        end
+
+        local cls = CLS()
+        for _, c in pairs(ifc.cs) do
+            local id = 'CLS_'..cls.id..'_'..c.id
+            _ENV.c[id] = { tag=c.tag, id=id, len=c.len, mod=c.mod }
         end
     end,
 
@@ -407,9 +420,19 @@ F = {
         len = ASR((not len) or len.sval, me, 'invalid static expression')
         if _AST.iter'BlockI'() then
             local cls = CLS()
-            id = ((cls.is_ifc and 'IFC_') or 'CLS_')..cls.id..'_'..id
+            if cls.is_ifc then
+                cls.cs[id] = { tag=tag, id=id, len=len, mod=mod }
+
+                -- TODO: use pointers to CLS_*
+                id = 'IFC_'..cls.id..'_'..id
+                _ENV.c[id] = { tag=tag, id=id, len=len, mod=mod }
+            else
+                id = 'CLS_'..cls.id..'_'..id
+                _ENV.c[id] = { tag=tag, id=id, len=len, mod=mod }
+            end
+        else
+            _ENV.c[id] = { tag=tag, id=id, len=len, mod=mod }
         end
-        _ENV.c[id] = { tag=tag, id=id, len=len, mod=mod }
     end,
 
     Dcl_pure = function (me)
@@ -474,6 +497,8 @@ F = {
 
         ASR(me.read_only or (not e1.fst.read_only),
                 me, 'read-only variable')
+
+        ASR(not CLS().is_ifc, me, 'invalid attribution')
 
         local req = false
 
