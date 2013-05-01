@@ -1,4 +1,4 @@
-//#line 0 "=== FILENAME ==="
+#line 0 "=== FILENAME ==="
 === DEFS ===
 
 #include <string.h>
@@ -124,6 +124,7 @@ typedef struct tceu_org
     struct tceu_org* par_org;  // traversal
     tceu_trl*        par_trl;
 
+    // TODO: only one pointer??
 
 #ifdef CEU_IFCS
     tceu_ncls cls;  // class id
@@ -378,10 +379,6 @@ void ceu_stack_clr () {
 
 void ceu_go (int __ceu_id, tceu_param* __ceu_p)
 {
-#ifdef CEU_RUNTESTS
-        ceu_stack_clr();
-#endif
-
     tceu_evt _CEU_STK_[255];  // TODO: 255
     int      _ceu_stk_ = 1;   // points to next (TODO: 1=desperdicio)
 
@@ -490,6 +487,7 @@ fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
                         else
 #endif
                         {
+                                // TODO: repeated from above
                                 CUR->par_trl->evt = IN__NONE;
                                 CUR->par_trl->org = NULL;
                         }
@@ -562,6 +560,11 @@ fprintf(stderr, "TRK: l.%d\n", _ceu_cur_.lbl);
 #endif
 #endif
 #endif
+
+#ifdef CEU_RUNTESTS
+        ceu_stack_clr();
+#endif
+
             switch (_ceu_cur_.lbl) {
                 === CODE ===
             }

@@ -150,7 +150,7 @@ do
     end
 
     tpl = sub(tpl, '=== CEU_NMEM ===',     _AST.root.mem.max)
-    tpl = sub(tpl, '=== CEU_NTRAILS ===',  _MAIN.ns.trails)
+    tpl = sub(tpl, '=== CEU_NTRAILS ===',  _MAIN.trails_n)
 
     tpl = sub(tpl, '=== TCEU_NLBL ===',    's'..tps[_ENV.c.tceu_nlbl.len])
 
@@ -268,7 +268,7 @@ if _OPTS.verbose or true then
         evts = _MEM.evt_off+#_ENV.exts,
         lbls = #_LBLS.list,
 
-        trls       = _AST.root.ns.trails,
+        trls       = _AST.root.trails_n,
 
         exts    = _PROPS.has_exts,
         wclocks = _PROPS.has_wclocks,

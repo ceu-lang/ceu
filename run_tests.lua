@@ -70,7 +70,7 @@ Test = function (t)
     if not check('code')     then return end
 
     STATS.mem     = STATS.mem     + _AST.root.mem.max
-    STATS.trails  = STATS.trails  + _AST.root.ns.trails
+    STATS.trails  = STATS.trails  + _AST.root.trails_n
 
 --[[
     if T.awaits then
@@ -198,9 +198,9 @@ STATS = {
 ]])
 
 assert(STATS.count  ==    1194)
-assert(STATS.mem    ==   50236)
-assert(STATS.trails ==    3388)
-assert(STATS.bytes  == 6966986)
+assert(STATS.mem    ==   49500)
+assert(STATS.trails ==    3318)
+assert(STATS.bytes  == 6966818)
 
 --[[
 -- TIME:

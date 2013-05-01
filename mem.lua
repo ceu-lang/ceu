@@ -93,18 +93,18 @@ DBG('', string.format('%8s','free'), off, 1)
         if _PROPS.has_orgs then
             -- TODO: disappear with metadata
             off = alloc(me.mem, 1)
-DBG('', string.format('%8s','trlN'), off, 1, '('..me.ns.trails..')')
+DBG('', string.format('%8s','trlN'), off, 1, '('..me.trails_n..')')
         end
 
         -- Class_Main also uses this
-        off = alloc(me.mem, me.ns.trails*_ENV.c.tceu_trl.len,
+        off = alloc(me.mem, me.trails_n*_ENV.c.tceu_trl.len,
                                          _ENV.c.tceu_trl.len)
-DBG('', string.format('%8s','trls'), off, me.ns.trails*_ENV.c.tceu_trl.len)
+DBG('', string.format('%8s','trls'), off, me.trails_n*_ENV.c.tceu_trl.len)
     end,
     Dcl_cls = function (me)
 DBG('===', me.id)
 DBG('', 'mem', me.mem.max)
-DBG('', 'trl', me.ns.trails)
+DBG('', 'trl', me.trails_n)
 DBG('======================')
 --[[
 local glb = {}

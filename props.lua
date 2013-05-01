@@ -1,8 +1,5 @@
 function SAME (me, sub)
     sub = sub or me[#me]
-    for k,v in pairs(sub.ns) do
-        me.ns[k] = v
-    end
     for k,v in pairs(sub.has) do
         me.has[k] = v
     end
@@ -14,18 +11,6 @@ function OR_all (me, t)
         if _AST.isNode(sub) then
             for k,v in pairs(sub.has) do
                 me.has[k] = me.has[k] or v
-            end
-        end
-    end
-end
-
-function MAX_all (me, t)
-    t = t or me
-    OR_all(me, t)
-    for _, sub in ipairs(t) do
-        if _AST.isNode(sub) then
-            for k,v in pairs(sub.ns) do
-                me.ns[k] = MAX(me.ns[k], v)
             end
         end
     end
@@ -70,16 +55,12 @@ local NO_constr = {
 
 F = {
     Root = function (me)
-        MAX_all(me)
+        OR_all(me)
     end,
 
     Pause = SAME,
 
     Node_pre = function (me)
-        me.ns = {
-            trails  = 1,        -- TODO: move to trails.lua
-            --ints    = 0,      --  after that MAX_all makes no sense
-        }
         me.has = {
             fins = false,
             orgs = false,
@@ -88,7 +69,7 @@ F = {
     end,
     Node_pos = function (me)
         if not F[me.tag] then
-            MAX_all(me)
+            OR_all(me)
         end
         if NO_fin[me.tag] then
             ASR(not _AST.iter'Finally'(), me,
@@ -105,11 +86,12 @@ F = {
 
     Block = function (me)
         SAME(me)
+
+        me.needs_clr = me.fins or me.has.news   -- or var.cls below
+
         if me.fins then
             _PROPS.has_fins = true
             me.has.fins = true
-            me.ns.trails = me.ns.trails + 1 -- implicit await in parallel
-            me.needs_clr = true
         end
 
         -- one trail for each org
@@ -117,31 +99,16 @@ F = {
             if var.cls then
                 me.has.news = me.has.news or var.cls.has.news
                 me.has.fins = me.has.fins or var.cls.has.fins
-                me.ns.trails = me.ns.trails + (var.arr or 1)
                 me.needs_clr = true
             end
         end
-
-        -- pointer to my first dyn-org child
-        if me.has.news then
-            me.ns.trails = me.ns.trails + 1
-            me.needs_clr = true
-        end
     end,
-    Stmts   = MAX_all,
+    Stmts   = OR_all,
 
     ParEver = 'ParOr',
     ParAnd  = 'ParOr',
     ParOr = function (me)
         OR_all(me)
-        me.ns.trails = 0
-        for i, sub in ipairs(me) do
-            if _AST.isNode(sub) then
-                for k,v in pairs(sub.ns) do
-                    me.ns[k] = me.ns[k] + v
-                end
-            end
-        end
         me.needs_clr = (me.tag == 'ParOr')
     end,
 
@@ -152,14 +119,6 @@ F = {
         else
             SAME(me)
         end
-
-        -- pointer to next dyn-org from my parent block
--- TODO
-        --if i_am_instantiable then
-            me.ns.trails = me.ns.trails + 1
-        --end
-
-        ASR(me.ns.trails < 256, me, 'too many trails')
     end,
 
     Dcl_ext = function (me)
@@ -194,12 +153,11 @@ F = {
 
     Async = function (me)
         _PROPS.has_asyncs = true
-        --me.ns.trails = 1
     end,
 
     If = function (me)
         local c, t, f = unpack(me)
-        MAX_all(me, {t,f})
+        OR_all(me, {t,f})
     end,
 
     ParOr_pre = function (me)
@@ -285,21 +243,16 @@ F = {
     end,
     AwaitT = function (me)
         _PROPS.has_wclocks = true
-        --me.ns.trails = 1
         F._loop(me)
     end,
     AwaitInt = function (me)
         _PROPS.has_ints = true
-        --me.ns.ints = 1
-        --me.ns.trails = 1
         F._loop(me)
     end,
     AwaitExt = function (me)
-        --me.ns.trails = 1
         F._loop(me)
     end,
     AwaitN = function (me)
-        --me.ns.trails = 1
         F._loop(me)
     end,
     AwaitS = function (me)

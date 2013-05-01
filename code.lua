@@ -37,7 +37,7 @@ function LINE (me, line, spc)
     spc = spc or 4
     spc = string.rep(' ', spc)
     me.code = me.code ..
-                --'#line '..me.ln..'\n'..
+                '#line '..me.ln..'\n'..
                 spc .. line .. '\n'
 end
 
@@ -206,7 +206,7 @@ if (CUR->toFree) {
 
     Host = function (me)
         _CODE.host = _CODE.host ..
-            --'#line '..(me.ln+1)..'\n' ..
+            '#line '..(me.ln+1)..'\n' ..
             me[1] .. '\n'
     end,
     Host_raw = function (me)
@@ -249,7 +249,7 @@ end;
     // reset org memory and do org.trail[0]=Class_XXX
     // links par <=> org
     ceu_org_init(org, ]]
-                ..t.cls.ns.trails..','
+                ..t.cls.trails_n..','
                 ..(t.cls.has_init and t.cls.lbl_init.id or t.cls.lbl.id)..[[);
 
     // par <=> org
