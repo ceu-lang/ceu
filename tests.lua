@@ -96,6 +96,28 @@ do return end
 -- OK: under tests but supposed to work
 
 Test { [[
+input void START;
+
+interface Global with
+    var int x;
+end
+
+var int x = 10;
+
+class T with
+    var int x;
+do
+    this.x = global:x;
+end
+
+var T t;
+await START;
+return t.x;
+]],
+    run = 10,
+}
+
+Test { [[
 C _s=0;
 C do
     typedef int s;

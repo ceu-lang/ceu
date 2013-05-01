@@ -16,9 +16,20 @@ F = {
 
     Var = function (me)
         local var = me.var
-        if var.isEvt or var.cls or var.inIfc then
+        if var.isEvt or var.cls then
+            var.isTmp = false
             return                  -- only normal vars can be tmp
         end
+
+        local glb = _ENV.clss.Global
+        if var.inIfc or
+            (var.blk==_ENV.clss.Main.blk_ifc and glb and glb.is_ifc and
+             glb.blk_ifc.vars[var.id])
+        then
+            var.isTmp = false
+            return                  -- vars in interfaces cannot be tmp
+        end
+
         if _AST.iter'Dcl_var'() or
            me.__par.tag == 'SetBlock' then
             return                  -- dcl is not an access
