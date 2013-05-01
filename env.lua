@@ -460,7 +460,7 @@ F = {
         local var = e1.var
         ASR(var and var.isEvt, me,
                 'event "'..(var and var.id or '?')..'" is not declared')
-        ASR(((not e2) or _TP.contains(e1.var.tp,e2.tp,true)),
+        ASR(e1.tp=='void' or  (e2 and _TP.contains(e1.var.tp,e2.tp,true)),
                 me, 'invalid emit')
     end,
 

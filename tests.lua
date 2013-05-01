@@ -91,9 +91,9 @@ error 'testar pause/if org.e'
 error 'testar new/spawn que se mata'
 
 do return end
+--]===]
 
 -- OK: under tests but supposed to work
---]===]
 
 Test { [[
 C _s=0;
@@ -3111,6 +3111,22 @@ end
 emit a;
 return ret;
 ]],
+    env = 'ERR : line 10 : invalid emit',
+}
+
+Test { [[
+var int ret = 0;
+event int a;
+var int aa = 3;
+par/or do
+    await a;
+    ret = ret + 1;  // 6
+with
+    ret = 5;        // 8
+end
+emit a=1;
+return ret;
+]],
     ana = {
         abrt = 1,
         --unreachs = 1,
@@ -3222,7 +3238,7 @@ return a;
 
 Test { [[
 input void START;
-event int e;
+event void e;
 var int v;
 par/or do           // 4
     await START;
@@ -7108,7 +7124,7 @@ end;
 }
 
 Test { [[
-event int a;
+event void a;
 var int x;
 par/or do
     par/and do
@@ -11123,7 +11139,7 @@ return 1;
 Test { [[
 input void START, A;
 var int v = 0;
-event int a,b;
+event void a,b;
 par/or do
     loop do
         par/or do
@@ -11174,7 +11190,7 @@ end;
 
 Test { [[
 input void START, F;
-event int a, b;
+event void a, b;
 par/or do
     loop do
         par/or do
@@ -12146,7 +12162,7 @@ end
 }
 Test { [[
 input void START;
-event int a;
+event void a;
 var int x = 0;
 par/or do
     await START;
@@ -12539,7 +12555,7 @@ return a;
 
 Test { [[
 var int ret = 0;
-event int a,b;
+event void a,b;
 par/or do
     ret = ret + 1;
 with
@@ -12570,7 +12586,7 @@ return ret;
 
 Test { [[
 var int ret = 0;
-event int a;
+event void a;
 par/or do
     ret = ret + 1;
 with
@@ -12603,7 +12619,7 @@ par/or do
         event int aa;
         par/or do
             par/or do
-                emit aa;  // 9
+                emit aa=1;  // 9
             with
             end;
         with
@@ -17683,12 +17699,12 @@ do
     await go;
     emit a=100;
     aa = 5;
-    emit ok;
+    emit ok=1;
 end
 var T aa;
     par/or do
         await START;
-        emit aa.go;
+        emit aa.go=1;
     with
         await aa.ok;
     end
@@ -18553,7 +18569,7 @@ do
         aa = await a;
         aa = 7;
     end
-    emit ok;
+    emit ok=1;
 end
 var T aa;
 par/and do
@@ -18899,7 +18915,7 @@ input void F;
 class Rect with
     var s16 x;
     var s16 y;
-    event int go;
+    event void go;
 do
     loop do
         par/or do
@@ -19022,7 +19038,7 @@ end
 var T aa;
 par/or do
     par/and do
-        emit aa.go;
+        emit aa.go=1;
     with
         await aa.ok;
     end
@@ -19049,7 +19065,7 @@ end
 var T aa;
 par/or do
     par/and do
-        emit aa.go;
+        emit aa.go=1;
     with
         await aa.ok;
     end
@@ -19083,7 +19099,7 @@ return _V;
 Test { [[
     input void START;
 class T with
-    event int a, ok, go, b;
+    event void a, ok, go, b;
     var int aa, bb;
 do
 
@@ -19122,7 +19138,7 @@ return _V + aa.aa + aa.bb;
 Test { [[
     input void START;
 class T with
-    event int a, ok, go, b;
+    event void a, ok, go, b;
     var int aa, bb;
 do
 
@@ -19155,7 +19171,7 @@ return ret + aa.aa + aa.bb;
 Test { [[
 input void START;
 class T with
-    event int e, ok, go;
+    event void e, ok, go;
     var int ee;
 do
     await this.go;
@@ -19196,7 +19212,7 @@ Test { [[
 C nohold _f();
 input void START;
 class T with
-    event int e, ok, go, b;
+    event void e, ok, go, b;
     var u8 a;
 do
     await go;
@@ -19228,7 +19244,7 @@ return _f(&a.a,&b.a);
 Test { [[
 input void START,B;
 class T with
-    event int ok, go, b;
+    event void ok, go, b;
     event void e, f;
     var int v;
 do
@@ -19270,7 +19286,7 @@ Test { [[
 input void START, B;
 class T with
     var int v;
-    event int ok, go, b;
+    event void ok, go, b;
     event void e, f;
 do
     await go;
@@ -19325,7 +19341,7 @@ return ret + ts[0].v + ts[1].v;
 Test { [[
 input int S,F;
 class T with
-    event int a,ok;
+    event void a,ok;
     var int aa;
 do
     par/or do
@@ -21825,12 +21841,12 @@ Test { [[
 input void START;
 
 interface I with
-    event int e;
+    event void e;
     var int ee;
 end
 
 class T with
-    event int e;
+    event void e;
     var int ee;
 do
     await e;
