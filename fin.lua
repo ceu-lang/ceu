@@ -11,7 +11,6 @@ F = {
             local blk1 = (e1.fst=='_' and _AST.root) or e1.fst.blk
 
             if constr then
-DBG(constr, constr.blk)
                 blk1 = constr.blk
             end
 

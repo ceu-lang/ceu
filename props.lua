@@ -209,7 +209,7 @@ F = {
     Loop_pre = function (me)
         F.ParOr_pre(me)
         me.brks = {}
-        me.noAwts = true
+        me.noAwtsEmts = true
     end,
     Break = function (me)
         local loop = _AST.iter'Loop'()
@@ -280,7 +280,7 @@ F = {
 
     _loop = function (me)
         for loop in _AST.iter'Loop' do
-            loop.noAwts = false
+            loop.noAwtsEmts = false
         end
     end,
     AwaitT = function (me)
@@ -316,6 +316,7 @@ F = {
 
     EmitInt = function (me)
         _PROPS.has_ints = true
+        F._loop(me)
     end,
 
     EmitExtS = function (me)

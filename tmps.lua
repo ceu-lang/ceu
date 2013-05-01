@@ -30,9 +30,13 @@ F = {
             return                  -- vars in interfaces cannot be tmp
         end
 
-        if _AST.iter'Dcl_var'() or
-           me.__par.tag == 'SetBlock' then
-            return                  -- dcl is not an access
+        local dcl = _AST.iter'Dcl_var'()
+        if dcl and dcl[1]==var.id then
+            return                  -- my declaration is not an access
+        end
+
+        if me.__par.tag == 'SetBlock' then
+            return                  -- set is performed on respective `return´
         end
 
         local v = VARS[var]
@@ -42,7 +46,9 @@ F = {
 
         if _AST.iter'Finally'() or      -- finally executes through "call"
            _AST.iter'AwaitInt'() or     -- await ptr:a (ptr is tested on awake)
-           isRef                        -- reference may escape
+           isRef or                     -- reference may escape
+           var.arr                      -- array may escape: TODO conservative
+                                        -- (arrays as parameters)
         then
             var.isTmp = false
             VARS[var] = nil
@@ -65,7 +71,7 @@ F = {
     end,
 
     Loop_pre = function (me)
-        if (me.noAwts and (not _AST.iter'Async'())) or
+        if (me.noAwtsEmts and (not _AST.iter'Async'())) or
             me.isAwaitUntil then
             return      -- OK: (tight loop outside Async) or (await ... until)
         end
