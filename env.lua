@@ -316,16 +316,9 @@ F = {
     This = function (me)
         local cls
 
-        local spw = _AST.iter'Spawn'()
-        local set = _AST.iter'SetNew'()
-        local dcl = _AST.iter'Dcl_var'()
-
-        if spw then
-            cls = _ENV.clss[ spw[1] ]   -- checked on Spawn
-        elseif set then
-            cls = _ENV.clss[ set[2] ]   -- checked on SetExp
-        elseif dcl then
-            cls = _ENV.clss[ dcl[2] ]   -- checked on Dcl_var
+        local constr = _AST.iter'Dcl_constr'()
+        if constr then
+            cls = constr.cls
         else
             cls = CLS()
             ASR(cls ~= _MAIN, me, 'invalid access')
@@ -366,7 +359,7 @@ F = {
 
     Dcl_int = 'Dcl_var',
     Dcl_var = function (me)
-        local pre, tp, dim, id = unpack(me)
+        local pre, tp, dim, id, constr = unpack(me)
         ASR((not dim) or tonumber(dim.sval), me, 'invalid static expression')
         if pre == 'event' then
             ASR(tp=='void' or tp=='int' or _TP.deref(tp),
@@ -374,6 +367,10 @@ F = {
         end
         me.var = newvar(me, _AST.iter'Block'(), pre, tp, dim and dim.sval, id)
         me.var.read_only = me.read_only
+
+        if constr then
+            constr.blk = me.var.blk
+        end
     end,
 
     Dcl_imp = function (me)
@@ -529,9 +526,9 @@ F = {
     end,
 
     SetNew = function (me)
-        local exp, id_cls = unpack(me)
+        local exp, id_cls, constr = unpack(me)
 
-        F.Spawn(me, id_cls, exp.ref.var.blk)    -- also sets me.cls
+        F.Spawn(me, id_cls, constr, exp.ref.var.blk)    -- also sets me.cls
 
         ASR(exp.lval and _TP.contains(exp.tp,me.cls.id..'*')
                          -- refuses (x.ptr = new T;)
@@ -545,8 +542,11 @@ F = {
                 me, 'invalid attribution')
     end,
 
-    Spawn = function (me, id, blk)
-        id = id or me[1]
+    Spawn = function (me, id, constr, blk)
+        if not id then
+            id, constr = unpack(me)
+        end
+
         me.cls = ASR(_ENV.clss[id], me,
                         'class "'..id..'" is not declared')
         ASR(not me.cls.is_ifc, me, 'cannot instantiate an interface')
@@ -556,6 +556,25 @@ F = {
                         me, '`spawn´ requires enclosing `do ... end´')[1]
         blk.has_news = true
         me.blk = blk
+        if constr then
+            constr.blk = blk
+        end
+    end,
+
+    Dcl_constr_pre = function (me)
+        local spw = _AST.iter'Spawn'()
+        local set = _AST.iter'SetNew'()
+        local dcl = _AST.iter'Dcl_var'()
+
+        if spw then
+            me.cls = _ENV.clss[ spw[1] ]   -- checked on Spawn
+        elseif set then
+            me.cls = _ENV.clss[ set[2] ]   -- checked on SetExp
+        elseif dcl then
+            me.cls = _ENV.clss[ dcl[2] ]   -- checked on Dcl_var
+        else
+            error'xxx'
+        end
     end,
 
     CallStmt = function (me)

@@ -91,9 +91,226 @@ error 'testar pause/if org.e'
 error 'testar new/spawn que se mata'
 
 do return end
---]===]
 
 -- OK: under tests but supposed to work
+--]===]
+
+Test { [[
+C _s=0;
+C do
+    typedef int s;
+end
+
+class T with
+    var _s* ptr = null;
+do
+end
+
+do
+    var _s* p = null;
+    var T* ui = new T with
+        this.ptr = p;
+    end;
+end
+
+return 10;
+]],
+    run = 10,
+}
+
+Test { [[
+C _s=0;
+C do
+    typedef int s;
+end
+
+class T with
+    var _s* ptr = null;
+do
+end
+
+var T* ui;
+do
+    var _s* p = null;
+    do
+        ui = new T with
+            this.ptr = p;
+        end;
+    end
+end
+
+return 10;
+]],
+    fin = 'ERR : line 16 : attribution requires `finalize´',
+}
+
+Test { [[
+C _s=0;
+C do
+    typedef int s;
+end
+
+class T with
+    var _s* ptr = null;
+do
+end
+
+do
+    loop i, 10 do
+        var _s* p = null;
+        spawn T with
+            this.ptr = p;
+        end;
+        await 1s;
+    end
+end
+
+return 0;
+]],
+    fin = 'ERR : line 15 : attribution requires `finalize´',
+}
+Test { [[
+C _s=0;
+C do
+    typedef int s;
+end
+
+class T with
+    var _s* ptr = null;
+do
+end
+
+C _V, _assert();
+C do
+    int V=0;
+end
+
+do
+    loop i, 10 do
+        var _s* p = null;
+        spawn T with
+            finalize
+                this.ptr = p;
+            with
+                _V = _V + 1;
+            end
+        end;
+        await 1s;
+    end
+    _assert(_V == 10);
+end
+
+return _V;
+]],
+    props = 'ERR : line 23 : not permitted inside a constructor',
+}
+
+Test { [[
+C _s=0;
+C do
+    typedef int s;
+end
+
+class T with
+    var _s* ptr = null;
+do
+end
+
+C _V, _assert();
+C do
+    int V=0;
+end
+
+do
+    loop i, 10 do
+        var _s* p = null;
+        var T* ui = new T with
+            finalize
+                this.ptr = p;   // p == ptr
+            with
+                _V = _V + 1;
+            end
+        end;
+        await 1s;
+    end
+    _assert(_V == 10);
+end
+
+return _V;
+]],
+    fin = 'ERR : line 21 : invalid `finalize´',
+}
+
+Test { [[
+C _s=0;
+C do
+    typedef int s;
+end
+
+class T with
+    var _s* ptr = null;
+do
+end
+
+C _V, _assert();
+C do
+    int V=0;
+end
+
+var T* ui;
+do
+    var _s* p = null;
+    loop i, 10 do
+        ui = new T with
+            this.ptr = p;
+        end;
+        await 1s;
+    end
+    _assert(_V == 10);
+end
+
+return _V;
+]],
+    fin = 'ERR : line 21 : attribution requires `finalize´',
+}
+
+Test { [[
+C _s=0;
+C do
+    typedef int s;
+end
+
+class T with
+    var _s* ptr = null;
+do
+end
+
+C _V, _assert();
+C do
+    int V=0;
+end
+
+var T* ui;
+do
+    var _s* p = null;
+    loop i, 10 do
+        ui = new T with
+            finalize
+                this.ptr = p;
+            with
+                _V = _V + 1;
+            end
+        end;
+        await 1s;
+    end
+    _assert(_V == 0);
+end
+//_assert(_V == 10);
+
+return _V;
+]],
+    props = 'ERR : line 24 : not permitted inside a constructor',
+}
 
 Test { [[
 C _V;
@@ -12560,7 +12777,7 @@ _f() finalize with nothing;
     end;
 return 1;
 ]],
-    env = 'ERR : line 2 : invalid `finalize´',
+    fin = 'ERR : line 2 : invalid `finalize´',
 }
 
 Test { [[
@@ -12600,7 +12817,7 @@ _f(p!=null) finalize with nothing;
     end;
 return 1;
 ]],
-    env = 'ERR : line 5 : invalid `finalize´',
+    fin = 'ERR : line 5 : invalid `finalize´',
     run = 1,
 }
 
@@ -12615,7 +12832,7 @@ do
 end
 return 1;
 ]],
-    env = 'ERR : line 6 : call requires `finalize´',
+    fin = 'ERR : line 6 : call requires `finalize´',
     -- multiple scopes
 }
 
@@ -12625,7 +12842,7 @@ C _v;
 _f(_v);
 return 0;
 ]],
-    env = 'ERR : line 3 : call requires `finalize´',
+    fin = 'ERR : line 3 : call requires `finalize´',
 }
 
 Test { [[
@@ -12652,7 +12869,7 @@ end
 var int v;
 return _f(&v) == 1;
 ]],
-    env = 'ERR : line 8 : call requires `finalize´',
+    fin = 'ERR : line 8 : call requires `finalize´',
 }
 
 Test { [[
@@ -14640,7 +14857,7 @@ end
 var int* p = _f();
 return *p;
 ]],
-    env = 'ERR : line 8 : attribution requires `finalize´',
+    fin = 'ERR : line 8 : attribution requires `finalize´',
 }
 
 Test { [[
@@ -15775,7 +15992,7 @@ end
         acc = 24,        -- TODO: nao conferi
         isForever = true,
     },
-    env = 'line 4 : call requires `finalize´',
+    fin = 'line 4 : call requires `finalize´',
 }
 
 Test { [[
@@ -16028,7 +16245,7 @@ var int a;
 a = _inv(_inv(1));
 return a;
 ]],
-    env = 'ERR : line 8 : call requires `finalize´',
+    fin = 'ERR : line 8 : call requires `finalize´',
 }
 
 Test { [[
@@ -20282,7 +20499,7 @@ do
 end
 return a:v;
 ]],
-    env = 'ERR : line 10 : attribution requires `finalize´',
+    fin = 'ERR : line 10 : attribution requires `finalize´',
 }
 
 Test { [[
@@ -20455,7 +20672,7 @@ end
 end
 return 10;
 ]],
-    env = 'ERR : line 6 : attribution requires `finalize´',
+    fin = 'ERR : line 6 : attribution requires `finalize´',
 }
 
 Test { [[
@@ -21766,7 +21983,7 @@ var I* t;
 
 return 1;
 ]],
-    env = 'ERR : line 10 : attribution requires `finalize´'
+    fin = 'ERR : line 10 : attribution requires `finalize´'
 }
 
 Test { [[
@@ -21797,7 +22014,7 @@ do
 end
 return 1;
 ]],
-    env = 'ERR : line 6 : attribution requires `finalize´',
+    fin = 'ERR : line 6 : attribution requires `finalize´',
 }
 Test { [[
 interface Global with
@@ -21825,7 +22042,7 @@ end
 var int* a;
 return 1;
 ]],
-    env = 'ERR : line 7 : attribution requires `finalize´'
+    fin = 'ERR : line 7 : attribution requires `finalize´'
 }
 
 Test { [[
