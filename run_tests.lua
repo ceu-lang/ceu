@@ -55,6 +55,7 @@ Test = function (t)
     if not check('ast')      then return end
     --_AST.dump(_AST.root)
     if not check('env')      then return end
+    if not check('fin')      then return end
     dofile 'ana.lua'
     dofile 'acc.lua'
     if not check('tight')    then return end

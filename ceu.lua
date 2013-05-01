@@ -121,6 +121,7 @@ do
     dofile 'parser.lua'
     dofile 'ast.lua'
     dofile 'env.lua'
+    dofile 'fin.lua'
     dofile 'ana.lua'
     dofile 'acc.lua'
     --_AST.dump(_AST.root)
