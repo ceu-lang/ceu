@@ -229,30 +229,6 @@ F = {
             end
         end
     end,
---[=[
-    Block = function (me)
-        local orgs
-
-        if me.has_news then
-            orgs = _AST.node('Orgs')(me.ln)
-            orgs.vars = {}
-        end
-
-        for _, var in ipairs(me.vars) do
-            if var.cls then
-                if not orgs then
-                    orgs = _AST.node('Orgs')(me.ln)
-                    orgs.vars = {}
-                end
-                orgs.vars[#orgs.vars+1] = var
-            end
-        end
-        if orgs then
-             -- awakes orgs first, then blk
-            me[1] = _AST.node('ParOr')(me.ln, orgs, me[1])
-        end
-    end,
-]=]
 
     Dcl_cls_pre = function (me)
         local ifc, id, blk = unpack(me)
@@ -550,7 +526,7 @@ F = {
         me.cls = ASR(_ENV.clss[id], me,
                         'class "'..id..'" is not declared')
         ASR(not me.cls.is_ifc, me, 'cannot instantiate an interface')
-        me.cls.has_news = true
+        me.cls.is_instantiable = true
 
         blk = blk or ASR(_AST.iter'Do'(),
                         me, '`spawn´ requires enclosing `do ... end´')[1]

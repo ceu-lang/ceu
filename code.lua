@@ -111,10 +111,11 @@ function CLEAR (me)
         return
     end
 
+    -- check if top will clear during same reaction
     if (not me.has.fins) and _ANA then   -- fin must execute before any stmt
         local top = _AST.iter(_iter)()
         if top and _ANA.CMP(top.ana.pos, me.ana.pos) then
-            return  -- top will clear (but blocks due to fins)
+            return  -- top will clear
         end
     end
 

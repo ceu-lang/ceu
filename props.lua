@@ -64,7 +64,7 @@ F = {
         me.has = {
             fins = false,
             orgs = false,
-            news = false,
+            news = false,   -- extra trail for dyns in blocks
         }
     end,
     Node_pos = function (me)
@@ -137,15 +137,12 @@ F = {
 
     Free = function (me)
         _PROPS.has_news = true
-        _PROPS.has_fins = true
-        me.cls.has_news = true      -- TODO has.news?
-        -- overwrite these:
-        me.has.news   = true
     end,
     SetNew = function (me)
         SAME(me, me.cls)
-        F.Free(me)
-        me.has.fins = me.cls.has.fins
+        _PROPS.has_news = true
+        me.has.news = true
+        me.has.fins = me.cls.has.fins   -- forces needs_clr (TODO: needs.clr?)
         ASR(not _AST.iter'BlockI'(), me,
                 'not permitted inside an interface')
     end,

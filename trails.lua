@@ -26,10 +26,9 @@ F = {
         MAX_all(me)
 
         -- pointer to next dyn-org from my parent block
--- TODO
-        --if i_am_instantiable then
+        if me.is_instantiable then
             me.trails_n = me.trails_n + 1
-        --end
+        end
 
         ASR(me.trails_n < 256, me, 'too many trails')
     end,
