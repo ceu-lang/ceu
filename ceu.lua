@@ -229,6 +229,7 @@ do
         has_orgs    = 'CEU_ORGS',
         has_news    = 'CEU_NEWS',
         has_ifcs    = 'CEU_IFCS',
+        has_clear   = 'CEU_CLEAR',
     }
     for k, s in pairs(t) do
         if _PROPS[k] then

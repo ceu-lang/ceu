@@ -25,6 +25,7 @@ _PROPS = {
     has_orgs    = false,
     has_news    = false,
     has_ifcs    = false,
+    has_clear   = false,
 }
 
 local NO_fin = {
@@ -90,6 +91,7 @@ F = {
         me.needs_clr = me.fins or me.has.news   -- or var.cls below
 
         if me.fins then
+            _PROPS.has_clear = true
             _PROPS.has_fins = true
             me.has.fins = true
         end
@@ -100,6 +102,7 @@ F = {
                 me.has.news = me.has.news or var.cls.has.news
                 me.has.fins = me.has.fins or var.cls.has.fins
                 me.needs_clr = true
+                _PROPS.has_clear = true     -- TODO: too conservative
             end
         end
     end,
@@ -109,7 +112,10 @@ F = {
     ParAnd  = 'ParOr',
     ParOr = function (me)
         OR_all(me)
-        me.needs_clr = (me.tag == 'ParOr')
+        if me.tag == 'ParOr' then
+            _PROPS.has_clear = true
+            me.needs_clr = true
+        end
     end,
 
     Dcl_cls = function (me)
@@ -137,10 +143,12 @@ F = {
 
     Free = function (me)
         _PROPS.has_news = true
+        _PROPS.has_clear = true
     end,
     SetNew = function (me)
         SAME(me, me.cls)
         _PROPS.has_news = true
+        _PROPS.has_clear = true
         me.has.news = true
         me.has.fins = me.cls.has.fins   -- forces needs_clr (TODO: needs.clr?)
         ASR(not _AST.iter'BlockI'(), me,
@@ -179,6 +187,7 @@ F = {
             elseif n.tag == 'ParEver' or
                    n.tag == 'ParAnd' or
                    n.tag == 'ParOr' then
+                _PROPS.has_clear = true
                 loop.needs_clr = true
                 break
             end
@@ -221,6 +230,7 @@ F = {
             elseif n.tag == 'ParEver' or
                    n.tag == 'ParAnd' or
                    n.tag == 'ParOr' then
+                _PROPS.has_clear = true
                 blk.needs_clr = true
                 break
             end

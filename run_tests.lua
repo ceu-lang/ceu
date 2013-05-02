@@ -200,7 +200,7 @@ STATS = {
 assert(STATS.count  ==    1194)
 assert(STATS.mem    ==   39789)
 assert(STATS.trails ==    2330)
-assert(STATS.bytes  == 6965246)
+assert(STATS.bytes  == 6932478)
 
 --[[
 -- TIME:

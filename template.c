@@ -379,16 +379,22 @@ void ceu_stack_clr () {
 
 void ceu_go (int __ceu_id, tceu_param* __ceu_p)
 {
-    tceu_evt _CEU_STK_[255];  // TODO: 255
-    int      _ceu_stk_ = 1;   // points to next (TODO: 1=desperdicio)
+#ifdef CEU_ORGS
+    tceu_evt _CEU_STK_[CEU_MAX_STACK];  // TODO: 255
+#else
+    tceu_evt _CEU_STK_[CEU_NTRAILS+1];
+#endif
+    int      _ceu_stk_ = 1;   // points to next (TODO: 0=unused)
 
     tceu_evt _ceu_evt_;       // current stack entry
     tceu_lst _ceu_cur_;       // current listener
 
+#ifdef CEU_CLEAR
 #ifdef CEU_ORGS
     void*       _ceu_clr_org_;  // stop at this org
 #endif
     tceu_trl* _ceu_clr_trlF_; //      at this trl
+#endif
 
     // ceu_go_init(): nobody awaiting, jump reset
     if (__ceu_id == IN__INIT) {
@@ -428,6 +434,7 @@ fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
 #endif
         for (;;)    // TRL
         {
+#ifdef CEU_CLEAR
             // clr is bounded to _trlF_ (set by code.lua)
             if (
                 (_ceu_evt_.id == IN__CLR)
@@ -438,6 +445,7 @@ fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
             ) {
                 break;
             }
+#endif
 
             // check if all trails have been traversed
             // traverse next org if applicable
@@ -458,6 +466,7 @@ fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
                     tceu_org* PAR = CUR->par_org;
                     _ceu_cur_.trl = CUR->par_trl;
                     _ceu_cur_.trl++;     // X->Y [ X | org | Y ]
+#ifdef CEU_CLEAR
                     if (_ceu_evt_.id == IN__CLR) {
 #ifdef CEU_NEWS
                         // re-link UP <-> DOWN
@@ -492,6 +501,7 @@ fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
                                 CUR->par_trl->org = NULL;
                         }
                     }
+#endif
                     _ceu_cur_.org = PAR;
                     goto _CEU_CALLTRL_;
                 }
@@ -529,8 +539,10 @@ fprintf(stderr, "\tTRY [%p] : evt=%d stk=%d lbl=%d\n",
 #endif
 
                 if (
-                    (_ceu_evt_.id != IN__CLR)
+#ifdef CEU_CLEAR
+                    (_ceu_evt_.id != IN__CLR)   // clear always executes
                   &&
+#endif
                     (  (trl->stk!=CEU_MAX_STACK && trl->stk!=_ceu_stk_)
                     || (trl->evt!=IN__ANY       && trl->evt!=_ceu_evt_.id) )
                 ) {
@@ -541,10 +553,12 @@ fprintf(stderr, "\tTRY [%p] : evt=%d stk=%d lbl=%d\n",
 
                 trl->stk = 0;             // no more awaking
 
+#ifdef CEU_CLEAR
                 if (_ceu_evt_.id==IN__CLR && trl->evt!=IN__CLR) {
                     trl->evt = IN__NONE;  // no more awaiting
                     goto _CEU_NEXT_;
                 }
+#endif
 
                 trl->evt = IN__NONE;      // no more awaiting
                 _ceu_cur_.lbl = trl->lbl;
