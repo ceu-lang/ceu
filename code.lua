@@ -123,7 +123,7 @@ function CLEAR (me)
                                 --', _ceu_cur_.org);')
 
     LINE(me, [[
-// trails[1] points to ORG blk
+/* trails[1] points to ORG blk */
 {
     tceu_trl* trl = &CUR->trls[ ]]..me.trails[1]..[[ ];
     trl->evt = IN__ANY;
@@ -132,12 +132,12 @@ function CLEAR (me)
 }
 _CEU_STK_[_ceu_stk_++] = _ceu_evt_;
 
-// [ trails[1]+1, trails[2] )
-_ceu_cur_.trl = &CUR->trls[ ]]..(me.trails[1]+1)..[[ ];  // trails[1]+1 is in
+/* [ trails[1]+1, trails[2] ) */
+_ceu_cur_.trl = &CUR->trls[ ]]..(me.trails[1]+1)..[[ ];  /* trails[1]+1 is in */
 #ifdef CEU_ORGS
 _ceu_clr_org_  = _ceu_cur_.org;
 #endif
-_ceu_clr_trlF_ = &CUR->trls[ ]]..(me.trails[2]+1)..[[ ]; // trails[2]+1 is out
+_ceu_clr_trlF_ = &CUR->trls[ ]]..(me.trails[2]+1)..[[ ]; /* trails[2]+1 is out */
 _ceu_evt_.id = IN__CLR;
 goto _CEU_CALLTRL_;
 
@@ -181,7 +181,7 @@ F = {
         CASE(me, me.lbl)
         LINE(me, [[
 #ifdef CEU_IFCS
-CUR->cls = ]]..me.n..[[;        // TODO: move to _ORG?
+CUR->cls = ]]..me.n..[[;        /* TODO: move to _ORG? */
 #endif
 ]])
 
@@ -247,37 +247,37 @@ end;
     org->toFree = ]]..t.toFree..[[;
 #endif
 
-    // reset org memory and do org.trail[0]=Class_XXX
-    // links par <=> org
+    /* reset org memory and do org.trail[0]=Class_XXX */
+    /* links par <=> org */
     ceu_org_init(org, ]]
                 ..t.cls.trails_n..','
                 ..(t.cls.has_init and t.cls.lbl_init.id or t.cls.lbl.id)..[[);
 
-    // par <=> org
-    // link org with the next trail in the block
+    /* par <=> org */
+    /* link org with the next trail in the block */
     org->par_org = ]]..t.par_org..[[;
     org->par_trl = par_trl;
 
-    // enables parent trail with IN__ORG (always awake from now on)
+    /* enables parent trail with IN__ORG (always awake from now on) */
     par_trl->evt = IN__ORG;
     par_trl->org = org;
 
 ]])
             if t.cls.has_init then
                 LINE(me, [[
-    // hold current blk trail: set to my continuation
+    /* hold current blk trail: set to my continuation */
     _ceu_cur_.trl->evt = IN__ANY;
     _ceu_cur_.trl->lbl = ]]..me.lbls_init[i].id..[[;
     _ceu_cur_.trl->stk = _ceu_stk_;
     _CEU_STK_[_ceu_stk_++] = _ceu_evt_;
 
-    // switch to ORG for INIT
+    /* switch to ORG for INIT */
     _ceu_cur_.org = org;
     goto _CEU_CALL_;
 }
 
 case ]]..me.lbls_init[i].id..[[:;
-    // BACK FROM INIT
+    /* BACK FROM INIT */
 {
     tceu_org* org = (tceu_org*) &]]..t.val..'['..(i-1)..']'..[[;
 ]])
@@ -288,13 +288,13 @@ case ]]..me.lbls_init[i].id..[[:;
             end
 
             LINE(me, [[
-    // hold current blk trail: set to my continuation
+    /* hold current blk trail: set to my continuation */
     _ceu_cur_.trl->evt = IN__ANY;
     _ceu_cur_.trl->lbl = ]]..me.lbls_cnt[i].id..[[;
     _ceu_cur_.trl->stk = _ceu_stk_;
     _CEU_STK_[_ceu_stk_++] = _ceu_evt_;
 
-    // switch to ORG
+    /* switch to ORG */
 
     org->trls[0].evt = IN__ANY;
     org->trls[0].lbl = ]]..t.cls.lbl.id..[[;
@@ -333,7 +333,7 @@ case ]]..me.lbls_cnt[i].id..[[:;
         LINE(me, [[
 {
     tceu_org* __ceu_org = malloc(]]..t.cls.mem.max..[[);
-//fprintf(stderr, "MALLOC: %p\n", __ceu_org);
+/*fprintf(stderr, "MALLOC: %p\n", __ceu_org); */
 
 #ifdef CEU_RUNTESTS
     _ceu_dyns_++;
@@ -435,19 +435,19 @@ case ]]..me.lbls_cnt[i].id..[[:;
     tceu_org* __ceu_org = (tceu_org*) ]]..val..[[;
     if (__ceu_org != NULL)
     {
-        // TODO: assert isDyn
+        /* TODO: assert isDyn */
 
-        // TODO: HACK_1 (avoids next to also be freed)
+        /* TODO: HACK_1 (avoids next to also be freed) */
         __ceu_org->trls[__ceu_org->n-1].evt = IN__NONE;
 
-        // push my continuation
+        /* push my continuation */
         _ceu_cur_.trl->evt = IN__ANY;
         _ceu_cur_.trl->stk = _ceu_stk_;
         _ceu_cur_.trl->lbl = ]]..me.lbl_clr.id..[[;
         _CEU_STK_[_ceu_stk_++] = _ceu_evt_;
 
-        // clear all __ceu_org from its parent  [ par_trl, par_trl+1 [
-        // this will call free()
+        /* clear all __ceu_org from its parent  [ par_trl, par_trl+1 [ */
+        /* this will call free() */
         _ceu_cur_.org  = _ceu_clr_org_ = __ceu_org->par_org;
         _ceu_cur_.trl  = __ceu_org->par_trl;
         _ceu_clr_trlF_ = __ceu_org->par_trl + 1;
@@ -483,17 +483,17 @@ case ]]..me.lbl_clr.id..[[:;
 
         if me.fins then
             LINE(me, [[
-//  FINALIZE
+/*  FINALIZE */
 CUR->trls[ ]]..me.fins.trails[1]..[[ ].evt = IN__CLR;
 CUR->trls[ ]]..me.fins.trails[1]..[[ ].lbl = ]]..me.lbl_fin.id..[[;
-//_ceu_cur_.trl->stk = CEU_MAX_STACK;   // never checked anyways
+/*_ceu_cur_.trl->stk = CEU_MAX_STACK;   /* never checked anyways */
 memset(PTR_cur(u8*,]]..me.off_fins..'), 0, '..#me.fins..[[);
 ]])
         end
 
         if me.trails[1] ~= blk.trails[1] then
             LINE(me, [[
-// switch to blk trail
+/* switch to blk trail */
 _ceu_cur_.trl = &CUR->trls[ ]]..blk.trails[1]..[[ ];
 ]])
         end
@@ -518,9 +518,9 @@ if (*PTR_cur(u8*,]]..(me.off_fins+i-1)..[[)) {
 -- TODO: remove!
         if not (_ANA and me.ana.pos[false]) then
             LINE(me, [[
-// switch to 1st trail
-// TODO: only if not joining with outer prio
-//_ceu_cur_.trl = &CUR->trls[ ]]..me.trails[1]..[[ ];
+/* switch to 1st trail */
+/* TODO: only if not joining with outer prio */
+/*_ceu_cur_.trl = &CUR->trls[ ]]..me.trails[1]..[[ ]; */
 ]])
         end
     end,
@@ -540,7 +540,7 @@ ceu_pause(&CUR->trls[ ]]..me.blk.trails[1]..[[ ],
     Op2_call_pre = function (me)
         local _, f, exps, fin = unpack(me)
         if fin and fin.active then
-            LINE(_AST.iter'Stmts'(), '*PTR_cur(u8*,'..fin.idx..') = 1;  // XXX')
+            LINE(_AST.iter'Stmts'(), '*PTR_cur(u8*,'..fin.idx..') = 1;  /* XXX */')
         end
     end,
     Finalize = function (me)
@@ -580,8 +580,8 @@ ceu_pause(&CUR->trls[ ]]..me.blk.trails[1]..[[ ],
         if me.has_return then
             CLEAR(me)
             LINE(me, [[
-// switch to 1st trail
-// TODO: only if not joining with outer prio
+/* switch to 1st trail */
+/* TODO: only if not joining with outer prio */
 _ceu_cur_.trl = &CUR->trls[ ]] ..me.trails[1]..[[ ];
 ]])
         end
@@ -640,8 +640,8 @@ _ceu_cur_.trl = &CUR->trls[ ]] ..me.trails[1]..[[ ];
             CASE(me, me.lbl_out)
             CLEAR(me)
             LINE(me, [[
-// switch to 1st trail
-// TODO: only if not joining with outer prio
+/* switch to 1st trail */
+/* TODO: only if not joining with outer prio */
 _ceu_cur_.trl = &CUR->trls[ ]]..me.trails[1]..[[ ];
 ]])
         end
@@ -659,7 +659,7 @@ _ceu_cur_.trl = &CUR->trls[ ]]..me.trails[1]..[[ ];
             end
             CONC(me, sub)
             LINE(me, [[
-*PTR_cur(u8*,]]..(me.off+i-1)..[[) = 1; // open and gate
+*PTR_cur(u8*,]]..(me.off+i-1)..[[) = 1; /* open and gate */
 ]])
             GOTO(me, me.lbl_tst)
         end
@@ -671,8 +671,8 @@ _ceu_cur_.trl = &CUR->trls[ ]]..me.trails[1]..[[ ];
         end
 
         LINE(me, [[
-// switch to 1st trail
-// TODO: only if not joining with outer prio
+/* switch to 1st trail */
+/* TODO: only if not joining with outer prio */
 _ceu_cur_.trl = &CUR->trls[ ]]..me.trails[1]..[[ ];
 ]])
     end,
@@ -723,8 +723,8 @@ for (;;) {
         if me.has_break then
             CLEAR(me)
             LINE(me, [[
-// switch to 1st trail
-// TODO: only if not joining with outer prio
+/* switch to 1st trail */
+/* TODO: only if not joining with outer prio */
 _ceu_cur_.trl = &CUR->trls[ ]]..me.trails[1]..[[ ];
 ]])
         end
@@ -804,7 +804,7 @@ _ceu_cur_.trl->stk = _ceu_stk_;
 _ceu_cur_.trl->lbl = ]]..me.lbl_cnt.id..[[;
 _CEU_STK_[_ceu_stk_++] = _ceu_evt_;
 
-// TRIGGER EVENT
+/* TRIGGER EVENT */
 _ceu_evt_.id = ]]..(int.off or int.evt.off)..[[;
 #ifdef CEU_ORGS
 _ceu_evt_.org = ]]..((int.org and int.org.val) or 'CUR')..[[;

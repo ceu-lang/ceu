@@ -15,7 +15,7 @@
 #endif
 
 #ifdef __cplusplus
-#define CEU_WCLOCK_INACTIVE 0x7fffffffL     // TODO
+#define CEU_WCLOCK_INACTIVE 0x7fffffffL     /* TODO */
 #else
 #define CEU_WCLOCK_INACTIVE INT32_MAX
 #endif
@@ -40,32 +40,34 @@
 #define CEU_NIFCS      (=== CEU_NIFCS ===)
 #endif
 
-// Macros that can be defined:
-// ceu_out_pending() (sync?)
-// ceu_out_wclock(dt)
-// ceu_out_event(id, len, data)
-// ceu_out_async(more?);
-// ceu_out_end(v)
+/* Macros that can be defined:
+ * ceu_out_pending() (sync?)
+ * ceu_out_wclock(dt)
+ * ceu_out_event(id, len, data)
+ * ceu_out_async(more?);
+ * ceu_out_end(v)
+*/
 
-//typedef === TCEU_NEVT === tceu_nevt;    // (x) number of events
-typedef u8 tceu_nevt;    // (x) number of events
+/*typedef === TCEU_NEVT === tceu_nevt;    // (x) number of events */
+typedef u8 tceu_nevt;    /* (x) number of events
 
-// TODO: lbl => unsigned
-typedef === TCEU_NLBL === tceu_nlbl;    // (x) number of trails
+/* TODO: lbl => unsigned */
+typedef === TCEU_NLBL === tceu_nlbl;    /* (x) number of trails */
 
 #ifdef CEU_IFCS
-typedef === TCEU_NCLS === tceu_ncls;    // (x) number of instances
-typedef === TCEU_NOFF === tceu_noff;    // (x) number of clss x ifcs
+typedef === TCEU_NCLS === tceu_ncls;    /* (x) number of instances */
+typedef === TCEU_NOFF === tceu_noff;    /* (x) number of clss x ifcs */
 #endif
 
-// align all structs 1 byte
+/* align all structs 1 byte
 // TODO: verify defaults for microcontrollers
 //#pragma pack(push)
 //#pragma pack(1)
+*/
 
-#define CEU_MAX_STACK   255     // TODO
+#define CEU_MAX_STACK   255     /* TODO */
 
-// TODO: 8 bytes!!!
+/* TODO: 8 bytes!!! */
 typedef union {
     tceu_nevt evt;
     struct {
@@ -83,9 +85,9 @@ typedef union {
 
 typedef struct {
     union {
-        void*   ptr;        // exts/ints
-        int     v;          // exts/ints
-        s32     dt;         // wclocks
+        void*   ptr;        /* exts/ints */
+        int     v;          /* exts/ints */
+        s32     dt;         /* wclocks */
     };
 } tceu_param;
 
@@ -107,7 +109,7 @@ typedef struct {
     tceu_nlbl lbl;
 } tceu_lst;
 
-// TODO: remove
+/* TODO: remove */
 #define ceu_evt_param_ptr(a)    \
     tceu_param p;           \
     p.ptr = a;
@@ -123,23 +125,23 @@ typedef struct {
 typedef struct tceu_org
 {
 #ifdef CEU_ORGS
-    struct tceu_org* par_org;  // traversal
+    struct tceu_org* par_org;  /* traversal */
     tceu_trl*        par_trl;
 
-    // TODO: only one pointer??
+    /* TODO: only one pointer?? */
 
 #ifdef CEU_IFCS
-    tceu_ncls cls;  // class id
+    tceu_ncls cls;  /* class id */
 #endif
 
 #ifdef CEU_NEWS
-    u8 isDyn:  1;       // created w/ new or spawn?
-    u8 toFree: 1;       // free on termination?
+    u8 isDyn:  1;       /* created w/ new or spawn? */
+    u8 toFree: 1;       /* free on termination? */
 #endif
 
-    u8       n;      // number of trails (TODO: to metadata)
+    u8       n;      /* number of trails (TODO: to metadata) */
 #endif
-    tceu_trl trls[0];   // first trail
+    tceu_trl trls[0];   /* first trail */
 
 } tceu_org;
 
@@ -159,13 +161,13 @@ typedef struct {
 #endif
 
 #ifdef CEU_DEBUG
-    tceu_lst    lst; // segfault printf
+    tceu_lst    lst; /* segfault printf */
 #endif
 
     char        mem[CEU_NMEM];
 } tceu;
 
-// TODO: fields that need no initialization?
+/* TODO: fields that need no initialization? */
 
 tceu CEU = {
 #ifdef CEU_WCLOCKS
@@ -177,10 +179,10 @@ tceu CEU = {
 #ifdef CEU_DEBUG
     {},
 #endif
-    {}                          // TODO: o q ele gera?
+    {}                          /* TODO: o q ele gera? */
 };
 
-//#pragma pack(pop)
+/*#pragma pack(pop) */
 
 === CLS_ACCS ===
 
@@ -219,13 +221,13 @@ void ceu_trails_set_wclock (s32* t, s32 dt) {
     ceu_wclocks_min(dt_, 1);
 }
 
-#endif  // CEU_WCLOCKS
+#endif  /* CEU_WCLOCKS */
 
 /**********************************************************************/
 
 #ifdef CEU_NEWS
 #ifdef CEU_RUNTESTS
-// TODO
+/* TODO */
 int _ceu_dyns_ = 0;
 #endif
 #endif
@@ -247,13 +249,13 @@ void ceu_segfault (int sig_num) {
 
 void ceu_org_init (tceu_org* org, int n, int lbl)
 {
-    // { evt=0, stk=0, lbl=0 } for all trails
+    /* { evt=0, stk=0, lbl=0 } for all trails */
 #ifdef CEU_ORGS
     org->n = n;
 #endif
     memset(&org->trls, 0, n*sizeof(tceu_trl));
     {
-        // trls[0] == blk.trails[1]
+        /* trls[0] == blk.trails[1] */
         org->trls[0].evt = IN__ANY;
         org->trls[0].lbl = lbl;
         org->trls[0].stk = CEU_MAX_STACK;
@@ -276,8 +278,8 @@ void ceu_pause (tceu_trl* trl, tceu_trl* trlF, int psed) {
     } while (++trl <= trlF);
 
     if (!psed) {
-        ceu_go_wclock(0);   // TODO: hack (recalculates MIN clock)
-                            // TODO: IN__WCLOCK=0 de trl => trlF
+        ceu_go_wclock(0);   /* TODO: hack (recalculates MIN clock) */
+                            /* TODO: IN__WCLOCK=0 de trl => trlF */
     }
 }
 
@@ -292,7 +294,7 @@ void ceu_go_init ()
     ceu_go(IN__INIT, NULL);
 }
 
-// TODO: ret
+/* TODO: ret */
 
 #ifdef CEU_EXTS
 void ceu_go_event (int id, void* data)
@@ -326,7 +328,7 @@ void ceu_go_wclock (s32 dt)
     ceu_evt_param_dt(dt);
 
     if (CEU.wclk_min <= dt)
-        CEU.wclk_late = dt - CEU.wclk_min;   // how much late the wclock is
+        CEU.wclk_late = dt - CEU.wclk_min;   /* how much late the wclock is */
 
     CEU.wclk_min_tmp = CEU.wclk_min;
     CEU.wclk_min     = CEU_WCLOCK_INACTIVE;
@@ -335,12 +337,12 @@ void ceu_go_wclock (s32 dt)
 
 #ifdef ceu_out_wclock
     if (CEU.wclk_min != CEU_WCLOCK_INACTIVE)
-        ceu_out_wclock(CEU.wclk_min);   // only signal after all
+        ceu_out_wclock(CEU.wclk_min);   /* only signal after all */
 #endif
 
     CEU.wclk_late = 0;
 
-#endif   // CEU_WCLOCKS
+#endif   /* CEU_WCLOCKS */
 
     return;
 }
@@ -366,7 +368,7 @@ _CEU_END_:;
 #ifdef CEU_NEWS
 #ifdef CEU_RUNTESTS
     #define CEU_MAX_DYNS 100
-//fprintf(stderr, "XXX %d\n", _ceu_dyns_);
+/*fprintf(stderr, "XXX %d\n", _ceu_dyns_); */
     assert(_ceu_dyns_ == 0);
 #endif
 #endif
@@ -382,50 +384,50 @@ void ceu_stack_clr () {
 void ceu_go (int __ceu_id, tceu_param* __ceu_p)
 {
 #ifdef CEU_ORGS
-    tceu_evt _CEU_STK_[CEU_MAX_STACK];  // TODO: 255
+    tceu_evt _CEU_STK_[CEU_MAX_STACK];  /* TODO: 255 */
 #else
     tceu_evt _CEU_STK_[CEU_NTRAILS+1];
 #endif
-    int      _ceu_stk_ = 1;   // points to next (TODO: 0=unused)
+    int      _ceu_stk_ = 1;   /* points to next (TODO: 0=unused) */
 
-    tceu_evt _ceu_evt_;       // current stack entry
-    tceu_lst _ceu_cur_;       // current listener
+    tceu_evt _ceu_evt_;       /* current stack entry */
+    tceu_lst _ceu_cur_;       /* current listener */
 
 #ifdef CEU_CLEAR
 #ifdef CEU_ORGS
-    void*       _ceu_clr_org_;  // stop at this org
+    void*       _ceu_clr_org_;  /* stop at this org */
 #endif
-    tceu_trl* _ceu_clr_trlF_; //      at this trl
+    tceu_trl* _ceu_clr_trlF_; /*      at this trl */
 #endif
 
-    // ceu_go_init(): nobody awaiting, jump reset
+    /* ceu_go_init(): nobody awaiting, jump reset */
     if (__ceu_id == IN__INIT) {
         _ceu_evt_.id = IN__INIT;
     }
 
-    // ceu_go_xxxx():
+    /* ceu_go_xxxx(): */
     else {
-        // first set all awaiting: trl.stk=CEU_MAX_STACK
+        /* first set all awaiting: trl.stk=CEU_MAX_STACK */
         _ceu_evt_.id = IN__ANY;
 
-        // then stack external event
+        /* then stack external event */
         if (__ceu_p)
             _CEU_STK_[_ceu_stk_].param = *__ceu_p;
         _CEU_STK_[_ceu_stk_].id  = __ceu_id;
         _ceu_stk_++;
     }
 
-    for (;;)    // STACK
+    for (;;)    /* STACK */
     {
 #ifdef CEU_ORGS
-        // TODO: don't restart if kill is impossible (hold trl on stk)
-        _ceu_cur_.org = CEU.mem;    // on pop(), always restart
+        /* TODO: don't restart if kill is impossible (hold trl on stk) */
+        _ceu_cur_.org = CEU.mem;    /* on pop(), always restart */
 #endif
 _CEU_CALL_:
-        // restart from org->trls[0]
+        /* restart from org->trls[0] */
         _ceu_cur_.trl = &CUR->trls[0];
 
-_CEU_CALLTRL_:  // restart from org->trls[i]
+_CEU_CALLTRL_:  /* restart from org->trls[i] */
 
 #ifdef CEU_DEBUG_TRAILS
 #ifdef CEU_ORGS
@@ -434,10 +436,10 @@ fprintf(stderr, "GO: evt=%d stk=%d org=%p\n", _ceu_evt_.id, _ceu_stk_, CUR);
 fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
 #endif
 #endif
-        for (;;)    // TRL
+        for (;;)    /* TRL */
         {
 #ifdef CEU_CLEAR
-            // clr is bounded to _trlF_ (set by code.lua)
+            /* clr is bounded to _trlF_ (set by code.lua) */
             if (
                 (_ceu_evt_.id == IN__CLR)
 #ifdef CEU_ORGS
@@ -449,10 +451,10 @@ fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
             }
 #endif
 
-            // check if all trails have been traversed
-            // traverse next org if applicable
+            /* check if all trails have been traversed */
+            /* traverse next org if applicable */
 
-            // org has been traversed to the end?
+            /* org has been traversed to the end? */
             if (_ceu_cur_.trl ==
                 &CUR->trls[
 #ifdef CEU_ORGS
@@ -463,21 +465,21 @@ fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
                 ])
             {
 #ifdef CEU_ORGS
-                // check for next org
+                /* check for next org */
                 if (CUR != (tceu_org*)CEU.mem) {
                     tceu_org* PAR = CUR->par_org;
                     _ceu_cur_.trl = CUR->par_trl;
-                    _ceu_cur_.trl++;     // X->Y [ X | org | Y ]
+                    _ceu_cur_.trl++;     /* X->Y [ X | org | Y ] */
 #ifdef CEU_CLEAR
                     if (_ceu_evt_.id == IN__CLR) {
 #ifdef CEU_NEWS
-                        // re-link UP <-> DOWN
+                        /* re-link UP <-> DOWN */
                         if (CUR->isDyn)
                         {
                             tceu_trl* down = &CUR->trls[CUR->n-1];
 
-                            // HACK_1 (see code.lua)
-                            // test org!=NULL instead of evt==IN__ORG
+                            /* HACK_1 (see code.lua) */
+                            /* test org!=NULL instead of evt==IN__ORG */
                             if (down->org != NULL) {
                                 CUR->par_trl->org = down->org;
                                 down->org->par_org = CUR->par_org;
@@ -486,9 +488,9 @@ fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
                                 CUR->par_trl->evt = IN__NONE;
                                 CUR->par_trl->org = NULL;
                             }
-                            // free if "dyn" and completelly traversed
+                            /* free if "dyn" and completelly traversed */
                             if (_ceu_clr_org_ != _ceu_cur_.org) {
-//fprintf(stderr, "FREE: %p\n", CUR);
+/*fprintf(stderr, "FREE: %p\n", CUR); */
                                 free(CUR);
 #ifdef CEU_RUNTESTS
                                 _ceu_dyns_--;
@@ -498,7 +500,7 @@ fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
                         else
 #endif
                         {
-                                // TODO: repeated from above
+                                /* TODO: repeated from above */
                                 CUR->par_trl->evt = IN__NONE;
                                 CUR->par_trl->org = NULL;
                         }
@@ -510,11 +512,11 @@ fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
                 else
 #endif
                 {
-                    break;  // reached CEU.mem: terminate current stack
+                    break;  /* reached CEU.mem: terminate current stack */
                 }
             }
 
-            // continue traversing it
+            /* continue traversing it */
 
             {
                 tceu_trl* trl = _ceu_cur_.trl;
@@ -542,27 +544,27 @@ fprintf(stderr, "\tTRY [%p] : evt=%d stk=%d lbl=%d\n",
 
                 if (
 #ifdef CEU_CLEAR
-                    (_ceu_evt_.id != IN__CLR)   // clear always executes
+                    (_ceu_evt_.id != IN__CLR)   /* clear always executes */
                   &&
 #endif
                     (  (trl->stk!=CEU_MAX_STACK && trl->stk!=_ceu_stk_)
                     || (trl->evt!=IN__ANY       && trl->evt!=_ceu_evt_.id) )
                 ) {
                     if (_ceu_evt_.id == IN__ANY)
-                        trl->stk = CEU_MAX_STACK; // new reaction reset stk
+                        trl->stk = CEU_MAX_STACK; /* new reaction reset stk */
                     goto _CEU_NEXT_;
                 }
 
-                trl->stk = 0;             // no more awaking
+                trl->stk = 0;             /* no more awaking */
 
 #ifdef CEU_CLEAR
                 if (_ceu_evt_.id==IN__CLR && trl->evt!=IN__CLR) {
-                    trl->evt = IN__NONE;  // no more awaiting
+                    trl->evt = IN__NONE;  /* no more awaiting */
                     goto _CEU_NEXT_;
                 }
 #endif
 
-                trl->evt = IN__NONE;      // no more awaiting
+                trl->evt = IN__NONE;      /* no more awaiting */
                 _ceu_cur_.lbl = trl->lbl;
             }
 _CEU_GOTO_:
