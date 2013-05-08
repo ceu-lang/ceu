@@ -99,9 +99,11 @@ DBG('', string.format('%8s','trlN'), off, 1, '('..me.trails_n..')')
         -- Class_Main also uses this
         off = alloc(me.mem, me.trails_n*_ENV.c.tceu_trl.len,
                                          _ENV.c.tceu_trl.len)
-DBG('', string.format('%8s','trls'), off, me.trails_n*_ENV.c.tceu_trl.len)
+DBG('', string.format('%8s','trls'), off, me.trails_n*_ENV.c.tceu_trl.len,
+    '('.._ENV.c.tceu_trl.len..')')
     end,
     Dcl_cls = function (me)
+        me.mem.max = _TP.sizeof(me.mem.max) -- align
 DBG('===', me.id)
 DBG('', 'mem', me.mem.max)
 DBG('', 'trl', me.trails_n)
@@ -145,6 +147,9 @@ DBG('', 'glb', '{'..table.concat(glb,',')..'}')
         -- TODO: bitmap?
         me.off_fins = alloc(cls.mem,
                                 (me.fins and #me.fins) or 0)
+if me.fins then
+    DBG('', string.format('%8s','FIN'), me.off_fins, #me.fins)
+end
 
         for _, var in ipairs(me.vars) do
             local len
@@ -209,10 +214,12 @@ DBG('', string.format('%8s',var.id), var.off, var.len)
 
     ParAnd_pre = function (me)
         me.off = alloc(CLS().mem, #me)        -- TODO: bitmap?
+DBG('', string.format('%8s','AND'), me.off, #me)
     end,
 
     AwaitT = function (me)
         me.off = alloc(CLS().mem, 4)
+DBG('', string.format('%8s','WCLK'), me.off, 4)
     end,
     AwaitS = function (me)
         for _, awt in ipairs(me) do

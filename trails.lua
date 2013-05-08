@@ -89,7 +89,7 @@ G = {
     Block_pre = function (me)
         local blk = unpack(me)
 
-        -- [ B, 1, O, 1 ] (fin, orgs, dyns, blk)
+        -- [ B, 1, O, 1 ] (blk, fin, orgs, dyns)
 
         me.trails = me.trails or _AST.iter(pred)().trails
 

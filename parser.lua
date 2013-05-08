@@ -101,6 +101,7 @@ KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'C'
      + 'continue'
      + 'until'
      + 'spawn'
+     + 'every'
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
@@ -140,7 +141,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
 
     , _StmtB = V'Do'    + V'Async'  + V'Host'
              + V'ParOr' + V'ParAnd'
-             + V'If'    + V'Loop'
+             + V'If'    + V'Loop'   + V'Every'
              + V'Pause'
              + V'Dcl_ifc' + V'Dcl_cls'
              + V'Finalize'
@@ -149,7 +150,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , _LstStmtB = V'ParEver' + V'_Continue'
 
     , _SetBlock = ( V'Do'     + V'Async' +
-                    V'ParEver' + V'If'    + V'Loop' )
+                    V'ParEver' + V'If'   + V'Loop' + V'Every' )
 
     , _Set  = V'_Exp' * V'_Sets'
     , _Sets = K'=' * (
@@ -205,6 +206,10 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
                 V'_Do'
     , Break    = K'break'
     , _Continue = K'continue'
+
+    , Every   = K'every' * (EV'_Exp'*EK'=' + Cc(false))
+              *  (V'WCLOCKK' + V'WCLOCKE' + EV'Ext' + EV'_Exp')
+              * V'_Do'
 
     , _Exp    = V'_1'
     , _1      = V'_2'  * (CK'or'  * V'_2')^0

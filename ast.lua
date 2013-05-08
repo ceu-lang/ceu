@@ -208,6 +208,29 @@ local C; C = {
         return _else
     end,
 
+    Every = function (ln, var, evt, body)
+        local tag
+        if evt.tag == 'Ext' then
+            tag = 'AwaitExt'
+        elseif evt.tag == 'Exp' then
+            tag = 'AwaitInt'
+        else
+            tag = 'AwaitT'
+        end
+        local awt = node(tag)(ln, evt, false)
+        awt.isEvery = true
+        if var then
+            awt = node('SetAwait')(ln, var, awt)
+        end
+
+        local ret = node('Loop')(ln,
+                        node('Stmts')(ln,
+                            awt,
+                            body))
+        ret.isEvery = true
+        return ret
+    end,
+
     _Continue = node('_Continue'),
     Break = node('Break'),
     Loop  = function (ln, _i, _j, blk)

@@ -847,7 +847,7 @@ case ]]..me.lbl_cnt.id..[[:;
         local no = '_CEU_NO_'..me.n..'_'
 
         LINE(me, [[
-ceu_trails_set_wclock(PTR_cur(u32*,]]..me.off..'),'..VAL(exp)..[[);
+ceu_trails_set_wclock(PTR_cur(s32*,]]..me.off..'),'..VAL(exp)..[[);
 ]]..no..[[:
     _ceu_cur_.trl->evt = IN__WCLOCK;
     _ceu_cur_.trl->lbl = ]]..me.lbl.id..[[;

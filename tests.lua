@@ -96,6 +96,94 @@ do return end
 -- OK: under tests but supposed to work
 
 Test { [[
+input void A;
+var int ret;
+every A do
+    ret = ret + 1;
+    if ret == 3 then
+        return ret;
+    end
+end
+]],
+    run = { ['~>A;~>A;~>A']=3 }
+}
+
+Test { [[
+var int ret;
+every 1s do
+    await 1s;
+    ret = ret + 1;
+    if ret == 10 then
+        return ret;
+    end
+end
+]],
+    props = 'ERR : line 3 : `every´ cannot contain `await´',
+}
+
+Test { [[
+var int ret;
+every 1s do
+    ret = ret + 1;
+    if ret == 10 then
+        return ret;
+    end
+end
+]],
+    run = { ['~>10s']=10 }
+}
+
+Test { [[
+var int ret;
+var int dt;
+C nohold _fprintf(), _stderr;
+every dt = 1s do
+    ret = ret + dt;
+_fprintf(_stderr, "%d\n", dt);
+    if ret == 10000000 then
+        return ret;
+    end
+end
+]],
+    run = { ['~>5s']=10000000 }
+}
+
+Test { [[
+C _V;
+C do
+    int V = 0;
+end
+
+class T with
+do
+    _V = _V + 1;
+    par/and do
+        await 10ms;
+    with
+        loop i, 5 do
+            if i==2 then
+                break;
+            end
+            await 10ms;
+        end
+    end
+    _V = _V + 1;
+end
+
+do
+    loop i, 10 do
+        await 1s;
+        spawn T;
+    end
+    await 5s;
+end
+
+return _V;
+]],
+    run = { ['~>1min']=20 },
+}
+
+Test { [[
 input void START;
 
 interface Global with
@@ -224,7 +312,8 @@ end
 
 return _V;
 ]],
-    props = 'ERR : line 23 : not permitted inside a constructor',
+    fin = 'only empty finalizers inside constructors',
+    --props = 'ERR : line 23 : not permitted inside a constructor',
 }
 
 Test { [[
@@ -260,7 +349,8 @@ end
 
 return _V;
 ]],
-    fin = 'ERR : line 21 : invalid `finalize´',
+    fin = 'only empty finalizers inside constructors',
+    --fin = 'ERR : line 21 : invalid `finalize´',
 }
 
 Test { [[
@@ -331,7 +421,8 @@ end
 
 return _V;
 ]],
-    props = 'ERR : line 24 : not permitted inside a constructor',
+    fin = 'only empty finalizers inside constructors',
+    --props = 'ERR : line 24 : not permitted inside a constructor',
 }
 
 Test { [[
@@ -18415,20 +18506,16 @@ return ret;
 Test { [[
 input void START;
 input void F;
-C nohold _fprintf(), _stderr;
 class T1 with
     event void ok;
 do
     await 1s;
-_fprintf(_stderr, "2\n");
     emit ok;
-_fprintf(_stderr, "4\n");
 end
 class T with
     event void ok;
 do
     input void E;
-_fprintf(_stderr, "1\n");
     par/or do
         var T1 a;
         par/and do
@@ -18439,7 +18526,6 @@ _fprintf(_stderr, "1\n");
     with
         await E;
     end
-_fprintf(_stderr, "3\n");
     await 1s;
     emit ok;
 end

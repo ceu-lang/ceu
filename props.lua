@@ -46,7 +46,7 @@ local NO_async = {
 }
 
 local NO_constr = {
-    Finalize=true, Finally=true,
+    --Finalize=true, Finally=true,
     Host=true, Return=true, Async=true,
     ParEver=true, ParOr=true, ParAnd=true,
     AwaitS=true, AwaitExt=true, AwaitInt=true, AwaitN=true, AwaitT=true,
@@ -246,6 +246,11 @@ F = {
     _loop = function (me)
         for loop in _AST.iter'Loop' do
             loop.noAwtsEmts = false
+
+            if loop.isEvery then
+                ASR(me.isEvery, me,
+                    '`every´ cannot contain `await´')
+            end
         end
     end,
     AwaitT = function (me)

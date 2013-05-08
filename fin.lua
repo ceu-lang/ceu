@@ -58,6 +58,12 @@ F = {
         fin.active = fin[1] and fin[1][1] and
                         (#fin[1][1]>1 or
                          fin[1][1][1] and fin[1][1][1].tag~='Nothing')
+
+        if _AST.iter'Dcl_constr'() then
+            ASR(not fin.active, me,
+                    'only empty finalizers inside constructors')
+        end
+
         if set then
             set.fin = fin                   -- let call/set handle
         elseif fin.active then

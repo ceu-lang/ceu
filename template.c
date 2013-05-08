@@ -73,10 +73,12 @@ typedef union {
         tceu_nlbl lbl;
         u8        stk;
     };
+#ifdef CEU_ORGS
     struct {
         tceu_nevt        evt2;
         struct tceu_org* org;
     };
+#endif
 } tceu_trl;
 
 typedef struct {
