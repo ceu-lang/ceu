@@ -49,7 +49,7 @@
 */
 
 /*typedef === TCEU_NEVT === tceu_nevt;    // (x) number of events */
-typedef u8 tceu_nevt;    /* (x) number of events
+typedef u8 tceu_nevt;    /* (x) number of events */
 
 /* TODO: lbl => unsigned */
 typedef === TCEU_NLBL === tceu_nlbl;    /* (x) number of trails */
