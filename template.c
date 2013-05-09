@@ -265,8 +265,6 @@ void ceu_org_init (tceu_org* org, int n, int lbl)
 /**********************************************************************/
 
 void ceu_pause (tceu_trl* trl, tceu_trl* trlF, int psed) {
-    int n;
-
     do {
         if (psed) {
             if (trl->evt == IN__ORG)
@@ -350,17 +348,17 @@ void ceu_go_wclock (s32 dt)
 void ceu_go_all (int* ret_end)
 {
     ceu_go_init();
-    if (*ret_end) goto _CEU_END_;
+    if (ret_end!=NULL && *ret_end) goto _CEU_END_;
 
 #ifdef IN_START
     ceu_go_event(IN_START, NULL);
-    if (*ret_end) goto _CEU_END_;
+    if (ret_end!=NULL && *ret_end) goto _CEU_END_;
 #endif
 
 #ifdef CEU_ASYNCS
     for (;;) {
         ceu_go_async();
-        if (*ret_end) goto _CEU_END_;
+        if (ret_end!=NULL && *ret_end) goto _CEU_END_;
     }
 #endif
 

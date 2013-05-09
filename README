@@ -3,15 +3,6 @@ alternative to C.
 
 http://www.ceu-lang.org/
 
-Céu requires Lua and LPeg installed.
-
-http://www.lua.org/
-http://www.inf.puc-rio.br/~roberto/lpeg/
-
-As a kick-off, try running the following on the command line:
-
-$ ./run_tests
-
 For Céu distributions targeted at specific platforms (e.g. Arduino, SDL), 
 consult the wiki.
 
