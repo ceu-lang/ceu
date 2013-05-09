@@ -1,6 +1,19 @@
-Céu is a reactive language aiming to offer a higher-level and safer alternative 
-to C.
+Céu is a reactive language that aims to offer a higher-level and safer 
+alternative to C.
 
-This version is not yet usable.
+http://www.ceu-lang.org/
 
-Please, refer to https://github.com/fsantanna/ceu.git
+Céu requires Lua and LPeg installed.
+
+http://www.lua.org/
+http://www.inf.puc-rio.br/~roberto/lpeg/
+
+As a kick-off, try running the following on the command line:
+
+$ ./run_tests
+
+For Céu distributions targeted at specific platforms (e.g. Arduino, SDL), 
+consult the wiki.
+
+http://www.ceu-lang.org/wiki
+
