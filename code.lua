@@ -777,7 +777,7 @@ case ]]..me.lbl_cnt.id..[[:;
 _ceu_cur_.trl->evt = IN__ASYNC;
 _ceu_cur_.trl->lbl = ]]..me.lbl_cnt.id..[[;
 #ifdef CEU_WCLOCKS
-ceu_go_wclock(]]..VAL(exp)..[[);
+ceu_go_wclock((s32)]]..VAL(exp)..[[);
 while (CEU.wclk_min <= 0) {
     ceu_go_wclock(0);
 }
@@ -847,7 +847,7 @@ case ]]..me.lbl_cnt.id..[[:;
         local no = '_CEU_NO_'..me.n..'_'
 
         LINE(me, [[
-ceu_trails_set_wclock(PTR_cur(s32*,]]..me.off..'),'..VAL(exp)..[[);
+ceu_trails_set_wclock(PTR_cur(s32*,]]..me.off..'),(s32)'..VAL(exp)..[[);
 ]]..no..[[:
     _ceu_cur_.trl->evt = IN__WCLOCK;
     _ceu_cur_.trl->lbl = ]]..me.lbl.id..[[;
@@ -921,7 +921,7 @@ error'AwaitInt que falha tem que setar stk=MAX'
         for _, awt in ipairs(me) do
             if awt.tag=='WCLOCKK' or awt.tag=='WCLOCKE' then
                 LINE(me, [[
-ceu_trails_set_wclock(PTR_cur(u32*,]]..awt.off..'),'..VAL(awt)..[[);
+ceu_trails_set_wclock(PTR_cur(u32*,]]..awt.off..'),(s32)'..VAL(awt)..[[);
 ]])
             end
         end
