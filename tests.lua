@@ -95,366 +95,6 @@ do return end
 
 -- OK: under tests but supposed to work
 
-Test { [[
-input void A;
-var int ret;
-every A do
-    ret = ret + 1;
-    if ret == 3 then
-        return ret;
-    end
-end
-]],
-    run = { ['~>A;~>A;~>A']=3 }
-}
-
-Test { [[
-var int ret;
-every 1s do
-    await 1s;
-    ret = ret + 1;
-    if ret == 10 then
-        return ret;
-    end
-end
-]],
-    props = 'ERR : line 3 : `every´ cannot contain `await´',
-}
-
-Test { [[
-var int ret;
-every 1s do
-    ret = ret + 1;
-    if ret == 10 then
-        return ret;
-    end
-end
-]],
-    run = { ['~>10s']=10 }
-}
-
-Test { [[
-var int ret;
-var int dt;
-C nohold _fprintf(), _stderr;
-every dt = 1s do
-    ret = ret + dt;
-_fprintf(_stderr, "%d\n", dt);
-    if ret == 10000000 then
-        return ret;
-    end
-end
-]],
-    run = { ['~>5s']=10000000 }
-}
-
-Test { [[
-C _V;
-C do
-    int V = 0;
-end
-
-class T with
-do
-    _V = _V + 1;
-    par/and do
-        await 10ms;
-    with
-        loop i, 5 do
-            if i==2 then
-                break;
-            end
-            await 10ms;
-        end
-    end
-    _V = _V + 1;
-end
-
-do
-    loop i, 10 do
-        await 1s;
-        spawn T;
-    end
-    await 5s;
-end
-
-return _V;
-]],
-    run = { ['~>1min']=20 },
-}
-
-Test { [[
-input void START;
-
-interface Global with
-    var int x;
-end
-
-var int x = 10;
-
-class T with
-    var int x;
-do
-    this.x = global:x;
-end
-
-var T t;
-await START;
-return t.x;
-]],
-    run = 10,
-}
-
-Test { [[
-C _s=0;
-C do
-    typedef int s;
-end
-
-class T with
-    var _s* ptr = null;
-do
-end
-
-do
-    var _s* p = null;
-    var T* ui = new T with
-        this.ptr = p;
-    end;
-end
-
-return 10;
-]],
-    run = 10,
-}
-
-Test { [[
-C _s=0;
-C do
-    typedef int s;
-end
-
-class T with
-    var _s* ptr = null;
-do
-end
-
-var T* ui;
-do
-    var _s* p = null;
-    do
-        ui = new T with
-            this.ptr = p;
-        end;
-    end
-end
-
-return 10;
-]],
-    fin = 'ERR : line 16 : attribution requires `finalize´',
-}
-
-Test { [[
-C _s=0;
-C do
-    typedef int s;
-end
-
-class T with
-    var _s* ptr = null;
-do
-end
-
-do
-    loop i, 10 do
-        var _s* p = null;
-        spawn T with
-            this.ptr = p;
-        end;
-        await 1s;
-    end
-end
-
-return 0;
-]],
-    fin = 'ERR : line 15 : attribution requires `finalize´',
-}
-Test { [[
-C _s=0;
-C do
-    typedef int s;
-end
-
-class T with
-    var _s* ptr = null;
-do
-end
-
-C _V, _assert();
-C do
-    int V=0;
-end
-
-do
-    loop i, 10 do
-        var _s* p = null;
-        spawn T with
-            finalize
-                this.ptr = p;
-            with
-                _V = _V + 1;
-            end
-        end;
-        await 1s;
-    end
-    _assert(_V == 10);
-end
-
-return _V;
-]],
-    fin = 'only empty finalizers inside constructors',
-    --props = 'ERR : line 23 : not permitted inside a constructor',
-}
-
-Test { [[
-C _s=0;
-C do
-    typedef int s;
-end
-
-class T with
-    var _s* ptr = null;
-do
-end
-
-C _V, _assert();
-C do
-    int V=0;
-end
-
-do
-    loop i, 10 do
-        var _s* p = null;
-        var T* ui = new T with
-            finalize
-                this.ptr = p;   // p == ptr
-            with
-                _V = _V + 1;
-            end
-        end;
-        await 1s;
-    end
-    _assert(_V == 10);
-end
-
-return _V;
-]],
-    fin = 'only empty finalizers inside constructors',
-    --fin = 'ERR : line 21 : invalid `finalize´',
-}
-
-Test { [[
-C _s=0;
-C do
-    typedef int s;
-end
-
-class T with
-    var _s* ptr = null;
-do
-end
-
-C _V, _assert();
-C do
-    int V=0;
-end
-
-var T* ui;
-do
-    var _s* p = null;
-    loop i, 10 do
-        ui = new T with
-            this.ptr = p;
-        end;
-        await 1s;
-    end
-    _assert(_V == 10);
-end
-
-return _V;
-]],
-    fin = 'ERR : line 21 : attribution requires `finalize´',
-}
-
-Test { [[
-C _s=0;
-C do
-    typedef int s;
-end
-
-class T with
-    var _s* ptr = null;
-do
-end
-
-C _V, _assert();
-C do
-    int V=0;
-end
-
-var T* ui;
-do
-    var _s* p = null;
-    loop i, 10 do
-        ui = new T with
-            finalize
-                this.ptr = p;
-            with
-                _V = _V + 1;
-            end
-        end;
-        await 1s;
-    end
-    _assert(_V == 0);
-end
-//_assert(_V == 10);
-
-return _V;
-]],
-    fin = 'only empty finalizers inside constructors',
-    --props = 'ERR : line 24 : not permitted inside a constructor',
-}
-
-Test { [[
-C _V;
-C do
-    int V = 1;
-end;
-class T with
-do
-    event void e;
-    emit e;
-    _V = 10;
-end
-
-do
-    var T t;
-end
-return _V;
-]],
-    run = 10,
-}
-
-Test { [[
-var int a=10;
-do
-    var int b=1;
-end
-return a;
-]],
-    run = 10,
-}
-
 --do return end
 
 -- OK: well tested
@@ -978,6 +618,36 @@ return a;
     val = 'ERR : line 3 : invalid expression',
     --run = 1,
     --trig_wo = 1,
+}
+
+Test { [[
+C _V;
+C do
+    int V = 1;
+end;
+class T with
+do
+    event void e;
+    emit e;
+    _V = 10;
+end
+
+do
+    var T t;
+end
+return _V;
+]],
+    run = 10,
+}
+
+Test { [[
+var int a=10;
+do
+    var int b=1;
+end
+return a;
+]],
+    run = 10,
 }
 
 Test { [[
@@ -2323,7 +1993,63 @@ end;
     },
 }
 
+-- EVERY
+
+Test { [[
+input void A;
+var int ret;
+every A do
+    ret = ret + 1;
+    if ret == 3 then
+        return ret;
+    end
+end
+]],
+    run = { ['~>A;~>A;~>A']=3 }
+}
+
+Test { [[
+var int ret;
+every 1s do
+    await 1s;
+    ret = ret + 1;
+    if ret == 10 then
+        return ret;
+    end
+end
+]],
+    props = 'ERR : line 3 : `every´ cannot contain `await´',
+}
+
+Test { [[
+var int ret;
+every 1s do
+    ret = ret + 1;
+    if ret == 10 then
+        return ret;
+    end
+end
+]],
+    run = { ['~>10s']=10 }
+}
+
+Test { [[
+var int ret;
+var int dt;
+C nohold _fprintf(), _stderr;
+every dt = 1s do
+    ret = ret + dt;
+_fprintf(_stderr, "%d\n", dt);
+    if ret == 10000000 then
+        return ret;
+    end
+end
+]],
+    run = { ['~>5s']=10000000 }
+}
+
 -- CONTINUE
+
 Test { [[
 loop do
     if 0 then
@@ -20023,6 +19749,7 @@ return ret;
 ]],
     run = 10;
 }
+
 -- NEW / FREE
 
 Test { [[
@@ -20069,6 +19796,20 @@ t = new T;
 return 10;
 ]],
     run = 10,
+}
+
+Test { [[
+input void START;
+class T with
+    var int a;
+do
+    this.a = 1;
+end
+var T* t = new T;
+await START;
+return t:a;
+]],
+    run = 1,
 }
 
 Test { [[
@@ -20133,6 +19874,68 @@ end
 return 10;
 ]],
     run = 10,
+}
+
+-- MEM/MEMORY POOL
+
+Test { [[
+class T (0) with
+    var int a;
+do
+    this.a = 1;
+end
+var T* t = new T;
+return t == null;
+]],
+    run = 1,
+}
+
+Test { [[
+class T (1) with
+    var int a;
+do
+    this.a = 1;
+end
+var T* a = new T;
+var T* b = new T;
+return a!=null and b==null;
+]],
+    run = 1,
+}
+
+Test { [[
+class T (1) with
+    var int a;
+do
+    this.a = 1;
+end
+var T* a = new T;
+free(a);
+var T* b = new T;
+return a!=null and b!=null;
+]],
+    run = 1,
+}
+
+Test { [[
+class T (1) with
+    var int a;
+do
+    this.a = 1;
+end
+var T* a;
+do
+    var T* aa = new T;
+    finalize
+        a = aa;
+    with
+        nothing;
+    end
+end
+var T* b = new T;
+return a!=null and b!=null;
+]],
+    run = 1,
 }
 
 -- CONSTRUCTOR
@@ -21554,6 +21357,263 @@ return t:v + ts[0]:v;
 ]],
     run = 20,
 }
+
+Test { [[
+C _V;
+C do
+    int V = 0;
+end
+
+class T with
+do
+    _V = _V + 1;
+    par/and do
+        await 10ms;
+    with
+        loop i, 5 do
+            if i==2 then
+                break;
+            end
+            await 10ms;
+        end
+    end
+    _V = _V + 1;
+end
+
+do
+    loop i, 10 do
+        await 1s;
+        spawn T;
+    end
+    await 5s;
+end
+
+return _V;
+]],
+    run = { ['~>1min']=20 },
+}
+
+Test { [[
+C _s=0;
+C do
+    typedef int s;
+end
+
+class T with
+    var _s* ptr = null;
+do
+end
+
+do
+    var _s* p = null;
+    var T* ui = new T with
+        this.ptr = p;
+    end;
+end
+
+return 10;
+]],
+    run = 10,
+}
+
+Test { [[
+C _s=0;
+C do
+    typedef int s;
+end
+
+class T with
+    var _s* ptr = null;
+do
+end
+
+var T* ui;
+do
+    var _s* p = null;
+    do
+        ui = new T with
+            this.ptr = p;
+        end;
+    end
+end
+
+return 10;
+]],
+    fin = 'ERR : line 16 : attribution requires `finalize´',
+}
+
+Test { [[
+C _s=0;
+C do
+    typedef int s;
+end
+
+class T with
+    var _s* ptr = null;
+do
+end
+
+do
+    loop i, 10 do
+        var _s* p = null;
+        spawn T with
+            this.ptr = p;
+        end;
+        await 1s;
+    end
+end
+
+return 0;
+]],
+    fin = 'ERR : line 15 : attribution requires `finalize´',
+}
+Test { [[
+C _s=0;
+C do
+    typedef int s;
+end
+
+class T with
+    var _s* ptr = null;
+do
+end
+
+C _V, _assert();
+C do
+    int V=0;
+end
+
+do
+    loop i, 10 do
+        var _s* p = null;
+        spawn T with
+            finalize
+                this.ptr = p;
+            with
+                _V = _V + 1;
+            end
+        end;
+        await 1s;
+    end
+    _assert(_V == 10);
+end
+
+return _V;
+]],
+    fin = 'only empty finalizers inside constructors',
+    --props = 'ERR : line 23 : not permitted inside a constructor',
+}
+
+Test { [[
+C _s=0;
+C do
+    typedef int s;
+end
+
+class T with
+    var _s* ptr = null;
+do
+end
+
+C _V, _assert();
+C do
+    int V=0;
+end
+
+var T* ui;
+do
+    var _s* p = null;
+    loop i, 10 do
+        ui = new T with
+            this.ptr = p;
+        end;
+        await 1s;
+    end
+    _assert(_V == 10);
+end
+
+return _V;
+]],
+    fin = 'ERR : line 21 : attribution requires `finalize´',
+}
+
+Test { [[
+C _s=0;
+C do
+    typedef int s;
+end
+
+class T with
+    var _s* ptr = null;
+do
+end
+
+C _V, _assert();
+C do
+    int V=0;
+end
+
+var T* ui;
+do
+    var _s* p = null;
+    loop i, 10 do
+        ui = new T with
+            finalize
+                this.ptr = p;
+            with
+                _V = _V + 1;
+            end
+        end;
+        await 1s;
+    end
+    _assert(_V == 0);
+end
+//_assert(_V == 10);
+
+return _V;
+]],
+    fin = 'only empty finalizers inside constructors',
+    --props = 'ERR : line 24 : not permitted inside a constructor',
+}
+
+Test { [[
+C _s=0;
+C do
+    typedef int s;
+end
+
+class T with
+    var _s* ptr = null;
+do
+end
+
+C _V, _assert();
+C do
+    int V=0;
+end
+
+do
+    loop i, 10 do
+        var _s* p = null;
+        var T* ui = new T with
+            finalize
+                this.ptr = p;   // p == ptr
+            with
+                _V = _V + 1;
+            end
+        end;
+        await 1s;
+    end
+    _assert(_V == 10);
+end
+
+return _V;
+]],
+    fin = 'only empty finalizers inside constructors',
+    --fin = 'ERR : line 21 : invalid `finalize´',
+}
+
+-- PAUSE/IF w/ ORGS
 
 Test { [[
 input void START;
@@ -23087,6 +23147,28 @@ end
     run = {
         ['~>10min10s'] = 10,
     },
+}
+
+Test { [[
+input void START;
+
+interface Global with
+    var int x;
+end
+
+var int x = 10;
+
+class T with
+    var int x;
+do
+    this.x = global:x;
+end
+
+var T t;
+await START;
+return t.x;
+]],
+    run = 10,
 }
 
 -- AWAITS // AWAIT MANY // SELECT

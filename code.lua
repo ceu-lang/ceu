@@ -332,15 +332,28 @@ case ]]..me.lbls_cnt[i].id..[[:;
     _New = function (me, t)
         LINE(me, [[
 {
-    tceu_org* __ceu_org = malloc(]]..t.cls.mem.max..[[);
-/*fprintf(stderr, "MALLOC: %p\n", __ceu_org); */
+    tceu_org* __ceu_org;
+]])
+        if t.cls.pool then
+            LINE(me, [[
+    __ceu_org = memb_alloc(&CEU_POOL_]]..t.cls.id..[[);
+]])
+        else
+            LINE(me, [[
+    __ceu_org = malloc(]]..t.cls.mem.max..[[);
+]])
+        end
 
+        LINE(me, [[
+/*fprintf(stderr, "MALLOC: %p\n", __ceu_org); */
 #ifdef CEU_RUNTESTS
-    _ceu_dyns_++;
-    if (_ceu_dyns_ > CEU_MAX_DYNS) {
-        free(__ceu_org);
-        __ceu_org = NULL;
-        _ceu_dyns_--;
+    if (__ceu_org != NULL) {
+        _ceu_dyns_++;
+        if (_ceu_dyns_ > CEU_MAX_DYNS) {
+            free(__ceu_org);
+            __ceu_org = NULL;
+            _ceu_dyns_--;
+        }
     }
 #endif
 ]])

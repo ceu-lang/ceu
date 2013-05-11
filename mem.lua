@@ -1,7 +1,8 @@
 _MEM = {
     cls = {},       -- offsets for fixed fields inside classes
     evt_off = 0,    -- max event index among all classes
-    code_clss = nil,
+    clss_defs = nil,
+    clss_init = nil,
 }
 
 function alloc (mem, n, al)
@@ -25,11 +26,16 @@ F = {
         me.mem = _MAIN.mem
 
         -- cls/ifc accessors
-        local code = {}
+        -- cls memb
+
+        local _defs = {}
+        local _init = {}
+        local _free = {}
+
         for _,cls in ipairs(_ENV.clss) do
             local pre = (cls.is_ifc and 'IFC') or 'CLS'
 
-            code[#code+1] = [[
+            _defs[#_defs+1] = [[
                 typedef struct {
                     char data[]]..cls.mem.max..[[];
                 } ]]..pre..'_'..cls.id..[[;
@@ -61,13 +67,26 @@ F = {
 
                 local id = pre..'_'..cls.id..'_'..var.id
                 local org = (cls.id=='Global' and '') or 'org'
-                code[#code+1] = '#define '..id..'_off('..org..') '..off
+                _defs[#_defs+1] = '#define '..id..'_off('..org..') '..off
                 if val then
-                    code[#code+1] = '#define '..id..'('..org..') '..val
+                    _defs[#_defs+1] = '#define '..id..'('..org..') '..val
                 end
             end
+
+            if cls.pool then
+                _defs[#_defs+1] = 'MEMB(CEU_POOL_'..cls.id..','
+                                ..'CLS_'..cls.id..','..cls.pool..');'
+                _init[#_init+1] = 'memb_init(&CEU_POOL_'..cls.id..');'
+                _free[#_free+1] = [[
+                    if ( memb_inmemb(&CEU_POOL_]]..cls.id..[[, CUR) )
+                        memb_free(&CEU_POOL_]]..cls.id..[[, CUR);
+                    else
+]]
+            end
         end
-        _MEM.code_clss = table.concat(code,'\n')
+        _MEM.clss_defs = table.concat(_defs,'\n')
+        _MEM.clss_init = table.concat(_init,'\n')
+        _MEM.clss_free = table.concat(_free,'\n')
     end,
 
     Dcl_cls_pre = function (me)

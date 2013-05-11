@@ -14,6 +14,11 @@
 #include <stdlib.h>
 #endif
 
+#ifdef CEU_NEWS
+#include "memb.h"
+#include "memb.c"
+#endif
+
 #ifdef __cplusplus
 #define CEU_WCLOCK_INACTIVE 0x7fffffffL     /* TODO */
 #else
@@ -184,7 +189,9 @@ tceu CEU = {
 
 /*#pragma pack(pop) */
 
-=== CLS_ACCS ===
+#ifdef CEU_ORGS
+=== CLSS_DEFS ===
+#endif
 
 === HOST ===
 
@@ -287,6 +294,9 @@ void ceu_go_init ()
 {
 #ifdef CEU_DEBUG
     signal(SIGSEGV, ceu_segfault);
+#endif
+#ifdef CEU_NEWS
+    === CLSS_INIT ===
 #endif
     ceu_org_init((tceu_org*)CEU.mem, CEU_NTRAILS, Class_Main);
     ceu_go(IN__INIT, NULL);
@@ -489,7 +499,9 @@ fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
                             /* free if "dyn" and completelly traversed */
                             if (_ceu_clr_org_ != _ceu_cur_.org) {
 /*fprintf(stderr, "FREE: %p\n", CUR); */
-                                free(CUR);
+                                === CLSS_FREE ===
+                                /* else */
+                                free(CUR);      /* TODO: check if needed */
 #ifdef CEU_RUNTESTS
                                 _ceu_dyns_--;
 #endif

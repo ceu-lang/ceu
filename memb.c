@@ -44,9 +44,6 @@
  */
 #include <string.h>
 
-#include "contiki.h"
-#include "lib/memb.h"
-
 /*---------------------------------------------------------------------------*/
 void
 memb_init(struct memb *m)

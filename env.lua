@@ -231,8 +231,9 @@ F = {
     end,
 
     Dcl_cls_pre = function (me)
-        local ifc, id, blk = unpack(me)
+        local ifc, id, n, blk = unpack(me)
         me.is_ifc = ifc
+        me.pool   = n
         me.id     = id
         me.cs     = ifc and {}      -- C decls
         if id == 'Main' then

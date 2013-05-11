@@ -86,22 +86,18 @@ TYPES = P'void' + 'int'
       + 's8' + 's16' + 's32' + 's64'
 
 KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'C'
-     + 'constant' + 'deterministic'         + 'do'       + 'else'
-     + 'else/if'  + 'emit'     + 'end'      + 'event'    --+ 'external'
-     + 'finalize' + 'FOREVER'  + 'if'       + 'input'    + 'loop'
-     + 'nohold'   + 'not'      + 'null'     + 'or'       + 'output'
-     + 'par'      + 'par/and'  + 'par/or'   + 'pause/if' + 'pure'
-     + 'return'   + 'sizeof'   + 'then'     + 'var'      + 'with'
+     + 'constant' + 'continue' + 'deterministic'         + 'do'
+     + 'else'     + 'else/if'  + 'emit'     + 'end'      + 'event'
+     + 'every'    + 'finalize' + 'FOREVER'  + 'if'       + 'input'
+     + 'loop'     + 'nohold'   + 'not'      + 'nothing'  + 'null'
+     + 'or'       + 'output'   + 'par'      + 'par/and'  + 'par/or'
+     + 'pause/if' + 'pure'     + 'return'   + 'sizeof'   + 'then'
+     + 'until'    + 'var'      + 'with'
      + TYPES
 -- ceu-orgs only
      + 'class'    + 'global'   + 'interface'
      + 'free'     + 'new'      + 'this'
--- TODO
-     + 'nothing'
-     + 'continue'
-     + 'until'
      + 'spawn'
-     + 'every'
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
@@ -331,10 +327,11 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , BlockI = ( (V'_Dcl_int'+V'_Dcl_var'+
                    V'_Dcl_c_ifc'+V'_Dcl_imp')
                * (EK';'*K';'^0) )^0
-    , Dcl_ifc = K'interface' * Cc(true)  * EV'ID_cls' * EK'with'
-                        * V'BlockI' * EK'end'
-    , Dcl_cls = K'class'     * Cc(false) * EV'ID_cls' * EK'with'
-                        * V'BlockI' * V'_Do'
+    , Dcl_ifc = K'interface' * Cc(true)  * EV'ID_cls' * Cc(false)
+              * EK'with' * V'BlockI' * EK'end'
+    , Dcl_cls = K'class'     * Cc(false) * EV'ID_cls'
+              * ('('*NUM*EK')' + Cc(false))
+              * EK'with' * V'BlockI' * V'_Do'
 
     , Global  = K'global'
     , This    = K'this'

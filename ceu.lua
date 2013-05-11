@@ -157,8 +157,11 @@ do
     tpl = sub(tpl, '=== LABELS_ENUM ===', _LBLS.code_enum)
 
     tpl = sub(tpl, '=== HOST ===',     _CODE.host)
-    tpl = sub(tpl, '=== CLS_ACCS ===', _MEM.code_clss)
     tpl = sub(tpl, '=== CODE ===',     _AST.root.code)
+
+    tpl = sub(tpl, '=== CLSS_DEFS ===', _MEM.clss_defs)
+    tpl = sub(tpl, '=== CLSS_INIT ===', _MEM.clss_init)
+    tpl = sub(tpl, '=== CLSS_FREE ===', _MEM.clss_free)
 
     -- IFACES
     if _PROPS.has_ifcs then

@@ -63,8 +63,6 @@
 #ifndef __MEMB_H__
 #define __MEMB_H__
 
-#include "sys/cc.h"
-
 /**
  * Declare a memory block.
  *
@@ -87,11 +85,11 @@ MEMB(connections, struct connection, 16);
  *
  */
 #define MEMB(name, structure, num) \
-        static char CC_CONCAT(name,_memb_count)[num]; \
-        static structure CC_CONCAT(name,_memb_mem)[num]; \
+        static char name##_memb_count[num]; \
+        static structure name##_memb_mem[num]; \
         static struct memb name = {sizeof(structure), num, \
-                                          CC_CONCAT(name,_memb_count), \
-                                          (void *)CC_CONCAT(name,_memb_mem)}
+                                          name##_memb_count, \
+                                          (void *)(name##_memb_mem)}
 
 struct memb {
   unsigned short size;

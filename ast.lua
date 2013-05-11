@@ -167,8 +167,8 @@ end
 
 local C; C = {
     [1] = function (ln, spc, ...) -- spc=CK''
-        C.Dcl_cls(ln, false, 'Main', node('Stmts')(ln),
-                                     node('Stmts')(ln,...))
+        C.Dcl_cls(ln, false, 'Main', false, node('Stmts')(ln),
+                                            node('Stmts')(ln,...))
         _AST.root = node('Root')(ln, unpack(TOP))
         return _AST.root
     end,
@@ -417,7 +417,7 @@ local C; C = {
     end,
 
     Dcl_ifc = function (...) return C.Dcl_cls(...) end,
-    Dcl_cls = function (ln, is_ifc, id, blk_ifc, blk_body)
+    Dcl_cls = function (ln, is_ifc, id, n, blk_ifc, blk_body)
         local blk = node('Block')(ln, node('Stmts')(ln,blk_ifc,blk_body))
         local this = blk
         if id == 'Main' then
@@ -429,7 +429,7 @@ local C; C = {
                             blk)))
         end
 
-        local cls = node('Dcl_cls')(ln, is_ifc, id, blk)
+        local cls = node('Dcl_cls')(ln, is_ifc, id, n, blk)
         cls.blk_ifc = this  -- top-most block for `this´
         cls.blk_body  = blk_body
         TOP[#TOP+1] = cls

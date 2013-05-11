@@ -1,0 +1,38 @@
+* v0.4 (may'13)
+    (+) classes and interfaces
+    (+) `nothing´ statement
+    (+) `continue´ statement
+    (+) `await <evt> until´ statement
+    (+) `every <evt> do´ statement
+    (^) `finalize with´
+    (^) deterministic scheduler
+    (^) simpler (polynomial) static analysis
+
+* v0.3 (dec'12)
+    (+) `else/if´ clause for conditionals
+    (+) `pause/if´ statement
+    (+) `C´ declarations
+        (*) types, variables, and functions in C
+        (+) `nohold´ keyword to annotate functions that do not
+            hold references to pointers passed as parameters
+    (+) escape analysis for pointer assignments
+        (*) enforces placement of `finally´ blocks
+        (+) `:=´ keyword to force assignments
+    (+) `var´ keyword to precede variable declarations
+    (+) types as keywords (void,int,u8,u16,u32,u64,s8,s16,s32,s64)
+    (^) operator renamings:
+        (^) `!´,`&&´,`||´ TO `not´,`and´,`or´
+        (^) `->´ TO `:´
+    (^) external events must be all capitalized
+
+* v0.2 (sep'12)
+    (+) `finally´ blocks
+    (+) external types
+    (^) static analysis rewritten
+    (*) many bug fixes
+
+* v0.1.1 (jul'12)
+    (*) many bug fixes
+
+* v0.1 (jul'12)
+    (*) first release
