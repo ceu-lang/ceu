@@ -18,9 +18,9 @@ end
 
 function CUR (me, id)
     if id then
-        return 'CUR_('.._TP.c(CLS().id)..')->'..id
+        return 'CEU_CUR_('.._TP.c(CLS().id)..')->'..id
     else
-        return 'CUR_('.._TP.c(CLS().id)..')'
+        return 'CEU_CUR_('.._TP.c(CLS().id)..')'
     end
 end
 

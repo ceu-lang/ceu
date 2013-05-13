@@ -125,7 +125,7 @@ function CLEAR (me)
     LINE(me, [[
 /* trails[1] points to ORG blk */
 {
-    tceu_trl* trl = &CUR->trls[ ]]..me.trails[1]..[[ ];
+    tceu_trl* trl = &CEU_CUR->trls[ ]]..me.trails[1]..[[ ];
     trl->evt = IN__ANY;
     trl->stk = _ceu_stk_;
     trl->lbl = ]]..me.lbl_clr.id..[[;
@@ -133,11 +133,12 @@ function CLEAR (me)
 _CEU_STK_[_ceu_stk_++] = _ceu_evt_;
 
 /* [ trails[1]+1, trails[2] ) */
-_ceu_cur_.trl = &CUR->trls[ ]]..(me.trails[1]+1)..[[ ];  /* trails[1]+1 is in */
+_ceu_cur_.trl = &CEU_CUR->trls[ ]]..(me.trails[1]+1)..[[ ];  /* trails[1]+1 is in */
 #ifdef CEU_ORGS
 _ceu_clr_org_  = _ceu_cur_.org;
 #endif
-_ceu_clr_trlF_ = &CUR->trls[ ]]..(me.trails[2]+1)..[[ ]; /* trails[2]+1 is out */
+_ceu_clr_trlF_ = &CEU_CUR->trls[ ]]..(me.trails[2]+1)..[[ ]; /* trails[2]+1 is out 
+*/
 _ceu_evt_.id = IN__CLR;
 goto _CEU_CALLTRL_;
 
@@ -181,7 +182,7 @@ F = {
         CASE(me, me.lbl)
         LINE(me, [[
 #ifdef CEU_IFCS
-CUR->cls = ]]..me.n..[[;        /* TODO: move to _ORG? */
+CEU_CUR->cls = ]]..me.n..[[;        /* TODO: move to _ORG? */
 #endif
 ]])
 
@@ -191,7 +192,7 @@ CUR->cls = ]]..me.n..[[;        /* TODO: move to _ORG? */
         --if i_am_instantiable then
             LINE(me, [[
 #ifdef CEU_NEWS
-if (CUR->toFree) {
+if (CEU_CUR->toFree) {
 ]])
             F.Free(me)
             LINE(me, [[
@@ -338,8 +339,8 @@ case ]]..me.lbls_cnt[i].id..[[:;
             isDyn    = 0,
             toFree   = 0,
             cls      = var.cls,
-            par_org  = 'CUR',
-            par_trls = 'CUR->trls+'..var.trails[1],
+            par_org  = 'CEU_CUR',
+            par_trls = 'CEU_CUR->trls+'..var.trails[1],
             val      = var.val,
             constr   = constr,
             arr      = var.arr,
@@ -392,8 +393,9 @@ case ]]..me.lbls_cnt[i].id..[[:;
         LINE(me, [[
     if (__ceu_org != NULL)
     {
-        tceu_trl* __par_trl = &CUR->trls[ ]]..t.par_blk.dyn_trails[1]..[[ ];
-        tceu_org* __par_org = CUR;
+        tceu_trl* __par_trl = &CEU_CUR->trls[ ]]..t.par_blk.dyn_trails[1]..[[ 
+        ];
+        tceu_org* __par_org = CEU_CUR;
 
         while (__par_trl->evt != IN__NONE) {
             __par_org = __par_trl->org;
@@ -456,7 +458,7 @@ case ]]..me.lbls_cnt[i].id..[[:;
             val = V(exp)
         else    -- Dcl_cls
             cls = me
-            val = 'CUR'
+            val = 'CEU_CUR'
         end
 
         local lbls = table.concat(cls.lbls,',')
@@ -514,8 +516,8 @@ case ]]..me.lbl_clr.id..[[:;
         if me.fins then
             LINE(me, [[
 /*  FINALIZE */
-CUR->trls[ ]]..me.fins.trails[1]..[[ ].evt = IN__CLR;
-CUR->trls[ ]]..me.fins.trails[1]..[[ ].lbl = ]]..me.lbl_fin.id..[[;
+CEU_CUR->trls[ ]]..me.fins.trails[1]..[[ ].evt = IN__CLR;
+CEU_CUR->trls[ ]]..me.fins.trails[1]..[[ ].lbl = ]]..me.lbl_fin.id..[[;
 /*_ceu_cur_.trl->stk = CEU_MAX_STACK;   // never checked anyways */
 ]])
             for _, fin in ipairs(me.fins) do
@@ -526,7 +528,7 @@ CUR->trls[ ]]..me.fins.trails[1]..[[ ].lbl = ]]..me.lbl_fin.id..[[;
         if me.trails[1] ~= blk.trails[1] then
             LINE(me, [[
 /* switch to blk trail */
-_ceu_cur_.trl = &CUR->trls[ ]]..blk.trails[1]..[[ ];
+_ceu_cur_.trl = &CEU_CUR->trls[ ]]..blk.trails[1]..[[ ];
 ]])
         end
         CONC(me, blk)
@@ -552,7 +554,7 @@ if (]]..fin.val..[[) {
             LINE(me, [[
 /* switch to 1st trail */
 /* TODO: only if not joining with outer prio */
-/*_ceu_cur_.trl = &CUR->trls[ ]]..me.trails[1]..[[ ]; */
+/*_ceu_cur_.trl = &CEU_CUR->trls[ ]]..me.trails[1]..[[ ]; */
 ]])
         end
     end,
@@ -562,8 +564,8 @@ if (]]..fin.val..[[) {
     PauseX = function (me)
         local psed = unpack(me)
         LINE(me, [[
-ceu_pause(&CUR->trls[ ]]..me.blk.trails[1]..[[ ],
-          &CUR->trls[ ]]..me.blk.trails[2]..[[ ],
+ceu_pause(&CEU_CUR->trls[ ]]..me.blk.trails[1]..[[ ],
+          &CEU_CUR->trls[ ]]..me.blk.trails[2]..[[ ],
         ]]..psed..[[);
 ]])
     end,
@@ -614,7 +616,7 @@ ceu_pause(&CUR->trls[ ]]..me.blk.trails[1]..[[ ],
             LINE(me, [[
 /* switch to 1st trail */
 /* TODO: only if not joining with outer prio */
-_ceu_cur_.trl = &CUR->trls[ ]] ..me.trails[1]..[[ ];
+_ceu_cur_.trl = &CEU_CUR->trls[ ]] ..me.trails[1]..[[ ];
 ]])
         end
     end,
@@ -629,7 +631,7 @@ _ceu_cur_.trl = &CUR->trls[ ]] ..me.trails[1]..[[ ];
             if i > 1 then
                 LINE(me, [[
 {
-    tceu_trl* trl = &CUR->trls[ ]]..sub.trails[1]..[[ ];
+    tceu_trl* trl = &CEU_CUR->trls[ ]]..sub.trails[1]..[[ ];
     trl->evt = IN__ANY;
     trl->lbl = ]]..me.lbls_in[i].id..[[;
     trl->stk = _ceu_stk_;
@@ -674,7 +676,7 @@ _ceu_cur_.trl = &CUR->trls[ ]] ..me.trails[1]..[[ ];
             LINE(me, [[
 /* switch to 1st trail */
 /* TODO: only if not joining with outer prio */
-_ceu_cur_.trl = &CUR->trls[ ]]..me.trails[1]..[[ ];
+_ceu_cur_.trl = &CEU_CUR->trls[ ]]..me.trails[1]..[[ ];
 ]])
         end
     end,
@@ -707,7 +709,7 @@ _ceu_cur_.trl = &CUR->trls[ ]]..me.trails[1]..[[ ];
         LINE(me, [[
 /* switch to 1st trail */
 /* TODO: only if not joining with outer prio */
-_ceu_cur_.trl = &CUR->trls[ ]]..me.trails[1]..[[ ];
+_ceu_cur_.trl = &CEU_CUR->trls[ ]]..me.trails[1]..[[ ];
 ]])
     end,
 
@@ -759,7 +761,7 @@ for (;;) {
             LINE(me, [[
 /* switch to 1st trail */
 /* TODO: only if not joining with outer prio */
-_ceu_cur_.trl = &CUR->trls[ ]]..me.trails[1]..[[ ];
+_ceu_cur_.trl = &CEU_CUR->trls[ ]]..me.trails[1]..[[ ];
 ]])
         end
     end,
@@ -841,7 +843,7 @@ _CEU_STK_[_ceu_stk_++] = _ceu_evt_;
 /* TRIGGER EVENT */
 _ceu_evt_.id = ]]..(int.evt_idx or int.evt.evt_idx)..[[;
 #ifdef CEU_ORGS
-_ceu_evt_.org = ]]..((int.org and '&'..int.org.val) or 'CUR')..[[;
+_ceu_evt_.org = ]]..((int.org and '&'..int.org.val) or 'CEU_CUR')..[[;
 #endif
 ]])
         if field then
