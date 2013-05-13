@@ -13,7 +13,6 @@ _OPTS = {
     m4_args   = false,
 
     tp_word    = 4,
-    tp_pointer = 4,
 }
 
 _OPTS_NPARAMS = {
@@ -29,7 +28,6 @@ _OPTS_NPARAMS = {
     m4_args   = 1,
 
     tp_word    = 1,
-    tp_pointer = 1,
 }
 
 local params = {...}
@@ -77,7 +75,6 @@ if not _OPTS.input then
         --m4-args              # preprocess the input with `m4´ passing arguments in between `"´ (no)
 
         --tp-word              # sizeof a word in bytes    (4)
-        --tp-pointer           # sizeof a pointer in bytes (4)
 
 ]])
     os.exit(1)
@@ -149,7 +146,6 @@ do
         return string.sub(str, 1, i-1) .. to .. string.sub(str, e+1)
     end
 
-    tpl = sub(tpl, '=== CEU_NMEM ===',     _AST.root.mem.max)
     tpl = sub(tpl, '=== CEU_NTRAILS ===',  _MAIN.trails_n)
 
     tpl = sub(tpl, '=== TCEU_NLBL ===',    's'..tps[_ENV.c.tceu_nlbl.len])
@@ -193,7 +189,7 @@ do
     end
 
     -- EVENTS
-    -- inputs: [evt_off+1...) (including _FIN,_WCLOCK,_ASYNC)
+    -- inputs: [max_evt+1...) (including _FIN,_WCLOCK,_ASYNC)
     --          cannot overlap w/ internal events
     local str = ''
     local t = {}
@@ -206,7 +202,7 @@ do
     for i, evt in ipairs(_ENV.exts) do
         if evt.pre == 'input' then
             str = str..'#define IN_'..evt.id..' '
-                    ..(_MEM.evt_off+i)..'\n'
+                    ..(_ENV.max_evt+i)..'\n'
             --ins = ins + 1
         else
             str = str..'#define OUT_'..evt.id..' '..outs..'\n'
@@ -270,8 +266,8 @@ end
 
 if _OPTS.verbose or true then
     local T = {
-        mem  = _AST.root.mem.max,
-        evts = _MEM.evt_off+#_ENV.exts,
+        --mem  = _AST.root.mem.max,
+        evts = _ENV.max_evt+#_ENV.exts,
         lbls = #_LBLS.list,
 
         trls       = _AST.root.trails_n,

@@ -1,7 +1,5 @@
 _OPTS.tp_word    = assert(tonumber(_OPTS.tp_word),
     'missing `--tp-word´ parameter')
-_OPTS.tp_pointer = assert(tonumber(_OPTS.tp_pointer),
-    'missing `--tp-pointer´ parameter')
 
 _ENV = {
     clss  = {},     -- { [1]=cls, ... [cls]=0 }
@@ -25,14 +23,14 @@ _ENV = {
 
         word     = _OPTS.tp_word,
         int      = _OPTS.tp_word,
-        pointer  = _OPTS.tp_pointer,
+        pointer  = _OPTS.tp_word,
 
         tceu_ncls = true,    -- env.lua
-
-        tceu_nlbl  = true,    -- labels.lua
-        tceu_trl = true,    -- labels.lua (TODO: remove this type?)
+        tceu_nlbl = true,    -- labels.lua
     },
     dets  = {},
+
+    max_evt = 0,    -- max # of internal events (exts+1 start from it)
 }
 
 for k, v in pairs(_ENV.c) do
@@ -79,6 +77,9 @@ function _ENV.ifc_vs_cls (ifc, cls)
     ifc.matches[cls] = true
     return true
 end
+
+local _N = 0
+local _E = 1    -- 0=NONE
 
 function newvar (me, blk, pre, tp, dim, id)
     for stmt in _AST.iter() do
@@ -130,11 +131,18 @@ function newvar (me, blk, pre, tp, dim, id)
         pre   = pre,
         inIfc = inIfc,
         isEvt = isEvt,
+        evt_idx = isEvt and _E,
         isTmp = false,
         arr   = dim,
-        val   = '0',     -- TODO: workaround: dummy value for interfaces
+        --val   = '0',     -- TODO: workaround: dummy value for interfaces
+        n     = _N,
     }
 --DBG(var.id, var.isTmp)
+
+    _N = _N + 1
+    if isEvt then
+        _E = _E + 1
+    end
 
     blk.vars[#blk.vars+1] = var
     blk.vars[id] = var -- TODO: last/first/error?
@@ -201,6 +209,7 @@ F = {
 
     Root = function (me)
         _ENV.c.tceu_ncls.len = _TP.n2bytes(#_ENV.clss_cls)
+        ASR(_ENV.max_evt+#_ENV.exts <= 255, me, 'too many events')
 
         -- matches all ifc vs cls
         for _, ifc in ipairs(_ENV.clss_ifc) do
@@ -242,6 +251,10 @@ F = {
         ASR(not _ENV.clss[id], me,
                 'interface/class "'..id..'" is already declared')
 
+        -- restart variables/events counting
+        _N = 0
+        _E = 1  -- 0=NONE
+
         _ENV.clss[id] = me
         _ENV.clss[#_ENV.clss+1] = me
 
@@ -255,7 +268,9 @@ F = {
         end
     end,
     Dcl_cls = function (me)
+        _ENV.max_evt = MAX(_ENV.max_evt, _E)
         -- expose each field
+--[[
         if me.is_ifc then
             for _, var in pairs(me.blk_ifc.vars) do
                 var.id_ifc = var.id_ifc or var2ifc(var)
@@ -265,6 +280,7 @@ F = {
                 end
             end
         end
+]]
     end,
 
     Dcl_det = function (me)                 -- TODO: verify in _ENV.c

@@ -42,10 +42,6 @@ F = {
         -- 0, 1,-1, tot,-tot
         -- <0 = off (for internal events)
         _ENV.c.tceu_nlbl.len  = _TP.n2bytes(1+2 + #_LBLS.list*2)
-        _ENV.c.tceu_trl.len = 1 +   -- TODO: _ENV.c.tceu_nevt.len
-                              MAX( _ENV.c.tceu_nlbl.len+1, -- TODO:1=stk
-                                   _ENV.c.pointer.len )
-        _ENV.c.tceu_trl.len = _TP.sizeof(_ENV.c.tceu_trl.len)
 
         -- enum of labels
         for i, lbl in ipairs(_LBLS.list) do

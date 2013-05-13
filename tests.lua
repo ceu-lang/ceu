@@ -621,26 +621,6 @@ return a;
 }
 
 Test { [[
-C _V;
-C do
-    int V = 1;
-end;
-class T with
-do
-    event void e;
-    emit e;
-    _V = 10;
-end
-
-do
-    var T t;
-end
-return _V;
-]],
-    run = 10,
-}
-
-Test { [[
 var int a=10;
 do
     var int b=1;
@@ -15004,7 +14984,7 @@ Test { [[
 ]]..evts..[[
 return 1;
 ]],
-    mem = 'ERR : line 1 : too many events',
+    env = 'ERR : line 1 : too many events',
 }
 
 Test { [[
@@ -17266,6 +17246,26 @@ return _V;
 }
 
 Test { [[
+C _V;
+C do
+    int V = 1;
+end;
+class T with
+do
+    event void e;
+    emit e;
+    _V = 10;
+end
+
+do
+    var T t;
+end
+return _V;
+]],
+    run = 10,
+}
+
+Test { [[
 class J with
 do
 end
@@ -18697,7 +18697,7 @@ end
 class T with
 do
     await START;
-    _f(this);       // 9
+    _f(&this);       // 9
 end
 var T[2] ts;
 await START;
@@ -18723,7 +18723,7 @@ end
 class T with
 do
     await START;
-    _f(this);       // 9
+    _f(&this);       // 9
 end
 var T t0,t1;
 await START;

@@ -1,4 +1,4 @@
-#line 0 "=== FILENAME ==="
+/*#line 0 "=== FILENAME ==="*/
 === DEFS ===
 
 #include <string.h>
@@ -26,15 +26,25 @@
 #endif
 #define CEU_WCLOCK_EXPIRED (CEU_WCLOCK_INACTIVE-1)
 
-#define PTR_glb(tp,off) ((tp)(CEU.mem + off))
+/*
+#define PTR_glb(tp,off) ((tp)(&CEU.mem + off))
 #ifdef CEU_ORGS
 #define CUR ((tceu_org*) _ceu_cur_.org)
 #define PTR_org(tp,org,off) ((tp)(((char*)(org)) + off))
 #define PTR_cur(tp,off) ((tp)(((char*)_ceu_cur_.org) + off))
 #else
-#define CUR ((tceu_org*) CEU.mem)
-#define PTR_org(tp,org,off) ((tp)(CEU.mem + off))
-#define PTR_cur(tp,off) ((tp)(CEU.mem + off))
+#define CUR ((tceu_org*) &CEU.mem)
+#define PTR_org(tp,org,off) ((tp)(&CEU.mem + off))
+#define PTR_cur(tp,off) ((tp)(&CEU.mem + off))
+#endif
+*/
+
+#ifdef CEU_ORGS
+#define CUR             ((tceu_org*) _ceu_cur_.org)
+#define CUR_(tp)        ((tp*)_ceu_cur_.org)
+#else
+#define CUR             ((tceu_org*) &CEU.mem)
+#define CUR_(tp)        (&CEU.mem)
 #endif
 
 #define CEU_NMEM       (=== CEU_NMEM ===)
@@ -150,6 +160,10 @@ typedef struct tceu_org
 
 } tceu_org;
 
+=== HOST ===
+
+=== CLSS_DEFS ===
+
 enum {
 === LABELS_ENUM ===
 };
@@ -169,7 +183,7 @@ typedef struct {
     tceu_lst    lst; /* segfault printf */
 #endif
 
-    char        mem[CEU_NMEM];
+    CEU_Main    mem;
 } tceu;
 
 /* TODO: fields that need no initialization? */
@@ -188,12 +202,6 @@ tceu CEU = {
 };
 
 /*#pragma pack(pop) */
-
-#ifdef CEU_ORGS
-=== CLSS_DEFS ===
-#endif
-
-=== HOST ===
 
 /**********************************************************************/
 
@@ -298,7 +306,7 @@ void ceu_go_init ()
 #ifdef CEU_NEWS
     === CLSS_INIT ===
 #endif
-    ceu_org_init((tceu_org*)CEU.mem, CEU_NTRAILS, Class_Main);
+    ceu_org_init((tceu_org*)&CEU.mem, CEU_NTRAILS, Class_Main);
     ceu_go(IN__INIT, NULL);
 }
 
@@ -430,7 +438,7 @@ void ceu_go (int __ceu_id, tceu_param* __ceu_p)
     {
 #ifdef CEU_ORGS
         /* TODO: don't restart if kill is impossible (hold trl on stk) */
-        _ceu_cur_.org = CEU.mem;    /* on pop(), always restart */
+        _ceu_cur_.org = &CEU.mem;    /* on pop(), always restart */
 #endif
 _CEU_CALL_:
         /* restart from org->trls[0] */
@@ -475,7 +483,7 @@ fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
             {
 #ifdef CEU_ORGS
                 /* check for next org */
-                if (CUR != (tceu_org*)CEU.mem) {
+                if (CUR != (tceu_org*)&CEU.mem) {
                     tceu_org* PAR = CUR->par_org;
                     _ceu_cur_.trl = CUR->par_trl;
                     _ceu_cur_.trl++;     /* X->Y [ X | org | Y ] */

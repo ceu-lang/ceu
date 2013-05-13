@@ -11,33 +11,41 @@ local function ceu2c (op)
     return _ceu2c[op] or op
 end
 
-function VAL (me)
+function V (me)
     ASR(me.val, me, 'invalid expression')
     return me.val
+end
+
+function CUR (me, id)
+    if id then
+        return 'CUR_('.._TP.c(CLS().id)..')->'..id
+    else
+        return 'CUR_('.._TP.c(CLS().id)..')'
+    end
 end
 
 F =
 {
     Block_pre = function (me)
-        if CLS().is_ifc then
-            return
+        local cls = CLS()
+        for _, var in ipairs(me.vars) do
+            if not var.isEvt then
+                if var.isTmp then
+                    var.val = '__ceu_'..var.id..'_'..string.gsub(tostring(var),': ','')
+                else
+                    var.val = CUR(me, var.id_)
+                end
+            end
         end
         if me.fins then
             for i, fin in ipairs(me.fins) do
-                fin.idx = me.off_fins + i - 1
+                fin.val = CUR(me, '__fin_'..me.n..'_'..i)
             end
         end
-        for _, var in ipairs(me.vars) do
-            if var.isEvt then
-                var.val = nil       -- cannot be used as variable
-            elseif var.isTmp then
-                var.val = '__ceu_'..var.id..'_'..string.gsub(tostring(var),': ','')
-            elseif var.cls or var.arr then
-                var.val = 'PTR_cur('.._TP.c(var.tp)..','..var.off..')'
-            else
-                var.val = '(*PTR_cur('.._TP.c(var.tp)..'*,'..var.off..'))'
-            end
-        end
+    end,
+
+    ParAnd = function (me)
+        me.val = CUR(me, '__and_'..me.n)
     end,
 
     Global = function (me)
@@ -50,6 +58,7 @@ F =
         else
             me.val = '_ceu_cur_.org'
         end
+        me.val = '(*(('.._TP.c(me.tp)..'*)'..me.val..'))'
     end,
 
     Var = function (me)
@@ -58,7 +67,7 @@ F =
 
     SetExp = function (me)
         local e1, e2 = unpack(me)
-        VAL(e2)     -- error on reads do internal events
+        V(e2)     -- error on reads do internal events
     end,
 
     EmitExtS = function (me)
@@ -74,10 +83,10 @@ F =
             local tp = _TP.deref(e1.evt.tp, true)
             if tp then
                 len = 'sizeof('.._TP.c(tp)..')'
-                val = VAL(e2)
+                val = V(e2)
             else
                 len = 'sizeof('.._TP.c(e1.evt.tp)..')'
-                val = VAL(e2)
+                val = V(e2)
             end
         else
             len = 0
@@ -104,39 +113,35 @@ F =
         end
     end,
     AwaitT = function (me)
-        me.val = 'CEU.wclk_late'
+        me.val      = 'CEU.wclk_late'
+        me.val_wclk = CUR(me, '__wclk_'..me.n)
     end,
+--[[
     AwaitS = function (me)
         me.val = '__ceu_'..me.n..'_AwaitS'
     end,
+]]
 
     Op2_call = function (me)
         local _, f, exps = unpack(me)
         local ps = {}
         for i, exp in ipairs(exps) do
-            ps[i] = VAL(exp)
+            ps[i] = V(exp)
         end
         if f.org then
-            table.insert(ps, 1, VAL(f.org))
+            table.insert(ps, 1, V(f.org))
         end
-        me.val = VAL(f)..'('..table.concat(ps,',')..')'
+        me.val = V(f)..'('..table.concat(ps,',')..')'
     end,
 
     Op2_idx = function (me)
         local _, arr, idx = unpack(me)
-        local cls = _ENV.clss[me.tp]
-        if cls then
-            me.val = 'PTR_org(void*,'..VAL(arr)
-                        ..',('..VAL(idx)..'*'..cls.mem.max..'))'
-            me.val = '(('.._TP.c(me.tp)..')'..VAL(me)..')'
-        else
-            me.val = '('..VAL(arr)..'['..VAL(idx)..'])'
-        end
+        me.val = V(arr)..'['..V(idx)..']'
     end,
 
     Op2_any = function (me)
         local op, e1, e2 = unpack(me)
-        me.val = '('..VAL(e1)..ceu2c(op)..VAL(e2)..')'
+        me.val = '('..V(e1)..ceu2c(op)..V(e2)..')'
     end,
     ['Op2_-']   = 'Op2_any',
     ['Op2_+']   = 'Op2_any',
@@ -159,7 +164,7 @@ F =
 
     Op1_any = function (me)
         local op, e1 = unpack(me)
-        me.val = '('..ceu2c(op)..VAL(e1)..')'
+        me.val = '('..ceu2c(op)..V(e1)..')'
     end,
     ['Op1_~']   = 'Op1_any',
     ['Op1_-']   = 'Op1_any',
@@ -167,49 +172,33 @@ F =
 
     ['Op1_*'] = function (me)
         local op, e1 = unpack(me)
-        me.val = '('..ceu2c(op)..VAL(e1)..')'
-        if _ENV.clss[_TP.deref(e1.tp)] then
-            me.val = '(('.._TP.c(me.tp)..')(&'..VAL(me)..'))'
-        end
+        me.val = '('..ceu2c(op)..V(e1)..')'
     end,
     ['Op1_&'] = function (me)
         local op, e1 = unpack(me)
-        if _ENV.clss[e1.tp] then
-            me.val = VAL(e1)
-        else
-            me.val = '('..ceu2c(op)..VAL(e1)..')'
-        end
+        me.val = '('..ceu2c(op)..V(e1)..')'
     end,
 
     ['Op2_.'] = function (me)
         if me.org then
-            local cls = _ENV.clss[me.org.tp]
-            local pre = (cls.is_ifc and 'IFC_') or 'CLS_'
             if me.c then
+error'oi'
                 me.val = me.c.id
             elseif me.var.isEvt then
                 me.val = nil    -- cannot be used as variable
-                if cls.id == 'Global' then
-                    me.off = pre..cls.id..'_'..me.var.id..'_off()'
-                else
-                    me.off = pre..cls.id..'_'..me.var.id..'_off('..VAL(me.org)..')'
-                end
+                me.evt_idx = me.var.evt_idx
             else
-                if cls.id == 'Global' then
-                    me.val = pre..cls.id..'_'..me.var.id..'()'
-                else
-                    me.val = pre..cls.id..'_'..me.var.id..'('..VAL(me.org)..')'
-                end
+                me.val = me.org.val..'.'..me.var.id_
             end
         else
             local op, e1, id = unpack(me)
-            me.val  = '('..VAL(e1)..ceu2c(op)..id..')'
+            me.val  = '('..V(e1)..ceu2c(op)..id..')'
         end
     end,
 
     Op1_cast = function (me)
         local tp, exp = unpack(me)
-        local val = VAL(exp)
+        local val = V(exp)
 
         local _tp = _TP.deref(tp)
         local cls = _tp and _ENV.clss[_tp]
@@ -231,7 +220,7 @@ F =
     WCLOCKE = function (me)
         local exp, unit = unpack(me)
         me.us   = nil
-        me.val  = VAL(exp) .. '*' .. t2n[unit]-- .. 'L'
+        me.val  = V(exp) .. '*' .. t2n[unit]-- .. 'L'
     end,
 
     C = function (me)

@@ -18,7 +18,7 @@ function CONC (me, sub, tab)
 end
 
 function ATTR (me, n1, n2)
-    LINE(me, VAL(n1)..' = '..VAL(n2)..';')
+    LINE(me, V(n1)..' = '..V(n2)..';')
 end
 
 function CASE (me, lbl)
@@ -37,7 +37,7 @@ function LINE (me, line, spc)
     spc = spc or 4
     spc = string.rep(' ', spc)
     me.code = me.code ..
-                '#line '..me.ln..'\n'..
+                '/*#line '..me.ln..'*/\n'..
                 spc .. line .. '\n'
 end
 
@@ -67,7 +67,7 @@ function PAUSE (me, no)
     for pse in _AST.iter'Pause' do
         COMM(me, 'PAUSE: '..pse.dcl.var.id)
         LINE(me, [[
-if (]]..VAL(pse.dcl.var)..[[) {
+if (]]..V(pse.dcl.var)..[[) {
 ]])
         if me.tag == 'AwaitInt' then
             LINE(me, [[
@@ -207,7 +207,7 @@ if (CUR->toFree) {
 
     Host = function (me)
         _CODE.host = _CODE.host ..
-            '#line '..(me.ln+1)..'\n' ..
+            '/*#line '..(me.ln+1)..'*/\n' ..
             me[1] .. '\n'
     end,
     Host_raw = function (me)
@@ -236,12 +236,21 @@ end;
 ]]
 
         -- each org has its own trail on enclosing block
-        for i=1, t.arr do
+        for i=1, (t.arr or 1) do
             LINE(me, [[
 {
+]])
+            if t.arr then
+                LINE(me, [[
     tceu_org* org     = (tceu_org*) &]]..t.val..'['..(i-1)..']'..[[;
+]])
+            else
+                LINE(me, [[
+    tceu_org* org     = (tceu_org*) &]]..t.val..[[;
+]])
+            end
+            LINE(me, [[
     tceu_trl* par_trl = &(]]..t.par_trls..')['..(i-1)..']'..[[;
-
 #ifdef CEU_NEWS
     org->isDyn  = ]]..t.isDyn..[[;
     org->toFree = ]]..t.toFree..[[;
@@ -279,8 +288,16 @@ end;
 case ]]..me.lbls_init[i].id..[[:;
     /* BACK FROM INIT */
 {
-    tceu_org* org = (tceu_org*) &]]..t.val..'['..(i-1)..']'..[[;
 ]])
+                if t.arr then
+                    LINE(me, [[
+    tceu_org* org     = (tceu_org*) &]]..t.val..'['..(i-1)..']'..[[;
+]])
+                else
+                    LINE(me, [[
+    tceu_org* org     = (tceu_org*) &]]..t.val..[[;
+]])
+                end
             end
 
             if t.constr then
@@ -325,7 +342,7 @@ case ]]..me.lbls_cnt[i].id..[[:;
             par_trls = 'CUR->trls+'..var.trails[1],
             val      = var.val,
             constr   = constr,
-            arr      = var.arr or 1,
+            arr      = var.arr,
         })
     end,
 
@@ -370,7 +387,7 @@ case ]]..me.lbls_cnt[i].id..[[:;
         t.isDyn    = 1
         t.par_org  = '__par_org'
         t.par_trls = '__par_trl'
-        t.arr      = 1
+        t.arr      = false
 
         LINE(me, [[
     if (__ceu_org != NULL)
@@ -396,7 +413,7 @@ case ]]..me.lbls_cnt[i].id..[[:;
         F._New(me, {
             par_org = (exp.org and exp.org.val) or '_ceu_cur_.org',
             par_blk = me.blk,
-            val     = VAL(exp),
+            val     = V(exp),
             cls     = me.cls,
             toFree  = 0,
             constr  = constr,
@@ -425,7 +442,7 @@ case ]]..me.lbls_cnt[i].id..[[:;
         CONC(me, spw)
 
         LINE(me, [[
-    ]]..VAL(exp)..[[ = __ceu_]]..spw.n..[[;
+    ]]..V(exp)..[[ = __ceu_]]..spw.n..[[;
 }
 ]])
     end,
@@ -436,7 +453,7 @@ case ]]..me.lbls_cnt[i].id..[[:;
         local cls, val
         if me.tag == 'Free' then
             cls = me.cls
-            val = VAL(exp)
+            val = V(exp)
         else    -- Dcl_cls
             cls = me
             val = 'CUR'
@@ -479,9 +496,9 @@ case ]]..me.lbl_clr.id..[[:;
             if var.isTmp then
                 if var.arr then
                     LINE(me, _TP.c(_TP.deref(var.tp))
-                            ..' '..VAL(var)..'['..var.arr..'];')
+                            ..' '..V(var)..'['..var.arr..'];')
                 else
-                    LINE(me, _TP.c(var.tp)..' '..VAL(var)..';')
+                    LINE(me, _TP.c(var.tp)..' '..V(var)..';')
                 end
             end
         end
@@ -500,8 +517,10 @@ case ]]..me.lbl_clr.id..[[:;
 CUR->trls[ ]]..me.fins.trails[1]..[[ ].evt = IN__CLR;
 CUR->trls[ ]]..me.fins.trails[1]..[[ ].lbl = ]]..me.lbl_fin.id..[[;
 /*_ceu_cur_.trl->stk = CEU_MAX_STACK;   // never checked anyways */
-memset(PTR_cur(u8*,]]..me.off_fins..'), 0, '..#me.fins..[[);
 ]])
+            for _, fin in ipairs(me.fins) do
+                LINE(me, fin.val..' = 0;')
+            end
         end
 
         if me.trails[1] ~= blk.trails[1] then
@@ -517,7 +536,7 @@ _ceu_cur_.trl = &CUR->trls[ ]]..blk.trails[1]..[[ ];
             CASE(me, me.lbl_fin)
             for i, fin in ipairs(me.fins) do
                 LINE(me, [[
-if (*PTR_cur(u8*,]]..(me.off_fins+i-1)..[[)) {
+if (]]..fin.val..[[) {
 ]] .. fin.code .. [[
 }
 ]])
@@ -553,14 +572,14 @@ ceu_pause(&CUR->trls[ ]]..me.blk.trails[1]..[[ ],
     Op2_call_pre = function (me)
         local _, f, exps, fin = unpack(me)
         if fin and fin.active then
-            LINE(_AST.iter'Stmts'(), '*PTR_cur(u8*,'..fin.idx..') = 1;  /* XXX */')
+            LINE(_AST.iter'Stmts'(), fin.val..' = 1;  /* XXX */')
         end
     end,
     Finalize = function (me)
         -- enable finalize
         local set,fin = unpack(me)
         if fin.active then
-            LINE(me, '*PTR_cur(u8*,'..fin.idx..') = 1;')
+            LINE(me, fin.val..' = 1;')
         end
         if set then
             CONC(me, set)
@@ -574,14 +593,14 @@ ceu_pause(&CUR->trls[ ]]..me.blk.trails[1]..[[ ],
         if e1.tag=='Var' and e1.var.id=='_ret' then
             LINE(me, [[
 #ifdef ceu_out_end
-    ceu_out_end(]]..VAL(e1)..[[);
+    ceu_out_end(]]..V(e1)..[[);
 #endif
 ]])
         end
 
         -- enable finalize
         if fin and fin.active then
-            LINE(me, '*PTR_cur(u8*,'..fin.idx..') = 1;')
+            LINE(me, fin.val..' = 1;')
         end
     end,
 
@@ -663,7 +682,11 @@ _ceu_cur_.trl = &CUR->trls[ ]]..me.trails[1]..[[ ];
     ParAnd = function (me)
         -- close AND gates
         COMM(me, 'close ParAnd gates')
-        LINE(me, 'memset(PTR_cur(u8*,'..me.off..'), 0, '..#me..');')
+
+        for i=1, #me do
+            LINE(me, me.val..'_'..i..' = 0;')
+        end
+
         F._Par(me)
 
         for i, sub in ipairs(me) do
@@ -671,16 +694,14 @@ _ceu_cur_.trl = &CUR->trls[ ]]..me.trails[1]..[[ ];
                 CASE(me, me.lbls_in[i])
             end
             CONC(me, sub)
-            LINE(me, [[
-*PTR_cur(u8*,]]..(me.off+i-1)..[[) = 1; /* open and gate */
-]])
+            LINE(me, me.val..'_'..i..' = 1;')
             GOTO(me, me.lbl_tst)
         end
 
         -- AFTER code :: test gates
         CASE(me, me.lbl_tst)
         for i, sub in ipairs(me) do
-            HALT(me, '! *PTR_cur(u8*,'..(me.off+i-1)..')')
+            HALT(me, '!'..me.val..'_'..i)
         end
 
         LINE(me, [[
@@ -695,7 +716,7 @@ _ceu_cur_.trl = &CUR->trls[ ]]..me.trails[1]..[[ ];
         -- TODO: If cond assert(c==ptr or int)
 
         LINE(me, [[
-if (]]..VAL(c)..[[) {
+if (]]..V(c)..[[) {
 ]]    ..t.code..[[
 } else {
 ]]    ..f.code..[[
@@ -749,7 +770,7 @@ _ceu_cur_.trl = &CUR->trls[ ]]..me.trails[1]..[[ ];
 
     CallStmt = function (me)
         local call = unpack(me)
-        LINE(me, VAL(call)..';')
+        LINE(me, V(call)..';')
     end,
 
     EmitExtS = function (me)
@@ -757,7 +778,7 @@ _ceu_cur_.trl = &CUR->trls[ ]]..me.trails[1]..[[ ];
         local evt = e1.evt
 
         if evt.pre == 'output' then  -- e1 not Exp
-            LINE(me, VAL(me)..';')
+            LINE(me, V(me)..';')
             return
         end
 
@@ -765,7 +786,7 @@ _ceu_cur_.trl = &CUR->trls[ ]]..me.trails[1]..[[ ];
 
         if e2 then
             LINE(me, 'ceu_go_event(IN_'..evt.id
-                        ..', (void*)'..VAL(e2)..');')
+                        ..', (void*)'..V(e2)..');')
         else
             LINE(me, 'ceu_go_event(IN_'..evt.id ..', NULL);')
         end
@@ -790,7 +811,7 @@ case ]]..me.lbl_cnt.id..[[:;
 _ceu_cur_.trl->evt = IN__ASYNC;
 _ceu_cur_.trl->lbl = ]]..me.lbl_cnt.id..[[;
 #ifdef CEU_WCLOCKS
-ceu_go_wclock((s32)]]..VAL(exp)..[[);
+ceu_go_wclock((s32)]]..V(exp)..[[);
 while (CEU.wclk_min <= 0) {
     ceu_go_wclock(0);
 }
@@ -818,19 +839,19 @@ _ceu_cur_.trl->lbl = ]]..me.lbl_cnt.id..[[;
 _CEU_STK_[_ceu_stk_++] = _ceu_evt_;
 
 /* TRIGGER EVENT */
-_ceu_evt_.id = ]]..(int.off or int.evt.off)..[[;
+_ceu_evt_.id = ]]..(int.evt_idx or int.evt.evt_idx)..[[;
 #ifdef CEU_ORGS
-_ceu_evt_.org = ]]..((int.org and int.org.val) or 'CUR')..[[;
+_ceu_evt_.org = ]]..((int.org and '&'..int.org.val) or 'CUR')..[[;
 #endif
 ]])
         if field then
             LINE(me, [[
-_ceu_evt_.param.]]..field..' = '..VAL(exp)..[[;
+_ceu_evt_.param.]]..field..' = '..V(exp)..[[;
 ]])
         end
         LINE(me, [[
 #ifdef CEU_ORGS
-_ceu_cur_.org = CEU.mem;
+_ceu_cur_.org = &CEU.mem;
 #endif
 goto _CEU_CALL_;
 
@@ -860,7 +881,7 @@ case ]]..me.lbl_cnt.id..[[:;
         local no = '_CEU_NO_'..me.n..'_'
 
         LINE(me, [[
-ceu_trails_set_wclock(PTR_cur(s32*,]]..me.off..'),(s32)'..VAL(exp)..[[);
+ceu_trails_set_wclock(&]]..me.val_wclk..[[, (s32)]]..V(exp)..[[);
 ]]..no..[[:
     _ceu_cur_.trl->evt = IN__WCLOCK;
     _ceu_cur_.trl->lbl = ]]..me.lbl.id..[[;
@@ -873,7 +894,7 @@ case ]]..me.lbl.id..[[:;
 
         PAUSE(me, no)
         LINE(me, [[
-    if (!ceu_wclocks_expired(PTR_cur(s32*,]]..me.off..[[), _ceu_evt_.param.dt) )
+    if (!ceu_wclocks_expired(&]]..me.val_wclk..[[, _ceu_evt_.param.dt) )
         goto ]]..no..[[;
 ]])
         DEBUG_TRAILS(me)
@@ -882,12 +903,12 @@ case ]]..me.lbl.id..[[:;
 
     AwaitInt = function (me)
         local int = unpack(me)
-        local org = (int.org and int.org.val) or '_ceu_cur_.org'
+        local org = (int.org and '&'..int.org.val) or '_ceu_cur_.org'
         local no = '_CEU_NO_'..me.n..'_'
 
         LINE(me, [[
 ]]..no..[[:
-    _ceu_cur_.trl->evt = ]]..(int.off or int.evt.off)..[[;
+    _ceu_cur_.trl->evt = ]]..(int.evt_idx or int.evt.evt_idx)..[[;
     _ceu_cur_.trl->lbl = ]]..me.lbl.id..[[;
 ]])
         HALT(me)
@@ -935,7 +956,7 @@ error'AwaitInt que falha tem que setar stk=MAX'
         for _, awt in ipairs(me) do
             if awt.tag=='WCLOCKK' or awt.tag=='WCLOCKE' then
                 LINE(me, [[
-ceu_trails_set_wclock(PTR_cur(u32*,]]..awt.off..'),(s32)'..VAL(awt)..[[);
+ceu_trails_set_wclock(PTR_cur(u32*,]]..awt.off..'),(s32)'..V(awt)..[[);
 ]])
             end
         end

@@ -84,14 +84,7 @@ function _TP.c (tp)
     -- _tp->tp
     local cls = _ENV.clss[_TP.noptr(tp)]
     if cls then
-        if cls.is_ifc then
-            tp = 'IFC_'..tp
-        else
-            tp = 'CLS_'..tp
-        end
-        if not _TP.deref(tp) then
-            tp = tp..'*'
-        end
+        tp = 'CEU_'..tp
     end
     return (string.gsub(tp,'^_', ''))
 end

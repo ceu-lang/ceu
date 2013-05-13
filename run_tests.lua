@@ -40,7 +40,6 @@ Test = function (t)
 
     _OPTS = {
         tp_word    = 4,
-        tp_pointer = 4,
         tp_off     = 2,
         tp_lbl     = 2,
     }
@@ -69,7 +68,7 @@ Test = function (t)
     if not check('val')      then return end
     if not check('code')     then return end
 
-    STATS.mem     = STATS.mem     + _AST.root.mem.max
+    --STATS.mem     = STATS.mem     + _AST.root.mem.max
     STATS.trails  = STATS.trails  + _AST.root.trails_n
 
 --[[
@@ -130,7 +129,7 @@ end
         return
     end
 
-    local CEU = './ceu _ceu_tmp.ceu --tp-word 4 --tp-pointer 4 --run-tests'
+    local CEU = './ceu _ceu_tmp.ceu --tp-word 4 --run-tests'
     local EXE = (VALGRIND=='false' and './ceu.exe')
              or 'valgrind -q --leak-check=full ./ceu.exe 2>&1'
 
