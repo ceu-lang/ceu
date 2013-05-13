@@ -123,7 +123,7 @@ DBG('', string.format('%8s','trls'), off, me.trails_n*_ENV.c.tceu_trl.len,
     end,
     Dcl_cls = function (me)
         me.mem.max = _TP.sizeof(me.mem.max) -- align
-DBG('===', me.id)
+DBG('===', me.id, '('..tostring(me.pool)..')')
 DBG('', 'mem', me.mem.max)
 DBG('', 'trl', me.trails_n)
 DBG('======================')

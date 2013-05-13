@@ -499,7 +499,7 @@ case ]]..me.lbl_clr.id..[[:;
 /*  FINALIZE */
 CUR->trls[ ]]..me.fins.trails[1]..[[ ].evt = IN__CLR;
 CUR->trls[ ]]..me.fins.trails[1]..[[ ].lbl = ]]..me.lbl_fin.id..[[;
-/*_ceu_cur_.trl->stk = CEU_MAX_STACK;   /* never checked anyways */
+/*_ceu_cur_.trl->stk = CEU_MAX_STACK;   // never checked anyways */
 memset(PTR_cur(u8*,]]..me.off_fins..'), 0, '..#me.fins..[[);
 ]])
         end
@@ -910,9 +910,10 @@ case ]]..me.lbl.id..[[:;
 
     AwaitExt = function (me)
         local e = unpack(me)
-        local no = '_CEU_NO_'..me.n..'_'
+        local no = _AST.iter'Pause'() and '_CEU_NO_'..me.n..'_:'
+                    or ''
         LINE(me, [[
-]]..no..[[:
+]]..no..[[
     _ceu_cur_.trl->evt = IN_]]..e.evt.id..[[;
     _ceu_cur_.trl->lbl = ]]..me.lbl.id..[[;
 ]])
@@ -921,7 +922,7 @@ case ]]..me.lbl.id..[[:;
         LINE(me, [[
 case ]]..me.lbl.id..[[:;
 ]])
-        PAUSE(me, no)
+        PAUSE(me, string.sub(no,1,-2))  -- remove `:´
         DEBUG_TRAILS(me)
         F._SetAwait(me)
     end,

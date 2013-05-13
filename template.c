@@ -15,8 +15,8 @@
 #endif
 
 #ifdef CEU_NEWS
-#include "memb.h"
-#include "memb.c"
+=== MEMB_H ===
+=== MEMB_C ===
 #endif
 
 #ifdef __cplusplus
@@ -402,10 +402,11 @@ void ceu_go (int __ceu_id, tceu_param* __ceu_p)
     tceu_lst _ceu_cur_;       /* current listener */
 
 #ifdef CEU_CLEAR
+    /* TODO: assignments avoid warning but are not needed */
 #ifdef CEU_ORGS
-    void*       _ceu_clr_org_;  /* stop at this org */
+    void* _ceu_clr_org_=NULL;      /* stop at this org */
 #endif
-    tceu_trl* _ceu_clr_trlF_; /*      at this trl */
+    tceu_trl* _ceu_clr_trlF_=NULL; /*      at this trl */
 #endif
 
     /* ceu_go_init(): nobody awaiting, jump reset */

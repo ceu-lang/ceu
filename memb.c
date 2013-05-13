@@ -1,3 +1,4 @@
+/* CEU USES MEMB.C FROM CONTIKI: COPYRIGHT BELOW */
 /*
  * Copyright (c) 2004, Swedish Institute of Computer Science.
  * All rights reserved.
