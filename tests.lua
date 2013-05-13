@@ -2016,10 +2016,8 @@ end
 Test { [[
 var int ret;
 var int dt;
-C nohold _fprintf(), _stderr;
 every dt = 1s do
     ret = ret + dt;
-_fprintf(_stderr, "%d\n", dt);
     if ret == 10000000 then
         return ret;
     end
@@ -22280,10 +22278,31 @@ return 10;
 }
 
 Test { [[
+class T with
+    var int v;
+    C nohold _f();
+do
+    v = 50;
+    this._f(10);
+
+    C do
+        int CEU_T__f (CEU_T* t, int v) {
+            t->v += v;
+            return t->v;
+        }
+    end
+end
+
+var T t;
+input void START;
+await START;
+return t.v + t._f(20) + t.v;
+]],
+    run = 220,
+}
+
+Test { [[
 C do
-    void CLS_T__f (void* org, int v) {
-        CLS_T_v(org) += v;
-    }
     void IFC_I__f (void* org, int v) {
         IFC_I_v(org) += v;
     }
@@ -22300,6 +22319,12 @@ class T with
 do
     v = 50;
     this._f(10);
+
+    C do
+        void CEU_T__f (CEU_T* t, int v) {
+            t->v += v;
+        }
+    end
 end
 
 var T t;
@@ -22308,6 +22333,62 @@ input void START;
 await START;
 i:_f(100);
 return i:v;
+]],
+    run = 160,
+}
+
+Test { [[
+C do
+    void IFC_I__f (void* org, int v) {
+        IFC_I_v(org) += v;
+    }
+end
+
+interface I with
+    var int v;
+    C nohold _f();
+end
+
+class T with
+    var int v;
+    C nohold _f();
+do
+    v = 50;
+    this._f(10);
+
+    C do
+        void CEU_T__f (CEU_T* t, int v) {
+            t->v += v;
+        }
+    end
+end
+
+class U with
+    var int v;
+    C nohold _f();
+do
+    v = 50;
+    this._f(10);
+
+    C do
+        void CEU_U__f (CEU_U* t, int v) {
+            t->v += 2*v;
+        }
+    end
+end
+
+var T t;
+var T u;
+var I* i = &t;
+input void START;
+await START;
+i:_f(100);
+var int ret = i:v;
+
+i=&u;
+i:_f(200);
+
+return ret + i:v;
 ]],
     run = 160,
 }
@@ -22622,6 +22703,8 @@ end
 var I* i;
 var T t;
 i = &t;
+C nohold _fprintf(), _stderr;
+_fprintf(_stderr, "%d vs %d\n", t.a, i:a);
 var J* j = i;
 await START;
 return i:a + j:a + t.a + i:v + t.v;

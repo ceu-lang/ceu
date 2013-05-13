@@ -1,7 +1,3 @@
-_CODE = {
-    host = '',
-}
-
 function CONC_ALL (me, t)
     t = t or me
     for _, sub in ipairs(t) do
@@ -167,6 +163,7 @@ F = {
         me.code_ifc = me.code       -- see Dcl_cls
         me.code = ''                -- avoid this code
     end,
+
     Dcl_cls = function (me)
         if me.is_ifc then
             CONC_ALL(me)
@@ -206,15 +203,6 @@ if (CEU_CUR->toFree) {
         end
     end,
 
-    Host = function (me)
-        _CODE.host = _CODE.host ..
-            '/*#line '..(me.ln+1)..'*/\n' ..
-            me[1] .. '\n'
-    end,
-    Host_raw = function (me)
-        LINE(me, me[1])
-    end,
-
     -- TODO: C function?
     _ORG = function (me, t)
         COMM(me, 'start org: '..t.id)
@@ -243,11 +231,11 @@ end;
 ]])
             if t.arr then
                 LINE(me, [[
-    tceu_org* org     = (tceu_org*) &]]..t.val..'['..(i-1)..']'..[[;
+    tceu_org* org = (tceu_org*) ]]..t.val..'['..(i-1)..']'..[[;
 ]])
             else
                 LINE(me, [[
-    tceu_org* org     = (tceu_org*) &]]..t.val..[[;
+    tceu_org* org = (tceu_org*) ]]..t.val..[[;
 ]])
             end
             LINE(me, [[
@@ -292,11 +280,11 @@ case ]]..me.lbls_init[i].id..[[:;
 ]])
                 if t.arr then
                     LINE(me, [[
-    tceu_org* org     = (tceu_org*) &]]..t.val..'['..(i-1)..']'..[[;
+    tceu_org* org = (tceu_org*) ]]..t.val..'['..(i-1)..']'..[[;
 ]])
                 else
                     LINE(me, [[
-    tceu_org* org     = (tceu_org*) &]]..t.val..[[;
+    tceu_org* org = (tceu_org*) ]]..t.val..[[;
 ]])
                 end
             end
@@ -341,7 +329,7 @@ case ]]..me.lbls_cnt[i].id..[[:;
             cls      = var.cls,
             par_org  = 'CEU_CUR',
             par_trls = 'CEU_CUR->trls+'..var.trails[1],
-            val      = var.val,
+            val      = '&'..var.val,
             constr   = constr,
             arr      = var.arr,
         })
@@ -358,7 +346,7 @@ case ]]..me.lbls_cnt[i].id..[[:;
 ]])
         else
             LINE(me, [[
-    __ceu_org = malloc(]]..t.cls.mem.max..[[);
+    __ceu_org = malloc(sizeof(]].._TP.c(t.cls.id)..[[));
 ]])
         end
 

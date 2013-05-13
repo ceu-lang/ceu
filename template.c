@@ -38,8 +38,9 @@
 #define CEU_NTRAILS    (=== CEU_NTRAILS ===)
 
 #ifdef CEU_IFCS
+#include <stddef.h>
+/* TODO: === direto? */
 #define CEU_NCLS       (=== CEU_NCLS ===)
-#define CEU_NIFCS      (=== CEU_NIFCS ===)
 #endif
 
 /* Macros that can be defined:
@@ -58,7 +59,6 @@ typedef === TCEU_NLBL === tceu_nlbl;    /* (x) number of trails */
 
 #ifdef CEU_IFCS
 typedef === TCEU_NCLS === tceu_ncls;    /* (x) number of instances */
-typedef === TCEU_NOFF === tceu_noff;    /* (x) number of clss x ifcs */
 #endif
 
 /* align all structs 1 byte
@@ -147,7 +147,9 @@ typedef struct tceu_org
 
 } tceu_org;
 
+/*
 === HOST ===
+*/
 
 === CLSS_DEFS ===
 
@@ -163,7 +165,10 @@ typedef struct {
 #endif
 
 #ifdef CEU_IFCS
-    tceu_noff   ifcs[CEU_NCLS][CEU_NIFCS];
+/* TODO: fun */
+    u16   ifcs_flds[CEU_NCLS][=== IFCS_NFLDS ===];
+    u16   ifcs_evts[CEU_NCLS][=== IFCS_NEVTS ===];
+    /*void* ifcs_funs[CEU_NCLS][=== IFCS_NFUNS ===];*/
 #endif
 
 #ifdef CEU_DEBUG
@@ -180,7 +185,12 @@ tceu CEU = {
     0, CEU_WCLOCK_INACTIVE, CEU_WCLOCK_INACTIVE,
 #endif
 #ifdef CEU_IFCS
-    { === IFCS === },
+    {
+=== IFCS_FLDS ===
+    },
+    {
+=== IFCS_EVTS ===
+    },
 #endif
 #ifdef CEU_DEBUG
     {},

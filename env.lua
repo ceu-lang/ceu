@@ -7,7 +7,9 @@ _ENV = {
     clss_cls = {},
 
     calls = {},     -- { _printf=true, _myf=true, ... }
-    ifcs  = {},     -- { [1]='A', [2]='B', A=0, B=1, ... }
+
+    -- f=fields, e=events
+    ifcs  = { f={}, e={} }, -- { f={[1]='A',[2]='B',A=0,B=1,...}, e=... }
 
     exts = {
         --[1]=ext1,         [ext1.id]=ext1.
@@ -117,7 +119,7 @@ function newvar (me, blk, pre, tp, dim, id)
                 'invalid declaration')
     end
 
-    local inIfc = _AST.iter'BlockI'()
+    local inIfc = (CLS().blk_ifc == blk)
     if inIfc and blk.vars[id] then
         return blk.vars[id]
     end
@@ -270,17 +272,20 @@ F = {
     Dcl_cls = function (me)
         _ENV.max_evt = MAX(_ENV.max_evt, _E)
         -- expose each field
---[[
         if me.is_ifc then
             for _, var in pairs(me.blk_ifc.vars) do
                 var.id_ifc = var.id_ifc or var2ifc(var)
                 if not _ENV.ifcs[var.id_ifc] then
-                    _ENV.ifcs[var.id_ifc] = #_ENV.ifcs
-                    _ENV.ifcs[#_ENV.ifcs+1] = var.id_ifc
+                    if var.isEvt then
+                        _ENV.ifcs.e[var.id_ifc] = #_ENV.ifcs.e
+                        _ENV.ifcs.e[#_ENV.ifcs.e+1] = var.id_ifc
+                    else
+                        _ENV.ifcs.f[var.id_ifc] = #_ENV.ifcs.f
+                        _ENV.ifcs.f[#_ENV.ifcs.f+1] = var.id_ifc
+                    end
                 end
             end
         end
-]]
     end,
 
     Dcl_det = function (me)                 -- TODO: verify in _ENV.c
@@ -379,7 +384,7 @@ F = {
 
         local cls = CLS()
         for _, c in pairs(ifc.cs) do
-            local id = 'CLS_'..cls.id..'_'..c.id
+            local id = 'CEU_'..cls.id..'_'..c.id
             _ENV.c[id] = { tag=c.tag, id=id, len=c.len, mod=c.mod }
         end
     end,
@@ -410,16 +415,11 @@ F = {
         len = ASR((not len) or len.sval, me, 'invalid static expression')
         if _AST.iter'BlockI'() then
             local cls = CLS()
+            local id = 'CEU_'..cls.id..'_'..id
             if cls.is_ifc then
                 cls.cs[id] = { tag=tag, id=id, len=len, mod=mod }
-
-                -- TODO: use pointers to CLS_*
-                id = 'IFC_'..cls.id..'_'..id
-                _ENV.c[id] = { tag=tag, id=id, len=len, mod=mod }
-            else
-                id = 'CLS_'..cls.id..'_'..id
-                _ENV.c[id] = { tag=tag, id=id, len=len, mod=mod }
             end
+            _ENV.c[id] = { tag=tag, id=id, len=len, mod=mod }
         else
             _ENV.c[id] = { tag=tag, id=id, len=len, mod=mod }
         end
@@ -694,7 +694,7 @@ F = {
             me.org = e1
 
             if string.sub(id,1,1)=='_' then
-                local id = ((cls.is_ifc and 'IFC_') or 'CLS_')..cls.id..'_'..id
+                local id = ((cls.is_ifc and 'IFC_') or 'CEU_')..cls.id..'_'..id
                 local c = _ENV.c[id]
                 ASR(c and c.tag=='func', me,
                         'C function "'..id..'" is not declared')

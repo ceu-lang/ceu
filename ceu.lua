@@ -152,7 +152,7 @@ do
 
     tpl = sub(tpl, '=== LABELS_ENUM ===', _LBLS.code_enum)
 
-    tpl = sub(tpl, '=== HOST ===',     _CODE.host)
+    --tpl = sub(tpl, '=== HOST ===',     _CODE.host)
     tpl = sub(tpl, '=== CODE ===',     _AST.root.code)
 
     tpl = sub(tpl, '=== MEMB_H ===', assert(io.open'memb.h'):read'*a')
@@ -163,29 +163,39 @@ do
 
     -- IFACES
     if _PROPS.has_ifcs then
-        local T = {}
-        local off_max = 0
+        local F = {}
+        local E = {}
         for _, cls in ipairs(_ENV.clss_cls) do
-            local t = {}
-            for i=1, #_ENV.ifcs do
-                t[i] = 0
+            local f = {}
+            local e = {}
+            for i=1, #_ENV.ifcs.f do
+                f[i] = 0
+            end
+            for i=1, #_ENV.ifcs.e do
+                e[i] = 0
             end
             for _, var in ipairs(cls.blk_ifc.vars) do
-                local i = _ENV.ifcs[var.id_ifc]
-                if i then
-                    t[i+1] = var.off
-                    if var.off > off_max then
-                        off_max = var.off
+                if var.isEvt then
+                    local i = _ENV.ifcs.e[var.id_ifc]
+                    if i then
+                        e[i+1] = var.evt_idx
+                    end
+                else
+                    local i = _ENV.ifcs.f[var.id_ifc]
+                    if i then
+                        f[i+1] = 'offsetof(CEU_'..cls.id..','..var.id_..')'
                     end
                 end
             end
-            T[#T+1] = '{'..table.concat(t,',')..'}'
+            F[#F+1] = '\t\t{'..table.concat(f,',')..'}'
+            E[#E+1] = '\t\t{'..table.concat(e,',')..'}'
         end
         tpl = sub(tpl, '=== TCEU_NCLS ===', 'u'..tps[_ENV.c.tceu_ncls.len])
-        tpl = sub(tpl, '=== TCEU_NOFF ===', 'u'..tps[_TP.n2bytes(off_max)])
         tpl = sub(tpl, '=== CEU_NCLS ===',  #_ENV.clss_cls)
-        tpl = sub(tpl, '=== CEU_NIFCS ===', #_ENV.ifcs)
-        tpl = sub(tpl, '=== IFCS ===', table.concat(T,','))
+        tpl = sub(tpl, '=== IFCS_NFLDS ===', #_ENV.ifcs.f)
+        tpl = sub(tpl, '=== IFCS_NEVTS ===', #_ENV.ifcs.e)
+        tpl = sub(tpl, '=== IFCS_FLDS ===', table.concat(F,',\n'))
+        tpl = sub(tpl, '=== IFCS_EVTS ===', table.concat(E,',\n'))
     end
 
     -- EVENTS

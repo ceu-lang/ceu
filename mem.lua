@@ -22,13 +22,19 @@ F = {
         local _init = {}
         local _free = {}
 
+        -- Main.host must be before everything
+        local _host = _ENV.clss.Main.host
+        _ENV.clss.Main.host = ''
+
         for _,cls in ipairs(_ENV.clss) do
             local pre = (cls.is_ifc and 'IFC') or 'CLS'
 
             _defs[#_defs+1] = cls.struct
+            _defs[#_defs+1] = cls.host
 
             -- TODO: separate vars/ints in two ifcs? (ifcs_vars/ifcs_ints)
 --[[
+TODO: remove
             for _, var in ipairs(cls.blk_ifc.vars)
             do
                 local org = (cls.id=='Global' and '((tceu_org*)CEU.mem)')
@@ -66,16 +72,23 @@ F = {
                                 ..'CEU_'..cls.id..','..cls.pool..');'
                 _init[#_init+1] = 'memb_init(&CEU_POOL_'..cls.id..');'
                 _free[#_free+1] = [[
-                    if ( memb_inmemb(&CEU_POOL_]]..cls.id..[[, CUR) )
-                        memb_free(&CEU_POOL_]]..cls.id..[[, CUR);
+                    if ( memb_inmemb(&CEU_POOL_]]..cls.id..[[, CEU_CUR) )
+                        memb_free(&CEU_POOL_]]..cls.id..[[, CEU_CUR);
                     else
 ]]
             end
         end
-        _MEM.clss_defs = table.concat(_defs,'\n')
+        _MEM.clss_defs = _host ..'\n'.. table.concat(_defs,'\n')
         _MEM.clss_init = table.concat(_init,'\n')
         _MEM.clss_free = table.concat(_free,'\n')
     end,
+
+    Host = function (me)
+        CLS().host = CLS().host ..
+            '/*#line '..(me.ln+1)..'*/\n' ..
+            me[1] .. '\n'
+    end,
+
 
     Dcl_cls_pre = function (me)
         me.struct = [[
@@ -83,12 +96,26 @@ typedef struct {
   struct tceu_org org;
   tceu_trl trls_[ ]]..me.trails_n..[[ ];
 ]]
+        me.host = ''
     end,
     Dcl_cls_pos = function (me)
-        me.struct = me.struct..'\n} CEU_'..me.id..';\n'
-DBG('===', me.id, '('..tostring(me.pool)..')')
-DBG(me.struct)
-DBG('======================')
+        if me.is_ifc then
+            me.struct = 'typedef void '.._TP.c(me.id)..';\n'
+--[[
+            me.struct = 'typedef union {\n'
+            for cls in pairs(me.matches) do
+                me.struct = me.struct..'  '.._TP.c(cls.id)
+                                ..'* __'..cls.id..';\n'
+            end
+            me.struct = me.struct..'} '.._TP.c(me.id)..';\n'
+]]
+            return
+        end
+
+        me.struct = me.struct..'\n} '.._TP.c(me.id)..';\n'
+--DBG('===', me.id, '('..tostring(me.pool)..')')
+--DBG(me.struct)
+--DBG('======================')
     end,
 
     Stmts_pre = function (me)

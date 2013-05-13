@@ -129,7 +129,7 @@ F =
             ps[i] = V(exp)
         end
         if f.org then
-            table.insert(ps, 1, V(f.org))
+            table.insert(ps, 1, '&'..V(f.org))
         end
         me.val = V(f)..'('..table.concat(ps,',')..')'
     end,
@@ -172,7 +172,12 @@ F =
 
     ['Op1_*'] = function (me)
         local op, e1 = unpack(me)
-        me.val = '('..ceu2c(op)..V(e1)..')'
+        local cls = _ENV.clss[_TP.deref(e1.tp)]
+        if cls and cls.is_ifc then
+            me.val = V(e1)
+        else
+            me.val = '('..ceu2c(op)..V(e1)..')'
+        end
     end,
     ['Op1_&'] = function (me)
         local op, e1 = unpack(me)
@@ -181,14 +186,31 @@ F =
 
     ['Op2_.'] = function (me)
         if me.org then
-            if me.c then
+            local cls = _ENV.clss[me.org.tp]
+            if cls and cls.is_ifc then
+                if me.c then
 error'oi'
-                me.val = me.c.id
-            elseif me.var.isEvt then
-                me.val = nil    -- cannot be used as variable
-                me.evt_idx = me.var.evt_idx
+                    me.val = me.c.id
+                elseif me.var.isEvt then
+error'oi'
+                    me.val = nil    -- cannot be used as variable
+                    me.evt_idx = me.var.evt_idx
+                else    -- var
+                    local org = '((tceu_org*)'..me.org.val..')'
+                    local off = '(CEU.ifcs_flds['..org..'->cls]['
+                                    .._ENV.ifcs.f[me.var.id_ifc]
+                                ..'])'
+                    me.val = '(*(('..me.tp..'*)(((char*)('..org..'))+'..off..')))'
+                end
             else
-                me.val = me.org.val..'.'..me.var.id_
+                if me.c then
+                    me.val = me.c.id
+                elseif me.var.isEvt then
+                    me.val = nil    -- cannot be used as variable
+                    me.evt_idx = me.var.evt_idx
+                else    -- var
+                    me.val = me.org.val..'.'..me.var.id_
+                end
             end
         else
             local op, e1, id = unpack(me)
