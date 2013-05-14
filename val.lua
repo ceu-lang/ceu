@@ -129,7 +129,8 @@ F =
             ps[i] = V(exp)
         end
         if f.org then
-            table.insert(ps, 1, '&'..V(f.org))
+            local op = (_ENV.clss[f.org.tp].is_ifc and '') or '&'
+            table.insert(ps, 1, op..V(f.org))
         end
         me.val = V(f)..'('..table.concat(ps,',')..')'
     end,
@@ -189,24 +190,31 @@ F =
             local cls = _ENV.clss[me.org.tp]
             if cls and cls.is_ifc then
                 if me.c then
-error'oi'
                     me.val = me.c.id
+                    local org = '((tceu_org*)'..me.org.val..')'
+                    local tp = '__typeof__('.._ENV.ifcs.fun2tp[me.c.id]..')*'
+                    me.val = '(('..tp..')CEU.ifcs_funs['..org..'->cls]['
+                                    .._ENV.ifcs.funs[me.c.id]
+                                ..'])'
                 elseif me.var.isEvt then
-error'oi'
                     me.val = nil    -- cannot be used as variable
-                    me.evt_idx = me.var.evt_idx
+                    local org = '((tceu_org*)'..me.org.val..')'
+                    me.evt_idx = '(CEU.ifcs_evts['..org..'->cls]['
+                                    .._ENV.ifcs.evts[me.var.id_ifc]
+                                ..'])'
                 else    -- var
                     local org = '((tceu_org*)'..me.org.val..')'
                     local off = '(CEU.ifcs_flds['..org..'->cls]['
-                                    .._ENV.ifcs.f[me.var.id_ifc]
+                                    .._ENV.ifcs.flds[me.var.id_ifc]
                                 ..'])'
                     me.val = '(*(('..me.tp..'*)(((char*)('..org..'))+'..off..')))'
                 end
             else
                 if me.c then
-                    me.val = me.c.id
+                    me.val = me.c.id_
                 elseif me.var.isEvt then
                     me.val = nil    -- cannot be used as variable
+                    me.org.val = '&'..me.org.val -- always via reference
                     me.evt_idx = me.var.evt_idx
                 else    -- var
                     me.val = me.org.val..'.'..me.var.id_

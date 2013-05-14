@@ -16894,7 +16894,7 @@ do
 end
 
 C do
-    int V = sizeof(CLS_T);
+    int V = sizeof(CEU_T);
 end
 
 C _V;
@@ -16913,7 +16913,7 @@ do
 end
 
 C do
-    int V = sizeof(CLS_T);
+    int V = sizeof(CEU_T);
 end
 C _V;
 return _V;
@@ -16932,7 +16932,7 @@ do
 end
 
 C do
-    int V = sizeof(CLS_T);
+    int V = sizeof(CEU_T);
 end
 C _V;
 return _V;
@@ -22302,12 +22302,6 @@ return t.v + t._f(20) + t.v;
 }
 
 Test { [[
-C do
-    void IFC_I__f (void* org, int v) {
-        IFC_I_v(org) += v;
-    }
-end
-
 interface I with
     var int v;
     C nohold _f();
@@ -22338,12 +22332,37 @@ return i:v;
 }
 
 Test { [[
-C do
-    void IFC_I__f (void* org, int v) {
-        IFC_I_v(org) += v;
-    }
+interface I with
+    var int v;
+    C nohold _get();
+    C nohold _set();
 end
 
+class T with
+    var int v = 50;
+    C nohold _get();
+    C nohold _set();
+do
+    C do
+        int CEU_T__get (CEU_T* t) {
+            return t->v;
+        }
+        void CEU_T__set (CEU_T* t, int v) {
+            t->v= v;
+        }
+    end
+end
+
+var T t;
+var I* i = &t;
+var int v = i:v;
+i:_set(100);
+return v + i:_get();
+]],
+    run = 150,
+}
+
+Test { [[
 interface I with
     var int v;
     C nohold _f();
@@ -22378,19 +22397,23 @@ do
 end
 
 var T t;
-var T u;
+var U u;
+C nohold _fprintf(), _stderr;
+_fprintf(_stderr, "[1] %d vs %d\n", t.v, u.v);
 var I* i = &t;
 input void START;
 await START;
 i:_f(100);
+_fprintf(_stderr, "[2] %d vs %d\n", t.v, u.v);
 var int ret = i:v;
 
 i=&u;
 i:_f(200);
 
+_fprintf(_stderr, "[2] %d vs %d\n", t.v, u.v);
 return ret + i:v;
 ]],
-    run = 160,
+    run = 630,
 }
 
 Test { [[
@@ -22455,7 +22478,7 @@ Test { [[
 C nohold _attr();
 C do
     void attr (void* org) {
-        IFC_Global_a() = CLS_T_a(org) + 1;
+        IFC_Global_a() = CEU_T_a(org) + 1;
     }
 end
 
@@ -22478,6 +22501,7 @@ await START;
     return t.a + global:a;
 end
 ]],
+    todo = 'IFC accs',
     run = 53,
 }
 
@@ -22703,8 +22727,6 @@ end
 var I* i;
 var T t;
 i = &t;
-C nohold _fprintf(), _stderr;
-_fprintf(_stderr, "%d vs %d\n", t.a, i:a);
 var J* j = i;
 await START;
 return i:a + j:a + t.a + i:v + t.v;
@@ -22757,12 +22779,6 @@ return t.a;
 }
 
 Test { [[
-C do
-    int IFC_I__ins (void* org) {
-        return IFC_I_v(org);
-    }
-end
-
 interface I with
     var int v;
 end
@@ -22777,15 +22793,9 @@ var T t;
 var I* i = &t;
 return t._ins();
 ]],
-    env = 'ERR : line 19 : C function "CLS_T__ins" is not declared',
+    env = 'ERR : line 13 : C function "CEU_T__ins" is not declared',
 }
 Test { [[
-C do
-    int IFC_I__ins (void* org) {
-        return IFC_I_v(org);
-    }
-end
-
 interface I with
     var int v;
 end
@@ -22800,15 +22810,9 @@ var T t;
 var I* i = &t;
 return i:_ins();
 ]],
-    env = 'ERR : line 19 : C function "IFC_I__ins" is not declared',
+    env = 'ERR : line 13 : C function "CEU_I__ins" is not declared',
 }
 Test { [[
-C do
-    int IFC_I__ins (void* org) {
-        return IFC_I_v(org);
-    }
-end
-
 interface I with
     var int v;
     C nohold _ins();
@@ -22824,22 +22828,10 @@ var T t;
 var I* i = &t;
 return i:_ins() + t._ins();;
 ]],
-    env = 'ERR : line 20 : C function "CLS_T__ins" is not declared',
+    env = 'ERR : line 14 : C function "CEU_T__ins" is not declared',
 }
 
 Test { [[
-C do
-    int IFC_I__ins (void* org) {
-        return IFC_I_v(org);
-    }
-end
-
-C do
-    int CLS_T__ins (void* org) {
-        return CLS_T_v(org);
-    }
-end
-
 interface I with
     var int v;
     C nohold _ins();
@@ -22849,6 +22841,11 @@ class T with
     var int v;
     C nohold _ins();
 do
+C do
+    int CEU_T__ins (CEU_T* t) {
+        return t->v;
+    }
+end
 end
 
 var T t;
@@ -22874,20 +22871,16 @@ interface F with
     var int i;
 end
 
-C do
-    void IFC_F__f (void* org, int i) {
-        IFC_F_i(org) += i;
-    }
-    void CLS_T__f (void* org, int i) {
-        CLS_T_i(org) += i;
-    }
-end
-
 class T with
     var int i=10;   // 1
     interface F;
 do
     this._f(1);
+C do
+    void CEU_T__f (CEU_T* t, int i) {
+        t->i += i;
+    }
+end
 end
 
 var T t1;
@@ -22906,20 +22899,17 @@ interface F with
     var int i;
 end
 
-C do
-    void IFC_F__f (void* org, int i) {
-        IFC_F_i(org) += i;
-    }
-    void CLS_T__f (void* org, int i) {
-        CLS_T_i(org) += i;
-    }
-end
-
 class T with
     interface F;
     var int i=10;   // 2
 do
     this._f(1);
+C do
+    void CEU_T__f (CEU_T* t, int i) {
+        t->i += i;
+    }
+end
+
 end
 
 var T t1;

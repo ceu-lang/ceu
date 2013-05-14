@@ -9,7 +9,12 @@ _ENV = {
     calls = {},     -- { _printf=true, _myf=true, ... }
 
     -- f=fields, e=events
-    ifcs  = { f={}, e={} }, -- { f={[1]='A',[2]='B',A=0,B=1,...}, e=... }
+    ifcs  = {
+        flds = {}, -- {[1]='A',[2]='B',A=0,B=1,...}
+        evts = {}, -- ...
+        funs = {}, -- ...
+        fun2tp = {}, -- { f='CEU_T__f', ... }
+    },
 
     exts = {
         --[1]=ext1,         [ext1.id]=ext1.
@@ -82,6 +87,7 @@ end
 
 local _N = 0
 local _E = 1    -- 0=NONE
+local _F = 0
 
 function newvar (me, blk, pre, tp, dim, id)
     for stmt in _AST.iter() do
@@ -246,7 +252,7 @@ F = {
         me.is_ifc = ifc
         me.pool   = n
         me.id     = id
-        me.cs     = ifc and {}      -- C decls
+        me.blk_ifc.funs = {}
         if id == 'Main' then
             _MAIN = me
         end
@@ -256,6 +262,7 @@ F = {
         -- restart variables/events counting
         _N = 0
         _E = 1  -- 0=NONE
+        _F = 0
 
         _ENV.clss[id] = me
         _ENV.clss[#_ENV.clss+1] = me
@@ -271,19 +278,25 @@ F = {
     end,
     Dcl_cls = function (me)
         _ENV.max_evt = MAX(_ENV.max_evt, _E)
-        -- expose each field
+
+        -- all identifiers in all interfaces get a unique N
         if me.is_ifc then
             for _, var in pairs(me.blk_ifc.vars) do
                 var.id_ifc = var.id_ifc or var2ifc(var)
                 if not _ENV.ifcs[var.id_ifc] then
                     if var.isEvt then
-                        _ENV.ifcs.e[var.id_ifc] = #_ENV.ifcs.e
-                        _ENV.ifcs.e[#_ENV.ifcs.e+1] = var.id_ifc
+                        _ENV.ifcs.evts[var.id_ifc] = #_ENV.ifcs.evts
+                        _ENV.ifcs.evts[#_ENV.ifcs.evts+1] = var.id_ifc
                     else
-                        _ENV.ifcs.f[var.id_ifc] = #_ENV.ifcs.f
-                        _ENV.ifcs.f[#_ENV.ifcs.f+1] = var.id_ifc
+                        _ENV.ifcs.flds[var.id_ifc] = #_ENV.ifcs.flds
+                        _ENV.ifcs.flds[#_ENV.ifcs.flds+1] = var.id_ifc
                     end
                 end
+            end
+            for id, c in pairs(me.blk_ifc.funs) do
+                -- id=_f // c.id=CEU_T__f
+                _ENV.ifcs.funs[id] = #_ENV.ifcs.funs
+                _ENV.ifcs.funs[#_ENV.ifcs.funs+1] = id
             end
         end
     end,
@@ -377,15 +390,21 @@ F = {
                         'class "'..id..'" is not declared')
         ASR(ifc.is_ifc, me, '`'..id..'´ is not an interface')
 
+        -- copy vars
         for _, var in ipairs(ifc.blk_ifc.vars) do
             local tp = (var.dim and _TP.deref(var.tp)) or var.tp
             newvar(me, _AST.iter'Block'(), var.pre, tp, var.arr, var.id)
         end
 
+        -- copy cs
         local cls = CLS()
-        for _, c in pairs(ifc.cs) do
-            local id = 'CEU_'..cls.id..'_'..c.id
-            _ENV.c[id] = { tag=c.tag, id=id, len=c.len, mod=c.mod }
+        for _, c in pairs(ifc.blk_ifc.funs) do
+            local id_ = 'CEU_'..cls.id..'_'..c.id
+            cls.blk_ifc.funs[c.id] =
+                { tag=c.tag, id=c.id, id_=id_, len=c.len, mod=c.mod }
+            _ENV.c[id_] =
+                { tag=c.tag, id=c.id, id_=id_, len=c.len, mod=c.mod }
+            _ENV.ifcs.fun2tp[c.id] = id_    -- last will be from a class
         end
     end,
 
@@ -412,17 +431,21 @@ F = {
 
     Dcl_c = function (me)
         local mod, tag, id, len = unpack(me)
+        local id_ = id
+
         len = ASR((not len) or len.sval, me, 'invalid static expression')
+
+        local n
         if _AST.iter'BlockI'() then
             local cls = CLS()
-            local id = 'CEU_'..cls.id..'_'..id
-            if cls.is_ifc then
-                cls.cs[id] = { tag=tag, id=id, len=len, mod=mod }
-            end
-            _ENV.c[id] = { tag=tag, id=id, len=len, mod=mod }
-        else
-            _ENV.c[id] = { tag=tag, id=id, len=len, mod=mod }
+            -- id=_f // c.id=CEU_T__f
+            id_ = 'CEU_'..cls.id..'_'..id
+            cls.blk_ifc.funs[id] = { tag=tag, id=id, id_=id_, len=len, mod=mod }
+            _ENV.ifcs.fun2tp[id] = id_      -- last will be from a class
+            n = _F
+            _F = _F + 1
         end
+        _ENV.c[id_] = { tag=tag, id=id, id_=id_, len=len, mod=mod, n=n }
     end,
 
     Dcl_pure = function (me)
@@ -694,7 +717,7 @@ F = {
             me.org = e1
 
             if string.sub(id,1,1)=='_' then
-                local id = ((cls.is_ifc and 'IFC_') or 'CEU_')..cls.id..'_'..id
+                local id = _TP.c(cls.id)..'_'..id
                 local c = _ENV.c[id]
                 ASR(c and c.tag=='func', me,
                         'C function "'..id..'" is not declared')

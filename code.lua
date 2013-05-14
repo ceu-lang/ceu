@@ -831,7 +831,7 @@ _CEU_STK_[_ceu_stk_++] = _ceu_evt_;
 /* TRIGGER EVENT */
 _ceu_evt_.id = ]]..(int.evt_idx or int.evt.evt_idx)..[[;
 #ifdef CEU_ORGS
-_ceu_evt_.org = ]]..((int.org and '&'..int.org.val) or 'CEU_CUR')..[[;
+_ceu_evt_.org = ]]..((int.org and int.org.val) or 'CEU_CUR')..[[;
 #endif
 ]])
         if field then
@@ -893,7 +893,7 @@ case ]]..me.lbl.id..[[:;
 
     AwaitInt = function (me)
         local int = unpack(me)
-        local org = (int.org and '&'..int.org.val) or '_ceu_cur_.org'
+        local org = (int.org and int.org.val) or '_ceu_cur_.org'
         local no = '_CEU_NO_'..me.n..'_'
 
         LINE(me, [[

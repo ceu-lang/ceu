@@ -168,7 +168,7 @@ typedef struct {
 /* TODO: fun */
     u16   ifcs_flds[CEU_NCLS][=== IFCS_NFLDS ===];
     u16   ifcs_evts[CEU_NCLS][=== IFCS_NEVTS ===];
-    /*void* ifcs_funs[CEU_NCLS][=== IFCS_NFUNS ===];*/
+    void* ifcs_funs[CEU_NCLS][=== IFCS_NFUNS ===];
 #endif
 
 #ifdef CEU_DEBUG
@@ -190,6 +190,9 @@ tceu CEU = {
     },
     {
 === IFCS_EVTS ===
+    },
+    {
+=== IFCS_FUNS ===
     },
 #endif
 #ifdef CEU_DEBUG

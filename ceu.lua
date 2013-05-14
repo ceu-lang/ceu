@@ -163,39 +163,54 @@ do
 
     -- IFACES
     if _PROPS.has_ifcs then
-        local F = {}
-        local E = {}
+        local FLDS = {}
+        local EVTS = {}
+        local FUNS = {}
         for _, cls in ipairs(_ENV.clss_cls) do
-            local f = {}
-            local e = {}
-            for i=1, #_ENV.ifcs.f do
-                f[i] = 0
+            local flds = {}
+            local evts = {}
+            local funs = {}
+            for i=1, #_ENV.ifcs.flds do
+                flds[i] = 0
             end
-            for i=1, #_ENV.ifcs.e do
-                e[i] = 0
+            for i=1, #_ENV.ifcs.evts do
+                evts[i] = 0
+            end
+            for i=1, #_ENV.ifcs.funs do
+                funs[i] = 'NULL'
             end
             for _, var in ipairs(cls.blk_ifc.vars) do
                 if var.isEvt then
-                    local i = _ENV.ifcs.e[var.id_ifc]
+                    local i = _ENV.ifcs.evts[var.id_ifc]
                     if i then
-                        e[i+1] = var.evt_idx
+                        evts[i+1] = var.evt_idx
                     end
                 else
-                    local i = _ENV.ifcs.f[var.id_ifc]
+                    local i = _ENV.ifcs.flds[var.id_ifc]
                     if i then
-                        f[i+1] = 'offsetof(CEU_'..cls.id..','..var.id_..')'
+                        flds[i+1] = 'offsetof(CEU_'..cls.id..','..var.id_..')'
                     end
                 end
             end
-            F[#F+1] = '\t\t{'..table.concat(f,',')..'}'
-            E[#E+1] = '\t\t{'..table.concat(e,',')..'}'
+            for id, c in pairs(cls.blk_ifc.funs) do
+                local i = _ENV.ifcs.funs[id]
+                if i then
+                    funs[i+1] = c.id_
+                end
+            end
+
+            FLDS[#FLDS+1] = '\t\t{'..table.concat(flds,',')..'}'
+            EVTS[#EVTS+1] = '\t\t{'..table.concat(evts,',')..'}'
+            FUNS[#FUNS+1] = '\t\t{'..table.concat(funs,',')..'}'
         end
-        tpl = sub(tpl, '=== TCEU_NCLS ===', 'u'..tps[_ENV.c.tceu_ncls.len])
-        tpl = sub(tpl, '=== CEU_NCLS ===',  #_ENV.clss_cls)
-        tpl = sub(tpl, '=== IFCS_NFLDS ===', #_ENV.ifcs.f)
-        tpl = sub(tpl, '=== IFCS_NEVTS ===', #_ENV.ifcs.e)
-        tpl = sub(tpl, '=== IFCS_FLDS ===', table.concat(F,',\n'))
-        tpl = sub(tpl, '=== IFCS_EVTS ===', table.concat(E,',\n'))
+        tpl = sub(tpl, '=== TCEU_NCLS ===',    'u'..tps[_ENV.c.tceu_ncls.len])
+        tpl = sub(tpl, '=== CEU_NCLS ===',     #_ENV.clss_cls)
+        tpl = sub(tpl, '=== IFCS_NFLDS ===',   #_ENV.ifcs.flds)
+        tpl = sub(tpl, '=== IFCS_NEVTS ===',   #_ENV.ifcs.evts)
+        tpl = sub(tpl, '=== IFCS_NFUNS ===',   #_ENV.ifcs.funs)
+        tpl = sub(tpl, '=== IFCS_FLDS ===',    table.concat(FLDS,',\n'))
+        tpl = sub(tpl, '=== IFCS_EVTS ===',    table.concat(EVTS,',\n'))
+        tpl = sub(tpl, '=== IFCS_FUNS ===',    table.concat(FUNS,',\n'))
     end
 
     -- EVENTS

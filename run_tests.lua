@@ -132,6 +132,8 @@ end
     local CEU = './ceu _ceu_tmp.ceu --tp-word 4 --run-tests'
     local EXE = (VALGRIND=='false' and './ceu.exe')
              or 'valgrind -q --leak-check=full ./ceu.exe 2>&1'
+    --local VER = (_PROPS.has_ifcs and '-std=c99') or '-ansi'
+    local VER = '-ansi'
 
     -- T.run = N
     if type(T.run) ~= 'table' then
@@ -141,7 +143,7 @@ end
         ceu:write(str_all)
         ceu:close()
         assert(os.execute(CEU))
-        assert(os.execute('gcc -DCEU_DEBUG -ansi -o ceu.exe main.c') == 0)
+        assert(os.execute('gcc -DCEU_DEBUG '..VER..' -o ceu.exe main.c') == 0)
         local ret = io.popen(EXE):read'*a'
         assert(not string.find(ret, '==%d+=='), 'valgrind error')
         ret = string.match(ret, 'END: (.-)\n')
@@ -168,7 +170,8 @@ end
             ceu:write(all)
             ceu:close()
             assert(os.execute(CEU))
-            assert(os.execute('gcc -DCEU_DEBUG -ansi -o ceu.exe main.c') == 0)
+            assert(os.execute('gcc -DCEU_DEBUG '..VER..' -o ceu.exe main.c') == 
+            0)
             local ret = io.popen(EXE):read'*a'
             assert(not string.find(ret, '==%d+=='), 'valgrind error')
             ret = string.match(ret, 'END: (%-?%d+)')
@@ -196,10 +199,10 @@ STATS = {
 }
 ]])
 
-assert(STATS.count  ==    1204)
-assert(STATS.mem    ==   40452)
-assert(STATS.trails ==    2355)
-assert(STATS.bytes  == 7055283)
+assert(STATS.count  ==    1206)
+assert(STATS.mem    ==       0)
+assert(STATS.trails ==    2360)
+assert(STATS.bytes  == 7114626)
 
 --[[
 -- TIME:
@@ -208,11 +211,19 @@ user	1m39.542s
 sys	0m21.989s
 ]]
 
+do return end
+
+-- TODO: antes de mem => structs
+assert(STATS.count  ==    1204)
+assert(STATS.mem    ==   40452)
+assert(STATS.trails ==    2355)
+assert(STATS.bytes  == 7055283)
+
 -- TODO: antes de trail de 8 bytes
---assert(STATS.count  ==    1157)
---assert(STATS.mem    ==   14177)
---assert(STATS.trails ==    2082)
---assert(STATS.bytes  == 7610546)
+assert(STATS.count  ==    1157)
+assert(STATS.mem    ==   14177)
+assert(STATS.trails ==    2082)
+assert(STATS.bytes  == 7610546)
 
 --[[
 STATS = {
