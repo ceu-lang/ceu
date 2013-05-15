@@ -1,4 +1,4 @@
-_OPTS.tp_word    = assert(tonumber(_OPTS.tp_word),
+_OPTS.tp_word = assert(tonumber(_OPTS.tp_word),
     'missing `--tp-word´ parameter')
 
 _ENV = {
@@ -108,11 +108,15 @@ function newvar (me, blk, pre, tp, dim, id)
     local c = _ENV.c[tp_raw]
     local isEvt = (pre == 'event')
 
-    ASR(_ENV.clss[tp_raw] or (c and c.tag=='type'),
+    ASR(_ENV.clss[tp_raw] or (c and (c.tag=='type' or c.tag=='unk')),
         me, 'undeclared type `'..tp_raw..'´')
+    if c then
+        c.tag = 'type'
+    end
+
     ASR(not _ENV.clss_ifc[tp], me,
         'cannot instantiate an interface')
-    ASR(_TP.deref(tp) or (not c) or (tp=='void' and isEvt) or c.len>0, me,
+    ASR(_TP.deref(tp) or (not c) or (tp=='void' and isEvt) or c.len~=0, me,
         'cannot instantiate type "'..tp..'"')
     ASR((not dim) or dim>0, me, 'invalid array dimension')
 
@@ -429,11 +433,13 @@ F = {
         end
     end,
 
-    Dcl_c = function (me)
+    Dcl_nat = function (me)
         local mod, tag, id, len = unpack(me)
         local id_ = id
 
-        len = ASR((not len) or len.sval, me, 'invalid static expression')
+        if len then
+            len = ASR(len.sval, me, 'invalid static expression')
+        end
 
         local n
         if _AST.iter'BlockI'() then
@@ -605,7 +611,7 @@ F = {
         me.tp  = '_'
         me.fst = '_'
         local id
-        if f.tag == 'C' then
+        if f.tag == 'Nat' then
             id   = f[1]
             me.c = _ENV.c[id]
         elseif f.tag == 'Op2_.' then
@@ -617,10 +623,10 @@ F = {
         end
 
         ASR((not _OPTS.c_calls) or _OPTS.c_calls[id],
-            me, 'C calls are disabled')
+            me, 'native calls are disabled')
 
         ASR(me.c and me.c.tag=='func', me,
-            'C function "'..id..'" is not declared')
+            'native function "'..id..'" is not declared')
 
         _ENV.calls[id] = true
     end,
@@ -720,8 +726,8 @@ F = {
                 local id = _TP.c(cls.id)..'_'..id
                 local c = _ENV.c[id]
                 ASR(c and c.tag=='func', me,
-                        'C function "'..id..'" is not declared')
-                me[3] = _AST.node('C')(me.ln, id)
+                        'native function "'..id..'" is not declared')
+                me[3] = _AST.node('Nat')(me.ln, id)
                 me.c    = c
                 me.tp   = '_'
                 me.lval = false
@@ -759,11 +765,11 @@ F = {
         me.fst  = exp.fst
     end,
 
-    C = function (me)
+    Nat = function (me)
         local id = unpack(me)
         local c = _ENV.c[id]
-        ASR(c and (c.tag=='var' or c.tag=='func'), me,
-            'C variable/function "'..id..'" is not declared')
+        ASR(c and c.tag~='type', me,
+            'native variable/function "'..id..'" is not declared')
         me.tp   = '_'
         me.lval = true
         me.ref  = me
@@ -786,8 +792,12 @@ F = {
         local tp = unpack(me)
         local sz = 0
         for _,tp in ipairs(me) do
-            local t = _TP.deref(tp) and _ENV.c.pointer or _ENV.c[tp]
-            local i = ASR(t and t.len, me, 'undeclared type '..tp)
+            local t = (_TP.deref(tp) and _ENV.c.pointer) or _ENV.c[tp]
+            ASR(t and (t.tag=='type' or t.tag=='unk'), me,
+                    'undeclared type '..tp)
+            t.tag = 'type'
+
+            local i = ASR(t and t.len, me, 'unknown size '..tp)
             sz = _TP.align(sz,i) + i
         end
         me.sval = sz

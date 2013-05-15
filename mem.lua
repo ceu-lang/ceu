@@ -10,7 +10,7 @@ function SPC ()
 end
 
 function pred_sort (v1, v2)
-    return v1.len > v2.len
+    return (v1.len or _ENV.c.word.len) > (v2.len or _ENV.c.word.len)
 end
 
 F = {

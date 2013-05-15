@@ -186,7 +186,7 @@ F = {
         }
     end,
 
-    C = function (me)
+    Nat = function (me)
         me.acc = INS {
             path = me.ana.pre,
             id  = me[1],

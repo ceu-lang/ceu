@@ -359,16 +359,16 @@ local C; C = {
         end
     end,
 
-    _Dcl_c_ifc = function (ln, mod, ...)
+    _Dcl_nat_ifc = function (ln, mod, ...)
         local ret = {}
         local t = { ... }
         for i=1, #t, 3 do   -- pure/const/false, type/func/var, id, len
-            ret[#ret+1] = node('Dcl_c')(ln, mod, t[i], t[i+1], t[i+2])
+            ret[#ret+1] = node('Dcl_nat')(ln, mod, t[i], t[i+1], t[i+2])
         end
         return unpack(ret)
     end,
-    _Dcl_c = function (ln, ...)
-        local ret = { C._Dcl_c_ifc(ln, ...) }
+    _Dcl_nat = function (ln, ...)
+        local ret = { C._Dcl_nat_ifc(ln, ...) }
         for _, t in ipairs(ret) do
             TOP[#TOP+1] = t
         end
@@ -486,7 +486,7 @@ local C; C = {
 
     Var      = node('Var'),
     Ext      = node('Ext'),
-    C        = node('C'),
+    Nat      = node('Nat'),
     SIZEOF   = node('SIZEOF'),
     CONST    = node('CONST'),
     WCLOCKK  = node('WCLOCKK'),

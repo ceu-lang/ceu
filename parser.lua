@@ -48,7 +48,7 @@ local _V2NAME = {
     _Stmt = 'statement',
     Ext = 'event',
     Var = 'variable/event',
-    ID_c  = 'identifier',
+    ID_nat  = 'identifier',
     ID_var  = 'identifier',
     ID_int  = 'identifier',
     ID_ext  = 'identifier',
@@ -56,8 +56,8 @@ local _V2NAME = {
     ID_type = 'type',
     _Dcl_var = 'declaration',
     _Dcl_int = 'declaration',
-    __Dcl_c  = 'declaration',
-    _Dcl_c   = 'declaration',
+    __Dcl_nat  = 'declaration',
+    _Dcl_nat   = 'declaration',
 }
 local EV = function (rule)
     return V(rule) + m.Cmt(P'',
@@ -85,7 +85,7 @@ TYPES = P'void' + 'int'
       + 'u8' + 'u16' + 'u32' + 'u64'
       + 's8' + 's16' + 's32' + 's64'
 
-KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'C'
+KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'native'
      + 'constant' + 'continue' + 'deterministic'         + 'do'
      + 'else'     + 'else/if'  + 'emit'     + 'end'      + 'event'
      + 'every'    + 'finalize' + 'FOREVER'  + 'if'       + 'input'
@@ -125,7 +125,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
 
     , _StmtS = V'AwaitS'   + V'AwaitT'    + V'AwaitExt'  + V'AwaitInt'
              + V'EmitT'    + V'EmitExtS'  + V'EmitInt'
-             + V'_Dcl_c'   + V'_Dcl_ext'
+             + V'_Dcl_nat'   + V'_Dcl_ext'
              + V'_Dcl_int' + V'_Dcl_var'
              + V'Dcl_det'
              + V'_Set'
@@ -234,7 +234,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
                                 end)
                     )^0
     , _13     = V'_Prim'
-    , _Prim   = V'_Parens' + V'Var'   + V'C'   + V'SIZEOF'
+    , _Prim   = V'_Parens' + V'Var'   + V'Nat'   + V'SIZEOF'
               + V'NULL'    + V'CONST' + V'STRING'
               + V'EmitExtE'
               + V'Global' + V'This'
@@ -256,8 +256,8 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
                 (NUM * K'ms'  + Cc(0)) *
                 (NUM * K'us'  + Cc(0)) *
                 (NUM * EM'<h,min,s,ms,us>')^-1
-    , WCLOCKE = K'(' * V'_Exp' * EK')' * C(
-                    K'h' + K'min' + K's' + K'ms' + K'us'
+    , WCLOCKE = K'(' * V'_Exp' * EK')' * (
+                    CK'h' + CK'min' + CK's' + CK'ms' + CK'us'
                   + EM'<h,min,s,ms,us>'
               )
 
@@ -285,17 +285,18 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
 
     , EmitInt  = K'emit' * EV'_Exp' * (K'=' * V'_Exp')^-1
 
-    , __ID     = V'ID_c' + V'ID_ext' + V'Var'
+    , __ID     = V'ID_nat' + V'ID_ext' + V'Var'
     , Dcl_det  = K'deterministic' * EV'__ID' * EK'with' *
                      EV'__ID' * (K',' * EV'__ID')^0
 
-    , __Dcl_c    = Cc'type' * V'ID_c' * K'=' * V'_Exp'
-                 + Cc'func' * V'ID_c' * '()' * Cc(false)
-                 + Cc'var'  * V'ID_c'        * Cc(false)
-    , _Dcl_c_ifc = K'C' * (CK'pure'+CK'constant'+CK'nohold'+Cc(false))
-                 * EV'__Dcl_c' * (K',' * EV'__Dcl_c')^0
-    , _Dcl_c     = K'C' * (CK'pure'+CK'constant'+CK'nohold'+Cc(false))
-                 * EV'__Dcl_c' * (K',' * EV'__Dcl_c')^0
+    , __Dcl_nat = Cc'type' * V'ID_nat' * K'=' * V'_Exp'
+                + Cc'func' * V'ID_nat' * '()' * Cc(false)
+                + Cc'unk'  * V'ID_nat'        * Cc(false)
+
+    , _Dcl_nat_ifc = K'native' * (CK'pure'+CK'constant'+CK'nohold'+Cc(false))
+                 * EV'__Dcl_nat' * (K',' * EV'__Dcl_nat')^0
+    , _Dcl_nat     = K'native' * (CK'pure'+CK'constant'+CK'nohold'+Cc(false))
+                 * EV'__Dcl_nat' * (K',' * EV'__Dcl_nat')^0
 
     , _Dcl_ext = (CK'input'+CK'output') * EV'ID_type' *
                     EV'ID_ext' * (K','*EV'ID_ext')^0
@@ -325,7 +326,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , _Dcl_imp = K'interface' * EV'ID_cls' * (K',' * EV'ID_cls')^0
 
     , BlockI = ( (V'_Dcl_int'+V'_Dcl_var'+
-                   V'_Dcl_c_ifc'+V'_Dcl_imp')
+                   V'_Dcl_nat_ifc'+V'_Dcl_imp')
                * (EK';'*K';'^0) )^0
     , Dcl_ifc = K'interface' * Cc(true)  * EV'ID_cls' * Cc(false)
               * EK'with' * V'BlockI' * EK'end'
@@ -338,22 +339,22 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
 
     , Ext     = V'ID_ext'
     , Var     = V'ID_var'
-    , C       = V'ID_c'
+    , Nat     = V'ID_nat'
 
     , ID_cls  = -KEYS * CK(m.R'AZ'*Alphanum^0)
     , ID_ext  = -KEYS * CK(m.R'AZ'*ALPHANUM^0)
     , ID_var  = -KEYS * CK(m.R'az'*(Alphanum+'?')^0)
                     / function(id) return (string.gsub(id,'%?','_')) end
     , ID_int  = V'ID_var'
-    , ID_c    = CK(  P'_' *Alphanum^0)
-    , ID_type = (CK(TYPES)+V'ID_c'+V'ID_cls') * C(K'*'^0) /
+    , ID_nat  = CK(  P'_' *Alphanum^0)
+    , ID_type = (CK(TYPES)+V'ID_nat'+V'ID_cls') * C(K'*'^0) /
                   function (id, star)
                     return (string.gsub(id..star,' ',''))
                   end
 
     , STRING = CK( CK'"' * (P(1)-'"'-'\n')^0 * EK'"' )
 
-    , Host    = K'C' * (#EK'do')*'do' * --m.S' \n\t'^0 *
+    , Host    = K'native' * (#EK'do')*'do' * --m.S' \n\t'^0 *
                     ( C(V'_C') + C((P(1)-(m.S'\t\n\r '*'end'*P';'^0*'\n'))^0) )
                 *S* EK'end'
 

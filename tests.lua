@@ -17,8 +17,8 @@ input void A, B, Z;
 event void a;
 var int ret = 1;
 var _t* a;
-C _f();
-C _t = 0;
+native _f();
+native _t = 0;
 par/or do
     _f(a)               // 8
         finalize with
@@ -65,8 +65,8 @@ end
 
 Test { [[
 input void START;
-C _V;
-C do
+native _V;
+native do
     int V = 1;
 end
 class T with
@@ -92,6 +92,19 @@ error 'testar new/spawn que se mata'
 
 do return end
 --]===]
+
+Test { [[
+par/or do
+    nothing;
+with
+    every (2)s do
+        nothing;
+    end
+end
+return 1;
+]],
+    run = 1,
+}
 
 -- OK: under tests but supposed to work
 
@@ -260,7 +273,7 @@ Test { [[var int a; a=1 ; ]],
 }
 
 Test { [[
-C _abc = 0;
+native _abc = 0;
 event void a;
 var _abc b;
 ]],
@@ -268,7 +281,19 @@ var _abc b;
 }
 
 Test { [[
-C _abc = 0;
+native _abc;
+native do
+    typedef u8  abc;
+end
+event void a;
+var _abc b;
+return 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native _abc = 0;
 event void a;
 var _abc a;
 ]],
@@ -655,7 +680,7 @@ end
 Test { [[
 input void START;
 event void a, b, c, d;
-C _assert();
+native _assert();
 var int v=0;
 par do
     loop do
@@ -693,7 +718,7 @@ return x;
 Test { [[
 input void START;
 event void a, b, c, d;
-C _assert();
+native _assert();
 var int v=0;
 par do
     loop do
@@ -740,7 +765,7 @@ return(1);
     run=1
 }
 Test { [[
-C do
+native do
     #define ceu_out_event(a,b,c) 1
 end
 output int A;
@@ -782,19 +807,19 @@ return(1);
     env = 'ERR : line 2 : undeclared type `_t´',
 }
 Test { [[
-C do
+native do
     void f (int* a) {
         *a = 10;
     }
     typedef void (*t)(int*);
 end
-C _t = 4;
+native _t = 4;
 var _t v = _f;
 var int a;
 v(&a);
 return(a);
 ]],
-    env = 'ERR : line 8 : C variable/function "_f" is not declared',
+    env = 'ERR : line 8 : native variable/function "_f" is not declared',
 }
 
 Test { [[
@@ -814,19 +839,19 @@ output _char A;
 }
 
 Test { [[
-C do
+native do
     /******/
     int end = 1;
     /******/
 end
-C _end;
+native _end;
 return _end;
 ]],
     run = 1
 }
 
 Test { [[
-C do
+native do
     #include <assert.h>
     typedef struct {
         int a;
@@ -843,7 +868,7 @@ C do
         return data - 1;
     }
 end
-C _t = 8;
+native _t = 8;
 output _t* A;
 output int B;
 var int a, b;
@@ -859,9 +884,9 @@ return a + b;
 }
 
 Test { [[
-C _char = 1;
+native _char = 1;
 output void A;
-C do
+native do
     void A (int v) {}
 end
 var _cahr v = emit A(1);
@@ -870,7 +895,7 @@ return 0;
     env = 'ERR : line 6 : undeclared type `_cahr´',
 }
 Test { [[
-C _char = 1;
+native _char = 1;
 output void A;
 var _char v = emit A();
 return v;
@@ -879,10 +904,10 @@ return v;
 }
 Test { [[
 output void A;
-C do
+native do
     void A (int v) {}
 end
-C _char = 1;
+native _char = 1;
 var _char v = emit A(1);
 return 0;
 ]],
@@ -890,7 +915,7 @@ return 0;
 }
 
 Test { [[
-C do
+native do
     void A (int v) {}
 end
 emit A(1);
@@ -3126,7 +3151,7 @@ return a;
 Test { [[
 input void START;
 event void a, b, c, d;
-C _assert();
+native _assert();
 var int v=0;
 par do
     loop do
@@ -3247,7 +3272,7 @@ end;
 Test { [[
 input void START;
 event void a;
-C _ret_val, _ret_end;
+native _ret_val, _ret_end;
 _ret_val = 0;
 par do
     loop do
@@ -4649,7 +4674,7 @@ return a;
 }
 
 Test { [[
-C _assert();
+native _assert();
 input void T;
 var int ret = 0;
 par/or do
@@ -7938,7 +7963,7 @@ end;
     ana = {
         acc = 1,
         abrt = 3,
-        --unreachs = 2,    -- +1 C unreachs
+        --unreachs = 2,    -- +1 native unreachs
     },
     --run = 1,
     run = 10,
@@ -12509,7 +12534,7 @@ return 0;
 }
 
 Test { [[
-C _f();
+native _f();
 do
     var int* a;
     finalize
@@ -12523,7 +12548,7 @@ end
 }
 
 Test { [[
-C _f();
+native _f();
 do
     var int* a;
     finalize
@@ -12538,7 +12563,7 @@ end
 }
 
 Test { [[
-C _f();
+native _f();
 do
     var int* a;
     finalize
@@ -12588,7 +12613,7 @@ return ret;
 }
 
 Test { [[
-C _f();
+native _f();
 var int r = 0;
 do
     var int* a;
@@ -12605,7 +12630,7 @@ return r;
 }
 
 Test { [[
-C _f();
+native _f();
 _f() finalize with nothing;
     end;
 return 1;
@@ -12630,8 +12655,8 @@ return v;
 }
 
 Test { [[
-C _f();
-C do void f () {} end
+native _f();
+native do void f () {} end
 
 var void* p;
 _f(p) finalize with nothing;
@@ -12642,8 +12667,8 @@ return 1;
 }
 
 Test { [[
-C _f();
-C do void f () {} end
+native _f();
+native do void f () {} end
 
 var void* p;
 _f(p!=null) finalize with nothing;
@@ -12655,7 +12680,7 @@ return 1;
 }
 
 Test { [[
-C _f();
+native _f();
 do
     var int* p1;
     do
@@ -12670,8 +12695,8 @@ return 1;
 }
 
 Test { [[
-C _f();
-C _v;
+native _f();
+native _v;
 _f(_v);
 return 0;
 ]],
@@ -12679,22 +12704,22 @@ return 0;
 }
 
 Test { [[
-C _f();
-C do
+native _f();
+native do
     V = 10;
     int f (int v) {
         return v;
     }
 end
-C constant _V;
+native constant _V;
 return _f(_V);
 ]],
     run = 10;
 }
 
 Test { [[
-C _f();
-C do
+native _f();
+native do
     int f (int* v) {
         return 1;
     }
@@ -12706,8 +12731,8 @@ return _f(&v) == 1;
 }
 
 Test { [[
-C nohold _f();
-C do
+native nohold _f();
+native do
     int f (int* v) {
         return 1;
     }
@@ -12719,9 +12744,9 @@ return _f(&v) == 1;
 }
 
 Test { [[
-C _V;
-C nohold _f();
-C do
+native _V;
+native nohold _f();
+native do
     int V=1;
     int f (int* v) {
         return 1;
@@ -13452,14 +13477,14 @@ return v;
 }
 
 Test { [[
-C do
+native do
     void f (int* a) {
         *a = 10;
     }
     typedef void (*t)(int*);
 end
-C _t=4;
-C nohold _f();
+native _t=4;
+native nohold _f();
 var _t v = _f;
 var int ret;
 do
@@ -13473,9 +13498,9 @@ return(ret);
     run = 10,
 }
 Test { [[
-C _t=4, _A;
-C _f();
-C do
+native _t=4, _A;
+native _f();
+native do
     int* A = NULL;;
     void f (int* a) {
         A = a;
@@ -13509,9 +13534,9 @@ return(ret);
 }
 Test { [[
 input void START;
-C _t=4, _A;
-C _f();
-C do
+native _t=4, _A;
+native _f();
+native do
     int* A = NULL;;
     void f (int* a) {
         A = a;
@@ -13556,8 +13581,8 @@ return 1;
 }
 
 Test { [[
-C _f(), _V;
-C do
+native _f(), _V;
+native do
     int V;
     void f (int* x) {
         V = *x;
@@ -13809,8 +13834,8 @@ return 0;
 }
 
 Test { [[
-C _a;
-C do
+native _a;
+native do
     int a;
 end
 async do
@@ -13822,8 +13847,8 @@ return _a;
 }
 
 Test { [[
-C _a;
-C do
+native _a;
+native do
     int a, b;
 end
 par/and do
@@ -13846,7 +13871,7 @@ return _a+_b;
 Test { [[
 constant _a;
 deterministic _b with _c;
-C do
+native do
     int a = 1;
     int b;
     int c;
@@ -13869,8 +13894,8 @@ return _a+_b+_c;
 }
 
 Test { [[
-C _a,_b;
-C do
+native _a,_b;
+native do
     int a=1,b=1;
 end
 par/or do
@@ -13887,8 +13912,8 @@ return _a + _b;
 }
 
 Test { [[
-C _a,_b;
-C do
+native _a,_b;
+native do
     int a = 1;
 end
 var int a=0;
@@ -13906,8 +13931,8 @@ return _a + a;
 }
 
 Test { [[
-C _a;
-C do
+native _a;
+native do
     int a = 1;
 end
 var int a;
@@ -13926,7 +13951,7 @@ return _a + a;
 }
 
 Test { [[
-C do
+native do
     int a = 1;
     int b;
     int c;
@@ -14383,7 +14408,7 @@ end;
 }
 
 Test { [[
-C _char = 1;
+native _char = 1;
 var int i;
 var int* pi;
 var _char c;
@@ -14398,7 +14423,7 @@ return 10;
 }
 
 Test { [[
-C _char = 1;
+native _char = 1;
 var int i;
 var int* pi;
 var _char c;
@@ -14444,7 +14469,7 @@ return 1;
 }
 
 Test { [[
-C _char=1;
+native _char=1;
 var _char* ptr1;
 var int* ptr2;
 ptr1 = ptr2;
@@ -14454,7 +14479,7 @@ return 1;
     env = 'ERR : line 4 : invalid attribution',
 }
 Test { [[
-C _char=1;
+native _char=1;
 var _char* ptr1;
 var int* ptr2;
 ptr1 = <_char*>ptr2;
@@ -14464,7 +14489,7 @@ return 1;
     run = 1,
 }
 Test { [[
-C _char=1;
+native _char=1;
 var int* ptr1;
 var _char* ptr2;
 ptr1 = <int*> ptr2;
@@ -14475,7 +14500,7 @@ return 1;
 }
 
 Test { [[
-C _FILE=0;
+native _FILE=0;
 var int* ptr1;
 var _FILE* ptr2;
 ptr1 = ptr2;
@@ -14543,8 +14568,8 @@ return *a+b+c;
 }
 
 Test { [[
-C nohold _f();
-C do
+native nohold _f();
+native do
     void f (int* v) {
         *v = 1;
     }
@@ -14564,8 +14589,8 @@ return a + b;
 }
 
 Test { [[
-C nohold _f();
-C do
+native nohold _f();
+native do
     void f (int* v) {
         *v = 1;
     }
@@ -14590,8 +14615,8 @@ return a + b;
 }
 
 Test { [[
-C nohold _f();
-C do
+native nohold _f();
+native do
     void f (int* v) {
         *v = 1;
     }
@@ -14618,7 +14643,7 @@ return a + b;
 
 Test { [[
 pure _f;
-C do
+native do
     void f (int* v) {
         *v = 1;
     }
@@ -14645,7 +14670,7 @@ return a + b;
 
 Test { [[
 pure _f;
-C do
+native do
     void f (int* v) {
         *v = 1;
     }
@@ -14680,8 +14705,8 @@ return *a + *c;
 }
 
 Test { [[
-C _f();
-C do
+native _f();
+native do
     int* f () {
         int a = 10;
         return &a;
@@ -14694,8 +14719,8 @@ return *p;
 }
 
 Test { [[
-C _f();
-C do
+native _f();
+native do
     int a;
     int* f () {
         a = 10;
@@ -14713,8 +14738,8 @@ return *p;
     run = 10,
 }
 Test { [[
-C _f();
-C do
+native _f();
+native do
     int a;
     int* f () {
         a = 10;
@@ -14732,8 +14757,8 @@ return *p;
     run = 10,
 }
 Test { [[
-C pure _f();    // its is actually impure
-C do
+native pure _f();    // its is actually impure
+native do
     int a;
     int* f () {
         a = 10;
@@ -14747,8 +14772,8 @@ return *p;
     run = 10,
 }
 Test { [[
-C _f();
-C do
+native _f();
+native do
     int A = 10;
     int* f () {
         return &A;
@@ -14769,8 +14794,8 @@ return a;
 }
 
 Test { [[
-C _f();
-C do
+native _f();
+native do
     int A = 10;
     int* f () {
         return &A;
@@ -14794,7 +14819,7 @@ return a;
 }
 
 Test { [[
-C _char = 1;
+native _char = 1;
 var _char* p;
 *(p:a) = <_char>1;
 return 1;
@@ -14887,13 +14912,13 @@ var void[1] b;
 }
 
 Test { [[
-C do
+native do
     typedef struct {
         int v[10];
         int c;
     } T;
 end
-C _T = 44;
+native _T = 44;
 
 var _T[10] vec;
 var int i = 110;
@@ -14925,8 +14950,8 @@ return v == &v[0] ;
 }
 
 Test { [[
-C nohold _f();
-C do
+native nohold _f();
+native do
     void f (int* p) {
         *p = 1;
     }
@@ -14944,8 +14969,8 @@ return a[0] + b;
 }
 
 Test { [[
-C nohold _f();
-C do
+native nohold _f();
+native do
     void f (int* p) {
         *p = 1;
     }
@@ -14992,10 +15017,10 @@ return a;
     run = 1,
 }
 
-    -- C FUNCS BLOCK
+    -- NATIVE C FUNCS BLOCK
 
 Test { [[
-C _printf();
+native _printf();
 do
     _printf("oi\n");
 end
@@ -15005,8 +15030,8 @@ return 10;
 }
 
 Test { [[
-C _V;
-C do
+native _V;
+native do
     int V[2][2] = { {1, 2}, {3, 4} };
 end
 
@@ -15017,8 +15042,8 @@ return _V[1][0] + _V[0][1];
 }
 
 Test { [[
-C _END;
-C do
+native _END;
+native do
     int END = 1;
 end
 if not  _END-1 then
@@ -15031,7 +15056,7 @@ end
 }
 
 Test { [[
-C do
+native do
 end
 return 1;
 ]],
@@ -15039,7 +15064,7 @@ return 1;
 }
 
 Test { [[
-C do
+native do
     char* a = "end";
 end
 return 1;
@@ -15048,7 +15073,7 @@ return 1;
 }
 
 Test { [[
-C do
+native do
     /*** END ***/
     char* a = "end";
     /*** END ***/
@@ -15059,7 +15084,7 @@ return 1;
 }
 
 Test { [[
-C do
+native do
     int A () {}
 end
 A = 1;
@@ -15069,7 +15094,7 @@ return 1;
 }
 
 Test { [[
-C do
+native do
     void A (int v) {}
 end
 return 0;
@@ -15078,7 +15103,7 @@ return 0;
 }
 
 Test { [[
-C do
+native do
     int A (int v) {}
 end
 return 0;
@@ -15088,19 +15113,19 @@ return 0;
 }
 
 Test { [[
-C _A;
-C do
+native _A;
+native do
     void A (int v) {}
 end
 _A();
 return 0;
 ]],
-    env = 'ERR : line 5 : C function "_A" is not declared',
+    env = 'ERR : line 5 : native function "_A" is not declared',
 }
 
 Test { [[
-C _A();
-C do
+native _A();
+native do
     void A (int v) {}
 end
 _A();
@@ -15110,8 +15135,8 @@ return 0;
 }
 
 Test { [[
-C _A();
-C do
+native _A();
+native do
     void A () {}
 end
 var int v = _A();
@@ -15125,8 +15150,8 @@ Test { [[emit A(10); return 0;]],
 }
 
 Test { [[
-C _Const();
-C do
+native _Const();
+native do
     int Const () {
         return -10;
     }
@@ -15138,8 +15163,8 @@ return ret;
 }
 
 Test { [[
-C _ID();
-C do
+native _ID();
+native do
     int ID (int v) {
         return v;
     }
@@ -15150,8 +15175,8 @@ return _ID(10);
 }
 
 Test { [[
-C _ID();
-C do
+native _ID();
+native do
     int ID (int v) {
         return v;
     }
@@ -15163,8 +15188,8 @@ return v;
 }
 
 Test { [[
-C _VD();
-C do
+native _VD();
+native do
     void VD (int v) {
     }
 end
@@ -15175,8 +15200,8 @@ return 1;
 }
 
 Test { [[
-C _VD();
-C do
+native _VD();
+native do
     void VD (int v) {
     }
 end
@@ -15187,7 +15212,7 @@ return ret;
 }
 
 Test { [[
-C do
+native do
     void VD (int v) {
     }
 end
@@ -15198,8 +15223,8 @@ return v;
 }
 
 Test { [[
-C _NEG();
-C do
+native _NEG();
+native do
     int NEG (int v) {
         return -v;
     }
@@ -15210,8 +15235,8 @@ return _NEG(10);
 }
 
 Test { [[
-C _NEG();
-C do
+native _NEG();
+native do
     int NEG (int v) {
         return -v;
     }
@@ -15223,8 +15248,8 @@ return v;
 }
 
 Test { [[
-C _ID();
-C do
+native _ID();
+native do
     int ID (int v) {
         return v;
     }
@@ -15242,8 +15267,8 @@ return v;
 }
 
 Test { [[
-C _ID();
-C do
+native _ID();
+native do
     int ID (int v) {
         return v;
     }
@@ -15264,8 +15289,8 @@ return v;
 }
 
 Test { [[
-C _Z1();
-C do int Z1 (int a) { return a; } end
+native _Z1();
+native do int Z1 (int a) { return a; } end
 input int A;
 var int c;
 _Z1(3);
@@ -15279,8 +15304,8 @@ return c;
 }
 
 Test { [[
-C nohold _f1(), _f2();
-C do
+native nohold _f1(), _f2();
+native do
     int f1 (u8* v) {
         return v[0]+v[1];
     }
@@ -15299,7 +15324,7 @@ return _f2(&v[0],&v[1]) + _f1(v) + _f1(&v[0]);
 --[=[
 
 PRE = [[
-C do
+native do
     static inline int idx (const int* vec, int i) {
         return vec[i];
     }
@@ -15381,7 +15406,7 @@ return 1;
 
 PRE = [[
 pure _f3, _f5;
-C do
+native do
 int f1 (int* a, int* b) {
     return *a + *b;
 }
@@ -15733,7 +15758,7 @@ return 0;
 
 Test { [[
 deterministic _printf with _assert;
-C do #include <assert.h> end
+native do #include <assert.h> end
 par/and do
     _printf("END: 1\n");
 with
@@ -15747,8 +15772,8 @@ return 0;
 --]=]
 
 Test { [[
-C _a;
-C do
+native _a;
+native do
     int a;
 end
 par/or do
@@ -15797,7 +15822,7 @@ end
 }
 
 Test { [[
-C _LOW, _HIGH, _digitalWrite();
+native _LOW, _HIGH, _digitalWrite();
 par do
     loop do
         _digitalWrite(11, _HIGH);
@@ -15829,8 +15854,8 @@ end
 }
 
 Test { [[
-C constant _LOW, _HIGH;
-C _digitalWrite();
+native constant _LOW, _HIGH;
+native _digitalWrite();
 par do
     loop do
         _digitalWrite(11, _HIGH);
@@ -15861,9 +15886,9 @@ end
 }
 
 Test { [[
-C _F();
+native _F();
 output int F;
-C do
+native do
     void F() {};
 end
 par do
@@ -15880,9 +15905,9 @@ end
 }
 
 Test { [[
-C _F();
+native _F();
 output int F,G;
-C do
+native do
     void F() {};
 end
 par do
@@ -15901,10 +15926,10 @@ end
 }
 
 Test { [[
-C _F();
+native _F();
 deterministic _F with F,G;
 output int F,G;
-C do
+native do
     void F() {};
 end
 par do
@@ -15923,12 +15948,12 @@ end
 }
 
 Test { [[
-C _F();
+native _F();
 output int* F,G;
 deterministic _F with F,G;
 int a = 1;
 int* b;
-C do
+native do
     void F (int v) {};
 end
 par do
@@ -15947,12 +15972,12 @@ end
 }
 
 Test { [[
-C _F();
+native _F();
 pure _F;
 output int* F,G;
 int a = 1;
 int* b;
-C do
+native do
     void F (int v) {};
 end
 par do
@@ -15971,7 +15996,7 @@ end
 }
 
 Test { [[
-C _F();
+native _F();
 deterministic F with G;
 output void F,G;
 par do
@@ -15990,33 +16015,33 @@ end
     -- STRINGS
 
 Test { [[
-C _char=1;
+native _char=1;
 var _char* a = "Abcd12" ;
 return 1;
 ]],
     run = 1
 }
 Test { [[
-C _printf();
+native _printf();
 _printf("END: %s\n", "Abcd12");
 return 0;
 ]],
     run='Abcd12',
 }
 Test { [[
-C _strncpy(), _printf(), _strlen();
+native _strncpy(), _printf(), _strlen();
 return _strlen("123");
 ]], run=3 }
 Test { [[
-C _printf();
+native _printf();
 _printf("END: 1%d\n",2); return 0;]], run=12 }
 Test { [[
-C _printf();
+native _printf();
 _printf("END: 1%d%d\n",2,3); return 0;]], run=123 }
 
 Test { [[
-C nohold _strncpy(), _printf(), _strlen();
-C _char = 1;
+native nohold _strncpy(), _printf(), _strlen();
+native _char = 1;
 var _char[10] str;
 _strncpy(str, "123", 4);
 _printf("END: %d %s\n", _strlen(str), str);
@@ -16026,8 +16051,8 @@ return 0;
 }
 
 Test { [[
-C nohold _strncpy(), _printf(), _strlen(), _strcpy();
-C _char = 1;
+native nohold _strncpy(), _printf(), _strlen(), _strcpy();
+native _char = 1;
 var _char[6] a; _strcpy(a, "Hello");
 var _char[2] b; _strcpy(b, " ");
 var _char[7] c; _strcpy(c, "World!");
@@ -16044,8 +16069,8 @@ return 0;
 }
 
 Test { [[
-C _const_1();
-C do
+native _const_1();
+native do
     int const_1 () {
         return 1;
     }
@@ -16056,8 +16081,8 @@ return _const_1();
 }
 
 Test { [[
-C _const_1();
-C do
+native _const_1();
+native do
     int const_1 () {
         return 1;
     }
@@ -16068,8 +16093,8 @@ return _const_1() + _const_1();
 }
 
 Test { [[
-C _inv();
-C do
+native _inv();
+native do
     int inv (int v) {
         return -v;
     }
@@ -16082,8 +16107,8 @@ return a;
 }
 
 Test { [[
-C pure _inv();
-C do
+native pure _inv();
+native do
     int inv (int v) {
         return -v;
     }
@@ -16096,8 +16121,8 @@ return a;
 }
 
 Test { [[
-C _id();
-C do
+native _id();
+native do
     int id (int v) {
         return v;
     }
@@ -16142,14 +16167,14 @@ return 0;
 -- STRUCTS / SIZEOF
 
 Test { [[
-C do
+native do
 typedef struct {
     u16 a;
     u8 b;
     u8 c;
 } s;
 end
-C _s = 4;
+native _s = 4;
 var _s vs;
 vs.a = 10;
 vs.b = 1;
@@ -16159,9 +16184,9 @@ return vs.a + vs.b + sizeof<_s>;
 }
 
 Test { [[
-C _SZ;
-C _aaa = (sizeof<void*,u16>) * 2;
-C do
+native _SZ;
+native _aaa = (sizeof<void*,u16>) * 2;
+native do
     typedef struct {
         void* a;
         u16 b;
@@ -16177,13 +16202,13 @@ return sizeof<_aaa> + _SZ;
 }
 
 Test { [[
-C do
+native do
     typedef struct {
         u16 ack;
         u8 data[16];
     } Payload;
 end
-C _Payload = 18;
+native _Payload = 18;
 var _Payload final;
 var u8* neighs = &(final.data[4]);
 return 1;
@@ -16192,13 +16217,13 @@ return 1;
 }
 
 Test { [[
-C do
+native do
 typedef struct {
     int a;
     int b;
 } s;
 end
-C _s = 8;
+native _s = 8;
 var _s vs;
 par/and do
     vs.a = 10;
@@ -16213,13 +16238,13 @@ return vs.a;
 }
 
 Test { [[
-C do
+native do
 typedef struct {
     int a;
     int b;
 } s;
 end
-C _s = 8;
+native _s = 8;
 var _s vs;
 par/and do
     vs.a = 10;
@@ -16234,12 +16259,12 @@ return vs.a;
 }
 
 Test { [[
-C do
+native do
     typedef struct {
         int a;
     } mys;
 end
-C _mys = 4;
+native _mys = 4;
 var _mys v;
 var _mys* pv;
 pv = &v;
@@ -16260,7 +16285,7 @@ Test { [[
 }
 
 Test { [[
-C _char=1;
+native _char=1;
 var u8[10] v1;
 var _char[10] v2;
 
@@ -16281,15 +16306,15 @@ return ret;
 }
 
 Test { [[
-C _message_t = 52;
-C _t = sizeof<_message_t, u8>;
+native _message_t = 52;
+native _t = sizeof<_message_t, u8>;
 return sizeof<_t>;
 ]],
     run = 53,
 }
 
 Test { [[
-C _char=1;
+native _char=1;
 var _char a = <_char> 1;
 return <int>a;
 ]],
@@ -16779,7 +16804,7 @@ end
 }
 
 Test { [[
-C _ret_val, _ret_end;
+native _ret_val, _ret_end;
 _ret_val = 1;
 _ret_end = 1;
 event void e, f;
@@ -16814,7 +16839,7 @@ end
 }
 
 Test { [[
-C _ret_val, _ret_end;
+native _ret_val, _ret_end;
 _ret_val = 1;
 _ret_end = 1;
 event void e, f;
@@ -16850,7 +16875,7 @@ end
 
 Test { [[
 event void e, k1, k2;
-C _ret_val, _ret_end;
+native _ret_val, _ret_end;
 _ret_val = 1;
 _ret_end = 1;
 par do
@@ -16893,11 +16918,11 @@ do
     var int v;
 end
 
-C do
+native do
     int V = sizeof(CEU_T);
 end
 
-C _V;
+native _V;
 var T t;
 return _V;
 ]],
@@ -16912,10 +16937,10 @@ do
     var int v;
 end
 
-C do
+native do
     int V = sizeof(CEU_T);
 end
-C _V;
+native _V;
 return _V;
 ]],
     todo = 'recalculate',
@@ -16931,10 +16956,10 @@ do
     var int v;
 end
 
-C do
+native do
     int V = sizeof(CEU_T);
 end
-C _V;
+native _V;
 return _V;
 ]],
     todo = 'recalculate',
@@ -17176,7 +17201,7 @@ return a.v;
 Test { [[
 class T with
     var int v;
-    C _f(), _t=10;   // TODO: refuse _t
+    native _f(), _t=10;   // TODO: refuse _t
 do
 end
 return 10;
@@ -17185,8 +17210,8 @@ return 10;
 }
 
 Test { [[
-C _V;
-C do
+native _V;
+native do
     int V = 1;
 end
 
@@ -17213,8 +17238,8 @@ return _V;
 }
 
 Test { [[
-C _V;
-C do
+native _V;
+native do
     int V = 1;
 end
 
@@ -17244,8 +17269,8 @@ return _V;
 }
 
 Test { [[
-C _V;
-C do
+native _V;
+native do
     int V = 1;
 end;
 class T with
@@ -17287,8 +17312,8 @@ return 1;
 }
 
 Test { [[
-C _V;
-C do
+native _V;
+native do
     int V = 1;
 end
 
@@ -18465,8 +18490,8 @@ var T* p = a;
 }
 
 Test { [[
-C _c, _d;
-C do
+native _c, _d;
+native do
     int c, d;
 end
 
@@ -18688,8 +18713,8 @@ return t1.a + t2.a;
 }
 Test { [[
 input void START;
-C nohold _f();
-C do
+native nohold _f();
+native do
     void f (void* t) {}
 end
 class T with
@@ -18714,8 +18739,8 @@ return 10;
 }
 Test { [[
 input void START;
-C nohold _f();
-C do
+native nohold _f();
+native do
     void f (void* t) {}
 end
 class T with
@@ -18740,7 +18765,7 @@ return 10;
 }
 
 Test { [[
-C _assert();
+native _assert();
 input int  BUTTON;
 input void F;
 
@@ -18913,8 +18938,8 @@ return aa.aa;
 Test { [[
 input void START;
 
-C _inc(), _V;
-C do
+native _inc(), _V;
+native do
     int V = 0;
     void inc() { V++; }
 end
@@ -18947,8 +18972,8 @@ do
 end
 var T aa;
 
-C _inc(), _V;
-C do
+native _inc(), _V;
+native do
     int V = 0;
     void inc() { V++; }
 end
@@ -19041,7 +19066,7 @@ return ret;
     run = { ['~>1s']=1 },
 }
 Test { [[
-C nohold _f();
+native nohold _f();
 input void START;
 class T with
     event void e, ok, go, b;
@@ -19052,7 +19077,7 @@ do
     emit ok;
 end
 var T a, b;
-C do
+native do
     int f (char* a, char* b) {
         return *a + *b;
     }
@@ -19297,8 +19322,8 @@ return ret;
 }
 
 Test { [[
-C _V;
-C do
+native _V;
+native do
     static int V = 0;
 end
 do
@@ -19316,8 +19341,8 @@ return _V;
 }
 
 Test { [[
-C _V;
-C do
+native _V;
+native do
     static int V = 0;
 end
 input void F;
@@ -19342,8 +19367,8 @@ return _V;
 }
 
 Test { [[
-C _V;
-C do
+native _V;
+native do
     static int V = 1;
 end
 input void F;
@@ -19369,8 +19394,8 @@ return _V;
 }
 
 Test { [[
-C _V;
-C do
+native _V;
+native do
     static int V = 0;
 end
 input void START;
@@ -19399,9 +19424,9 @@ return _V;
 }
 
 Test { [[
-C _V;
+native _V;
 input void A, F, START;
-C do
+native do
     int V = 0;
 end
 class T with
@@ -19445,9 +19470,9 @@ return t.v + _V;        // * reads before
 }
 
 Test { [[
-C _V;
+native _V;
 input void A, F, START;
-C do
+native do
     int V = 0;
 end
 class T with
@@ -19509,7 +19534,7 @@ class T with
 do
     await START;
     emit global:e; // TODO: must also check if org trail is active
-    C _assert();
+    native _assert();
     _assert(0);
 end
 
@@ -19524,8 +19549,8 @@ return 2;
 Test { [[
 input void START;
 
-C _V, _assert();
-C do
+native _V, _assert();
+native do
     #include <assert.h>
     int V = 0;
 end
@@ -19560,8 +19585,8 @@ return _V;
 Test { [[
 input void START;
 
-C _V, _assert();
-C do
+native _V, _assert();
+native do
     #include <assert.h>
     int V = 0;
 end
@@ -19597,8 +19622,8 @@ return _V;
 Test { [[
 input void START;
 
-C _V, _assert();
-C do
+native _V, _assert();
+native do
     #include <assert.h>
     int V = 0;
 end
@@ -19636,8 +19661,8 @@ return _V;
 Test { [[
 input void START;
 
-C _X,_V, _assert();
-C do
+native _X,_V, _assert();
+native do
     #include <assert.h>
     int V = 0;
     int X = 0;
@@ -19678,8 +19703,8 @@ return _V+_X;
 Test { [[
 input void START;
 
-C _V, _assert();
-C do
+native _V, _assert();
+native do
     #include <assert.h>
     int V = 0;
 end
@@ -19710,8 +19735,8 @@ return ret;
 Test { [[
 input void START;
 
-C _V, _assert();
-C do
+native _V, _assert();
+native do
     #include <assert.h>
     int V = 0;
 end
@@ -20034,8 +20059,8 @@ return t:b;
 }
 
 Test { [[
-C _V;
-C do
+native _V;
+native do
     int V=0;
 end
 input void START;
@@ -20110,8 +20135,33 @@ return 10;
 }
 
 Test { [[
-C _V;
-C do
+native _V;
+native do
+    int V = 0;
+end
+class T with
+do
+    await 2s;
+    _V = _V + 1;
+end
+do
+    spawn T;
+    await 1s;
+    spawn T;
+    await 1s;
+    spawn T;
+    await 1s;
+    spawn T;
+    await 50s;
+end
+return _V;
+]],
+    run = { ['~>100s']=4 },
+}
+
+Test { [[
+native _V;
+native do
     int V = 0;
 end
 class T with
@@ -20129,8 +20179,8 @@ return _V;
 }
 
 Test { [[
-C _V;
-C do
+native _V;
+native do
     int V = 0;
 end
 class T with
@@ -20171,8 +20221,8 @@ spawn T;
 }
 
 Test { [[
-C _V;
-C do
+native _V;
+native do
     int V = 0;
 end
 class T with
@@ -20188,8 +20238,8 @@ return _V;
 }
 
 Test { [[
-C _V;
-C do
+native _V;
+native do
     int V = 0;
 end
 class T with
@@ -20205,8 +20255,8 @@ return _V;
 }
 
 Test { [[
-C _V;
-C do
+native _V;
+native do
     int V = 0;
 end
 class T with
@@ -20249,7 +20299,7 @@ class T with do
     await FOREVER;
 end
 var u8 ok;
-C _assert();
+native _assert();
 do
     loop i, 5 do
         ok = spawn T;
@@ -20266,7 +20316,7 @@ class T with do
     await FOREVER;
 end
 var u8 ok;
-C _assert();
+native _assert();
 do
     loop i, 100 do
         ok = spawn T;
@@ -20284,7 +20334,7 @@ class T with do
     await FOREVER;
 end
 var u8 ok;
-C _assert();
+native _assert();
 do
     loop i, 100 do
         ok = spawn T;
@@ -20294,7 +20344,7 @@ do
     ok = spawn T;
     _assert(ok == 0);
 end
-C __ceu_dyns_;
+native __ceu_dyns_;
 _assert(__ceu_dyns_ == 0);
 do
     loop i, 100 do
@@ -20315,8 +20365,8 @@ return ok;
 }
 
 Test { [[
-C _V;
-C do
+native _V;
+native do
     int V = 0;
 end
 class T with
@@ -20342,7 +20392,7 @@ do
     input void START;
     await START;
 end
-C _assert();
+native _assert();
 _assert(_V==100 and v==100);
 return _V+v;
 ]],
@@ -20352,8 +20402,8 @@ return _V+v;
 
 Test { [[
 input void START;
-C _V;
-C do
+native _V;
+native do
     int V = 1;
 end
 class T with
@@ -20372,8 +20422,8 @@ return _V;
 
 Test { [[
 input void START;
-C _V;
-C do
+native _V;
+native do
     int V = 1;
 end
 class T with
@@ -20454,8 +20504,8 @@ return a:v;
 }
 
 Test { [[
-C _V;
-C do
+native _V;
+native do
     int V = 1;
 end
 class T with
@@ -20485,8 +20535,8 @@ return _V;
 
 Test { [[
 input void START;
-C _V;
-C do
+native _V;
+native do
     int V = 0;
 end
 class T with
@@ -20516,8 +20566,8 @@ return _V;
 }
 
 Test { [[
-C _V;
-C do
+native _V;
+native do
     int V = 5;
 end
 class T with
@@ -20545,8 +20595,8 @@ return _V;
 }
 Test { [[
 input void START;
-C _V;
-C do
+native _V;
+native do
     int V = 5;
 end
 class T with
@@ -20647,9 +20697,9 @@ a = new U;
 }
 
 Test { [[
-C _V;
+native _V;
 input void START;
-C do
+native do
     int V = 0;
 end
 
@@ -20678,8 +20728,8 @@ return ret + _V;
 
 Test { [[
 input void START, F;
-C _V;
-C do
+native _V;
+native do
     int V = 0;
 end
 
@@ -20711,8 +20761,8 @@ return ret + _V;
 
 Test { [[
 input void START, F;
-C _V;
-C do
+native _V;
+native do
     int V = 0;
 end
 
@@ -20780,8 +20830,8 @@ return 1;
 }
 
 Test { [[
-C _f(), _V;
-C do
+native _f(), _V;
+native do
     int V = 1;
     int* f (){ return NULL; }
 end
@@ -20820,8 +20870,8 @@ return _V;
 
 Test { [[
 input void START;
-C _f(), _V;
-C do
+native _f(), _V;
+native do
     int V = 1;
 end
 
@@ -20857,8 +20907,8 @@ return _V;
 
 Test { [[
 input void START;
-C _f(), _V;
-C do
+native _f(), _V;
+native do
     int V = 1;
     int* f (){ return NULL; }
 end
@@ -20914,7 +20964,7 @@ end
 var U t;
 await START;
 
-C nohold _tceu_trl, _tceu_trl_, _sizeof();
+native nohold _tceu_trl, _tceu_trl_, _sizeof();
 return 2;
 ]],
     run = 2,
@@ -20922,8 +20972,8 @@ return 2;
 
 Test { [[
 input void START;
-C _f(), _V;
-C do
+native _f(), _V;
+native do
     int V = 1;
     int* f (){ return NULL; }
 end
@@ -20966,8 +21016,8 @@ return _V;
 
 Test { [[
 input void START;
-C _f(), _V;
-C do
+native _f(), _V;
+native do
     int V = 1;
     int* f (){ return NULL; }
 end
@@ -21010,8 +21060,8 @@ return _V;
 }
 
 Test { [[
-C _f(), _V;
-C do
+native _f(), _V;
+native do
     int V = 1;
     int* f (){ return NULL; }
 end
@@ -21175,8 +21225,8 @@ return 10;
 }
 
 Test { [[
-C _V, _assert();
-C do
+native _V, _assert();
+native do
     int V = 1;
 end
 
@@ -21215,9 +21265,9 @@ return _V;
 }
 
 Test { [[
-C _assert();
-C _V;
-C do
+native _assert();
+native _V;
+native do
     int V = 10;
 end
 class T with
@@ -21243,9 +21293,9 @@ return _V;
 }
 
 Test { [[
-C _assert();
-C _X, _Y;
-C do
+native _assert();
+native _X, _Y;
+native do
     int X = 0;
     int Y = 0;
 end
@@ -21295,8 +21345,8 @@ return 10;
 ]=]
 
 Test { [[
-C _V, _assert();
-C do
+native _V, _assert();
+native do
     int V = 0;
 end
 class T with
@@ -21357,8 +21407,8 @@ return t:v + ts[0]:v;
 }
 
 Test { [[
-C _V;
-C do
+native _V;
+native do
     int V = 0;
 end
 
@@ -21392,8 +21442,8 @@ return _V;
 }
 
 Test { [[
-C _s=0;
-C do
+native _s=0;
+native do
     typedef int s;
 end
 
@@ -21415,8 +21465,8 @@ return 10;
 }
 
 Test { [[
-C _s=0;
-C do
+native _s=0;
+native do
     typedef int s;
 end
 
@@ -21441,8 +21491,8 @@ return 10;
 }
 
 Test { [[
-C _s=0;
-C do
+native _s=0;
+native do
     typedef int s;
 end
 
@@ -21466,8 +21516,8 @@ return 0;
     fin = 'ERR : line 15 : attribution requires `finalize´',
 }
 Test { [[
-C _s=0;
-C do
+native _s=0;
+native do
     typedef int s;
 end
 
@@ -21476,8 +21526,8 @@ class T with
 do
 end
 
-C _V, _assert();
-C do
+native _V, _assert();
+native do
     int V=0;
 end
 
@@ -21503,8 +21553,8 @@ return _V;
 }
 
 Test { [[
-C _s=0;
-C do
+native _s=0;
+native do
     typedef int s;
 end
 
@@ -21513,8 +21563,8 @@ class T with
 do
 end
 
-C _V, _assert();
-C do
+native _V, _assert();
+native do
     int V=0;
 end
 
@@ -21536,8 +21586,8 @@ return _V;
 }
 
 Test { [[
-C _s=0;
-C do
+native _s=0;
+native do
     typedef int s;
 end
 
@@ -21546,8 +21596,8 @@ class T with
 do
 end
 
-C _V, _assert();
-C do
+native _V, _assert();
+native do
     int V=0;
 end
 
@@ -21575,8 +21625,8 @@ return _V;
 }
 
 Test { [[
-C _s=0;
-C do
+native _s=0;
+native do
     typedef int s;
 end
 
@@ -21585,8 +21635,8 @@ class T with
 do
 end
 
-C _V, _assert();
-C do
+native _V, _assert();
+native do
     int V=0;
 end
 
@@ -21694,8 +21744,8 @@ return ret;
 }
 
 Test { [[
-C _V;
-C do
+native _V;
+native do
     int V = 0;
 end
 
@@ -21727,8 +21777,8 @@ return _V;
 }
 
 Test { [[
-C _V;
-C do
+native _V;
+native do
     int V = 0;
 end
 
@@ -21770,8 +21820,8 @@ return _V;
 }
 
 Test { [[
-C _V;
-C do
+native _V;
+native do
     int V = 0;
 end
 
@@ -21814,8 +21864,8 @@ return _V;
 }
 
 Test { [[
-C _V;
-C do
+native _V;
+native do
     int V = 0;
 end
 
@@ -21858,8 +21908,8 @@ return _V;
 }
 
 Test { [[
-C _V;
-C do
+native _V;
+native do
     int V = 0;
 end
 
@@ -21907,8 +21957,8 @@ return _V;
 -- INTERFACES / IFACES / IFCES
 
 Test { [[
-C _ptr;
-C do
+native _ptr;
+native do
     void* ptr;
 end
 interface I with
@@ -21921,8 +21971,8 @@ return 10;
 }
 
 Test { [[
-C _ptr;
-C do
+native _ptr;
+native do
     void* ptr;
 end
 interface I with
@@ -21935,8 +21985,8 @@ return 10;
 }
 
 Test { [[
-C _ptr;
-C do
+native _ptr;
+native do
     void* ptr;
 end
 interface I with
@@ -21951,7 +22001,7 @@ return 10;
 -- CAST
 
 Test { [[
-C _assert();
+native _assert();
 
 interface T with
 end
@@ -22270,7 +22320,7 @@ return t.aa;
 Test { [[
 interface I with
     var int v;
-    C _f(), _a;      // TODO: refuse _a
+    native _f(), _a;      // TODO: refuse _a
 end
 return 10;
 ]],
@@ -22280,12 +22330,12 @@ return 10;
 Test { [[
 class T with
     var int v;
-    C nohold _f();
+    native nohold _f();
 do
     v = 50;
     this._f(10);
 
-    C do
+    native do
         int CEU_T__f (CEU_T* t, int v) {
             t->v += v;
             return t->v;
@@ -22304,17 +22354,17 @@ return t.v + t._f(20) + t.v;
 Test { [[
 interface I with
     var int v;
-    C nohold _f();
+    native nohold _f();
 end
 
 class T with
     var int v;
-    C nohold _f();
+    native nohold _f();
 do
     v = 50;
     this._f(10);
 
-    C do
+    native do
         void CEU_T__f (CEU_T* t, int v) {
             t->v += v;
         }
@@ -22334,16 +22384,16 @@ return i:v;
 Test { [[
 interface I with
     var int v;
-    C nohold _get();
-    C nohold _set();
+    native nohold _get();
+    native nohold _set();
 end
 
 class T with
     var int v = 50;
-    C nohold _get();
-    C nohold _set();
+    native nohold _get();
+    native nohold _set();
 do
-    C do
+    native do
         int CEU_T__get (CEU_T* t) {
             return t->v;
         }
@@ -22365,17 +22415,17 @@ return v + i:_get();
 Test { [[
 interface I with
     var int v;
-    C nohold _f();
+    native nohold _f();
 end
 
 class T with
     var int v;
-    C nohold _f();
+    native nohold _f();
 do
     v = 50;
     this._f(10);
 
-    C do
+    native do
         void CEU_T__f (CEU_T* t, int v) {
             t->v += v;
         }
@@ -22384,12 +22434,12 @@ end
 
 class U with
     var int v;
-    C nohold _f();
+    native nohold _f();
 do
     v = 50;
     this._f(10);
 
-    C do
+    native do
         void CEU_U__f (CEU_U* t, int v) {
             t->v += 2*v;
         }
@@ -22398,7 +22448,7 @@ end
 
 var T t;
 var U u;
-C nohold _fprintf(), _stderr;
+native nohold _fprintf(), _stderr;
 _fprintf(_stderr, "[1] %d vs %d\n", t.v, u.v);
 var I* i = &t;
 input void START;
@@ -22475,8 +22525,8 @@ end
 }
 
 Test { [[
-C nohold _attr();
-C do
+native nohold _attr();
+native do
     void attr (void* org) {
         IFC_Global_a() = CEU_T_a(org) + 1;
     }
@@ -22793,7 +22843,7 @@ var T t;
 var I* i = &t;
 return t._ins();
 ]],
-    env = 'ERR : line 13 : C function "CEU_T__ins" is not declared',
+    env = 'ERR : line 13 : native function "CEU_T__ins" is not declared',
 }
 Test { [[
 interface I with
@@ -22810,12 +22860,12 @@ var T t;
 var I* i = &t;
 return i:_ins();
 ]],
-    env = 'ERR : line 13 : C function "CEU_I__ins" is not declared',
+    env = 'ERR : line 13 : native function "CEU_I__ins" is not declared',
 }
 Test { [[
 interface I with
     var int v;
-    C nohold _ins();
+    native nohold _ins();
 end
 
 class T with
@@ -22828,20 +22878,20 @@ var T t;
 var I* i = &t;
 return i:_ins() + t._ins();;
 ]],
-    env = 'ERR : line 14 : C function "CEU_T__ins" is not declared',
+    env = 'ERR : line 14 : native function "CEU_T__ins" is not declared',
 }
 
 Test { [[
 interface I with
     var int v;
-    C nohold _ins();
+    native nohold _ins();
 end
 
 class T with
     var int v;
-    C nohold _ins();
+    native nohold _ins();
 do
-C do
+native do
     int CEU_T__ins (CEU_T* t) {
         return t->v;
     }
@@ -22858,7 +22908,7 @@ return i:_ins() + t._ins();
 
 Test { [[
 interface F with
-    C nohold _f();
+    native nohold _f();
     var int i=10;
 end
 ]],
@@ -22867,7 +22917,7 @@ end
 
 Test { [[
 interface F with
-    C nohold _f();
+    native nohold _f();
     var int i;
 end
 
@@ -22876,7 +22926,7 @@ class T with
     interface F;
 do
     this._f(1);
-C do
+native do
     void CEU_T__f (CEU_T* t, int i) {
         t->i += i;
     }
@@ -22895,7 +22945,7 @@ return t1.i + f:i;
 
 Test { [[
 interface F with
-    C nohold _f();
+    native nohold _f();
     var int i;
 end
 
@@ -22904,7 +22954,7 @@ class T with
     var int i=10;   // 2
 do
     this._f(1);
-C do
+native do
     void CEU_T__f (CEU_T* t, int i) {
         t->i += i;
     }
@@ -22936,7 +22986,7 @@ return 0;
 -- RET_VAL / RET_END
 
 Test { [[
-C _ret_val, _ret_end;
+native _ret_val, _ret_end;
 class T with
 do
     _ret_val = 10;
@@ -22953,7 +23003,7 @@ await FOREVER;
 
 Test { [[
 input int A;
-C _ret_val, _ret_end;
+native _ret_val, _ret_end;
 class T with
     var int i;
 do
@@ -22978,7 +23028,7 @@ await FOREVER;
 
 Test { [[
 input int A;
-C _ret_val, _ret_end;
+native _ret_val, _ret_end;
 _ret_val=0;
 class T with
     var int i;
@@ -23004,7 +23054,7 @@ await FOREVER;
 
 Test { [[
 input int A;
-C _ret_val, _ret_end;
+native _ret_val, _ret_end;
 _ret_val = 10;
 class T with
     event int i, x;
@@ -23056,7 +23106,7 @@ end
 
 Test { [[
 input int A;
-C _ret_val, _ret_end;
+native _ret_val, _ret_end;
 class T with
     event int i;
 do
@@ -23095,7 +23145,7 @@ end
 
 Test { [[
 input void A;
-C _ret_val, _ret_end;
+native _ret_val, _ret_end;
 _ret_val = 0;
 loop do
     par/or do
@@ -23119,7 +23169,7 @@ end
 Test { [[
 input void START;
 event void a;
-C _ret_val, _ret_end;
+native _ret_val, _ret_end;
 _ret_val = 0;
 loop do
     par/or do
@@ -23145,8 +23195,8 @@ end
 
 Test { [[
 input void A;
-C _assert();
-C _ret_end, _ret_val;
+native _assert();
+native _ret_end, _ret_val;
 var int v = 1;
 par do
     loop do
@@ -23174,7 +23224,7 @@ end
 
 Test { [[
 input void A;
-C _ret_val, _ret_end;
+native _ret_val, _ret_end;
 _ret_val = 0;
 loop do
     await A;
@@ -23449,7 +23499,7 @@ return 1;
 
 Test { [[
 input void A,B;
-C _ret_val, _ret_end, _assert();
+native _ret_val, _ret_end, _assert();
 _ret_val = 0;
 loop do
     par/or do
@@ -23547,7 +23597,7 @@ do
     await A;
 end
 var T a,b;
-C _f();
+native _f();
 var int c;
 par do
     loop do
@@ -23596,7 +23646,7 @@ do
     await A;
 end
 var T a,b;
-C _f();
+native _f();
 var int c;
 par do
     loop do

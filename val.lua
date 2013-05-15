@@ -253,7 +253,7 @@ F =
         me.val  = V(exp) .. '*' .. t2n[unit]-- .. 'L'
     end,
 
-    C = function (me)
+    Nat = function (me)
         me.val = string.sub(me[1], 2)
     end,
     SIZEOF = function (me)

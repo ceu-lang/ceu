@@ -129,7 +129,7 @@ end
         return
     end
 
-    local CEU = './ceu _ceu_tmp.ceu --tp-word 4 --run-tests'
+    local CEU = './ceu _ceu_tmp.ceu --run-tests'
     local EXE = (VALGRIND=='false' and './ceu.exe')
              or 'valgrind -q --leak-check=full ./ceu.exe 2>&1'
     --local VER = (_PROPS.has_ifcs and '-std=c99') or '-ansi'
