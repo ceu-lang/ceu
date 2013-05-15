@@ -536,6 +536,7 @@ fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
             }
 
             /* continue traversing it */
+            /* TODO: rewrite these if's / fatorate */
 
             {
                 tceu_trl* trl = _ceu_cur_.trl;
@@ -574,7 +575,9 @@ fprintf(stderr, "\tTRY [%p] : evt=%d stk=%d lbl=%d\n",
                     goto _CEU_NEXT_;
                 }
 
-                trl->stk = 0;             /* no more awaking */
+                /* don't clear trl->nxt_org from org being cleared */
+                if (trl->evt != CEU_IN__NONE)
+                    trl->stk = 0;             /* no more awaking */
 
 #ifdef CEU_CLEAR
                 if (_ceu_evt_.id==CEU_IN__CLR && trl->evt!=CEU_IN__CLR) {

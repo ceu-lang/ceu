@@ -342,11 +342,11 @@ case ]]..me.lbls_cnt[i].id..[[:;
 ]])
         if t.cls.pool then
             LINE(me, [[
-    __ceu_org = memb_alloc(&CEU_POOL_]]..t.cls.id..[[);
+    __ceu_org = (tceu_org*) memb_alloc(&CEU_POOL_]]..t.cls.id..[[);
 ]])
         else
             LINE(me, [[
-    __ceu_org = malloc(sizeof(]].._TP.c(t.cls.id)..[[));
+    __ceu_org = (tceu_org*) malloc(sizeof(]].._TP.c(t.cls.id)..[[));
 ]])
         end
 
@@ -364,11 +364,11 @@ case ]]..me.lbls_cnt[i].id..[[:;
 #endif
 ]])
 
-        if t.val then
-            LINE(me, t.val..' = (void*)__ceu_org;')             -- new result
+        if t.val then                   -- new result
+            LINE(me, t.val..' = ('.._TP.c(t.cls.id)..'*)__ceu_org;')
         end
-        if _AST.iter'SetSpawn'() then
-            LINE(me, '__ceu_'..me.n..' = (__ceu_org != NULL);') -- spw result
+        if _AST.iter'SetSpawn'() then   -- spw result
+            LINE(me, '__ceu_'..me.n..' = (__ceu_org != NULL);')
         end
 
         t.id       = 'dyn'
@@ -381,15 +381,16 @@ case ]]..me.lbls_cnt[i].id..[[:;
         LINE(me, [[
     if (__ceu_org != NULL)
     {
-        tceu_trl* __par_trl = &CEU_CUR->trls[ ]]..t.par_blk.dyn_trails[1]..[[ 
-        ];
-        tceu_org* __par_org = CEU_CUR;
+        tceu_trl* __par_trl;    /* avr/arduino enforces this split */
+        __par_trl = &CEU_CUR->trls[ ]]..t.par_blk.dyn_trails[1]..[[ ];
+        tceu_org* __par_org;
+        __par_org = CEU_CUR;
 
+        /* TODO: =>func? */
         while (__par_trl->evt != CEU_IN__NONE) {
             __par_org = __par_trl->org;
             __par_trl = &__par_org->trls[__par_org->n - 1];
         }
-
 ]])
         F._ORG(me, t)
         LINE(me, [[

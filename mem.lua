@@ -32,41 +32,6 @@ F = {
             _defs[#_defs+1] = cls.struct
             _defs[#_defs+1] = cls.host
 
-            -- TODO: separate vars/ints in two ifcs? (ifcs_vars/ifcs_ints)
---[[
-TODO: remove
-            for _, var in ipairs(cls.blk_ifc.vars)
-            do
-                local org = (cls.id=='Global' and '((tceu_org*)CEU.mem)')
-                            or '((tceu_org*)org)'
-
-                local off
-                if cls.is_ifc then
-                    -- off = IFC[org.cls][var.n]
-                    off = 'CEU.ifcs['..org..'->cls]['
-                                .._ENV.ifcs[var.id_ifc]
-                            ..']'
-                else
-                    off = var.off
-                end
-
-                if var.isEvt then
-                    val = nil
-                elseif var.cls or var.arr then
-                    val = 'PTR_org('.._TP.c(var.tp)..','..org..','..off..')'
-                else
-                    val = '(*PTR_org('.._TP.c(var.tp..'*')..','..org..','..off..'))'
-                end
-
-                local id = pre..'_'..cls.id..'_'..var.id
-                local org = (cls.id=='Global' and '') or 'org'
-                _defs[#_defs+1] = '#define '..id..'_off('..org..') '..off
-                if val then
-                    _defs[#_defs+1] = '#define '..id..'('..org..') '..val
-                end
-            end
-]]
-
             if cls.pool then
                 _defs[#_defs+1] = 'MEMB(CEU_POOL_'..cls.id..','
                                 ..'CEU_'..cls.id..','..cls.pool..');'
@@ -75,6 +40,7 @@ TODO: remove
                     if ( memb_inmemb(&CEU_POOL_]]..cls.id..[[, CEU_CUR) )
                         memb_free(&CEU_POOL_]]..cls.id..[[, CEU_CUR);
                     else
+                        /* malloc in template.c */
 ]]
             end
         end

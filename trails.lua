@@ -109,7 +109,8 @@ G = {
             end
         end
 
-        -- DYNS
+        -- DYNS (pointer to the first alloc'd org here)
+        -- (this is not the linked list from my parent)
         if me.has_news then
             me.dyn_trails = { t0, t0 }
                 t0 = t0 + 1
@@ -123,17 +124,17 @@ G = {
     end,
 
     _Par_pre = function (me)
-        me.trails  = _AST.iter(pred)().trails
+        me.trails = _AST.iter(pred)().trails
 
         for i, sub in ipairs(me) do
-            sub.trails  = {}
+            sub.trails = {}
             if i == 1 then
-                sub.trails [1] = me.trails [1]
+                sub.trails[1] = me.trails[1]
             else
                 local pre = me[i-1]
-                sub.trails [1] = pre.trails [1] + pre.trails_n
+                sub.trails[1] = pre.trails[1] + pre.trails_n
             end
-            sub.trails [2] = sub.trails [1] + sub.trails_n  - 1
+            sub.trails[2] = sub.trails[1] + sub.trails_n  - 1
         end
     end,
 
