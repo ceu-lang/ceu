@@ -122,7 +122,7 @@ function CLEAR (me)
 /* trails[1] points to ORG blk */
 {
     tceu_trl* trl = &CEU_CUR->trls[ ]]..me.trails[1]..[[ ];
-    trl->evt = IN__ANY;
+    trl->evt = CEU_IN__ANY;
     trl->stk = _ceu_stk_;
     trl->lbl = ]]..me.lbl_clr.id..[[;
 }
@@ -135,7 +135,7 @@ _ceu_clr_org_  = _ceu_cur_.org;
 #endif
 _ceu_clr_trlF_ = &CEU_CUR->trls[ ]]..(me.trails[2]+1)..[[ ]; /* trails[2]+1 is out 
 */
-_ceu_evt_.id = IN__CLR;
+_ceu_evt_.id = CEU_IN__CLR;
 goto _CEU_CALLTRL_;
 
 case ]]..me.lbl_clr.id..[[:;
@@ -256,15 +256,15 @@ end;
     org->par_org = ]]..t.par_org..[[;
     org->par_trl = par_trl;
 
-    /* enables parent trail with IN__ORG (always awake from now on) */
-    par_trl->evt = IN__ORG;
+    /* enables parent trail with CEU_IN__ORG (always awake from now on) */
+    par_trl->evt = CEU_IN__ORG;
     par_trl->org = org;
 
 ]])
             if t.cls.has_init then
                 LINE(me, [[
     /* hold current blk trail: set to my continuation */
-    _ceu_cur_.trl->evt = IN__ANY;
+    _ceu_cur_.trl->evt = CEU_IN__ANY;
     _ceu_cur_.trl->lbl = ]]..me.lbls_init[i].id..[[;
     _ceu_cur_.trl->stk = _ceu_stk_;
     _CEU_STK_[_ceu_stk_++] = _ceu_evt_;
@@ -295,14 +295,14 @@ case ]]..me.lbls_init[i].id..[[:;
 
             LINE(me, [[
     /* hold current blk trail: set to my continuation */
-    _ceu_cur_.trl->evt = IN__ANY;
+    _ceu_cur_.trl->evt = CEU_IN__ANY;
     _ceu_cur_.trl->lbl = ]]..me.lbls_cnt[i].id..[[;
     _ceu_cur_.trl->stk = _ceu_stk_;
     _CEU_STK_[_ceu_stk_++] = _ceu_evt_;
 
     /* switch to ORG */
 
-    org->trls[0].evt = IN__ANY;
+    org->trls[0].evt = CEU_IN__ANY;
     org->trls[0].lbl = ]]..t.cls.lbl.id..[[;
     org->trls[0].stk = _ceu_stk_;
 
@@ -385,7 +385,7 @@ case ]]..me.lbls_cnt[i].id..[[:;
         ];
         tceu_org* __par_org = CEU_CUR;
 
-        while (__par_trl->evt != IN__NONE) {
+        while (__par_trl->evt != CEU_IN__NONE) {
             __par_org = __par_trl->org;
             __par_trl = &__par_org->trls[__par_org->n - 1];
         }
@@ -458,10 +458,10 @@ case ]]..me.lbls_cnt[i].id..[[:;
         /* TODO: assert isDyn */
 
         /* TODO: HACK_1 (avoids next to also be freed) */
-        __ceu_org->trls[__ceu_org->n-1].evt = IN__NONE;
+        __ceu_org->trls[__ceu_org->n-1].evt = CEU_IN__NONE;
 
         /* push my continuation */
-        _ceu_cur_.trl->evt = IN__ANY;
+        _ceu_cur_.trl->evt = CEU_IN__ANY;
         _ceu_cur_.trl->stk = _ceu_stk_;
         _ceu_cur_.trl->lbl = ]]..me.lbl_clr.id..[[;
         _CEU_STK_[_ceu_stk_++] = _ceu_evt_;
@@ -471,7 +471,7 @@ case ]]..me.lbls_cnt[i].id..[[:;
         _ceu_cur_.org  = _ceu_clr_org_ = __ceu_org->par_org;
         _ceu_cur_.trl  = __ceu_org->par_trl;
         _ceu_clr_trlF_ = __ceu_org->par_trl + 1;
-        _ceu_evt_.id   = IN__CLR;
+        _ceu_evt_.id   = CEU_IN__CLR;
         goto _CEU_CALLTRL_;
     }
 }
@@ -504,7 +504,7 @@ case ]]..me.lbl_clr.id..[[:;
         if me.fins then
             LINE(me, [[
 /*  FINALIZE */
-CEU_CUR->trls[ ]]..me.fins.trails[1]..[[ ].evt = IN__CLR;
+CEU_CUR->trls[ ]]..me.fins.trails[1]..[[ ].evt = CEU_IN__CLR;
 CEU_CUR->trls[ ]]..me.fins.trails[1]..[[ ].lbl = ]]..me.lbl_fin.id..[[;
 /*_ceu_cur_.trl->stk = CEU_MAX_STACK;   // never checked anyways */
 ]])
@@ -620,7 +620,7 @@ _ceu_cur_.trl = &CEU_CUR->trls[ ]] ..me.trails[1]..[[ ];
                 LINE(me, [[
 {
     tceu_trl* trl = &CEU_CUR->trls[ ]]..sub.trails[1]..[[ ];
-    trl->evt = IN__ANY;
+    trl->evt = CEU_IN__ANY;
     trl->lbl = ]]..me.lbls_in[i].id..[[;
     trl->stk = _ceu_stk_;
 }
@@ -729,7 +729,7 @@ for (;;) {
 #else
     {
 #endif
-        _ceu_cur_.trl->evt = IN__ASYNC;
+        _ceu_cur_.trl->evt = CEU_IN__ASYNC;
         _ceu_cur_.trl->lbl = ]]..me.lbl_asy.id..[[;
 #ifdef ceu_out_async
         ceu_out_async(1);
@@ -775,14 +775,14 @@ _ceu_cur_.trl = &CEU_CUR->trls[ ]]..me.trails[1]..[[ ];
         assert(evt.pre == 'input')
 
         if e2 then
-            LINE(me, 'ceu_go_event(IN_'..evt.id
+            LINE(me, 'ceu_go_event(CEU_IN_'..evt.id
                         ..', (void*)'..V(e2)..');')
         else
-            LINE(me, 'ceu_go_event(IN_'..evt.id ..', NULL);')
+            LINE(me, 'ceu_go_event(CEU_IN_'..evt.id ..', NULL);')
         end
 
         LINE(me, [[
-_ceu_cur_.trl->evt = IN__ASYNC;
+_ceu_cur_.trl->evt = CEU_IN__ASYNC;
 _ceu_cur_.trl->lbl = ]]..me.lbl_cnt.id..[[;
 #ifdef ceu_out_async
 ceu_out_async(1);
@@ -798,7 +798,7 @@ case ]]..me.lbl_cnt.id..[[:;
     EmitT = function (me)
         local exp = unpack(me)
         LINE(me, [[
-_ceu_cur_.trl->evt = IN__ASYNC;
+_ceu_cur_.trl->evt = CEU_IN__ASYNC;
 _ceu_cur_.trl->lbl = ]]..me.lbl_cnt.id..[[;
 #ifdef CEU_WCLOCKS
 ceu_go_wclock((s32)]]..V(exp)..[[);
@@ -823,7 +823,7 @@ case ]]..me.lbl_cnt.id..[[:;
         local field = exp and ((_TP.deref(int.tp) and 'ptr') or 'v')
 
         LINE(me, [[
-_ceu_cur_.trl->evt = IN__ANY;
+_ceu_cur_.trl->evt = CEU_IN__ANY;
 _ceu_cur_.trl->stk = _ceu_stk_;
 _ceu_cur_.trl->lbl = ]]..me.lbl_cnt.id..[[;
 _CEU_STK_[_ceu_stk_++] = _ceu_evt_;
@@ -873,7 +873,7 @@ case ]]..me.lbl_cnt.id..[[:;
         LINE(me, [[
 ceu_trails_set_wclock(&]]..me.val_wclk..[[, (s32)]]..V(exp)..[[);
 ]]..no..[[:
-    _ceu_cur_.trl->evt = IN__WCLOCK;
+    _ceu_cur_.trl->evt = CEU_IN__WCLOCK;
     _ceu_cur_.trl->lbl = ]]..me.lbl.id..[[;
 ]])
         HALT(me)
@@ -925,7 +925,7 @@ case ]]..me.lbl.id..[[:;
                     or ''
         LINE(me, [[
 ]]..no..[[
-    _ceu_cur_.trl->evt = IN_]]..e.evt.id..[[;
+    _ceu_cur_.trl->evt = CEU_IN_]]..e.evt.id..[[;
     _ceu_cur_.trl->lbl = ]]..me.lbl.id..[[;
 ]])
         HALT(me)
@@ -954,7 +954,7 @@ ceu_trails_set_wclock(PTR_cur(u32*,]]..awt.off..'),(s32)'..V(awt)..[[);
         local no = '_CEU_NO_'..me.n..'_'
         LINE(me, [[
 ]]..no..[[:
-    _ceu_cur_.trl->evt = IN__ANY;
+    _ceu_cur_.trl->evt = CEU_IN__ANY;
     _ceu_cur_.trl->lbl = ]]..me.lbl.id..[[;
 ]])
         HALT(me)
@@ -970,7 +970,7 @@ case ]]..me.lbl.id..[[:;
         for i, awt in ipairs(me) do
             if awt.tag == 'Ext' then
                 LINE(me, [[
-                    if (_ceu_evt_.id == IN_]]..awt.evt.id..[[) {
+                    if (_ceu_evt_.id == CEU_IN_]]..awt.evt.id..[[) {
                 ]])
             elseif awt.isExp then
                 local org = (awt.org and awt.org.val) or '_ceu_cur_.org'
@@ -983,7 +983,7 @@ case ]]..me.lbl.id..[[:;
                 ]])
             else -- WCLOCK
                 LINE(me, [[
-                    if ( (_ceu_evt_.id == IN__WCLOCK)
+                    if ( (_ceu_evt_.id == CEU_IN__WCLOCK)
                     &&   (!ceu_wclocks_not(PTR_cur(s32*,]]..awt.off..
                             [[), _ceu_evt_.param.dt)) ) {
                 ]])
@@ -1009,7 +1009,7 @@ case ]]..me.lbl.id..[[:;
             ATTR(me, n.new, n.var)
         end
         LINE(me, [[
-_ceu_cur_.trl->evt = IN__ASYNC;
+_ceu_cur_.trl->evt = CEU_IN__ASYNC;
 _ceu_cur_.trl->lbl = ]]..me.lbl.id..[[;
 #ifdef ceu_out_async
 ceu_out_async(1);

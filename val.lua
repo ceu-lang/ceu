@@ -96,7 +96,7 @@ F =
 #if defined(ceu_out_event_]]..e1.evt.id..[[)
     ceu_out_event_]]..e1.evt.id..'('..val..[[)
 #elif defined(ceu_out_event)
-    ceu_out_event(OUT_]]..e1.evt.id..','..len..','..val..[[)
+    ceu_out_event(CEU_OUT_]]..e1.evt.id..','..len..','..val..[[)
 #else
     0
 #endif

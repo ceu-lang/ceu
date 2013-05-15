@@ -222,26 +222,26 @@ do
     local outs = 0
 
     -- TODO
-    str = str..'#define IN__NONE 0\n'
+    str = str..'#define CEU_IN__NONE 0\n'
 
     for i, evt in ipairs(_ENV.exts) do
         if evt.pre == 'input' then
-            str = str..'#define IN_'..evt.id..' '
+            str = str..'#define CEU_IN_'..evt.id..' '
                     ..(_ENV.max_evt+i)..'\n'
             --ins = ins + 1
         else
-            str = str..'#define OUT_'..evt.id..' '..outs..'\n'
+            str = str..'#define CEU_OUT_'..evt.id..' '..outs..'\n'
             outs = outs + 1
         end
         assert(evt.pre=='input' or evt.pre=='output')
     end
-    --str = str..'#define IN_n  '..ins..'\n'
-    str = str..'#define OUT_n '..outs..'\n'
+    --str = str..'#define CEU_IN_n  '..ins..'\n'
+    str = str..'#define CEU_OUT_n '..outs..'\n'
 
     -- FUNCTIONS called
     for id in pairs(_ENV.calls) do
         if id ~= '$anon' then
-            str = str..'#define FUNC'..id..'\n'
+            str = str..'#define CEU_FUN'..id..'\n'
         end
     end
 
