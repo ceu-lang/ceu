@@ -121,7 +121,8 @@ typedef struct {
             elseif var.arr then
                 local _tp = _TP.deref(var.tp)
                 len = var.arr * (_TP.deref(_tp) and _ENV.c.pointer.len
-                             or (_ENV.c[_tp] and _ENV.c[_tp].len))
+                             or (_ENV.c[_tp] and _ENV.c[_tp].len
+                                 or _ENV.c.word.len)) -- defaults to word
             elseif _TP.deref(var.tp) then
                 len = _ENV.c.pointer.len
             else

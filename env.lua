@@ -797,7 +797,8 @@ F = {
                     'undeclared type '..tp)
             t.tag = 'type'
 
-            local i = ASR(t and t.len, me, 'unknown size '..tp)
+            local i = ASR(t and t.len or _ENV.c.word.len,
+                            me, 'unknown size '..tp)    -- defaults to word
             sz = _TP.align(sz,i) + i
         end
         me.sval = sz

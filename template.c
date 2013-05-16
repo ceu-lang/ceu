@@ -540,6 +540,7 @@ fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
 
             {
                 tceu_trl* trl = _ceu_cur_.trl;
+
 #ifdef CEU_DEBUG_TRAILS
 #ifdef CEU_ORGS
 if (trl->evt == CEU_IN__ORG)
@@ -550,10 +551,12 @@ else
 fprintf(stderr, "\tTRY [%p] : evt=%d stk=%d lbl=%d\n",
                     trl, trl->evt, trl->stk, trl->lbl);
 #endif
+
+                /* jump into inner orgs */
 #ifdef CEU_ORGS
-                if ( trl->evt == CEU_IN__ORG
-                ||   (trl->evt==CEU_IN__ORG_PSED && _ceu_evt_.id==CEU_IN__CLR)
-                ) {
+                if ( (trl->evt == CEU_IN__ORG)
+                  || (trl->evt==CEU_IN__ORG_PSED && _ceu_evt_.id==CEU_IN__CLR) )
+                {
 #ifdef CEU_DEBUG
                     assert(trl->org != NULL);
 #endif
@@ -562,31 +565,29 @@ fprintf(stderr, "\tTRY [%p] : evt=%d stk=%d lbl=%d\n",
                 }
 #endif
 
-                if (
-#ifdef CEU_CLEAR
-                    (_ceu_evt_.id != CEU_IN__CLR)   /* clear always executes */
-                  &&
-#endif
-                    (  (trl->stk!=CEU_MAX_STACK && trl->stk!=_ceu_stk_)
-                    || (trl->evt!=CEU_IN__ANY   && trl->evt!=_ceu_evt_.id) )
-                ) {
-                    if (_ceu_evt_.id == CEU_IN__ANY)
-                        trl->stk = CEU_MAX_STACK; /* new reaction reset stk */
-                    goto _CEU_NEXT_;
+                {
+                    int run =
+                        ( (trl->evt == CEU_IN__ANY) || (trl->evt == _ceu_evt_.id) )
+                     &&
+                        ( (trl->stk == _ceu_stk_)   || (trl->stk == CEU_MAX_STACK) );
+
+                    /* clear trl only if i'll run or in a "clear" */
+                    if ( run || (_ceu_evt_.id == CEU_IN__CLR) ) {
+                        /* this test is necessary due to `HACK_1´ */
+                        if (trl->evt != CEU_IN__NONE) {
+                            trl->evt = CEU_IN__NONE;
+                            trl->stk = 0;   /* `HACK_1´ */
+                        }
+                    } else
+                    if (_ceu_evt_.id == CEU_IN__ANY) {
+                        trl->stk = CEU_MAX_STACK;
+                    }
+
+                    if (! run)
+                        goto _CEU_NEXT_;
                 }
 
-                /* don't clear trl->nxt_org from org being cleared */
-                if (trl->evt != CEU_IN__NONE)
-                    trl->stk = 0;             /* no more awaking */
-
-#ifdef CEU_CLEAR
-                if (_ceu_evt_.id==CEU_IN__CLR && trl->evt!=CEU_IN__CLR) {
-                    trl->evt = CEU_IN__NONE;  /* no more awaiting */
-                    goto _CEU_NEXT_;
-                }
-#endif
-
-                trl->evt = CEU_IN__NONE;      /* no more awaiting */
+                /* finally, execute this trail */
                 _ceu_cur_.lbl = trl->lbl;
             }
 _CEU_GOTO_:

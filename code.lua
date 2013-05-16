@@ -382,8 +382,8 @@ case ]]..me.lbls_cnt[i].id..[[:;
     if (__ceu_org != NULL)
     {
         tceu_trl* __par_trl;    /* avr/arduino enforces this split */
-        __par_trl = &CEU_CUR->trls[ ]]..t.par_blk.dyn_trails[1]..[[ ];
         tceu_org* __par_org;
+        __par_trl = &CEU_CUR->trls[ ]]..t.par_blk.dyn_trails[1]..[[ ];
         __par_org = CEU_CUR;
 
         /* TODO: =>func? */
@@ -507,7 +507,7 @@ case ]]..me.lbl_clr.id..[[:;
 /*  FINALIZE */
 CEU_CUR->trls[ ]]..me.fins.trails[1]..[[ ].evt = CEU_IN__CLR;
 CEU_CUR->trls[ ]]..me.fins.trails[1]..[[ ].lbl = ]]..me.lbl_fin.id..[[;
-/*_ceu_cur_.trl->stk = CEU_MAX_STACK;   // never checked anyways */
+CEU_CUR->trls[ ]]..me.fins.trails[1]..[[ ].stk = CEU_MAX_STACK;
 ]])
             for _, fin in ipairs(me.fins) do
                 LINE(me, fin.val..' = 0;')
