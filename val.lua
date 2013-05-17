@@ -257,7 +257,8 @@ F =
         me.val = string.sub(me[1], 2)
     end,
     SIZEOF = function (me)
-        me.val = me.sval --'sizeof('.._TP.c(me[1])..')'
+        --me.val = me.sval
+        me.val = 'sizeof('.._TP.c(me[1])..')'
     end,
     STRING = function (me)
         me.val = me[1]
