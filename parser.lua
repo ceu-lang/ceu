@@ -98,6 +98,8 @@ KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'native'
      + 'class'    + 'global'   + 'interface'
      + 'free'     + 'new'      + 'this'
      + 'spawn'
+--
+     --+ 'import'   + 'export'   + 'as'
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 

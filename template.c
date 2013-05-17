@@ -1,3 +1,5 @@
+/*#define fprintf dbg*/
+/*#define stderr "TestSrpP"*/
 /*#line 0 "=== FILENAME ==="*/
 === DEFS ===
 
@@ -315,10 +317,10 @@ void ceu_go_init ()
 #ifdef CEU_EXTS
 void ceu_go_event (int id, void* data)
 {
+    ceu_evt_param_ptr(data);
 #ifdef CEU_DEBUG_TRAILS
     fprintf(stderr, "====== %d\n", id);
 #endif
-    ceu_evt_param_ptr(data);
     ceu_go(id, &p);
 }
 #endif
@@ -337,11 +339,11 @@ void ceu_go_wclock (s32 dt)
 {
 #ifdef CEU_WCLOCKS
 
+    ceu_evt_param_dt(dt);
+
 #ifdef CEU_DEBUG_TRAILS
     fprintf(stderr, "====== WCLOCK\n");
 #endif
-
-    ceu_evt_param_dt(dt);
 
     if (CEU.wclk_min <= dt)
         CEU.wclk_late = dt - CEU.wclk_min;   /* how much late the wclock is */
@@ -507,7 +509,7 @@ fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
                             }
                             /* free if "dyn" and completelly traversed */
                             if (_ceu_clr_org_ != _ceu_cur_.org) {
-/*fprintf(stderr, "FREE: %p\n", CEU_CUR); */
+/*fprintf(stderr, "FREE: %p\n", CEU_CUR);*/
                                 === CLSS_FREE ===
                                 /* else */
                                 free(CEU_CUR);      /* TODO: check if needed */
@@ -525,6 +527,8 @@ fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
                         }
                     }
 #endif
+                    /* restart from parent org, same trail */
+                    /* _ceu_cur_.trl=CEU_CUR->par_trl; // already set above */
                     _ceu_cur_.org = PAR;
                     goto _CEU_CALLTRL_;
                 }
@@ -579,6 +583,8 @@ fprintf(stderr, "\tTRY [%p] : evt=%d stk=%d lbl=%d\n",
                             trl->stk = 0;   /* `HACK_1´ */
                         }
                     } else
+
+                    /* reset event */
                     if (_ceu_evt_.id == CEU_IN__ANY) {
                         trl->stk = CEU_MAX_STACK;
                     }

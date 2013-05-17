@@ -55,11 +55,11 @@ Test = function (t)
     --_AST.dump(_AST.root)
     if not check('env')      then return end
     if not check('fin')      then return end
-    dofile 'ana.lua'
-    dofile 'acc.lua'
     if not check('tight')    then return end
     --dofile 'awaits.lua'
     if not check('props')    then return end
+    dofile 'ana.lua'
+    dofile 'acc.lua'
 
     if not check('trails')   then return end
     if not check('labels')   then return end

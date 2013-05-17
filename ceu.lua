@@ -119,12 +119,12 @@ do
     dofile 'ast.lua'
     dofile 'env.lua'
     dofile 'fin.lua'
-    dofile 'ana.lua'
-    dofile 'acc.lua'
     --_AST.dump(_AST.root)
     dofile 'tight.lua'
     --dofile 'awaits.lua'
     dofile 'props.lua'
+    dofile 'ana.lua'
+    dofile 'acc.lua'
     dofile 'trails.lua'
     dofile 'labels.lua'
     dofile 'tmps.lua'
@@ -287,6 +287,8 @@ void ceu_go_wclock (s32 dt);
     end
 
     tpl = sub(tpl, '=== FILENAME ===', _OPTS.input)
+
+    tpl = string.gsub(tpl, '^#line.-\n', '')
 end
 
 if _OPTS.verbose or true then

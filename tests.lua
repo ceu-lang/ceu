@@ -94,6 +94,21 @@ do return end
 --]===]
 
 Test { [[
+class T(10) with do end
+return 1;
+]],
+    run = 1,
+}
+
+do return end
+
+Test { [[
+break;
+]],
+    props = 'ERR : line 1 : break without loop',
+}
+
+Test { [[
 par/or do
     nothing;
 with

@@ -33,8 +33,11 @@ F = {
             _defs[#_defs+1] = cls.host
 
             if cls.pool then
-                _defs[#_defs+1] = 'MEMB(CEU_POOL_'..cls.id..','
-                                ..'CEU_'..cls.id..','..cls.pool..');'
+                _defs[#_defs+1] = [[
+#ifdef CEU_NEWS
+MEMB(CEU_POOL_]]..cls.id..','..'CEU_'..cls.id..','..cls.pool..[[);
+#endif
+]]
                 _init[#_init+1] = 'memb_init(&CEU_POOL_'..cls.id..');'
                 _free[#_free+1] = [[
                     if ( memb_inmemb(&CEU_POOL_]]..cls.id..[[, CEU_CUR) )

@@ -460,18 +460,26 @@ case ]]..me.lbls_cnt[i].id..[[:;
 
         /* TODO: HACK_1 (avoids next to also be freed) */
         __ceu_org->trls[__ceu_org->n-1].evt = CEU_IN__NONE;
+]])
 
-        /* push my continuation */
+        if me.tag == 'Free' then
+            -- only if freeing someone else
+            LINE(me, [[
+        /* save my continuation */
         _ceu_cur_.trl->evt = CEU_IN__ANY;
         _ceu_cur_.trl->stk = _ceu_stk_;
         _ceu_cur_.trl->lbl = ]]..me.lbl_clr.id..[[;
-        _CEU_STK_[_ceu_stk_++] = _ceu_evt_;
+]])
+        end
 
+        LINE(me, [[
         /* clear all __ceu_org from its parent  [ par_trl, par_trl+1 [ */
         /* this will call free() */
         _ceu_cur_.org  = _ceu_clr_org_ = __ceu_org->par_org;
         _ceu_cur_.trl  = __ceu_org->par_trl;
         _ceu_clr_trlF_ = __ceu_org->par_trl + 1;
+
+        _CEU_STK_[_ceu_stk_++] = _ceu_evt_;
         _ceu_evt_.id   = CEU_IN__CLR;
         goto _CEU_CALLTRL_;
     }
