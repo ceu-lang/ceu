@@ -1,7 +1,9 @@
-function SAME (me, sub)
+-- TODO: eliminar me.has.*
+
+function OR (me, sub)
     sub = sub or me[#me]
     for k,v in pairs(sub.has) do
-        me.has[k] = v
+        me.has[k] = me.has[k] or v
     end
 end
 
@@ -21,7 +23,6 @@ _PROPS = {
     has_wclocks = false,
     has_ints    = false,
     has_asyncs  = false,
-    has_fins    = false,
     has_orgs    = false,
     has_news    = false,
     has_ifcs    = false,
@@ -59,12 +60,11 @@ F = {
         OR_all(me)
     end,
 
-    Pause = SAME,
+    Pause = OR,
 
     Node_pre = function (me)
         me.has = {
             fins = false,
-            orgs = false,
             news = false,   -- extra trail for dyns in blocks
         }
     end,
@@ -86,20 +86,18 @@ F = {
     end,
 
     Block = function (me)
-        SAME(me)
+        OR(me)
 
         me.needs_clr = me.fins or me.has.news   -- or var.cls below
 
         if me.fins then
             _PROPS.has_clear = true
-            _PROPS.has_fins = true
             me.has.fins = true
         end
 
         -- one trail for each org
         for _, var in ipairs(me.vars) do
             if var.cls then
-                me.has.news = me.has.news or var.cls.has.news
                 me.has.fins = me.has.fins or var.cls.has.fins
                 me.needs_clr = true
                 _PROPS.has_clear = true     -- TODO: too conservative
@@ -123,7 +121,7 @@ F = {
         if me.is_ifc then
             _PROPS.has_ifcs = true
         else
-            SAME(me)
+            OR(me)
         end
     end,
 
@@ -133,8 +131,6 @@ F = {
 
     Dcl_var = function (me)
         if me.var.cls then
-            me.has.orgs = true
-            me.has.news = me.var.cls.has.news
             if _AST.iter'BlockI'() then
                 CLS().has_init = true   -- code for init (before constr)
             end
@@ -146,10 +142,10 @@ F = {
         _PROPS.has_clear = true
     end,
     SetNew = function (me)
-        SAME(me, me.cls)
+        OR(me, me.cls)
         _PROPS.has_news = true
         _PROPS.has_clear = true
-        me.has.news = true
+        me.blk.has.news = true
         me.has.fins = me.cls.has.fins   -- forces needs_clr (TODO: needs.clr?)
         ASR(not _AST.iter'BlockI'(), me,
                 'not permitted inside an interface')

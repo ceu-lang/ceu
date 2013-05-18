@@ -32,6 +32,16 @@ F = {
 
         ASR(me.trails_n < 256, me, 'too many trails')
     end,
+    Dcl_var = function (me)
+        if me.var.cls then
+            me.var.blk.trl_orgs = true
+        end
+    end,
+
+    SetNew = function (me)
+        me.blk.trl_dyns = true
+    end,
+    Spawn = 'SetNew',
 
     Block = function (me)
         MAX_all(me)
@@ -50,7 +60,7 @@ F = {
         end
 
         -- pointer to my first dyn-org child
-        if me.has.news then
+        if me.trl_dyns then
             me.trails_n = me.trails_n + 1
         end
     end,
@@ -111,7 +121,7 @@ G = {
 
         -- DYNS (pointer to the first alloc'd org here)
         -- (this is not the linked list from my parent)
-        if me.has_news then
+        if me.trl_dyns then
             me.dyn_trails = { t0, t0 }
                 t0 = t0 + 1
         end

@@ -128,7 +128,7 @@ function CLEAR (me)
 }
 _CEU_STK_[_ceu_stk_++] = _ceu_evt_;
 
-/* [ trails[1]+1, trails[2] ) */
+/* [ trails[1]+1, trails[2] [ */
 _ceu_cur_.trl = &CEU_CUR->trls[ ]]..(me.trails[1]+1)..[[ ];  /* trails[1]+1 is in */
 #ifdef CEU_ORGS
 _ceu_clr_org_  = _ceu_cur_.org;
