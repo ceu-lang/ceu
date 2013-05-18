@@ -53,6 +53,17 @@ function NEEDS_CLR (top)
     end
 end
 
+function HAS_FINS ()
+    for n in _AST.iter() do
+        if n.tag == 'Block'    or
+           n.tag == 'ParOr'    or
+           n.tag == 'Loop'     or
+           n.tag == 'SetBlock' then
+            n.needs_clr_fin = true
+        end
+    end
+end
+
 F = {
     Node_pos = function (me)
         if NO_fin[me.tag] then
@@ -70,8 +81,8 @@ F = {
 
     Block_pre = function (me)       -- _pre: break/return depends on it
         if me.fins then
-            CLS().needs_clr = true
             me.needs_clr = true
+            me.needs_clr_fin = true
             _PROPS.has_clear = true
         end
 
@@ -81,6 +92,10 @@ F = {
                 _PROPS.has_clear = true
                 break
             end
+        end
+
+        if me.needs_clr then
+            HAS_FINS()  -- TODO (-ROM): could avoid ors w/o fins
         end
     end,
     Free = function (me)

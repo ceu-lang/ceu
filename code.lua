@@ -108,15 +108,12 @@ function CLEAR (me)
     end
 
     -- check if top will clear during same reaction
---[[
-    -- TODO (-ROM): join consecutive CLR
-    if (not me.has.fins) and _ANA then   -- fin must execute before any stmt
+    if (not me.needs_clr_fin) and _ANA then   -- fin must execute before any stmt
         local top = _AST.iter(_iter)()
         if top and _ANA.CMP(top.ana.pos, me.ana.pos) then
             return  -- top will clear
         end
     end
-]]
 
     --LINE(me, 'ceu_trails_clr('..me.trails[1]..','..me.trails[2]..
                                 --', _ceu_cur_.org);')
