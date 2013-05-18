@@ -25,9 +25,10 @@ F = {
     Dcl_cls = function (me)
         MAX_all(me)
 
-        -- pointer to next dyn-org from my parent block
-        if me.is_instantiable then
-            me.trails_n = me.trails_n + 1
+        -- pointer to next org or parent/trail
+        -- [ IN__ORG_? | org | trl ]
+        if me ~= _MAIN then
+            me.trails_n = me.trails_n + 3
         end
 
         ASR(me.trails_n < 256, me, 'too many trails')
@@ -39,7 +40,7 @@ F = {
     end,
 
     SetNew = function (me)
-        me.blk.trl_dyns = true
+        me.blk.trl_orgs = true
     end,
     Spawn = 'SetNew',
 
@@ -51,17 +52,10 @@ F = {
             me.trails_n = me.trails_n + 1
         end
 
-        -- TODO: share single trail and use linked list (as for DYN orgs)
-        -- one trail for each org
-        for _, var in ipairs(me.vars) do
-            if var.cls then
-                me.trails_n = me.trails_n + (var.arr or 1)
-            end
-        end
-
-        -- pointer to my first dyn-org child
-        if me.trl_dyns then
-            me.trails_n = me.trails_n + 1
+        -- pointer to my first org
+        -- [ IN__ORG_DOWN | org ]
+        if me.trl_orgs then
+            me.trails_n = me.trails_n + 2
         end
     end,
 
@@ -99,7 +93,7 @@ G = {
     Block_pre = function (me)
         local blk = unpack(me)
 
-        -- [ B, 1, O, 1 ] (blk, fin, orgs, dyns)
+        -- [ B, 2, 1 ] (blk, orgs, fin)
 
         me.trails = me.trails or _AST.iter(pred)().trails
 
@@ -109,26 +103,17 @@ G = {
         blk.trails = { t0, t0+blk.trails_n-1 }
             t0 = t0 + blk.trails_n
 
--- TODO: stk as dyns? (use nxt, prv?)
-
-        -- ORGS
-        for _, var in ipairs(me.vars) do
-            if var.cls then
-                var.trails = { t0, t0+(var.arr or 1)-1 }
-                    t0 = t0 + (var.arr or 1)
-            end
-        end
-
-        -- DYNS (pointer to the first alloc'd org here)
+        -- ORGS (pointer to the first org here)
         -- (this is not the linked list from my parent)
-        if me.trl_dyns then
-            me.dyn_trails = { t0, t0 }
-                t0 = t0 + 1
+        -- [ IN__ORGS_DOWN | org ]
+        if me.trl_orgs then
+            me.trl_orgs = { t0, t0+1 }
+                t0 = t0 + 2
         end
 
         -- FINS (must be the last to proper nest fins)
         if me.fins then
-            me.fins.trails  = { t0, t0  }
+            me.trl_fins  = { t0, t0  }
                 t0 = t0 + 1
         end
     end,

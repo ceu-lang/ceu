@@ -71,19 +71,15 @@ typedef === TCEU_NCLS === tceu_ncls;    /* (x) number of instances */
 
 #define CEU_MAX_STACK   255     /* TODO */
 
-/* TODO: 8 bytes!!! */
-typedef union {
-    tceu_nevt evt;
+typedef union tceu_trl {
     struct {
-        tceu_nevt evt1;
+        tceu_nevt evt;      /* TODO (-RAM): 2bytes */
         tceu_nlbl lbl;
         u8        stk;
     };
 #ifdef CEU_ORGS
-    struct {
-        tceu_nevt        evt2;
-        struct tceu_org* org;
-    };
+    struct tceu_org* org;
+    union  tceu_trl* trl;
 #endif
 } tceu_trl;
 
@@ -264,31 +260,54 @@ void ceu_segfault (int sig_num) {
 
 /**********************************************************************/
 
-void ceu_org_init (tceu_org* org, int n, int lbl)
+void ceu_org_init (tceu_org* org, int n, int lbl,
+                   tceu_org* par_org, tceu_trl* par_trl)
 {
     /* { evt=0, stk=0, lbl=0 } for all trails */
 #ifdef CEU_ORGS
     org->n = n;
 #endif
     memset(&org->trls, 0, n*sizeof(tceu_trl));
-    {
-        /* trls[0] == blk.trails[1] */
-        org->trls[0].evt = CEU_IN__ANY;
-        org->trls[0].lbl = lbl;
-        org->trls[0].stk = CEU_MAX_STACK;
+
+    /* org.trls[0] == org.blk.trails[1] */
+    org->trls[0].evt = CEU_IN__ANY;
+    org->trls[0].lbl = lbl;
+    org->trls[0].stk = CEU_MAX_STACK;
+
+#ifdef CEU_ORGS
+    if (par_org == NULL)
+        return;
+
+    /* link org->par */
+    org->trls[org->n-3].evt = CEU_IN__ORG_UP;
+    org->trls[org->n-2].org = par_org;
+    org->trls[org->n-1].trl = par_trl+2;    /* jump [DOWN|ORG]
+/*fprintf(stderr, "up[%p] %p %p\n", &org->trls[org->n-2], par_org,par_trl);*/
+
+    /* traverse parent linked list */
+    while (par_trl[0].evt != CEU_IN__NONE &&
+           par_trl[1].org != par_org) {
+        par_trl = &par_trl[1].org->trls[ par_trl[1].org->n-3 ];
     }
+    /* link last->org */
+    par_trl[0].evt = CEU_IN__ORG_DOWN;
+    par_trl[1].org = org;
+#endif
 }
+#ifndef CEU_ORGS
+#define ceu_org_init(a,b,c,d,e) ceu_org_init(a,b,c,NULL,NULL)
+#endif
 
 /**********************************************************************/
 
 void ceu_pause (tceu_trl* trl, tceu_trl* trlF, int psed) {
     do {
         if (psed) {
-            if (trl->evt == CEU_IN__ORG)
-                trl->evt = CEU_IN__ORG_PSED;
+            if (trl->evt == CEU_IN__ORG_DOWN)
+                trl->evt = CEU_IN__ORG_DOWN_PSED;
         } else {
-            if (trl->evt == CEU_IN__ORG_PSED)
-                trl->evt = CEU_IN__ORG;
+            if (trl->evt == CEU_IN__ORG_DOWN_PSED)
+                trl->evt = CEU_IN__ORG_DOWN;
         }
     } while (++trl <= trlF);
 
@@ -308,7 +327,7 @@ void ceu_go_init ()
 #ifdef CEU_NEWS
     === CLSS_INIT ===
 #endif
-    ceu_org_init((tceu_org*)&CEU.mem, CEU_NTRAILS, Class_Main);
+    ceu_org_init((tceu_org*)&CEU.mem, CEU_NTRAILS, Class_Main, NULL, NULL);
     ceu_go(CEU_IN__INIT, NULL);
 }
 
@@ -460,6 +479,16 @@ fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
 #endif
         for (;;)    /* TRL */
         {
+            /* check if all trails have been traversed */
+            if (
+#ifdef CEU_ORGS
+                _ceu_cur_.org == (tceu_org*)&CEU.mem &&
+#endif
+                _ceu_cur_.trl == &CEU_CUR->trls[CEU_NTRAILS]
+            ) {
+                break;
+            }
+
 #ifdef CEU_CLEAR
             /* clr is bounded to _trlF_ (set by code.lua) */
             if (
@@ -481,106 +510,47 @@ fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
             }
 #endif
 
-            /* check if all trails have been traversed */
-            /* traverse next org if applicable */
-
-            /* org has been traversed to the end? */
-            if (_ceu_cur_.trl ==
-                &CEU_CUR->trls[
-#ifdef CEU_ORGS
-                    CEU_CUR->n
-#else
-                    CEU_NTRAILS
-#endif
-                ])
-            {
-#ifdef CEU_ORGS
-                tceu_trl* PAR_trl = CEU_CUR->par_trl;
-                tceu_org* PAR_org = CEU_CUR->par_org;
-
-#ifdef CEU_CLEAR
-                /* I have been cleared to the end from my parent: FREE ME! */
-                if ( _ceu_evt_.id  == CEU_IN__CLR &&
-                     _ceu_clr_org_ != CEU_CUR )
-                {
-#ifdef CEU_NEWS
-                    if (CEU_CUR->isDyn) {
-                        /* re-link UP <-> DOWN */
-                        tceu_trl* down = &CEU_CUR->trls[CEU_CUR->n-1];
-
-                        /* HACK_1 (see code.lua) */
-                        /* test org!=NULL instead of evt==CEU_IN__ORG */
-                        if (down->org != NULL) {
-                            PAR_trl->org = down->org;
-                            down->org->par_org = PAR_org;
-                            down->org->par_trl = PAR_trl;
-                        } else {
-                            PAR_trl->evt = CEU_IN__NONE;
-                            PAR_trl->org = NULL;
-                        }
-
-                        {   /* FREE */
-                            /* TODO: check if needed? (freed manually?) */
-                            /*fprintf(stderr, "FREE: %p\n", CEU_CUR);*/
-                            === CLSS_FREE ===
-                            /* else */
-                                free(CEU_CUR);
-#ifdef CEU_RUNTESTS
-                                _ceu_dyns_--;
-#endif
-                        }
-                    } else
-#endif /* CEU_NEWS */
-                    {
-                            /* TODO: duplicated form above */
-                            PAR_trl->evt = CEU_IN__NONE;
-                            PAR_trl->org = NULL;
-                    }
-                }
-#endif /* CEU_CLEAR */
-
-                /* traverse next org */
-                /* restart from parent org, same trail */
-                if (CEU_CUR != (tceu_org*)&CEU.mem) {
-                    _ceu_cur_.trl = PAR_trl;
-                    _ceu_cur_.trl++;     /* X->Y [ X | org | Y ] */
-                    _ceu_cur_.org = PAR_org;
-                    goto _CEU_CALLTRL_;
-                }
-                else
-#endif /* CEU_ORGS */
-                {
-                    break;  /* reached CEU.mem: terminate current stack */
-                }
-            }
-
             /* continue traversing CUR org */
             /* TODO: rewrite these if's / fatorate */
-
             {
+                /* TODO: marco? */
                 tceu_trl* trl = _ceu_cur_.trl;
 
 #ifdef CEU_DEBUG_TRAILS
 #ifdef CEU_ORGS
-if (trl->evt == CEU_IN__ORG)
+if (trl->evt==CEU_IN__ORG_DOWN || trl->evt==CEU_IN__ORG_UP)
     fprintf(stderr, "\tTRY [%p] : evt=%d org=%p\n",
-                    trl, trl->evt, trl->org);
+                    trl, trl->evt, (trl+1)->org);
 else
 #endif
 fprintf(stderr, "\tTRY [%p] : evt=%d stk=%d lbl=%d\n",
                     trl, trl->evt, trl->stk, trl->lbl);
 #endif
 
-                /* jump into inner orgs */
 #ifdef CEU_ORGS
-                if ( (trl->evt == CEU_IN__ORG)
-                  || (trl->evt==CEU_IN__ORG_PSED && _ceu_evt_.id==CEU_IN__CLR) )
+                /* jump into down orgs */
+                if ( (trl->evt == CEU_IN__ORG_DOWN)
+                  || (trl->evt==CEU_IN__ORG_DOWN_PSED && _ceu_evt_.id==CEU_IN__CLR) )
                 {
-#ifdef CEU_DEBUG
-                    assert(trl->org != NULL);
-#endif
-                    _ceu_cur_.org = trl->org;
+                    _ceu_cur_.org = (trl+1)->org;
+                    if (_ceu_evt_.id == CEU_IN__CLR) {
+                        trl->evt     = CEU_IN__NONE;
+                        (trl+1)->evt = CEU_IN__NONE;
+                    }
                     goto _CEU_CALL_;
+                }
+/*
+=== CLSS_FREE ===
+*/
+
+                /* jump into up org */
+                if (trl->evt == CEU_IN__ORG_UP)
+                {
+                    _ceu_cur_.org = (trl+1)->org;
+                    _ceu_cur_.trl = (trl+2)->trl;
+/*fprintf(stderr, "UP[%p] %p %p\n", trl+1, _ceu_cur_.org, _ceu_cur_.trl);*/
+                    /* no need to clear if IN__CLR */
+                    goto _CEU_CALLTRL_;
                 }
 #endif
 
@@ -613,6 +583,7 @@ fprintf(stderr, "\tTRY [%p] : evt=%d stk=%d lbl=%d\n",
                 /* finally, execute this trail */
                 _ceu_cur_.lbl = trl->lbl;
             }
+
 _CEU_GOTO_:
 #ifdef CEU_DEBUG
     CEU.lst = _ceu_cur_;

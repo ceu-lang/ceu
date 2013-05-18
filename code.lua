@@ -238,28 +238,19 @@ end;
 ]])
             end
             LINE(me, [[
-    tceu_trl* par_trl = &(]]..t.par_trls..')['..(i-1)..']'..[[;
 #ifdef CEU_NEWS
     org->isDyn  = ]]..t.isDyn..[[;
     org->toFree = ]]..t.toFree..[[;
 #endif
 
-    /* reset org memory and do org.trail[0]=Class_XXX */
+    /* resets org memory and starts org.trail[0]=Class_XXX */
     /* links par <=> org */
     ceu_org_init(org, ]]
                 ..t.cls.trails_n..','
-                ..(t.cls.has_init and t.cls.lbl_init.id or t.cls.lbl.id)..[[);
-
-    /* par <=> org */
-    /* link org with the next trail in the block */
-    org->par_org = ]]..t.par_org..[[;
-    org->par_trl = par_trl;
-
-    /* enables parent trail with CEU_IN__ORG (always awake from now on) */
-    par_trl->evt = CEU_IN__ORG;
-    par_trl->org = org;
-
+                ..(t.cls.has_init and t.cls.lbl_init.id or t.cls.lbl.id)..[[,
+                CEU_CUR, CEU_CUR->trls+]]..t.par_trl_idx..[[);
 ]])
+
             if t.cls.has_init then
                 LINE(me, [[
     /* hold current blk trail: set to my continuation */
@@ -322,15 +313,14 @@ case ]]..me.lbls_cnt[i].id..[[:;
         end
 
         F._ORG(me, {
-            id       = var.id,
-            isDyn    = 0,
-            toFree   = 0,
-            cls      = var.cls,
-            par_org  = 'CEU_CUR',
-            par_trls = 'CEU_CUR->trls+'..var.trails[1],
-            val      = '&'..var.val,
-            constr   = constr,
-            arr      = var.arr,
+            id      = var.id,
+            isDyn   = 0,
+            toFree  = 0,
+            cls     = var.cls,
+            val     = '&'..var.val,
+            constr  = constr,
+            arr     = var.arr,
+            par_trl_idx = var.blk.trl_orgs[1],
         })
     end,
 
@@ -370,30 +360,18 @@ case ]]..me.lbls_cnt[i].id..[[:;
             LINE(me, '__ceu_'..me.n..' = (__ceu_org != NULL);')
         end
 
-        t.id       = 'dyn'
-        t.val      = '__ceu_org'
-        t.isDyn    = 1
-        t.par_org  = '__par_org'
-        t.par_trls = '__par_trl'
-        t.arr      = false
+        F._ORG(me, {
+            id      = 'dyn',
+            isDyn   = 1,
+            toFree  = t.toFree,
+            cls     = me.cls,
+            val     = '__ceu_org',
+            constr  = t.constr,
+            arr     = false,
+            par_trl_idx = me.blk.trl_orgs[1],
+        })
 
         LINE(me, [[
-    if (__ceu_org != NULL)
-    {
-        tceu_trl* __par_trl;    /* avr/arduino enforces this split */
-        tceu_org* __par_org;
-        __par_trl = &CEU_CUR->trls[ ]]..t.par_blk.dyn_trails[1]..[[ ];
-        __par_org = CEU_CUR;
-
-        /* TODO: =>func? */
-        while (__par_trl->evt != CEU_IN__NONE) {
-            __par_org = __par_trl->org;
-            __par_trl = &__par_org->trls[__par_org->n - 1];
-        }
-]])
-        F._ORG(me, t)
-        LINE(me, [[
-    }
 }
 ]])
     end,
@@ -401,8 +379,6 @@ case ]]..me.lbls_cnt[i].id..[[:;
     SetNew = function (me)
         local exp, _, constr = unpack(me)
         F._New(me, {
-            par_org = (exp.org and exp.org.val) or '_ceu_cur_.org',
-            par_blk = me.blk,
             val     = V(exp),
             cls     = me.cls,
             toFree  = 0,
@@ -413,10 +389,7 @@ case ]]..me.lbls_cnt[i].id..[[:;
     Spawn = function (me)
         local _, constr = unpack(me)
         F._New(me, {
-            par_org = '_ceu_cur_.org',
-            par_blk = me.blk,
             val     = nil,
-            cls     = me.cls,
             toFree  = 1,
             constr  = constr,
         })
@@ -512,9 +485,9 @@ case ]]..me.lbl_clr.id..[[:;
         if me.fins then
             LINE(me, [[
 /*  FINALIZE */
-CEU_CUR->trls[ ]]..me.fins.trails[1]..[[ ].evt = CEU_IN__CLR;
-CEU_CUR->trls[ ]]..me.fins.trails[1]..[[ ].lbl = ]]..me.lbl_fin.id..[[;
-CEU_CUR->trls[ ]]..me.fins.trails[1]..[[ ].stk = CEU_MAX_STACK;
+CEU_CUR->trls[ ]]..me.trl_fins[1]..[[ ].evt = CEU_IN__CLR;
+CEU_CUR->trls[ ]]..me.trl_fins[1]..[[ ].lbl = ]]..me.lbl_fin.id..[[;
+CEU_CUR->trls[ ]]..me.trl_fins[1]..[[ ].stk = CEU_MAX_STACK;
 ]])
             for _, fin in ipairs(me.fins) do
                 LINE(me, fin.val..' = 0;')

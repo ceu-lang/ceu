@@ -188,17 +188,22 @@ end
 F = {
     Root_pre = function (me)
         -- TODO: NONE=0
+        -- TODO: if _PROPS.* then ... end
 
         local evt = {id='_ANY', pre='input'}
         _ENV.exts[#_ENV.exts+1] = evt
         _ENV.exts[evt.id] = evt
 
         -- TODO: shared with _INIT?
-        local evt = {id='_ORG', pre='input'}
+        local evt = {id='_ORG_DOWN', pre='input'}
         _ENV.exts[#_ENV.exts+1] = evt
         _ENV.exts[evt.id] = evt
 
-        local evt = {id='_ORG_PSED', pre='input'}
+        local evt = {id='_ORG_UP', pre='input'}
+        _ENV.exts[#_ENV.exts+1] = evt
+        _ENV.exts[evt.id] = evt
+
+        local evt = {id='_ORG_DOWN_PSED', pre='input'}
         _ENV.exts[#_ENV.exts+1] = evt
         _ENV.exts[evt.id] = evt
 
