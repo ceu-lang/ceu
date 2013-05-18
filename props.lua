@@ -1,23 +1,3 @@
--- TODO: eliminar me.has.*
-
-function OR (me, sub)
-    sub = sub or me[#me]
-    for k,v in pairs(sub.has) do
-        me.has[k] = me.has[k] or v
-    end
-end
-
-function OR_all (me, t)
-    t = t or me
-    for _, sub in ipairs(t) do
-        if _AST.isNode(sub) then
-            for k,v in pairs(sub.has) do
-                me.has[k] = me.has[k] or v
-            end
-        end
-    end
-end
-
 _PROPS = {
     has_exts    = false,
     has_wclocks = false,
@@ -55,23 +35,26 @@ local NO_constr = {
     Pause=true,
 }
 
-F = {
-    Root = function (me)
-        OR_all(me)
-    end,
-
-    Pause = OR,
-
-    Node_pre = function (me)
-        me.has = {
-            fins = false,
-            news = false,   -- extra trail for dyns in blocks
-        }
-    end,
-    Node_pos = function (me)
-        if not F[me.tag] then
-            OR_all(me)
+-- Loop, SetBlock may need clear
+-- if break/return are in parallel w/ something
+--                  or inside block that needs_clr
+function NEEDS_CLR (top)
+    for n in _AST.iter() do
+        if n.tag == top.tag then
+            break
+        elseif n.tag == 'ParEver' or
+               n.tag == 'ParAnd'  or
+               n.tag == 'ParOr'   or
+               n.tag == 'Block' and n.needs_clr then
+            _PROPS.has_clear = true
+            top.needs_clr = true
+            break
         end
+    end
+end
+
+F = {
+    Node_pos = function (me)
         if NO_fin[me.tag] then
             ASR(not _AST.iter'Finally'(), me,
                 'not permitted inside `finalize´')
@@ -85,34 +68,79 @@ F = {
         end
     end,
 
-    Block = function (me)
-        OR(me)
-
-        me.needs_clr = me.fins or me.has.news   -- or var.cls below
-
+    Block_pre = function (me)       -- _pre: break/return depends on it
         if me.fins then
+            CLS().needs_clr = true
+            me.needs_clr = true
             _PROPS.has_clear = true
-            me.has.fins = true
         end
 
-        -- one trail for each org
         for _, var in ipairs(me.vars) do
             if var.cls then
-                me.has.fins = me.has.fins or var.cls.has.fins
                 me.needs_clr = true
-                _PROPS.has_clear = true     -- TODO: too conservative
+                _PROPS.has_clear = true
+                break
             end
         end
     end,
-    Stmts   = OR_all,
+    Free = function (me)
+        _PROPS.has_news = true
+        _PROPS.has_clear = true
+    end,
+    SetNew = function (me)
+        _PROPS.has_news = true
+        _PROPS.has_clear = true
+        me.blk.needs_clr = true
+        ASR(not _AST.iter'BlockI'(), me,
+                'not permitted inside an interface')
+    end,
+    Spawn = 'SetNew',
 
-    ParEver = 'ParOr',
-    ParAnd  = 'ParOr',
     ParOr = function (me)
-        OR_all(me)
-        if me.tag == 'ParOr' then
-            _PROPS.has_clear = true
-            me.needs_clr = true
+        me.needs_clr = true
+        _PROPS.has_clear = true
+    end,
+
+    Loop_pre = function (me)
+        me.brks = {}
+        me.noAwtsEmts = true
+    end,
+    Break = function (me)
+        local loop = _AST.iter'Loop'()
+        ASR(loop, me, 'break without loop')
+        loop.brks[me] = true
+        loop.has_break = true
+
+        NEEDS_CLR(loop)
+
+        local fin = _AST.iter'Finally'()
+        ASR(not fin or fin.depth<loop.depth, me,
+                'not permitted inside `finalize´')
+        -- TODO: same for return
+
+        local async = _AST.iter'Async'()
+        if async then
+            local loop = _AST.iter'Loop'()
+            ASR(loop.depth>async.depth, me, '`break´ without loop')
+        end
+    end,
+
+    SetBlock_pre = function (me)
+        me.rets = {}
+        ASR(not _AST.iter'BlockI'(), me,
+                'not permitted inside an interface')
+    end,
+    Return = function (me)
+        local blk = _AST.iter'SetBlock'()
+        blk.rets[me] = true
+        blk.has_return = true
+
+        NEEDS_CLR(blk)
+
+        local async = _AST.iter'Async'()
+        if async then
+            local setblk = _AST.iter'SetBlock'()
+            ASR(async.depth<=setblk.depth+1, me, '`return´ without block')
         end
     end,
 
@@ -120,8 +148,6 @@ F = {
         _PROPS.has_orgs = _PROPS.has_orgs or (me.id~='Main')
         if me.is_ifc then
             _PROPS.has_ifcs = true
-        else
-            OR(me)
         end
     end,
 
@@ -137,111 +163,13 @@ F = {
         end
     end,
 
-    Free = function (me)
-        _PROPS.has_news = true
-        _PROPS.has_clear = true
-    end,
-    SetNew = function (me)
-        OR(me, me.cls)
-        _PROPS.has_news = true
-        _PROPS.has_clear = true
-        me.blk.has.news = true
-        me.has.fins = me.cls.has.fins   -- forces needs_clr (TODO: needs.clr?)
-        ASR(not _AST.iter'BlockI'(), me,
-                'not permitted inside an interface')
-    end,
-    Spawn = 'SetNew',
-
     Async = function (me)
         _PROPS.has_asyncs = true
     end,
 
-    If = function (me)
-        local c, t, f = unpack(me)
-        OR_all(me, {t,f})
-    end,
-
-    ParOr_pre = function (me)
-        me.nd_join = true
-    end,
-
-    Loop_pre = function (me)
-        F.ParOr_pre(me)
-        me.brks = {}
-        me.noAwtsEmts = true
-    end,
-    Break = function (me)
-        local loop = _AST.iter'Loop'()
-        ASR(loop, me, 'break without loop')
-        loop.brks[me] = true
-        loop.has_break = true
-
-        -- loops w/ breaks in parallel needs CLEAR
-        for n in _AST.iter() do
-            if n.tag == 'Loop' then
-                break
-            elseif n.tag == 'ParEver' or
-                   n.tag == 'ParAnd' or
-                   n.tag == 'ParOr' then
-                _PROPS.has_clear = true
-                loop.needs_clr = true
-                break
-            end
-        end
-
-        local fin = _AST.iter'Finally'()
-        ASR(not fin or fin.depth<loop.depth, me,
-                'not permitted inside `finalize´')
-        -- TODO: same for return
-
-        local async = _AST.iter'Async'()
-        if async then
-            local loop = _AST.iter'Loop'()
-            ASR(loop.depth>async.depth, me, '`break´ without loop')
-        end
-    end,
-
-    Loop_pos = function (me)
-        F.Node_pos(me)
-        me.needs_clr = me.needs_clr or me.has.fins
-        me.needs_clr = me.needs_clr or me.has.news
-    end,
-    SetBlock_pos = 'Loop_pos',
-
-    SetBlock_pre = function (me)
-        F.ParOr_pre(me)
-        me.rets = {}
-        ASR(not _AST.iter'BlockI'(), me,
-                'not permitted inside an interface')
-    end,
-    Return = function (me)
-        local blk = _AST.iter'SetBlock'()
-        blk.rets[me] = true
-        blk.has_return = true
-
-        -- setblock w/ returs in parallel needs CLEAR
-        for n in _AST.iter() do
-            if n.tag == 'SetBlock' then
-                break
-            elseif n.tag == 'ParEver' or
-                   n.tag == 'ParAnd' or
-                   n.tag == 'ParOr' then
-                _PROPS.has_clear = true
-                blk.needs_clr = true
-                break
-            end
-        end
-
-        local async = _AST.iter'Async'()
-        if async then
-            local setblk = _AST.iter'SetBlock'()
-            ASR(async.depth<=setblk.depth+1, me, '`return´ without block')
-        end
-    end,
-
     _loop = function (me)
         for loop in _AST.iter'Loop' do
-            loop.noAwtsEmts = false
+            loop.noAwtsEmts = false     -- TODO: move to tmps.lua
 
             if loop.isEvery then
                 ASR(me.isEvery, me,
