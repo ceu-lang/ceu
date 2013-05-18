@@ -100,8 +100,6 @@ return 1;
     run = 1,
 }
 
-do return end
-
 Test { [[
 break;
 ]],
@@ -16213,6 +16211,7 @@ native do
 end
 return sizeof<_aaa> + _SZ;
 ]],
+    todo = 'sizeof',
     run = 28,   -- TODO: different packings
 }
 
@@ -16325,6 +16324,7 @@ native _message_t = 52;
 native _t = sizeof<_message_t, u8>;
 return sizeof<_t>;
 ]],
+    todo = 'sizeof',
     run = 53,
 }
 
@@ -18267,6 +18267,48 @@ return ret;
     },
 }
 
+Test { [[
+input void START;
+input void F;
+native _V;
+native do
+    int V = 0;
+end
+native nohold _fprintf(), _stderr;
+class T1 with
+    event void ok;
+do
+    await 1s;
+    _V = _V + 2;
+    emit ok;
+    _V = _V + 1000;
+end
+class T with
+    event void ok;
+do
+    do
+        var T1 a;
+        await a.ok;
+        _V = _V * 2;
+    end
+    await 1s;
+    _V = _V + 1;
+end
+do
+    var T aa;
+    await F;
+    _V = _V * 2;
+end
+return _V;
+]],
+    run = {
+        ['~>F;~>5s;~>F'] = 0,
+        ['~>1s;~>F;~>F;~>1s'] = 8,
+        ['~>1s;~>F;~>1s;~>F'] = 8,
+        ['~>1s;~>1s;~>F'] = 10,
+    },
+    --run = { ['~>1s']=0 },
+}
 Test { [[
 input void START;
 input void F;
@@ -22463,19 +22505,15 @@ end
 
 var T t;
 var U u;
-native nohold _fprintf(), _stderr;
-_fprintf(_stderr, "[1] %d vs %d\n", t.v, u.v);
 var I* i = &t;
 input void START;
 await START;
 i:_f(100);
-_fprintf(_stderr, "[2] %d vs %d\n", t.v, u.v);
 var int ret = i:v;
 
 i=&u;
 i:_f(200);
 
-_fprintf(_stderr, "[2] %d vs %d\n", t.v, u.v);
 return ret + i:v;
 ]],
     run = 630,

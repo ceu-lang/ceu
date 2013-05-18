@@ -133,8 +133,7 @@ _ceu_cur_.trl = &CEU_CUR->trls[ ]]..(me.trails[1]+1)..[[ ];  /* trails[1]+1 is i
 #ifdef CEU_ORGS
 _ceu_clr_org_  = _ceu_cur_.org;
 #endif
-_ceu_clr_trlF_ = &CEU_CUR->trls[ ]]..(me.trails[2]+1)..[[ ]; /* trails[2]+1 is out 
-*/
+_ceu_clr_trlF_ = &CEU_CUR->trls[ ]]..(me.trails[2]+1)..[[ ]; /* trails[2]+1 is out */
 _ceu_evt_.id = CEU_IN__CLR;
 goto _CEU_CALLTRL_;
 
@@ -480,7 +479,7 @@ case ]]..me.lbls_cnt[i].id..[[:;
         _ceu_clr_trlF_ = __ceu_org->par_trl + 1;
 
         _CEU_STK_[_ceu_stk_++] = _ceu_evt_;
-        _ceu_evt_.id   = CEU_IN__CLR;
+        _ceu_evt_.id = CEU_IN__CLR;
         goto _CEU_CALLTRL_;
     }
 }

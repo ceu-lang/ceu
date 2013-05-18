@@ -411,12 +411,15 @@ void ceu_go (int __ceu_id, tceu_param* __ceu_p)
     tceu_evt _ceu_evt_;       /* current stack entry */
     tceu_lst _ceu_cur_;       /* current listener */
 
+    /* they are always set when _ceu_evt_.id=CEU_IN__CLR
+     * no need to protect them with NULLs
+     * however assignments avoid warning on nescc
+     */
 #ifdef CEU_CLEAR
-    /* TODO: assignments avoid warning but are not needed */
 #ifdef CEU_ORGS
-    void* _ceu_clr_org_=NULL;      /* stop at this org */
+    void* _ceu_clr_org_ = NULL;      /* stop at this org */
 #endif
-    tceu_trl* _ceu_clr_trlF_=NULL; /*      at this trl */
+    tceu_trl* _ceu_clr_trlF_ = NULL; /*      at this trl */
 #endif
 
     /* ceu_go_init(): nobody awaiting, jump reset */
@@ -464,8 +467,16 @@ fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
 #ifdef CEU_ORGS
             &&  (_ceu_clr_org_ == CEU_CUR)
 #endif
-            &&  (_ceu_cur_.trl == _ceu_clr_trlF_)
+            &&  (_ceu_clr_trlF_ == _ceu_cur_.trl)
             ) {
+/*
+ * they are always set when _ceu_evt_.id=CEU_IN__CLR
+ * no need to protect them
+#ifdef CEU_ORGS
+                _ceu_clr_org_  = NULL;
+#endif
+                _ceu_clr_trlF_ = NULL;
+*/
                 break;
             }
 #endif
@@ -484,62 +495,66 @@ fprintf(stderr, "GO: evt=%d stk=%d\n", _ceu_evt_.id, _ceu_stk_);
                 ])
             {
 #ifdef CEU_ORGS
-                /* check for next org */
-                if (CEU_CUR != (tceu_org*)&CEU.mem) {
-                    tceu_org* PAR = CEU_CUR->par_org;
-                    _ceu_cur_.trl = CEU_CUR->par_trl;
-                    _ceu_cur_.trl++;     /* X->Y [ X | org | Y ] */
-#ifdef CEU_CLEAR
-                    if (_ceu_evt_.id == CEU_IN__CLR) {
-#ifdef CEU_NEWS
-                        /* re-link UP <-> DOWN */
-                        if (CEU_CUR->isDyn)
-                        {
-                            tceu_trl* down = &CEU_CUR->trls[CEU_CUR->n-1];
+                tceu_trl* PAR_trl = CEU_CUR->par_trl;
+                tceu_org* PAR_org = CEU_CUR->par_org;
 
-                            /* HACK_1 (see code.lua) */
-                            /* test org!=NULL instead of evt==CEU_IN__ORG */
-                            if (down->org != NULL) {
-                                CEU_CUR->par_trl->org = down->org;
-                                down->org->par_org = CEU_CUR->par_org;
-                                down->org->par_trl = CEU_CUR->par_trl;
-                            } else {
-                                CEU_CUR->par_trl->evt = CEU_IN__NONE;
-                                CEU_CUR->par_trl->org = NULL;
-                            }
-                            /* free if "dyn" and completelly traversed */
-                            if (_ceu_clr_org_ != _ceu_cur_.org) {
-/*fprintf(stderr, "FREE: %p\n", CEU_CUR);*/
-                                === CLSS_FREE ===
-                                /* else */
-                                free(CEU_CUR);      /* TODO: check if needed */
+#ifdef CEU_CLEAR
+                /* I have been cleared to the end from my parent: FREE ME! */
+                if ( _ceu_evt_.id  == CEU_IN__CLR &&
+                     _ceu_clr_org_ != CEU_CUR )
+                {
+#ifdef CEU_NEWS
+                    if (CEU_CUR->isDyn) {
+                        /* re-link UP <-> DOWN */
+                        tceu_trl* down = &CEU_CUR->trls[CEU_CUR->n-1];
+
+                        /* HACK_1 (see code.lua) */
+                        /* test org!=NULL instead of evt==CEU_IN__ORG */
+                        if (down->org != NULL) {
+                            PAR_trl->org = down->org;
+                            down->org->par_org = PAR_org;
+                            down->org->par_trl = PAR_trl;
+                        } else {
+                            PAR_trl->evt = CEU_IN__NONE;
+                            PAR_trl->org = NULL;
+                        }
+
+                        {   /* FREE */
+                            /* TODO: check if needed? (freed manually?) */
+                            /*fprintf(stderr, "FREE: %p\n", CEU_CUR);*/
+                            === CLSS_FREE ===
+                            /* else */
+                                free(CEU_CUR);
 #ifdef CEU_RUNTESTS
                                 _ceu_dyns_--;
 #endif
-                            }
                         }
-                        else
-#endif
-                        {
-                                /* TODO: repeated from above */
-                                CEU_CUR->par_trl->evt = CEU_IN__NONE;
-                                CEU_CUR->par_trl->org = NULL;
-                        }
+                    } else
+#endif /* CEU_NEWS */
+                    {
+                            /* TODO: duplicated form above */
+                            PAR_trl->evt = CEU_IN__NONE;
+                            PAR_trl->org = NULL;
                     }
-#endif
-                    /* restart from parent org, same trail */
-                    /* _ceu_cur_.trl=CEU_CUR->par_trl; // already set above */
-                    _ceu_cur_.org = PAR;
+                }
+#endif /* CEU_CLEAR */
+
+                /* traverse next org */
+                /* restart from parent org, same trail */
+                if (CEU_CUR != (tceu_org*)&CEU.mem) {
+                    _ceu_cur_.trl = PAR_trl;
+                    _ceu_cur_.trl++;     /* X->Y [ X | org | Y ] */
+                    _ceu_cur_.org = PAR_org;
                     goto _CEU_CALLTRL_;
                 }
                 else
-#endif
+#endif /* CEU_ORGS */
                 {
                     break;  /* reached CEU.mem: terminate current stack */
                 }
             }
 
-            /* continue traversing it */
+            /* continue traversing CUR org */
             /* TODO: rewrite these if's / fatorate */
 
             {
@@ -586,7 +601,9 @@ fprintf(stderr, "\tTRY [%p] : evt=%d stk=%d lbl=%d\n",
 
                     /* reset event */
                     if (_ceu_evt_.id == CEU_IN__ANY) {
-                        trl->stk = CEU_MAX_STACK;
+/* TODO: this test should not be required!!! */
+                        if (trl->evt != CEU_IN__NONE)
+                            trl->stk = CEU_MAX_STACK;
                     }
 
                     if (! run)
