@@ -580,7 +580,7 @@ fprintf(stderr, "\tTRY [%p] : evt=%d stk=%d lbl=%d\n",
 #ifdef CEU_PSES
 /* TODO */
                 if (trl->evt == CEU_IN__ORG_PAR_PSED) {
-fprintf(stderr, "JUMP\n");
+/*fprintf(stderr, "JUMP\n");*/
                     _ceu_cur_.trl += 2;
                     goto _CEU_NEXT_;
                 }
@@ -606,9 +606,9 @@ fprintf(stderr, "JUMP\n");
 
                         /* I was the only one */
                         if (prv == nxt) {
-fprintf(stderr,"was only: %p %p (%d/%d)\n", CEU_CUR, 
+/*fprintf(stderr,"was only: %p %p (%d/%d)\n", CEU_CUR, 
                             &nxt->trls[_ceu_cur_.trl->idx-3],
-                            trl->idx,trl->evt);
+                            trl->idx,trl->evt);*/
                             nxt->trls[ _ceu_cur_.trl->idx-3 ].evt = CEU_IN__NONE;
                             nxt->trls[ _ceu_cur_.trl->idx-2 ].org = NULL; /* fst */
                             nxt->trls[ _ceu_cur_.trl->idx-1 ].org = NULL; /* lst */
@@ -616,8 +616,8 @@ fprintf(stderr,"was only: %p %p (%d/%d)\n", CEU_CUR,
 
                         /* I was the last one */
                         if (_ceu_cur_.trl->evt == CEU_IN__ORG_LST) {
-fprintf(stderr,"was last: %p -> %p\n", prv, CEU_CUR);
-fprintf(stderr,"was last: %p -> %p\n", prv, nxt);
+/*fprintf(stderr,"was last: %p -> %p\n", prv, CEU_CUR);*/
+/*fprintf(stderr,"was last: %p -> %p\n", prv, nxt);*/
                             prv->nxt = nxt;
                             prv->trls[prv->n-1].evt = CEU_IN__ORG_LST;
                             prv->trls[prv->n-1].idx = _ceu_cur_.trl->idx;
@@ -626,9 +626,9 @@ fprintf(stderr,"was last: %p -> %p\n", prv, nxt);
 
                         /* I was the first one */
                         if (_ceu_cur_.trl->evt == CEU_IN__ORG_FST) {
-fprintf(stderr,"was first: %p\n", CEU_CUR);
-fprintf(stderr,"...[%p]: %p=>%p\n", &prv->trls[_ceu_cur_.trl->idx-3],
-                                     CEU_CUR, nxt);
+/*fprintf(stderr,"was first: %p\n", CEU_CUR);*/
+/*fprintf(stderr,"...[%p]: %p=>%p\n", &prv->trls[_ceu_cur_.trl->idx-3],
+                                     CEU_CUR, nxt);*/
                             nxt->prv = prv;
 /* TODO */
                             if (nxt->trls[nxt->n-1].evt != CEU_IN__ORG_LST)
@@ -638,7 +638,7 @@ fprintf(stderr,"...[%p]: %p=>%p\n", &prv->trls[_ceu_cur_.trl->idx-3],
 
                         /* I was in the middle */
                         else {
-fprintf(stderr,"was mid\n");
+/*fprintf(stderr,"was mid\n");*/
                             prv->nxt = nxt;
                             nxt->prv = prv;
                         }
@@ -646,7 +646,7 @@ fprintf(stderr,"was mid\n");
                         /* FREE */
                         {
                             /* TODO: check if needed? (freed manually?) */
-                            fprintf(stderr, "FREE: %p\n", CEU_CUR);
+                            /*fprintf(stderr, "FREE: %p\n", CEU_CUR);*/
                             === CLSS_FREE ===
                             /* else */
                                 free(CEU_CUR);

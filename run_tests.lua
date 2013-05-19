@@ -143,7 +143,7 @@ end
         ceu:write(str_all)
         ceu:close()
         assert(os.execute(CEU))
-        assert(os.execute('gcc -g -DCEU_DEBUG '..VER..' -o ceu.exe main.c') == 0)
+        assert(os.execute('gcc -DCEU_DEBUG '..VER..' -o ceu.exe main.c') == 0)
         local ret = io.popen(EXE):read'*a'
         assert(not string.find(ret, '==%d+=='), 'valgrind error')
         ret = string.match(ret, 'END: (.-)\n')
@@ -170,7 +170,7 @@ end
             ceu:write(all)
             ceu:close()
             assert(os.execute(CEU))
-            assert(os.execute('gcc -g -DCEU_DEBUG '..VER..' -o ceu.exe main.c') == 0)
+            assert(os.execute('gcc -DCEU_DEBUG '..VER..' -o ceu.exe main.c') == 0)
             local ret = io.popen(EXE):read'*a'
             assert(not string.find(ret, '==%d+=='), 'valgrind error')
             ret = string.match(ret, 'END: (%-?%d+)')
@@ -208,7 +208,7 @@ sys	0m21.989s
 assert(STATS.count  ==    1211)
 assert(STATS.mem    ==       0)
 assert(STATS.trails ==    2606)
-assert(STATS.bytes  == 11935786)
+assert(STATS.bytes  == 6993440)
 
 do return end
 
