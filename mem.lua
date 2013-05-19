@@ -105,6 +105,11 @@ DBG('===', me.id, me.trails_n, '('..tostring(me.pool)..')')
 
         cls.struct = cls.struct..SPC()..'struct { /* BLOCK ln='..me.ln..' */\n'
 
+        if me.trl_orgs then
+            cls.struct = cls.struct .. SPC()
+                            ..'tceu_lnk __lnks_'..me.n..'[2];\n'
+        end
+
         if me.fins then
             for i=1, #me.fins do
             cls.struct = cls.struct .. SPC()

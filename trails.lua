@@ -53,9 +53,9 @@ F = {
         end
 
         -- pointer to my first org
-        -- [ IN__ORG_DOWN | fst | lst ]
+        -- [ IN__ORG ]
         if me.trl_orgs then
-            me.trails_n = me.trails_n + 3
+            me.trails_n = me.trails_n + 1
         end
     end,
 
@@ -93,7 +93,7 @@ G = {
     Block_pre = function (me)
         local blk = unpack(me)
 
-        -- [ B, 2, 1 ] (blk, orgs, fin)
+        -- [ B, 1, 1 ] (blk, orgs, fin)
 
         me.trails = me.trails or _AST.iter(pred)().trails
 
@@ -107,13 +107,13 @@ G = {
         -- (this is not the linked list from my parent)
         -- [ IN__ORGS_DOWN | fst | lst ]
         if me.trl_orgs then
-            me.trl_orgs = { t0, t0+2 }
-                t0 = t0 + 3
+            me.trl_orgs = { t0, t0 }
+                t0 = t0 + 1
         end
 
         -- FINS (must be the last to proper nest fins)
         if me.fins then
-            me.trl_fins  = { t0, t0  }
+            me.trl_fins  = { t0, t0 }
                 t0 = t0 + 1
         end
     end,

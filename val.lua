@@ -37,6 +37,9 @@ F =
                 end
             end
         end
+        if me.trl_orgs then
+            me.trl_orgs.val = CUR(me, '__lnks_'..me.n)
+        end
         if me.fins then
             for i, fin in ipairs(me.fins) do
                 fin.val = CUR(me, '__fin_'..me.n..'_'..i)

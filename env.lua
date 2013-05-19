@@ -195,23 +195,11 @@ F = {
         _ENV.exts[evt.id] = evt
 
         -- TODO: shared with _INIT?
-        local evt = {id='_ORG_PAR', pre='input'}
+        local evt = {id='_ORG', pre='input'}
         _ENV.exts[#_ENV.exts+1] = evt
         _ENV.exts[evt.id] = evt
 
-        local evt = {id='_ORG_PAR_PSED', pre='input'}
-        _ENV.exts[#_ENV.exts+1] = evt
-        _ENV.exts[evt.id] = evt
-
-        local evt = {id='_ORG_FST', pre='input'}
-        _ENV.exts[#_ENV.exts+1] = evt
-        _ENV.exts[evt.id] = evt
-
-        local evt = {id='_ORG_MID', pre='input'}
-        _ENV.exts[#_ENV.exts+1] = evt
-        _ENV.exts[evt.id] = evt
-
-        local evt = {id='_ORG_LST', pre='input'}
+        local evt = {id='_ORG_PSED', pre='input'}
         _ENV.exts[#_ENV.exts+1] = evt
         _ENV.exts[evt.id] = evt
 

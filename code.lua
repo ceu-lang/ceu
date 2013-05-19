@@ -498,6 +498,21 @@ case ]]..me.lbl_clr.id..[[:;
             return
         end
 
+        if me.trl_orgs then
+            LINE(me, [[
+CEU_CUR->trls[ ]]..me.trl_orgs[1]..[[ ].evt  = CEU_IN__ORG;
+CEU_CUR->trls[ ]]..me.trl_orgs[1]..[[ ].lnks =
+    (tceu_org*) &]]..me.trl_orgs.val..[[;
+
+]]..me.trl_orgs.val..'[0].nxt = (tceu_org*) &'..me.trl_orgs.val..'[1]'..[[;
+
+]]..me.trl_orgs.val..'[1].prv = (tceu_org*) &'..me.trl_orgs.val..'[0]'..[[;
+]]..me.trl_orgs.val..'[1].nxt =  '..[[CEU_CUR;
+]]..me.trl_orgs.val..'[1].n   =  '..[[0;
+]]..me.trl_orgs.val..'[1].lnk =  '..me.trl_orgs[1]..[[+1;
+]])
+        end
+
         if me.fins then
             LINE(me, [[
 /*  FINALIZE */
