@@ -255,6 +255,7 @@ do
         has_news    = 'CEU_NEWS',
         has_ifcs    = 'CEU_IFCS',
         has_clear   = 'CEU_CLEAR',
+        has_pses    = 'CEU_PSES',
     }
     for k, s in pairs(t) do
         if _PROPS[k] then

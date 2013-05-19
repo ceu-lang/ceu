@@ -60,6 +60,10 @@ goto _CEU_GOTO_;
 end
 
 function PAUSE (me, no)
+    if not _PROPS.has_pses then
+        return
+    end
+
     for pse in _AST.iter'Pause' do
         COMM(me, 'PAUSE: '..pse.dcl.var.id)
         LINE(me, [[
@@ -184,7 +188,7 @@ CEU_CUR->cls = ]]..me.n..[[;        /* TODO: move to _ORG? */
 
         CONC_ALL(me)
 
--- TODO
+-- TODO (-ROM): avoid clss w/o new
         --if i_am_instantiable then
             LINE(me, [[
 #ifdef CEU_NEWS
@@ -248,7 +252,7 @@ end;
     ceu_org_init(org, ]]
                 ..t.cls.trails_n..','
                 ..(t.cls.has_init and t.cls.lbl_init.id or t.cls.lbl.id)..[[,
-                CEU_CUR, CEU_CUR->trls+]]..t.par_trl_idx..[[);
+                CEU_CUR, ]]..t.par_trl_idx..[[);
 ]])
 
             if t.cls.has_init then
@@ -360,18 +364,21 @@ case ]]..me.lbls_cnt[i].id..[[:;
             LINE(me, '__ceu_'..me.n..' = (__ceu_org != NULL);')
         end
 
+        LINE(me, [[
+    if (__ceu_org != NULL) {
+]])
         F._ORG(me, {
             id      = 'dyn',
             isDyn   = 1,
             toFree  = t.toFree,
-            cls     = me.cls,
+            cls     = t.cls,
             val     = '__ceu_org',
             constr  = t.constr,
             arr     = false,
             par_trl_idx = me.blk.trl_orgs[1],
         })
-
         LINE(me, [[
+    }
 }
 ]])
     end,
@@ -390,6 +397,7 @@ case ]]..me.lbls_cnt[i].id..[[:;
         local _, constr = unpack(me)
         F._New(me, {
             val     = nil,
+            cls     = me.cls,
             toFree  = 1,
             constr  = constr,
         })
@@ -429,9 +437,6 @@ case ]]..me.lbls_cnt[i].id..[[:;
     if (__ceu_org != NULL)
     {
         /* TODO: assert isDyn */
-
-        /* TODO: HACK_1 (avoids next to also be freed) */
-        __ceu_org->trls[__ceu_org->n-1].evt = CEU_IN__NONE;
 ]])
 
         if me.tag == 'Free' then
@@ -445,11 +450,22 @@ case ]]..me.lbls_cnt[i].id..[[:;
         end
 
         LINE(me, [[
-        /* clear all __ceu_org from its parent  [ par_trl, par_trl+1 [ */
+        /* clear all __ceu_org [ trls[0], ... [ */
         /* this will call free() */
-        _ceu_cur_.org  = _ceu_clr_org_ = __ceu_org->par_org;
-        _ceu_cur_.trl  = __ceu_org->par_trl;
-        _ceu_clr_trlF_ = __ceu_org->par_trl + 1;
+        _ceu_clr_org_  = NULL;
+        _ceu_clr_trlF_ = NULL;
+        _ceu_cur_.trl  = &__ceu_org->trls[0];
+]])
+        if me.tag == 'Free' then    -- (or CEU_CUR is already me)
+            LINE(me, [[
+        _ceu_cur_.org  = __ceu_org;
+]])
+        end
+        LINE(me, [[
+        /* TODO: HACK_1 (avoids next to also be freed) */
+/*
+        __ceu_org->trls[__ceu_org->n-3].evt = CEU_IN__NONE;
+*/
 
         _CEU_STK_[_ceu_stk_++] = _ceu_evt_;
         _ceu_evt_.id = CEU_IN__CLR;

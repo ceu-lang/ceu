@@ -7,6 +7,7 @@ _PROPS = {
     has_news    = false,
     has_ifcs    = false,
     has_clear   = false,
+    has_pses    = false,
 }
 
 local NO_fin = {
@@ -180,6 +181,10 @@ F = {
 
     Async = function (me)
         _PROPS.has_asyncs = true
+    end,
+
+    Pause = function (me)
+        _PROPS.has_pses = true
     end,
 
     _loop = function (me)

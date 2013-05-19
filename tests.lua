@@ -17719,6 +17719,24 @@ return a+b;
 
 Test { [[
 class Sm with
+do
+    var u8 id;
+end
+
+class Image_media with
+    var Sm sm;
+do
+end
+
+var Image_media img1;
+var Image_media img2;
+
+return 1;
+]],
+    run = 1;
+}
+Test { [[
+class Sm with
     var int id;
 do
 end
@@ -18274,7 +18292,6 @@ native _V;
 native do
     int V = 0;
 end
-native nohold _fprintf(), _stderr;
 class T1 with
     event void ok;
 do
@@ -19989,9 +20006,14 @@ class T (1) with
 do
     this.a = 1;
 end
+native nohold _fprintf(), _stderr;
+_fprintf(_stderr, "1\n");
 var T* a = new T;
+_fprintf(_stderr, "2\n");
 free(a);
+_fprintf(_stderr, "3\n");
 var T* b = new T;
+_fprintf(_stderr, "4 %p %p\n", a, b);
 return a!=null and b!=null;
 ]],
     run = 1,
@@ -20189,31 +20211,6 @@ free a;
 return 10;
 ]],
     run = 10,
-}
-
-Test { [[
-native _V;
-native do
-    int V = 0;
-end
-class T with
-do
-    await 2s;
-    _V = _V + 1;
-end
-do
-    spawn T;
-    await 1s;
-    spawn T;
-    await 1s;
-    spawn T;
-    await 1s;
-    spawn T;
-    await 50s;
-end
-return _V;
-]],
-    run = { ['~>100s']=4 },
 }
 
 Test { [[
@@ -20455,6 +20452,31 @@ return _V+v;
 ]],
     loop = 1,
     run = 200,
+}
+
+Test { [[
+native _V;
+native do
+    int V = 0;
+end
+class T with
+do
+    await 2s;
+    _V = _V + 1;
+end
+do
+    spawn T;
+    await 1s;
+    spawn T;
+    await 1s;
+    spawn T;
+    await 1s;
+    spawn T;
+    await 50s;
+end
+return _V;
+]],
+    run = { ['~>100s']=4 },
 }
 
 Test { [[

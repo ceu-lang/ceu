@@ -26,9 +26,9 @@ F = {
         MAX_all(me)
 
         -- pointer to next org or parent/trail
-        -- [ IN__ORG_? | org | trl ]
+        -- [ IN__ORG_UP/DOWN ]
         if me ~= _MAIN then
-            me.trails_n = me.trails_n + 3
+            me.trails_n = me.trails_n + 1
         end
 
         ASR(me.trails_n < 256, me, 'too many trails')
@@ -53,9 +53,9 @@ F = {
         end
 
         -- pointer to my first org
-        -- [ IN__ORG_DOWN | org ]
+        -- [ IN__ORG_DOWN | fst | lst ]
         if me.trl_orgs then
-            me.trails_n = me.trails_n + 2
+            me.trails_n = me.trails_n + 3
         end
     end,
 
@@ -105,10 +105,10 @@ G = {
 
         -- ORGS (pointer to the first org here)
         -- (this is not the linked list from my parent)
-        -- [ IN__ORGS_DOWN | org ]
+        -- [ IN__ORGS_DOWN | fst | lst ]
         if me.trl_orgs then
-            me.trl_orgs = { t0, t0+1 }
-                t0 = t0 + 2
+            me.trl_orgs = { t0, t0+2 }
+                t0 = t0 + 3
         end
 
         -- FINS (must be the last to proper nest fins)

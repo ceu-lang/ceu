@@ -82,7 +82,7 @@ typedef struct {
         end
 
         me.struct = me.struct..'\n} '.._TP.c(me.id)..';\n'
---DBG('===', me.id, '('..tostring(me.pool)..')')
+DBG('===', me.id, me.trails_n, '('..tostring(me.pool)..')')
 --DBG(me.struct)
 --DBG('======================')
     end,
