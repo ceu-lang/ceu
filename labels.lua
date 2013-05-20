@@ -68,18 +68,18 @@ F = {
 
     Dcl_cls = function (me)
         me.lbl = new{'Class_'..me.id, true}
-        if me.has_init then
-            me.lbl_init = new{'Class_Init_'..me.id}
+        if me.has_pre then
+            me.lbl_pre = new{'Class_Pre_'..me.id}
         end
--- TODO
+-- TODO (-RAM)
         --if i_am_instantiable then
             me.lbl_clr = new{'Class_free_'..me.id}
         --end
     end,
     SetNew = function (me)
         me.lbls_cnt = { new{me.tag..'_cont'} }
-        if me.cls.has_init then
-            me.lbls_init = { new{'Init_cnt'} }
+        if me.cls.has_pre then
+            me.lbls_pre = { new{'Pre_cnt'} }
         end
     end,
     Spawn = 'SetNew',
@@ -137,10 +137,10 @@ F = {
     end,
     Dcl_var = function (me)
         if me.var.cls then
-            if me.var.cls.has_init then
-                me.lbls_init = {}
+            if me.var.cls.has_pre then
+                me.lbls_pre = {}
                 for i=1, (me.var.arr or 1) do
-                    me.lbls_init[i] = new{'Init_cnt'}
+                    me.lbls_pre[i] = new{'Pre_cnt'}
                 end
             end
 

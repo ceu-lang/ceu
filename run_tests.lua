@@ -205,10 +205,10 @@ user	1m39.542s
 sys	0m21.989s
 ]]
 
-assert(STATS.count  ==    1211)
+assert(STATS.count  ==    1212)
 assert(STATS.mem    ==       0)
-assert(STATS.trails ==    2606)
-assert(STATS.bytes  == 6993440)
+assert(STATS.trails ==    2229)
+assert(STATS.bytes  == 6978632)
 
 do return end
 

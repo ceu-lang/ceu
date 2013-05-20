@@ -173,16 +173,19 @@ F = {
             return
         end
 
-        if me.has_init then
-            CASE(me, me.lbl_init)
+        if me.has_pre then
+            CASE(me, me.lbl_pre)
+            me.code = me.code .. me.blk_ifc.code_pre
             LINE(me, me.blk_ifc[1][1].code_ifc)   -- Block->Stmts->BlockI
             HALT(me)
         end
 
         CASE(me, me.lbl)
+
+        -- TODO: move to _ORG? (_MAIN does not call _ORG)
         LINE(me, [[
 #ifdef CEU_IFCS
-CEU_CUR->cls = ]]..me.n..[[;        /* TODO: move to _ORG? */
+CEU_CUR->cls = ]]..me.n..[[;
 #endif
 ]])
 
@@ -212,7 +215,7 @@ if (CEU_CUR->toFree) {
 
         --[[
 class T with
-    <INIT>          -- 1    me.lbls_init[i].id
+    <PRE>           -- 1    me.lbls_pre[i].id
     var int v = 0;
 do
     <BODY>          -- 3    me.lbls_body[i].id
@@ -251,25 +254,25 @@ end;
     /* links par <=> org */
     ceu_org_init(org, ]]
                 ..t.cls.trails_n..','
-                ..(t.cls.has_init and t.cls.lbl_init.id or t.cls.lbl.id)..[[,
+                ..(t.cls.has_pre and t.cls.lbl_pre.id or t.cls.lbl.id)..[[,
                 CEU_CUR, ]]..t.par_trl_idx..[[);
 ]])
 
-            if t.cls.has_init then
+            if t.cls.has_pre then
                 LINE(me, [[
     /* hold current blk trail: set to my continuation */
     _ceu_cur_.trl->evt = CEU_IN__ANY;
-    _ceu_cur_.trl->lbl = ]]..me.lbls_init[i].id..[[;
+    _ceu_cur_.trl->lbl = ]]..me.lbls_pre[i].id..[[;
     _ceu_cur_.trl->stk = _ceu_stk_;
     _CEU_STK_[_ceu_stk_++] = _ceu_evt_;
 
-    /* switch to ORG for INIT */
+    /* switch to ORG for PRE */
     _ceu_cur_.org = org;
     goto _CEU_CALL_;
 }
 
-case ]]..me.lbls_init[i].id..[[:;
-    /* BACK FROM INIT */
+case ]]..me.lbls_pre[i].id..[[:;
+    /* BACK FROM PRE */
 {
 ]])
                 if t.arr then
@@ -477,24 +480,8 @@ case ]]..me.lbl_clr.id..[[:;
     end,
 
     Block_pre = function (me)
-        -- declare tmps
-        LINE(me, '{')       -- close in Block_pos
-        for _, var in ipairs(me.vars) do
-            if var.isTmp then
-                if var.arr then
-                    LINE(me, _TP.c(_TP.deref(var.tp))
-                            ..' '..V(var)..'['..var.arr..'];')
-                else
-                    LINE(me, _TP.c(var.tp)..' '..V(var)..';')
-                end
-            end
-        end
-    end,
-
-    Block_pos = function (me)
-        local blk = unpack(me)
-
-        if CLS().is_ifc then
+        local cls = CLS()
+        if cls.is_ifc then
             return
         end
 
@@ -525,6 +512,33 @@ CEU_CUR->trls[ ]]..me.trl_fins[1]..[[ ].stk = CEU_MAX_STACK;
             end
         end
 
+        -- above code must execute before PRE
+        if cls.has_pre and cls.blk_ifc==me then
+            me.code_pre = me.code
+            me.code = ''
+        end
+
+        -- declare tmps
+        LINE(me, '{')       -- close in Block_pos
+        for _, var in ipairs(me.vars) do
+            if var.isTmp then
+                if var.arr then
+                    LINE(me, _TP.c(_TP.deref(var.tp))
+                            ..' '..V(var)..'['..var.arr..'];')
+                else
+                    LINE(me, _TP.c(var.tp)..' '..V(var)..';')
+                end
+            end
+        end
+    end,
+
+    Block_pos = function (me)
+        local blk = unpack(me)
+        if CLS().is_ifc then
+            return
+        end
+
+-- TODO: block?
         if me.trails[1] ~= blk.trails[1] then
             LINE(me, [[
 /* switch to blk trail */

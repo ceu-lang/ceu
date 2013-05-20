@@ -17386,6 +17386,20 @@ return t.a;
 }
 
 Test { [[
+class T2 with
+do
+end
+class T with
+    var T2 x;
+do
+end
+var T a;
+return 1;
+]],
+    run = 1,
+}
+
+Test { [[
 class T3 with
     var int v3;
 do

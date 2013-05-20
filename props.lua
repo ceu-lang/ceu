@@ -174,7 +174,7 @@ F = {
     Dcl_var = function (me)
         if me.var.cls then
             if _AST.iter'BlockI'() then
-                CLS().has_init = true   -- code for init (before constr)
+                CLS().has_pre = true   -- code for pre (before constr)
             end
         end
     end,
@@ -251,7 +251,7 @@ F = {
         end
 
         if _AST.iter'BlockI'() then
-            CLS().has_init = true   -- code for init (before constr)
+            CLS().has_pre = true   -- code for pre (before constr)
         end
     end,
 
