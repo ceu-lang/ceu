@@ -29,23 +29,13 @@ subst 'mem.lua'
 subst 'val.lua'
 subst 'code.lua'
 
--- memb.h
+-- pool.c
 do
-    local mem = assert(io.open'memb.h'):read'*a'
+    local pool = assert(io.open'pool.c'):read'*a'
 
-    local s, e = string.find(fin, "assert%(io%.open'memb%.h'%):read'%*a'")
+    local s, e = string.find(fin, "assert%(io%.open'pool%.c'%):read'%*a'")
     fin = string.sub(fin, 1, (s-1))
-            .. "[===[" .. mem .. "]===]" ..
-          string.sub(fin, (e+1))
-end
-
--- memb.c
-do
-    local mem = assert(io.open'memb.c'):read'*a'
-
-    local s, e = string.find(fin, "assert%(io%.open'memb%.c'%):read'%*a'")
-    fin = string.sub(fin, 1, (s-1))
-            .. "[===[" .. mem .. "]===]" ..
+            .. "[===[" .. pool .. "]===]" ..
           string.sub(fin, (e+1))
 end
 

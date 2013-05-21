@@ -155,8 +155,7 @@ do
     --tpl = sub(tpl, '=== HOST ===',     _CODE.host)
     tpl = sub(tpl, '=== CODE ===',     _AST.root.code)
 
-    tpl = sub(tpl, '=== MEMB_H ===', assert(io.open'memb.h'):read'*a')
-    tpl = sub(tpl, '=== MEMB_C ===', assert(io.open'memb.c'):read'*a')
+    tpl = sub(tpl, '=== POOL_C ===', assert(io.open'pool.c'):read'*a')
     tpl = sub(tpl, '=== CLSS_DEFS ===', _MEM.clss_defs)
     tpl = sub(tpl, '=== CLSS_INIT ===', _MEM.clss_init)
     tpl = sub(tpl, '=== CLSS_FREE ===', _MEM.clss_free)

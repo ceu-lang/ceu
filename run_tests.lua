@@ -208,7 +208,7 @@ sys	0m21.989s
 assert(STATS.count  ==    1212)
 assert(STATS.mem    ==       0)
 assert(STATS.trails ==    2229)
-assert(STATS.bytes  == 6978632)
+assert(STATS.bytes  == 6975488)
 
 do return end
 

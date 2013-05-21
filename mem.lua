@@ -16,7 +16,7 @@ end
 F = {
     Root = function (me)
         -- cls/ifc accessors
-        -- cls memb
+        -- cls pool
 
         local _defs = {}
         local _init = {}
@@ -35,13 +35,15 @@ F = {
             if cls.pool then
                 _defs[#_defs+1] = [[
 #ifdef CEU_NEWS
-MEMB(CEU_POOL_]]..cls.id..','..'CEU_'..cls.id..','..cls.pool..[[);
+CEU_POOL(CEU_POOL_]]..cls.id..','..'CEU_'..cls.id..','..cls.pool..[[);
 #endif
 ]]
-                _init[#_init+1] = 'memb_init(&CEU_POOL_'..cls.id..');'
+                _init[#_init+1] = 'ceu_pool_init(&CEU_POOL_'..cls.id..');'
                 _free[#_free+1] = [[
-                    if ( memb_inmemb(&CEU_POOL_]]..cls.id..[[, CEU_CUR) )
-                        memb_free(&CEU_POOL_]]..cls.id..[[, CEU_CUR);
+                    if ( ceu_pool_inside(&CEU_POOL_]]..cls.id..[[, CEU_CUR) )
+                    {
+                        ceu_pool_free(&CEU_POOL_]]..cls.id..[[, CEU_CUR);
+                    }
                     else
                         /* malloc in template.c */
 ]]

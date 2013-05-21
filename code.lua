@@ -338,7 +338,7 @@ case ]]..me.lbls_cnt[i].id..[[:;
 ]])
         if t.cls.pool then
             LINE(me, [[
-    __ceu_org = (tceu_org*) memb_alloc(&CEU_POOL_]]..t.cls.id..[[);
+    __ceu_org = (tceu_org*) ceu_pool_alloc(&CEU_POOL_]]..t.cls.id..[[);
 ]])
         else
             LINE(me, [[

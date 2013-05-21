@@ -15,8 +15,7 @@
 #endif
 
 #ifdef CEU_NEWS
-=== MEMB_H ===
-=== MEMB_C ===
+=== POOL_C ===
 #endif
 
 #ifdef __cplusplus
@@ -619,8 +618,6 @@ fprintf(stderr, "\tTRY [%p] : evt=%d stk=%d lbl=%d\n",
 
                     /* reset event */
                     if (_ceu_evt_.id == CEU_IN__ANY) {
-                        if (trl->evt != CEU_IN__NONE)
-/* TODO: this test should not be required!!! */
                             trl->stk = CEU_MAX_STACK;
                     }
 
