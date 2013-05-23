@@ -28,15 +28,15 @@ void ceu_pool_init (tceu_pool* pool) {
     }
 }
 
-void* ceu_pool_alloc (tceu_pool* pool) {
-    void* ret;
+char* ceu_pool_alloc (tceu_pool* pool) {
+    char* ret;
 
     if (pool->free == 0) {
         return NULL;
     }
 
     pool->free--;
-    ret = (void*) &pool->mem[pool->index * pool->unit];
+    ret = &pool->mem[pool->index * pool->unit];
     pool->queue[pool->index++] = NULL;
     if (pool->index == pool->size) {
         pool->index = 0;
@@ -44,7 +44,7 @@ void* ceu_pool_alloc (tceu_pool* pool) {
     return ret;
 }
 
-void ceu_pool_free (tceu_pool* pool, void* val) {
+void ceu_pool_free (tceu_pool* pool, char* val) {
     int idx;
 
     if (pool->free >= pool->size) {
@@ -59,7 +59,7 @@ void ceu_pool_free (tceu_pool* pool, void* val) {
     pool->free++;
 }
 
-int ceu_pool_inside (tceu_pool* pool, void* val) {
+int ceu_pool_inside (tceu_pool* pool, char* val) {
     return ((char*)val >= pool->mem)
         && ((char*)val < pool->mem+pool->size*pool->unit);
 }
