@@ -200,9 +200,9 @@ STATS = {
 
 --[[
 -- TIME:
-real	2m27.417s
-user	1m39.542s
-sys	0m21.989s
+real	2m23.884s
+user	1m41.478s
+sys	0m21.685s
 ]]
 
 assert(STATS.count  ==    1212)

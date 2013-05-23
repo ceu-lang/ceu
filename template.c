@@ -618,7 +618,7 @@ fprintf(stderr, "\tTRY [%p] : evt=%d stk=%d lbl=%d\n",
 
                     /* reset event */
                     if (_ceu_evt_.id == CEU_IN__ANY) {
-                            trl->stk = CEU_MAX_STACK;
+                        trl->stk = CEU_MAX_STACK;
                     }
 
                     if (! run)
