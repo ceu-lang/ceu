@@ -287,7 +287,7 @@ void ceu_go_wclock (s32 dt);
 
     tpl = sub(tpl, '=== FILENAME ===', _OPTS.input)
 
-    tpl = string.gsub(tpl, '^#line.-\n', '')
+    --tpl = string.gsub(tpl, '^#line.-\n', '')
 end
 
 if _OPTS.verbose or true then

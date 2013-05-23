@@ -56,7 +56,7 @@ CEU_POOL(CEU_POOL_]]..cls.id..','..'CEU_'..cls.id..','..cls.pool..[[);
 
     Host = function (me)
         CLS().host = CLS().host ..
-            '/*#line '..(me.ln+1)..'*/\n' ..
+            '#line '..(me.ln+1)..'\n' ..
             me[1] .. '\n'
     end,
 
