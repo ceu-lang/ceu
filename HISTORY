@@ -1,3 +1,9 @@
+* v0.5 (may'13)
+    (+) classes can specify a memory pool for its organisms
+    (+) interfaces can have C functions
+    (^) `C´ keyword renamed to `native´
+    (^) scheduler rewritten
+
 * v0.4 (may'13)
     (+) classes and interfaces
     (+) `nothing´ statement
