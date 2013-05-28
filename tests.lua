@@ -94,6 +94,22 @@ do return end
 --]===]
 
 Test { [[
+input void START;
+event void a,b;
+par do
+    await START;
+    emit a;
+    return 10;
+with
+    await a;
+    emit b;
+    return 100;
+end
+]],
+    run = 100;
+}
+
+Test { [[
 class T(10) with do end
 return 1;
 ]],

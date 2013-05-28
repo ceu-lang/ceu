@@ -105,7 +105,7 @@ typedef struct {
 
 typedef struct {
 #ifdef CEU_ORGS
-    void*       org;
+    void*     org;
 #endif
     tceu_trl* trl;
     tceu_nlbl lbl;
@@ -605,7 +605,7 @@ fprintf(stderr, "\tTRY [%p] : evt=%d stk=%d lbl=%d\n",
                     int run =
                         ( (trl->evt == CEU_IN__ANY) || (trl->evt == _ceu_evt_.id) )
                      &&
-                        ( (trl->stk == _ceu_stk_)   || (trl->stk == CEU_MAX_STACK) );
+                        (trl->stk >= _ceu_stk_);
 
                     /* clear trl only if i'll run or in a "clear" */
                     if ( run || (_ceu_evt_.id == CEU_IN__CLR) ) {
