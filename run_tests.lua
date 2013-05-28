@@ -207,10 +207,10 @@ sys	0m21.685s
 107.37s user 22.71s system 84% cpu 2:34.42 total
 ]]
 
-assert(STATS.count  ==    1214)
+assert(STATS.count  ==    1218)
 assert(STATS.mem    ==       0)
-assert(STATS.trails ==    2235)
-assert(STATS.bytes  == 6978461)
+assert(STATS.trails ==    2249)
+assert(STATS.bytes  == 7088187)
 
 do return end
 

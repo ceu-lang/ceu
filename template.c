@@ -277,7 +277,7 @@ void ceu_org_init (tceu_org* org, int n, int lbl,
     memset(&org->trls, 0, n*sizeof(tceu_trl));
 
     /* org.trls[0] == org.blk.trails[1] */
-    org->trls[0].evt = CEU_IN__ANY;
+    org->trls[0].evt = CEU_IN__GO;
     org->trls[0].lbl = lbl;
     org->trls[0].stk = CEU_MAX_STACK;
 
@@ -439,7 +439,7 @@ void ceu_go (int __ceu_id, tceu_param* __ceu_p)
     tceu_evt _ceu_evt_;       /* current stack entry */
     tceu_lst _ceu_cur_;       /* current listener */
 
-    /* they are always set when _ceu_evt_.id=CEU_IN__CLR
+    /* they are always set when _ceu_evt_.id=CEU_IN__CLEAR
      * no need to protect them with NULLs
      * however assignments avoid warning on nescc
      */
@@ -458,7 +458,7 @@ void ceu_go (int __ceu_id, tceu_param* __ceu_p)
     /* ceu_go_xxxx(): */
     else {
         /* first set all awaiting: trl.stk=CEU_MAX_STACK */
-        _ceu_evt_.id = CEU_IN__ANY;
+        _ceu_evt_.id = CEU_IN__RESET;
 
         /* then stack external event */
         if (__ceu_p)
@@ -492,7 +492,7 @@ fprintf(stderr, "GO: evt=%d stk=%d [%d]\n", _ceu_evt_.id, _ceu_stk_, CEU_NTRAILS
 #ifdef CEU_CLEAR
             /* IN__CLR completed? (bounded to _trlF_) */
             if (
-                (_ceu_evt_.id   == CEU_IN__CLR)
+                (_ceu_evt_.id   == CEU_IN__CLEAR)
             &&  (_ceu_clr_trlF_ == _ceu_cur_.trl)
 #ifdef CEU_ORGS
             &&  (_ceu_clr_org_  == CEU_CUR)
@@ -532,7 +532,7 @@ fprintf(stderr, "GO: evt=%d stk=%d [%d]\n", _ceu_evt_.id, _ceu_stk_, CEU_NTRAILS
 
 #ifdef CEU_NEWS
                     /* org has been cleared to the end? */
-                    if ( _ceu_evt_.id  == CEU_IN__CLR
+                    if ( _ceu_evt_.id  == CEU_IN__CLEAR
                     &&   _ceu_clr_org_ != CEU_CUR
                     &&   CEU_CUR->isDyn
                     &&   CEU_CUR->n != 0 )  /* TODO: avoids LST */
@@ -587,42 +587,50 @@ fprintf(stderr, "\tTRY [%p] : evt=%d stk=%d lbl=%d\n",
 #ifdef CEU_ORGS
                 if ( (trl->evt == CEU_IN__ORG)
 #ifdef CEU_PSES
-                  || (trl->evt==CEU_IN__ORG_PSED && _ceu_evt_.id==CEU_IN__CLR)
+                  || (trl->evt==CEU_IN__ORG_PSED && _ceu_evt_.id==CEU_IN__CLEAR)
 #endif
                    )
                 {
                     /* TODO (+SPEED): jump LST */
                     _ceu_cur_.org = trl->lnks[0].nxt;
-                    if (_ceu_evt_.id == CEU_IN__CLR) {
+                    if (_ceu_evt_.id == CEU_IN__CLEAR) {
                         trl->evt = CEU_IN__NONE;
                     }
                     goto _CEU_CALL_;
                 }
 #endif /* CEU_ORGS */
 
-                /* normal trails */
+                switch (_ceu_evt_.id)
                 {
-                    int run =
-                        ( (trl->evt == CEU_IN__ANY) || (trl->evt == _ceu_evt_.id) )
-                     &&
-                        (trl->stk >= _ceu_stk_);
-
-                    /* clear trl only if i'll run or in a "clear" */
-                    if ( run || (_ceu_evt_.id == CEU_IN__CLR) ) {
-                        trl->evt = CEU_IN__NONE;
-                        trl->stk = 0;
-                    } else
-
-                    /* reset event */
-                    if (_ceu_evt_.id == CEU_IN__ANY) {
+                    /* "reset" event */
+                    case CEU_IN__RESET:
                         trl->stk = CEU_MAX_STACK;
-                    }
-
-                    if (! run)
                         goto _CEU_NEXT_;
+
+                    /* "clear" event */
+                    case CEU_IN__CLEAR:
+                        if (trl->evt == CEU_IN__CLEAR)
+                            goto _CEU_GO_;
+                        trl->evt = CEU_IN__NONE;
+                        goto _CEU_NEXT_;
+
+                    /* "go" event */
+                    case CEU_IN__GO:
+                        if (trl->evt == CEU_IN__GO &&
+                            trl->stk >= _ceu_stk_)
+                            goto _CEU_GO_;
                 }
 
-                /* finally, execute this trail */
+                /* matched event */
+                if ( (_ceu_evt_.id == trl->evt) && (_ceu_stk_ <= trl->stk) ) {
+                    trl->evt = CEU_IN__GO;
+                    trl->stk = _ceu_stk_;
+                }
+                goto _CEU_NEXT_;
+
+_CEU_GO_:
+                /* execute this trail */
+                trl->evt = CEU_IN__NONE;
                 _ceu_cur_.lbl = trl->lbl;
             }
 
@@ -649,8 +657,12 @@ _CEU_NEXT_:
             _ceu_cur_.trl++;
         }
 
-        if (_ceu_stk_ == 1)
-            break;
-        _ceu_evt_ = _CEU_STK_[--_ceu_stk_];
+        if (_ceu_evt_.id == CEU_IN__GO) {
+            if (_ceu_stk_ == 1)
+                break;
+            _ceu_evt_ = _CEU_STK_[--_ceu_stk_];
+        } else {
+            _ceu_evt_.id = CEU_IN__GO;  /* TODO (+SPEED): execing twice */
+        }
     }
 }

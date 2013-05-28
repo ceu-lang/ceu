@@ -93,48 +93,6 @@ error 'testar new/spawn que se mata'
 do return end
 --]===]
 
-Test { [[
-input void START;
-event void a,b;
-par do
-    await START;
-    emit a;
-    return 10;
-with
-    await a;
-    emit b;
-    return 100;
-end
-]],
-    run = 100;
-}
-
-Test { [[
-class T(10) with do end
-return 1;
-]],
-    run = 1,
-}
-
-Test { [[
-break;
-]],
-    props = 'ERR : line 1 : break without loop',
-}
-
-Test { [[
-par/or do
-    nothing;
-with
-    every (2)s do
-        nothing;
-    end
-end
-return 1;
-]],
-    run = 1,
-}
-
 -- OK: under tests but supposed to work
 
 --do return end
@@ -767,6 +725,22 @@ end
         excpt = 1,
     },
     run = 1,
+}
+
+Test { [[
+input void START;
+event void a,b;
+par do
+    await START;
+    emit a;
+    return 10;
+with
+    await a;
+    emit b;
+    return 100;
+end
+]],
+    run = 100;
 }
 
     -- OUTPUT
@@ -1795,6 +1769,12 @@ return b;
     -- LOOP
 
 Test { [[
+break;
+]],
+    props = 'ERR : line 1 : break without loop',
+}
+
+Test { [[
 input int A;
 loop do
     do
@@ -2028,6 +2008,19 @@ end;
 }
 
 -- EVERY
+
+Test { [[
+par/or do
+    nothing;
+with
+    every (2)s do
+        nothing;
+    end
+end
+return 1;
+]],
+    run = 1,
+}
 
 Test { [[
 input void A;
@@ -3326,7 +3319,7 @@ end
         abrt  = 3,
     },
     awaits = 1,
-    run = 1,
+    run = 2,
 }
 
 Test { [[
@@ -4825,6 +4818,31 @@ return 10;
         acc = 1,
     },
     run = 0,
+}
+
+Test { [[
+input int A;
+event int b, c;
+par do
+    await A;
+    emit b=1;
+    await c;        // 6
+    return 10;      // 7
+with
+    await b;
+    await A;
+    emit c=10;      // 11
+end;
+]],
+    ana = {
+        isForever = false,
+        --unreachs = 2,
+        --nd_esc = 1,
+        acc = 1,
+    },
+    run = {
+        ['0~>A ; 0~>A'] = 10,
+    }
 }
 
 Test { [[
@@ -10799,7 +10817,7 @@ with
 end;
 return aa;
 ]],
-    run = { ['1~>A;1~>A']=3 }
+    run = { ['1~>A;1~>A']=4 }
 }
 
 Test { [[
@@ -11500,7 +11518,7 @@ with
 end;
 return aa;
 ]],
-    run = 2,
+    run = 7,
 }
 
 Test { [[
@@ -11991,7 +12009,7 @@ with
     end
 end
 ]],
-    run = 1,
+    run = 2,
 }
 Test { [[
 input void START, A;
@@ -12125,7 +12143,7 @@ return ret;
         --trig_wo = 2,
         unreachs = 1,
     },
-    run = 1,
+    run = 10,
 }
 
 Test { [[
@@ -12204,7 +12222,7 @@ Test { [[
 input void START;
 input int F;
 event int x, w, y, z, a, vis;
-var int xx, ww, yy, zz, aa, vvis;
+var int xx=0, ww=0, yy=0, zz=0, aa=0, vvis=0;
 par do
     loop do
         par/or do
@@ -12242,7 +12260,7 @@ end;
         --trig_wo = 2,
         unreachs = 2,
     },
-    run = { ['1~>F']=5 },
+    run = { ['1~>F']=7 },
 }
 
     -- SCOPE / BLOCK
@@ -16839,10 +16857,8 @@ native _ret_val, _ret_end;
 _ret_val = 1;
 _ret_end = 1;
 event void e, f;
-native nohold _fprintf(), _stderr;
 par do
     loop do
-_fprintf(_stderr, "1\n");
         par/or do
             emit f;         // 18
         with
@@ -16996,6 +17012,13 @@ return _V;
 ]],
     todo = 'recalculate',
     run = 8,    -- 2/2 (trl0) 0 (x) 4 (y)
+}
+
+Test { [[
+class T(10) with do end
+return 1;
+]],
+    run = 1,
 }
 
 Test { [[
@@ -19460,6 +19483,30 @@ return ret;
         ['~>1s;~>F;~>1s;~>F'] = 10,
         ['~>1s;~>1s;~>F'] = 11,
     },
+}
+
+Test { [[
+native _V;
+native do
+    int V=1;
+end
+
+class T with
+    event void a;
+do
+    loop do
+        await a;
+        _V = _V + 1;
+    end
+end
+
+var T t;
+emit t.a;
+emit t.a;
+emit t.a;
+return _V;
+]],
+    run = 4,
 }
 
 Test { [[
@@ -21935,6 +21982,52 @@ end
 input int P;
 event int pse;
 
+native nohold _fprintf(), _stderr;
+par/or do
+    pause/if pse do
+        do
+            loop i do
+                spawn T with
+_fprintf(_stderr, "=== %d\n", i);
+                    this.c = i;
+                end;
+                await 1s;
+            end
+        end
+    end
+with
+    loop do
+        var int v = await P;
+        emit pse = v;
+_fprintf(_stderr, "pse %d\n", v);
+    end
+with
+    await 5s;
+end
+
+return _V;
+]],
+    run = { ['~>2s;1~>P;~>2s;0~>P;~>1s']=6 },
+}
+
+Test { [[
+native _V;
+native do
+    int V = 0;
+end
+
+class T with
+    var int c;
+do
+    finalize with
+        _V = _V + c;
+    end
+    await FOREVER;
+end
+
+input int P;
+event int pse;
+
 par/or do
     do
         loop i do
@@ -22001,6 +22094,49 @@ end
 
 return _V;
 ]],
+    run = { ['~>2s;1~>P;~>2s;0~>P;~>1s']=16 },
+}
+Test { [[
+native _V;
+native do
+    int V = 0;
+end
+
+class T with
+    var int c;
+do
+    finalize with
+        _V = _V + c;
+    end
+    await 5s;
+    _V = _V + 10;
+end
+
+input int P;
+event int pse;
+
+par/or do
+    pause/if pse do
+        do
+            loop i do
+                spawn T with
+                    this.c = i;
+                end;
+                await 1s;
+            end
+        end
+    end
+with
+    loop do
+        var int v = await P;
+        emit pse = v;
+    end
+with
+    await 5s;   // terminates before first spawn
+end
+
+return _V;
+]],
     run = { ['~>2s;1~>P;~>2s;0~>P;~>1s']=6 },
 }
 
@@ -22045,7 +22181,7 @@ end
 
 return _V;
 ]],
-    run = { ['~>2s;1~>P;~>2s;0~>P;~>2s']=20 },
+    run = { ['~>2s;1~>P;~>2s;0~>P;~>2s']=30 },
 }
 
 Test { [[
