@@ -465,11 +465,6 @@ case ]]..me.lbls_cnt[i].id..[[:;
 ]])
         end
         LINE(me, [[
-        /* TODO: HACK_1 (avoids next to also be freed) */
-/*
-        __ceu_org->trls[__ceu_org->n-3].evt = CEU_IN__NONE;
-*/
-
         _CEU_STK_[_ceu_stk_++] = _ceu_evt_;
         _ceu_evt_.id = CEU_IN__CLR;
         goto _CEU_CALLTRL_;

@@ -16823,6 +16823,43 @@ native _ret_val, _ret_end;
 _ret_val = 1;
 _ret_end = 1;
 event void e, f;
+native nohold _fprintf(), _stderr;
+par do
+    loop do
+_fprintf(_stderr, "1\n");
+        par/or do
+            emit f;         // 18
+        with
+            await f;        // 20
+        end
+_ret_val = _ret_val + 5;
+        await e;            // 23
+    end
+with
+    loop do
+        par/or do
+            await f;        // 8
+_ret_val = _ret_val + 11;
+        with
+            emit e;         // 11
+            await FOREVER;
+        end
+    end
+end
+]],
+    ana = {
+        isForever = true,
+        acc = 3,
+    },
+    awaits = 0,
+    run = 6,
+}
+
+Test { [[
+native _ret_val, _ret_end;
+_ret_val = 1;
+_ret_end = 1;
+event void e, f;
 par do
     loop do
         par/or do
@@ -20020,14 +20057,9 @@ class T (1) with
 do
     this.a = 1;
 end
-native nohold _fprintf(), _stderr;
-_fprintf(_stderr, "1\n");
 var T* a = new T;
-_fprintf(_stderr, "2\n");
 free(a);
-_fprintf(_stderr, "3\n");
 var T* b = new T;
-_fprintf(_stderr, "4 %p %p\n", a, b);
 return a!=null and b!=null;
 ]],
     run = 1,

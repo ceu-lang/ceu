@@ -203,12 +203,14 @@ STATS = {
 real	2m23.884s
 user	1m41.478s
 sys	0m21.685s
+
+102.94s user 21.87s system 85% cpu 2:26.66 total
 ]]
 
-assert(STATS.count  ==    1212)
+assert(STATS.count  ==    1213)
 assert(STATS.mem    ==       0)
-assert(STATS.trails ==    2229)
-assert(STATS.bytes  == 6975488)
+assert(STATS.trails ==    2233)
+assert(STATS.bytes  == 6979008)
 
 do return end
 

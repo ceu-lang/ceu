@@ -609,11 +609,8 @@ fprintf(stderr, "\tTRY [%p] : evt=%d stk=%d lbl=%d\n",
 
                     /* clear trl only if i'll run or in a "clear" */
                     if ( run || (_ceu_evt_.id == CEU_IN__CLR) ) {
-                        /* this test is necessary due to `HACK_1´ */
-                        if (trl->evt != CEU_IN__NONE) {
-                            trl->evt = CEU_IN__NONE;
-                            trl->stk = 0;   /* `HACK_1´ */
-                        }
+                        trl->evt = CEU_IN__NONE;
+                        trl->stk = 0;
                     } else
 
                     /* reset event */
