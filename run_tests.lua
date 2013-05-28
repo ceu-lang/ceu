@@ -198,14 +198,7 @@ STATS = {
 }
 ]])
 
---[[
--- TIME:
-real	2m23.884s
-user	1m41.478s
-sys	0m21.685s
-
-107.37s user 22.71s system 84% cpu 2:34.42 total
-]]
+-- 123.50s user 26.53s system 83% cpu 2:58.79 total
 
 assert(STATS.count  ==    1218)
 assert(STATS.mem    ==       0)
@@ -213,6 +206,13 @@ assert(STATS.trails ==    2249)
 assert(STATS.bytes  == 7088187)
 
 do return end
+
+-- TODO: antes emit stack
+--102.94s user 21.87s system 85% cpu 2:26.66 total
+assert(STATS.count  ==    1213)
+assert(STATS.mem    ==       0)
+assert(STATS.trails ==    2233)
+assert(STATS.bytes  == 6979008)
 
 -- TODO: antes scheduler double link
 assert(STATS.count  ==    1210)
