@@ -132,7 +132,7 @@ F = {
 
     SetAwait = 'SetExp',
     SetExp = function (me)
-        me[1].ref.acc.md = 'wr'
+        me[2].ref.acc.md = 'wr'
     end,
     AwaitInt = function (me)
         me[1].ref.acc.md = 'aw'

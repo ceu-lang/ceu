@@ -243,9 +243,9 @@ F = {
     end,
 
     SetExp = function (me)
-        local e1, e2 = unpack(me)
+        local _, to = unpack(me)
         local async = _AST.iter'Async'()
-        if async and (not e1) then
+        if async and (not to) then
             ASR( async.depth <= _AST.iter'SetBlock'().depth+1,
                     me, 'invalid access from async')
         end

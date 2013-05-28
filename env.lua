@@ -117,7 +117,7 @@ function newvar (me, blk, pre, tp, dim, id)
     ASR(not _ENV.clss_ifc[tp], me,
         'cannot instantiate an interface')
     ASR(_TP.deref(tp) or (not c) or (tp=='void' and isEvt) or c.len~=0, me,
-        'cannot instantiate type "'..tp..'"')
+        'cannot instantiate type "'.._TP.tostring(tp)..'"')
     ASR((not dim) or dim>0, me, 'invalid array dimension')
 
     tp = (dim and tp..'*') or tp
@@ -164,6 +164,7 @@ function newvar (me, blk, pre, tp, dim, id)
 end
 
 function _ENV.getvar (id, blk)
+    local blk = blk or _AST.iter('Block')()
     while blk do
         for i=#blk.vars, 1, -1 do   -- n..1 (hidden vars)
             local var = blk.vars[i]
@@ -363,8 +364,13 @@ F = {
     Dcl_ext = function (me)
         local dir, tp, id = unpack(me)
         ASR(not _ENV.exts[id], me, 'event "'..id..'" is already declared')
-        ASR(tp=='void' or tp=='int' or _TP.deref(tp),
+        ASR(tp=='void' or tp=='int' or _TP.deref(tp) or _TP.isTuple(tp),
                 me, 'invalid event type')
+
+        if _TP.isTuple(tp) then
+            local id = _TP.c(tp)
+            _ENV.c[id] = { tag='type', id=id, len=nil }
+        end
 
         me.evt = {
             ln    = me.ln,
@@ -382,8 +388,12 @@ F = {
         local pre, tp, dim, id, constr = unpack(me)
         ASR((not dim) or tonumber(dim.sval), me, 'invalid static expression')
         if pre == 'event' then
-            ASR(tp=='void' or tp=='int' or _TP.deref(tp),
+            ASR(tp=='void' or tp=='int' or _TP.deref(tp) or _TP.isTuple(tp),
                     me, 'invalid event type')
+            if _TP.isTuple(tp) then
+                local id = _TP.c(tp)
+                _ENV.c[id] = { tag='type', id=id, len=nil }
+            end
         end
         me.var = newvar(me, _AST.iter'Block'(), pre, tp, dim and dim.sval, id)
         me.var.read_only = me.read_only
@@ -514,20 +524,20 @@ F = {
     --------------------------------------------------------------------------
 
     SetExp = function (me)
-        local e1, e2 = unpack(me)
-        e1 = e1 or _AST.iter'SetBlock'()[1]
-        ASR(e1.lval and _TP.contains(e1.tp,e2.tp,true),
+        local fr, to = unpack(me)
+        to = to or _AST.iter'SetBlock'()[1]
+        ASR(to.lval and _TP.contains(to.tp,fr.tp,true),
                 me, 'invalid attribution')
 
-        ASR(me.read_only or (not e1.fst.read_only),
+        ASR(me.read_only or (not to.fst.read_only),
                 me, 'read-only variable')
 
         ASR(not CLS().is_ifc, me, 'invalid attribution')
     end,
 
     SetAwait = function (me)
-        local e1, awt = unpack(me)
-        ASR(e1.lval, me, 'invalid attribution')
+        local awt, to = unpack(me)
+        ASR(to.lval, me, 'invalid attribution')
 
         if awt.tag == 'Loop' then
             awt = awt[1][1]         -- await ... until
@@ -535,12 +545,12 @@ F = {
         me.awt = awt                -- will need me.awt.val
 
         if awt.tag == 'AwaitT' then
-            ASR(_TP.isNumeric(e1.tp,true), me, 'invalid attribution')
+            ASR(_TP.isNumeric(to.tp,true), me, 'invalid attribution')
         elseif awt.tag == 'AwaitS' then
-            ASR(_TP.isNumeric(e1.tp,true), me, 'invalid attribution')
+            ASR(_TP.isNumeric(to.tp,true), me, 'invalid attribution')
         else    -- AwaitInt / AwaitExt
             local evt = awt[1].evt
-            ASR(_TP.contains(e1.tp,evt.tp,true), me, 'invalid attribution')
+            ASR(_TP.contains(to.tp,evt.tp,true), me, 'invalid attribution')
         end
     end,
 
@@ -553,19 +563,19 @@ F = {
     end,
 
     SetNew = function (me)
-        local exp, id_cls, constr = unpack(me)
+        local id_cls, to, constr = unpack(me)
 
-        F.Spawn(me, id_cls, constr, exp.ref.var.blk)    -- also sets me.cls
+        F.Spawn(me, id_cls, constr, to.ref.var.blk)    -- also sets me.cls
 
-        ASR(exp.lval and _TP.contains(exp.tp,me.cls.id..'*')
+        ASR(to.lval and _TP.contains(to.tp,me.cls.id..'*')
                          -- refuses (x.ptr = new T;)
-                     and _AST.isChild(CLS(),exp.ref.var.blk),
+                     and _AST.isChild(CLS(),to.ref.var.blk),
                 me, 'invalid attribution')
     end,
 
     SetSpawn = function (me)
-        local exp = unpack(me)
-        ASR(exp.lval and _TP.isNumeric(exp.tp,true),
+        local _, to = unpack(me)
+        ASR(to.lval and _TP.isNumeric(to.tp,true),
                 me, 'invalid attribution')
     end,
 
@@ -596,7 +606,7 @@ F = {
         if spw then
             me.cls = _ENV.clss[ spw[1] ]   -- checked on Spawn
         elseif set then
-            me.cls = _ENV.clss[ set[2] ]   -- checked on SetExp
+            me.cls = _ENV.clss[ set[1] ]   -- checked on SetExp
         elseif dcl then
             me.cls = _ENV.clss[ dcl[2] ]   -- checked on Dcl_var
         else

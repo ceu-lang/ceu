@@ -1,21 +1,21 @@
 F = {
     SetExp = function (me)
-        local e1, e2 = unpack(me)
-        e1 = e1 or _AST.iter'SetBlock'()[1]
+        local fr, to = unpack(me)
+        to = to or _AST.iter'SetBlock'()[1]
 
         local req = false
 
         local constr = _AST.iter'Dcl_constr'()
 
-        if _TP.deref(e1.tp) then
-            local blk1 = (e1.fst=='_' and _AST.root) or e1.fst.blk
+        if _TP.deref(to.tp) then
+            local blk1 = (to.fst=='_' and _AST.root) or to.fst.blk
 
             if constr then
                 blk1 = constr.blk
             end
 
-            if e2.fst and e2.fst~='_' then
-                local blk2 = e2.fst.blk
+            if fr.fst and fr.fst~='_' then
+                local blk2 = fr.fst.blk
                 if blk2 then
                     local d1 = (blk1==true and 0) or blk1.depth
                     local d2 = (blk2==true and 0) or blk2.depth
@@ -30,7 +30,7 @@ F = {
                 req = req and blk2
             else
                 -- int* pa = _fopen();  -- `pa´ termination must consider ret
-                req = (e2.tag=='Op2_call' and e2.c.mod~='pure')
+                req = (fr.tag=='Op2_call' and fr.c.mod~='pure')
                 req = req and blk1
             end
         end

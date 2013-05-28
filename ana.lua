@@ -196,9 +196,9 @@ F = {
         me.ana.pos = { [false]='esc' }   -- diff from [false]=true
     end,
     SetBlock = function (me)
-        local blk = me[2]
+        local blk = me[1]
         if   (not blk.ana.pos[false])
-        and  (me[2].tag ~= 'Async')     -- async is assumed to terminate
+        and  (me[1].tag ~= 'Async')     -- async is assumed to terminate
         then
             --_ANA.ana.reachs = _ANA.ana.reachs + 1
             WRN( INC(me, 'reachs'),
@@ -232,7 +232,7 @@ F = {
     end,
 
     SetAwait = function (me)
-        local set, awt = unpack(me)
+        local awt, set = unpack(me)
         set.ana.pre = COPY(awt.ana.pos)
         set.ana.pos = COPY(awt.ana.pos)
         me.ana.pre = COPY(awt.ana.pre)

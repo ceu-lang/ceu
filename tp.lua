@@ -59,10 +59,22 @@ function _TP.ceil (v)
     end
 end
 
+function _TP.tostring (tp)
+    if _TP.isTuple(tp) then
+        return '<'..table.concat(tp,',')..'>'
+    else
+        return tp
+    end
+end
+
 -- TODO: enforce passing parameter `c´ to isNumeric/deref/contains/max ?
 
 function _TP.noptr (tp)
-    return (string.match(tp, '^([_%w]*)%**'))
+    if _TP.isTuple(tp) then
+        return _TP.c(tp)
+    else
+        return (string.match(tp, '^([_%w]*)%**'))
+    end
 end
 
 function _TP.cls (tp)
@@ -74,32 +86,42 @@ end
 --[[
 function _TP.c (tp)
     -- _tp->tp
-    -- class->char*
-    -- class*->char* (too!)
+    -- class->CEU_XXX
+    -- class*->CEU_XXX* (too!)
     return (string.gsub(string.gsub(tp,'^%u[_%w]*%*?','char*'), '^_', ''))
 end
 ]]
 
 function _TP.c (tp)
-    -- _tp->tp
+    if _TP.isTuple(tp) then
+        return 'tceu__'..table.concat(tp,'__')
+    end
+
     local cls = _ENV.clss[_TP.noptr(tp)]
     if cls then
-        tp = 'CEU_'..tp
+        return 'CEU_'..tp
     end
+
     return (string.gsub(tp,'^_', ''))
 end
 
 function _TP.isNumeric (tp, c)
-    return tp~='void' and types[tp] or (c and _TP.ext(tp))
+    return (not _TP.isTuple(tp)) and tp~='void' and types[tp]
+            or (c and _TP.ext(tp))
+end
+
+function _TP.isTuple (tp)
+    return type(tp) == 'table'
 end
 
 function _TP.deref (tp, c)
-    return string.match(tp,'(.-)%*$')
-            or (c and _TP.ext(tp,c))
+    return (not _TP.isTuple(tp)) and
+            ( string.match(tp,'(.-)%*$')
+                or (c and _TP.ext(tp,c)) )
 end
 
 function _TP.ext (tp, loc)
-    return (tp=='_' and '_') or
+    return (not _TP.isTuple(tp)) and (tp=='_' and '_') or
             (loc and (not _TP.deref(tp)) and (string.sub(tp,1,1) == '_') and tp)
 end
 
@@ -118,6 +140,13 @@ function _TP.contains (tp1, tp2, c)
             return cls1.is_ifc and _ENV.ifc_vs_cls(cls1,cls2)
         end
         return tp1=='void*' or tp2=='void*' or _TP.contains(_tp1, _tp2, c)
+    elseif _TP.isTuple(tp1) and _TP.isTuple(tp2) and #tp1 == #tp2 then
+        for i=1, #tp1 do
+            if not _TP.contains(tp1[i], tp2[i]) then
+                return false
+            end
+        end
+        return true
     end
     return false
 end

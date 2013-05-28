@@ -70,7 +70,7 @@ F = {
     end,
 
     SetBlock = function (me)
-        local _,blk = unpack(me)
+        local blk,_ = unpack(me)
         SAME(me, blk)
         me.tl_returns = false
     end,

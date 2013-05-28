@@ -91,11 +91,105 @@ error 'testar pause/if org.e'
 error 'testar new/spawn que se mata'
 
 do return end
---]===]
 
 -- OK: under tests but supposed to work
 
---do return end
+Test { [[
+var int a, b;
+(a,b) = 1;
+return 1;
+]],
+    ast = 'ERR : line 2 : invalid attribution',
+}
+
+Test { [[
+input <int> A;
+return 1;
+]],
+    parser = 'ERR : line 1 : after `int´ : expected `,´',
+}
+
+Test { [[
+input <_int,int> A;
+return 1;
+]],
+    run = 1;
+}
+
+Test { [[
+input <int,int> A;
+event <int,int> a;
+return 1;
+]],
+    run = 1;
+}
+
+Test { [[
+input <int,int> A;
+par/or do
+    event int a,b;
+    (a,b) = await A;
+    return a + b;
+with
+    async do
+        emit A(1,2);
+    end
+end
+return 1;
+]],
+    env = 'ERR : line 4 : variable "a" is not declared',
+}
+
+Test { [[
+input <int,int*> A;
+par/or do
+    var int a,b;
+    (a,b) = await A;
+    return a + b;
+with
+    async do
+        emit A(1,2);
+    end
+end
+return 1;
+]],
+    env = 'ERR : line 4 : invalid attribution',
+}
+
+Test { [[
+input <int,int> A;
+par/or do
+    var int a,b;
+    (a,b) = await A;
+    return a + b;
+with
+    async do
+        emit A(1,2);
+    end
+end
+return 1;
+]],
+    run = 3;
+}
+
+Test { [[
+event <int,int> a;
+par/or do
+    var int a,b;
+    (a,b) = await a;
+    return a + b;
+with
+    async do
+        emit a=1,2;
+    end
+end
+return 1;
+]],
+    run = 3;
+}
+
+do return end
+--]===]
 
 -- OK: well tested
 

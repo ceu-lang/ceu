@@ -220,7 +220,7 @@ local C; C = {
         local awt = node(tag)(ln, evt, false)
         awt.isEvery = true
         if var then
-            awt = node('SetAwait')(ln, var, awt)
+            awt = node('SetAwait')(ln, awt, var)
         end
 
         local ret = node('Loop')(ln,
@@ -243,10 +243,11 @@ local C; C = {
         local i = function() return node('Var')(ln, _i) end
         local dcl_i = node('Dcl_var')(ln, 'var', 'int', false, _i)
         dcl_i.read_only = true
-        local set_i = node('SetExp')(ln, i(), node('CONST')(ln,'0'))
+        local set_i = node('SetExp')(ln, node('CONST')(ln,'0'), i())
         set_i.read_only = true  -- overcome read_only
-        local nxt_i = node('SetExp')(ln, i(),
-                        node('Op2_+')(ln, '+', i(), node('CONST')(ln,'1')))
+        local nxt_i = node('SetExp')(ln,
+                        node('Op2_+')(ln, '+', i(), node('CONST')(ln,'1')),
+                        i())
         nxt_i.read_only = true
 
         if not _j then
@@ -269,7 +270,7 @@ local C; C = {
             local j_name = '_j'..blk.n
             j = function() return node('Var')(ln, j_name) end
             dcl_j = node('Dcl_var')(ln, 'var', 'int', false, j_name)
-            set_j = node('SetExp')(ln, j(), _j)
+            set_j = node('SetExp')(ln, _j, j())
         end
 
         local cmp = node('Op2_>=')(ln, '>=', i(), j())
@@ -309,14 +310,14 @@ local C; C = {
                 node('Stmts')(ln,
                     cur_dcl,    -- Dcl_var(cur_id)
                     node('SetExp')(ln,
-                        node('Var')(ln, cur_id),
-                        node('CONST')(ln, '0')),
+                        node('CONST')(ln, '0'),
+                        node('Var')(ln, cur_id)),
                     node('ParOr')(ln,
                         node('Loop')(ln,
                             node('Stmts')(ln,
                                 node('SetAwait')(ln,
-                                    node('Var')(ln, cur_id),
                                     node('AwaitInt')(ln, evt, false),
+                                    node('Var')(ln, cur_id),
                                     false),
                                 node('If')(ln,
                                     node('Var')(ln, cur_id),
@@ -424,9 +425,8 @@ local C; C = {
             blk = node('Block')(ln,
                     node('Stmts')(ln,
                         node('Dcl_var')(ln, 'var', 'int', false, '_ret'),
-                        node('SetBlock')(ln,
-                            node('Var')(ln,'_ret'),
-                            blk)))
+                        node('SetBlock')(ln, blk,
+                            node('Var')(ln,'_ret'))))
         end
 
         local cls = node('Dcl_cls')(ln, is_ifc, id, n, blk)
@@ -440,8 +440,25 @@ local C; C = {
     Free   = node('Free'),
     Spawn  = node('Spawn'),
 
-    _Set = function (ln, e1, tag, e2, constr)
-        return node(tag)(ln, e1, e2, constr)
+    _Set = function (ln, to, tag, fr, constr)
+        if to.tag == 'VarList' then
+            ASR(tag=='SetAwait', ln, 'invalid attribution')
+            local tup = node('Tuple')(ln, 0)
+            tup.evt = fr[1]
+assert(tup.evt)
+            local t = {
+                node('SetAwait')(ln, fr, tup)
+            }
+            for i, var in ipairs(fr) do
+                local tup = node('Tuple')(ln, i)
+                tup.evt = fr[1]
+assert(tup.evt)
+                t[#t+1] = node('SetExp')(ln, tup, var)
+            end
+            return node('Stmts')(ln, unpack(t))
+        else
+            return node(tag)(ln, fr, to, constr)
+        end
     end,
 
     CallStmt = node('CallStmt'),
@@ -484,6 +501,8 @@ local C; C = {
     end,
     ExpList  = node('ExpList'),
 
+    --TupleType = node('TupleType'),
+
     Var      = node('Var'),
     Ext      = node('Ext'),
     Nat      = node('Nat'),
@@ -522,13 +541,13 @@ F = {
     end,
     _Return = function (me)
         local set = _AST.iter'SetBlock'()
-        local e2 = unpack(me)
-        local var = node('Var')(me.ln,set[1][1])
-        var.blk = set.blk
-        var.ret = true
+        local fr = unpack(me)
+        local to = node('Var')(me.ln,set[2][1])
+        to.blk = set.blk
+        to.ret = true
 
         local blk = node('Stmts')(me.ln)
-        blk[#blk+1] = node('SetExp')(me.ln, var, e2, set[3])
+        blk[#blk+1] = node('SetExp')(me.ln, fr, to, set[3])
 
         blk[#blk+1] = node('Return')(me.ln)
         return blk

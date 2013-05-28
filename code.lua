@@ -387,9 +387,9 @@ case ]]..me.lbls_cnt[i].id..[[:;
     end,
 
     SetNew = function (me)
-        local exp, _, constr = unpack(me)
+        local _, to, constr = unpack(me)
         F._New(me, {
-            val     = V(exp),
+            val     = V(to),
             cls     = me.cls,
             toFree  = 0,
             constr  = constr,
@@ -407,7 +407,7 @@ case ]]..me.lbls_cnt[i].id..[[:;
     end,
 
     SetSpawn = function (me)
-        local exp, spw = unpack(me)
+        local spw, to = unpack(me)
         LINE(me, [[
 {
     int __ceu_]]..spw.n..[[;
@@ -416,7 +416,7 @@ case ]]..me.lbls_cnt[i].id..[[:;
         CONC(me, spw)
 
         LINE(me, [[
-    ]]..V(exp)..[[ = __ceu_]]..spw.n..[[;
+    ]]..V(to)..[[ = __ceu_]]..spw.n..[[;
 }
 ]])
     end,
@@ -598,13 +598,13 @@ ceu_pause(&CEU_CUR->trls[ ]]..me.blk.trails[1]..[[ ],
     end,
 
     SetExp = function (me)
-        local e1, e2, fin = unpack(me)
-        COMM(me, 'SET: '..tostring(e1[1]))    -- Var or C
-        ATTR(me, e1, e2)
-        if e1.tag=='Var' and e1.var.id=='_ret' then
+        local fr, to, fin = unpack(me)
+        COMM(me, 'SET: '..tostring(to[1]))    -- Var or C
+        ATTR(me, to, fr)
+        if to.tag=='Var' and to.var.id=='_ret' then
             LINE(me, [[
 #ifdef ceu_out_end
-    ceu_out_end(]]..V(e1)..[[);
+    ceu_out_end(]]..V(to)..[[);
 #endif
 ]])
         end
@@ -616,7 +616,7 @@ ceu_pause(&CEU_CUR->trls[ ]]..me.blk.trails[1]..[[ ],
     end,
 
     SetBlock_pos = function (me)
-        local _,blk = unpack(me)
+        local blk,_ = unpack(me)
         CONC(me, blk)
         HALT(me)        -- must escape with `return´
         CASE(me, me.lbl_out)
@@ -871,7 +871,7 @@ case ]]..me.lbl_cnt.id..[[:;
     end,
 
     SetAwait = function (me)
-        local _, awt = unpack(me)
+        local awt,_ = unpack(me)
         CONC(me, awt) -- await code
     end,
     _SetAwait = function (me)
@@ -879,8 +879,8 @@ case ]]..me.lbl_cnt.id..[[:;
         if not set then
             return
         end
-        local e1, e2 = unpack(set)
-        ATTR(me, e1, set.awt)
+        local _, to = unpack(set)
+        ATTR(me, to, set.awt)
     end,
 
     AwaitN = function (me)
