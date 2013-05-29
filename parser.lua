@@ -126,7 +126,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , Nothing = K'nothing'
 
     , _StmtS = V'AwaitS'   + V'AwaitT'    + V'AwaitExt'  + V'AwaitInt'
-             + V'EmitT'    + V'EmitExtS'  + V'EmitInt'
+             + V'EmitT'    + V'EmitExt'   + V'EmitInt'
              + V'_Dcl_nat'   + V'_Dcl_ext'
              + V'_Dcl_int' + V'_Dcl_var'
              + V'Dcl_det'
@@ -238,7 +238,6 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , _13     = V'_Prim'
     , _Prim   = V'_Parens' + V'Var'   + V'Nat'   + V'SIZEOF'
               + V'NULL'    + V'CONST' + V'STRING'
-              + V'EmitExtE'
               + V'Global' + V'This'
 
     , ExpList = ( V'_Exp'*(K','*EV'_Exp')^0 )^-1
@@ -279,16 +278,12 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , AwaitS   = K'await' * V'__awaits' * (EK'or' * V'__awaits')^1
                                      * (V'__until' + Cc(false))
 
-    , _EmitExt = K'emit' * EV'Ext' * ( K'{' * V'ExpList' * EK'}'
-                                     + Cc(false) )
-    , EmitExtS = V'_EmitExt'
-    , EmitExtE = V'_EmitExt'
-
     , EmitT    = K'emit' * (V'WCLOCKK'+V'WCLOCKE')
 
-    --, EmitInt  = K'emit' * EV'_Exp' * (K'=' * V'_Exp')^-1
-    , EmitInt  = K'emit' * EV'_Exp' * ( K'{' * V'ExpList' * EK'}'
-                                      + Cc(false) )
+    , EmitExt  = K'emit' * EV'Ext'  * V'__emit_ps'
+    , EmitInt  = K'emit' * EV'_Exp' * V'__emit_ps'
+    , __emit_ps = ( K'=>' * (V'_Exp' + K'(' * V'ExpList' * EK')')
+                +   Cc(false) )
 
     , __ID     = V'ID_nat' + V'ID_ext' + V'Var'
     , Dcl_det  = K'deterministic' * EV'__ID' * EK'with' *
@@ -359,7 +354,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
                     return (string.gsub(id..star,' ',''))
                   end
 
-    , TupleType = K'{' * EV'ID_type' * (EK','*EV'ID_type')^1 * EK'}'
+    , TupleType = K'(' * EV'ID_type' * (EK','*EV'ID_type')^0 * EK')'
 
     , STRING = CK( CK'"' * (P(1)-'"'-'\n')^0 * EK'"' )
 

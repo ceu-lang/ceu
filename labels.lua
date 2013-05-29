@@ -126,7 +126,7 @@ F = {
         end
     end,
 
-    EmitExtS = function (me)
+    EmitExt = function (me)
         me.lbl_cnt = new{'Async_cont'}
     end,
     EmitT = function (me)

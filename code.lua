@@ -784,7 +784,7 @@ _ceu_cur_.trl = &CEU_CUR->trls[ ]]..me.trails[1]..[[ ];
         LINE(me, V(call)..';')
     end,
 
-    EmitExtS = function (me)
+    EmitExt = function (me)
         local e1, e2 = unpack(me)
         local evt = e1.evt
 

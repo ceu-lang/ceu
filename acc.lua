@@ -76,14 +76,11 @@ F = {
     end,
 ]=]
 
-    EmitExtS = function (me)
-        local e1, _ = unpack(me)
-        if e1.evt.pre == 'output' then
-            F.EmitExtE(me)
-        end
-    end,
-    EmitExtE = function (me)
+    EmitExt = function (me)
         local e1, e2 = unpack(me)
+        if e1.evt.pre == 'input' then
+            return
+        end
         INS {
             path = me.ana.pre,
             id  = e1.evt.id,    -- like functions (not table events)

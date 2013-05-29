@@ -532,14 +532,11 @@ F = {
                 me, 'invalid emit')
     end,
 
-    EmitExtS = function (me)
+    EmitExt = function (me)
         local ext, ps = unpack(me)
-        if ext.evt.pre == 'output' then
-            F.EmitExtE(me)
+        if ext.evt.pre == 'input' then
+            return
         end
-    end,
-    EmitExtE = function (me)
-        local ext, ps = unpack(me)
         ASR(ext.evt.pre == 'output', me, 'invalid input `emit´')
         me.tp = 'int'
 

@@ -464,28 +464,16 @@ local C; C = {
         end
     end,
 
-    EmitT    = node('EmitT'),
---[[
-    EmitInt  = node('EmitInt'),
-]]
+    EmitT = node('EmitT'),
     EmitInt = function (ln, int, ps)
-        return C.EmitExtS(ln, int, ps, 'EmitInt')
+        return C.EmitExt(ln, int, ps, 'EmitInt')
     end,
-    EmitExtE = function (ln, ext, ps)
-        if (not ps) or (#ps==0) then
-            return node('EmitExtE')(ln, ext, false)
-        elseif #ps == 1 then
-            return node('EmitExtE')(ln, ext, ps[1])
-        else
-            return node('EmitExtE')(ln, ext, ps)
-        end
-    end,
-    EmitExtS = function (ln, ext, ps, tag)
-        tag = tag or 'EmitExtS'
-        if (not ps) or (#ps==0) then
+    EmitExt = function (ln, ext, ps, tag)
+        tag = tag or 'EmitExt'
+        if not ps then
             return node(tag)(ln, ext, false)
-        elseif #ps == 1 then
-            return node(tag)(ln, ext, ps[1])
+        elseif ps.tag~='ExpList' then
+            return node(tag)(ln, ext, ps)
         else
             local tup = '_tup_'.._N
             _N = _N + 1

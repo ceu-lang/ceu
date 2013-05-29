@@ -228,15 +228,12 @@ F = {
         F._loop(me)
     end,
 
-    EmitExtS = function (me)
+    EmitExt = function (me)
         if _AST.iter'Async'() then
             ASR(me[1].evt.pre=='input',  me, 'not permitted inside `async´')
         else
             ASR(me[1].evt.pre=='output', me, 'not permitted outside `async´')
         end
-    end,
-    EmitExtE = function (me)
-        F.EmitExtS(me)
     end,
     EmitT = function (me)
         ASR(_AST.iter'Async'(), me,'not permitted outside `async´')
