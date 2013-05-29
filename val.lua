@@ -70,7 +70,7 @@ F =
 
     SetExp = function (me)
         local fr, to = unpack(me)
-        V(fr)     -- error on reads do internal events
+        V(fr)     -- error on reads of internal events
     end,
 
     EmitExtS = function (me)

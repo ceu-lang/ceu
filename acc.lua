@@ -131,9 +131,6 @@ F = {
     end,
 
     SetAwait = 'SetExp',
-    SetExp = function (me)
-        me[2].ref.acc.md = 'wr'
-    end,
     AwaitInt = function (me)
         me[1].ref.acc.md = 'aw'
         F.AwaitExt(me)  -- flow

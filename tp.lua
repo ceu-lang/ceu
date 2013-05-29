@@ -59,22 +59,10 @@ function _TP.ceil (v)
     end
 end
 
-function _TP.tostring (tp)
-    if _TP.isTuple(tp) then
-        return '<'..table.concat(tp,',')..'>'
-    else
-        return tp
-    end
-end
-
 -- TODO: enforce passing parameter `c´ to isNumeric/deref/contains/max ?
 
 function _TP.noptr (tp)
-    if _TP.isTuple(tp) then
-        return _TP.c(tp)
-    else
-        return (string.match(tp, '^([_%w]*)%**'))
-    end
+    return (string.match(tp, '^([_%w]*)%**'))
 end
 
 function _TP.cls (tp)
@@ -92,11 +80,11 @@ function _TP.c (tp)
 end
 ]]
 
-function _TP.c (tp)
-    if _TP.isTuple(tp) then
-        return 'tceu__'..table.concat(tp,'__')
-    end
+function _TP.isTuple (tp)
+    return _ENV.c[tp] and _ENV.c[tp].tuple
+end
 
+function _TP.c (tp)
     local cls = _ENV.clss[_TP.noptr(tp)]
     if cls then
         return 'CEU_'..tp
@@ -106,23 +94,16 @@ function _TP.c (tp)
 end
 
 function _TP.isNumeric (tp, c)
-    return (not _TP.isTuple(tp)) and tp~='void' and types[tp]
-            or (c and _TP.ext(tp))
-end
-
-function _TP.isTuple (tp)
-    return type(tp) == 'table'
+    return tp~='void' and types[tp] or (c and _TP.ext(tp))
 end
 
 function _TP.deref (tp, c)
-    return (not _TP.isTuple(tp)) and
-            ( string.match(tp,'(.-)%*$')
-                or (c and _TP.ext(tp,c)) )
+    return string.match(tp,'(.-)%*$') or (c and _TP.ext(tp,c))
 end
 
 function _TP.ext (tp, loc)
-    return (not _TP.isTuple(tp)) and (tp=='_' and '_') or
-            (loc and (not _TP.deref(tp)) and (string.sub(tp,1,1) == '_') and tp)
+    return (tp=='_' and '_') or
+           (loc and (not _TP.deref(tp)) and (string.sub(tp,1,1) == '_') and tp)
 end
 
 function _TP.contains (tp1, tp2, c)
@@ -140,13 +121,17 @@ function _TP.contains (tp1, tp2, c)
             return cls1.is_ifc and _ENV.ifc_vs_cls(cls1,cls2)
         end
         return tp1=='void*' or tp2=='void*' or _TP.contains(_tp1, _tp2, c)
-    elseif _TP.isTuple(tp1) and _TP.isTuple(tp2) and #tp1 == #tp2 then
-        for i=1, #tp1 do
-            if not _TP.contains(tp1[i], tp2[i]) then
-                return false
+    else
+        local tup1 = _TP.isTuple(tp1)
+        local tup2 = _TP.isTuple(tp2)
+        if tup1 and tup2 and (#tp1 == #tp2) then
+            for i=1, #tp1 do
+                if not _TP.contains(tp1[i], tp2[i]) then
+                    return false
+                end
             end
+            return true
         end
-        return true
     end
     return false
 end

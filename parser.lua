@@ -150,7 +150,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , _SetBlock = ( V'Do'     + V'Async' +
                     V'ParEver' + V'If'   + V'Loop' + V'Every' )
 
-    , _Set  = V'_Exp' * V'_Sets'
+    , _Set  = (V'_Exp' + V'VarList') * V'_Sets'
     , _Sets = K'=' * (
                 Cc'SetAwait' * (V'AwaitS'+V'AwaitT'+V'AwaitExt'+V'AwaitInt')
                                                     * Cc(false)
@@ -175,8 +175,8 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
                         return (string.find(s, '%(.*%)')) and i, ...
                     end)
 
-    , Async   = K'async' * V'VarList' * V'_Do'
-    , VarList = ( EK'(' * EV'Var' * (EK',' * EV'Var')^0 * EK')' )^-1
+    , Async   = K'async' * EV'VarList' * V'_Do'
+    , VarList = ( K'(' * EV'Var' * (EK',' * EV'Var')^0 * EK')' )^-1
 
     , _Return = K'return' * EV'_Exp'
 
@@ -279,7 +279,8 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , AwaitS   = K'await' * V'__awaits' * (EK'or' * V'__awaits')^1
                                      * (V'__until' + Cc(false))
 
-    , _EmitExt = K'emit' * EV'Ext' * (K'(' * V'_Exp'^-1 * EK')')^-1
+    , _EmitExt = K'emit' * EV'Ext' * ( K'(' * V'ExpList' * EK')'
+                                     + Cc(false) )
     , EmitExtS = V'_EmitExt'
     , EmitExtE = V'_EmitExt'
 
@@ -300,21 +301,23 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , _Dcl_nat     = K'native' * (CK'pure'+CK'constant'+CK'nohold'+Cc(false))
                  * EV'__Dcl_nat' * (K',' * EV'__Dcl_nat')^0
 
-    , _Dcl_ext = (CK'input'+CK'output') * EV'ID_type' *
+    , _Dcl_ext = (CK'input'+CK'output') * (EV'ID_type'+EV'TupleType') *
                     EV'ID_ext' * (K','*EV'ID_ext')^0
 
-    , _Dcl_int  = CK'event' * EV'ID_type' *
+    , _Dcl_int  = CK'event' * (EV'ID_type'+EV'TupleType') *
                     V'__Dcl_int' * (K','*V'__Dcl_int')^0
     , __Dcl_int = EV'ID_int' --* (V'_Sets' +
                              --   Cc(false)*Cc(false)*Cc(false))
 
     , _Dcl_var   = V'_Dcl_var_1' + V'_Dcl_var_2'
 
+    -- w/o constructor
     , _Dcl_var_2 = CK'var'
                  * (EV'ID_type' + EV'ID_cls')
                  * (K'['*V'_Exp'*K']' + Cc(false))
                  * V'__Dcl_var' * (K','*V'__Dcl_var')^0
 
+    -- w/  constructor
     , _Dcl_var_1 = CK'var'
                  * EV'ID_cls'
                  * (K'['*V'_Exp'*K']' + Cc(false))
@@ -353,6 +356,8 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
                   function (id, star)
                     return (string.gsub(id..star,' ',''))
                   end
+
+    , TupleType = K'<' * EV'ID_type' * (EK','*EV'ID_type')^1 * EK'>'
 
     , STRING = CK( CK'"' * (P(1)-'"'-'\n')^0 * EK'"' )
 

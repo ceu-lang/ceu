@@ -22,6 +22,7 @@ _ENV = {
         --[N]={_WCLOCK},    [id]={},
     },
 
+    -- TODO: move to _TP
     c = {
         void = 0,
 
@@ -117,7 +118,7 @@ function newvar (me, blk, pre, tp, dim, id)
     ASR(not _ENV.clss_ifc[tp], me,
         'cannot instantiate an interface')
     ASR(_TP.deref(tp) or (not c) or (tp=='void' and isEvt) or c.len~=0, me,
-        'cannot instantiate type "'.._TP.tostring(tp)..'"')
+        'cannot instantiate type "'..tp..'"')
     ASR((not dim) or dim>0, me, 'invalid array dimension')
 
     tp = (dim and tp..'*') or tp
@@ -361,6 +362,24 @@ F = {
         ASR(_tp and _ENV.clss[_tp], me, 'invalid `free´')
     end,
 
+    TupleType = function (me)
+        local tp = '_tceu'
+        for i, v in ipairs(me) do
+            local c = _ENV.c[v]
+            ASR(_TP.deref(v) or (c and (c.tag=='type' or c.tag=='unk')),
+                me, 'undeclared type `'..v..'´')
+            if c then
+                c.tag = 'type'
+            end
+            me[i] = _TP.c(v)
+            tp = tp .. '__'.._TP.c(v)
+        end
+
+        tp = string.gsub(tp, '*', '_')  -- TODO: not reliable
+        _ENV.c[tp] = { tag='type', id=tp, tuple=me, len=nil }
+        return tp
+    end,
+
     Dcl_ext = function (me)
         local dir, tp, id = unpack(me)
         ASR(not _ENV.exts[id], me, 'event "'..id..'" is already declared')
@@ -368,8 +387,7 @@ F = {
                 me, 'invalid event type')
 
         if _TP.isTuple(tp) then
-            local id = _TP.c(tp)
-            _ENV.c[id] = { tag='type', id=id, len=nil }
+            tp = tp..'*'
         end
 
         me.evt = {
@@ -383,6 +401,17 @@ F = {
         _ENV.exts[id] = me.evt
     end,
 
+    Dcl_var_pre = function (me)
+        -- changes TP from ast.lua
+        if me.__ref then
+            if me[2] == 'TP' then
+                me[2] = _TP.deref(me.__ref.evt.tp)
+            else    --  'TP*'
+                me[2] = me.__ref.evt.tp
+            end
+        end
+    end,
+
     Dcl_int = 'Dcl_var',
     Dcl_var = function (me)
         local pre, tp, dim, id, constr = unpack(me)
@@ -391,8 +420,7 @@ F = {
             ASR(tp=='void' or tp=='int' or _TP.deref(tp) or _TP.isTuple(tp),
                     me, 'invalid event type')
             if _TP.isTuple(tp) then
-                local id = _TP.c(tp)
-                _ENV.c[id] = { tag='type', id=id, len=nil }
+                tp = tp..'*'
             end
         end
         me.var = newvar(me, _AST.iter'Block'(), pre, tp, dim and dim.sval, id)
@@ -493,30 +521,30 @@ F = {
     end,
 
     EmitInt = function (me)
-        local e1, e2 = unpack(me)
-        local var = e1.var
+        local int, ps = unpack(me)
+        local var = int.var
         ASR(var and var.isEvt, me,
                 'event "'..(var and var.id or '?')..'" is not declared')
-        ASR(e1.tp=='void' or  (e2 and _TP.contains(e1.var.tp,e2.tp,true)),
+        ASR(int.tp=='void' or  (ps and _TP.contains(int.var.tp,ps.tp,true)),
                 me, 'invalid emit')
     end,
 
     EmitExtS = function (me)
-        local e1, _ = unpack(me)
-        if e1.evt.pre == 'output' then
+        local ext, ps = unpack(me)
+        if ext.evt.pre == 'output' then
             F.EmitExtE(me)
         end
     end,
     EmitExtE = function (me)
-        local e1, e2 = unpack(me)
-        ASR(e1.evt.pre == 'output', me, 'invalid input `emit´')
+        local ext, ps = unpack(me)
+        ASR(ext.evt.pre == 'output', me, 'invalid input `emit´')
         me.tp = 'int'
 
-        if e2 then
-            ASR(_TP.contains(e1.evt.tp,e2.tp,true),
+        if ps then
+            ASR(_TP.contains(ext.evt.tp,ps.tp,true),
                     me, "non-matching types on `emit´")
         else
-            ASR(e1.evt.tp=='void',
+            ASR(ext.evt.tp=='void',
                     me, "missing parameters on `emit´")
         end
     end,
@@ -528,10 +556,8 @@ F = {
         to = to or _AST.iter'SetBlock'()[1]
         ASR(to.lval and _TP.contains(to.tp,fr.tp,true),
                 me, 'invalid attribution')
-
         ASR(me.read_only or (not to.fst.read_only),
                 me, 'read-only variable')
-
         ASR(not CLS().is_ifc, me, 'invalid attribution')
     end,
 
@@ -724,7 +750,7 @@ F = {
     ['Op1_&'] = function (me)
         local op, e1 = unpack(me)
         ASR(_ENV.clss[e1.tp] or e1.lval, me, 'invalid operand to unary "&"')
-        me.tp   = e1.tp..'*'
+        me.tp   = _TP.c(e1.tp)..'*'
         me.lval = false
         me.ref  = e1.ref
         me.fst  = e1.fst
@@ -765,7 +791,13 @@ F = {
             end
         else
             ASR(_TP.ext(e1.tp,true), me, 'not a struct')
-            me.tp   = '_'
+            local tup = _TP.isTuple(e1.tp)
+            if tup then
+                local n = tonumber(string.match(id,'(%d+)'))
+                me.tp = tup[n]
+            else
+                me.tp = '_'
+            end
             me.lval = e1.lval
             me.ref  = e1.ref
         end

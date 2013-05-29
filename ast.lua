@@ -349,11 +349,6 @@ local C; C = {
     AwaitT   = node('AwaitT'),
     AwaitS   = node('AwaitS'),
 
-    EmitExtE = node('EmitExtE'),
-    EmitExtS = node('EmitExtS'),
-    EmitT    = node('EmitT'),
-    EmitInt  = node('EmitInt'),
-
     _Dcl_ext = function (ln, dir, tp, ...)
         for _, v in ipairs{...} do
             TOP[#TOP+1] = node('Dcl_ext')(ln, dir, tp, v)
@@ -443,21 +438,61 @@ local C; C = {
     _Set = function (ln, to, tag, fr, constr)
         if to.tag == 'VarList' then
             ASR(tag=='SetAwait', ln, 'invalid attribution')
-            local tup = node('Tuple')(ln, 0)
-            tup.evt = fr[1]
-assert(tup.evt)
+
+            local tup = '_tup_'.._N
+            _N = _N + 1
+
             local t = {
-                node('SetAwait')(ln, fr, tup)
+                fr[1],
+                node('Dcl_var')(ln, 'var', 'TP*', false, tup),
+                node('SetAwait')(ln, fr, node('Var')(ln,tup)),
             }
-            for i, var in ipairs(fr) do
-                local tup = node('Tuple')(ln, i)
-                tup.evt = fr[1]
-assert(tup.evt)
-                t[#t+1] = node('SetExp')(ln, tup, var)
+            t[2].__ref = fr[1] -- TP* is changed on env.lua
+
+            for i, v in ipairs(to) do
+                t[#t+1] = node('SetExp')(ln,
+                            node('Op2_.')(ln, '.',
+                                node('Op1_*')(ln, '*',
+                                    node('Var')(ln, tup)),
+                                'field_'..i),
+                            v)
             end
+
             return node('Stmts')(ln, unpack(t))
         else
             return node(tag)(ln, fr, to, constr)
+        end
+    end,
+
+    EmitT    = node('EmitT'),
+    EmitInt  = node('EmitInt'),
+    EmitExtE = node('EmitExtE'),
+    EmitExtS = function (ln, ext, ps)
+        if (not ps) or (#ps==0) then
+            return node('EmitExtS')(ln, ext, false)
+        elseif #ps == 1 then
+            return node('EmitExtS')(ln, ext, ps[1])
+        else
+            local tup = '_tup_'.._N
+            _N = _N + 1
+            local t = {
+                ext,
+                node('Dcl_var')(ln, 'var', 'TP', false, tup)
+            }
+            t[2].__ref = ext    -- TP is changed on env.lua
+
+            for i, p in ipairs(ps) do
+                t[#t+1] = node('SetExp')(ln,
+                            p,
+                            node('Op2_.')(ln, '.', node('Var')(ln, tup),
+                                'field_'..i))
+            end
+
+            t[#t+1] = node('EmitExtS')(ln, ext,
+                        node('Op1_&')(ln, '&',
+                            node('Var')(ln, tup)))
+
+            return node('Stmts')(ln, unpack(t))
         end
     end,
 
@@ -501,7 +536,7 @@ assert(tup.evt)
     end,
     ExpList  = node('ExpList'),
 
-    --TupleType = node('TupleType'),
+    TupleType = node('TupleType'),
 
     Var      = node('Var'),
     Ext      = node('Ext'),

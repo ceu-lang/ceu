@@ -110,7 +110,16 @@ return 1;
 }
 
 Test { [[
+native _int;
 input <_int,int> A;
+return 1;
+]],
+    run = 1;
+}
+
+Test { [[
+input <int*,int> A;
+event <int,int*> a;
 return 1;
 ]],
     run = 1;
@@ -129,7 +138,7 @@ input <int,int> A;
 par/or do
     event int a,b;
     (a,b) = await A;
-    return a + b;
+    return 1;
 with
     async do
         emit A(1,2);
@@ -137,7 +146,7 @@ with
 end
 return 1;
 ]],
-    env = 'ERR : line 4 : variable "a" is not declared',
+    code = 'ERR : line 4 : invalid expression',
 }
 
 Test { [[
@@ -149,6 +158,23 @@ par/or do
 with
     async do
         emit A(1,2);
+    end
+end
+return 1;
+]],
+    env = 'ERR : line 4 : invalid attribution',
+}
+
+Test { [[
+input <int,int*> A;
+par/or do
+    var int a,b;
+    (a,b) = await A;
+    return a + b;
+with
+    async do
+        var int x = 2;
+        emit A(1,&x);
     end
 end
 return 1;
@@ -172,6 +198,7 @@ return 1;
     run = 3;
 }
 
+--]===]
 Test { [[
 event <int,int> a;
 par/or do
@@ -189,7 +216,6 @@ return 1;
 }
 
 do return end
---]===]
 
 -- OK: well tested
 

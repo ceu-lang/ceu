@@ -152,9 +152,7 @@ typedef struct tceu_org
 
 } tceu_org;
 
-/*
-=== HOST ===
-*/
+=== TUPLE_TYPES ===
 
 === CLSS_DEFS ===
 

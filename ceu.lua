@@ -152,13 +152,27 @@ do
 
     tpl = sub(tpl, '=== LABELS_ENUM ===', _LBLS.code_enum)
 
-    --tpl = sub(tpl, '=== HOST ===',     _CODE.host)
-    tpl = sub(tpl, '=== CODE ===',     _AST.root.code)
+    do
+        local tps = ''
+        for _,c in pairs(_ENV.c) do
+            if c.tuple then
+                tps = tps .. 'typedef struct {\n'
+                for i, f in ipairs(c.tuple) do
+                    tps = tps..'\t'.._TP.c(f)..' field_'..i..';\n'
+                end
+                tps = tps .. '} '.._TP.c(c.id)..';\n'
+            end
+        end
+        tpl = sub(tpl, '=== TUPLE_TYPES ===', tps)
+    end
 
     tpl = sub(tpl, '=== POOL_C ===', assert(io.open'pool.c'):read'*a')
     tpl = sub(tpl, '=== CLSS_DEFS ===', _MEM.clss_defs)
     tpl = sub(tpl, '=== CLSS_INIT ===', _MEM.clss_init)
     tpl = sub(tpl, '=== CLSS_FREE ===', _MEM.clss_free)
+
+    --tpl = sub(tpl, '=== HOST ===',     _CODE.host)
+    tpl = sub(tpl, '=== CODE ===',     _AST.root.code)
 
     -- IFACES
     if _PROPS.has_ifcs then
@@ -287,7 +301,7 @@ void ceu_go_wclock (s32 dt);
 
     tpl = sub(tpl, '=== FILENAME ===', _OPTS.input)
 
-    --tpl = string.gsub(tpl, '^#line.-\n', '')
+    tpl = string.gsub(tpl, '^#line.-\n', '')
 end
 
 if _OPTS.verbose or true then
