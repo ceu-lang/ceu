@@ -750,7 +750,7 @@ F = {
     ['Op1_&'] = function (me)
         local op, e1 = unpack(me)
         ASR(_ENV.clss[e1.tp] or e1.lval, me, 'invalid operand to unary "&"')
-        me.tp   = _TP.c(e1.tp)..'*'
+        me.tp   = e1.tp..'*'
         me.lval = false
         me.ref  = e1.ref
         me.fst  = e1.fst
@@ -837,18 +837,15 @@ F = {
         me.fst  = false
 
         local tp = unpack(me)
-        local sz = 0
-        for _,tp in ipairs(me) do
+        if type(tp) == 'string' then    -- sizeof(type)
             local t = (_TP.deref(tp) and _ENV.c.pointer) or _ENV.c[tp]
             ASR(t and (t.tag=='type' or t.tag=='unk'), me,
                     'undeclared type '..tp)
             t.tag = 'type'
 
-            local i = ASR(t and t.len or _ENV.c.word.len,
+            me.sval = ASR(t and t.len or _ENV.c.word.len,
                             me, 'unknown size '..tp)    -- defaults to word
-            sz = _TP.align(sz,i) + i
         end
-        me.sval = sz
     end,
 
     STRING = function (me)

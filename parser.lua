@@ -221,7 +221,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , _9      = V'_10' * ((CK'+'+CK'-') * V'_10')^0
     , _10     = V'_11' * ((CK'*'+(CK'/'-'//'-'/*')+CK'%') * V'_11')^0
     , _11     = ( Cc(true) * ( (CK'not'-'nothing') + CK'&' + CK'-' + CK'+' + CK'~' + CK'*'
-                             + (K'<'*EV'ID_type'*K'>') )
+                             + (K'('*V'ID_type'*EK')') )
                 )^0 * V'_12'
     , _12     = V'_13' *
                     (
@@ -245,7 +245,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
 
     , _Parens  = K'(' * EV'_Exp' * EK')'
 
-    , SIZEOF = K'sizeof' * EK'<' * EV'ID_type' * (K','*EV'ID_type')^0 * EK'>'
+    , SIZEOF = K'sizeof' * EK'(' * (V'ID_type' + V'_Exp') * EK')'
     , CONST = CK( #m.R'09' * (m.R'09'+m.S'xX'+m.R'AF'+m.R'af')^1 )
             + CK( "'" * (P(1)-"'")^0 * "'" )
 
@@ -287,6 +287,8 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , EmitT    = K'emit' * (V'WCLOCKK'+V'WCLOCKE')
 
     , EmitInt  = K'emit' * EV'_Exp' * (K'=' * V'_Exp')^-1
+    --, EmitInt  = K'emit' * EV'_Exp' * ( K'(' * V'ExpList' * EK')'
+                                      --+ Cc(false) )
 
     , __ID     = V'ID_nat' + V'ID_ext' + V'Var'
     , Dcl_det  = K'deterministic' * EV'__ID' * EK'with' *

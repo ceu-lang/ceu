@@ -261,7 +261,12 @@ F =
     end,
     SIZEOF = function (me)
         --me.val = me.sval
-        me.val = 'sizeof('.._TP.c(me[1])..')'
+        local tp = unpack(me)
+        if type(tp) == 'string' then
+            me.val = 'sizeof('.._TP.c(me[1])..')'
+        else
+            me.val = 'sizeof('..tp.val..')'
+        end
     end,
     STRING = function (me)
         me.val = me[1]

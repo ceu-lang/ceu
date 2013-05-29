@@ -466,7 +466,26 @@ local C; C = {
 
     EmitT    = node('EmitT'),
     EmitInt  = node('EmitInt'),
-    EmitExtE = node('EmitExtE'),
+--[[
+    EmitInt = function (ln, int, ps)
+        if (not ps) or (#ps==0) then
+            return node('EmitInt')(ln, int, false)
+        elseif #ps == 1 then
+            return node('EmitInt')(ln, int, ps[1])
+        else
+            return node('EmitInt')(ln, int, ps)
+        end
+    end,
+]]
+    EmitExtE = function (ln, ext, ps)
+        if (not ps) or (#ps==0) then
+            return node('EmitExtE')(ln, ext, false)
+        elseif #ps == 1 then
+            return node('EmitExtE')(ln, ext, ps[1])
+        else
+            return node('EmitExtE')(ln, ext, ps)
+        end
+    end,
     EmitExtS = function (ln, ext, ps)
         if (not ps) or (#ps==0) then
             return node('EmitExtS')(ln, ext, false)

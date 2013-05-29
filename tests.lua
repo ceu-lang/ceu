@@ -198,7 +198,6 @@ return 1;
     run = 3;
 }
 
---]===]
 Test { [[
 event <int,int> a;
 par/or do
@@ -216,6 +215,7 @@ return 1;
 }
 
 do return end
+--]===]
 
 -- OK: well tested
 
@@ -302,7 +302,7 @@ Test { [[nt sizeof;]],
 Test { [[var int sizeof;]],
     parser = "ERR : line 1 : after `int´ : expected identifier",
 }
-Test { [[return sizeof<int>;]], run=4 }
+Test { [[return sizeof(int);]], run=4 }
 Test { [[return 1<2>3;]], run=0 }
 
 Test { [[var int a;]],
@@ -8886,7 +8886,6 @@ with
     end;
 end;
 ]],
---(~A; (~A;v)*) and (~A;~A;2=>v)*]],
     ana = {
         isForever = true,
         acc = 1,
@@ -8910,7 +8909,6 @@ with
     end;
 end;
 ]],
---(~A;~A;1=>v)* and (~A;~A;~A;v)*]],
     ana = {
         isForever = true,
         acc = 1,
@@ -10583,7 +10581,6 @@ loop do
     emit a=v;
 end;
 ]],
---((a,~D):add~>a)*]],
     ana = {
         isForever = true,
         --trig_wo = 1,
@@ -14582,8 +14579,8 @@ var _char c;
 var _char* pc;
 i = c;
 c = i;
-i = <int> c;
-c = <_char> i;
+i = (int) c;
+c = (_char) i;
 return 10;
 ]],
     env = 'ERR : line 6 : invalid attribution',
@@ -14595,8 +14592,8 @@ var int i;
 var int* pi;
 var _char c;
 var _char* pc;
-i = <int> c;
-c = <_char> i;
+i = (int) c;
+c = (_char) i;
 return 10;
 ]],
     run = 10
@@ -14649,8 +14646,8 @@ Test { [[
 native _char=1;
 var _char* ptr1;
 var int* ptr2;
-ptr1 = <_char*>ptr2;
-ptr2 = <int*>ptr1;
+ptr1 = (_char*)ptr2;
+ptr2 = (int*)ptr1;
 return 1;
 ]],
     run = 1,
@@ -14659,8 +14656,8 @@ Test { [[
 native _char=1;
 var int* ptr1;
 var _char* ptr2;
-ptr1 = <int*> ptr2;
-ptr2 = <_char*> ptr1;
+ptr1 = (int*) ptr2;
+ptr2 = (_char*) ptr1;
 return 1;
 ]],
     run = 1,
@@ -14864,7 +14861,7 @@ return a + b;
 
 Test { [[
 var int b = 10;
-var int* a = <int*> &b;
+var int* a = (int*) &b;
 var int* c = &b;
 return *a + *c;
 ]],
@@ -14988,7 +14985,7 @@ return a;
 Test { [[
 native _char = 1;
 var _char* p;
-*(p:a) = <_char>1;
+*(p:a) = (_char)1;
 return 1;
 ]],
     run = false,
@@ -16345,9 +16342,26 @@ native _s = 4;
 var _s vs;
 vs.a = 10;
 vs.b = 1;
-return vs.a + vs.b + sizeof<_s>;
+return vs.a + vs.b + sizeof(_s);
 ]],
     run = 15,
+}
+
+Test { [[
+native do
+typedef struct {
+    u16 a;
+    u8 b;
+    u8 c;
+} s;
+end
+native _s = 4;
+var _s vs;
+vs.a = 10;
+vs.b = 1;
+return vs.a + vs.b + sizeof(_s) + sizeof(vs) + sizeof(vs.a);
+]],
+    run = 21,
 }
 
 Test { [[
@@ -16459,12 +16473,12 @@ var _char[10] v2;
 
 loop i, 10 do
     v1[i] = i;
-    v2[i] = <_char> (i*2);
+    v2[i] = (_char) (i*2);
 end
 
 var int ret = 0;
 loop i, 10 do
-    ret = ret + <u8>v2[i] - v1[i];
+    ret = ret + (u8)v2[i] - v1[i];
 end
 
 return ret;
@@ -16484,8 +16498,8 @@ return sizeof<_t>;
 
 Test { [[
 native _char=1;
-var _char a = <_char> 1;
-return <int>a;
+var _char a = (_char) 1;
+return (int)a;
 ]],
     run = 1,
 }
@@ -22389,7 +22403,7 @@ end
 interface I with
     event int e;
 end
-var I* i = <I*> _ptr;
+var I* i = (I*) _ptr;
 return 10;
 ]],
     run = 10;
@@ -22416,11 +22430,11 @@ var T2 t2;
 var T* t;
 
 t = &t1;
-var T1* x1 = <T1*> t;
+var T1* x1 = (T1*) t;
 _assert(x1 != null);
 
 t = &t1;
-var T2* x2 = <T2*> t;
+var T2* x2 = (T2*) t;
 _assert(x2 == null);
 
 return 10;
