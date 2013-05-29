@@ -163,7 +163,7 @@ end
         ]]
         for input, ret2 in pairs(T.run) do
             input = string.gsub(input, '([^;]*)~>(%d[^;]*);?', 'emit %2;')
-            input = string.gsub(input, '[ ]*(%d+)[ ]*~>([^;]*);?', 'emit %2(%1);')
+            input = string.gsub(input, '[ ]*(%d+)[ ]*~>([^;]*);?', 'emit %2{%1};')
             input = string.gsub(input, '~>([^;]*);?', 'emit %1;')
             local all = string.gsub(str_all, '`EVTS', input)
             local ceu = assert(io.open('_ceu_tmp.ceu', 'w'))
@@ -200,10 +200,10 @@ STATS = {
 
 -- 123.50s user 26.53s system 83% cpu 2:58.79 total
 
-assert(STATS.count  ==    1218)
+assert(STATS.count  ==    1219)
 assert(STATS.mem    ==       0)
-assert(STATS.trails ==    2249)
-assert(STATS.bytes  == 7088187)
+assert(STATS.trails ==    2250)
+assert(STATS.bytes  == 7095803)
 
 do return end
 

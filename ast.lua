@@ -465,8 +465,9 @@ local C; C = {
     end,
 
     EmitT    = node('EmitT'),
-    EmitInt  = node('EmitInt'),
 --[[
+    EmitInt  = node('EmitInt'),
+]]
     EmitInt = function (ln, int, ps)
         if (not ps) or (#ps==0) then
             return node('EmitInt')(ln, int, false)
@@ -476,7 +477,6 @@ local C; C = {
             return node('EmitInt')(ln, int, ps)
         end
     end,
-]]
     EmitExtE = function (ln, ext, ps)
         if (not ps) or (#ps==0) then
             return node('EmitExtE')(ln, ext, false)

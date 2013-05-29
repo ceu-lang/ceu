@@ -279,16 +279,16 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , AwaitS   = K'await' * V'__awaits' * (EK'or' * V'__awaits')^1
                                      * (V'__until' + Cc(false))
 
-    , _EmitExt = K'emit' * EV'Ext' * ( K'(' * V'ExpList' * EK')'
+    , _EmitExt = K'emit' * EV'Ext' * ( K'{' * V'ExpList' * EK'}'
                                      + Cc(false) )
     , EmitExtS = V'_EmitExt'
     , EmitExtE = V'_EmitExt'
 
     , EmitT    = K'emit' * (V'WCLOCKK'+V'WCLOCKE')
 
-    , EmitInt  = K'emit' * EV'_Exp' * (K'=' * V'_Exp')^-1
-    --, EmitInt  = K'emit' * EV'_Exp' * ( K'(' * V'ExpList' * EK')'
-                                      --+ Cc(false) )
+    --, EmitInt  = K'emit' * EV'_Exp' * (K'=' * V'_Exp')^-1
+    , EmitInt  = K'emit' * EV'_Exp' * ( K'{' * V'ExpList' * EK'}'
+                                      + Cc(false) )
 
     , __ID     = V'ID_nat' + V'ID_ext' + V'Var'
     , Dcl_det  = K'deterministic' * EV'__ID' * EK'with' *
@@ -359,7 +359,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
                     return (string.gsub(id..star,' ',''))
                   end
 
-    , TupleType = K'<' * EV'ID_type' * (EK','*EV'ID_type')^1 * EK'>'
+    , TupleType = K'{' * EV'ID_type' * (EK','*EV'ID_type')^1 * EK'}'
 
     , STRING = CK( CK'"' * (P(1)-'"'-'\n')^0 * EK'"' )
 
