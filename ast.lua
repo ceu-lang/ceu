@@ -469,13 +469,7 @@ local C; C = {
     EmitInt  = node('EmitInt'),
 ]]
     EmitInt = function (ln, int, ps)
-        if (not ps) or (#ps==0) then
-            return node('EmitInt')(ln, int, false)
-        elseif #ps == 1 then
-            return node('EmitInt')(ln, int, ps[1])
-        else
-            return node('EmitInt')(ln, int, ps)
-        end
+        return C.EmitExtS(ln, int, ps, 'EmitInt')
     end,
     EmitExtE = function (ln, ext, ps)
         if (not ps) or (#ps==0) then
@@ -486,11 +480,12 @@ local C; C = {
             return node('EmitExtE')(ln, ext, ps)
         end
     end,
-    EmitExtS = function (ln, ext, ps)
+    EmitExtS = function (ln, ext, ps, tag)
+        tag = tag or 'EmitExtS'
         if (not ps) or (#ps==0) then
-            return node('EmitExtS')(ln, ext, false)
+            return node(tag)(ln, ext, false)
         elseif #ps == 1 then
-            return node('EmitExtS')(ln, ext, ps[1])
+            return node(tag)(ln, ext, ps[1])
         else
             local tup = '_tup_'.._N
             _N = _N + 1
@@ -507,7 +502,7 @@ local C; C = {
                                 'field_'..i))
             end
 
-            t[#t+1] = node('EmitExtS')(ln, ext,
+            t[#t+1] = node(tag)(ln, ext,
                         node('Op1_&')(ln, '&',
                             node('Var')(ln, tup)))
 

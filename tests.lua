@@ -91,6 +91,7 @@ error 'testar pause/if org.e'
 error 'testar new/spawn que se mata'
 
 do return end
+--]===]
 
 -- OK: under tests but supposed to work
 
@@ -211,11 +212,24 @@ with
 end
 return 1;
 ]],
-    run = 3;
+    env = 'ERR : line 4 : event "a" is not declared',
 }
 
-do return end
---]===]
+Test { [[
+event {int,int} a;
+input void START;
+par/or do
+    var int c,d;
+    (c,d) = await a;
+    return c + d;
+with
+    await START;
+    emit a{1,2};
+end
+return 1;
+]],
+    run = 3,
+}
 
 -- OK: well tested
 

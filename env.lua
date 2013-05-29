@@ -404,10 +404,13 @@ F = {
     Dcl_var_pre = function (me)
         -- changes TP from ast.lua
         if me.__ref then
+            local ref = me.__ref
+            ASR(ref.evt, me,
+                'event "'..(ref.var and ref.var.id or '?')..'" is not declared')
             if me[2] == 'TP' then
-                me[2] = _TP.deref(me.__ref.evt.tp)
+                me[2] = _TP.deref(ref.evt.tp)
             else    --  'TP*'
-                me[2] = me.__ref.evt.tp
+                me[2] = ref.evt.tp
             end
         end
     end,
