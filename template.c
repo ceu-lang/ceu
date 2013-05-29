@@ -302,7 +302,6 @@ void ceu_org_init (tceu_org* org, int n, int lbl,
 #ifdef CEU_PSES
 void ceu_pause (tceu_trl* trl, tceu_trl* trlF, int psed) {
     do {
-/*fprintf(stderr, "antes [%p] %d %p\n", trl, trl->evt, (trl+1)->org);*/
         if (psed) {
             if (trl->evt == CEU_IN__ORG)
                 trl->evt = CEU_IN__ORG_PSED;
@@ -310,17 +309,18 @@ void ceu_pause (tceu_trl* trl, tceu_trl* trlF, int psed) {
             if (trl->evt == CEU_IN__ORG_PSED)
                 trl->evt = CEU_IN__ORG;
         }
-/*fprintf(stderr, "depois [%p] %d %p\n", trl, trl->evt, (trl+1)->org);*/
         if ( trl->evt == CEU_IN__ORG
         ||   trl->evt == CEU_IN__ORG_PSED ) {
             trl += 2;       /* jump [fst|lst] */
         }
     } while (++trl <= trlF);
 
+#ifdef ceu_out_wclock
     if (!psed) {
-        ceu_go_wclock(0);   /* TODO: hack (recalculates MIN clock) */
-                            /* TODO: CEU_IN__WCLOCK=0 de trl => trlF */
+        ceu_out_wclock(0);  /* TODO: recalculate MIN clock */
+                            /*       between trl => trlF   */
     }
+#endif
 }
 #endif
 

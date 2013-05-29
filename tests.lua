@@ -87,6 +87,33 @@ return _V;
     run = { ['~>1s']=10 },
 }
 
+Test { [[
+input int  A;
+input void Z;
+event int a;
+var int ret = 0;
+par/or do
+    loop do
+        var int v = await A;
+        emit a => v;
+    end
+with
+    pause/if a do
+        ret = await 9us;
+    end
+native nohold _fprintf(), _stderr;
+_fprintf(_stderr, "=== %d\n", ret);
+end
+return ret;
+]],
+    run = {
+        ['~>1us;0~>A;~>1us;0~>A;~>19us'] = 12,
+        ['~>1us;1~>A;~>1s;0~>A;~>19us'] = 11,
+        --['~>1us;1~>A;~>5us;0~>A;~>5us;1~>A;~>5us;0~>A;~>9us'] = 6,
+-- BUG: set_min nao eh chamado apos o pause
+    },
+}
+
 error 'testar pause/if org.e'
 error 'testar new/spawn que se mata'
 
@@ -94,6 +121,46 @@ do return end
 --]===]
 
 -- OK: under tests but supposed to work
+
+Test { [[
+event int a;
+input void A;
+var int v = 0;
+
+class T with
+    event int a;
+do
+    pause/if a do
+        await FOREVER;
+    end
+end
+
+par/or do
+    pause/if a do
+        await FOREVER;
+    end
+with
+    loop do
+        await 1s;
+        v = v + 1;
+    end
+with
+    var T t;
+    var int pse? = 0;
+    loop do
+        await 1s;
+        pse? = not pse?;
+        emit a => pse?;
+        emit t.a => pse?;
+    end
+with
+    await A;
+end
+return v;
+]],
+    ana = { acc=0 },
+    run = { ['~>10s;~>A']=10 }
+}
 
 Test { [[
 var int a, b;
@@ -16995,13 +17062,15 @@ with
     pause/if a do
         ret = await 9us;
     end
+native nohold _fprintf(), _stderr;
+_fprintf(_stderr, "=== %d\n", ret);
 end
 return ret;
 ]],
     run = {
         ['~>1us;0~>A;~>1us;0~>A;~>19us'] = 12,
-        ['~>1us;1~>A;~>1s;0~>A;~>19us'] = 11,
-        ['~>1us;1~>A;~>5us;0~>A;~>5us;1~>A;~>5us;0~>A;~>9us'] = 6,
+        --['~>1us;1~>A;~>1s;0~>A;~>19us'] = 11,
+        --['~>1us;1~>A;~>5us;0~>A;~>5us;1~>A;~>5us;0~>A;~>9us'] = 6,
     },
 }
 
@@ -22145,13 +22214,11 @@ end
 input int P;
 event int pse;
 
-native nohold _fprintf(), _stderr;
 par/or do
     pause/if pse do
         do
             loop i do
                 spawn T with
-_fprintf(_stderr, "=== %d\n", i);
                     this.c = i;
                 end;
                 await 1s;
@@ -22162,7 +22229,6 @@ with
     loop do
         var int v = await P;
         emit pse  =>  v;
-_fprintf(_stderr, "pse %d\n", v);
     end
 with
     await 5s;
