@@ -90,6 +90,17 @@ local _N = 0
 local _E = 1    -- 0=NONE
 local _F = 0
 
+function newtype (tp)
+    local raw = _TP.noptr(tp)
+
+    local c = _ENV.c[raw]
+    if c or string.sub(raw,1,1)~='_' then
+        return  -- already declared or not external type
+    end
+
+    _ENV.c[raw] = { tag='type', id=raw, id_=raw, len=nil, mod=nil }
+end
+
 function newvar (me, blk, pre, tp, dim, id)
     for stmt in _AST.iter() do
         if stmt.tag == 'Async' then
@@ -105,16 +116,12 @@ function newvar (me, blk, pre, tp, dim, id)
         end
     end
 
+    local isEvt = (pre == 'event')
     local tp_raw = _TP.noptr(tp)
     local c = _ENV.c[tp_raw]
-    local isEvt = (pre == 'event')
 
-    ASR(_ENV.clss[tp_raw] or (c and (c.tag=='type' or c.tag=='unk')),
-        me, 'undeclared type `'..tp_raw..'´')
-    if c then
-        c.tag = 'type'
-    end
-
+    ASR(_ENV.clss[tp_raw] or c, me,
+            'undeclared type `'..tp_raw..'´')
     ASR(not _ENV.clss_ifc[tp], me,
         'cannot instantiate an interface')
     ASR(_TP.deref(tp) or (not c) or (tp=='void' and isEvt) or c.len~=0, me,
@@ -382,6 +389,7 @@ F = {
 
     Dcl_ext = function (me)
         local dir, tp, id = unpack(me)
+        newtype(tp)
         ASR(not _ENV.exts[id], me, 'event "'..id..'" is already declared')
         ASR(tp=='void' or tp=='int' or _TP.deref(tp) or _TP.isTuple(tp),
                 me, 'invalid event type')
@@ -418,6 +426,7 @@ F = {
     Dcl_int = 'Dcl_var',
     Dcl_var = function (me)
         local pre, tp, dim, id, constr = unpack(me)
+        newtype(tp)
         ASR((not dim) or tonumber(dim.sval), me, 'invalid static expression')
         if pre == 'event' then
             ASR(tp=='void' or tp=='int' or _TP.deref(tp) or _TP.isTuple(tp),
@@ -666,6 +675,10 @@ F = {
         ASR((not _OPTS.c_calls) or _OPTS.c_calls[id],
             me, 'native calls are disabled')
 
+        if not me.c then
+            me.c = { tag='func', id=id, mod=nil }
+            _ENV.c[id] = me.c
+        end
         ASR(me.c and me.c.tag=='func', me,
             'native function "'..id..'" is not declared')
 
@@ -815,7 +828,7 @@ F = {
     Nat = function (me)
         local id = unpack(me)
         local c = _ENV.c[id]
-        ASR(c and c.tag~='type', me,
+        ASR((not c) or c.tag~='type', me,
             'native variable/function "'..id..'" is not declared')
         me.tp   = '_'
         me.lval = true

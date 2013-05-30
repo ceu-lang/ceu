@@ -118,9 +118,59 @@ error 'testar pause/if org.e'
 error 'testar new/spawn que se mata'
 
 do return end
---]===]
 
 -- OK: under tests but supposed to work
+
+Test { [[
+event void a, b;
+input void START,A;
+var int ret = 0 ;
+
+par/or do
+    loop do
+        await a;
+        ret = ret + 1;
+    end
+with
+    await b;
+    emit a;
+    await FOREVER;
+with
+    await START;
+    emit a;
+    await A;
+    emit b;
+end
+return ret;
+]],
+    run = { ['~>A']=2 },
+}
+Test { [[
+event void a, b;
+input void START;
+var int ret = 0 ;
+
+par/or do
+    loop do
+        await a;
+        ret = ret + 1;
+    end
+with
+    await b;
+    emit a;
+    await FOREVER;
+with
+    await START;
+    emit a;
+    emit b;
+end
+return ret;
+]],
+    ana = { acc=1 },
+    run = 2,
+}
+do return end
+--]===]
 
 Test { [[
 event int a;
@@ -1009,24 +1059,9 @@ var _t v;
 emit A => v;
 return(1);
 ]],
-    env = 'ERR : line 2 : undeclared type `_t´',
+    --env = 'ERR : line 2 : undeclared type `_t´',
+    env = 'ERR : line 3 : non-matching types on `emit´',
 }
-Test { [[
-native do
-    void f (int* a) {
-        *a = 10;
-    }
-    typedef void (*t)(int*);
-end
-native _t = 4;
-var _t v = _f;
-var int a;
-v(&a);
-return(a);
-]],
-    env = 'ERR : line 8 : native variable/function "_f" is not declared',
-}
-
 Test { [[
 output int A;
 var int a;
@@ -12886,6 +12921,23 @@ end
 return r;
 ]],
     props = "ERR : line 8 : not permitted inside `finalize´",
+}
+
+Test { [[
+native do
+    void f (int* a) {
+        *a = 10;
+    }
+    typedef void (*t)(int*);
+end
+native _t = 4;
+var _t v = _f;
+var int a;
+v(&a) finalize with nothing; end;
+return(a);
+]],
+    --env = 'ERR : line 8 : native variable/function "_f" is not declared',
+    run = 10,
 }
 
 Test { [[
