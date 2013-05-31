@@ -139,11 +139,10 @@ _CEU_STK[_ceu_stki  ].evto = _ceu_evto;
 _CEU_STK[_ceu_stki++].evt  = _ceu_evt;
 
 /* [ trails[1]+1, trails[2] [ */
-_ceu_trl = &_ceu_org->trls[ ]]..(me.trails[1]+1)..[[ ];  /* trails[1]+1 is in */
-#ifdef CEU_ORGS
-_ceu_forg = _ceu_org;
-#endif
-_ceu_ftrl = &_ceu_org->trls[ ]]..(me.trails[2]+1)..[[ ]; /* trails[2]+1 is out */
+_ceu_trl  = &_ceu_org->trls[ ]]..(me.trails[1]+1)..[[ ];
+                                /* trails[1]+1 is in */
+_ceu_stop = &_ceu_org->trls[ ]]..(me.trails[2]+1)..[[ ];
+                                /* trails[2]+1 is out */
 _ceu_evt = CEU_IN__CLEAR;
 goto _CEU_CALLTRL_;
 
@@ -271,9 +270,8 @@ end;
     _CEU_STK[_ceu_stki++].evt  = _ceu_evt;
 
     /* switch to ORG for PRE */
-    _ceu_org = ]]..org..[[;
-    _ceu_ftrl = &_ceu_org->trls[_ceu_org->n]; /* don't follow the up link */
-    _ceu_forg = _ceu_org;
+    _ceu_org  = ]]..org..[[;
+    _ceu_stop = &_ceu_org->trls[_ceu_org->n]; /* don't follow the up link */
     goto _CEU_CALL_;
 
 case ]]..me.lbls_pre[i].id..[[:;
@@ -305,9 +303,8 @@ case ]]..me.lbls_pre[i].id..[[:;
     ]]..org..[[->trls[0].lbl = ]]..t.cls.lbl.id..[[;
     ]]..org..[[->trls[0].stk = _ceu_stki;
 
-    _ceu_org = ]]..org..[[;
-    _ceu_ftrl = &_ceu_org->trls[_ceu_org->n]; /* don't follow the up link */
-    _ceu_forg = _ceu_org;
+    _ceu_org  = ]]..org..[[;
+    _ceu_stop = &_ceu_org->trls[_ceu_org->n]; /* don't follow the up link */
     goto _CEU_CALL_;
 
 case ]]..me.lbls_cnt[i].id..[[:;
@@ -458,10 +455,7 @@ case ]]..me.lbls_cnt[i].id..[[:;
         LINE(me, [[
         /* clear all __ceu_tofree [ trls[0], ... [ */
         /* this will call free() */
-/* // not nedded (this is the default)
-        _ceu_forg = NULL;
-        _ceu_ftrl = NULL;
- */
+        _ceu_stop = __ceu_tofree;
         _ceu_trl  = &__ceu_tofree->trls[0];
 ]])
         if me.tag == 'Free' then    -- (or __ceu_tofree is already me)

@@ -424,13 +424,9 @@ void ceu_go (int _ceu_evt, void* _ceu_evtp)
 #endif
 
     /* traversals may be bounded to org/trl
-     * default (NULL) is to traverse everything
-     */
-#if defined(CEU_ORGS) || defined(CEU_CLEAR)
-#ifdef CEU_ORGS
-    void*     _ceu_forg = NULL; /* stop at this org */
-#endif
-    tceu_trl* _ceu_ftrl = NULL; /*      at this trl */
+     * default (NULL) is to traverse everything */
+#ifdef CEU_CLEAR
+    void* _ceu_stop = NULL;     /* stop at this trl/org */
 #endif
 
     _ceu_seqno++;
@@ -458,21 +454,12 @@ fprintf(stderr, "GO[%d]: evt=%d stk=%d [%d]\n", _ceu_seqno,
 #endif
         for (;;) /* TRL // TODO (speed): only range of trails that apply */
         {        /* (e.g. events that do not escape an org) */
-            /* bounded traversal? */
-#if defined(CEU_ORGS) || defined(CEU_CLEAR)
-            if ( (_ceu_ftrl == _ceu_trl)
-#ifdef CEU_ORGS
-            &&   (_ceu_forg == _ceu_org)
-#endif
-               )
-            {
-                _ceu_ftrl = NULL;   /* back to default */
-#ifdef CEU_ORGS
-                _ceu_forg = NULL;   /* back to default */
-#endif
-                break;      /* pop stack */
+#ifdef CEU_CLEAR
+            if (_ceu_trl == _ceu_stop) {    /* bounded trail traversal? */
+                _ceu_stop = NULL;           /* back to default */
+                break;                      /* pop stack */
             }
-#endif /* CEU_ORGS || CEU_CLEAR */
+#endif
 
             /* _ceu_org has been traversed to the end? */
             if (_ceu_trl ==
@@ -501,7 +488,6 @@ fprintf(stderr, "GO[%d]: evt=%d stk=%d [%d]\n", _ceu_seqno,
 #ifdef CEU_NEWS
                     /* org has been cleared to the end? */
                     if ( _ceu_evt  == CEU_IN__CLEAR
-                    &&   _ceu_forg != _ceu_org
                     &&   _ceu_org->isDyn
                     &&   _ceu_org->n != 0 )  /* TODO: avoids LST */
                     {
@@ -521,8 +507,8 @@ fprintf(stderr, "GO[%d]: evt=%d stk=%d [%d]\n", _ceu_seqno,
 #endif
                         }
 
-                        /* explicit free(me): return */
-                        if (_ceu_forg == NULL)
+                        /* explicit free(me) or end of spawn */
+                        if (_ceu_stop == _ceu_org)
                             break;  /* pop stack */
                     }
 #endif  /* CEU_NEWS */
