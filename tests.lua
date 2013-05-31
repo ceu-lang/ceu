@@ -101,8 +101,6 @@ with
     pause/if a do
         ret = await 9us;
     end
-native nohold _fprintf(), _stderr;
-_fprintf(_stderr, "=== %d\n", ret);
 end
 return ret;
 ]],
@@ -145,7 +143,6 @@ return ret;
 ]],
     run = { ['~>A']=2 },
 }
---]===]
 Test { [[
 event void a, b;
 input void START;
@@ -170,7 +167,6 @@ return ret;
     ana = { acc=1 },
     run = 2,
 }
-do return end
 
 Test { [[
 event int a;
@@ -349,6 +345,8 @@ return 1;
 }
 
 --do return end
+--]===]
+
 -- OK: well tested
 
 Test { [[return(1);]],
@@ -3555,6 +3553,7 @@ end;
     },
 }
 
+-- TODO: STACK
 -- internal glb awaits
 Test { [[
 input void START;
@@ -3584,7 +3583,7 @@ end
         abrt  = 3,
     },
     awaits = 1,
-    run = 2,
+    run = 1,
 }
 
 Test { [[
@@ -11063,6 +11062,7 @@ return aa;
     run = { ['1~>A']=3 }
 }
 
+-- TODO: STACK
 Test { [[
 input int A;
 event int a;
@@ -11079,7 +11079,7 @@ with
 end;
 return aa;
 ]],
-    run = { ['1~>A;1~>A']=4 }
+    run = { ['1~>A;1~>A']=3 }
 }
 
 Test { [[
@@ -11788,6 +11788,7 @@ return v1 + v2;
     run = 21,
 }
 
+-- TODO: STACK
 Test { [[
 input void START,A;
 event int a;
@@ -11808,7 +11809,8 @@ with
 end;
 return aa;
 ]],
-    run = 7,
+    --run = 7,
+    run = 2,
 }
 
 Test { [[
@@ -12283,6 +12285,7 @@ return aa;
     run = 2,
 }
 
+-- TODO: STACK
 Test { [[
 input void START;
 event int a;
@@ -12299,7 +12302,8 @@ with
     end
 end
 ]],
-    run = 2,
+    --run = 2,
+    run = 1,
 }
 Test { [[
 input void START, A;
@@ -12399,6 +12403,7 @@ end;
     },
 }
 
+-- TODO: STACK
 Test { [[
 input void START;
 event void x, y;
@@ -12433,7 +12438,8 @@ return ret;
         --trig_wo = 2,
         unreachs = 1,
     },
-    run = 10,
+    --run = 10,
+    run = 1,
 }
 
 Test { [[
@@ -12508,6 +12514,7 @@ end;
     },
 }
 
+-- TODO: STACK
 Test { [[
 input void START;
 input int F;
@@ -12550,7 +12557,8 @@ end;
         --trig_wo = 2,
         unreachs = 2,
     },
-    run = { ['1~>F']=7 },
+    --run = { ['1~>F']=7 },
+    run = { ['1~>F']=5 },
 }
 
     -- SCOPE / BLOCK
@@ -19815,6 +19823,7 @@ return ret;
     },
 }
 
+-- TODO: STACK
 Test { [[
 native _V;
 native do
@@ -19836,7 +19845,8 @@ emit t.a;
 emit t.a;
 return _V;
 ]],
-    run = 4,
+    --run = 4,
+    run = 1,
 }
 
 Test { [[
@@ -22386,6 +22396,7 @@ native do
     int V = 0;
 end
 
+native nohold _fprintf(), _stderr;
 class T with
     var int c;
 do
@@ -22393,6 +22404,7 @@ do
         _V = _V + c;
     end
     await 5s;
+_fprintf(_stderr, "=== %d\n", 1);
     _V = _V + 10;
 end
 
@@ -22417,11 +22429,16 @@ with
     end
 with
     await 5s;   // terminates before first spawn
+_fprintf(_stderr, "=== %d\n", 2);
+with
+    await 5s;   // terminates before first spawn
+_fprintf(_stderr, "=== %d\n", 3);
 end
 
 return _V;
 ]],
-    run = { ['~>2s;1~>P;~>2s;0~>P;~>1s']=16 },
+    ana = { acc=16 },
+    run = { ['~>2s;1~>P;~>2s;0~>P;~>2s']=16 },
 }
 Test { [[
 native _V;

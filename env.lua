@@ -199,10 +199,6 @@ F = {
         -- TODO: NONE=0
         -- TODO: if _PROPS.* then ... end
 
-        local evt = {id='_RESET', pre='input'}
-        _ENV.exts[#_ENV.exts+1] = evt
-        _ENV.exts[evt.id] = evt
-
         local evt = {id='_STK', pre='input'}
         _ENV.exts[#_ENV.exts+1] = evt
         _ENV.exts[evt.id] = evt

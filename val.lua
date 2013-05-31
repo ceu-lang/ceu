@@ -57,7 +57,7 @@ F =
 
     This = function (me)
         if _AST.iter'Dcl_constr'() then
-            me.val = 'org'
+            me.val = '__org'    -- set when calling constr
         else
             me.val = '_ceu_org'
         end
