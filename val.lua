@@ -18,9 +18,9 @@ end
 
 function CUR (me, id)
     if id then
-        return 'CEU_CUR_('.._TP.c(CLS().id)..')->'..id
+        return '(('.._TP.c(CLS().id)..'*)_ceu_org)->'..id
     else
-        return 'CEU_CUR_('.._TP.c(CLS().id)..')'
+        return '(('.._TP.c(CLS().id)..'*)_ceu_org)'
     end
 end
 
@@ -59,7 +59,7 @@ F =
         if _AST.iter'Dcl_constr'() then
             me.val = 'org'
         else
-            me.val = '_ceu_cur_.org'
+            me.val = '_ceu_org'
         end
         me.val = '(*(('.._TP.c(me.tp)..'*)'..me.val..'))'
     end,
@@ -107,9 +107,9 @@ F =
     AwaitExt = function (me)
         local e1 = unpack(me)
         if _TP.deref(e1.evt.tp) then
-            me.val = '(('.._TP.c(e1.evt.tp)..')_ceu_evt_.param.ptr)'
+            me.val = '(('.._TP.c(e1.evt.tp)..')_ceu_evtp)'
         else
-            me.val = '_ceu_evt_.param.v'
+            me.val = '((int)_ceu_evtp)'
         end
     end,
     AwaitT = function (me)

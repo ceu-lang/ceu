@@ -198,12 +198,12 @@ STATS = {
 }
 ]])
 
--- 102.50s user 21.21s system 86% cpu 2:23.17 total
+-- 104.72s user 21.98s system 85% cpu 2:28.38 total
 
-assert(STATS.count  ==    1232)
+assert(STATS.count  ==    1220)
 assert(STATS.mem    ==       0)
-assert(STATS.trails ==    2261)
-assert(STATS.bytes  == 7126657)
+assert(STATS.trails ==    2248)
+assert(STATS.bytes  == 7096762)
 
 do return end
 

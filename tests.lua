@@ -145,6 +145,7 @@ return ret;
 ]],
     run = { ['~>A']=2 },
 }
+--]===]
 Test { [[
 event void a, b;
 input void START;
@@ -170,7 +171,6 @@ return ret;
     run = 2,
 }
 do return end
---]===]
 
 Test { [[
 event int a;
@@ -348,6 +348,7 @@ return 1;
     run = 3,
 }
 
+--do return end
 -- OK: well tested
 
 Test { [[return(1);]],
@@ -1060,7 +1061,21 @@ emit A => v;
 return(1);
 ]],
     --env = 'ERR : line 2 : undeclared type `_t´',
-    env = 'ERR : line 3 : non-matching types on `emit´',
+    --env = 'ERR : line 3 : non-matching types on `emit´',
+    run = false,    -- unknown type name
+}
+Test { [[
+output int A;
+native do
+    typedef int t;
+end
+var _t v;
+emit A => v;
+return(1);
+]],
+    --env = 'ERR : line 2 : undeclared type `_t´',
+    --env = 'ERR : line 3 : non-matching types on `emit´',
+    run = 1,
 }
 Test { [[
 output int A;
@@ -11171,6 +11186,34 @@ return aa;
 }
 
 Test { [[
+input int A, B, Z;
+event int a;
+var int aa;
+par/and do
+    par/or do
+        await A;
+    with
+        await B;
+    end;
+    await B;
+    emit a => 10;
+with
+    par/or do
+        await Z;
+    with
+        await B;
+    end;
+    aa = await a;
+end;
+return aa;
+]],
+    ana = {
+        acc = 1,
+    },
+    run = { ['1~>B;~>B']=10 },
+}
+
+Test { [[
 input int A;
 event int a,b;
 par/and do
@@ -14723,15 +14766,16 @@ Test { [[
 native _char = 1;
 var int i;
 var int* pi;
-var _char c;
+var _char c=10;
 var _char* pc;
 i = c;
 c = i;
 i = (int) c;
 c = (_char) i;
-return 10;
+return c;
 ]],
-    env = 'ERR : line 6 : invalid attribution',
+    --env = 'ERR : line 6 : invalid attribution',
+    run = 10,
 }
 
 Test { [[
@@ -14783,12 +14827,13 @@ return 1;
 Test { [[
 native _char=1;
 var _char* ptr1;
-var int* ptr2;
+var int* ptr2=(void*)0xFF;
 ptr1 = ptr2;
 ptr2 = ptr1;
-return 1;
+return (int)ptr2;
 ]],
-    env = 'ERR : line 4 : invalid attribution',
+    --env = 'ERR : line 4 : invalid attribution',
+    run = 255,
 }
 Test { [[
 native _char=1;
@@ -14819,7 +14864,8 @@ ptr1 = ptr2;
 ptr2 = ptr1;
 return 1;
 ]],
-    env = 'ERR : line 4 : invalid attribution',
+    run = 1,
+    --env = 'ERR : line 4 : invalid attribution',
 }
 
 Test { [[

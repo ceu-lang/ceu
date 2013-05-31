@@ -94,7 +94,7 @@ function _TP.c (tp)
 end
 
 function _TP.isNumeric (tp, c)
-    return tp~='void' and types[tp] or (c and _TP.ext(tp))
+    return tp~='void' and types[tp] or (c and _TP.ext(tp,c))
 end
 
 function _TP.deref (tp, c)
@@ -110,7 +110,7 @@ function _TP.contains (tp1, tp2, c)
     local _tp1, _tp2 = _TP.deref(tp1), _TP.deref(tp2)
     if tp1 == tp2 then
         return true
-    elseif _TP.isNumeric(tp1) and _TP.isNumeric(tp2) then
+    elseif _TP.isNumeric(tp1,c) and _TP.isNumeric(tp2,c) then
         return true
     elseif c and (_TP.ext(tp1) or _TP.ext(tp2)) then
         return true

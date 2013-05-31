@@ -25,14 +25,6 @@
 #endif
 #define CEU_WCLOCK_EXPIRED (CEU_WCLOCK_INACTIVE-1)
 
-#ifdef CEU_ORGS
-#define CEU_CUR         ((tceu_org*) _ceu_cur_.org)
-#define CEU_CUR_(tp)    ((tp*)_ceu_cur_.org)
-#else
-#define CEU_CUR         ((tceu_org*) &CEU.mem)
-#define CEU_CUR_(tp)    (&CEU.mem)
-#endif
-
 #define CEU_NMEM       (=== CEU_NMEM ===)
 #define CEU_NTRAILS    (=== CEU_NTRAILS ===)
 
@@ -83,25 +75,16 @@ typedef union tceu_trl {
 #endif
 } tceu_trl;
 
+/* TODO (speed): hold nxt trl to run */
 typedef struct {
-    union {
-        void*   ptr;        /* exts/ints */
-        int     v;          /* exts/ints */
-        s32     dt;         /* wclocks */
-    };
-} tceu_param;
-
-/* TODO (+SPEED): hold nxt trl to run */
-/* TODO: rename -> tceu_stk */
-typedef struct {
-    tceu_param  param;
-    tceu_nevt   id;
+    void*     evtp;
 #ifdef CEU_INTS
 #ifdef CEU_ORGS
-    void*       org;
+    void*     evto;
 #endif
 #endif
-} tceu_evt;
+    tceu_nevt evt;
+} tceu_stk;
 
 typedef struct {
 #ifdef CEU_ORGS
@@ -110,19 +93,6 @@ typedef struct {
     tceu_trl* trl;
     tceu_nlbl lbl;
 } tceu_lst;
-
-/* TODO: remove */
-#define ceu_evt_param_ptr(a)    \
-    tceu_param p;           \
-    p.ptr = a;
-
-#define ceu_evt_param_v(a)      \
-    tceu_param p;           \
-    p.v = a;
-
-#define ceu_evt_param_dt(a)     \
-    tceu_param p;           \
-    p.dt = a;
 
 typedef struct {
     struct tceu_org* prv;   /* TODO (-RAM): lnks[0] does not use */
@@ -208,7 +178,7 @@ tceu CEU = {
 
 /**********************************************************************/
 
-void ceu_go (int __ceu_id, tceu_param* __ceu_p);
+void ceu_go (int _ceu_evt, void* _ceu_evtp);
 
 /**********************************************************************/
 
@@ -275,7 +245,7 @@ void ceu_org_init (tceu_org* org, int n, int lbl,
     memset(&org->trls, 0, n*sizeof(tceu_trl));
 
     /* org.trls[0] == org.blk.trails[1] */
-    org->trls[0].evt = CEU_IN__GO;
+    org->trls[0].evt = CEU_IN__STK;
     org->trls[0].lbl = lbl;
     org->trls[0].stk = CEU_MAX_STACK;
 
@@ -343,11 +313,10 @@ void ceu_go_init ()
 #ifdef CEU_EXTS
 void ceu_go_event (int id, void* data)
 {
-    ceu_evt_param_ptr(data);
 #ifdef CEU_DEBUG_TRAILS
     fprintf(stderr, "====== %d\n", id);
 #endif
-    ceu_go(id, &p);
+    ceu_go(id, data);
 }
 #endif
 
@@ -365,8 +334,6 @@ void ceu_go_wclock (s32 dt)
 {
 #ifdef CEU_WCLOCKS
 
-    ceu_evt_param_dt(dt);
-
 #ifdef CEU_DEBUG_TRAILS
     fprintf(stderr, "====== WCLOCK\n");
 #endif
@@ -377,7 +344,7 @@ void ceu_go_wclock (s32 dt)
     CEU.wclk_min_tmp = CEU.wclk_min;
     CEU.wclk_min     = CEU_WCLOCK_INACTIVE;
 
-    ceu_go(CEU_IN__WCLOCK, &p);
+    ceu_go(CEU_IN__WCLOCK, (void*)dt);
 
 #ifdef ceu_out_wclock
     if (CEU.wclk_min != CEU_WCLOCK_INACTIVE)
@@ -425,141 +392,139 @@ void ceu_stack_clr () {
 }
 #endif
 
-void ceu_go (int __ceu_id, tceu_param* __ceu_p)
+/* TODO: _ceu_evtp relies on (void* == int == s32) */
+void ceu_go (int _ceu_evt, void* _ceu_evtp)
 {
 #ifdef CEU_ORGS
-    tceu_evt _CEU_STK_[CEU_MAX_STACK];  /* TODO: 255 */
-#else
-    tceu_evt _CEU_STK_[CEU_NTRAILS+1];
+    tceu_org* _ceu_evto;       /* org that emitted current event */
 #endif
-    int      _ceu_stk_ = 1;   /* points to next (TODO: 0=unused) */
 
-    tceu_evt _ceu_evt_;       /* current stack entry */
-    tceu_lst _ceu_cur_;       /* current listener */
+#ifdef CEU_ORGS
+    tceu_stk _CEU_STK[CEU_MAX_STACK];  /* TODO: 255 */
+#else
+    tceu_stk _CEU_STK[CEU_MAX_STACK];  /* TODO: 255 */
+    /*tceu_stk _CEU_STK[CEU_NTRAILS*2];*/
+#endif
 
-    /* they are always set when _ceu_evt_.id=CEU_IN__CLEAR
+    /* current traversal state */
+    int       _ceu_stki = 1;   /* points to next */
+    tceu_trl* _ceu_trl;
+    tceu_nlbl _ceu_lbl;
+#ifdef CEU_ORGS
+    tceu_org* _ceu_org;
+#else
+    #define   _ceu_org ((tceu_org*)&CEU.mem)
+#endif
+
+    /* they are always set when _ceu_evt=CEU_IN__CLEAR
      * no need to protect them with NULLs
      * however assignments avoid warning on nescc
      */
 #ifdef CEU_CLEAR
 #ifdef CEU_ORGS
-    void* _ceu_clr_org_ = NULL;      /* stop at this org */
+    void*     _ceu_clro = NULL; /* stop at this org */
 #endif
-    tceu_trl* _ceu_clr_trlF_ = NULL; /*      at this trl */
+    tceu_trl* _ceu_clrf = NULL; /*      at this trl */
 #endif
 
-    /* ceu_go_init(): nobody awaiting, jump reset */
-    if (__ceu_id == CEU_IN__INIT) {
-        _ceu_evt_.id = CEU_IN__INIT;
-    }
-
-    /* ceu_go_xxxx(): */
-    else {
-        /* first set all awaiting: trl.stk=CEU_MAX_STACK */
-        _ceu_evt_.id = CEU_IN__RESET;
-
-        /* then stack external event */
-        if (__ceu_p)
-            _CEU_STK_[_ceu_stk_].param = *__ceu_p;
-        _CEU_STK_[_ceu_stk_].id  = __ceu_id;
-        _ceu_stk_++;
-    }
+    /* clear for _ceu_stki=1 */
+    _CEU_STK[0].evt = CEU_IN__RESET;
 
     for (;;)    /* STACK */
     {
 #ifdef CEU_ORGS
         /* TODO: don't restart if kill is impossible (hold trl on stk) */
-        _ceu_cur_.org = &CEU.mem;    /* on pop(), always restart */
+        _ceu_org = (tceu_org*) &CEU.mem;    /* on pop(), always restart */
 #endif
 _CEU_CALL_:
         /* restart from org->trls[0] */
-        _ceu_cur_.trl = &CEU_CUR->trls[0];
+        _ceu_trl = &_ceu_org->trls[0];
 
 _CEU_CALLTRL_:  /* restart from org->trls[i] */
 
 #ifdef CEU_DEBUG_TRAILS
 #ifdef CEU_ORGS
-fprintf(stderr, "GO: evt=%d stk=%d org=%p [%d/%p]\n", _ceu_evt_.id, _ceu_stk_,
-                CEU_CUR, CEU_CUR->n, CEU_CUR->trls);
+fprintf(stderr, "GO: evt=%d stk=%d org=%p [%d/%p]\n", _ceu_evt, _ceu_stki,
+                _ceu_org, _ceu_org->n, _ceu_org->trls);
 #else
-fprintf(stderr, "GO: evt=%d stk=%d [%d]\n", _ceu_evt_.id, _ceu_stk_, CEU_NTRAILS);
+fprintf(stderr, "GO: evt=%d stk=%d [%d]\n", _ceu_evt, _ceu_stki, CEU_NTRAILS);
 #endif
 #endif
-        for (;;)    /* TRL */
-        {
+        for (;;) /* TRL // TODO (speed): only range of trails that apply */
+        {        /* (e.g. events that do not escape an org) */
 #ifdef CEU_CLEAR
             /* IN__CLR completed? (bounded to _trlF_) */
             if (
-                (_ceu_evt_.id   == CEU_IN__CLEAR)
-            &&  (_ceu_clr_trlF_ == _ceu_cur_.trl)
+                (_ceu_evt   == CEU_IN__CLEAR)
+            &&  (_ceu_clrf == _ceu_trl)
 #ifdef CEU_ORGS
-            &&  (_ceu_clr_org_  == CEU_CUR)
+            &&  (_ceu_clro  == _ceu_org)
 #endif
             ) {
                 /*
-                _ceu_clr_org_  = NULL; // they are always reset
-                _ceu_clr_trlF_ = NULL; // before a clear
+                _ceu_clro  = NULL; // they are always reset
+                _ceu_clrf = NULL; // before a clear
                 */
                 break;
             }
 #endif  /* CEU_CLEAR */
 
-            /* CEU_CUR has been traversed to the end? */
-            if (_ceu_cur_.trl ==
-                &CEU_CUR->trls[
+            /* _ceu_org has been traversed to the end? */
+            if (_ceu_trl ==
+                &_ceu_org->trls[
 #ifdef CEU_ORGS
-                    CEU_CUR->n
+                    _ceu_org->n
 #else
                     CEU_NTRAILS
 #endif
                 ])
             {
-                if (CEU_CUR == (tceu_org*) &CEU.mem) {
+                if (_ceu_org == (tceu_org*) &CEU.mem) {
                     break;
                 }
 
 #ifdef CEU_ORGS
                 {
                     /* hold next org/trl */
-                    /* TODO (+SPEED): jump LST */
-                    tceu_org* __org = CEU_CUR->nxt;
-                    tceu_trl* __trl = &__org->trls [
-                                        (CEU_CUR->n == 0) ?
-                                         ((tceu_lnk*)CEU_CUR)->lnk : 0
+                    /* TODO (speed): jump LST */
+                    tceu_org* _org = _ceu_org->nxt;
+                    tceu_trl* _trl = &_org->trls [
+                                        (_ceu_org->n == 0) ?
+                                         ((tceu_lnk*)_ceu_org)->lnk : 0
                                       ];
 
 #ifdef CEU_NEWS
                     /* org has been cleared to the end? */
-                    if ( _ceu_evt_.id  == CEU_IN__CLEAR
-                    &&   _ceu_clr_org_ != CEU_CUR
-                    &&   CEU_CUR->isDyn
-                    &&   CEU_CUR->n != 0 )  /* TODO: avoids LST */
+                    if ( _ceu_evt  == CEU_IN__CLEAR
+                    &&   _ceu_clro != _ceu_org
+                    &&   _ceu_org->isDyn
+                    &&   _ceu_org->n != 0 )  /* TODO: avoids LST */
                     {
                         /* re-link PRV <-> NXT */
-                        CEU_CUR->prv->nxt = CEU_CUR->nxt;
-                        CEU_CUR->nxt->prv = CEU_CUR->prv;
+                        _ceu_org->prv->nxt = _ceu_org->nxt;
+                        _ceu_org->nxt->prv = _ceu_org->prv;
 
                         /* FREE */
                         {
                         /* TODO: check if needed? (freed manually?) */
-                        /*fprintf(stderr, "FREE: %p\n", CEU_CUR);*/
+                        /*fprintf(stderr, "FREE: %p\n", _ceu_org);*/
                             === CLSS_FREE ===
                         /* else */
-                                free(CEU_CUR);
+                                free(_ceu_org);
 #ifdef CEU_RUNTESTS
                             _ceu_dyns_--;
 #endif
                         }
 
                         /* explicit free(me): return */
-                        if (_ceu_clr_org_ == NULL)
+                        if (_ceu_clro == NULL)
                             break;
                     }
 #endif  /* CEU_NEWS */
 
-                    _ceu_cur_.org = __org;
-                    _ceu_cur_.trl = __trl;
-/*fprintf(stderr, "UP[%p] %p %p\n", trl+1, _ceu_cur_.org, _ceu_cur_.trl);*/
+                    _ceu_org = _org;
+                    _ceu_trl = _trl;
+/*fprintf(stderr, "UP[%p] %p %p\n", trl+1, _ceu_org _ceu_trl);*/
                     goto _CEU_CALLTRL_;
                 }
 #endif  /* CEU_ORGS */
@@ -568,7 +533,7 @@ fprintf(stderr, "GO: evt=%d stk=%d [%d]\n", _ceu_evt_.id, _ceu_stk_, CEU_NTRAILS
             /* continue traversing CUR org */
             {
                 /* TODO: macro? */
-                tceu_trl* trl = _ceu_cur_.trl;
+                tceu_trl* trl = _ceu_trl;
 
 #ifdef CEU_DEBUG_TRAILS
 #ifdef CEU_ORGS
@@ -585,24 +550,30 @@ fprintf(stderr, "\tTRY [%p] : evt=%d stk=%d lbl=%d\n",
 #ifdef CEU_ORGS
                 if ( (trl->evt == CEU_IN__ORG)
 #ifdef CEU_PSES
-                  || (trl->evt==CEU_IN__ORG_PSED && _ceu_evt_.id==CEU_IN__CLEAR)
+                  || (trl->evt==CEU_IN__ORG_PSED && _ceu_evt==CEU_IN__CLEAR)
 #endif
                    )
                 {
-                    /* TODO (+SPEED): jump LST */
-                    _ceu_cur_.org = trl->lnks[0].nxt;
-                    if (_ceu_evt_.id == CEU_IN__CLEAR) {
+                    /* TODO (speed): jump LST */
+                    _ceu_org = trl->lnks[0].nxt;
+                    if (_ceu_evt == CEU_IN__CLEAR) {
                         trl->evt = CEU_IN__NONE;
                     }
                     goto _CEU_CALL_;
                 }
 #endif /* CEU_ORGS */
 
-                switch (_ceu_evt_.id)
+                switch (_ceu_evt)
                 {
-                    /* "reset" event */
+                    /* "reset" event
+                     * _ceu_stki==0  : enable all for next reaction
+                     * trl->stk!=MAX : disable all from current internal reaction
+                     */
                     case CEU_IN__RESET:
-                        trl->stk = CEU_MAX_STACK;
+                        if (_ceu_stki == 0)
+                            trl->stk = CEU_MAX_STACK;
+                        else if (trl->stk != CEU_MAX_STACK)
+                            trl->stk = 0;
                         goto _CEU_NEXT_;
 
                     /* "clear" event */
@@ -611,35 +582,38 @@ fprintf(stderr, "\tTRY [%p] : evt=%d stk=%d lbl=%d\n",
                             goto _CEU_GO_;
                         trl->evt = CEU_IN__NONE;
                         goto _CEU_NEXT_;
-
-                    /* "go" event */
-                    case CEU_IN__GO:
-                        if (trl->evt == CEU_IN__GO &&
-                            trl->stk >= _ceu_stk_)
-                            goto _CEU_GO_;
                 }
 
-                /* matched event */
-                if ( (_ceu_evt_.id == trl->evt) && (_ceu_stk_ <= trl->stk) ) {
-                    trl->evt = CEU_IN__GO;
-                    trl->stk = _ceu_stk_;
+                /* a continuation (STK) will always appear before a
+                 * matched event in the same stack level
+                 */
+                if ( ! (
+                    (trl->evt==CEU_IN__STK && /* MAX_STACK from ceu_org_init */
+                        (trl->stk==_ceu_stki || trl->stk==CEU_MAX_STACK))
+                ||
+                    (trl->evt==_ceu_evt && trl->stk>_ceu_stki)
+                ) ) {
+                    goto _CEU_NEXT_;
                 }
-                goto _CEU_NEXT_;
-
 _CEU_GO_:
                 /* execute this trail */
                 trl->evt = CEU_IN__NONE;
-                _ceu_cur_.lbl = trl->lbl;
+                trl->stk = _ceu_stki;
+                _ceu_lbl = trl->lbl;
             }
 
 _CEU_GOTO_:
 #ifdef CEU_DEBUG
-    CEU.lst = _ceu_cur_;
+#ifdef CEU_ORG
+    CEU.lst.org = _ceu_org;
+#endif
+    CEU.lst.trl = _ceu_trl;
+    CEU.lst.lbl = _ceu_lbl;
 #ifdef CEU_DEBUG_TRAILS
 #ifdef CEU_ORGS
-fprintf(stderr, "TRK: o.%p / l.%d\n", CEU_CUR, _ceu_cur_.lbl);
+fprintf(stderr, "TRK: o.%p / l.%d\n", _ceu_org, _ceu_lbl);
 #else
-fprintf(stderr, "TRK: l.%d\n", _ceu_cur_.lbl);
+fprintf(stderr, "TRK: l.%d\n", _ceu_lbl);
 #endif
 #endif
 #endif
@@ -648,19 +622,30 @@ fprintf(stderr, "TRK: l.%d\n", _ceu_cur_.lbl);
         ceu_stack_clr();
 #endif
 
-            switch (_ceu_cur_.lbl) {
+            switch (_ceu_lbl) {
                 === CODE ===
             }
 _CEU_NEXT_:
-            _ceu_cur_.trl++;
+            _ceu_trl++;
         }
 
-        if (_ceu_evt_.id == CEU_IN__GO) {
-            if (_ceu_stk_ == 1)
-                break;
-            _ceu_evt_ = _CEU_STK_[--_ceu_stk_];
+        /* before poping:
+         * - reset all trails where trl->stk>=_ceu_stki, they can awake again
+         * then:
+         * - decrement stack to handle previous continuation
+         */
+        if (_ceu_evt == CEU_IN__STK) {
+            _ceu_evt = CEU_IN__RESET;  /* TODO (speed): execs for every pop */
         } else {
-            _ceu_evt_.id = CEU_IN__GO;  /* TODO (+SPEED): execing twice */
+            if (_ceu_stki == 0)
+                break;
+            _ceu_evtp = _CEU_STK[--_ceu_stki].evtp;
+#ifdef CEU_INTS
+#ifdef CEU_ORGS
+            _ceu_evto = _CEU_STK[  _ceu_stki].evto;
+#endif
+#endif
+            _ceu_evt  = _CEU_STK[  _ceu_stki].evt;
         }
     }
 }

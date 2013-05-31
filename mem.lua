@@ -40,9 +40,9 @@ CEU_POOL(CEU_POOL_]]..cls.id..','..'CEU_'..cls.id..','..cls.pool..[[);
 ]]
                 _init[#_init+1] = 'ceu_pool_init(&CEU_POOL_'..cls.id..');'
                 _free[#_free+1] = [[
-                    if ( ceu_pool_inside(&CEU_POOL_]]..cls.id..[[, (char*)CEU_CUR) )
+                    if ( ceu_pool_inside(&CEU_POOL_]]..cls.id..[[, (char*)_ceu_org) )
                     {
-                        ceu_pool_free(&CEU_POOL_]]..cls.id..[[, (char*)CEU_CUR);
+                        ceu_pool_free(&CEU_POOL_]]..cls.id..[[, (char*)_ceu_org);
                     }
                     else
                         /* malloc in template.c */
@@ -56,7 +56,7 @@ CEU_POOL(CEU_POOL_]]..cls.id..','..'CEU_'..cls.id..','..cls.pool..[[);
 
     Host = function (me)
         CLS().host = CLS().host ..
-            '#line '..(me.ln+1)..'\n' ..
+            --'#line '..(me.ln+1)..'\n' ..
             me[1] .. '\n'
     end,
 
