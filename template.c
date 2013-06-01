@@ -401,10 +401,10 @@ void ceu_go (int _ceu_evt, void* _ceu_evtp)
 #endif
 
 #ifdef CEU_ORGS
-    tceu_stk _CEU_STK[CEU_MAX_STACK];  /* TODO: 255 */
+    /* TODO: CEU_ORGS is calculable // CEU_NEWS isn't (255?) */
+    tceu_stk _CEU_STK[CEU_MAX_STACK];
 #else
-    tceu_stk _CEU_STK[CEU_MAX_STACK];  /* TODO: 255 */
-    /*tceu_stk _CEU_STK[CEU_NTRAILS*2];*/
+    tceu_stk _CEU_STK[CEU_NTRAILS];
 #endif
 
     /* global seqno: incremented on every reaction
