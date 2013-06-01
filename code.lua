@@ -1,3 +1,5 @@
+_CODE = {}
+
 function CONC_ALL (me, t)
     t = t or me
     for _, sub in ipairs(t) do
@@ -48,6 +50,7 @@ function HALT (me, cond)
 end
 
 function GOTO (me, lbl, org)
+    _CODE.has_goto = true
     if org then
         LINE(me, [[
 _ceu_org = ]]..org..[[;

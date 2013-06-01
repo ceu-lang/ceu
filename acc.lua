@@ -419,7 +419,10 @@ DBG'==============='
         --DBG(id_, c_,c1,c2, acc1.any,acc2.any)
                     if cls_ and org_ and id_ and (not c_)
                     then
-                        DBG('WRN : nondeterminism : '..acc1.err..' vs '..acc2.err)
+                        if _OPTS.warn_nondeterminism then
+                            DBG('WRN : nondeterminism : '..acc1.err
+                                    ..' vs '..acc2.err)
+                        end
                         _ANA.ana.acc = _ANA.ana.acc + 1
                     end
                 end

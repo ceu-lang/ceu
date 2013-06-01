@@ -276,6 +276,10 @@ do
         end
     end
 
+    if _CODE.has_goto then
+        str = str .. '#define CEU_GOTO\n'
+    end
+
     -- TODO: goto _OPTS
     --str = str .. '#define CEU_DEBUG_TRAILS\n'
 

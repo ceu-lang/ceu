@@ -437,11 +437,15 @@ void ceu_go (int _ceu_evt, void* _ceu_evtp)
         /* TODO: don't restart if kill is impossible (hold trl on stk) */
         _ceu_org = (tceu_org*) &CEU.mem;    /* on pop(), always restart */
 #endif
+#if defined(CEU_INTS) || defined(CEU_ORGS)
 _CEU_CALL_:
+#endif
         /* restart from org->trls[0] */
         _ceu_trl = &_ceu_org->trls[0];
 
+#if defined(CEU_CLEAR) || defined(CEU_ORGS)
 _CEU_CALLTRL_:  /* restart from org->trls[i] */
+#endif
 
 #ifdef CEU_DEBUG_TRAILS
 #ifdef CEU_ORGS
@@ -579,7 +583,9 @@ _CEU_GO_:
                 _ceu_lbl = _ceu_trl->lbl;
             }
 
+#ifdef CEU_GOTO
 _CEU_GOTO_:
+#endif
 #ifdef CEU_DEBUG
 #ifdef CEU_ORG
     CEU.lst.org = _ceu_org;

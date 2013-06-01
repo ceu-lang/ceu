@@ -42,6 +42,7 @@ Test = function (t)
         tp_word    = 4,
         tp_off     = 2,
         tp_lbl     = 2,
+        warn_nondeterminism = true,
     }
 
     _STR = str_input
