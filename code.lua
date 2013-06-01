@@ -872,7 +872,7 @@ _ceu_evto = (tceu_org*) ]]..((int.org and int.org.val) or '_ceu_org')..[[;
 ]])
         if exp then
             LINE(me, [[
-_ceu_evtp = (void*)]]..V(exp)..[[;
+_ceu_evtp = (tceu_evtp)]]..V(exp)..[[;
 ]])
         end
         LINE(me, [[
@@ -920,7 +920,7 @@ case ]]..me.lbl.id..[[:;
 
         PAUSE(me, no)
         LINE(me, [[
-    if (!ceu_wclocks_expired(&]]..me.val_wclk..[[, (s32)_ceu_evtp) )
+    if (!ceu_wclocks_expired(&]]..me.val_wclk..[[, _ceu_evtp.dt) )
         goto ]]..no..[[;
 ]])
         DEBUG_TRAILS(me)

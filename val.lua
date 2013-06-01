@@ -107,9 +107,9 @@ F =
     AwaitExt = function (me)
         local e1 = unpack(me)
         if _TP.deref(e1.evt.tp) then
-            me.val = '(('.._TP.c(e1.evt.tp)..')_ceu_evtp)'
+            me.val = '(('.._TP.c(e1.evt.tp)..')_ceu_evtp.ptr)'
         else
-            me.val = '((int)_ceu_evtp)'
+            me.val = '(_ceu_evtp.v)'
         end
     end,
     AwaitT = function (me)

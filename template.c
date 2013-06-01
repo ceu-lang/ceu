@@ -75,9 +75,15 @@ typedef union tceu_trl {
 #endif
 } tceu_trl;
 
+typedef union {
+    int   v;
+    void* ptr;
+    s32   dt;
+} tceu_evtp;
+
 /* TODO (speed): hold nxt trl to run */
 typedef struct {
-    void*     evtp;
+    tceu_evtp evtp;
 #ifdef CEU_INTS
 #ifdef CEU_ORGS
     void*     evto;
@@ -179,7 +185,7 @@ tceu CEU = {
 
 /**********************************************************************/
 
-void ceu_go (int _ceu_evt, void* _ceu_evtp);
+void ceu_go (int _ceu_evt, tceu_evtp _ceu_evtp);
 
 /**********************************************************************/
 
@@ -306,7 +312,7 @@ void ceu_go_init ()
     === CLSS_INIT ===
 #endif
     ceu_org_init((tceu_org*)&CEU.mem, CEU_NTRAILS, Class_Main, 0, NULL, 0);
-    ceu_go(CEU_IN__INIT, NULL);
+    ceu_go(CEU_IN__INIT, (tceu_evtp)NULL);
 }
 
 /* TODO: ret */
@@ -317,7 +323,7 @@ void ceu_go_event (int id, void* data)
 #ifdef CEU_DEBUG_TRAILS
     fprintf(stderr, "====== %d\n", id);
 #endif
-    ceu_go(id, data);
+    ceu_go(id, (tceu_evtp)data);
 }
 #endif
 
@@ -327,7 +333,7 @@ void ceu_go_async ()
 #ifdef CEU_DEBUG_TRAILS
     fprintf(stderr, "====== ASYNC\n");
 #endif
-    ceu_go(CEU_IN__ASYNC, NULL);
+    ceu_go(CEU_IN__ASYNC, (tceu_evtp)NULL);
 }
 #endif
 
@@ -345,7 +351,7 @@ void ceu_go_wclock (s32 dt)
     CEU.wclk_min_tmp = CEU.wclk_min;
     CEU.wclk_min     = CEU_WCLOCK_INACTIVE;
 
-    ceu_go(CEU_IN__WCLOCK, (void*)dt);
+    ceu_go(CEU_IN__WCLOCK, (tceu_evtp)dt);
 
 #ifdef ceu_out_wclock
     if (CEU.wclk_min != CEU_WCLOCK_INACTIVE)
@@ -393,8 +399,7 @@ void ceu_stack_clr () {
 }
 #endif
 
-/* TODO: _ceu_evtp relies on (void* == int == s32) */
-void ceu_go (int _ceu_evt, void* _ceu_evtp)
+void ceu_go (int _ceu_evt, tceu_evtp _ceu_evtp)
 {
 #ifdef CEU_ORGS
     tceu_org* _ceu_evto;       /* org that emitted current event */
