@@ -119,232 +119,7 @@ do return end
 
 -- OK: under tests but supposed to work
 
-Test { [[
-event void a, b;
-input void START,A;
-var int ret = 0 ;
-
-par/or do
-    loop do
-        await a;
-        ret = ret + 1;
-    end
-with
-    await b;
-    emit a;
-    await FOREVER;
-with
-    await START;
-    emit a;
-    await A;
-    emit b;
-end
-return ret;
-]],
-    run = { ['~>A']=2 },
-}
-Test { [[
-event void a, b;
-input void START;
-var int ret = 0 ;
-
-par/or do
-    loop do
-        await a;
-        ret = ret + 1;
-    end
-with
-    await b;
-    emit a;
-    await FOREVER;
-with
-    await START;
-    emit a;
-    emit b;
-end
-return ret;
-]],
-    ana = { acc=1 },
-    run = 2,
-}
-
-Test { [[
-event int a;
-input void A;
-var int v = 0;
-
-class T with
-    event int a;
-do
-    pause/if a do
-        await FOREVER;
-    end
-end
-
-par/or do
-    pause/if a do
-        await FOREVER;
-    end
-with
-    loop do
-        await 1s;
-        v = v + 1;
-    end
-with
-    var T t;
-    var int pse? = 0;
-    loop do
-        await 1s;
-        pse? = not pse?;
-        emit a => pse?;
-        emit t.a => pse?;
-    end
-with
-    await A;
-end
-return v;
-]],
-    ana = { acc=0 },
-    run = { ['~>10s;~>A']=10 }
-}
-
-Test { [[
-var int a, b;
-(a,b) = 1;
-return 1;
-]],
-    ast = 'ERR : line 2 : invalid attribution',
-}
-
-Test { [[
-input (int) A;
-return 1;
-]],
-    run = 1,
-}
-
-Test { [[
-native _int;
-input (_int,int) A;
-return 1;
-]],
-    run = 1;
-}
-
-Test { [[
-input (int*,int) A;
-event (int,int*) a;
-return 1;
-]],
-    run = 1;
-}
-
-Test { [[
-input (int,int) A;
-event (int,int) a;
-return 1;
-]],
-    run = 1;
-}
-
-Test { [[
-input (int,int) A;
-par/or do
-    event int a,b;
-    (a,b) = await A;
-    return 1;
-with
-    async do
-        emit A => (1,2);
-    end
-end
-return 1;
-]],
-    code = 'ERR : line 4 : invalid expression',
-}
-
-Test { [[
-input (int,int*) A;
-par/or do
-    var int a,b;
-    (a,b) = await A;
-    return a + b;
-with
-    async do
-        emit A => (1,2);
-    end
-end
-return 1;
-]],
-    env = 'ERR : line 4 : invalid attribution',
-}
-
-Test { [[
-input (int,int*) A;
-par/or do
-    var int a,b;
-    (a,b) = await A;
-    return a + b;
-with
-    async do
-        var int x = 2;
-        emit A=> (1,&x);
-    end
-end
-return 1;
-]],
-    env = 'ERR : line 4 : invalid attribution',
-}
-
-Test { [[
-input (int,int) A;
-par/or do
-    var int a,b;
-    (a,b) = await A;
-    return a + b;
-with
-    async do
-        emit A => (1,2);
-    end
-end
-return 1;
-]],
-    run = 3;
-}
-
-Test { [[
-event (int,int) a;
-par/or do
-    var int a,b;
-    (a,b) = await a;
-    return a + b;
-with
-    async do
-        emit a => (1,2);
-    end
-end
-return 1;
-]],
-    env = 'ERR : line 4 : event "a" is not declared',
-}
-
-Test { [[
-event (int,int) a;
-input void START;
-par/or do
-    var int c,d;
-    (c,d) = await a;
-    return c + d;
-with
-    await START;
-    emit a => (1,2);
-end
-return 1;
-]],
-    run = 3,
-}
-
---do return end
+do return end
 --]===]
 
 -- OK: well tested
@@ -3551,6 +3326,57 @@ end;
         abrt = 8,      -- TODO: not checked
         acc = 2,
     },
+}
+
+Test { [[
+event void a, b;
+input void START,A;
+var int ret = 0 ;
+
+par/or do
+    loop do
+        await a;
+        ret = ret + 1;
+    end
+with
+    await b;
+    emit a;
+    await FOREVER;
+with
+    await START;
+    emit a;
+    await A;
+    emit b;
+end
+return ret;
+]],
+    run = { ['~>A']=2 },
+}
+
+-- TODO: STACK
+Test { [[
+event void a, b;
+input void START;
+var int ret = 0 ;
+
+par/or do
+    loop do
+        await a;
+        ret = ret + 1;
+    end
+with
+    await b;
+    emit a;
+    await FOREVER;
+with
+    await START;
+    emit a;
+    emit b;
+end
+return ret;
+]],
+    ana = { acc=1 },
+    run = 1,
 }
 
 -- TODO: STACK
@@ -22572,6 +22398,46 @@ return _V;
     run = { ['~>2s;1~>P;~>2s;0~>P;~>1s']=6 },
 }
 
+Test { [[
+event int a;
+input void A;
+var int v = 0;
+
+class T with
+    event int a;
+do
+    pause/if a do
+        await FOREVER;
+    end
+end
+
+par/or do
+    pause/if a do
+        await FOREVER;
+    end
+with
+    loop do
+        await 1s;
+        v = v + 1;
+    end
+with
+    var T t;
+    var int pse? = 0;
+    loop do
+        await 1s;
+        pse? = not pse?;
+        emit a => pse?;
+        emit t.a => pse?;
+    end
+with
+    await A;
+end
+return v;
+]],
+    ana = { acc=0 },
+    run = { ['~>10s;~>A']=10 }
+}
+
 -- TODO pause hierarquico dentro de um org
 -- SDL/samples/sdl4.ceu
 
@@ -24365,6 +24231,144 @@ end
     },
     run = false,
     awaits = 2,
+}
+
+-- TUPLES
+
+Test { [[
+var int a, b;
+(a,b) = 1;
+return 1;
+]],
+    ast = 'ERR : line 2 : invalid attribution',
+}
+
+Test { [[
+input (int) A;
+return 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native _int;
+input (_int,int) A;
+return 1;
+]],
+    run = 1;
+}
+
+Test { [[
+input (int*,int) A;
+event (int,int*) a;
+return 1;
+]],
+    run = 1;
+}
+
+Test { [[
+input (int,int) A;
+event (int,int) a;
+return 1;
+]],
+    run = 1;
+}
+
+Test { [[
+input (int,int) A;
+par/or do
+    event int a,b;
+    (a,b) = await A;
+    return 1;
+with
+    async do
+        emit A => (1,2);
+    end
+end
+return 1;
+]],
+    code = 'ERR : line 4 : invalid expression',
+}
+
+Test { [[
+input (int,int*) A;
+par/or do
+    var int a,b;
+    (a,b) = await A;
+    return a + b;
+with
+    async do
+        emit A => (1,2);
+    end
+end
+return 1;
+]],
+    env = 'ERR : line 4 : invalid attribution',
+}
+
+Test { [[
+input (int,int*) A;
+par/or do
+    var int a,b;
+    (a,b) = await A;
+    return a + b;
+with
+    async do
+        var int x = 2;
+        emit A=> (1,&x);
+    end
+end
+return 1;
+]],
+    env = 'ERR : line 4 : invalid attribution',
+}
+
+Test { [[
+input (int,int) A;
+par/or do
+    var int a,b;
+    (a,b) = await A;
+    return a + b;
+with
+    async do
+        emit A => (1,2);
+    end
+end
+return 1;
+]],
+    run = 3;
+}
+
+Test { [[
+event (int,int) a;
+par/or do
+    var int a,b;
+    (a,b) = await a;
+    return a + b;
+with
+    async do
+        emit a => (1,2);
+    end
+end
+return 1;
+]],
+    env = 'ERR : line 4 : event "a" is not declared',
+}
+
+Test { [[
+event (int,int) a;
+input void START;
+par/or do
+    var int c,d;
+    (c,d) = await a;
+    return c + d;
+with
+    await START;
+    emit a => (1,2);
+end
+return 1;
+]],
+    run = 3,
 }
 
 --[==[

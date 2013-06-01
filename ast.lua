@@ -454,7 +454,7 @@ local C; C = {
                             node('Op2_.')(ln, '.',
                                 node('Op1_*')(ln, '*',
                                     node('Var')(ln, tup)),
-                                'field_'..i),
+                                '_'..i),
                             v)
             end
 
@@ -487,7 +487,7 @@ local C; C = {
                 t[#t+1] = node('SetExp')(ln,
                             p,
                             node('Op2_.')(ln, '.', node('Var')(ln, tup),
-                                'field_'..i))
+                                '_'..i))
             end
 
             t[#t+1] = node(tag)(ln, ext,

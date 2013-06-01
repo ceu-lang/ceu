@@ -129,8 +129,6 @@ typedef struct tceu_org
 
 } tceu_org;
 
-=== TUPLE_TYPES ===
-
 === CLSS_DEFS ===
 
 enum {

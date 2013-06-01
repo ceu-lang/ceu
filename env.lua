@@ -374,7 +374,7 @@ F = {
             if c then
                 c.tag = 'type'
             end
-            me[i] = _TP.c(v)
+            me[i] = v
             tp = tp .. '__'.._TP.c(v)
         end
 

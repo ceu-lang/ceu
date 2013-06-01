@@ -152,20 +152,6 @@ do
 
     tpl = sub(tpl, '=== LABELS_ENUM ===', _LBLS.code_enum)
 
-    do
-        local tps = ''
-        for _,c in pairs(_ENV.c) do
-            if c.tuple then
-                tps = tps .. 'typedef struct {\n'
-                for i, f in ipairs(c.tuple) do
-                    tps = tps..'\t'.._TP.c(f)..' field_'..i..';\n'
-                end
-                tps = tps .. '} '.._TP.c(c.id)..';\n'
-            end
-        end
-        tpl = sub(tpl, '=== TUPLE_TYPES ===', tps)
-    end
-
     tpl = sub(tpl, '=== POOL_C ===', assert(io.open'pool.c'):read'*a')
     tpl = sub(tpl, '=== CLSS_DEFS ===', _MEM.clss_defs)
     tpl = sub(tpl, '=== CLSS_INIT ===', _MEM.clss_init)
@@ -287,15 +273,32 @@ do
         str = str .. '#define CEU_RUNTESTS\n'
     end
 
+    -- tuples
+    do
+        for _,c in pairs(_ENV.c) do
+            if c.tuple then
+                str = str .. 'typedef struct {\n'
+                for i, f in ipairs(c.tuple) do
+                    str = str..'\t'.._TP.c(f)..' _'..i..';\n'
+                end
+                str = str .. '} '.._TP.c(c.id)..';\n'
+            end
+        end
+    end
+
     if _OPTS.defs_file then
         local f = assert(io.open(_OPTS.defs_file,'w'))
         local h = [[
+#ifndef _CEU_DEFS_H
+#define _CEU_DEFS_H
 void ceu_go_init ();
 void ceu_go_event (int id, void* data);
 void ceu_go_async ();
 void ceu_go_wclock (s32 dt);
 ]]
-        f:write(h..str)
+        f:write(h..str..[[
+#endif
+]])
         f:close()
         tpl = sub(tpl, '=== DEFS ===',
                        '#include "'.. _OPTS.defs_file ..'"')
