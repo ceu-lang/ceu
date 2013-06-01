@@ -871,8 +871,9 @@ _ceu_evto = (tceu_org*) ]]..((int.org and int.org.val) or '_ceu_org')..[[;
 #endif
 ]])
         if exp then
+            local field = _TP.deref(exp.tp) and 'ptr' or 'v'
             LINE(me, [[
-_ceu_evtp = (tceu_evtp)]]..V(exp)..[[;
+_ceu_evtp.]]..field..' = '..V(exp)..[[;
 ]])
         end
         LINE(me, [[

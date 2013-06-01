@@ -312,7 +312,11 @@ void ceu_go_init ()
     === CLSS_INIT ===
 #endif
     ceu_org_init((tceu_org*)&CEU.mem, CEU_NTRAILS, Class_Main, 0, NULL, 0);
-    ceu_go(CEU_IN__INIT, (tceu_evtp)NULL);
+    {
+        tceu_evtp p;
+        p.ptr = NULL;
+        ceu_go(CEU_IN__INIT, p);
+    }
 }
 
 /* TODO: ret */
@@ -323,7 +327,11 @@ void ceu_go_event (int id, void* data)
 #ifdef CEU_DEBUG_TRAILS
     fprintf(stderr, "====== %d\n", id);
 #endif
-    ceu_go(id, (tceu_evtp)data);
+    {
+        tceu_evtp p;
+        p.ptr = data;
+        ceu_go(id, p);
+    }
 }
 #endif
 
@@ -333,7 +341,11 @@ void ceu_go_async ()
 #ifdef CEU_DEBUG_TRAILS
     fprintf(stderr, "====== ASYNC\n");
 #endif
-    ceu_go(CEU_IN__ASYNC, (tceu_evtp)NULL);
+    {
+        tceu_evtp p;
+        p.ptr = NULL;
+        ceu_go(CEU_IN__ASYNC, p);
+    }
 }
 #endif
 
@@ -351,7 +363,11 @@ void ceu_go_wclock (s32 dt)
     CEU.wclk_min_tmp = CEU.wclk_min;
     CEU.wclk_min     = CEU_WCLOCK_INACTIVE;
 
-    ceu_go(CEU_IN__WCLOCK, (tceu_evtp)dt);
+    {
+        tceu_evtp p;
+        p.dt = dt;
+        ceu_go(CEU_IN__WCLOCK, p);
+    }
 
 #ifdef ceu_out_wclock
     if (CEU.wclk_min != CEU_WCLOCK_INACTIVE)
