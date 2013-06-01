@@ -35,7 +35,7 @@ function LINE (me, line, spc)
     spc = spc or 4
     spc = string.rep(' ', spc)
     me.code = me.code ..
-                '/*#line '..me.ln..'*/\n'..
+                '#line '..me.ln..'\n'..
                 spc .. line .. '\n'
 end
 
