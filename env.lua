@@ -557,7 +557,7 @@ F = {
     --------------------------------------------------------------------------
 
     SetExp = function (me)
-        local fr, to = unpack(me)
+        local _, fr, to = unpack(me)
         to = to or _AST.iter'SetBlock'()[1]
         ASR(to.lval and _TP.contains(to.tp,fr.tp,true),
                 me, 'invalid attribution')
@@ -567,7 +567,7 @@ F = {
     end,
 
     SetAwait = function (me)
-        local awt, to = unpack(me)
+        local _, awt, to = unpack(me)
         ASR(to.lval, me, 'invalid attribution')
 
         if awt.tag == 'Loop' then
@@ -831,6 +831,12 @@ F = {
         me.ref  = me
         me.fst  = '_'
         me.c    = c
+    end,
+    RawExp = function (me)
+        me.tp   = '_'
+        me.lval = true
+        me.ref  = me
+        me.fst  = '_'
     end,
 
     WCLOCKK = function (me)

@@ -62,15 +62,20 @@ typedef === TCEU_NCLS === tceu_ncls;    /* (x) number of instances */
 
 typedef union tceu_trl {
     tceu_nevt evt;
-    struct {                    /* TODO (-RAM): bitfields */
+    struct {                    /* TODO(ram): bitfields */
         tceu_nevt evt1;
         tceu_nlbl lbl;
+        u8        seqno;        /* TODO(ram): 2 bits is enough */
+    };
+    struct {                    /* TODO(ram): bitfields */
+        tceu_nevt evt2;
+        tceu_nlbl lbl2;
         u8        stk;
     };
 #ifdef CEU_ORGS
     struct {
-        tceu_nevt evt2;
-        struct tceu_org* lnks;  /* TODO (-RAM): bad for alignment */
+        tceu_nevt evt3;
+        struct tceu_org* lnks;  /* TODO(ram): bad for alignment */
     };
 #endif
 } tceu_trl;
@@ -81,7 +86,7 @@ typedef union {
     s32   dt;
 } tceu_evtp;
 
-/* TODO (speed): hold nxt trl to run */
+/* TODO(speed): hold nxt trl to run */
 typedef struct {
     tceu_evtp evtp;
 #ifdef CEU_INTS
@@ -102,7 +107,7 @@ typedef struct {
 
 /* simulates an org prv/nxt */
 typedef struct {
-    struct tceu_org* prv;   /* TODO (-RAM): lnks[0] does not use */
+    struct tceu_org* prv;   /* TODO(ram): lnks[0] does not use */
     struct tceu_org* nxt;   /*      prv, n, lnk                  */
     u8 n;                   /* use for ands/fins                 */
     u8 lnk;
@@ -240,19 +245,19 @@ void ceu_segfault (int sig_num) {
 
 /**********************************************************************/
 
-void ceu_org_init (tceu_org* org, int n, int lbl, int stk,
+void ceu_org_init (tceu_org* org, int n, int lbl, int seqno,
                    tceu_org* par_org, int par_trl)
 {
-    /* { evt=0, stk=0, lbl=0 } for all trails */
+    /* { evt=0, seqno=0, lbl=0 } for all trails */
 #ifdef CEU_ORGS
     org->n = n;
 #endif
     memset(&org->trls, 0, n*sizeof(tceu_trl));
 
     /* org.trls[0] == org.blk.trails[1] */
-    org->trls[0].evt = CEU_IN__STK;
-    org->trls[0].lbl = lbl;
-    org->trls[0].stk = stk;
+    org->trls[0].evt   = CEU_IN__STK;
+    org->trls[0].lbl   = lbl;
+    org->trls[0].seqno = seqno;
 
 #ifdef CEU_ORGS
     if (par_org == NULL)
@@ -427,7 +432,7 @@ void ceu_go (int _ceu_evt, tceu_evtp _ceu_evtp)
 #endif
 
     /* global seqno: incremented on every reaction
-     * awaiting trails matches only if trl->stk < seqno,
+     * awaiting trails matches only if trl->seqno < seqno,
      * i.e., previously awaiting the event
      */
     static u8 _ceu_seqno = 0;
@@ -475,7 +480,7 @@ fprintf(stderr, "GO[%d]: evt=%d stk=%d [%d]\n", _ceu_seqno,
                 _ceu_evt, _ceu_stki, CEU_NTRAILS);
 #endif
 #endif
-        for (;;) /* TRL // TODO (speed): only range of trails that apply */
+        for (;;) /* TRL // TODO(speed): only range of trails that apply */
         {        /* (e.g. events that do not escape an org) */
 #ifdef CEU_CLEAR
             if (_ceu_trl == _ceu_stop) {    /* bounded trail traversal? */
@@ -501,7 +506,7 @@ fprintf(stderr, "GO[%d]: evt=%d stk=%d [%d]\n", _ceu_seqno,
 #ifdef CEU_ORGS
                 {
                     /* hold next org/trl */
-                    /* TODO (speed): jump LST */
+                    /* TODO(speed): jump LST */
                     tceu_org* _org = _ceu_org->nxt;
                     tceu_trl* _trl = &_org->trls [
                                         (_ceu_org->n == 0) ?
@@ -553,8 +558,8 @@ if (_ceu_trl->evt==CEU_IN__ORG)
                     _ceu_trl, _ceu_trl->evt);
 else
 #endif
-fprintf(stderr, "\tTRY [%p] : evt=%d stk=%d lbl=%d\n",
-                    _ceu_trl, _ceu_trl->evt, _ceu_trl->stk, _ceu_trl->lbl);
+fprintf(stderr, "\tTRY [%p] : evt=%d seqno=%d lbl=%d\n",
+                    _ceu_trl, _ceu_trl->evt, _ceu_trl->seqno, _ceu_trl->lbl);
 #endif
 
                 /* jump into linked orgs */
@@ -565,7 +570,7 @@ fprintf(stderr, "\tTRY [%p] : evt=%d stk=%d lbl=%d\n",
 #endif
                    )
                 {
-                    /* TODO (speed): jump LST */
+                    /* TODO(speed): jump LST */
                     _ceu_org = _ceu_trl->lnks[0].nxt;
                     if (_ceu_evt == CEU_IN__CLEAR) {
                         _ceu_trl->evt = CEU_IN__NONE;
@@ -590,15 +595,16 @@ fprintf(stderr, "\tTRY [%p] : evt=%d stk=%d lbl=%d\n",
                 if ( ! (
                     (_ceu_trl->evt==CEU_IN__STK && _ceu_trl->stk==_ceu_stki)
                 ||
-                    (_ceu_trl->evt==_ceu_evt    && _ceu_trl->stk!=_ceu_seqno)
+                    (_ceu_trl->evt==_ceu_evt    && _ceu_trl->seqno!=_ceu_seqno)
+                    /* _ceu_evt!=CEU_IN__STK (never generated): comp is safe */
                     /* we use `!=´ intead of `<´ due to u8 overflow */
                 ) ) {
                     goto _CEU_NEXT_;
                 }
 _CEU_GO_:
                 /* execute this trail */
-                _ceu_trl->evt = CEU_IN__NONE;
-                _ceu_trl->stk = _ceu_seqno;   /* don't awake again */
+                _ceu_trl->evt   = CEU_IN__NONE;
+                _ceu_trl->seqno = _ceu_seqno;   /* don't awake again */
                 _ceu_lbl = _ceu_trl->lbl;
             }
 
@@ -628,8 +634,9 @@ fprintf(stderr, "TRK: l.%d\n", _ceu_lbl);
                 === CODE ===
             }
 _CEU_NEXT_:
-            if (_ceu_trl->evt!=CEU_IN__STK && _ceu_trl->stk!=_ceu_seqno)
-                _ceu_trl->stk = _ceu_seqno-1;   /* keeps the gap tight */
+            /* _ceu_trl!=CEU_IN__ORG guaranteed here */
+            if (_ceu_trl->evt!=CEU_IN__STK && _ceu_trl->seqno!=_ceu_seqno)
+                _ceu_trl->seqno = _ceu_seqno-1;   /* keeps the gap tight */
             _ceu_trl++;
         }
 

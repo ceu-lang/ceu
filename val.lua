@@ -69,7 +69,7 @@ F =
     end,
 
     SetExp = function (me)
-        local fr, to = unpack(me)
+        local _, fr, to = unpack(me)
         V(fr)     -- error on reads of internal events
     end,
 
@@ -253,6 +253,9 @@ F =
         me.val  = V(exp) .. '*' .. t2n[unit]-- .. 'L'
     end,
 
+    RawExp = function (me)
+        me.val = unpack(me)
+    end,
     Nat = function (me)
         me.val = string.sub(me[1], 2)
     end,

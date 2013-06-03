@@ -169,6 +169,10 @@ F = {
         end
     end,
 
+    RawStmt = function (me)
+        LINE(me, me[1])
+    end,
+
     BlockI = CONC_ALL,
     BlockI_pos = function (me)
         me.code_ifc = me.code       -- see Dcl_cls
@@ -199,7 +203,7 @@ _ceu_org->cls = ]]..me.n..[[;
 
         CONC_ALL(me)
 
--- TODO (-ROM): avoid clss w/o new
+-- TODO(rom): avoid clss w/o new
         --if i_am_instantiable then
             LINE(me, [[
 #ifdef CEU_NEWS
@@ -607,7 +611,7 @@ ceu_pause(&_ceu_org->trls[ ]]..me.blk.trails[1]..[[ ],
     end,
 
     SetExp = function (me)
-        local fr, to, fin = unpack(me)
+        local _, fr, to, fin = unpack(me)
         COMM(me, 'SET: '..tostring(to[1]))    -- Var or C
         ATTR(me, to, fr)
         if to.tag=='Var' and to.var.id=='_ret' then
@@ -878,7 +882,7 @@ _ceu_evtp.]]..field..' = '..V(exp)..[[;
         end
         LINE(me, [[
 #ifdef CEU_ORGS
-_ceu_org = (tceu_org*) &CEU.mem;   /* TODO (speed): check if is_ifc */
+_ceu_org = (tceu_org*) &CEU.mem;   /* TODO(speed): check if is_ifc */
 #endif
 goto _CEU_CALL_;
 
@@ -887,7 +891,7 @@ case ]]..me.lbl_cnt.id..[[:;
     end,
 
     SetAwait = function (me)
-        local awt,_ = unpack(me)
+        local _,awt,_ = unpack(me)
         CONC(me, awt) -- await code
     end,
     _SetAwait = function (me)
@@ -895,7 +899,7 @@ case ]]..me.lbl_cnt.id..[[:;
         if not set then
             return
         end
-        local _, to = unpack(set)
+        local _,_, to = unpack(set)
         ATTR(me, to, set.awt)
     end,
 
@@ -938,6 +942,12 @@ case ]]..me.lbl.id..[[:;
     _ceu_trl->evt = ]]..(int.evt_idx or int.evt.evt_idx)..[[;
     _ceu_trl->lbl = ]]..me.lbl.id..[[;
 ]])
+        -- awake in the same reaction (first awaits of a class)
+        if (not _AST.iter'Loop'()) and CLS().id~='Main' then
+            LINE(me, [[
+    _ceu_trl->stk = _ceu_seqno-1;
+]])
+        end
         HALT(me)
 
         LINE(me, [[

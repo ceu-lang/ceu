@@ -129,7 +129,8 @@ F = {
 
     SetAwait = 'SetExp',
     SetExp = function (me)
-        me[2].ref.acc.md = 'wr'
+        local _,_,to = unpack(me)
+        to.ref.acc.md = 'wr'
     end,
     AwaitInt = function (me)
         me[1].ref.acc.md = 'aw'
@@ -449,7 +450,9 @@ function CHK_EXCPT (s1, s2, isOR)
                s2.ana.pos[false] --or       -- ~terminates (return/break)
                --s2.ana.pos[true]                 -- terminates tight
             then
-                DBG('WRN : exception : line '..s2.ln..' vs '..ana.err)
+                if _OPTS.warn_exception then
+                    DBG('WRN : exception : line '..s2.ln..' vs '..ana.err)
+                end
                 _ANA.ana.excpt = _ANA.ana.excpt + 1
                 ana.node.emtChk = true
             end

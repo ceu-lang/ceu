@@ -1,6 +1,7 @@
 F = {
+    -- TODO: SetAwait too!
     SetExp = function (me)
-        local fr, to = unpack(me)
+        local op, fr, to = unpack(me)
         to = to or _AST.iter'SetBlock'()[1]
 
         local req = false
@@ -31,16 +32,17 @@ F = {
             else
                 -- int* pa = _fopen();  -- `pa´ termination must consider ret
                 req = (fr.tag=='Op2_call' and fr.c.mod~='pure')
+                        or fr.tag == 'RawExp'
                 req = req and blk1
             end
         end
 
         if req then
-            ASR(me.fin, me, 'attribution requires `finalize´')
-        end
-
-        if me.fin then
-            ASR(req, me, 'invalid `finalize´')
+            ASR((op==':=') or me.fin, me,
+                    'attribution requires `finalize´')
+        else
+            ASR((op=='=') and (not me.fin), me,
+                    'attribution does not require `finalize´')
         end
 
         if me.fin and me.fin.active then

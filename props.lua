@@ -240,7 +240,7 @@ F = {
     end,
 
     SetExp = function (me)
-        local _, to = unpack(me)
+        local _, _, to = unpack(me)
         local async = _AST.iter'Async'()
         if async and (not to) then
             ASR( async.depth <= _AST.iter'SetBlock'().depth+1,

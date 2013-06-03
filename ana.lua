@@ -232,7 +232,7 @@ F = {
     end,
 
     SetAwait = function (me)
-        local awt, set = unpack(me)
+        local _, awt, set = unpack(me)
         set.ana.pre = COPY(awt.ana.pos)
         set.ana.pos = COPY(awt.ana.pos)
         me.ana.pre = COPY(awt.ana.pre)

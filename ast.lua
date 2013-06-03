@@ -180,6 +180,9 @@ local C; C = {
     Block   = node('Block'),
     Host    = node('Host'),
 
+    RawStmt = node('RawStmt'),
+    RawExp  = node('RawExp'),
+
     Finalize = node('Finalize'),
     Finally  = node('Finally'),
 
@@ -208,7 +211,7 @@ local C; C = {
         return _else
     end,
 
-    Every = function (ln, var, evt, body)
+    Every = function (ln, var, op, evt, body)
         local tag
         if evt.tag == 'Ext' then
             tag = 'AwaitExt'
@@ -220,7 +223,7 @@ local C; C = {
         local awt = node(tag)(ln, evt, false)
         awt.isEvery = true
         if var then
-            awt = node('SetAwait')(ln, awt, var)
+            awt = node('SetAwait')(ln, op, awt, var)
         end
 
         local ret = node('Loop')(ln,
@@ -243,9 +246,9 @@ local C; C = {
         local i = function() return node('Var')(ln, _i) end
         local dcl_i = node('Dcl_var')(ln, 'var', 'int', false, _i)
         dcl_i.read_only = true
-        local set_i = node('SetExp')(ln, node('CONST')(ln,'0'), i())
+        local set_i = node('SetExp')(ln, '=', node('CONST')(ln,'0'), i())
         set_i.read_only = true  -- overcome read_only
-        local nxt_i = node('SetExp')(ln,
+        local nxt_i = node('SetExp')(ln, '=',
                         node('Op2_+')(ln, '+', i(), node('CONST')(ln,'1')),
                         i())
         nxt_i.read_only = true
@@ -270,7 +273,7 @@ local C; C = {
             local j_name = '_j'..blk.n
             j = function() return node('Var')(ln, j_name) end
             dcl_j = node('Dcl_var')(ln, 'var', 'int', false, j_name)
-            set_j = node('SetExp')(ln, _j, j())
+            set_j = node('SetExp')(ln, '=', _j, j())
         end
 
         local cmp = node('Op2_>=')(ln, '>=', i(), j())
@@ -309,13 +312,13 @@ local C; C = {
             node('Block')(ln,
                 node('Stmts')(ln,
                     cur_dcl,    -- Dcl_var(cur_id)
-                    node('SetExp')(ln,
+                    node('SetExp')(ln, '=',
                         node('CONST')(ln, '0'),
                         node('Var')(ln, cur_id)),
                     node('ParOr')(ln,
                         node('Loop')(ln,
                             node('Stmts')(ln,
-                                node('SetAwait')(ln,
+                                node('SetAwait')(ln, '=',
                                     node('AwaitInt')(ln, evt, false),
                                     node('Var')(ln, cur_id),
                                     false),
@@ -375,15 +378,16 @@ local C; C = {
     _Dcl_var_2 = function (ln, pre, tp, dim, ...)
         local ret = {}
         local t = { ... }
-        -- id, tag, exp, constr
-        for i=1, #t, 4 do
+        -- id, op, tag, exp, constr
+        for i=1, #t, 5 do
             ret[#ret+1] = node('Dcl_var')(ln, pre, tp, dim, t[i])
             if t[i+1] then
                 ret[#ret+1] = C._Set(ln,
                                 node('Var')(ln,t[i]),   -- var
-                                t[i+1],                 -- tag
-                                t[i+2],                 -- exp
-                                t[i+3])                 -- constr
+                                t[i+1],                 -- op
+                                t[i+2],                 -- tag
+                                t[i+3],                 -- exp
+                                t[i+4])                 -- constr
             end
         end
         return unpack(ret)
@@ -435,7 +439,10 @@ local C; C = {
     Free   = node('Free'),
     Spawn  = node('Spawn'),
 
-    _Set = function (ln, to, tag, fr, constr)
+    _Set = function (ln, to, op, tag, fr, constr)
+        if op == ':=' then
+            ASR(tag=='SetExp', ln, 'invalid attribution')
+        end
         if to.tag == 'VarList' then
             ASR(tag=='SetAwait', ln, 'invalid attribution')
 
@@ -445,12 +452,12 @@ local C; C = {
             local t = {
                 fr[1],
                 node('Dcl_var')(ln, 'var', 'TP*', false, tup),
-                node('SetAwait')(ln, fr, node('Var')(ln,tup)),
+                node('SetAwait')(ln, op, fr, node('Var')(ln,tup)),
             }
             t[2].__ref = fr[1] -- TP* is changed on env.lua
 
             for i, v in ipairs(to) do
-                t[#t+1] = node('SetExp')(ln,
+                t[#t+1] = node('SetExp')(ln, '=',
                             node('Op2_.')(ln, '.',
                                 node('Op1_*')(ln, '*',
                                     node('Var')(ln, tup)),
@@ -459,6 +466,8 @@ local C; C = {
             end
 
             return node('Stmts')(ln, unpack(t))
+        elseif (tag=='SetExp') or (tag=='SetAwait') then
+            return node(tag)(ln, op, fr, to, constr)
         else
             return node(tag)(ln, fr, to, constr)
         end
@@ -484,7 +493,7 @@ local C; C = {
             t[2].__ref = ext    -- TP is changed on env.lua
 
             for i, p in ipairs(ps) do
-                t[#t+1] = node('SetExp')(ln,
+                t[#t+1] = node('SetExp')(ln, '=',
                             p,
                             node('Op2_.')(ln, '.', node('Var')(ln, tup),
                                 '_'..i))
@@ -584,15 +593,10 @@ F = {
         to.ret = true
 
         local blk = node('Stmts')(me.ln)
-        blk[#blk+1] = node('SetExp')(me.ln, fr, to, set[3])
+        blk[#blk+1] = node('SetExp')(me.ln, '=', fr, to, set[3])
 
         blk[#blk+1] = node('Return')(me.ln)
         return blk
-    end,
-
-    SetAwait = function (me)
-        local _, awt = unpack(me)
-        --awt.ret = awt.ret or awt
     end,
 
     AwaitT = function (me)

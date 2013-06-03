@@ -133,6 +133,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
              + V'_Set'
              + V'Free'     + V'Spawn'
              + V'Nothing'
+             + V'RawStmt'
              + V'CallStmt' -- last
              --+ EM'statement'-- (missing `_´?)'
              + EM'statement (usually a missing `var´ or C prefix `_´)'
@@ -151,7 +152,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
                     V'ParEver' + V'If'   + V'Loop' + V'Every' )
 
     , _Set  = (V'_Exp' + V'VarList') * V'_Sets'
-    , _Sets = K'=' * (
+    , _Sets = (CK'='+CK':=') * (
                 Cc'SetAwait' * (V'AwaitS'+V'AwaitT'+V'AwaitExt'+V'AwaitInt')
                                                     * Cc(false)
               + Cc'SetBlock' * V'_SetBlock'         * Cc(false) -- (constr)
@@ -205,7 +206,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , Break    = K'break'
     , _Continue = K'continue'
 
-    , Every   = K'every' * (EV'_Exp'*EK'=' + Cc(false))
+    , Every   = K'every' * (EV'_Exp'*(CK'='+CK':=') + Cc(false)*Cc(false))
               *  (V'WCLOCKK' + V'WCLOCKE' + EV'Ext' + EV'_Exp')
               * V'_Do'
 
@@ -238,7 +239,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , _13     = V'_Prim'
     , _Prim   = V'_Parens' + V'Var'   + V'Nat'   + V'SIZEOF'
               + V'NULL'    + V'CONST' + V'STRING'
-              + V'Global' + V'This'
+              + V'Global' + V'This'   + V'RawExp'
 
     , ExpList = ( V'_Exp'*(K','*EV'_Exp')^0 )^-1
 
@@ -323,7 +324,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , Dcl_constr = V'Stmts'     -- TODO: Block?
 
     , __Dcl_var = EV'ID_var' * (V'_Sets' +
-                                Cc(false)*Cc(false)*Cc(false))
+                                Cc(false)*Cc(false)*Cc(false)*Cc(false))
 
     , _Dcl_imp = K'interface' * EV'ID_cls' * (K',' * EV'ID_cls')^0
 
@@ -361,6 +362,9 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , Host    = K'native' * (#EK'do')*'do' * --m.S' \n\t'^0 *
                     ( C(V'_C') + C((P(1)-(m.S'\t\n\r '*'end'*P';'^0*'\n'))^0) )
                 *S* EK'end'
+
+    , RawStmt = K'{' * C((P(1)-'}')^0) * EK'}'
+    , RawExp  = K'{' * C((P(1)-'}')^0) * EK'}'
 
     --, _C = '/******/' * (P(1)-'/******/')^0 * '/******/'
     , _C      = m.Cg(V'_CSEP','mark') *

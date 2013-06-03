@@ -117,10 +117,71 @@ error 'testar new/spawn que se mata'
 
 do return end
 
+--]===]
 -- OK: under tests but supposed to work
 
-do return end
---]===]
+Test { [[
+native do
+    int V = 0;
+end
+
+class T with
+    event void a;
+do
+    par/or do
+        await a;
+        _V = _V + 2;
+    with
+        emit a;
+        _V = _V + 20;
+    end
+    await a;
+    _V = _V + 10;
+end
+
+var T t;
+_V = _V * 2;
+emit t.a;
+return _V;
+]],
+    ana = { acc=1 },
+    run = 14,
+}
+
+Test { [[
+return {1};
+]],
+    run = 1,
+}
+
+Test { [[
+{ int V = 10; };
+return _V;
+]],
+    run = 10,
+}
+
+Test { [[
+var void* p;
+finalize
+    p = { NULL };
+with
+    nothing;
+end
+return p==null;
+]],
+    run = 1,
+}
+
+Test { [[
+var void* p;
+p := { NULL };
+return p==null;
+]],
+    run = 1,
+}
+
+--do return end
 
 -- OK: well tested
 

@@ -201,10 +201,10 @@ STATS = {
 
 -- 106.07s user 22.19s system 84% cpu 2:32.50 total
 
-assert(STATS.count  ==    1236)
+assert(STATS.count  ==    1241)
 assert(STATS.mem    ==       0)
-assert(STATS.trails ==    2278)
-assert(STATS.bytes  == 7226381)
+assert(STATS.trails ==    2285)
+assert(STATS.bytes  == 7268735)
 
 do return end
 
