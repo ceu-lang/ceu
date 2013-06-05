@@ -5,20 +5,20 @@
  */
 
 typedef struct {
-    u8     size;
-    u8     free;
-    u8     index;
-    u8     unit;
+    int     size;
+    int     free;
+    int     index;
+    int     unit;
     char** queue;
     char*  mem;
 } tceu_pool;
 
-#define CEU_POOL(name, type, num)    \
-    static type* name##_queue[num];  \
-    static type  name##_mem[num];    \
-    static tceu_pool name = { num, num, 0, sizeof(type), \
-                             (char**)&name##_queue,      \
-                             (char*) &name##_mem         \
+#define CEU_POOL(name, type, size)    \
+    static type* name##_queue[size];  \
+    static type  name##_mem[size];    \
+    static tceu_pool name = { size, size, 0, sizeof(type), \
+                             (char**)&name##_queue,        \
+                             (char*) &name##_mem           \
                             } ;
 
 void ceu_pool_init (tceu_pool* pool) {
@@ -36,7 +36,7 @@ char* ceu_pool_alloc (tceu_pool* pool) {
     }
 
     pool->free--;
-    ret = &pool->mem[pool->index * pool->unit];
+    ret = pool->queue[pool->index];
     pool->queue[pool->index++] = NULL;
     if (pool->index == pool->size) {
         pool->index = 0;
@@ -45,21 +45,15 @@ char* ceu_pool_alloc (tceu_pool* pool) {
 }
 
 void ceu_pool_free (tceu_pool* pool, char* val) {
-    int idx;
-
-    if (pool->free >= pool->size) {
-        return;
+    int empty = pool->index + pool->free;
+    if (empty >= pool->size) {
+        empty -= pool->size;
     }
-
-    idx = pool->index + pool->free;
-    if (idx >= pool->size) {
-        idx -= pool->size;
-    }
-    pool->queue[idx] = val;
+    pool->queue[empty] = val;
     pool->free++;
 }
 
 int ceu_pool_inside (tceu_pool* pool, char* val) {
     return ((char*)val >= pool->mem)
-        && ((char*)val < pool->mem+pool->size*pool->unit);
+        && ((char*)val < pool->mem+(pool->size*pool->unit));
 }

@@ -109,7 +109,7 @@ F =
         if _TP.deref(e1.evt.tp) then
             me.val = '(('.._TP.c(e1.evt.tp)..')_ceu_evtp.ptr)'
         else
-            me.val = '(_ceu_evtp.v)'
+            me.val = '*(('.._TP.c(e1.evt.tp)..'*)_ceu_evtp.ptr)'
         end
     end,
     AwaitT = function (me)

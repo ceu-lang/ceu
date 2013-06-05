@@ -528,8 +528,10 @@ fprintf(stderr, "GO[%d]: evt=%d stk=%d [%d]\n", _ceu_seqno,
                         /* TODO: check if needed? (freed manually?) */
                         /*fprintf(stderr, "FREE: %p\n", _ceu_org);*/
                             === CLSS_FREE ===
-                        /* else */
+                            /* else */
+                            {
                                 free(_ceu_org);
+                            }
 #ifdef CEU_RUNTESTS
                             _ceu_dyns_--;
 #endif
