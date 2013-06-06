@@ -348,9 +348,7 @@ F = {
             cls = CLS()
             ASR(cls ~= _MAIN, me, 'invalid access')
         end
-        if not cls then
-            return
-        end
+        ASR(cls, me, 'undeclared class')
 
         me.tp   = cls.id
         me.lval = false
