@@ -153,12 +153,19 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
 
     , _Set  = (V'_Exp' + V'VarList') * V'_Sets'
     , _Sets = (CK'='+CK':=') * (
+                                    -- p1=awt, p2=false, p3=false
                 Cc'SetAwait' * (V'AwaitS'+V'AwaitT'+V'AwaitExt'+V'AwaitInt')
-                                                    * Cc(false)
-              + Cc'SetBlock' * V'_SetBlock'         * Cc(false) -- (constr)
-              + Cc'SetExp'   * V'_Exp'              * Cc(false)
-              + Cc'SetNew'   * K'new' * V'ID_cls'
-                 * (EK'with' * V'Dcl_constr' * EK'end' + Cc(false))
+                             * Cc(false) * Cc(false)
+                                    -- p1=blk, p2=false, p3=false
+              + Cc'SetBlock' * V'_SetBlock'
+                             * Cc(false) * Cc(false)
+                                    -- p1=exp, p2=false, p3=false
+              + Cc'SetExp'   * V'_Exp'
+                             * Cc(false) * Cc(false)
+                                    -- p1=max, p2=cls, p3=constr
+              + Cc'SetNew'   * K'new' * ('['*NUM*EK']'+Cc(false)) * V'ID_cls'
+                             * (EK'with' * V'Dcl_constr' * EK'end' + Cc(false))
+                                    -- p1=Spawn[max,cls,constr]
               + Cc'SetSpawn' * V'Spawn'
               + EM'expression'
               )
@@ -168,8 +175,9 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , Finally  = V'Block'
 
     , Free  = K'free'  * V'_Exp'
-    , Spawn = K'spawn' * EV'ID_cls'
-                 * (EK'with' * V'Dcl_constr' * EK'end' + Cc(false))
+    , Spawn = K'spawn' * ('['*NUM*EK']'+Cc(false))
+            * EV'ID_cls'
+            * (EK'with' * V'Dcl_constr' * EK'end' + Cc(false))
 
     , CallStmt = m.Cmt(V'_Exp',
                     function (s,i,...)
@@ -324,17 +332,20 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , Dcl_constr = V'Stmts'     -- TODO: Block?
 
     , __Dcl_var = EV'ID_var' * (V'_Sets' +
-                                Cc(false)*Cc(false)*Cc(false)*Cc(false))
+                                Cc(false)*Cc(false)*Cc(false)*Cc(false)*Cc(false))
 
     , _Dcl_imp = K'interface' * EV'ID_cls' * (K',' * EV'ID_cls')^0
 
     , BlockI = ( (V'_Dcl_int'+V'_Dcl_var'+
                    V'_Dcl_nat_ifc'+V'_Dcl_imp')
                * (EK';'*K';'^0) )^0
-    , Dcl_ifc = K'interface' * Cc(true)  * EV'ID_cls' * Cc(false)
+    , Dcl_ifc = K'interface' * Cc(true)
+              * Cc(false)
+              * EV'ID_cls'
               * EK'with' * V'BlockI' * EK'end'
-    , Dcl_cls = K'class'     * Cc(false) * EV'ID_cls'
-              * ('('*NUM*EK')' + Cc(false))
+    , Dcl_cls = K'class'     * Cc(false)
+              * ('['*NUM*EK']' + Cc(false))
+              * EV'ID_cls'
               * EK'with' * V'BlockI' * V'_Do'
 
     , Global  = K'global'

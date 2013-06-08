@@ -115,9 +115,24 @@ return ret;
 error 'testar pause/if org.e'
 error 'testar new/spawn que se mata'
 
-do return end
+Test { [[
+do
+    var int i = 1;
+    every 1s do
+        spawn HelloWorld with
+            this.id = i;
+        end;
+        i = i + 1;
+    end
+end
+]],
+    env = 'ERR : line 5 : undeclared class',
+}
 
+
+--do return end
 --]===]
+
 -- OK: under tests but supposed to work
 
 Test { [[
@@ -17055,8 +17070,6 @@ with
     pause/if a do
         ret = await 9us;
     end
-native nohold _fprintf(), _stderr;
-_fprintf(_stderr, "=== %d\n", ret);
 end
 return ret;
 ]],
@@ -17240,7 +17253,7 @@ return _V;
 }
 
 Test { [[
-class T(10) with do end
+class [10] T with do end
 return 1;
 ]],
     run = 1,
@@ -20317,7 +20330,7 @@ return 10;
 -- MEM/MEMORY POOL
 
 Test { [[
-class T (0) with
+class [0] T with
     var int a;
 do
     this.a = 1;
@@ -20329,20 +20342,48 @@ return t == null;
 }
 
 Test { [[
-class T (1) with
+class [1] T with
     var int a;
 do
     this.a = 1;
 end
+native nohold _fprintf(), _stderr;
 var T* a = new T;
+_fprintf(_stderr, "=== %p\n", a);
 var T* b = new T;
+_fprintf(_stderr, "=== %p\n", b);
 return a!=null and b==null;
 ]],
     run = 1,
 }
 
 Test { [[
-class T (1) with
+class T with
+    var int a;
+do
+    this.a = 1;
+end
+var T* t = new [0] T;
+return t == null;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+    var int a;
+do
+    this.a = 1;
+end
+var T* a = new [1] T;
+var T* b = new [0] T;
+return a!=null and b==null;
+]],
+    run = 1,
+}
+
+Test { [[
+class [1] T with
     var int a;
 do
     this.a = 1;
@@ -20356,7 +20397,7 @@ return a!=null and b!=null;
 }
 
 Test { [[
-class T (1) with
+class [1] T with
     var int a;
 do
     this.a = 1;
@@ -20374,6 +20415,95 @@ var T* b = new T;
 return a!=null and b!=null;
 ]],
     run = 1,
+}
+
+Test { [[
+class [1] T with
+    var int a;
+do
+    this.a = 1;
+end
+var T* a;
+do
+    var T* aa = new T;
+    finalize
+        a = aa;
+    with
+        nothing;
+    end
+end
+var T* b = new T;
+return a!=null and b!=null;
+]],
+    run = 1,
+}
+
+Test { [[
+native do
+    int V = 0;
+end
+class T with
+    var int a;
+do
+    _V = _V + 1;
+end
+do
+    loop i, 1000 do
+        var int ok = spawn [1] T;
+        if not ok then
+            return 0;
+        end
+    end
+end
+return _V;
+]],
+    loop = 1,
+    run = 1000,
+}
+Test { [[
+input void A;
+native do
+    int V = 0;
+end
+class T with
+    var int a;
+do
+    _V = _V + 1;
+    await A;
+end
+do
+    loop i, 10 do
+        spawn [1] T;
+    end
+end
+return _V;
+]],
+    loop = 1,
+    run = { ['~>A']=1 },
+}
+Test { [[
+input void A;
+native do
+    int V = 0;
+end
+class T with
+    var int a;
+do
+    _V = _V + 1;
+    await A;
+end
+do
+    loop i, 1000 do
+        var int ok = spawn [1] T;
+        if not ok then
+            return 10;
+        end
+    end
+end
+return _V;
+]],
+    loop = 1,
+    run = { ['~>A']=10 },
 }
 
 -- CONSTRUCTOR
@@ -22283,7 +22413,6 @@ native do
     int V = 0;
 end
 
-native nohold _fprintf(), _stderr;
 class T with
     var int c;
 do
@@ -22291,7 +22420,6 @@ do
         _V = _V + c;
     end
     await 5s;
-_fprintf(_stderr, "=== %d\n", 1);
     _V = _V + 10;
 end
 
@@ -22316,15 +22444,12 @@ with
     end
 with
     await 5s;   // terminates before first spawn
-_fprintf(_stderr, "=== %d\n", 2);
 with
     await 5s;   // terminates before first spawn
-_fprintf(_stderr, "=== %d\n", 3);
 end
 
 return _V;
 ]],
-    ana = { acc=16 },
     run = { ['~>2s;1~>P;~>2s;0~>P;~>2s']=16 },
 }
 Test { [[

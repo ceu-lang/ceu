@@ -13,18 +13,23 @@ typedef struct {
     char*  mem;
 } tceu_pool;
 
-#define CEU_POOL(name, type, size)    \
-    static type* name##_queue[size];  \
-    static type  name##_mem[size];    \
-    static tceu_pool name = { size, size, 0, sizeof(type), \
-                             (char**)&name##_queue,        \
-                             (char*) &name##_mem           \
-                            } ;
+#define CEU_POOL_DCL(name, type, size) \
+    type* name##_queue[size];          \
+    type  name##_mem[size];            \
+    tceu_pool name;
 
-void ceu_pool_init (tceu_pool* pool) {
+void ceu_pool_init (tceu_pool* pool, int size, int unit,
+                    char** queue, char* mem)
+{
     int i;
-    for (i=0; i<pool->size; i++) {
-        pool->queue[i] = &pool->mem[i*pool->unit];
+    pool->size  = size;
+    pool->free  = size;
+    pool->index = 0;
+    pool->unit  = unit;
+    pool->queue = queue;
+    pool->mem   = mem;
+    for (i=0; i<size; i++) {
+        queue[i] = &mem[i*unit];
     }
 }
 
@@ -53,7 +58,9 @@ void ceu_pool_free (tceu_pool* pool, char* val) {
     pool->free++;
 }
 
+/*
 int ceu_pool_inside (tceu_pool* pool, char* val) {
     return ((char*)val >= pool->mem)
         && ((char*)val < pool->mem+(pool->size*pool->unit));
 }
+*/

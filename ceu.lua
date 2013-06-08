@@ -155,7 +155,6 @@ do
     tpl = sub(tpl, '=== POOL_C ===', assert(io.open'pool.c'):read'*a')
     tpl = sub(tpl, '=== CLSS_DEFS ===', _MEM.clss_defs)
     tpl = sub(tpl, '=== CLSS_INIT ===', _MEM.clss_init)
-    tpl = sub(tpl, '=== CLSS_FREE ===', _MEM.clss_free)
 
     --tpl = sub(tpl, '=== HOST ===',     _CODE.host)
     tpl = sub(tpl, '=== CODE ===',     _AST.root.code)
@@ -252,6 +251,8 @@ do
         has_asyncs  = 'CEU_ASYNCS',
         has_orgs    = 'CEU_ORGS',
         has_news    = 'CEU_NEWS',
+        has_news_pool   = 'CEU_NEWS_POOL',
+        has_news_malloc = 'CEU_NEWS_MALLOC',
         has_ifcs    = 'CEU_IFCS',
         has_clear   = 'CEU_CLEAR',
         has_pses    = 'CEU_PSES',

@@ -262,9 +262,9 @@ F = {
     end,
 
     Dcl_cls_pre = function (me)
-        local ifc, id, n, blk = unpack(me)
+        local ifc, max, id, blk = unpack(me)
         me.is_ifc = ifc
-        me.pool   = n
+        me.max    = max
         me.id     = id
         me.blk_ifc.funs = {}
         if id == 'Main' then
@@ -592,9 +592,9 @@ F = {
     end,
 
     SetNew = function (me)
-        local id_cls, to, constr = unpack(me)
+        local to, id, max, constr = unpack(me)
 
-        F.Spawn(me, id_cls, constr, to.ref.var.blk)    -- also sets me.cls
+        F.Spawn(me, id, max, constr, to.ref.var.blk)    -- also sets me.cls
 
         ASR(to.lval and _TP.contains(to.tp,me.cls.id..'*')
                          -- refuses (x.ptr = new T;)
@@ -603,14 +603,17 @@ F = {
     end,
 
     SetSpawn = function (me)
-        local _, to = unpack(me)
+        local to,_ = unpack(me)
         ASR(to.lval and _TP.isNumeric(to.tp,true),
                 me, 'invalid attribution')
     end,
 
-    Spawn = function (me, id, constr, blk)
+    Spawn = function (me, id, max, constr, blk)
         if not id then
-            id, constr = unpack(me)
+            id, max, constr = unpack(me)
+            blk = ASR(_AST.iter'Do'(),
+                        me, '`spawn´ requires enclosing `do ... end´')
+            blk = blk[1]
         end
 
         me.cls = ASR(_ENV.clss[id], me,
@@ -618,9 +621,11 @@ F = {
         ASR(not me.cls.is_ifc, me, 'cannot instantiate an interface')
         me.cls.is_instantiable = true
 
-        blk = blk or ASR(_AST.iter'Do'(),
-                        me, '`spawn´ requires enclosing `do ... end´')[1]
-        blk.has_news = true
+        if max then
+            blk.pools = blk.pools or {}
+            blk.pools[me] = max
+        end
+
         me.blk = blk
         if constr then
             constr.blk = blk
@@ -635,12 +640,11 @@ F = {
         if spw then
             me.cls = _ENV.clss[ spw[1] ]   -- checked on Spawn
         elseif set then
-            me.cls = _ENV.clss[ set[1] ]   -- checked on SetExp
+            me.cls = _ENV.clss[ set[2] ]   -- checked on SetExp
         elseif dcl then
             me.cls = _ENV.clss[ dcl[2] ]   -- checked on Dcl_var
-        else
-            error'xxx'
         end
+        assert(me.cls)
     end,
 
     CallStmt = function (me)

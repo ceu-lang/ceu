@@ -73,9 +73,9 @@ typedef union tceu_trl {
         u8        stk;
     };
 #ifdef CEU_ORGS
-    struct {
+    struct {                    /* TODO(ram): bad for alignment */
         tceu_nevt evt3;
-        struct tceu_org* lnks;  /* TODO(ram): bad for alignment */
+        struct tceu_lnk* lnks;
     };
 #endif
 } tceu_trl;
@@ -106,7 +106,7 @@ typedef struct {
 } tceu_lst;
 
 /* simulates an org prv/nxt */
-typedef struct {
+typedef struct tceu_lnk {
     struct tceu_org* prv;   /* TODO(ram): lnks[0] does not use */
     struct tceu_org* nxt;   /*      prv, n, lnk                  */
     u8 n;                   /* use for ands/fins                 */
@@ -118,17 +118,23 @@ typedef struct tceu_org
 #ifdef CEU_ORGS
     struct tceu_org* prv;   /* linked list for the scheduler */
     struct tceu_org* nxt;
-    u8 n;                   /* number of trails (TODO: to metadata) */
+    u8 n;                   /* number of trails (TODO(ram): opt, metadata) */
+    u8 lnk;
+    /* tceu_lnk */
 
 #ifdef CEU_IFCS
     tceu_ncls cls;          /* class id */
 #endif
 
 #ifdef CEU_NEWS
-    u8 isDyn:  1;           /* created w/ new or spawn? */
-    u8 toFree: 1;           /* free on termination? */
+    u8 isDyn: 1;            /* created w/ new or spawn? */
+    u8 isSpw: 1;            /* free on termination? */
 #endif
 #endif  /* CEU_ORGS */
+
+#ifdef CEU_NEWS_POOL
+    void*  pool;            /* TODO(ram): opt, traverse lst of cls pools */
+#endif
 
     tceu_trl trls[0];       /* first trail */
 
@@ -265,10 +271,10 @@ void ceu_org_init (tceu_org* org, int n, int lbl, int seqno,
 
     /* re-link */
     {
-        tceu_org* lst = &par_org->trls[par_trl].lnks[1];
+        tceu_lnk* lst = &par_org->trls[par_trl].lnks[1];
         lst->prv->nxt = org;
         org->prv = lst->prv;
-        org->nxt = lst;
+        org->nxt = (tceu_org*)lst;
         lst->prv = org;
     }
 #endif  /* CEU_ORGS */
@@ -517,25 +523,29 @@ fprintf(stderr, "GO[%d]: evt=%d stk=%d [%d]\n", _ceu_seqno,
                     /* org has been cleared to the end? */
                     if ( _ceu_evt  == CEU_IN__CLEAR
                     &&   _ceu_org->isDyn
-                    &&   _ceu_org->n != 0 )  /* TODO: avoids LST */
+                    &&   _ceu_org->n != 0 )  /* TODO: avoids LNKs */
                     {
                         /* re-link PRV <-> NXT */
                         _ceu_org->prv->nxt = _ceu_org->nxt;
                         _ceu_org->nxt->prv = _ceu_org->prv;
 
                         /* FREE */
-                        {
                         /* TODO: check if needed? (freed manually?) */
                         /*fprintf(stderr, "FREE: %p\n", _ceu_org);*/
-                            === CLSS_FREE ===
-                            /* else */
-                            {
-                                free(_ceu_org);
-                            }
-#ifdef CEU_RUNTESTS
-                            _ceu_dyns_--;
+                        /* TODO(speed): avoid free if pool and blk out of scope */
+#if    defined(CEU_NEWS_POOL) && !defined(CEU_NEWS_MALLOC)
+                        ceu_pool_free(_ceu_org->pool, (char*)_ceu_org);
+#elif  defined(CEU_NEWS_POOL) &&  defined(CEU_NEWS_MALLOC)
+                        if (_ceu_org->pool == NULL)
+                            free(_ceu_org);
+                        else
+                            ceu_pool_free(_ceu_org->pool, _ceu_org);
+#elif !defined(CEU_NEWS_POOL) &&  defined(CEU_NEWS_MALLOC)
+                        free(_ceu_org);
 #endif
-                        }
+#ifdef CEU_RUNTESTS
+                        _ceu_dyns_--;
+#endif
 
                         /* explicit free(me) or end of spawn */
                         if (_ceu_stop == _ceu_org)
@@ -556,8 +566,9 @@ fprintf(stderr, "GO[%d]: evt=%d stk=%d [%d]\n", _ceu_seqno,
 #ifdef CEU_DEBUG_TRAILS
 #ifdef CEU_ORGS
 if (_ceu_trl->evt==CEU_IN__ORG)
-    fprintf(stderr, "\tTRY [%p] : evt=%d org=?\n",
-                    _ceu_trl, _ceu_trl->evt);
+    fprintf(stderr, "\tTRY [%p] : evt=%d org=%p->%p\n",
+                    _ceu_trl, _ceu_trl->evt,
+                    &_ceu_trl->lnks[0], &_ceu_trl->lnks[1]);
 else
 #endif
 fprintf(stderr, "\tTRY [%p] : evt=%d seqno=%d lbl=%d\n",
@@ -573,7 +584,7 @@ fprintf(stderr, "\tTRY [%p] : evt=%d seqno=%d lbl=%d\n",
                    )
                 {
                     /* TODO(speed): jump LST */
-                    _ceu_org = _ceu_trl->lnks[0].nxt;
+                    _ceu_org = _ceu_trl->lnks[0].nxt;   /* jump FST */
                     if (_ceu_evt == CEU_IN__CLEAR) {
                         _ceu_trl->evt = CEU_IN__NONE;
                     }

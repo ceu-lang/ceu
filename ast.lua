@@ -167,7 +167,7 @@ end
 
 local C; C = {
     [1] = function (ln, spc, ...) -- spc=CK''
-        C.Dcl_cls(ln, false, 'Main', false, node('Stmts')(ln),
+        C.Dcl_cls(ln, false, false, 'Main', node('Stmts')(ln),
                                             node('Stmts')(ln,...))
         _AST.root = node('Root')(ln, unpack(TOP))
         return _AST.root
@@ -379,15 +379,16 @@ local C; C = {
         local ret = {}
         local t = { ... }
         -- id, op, tag, exp, constr
-        for i=1, #t, 5 do
+        for i=1, #t, 6 do
             ret[#ret+1] = node('Dcl_var')(ln, pre, tp, dim, t[i])
             if t[i+1] then
                 ret[#ret+1] = C._Set(ln,
                                 node('Var')(ln,t[i]),   -- var
                                 t[i+1],                 -- op
                                 t[i+2],                 -- tag
-                                t[i+3],                 -- exp
-                                t[i+4])                 -- constr
+                                t[i+3],                 -- exp    (p1)
+                                t[i+4],                 -- max    (p2)
+                                t[i+5])                 -- constr (p3)
             end
         end
         return unpack(ret)
@@ -417,7 +418,7 @@ local C; C = {
     end,
 
     Dcl_ifc = function (...) return C.Dcl_cls(...) end,
-    Dcl_cls = function (ln, is_ifc, id, n, blk_ifc, blk_body)
+    Dcl_cls = function (ln, is_ifc, n, id, blk_ifc, blk_body)
         local blk = node('Block')(ln, node('Stmts')(ln,blk_ifc,blk_body))
         local this = blk
         if id == 'Main' then
@@ -428,7 +429,7 @@ local C; C = {
                             node('Var')(ln,'_ret'))))
         end
 
-        local cls = node('Dcl_cls')(ln, is_ifc, id, n, blk)
+        local cls = node('Dcl_cls')(ln, is_ifc, n, id, blk)
         cls.blk_ifc = this  -- top-most block for `this´
         cls.blk_body  = blk_body
         TOP[#TOP+1] = cls
@@ -437,9 +438,12 @@ local C; C = {
     Global = node('Global'),
     This   = node('This'),
     Free   = node('Free'),
-    Spawn  = node('Spawn'),
 
-    _Set = function (ln, to, op, tag, fr, constr)
+    Spawn  = function (ln, max, id, constr)
+        return node('Spawn')(ln, id, max, constr) -- to conform w/ SetNew
+    end,
+
+    _Set = function (ln, to, op, tag, p1, p2, p3)
         if op == ':=' then
             ASR(tag=='SetExp', ln, 'invalid attribution')
         end
@@ -450,11 +454,11 @@ local C; C = {
             _N = _N + 1
 
             local t = {
-                fr[1],
+                p1[1],
                 node('Dcl_var')(ln, 'var', 'TP*', false, tup),
-                node('SetAwait')(ln, op, fr, node('Var')(ln,tup)),
+                node('SetAwait')(ln, op, p1, node('Var')(ln,tup)),
             }
-            t[2].__ref = fr[1] -- TP* is changed on env.lua
+            t[2].__ref = p1[1] -- TP* is changed on env.lua
 
             for i, v in ipairs(to) do
                 t[#t+1] = node('SetExp')(ln, '=',
@@ -467,9 +471,14 @@ local C; C = {
 
             return node('Stmts')(ln, unpack(t))
         elseif (tag=='SetExp') or (tag=='SetAwait') then
-            return node(tag)(ln, op, fr, to, constr)
+            return node(tag)(ln, op, p1, to)
+        elseif (tag=='SetBlock') then
+            return node(tag)(ln, p1, to)
+        elseif (tag=='SetNew') then
+            return node(tag)(ln, to, p2, p1, p3)
         else
-            return node(tag)(ln, fr, to, constr)
+            assert(tag=='SetSpawn')
+            return node(tag)(ln, to, p1)
         end
     end,
 

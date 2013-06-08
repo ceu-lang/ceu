@@ -5,6 +5,8 @@ _PROPS = {
     has_asyncs  = false,
     has_orgs    = false,
     has_news    = false,
+    has_news_pool   = false,
+    has_news_malloc = false,
     has_ifcs    = false,
     has_clear   = false,
     has_pses    = false,
@@ -103,14 +105,26 @@ F = {
         _PROPS.has_news = true
         _PROPS.has_clear = true
     end,
-    SetNew = function (me)
+    SetNew = function (me, spw, max)
+        if not spw then
+            max = me[3]
+        end
+
         _PROPS.has_news = true
+        if max or me.cls.max then
+            _PROPS.has_news_pool = true
+        else
+            _PROPS.has_news_malloc = true
+        end
+
         _PROPS.has_clear = true
         me.blk.needs_clr = true
         ASR(not _AST.iter'BlockI'(), me,
                 'not permitted inside an interface')
     end,
-    Spawn = 'SetNew',
+    Spawn = function (me)
+        return F.SetNew(me, true, me[2])  -- id,max,constr
+    end,
 
     ParOr = function (me)
         me.needs_clr = true

@@ -207,7 +207,7 @@ _ceu_org->cls = ]]..me.n..[[;
         --if i_am_instantiable then
             LINE(me, [[
 #ifdef CEU_NEWS
-if (_ceu_org->toFree) {
+if (_ceu_org->isSpw) {
 ]])
             F.Free(me)
             LINE(me, [[
@@ -251,7 +251,7 @@ end;
             LINE(me, [[
 #ifdef CEU_NEWS
     ]]..org..[[->isDyn  = ]]..t.isDyn..[[;
-    ]]..org..[[->toFree = ]]..t.toFree..[[;
+    ]]..org..[[->isSpw  = ]]..t.isSpw..[[;
 #endif
 
     /* resets org memory and starts org.trail[0]=Class_XXX */
@@ -329,7 +329,7 @@ case ]]..me.lbls_cnt[i].id..[[:;
         F._ORG(me, {
             id      = var.id,
             isDyn   = 0,
-            toFree  = 0,
+            isSpw   = 0,
             cls     = var.cls,
             val     = '&'..var.val,
             constr  = constr,
@@ -343,9 +343,9 @@ case ]]..me.lbls_cnt[i].id..[[:;
 {
     tceu_org* __ceu_new;
 ]])
-        if t.cls.pool then
+        if t.pool then
             LINE(me, [[
-    __ceu_new = (tceu_org*) ceu_pool_alloc(&CEU_POOL_]]..t.cls.id..[[);
+    __ceu_new = (tceu_org*) ceu_pool_alloc(&]]..t.pool..[[);
 ]])
         else
             LINE(me, [[
@@ -377,10 +377,15 @@ case ]]..me.lbls_cnt[i].id..[[:;
         LINE(me, [[
     if (__ceu_new != NULL) {
 ]])
+        if t.pool then
+            LINE(me, '__ceu_new->pool = &'..t.pool..';')
+        elseif _PROPS.has_news_pool then
+            LINE(me, '__ceu_new->pool = NULL;')
+        end
         F._ORG(me, {
             id      = 'dyn',
             isDyn   = 1,
-            toFree  = t.toFree,
+            isSpw   = t.isSpw,
             cls     = t.cls,
             val     = '__ceu_new',
             constr  = t.constr,
@@ -394,27 +399,31 @@ case ]]..me.lbls_cnt[i].id..[[:;
     end,
 
     SetNew = function (me)
-        local _, to, constr = unpack(me)
+        local to, _, max, constr = unpack(me)
         F._New(me, {
             val     = V(to),
             cls     = me.cls,
-            toFree  = 0,
+            isSpw   = 0,
+            pool    = me.pool and CUR(me,me.pool)
+                        or me.cls.pool,
             constr  = constr,
         })
     end,
 
     Spawn = function (me)
-        local _, constr = unpack(me)
+        local _, max, constr = unpack(me)
         F._New(me, {
             val     = nil,
             cls     = me.cls,
-            toFree  = 1,
+            isSpw   = 1,
+            pool    = me.pool and CUR(me,me.pool)
+                        or me.cls.pool,
             constr  = constr,
         })
     end,
 
     SetSpawn = function (me)
-        local spw, to = unpack(me)
+        local to, spw = unpack(me)
         LINE(me, [[
 {
     int __ceu_]]..spw.n..[[;
@@ -497,7 +506,7 @@ case ]]..me.lbl_clr.id..[[:;
             LINE(me, [[
 _ceu_org->trls[ ]]..me.trl_orgs[1]..[[ ].evt  = CEU_IN__ORG;
 _ceu_org->trls[ ]]..me.trl_orgs[1]..[[ ].lnks =
-    (tceu_org*) &]]..me.trl_orgs.val..[[;
+    (tceu_lnk*) &]]..me.trl_orgs.val..[[;
 
 ]]..me.trl_orgs.val..'[0].nxt = (tceu_org*) &'..me.trl_orgs.val..'[1]'..[[;
 
@@ -517,6 +526,17 @@ _ceu_org->trls[ ]]..me.trl_fins[1]..[[ ].stk = _ceu_seqno-1;    /* awake now */
 ]])
             for _, fin in ipairs(me.fins) do
                 LINE(me, fin.val..' = 0;')
+            end
+        end
+
+        -- initialize pools for new/spawn
+        if me.pools then
+            for node, n in pairs(me.pools) do
+                local pre = CUR(me,node.pool)
+                LINE(me, [[
+ceu_pool_init(&]]..pre..', '..n..', sizeof(CEU_'..node.cls.id..'), '
+    ..'(char**)'..pre..'_queue, (char*)'..pre..[[_mem);
+]])
             end
         end
 

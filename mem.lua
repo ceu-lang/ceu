@@ -32,26 +32,19 @@ F = {
             _defs[#_defs+1] = cls.struct
             _defs[#_defs+1] = cls.host
 
-            if cls.pool then
+            if cls.max and _PROPS.has_news_pool then
+                cls.pool = 'CEU_POOL_'..cls.id
                 _defs[#_defs+1] = [[
-#ifdef CEU_NEWS
-CEU_POOL(CEU_POOL_]]..cls.id..','..'CEU_'..cls.id..','..cls.pool..[[);
-#endif
+CEU_POOL_DCL(]]..cls.pool..','..'CEU_'..cls.id..','..cls.max..[[);
 ]]
-                _init[#_init+1] = 'ceu_pool_init(&CEU_POOL_'..cls.id..');'
-                _free[#_free+1] = [[
-                    if ( ceu_pool_inside(&CEU_POOL_]]..cls.id..[[, (char*)_ceu_org) )
-                    {
-                        ceu_pool_free(&CEU_POOL_]]..cls.id..[[, (char*)_ceu_org);
-                    }
-                    else
-                        /* malloc in template.c */
+                _init[#_init+1] = [[
+ceu_pool_init(&]]..cls.pool..', '..cls.max..', sizeof(CEU_'..cls.id..'), '
+    ..'(char**)'..cls.pool..'_queue, (char*)'..cls.pool..[[_mem);
 ]]
             end
         end
         _MEM.clss_defs = _host ..'\n'.. table.concat(_defs,'\n')
         _MEM.clss_init = table.concat(_init,'\n')
-        _MEM.clss_free = table.concat(_free,'\n')
     end,
 
     Host = function (me)
@@ -84,7 +77,7 @@ typedef struct {
         end
 
         me.struct = me.struct..'\n} '.._TP.c(me.id)..';\n'
-DBG('===', me.id, me.trails_n, '('..tostring(me.pool)..')')
+DBG('===', me.id, me.trails_n, '('..tostring(me.max)..')')
 --DBG(me.struct)
 --DBG('======================')
     end,
@@ -116,6 +109,16 @@ DBG('===', me.id, me.trails_n, '('..tostring(me.pool)..')')
             for i=1, #me.fins do
             cls.struct = cls.struct .. SPC()
                             ..'u8 __fin_'..me.n..'_'..i..': 1;\n'
+            end
+        end
+
+        -- memory pools from spawn/new
+        if me.pools then
+            for node, n in pairs(me.pools) do
+                node.pool = '__pool_'..node.n..'_'..node.cls.id
+                cls.struct = cls.struct .. [[
+CEU_POOL_DCL(]]..node.pool..', CEU_'..node.cls.id..','..n..[[)
+]]
             end
         end
 
