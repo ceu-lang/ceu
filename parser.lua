@@ -140,7 +140,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
 
     , _StmtB = V'Do'    + V'Async'  + V'Host'
              + V'ParOr' + V'ParAnd'
-             + V'If'    + V'Loop'   + V'Every'
+             + V'If'    + V'Loop'   + V'_Every'  + V'_Iter'
              + V'Pause'
              + V'Dcl_ifc' + V'Dcl_cls'
              + V'Finalize'
@@ -149,7 +149,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , _LstStmtB = V'ParEver' + V'_Continue'
 
     , _SetBlock = ( V'Do'     + V'Async' +
-                    V'ParEver' + V'If'   + V'Loop' + V'Every' )
+                    V'ParEver' + V'If'   + V'Loop' + V'_Every' )
 
     , _Set  = (V'_Exp' + V'VarList') * V'_Sets'
     , _Sets = (CK'='+CK':=') * (
@@ -207,14 +207,18 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
                     V'Block' + Cc(false)) *
                 EK'end'-- - V'_Continue'
 
-    , Loop    = K'loop' *
-                    (V'ID_var'* (EK','*EV'_Exp' + Cc(false)) +
-                        Cc(false)*Cc(false)) *
-                V'_Do'
     , Break    = K'break'
     , _Continue = K'continue'
 
-    , Every   = K'every' * (EV'_Exp'*(CK'='+CK':=') + Cc(false)*Cc(false))
+    , Loop    = K'loop' *
+                    (V'ID_var' * (K','*EV'_Exp' + Cc(false)) +
+                        Cc(false)*Cc(false)) *
+                V'_Do'
+
+    , _Iter   = K'loop' * V'ID_var' * K',' * V'ID_type'
+              * V'_Do'
+
+    , _Every  = K'every' * (EV'_Exp'*(CK'='+CK':=') + Cc(false)*Cc(false))
               *  (V'WCLOCKK' + V'WCLOCKE' + EV'Ext' + EV'_Exp')
               * V'_Do'
 

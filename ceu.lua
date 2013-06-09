@@ -161,10 +161,12 @@ do
 
     -- IFACES
     if _PROPS.has_ifcs then
+        local CLSS = {}
         local FLDS = {}
         local EVTS = {}
         local FUNS = {}
         for _, cls in ipairs(_ENV.clss_cls) do
+            local clss = {}
             local flds = {}
             local evts = {}
             local funs = {}
@@ -197,15 +199,23 @@ do
                 end
             end
 
+            -- IFCS_CLSS
+            for _,ifc in ipairs(_ENV.clss_ifc) do
+                clss[#clss+1] = cls.matches[ifc] and 1 or 0
+            end
+
+            CLSS[#CLSS+1] = '\t\t{'..table.concat(clss,',')..'}'
             FLDS[#FLDS+1] = '\t\t{'..table.concat(flds,',')..'}'
             EVTS[#EVTS+1] = '\t\t{'..table.concat(evts,',')..'}'
             FUNS[#FUNS+1] = '\t\t{'..table.concat(funs,',')..'}'
         end
         tpl = sub(tpl, '=== TCEU_NCLS ===',    'u'..tps[_ENV.c.tceu_ncls.len])
         tpl = sub(tpl, '=== CEU_NCLS ===',     #_ENV.clss_cls)
+        tpl = sub(tpl, '=== IFCS_NIFCS ===',   #_ENV.clss_ifc)
         tpl = sub(tpl, '=== IFCS_NFLDS ===',   #_ENV.ifcs.flds)
         tpl = sub(tpl, '=== IFCS_NEVTS ===',   #_ENV.ifcs.evts)
         tpl = sub(tpl, '=== IFCS_NFUNS ===',   #_ENV.ifcs.funs)
+        tpl = sub(tpl, '=== IFCS_CLSS ===',    table.concat(CLSS,',\n'))
         tpl = sub(tpl, '=== IFCS_FLDS ===',    table.concat(FLDS,',\n'))
         tpl = sub(tpl, '=== IFCS_EVTS ===',    table.concat(EVTS,',\n'))
         tpl = sub(tpl, '=== IFCS_FUNS ===',    table.concat(FUNS,',\n'))

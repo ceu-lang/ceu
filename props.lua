@@ -201,29 +201,37 @@ F = {
         _PROPS.has_pses = true
     end,
 
-    _loop = function (me)
+    _loop1 = function (me)
         for loop in _AST.iter'Loop' do
-            loop.noAwtsEmts = false     -- TODO: move to tmps.lua
-
             if loop.isEvery then
                 ASR(me.isEvery, me,
                     '`every´ cannot contain `await´')
             end
         end
     end,
+    _loop2 = function (me)
+        for loop in _AST.iter'Loop' do
+            loop.noAwtsEmts = false     -- TODO: move to tmps.lua
+        end
+    end,
+
     AwaitT = function (me)
         _PROPS.has_wclocks = true
-        F._loop(me)
+        F._loop1(me)
+        F._loop2(me)
     end,
     AwaitInt = function (me)
         _PROPS.has_ints = true
-        F._loop(me)
+        F._loop1(me)
+        F._loop2(me)
     end,
     AwaitExt = function (me)
-        F._loop(me)
+        F._loop1(me)
+        F._loop2(me)
     end,
     AwaitN = function (me)
-        F._loop(me)
+        F._loop1(me)
+        F._loop2(me)
     end,
     AwaitS = function (me)
         for _, awt in ipairs(me) do
@@ -239,7 +247,7 @@ F = {
 
     EmitInt = function (me)
         _PROPS.has_ints = true
-        F._loop(me)
+        F._loop2(me)
     end,
 
     EmitExt = function (me)
@@ -280,6 +288,14 @@ F = {
                     me, 'invalid access from async')
         end
     end,
+
+    Op1_cast = function (me)
+        local tp, _ = unpack(me)
+        local _tp = _TP.deref(tp)
+        if _tp and _ENV.clss[_tp] then
+            _PROPS.has_ifcs = true      -- cast must check org->cls_id
+        end
+    end
 }
 
 _AST.visit(F)

@@ -154,7 +154,7 @@ typedef struct {
 #endif
 
 #ifdef CEU_IFCS
-/* TODO: fun */
+    s8    ifcs_clss[CEU_NCLS][=== IFCS_NIFCS ===]; /* TODO(ram): bitfield */
     u16   ifcs_flds[CEU_NCLS][=== IFCS_NFLDS ===];
     u16   ifcs_evts[CEU_NCLS][=== IFCS_NEVTS ===];
     void* ifcs_funs[CEU_NCLS][=== IFCS_NFUNS ===];
@@ -174,6 +174,9 @@ tceu CEU = {
     0, CEU_WCLOCK_INACTIVE, CEU_WCLOCK_INACTIVE,
 #endif
 #ifdef CEU_IFCS
+    {
+=== IFCS_CLSS ===
+    },
     {
 === IFCS_FLDS ===
     },
@@ -426,8 +429,10 @@ void ceu_stack_clr () {
 
 void ceu_go (int _ceu_evt, tceu_evtp _ceu_evtp)
 {
+#ifdef CEU_INTS
 #ifdef CEU_ORGS
     tceu_org* _ceu_evto;       /* org that emitted current event */
+#endif
 #endif
 
 #ifdef CEU_ORGS

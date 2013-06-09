@@ -175,11 +175,6 @@ F = {
     end,
 
     If = function (me)
-        if me.isFor then
-            me.ana.pos = COPY(me.ana.pre)
-            return
-        end
-
         me.ana.pos = { [false]=true }
         for _, sub in ipairs{me[2],me[3]} do
             OR(me, sub)
@@ -210,10 +205,9 @@ F = {
     Break    = 'Return',
 
     Loop = function (me)
--- TODO: why?
-        if me.isFor then
+        if me.isBounded then
             me.ana.pos = COPY(me[1].ana.pos)
-            return
+            return      -- guaranteed to terminate
         end
 
         if me[1].ana.pos[false] then

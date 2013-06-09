@@ -65,6 +65,7 @@ end
 function _ENV.ifc_vs_cls (ifc, cls)
     -- check if they have been checked
     ifc.matches = ifc.matches or {}
+    cls.matches = cls.matches or {}
     if ifc.matches[cls] ~= nil then
         return ifc.matches[cls]
     end
@@ -83,6 +84,7 @@ function _ENV.ifc_vs_cls (ifc, cls)
 
     -- yes, they match
     ifc.matches[cls] = true
+    cls.matches[ifc] = true
     return true
 end
 
@@ -282,10 +284,11 @@ F = {
         _ENV.clss[#_ENV.clss+1] = me
 
         if me.is_ifc then
+            me.n = #_ENV.clss_ifc   -- TODO: n=>?
             _ENV.clss_ifc[id] = me
             _ENV.clss_ifc[#_ENV.clss_ifc+1] = me
         else
-            me.n = #_ENV.clss_cls   -- TODO: remove Main?
+            me.n = #_ENV.clss_cls   -- TODO: remove Main?   -- TODO: n=>?
             _ENV.clss_cls[id] = me
             _ENV.clss_cls[#_ENV.clss_cls+1] = me
         end
@@ -879,7 +882,7 @@ F = {
         ASR(string.sub(v,1,1)=="'" or tonumber(v), me, 'malformed number')
     end,
     NULL = function (me)
-        me.tp   = 'void*'
+        me.tp   = 'null*'
         me.lval = false
         me.fst  = false
     end,

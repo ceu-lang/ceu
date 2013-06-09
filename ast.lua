@@ -108,7 +108,7 @@ function _AST.dump (me, spc)
     ks = ks..'['..table.concat(t,',')..']'
 ]]
     --ks = me.ns.trails..' / '..tostring(me.needs_clr)
-    DBG(string.rep(' ',spc)..me.tag..' ('..me.ln..') '..ks)
+    DBG(string.rep(' ',spc)..me.tag..' ('..me.ln..': '..me.n..') '..ks)
     for i, sub in ipairs(me) do
         if _AST.isNode(sub) then
             _AST.dump(sub, spc+2)
@@ -211,31 +211,9 @@ local C; C = {
         return _else
     end,
 
-    Every = function (ln, var, op, evt, body)
-        local tag
-        if evt.tag == 'Ext' then
-            tag = 'AwaitExt'
-        elseif evt.tag == 'Exp' then
-            tag = 'AwaitInt'
-        else
-            tag = 'AwaitT'
-        end
-        local awt = node(tag)(ln, evt, false)
-        awt.isEvery = true
-        if var then
-            awt = node('SetAwait')(ln, op, awt, var)
-        end
-
-        local ret = node('Loop')(ln,
-                        node('Stmts')(ln,
-                            awt,
-                            body))
-        ret.isEvery = true
-        return ret
-    end,
-
     _Continue = node('_Continue'),
     Break = node('Break'),
+
     Loop  = function (ln, _i, _j, blk)
         if not _i then
             local n = node('Loop')(ln, blk)
@@ -247,11 +225,11 @@ local C; C = {
         local dcl_i = node('Dcl_var')(ln, 'var', 'int', false, _i)
         dcl_i.read_only = true
         local set_i = node('SetExp')(ln, '=', node('CONST')(ln,'0'), i())
-        set_i.read_only = true  -- overcome read_only
+        set_i.read_only = true  -- accept this write
         local nxt_i = node('SetExp')(ln, '=',
                         node('Op2_+')(ln, '+', i(), node('CONST')(ln,'1')),
                         i())
-        nxt_i.read_only = true
+        nxt_i.read_only = true  -- accept this write
 
         if not _j then
             local n = node('Loop')(ln,
@@ -286,14 +264,84 @@ local C; C = {
                             blk,
                             nxt_i))
         loop.blk = blk      -- continue
-        loop.isFor = true
-        loop[1][1].isFor = true
+        loop.isBounded = true
+        loop[1][1].isBounded = true
 
         return node('Block')(ln,
                 node('Stmts')(ln,
                     dcl_i, set_i,
                     dcl_j, set_j,
                     loop))
+    end,
+
+    _Every = function (ln, var, op, evt, blk)
+        local tag
+        if evt.tag == 'Ext' then
+            tag = 'AwaitExt'
+        elseif evt.tag=='WCLOCKK' or evt.tag=='WCLOCKE' then
+            tag = 'AwaitT'
+        else
+            tag = 'AwaitInt'
+        end
+        local awt = node(tag)(ln, evt, false)
+        awt.isEvery = true
+        if var then
+            awt = node('SetAwait')(ln, op, awt, var)
+        end
+
+        local ret = node('Loop')(ln,
+                        node('Stmts')(ln,
+                            awt,
+                            blk))
+        ret.isEvery = true
+        return ret
+    end,
+
+    _Iter = function (ln, id2, tp2, blk)
+        local id1 = '_i'.._N ; _N=_N+1
+        local tp1 = '_tceu_org*'
+
+        local var1 = function() return node('Var')(ln, id1) end
+        local var2 = function() return node('Var')(ln, id2) end
+
+        local dcl1 = node('Dcl_var')(ln, 'var', tp1, false, id1)
+        local dcl2 = node('Dcl_var')(ln, 'var', tp2, false, id2)
+        dcl2.read_only = true
+
+        local ini1 = node('SetExp')(ln, ':=', node('RawExp')(ln,nil), var1())
+        ini1[2].iter_ini = true
+        local ini2 = node('SetExp')(ln, '=',
+                        node('Op1_cast')(ln, tp2, var1()),
+                        var2())
+        ini2.read_only = true   -- accept this write
+
+        local nxt1 = node('SetExp')(ln, ':=', node('RawExp')(ln,nil), var1())
+        nxt1[2].iter_nxt = nxt1[3]   -- var
+        local nxt2 = node('SetExp')(ln, '=',
+                        node('Op1_cast')(ln, tp2, var1()),
+                        var2())
+        nxt2.read_only = true   -- accept this write
+
+        local loop = node('Loop')(ln,
+                        node('Stmts')(ln,
+                            node('If')(ln,
+                                node('Op2_==')(ln, '==',
+                                                   var1(),
+                                                   node('NULL')(ln)),
+                                node('Break')(ln),
+                                node('Nothing')(ln)),
+                            node('If')(ln,
+                                node('Op2_==')(ln, '==',
+                                                   var2(),
+                                                   node('NULL')(ln)),
+                                node('Nothing')(ln),
+                                blk),
+                            nxt1,nxt2))
+        loop.blk = blk      -- continue
+        loop.isBounded = true
+        loop[1][1].isBounded = true
+
+        return node('Block')(ln, node('Stmts')(ln, dcl1,dcl2, ini1,ini2, loop))
     end,
 
     Pause = function (ln, evt, blk)

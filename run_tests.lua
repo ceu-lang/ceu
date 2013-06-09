@@ -133,8 +133,7 @@ end
     local CEU = './ceu _ceu_tmp.ceu --run-tests'
     local EXE = (VALGRIND=='false' and './ceu.exe')
              or 'valgrind -q --leak-check=full ./ceu.exe 2>&1'
-    --local VER = (_PROPS.has_ifcs and '-std=c99') or '-ansi'
-    local VER = '-ansi'
+    local GCC = 'gcc -Wall -DCEU_DEBUG -ansi -o ceu.exe main.c'
 
     -- T.run = N
     if type(T.run) ~= 'table' then
@@ -144,7 +143,7 @@ end
         ceu:write(str_all)
         ceu:close()
         assert(os.execute(CEU))
-        assert(os.execute('gcc -DCEU_DEBUG '..VER..' -o ceu.exe main.c') == 0)
+        assert(os.execute(GCC) == 0)
         local ret = io.popen(EXE):read'*a'
         assert(not string.find(ret, '==%d+=='), 'valgrind error')
         ret = string.match(ret, 'END: (.-)\n')
@@ -171,7 +170,7 @@ end
             ceu:write(all)
             ceu:close()
             assert(os.execute(CEU))
-            assert(os.execute('gcc -DCEU_DEBUG '..VER..' -o ceu.exe main.c') == 0)
+            assert(os.execute(GCC) == 0)
             local ret = io.popen(EXE):read'*a'
             assert(not string.find(ret, '==%d+=='), 'valgrind error')
             ret = string.match(ret, 'END: (%-?%d+)')
@@ -199,12 +198,13 @@ STATS = {
 }
 ]])
 
--- ./run_tests.lua false  104.33s user 22.39s system 87% cpu 2:24.82 total
+--./run_tests.lua false  104.33s user 22.39s system 87% cpu 2:24.82 total
+--./run_tests.lua false  123.67s user 25.44s system 85% cpu 2:55.37 total
 
-assert(STATS.count  ==    1247)
+assert(STATS.count  ==    1256)
 assert(STATS.mem    ==       0)
-assert(STATS.trails ==    2298)
-assert(STATS.bytes  == 7338768)
+assert(STATS.trails ==    2314)
+assert(STATS.bytes  == 7419866)
 
 do return end
 

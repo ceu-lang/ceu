@@ -63,9 +63,10 @@ F = {
     Loop = function (me)
         local body = unpack(me)
         SAME(me, body)
-        _TIGHT = _TIGHT or
-            not WRN(_AST.iter'Async'() or body.tl_blocks,
-                    me,'tight loop')
+        local isTight = (not _AST.iter'Async'()) and (not body.tl_blocks)
+                            and (not me.isBounded)
+        WRN(not isTight, me, 'tight loop')
+        _TIGHT = _TIGHT or isTight
         me.tl_blocks = body.tl_awaits or body.tl_returns
     end,
 

@@ -135,6 +135,287 @@ end
 
 -- OK: under tests but supposed to work
 
+-- TODO: test i escaping
+
+Test { [[
+event void inc;
+loop do
+    await inc;
+    nothing;
+end
+every inc do
+    nothing;
+end
+]],
+    ana = { isForever=true },
+}
+
+Test { [[
+input void START;
+event void e;
+every START do
+    loop i, 10 do
+        emit e;
+    end
+    do break; end
+end
+return 10;
+]],
+    --loop = 1,
+    run = 10,
+}
+
+Test { [[
+interface I with
+    var int v;
+    event void inc;
+end
+
+class T with
+    interface I;
+do
+    await FOREVER;
+end
+
+var int ret = 0;
+do
+    spawn T with
+        this.v = 1;
+    end;
+    spawn T with
+        this.v = 2;
+    end;
+    spawn T with
+        this.v = 3;
+    end;
+
+    loop i, I* do
+        ret = ret + i:v;
+    end
+end
+return ret;
+]],
+    run = 6,
+}
+
+Test { [[
+interface I with
+    var int v;
+    event void inc;
+end
+
+class T with
+    interface I;
+do
+    await FOREVER;
+end
+
+class U with
+    var int z;
+    var int v;
+do
+    await FOREVER;
+end
+
+var T t;
+var U u;
+
+var I* i1 = &t;
+var I* i2 = (I*) &u;
+
+native pure _f();
+native do
+    void* f (void* org) {
+        return org;
+    }
+end
+
+var I* i3 = (I*) _f(&t);
+var I* i4 = (I*) _f(&u);
+
+var T* i5 = (T*) _f(&t);
+var T* i6 = (T*) _f(&u);
+
+return i1==&t and i2==null and i3==&t and i4==null and i5==&t and i6==null;
+]],
+    run = 1,
+}
+
+Test { [[
+interface I with
+    var int v;
+    event void inc;
+end
+
+class T with
+    interface I;
+do
+    await FOREVER;
+end
+
+class U with
+    var int z;
+    var int v;
+do
+    await FOREVER;
+end
+
+var int ret = 0;
+do
+    spawn T with
+        this.v = 1;
+    end;
+    spawn U with
+        this.v = 2;
+    end;
+    spawn T with
+        this.v = 3;
+    end;
+
+    loop i, I* do
+        ret = ret + i:v;
+    end
+end
+return ret;
+]],
+    run = 4,
+}
+
+Test { [[
+interface I with
+    var int v;
+    event void inc;
+end
+
+class T with
+    interface I;
+do
+end
+
+var int ret = 1;
+do
+    loop i, I* do
+        ret = ret + i:v;
+    end
+end
+return ret;
+]],
+    run = 1,
+}
+
+Test { [[
+interface I with
+    var int v;
+    event void inc;
+end
+
+class T with
+    interface I;
+do
+end
+
+native nohold _fprintf(), _stderr;
+
+var int ret = 1;
+do
+    spawn T with
+        this.v = 1;
+    end;
+    spawn T with
+        this.v = 2;
+    end;
+    spawn T with
+        this.v = 3;
+    end;
+
+    loop i, I* do
+_fprintf(_stderr, "oioioi %p\n", i);
+        ret = ret + i:v;
+    end
+end
+return ret;
+]],
+    run = 1,
+}
+
+Test { [[
+input void A,F;
+
+interface I with
+    var int v;
+    event void inc;
+end
+
+class T with
+    interface I;
+do
+    await inc;
+    this.v = v + 1;
+end
+
+var int ret = 1;
+do
+    spawn T with
+        this.v = 1;
+    end;
+    spawn T with
+        this.v = 2;
+    end;
+    spawn T with
+        this.v = 3;
+    end;
+
+    loop i, I* do
+        emit i:inc;
+        ret = ret + i:v;
+    end
+end
+return ret;
+]],
+    run = 10,
+}
+
+Test { [[
+input void A,F;
+
+interface I with
+    var int v;
+    event void inc;
+end
+
+class T with
+    interface I;
+do
+    await inc;
+    this.v = v + 1;
+end
+
+var int ret = 0;
+do
+    par/or do
+        await F;
+    with
+        var int i=1;
+        every 1s do
+            spawn T with
+                this.v = i;
+                i = i + 1;
+            end;
+        end
+    with
+        every 1s do
+            loop i, I* do
+                emit i:inc;
+                ret = ret + i:v;
+            end
+        end
+    end
+end
+return ret;
+]],
+    run = { ['~>3s;~>F'] = 9 },
+}
+
 Test { [[
 native do
     int V = 0;
@@ -2682,7 +2963,7 @@ loop i, 100 do
 end
 return sum;
 ]],
-    loop = true,
+    --loop = true,
     run = 5050,
 }
 Test { [[
@@ -2693,7 +2974,7 @@ for i=1, 100 do
 end
 return sum;
 ]],
-    loop = true,
+    --loop = true,
     todo = 'should raise an error',
     run = 5050,
 }
@@ -2704,7 +2985,7 @@ loop i, 100 do
 end
 return sum;
 ]],
-    loop = true,
+    --loop = true,
     run = 0,
 }
 Test { [[
@@ -2719,7 +3000,7 @@ loop i, 100 do
 end
 return v;
 ]],
-    loop = true,
+    --loop = true,
     run = 99,
 }
 Test { [[
@@ -2745,7 +3026,7 @@ loop i, 0 do
 end
 return sum;
 ]],
-    loop = true,
+    --loop = true,
     run = 4,
 }
 Test { [[
@@ -16587,7 +16868,7 @@ end
 
 return ret;
 ]],
-    loop = 1,
+    --loop = 1,
     run = 45,
 }
 
@@ -20347,11 +20628,8 @@ class [1] T with
 do
     this.a = 1;
 end
-native nohold _fprintf(), _stderr;
 var T* a = new T;
-_fprintf(_stderr, "=== %p\n", a);
 var T* b = new T;
-_fprintf(_stderr, "=== %p\n", b);
 return a!=null and b==null;
 ]],
     run = 1,
@@ -20457,7 +20735,7 @@ do
 end
 return _V;
 ]],
-    loop = 1,
+    --loop = 1,
     run = 1000,
 }
 Test { [[
@@ -20478,7 +20756,7 @@ do
 end
 return _V;
 ]],
-    loop = 1,
+    --loop = 1,
     run = { ['~>A']=1 },
 }
 Test { [[
@@ -20502,7 +20780,7 @@ do
 end
 return _V;
 ]],
-    loop = 1,
+    --loop = 1,
     run = { ['~>A']=10 },
 }
 
@@ -20827,7 +21105,7 @@ do
 end
 return ok;
 ]],
-    loop = 1,
+    --loop = 1,
     run = 1,
 }
 
@@ -20845,7 +21123,7 @@ do
 end
 return ok+1;
 ]],
-    loop = 1,
+    --loop = 1,
     run = 1,
 }
 
@@ -20880,7 +21158,7 @@ do
 end
 return ok;
 ]],
-    loop = 1,
+    --loop = 1,
     run = 0,
 }
 
@@ -20916,7 +21194,7 @@ native _assert();
 _assert(_V==100 and v==100);
 return _V+v;
 ]],
-    loop = 1,
+    --loop = 1,
     run = 200,
 }
 
@@ -21868,7 +22146,7 @@ end
 _assert(_X == 100 and _Y == 100);
 return 10;
 ]],
-    loop = true,
+    --loop = true,
     run = 10,
 }
 
@@ -21884,7 +22162,7 @@ loop i, 100000 do
 end
 return 10;
 ]],
-    loop = true,
+    --loop = true,
     run = 10;
 }
 ]=]
@@ -22654,7 +22932,7 @@ end
 var I* i = _ptr;
 return 10;
 ]],
-    run = 10;
+    env = 'ERR : line 8 : invalid attribution',
 }
 
 Test { [[
@@ -24134,7 +24412,7 @@ end
 return 0;
 ]],
     awaits = 0,
-    loop = true,
+    --loop = true,
     run = false,
 }
 

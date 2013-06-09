@@ -107,32 +107,47 @@ function _TP.ext (tp, loc)
 end
 
 function _TP.contains (tp1, tp2, c)
-    local _tp1, _tp2 = _TP.deref(tp1), _TP.deref(tp2)
+    -- same exact type
     if tp1 == tp2 then
         return true
-    elseif _TP.isNumeric(tp1,c) and _TP.isNumeric(tp2,c) then
+    end
+
+    -- both are numeric
+    if _TP.isNumeric(tp1,c) and _TP.isNumeric(tp2,c) then
         return true
-    elseif c and (_TP.ext(tp1) or _TP.ext(tp2)) then
-        return true
-    elseif _tp1 and _tp2 then
+    end
+
+    -- both are pointers
+    local _tp1, _tp2 = _TP.deref(tp1,c), _TP.deref(tp2,c)
+    if _tp1 and _tp2 then
         local cls1 = _TP.cls(_tp1)
         local cls2 = _TP.cls(_tp2)
-        if cls1 and cls2 then
-            return cls1.is_ifc and _ENV.ifc_vs_cls(cls1,cls2)
+        -- assigning to a cls (cast is enforced)
+        if cls1 then
+            return tp2 == 'null*' or
+                   cls2 and cls1.is_ifc and _ENV.ifc_vs_cls(cls1,cls2)
         end
-        return tp1=='void*' or tp2=='void*' or _TP.contains(_tp1, _tp2, c)
-    else
-        local tup1 = _TP.isTuple(tp1)
-        local tup2 = _TP.isTuple(tp2)
-        if tup1 and tup2 and (#tp1 == #tp2) then
-            for i=1, #tp1 do
-                if not _TP.contains(tp1[i], tp2[i]) then
-                    return false
-                end
-            end
-            return true
-        end
+        return tp1=='void*' or tp2=='void*' or tp2=='null*'
+                or _TP.contains(_tp1, _tp2, c)
     end
+
+    -- c=accept ext // and at least one is ext
+    if c and (_TP.ext(tp1) or _TP.ext(tp2)) then
+        return true
+    end
+
+    -- both are tuples
+    local tup1 = _TP.isTuple(tp1)
+    local tup2 = _TP.isTuple(tp2)
+    if tup1 and tup2 and (#tp1 == #tp2) then
+        for i=1, #tp1 do
+            if not _TP.contains(tp1[i], tp2[i]) then
+                return false
+            end
+        end
+        return true
+    end
+
     return false
 end
 

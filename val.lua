@@ -233,9 +233,19 @@ F =
 
         local _tp = _TP.deref(tp)
         local cls = _tp and _ENV.clss[_tp]
-        if cls and (not cls.is_ifc) and _PROPS.has_ifcs then
-            val = '((((tceu_org*)'..val..')->cls == '..cls.n..') ? '
-                    ..val..' : NULL)'
+        if cls then
+            if cls.is_ifc then
+                -- TODO: out of bounds acc
+                val = '(('..val..' == NULL) ? NULL : '..
+                        '((CEU.ifcs_clss[((tceu_org*)'..val..')->cls]'
+                            ..'['..cls.n..']) ?'..val..' : NULL)'..
+                      ')'
+            else
+                val = '(('..val..' == NULL) ? NULL : '..
+                        '((((tceu_org*)'..val..')->cls == '..cls.n..') ? '
+                        ..val..' : NULL)'..
+                      ')'
+            end
         end
 
         me.val = '(('.._TP.c(tp)..')'..val..')'
@@ -256,6 +266,28 @@ F =
 
     RawExp = function (me)
         me.val = unpack(me)
+
+        -- handle org iterators
+        local blk = _AST.iter'Do'()
+        blk = blk and blk[1]
+        if me.iter_ini then
+            if blk.trl_orgs then
+                me.val = [[
+( (_ceu_org->trls[ ]]..blk.trl_orgs[1]..[[ ].lnks[0].nxt->n == 0) ?
+    NULL :
+    _ceu_org->trls[ ]]..blk.trl_orgs[1]..[[ ].lnks[0].nxt )
+]]
+            else
+                me.val = 'NULL'
+            end
+        elseif me.iter_nxt then
+            if blk.trl_orgs then
+                local var = me.iter_nxt.var.val
+                me.val = '(('..var..'->nxt->n==0) ? NULL : '..var..'->nxt)'
+            else
+                me.val = 'NULL'
+            end
+        end
     end,
     Nat = function (me)
         me.val = string.sub(me[1], 2)
