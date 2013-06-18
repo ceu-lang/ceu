@@ -3,21 +3,26 @@ _MAIN = nil     -- should be only one "Main"
 
 local TOP   = {}    -- holds all clss/exts/nats
 local TOP_i = 1     -- next top
+local C;
 
 _AST = {
     root = nil,
 
     f = function (url, source)
         _LINES.url = url
-        _LINES.f(source)    -- i2l
-        _PARSER.f(source)   -- parser + AST
+        _LINES.f(source)
+        local ast = _PARSER.f(source)
+        C.Dcl_cls({url,1}, false, false, 'Main',
+                    _AST.node('Stmts')({url,1}), ast)
+        _MAIN = TOP[TOP_i-1]
+DBG('main', _MAIN, _MAIN.tag, ast.tag, ast[1].tag)
 
-        for i, node in ipairs(TOP) do
+        -- recurse into include's
+        local i = 1
+        while TOP[i] do
+            local node = TOP[i]
             if node.tag == 'Include' then
-                TOP[i] = _AST.node('Nothing')(1) -- remove "Include"
-                TOP_i = i+1
-
-                -- recurse into include
+error'oi'
                 url = node[1]
 
                 -- _G['/tmp/_ceu_MODx'] = ...
@@ -30,11 +35,20 @@ _AST = {
                 end
 
                 local ff = io.open(url)
-                ASR(ff, node, 'module "'..url..'" not found')
+                ASR(ff, node.ln, 'module "'..url..'" not found')
                 local new = ff:read'*a'
                 ff:close()
-                return _AST.f(url, new)
+
+                -- change Include => top-level stmts
+                TOP[i] = ast
+                TOP_i = i+1
+
+                -- parse new source
+                _LINES.url = url
+                _LINES.f(new)
+                local ast = _PARSER.f(new)
             end
+            i = i + 1
         end
 
         -- reached only after all includes are handled
@@ -205,13 +219,9 @@ function _AST.visit (F, node)
     return visit_aux(node or _AST.root, F)
 end
 
-local C; C = {
+C = {
     [1] = function (ln, spc, ...) -- spc=CK''
-        if not _MAIN then   -- Main only for top-level file
-            C.Dcl_cls(ln, false, false, 'Main', node('Stmts')(ln),
-                                                node('Stmts')(ln,...))
-            _MAIN = TOP[TOP_i-1]
-        end
+        return node('Stmts')(ln,...)
     end,
 
     BlockI  = node('BlockI'),

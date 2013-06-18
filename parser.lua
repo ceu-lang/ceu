@@ -1,13 +1,15 @@
 _PARSER = {
     f = function (source)
+        local ret = m.P(_GG):match(source)
         if _RUNTESTS then
-            assert(m.P(_GG):match(source), err())
+            assert(ret, err())
         else
-            if not m.P(_GG):match(source) then
+            if not ret then
                 DBG(err())
                 os.exit(1)
             end
         end
+        return ret
     end,
 }
 
