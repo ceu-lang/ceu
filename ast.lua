@@ -155,8 +155,9 @@ function _AST.dump (me, spc)
     local t = {}
     for k in pairs(me.ana.pos) do t[#t+1]=f(k) end
     ks = ks..'['..table.concat(t,',')..']'
-    --ks = me.ns.trails..' / '..tostring(me.needs_clr)
 ]]
+--
+    --ks = me.ns.trails..' / '..tostring(me.needs_clr)
     DBG(string.rep(' ',spc)..me.tag..
         ' (ln='..me.ln[2]..' n='..me.n..' d='..(me.depth or 0)..') '..ks)
     for i, sub in ipairs(me) do

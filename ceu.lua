@@ -116,13 +116,13 @@ do
     dofile 'ast.lua'
     _AST.f(_OPTS.input, source)
     dofile 'adj.lua'
+    --_AST.dump(_AST.root)
     dofile 'env.lua'
     dofile 'fin.lua'
     dofile 'tight.lua'
     --dofile 'awaits.lua'
     dofile 'props.lua'
     dofile 'ana.lua'
-    --_AST.dump(_AST.root)
     dofile 'acc.lua'
     dofile 'trails.lua'
     dofile 'labels.lua'

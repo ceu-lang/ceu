@@ -59,8 +59,8 @@ Test = function (t)
         return
     end
 
-    --_AST.dump(_AST.root)
     if not check('adj')      then return end
+    --_AST.dump(_AST.root)
     if not check('env')      then return end
     if not check('fin')      then return end
     if not check('tight')    then return end
@@ -207,11 +207,12 @@ STATS = {
 
 --./run_tests.lua false  114.32s user 23.74s system 76% cpu 3:00.12 total
 --./run_tests.lua false  108.37s user 22.98s system 86% cpu 2:31.85 total
+--./run_tests.lua false  112.09s user 23.11s system 86% cpu 2:36.97 total
 
-assert(STATS.count  ==    1272)
+assert(STATS.count  ==    1274)
 assert(STATS.mem    ==       0)
-assert(STATS.trails ==    2326)
-assert(STATS.bytes  == 7489227)
+assert(STATS.trails ==    2328)
+assert(STATS.bytes  == 7496893)
 
 os.execute('rm -f /tmp/_ceu_*')
 
