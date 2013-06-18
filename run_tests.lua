@@ -198,13 +198,12 @@ STATS = {
 }
 ]])
 
---./run_tests.lua false  104.33s user 22.39s system 87% cpu 2:24.82 total
---./run_tests.lua false  123.67s user 25.44s system 85% cpu 2:55.37 total
+--./run_tests.lua false  114.32s user 23.74s system 76% cpu 3:00.12 total
 
-assert(STATS.count  ==    1256)
+assert(STATS.count  ==    1262)
 assert(STATS.mem    ==       0)
-assert(STATS.trails ==    2314)
-assert(STATS.bytes  == 7419866)
+assert(STATS.trails ==    2320)
+assert(STATS.bytes  == 7443078)
 
 do return end
 
