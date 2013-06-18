@@ -1,15 +1,46 @@
+-- points to the main file body
+_MAIN = nil     -- should be only one "Main"
+
+local TOP   = {}    -- holds all clss/exts/nats
+local TOP_i = 1     -- next top
+
 _AST = {
     root = nil,
 
-    f = function (str)
-        _LINES.f(str)
-        return _PARSER.f(str)  -- GG is changed => sets root
+    f = function (source)
+        _LINES.f(source)    -- i2l
+        _PARSER.f(source)   -- parser + AST
+
+        for i, node in ipairs(TOP) do
+            if node.tag == 'Include' then
+                TOP[i] = _AST.node('Nothing')(1) -- remove "Include"
+                TOP_i = i+1
+
+                -- recurse into include
+                local url = node[1]
+
+                -- _G['/tmp/_ceu_MODx'] = ...
+                -- "include /tmp/_ceu_MODx;"
+                if _RUNTESTS and _G[url] then
+                    -- transform global value into a file
+                    local ff = assert(io.open(url,'w'))
+                    ff:write(_G[url])
+                    ff:close()
+                end
+
+                local ff = io.open(url)
+                ASR(ff, node.ln, 'module "'..url..'" not found')
+                local new = ff:read'*a'
+                ff:close()
+                return _AST.f(new)
+            end
+        end
+        _AST.root = _AST.node('Root')(1, unpack(TOP))
     end,
 }
 
-local MT = {}
+local MT    = {}
 local STACK = {}
-local TOP = {}
 
 function _AST.isNode (node)
     return (getmetatable(node) == MT) and node.tag
@@ -173,10 +204,11 @@ end
 
 local C; C = {
     [1] = function (ln, spc, ...) -- spc=CK''
-        C.Dcl_cls(ln, false, false, 'Main', node('Stmts')(ln),
-                                            node('Stmts')(ln,...))
-        _AST.root = node('Root')(ln, unpack(TOP))
-        return _AST.root
+        if not _MAIN then   -- Main only for top-level file
+            C.Dcl_cls(ln, false, false, 'Main', node('Stmts')(ln),
+                                                node('Stmts')(ln,...))
+            _MAIN = TOP[TOP_i-1]
+        end
     end,
 
     BlockI  = node('BlockI'),
@@ -194,7 +226,11 @@ local C; C = {
 
     _Return = node('_Return'),
 
-    Include = _INCLUDE,
+    Include = function (ln, url)
+        table.insert(TOP, TOP_i, node('Include')(ln,url))
+        TOP_i = TOP_i + 1
+        return node('Nothing')(ln)
+    end,
 
     Async   = node('Async'),
     VarList = function (ln, ...)
@@ -410,7 +446,9 @@ local C; C = {
 
     _Dcl_ext = function (ln, dir, tp, ...)
         for _, v in ipairs{...} do
-            TOP[#TOP+1] = node('Dcl_ext')(ln, dir, tp, v)
+            table.insert(TOP, TOP_i,
+                node('Dcl_ext')(ln, dir, tp, v))
+            TOP_i = TOP_i + 1
         end
     end,
 
@@ -425,7 +463,8 @@ local C; C = {
     _Dcl_nat = function (ln, ...)
         local ret = { C._Dcl_nat_ifc(ln, ...) }
         for _, t in ipairs(ret) do
-            TOP[#TOP+1] = t
+            table.insert(TOP, TOP_i, t)
+            TOP_i = TOP_i + 1
         end
     end,
 
@@ -488,7 +527,8 @@ local C; C = {
         local cls = node('Dcl_cls')(ln, is_ifc, n, id, blk)
         cls.blk_ifc = this  -- top-most block for `this´
         cls.blk_body  = blk_body
-        TOP[#TOP+1] = cls
+        table.insert(TOP, TOP_i, cls)
+        TOP_i = TOP_i + 1
     end,
 
     Global = node('Global'),

@@ -269,9 +269,6 @@ F = {
         me.max    = max
         me.id     = id
         me.blk_ifc.funs = {}
-        if id == 'Main' then
-            _MAIN = me
-        end
         ASR(not _ENV.clss[id], me,
                 'interface/class "'..id..'" is already declared')
 

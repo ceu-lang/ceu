@@ -113,7 +113,6 @@ do
     dofile 'tp.lua'
     dofile 'lines.lua'
     dofile 'parser.lua'
-    dofile 'include.lua'
     dofile 'ast.lua'
     _AST.f(source)
     dofile 'adj.lua'

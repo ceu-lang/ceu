@@ -133,6 +133,7 @@ end
 --do return end
 
 -- OK: under tests but supposed to work
+--]===]
 
 Test { [[
 include;
@@ -142,29 +143,35 @@ include;
 
 Test { [[
 include MOD1;
+include http://ceu-lang.org/;
+include https://github.com/fsantanna/ceu;
+include ^4!_;
 ]],
     ast = 'ERR : line 1 : module "MOD1" not found',
 }
 
-MOD1 = [[
+_G['/tmp/_ceu_MOD1.ceu'] = [[
 input void A;
 ]]
 
 Test { [[
-include MOD1;
+include /tmp/_ceu_MOD1.ceu ;
 await A;
 return 1;
 ]],
     run = { ['~>A']=1 },
 }
 
+_G['/tmp/_ceu_MOD1.ceu'] = [[
+input void A;
+]]
+
 Test { [[
-include asdh;
-include http://ceu-lang.org/;
-include https://github.com/fsantanna/ceu;
-include ^4!_;
+include /tmp/_ceu_MOD1.ceu ;
+await A;
+return 1;
 ]],
-    run = 1,
+    run = { ['~>A']=1 },
 }
 
 --do return end
@@ -2201,7 +2208,6 @@ end
 
 -- CONTINUE
 
---]===]
 Test { [[
 loop do
     if 0 then

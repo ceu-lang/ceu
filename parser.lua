@@ -197,7 +197,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
                     end)
 
     , Include = K'include' * ( C( (P(1)-m.S'\t\n\r ;')^1 )
-                             + EM'module' )
+                             + EM'module' ) *S
 
     , Async   = K'async' * EV'VarList' * V'_Do'
     , VarList = ( K'(' * EV'Var' * (EK',' * EV'Var')^0 * EK')' )^-1

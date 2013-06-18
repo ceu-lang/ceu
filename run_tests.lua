@@ -49,19 +49,19 @@ Test = function (t)
     dofile 'tp.lua'
     dofile 'lines.lua'
     dofile 'parser.lua'
-    dofile 'include.lua'
     dofile 'ast.lua'
 
     STATS.count = STATS.count   + 1
 
     local ok, msg = pcall(_AST.f, source)
     if not ok then
+DBG(ok, msg)
         assert(string.find(msg, T.ast, nil, true), tostring(msg))
         return
     end
 
-    if not check('adj')      then return end
     --_AST.dump(_AST.root)
+    if not check('adj')      then return end
     if not check('env')      then return end
     if not check('fin')      then return end
     if not check('tight')    then return end
@@ -212,6 +212,8 @@ assert(STATS.count  ==    1262)
 assert(STATS.mem    ==       0)
 assert(STATS.trails ==    2320)
 assert(STATS.bytes  == 7443078)
+
+os.execute('rm -f /tmp/_ceu_*')
 
 do return end
 

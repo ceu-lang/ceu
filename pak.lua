@@ -13,7 +13,6 @@ end
 subst 'tp.lua'
 subst 'lines.lua'
 subst 'parser.lua'
-subst 'include.lua'
 subst 'ast.lua'
 subst 'adj.lua'
 subst 'env.lua'
