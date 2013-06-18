@@ -15,14 +15,12 @@ _AST = {
         C.Dcl_cls({url,1}, false, false, 'Main',
                     _AST.node('Stmts')({url,1}), ast)
         _MAIN = TOP[TOP_i-1]
-DBG('main', _MAIN, _MAIN.tag, ast.tag, ast[1].tag)
 
         -- recurse into include's
         local i = 1
         while TOP[i] do
             local node = TOP[i]
-            if node.tag == 'Include' then
-error'oi'
+            if node.tag == '_Include' then
                 url = node[1]
 
                 -- _G['/tmp/_ceu_MODx'] = ...
@@ -35,18 +33,16 @@ error'oi'
                 end
 
                 local ff = io.open(url)
-                ASR(ff, node.ln, 'module "'..url..'" not found')
+                ASR(ff, node, 'module "'..url..'" not found')
                 local new = ff:read'*a'
                 ff:close()
 
-                -- change Include => top-level stmts
-                TOP[i] = ast
-                TOP_i = i+1
-
                 -- parse new source
+                TOP_i = i+1
                 _LINES.url = url
                 _LINES.f(new)
-                local ast = _PARSER.f(new)
+                node[2][1] = _PARSER.f(new) -- fill #HOLE w/ top-level stmts
+                TOP[i] = _AST.node('Nothing')(node.ln)  -- subst _Include
             end
             i = i + 1
         end
@@ -159,8 +155,8 @@ function _AST.dump (me, spc)
     local t = {}
     for k in pairs(me.ana.pos) do t[#t+1]=f(k) end
     ks = ks..'['..table.concat(t,',')..']'
-]]
     --ks = me.ns.trails..' / '..tostring(me.needs_clr)
+]]
     DBG(string.rep(' ',spc)..me.tag..
         ' (ln='..me.ln[2]..' n='..me.n..' d='..(me.depth or 0)..') '..ks)
     for i, sub in ipairs(me) do
@@ -240,9 +236,11 @@ C = {
     _Return = node('_Return'),
 
     Include = function (ln, url)
-        table.insert(TOP, TOP_i, node('Include')(ln,url))
+        local ret = node('Stmts')(ln,   -- #HOLE to fill w/ top-level stmts
+                        node('Include')(ln))
+        table.insert(TOP, TOP_i, node('_Include')(ln,url,ret))
         TOP_i = TOP_i + 1
-        return node('Nothing')(ln)
+        return ret
     end,
 
     Async   = node('Async'),

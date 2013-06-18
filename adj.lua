@@ -1,4 +1,15 @@
 F = {
+    -- ignore top-level stmts from include's, except "Host"
+    Node_pos = function (me)
+        local inc = _AST.iter'Include'()  -- inc[1] = Stmts #HOLE
+        if inc then
+            if me.tag == 'Host' then
+                inc.__par[#inc.__par+1] = me
+            end
+            return _AST.node('Nothing')(me.ln)
+        end
+    end,
+---
     Block_pre = function (me)
         local blk = _AST.iter'Block'()
         local cls = _AST.iter'Dcl_cls'()

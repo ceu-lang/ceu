@@ -162,6 +162,7 @@ F = {
     Finally    = CONC_ALL,
     Stmts      = CONC_ALL,
     Dcl_constr = CONC_ALL,
+    Include    = CONC_ALL,
 
     Root = function (me)
         for _, cls in ipairs(_ENV.clss_cls) do

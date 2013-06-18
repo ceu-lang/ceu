@@ -131,6 +131,7 @@ end
 
 
 --do return end
+--]===]
 
 -- OK: under tests but supposed to work
 
@@ -271,17 +272,17 @@ native do
     int f () {
         return 10
     }
+    int A;
+    int B;
 end
 ]]
 Test { [[
 include /tmp/_ceu_MOD1.ceu ;
 return _f();
 ]],
-    run = 1,
+    run = false     -- TODO: catch gcc error
 }
 
-do return end
---]===]
 
 -- OK: well tested
 

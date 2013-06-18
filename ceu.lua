@@ -118,11 +118,11 @@ do
     dofile 'adj.lua'
     dofile 'env.lua'
     dofile 'fin.lua'
-    --_AST.dump(_AST.root)
     dofile 'tight.lua'
     --dofile 'awaits.lua'
     dofile 'props.lua'
     dofile 'ana.lua'
+    --_AST.dump(_AST.root)
     dofile 'acc.lua'
     dofile 'trails.lua'
     dofile 'labels.lua'
