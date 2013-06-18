@@ -133,7 +133,6 @@ end
 --do return end
 
 -- OK: under tests but supposed to work
---]===]
 
 Test { [[
 include;
@@ -253,7 +252,36 @@ return 1;
     ast = 'ERR : /tmp/_ceu_MOD1.ceu : line 2 : after `A´ : expected `;´',
 }
 
---do return end
+_G['/tmp/_ceu_MOD1.ceu'] = [[
+native do
+    int f () {
+        return 10;
+    }
+end
+]]
+Test { [[
+include /tmp/_ceu_MOD1.ceu ;
+return _f();
+]],
+    run = 10,
+}
+
+_G['/tmp/_ceu_MOD1.ceu'] = [[
+native do
+    int f () {
+        return 10
+    }
+end
+]]
+Test { [[
+include /tmp/_ceu_MOD1.ceu ;
+return _f();
+]],
+    run = 1,
+}
+
+do return end
+--]===]
 
 -- OK: well tested
 

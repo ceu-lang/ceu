@@ -113,7 +113,7 @@ function newvar (me, blk, pre, tp, dim, id)
                     --'variable/event "'..var.id..
                     --'" is already declared at --line '..var.ln)
                 WRN(var.id~=id, me,
-                    'declaration of "'..id..'" hides the one at line '..var.ln)
+                    'declaration of "'..id..'" hides the one at line '..var.ln[2])
             end
         end
     end

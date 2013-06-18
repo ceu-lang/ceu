@@ -30,7 +30,7 @@ _AST = {
                 end
 
                 local ff = io.open(url)
-                ASR(ff, node.ln, 'module "'..url..'" not found')
+                ASR(ff, node, 'module "'..url..'" not found')
                 local new = ff:read'*a'
                 ff:close()
                 return _AST.f(url, new)
@@ -38,7 +38,7 @@ _AST = {
         end
 
         -- reached only after all includes are handled
-        _AST.root = _AST.node('Root')(1, unpack(TOP))
+        _AST.root = _AST.node('Root')({url,1}, unpack(TOP))
     end,
 }
 
@@ -148,7 +148,7 @@ function _AST.dump (me, spc)
 ]]
     --ks = me.ns.trails..' / '..tostring(me.needs_clr)
     DBG(string.rep(' ',spc)..me.tag..
-        ' (ln='..me.ln..' n='..me.n..' d='..(me.depth or 0)..') '..ks)
+        ' (ln='..me.ln[2]..' n='..me.n..' d='..(me.depth or 0)..') '..ks)
     for i, sub in ipairs(me) do
         if _AST.isNode(sub) then
             _AST.dump(sub, spc+2)
@@ -544,10 +544,10 @@ local C; C = {
 
     _Set = function (ln, to, op, tag, p1, p2, p3)
         if op == ':=' then
-            ASR(tag=='SetExp', ln, 'invalid attribution')
+            ASR(tag=='SetExp', ln[2], 'invalid attribution')
         end
         if to.tag == 'VarList' then
-            ASR(tag=='SetAwait', ln, 'invalid attribution')
+            ASR(tag=='SetAwait', ln[2], 'invalid attribution')
 
             local tup = '_tup_'.._N
             _N = _N + 1
@@ -669,7 +669,7 @@ local C; C = {
 }
 
 local function i2l (v)
-    return _LINES.i2l[v]
+    return {_LINES.url,_LINES.i2l[v]}
 end
 
 for rule, f in pairs(C) do

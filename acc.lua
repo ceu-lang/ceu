@@ -87,7 +87,7 @@ F = {
             md  = 'cl',
             tp  = '_',
             any = false,
-            err = 'event `'..e1.evt.id..'´ (line '..me.ln..')'
+            err = 'event `'..e1.evt.id..'´ (line '..me.ln[2]..')'
         }
 --[[
         if e2 then
@@ -158,7 +158,7 @@ F = {
             md  = 'rd',
             tp  = me.tp,
             any = true,
-            err = 'variable `global´ (line '..me.ln..')',
+            err = 'variable `global´ (line '..me.ln[2]..')',
         }
     end,
 
@@ -169,7 +169,7 @@ F = {
             md  = 'rd',
             tp  = me.tp,
             any = true,
-            err = 'variable `this´ (line '..me.ln..')',
+            err = 'variable `this´ (line '..me.ln[2]..')',
         }
     end,
 
@@ -180,7 +180,7 @@ F = {
             md  = 'rd',
             tp  = me.var.tp,
             any = false,
-            err = 'variable/event `'..me.var.id..'´ (line '..me.ln..')',
+            err = 'variable/event `'..me.var.id..'´ (line '..me.ln[2]..')',
         }
     end,
 
@@ -191,7 +191,7 @@ F = {
             md  = 'rd',
             tp  = '_',
             any = false,
-            err = 'symbol `'..me[1]..'´ (line '..me.ln..')',
+            err = 'symbol `'..me[1]..'´ (line '..me.ln[2]..')',
         }
     end,
 
@@ -205,7 +205,7 @@ F = {
             path = PRE,
             id  = top,
             md  = 'esc',
-            err = 'escape (line '..me.ln..')',
+            err = 'escape (line '..me.ln[2]..')',
         }
     end,
     Return = function (me)
@@ -226,7 +226,7 @@ F = {
                     path = me.ana.pre,
                     id   = me,--.__par,
                     md   = 'par',
-                    err  = 'par enter (line '..me.ln..')',
+                    err  = 'par enter (line '..me.ln[2]..')',
                 }
             end
         end
@@ -237,7 +237,7 @@ F = {
             path = me.ana.pos,
             id  = me,--_AST.iter(TAG)(),
             md  = 'awk',
-            err = 'awake (line '..me.ln..')',
+            err = 'awake (line '..me.ln[2]..')',
         }
     end,
     AwaitT = 'AwaitExt',
@@ -451,7 +451,7 @@ function CHK_EXCPT (s1, s2, isOR)
                --s2.ana.pos[true]                 -- terminates tight
             then
                 if _OPTS.warn_exception then
-                    DBG('WRN : exception : line '..s2.ln..' vs '..ana.err)
+                    DBG('WRN : exception : line '..s2.ln[2]..' vs '..ana.err)
                 end
                 _ANA.ana.excpt = _ANA.ana.excpt + 1
                 ana.node.emtChk = true

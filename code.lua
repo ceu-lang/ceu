@@ -35,7 +35,7 @@ function LINE (me, line, spc)
     spc = spc or 4
     spc = string.rep(' ', spc)
     me.code = me.code ..
-                '#line '..me.ln..'\n'..
+                '#line '..me.ln[2]..' "'..me.ln[1]..'"\n'..
                 spc .. line .. '\n'
 end
 
@@ -108,7 +108,7 @@ local _iter = function (n)
 end
 
 function CLEAR (me)
-    COMM(me, 'CLEAR: '..me.tag..' ('..me.ln..')')
+    COMM(me, 'CLEAR: '..me.tag..' ('..me.ln[2]..')')
 
     if not me.needs_clr then
         return

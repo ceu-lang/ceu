@@ -49,7 +49,7 @@ ceu_pool_init(&]]..cls.pool..', '..cls.max..', sizeof(CEU_'..cls.id..'), '
 
     Host = function (me)
         CLS().host = CLS().host ..
-            '#line '..(me.ln+1)..'\n' ..
+            '#line '..(me.ln[2]+1)..'\n' ..
             me[1] .. '\n'
     end,
 
@@ -98,7 +98,7 @@ DBG('===', me.id, me.trails_n, '('..tostring(me.max)..')')
     Block_pre = function (me)
         local cls = CLS()
 
-        cls.struct = cls.struct..SPC()..'struct { /* BLOCK ln='..me.ln..' */\n'
+        cls.struct = cls.struct..SPC()..'struct { /* BLOCK ln='..me.ln[2]..' */\n'
 
         if me.trl_orgs then
             cls.struct = cls.struct .. SPC()
