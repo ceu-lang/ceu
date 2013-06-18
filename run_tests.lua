@@ -53,9 +53,8 @@ Test = function (t)
 
     STATS.count = STATS.count   + 1
 
-    local ok, msg = pcall(_AST.f, source)
+    local ok, msg = pcall(_AST.f, 'tests.lua', source)
     if not ok then
-DBG(ok, msg)
         assert(string.find(msg, T.ast, nil, true), tostring(msg))
         return
     end
@@ -207,11 +206,12 @@ STATS = {
 ]])
 
 --./run_tests.lua false  114.32s user 23.74s system 76% cpu 3:00.12 total
+--./run_tests.lua false  108.37s user 22.98s system 86% cpu 2:31.85 total
 
-assert(STATS.count  ==    1262)
+assert(STATS.count  ==    1272)
 assert(STATS.mem    ==       0)
-assert(STATS.trails ==    2320)
-assert(STATS.bytes  == 7443078)
+assert(STATS.trails ==    2326)
+assert(STATS.bytes  == 7489227)
 
 os.execute('rm -f /tmp/_ceu_*')
 

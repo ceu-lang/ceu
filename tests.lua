@@ -138,7 +138,7 @@ end
 Test { [[
 include;
 ]],
-    ast = 'ERR : line 1 : after `include´ : expected module',
+    ast = 'ERR : tests.lua : line 1 : after `include´ : expected module'
 }
 
 Test { [[
@@ -147,13 +147,12 @@ include http://ceu-lang.org/;
 include https://github.com/fsantanna/ceu;
 include ^4!_;
 ]],
-    ast = 'ERR : line 1 : module "MOD1" not found',
+    ast = 'ERR : tests.lua : line 1 : module "MOD1" not found'
 }
 
 _G['/tmp/_ceu_MOD1.ceu'] = [[
 input void A;
 ]]
-
 Test { [[
 include /tmp/_ceu_MOD1.ceu ;
 await A;
@@ -163,15 +162,95 @@ return 1;
 }
 
 _G['/tmp/_ceu_MOD1.ceu'] = [[
+nothing;
+nothing;
+nothing;
+input void A
+]]
+Test { [[
+nothing;
+include /tmp/_ceu_MOD1.ceu ;
+await A;
+return 1;
+]],
+    ast = 'ERR : /tmp/_ceu_MOD1.ceu : line 4 : after `A´ : expected `;´',
+}
+
+_G['/tmp/_ceu_MOD1.ceu'] = [[
 input void A;
 ]]
-
 Test { [[
 include /tmp/_ceu_MOD1.ceu ;
 await A;
 return 1;
 ]],
     run = { ['~>A']=1 },
+}
+
+_G['/tmp/_ceu_MOD2.ceu'] = [[
+input void A;
+]]
+_G['/tmp/_ceu_MOD1.ceu'] = [[
+include /tmp/_ceu_MOD2.ceu;
+]]
+Test { [[
+include /tmp/_ceu_MOD1.ceu ;
+await A;
+return 1;
+]],
+    run = { ['~>A']=1 },
+}
+
+_G['/tmp/_ceu_MOD2.ceu'] = [[
+input void A;
+nothing
+]]
+_G['/tmp/_ceu_MOD1.ceu'] = [[
+include /tmp/_ceu_MOD2.ceu;
+]]
+Test { [[
+include /tmp/_ceu_MOD1.ceu ;
+await A;
+return 1;
+]],
+    ast = 'ERR : /tmp/_ceu_MOD2.ceu : line 2 : after `nothing´ : expected `;´',
+}
+
+_G['/tmp/_ceu_MOD2.ceu'] = [[
+input void A;
+]]
+_G['/tmp/_ceu_MOD1.ceu'] = [[
+input void A;
+]]
+_G['/tmp/_ceu_MOD0.ceu'] = [[
+include /tmp/_ceu_MOD1.ceu ;
+include /tmp/_ceu_MOD2.ceu ;
+]]
+Test { [[
+include /tmp/_ceu_MOD0.ceu ;
+await A;
+return 1;
+]],
+    run = { ['~>A']=1 },
+}
+
+_G['/tmp/_ceu_MOD2.ceu'] = [[
+input void A;
+]]
+_G['/tmp/_ceu_MOD1.ceu'] = [[
+nothing;
+input void A
+]]
+_G['/tmp/_ceu_MOD0.ceu'] = [[
+include /tmp/_ceu_MOD2.ceu ;
+include /tmp/_ceu_MOD1.ceu ;
+]]
+Test { [[
+include /tmp/_ceu_MOD0.ceu ;
+await A;
+return 1;
+]],
+    ast = 'ERR : /tmp/_ceu_MOD1.ceu : line 2 : after `A´ : expected `;´',
 }
 
 --do return end
@@ -195,7 +274,7 @@ Test { [[return /*
 */ 1;]], run=1 }
 Test { [[return /**/* **/ 1;]], run=1 }
 Test { [[return /**/* */ 1;]],
-    ast = "ERR : line 1 : after `return´ : expected expression"
+    ast = "line 1 : after `return´ : expected expression"
 }
 
 Test { [[
@@ -211,7 +290,7 @@ do do
 end end
 return 1;
 ]],
-    --ast = 'ERR : line 2 : max depth of 127',
+    --ast = 'line 2 : max depth of 127',
     run = 1
 }
 Test { [[
@@ -223,7 +302,7 @@ end end end end end end end end end end end end end end end end end end end end
 end end end end end end end end end end end end end end end end end end end end
 return 1;
 ]],
-    --ast = 'ERR : line 2 : max depth of 127',
+    --ast = 'line 2 : max depth of 127',
     run = 1
 }
 
@@ -242,7 +321,7 @@ end end end end end end end end end end end end end end end end end end end end
 end end end end end end end end end end end end end end end end end end end end
 return 1;
 ]],
-    adj = 'ERR : line 5 : max depth of 0xFF',
+    adj = 'line 5 : max depth of 0xFF',
 }
 
 Test { [[return 0;]], run=0 }
@@ -262,13 +341,13 @@ Test { [[return (1<=2) + (1<2) + 2/1 - 2%3;]], run=2 }
 -- TODO: linux gcc only?
 --Test { [[return (~(~0b1010 & 0XF) | 0b0011 ^ 0B0010) & 0xF;]], run=11 }
 Test { [[nt a;]],
-    ast = "ERR : line 1 : before `nt´ : expected statement",
+    ast = "line 1 : before `nt´ : expected statement",
 }
 Test { [[nt sizeof;]],
-    ast = "ERR : line 1 : before `nt´ : expected statement",
+    ast = "line 1 : before `nt´ : expected statement",
 }
 Test { [[var int sizeof;]],
-    ast = "ERR : line 1 : after `int´ : expected identifier",
+    ast = "line 1 : after `int´ : expected identifier",
 }
 Test { [[return sizeof(int);]], run=4 }
 Test { [[return 1<2>3;]], run=0 }
@@ -306,24 +385,24 @@ Test { [[var int a = 1;]],
     }
 }
 Test { [[var int a=1;var int a=0; return a;]],
-    --env = 'ERR : line 1 : variable/event "a" is already declared at line 1',
+    --env = 'line 1 : variable/event "a" is already declared at line 1',
     run = 0,
 }
 Test { [[do var int a=1; end var int a=0; return a;]],
     run = 0,
 }
 Test { [[var int a=1,a=0; return a;]],
-    --env = 'ERR : line 1 : variable/event "a" is already declared at line 1',
+    --env = 'line 1 : variable/event "a" is already declared at line 1',
     run = 0,
 }
 Test { [[var int a; a = b = 1]],
-    ast = "ERR : line 1 : after `b´ : expected `;´",
+    ast = "line 1 : after `b´ : expected `;´",
 }
 Test { [[var int a = b; return 0;]],
     env = 'variable/event "b" is not declared',
 }
 Test { [[return 1;2;]],
-    ast = "ERR : line 1 : before `;´ : expected statement",
+    ast = "line 1 : before `;´ : expected statement",
 }
 Test { [[var int aAa; aAa=1; return aAa;]],
     run = 1,
@@ -352,7 +431,7 @@ native _abc = 0;
 event void a;
 var _abc b;
 ]],
-    env = 'ERR : line 3 : cannot instantiate type "_abc"',
+    env = 'line 3 : cannot instantiate type "_abc"',
 }
 
 Test { [[
@@ -372,8 +451,8 @@ native _abc = 0;
 event void a;
 var _abc a;
 ]],
-    --env = 'ERR : line 3 : variable/event "a" is already declared at line 2',
-    env = 'ERR : line 3 : cannot instantiate type "_abc"',
+    --env = 'line 3 : variable/event "a" is already declared at line 2',
+    env = 'line 3 : cannot instantiate type "_abc"',
 }
 
 Test { [[
@@ -394,7 +473,7 @@ return 0x1 + 0X1 + 001;
 Test { [[
 return 0x1 + 0X1 + 0a01;
 ]],
-    env = 'ERR : line 1 : malformed number',
+    env = 'line 1 : malformed number',
 }
 
     -- IF
@@ -567,13 +646,13 @@ return a;
 
     -- EVENTS
 
-Test { [[input int A=1;]], ast="ERR : line 1 : after `A´ : expected `;´" }
+Test { [[input int A=1;]], ast="line 1 : after `A´ : expected `;´" }
 Test { [[
 input int A;
 A=1;
 return 1;
 ]],
-    ast = 'ERR : line 1 : after `;´ : expected statement',
+    ast = 'line 1 : after `;´ : expected statement',
 }
 
 Test { [[input  int A;]],
@@ -583,7 +662,8 @@ Test { [[input  int A;]],
     },
 }
 Test { [[input int A,A; return 0;]],
-    env = 'event "A" is already declared',
+    --env = 'event "A" is already declared',
+    run = 0,
 }
 Test { [[
 input int A,B,Z;
@@ -659,7 +739,7 @@ with
 end;
 return A;
 ]],
-    ast = "ERR : line 9 : after `return´ : expected expression",
+    ast = "line 9 : after `return´ : expected expression",
 }
 
 Test { [[
@@ -698,17 +778,17 @@ Test { [[var int a = a+1; return a;]],
 }
 
 Test { [[var int a; a = emit a => 1; return a;]],
-    ast = 'ERR : line 1 : after `=´ : expected expression',
-    --ast = "ERR : line 1 : after `emit´ : expected event",
+    ast = 'line 1 : after `=´ : expected expression',
+    --ast = "line 1 : after `emit´ : expected event",
     --trig_wo = 1,
 }
 
 Test { [[var int a; emit a => 1; return a;]],
-    env = 'ERR : line 1 : event "a" is not declared',
+    env = 'line 1 : event "a" is not declared',
     --trig_wo = 1,
 }
 Test { [[event int a=0; emit a => 1; return a;]],
-    ast = 'ERR : line 1 : after `a´ : expected `;´',
+    ast = 'line 1 : after `a´ : expected `;´',
     --trig_wo = 1,
 }
 Test { [[
@@ -716,7 +796,7 @@ event int a;
 emit a => 1;
 return a;
 ]],
-    val = 'ERR : line 3 : invalid expression',
+    val = 'line 3 : invalid expression',
     --run = 1,
     --trig_wo = 1,
 }
@@ -853,7 +933,7 @@ Test { [[
 output xxx A;
 return(1);
 ]],
-    ast = "ERR : line 1 : after `output´ : expected type",
+    ast = "line 1 : after `output´ : expected type",
 }
 Test { [[
 output int A;
@@ -869,7 +949,7 @@ if emit A => 1 then
 end
 return(1);
 ]],
-    ast = 'ERR : line 2 : after `if´ : expected expression',
+    ast = 'line 2 : after `if´ : expected expression',
 }
 Test { [[
 native do
@@ -881,7 +961,7 @@ if emit A => 1 then
 end
 return(1);
 ]],
-    ast = 'ERR : line 5 : after `if´ : expected expression',
+    ast = 'line 5 : after `if´ : expected expression',
 }
 
 Test { [[
@@ -889,21 +969,21 @@ output t A;
 emit A => 1;
 return(1);
 ]],
-    ast = 'ERR : line 1 : after `output´ : expected type',
+    ast = 'line 1 : after `output´ : expected type',
 }
 Test { [[
 output t A;
 emit A => 1;
 return(1);
 ]],
-    ast = 'ERR : line 1 : after `output´ : expected type',
+    ast = 'line 1 : after `output´ : expected type',
 }
 Test { [[
 output _t* A;
 emit A => 1;
 return(1);
 ]],
-    env = 'ERR : line 2 : non-matching types on `emit´',
+    env = 'line 2 : non-matching types on `emit´',
 }
 Test { [[
 output int A;
@@ -911,8 +991,8 @@ var _t v;
 emit A => v;
 return(1);
 ]],
-    --env = 'ERR : line 2 : undeclared type `_t´',
-    --env = 'ERR : line 3 : non-matching types on `emit´',
+    --env = 'line 2 : undeclared type `_t´',
+    --env = 'line 3 : non-matching types on `emit´',
     run = false,    -- unknown type name
 }
 Test { [[
@@ -924,8 +1004,8 @@ var _t v;
 emit A => v;
 return(1);
 ]],
-    --env = 'ERR : line 2 : undeclared type `_t´',
-    --env = 'ERR : line 3 : non-matching types on `emit´',
+    --env = 'line 2 : undeclared type `_t´',
+    --env = 'line 3 : non-matching types on `emit´',
     run = 1,
 }
 Test { [[
@@ -934,7 +1014,7 @@ var int a;
 emit A => &a;
 return(1);
 ]],
-    env = 'ERR : line 3 : non-matching types on `emit´',
+    env = 'line 3 : non-matching types on `emit´',
 }
 Test { [[
 output int A;
@@ -944,13 +1024,13 @@ if emit A => &a then
 end
 return(1);
 ]],
-    ast = 'ERR : line 3 : after `if´ : expected expression',
-    --env = 'ERR : line 3 : non-matching types on `emit´',
+    ast = 'line 3 : after `if´ : expected expression',
+    --env = 'line 3 : non-matching types on `emit´',
 }
 Test { [[
 output _char A;
 ]],
-    env = "ERR : line 1 : invalid event type",
+    env = "line 1 : invalid event type",
 }
 
 Test { [[
@@ -996,7 +1076,7 @@ b = emit B => 5;
 return a + b;
 ]],
     --run = 6,
-    ast = 'ERR : line 26 : after `=´ : expected expression',
+    ast = 'line 26 : after `=´ : expected expression',
 }
 
 Test { [[
@@ -1008,8 +1088,8 @@ end
 var _cahr v = emit A => 1;
 return 0;
 ]],
-    ast = 'ERR : line 6 : after `=´ : expected expression',
-    --env = 'ERR : line 6 : undeclared type `_cahr´',
+    ast = 'line 6 : after `=´ : expected expression',
+    --env = 'line 6 : undeclared type `_cahr´',
 }
 Test { [[
 native _char = 1;
@@ -1017,8 +1097,8 @@ output void A;
 var _char v = emit A => ;
 return v;
 ]],
-    ast = 'ERR : line 3 : after `=´ : expected expression',
-    --env = 'ERR : line 3 : invalid attribution',
+    ast = 'line 3 : after `=´ : expected expression',
+    --env = 'line 3 : invalid attribution',
 }
 Test { [[
 output void A;
@@ -1029,8 +1109,8 @@ native _char = 1;
 var _char v = emit A => 1;
 return 0;
 ]],
-    ast = 'ERR : line 6 : after `=´ : expected expression',
-    --env = 'ERR : line 6 : non-matching types on `emit´',
+    ast = 'line 6 : after `=´ : expected expression',
+    --env = 'line 6 : non-matching types on `emit´',
 }
 
 Test { [[
@@ -1078,7 +1158,7 @@ return 1;
     -- WALL-CLOCK TIME / WCLOCK
 
 Test { [[await 0ms; return 0;]],
-    val = 'ERR : line 1 : constant is out of range',
+    val = 'line 1 : constant is out of range',
 }
 Test { [[
 input void A;
@@ -1089,15 +1169,15 @@ return 0;
 }
 
 Test { [[await -1ms; return 0;]],
-    --ast = "ERR : line 1 : after `await´ : expected event",
-    ast = 'ERR : line 1 : after `1´ : expected `;´',
+    --ast = "line 1 : after `await´ : expected event",
+    ast = 'line 1 : after `1´ : expected `;´',
 }
 
 Test { [[await 1; return 0;]],
-    ast = 'ERR : line 1 : after `1´ : expected <h,min,s,ms,us>',
+    ast = 'line 1 : after `1´ : expected <h,min,s,ms,us>',
 }
 Test { [[await -1; return 0;]],
-    env = 'ERR : line 1 : event "?" is not declared',
+    env = 'line 1 : event "?" is not declared',
 }
 
 Test { [[var s32 a=await 10s; return a==8000000;]],
@@ -1116,10 +1196,10 @@ Test { [[await FOREVER;]],
     },
 }
 Test { [[await FOREVER; await FOREVER;]],
-    ast = "ERR : line 1 : before `;´ : expected event",
+    ast = "line 1 : before `;´ : expected event",
 }
 Test { [[await FOREVER; return 0;]],
-    ast = "ERR : line 1 : before `;´ : expected event",
+    ast = "line 1 : before `;´ : expected event",
 }
 
 Test { [[emit 1ms; return 0;]], props='not permitted outside `async´' }
@@ -1165,7 +1245,7 @@ async do
     return 10;
 end
 ]],
-    props = 'ERR : line 3 : `return´ without block',
+    props = 'line 3 : `return´ without block',
 }
 
 -- Seq
@@ -1594,7 +1674,7 @@ with
 end;
 return 0;
 ]],
-    code = 'ERR : line 4 : invalid expression',
+    code = 'line 4 : invalid expression',
 }
 
 Test { [[
@@ -1836,7 +1916,7 @@ var int a = do
 return a;
 ]],
     -- TODO: melhor seria: unexpected statement
-    ast = "ERR : line 16 : after `;´ : expected `with´",
+    ast = "line 16 : after `;´ : expected `with´",
     --unreachs = 1,
     run = {
         ['1~>B; ~>20ms; 1~>F'] = 1,
@@ -1887,7 +1967,7 @@ return b;
 Test { [[
 break;
 ]],
-    props = 'ERR : line 1 : break without loop',
+    props = 'line 1 : break without loop',
 }
 
 Test { [[
@@ -2060,10 +2140,10 @@ return a;
 }
 
 Test { [[break; return 1;]],
-    ast="ERR : line 1 : before `;´ : expected statement"
+    ast="line 1 : before `;´ : expected statement"
 }
 Test { [[break; break;]],
-    ast="ERR : line 1 : before `;´ : expected statement"
+    ast="line 1 : before `;´ : expected statement"
 }
 Test { [[loop do break; end; return 1;]],
     ana = {
@@ -2165,7 +2245,7 @@ every 1s do
     end
 end
 ]],
-    props = 'ERR : line 3 : `every´ cannot contain `await´',
+    props = 'line 3 : `every´ cannot contain `await´',
 }
 
 Test { [[
@@ -2217,7 +2297,7 @@ loop do
     end
 end
 ]],
-    adj = 'ERR : line 3 : invalid `continue´',
+    adj = 'line 3 : invalid `continue´',
 }
 
 Test { [[
@@ -2225,7 +2305,7 @@ loop do
     do continue; end
 end
 ]],
-    adj = 'ERR : line 2 : invalid `continue´',
+    adj = 'line 2 : invalid `continue´',
 }
 
 Test { [[
@@ -2237,7 +2317,7 @@ loop do
     end
 end
 ]],
-    adj = 'ERR : line 4 : invalid `continue´',
+    adj = 'line 4 : invalid `continue´',
 }
 
 Test { [[
@@ -3031,7 +3111,7 @@ emit c => 10;
 emit c => 10;
 return c;
 ]],
-    val = 'ERR : line 4 : invalid expression',
+    val = 'line 4 : invalid expression',
     --trig_wo = 2,
 }
 
@@ -3108,7 +3188,7 @@ end
 emit a;
 return ret;
 ]],
-    env = 'ERR : line 10 : invalid emit',
+    env = 'line 10 : invalid emit',
 }
 
 Test { [[
@@ -4574,7 +4654,7 @@ Test { [[
 await 35min;
 return 0;
 ]],
-    val = 'ERR : line 1 : constant is out of range',
+    val = 'line 1 : constant is out of range',
 }
 Test { [[
 var int a = 2;
@@ -7313,7 +7393,7 @@ end;
         acc = 2,
         isForever = true,
     },
-    loop = 'ERR : line 3 : tight loop',
+    loop = 'line 3 : tight loop',
 }
 
 Test { [[
@@ -9450,8 +9530,8 @@ loop do
     break;
 end;
 ]],
-    --ast = "ERR : line 4 : after `;´ : expected `end´",
-    ast = 'ERR : line 4 : before `;´ : expected statement',
+    --ast = "line 4 : after `;´ : expected `end´",
+    ast = 'line 4 : before `;´ : expected statement',
 }
 
 Test { [[
@@ -10369,7 +10449,7 @@ c = d + 1;
 await A;
 return c;
 ]],
-    ast = "ERR : line 3 : after `par´ : expected `do´",
+    ast = "line 3 : after `par´ : expected `do´",
 }
 
 Test { [[
@@ -11378,7 +11458,7 @@ with
     return v1 + v2;
 end;
 ]],
-    props = "ERR : line 8 : invalid access from async",
+    props = "line 8 : invalid access from async",
 }
 
 Test { [[
@@ -11477,7 +11557,7 @@ with
     return v1 + v2;
 end;
 ]],
-    props = "ERR : line 8 : invalid access from async",
+    props = "line 8 : invalid access from async",
 }
 
 Test { [[
@@ -12629,7 +12709,7 @@ Test { [[
 event a;
 return 0;
 ]],
-    ast = 'ERR : line 1 : after `event´ : expected type',
+    ast = 'line 1 : after `event´ : expected type',
 }
 
 Test { [[
@@ -12658,7 +12738,7 @@ with
 end;
 return a;
 ]],
-    env = 'ERR : line 8 : event "a" is not declared',
+    env = 'line 8 : event "a" is not declared',
 }
 
 Test { [[
@@ -12796,7 +12876,7 @@ finalize with
 end
 return 0;
 ]],
-    props = 'ERR : line 2 : not permitted inside `finalize´',
+    props = 'line 2 : not permitted inside `finalize´',
 }
 
 Test { [[
@@ -12810,7 +12890,7 @@ do
     end
 end
 ]],
-    props = "ERR : line 7 : not permitted inside `finalize´",
+    props = "line 7 : not permitted inside `finalize´",
 }
 
 Test { [[
@@ -12825,7 +12905,7 @@ do
     end
 end
 ]],
-    props = "ERR : line 7 : not permitted inside `finalize´",
+    props = "line 7 : not permitted inside `finalize´",
 }
 
 Test { [[
@@ -12839,7 +12919,7 @@ do
     end
 end
 ]],
-    props = "ERR : line 7 : not permitted inside `finalize´",
+    props = "line 7 : not permitted inside `finalize´",
 }
 
 Test { [[
@@ -12855,8 +12935,8 @@ loop do
     end
 end
 ]],
-    loop = 'ERR : line 1 : tight loop',    -- TODO: par/and
-    props = "ERR : line 8 : not permitted inside `finalize´",
+    loop = 'line 1 : tight loop',    -- TODO: par/and
+    props = "line 8 : not permitted inside `finalize´",
 }
 
 Test { [[
@@ -12875,7 +12955,7 @@ do
 end
 return ret;
 ]],
-    env = 'ERR : line 6 : variable/event "a" is not declared',
+    env = 'line 6 : variable/event "a" is not declared',
 }
 
 Test { [[
@@ -12892,7 +12972,7 @@ do
 end
 return r;
 ]],
-    props = "ERR : line 8 : not permitted inside `finalize´",
+    props = "line 8 : not permitted inside `finalize´",
 }
 
 Test { [[
@@ -12908,7 +12988,7 @@ var int a;
 v(&a) finalize with nothing; end;
 return(a);
 ]],
-    --env = 'ERR : line 8 : native variable/function "_f" is not declared',
+    --env = 'line 8 : native variable/function "_f" is not declared',
     run = 10,
 }
 
@@ -12918,7 +12998,7 @@ _f() finalize with nothing;
     end;
 return 1;
 ]],
-    fin = 'ERR : line 2 : invalid `finalize´',
+    fin = 'line 2 : invalid `finalize´',
 }
 
 Test { [[
@@ -12958,7 +13038,7 @@ _f(p!=null) finalize with nothing;
     end;
 return 1;
 ]],
-    fin = 'ERR : line 5 : invalid `finalize´',
+    fin = 'line 5 : invalid `finalize´',
     run = 1,
 }
 
@@ -12973,7 +13053,7 @@ do
 end
 return 1;
 ]],
-    fin = 'ERR : line 6 : call requires `finalize´',
+    fin = 'line 6 : call requires `finalize´',
     -- multiple scopes
 }
 
@@ -12983,7 +13063,7 @@ native _v;
 _f(_v);
 return 0;
 ]],
-    fin = 'ERR : line 3 : call requires `finalize´',
+    fin = 'line 3 : call requires `finalize´',
 }
 
 Test { [[
@@ -13010,7 +13090,7 @@ end
 var int v;
 return _f(&v) == 1;
 ]],
-    fin = 'ERR : line 8 : call requires `finalize´',
+    fin = 'line 8 : call requires `finalize´',
 }
 
 Test { [[
@@ -13358,7 +13438,7 @@ with
 end
 return ret;
 ]],
-    props = 'ERR : line 9 : not permitted inside `finalize´',
+    props = 'line 9 : not permitted inside `finalize´',
 }
 
 Test { [[
@@ -14048,8 +14128,8 @@ async do
 end;
 return a;
 ]],
-    --env = "ERR : line 4 : invalid input `emit´",
-    ast = 'ERR : line 4 : after `=´ : expected expression',
+    --env = "line 4 : invalid input `emit´",
+    ast = 'line 4 : after `=´ : expected expression',
 }
 
 Test { [[
@@ -14059,7 +14139,7 @@ async do
 end;
 return 0;
 ]],
-    props = 'ERR : line 3 : invalid access from async',
+    props = 'line 3 : invalid access from async',
 }
 Test { [[
 event int a;
@@ -14068,7 +14148,7 @@ async do
 end;
 return 0;
 ]],
-    props = 'ERR : line 3 : invalid access from async',
+    props = 'line 3 : invalid access from async',
 }
 Test { [[
 async do
@@ -14703,7 +14783,7 @@ i = (int) c;
 c = (_char) i;
 return c;
 ]],
-    --env = 'ERR : line 6 : invalid attribution',
+    --env = 'line 6 : invalid attribution',
     run = 10,
 }
 
@@ -14761,7 +14841,7 @@ ptr1 = ptr2;
 ptr2 = ptr1;
 return (int)ptr2;
 ]],
-    --env = 'ERR : line 4 : invalid attribution',
+    --env = 'line 4 : invalid attribution',
     run = 255,
 }
 Test { [[
@@ -14794,7 +14874,7 @@ ptr2 = ptr1;
 return 1;
 ]],
     run = 1,
-    --env = 'ERR : line 4 : invalid attribution',
+    --env = 'line 4 : invalid attribution',
 }
 
 Test { [[
@@ -15002,7 +15082,7 @@ end
 var int* p = _f();
 return *p;
 ]],
-    fin = 'ERR : line 8 : attribution requires `finalize´',
+    fin = 'line 8 : attribution requires `finalize´',
 }
 
 Test { [[
@@ -15131,7 +15211,7 @@ return *p;
     -- ARRAYS
 
 Test { [[input int[1] E; return 0;]],
-    ast = "ERR : line 1 : after `int´ : expected identifier",
+    ast = "line 1 : after `int´ : expected identifier",
 }
 Test { [[var int[0] v; return 0;]],
     env='invalid array dimension'
@@ -15146,13 +15226,13 @@ Test { [[var u8[2] v; return &v;]],
 Test { [[
 void[10] a;
 ]],
-    ast = 'ERR : line 1 : after `<BOF>´ : expected statement',
+    ast = 'line 1 : after `<BOF>´ : expected statement',
 }
 
 Test { [[
 var void[10] a;
 ]],
-    env = 'ERR : line 1 : cannot instantiate type "void"',
+    env = 'line 1 : cannot instantiate type "void"',
 }
 
 Test { [[
@@ -15188,14 +15268,14 @@ Test { [[
 var void a;
 var void[1] b;
 ]],
-    env = 'ERR : line 1 : cannot instantiate type "void"',
+    env = 'line 1 : cannot instantiate type "void"',
 }
 
 Test { [[
 var int a;
 var void[1] b;
 ]],
-    env = 'ERR : line 2 : cannot instantiate type "void"',
+    env = 'line 2 : cannot instantiate type "void"',
 }
 
 Test { [[
@@ -15222,7 +15302,7 @@ Test { [[var int[2] v; await v;     return 0;]],
 Test { [[var int[2] v; emit v;    return 0;]],
         env='event "v" is not declared' }
 Test { [[var int[2] v; await v[0];  return 0;]],
-        env='ERR : line 1 : event "?" is not declared'}
+        env='line 1 : event "?" is not declared'}
 Test { [[var int[2] v; emit v[0]; return 0;]],
         env='event "?" is not declared' }
 Test { [[var int[2] v; v=v; return 0;]], env='invalid attribution' }
@@ -15294,7 +15374,7 @@ Test { [[
 ]]..evts..[[
 return 1;
 ]],
-    env = 'ERR : line 1 : too many events',
+    env = 'line 1 : too many events',
 }
 
 Test { [[
@@ -15342,7 +15422,7 @@ return p==null;
 Test { [[
 _f()
 ]],
-    ast = 'ERR : line 1 : after `)´ : expected `;´',
+    ast = 'line 1 : after `)´ : expected `;´',
 }
 
 Test { [[
@@ -15416,7 +15496,7 @@ end
 A = 1;
 return 1;
 ]],
-    ast = 'ERR : line 3 : after `end´ : expected statement'
+    ast = 'line 3 : after `end´ : expected statement'
 }
 
 Test { [[
@@ -15446,7 +15526,7 @@ end
 _A();
 return 0;
 ]],
-    env = 'ERR : line 5 : native function "_A" is not declared',
+    env = 'line 5 : native function "_A" is not declared',
 }
 
 Test { [[
@@ -16429,7 +16509,7 @@ var int a;
 a = _inv(_inv(1));
 return a;
 ]],
-    fin = 'ERR : line 8 : call requires `finalize´',
+    fin = 'line 8 : call requires `finalize´',
 }
 
 Test { [[
@@ -16669,27 +16749,27 @@ return (int)a;
 -- Exps
 
 Test { [[var int a = ]],
-    ast = "ERR : line 1 : after `=´ : expected expression",
+    ast = "line 1 : after `=´ : expected expression",
 }
 
 Test { [[return]],
-    ast = "ERR : line 1 : after `return´ : expected expression",
+    ast = "line 1 : after `return´ : expected expression",
 }
 
 Test { [[return()]],
-    ast = "ERR : line 1 : after `(´ : expected expression",
+    ast = "line 1 : after `(´ : expected expression",
 }
 
 Test { [[return 1+;]],
-    ast = "ERR : line 1 : before `+´ : expected `;´",
+    ast = "line 1 : before `+´ : expected `;´",
 }
 
 Test { [[if then]],
-    ast = "ERR : line 1 : after `if´ : expected expression",
+    ast = "line 1 : after `if´ : expected expression",
 }
 
 Test { [[b = ;]],
-    ast = "ERR : line 1 : after `=´ : expected expression",
+    ast = "line 1 : after `=´ : expected expression",
 }
 
 
@@ -16703,7 +16783,7 @@ return 1
 
 ;
 ]],
-    ast = "ERR : line 5 : before `+´ : expected `;´"
+    ast = "line 5 : before `+´ : expected `;´"
 }
 
 Test { [[
@@ -16712,7 +16792,7 @@ a = do
     var int b;
 end
 ]],
-    ast = "ERR : line 4 : after `end´ : expected `;´",
+    ast = "line 4 : after `end´ : expected `;´",
 }
 
 -- ASYNC
@@ -16727,7 +16807,7 @@ async do
     end
 end
 ]],
-    props = "ERR : line 3 : not permitted inside `async´",
+    props = "line 3 : not permitted inside `async´",
 }
 Test { [[
 async do
@@ -16740,7 +16820,7 @@ async do
     end
 end
 ]],
-    props = "ERR : line 4 : not permitted inside `async´",
+    props = "line 4 : not permitted inside `async´",
 }
 Test { [[
 async do
@@ -16751,7 +16831,7 @@ async do
     end
 end
 ]],
-    props = "ERR : line 2 : not permitted inside `async´",
+    props = "line 2 : not permitted inside `async´",
 }
 
 -- DFA
@@ -16883,7 +16963,7 @@ pause/if A do
 end
 return 0;
 ]],
-    ast = 'ERR : line 2 : after `pause/if´ : expected expression',
+    ast = 'line 2 : after `pause/if´ : expected expression',
 }
 
 Test { [[
@@ -16892,8 +16972,8 @@ pause/if a do
 end
 return 0;
 ]],
-    --env = 'ERR : line 2 : event type must be numeric',
-    env = 'ERR : line 2 : invalid attribution',
+    --env = 'line 2 : event type must be numeric',
+    env = 'line 2 : invalid attribution',
 }
 
 Test { [[
@@ -17145,7 +17225,7 @@ loop i, 10 do
     i = 0;
 end
 ]],
-    env = 'ERR : line 2 : read-only variable',
+    env = 'line 2 : read-only variable',
 }
 
 Test { [[
@@ -17441,7 +17521,7 @@ end
 return 0;
 ]],
     run = 0, -- TODO
-    --props = 'ERR : line 2 : must be in top-level',
+    --props = 'line 2 : must be in top-level',
 }
 
 Test { [[
@@ -17453,7 +17533,7 @@ end
 return 0;
 ]],
     run = 0, -- TODO
-    --props = 'ERR : line 2 : must be in top-level',
+    --props = 'line 2 : must be in top-level',
 }
 
 Test { [[
@@ -17473,7 +17553,7 @@ end
 event T a;
 return 0;
 ]],
-    env = 'ERR : line 4 : invalid event type',
+    env = 'line 4 : invalid event type',
 }
 
 Test { [[
@@ -17483,7 +17563,7 @@ end
 var T a = 1;
 return 0;
 ]],
-    env = 'ERR : line 4 : invalid attribution',
+    env = 'line 4 : invalid attribution',
 }
 
 Test { [[
@@ -17495,7 +17575,7 @@ end
 var T aa;
 return 0;
 ]],
-    env = 'ERR : line 4 : invalid declaration',
+    env = 'line 4 : invalid declaration',
 }
 
 Test { [[
@@ -17516,7 +17596,7 @@ var T a;
 a.v = 0;
 return a.v;
 ]],
-    env = 'ERR : line 5 : variable/event "v" is not declared',
+    env = 'line 5 : variable/event "v" is not declared',
 }
 
 Test { [[
@@ -17528,7 +17608,7 @@ var T aa;
 aa.b = 1;
 return 0;
 ]],
-    env = 'ERR : line 6 : variable/event "b" is not declared',
+    env = 'line 6 : variable/event "b" is not declared',
 }
 
 Test { [[
@@ -17540,7 +17620,7 @@ var T a;
 a.v = 5;
 return a.v;
 ]],
-    env = 'ERR : line 6 : variable/event "v" is not declared',
+    env = 'line 6 : variable/event "v" is not declared',
 }
 
 Test { [[
@@ -17582,7 +17662,7 @@ end
 a.v = 5;
 return a.v;
 ]],
-    env = 'ERR : line 9 : variable/event "a" is not declared',
+    env = 'line 9 : variable/event "a" is not declared',
 }
 
 Test { [[
@@ -17737,7 +17817,7 @@ do
 end
 return a;
 ]],
-    env = 'ERR : line 4 : invalid access',
+    env = 'line 4 : invalid access',
     --run = 14,
 }
 
@@ -17804,7 +17884,7 @@ class T with
 do
 end
 ]],
-    ast = 'ERR : line 3 : before `;´ : expected identifier',
+    ast = 'line 3 : before `;´ : expected identifier',
 }
 
 Test { [[
@@ -18008,8 +18088,8 @@ do
 end
 return ret;
 ]],
-    env = 'ERR : line 7 : variable/event "a" is not declared',
-    --props = 'ERR : line 5 : must be in top-level',
+    env = 'line 7 : variable/event "a" is not declared',
+    --props = 'line 5 : must be in top-level',
 }
 
 Test { [[
@@ -18026,8 +18106,8 @@ var T v;
 emit v.go;
 return 0;
 ]],
-    env = 'ERR : line 6 : variable/event "a" is not declared',
-    --props = 'ERR : line 4 : must be in top-level',
+    env = 'line 6 : variable/event "a" is not declared',
+    --props = 'line 4 : must be in top-level',
 }
 
 Test { [[
@@ -18046,8 +18126,8 @@ var T v;
 emit v.go;
 return a;
 ]],
-    env = 'ERR : line 6 : variable/event "a" is not declared',
-    --env = 'ERR : line 6 : variable/event "b" is not declared',
+    env = 'line 6 : variable/event "a" is not declared',
+    --env = 'line 6 : variable/event "b" is not declared',
 }
 
 Test { [[
@@ -18074,9 +18154,9 @@ do
 end
 return a+b;
 ]],
-    env = 'ERR : line 7 : variable/event "a" is not declared',
-    --props = 'ERR : line 5 : must be in top-level',
-    --env = 'ERR : line 17 : class "T" is not declared',
+    env = 'line 7 : variable/event "a" is not declared',
+    --props = 'line 5 : must be in top-level',
+    --env = 'line 17 : class "T" is not declared',
 }
 
 Test { [[
@@ -18099,7 +18179,7 @@ do
 end
 return a+b;
 ]],
-    env = 'ERR : line 5 : variable/event "a" is not declared',
+    env = 'line 5 : variable/event "a" is not declared',
     --run = 4,
 }
 
@@ -18380,7 +18460,7 @@ do
 end
 return 0;
 ]],
-    props = 'ERR : line 3 : not permitted inside an interface',
+    props = 'line 3 : not permitted inside an interface',
 }
 
 Test { [[
@@ -18946,7 +19026,7 @@ class T with do end
 var T a;
 var T* p = a;
 ]],
-    env = 'ERR : line 3 : invalid attribution',
+    env = 'line 3 : invalid attribution',
 }
 
 Test { [[
@@ -20346,12 +20426,12 @@ return 10;
 Test { [[
 new i;
 ]],
-    ast = 'ERR : line 1 : after `<BOF>´ : expected statement',
+    ast = 'line 1 : after `<BOF>´ : expected statement',
 }
 Test { [[
 _f(new T);
 ]],
-    ast = 'ERR : line 1 : after `(´ : expected `)´',
+    ast = 'line 1 : after `(´ : expected `)´',
 }
 
 Test { [[
@@ -20359,7 +20439,7 @@ class T with do end
 var T* a;
 a = new U;
 ]],
-    env = 'ERR : line 3 : class "U" is not declared'
+    env = 'line 3 : class "U" is not declared'
 }
 
 Test { [[
@@ -20569,7 +20649,7 @@ var int a with
 end;
 return 0;
 ]],
-    ast = 'ERR : line 1 : after `a´ : expected `;´',
+    ast = 'line 1 : after `a´ : expected `;´',
 }
 
 Test { [[
@@ -20586,7 +20666,7 @@ end;
 
 return t1.b;
 ]],
-    ast = 'ERR : line 8 : after `t2´ : expected `;´',
+    ast = 'line 8 : after `t2´ : expected `;´',
 }
 
 Test { [[
@@ -20620,7 +20700,7 @@ end;
 
 return t.b;
 ]],
-    props = 'ERR : line 9 : not permitted inside a constructor',
+    props = 'line 9 : not permitted inside a constructor',
 }
 
 Test { [[
@@ -20783,7 +20863,7 @@ var T a;
 free a;
 return 0;
 ]],
-    env = 'ERR : line 3 : invalid `free´',
+    env = 'line 3 : invalid `free´',
 }
 
 -- SPAWN
@@ -20792,7 +20872,7 @@ Test { [[
 class T with do end
 spawn T;
 ]],
-    env = 'ERR : line 2 : `spawn´ requires enclosing `do ... end´',
+    env = 'line 2 : `spawn´ requires enclosing `do ... end´',
 }
 
 Test { [[
@@ -20809,7 +20889,7 @@ do
 end
 return _V;
 ]],
-    env = 'ERR : line 10 : class "U" is not declared',
+    env = 'line 10 : class "U" is not declared',
 }
 
 Test { [[
@@ -20855,7 +20935,7 @@ do
     var u8* x = spawn T;
 end
 ]],
-    env = 'ERR : line 3 : invalid attribution',
+    env = 'line 3 : invalid attribution',
 }
 
 Test { [[
@@ -21047,7 +21127,7 @@ b = &a;
 return 1;
 ]],
     run = 1,
-    --env = 'ERR : line 4 : invalid attribution',
+    --env = 'line 4 : invalid attribution',
 }
 
 Test { [[
@@ -21074,7 +21154,7 @@ do
 end
 return a:v;
 ]],
-    fin = 'ERR : line 10 : attribution requires `finalize´',
+    fin = 'line 10 : attribution requires `finalize´',
 }
 
 Test { [[
@@ -21247,7 +21327,7 @@ end
 end
 return 10;
 ]],
-    fin = 'ERR : line 6 : attribution requires `finalize´',
+    fin = 'line 6 : attribution requires `finalize´',
 }
 
 Test { [[
@@ -21293,7 +21373,7 @@ class U with do end
 var T* a;
 a = new U;
 ]],
-    env = 'ERR : line 4 : invalid attribution',
+    env = 'line 4 : invalid attribution',
 }
 
 Test { [[
@@ -21790,7 +21870,7 @@ end
 return 10;
 ]],
     --run = 10,
-    env = 'ERR : line 15 : invalid attribution',
+    env = 'line 15 : invalid attribution',
 }
 Test { [[
 class V with
@@ -21821,7 +21901,7 @@ end
 return 10;
 ]],
     --run = { ['~>A']=10 },
-    env = 'ERR : line 16 : invalid attribution',
+    env = 'line 16 : invalid attribution',
 }
 
 Test { [[
@@ -21861,7 +21941,7 @@ _assert(_V == 10);
 return _V;
 ]],
     --run = { ['~>2s']=10, }       -- TODO: stack change
-    env = 'ERR : line 21 : invalid attribution',
+    env = 'line 21 : invalid attribution',
 }
 
 Test { [[
@@ -21987,7 +22067,7 @@ var T* t;
 t = new T;
 return t.v;
 ]],
-    env = 'ERR : line 6 : not a struct',
+    env = 'line 6 : not a struct',
 }
 
 Test { [[
@@ -22087,7 +22167,7 @@ end
 
 return 10;
 ]],
-    fin = 'ERR : line 16 : attribution requires `finalize´',
+    fin = 'line 16 : attribution requires `finalize´',
 }
 
 Test { [[
@@ -22113,7 +22193,7 @@ end
 
 return 0;
 ]],
-    fin = 'ERR : line 15 : attribution requires `finalize´',
+    fin = 'line 15 : attribution requires `finalize´',
 }
 Test { [[
 native do
@@ -22177,7 +22257,7 @@ end
 return _V;
 ]],
     fin = 'only empty finalizers inside constructors',
-    --props = 'ERR : line 23 : not permitted inside a constructor',
+    --props = 'line 23 : not permitted inside a constructor',
 }
 
 Test { [[
@@ -22210,7 +22290,7 @@ end
 
 return _V;
 ]],
-    fin = 'ERR : line 21 : attribution requires `finalize´',
+    fin = 'line 21 : attribution requires `finalize´',
 }
 
 Test { [[
@@ -22249,7 +22329,7 @@ end
 return _V;
 ]],
     fin = 'only empty finalizers inside constructors',
-    --props = 'ERR : line 24 : not permitted inside a constructor',
+    --props = 'line 24 : not permitted inside a constructor',
 }
 
 Test { [[
@@ -22286,7 +22366,7 @@ end
 return _V;
 ]],
     fin = 'only empty finalizers inside constructors',
-    --fin = 'ERR : line 21 : invalid `finalize´',
+    --fin = 'line 21 : invalid `finalize´',
 }
 
 -- PAUSE/IF w/ ORGS
@@ -22723,7 +22803,7 @@ end
 var J* i = _ptr;
 return 10;
 ]],
-    env = 'ERR : line 8 : undeclared type `J´',
+    env = 'line 8 : undeclared type `J´',
 }
 
 Test { [[
@@ -22737,7 +22817,7 @@ end
 var I* i = _ptr;
 return 10;
 ]],
-    env = 'ERR : line 8 : invalid attribution',
+    env = 'line 8 : invalid attribution',
 }
 
 Test { [[
@@ -22924,7 +23004,7 @@ interface I with
 end
 var I[10] a;
 ]],
-    env = 'ERR : line 3 : cannot instantiate an interface',
+    env = 'line 3 : cannot instantiate an interface',
 }
 
 Test { [[
@@ -22971,7 +23051,7 @@ var I* t;
 
 return 1;
 ]],
-    fin = 'ERR : line 10 : attribution requires `finalize´'
+    fin = 'line 10 : attribution requires `finalize´'
 }
 
 Test { [[
@@ -23002,7 +23082,7 @@ do
 end
 return 1;
 ]],
-    fin = 'ERR : line 6 : attribution requires `finalize´',
+    fin = 'line 6 : attribution requires `finalize´',
 }
 Test { [[
 interface Global with
@@ -23030,7 +23110,7 @@ end
 var int* a;
 return 1;
 ]],
-    fin = 'ERR : line 7 : attribution requires `finalize´'
+    fin = 'line 7 : attribution requires `finalize´'
 }
 
 Test { [[
@@ -23231,7 +23311,7 @@ await START;
 t.a = t.a + a;
 return t.a;
 ]],
-    env = 'ERR : line 4 : interface "Global" is not defined',
+    env = 'line 4 : interface "Global" is not defined',
 }
 
 Test { [[
@@ -23252,7 +23332,7 @@ await START;
     return t.a;
 end
 ]],
-    env = 'ERR : line 1 : interface "Global" must be implemented by class "Main"',
+    env = 'line 1 : interface "Global" must be implemented by class "Main"',
 }
 
 Test { [[
@@ -23314,7 +23394,7 @@ end
 var I t;
 return 10;
 ]],
-    env = 'ERR : line 4 : cannot instantiate an interface',
+    env = 'line 4 : cannot instantiate an interface',
 }
 
 Test { [[
@@ -23324,7 +23404,7 @@ end
 var I[10] t;
 return 10;
 ]],
-    env = 'ERR : line 4 : cannot instantiate an interface',
+    env = 'line 4 : cannot instantiate an interface',
 }
 
 Test { [[
@@ -23335,7 +23415,7 @@ var I* t;
 t = new I;
 return 10;
 ]],
-    env = 'ERR : line 5 : cannot instantiate an interface',
+    env = 'line 5 : cannot instantiate an interface',
 }
 
 Test { [[
@@ -23352,7 +23432,7 @@ var T t;
 i = &t;
 return 10;
 ]],
-    env = 'ERR : line 11 : invalid attribution',
+    env = 'line 11 : invalid attribution',
 }
 
 Test { [[
@@ -23370,7 +23450,7 @@ var T t;
 i = &t;
 return 10;
 ]],
-    env = 'ERR : line 12 : invalid attribution',
+    env = 'line 12 : invalid attribution',
 }
 
 Test { [[
@@ -23388,7 +23468,7 @@ var T t;
 i = t;
 return 10;
 ]],
-    env = 'ERR : line 12 : invalid attribution',
+    env = 'line 12 : invalid attribution',
 }
 
 Test { [[
@@ -23450,7 +23530,7 @@ i = &t;
 var J* j = i;
 return 10;
 ]],
-    env = 'ERR : line 16 : invalid attribution',
+    env = 'line 16 : invalid attribution',
 }
 
 Test { [[
@@ -23476,7 +23556,7 @@ i = &t;
 var J* j = i;
 return 0;
 ]],
-    env = 'ERR : line 20 : invalid attribution',
+    env = 'line 20 : invalid attribution',
 }
 
 Test { [[
@@ -23560,7 +23640,7 @@ end
 var T t;
 return t.a;
 ]],
-    env = 'ERR : line 5 : class "J" is not declared',
+    env = 'line 5 : class "J" is not declared',
 }
 
 Test { [[
@@ -23595,7 +23675,7 @@ var T t;
 var I* i = &t;
 return t._ins();
 ]],
-    env = 'ERR : line 13 : native function "CEU_T__ins" is not declared',
+    env = 'line 13 : native function "CEU_T__ins" is not declared',
 }
 Test { [[
 interface I with
@@ -23612,7 +23692,7 @@ var T t;
 var I* i = &t;
 return i:_ins();
 ]],
-    env = 'ERR : line 13 : native function "CEU_I__ins" is not declared',
+    env = 'line 13 : native function "CEU_I__ins" is not declared',
 }
 Test { [[
 interface I with
@@ -23630,7 +23710,7 @@ var T t;
 var I* i = &t;
 return i:_ins() + t._ins();;
 ]],
-    env = 'ERR : line 14 : native function "CEU_T__ins" is not declared',
+    env = 'line 14 : native function "CEU_T__ins" is not declared',
 }
 
 Test { [[
@@ -23664,7 +23744,7 @@ interface F with
     var int i=10;
 end
 ]],
-    env = 'ERR : line 3 : invalid attribution',
+    env = 'line 3 : invalid attribution',
 }
 
 Test { [[
@@ -23732,7 +23812,7 @@ do
 end
 return 0;
 ]],
-    env = 'ERR : line 3 : `T´ is not an interface',
+    env = 'line 3 : `T´ is not an interface',
 }
 
 -- IFACES / IFCS / ITERATORS
@@ -23745,7 +23825,7 @@ do
     end
 end
 ]],
-    fin = 'ERR : line 5 : call requires `finalize´',
+    fin = 'line 5 : call requires `finalize´',
 }
 
 Test { [[
@@ -23758,7 +23838,7 @@ do
     end
 end
 ]],
-    fin = 'ERR : line 6 : attribution requires `finalize´',
+    fin = 'line 6 : attribution requires `finalize´',
 }
 
 Test { [[
@@ -24379,19 +24459,19 @@ Test { [[
 await (10ms);
 return 1;
 ]],
-    ast = 'ERR : line 1 : after `)´ : expected `or´',
+    ast = 'line 1 : after `)´ : expected `or´',
 }
 Test { [[
 await (10ms) or (20ms);
 return 1;
 ]],
-    env = 'ERR : line 1 : invalid await: multiple timers',
+    env = 'line 1 : invalid await: multiple timers',
 }
 Test { [[
 await ((10)ms);
 return 1;
 ]],
-    ast = 'ERR : line 1 : after `)´ : expected `or´',
+    ast = 'line 1 : after `)´ : expected `or´',
 }
 
 Test { [[
@@ -24399,7 +24479,7 @@ await (e) or
       (f);
 return 1;
 ]],
-    env = 'ERR : line 1 : variable/event "e" is not declared',
+    env = 'line 1 : variable/event "e" is not declared',
 }
 
 Test { [[
@@ -24409,7 +24489,7 @@ await (e) or
       (f);
 return 1;
 ]],
-    env = 'ERR : line 3 : event "f" is not declared',
+    env = 'line 3 : event "f" is not declared',
 }
 
 --[=[
@@ -24438,7 +24518,7 @@ input void START;
 var int* x = await (10ms) or (START);
 return 1;
 ]],
-    env = 'ERR : line 2 : invalid attribution',
+    env = 'line 2 : invalid attribution',
 }
 
 Test { [[
@@ -24836,7 +24916,7 @@ var int a, b;
 (a,b) = 1;
 return 1;
 ]],
-    ast = 'ERR : line 2 : invalid attribution',
+    ast = 'line 2 : invalid attribution',
 }
 
 Test { [[
@@ -24883,7 +24963,7 @@ with
 end
 return 1;
 ]],
-    code = 'ERR : line 4 : invalid expression',
+    code = 'line 4 : invalid expression',
 }
 
 Test { [[
@@ -24899,7 +24979,7 @@ with
 end
 return 1;
 ]],
-    env = 'ERR : line 4 : invalid attribution',
+    env = 'line 4 : invalid attribution',
 }
 
 Test { [[
@@ -24916,7 +24996,7 @@ with
 end
 return 1;
 ]],
-    env = 'ERR : line 4 : invalid attribution',
+    env = 'line 4 : invalid attribution',
 }
 
 Test { [[
@@ -24948,7 +25028,7 @@ with
 end
 return 1;
 ]],
-    env = 'ERR : line 4 : event "a" is not declared',
+    env = 'line 4 : event "a" is not declared',
 }
 
 Test { [[

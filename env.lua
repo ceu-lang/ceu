@@ -384,7 +384,7 @@ F = {
     Dcl_ext = function (me)
         local dir, tp, id = unpack(me)
         newtype(tp)
-        ASR(not _ENV.exts[id], me, 'event "'..id..'" is already declared')
+        WRN(not _ENV.exts[id], me, 'event "'..id..'" is already declared')
         ASR(tp=='void' or tp=='int' or _TP.deref(tp) or _TP.isTuple(tp),
                 me, 'invalid event type')
 

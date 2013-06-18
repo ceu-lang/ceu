@@ -114,7 +114,7 @@ do
     dofile 'lines.lua'
     dofile 'parser.lua'
     dofile 'ast.lua'
-    _AST.f(source)
+    _AST.f(_OPTS.input, source)
     dofile 'adj.lua'
     dofile 'env.lua'
     dofile 'fin.lua'

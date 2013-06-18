@@ -7,7 +7,8 @@ local TOP_i = 1     -- next top
 _AST = {
     root = nil,
 
-    f = function (source)
+    f = function (url, source)
+        _LINES.url = url
         _LINES.f(source)    -- i2l
         _PARSER.f(source)   -- parser + AST
 
@@ -17,7 +18,7 @@ _AST = {
                 TOP_i = i+1
 
                 -- recurse into include
-                local url = node[1]
+                url = node[1]
 
                 -- _G['/tmp/_ceu_MODx'] = ...
                 -- "include /tmp/_ceu_MODx;"
@@ -32,9 +33,11 @@ _AST = {
                 ASR(ff, node.ln, 'module "'..url..'" not found')
                 local new = ff:read'*a'
                 ff:close()
-                return _AST.f(new)
+                return _AST.f(url, new)
             end
         end
+
+        -- reached only after all includes are handled
         _AST.root = _AST.node('Root')(1, unpack(TOP))
     end,
 }

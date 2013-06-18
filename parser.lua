@@ -419,7 +419,8 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
 function err ()
     local x = (ERR_i<LST_i) and 'before' or 'after'
 --DBG(LST_i, ERR_i, ERR_msg, _I2L[LST_i], I2TK[LST_i])
-    return 'ERR : line '.._LINES.i2l[LST_i]..
+    return 'ERR : '.._LINES.url..
+              ' : line '.._LINES.i2l[LST_i]..
               ' : '..x..' `'..(I2TK[LST_i] or '?').."´"..
               ' : '..ERR_msg
 end

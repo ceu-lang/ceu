@@ -7,6 +7,7 @@ local patt
 
 _LINES = {
     i2l = nil,
+    url = nil,
 
     f = function (source)
         CNT  = 1
@@ -63,7 +64,7 @@ end
 function WRN (cond, me, msg)
     local ln = (type(me)=='number' and me) or me.ln
     if not cond then
-        DBG('WRN : line '..ln..' : '..msg)
+        DBG('WRN : '.._LINES.url..' : line '..ln..' : '..msg)
     end
     return cond
 end
@@ -71,11 +72,11 @@ function ASR (cond, me, msg)
     local ln = (type(me)=='number' and me) or me.ln
     if _CEU then
         if not cond then
-            DBG('ERR : line '..ln..' : '..msg)
+            DBG('ERR : '.._LINES.url..' : line '..ln..' : '..msg)
             os.exit(1)
         end
         return cond
     else
-        return assert(cond, 'ERR : line '..ln..' : '..msg)
+        return assert(cond, 'ERR : '.._LINES.url..' : line '..ln..' : '..msg)
     end
 end
