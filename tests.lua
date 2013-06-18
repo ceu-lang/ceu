@@ -135,348 +135,6 @@ end
 
 -- OK: under tests but supposed to work
 
--- TODO: test i escaping
-
-Test { [[
-event void inc;
-loop do
-    await inc;
-    nothing;
-end
-every inc do
-    nothing;
-end
-]],
-    ana = { isForever=true },
-}
-
-Test { [[
-input void START;
-event void e;
-every START do
-    loop i, 10 do
-        emit e;
-    end
-    do break; end
-end
-return 10;
-]],
-    --loop = 1,
-    run = 10,
-}
-
-Test { [[
-interface I with
-    var int v;
-    event void inc;
-end
-
-class T with
-    interface I;
-do
-    await FOREVER;
-end
-
-var int ret = 0;
-do
-    spawn T with
-        this.v = 1;
-    end;
-    spawn T with
-        this.v = 2;
-    end;
-    spawn T with
-        this.v = 3;
-    end;
-
-    loop i, I* do
-        ret = ret + i:v;
-    end
-end
-return ret;
-]],
-    run = 6,
-}
-
-Test { [[
-interface I with
-    var int v;
-    event void inc;
-end
-
-class T with
-    interface I;
-do
-    await FOREVER;
-end
-
-class U with
-    var int z;
-    var int v;
-do
-    await FOREVER;
-end
-
-var T t;
-var U u;
-
-var I* i1 = &t;
-var I* i2 = (I*) &u;
-
-native pure _f();
-native do
-    void* f (void* org) {
-        return org;
-    }
-end
-
-var I* i3 = (I*) _f(&t);
-var I* i4 = (I*) _f(&u);
-
-var T* i5 = (T*) _f(&t);
-var T* i6 = (T*) _f(&u);
-
-return i1==&t and i2==null and i3==&t and i4==null and i5==&t and i6==null;
-]],
-    run = 1,
-}
-
-Test { [[
-interface I with
-    var int v;
-    event void inc;
-end
-
-class T with
-    interface I;
-do
-    await FOREVER;
-end
-
-class U with
-    var int z;
-    var int v;
-do
-    await FOREVER;
-end
-
-var int ret = 0;
-do
-    spawn T with
-        this.v = 1;
-    end;
-    spawn U with
-        this.v = 2;
-    end;
-    spawn T with
-        this.v = 3;
-    end;
-
-    loop i, I* do
-        ret = ret + i:v;
-    end
-end
-return ret;
-]],
-    run = 4,
-}
-
-Test { [[
-interface I with
-    var int v;
-    event void inc;
-end
-
-class T with
-    interface I;
-do
-end
-
-var int ret = 1;
-do
-    loop i, I* do
-        ret = ret + i:v;
-    end
-end
-return ret;
-]],
-    run = 1,
-}
-
-Test { [[
-interface I with
-    var int v;
-    event void inc;
-end
-
-class T with
-    interface I;
-do
-end
-
-native nohold _fprintf(), _stderr;
-
-var int ret = 1;
-do
-    spawn T with
-        this.v = 1;
-    end;
-    spawn T with
-        this.v = 2;
-    end;
-    spawn T with
-        this.v = 3;
-    end;
-
-    loop i, I* do
-_fprintf(_stderr, "oioioi %p\n", i);
-        ret = ret + i:v;
-    end
-end
-return ret;
-]],
-    run = 1,
-}
-
-Test { [[
-input void A,F;
-
-interface I with
-    var int v;
-    event void inc;
-end
-
-class T with
-    interface I;
-do
-    await inc;
-    this.v = v + 1;
-end
-
-var int ret = 1;
-do
-    spawn T with
-        this.v = 1;
-    end;
-    spawn T with
-        this.v = 2;
-    end;
-    spawn T with
-        this.v = 3;
-    end;
-
-    loop i, I* do
-        emit i:inc;
-        ret = ret + i:v;
-    end
-end
-return ret;
-]],
-    run = 10,
-}
-
-Test { [[
-input void A,F;
-
-interface I with
-    var int v;
-    event void inc;
-end
-
-class T with
-    interface I;
-do
-    await inc;
-    this.v = v + 1;
-end
-
-var int ret = 0;
-do
-    par/or do
-        await F;
-    with
-        var int i=1;
-        every 1s do
-            spawn T with
-                this.v = i;
-                i = i + 1;
-            end;
-        end
-    with
-        every 1s do
-            loop i, I* do
-                emit i:inc;
-                ret = ret + i:v;
-            end
-        end
-    end
-end
-return ret;
-]],
-    run = { ['~>3s;~>F'] = 9 },
-}
-
-Test { [[
-native do
-    int V = 0;
-end
-
-class T with
-    event void a;
-do
-    par/or do
-        await a;
-        _V = _V + 2;
-    with
-        emit a;
-        _V = _V + 20;
-    end
-    await a;
-    _V = _V + 10;
-end
-
-var T t;
-_V = _V * 2;
-emit t.a;
-return _V;
-]],
-    ana = { acc=1 },
-    run = 14,
-}
-
-Test { [[
-return {1};
-]],
-    run = 1,
-}
-
-Test { [[
-{ int V = 10; };
-return _V;
-]],
-    run = 10,
-}
-
-Test { [[
-var void* p;
-finalize
-    p = { NULL };
-with
-    nothing;
-end
-return p==null;
-]],
-    run = 1,
-}
-
-Test { [[
-var void* p;
-p := { NULL };
-return p==null;
-]],
-    run = 1,
-}
-
 --do return end
 
 -- OK: well tested
@@ -1013,6 +671,21 @@ return a;
     val = 'ERR : line 3 : invalid expression',
     --run = 1,
     --trig_wo = 1,
+}
+
+Test { [[
+input void START;
+event void e;
+every START do
+    loop i, 10 do
+        emit e;
+    end
+    do break; end
+end
+return 10;
+]],
+    --loop = 1,
+    run = 10,
 }
 
 Test { [[
@@ -2466,6 +2139,19 @@ every dt = 1s do
 end
 ]],
     run = { ['~>5s']=10000000 }
+}
+
+Test { [[
+event void inc;
+loop do
+    await inc;
+    nothing;
+end
+every inc do
+    nothing;
+end
+]],
+    ana = { isForever=true },
 }
 
 -- CONTINUE
@@ -15566,7 +15252,46 @@ return a;
     run = 1,
 }
 
-    -- NATIVE C FUNCS BLOCK
+    -- NATIVE C FUNCS BLOCK RAW
+
+Test { [[
+return {1};
+]],
+    run = 1,
+}
+
+Test { [[
+{ int V = 10; };
+return _V;
+]],
+    run = 10,
+}
+
+Test { [[
+var void* p;
+finalize
+    p = { NULL };
+with
+    nothing;
+end
+return p==null;
+]],
+    run = 1,
+}
+
+Test { [[
+var void* p;
+p := { NULL };
+return p==null;
+]],
+    run = 1,
+}
+
+Test { [[
+_f()
+]],
+    parser = 'ERR : line 1 : after `)´ : expected `;´',
+}
 
 Test { [[
 native _printf();
@@ -22339,6 +22064,34 @@ return 0;
     fin = 'ERR : line 15 : attribution requires `finalize´',
 }
 Test { [[
+native do
+    int V = 0;
+end
+
+class T with
+    event void a;
+do
+    par/or do
+        await a;
+        _V = _V + 2;
+    with
+        emit a;
+        _V = _V + 20;
+    end
+    await a;
+    _V = _V + 10;
+end
+
+var T t;
+_V = _V * 2;
+emit t.a;
+return _V;
+]],
+    ana = { acc=1 },
+    run = 14,
+}
+
+Test { [[
 native _s=0;
 native do
     typedef int s;
@@ -23928,6 +23681,333 @@ end
 return 0;
 ]],
     env = 'ERR : line 3 : `T´ is not an interface',
+}
+
+-- IFACES / IFCS / ITERATORS
+Test { [[
+interface I with
+end
+do
+    loop i, I* do
+        _f(i);
+    end
+end
+]],
+    fin = 'ERR : line 5 : call requires `finalize´',
+}
+
+Test { [[
+interface I with
+end
+var I* p;
+do
+    loop i, I* do
+        p = i;
+    end
+end
+]],
+    fin = 'ERR : line 6 : attribution requires `finalize´',
+}
+
+Test { [[
+interface I with
+end
+var I* p;
+do
+    loop i, I* do
+        p := i;
+    end
+end
+return 10;
+]],
+    run = 10;
+}
+
+Test { [[
+interface I with
+end
+native nohold _f();
+native do
+    void f (void* p) {
+    }
+end
+do
+    loop i, I* do
+        _f(i);
+    end
+end
+return 10;
+]],
+    run = 10,
+}
+
+Test { [[
+interface I with
+end
+native _f();
+native do
+    void f (void* p) {
+    }
+end
+do
+    loop i, I* do
+        _f(i) finalize with nothing; end;
+    end
+end
+return 10;
+]],
+    run = 10,
+}
+
+Test { [[
+interface I with
+    var int v;
+    event void inc;
+end
+
+class T with
+    interface I;
+do
+    await FOREVER;
+end
+
+var int ret = 0;
+do
+    spawn T with
+        this.v = 1;
+    end;
+    spawn T with
+        this.v = 2;
+    end;
+    spawn T with
+        this.v = 3;
+    end;
+
+    loop i, I* do
+        ret = ret + i:v;
+    end
+end
+return ret;
+]],
+    run = 6,
+}
+
+Test { [[
+interface I with
+    var int v;
+    event void inc;
+end
+
+class T with
+    interface I;
+do
+    await FOREVER;
+end
+
+class U with
+    var int z;
+    var int v;
+do
+    await FOREVER;
+end
+
+var T t;
+var U u;
+
+var I* i1 = &t;
+var I* i2 = (I*) &u;
+
+native pure _f();
+native do
+    void* f (void* org) {
+        return org;
+    }
+end
+
+var I* i3 = (I*) _f(&t);
+var I* i4 = (I*) _f(&u);
+
+var T* i5 = (T*) _f(&t);
+var T* i6 = (T*) _f(&u);
+
+return i1==&t and i2==null and i3==&t and i4==null and i5==&t and i6==null;
+]],
+    run = 1,
+}
+
+Test { [[
+interface I with
+    var int v;
+    event void inc;
+end
+
+class T with
+    interface I;
+do
+    await FOREVER;
+end
+
+class U with
+    var int z;
+    var int v;
+do
+    await FOREVER;
+end
+
+var int ret = 0;
+do
+    spawn T with
+        this.v = 1;
+    end;
+    spawn U with
+        this.v = 2;
+    end;
+    spawn T with
+        this.v = 3;
+    end;
+
+    loop i, I* do
+        ret = ret + i:v;
+    end
+end
+return ret;
+]],
+    run = 4,
+}
+
+Test { [[
+interface I with
+    var int v;
+    event void inc;
+end
+
+class T with
+    interface I;
+do
+end
+
+var int ret = 1;
+do
+    loop i, I* do
+        ret = ret + i:v;
+    end
+end
+return ret;
+]],
+    run = 1,
+}
+
+Test { [[
+interface I with
+    var int v;
+    event void inc;
+end
+
+class T with
+    interface I;
+do
+end
+
+native nohold _fprintf(), _stderr;
+
+var int ret = 1;
+do
+    spawn T with
+        this.v = 1;
+    end;
+    spawn T with
+        this.v = 2;
+    end;
+    spawn T with
+        this.v = 3;
+    end;
+
+    loop i, I* do
+_fprintf(_stderr, "oioioi %p\n", i);
+        ret = ret + i:v;
+    end
+end
+return ret;
+]],
+    run = 1,
+}
+
+Test { [[
+input void A,F;
+
+interface I with
+    var int v;
+    event void inc;
+end
+
+class T with
+    interface I;
+do
+    await inc;
+    this.v = v + 1;
+end
+
+var int ret = 1;
+do
+    spawn T with
+        this.v = 1;
+    end;
+    spawn T with
+        this.v = 2;
+    end;
+    spawn T with
+        this.v = 3;
+    end;
+
+    loop i, I* do
+        emit i:inc;
+        ret = ret + i:v;
+    end
+end
+return ret;
+]],
+    run = 10,
+}
+
+Test { [[
+input void A,F;
+
+interface I with
+    var int v;
+    event void inc;
+end
+
+class T with
+    interface I;
+do
+    await inc;
+    this.v = v + 1;
+end
+
+var int ret = 0;
+do
+    par/or do
+        await F;
+    with
+        var int i=1;
+        every 1s do
+            spawn T with
+                this.v = i;
+                i = i + 1;
+            end;
+        end
+    with
+        every 1s do
+            loop i, I* do
+                emit i:inc;
+                ret = ret + i:v;
+            end
+        end
+    end
+end
+return ret;
+]],
+    run = { ['~>3s;~>F'] = 9 },
 }
 
 -- RET_VAL / RET_END

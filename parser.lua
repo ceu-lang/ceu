@@ -239,7 +239,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , _12     = V'_13' *
                     (
                         K'(' * Cc'call' * V'ExpList' * EK')' *
-                            ( EK'finalize' * EK'with' * V'Finally' * EK'end'
+                            ( K'finalize' * EK'with' * V'Finally' * EK'end'
                             + Cc(false)) +
                         K'[' * Cc'idx'  * V'_Exp'    * EK']' +
                         (CK':' + CK'.')
