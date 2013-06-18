@@ -1,5 +1,10 @@
 _AST = {
-    root = nil
+    root = nil,
+
+    f = function (str)
+        _LINES.f(str)
+        return _PARSER.f(str)  -- GG is changed => sets root
+    end,
 }
 
 local MT = {}
@@ -108,7 +113,8 @@ function _AST.dump (me, spc)
     ks = ks..'['..table.concat(t,',')..']'
 ]]
     --ks = me.ns.trails..' / '..tostring(me.needs_clr)
-    DBG(string.rep(' ',spc)..me.tag..' ('..me.ln..': '..me.n..') '..ks)
+    DBG(string.rep(' ',spc)..me.tag..
+        ' (ln='..me.ln..' n='..me.n..' d='..(me.depth or 0)..') '..ks)
     for i, sub in ipairs(me) do
         if _AST.isNode(sub) then
             _AST.dump(sub, spc+2)
@@ -187,6 +193,8 @@ local C; C = {
     Finally  = node('Finally'),
 
     _Return = node('_Return'),
+
+    Include = _INCLUDE,
 
     Async   = node('Async'),
     VarList = function (ln, ...)
@@ -618,7 +626,7 @@ local C; C = {
 }
 
 local function i2l (v)
-    return _I2L[v]
+    return _LINES.i2l[v]
 end
 
 for rule, f in pairs(C) do
@@ -629,82 +637,3 @@ for i=1, 12 do
     local tag = '_'..i
     _GG[tag] = (m.Cp()/i2l) * _GG[tag] / C._Exp
 end
-
-_GG = m.P(_GG):match(_STR)
-
-F = {
-    Block_pre = function (me)
-        local blk = _AST.iter'Block'()
-        local cls = _AST.iter'Dcl_cls'()
-        me.par = blk and (cls.depth < blk.depth) and blk
-    end,
-
-    SetBlock_pre = function (me)
-        me.blk = _AST.iter'Block'()
-    end,
-    _Return = function (me)
-        local set = _AST.iter'SetBlock'()
-        local fr = unpack(me)
-        local to = node('Var')(me.ln,set[2][1])
-        to.blk = set.blk
-        to.ret = true
-
-        local blk = node('Stmts')(me.ln)
-        blk[#blk+1] = node('SetExp')(me.ln, '=', fr, to, set[3])
-
-        blk[#blk+1] = node('Return')(me.ln)
-        return blk
-    end,
-
-    AwaitT = function (me)
-        local cnd = me[#me]
-        me[#me] = nil   -- remove cnd
-        if not cnd then
-            return
-        end
-        local loop = node('Loop')(me.ln,
-                        node('Stmts')(me.ln,
-                            me,
-                            node('If')(me.ln, cnd,
-                                node('Break')(me.ln),
-                                node('Nothing')(me.ln))))
-        loop.isAwaitUntil = true
-        return loop
-    end,
-    AwaitExt = 'AwaitT',
-    AwaitInt = 'AwaitT',
-    AwaitS   = 'AwaitT',
-
-    _Continue = function (me)
-        local _if  = _AST.iter('If')()
-        local loop = _AST.iter('Loop')()
-        ASR(_if and loop,
-            me, 'invalid `continue´')
-
-        loop.continue = _if
-        ASR( _if[3].tag=='Nothing'     and   -- no else
-            me.depth  == _if.depth+3   and   -- If->Block->Stmts->Continue
-             _if.depth == loop.blk.depth+2 , -- Block->Stmts->If
-            me, 'invalid `continue´')
-        return node('Nothing')(me.ln)
-    end,
-    Loop = function (me)
-        if not me.continue then
-            return
-        end
-
-        local stmts = me.blk[1]
-        for i, n in ipairs(stmts) do
-            if n == me.continue then
-                local _else = node('Stmts')(n.ln)
-                n[3] = _else
-                for j=i+1, #stmts do
-                    _else[#_else+1] = stmts[j]
-                    stmts[j] = nil
-                end
-            end
-        end
-    end,
-}
-
-_AST.visit(F)

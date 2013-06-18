@@ -29,9 +29,9 @@ end
 
 Test = function (t)
     T = t
-    local str_input = T[1]
-    --local str_input = 'C _fprintf(), _stderr;'..T[1]
-    print('\n=============\n---\n'..str_input..'\n---\n')
+    local source = T[1]
+    --local source = 'C _fprintf(), _stderr;'..T[1]
+    print('\n=============\n---\n'..source..'\n---\n')
 
     --assert(T.todo == nil)
     if T.todo then
@@ -45,14 +45,22 @@ Test = function (t)
         warn_nondeterminism = true,
     }
 
-    _STR = str_input
+    -- require's (don't do anything)
     dofile 'tp.lua'
     dofile 'lines.lua'
+    dofile 'parser.lua'
+    dofile 'include.lua'
+    dofile 'ast.lua'
 
     STATS.count = STATS.count   + 1
 
-    if not check('parser')   then return end
-    if not check('ast')      then return end
+    local ok, msg = pcall(_AST.f, source)
+    if not ok then
+        assert(string.find(msg, T.ast, nil, true), tostring(msg))
+        return
+    end
+
+    if not check('adj')      then return end
     --_AST.dump(_AST.root)
     if not check('env')      then return end
     if not check('fin')      then return end
@@ -137,7 +145,7 @@ end
 
     -- T.run = N
     if type(T.run) ~= 'table' then
-        local str_all = str_input
+        local str_all = source
         print(str_all)
         local ceu = assert(io.open('_ceu_tmp.ceu', 'w'))
         ceu:write(str_all)
@@ -153,7 +161,7 @@ end
         local par = (T.awaits and T.awaits>0 and 'par') or 'par/or'
         local str_all =
             par .. [[ do
-                ]]..str_input..[[
+                ]]..source..[[
             with
                 async do
                     `EVTS

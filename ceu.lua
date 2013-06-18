@@ -1,5 +1,3 @@
-_CEU = true
-
 _OPTS = {
     input     = nil,
     output    = '_ceu_code.cceu',
@@ -97,26 +95,28 @@ if _OPTS.input == '-' then
 else
     inp = assert(io.open(_OPTS.input))
 end
-_STR = inp:read'*a'
+local source = inp:read'*a'
 
 if _OPTS.m4 or _OPTS.m4_args then
     local args = _OPTS.m4_args or ''
     local m4_file = (_OPTS.input=='-' and '_ceu_tmp.ceu_m4') or _OPTS.input..'_m4'
     local m4 = assert(io.popen('m4 '..args..' - > '..m4_file, 'w'))
-    m4:write(_STR)
+    m4:write(source)
     m4:close()
 
-    _STR = assert(io.open(m4_file)):read'*a'
+    source = assert(io.open(m4_file)):read'*a'
     --os.remove(m4_file)
 end
 
 -- PARSE
 do
     dofile 'tp.lua'
-
     dofile 'lines.lua'
     dofile 'parser.lua'
+    dofile 'include.lua'
     dofile 'ast.lua'
+    _AST.f(source)
+    dofile 'adj.lua'
     dofile 'env.lua'
     dofile 'fin.lua'
     --_AST.dump(_AST.root)

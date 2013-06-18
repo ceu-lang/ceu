@@ -1,4 +1,14 @@
 _PARSER = {
+    f = function (source)
+        if _RUNTESTS then
+            assert(m.P(_GG):match(source), err())
+        else
+            if not m.P(_GG):match(source) then
+                DBG(err())
+                os.exit(1)
+            end
+        end
+    end,
 }
 
 local P, C, V, Cc, Ct = m.P, m.C, m.V, m.Cc, m.Ct
@@ -99,7 +109,8 @@ KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'native'
      + 'free'     + 'new'      + 'this'
      + 'spawn'
 --
-     --+ 'import'   + 'export'   + 'as'
+     + 'include'  + 'as'
+-- export / version
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
@@ -134,6 +145,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
              + V'Free'     + V'Spawn'
              + V'Nothing'
              + V'RawStmt'
+             + V'Include'
              + V'CallStmt' -- last
              --+ EM'statement'-- (missing `_´?)'
              + EM'statement (usually a missing `var´ or C prefix `_´)'
@@ -183,6 +195,9 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
                     function (s,i,...)
                         return (string.find(s, '%(.*%)')) and i, ...
                     end)
+
+    , Include = K'include' * ( C( (P(1)-m.S'\t\n\r ;')^1 )
+                             + EM'module' )
 
     , Async   = K'async' * EV'VarList' * V'_Do'
     , VarList = ( K'(' * EV'Var' * (EK',' * EV'Var')^0 * EK')' )^-1
@@ -404,16 +419,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
 function err ()
     local x = (ERR_i<LST_i) and 'before' or 'after'
 --DBG(LST_i, ERR_i, ERR_msg, _I2L[LST_i], I2TK[LST_i])
-    return 'ERR : line '.._I2L[LST_i]..
+    return 'ERR : line '.._LINES.i2l[LST_i]..
               ' : '..x..' `'..(I2TK[LST_i] or '?').."´"..
               ' : '..ERR_msg
-end
-
-if _CEU then
-    if not m.P(_GG):match(_STR) then
-        DBG(err())
-        os.exit(1)
-    end
-else
-    assert(m.P(_GG):match(_STR), err())
 end

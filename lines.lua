@@ -1,6 +1,46 @@
 m = require 'lpeg'
 m.setmaxstack(1000)
 
+local CNT
+local LINE
+local patt
+
+_LINES = {
+    i2l = nil,
+
+    f = function (source)
+        CNT  = 1
+        LINE = 1
+        _LINES.i2l = {}
+        patt:match(source..'\n')
+    end,
+}
+
+local open = m.Cmt('/*{-{*/',
+    function ()
+        if _OPTS.join then
+            CNT = CNT - 1
+        end
+    end )
+local close = m.Cmt('/*}-}*/',
+    function ()
+        if _OPTS.join then
+            CNT = CNT + 1
+        end
+    end )
+
+local line = m.Cmt('\n',
+    function (s,i)
+        for i=#_LINES.i2l, i do
+            _LINES.i2l[i] = LINE
+        end
+        if CNT > 0 then
+            LINE = LINE + 1
+        end
+    end )
+
+patt = (line + open + close + 1)^0
+
 function DBG (...)
     local t = {}
     for i=1, select('#',...) do
@@ -39,33 +79,3 @@ function ASR (cond, me, msg)
         return assert(cond, 'ERR : line '..ln..' : '..msg)
     end
 end
-
-_I2L = {}
-
-local CNT = 1
-local open = m.Cmt('/*{-{*/',
-    function ()
-        if _OPTS.join then
-            CNT = CNT - 1
-        end
-    end )
-local close = m.Cmt('/*}-}*/',
-    function ()
-        if _OPTS.join then
-            CNT = CNT + 1
-        end
-    end )
-
-local LINE = 1
-local line = m.Cmt('\n',
-    function (s,i)
-        for i=#_I2L, i do
-            _I2L[i] = LINE
-        end
-        if CNT > 0 then
-            LINE = LINE + 1
-        end
-    end )
-
-local patt = (line + open + close + 1)^0
-patt:match(_STR..'\n')

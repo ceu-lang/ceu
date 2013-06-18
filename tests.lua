@@ -131,9 +131,41 @@ end
 
 
 --do return end
---]===]
 
 -- OK: under tests but supposed to work
+
+Test { [[
+include;
+]],
+    ast = 'ERR : line 1 : after `include´ : expected module',
+}
+
+Test { [[
+include MOD1;
+]],
+    ast = 'ERR : line 1 : module "MOD1" not found',
+}
+
+MOD1 = [[
+input void A;
+]]
+
+Test { [[
+include MOD1;
+await A;
+return 1;
+]],
+    run = { ['~>A']=1 },
+}
+
+Test { [[
+include asdh;
+include http://ceu-lang.org/;
+include https://github.com/fsantanna/ceu;
+include ^4!_;
+]],
+    run = 1,
+}
 
 --do return end
 
@@ -156,7 +188,8 @@ Test { [[return /*
 */ 1;]], run=1 }
 Test { [[return /**/* **/ 1;]], run=1 }
 Test { [[return /**/* */ 1;]],
-    parser = "ERR : line 1 : after `return´ : expected expression" }
+    ast = "ERR : line 1 : after `return´ : expected expression"
+}
 
 Test { [[
 do do do do do do do do do do do do do do do do do do do do
@@ -166,6 +199,14 @@ return 1;
     run = 1
 }
 
+Test { [[
+do do
+end end
+return 1;
+]],
+    --ast = 'ERR : line 2 : max depth of 127',
+    run = 1
+}
 Test { [[
 do do do do do do do do do do do do do do do do do do do do
 do do do do do do do do do do do do do do do do do do do do
@@ -194,7 +235,7 @@ end end end end end end end end end end end end end end end end end end end end
 end end end end end end end end end end end end end end end end end end end end
 return 1;
 ]],
-    ast = 'ERR : line 5 : max depth of 0xFF',
+    adj = 'ERR : line 5 : max depth of 0xFF',
 }
 
 Test { [[return 0;]], run=0 }
@@ -214,13 +255,13 @@ Test { [[return (1<=2) + (1<2) + 2/1 - 2%3;]], run=2 }
 -- TODO: linux gcc only?
 --Test { [[return (~(~0b1010 & 0XF) | 0b0011 ^ 0B0010) & 0xF;]], run=11 }
 Test { [[nt a;]],
-    parser = "ERR : line 1 : before `nt´ : expected statement",
+    ast = "ERR : line 1 : before `nt´ : expected statement",
 }
 Test { [[nt sizeof;]],
-    parser = "ERR : line 1 : before `nt´ : expected statement",
+    ast = "ERR : line 1 : before `nt´ : expected statement",
 }
 Test { [[var int sizeof;]],
-    parser = "ERR : line 1 : after `int´ : expected identifier",
+    ast = "ERR : line 1 : after `int´ : expected identifier",
 }
 Test { [[return sizeof(int);]], run=4 }
 Test { [[return 1<2>3;]], run=0 }
@@ -269,13 +310,13 @@ Test { [[var int a=1,a=0; return a;]],
     run = 0,
 }
 Test { [[var int a; a = b = 1]],
-    parser = "ERR : line 1 : after `b´ : expected `;´",
+    ast = "ERR : line 1 : after `b´ : expected `;´",
 }
 Test { [[var int a = b; return 0;]],
     env = 'variable/event "b" is not declared',
 }
 Test { [[return 1;2;]],
-    parser = "ERR : line 1 : before `;´ : expected statement",
+    ast = "ERR : line 1 : before `;´ : expected statement",
 }
 Test { [[var int aAa; aAa=1; return aAa;]],
     run = 1,
@@ -519,13 +560,13 @@ return a;
 
     -- EVENTS
 
-Test { [[input int A=1;]], parser="ERR : line 1 : after `A´ : expected `;´" }
+Test { [[input int A=1;]], ast="ERR : line 1 : after `A´ : expected `;´" }
 Test { [[
 input int A;
 A=1;
 return 1;
 ]],
-    parser = 'ERR : line 1 : after `;´ : expected statement',
+    ast = 'ERR : line 1 : after `;´ : expected statement',
 }
 
 Test { [[input  int A;]],
@@ -611,7 +652,7 @@ with
 end;
 return A;
 ]],
-    parser = "ERR : line 9 : after `return´ : expected expression",
+    ast = "ERR : line 9 : after `return´ : expected expression",
 }
 
 Test { [[
@@ -650,8 +691,8 @@ Test { [[var int a = a+1; return a;]],
 }
 
 Test { [[var int a; a = emit a => 1; return a;]],
-    parser = 'ERR : line 1 : after `=´ : expected expression',
-    --parser = "ERR : line 1 : after `emit´ : expected event",
+    ast = 'ERR : line 1 : after `=´ : expected expression',
+    --ast = "ERR : line 1 : after `emit´ : expected event",
     --trig_wo = 1,
 }
 
@@ -660,7 +701,7 @@ Test { [[var int a; emit a => 1; return a;]],
     --trig_wo = 1,
 }
 Test { [[event int a=0; emit a => 1; return a;]],
-    parser = 'ERR : line 1 : after `a´ : expected `;´',
+    ast = 'ERR : line 1 : after `a´ : expected `;´',
     --trig_wo = 1,
 }
 Test { [[
@@ -805,7 +846,7 @@ Test { [[
 output xxx A;
 return(1);
 ]],
-    parser = "ERR : line 1 : after `output´ : expected type",
+    ast = "ERR : line 1 : after `output´ : expected type",
 }
 Test { [[
 output int A;
@@ -821,7 +862,7 @@ if emit A => 1 then
 end
 return(1);
 ]],
-    parser = 'ERR : line 2 : after `if´ : expected expression',
+    ast = 'ERR : line 2 : after `if´ : expected expression',
 }
 Test { [[
 native do
@@ -833,7 +874,7 @@ if emit A => 1 then
 end
 return(1);
 ]],
-    parser = 'ERR : line 5 : after `if´ : expected expression',
+    ast = 'ERR : line 5 : after `if´ : expected expression',
 }
 
 Test { [[
@@ -841,14 +882,14 @@ output t A;
 emit A => 1;
 return(1);
 ]],
-    parser = 'ERR : line 1 : after `output´ : expected type',
+    ast = 'ERR : line 1 : after `output´ : expected type',
 }
 Test { [[
 output t A;
 emit A => 1;
 return(1);
 ]],
-    parser = 'ERR : line 1 : after `output´ : expected type',
+    ast = 'ERR : line 1 : after `output´ : expected type',
 }
 Test { [[
 output _t* A;
@@ -896,7 +937,7 @@ if emit A => &a then
 end
 return(1);
 ]],
-    parser = 'ERR : line 3 : after `if´ : expected expression',
+    ast = 'ERR : line 3 : after `if´ : expected expression',
     --env = 'ERR : line 3 : non-matching types on `emit´',
 }
 Test { [[
@@ -948,7 +989,7 @@ b = emit B => 5;
 return a + b;
 ]],
     --run = 6,
-    parser = 'ERR : line 26 : after `=´ : expected expression',
+    ast = 'ERR : line 26 : after `=´ : expected expression',
 }
 
 Test { [[
@@ -960,7 +1001,7 @@ end
 var _cahr v = emit A => 1;
 return 0;
 ]],
-    parser = 'ERR : line 6 : after `=´ : expected expression',
+    ast = 'ERR : line 6 : after `=´ : expected expression',
     --env = 'ERR : line 6 : undeclared type `_cahr´',
 }
 Test { [[
@@ -969,7 +1010,7 @@ output void A;
 var _char v = emit A => ;
 return v;
 ]],
-    parser = 'ERR : line 3 : after `=´ : expected expression',
+    ast = 'ERR : line 3 : after `=´ : expected expression',
     --env = 'ERR : line 3 : invalid attribution',
 }
 Test { [[
@@ -981,7 +1022,7 @@ native _char = 1;
 var _char v = emit A => 1;
 return 0;
 ]],
-    parser = 'ERR : line 6 : after `=´ : expected expression',
+    ast = 'ERR : line 6 : after `=´ : expected expression',
     --env = 'ERR : line 6 : non-matching types on `emit´',
 }
 
@@ -1041,12 +1082,12 @@ return 0;
 }
 
 Test { [[await -1ms; return 0;]],
-    --parser = "ERR : line 1 : after `await´ : expected event",
-    parser = 'ERR : line 1 : after `1´ : expected `;´',
+    --ast = "ERR : line 1 : after `await´ : expected event",
+    ast = 'ERR : line 1 : after `1´ : expected `;´',
 }
 
 Test { [[await 1; return 0;]],
-    parser = 'ERR : line 1 : after `1´ : expected <h,min,s,ms,us>',
+    ast = 'ERR : line 1 : after `1´ : expected <h,min,s,ms,us>',
 }
 Test { [[await -1; return 0;]],
     env = 'ERR : line 1 : event "?" is not declared',
@@ -1068,10 +1109,10 @@ Test { [[await FOREVER;]],
     },
 }
 Test { [[await FOREVER; await FOREVER;]],
-    parser = "ERR : line 1 : before `;´ : expected event",
+    ast = "ERR : line 1 : before `;´ : expected event",
 }
 Test { [[await FOREVER; return 0;]],
-    parser = "ERR : line 1 : before `;´ : expected event",
+    ast = "ERR : line 1 : before `;´ : expected event",
 }
 
 Test { [[emit 1ms; return 0;]], props='not permitted outside `async´' }
@@ -1788,7 +1829,7 @@ var int a = do
 return a;
 ]],
     -- TODO: melhor seria: unexpected statement
-    parser = "ERR : line 16 : after `;´ : expected `with´",
+    ast = "ERR : line 16 : after `;´ : expected `with´",
     --unreachs = 1,
     run = {
         ['1~>B; ~>20ms; 1~>F'] = 1,
@@ -2011,8 +2052,12 @@ return a;
     loop = 'tight loop',
 }
 
-Test { [[break; return 1;]], parser="ERR : line 1 : before `;´ : expected statement" }
-Test { [[break; break;]], parser="ERR : line 1 : before `;´ : expected statement" }
+Test { [[break; return 1;]],
+    ast="ERR : line 1 : before `;´ : expected statement"
+}
+Test { [[break; break;]],
+    ast="ERR : line 1 : before `;´ : expected statement"
+}
 Test { [[loop do break; end; return 1;]],
     ana = {
         unreachs=1,
@@ -2156,6 +2201,7 @@ end
 
 -- CONTINUE
 
+--]===]
 Test { [[
 loop do
     if 0 then
@@ -2165,7 +2211,7 @@ loop do
     end
 end
 ]],
-    ast = 'ERR : line 3 : invalid `continue´',
+    adj = 'ERR : line 3 : invalid `continue´',
 }
 
 Test { [[
@@ -2173,7 +2219,7 @@ loop do
     do continue; end
 end
 ]],
-    ast = 'ERR : line 2 : invalid `continue´',
+    adj = 'ERR : line 2 : invalid `continue´',
 }
 
 Test { [[
@@ -2185,7 +2231,7 @@ loop do
     end
 end
 ]],
-    ast = 'ERR : line 4 : invalid `continue´',
+    adj = 'ERR : line 4 : invalid `continue´',
 }
 
 Test { [[
@@ -9398,8 +9444,8 @@ loop do
     break;
 end;
 ]],
-    --parser = "ERR : line 4 : after `;´ : expected `end´",
-    parser = 'ERR : line 4 : before `;´ : expected statement',
+    --ast = "ERR : line 4 : after `;´ : expected `end´",
+    ast = 'ERR : line 4 : before `;´ : expected statement',
 }
 
 Test { [[
@@ -10317,7 +10363,7 @@ c = d + 1;
 await A;
 return c;
 ]],
-    parser = "ERR : line 3 : after `par´ : expected `do´",
+    ast = "ERR : line 3 : after `par´ : expected `do´",
 }
 
 Test { [[
@@ -12577,7 +12623,7 @@ Test { [[
 event a;
 return 0;
 ]],
-    parser = 'ERR : line 1 : after `event´ : expected type',
+    ast = 'ERR : line 1 : after `event´ : expected type',
 }
 
 Test { [[
@@ -13997,7 +14043,7 @@ end;
 return a;
 ]],
     --env = "ERR : line 4 : invalid input `emit´",
-    parser = 'ERR : line 4 : after `=´ : expected expression',
+    ast = 'ERR : line 4 : after `=´ : expected expression',
 }
 
 Test { [[
@@ -15079,7 +15125,7 @@ return *p;
     -- ARRAYS
 
 Test { [[input int[1] E; return 0;]],
-    parser = "ERR : line 1 : after `int´ : expected identifier",
+    ast = "ERR : line 1 : after `int´ : expected identifier",
 }
 Test { [[var int[0] v; return 0;]],
     env='invalid array dimension'
@@ -15094,7 +15140,7 @@ Test { [[var u8[2] v; return &v;]],
 Test { [[
 void[10] a;
 ]],
-    parser = 'ERR : line 1 : after `<BOF>´ : expected statement',
+    ast = 'ERR : line 1 : after `<BOF>´ : expected statement',
 }
 
 Test { [[
@@ -15290,7 +15336,7 @@ return p==null;
 Test { [[
 _f()
 ]],
-    parser = 'ERR : line 1 : after `)´ : expected `;´',
+    ast = 'ERR : line 1 : after `)´ : expected `;´',
 }
 
 Test { [[
@@ -15364,7 +15410,7 @@ end
 A = 1;
 return 1;
 ]],
-    parser = 'ERR : line 3 : after `end´ : expected statement'
+    ast = 'ERR : line 3 : after `end´ : expected statement'
 }
 
 Test { [[
@@ -16617,27 +16663,27 @@ return (int)a;
 -- Exps
 
 Test { [[var int a = ]],
-    parser = "ERR : line 1 : after `=´ : expected expression",
+    ast = "ERR : line 1 : after `=´ : expected expression",
 }
 
 Test { [[return]],
-    parser = "ERR : line 1 : after `return´ : expected expression",
+    ast = "ERR : line 1 : after `return´ : expected expression",
 }
 
 Test { [[return()]],
-    parser = "ERR : line 1 : after `(´ : expected expression",
+    ast = "ERR : line 1 : after `(´ : expected expression",
 }
 
 Test { [[return 1+;]],
-    parser = "ERR : line 1 : before `+´ : expected `;´",
+    ast = "ERR : line 1 : before `+´ : expected `;´",
 }
 
 Test { [[if then]],
-    parser = "ERR : line 1 : after `if´ : expected expression",
+    ast = "ERR : line 1 : after `if´ : expected expression",
 }
 
 Test { [[b = ;]],
-    parser = "ERR : line 1 : after `=´ : expected expression",
+    ast = "ERR : line 1 : after `=´ : expected expression",
 }
 
 
@@ -16651,7 +16697,7 @@ return 1
 
 ;
 ]],
-    parser = "ERR : line 5 : before `+´ : expected `;´"
+    ast = "ERR : line 5 : before `+´ : expected `;´"
 }
 
 Test { [[
@@ -16660,7 +16706,7 @@ a = do
     var int b;
 end
 ]],
-    parser = "ERR : line 4 : after `end´ : expected `;´",
+    ast = "ERR : line 4 : after `end´ : expected `;´",
 }
 
 -- ASYNC
@@ -16831,7 +16877,7 @@ pause/if A do
 end
 return 0;
 ]],
-    parser = 'ERR : line 2 : after `pause/if´ : expected expression',
+    ast = 'ERR : line 2 : after `pause/if´ : expected expression',
 }
 
 Test { [[
@@ -17752,7 +17798,7 @@ class T with
 do
 end
 ]],
-    parser = 'ERR : line 3 : before `;´ : expected identifier',
+    ast = 'ERR : line 3 : before `;´ : expected identifier',
 }
 
 Test { [[
@@ -20294,12 +20340,12 @@ return 10;
 Test { [[
 new i;
 ]],
-    parser = 'ERR : line 1 : after `<BOF>´ : expected statement',
+    ast = 'ERR : line 1 : after `<BOF>´ : expected statement',
 }
 Test { [[
 _f(new T);
 ]],
-    parser = 'ERR : line 1 : after `(´ : expected `)´',
+    ast = 'ERR : line 1 : after `(´ : expected `)´',
 }
 
 Test { [[
@@ -20517,7 +20563,7 @@ var int a with
 end;
 return 0;
 ]],
-    parser = 'ERR : line 1 : after `a´ : expected `;´',
+    ast = 'ERR : line 1 : after `a´ : expected `;´',
 }
 
 Test { [[
@@ -20534,7 +20580,7 @@ end;
 
 return t1.b;
 ]],
-    parser = 'ERR : line 8 : after `t2´ : expected `;´',
+    ast = 'ERR : line 8 : after `t2´ : expected `;´',
 }
 
 Test { [[
@@ -24327,7 +24373,7 @@ Test { [[
 await (10ms);
 return 1;
 ]],
-    parser = 'ERR : line 1 : after `)´ : expected `or´',
+    ast = 'ERR : line 1 : after `)´ : expected `or´',
 }
 Test { [[
 await (10ms) or (20ms);
@@ -24339,7 +24385,7 @@ Test { [[
 await ((10)ms);
 return 1;
 ]],
-    parser = 'ERR : line 1 : after `)´ : expected `or´',
+    ast = 'ERR : line 1 : after `)´ : expected `or´',
 }
 
 Test { [[
