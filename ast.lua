@@ -5,6 +5,8 @@ local TOP   = {}    -- holds all clss/exts/nats
 local TOP_i = 1     -- next top
 local C;
 
+local modules = {}
+
 _AST = {
     root = nil,
 
@@ -16,38 +18,45 @@ _AST = {
                     _AST.node('Stmts')({url,1}), ast)
         _MAIN = TOP[TOP_i-1]
 
-        -- recurse into include's
+        -- recurse into import's
         local i = 1
         while TOP[i] do
             local node = TOP[i]
-            if node.tag == '_Include' then
+            if node.tag == '_Import' then
                 url = node[1]
 
-                -- _G['/tmp/_ceu_MODx'] = ...
-                -- "include /tmp/_ceu_MODx;"
-                if _RUNTESTS and _G[url] then
-                    -- transform global value into a file
-                    local ff = assert(io.open(url,'w'))
-                    ff:write(_G[url])
+                if not modules[url] then
+                    modules[url] = true
+
+                    -- _G['/tmp/_ceu_MODx'] = ...
+                    -- "import /tmp/_ceu_MODx;"
+                    if _RUNTESTS and _G[url] then
+                        -- transform global value into a file
+                        local ff = assert(io.open(url,'w'))
+                        ff:write(_G[url])
+                        ff:close()
+                    end
+
+                    local ff = io.open(url)
+                    ASR(ff, node, 'module "'..url..'" not found')
+                    local new = ff:read'*a'
                     ff:close()
+
+                    -- parse new source
+                    TOP_i = i+1
+                    _LINES.url = url
+                    _LINES.f(new)
+
+                    -- fill #HOLE w/ top-level stmts
+                    -- Stmts->Import->[1]
+                    node[2][1][1] = _PARSER.f(new)
                 end
-
-                local ff = io.open(url)
-                ASR(ff, node, 'module "'..url..'" not found')
-                local new = ff:read'*a'
-                ff:close()
-
-                -- parse new source
-                TOP_i = i+1
-                _LINES.url = url
-                _LINES.f(new)
-                node[2][1] = _PARSER.f(new) -- fill #HOLE w/ top-level stmts
-                TOP[i] = _AST.node('Nothing')(node.ln)  -- subst _Include
+                TOP[i] = _AST.node('Nothing')(node.ln)  -- subst _Import
             end
             i = i + 1
         end
 
-        -- reached only after all includes are handled
+        -- reached only after all imports are handled
         _AST.root = _AST.node('Root')({url,1}, unpack(TOP))
     end,
 }
@@ -236,10 +245,10 @@ C = {
 
     _Return = node('_Return'),
 
-    Include = function (ln, url)
+    Import = function (ln, url)
         local ret = node('Stmts')(ln,   -- #HOLE to fill w/ top-level stmts
-                        node('Include')(ln))
-        table.insert(TOP, TOP_i, node('_Include')(ln,url,ret))
+                        node('Import')(ln))
+        table.insert(TOP, TOP_i, node('_Import')(ln,url,ret))
         TOP_i = TOP_i + 1
         return ret
     end,

@@ -136,16 +136,16 @@ end
 -- OK: under tests but supposed to work
 
 Test { [[
-include;
+import;
 ]],
-    ast = 'ERR : tests.lua : line 1 : after `include´ : expected module'
+    ast = 'ERR : tests.lua : line 1 : after `import´ : expected module'
 }
 
 Test { [[
-include MOD1;
-include http://ceu-lang.org/;
-include https://github.com/fsantanna/ceu;
-include ^4!_;
+import MOD1;
+import http://ceu-lang.org/;
+import https://github.com/fsantanna/ceu;
+import ^4!_;
 ]],
     ast = 'ERR : tests.lua : line 1 : module "MOD1" not found'
 }
@@ -154,7 +154,7 @@ _G['/tmp/_ceu_MOD1.ceu'] = [[
 input void A;
 ]]
 Test { [[
-include /tmp/_ceu_MOD1.ceu ;
+import /tmp/_ceu_MOD1.ceu ;
 await A;
 return 1;
 ]],
@@ -169,7 +169,7 @@ input void A
 ]]
 Test { [[
 nothing;
-include /tmp/_ceu_MOD1.ceu ;
+import /tmp/_ceu_MOD1.ceu ;
 await A;
 return 1;
 ]],
@@ -178,9 +178,10 @@ return 1;
 
 _G['/tmp/_ceu_MOD1.ceu'] = [[
 input void A;
+_assert(0);
 ]]
 Test { [[
-include /tmp/_ceu_MOD1.ceu ;
+import /tmp/_ceu_MOD1.ceu ;
 await A;
 return 1;
 ]],
@@ -191,10 +192,10 @@ _G['/tmp/_ceu_MOD2.ceu'] = [[
 input void A;
 ]]
 _G['/tmp/_ceu_MOD1.ceu'] = [[
-include /tmp/_ceu_MOD2.ceu;
+import /tmp/_ceu_MOD2.ceu;
 ]]
 Test { [[
-include /tmp/_ceu_MOD1.ceu ;
+import /tmp/_ceu_MOD1.ceu ;
 await A;
 return 1;
 ]],
@@ -206,10 +207,10 @@ input void A;
 nothing
 ]]
 _G['/tmp/_ceu_MOD1.ceu'] = [[
-include /tmp/_ceu_MOD2.ceu;
+import /tmp/_ceu_MOD2.ceu;
 ]]
 Test { [[
-include /tmp/_ceu_MOD1.ceu ;
+import /tmp/_ceu_MOD1.ceu ;
 await A;
 return 1;
 ]],
@@ -223,11 +224,11 @@ _G['/tmp/_ceu_MOD1.ceu'] = [[
 input void A;
 ]]
 _G['/tmp/_ceu_MOD0.ceu'] = [[
-include /tmp/_ceu_MOD1.ceu ;
-include /tmp/_ceu_MOD2.ceu ;
+import /tmp/_ceu_MOD1.ceu ;
+import /tmp/_ceu_MOD2.ceu ;
 ]]
 Test { [[
-include /tmp/_ceu_MOD0.ceu ;
+import /tmp/_ceu_MOD0.ceu ;
 await A;
 return 1;
 ]],
@@ -242,11 +243,11 @@ nothing;
 input void A
 ]]
 _G['/tmp/_ceu_MOD0.ceu'] = [[
-include /tmp/_ceu_MOD2.ceu ;
-include /tmp/_ceu_MOD1.ceu ;
+import /tmp/_ceu_MOD2.ceu ;
+import /tmp/_ceu_MOD1.ceu ;
 ]]
 Test { [[
-include /tmp/_ceu_MOD0.ceu ;
+import /tmp/_ceu_MOD0.ceu ;
 await A;
 return 1;
 ]],
@@ -261,7 +262,22 @@ native do
 end
 ]]
 Test { [[
-include /tmp/_ceu_MOD1.ceu ;
+import /tmp/_ceu_MOD1.ceu ;
+return _f();
+]],
+    run = 10,
+}
+
+_G['/tmp/_ceu_MOD1.ceu'] = [[
+native do
+    int f () {
+        return 10;
+    }
+end
+]]
+Test { [[
+import /tmp/_ceu_MOD1.ceu ;
+import /tmp/_ceu_MOD1.ceu ;
 return _f();
 ]],
     run = 10,
@@ -277,7 +293,7 @@ native do
 end
 ]]
 Test { [[
-include /tmp/_ceu_MOD1.ceu ;
+import /tmp/_ceu_MOD1.ceu ;
 return _f();
 ]],
     run = false     -- TODO: catch gcc error

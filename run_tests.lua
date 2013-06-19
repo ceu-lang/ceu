@@ -205,14 +205,12 @@ STATS = {
 }
 ]])
 
---./run_tests.lua false  114.32s user 23.74s system 76% cpu 3:00.12 total
---./run_tests.lua false  108.37s user 22.98s system 86% cpu 2:31.85 total
---./run_tests.lua false  112.09s user 23.11s system 86% cpu 2:36.97 total
+--./run_tests.lua false  107.46s user 22.39s system 87% cpu 2:28.35 total
 
-assert(STATS.count  ==    1274)
+assert(STATS.count  ==    1275)
 assert(STATS.mem    ==       0)
-assert(STATS.trails ==    2328)
-assert(STATS.bytes  == 7496893)
+assert(STATS.trails ==    2329)
+assert(STATS.bytes  == 7504559)
 
 os.execute('rm -f /tmp/_ceu_*')
 

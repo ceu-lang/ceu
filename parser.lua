@@ -111,7 +111,7 @@ KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'native'
      + 'free'     + 'new'      + 'this'
      + 'spawn'
 --
-     + 'include'  + 'as'
+     + 'import'  --+ 'as'
 -- export / version
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
@@ -147,7 +147,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
              + V'Free'     + V'Spawn'
              + V'Nothing'
              + V'RawStmt'
-             + V'Include'
+             + V'Import'
              + V'CallStmt' -- last
              --+ EM'statement'-- (missing `_´?)'
              + EM'statement (usually a missing `var´ or C prefix `_´)'
@@ -198,7 +198,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
                         return (string.find(s, '%(.*%)')) and i, ...
                     end)
 
-    , Include = K'include' * ( C( (P(1)-m.S'\t\n\r ;')^1 )
+    , Import = K'import' * ( C( (P(1)-m.S'\t\n\r ;')^1 )
                              + EM'module' ) *S
 
     , Async   = K'async' * EV'VarList' * V'_Do'

@@ -1,7 +1,7 @@
 F = {
-    -- ignore top-level stmts from include's, except "Host"
+    -- ignore top-level stmts from import's, except "Host"
     Node = function (me)
-        local inc = _AST.iter'Include'()  -- inc[1] = Stmts #HOLE
+        local inc = _AST.iter'Import'()  -- inc[1] = Stmts #HOLE
         if inc then
             if me.tag == 'Host' then
                 inc.__par[#inc.__par+1] = me
