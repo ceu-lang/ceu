@@ -561,16 +561,16 @@ ceu_pool_init(&]]..pre..', '..n..', sizeof(CEU_'..node.cls.id..'), '
     end,
 
     Block_pos = function (me)
-        local blk = unpack(me)
+        local stmts = unpack(me)
         if CLS().is_ifc then
             return
         end
 
--- TODO: block?
-        if me.trails[1] ~= blk.trails[1] then
+-- TODO: try to remove this need
+        if me.trails[1] ~= stmts.trails[1] then
             LINE(me, [[
 /* switch to blk trail */
-_ceu_trl = &_ceu_org->trls[ ]]..blk.trails[1]..[[ ];
+_ceu_trl = &_ceu_org->trls[ ]]..stmts.trails[1]..[[ ];
 ]])
         end
         CONC(me, blk)

@@ -526,7 +526,7 @@ fprintf(stderr, "GO[%d]: evt=%d stk=%d [%d]\n", _ceu_seqno,
 
 #ifdef CEU_NEWS
                     /* org has been cleared to the end? */
-                    if ( _ceu_evt  == CEU_IN__CLEAR
+                    if ( _ceu_evt == CEU_IN__CLEAR
                     &&   _ceu_org->isDyn
                     &&   _ceu_org->n != 0 )  /* TODO: avoids LNKs */
                     {

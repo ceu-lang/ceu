@@ -342,6 +342,7 @@ return _f();
 }
 
 do return end
+--]===]
 -- OK: well tested
 
 Test { [[return(1);]],
@@ -17822,7 +17823,6 @@ return _V;
     run = 345;
 }
 
---]===]
 Test { [[
 native _V;
 native do
@@ -20846,7 +20846,8 @@ var T* t2 = new T;
 await START;
 return _V;
 ]],
-    run = 2,
+    --run = 2,  -- blk before org
+    run = 4,    -- org before blk
 }
 
 -- FREE
@@ -21185,7 +21186,8 @@ do
 end
 return _V;
 ]],
-    run = 1,
+    --run = 1,  -- blk before org
+    run = 10,   -- org before blk
 }
 
 Test { [[

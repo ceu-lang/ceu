@@ -53,9 +53,10 @@ F = {
         end
 
         -- pointer to my first org
-        -- [ IN__ORG ]
+        -- clear trail
+        -- [ CLR | IN__ORG | STMTS | FIN ]
         if me.trl_orgs then
-            me.trails_n = me.trails_n + 1
+            me.trails_n = me.trails_n + 1 + 1
         end
     end,
 
@@ -91,30 +92,31 @@ G = {
     end,
 
     Block_pre = function (me)
-        local blk = unpack(me)
+        local stmts = unpack(me)
 
-        -- [ B, 1, 1 ] (blk, orgs, fin)
+        -- [ 1, 1, S, 1 ] (clr, org0, stmts, fin)
 
         me.trails = me.trails or _AST.iter(pred)().trails
 
         local t0 = me.trails[1]
 
-        -- BLOCK (must be first, see CLEAR in code.lua)
-        blk.trails = { t0, t0+blk.trails_n-1 }
-            t0 = t0 + blk.trails_n
-
         -- ORGS (pointer to the first org here)
         -- (this is not the linked list from my parent)
         -- [ IN__ORGS_DOWN | fst | lst ]
         if me.trl_orgs then
+            t0 = t0 + 1                 -- clr
             me.trl_orgs = { t0, t0 }
-                t0 = t0 + 1
+                t0 = t0 + 1             -- org0
         end
+
+        -- BLOCK
+        stmts.trails = { t0, t0+stmts.trails_n-1 }
+            t0 = t0 + stmts.trails_n    -- stmts
 
         -- FINS (must be the last to proper nest fins)
         if me.fins then
             me.trl_fins  = { t0, t0 }
-                t0 = t0 + 1
+                t0 = t0 + 1             -- fin
         end
     end,
 
