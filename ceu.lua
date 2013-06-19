@@ -289,6 +289,11 @@ do
             if c.tuple then
                 str = str .. 'typedef struct {\n'
                 for i, f in ipairs(c.tuple) do
+                    if _TP.deref(f) then
+                        -- T* => void*
+                        -- T** => void**
+                        f = 'void'..string.match(f,'(%*+)')
+                    end
                     str = str..'\t'.._TP.c(f)..' _'..i..';\n'
                 end
                 str = str .. '} '.._TP.c(c.id)..';\n'

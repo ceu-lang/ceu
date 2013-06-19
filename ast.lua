@@ -613,10 +613,10 @@ C = {
             local tup = '_tup_'.._N
             _N = _N + 1
             local t = {
-                ext,
+                _AST.copy(ext),  -- find out 'TP' before traversing tup
                 node('Dcl_var')(ln, 'var', 'TP', false, tup)
             }
-            t[2].__ref = ext    -- TP is changed on env.lua
+            t[2].__ref = t[1]    -- TP is changed on env.lua
 
             for i, p in ipairs(ps) do
                 t[#t+1] = node('SetExp')(ln, '=',

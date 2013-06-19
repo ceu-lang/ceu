@@ -131,7 +131,49 @@ end
 
 
 --do return end
---]===]
+
+Test { [[
+input (int,int,int*) A;
+async do
+    emit A =>
+        (1, 1, null);
+end
+return 1;
+]],
+    run = 1;
+}
+
+Test { [[
+class Game with
+    event (int,int,int*) go;
+do
+end
+
+var Game game;
+emit game.go => (1, 1, null);
+return 1;
+]],
+    run = 1;
+}
+
+do return end
+
+-- TODO
+Test { [[
+input (int,int) A;
+par do
+    var int a, b;
+    every (a,b) = A do
+        return a+b;
+    end
+with
+    async do
+        emit A => (1,3);
+    end
+end
+]],
+    run = 4;
+}
 
 -- OK: under tests but supposed to work
 
@@ -299,7 +341,7 @@ return _f();
     run = false     -- TODO: catch gcc error
 }
 
-
+do return end
 -- OK: well tested
 
 Test { [[return(1);]],
@@ -17780,6 +17822,7 @@ return _V;
     run = 345;
 }
 
+--]===]
 Test { [[
 native _V;
 native do

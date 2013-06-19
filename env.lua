@@ -561,7 +561,7 @@ F = {
         local _, fr, to = unpack(me)
         to = to or _AST.iter'SetBlock'()[1]
         ASR(to.lval and _TP.contains(to.tp,fr.tp,true),
-                me, 'invalid attribution')
+                me, 'invalid attribution ('..to.tp..' vs '..fr.tp..')')
         ASR(me.read_only or (not to.fst.read_only),
                 me, 'read-only variable')
         ASR(not CLS().is_ifc, me, 'invalid attribution')
@@ -602,7 +602,7 @@ F = {
         ASR(to.lval and _TP.contains(to.tp,me.cls.id..'*')
                          -- refuses (x.ptr = new T;)
                      and _AST.isChild(CLS(),to.ref.var.blk),
-                me, 'invalid attribution')
+                me, 'invalid attribution ('..to.tp..' vs '..me.cls.id..'*)')
     end,
 
     SetSpawn = function (me)
@@ -790,7 +790,7 @@ F = {
             else
                 local var = ASR(cls.blk_ifc.vars[id], me,
                             'variable/event "'..id..'" is not declared')
-                me[3] = _AST.node('Var')(me.ln)
+                me[3] = _AST.node('Var')(me.ln, '$'..id)
                 me[3].var = var
 
                 me.org  = e1
