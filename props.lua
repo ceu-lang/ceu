@@ -31,7 +31,7 @@ local NO_async = {
 
 local NO_constr = {
     --Finalize=true, Finally=true,
-    Host=true, Return=true, Async=true,
+    Return=true, Async=true,
     ParEver=true, ParOr=true, ParAnd=true,
     AwaitS=true, AwaitExt=true, AwaitInt=true, AwaitN=true, AwaitT=true,
     EmitInt=true,

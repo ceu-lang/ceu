@@ -23,7 +23,7 @@ _AST = {
         while TOP[i] do
             local node = TOP[i]
             if node.tag == '_Import' then
-                url = node[1]
+                local url = node[1]
 
                 if not modules[url] then
                     modules[url] = true

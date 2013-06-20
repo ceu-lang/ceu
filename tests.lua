@@ -133,6 +133,23 @@ end
 --do return end
 
 Test { [[
+interface I with
+    var _char c;
+end
+class T with
+    interface I;
+do
+    this.c = 1;
+end
+var T t;
+var I* i = &t;
+return i:c == 1;
+]],
+    run = 1,
+}
+do return end
+
+Test { [[
 class T with
 do
 end
@@ -404,6 +421,25 @@ var int i = 10;
 return i;
 ]],
     env = 'ERR : tests.lua : line 4 : interface/class "T" is already declared',
+}
+
+_G['/tmp/_ceu_MOD1.ceu'] = [[
+interface T with
+    var int i;
+end
+var int i = 0;
+]]
+Test { [[
+//
+//
+interface T with
+    var int i;
+end
+import /tmp/_ceu_MOD1.ceu ;
+var int i = 10;
+return i;
+]],
+    env = 'ERR : /tmp/_ceu_MOD1.ceu : line 1 : interface/class "T" is already declared',
 }
 
 _G['/tmp/_ceu_MOD1.ceu'] = [[

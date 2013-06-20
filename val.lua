@@ -208,7 +208,7 @@ F =
                     local off = '(CEU.ifcs_flds['..org..'->cls]['
                                     .._ENV.ifcs.flds[me.var.id_ifc]
                                 ..'])'
-                    me.val = '(*(('..me.tp..'*)(((char*)('..org..'))+'..off..')))'
+                    me.val = '(*(('.._TP.c(me.tp)..'*)(((char*)('..org..'))+'..off..')))'
                 end
             else
                 if me.c then
