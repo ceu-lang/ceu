@@ -133,10 +133,72 @@ end
 --do return end
 
 Test { [[
+class T with
+do
+end
+var T** t := _malloc(10 * sizeof(T**));
+return 10;
+]],
+    run = 10;
+}
+
+Test { [[
+class T with
+    var int a;
+do
+    this.a = do return 1; end;
+end
+var T a;
+return a.a;
+]],
+    run = 1,
+}
+
+Test { [[
+event (int,int) e;
+emit e => (1,2,3);
+return 1;
+]],
+    env = 'line 2 : invalid attribution',
+}
+
+Test { [[
+event (int,void*) ptr;
+var void* p;
+var int i;
+do
+    (i,p) = await ptr;
+end
+return 1;
+]],
+    run = 1,
+}
+do return end
+
+Test { [[
 input (int,int,int*) A;
 async do
     emit A =>
         (1, 1, null);
+end
+return 1;
+]],
+    run = 1;
+}
+
+Test { [[
+class Game with
+    event (int,int,int*) go;
+do
+end
+
+var Game game;
+par/or do
+    var int a,b;
+    var int* c;
+    (a, b, c) = await game.go;
+with
+    nothing;
 end
 return 1;
 ]],
@@ -326,6 +388,44 @@ return _f();
 }
 
 _G['/tmp/_ceu_MOD1.ceu'] = [[
+interface T with
+    var int i;
+end
+var int i = 0;
+]]
+Test { [[
+//
+//
+import /tmp/_ceu_MOD1.ceu ;
+interface T with
+    var int i;
+end
+var int i = 10;
+return i;
+]],
+    env = 'ERR : tests.lua : line 4 : interface/class "T" is already declared',
+}
+
+_G['/tmp/_ceu_MOD1.ceu'] = [[
+interface Global with
+    var int i;
+end
+var int i = 0;
+]]
+Test { [[
+import /tmp/_ceu_MOD1.ceu ;
+interface Global with
+    var int i;
+end
+var int i = 10;
+return i;
+]],
+    run = 10,
+}
+
+do return end
+
+_G['/tmp/_ceu_MOD1.ceu'] = [[
 native do
     int f () {
         return 10
@@ -343,6 +443,7 @@ return _f();
 
 do return end
 --]===]
+
 -- OK: well tested
 
 Test { [[return(1);]],

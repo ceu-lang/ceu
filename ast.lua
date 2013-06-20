@@ -562,20 +562,21 @@ C = {
 
     _Set = function (ln, to, op, tag, p1, p2, p3)
         if op == ':=' then
-            ASR(tag=='SetExp', ln[2], 'invalid attribution')
+            ASR(tag=='SetExp', ln, 'invalid attribution')
         end
         if to.tag == 'VarList' then
-            ASR(tag=='SetAwait', ln[2], 'invalid attribution')
+            ASR(tag=='SetAwait', ln,
+                'invalid attribution (`await´ expected)')
 
             local tup = '_tup_'.._N
             _N = _N + 1
 
             local t = {
-                p1[1],
+                _AST.copy(p1[1]),  -- find out 'TP' before traversing tup
                 node('Dcl_var')(ln, 'var', 'TP*', false, tup),
                 node('SetAwait')(ln, op, p1, node('Var')(ln,tup)),
             }
-            t[2].__ref = p1[1] -- TP* is changed on env.lua
+            t[2].__ref = t[1] -- TP* is changed on env.lua
 
             for i, v in ipairs(to) do
                 t[#t+1] = node('SetExp')(ln, '=',

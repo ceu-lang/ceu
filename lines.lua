@@ -45,11 +45,7 @@ patt = (line + open + close + 1)^0
 function DBG (...)
     local t = {}
     for i=1, select('#',...) do
-        if select(i,...) == nil then
-            t[#t+1] = debug.traceback()
-        else
-            t[#t+1] = tostring( select(i,...) )
-        end
+        t[#t+1] = tostring( select(i,...) )
     end
     if #t == 0 then
         t = { [1]=debug.traceback() }
@@ -61,22 +57,22 @@ function MAX (v1, v2)
     return (v1 > v2) and v1 or v2
 end
 
-function WRN (cond, me, msg)
-    local ln = (type(me)=='number' and me) or me.ln[2]
+function WRN (cond, ln, msg)
+    ln = (_AST.isNode(ln) and ln.ln) or ln
     if not cond then
-        DBG('WRN : '.._LINES.url..' : line '..ln..' : '..msg)
+        DBG('WRN : '..ln[1]..' : line '..ln[2]..' : '..msg)
     end
     return cond
 end
-function ASR (cond, me, msg)
-    local ln = (type(me)=='number' and me) or me.ln[2]
-    if _CEU then
+function ASR (cond, ln, msg)
+    ln = (_AST.isNode(ln) and ln.ln) or ln
+    if _RUNTESTS and (not cond) then
+        return assert(false, 'ERR : '..ln[1]..' : line '..ln[2]..' : '..msg)
+    else
         if not cond then
-            DBG('ERR : '.._LINES.url..' : line '..ln..' : '..msg)
+            DBG('ERR : '..ln[1]..' : line '..ln[2]..' : '..msg)
             os.exit(1)
         end
         return cond
-    else
-        return assert(cond, 'ERR : '.._LINES.url..' : line '..ln..' : '..msg)
     end
 end

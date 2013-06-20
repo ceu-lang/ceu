@@ -205,7 +205,7 @@ STATS = {
 }
 ]])
 
---./run_tests.lua false  111.17s user 22.96s system 85% cpu 2:36.12 total
+--./run_tests.lua false  107.61s user 23.11s system 85% cpu 2:32.92 total
 
 assert(STATS.count  ==    1263)
 assert(STATS.mem    ==       0)

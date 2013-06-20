@@ -1,12 +1,19 @@
 F = {
-    -- ignore top-level stmts from import's, except "Host"
+    -- IMPORT: ignore top-level stmts & Global
     Node = function (me)
+        -- ignore top-level stmts, except "Host"
         local inc = _AST.iter'Import'()  -- inc[1] = Stmts #HOLE
         if inc then
             if me.tag == 'Host' then
                 inc.__par[#inc.__par+1] = me
             end
             return _AST.node('Nothing')(me.ln,false)
+        end
+    end,
+    Dcl_cls = function (me)
+        -- ignore Global if url~=main
+        if me[3]=='Global' and me.ln[1]~=_AST.root.ln[1] then
+            return _AST.node('Nothing')(me.ln)
         end
     end,
 ---
@@ -55,8 +62,8 @@ F = {
     _Continue = function (me)
         local _if  = _AST.iter('If')()
         local loop = _AST.iter('Loop')()
-        ASR(_if and loop,
-            me, 'invalid `continue´')
+        ASR(_if and loop, me,
+            'invalid `continue´')
 
         loop.continue = _if
         ASR( _if[3].tag=='Nothing'     and   -- no else

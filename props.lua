@@ -77,8 +77,8 @@ F = {
             ASR(not _AST.iter'Async'(), me,'not permitted inside `async´')
         end
         if NO_constr[me.tag] then
-            ASR(not _AST.iter'Dcl_constr'(),
-                    me,'not permitted inside a constructor')
+            ASR(not _AST.iter'Dcl_constr'(), me,
+                    'not permitted inside a constructor')
         end
     end,
 
@@ -265,8 +265,8 @@ F = {
         local _, _, to = unpack(me)
         local async = _AST.iter'Async'()
         if async and (not to) then
-            ASR( async.depth <= _AST.iter'SetBlock'().depth+1,
-                    me, 'invalid access from async')
+            ASR( async.depth <= _AST.iter'SetBlock'().depth+1, me,
+                    'invalid access from async')
         end
 
         if _AST.iter'BlockI'() then

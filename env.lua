@@ -367,8 +367,8 @@ F = {
         local tp = '_tceu'
         for i, v in ipairs(me) do
             local c = _ENV.c[v]
-            ASR(_TP.deref(v) or (c and (c.tag=='type' or c.tag=='unk')),
-                me, 'undeclared type `'..v..'´')
+            ASR(_TP.deref(v) or (c and (c.tag=='type' or c.tag=='unk')), me,
+                    'undeclared type `'..v..'´')
             if c then
                 c.tag = 'type'
             end
@@ -388,8 +388,8 @@ F = {
             WRN(false, me, 'event "'..id..'" is already declared')
             return
         end
-        ASR(tp=='void' or tp=='int' or _TP.deref(tp) or _TP.isTuple(tp),
-                me, 'invalid event type')
+        ASR(tp=='void' or tp=='int' or _TP.deref(tp) or _TP.isTuple(tp), me,
+                'invalid event type')
 
         if _TP.isTuple(tp) then
             tp = tp..'*'
@@ -426,8 +426,8 @@ F = {
         newtype(tp)
         ASR((not dim) or tonumber(dim.sval), me, 'invalid static expression')
         if pre == 'event' then
-            ASR(tp=='void' or tp=='int' or _TP.deref(tp) or _TP.isTuple(tp),
-                    me, 'invalid event type')
+            ASR(tp=='void' or tp=='int' or _TP.deref(tp) or _TP.isTuple(tp), me,
+                    'invalid event type')
             if _TP.isTuple(tp) then
                 tp = tp..'*'
             end
@@ -534,8 +534,8 @@ F = {
         local var = int.var
         ASR(var and var.isEvt, me,
                 'event "'..(var and var.id or '?')..'" is not declared')
-        ASR(int.tp=='void' or  (ps and _TP.contains(int.var.tp,ps.tp,true)),
-                me, 'invalid emit')
+        ASR(int.tp=='void' or  (ps and _TP.contains(int.var.tp,ps.tp,true)), me,
+                'invalid emit')
     end,
 
     EmitExt = function (me)
@@ -547,11 +547,11 @@ F = {
         me.tp = 'int'
 
         if ps then
-            ASR(_TP.contains(ext.evt.tp,ps.tp,true),
-                    me, "non-matching types on `emit´")
+            ASR(_TP.contains(ext.evt.tp,ps.tp,true), me,
+                "non-matching types on `emit´")
         else
-            ASR(ext.evt.tp=='void',
-                    me, "missing parameters on `emit´")
+            ASR(ext.evt.tp=='void', me,
+                "missing parameters on `emit´")
         end
     end,
 
@@ -560,10 +560,10 @@ F = {
     SetExp = function (me)
         local _, fr, to = unpack(me)
         to = to or _AST.iter'SetBlock'()[1]
-        ASR(to.lval and _TP.contains(to.tp,fr.tp,true),
-                me, 'invalid attribution ('..to.tp..' vs '..fr.tp..')')
-        ASR(me.read_only or (not to.fst.read_only),
-                me, 'read-only variable')
+        ASR(to.lval and _TP.contains(to.tp,fr.tp,true), me,
+                'invalid attribution ('..to.tp..' vs '..fr.tp..')')
+        ASR(me.read_only or (not to.fst.read_only), me,
+                'read-only variable')
         ASR(not CLS().is_ifc, me, 'invalid attribution')
     end,
 
@@ -588,10 +588,9 @@ F = {
 
     Free = function (me)
         local exp = unpack(me)
-        local id = ASR(_TP.deref(exp.tp),
-                        me, 'invalid `free´')
-        me.cls = ASR( _ENV.clss[id],
-                      me, 'class "'..id..'" is not declared')
+        local id = ASR(_TP.deref(exp.tp), me, 'invalid `free´')
+        me.cls = ASR( _ENV.clss[id], me,
+                        'class "'..id..'" is not declared')
     end,
 
     SetNew = function (me)
@@ -614,8 +613,8 @@ F = {
     Spawn = function (me, id, max, constr, blk)
         if not id then
             id, max, constr = unpack(me)
-            blk = ASR(_AST.iter'Do'(),
-                        me, '`spawn´ requires enclosing `do ... end´')
+            blk = ASR(_AST.iter'Do'(), me,
+                        '`spawn´ requires enclosing `do ... end´')
             blk = blk[1]
         end
 
@@ -673,8 +672,8 @@ F = {
             me.c = { tag='func', id=id, mod=nil }
         end
 
-        ASR((not _OPTS.c_calls) or _OPTS.c_calls[id],
-            me, 'native calls are disabled')
+        ASR((not _OPTS.c_calls) or _OPTS.c_calls[id], me,
+                'native calls are disabled')
 
         if not me.c then
             me.c = { tag='func', id=id, mod=nil }
@@ -700,8 +699,8 @@ F = {
     Op2_int_int = function (me)
         local op, e1, e2 = unpack(me)
         me.tp  = 'int'
-        ASR(_TP.isNumeric(e1.tp,true) and _TP.isNumeric(e2.tp,true),
-            me, 'invalid operands to binary "'..op..'"')
+        ASR(_TP.isNumeric(e1.tp,true) and _TP.isNumeric(e2.tp,true), me,
+                'invalid operands to binary "'..op..'"')
 
         if e1.sval and e2.sval then
             local v = loadstring('return '..e1.sval..op..e2.sval)
@@ -722,8 +721,8 @@ F = {
     Op1_int = function (me)
         local op, e1 = unpack(me)
         me.tp  = 'int'
-        ASR(_TP.isNumeric(e1.tp,true),
-                me, 'invalid operand to unary "'..op..'"')
+        ASR(_TP.isNumeric(e1.tp,true), me,
+                'invalid operand to unary "'..op..'"')
         if e1.sval then
             local v = loadstring(op..e1.sval)
             me.sval = v and tonumber(v())
@@ -735,8 +734,8 @@ F = {
     Op2_same = function (me)
         local op, e1, e2 = unpack(me)
         me.tp  = 'int'
-        ASR(_TP.max(e1.tp,e2.tp,true),
-                me, 'invalid operands to binary "'..op..'"')
+        ASR(_TP.max(e1.tp,e2.tp,true), me,
+                'invalid operands to binary "'..op..'"')
     end,
     ['Op2_=='] = 'Op2_same',
     ['Op2_!='] = 'Op2_same',
@@ -808,7 +807,7 @@ F = {
             local tup = _TP.isTuple(e1.tp)
             if tup then
                 local n = tonumber(string.match(id,'(%d+)'))
-                me.tp = tup[n]
+                me.tp = tup[n] or 'void'
             else
                 me.tp = '_'
             end
