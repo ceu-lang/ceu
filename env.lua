@@ -477,7 +477,7 @@ F = {
         ASR(var, me, 'variable/event "'..id..'" is not declared')
         me.var  = var
         me.tp   = var.tp
-        me.lval = (not var.arr) and (not var.cls)
+        me.lval = (not var.arr) and (not var.cls) and var
         me.ref  = me
         me.fst  = var
         if var.isEvt then
@@ -562,7 +562,7 @@ F = {
         to = to or _AST.iter'SetBlock'()[1]
         ASR(to.lval and _TP.contains(to.tp,fr.tp,true), me,
                 'invalid attribution ('..to.tp..' vs '..fr.tp..')')
-        ASR(me.read_only or (not to.fst.read_only), me,
+        ASR(me.read_only or (not to.lval.read_only), me,
                 'read-only variable')
         ASR(not CLS().is_ifc, me, 'invalid attribution')
     end,
@@ -691,7 +691,7 @@ F = {
         ASR(tp and _TP.isNumeric(idx.tp,true), me, 'invalid array index')
         me.tp = tp
 --DBG('idx', arr.tag, arr.lval)
-        me.lval = (not _ENV.clss[tp])
+        me.lval = (not _ENV.clss[tp]) and arr
         me.ref  = arr.ref
         me.fst  = arr.fst
     end,
@@ -754,7 +754,7 @@ F = {
     ['Op1_*'] = function (me)
         local op, e1 = unpack(me)
         me.tp   = _TP.deref(e1.tp, true)
-        me.lval = e1.lval
+        me.lval = e1.lval and e1
         me.ref  = e1.ref
         me.fst  = e1.fst
         ASR(me.tp, me, 'invalid operand to unary "*"')
@@ -795,7 +795,7 @@ F = {
                 me.org  = e1
                 me.var  = var
                 me.tp   = var.tp
-                me.lval = (not var.arr) and (not var.cls)
+                me.lval = (not var.arr) and (not var.cls) and var
                 me.ref  = me[3]
                 if var.isEvt then
                     me.evt    = me.var
@@ -831,14 +831,14 @@ F = {
         ASR((not c) or c.tag~='type', me,
             'native variable/function "'..id..'" is not declared')
         me.tp   = '_'
-        me.lval = true
+        me.lval = me
         me.ref  = me
         me.fst  = '_'
         me.c    = c
     end,
     RawExp = function (me)
         me.tp   = '_'
-        me.lval = true
+        me.lval = me
         me.ref  = me
         me.fst  = '_'
     end,

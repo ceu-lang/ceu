@@ -128,9 +128,49 @@ end
 ]],
     env = 'ERR : line 5 : undeclared class',
 }
-
-
 --do return end
+
+
+-- OK: under tests but supposed to work
+
+Test { [[
+interface Global with
+    var G* g;
+end
+var G* g;
+return 1;
+]],
+    env = 'line 2 : undeclared type `G´',
+}
+
+Test { [[
+interface Global with
+    event (G*,int) g;
+end
+event (G*,int) g;
+return 1;
+]],
+    env = 'line 2 : undeclared type `G´',
+}
+
+Test { [[
+class T with
+    var int a;
+do
+end
+
+do
+    loop t, T* do
+        t:a = 1;
+    end
+end
+
+return 10;
+]],
+    run = 10;
+}
+
+do return end
 
 Test { [[
 interface I with
@@ -147,7 +187,6 @@ return i:c == 1;
 ]],
     run = 1,
 }
-do return end
 
 Test { [[
 class T with
@@ -253,8 +292,6 @@ end
 ]],
     run = 4;
 }
-
--- OK: under tests but supposed to work
 
 Test { [[
 import;
@@ -479,6 +516,7 @@ return _f();
 
 do return end
 --]===]
+
 
 -- OK: well tested
 
