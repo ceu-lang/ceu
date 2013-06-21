@@ -55,7 +55,7 @@ Test = function (t)
 
     local ok, msg = pcall(_AST.f, 'tests.lua', source)
     if not ok then
-        assert(string.find(msg, T.ast, nil, true), tostring(msg))
+        assert(T.ast and string.find(msg, T.ast, nil, true), tostring(msg))
         return
     end
 
