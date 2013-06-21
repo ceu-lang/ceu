@@ -63,7 +63,8 @@ F = {
     Loop = function (me)
         local body = unpack(me)
         SAME(me, body)
-        local isTight = (not _AST.iter'Async'()) and (not body.tl_blocks)
+        local isTight = (not _AST.iter(_AST.pred_async)())
+                            and (not body.tl_blocks)
                             and (not me.isBounded)
         WRN(not isTight, me, 'tight loop')
         _TIGHT = _TIGHT or isTight
@@ -80,6 +81,7 @@ F = {
         me.tl_blocks  = true
     end,
 
+    Thread = 'Async',
     Async = function (me)
         local _,body = unpack(me)
         SAME(me, body)

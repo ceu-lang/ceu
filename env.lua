@@ -105,8 +105,8 @@ end
 
 function newvar (me, blk, pre, tp, dim, id)
     for stmt in _AST.iter() do
-        if stmt.tag == 'Async' then
-            break
+        if stmt.tag=='Async' or stmt.tag=='Thread' then
+            break   -- search until Async/Thread
         elseif stmt.tag == 'Block' then
             for _, var in ipairs(stmt.vars) do
                 --ASR(var.id~=id or var.blk~=blk, me,
@@ -251,10 +251,10 @@ F = {
     Block_pre = function (me)
         me.vars = {}
         local async = _AST.iter()()
-        if async.tag == 'Async' then
+        if async.tag=='Async' or async.tag=='Thread' then
             local vars, blk = unpack(async)
             if vars then
-                for _, n in ipairs(vars) do
+                for _, n in ipairs(vars) do -- create new variables for params
                     local var = n.var
                     ASR(not var.arr, vars, 'invalid argument')
                     n.new = newvar(vars, blk, 'var', var.tp, nil, var.id)

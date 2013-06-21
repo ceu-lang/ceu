@@ -113,6 +113,7 @@ KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'native'
 --
      + 'import'  --+ 'as'
 -- export / version
+     + 'thread'
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
@@ -152,7 +153,8 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
              --+ EM'statement'-- (missing `_´?)'
              + EM'statement (usually a missing `var´ or C prefix `_´)'
 
-    , _StmtB = V'Do'    + V'Async'  + V'Host'
+    , _StmtB = V'Do'    + V'Host'
+             + V'Async' + V'Thread'
              + V'ParOr' + V'ParAnd'
              + V'If'    + V'Loop'   + V'_Every'  + V'_Iter'
              + V'Pause'
@@ -162,8 +164,8 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , _LstStmt  = V'_Return' + V'Break' + V'_Continue' + V'AwaitN'
     , _LstStmtB = V'ParEver' + V'_Continue'
 
-    , _SetBlock = ( V'Do'     + V'Async' +
-                    V'ParEver' + V'If'   + V'Loop' + V'_Every' )
+    , _SetBlock = ( V'Do'      + V'Async' + V'Thread'
+                  + V'ParEver' + V'If'    + V'Loop' + V'_Every' )
 
     , _Set  = (V'_Exp' + V'VarList') * V'_Sets'
     , _Sets = (CK'='+CK':=') * (
@@ -201,7 +203,8 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , Import = K'import' * ( C( (P(1)-m.S'\t\n\r ;')^1 )
                              + EM'module' ) *S
 
-    , Async   = K'async' * EV'VarList' * V'_Do'
+    , Thread  = K'async' * K'thread'    * EV'VarList' * V'_Do'
+    , Async   = K'async' * (-P'thread') * EV'VarList' * V'_Do'
     , VarList = ( K'(' * EV'Var' * (EK',' * EV'Var')^0 * EK')' )^-1
 
     , _Return = K'return' * EV'_Exp'

@@ -3,6 +3,7 @@ _PROPS = {
     has_wclocks = false,
     has_ints    = false,
     has_asyncs  = false,
+    has_threads = false,
     has_orgs    = false,
     has_news    = false,
     has_news_pool   = false,
@@ -14,7 +15,7 @@ _PROPS = {
 
 local NO_fin = {
     Finalize=true, Finally=true,
-    Host=true, Return=true, Async=true,
+    Host=true, Return=true, Async=true, Thread=true,
     ParEver=true, ParOr=true, ParAnd=true,
     AwaitS=true, AwaitExt=true, AwaitInt=true, AwaitN=true, AwaitT=true,
     EmitInt=true,
@@ -22,7 +23,7 @@ local NO_fin = {
 }
 
 local NO_async = {
-    Async=true,
+    Async=true, Thread=true,
     ParEver=true, ParOr=true, ParAnd=true,
     AwaitS=true, AwaitExt=true, AwaitInt=true, AwaitN=true, AwaitT=true,
     EmitInt=true,
@@ -31,7 +32,7 @@ local NO_async = {
 
 local NO_constr = {
     --Finalize=true, Finally=true,
-    Return=true, Async=true,
+    Return=true, Async=true, Thread=true,
     ParEver=true, ParOr=true, ParAnd=true,
     AwaitS=true, AwaitExt=true, AwaitInt=true, AwaitN=true, AwaitT=true,
     EmitInt=true,
@@ -74,7 +75,8 @@ F = {
                 'not permitted inside `finalize´')
         end
         if NO_async[me.tag] then
-            ASR(not _AST.iter'Async'(), me,'not permitted inside `async´')
+            ASR(not _AST.iter(_AST.pred_async)(), me,
+                    'not permitted inside `async´')
         end
         if NO_constr[me.tag] then
             ASR(not _AST.iter'Dcl_constr'(), me,
@@ -148,7 +150,7 @@ F = {
                 'not permitted inside `finalize´')
         -- TODO: same for return
 
-        local async = _AST.iter'Async'()
+        local async = _AST.iter(_AST.pred_async)()
         if async then
             local loop = _AST.iter'Loop'()
             ASR(loop.depth>async.depth, me, '`break´ without loop')
@@ -167,7 +169,7 @@ F = {
 
         NEEDS_CLR(blk)
 
-        local async = _AST.iter'Async'()
+        local async = _AST.iter(_AST.pred_async)()
         if async then
             local setblk = _AST.iter'SetBlock'()
             ASR(async.depth<=setblk.depth+1, me, '`return´ without block')
@@ -195,6 +197,9 @@ F = {
 
     Async = function (me)
         _PROPS.has_asyncs = true
+    end,
+    Thread = function (me)
+        _PROPS.has_threads = true
     end,
 
     Pause = function (me)
@@ -251,19 +256,19 @@ F = {
     end,
 
     EmitExt = function (me)
-        if _AST.iter'Async'() then
+        if _AST.iter(_AST.pred_async)() then
             ASR(me[1].evt.pre=='input',  me, 'not permitted inside `async´')
         else
             ASR(me[1].evt.pre=='output', me, 'not permitted outside `async´')
         end
     end,
     EmitT = function (me)
-        ASR(_AST.iter'Async'(), me,'not permitted outside `async´')
+        ASR(_AST.iter(_AST.pred_async)(), me,'not permitted outside `async´')
     end,
 
     SetExp = function (me)
         local _, _, to = unpack(me)
-        local async = _AST.iter'Async'()
+        local async = _AST.iter(_AST.pred_async)()
         if async and (not to) then
             ASR( async.depth <= _AST.iter'SetBlock'().depth+1, me,
                     'invalid access from async')
@@ -280,7 +285,7 @@ F = {
     end,
 
     Var = function (me)
-        local async = _AST.iter'Async'()
+        local async = _AST.iter(_AST.pred_async)()
         if async then
             ASR(_AST.iter'VarList'() or         -- param list
                 me.ret or                       -- var assigned on return

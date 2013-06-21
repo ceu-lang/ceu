@@ -71,7 +71,7 @@ F = {
     end,
 
     Loop_pre = function (me)
-        if (me.noAwtsEmts and (not _AST.iter'Async'())) or
+        if (me.noAwtsEmts and (not _AST.iter(_AST.pred_async)())) or
             me.isAwaitUntil then
             return      -- OK: (tight loop outside Async) or (await ... until)
         end

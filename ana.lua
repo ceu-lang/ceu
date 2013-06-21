@@ -194,6 +194,7 @@ F = {
         local blk = me[1]
         if   (not blk.ana.pos[false])
         and  (me[1].tag ~= 'Async')     -- async is assumed to terminate
+        and  (me[1].tag ~= 'Thread')    -- async is assumed to terminate
         then
             --_ANA.ana.reachs = _ANA.ana.reachs + 1
             WRN( INC(me, 'reachs'),
@@ -217,6 +218,7 @@ F = {
         end
     end,
 
+    Thread = 'Async',
     Async = function (me)
         if me.ana.pre[false] then
             me.ana.pos = COPY(me.ana.pre)

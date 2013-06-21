@@ -193,6 +193,14 @@ tceu CEU = {
     {}                          /* TODO: o q ele gera? */
 };
 
+/* THREADS bodies (C functions) - they access global "CEU" */
+#ifdef CEU_THREADS
+#include <pthread.h>
+=== THREADS_C ===
+#if 0
+#endif
+#endif
+
 /*#pragma pack(pop) */
 
 /**********************************************************************/

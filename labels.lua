@@ -113,6 +113,7 @@ F = {
         me.lbl_out = new{'ParAnd_out'}
     end,
 
+    Thread = 'Async',
     Async = function (me)
         me.lbl = new{'Async'}
     end,

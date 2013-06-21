@@ -91,6 +91,10 @@ function _AST.node (tag, min)
 end
 local node = _AST.node
 
+function _AST.pred_async (me)
+    local tag = me.tag
+    return tag=='Async' or tag=='Thread'
+end
 function _AST.pred_par (me)
     local tag = me.tag
     return tag=='ParOr' or tag=='ParAnd' or tag=='ParEver'
@@ -254,6 +258,7 @@ C = {
     end,
 
     Async   = node('Async'),
+    Thread  = node('Thread'),
     VarList = function (ln, ...)
         local t = { ... }
         for i, var in ipairs(t) do
