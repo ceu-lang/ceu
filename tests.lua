@@ -131,8 +131,137 @@ end
     env = 'ERR : line 5 : undeclared class',
 }
 --do return end
+--]===]
 
 -- OK: under tests but supposed to work
+
+Test { [[
+var int  v1=10, v2=5;
+var int* p1 = &v1;
+var int* p2 = &v2;
+
+par/and do
+    async thread (v1, p1) do
+        *p1 = v1 + v1;
+    end
+with
+    async thread (v2, p2) do
+        *p2 = v2 + v2;
+    end
+end
+return v1+v2;
+]],
+    run = 30,
+}
+
+Test { [[
+var int  v1, v2;
+var int* p1 = &v1;
+var int* p2 = &v2;
+
+native nohold _fprintf(), _stderr;
+native do
+    int calc ()
+    {
+        int ret, i, j;
+        ret = 0;
+        for (i=0; i<10; i++) {
+            for (j=0; j<10; j++) {
+                ret = ret + i + j;
+            }
+        }
+        printf("ret = %d\n", ret);
+        return ret;
+    }
+end
+
+par/and do
+    async thread (p1) do
+        *p1 = _calc();
+    end
+with
+    async thread (p2) do
+        *p2 = _calc();
+    end
+end
+_assert(v1 == v2);
+return v1;
+]],
+    run = 900,
+}
+
+Test { [[
+var int  v1, v2;
+var int* p1 = &v1;
+var int* p2 = &v2;
+
+native nohold _fprintf(), _stderr;
+par/and do
+    async thread (p1) do
+        var int ret = 0;
+        loop i, 10 do
+            loop j, 10 do
+                ret = ret + i + j;
+            end
+        end
+        _printf("ret = %d\n", ret);
+        *p1 = ret;
+    end
+with
+    async thread (p2) do
+        var int ret = 0;
+        loop i, 10 do
+            loop j, 10 do
+                ret = ret + i + j;
+            end
+        end
+        _printf("ret = %d\n", ret);
+        *p2 = ret;
+    end
+end
+_assert(v1 == v2);
+return v1;
+]],
+    run = 900,
+}
+do return end
+
+Test { [[
+var int  v1, v2;
+var int* p1 = &v1;
+var int* p2 = &v2;
+
+native nohold _fprintf(), _stderr;
+native do
+    int calc ()
+    {
+        int ret, i, j;
+        ret = 0;
+        for (i=0; i<50000; i++) {
+            for (j=0; j<50000; j++) {
+                ret = ret + i + j;
+            }
+        }
+        printf("ret = %d\n", ret);
+        return ret;
+    }
+end
+
+par/and do
+    async thread (p1) do
+        *p1 = _calc();
+    end
+with
+    async thread (p2) do
+        *p2 = _calc();
+    end
+end
+_assert(v1 == v2);
+return v1;
+]],
+    --run = 1066784512,
+    run = false,
+}
 
 Test { [[
 var int  v1, v2;
@@ -148,6 +277,7 @@ par/and do
                 ret = ret + i + j;
             end
         end
+        _printf("ret = %d\n", ret);
         *p1 = ret;
     end
 with
@@ -158,22 +288,24 @@ with
                 ret = ret + i + j;
             end
         end
+        _printf("ret = %d\n", ret);
         *p2 = ret;
     end
 end
-_fprintf(_stderr,"tc\n");
 _assert(v1 == v2);
 return v1;
 ]],
-    run = 1066784512,
-    --run = false,
+    --run = 1066784512,
+    run = false,
 -- thr.c
 --./a.out  17.41s user 0.00s system 180% cpu 9.629 total
--- me
---./r.lua  26.62s user 0.05s system 186% cpu 14.304 total
-
-
+-- me (isTmp=true)
+--./a.out  16.80s user 0.02s system 176% cpu 9.525 total
+-- me (isTmp=false)
+--./a.out  30.36s user 0.04s system 173% cpu 17.476 total
 }
+
+do return end
 
 Test { [[
 var int  a=10, b=5;
@@ -601,7 +733,6 @@ return _f();
 }
 
 do return end
---]===]
 
 -- OK: well tested
 

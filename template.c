@@ -172,7 +172,8 @@ typedef struct {
 #endif
 
 #ifdef CEU_THREADS
-    pthread_mutex_t mutex;
+    pthread_mutex_t threads_mutex;
+    pthread_cond_t  threads_cond;
 #endif
 
     CEU_Main    mem;
@@ -203,6 +204,7 @@ tceu CEU = {
 #endif
 #ifdef CEU_THREADS
     PTHREAD_MUTEX_INITIALIZER,
+    PTHREAD_COND_INITIALIZER,
 #endif
     {}                          /* TODO: o q ele gera? */
 };
@@ -427,6 +429,9 @@ void ceu_go_all (int* ret_end)
 #ifdef CEU_THREADS
     for (;;) {
         if (ret_end!=NULL && *ret_end) goto _CEU_END_;
+        pthread_mutex_lock(&CEU.threads_mutex);
+        pthread_cond_wait(&CEU.threads_cond, &CEU.threads_mutex);
+        pthread_mutex_unlock(&CEU.threads_mutex);
     }
 #endif
 

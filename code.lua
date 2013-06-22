@@ -1136,9 +1136,10 @@ void* _ceu_thread_]]..me.n..[[ (void* __ceu_org) {
     {
         tceu_evtp p;
         p.thread = pthread_self();
-        /*pthread_mutex_lock(&CEU.mutex);*/
+        pthread_mutex_lock(&CEU.threads_mutex);
         ceu_go(CEU_IN__THREAD, p);
-        /*pthread_mutex_unlock(&CEU.mutex);*/
+        pthread_cond_signal(&CEU.threads_cond);
+        pthread_mutex_unlock(&CEU.threads_mutex);
     }
     return NULL;
 }
