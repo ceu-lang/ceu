@@ -11,6 +11,10 @@ function iter (n)
 end
 
 function INS (acc, exists)
+    if _AST.iter'Thread'() then
+        acc.md = 'no'                       -- no acc inside threads
+    end
+
     if not exists then
         acc.cls = CLS()                     -- cls that acc resides
     end
@@ -19,6 +23,13 @@ function INS (acc, exists)
         n.ana.accs[#n.ana.accs+1] = acc
     end
     return acc
+end
+
+function CHG (acc, md)
+    if _AST.iter'Thread'() then
+        return
+    end
+    acc.md = md
 end
 
 F = {
@@ -105,7 +116,7 @@ F = {
     Op2_call = function (me)
         local _, f, exps = unpack(me)
         local ps = {}
-        f.ref.acc.md = 'cl'
+        CHG(f.ref.acc, 'cl')
         for i, exp in ipairs(exps) do
             local tp = _TP.deref(exp.tp, true)
             if tp then
@@ -113,7 +124,7 @@ F = {
                 if v then   -- ignore constants
 --DBG(exp.tag, exp.ref)
                     v.acc.any = exp.lval    -- f(&x) // a[N] f(a) // not "any"
-                    v.acc.md  = (me.c and me.c.mod=='pure' and 'rd') or 'wr'
+                    CHG(v.acc, (me.c and me.c.mod=='pure' and 'rd') or 'wr')
                     v.acc.tp  = tp
                 end
             end
@@ -122,7 +133,7 @@ F = {
 
     EmitInt = function (me)
         local e1, e2 = unpack(me)
-        e1.ref.acc.md   = 'tr'
+        CHG(e1.ref.acc, 'tr')
         e1.ref.acc.node = me        -- emtChk
         me.emtChk = false
     end,
@@ -130,10 +141,10 @@ F = {
     SetAwait = 'SetExp',
     SetExp = function (me)
         local _,_,to = unpack(me)
-        to.ref.acc.md = 'wr'
+        CHG(to.ref.acc, 'wr')
     end,
     AwaitInt = function (me)
-        me[1].ref.acc.md = 'aw'
+        CHG(me[1].ref.acc, 'aw')
         F.AwaitExt(me)  -- flow
     end,
 
@@ -142,7 +153,7 @@ F = {
         me.ref.acc.tp  = _TP.deref(me.ref.acc.tp,true)
     end,
     ['Op1_&'] = function (me)
-        me.ref.acc.md = 'no'
+        CHG(me.ref.acc, 'no')
     end,
 
     ['Op2_.'] = function (me)

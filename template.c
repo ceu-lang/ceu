@@ -171,6 +171,10 @@ typedef struct {
     tceu_lst    lst; /* segfault printf */
 #endif
 
+#ifdef CEU_THREADS
+    pthread_mutex_t mutex;
+#endif
+
     CEU_Main    mem;
 } tceu;
 
@@ -196,6 +200,9 @@ tceu CEU = {
 #endif
 #ifdef CEU_DEBUG
     {},
+#endif
+#ifdef CEU_THREADS
+    PTHREAD_MUTEX_INITIALIZER,
 #endif
     {}                          /* TODO: o q ele gera? */
 };

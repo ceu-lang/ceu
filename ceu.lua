@@ -279,7 +279,7 @@ do
     end
 
     -- TODO: goto _OPTS
-    str = str .. '#define CEU_DEBUG_TRAILS\n'
+    --str = str .. '#define CEU_DEBUG_TRAILS\n'
 
     if _OPTS.run_tests then
         str = str .. '#define CEU_RUNTESTS\n'

@@ -31,7 +31,7 @@ F =
         for _, var in ipairs(me.vars) do
             if not var.isEvt then
                 if var.isTmp then
-                    var.val = '__ceu_'..var.id..'_'..string.gsub(tostring(var),': ','')
+                    var.val = '__ceu_'..var.id..'_'..var.n
                 else
                     var.val = CUR(me, var.id_)
                 end

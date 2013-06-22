@@ -11,11 +11,16 @@ F = {
             return                  -- only normal vars can be tmp
         end
         VARS[var] = true
-        --var.isTmp = true          -- TODO: always "false" by now
+        var.isTmp = true          -- TODO: always "false" by now
     end,
 
     Var = function (me)
         local var = me.var
+
+        if _AST.iter'Thread'() then
+            return                  -- all threads vars are "tmp"
+        end
+
         if var.isEvt or var.cls then
             var.isTmp = false
             return                  -- only normal vars can be tmp

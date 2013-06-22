@@ -801,7 +801,7 @@ for (;;) {
         LINE(me, [[
 }
 ]])
-        if me.has_break then
+        if me.has_break and (not _AST.iter(_AST.pred_async)()) then
             CLEAR(me)
             LINE(me, [[
 /* switch to 1st trail */
@@ -1136,7 +1136,9 @@ void* _ceu_thread_]]..me.n..[[ (void* __ceu_org) {
     {
         tceu_evtp p;
         p.thread = pthread_self();
+        /*pthread_mutex_lock(&CEU.mutex);*/
         ceu_go(CEU_IN__THREAD, p);
+        /*pthread_mutex_unlock(&CEU.mutex);*/
     }
     return NULL;
 }

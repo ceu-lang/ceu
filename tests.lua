@@ -131,12 +131,51 @@ end
     env = 'ERR : line 5 : undeclared class',
 }
 --do return end
---]===]
 
 -- OK: under tests but supposed to work
 
 Test { [[
+var int  v1, v2;
+var int* p1 = &v1;
+var int* p2 = &v2;
+
 native nohold _fprintf(), _stderr;
+par/and do
+    async thread (p1) do
+        var int ret = 0;
+        loop i, 50000 do
+            loop j, 50000 do
+                ret = ret + i + j;
+            end
+        end
+        *p1 = ret;
+    end
+with
+    async thread (p2) do
+        var int ret = 0;
+        loop i, 50000 do
+            loop j, 50000 do
+                ret = ret + i + j;
+            end
+        end
+        *p2 = ret;
+    end
+end
+_fprintf(_stderr,"tc\n");
+_assert(v1 == v2);
+return v1;
+]],
+    run = 1066784512,
+    --run = false,
+-- thr.c
+--./a.out  17.41s user 0.00s system 180% cpu 9.629 total
+-- me
+--./r.lua  26.62s user 0.05s system 186% cpu 14.304 total
+
+
+}
+
+Test { [[
 var int  a=10, b=5;
 var int* p = &b;
 async thread do
@@ -147,7 +186,6 @@ return a + b + *p;
 }
 
 Test { [[
-native nohold _fprintf(), _stderr;
 var int ret =
     async thread do
     end;
@@ -157,7 +195,6 @@ return (ret == 0);
 }
 
 Test { [[
-native nohold _fprintf(), _stderr;
 var int  a=10, b=5;
 var int* p = &b;
 async thread (a, p) do
@@ -170,7 +207,6 @@ return a + b + *p;
 }
 
 Test { [[
-native nohold _fprintf(), _stderr;
 var int  a=10, b=5;
 var int* p = &b;
 var int ret =
@@ -182,7 +218,6 @@ return (ret==0) + a + b + *p;
 ]],
     run = 41,
 }
-do return end
 
 Test { [[
 interface Global with
@@ -566,6 +601,7 @@ return _f();
 }
 
 do return end
+--]===]
 
 -- OK: well tested
 
