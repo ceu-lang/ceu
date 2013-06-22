@@ -1098,12 +1098,10 @@ case ]]..me.lbl.id..[[:;
 
         -- spawn thread
         LINE(me, [[
-]]..me.thread_on..[[  = malloc(sizeof(s8));
-*]]..me.thread_on..[[ = 1;
+]]..me.thread_st..[[  = malloc(sizeof(s8));
+*]]..me.thread_st..[[ = 0;  /* ini */
 {
-    static tceu_threads_p p;
-    p.org = _ceu_org;
-    p.on  = ]]..me.thread_on..[[;
+    tceu_threads_p p = { _ceu_org, ]]..me.thread_st..[[ };
 ]])
         local to = _AST.iter'SetThread'()
         if to then
@@ -1111,6 +1109,12 @@ case ]]..me.lbl.id..[[:;
         end
         LINE(me, [[
     pthread_create(&]]..me.thread_id..[[, NULL, _ceu_thread_]]..me.n..[[, &p);
+
+    /* wait for "p" to be copied inside the thread */
+    /* i'm already with the mutex (inside sync) */
+    pthread_cond_wait(&CEU.threads_cond, &CEU.threads_mutex);
+    /* i want to keep the mutex (back to sync) */
+    *(p.st) = 1;    /* go: now thread may also execute */
 }
 ]])
 
@@ -1132,28 +1136,39 @@ case ]]..me.lbl.id..[[:;
 ]])
         DEBUG_TRAILS(me)
 
+        -- thread function
         local tp = _TP.c(CLS().id)
         _CODE.threads = _CODE.threads .. [[
-void* _ceu_thread_]]..me.n..[[ (void* __ceu_p) {
-    tceu_threads_p* _ceu_p = (tceu_threads_p*) __ceu_p;
-    tceu_org* _ceu_org = _ceu_p->org;
+void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
+{
+    /* start thread */
+        /* copy param */
+    tceu_threads_p _ceu_p = *((tceu_threads_p*) __ceu_p);
+    tceu_org* _ceu_org = _ceu_p.org;
+        /* now safe for sync to proceed */
+    pthread_cond_broadcast(&CEU.threads_cond);
+    while (*(_ceu_p.st) == 0);
+        /* wait until st=1: bcast ok and sync locks again */
+
+    /* body */
     ]]..blk.code..[[
 
+    /* terminate thread */
     {
         tceu_evtp evtp;
         evtp.thread = pthread_self();
         /*pthread_testcancel();*/
         pthread_mutex_lock(&CEU.threads_mutex);
-        if (*(_ceu_p->on)) {
-            *(_ceu_p->on) = 0;
+    /* only if sync is not active */
+        if (*(_ceu_p.st) < 2) {     /* 2=end */
+            *(_ceu_p.st) = 2;
             pthread_mutex_unlock(&CEU.threads_mutex);
             ceu_go(CEU_IN__THREAD, evtp);
-            pthread_mutex_lock(&CEU.threads_mutex);
-            pthread_cond_signal(&CEU.threads_cond);
+            pthread_cond_broadcast(&CEU.threads_cond);
         } else {
-            free(_ceu_p->on);               /* fin did: I free */
+            free(_ceu_p.st);                /* fin finished, I free */
+            pthread_mutex_unlock(&CEU.threads_mutex);
         }
-        pthread_mutex_unlock(&CEU.threads_mutex);
     }
     return NULL;
 }
@@ -1163,11 +1178,11 @@ void* _ceu_thread_]]..me.n..[[ (void* __ceu_p) {
     RawStmt = function (me)
         if me.thread then
             me[1] = [[
-if (*]]..me.thread.thread_on..[[) {
-    *]]..me.thread.thread_on..[[ = 0;
+if (*]]..me.thread.thread_st..[[) {
+    *]]..me.thread.thread_st..[[ = 2;       /* end */
     /*assert( pthread_cancel(]]..me.thread.thread_id..[[) == 0 );*/
 } else {
-    free(]]..me.thread.thread_on..[[);      /* thr did: I free */
+    free(]]..me.thread.thread_st..[[);      /* thr finished, I free */
 }
 ]]
         end
@@ -1179,9 +1194,9 @@ if (*]]..me.thread.thread_on..[[) {
         local thr = _AST.iter'Thread'()
         LINE(me, [[
 pthread_mutex_lock(&CEU.threads_mutex);
-if (! *(_ceu_p->on)) {
+if (*(_ceu_p.st) == 2) {    /* 2=end */
     pthread_mutex_unlock(&CEU.threads_mutex);
-    return NULL;        /* exit if fi */
+    return NULL;        /* exit if end */
 } else {                /* othrewise, execute block */
 ]])
         CONC(me)

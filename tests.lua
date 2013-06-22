@@ -25337,7 +25337,7 @@ return 1;
     run = 3,
 }
 
--- ASYNC THREAD
+-- ASYNCS // THREAD
 
 Test { [[
 var int  a=10, b=5;
@@ -25350,9 +25350,12 @@ return a + b + *p;
 }
 
 Test { [[
+native nohold _fprintf(), _stderr;
 var int ret =
     async thread do
+_fprintf(_stderr,"2\n");
     end;
+_fprintf(_stderr,"3\n");
 return (ret == 0);
 ]],
     run = 1,
@@ -25457,26 +25460,17 @@ var int  v1=10, v2=5;
 var int* p1 = &v1;
 var int* p2 = &v2;
 
-native nohold _fprintf(), _stderr;
 par/and do
     async thread (v1, p1) do
-_fprintf(_stderr,"1\n");
         sync do
-_fprintf(_stderr,"a\n");
             *p1 = v1 + v1;
-_fprintf(_stderr,"aa\n");
         end
-_fprintf(_stderr,"11\n");
     end
 with
     async thread (v2, p2) do
-_fprintf(_stderr,"2\n");
         sync do
-_fprintf(_stderr,"b\n");
             *p2 = v2 + v2;
-_fprintf(_stderr,"bb\n");
         end
-_fprintf(_stderr,"22\n");
     end
 end
 return v1+v2;
@@ -25637,6 +25631,49 @@ with
         end
     end
 end
+_assert(v1 == v2);
+return v1;
+]],
+    --run = 1066784512,
+    run = false,
+-- thr.c
+--./a.out  17.41s user 0.00s system 180% cpu 9.629 total
+-- me (isTmp=true)
+--./a.out  16.80s user 0.02s system 176% cpu 9.525 total
+-- me (isTmp=false)
+--./a.out  30.36s user 0.04s system 173% cpu 17.476 total
+}
+
+Test { [[
+class T with
+    event int ok;
+do
+    var int v;
+    var int* p = &v;
+    async thread (p) do
+        var int ret = 0;
+        loop i, 50000 do
+            loop j, 50000 do
+                ret = ret + i + j;
+            end
+        end
+        _printf("ret = %d\n", ret);
+        sync do
+            *p = ret;
+        end
+    end
+    emit ok => v;
+end
+
+var T t1, t2;
+var int v1, v2;
+
+par/and do
+    v1 = await t1.ok;
+with
+    v2 = await t2.ok;
+end
+
 _assert(v1 == v2);
 return v1;
 ]],

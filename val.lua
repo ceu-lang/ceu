@@ -49,7 +49,7 @@ F =
 
     Thread = function (me)
         me.thread_id = CUR(me, '__thread_id_'..me.n)
-        me.thread_on = CUR(me, '__thread_on_'..me.n)
+        me.thread_st = CUR(me, '__thread_st_'..me.n)
     end,
 
     ParAnd = function (me)

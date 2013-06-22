@@ -457,7 +457,7 @@ void ceu_stack_clr () {
 #ifdef CEU_THREADS
 typedef struct {
     tceu_org* org;
-    s8*       on;
+    s8*       st; /* thread state (0=ini,1=go,2=end) */
 } tceu_threads_p;
 
 /* THREADS bodies (C functions)
