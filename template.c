@@ -1,4 +1,4 @@
-#line 0 "=== FILENAME ==="
+/*#line 0 "=== FILENAME ==="*/
 === DEFS ===
 
 #include <string.h>
@@ -8,6 +8,10 @@
 #include <assert.h>
 #include <signal.h>
 #include <stdlib.h>
+#endif
+
+#ifdef CEU_THREADS
+#include <pthread.h>
 #endif
 
 #ifdef CEU_NEWS
@@ -84,6 +88,9 @@ typedef union {
     int   v;
     void* ptr;
     s32   dt;
+#ifdef CEU_THREADS
+    pthread_t thread;
+#endif
 } tceu_evtp;
 
 /* TODO(speed): hold nxt trl to run */
@@ -192,14 +199,6 @@ tceu CEU = {
 #endif
     {}                          /* TODO: o q ele gera? */
 };
-
-/* THREADS bodies (C functions) - they access global "CEU" */
-#ifdef CEU_THREADS
-#include <pthread.h>
-=== THREADS_C ===
-#if 0
-#endif
-#endif
 
 /*#pragma pack(pop) */
 
@@ -418,6 +417,12 @@ void ceu_go_all (int* ret_end)
     }
 #endif
 
+#ifdef CEU_THREADS
+    for (;;) {
+        if (ret_end!=NULL && *ret_end) goto _CEU_END_;
+    }
+#endif
+
 _CEU_END_:;
 #ifdef CEU_NEWS
 #ifdef CEU_RUNTESTS
@@ -433,6 +438,15 @@ void ceu_stack_clr () {
     int a[1000];
     memset(a, 0, sizeof(a));
 }
+#endif
+
+#undef _ceu_org
+#ifdef CEU_THREADS
+/* THREADS bodies (C functions)
+void* f (tceu_org* org) {
+}
+ */
+=== THREADS_C ===
 #endif
 
 void ceu_go (int _ceu_evt, tceu_evtp _ceu_evtp)

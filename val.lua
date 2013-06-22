@@ -47,6 +47,10 @@ F =
         end
     end,
 
+    Thread = function (me)
+        me.val = CUR(me, '__thread_'..me.n)
+    end,
+
     ParAnd = function (me)
         me.val = CUR(me, '__and_'..me.n)
     end,

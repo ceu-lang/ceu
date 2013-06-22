@@ -141,6 +141,9 @@ end
     local EXE = (VALGRIND=='false' and './ceu.exe')
              or 'valgrind -q --leak-check=full ./ceu.exe 2>&1'
     local GCC = 'gcc -Wall -DCEU_DEBUG -ansi -o ceu.exe main.c'
+    if _PROPS.has_threads then
+        GCC = GCC .. ' -lpthread'
+    end
 
     -- T.run = N
     if type(T.run) ~= 'table' then
@@ -206,11 +209,12 @@ STATS = {
 ]])
 
 --./run_tests.lua false  107.61s user 23.11s system 85% cpu 2:32.92 total
+--./run_tests.lua false  107.43s user 23.42s system 85% cpu 2:32.62 total
 
 assert(STATS.count  ==    1263)
 assert(STATS.mem    ==       0)
-assert(STATS.trails ==    2523)
-assert(STATS.bytes  == 7458955)
+assert(STATS.trails ==    2521)
+assert(STATS.bytes  == 7443601)
 
 os.execute('rm -f /tmp/_ceu_*')
 

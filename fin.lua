@@ -37,6 +37,10 @@ F = {
             end
         end
 
+        if _AST.iter'Thread'() then
+            req = false     -- impossible to run finalizers on threads
+        end
+
         if req then
             ASR((op==':=') or me.fin, me,
                     'attribution requires `finalize´')
@@ -102,6 +106,10 @@ F = {
                         me, 'invalid call (multiple scopes)')
                 req = req or r
             end
+        end
+
+        if _AST.iter'Thread'() then
+            req = false     -- impossible to run finalizers on threads
         end
 
         ASR((not req) or fin, me, 'call requires `finalize´')

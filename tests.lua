@@ -10,6 +10,8 @@
 
 -- ceu_evt_param em ceu_call p/ passar p/ o prox
 
+-- async dentro de pause
+
 --[===[
 
 Test { [[
@@ -129,26 +131,56 @@ end
     env = 'ERR : line 5 : undeclared class',
 }
 --do return end
-
+--]===]
 
 -- OK: under tests but supposed to work
 
 Test { [[
-var int fora = 10;
+native nohold _fprintf(), _stderr;
+var int  a=10, b=5;
+var int* p = &b;
+async thread do
+end
+return a + b + *p;
+]],
+    run = 20,
+}
+
+Test { [[
+native nohold _fprintf(), _stderr;
 var int ret =
-    async thread (fora) do
-        _fprintf(_stderr,"oi\n");
-/*
-        var int dentro = fora;
-        fora = fora + 1;
-        return fora;
-*/
+    async thread do
     end;
-async do end
-await 1s;
-return ret;
+return (ret == 0);
 ]],
     run = 1,
+}
+
+Test { [[
+native nohold _fprintf(), _stderr;
+var int  a=10, b=5;
+var int* p = &b;
+async thread (a, p) do
+    a = a + *p;
+    *p = a;
+end
+return a + b + *p;
+]],
+    run = 40,
+}
+
+Test { [[
+native nohold _fprintf(), _stderr;
+var int  a=10, b=5;
+var int* p = &b;
+var int ret =
+    async thread (a, p) do
+        a = a + *p;
+        *p = a;
+    end;
+return (ret==0) + a + b + *p;
+]],
+    run = 41,
 }
 do return end
 
@@ -534,7 +566,6 @@ return _f();
 }
 
 do return end
---]===]
 
 -- OK: well tested
 
@@ -24351,8 +24382,6 @@ class T with
 do
 end
 
-native nohold _fprintf(), _stderr;
-
 var int ret = 1;
 do
     spawn T with
@@ -24366,7 +24395,6 @@ do
     end;
 
     loop i, I* do
-_fprintf(_stderr, "oioioi %p\n", i);
         ret = ret + i:v;
     end
 end

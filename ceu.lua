@@ -259,6 +259,7 @@ do
         has_wclocks = 'CEU_WCLOCKS',
         has_ints    = 'CEU_INTS',
         has_asyncs  = 'CEU_ASYNCS',
+        has_threads = 'CEU_THREADS',
         has_orgs    = 'CEU_ORGS',
         has_news    = 'CEU_NEWS',
         has_news_pool   = 'CEU_NEWS_POOL',
@@ -278,7 +279,7 @@ do
     end
 
     -- TODO: goto _OPTS
-    --str = str .. '#define CEU_DEBUG_TRAILS\n'
+    str = str .. '#define CEU_DEBUG_TRAILS\n'
 
     if _OPTS.run_tests then
         str = str .. '#define CEU_RUNTESTS\n'

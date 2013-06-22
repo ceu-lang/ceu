@@ -597,6 +597,8 @@ C = {
             return node(tag)(ln, op, p1, to)
         elseif (tag=='SetBlock') then
             return node(tag)(ln, p1, to)
+        elseif (tag=='SetThread') then
+            return node(tag)(ln, p1, to)
         elseif (tag=='SetNew') then
             return node(tag)(ln, to, p2, p1, p3)
         else

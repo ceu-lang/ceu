@@ -49,7 +49,7 @@ ceu_pool_init(&]]..cls.pool..', '..cls.max..', sizeof(CEU_'..cls.id..'), '
 
     Host = function (me)
         CLS().host = CLS().host ..
-            '#line '..(me.ln[2]+1)..'\n' ..
+            --'#line '..(me.ln[2]+1)..'\n' ..
             me[1] .. '\n'
     end,
 
@@ -200,6 +200,13 @@ CEU_POOL_DCL(]]..node.pool..', CEU_'..node.cls.id..','..n..[[)
         end
     end,
 ]]
+
+    Thread_pre = 'ParOr_pre',
+    Thread = function (me)
+        local cls = CLS()
+        cls.struct = cls.struct..SPC()..'pthread_t __thread_'..me.n..';\n'
+    end,
+    Thread_pos = 'ParOr_pos',
 }
 
 _AST.visit(F)

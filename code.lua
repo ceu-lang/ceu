@@ -1,4 +1,7 @@
-_CODE = {}
+_CODE = {
+    has_goto = false,   -- avoids "unused label"
+    threads = '',
+}
 
 function CONC_ALL (me, t)
     t = t or me
@@ -35,7 +38,7 @@ function LINE (me, line, spc)
     spc = spc or 4
     spc = string.rep(' ', spc)
     me.code = me.code ..
-                '#line '..me.ln[2]..' "'..me.ln[1]..'"\n'..
+                --'#line '..me.ln[2]..' "'..me.ln[1]..'"\n'..
                 spc .. line .. '\n'
 end
 
@@ -728,7 +731,7 @@ _ceu_trl = &_ceu_org->trls[ ]]..me.trails[1]..[[ ];
         COMM(me, 'close ParAnd gates')
 
         for i=1, #me do
-            LINE(me, me.val..'_'..i..' = 0;')
+            LINE(me, V(me)..'_'..i..' = 0;')
         end
 
         F._Par(me)
@@ -738,14 +741,14 @@ _ceu_trl = &_ceu_org->trls[ ]]..me.trails[1]..[[ ];
                 CASE(me, me.lbls_in[i])
             end
             CONC(me, sub)
-            LINE(me, me.val..'_'..i..' = 1;')
+            LINE(me, V(me)..'_'..i..' = 1;')
             GOTO(me, me.lbl_tst)
         end
 
         -- AFTER code :: test gates
         CASE(me, me.lbl_tst)
         for i, sub in ipairs(me) do
-            HALT(me, '!'..me.val..'_'..i)
+            HALT(me, '!'..V(me)..'_'..i)
         end
 
         LINE(me, [[
@@ -1056,7 +1059,7 @@ case ]]..me.lbl.id..[[:;
                 ]])
             end
             if set then
-                LINE(me, me.val..' = '..(i-1)..';')
+                LINE(me, V(me)..' = '..(i-1)..';')
             end
             LINE(me, 'goto '..LBL_OUT..';}')    -- close my if
         end
@@ -1070,7 +1073,7 @@ case ]]..me.lbl.id..[[:;
         end
     end,
 
-    Async_pos = function (me)
+    Async = function (me)
         local vars,blk = unpack(me)
         for _, n in ipairs(vars) do
             ATTR(me, n.new, n.var)
@@ -1088,6 +1091,56 @@ ceu_out_async(1);
 case ]]..me.lbl.id..[[:;
 ]])
         CONC(me, blk)
+    end,
+
+    SetThread = CONC,
+    Thread = function (me)
+        local vars,blk = unpack(me)
+        for _, n in ipairs(vars) do
+            ATTR(me, n.new, n.var)      -- copy async parameters
+        end
+
+        -- spawn thread
+        local to = _AST.iter'SetThread'()
+        if to then
+            LINE(me, V(to[2])..' = ')
+        end
+        LINE(me, [[
+pthread_create(&]]..V(me)..[[, NULL, _ceu_thread_]]..me.n..[[, _ceu_org);
+]])
+
+        -- await termination
+        local no = '_CEU_NO_'..me.n..'_'
+        LINE(me, [[
+]]..no..[[:
+    _ceu_trl->evt = CEU_IN__THREAD;
+    _ceu_trl->lbl = ]]..me.lbl.id..[[;
+]])
+        HALT(me)
+
+        -- continue
+        LINE(me, [[
+case ]]..me.lbl.id..[[:;
+    if (_ceu_evtp.thread != ]]..V(me)..[[) {
+        goto ]]..no..[[; /* another thread is terminating: await again */
+    }
+]])
+        DEBUG_TRAILS(me)
+
+        local tp = _TP.c(CLS().id)
+        _CODE.threads = _CODE.threads .. [[
+void* _ceu_thread_]]..me.n..[[ (void* __ceu_org) {
+    tceu_org* _ceu_org = (tceu_org*) __ceu_org;
+    ]]..blk.code..[[
+
+    {
+        tceu_evtp p;
+        p.thread = pthread_self();
+        ceu_go(CEU_IN__THREAD, p);
+    }
+    return NULL;
+}
+]]
     end,
 }
 
