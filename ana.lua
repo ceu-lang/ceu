@@ -192,10 +192,7 @@ F = {
     end,
     SetBlock = function (me)
         local blk = me[1]
-        if   (not blk.ana.pos[false])
-        and  (me[1].tag ~= 'Async')     -- async is assumed to terminate
-        and  (me[1].tag ~= 'Thread')    -- async is assumed to terminate
-        then
+        if not blk.ana.pos[false] then
             --_ANA.ana.reachs = _ANA.ana.reachs + 1
             WRN( INC(me, 'reachs'),
                  blk, 'missing `return´ statement for the block')
@@ -223,7 +220,7 @@ F = {
         if me.ana.pre[false] then
             me.ana.pos = COPY(me.ana.pre)
         else
-            me.ana.pos = { ['ASYNC_'..me.n]=true }
+            me.ana.pos = { ['ASYNC_'..me.n]=true }  -- assume it terminates
         end
     end,
 

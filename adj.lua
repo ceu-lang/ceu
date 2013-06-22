@@ -16,12 +16,8 @@ F = {
             return _AST.node('Nothing')(me.ln)
         end
     end,
+
 ---
-    Block_pre = function (me)
-        local blk = _AST.iter'Block'()
-        local cls = _AST.iter'Dcl_cls'()
-        me.par = blk and (cls.depth < blk.depth) and blk
-    end,
 
     SetBlock_pre = function (me)
         me.blk = _AST.iter'Block'()

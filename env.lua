@@ -105,7 +105,7 @@ end
 
 function newvar (me, blk, pre, tp, dim, id)
     for stmt in _AST.iter() do
-        if stmt.tag=='Async' or stmt.tag=='Thread' then
+        if _AST.pred_async(stmt) then
             break   -- search until Async/Thread
         elseif stmt.tag == 'Block' then
             for _, var in ipairs(stmt.vars) do
@@ -176,14 +176,19 @@ end
 function _ENV.getvar (id, blk)
     local blk = blk or _AST.iter('Block')()
     while blk do
-        for i=#blk.vars, 1, -1 do   -- n..1 (hidden vars)
-            local var = blk.vars[i]
-            if var.id == id then
-                return var
+        if _AST.pred_async(blk) then
+            return nil                  -- async boundary (stop search)
+        elseif blk.tag == 'Block' then
+            for i=#blk.vars, 1, -1 do   -- n..1 (hidden vars)
+                local var = blk.vars[i]
+                if var.id == id then
+                    return var
+                end
             end
         end
-        blk = blk.par
+        blk = blk.__par
     end
+    return nil
 end
 
 -- identifiers for ID_c / ID_ext (allow to be defined after annotations)
@@ -251,7 +256,7 @@ F = {
     Block_pre = function (me)
         me.vars = {}
         local async = _AST.iter()()
-        if async.tag=='Async' or async.tag=='Thread' then
+        if _AST.pred_async(async) then
             local vars, blk = unpack(async)
             if vars then
                 for _, n in ipairs(vars) do -- create new variables for params

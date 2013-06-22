@@ -28,6 +28,7 @@ local NO_async = {
     AwaitS=true, AwaitExt=true, AwaitInt=true, AwaitN=true, AwaitT=true,
     EmitInt=true,
     Pause=true,
+    Return=true,
 }
 
 local NO_constr = {
@@ -168,12 +169,6 @@ F = {
         blk.has_return = true
 
         NEEDS_CLR(blk)
-
-        local async = _AST.iter(_AST.pred_async)()
-        if async then
-            local setblk = _AST.iter'SetBlock'()
-            ASR(async.depth<=setblk.depth+1, me, '`return´ without block')
-        end
     end,
 
     Dcl_cls = function (me)

@@ -164,8 +164,8 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , _LstStmt  = V'_Return' + V'Break' + V'_Continue' + V'AwaitN'
     , _LstStmtB = V'ParEver' + V'_Continue'
 
-    , _SetBlock = ( V'Do'      + V'Async' + V'Thread'
-                  + V'ParEver' + V'If'    + V'Loop' + V'_Every' )
+    , _SetBlock  = V'Do' + V'ParEver' + V'If' + V'Loop' + V'_Every'
+    , _SetThread = V'Thread'
 
     , _Set  = (V'_Exp' + V'VarList') * V'_Sets'
     , _Sets = (CK'='+CK':=') * (
@@ -175,7 +175,10 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
                                     -- p1=blk, p2=false, p3=false
               + Cc'SetBlock' * V'_SetBlock'
                              * Cc(false) * Cc(false)
-                                    -- p1=exp, p2=false, p3=false
+                                    -- p1=blk, p2=false, p3=false
+              + Cc'SetThread' * V'_SetThread'
+                              * Cc(false) * Cc(false)
+                                    -- p1=blk, p2=false, p3=false
               + Cc'SetExp'   * V'_Exp'
                              * Cc(false) * Cc(false)
                                     -- p1=max, p2=cls, p3=constr

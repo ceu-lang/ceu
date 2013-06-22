@@ -134,6 +134,25 @@ end
 -- OK: under tests but supposed to work
 
 Test { [[
+var int fora = 10;
+var int ret =
+    async thread (fora) do
+        _fprintf(_stderr,"oi\n");
+/*
+        var int dentro = fora;
+        fora = fora + 1;
+        return fora;
+*/
+    end;
+async do end
+await 1s;
+return ret;
+]],
+    run = 1,
+}
+do return end
+
+Test { [[
 interface Global with
     var G* g;
 end
@@ -516,7 +535,6 @@ return _f();
 
 do return end
 --]===]
-
 
 -- OK: well tested
 
@@ -1490,25 +1508,25 @@ return 10;
 
 Test { [[
 var int a;
-a = async do
+async do
     emit 1min;
     return 10;
 end;
 return a + 1;
 ]],
-    ana = {
-        isForever = false,
-    },
-    run = 11,
+    props = 'line 4 : not permitted inside `async´',
 }
 
 Test { [[
-async do
+var int a;
+var int* pa = &a;
+async (pa) do
     emit 1min;
-    return 10;
-end
+    *pa = 10;
+end;
+return a + 1;
 ]],
-    props = 'line 3 : `return´ without block',
+    run = 11,
 }
 
 -- Seq
@@ -11721,15 +11739,17 @@ with
     return v1 + v2;
 end;
 ]],
-    props = "line 8 : invalid access from async",
+    env = 'line 8 : variable/event "v1" is not declared',
 }
 
 Test { [[
 var int v=2;
-var int ret = async (v) do
-        return v + 1;
-    end;
-return ret + v;
+var int x=v;
+var int* px = &x;
+async (px, v) do
+    *px = v + 1;
+end;
+return x + v;
 ]],
     run = 5,
 }
@@ -11750,10 +11770,11 @@ Test { [[
 input void F;
 var int v=2;
 var int ret;
+var int* pret;
 par/or do
-    ret = async (v) do        // nd
-            return v + 1;
-        end;
+    async (pret,v) do        // nd
+        *pret = v + 1;
+    end;
 with
     v = 3;                  // nd
     await F;
@@ -11761,7 +11782,7 @@ end
 return ret + v;
 ]],
     ana = {
-        acc = 1,
+        acc = 2,
     },
 }
 
@@ -11820,7 +11841,7 @@ with
     return v1 + v2;
 end;
 ]],
-    props = "line 8 : invalid access from async",
+    env = 'line 8 : variable/event "v1" is not declared',
 }
 
 Test { [[
@@ -14233,9 +14254,10 @@ return ret + _V;
 Test { [[
 input void A;
 var int ret;
+var int* pret = &ret;
 par/or do
-   ret = async do
-      return 10;
+   async(pret) do
+      *pret=10;
     end;
 with
    await A;
@@ -14252,7 +14274,7 @@ async do
 end;
 return 0;
 ]],
-    props = '`return´ without block',
+    props = 'line 2 : not permitted inside `async´',
 }
 
 Test { [[
@@ -14261,7 +14283,7 @@ var int a = async do
 end;
 return a;
 ]],
-    run = 1,
+    ast = 'line 1 : before `async´ : expected expression',
 }
 
 Test { [[
@@ -14280,7 +14302,7 @@ async (b) do
 end;
 return a;
 ]],
-    props = 'invalid access from async',
+    env = 'line 3 : variable/event "a" is not declared',
     --run = 1,
 }
 
@@ -14291,7 +14313,7 @@ async do
 end;
 return a;
 ]],
-    props = 'invalid access from async',
+    env = 'line 3 : variable/event "a" is not declared',
     --run = 1,
 }
 
@@ -14304,14 +14326,14 @@ with
     return 2;
 end;
 ]],
-    props = '`return´ without block',
+    props = 'line 3 : not permitted inside `async´',
 }
 
 Test { [[
 par/and do
-    var int a = async do
-        return 1;
+    async do
     end;
+    return 1;
 with
     return 2;
 end;
@@ -14334,7 +14356,7 @@ with
 end;
 return a;
 ]],
-    props = 'invalid access from async',
+    env = 'line 4 : variable/event "a" is not declared',
     ana = {
         --acc = 1,
     },
@@ -14345,11 +14367,13 @@ async do
     return 1+2;
 end;
 ]],
-    props = '`return´ without block',
+    props = 'line 2 : not permitted inside `async´',
 }
 
 Test { [[
-var int a = async do
+var int a;
+var int* pa = &a;
+async (pa) do
     var int a = do
         return 1;
     end;
@@ -14357,7 +14381,7 @@ var int a = async do
 end;
 return a;
 ]],
-    run = 1
+    props = 'ERR : tests.lua : line 5 : not permitted inside `async´',
 }
 
 Test { [[
@@ -14379,7 +14403,7 @@ async do
 end;
 return a;
 ]],
-    props = 'invalid access from async',
+    env = 'line 4 : variable/event "a" is not declared',
     --run=1
 }
 
@@ -14402,7 +14426,7 @@ async do
 end;
 return 0;
 ]],
-    props = 'line 3 : invalid access from async',
+    env = 'line 3 : variable/event "a" is not declared',
 }
 Test { [[
 event int a;
@@ -14411,7 +14435,7 @@ async do
 end;
 return 0;
 ]],
-    props = 'line 3 : invalid access from async',
+    env = 'line 3 : variable/event "a" is not declared',
 }
 Test { [[
 async do
@@ -14603,9 +14627,11 @@ return _a+_b+_c;
 }
 
 Test { [[
-var int r = async do
+var int r;
+var int* pr = &r;
+async(pr) do
     var int i = 100;
-    return i;
+    *pr = i;
 end;
 return r;
 ]],
@@ -14613,11 +14639,13 @@ return r;
 }
 
 Test { [[
-var int ret = async do
+var int ret;
+var int* pret = &ret;
+async (pret) do
     var int i = 100;
     var int sum = 10;
     sum = sum + i;
-    return sum;
+    *pret = sum;
 end;
 return ret;
 ]],
@@ -14659,8 +14687,9 @@ Test { [[
 input int F;
 var int ret = 0;
 var int f;
+var int* pret=&ret;
 par/and do
-    ret = async do
+    async(pret) do
         var int sum = 0;
         var int i = 0;
         loop do
@@ -14671,7 +14700,7 @@ par/and do
                 i = i + 1;
             end
         end
-        return sum;
+        *pret = sum;
     end;
 with
     f = await F;
@@ -14685,8 +14714,9 @@ Test { [[
 input int F;
 var int ret = 0;
 var int f;
+var int* pret = &ret;
 par/or do
-    ret = async do
+    async(pret) do
         var int sum = 0;
         var int i = 0;
         loop do
@@ -14697,7 +14727,7 @@ par/or do
                 i = i + 1;
             end
         end
-        return sum;
+        *pret =  sum;
     end;
 with
     f = await F;
@@ -14743,10 +14773,12 @@ return 0;
 }
 
 Test { [[
-var int ret = async do
+var int ret;
+var int* pret = &ret;
+async (pret) do
     var int i = 100;
     i = i - 1;
-    return i;
+    *pret = i;
 end;
 return ret;
 ]],
@@ -14754,12 +14786,14 @@ return ret;
 }
 
 Test { [[
-var int ret = async do
+var int ret;
+var int* pret = &ret;
+async(pret) do
     var int i = 100;
     loop do
         break;
     end;
-    return i;
+    *pret = i;
 end;
 return ret;
 ]],
@@ -14770,14 +14804,16 @@ return ret;
 }
 
 Test { [[
-var int ret = async do
+var int ret;
+var int* pret = &ret;
+async(pret) do
     var int i = 0;
     if i then
         i = 1;
     else
         i = 2;
     end
-    return i;
+    *pret = i;
 end;
 return ret;
 ]],
@@ -14785,12 +14821,15 @@ return ret;
 }
 
 Test { [[
-var int i = async do
+var int i;
+var int* pi=&i;
+async (pi) do
     var int i = 10;
     loop do
         i = i - 1;
         if not i then
-            return i;
+            *pi = i;
+            break;
         end;
     end;
 end;
@@ -14800,15 +14839,17 @@ return i;
 }
 
 Test { [[
-var int i = async do
+var int i;
+var int* pi = &i;
+async (pi) do
     var int i = 10;
     loop do
         i = i - 1;
         if not i then
+            *pi = i;
             break;
         end;
     end;
-    return 0;
 end;
 return i;
 ]],
@@ -14836,28 +14877,33 @@ return i;
 
 Test { [[
 var int i = 10;
-async do
+var int* pi = &i;
+async (pi) do
     loop do
         i = i - 1;
         if not i then
+            *pi = i;
             break;
         end;
     end;
 end;
 return i;
 ]],
-    props = 'invalid access from async',
+    env = 'line 5 : variable/event "i" is not declared',
 }
 
 Test { [[
-var int sum = async do
+var int sum;
+var int* p = &sum;
+async (p) do
     var int i = 10;
     var int sum = 0;
     loop do
         sum = sum + i;
         i = i - 1;
         if not i then
-            return sum;
+            *p = sum;
+            break;
         end;
     end;
 end;
