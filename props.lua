@@ -196,6 +196,9 @@ F = {
     Thread = function (me)
         _PROPS.has_threads = true
     end,
+    Sync = function (me)
+        ASR(_AST.iter'Thread'(), me,'not permitted outside `thread´')
+    end,
 
     Pause = function (me)
         _PROPS.has_pses = true

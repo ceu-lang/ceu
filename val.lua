@@ -48,7 +48,8 @@ F =
     end,
 
     Thread = function (me)
-        me.val = CUR(me, '__thread_'..me.n)
+        me.thread_id = CUR(me, '__thread_id_'..me.n)
+        me.thread_on = CUR(me, '__thread_on_'..me.n)
     end,
 
     ParAnd = function (me)
@@ -293,6 +294,7 @@ F =
             end
         end
     end,
+
     Nat = function (me)
         me.val = string.sub(me[1], 2)
     end,

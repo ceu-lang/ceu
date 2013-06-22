@@ -131,225 +131,8 @@ end
     env = 'ERR : line 5 : undeclared class',
 }
 --do return end
---]===]
 
 -- OK: under tests but supposed to work
-
-Test { [[
-var int  v1=10, v2=5;
-var int* p1 = &v1;
-var int* p2 = &v2;
-
-par/and do
-    async thread (v1, p1) do
-        *p1 = v1 + v1;
-    end
-with
-    async thread (v2, p2) do
-        *p2 = v2 + v2;
-    end
-end
-return v1+v2;
-]],
-    run = 30,
-}
-
-Test { [[
-var int  v1, v2;
-var int* p1 = &v1;
-var int* p2 = &v2;
-
-native nohold _fprintf(), _stderr;
-native do
-    int calc ()
-    {
-        int ret, i, j;
-        ret = 0;
-        for (i=0; i<10; i++) {
-            for (j=0; j<10; j++) {
-                ret = ret + i + j;
-            }
-        }
-        printf("ret = %d\n", ret);
-        return ret;
-    }
-end
-
-par/and do
-    async thread (p1) do
-        *p1 = _calc();
-    end
-with
-    async thread (p2) do
-        *p2 = _calc();
-    end
-end
-_assert(v1 == v2);
-return v1;
-]],
-    run = 900,
-}
-
-Test { [[
-var int  v1, v2;
-var int* p1 = &v1;
-var int* p2 = &v2;
-
-native nohold _fprintf(), _stderr;
-par/and do
-    async thread (p1) do
-        var int ret = 0;
-        loop i, 10 do
-            loop j, 10 do
-                ret = ret + i + j;
-            end
-        end
-        _printf("ret = %d\n", ret);
-        *p1 = ret;
-    end
-with
-    async thread (p2) do
-        var int ret = 0;
-        loop i, 10 do
-            loop j, 10 do
-                ret = ret + i + j;
-            end
-        end
-        _printf("ret = %d\n", ret);
-        *p2 = ret;
-    end
-end
-_assert(v1 == v2);
-return v1;
-]],
-    run = 900,
-}
-do return end
-
-Test { [[
-var int  v1, v2;
-var int* p1 = &v1;
-var int* p2 = &v2;
-
-native nohold _fprintf(), _stderr;
-native do
-    int calc ()
-    {
-        int ret, i, j;
-        ret = 0;
-        for (i=0; i<50000; i++) {
-            for (j=0; j<50000; j++) {
-                ret = ret + i + j;
-            }
-        }
-        printf("ret = %d\n", ret);
-        return ret;
-    }
-end
-
-par/and do
-    async thread (p1) do
-        *p1 = _calc();
-    end
-with
-    async thread (p2) do
-        *p2 = _calc();
-    end
-end
-_assert(v1 == v2);
-return v1;
-]],
-    --run = 1066784512,
-    run = false,
-}
-
-Test { [[
-var int  v1, v2;
-var int* p1 = &v1;
-var int* p2 = &v2;
-
-native nohold _fprintf(), _stderr;
-par/and do
-    async thread (p1) do
-        var int ret = 0;
-        loop i, 50000 do
-            loop j, 50000 do
-                ret = ret + i + j;
-            end
-        end
-        _printf("ret = %d\n", ret);
-        *p1 = ret;
-    end
-with
-    async thread (p2) do
-        var int ret = 0;
-        loop i, 50000 do
-            loop j, 50000 do
-                ret = ret + i + j;
-            end
-        end
-        _printf("ret = %d\n", ret);
-        *p2 = ret;
-    end
-end
-_assert(v1 == v2);
-return v1;
-]],
-    --run = 1066784512,
-    run = false,
--- thr.c
---./a.out  17.41s user 0.00s system 180% cpu 9.629 total
--- me (isTmp=true)
---./a.out  16.80s user 0.02s system 176% cpu 9.525 total
--- me (isTmp=false)
---./a.out  30.36s user 0.04s system 173% cpu 17.476 total
-}
-
-do return end
-
-Test { [[
-var int  a=10, b=5;
-var int* p = &b;
-async thread do
-end
-return a + b + *p;
-]],
-    run = 20,
-}
-
-Test { [[
-var int ret =
-    async thread do
-    end;
-return (ret == 0);
-]],
-    run = 1,
-}
-
-Test { [[
-var int  a=10, b=5;
-var int* p = &b;
-async thread (a, p) do
-    a = a + *p;
-    *p = a;
-end
-return a + b + *p;
-]],
-    run = 40,
-}
-
-Test { [[
-var int  a=10, b=5;
-var int* p = &b;
-var int ret =
-    async thread (a, p) do
-        a = a + *p;
-        *p = a;
-    end;
-return (ret==0) + a + b + *p;
-]],
-    run = 41,
-}
 
 Test { [[
 interface Global with
@@ -733,6 +516,7 @@ return _f();
 }
 
 do return end
+--]===]
 
 -- OK: well tested
 
@@ -25552,6 +25336,321 @@ return 1;
 ]],
     run = 3,
 }
+
+-- ASYNC THREAD
+
+Test { [[
+var int  a=10, b=5;
+var int* p = &b;
+async thread do
+end
+return a + b + *p;
+]],
+    run = 20,
+}
+
+Test { [[
+var int ret =
+    async thread do
+    end;
+return (ret == 0);
+]],
+    run = 1,
+}
+
+Test { [[
+var int  a=10, b=5;
+var int* p = &b;
+async thread (a, p) do
+    a = a + *p;
+    sync do
+        *p = a;
+    end
+end
+return a + b + *p;
+]],
+    run = 40,
+}
+
+Test { [[
+var int  a=10, b=5;
+var int* p = &b;
+var int ret =
+    async thread (a, p) do
+        a = a + *p;
+        sync do
+            *p = a;
+        end
+    end;
+return (ret==0) + a + b + *p;
+]],
+    run = 41,
+}
+
+Test { [[
+sync do
+    return 1;
+end
+]],
+    props = 'line 1 : not permitted outside `thread´',
+}
+
+Test { [[
+async do
+    sync do
+        nothing;
+    end
+end
+return 1;
+]],
+    props = 'line 2 : not permitted outside `thread´',
+}
+
+for i=1, 100 do
+    Test { [[
+native do
+    #include <unistd.h>
+end
+var int ret = 1;
+var int* p = &ret;
+par/or do
+    async thread (p) do
+        sync do
+            *p = 2;
+        end
+    end
+with
+end
+_usleep(]]..i..[[);
+return ret;
+]],
+        run = 1,
+    }
+end
+
+for i=1, 100 do
+    Test { [[
+native do
+    #include <unistd.h>
+end
+var int ret = 0;
+var int* p = &ret;
+par/or do
+    async thread (p) do
+        _usleep(]]..i..[[);
+        sync do
+            *p = 2;
+        end
+    end
+with
+    ret = 1;
+end
+_usleep(]]..i..[[+1);
+return ret;
+]],
+        run = 1,
+    }
+end
+
+Test { [[
+var int  v1=10, v2=5;
+var int* p1 = &v1;
+var int* p2 = &v2;
+
+native nohold _fprintf(), _stderr;
+par/and do
+    async thread (v1, p1) do
+_fprintf(_stderr,"1\n");
+        sync do
+_fprintf(_stderr,"a\n");
+            *p1 = v1 + v1;
+_fprintf(_stderr,"aa\n");
+        end
+_fprintf(_stderr,"11\n");
+    end
+with
+    async thread (v2, p2) do
+_fprintf(_stderr,"2\n");
+        sync do
+_fprintf(_stderr,"b\n");
+            *p2 = v2 + v2;
+_fprintf(_stderr,"bb\n");
+        end
+_fprintf(_stderr,"22\n");
+    end
+end
+return v1+v2;
+]],
+    run = 30,
+}
+
+Test { [[
+var int  v1, v2;
+var int* p1 = &v1;
+var int* p2 = &v2;
+
+native do
+    int calc ()
+    {
+        int ret, i, j;
+        ret = 0;
+        for (i=0; i<10; i++) {
+            for (j=0; j<10; j++) {
+                ret = ret + i + j;
+            }
+        }
+        printf("ret = %d\n", ret);
+        return ret;
+    }
+end
+
+par/and do
+    async thread (p1) do
+        var int ret = _calc();
+        sync do
+            *p1 = ret;
+        end
+    end
+with
+    async thread (p2) do
+        var int ret = _calc();
+        sync do
+            *p2 = ret;
+        end
+    end
+end
+_assert(v1 == v2);
+return v1;
+]],
+    run = 900,
+}
+
+Test { [[
+var int  v1, v2;
+var int* p1 = &v1;
+var int* p2 = &v2;
+
+par/and do
+    async thread (p1) do
+        var int ret = 0;
+        loop i, 10 do
+            loop j, 10 do
+                ret = ret + i + j;
+            end
+        end
+        _printf("ret = %d\n", ret);
+        sync do
+            *p1 = ret;
+        end
+    end
+with
+    async thread (p2) do
+        var int ret = 0;
+        loop i, 10 do
+            loop j, 10 do
+                ret = ret + i + j;
+            end
+        end
+        _printf("ret = %d\n", ret);
+        sync do
+            *p2 = ret;
+        end
+    end
+end
+_assert(v1 == v2);
+return v1;
+]],
+    run = 900,
+}
+
+Test { [[
+var int  v1, v2;
+var int* p1 = &v1;
+var int* p2 = &v2;
+
+native do
+    int calc ()
+    {
+        int ret, i, j;
+        ret = 0;
+        for (i=0; i<50000; i++) {
+            for (j=0; j<50000; j++) {
+                ret = ret + i + j;
+            }
+        }
+        printf("ret = %d\n", ret);
+        return ret;
+    }
+end
+
+par/and do
+    async thread (p1) do
+        var int ret = _calc();
+        sync do
+            *p1 = ret;
+        end
+    end
+with
+    async thread (p2) do
+        var int ret = _calc();
+        sync do
+            *p2 = ret;
+        end
+    end
+end
+_assert(v1 == v2);
+return v1;
+]],
+    run = false,
+    --run = 1066784512,
+}
+
+Test { [[
+var int  v1, v2;
+var int* p1 = &v1;
+var int* p2 = &v2;
+
+par/and do
+    async thread (p1) do
+        var int ret = 0;
+        loop i, 50000 do
+            loop j, 50000 do
+                ret = ret + i + j;
+            end
+        end
+        _printf("ret = %d\n", ret);
+        sync do
+            *p1 = ret;
+        end
+    end
+with
+    async thread (p2) do
+        var int ret = 0;
+        loop i, 50000 do
+            loop j, 50000 do
+                ret = ret + i + j;
+            end
+        end
+        _printf("ret = %d\n", ret);
+        sync do
+            *p2 = ret;
+        end
+    end
+end
+_assert(v1 == v2);
+return v1;
+]],
+    --run = 1066784512,
+    run = false,
+-- thr.c
+--./a.out  17.41s user 0.00s system 180% cpu 9.629 total
+-- me (isTmp=true)
+--./a.out  16.80s user 0.02s system 176% cpu 9.525 total
+-- me (isTmp=false)
+--./a.out  30.36s user 0.04s system 173% cpu 17.476 total
+}
+
+do return end
 
 --[==[
     -- MEM

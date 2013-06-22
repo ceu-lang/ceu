@@ -113,7 +113,7 @@ KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'native'
 --
      + 'import'  --+ 'as'
 -- export / version
-     + 'thread'
+     + 'thread'   + 'sync'
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
@@ -154,7 +154,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
              + EM'statement (usually a missing `var´ or C prefix `_´)'
 
     , _StmtB = V'Do'    + V'Host'
-             + V'Async' + V'Thread'
+             + V'Async' + V'Thread' + V'Sync'
              + V'ParOr' + V'ParAnd'
              + V'If'    + V'Loop'   + V'_Every'  + V'_Iter'
              + V'Pause'
@@ -206,6 +206,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , Import = K'import' * ( C( (P(1)-m.S'\t\n\r ;')^1 )
                              + EM'module' ) *S
 
+    , Sync    = K'sync'  * V'_Do'
     , Thread  = K'async' * K'thread'    * EV'VarList' * V'_Do'
     , Async   = K'async' * (-P'thread') * EV'VarList' * V'_Do'
     , VarList = ( K'(' * EV'Var' * (EK',' * EV'Var')^0 * EK')' )^-1

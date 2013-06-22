@@ -257,8 +257,21 @@ C = {
         return ret
     end,
 
-    Async   = node('Async'),
-    Thread  = node('Thread'),
+    Sync = node('Sync'),
+    Thread = function (ln, ...)
+        local thr = node('Thread')(ln,...)
+        local raw = node('RawStmt')(ln, nil)    -- see code.lua
+              raw.thread = thr
+        return node('Stmts')(ln,
+                    node('Finalize')(ln,
+                        false,
+                        node('Finally')(ln,
+                            node('Block')(ln,
+                                node('Stmts')(ln,raw)))),
+                    thr)
+    end,
+
+    Async = node('Async'),
     VarList = function (ln, ...)
         local t = { ... }
         for i, var in ipairs(t) do
@@ -378,14 +391,18 @@ C = {
         local dcl2 = node('Dcl_var')(ln, 'var', tp2, false, id2)
         dcl2.read_only = true
 
-        local ini1 = node('SetExp')(ln, ':=', node('RawExp')(ln,nil), var1())
+        local ini1 = node('SetExp')(ln, ':=',
+                                        node('RawExp')(ln,nil), -- see val.lua
+                                        var1())
         ini1[2].iter_ini = true
         local ini2 = node('SetExp')(ln, '=',
                         node('Op1_cast')(ln, tp2, var1()),
                         var2())
         ini2.read_only = true   -- accept this write
 
-        local nxt1 = node('SetExp')(ln, ':=', node('RawExp')(ln,nil), var1())
+        local nxt1 = node('SetExp')(ln, ':=',
+                                        node('RawExp')(ln,nil), -- see val.lua
+                                        var1())
         nxt1[2].iter_nxt = nxt1[3]   -- var
         local nxt2 = node('SetExp')(ln, '=',
                         node('Op1_cast')(ln, tp2, var1()),

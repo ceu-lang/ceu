@@ -172,10 +172,6 @@ F = {
         end
     end,
 
-    RawStmt = function (me)
-        LINE(me, me[1])
-    end,
-
     BlockI = CONC_ALL,
     BlockI_pos = function (me)
         me.code_ifc = me.code       -- see Dcl_cls
@@ -1101,12 +1097,21 @@ case ]]..me.lbl.id..[[:;
         end
 
         -- spawn thread
+        LINE(me, [[
+]]..me.thread_on..[[  = malloc(sizeof(s8));
+*]]..me.thread_on..[[ = 1;
+{
+    static tceu_threads_p p;
+    p.org = _ceu_org;
+    p.on  = ]]..me.thread_on..[[;
+]])
         local to = _AST.iter'SetThread'()
         if to then
             LINE(me, V(to[2])..' = ')
         end
         LINE(me, [[
-pthread_create(&]]..V(me)..[[, NULL, _ceu_thread_]]..me.n..[[, _ceu_org);
+    pthread_create(&]]..me.thread_id..[[, NULL, _ceu_thread_]]..me.n..[[, &p);
+}
 ]])
 
         -- await termination
@@ -1121,7 +1126,7 @@ pthread_create(&]]..V(me)..[[, NULL, _ceu_thread_]]..me.n..[[, _ceu_org);
         -- continue
         LINE(me, [[
 case ]]..me.lbl.id..[[:;
-    if (_ceu_evtp.thread != ]]..V(me)..[[) {
+    if (_ceu_evtp.thread != ]]..me.thread_id..[[) {
         goto ]]..no..[[; /* another thread is terminating: await again */
     }
 ]])
@@ -1129,21 +1134,61 @@ case ]]..me.lbl.id..[[:;
 
         local tp = _TP.c(CLS().id)
         _CODE.threads = _CODE.threads .. [[
-void* _ceu_thread_]]..me.n..[[ (void* __ceu_org) {
-    tceu_org* _ceu_org = (tceu_org*) __ceu_org;
+void* _ceu_thread_]]..me.n..[[ (void* __ceu_p) {
+    tceu_threads_p* _ceu_p = (tceu_threads_p*) __ceu_p;
+    tceu_org* _ceu_org = _ceu_p->org;
     ]]..blk.code..[[
 
     {
-        tceu_evtp p;
-        p.thread = pthread_self();
+        tceu_evtp evtp;
+        evtp.thread = pthread_self();
+        /*pthread_testcancel();*/
         pthread_mutex_lock(&CEU.threads_mutex);
-        ceu_go(CEU_IN__THREAD, p);
-        pthread_cond_signal(&CEU.threads_cond);
+        if (*(_ceu_p->on)) {
+            *(_ceu_p->on) = 0;
+            pthread_mutex_unlock(&CEU.threads_mutex);
+            ceu_go(CEU_IN__THREAD, evtp);
+            pthread_mutex_lock(&CEU.threads_mutex);
+            pthread_cond_signal(&CEU.threads_cond);
+        } else {
+            free(_ceu_p->on);               /* fin did: I free */
+        }
         pthread_mutex_unlock(&CEU.threads_mutex);
     }
     return NULL;
 }
 ]]
+    end,
+
+    RawStmt = function (me)
+        if me.thread then
+            me[1] = [[
+if (*]]..me.thread.thread_on..[[) {
+    *]]..me.thread.thread_on..[[ = 0;
+    /*assert( pthread_cancel(]]..me.thread.thread_id..[[) == 0 );*/
+} else {
+    free(]]..me.thread.thread_on..[[);      /* thr did: I free */
+}
+]]
+        end
+
+        LINE(me, me[1])
+    end,
+
+    Sync = function (me)
+        local thr = _AST.iter'Thread'()
+        LINE(me, [[
+pthread_mutex_lock(&CEU.threads_mutex);
+if (! *(_ceu_p->on)) {
+    pthread_mutex_unlock(&CEU.threads_mutex);
+    return NULL;        /* exit if fi */
+} else {                /* othrewise, execute block */
+]])
+        CONC(me)
+        LINE(me, [[
+    pthread_mutex_unlock(&CEU.threads_mutex);
+}
+]])
     end,
 }
 

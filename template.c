@@ -12,6 +12,7 @@
 
 #ifdef CEU_THREADS
 #include <pthread.h>
+#include <stdlib.h>
 #endif
 
 #ifdef CEU_NEWS
@@ -454,8 +455,13 @@ void ceu_stack_clr () {
 
 #undef _ceu_org
 #ifdef CEU_THREADS
+typedef struct {
+    tceu_org* org;
+    s8*       on;
+} tceu_threads_p;
+
 /* THREADS bodies (C functions)
-void* f (tceu_org* org) {
+void* f (tceu_threads_p* p) {
 }
  */
 === THREADS_C ===
@@ -496,6 +502,10 @@ void ceu_go (int _ceu_evt, tceu_evtp _ceu_evtp)
      * default (NULL) is to traverse everything */
 #ifdef CEU_CLEAR
     void* _ceu_stop = NULL;     /* stop at this trl/org */
+#endif
+
+#ifdef CEU_THREADS
+pthread_mutex_lock(&CEU.threads_mutex);
 #endif
 
     _ceu_seqno++;
@@ -703,4 +713,8 @@ _CEU_NEXT_:
 #endif
         _ceu_evt  = _CEU_STK[  _ceu_stki].evt;
     }
+
+#ifdef CEU_THREADS
+pthread_mutex_unlock(&CEU.threads_mutex);
+#endif
 }
