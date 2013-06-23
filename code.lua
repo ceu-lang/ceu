@@ -827,11 +827,17 @@ _ceu_trl = &_ceu_org->trls[ ]]..me.trails[1]..[[ ];
 
         assert(evt.pre == 'input')
 
+        if _PROPS.has_threads then
+            LINE(me, 'pthread_mutex_unlock(&CEU.threads_mutex);')
+        end
         if e2 then
             LINE(me, 'ceu_go_event(CEU_IN_'..evt.id
                         ..', (void*)'..V(e2)..');')
         else
             LINE(me, 'ceu_go_event(CEU_IN_'..evt.id ..', NULL);')
+        end
+        if _PROPS.has_threads then
+            LINE(me, 'pthread_mutex_lock(&CEU.threads_mutex);')
         end
 
         LINE(me, [[
@@ -854,10 +860,16 @@ case ]]..me.lbl_cnt.id..[[:;
 _ceu_trl->evt = CEU_IN__ASYNC;
 _ceu_trl->lbl = ]]..me.lbl_cnt.id..[[;
 #ifdef CEU_WCLOCKS
+#ifdef CEU_THREADS
+pthread_mutex_unlock(&CEU.threads_mutex);
+#endif
 ceu_go_wclock((s32)]]..V(exp)..[[);
 while (CEU.wclk_min <= 0) {
     ceu_go_wclock(0);
 }
+#ifdef CEU_THREADS
+pthread_mutex_lock(&CEU.threads_mutex);
+#endif
 ]])
         HALT(me)
         LINE(me, [[
@@ -1111,10 +1123,13 @@ case ]]..me.lbl.id..[[:;
     pthread_create(&]]..me.thread_id..[[, NULL, _ceu_thread_]]..me.n..[[, &p);
 
     /* wait for "p" to be copied inside the thread */
-    /* i'm already with the mutex (inside sync) */
-    pthread_cond_wait(&CEU.threads_cond, &CEU.threads_mutex);
-    /* i want to keep the mutex (back to sync) */
-    *(p.st) = 1;    /* go: now thread may also execute */
+    pthread_mutex_unlock(&CEU.threads_mutex);
+    while (*(p.st) < 1);   /* cpy ok */
+        /* TODO: safe w/o mutex? */
+
+    /* proceed with sync execution */
+    pthread_mutex_lock(&CEU.threads_mutex);
+    *(p.st) = 2;    /* lck: now thread may also execute */
 }
 ]])
 
@@ -1142,13 +1157,18 @@ case ]]..me.lbl.id..[[:;
 void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
 {
     /* start thread */
-        /* copy param */
+
+    /* copy param */
     tceu_threads_p _ceu_p = *((tceu_threads_p*) __ceu_p);
     tceu_org* _ceu_org = _ceu_p.org;
-        /* now safe for sync to proceed */
-    pthread_cond_broadcast(&CEU.threads_cond);
-    while (*(_ceu_p.st) == 0);
-        /* wait until st=1: bcast ok and sync locks again */
+
+    /* now safe for sync to proceed */
+    *(_ceu_p.st) = 1;
+
+    /* ensures that sync reaquires the mutex before I proceed */
+    /* otherwise I could lock below and reenter sync */
+    while (*(_ceu_p.st) < 2);  /* lck ok */
+        /* TODO: safe w/o mutex? */
 
     /* body */
     ]]..blk.code..[[
@@ -1160,11 +1180,11 @@ void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
         /*pthread_testcancel();*/
         pthread_mutex_lock(&CEU.threads_mutex);
     /* only if sync is not active */
-        if (*(_ceu_p.st) < 2) {     /* 2=end */
-            *(_ceu_p.st) = 2;
+        if (*(_ceu_p.st) < 3) {     /* 3=end */
+            *(_ceu_p.st) = 3;
             pthread_mutex_unlock(&CEU.threads_mutex);
             ceu_go(CEU_IN__THREAD, evtp);
-            pthread_cond_broadcast(&CEU.threads_cond);
+            pthread_cond_signal(&CEU.threads_cond);
         } else {
             free(_ceu_p.st);                /* fin finished, I free */
             pthread_mutex_unlock(&CEU.threads_mutex);
@@ -1194,7 +1214,7 @@ if (*]]..me.thread.thread_st..[[) {
         local thr = _AST.iter'Thread'()
         LINE(me, [[
 pthread_mutex_lock(&CEU.threads_mutex);
-if (*(_ceu_p.st) == 2) {    /* 2=end */
+if (*(_ceu_p.st) == 3) {    /* 3=end */
     pthread_mutex_unlock(&CEU.threads_mutex);
     return NULL;        /* exit if end */
 } else {                /* othrewise, execute block */

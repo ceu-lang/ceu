@@ -45,6 +45,18 @@
  * ceu_out_event(id, len, data)
  * ceu_out_async(more?);
  * ceu_out_end(v)
+
+ * pthread_t thread;
+ * pthread_mutex_t mutex;
+ * pthread_cond_t  cond;
+ * pthread_self();
+        Uint32 SDL_ThreadID(void);
+ * pthread_create(&thread, NULL, f, &p);
+        SDL_Thread *SDL_CreateThread(int (*fn)(void *), void *data);
+ * pthread_mutex_lock(&mutex);
+ * pthread_mutex_unlock(&mutex);
+ * pthread_cond_wait(&cond, &mutex);
+ * pthread_cond_broadcast(&cond);
 */
 
 /*typedef === TCEU_NEVT === tceu_nevt;    // (x) number of events */
@@ -428,11 +440,13 @@ void ceu_go_all (int* ret_end)
 #endif
 
 #ifdef CEU_THREADS
+    pthread_mutex_lock(&CEU.threads_mutex);
     for (;;) {
-        if (ret_end!=NULL && *ret_end) goto _CEU_END_;
-        pthread_mutex_lock(&CEU.threads_mutex);
+        if (ret_end!=NULL && *ret_end) {
+            pthread_mutex_unlock(&CEU.threads_mutex);
+            goto _CEU_END_;
+        }
         pthread_cond_wait(&CEU.threads_cond, &CEU.threads_mutex);
-        pthread_mutex_unlock(&CEU.threads_mutex);
     }
 #endif
 
@@ -457,7 +471,12 @@ void ceu_stack_clr () {
 #ifdef CEU_THREADS
 typedef struct {
     tceu_org* org;
-    s8*       st; /* thread state (0=ini,1=go,2=end) */
+    s8*       st; /* thread state:
+                   * 0=ini (sync  spawns)
+                   * 1=cpy (async copies)
+                   * 2=lck (sync  locks)
+                   * 3=end (sync/async terminates)
+                   */
 } tceu_threads_p;
 
 /* THREADS bodies (C functions)

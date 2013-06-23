@@ -12,6 +12,9 @@
 
 -- async dentro de pause
 
+local THREADS = true
+local THREADS_all = true
+
 --[===[
 
 Test { [[
@@ -519,6 +522,7 @@ do return end
 --]===]
 
 -- OK: well tested
+--while(true) do
 
 Test { [[return(1);]],
     ana = {
@@ -25337,7 +25341,9 @@ return 1;
     run = 3,
 }
 
--- ASYNCS // THREAD
+-- ASYNCS // THREADS
+
+if THREADS then
 
 Test { [[
 var int  a=10, b=5;
@@ -25350,20 +25356,19 @@ return a + b + *p;
 }
 
 Test { [[
-native nohold _fprintf(), _stderr;
 var int ret =
     async thread do
-_fprintf(_stderr,"2\n");
     end;
-_fprintf(_stderr,"3\n");
 return (ret == 0);
 ]],
     run = 1,
 }
 
 Test { [[
+native nohold _fprintf(), _stderr;
 var int  a=10, b=5;
 var int* p = &b;
+_fprintf(_stderr,"a\n");
 async thread (a, p) do
     a = a + *p;
     sync do
@@ -25407,6 +25412,34 @@ end
 return 1;
 ]],
     props = 'line 2 : not permitted outside `thread´',
+}
+
+Test { [[
+var int ret = 0;
+input void A;
+par/and do
+    await 1s;
+    ret = ret + 1;
+with
+    async do
+        emit 1s;
+    end
+    ret = ret + 1;
+with
+    async thread do
+        sync do
+        end
+    end
+    ret = ret + 1;
+with
+    async do
+        emit A;
+    end
+    ret = ret + 1;
+end
+return ret;
+]],
+    run = { ['~>A;~>1s'] = 4 },
 }
 
 for i=1, 100 do
@@ -25557,6 +25590,8 @@ return v1;
     run = 900,
 }
 
+if THREADS_all then
+
 Test { [[
 var int  v1, v2;
 var int* p1 = &v1;
@@ -25595,8 +25630,8 @@ end
 _assert(v1 == v2);
 return v1;
 ]],
-    run = false,
-    --run = 1066784512,
+    --run = false,
+    run = 1066784512,
 }
 
 Test { [[
@@ -25634,8 +25669,8 @@ end
 _assert(v1 == v2);
 return v1;
 ]],
-    --run = 1066784512,
-    run = false,
+    run = 1066784512,
+    --run = false,
 -- thr.c
 --./a.out  17.41s user 0.00s system 180% cpu 9.629 total
 -- me (isTmp=true)
@@ -25677,8 +25712,8 @@ end
 _assert(v1 == v2);
 return v1;
 ]],
-    --run = 1066784512,
-    run = false,
+    run = 1066784512,
+    --run = false,
 -- thr.c
 --./a.out  17.41s user 0.00s system 180% cpu 9.629 total
 -- me (isTmp=true)
@@ -25687,6 +25722,8 @@ return v1;
 --./a.out  30.36s user 0.04s system 173% cpu 17.476 total
 }
 
+end     -- THREADS_all
+end     -- THREADS
 do return end
 
 --[==[
