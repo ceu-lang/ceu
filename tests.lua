@@ -14,6 +14,9 @@
 
 local THREADS = true
 local THREADS_all = true
+local FOREVER = true
+
+repeat  -- FOREVER
 
 --[===[
 
@@ -25979,3 +25982,5 @@ end
     tot = 12,
 }
 ]==]
+
+until (not FOREVER)
