@@ -14,7 +14,7 @@
 
 local THREADS = true
 local THREADS_all = true
-local FOREVER = true
+--local FOREVER = true
 
 repeat  -- FOREVER
 
@@ -522,7 +522,6 @@ return _f();
 }
 
 do return end
---]===]
 
 -- OK: well tested
 --while(true) do
@@ -25345,6 +25344,7 @@ return 1;
 }
 
 -- ASYNCS // THREADS
+--]===]
 
 if THREADS then
 
@@ -25445,7 +25445,7 @@ return ret;
     run = { ['~>A;~>1s'] = 4 },
 }
 
-for i=1, 100 do
+for i=1, 50 do
     Test { [[
 native do
     #include <unistd.h>
@@ -25467,7 +25467,7 @@ return ret;
     }
 end
 
-for i=1, 100 do
+for i=1, 50 do
     Test { [[
 native do
     #include <unistd.h>
@@ -25727,7 +25727,6 @@ return v1;
 
 end     -- THREADS_all
 end     -- THREADS
-do return end
 
 --[==[
     -- MEM

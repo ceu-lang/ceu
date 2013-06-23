@@ -828,7 +828,7 @@ _ceu_trl = &_ceu_org->trls[ ]]..me.trails[1]..[[ ];
         assert(evt.pre == 'input')
 
         if _PROPS.has_threads then
-            LINE(me, 'pthread_mutex_unlock(&CEU.threads_mutex);')
+            LINE(me, 'CEU_THREADS_MUTEX_UNLOCK(&CEU.threads_mutex);')
         end
         if e2 then
             LINE(me, 'ceu_go_event(CEU_IN_'..evt.id
@@ -837,7 +837,7 @@ _ceu_trl = &_ceu_org->trls[ ]]..me.trails[1]..[[ ];
             LINE(me, 'ceu_go_event(CEU_IN_'..evt.id ..', NULL);')
         end
         if _PROPS.has_threads then
-            LINE(me, 'pthread_mutex_lock(&CEU.threads_mutex);')
+            LINE(me, 'CEU_THREADS_MUTEX_LOCK(&CEU.threads_mutex);')
         end
 
         LINE(me, [[
@@ -861,14 +861,14 @@ _ceu_trl->evt = CEU_IN__ASYNC;
 _ceu_trl->lbl = ]]..me.lbl_cnt.id..[[;
 #ifdef CEU_WCLOCKS
 #ifdef CEU_THREADS
-pthread_mutex_unlock(&CEU.threads_mutex);
+CEU_THREADS_MUTEX_UNLOCK(&CEU.threads_mutex);
 #endif
 ceu_go_wclock((s32)]]..V(exp)..[[);
 while (CEU.wclk_min <= 0) {
     ceu_go_wclock(0);
 }
 #ifdef CEU_THREADS
-pthread_mutex_lock(&CEU.threads_mutex);
+CEU_THREADS_MUTEX_LOCK(&CEU.threads_mutex);
 #endif
 ]])
         HALT(me)
@@ -1120,15 +1120,15 @@ case ]]..me.lbl.id..[[:;
             LINE(me, V(to[2])..' = ')
         end
         LINE(me, [[
-    pthread_create(&]]..me.thread_id..[[, NULL, _ceu_thread_]]..me.n..[[, &p);
+    CEU_THREADS_CREATE(&]]..me.thread_id..[[, NULL, _ceu_thread_]]..me.n..[[, &p);
 
     /* wait for "p" to be copied inside the thread */
-    pthread_mutex_unlock(&CEU.threads_mutex);
+    CEU_THREADS_MUTEX_UNLOCK(&CEU.threads_mutex);
     while (*(p.st) < 1);   /* cpy ok */
         /* TODO: safe w/o mutex? */
 
     /* proceed with sync execution */
-    pthread_mutex_lock(&CEU.threads_mutex);
+    CEU_THREADS_MUTEX_LOCK(&CEU.threads_mutex);
     *(p.st) = 2;    /* lck: now thread may also execute */
 }
 ]])
@@ -1176,18 +1176,18 @@ void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
     /* terminate thread */
     {
         tceu_evtp evtp;
-        evtp.thread = pthread_self();
+        evtp.thread = CEU_THREADS_SELF();
         /*pthread_testcancel();*/
-        pthread_mutex_lock(&CEU.threads_mutex);
+        CEU_THREADS_MUTEX_LOCK(&CEU.threads_mutex);
     /* only if sync is not active */
         if (*(_ceu_p.st) < 3) {     /* 3=end */
             *(_ceu_p.st) = 3;
-            pthread_mutex_unlock(&CEU.threads_mutex);
+            CEU_THREADS_MUTEX_UNLOCK(&CEU.threads_mutex);
             ceu_go(CEU_IN__THREAD, evtp);
-            pthread_cond_signal(&CEU.threads_cond);
+            CEU_THREADS_COND_SIGNAL(&CEU.threads_cond);
         } else {
             free(_ceu_p.st);                /* fin finished, I free */
-            pthread_mutex_unlock(&CEU.threads_mutex);
+            CEU_THREADS_MUTEX_UNLOCK(&CEU.threads_mutex);
         }
     }
     return NULL;
@@ -1213,15 +1213,15 @@ if (*]]..me.thread.thread_st..[[) {
     Sync = function (me)
         local thr = _AST.iter'Thread'()
         LINE(me, [[
-pthread_mutex_lock(&CEU.threads_mutex);
+CEU_THREADS_MUTEX_LOCK(&CEU.threads_mutex);
 if (*(_ceu_p.st) == 3) {    /* 3=end */
-    pthread_mutex_unlock(&CEU.threads_mutex);
+    CEU_THREADS_MUTEX_UNLOCK(&CEU.threads_mutex);
     return NULL;        /* exit if end */
 } else {                /* othrewise, execute block */
 ]])
         CONC(me)
         LINE(me, [[
-    pthread_mutex_unlock(&CEU.threads_mutex);
+    CEU_THREADS_MUTEX_UNLOCK(&CEU.threads_mutex);
 }
 ]])
     end,

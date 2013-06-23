@@ -10,13 +10,8 @@
 #include <stdlib.h>
 #endif
 
-#ifdef CEU_THREADS
-#include <pthread.h>
-#include <stdlib.h>
-#endif
-
 #ifdef CEU_NEWS
-#include <stdlib.h>
+#include <stdlib.h>     /* malloc / free */
 #endif
 
 #ifdef CEU_NEWS
@@ -45,7 +40,24 @@
  * ceu_out_event(id, len, data)
  * ceu_out_async(more?);
  * ceu_out_end(v)
+ */
 
+#ifdef CEU_THREADS
+#ifndef CEU_THREADS_T
+#include <pthread.h>
+#define CEU_THREADS_T               pthread_t
+#define CEU_THREADS_MUTEX_T         pthread_mutex_t
+#define CEU_THREADS_COND_T          pthread_cond_t
+#define CEU_THREADS_SELF()          pthread_self()
+#define CEU_THREADS_CREATE(t,a,f,p) pthread_create(t,a,f,p)
+#define CEU_THREADS_MUTEX_LOCK(m)   pthread_mutex_lock(m)
+#define CEU_THREADS_MUTEX_UNLOCK(m) pthread_mutex_unlock(m)
+#define CEU_THREADS_COND_WAIT(c,m)  pthread_cond_wait(c,m)
+#define CEU_THREADS_COND_SIGNAL(c)  pthread_cond_signal(c)
+#endif
+#endif
+
+/*
  * pthread_t thread;
  * pthread_mutex_t mutex;
  * pthread_cond_t  cond;
@@ -56,7 +68,7 @@
  * pthread_mutex_lock(&mutex);
  * pthread_mutex_unlock(&mutex);
  * pthread_cond_wait(&cond, &mutex);
- * pthread_cond_broadcast(&cond);
+ * pthread_cond_signal(&cond);
 */
 
 /*typedef === TCEU_NEVT === tceu_nevt;    // (x) number of events */
@@ -102,7 +114,7 @@ typedef union {
     void* ptr;
     s32   dt;
 #ifdef CEU_THREADS
-    pthread_t thread;
+    CEU_THREADS_T thread;
 #endif
 } tceu_evtp;
 
@@ -185,8 +197,8 @@ typedef struct {
 #endif
 
 #ifdef CEU_THREADS
-    pthread_mutex_t threads_mutex;
-    pthread_cond_t  threads_cond;
+    CEU_THREADS_MUTEX_T threads_mutex;
+    CEU_THREADS_COND_T  threads_cond;
 #endif
 
     CEU_Main    mem;
@@ -440,13 +452,13 @@ void ceu_go_all (int* ret_end)
 #endif
 
 #ifdef CEU_THREADS
-    pthread_mutex_lock(&CEU.threads_mutex);
+    CEU_THREADS_MUTEX_LOCK(&CEU.threads_mutex);
     for (;;) {
         if (ret_end!=NULL && *ret_end) {
-            pthread_mutex_unlock(&CEU.threads_mutex);
+            CEU_THREADS_MUTEX_UNLOCK(&CEU.threads_mutex);
             goto _CEU_END_;
         }
-        pthread_cond_wait(&CEU.threads_cond, &CEU.threads_mutex);
+        CEU_THREADS_COND_WAIT(&CEU.threads_cond, &CEU.threads_mutex);
     }
 #endif
 
@@ -524,7 +536,7 @@ void ceu_go (int _ceu_evt, tceu_evtp _ceu_evtp)
 #endif
 
 #ifdef CEU_THREADS
-pthread_mutex_lock(&CEU.threads_mutex);
+CEU_THREADS_MUTEX_LOCK(&CEU.threads_mutex);
 #endif
 
     _ceu_seqno++;
@@ -734,6 +746,6 @@ _CEU_NEXT_:
     }
 
 #ifdef CEU_THREADS
-pthread_mutex_unlock(&CEU.threads_mutex);
+CEU_THREADS_MUTEX_UNLOCK(&CEU.threads_mutex);
 #endif
 }
