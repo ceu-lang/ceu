@@ -1114,22 +1114,25 @@ case ]]..me.lbl.id..[[:;
 *]]..me.thread_st..[[ = 0;  /* ini */
 {
     tceu_threads_p p = { _ceu_org, ]]..me.thread_st..[[ };
+    int ret =
+        CEU_THREADS_CREATE(&]]..me.thread_id..[[, _ceu_thread_]]..me.n..[[, &p);
 ]])
         local to = _AST.iter'SetThread'()
         if to then
-            LINE(me, V(to[2])..' = ')
+            LINE(me, V(to[2])..' = ret;')
         end
         LINE(me, [[
-    CEU_THREADS_CREATE(&]]..me.thread_id..[[, NULL, _ceu_thread_]]..me.n..[[, &p);
+    if (ret == 0)
+    {
+        /* wait for "p" to be copied inside the thread */
+        CEU_THREADS_MUTEX_UNLOCK(&CEU.threads_mutex);
+        while (*(p.st) < 1);   /* cpy ok */
+            /* TODO: safe w/o mutex? */
 
-    /* wait for "p" to be copied inside the thread */
-    CEU_THREADS_MUTEX_UNLOCK(&CEU.threads_mutex);
-    while (*(p.st) < 1);   /* cpy ok */
-        /* TODO: safe w/o mutex? */
-
-    /* proceed with sync execution */
-    CEU_THREADS_MUTEX_LOCK(&CEU.threads_mutex);
-    *(p.st) = 2;    /* lck: now thread may also execute */
+        /* proceed with sync execution */
+        CEU_THREADS_MUTEX_LOCK(&CEU.threads_mutex);
+        *(p.st) = 2;    /* lck: now thread may also execute */
+    }
 }
 ]])
 

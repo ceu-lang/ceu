@@ -204,7 +204,7 @@ CEU_POOL_DCL(]]..node.pool..', CEU_'..node.cls.id..','..n..[[)
     Thread_pre = 'ParOr_pre',
     Thread = function (me)
         local cls = CLS()
-        cls.struct = cls.struct..SPC()..'pthread_t __thread_id_'..me.n..';\n'
+        cls.struct = cls.struct..SPC()..'CEU_THREADS_T __thread_id_'..me.n..';\n'
         cls.struct = cls.struct..SPC()..'s8*       __thread_st_'..me.n..';\n'
     end,
     Thread_pos = 'ParOr_pos',
