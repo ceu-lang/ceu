@@ -12,6 +12,8 @@
 
 -- async dentro de pause
 
+_VALGRIND = true
+
 local THREADS = true
 local THREADS_all = true
 --local FOREVER = true
@@ -522,9 +524,9 @@ return _f();
 }
 
 do return end
+--]===]
 
 -- OK: well tested
---while(true) do
 
 Test { [[return(1);]],
     ana = {
@@ -2556,6 +2558,22 @@ end
 }
 
 -- CONTINUE
+
+Test { [[
+var int ret = 1;
+loop i,10 do
+    if 1 then
+        continue;
+    end
+    ret = ret + 1;
+    if 0 then
+        continue;
+    end
+end
+return ret;
+]],
+    run = 1,
+}
 
 Test { [[
 loop do
@@ -25344,7 +25362,6 @@ return 1;
 }
 
 -- ASYNCS // THREADS
---]===]
 
 if THREADS then
 
@@ -25465,6 +25482,9 @@ return ret;
 ]],
         run = 1,
     }
+    if _VALGRIND then
+        break   -- run only once with valgrind
+    end
 end
 
 for i=1, 50 do
@@ -25489,6 +25509,9 @@ return ret;
 ]],
         run = 1,
     }
+    if _VALGRIND then
+        break   -- run only once with valgrind
+    end
 end
 
 Test { [[
@@ -25593,7 +25616,7 @@ return v1;
     run = 900,
 }
 
-if THREADS_all then
+if THREADS_all and (not _VALGRIND) then
 
 Test { [[
 var int  v1, v2;

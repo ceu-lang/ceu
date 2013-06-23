@@ -13,8 +13,6 @@ STATS = {
     bytes   = 0,
 }
 
-VALGRIND = ...
-
 function check (mod)
     assert(T[mod]==nil or T[mod]==false or type(T[mod])=='string')
     local ok, msg = pcall(dofile, mod..'.lua')
@@ -138,8 +136,9 @@ end
     end
 
     local CEU = './ceu _ceu_tmp.ceu --run-tests'
-    local EXE = (VALGRIND=='false' and './ceu.exe')
+    local EXE = ((not _VALGRIND) and './ceu.exe')
              or 'valgrind -q --leak-check=full ./ceu.exe 2>&1'
+             --or 'valgrind -q --tool=helgrind ./ceu.exe 2>&1'
     local GCC = 'gcc -Wall -DCEU_DEBUG -ansi -o ceu.exe main.c'
     if _PROPS.has_threads then
         GCC = GCC .. ' -lpthread'
@@ -216,11 +215,11 @@ assert(STATS.trails ==    2521)
 assert(STATS.bytes  == 7443601)
 
 -- w/ threads
---./run_tests.lua false  135.42s user 29.37s system 84% cpu 3:15.02 total
-assert(STATS.count  ==    1476)
+--./run_tests.lua false  169.53s user 26.22s system 98% cpu 3:18.44 total
+assert(STATS.count  ==    1377)
 assert(STATS.mem    ==       0)
-assert(STATS.trails ==    3158)
-assert(STATS.bytes  == 9977970)
+assert(STATS.trails ==    2859)
+assert(STATS.bytes  == 8818309)
 
 os.execute('rm -f /tmp/_ceu_*')
 

@@ -61,7 +61,8 @@ F = {
         ASR(_if and loop, me,
             'invalid `continue´')
 
-        loop.continue = _if
+        loop.hasContinue = true
+        _if.hasContinue = true
         ASR( _if[3].tag=='Nothing'     and   -- no else
             me.depth  == _if.depth+3   and   -- If->Block->Stmts->Continue
              _if.depth == loop.blk.depth+2 , -- Block->Stmts->If
@@ -69,18 +70,27 @@ F = {
         return _AST.node('Nothing')(me.ln)
     end,
     Loop = function (me)
-        if not me.continue then
+        if not me.hasContinue then
             return
         end
 
+        -- start from last to first continue
         local stmts = me.blk[1]
-        for i, n in ipairs(stmts) do
-            if n == me.continue then
-                local _else = _AST.node('Stmts')(n.ln)
-                n[3] = _else
-                for j=i+1, #stmts do
-                    _else[#_else+1] = stmts[j]
-                    stmts[j] = nil
+        local N = #stmts
+        local has = true
+        while has do
+            has = false
+            for i=N, 1, -1 do
+                local n = stmts[i]
+                if n.hasContinue then
+                    has = true
+                    N = i-1
+                    local _else = _AST.node('Stmts')(n.ln)
+                    n[3] = _else
+                    for j=i+1, #stmts do
+                        _else[#_else+1] = stmts[j]
+                        stmts[j] = nil
+                    end
                 end
             end
         end

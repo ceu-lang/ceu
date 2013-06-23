@@ -1124,33 +1124,41 @@ case ]]..me.lbl.id..[[:;
         LINE(me, [[
     if (ret == 0)
     {
+        assert( CEU_THREADS_DETACH(]]..me.thread_id..[[) == 0 );
+
         /* wait for "p" to be copied inside the thread */
         CEU_THREADS_MUTEX_UNLOCK(&CEU.threads_mutex);
-        while (*(p.st) < 1);   /* cpy ok */
-            /* TODO: safe w/o mutex? */
+
+        while (1) {
+            CEU_THREADS_MUTEX_LOCK(&CEU.threads_mutex);
+            int ok = (*(p.st) >= 1);   /* cpy ok? */
+            CEU_THREADS_MUTEX_UNLOCK(&CEU.threads_mutex);
+            if (ok)
+                break;
+        }
 
         /* proceed with sync execution */
         CEU_THREADS_MUTEX_LOCK(&CEU.threads_mutex);
         *(p.st) = 2;    /* lck: now thread may also execute */
-    }
-}
 ]])
 
         -- await termination
         local no = '_CEU_NO_'..me.n..'_'
         LINE(me, [[
 ]]..no..[[:
-    _ceu_trl->evt = CEU_IN__THREAD;
-    _ceu_trl->lbl = ]]..me.lbl.id..[[;
+        _ceu_trl->evt = CEU_IN__THREAD;
+        _ceu_trl->lbl = ]]..me.lbl.id..[[;
 ]])
         HALT(me)
 
         -- continue
         LINE(me, [[
 case ]]..me.lbl.id..[[:;
-    if (_ceu_evtp.thread != ]]..me.thread_id..[[) {
-        goto ]]..no..[[; /* another thread is terminating: await again */
+        if (_ceu_evtp.thread != ]]..me.thread_id..[[) {
+            goto ]]..no..[[; /* another thread is terminating: await again */
+        }
     }
+}
 ]])
         DEBUG_TRAILS(me)
 
@@ -1166,12 +1174,19 @@ void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
     tceu_org* _ceu_org = _ceu_p.org;
 
     /* now safe for sync to proceed */
+    CEU_THREADS_MUTEX_LOCK(&CEU.threads_mutex);
     *(_ceu_p.st) = 1;
+    CEU_THREADS_MUTEX_UNLOCK(&CEU.threads_mutex);
 
     /* ensures that sync reaquires the mutex before I proceed */
     /* otherwise I could lock below and reenter sync */
-    while (*(_ceu_p.st) < 2);  /* lck ok */
-        /* TODO: safe w/o mutex? */
+    while (1) {
+        CEU_THREADS_MUTEX_LOCK(&CEU.threads_mutex);
+        int ok = (*(_ceu_p.st) >= 2);   /* lck ok? */
+        CEU_THREADS_MUTEX_UNLOCK(&CEU.threads_mutex);
+        if (ok)
+            break;
+    }
 
     /* body */
     ]]..blk.code..[[
@@ -1183,7 +1198,7 @@ void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
         /*pthread_testcancel();*/
         CEU_THREADS_MUTEX_LOCK(&CEU.threads_mutex);
     /* only if sync is not active */
-        if (*(_ceu_p.st) < 3) {     /* 3=end */
+        if (*(_ceu_p.st) < 3) {             /* 3=end */
             *(_ceu_p.st) = 3;
             CEU_THREADS_MUTEX_UNLOCK(&CEU.threads_mutex);
             ceu_go(CEU_IN__THREAD, evtp);
@@ -1201,8 +1216,8 @@ void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
     RawStmt = function (me)
         if me.thread then
             me[1] = [[
-if (*]]..me.thread.thread_st..[[) {
-    *]]..me.thread.thread_st..[[ = 2;       /* end */
+if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
+    *]]..me.thread.thread_st..[[ = 3;
     /*assert( pthread_cancel(]]..me.thread.thread_id..[[) == 0 );*/
 } else {
     free(]]..me.thread.thread_st..[[);      /* thr finished, I free */

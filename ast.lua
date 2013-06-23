@@ -319,7 +319,7 @@ C = {
                         node('Stmts')(ln,
                             blk,
                             nxt_i))
-            n.blk = blk     -- continue
+            n.blk = blk     -- _Continue needs this
             return node('Block')(ln,
                     node('Stmts')(ln, dcl_i, set_i, n))
         end

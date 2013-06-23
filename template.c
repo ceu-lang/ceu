@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #endif
 
-#ifdef CEU_NEWS
+#if defined(CEU_NEWS) || defined(CEU_THREADS)
 #include <stdlib.h>     /* malloc / free */
 #endif
 
@@ -50,6 +50,7 @@
 #define CEU_THREADS_COND_T          pthread_cond_t
 #define CEU_THREADS_SELF()          pthread_self()
 #define CEU_THREADS_CREATE(t,f,p)   pthread_create(t,NULL,f,p)
+#define CEU_THREADS_DETACH(t)       pthread_detach(t)
 #define CEU_THREADS_MUTEX_LOCK(m)   pthread_mutex_lock(m)
 #define CEU_THREADS_MUTEX_UNLOCK(m) pthread_mutex_unlock(m)
 #define CEU_THREADS_COND_WAIT(c,m)  pthread_cond_wait(c,m)

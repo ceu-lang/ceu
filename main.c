@@ -25,5 +25,9 @@ int main (int argc, char *argv[])
     ceu_go_all(&ret_end);
 
     printf("*** END: %d\n", ret_val);
+#if 0
+    #include <unistd.h>
+    sleep(1);  /* use when testing threads+valgrind */
+#endif
     return ret_val;
 }
