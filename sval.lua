@@ -90,8 +90,6 @@ F =
         local tp = unpack(me)
         if type(tp) == 'string' then
             me.cval = 'sizeof('.._TP.c(me[1])..')'
-        else
-            me.cval = 'sizeof('..tp.cval..')'
         end
 
         if type(tp) == 'string' then    -- sizeof(type) vs sizeof(exp)
@@ -107,7 +105,7 @@ F =
     end,
     CONST = function (me)
         me.cval = me[1]
-        me.sval = tonumber(v)
+        me.sval = tonumber(me[1])
     end,
     NULL = function (me)
         me.cval = '((void *)0)'

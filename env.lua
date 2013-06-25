@@ -505,7 +505,7 @@ F = {
             local cls = CLS()
             -- id=_f // c.id=CEU_T__f
             id_ = 'CEU_'..cls.id..'_'..id
-            cls.blk_ifc.funs[id] = { tag=tag, id=id, id_=id_, len=len, mod=mod }
+            cls.blk_ifc.funs[id] = { tag=tag, id=id, id_=id_, mod=mod }
             _ENV.ifcs.fun2tp[id] = id_      -- last will be from a class
             n = _F
             _F = _F + 1
@@ -844,32 +844,32 @@ F = {
     WCLOCKK = function (me)
         me.tp   = 'int'
         me.lval = false
-        me.fst  = false
+        me.fst  = 'const'
     end,
     WCLOCKE = 'WCLOCKK',
 
     SIZEOF = function (me)
         me.tp   = 'int'
         me.lval = false
-        me.fst  = false
+        me.fst  = 'const'
     end,
 
     STRING = function (me)
         me.tp   = '_char*'
         me.lval = false
-        me.fst  = false
+        me.fst  = 'const'
     end,
     CONST = function (me)
         local v = unpack(me)
         me.tp   = 'int'
         me.lval = false
-        me.fst  = false
+        me.fst  = 'const'
         ASR(string.sub(v,1,1)=="'" or tonumber(v), me, 'malformed number')
     end,
     NULL = function (me)
         me.tp   = 'null*'
         me.lval = false
-        me.fst  = false
+        me.fst  = 'const'
     end,
 }
 

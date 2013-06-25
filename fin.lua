@@ -8,32 +8,43 @@ F = {
 
         local constr = _AST.iter'Dcl_constr'()
 
+        if me.fromAwait then
+            -- (a,b) = await X;
+            ----
+            -- var t* p;        -- wrong scope (p is a local)
+            -- p = await X;     -- right scope (where X is defined)
+            -- a = p:_1;
+            -- b = p:_2;
+            fr = me.fromAwait
+        end
+
         if _TP.deref(to.tp) then
-            local blk1 = (to.fst=='_' and _AST.root) or to.fst.blk
+            local to_blk = (to.fst=='_' and _AST.root) or to.fst.blk
 
             if constr then
-                blk1 = constr.blk
+                to_blk = constr.blk
             end
 
-            if fr.fst and fr.fst~='_' then
-                local blk2 = fr.fst.blk
-                if blk2 then
-                    local d1 = (blk1==true and 0) or blk1.depth
-                    local d2 = (blk2==true and 0) or blk2.depth
---DBG(d1, d2)
+            assert(fr.fst)
+            -- '_' is in the global scope
+            if fr.fst~='const' and fr.fst~='_' then
+                local fr_blk = fr.fst.blk
+                if fr_blk then
+                    local to_depth = (to_blk==true and 0) or to_blk.depth
+                    local fr_depth = (fr_blk==true and 0) or fr_blk.depth
 
                     -- int a; pa=&a;    -- `a´ termination must consider `pa´
-                    req = d2 > d1 and (
-                            blk1 == true or             -- `pa´ global
-                            d2 > CLS().blk_body.depth   -- `a´ not top-level
+                    req = fr_depth > to_depth and (
+                            to_blk == true or                 -- `pa´ global
+                            fr_depth > CLS().blk_body.depth   -- `a´ not top-level
                     )
                 end
-                req = req and blk2
+                req = req and fr_blk
             else
                 -- int* pa = _fopen();  -- `pa´ termination must consider ret
                 req = (fr.tag=='Op2_call' and fr.c.mod~='pure')
                         or fr.tag == 'RawExp'
-                req = req and blk1
+                req = req and to_blk
             end
         end
 

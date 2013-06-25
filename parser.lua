@@ -326,7 +326,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , Dcl_det  = K'deterministic' * EV'__ID' * EK'with' *
                      EV'__ID' * (K',' * EV'__ID')^0
 
-    , __Dcl_nat = Cc'type' * V'ID_nat' * K'=' * V'_Exp'
+    , __Dcl_nat = Cc'type' * V'ID_nat' * K'=' * NUM
                 + Cc'func' * V'ID_nat' * '()' * Cc(false)
                 + Cc'unk'  * V'ID_nat'        * Cc(false)
 

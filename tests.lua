@@ -143,16 +143,57 @@ end
 -- OK: under tests but supposed to work
 
 do return end
---]===]
 
 Test { [[
+var int* p;
+do
+    event int* e;
+    p = await e;
+end
+return 1;
+]],
+    fin = 'line 4 : attribution requires `finalize´',
+}
+
+Test { [[
+var int* p;
+do
+    event int* e;
+    p := await e;
+end
+return 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input void START;
+native nohold _fprintf(), _stderr;
 event (int,void*) ptr;
 var void* p;
 var int i;
 par/or do
     (i,p) = await ptr;
+_fprintf(_stderr,"a\n");
 with
+    await START;
     emit ptr => (1, null);
+end
+return i;
+]],
+    run = 1,
+}
+
+Test { [[
+var void* p;
+var int i;
+do
+    event (int,void*) ptr;
+    par/or do
+        (i,p) = await ptr;
+    with
+        emit ptr => (1, null);
+    end
 end
 return i;
 ]],
@@ -473,6 +514,7 @@ return _f();
 }
 
 do return end
+--]===]
 
 -- OK: well tested
 
@@ -1893,7 +1935,7 @@ with
 end;
 return 0;
 ]],
-    code = 'line 4 : invalid expression',
+    code = 'line 3 : invalid expression',
 }
 
 Test { [[
@@ -15477,7 +15519,8 @@ Test { [[input int[1] E; return 0;]],
     ast = "line 1 : after `int´ : expected identifier",
 }
 Test { [[var int[0] v; return 0;]],
-    env='invalid array dimension'
+    run = 0,
+    --env='invalid array dimension'
 }
 Test { [[var int[2] v; return v;]],
     env = 'invalid attribution'
@@ -25440,10 +25483,8 @@ return (ret == 0);
 }
 
 Test { [[
-native nohold _fprintf(), _stderr;
 var int  a=10, b=5;
 var int* p = &b;
-_fprintf(_stderr,"a\n");
 async thread (a, p) do
     a = a + *p;
     sync do

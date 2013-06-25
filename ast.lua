@@ -601,12 +601,13 @@ C = {
             t[2].__ref = t[1] -- TP* is changed on env.lua
 
             for i, v in ipairs(to) do
-                t[#t+1] = node('SetExp')(ln, '=',
+                t[#t+1] = node('SetExp')(ln, op,
                             node('Op2_.')(ln, '.',
                                 node('Op1_*')(ln, '*',
                                     node('Var')(ln, tup)),
                                 '_'..i),
                             v)
+                t[#t].fromAwait = p1    -- p1 is an AwaitX
             end
 
             return node('Stmts')(ln, unpack(t))
