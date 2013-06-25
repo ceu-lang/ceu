@@ -224,6 +224,37 @@ function _AST.visit (F, node)
     return visit_aux(node or _AST.root, F)
 end
 
+function _AST.SetAwaitUntil (ln, awt, op,to)
+    local ret
+    awt.is_inside_set = true
+
+    -- set await
+    if op then
+        local val = node('AwaitVal')(ln)
+        val.awt = awt
+        ret = node('Stmts')(ln,
+                awt,
+                node('SetExp')(ln, op, val, to))
+    else
+        ret = awt
+    end
+
+    -- await until
+    local cnd = awt[#awt]
+    awt[#awt] = nil
+    if cnd then
+        ret = _AST.node('Loop')(ln,
+                    _AST.node('Stmts')(ln,
+                        ret,
+                        _AST.node('If')(ln, cnd,
+                            _AST.node('Break')(ln),
+                            _AST.node('Nothing')(ln))))
+        ret.isAwaitUntil = true
+    end
+
+    return ret
+end
+
 C = {
     [1] = function (ln, spc, ...) -- spc=CK''
         return node('Stmts')(ln,...)
@@ -361,15 +392,14 @@ C = {
         else
             tag = 'AwaitInt'
         end
+
+        local set
         local awt = node(tag)(ln, evt, false)
         awt.isEvery = true
-        if var then
-            awt = node('SetAwait')(ln, op, awt, var)
-        end
 
         local ret = node('Loop')(ln,
                         node('Stmts')(ln,
-                            awt,
+                            _AST.SetAwaitUntil(ln, awt, op, var),
                             blk))
         ret.isEvery = true
         return ret
@@ -448,10 +478,10 @@ C = {
                     node('ParOr')(ln,
                         node('Loop')(ln,
                             node('Stmts')(ln,
-                                node('SetAwait')(ln, '=',
+                                _AST.SetAwaitUntil(ln,
                                     node('AwaitInt')(ln, evt, false),
-                                    node('Var')(ln, cur_id),
-                                    false),
+                                    '=',
+                                    node('Var')(ln, cur_id)),
                                 node('If')(ln,
                                     node('Var')(ln, cur_id),
                                     on,
@@ -582,16 +612,16 @@ C = {
             ASR(tag=='SetExp', ln, 'invalid attribution')
         end
         if to.tag == 'VarList' then
-            ASR(tag=='SetAwait', ln,
+            ASR(tag=='_SetAwait', ln,
                 'invalid attribution (`await´ expected)')
 
             local tup = '_tup_'.._N
             _N = _N + 1
 
             local t = {
-                _AST.copy(p1[1]),  -- find out 'TP' before traversing tup
+                _AST.copy(p1[1]),   -- find out 'TP' before traversing tup
                 node('Dcl_var')(ln, 'var', 'TP*', false, tup),
-                node('SetAwait')(ln, op, p1, node('Var')(ln,tup)),
+                _AST.SetAwaitUntil(ln, p1, op, node('Var')(ln,tup)),
             }
             t[2].__ref = t[1] -- TP* is changed on env.lua
 
@@ -604,16 +634,23 @@ C = {
                             v)
                 t[#t].fromAwait = p1    -- p1 is an AwaitX
             end
-
             return node('Stmts')(ln, unpack(t))
-        elseif (tag=='SetExp') or (tag=='SetAwait') then
+
+        elseif tag == 'SetExp' then
             return node(tag)(ln, op, p1, to)
-        elseif (tag=='SetBlock') then
+
+        elseif tag == '_SetAwait' then
+            return _AST.SetAwaitUntil(ln, p1, op, to)
+
+        elseif tag == 'SetBlock' then
             return node(tag)(ln, p1, to)
-        elseif (tag=='SetThread') then
+
+        elseif tag == 'SetThread' then
             return node(tag)(ln, p1, to)
-        elseif (tag=='SetNew') then
+
+        elseif tag == 'SetNew' then
             return node(tag)(ln, to, p2, p1, p3)
+
         else
             assert(tag=='SetSpawn')
             return node(tag)(ln, to, p1)

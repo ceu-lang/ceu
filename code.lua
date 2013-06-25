@@ -921,19 +921,6 @@ case ]]..me.lbl_cnt.id..[[:;
 ]])
     end,
 
-    SetAwait = function (me)
-        local _,awt,_ = unpack(me)
-        CONC(me, awt) -- await code
-    end,
-    _SetAwait = function (me)
-        local set = _AST.iter'SetAwait'()
-        if not set then
-            return
-        end
-        local _,_, to = unpack(set)
-        ATTR(me, to, set.awt)
-    end,
-
     AwaitN = function (me)
         HALT(me)
     end,
@@ -960,7 +947,6 @@ case ]]..me.lbl.id..[[:;
         goto ]]..no..[[;
 ]])
         DEBUG_TRAILS(me)
-        F._SetAwait(me)
     end,
 
     AwaitInt = function (me)
@@ -994,7 +980,6 @@ case ]]..me.lbl.id..[[:;
 ]])
         PAUSE(me, no)
         DEBUG_TRAILS(me)
-        F._SetAwait(me)
     end,
 
     AwaitExt = function (me)
@@ -1013,7 +998,6 @@ case ]]..me.lbl.id..[[:;
 ]])
         PAUSE(me, string.sub(no,1,-2))  -- remove `:´
         DEBUG_TRAILS(me)
-        F._SetAwait(me)
     end,
 
     AwaitS = function (me)

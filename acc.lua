@@ -138,7 +138,6 @@ F = {
         me.emtChk = false
     end,
 
-    SetAwait = 'SetExp',
     SetExp = function (me)
         local _,_,to = unpack(me)
         CHG(to.ref.acc, 'wr')

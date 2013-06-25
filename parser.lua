@@ -170,22 +170,22 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , _Set  = (V'_Exp' + V'VarList') * V'_Sets'
     , _Sets = (CK'='+CK':=') * (
                                     -- p1=awt, p2=false, p3=false
-                Cc'SetAwait' * (V'AwaitS'+V'AwaitT'+V'AwaitExt'+V'AwaitInt')
-                             * Cc(false) * Cc(false)
+                Cc'_SetAwait' * (V'AwaitS'+V'AwaitT'+V'AwaitExt'+V'AwaitInt')
+                              * Cc(false) * Cc(false)
                                     -- p1=blk, p2=false, p3=false
-              + Cc'SetBlock' * V'_SetBlock'
-                             * Cc(false) * Cc(false)
+              + Cc'SetBlock'  * V'_SetBlock'
+                              * Cc(false) * Cc(false)
                                     -- p1=blk, p2=false, p3=false
               + Cc'SetThread' * V'_SetThread'
                               * Cc(false) * Cc(false)
                                     -- p1=blk, p2=false, p3=false
-              + Cc'SetExp'   * V'_Exp'
-                             * Cc(false) * Cc(false)
+              + Cc'SetExp'    * V'_Exp'
+                              * Cc(false) * Cc(false)
                                     -- p1=max, p2=cls, p3=constr
-              + Cc'SetNew'   * K'new' * ('['*NUM*EK']'+Cc(false)) * V'ID_cls'
-                             * (EK'with' * V'Dcl_constr' * EK'end' + Cc(false))
+              + Cc'SetNew'    * K'new' * ('['*NUM*EK']'+Cc(false)) * V'ID_cls'
+                              * (EK'with' * V'Dcl_constr' * EK'end' + Cc(false))
                                     -- p1=Spawn[max,cls,constr]
-              + Cc'SetSpawn' * V'Spawn'
+              + Cc'SetSpawn'  * V'Spawn'
               + EM'expression'
               )
 

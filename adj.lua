@@ -37,24 +37,18 @@ F = {
         return blk
     end,
 
+    -- AWAIT: await x until y (not child from SetAwait)
     AwaitT = function (me)
-        local cnd = me[#me]
-        me[#me] = nil   -- remove cnd
-        if not cnd then
-            return
+        if me.is_inside_set then
+            return      -- already handled by SetAwait
         end
-        local loop = _AST.node('Loop')(me.ln,
-                        _AST.node('Stmts')(me.ln,
-                            me,
-                            _AST.node('If')(me.ln, cnd,
-                                _AST.node('Break')(me.ln),
-                                _AST.node('Nothing')(me.ln))))
-        loop.isAwaitUntil = true
-        return loop
+        return _AST.SetAwaitUntil(me.ln, me)
     end,
     AwaitExt = 'AwaitT',
     AwaitInt = 'AwaitT',
     AwaitS   = 'AwaitT',
+
+---
 
     _Continue = function (me)
         local _if  = _AST.iter('If')()

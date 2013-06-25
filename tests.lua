@@ -514,7 +514,6 @@ return _f();
 }
 
 do return end
---]===]
 
 -- OK: well tested
 
@@ -25354,6 +25353,7 @@ return 1;
     run = 1;
 }
 
+--]===]
 Test { [[
 input (int,int) A;
 par/or do

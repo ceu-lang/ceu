@@ -108,6 +108,10 @@ F =
 ]]
     end,
 
+    AwaitVal = function (me)
+        me.val = me.awt.val
+    end,
+
     AwaitInt = 'AwaitExt',
     AwaitExt = function (me)
         local e1 = unpack(me)

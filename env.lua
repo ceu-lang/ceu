@@ -528,12 +528,18 @@ F = {
                 wclock = true
             end
         end
+        error'me.fst'
+        --me.fst = ?
     end,
     AwaitInt = function (me, exp)
         local exp = exp or unpack(me)
         local var = exp.var
         ASR(var and var.isEvt, me,
                 'event "'..(var and var.id or '?')..'" is not declared')
+        me.fst = exp.fst
+    end,
+    AwaitExt = function (me)
+        me.fst = 'global'
     end,
 
     EmitInt = function (me)
@@ -574,6 +580,9 @@ F = {
         ASR(not CLS().is_ifc, me, 'invalid attribution')
     end,
 
+--[[
+-- TODO: remove?
+-- await ... until?
     SetAwait = function (me)
         local _, awt, to = unpack(me)
         ASR(to.lval, me, 'invalid attribution')
@@ -582,15 +591,18 @@ F = {
             awt = awt[1][1]         -- await ... until
         end
         me.awt = awt                -- will need me.awt.val
+    end,
+]]
 
-        if awt.tag == 'AwaitT' then
-            ASR(_TP.isNumeric(to.tp,true), me, 'invalid attribution')
-        elseif awt.tag == 'AwaitS' then
-            ASR(_TP.isNumeric(to.tp,true), me, 'invalid attribution')
+    AwaitVal = function (me)
+        if me.awt.tag == 'AwaitT' then
+            me.tp = 's32'
+        elseif me.awt.tag == 'AwaitS' then
+            me.tp = 'int'
         else    -- AwaitInt / AwaitExt
-            local evt = awt[1].evt
-            ASR(_TP.contains(to.tp,evt.tp,true), me, 'invalid attribution')
+            me.tp = me.awt[1].evt.tp
         end
+        me.fst = me.awt.fst
     end,
 
     Free = function (me)
@@ -844,32 +856,32 @@ F = {
     WCLOCKK = function (me)
         me.tp   = 'int'
         me.lval = false
-        me.fst  = 'const'
+        me.fst  = 'global'
     end,
     WCLOCKE = 'WCLOCKK',
 
     SIZEOF = function (me)
         me.tp   = 'int'
         me.lval = false
-        me.fst  = 'const'
+        me.fst  = 'global'
     end,
 
     STRING = function (me)
         me.tp   = '_char*'
         me.lval = false
-        me.fst  = 'const'
+        me.fst  = 'global'
     end,
     CONST = function (me)
         local v = unpack(me)
         me.tp   = 'int'
         me.lval = false
-        me.fst  = 'const'
+        me.fst  = 'global'
         ASR(string.sub(v,1,1)=="'" or tonumber(v), me, 'malformed number')
     end,
     NULL = function (me)
         me.tp   = 'null*'
         me.lval = false
-        me.fst  = 'const'
+        me.fst  = 'global'
     end,
 }
 

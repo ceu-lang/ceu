@@ -1,5 +1,4 @@
 F = {
-    -- TODO: SetAwait too!
     SetExp = function (me)
         local op, fr, to = unpack(me)
         to = to or _AST.iter'SetBlock'()[1]
@@ -27,7 +26,7 @@ F = {
 
             assert(fr.fst)
             -- '_' is in the global scope
-            if fr.fst~='const' and fr.fst~='_' then
+            if fr.fst~='global' and fr.fst~='_' then
                 local fr_blk = fr.fst.blk
                 if fr_blk then
                     local to_depth = (to_blk==true and 0) or to_blk.depth

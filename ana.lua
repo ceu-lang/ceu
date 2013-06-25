@@ -224,6 +224,9 @@ F = {
         end
     end,
 
+--[[
+-- TODO: remove
+-- not needed after SetAwait => AwaitX;SetExp
     SetAwait = function (me)
         local _, awt, set = unpack(me)
         set.ana.pre = COPY(awt.ana.pos)
@@ -231,6 +234,7 @@ F = {
         me.ana.pre = COPY(awt.ana.pre)
         me.ana.pos = COPY(set.ana.pos)
     end,
+]]
 
     AwaitS = function (me)
         DBG'TODO - ana.lua - AwaitS'

@@ -277,7 +277,7 @@ F = {
         end
     end,
 
-    SetAwait = function (me)
+    AwaitVal = function (me)
         ASR(not _AST.iter'BlockI'(), me,
                 'not permitted inside an interface')
     end,
