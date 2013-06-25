@@ -68,6 +68,7 @@ Test = function (t)
     dofile 'acc.lua'
 
     if not check('trails')   then return end
+    if not check('sval')     then return end
     if not check('labels')   then return end
     if not check('tmps')     then return end
     if not check('mem')      then return end

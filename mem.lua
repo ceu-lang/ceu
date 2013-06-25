@@ -130,12 +130,16 @@ CEU_POOL_DCL(]]..node.pool..', CEU_'..node.cls.id..','..n..[[)
             elseif var.isEvt then --
                 len = 1   --
             elseif var.cls then
-                len = (var.arr or 1) * 10   -- TODO: 10 = cls size
+                len = 10    -- TODO: no static types
+                --len = (var.arr or 1) * ?
             elseif var.arr then
+                len = 10    -- TODO: no static types
+--[[
                 local _tp = _TP.deref(var.tp)
                 len = var.arr * (_TP.deref(_tp) and _ENV.c.pointer.len
                              or (_ENV.c[_tp] and _ENV.c[_tp].len
                                  or _ENV.c.word.len)) -- defaults to word
+]]
             elseif _TP.deref(var.tp) then
                 len = _ENV.c.pointer.len
             else
@@ -155,7 +159,7 @@ CEU_POOL_DCL(]]..node.pool..', CEU_'..node.cls.id..','..n..[[)
                 var.id_ = var.id ..
                             (var.inIfc and '' or ('_'..var.n))
                 if var.arr then
-                    dcl = _TP.deref(tp)..' '..var.id_..'['..var.arr..']'
+                    dcl = _TP.deref(tp)..' '..var.id_..'['..var.arr.cval..']'
                 else
                     dcl = tp..' '..var.id_
                 end

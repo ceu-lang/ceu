@@ -103,7 +103,7 @@ function newtype (tp)
     _ENV.c[raw] = { tag='type', id=raw, id_=raw, len=nil, mod=nil }
 end
 
-function newvar (me, blk, pre, tp, dim, id)
+function newvar (me, blk, pre, tp, arr, id)
     for stmt in _AST.iter() do
         if _AST.pred_async(stmt) then
             break   -- search until Async/Thread
@@ -128,12 +128,12 @@ function newvar (me, blk, pre, tp, dim, id)
         'cannot instantiate an interface')
     ASR(_TP.deref(tp) or (not c) or (tp=='void' and isEvt) or c.len~=0, me,
         'cannot instantiate type "'..tp..'"')
-    ASR((not dim) or dim>0, me, 'invalid array dimension')
+    --ASR((not arr) or arr>0, me, 'invalid array dimension')
 
-    tp = (dim and tp..'*') or tp
+    tp = (arr and tp..'*') or tp
 
     local tp_ = _TP.deref(tp)
-    local cls = _ENV.clss[tp] or (dim and tp_ and _ENV.clss[tp_])
+    local cls = _ENV.clss[tp] or (arr and tp_ and _ENV.clss[tp_])
     if cls then
         ASR(cls~=_AST.iter'Dcl_cls'() and isEvt==false, me,
                 'invalid declaration')
@@ -155,7 +155,7 @@ function newvar (me, blk, pre, tp, dim, id)
         isEvt = isEvt,
         evt_idx = isEvt and _E,
         isTmp = false,
-        arr   = dim,
+        arr   = arr,
         --val   = '0',     -- TODO: workaround: dummy value for interfaces
         n     = _N,
     }
@@ -375,12 +375,9 @@ F = {
     TupleType = function (me)
         local tp = '_tceu'
         for i, v in ipairs(me) do
-            local c = _ENV.c[v]
-            ASR(_TP.deref(v) or (c and (c.tag=='type' or c.tag=='unk')), me,
-                    'undeclared type `'..v..'´')
-            if c then
-                c.tag = 'type'
-            end
+            local tp_raw = _TP.noptr(v)
+            local c = _ENV.c[tp_raw]
+            ASR(c or _ENV.clss[tp_raw], me, 'undeclared type `'..tp_raw..'´')
             me[i] = v
             tp = tp .. '__'.._TP.c(v)
         end
@@ -431,9 +428,8 @@ F = {
 
     Dcl_int = 'Dcl_var',
     Dcl_var = function (me)
-        local pre, tp, dim, id, constr = unpack(me)
+        local pre, tp, arr, id, constr = unpack(me)
         newtype(tp)
-        ASR((not dim) or tonumber(dim.sval), me, 'invalid static expression')
         if pre == 'event' then
             ASR(tp=='void' or tp=='int' or _TP.deref(tp) or _TP.isTuple(tp), me,
                     'invalid event type')
@@ -441,7 +437,7 @@ F = {
                 tp = tp..'*'
             end
         end
-        me.var = newvar(me, _AST.iter'Block'(), pre, tp, dim and dim.sval, id)
+        me.var = newvar(me, _AST.iter'Block'(), pre, tp, arr, id)
         me.var.read_only = me.read_only
 
         if constr then
@@ -457,7 +453,7 @@ F = {
 
         -- copy vars
         for _, var in ipairs(ifc.blk_ifc.vars) do
-            local tp = (var.dim and _TP.deref(var.tp)) or var.tp
+            local tp = (var.arr and _TP.deref(var.tp)) or var.tp
             newvar(me, _AST.iter'Block'(), var.pre, tp, var.arr, var.id)
         end
 
@@ -498,9 +494,11 @@ F = {
         local mod, tag, id, len = unpack(me)
         local id_ = id
 
-        if len then
-            len = ASR(len.sval, me, 'invalid static expression')
-        end
+        -- TODO: we are not using "native _t=N" anymore
+        -- if needed again, this check has to be moved to sval.lua
+        --if len then
+            --len = ASR(len.sval, me, 'invalid static expression')
+        --end
 
         local n
         if _AST.iter'BlockI'() then
@@ -710,11 +708,6 @@ F = {
         me.tp  = 'int'
         ASR(_TP.isNumeric(e1.tp,true) and _TP.isNumeric(e2.tp,true), me,
                 'invalid operands to binary "'..op..'"')
-
-        if e1.sval and e2.sval then
-            local v = loadstring('return '..e1.sval..op..e2.sval)
-            me.sval = v and tonumber(v())
-        end
     end,
     ['Op2_-']  = 'Op2_int_int',
     ['Op2_+']  = 'Op2_int_int',
@@ -732,10 +725,6 @@ F = {
         me.tp  = 'int'
         ASR(_TP.isNumeric(e1.tp,true), me,
                 'invalid operand to unary "'..op..'"')
-        if e1.sval then
-            local v = loadstring(op..e1.sval)
-            me.sval = v and tonumber(v())
-        end
     end,
     ['Op1_~']  = 'Op1_int',
     ['Op1_-']  = 'Op1_int',
@@ -863,17 +852,6 @@ F = {
         me.tp   = 'int'
         me.lval = false
         me.fst  = false
-
-        local tp = unpack(me)
-        if type(tp) == 'string' then    -- sizeof(type)
-            local t = (_TP.deref(tp) and _ENV.c.pointer) or _ENV.c[tp]
-            ASR(t and (t.tag=='type' or t.tag=='unk'), me,
-                    'undeclared type '..tp)
-            t.tag = 'type'
-
-            me.sval = ASR(t and t.len or _ENV.c.word.len,
-                            me, 'unknown size '..tp)    -- defaults to word
-        end
     end,
 
     STRING = function (me)
@@ -886,7 +864,6 @@ F = {
         me.tp   = 'int'
         me.lval = false
         me.fst  = false
-        me.sval = tonumber(v)
         ASR(string.sub(v,1,1)=="'" or tonumber(v), me, 'malformed number')
     end,
     NULL = function (me)

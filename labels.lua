@@ -140,13 +140,13 @@ F = {
         if me.var.cls then
             if me.var.cls.has_pre then
                 me.lbls_pre = {}
-                for i=1, (me.var.arr or 1) do
+                for i=1, (me.var.arr and me.var.arr.sval or 1) do
                     me.lbls_pre[i] = new{'Pre_cnt'}
                 end
             end
 
             me.lbls_cnt = {}
-            for i=1, (me.var.arr or 1) do
+            for i=1, (me.var.arr and me.var.arr.sval or 1) do
                 me.lbls_cnt[i] = new{'Start_cnt'}
             end
         end

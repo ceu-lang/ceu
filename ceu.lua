@@ -125,6 +125,7 @@ do
     dofile 'ana.lua'
     dofile 'acc.lua'
     dofile 'trails.lua'
+    dofile 'sval.lua'
     dofile 'labels.lua'
     dofile 'tmps.lua'
     dofile 'mem.lua'

@@ -242,7 +242,7 @@ end;
 ]]
 
         -- each org has its own trail on enclosing block
-        for i=1, (t.arr or 1) do
+        for i=1, (t.arr and t.arr.sval or 1) do
             local org = t.arr and
                 '((tceu_org*) '..t.val..'['..(i-1)..']'..')'
             or
@@ -551,7 +551,7 @@ ceu_pool_init(&]]..pre..', '..n..', sizeof(CEU_'..node.cls.id..'), '
             if var.isTmp then
                 if var.arr then
                     LINE(me, _TP.c(_TP.deref(var.tp))
-                            ..' '..V(var)..'['..var.arr..'];')
+                            ..' '..V(var)..'['..V(var.arr)..'];')
                 else
                     LINE(me, _TP.c(var.tp)..' '..V(var)..';')
                 end

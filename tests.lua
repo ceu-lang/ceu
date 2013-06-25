@@ -12,7 +12,7 @@
 
 -- async dentro de pause
 
-_VALGRIND = true
+--_VALGRIND = true
 
 local THREADS = true
 local THREADS_all = true
@@ -142,89 +142,21 @@ end
 
 -- OK: under tests but supposed to work
 
-Test { [[
-interface Global with
-    var G* g;
-end
-var G* g;
-return 1;
-]],
-    env = 'line 2 : undeclared type `G´',
-}
-
-Test { [[
-interface Global with
-    event (G*,int) g;
-end
-event (G*,int) g;
-return 1;
-]],
-    env = 'line 2 : undeclared type `G´',
-}
-
-Test { [[
-class T with
-    var int a;
-do
-end
-
-do
-    loop t, T* do
-        t:a = 1;
-    end
-end
-
-return 10;
-]],
-    run = 10;
-}
-
 do return end
+--]===]
 
 Test { [[
-interface I with
-    var _char c;
+event (int,void*) ptr;
+var void* p;
+var int i;
+par/or do
+    (i,p) = await ptr;
+with
+    emit ptr => (1, null);
 end
-class T with
-    interface I;
-do
-    this.c = 1;
-end
-var T t;
-var I* i = &t;
-return i:c == 1;
+return i;
 ]],
     run = 1,
-}
-
-Test { [[
-class T with
-do
-end
-var T** t := _malloc(10 * sizeof(T**));
-return 10;
-]],
-    run = 10;
-}
-
-Test { [[
-class T with
-    var int a;
-do
-    this.a = do return 1; end;
-end
-var T a;
-return a.a;
-]],
-    run = 1,
-}
-
-Test { [[
-event (int,int) e;
-emit e => (1,2,3);
-return 1;
-]],
-    env = 'line 2 : invalid attribution',
 }
 
 Test { [[
@@ -238,7 +170,24 @@ return 1;
 ]],
     run = 1,
 }
-do return end
+
+Test { [[
+event (int,void*) ptr;
+var int* p;
+var int i;
+par/or do
+    (i,p) = await ptr;
+with
+    do
+        var int v = 1;
+        emit ptr => (1, &b);
+    end
+end
+return 1;
+]],
+    env = 'error',
+    -- e depois outro exemplo com fin apropriado
+}
 
 Test { [[
 input (int,int,int*) A;
@@ -524,7 +473,6 @@ return _f();
 }
 
 do return end
---]===]
 
 -- OK: well tested
 
@@ -15580,6 +15528,23 @@ return v[i+1];
 }
 
 Test { [[
+native do
+    #define N 5
+end
+var int[_N] vec;
+loop i, _N do
+    vec[i] = i;
+end
+var int ret = 0;
+loop i, _N do
+    ret = ret + vec[i];
+end
+return ret;
+]],
+    run = 10,
+}
+
+Test { [[
 var void a;
 var void[1] b;
 ]],
@@ -15700,6 +15665,13 @@ return a;
 }
 
     -- NATIVE C FUNCS BLOCK RAW
+
+Test { [[
+var _char c = 1;
+return c;
+]],
+    run = 1,
+}
 
 Test { [[
 return {1};
@@ -17948,6 +17920,18 @@ a.v = 5;
 return a.v;
 ]],
     run = 5,
+}
+
+Test { [[
+class T with
+    var int a;
+do
+    this.a = do return 1; end;
+end
+var T a;
+return a.a;
+]],
+    run = 1,
 }
 
 Test { [[
@@ -24132,6 +24116,52 @@ return 0;
     env = 'line 3 : `T´ is not an interface',
 }
 
+Test { [[
+interface Global with
+    var G* g;
+end
+var G* g;
+return 1;
+]],
+    env = 'line 2 : undeclared type `G´',
+}
+
+Test { [[
+interface Global with
+    event (G*,int) g;
+end
+event (G*,int) g;
+return 1;
+]],
+    env = 'line 2 : undeclared type `G´',
+}
+
+Test { [[
+interface I with
+    var _char c;
+end
+class T with
+    interface I;
+do
+    this.c = 1;
+end
+var T t;
+var I* i = &t;
+return i:c == 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+do
+end
+var T** t := _malloc(10 * sizeof(T**));
+return 10;
+]],
+    run = 10;
+}
+
 -- IFACES / IFCS / ITERATORS
 Test { [[
 interface I with
@@ -24454,6 +24484,23 @@ end
 return ret;
 ]],
     run = { ['~>3s;~>F'] = 9 },
+}
+
+Test { [[
+class T with
+    var int a;
+do
+end
+
+do
+    loop t, T* do
+        t:a = 1;
+    end
+end
+
+return 10;
+]],
+    run = 10;
 }
 
 -- RET_VAL / RET_END
@@ -25359,6 +25406,14 @@ end
 return 1;
 ]],
     run = 3,
+}
+
+Test { [[
+event (int,int) e;
+emit e => (1,2,3);
+return 1;
+]],
+    env = 'line 2 : invalid attribution (void vs int)',
 }
 
 -- ASYNCS // THREADS

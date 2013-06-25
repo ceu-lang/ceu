@@ -25,7 +25,8 @@ F = {
     _Return = function (me)
         local set = _AST.iter'SetBlock'()
         local fr = unpack(me)
-        local to = _AST.node('Var')(me.ln,set[2][1])
+        --local to = _AST.node('Var')(me.ln,set[2][1])
+        local to = _AST.copy(set[2])
         to.blk = set.blk
         to.ret = true
 
