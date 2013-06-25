@@ -74,19 +74,14 @@ function _AST.isChild (n1, n2)
 end
 
 local _N = 0
-function _AST.node (tag, min)
-    min = min or 0
+function _AST.node (tag)
     return function (ln, ...)
-        local node = setmetatable({ ... }, MT)
-        node.n = _N
+        local me = setmetatable({ ... }, MT)
+        me.n = _N
         _N = _N + 1
-        if #node < min then
-            return ...
-        else
-            node.ln  = ln
-            node.tag = tag
-            return node
-        end
+        me.ln  = ln
+        me.tag = tag
+        return me
     end
 end
 local node = _AST.node
