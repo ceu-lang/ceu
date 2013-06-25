@@ -578,6 +578,15 @@ F = {
         ASR(me.read_only or (not to.lval.read_only), me,
                 'read-only variable')
         ASR(not CLS().is_ifc, me, 'invalid attribution')
+
+        if fr.from and (fr.from.tag == 'New') then
+            -- a = new T
+            fr.from.blk = to.ref.var.blk   -- to = me.__par[3]
+
+            -- refuses (x.ptr = new T;)
+            ASR( _AST.isChild(CLS(),to.ref.var.blk), me,
+                    'invalid attribution (no scope)' )
+        end
     end,
 
 --[[
@@ -594,15 +603,23 @@ F = {
     end,
 ]]
 
-    AwaitVal = function (me)
-        if me.awt.tag == 'AwaitT' then
-            me.tp = 's32'
-        elseif me.awt.tag == 'AwaitS' then
+    SetVal = function (me)
+        if me.from.tag == 'AwaitT' then
+            me.tp = 's32'               -- late
+        elseif me.from.tag == 'AwaitS' then
             me.tp = 'int'
-        else    -- AwaitInt / AwaitExt
-            me.tp = me.awt[1].evt.tp
+        elseif me.from.tag=='AwaitInt' or me.from.tag=='AwaitExt' then
+            me.tp = me.from[1].evt.tp   -- evt tp
+        elseif me.from.tag == 'New' then
+            me.tp = me.from[2]..'*'     -- class id
+        elseif me.from.tag == 'Spawn' then
+            me.tp = 'int'               -- 0/1
+        elseif me.from.tag == 'Thread' then
+            me.tp = 'int'               -- 0/1
+        else
+            error'unexpected error'
         end
-        me.fst = me.awt.fst
+        me.fst = me.from.fst
     end,
 
     Free = function (me)
@@ -612,56 +629,45 @@ F = {
                         'class "'..id..'" is not declared')
     end,
 
-    SetNew = function (me)
-        local to, id, max, constr = unpack(me)
-
-        F.Spawn(me, id, max, constr, to.ref.var.blk)    -- also sets me.cls
-
-        ASR(to.lval and _TP.contains(to.tp,me.cls.id..'*')
-                         -- refuses (x.ptr = new T;)
-                     and _AST.isChild(CLS(),to.ref.var.blk),
-                me, 'invalid attribution ('..to.tp..' vs '..me.cls.id..'*)')
-    end,
-
-    SetSpawn = function (me)
-        local to,_ = unpack(me)
-        ASR(to.lval and _TP.isNumeric(to.tp,true),
-                me, 'invalid attribution')
-    end,
-
-    Spawn = function (me, id, max, constr, blk)
-        if not id then
-            id, max, constr = unpack(me)
-            blk = ASR(_AST.iter'Do'(), me,
-                        '`spawn´ requires enclosing `do ... end´')
-            blk = blk[1]
-        end
+    New = function (me)
+        local max, id, constr = unpack(me)
 
         me.cls = ASR(_ENV.clss[id], me,
                         'class "'..id..'" is not declared')
         ASR(not me.cls.is_ifc, me, 'cannot instantiate an interface')
-        me.cls.is_instantiable = true
+        me.fst = 'global'   -- "a = new T"      ("a" will determine)
+        me.fst = 'global'   -- "a = spawn T"    (constant value 0/1)
 
-        if max then
-            blk.pools = blk.pools or {}
-            blk.pools[me] = max
-        end
+--[[
+        _AST.visit(F, me.__par[2][3])
+        F.Spawn(me, me.__par[2][3].ref.var.blk)    -- also sets me.cls
 
-        me.blk = blk
-        if constr then
-            constr.blk = blk
-        end
+-- TODO: remove (SetExp should do)
+        ASR(to.lval and _TP.contains(to.tp,me.cls.id..'*')
+                         -- refuses (x.ptr = new T;)
+                     and _AST.isChild(CLS(),to.ref.var.blk),
+                me, 'invalid attribution ('..to.tp..' vs '..me.cls.id..'*)')
+]]
+    end,
+
+    Spawn = function (me, blk)
+        local max, id, constr = unpack(me)
+        F.New(me)
+        me.blk = ASR(_AST.iter'Do'(), me,
+                        '`spawn´ requires enclosing `do ... end´')
+        me.blk = me.blk[1]
     end,
 
     Dcl_constr_pre = function (me)
         local spw = _AST.iter'Spawn'()
-        local set = _AST.iter'SetNew'()
+        local new = _AST.iter'New'()
         local dcl = _AST.iter'Dcl_var'()
 
+        -- type check for this.* inside constructor
         if spw then
-            me.cls = _ENV.clss[ spw[1] ]   -- checked on Spawn
-        elseif set then
-            me.cls = _ENV.clss[ set[2] ]   -- checked on SetExp
+            me.cls = _ENV.clss[ spw[2] ]   -- checked on Spawn
+        elseif new then
+            me.cls = _ENV.clss[ new[2] ]   -- checked on SetExp
         elseif dcl then
             me.cls = _ENV.clss[ dcl[2] ]   -- checked on Dcl_var
         end

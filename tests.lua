@@ -514,6 +514,7 @@ return _f();
 }
 
 do return end
+--]===]
 
 -- OK: well tested
 
@@ -22213,7 +22214,7 @@ end
 return 10;
 ]],
     --run = 10,
-    env = 'line 15 : invalid attribution',
+    env = 'line 15 : invalid attribution (no scope)',
 }
 Test { [[
 class V with
@@ -25353,7 +25354,6 @@ return 1;
     run = 1;
 }
 
---]===]
 Test { [[
 input (int,int) A;
 par/or do
@@ -25477,7 +25477,7 @@ Test { [[
 var int ret =
     async thread do
     end;
-return (ret == 0);
+return (ret == 1);
 ]],
     run = 1,
 }
@@ -25506,7 +25506,7 @@ var int ret =
             *p = a;
         end
     end;
-return (ret==0) + a + b + *p;
+return (ret==1) + a + b + *p;
 ]],
     run = 41,
 }
@@ -25843,6 +25843,8 @@ return v1;
 -- me (isTmp=false)
 --./a.out  30.36s user 0.04s system 173% cpu 17.476 total
 }
+
+error 'copiar alguns execmplos de async c/ emits '
 
 end     -- THREADS_all
 end     -- THREADS

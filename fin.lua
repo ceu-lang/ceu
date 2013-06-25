@@ -5,8 +5,6 @@ F = {
 
         local req = false
 
-        local constr = _AST.iter'Dcl_constr'()
-
         if me.fromAwait then
             -- (a,b) = await X;
             ----
@@ -20,8 +18,11 @@ F = {
         if _TP.deref(to.tp) then
             local to_blk = (to.fst=='_' and _AST.root) or to.fst.blk
 
+            -- spawn T with
+            --  this.x = y;     -- blk of this? (same as parent spawn/new)
+            local constr = _AST.iter'Dcl_constr'()
             if constr then
-                to_blk = constr.blk
+                to_blk = constr.__par.blk
             end
 
             assert(fr.fst)

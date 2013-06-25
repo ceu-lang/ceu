@@ -226,22 +226,22 @@ end
 
 function _AST.SetAwaitUntil (ln, awt, op,to)
     local ret
-    awt.is_inside_set = true
 
     -- set await
     if op then
-        local val = node('AwaitVal')(ln)
-        val.awt = awt
+        local val = node('SetVal')(ln)
+        val.from = awt
         ret = node('Stmts')(ln,
                 awt,
                 node('SetExp')(ln, op, val, to))
+        awt.setto = true
     else
         ret = awt
     end
 
     -- await until
     local cnd = awt[#awt]
-    awt[#awt] = nil
+    awt[#awt] = false
     if cnd then
         ret = _AST.node('Loop')(ln,
                     _AST.node('Stmts')(ln,
@@ -603,9 +603,8 @@ C = {
     This   = node('This'),
     Free   = node('Free'),
 
-    Spawn  = function (ln, max, id, constr)
-        return node('Spawn')(ln, id, max, constr) -- to conform w/ SetNew
-    end,
+    New   = node('New'),
+    Spawn = node('Spawn'),
 
     _Set = function (ln, to, op, tag, p1, p2, p3)
         if op == ':=' then
@@ -645,15 +644,21 @@ C = {
         elseif tag == 'SetBlock' then
             return node(tag)(ln, p1, to)
 
-        elseif tag == 'SetThread' then
-            return node(tag)(ln, p1, to)
+        elseif tag == '_SetThread' then
+            local thr = p1[2]
 
-        elseif tag == 'SetNew' then
-            return node(tag)(ln, to, p2, p1, p3)
+            local val = node('SetVal')(ln)
+            val.from = thr
+            thr.setto = true
 
-        else
-            assert(tag=='SetSpawn')
-            return node(tag)(ln, to, p1)
+            p1[2] = node('Stmts')(ln, thr, node('SetExp')(ln,op,val,to))
+            return p1
+
+        else -- '_SetNew', '_SetSpawn'
+            local val = node('SetVal')(ln)
+            val.from = p1
+            p1.setto = true
+            return node('Stmts')(ln, p1, node('SetExp')(ln,op,val,to))
         end
     end,
 

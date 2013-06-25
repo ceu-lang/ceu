@@ -47,11 +47,6 @@ F =
         end
     end,
 
-    Thread = function (me)
-        me.thread_id = CUR(me, '__thread_id_'..me.n)
-        me.thread_st = CUR(me, '__thread_st_'..me.n)
-    end,
-
     ParAnd = function (me)
         me.val = CUR(me, '__and_'..me.n)
     end,
@@ -76,6 +71,22 @@ F =
     SetExp = function (me)
         local _, fr, to = unpack(me)
         V(fr)     -- error on reads of internal events
+    end,
+
+    SetVal = function (me)
+        me.val = me.from.val
+    end,
+    New = function (me)
+        me.val = '(('.._TP.c(me[2])..'*)__ceu_new)'
+                                        -- defined by _New (code.lua)
+    end,
+    Spawn = function (me)
+        me.val = '(__ceu_new != NULL)'
+    end,
+    Thread = function (me)
+        me.thread_id = CUR(me, '__thread_id_'..me.n)
+        me.thread_st = CUR(me, '__thread_st_'..me.n)
+        me.val = '(*('..me.thread_st..') > 0)'
     end,
 
     EmitExt = function (me)
@@ -106,10 +117,6 @@ F =
     0
 #endif
 ]]
-    end,
-
-    AwaitVal = function (me)
-        me.val = me.awt.val
     end,
 
     AwaitInt = 'AwaitExt',

@@ -39,10 +39,10 @@ F = {
         end
     end,
 
-    SetNew = function (me)
+    New = function (me)
         me.blk.trl_orgs = true
     end,
-    Spawn = 'SetNew',
+    Spawn = 'New',
 
     Block = function (me)
         MAX_all(me)

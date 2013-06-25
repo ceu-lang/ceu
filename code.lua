@@ -163,8 +163,13 @@ F = {
 
     Do         = CONC_ALL,
     Finally    = CONC_ALL,
-    Stmts      = CONC_ALL,
     Dcl_constr = CONC_ALL,
+
+    Stmts = function (me)
+        LINE(me, '{')   -- allows C declarations for New/Spawn
+        CONC_ALL(me)
+        LINE(me, '}')
+    end,
 
     Root = function (me)
         for _, cls in ipairs(_ENV.clss_cls) do
@@ -338,8 +343,10 @@ case ]]..me.lbls_cnt[i].id..[[:;
     end,
 
     _New = function (me, t)
+        if not me.setto then
+            LINE(me, '{')   -- otherwise Stmts create the block
+        end
         LINE(me, [[
-{
     tceu_org* __ceu_new;
 ]])
         if t.pool then
@@ -366,13 +373,6 @@ case ]]..me.lbls_cnt[i].id..[[:;
 #endif
 ]])
 
-        if t.val then                   -- new result
-            LINE(me, t.val..' = ('.._TP.c(t.cls.id)..'*)__ceu_new;')
-        end
-        if _AST.iter'SetSpawn'() then   -- spw result
-            LINE(me, '__ceu_'..me.n..' = (__ceu_new != NULL);')
-        end
-
         LINE(me, [[
     if (__ceu_new != NULL) {
 ]])
@@ -393,14 +393,15 @@ case ]]..me.lbls_cnt[i].id..[[:;
         })
         LINE(me, [[
     }
-}
 ]])
+        if not me.setto then
+            LINE(me, '}')   -- otherwise Stmts create the block
+        end
     end,
 
-    SetNew = function (me)
-        local to, _, max, constr = unpack(me)
+    New = function (me)
+        local max, id, constr = unpack(me)
         F._New(me, {
-            val     = V(to),
             cls     = me.cls,
             isSpw   = 0,
             pool    = me.pool and CUR(me,me.pool)
@@ -410,30 +411,14 @@ case ]]..me.lbls_cnt[i].id..[[:;
     end,
 
     Spawn = function (me)
-        local _, max, constr = unpack(me)
+        local max, id, constr = unpack(me)
         F._New(me, {
-            val     = nil,
             cls     = me.cls,
             isSpw   = 1,
             pool    = me.pool and CUR(me,me.pool)
                         or me.cls.pool,
             constr  = constr,
         })
-    end,
-
-    SetSpawn = function (me)
-        local to, spw = unpack(me)
-        LINE(me, [[
-{
-    int __ceu_]]..spw.n..[[;
-]])
-
-        CONC(me, spw)
-
-        LINE(me, [[
-    ]]..V(to)..[[ = __ceu_]]..spw.n..[[;
-}
-]])
     end,
 
     Free = function (me)
@@ -1100,12 +1085,6 @@ case ]]..me.lbl.id..[[:;
     tceu_threads_p p = { _ceu_org, ]]..me.thread_st..[[ };
     int ret =
         CEU_THREADS_CREATE(&]]..me.thread_id..[[, _ceu_thread_]]..me.n..[[, &p);
-]])
-        local to = _AST.iter'SetThread'()
-        if to then
-            LINE(me, V(to[2])..' = ret;')
-        end
-        LINE(me, [[
     if (ret == 0)
     {
         assert( CEU_THREADS_DETACH(]]..me.thread_id..[[) == 0 );

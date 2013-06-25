@@ -108,14 +108,18 @@ F = {
         _PROPS.has_news = true
         _PROPS.has_clear = true
     end,
-    SetNew = function (me, spw, max)
-        if not spw then
-            max = me[3]
-        end
+    New = function (me)
+        local max,_,_ = unpack(me)
 
         _PROPS.has_news = true
         if max or me.cls.max then
             _PROPS.has_news_pool = true
+
+            if max then
+                local blk = me.blk
+                blk.pools = blk.pools or {}
+                blk.pools[me] = max
+            end
         else
             _PROPS.has_news_malloc = true
         end
@@ -125,9 +129,7 @@ F = {
         ASR(not _AST.iter'BlockI'(), me,
                 'not permitted inside an interface')
     end,
-    Spawn = function (me)
-        return F.SetNew(me, true, me[2])  -- id,max,constr
-    end,
+    Spawn = 'New',
 
     ParOr = function (me)
         me.needs_clr = true
@@ -277,7 +279,8 @@ F = {
         end
     end,
 
-    AwaitVal = function (me)
+    SetVal = function (me)
+        -- new, spawn, async, await
         ASR(not _AST.iter'BlockI'(), me,
                 'not permitted inside an interface')
     end,

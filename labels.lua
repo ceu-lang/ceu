@@ -76,13 +76,13 @@ F = {
             me.lbl_clr = new{'Class_free_'..me.id}
         --end
     end,
-    SetNew = function (me)
+    New = function (me)
         me.lbls_cnt = { new{me.tag..'_cont'} }
         if me.cls.has_pre then
             me.lbls_pre = { new{'Pre_cnt'} }
         end
     end,
-    Spawn = 'SetNew',
+    Spawn = 'New',
     Free  = function (me)
         me.lbl_clr = new{'Free_clr'}
     end,
@@ -159,7 +159,7 @@ F = {
         me.lbl = new{'Awake_DT'}
     end,
     AwaitExt = function (me)
-        local e = unpack(me);
+        local e = unpack(me)
         me.lbl = new{'Awake_'..e.evt.id}
     end,
     AwaitInt = 'AwaitExt',

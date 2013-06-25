@@ -39,10 +39,11 @@ F = {
 
     -- AWAIT: await x until y (not child from SetAwait)
     AwaitT = function (me)
-        if me.is_inside_set then
+        if me.setto then
             return      -- already handled by SetAwait
         end
-        return _AST.SetAwaitUntil(me.ln, me)
+        local ret = _AST.SetAwaitUntil(me.ln, me)
+        return ret
     end,
     AwaitExt = 'AwaitT',
     AwaitInt = 'AwaitT',

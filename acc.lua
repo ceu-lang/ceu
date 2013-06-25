@@ -68,8 +68,8 @@ F = {
     ParAnd_pos  = 'ParOr_pos',
     ParEver_pos = 'ParAnd_pos',
 
-    Spawn = 'SetNew',
-    SetNew = function (me)
+    Spawn = 'New',
+    New = function (me)
         for _,acc in ipairs(me.cls.ana.accs) do
             INS(acc, true)
         end
