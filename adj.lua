@@ -1,5 +1,5 @@
 F = {
-    -- IMPORT: ignore top-level stmts & Global
+-- IMPORT: ignore top-level stmts & Global
     Node = function (me)
         -- ignore top-level stmts, except "Host"
         local inc = _AST.iter'Import'()  -- inc[1] = Stmts #HOLE
@@ -16,9 +16,39 @@ F = {
             return _AST.node('Nothing')(me.ln)
         end
     end,
-
 ---
 
+-- AWAIT: await x until y (not child from SetAwait)
+    AwaitT = function (me)
+        if me.setto then
+            return      -- already handled by SetAwait
+        end
+        local ret = _AST.SetAwaitUntil(me.ln, me)
+        return ret
+    end,
+    AwaitExt = 'AwaitT',
+    AwaitInt = 'AwaitT',
+    AwaitS   = 'AwaitT',
+---
+
+-- FINALIZE: Await+Set => Await+FIN(Set)
+    Finalize = function (me)
+        if me[1].tag ~= 'Stmts' then
+            return      -- normal finalize
+        end
+
+        ASR(me[1][1].tag == 'AwaitInt', me,
+            'invalid finalize (multiple scopes)')
+
+        -- invert fin <=> await
+        local ret = me[1]   -- return stmts
+        me[1] = ret[2]      -- await => fin
+        ret[2] = me         -- fin => stmts[2]
+        return ret
+    end,
+---
+
+--?
     SetBlock_pre = function (me)
         me.blk = _AST.iter'Block'()
     end,
@@ -36,20 +66,6 @@ F = {
         blk[#blk+1] = _AST.node('Return')(me.ln)
         return blk
     end,
-
-    -- AWAIT: await x until y (not child from SetAwait)
-    AwaitT = function (me)
-        if me.setto then
-            return      -- already handled by SetAwait
-        end
-        local ret = _AST.SetAwaitUntil(me.ln, me)
-        return ret
-    end,
-    AwaitExt = 'AwaitT',
-    AwaitInt = 'AwaitT',
-    AwaitS   = 'AwaitT',
-
----
 
     _Continue = function (me)
         local _if  = _AST.iter('If')()

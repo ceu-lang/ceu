@@ -122,52 +122,14 @@ return ret;
     },
 }
 
-Test { [[
-var int* p;
-var int ret;
-input void START;
-do
-    event int* e;
-    par/and do
-        finalize
-            p = await e;
-        with
-            ret = *p;
-            p = &ret;
-        end
-    with
-        await START;
-        var int i = 1;
-        emit e => &i;
-    end
-end
-return ret + *p;
-]],
-    run = 2,
-    -- BUG: preciso colocar o await p/ fora do finalize e o set para dentro
-}
-Test { [[
-var void* p;
-var int i;
-input void START;
-do
-    event (int,void*) ptr;
-    par/or do
-        finalize
-            (i,p) = await ptr;
-        with
-            ???
-        end
-    with
-        await START;
-        emit ptr => (1, null);
-    end
-end
-return i;
-]],
-    run = 1,
-    -- BUG: preciso colocar o await p/ fora do finalize e o set para dentro
-}
+error 'testar pause/if org.e'
+error 'testar new/spawn que se mata'
+
+--do return end
+
+--]===]
+
+-- OK: under tests but supposed to work
 
 Test { [[
 input void START;
@@ -190,33 +152,7 @@ return 1;
     -- BUG: precisa transformar emit x=>1 em p=1;emit x
 }
 
-Test { [[
-input (int,int) A;
-par do
-    var int a, b;
-    every (a,b) = A do
-        return a+b;
-    end
-with
-    async do
-        emit A => (1,3);
-    end
-end
-]],
-    run = 4;
-    -- BUG: every w/ tuples
-}
-
-error 'testar pause/if org.e'
-error 'testar new/spawn que se mata'
-
---do return end
-
--- OK: under tests but supposed to work
-
 do return end
-
---]===]
 
 -- OK: well tested
 
@@ -2247,6 +2183,23 @@ every inc do
 end
 ]],
     ana = { isForever=true },
+}
+
+Test { [[
+input (int,int) A;
+par do
+    var int a, b;
+    every (a,b) = A do
+        return a+b;
+    end
+with
+    async do
+        emit A => (1,3);
+    end
+end
+]],
+    run = 4;
+    -- BUG: every w/ tuples
 }
 
 -- CONTINUE
@@ -13943,6 +13896,58 @@ end
 return ret + _V;
 ]],
     run = 16,
+}
+
+Test { [[
+var int* p;
+var int ret;
+input void START;
+do
+    event int* e;
+    par/and do
+        finalize
+            p = await e;
+        with
+            ret = *p;
+            p = &ret;
+        end
+    with
+        await START;
+        var int i = 1;
+        emit e => &i;
+    end
+end
+return ret + *p;
+]],
+    run = 2,
+}
+
+Test { [[
+var void* p;
+var int i;
+input void START;
+do
+    var int r;
+    do
+        event (int,void*) ptr;
+        par/or do
+            finalize
+                (i,p) = await ptr;
+            with
+                r = i;
+            end
+        with
+            await START;
+            emit ptr => (1, null);
+        end
+    end
+    _assert(r == 1);
+    return r;
+end
+]],
+    adj = 'line 9 : invalid finalize',
+    --run = 1,
+    -- TODO: impossible to place the finally in the correct parameter?
 }
 
 Test { [[

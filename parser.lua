@@ -244,7 +244,8 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , _Iter   = K'loop' * V'ID_var' * K',' * V'ID_type'
               * V'_Do'
 
-    , _Every  = K'every' * (EV'_Exp'*(CK'='+CK':=') + Cc(false)*Cc(false))
+    , _Every  = K'every' * ( (EV'_Exp'+V'VarList') *(CK'='+CK':=')
+                            + Cc(false)*Cc(false) )
               *  (V'WCLOCKK' + V'WCLOCKE' + EV'Ext' + EV'_Exp')
               * V'_Do'
 
