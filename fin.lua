@@ -56,8 +56,11 @@ F = {
             ASR((op==':=') or me.fin, me,
                     'attribution requires `finalize´')
         else
-            ASR((op=='=') and (not me.fin), me,
-                    'attribution does not require `finalize´')
+            -- TODO: workaround that avoids checking := for fields
+            if not me.dont_check_nofin then
+                ASR((op=='=') and (not me.fin), me,
+                        'attribution does not require `finalize´')
+            end
         end
 
         if me.fin and me.fin.active then

@@ -122,97 +122,55 @@ return ret;
     },
 }
 
-error 'testar pause/if org.e'
-error 'testar new/spawn que se mata'
-
 Test { [[
+var int* p;
+var int ret;
+input void START;
 do
-    var int i = 1;
-    every 1s do
-        spawn HelloWorld with
-            this.id = i;
-        end;
-        i = i + 1;
+    event int* e;
+    par/and do
+        finalize
+            p = await e;
+        with
+            ret = *p;
+            p = &ret;
+        end
+    with
+        await START;
+        var int i = 1;
+        emit e => &i;
     end
 end
+return ret + *p;
 ]],
-    env = 'ERR : line 5 : undeclared class',
+    run = 2,
+    -- BUG: preciso colocar o await p/ fora do finalize e o set para dentro
 }
---do return end
-
--- OK: under tests but supposed to work
-
-do return end
-
 Test { [[
-var int* p;
-do
-    event int* e;
-    p = await e;
-end
-return 1;
-]],
-    fin = 'line 4 : attribution requires `finalize´',
-}
-
-Test { [[
-var int* p;
-do
-    event int* e;
-    p := await e;
-end
-return 1;
-]],
-    run = 1,
-}
-
-Test { [[
+var void* p;
+var int i;
 input void START;
-native nohold _fprintf(), _stderr;
-event (int,void*) ptr;
-var void* p;
-var int i;
-par/or do
-    (i,p) = await ptr;
-_fprintf(_stderr,"a\n");
-with
-    await START;
-    emit ptr => (1, null);
-end
-return i;
-]],
-    run = 1,
-}
-
-Test { [[
-var void* p;
-var int i;
 do
     event (int,void*) ptr;
     par/or do
-        (i,p) = await ptr;
+        finalize
+            (i,p) = await ptr;
+        with
+            ???
+        end
     with
+        await START;
         emit ptr => (1, null);
     end
 end
 return i;
 ]],
     run = 1,
+    -- BUG: preciso colocar o await p/ fora do finalize e o set para dentro
 }
 
 Test { [[
-event (int,void*) ptr;
-var void* p;
-var int i;
-do
-    (i,p) = await ptr;
-end
-return 1;
-]],
-    run = 1,
-}
-
-Test { [[
+input void START;
 event (int,void*) ptr;
 var int* p;
 var int i;
@@ -220,62 +178,18 @@ par/or do
     (i,p) = await ptr;
 with
     do
-        var int v = 1;
+        var int b = 1;
+        await START;
         emit ptr => (1, &b);
     end
 end
 return 1;
 ]],
-    env = 'error',
+    run = 1,
     -- e depois outro exemplo com fin apropriado
+    -- BUG: precisa transformar emit x=>1 em p=1;emit x
 }
 
-Test { [[
-input (int,int,int*) A;
-async do
-    emit A =>
-        (1, 1, null);
-end
-return 1;
-]],
-    run = 1;
-}
-
-Test { [[
-class Game with
-    event (int,int,int*) go;
-do
-end
-
-var Game game;
-par/or do
-    var int a,b;
-    var int* c;
-    (a, b, c) = await game.go;
-with
-    nothing;
-end
-return 1;
-]],
-    run = 1;
-}
-
-Test { [[
-class Game with
-    event (int,int,int*) go;
-do
-end
-
-var Game game;
-emit game.go => (1, 1, null);
-return 1;
-]],
-    run = 1;
-}
-
-do return end
-
--- TODO
 Test { [[
 input (int,int) A;
 par do
@@ -290,232 +204,18 @@ with
 end
 ]],
     run = 4;
+    -- BUG: every w/ tuples
 }
 
-Test { [[
-import;
-]],
-    ast = 'ERR : tests.lua : line 1 : after `import´ : expected module'
-}
+error 'testar pause/if org.e'
+error 'testar new/spawn que se mata'
 
-Test { [[
-import MOD1;
-import http://ceu-lang.org/;
-import https://github.com/fsantanna/ceu;
-import ^4!_;
-]],
-    ast = 'ERR : tests.lua : line 1 : module "MOD1" not found'
-}
+--do return end
 
-_G['/tmp/_ceu_MOD1.ceu'] = [[
-input void A;
-]]
-Test { [[
-import /tmp/_ceu_MOD1.ceu ;
-await A;
-return 1;
-]],
-    run = { ['~>A']=1 },
-}
-
-_G['/tmp/_ceu_MOD1.ceu'] = [[
-nothing;
-nothing;
-nothing;
-input void A
-]]
-Test { [[
-nothing;
-import /tmp/_ceu_MOD1.ceu ;
-await A;
-return 1;
-]],
-    ast = 'ERR : /tmp/_ceu_MOD1.ceu : line 4 : after `A´ : expected `;´',
-}
-
-_G['/tmp/_ceu_MOD1.ceu'] = [[
-input void A;
-_assert(0);
-]]
-Test { [[
-import /tmp/_ceu_MOD1.ceu ;
-await A;
-return 1;
-]],
-    run = { ['~>A']=1 },
-}
-
-_G['/tmp/_ceu_MOD2.ceu'] = [[
-input void A;
-]]
-_G['/tmp/_ceu_MOD1.ceu'] = [[
-import /tmp/_ceu_MOD2.ceu;
-]]
-Test { [[
-import /tmp/_ceu_MOD1.ceu ;
-await A;
-return 1;
-]],
-    run = { ['~>A']=1 },
-}
-
-_G['/tmp/_ceu_MOD2.ceu'] = [[
-input void A;
-nothing
-]]
-_G['/tmp/_ceu_MOD1.ceu'] = [[
-import /tmp/_ceu_MOD2.ceu;
-]]
-Test { [[
-import /tmp/_ceu_MOD1.ceu ;
-await A;
-return 1;
-]],
-    ast = 'ERR : /tmp/_ceu_MOD2.ceu : line 2 : after `nothing´ : expected `;´',
-}
-
-_G['/tmp/_ceu_MOD2.ceu'] = [[
-input void A;
-]]
-_G['/tmp/_ceu_MOD1.ceu'] = [[
-input void A;
-]]
-_G['/tmp/_ceu_MOD0.ceu'] = [[
-import /tmp/_ceu_MOD1.ceu ;
-import /tmp/_ceu_MOD2.ceu ;
-]]
-Test { [[
-import /tmp/_ceu_MOD0.ceu ;
-await A;
-return 1;
-]],
-    run = { ['~>A']=1 },
-}
-
-_G['/tmp/_ceu_MOD2.ceu'] = [[
-input void A;
-]]
-_G['/tmp/_ceu_MOD1.ceu'] = [[
-nothing;
-input void A
-]]
-_G['/tmp/_ceu_MOD0.ceu'] = [[
-import /tmp/_ceu_MOD2.ceu ;
-import /tmp/_ceu_MOD1.ceu ;
-]]
-Test { [[
-import /tmp/_ceu_MOD0.ceu ;
-await A;
-return 1;
-]],
-    ast = 'ERR : /tmp/_ceu_MOD1.ceu : line 2 : after `A´ : expected `;´',
-}
-
-_G['/tmp/_ceu_MOD1.ceu'] = [[
-native do
-    int f () {
-        return 10;
-    }
-end
-]]
-Test { [[
-import /tmp/_ceu_MOD1.ceu ;
-return _f();
-]],
-    run = 10,
-}
-
-_G['/tmp/_ceu_MOD1.ceu'] = [[
-native do
-    int f () {
-        return 10;
-    }
-end
-]]
-Test { [[
-import /tmp/_ceu_MOD1.ceu ;
-import /tmp/_ceu_MOD1.ceu ;
-return _f();
-]],
-    run = 10,
-}
-
-_G['/tmp/_ceu_MOD1.ceu'] = [[
-interface T with
-    var int i;
-end
-var int i = 0;
-]]
-Test { [[
-//
-//
-import /tmp/_ceu_MOD1.ceu ;
-interface T with
-    var int i;
-end
-var int i = 10;
-return i;
-]],
-    env = 'ERR : tests.lua : line 4 : interface/class "T" is already declared',
-}
-
-_G['/tmp/_ceu_MOD1.ceu'] = [[
-interface T with
-    var int i;
-end
-var int i = 0;
-]]
-Test { [[
-//
-//
-interface T with
-    var int i;
-end
-import /tmp/_ceu_MOD1.ceu ;
-var int i = 10;
-return i;
-]],
-    env = 'ERR : /tmp/_ceu_MOD1.ceu : line 1 : interface/class "T" is already declared',
-}
-
-_G['/tmp/_ceu_MOD1.ceu'] = [[
-interface Global with
-    var int i;
-end
-var int i = 0;
-]]
-Test { [[
-import /tmp/_ceu_MOD1.ceu ;
-interface Global with
-    var int i;
-end
-var int i = 10;
-return i;
-]],
-    run = 10,
-}
+-- OK: under tests but supposed to work
 
 do return end
 
-_G['/tmp/_ceu_MOD1.ceu'] = [[
-native do
-    int f () {
-        return 10
-    }
-    int A;
-    int B;
-end
-]]
-Test { [[
-import /tmp/_ceu_MOD1.ceu ;
-return _f();
-]],
-    run = false     -- TODO: catch gcc error
-}
-
-do return end
-
-voltar aos testes de fins c/ awaits / tuples
 --]===]
 
 -- OK: well tested
@@ -14245,6 +13945,84 @@ return ret + _V;
     run = 16,
 }
 
+Test { [[
+var int* p;
+do
+    event int* e;
+    p = await e;
+end
+return 1;
+]],
+    fin = 'line 4 : attribution requires `finalize´',
+}
+
+Test { [[
+var int* p;
+var int ret;
+input void START;
+do
+    event int* e;
+    par/and do
+        p := await e;
+        ret = *p;
+    with
+        await START;
+        var int i = 1;
+        emit e => &i;
+    end
+end
+return ret;
+]],
+    run = 1,
+}
+
+Test { [[
+input void START;
+native nohold _fprintf(), _stderr;
+event (int,void*) ptr;
+var void* p;
+var int i;
+par/or do
+    (i,p) = await ptr;
+_fprintf(_stderr,"a\n");
+with
+    await START;
+    emit ptr => (1, null);
+end
+return i;
+]],
+    run = 1,
+}
+
+Test { [[
+var void* p;
+var int i;
+input void START;
+do
+    event (int,void*) ptr;
+    par/or do
+        (i,p) := await ptr;
+    with
+        await START;
+        emit ptr => (1, null);
+    end
+end
+return i;
+]],
+    run = 1,
+}
+
+Test { [[
+input (int,int,int*) A;
+async do
+    emit A =>
+        (1, 1, null);
+end
+return 1;
+]],
+    run = 1;
+}
+
 -- TODO: bounded loop on finally
 
     -- ASYNCHRONOUS
@@ -21401,6 +21179,20 @@ return _V+v;
 }
 
 Test { [[
+do
+    var int i = 1;
+    every 1s do
+        spawn HelloWorld with
+            this.id = i;
+        end;
+        i = i + 1;
+    end
+end
+]],
+    env = 'line 5 : undeclared class',
+}
+
+Test { [[
 native _V;
 native do
     int V = 0;
@@ -22713,6 +22505,38 @@ return _V;
 ]],
     fin = 'only empty finalizers inside constructors',
     --fin = 'line 21 : invalid `finalize´',
+}
+
+Test { [[
+class Game with
+    event (int,int,int*) go;
+do
+end
+
+var Game game;
+par/or do
+    var int a,b;
+    var int* c;
+    (a, b, c) = await game.go;
+with
+    nothing;
+end
+return 1;
+]],
+    run = 1;
+}
+
+Test { [[
+class Game with
+    event (int,int,int*) go;
+do
+end
+
+var Game game;
+emit game.go => (1, 1, null);
+return 1;
+]],
+    run = 1;
 }
 
 -- PAUSE/IF w/ ORGS
@@ -25459,6 +25283,227 @@ emit e => (1,2,3);
 return 1;
 ]],
     env = 'line 2 : invalid attribution (void vs int)',
+}
+
+-- IMPORT
+
+Test { [[
+import;
+]],
+    ast = 'ERR : tests.lua : line 1 : after `import´ : expected module'
+}
+
+Test { [[
+import MOD1;
+import http://ceu-lang.org/;
+import https://github.com/fsantanna/ceu;
+import ^4!_;
+]],
+    ast = 'ERR : tests.lua : line 1 : module "MOD1" not found'
+}
+
+_G['/tmp/_ceu_MOD1.ceu'] = [[
+input void A;
+]]
+Test { [[
+import /tmp/_ceu_MOD1.ceu ;
+await A;
+return 1;
+]],
+    run = { ['~>A']=1 },
+}
+
+_G['/tmp/_ceu_MOD1.ceu'] = [[
+nothing;
+nothing;
+nothing;
+input void A
+]]
+Test { [[
+nothing;
+import /tmp/_ceu_MOD1.ceu ;
+await A;
+return 1;
+]],
+    ast = 'ERR : /tmp/_ceu_MOD1.ceu : line 4 : after `A´ : expected `;´',
+}
+
+_G['/tmp/_ceu_MOD1.ceu'] = [[
+input void A;
+_assert(0);
+]]
+Test { [[
+import /tmp/_ceu_MOD1.ceu ;
+await A;
+return 1;
+]],
+    run = { ['~>A']=1 },
+}
+
+_G['/tmp/_ceu_MOD2.ceu'] = [[
+input void A;
+]]
+_G['/tmp/_ceu_MOD1.ceu'] = [[
+import /tmp/_ceu_MOD2.ceu;
+]]
+Test { [[
+import /tmp/_ceu_MOD1.ceu ;
+await A;
+return 1;
+]],
+    run = { ['~>A']=1 },
+}
+
+_G['/tmp/_ceu_MOD2.ceu'] = [[
+input void A;
+nothing
+]]
+_G['/tmp/_ceu_MOD1.ceu'] = [[
+import /tmp/_ceu_MOD2.ceu;
+]]
+Test { [[
+import /tmp/_ceu_MOD1.ceu ;
+await A;
+return 1;
+]],
+    ast = 'ERR : /tmp/_ceu_MOD2.ceu : line 2 : after `nothing´ : expected `;´',
+}
+
+_G['/tmp/_ceu_MOD2.ceu'] = [[
+input void A;
+]]
+_G['/tmp/_ceu_MOD1.ceu'] = [[
+input void A;
+]]
+_G['/tmp/_ceu_MOD0.ceu'] = [[
+import /tmp/_ceu_MOD1.ceu ;
+import /tmp/_ceu_MOD2.ceu ;
+]]
+Test { [[
+import /tmp/_ceu_MOD0.ceu ;
+await A;
+return 1;
+]],
+    run = { ['~>A']=1 },
+}
+
+_G['/tmp/_ceu_MOD2.ceu'] = [[
+input void A;
+]]
+_G['/tmp/_ceu_MOD1.ceu'] = [[
+nothing;
+input void A
+]]
+_G['/tmp/_ceu_MOD0.ceu'] = [[
+import /tmp/_ceu_MOD2.ceu ;
+import /tmp/_ceu_MOD1.ceu ;
+]]
+Test { [[
+import /tmp/_ceu_MOD0.ceu ;
+await A;
+return 1;
+]],
+    ast = 'ERR : /tmp/_ceu_MOD1.ceu : line 2 : after `A´ : expected `;´',
+}
+
+_G['/tmp/_ceu_MOD1.ceu'] = [[
+native do
+    int f () {
+        return 10;
+    }
+end
+]]
+Test { [[
+import /tmp/_ceu_MOD1.ceu ;
+return _f();
+]],
+    run = 10,
+}
+
+_G['/tmp/_ceu_MOD1.ceu'] = [[
+native do
+    int f () {
+        return 10;
+    }
+end
+]]
+Test { [[
+import /tmp/_ceu_MOD1.ceu ;
+import /tmp/_ceu_MOD1.ceu ;
+return _f();
+]],
+    run = 10,
+}
+
+_G['/tmp/_ceu_MOD1.ceu'] = [[
+interface T with
+    var int i;
+end
+var int i = 0;
+]]
+Test { [[
+//
+//
+import /tmp/_ceu_MOD1.ceu ;
+interface T with
+    var int i;
+end
+var int i = 10;
+return i;
+]],
+    env = 'ERR : tests.lua : line 4 : interface/class "T" is already declared',
+}
+
+_G['/tmp/_ceu_MOD1.ceu'] = [[
+interface T with
+    var int i;
+end
+var int i = 0;
+]]
+Test { [[
+//
+//
+interface T with
+    var int i;
+end
+import /tmp/_ceu_MOD1.ceu ;
+var int i = 10;
+return i;
+]],
+    env = 'ERR : /tmp/_ceu_MOD1.ceu : line 1 : interface/class "T" is already declared',
+}
+
+_G['/tmp/_ceu_MOD1.ceu'] = [[
+interface Global with
+    var int i;
+end
+var int i = 0;
+]]
+Test { [[
+import /tmp/_ceu_MOD1.ceu ;
+interface Global with
+    var int i;
+end
+var int i = 10;
+return i;
+]],
+    run = 10,
+}
+
+_G['/tmp/_ceu_MOD1.ceu'] = [[
+native do
+    int f () {
+        return 10
+    }
+    int A;
+    int B;
+end
+]]
+Test { [[
+import /tmp/_ceu_MOD1.ceu ;
+return _f();
+]],
+    run = false     -- TODO: catch gcc error
 }
 
 -- ASYNCS // THREADS

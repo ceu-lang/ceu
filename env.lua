@@ -671,7 +671,7 @@ F = {
         elseif dcl then
             me.cls = _ENV.clss[ dcl[2] ]   -- checked on Dcl_var
         end
-        assert(me.cls)
+        --assert(me.cls)
     end,
 
     CallStmt = function (me)

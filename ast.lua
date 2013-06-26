@@ -607,9 +607,6 @@ C = {
     Spawn = node('Spawn'),
 
     _Set = function (ln, to, op, tag, p1, p2, p3)
-        if op == ':=' then
-            ASR(tag=='SetExp', ln, 'invalid attribution')
-        end
         if to.tag == 'VarList' then
             ASR(tag=='_SetAwait', ln,
                 'invalid attribution (`await´ expected)')
@@ -620,7 +617,8 @@ C = {
             local t = {
                 _AST.copy(p1[1]),   -- find out 'TP' before traversing tup
                 node('Dcl_var')(ln, 'var', 'TP*', false, tup),
-                _AST.SetAwaitUntil(ln, p1, op, node('Var')(ln,tup)),
+                _AST.SetAwaitUntil(ln, p1, '=', node('Var')(ln,tup)),
+                                        -- assignment to struct must be '='
             }
             t[2].__ref = t[1] -- TP* is changed on env.lua
 
@@ -632,6 +630,9 @@ C = {
                                 '_'..i),
                             v)
                 t[#t].fromAwait = p1    -- p1 is an AwaitX
+
+                -- TODO: workaround that avoids checking := for fields
+                t[#t].dont_check_nofin = true
             end
             return node('Stmts')(ln, unpack(t))
 

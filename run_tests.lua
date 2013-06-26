@@ -216,11 +216,11 @@ assert(STATS.trails ==    2521)
 assert(STATS.bytes  == 7443601)
 
 -- w/ threads
---./run_tests.lua false  169.53s user 26.22s system 98% cpu 3:18.44 total
-assert(STATS.count  ==    1386)
+--./run_tests.lua  175.19s user 27.19s system 98% cpu 3:24.63 total
+assert(STATS.count  ==    1415)
 assert(STATS.mem    ==       0)
-assert(STATS.trails ==    2872)
-assert(STATS.bytes  == 8871997)
+assert(STATS.trails ==    2916)
+assert(STATS.bytes  == 9046590)
 
 os.execute('rm -f /tmp/_ceu_*')
 
