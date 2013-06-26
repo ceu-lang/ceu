@@ -58,6 +58,15 @@
 #endif
 #endif
 
+#ifdef CEU_THREADS
+#   define CEU_ATOMIC(f)                                \
+            CEU_THREADS_MUTEX_LOCK(&CEU.threads_mutex); \
+                f                                       \
+            CEU_THREADS_MUTEX_UNLOCK(&CEU.threads_mutex);
+#else
+#   define CEU_ATOMIC(f) f
+#endif
+
 /*
  * pthread_t thread;
  * pthread_mutex_t mutex;
@@ -437,6 +446,17 @@ void ceu_go_wclock (s32 dt)
 
 void ceu_go_all (int* ret_end)
 {
+    /* All code run atomically:
+     * - the program is always locked as a whole
+     * - thread spawns will unlock => re-lock
+     * - but will still run to completion
+     * - only COND_WAIT will allow threads to execute
+     */
+
+#ifdef CEU_THREADS
+    CEU_THREADS_MUTEX_LOCK(&CEU.threads_mutex);
+#endif
+
     ceu_go_init();
     if (ret_end!=NULL && *ret_end) goto _CEU_END_;
 
@@ -448,22 +468,26 @@ void ceu_go_all (int* ret_end)
 #ifdef CEU_ASYNCS
     for (;;) {
         ceu_go_async();
+#ifdef CEU_THREADS
+        CEU_THREADS_MUTEX_UNLOCK(&CEU.threads_mutex);
+        /* allow threads to also execute */
+        CEU_THREADS_MUTEX_LOCK(&CEU.threads_mutex);
+#endif
         if (ret_end!=NULL && *ret_end) goto _CEU_END_;
     }
 #endif
 
 #ifdef CEU_THREADS
-    CEU_THREADS_MUTEX_LOCK(&CEU.threads_mutex);
     for (;;) {
-        if (ret_end!=NULL && *ret_end) {
-            CEU_THREADS_MUTEX_UNLOCK(&CEU.threads_mutex);
-            goto _CEU_END_;
-        }
+        if (ret_end!=NULL && *ret_end) goto _CEU_END_;
         CEU_THREADS_COND_WAIT(&CEU.threads_cond, &CEU.threads_mutex);
     }
 #endif
 
 _CEU_END_:;
+#ifdef CEU_THREADS
+    CEU_THREADS_MUTEX_UNLOCK(&CEU.threads_mutex);
+#endif
 #ifdef CEU_NEWS
 #ifdef CEU_RUNTESTS
     #define CEU_MAX_DYNS 100
@@ -534,10 +558,6 @@ void ceu_go (int _ceu_evt, tceu_evtp _ceu_evtp)
      * default (NULL) is to traverse everything */
 #ifdef CEU_CLEAR
     void* _ceu_stop = NULL;     /* stop at this trl/org */
-#endif
-
-#ifdef CEU_THREADS
-CEU_THREADS_MUTEX_LOCK(&CEU.threads_mutex);
 #endif
 
     _ceu_seqno++;
@@ -745,8 +765,4 @@ _CEU_NEXT_:
 #endif
         _ceu_evt  = _CEU_STK[  _ceu_stki].evt;
     }
-
-#ifdef CEU_THREADS
-CEU_THREADS_MUTEX_UNLOCK(&CEU.threads_mutex);
-#endif
 }

@@ -812,59 +812,69 @@ _ceu_trl = &_ceu_org->trls[ ]]..me.trails[1]..[[ ];
 
         assert(evt.pre == 'input')
 
-        if _PROPS.has_threads then
-            LINE(me, 'CEU_THREADS_MUTEX_UNLOCK(&CEU.threads_mutex);')
-        end
-        if e2 then
-            LINE(me, 'ceu_go_event(CEU_IN_'..evt.id
-                        ..', (void*)'..V(e2)..');')
-        else
-            LINE(me, 'ceu_go_event(CEU_IN_'..evt.id ..', NULL);')
-        end
-        if _PROPS.has_threads then
-            LINE(me, 'CEU_THREADS_MUTEX_LOCK(&CEU.threads_mutex);')
-        end
-
-        LINE(me, [[
+        -- only async's need to split in two (to avoid stack growth)
+        if _AST.iter'Async'() then
+            LINE(me, [[
 _ceu_trl->evt = CEU_IN__ASYNC;
 _ceu_trl->lbl = ]]..me.lbl_cnt.id..[[;
 #ifdef ceu_out_async
 ceu_out_async(1);
 #endif
 ]])
-        HALT(me)
+        end
 
-        LINE(me, [[
+        local emit
+        if e2 then
+            emit = 'ceu_go_event(CEU_IN_'..evt.id ..', (void*)'..V(e2)..');'
+        else
+            emit = 'ceu_go_event(CEU_IN_'..evt.id ..', NULL);'
+        end
+
+        if _AST.iter'Async'() then
+            LINE(me, emit)
+            HALT(me)
+            LINE(me, [[
 case ]]..me.lbl_cnt.id..[[:;
 ]])
+        else
+            -- called from Thread
+            LINE(me, 'CEU_ATOMIC('..emit..')')
+        end
     end,
 
     EmitT = function (me)
         local exp = unpack(me)
-        LINE(me, [[
+
+        -- only async's need to split in two (to avoid stack growth)
+        if _AST.iter'Async'() then
+            LINE(me, [[
 _ceu_trl->evt = CEU_IN__ASYNC;
 _ceu_trl->lbl = ]]..me.lbl_cnt.id..[[;
-#ifdef CEU_WCLOCKS
-#ifdef CEU_THREADS
-CEU_THREADS_MUTEX_UNLOCK(&CEU.threads_mutex);
-#endif
-ceu_go_wclock((s32)]]..V(exp)..[[);
-while (CEU.wclk_min <= 0) {
-    ceu_go_wclock(0);
+]])
+        end
+
+        local emit = [[
+ceu_go_wclock((s32)]]..V(exp)..[[);     \
+while (CEU.wclk_min <= 0) {             \
+    ceu_go_wclock(0);                   \
 }
-#ifdef CEU_THREADS
-CEU_THREADS_MUTEX_LOCK(&CEU.threads_mutex);
+]]
+        if _AST.iter'Thread'() then
+            emit = 'CEU_ATOMIC( '..emit..' )\n'
+        end
+
+        LINE(me, [[
+#ifdef CEU_WCLOCKS
+    ]]..emit..[[
 #endif
 ]])
-        HALT(me)
-        LINE(me, [[
-#else
-]])
-        HALT(me)
-        LINE(me, [[
-#endif
+
+        if _AST.iter'Async'() then
+            HALT(me)
+            LINE(me, [[
 case ]]..me.lbl_cnt.id..[[:;
 ]])
+        end
     end,
 
     EmitInt = function (me)
@@ -1095,13 +1105,12 @@ case ]]..me.lbl.id..[[:;
         while (1) {
             CEU_THREADS_MUTEX_LOCK(&CEU.threads_mutex);
             int ok = (*(p.st) >= 1);   /* cpy ok? */
-            CEU_THREADS_MUTEX_UNLOCK(&CEU.threads_mutex);
             if (ok)
                 break;
+            CEU_THREADS_MUTEX_UNLOCK(&CEU.threads_mutex);
         }
 
-        /* proceed with sync execution */
-        CEU_THREADS_MUTEX_LOCK(&CEU.threads_mutex);
+        /* proceed with sync execution (already locked) */
         *(p.st) = 2;    /* lck: now thread may also execute */
 ]])
 
@@ -1141,8 +1150,10 @@ void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
     *(_ceu_p.st) = 1;
     CEU_THREADS_MUTEX_UNLOCK(&CEU.threads_mutex);
 
-    /* ensures that sync reaquires the mutex before I proceed */
-    /* otherwise I could lock below and reenter sync */
+    /* ensures that sync reaquires the mutex and terminates
+     * the current reaction before I proceed
+     * otherwise I could lock below and reenter sync
+     */
     while (1) {
         CEU_THREADS_MUTEX_LOCK(&CEU.threads_mutex);
         int ok = (*(_ceu_p.st) >= 2);   /* lck ok? */
@@ -1165,12 +1176,19 @@ void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
             *(_ceu_p.st) = 3;
             CEU_THREADS_MUTEX_UNLOCK(&CEU.threads_mutex);
             ceu_go(CEU_IN__THREAD, evtp);
-            CEU_THREADS_COND_SIGNAL(&CEU.threads_cond);
+            /*CEU_THREADS_COND_SIGNAL(&CEU.threads_cond);*/
         } else {
             free(_ceu_p.st);                /* fin finished, I free */
             CEU_THREADS_MUTEX_UNLOCK(&CEU.threads_mutex);
         }
     }
+
+    /* more correct would be two signals:
+     * (1) above, when I finish
+     * (2) finalizer, when sync finishes
+     * now the program may hang if I never reach here
+     */
+    CEU_THREADS_COND_SIGNAL(&CEU.threads_cond);
     return NULL;
 }
 ]]

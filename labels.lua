@@ -128,10 +128,16 @@ F = {
     end,
 
     EmitExt = function (me)
-        me.lbl_cnt = new{'Async_cont'}
+        -- only async needs to break up (avoids stack growth)
+        if _AST.iter'Async'() then
+            me.lbl_cnt = new{'Async_cont'}
+        end
     end,
     EmitT = function (me)
-        me.lbl_cnt = new{'Async_cont'}
+        -- only async needs to break up (avoids stack growth)
+        if _AST.iter'Async'() then
+            me.lbl_cnt = new{'Async_cont'}
+        end
     end,
     EmitInt = function (me)
         me.lbl_cnt = new{'EmitInt_cont'}
