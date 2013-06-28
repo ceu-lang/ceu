@@ -105,8 +105,10 @@ F = {
         local req = false
 
         if not (me.c and (me.c.mod=='pure' or me.c.mod=='nohold')) then
-            if f.org then
-                exps = { f.org, unpack(exps) }
+            if f.org and string.sub(me.c.id,1,1)=='_' then
+                exps = { f.org, unpack(exps) }  -- only native
+                -- avoids this.f(), where f is a pointer to func
+                -- vs this._f()
             end
             for _, exp in ipairs(exps) do
                 -- int* pa; _f(pa); -- `pa´ termination must consider `_f´
@@ -126,7 +128,8 @@ F = {
             req = false     -- impossible to run finalizers on threads
         end
 
-        ASR((not req) or fin, me, 'call requires `finalize´')
+        ASR((not req) or fin, me,
+            'call to "'..me.c.id..'" requires `finalize´')
         ASR((not fin) or req, me, 'invalid `finalize´')
 
         if fin and fin.active then

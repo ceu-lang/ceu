@@ -701,10 +701,16 @@ C = {
     end,
     EmitExt = function (ln, ext, ps, tag)
         tag = tag or 'EmitExt'
+
+        -- no exp: emit e
         if not ps then
             return node(tag)(ln, ext, false)
+
+        -- single: emit e => a
         elseif ps.tag~='ExpList' then
             return node(tag)(ln, ext, ps)
+
+        -- multiple: emit e => (a,b)
         else
             local tup = '_tup_'.._N
             _N = _N + 1

@@ -145,9 +145,11 @@ F =
         for i, exp in ipairs(exps) do
             ps[i] = V(exp)
         end
-        if f.org then
+        if f.org and string.sub(me.c.id,1,1)=='_' then
             local op = (_ENV.clss[f.org.tp].is_ifc and '') or '&'
-            table.insert(ps, 1, op..V(f.org))
+            table.insert(ps, 1, op..V(f.org))   -- only native
+                -- avoids this.f(), where f is a pointer to func
+                -- vs this._f()
         end
         me.val = V(f)..'('..table.concat(ps,',')..')'
     end,
