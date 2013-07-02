@@ -8,6 +8,16 @@ if exists("b:current_syntax")
   finish
 endif
 
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+syn match	Macro	"\<_\w*\>"
+syn keyword	cConstant	null
+syn keyword	cOperator	not or sizeof
+syn keyword	cType   	u8 u16 u32 u64 s8 s16 s32 s64 constant nohold deterministic pure
+syn keyword	cStatement async await break native continue do else else/if emit end event every finalize FOREVER if input loop nothing output par par/and par/or pause/if return then until var with class global interface free new this spawn import thread sync
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
 " A bunch of useful C keywords
 syn keyword	cStatement	goto break return continue asm
 syn keyword	cLabel		case default
@@ -291,7 +301,7 @@ syn region	cPreProc	start="^\s*\(%:\|#\)\s*\(pragma\>\|line\>\|warning\>\|warn\>
 
 " Highlight User Labels
 syn cluster	cMultiGroup	contains=cIncluded,cSpecial,cCommentSkip,cCommentString,cComment2String,@cCommentGroup,cCommentStartError,cUserCont,cUserLabel,cBitField,cOctalZero,cCppOut,cCppOut2,cCppSkip,cFormat,cNumber,cFloat,cOctal,cOctalError,cNumbersCom,cCppParen,cCppBracket,cCppString
-syn region	cMulti		transparent start='?' skip='::' end=':' contains=ALLBUT,@cMultiGroup,@Spell
+"syn region	cMulti		transparent start='?' skip='::' end=':' contains=ALLBUT,@cMultiGroup,@Spell
 " Avoid matching foo::bar() in C++ by requiring that the next char is not ':'
 syn cluster	cLabelGroup	contains=cUserLabel
 syn match	cUserCont	display "^\s*\I\i*\s*:$" contains=@cLabelGroup
@@ -369,6 +379,6 @@ hi def link cCppSkip		cCppOut
 hi def link cCppOut2		cCppOut
 hi def link cCppOut		Comment
 
-let b:current_syntax = "c"
+let b:current_syntax = "ceu"
 
 " vim: ts=8
