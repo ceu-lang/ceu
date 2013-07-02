@@ -27,9 +27,8 @@ F = {
         _ENV.clss.Main.host = ''
 
         for _,cls in ipairs(_ENV.clss) do
-            local pre = (cls.is_ifc and 'IFC') or 'CLS'
-
             _defs[#_defs+1] = cls.struct
+            _defs[#_defs+1] = cls.cstruct
             _defs[#_defs+1] = cls.host
 
             if cls.max and _PROPS.has_news_pool then
@@ -49,7 +48,7 @@ ceu_pool_init(&]]..cls.pool..', '..cls.max..', sizeof(CEU_'..cls.id..'), '
 
     Host = function (me)
         CLS().host = CLS().host ..
-            --'#line '..(me.ln[2]+1)..'\n' ..
+            '#line '..(me.ln[2]+1)..'\n' ..
             me[1] .. '\n'
     end,
 
@@ -59,6 +58,9 @@ ceu_pool_init(&]]..cls.pool..', '..cls.max..', sizeof(CEU_'..cls.id..'), '
 typedef struct {
   struct tceu_org org;
   tceu_trl trls_[ ]]..me.trails_n..[[ ];
+]]
+        me.cstruct = [[
+typedef struct {
 ]]
         me.host = ''
     end,
@@ -76,7 +78,8 @@ typedef struct {
             return
         end
 
-        me.struct = me.struct..'\n} '.._TP.c(me.id)..';\n'
+        me.struct  = me.struct..'\n} '.._TP.c(me.id)..';\n'
+        me.cstruct = me.cstruct..'\n} T'.._TP.c(me.id)..';\n'
 DBG('===', me.id, me.trails_n, '('..tostring(me.max)..')')
 --DBG(me.struct)
 --DBG('======================')
@@ -151,7 +154,10 @@ CEU_POOL_DCL(]]..node.pool..', CEU_'..node.cls.id..','..n..[[)
         -- sort offsets in descending order to optimize alignment
         -- TODO: previous org metadata
         local sorted = { unpack(me.vars) }
-        table.sort(sorted, pred_sort)
+        if me ~= CLS().blk_ifc then
+            table.sort(sorted, pred_sort)   -- TCEU_X should respect lexical order
+        end
+
         for _, var in ipairs(sorted) do
             if not var.isEvt then
                 local tp = _TP.c(var.tp)
@@ -164,6 +170,9 @@ CEU_POOL_DCL(]]..node.pool..', CEU_'..node.cls.id..','..n..[[)
                     dcl = tp..' '..var.id_
                 end
                 cls.struct = cls.struct..SPC()..'  '..dcl..';\n'
+                if me == CLS().blk_ifc then
+                    cls.cstruct = cls.cstruct..SPC()..'  '..dcl..';\n'
+                end
             end
         end
     end,
