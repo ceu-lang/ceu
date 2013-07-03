@@ -33,7 +33,7 @@ F = {
 
 -- FINALIZE: Await+Set => Await+FIN(Set)
     Finalize = function (me)
-        if me[1].tag ~= 'Stmts' then
+        if (not me[1]) or (me[1].tag ~= 'Stmts') then
             return      -- normal finalize
         end
 

@@ -127,9 +127,87 @@ error 'testar new/spawn que se mata'
 
 --do return end
 
---]===]
-
 -- OK: under tests but supposed to work
+
+Test { [[
+class T with
+    var int a;
+do
+end
+
+var _TCEU_T t;
+t.a = 1;
+return t.a;
+]],
+    run = 1,
+}
+
+Test { [[
+var u8[_N] vec;
+return 1;
+]],
+    run = 1,
+}
+
+--ERRO de #ps
+Test { [[
+input (int,int,int) EVT;
+var int a,b;
+(a,b) = await EVT;
+return 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native do
+    typedef int t;
+end
+input (_t,int) EVT;
+return 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native do
+    typedef int (*f_t) (int v);
+end
+
+class T with
+    var int ret1, ret2;
+    native nohold _f1();
+    var _f_t f2;
+do
+    native do
+        int CEU_T__f1 (CEU_T* t, int v) {
+            return v;
+        }
+        int f2 (int v) {
+            return v;
+        }
+    end
+
+    ret1 = this._f1(1);
+    ret2 = this.f2(2);
+end
+
+var T t with
+    this.f2 = _f2;
+end;
+return t.ret1 + t.ret2;
+]],
+    run = 3,
+}
+do return end
+
+Test { [[
+if ( _transaction ) then
+    _coap_send_transaction(_transaction);
+end
+]],
+    run = 1,
+}
 
 Test { [[
 input void START;
@@ -152,6 +230,39 @@ return 1;
     -- BUG: precisa transformar emit x=>1 em p=1;emit x
 }
 
+do return end
+--]===]
+
+Test { [[
+class T with
+    var _char* ptr;
+do
+end
+
+var _char* ptr;
+var T t with
+    this.ptr = ptr;
+end;
+return 1;
+]],
+    run = 1,
+}
+Test { [[
+class T with
+    var _char* ptr;
+do
+end
+
+var T t with
+    do
+        var _char* ptr;
+        this.ptr = ptr;
+    end
+end;
+return 1;
+]],
+    fin = 'line 9 : attribution requires `finalize´',
+}
 do return end
 
 -- OK: well tested
@@ -2200,6 +2311,21 @@ end
 ]],
     run = 4;
     -- BUG: every w/ tuples
+}
+
+Test { [[
+input void A,F;
+var int ret = 0;
+par/or do
+    every A do
+        ret = ret + 1;
+    end
+with
+    await F;
+end
+return ret;
+]],
+    run = { ['~>A;~>A;~>A;~>F;~>A']=3 },
 }
 
 -- CONTINUE
@@ -12988,7 +13114,7 @@ do
 end
 return 1;
 ]],
-    fin = 'line 6 : call requires `finalize´',
+    fin = 'line 6 : call to "_f" requires `finalize´',
     -- multiple scopes
 }
 
@@ -12998,7 +13124,7 @@ native _v;
 _f(_v);
 return 0;
 ]],
-    fin = 'line 3 : call requires `finalize´',
+    fin = 'line 3 : call to "_f" requires `finalize´',
 }
 
 Test { [[
@@ -13025,7 +13151,7 @@ end
 var int v;
 return _f(&v) == 1;
 ]],
-    fin = 'line 8 : call requires `finalize´',
+    fin = 'line 8 : call to "_f" requires `finalize´',
 }
 
 Test { [[
@@ -16371,7 +16497,7 @@ end
         acc = 24,        -- TODO: nao conferi
         isForever = true,
     },
-    fin = 'line 4 : call requires `finalize´',
+    fin = 'line 4 : call to "_digitalWrite" requires `finalize´',
 }
 
 Test { [[
@@ -16624,7 +16750,7 @@ var int a;
 a = _inv(_inv(1));
 return a;
 ]],
-    fin = 'line 8 : call requires `finalize´',
+    fin = 'line 8 : call to "_inv" requires `finalize´',
 }
 
 Test { [[
@@ -24007,7 +24133,9 @@ end
 event (G*,int) g;
 return 1;
 ]],
-    env = 'line 2 : undeclared type `G´',
+    --env = 'line 2 : undeclared type `G´',
+    run = 1,
+    -- TODO
 }
 
 Test { [[
@@ -24046,7 +24174,7 @@ do
     end
 end
 ]],
-    fin = 'line 5 : call requires `finalize´',
+    fin = 'line 5 : call to "_f" requires `finalize´',
 }
 
 Test { [[

@@ -18,11 +18,20 @@ F = {
         if _TP.deref(to.tp) then
             local to_blk = (to.fst=='_' and _AST.root) or to.fst.blk
 
+            -- var T t with
+            --  this.x = y;     -- blk of this? (same as block of t)
+            -- end;
             -- spawn T with
             --  this.x = y;     -- blk of this? (same as parent spawn/new)
+            -- end
             local constr = _AST.iter'Dcl_constr'()
             if constr then
-                to_blk = constr.__par.blk
+                local dcl = _AST.iter'Dcl_var'()
+                if dcl then
+                    to_blk = dcl.var.blk
+                else
+                    to_blk = constr.__par.blk
+                end
             end
 
             assert(fr.fst)

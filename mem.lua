@@ -48,7 +48,7 @@ ceu_pool_init(&]]..cls.pool..', '..cls.max..', sizeof(CEU_'..cls.id..'), '
 
     Host = function (me)
         CLS().host = CLS().host ..
-            '#line '..(me.ln[2]+1)..'\n' ..
+            --'#line '..(me.ln[2]+1)..'\n' ..
             me[1] .. '\n'
     end,
 
@@ -65,6 +65,7 @@ typedef struct {
         me.host = ''
     end,
     Dcl_cls_pos = function (me)
+        me.cstruct = me.cstruct..'\n} T'.._TP.c(me.id)..';\n'
         if me.is_ifc then
             me.struct = 'typedef void '.._TP.c(me.id)..';\n'
 --[[
@@ -79,7 +80,6 @@ typedef struct {
         end
 
         me.struct  = me.struct..'\n} '.._TP.c(me.id)..';\n'
-        me.cstruct = me.cstruct..'\n} T'.._TP.c(me.id)..';\n'
 DBG('===', me.id, me.trails_n, '('..tostring(me.max)..')')
 --DBG(me.struct)
 --DBG('======================')

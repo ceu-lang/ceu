@@ -396,37 +396,39 @@ C = {
         local awt = node(tag)(ln, evt, false)
         awt.isEvery = true
 
-        local stmts
+        local stmts = awt
 
-        -- TODO: join this code w/ _Set
-        if to.tag == 'VarList' then
-            local tup = '_tup_'.._N
-            _N = _N + 1
+        if to then
+            -- TODO: join this code w/ _Set
+            if to.tag == 'VarList' then
+                local tup = '_tup_'.._N
+                _N = _N + 1
 
-            local t = {
-                _AST.copy(evt),         -- find out 'TP' before traversing tup
-                node('Dcl_var')(ln, 'var', 'TP*', false, tup),
-                _AST.SetAwaitUntil(ln, awt, '=', node('Var')(ln,tup)),
+                local t = {
+                    _AST.copy(evt), -- find out 'TP' before traversing tup
+                    node('Dcl_var')(ln, 'var', 'TP*', false, tup),
+                    _AST.SetAwaitUntil(ln, awt, '=', node('Var')(ln,tup)),
                                         -- assignment to struct must be '='
-            }
-            t[2].__ref = t[1] -- TP* is changed on env.lua
+                }
+                t[2].__ref = t[1] -- TP* is changed on env.lua
 
-            for i, v in ipairs(to) do
-                t[#t+1] = node('SetExp')(ln, op,
-                            node('Op2_.')(ln, '.',
-                                node('Op1_*')(ln, '*',
-                                    node('Var')(ln, tup)),
-                                '_'..i),
-                            v)
-                t[#t].fromAwait = awt
+                for i, v in ipairs(to) do
+                    t[#t+1] = node('SetExp')(ln, op,
+                                node('Op2_.')(ln, '.',
+                                    node('Op1_*')(ln, '*',
+                                        node('Var')(ln, tup)),
+                                    '_'..i),
+                                v)
+                    t[#t].fromAwait = awt
 
-                -- TODO: workaround that avoids checking := for fields
-                t[#t].dont_check_nofin = true
+                    -- TODO: workaround that avoids checking := for fields
+                    t[#t].dont_check_nofin = true
+                end
+                stmts = node('Stmts')(ln, unpack(t))
+
+            else
+                stmts = _AST.SetAwaitUntil(ln, awt, op, to)
             end
-            stmts = node('Stmts')(ln, unpack(t))
-
-        else
-            stmts = _AST.SetAwaitUntil(ln, awt, op, to)
         end
 
         local ret = node('Loop')(ln,

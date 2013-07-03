@@ -14,7 +14,7 @@ syn match	Macro	"\<_\w*\>"
 syn keyword	cConstant	null
 syn keyword	cOperator	not or sizeof
 syn keyword	cType   	u8 u16 u32 u64 s8 s16 s32 s64 constant nohold deterministic pure
-syn keyword	cStatement async await break native continue do else else/if emit end event every finalize FOREVER if input loop nothing output par par/and par/or pause/if return then until var with class global interface free new this spawn import thread sync
+syn keyword	cStatement async await break native continue do else else/if emit end event every finalize FOREVER if input loop nothing output par par/and par/or pause/if return then until var with class global include interface free new this spawn import thread sync
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
@@ -306,7 +306,8 @@ syn cluster	cMultiGroup	contains=cIncluded,cSpecial,cCommentSkip,cCommentString,
 syn cluster	cLabelGroup	contains=cUserLabel
 syn match	cUserCont	display "^\s*\I\i*\s*:$" contains=@cLabelGroup
 syn match	cUserCont	display ";\s*\I\i*\s*:$" contains=@cLabelGroup
-syn match	cUserCont	display "^\s*\I\i*\s*:[^:]"me=e-1 contains=@cLabelGroup
+"syn match	cUserCont	display "^\s*\I\i*\s*:[^:]"me=e-1 contains=@cLabelGroup
+"   v := f()    // v becomes a keyword
 syn match	cUserCont	display ";\s*\I\i*\s*:[^:]"me=e-1 contains=@cLabelGroup
 
 syn match	cUserLabel	display "\I\i*" contained
