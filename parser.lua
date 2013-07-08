@@ -334,9 +334,9 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
                 + Cc'unk'  * V'ID_nat'        * Cc(false)
 
     , _Dcl_nat_ifc = K'native' * (CK'pure'+CK'constant'+CK'nohold'+Cc(false))
-                 * EV'__Dcl_nat' * (K',' * EV'__Dcl_nat')^0
+                        * EV'__Dcl_nat' * (K',' * EV'__Dcl_nat')^0
     , _Dcl_nat     = K'native' * (CK'pure'+CK'constant'+CK'nohold'+Cc(false))
-                 * EV'__Dcl_nat' * (K',' * EV'__Dcl_nat')^0
+                        * EV'__Dcl_nat' * (K',' * EV'__Dcl_nat')^0
 
     , _Dcl_ext = (CK'input'+CK'output') * (EV'ID_type'+EV'TupleType') *
                     EV'ID_ext' * (K','*EV'ID_ext')^0
@@ -368,8 +368,9 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , _Dcl_imp = K'interface' * EV'ID_cls' * (K',' * EV'ID_cls')^0
 
     , BlockI = ( (V'_Dcl_int'+V'_Dcl_var'+
-                   V'_Dcl_nat_ifc'+V'_Dcl_imp')
-               * (EK';'*K';'^0) )^0
+                   V'_Dcl_nat_ifc'+V'_Dcl_imp') * (EK';'*K';'^0)
+               + V'Host'    -- method prototypes
+               )^0
     , Dcl_ifc = K'interface' * Cc(true)
               * Cc(false)
               * EV'ID_cls'

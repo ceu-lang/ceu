@@ -208,14 +208,7 @@ F =
         if me.org then
             local cls = _ENV.clss[me.org.tp]
             if cls and cls.is_ifc then
-                if me.c then
-                    me.val = me.c.id
-                    local org = '((tceu_org*)'..me.org.val..')'
-                    local tp = '__typeof__('.._ENV.ifcs.fun2tp[me.c.id]..')*'
-                    me.val = '(('..tp..')CEU.ifcs_funs['..org..'->cls]['
-                                    .._ENV.ifcs.funs[me.c.id]
-                                ..'])'
-                elseif me.var.isEvt then
+                if me.var.isEvt then
                     me.val = nil    -- cannot be used as variable
                     local org = '((tceu_org*)'..me.org.val..')'
                     me.evt_idx = '(CEU.ifcs_evts['..org..'->cls]['

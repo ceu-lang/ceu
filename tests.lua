@@ -129,27 +129,7 @@ error 'testar new/spawn que se mata'
 
 -- OK: under tests but supposed to work
 
-Test { [[
-class T with
-    var int a;
-do
-end
-
-var _TCEU_T t;
-t.a = 1;
-return t.a;
-]],
-    run = 1,
-}
-
-Test { [[
-var u8[_N] vec;
-return 1;
-]],
-    run = 1,
-}
-
---ERRO de #ps
+--ERROR: #ps
 Test { [[
 input (int,int,int) EVT;
 var int a,b;
@@ -158,7 +138,9 @@ return 1;
 ]],
     run = 1,
 }
-
+-- ERROR: defs.h before host code
+-- makes sense: how an external component would know about a
+-- type defined in Ceu?
 Test { [[
 native do
     typedef int t;
@@ -169,38 +151,7 @@ return 1;
     run = 1,
 }
 
-Test { [[
-native do
-    typedef int (*f_t) (int v);
-end
-
-class T with
-    var int ret1, ret2;
-    native nohold _f1();
-    var _f_t f2;
-do
-    native do
-        int CEU_T__f1 (CEU_T* t, int v) {
-            return v;
-        }
-        int f2 (int v) {
-            return v;
-        }
-    end
-
-    ret1 = this._f1(1);
-    ret2 = this.f2(2);
-end
-
-var T t with
-    this.f2 = _f2;
-end;
-return t.ret1 + t.ret2;
-]],
-    run = 3,
-}
-do return end
-
+-- ERROR: parse (typecast)
 Test { [[
 if ( _transaction ) then
     _coap_send_transaction(_transaction);
@@ -209,6 +160,7 @@ end
     run = 1,
 }
 
+--]===]
 Test { [[
 input void START;
 event (int,void*) ptr;
@@ -229,41 +181,6 @@ return 1;
     -- e depois outro exemplo com fin apropriado
     -- BUG: precisa transformar emit x=>1 em p=1;emit x
 }
-
-do return end
---]===]
-
-Test { [[
-class T with
-    var _char* ptr;
-do
-end
-
-var _char* ptr;
-var T t with
-    this.ptr = ptr;
-end;
-return 1;
-]],
-    run = 1,
-}
-Test { [[
-class T with
-    var _char* ptr;
-do
-end
-
-var T t with
-    do
-        var _char* ptr;
-        this.ptr = ptr;
-    end
-end;
-return 1;
-]],
-    fin = 'line 9 : attribution requires `finalize´',
-}
-do return end
 
 -- OK: well tested
 
@@ -15453,6 +15370,17 @@ var void[10] a;
 }
 
 Test { [[
+native do
+    #define N 1
+end
+var u8[_N] vec;
+vec[0] = 10;
+return vec[_N-1];
+]],
+    run = 10,
+}
+
+Test { [[
 var int[2] v;
 v[0] = 5;
 return v[0];
@@ -17656,6 +17584,19 @@ return _V;
 }
 
 Test { [[
+class T with
+    var int a;
+do
+end
+
+var _TCEU_T t;
+t.a = 1;
+return t.a;
+]],
+    run = 1,
+}
+
+Test { [[
 interface I with end
 
 class T with
@@ -17926,7 +17867,7 @@ do
 end
 return 10;
 ]],
-    run = 10,
+    env = 'line 3 : only methods are allowed',
 }
 
 Test { [[
@@ -18533,6 +18474,37 @@ t2.v = 2;
 return t1.v+t2.v;
 ]],
     run = 3,
+}
+
+Test { [[
+class T with
+    var _char* ptr;
+do
+end
+
+var _char* ptr;
+var T t with
+    this.ptr = ptr;
+end;
+return 1;
+]],
+    run = 1,
+}
+Test { [[
+class T with
+    var _char* ptr;
+do
+end
+
+var T t with
+    do
+        var _char* ptr;
+        this.ptr = ptr;
+    end
+end;
+return 1;
+]],
+    fin = 'line 9 : attribution requires `finalize´',
 }
 
 Test { [[
@@ -19555,6 +19527,37 @@ return 10;
         --acc = 9,  -- TODO
     },
     run = 10,
+}
+
+Test { [[
+native do
+    typedef int (*f_t) (int v);
+end
+
+class T with
+    var int ret1, ret2;
+    native nohold _f1();
+    var _f_t f2;
+do
+    native do
+        int CEU_T__f1 (CEU_T* t, int v) {
+            return v;
+        }
+        int f2 (int v) {
+            return v;
+        }
+    end
+
+    ret1 = this._f1(1);
+    ret2 = this.f2(2);
+end
+
+var T t with
+    this.f2 = _f2;
+end;
+return t.ret1 + t.ret2;
+]],
+    run = 3,
 }
 
 Test { [[
@@ -22489,7 +22492,8 @@ emit t.a;
 return _V;
 ]],
     ana = { acc=1 },
-    run = 14,
+    --run = 14,
+    run = 40,
 }
 
 Test { [[
@@ -23461,7 +23465,8 @@ interface I with
 end
 return 10;
 ]],
-    run = 10,
+    env = 'line 3 : only methods are allowed',
+    --run = 10,
 }
 
 Test { [[
@@ -23491,12 +23496,44 @@ return t.v + t._f(20) + t.v;
 Test { [[
 interface I with
     var int v;
-    native nohold _f();
+    native nohold _f();     // 1st parameter = I*
 end
 
 class T with
     var int v;
+    native nohold _f();     // 1st parameter = T*
+do
+    v = 50;
+    this._f(10);
+
+    native do
+        void CEU_T__f (CEU_T* t, int v) {
+            t->v += v;
+        }
+    end
+end
+
+var T t;
+var I* i = &t;
+input void START;
+await START;
+i:_f(100);
+return i:v;
+]],
+    env = 'line 21 : invalid attribution (I* vs T*)',
+}
+
+Test { [[
+interface I with
+    var int v;
     native nohold _f();
+    native do
+        void CEU_I__f (CEU_I* i, int v);
+    end
+end
+
+class T with
+    interface I;
 do
     v = 50;
     this._f(10);
@@ -23523,12 +23560,15 @@ interface I with
     var int v;
     native nohold _get();
     native nohold _set();
+    native do
+        int CEU_I__get (CEU_I* t);
+        void CEU_I__set (CEU_I* t, int v);
+    end
 end
 
 class T with
+    interface I;
     var int v = 50;
-    native nohold _get();
-    native nohold _set();
 do
     native do
         int CEU_T__get (CEU_T* t) {
@@ -23553,11 +23593,13 @@ Test { [[
 interface I with
     var int v;
     native nohold _f();
+    native do
+        void CEU_I__f (CEU_I* i, int v);
+    end
 end
 
 class T with
-    var int v;
-    native nohold _f();
+    interface I;
 do
     v = 50;
     this._f(10);
@@ -23570,8 +23612,7 @@ do
 end
 
 class U with
-    var int v;
-    native nohold _f();
+    interface I;
 do
     v = 50;
     this._f(10);
@@ -23597,6 +23638,36 @@ i:_f(200);
 return ret + i:v;
 ]],
     run = 630,
+}
+
+Test { [[
+interface I with
+    native nohold _f();
+    native nohold _f1();
+end
+    native do
+        int CEU_I__f  (void* this);
+        int CEU_I__f1 (void* this);
+    end
+
+class T with
+    interface I;
+do
+    native do
+        int CEU_T__f (CEU_I* t) {
+            return ((CEU_T*)t)->_f1(t);
+        }
+        int CEU_T__f1 (CEU_I* t) {
+            return 1;
+        }
+    end
+end
+
+var T t;
+var I* i = &t;
+return t._f() + i:_f();
+]],
+    run = 2,
 }
 
 Test { [[
@@ -23941,7 +24012,7 @@ end
 var T t;
 return t.a;
 ]],
-    env = 'line 5 : class "J" is not declared',
+    env = 'line 5 : interface "J" is not declared',
 }
 
 Test { [[
@@ -23976,7 +24047,8 @@ var T t;
 var I* i = &t;
 return t._ins();
 ]],
-    env = 'line 13 : native function "CEU_T__ins" is not declared',
+    --env = 'line 13 : native function "CEU_T__ins" is not declared',
+    env = 'line 13 : variable/event "_ins" is not declared',
 }
 Test { [[
 interface I with
@@ -23993,7 +24065,8 @@ var T t;
 var I* i = &t;
 return i:_ins();
 ]],
-    env = 'line 13 : native function "CEU_I__ins" is not declared',
+    --env = 'line 13 : native function "CEU_I__ins" is not declared',
+    env = 'line 13 : variable/event "_ins" is not declared',
 }
 Test { [[
 interface I with
@@ -24011,18 +24084,23 @@ var T t;
 var I* i = &t;
 return i:_ins() + t._ins();;
 ]],
-    env = 'line 14 : native function "CEU_T__ins" is not declared',
+    --env = 'line 14 : native function "CEU_T__ins" is not declared',
+    env = 'line 13 : invalid attribution (I* vs T*)',
 }
 
 Test { [[
 interface I with
     var int v;
     native nohold _ins();
+    native do
+        int CEU_I__ins (CEU_I* i);
+    end
 end
 
 class T with
-    var int v;
-    native nohold _ins();
+    interface I;
+    //var int v;
+    //native nohold _ins();
 do
 native do
     int CEU_T__ins (CEU_T* t) {
@@ -24050,8 +24128,11 @@ end
 
 Test { [[
 interface F with
-    native nohold _f();
     var int i;
+    native nohold _f();
+    native do
+        void CEU_F__f (CEU_F* f, int i);
+    end
 end
 
 class T with
@@ -24080,6 +24161,9 @@ Test { [[
 interface F with
     native nohold _f();
     var int i;
+    native do
+        void CEU_F__f (CEU_F* f, int i);
+    end
 end
 
 class T with
@@ -24444,7 +24528,8 @@ do
 end
 return ret;
 ]],
-    run = 10,
+    run = 7,
+    --run = 10,
 }
 
 Test { [[
@@ -24485,7 +24570,8 @@ do
 end
 return ret;
 ]],
-    run = { ['~>3s;~>F'] = 9 },
+    run = { ['~>3s;~>F'] = 11 },
+    --run = { ['~>3s;~>F'] = 9 },
 }
 
 Test { [[

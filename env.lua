@@ -12,8 +12,6 @@ _ENV = {
     ifcs  = {
         flds = {}, -- {[1]='A',[2]='B',A=0,B=1,...}
         evts = {}, -- ...
-        funs = {}, -- ...
-        fun2tp = {}, -- { f='CEU_T__f', ... }
     },
 
     exts = {
@@ -88,9 +86,9 @@ function _ENV.ifc_vs_cls (ifc, cls)
     return true
 end
 
+-- unique numbers for vars and events
 local _N = 0
 local _E = 1    -- 0=NONE
-local _F = 0
 
 function newtype (tp)
     local raw = _TP.noptr(tp)
@@ -100,7 +98,7 @@ function newtype (tp)
         return  -- already declared or not external type
     end
 
-    _ENV.c[raw] = { tag='type', id=raw, id_=raw, len=nil, mod=nil }
+    _ENV.c[raw] = { tag='type', id=raw, len=nil, mod=nil }
 end
 
 function newvar (me, blk, pre, tp, arr, id)
@@ -159,7 +157,6 @@ function newvar (me, blk, pre, tp, arr, id)
         --val   = '0',     -- TODO: workaround: dummy value for interfaces
         n     = _N,
     }
---DBG(var.id, var.isTmp)
 
     _N = _N + 1
     if isEvt then
@@ -277,14 +274,13 @@ F = {
         me.is_ifc = ifc
         me.max    = max
         me.id     = id
-        me.blk_ifc.funs = {}
+        me.c      = {}      -- holds all "native _f()"
         ASR(not _ENV.clss[id], me,
                 'interface/class "'..id..'" is already declared')
 
         -- restart variables/events counting
         _N = 0
         _E = 1  -- 0=NONE
-        _F = 0
 
         _ENV.clss[id] = me
         _ENV.clss[#_ENV.clss+1] = me
@@ -315,11 +311,6 @@ F = {
                         _ENV.ifcs.flds[#_ENV.ifcs.flds+1] = var.id_ifc
                     end
                 end
-            end
-            for id, c in pairs(me.blk_ifc.funs) do
-                -- id=_f // c.id=CEU_T__f
-                _ENV.ifcs.funs[id] = #_ENV.ifcs.funs
-                _ENV.ifcs.funs[#_ENV.ifcs.funs+1] = id
             end
         end
     end,
@@ -448,24 +439,14 @@ F = {
     Dcl_imp = function (me)
         local id = unpack(me)
         local ifc = ASR(_ENV.clss[id], me,
-                        'class "'..id..'" is not declared')
+                        'interface "'..id..'" is not declared')
         ASR(ifc.is_ifc, me, '`'..id..'´ is not an interface')
 
         -- copy vars
         for _, var in ipairs(ifc.blk_ifc.vars) do
             local tp = (var.arr and _TP.deref(var.tp)) or var.tp
             newvar(me, _AST.iter'Block'(), var.pre, tp, var.arr, var.id)
-        end
-
-        -- copy cs
-        local cls = CLS()
-        for _, c in pairs(ifc.blk_ifc.funs) do
-            local id_ = 'CEU_'..cls.id..'_'..c.id
-            cls.blk_ifc.funs[c.id] =
-                { tag=c.tag, id=c.id, id_=id_, len=c.len, mod=c.mod }
-            _ENV.c[id_] =
-                { tag=c.tag, id=c.id, id_=id_, len=c.len, mod=c.mod }
-            _ENV.ifcs.fun2tp[c.id] = id_    -- last will be from a class
+            CLS().c[var.id] = ifc.c[var.id] -- also copy C properties
         end
     end,
 
@@ -492,25 +473,19 @@ F = {
 
     Dcl_nat = function (me)
         local mod, tag, id, len = unpack(me)
-        local id_ = id
+        --assert(not len) -- TODO: not using len anymore
 
-        -- TODO: we are not using "native _t=N" anymore
-        -- if needed again, this check has to be moved to sval.lua
-        --if len then
-            --len = ASR(len.sval, me, 'invalid static expression')
-        --end
-
-        local n
         if _AST.iter'BlockI'() then
+            ASR(tag == 'func', me, 'only methods are allowed')
+            -- native _f()  =>  CEU_T__f  (must be defined manually)
             local cls = CLS()
-            -- id=_f // c.id=CEU_T__f
-            id_ = 'CEU_'..cls.id..'_'..id
-            cls.blk_ifc.funs[id] = { tag=tag, id=id, id_=id_, mod=mod }
-            _ENV.ifcs.fun2tp[id] = id_      -- last will be from a class
-            n = _F
-            _F = _F + 1
+            local tp = '___typeof__(CEU_'..cls.id..'_'..id..')'
+            _ENV.c[tp] = { tag='type', id=tp }
+            newvar(me, _AST.iter'Block'(), 'var', tp..'*', false, id)
+            cls.c[id] = { tag=tag, id=id, mod=mod }
+        else
+            _ENV.c[id] = { tag=tag, id=id, len=len, mod=mod }
         end
-        _ENV.c[id_] = { tag=tag, id=id, id_=id_, len=len, mod=mod, n=n }
     end,
 
     Dcl_pure = function (me)
@@ -691,7 +666,11 @@ F = {
             me.c = _ENV.c[id]
         elseif f.tag == 'Op2_.' then
             id   = f.id
-            me.c = f.c
+            if f.org then   -- t._f()
+                me.c = assert(_ENV.clss[f.org.tp]).c[f.id]
+            else            -- _x._f()
+                me.c = f.c
+            end
         else
             id = '$anon'
             me.c = { tag='func', id=id, mod=nil }
@@ -715,7 +694,6 @@ F = {
         local tp = ASR(_TP.deref(arr.tp,true), me, 'cannot index a non array')
         ASR(tp and _TP.isNumeric(idx.tp,true), me, 'invalid array index')
         me.tp = tp
---DBG('idx', arr.tag, arr.lval)
         me.lval = (not _ENV.clss[tp]) and arr
         me.ref  = arr.ref
         me.fst  = arr.fst
@@ -792,31 +770,19 @@ F = {
         if cls then
             me.org = e1
 
-            if string.sub(id,1,1)=='_' then
-                local id = _TP.c(cls.id)..'_'..id
-                local c = _ENV.c[id]
-                ASR(c and c.tag=='func', me,
-                        'native function "'..id..'" is not declared')
-                me[3] = _AST.node('Nat')(me.ln, id)
-                me.c    = c
-                me.tp   = '_'
-                me.lval = false
-                me.ref  = me[3]
-            else
-                local var = ASR(cls.blk_ifc.vars[id], me,
-                            'variable/event "'..id..'" is not declared')
-                me[3] = _AST.node('Var')(me.ln, '$'..id)
-                me[3].var = var
+            local var = ASR(cls.blk_ifc.vars[id], me,
+                        'variable/event "'..id..'" is not declared')
+            me[3] = _AST.node('Var')(me.ln, '$'..id)
+            me[3].var = var
 
-                me.org  = e1
-                me.var  = var
-                me.tp   = var.tp
-                me.lval = (not var.arr) and (not var.cls) and var
-                me.ref  = me[3]
-                if var.isEvt then
-                    me.evt    = me.var
-                    me[3].evt = var
-                end
+            me.org  = e1
+            me.var  = var
+            me.tp   = var.tp
+            me.lval = (not var.arr) and (not var.cls) and var
+            me.ref  = me[3]
+            if var.isEvt then
+                me.evt    = me.var
+                me[3].evt = var
             end
         else
             ASR(_TP.ext(e1.tp,true), me, 'not a struct')

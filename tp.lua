@@ -62,7 +62,7 @@ end
 -- TODO: enforce passing parameter `c´ to isNumeric/deref/contains/max ?
 
 function _TP.noptr (tp)
-    return (string.match(tp, '^([_%w]*)%**'))
+    return (string.match(tp, '^([^%*]*)%**'))
 end
 
 --[[

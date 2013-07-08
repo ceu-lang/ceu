@@ -38,7 +38,7 @@ function LINE (me, line, spc)
     spc = spc or 4
     spc = string.rep(' ', spc)
     me.code = me.code ..
-                --'#line '..me.ln[2]..' "'..me.ln[1]..'"\n'..
+                '#line '..me.ln[2]..' "'..me.ln[1]..'"\n'..
                 spc .. line .. '\n'
 end
 
@@ -189,14 +189,24 @@ F = {
             return
         end
 
+        -- copy all method pointers
+        local fs = ''
+        for id, t in pairs(me.c) do
+            fs = fs ..  CUR(me,id)..' = &CEU_'..me.id..'_'..id..';\n'
+        end
+
         if me.has_pre then
             CASE(me, me.lbl_pre)
+            LINE(me, fs)    -- method pointers
+                fs = ''     -- clear
             me.code = me.code .. me.blk_ifc.code_pre
             LINE(me, me.blk_ifc[1][1].code_ifc)   -- Block->Stmts->BlockI
             HALT(me)
         end
 
         CASE(me, me.lbl)
+        LINE(me, fs)    -- method pointers
+            fs = ''     -- clear
 
         -- TODO: move to _ORG? (_MAIN does not call _ORG)
         LINE(me, [[
@@ -955,11 +965,13 @@ case ]]..me.lbl.id..[[:;
     _ceu_trl->lbl = ]]..me.lbl.id..[[;
 ]])
         -- awake in the same reaction (first awaits of a class)
+--[=[
         if (not _AST.iter'Loop'()) and CLS().id~='Main' then
             LINE(me, [[
     _ceu_trl->stk = _ceu_seqno-1;
 ]])
         end
+]=]
         HALT(me)
 
         LINE(me, [[

@@ -1,5 +1,67 @@
-/*#line 0 "=== FILENAME ==="*/
+#line 0 "=== FILENAME ==="
 === DEFS ===
+
+/* Order of C definitions:
+=== DEFS
+    -- external:
+    CEU_IN_*
+    CEU_OUT_*
+    CEU_OUT_n
+    CEU_FUN_*
+
+    -- ifdefs 1:
+    CEU_EXTS CEU_WCLOCKS CEU_INTS CEU_ASYNCS CEU_THREADS CEU_ORGS
+    CEU_NEWS CEU_NEWS_POOL CEU_NEWS_MALLOC CEU_IFCS CEU_CLEAR CEU_PSES
+
+    -- ifdefs 2:
+    CEU_GOTO CEU_RUNTESTS
+
+    -- tuples:
+    typedef struct {
+            void* _1;
+            void* _2;
+    } tceu__int___TCEU_Transaction_;
+
+=== POOL_C
+
+CEU_WCLOCK_INACTIVE
+CEU_WCLOCK_EXPIRED
+
+CEU_NMEM
+CEU_NTRAILS
+CEU_NCLS
+
+CEU_THREADS_*
+CEU_ATOMIC
+
+-- limits
+    tceu_nevt
+    tceu_nlbl
+    tceu_ncls
+    CEU_MAX_STACK
+
+-- types
+    tceu_trl
+    tceu_evtp
+    tceu_stk
+    tceu_lst
+    tceu_lnk
+    tceu_org
+
+=== CLSS_DEFS
+    - main host
+    - clss
+        - "typedef struct T T;"
+        - methods prototypes (T__f)
+        - struct
+        - cstruct
+        - host (methods)
+    - main cls
+
+=== LABELS_ENUM
+
+tceu
+*/
 
 #include <string.h>
 #include <limits.h>
@@ -199,7 +261,6 @@ typedef struct {
     s8    ifcs_clss[CEU_NCLS][=== IFCS_NIFCS ===]; /* TODO(ram): bitfield */
     u16   ifcs_flds[CEU_NCLS][=== IFCS_NFLDS ===];
     u16   ifcs_evts[CEU_NCLS][=== IFCS_NEVTS ===];
-    void* ifcs_funs[CEU_NCLS][=== IFCS_NFUNS ===];
 #endif
 
 #ifdef CEU_DEBUG
@@ -229,9 +290,6 @@ tceu CEU = {
     },
     {
 === IFCS_EVTS ===
-    },
-    {
-=== IFCS_FUNS ===
     },
 #endif
 #ifdef CEU_DEBUG
@@ -372,7 +430,7 @@ void ceu_go_init ()
     signal(SIGSEGV, ceu_segfault);
 #endif
 #ifdef CEU_NEWS
-    === CLSS_INIT ===
+    === CLSS_POOLS ===
 #endif
     ceu_org_init((tceu_org*)&CEU.mem, CEU_NTRAILS, Class_Main, 0, NULL, 0);
     {

@@ -2,7 +2,7 @@ _MEM = {
     cls = {},       -- offsets for fixed fields inside classes
     evt_off = 0,    -- max event index among all classes
     clss_defs = nil,
-    clss_init = nil,
+    clss_pools = nil,
 }
 
 function SPC ()
@@ -15,18 +15,22 @@ end
 
 F = {
     Root = function (me)
-        -- cls/ifc accessors
-        -- cls pool
 
-        local _defs = {}
-        local _init = {}
-        local _free = {}
+        local _defs  = {}   -- pool / struct / cstruct / host
+        local _pools = {}   -- per-class pool (not per-block pool)
 
         -- Main.host must be before everything
         local _host = _ENV.clss.Main.host
         _ENV.clss.Main.host = ''
 
         for _,cls in ipairs(_ENV.clss) do
+            local protos = ''
+            for p in string.gmatch(cls.host, '(%w+ CEU_'..cls.id..'[^{;]*)') do
+                protos = protos .. p .. ';\n'
+            end
+
+            _defs[#_defs+1] = 'typedef struct CEU_'..cls.id..' CEU_'..cls.id..';'
+            _defs[#_defs+1] = protos
             _defs[#_defs+1] = cls.struct
             _defs[#_defs+1] = cls.cstruct
             _defs[#_defs+1] = cls.host
@@ -36,29 +40,32 @@ F = {
                 _defs[#_defs+1] = [[
 CEU_POOL_DCL(]]..cls.pool..','..'CEU_'..cls.id..','..cls.max..[[);
 ]]
-                _init[#_init+1] = [[
+                _pools[#_pools+1] = [[
 ceu_pool_init(&]]..cls.pool..', '..cls.max..', sizeof(CEU_'..cls.id..'), '
     ..'(char**)'..cls.pool..'_queue, (char*)'..cls.pool..[[_mem);
 ]]
             end
         end
         _MEM.clss_defs = _host ..'\n'.. table.concat(_defs,'\n')
-        _MEM.clss_init = table.concat(_init,'\n')
+        _MEM.clss_pools = table.concat(_pools,'\n')
     end,
 
     Host = function (me)
         CLS().host = CLS().host ..
-            --'#line '..(me.ln[2]+1)..'\n' ..
+            '#line '..(me.ln[2]+1)..'\n' ..
             me[1] .. '\n'
     end,
 
 
     Dcl_cls_pre = function (me)
+        -- whole class
         me.struct = [[
-typedef struct {
+struct CEU_]]..me.id..[[ {
   struct tceu_org org;
   tceu_trl trls_[ ]]..me.trails_n..[[ ];
 ]]
+
+        -- only the constructor
         me.cstruct = [[
 typedef struct {
 ]]
@@ -67,7 +74,7 @@ typedef struct {
     Dcl_cls_pos = function (me)
         me.cstruct = me.cstruct..'\n} T'.._TP.c(me.id)..';\n'
         if me.is_ifc then
-            me.struct = 'typedef void '.._TP.c(me.id)..';\n'
+            me.struct = ''--'typedef void '.._TP.c(me.id)..';\n'
 --[[
             me.struct = 'typedef union {\n'
             for cls in pairs(me.matches) do
@@ -79,7 +86,7 @@ typedef struct {
             return
         end
 
-        me.struct  = me.struct..'\n} '.._TP.c(me.id)..';\n'
+        me.struct  = me.struct..'\n};\n'--.._TP.c(me.id)..';\n'
 DBG('===', me.id, me.trails_n, '('..tostring(me.max)..')')
 --DBG(me.struct)
 --DBG('======================')
