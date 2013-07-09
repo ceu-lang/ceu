@@ -82,11 +82,12 @@ typedef struct {
         me.ifc_accs_impls  = {}
         if me.is_ifc then
             for _,var in ipairs(me.blk_ifc.vars) do
-                var.ifc_acc = '_CEU_'..me.id..'_'..var.id
-                           -- '_' to distingish from method prototypes
-                me.ifc_accs_protos[#me.ifc_accs_protos+1] =
-                    _TP.c(var.tp)..' '..var.ifc_acc..' ('.._TP.c(me.id)..'* org);'
-                me.ifc_accs_impls[#me.ifc_accs_impls+1] =
+                if not var.isEvt then   -- events cannot be accessed from C
+                    var.ifc_acc = '_CEU_'..me.id..'_'..var.id
+                               -- '_' to distingish from method prototypes
+                    me.ifc_accs_protos[#me.ifc_accs_protos+1] =
+                        _TP.c(var.tp)..' '..var.ifc_acc..' ('.._TP.c(me.id)..'* org);'
+                    me.ifc_accs_impls[#me.ifc_accs_impls+1] =
 _TP.c(var.tp)..' '..var.ifc_acc..[[(]].._TP.c(me.id)..[[* org) {
     return (* (]].._TP.c(var.tp)..[[*) (
         ((char*)org) + CEU.ifcs_flds[((tceu_org*)org)->cls][
@@ -95,6 +96,7 @@ _TP.c(var.tp)..' '..var.ifc_acc..[[(]].._TP.c(me.id)..[[* org) {
             ) );
 }
 ]]
+                end
             end
         end
     end,

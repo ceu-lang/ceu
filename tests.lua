@@ -160,7 +160,6 @@ end
     run = 1,
 }
 
---]===]
 Test { [[
 input void START;
 event (int,void*) ptr;
@@ -182,38 +181,9 @@ return 1;
     -- BUG: precisa transformar emit x=>1 em p=1;emit x
 }
 
-Test { [[
-interface I with
-    native nohold _g();
-    native do
-        int CEU_I__g (CEU_I* i, int v);
-    end
-end
-
-class T with
-    interface I;
-    var I* i;
-do
-    native do
-        int CEU_T__g (CEU_T* t, int v) {
-            if (v == 1) {
-                return 1;
-            }
-            /*return v * t->i->_g(t->i, v-1);*/
-            return v * _CEU_I__g(t->i)(t->i, v-1);
-        }
-    end
-end
-
-var T t;
-var I* i = &t;
-t.i = i;
-return i:_g(5);
-]],
-    run = 120,
-}
-
 do return end
+--]===]
+
 -- OK: well tested
 
 Test { [[return(1);]],
@@ -23700,6 +23670,37 @@ var I* i = &t;
 return t._f() + i:_f();
 ]],
     run = 2,
+}
+
+Test { [[
+interface I with
+    native nohold _g();
+    native do
+        int CEU_I__g (CEU_I* i, int v);
+    end
+end
+
+class T with
+    interface I;
+    var I* i;
+do
+    native do
+        int CEU_T__g (CEU_T* t, int v) {
+            if (v == 1) {
+                return 1;
+            }
+            /*return v * t->i->_g(t->i, v-1);*/
+            return v * _CEU_I__g(t->i)(t->i, v-1);
+        }
+    end
+end
+
+var T t;
+var I* i = &t;
+t.i = i;
+return i:_g(5);
+]],
+    run = 120,
 }
 
 Test { [[
