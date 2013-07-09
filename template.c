@@ -52,7 +52,9 @@ CEU_ATOMIC
     - main host
     - clss
         - "typedef struct T T;"
-        - methods prototypes (T__f)
+        - methods prototypes:   <tp_r> CEU_T__f (<tp_ps>);
+        - accessors prototypes: <tp_f> _CEU_I__f (I* i);
+        - field accessors
         - struct
         - cstruct
         - host (methods)
@@ -61,6 +63,8 @@ CEU_ATOMIC
 === LABELS_ENUM
 
 tceu
+
+=== IFCS_ACCS
 */
 
 #include <string.h>
@@ -94,6 +98,7 @@ tceu
 #include <stddef.h>
 /* TODO: === direto? */
 #define CEU_NCLS       (=== CEU_NCLS ===)
+#define CEU_IFC_CLS(tp,org,idx) ((tp)CEU.ifcs_flds[org][idx])
 #endif
 
 /* Macros that can be defined:
@@ -244,8 +249,10 @@ typedef struct tceu_org
 
 } tceu_org;
 
+/* class definitions */
 === CLSS_DEFS ===
 
+/* goto labels */
 enum {
 === LABELS_ENUM ===
 };
@@ -301,6 +308,11 @@ tceu CEU = {
 #endif
     {}                          /* TODO: o q ele gera? */
 };
+
+#ifdef CEU_IFCS
+/* iterface accessors */
+=== IFCS_ACCS ===   /* requires CEU.ifcs_flds */
+#endif
 
 /*#pragma pack(pop) */
 

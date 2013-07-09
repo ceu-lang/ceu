@@ -1,8 +1,9 @@
 _MEM = {
     cls = {},       -- offsets for fixed fields inside classes
     evt_off = 0,    -- max event index among all classes
-    clss_defs = nil,
+    clss_defs  = nil,
     clss_pools = nil,
+    ifcs_accs  = nil,
 }
 
 function SPC ()
@@ -18,6 +19,7 @@ F = {
 
         local _defs  = {}   -- pool / struct / cstruct / host
         local _pools = {}   -- per-class pool (not per-block pool)
+        local _accs  = {}   -- interfaces accessors
 
         -- Main.host must be before everything
         local _host = _ENV.clss.Main.host
@@ -31,9 +33,12 @@ F = {
 
             _defs[#_defs+1] = 'typedef struct CEU_'..cls.id..' CEU_'..cls.id..';'
             _defs[#_defs+1] = protos
+            _defs[#_defs+1] = table.concat(cls.ifc_accs_protos, '\n')
             _defs[#_defs+1] = cls.struct
             _defs[#_defs+1] = cls.cstruct
             _defs[#_defs+1] = cls.host
+
+            _accs[#_accs+1] = table.concat(cls.ifc_accs_impls, '\n')
 
             if cls.max and _PROPS.has_news_pool then
                 cls.pool = 'CEU_POOL_'..cls.id
@@ -46,8 +51,9 @@ ceu_pool_init(&]]..cls.pool..', '..cls.max..', sizeof(CEU_'..cls.id..'), '
 ]]
             end
         end
-        _MEM.clss_defs = _host ..'\n'.. table.concat(_defs,'\n')
-        _MEM.clss_pools = table.concat(_pools,'\n')
+        _MEM.clss_defs  = _host ..'\n'.. table.concat(_defs,'\n')
+        _MEM.clss_pools = table.concat(_pools, '\n')
+        _MEM.ifcs_accs  = table.concat(_accs,  '\n')
     end,
 
     Host = function (me)
@@ -70,6 +76,27 @@ struct CEU_]]..me.id..[[ {
 typedef struct {
 ]]
         me.host = ''
+
+        -- field accessors
+        me.ifc_accs_protos = {}
+        me.ifc_accs_impls  = {}
+        if me.is_ifc then
+            for _,var in ipairs(me.blk_ifc.vars) do
+                var.ifc_acc = '_CEU_'..me.id..'_'..var.id
+                           -- '_' to distingish from method prototypes
+                me.ifc_accs_protos[#me.ifc_accs_protos+1] =
+                    _TP.c(var.tp)..' '..var.ifc_acc..' ('.._TP.c(me.id)..'* org);'
+                me.ifc_accs_impls[#me.ifc_accs_impls+1] =
+_TP.c(var.tp)..' '..var.ifc_acc..[[(]].._TP.c(me.id)..[[* org) {
+    return (* (]].._TP.c(var.tp)..[[*) (
+        ((char*)org) + CEU.ifcs_flds[((tceu_org*)org)->cls][
+            ]].._ENV.ifcs.flds[var.ifc_id]..[[
+        ]
+            ) );
+}
+]]
+            end
+        end
     end,
     Dcl_cls_pos = function (me)
         me.cstruct = me.cstruct..'\n} T'.._TP.c(me.id)..';\n'

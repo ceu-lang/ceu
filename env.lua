@@ -72,9 +72,9 @@ function _ENV.ifc_vs_cls (ifc, cls)
     for _, v1 in ipairs(ifc.blk_ifc.vars) do
         v2 = cls.blk_ifc.vars[v1.id]
         if v2 then
-            v2.id_ifc = v2.id_ifc or var2ifc(v2)
+            v2.ifc_id = v2.ifc_id or var2ifc(v2)
         end
-        if (not v2) or (v1.id_ifc~=v2.id_ifc) then
+        if (not v2) or (v1.ifc_id~=v2.ifc_id) then
             ifc.matches[cls] = false
             return false
         end
@@ -301,14 +301,14 @@ F = {
         -- all identifiers in all interfaces get a unique N
         if me.is_ifc then
             for _, var in pairs(me.blk_ifc.vars) do
-                var.id_ifc = var.id_ifc or var2ifc(var)
-                if not _ENV.ifcs[var.id_ifc] then
+                var.ifc_id = var.ifc_id or var2ifc(var)
+                if not _ENV.ifcs[var.ifc_id] then
                     if var.isEvt then
-                        _ENV.ifcs.evts[var.id_ifc] = #_ENV.ifcs.evts
-                        _ENV.ifcs.evts[#_ENV.ifcs.evts+1] = var.id_ifc
+                        _ENV.ifcs.evts[var.ifc_id] = #_ENV.ifcs.evts
+                        _ENV.ifcs.evts[#_ENV.ifcs.evts+1] = var.ifc_id
                     else
-                        _ENV.ifcs.flds[var.id_ifc] = #_ENV.ifcs.flds
-                        _ENV.ifcs.flds[#_ENV.ifcs.flds+1] = var.id_ifc
+                        _ENV.ifcs.flds[var.ifc_id] = #_ENV.ifcs.flds
+                        _ENV.ifcs.flds[#_ENV.ifcs.flds+1] = var.ifc_id
                     end
                 end
             end

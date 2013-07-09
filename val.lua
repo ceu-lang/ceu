@@ -212,14 +212,10 @@ F =
                     me.val = nil    -- cannot be used as variable
                     local org = '((tceu_org*)'..me.org.val..')'
                     me.evt_idx = '(CEU.ifcs_evts['..org..'->cls]['
-                                    .._ENV.ifcs.evts[me.var.id_ifc]
+                                    .._ENV.ifcs.evts[me.var.ifc_id]
                                 ..'])'
                 else    -- var
-                    local org = '((tceu_org*)'..me.org.val..')'
-                    local off = '(CEU.ifcs_flds['..org..'->cls]['
-                                    .._ENV.ifcs.flds[me.var.id_ifc]
-                                ..'])'
-                    me.val = '(*(('.._TP.c(me.tp)..'*)(((char*)('..org..'))+'..off..')))'
+                    me.val = me.var.ifc_acc..'('..me.org.val..')'
                 end
             else
                 if me.c then

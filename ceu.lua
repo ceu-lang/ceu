@@ -153,8 +153,9 @@ do
     tpl = sub(tpl, '=== LABELS_ENUM ===', _LBLS.code_enum)
 
     tpl = sub(tpl, '=== POOL_C ===', assert(io.open'pool.c'):read'*a')
-    tpl = sub(tpl, '=== CLSS_DEFS ===', _MEM.clss_defs)
+    tpl = sub(tpl, '=== CLSS_DEFS ===',  _MEM.clss_defs)
     tpl = sub(tpl, '=== CLSS_POOLS ===', _MEM.clss_pools)
+    tpl = sub(tpl, '=== IFCS_ACCS ===',  _MEM.ifcs_accs)
 
     tpl = sub(tpl, '=== THREADS_C ===', _CODE.threads)
     --tpl = sub(tpl, '=== HOST ===',     _CODE.host)
@@ -177,12 +178,12 @@ do
             end
             for _, var in ipairs(cls.blk_ifc.vars) do
                 if var.isEvt then
-                    local i = _ENV.ifcs.evts[var.id_ifc]
+                    local i = _ENV.ifcs.evts[var.ifc_id]
                     if i then
                         evts[i+1] = var.evt_idx
                     end
                 else
-                    local i = _ENV.ifcs.flds[var.id_ifc]
+                    local i = _ENV.ifcs.flds[var.ifc_id]
                     if i then
                         flds[i+1] = 'offsetof(CEU_'..cls.id..','..var.id_..')'
                     end
