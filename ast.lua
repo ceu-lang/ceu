@@ -627,8 +627,8 @@ C = {
         end
 
         local cls = node('Dcl_cls')(ln, is_ifc, n, id, blk)
-        cls.blk_ifc = this  -- top-most block for `this´
-        cls.blk_body  = blk_body
+        cls.blk_ifc  = this  -- top-most block for `this´
+        cls.blk_body = blk_body
         table.insert(TOP, TOP_i, cls)
         TOP_i = TOP_i + 1
     end,

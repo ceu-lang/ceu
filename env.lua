@@ -110,8 +110,17 @@ function newvar (me, blk, pre, tp, arr, id)
                 --ASR(var.id~=id or var.blk~=blk, me,
                     --'variable/event "'..var.id..
                     --'" is already declared at --line '..var.ln)
-                WRN(var.id~=id, me,
-                    'declaration of "'..id..'" hides the one at line '..var.ln[2])
+                if (var.id == id) and
+                        -- ifc vs ifc ok (constant def)
+                    ( (    blk ~= CLS().blk_ifc) or
+                      (var.blk ~= CLS().blk_ifc) ) then
+                    WRN(false, me,
+                        'declaration of "'..id..'" hides the one at line '
+                            ..var.ln[2])
+                    ASR( (blk ~= CLS().blk_ifc) and
+                         (blk ~= CLS().blk_body), me,
+                        'cannot hide at top-level block' )
+                end
             end
         end
     end
@@ -137,8 +146,8 @@ function newvar (me, blk, pre, tp, arr, id)
                 'invalid declaration')
     end
 
-    local inIfc = (CLS().blk_ifc == blk)
-    if inIfc and blk.vars[id] then
+    local inTop = (blk == CLS().blk_ifc) or (blk == CLS().blk_body)
+    if inTop and blk.vars[id] then
         return blk.vars[id]
     end
 
@@ -149,7 +158,7 @@ function newvar (me, blk, pre, tp, arr, id)
         tp    = tp,
         blk   = blk,
         pre   = pre,
-        inIfc = inIfc,
+        inTop = inTop,  -- var is in top-level of class (accessible from C)
         isEvt = isEvt,
         evt_idx = isEvt and _E,
         isTmp = false,

@@ -184,6 +184,28 @@ return 1;
 do return end
 --]===]
 
+Test { [[
+class T with
+    var int a;
+    native nohold _f();
+do
+    native do
+        int CEU_T__f (CEU_T *t) {
+            return t->b;
+        }
+    end
+
+    var int b;
+    a = 1;
+    b = 2;
+end
+
+var T t;
+return t.a + t._f();
+]],
+    run = 3,
+}
+
 -- OK: well tested
 
 Test { [[return(1);]],
@@ -18024,6 +18046,25 @@ do
     this.a = 8;
     var int a = 1;
     this.a = this.a + a + 5;
+end
+var T t;
+input void START;
+await START;
+return t.a;
+]],
+    --run = 14,
+    env = 'line 5 : cannot hide at top-level block',
+}
+
+Test { [[
+class T with
+    var int a;
+do
+    this.a = 8;
+    do
+        var int a = 1;
+        this.a = this.a + a + 5;
+    end
 end
 var T t;
 input void START;

@@ -7,7 +7,7 @@ end
 F = {
     Dcl_var_pre = function (me)
         local var = me.var
-        if var.isEvt or var.cls or var.inIfc then
+        if var.isEvt or var.cls or var.inTop then
             return                  -- only normal vars can be tmp
         end
         VARS[var] = true
@@ -27,7 +27,7 @@ F = {
         end
 
         local glb = _ENV.clss.Global
-        if var.inIfc or
+        if var.inTop or
             (var.blk==_ENV.clss.Main.blk_ifc and glb and glb.is_ifc and
              glb.blk_ifc.vars[var.id])
         then
