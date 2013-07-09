@@ -37,9 +37,12 @@ end
 function LINE (me, line, spc)
     spc = spc or 4
     spc = string.rep(' ', spc)
-    me.code = me.code ..
-                '#line '..me.ln[2]..' "'..me.ln[1]..'"\n'..
-                spc .. line .. '\n'
+    me.code = me.code .. [[
+
+#ifndef CEU_NOLINES
+#line ]]..me.ln[2]..' "'..me.ln[1]..[["
+#endif
+]] .. spc..line
 end
 
 function HALT (me, cond)
@@ -192,7 +195,9 @@ F = {
         -- copy all method pointers
         local fs = ''
         for id, t in pairs(me.c) do
-            fs = fs ..  CUR(me,id)..' = &CEU_'..me.id..'_'..id..';\n'
+            -- "ifc_type = cls_type" (src is an interface method)
+            fs = fs ..  CUR(me,id)..' = ('.._TP.c(me.blk_ifc.vars[id].tp)..')'
+                                          ..'&CEU_'..me.id..'_'..id..';\n'
         end
 
         if me.has_pre then

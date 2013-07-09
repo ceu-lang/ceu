@@ -1,4 +1,7 @@
+#ifndef CEU_NOLINES
 #line 0 "=== FILENAME ==="
+#endif
+
 === DEFS ===
 
 /* Order of C definitions:

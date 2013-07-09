@@ -31,7 +31,13 @@ F = {
                 protos = protos .. p .. ';\n'
             end
 
-            _defs[#_defs+1] = 'typedef struct CEU_'..cls.id..' CEU_'..cls.id..';'
+            if cls.is_ifc then
+                _defs[#_defs+1] = 'typedef void CEU_'..cls.id..';'
+                                    -- void* (no casts needed class=>interface)
+            else
+                _defs[#_defs+1] = 'typedef struct CEU_'..cls.id..
+                                    ' CEU_'..cls.id..';'
+            end
             _defs[#_defs+1] = protos
             _defs[#_defs+1] = table.concat(cls.ifc_accs_protos, '\n')
             _defs[#_defs+1] = cls.struct
@@ -57,9 +63,12 @@ ceu_pool_init(&]]..cls.pool..', '..cls.max..', sizeof(CEU_'..cls.id..'), '
     end,
 
     Host = function (me)
-        CLS().host = CLS().host ..
-            '#line '..(me.ln[2]+1)..'\n' ..
-            me[1] .. '\n'
+        CLS().host = CLS().host .. [[
+
+#ifndef CEU_NOLINES
+#line ]]..(me.ln[2]+1)..' "'..me.ln[1]..[["
+#endif
+]] .. me[1]
     end,
 
 
