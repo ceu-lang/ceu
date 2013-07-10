@@ -7,6 +7,9 @@ _OPTS = {
     join      = true,
     c_calls   = false,
 
+    cpp       = true,
+    cpp_args  = false,
+
     m4        = false,
     m4_args   = false,
 
@@ -21,6 +24,9 @@ _OPTS_NPARAMS = {
 
     join      = 0,
     c_calls   = 1,
+
+    cpp       = 0,
+    cpp_args  = 1,
 
     m4        = 0,
     m4_args   = 1,
@@ -69,6 +75,9 @@ if not _OPTS.input then
         --join (--no-join)     # join lines enclosed by /*{-{*/ and /*}-}*/ (join)
         --c-calls              # TODO
 
+        --cpp (--no-cpp)       # preprocess the input with `cpp´ (no-cpp)
+        --cpp-args             # preprocess the input with `cpp´ passing arguments in between `"´ (no)
+
         --m4 (--no-m4)         # preprocess the input with `m4´ (no-m4)
         --m4-args              # preprocess the input with `m4´ passing arguments in between `"´ (no)
 
@@ -106,6 +115,17 @@ if _OPTS.m4 or _OPTS.m4_args then
 
     source = assert(io.open(m4_file)):read'*a'
     --os.remove(m4_file)
+end
+
+if _OPTS.cpp or _OPTS.cpp_args then
+    local args = _OPTS.cpp_args or ''
+    local cpp_file = (_OPTS.input=='-' and '_ceu_tmp.ceu_cpp') or _OPTS.input..'_cpp'
+    local cpp = assert(io.popen('cpp -dD'..args..' - > '..cpp_file, 'w'))
+    cpp:write(source)
+    cpp:close()
+
+    source = assert(io.open(cpp_file)):read'*a'
+    --os.remove(cpp_file)
 end
 
 -- PARSE

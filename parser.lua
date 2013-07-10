@@ -419,6 +419,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
 
     , _SPACES = (  m.S'\t\n\r @'
                 + ('//' * (P(1)-'\n')^0 * P'\n'^-1)
+                + ('#'  * (P(1)-'\n')^0 * P'\n'^-1) -- TODO: set of #'s/only after spaces
                 + V'_COMM'
                 )^0
 

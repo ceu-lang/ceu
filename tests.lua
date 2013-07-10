@@ -181,8 +181,152 @@ return 1;
     -- BUG: precisa transformar emit x=>1 em p=1;emit x
 }
 
-do return end
+-- CPP / DEFINE / PREPROCESSOR
 --]===]
+
+
+Test { [[
+native do
+    #define N 1
+end
+var u8[_N] vec;
+vec[0] = 10;
+return vec[_N-1];
+]],
+    run = 10,
+}
+
+Test { [[
+native do
+    #define N 1
+end
+var u8[N] vec;
+vec[0] = 10;
+return vec[N-1];
+]],
+    run = 10,
+    cpp = true,
+}
+
+Test { [[
+native do
+    #define N 1
+end
+var u8[N+1] vec;
+vec[1] = 10;
+return vec[1];
+]],
+    run = 10,
+    cpp = true,
+}
+
+Test { [[
+#define N 1
+var u8[N+1] vec;
+vec[1] = 10;
+return vec[1];
+]],
+    run = 10,
+    cpp = true,
+}
+
+Test { [[
+native do
+    #define N 5
+end
+var int[_N] vec;
+loop i, _N do
+    vec[i] = i;
+end
+var int ret = 0;
+loop i, _N do
+    ret = ret + vec[i];
+end
+return ret;
+]],
+    run = 10,
+}
+
+Test { [[
+#define N 5
+native do
+    int V = 0;
+end
+class T with
+do
+    _V = _V + 1;
+end
+var T[N] ts;
+return _V;
+]],
+    run = 5,
+    cpp = true,
+}
+
+Test { [[
+#define N 5
+native do
+    int V = 0;
+end
+class T with
+do
+    _V = _V + 1;
+end
+var T[N+1] ts;
+return _V;
+]],
+    run = 6,
+    cpp = true,
+}
+
+Test { [[
+#define N 5
+native do
+    int V = 0;
+end
+class T with
+do
+    _V = _V + 1;
+end
+#def
+var T[N+1] ts;
+return _V;
+]],
+    run = 6,
+    cpp = true,
+}
+
+Test { [[
+#define N 5
+native do
+    int V = 0;
+end
+class T with
+do
+    _V = _V + 1;
+end
+#error oi
+var T[N+1] ts;
+return _V;
+]],
+    run = 6,
+    cpp = true,
+}
+
+_G['/tmp/_ceu_MOD1.ceu'] = [[
+#define N 1;
+]]
+Test { [[
+import /tmp/_ceu_MOD1.ceu ;
+return N;
+]],
+    run = 1,
+}
+
+-- TODO: CPP w/ include's
+
+
+do return end
 
 -- OK: well tested
 
@@ -15447,17 +15591,6 @@ var void[10] a;
 }
 
 Test { [[
-native do
-    #define N 1
-end
-var u8[_N] vec;
-vec[0] = 10;
-return vec[_N-1];
-]],
-    run = 10,
-}
-
-Test { [[
 var int[2] v;
 v[0] = 5;
 return v[0];
@@ -15484,23 +15617,6 @@ i = 0;
 return v[i+1];
 ]],
     run = 5
-}
-
-Test { [[
-native do
-    #define N 5
-end
-var int[_N] vec;
-loop i, _N do
-    vec[i] = i;
-end
-var int ret = 0;
-loop i, _N do
-    ret = ret + vec[i];
-end
-return ret;
-]],
-    run = 10,
 }
 
 Test { [[
@@ -25926,7 +26042,7 @@ return 1;
 for i=1, 50 do
     Test { [[
 native do
-    #include <unistd.h>
+    //#include <unistd.h>
 end
 var int ret = 1;
 var int* p = &ret;
@@ -25951,7 +26067,7 @@ end
 for i=1, 50 do
     Test { [[
 native do
-    #include <unistd.h>
+    //#include <unistd.h>
 end
 var int ret = 0;
 var int* p = &ret;
