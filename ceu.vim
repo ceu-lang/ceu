@@ -14,7 +14,7 @@ syn match	Macro	"\<_\w*\>"
 syn keyword	cConstant	null
 syn keyword	cOperator	not or and sizeof
 syn keyword	cType   	u8 u16 u32 u64 s8 s16 s32 s64 constant nohold deterministic pure
-syn keyword	cStatement async await break native continue do else else/if emit end event every finalize FOREVER if input loop nothing output par par/and par/or pause/if return then until var with class global include interface free new this spawn import thread sync
+syn keyword	cStatement async await break native continue do else else/if emit end event every finalize FOREVER if input loop nothing output par par/and par/or pause/if return then until var with class global include interface free new this spawn thread sync
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 

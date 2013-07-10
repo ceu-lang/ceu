@@ -1,18 +1,3 @@
-_PARSER = {
-    f = function (source)
-        local ret = m.P(_GG):match(source)
-        if _RUNTESTS then
-            assert(ret, err())
-        else
-            if not ret then
-                DBG(err())
-                os.exit(1)
-            end
-        end
-        return ret
-    end,
-}
-
 local P, C, V, Cc, Ct = m.P, m.C, m.V, m.Cc, m.Ct
 
 local S = V'_SPACES'
@@ -111,7 +96,7 @@ KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'native'
      + 'free'     + 'new'      + 'this'
      + 'spawn'
 --
-     + 'import'  --+ 'as'
+     --+ 'import'  --+ 'as'
 -- export / version
      + 'thread'   + 'sync'
 
@@ -148,7 +133,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
              + V'Free'     + V'Spawn'
              + V'Nothing'
              + V'RawStmt'
-             + V'Import'
+             --+ V'Import'
              + V'CallStmt' -- last
              --+ EM'statement'-- (missing `_´?)'
              + EM'statement (usually a missing `var´ or C prefix `_´)'
@@ -205,8 +190,8 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
                         return (string.find(s, '%(.*%)')) and i, ...
                     end)
 
-    , Import = K'import' * ( C( (P(1)-m.S'\t\n\r ;')^1 )
-                             + EM'module' ) *S
+    --, Import = K'import' * ( C( (P(1)-m.S'\t\n\r ;')^1 )
+                             --+ EM'module' ) *S
 
     , Sync    = K'sync'  * V'_Do'
     , Thread  = K'async' * K'thread'    * EV'VarList' * V'_Do'
@@ -417,7 +402,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , _CEND = m.Cmt(C(V'_CSEP') * m.Cb'mark',
                     function (s,i,a,b) return a == b end)
 
-    , _SPACES = (  m.S'\t\n\r @'
+    , _SPACES = (  m.S'\t\n\r '
                 + ('//' * (P(1)-'\n')^0 * P'\n'^-1)
                 + ('#'  * (P(1)-'\n')^0 * P'\n'^-1) -- TODO: set of #'s/only after spaces
                 + V'_COMM'
@@ -433,8 +418,18 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
 function err ()
     local x = (ERR_i<LST_i) and 'before' or 'after'
 --DBG(LST_i, ERR_i, ERR_msg, _I2L[LST_i], I2TK[LST_i])
-    return 'ERR : '.._LINES.url..
-              ' : line '.._LINES.i2l[LST_i]..
+    local file, line = unpack(_LINES.i2l[LST_i])
+    return 'ERR : '..file..
+              ' : line '..line..
               ' : '..x..' `'..(I2TK[LST_i] or '?').."´"..
               ' : '..ERR_msg
+end
+
+if _RUNTESTS then
+    assert(m.P(_GG):match(_OPTS.source), err())
+else
+    if not m.P(_GG):match(_OPTS.source) then     -- TODO: match only in ast.lua?
+        DBG(err())
+        os.exit(1)
+    end
 end

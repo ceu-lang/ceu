@@ -14,6 +14,12 @@
 
 --_VALGRIND = true
 
+local function INCLUDE (fname, src)
+    local f = assert(io.open(fname,'w'))
+    f:write(src)
+    f:close()
+end
+
 local THREADS = true
 local THREADS_all = true
 --local FOREVER = true
@@ -182,8 +188,6 @@ return 1;
 }
 
 -- CPP / DEFINE / PREPROCESSOR
---]===]
-
 
 Test { [[
 native do
@@ -205,7 +209,6 @@ vec[0] = 10;
 return vec[N-1];
 ]],
     run = 10,
-    cpp = true,
 }
 
 Test { [[
@@ -217,7 +220,6 @@ vec[1] = 10;
 return vec[1];
 ]],
     run = 10,
-    cpp = true,
 }
 
 Test { [[
@@ -227,7 +229,6 @@ vec[1] = 10;
 return vec[1];
 ]],
     run = 10,
-    cpp = true,
 }
 
 Test { [[
@@ -260,7 +261,6 @@ var T[N] ts;
 return _V;
 ]],
     run = 5,
-    cpp = true,
 }
 
 Test { [[
@@ -276,7 +276,6 @@ var T[N+1] ts;
 return _V;
 ]],
     run = 6,
-    cpp = true,
 }
 
 Test { [[
@@ -293,7 +292,6 @@ var T[N+1] ts;
 return _V;
 ]],
     run = 6,
-    cpp = true,
 }
 
 Test { [[
@@ -310,7 +308,6 @@ var T[N+1] ts;
 return _V;
 ]],
     run = 6,
-    cpp = true,
 }
 
 _G['/tmp/_ceu_MOD1.ceu'] = [[
@@ -323,10 +320,8 @@ return N;
     run = 1,
 }
 
--- TODO: CPP w/ include's
-
-
 do return end
+--]===]
 
 -- OK: well tested
 
@@ -347,7 +342,7 @@ Test { [[return /*
 */ 1;]], run=1 }
 Test { [[return /**/* **/ 1;]], run=1 }
 Test { [[return /**/* */ 1;]],
-    ast = "line 1 : after `return´ : expected expression"
+    parser = "line 1 : after `return´ : expected expression"
 }
 
 Test { [[
@@ -414,13 +409,13 @@ Test { [[return (1<=2) + (1<2) + 2/1 - 2%3;]], run=2 }
 -- TODO: linux gcc only?
 --Test { [[return (~(~0b1010 & 0XF) | 0b0011 ^ 0B0010) & 0xF;]], run=11 }
 Test { [[nt a;]],
-    ast = "line 1 : before `nt´ : expected statement",
+    parser = "line 1 : after `nt´ : expected `;´",
 }
 Test { [[nt sizeof;]],
-    ast = "line 1 : before `nt´ : expected statement",
+    parser = "line 1 : after `nt´ : expected `;´",
 }
 Test { [[var int sizeof;]],
-    ast = "line 1 : after `int´ : expected identifier",
+    parser = "line 1 : after `int´ : expected identifier",
 }
 Test { [[return sizeof(int);]], run=4 }
 Test { [[return 1<2>3;]], run=0 }
@@ -469,13 +464,13 @@ Test { [[var int a=1,a=0; return a;]],
     run = 0,
 }
 Test { [[var int a; a = b = 1]],
-    ast = "line 1 : after `b´ : expected `;´",
+    parser = "line 1 : after `b´ : expected `;´",
 }
 Test { [[var int a = b; return 0;]],
     env = 'variable/event "b" is not declared',
 }
 Test { [[return 1;2;]],
-    ast = "line 1 : before `;´ : expected statement",
+    parser = "line 1 : before `;´ : expected statement",
 }
 Test { [[var int aAa; aAa=1; return aAa;]],
     run = 1,
@@ -719,13 +714,13 @@ return a;
 
     -- EVENTS
 
-Test { [[input int A=1;]], ast="line 1 : after `A´ : expected `;´" }
+Test { [[input int A=1;]], parser="line 1 : after `A´ : expected `;´" }
 Test { [[
 input int A;
 A=1;
 return 1;
 ]],
-    ast = 'line 1 : after `;´ : expected statement',
+    parser = 'line 1 : after `;´ : expected statement',
 }
 
 Test { [[input  int A;]],
@@ -756,7 +751,7 @@ input void A;
 await A;
 return 1;
 ]],
-    run = false,
+    run = { ['~>A']=1 },
 }
 Test { [[
 input void A;
@@ -767,7 +762,7 @@ with
 end
 return 1;
 ]],
-    run = false,
+    run = { ['~>A']=1 },
 }
 
 Test { [[
@@ -812,7 +807,7 @@ with
 end;
 return A;
 ]],
-    ast = "line 9 : after `return´ : expected expression",
+    parser = "line 9 : after `return´ : expected expression",
 }
 
 Test { [[
@@ -851,7 +846,7 @@ Test { [[var int a = a+1; return a;]],
 }
 
 Test { [[var int a; a = emit a => 1; return a;]],
-    ast = 'line 1 : after `=´ : expected expression',
+    parser = 'line 1 : after `=´ : expected expression',
     --ast = "line 1 : after `emit´ : expected event",
     --trig_wo = 1,
 }
@@ -861,7 +856,7 @@ Test { [[var int a; emit a => 1; return a;]],
     --trig_wo = 1,
 }
 Test { [[event int a=0; emit a => 1; return a;]],
-    ast = 'line 1 : after `a´ : expected `;´',
+    parser = 'line 1 : after `a´ : expected `;´',
     --trig_wo = 1,
 }
 Test { [[
@@ -1006,7 +1001,7 @@ Test { [[
 output xxx A;
 return(1);
 ]],
-    ast = "line 1 : after `output´ : expected type",
+    parser = "line 1 : after `output´ : expected type",
 }
 Test { [[
 output int A;
@@ -1022,7 +1017,7 @@ if emit A => 1 then
 end
 return(1);
 ]],
-    ast = 'line 2 : after `if´ : expected expression',
+    parser = 'line 2 : after `if´ : expected expression',
 }
 Test { [[
 native do
@@ -1034,7 +1029,7 @@ if emit A => 1 then
 end
 return(1);
 ]],
-    ast = 'line 5 : after `if´ : expected expression',
+    parser = 'line 5 : after `if´ : expected expression',
 }
 
 Test { [[
@@ -1042,14 +1037,14 @@ output t A;
 emit A => 1;
 return(1);
 ]],
-    ast = 'line 1 : after `output´ : expected type',
+    parser = 'line 1 : after `output´ : expected type',
 }
 Test { [[
 output t A;
 emit A => 1;
 return(1);
 ]],
-    ast = 'line 1 : after `output´ : expected type',
+    parser = 'line 1 : after `output´ : expected type',
 }
 Test { [[
 output _t* A;
@@ -1066,7 +1061,7 @@ return(1);
 ]],
     --env = 'line 2 : undeclared type `_t´',
     --env = 'line 3 : non-matching types on `emit´',
-    run = false,    -- unknown type name
+    gcc = '2:11: error: unknown type name',
 }
 Test { [[
 output int A;
@@ -1097,7 +1092,7 @@ if emit A => &a then
 end
 return(1);
 ]],
-    ast = 'line 3 : after `if´ : expected expression',
+    parser = 'line 3 : after `if´ : expected expression',
     --env = 'line 3 : non-matching types on `emit´',
 }
 Test { [[
@@ -1149,7 +1144,7 @@ b = emit B => 5;
 return a + b;
 ]],
     --run = 6,
-    ast = 'line 26 : after `=´ : expected expression',
+    parser = 'line 26 : after `=´ : expected expression',
 }
 
 Test { [[
@@ -1161,7 +1156,7 @@ end
 var _cahr v = emit A => 1;
 return 0;
 ]],
-    ast = 'line 6 : after `=´ : expected expression',
+    parser = 'line 6 : after `=´ : expected expression',
     --env = 'line 6 : undeclared type `_cahr´',
 }
 Test { [[
@@ -1170,7 +1165,7 @@ output void A;
 var _char v = emit A => ;
 return v;
 ]],
-    ast = 'line 3 : after `=´ : expected expression',
+    parser = 'line 3 : after `=´ : expected expression',
     --env = 'line 3 : invalid attribution',
 }
 Test { [[
@@ -1182,7 +1177,7 @@ native _char = 1;
 var _char v = emit A => 1;
 return 0;
 ]],
-    ast = 'line 6 : after `=´ : expected expression',
+    parser = 'line 6 : after `=´ : expected expression',
     --env = 'line 6 : non-matching types on `emit´',
 }
 
@@ -1243,11 +1238,11 @@ return 0;
 
 Test { [[await -1ms; return 0;]],
     --ast = "line 1 : after `await´ : expected event",
-    ast = 'line 1 : after `1´ : expected `;´',
+    parser = 'line 1 : after `1´ : expected `;´',
 }
 
 Test { [[await 1; return 0;]],
-    ast = 'line 1 : after `1´ : expected <h,min,s,ms,us>',
+    parser = 'line 1 : after `1´ : expected <h,min,s,ms,us>',
 }
 Test { [[await -1; return 0;]],
     env = 'line 1 : event "?" is not declared',
@@ -1269,10 +1264,10 @@ Test { [[await FOREVER;]],
     },
 }
 Test { [[await FOREVER; await FOREVER;]],
-    ast = "line 1 : before `;´ : expected event",
+    parser = "line 1 : before `;´ : expected event",
 }
 Test { [[await FOREVER; return 0;]],
-    ast = "line 1 : before `;´ : expected event",
+    parser = "line 1 : before `;´ : expected event",
 }
 
 Test { [[emit 1ms; return 0;]], props='not permitted outside `async´' }
@@ -1989,7 +1984,7 @@ var int a = do
 return a;
 ]],
     -- TODO: melhor seria: unexpected statement
-    ast = "line 16 : after `;´ : expected `with´",
+    parser = "line 16 : after `;´ : expected `with´",
     --unreachs = 1,
     run = {
         ['1~>B; ~>20ms; 1~>F'] = 1,
@@ -2213,10 +2208,10 @@ return a;
 }
 
 Test { [[break; return 1;]],
-    ast="line 1 : before `;´ : expected statement"
+    parser="line 1 : before `;´ : expected statement"
 }
 Test { [[break; break;]],
-    ast="line 1 : before `;´ : expected statement"
+    parser="line 1 : before `;´ : expected statement"
 }
 Test { [[loop do break; end; return 1;]],
     ana = {
@@ -9727,7 +9722,7 @@ loop do
 end;
 ]],
     --ast = "line 4 : after `;´ : expected `end´",
-    ast = 'line 4 : before `;´ : expected statement',
+    parser = 'line 4 : before `;´ : expected statement',
 }
 
 Test { [[
@@ -10645,7 +10640,7 @@ c = d + 1;
 await A;
 return c;
 ]],
-    ast = "line 3 : after `par´ : expected `do´",
+    parser = "line 3 : after `par´ : expected `do´",
 }
 
 Test { [[
@@ -12908,7 +12903,7 @@ Test { [[
 event a;
 return 0;
 ]],
-    ast = 'line 1 : after `event´ : expected type',
+    parser = 'line 1 : after `event´ : expected type',
 }
 
 Test { [[
@@ -14328,7 +14323,7 @@ var int a = async do
 end;
 return a;
 ]],
-    ast = 'line 1 : before `async´ : expected expression',
+    parser = 'line 1 : before `async´ : expected expression',
 }
 
 Test { [[
@@ -14461,7 +14456,7 @@ end;
 return a;
 ]],
     --env = "line 4 : invalid input `emit´",
-    ast = 'line 4 : after `=´ : expected expression',
+    parser = 'line 4 : after `=´ : expected expression',
 }
 
 Test { [[
@@ -15545,7 +15540,7 @@ var _char* p;
 *(p:a) = (_char)1;
 return 1;
 ]],
-    run = false,
+    gcc = ':3:35: error: request for member',
 }
 
 Test { [[
@@ -15565,7 +15560,7 @@ return *p;
     -- ARRAYS
 
 Test { [[input int[1] E; return 0;]],
-    ast = "line 1 : after `int´ : expected identifier",
+    parser = "line 1 : after `int´ : expected identifier",
 }
 Test { [[var int[0] v; return 0;]],
     run = 0,
@@ -15581,7 +15576,7 @@ Test { [[var u8[2] v; return &v;]],
 Test { [[
 void[10] a;
 ]],
-    ast = 'line 1 : after `<BOF>´ : expected statement',
+    parser = 'line 1 : after `<BOF>´ : expected statement',
 }
 
 Test { [[
@@ -15784,7 +15779,7 @@ return p==null;
 Test { [[
 _f()
 ]],
-    ast = 'line 1 : after `)´ : expected `;´',
+    parser = 'line 1 : after `)´ : expected `;´',
 }
 
 Test { [[
@@ -15858,7 +15853,7 @@ end
 A = 1;
 return 1;
 ]],
-    ast = 'line 3 : after `end´ : expected statement'
+    parser = 'line 3 : after `end´ : expected statement'
 }
 
 Test { [[
@@ -15899,7 +15894,7 @@ end
 _A();
 return 0;
 ]],
-    run = false,
+    run = 0,
 }
 
 Test { [[
@@ -15910,7 +15905,7 @@ end
 var int v = _A();
 return v;
 ]],
-    run = false,
+    gcc = ':5:30: error: void value not ignored as it ought to be',
 }
 
 Test { [[emit A => 10; return 0;]],
@@ -17111,27 +17106,27 @@ return (int)a;
 -- Exps
 
 Test { [[var int a = ]],
-    ast = "line 1 : after `=´ : expected expression",
+    parser = "line 1 : after `=´ : expected expression",
 }
 
 Test { [[return]],
-    ast = "line 1 : after `return´ : expected expression",
+    parser = "line 1 : after `return´ : expected expression",
 }
 
 Test { [[return()]],
-    ast = "line 1 : after `(´ : expected expression",
+    parser = "line 1 : after `(´ : expected expression",
 }
 
 Test { [[return 1+;]],
-    ast = "line 1 : before `+´ : expected `;´",
+    parser = "line 1 : before `+´ : expected `;´",
 }
 
 Test { [[if then]],
-    ast = "line 1 : after `if´ : expected expression",
+    parser = "line 1 : after `if´ : expected expression",
 }
 
 Test { [[b = ;]],
-    ast = "line 1 : after `=´ : expected expression",
+    parser = "line 1 : after `=´ : expected expression",
 }
 
 
@@ -17145,7 +17140,7 @@ return 1
 
 ;
 ]],
-    ast = "line 5 : before `+´ : expected `;´"
+    parser = "line 5 : before `+´ : expected `;´"
 }
 
 Test { [[
@@ -17154,7 +17149,7 @@ a = do
     var int b;
 end
 ]],
-    ast = "line 4 : after `end´ : expected `;´",
+    parser = "line 4 : after `end´ : expected `;´",
 }
 
 -- ASYNC
@@ -17325,7 +17320,7 @@ pause/if A do
 end
 return 0;
 ]],
-    ast = 'line 2 : after `pause/if´ : expected expression',
+    parser = 'line 2 : after `pause/if´ : expected expression',
 }
 
 Test { [[
@@ -18290,7 +18285,7 @@ class T with
 do
 end
 ]],
-    ast = 'line 3 : before `;´ : expected identifier',
+    parser = 'line 3 : before `;´ : expected identifier',
 }
 
 Test { [[
@@ -20894,12 +20889,12 @@ return 10;
 Test { [[
 new i;
 ]],
-    ast = 'line 1 : after `<BOF>´ : expected statement',
+    parser = 'line 1 : after `<BOF>´ : expected statement',
 }
 Test { [[
 _f(new T);
 ]],
-    ast = 'line 1 : after `(´ : expected `)´',
+    parser = 'line 1 : after `(´ : expected `)´',
 }
 
 Test { [[
@@ -21117,7 +21112,7 @@ var int a with
 end;
 return 0;
 ]],
-    ast = 'line 1 : after `a´ : expected `;´',
+    parser = 'line 1 : after `a´ : expected `;´',
 }
 
 Test { [[
@@ -21134,7 +21129,7 @@ end;
 
 return t1.b;
 ]],
-    ast = 'line 8 : after `t2´ : expected `;´',
+    parser = 'line 8 : after `t2´ : expected `;´',
 }
 
 Test { [[
@@ -25151,7 +25146,7 @@ Test { [[
 await (10ms);
 return 1;
 ]],
-    ast = 'line 1 : after `)´ : expected `or´',
+    parser = 'line 1 : after `)´ : expected `or´',
 }
 Test { [[
 await (10ms) or (20ms);
@@ -25163,7 +25158,7 @@ Test { [[
 await ((10)ms);
 return 1;
 ]],
-    ast = 'line 1 : after `)´ : expected `or´',
+    parser = 'line 1 : after `)´ : expected `or´',
 }
 
 Test { [[
@@ -25747,166 +25742,187 @@ return 1;
     env = 'line 2 : invalid attribution (void vs int)',
 }
 
--- IMPORT
+-- INCLUDE
 
 Test { [[
-import;
+#include
+return 1;
 ]],
-    ast = 'ERR : tests.lua : line 1 : after `import´ : expected module'
+    lines = 'error: #include expects "FILENAME" or <FILENAME>',
 }
 
 Test { [[
-import MOD1;
-import http://ceu-lang.org/;
-import https://github.com/fsantanna/ceu;
-import ^4!_;
+#include "MOD1"
+#include "http://ceu-lang.org/"
+#include "https://github.com/fsantanna/ceu"
+#include "^4!_"
+return 1;
 ]],
-    ast = 'ERR : tests.lua : line 1 : module "MOD1" not found'
+    lines = 'fatal error: MOD1: No such file or directory',
 }
 
-_G['/tmp/_ceu_MOD1.ceu'] = [[
+INCLUDE('/tmp/_ceu_MOD1.ceu', [[
 input void A;
-]]
+]])
 Test { [[
-import /tmp/_ceu_MOD1.ceu ;
+#include "/tmp/_ceu_MOD1.ceu"
 await A;
 return 1;
 ]],
     run = { ['~>A']=1 },
 }
 
-_G['/tmp/_ceu_MOD1.ceu'] = [[
+INCLUDE('/tmp/_ceu_MOD1.ceu', [[
 nothing;
 nothing;
 nothing;
 input void A
-]]
+]])
 Test { [[
 nothing;
-import /tmp/_ceu_MOD1.ceu ;
+#include "/tmp/_ceu_MOD1.ceu"
 await A;
 return 1;
 ]],
-    ast = 'ERR : /tmp/_ceu_MOD1.ceu : line 4 : after `A´ : expected `;´',
+    parser = 'ERR : /tmp/_ceu_MOD1.ceu : line 4 : after `A´ : expected `;´',
 }
 
-_G['/tmp/_ceu_MOD1.ceu'] = [[
+INCLUDE('/tmp/_ceu_MOD1.ceu', [[
 input void A;
 _assert(0);
-]]
+]])
 Test { [[
-import /tmp/_ceu_MOD1.ceu ;
+#include "/tmp/_ceu_MOD1.ceu"
 await A;
 return 1;
 ]],
-    run = { ['~>A']=1 },
+    --run = { ['~>A']=1 },
+    run = "ceu_go: Assertion `0' failed",
 }
 
-_G['/tmp/_ceu_MOD2.ceu'] = [[
+INCLUDE('/tmp/_ceu_MOD2.ceu', [[
 input void A;
-]]
-_G['/tmp/_ceu_MOD1.ceu'] = [[
-import /tmp/_ceu_MOD2.ceu;
-]]
+]])
+INCLUDE('/tmp/_ceu_MOD1.ceu', [[
+#include "/tmp/_ceu_MOD2.ceu"
+]])
 Test { [[
-import /tmp/_ceu_MOD1.ceu ;
+#include "/tmp/_ceu_MOD1.ceu"
 await A;
 return 1;
 ]],
     run = { ['~>A']=1 },
 }
 
-_G['/tmp/_ceu_MOD2.ceu'] = [[
+INCLUDE('/tmp/_ceu_MOD2.ceu', [[
 input void A;
 nothing
-]]
-_G['/tmp/_ceu_MOD1.ceu'] = [[
-import /tmp/_ceu_MOD2.ceu;
-]]
+]])
+INCLUDE('/tmp/_ceu_MOD1.ceu', [[
+#include "/tmp/_ceu_MOD2.ceu"
+]])
 Test { [[
-import /tmp/_ceu_MOD1.ceu ;
+#include "/tmp/_ceu_MOD1.ceu"
 await A;
 return 1;
 ]],
-    ast = 'ERR : /tmp/_ceu_MOD2.ceu : line 2 : after `nothing´ : expected `;´',
+    parser = 'ERR : /tmp/_ceu_MOD2.ceu : line 2 : after `nothing´ : expected `;´',
 }
 
-_G['/tmp/_ceu_MOD2.ceu'] = [[
+INCLUDE('/tmp/_ceu_MOD2.ceu', [[
 input void A;
-]]
-_G['/tmp/_ceu_MOD1.ceu'] = [[
+]])
+INCLUDE('/tmp/_ceu_MOD1.ceu', [[
 input void A;
-]]
-_G['/tmp/_ceu_MOD0.ceu'] = [[
-import /tmp/_ceu_MOD1.ceu ;
-import /tmp/_ceu_MOD2.ceu ;
-]]
+]])
+INCLUDE('/tmp/_ceu_MOD0.ceu', [[
+#include "/tmp/_ceu_MOD1.ceu"
+#include "/tmp/_ceu_MOD2.ceu"
+]])
 Test { [[
-import /tmp/_ceu_MOD0.ceu ;
+#include "/tmp/_ceu_MOD0.ceu"
 await A;
 return 1;
 ]],
     run = { ['~>A']=1 },
 }
 
-_G['/tmp/_ceu_MOD2.ceu'] = [[
+INCLUDE('/tmp/_ceu_MOD2.ceu', [[
 input void A;
-]]
-_G['/tmp/_ceu_MOD1.ceu'] = [[
+]])
+INCLUDE('/tmp/_ceu_MOD1.ceu', [[
 nothing;
 input void A
-]]
-_G['/tmp/_ceu_MOD0.ceu'] = [[
-import /tmp/_ceu_MOD2.ceu ;
-import /tmp/_ceu_MOD1.ceu ;
-]]
+]])
+INCLUDE('/tmp/_ceu_MOD0.ceu', [[
+#include "/tmp/_ceu_MOD2.ceu"
+#include "/tmp/_ceu_MOD1.ceu"
+]])
 Test { [[
-import /tmp/_ceu_MOD0.ceu ;
+#include "/tmp/_ceu_MOD0.ceu"
 await A;
 return 1;
 ]],
-    ast = 'ERR : /tmp/_ceu_MOD1.ceu : line 2 : after `A´ : expected `;´',
+    parser = 'ERR : /tmp/_ceu_MOD1.ceu : line 2 : after `A´ : expected `;´',
 }
 
-_G['/tmp/_ceu_MOD1.ceu'] = [[
+INCLUDE('/tmp/_ceu_MOD1.ceu', [[
 native do
     int f () {
         return 10;
     }
 end
-]]
+]])
 Test { [[
-import /tmp/_ceu_MOD1.ceu ;
+#include "/tmp/_ceu_MOD1.ceu"
 return _f();
 ]],
     run = 10,
 }
 
-_G['/tmp/_ceu_MOD1.ceu'] = [[
+INCLUDE('/tmp/_ceu_MOD1.ceu', [[
 native do
     int f () {
         return 10;
     }
 end
-]]
+]])
 Test { [[
-import /tmp/_ceu_MOD1.ceu ;
-import /tmp/_ceu_MOD1.ceu ;
+#include "/tmp/_ceu_MOD1.ceu"
+#include "/tmp/_ceu_MOD1.ceu"
+return _f();
+]],
+    gcc = ':2:9: error: redefinition of',
+}
+
+INCLUDE('/tmp/_ceu_MOD1.ceu', [[
+#ifndef MOD1
+#define MOD1
+native do
+    int f () {
+        return 10;
+    }
+end
+#endif
+]])
+Test { [[
+#include "/tmp/_ceu_MOD1.ceu"
+#include "/tmp/_ceu_MOD1.ceu"
 return _f();
 ]],
     run = 10,
 }
 
-_G['/tmp/_ceu_MOD1.ceu'] = [[
+INCLUDE('/tmp/_ceu_MOD1.ceu', [[
 interface T with
     var int i;
 end
 var int i = 0;
-]]
+]])
 Test { [[
 //
 //
-import /tmp/_ceu_MOD1.ceu ;
+#include "/tmp/_ceu_MOD1.ceu"
 interface T with
     var int i;
 end
@@ -25916,43 +25932,65 @@ return i;
     env = 'ERR : tests.lua : line 4 : interface/class "T" is already declared',
 }
 
-_G['/tmp/_ceu_MOD1.ceu'] = [[
+INCLUDE('/tmp/_ceu_MOD1.ceu', [[
 interface T with
     var int i;
 end
 var int i = 0;
-]]
+]])
 Test { [[
 //
 //
 interface T with
     var int i;
 end
-import /tmp/_ceu_MOD1.ceu ;
+#include "/tmp/_ceu_MOD1.ceu"
 var int i = 10;
 return i;
 ]],
     env = 'ERR : /tmp/_ceu_MOD1.ceu : line 1 : interface/class "T" is already declared',
 }
 
-_G['/tmp/_ceu_MOD1.ceu'] = [[
+INCLUDE('/tmp/_ceu_MOD1.ceu', [[
 interface Global with
     var int i;
 end
 var int i = 0;
-]]
+]])
 Test { [[
-import /tmp/_ceu_MOD1.ceu ;
+#include "/tmp/_ceu_MOD1.ceu"
 interface Global with
     var int i;
 end
 var int i = 10;
 return i;
 ]],
+    env = 'line 2 : interface/class "Global" is already declared',
+}
+
+INCLUDE('/tmp/_ceu_MOD1.ceu', [[
+#ifndef GLB
+#define GLB
+interface Global with
+    var int i;
+end
+#endif
+var int i = 0;
+]])
+Test { [[
+#include "/tmp/_ceu_MOD1.ceu"
+#ifndef GLB
+interface Global with
+    var int i;
+end
+#endif
+var int i = 10;
+return i;
+]],
     run = 10,
 }
 
-_G['/tmp/_ceu_MOD1.ceu'] = [[
+INCLUDE('/tmp/_ceu_MOD1.ceu', [[
 native do
     int f () {
         return 10
@@ -25960,12 +25998,12 @@ native do
     int A;
     int B;
 end
-]]
+]])
 Test { [[
-import /tmp/_ceu_MOD1.ceu ;
+#include "/tmp/_ceu_MOD1.ceu"
 return _f();
 ]],
-    run = false     -- TODO: catch gcc error
+    run = 10,
 }
 
 -- ASYNCS // THREADS
@@ -26042,7 +26080,7 @@ return 1;
 for i=1, 50 do
     Test { [[
 native do
-    //#include <unistd.h>
+    /*#include <unistd.h>*/
 end
 var int ret = 1;
 var int* p = &ret;
@@ -26067,7 +26105,7 @@ end
 for i=1, 50 do
     Test { [[
 native do
-    //#include <unistd.h>
+    /*#include <unistd.h>*/
 end
 var int ret = 0;
 var int* p = &ret;

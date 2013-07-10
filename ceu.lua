@@ -117,16 +117,7 @@ if _OPTS.m4 or _OPTS.m4_args then
     --os.remove(m4_file)
 end
 
-if _OPTS.cpp or _OPTS.cpp_args then
-    local args = _OPTS.cpp_args or ''
-    local cpp_file = (_OPTS.input=='-' and '_ceu_tmp.ceu_cpp') or _OPTS.input..'_cpp'
-    local cpp = assert(io.popen('cpp -dD'..args..' - > '..cpp_file, 'w'))
-    cpp:write(source)
-    cpp:close()
-
-    source = assert(io.open(cpp_file)):read'*a'
-    --os.remove(cpp_file)
-end
+_OPTS.source = source
 
 -- PARSE
 do
@@ -134,7 +125,6 @@ do
     dofile 'lines.lua'
     dofile 'parser.lua'
     dofile 'ast.lua'
-    _AST.f(_OPTS.input, source)
     dofile 'adj.lua'
     --_AST.dump(_AST.root)
     dofile 'env.lua'

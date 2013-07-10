@@ -1,20 +1,13 @@
 m = require 'lpeg'
 m.setmaxstack(1000)
 
-local CNT
-local LINE
+local CNT  = 1
+local LINE = 1
+local FILE = _OPTS.input
 local patt
 
 _LINES = {
-    i2l = nil,
-    url = nil,
-
-    f = function (source)
-        CNT  = 1
-        LINE = 1
-        _LINES.i2l = {}
-        patt:match(source..'\n')
-    end,
+    i2l = {},
 }
 
 local open = m.Cmt('/*{-{*/',
@@ -33,14 +26,52 @@ local close = m.Cmt('/*}-}*/',
 local line = m.Cmt('\n',
     function (s,i)
         for i=#_LINES.i2l, i do
-            _LINES.i2l[i] = LINE
+            _LINES.i2l[i] = { FILE, LINE }
         end
         if CNT > 0 then
             LINE = LINE + 1
         end
     end )
 
-patt = (line + open + close + 1)^0
+local S = m.S'\t\r '
+local cpp = m.Cmt( m.P'#' *S* m.C(m.R'09'^1)       -- line
+                          *S* ( m.P'"' * m.C((1-m.P'"')^0) * m.P'"'
+                              + m.Cc(false) ),     -- file
+    function (s,i, line, file)
+        LINE = line - 1     -- leading '\n' will increment again
+        FILE = file
+    end )
+
+patt = (line + open + close + cpp + 1)^0
+
+_OPTS.source = '#line 0 "'.._OPTS.input..'"\n'.._OPTS.source
+
+if _OPTS.cpp or _OPTS.cpp_args then
+    local args = _OPTS.cpp_args or ''
+    local fout = (_OPTS.input=='-' and '_ceu_tmp.ceu_cpp')
+                    or _OPTS.input..'_cpp'
+
+    local ferr = fout..'.err'
+
+    local fin  = fout..'.in'
+    local f = assert( io.open(fin,'w') )
+    f:write(_OPTS.source)
+    f:close()
+
+    local ret = os.execute('cpp -C -dD '..args..' '..fin
+                            ..' > '..fout..' 2>'..ferr)
+            -- "-C":  keep comments (because of nesting)
+            -- "-dD": repeat #define's (because of macros used as C functions)
+    --os.remove(fin)
+    assert(ret == 0, assert(io.open(ferr)):read'*a')
+
+    _OPTS.source = assert(io.open(fout)):read'*a'
+    --os.remove(fout)
+end
+
+patt:match(_OPTS.source..'\n')
+
+-------------------------------------------------------------------------------
 
 function DBG (...)
     local t = {}

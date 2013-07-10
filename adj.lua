@@ -1,5 +1,6 @@
 F = {
 -- IMPORT: ignore top-level stmts & Global
+--[[
     Node = function (me)
         -- ignore top-level stmts, except "Host"
         local inc = _AST.iter'Import'()  -- inc[1] = Stmts #HOLE
@@ -16,6 +17,7 @@ F = {
             return _AST.node('Nothing')(me.ln)
         end
     end,
+]]
 ---
 
 -- AWAIT: await x until y (not child from SetAwait)

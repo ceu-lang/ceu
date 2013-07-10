@@ -9,56 +9,6 @@ local modules = {}
 
 _AST = {
     root = nil,
-
-    f = function (url, source)
-        _LINES.url = url
-        _LINES.f(source)
-        local ast = _PARSER.f(source)
-        C.Dcl_cls({url,1}, false, false, 'Main',
-                    _AST.node('Stmts')({url,1}), ast)
-        _MAIN = TOP[TOP_i-1]
-
-        -- recurse into import's
-        local i = 1
-        while TOP[i] do
-            local node = TOP[i]
-            if node.tag == '_Import' then
-                local url = node[1]
-
-                if not modules[url] then
-                    modules[url] = true
-
-                    -- _G['/tmp/_ceu_MODx'] = ...
-                    -- "import /tmp/_ceu_MODx;"
-                    if _RUNTESTS and _G[url] then
-                        -- transform global value into a file
-                        local ff = assert(io.open(url,'w'))
-                        ff:write(_G[url])
-                        ff:close()
-                    end
-
-                    local ff = io.open(url)
-                    ASR(ff, node, 'module "'..url..'" not found')
-                    local new = ff:read'*a'
-                    ff:close()
-
-                    -- parse new source
-                    TOP_i = i+1
-                    _LINES.url = url
-                    _LINES.f(new)
-
-                    -- fill #HOLE w/ top-level stmts
-                    -- Stmts->Import->[1]
-                    node[2][1][1] = _PARSER.f(new)
-                end
-                TOP[i] = _AST.node('Nothing')(node.ln)  -- subst _Import
-            end
-            i = i + 1
-        end
-
-        -- reached only after all imports are handled
-        _AST.root = _AST.node('Root')({url,1}, unpack(TOP))
-    end,
 }
 
 local MT    = {}
@@ -257,7 +207,13 @@ end
 
 C = {
     [1] = function (ln, spc, ...) -- spc=CK''
-        return node('Stmts')(ln,...)
+        C.Dcl_cls(ln, false, false,
+                      'Main',
+                      node('Stmts')(ln),
+                      node('Stmts')(ln,...))
+        _MAIN = TOP[#TOP]
+        _AST.root = node('Root')(ln, unpack(TOP))
+        return _AST.root
     end,
 
     BlockI  = node('BlockI'),
@@ -275,6 +231,7 @@ C = {
 
     _Return = node('_Return'),
 
+--[[
     Import = function (ln, url)
         local ret = node('Stmts')(ln,   -- #HOLE to fill w/ top-level stmts
                         node('Import')(ln))
@@ -282,6 +239,7 @@ C = {
         TOP_i = TOP_i + 1
         return ret
     end,
+]]
 
     Sync = node('Sync'),
     Thread = function (ln, ...)
@@ -791,7 +749,7 @@ C = {
 }
 
 local function i2l (v)
-    return {_LINES.url,_LINES.i2l[v]}
+    return _LINES.i2l[v]
 end
 
 for rule, f in pairs(C) do
@@ -802,3 +760,5 @@ for i=1, 12 do
     local tag = '_'..i
     _GG[tag] = (m.Cp()/i2l) * _GG[tag] / C._Exp
 end
+
+_GG = m.P(_GG):match(_OPTS.source)
