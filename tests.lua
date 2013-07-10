@@ -184,28 +184,6 @@ return 1;
 do return end
 --]===]
 
-Test { [[
-class T with
-    var int a;
-    native nohold _f();
-do
-    native do
-        int CEU_T__f (CEU_T *t) {
-            return t->b;
-        }
-    end
-
-    var int b;
-    a = 1;
-    b = 2;
-end
-
-var T t;
-return t.a + t._f();
-]],
-    run = 3,
-}
-
 -- OK: well tested
 
 Test { [[return(1);]],
@@ -2158,6 +2136,80 @@ end;
     },
 }
 
+Test { [[
+loop i, -1 do
+end
+return 1;
+]],
+    run = 1,
+    -- TODO: with sval -1 would be constant
+}
+Test { [[
+loop i, 0 do
+end
+]],
+    ast = 'line 1 : constant should not be `0´',
+}
+
+Test { [[
+input void A;
+loop do
+    loop do
+        await A;
+    end
+end
+]],
+    ana = { isForever=true },
+}
+
+Test { [[
+input void A;
+loop do
+    loop i, 1 do
+        await A;
+    end
+end
+]],
+    ana = { isForever=true },
+}
+
+Test { [[
+input void START;
+var int v = 1;
+loop do
+    loop i, v do
+        await START;
+        return 2;
+    end
+end
+return 1;
+]],
+    loop = 'tight loop',
+    run = 2,
+}
+
+Test { [[
+class T with
+    var int a;
+    native nohold _f();
+do
+    native do
+        int CEU_T__f (CEU_T *t) {
+            return t->b;
+        }
+    end
+
+    var int b;
+    a = 1;
+    b = 2;
+end
+
+var T t;
+return t.a + t._f();
+]],
+    run = 3,
+}
+
 -- EVERY
 
 Test { [[
@@ -2844,6 +2896,7 @@ end
 return sum;
 ]],
     --loop = true,
+    ast = 'line 2 : constant should not be `0´',
     run = 4,
 }
 Test { [[
@@ -22349,7 +22402,7 @@ class T with
 do
     finalize with
         do
-            loop i, 0 do
+            loop i, 1 do
                 do break; end
             end
             _V = _V + this.v;

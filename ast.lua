@@ -353,6 +353,8 @@ C = {
         local dcl_j, set_j, j
 
         if _j.tag == 'CONST' then
+            ASR(tonumber(_j[1]) > 0, ln,
+                'constant should not be `0´')
             j = function () return _j end
             dcl_j = node('Nothing')(ln)
             set_j = node('Nothing')(ln)
@@ -373,8 +375,7 @@ C = {
                             blk,
                             nxt_i))
         loop.blk = blk      -- continue
-        loop.isBounded = true
-        loop[1][1].isBounded = true
+        loop.isBounded = (_j.tag=='CONST' and 'const') or 'var'
 
         return node('Block')(ln,
                 node('Stmts')(ln,
@@ -485,7 +486,6 @@ C = {
                             nxt1,nxt2))
         loop.blk = blk      -- continue
         loop.isBounded = true
-        loop[1][1].isBounded = true
 
         return node('Block')(ln, node('Stmts')(ln, dcl1,dcl2, ini1,ini2, loop))
     end,

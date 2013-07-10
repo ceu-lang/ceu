@@ -68,7 +68,7 @@ F = {
                             and (not me.isBounded)
         WRN(not isTight, me, 'tight loop')
         _TIGHT = _TIGHT or isTight
-        me.tl_blocks = body.tl_awaits or body.tl_returns
+        me.tl_blocks = (body.tl_awaits or body.tl_returns) and me.isBounded~='var'
     end,
 
     SetBlock = function (me)

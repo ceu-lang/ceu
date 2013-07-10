@@ -60,7 +60,7 @@ CEU_ATOMIC
         - field accessors
         - struct
         - cstruct
-        - host (methods)
+        - host (+methods)
     - main cls
 
 === LABELS_ENUM
