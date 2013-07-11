@@ -23,7 +23,7 @@ local f = function (s, i, tk)
 end
 local K = function (patt)
     ERR_msg = '?'
-    return m.Cmt(patt, f)*S
+    return #P(1) * m.Cmt(patt, f) * S
 end
 local CK = function (patt)
     ERR_msg = '?'
@@ -37,7 +37,7 @@ local EK = function (tk)
                 ERR_msg = 'expected `'..tk.."´"
             end
             return false
-        end)
+        end) * P(false)
 end
 
 local _V2NAME = {
@@ -64,7 +64,7 @@ local EV = function (rule)
                 ERR_msg = 'expected ' .. _V2NAME[rule]
             end
             return false
-        end)
+        end) * P(false)
 end
 
 local EM = function (msg)
@@ -197,6 +197,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , Sync    = K'sync'  * V'_Do'
     , Thread  = K'async' * K'thread'    * EV'VarList' * V'_Do'
     , Async   = K'async' * (-P'thread') * EV'VarList' * V'_Do'
+    , AVarList = (EK',')^0
     , VarList = ( K'(' * EV'Var' * (EK',' * EV'Var')^0 * EK')' )^-1
 
     , _Return = K'return' * EV'_Exp'

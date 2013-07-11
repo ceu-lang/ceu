@@ -58,11 +58,16 @@ _OPTS.source = '#line 1 "'.._OPTS.input..'"\n'.._OPTS.source
 
 if _OPTS.cpp or _OPTS.cpp_args then
     local args = _OPTS.cpp_args or ''
-
+    local orig = (_OPTS.input=='-' and 'tmp.ceu')
+                    or _OPTS.input
+    local base, name = string.match(orig, '(.*/)(.*)')
+    if not base then
+        base = ''
+        name = orig
+    end
 
     -- fin, fout, ferr
-    local fout = (_OPTS.input=='-' and '_ceu_cpp_tmp.ceu')
-                    or '_ceu_cpp_'.._OPTS.input
+    local fout = base..'_ceu_cpp_'..name
     local ferr = fout..'.err'
     local fin  = fout..'.in'
     local f = assert( io.open(fin,'w') )
