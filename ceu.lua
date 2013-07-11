@@ -10,8 +10,8 @@ _OPTS = {
     cpp       = true,
     cpp_args  = false,
 
-    m4        = false,
-    m4_args   = false,
+    --m4        = false,
+    --m4_args   = false,
 
     tp_word    = 4,
 }
@@ -28,8 +28,9 @@ _OPTS_NPARAMS = {
     cpp       = 0,
     cpp_args  = 1,
 
-    m4        = 0,
-    m4_args   = 1,
+-- TODO: remove
+    --m4        = 0,
+    --m4_args   = 1,
 
     tp_word    = 1,
 }
@@ -78,14 +79,15 @@ if not _OPTS.input then
         --cpp (--no-cpp)       # preprocess the input with `cpp´ (no-cpp)
         --cpp-args             # preprocess the input with `cpp´ passing arguments in between `"´ (no)
 
-        --m4 (--no-m4)         # preprocess the input with `m4´ (no-m4)
-        --m4-args              # preprocess the input with `m4´ passing arguments in between `"´ (no)
-
         --tp-word              # sizeof a word in bytes    (4)
 
 ]])
     os.exit(1)
 end
+
+-- TODO: remove
+        --m4 (--no-m4)         # preprocess the input with `m4´ (no-m4)
+        --m4-args              # preprocess the input with `m4´ passing arguments in between `"´ (no)
 
 -- C_CALLS
 if _OPTS.c_calls then
@@ -106,6 +108,8 @@ else
 end
 local source = inp:read'*a'
 
+-- TODO: remove
+--[[
 if _OPTS.m4 or _OPTS.m4_args then
     local args = _OPTS.m4_args or ''
     local m4_file = (_OPTS.input=='-' and '_ceu_tmp.ceu_m4') or _OPTS.input..'_m4'
@@ -116,6 +120,7 @@ if _OPTS.m4 or _OPTS.m4_args then
     source = assert(io.open(m4_file)):read'*a'
     --os.remove(m4_file)
 end
+]]
 
 _OPTS.source = source
 
