@@ -25751,6 +25751,16 @@ return 1;
 -- INCLUDE
 
 Test { [[
+native do
+    ##include <stdio.h>
+    ##include <stdio.h>
+end
+return 1;
+]],
+    run = 1,
+}
+
+Test { [[
 #include
 return 1;
 ]],
