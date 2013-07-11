@@ -75,6 +75,7 @@ local EM = function (msg)
                 ERR_msg = 'expected ' .. msg
                 return false
             end
+            return true
         end)
 end
 

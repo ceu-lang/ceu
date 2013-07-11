@@ -1,6 +1,4 @@
-#ifndef CEU_NOLINES
-#line 0 "=== FILENAME ==="
-#endif
+#line 1 "=== FILENAME ==="
 
 === DEFS ===
 

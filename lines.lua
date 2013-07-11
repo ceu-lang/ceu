@@ -15,12 +15,14 @@ local open = m.Cmt('/*{-{*/',
         if _OPTS.join then
             CNT = CNT - 1
         end
+        return true
     end )
 local close = m.Cmt('/*}-}*/',
     function ()
         if _OPTS.join then
             CNT = CNT + 1
         end
+        return true
     end )
 
 local line = m.Cmt('\n',
@@ -31,20 +33,37 @@ local line = m.Cmt('\n',
         if CNT > 0 then
             LINE = LINE + 1
         end
+        return true
     end )
 
-local S = m.S'\t\r '
-local cpp = m.Cmt( m.P'#' *S* m.C(m.R'09'^1)       -- line
+local S = m.S'\t\r '^0
+
+-- reset line/file for # N "file"
+local cpp = m.Cmt( m.P'#' * m.P'line'^-1
+                          *S* m.C(m.R'09'^1)         -- line
                           *S* ( m.P'"' * m.C((1-m.P'"')^0) * m.P'"'
-                              + m.Cc(false) ),     -- file
+                              + m.Cc(false) )        -- file
+                          *S* (m.P(1)-'\n')^0 * '\n' -- \n
+                 ,
     function (s,i, line, file)
-        LINE = line - 1     -- leading '\n' will increment again
+        LINE = line
         FILE = file
+        return true
     end )
+
+-- decrement line for #define <...>
+--  (the line is not removed because of "gcc -dD")
+-- already handled below
+--[[
+local def = m.Cmt( m.P'#' *S* 'define' * (1-m.P'\n')^0,
+    function (s,i)
+        LINE = LINE - 1
+    end )
+]]
 
 patt = (line + open + close + cpp + 1)^0
 
-_OPTS.source = '#line 0 "'.._OPTS.input..'"\n'.._OPTS.source
+_OPTS.source = '#line 1 "'.._OPTS.input..'"\n'.._OPTS.source
 
 if _OPTS.cpp or _OPTS.cpp_args then
     local args = _OPTS.cpp_args or ''
@@ -64,8 +83,12 @@ if _OPTS.cpp or _OPTS.cpp_args then
             -- "-dD": repeat #define's (because of macros used as C functions)
     --os.remove(fin)
     assert(ret == 0, assert(io.open(ferr)):read'*a')
-
     _OPTS.source = assert(io.open(fout)):read'*a'
+
+    -- remove blank lines of #define's (because of "-dD")
+    _OPTS.source = string.gsub(_OPTS.source, '(#define[^\n]*)(\n)(\n)', '%1%3')
+    --print(_OPTS.source)
+
     --os.remove(fout)
 end
 

@@ -39,9 +39,7 @@ function LINE (me, line, spc)
     spc = string.rep(' ', spc)
     me.code = me.code .. [[
 
-#ifndef CEU_NOLINES
 #line ]]..me.ln[2]..' "'..me.ln[1]..[["
-#endif
 ]] .. spc..line
 end
 

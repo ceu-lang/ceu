@@ -1061,7 +1061,7 @@ return(1);
 ]],
     --env = 'line 2 : undeclared type `_t´',
     --env = 'line 3 : non-matching types on `emit´',
-    gcc = '2:11: error: unknown type name',
+    gcc = '2:1: error: unknown type name',
 }
 Test { [[
 output int A;
@@ -15574,6 +15574,12 @@ Test { [[var u8[2] v; return &v;]],
 }
 
 Test { [[
+N;
+]],
+    parser = 'line 1 : after `<BOF>´ : expected statement',
+}
+
+Test { [[
 void[10] a;
 ]],
     parser = 'line 1 : after `<BOF>´ : expected statement',
@@ -15971,7 +15977,7 @@ end
 var int ret = _VD(10);
 return ret;
 ]],
-    run = false,
+    gcc = ':6:32: error: void value not ignored as it ought to be',
 }
 
 Test { [[
@@ -25308,11 +25314,11 @@ input void A;
 await A;
 loop i, 10 do
 end
-return 0;
+return 1;
 ]],
     awaits = 0,
     --loop = true,
-    run = false,
+    run = { ['~>A'] = 1 },
 }
 
 Test { [[
@@ -25326,7 +25332,6 @@ await FOREVER;
         isForever = true,
     },
     awaits = 0,     -- stmts
-    run = false,
 }
 
 Test { [[

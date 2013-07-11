@@ -65,9 +65,7 @@ ceu_pool_init(&]]..cls.pool..', '..cls.max..', sizeof(CEU_'..cls.id..'), '
     Host = function (me)
         CLS().host = CLS().host .. [[
 
-#ifndef CEU_NOLINES
-#line ]]..(me.ln[2]+1)..' "'..me.ln[1]..[["
-#endif
+#line ]]..me.ln[2]..' "'..me.ln[1]..[["
 ]] .. me[1]
     end,
 
@@ -206,13 +204,15 @@ CEU_POOL_DCL(]]..node.pool..', CEU_'..node.cls.id..','..n..[[)
         for _, var in ipairs(sorted) do
             if not var.isEvt then
                 local tp = _TP.c(var.tp)
-                local dcl
+                local dcl = [[
+#line ]]..var.ln[2]..' "'..var.ln[1]..[["
+]]
                 var.id_ = var.id ..
                             (var.inTop and '' or ('_'..var.n))
                 if var.arr then
-                    dcl = _TP.deref(tp)..' '..var.id_..'['..var.arr.cval..']'
+                    dcl = dcl .. _TP.deref(tp)..' '..var.id_..'['..var.arr.cval..']'
                 else
-                    dcl = tp..' '..var.id_
+                    dcl = dcl .. tp..' '..var.id_
                 end
                 cls.struct = cls.struct..SPC()..'  '..dcl..';\n'
                 if me == CLS().blk_ifc then

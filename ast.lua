@@ -748,8 +748,8 @@ C = {
     NULL     = node('NULL'),
 }
 
-local function i2l (v)
-    return _LINES.i2l[v]
+local function i2l (p)
+    return _LINES.i2l[p]
 end
 
 for rule, f in pairs(C) do
