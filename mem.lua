@@ -63,10 +63,12 @@ ceu_pool_init(&]]..cls.pool..', '..cls.max..', sizeof(CEU_'..cls.id..'), '
     end,
 
     Host = function (me)
+        -- unescape `##´ => `#´
+        local src = string.gsub(me[1], '^%s*##', '#')
         CLS().host = CLS().host .. [[
 
 #line ]]..me.ln[2]..' "'..me.ln[1]..[["
-]] .. me[1]
+]] .. src
     end,
 
 

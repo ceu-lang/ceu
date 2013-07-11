@@ -3,6 +3,6 @@ all:
 	gcc main.c $(CFLAGS)
 
 clean:
-	rm -f *.exe _ceu_* *.ceu_cpp *.ceu_m4 a.out
+	rm -f *.exe _ceu_* a.out
 
 .PHONY: all clean

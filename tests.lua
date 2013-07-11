@@ -323,6 +323,7 @@ return N;
 do return end
 --]===]
 
+
 -- OK: well tested
 
 Test { [[return(1);]],
@@ -1115,18 +1116,18 @@ return _end;
 
 Test { [[
 native do
-    #include <assert.h>
+    ##include <assert.h>
     typedef struct {
         int a;
         int b;
     } t;
-    #define ceu_out_event(a,b,c) Fa(a,b,c)
+    ##define ceu_out_event(a,b,c) Fa(a,b,c)
     int Fa (int id, int len, void* data) {
         assert(len == 8);
         t v = *((t*)data);
         return v.a - v.b;
     }
-    #define ceu_out_event_B(c) Fb(c)
+    ##define ceu_out_event_B(c) Fb(c)
     int Fb (int data) {
         return data - 1;
     }
@@ -16527,7 +16528,7 @@ return 0;
 
 Test { [[
 deterministic _printf with _assert;
-native do #include <assert.h> end
+native do ##include <assert.h> end
 par/and do
     _printf("END: 1\n");
 with
@@ -20586,7 +20587,7 @@ input void START;
 
 native _V, _assert();
 native do
-    #include <assert.h>
+    ##include <assert.h>
     int V = 0;
 end
 
@@ -20622,7 +20623,7 @@ input void START;
 
 native _V, _assert();
 native do
-    #include <assert.h>
+    ##include <assert.h>
     int V = 0;
 end
 
@@ -20659,7 +20660,7 @@ input void START;
 
 native _V, _assert();
 native do
-    #include <assert.h>
+    ##include <assert.h>
     int V = 0;
 end
 
@@ -20698,7 +20699,7 @@ input void START;
 
 native _X,_V, _assert();
 native do
-    #include <assert.h>
+    ##include <assert.h>
     int V = 0;
     int X = 0;
 end
@@ -20740,7 +20741,7 @@ input void START;
 
 native _V, _assert();
 native do
-    #include <assert.h>
+    ##include <assert.h>
     int V = 0;
 end
 
@@ -20772,7 +20773,7 @@ input void START;
 
 native _V, _assert();
 native do
-    #include <assert.h>
+    ##include <assert.h>
     int V = 0;
 end
 
@@ -26011,6 +26012,15 @@ return _f();
     run = 10,
 }
 
+Test { [[
+native do
+    ##include <unistd.h>
+end
+return 1;
+]],
+    run = 1,
+}
+
 -- ASYNCS // THREADS
 
 if THREADS then
@@ -26085,7 +26095,7 @@ return 1;
 for i=1, 50 do
     Test { [[
 native do
-    /*#include <unistd.h>*/
+    ##include <unistd.h>
 end
 var int ret = 1;
 var int* p = &ret;
@@ -26110,7 +26120,7 @@ end
 for i=1, 50 do
     Test { [[
 native do
-    /*#include <unistd.h>*/
+    ##include <unistd.h>
 end
 var int ret = 0;
 var int* p = &ret;
