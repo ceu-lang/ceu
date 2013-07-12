@@ -112,12 +112,13 @@ NUM = CK(m.R'09'^1) / tonumber
 
 _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
 
-    , Stmts  = ( V'_StmtS' * (EK';'*K';'^0) +
-                 V'_StmtB' * (K';'^0)
-               )^0
-             * ( V'_LstStmt' * (EK';'*K';'^0) +
-                 V'_LstStmtB' * (K';'^0)
-               )^-1
+                -- "Ct" as a special case to avoid "too many captures" (HACK_1)
+    , Stmts  = Ct (( V'_StmtS' * (EK';'*K';'^0) +
+                     V'_StmtB' * (K';'^0)
+                   )^0
+                 * ( V'_LstStmt' * (EK';'*K';'^0) +
+                     V'_LstStmtB' * (K';'^0)
+                   )^-1 )
     , Block  = V'Stmts'
 
     , Do     = V'_Do'
@@ -197,7 +198,6 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , Sync    = K'sync'  * V'_Do'
     , Thread  = K'async' * K'thread'    * EV'VarList' * V'_Do'
     , Async   = K'async' * (-P'thread') * EV'VarList' * V'_Do'
-    , AVarList = (EK',')^0
     , VarList = ( K'(' * EV'Var' * (EK',' * EV'Var')^0 * EK')' )^-1
 
     , _Return = K'return' * EV'_Exp'

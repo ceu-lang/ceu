@@ -216,8 +216,11 @@ C = {
         return _AST.root
     end,
 
+    Stmts = function (ln, me)   -- (HACK_1)
+        return _AST.node('Stmts')(ln, unpack(me))
+    end,
+
     BlockI  = node('BlockI'),
-    Stmts   = node('Stmts'),
     Do      = node('Do'),
     Nothing = node('Nothing'),
     Block   = node('Block'),
