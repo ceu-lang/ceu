@@ -215,7 +215,7 @@ F =
                                     .._ENV.ifcs.evts[me.var.ifc_id]
                                 ..'])'
                 else    -- var
-                    me.val = me.var.ifc_acc..'('..me.org.val..')'
+                    me.val = '(*('..me.var.ifc_acc..'('..me.org.val..')))'
                 end
             else
                 if me.c then

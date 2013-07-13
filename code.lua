@@ -1230,7 +1230,7 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
 CEU_THREADS_MUTEX_LOCK(&CEU.threads_mutex);
 if (*(_ceu_p.st) == 3) {    /* 3=end */
     CEU_THREADS_MUTEX_UNLOCK(&CEU.threads_mutex);
-    return NULL;        /* exit if end */
+    return NULL;        /* exit if ended from "sync" */
 } else {                /* othrewise, execute block */
 ]])
         CONC(me)
