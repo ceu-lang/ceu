@@ -1096,6 +1096,11 @@ case ]]..me.lbl.id..[[:;
     end,
 
     SetThread = CONC,
+
+    Thread_pre = function (me)
+        me.lbl_out = '_CEU_THREAD_OUT_'..me.n
+    end,
+
     Thread = function (me)
         local vars,blk = unpack(me)
         for _, n in ipairs(vars) do
@@ -1180,6 +1185,9 @@ void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
     /* body */
     ]]..blk.code..[[
 
+    /* goto from "sync" and already terminated */
+    ]]..me.lbl_out..[[:
+
     /* terminate thread */
     {
         tceu_evtp evtp;
@@ -1189,13 +1197,11 @@ void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
     /* only if sync is not active */
         if (*(_ceu_p.st) < 3) {             /* 3=end */
             *(_ceu_p.st) = 3;
-            CEU_THREADS_MUTEX_UNLOCK(&CEU.threads_mutex);
-            ceu_go(CEU_IN__THREAD, evtp);
-            /*CEU_THREADS_COND_SIGNAL(&CEU.threads_cond);*/
+            ceu_go(CEU_IN__THREAD, evtp);   /* keep locked */
         } else {
             free(_ceu_p.st);                /* fin finished, I free */
-            CEU_THREADS_MUTEX_UNLOCK(&CEU.threads_mutex);
         }
+        CEU_THREADS_MUTEX_UNLOCK(&CEU.threads_mutex);
     }
 
     /* more correct would be two signals:
@@ -1228,10 +1234,10 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
         local thr = _AST.iter'Thread'()
         LINE(me, [[
 CEU_THREADS_MUTEX_LOCK(&CEU.threads_mutex);
-if (*(_ceu_p.st) == 3) {    /* 3=end */
+if (*(_ceu_p.st) == 3) {        /* 3=end */
     CEU_THREADS_MUTEX_UNLOCK(&CEU.threads_mutex);
-    return NULL;        /* exit if ended from "sync" */
-} else {                /* othrewise, execute block */
+    goto ]]..thr.lbl_out..[[;   /* exit if ended from "sync" */
+} else {                        /* othrewise, execute block */
 ]])
         CONC(me)
         LINE(me, [[
