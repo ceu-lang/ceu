@@ -138,7 +138,7 @@ do
     dofile 'props.lua'
     dofile 'ana.lua'
     dofile 'acc.lua'
-    _AST.dump(_AST.root)
+    --_AST.dump(_AST.root)
     dofile 'trails.lua'
     dofile 'sval.lua'
     dofile 'labels.lua'

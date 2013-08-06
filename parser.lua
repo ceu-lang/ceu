@@ -37,7 +37,7 @@ local EK = function (tk)
                 ERR_msg = 'expected `'..tk.."´"
             end
             return false
-        end) * P(false)
+        end) --* P(false)
 end
 
 local _V2NAME = {
@@ -64,7 +64,7 @@ local EV = function (rule)
                 ERR_msg = 'expected ' .. _V2NAME[rule]
             end
             return false
-        end) * P(false)
+        end) --* P(false)
 end
 
 local EM = function (msg)
