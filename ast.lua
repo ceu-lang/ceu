@@ -104,7 +104,8 @@ function _AST.dump (me, spc)
 --
 --[[
     local f = function(v)
-                return type(v)=='table' and v.id
+                return type(v)=='table'
+                            and (type(v[1])=='table' and v[1].id or v[1])
                     or tostring(v)
               end
     local t = {}

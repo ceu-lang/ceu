@@ -122,9 +122,6 @@ F = {
         if _AST.iter'Async'() then
             me.lbl_asy = new{'Async_cnt'}
         end
-        if me.has_break then
-            me.lbl_out = new{'Loop_out',  prio=me.depth }
-        end
     end,
 
     EmitExt = function (me)

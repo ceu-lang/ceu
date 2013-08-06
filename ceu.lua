@@ -131,7 +131,6 @@ do
     dofile 'parser.lua'
     dofile 'ast.lua'
     dofile 'adj.lua'
-    --_AST.dump(_AST.root)
     dofile 'env.lua'
     dofile 'fin.lua'
     dofile 'tight.lua'
@@ -139,6 +138,7 @@ do
     dofile 'props.lua'
     dofile 'ana.lua'
     dofile 'acc.lua'
+    _AST.dump(_AST.root)
     dofile 'trails.lua'
     dofile 'sval.lua'
     dofile 'labels.lua'

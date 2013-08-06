@@ -321,8 +321,26 @@ return N;
 }
 
 do return end
---]===]
 
+Test { [[
+native do
+    int V = 0;
+end
+
+class T with
+do
+    _V = 10;
+    finalize with
+        _V = 100;
+    end
+end
+
+var T t;
+_assert(_V == 10);
+return _V;
+]],
+    run = 100,
+}
 
 -- OK: well tested
 
@@ -345,6 +363,8 @@ Test { [[return /**/* **/ 1;]], run=1 }
 Test { [[return /**/* */ 1;]],
     parser = "line 1 : after `return´ : expected expression"
 }
+
+--]===]
 
 Test { [[
 do do do do do do do do do do do do do do do do do do do do
@@ -23902,7 +23922,7 @@ do
                 return 1;
             }
             /*return v * t->i->_g(t->i, v-1);*/
-            return v * _CEU_I__g(t->i)(t->i, v-1);
+            return v * (*_CEU_I__g(t->i))(t->i, v-1);
         }
     end
 end
