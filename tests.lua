@@ -187,141 +187,6 @@ return 1;
     -- BUG: precisa transformar emit x=>1 em p=1;emit x
 }
 
--- CPP / DEFINE / PREPROCESSOR
-
-Test { [[
-native do
-    #define N 1
-end
-var u8[_N] vec;
-vec[0] = 10;
-return vec[_N-1];
-]],
-    run = 10,
-}
-
-Test { [[
-native do
-    #define N 1
-end
-var u8[N] vec;
-vec[0] = 10;
-return vec[N-1];
-]],
-    run = 10,
-}
-
-Test { [[
-native do
-    #define N 1
-end
-var u8[N+1] vec;
-vec[1] = 10;
-return vec[1];
-]],
-    run = 10,
-}
-
-Test { [[
-#define N 1
-var u8[N+1] vec;
-vec[1] = 10;
-return vec[1];
-]],
-    run = 10,
-}
-
-Test { [[
-native do
-    #define N 5
-end
-var int[_N] vec;
-loop i, _N do
-    vec[i] = i;
-end
-var int ret = 0;
-loop i, _N do
-    ret = ret + vec[i];
-end
-return ret;
-]],
-    run = 10,
-}
-
-Test { [[
-#define N 5
-native do
-    int V = 0;
-end
-class T with
-do
-    _V = _V + 1;
-end
-var T[N] ts;
-return _V;
-]],
-    run = 5,
-}
-
-Test { [[
-#define N 5
-native do
-    int V = 0;
-end
-class T with
-do
-    _V = _V + 1;
-end
-var T[N+1] ts;
-return _V;
-]],
-    run = 6,
-}
-
-Test { [[
-#define N 5
-native do
-    int V = 0;
-end
-class T with
-do
-    _V = _V + 1;
-end
-#def
-var T[N+1] ts;
-return _V;
-]],
-    run = 6,
-}
-
-Test { [[
-#define N 5
-native do
-    int V = 0;
-end
-class T with
-do
-    _V = _V + 1;
-end
-#error oi
-var T[N+1] ts;
-return _V;
-]],
-    run = 6,
-}
-
-_G['/tmp/_ceu_MOD1.ceu'] = [[
-#define N 1;
-]]
-Test { [[
-import /tmp/_ceu_MOD1.ceu ;
-return N;
-]],
-    run = 1,
-}
-
-do return end
-
 Test { [[
 native do
     int V = 0;
@@ -331,7 +196,7 @@ class T with
 do
     _V = 10;
     finalize with
-        _V = 100;
+        _V = 100;   // TODO: deveria executar qd "var T t" sai de escopo
     end
 end
 
@@ -341,6 +206,8 @@ return _V;
 ]],
     run = 100,
 }
+
+--]===]
 
 -- OK: well tested
 
@@ -363,8 +230,6 @@ Test { [[return /**/* **/ 1;]], run=1 }
 Test { [[return /**/* */ 1;]],
     parser = "line 1 : after `return´ : expected expression"
 }
-
---]===]
 
 Test { [[
 do do do do do do do do do do do do do do do do do do do do
@@ -17177,6 +17042,128 @@ a = do
 end
 ]],
     parser = "line 4 : after `end´ : expected `;´",
+}
+
+    -- CPP / DEFINE / PREPROCESSOR
+
+Test { [[
+native do
+    #define N 1
+end
+var u8[_N] vec;
+vec[0] = 10;
+return vec[_N-1];
+]],
+    run = 10,
+}
+
+Test { [[
+native do
+    #define N 1
+end
+var u8[N] vec;
+vec[0] = 10;
+return vec[N-1];
+]],
+    run = 10,
+}
+
+Test { [[
+native do
+    #define N 1
+end
+var u8[N+1] vec;
+vec[1] = 10;
+return vec[1];
+]],
+    run = 10,
+}
+
+Test { [[
+#define N 1
+var u8[N+1] vec;
+vec[1] = 10;
+return vec[1];
+]],
+    run = 10,
+}
+
+Test { [[
+native do
+    #define N 5
+end
+var int[_N] vec;
+loop i, _N do
+    vec[i] = i;
+end
+var int ret = 0;
+loop i, _N do
+    ret = ret + vec[i];
+end
+return ret;
+]],
+    run = 10,
+}
+
+Test { [[
+#define N 5
+native do
+    int V = 0;
+end
+class T with
+do
+    _V = _V + 1;
+end
+var T[N] ts;
+return _V;
+]],
+    run = 5,
+}
+
+Test { [[
+#define N 5
+native do
+    int V = 0;
+end
+class T with
+do
+    _V = _V + 1;
+end
+var T[N+1] ts;
+return _V;
+]],
+    run = 6,
+}
+
+Test { [[
+#define N 5
+native do
+    int V = 0;
+end
+class T with
+do
+    _V = _V + 1;
+end
+var T[N+1] ts;
+return _V;
+]],
+    run = 6,
+}
+
+Test { [[
+#define N 5
+native do
+    int V = 0;
+end
+class T with
+do
+    _V = _V + 1;
+end
+#error oi
+var T[N+1] ts;
+return _V;
+]],
+    lines = 'error oi',
 }
 
 -- ASYNC

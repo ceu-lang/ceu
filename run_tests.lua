@@ -207,58 +207,18 @@ STATS = {
 }
 ]])
 
---./run_tests.lua false  107.61s user 23.11s system 85% cpu 2:32.92 total
---./run_tests.lua false  107.43s user 23.42s system 85% cpu 2:32.62 total
-assert(STATS.count  ==    1263)
-assert(STATS.mem    ==       0)
-assert(STATS.trails ==    2521)
-assert(STATS.bytes  == 7443601)
-
 -- w/ threads
---./run_tests.lua  175.19s user 27.19s system 98% cpu 3:24.63 total
---./run_tests.lua  190.89s user 28.61s system 95% cpu 3:51.05 total
---./run_tests.lua  213.93s user 30.92s system 94% cpu 4:18.16 total
-
--- CPP
---./run_tests.lua  229.11s user 36.90s system 93% cpu 4:44.07 total
-
-assert(STATS.count  ==    1437)
-assert(STATS.mem    ==       0)
-assert(STATS.trails ==    2943)
-assert(STATS.bytes  == 9210022)
-
-os.execute('rm -f /tmp/_ceu_*')
-
-do return end
-
--- TODO: antes emit stack
---102.94s user 21.87s system 85% cpu 2:26.66 total
-assert(STATS.count  ==    1213)
-assert(STATS.mem    ==       0)
-assert(STATS.trails ==    2233)
-assert(STATS.bytes  == 6979008)
-
--- TODO: antes scheduler double link
-assert(STATS.count  ==    1210)
-assert(STATS.mem    ==       0)
-assert(STATS.trails ==    2244)
-assert(STATS.bytes  == 7179277)
-
--- TODO: antes de mem => structs
-assert(STATS.count  ==    1204)
-assert(STATS.mem    ==   40452)
-assert(STATS.trails ==    2355)
-assert(STATS.bytes  == 7055283)
-
--- TODO: antes de trail de 8 bytes
-assert(STATS.count  ==    1157)
-assert(STATS.mem    ==   14177)
-assert(STATS.trails ==    2082)
-assert(STATS.bytes  == 7610546)
-
 --[[
 STATS = {
-    mem   = BIG,  -- ints 1 byte  //  trlN
-    bytes = BIG,  -- ON/ceu_param
+    count   = 1446,
+    mem     = 0,
+    trails  = 2957,
+    bytes   = 12723258,
 }
+
+real	5m15.389s
+user	4m13.696s
+sys	0m50.240s
 ]]
+
+os.execute('rm -f /tmp/_ceu_*')
