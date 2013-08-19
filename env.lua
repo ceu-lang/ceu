@@ -382,7 +382,7 @@ F = {
             tp = tp .. '__'.._TP.c(v)
         end
 
-        tp = string.gsub(tp, '*', '_')  -- TODO: not reliable
+        tp = string.gsub(tp, '*', '_')  -- TODO: '_' is not reliable
         _ENV.c[tp] = { tag='type', id=tp, tuple=me, len=nil }
         return tp
     end,

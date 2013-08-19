@@ -250,8 +250,8 @@ return _V;
 }
 
 do return end
-
 --]===]
+
 -- OK: well tested
 
 Test { [[return(1);]],
@@ -24513,8 +24513,8 @@ event (G*,int) g;
 return 1;
 ]],
     --env = 'line 2 : undeclared type `G´',
-    run = 1,
-    -- TODO
+    --run = 1,
+    gcc = '22:2: error: unknown type name ‘G’',
 }
 
 Test { [[
@@ -25796,6 +25796,24 @@ emit e => (1,2,3);
 return 1;
 ]],
     env = 'line 2 : invalid attribution (void vs int)',
+}
+
+Test { [[
+native do
+    ##define ceu_out_event_RADIO_SEND(a) F(a)
+    void F (tceu__int___int_* v) {
+        *(v->_1) = 1;
+        *(v->_2) = 2;
+    }
+end
+
+output (int*,  int*) RADIO_SEND;
+var int a=1,b=1;
+emit RADIO_SEND => (&a,&b);
+
+return a + b;
+]],
+    run = 3,
 }
 
 -- INCLUDE

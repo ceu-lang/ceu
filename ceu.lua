@@ -294,13 +294,13 @@ do
         for _,c in pairs(_ENV.c) do
             if c.tuple then
                 str = str .. 'typedef struct {\n'
-                for i, f in ipairs(c.tuple) do
-                    if _TP.deref(f) then
+                for i, tp in ipairs(c.tuple) do
+                    if _ENV.clss[_TP.noptr(tp)] then
                         -- T* => void*
                         -- T** => void**
-                        f = 'void'..string.match(f,'(%*+)')
+                        tp = 'void'..string.match(tp,'(%*+)')
                     end
-                    str = str..'\t'.._TP.c(f)..' _'..i..';\n'
+                    str = str..'\t'.._TP.c(tp)..' _'..i..';\n'
                 end
                 str = str .. '} '.._TP.c(c.id)..';\n'
             end
