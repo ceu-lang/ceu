@@ -84,7 +84,7 @@ TYPES = P'void' + 'int'
       + 's8' + 's16' + 's32' + 's64'
 
 KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'native'
-     + 'constant' + 'continue' + 'deterministic'         + 'do'
+     + 'constant' + 'continue' + 'safe'     + 'do'
      + 'else'     + 'else/if'  + 'emit'     + 'end'      + 'event'
      + 'every'    + 'finalize' + 'FOREVER'  + 'if'       + 'input'
      + 'loop'     + 'nohold'   + 'not'      + 'nothing'  + 'null'
@@ -313,7 +313,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
                 +   Cc(false) )
 
     , __ID     = V'ID_nat' + V'ID_ext' + V'Var'
-    , Dcl_det  = K'deterministic' * EV'__ID' * EK'with' *
+    , Dcl_det  = K'safe' * EV'__ID' * EK'with' *
                      EV'__ID' * (K',' * EV'__ID')^0
 
     , __Dcl_nat = Cc'type' * V'ID_nat' * K'=' * NUM

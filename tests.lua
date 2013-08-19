@@ -128,6 +128,48 @@ return ret;
     },
 }
 
+Test { [[
+input void A,F;
+
+interface I with
+    var int v;
+    event void inc;
+end
+
+class T with
+    interface I;
+do
+    await inc;
+    this.v = v + 1;
+end
+
+var int ret = 0;
+do
+    par/or do
+        await F;
+    with
+        var int i=1;
+        every 1s do
+            spawn T with
+                this.v = i;
+                i = i + 1;
+            end;
+        end
+    with
+        every 1s do
+            loop i, I* do
+                emit i:inc;         // mata o org enquanto o percorre iterador
+                ret = ret + i:v;
+            end
+        end
+    end
+end
+return ret;
+]],
+-- BUG: erro de valgrind
+    run = { ['~>3s;~>F'] = 11 },
+}
+
 error 'testar pause/if org.e'
 error 'testar new/spawn que se mata'
 
@@ -207,8 +249,9 @@ return _V;
     run = 100,
 }
 
---]===]
+do return end
 
+--]===]
 -- OK: well tested
 
 Test { [[return(1);]],
@@ -1094,7 +1137,7 @@ return 1;
 }
 
 Test { [[
-deterministic A with B;
+safe A with B;
 output void A, B;
 par/or do
     emit A;
@@ -14447,7 +14490,7 @@ return _a+_b;
 
 Test { [[
 constant _a;
-deterministic _b with _c;
+safe _b with _c;
 native do
     int a = 1;
     int b;
@@ -14513,7 +14556,7 @@ native do
     int a = 1;
 end
 var int a;
-deterministic a with _a;
+safe a with _a;
 par/or do
     _a = 1;
 with
@@ -15158,7 +15201,7 @@ Test { [[
 var int b = 1;
 var int c = 2;
 var int* a = &c;
-deterministic b with a, c;
+safe b with a, c;
 par/and do
     b = 1;
 with
@@ -16412,7 +16455,7 @@ return 0;
 }
 
 Test { [[
-deterministic _printf with _assert;
+safe _printf with _assert;
 native do ##include <assert.h> end
 par/and do
     _printf("END: 1\n");
@@ -16582,7 +16625,7 @@ end
 
 Test { [[
 native _F();
-deterministic _F with F,G;
+safe _F with F,G;
 output int F,G;
 native do
     void F() {};
@@ -16605,7 +16648,7 @@ end
 Test { [[
 native _F();
 output int* F,G;
-deterministic _F with F,G;
+safe _F with F,G;
 int a = 1;
 int* b;
 native do
@@ -16652,7 +16695,7 @@ end
 
 Test { [[
 native _F();
-deterministic F with G;
+safe F with G;
 output void F,G;
 par do
     emit F;
@@ -24797,6 +24840,7 @@ class T with
 do
     await inc;
     this.v = v + 1;
+    await FOREVER;
 end
 
 var int ret = 0;
@@ -24822,8 +24866,7 @@ do
 end
 return ret;
 ]],
-    run = { ['~>3s;~>F'] = 11 },
-    --run = { ['~>3s;~>F'] = 9 },
+    run = { ['~>3s;~>F'] = 13 },
 }
 
 Test { [[

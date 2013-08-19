@@ -115,7 +115,7 @@ F = {
 
         if not (me.c and (me.c.mod=='pure' or me.c.mod=='nohold')) then
             if f.org and string.sub(me.c.id,1,1)=='_' then
-                exps = { f.org, unpack(exps) }  -- only native
+                --exps = { f.org, unpack(exps) }  -- only native
                 -- avoids this.f(), where f is a pointer to func
                 -- vs this._f()
             end
