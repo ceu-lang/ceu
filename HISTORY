@@ -1,3 +1,15 @@
+* v0.6 (aug'13)
+    (+) `async thread do´ statement
+        (+) `sync do´ statement inside `async thread´
+    (+) C preprocessor
+    (+) iterators for spawned organisms in a block
+    (+) native code in between `{´ and `}´
+    (+) tuple types for events
+    (+) interface accessors from C
+    (^) per `spawn´/`new´ pools
+    (-) `m4´ support
+    (-) `@´ token
+
 * v0.5 (may'13)
     (+) classes can specify a memory pool for its organisms
     (+) interfaces can have C functions

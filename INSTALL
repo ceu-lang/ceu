@@ -13,9 +13,7 @@
 
 # Run self tests:
 
-> ./run_tests.lua           # takes a long time (w/ valgrind)
-                            # OR
-> ./run_tests.lua false     # much faster (w/o valgrind)
+> ./run_tests.lua
 
 # Include Céu in your path:
 
