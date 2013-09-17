@@ -375,10 +375,10 @@ F = {
     TupleType = function (me)
         local tp = '_tceu'
         for i, v in ipairs(me) do
-            local tp_raw = _TP.noptr(v)
-            local c = _ENV.c[tp_raw]
+            --local tp_raw = _TP.noptr(v)
+            --local c = _ENV.c[tp_raw]
             --ASR(c or _ENV.clss[tp_raw], me, 'undeclared type `'..tp_raw..'´')
-            me[i] = v
+            --me[i] = v
             tp = tp .. '__'.._TP.c(v)
         end
 
