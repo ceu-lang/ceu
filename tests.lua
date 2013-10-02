@@ -250,8 +250,8 @@ return _V;
 }
 
 do return end
---]===]
 
+--]===]
 -- OK: well tested
 
 Test { [[return(1);]],
@@ -2467,6 +2467,18 @@ end
 return ret;
 ]],
     run = { ['~>10s']=5 }
+}
+
+Test { [[
+every 1s do
+    if 1 then
+        continue;
+    end
+end
+]],
+    ana = {
+        isForever = true,
+    },
 }
 
 -- EX.05

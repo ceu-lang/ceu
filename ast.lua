@@ -399,6 +399,7 @@ C = {
                             stmts,
                             blk))
         ret.isEvery = true
+        ret.blk = blk
         return ret
     end,
 
