@@ -15402,7 +15402,7 @@ return *p;
     run = 10,
 }
 Test { [[
-native pure _f();    // its is actually impure
+native pure _f();    // its actually impure
 native do
     int a;
     int* f () {

@@ -1,22 +1,34 @@
+function node2blk (node)
+    if not node.fst then
+        return _AST.root
+    elseif node.fst == '_' then
+        return _AST.root
+    elseif node.fst == 'global' then
+        return _AST.root
+    else
+        return node.fst.blk
+    end
+end
+
 F = {
     SetExp = function (me)
         local op, fr, to = unpack(me)
         to = to or _AST.iter'SetBlock'()[1]
 
+        local to_blk = node2blk(to)
         local req = false
 
-        if me.fromAwait then
-            -- (a,b) = await X;
-            ----
-            -- var t* p;        -- wrong scope (p is a local)
-            -- p = await X;     -- right scope (where X is defined)
-            -- a = p:_1;
-            -- b = p:_2;
-            fr = me.fromAwait
-        end
+        if _TP.deref(to.tp,true) and _TP.deref(fr.tp,true) then
 
-        if _TP.deref(to.tp) then
-            local to_blk = (to.fst=='_' and _AST.root) or to.fst.blk
+            if me.fromAwait then
+                -- (a,b) = await X;
+                ----
+                -- var t* p;        -- wrong scope (p is a local)
+                -- p = await X;     -- right scope (where X is defined)
+                -- a = p:_1;
+                -- b = p:_2;
+                fr = me.fromAwait
+            end
 
             -- var T t with
             --  this.x = y;     -- blk of this? (same as block of t)
@@ -34,26 +46,48 @@ F = {
                 end
             end
 
-            assert(fr.fst)
-            -- '_' is in the global scope
-            if fr.fst~='global' and fr.fst~='_' then
-                local fr_blk = fr.fst.blk
-                if fr_blk then
-                    local to_depth = (to_blk==true and 0) or to_blk.depth
-                    local fr_depth = (fr_blk==true and 0) or fr_blk.depth
+            if fr.tag == 'Op2_call' then
+                -- Maximum pointer depth that the function can return.
+                -- Default is the lowest depth, i.e., any global pointer.
+                local fr_max_out = _AST.root
 
-                    -- int a; pa=&a;    -- `a´ termination must consider `pa´
-                    req = fr_depth > to_depth and (
-                            to_blk == true or                 -- `pa´ global
-                            fr_depth > CLS().blk_body.depth   -- `a´ not top-level
-                    )
+                -- Minimum pointer depth that the function can receive.
+                -- Default is the same as "to", i.e., as minimum as target variable.
+                local fr_min_in  = to_blk     -- max * depth passed as parameter
+
+                local _, _, exps, _ = unpack(fr)
+                for _, exp in ipairs(exps) do
+                    local blk = node2blk(exp)
+                    if blk.depth < fr_min_in.depth then
+                        fr_min_in = blk
+                    end
                 end
-                req = req and fr_blk
+                if fr.c.mod == 'pure' then
+                    fr_max_out = fr_min_in -- pure function returns min param as max
+                end
+
+                -- int* pa = _fopen();  -- pa(n) fin must consider _RET(_)
+                if to_blk.depth > fr_max_out.depth then
+                    req = to_blk
+                end
+            elseif fr.tag == 'RawExp' then
+                -- int* pa = { new X() };
+                if to_blk.depth > _AST.root.depth then
+                    req = to_blk
+                end
             else
-                -- int* pa = _fopen();  -- `pa´ termination must consider ret
-                req = (fr.tag=='Op2_call' and fr.c.mod~='pure')
-                        or fr.tag == 'RawExp'
-                req = req and to_blk
+                local fr_blk = node2blk(fr)
+
+                -- int a; pa=&a;    -- `a´ termination must consider `pa´
+                if to_blk.depth < fr_blk.depth then
+                    req = fr_blk
+
+                    -- class do int* a1; this.a2=a1; end (a1 is also top-level)
+                    if to_blk.depth == CLS().blk_ifc.depth and
+                       fr_blk.depth == CLS().blk_body.depth then
+                        req = false
+                    end
+                end
             end
         end
 

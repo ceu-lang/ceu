@@ -344,7 +344,7 @@ F = {
         me.lval = false
         me.ref  = me
         me.fst  = me
-        me.blk  = true --_MAIN.blk
+        me.blk  = _AST.root
     end,
 
     This = function (me)
