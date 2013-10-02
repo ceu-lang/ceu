@@ -59,7 +59,9 @@ F = {
                 for _, exp in ipairs(exps) do
                     local blk = node2blk(exp)
                     if blk.depth < fr_min_in.depth then
-                        fr_min_in = blk
+                        if not (exp.c and exp.c.mod=='constant') then
+                            fr_min_in = blk
+                        end
                     end
                 end
                 if fr.c.mod == 'pure' then

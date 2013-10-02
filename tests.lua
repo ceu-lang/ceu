@@ -250,6 +250,7 @@ return _V;
 }
 
 do return end
+
 --]===]
 
 -- OK: well tested
@@ -17034,6 +17035,96 @@ Test { [[
 native _char=1;
 var _char a = (_char) 1;
 return (int)a;
+]],
+    run = 1,
+}
+
+Test { [[
+native pure _UI_align();
+class T with
+    var _SDL_rect rect;
+do
+    do
+        var _SDL_Rect r;
+        r.x = _UI_align(r.w, _UI_ALIGN_CENTER);
+    end
+end
+return 1;
+]],
+    fin = 'line 7 : attribution requires `finalize´',
+}
+
+Test { [[
+native constant _UI_ALIGN_CENTER;
+native pure _UI_align();
+native do
+    typedef struct {
+        int x, w;
+    } SDL_Rect;
+    int UI_ALIGN_CENTER = 1;
+    int UI_align (int a, int b) {
+        return 0;
+    }
+end
+class T with
+    var _SDL_Rect rect;
+do
+    do
+        var _SDL_Rect r;
+        r.x = _UI_align(r.w, _UI_ALIGN_CENTER);
+    end
+end
+return 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native constant _UI_ALIGN_CENTER;
+native pure _UI_align();
+native do
+    typedef struct {
+        int x, w;
+    } SDL_Rect;
+    int UI_ALIGN_CENTER = 1;
+    int UI_align (int a, int b, int c) {
+        return 0;
+    }
+end
+class T with
+    var _SDL_Rect rect;
+do
+    do
+        var _SDL_Rect r;
+        r.x = _UI_align(this.rect.w, r.w, _UI_ALIGN_CENTER);
+    end
+end
+return 1;
+]],
+    fin = 'line 17 : attribution requires `finalize´',
+}
+
+Test { [[
+native constant _UI_ALIGN_CENTER;
+native pure _UI_align();
+native do
+    typedef struct {
+        int x, w;
+    } SDL_Rect;
+    int UI_ALIGN_CENTER = 1;
+    int UI_align (int a, int b, int c) {
+        return 0;
+    }
+end
+class T with
+    var _SDL_Rect rect;
+do
+    do
+        var _SDL_Rect r;
+        r.x = (int) _UI_align(this.rect.w, r.w, _UI_ALIGN_CENTER);
+    end
+end
+return 1;
 ]],
     run = 1,
 }
