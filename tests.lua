@@ -250,7 +250,6 @@ return _V;
 }
 
 do return end
-
 --]===]
 
 -- OK: well tested
@@ -21182,6 +21181,51 @@ var T* b = new T;
 return a!=null and b!=null;
 ]],
     run = 1,
+}
+
+Test { [[
+native do
+    int V = 0;
+end
+class [1] T with
+    var int a;
+do
+    _V = _V + 1;
+    await FOREVER;
+end
+do
+    loop i, 2 do
+        spawn [1] T;
+    end
+    loop i, 2 do
+        spawn T;
+    end
+end
+return _V;
+]],
+    run = 2,
+}
+Test { [[
+native do
+    int V = 0;
+end
+class T with
+    var int a;
+do
+    _V = _V + 1;
+    await FOREVER;
+end
+do
+    loop i, 2 do
+        spawn [1] T;
+    end
+    loop i, 2 do
+        spawn T;
+    end
+end
+return _V;
+]],
+    run = 3,
 }
 
 Test { [[

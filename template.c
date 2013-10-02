@@ -715,7 +715,7 @@ fprintf(stderr, "GO[%d]: evt=%d stk=%d [%d]\n", _ceu_seqno,
                         if (_ceu_org->pool == NULL)
                             free(_ceu_org);
                         else
-                            ceu_pool_free(_ceu_org->pool, _ceu_org);
+                            ceu_pool_free(_ceu_org->pool, (char*)_ceu_org);
 #elif !defined(CEU_NEWS_POOL) &&  defined(CEU_NEWS_MALLOC)
                         free(_ceu_org);
 #endif
