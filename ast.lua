@@ -295,10 +295,10 @@ C = {
         local i = function() return node('Var')(ln, _i) end
         local dcl_i = node('Dcl_var')(ln, 'var', 'int', false, _i)
         dcl_i.read_only = true
-        local set_i = node('SetExp')(ln, '=', node('CONST')(ln,'0'), i())
+        local set_i = node('SetExp')(ln, '=', node('NUMBER')(ln,'0'), i())
         set_i.read_only = true  -- accept this write
         local nxt_i = node('SetExp')(ln, '=',
-                        node('Op2_+')(ln, '+', i(), node('CONST')(ln,'1')),
+                        node('Op2_+')(ln, '+', i(), node('NUMBER')(ln,'1')),
                         i())
         nxt_i.read_only = true  -- accept this write
 
@@ -314,7 +314,7 @@ C = {
 
         local dcl_j, set_j, j
 
-        if _j.tag == 'CONST' then
+        if _j.tag == 'NUMBER' then
             ASR(tonumber(_j[1]) > 0, ln,
                 'constant should not be `0´')
             j = function () return _j end
@@ -337,7 +337,7 @@ C = {
                             blk,
                             nxt_i))
         loop.blk = blk      -- continue
-        loop.isBounded = (_j.tag=='CONST' and 'const') or 'var'
+        loop.isBounded = (_j.tag=='NUMBER' and 'const') or 'var'
 
         return node('Block')(ln,
                 node('Stmts')(ln,
@@ -470,7 +470,7 @@ C = {
                 node('Stmts')(ln,
                     cur_dcl,    -- Dcl_var(cur_id)
                     node('SetExp')(ln, '=',
-                        node('CONST')(ln, '0'),
+                        node('NUMBER')(ln, '0'),
                         node('Var')(ln, cur_id)),
                     node('ParOr')(ln,
                         node('Loop')(ln,
@@ -746,7 +746,7 @@ C = {
     Ext      = node('Ext'),
     Nat      = node('Nat'),
     SIZEOF   = node('SIZEOF'),
-    CONST    = node('CONST'),
+    NUMBER   = node('NUMBER'),
     WCLOCKK  = node('WCLOCKK'),
     WCLOCKE  = node('WCLOCKE'),
     STRING   = node('STRING'),

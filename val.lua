@@ -312,7 +312,7 @@ F =
     STRING = function (me)
         me.val = me[1]
     end,
-    CONST = function (me)
+    NUMBER = function (me)
         me.val = me[1]
     end,
     NULL = function (me)

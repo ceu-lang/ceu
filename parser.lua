@@ -79,9 +79,11 @@ local EM = function (msg)
         end)
 end
 
-TYPES = P'void' + 'int'
+TYPES = P'void' + 'char'
+      + 'int' + 'uint'
       + 'u8' + 'u16' + 'u32' + 'u64'
       + 's8' + 's16' + 's32' + 's64'
+      + 'float' + 'f32' + 'f64'
 
 KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'native'
      + 'constant' + 'continue' + 'safe'     + 'do'
@@ -263,16 +265,17 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
                                 end)
                     )^0
     , _13     = V'_Prim'
-    , _Prim   = V'_Parens' + V'Var'   + V'Nat'   + V'SIZEOF'
-              + V'NULL'    + V'CONST' + V'STRING'
-              + V'Global' + V'This'   + V'RawExp'
+    , _Prim   = V'_Parens' + V'Var'    + V'Nat'   + V'SIZEOF'
+              + V'NULL'    + V'NUMBER' + V'STRING'
+              + V'Global' + V'This'    + V'RawExp'
 
     , ExpList = ( V'_Exp'*(K','*EV'_Exp')^0 )^-1
 
     , _Parens  = K'(' * EV'_Exp' * EK')'
 
     , SIZEOF = K'sizeof' * EK'(' * (V'ID_type' + V'_Exp') * EK')'
-    , CONST = CK( #m.R'09' * (m.R'09'+m.S'xX'+m.R'AF'+m.R'af')^1 )
+
+    , NUMBER = CK( #m.R'09' * (m.R'09'+m.S'xX'+m.R'AF'+m.R'af'+'.'+m.S'Ee'+'-')^1 )
             + CK( "'" * (P(1)-"'")^0 * "'" )
 
     , NULL = CK'null'

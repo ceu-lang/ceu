@@ -103,7 +103,7 @@ F =
     STRING = function (me)
         me.cval = me[1]
     end,
-    CONST = function (me)
+    NUMBER = function (me)
         me.cval = me[1]
         me.sval = tonumber(me[1])
     end,

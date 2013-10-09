@@ -24,12 +24,17 @@ _ENV = {
     c = {
         void = 0,
 
+        word     = _OPTS.tp_word,
+        pointer  = _OPTS.tp_word,
+
+        char     = 1,
+        int      = _OPTS.tp_word,
+        uint     = _OPTS.tp_word,
         u8=1, u16=2, u32=4, u64=8,
         s8=1, s16=2, s32=4, s64=8,
 
-        word     = _OPTS.tp_word,
-        int      = _OPTS.tp_word,
-        pointer  = _OPTS.tp_word,
+        float    = _OPTS.tp_word,
+        f32=4, f64=8,
 
         tceu_ncls = true,    -- env.lua
         tceu_nlbl = true,    -- labels.lua
@@ -852,12 +857,16 @@ F = {
         me.lval = false
         me.fst  = 'global'
     end,
-    CONST = function (me)
+    NUMBER = function (me)
         local v = unpack(me)
-        me.tp   = 'int'
+        ASR(string.sub(v,1,1)=="'" or tonumber(v), me, 'malformed number')
+        if string.find(v,'.') or string.find(v,'e') or string.find(v,'E') then
+            me.tp = 'float'
+        else
+            me.tp = 'int'
+        end
         me.lval = false
         me.fst  = 'global'
-        ASR(string.sub(v,1,1)=="'" or tonumber(v), me, 'malformed number')
     end,
     NULL = function (me)
         me.tp   = 'null*'

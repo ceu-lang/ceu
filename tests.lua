@@ -249,9 +249,44 @@ return _V;
     run = 100,
 }
 
+--]===]
+
+Test { [[
+return 1.;
+]],
+    run = 1,
+}
+
+Test { [[
+var float x = 1.5;
+return x + 0.5;
+]],
+    run = 2,
+}
+
+Test { [[
+var uint x = 1.5;
+return x + 0.5;
+]],
+    run = 1,
+}
+
+Test { [[
+var char x = 1.5;
+return x + 0.5;
+]],
+    run = 1,
+}
+
+Test { [[
+var char x = 256;
+return x + 0.5;
+]],
+    run = 0,
+}
+
 do return end
 
---]===]
 -- OK: well tested
 
 Test { [[return(1);]],
