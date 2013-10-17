@@ -850,28 +850,32 @@ F = {
         me.tp   = 'int'
         me.lval = false
         me.fst  = 'global'
+        me.const = true
     end,
 
     STRING = function (me)
         me.tp   = '_char*'
         me.lval = false
         me.fst  = 'global'
+        me.const = true
     end,
     NUMBER = function (me)
         local v = unpack(me)
         ASR(string.sub(v,1,1)=="'" or tonumber(v), me, 'malformed number')
-        if string.find(v,'.') or string.find(v,'e') or string.find(v,'E') then
+        if string.find(v,'%.') or string.find(v,'e') or string.find(v,'E') then
             me.tp = 'float'
         else
             me.tp = 'int'
         end
         me.lval = false
         me.fst  = 'global'
+        me.const = true
     end,
     NULL = function (me)
         me.tp   = 'null*'
         me.lval = false
         me.fst  = 'global'
+        me.const = true
     end,
 }
 

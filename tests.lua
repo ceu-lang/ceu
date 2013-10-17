@@ -249,43 +249,9 @@ return _V;
     run = 100,
 }
 
---]===]
-
-Test { [[
-return 1.;
-]],
-    run = 1,
-}
-
-Test { [[
-var float x = 1.5;
-return x + 0.5;
-]],
-    run = 2,
-}
-
-Test { [[
-var uint x = 1.5;
-return x + 0.5;
-]],
-    run = 1,
-}
-
-Test { [[
-var char x = 1.5;
-return x + 0.5;
-]],
-    run = 1,
-}
-
-Test { [[
-var char x = 256;
-return x + 0.5;
-]],
-    run = 0,
-}
-
 do return end
+
+--]===]
 
 -- OK: well tested
 
@@ -506,6 +472,40 @@ Test { [[
 return 0x1 + 0X1 + 0a01;
 ]],
     env = 'line 1 : malformed number',
+}
+
+Test { [[
+return 1.;
+]],
+    run = 1,
+}
+
+Test { [[
+var float x = 1.5;
+return x + 0.5;
+]],
+    run = 2,
+}
+
+Test { [[
+var uint x = 1.5;
+return x + 0.5;
+]],
+    run = 1,
+}
+
+Test { [[
+var char x = 1.5;
+return x + 0.5;
+]],
+    run = 1,
+}
+
+Test { [[
+var char x = 256;
+return x + 0.5;
+]],
+    run = 0,
 }
 
     -- IF
@@ -13234,6 +13234,19 @@ _f(_v);
 return 0;
 ]],
     fin = 'line 3 : call to "_f" requires `finalize´',
+}
+
+Test { [[
+native pure _f();
+native do
+    int* f (int a) {
+        return NULL;
+    }
+end
+var int* v = _f(0);
+return v == null;
+]],
+    run = 1,
 }
 
 Test { [[
