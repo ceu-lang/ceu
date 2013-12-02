@@ -24709,7 +24709,8 @@ return 1;
 ]],
     --env = 'line 2 : undeclared type `G´',
     --run = 1,
-    gcc = '22:2: error: unknown type name ‘G’',
+    --gcc = '22:2: error: unknown type name ‘G’',
+    gcc = '22:2: error: unknown type name',
 }
 
 Test { [[
