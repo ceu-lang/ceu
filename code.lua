@@ -78,7 +78,7 @@ if (]]..V(pse.dcl.var)..[[) {
 ]])
         if me.tag == 'AwaitInt' then
             LINE(me, [[
-    _ceu_trl->stk = _ceu_seqno-1;   /* awake again */
+    _ceu_trl->seqno = _ceu_seqno-1;   /* awake again */
 ]])
         end
         LINE(me, [[
@@ -151,7 +151,7 @@ _ceu_trl  = &_ceu_org->trls[ ]]..(me.trails[1]+1)..[[ ];
 _ceu_stop = &_ceu_org->trls[ ]]..(me.trails[2]+1)..[[ ];
                                 /* trails[2]+1 is out */
 _ceu_evt = CEU_IN__CLEAR;
-goto _CEU_CALLTRL_;
+goto _CEU_CALL_TRL_;
 
 case ]]..me.lbl_clr.id..[[:;
 ]])
@@ -296,7 +296,7 @@ end;
     /* switch to ORG for PRE */
     _ceu_org  = ]]..org..[[;
     _ceu_stop = &_ceu_org->trls[_ceu_org->n]; /* don't follow the up link */
-    goto _CEU_CALL_;
+    goto _CEU_CALL_ORG_;
 
 case ]]..me.lbls_pre[i].id..[[:;
     /* BACK FROM PRE */
@@ -329,7 +329,7 @@ case ]]..me.lbls_pre[i].id..[[:;
 
     _ceu_org  = ]]..org..[[;
     _ceu_stop = &_ceu_org->trls[_ceu_org->n]; /* don't follow the up link */
-    goto _CEU_CALL_;
+    goto _CEU_CALL_ORG_;
 
 case ]]..me.lbls_cnt[i].id..[[:;
 ]])
@@ -486,7 +486,7 @@ case ]]..me.lbls_cnt[i].id..[[:;
         _CEU_STK[_ceu_stki++].evt  = _ceu_evt;
 
         _ceu_evt = CEU_IN__CLEAR;
-        goto _CEU_CALLTRL_;
+        goto _CEU_CALL_TRL_;
     }
 }
 case ]]..me.lbl_clr.id..[[:;
@@ -517,9 +517,9 @@ _ceu_org->trls[ ]]..me.trl_orgs[1]..[[ ].lnks =
         if me.fins then
             LINE(me, [[
 /*  FINALIZE */
-_ceu_org->trls[ ]]..me.trl_fins[1]..[[ ].evt = CEU_IN__CLEAR;
-_ceu_org->trls[ ]]..me.trl_fins[1]..[[ ].lbl = ]]..me.lbl_fin.id..[[;
-_ceu_org->trls[ ]]..me.trl_fins[1]..[[ ].stk = _ceu_seqno-1;    /* awake now */
+_ceu_org->trls[ ]]..me.trl_fins[1]..[[ ].evt   = CEU_IN__CLEAR;
+_ceu_org->trls[ ]]..me.trl_fins[1]..[[ ].lbl   = ]]..me.lbl_fin.id..[[;
+_ceu_org->trls[ ]]..me.trl_fins[1]..[[ ].seqno = _ceu_seqno-1; /* awake now */
 ]])
             for _, fin in ipairs(me.fins) do
                 LINE(me, fin.val..' = 0;')
@@ -923,7 +923,7 @@ _ceu_evtp.]]..field..' = '..V(exp)..[[;
 #ifdef CEU_ORGS
 _ceu_org = (tceu_org*) &CEU.mem;   /* TODO(speed): check if is_ifc */
 #endif
-goto _CEU_CALL_;
+goto _CEU_CALL_ORG_;
 
 case ]]..me.lbl_cnt.id..[[:;
 ]])
@@ -967,14 +967,6 @@ case ]]..me.lbl.id..[[:;
     _ceu_trl->evt = ]]..(int.evt_idx or int.evt.evt_idx)..[[;
     _ceu_trl->lbl = ]]..me.lbl.id..[[;
 ]])
-        -- awake in the same reaction (first awaits of a class)
---[=[
-        if (not _AST.iter'Loop'()) and CLS().id~='Main' then
-            LINE(me, [[
-    _ceu_trl->stk = _ceu_seqno-1;
-]])
-        end
-]=]
         HALT(me)
 
         LINE(me, [[
@@ -983,7 +975,7 @@ case ]]..me.lbl.id..[[:;
         LINE(me, [[
 #ifdef CEU_ORGS
     if ((tceu_org*)]]..org..[[ != _ceu_evto) {
-        _ceu_trl->stk = _ceu_seqno-1;   /* awake again */
+        _ceu_trl->seqno = _ceu_seqno-1;   /* awake again */
         goto ]]..no..[[;
     }
 #endif

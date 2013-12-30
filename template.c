@@ -644,13 +644,13 @@ void ceu_go (int _ceu_evt, tceu_evtp _ceu_evtp)
         _ceu_org = (tceu_org*) &CEU.mem;    /* on pop(), always restart */
 #endif
 #if defined(CEU_INTS) || defined(CEU_ORGS)
-_CEU_CALL_:
+_CEU_CALL_ORG_:
 #endif
         /* restart from org->trls[0] */
         _ceu_trl = &_ceu_org->trls[0];
 
 #if defined(CEU_CLEAR) || defined(CEU_ORGS)
-_CEU_CALLTRL_:  /* restart from org->trls[i] */
+_CEU_CALL_TRL_:  /* restart from org->trls[i] */
 #endif
 
 #ifdef CEU_DEBUG_TRAILS
@@ -732,7 +732,7 @@ fprintf(stderr, "GO[%d]: evt=%d stk=%d [%d]\n", _ceu_seqno,
                     _ceu_org = _org;
                     _ceu_trl = _trl;
 /*fprintf(stderr, "UP[%p] %p %p\n", trl+1, _ceu_org _ceu_trl);*/
-                    goto _CEU_CALLTRL_;
+                    goto _CEU_CALL_TRL_;
                 }
 #endif  /* CEU_ORGS */
             }
@@ -764,7 +764,7 @@ fprintf(stderr, "\tTRY [%p] : evt=%d seqno=%d lbl=%d\n",
                     if (_ceu_evt == CEU_IN__CLEAR) {
                         _ceu_trl->evt = CEU_IN__NONE;
                     }
-                    goto _CEU_CALL_;
+                    goto _CEU_CALL_ORG_;
                 }
 #endif /* CEU_ORGS */
 
