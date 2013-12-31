@@ -253,8 +253,15 @@ F = {
         if me.ana.pre[false] then
             t = { [false]=true }
         else
-            -- use a table to differentiate each instance
-            t = { [{awt.evt and awt.evt or 'WCLOCK'}]=true }
+            -- enclose with a table to differentiate each instance
+            if me.tag == 'AwaitExt' then
+                t = { [{awt.evt}]=true }
+            elseif me.tag == 'AwaitInt' then
+                -- use "var" as identifier (why "evt" doesn't work?)
+                t = { [{awt.var}]=true }
+            else    -- 'AwaitT'
+                t = { [{awt.evt or 'WCLOCK'}]=true }
+            end
         end
         me.ana.pos = COPY(t)
         if cnd then

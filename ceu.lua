@@ -195,7 +195,7 @@ do
                 if var.pre == 'event' then
                     local i = _ENV.ifcs.evts[var.ifc_id]
                     if i then
-                        evts[i+1] = var.evt_idx
+                        evts[i+1] = var.evt.idx
                     end
                 else
                     local i = _ENV.ifcs.flds[var.ifc_id]

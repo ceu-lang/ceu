@@ -377,7 +377,6 @@ escape 1;
 }
 
 do return end
---]===]
 
 -- OK: well tested
 
@@ -954,7 +953,7 @@ event int a;
 emit a => 1;
 escape a;
 ]],
-    val = 'line 3 : invalid expression',
+    env = 'line 3 : invalid attribution (int vs void)',
     --run = 1,
     --trig_wo = 1,
 }
@@ -3282,7 +3281,7 @@ event int a;
 var int ret = 0;
 par/or do
     await START;
-    emit a  =>  1;
+    emit a => 1;
 with
     ret = await a;
 end
@@ -3404,7 +3403,7 @@ emit c => 10;
 emit c => 10;
 escape c;
 ]],
-    val = 'line 4 : invalid expression',
+    env = 'line 4 : invalid attribution (int vs void)',
     --trig_wo = 2,
 }
 
@@ -23907,6 +23906,7 @@ var I[10] a;
     env = 'line 3 : cannot instantiate an interface',
 }
 
+--]===]
 Test { [[
 input void START;
 interface Global with

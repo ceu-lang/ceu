@@ -57,9 +57,17 @@ function CLS ()
 end
 
 function var2ifc (var)
+    local tp
+    if var.pre == 'var' then
+        tp = var.tp
+    elseif var.pre == 'event' then
+        tp = var.evt.tp
+    else
+        error 'TODO'
+    end
     return table.concat({
         var.id,
-        var.tp,
+        tp,
         tostring(var.pre),
         tostring(var.arr),
     }, '$')
@@ -172,9 +180,15 @@ function newvar (me, blk, pre, tp, arr, id)
     return var
 end
 
-function newevt (me, blk, pre, tp, id)
-    local var = newvar(me, blk, pre, tp, false, id)
-    var.evt_idx = _E
+function newint (me, blk, pre, tp, id)
+    local var = newvar(me, blk, pre, 'void', false, id)
+    local evt = {
+        id  = id,
+        idx = _E,
+        tp  = (_TP.isTuple(tp) and tp..'*') or tp,
+        pre = pre,
+    }
+    var.evt = evt
     _E = _E + 1
     return var
 end
@@ -432,10 +446,7 @@ F = {
         ASR(tp=='void' or tp=='int' or _TP.deref(tp) or _TP.isTuple(tp),
                 me, 'invalid event type')
         newtype(tp)
-        if _TP.isTuple(tp) then
-            tp = tp..'*'
-        end
-        me.var = newevt(me, _AST.iter'Block'(), pre, tp, id)
+        me.var = newint(me, _AST.iter'Block'(), pre, tp, id)
     end,
 
     Dcl_var = function (me)
@@ -466,7 +477,7 @@ F = {
             if var.pre == 'var' then
                 newvar(me, _AST.iter'Block'(), var.pre, tp, var.arr, var.id)
             elseif var.pre == 'event' then
-                newevt(me, _AST.iter'Block'(), var.pre, tp, var.id)
+                newint(me, _AST.iter'Block'(), var.pre, tp, var.id)
             else
                 error 'TODO'
             end
@@ -491,8 +502,10 @@ F = {
                     and var
         me.ref  = me
         me.fst  = var
+
         if var.pre == 'event' then
-            me.evt = var
+-- TODO: remove
+            me.evt = var.evt
         end
     end,
 
@@ -540,12 +553,11 @@ F = {
         error'me.fst'
         --me.fst = ?
     end,
-    AwaitInt = function (me, exp)
-        local exp = exp or unpack(me)
-        local var = exp.var
-        ASR(var and var.pre=='event', me,
-                'event "'..(var and var.id or '?')..'" is not declared')
-        me.fst = exp.fst
+    AwaitInt = function (me, int)
+        local int = int or unpack(me)
+        ASR(int.var and int.var.pre=='event', me,
+            'event "'..(int.var and int.var.id or '?')..'" is not declared')
+        me.fst = int.fst
     end,
     AwaitExt = function (me)
         me.fst = 'global'
@@ -555,9 +567,9 @@ F = {
         local int, ps = unpack(me)
         local var = int.var
         ASR(var and var.pre=='event', me,
-                'event "'..(var and var.id or '?')..'" is not declared')
-        ASR(int.tp=='void' or  (ps and _TP.contains(int.var.tp,ps.tp,true)), me,
-                'invalid emit')
+            'event "'..(var and var.id or '?')..'" is not declared')
+        ASR(var.evt.tp=='void' or (ps and _TP.contains(var.evt.tp,ps.tp,true)),
+            me, 'invalid emit')
     end,
 
     EmitExt = function (me)
@@ -618,7 +630,9 @@ F = {
             me.tp = 's32'               -- late
         elseif me.from.tag == 'AwaitS' then
             me.tp = 'int'
-        elseif me.from.tag=='AwaitInt' or me.from.tag=='AwaitExt' then
+        elseif me.from.tag=='AwaitInt' then
+            me.tp = me.from[1].var.evt.tp   -- evt tp
+        elseif me.from.tag=='AwaitExt' then
             me.tp = me.from[1].evt.tp   -- evt tp
         elseif me.from.tag == 'New' then
             me.tp = me.from[2]..'*'     -- class id
@@ -817,8 +831,8 @@ F = {
                         and var
             me.ref  = me[3]
             if var.pre == 'event' then
-                me.evt    = me.var
-                me[3].evt = var
+                me.evt    = var.evt
+                me[3].evt = var.evt
             end
         else
             ASR(_TP.ext(e1.tp,true), me, 'not a struct')
