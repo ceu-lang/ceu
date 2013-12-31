@@ -47,7 +47,6 @@ local _V2NAME = {
     Var = 'variable/event',
     ID_nat  = 'identifier',
     ID_var  = 'identifier',
-    ID_int  = 'identifier',
     ID_ext  = 'identifier',
     ID_cls  = 'identifier',
     ID_type = 'type',
@@ -91,7 +90,7 @@ KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'native'
      + 'every'    + 'finalize' + 'FOREVER'  + 'if'       + 'input'
      + 'loop'     + 'nohold'   + 'not'      + 'nothing'  + 'null'
      + 'or'       + 'output'   + 'par'      + 'par/and'  + 'par/or'
-     + 'pause/if' + 'pure'     + 'return'   + 'sizeof'   + 'then'
+     + 'pause/if' + 'pure'     + 'escape'   + 'sizeof'   + 'then'
      + 'until'    + 'var'      + 'with'
      + TYPES
 -- ceu-orgs only
@@ -130,9 +129,10 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
 
     , _StmtS = V'AwaitS'   + V'AwaitT'    + V'AwaitExt'  + V'AwaitInt'
              + V'EmitT'    + V'EmitExt'   + V'EmitInt'
-             + V'_Dcl_nat'   + V'_Dcl_ext'
+             + V'_Dcl_nat' + V'_Dcl_ext'
              + V'_Dcl_int' + V'_Dcl_var'
              + V'Dcl_det'
+             --+ V'Call'
              + V'_Set'
              + V'Free'     + V'Spawn'
              + V'Nothing'
@@ -150,7 +150,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
              + V'Dcl_ifc' + V'Dcl_cls'
              + V'Finalize'
 
-    , _LstStmt  = V'_Return' + V'Break' + V'_Continue' + V'AwaitN'
+    , _LstStmt  = V'_Escape' + V'Break' + V'_Continue' + V'AwaitN'
     , _LstStmtB = V'ParEver' + V'_Continue'
 
     , _SetBlock  = V'Do' + V'ParEver' + V'If' + V'Loop' + V'_Every'
@@ -202,7 +202,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , Async   = K'async' * (-P'thread') * EV'VarList' * V'_Do'
     , VarList = ( K'(' * EV'Var' * (EK',' * EV'Var')^0 * EK')' )^-1
 
-    , _Return = K'return' * EV'_Exp'
+    , _Escape = K'escape' * EV'_Exp'
 
     , ParOr   = K'par/or' * EK'do' *
                     V'Block' * (EK'with' * V'Block')^1 *
@@ -265,9 +265,10 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
                                 end)
                     )^0
     , _13     = V'_Prim'
-    , _Prim   = V'_Parens' + V'Var'    + V'Nat'   + V'SIZEOF'
+    , _Prim   = V'_Parens' + V'SIZEOF'
+              + V'Var'     + V'Nat'
               + V'NULL'    + V'NUMBER' + V'STRING'
-              + V'Global' + V'This'    + V'RawExp'
+              + V'Global'  + V'This'   + V'RawExp'
 
     , ExpList = ( V'_Exp'*(K','*EV'_Exp')^0 )^-1
 
@@ -333,7 +334,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
 
     , _Dcl_int  = CK'event' * (EV'ID_type'+EV'TupleType') *
                     V'__Dcl_int' * (K','*V'__Dcl_int')^0
-    , __Dcl_int = EV'ID_int' --* (V'_Sets' +
+    , __Dcl_int = EV'ID_var' --* (V'_Sets' +
                              --   Cc(false)*Cc(false)*Cc(false))
 
     , _Dcl_var   = V'_Dcl_var_1' + V'_Dcl_var_2'
@@ -381,7 +382,6 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , ID_ext  = -KEYS * CK(m.R'AZ'*ALPHANUM^0)
     , ID_var  = -KEYS * CK(m.R'az'*(Alphanum+'?')^0)
                     / function(id) return (string.gsub(id,'%?','_')) end
-    , ID_int  = V'ID_var'
     , ID_nat  = CK(  P'_' *Alphanum^0)
     , ID_type = (CK(TYPES)+V'ID_nat'+V'ID_cls') * C(K'*'^0) /
                   function (id, star)

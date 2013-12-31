@@ -650,7 +650,7 @@ ceu_pause(&_ceu_org->trls[ ]]..me.blk.trails[1]..[[ ],
         CONC(me, blk)
         HALT(me)        -- must escape with `return´
         CASE(me, me.lbl_out)
-        if me.has_return then
+        if me.has_escape then
             CLEAR(me)
             LINE(me, [[
 /* switch to 1st trail */
@@ -659,7 +659,7 @@ _ceu_trl = &_ceu_org->trls[ ]] ..me.trails[1]..[[ ];
 ]])
         end
     end,
-    Return = function (me)
+    Escape = function (me)
         GOTO(me, _AST.iter'SetBlock'().lbl_out)
     end,
 

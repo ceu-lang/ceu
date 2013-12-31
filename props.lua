@@ -15,7 +15,7 @@ _PROPS = {
 
 local NO_fin = {
     Finalize=true, Finally=true,
-    Host=true, Return=true, Async=true, Thread=true,
+    Host=true, Escape=true, Async=true, Thread=true,
     ParEver=true, ParOr=true, ParAnd=true,
     AwaitS=true, AwaitExt=true, AwaitInt=true, AwaitN=true, AwaitT=true,
     EmitInt=true,
@@ -28,12 +28,12 @@ local NO_async = {
     AwaitS=true, AwaitExt=true, AwaitInt=true, AwaitN=true, AwaitT=true,
     EmitInt=true,
     Pause=true,
-    Return=true,
+    Escape=true,
 }
 
 local NO_constr = {
     --Finalize=true, Finally=true,
-    Return=true, Async=true, Thread=true,
+    Escape=true, Async=true, Thread=true,
     ParEver=true, ParOr=true, ParAnd=true,
     AwaitS=true, AwaitExt=true, AwaitInt=true, AwaitN=true, AwaitT=true,
     EmitInt=true,
@@ -165,10 +165,10 @@ F = {
         ASR(not _AST.iter'BlockI'(), me,
                 'not permitted inside an interface')
     end,
-    Return = function (me)
+    Escape = function (me)
         local blk = _AST.iter'SetBlock'()
         blk.rets[me] = true
-        blk.has_return = true
+        blk.has_escape = true
 
         NEEDS_CLR(blk)
     end,

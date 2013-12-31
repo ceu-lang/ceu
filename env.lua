@@ -97,13 +97,9 @@ local _E = 1    -- 0=NONE
 
 function newtype (tp)
     local raw = _TP.noptr(tp)
-
-    local c = _ENV.c[raw]
-    if c or string.sub(raw,1,1)~='_' then
-        return  -- already declared or not external type
+    if string.sub(raw,1,1)~='_' or (not _ENV.c[raw]) then
+        _ENV.c[raw] = { tag='type', id=raw, len=nil, mod=nil }
     end
-
-    _ENV.c[raw] = { tag='type', id=raw, len=nil, mod=nil }
 end
 
 function newvar (me, blk, pre, tp, arr, id)
@@ -477,7 +473,8 @@ F = {
         ASR(var, me, 'variable/event "'..id..'" is not declared')
         me.var  = var
         me.tp   = var.tp
-        me.lval = (not var.arr) and (not var.cls) and var
+        me.lval = not (var.isEvt or var.cls or var.arr)
+                    and var
         me.ref  = me
         me.fst  = var
         if var.isEvt then
@@ -562,7 +559,8 @@ F = {
     SetExp = function (me)
         local _, fr, to = unpack(me)
         to = to or _AST.iter'SetBlock'()[1]
-        ASR(to.lval and _TP.contains(to.tp,fr.tp,true), me,
+        ASR(to.lval, me, 'invalid attribution')
+        ASR(_TP.contains(to.tp,fr.tp,true), me,
                 'invalid attribution ('..to.tp..' vs '..fr.tp..')')
         ASR(me.read_only or (not to.lval.read_only), me,
                 'read-only variable')
@@ -792,7 +790,8 @@ F = {
             me.org  = e1
             me.var  = var
             me.tp   = var.tp
-            me.lval = (not var.arr) and (not var.cls) and var
+            me.lval = not (var.isEvt or var.cls or var.arr)
+                        and var
             me.ref  = me[3]
             if var.isEvt then
                 me.evt    = me.var

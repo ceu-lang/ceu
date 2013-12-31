@@ -166,7 +166,7 @@ F = {
 
 -- TODO: breaks e rets dentro de ParEver, Loop
 
-    Return = function (me)
+    Escape = function (me)
         _AST.iter'SetBlock'().aw.forever_ = false
     end,
     SetBlock_pre = 'Loop_pre',

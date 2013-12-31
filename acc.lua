@@ -218,7 +218,7 @@ F = {
             err = 'escape (line '..me.ln[2]..')',
         }
     end,
-    Return = function (me)
+    Escape = function (me)
         F.Break(me, 'SetBlock')
     end,
     Node = function (me)

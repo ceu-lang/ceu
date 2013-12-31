@@ -194,12 +194,12 @@ function _AST.SetAwaitUntil (ln, awt, op,to)
     local cnd = awt[#awt]
     awt[#awt] = false
     if cnd then
-        ret = _AST.node('Loop')(ln,
-                    _AST.node('Stmts')(ln,
+        ret = node('Loop')(ln,
+                    node('Stmts')(ln,
                         ret,
-                        _AST.node('If')(ln, cnd,
-                            _AST.node('Break')(ln),
-                            _AST.node('Nothing')(ln))))
+                        node('If')(ln, cnd,
+                            node('Break')(ln),
+                            node('Nothing')(ln))))
         ret.isAwaitUntil = true
     end
 
@@ -218,7 +218,7 @@ C = {
     end,
 
     Stmts = function (ln, me)   -- (HACK_1)
-        return _AST.node('Stmts')(ln, unpack(me))
+        return node('Stmts')(ln, unpack(me))
     end,
 
     BlockI  = node('BlockI'),
@@ -233,7 +233,7 @@ C = {
     Finalize = node('Finalize'),
     Finally  = node('Finally'),
 
-    _Return = node('_Return'),
+    _Escape = node('_Escape'),
 
 --[[
     Import = function (ln, url)

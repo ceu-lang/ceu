@@ -47,7 +47,7 @@ with
             ret = 2;    // DET: nested blocks
         end;
 end
-return ret;
+escape ret;
 ]],
     ana = {
         acc = 2,
@@ -62,10 +62,10 @@ var int ret = 0;
 par do
     par/or do
         await y;
-        return 1;   // 12
+        escape 1;   // 12
     with
         await x;
-        return 2;   // 15
+        escape 2;   // 15
     end;
 with
     await START;
@@ -98,7 +98,7 @@ do
     spawn T;
     await 1s;
 end
-return _V;
+escape _V;
 ]],
     run = { ['~>1s']=10 },
 }
@@ -118,7 +118,7 @@ with
         ret = await 9us;
     end
 end
-return ret;
+escape ret;
 ]],
     run = {
         ['~>1us;0~>A;~>1us;0~>A;~>19us'] = 12,
@@ -164,7 +164,7 @@ do
         end
     end
 end
-return ret;
+escape ret;
 ]],
 -- BUG: erro de valgrind
     run = { ['~>3s;~>F'] = 11 },
@@ -173,7 +173,7 @@ return ret;
 error 'testar pause/if org.e'
 error 'testar new/spawn que se mata'
 
---do return end
+--do escape end
 
 -- OK: under tests but supposed to work
 
@@ -182,7 +182,7 @@ Test { [[
 input (int,int,int) EVT;
 var int a,b;
 (a,b) = await EVT;
-return 1;
+escape 1;
 ]],
     run = 1,
 }
@@ -194,7 +194,7 @@ native do
     typedef int t;
 end
 input (_t,int) EVT;
-return 1;
+escape 1;
 ]],
     run = 1,
 }
@@ -222,7 +222,7 @@ with
         emit ptr => (1, &b);
     end
 end
-return 1;
+escape 1;
 ]],
     run = 1,
     -- e depois outro exemplo com fin apropriado
@@ -244,41 +244,166 @@ end
 
 var T t;
 _assert(_V == 10);
-return _V;
+escape _V;
 ]],
     run = 100,
 }
 
-do return end
+Test { [[
+function void f;
+escape 1;
+]],
+    parser = 'ERR : tests.lua : line 1 : after `void´ : expected type',
+}
 
+Test { [[
+function void void f
+escape 1;
+]],
+    parser = 'ERR : tests.lua : line 1 : after `f´ : expected `;´'
+}
+
+Test { [[
+function void void f;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+function void (void) f;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+function void void f do
+    event void i;
+    emit i;
+    await i;
+end
+escape 1;
+]],
+    props = 'ERR : tests.lua : line 3 : not permitted inside `function´',
+}
+
+Test { [[
+function void void f do
+    var int a = 1;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+function void void f do
+    return;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+function void void f do
+    return 1;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+do
+    return 1;
+end
+escape 1;
+]],
+    props = 'ERR : tests.lua : line 2 : not permitted outside a function',
+}
+
+Test { [[
+event int a;
+a = 1;
+escape 1;
+]],
+    env = 'invalid attribution',
+}
+
+Test { [[
+function int void f do
+    return 1;
+end
+escape f();
+]],
+    run = 1,
+}
+
+Test { [[
+function int void f do
+    return 1;
+end
+escape call f();
+]],
+    run = 1,
+}
+
+Test { [[
+function int void f;
+function int int  f;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+function int void f;
+function int int  f do end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+function int void f;
+function int void f do end
+escape 1;
+]],
+    run = 1,
+}
+
+do return end
 --]===]
+
 
 -- OK: well tested
 
-Test { [[return(1);]],
+Test { [[escape(1);]],
     ana = {
         isForever = false,
     },
     run = 1,
 }
 
-Test { [[return (1);]], run=1 }
-Test { [[return 1;]], run=1 }
+Test { [[escape (1);]], run=1 }
+Test { [[escape 1;]], run=1 }
 
-Test { [[return 1; // return 1;]], run=1 }
-Test { [[return /* */ 1;]], run=1 }
-Test { [[return /*
+Test { [[escape 1; // return 1;]], run=1 }
+Test { [[escape /* */ 1;]], run=1 }
+Test { [[escape /*
 
 */ 1;]], run=1 }
-Test { [[return /**/* **/ 1;]], run=1 }
-Test { [[return /**/* */ 1;]],
-    parser = "line 1 : after `return´ : expected expression"
+Test { [[escape /**/* **/ 1;]], run=1 }
+Test { [[escape /**/* */ 1;]],
+    parser = "line 1 : after `escape´ : expected expression"
 }
 
 Test { [[
 do do do do do do do do do do do do do do do do do do do do
 end end end end end end end end end end end end end end end end end end end end
-return 1;
+escape 1;
 ]],
     run = 1
 }
@@ -286,7 +411,7 @@ return 1;
 Test { [[
 do do
 end end
-return 1;
+escape 1;
 ]],
     --ast = 'line 2 : max depth of 127',
     run = 1
@@ -298,7 +423,7 @@ do do do do do do do do do do do do do do do do do do do do
 end end end end end end end end end end end end end end end end end end end end
 end end end end end end end end end end end end end end end end end end end end
 end end end end end end end end end end end end end end end end end end end end
-return 1;
+escape 1;
 ]],
     --ast = 'line 2 : max depth of 127',
     run = 1
@@ -317,27 +442,27 @@ end end end end end end end end end end end end end end end end end end end end
 end end end end end end end end end end end end end end end end end end end end
 end end end end end end end end end end end end end end end end end end end end
 end end end end end end end end end end end end end end end end end end end end
-return 1;
+escape 1;
 ]],
     adj = 'line 5 : max depth of 0xFF',
 }
 
-Test { [[return 0;]], run=0 }
-Test { [[return 9999;]], run=9999 }
-Test { [[return -1;]], run=-1 }
-Test { [[return --1;]], run=1 }
-Test { [[return - -1;]], run=1 }
-Test { [[return -9999;]], run=-9999 }
-Test { [[return 'A';]], run=65, }
-Test { [[return (((1)));]], run=1 }
-Test { [[return 1+2*3;]], run=7 }
-Test { [[return 1==2;]], run=0 }
-Test { [[return 0  or  10;]], run=1 }
-Test { [[return 0 and 10;]], run=0 }
-Test { [[return 2>1 and 10!=0;]], run=1 }
-Test { [[return (1<=2) + (1<2) + 2/1 - 2%3;]], run=2 }
+Test { [[escape 0;]], run=0 }
+Test { [[escape 9999;]], run=9999 }
+Test { [[escape -1;]], run=-1 }
+Test { [[escape --1;]], run=1 }
+Test { [[escape - -1;]], run=1 }
+Test { [[escape -9999;]], run=-9999 }
+Test { [[escape 'A';]], run=65, }
+Test { [[escape (((1)));]], run=1 }
+Test { [[escape 1+2*3;]], run=7 }
+Test { [[escape 1==2;]], run=0 }
+Test { [[escape 0  or  10;]], run=1 }
+Test { [[escape 0 and 10;]], run=0 }
+Test { [[escape 2>1 and 10!=0;]], run=1 }
+Test { [[escape (1<=2) + (1<2) + 2/1 - 2%3;]], run=2 }
 -- TODO: linux gcc only?
---Test { [[return (~(~0b1010 & 0XF) | 0b0011 ^ 0B0010) & 0xF;]], run=11 }
+--Test { [[escape (~(~0b1010 & 0XF) | 0b0011 ^ 0B0010) & 0xF;]], run=11 }
 Test { [[nt a;]],
     parser = "line 1 : after `nt´ : expected `;´",
 }
@@ -347,8 +472,8 @@ Test { [[nt sizeof;]],
 Test { [[var int sizeof;]],
     parser = "line 1 : after `int´ : expected identifier",
 }
-Test { [[return sizeof(int);]], run=4 }
-Test { [[return 1<2>3;]], run=0 }
+Test { [[escape sizeof(int);]], run=4 }
+Test { [[escape 1<2>3;]], run=0 }
 
 Test { [[var int a;]],
     ana = {
@@ -359,21 +484,21 @@ Test { [[var int a;]],
 
 Test { [[
 var int a, b;
-return 10;
+escape 10;
 ]],
     run = 10,
 }
 
-Test { [[a = 1; return a;]],
+Test { [[a = 1; escape a;]],
     env = 'variable/event "a" is not declared',
 }
-Test { [[var int a; a = 1; return a;]],
+Test { [[var int a; a = 1; escape a;]],
     run = 1,
 }
-Test { [[var int a = 1; return a;]],
+Test { [[var int a = 1; escape a;]],
     run = 1,
 }
-Test { [[var int a = 1; return (a);]],
+Test { [[var int a = 1; escape (a);]],
     run = 1,
 }
 Test { [[var int a = 1;]],
@@ -382,39 +507,39 @@ Test { [[var int a = 1;]],
         isForever = true,
     }
 }
-Test { [[var int a=1;var int a=0; return a;]],
+Test { [[var int a=1;var int a=0; escape a;]],
     --env = 'line 1 : variable/event "a" is already declared at line 1',
     run = 0,
 }
-Test { [[do var int a=1; end var int a=0; return a;]],
+Test { [[do var int a=1; end var int a=0; escape a;]],
     run = 0,
 }
-Test { [[var int a=1,a=0; return a;]],
+Test { [[var int a=1,a=0; escape a;]],
     --env = 'line 1 : variable/event "a" is already declared at line 1',
     run = 0,
 }
 Test { [[var int a; a = b = 1]],
     parser = "line 1 : after `b´ : expected `;´",
 }
-Test { [[var int a = b; return 0;]],
+Test { [[var int a = b; escape 0;]],
     env = 'variable/event "b" is not declared',
 }
-Test { [[return 1;2;]],
+Test { [[escape 1;2;]],
     parser = "line 1 : before `;´ : expected statement",
 }
-Test { [[var int aAa; aAa=1; return aAa;]],
+Test { [[var int aAa; aAa=1; escape aAa;]],
     run = 1,
 }
-Test { [[var int a; a=1; return a;]],
+Test { [[var int a; a=1; escape a;]],
     run = 1,
 }
-Test { [[var int a; a=1; a=2; return a;]],
+Test { [[var int a; a=1; a=2; escape a;]],
     run = 2,
 }
-Test { [[var int a; a=1; return a;]],
+Test { [[var int a; a=1; escape a;]],
     run = 1,
 }
-Test { [[var int a; a=1 ; a=a; return a;]],
+Test { [[var int a; a=1 ; a=a; escape a;]],
     run = 1,
 }
 Test { [[var int a; a=1 ; ]],
@@ -439,7 +564,7 @@ native do
 end
 event void a;
 var _abc b;
-return 1;
+escape 1;
 ]],
     run = 1,
 }
@@ -457,78 +582,78 @@ Test { [[
 input void A;
 var int a? = 1;
 a_ = 2;
-return a?;
+escape a?;
 ]],
     run = 2,
 }
 
 Test { [[
-return 0x1 + 0X1 + 001;
+escape 0x1 + 0X1 + 001;
 ]],
     run = 3,
 }
 
 Test { [[
-return 0x1 + 0X1 + 0a01;
+escape 0x1 + 0X1 + 0a01;
 ]],
     env = 'line 1 : malformed number',
 }
 
 Test { [[
-return 1.;
+escape 1.;
 ]],
     run = 1,
 }
 
 Test { [[
 var float x = 1.5;
-return x + 0.5;
+escape x + 0.5;
 ]],
     run = 2,
 }
 
 Test { [[
 var uint x = 1.5;
-return x + 0.5;
+escape x + 0.5;
 ]],
     run = 1,
 }
 
 Test { [[
 var char x = 1.5;
-return x + 0.5;
+escape x + 0.5;
 ]],
     run = 1,
 }
 
 Test { [[
 var char x = 256;
-return x + 0.5;
+escape x + 0.5;
 ]],
     run = 0,
 }
 
     -- IF
 
-Test { [[if 1 then return 1; end; return 0;]],
+Test { [[if 1 then escape 1; end; escape 0;]],
     ana = {
         isForever = false,
     },
     run = 1,
 }
-Test { [[if 0 then return 0; end  return 1;]],
+Test { [[if 0 then escape 0; end  escape 1;]],
     run = 1,
 }
-Test { [[if 0 then return 0; else return 1; end]],
+Test { [[if 0 then escape 0; else escape 1; end]],
     ana = {
         isForever = false,
     },
     run = 1,
 }
-Test { [[if (0) then return 0; else return 1; end;]],
+Test { [[if (0) then escape 0; else escape 1; end;]],
     run = 1,
 }
-Test { [[if (1) then return (1); end]],
+Test { [[if (1) then escape (1); end]],
     ana = {
         reachs = 1,
     },
@@ -536,22 +661,22 @@ Test { [[if (1) then return (1); end]],
 }
 Test { [[
 if (0) then
-    return 1;
+    escape 1;
 end
-return 0;
+escape 0;
 ]],
     run = 0,
 }
 Test { [[
 var int a = 1;
 if a == 0 then
-    return 1;
+    escape 1;
 else/if a > 0 then
-    return 0;
+    escape 0;
 else
-    return 1;
+    escape 1;
 end
-return 0;
+escape 0;
 ]],
     ana = {
         unreachs = 1,
@@ -561,28 +686,28 @@ return 0;
 Test { [[
 var int a = 1;
 if a == 0 then
-    return 0;
+    escape 0;
 else/if a < 0 then
-    return 0;
+    escape 0;
 else
     a = a + 2;
     if a < 0 then
-        return 0;
+        escape 0;
     else/if a > 1 then
-        return 1;
+        escape 1;
     else
-        return 0;
+        escape 0;
     end
-    return 1;
+    escape 1;
 end
-return 0;
+escape 0;
 ]],
     ana = {
         unreachs = 2,
     },
     run = 1,
 }
-Test { [[if (2) then  else return 0; end;]],
+Test { [[if (2) then  else escape 0; end;]],
     ana = {
         reachs = 1,
     },
@@ -590,16 +715,16 @@ Test { [[if (2) then  else return 0; end;]],
 }
 
 -- IF vs SEQ priority
-Test { [[if 1 then var int a; return 2; else return 3; end;]],
+Test { [[if 1 then var int a; escape 2; else escape 3; end;]],
     run = 2,
 }
 
 Test { [[
 if 0 then
-    return 1;
+    escape 1;
 else
     if 1 then
-        return 1;
+        escape 1;
     end
 end;]],
     ana = {
@@ -609,12 +734,12 @@ end;]],
 }
 Test { [[
 if 0 then
-    return 1;
+    escape 1;
 else
     if 0 then
-        return 1;
+        escape 1;
     else
-        return 2;
+        escape 2;
     end
 end;]],
     ana = {
@@ -626,9 +751,9 @@ Test { [[
 var int a = 0;
 var int b = a;
 if b then
-    return 1;
+    escape 1;
 else
-    return 2;
+    escape 2;
 end;
 ]],
     run = 2,
@@ -640,7 +765,7 @@ if 0 then
 else
     a = 2;
 end;
-return a;
+escape a;
 ]],
     run = 2,
 }
@@ -652,16 +777,16 @@ if 1 then
         a = 2;
     end;
 end;
-return a;
+escape a;
 ]],
     run = 2,
 }
 Test { [[
 var int a;
 if 0 then
-    return 1;
+    escape 1;
 else
-    a=1;a=2; return 3;
+    a=1;a=2; escape 3;
 end;
 ]],
     run = 3,
@@ -671,7 +796,7 @@ var int a = 0;
 if (0) then
     a = 1;
 end
-return a;
+escape a;
 ]],
     run = 0,
 }
@@ -682,7 +807,7 @@ Test { [[input int A=1;]], parser="line 1 : after `A´ : expected `;´" }
 Test { [[
 input int A;
 A=1;
-return 1;
+escape 1;
 ]],
     parser = 'line 1 : after `;´ : expected statement',
 }
@@ -693,7 +818,7 @@ Test { [[input  int A;]],
         isForever = true,
     },
 }
-Test { [[input int A,A; return 0;]],
+Test { [[input int A,A; escape 0;]],
     --env = 'event "A" is already declared',
     run = 0,
 }
@@ -706,14 +831,14 @@ input int A,B,Z;
     },
 }
 
-Test { [[await A; return 0;]],
+Test { [[await A; escape 0;]],
     env = 'event "A" is not declared',
 }
 
 Test { [[
 input void A;
 await A;
-return 1;
+escape 1;
 ]],
     run = { ['~>A']=1 },
 }
@@ -724,7 +849,7 @@ par/and do
 with
     nothing;
 end
-return 1;
+escape 1;
 ]],
     run = { ['~>A']=1 },
 }
@@ -738,7 +863,7 @@ with
         emit A=>10;
     end
 end;
-return 10;
+escape 10;
 ]],
     ana = {
         isForever = false,
@@ -755,7 +880,7 @@ with
         emit A => 10;
     end;
 end
-return ret;
+escape ret;
 ]],
     run = 10
 }
@@ -769,9 +894,9 @@ with
         emit A => 10;
     end;
 end;
-return A;
+escape A;
 ]],
-    parser = "line 9 : after `return´ : expected expression",
+    parser = "line 9 : after `escape´ : expected expression",
 }
 
 Test { [[
@@ -784,7 +909,7 @@ with
         emit A => 10;
     end;
 end;
-return v;
+escape v;
 ]],
     ana = {
         isForever = false,
@@ -795,7 +920,7 @@ return v;
 Test { [[
 input int A;
 var int v = await A;
-return v;
+escape v;
 ]],
     run = {
         ['101~>A'] = 101,
@@ -803,30 +928,30 @@ return v;
     },
 }
 
-Test { [[var int a = a+1; return a;]],
+Test { [[var int a = a+1; escape a;]],
     --env = 'variable/event "a" is not declared',
     todo = 'TODO: deveria dar erro!',
     run = 1,
 }
 
-Test { [[var int a; a = emit a => 1; return a;]],
+Test { [[var int a; a = emit a => 1; escape a;]],
     parser = 'line 1 : after `=´ : expected expression',
     --ast = "line 1 : after `emit´ : expected event",
     --trig_wo = 1,
 }
 
-Test { [[var int a; emit a => 1; return a;]],
+Test { [[var int a; emit a => 1; escape a;]],
     env = 'line 1 : event "a" is not declared',
     --trig_wo = 1,
 }
-Test { [[event int a=0; emit a => 1; return a;]],
+Test { [[event int a=0; emit a => 1; escape a;]],
     parser = 'line 1 : after `a´ : expected `;´',
     --trig_wo = 1,
 }
 Test { [[
 event int a;
 emit a => 1;
-return a;
+escape a;
 ]],
     val = 'line 3 : invalid expression',
     --run = 1,
@@ -842,7 +967,7 @@ every START do
     end
     do break; end
 end
-return 10;
+escape 10;
 ]],
     --loop = 1,
     run = 10,
@@ -853,7 +978,7 @@ var int a=10;
 do
     var int b=1;
 end
-return a;
+escape a;
 ]],
     run = 10,
 }
@@ -867,10 +992,10 @@ event void e;
 par do
     await START;
     emit e;
-    return 1;       // 9
+    escape 1;       // 9
 with
     await e;
-    return 2;       // 12
+    escape 2;       // 12
 end
 ]],
     ana = {
@@ -891,7 +1016,7 @@ par do
         v = 0;
         emit a;
         v = 1;
-        return v;
+        escape v;
     end
 with
     loop do
@@ -913,7 +1038,7 @@ loop do
     end
     x = tmp;
 end
-return x;
+escape x;
 ]],
     run = { ['1~>E; 2~>E;0~>E']=2 }
 }
@@ -932,7 +1057,7 @@ par do
 with
     loop do
         await a;
-        return 1;       // kills emit a
+        escape 1;       // kills emit a
     end                 // unreach
 end
 ]],
@@ -949,11 +1074,11 @@ event void a,b;
 par do
     await START;
     emit a;
-    return 10;
+    escape 10;
 with
     await a;
     emit b;
-    return 100;
+    escape 100;
 end
 ]],
     run = 100;
@@ -963,23 +1088,23 @@ end
 
 Test { [[
 output xxx A;
-return(1);
+escape(1);
 ]],
     parser = "line 1 : after `output´ : expected type",
 }
 Test { [[
 output int A;
 emit A => 1;
-return(1);
+escape(1);
 ]],
     run=1
 }
 Test { [[
 output int A;
 if emit A => 1 then
-    return 0;
+    escape 0;
 end
-return(1);
+escape(1);
 ]],
     parser = 'line 2 : after `if´ : expected expression',
 }
@@ -989,9 +1114,9 @@ native do
 end
 output int A;
 if emit A => 1 then
-    return 0;
+    escape 0;
 end
-return(1);
+escape(1);
 ]],
     parser = 'line 5 : after `if´ : expected expression',
 }
@@ -999,21 +1124,21 @@ return(1);
 Test { [[
 output t A;
 emit A => 1;
-return(1);
+escape(1);
 ]],
     parser = 'line 1 : after `output´ : expected type',
 }
 Test { [[
 output t A;
 emit A => 1;
-return(1);
+escape(1);
 ]],
     parser = 'line 1 : after `output´ : expected type',
 }
 Test { [[
 output _t* A;
 emit A => 1;
-return(1);
+escape(1);
 ]],
     env = 'line 2 : non-matching types on `emit´',
 }
@@ -1021,7 +1146,7 @@ Test { [[
 output int A;
 var _t v;
 emit A => v;
-return(1);
+escape(1);
 ]],
     --env = 'line 2 : undeclared type `_t´',
     --env = 'line 3 : non-matching types on `emit´',
@@ -1034,7 +1159,7 @@ native do
 end
 var _t v;
 emit A => v;
-return(1);
+escape(1);
 ]],
     --env = 'line 2 : undeclared type `_t´',
     --env = 'line 3 : non-matching types on `emit´',
@@ -1044,7 +1169,7 @@ Test { [[
 output int A;
 var int a;
 emit A => &a;
-return(1);
+escape(1);
 ]],
     env = 'line 3 : non-matching types on `emit´',
 }
@@ -1052,9 +1177,9 @@ Test { [[
 output int A;
 var int a;
 if emit A => &a then
-    return 0;
+    escape 0;
 end
-return(1);
+escape(1);
 ]],
     parser = 'line 3 : after `if´ : expected expression',
     --env = 'line 3 : non-matching types on `emit´',
@@ -1072,7 +1197,7 @@ native do
     /******/
 end
 native _end;
-return _end;
+escape _end;
 ]],
     run = 1
 }
@@ -1088,11 +1213,11 @@ native do
     int Fa (int id, int len, void* data) {
         assert(len == 8);
         t v = *((t*)data);
-        return v.a - v.b;
+        escape v.a - v.b;
     }
     ##define ceu_out_event_B(c) Fb(c)
     int Fb (int data) {
-        return data - 1;
+        escape data - 1;
     }
 end
 native _t = 8;
@@ -1105,7 +1230,7 @@ v.a = 1;
 v.b = -1;
 a = emit A => &v;
 b = emit B => 5;
-return a + b;
+escape a + b;
 ]],
     --run = 6,
     parser = 'line 26 : after `=´ : expected expression',
@@ -1118,7 +1243,7 @@ native do
     void A (int v) {}
 end
 var _cahr v = emit A => 1;
-return 0;
+escape 0;
 ]],
     parser = 'line 6 : after `=´ : expected expression',
     --env = 'line 6 : undeclared type `_cahr´',
@@ -1127,7 +1252,7 @@ Test { [[
 native _char = 1;
 output void A;
 var _char v = emit A => ;
-return v;
+escape v;
 ]],
     parser = 'line 3 : after `=´ : expected expression',
     --env = 'line 3 : invalid attribution',
@@ -1139,7 +1264,7 @@ native do
 end
 native _char = 1;
 var _char v = emit A => 1;
-return 0;
+escape 0;
 ]],
     parser = 'line 6 : after `=´ : expected expression',
     --env = 'line 6 : non-matching types on `emit´',
@@ -1150,7 +1275,7 @@ native do
     void A (int v) {}
 end
 emit A => 1;
-return 0;
+escape 0;
 ]],
     env = 'event "A" is not declared',
 }
@@ -1162,7 +1287,7 @@ par/or do
 with
     emit B;
 end
-return 1;
+escape 1;
 ]],
     ana = {
         acc = 1,
@@ -1179,7 +1304,7 @@ par/or do
 with
     emit B;
 end
-return 1;
+escape 1;
 ]],
     ana = {
         abrt = 3,
@@ -1189,30 +1314,30 @@ return 1;
 
     -- WALL-CLOCK TIME / WCLOCK
 
-Test { [[await 0ms; return 0;]],
+Test { [[await 0ms; escape 0;]],
     val = 'line 1 : constant is out of range',
 }
 Test { [[
 input void A;
 await A;
-return 0;
+escape 0;
 ]],
     run = { ['~>10ms; ~>A'] = 0 }
 }
 
-Test { [[await -1ms; return 0;]],
+Test { [[await -1ms; escape 0;]],
     --ast = "line 1 : after `await´ : expected event",
     parser = 'line 1 : after `1´ : expected `;´',
 }
 
-Test { [[await 1; return 0;]],
+Test { [[await 1; escape 0;]],
     parser = 'line 1 : after `1´ : expected <h,min,s,ms,us>',
 }
-Test { [[await -1; return 0;]],
+Test { [[await -1; escape 0;]],
     env = 'line 1 : event "?" is not declared',
 }
 
-Test { [[var s32 a=await 10s; return a==8000000;]],
+Test { [[var s32 a=await 10s; escape a==8000000;]],
     ana = {
         isForever = false,
     },
@@ -1230,17 +1355,17 @@ Test { [[await FOREVER;]],
 Test { [[await FOREVER; await FOREVER;]],
     parser = "line 1 : before `;´ : expected event",
 }
-Test { [[await FOREVER; return 0;]],
+Test { [[await FOREVER; escape 0;]],
     parser = "line 1 : before `;´ : expected event",
 }
 
-Test { [[emit 1ms; return 0;]], props='not permitted outside `async´' }
+Test { [[emit 1ms; escape 0;]], props='not permitted outside `async´' }
 Test { [[
 var int a;
 a = async do
     emit 1min;
 end;
-return a + 1;
+escape a + 1;
 ]],
     todo = 'async nao termina',
     run = false,
@@ -1249,7 +1374,7 @@ return a + 1;
 Test { [[
 async do
 end
-return 10;
+escape 10;
 ]],
     ana = {
         isForever = false,
@@ -1261,9 +1386,9 @@ Test { [[
 var int a;
 async do
     emit 1min;
-    return 10;
+    escape 10;
 end;
-return a + 1;
+escape a + 1;
 ]],
     props = 'line 4 : not permitted inside `async´',
 }
@@ -1275,7 +1400,7 @@ async (pa) do
     emit 1min;
     *pa = 10;
 end;
-return a + 1;
+escape a + 1;
 ]],
     run = 11,
 }
@@ -1285,7 +1410,7 @@ return a + 1;
 Test { [[
 input int A;
 var int v = await A;
-return v;
+escape v;
 ]],
     run = { ['10~>A']=10 },
 }
@@ -1293,7 +1418,7 @@ Test { [[
 input int A,B;
 await A;
 var int v = await B;
-return v;
+escape v;
 ]],
     run = {
         ['3~>A ; 1~>B'] = 1,
@@ -1303,7 +1428,7 @@ return v;
 Test { [[
 var int a = await 10ms;
 a = await 20ms;
-return a;
+escape a;
 ]],
     run = {
         ['~>20ms ; ~>11ms'] = 1000,
@@ -1313,7 +1438,7 @@ return a;
 Test { [[
 var int a = await 10us;
 a = await 40us;
-return a;
+escape a;
 ]],
     run = {
         ['~>20us ; ~>30us'] = 0,
@@ -1333,7 +1458,7 @@ par/and do
 with
     await 1s;
 end
-return 0;
+escape 0;
 ]],
     ana = {
         unreachs = 2,
@@ -1348,7 +1473,7 @@ par/or do
 with
     ret = 2;
 end
-return ret;
+escape ret;
 ]],
     ana = {
         acc = 1,
@@ -1363,7 +1488,7 @@ par/or do
 with
     ret = 2;
 end
-return ret;
+escape ret;
 ]],
     run = 2,
 }
@@ -1379,7 +1504,7 @@ par/or do
 with
     ret = 2;
 end
-return ret;
+escape ret;
 ]],
     ana = {
         acc = 1,
@@ -1398,7 +1523,7 @@ with
         ret = 1;
     end
 end
-return ret;
+escape ret;
 ]],
     ana = {
         acc = 1,
@@ -1417,7 +1542,7 @@ with
         ret = 1;
     end
 end
-return ret;
+escape ret;
 ]],
     run = 1,
 }
@@ -1434,7 +1559,7 @@ with
     ret = 1;
     await F;    // 10
 end
-return ret;
+escape ret;
 ]],
     ana = {
         acc = 1,  -- false positive
@@ -1459,7 +1584,7 @@ par/or do
 with
     await FOREVER;
 end
-return 0;
+escape 0;
 ]],
     ana = {
         unreachs = 2,
@@ -1509,10 +1634,10 @@ Test { [[
 par do
     await 1s;
     await 1s;
-    return 1;   // 4
+    escape 1;   // 4
 with
     await 2s;
-    return 2;   // 7
+    escape 2;   // 7
 end
 ]],
     ana = {
@@ -1540,7 +1665,7 @@ loop do
         end
     end
 end
-return a;
+escape a;
 ]],
     ana = {
         abrt = 2,
@@ -1582,7 +1707,7 @@ par do
         await 10ms;
         v2 = 2;
     end
-    return v1 + v2;
+    escape v1 + v2;
 with
     async do
         emit 5ms;
@@ -1604,7 +1729,7 @@ input int A;
 await A;
 await A;
 var int v = await A;
-return v;
+escape v;
 ]],
     run  = {
         ['1~>A ; 2~>A ; 3~>A'] = 3,
@@ -1619,7 +1744,7 @@ if 1 then
 else
     ret = await B;
 end;
-return ret;
+escape ret;
 ]],
     run = {
         ['1~>A ; 0~>A'] = 1,
@@ -1633,7 +1758,7 @@ var int v;
 if 1 then
     v = await A;
 end;
-return v;
+escape v;
 ]],
     run = {
         ['1~>A ; 0~>A'] = 1,
@@ -1646,7 +1771,7 @@ var int v;
 if 0 then
     v = await A;
 end;
-return v;
+escape v;
 ]],
     run = 0,
 }
@@ -1655,7 +1780,7 @@ Test { [[
 par/or do
     await FOREVER;
 with
-    return 1;
+    escape 1;
 end
 ]],
     ana = {
@@ -1668,11 +1793,11 @@ end
 Test { [[
 var int a = do
     var int a = do
-        return 1;
+        escape 1;
     end;
-    return a;
+    escape a;
 end;
-return a;
+escape a;
 ]],
     run = 1
 }
@@ -1682,12 +1807,12 @@ event int aa;
 var int a;
 par/and do
     a = do
-        return 1;
+        escape 1;
     end;
 with
     await aa;
 end;
-return 0;
+escape 0;
 ]],
     ana = {
         --unreachs = 2,
@@ -1699,12 +1824,12 @@ Test { [[
 event int a;
 par/and do
     a = do
-        return 1;
+        escape 1;
     end;
 with
     await a;
 end;
-return 0;
+escape 0;
 ]],
     code = 'line 3 : invalid expression',
 }
@@ -1716,7 +1841,7 @@ par/or do
     await FOREVER;
 with
     await B;
-    return 1;
+    escape 1;
 end;
 ]],
     ana = {
@@ -1728,7 +1853,7 @@ end;
 Test { [[
 par/and do
 with
-    return 1;
+    escape 1;
 end
 ]],
     ana = {
@@ -1740,7 +1865,7 @@ end
 Test { [[
 par do
 with
-    return 1;
+    escape 1;
 end
 ]],
     run = 1,
@@ -1752,7 +1877,7 @@ Test { [[
 par do
     await 10ms;
 with
-    return 1;
+    escape 1;
 end
 ]],
     ana = {
@@ -1767,7 +1892,7 @@ par do
     async do end
 with
     await A;
-    return 1;
+    escape 1;
 end
 ]],
     run = { ['1~>A']=1 },
@@ -1777,7 +1902,7 @@ Test { [[
 par do
     async do end
 with
-    return 1;
+    escape 1;
 end
 ]],
     todo = 'async dos not exec',
@@ -1791,7 +1916,7 @@ Test { [[
 par do
     await FOREVER;
 with
-    return 1;
+    escape 1;
 end;
 ]],
     run = 1,
@@ -1807,7 +1932,7 @@ par do
     await FOREVER;
 with
     await B;
-    return 1;
+    escape 1;
 end;
 ]],
     run = { ['~>A;~>B']=1, },
@@ -1828,7 +1953,7 @@ par/or do
 with
     await F;
 end;
-return a;
+escape a;
 ]],
     ana = {
         --unreachs = 1,
@@ -1884,7 +2009,7 @@ par/or do
 with
     await F;
 end;
-return a;
+escape a;
 ]],
     run = {
         ['1~>B; ~>20us; 1~>F'] = 1,
@@ -1899,21 +2024,21 @@ var int a = do
                 var int v;
                 par/or do
                     var int v = await 10ms;
-                    return v; //  8
+                    escape v; //  8
                 with
                     v = await A;
                 end;
-                return v;     // 12
+                escape v;     // 12
             with
                 var int v = await B;
-                return v;     // 15
+                escape v;     // 15
             end;
         with
             await F;
         end;
-        return 0;
+        escape 0;
     end;
-return a;
+escape a;
 ]],
     run = {
         ['1~>B; ~>20ms; 1~>F'] = 1,
@@ -1929,23 +2054,23 @@ var int a = do
                 var int v;
                 par/or do
                     var int v = await 10ms;
-                    return v;
+                    escape v;
                 with
                     v = await A;
                 end;
-                return v;
+                escape v;
             with
                 var int v = await B;
-                return v;
+                escape v;
             end;
             // unreachable
             await FOREVER;
         with
             await F;
         end;
-        return 0;
+        escape 0;
     end;
-return a;
+escape a;
 ]],
     -- TODO: melhor seria: unexpected statement
     parser = "line 16 : after `;´ : expected `with´",
@@ -1968,7 +2093,7 @@ par/and do
 with
     await D;
 end;
-return 100;
+escape 100;
 ]],
     run = { ['1~>A;1~>D']=100 }
 }
@@ -1987,7 +2112,7 @@ else
         await A;
     end;
 end;
-return b;
+escape b;
 ]],
     run = {
         ['0~>A ; 0~>A'] = 1,
@@ -2009,7 +2134,7 @@ loop do
         break;
     end;
 end;
-return 1;
+escape 1;
 ]],
     ana = {
         unreachs = 1,    -- re-loop
@@ -2020,10 +2145,10 @@ Test { [[
 input int A;
 loop do
     do
-        return 1;
+        escape 1;
     end;
 end;
-return 0;
+escape 0;
 ]],
     ana = {
         unreachs = 2,
@@ -2035,10 +2160,10 @@ Test { [[
 input int A;
 loop do
     loop do
-        return 1;
+        escape 1;
     end;
 end;
-return 0;
+escape 0;
 ]],
     ana = {
         unreachs = 3,
@@ -2053,7 +2178,7 @@ loop do
         break;
     end;
 end;
-return 0;
+escape 0;
 ]],
     ana = {
         isForever = true,
@@ -2070,7 +2195,7 @@ loop do
         break;
     end;
 end;
-return 1;
+escape 1;
 ]],
     ana = {
         unreachs = 1,
@@ -2090,7 +2215,7 @@ loop do
         break;
     end;
 end;
-return 1;
+escape 1;
 ]],
     ana = {
         unreachs = 1,
@@ -2103,10 +2228,10 @@ loop do
     par do
         await FOREVER;
     with
-        return 1;
+        escape 1;
     end;
 end;        // unreachs
-return 1;   // unreachs
+escape 1;   // unreachs
 ]],
     ana = {
         unreachs = 2,
@@ -2123,10 +2248,10 @@ loop do
         await FOREVER;
     with
         await B;
-        return 1;
+        escape 1;
     end;
 end;        // unreachs
-return 1;   // unreachs
+escape 1;   // unreachs
 ]],
     ana = {
         unreachs = 2,
@@ -2140,7 +2265,7 @@ loop do
         break;
     end;
 end;
-return 1;
+escape 1;
 ]],
     props = '`break´ without loop',
 }
@@ -2162,7 +2287,7 @@ end;
 Test { [[
 var int a;
 loop do a=1; end;
-return a;
+escape a;
 ]],
     ana = {
         isForever = true,
@@ -2171,13 +2296,13 @@ return a;
     loop = 'tight loop',
 }
 
-Test { [[break; return 1;]],
+Test { [[break; escape 1;]],
     parser="line 1 : before `;´ : expected statement"
 }
 Test { [[break; break;]],
     parser="line 1 : before `;´ : expected statement"
 }
-Test { [[loop do break; end; return 1;]],
+Test { [[loop do break; end; escape 1;]],
     ana = {
         unreachs=1,
     },
@@ -2189,7 +2314,7 @@ loop do
     ret = 1;
     break;
 end;
-return ret;
+escape ret;
 ]],
     ana = {
         unreachs = 1,
@@ -2242,7 +2367,7 @@ end;
 Test { [[
 loop i, -1 do
 end
-return 1;
+escape 1;
 ]],
     run = 1,
     -- TODO: with sval -1 would be constant
@@ -2282,10 +2407,10 @@ var int v = 1;
 loop do
     loop i, v do
         await START;
-        return 2;
+        escape 2;
     end
 end
-return 1;
+escape 1;
 ]],
     loop = 'tight loop',
     run = 2,
@@ -2308,7 +2433,7 @@ do
 end
 
 var T t;
-return t.a + t._f();
+escape t.a + t._f();
 ]],
     run = 3,
 }
@@ -2323,7 +2448,7 @@ with
         nothing;
     end
 end
-return 1;
+escape 1;
 ]],
     run = 1,
 }
@@ -2334,7 +2459,7 @@ var int ret;
 every A do
     ret = ret + 1;
     if ret == 3 then
-        return ret;
+        escape ret;
     end
 end
 ]],
@@ -2347,7 +2472,7 @@ every 1s do
     await 1s;
     ret = ret + 1;
     if ret == 10 then
-        return ret;
+        escape ret;
     end
 end
 ]],
@@ -2359,7 +2484,7 @@ var int ret;
 every 1s do
     ret = ret + 1;
     if ret == 10 then
-        return ret;
+        escape ret;
     end
 end
 ]],
@@ -2372,7 +2497,7 @@ var int dt;
 every dt = 1s do
     ret = ret + dt;
     if ret == 10000000 then
-        return ret;
+        escape ret;
     end
 end
 ]],
@@ -2397,7 +2522,7 @@ input (int,int) A;
 par do
     var int a, b;
     every (a,b) = A do
-        return a+b;
+        escape a+b;
     end
 with
     async do
@@ -2419,7 +2544,7 @@ par/or do
 with
     await F;
 end
-return ret;
+escape ret;
 ]],
     run = { ['~>A;~>A;~>A;~>F;~>A']=3 },
 }
@@ -2437,7 +2562,7 @@ loop i,10 do
         continue;
     end
 end
-return ret;
+escape ret;
 ]],
     run = 1,
 }
@@ -2499,7 +2624,7 @@ loop i, 10 do
     end
     await 1s;
 end
-return ret;
+escape ret;
 ]],
     run = { ['~>10s']=5 }
 }
@@ -2560,7 +2685,7 @@ loop do
         a = 1;
     end;
 end;
-return a;
+escape a;
 ]],
     loop = 'tight loop',
     ana = {
@@ -2574,7 +2699,7 @@ loop do
         break;
     end;
 end;
-return 0;
+escape 0;
 ]],
     loop = 'tight loop'
 }
@@ -2587,7 +2712,7 @@ with
     loop do
     end;
 end;
-return 0;
+escape 0;
 ]],
     loop='tight loop',
     ana = {
@@ -2604,7 +2729,7 @@ with
     loop do
     end;
 end;
-return 0;
+escape 0;
 ]],
     loop='tight loop',
     ana = {
@@ -2620,7 +2745,7 @@ par/and do
 with
     loop do end;
 end;
-return 0;
+escape 0;
 ]],
     loop='tight loop',
     ana = {
@@ -2637,7 +2762,7 @@ loop do
     with
     end;
 end;
-return 0;
+escape 0;
 ]],
     loop='tight loop',
     ana = {
@@ -2656,7 +2781,7 @@ loop do
         await A;
     end;
 end;
-return 0;
+escape 0;
 ]],
     loop='tight loop',
     ana = {
@@ -2676,7 +2801,7 @@ with
     emit b;
     emit a;
 end
-return 5;
+escape 5;
 ]],
     run = 5,
 }
@@ -2688,7 +2813,7 @@ if 0 then
 else
     loop do await A; end;
 end;
-return 0;   // TODO
+escape 0;   // TODO
 ]],
     ana = {
         unreachs = 1,
@@ -2716,7 +2841,7 @@ loop do
         break;
     end;
 end;
-return 1;
+escape 1;
 ]],
     run = 1,
 }
@@ -2730,7 +2855,7 @@ loop do
         break;
     end;
 end;
-return 1;
+escape 1;
 ]],
     run = 1,
 }
@@ -2744,7 +2869,7 @@ loop do
         break;
     end;
 end;
-return 1;
+escape 1;
 ]],
     run = {
         ['0~>F'] = 1,
@@ -2765,7 +2890,7 @@ with
     await A;
     a = 1;          // 11
 end;
-return a;
+escape a;
 ]],
     ana = {
         abrt = 1,
@@ -2813,7 +2938,7 @@ par/or do
 with
     sum = 1;
 end
-return sum;
+escape sum;
 ]],
     todo = 'for',
     ana = {
@@ -2834,7 +2959,7 @@ par/or do
 with
     sum = 1;        // 9
 end
-return sum;
+escape sum;
 ]],
     ana = {
         abrt = 1,
@@ -2858,7 +2983,7 @@ with
     await A;
     sum = 1;    // 13
 end
-return ret;
+escape ret;
 ]],
     ana = {
         acc = 1,
@@ -2882,7 +3007,7 @@ with
     await A;
     sum = 1;
 end
-return ret;
+escape ret;
 ]],
     ana = {
         acc = 1,
@@ -2906,7 +3031,7 @@ par/or do
 with
     sum = 1;        // 12
 end
-return sum;
+escape sum;
 ]],
     ana = {
         abrt = 1,
@@ -2935,7 +3060,7 @@ with
         sum = sum + 1;  // 17
     end
 end
-return sum;
+escape sum;
 ]],
     run = 7,
 }
@@ -2945,7 +3070,7 @@ var int sum = 0;
 loop i, 100 do
     sum = sum + (i+1);
 end
-return sum;
+escape sum;
 ]],
     --loop = true,
     run = 5050,
@@ -2956,7 +3081,7 @@ for i=1, 100 do
     i = 1;
     sum = sum + i;
 end
-return sum;
+escape sum;
 ]],
     --loop = true,
     todo = 'should raise an error',
@@ -2967,7 +3092,7 @@ var int sum = 5050;
 loop i, 100 do
     sum = sum - (i+1);
 end
-return sum;
+escape sum;
 ]],
     --loop = true,
     run = 0,
@@ -2982,7 +3107,7 @@ loop i, 100 do
     end
     sum = sum - (i+1);
 end
-return v;
+escape v;
 ]],
     --loop = true,
     run = 99,
@@ -2999,7 +3124,7 @@ loop i, 101 do
     sum = sum + i;
     await A;
 end
-return v;
+escape v;
 ]],
     run = {['~>A;~>A;~>A;~>A;~>A;~>A;~>A;~>A;~>A;~>A;']=4},
 }
@@ -3008,7 +3133,7 @@ var int sum = 4;
 loop i, 0 do
     sum = sum - i;
 end
-return sum;
+escape sum;
 ]],
     --loop = true,
     ast = 'line 2 : constant should not be `0´',
@@ -3021,7 +3146,7 @@ loop i, 10 do
     await A;
     sum = sum + 1;
 end
-return sum;
+escape sum;
 ]],
     run = {['~>A;~>B;~>A;~>A;~>A;~>A;~>A;~>A;~>A;~>A;~>A;']=10},
 }
@@ -3033,7 +3158,7 @@ par/and do
 with
     ret = await B;
 end;
-return ret;
+escape ret;
 ]],
     run = { ['1~>A;2~>B'] = 2 }
 }
@@ -3059,7 +3184,7 @@ par/or do
 with
     ret = await F;
 end;
-return ret;
+escape ret;
 ]],
     run = { ['1~>F'] = 1 }
 }
@@ -3074,7 +3199,7 @@ loop do
 end;
 await A;
 await A;
-return a;
+escape a;
 ]],
     ana = {
         unreachs = 1,
@@ -3090,7 +3215,7 @@ par do
     await FOREVER;
 with
     await F;
-    return a;
+    escape a;
 end;
 ]],
     ana = {
@@ -3103,7 +3228,7 @@ Test { [[
 input int A;
 var int a = await A;
 await A;
-return a;
+escape a;
 ]],
     run = {['10~>A;20~>A']=10},
 }
@@ -3112,7 +3237,7 @@ Test { [[
 input int A;
 var int a = await A;
 var int b = await A;
-return a + b;
+escape a + b;
 ]],
     run = { ['10~>A;20~>A']=30, ['3~>A;0~>A;0~>A']=3 }
 }
@@ -3126,7 +3251,7 @@ par/and do
 with
     f = await F;
 end;
-return a+f;
+escape a+f;
 ]],
     run = { ['1~>A;5~>A;1~>F'] = 2 },
 }
@@ -3143,7 +3268,7 @@ par/or do
 with
     f = await F;
 end;
-return a+f;
+escape a+f;
 ]],
     run = { ['1~>A;5~>A;1~>F'] = 2 },
 }
@@ -3160,7 +3285,7 @@ par/or do
 with
     ret = await a;
 end
-return ret;
+escape ret;
 ]],
     run = 1,
     ana = {
@@ -3185,7 +3310,7 @@ with
     await b;
     ret = 2;    // 15: nd
 end
-return ret;
+escape ret;
 ]],
     ana = {
         acc = 1,
@@ -3218,7 +3343,7 @@ with
     end
     ret = 2;        // acc
 end
-return ret;
+escape ret;
 ]],
     ana = {
         acc = 1,
@@ -3250,7 +3375,7 @@ with
     await d;
     ret = 2;    // 21: acc
 end
-return ret;
+escape ret;
 ]],
     ana = {
         acc = 1,
@@ -3262,7 +3387,7 @@ Test { [[
 event int c;
 emit c => 10;
 await c;
-return 0;
+escape 0;
 ]],
     ana = {
         --unreachs = 1,
@@ -3276,7 +3401,7 @@ Test { [[
 event int c;
 emit c => 10;
 emit c => 10;
-return c;
+escape c;
 ]],
     val = 'line 4 : invalid expression',
     --trig_wo = 2,
@@ -3286,7 +3411,7 @@ Test { [[
 event int c;
 emit c => 10;
 emit c => 10;
-return 10;
+escape 10;
 ]],
     run = 10,
     --trig_wo = 2,
@@ -3297,7 +3422,7 @@ event int b;
 var   int a;
 a = 1;
 emit b => a;
-return a;
+escape a;
 ]],
     run = 1,
     --trig_wo = 1,
@@ -3312,7 +3437,7 @@ var int aa = 3;
 par do
     await START;
     emit a => aa;      // 6
-    return aa;
+    escape aa;
 with
     loop do
         var int v = await a;
@@ -3331,7 +3456,7 @@ var int aa = 3;
 par do
     await START;
     emit a => aa;
-    return aa;
+    escape aa;
 with
     loop do
         var int v = await a;
@@ -3353,7 +3478,7 @@ with
     ret = 5;        // 8
 end
 emit a;
-return ret;
+escape ret;
 ]],
     env = 'line 10 : invalid emit',
 }
@@ -3369,7 +3494,7 @@ with
     ret = 5;        // 8
 end
 emit a => 1;
-return ret;
+escape ret;
 ]],
     ana = {
         abrt = 1,
@@ -3386,7 +3511,7 @@ par/or do
 with
     ret = v[1];
 end;
-return ret;
+escape ret;
 ]],
     ana = {
         acc = 1,
@@ -3403,7 +3528,7 @@ par/or do
 with
     a = await A;
 end;
-return a;
+escape a;
 ]],
     ana = {
         acc = 1,
@@ -3420,12 +3545,12 @@ var int a = par do
             await B;
             // unreachable
         end;
-        return 0;               // 8
+        escape 0;               // 8
     with
         var int v = await A;
-        return v;               // 11
+        escape v;               // 11
     end;
-return a;
+escape a;
 ]],
     ana = {
         --unreachs = 1,
@@ -3440,14 +3565,14 @@ var int a;
 a = par do
         if 1 then
             var int v = await A;
-            return v;           // 6
+            escape v;           // 6
         end;
-        return 0;
+        escape 0;
     with
         var int v = await A;
-        return v;               // 11
+        escape v;               // 11
     end;
-return a;
+escape a;
 ]],
     ana = {
         acc = 1,
@@ -3463,14 +3588,14 @@ a = par do
     if 1 then
         var int v = await A;
         // unreachable
-        return v;               // 8
+        escape v;               // 8
     end;
-    return 0;                   // 10
+    escape 0;                   // 10
 with
     var int v = await A;
-    return v;                   // 13
+    escape v;                   // 13
 end;
-return a;
+escape a;
 ]],
     ana = {
         --unreachs = 1,
@@ -3493,7 +3618,7 @@ with
     emit e;
     v = 2;
 end
-return v;
+escape v;
 ]],
     ana = {
         excpt = 1,
@@ -3509,14 +3634,14 @@ a = par do
         v = await A;    // 5
     else
         await B;
-        return v;
+        escape v;
     end;
-    return 0;           // 10
+    escape 0;           // 10
 with
     var int v = await A;
-    return v;           // 13
+    escape v;           // 13
 end;
-return a;
+escape a;
 ]],
     ana = {
         acc = 1,
@@ -3530,17 +3655,17 @@ var int a,v;
 a = par do
     if 1 then
         v = await A;
-        return v;       // 6
+        escape v;       // 6
     else
         await B;
-        return v;
+        escape v;
     end;
-    return 0;
+    escape 0;
 with
     var int v = await A;
-    return v;           // 14
+    escape v;           // 14
 end;
-return a;
+escape a;
 ]],
     ana = {
         unreachs = 1,
@@ -3585,7 +3710,7 @@ with
         v = v + 1;
         emit c;
         _assert(v==4);
-        return v;       // 35
+        escape v;       // 35
     end                 // unreach
 with
     loop do
@@ -3617,7 +3742,7 @@ with
         a = await A;
     end;
 end;
-return a;
+escape a;
 ]],
     ana = {
         acc  = 1,
@@ -3632,13 +3757,13 @@ event int a;
 var int aa;
 par do
     await B;
-    return 1;
+    escape 1;
 with
     await B;
     par/or do
     with
     end;
-    return 2;
+    escape 2;
 end;
 ]],
     ana = {
@@ -3653,14 +3778,14 @@ event int a;
 var int aa;
 par do
     await B;
-    return 1;
+    escape 1;
 with
     await B;
     par/or do
-        return 2;
+        escape 2;
     with
     end;
-    return 3;
+    escape 3;
 end;
 ]],
     ana = {
@@ -3690,7 +3815,7 @@ with
     await A;
     emit b;
 end
-return ret;
+escape ret;
 ]],
     run = { ['~>A']=2 },
 }
@@ -3715,7 +3840,7 @@ with
     emit a;
     emit b;
 end
-return ret;
+escape ret;
 ]],
     ana = { acc=1 },
     run = 1,
@@ -3766,10 +3891,10 @@ par do
     with
         par/or do
             await y;
-            return 1;   // 12
+            escape 1;   // 12
         with
             await x;
-            return 2;   // 15
+            escape 2;   // 15
         end;
     end;
 with
@@ -3791,10 +3916,10 @@ event void a, b;
 par do
     par do
         await a;    // 5
-        return 1;   // 6
+        escape 1;   // 6
     with
         await b;
-        return 2;   // 9
+        escape 2;   // 9
     end
 with
     await START;    // 12
@@ -3821,7 +3946,7 @@ with
     b = await A;
     b = b+1+1;
 end;
-return a + b;
+escape a + b;
 ]],
     run = { ['0~>A']=3, ['5~>A']=13 },
 }
@@ -3844,7 +3969,7 @@ with
     end;
     d = 2;
 end;
-return a + b + c + d;
+escape a + b + c + d;
 ]],
     ana = {
         acc = 2,
@@ -3866,7 +3991,7 @@ with
     b = 100+v;
     ret = a + b;
 end;
-return ret;
+escape ret;
 ]],
     run = { ['1~>A;10~>B']=120 },
 }
@@ -3887,7 +4012,7 @@ with
         a = await A;
     end;
 end;
-return a + b;
+escape a + b;
 ]],
     ana = {
         acc = 2,
@@ -3898,9 +4023,9 @@ return a + b;
 
 Test { [[
 par do
-    return 1;
+    escape 1;
 with
-    return 2;
+    escape 2;
 end;
 ]],
     ana = {
@@ -3911,10 +4036,10 @@ end;
 Test { [[
 input int A;
 par do
-    return 1;
+    escape 1;
 with
     await A;
-    return 1;
+    escape 1;
 end;
 ]],
     ana = {
@@ -3927,10 +4052,10 @@ Test { [[
 input int A;
 par do
     var int v = await A;
-    return v;
+    escape v;
 with
     var int v = await A;
-    return v;
+    escape v;
 end;
 ]],
     ana = {
@@ -3944,7 +4069,7 @@ Test { [[
 par do
     await FOREVER;
 with
-    return 10;
+    escape 10;
 end;
 ]],
     ana = {
@@ -3957,13 +4082,13 @@ Test { [[
 input int A,B,Z;
 par do
     var int v = await A;
-    return v;
+    escape v;
 with
     var int v = await B;
-    return v;
+    escape v;
 with
     var int v = await Z;
-    return v;
+    escape v;
 end;
 ]],
     run = { ['1~>A']=1, ['2~>B']=2, ['3~>Z']=3 }
@@ -3972,7 +4097,7 @@ Test { [[
 par/and do
 with
 end;
-return 1;
+escape 1;
 ]],
     run = 1,
 }
@@ -3980,7 +4105,7 @@ Test { [[
 par/or do
 with
 end;
-return 1;
+escape 1;
 ]],
     ana = {
         abrt = 3,
@@ -3992,10 +4117,10 @@ input int A,B;
 par do
     await A;
     var int v = await A;
-    return v;
+    escape v;
 with
     var int v = await B;
-    return v;
+    escape v;
 end;
 ]],
     run = {
@@ -4010,10 +4135,10 @@ input int A,B;
 await A;
 par do
     var int v = await A;
-    return v;
+    escape v;
 with
     var int v = await B;
-    return v;
+    escape v;
 end;
 ]],
     run = {
@@ -4026,11 +4151,11 @@ input int A,B,Z;
 par do
     await A;
     var int v = await B;
-    return v;
+    escape v;
 with
     await A;
     var int v = await Z;
-    return v;
+    escape v;
 end;
 ]],
     run = {
@@ -4043,10 +4168,10 @@ input int A,B,Z;
 await A;
 par do
     var int v = await B;
-    return v;
+    escape v;
 with
     var int v = await Z;
-    return v;
+    escape v;
 end;
 ]],
     run = {
@@ -4061,7 +4186,7 @@ par/or do
 with
     await 10s;
 end;
-return 1;
+escape 1;
 ]],
     ana = {
         abrt = 3,
@@ -4074,10 +4199,10 @@ return 1;
 Test { [[
 par do
     var int a = await 10ms;
-    return a;
+    escape a;
 with
     var int b = await 10ms;
-    return b;
+    escape b;
 end;
 ]],
     ana = {
@@ -4096,7 +4221,7 @@ par/or do
 with
     a = await 10ms;
 end;
-return a;
+escape a;
 ]],
     ana = {
         acc = 1,
@@ -4117,7 +4242,7 @@ with
     await 20us;
     b = 1;
 end;
-return a + b;
+escape a + b;
 ]],
     ana = {
         abrt = 4,
@@ -4137,7 +4262,7 @@ with
     await 20us;
     b = 1;
 end;
-return a + b;
+escape a + b;
 ]],
     ana = {
         abrt = 4,
@@ -4157,7 +4282,7 @@ with
     await (20)us;
     b = 1;
 end;
-return a + b;
+escape a + b;
 ]],
     ana = {
         abrt = 4,
@@ -4177,7 +4302,7 @@ with
     await (20)us;
     b = 1;
 end;
-return a + b;
+escape a + b;
 ]],
     ana = {
         abrt = 4,
@@ -4194,7 +4319,7 @@ par/or do
 with
     b = await (10)us;
 end;
-return a + b;
+escape a + b;
 ]],
     ana = {
         abrt = 3,
@@ -4210,10 +4335,10 @@ Test { [[
 var int a,b;
 par do
     a = await 10ms;
-    return a;
+    escape a;
 with
     b = await (10000)us;
-    return b;
+    escape b;
 end;
 ]],
     ana = {
@@ -4229,7 +4354,7 @@ with
     await (5)ms;
     b = await (2)ms;
 end;
-return a+b;
+escape a+b;
 ]],
     ana = {
         abrt = 4,
@@ -4247,7 +4372,7 @@ with
     await (5)ms;
     b = await 2ms;
 end;
-return a+b;
+escape a+b;
 ]],
     ana = {
         abrt = 4,
@@ -4261,11 +4386,11 @@ Test { [[
 var int a,b;
 par do
     a = await 10us;
-    return a;
+    escape a;
 with
     b = await (5)us;
     await 5us;
-    return b;
+    escape b;
 end;
 ]],
     ana = {
@@ -4277,11 +4402,11 @@ Test { [[
 var int a,b;
 par do
     a = await 10us;
-    return a;
+    escape a;
 with
     b = await (5)us;
     await 10us;
-    return b;
+    escape b;
 end;
 ]],
     ana = {
@@ -4306,7 +4431,7 @@ with
         v2 = v2 + 1;
     end
 end
-return v1 + v2;
+escape v1 + v2;
 ]],
     ana = {
         abrt = 1,
@@ -4340,7 +4465,7 @@ with
         v3 = v3 + 1;
     end
 end
-return v1 + v2 + v3;
+escape v1 + v2 + v3;
 ]],
     ana = {
         abrt = 2,
@@ -4400,7 +4525,7 @@ par/or do
 with
     v = 1;          // 8
 end
-return v;
+escape v;
 ]],
     ana = {
         unreachs = 1,
@@ -4420,7 +4545,7 @@ loop do
     end
     v = v * 2;
 end
-return v;
+escape v;
 ]],
     run = 1,
     --run = 2,
@@ -4443,7 +4568,7 @@ loop do
         await A;
     end
 end
-return 0;
+escape 0;
 ]],
     run = 0,
 }
@@ -4522,7 +4647,7 @@ with
     await 10ms;
     v = 0;
 end
-return v;
+escape v;
 ]],
     todo = 'acc should be 0',
     simul = {
@@ -4565,7 +4690,7 @@ loop do
         break;
     end;
 end;
-return 0;
+escape 0;
 ]],
     run = { ['~>20ms'] = 0 }
 }
@@ -4601,7 +4726,7 @@ with
         a = 1;
     end;
 end;
-return a;
+escape a;
 ]],
     ana = {
         acc = 1,
@@ -4681,11 +4806,11 @@ Test { [[
 var int a,b;
 par/or do
     a = await 10ms;
-    return a;
+    escape a;
 with
     b = await (5)us;
     await 11ms;
-    return b;
+    escape b;
 end;
 ]],
     todo = 'await(x) pode ser <0?',  -- TIME_undef
@@ -4697,10 +4822,10 @@ Test { [[
 var int a,b;
 par do
     a = await 10ms;
-    return a;
+    escape a;
 with
     b = await (10000)us;
-    return b;
+    escape b;
 end;
 ]],
     ana = {
@@ -4719,7 +4844,7 @@ par/and do
 with
     b = await (9)us;
 end;
-return a+b;
+escape a+b;
 ]],
     run = {
         ['~>10us'] = 1,
@@ -4730,13 +4855,13 @@ Test { [[
 var int a,b,c;
 par do
     a = await 10us;
-    return a;
+    escape a;
 with
     b = await (9)us;
-    return b;
+    escape b;
 with
     c = await (8)us;
-    return c;
+    escape c;
 end;
 ]],
     ana = {
@@ -4753,7 +4878,7 @@ with
 with
     c = await (8)us;
 end;
-return a+b+c;
+escape a+b+c;
 ]],
     ana = {
         abrt = 9,
@@ -4772,7 +4897,7 @@ with
 with
     c = await (8000)us;
 end;
-return a+b+c;
+escape a+b+c;
 ]],
     run = {
         ['~>10ms'] = 3000,
@@ -4783,13 +4908,13 @@ Test { [[
 var int a,b,c;
 par do
     a = await 10us;
-    return a;
+    escape a;
 with
     b = await (10)us;
-    return b;
+    escape b;
 with
     c = await 10us;
-    return c;
+    escape c;
 end;
 ]],
     ana = {
@@ -4801,10 +4926,10 @@ Test { [[
 var s32 a,b;
 par do
     a = await 10min;
-    return a;
+    escape a;
 with
     b = await 20min;
-    return b;
+    escape b;
 end;
 ]],
     ana = {
@@ -4819,7 +4944,7 @@ end;
 }
 Test { [[
 await 35min;
-return 0;
+escape 0;
 ]],
     val = 'line 1 : constant is out of range',
 }
@@ -4831,7 +4956,7 @@ with
     await 20s;
     a = 0;
 end;
-return a;
+escape a;
 ]],
     ana = {
         abrt = 3,
@@ -4851,7 +4976,7 @@ with
     await 20ms;
     a = 0;
 end;
-return a;
+escape a;
 ]],
     ana = {
         abrt = 3,
@@ -4871,7 +4996,7 @@ with
     await 20ms;
     a = 0;
 end;
-return a;
+escape a;
 ]],
     ana = {
         acc = 1,
@@ -4882,11 +5007,11 @@ Test { [[
 var s32 v1,v2;
 par do
     v1 = await 5min;
-    return v1;
+    escape v1;
 with
     await 1min;
     v2 = await 4min;
-    return v2;
+    escape v2;
 end;
 ]],
     ana = {
@@ -4974,7 +5099,7 @@ with
     end;
 with
     await F;
-    return a;
+    escape a;
 end;
 ]],
     run = { ['~>10s;~>F']=10 }
@@ -5001,7 +5126,7 @@ do
         end;
     with
         await F;
-        return a + b + c;
+        escape a + b + c;
     end;
 end;
 ]],
@@ -5025,7 +5150,7 @@ par do
     end;
 with
     await F;
-    return late;
+    escape late;
 end;
 ]],
     run = {
@@ -5043,10 +5168,10 @@ Test { [[
 input int A;
 par do
     var int v = await A;
-    return v;
+    escape v;
 with
     var int v = await (1)us;
-    return v;
+    escape v;
 end;
 ]],
     run = {
@@ -5062,7 +5187,7 @@ par/or do
 with
     v = await (1)us;
 end;
-return v;
+escape v;
 ]],
     ana = {
         acc = 1,
@@ -5082,7 +5207,7 @@ par/or do
 with
     a = await (1)us;
 end;
-return a;
+escape a;
 ]],
     run = {
         ['~>10us'] = 9,
@@ -5098,7 +5223,7 @@ par/or do
 with
     a = await A;
 end;
-return a;
+escape a;
 ]],
     run = {
         ['~>30us'] = 0,
@@ -5117,7 +5242,7 @@ with
     a = await A;
 end;
 await F;
-return a;
+escape a;
 ]],
     run = {
         ['1~>A  ; 1~>F'] = 1,
@@ -5180,7 +5305,7 @@ with
         emit T;
     end
 end
-return ret;
+escape ret;
 ]],
     run = 72000,
 }
@@ -5195,7 +5320,7 @@ par/or do
 with
     ret = await a;
 end;
-return ret;
+escape ret;
 ]],
     ana = {
         excpt = 1,
@@ -5211,7 +5336,7 @@ par/or do
 with
     ret = await a;
 end;
-return ret;
+escape ret;
 ]],
     ana = {
         acc = 1,
@@ -5230,7 +5355,7 @@ par/and do
 with
     ret = await a;
 end;
-return ret;
+escape ret;
 ]],
     ana = {
         --acc = 1,
@@ -5244,7 +5369,7 @@ par/and do
 with
     emit a => 1;
 end;
-return 10;
+escape 10;
 ]],
     ana = {
         acc = 1,
@@ -5259,7 +5384,7 @@ par do
     await A;
     emit b => 1;
     await c;        // 6
-    return 10;      // 7
+    escape 10;      // 7
 with
     await b;
     await A;
@@ -5284,7 +5409,7 @@ par do
     await A;
     emit b => 1;
     await c;        // 6
-    return 10;      // 7
+    escape 10;      // 7
 with
     await b;
     await A;
@@ -5292,7 +5417,7 @@ with
     // unreachable
     await c;
     // unreachable
-    return 0;       // 15
+    escape 0;       // 15
 end;
 ]],
     ana = {
@@ -5326,7 +5451,7 @@ end;
 Test { [[
 event int a;
 par/or do
-    return 1;       // TODO: [false]=true
+    escape 1;       // TODO: [false]=true
 with
     emit a => 1;       // TODO: elimina o [false]
     // unreachable
@@ -5334,7 +5459,7 @@ end;
 // unreachable
 await a;
 // unreachable
-return 0;
+escape 0;
 ]],
     ana = {
         abrt = 3,
@@ -5353,7 +5478,7 @@ end;
 // unreachable
 await a;
 // unreachable
-return 0;
+escape 0;
 ]],
     ana = {
         abrt = 3,
@@ -5366,7 +5491,7 @@ return 0;
 Test { [[
 event int a;
 par do
-    return 1;
+    escape 1;
 with
     emit a => 1;
     // unreachable
@@ -5384,9 +5509,9 @@ Test { [[
 event int a;
 par do
     emit a => 1;
-    return 0;
+    escape 0;
 with
-    return 2;
+    escape 2;
 end;
 ]],
     ana = {
@@ -5405,7 +5530,7 @@ par/or do
 with
 end;
 await a;
-return 0;
+escape 0;
 ]],
     ana = {
         --unreachs = 2,
@@ -5420,7 +5545,7 @@ var int v1=2,v2=3;
 par/or do
 with
 end
-return v1+v2;
+escape v1+v2;
 ]],
     run = 5,
 }
@@ -5431,7 +5556,7 @@ with
 end
 v1=2;
 v2=3;
-return v1+v2;
+escape v1+v2;
 ]],
     run = 5,
 }
@@ -5444,7 +5569,7 @@ do
     v1=2;
     v2=3;
 end
-return v1+v2;
+escape v1+v2;
 ]],
     run = 5,
 }
@@ -5456,7 +5581,7 @@ par/and do
 with
     v2 = 2;
 end
-return v1+v2;
+escape v1+v2;
 ]],
     run = 5,
 }
@@ -5470,7 +5595,7 @@ par/or do
 with
     v2 = 2;
 end
-return v1+v2;
+escape v1+v2;
 ]],
     ana = {
         abrt = 3,
@@ -5493,7 +5618,7 @@ with
     await a;
     v3 = 2;
 end
-return v1+v2+v3;
+escape v1+v2+v3;
 ]],
     ana = {
         --unreachs = 2,
@@ -5516,7 +5641,7 @@ with
 with
     v2 = 2;
 end
-return v1+v2+v3;
+escape v1+v2+v3;
 ]],
     ana = {
         --unreachs = 2,
@@ -5535,7 +5660,7 @@ with
     ret = 2;
 end
 ret = ret * 2;
-return ret;
+escape ret;
 ]],
     ana = {
         acc = 1,
@@ -5558,7 +5683,7 @@ with
     var int aa = await a;
     ret = aa + 1;
 end;
-return ret;
+escape ret;
 ]],
     ana = {
         --unreachs = 2,
@@ -5583,7 +5708,7 @@ with
         ret = 3;
     end;
 end;
-return ret;
+escape ret;
 ]],
     ana = {
         --unreachs = 2,
@@ -5599,10 +5724,10 @@ input int A;
 var int a;
 par do
     a = await A;
-    return a;
+    escape a;
 with
     a = await A;
-    return a;
+    escape a;
 end;
 ]],
     ana = {
@@ -5619,7 +5744,7 @@ par/or do
 with
     await A;
 end;
-return a;
+escape a;
 ]],
     ana = {
         abrt = 3,
@@ -5638,7 +5763,7 @@ par/or do
 with
     a = await A;
 end;
-return a;
+escape a;
 ]],
     ana = {
         abrt = 3,
@@ -5660,7 +5785,7 @@ with
     await A;
     var int v = a;
 end;
-return a;
+escape a;
 ]],
     ana = {
         acc = 1,
@@ -5682,7 +5807,7 @@ with
     await A;
     a = 11;
 end;
-return a;
+escape a;
 ]],
     ana = {
         acc = 1,
@@ -5698,9 +5823,9 @@ par/or do
     a = 10;
 with
     await A;
-    return a;
+    escape a;
 end;
-return a;
+escape a;
 ]],
     ana = {
         acc = 1,
@@ -5720,7 +5845,7 @@ loop do
         end;
     end;
 end;
-return 0;
+escape 0;
 ]],
     ana = {
         abrt = 5,
@@ -5786,12 +5911,12 @@ input int A;
 var int a = par do
     await A;
     var int v = 10;
-    return a;
+    escape a;
 with
     await A;
-    return a;
+    escape a;
 end;
-return a;
+escape a;
 ]],
     todo = '"a"s deveriam ser diferentes',
     ana = {
@@ -5812,9 +5937,9 @@ par/or do
     a = 10;
 with
     await A;
-    return a;
+    escape a;
 end;
-return a;
+escape a;
 ]],
     run = { ['~>A']=10, ['~>B']=10 },
     ana = {
@@ -5835,9 +5960,9 @@ par/or do
     a = 10;
 with
     await A;
-    return a;
+    escape a;
 end;
-return a;
+escape a;
 ]],
     run = { ['~>A']=5, ['~>B;~>A']=10 },
     ana = {
@@ -5852,7 +5977,7 @@ var int a = 0;
 par/or do
     par/or do
         var int v = await A;
-        return v;
+        escape v;
     with
         await B;
     end;
@@ -5860,7 +5985,7 @@ par/or do
 with
     await A;
 end;
-return a;
+escape a;
 ]],
     ana = {
         abrt = 3,
@@ -5882,7 +6007,7 @@ loop do
         break;
     end;
 end;
-return v;
+escape v;
 ]],
     run = {
         ['0~>A ; 0~>A ; 3~>Z'] = 3,
@@ -5901,7 +6026,7 @@ loop do
         break;
     end;
 end;
-return v;
+escape v;
 ]],
     run = {
         ['0~>A ; 0~>A ; 3~>Z'] = 3,
@@ -5920,7 +6045,7 @@ loop do
         break;
     end;
 end;
-return v;
+escape v;
 ]],
     run = {
         ['0~>A ; 0~>A ; 3~>Z'] = 3,
@@ -5939,7 +6064,7 @@ loop do
         break;
     end;
 end;
-return v;
+escape v;
 ]],
     ana = {
         unreachs = 1,
@@ -5961,7 +6086,7 @@ loop do
         break;
     end;
 end;
-return v;
+escape v;
 ]],
     ana = {
         --unreachs = 3,
@@ -5985,7 +6110,7 @@ loop do
         await B;
     end;
 end;
-return v;
+escape v;
 ]],
     ana = {
         acc = 2,     -- TODO: should be 0
@@ -6002,7 +6127,7 @@ loop do
     v = await A;
     break;
 end;
-return v;
+escape v;
 ]],
     ana = {
         unreachs = 1,
@@ -6021,7 +6146,7 @@ par/and do
 with
     await A;
 end;
-return a;
+escape a;
 ]],
     run = {
         ['~>30ms ; 0~>A'] = 0,
@@ -6039,7 +6164,7 @@ with
     await B;
     await A;
 end;
-return 1;
+escape 1;
 ]],
     run = {
         ['1~>A ; 0~>B ; 0~>B ; 1~>A'] = 1,
@@ -6053,7 +6178,7 @@ with
     await A;
     await 30ms;
 end;
-return 1;
+escape 1;
 ]],
     run = {
         ['~>30ms ; 0~>A ; ~>50ms'] = 1,
@@ -6069,7 +6194,7 @@ with
     await A;
     await (30)us;
 end;
-return 1;
+escape 1;
 ]],
     run = {
         ['~>30ms ; 0~>A ; ~>50ms'] = 1,
@@ -6096,7 +6221,7 @@ with
         end;
     end;
 end;
-return cc;
+escape cc;
 ]],
     ana = {
         abrt = 6,   -- TODO: not checked
@@ -6115,7 +6240,7 @@ with
     await 30ms;
     a = 2;
 end;
-return a;
+escape a;
 ]],
     ana = {
         acc = 1,
@@ -6139,7 +6264,7 @@ with
     await 30ms;
     a = 1;
 end;
-return a;
+escape a;
 ]],
     ana = {
         acc = 1,
@@ -6162,7 +6287,7 @@ with
     await 30ms;
     a = 2;
 end;
-return a;
+escape a;
 ]],
     ana = {
         acc = 1,
@@ -6190,7 +6315,7 @@ with
     await 90ms;
     a = 2;
 end;
-return a;
+escape a;
 ]],
     ana = {
         acc = 1,
@@ -6209,7 +6334,7 @@ with
     await A;
     dt = await 20ms;
 end;
-return dt;
+escape dt;
 ]],
     ana = {
         acc = 1,
@@ -6230,7 +6355,7 @@ par/or do
 with
     dt = await 20ms;
 end;
-return dt;
+escape dt;
 ]],
     ana = {
         abrt = 3,
@@ -6251,7 +6376,7 @@ with
     await A;
     dt = await 10us;
 end;
-return dt;
+escape dt;
 ]],
     ana = {
         abrt = 3,
@@ -6273,7 +6398,7 @@ with
     await A;
     dt = await 10ms;
 end;
-return dt;
+escape dt;
 ]],
     ana = {
         --unreachs = 1,
@@ -6292,12 +6417,12 @@ input int A;
 var int dt;
 par do
     dt = await 20us;
-    return 1;
+    escape 1;
 with
     dt = await 10us;
     await A;
     dt = await 10us;
-    return 2;
+    escape 2;
 end;
 ]],
     ana = {
@@ -6324,7 +6449,7 @@ with
     await 20ms;
     ret = 2;
 end;
-return ret;
+escape ret;
 ]],
     ana = {
         abrt = 3,
@@ -6350,7 +6475,7 @@ with
     await 20ms;
     ret = 1;
 end;
-return ret;
+escape ret;
 ]],
     ana = {
         acc = 1,
@@ -6374,7 +6499,7 @@ with
     await 10ms;
     dt = await 10ms;
 end;
-return dt;
+escape dt;
 ]],
     ana = {
         acc = 1,
@@ -6398,7 +6523,7 @@ with
     await B;
     dt = await 20ms;
 end;
-return dt;
+escape dt;
 ]],
     ana = {
         acc = 1,
@@ -6421,7 +6546,7 @@ with
     await B;
     dt = await (20)ms;
 end;
-return dt;
+escape dt;
 ]],
     ana = {
         acc = 1,
@@ -6447,7 +6572,7 @@ with
     dt = await (20)ms;
     ret = 2;
 end;
-return ret;
+escape ret;
 ]],
     ana = {
         acc = 2,
@@ -6473,7 +6598,7 @@ with
     dt = await 20ms;
     ret = 2;
 end;
-return ret;
+escape ret;
 ]],
     ana = {
         acc = 2,
@@ -6494,7 +6619,7 @@ par/or do
 with
     dt = await 30ms;
 end;
-return dt;
+escape dt;
 ]],
     ana = {
         acc = 1,
@@ -6513,7 +6638,7 @@ par/or do
 with
     dt = await 30us;
 end;
-return dt;
+escape dt;
 ]],
     ana = {
         acc = 1,
@@ -6536,7 +6661,7 @@ with
     await 10ms;
     ret = 1;
 end;
-return ret;
+escape ret;
 ]],
     ana = {
         acc = 1,
@@ -6567,7 +6692,7 @@ with
     x = 2;
     await FOREVER;
 end;
-return x;
+escape x;
 ]],
     ana = {
         abrt = 3,
@@ -6595,7 +6720,7 @@ with
     x = 2;
     await FOREVER;
 end;
-return x;
+escape x;
 ]],
     ana = {
         abrt = 3,
@@ -6621,7 +6746,7 @@ with
     var int a = b;
     x = a;
 end;
-return x;
+escape x;
 ]],
     ana = {
         abrt = 5,
@@ -6639,10 +6764,10 @@ par do
     with
         await B;
     end;
-    return 1;
+    escape 1;
 with
     await A;
-    return 2;
+    escape 2;
 end;
 ]],
     ana = {
@@ -6659,10 +6784,10 @@ par do
     with
         await B;
     end;
-    return 1;
+    escape 1;
 with
     await A;
-    return 2;
+    escape 2;
 end;
 ]],
     ana = {
@@ -6686,10 +6811,10 @@ par do
         end;
         await Z;
     end;
-    return 1;           // 15
+    escape 1;           // 15
 with
     await A;            // 17
-    return 2;           // 18
+    escape 2;           // 18
 end;
 ]],
     ana = {
@@ -6714,7 +6839,7 @@ with
     await 10ms;
     a = 2;
 end;
-return a;
+escape a;
 ]],
     ana = {
         abrt = 3,
@@ -6738,7 +6863,7 @@ with
     await 10ms;
     a = 1;
 end;
-return a;
+escape a;
 ]],
     ana = {
         abrt = 3,
@@ -6762,7 +6887,7 @@ with
     await 20ms;
     a = 1;
 end;
-return a;
+escape a;
 ]],
     ana = {
         abrt = 3,
@@ -6792,7 +6917,7 @@ with
     await (20)us;
     a = 1;
 end;
-return a;
+escape a;
 ]],
     ana = {
         abrt = 4,
@@ -6820,7 +6945,7 @@ with
     await 20ms;
     a = 1;
 end;
-return a;
+escape a;
 ]],
     ana = {
         abrt = 4,
@@ -6837,7 +6962,7 @@ with
     await 10ms;
     a = 1;
 end;
-return a;
+escape a;
 ]],
     ana = {
         abrt = 3,
@@ -6932,7 +7057,7 @@ with
     await A;
     await B;
 end;
-return a;
+escape a;
 ]],
     run = {
         ['0~>A ; 0~>B'] = 1,
@@ -6959,7 +7084,7 @@ with
     await A;
     a = await A;
 end;
-return a;
+escape a;
 ]],
     ana = {
         --acc = 1,
@@ -6985,7 +7110,7 @@ else
         a = await A;
     end;
 end;
-return a;
+escape a;
 ]],
     ana = {
         --acc = 1,
@@ -7025,17 +7150,17 @@ end;
 }
 Test { [[
 var int v = par do
-            return 0;
+            escape 0;
         with
-            return 0;
+            escape 0;
         end;
 if v then
-    return 1;
+    escape 1;
 else
     if 1==1 then
-        return 1;
+        escape 1;
     else
-        return 0;
+        escape 0;
     end;
 end;
 ]],
@@ -7047,16 +7172,16 @@ end;
 Test { [[
 var int a;
 var int v = par do
-            return 0;
+            escape 0;
         with
-            return 0;
+            escape 0;
         end;
 if v then
     a = 1;
 else
     a = 1;
 end;
-return a;
+escape a;
 ]],
     ana = {
         acc = 1,
@@ -7065,11 +7190,11 @@ return a;
 }
 Test { [[
 var int v = par do
-            return 1;
+            escape 1;
         with
-            return 2;
+            escape 2;
         end;
-return v;
+escape v;
 ]],
     ana = {
         acc = 1,
@@ -7088,7 +7213,7 @@ with
     await 100ms;
     a = 2;
 end;
-return a;
+escape a;
 ]],
     ana = {
         acc = 1,
@@ -7105,7 +7230,7 @@ with
     await (10)us;
     a = 2;
 end;
-return a;
+escape a;
 ]],
     ana = {
         abrt = 4,
@@ -7126,7 +7251,7 @@ with
     await A;
     a = 2;
 end;
-return a;
+escape a;
 ]],
     ana = {
         abrt = 4,
@@ -7146,7 +7271,7 @@ with
     await A;
     a = 2;
 end;
-return a;
+escape a;
 ]],
     ana = {
         abrt = 4,
@@ -7166,7 +7291,7 @@ with
     await A;
     a = 2;
 end;
-return a;
+escape a;
 ]],
     ana = {
         abrt = 4,
@@ -7184,7 +7309,7 @@ with
     await 10ms;
     a = 2;
 end;
-return a;
+escape a;
 ]],
     ana = {
         abrt = 4,
@@ -7200,7 +7325,7 @@ par/or do
 with
     nothing;    // 6
 end
-return 0;
+escape 0;
 ]],
     ana = {
         abrt = 4,   -- TODO: break is inside par/or (should be 3)
@@ -7222,7 +7347,7 @@ with
     await 100ms;        // 11
     a = 2;
 end;
-return a;
+escape a;
 ]],
     ana = {
         abrt = 4,   -- TODO: break is inside par/or (should be 3)
@@ -7244,7 +7369,7 @@ with
     await 100ms;
     a = 2;
 end;
-return a;
+escape a;
 ]],
     ana = {
         abrt = 4,
@@ -7264,7 +7389,7 @@ with
     await A;
     a = 2;
 end;
-return a;
+escape a;
 ]],
     ana = {
         abrt = 3,
@@ -7284,7 +7409,7 @@ with
     await A;
     a = 2;
 end;
-return a;
+escape a;
 ]],
     ana = {
         abrt = 3,
@@ -7303,7 +7428,7 @@ with
     await 10ms;
     a = 2;
 end;
-return a;
+escape a;
 ]],
     ana = {
         abrt = 3,
@@ -7326,7 +7451,7 @@ with
     await 20ms;
     a = 3;
 end
-return a;
+escape a;
 ]],
     --todo = 'wclk_any=0',
     ana = {
@@ -7355,7 +7480,7 @@ with
     await 30ms;
     a = 4;
 end;
-return a;
+escape a;
 ]],
     todo = 'wclk_any=0',
     ana = {
@@ -7374,7 +7499,7 @@ with
     await (10)us;
     a = 2;
 end;
-return a;
+escape a;
 ]],
     ana = {
         --unreachs = 1,
@@ -7398,7 +7523,7 @@ with
     await 4ms;
     x = 1;
 end;
-return x;
+escape x;
 ]],
     ana = {
         abrt = 5,
@@ -7460,7 +7585,7 @@ with
     await 10ms;
     x = 5;
 end;
-return x;
+escape x;
 ]],
     ana = {
         abrt = 3,
@@ -7494,7 +7619,7 @@ par/or do
 with
     await a;
 end
-return 0;
+escape 0;
 ]],
     ana = {
         --unreachs = 1,
@@ -7516,7 +7641,7 @@ with
     ret = 1;
 end
 ret = ret + 1;
-return ret;
+escape ret;
 ]],
     ana = {
         --unreachs = 1,
@@ -7577,7 +7702,7 @@ with
     ee = await a;
     emit j => 6;
 end;
-return dd + ee;
+escape dd + ee;
 ]],
     --trig_wo = 2,
     run = {
@@ -7592,7 +7717,7 @@ par do
     emit a => 1;
     aa = 1;
 with
-    return aa;
+    escape aa;
 end;
 ]],
     ana = {
@@ -7652,7 +7777,7 @@ par do
     end;
 with
     var int v = await B;
-    return v;
+    escape v;
 end;
 ]],
     ana = {
@@ -7674,7 +7799,7 @@ with
     await START;
     emit a => 3;
 end;
-return b+b;
+escape b+b;
 ]],
     ana = {
         --unreachs = 1,
@@ -7693,7 +7818,7 @@ with
 with
     var int a = b;
 end;
-return 0;
+escape 0;
 ]],
     ana = {
         abrt = 5,
@@ -7715,7 +7840,7 @@ with
     await b;
     i = 1;
 end;
-return i;
+escape i;
 ]],
     ana = {
         --nd_esc = 1,
@@ -7736,7 +7861,7 @@ with
     cc = 5;
     emit c => 5;
 end;
-return cc;
+escape cc;
 ]],
     ana = {
         --nd_esc = 1,
@@ -7756,7 +7881,7 @@ loop do
     else
     end;
 end;
-return ret;
+escape ret;
 ]],
     run = {
         ['1~>A ; 2~>A ; 3~>A ; 4~>A ; 5~>A'] = 10,
@@ -7770,10 +7895,10 @@ loop do
     var int b = await B;
     a = a + b;
     if a == 5 then
-        return 10;
+        escape 10;
     end;
 end;
-return 0;   // TODO
+escape 0;   // TODO
 ]],
     ana = {
         unreachs = 1,
@@ -7792,10 +7917,10 @@ var int ret = loop do
             await A;
         with
             var int v = await B;
-            return v;
+            escape v;
         end;
     end;
-return ret;
+escape ret;
 ]],
     run = {
         ['1~>A ; 5~>B'] = 5,
@@ -7810,7 +7935,7 @@ var int aa;
 loop do
     var int v = await A;
     if v==2 then
-        return aa;
+        escape aa;
     end;
     emit a => v;
     aa = v;
@@ -7831,7 +7956,7 @@ var int aa;
 loop do
     var int v = await A;
     if v==2 then
-        return aa;
+        escape aa;
     else
         if v==4 then
             break;
@@ -7840,7 +7965,7 @@ loop do
     emit a => v;
     aa = v;
 end;
-return aa-1;
+escape aa-1;
 ]],
     --trig_wo = 1,
     run = {
@@ -7854,7 +7979,7 @@ input int A,B;
 var int a = 0;
 par do
     await B;
-    return a;
+    escape a;
 with
     loop do
         await A;
@@ -7880,7 +8005,7 @@ loop do
         await B;
     end;
 end;
-return 1;
+escape 1;
 ]],
     run = {
         ['2~>A ; 4~>A'] = 1,
@@ -7899,7 +8024,7 @@ par/or do
 with
     ret=await B;
 end;
-return ret;
+escape ret;
 ]],
     run = {
         ['1~>A;2~>B;1~>A'] = 2,
@@ -7920,7 +8045,7 @@ with
     await B;
     await B;
 end;
-return ret;
+escape ret;
 ]],
     ana = {
         abrt = 8,   -- TODO: not checked
@@ -7942,7 +8067,7 @@ with
     await B;
     v = await A;
 end;
-return v;
+escape v;
 ]],
     ana = {
         acc = 1,     -- should be 0
@@ -7967,7 +8092,7 @@ with
     await Z;
     ret = await A;
 end;
-return ret;
+escape ret;
 ]],
     ana = {
         acc = 1,
@@ -7993,7 +8118,7 @@ with
     await Z;
     v = await A;
 end;
-return v;
+escape v;
 ]],
     ana = {
         acc = 1,
@@ -8025,7 +8150,7 @@ with
     await B;
     v = await Z;
 end;
-return v;
+escape v;
 ]],
     ana = {
         abrt = 6,   -- TODO: not checked
@@ -8057,7 +8182,7 @@ with
     await Z;
     await B;
 end;
-return v;
+escape v;
 ]],
     ana = {
         abrt = 6,   -- TODO: not checked
@@ -8084,7 +8209,7 @@ with
     await B;
     v = 2;
 end;
-return v;
+escape v;
 ]],
     ana = {
         acc = 2,
@@ -8111,7 +8236,7 @@ with
     await B;
     v = await A;
 end;
-return v;
+escape v;
 ]],
     ana = {
         acc = 2,
@@ -8134,7 +8259,7 @@ with
     await A;
     v = await Z;
 end;
-return v;
+escape v;
 ]],
     ana = {
         acc = 1,
@@ -8159,7 +8284,7 @@ with
     await A;
     v = await Z;
 end;
-return v;
+escape v;
 ]],
     ana = {
         --unreachs = 2,
@@ -8176,11 +8301,11 @@ par do
     loop do
         await A;
         var int v = await B;
-        return v;
+        escape v;
     end;
 with
     var int v = await A;
-    return v;
+    escape v;
 end;
 ]],
     ana = {
@@ -8202,7 +8327,7 @@ loop do
         break;
     end;
 end;
-return v;
+escape v;
 ]],
     run = {
         ['0~>A ; 0~>A ; 10~>B'] = 10,
@@ -8220,11 +8345,11 @@ par do
             await B;
         end;
     end;
-    return a;
+    escape a;
 with
     await B;
     a = await Z;
-    return a;
+    escape a;
 end;
 ]],
     run = {
@@ -8236,10 +8361,10 @@ Test { [[
 input int A,B;
 if 11 then
     var int v = await A;
-    return v;
+    escape v;
 else
     var int v = await B;
-    return v;
+    escape v;
 end;
 ]],
 --(11?~A:~B)]],
@@ -8258,7 +8383,7 @@ if 1 then       // TODO: unreach
 else
     await B;
 end;
-return 1;
+escape 1;
 ]],
     ana = {
         isForever = true,
@@ -8269,7 +8394,7 @@ Test { [[
 par/or do
 with
 end
-return 1;
+escape 1;
 ]],
     ana = {
         abrt = 3,
@@ -8319,7 +8444,7 @@ loop do
         await Z;
     end
 end
-return v;
+escape v;
 ]],
 --(((~A)?~B^:~Z))*]],
     run = {
@@ -8355,7 +8480,7 @@ loop do
         break;
     end;
 end;
-return v;
+escape v;
 ]],
     run = {
         ['0~>A ; 0~>Z ; 0~>D ; 0~>E ; 0~>F ; 0~>G ; 0~>I ; 0~>J ; 0~>K ; 10~>L'] = 10,
@@ -8369,9 +8494,9 @@ Test { [[
 var int a;
 par do
     a = 1;
-    return 1;
+    escape 1;
 with
-    return a;
+    escape a;
 end;
 ]],
     ana = {
@@ -8385,10 +8510,10 @@ var int a;
 par do
     await B;
     a = 1;
-    return 1;
+    escape 1;
 with
     await B;
-    return a;
+    escape a;
 end;
 ]],
     ana = {
@@ -8403,7 +8528,7 @@ var int aa;
 par do
     await B;
     aa = 1;
-    return 1;
+    escape 1;
 with
     par/or do
         await a;
@@ -8412,7 +8537,7 @@ with
     with
         await Z;
     end;
-    return aa;
+    escape aa;
 end;
 ]],
     ana = {
@@ -8428,7 +8553,7 @@ var int aa;
 par do
     emit a => 1;       // 5
     aa = 1;
-    return 10;
+    escape 10;
 with
     par/or do
         await a;    // 10
@@ -8436,7 +8561,7 @@ with
     with
         await Z;
     end;
-    return aa;
+    escape aa;
 end;
 ]],
     ana = {
@@ -8455,7 +8580,7 @@ par do
     emit a => 1;
 with
     var int aa = await a;
-    return aa;
+    escape aa;
 end;
 ]],
     ana = {
@@ -8475,7 +8600,7 @@ with
     aa = await a;
     aa = aa + 1;
 end;
-return aa;
+escape aa;
 ]],
     ana = {
         --unreachs = 1,
@@ -8500,7 +8625,7 @@ with
     end
     aa = aa + 1;
 end;
-return aa;
+escape aa;
 ]],
     ana = {
         --unreachs = 1,
@@ -8527,7 +8652,7 @@ with
     end
     aa = aa + 1;
 end;
-return aa;
+escape aa;
 ]],
     ana = {
         acc = 2,
@@ -8557,7 +8682,7 @@ with
     end;
     aa = aa + 1;
 end;
-return aa;
+escape aa;
 ]],
     ana = {
         abrt = 3,
@@ -8572,13 +8697,13 @@ event int a;
 var int aa = 1;
 par do
     emit a => 0;
-    return aa;  // 5
+    escape aa;  // 5
 with
     par/and do  // 7
         aa = await a;
     with
     end;
-    return aa;
+    escape aa;
 end;
 ]],
     ana = {
@@ -8595,7 +8720,7 @@ var int aa = 0;
 par do
     emit a => 1;
     aa = 1;
-    return aa;
+    escape aa;
 with
     par/and do
         aa = await a;
@@ -8603,7 +8728,7 @@ with
     with
         await Z;
     end;
-    return aa;
+    escape aa;
 end
 ]],
     ana = {
@@ -8620,7 +8745,7 @@ var int aa;
 par do
     await B;
     aa = 1;
-    return aa;
+    escape aa;
 with
     par do
         await a;
@@ -8647,7 +8772,7 @@ var int a;
 par do
     await B;
     a = 1;
-    return a;
+    escape a;
 with
     par/and do
         await aa;
@@ -8656,7 +8781,7 @@ with
     with
         await Z;
     end;
-    return a;
+    escape a;
 end;
 ]],
     ana = {
@@ -8682,7 +8807,7 @@ loop do
     end;
     // unreachable
 end;
-return 1;
+escape 1;
 ]],
     ana = {
         abrt = 4,
@@ -8700,7 +8825,7 @@ loop do
         break;
     end
 end
-return 1;
+escape 1;
 ]],
     ana = {
         abrt = 3,
@@ -8712,7 +8837,7 @@ return 1;
 Test { [[
 input int A;
 par/or do
-    return 1;
+    escape 1;
 with
     await A;
 end;
@@ -8731,7 +8856,7 @@ loop do
         break;
     with
         par/or do
-            return 1;
+            escape 1;
         with
             await A;
             // unreachable
@@ -8742,7 +8867,7 @@ loop do
     end;
     // unreachable
 end;
-return 2;       // executes last
+escape 2;       // executes last
 ]],
     ana = {
         --unreachs = 5,
@@ -8757,12 +8882,12 @@ loop do
     par do
         break;
     with
-        return 1;
+        escape 1;
     with
         await A;
     end;
 end;
-return 2;   // executes last
+escape 2;   // executes last
 ]],
     ana = {
         unreachs = 1,
@@ -8778,14 +8903,14 @@ loop do
         break;          // 4
     with
         par do
-            return 1;   // 7
+            escape 1;   // 7
         with
             await A;    // 9
             // unreachable
         end;
     end;
 end;
-return 2;   // executes last
+escape 2;   // executes last
 ]],
     ana = {
         unreachs = 1,
@@ -8807,7 +8932,7 @@ loop do
                         // prio2
     end;
 end;
-return 1;
+escape 1;
 ]],
     ana = {
         abrt = 6,       -- TODO: not checked
@@ -8821,7 +8946,7 @@ with
     with
     end;
 end;
-return 1;
+escape 1;
 ]],
     ana = {
         abrt = 6,
@@ -8838,9 +8963,9 @@ with
         await a;
     with
     end;
-    return aa;
+    escape aa;
 end;
-return aa;
+escape aa;
 ]],
     ana = {
         --unreachs = 1,
@@ -8855,14 +8980,14 @@ var int aa;
 par do
     await B;
     aa = 1;
-    return aa;
+    escape aa;
 with
     await B;
     par/or do
         await a;
     with
     end;
-    return aa;
+    escape aa;
 end;
 ]],
     ana = {
@@ -8874,9 +8999,9 @@ end;
 Test { [[
 var int a = 0;
 par do
-    return a;
+    escape a;
 with
-    return a;
+    escape a;
 end;
 ]],
     ana = {
@@ -8887,10 +9012,10 @@ end;
 Test { [[
 var int a;
 par do
-    return a;
+    escape a;
 with
     a = 1;
-    return a;
+    escape a;
 end;
 ]],
     ana = {
@@ -8902,9 +9027,9 @@ Test { [[
 var int a;
 par do
     a = 1;
-    return a;
+    escape a;
 with
-    return a;
+    escape a;
 end;
 ]],
     ana = {
@@ -8919,7 +9044,7 @@ par/or do
 with
     a = 1;
 end;
-return a;
+escape a;
 ]],
     ana = {
         abrt = 3,
@@ -8935,7 +9060,7 @@ with
 with
     a = 1;
 end;
-return a;
+escape a;
 ]],
     ana = {
         abrt = 9,
@@ -8946,10 +9071,10 @@ Test { [[
 input int A;
 par do
     var int v = await A;
-    return v;
+    escape v;
 with
     var int v = await A;
-    return v;
+    escape v;
 end;
 ]],
     ana = {
@@ -8967,7 +9092,7 @@ with
     emit a => 1;
     aa = 1;
 end;
-return aa;
+escape aa;
 ]],
     ana = {
         abrt = 1,
@@ -8984,7 +9109,7 @@ par/or do
 with
     emit a => 1;
 end;
-return 1;
+escape 1;
 ]],
     ana = {
         abrt = 3,
@@ -9002,7 +9127,7 @@ with
     emit b => 1;
     bb = 5;
 end;
-return aa+bb;
+escape aa+bb;
 ]],
     ana = {
         abrt = 3,
@@ -9017,7 +9142,7 @@ par/or do
 with
     b=3;
 end;
-return a+b;
+escape a+b;
 ]],
     ana = {
         abrt = 3,
@@ -9032,15 +9157,15 @@ var int aa;
 var int v = par do
     emit a => 1;
     aa = 1;
-    return aa;
+    escape aa;
 with
     emit a => 1;
-    return aa;
+    escape aa;
 with
     emit a => 1;
-    return aa;
+    escape aa;
 end;
-return v;
+escape v;
 ]],
     ana = {
         acc = 8, -- TODO: not checked
@@ -9051,13 +9176,13 @@ return v;
 Test { [[
 var int a,v;
 v = par do
-    return 1;
+    escape 1;
 with
-    return 1;
+    escape 1;
 with
-    return 1;
+    escape 1;
 end;
-return v;
+escape v;
 ]],
     ana = {
         acc = 3,
@@ -9070,10 +9195,10 @@ input int A;
 var int a = 0;
 par do
     await A;
-    return a;
+    escape a;
 with
     await A;
-    return a;
+    escape a;
 end;
 ]],
     ana = {
@@ -9086,11 +9211,11 @@ input int A;
 var int a;
 par do
     await A;
-    return a;
+    escape a;
 with
     await A;
     a = 1;
-    return a;
+    escape a;
 end;
 ]],
     ana = {
@@ -9105,7 +9230,7 @@ await A;
 emit a => 1;
 await A;
 emit a => 1;
-return 1;
+escape 1;
 ]],
 --~A;1~>a;~A;1~>a]],
     --trig_wo = 2,
@@ -9128,7 +9253,7 @@ with
     await A;
     ret = await a;
 end;
-return ret;
+escape ret;
 ]],
     ana = {
         acc = 1,
@@ -9142,11 +9267,11 @@ event int a;
 par do
     await START;
     emit a => 1;
-    return 1;
+    escape 1;
 with
     var int aa = await a;
     aa = aa + 1;
-    return aa;      // 10
+    escape aa;      // 10
 with
     await a;        // 12
     await FOREVER;
@@ -9172,7 +9297,7 @@ with
     var int aa = await a;
     var int v = aa;
 end;
-return aa;
+escape aa;
 ]],
     ana = {
         --nd_esc = 1,
@@ -9240,7 +9365,7 @@ with
     await B;
     var int v = a;
 end;
-return a;
+escape a;
 ]],
     ana = {
         --unreachs = 1,
@@ -9264,7 +9389,7 @@ with
     var int v = await B;
     a = v;
 end;
-return a;
+escape a;
 ]],
     ana = {
         acc = 1,
@@ -9282,7 +9407,7 @@ with
     a = 1;
 end;
 await B;
-return a;
+escape a;
 ]],
     run = {
         ['3~>A ; 5~>B'] = 3,
@@ -9304,7 +9429,7 @@ with
         v = await Z;
     end;
 end;
-return v;
+escape v;
 ]],
     run = {
         ['10~>A ; 1~>A'] = 10,
@@ -9318,7 +9443,7 @@ par/or do
 with
 end;
 var int v = await A;
-return v;
+escape v;
 ]],
     ana = {
         abrt = 3,
@@ -9355,7 +9480,7 @@ with
     emit dd => 4;
     d=4;
 end;
-return a+b+c+d;
+escape a+b+c+d;
 ]],
     ana = {
         acc = 3,
@@ -9388,7 +9513,7 @@ with
         cc=30;
     end;
 end;
-return aa+bb+cc;
+escape aa+bb+cc;
 ]],
     ana = {
         acc = 3,
@@ -9417,7 +9542,7 @@ with
         emit c => 30;
     end;
 end;
-return 10;
+escape 10;
 ]],
     ana = {
         acc = 3,
@@ -9436,7 +9561,7 @@ with
     emit a => 1;
     await a;
 end;
-return 0;
+escape 0;
 ]],
     ana = {
         acc = 2,
@@ -9453,7 +9578,7 @@ par/or do
 with
     emit a => 1;
 end;
-return 0;
+escape 0;
 ]],
     ana = {
         acc = 2,
@@ -9488,7 +9613,7 @@ loop do
         await B;
     end;
 end;
-return 1;
+escape 1;
 ]],
     ana = {
         unreachs = 1,
@@ -9507,7 +9632,7 @@ loop do
         await B;
     end;
 end;
-return v;
+escape v;
 ]],
     run = {
         ['4~>A'] = 4,
@@ -9538,7 +9663,7 @@ with
     await 4ms;
     x = 1;
 end;
-return x;
+escape x;
 ]],
     ana = {
         acc = 1,
@@ -9557,9 +9682,9 @@ loop do
         break;
     end
     ret = 5;
-    return ret;
+    escape ret;
 end
-return ret;
+escape ret;
 ]],
     ana = {
         unreachs = 1,
@@ -9572,14 +9697,14 @@ Test { [[
 var int ret = 10;
 loop do
     par/or do
-        return 100;
+        escape 100;
     with
         break;
     end
     ret = 5;
     await 1s;
 end
-return ret;
+escape ret;
 ]],
     ana = {
         abrt = 3,
@@ -9599,7 +9724,7 @@ par/or do
 with
 end;
 a = a + 1;
-return a;
+escape a;
 ]],
     ana = {
         abrt = 6,
@@ -9610,10 +9735,10 @@ return a;
 Test { [[
 var int b;
 par do
-    return 3;
+    escape 3;
 with
     b = 1;
-    return b+2;
+    escape b+2;
 end;
 ]],
     ana = {
@@ -9634,7 +9759,7 @@ loop do
         break;
     end;
 end;
-return v;
+escape v;
 ]],
     ana = {
         unreachs = 1,
@@ -9659,7 +9784,7 @@ loop do
         await FOREVER;
     end;
 end;
-return v1 + v2;
+escape v1 + v2;
 ]],
     ana = {
         unreachs = 1,
@@ -9678,7 +9803,7 @@ loop do
     with
     end;
 end;
-return v;
+escape v;
 ]],
     ana = {
         unreachs = 1,
@@ -9713,7 +9838,7 @@ loop do
         break;
     end;
 end;
-return v1 + v2;
+escape v1 + v2;
 ]],
     ana = {
         unreachs = 1,
@@ -9738,7 +9863,7 @@ loop do
     v2 = 2;
     break;
 end;
-return 0;
+escape 0;
 ]],
     ana = {
         unreachs = 1,
@@ -9760,7 +9885,7 @@ loop do
     v2 = 1;
     break;
 end;
-return v1+v2+v3;
+escape v1+v2+v3;
 ]],
     ana = {
         unreachs = 1,
@@ -9795,7 +9920,7 @@ loop do
     v6 = 6;
     break;
 end;
-return v1+v2+v3+v4+v5+v6;
+escape v1+v2+v3+v4+v5+v6;
 ]],
     ana = {
         unreachs = 2,
@@ -9825,7 +9950,7 @@ loop do
     v6 = 6;
     break;
 end;
-return v1+v2+v3+v4+v5+v6;
+escape v1+v2+v3+v4+v5+v6;
 ]],
     ana = {
         unreachs = 2,
@@ -9861,7 +9986,7 @@ loop do
     v6 = 6;
     break;
 end;
-return v1+v2+v3+v4+v5+v6;
+escape v1+v2+v3+v4+v5+v6;
 ]],
     ana = {
         unreachs = 2,
@@ -9895,7 +10020,7 @@ loop do
     v6 = 6;
     break;
 end;
-return v1+v2+v3+v4+v5+v6;
+escape v1+v2+v3+v4+v5+v6;
 ]],
     ana = {
         unreachs = 2,
@@ -9909,7 +10034,7 @@ Test { [[
 var int v1=0,v2=0,v3=0,v4=0,v5=0,v6=0;
 loop do
     par do
-        return 1;           // acc 1
+        escape 1;           // acc 1
     with
         loop do
             par/or do
@@ -9922,11 +10047,11 @@ loop do
             v4 = 4;
             break;
         end;
-        return 1;           // acc 1
+        escape 1;           // acc 1
     end;
 end;
 // unreachable
-return v1+v2+v3+v4+v5+v6;   // TODO: unreach
+escape v1+v2+v3+v4+v5+v6;   // TODO: unreach
 ]],
     ana = {
         unreachs = 3,
@@ -9947,7 +10072,7 @@ loop do
         break;
     end;
 end;
-return v;
+escape v;
 ]],
     run = {
         ['1~>A ; 5~>B'] = 5,
@@ -9964,14 +10089,14 @@ a = par do
     with
         await B;
     end;
-    return a+1;
+    escape a+1;
 with
     await Z;
-    return a;
+    escape a;
 end;
 a = a + 1;
 await D;
-return a;
+escape a;
 ]],
     run = { ['0~>A;0~>B;0~>Z;0~>D'] = 2 }
 }
@@ -9982,18 +10107,18 @@ var int a = 0;
 a = par do
     par do
         await A;
-        return a;
+        escape a;
     with
         await B;
-        return a;
+        escape a;
     end;
 with
     await Z;
-    return a;
+    escape a;
 end;
 a = a + 1;
 await D;
-return a;
+escape a;
 ]],
     run = { ['0~>A;0~>B;0~>Z;0~>D'] = 1 }
 }
@@ -10004,19 +10129,19 @@ var int a = 0;
 a = par do
     par do
         await A;
-        return a;
+        escape a;
     with
         await B;
-        return a;
+        escape a;
     end;
     // unreachable
 with
     await Z;
-    return a;
+    escape a;
 end;
 a = a + 1;
 await D;
-return a;
+escape a;
 ]],
     run = { ['0~>A;0~>B;0~>Z;0~>D'] = 1 }
 }
@@ -10034,7 +10159,7 @@ with
     await B;
 end;
 a = a + 1;
-return a;
+escape a;
 ]],
     ana = {
         abrt = 2,
@@ -10058,7 +10183,7 @@ loop do
     break;
 end;
 a = a + 1;
-return a;
+escape a;
 ]],
     ana = {
         unreachs = 1,
@@ -10082,7 +10207,7 @@ loop do
     break;
 end;
 a = a + 1;
-return a;
+escape a;
 ]],
     ana = {
         unreachs = 1,
@@ -10105,7 +10230,7 @@ loop do
     end;
     b = b + 1;
 end;
-return b;
+escape b;
 ]],
     ana = {
         --dfa = 'unreachable statement',
@@ -10127,7 +10252,7 @@ loop do
         break;
     end;
 end;
-return b;
+escape b;
 ]],
     ana = {
         unreachs = 1,
@@ -10148,14 +10273,14 @@ with
                             // prio 1
             with
                 var int v = await B;
-                return v;   // prio 1
+                escape v;   // prio 1
             end;
             a = a + 1;
-            return a;
+            escape a;
         end;
     a = a + 2 + b;
 end;
-return a;
+escape a;
 ]],
     ana = {
         abrt = 2,
@@ -10176,13 +10301,13 @@ with
                 await B;
             with
                 var int v = await B;
-                return v;
+                escape v;
             end;
             a = a + 1;
         end;
     a = a + 2 + b;
 end;
-return a;
+escape a;
 ]],
     ana = {
         abrt = 2,
@@ -10204,7 +10329,7 @@ loop do
     a = a + 1;
     break;
 end;
-return a;
+escape a;
 ]],
     ana = {
         unreachs = 1,
@@ -10225,7 +10350,7 @@ loop do
         break;
     end;
 end;
-return a;
+escape a;
 ]],
     ana = {
         unreachs = 1,
@@ -10249,7 +10374,7 @@ loop do
     a = a + 1;
     break;
 end;
-return a;
+escape a;
 ]],
     ana = {
         abrt = 2,
@@ -10273,7 +10398,7 @@ loop do
     a = a + 1;
     break;
 end;
-return a;
+escape a;
 ]],
     ana = {
         abrt = 1,
@@ -10294,7 +10419,7 @@ end;
 b = a;
 a = a*2;
 await B;
-return a;
+escape a;
 ]],
     ana = {
         abrt = 1,
@@ -10316,7 +10441,7 @@ with
 end;
 a = a * 2;
 await B;
-return a;
+escape a;
 ]],
     run = {
         ['0~>B'] = 6,
@@ -10332,7 +10457,7 @@ with
     end;
 end;
 a = a * 2;
-return a;
+escape a;
 ]],
     run = 4,
 }
@@ -10346,7 +10471,7 @@ with
     end;
 end;
 a = a * 2;
-return a;
+escape a;
 ]],
     ana = {
         abrt = 2,
@@ -10375,7 +10500,7 @@ with
 with
     f = 1;
 end;
-return a+b+c+d+e+f;
+escape a+b+c+d+e+f;
 ]],
     run = 6,
 }
@@ -10392,7 +10517,7 @@ loop do
         await A;
     end;
 end;
-return v;
+escape v;
 ]],
     ana = {
         --abrt = 1,
@@ -10412,7 +10537,7 @@ loop do
         await A;
     end;
 end;
-return v;
+escape v;
 ]],
     ana = {
         abrt = 1,
@@ -10428,10 +10553,10 @@ par/or do
         v = await A;
         break;
     end;
-    return v;
+    escape v;
 with
     var int v = await A;
-    return v;
+    escape v;
 end;
 ]],
     ana = {
@@ -10456,7 +10581,7 @@ par/or do
 with
     v = await A;
 end;
-return v;
+escape v;
 ]],
     ana = {
         acc = 1, -- should be 0 (same evt)
@@ -10490,7 +10615,7 @@ with
     await A;
     d = 3;
 end;
-return b+c+d;
+escape b+c+d;
 ]],
     ana = {
         unreachs = 1,
@@ -10522,7 +10647,7 @@ with
     await A;
     d = 3;
 end;
-return b+c+d;
+escape b+c+d;
 ]],
     ana = {
         abrt = 2,
@@ -10548,7 +10673,7 @@ par/or do
 with
     await Z;
     await D;
-    return b;
+    escape b;
 end;
 ]],
     ana = {
@@ -10573,7 +10698,7 @@ par/or do
 with
     await Z;
 end;
-return ret;
+escape ret;
 ]],
     ana = {
         unreachs = 1,
@@ -10596,7 +10721,7 @@ par/or do
 with
     await Z;
     await D;
-    return b;
+    escape b;
 end;
 ]],
     ana = {
@@ -10610,11 +10735,11 @@ input int A;
 var int c = 2;
 var int d = par/and do
     with
-        return c;
+        escape c;
     end;
 c = d + 1;
 await A;
-return c;
+escape c;
 ]],
     parser = "line 3 : after `par´ : expected `do´",
 }
@@ -10624,11 +10749,11 @@ input int A;
 var int c = 2;
 var int d = par do
     with
-        return c;
+        escape c;
     end;
 c = d + 1;
 await A;
-return c;
+escape c;
 ]],
     --abrt = 1,
     run = {
@@ -10644,7 +10769,7 @@ par/or do
 with
     emit b => 5;
 end;
-return 2;
+escape 2;
 ]],
     ana = {
         abrt = 1,
@@ -10684,7 +10809,7 @@ end;
 Test { [[
 event int a;
 emit a => 8;
-return 8;
+escape 8;
 ]],
     run = 8,
     --trig_wo = 1,
@@ -10746,7 +10871,7 @@ with
         end;
     end;
 end;
-return v;
+escape v;
 ]],
     ana = {
         abrt = 2,
@@ -10768,7 +10893,7 @@ par/or do
         emit b => 5;
     end;
     var int v = await D;
-    return v;
+    escape v;
 with
     c = 0;
     loop do
@@ -10782,7 +10907,7 @@ with
     end;
 with
     await E;
-    return c;
+    escape c;
 end;
 ]],
     ana = {
@@ -10808,13 +10933,13 @@ par/or do
         await B;
         emit b => 1;
     end;
-    return v;
+    escape v;
 with
     v = await a;
-    return v;       // 15
+    escape v;       // 15
 with
     var int bb = await b;
-    return bb;       // 18
+    escape bb;       // 18
 end;
 ]],
     ana = {
@@ -10835,18 +10960,18 @@ par/or do
     par/and do
         var int a = await A;
         v = a;
-        return v;
+        escape v;
     with
         await B;
         emit b => 1;
-        return v;
+        escape v;
     end;
 with
     var int aa = await a;
-    return aa;
+    escape aa;
 with
     var int bb = await b;
-    return bb;
+    escape bb;
 end;
 ]],
     ana = {
@@ -10929,7 +11054,7 @@ with
     end;
 with
     await E;
-    return cc;
+    escape cc;
 end;
 ]],
     ana = {
@@ -10972,7 +11097,7 @@ input int A,Z,D;
 var int i;
 par/or do
     await A;
-    return i;
+    escape i;
 with
     i = 1;
     loop do
@@ -10980,10 +11105,10 @@ with
                 await Z;
                 await Z;
                 var int c = await Z;
-                return c;
+                escape c;
             with
                 var int d = await D;
-                return d;
+                escape d;
             end;
         if o == 0 then
             i = i + 1;
@@ -11031,7 +11156,7 @@ with
         await D;
     end;
 end;
-return v;
+escape v;
 ]],
     run = {
         ['0~>B ; 0~>B ; 1~>A ; 2~>Z'] = 1,
@@ -11049,7 +11174,7 @@ with
     with
         await A;
     end;
-    return a;
+    escape a;
 end;
 ]],
     ana = {
@@ -11070,7 +11195,7 @@ with
 with
     aa=await a;     // 10
 end;
-return aa;
+escape aa;
 ]],
     ana = {
         acc = 1,
@@ -11092,7 +11217,7 @@ with
     aa = await a;
     emit a => aa;
 end;
-return aa;
+escape aa;
 ]],
     run = {
         ['0~>A'] = 1,
@@ -11108,7 +11233,7 @@ par/and do
 with
     await a;
     await a;
-    return 1;
+    escape 1;
 end;
 ]],
     ana = {
@@ -11143,7 +11268,7 @@ with
     // unreachable
 end;
 // unreachable
-return 0;
+escape 0;
 ]],
     ana = {
         --isForever = true,
@@ -11179,7 +11304,7 @@ with
     // unreachable
 end;
 // unreachable
-return 0;
+escape 0;
 ]],
     ana = {
         --isForever = true,
@@ -11203,7 +11328,7 @@ with
     await a;
 end;
 // unreachable
-return 0;
+escape 0;
 ]],
     ana = {
         acc = 1,
@@ -11225,7 +11350,7 @@ par/and do
 with
     aa = await a;
 end;
-return aa;
+escape aa;
 ]],
     run = { ['1~>A']=3 }
 }
@@ -11245,7 +11370,7 @@ with
     aa = await a;
     aa = aa + 1;
 end;
-return aa;
+escape aa;
 ]],
     run = { ['1~>A;1~>A']=3 }
 }
@@ -11265,7 +11390,7 @@ with
         break;
     end;
 end;
-return v;
+escape v;
 ]],
     ana = {
         unreachs = 1,
@@ -11289,7 +11414,7 @@ with
     // unreachable
 end;
 // unreachable
-return 0;
+escape 0;
 ]],
     ana = {
         --isForever = true,
@@ -11315,7 +11440,7 @@ with
     end;
     await a;
 end;
-return 10;
+escape 10;
 ]],
     ana = {
         acc = 1,
@@ -11345,7 +11470,7 @@ with
     end;
     aa = await a;
 end;
-return aa;
+escape aa;
 ]],
     ana = {
         acc = 1,
@@ -11373,7 +11498,7 @@ with
     end;
     aa = await a;
 end;
-return aa;
+escape aa;
 ]],
     ana = {
         acc = 1,
@@ -11392,9 +11517,9 @@ par/and do
 with
     await a;
     await b;
-    return 1;
+    escape 1;
 end;
-return 0;
+escape 0;
 ]],
     ana = {
         --nd_esc = 1,
@@ -11418,7 +11543,7 @@ par/and do
 with
     await E;
 end;
-return d;
+escape d;
 ]],
     run = {
         ['1~>A ; 0~>Z ; 9~>D ; 10~>E'] = 9,
@@ -11438,7 +11563,7 @@ with
     end;
     aa = await a;
 end;
-return aa;
+escape aa;
 ]],
     ana = {
         --acc = 1,
@@ -11456,7 +11581,7 @@ with
         await a;
     end;
 end;
-return 1;
+escape 1;
 ]],
     ana = {
         acc = 1,
@@ -11504,7 +11629,7 @@ with
     emit b;
     await A;
     emit a;
-    return v;
+    escape v;
 end;
 ]],
     ana = {
@@ -11526,7 +11651,7 @@ par/or do
 with
     await START;
     emit a => 1;
-    return v;
+    escape v;
 end;
 ]],
     run = 1,
@@ -11554,7 +11679,7 @@ with
 with
     await F;
 end;
-return 1;
+escape 1;
 ]],
     run = { ['~>F'] = 1 },
 }
@@ -11587,9 +11712,9 @@ with
     emit a => 1;
     await A;
     emit a => 0;
-    return v+x;
+    escape v+x;
 end;
-return 10;
+escape 10;
 ]],
     --nd_esc = 1,
     --run = { ['~>A;~>A'] = 1 },
@@ -11622,7 +11747,7 @@ with
     await F;
     v1 = 1;
     v2 = 1;
-    return v1 + v2;
+    escape v1 + v2;
 end;
 ]],
     env = 'line 8 : variable/event "v1" is not declared',
@@ -11635,7 +11760,7 @@ var int* px = &x;
 async (px, v) do
     *px = v + 1;
 end;
-return x + v;
+escape x + v;
 ]],
     run = 5,
 }
@@ -11647,7 +11772,7 @@ async (a) do
     do
     end
 end
-return a;
+escape a;
 ]],
     run = 0,
 }
@@ -11665,7 +11790,7 @@ with
     v = 3;                  // nd
     await F;
 end
-return ret + v;
+escape ret + v;
 ]],
     ana = {
         acc = 2,
@@ -11695,7 +11820,7 @@ with
     await F;
     v1 = 1;
     v2 = 1;
-    return v1 + v2;
+    escape v1 + v2;
 end;
 ]],
     run = { ['1~>F']=2 },
@@ -11724,7 +11849,7 @@ with
     await F;
     v1 = 1;
     v2 = 1;
-    return v1 + v2;
+    escape v1 + v2;
 end;
 ]],
     env = 'line 8 : variable/event "v1" is not declared',
@@ -11744,7 +11869,7 @@ par do
     end;
 with
     await F;
-    return v;
+    escape v;
 end;
 ]],
     run = {
@@ -11759,7 +11884,7 @@ par do
         par/or do
             var int p2 = await P2;
             if p2 == 1 then
-                return 0;
+                escape 0;
             end;
         with
             loop do
@@ -11844,7 +11969,7 @@ with
     await B;
     bb = b;
 end
-return aa+bb;
+escape aa+bb;
 ]],
     run = { ['~>A;~>B']=4 },
 }
@@ -11855,7 +11980,7 @@ event int draw, occurring, sleeping;
 var int x, vis;
 par do
     await F;
-    return vis;
+    escape vis;
 with
     par/and do
         loop do
@@ -11921,10 +12046,10 @@ with
 with
     await START;
     emit a => 1;
-    return v;
+    escape v;
 end;
 // unreachable
-return 0;
+escape 0;
 ]],
     ana = {
         unreachs = 1,
@@ -11954,7 +12079,7 @@ with
         await FOREVER;
     end;
 end;
-return v1 + v2;
+escape v1 + v2;
 ]],
     run = 21,
 }
@@ -11978,7 +12103,7 @@ with
     emit a => aa;
     emit a => aa;
 end;
-return aa;
+escape aa;
 ]],
     --run = 7,
     run = 2,
@@ -12007,7 +12132,7 @@ with
     await A;
     emit a => aa;
 end;
-return aa;
+escape aa;
 ]],
     run = { ['~>A;~>A;~>A;~>A;~>A'] = 7, },
 }
@@ -12041,7 +12166,7 @@ with
     emit a => 1;
     bb = 0;
 end;
-return bb;
+escape bb;
 ]],
     ana = {
         --nd_esc = 1,
@@ -12063,7 +12188,7 @@ with
     emit a => aa;
     await FOREVER;
 end;
-return aa;
+escape aa;
 ]],
     run = 1,
 }
@@ -12086,7 +12211,7 @@ with
     bb = bb + 1;
     await FOREVER;
 end;
-return aa;
+escape aa;
 ]],
     run = 2,
 }
@@ -12108,7 +12233,7 @@ with
     end;
 with
     await F;
-    return cc;
+    escape cc;
 end;
 ]],
     run = { ['1~>A;1~>A;1~>A;1~>F'] = 3 },
@@ -12131,7 +12256,7 @@ with
     with
         v2 = await a;
     end;
-    return v1+v2;
+    escape v1+v2;
 end;
 ]],
     ana = {
@@ -12157,7 +12282,7 @@ with
     var int v1,v2;
     v1 = await a;
     v2 = await a;
-    return v1 + v2;
+    escape v1 + v2;
 end;
 ]],
     ana = {
@@ -12180,7 +12305,7 @@ with
     emit c => 1;
     a = 1;
 end;
-return a;
+escape a;
 ]],
     run = { ['10~>A'] = 1 },
 }
@@ -12203,7 +12328,7 @@ with
     emit c => 1;           // 14
     a = 1;
 end;
-return a;
+escape a;
 ]],
     ana = {
         acc = 1,
@@ -12237,7 +12362,7 @@ par do
     end;
 with
     await F;
-    return i;
+    escape i;
 end;
 ]],
     run = { ['1~>A;1~>A;1~>A;1~>A;1~>A;1~>F'] = 5 },
@@ -12276,7 +12401,7 @@ with
     end;
 with
     await F;
-    return c;
+    escape c;
 end;
 ]],
     ana = {
@@ -12310,7 +12435,7 @@ with
         end;
     end;
 end;
-return x + y;
+escape x + y;
 ]],
     ana = {
         unreachs = 4,
@@ -12353,7 +12478,7 @@ with
     end;
 with
     await F;
-    return c;
+    escape c;
 end;
 ]],
     ana = {
@@ -12383,7 +12508,7 @@ with
     var int aa = await a;
     b = aa + 1;
 end;
-return b;
+escape b;
 ]],
     run = 1,
 }
@@ -12399,7 +12524,7 @@ with
     var int aa =await a;
     b = aa + 1;
 end;
-return b;
+escape b;
 ]],
     ana = {
         unreachs = 1,
@@ -12414,11 +12539,11 @@ event int a;
 par do
     var int aa = await a;
     emit a => 1;
-    return aa;
+    escape aa;
 with
     await START;
     emit a => 2;
-    return 0;
+    escape 0;
 end;
 ]],
     ana = {
@@ -12446,7 +12571,7 @@ with
     emit a => 2;
     aa = 2;
 end;
-return aa;
+escape aa;
 ]],
     ana = {
         --nd_esc = 2,
@@ -12465,7 +12590,7 @@ par do
     await START;
     emit a => 1;
     emit a => 2;
-    return x;
+    escape x;
 with
     loop do
         await a;
@@ -12485,7 +12610,7 @@ par do
     emit a => 1;
     await A;
     emit a => 2;
-    return x;
+    escape x;
 with
     await a;
     x = x + 1;
@@ -12500,7 +12625,7 @@ event int a;
 var int x = 0;
 par do
     emit a  =>  1;
-    return x;
+    escape x;
 with
     loop do
         await a;
@@ -12532,7 +12657,7 @@ with
     emit a;         // 15
     // unreachable
 end
-return x;
+escape x;
 ]],
     ana = {
         abrt = 1,
@@ -12600,7 +12725,7 @@ with
     emit x;             // 22
     emit y;             // 23
 end;
-return ret;
+escape ret;
 ]],
     ana = {
         abrt = 1,
@@ -12640,7 +12765,7 @@ with
     ret = ret + 1;
     emit y => 0;               // 25
     ret = ret * 2;
-    return ret;
+    escape ret;
 end;
 ]],
     ana = {
@@ -12720,7 +12845,7 @@ with
     emit vis => vvis;
 with
     await F;
-    return aa+xx+yy+zz+ww;
+    escape aa+xx+yy+zz+ww;
 end;
 ]],
     ana = {
@@ -12749,7 +12874,7 @@ Test { [[do var int a; end;]],
 Test { [[
 do
     var int a;
-    return 1;
+    escape 1;
 end;
 ]],
     run = 1
@@ -12761,7 +12886,7 @@ do
     do
         var int a = 0;
     end;
-    return a;
+    escape a;
 end;
 ]],
     run = 1,
@@ -12781,7 +12906,7 @@ do
         await B;
         tot = tot + a;
     end;
-    return tot + a;
+    escape tot + a;
 end;
 ]],
     run = { ['~>A;~>B']=8 },
@@ -12792,7 +12917,7 @@ do
     var int a = 1;
     var int b = 0;
     do
-        return a + b;
+        escape a + b;
     end;
 end;
 ]],
@@ -12811,7 +12936,7 @@ do
         a = 2;
         await B;
     end;
-    return a;
+    escape a;
 end;
 ]],
     run = { ['~>A;~>B']=1 },
@@ -12829,7 +12954,7 @@ with
     a = 2;
     await B;
 end;
-return a;
+escape a;
 ]],
     run = { ['~>A;~>B']=2 },
 }
@@ -12843,7 +12968,7 @@ do
         do b=2; end;
     end;
 end;
-return 0;
+escape 0;
 ]],
     ana = {
         acc = 1,
@@ -12863,7 +12988,7 @@ do
     end;
 end;
 await B;
-return i;
+escape i;
 ]],
     ana = {
         unreachs = 1,
@@ -12877,7 +13002,7 @@ return i;
 
 Test { [[
 event a;
-return 0;
+escape 0;
 ]],
     parser = 'line 1 : after `event´ : expected type',
 }
@@ -12906,7 +13031,7 @@ par/or do
 with
     a = await A;
 end;
-return a;
+escape a;
 ]],
     env = 'line 8 : event "a" is not declared',
 }
@@ -12933,7 +13058,7 @@ with
 with
     ret = ret + 1;
 end
-return ret;
+escape ret;
 ]],
     ana = {
         abrt = 1,
@@ -12959,7 +13084,7 @@ with
 with
     ret = ret + 1;
 end
-return ret;
+escape ret;
 ]],
     ana = {
         acc = 2,
@@ -12991,7 +13116,7 @@ par/or do
 with
     aa = await A;
 end;
-return aa;
+escape aa;
 ]],
     ana = {
     abrt = 1,
@@ -13020,7 +13145,7 @@ with
     // unreachable
     ret = 0;
 end;
-return ret;
+escape ret;
 ]],
     ana = {
         --nd_esc = 1,
@@ -13035,16 +13160,16 @@ Test { [[
 do
 finalize with nothing; end
 end
-return 1;
+escape 1;
 ]],
     run = 1,
 }
 
 Test { [[
 finalize with
-    do return 1; end;
+    do escape 1; end;
 end
-return 0;
+escape 0;
 ]],
     props = 'line 2 : not permitted inside `finalize´',
 }
@@ -13085,7 +13210,7 @@ do
     finalize
         a = _f();
     with
-        do return 0; end;
+        do escape 0; end;
     end
 end
 ]],
@@ -13123,7 +13248,7 @@ do
         end;
     end
 end
-return ret;
+escape ret;
 ]],
     env = 'line 6 : variable/event "a" is not declared',
 }
@@ -13136,11 +13261,11 @@ do
     finalize
         a = _f();
     with
-        var int b = do return 2; end;       // TODO: why not?
+        var int b = do escape 2; end;       // TODO: why not?
     end
     r = 1;
 end
-return r;
+escape r;
 ]],
     props = "line 8 : not permitted inside `finalize´",
 }
@@ -13156,7 +13281,7 @@ native _t = 4;
 var _t v = _f;
 var int a;
 v(&a) finalize with nothing; end;
-return(a);
+escape(a);
 ]],
     --env = 'line 8 : native variable/function "_f" is not declared',
     run = 10,
@@ -13166,7 +13291,7 @@ Test { [[
 native _f();
 _f() finalize with nothing;
     end;
-return 1;
+escape 1;
 ]],
     fin = 'line 2 : invalid `finalize´',
 }
@@ -13182,7 +13307,7 @@ do
         v = v + 3;
     end
 end
-return v;
+escape v;
 ]],
     run = 8,
 }
@@ -13194,7 +13319,7 @@ native do void f () {} end
 var void* p;
 _f(p) finalize with nothing;
     end;
-return 1;
+escape 1;
 ]],
     run = 1,
 }
@@ -13206,7 +13331,7 @@ native do void f () {} end
 var void* p;
 _f(p!=null) finalize with nothing;
     end;
-return 1;
+escape 1;
 ]],
     fin = 'line 5 : invalid `finalize´',
     run = 1,
@@ -13221,7 +13346,7 @@ do
         _f(p1, p2);
     end
 end
-return 1;
+escape 1;
 ]],
     fin = 'line 6 : call to "_f" requires `finalize´',
     -- multiple scopes
@@ -13231,7 +13356,7 @@ Test { [[
 native _f();
 native _v;
 _f(_v);
-return 0;
+escape 0;
 ]],
     fin = 'line 3 : call to "_f" requires `finalize´',
 }
@@ -13244,7 +13369,7 @@ native do
     }
 end
 var int* v = _f(0);
-return v == null;
+escape v == null;
 ]],
     run = 1,
 }
@@ -13258,7 +13383,7 @@ native do
     }
 end
 native constant _V;
-return _f(_V);
+escape _f(_V);
 ]],
     run = 10;
 }
@@ -13271,7 +13396,7 @@ native do
     }
 end
 var int v;
-return _f(&v) == 1;
+escape _f(&v) == 1;
 ]],
     fin = 'line 8 : call to "_f" requires `finalize´',
 }
@@ -13284,7 +13409,7 @@ native do
     }
 end
 var int v;
-return _f(&v) == 1;
+escape _f(&v) == 1;
 ]],
     run = 1,
 }
@@ -13299,7 +13424,7 @@ native do
     }
 end
 var int v;
-return _f(&v) == _V;
+escape _f(&v) == _V;
 ]],
     run = 1,
 }
@@ -13319,7 +13444,7 @@ do
     end
     end
 end
-return ret;
+escape ret;
 ]],
     run = 1,
 }
@@ -13343,7 +13468,7 @@ do
     end
     end
 end
-return ret;
+escape ret;
 ]],
     run = 1,
 }
@@ -13360,7 +13485,7 @@ do
         end;
     end
 end
-return r;
+escape r;
 ]],
     run = { ['~>1s']=1 },
 }
@@ -13373,7 +13498,7 @@ do
         var int a = 1;
     end
 end
-return ret;
+escape ret;
 ]],
     run = { ['~>1s']=0 },
 }
@@ -13385,7 +13510,7 @@ do
         end;
     end
 end
-return 1;
+escape 1;
 ]],
     run = 1,
 }
@@ -13401,7 +13526,7 @@ do
         end;
     end
 end
-return ret;
+escape ret;
 ]],
     run = 2,
 }
@@ -13417,7 +13542,7 @@ do
         end;
     end
 end
-return ret;
+escape ret;
 ]],
     run = 2,
 }
@@ -13433,7 +13558,7 @@ do
         end;
     end
 end
-return ret;
+escape ret;
 ]],
     run = 1,
 }
@@ -13447,7 +13572,7 @@ par/or do
 with
     a = 2;
 end
-return a;
+escape a;
 ]],
     todo = '1 or 2: stack change',
     run = 1;
@@ -13465,7 +13590,7 @@ par/or do
 with
     a = 2;
 end
-return a;
+escape a;
 ]],
     todo = '1 or 2: stack change',
     run = 2;
@@ -13484,7 +13609,7 @@ with
     await 1s;
     ret = 2;
 end
-return ret;
+escape ret;
 ]],
     todo = '2 or 3: stack change',
     run = { ['~>1s']=3 },
@@ -13501,12 +13626,12 @@ loop do
                 ret = ret + 1;
             end
         end;
-        return 0;
+        escape 0;
     with
         break;
     end
 end
-return ret;
+escape ret;
 ]],
     run = 1,
 }
@@ -13522,12 +13647,12 @@ loop do
     end
             await A;
         end;
-        return 0;
+        escape 0;
     with
         break;
     end
 end
-return ret;
+escape ret;
 ]],
     run = 2,
 }
@@ -13550,7 +13675,7 @@ with
     end
     end
 end
-return ret;
+escape ret;
 ]],
     run = {
         ['~>A']=1,
@@ -13583,7 +13708,7 @@ with
     end
     end
 end
-return ret;
+escape ret;
 ]],
     todo = 'finalizers do not run in parallel',
     ana = {
@@ -13619,7 +13744,7 @@ with
         ret = ret + 1;
     end
 end
-return ret;
+escape ret;
 ]],
     props = 'line 9 : not permitted inside `finalize´',
 }
@@ -13649,7 +13774,7 @@ with
         ret = ret + 1;
     end
 end
-return ret;
+escape ret;
 ]],
     ana = {
         acc = 3,
@@ -13680,7 +13805,7 @@ with
     await A;
     ret = ret * 2;
 end
-return ret;
+escape ret;
 ]],
     todo = 'ND: stack change',
     run = { ['~>A']=17 },
@@ -13706,7 +13831,7 @@ with
     await A;
 end
 ret = ret * 2;
-return ret;
+escape ret;
 ]],
     ana = {
         abrt = 1,
@@ -13735,7 +13860,7 @@ with
     await B;
     ret = ret * 2;
 end
-return ret;
+escape ret;
 ]],
     run = { ['~>B']=17, ['~>A']=605 },
 }
@@ -13748,7 +13873,7 @@ par/or do
 with
     await START;
 end
-return 1;
+escape 1;
 ]],
     run = 0,
 }
@@ -13762,7 +13887,7 @@ do
     end
     await START;
 end
-return 1;
+escape 1;
 ]],
     run = 0,
 }
@@ -13796,7 +13921,7 @@ loop do
         end
     end
 end
-return ret;
+escape ret;
 ]],
     run = {
         ['~>A']         =  7,
@@ -13816,7 +13941,7 @@ loop do
     end
     end
 end
-return ret;
+escape ret;
 ]],
     run = 1,
 }
@@ -13832,7 +13957,7 @@ loop do
         break;
     end
 end
-return ret;
+escape ret;
 ]],
     ana = {
         unreachs = 2,
@@ -13852,7 +13977,7 @@ loop do
     end
     end
 end
-return ret;
+escape ret;
 ]],
     run = { ['~>1s']=1 },
 }
@@ -13869,7 +13994,7 @@ loop do
         break;
     end
 end
-return ret;
+escape ret;
 ]],
     ana = {
         unreachs = 2,
@@ -13884,14 +14009,14 @@ var int ret = do
         do
             await 1s;
             ret = ret + 1;
-            do return ret * 2; end
+            do escape ret * 2; end
             finalize with
-                ret = ret + 4;  // executed after `return´ assigns to outer `ret´
+                ret = ret + 4;  // executed after `escape´ assigns to outer `ret´
     end
         end
     end
 end;
-return ret;
+escape ret;
 ]],
     ana = {
         unreachs = 2,
@@ -13907,13 +14032,13 @@ var int ret = do
             await 1s;
             ret = ret + 1;
             finalize with
-                ret = ret + 4;  // executed after `return´ assigns to outer `ret´
+                ret = ret + 4;  // executed after `escape´ assigns to outer `ret´
     end
-            return ret * 2;
+            escape ret * 2;
         end
     end
 end;
-return ret;
+escape ret;
 ]],
     ana = {
         unreachs = 2,
@@ -13933,7 +14058,7 @@ with
     end
     end
 end
-return ret;
+escape ret;
 ]],
     ana = {
         abrt = 1,
@@ -13957,7 +14082,7 @@ with
         end
     end
 end
-return ret;
+escape ret;
 ]],
     ana = {
         unreachs = 4,  -- 1s,1s,or,fin
@@ -13983,7 +14108,7 @@ with
         end
     end
 end
-return ret;
+escape ret;
 ]],
     ana = {
         unreachs = 2,  -- 500ms,1s
@@ -14014,7 +14139,7 @@ with
     await F;
     v = v * 5;
 end
-return v;
+escape v;
 ]],
     run = {
         ['~>F'] = 12,
@@ -14039,7 +14164,7 @@ do
         finalize with nothing; end;
     ret = a;
 end
-return(ret);
+escape(ret);
 ]],
     run = 10,
 }
@@ -14074,7 +14199,7 @@ end
 if _A then
     ret = ret + *_A;
 end
-return(ret);
+escape(ret);
 ]],
     run = 20,
 }
@@ -14113,7 +14238,7 @@ end
 if _A then
     ret = ret + *_A;
 end
-return(ret);
+escape(ret);
 ]],
     run = 20,
 }
@@ -14121,7 +14246,7 @@ return(ret);
 Test { [[
 finalize with
 end
-return 1;
+escape 1;
 ]],
     run = 1,
 }
@@ -14141,7 +14266,7 @@ do
         _V = _V + 1;
     end;
 end
-return ret + _V;
+escape ret + _V;
 ]],
     run = 16,
 }
@@ -14165,7 +14290,7 @@ do
         emit e => &i;
     end
 end
-return ret + *p;
+escape ret + *p;
 ]],
     run = 2,
 }
@@ -14190,7 +14315,7 @@ do
         end
     end
     _assert(r == 1);
-    return r;
+    escape r;
 end
 ]],
     adj = 'line 9 : invalid finalize',
@@ -14204,7 +14329,7 @@ do
     event int* e;
     p = await e;
 end
-return 1;
+escape 1;
 ]],
     fin = 'line 4 : attribution requires `finalize´',
 }
@@ -14224,7 +14349,7 @@ do
         emit e => &i;
     end
 end
-return ret;
+escape ret;
 ]],
     run = 1,
 }
@@ -14242,7 +14367,7 @@ with
     await START;
     emit ptr => (1, null);
 end
-return i;
+escape i;
 ]],
     run = 1,
 }
@@ -14260,7 +14385,7 @@ do
         emit ptr => (1, null);
     end
 end
-return i;
+escape i;
 ]],
     run = 1,
 }
@@ -14271,7 +14396,7 @@ async do
     emit A =>
         (1, 1, null);
 end
-return 1;
+escape 1;
 ]],
     run = 1;
 }
@@ -14292,25 +14417,25 @@ with
    await A;
    ret = 1;
 end
-return ret;
+escape ret;
 ]],
     run = { ['~>A']=10 },
 }
 
 Test { [[
 async do
-    return 1;
+    escape 1;
 end;
-return 0;
+escape 0;
 ]],
     props = 'line 2 : not permitted inside `async´',
 }
 
 Test { [[
 var int a = async do
-    return 1;
+    escape 1;
 end;
-return a;
+escape a;
 ]],
     parser = 'line 1 : before `async´ : expected expression',
 }
@@ -14320,7 +14445,7 @@ var int a=12, b;
 async (a) do
     a = 1;
 end;
-return a;
+escape a;
 ]],
     run = 12,
 }
@@ -14329,7 +14454,7 @@ var int a,b;
 async (b) do
     a = 1;
 end;
-return a;
+escape a;
 ]],
     env = 'line 3 : variable/event "a" is not declared',
     --run = 1,
@@ -14340,7 +14465,7 @@ var int a;
 async do
     a = 1;
 end;
-return a;
+escape a;
 ]],
     env = 'line 3 : variable/event "a" is not declared',
     --run = 1,
@@ -14349,10 +14474,10 @@ return a;
 Test { [[
 par/and do
     async do
-        return 1;
+        escape 1;
     end;
 with
-    return 2;
+    escape 2;
 end;
 ]],
     props = 'line 3 : not permitted inside `async´',
@@ -14362,9 +14487,9 @@ Test { [[
 par/and do
     async do
     end;
-    return 1;
+    escape 1;
 with
-    return 2;
+    escape 2;
 end;
 ]],
     --abrt = 1,
@@ -14383,7 +14508,7 @@ par/and do
 with
     a = 2;
 end;
-return a;
+escape a;
 ]],
     env = 'line 4 : variable/event "a" is not declared',
     ana = {
@@ -14393,7 +14518,7 @@ return a;
 
 Test { [[
 async do
-    return 1+2;
+    escape 1+2;
 end;
 ]],
     props = 'line 2 : not permitted inside `async´',
@@ -14404,11 +14529,11 @@ var int a;
 var int* pa = &a;
 async (pa) do
     var int a = do
-        return 1;
+        escape 1;
     end;
-    return a;
+    escape a;
 end;
-return a;
+escape a;
 ]],
     props = 'ERR : tests.lua : line 5 : not permitted inside `async´',
 }
@@ -14418,7 +14543,7 @@ input void X;
 async do
     emit X;
 end;
-return 0;
+escape 0;
 ]],
     run=0
 }
@@ -14430,7 +14555,7 @@ async do
     a = 1;
     emit A => a;
 end;
-return a;
+escape a;
 ]],
     env = 'line 4 : variable/event "a" is not declared',
     --run=1
@@ -14442,7 +14567,7 @@ var int a;
 async do
     a = emit A;
 end;
-return a;
+escape a;
 ]],
     --env = "line 4 : invalid input `emit´",
     parser = 'line 4 : after `=´ : expected expression',
@@ -14453,7 +14578,7 @@ event int a;
 async do
     emit a => 1;
 end;
-return 0;
+escape 0;
 ]],
     env = 'line 3 : variable/event "a" is not declared',
 }
@@ -14462,7 +14587,7 @@ event int a;
 async do
     await a;
 end;
-return 0;
+escape 0;
 ]],
     env = 'line 3 : variable/event "a" is not declared',
 }
@@ -14470,7 +14595,7 @@ Test { [[
 async do
     await 1ms;
 end;
-return 0;
+escape 0;
 ]],
     props='not permitted inside `async´'
 }
@@ -14480,7 +14605,7 @@ async do
     emit X => 1;
 end;
 emit X => 1;
-return 0;
+escape 0;
 ]],
   props='not permitted outside `async´'
 }
@@ -14508,7 +14633,7 @@ loop do
         break;
     end;
 end;
-return 0;
+escape 0;
 ]],
     props='`break´ without loop'
 }
@@ -14521,7 +14646,7 @@ end
 async do
     _a = 1;
 end
-return _a;
+escape _a;
 ]],
     run = 1,
 }
@@ -14540,7 +14665,7 @@ with
         _a = 1;
     end
 end
-return _a+_b;
+escape _a+_b;
 ]],
     todo = 'async is not simulated',
     ana = {
@@ -14567,7 +14692,7 @@ with
 with
     _c = 1;
 end
-return _a+_b+_c;
+escape _a+_b+_c;
 ]],
     todo = true,
     run = 3,
@@ -14583,7 +14708,7 @@ par/or do
 with
     _b = 1;
 end
-return _a + _b;
+escape _a + _b;
 ]],
     ana = {
         abrt = 1,
@@ -14602,7 +14727,7 @@ par/or do
 with
     a = 1;
 end
-return _a + a;
+escape _a + a;
 ]],
     ana = {
         abrt = 1,
@@ -14622,7 +14747,7 @@ par/or do
 with
     a = 1;
 end
-return _a + a;
+escape _a + a;
 ]],
     ana = {
         abrt = 1,
@@ -14647,7 +14772,7 @@ with
 with
     _c = 1;
 end
-return _a+_b+_c;
+escape _a+_b+_c;
 ]],
     todo = 'nd in async',
     ana = {
@@ -14662,7 +14787,7 @@ async(pr) do
     var int i = 100;
     *pr = i;
 end;
-return r;
+escape r;
 ]],
     run=100
 }
@@ -14676,7 +14801,7 @@ async (pret) do
     sum = sum + i;
     *pret = sum;
 end;
-return ret;
+escape ret;
 ]],
     run = 110,
 }
@@ -14699,12 +14824,12 @@ par/or do
                 i = i + 1;
             end
         end
-        return sum;
+        escape sum;
     end;
 with
     f = await F;
 end;
-return ret+f;
+escape ret+f;
 ]],
     run = {
         ['10~>F'] = 10,
@@ -14734,7 +14859,7 @@ par/and do
 with
     f = await F;
 end;
-return ret+f;
+escape ret+f;
 ]],
     run = { ['10~>F']=5060 }
 }
@@ -14761,7 +14886,7 @@ par/or do
 with
     f = await F;
 end;
-return ret+f;
+escape ret+f;
 ]],
     run = { ['10~>F']=10 }
 }
@@ -14770,7 +14895,7 @@ Test { [[
 input int F;
 par do
     await F;
-    return 1;
+    escape 1;
 with
     async do
         loop do
@@ -14779,7 +14904,7 @@ with
             end;
         end;
     end;
-    return 0;
+    escape 0;
 end;
 ]],
     run = { ['1~>F'] = 1 },
@@ -14795,7 +14920,7 @@ with
         end;
     end;
 end;
-return 0;
+escape 0;
 ]],
     todo = 'detect termination',
     props='async must terminate'
@@ -14809,7 +14934,7 @@ async (pret) do
     i = i - 1;
     *pret = i;
 end;
-return ret;
+escape ret;
 ]],
     run = 99,
 }
@@ -14824,7 +14949,7 @@ async(pret) do
     end;
     *pret = i;
 end;
-return ret;
+escape ret;
 ]],
     ana = {
         --unreachs = 1,       -- TODO: loop iter
@@ -14844,7 +14969,7 @@ async(pret) do
     end
     *pret = i;
 end;
-return ret;
+escape ret;
 ]],
     run = 2,
 }
@@ -14862,7 +14987,7 @@ async (pi) do
         end;
     end;
 end;
-return i;
+escape i;
 ]],
     run = 0,
 }
@@ -14880,7 +15005,7 @@ async (pi) do
         end;
     end;
 end;
-return i;
+escape i;
 ]],
     run = 0,
 }
@@ -14892,9 +15017,9 @@ var int i = async do
     loop do
         i = i - 1;
     end;
-    return 0;
+    escape 0;
 end;
-return i;
+escape i;
 ]],
     ana = {
         unreachs = 3,
@@ -14916,7 +15041,7 @@ async (pi) do
         end;
     end;
 end;
-return i;
+escape i;
 ]],
     env = 'line 5 : variable/event "i" is not declared',
 }
@@ -14936,7 +15061,7 @@ async (p) do
         end;
     end;
 end;
-return sum;
+escape sum;
 ]],
     run = 55,
 }
@@ -14947,10 +15072,10 @@ par do
     async do
         emit A => 1;
     end;
-    return 0;
+    escape 0;
 with
     await A;
-    return 5;
+    escape 5;
 end;
 ]],
     run = 5,
@@ -14967,7 +15092,7 @@ with
 end;
 a = a + 1;
 await A;
-return a;
+escape a;
 ]],
     run = {
         ['1~>B ; 10~>A'] = 1,
@@ -14982,7 +15107,7 @@ par/or do
     end;
 with
 end;
-return 1;
+escape 1;
 ]],
     ana = {
         unreachs = 1,
@@ -15008,7 +15133,7 @@ with
             loop i, 5 do
                 v = v + i;
             end
-            return v;
+            escape v;
         end;
         ret = ret + v;
     with
@@ -15017,12 +15142,12 @@ with
             loop i, 5 do
                 v = v + i;
             end
-            return v;
+            escape v;
         end;
         ret = ret + v;
     end
 end
-return ret;
+escape ret;
 ]],
     todo = 'algo now is nondet',
     ana = {
@@ -15038,7 +15163,7 @@ var int* b = &a;
 do
 var int a = 0;
 end
-return *b;
+escape *b;
 ]],
     run = 1,
 }
@@ -15046,53 +15171,53 @@ return *b;
     -- POINTERS & ARRAYS
 
 -- int_int
-Test { [[var int*p; return p/10;]],  env='invalid operands to binary "/"'}
-Test { [[var int*p; return p|10;]],  env='invalid operands to binary "|"'}
-Test { [[var int*p; return p>>10;]], env='invalid operands to binary ">>"'}
-Test { [[var int*p; return p^10;]],  env='invalid operands to binary "^"'}
-Test { [[var int*p; return ~p;]],    env='invalid operand to unary "~"'}
+Test { [[var int*p; escape p/10;]],  env='invalid operands to binary "/"'}
+Test { [[var int*p; escape p|10;]],  env='invalid operands to binary "|"'}
+Test { [[var int*p; escape p>>10;]], env='invalid operands to binary ">>"'}
+Test { [[var int*p; escape p^10;]],  env='invalid operands to binary "^"'}
+Test { [[var int*p; escape ~p;]],    env='invalid operand to unary "~"'}
 
 -- same
-Test { [[var int*p; var int a; return p==a;]],
+Test { [[var int*p; var int a; escape p==a;]],
         env='invalid operands to binary "=="'}
-Test { [[var int*p; var int a; return p!=a;]],
+Test { [[var int*p; var int a; escape p!=a;]],
         env='invalid operands to binary "!="'}
-Test { [[var int*p; var int a; return p>a;]],
+Test { [[var int*p; var int a; escape p>a;]],
         env='invalid operands to binary ">"'}
 
 -- any
-Test { [[var int*p; return p or 10;]], run=1 }
-Test { [[var int*p; return p and 0;]],  run=0 }
-Test { [[var int*p=null; return not p;]], run=1 }
+Test { [[var int*p; escape p or 10;]], run=1 }
+Test { [[var int*p; escape p and 0;]],  run=0 }
+Test { [[var int*p=null; escape not p;]], run=1 }
 
 -- arith
-Test { [[var int*p; return p+p;]],     env='invalid operands to binary'}--TODO: "+"'}
-Test { [[var int*p; return p+10;]],    env='invalid operands to binary'}
-Test { [[var int*p; return p+10 and 0;]], env='invalid operands to binary' }
+Test { [[var int*p; escape p+p;]],     env='invalid operands to binary'}--TODO: "+"'}
+Test { [[var int*p; escape p+10;]],    env='invalid operands to binary'}
+Test { [[var int*p; escape p+10 and 0;]], env='invalid operands to binary' }
 
 -- ptr
-Test { [[var int a; return *a;]], env='invalid operand to unary "*"' }
-Test { [[var int a; var int*pa; (pa+10)=&a; return a;]],
+Test { [[var int a; escape *a;]], env='invalid operand to unary "*"' }
+Test { [[var int a; var int*pa; (pa+10)=&a; escape a;]],
         env='invalid operands to binary'}
-Test { [[var int a; var int*pa; a=1; pa=&a; *pa=3; return a;]], run=3 }
+Test { [[var int a; var int*pa; a=1; pa=&a; *pa=3; escape a;]], run=3 }
 
-Test { [[var int  a;  var int* pa=a; return a;]], env='invalid attribution' }
-Test { [[var int* pa; var int a=pa;  return a;]], env='invalid attribution' }
+Test { [[var int  a;  var int* pa=a; escape a;]], env='invalid attribution' }
+Test { [[var int* pa; var int a=pa;  escape a;]], env='invalid attribution' }
 Test { [[
 var int a;
 var int* pa = do
-    return a;
+    escape a;
 end;
-return a;
+escape a;
 ]],
     env='invalid attribution'
 }
 Test { [[
 var int* pa;
 var int a = do
-    return pa;
+    escape pa;
 end;
-return a;
+escape a;
 ]],
     env='invalid attribution'
 }
@@ -15101,9 +15226,9 @@ Test { [[
 var int* a;
 a = null;
 if a then
-    return 1;
+    escape 1;
 else
-    return -1;
+    escape -1;
 end;
 ]],
     run = -1,
@@ -15119,7 +15244,7 @@ i = c;
 c = i;
 i = (int) c;
 c = (_char) i;
-return c;
+escape c;
 ]],
     --env = 'line 6 : invalid attribution',
     run = 10,
@@ -15133,7 +15258,7 @@ var _char c;
 var _char* pc;
 i = (int) c;
 c = (_char) i;
-return 10;
+escape 10;
 ]],
     run = 10
 }
@@ -15146,7 +15271,7 @@ if 1 then
 else
     ptr2 = ptr2;
 end;
-return 1;
+escape 1;
 ]],
     run = 1,
 }
@@ -15156,7 +15281,7 @@ var int* ptr1;
 var void* ptr2;
 ptr1 = ptr2;
 ptr2 = ptr1;
-return 1;
+escape 1;
 ]],
     run = 1,
 }
@@ -15166,7 +15291,7 @@ var void* ptr1;
 var int* ptr2;
 ptr1 = ptr2;
 ptr2 = ptr1;
-return 1;
+escape 1;
 ]],
     run = 1,
 }
@@ -15177,7 +15302,7 @@ var _char* ptr1;
 var int* ptr2=(void*)0xFF;
 ptr1 = ptr2;
 ptr2 = ptr1;
-return (int)ptr2;
+escape (int)ptr2;
 ]],
     --env = 'line 4 : invalid attribution',
     run = 255,
@@ -15188,7 +15313,7 @@ var _char* ptr1;
 var int* ptr2;
 ptr1 = (_char*)ptr2;
 ptr2 = (int*)ptr1;
-return 1;
+escape 1;
 ]],
     run = 1,
 }
@@ -15198,7 +15323,7 @@ var int* ptr1;
 var _char* ptr2;
 ptr1 = (int*) ptr2;
 ptr2 = (_char*) ptr1;
-return 1;
+escape 1;
 ]],
     run = 1,
 }
@@ -15209,7 +15334,7 @@ var int* ptr1;
 var _FILE* ptr2;
 ptr1 = ptr2;
 ptr2 = ptr1;
-return 1;
+escape 1;
 ]],
     run = 1,
     --env = 'line 4 : invalid attribution',
@@ -15219,7 +15344,7 @@ Test { [[
 var int a = 1;
 var int* b = &a;
 *b = 2;
-return a;
+escape a;
 ]],
     run = 2,
 }
@@ -15232,7 +15357,7 @@ par/or do
 with
     pa = &a;
 end;
-return a;
+escape a;
 ]],
     ana = {
         abrt = 1,
@@ -15248,7 +15373,7 @@ par/or do
 with
     *a = 0;
 end
-return b;
+escape b;
 ]],
     ana = {
         abrt = 1,
@@ -15267,7 +15392,7 @@ par/and do
 with
     *a = 3;
 end
-return *a+b+c;
+escape *a+b+c;
 ]],
     run = 7,
 }
@@ -15285,7 +15410,7 @@ par/and do
 with
     _f(&a);
 end
-return a + b;
+escape a + b;
 ]],
     run = 2,
     ana = {
@@ -15311,7 +15436,7 @@ with
 with
     _f(pb);             // 16
 end
-return a + b;
+escape a + b;
 ]],
     run = 2,
     ana = {
@@ -15337,7 +15462,7 @@ with
 with
     _f(pb);
 end
-return a + b;
+escape a + b;
 ]],
     run = 1,
     ana = {
@@ -15364,7 +15489,7 @@ with
 with
     _f(pb);
 end
-return a + b;
+escape a + b;
 ]],
     todo = true,
     run = 2,
@@ -15391,7 +15516,7 @@ with
 with
     _f(pb);
 end
-return a + b;
+escape a + b;
 ]],
     todo = true,
     run = 1,
@@ -15404,7 +15529,7 @@ Test { [[
 var int b = 10;
 var int* a = (int*) &b;
 var int* c = &b;
-return *a + *c;
+escape *a + *c;
 ]],
     run = 20;
 }
@@ -15414,11 +15539,11 @@ native _f();
 native do
     int* f () {
         int a = 10;
-        return &a;
+        escape &a;
     }
 end
 var int* p = _f();
-return *p;
+escape *p;
 ]],
     fin = 'line 8 : attribution requires `finalize´',
 }
@@ -15438,7 +15563,7 @@ finalize
 with
     nothing;
 end
-return *p;
+escape *p;
 ]],
     run = 10,
 }
@@ -15457,7 +15582,7 @@ finalize
 with
     nothing;
 end
-return *p;
+escape *p;
 ]],
     run = 10,
 }
@@ -15472,7 +15597,7 @@ native do
 end
 var int* p;
     p = _f();
-return *p;
+escape *p;
 ]],
     run = 10,
 }
@@ -15493,7 +15618,7 @@ do
         a = *p;
 end
 end
-return a;
+escape a;
 ]],
     run = 10,
 }
@@ -15518,7 +15643,7 @@ end
     end
     a = 0;
 end
-return a;
+escape a;
 ]],
     run = 10,
 }
@@ -15527,7 +15652,7 @@ Test { [[
 native _char = 1;
 var _char* p;
 *(p:a) = (_char)1;
-return 1;
+escape 1;
 ]],
     gcc = ':3:35: error: request for member',
 }
@@ -15541,24 +15666,24 @@ do
     await START;
     var int z = 0;
 end
-return *p;
+escape *p;
 ]],
     run = 10;
 }
 
     -- ARRAYS
 
-Test { [[input int[1] E; return 0;]],
+Test { [[input int[1] E; escape 0;]],
     parser = "line 1 : after `int´ : expected identifier",
 }
-Test { [[var int[0] v; return 0;]],
+Test { [[var int[0] v; escape 0;]],
     run = 0,
     --env='invalid array dimension'
 }
-Test { [[var int[2] v; return v;]],
+Test { [[var int[2] v; escape v;]],
     env = 'invalid attribution'
 }
-Test { [[var u8[2] v; return &v;]],
+Test { [[var u8[2] v; escape &v;]],
     env = 'invalid operand to unary "&"',
 }
 
@@ -15583,7 +15708,7 @@ var void[10] a;
 Test { [[
 var int[2] v;
 v[0] = 5;
-return v[0];
+escape v[0];
 ]],
     run = 5
 }
@@ -15592,7 +15717,7 @@ Test { [[
 var int[2] v;
 v[0] = 1;
 v[1] = 1;
-return v[0] + v[1];
+escape v[0] + v[1];
 ]],
     run = 2,
 }
@@ -15604,7 +15729,7 @@ v[0] = 0;
 v[1] = 5;
 v[0] = 0;
 i = 0;
-return v[i+1];
+escape v[i+1];
 ]],
     run = 5
 }
@@ -15637,26 +15762,26 @@ var int i = 110;
 
 vec[3].v[5] = 10;
 vec[9].c = 100;
-return i + vec[9].c + vec[3].v[5];
+escape i + vec[9].c + vec[3].v[5];
 ]],
     run = 220,
 }
 
-Test { [[var int[2] v; await v;     return 0;]],
+Test { [[var int[2] v; await v;     escape 0;]],
         env='event "v" is not declared' }
-Test { [[var int[2] v; emit v;    return 0;]],
+Test { [[var int[2] v; emit v;    escape 0;]],
         env='event "v" is not declared' }
-Test { [[var int[2] v; await v[0];  return 0;]],
+Test { [[var int[2] v; await v[0];  escape 0;]],
         env='line 1 : event "?" is not declared'}
-Test { [[var int[2] v; emit v[0]; return 0;]],
+Test { [[var int[2] v; emit v[0]; escape 0;]],
         env='event "?" is not declared' }
-Test { [[var int[2] v; v=v; return 0;]], env='invalid attribution' }
-Test { [[var int v; return v[1];]], env='cannot index a non array' }
-Test { [[var int[2] v; return v[v];]], env='invalid array index' }
+Test { [[var int[2] v; v=v; escape 0;]], env='invalid attribution' }
+Test { [[var int v; escape v[1];]], env='cannot index a non array' }
+Test { [[var int[2] v; escape v[v];]], env='invalid array index' }
 
 Test { [[
 var int[2] v ;
-return v == &v[0] ;
+escape v == &v[0] ;
 ]],
     run = 1,
 }
@@ -15675,7 +15800,7 @@ par/and do
 with
     _f(a);
 end
-return a[0] + b;
+escape a[0] + b;
 ]],
     run = 3,
 }
@@ -15694,7 +15819,7 @@ par/or do
 with
     _f(a);
 end
-return a[0] + b;
+escape a[0] + b;
 ]],
     ana = {
         abrt = 1,
@@ -15705,7 +15830,7 @@ return a[0] + b;
 Test { [[
 var u8[255] vec;
 event void  e;
-return 1;
+escape 1;
 ]],
     --mem = 'too many events',    -- TODO
     run = 1,
@@ -15717,14 +15842,14 @@ for i=1, 256 do
 end
 Test { [[
 ]]..evts..[[
-return 1;
+escape 1;
 ]],
     env = 'line 1 : too many events',
 }
 
 Test { [[
 var int a = 1;
-return a;
+escape a;
 ]],
     run = 1,
 }
@@ -15733,20 +15858,20 @@ return a;
 
 Test { [[
 var _char c = 1;
-return c;
+escape c;
 ]],
     run = 1,
 }
 
 Test { [[
-return {1};
+escape {1};
 ]],
     run = 1,
 }
 
 Test { [[
 { int V = 10; };
-return _V;
+escape _V;
 ]],
     run = 10,
 }
@@ -15758,7 +15883,7 @@ finalize
 with
     nothing;
 end
-return p==null;
+escape p==null;
 ]],
     run = 1,
 }
@@ -15766,7 +15891,7 @@ return p==null;
 Test { [[
 var void* p;
 p := { NULL };
-return p==null;
+escape p==null;
 ]],
     run = 1,
 }
@@ -15782,7 +15907,7 @@ native _printf();
 do
     _printf("oi\n");
 end
-return 10;
+escape 10;
 ]],
     run = 10;
 }
@@ -15794,7 +15919,7 @@ native do
 end
 
 _V[0][1] = 5;
-return _V[1][0] + _V[0][1];
+escape _V[1][0] + _V[0][1];
 ]],
     run = 8,
 }
@@ -15805,9 +15930,9 @@ native do
     int END = 1;
 end
 if not  _END-1 then
-    return 1;
+    escape 1;
 else
-    return 0;
+    escape 0;
 end
 ]],
     run = 1,
@@ -15816,7 +15941,7 @@ end
 Test { [[
 native do
 end
-return 1;
+escape 1;
 ]],
     run = 1,
 }
@@ -15825,7 +15950,7 @@ Test { [[
 native do
     char* a = "end";
 end
-return 1;
+escape 1;
 ]],
     run = 1,
 }
@@ -15836,7 +15961,7 @@ native do
     char* a = "end";
     /*** END ***/
 end
-return 1;
+escape 1;
 ]],
     run = 1,
 }
@@ -15846,7 +15971,7 @@ native do
     int A () {}
 end
 A = 1;
-return 1;
+escape 1;
 ]],
     parser = 'line 3 : after `end´ : expected statement'
 }
@@ -15855,7 +15980,7 @@ Test { [[
 native do
     void A (int v) {}
 end
-return 0;
+escape 0;
 ]],
     run = 0;
 }
@@ -15864,7 +15989,7 @@ Test { [[
 native do
     int A (int v) {}
 end
-return 0;
+escape 0;
 ]],
     --env = 'A : incompatible with function definition',
     run = 0,
@@ -15876,7 +16001,7 @@ native do
     void A (int v) {}
 end
 _A();
-return 0;
+escape 0;
 ]],
     env = 'line 5 : native function "_A" is not declared',
 }
@@ -15887,7 +16012,7 @@ native do
     void A (int v) {}
 end
 _A();
-return 0;
+escape 0;
 ]],
     run = 0,
 }
@@ -15898,12 +16023,12 @@ native do
     void A () {}
 end
 var int v = _A();
-return v;
+escape v;
 ]],
     gcc = ':5:30: error: void value not ignored as it ought to be',
 }
 
-Test { [[emit A => 10; return 0;]],
+Test { [[emit A => 10; escape 0;]],
     env = 'event "A" is not declared'
 }
 
@@ -15915,7 +16040,7 @@ native do
     }
 end
 var int ret = _Const();
-return ret;
+escape ret;
 ]],
     run = -10
 }
@@ -15927,7 +16052,7 @@ native do
         return v;
     }
 end
-return _ID(10);
+escape _ID(10);
 ]],
     run = 10,
 }
@@ -15940,7 +16065,7 @@ native do
     }
 end
 var int v = _ID(10);
-return v;
+escape v;
 ]],
     run = 10
 }
@@ -15952,7 +16077,7 @@ native do
     }
 end
 _VD(10);
-return 1;
+escape 1;
 ]],
     run = 1
 }
@@ -15964,7 +16089,7 @@ native do
     }
 end
 var int ret = _VD(10);
-return ret;
+escape ret;
 ]],
     gcc = ':6:32: error: void value not ignored as it ought to be',
 }
@@ -15975,7 +16100,7 @@ native do
     }
 end
 var void v = _VD(10);
-return v;
+escape v;
 ]],
     env = 'line 5 : cannot instantiate type "void"',
 }
@@ -15987,7 +16112,7 @@ native do
         return -v;
     }
 end
-return _NEG(10);
+escape _NEG(10);
 ]],
     run = -10,
 }
@@ -16000,7 +16125,7 @@ native do
     }
 end
 var int v = _NEG(10);
-return v;
+escape v;
 ]],
     run = -10
 }
@@ -16019,7 +16144,7 @@ par/and do
 with
     v = _ID(10);
 end;
-return v;
+escape v;
 ]],
     run = {['1~>A']=10},
 }
@@ -16038,7 +16163,7 @@ par/or do
 with
     v = _ID(10);
 end
-return v;
+escape v;
 ]],
     ana = {
         unreachs = 1,
@@ -16053,7 +16178,7 @@ input int A;
 var int c;
 _Z1(3);
 c = await A;
-return c;
+escape c;
 ]],
     run = {
         ['10~>A ; 20~>A'] = 10,
@@ -16074,7 +16199,7 @@ end
 var u8[2] v;
 v[0] = 8;
 v[1] = 5;
-return _f2(&v[0],&v[1]) + _f1(v) + _f1(&v[0]);
+escape _f2(&v[0],&v[1]) + _f1(v) + _f1(&v[0]);
 ]],
     run = 39,
 }
@@ -16098,7 +16223,7 @@ int[2] va;
 
 Test { PRE .. [[
 _set(va,1,1);
-return _idx(va,1);
+escape _idx(va,1);
 ]],
     run = 1,
 }
@@ -16106,7 +16231,7 @@ return _idx(va,1);
 Test { PRE .. [[
 _set(va,0,1);
 _set(va,1,2);
-return _idx(va,0) + _idx(va,1);
+escape _idx(va,0) + _idx(va,1);
 ]],
     run = 3,
 }
@@ -16117,7 +16242,7 @@ par/and do
 with
     _set(va,1,2);
 end;
-return _idx(va,0) + _idx(va,1);
+escape _idx(va,0) + _idx(va,1);
 ]],
     ana = {
         acc = 2,
@@ -16129,7 +16254,7 @@ par/and do
 with
     _idx(va,1);
 end;
-return _idx(va,0) + _idx(va,1);
+escape _idx(va,0) + _idx(va,1);
 ]],
     ana = {
         acc = 1,
@@ -16143,7 +16268,7 @@ par/and do
 with
     _idx(va,1);
 end;
-return _idx(va,0) + _idx(va,1);
+escape _idx(va,0) + _idx(va,1);
 ]],
     run = 3,
 }
@@ -16157,7 +16282,7 @@ par/or do
 with
     pb = &b;
 end;
-return 1;
+escape 1;
 ]],
     run = 1
 }
@@ -16186,7 +16311,7 @@ end
 Test { PRE .. [[
 int a = 1;
 int b = 2;
-return _f1(&a,&b);
+escape _f1(&a,&b);
 ]],
     run = 3,
 }
@@ -16198,7 +16323,7 @@ par/or do
 with
     int v = 1;
 end;
-return 0;
+escape 0;
 ]],
     ana = {
         acc = 1,
@@ -16211,7 +16336,7 @@ par/or do
 with
     int v = a;
 end;
-return 0;
+escape 0;
 ]],
     ana = {
         acc = 1,
@@ -16224,7 +16349,7 @@ par/or do
 with
     a = 1;
 end;
-return 0;
+escape 0;
 ]],
     ana = {
         acc = 1,
@@ -16235,9 +16360,9 @@ int a = 10;
 par/or do
     _f5(&a);
 with
-    return a;
+    escape a;
 end;
-return 0;
+escape 0;
 ]],
     run = false,
     ana = {
@@ -16250,9 +16375,9 @@ int* pa;
 par/or do
     _f5(pa);
 with
-    return a;
+    escape a;
 end;
-return 0;
+escape 0;
 ]],
     --abrt = 1,
     ana = {
@@ -16266,7 +16391,7 @@ par/or do
 with
     int v = b;
 end;
-return 0;
+escape 0;
 ]],
     run = 0,
 }
@@ -16277,7 +16402,7 @@ par/or do
 with
     b = 1;
 end;
-return 0;
+escape 0;
 ]],
     run = 0,
 }
@@ -16289,7 +16414,7 @@ par/or do
 with
     int v = b;
 end;
-return 0;
+escape 0;
 ]],
     run = 0,
 }
@@ -16299,7 +16424,7 @@ do
     int a;
     pa = &a;
 end;
-return 1;
+escape 1;
 ]],
     run = 1,     -- TODO: check_depth
     --env = 'invalid attribution',
@@ -16310,7 +16435,7 @@ do
     int* pa = &a;
     *pa = 2;
 end;
-return a;
+escape a;
 ]],
     run = 2,
 }
@@ -16323,7 +16448,7 @@ par/or do
 with
     int v = a;
 end;
-return 0;
+escape 0;
 ]],
     ana = {
         acc = 2, -- TODO: scope of v vs pa
@@ -16337,7 +16462,7 @@ par/or do
 with
     a = 1;
 end;
-return a;
+escape a;
 ]],
     ana = {
         acc = 1,
@@ -16347,9 +16472,9 @@ Test { PRE .. [[
 int a;
 int* pa;
 par do
-    return _f5(pa);
+    escape _f5(pa);
 with
-    return a;
+    escape a;
 end;
 ]],
     --abrt = 2,
@@ -16365,7 +16490,7 @@ par/or do
 with
     _f4(&b);
 end;
-return a+b;
+escape a+b;
 ]],
     ana = {
         acc = 1,
@@ -16382,7 +16507,7 @@ par/and do
 with
     v2 = _f1(&a,&b);
 end;
-return v1 + v2;
+escape v1 + v2;
 ]],
     ana = {
         acc = 3,
@@ -16398,7 +16523,7 @@ par/and do
 with
     v2 = _f2(&a,&b);
 end;
-return v1 + v2;
+escape v1 + v2;
 ]],
     ana = {
         acc = 3,     -- TODO: f2 is const
@@ -16414,7 +16539,7 @@ par/and do
 with
     v2 = _f3(&a,&b);
 end;
-return v1 + v2;
+escape v1 + v2;
 ]],
     run = 6,
 }
@@ -16428,7 +16553,7 @@ par/and do
 with
     v2 = _f4(&b);
 end;
-return a+b;
+escape a+b;
 ]],
     run = 4,
     ana = {
@@ -16445,7 +16570,7 @@ par/and do
 with
     v2 = _f4(&a);
 end;
-return a+a;
+escape a+a;
 ]],
     ana = {
         acc = 2,
@@ -16461,7 +16586,7 @@ par/and do
 with
     v2 = _f5(&a);
 end;
-return a+a;
+escape a+a;
 ]],
     run = 4,
 }
@@ -16476,7 +16601,7 @@ par/and do
 with
     v2 = _f4(pa);
 end;
-return v1+v2;
+escape v1+v2;
 ]],
     ana = {
         acc = 3,
@@ -16493,7 +16618,7 @@ par/and do
 with
     v2 = _f5(pa);
 end;
-return v1+v2;
+escape v1+v2;
 ]],
     ana = {
         acc = 1,
@@ -16506,7 +16631,7 @@ par/and do
 with
     _assert(1);
 end
-return 0;
+escape 0;
 ]],
     ana = {
         acc = 1,
@@ -16522,7 +16647,7 @@ par/and do
 with
     _assert(1);
 end
-return 0;
+escape 0;
 ]],
     todo = true,
     run = 1,
@@ -16539,7 +16664,7 @@ par/or do
 with
     _a = 2;
 end
-return _a;
+escape _a;
 ]],
     ana = {
         acc = 1,
@@ -16775,27 +16900,27 @@ end
 Test { [[
 native _char=1;
 var _char* a = "Abcd12" ;
-return 1;
+escape 1;
 ]],
     run = 1
 }
 Test { [[
 native _printf();
 _printf("END: %s\n", "Abcd12");
-return 0;
+escape 0;
 ]],
     run='Abcd12',
 }
 Test { [[
 native _strncpy(), _printf(), _strlen();
-return _strlen("123");
+escape _strlen("123");
 ]], run=3 }
 Test { [[
 native _printf();
-_printf("END: 1%d\n",2); return 0;]], run=12 }
+_printf("END: 1%d\n",2); escape 0;]], run=12 }
 Test { [[
 native _printf();
-_printf("END: 1%d%d\n",2,3); return 0;]], run=123 }
+_printf("END: 1%d%d\n",2,3); escape 0;]], run=123 }
 
 Test { [[
 native nohold _strncpy(), _printf(), _strlen();
@@ -16803,7 +16928,7 @@ native _char = 1;
 var _char[10] str;
 _strncpy(str, "123", 4);
 _printf("END: %d %s\n", _strlen(str), str);
-return 0;
+escape 0;
 ]],
     run = '3 123'
 }
@@ -16821,7 +16946,7 @@ _strcpy(d,a);
 _strcpy(&d[_strlen(d)], b);
 _strcpy(&d[_strlen(d)], c);
 _printf("END: %d %s\n", _strlen(d), d);
-return 0;
+escape 0;
 ]],
     run = '12 Hello World!'
 }
@@ -16830,10 +16955,10 @@ Test { [[
 native _const_1();
 native do
     int const_1 () {
-        return 1;
+        escape 1;
     }
 end
-return _const_1();
+escape _const_1();
 ]],
     run = 1;
 }
@@ -16842,10 +16967,10 @@ Test { [[
 native _const_1();
 native do
     int const_1 () {
-        return 1;
+        escape 1;
     }
 end
-return _const_1() + _const_1();
+escape _const_1() + _const_1();
 ]],
     run = 2;
 }
@@ -16854,12 +16979,12 @@ Test { [[
 native _inv();
 native do
     int inv (int v) {
-        return -v;
+        escape -v;
     }
 end
 var int a;
 a = _inv(_inv(1));
-return a;
+escape a;
 ]],
     fin = 'line 8 : call to "_inv" requires `finalize´',
 }
@@ -16868,12 +16993,12 @@ Test { [[
 native pure _inv();
 native do
     int inv (int v) {
-        return -v;
+        escape -v;
     }
 end
 var int a;
 a = _inv(_inv(1));
-return a;
+escape a;
 ]],
     run = 1,
 }
@@ -16882,12 +17007,12 @@ Test { [[
 native _id();
 native do
     int id (int v) {
-        return v;
+        escape v;
     }
 end
 var int a;
 a = _id(1);
-return a;
+escape a;
 ]],
     run = 1
 }
@@ -16899,7 +17024,7 @@ par/or do
 with
     v[1] = 2;
 end;
-return 0;
+escape 0;
 ]],
     ana = {
         acc = 1,
@@ -16914,7 +17039,7 @@ par/or do
 with
     v[i+1] = 2;
 end;
-return 0;
+escape 0;
 ]],
     ana = {
         acc = 1,
@@ -16936,7 +17061,7 @@ native _s = 4;
 var _s vs;
 vs.a = 10;
 vs.b = 1;
-return vs.a + vs.b + sizeof(_s);
+escape vs.a + vs.b + sizeof(_s);
 ]],
     run = 15,
 }
@@ -16953,7 +17078,7 @@ native _s = 4;
 var _s vs;
 vs.a = 10;
 vs.b = 1;
-return vs.a + vs.b + sizeof(_s) + sizeof(vs) + sizeof(vs.a);
+escape vs.a + vs.b + sizeof(_s) + sizeof(vs) + sizeof(vs.a);
 ]],
     run = 21,
 }
@@ -16971,7 +17096,7 @@ native do
     } aaa;
     int SZ = sizeof(aaa);
 end
-return sizeof<_aaa> + _SZ;
+escape sizeof<_aaa> + _SZ;
 ]],
     todo = 'sizeof',
     run = 28,   -- TODO: different packings
@@ -16987,7 +17112,7 @@ end
 native _Payload = 18;
 var _Payload final;
 var u8* neighs = &(final.data[4]);
-return 1;
+escape 1;
 ]],
     run = 1;
 }
@@ -17006,7 +17131,7 @@ par/and do
 with
     vs.a = 1;
 end;
-return vs.a;
+escape vs.a;
 ]],
     ana = {
         acc = 1,
@@ -17027,7 +17152,7 @@ par/and do
 with
     vs.b = 1;
 end;
-return vs.a;
+escape vs.a;
 ]],
     ana = {
         acc = 1,     -- TODO: struct
@@ -17047,7 +17172,7 @@ pv = &v;
 v.a = 10;
 (*pv).a = 20;
 pv:a = pv:a + v.a;
-return v.a;
+escape v.a;
 ]],
     run = 40,
 }
@@ -17075,7 +17200,7 @@ loop i, 10 do
     ret = ret + (u8)v2[i] - v1[i];
 end
 
-return ret;
+escape ret;
 ]],
     --loop = 1,
     run = 45,
@@ -17084,7 +17209,7 @@ return ret;
 Test { [[
 native _message_t = 52;
 native _t = sizeof<_message_t, u8>;
-return sizeof<_t>;
+escape sizeof<_t>;
 ]],
     todo = 'sizeof',
     run = 53,
@@ -17093,7 +17218,7 @@ return sizeof<_t>;
 Test { [[
 native _char=1;
 var _char a = (_char) 1;
-return (int)a;
+escape (int)a;
 ]],
     run = 1,
 }
@@ -17108,7 +17233,7 @@ do
         r.x = _UI_align(r.w, _UI_ALIGN_CENTER);
     end
 end
-return 1;
+escape 1;
 ]],
     fin = 'line 7 : attribution requires `finalize´',
 }
@@ -17122,7 +17247,7 @@ native do
     } SDL_Rect;
     int UI_ALIGN_CENTER = 1;
     int UI_align (int a, int b) {
-        return 0;
+        escape 0;
     }
 end
 class T with
@@ -17133,7 +17258,7 @@ do
         r.x = _UI_align(r.w, _UI_ALIGN_CENTER);
     end
 end
-return 1;
+escape 1;
 ]],
     run = 1,
 }
@@ -17147,7 +17272,7 @@ native do
     } SDL_Rect;
     int UI_ALIGN_CENTER = 1;
     int UI_align (int a, int b, int c) {
-        return 0;
+        escape 0;
     }
 end
 class T with
@@ -17158,7 +17283,7 @@ do
         r.x = _UI_align(this.rect.w, r.w, _UI_ALIGN_CENTER);
     end
 end
-return 1;
+escape 1;
 ]],
     fin = 'line 17 : attribution requires `finalize´',
 }
@@ -17172,7 +17297,7 @@ native do
     } SDL_Rect;
     int UI_ALIGN_CENTER = 1;
     int UI_align (int a, int b, int c) {
-        return 0;
+        escape 0;
     }
 end
 class T with
@@ -17183,7 +17308,7 @@ do
         r.x = (int) _UI_align(this.rect.w, r.w, _UI_ALIGN_CENTER);
     end
 end
-return 1;
+escape 1;
 ]],
     run = 1,
 }
@@ -17194,15 +17319,15 @@ Test { [[var int a = ]],
     parser = "line 1 : after `=´ : expected expression",
 }
 
-Test { [[return]],
-    parser = "line 1 : after `return´ : expected expression",
+Test { [[escape]],
+    parser = "line 1 : after `escape´ : expected expression",
 }
 
-Test { [[return()]],
+Test { [[escape()]],
     parser = "line 1 : after `(´ : expected expression",
 }
 
-Test { [[return 1+;]],
+Test { [[escape 1+;]],
     parser = "line 1 : before `+´ : expected `;´",
 }
 
@@ -17218,7 +17343,7 @@ Test { [[b = ;]],
 Test { [[
 
 
-return 1
+escape 1
 
 +
 
@@ -17245,7 +17370,7 @@ native do
 end
 var u8[_N] vec;
 vec[0] = 10;
-return vec[_N-1];
+escape vec[_N-1];
 ]],
     run = 10,
 }
@@ -17256,7 +17381,7 @@ native do
 end
 var u8[N] vec;
 vec[0] = 10;
-return vec[N-1];
+escape vec[N-1];
 ]],
     run = 10,
 }
@@ -17267,7 +17392,7 @@ native do
 end
 var u8[N+1] vec;
 vec[1] = 10;
-return vec[1];
+escape vec[1];
 ]],
     run = 10,
 }
@@ -17276,7 +17401,7 @@ Test { [[
 #define N 1
 var u8[N+1] vec;
 vec[1] = 10;
-return vec[1];
+escape vec[1];
 ]],
     run = 10,
 }
@@ -17293,7 +17418,7 @@ var int ret = 0;
 loop i, _N do
     ret = ret + vec[i];
 end
-return ret;
+escape ret;
 ]],
     run = 10,
 }
@@ -17308,7 +17433,7 @@ do
     _V = _V + 1;
 end
 var T[N] ts;
-return _V;
+escape _V;
 ]],
     run = 5,
 }
@@ -17323,7 +17448,7 @@ do
     _V = _V + 1;
 end
 var T[N+1] ts;
-return _V;
+escape _V;
 ]],
     run = 6,
 }
@@ -17338,7 +17463,7 @@ do
     _V = _V + 1;
 end
 var T[N+1] ts;
-return _V;
+escape _V;
 ]],
     run = 6,
 }
@@ -17354,7 +17479,7 @@ do
 end
 #error oi
 var T[N+1] ts;
-return _V;
+escape _V;
 ]],
     lines = 'error oi',
 }
@@ -17429,7 +17554,7 @@ par/or do
 with
     a = 2;
 end;
-return a;
+escape a;
 ]],
     ana = {
         acc = 1,
@@ -17440,7 +17565,7 @@ return a;
 -- BIG // FULL // COMPLETE
 Test { [[
 input int KEY;
-if 1 then return 50; end
+if 1 then escape 50; end
 par do
     var int pct, dt, step, ship, points;
     var int win = 0;
@@ -17470,7 +17595,7 @@ par do
                     step = step + 1;
 
                     if step == 1 then
-                        return 1;           // finish line
+                        escape 1;           // finish line
                     end
                     points = points + 1;
                 end
@@ -17525,7 +17650,7 @@ Test { [[
 input void A;
 pause/if A do
 end
-return 0;
+escape 0;
 ]],
     parser = 'line 2 : after `pause/if´ : expected expression',
 }
@@ -17534,7 +17659,7 @@ Test { [[
 event void a;
 pause/if a do
 end
-return 0;
+escape 0;
 ]],
     --env = 'line 2 : event type must be numeric',
     env = 'line 2 : invalid attribution',
@@ -17544,7 +17669,7 @@ Test { [[
 event int a;
 pause/if a do
 end
-return 1;
+escape 1;
 ]],
     run = 1,
 }
@@ -17560,7 +17685,7 @@ par/or do
 with
     pause/if a do
         var int v = await B;
-        return v;
+        escape v;
     end
 end
 ]],
@@ -17597,7 +17722,7 @@ with
         end
     end
 end
-return ret;
+escape ret;
 ]],
     run = {
         ['1~>B;1~>B'] = 1,
@@ -17630,7 +17755,7 @@ with
         end
     end
 end
-return ret;
+escape ret;
 ]],
     run = {
         ['1~>Z'] = 1,
@@ -17656,7 +17781,7 @@ with
         ret = await B;
     end
 end
-return ret;
+escape ret;
 ]],
     run = {
         ['~>Z ; 1~>B'] = 1,
@@ -17682,7 +17807,7 @@ with
         await Z;
     end
 end
-return ret;
+escape ret;
 ]],
     ana = {
         acc = 1,
@@ -17711,7 +17836,7 @@ with
     await 10s;
     ret = 10;
 end
-return ret;
+escape ret;
 ]],
     ana = {
         acc = 1,     -- TODO: 0
@@ -17738,7 +17863,7 @@ with
 with
     await F;
 end
-return ret;
+escape ret;
 ]],
     run = {
         ['1~>A ; 10~>B ; 1~>F'] = 50,
@@ -17753,7 +17878,7 @@ with
     await 1us;
 end
 var int v = await 1us;
-return v;
+escape v;
 ]],
     run = { ['~>1us; ~>F; ~>4us; ~>F']=3 }
 }
@@ -17773,7 +17898,7 @@ with
         ret = await 9us;
     end
 end
-return ret;
+escape ret;
 ]],
     run = {
         ['~>1us;0~>A;~>1us;0~>A;~>19us'] = 12,
@@ -17936,6 +18061,16 @@ end
 -- CLASSES, ORGS, ORGANISMS
 
 Test { [[
+class A with
+do
+    escape 1;
+end
+escape 1;
+]],
+    adj = 'ERR : tests.lua : line 3 : invalid `escape´',
+}
+
+Test { [[
 class T with
     var int x;
 do
@@ -17948,7 +18083,7 @@ end
 
 native _V;
 var T t;
-return _V;
+escape _V;
 ]],
     todo = 'recalculate',
     run = 8,    -- 2/2 (trl0) 0 (x) 4 (y)
@@ -17956,7 +18091,7 @@ return _V;
 
 Test { [[
 class [10] T with do end
-return 1;
+escape 1;
 ]],
     run = 1,
 }
@@ -17972,7 +18107,7 @@ native do
     int V = sizeof(CEU_T);
 end
 native _V;
-return _V;
+escape _V;
 ]],
     todo = 'recalculate',
     run = 8,
@@ -17986,7 +18121,7 @@ end
 
 var _TCEU_T t;
 t.a = 1;
-return t.a;
+escape t.a;
 ]],
     run = 1,
 }
@@ -18004,7 +18139,7 @@ native do
     int V = sizeof(CEU_T);
 end
 native _V;
-return _V;
+escape _V;
 ]],
     todo = 'recalculate',
     run = 8,   -- 1/1 cls / 2 trl / 0 x / 4 v
@@ -18024,7 +18159,7 @@ var T x;
 input void START;
 await START;
 
-return x.a;
+escape x.a;
 ]],
     run = 10,
 }
@@ -18037,7 +18172,7 @@ end
 var T x;
     x.a = 30;
 
-return x.a;
+escape x.a;
 ]],
     run = 30,
 }
@@ -18054,7 +18189,7 @@ var T[2] y;
 var T x;
     x.a = 30;
 
-return x.a + y[0].a + y[1].a;
+escape x.a + y[0].a + y[1].a;
 ]],
     run = 60,
 }
@@ -18074,7 +18209,7 @@ end;
 var T x;
     x.a = 30;
 
-return x.a + y[0].a + y[1].a;
+escape x.a + y[0].a + y[1].a;
 ]],
     run = 60,
 }
@@ -18084,7 +18219,7 @@ class T with
     var int v;
 do
 end
-return 0;
+escape 0;
 ]],
     run = 0,
 }
@@ -18095,7 +18230,7 @@ do
     class T1 with var int v; do end
     var int v;
 end
-return 0;
+escape 0;
 ]],
     run = 0, -- TODO
     --props = 'line 2 : must be in top-level',
@@ -18107,7 +18242,7 @@ do
     class T1 with do var int v; end
     var int v;
 end
-return 0;
+escape 0;
 ]],
     run = 0, -- TODO
     --props = 'line 2 : must be in top-level',
@@ -18118,7 +18253,7 @@ class T with
 do
 end
 var T[5] a;
-return 0;
+escape 0;
 ]],
     run = 0,
 }
@@ -18128,7 +18263,7 @@ class T with
 do
 end
 event T a;
-return 0;
+escape 0;
 ]],
     env = 'line 4 : invalid event type',
 }
@@ -18138,7 +18273,7 @@ class T with
 do
 end
 var T a = 1;
-return 0;
+escape 0;
 ]],
     env = 'line 4 : invalid attribution',
 }
@@ -18150,7 +18285,7 @@ do
     var T b;
 end
 var T aa;
-return 0;
+escape 0;
 ]],
     env = 'line 4 : invalid declaration',
 }
@@ -18160,7 +18295,7 @@ class T with
 do
 end
 var T a;
-return 0;
+escape 0;
 ]],
     run = 0,
 }
@@ -18171,7 +18306,7 @@ do
 end
 var T a;
 a.v = 0;
-return a.v;
+escape a.v;
 ]],
     env = 'line 5 : variable/event "v" is not declared',
 }
@@ -18183,7 +18318,7 @@ do
 end
 var T aa;
 aa.b = 1;
-return 0;
+escape 0;
 ]],
     env = 'line 6 : variable/event "b" is not declared',
 }
@@ -18195,7 +18330,7 @@ do
 end
 var T a;
 a.v = 5;
-return a.v;
+escape a.v;
 ]],
     env = 'line 6 : variable/event "v" is not declared',
 }
@@ -18207,7 +18342,7 @@ do
 end
 var T a;
 a.v = 5;
-return a.v;
+escape a.v;
 ]],
     run = 5,
 }
@@ -18216,10 +18351,10 @@ Test { [[
 class T with
     var int a;
 do
-    this.a = do return 1; end;
+    this.a = do escape 1; end;
 end
 var T a;
-return a.a;
+escape a.a;
 ]],
     run = 1,
 }
@@ -18234,7 +18369,7 @@ end
 var T a;
 a.v = 5;
 await START;
-return a.v;
+escape a.v;
 ]],
     run = 5,
 }
@@ -18249,7 +18384,7 @@ do
     a.v = 5;
 end
 a.v = 5;
-return a.v;
+escape a.v;
 ]],
     env = 'line 9 : variable/event "a" is not declared',
 }
@@ -18260,7 +18395,7 @@ class T with
     native _f(), _t=10;   // TODO: refuse _t
 do
 end
-return 10;
+escape 10;
 ]],
     env = 'line 3 : only methods are allowed',
 }
@@ -18288,7 +18423,7 @@ var T t2;
 _V = _V*3;
 var T t3;
 _V = _V*3;
-return _V;
+escape _V;
 ]],
     run = 345;
 }
@@ -18319,7 +18454,7 @@ _V = _V*3;
 var T t3;
 _V = _V*3;
 await START;
-return _V;
+escape _V;
 ]],
     run = 345;
 }
@@ -18339,7 +18474,7 @@ end
 do
     var T t;
 end
-return _V;
+escape _V;
 ]],
     run = 10,
 }
@@ -18362,7 +18497,7 @@ var T t1;
 var T t2;
 emit a;
 await START;
-return 1;
+escape 1;
 ]],
     run = 1;
 }
@@ -18394,7 +18529,7 @@ _V = _V*3;
 var T t3;
 _V = _V*3;
 await START;
-return _V;
+escape _V;
 ]],
     run = 345;
 }
@@ -18404,7 +18539,7 @@ do
     var int a = 1;
     this.a = this.a + a + 5;
 end
-return a;
+escape a;
 ]],
     env = 'line 4 : invalid access',
     --run = 14,
@@ -18421,7 +18556,7 @@ end
 var T t;
 input void START;
 await START;
-return t.a;
+escape t.a;
 ]],
     --run = 14,
     env = 'line 5 : cannot hide at top-level block',
@@ -18440,7 +18575,7 @@ end
 var T t;
 input void START;
 await START;
-return t.a;
+escape t.a;
 ]],
     run = 14,
 }
@@ -18454,7 +18589,7 @@ class T with
 do
 end
 var T a;
-return 1;
+escape 1;
 ]],
     run = 1,
 }
@@ -18479,7 +18614,7 @@ a.v = 5;
 a.x.v = 5;
 a.v2 = 10;
 a.x.t3.v3 = 15;
-return a . v + a.x .v + a .v2 + a.x  .  t3 . v3;
+escape a . v + a.x .v + a .v2 + a.x  .  t3 . v3;
 ]],
     run = 35,
 }
@@ -18502,7 +18637,7 @@ class T with
 do
 end
 var T t;
-return t.v;
+escape t.v;
 ]],
     run = 5,
 }
@@ -18516,7 +18651,7 @@ end
 var T t with
     this.v = 10;
 end;
-return t.v;
+escape t.v;
 ]],
     run = 10,
 }
@@ -18531,7 +18666,7 @@ end
 var T t with
     this.v = 10;
 end;
-return t.v;
+escape t.v;
 ]],
     run = 100,
 }
@@ -18555,7 +18690,7 @@ end
 var T t with
     this.v = 10;
 end;
-return t.v + t.u.x;
+escape t.v + t.u.x;
 ]],
     run = 120,
 }
@@ -18572,7 +18707,7 @@ var T a;
 await START;
 v = a.v;
 a.v = 4;
-return a.v + v;
+escape a.v + v;
 ]],
     run = 9,
 }
@@ -18589,7 +18724,7 @@ do
     await START;
     var int v = a.v;
     a.v = 4;
-    return a.v + v;
+    escape a.v + v;
 end
 ]],
     run = 9,
@@ -18607,7 +18742,7 @@ do
     var T a;
         a.v = 0;
     await A;
-    return a.v;
+    escape a.v;
 end
 ]],
     run = { ['~>A']=5} ,
@@ -18632,7 +18767,7 @@ do
     end
     var int v = a.v;
     a.v = 4;
-    return a.v + v;
+    escape a.v + v;
 end
 ]],
     ana = {
@@ -18659,7 +18794,7 @@ var T aa;
     with
         await aa.ok;
     end
-return aa.aa;
+escape aa.aa;
 ]],
     run = 5,
 }
@@ -18675,7 +18810,7 @@ var T a;
     await START;
 var int v = a.v;
 a.v = 4;
-return a.v + v;
+escape a.v + v;
 ]],
     run = 9,
 }
@@ -18694,7 +18829,7 @@ do
     end
     ret = a;
 end
-return ret;
+escape ret;
 ]],
     env = 'line 7 : variable/event "a" is not declared',
     --props = 'line 5 : must be in top-level',
@@ -18712,7 +18847,7 @@ do
 end
 var T v;
 emit v.go;
-return 0;
+escape 0;
 ]],
     env = 'line 6 : variable/event "a" is not declared',
     --props = 'line 4 : must be in top-level',
@@ -18732,7 +18867,7 @@ end
 var int b;
 var T v;
 emit v.go;
-return a;
+escape a;
 ]],
     env = 'line 6 : variable/event "a" is not declared',
     --env = 'line 6 : variable/event "b" is not declared',
@@ -18760,7 +18895,7 @@ do
         emit v.go;
     end
 end
-return a+b;
+escape a+b;
 ]],
     env = 'line 7 : variable/event "a" is not declared',
     --props = 'line 5 : must be in top-level',
@@ -18785,7 +18920,7 @@ do
         emit v.go;
     end
 end
-return a+b;
+escape a+b;
 ]],
     env = 'line 5 : variable/event "a" is not declared',
     --run = 4,
@@ -18805,7 +18940,7 @@ end
 var Image_media img1;
 var Image_media img2;
 
-return 1;
+escape 1;
 ]],
     run = 1;
 }
@@ -18829,7 +18964,7 @@ var Image_media img2;
 var Image_media img3;
     img3.sm.id = 11;
 
-return img1.sm.id + img2.sm.id + img3.sm.id;
+escape img1.sm.id + img2.sm.id + img3.sm.id;
 ]],
     run = 33;
 }
@@ -18854,7 +18989,7 @@ var Image_media img2;
 var Image_media img3;
     img3.sm.id = 11;
 
-return img1.sm.id + img2.sm.id + img3.sm.id;
+escape img1.sm.id + img2.sm.id + img3.sm.id;
 ]],
     ana = {
         reachs = 1,
@@ -18871,7 +19006,7 @@ end
 var T t;
     t.v = 10;
 var T* p = &t;
-return p:v;
+escape p:v;
 ]],
     run = 10,
 }
@@ -18885,7 +19020,7 @@ end
 var T t1, t2;
 t1.v = 1;
 t2.v = 2;
-return t1.v+t2.v;
+escape t1.v+t2.v;
 ]],
     run = 3,
 }
@@ -18900,7 +19035,7 @@ var _char* ptr;
 var T t with
     this.ptr = ptr;
 end;
-return 1;
+escape 1;
 ]],
     run = 1,
 }
@@ -18916,7 +19051,7 @@ var T t with
         this.ptr = ptr;
     end
 end;
-return 1;
+escape 1;
 ]],
     fin = 'line 9 : attribution requires `finalize´',
 }
@@ -18964,7 +19099,7 @@ par/or do
 with
     await F;
 end
-return v;
+escape v;
 ]],
     run = { ['~>A;~>A;~>A;~>F']=1 },
 }
@@ -18994,7 +19129,7 @@ par/or do
 with
     await F;
 end
-return v;
+escape v;
 ]],
     run = { ['~>A;~>A;~>A;~>F']=1 },
 }
@@ -19021,7 +19156,7 @@ par/or do
 with
     await F;
 end
-return v;
+escape v;
 ]],
     run = { ['~>A;~>A;~>A;~>F']=3 },
 }
@@ -19044,7 +19179,7 @@ loop i,3 do
     await a.e;
     v = v + 1;
 end
-return v;
+escape v;
 ]],
     run = { ['~>A;~>A;~>A']=3 },
 }
@@ -19065,7 +19200,7 @@ par/and do
 with
     await aa.ok;
 end
-return 10;
+escape 10;
 ]],
     run = { ['~>1s']=10 },
 }
@@ -19086,7 +19221,7 @@ par/and do
 with
     await aa.ok;
 end
-return 10;
+escape 10;
 ]],
     run = { ['~>1s']=10 },
 }
@@ -19097,7 +19232,7 @@ class T with
     var int v = await F;
 do
 end
-return 0;
+escape 0;
 ]],
     props = 'line 3 : not permitted inside an interface',
 }
@@ -19120,7 +19255,7 @@ par/and do
 with
     await aa.ok;
 end
-return aa.v;
+escape aa.v;
 ]],
     run = { ['10~>F']=10 },
 }
@@ -19142,7 +19277,7 @@ with
     await START;
     emit a.e;
 end
-return ret;
+escape ret;
 ]],
     run = 2,
 }
@@ -19169,7 +19304,7 @@ with
     await F;
     ret = 1;
 end
-return ret;
+escape ret;
 ]],
     run = { ['~>F']=1 }
 }
@@ -19212,7 +19347,7 @@ with
     await F;
 end
 await F;
-return ret;
+escape ret;
 ]],
     run = {
         --['~>F;~>5s;~>F'] = 10,
@@ -19248,7 +19383,7 @@ par/or do
 with
     await F;
 end
-return ret;
+escape ret;
 ]],
     run = {
         ['~>F'] = 10,
@@ -19293,7 +19428,7 @@ with
     await F;
 end
 await F;
-return ret;
+escape ret;
 ]],
     run = {
         ['~>F;~>5s;~>F'] = 10,
@@ -19318,7 +19453,7 @@ with
     await F;
     ret = 5;
 end
-return ret;
+escape ret;
 ]],
     run = {
         ['~>F;~>E'] = 5,
@@ -19345,7 +19480,7 @@ with
     await F;
     ret = 5;
 end
-return ret;
+escape ret;
 ]],
     run = {
         ['~>F;~>1s;~>E'] = 5,
@@ -19379,7 +19514,7 @@ with
     await F;
 end
 await F;
-return ret;
+escape ret;
 ]],
     run = {
         --['~>F;~>5s;~>F'] = 10,
@@ -19421,7 +19556,7 @@ do
     await F;
     _V = _V * 2;
 end
-return _V;
+escape _V;
 ]],
     run = {
         ['~>F;~>5s;~>F'] = 0,
@@ -19468,7 +19603,7 @@ with
     await F;
 end
 await F;
-return ret;
+escape ret;
 ]],
     run = {
         ['~>F;~>5s;~>F'] = 10,
@@ -19502,7 +19637,7 @@ with
     await F;
 end
 await F;
-return ret;
+escape ret;
 ]],
     run = {
         ['~>1s;~>F'] = 11,
@@ -19535,7 +19670,7 @@ par/or do
 with
     await F;
 end
-return ret;
+escape ret;
 ]],
     ana = {
         --acc = 1,  -- TODO
@@ -19554,7 +19689,7 @@ end
 var T a;
 await A;
 a.v = 2;
-return a.v;
+escape a.v;
 ]],
     ana = {
         --acc = 2,    -- TODO
@@ -19580,7 +19715,7 @@ par do
 with
     await A;
     if aa.v == 3 then   // 17
-        return aa.v;    // 18
+        escape aa.v;    // 18
     end
 end
 ]],
@@ -19613,7 +19748,7 @@ par/and do
 with
     await aa.ok;
 end
-return aa.aa;
+escape aa.aa;
 ]],
     run = { ['~>A']=7 },
 }
@@ -19634,7 +19769,7 @@ do
 end
 var T aa;
 await START;
-return aa.aa;
+escape aa.aa;
 ]],
     ana = {
         acc = 1,
@@ -19655,7 +19790,7 @@ with
     await B;
     a = a + 1;
 end
-return a;
+escape a;
 ]],
     run = { ['~>B;~>A']=2 },
 }
@@ -19688,7 +19823,7 @@ t.a = 10;
 var T* p = &t;
 _c = t.a;
 _d = p:a;
-return p:a + t.a + _c + _d;
+escape p:a + t.a + _c + _d;
 ]],
     run = 40,
 }
@@ -19716,7 +19851,7 @@ par/or do
 with
     await ptr:ok;
 end
-return ptr:v + a.v;
+escape ptr:v + a.v;
 ]],
     run = 20,
 }
@@ -19754,7 +19889,7 @@ with
         emit F;
     end
 end
-return x;
+escape x;
 ]],
     run = 9,
 }
@@ -19765,7 +19900,7 @@ do
     var int a = 1;
 end
 var T[2] ts;
-return 1;
+escape 1;
 ]],
     run = 1,
 }
@@ -19780,7 +19915,7 @@ par/and do
 with
     ts[1].a = 20;   // 9
 end
-return ts[0].a + ts[1].a;
+escape ts[0].a + ts[1].a;
 ]],
     ana = {
         acc = 1,
@@ -19798,7 +19933,7 @@ par/and do
 with
     t2.a = 20;   // 9
 end
-return t1.a + t2.a;
+escape t1.a + t2.a;
 ]],
     run = 30,
 }
@@ -19817,7 +19952,7 @@ par/and do
 with
     ts[1].a = 20;   // 13
 end
-return ts[0].a + ts[1].a;
+escape ts[0].a + ts[1].a;
 ]],
     ana = {
         acc = 1,  -- TODO=5?
@@ -19839,7 +19974,7 @@ par/and do
 with
     ts[1].a = 20;
 end
-return ts[0].a + ts[1].a;
+escape ts[0].a + ts[1].a;
 ]],
     ana = {
         acc = 1,    -- TODO: 5?
@@ -19861,7 +19996,7 @@ par/and do
 with
     t2.a = 20;
 end
-return t1.a + t2.a;
+escape t1.a + t2.a;
 ]],
     ana = {
         --acc = 8,      -- TODO
@@ -19883,7 +20018,7 @@ par/and do
 with
     t2.a = 20;
 end
-return t1.a + t2.a;
+escape t1.a + t2.a;
 ]],
     ana = {
         --acc = 8,  -- TODO
@@ -19908,7 +20043,7 @@ par/and do
 with
     _f(&ts[1]);     // 16
 end
-return 10;
+escape 10;
 ]],
     ana = {
         acc = 2,
@@ -19934,7 +20069,7 @@ par/and do
 with
     _f(&t1);     // 16
 end
-return 10;
+escape 10;
 ]],
     ana = {
         acc = 1,
@@ -19969,7 +20104,7 @@ end
 var T t with
     this.f2 = _f2;
 end;
-return t.ret1 + t.ret2;
+escape t.ret1 + t.ret2;
 ]],
     run = 3,
 }
@@ -20083,7 +20218,7 @@ with
     _assert(rs[0].x==19 and rs[0].y==-11 and rs[1].x==210 and rs[1].y==299);
 
 end
-return 100;
+escape 100;
 ]],
     awaits = 0,
     run = 100,
@@ -20113,7 +20248,7 @@ with
     input void START;
     await START;
 end
-return aa.aa;
+escape aa.aa;
 ]],
     ana = {
         acc = 1,
@@ -20140,7 +20275,7 @@ with
     input void START;
     await START;
 end
-return aa.aa;
+escape aa.aa;
 ]],
     run = 5,
 }
@@ -20158,7 +20293,7 @@ _inc();
 event void x;
 emit x;
 await START;
-return _V;
+escape _V;
 ]],
     run = 1,
 }
@@ -20197,7 +20332,7 @@ with
     emit aa.a;
     _V = _V+2;
 end
-return _V + aa.aa + aa.bb;
+escape _V + aa.aa + aa.bb;
 ]],
     run = 11,
 }
@@ -20230,7 +20365,7 @@ with
     emit aa.a;
     ret = 2;
 end
-return ret + aa.aa + aa.bb;
+escape ret + aa.aa + aa.bb;
 ]],
     run = 10,
 }
@@ -20268,7 +20403,7 @@ with
     await a2.e;
     ret = 100;
 end
-return ret;
+escape ret;
 ]],
     ana = {
         --acc = 1,
@@ -20303,7 +20438,7 @@ with
 with
     await b.ok;
 end
-return _f(&a.a,&b.a);
+escape _f(&a.a,&b.a);
 ]],
     run = 2,
 }
@@ -20341,7 +20476,7 @@ with
     await ptr:f;
     ret = ret + 1;      // 31
 end
-return ret + ptr:v + a.v;
+escape ret + ptr:v + a.v;
 ]],
     ana = {
         --acc = 3,
@@ -20396,7 +20531,7 @@ with
     await ts[1].f;
     ret = ret + 1;              // 45
 end
-return ret + ts[0].v + ts[1].v;
+escape ret + ts[0].v + ts[1].v;
 ]],
     ana = {
         --acc = 47,     -- TODO: not checked
@@ -20424,7 +20559,7 @@ end
 var T aa;
 await aa.ok;
 await F;
-return aa.aa;
+escape aa.aa;
 ]],
     run = {
         ['11~>S;~>10s;~>F'] = 11,
@@ -20469,7 +20604,7 @@ with
     await ts[1].f;
     ret = ret + 1;
 end
-return ret + ts[0].v + ts[1].v;
+escape ret + ts[0].v + ts[1].v;
 ]],
     ana = {
         acc = 4,
@@ -20487,7 +20622,7 @@ do
 end
 var T a, b;
 await START;
-return a.v + b.v;
+escape a.v + b.v;
 ]],
     run = 2,
 }
@@ -20521,7 +20656,7 @@ with
     await F;
 end
 await F;
-return ret;
+escape ret;
 ]],
     run = {
         ['~>F;~>5s;~>F'] = 10,
@@ -20551,7 +20686,7 @@ var T t;
 emit t.a;
 emit t.a;
 emit t.a;
-return _V;
+escape _V;
 ]],
     --run = 4,
     run = 1,
@@ -20571,7 +20706,7 @@ do
         end
     end
 end
-return _V;
+escape _V;
 ]],
     run = 100;
 }
@@ -20597,7 +20732,7 @@ do
     input void START;
     await START;
 end
-return _V;
+escape _V;
 ]],
     run = 100,
 }
@@ -20624,7 +20759,7 @@ par/or do
 with
     // nothing;
 end
-return _V;
+escape _V;
 ]],
     run = 110,      -- TODO: stack change
 }
@@ -20651,7 +20786,7 @@ par/or do
 with
     await START;
 end
-return _V;
+escape _V;
 ]],
     ana = {
         abrt = 1,
@@ -20694,7 +20829,7 @@ with
     await F;
     t.v = t.v * 5;
 end
-return t.v + _V;        // * reads before
+escape t.v + _V;        // * reads before
 ]],
     ana = {
         abrt = 1,        -- false positive
@@ -20744,7 +20879,7 @@ do
     end
     ret = t.v;
 end
-return ret + _V;        // * reads after
+escape ret + _V;        // * reads after
 ]],
     ana = {
         abrt = 1,        -- false positive
@@ -20778,7 +20913,7 @@ do
     var T t;
     await e;
 end
-return 2;
+escape 2;
 ]],
     run = 2,
 }
@@ -20813,7 +20948,7 @@ with
     await FOREVER;
 end
 
-return _V;
+escape _V;
 ]],
     run = 2,
 }
@@ -20850,7 +20985,7 @@ with
         await FOREVER;
     end
 end
-return _V;
+escape _V;
 ]],
     run = 2;
 }
@@ -20889,7 +21024,7 @@ with
         await FOREVER;
     end
 end
-return _V;
+escape _V;
 ]],
     run = 2;
 }
@@ -20931,7 +21066,7 @@ with
         await FOREVER;
     end
 end
-return _V+_X;
+escape _V+_X;
 ]],
     run = 3;
 }
@@ -20963,7 +21098,7 @@ do
     await t.ok;
     ret = t.x;
 end
-return ret;
+escape ret;
 ]],
     run = 10;
 }
@@ -21004,7 +21139,7 @@ do
     await t.ok;
     ret = t.x;
 end
-return ret;
+escape ret;
 ]],
     run = 10;
 }
@@ -21018,7 +21153,7 @@ do
     this.a = 1;
 end
 var T* t = new T;
-return t:a;
+escape t:a;
 ]],
     run = 1,
 }
@@ -21032,7 +21167,7 @@ do
 end
 var T* t = new T;
 await START;
-return t:a;
+escape t:a;
 ]],
     run = 1,
 }
@@ -21043,7 +21178,7 @@ do
     var T* t;
     t = new T;
 end
-return 10;
+escape 10;
 ]],
     run = 10,
 }
@@ -21052,7 +21187,7 @@ Test { [[
 class T with do end
 var T* t;
 t = new T;
-return 10;
+escape 10;
 ]],
     run = 10,
 }
@@ -21066,7 +21201,7 @@ do
 end
 var T* t = new T;
 await START;
-return t:a;
+escape t:a;
 ]],
     run = 1,
 }
@@ -21088,7 +21223,7 @@ do
     t = new T;
     t = new T;
 end
-return 10;
+escape 10;
 ]],
     run = 10;
 }
@@ -21118,7 +21253,7 @@ do
     var T* t;
     t = new T;
 end
-return 10;
+escape 10;
 ]],
     run = 10,
 }
@@ -21130,7 +21265,7 @@ do
     var int* a2;
     a1 = a2;
 end
-return 10;
+escape 10;
 ]],
     run = 10,
 }
@@ -21144,7 +21279,7 @@ do
     this.a = 1;
 end
 var T* t = new T;
-return t == null;
+escape t == null;
 ]],
     run = 1,
 }
@@ -21157,7 +21292,7 @@ do
 end
 var T* a = new T;
 var T* b = new T;
-return a!=null and b==null;
+escape a!=null and b==null;
 ]],
     run = 1,
 }
@@ -21169,7 +21304,7 @@ do
     this.a = 1;
 end
 var T* t = new [0] T;
-return t == null;
+escape t == null;
 ]],
     run = 1,
 }
@@ -21182,7 +21317,7 @@ do
 end
 var T* a = new [1] T;
 var T* b = new [0] T;
-return a!=null and b==null;
+escape a!=null and b==null;
 ]],
     run = 1,
 }
@@ -21196,7 +21331,7 @@ end
 var T* a = new T;
 free(a);
 var T* b = new T;
-return a!=null and b!=null;
+escape a!=null and b!=null;
 ]],
     run = 1,
 }
@@ -21217,7 +21352,7 @@ do
     end
 end
 var T* b = new T;
-return a!=null and b!=null;
+escape a!=null and b!=null;
 ]],
     run = 1,
 }
@@ -21238,7 +21373,7 @@ do
     end
 end
 var T* b = new T;
-return a!=null and b!=null;
+escape a!=null and b!=null;
 ]],
     run = 1,
 }
@@ -21261,7 +21396,7 @@ do
         spawn T;
     end
 end
-return _V;
+escape _V;
 ]],
     run = 2,
 }
@@ -21283,7 +21418,7 @@ do
         spawn T;
     end
 end
-return _V;
+escape _V;
 ]],
     run = 3,
 }
@@ -21301,11 +21436,11 @@ do
     loop i, 1000 do
         var int ok = spawn [1] T;
         if not ok then
-            return 0;
+            escape 0;
         end
     end
 end
-return _V;
+escape _V;
 ]],
     --loop = 1,
     run = 1000,
@@ -21326,7 +21461,7 @@ do
         spawn [1] T;
     end
 end
-return _V;
+escape _V;
 ]],
     --loop = 1,
     run = { ['~>A']=1 },
@@ -21346,11 +21481,11 @@ do
     loop i, 1000 do
         var int ok = spawn [1] T;
         if not ok then
-            return 10;
+            escape 10;
         end
     end
 end
-return _V;
+escape _V;
 ]],
     --loop = 1,
     run = { ['~>A']=10 },
@@ -21362,7 +21497,7 @@ Test { [[
 var int a with
     nothing;
 end;
-return 0;
+escape 0;
 ]],
     parser = 'line 1 : after `a´ : expected `;´',
 }
@@ -21379,7 +21514,7 @@ var T t1, t2 with
     this.a = 10;
 end;
 
-return t1.b;
+escape t1.b;
 ]],
     parser = 'line 8 : after `t2´ : expected `;´',
 }
@@ -21396,7 +21531,7 @@ var T[2] t with
     this.a = 10;
 end;
 
-return t[0].b + t[1].b;
+escape t[0].b + t[1].b;
 ]],
     run = 40;
 }
@@ -21413,7 +21548,7 @@ var T t with
     await 1s;
 end;
 
-return t.b;
+escape t.b;
 ]],
     props = 'line 9 : not permitted inside a constructor',
 }
@@ -21430,7 +21565,7 @@ var T t with
     this.a = 10;
 end;
 
-return t.b;
+escape t.b;
 ]],
     run = 20,
 }
@@ -21448,7 +21583,7 @@ var T* t =
         this.a = 10;
     end;
 
-return t:b;
+escape t:b;
 ]],
     run = 20,
 }
@@ -21471,7 +21606,7 @@ end
 var T* t1 = new T;
 var T* t2 = new T;
 await START;
-return _V;
+escape _V;
 ]],
     --run = 2,  -- blk before org
     run = 4,    -- org before blk
@@ -21483,7 +21618,7 @@ Test { [[
 class T with do end
 var T* a = null;
 free a;
-return 10;
+escape 10;
 ]],
     run = 10,
 }
@@ -21492,7 +21627,7 @@ Test { [[
 class T with do end
 var T* a = new T;
 free a;
-return 10;
+escape 10;
 ]],
     run = 10,
 }
@@ -21503,7 +21638,7 @@ var T* a = new T;
 free a;
 var T* b = new T;
 free b;
-return 10;
+escape 10;
 ]],
     run = 10,
 }
@@ -21514,7 +21649,7 @@ var T* a = new T;
 var T* b = new T;
 free a;
 free b;
-return 10;
+escape 10;
 ]],
     run = 10,
 }
@@ -21525,7 +21660,7 @@ var T* a = new T;
 var T* b = new T;
 free b;
 free a;
-return 10;
+escape 10;
 ]],
     run = 10,
 }
@@ -21544,7 +21679,7 @@ end
 
 var T* a = new T;
 free a;
-return _V;
+escape _V;
 ]],
     run = 1,
 }
@@ -21565,7 +21700,7 @@ var T* a = new T;
 var T* b = new T;
 free b;
 free a;
-return _V;
+escape _V;
 ]],
     run = 2,
 }
@@ -21577,7 +21712,7 @@ Test { [[
 class T with do end
 var T a;
 free a;
-return 0;
+escape 0;
 ]],
     env = 'line 3 : invalid `free´',
 }
@@ -21603,7 +21738,7 @@ end
 do
     spawn U;
 end
-return _V;
+escape _V;
 ]],
     env = 'line 10 : class "U" is not declared',
 }
@@ -21620,7 +21755,7 @@ end
 do
     spawn T;
 end
-return _V;
+escape _V;
 ]],
     run = 10,
 }
@@ -21640,7 +21775,7 @@ do
         this.a = 10;
     end;
 end
-return _V;
+escape _V;
 ]],
     run = 10,
 }
@@ -21660,7 +21795,7 @@ var u8 ok;
 do
     ok = spawn T;
 end
-return ok;
+escape ok;
 ]],
     run = 1,
 }
@@ -21676,7 +21811,7 @@ do
         ok = spawn T;
     end
 end
-return ok;
+escape ok;
 ]],
     --loop = 1,
     run = 1,
@@ -21694,7 +21829,7 @@ do
     end
     ok = spawn T;
 end
-return ok+1;
+escape ok+1;
 ]],
     --loop = 1,
     run = 1,
@@ -21729,7 +21864,7 @@ do
     end
     _assert(ok == 0);
 end
-return ok;
+escape ok;
 ]],
     --loop = 1,
     run = 0,
@@ -21765,7 +21900,7 @@ do
 end
 native _assert();
 _assert(_V==100 and v==100);
-return _V+v;
+escape _V+v;
 ]],
     --loop = 1,
     run = 200,
@@ -21805,7 +21940,7 @@ do
     spawn T;
     await 50s;
 end
-return _V;
+escape _V;
 ]],
     run = { ['~>100s']=4 },
 }
@@ -21825,7 +21960,7 @@ do
     spawn T;
     await START;
 end
-return _V;
+escape _V;
 ]],
     --run = 1,  -- blk before org
     run = 10,   -- org before blk
@@ -21845,7 +21980,7 @@ do
     spawn T;
     await START;
 end
-return _V;
+escape _V;
 ]],
     run = 10,
 }
@@ -21855,7 +21990,7 @@ class T with do end;
 var T a;
 var T* b;
 b = &a;
-return 1;
+escape 1;
 ]],
     run = 1,
     --env = 'line 4 : invalid attribution',
@@ -21866,7 +22001,7 @@ class T with do end;
 var T* a = new T;
 var T* b;
 b = a;
-return 10;
+escape 10;
 ]],
     run = 10;
 }
@@ -21883,7 +22018,7 @@ do
     b:v = 10;
     a = b;
 end
-return a:v;
+escape a:v;
 ]],
     fin = 'line 10 : attribution requires `finalize´',
 }
@@ -21908,7 +22043,7 @@ do
         end
     end
 end
-return a:v;
+escape a:v;
 ]],
     todo = 'free runs after block fin (correct leak!)',
     run = 10,
@@ -21939,7 +22074,7 @@ do
         nothing;
     end
 end
-return _V;
+escape _V;
 ]],
     run = 10,
 }
@@ -21971,7 +22106,7 @@ do
     end
     await START;
 end
-return _V;
+escape _V;
 ]],
     run = 10,
 }
@@ -22000,7 +22135,7 @@ do
         nothing;
     end
 end
-return _V;
+escape _V;
 ]],
     run = 10,
 }
@@ -22030,7 +22165,7 @@ do
     end
     await START;
 end
-return _V;
+escape _V;
 ]],
     run = 10,
 }
@@ -22042,7 +22177,7 @@ do
     i1 = &i2;
 end
 var T a;
-return 10;
+escape 10;
 ]],
     run = 10,
 }
@@ -22056,7 +22191,7 @@ do
     t1 = &t2;
 end
 end
-return 10;
+escape 10;
 ]],
     fin = 'line 6 : attribution requires `finalize´',
 }
@@ -22074,7 +22209,7 @@ do
     end
 end
 end
-return 10;
+escape 10;
 ]],
     run = 10,
 }
@@ -22085,7 +22220,7 @@ var T* t;
 do
     t = new T;
 end
-return 10;
+escape 10;
 ]],
     run = 10,
 }
@@ -22093,7 +22228,7 @@ return 10;
 Test { [[
 class T with do end
 var T* a = new T;
-return 10;
+escape 10;
 ]],
     run = 10,
 }
@@ -22132,7 +22267,7 @@ do
     ret = o:a;
 end
 
-return ret + _V;
+escape ret + _V;
 ]],
     run = 11,
 }
@@ -22165,7 +22300,7 @@ with
     await F;
 end
 
-return ret + _V;
+escape ret + _V;
 ]],
     run = { ['~>F']=11 },
 }
@@ -22198,7 +22333,7 @@ with
     await F;
 end
 
-return ret + _V;    // V still 0
+escape ret + _V;    // V still 0
 ]],
     run = { ['~>F']=10 },
 }
@@ -22212,7 +22347,7 @@ var V* v;
 v = new V;
 await 1s;
 
-return 10;
+escape 10;
 ]],
     run = { ['~>1s']=10, }
 }
@@ -22235,7 +22370,7 @@ do
 end
 
 var T t;
-return 1;
+escape 1;
 ]],
     run = 1,
 }
@@ -22274,7 +22409,7 @@ do
 end
 
 var T t;
-return _V;
+escape _V;
 ]],
     run = 1,
 }
@@ -22311,7 +22446,7 @@ do
     var T t;
 end
 
-return _V;
+escape _V;
 ]],
     run = 3,
 }
@@ -22354,7 +22489,7 @@ do
     var T t;
 end
 
-return _V;
+escape _V;
 ]],
     run = 3,
 }
@@ -22376,7 +22511,7 @@ var U t;
 await START;
 
 native nohold _tceu_trl, _tceu_trl_, _sizeof();
-return 2;
+escape 2;
 ]],
     run = 2,
 }
@@ -22420,7 +22555,7 @@ do
     await START;
 end
 
-return _V;
+escape _V;
 ]],
     run = 3,
 }
@@ -22465,7 +22600,7 @@ do
     var V* v = t.u.v;   // no more :=
 end
 
-return _V;
+escape _V;
 ]],
     run = 1,
 }
@@ -22512,7 +22647,7 @@ do
     await START;
 end
 
-return _V;
+escape _V;
 ]],
     run = 2,
 }
@@ -22531,7 +22666,7 @@ end
 
 var T t;
 await 1s;
-return 1;
+escape 1;
 
 ]],
     run = { ['~>1s']=1, }
@@ -22569,7 +22704,7 @@ do
     await START;
 end
 
-return 10;
+escape 10;
 ]],
     run = 10,
 }
@@ -22598,7 +22733,7 @@ do
     await START;
 end
 
-return 10;
+escape 10;
 ]],
     --run = 10,
     env = 'line 15 : invalid attribution (no scope)',
@@ -22629,7 +22764,7 @@ do
     await START;
 end
 
-return 10;
+escape 10;
 ]],
     --run = { ['~>A']=10 },
     env = 'line 16 : invalid attribution',
@@ -22669,7 +22804,7 @@ do
     _assert(_V == 10);
 end
 _assert(_V == 10);
-return _V;
+escape _V;
 ]],
     --run = { ['~>2s']=10, }       -- TODO: stack change
     env = 'line 21 : invalid attribution',
@@ -22698,7 +22833,7 @@ do
     await 1s;
 end
 
-return _V;
+escape _V;
 ]],
     run = { ['~>1s']=9 },
 }
@@ -22732,7 +22867,7 @@ do
 end
 
 _assert(_X == 100 and _Y == 100);
-return 10;
+escape 10;
 ]],
     --loop = true,
     run = 10,
@@ -22748,7 +22883,7 @@ end
 loop i, 100000 do
     ptr = new T;
 end
-return 10;
+escape 10;
 ]],
     --loop = true,
     run = 10;
@@ -22785,7 +22920,7 @@ do
     await START;
 end
 _assert(_V == 6);
-return _V;
+escape _V;
 ]],
     run = 6,
 }
@@ -22796,7 +22931,7 @@ do
 end
 var T* t;
 t = new T;
-return t.v;
+escape t.v;
 ]],
     env = 'line 6 : not a struct',
 }
@@ -22812,7 +22947,7 @@ var T* t;
 t = new T;
 t:v = 10;
 ts[0] = t;
-return t:v + ts[0]:v;
+escape t:v + ts[0]:v;
 ]],
     run = 20,
 }
@@ -22847,7 +22982,7 @@ do
     await 5s;
 end
 
-return _V;
+escape _V;
 ]],
     run = { ['~>1min']=20 },
 }
@@ -22870,7 +23005,7 @@ do
     end;
 end
 
-return 10;
+escape 10;
 ]],
     run = 10,
 }
@@ -22896,7 +23031,7 @@ do
     end
 end
 
-return 10;
+escape 10;
 ]],
     fin = 'line 16 : attribution requires `finalize´',
 }
@@ -22922,7 +23057,7 @@ do
     end
 end
 
-return 0;
+escape 0;
 ]],
     fin = 'line 15 : attribution requires `finalize´',
 }
@@ -22948,7 +23083,7 @@ end
 var T t;
 _V = _V * 2;
 emit t.a;
-return _V;
+escape _V;
 ]],
     ana = { acc=1 },
     --run = 14,
@@ -22986,7 +23121,7 @@ do
     _assert(_V == 10);
 end
 
-return _V;
+escape _V;
 ]],
     fin = 'only empty finalizers inside constructors',
     --props = 'line 23 : not permitted inside a constructor',
@@ -23020,7 +23155,7 @@ do
     _assert(_V == 10);
 end
 
-return _V;
+escape _V;
 ]],
     fin = 'line 21 : attribution requires `finalize´',
 }
@@ -23058,7 +23193,7 @@ do
 end
 //_assert(_V == 10);
 
-return _V;
+escape _V;
 ]],
     fin = 'only empty finalizers inside constructors',
     --props = 'line 24 : not permitted inside a constructor',
@@ -23095,7 +23230,7 @@ do
     _assert(_V == 10);
 end
 
-return _V;
+escape _V;
 ]],
     fin = 'only empty finalizers inside constructors',
     --fin = 'line 21 : invalid `finalize´',
@@ -23115,7 +23250,7 @@ par/or do
 with
     nothing;
 end
-return 1;
+escape 1;
 ]],
     run = 1;
 }
@@ -23128,7 +23263,7 @@ end
 
 var Game game;
 emit game.go => (1, 1, null);
-return 1;
+escape 1;
 ]],
     run = 1;
 }
@@ -23161,7 +23296,7 @@ with
     emit a => 0;
     await FOREVER;
 end
-return ret;
+escape ret;
 ]],
     run = { ['10~>A; ~>B; 5~>A'] = 5 },
 }
@@ -23206,7 +23341,7 @@ with
     ret = 10;
     await FOREVER;
 end
-return ret;
+escape ret;
 ]],
     ana = {
         reachs = 1,
@@ -23243,7 +23378,7 @@ with
     await 5s;
 end
 
-return _V;
+escape _V;
 ]],
     run = { ['~>5s']=15 },
 }
@@ -23286,7 +23421,7 @@ with
     await 5s;
 end
 
-return _V;
+escape _V;
 ]],
     run = { ['~>2s;1~>P;~>2s;0~>P;~>1s']=6 },
 }
@@ -23329,7 +23464,7 @@ with
     await 5s;
 end
 
-return _V;
+escape _V;
 ]],
     run = { ['~>2s;1~>P;~>2s;0~>P;~>1s']=6 },
 }
@@ -23375,7 +23510,7 @@ with
     await 5s;   // terminates before first spawn
 end
 
-return _V;
+escape _V;
 ]],
     run = { ['~>2s;1~>P;~>2s;0~>P;~>2s']=16 },
 }
@@ -23418,7 +23553,7 @@ with
     await 5s;   // terminates before first spawn
 end
 
-return _V;
+escape _V;
 ]],
     run = { ['~>2s;1~>P;~>2s;0~>P;~>1s']=6 },
 }
@@ -23462,7 +23597,7 @@ with
     await 6s;
 end
 
-return _V;
+escape _V;
 ]],
     run = { ['~>2s;1~>P;~>2s;0~>P;~>2s']=30 },
 }
@@ -23506,7 +23641,7 @@ with
     await 5s;
 end
 
-return _V;
+escape _V;
 ]],
     run = { ['~>2s;1~>P;~>2s;0~>P;~>1s']=6 },
 }
@@ -23545,7 +23680,7 @@ with
 with
     await A;
 end
-return v;
+escape v;
 ]],
     ana = { acc=0 },
     run = { ['~>10s;~>A']=10 }
@@ -23565,7 +23700,7 @@ interface I with
     event void e;
 end
 var J* i = _ptr;
-return 10;
+escape 10;
 ]],
     env = 'line 8 : undeclared type `J´',
 }
@@ -23579,7 +23714,7 @@ interface I with
     event void e;
 end
 var I* i = _ptr;
-return 10;
+escape 10;
 ]],
     env = 'line 8 : invalid attribution',
 }
@@ -23593,7 +23728,7 @@ interface I with
     event int e;
 end
 var I* i = (I*) _ptr;
-return 10;
+escape 10;
 ]],
     run = 10;
 }
@@ -23626,7 +23761,7 @@ t = &t1;
 var T2* x2 = (T2*) t;
 _assert(x2 == null);
 
-return 10;
+escape 10;
 ]],
     run = 10;
 }
@@ -23648,7 +23783,7 @@ var T t;
 var I* i = &t;
 
 await START;
-return i:e;
+escape i:e;
 ]],
     run = 100,
 }
@@ -23674,7 +23809,7 @@ var I* i = &t;
 
 await START;
 emit i:e;
-return i:ee;
+escape i:ee;
 ]],
     run = 100,
 }
@@ -23709,7 +23844,7 @@ with
 with
     await START;
 end
-return ret;
+escape ret;
 ]],
     run = 99,
 }
@@ -23746,7 +23881,7 @@ with
     var int v = await i2:f;
     ret = ret + v;
 end
-return ret;
+escape ret;
 ]],
     ana = {
         acc = 1,
@@ -23758,7 +23893,7 @@ Test { [[
 interface I with
     event int a;
 end
-return 10;
+escape 10;
 ]],
     run = 10;
 }
@@ -23793,7 +23928,7 @@ var Global* g = &u;
 var T t;
 t.g = &u;
 var int v = await g:a?;
-return v;
+escape v;
 ]],
     run = 10,
 }
@@ -23813,7 +23948,7 @@ end
 
 var I* t;
 
-return 1;
+escape 1;
 ]],
     fin = 'line 10 : attribution requires `finalize´'
 }
@@ -23829,7 +23964,7 @@ do
     var int* c;
     c = global:a;
 end
-return 1;
+escape 1;
 ]],
     run = 1,
 }
@@ -23844,7 +23979,7 @@ do
     var int* c;
     global:a = c;
 end
-return 1;
+escape 1;
 ]],
     fin = 'line 6 : attribution requires `finalize´',
 }
@@ -23858,7 +23993,7 @@ do
     b = global:a;
 end
 var int* a;
-return 1;
+escape 1;
 ]],
     run = 1,
 }
@@ -23872,7 +24007,7 @@ do
     global:a = b;
 end
 var int* a;
-return 1;
+escape 1;
 ]],
     fin = 'line 7 : attribution requires `finalize´'
 }
@@ -23891,7 +24026,7 @@ do
 end
 var T t;
 var int v = await a;
-return v;
+escape v;
 ]],
     run = 10,
 }
@@ -23912,7 +24047,7 @@ end
 var T t;
 await START;
 emit a  =>  10;
-return t.aa;
+escape t.aa;
 ]],
     run = 10,
 }
@@ -23922,7 +24057,7 @@ interface I with
     var int v;
     native _f(), _a;      // TODO: refuse _a
 end
-return 10;
+escape 10;
 ]],
     env = 'line 3 : only methods are allowed',
     --run = 10,
@@ -23947,7 +24082,7 @@ end
 var T t;
 input void START;
 await START;
-return t.v + t._f(20) + t.v;
+escape t.v + t._f(20) + t.v;
 ]],
     run = 220,
 }
@@ -23977,7 +24112,7 @@ var I* i = &t;
 input void START;
 await START;
 i:_f(100);
-return i:v;
+escape i:v;
 ]],
     env = 'line 21 : invalid attribution (I* vs T*)',
 }
@@ -24009,7 +24144,7 @@ var I* i = &t;
 input void START;
 await START;
 i:_f(100);
-return i:v;
+escape i:v;
 ]],
     run = 160,
 }
@@ -24043,7 +24178,7 @@ var T t;
 var I* i = &t;
 var int v = i:v;
 i:_set(100);
-return v + i:_get();
+escape v + i:_get();
 ]],
     run = 150,
 }
@@ -24094,7 +24229,7 @@ var int ret = i:v;
 i=&u;
 i:_f(200);
 
-return ret + i:v;
+escape ret + i:v;
 ]],
     run = 630,
 }
@@ -24124,7 +24259,7 @@ end
 
 var T t;
 var I* i = &t;
-return t._f() + i:_f();
+escape t._f() + i:_f();
 ]],
     run = 2,
 }
@@ -24155,7 +24290,7 @@ end
 var T t;
 var I* i = &t;
 t.i = i;
-return i:_g(5);
+escape i:_g(5);
 ]],
     run = 120,
 }
@@ -24171,7 +24306,7 @@ var T t;
 input void START;
 await START;
 t.a = t.a + a;
-return t.a;
+escape t.a;
 ]],
     env = 'line 4 : interface "Global" is not defined',
 }
@@ -24191,7 +24326,7 @@ do
 input void START;
 await START;
     t.a = t.a + a;
-    return t.a;
+    escape t.a;
 end
 ]],
     env = 'line 1 : interface "Global" must be implemented by class "Main"',
@@ -24212,7 +24347,7 @@ do
 input void START;
 await START;
     t.a = t.a + a;
-    return t.a;
+    escape t.a;
 end
 ]],
     run = 20,
@@ -24242,7 +24377,7 @@ do
 input void START;
 await START;
     t.a = t.a + a;
-    return t.a + global:a;
+    escape t.a + global:a;
 end
 ]],
     todo = 'IFC accs',
@@ -24254,7 +24389,7 @@ interface I with
     event int a;
 end
 var I t;
-return 10;
+escape 10;
 ]],
     env = 'line 4 : cannot instantiate an interface',
 }
@@ -24264,7 +24399,7 @@ interface I with
     event int a;
 end
 var I[10] t;
-return 10;
+escape 10;
 ]],
     env = 'line 4 : cannot instantiate an interface',
 }
@@ -24275,7 +24410,7 @@ interface I with
 end
 var I* t;
 t = new I;
-return 10;
+escape 10;
 ]],
     env = 'line 5 : cannot instantiate an interface',
 }
@@ -24292,7 +24427,7 @@ end
 var I* i;
 var T t;
 i = &t;
-return 10;
+escape 10;
 ]],
     env = 'line 11 : invalid attribution',
 }
@@ -24310,7 +24445,7 @@ end
 var I* i;
 var T t;
 i = &t;
-return 10;
+escape 10;
 ]],
     env = 'line 12 : invalid attribution',
 }
@@ -24328,7 +24463,7 @@ end
 var I* i;
 var T t;
 i = t;
-return 10;
+escape 10;
 ]],
     env = 'line 12 : invalid attribution',
 }
@@ -24346,7 +24481,7 @@ end
 var I* i;
 var T t;
 i = &t;
-return 10;
+escape 10;
 ]],
     run = 10;
 }
@@ -24368,7 +24503,7 @@ var I* i;
 var T t;
 i = &t;
 var J* j = i;
-return 10;
+escape 10;
 ]],
     run = 10;
 }
@@ -24390,7 +24525,7 @@ var I* i;
 var T t;
 i = &t;
 var J* j = i;
-return 10;
+escape 10;
 ]],
     env = 'line 16 : invalid attribution',
 }
@@ -24416,7 +24551,7 @@ var I* i;
 var T t;
 i = &t;
 var J* j = i;
-return 0;
+escape 0;
 ]],
     env = 'line 20 : invalid attribution',
 }
@@ -24444,7 +24579,7 @@ var T t;
 i = &t;
 var J* j = i;
 await START;
-return i:aa + j:aa + t.aa;
+escape i:aa + j:aa + t.aa;
 ]],
     run = 30,
 }
@@ -24473,7 +24608,7 @@ var T t;
 i = &t;
 var J* j = i;
 await START;
-return i:a + j:a + t.a + i:v + t.v;
+escape i:a + j:a + t.a + i:v + t.v;
 ]],
     run = 32,
 }
@@ -24485,7 +24620,7 @@ end
 interface Media with
     var Sm sm;
 end
-return 10;
+escape 10;
 ]],
     run = 10;
 }
@@ -24500,7 +24635,7 @@ do
     a = 10;
 end
 var T t;
-return t.a;
+escape t.a;
 ]],
     env = 'line 5 : interface "J" is not declared',
 }
@@ -24517,7 +24652,7 @@ end
 var T t;
 input void START;
 await START;
-return t.a;
+escape t.a;
 ]],
     run = 10,
 }
@@ -24535,7 +24670,7 @@ end
 var T t;
     t.v = 10;
 var I* i = &t;
-return t._ins();
+escape t._ins();
 ]],
     --env = 'line 13 : native function "CEU_T__ins" is not declared',
     env = 'line 13 : variable/event "_ins" is not declared',
@@ -24553,7 +24688,7 @@ end
 var T t;
     t.v = 10;
 var I* i = &t;
-return i:_ins();
+escape i:_ins();
 ]],
     --env = 'line 13 : native function "CEU_I__ins" is not declared',
     env = 'line 13 : variable/event "_ins" is not declared',
@@ -24572,7 +24707,7 @@ end
 var T t;
     t.v = 10;
 var I* i = &t;
-return i:_ins() + t._ins();;
+escape i:_ins() + t._ins();;
 ]],
     --env = 'line 14 : native function "CEU_T__ins" is not declared',
     env = 'line 13 : invalid attribution (I* vs T*)',
@@ -24602,7 +24737,7 @@ end
 var T t;
     t.v = 10;
 var I* i = &t;
-return i:_ins() + t._ins();
+escape i:_ins() + t._ins();
 ]],
     run = 20,
 }
@@ -24642,7 +24777,7 @@ var T t1;
 var F* f = &t1;
 f:_f(3);
 
-return t1.i + f:i;
+escape t1.i + f:i;
 ]],
     run = 28,
 }
@@ -24674,7 +24809,7 @@ var T t1;
 var F* f = &t1;
 f:_f(3);
 
-return t1.i + f:i;
+escape t1.i + f:i;
 ]],
     run = 28,
 }
@@ -24685,7 +24820,7 @@ class U with
     interface T;
 do
 end
-return 0;
+escape 0;
 ]],
     env = 'line 3 : `T´ is not an interface',
 }
@@ -24695,7 +24830,7 @@ interface Global with
     var G* g;
 end
 var G* g;
-return 1;
+escape 1;
 ]],
     env = 'line 2 : undeclared type `G´',
 }
@@ -24705,7 +24840,7 @@ interface Global with
     event (G*,int) g;
 end
 event (G*,int) g;
-return 1;
+escape 1;
 ]],
     --env = 'line 2 : undeclared type `G´',
     --run = 1,
@@ -24724,7 +24859,7 @@ do
 end
 var T t;
 var I* i = &t;
-return i:c == 1;
+escape i:c == 1;
 ]],
     run = 1,
 }
@@ -24734,7 +24869,7 @@ class T with
 do
 end
 var T** t := _malloc(10 * sizeof(T**));
-return 10;
+escape 10;
 ]],
     run = 10;
 }
@@ -24774,7 +24909,7 @@ do
         p := i;
     end
 end
-return 10;
+escape 10;
 ]],
     run = 10;
 }
@@ -24792,7 +24927,7 @@ do
         _f(i);
     end
 end
-return 10;
+escape 10;
 ]],
     run = 10,
 }
@@ -24810,7 +24945,7 @@ do
         _f(i) finalize with nothing; end;
     end
 end
-return 10;
+escape 10;
 ]],
     run = 10,
 }
@@ -24843,7 +24978,7 @@ do
         ret = ret + i:v;
     end
 end
-return ret;
+escape ret;
 ]],
     run = 6,
 }
@@ -24886,7 +25021,7 @@ var I* i4 = (I*) _f(&u);
 var T* i5 = (T*) _f(&t);
 var T* i6 = (T*) _f(&u);
 
-return i1==&t and i2==null and i3==&t and i4==null and i5==&t and i6==null;
+escape i1==&t and i2==null and i3==&t and i4==null and i5==&t and i6==null;
 ]],
     run = 1,
 }
@@ -24926,7 +25061,7 @@ do
         ret = ret + i:v;
     end
 end
-return ret;
+escape ret;
 ]],
     run = 4,
 }
@@ -24948,7 +25083,7 @@ do
         ret = ret + i:v;
     end
 end
-return ret;
+escape ret;
 ]],
     run = 1,
 }
@@ -24980,7 +25115,7 @@ do
         ret = ret + i:v;
     end
 end
-return ret;
+escape ret;
 ]],
     run = 1,
 }
@@ -25017,7 +25152,7 @@ do
         ret = ret + i:v;
     end
 end
-return ret;
+escape ret;
 ]],
     run = 7,
     --run = 10,
@@ -25060,7 +25195,7 @@ do
         end
     end
 end
-return ret;
+escape ret;
 ]],
     run = { ['~>3s;~>F'] = 13 },
 }
@@ -25077,7 +25212,7 @@ do
     end
 end
 
-return 10;
+escape 10;
 ]],
     run = 10;
 }
@@ -25345,7 +25480,7 @@ end
 Test { [[
 input int A;
 var int x = await A until x>10;
-return x;
+escape x;
 ]],
     run = {
         ['1~>A; 0~>A; 10~>A; 11~>A'] = 11,
@@ -25357,7 +25492,7 @@ input int A;
 var int v = 0;
 par do
     await 10s until v;
-    return 10;
+    escape 10;
 with
     await 10min;
     v = 1;
@@ -25388,7 +25523,7 @@ end
 
 var T t;
 await START;
-return t.x;
+escape t.x;
 ]],
     run = 10,
 }
@@ -25397,19 +25532,19 @@ return t.x;
 
 Test { [[
 await (10ms);
-return 1;
+escape 1;
 ]],
     parser = 'line 1 : after `)´ : expected `or´',
 }
 Test { [[
 await (10ms) or (20ms);
-return 1;
+escape 1;
 ]],
     env = 'line 1 : invalid await: multiple timers',
 }
 Test { [[
 await ((10)ms);
-return 1;
+escape 1;
 ]],
     parser = 'line 1 : after `)´ : expected `or´',
 }
@@ -25417,7 +25552,7 @@ return 1;
 Test { [[
 await (e) or
       (f);
-return 1;
+escape 1;
 ]],
     env = 'line 1 : variable/event "e" is not declared',
 }
@@ -25427,7 +25562,7 @@ event void e;
 var int f;
 await (e) or
       (f);
-return 1;
+escape 1;
 ]],
     env = 'line 3 : event "f" is not declared',
 }
@@ -25440,7 +25575,7 @@ input void START;
 await (e) or
       (f) or
       (START);
-return 1;
+escape 1;
 ]],
     run = 1,
 }
@@ -25448,7 +25583,7 @@ return 1;
 Test { [[
 input void START;
 await (10ms) or (START);
-return 1;
+escape 1;
 ]],
     run = 1,
 }
@@ -25456,7 +25591,7 @@ return 1;
 Test { [[
 input void START;
 var int* x = await (10ms) or (START);
-return 1;
+escape 1;
 ]],
     env = 'line 2 : invalid attribution',
 }
@@ -25470,7 +25605,7 @@ par/or do
 with
     await START;
 end
-return 1;
+escape 1;
 ]],
     run = 1,
 }
@@ -25479,7 +25614,7 @@ Test { [[
 input void START;
 await (10ms) or (START)
         until 1;
-return 1;
+escape 1;
 ]],
     run = 1,
 }
@@ -25488,7 +25623,7 @@ Test { [[
 input void START;
 var int i = await (10ms) or (START)
         until i==1;
-return i;
+escape i;
 ]],
     run = 1,
 }
@@ -25496,13 +25631,13 @@ Test { [[
 input void START;
 var int i = await (10ms) or (START)
         until i==0;
-return i+1;
+escape i+1;
 ]],
     run = {['~>10ms']=1},
 }
 ]=]
 
---do return end
+--do escape end
 
 -- GLOBAL AWAITS (deprecated)
 
@@ -25561,7 +25696,7 @@ input void A;
 await A;
 loop i, 10 do
 end
-return 1;
+escape 1;
 ]],
     awaits = 0,
     --loop = true,
@@ -25586,7 +25721,7 @@ input void A;
 loop do
     await A;
 end
-return 1;
+escape 1;
 ]],
     ana = {
         isForever = true,
@@ -25733,7 +25868,7 @@ end
     awaits = 3,
     run = false,
 }
---do return end
+--do escape end
 
 Test { [[
 input int A, B;
@@ -25853,14 +25988,14 @@ end
 Test { [[
 var int a, b;
 (a,b) = 1;
-return 1;
+escape 1;
 ]],
     ast = 'line 2 : invalid attribution',
 }
 
 Test { [[
 input (int) A;
-return 1;
+escape 1;
 ]],
     run = 1,
 }
@@ -25868,7 +26003,7 @@ return 1;
 Test { [[
 native _int;
 input (_int,int) A;
-return 1;
+escape 1;
 ]],
     run = 1;
 }
@@ -25876,7 +26011,7 @@ return 1;
 Test { [[
 input (int*,int) A;
 event (int,int*) a;
-return 1;
+escape 1;
 ]],
     run = 1;
 }
@@ -25884,7 +26019,7 @@ return 1;
 Test { [[
 input (int,int) A;
 event (int,int) a;
-return 1;
+escape 1;
 ]],
     run = 1;
 }
@@ -25894,13 +26029,13 @@ input (int,int) A;
 par/or do
     event int a,b;
     (a,b) = await A;
-    return 1;
+    escape 1;
 with
     async do
         emit A => (1,2);
     end
 end
-return 1;
+escape 1;
 ]],
     code = 'line 4 : invalid expression',
 }
@@ -25910,13 +26045,13 @@ input (int,int*) A;
 par/or do
     var int a,b;
     (a,b) = await A;
-    return a + b;
+    escape a + b;
 with
     async do
         emit A => (1,2);
     end
 end
-return 1;
+escape 1;
 ]],
     env = 'line 4 : invalid attribution',
 }
@@ -25926,14 +26061,14 @@ input (int,int*) A;
 par/or do
     var int a,b;
     (a,b) = await A;
-    return a + b;
+    escape a + b;
 with
     async do
         var int x = 2;
         emit A=> (1,&x);
     end
 end
-return 1;
+escape 1;
 ]],
     env = 'line 4 : invalid attribution',
 }
@@ -25943,13 +26078,13 @@ input (int,int) A;
 par/or do
     var int a,b;
     (a,b) = await A;
-    return a + b;
+    escape a + b;
 with
     async do
         emit A => (1,2);
     end
 end
-return 1;
+escape 1;
 ]],
     run = 3;
 }
@@ -25959,13 +26094,13 @@ event (int,int) a;
 par/or do
     var int a,b;
     (a,b) = await a;
-    return a + b;
+    escape a + b;
 with
     async do
         emit a => (1,2);
     end
 end
-return 1;
+escape 1;
 ]],
     env = 'line 4 : event "a" is not declared',
 }
@@ -25976,12 +26111,12 @@ input void START;
 par/or do
     var int c,d;
     (c,d) = await a;
-    return c + d;
+    escape c + d;
 with
     await START;
     emit a => (1,2);
 end
-return 1;
+escape 1;
 ]],
     run = 3,
 }
@@ -25989,7 +26124,7 @@ return 1;
 Test { [[
 event (int,int) e;
 emit e => (1,2,3);
-return 1;
+escape 1;
 ]],
     env = 'line 2 : invalid attribution (void vs int)',
 }
@@ -26007,7 +26142,7 @@ output (int*,  int*) RADIO_SEND;
 var int a=1,b=1;
 emit RADIO_SEND => (&a,&b);
 
-return a + b;
+escape a + b;
 ]],
     run = 3,
 }
@@ -26019,14 +26154,14 @@ native do
     ##include <stdio.h>
     ##include <stdio.h>
 end
-return 1;
+escape 1;
 ]],
     run = 1,
 }
 
 Test { [[
 #include
-return 1;
+escape 1;
 ]],
     lines = 'error: #include expects "FILENAME" or <FILENAME>',
 }
@@ -26036,7 +26171,7 @@ Test { [[
 #include "http://ceu-lang.org/"
 #include "https://github.com/fsantanna/ceu"
 #include "^4!_"
-return 1;
+escape 1;
 ]],
     lines = 'fatal error: MOD1: No such file or directory',
 }
@@ -26047,7 +26182,7 @@ input void A;
 Test { [[
 #include "/tmp/_ceu_MOD1.ceu"
 await A;
-return 1;
+escape 1;
 ]],
     run = { ['~>A']=1 },
 }
@@ -26062,7 +26197,7 @@ Test { [[
 nothing;
 #include "/tmp/_ceu_MOD1.ceu"
 await A;
-return 1;
+escape 1;
 ]],
     parser = 'ERR : /tmp/_ceu_MOD1.ceu : line 4 : after `A´ : expected `;´',
 }
@@ -26074,7 +26209,7 @@ _assert(0);
 Test { [[
 #include "/tmp/_ceu_MOD1.ceu"
 await A;
-return 1;
+escape 1;
 ]],
     --run = { ['~>A']=1 },
     run = "ceu_go: Assertion `0' failed",
@@ -26089,7 +26224,7 @@ INCLUDE('/tmp/_ceu_MOD1.ceu', [[
 Test { [[
 #include "/tmp/_ceu_MOD1.ceu"
 await A;
-return 1;
+escape 1;
 ]],
     run = { ['~>A']=1 },
 }
@@ -26104,7 +26239,7 @@ INCLUDE('/tmp/_ceu_MOD1.ceu', [[
 Test { [[
 #include "/tmp/_ceu_MOD1.ceu"
 await A;
-return 1;
+escape 1;
 ]],
     parser = 'ERR : /tmp/_ceu_MOD2.ceu : line 2 : after `nothing´ : expected `;´',
 }
@@ -26122,7 +26257,7 @@ INCLUDE('/tmp/_ceu_MOD0.ceu', [[
 Test { [[
 #include "/tmp/_ceu_MOD0.ceu"
 await A;
-return 1;
+escape 1;
 ]],
     run = { ['~>A']=1 },
 }
@@ -26141,7 +26276,7 @@ INCLUDE('/tmp/_ceu_MOD0.ceu', [[
 Test { [[
 #include "/tmp/_ceu_MOD0.ceu"
 await A;
-return 1;
+escape 1;
 ]],
     parser = 'ERR : /tmp/_ceu_MOD1.ceu : line 2 : after `A´ : expected `;´',
 }
@@ -26155,7 +26290,7 @@ end
 ]])
 Test { [[
 #include "/tmp/_ceu_MOD1.ceu"
-return _f();
+escape _f();
 ]],
     run = 10,
 }
@@ -26170,7 +26305,7 @@ end
 Test { [[
 #include "/tmp/_ceu_MOD1.ceu"
 #include "/tmp/_ceu_MOD1.ceu"
-return _f();
+escape _f();
 ]],
     gcc = ':2:9: error: redefinition of',
 }
@@ -26188,7 +26323,7 @@ end
 Test { [[
 #include "/tmp/_ceu_MOD1.ceu"
 #include "/tmp/_ceu_MOD1.ceu"
-return _f();
+escape _f();
 ]],
     run = 10,
 }
@@ -26207,7 +26342,7 @@ interface T with
     var int i;
 end
 var int i = 10;
-return i;
+escape i;
 ]],
     env = 'ERR : tests.lua : line 4 : interface/class "T" is already declared',
 }
@@ -26226,7 +26361,7 @@ interface T with
 end
 #include "/tmp/_ceu_MOD1.ceu"
 var int i = 10;
-return i;
+escape i;
 ]],
     env = 'ERR : /tmp/_ceu_MOD1.ceu : line 1 : interface/class "T" is already declared',
 }
@@ -26243,7 +26378,7 @@ interface Global with
     var int i;
 end
 var int i = 10;
-return i;
+escape i;
 ]],
     env = 'line 2 : interface/class "Global" is already declared',
 }
@@ -26265,7 +26400,7 @@ interface Global with
 end
 #endif
 var int i = 10;
-return i;
+escape i;
 ]],
     run = 10,
 }
@@ -26281,7 +26416,7 @@ end
 ]])
 Test { [[
 #include "/tmp/_ceu_MOD1.ceu"
-return _f();
+escape _f();
 ]],
     run = 10,
 }
@@ -26290,7 +26425,7 @@ Test { [[
 native do
     ##include <unistd.h>
 end
-return 1;
+escape 1;
 ]],
     run = 1,
 }
@@ -26304,7 +26439,7 @@ var int  a=10, b=5;
 var int* p = &b;
 async thread do
 end
-return a + b + *p;
+escape a + b + *p;
 ]],
     run = 20,
 }
@@ -26313,7 +26448,7 @@ Test { [[
 var int ret =
     async thread do
     end;
-return (ret == 1);
+escape (ret == 1);
 ]],
     run = 1,
 }
@@ -26327,7 +26462,7 @@ async thread (a, p) do
         *p = a;
     end
 end
-return a + b + *p;
+escape a + b + *p;
 ]],
     run = 40,
 }
@@ -26342,14 +26477,14 @@ var int ret =
             *p = a;
         end
     end;
-return (ret==1) + a + b + *p;
+escape (ret==1) + a + b + *p;
 ]],
     run = 41,
 }
 
 Test { [[
 sync do
-    return 1;
+    escape 1;
 end
 ]],
     props = 'line 1 : not permitted outside `thread´',
@@ -26361,7 +26496,7 @@ async do
         nothing;
     end
 end
-return 1;
+escape 1;
 ]],
     props = 'line 2 : not permitted outside `thread´',
 }
@@ -26382,7 +26517,7 @@ par/or do
 with
 end
 _usleep(]]..i..[[);
-return ret;
+escape ret;
 ]],
         run = 1,
     }
@@ -26409,7 +26544,7 @@ with
     ret = 1;
 end
 _usleep(]]..i..[[+1);
-return ret;
+escape ret;
 ]],
         run = 1,
     }
@@ -26436,7 +26571,7 @@ with
         end
     end
 end
-return v1+v2;
+escape v1+v2;
 ]],
     run = 30,
 }
@@ -26477,7 +26612,7 @@ with
     end
 end
 _assert(v1 == v2);
-return v1;
+escape v1;
 ]],
     run = 900,
 }
@@ -26515,7 +26650,7 @@ with
     end
 end
 _assert(v1 == v2);
-return v1;
+escape v1;
 ]],
     run = 900,
 }
@@ -26558,7 +26693,7 @@ with
     end
 end
 _assert(v1 == v2);
-return v1;
+escape v1;
 ]],
     --run = false,
     run = 1066784512,
@@ -26597,7 +26732,7 @@ with
     end
 end
 _assert(v1 == v2);
-return v1;
+escape v1;
 ]],
     run = 1066784512,
     --run = false,
@@ -26640,7 +26775,7 @@ with
 end
 
 _assert(v1 == v2);
-return v1;
+escape v1;
 ]],
     run = 1066784512,
     --run = false,
@@ -26663,7 +26798,7 @@ with
         emit A=>10;
     end
 end;
-return 10;
+escape 10;
 ]],
     ana = {
         isForever = false,
@@ -26678,7 +26813,7 @@ async thread (pa) do
     emit 1min;
     *pa = 10;
 end;
-return a + 1;
+escape a + 1;
 ]],
     run = 11,
 }
@@ -26693,7 +26828,7 @@ par do
         await 10ms;
         v2 = 2;
     end
-    return v1 + v2;
+    escape v1 + v2;
 with
     async thread do
         emit 5ms;
@@ -26716,7 +26851,7 @@ par do
     async thread do end
 with
     await A;
-    return 1;
+    escape 1;
 end
 ]],
     run = { ['1~>A']=1 },
@@ -26775,7 +26910,7 @@ with
         emit T;
     end
 end
-return ret;
+escape ret;
 ]],
     run = 72000,
 }
@@ -26787,7 +26922,7 @@ par do
         par/or do
             var int p2 = await P2;
             if p2 == 1 then
-                return 0;
+                escape 0;
             end;
         with
             loop do
@@ -26835,7 +26970,7 @@ with
     end
     ret = ret + 1;
 end
-return ret;
+escape ret;
 ]],
     run = { ['~>A;~>1s'] = 4 },
 }
@@ -26862,7 +26997,7 @@ await FOREVER;
 }
 
 Test { [[
-return 0;
+escape 0;
 ]],
     tot = 4,
     run = 0,
@@ -26877,7 +27012,7 @@ return 0;
 Test { [[
 int a, b, c;
 u8 d, e, f;
-return 0;
+escape 0;
 ]],
     tot = 19,
     run = 0,
@@ -26895,7 +27030,7 @@ do
     int a, b, c;
 end
 u8 d, e, f;
-return 0;
+escape 0;
 ]],
     tot = 19,
     run = 0,
@@ -26915,7 +27050,7 @@ end
 do
     u8 d, e, f;
 end
-return 0;
+escape 0;
 ]],
     tot = 16,
     run = 0,
@@ -26932,7 +27067,7 @@ do
     end
 end
 u8 d=4, e=5, f=6;
-return ret + d + e + f;
+escape ret + d + e + f;
 ]],
     tot = 20,
     run = 81,
@@ -26954,7 +27089,7 @@ with
 with
     ret = ret + 1;
 end
-return ret;
+escape ret;
 ]],
     tot = 11,
     ana = {
@@ -26990,7 +27125,7 @@ do
     int v = -5;
     ret = ret + v;
 end
-return ret+a;
+escape ret+a;
 ]],
     ana = {
         acc = 21,
@@ -27041,7 +27176,7 @@ with
     await Z;
     ret = ret + a;
 end
-return ret;
+escape ret;
 ]],
     tot = 24,
     run = {
@@ -27058,7 +27193,7 @@ par do
     await A;
     ret = ret + a;
     a = 10;
-    return ret;
+    escape ret;
 with
     s16 a = 100;
     await B;

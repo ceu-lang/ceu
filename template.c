@@ -384,10 +384,11 @@ void ceu_org_init (tceu_org* org, int n, int lbl, int seqno,
                    tceu_org* par_org, int par_trl)
 {
     /* { evt=0, seqno=0, lbl=0 } for all trails */
+    memset(&org->trls, 0, n*sizeof(tceu_trl));
+
 #ifdef CEU_ORGS
     org->n = n;
 #endif
-    memset(&org->trls, 0, n*sizeof(tceu_trl));
 
     /* org.trls[0] == org.blk.trails[1] */
     org->trls[0].evt   = CEU_IN__STK;

@@ -184,8 +184,8 @@ F = {
     SetBlock_pre = function (me)
         me.ana.pos = { [false]=true }   -- `return/break´ may change this
     end,
-    Return = function (me)
-        local top = _AST.iter((me.tag=='Return' and 'SetBlock') or 'Loop')()
+    Escape = function (me)
+        local top = _AST.iter((me.tag=='Escape' and 'SetBlock') or 'Loop')()
         me.ana.pos = COPY(me.ana.pre)
         OR(top, me, true)
         me.ana.pos = { [false]='esc' }   -- diff from [false]=true
@@ -200,7 +200,7 @@ F = {
     end,
 
     Loop_pre = 'SetBlock_pre',
-    Break    = 'Return',
+    Break    = 'Escape',
 
     Loop = function (me)
         if me.isBounded then

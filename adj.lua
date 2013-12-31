@@ -54,8 +54,10 @@ F = {
     SetBlock_pre = function (me)
         me.blk = _AST.iter'Block'()
     end,
-    _Return = function (me)
-        local set = _AST.iter'SetBlock'()
+    _Escape = function (me)
+        local set =  _AST.iter'SetBlock'()
+        ASR(set, me, 'invalid `escape´')
+
         local fr = unpack(me)
         --local to = _AST.node('Var')(me.ln,set[2][1])
         local to = _AST.copy(set[2])
@@ -65,7 +67,7 @@ F = {
         local blk = _AST.node('Stmts')(me.ln)
         blk[#blk+1] = _AST.node('SetExp')(me.ln, '=', fr, to, set[3])
 
-        blk[#blk+1] = _AST.node('Return')(me.ln)
+        blk[#blk+1] = _AST.node('Escape')(me.ln)
         return blk
     end,
 
