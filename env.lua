@@ -97,7 +97,7 @@ local _E = 1    -- 0=NONE
 
 function newtype (tp)
     local raw = _TP.noptr(tp)
-    if string.sub(raw,1,1)~='_' or (not _ENV.c[raw]) then
+    if string.sub(raw,1,1)=='_' and (not _ENV.c[raw]) then
         _ENV.c[raw] = { tag='type', id=raw, len=nil, mod=nil }
     end
 end
@@ -126,26 +126,25 @@ function newvar (me, blk, pre, tp, arr, id)
         end
     end
 
-    local isEvt = (pre == 'event')
     local tp_raw = _TP.noptr(tp)
     local c = _ENV.c[tp_raw]
 
-    ASR(_ENV.clss[tp_raw] or c, me,
-            'undeclared type `'..tp_raw..'´')
-    ASR(not _ENV.clss_ifc[tp], me,
-        'cannot instantiate an interface')
-    ASR(_TP.deref(tp) or (not c) or (tp=='void' and isEvt) or c.len~=0, me,
-        'cannot instantiate type "'..tp..'"')
+    ASR(_ENV.clss[tp_raw] or c,
+        me, 'undeclared type `'..tp_raw..'´')
+    ASR(not _ENV.clss_ifc[tp],
+        me, 'cannot instantiate an interface')
+    ASR(_TP.deref(tp) or (not c) or (tp=='void' and pre~='var') or c.len~=0,
+        me, 'cannot instantiate type "'..tp..'"')
     --ASR((not arr) or arr>0, me, 'invalid array dimension')
 
     tp = (arr and tp..'*') or tp
 
     local tp_ = _TP.deref(tp)
     local cls = _ENV.clss[tp] or (arr and tp_ and _ENV.clss[tp_])
-    if cls then
-        ASR(cls~=_AST.iter'Dcl_cls'() and isEvt==false, me,
-                'invalid declaration')
-    end
+        if cls then
+            ASR(cls ~=_AST.iter'Dcl_cls'(),
+                me, 'invalid declaration')
+        end
 
     local inTop = (blk == CLS().blk_ifc) or (blk == CLS().blk_body)
     if inTop and blk.vars[id] then
@@ -155,28 +154,28 @@ function newvar (me, blk, pre, tp, arr, id)
     local var = {
         ln    = me.ln,
         id    = id,
-        cls   = cls,
-        tp    = tp,
         blk   = blk,
+        tp    = tp,
+        cls   = cls,
         pre   = pre,
         inTop = inTop,  -- var is in top-level of class (accessible from C)
-        isEvt = isEvt,
-        evt_idx = isEvt and _E,
         isTmp = false,
         arr   = arr,
-        --val   = '0',     -- TODO: workaround: dummy value for interfaces
         n     = _N,
     }
 
     _N = _N + 1
-    if isEvt then
-        _E = _E + 1
-    end
-
     blk.vars[#blk.vars+1] = var
     blk.vars[id] = var -- TODO: last/first/error?
     -- TODO: warning in C (hides)
 
+    return var
+end
+
+function newevt (me, blk, pre, tp, id)
+    local var = newvar(me, blk, pre, tp, false, id)
+    var.evt_idx = _E
+    _E = _E + 1
     return var
 end
 
@@ -313,12 +312,14 @@ F = {
             for _, var in pairs(me.blk_ifc.vars) do
                 var.ifc_id = var.ifc_id or var2ifc(var)
                 if not _ENV.ifcs[var.ifc_id] then
-                    if var.isEvt then
+                    if var.pre == 'var' then
+                        _ENV.ifcs.flds[var.ifc_id] = #_ENV.ifcs.flds
+                        _ENV.ifcs.flds[#_ENV.ifcs.flds+1] = var.ifc_id
+                    elseif var.pre == 'event' then
                         _ENV.ifcs.evts[var.ifc_id] = #_ENV.ifcs.evts
                         _ENV.ifcs.evts[#_ENV.ifcs.evts+1] = var.ifc_id
                     else
-                        _ENV.ifcs.flds[var.ifc_id] = #_ENV.ifcs.flds
-                        _ENV.ifcs.flds[#_ENV.ifcs.flds+1] = var.ifc_id
+                        error 'TODO'
                     end
                 end
             end
@@ -407,7 +408,6 @@ F = {
             id    = id,
             tp    = tp,
             pre   = dir,
-            isEvt = true,
         }
         _ENV.exts[#_ENV.exts+1] = me.evt
         _ENV.exts[id] = me.evt
@@ -427,23 +427,31 @@ F = {
         end
     end,
 
-    Dcl_int = 'Dcl_var',
+    Dcl_int = function (me)
+        local pre, tp, id = unpack(me)
+        ASR(tp=='void' or tp=='int' or _TP.deref(tp) or _TP.isTuple(tp),
+                me, 'invalid event type')
+        newtype(tp)
+        if _TP.isTuple(tp) then
+            tp = tp..'*'
+        end
+        me.var = newevt(me, _AST.iter'Block'(), pre, tp, id)
+    end,
+
     Dcl_var = function (me)
         local pre, tp, arr, id, constr = unpack(me)
         newtype(tp)
-        if pre == 'event' then
-            ASR(tp=='void' or tp=='int' or _TP.deref(tp) or _TP.isTuple(tp), me,
-                    'invalid event type')
-            if _TP.isTuple(tp) then
-                tp = tp..'*'
-            end
-        end
         me.var = newvar(me, _AST.iter'Block'(), pre, tp, arr, id)
         me.var.read_only = me.read_only
-
         if constr then
             constr.blk = me.var.blk
         end
+    end,
+
+    Dcl_fun = function (me)
+        local ret, params, id, blk = unpack(me)
+        local cls = CLS()
+        me.var = newvar(me, _AST.iter'Block'(), pre, {tp1,tp2}, false, id)
     end,
 
     Dcl_imp = function (me)
@@ -455,7 +463,13 @@ F = {
         -- copy vars
         for _, var in ipairs(ifc.blk_ifc.vars) do
             local tp = (var.arr and _TP.deref(var.tp)) or var.tp
-            newvar(me, _AST.iter'Block'(), var.pre, tp, var.arr, var.id)
+            if var.pre == 'var' then
+                newvar(me, _AST.iter'Block'(), var.pre, tp, var.arr, var.id)
+            elseif var.pre == 'event' then
+                newevt(me, _AST.iter'Block'(), var.pre, tp, var.id)
+            else
+                error 'TODO'
+            end
             CLS().c[var.id] = ifc.c[var.id] -- also copy C properties
         end
     end,
@@ -473,13 +487,22 @@ F = {
         ASR(var, me, 'variable/event "'..id..'" is not declared')
         me.var  = var
         me.tp   = var.tp
-        me.lval = not (var.isEvt or var.cls or var.arr)
+        me.lval = not (var.pre~='var' or var.cls or var.arr)
                     and var
         me.ref  = me
         me.fst  = var
-        if var.isEvt then
+        if var.pre == 'event' then
             me.evt = var
         end
+    end,
+
+    Fun = function (me)
+        local id = unpack(me)
+        local fun = CLS()[id]
+        ASR(var, fun, 'function "'..id..'" is not declared')
+        me.fun  = fun
+        me.tp   = fun[1]    -- return type
+        me.lval = false
     end,
 
     Dcl_nat = function (me)
@@ -520,7 +543,7 @@ F = {
     AwaitInt = function (me, exp)
         local exp = exp or unpack(me)
         local var = exp.var
-        ASR(var and var.isEvt, me,
+        ASR(var and var.pre=='event', me,
                 'event "'..(var and var.id or '?')..'" is not declared')
         me.fst = exp.fst
     end,
@@ -531,7 +554,7 @@ F = {
     EmitInt = function (me)
         local int, ps = unpack(me)
         local var = int.var
-        ASR(var and var.isEvt, me,
+        ASR(var and var.pre=='event', me,
                 'event "'..(var and var.id or '?')..'" is not declared')
         ASR(int.tp=='void' or  (ps and _TP.contains(int.var.tp,ps.tp,true)), me,
                 'invalid emit')
@@ -559,7 +582,7 @@ F = {
     SetExp = function (me)
         local _, fr, to = unpack(me)
         to = to or _AST.iter'SetBlock'()[1]
-        ASR(to.lval, me, 'invalid attribution')
+        ASR(to and to.lval, me, 'invalid attribution')
         ASR(_TP.contains(to.tp,fr.tp,true), me,
                 'invalid attribution ('..to.tp..' vs '..fr.tp..')')
         ASR(me.read_only or (not to.lval.read_only), me,
@@ -790,10 +813,10 @@ F = {
             me.org  = e1
             me.var  = var
             me.tp   = var.tp
-            me.lval = not (var.isEvt or var.cls or var.arr)
+            me.lval = not (var.pre~='var' or var.cls or var.arr)
                         and var
             me.ref  = me[3]
-            if var.isEvt then
+            if var.pre == 'event' then
                 me.evt    = me.var
                 me[3].evt = var
             end

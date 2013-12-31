@@ -249,6 +249,8 @@ escape _V;
     run = 100,
 }
 
+-- FUNCTIONS
+
 Test { [[
 function void f;
 escape 1;
@@ -376,7 +378,6 @@ escape 1;
 
 do return end
 --]===]
-
 
 -- OK: well tested
 
@@ -1831,7 +1832,7 @@ with
 end;
 escape 0;
 ]],
-    code = 'line 3 : invalid expression',
+    env = 'line 4 : invalid attribution',
 }
 
 Test { [[
@@ -24553,7 +24554,7 @@ i = &t;
 var J* j = i;
 escape 0;
 ]],
-    env = 'line 20 : invalid attribution',
+    env = 'line 6 : invalid attribution',
 }
 
 Test { [[
@@ -26037,7 +26038,7 @@ with
 end
 escape 1;
 ]],
-    code = 'line 4 : invalid expression',
+    env = 'line 4 : invalid attribution',
 }
 
 Test { [[

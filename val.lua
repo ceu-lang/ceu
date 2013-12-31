@@ -29,7 +29,7 @@ F =
     Block_pre = function (me)
         local cls = CLS()
         for _, var in ipairs(me.vars) do
-            if not var.isEvt then
+            if var.pre == 'var' then
                 if var.isTmp then
                     var.val = '__ceu_'..var.id..'_'..var.n
                 else
@@ -208,24 +208,26 @@ F =
         if me.org then
             local cls = _ENV.clss[me.org.tp]
             if cls and cls.is_ifc then
-                if me.var.isEvt then
+                if me.var.pre == 'var' then
+                    me.val = '(*('..me.var.ifc_acc..'('..me.org.val..')))'
+                elseif me.var.pre == 'event' then
                     me.val = nil    -- cannot be used as variable
                     local org = '((tceu_org*)'..me.org.val..')'
                     me.evt_idx = '(CEU.ifcs_evts['..org..'->cls]['
                                     .._ENV.ifcs.evts[me.var.ifc_id]
                                 ..'])'
-                else    -- var
-                    me.val = '(*('..me.var.ifc_acc..'('..me.org.val..')))'
+                else
+                    error 'TODO'
                 end
             else
                 if me.c then
                     me.val = me.c.id_
-                elseif me.var.isEvt then
+                elseif me.var.pre == 'var' then
+                    me.val = me.org.val..'.'..me.var.id_
+                elseif me.var.pre == 'event' then
                     me.val = nil    -- cannot be used as variable
                     me.org.val = '&'..me.org.val -- always via reference
                     me.evt_idx = me.var.evt_idx
-                else    -- var
-                    me.val = me.org.val..'.'..me.var.id_
                 end
             end
         else

@@ -192,7 +192,7 @@ do
                 evts[i] = 0
             end
             for _, var in ipairs(cls.blk_ifc.vars) do
-                if var.isEvt then
+                if var.pre == 'event' then
                     local i = _ENV.ifcs.evts[var.ifc_id]
                     if i then
                         evts[i+1] = var.evt_idx

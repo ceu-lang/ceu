@@ -101,6 +101,8 @@ KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'native'
      --+ 'import'  --+ 'as'
 -- export / version
      + 'thread'   + 'sync'
+-- functions
+     + 'function' + 'call' + 'return' + 'delay' + 'call/delay'
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
@@ -111,7 +113,7 @@ local alphanum = m.R'az' + '_' + m.R'09'
 
 NUM = CK(m.R'09'^1) / tonumber
 
-_GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
+_GG = { [1] = CK'' * V'_Dcl_funs'^0 * V'Stmts' * P(-1)-- + EM'expected EOF')
 
                 -- "Ct" as a special case to avoid "too many captures" (HACK_1)
     , Stmts  = Ct (( V'_StmtS' * (EK';'*K';'^0) +
@@ -150,7 +152,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
              + V'Dcl_ifc' + V'Dcl_cls'
              + V'Finalize'
 
-    , _LstStmt  = V'_Escape' + V'Break' + V'_Continue' + V'AwaitN'
+    , _LstStmt  = V'_Escape' + V'Break' + V'_Continue' + V'AwaitN' + V'Return'
     , _LstStmtB = V'ParEver' + V'_Continue'
 
     , _SetBlock  = V'Do' + V'ParEver' + V'If' + V'Loop' + V'_Every'
@@ -357,6 +359,14 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
                                 Cc(false)*Cc(false)*Cc(false)*Cc(false)*Cc(false))
 
     , _Dcl_imp = K'interface' * EV'ID_cls' * (K',' * EV'ID_cls')^0
+
+    , _Dcl_funs = V'_Dcl_fun0' * (EK';'*K';'^0)
+                + V'_Dcl_fun1' * K';'^0
+    , _Dcl_fun0 = CK'function' * EV'ID_type'
+                               * (EV'ID_type'+EV'TupleType')
+                               * V'ID_var'
+    , _Dcl_fun1 = V'_Dcl_fun0' * V'_Do'
+    , Return  = K'return' * EV'_Exp'^-1
 
     , BlockI = ( (V'_Dcl_int'+V'_Dcl_var'+
                    V'_Dcl_nat_ifc'+V'_Dcl_imp') * (EK';'*K';'^0)

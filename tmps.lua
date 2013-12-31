@@ -7,7 +7,7 @@ end
 F = {
     Dcl_var_pre = function (me)
         local var = me.var
-        if var.isEvt or var.cls or var.inTop then
+        if var.pre~='var' or var.cls or var.inTop then
             return                  -- only normal vars can be tmp
         end
         VARS[var] = true
@@ -21,7 +21,7 @@ F = {
             return                  -- all threads vars are "tmp"
         end
 
-        if var.isEvt or var.cls then
+        if var.pre~='var' or var.cls then
             var.isTmp = false
             return                  -- only normal vars can be tmp
         end

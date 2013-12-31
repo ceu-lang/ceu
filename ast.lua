@@ -227,6 +227,14 @@ C = {
     Block   = node('Block'),
     Host    = node('Host'),
 
+    _Dcl_fun0 = node('Dcl_fun'),
+    _Dcl_fun1 = function (ln, dcl, blk)
+        dcl[#dcl+1] = blk
+        return dcl
+    end,
+
+    Return = node('Return'),
+
     RawStmt = node('RawStmt'),
     RawExp  = node('RawExp'),
 
@@ -558,12 +566,11 @@ C = {
     end,
     Dcl_constr = node('Dcl_constr'),
 
-    -- TODO: unify with _Dcl_var
     _Dcl_int = function (ln, pre, tp, ...)
         local ret = {}
         local t = { ... }
         for i=1, #t do
-            ret[#ret+1] = node('Dcl_int')(ln, pre, tp, false, t[i])
+            ret[#ret+1] = node('Dcl_int')(ln, pre, tp, t[i])
         end
         return unpack(ret)
     end,

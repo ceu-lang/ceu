@@ -13,6 +13,15 @@ _PROPS = {
     has_pses    = false,
 }
 
+local NO_fun = {
+    Finalize=true, Finally=true,
+    Host=true, Thread=true,
+    ParEver=true, ParOr=true, ParAnd=true,
+    AwaitS=true, AwaitExt=true, AwaitInt=true, AwaitN=true, AwaitT=true,
+    EmitInt=true, EmitExt=true,
+    Pause=true,
+}
+
 local NO_fin = {
     Finalize=true, Finally=true,
     Host=true, Escape=true, Async=true, Thread=true,
@@ -71,6 +80,10 @@ end
 
 F = {
     Node_pos = function (me)
+        if NO_fun[me.tag] then
+            ASR(not _AST.iter'Dcl_fun'(), me,
+                'not permitted inside `function´')
+        end
         if NO_fin[me.tag] then
             ASR(not _AST.iter'Finally'(), me,
                 'not permitted inside `finalize´')
@@ -171,6 +184,11 @@ F = {
         blk.has_escape = true
 
         NEEDS_CLR(blk)
+    end,
+
+    Return = function (me)
+        ASR(_AST.iter'Dcl_fun'(), me,
+                'not permitted outside a function')
     end,
 
     Dcl_cls = function (me)

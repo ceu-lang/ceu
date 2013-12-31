@@ -92,7 +92,7 @@ typedef struct {
         me.ifc_accs_impls  = {}
         if me.is_ifc then
             for _,var in ipairs(me.blk_ifc.vars) do
-                if not var.isEvt then   -- events cannot be accessed from C
+                if var.pre == 'var' then   -- events cannot be accessed from C
                     var.ifc_acc = '_CEU_'..me.id..'_'..var.id
                                -- '_' to distingish from method prototypes
                     me.ifc_accs_protos[#me.ifc_accs_protos+1] =
@@ -173,10 +173,10 @@ CEU_POOL_DCL(]]..node.pool..', CEU_'..node.cls.id..','..n..[[)
 
         for _, var in ipairs(me.vars) do
             local len
-            --if var.isTmp or var.isEvt then  --
+            --if var.isTmp or var.pre=='event' then  --
             if var.isTmp then --
                 len = 0
-            elseif var.isEvt then --
+            elseif var.pre == 'event' then --
                 len = 1   --
             elseif var.cls then
                 len = 10    -- TODO: no static types
@@ -205,7 +205,7 @@ CEU_POOL_DCL(]]..node.pool..', CEU_'..node.cls.id..','..n..[[)
         end
 
         for _, var in ipairs(sorted) do
-            if not var.isEvt then
+            if var.pre == 'var' then
                 local tp = _TP.c(var.tp)
                 local dcl = [[
 #line ]]..var.ln[2]..' "'..var.ln[1]..[["
