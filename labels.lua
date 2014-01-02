@@ -163,7 +163,7 @@ F = {
     end,
     AwaitExt = function (me)
         local e = unpack(me)
-        me.lbl = new{'Awake_'..e.evt.id}
+        me.lbl = new{'Awake_'..(e.evt or e.var.evt).id}
     end,
     AwaitInt = 'AwaitExt',
 

@@ -431,12 +431,13 @@ F = {
         -- changes TP from ast.lua
         if me.__ref then
             local ref = me.__ref
-            ASR(ref.evt, me,
+            local evt = ref.evt or ref.var.evt
+            ASR(evt, me,
                 'event "'..(ref.var and ref.var.id or '?')..'" is not declared')
             if me[2] == 'TP' then
-                me[2] = _TP.deref(ref.evt.tp)
+                me[2] = _TP.deref(evt.tp)
             else    --  'TP*'
-                me[2] = ref.evt.tp
+                me[2] = evt.tp
             end
         end
     end,
@@ -502,11 +503,6 @@ F = {
                     and var
         me.ref  = me
         me.fst  = var
-
-        if var.pre == 'event' then
--- TODO: remove
-            me.evt = var.evt
-        end
     end,
 
     Fun = function (me)
@@ -831,11 +827,6 @@ F = {
             me.lval = not (var.pre~='var' or var.cls or var.arr)
                         and var
             me.ref  = me[3]
-            if var.pre == 'event' then
--- TODO: remove
-                me.evt    = var.evt
-                me[3].evt = var.evt
-            end
         else
             ASR(_TP.ext(e1.tp,true), me, 'not a struct')
             local tup = _TP.isTuple(e1.tp)
