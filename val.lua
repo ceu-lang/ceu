@@ -213,7 +213,7 @@ F =
                 elseif me.var.pre == 'event' then
                     me.val = nil    -- cannot be used as variable
                     local org = '((tceu_org*)'..me.org.val..')'
-                    me.evt.idx = '(CEU.ifcs_evts['..org..'->cls]['
+                    me.ifc_idx = '(CEU.ifcs_evts['..org..'->cls]['
                                     .._ENV.ifcs.evts[me.var.ifc_id]
                                 ..'])'
                 else
@@ -227,7 +227,6 @@ F =
                 elseif me.var.pre == 'event' then
                     me.val = nil    -- cannot be used as variable
                     me.org.val = '&'..me.org.val -- always via reference
-                    me.evt.idx = me.var.evt.idx
                 end
             end
         else

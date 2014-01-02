@@ -819,6 +819,7 @@ F = {
         if cls then
             me.org = e1
 
+            -- me[3]: id => Var
             local var = ASR(cls.blk_ifc.vars[id], me,
                         'variable/event "'..id..'" is not declared')
             me[3] = _AST.node('Var')(me.ln, '$'..id)
@@ -831,6 +832,7 @@ F = {
                         and var
             me.ref  = me[3]
             if var.pre == 'event' then
+-- TODO: remove
                 me.evt    = var.evt
                 me[3].evt = var.evt
             end

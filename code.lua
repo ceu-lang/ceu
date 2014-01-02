@@ -908,7 +908,7 @@ _ceu_trl->stk = _ceu_stki++;                /* 2nd (stk) me */
 _ceu_trl->lbl = ]]..me.lbl_cnt.id..[[;
                                             /* 1st (stk+1) my lsts */
 /* TRIGGER EVENT */
-_ceu_evt  = ]]..int.var.evt.idx..[[;
+_ceu_evt  = ]]..(int.ifc_idx or int.evt.idx)..[[;
 #ifdef CEU_ORGS
 _ceu_evto = (tceu_org*) ]]..((int.org and int.org.val) or '_ceu_org')..[[;
 #endif
@@ -964,7 +964,7 @@ case ]]..me.lbl.id..[[:;
 
         LINE(me, [[
 ]]..no..[[:
-    _ceu_trl->evt = ]]..int.var.evt.idx..[[;
+    _ceu_trl->evt = ]]..(int.ifc_idx or int.evt.idx)..[[;
     _ceu_trl->lbl = ]]..me.lbl.id..[[;
 ]])
         HALT(me)

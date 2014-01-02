@@ -377,6 +377,7 @@ escape 1;
 }
 
 do return end
+--]===]
 
 -- OK: well tested
 
@@ -23906,7 +23907,6 @@ var I[10] a;
     env = 'line 3 : cannot instantiate an interface',
 }
 
---]===]
 Test { [[
 input void START;
 interface Global with
