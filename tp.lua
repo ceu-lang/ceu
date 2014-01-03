@@ -138,7 +138,8 @@ function _TP.contains (tp1, tp2, c)
     local tup2 = _TP.isTuple(tp2)
     if tup1 and tup2 and (#tp1 == #tp2) then
         for i=1, #tp1 do
-            if not _TP.contains(tp1[i], tp2[i]) then
+            -- [i][1]=type, [i][2]=id
+            if not _TP.contains(tp1[i][1], tp2[i][1]) then
                 return false
             end
         end

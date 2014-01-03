@@ -255,32 +255,39 @@ Test { [[
 function void f;
 escape 1;
 ]],
-    parser = 'ERR : tests.lua : line 1 : after `void´ : expected type',
+    parser = 'ERR : tests.lua : line 1 : after `void´ : expected `=>´',
 }
 
 Test { [[
-function void void f
+function void => void f
 escape 1;
 ]],
     parser = 'ERR : tests.lua : line 1 : after `f´ : expected `;´'
 }
 
 Test { [[
-function void void f;
+function void => void f;
 escape 1;
 ]],
     run = 1,
 }
 
 Test { [[
-function void (void) f;
+function void => (void) f;
+escape 1;
+]],
+    parser = 'line 1 : after `=>´ : expected type',
+}
+
+Test { [[
+function (void) => void f;
 escape 1;
 ]],
     run = 1,
 }
 
 Test { [[
-function void void f do
+function void => void f do
     event void i;
     emit i;
     await i;
@@ -291,7 +298,7 @@ escape 1;
 }
 
 Test { [[
-function void void f do
+function void => void f do
     var int a = 1;
 end
 escape 1;
@@ -300,7 +307,7 @@ escape 1;
 }
 
 Test { [[
-function void void f do
+function void => void f do
     return;
 end
 escape 1;
@@ -309,7 +316,7 @@ escape 1;
 }
 
 Test { [[
-function void void f do
+function void => void f do
     return 1;
 end
 escape 1;
@@ -335,7 +342,7 @@ escape 1;
 }
 
 Test { [[
-function int void f do
+function void=>int f do
     return 1;
 end
 escape f();
@@ -344,40 +351,51 @@ escape f();
 }
 
 Test { [[
-function int void f do
+function void=>int f do
     return 1;
 end
 escape call f();
 ]],
+    todo = 'call?',
     run = 1,
 }
 
 Test { [[
-function int void f;
-function int int  f;
+function void => int f;
+function int  => int f;
+escape 1;
+]],
+    env = 'line 2 : function declaration does not match with the one in "tests.lua:1"',
+}
+
+Test { [[
+function void => int f;
+function int  => int f do end
+escape 1;
+]],
+    env = 'line 2 : function declaration does not match with the one in "tests.lua:1"',
+}
+
+Test { [[
+function void => int f;
+function void => int f do end
 escape 1;
 ]],
     run = 1,
 }
 
 Test { [[
-function int void f;
-function int int  f do end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-function int void f;
-function int void f do end
+function int => (int,int) f;
+function int => (int,int) f do
+    return a + b;
+end
 escape 1;
 ]],
     run = 1,
 }
 
 do return end
---]===]
+
 
 -- OK: well tested
 
@@ -2417,28 +2435,6 @@ escape 1;
     run = 2,
 }
 
-Test { [[
-class T with
-    var int a;
-    native nohold _f();
-do
-    native do
-        int CEU_T__f (CEU_T *t) {
-            return t->b;
-        }
-    end
-
-    var int b;
-    a = 1;
-    b = 2;
-end
-
-var T t;
-escape t.a + t._f();
-]],
-    run = 3,
-}
-
 -- EVERY
 
 Test { [[
@@ -2518,6 +2514,7 @@ end
     ana = { isForever=true },
 }
 
+--]===]
 Test { [[
 input (int,int) A;
 par do
@@ -17224,96 +17221,6 @@ escape (int)a;
     run = 1,
 }
 
-Test { [[
-native pure _UI_align();
-class T with
-    var _SDL_rect rect;
-do
-    do
-        var _SDL_Rect r;
-        r.x = _UI_align(r.w, _UI_ALIGN_CENTER);
-    end
-end
-escape 1;
-]],
-    fin = 'line 7 : attribution requires `finalize´',
-}
-
-Test { [[
-native constant _UI_ALIGN_CENTER;
-native pure _UI_align();
-native do
-    typedef struct {
-        int x, w;
-    } SDL_Rect;
-    int UI_ALIGN_CENTER = 1;
-    int UI_align (int a, int b) {
-        escape 0;
-    }
-end
-class T with
-    var _SDL_Rect rect;
-do
-    do
-        var _SDL_Rect r;
-        r.x = _UI_align(r.w, _UI_ALIGN_CENTER);
-    end
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-native constant _UI_ALIGN_CENTER;
-native pure _UI_align();
-native do
-    typedef struct {
-        int x, w;
-    } SDL_Rect;
-    int UI_ALIGN_CENTER = 1;
-    int UI_align (int a, int b, int c) {
-        escape 0;
-    }
-end
-class T with
-    var _SDL_Rect rect;
-do
-    do
-        var _SDL_Rect r;
-        r.x = _UI_align(this.rect.w, r.w, _UI_ALIGN_CENTER);
-    end
-end
-escape 1;
-]],
-    fin = 'line 17 : attribution requires `finalize´',
-}
-
-Test { [[
-native constant _UI_ALIGN_CENTER;
-native pure _UI_align();
-native do
-    typedef struct {
-        int x, w;
-    } SDL_Rect;
-    int UI_ALIGN_CENTER = 1;
-    int UI_align (int a, int b, int c) {
-        escape 0;
-    }
-end
-class T with
-    var _SDL_Rect rect;
-do
-    do
-        var _SDL_Rect r;
-        r.x = (int) _UI_align(this.rect.w, r.w, _UI_ALIGN_CENTER);
-    end
-end
-escape 1;
-]],
-    run = 1,
-}
-
 -- Exps
 
 Test { [[var int a = ]],
@@ -17422,67 +17329,6 @@ end
 escape ret;
 ]],
     run = 10,
-}
-
-Test { [[
-#define N 5
-native do
-    int V = 0;
-end
-class T with
-do
-    _V = _V + 1;
-end
-var T[N] ts;
-escape _V;
-]],
-    run = 5,
-}
-
-Test { [[
-#define N 5
-native do
-    int V = 0;
-end
-class T with
-do
-    _V = _V + 1;
-end
-var T[N+1] ts;
-escape _V;
-]],
-    run = 6,
-}
-
-Test { [[
-#define N 5
-native do
-    int V = 0;
-end
-class T with
-do
-    _V = _V + 1;
-end
-var T[N+1] ts;
-escape _V;
-]],
-    run = 6,
-}
-
-Test { [[
-#define N 5
-native do
-    int V = 0;
-end
-class T with
-do
-    _V = _V + 1;
-end
-#error oi
-var T[N+1] ts;
-escape _V;
-]],
-    lines = 'error oi',
 }
 
 -- ASYNC
@@ -21490,6 +21336,179 @@ escape _V;
 ]],
     --loop = 1,
     run = { ['~>A']=10 },
+}
+
+Test { [[
+class T with
+    var int a;
+    native nohold _f();
+do
+    native do
+        int CEU_T__f (CEU_T *t) {
+            return t->b;
+        }
+    end
+
+    var int b;
+    a = 1;
+    b = 2;
+end
+
+var T t;
+escape t.a + t._f();
+]],
+    run = 3,
+}
+
+Test { [[
+native pure _UI_align();
+class T with
+    var _SDL_rect rect;
+do
+    do
+        var _SDL_Rect r;
+        r.x = _UI_align(r.w, _UI_ALIGN_CENTER);
+    end
+end
+escape 1;
+]],
+    fin = 'line 7 : attribution requires `finalize´',
+}
+
+Test { [[
+native constant _UI_ALIGN_CENTER;
+native pure _UI_align();
+native do
+    typedef struct {
+        int x, w;
+    } SDL_Rect;
+    int UI_ALIGN_CENTER = 1;
+    int UI_align (int a, int b) {
+        return 0;
+    }
+end
+class T with
+    var _SDL_Rect rect;
+do
+    do
+        var _SDL_Rect r;
+        r.x = _UI_align(r.w, _UI_ALIGN_CENTER);
+    end
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native constant _UI_ALIGN_CENTER;
+native pure _UI_align();
+native do
+    typedef struct {
+        int x, w;
+    } SDL_Rect;
+    int UI_ALIGN_CENTER = 1;
+    int UI_align (int a, int b, int c) {
+        escape 0;
+    }
+end
+class T with
+    var _SDL_Rect rect;
+do
+    do
+        var _SDL_Rect r;
+        r.x = _UI_align(this.rect.w, r.w, _UI_ALIGN_CENTER);
+    end
+end
+escape 1;
+]],
+    fin = 'line 17 : attribution requires `finalize´',
+}
+
+Test { [[
+native constant _UI_ALIGN_CENTER;
+native pure _UI_align();
+native do
+    typedef struct {
+        int x, w;
+    } SDL_Rect;
+    int UI_ALIGN_CENTER = 1;
+    int UI_align (int a, int b, int c) {
+        escape 0;
+    }
+end
+class T with
+    var _SDL_Rect rect;
+do
+    do
+        var _SDL_Rect r;
+        r.x = (int) _UI_align(this.rect.w, r.w, _UI_ALIGN_CENTER);
+    end
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+#define N 5
+native do
+    int V = 0;
+end
+class T with
+do
+    _V = _V + 1;
+end
+var T[N] ts;
+escape _V;
+]],
+    run = 5,
+}
+
+Test { [[
+#define N 5
+native do
+    int V = 0;
+end
+class T with
+do
+    _V = _V + 1;
+end
+var T[N+1] ts;
+escape _V;
+]],
+    run = 6,
+}
+
+Test { [[
+#define N 5
+native do
+    int V = 0;
+end
+class T with
+do
+    _V = _V + 1;
+end
+var T[N+1] ts;
+escape _V;
+]],
+    run = 6,
+}
+
+Test { [[
+#define N 5
+native do
+    int V = 0;
+end
+class T with
+do
+    _V = _V + 1;
+end
+#error oi
+var T[N+1] ts;
+escape _V;
+]],
+    lines = 'error oi',
 }
 
 -- CONSTRUCTOR

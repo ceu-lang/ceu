@@ -1,6 +1,7 @@
 _CODE = {
-    has_goto = false,   -- avoids "unused label"
-    threads = '',
+    has_goto  = false,   -- avoids "unused label"
+    threads   = '',
+    functions = '',
 }
 
 function CONC_ALL (me, t)
@@ -182,6 +183,19 @@ F = {
     BlockI_pos = function (me)
         me.code_ifc = me.code       -- see Dcl_cls
         me.code = ''                -- avoid this code
+    end,
+
+    Dcl_fun = function (me)
+        local _, ins, out, id, blk = unpack(me)
+        if not blk then
+            return
+        end
+        _CODE.functions = _CODE.functions .. [[
+]]..out..' '..me.var.val..' ('..ins..[[)
+{
+]]..blk.code..[[
+}
+]]
     end,
 
     Dcl_cls = function (me)

@@ -3,6 +3,12 @@ local function ceu2c (op)
     return _ceu2c[op] or op
 end
 
+--[[
+-- Fills nodes with "sval" and "cval".
+-- sval: static value
+-- cval: C value
+--]]
+
 F =
 {
     Dcl_var = function (me)
@@ -14,12 +20,12 @@ F =
     end,
 
     Op2_call = function (me)
-        local _, f, exps = unpack(me)
-        if f.org then
+        local _, f, ins = unpack(me)
+        if not f.cval then
             return
         end
         local ps = {}
-        for i, exp in ipairs(exps) do
+        for i, exp in ipairs(ins) do
             if not exp.cval then
                 return
             end

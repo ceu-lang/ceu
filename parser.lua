@@ -362,8 +362,11 @@ _GG = { [1] = CK'' * V'_Dcl_funs'^0 * V'Stmts' * P(-1)-- + EM'expected EOF')
 
     , _Dcl_funs = V'_Dcl_fun0' * (EK';'*K';'^0)
                 + V'_Dcl_fun1' * K';'^0
-    , _Dcl_fun0 = CK'function' * EV'ID_type'
-                               * (EV'ID_type'+EV'TupleType')
+    , _Dcl_fun0 = CK'function' * (EV'ID_type'+EV'TupleType')
+                               * EK'=>' * EV'ID_type'
+                               * V'ID_var'
+    , _Dcl_fun1 = CK'function' * (EV'ID_type'+EV'TupleType')
+                               * EK'=>' * EV'ID_type'
                                * V'ID_var'
     , _Dcl_fun1 = V'_Dcl_fun0' * V'_Do'
     , Return  = K'return' * EV'_Exp'^-1
@@ -398,7 +401,10 @@ _GG = { [1] = CK'' * V'_Dcl_funs'^0 * V'Stmts' * P(-1)-- + EM'expected EOF')
                     return (string.gsub(id..star,' ',''))
                   end
 
-    , TupleType = K'(' * EV'ID_type' * (EK','*EV'ID_type')^0 * EK')'
+    , TupleType = K'('
+                * Ct( EV'ID_type' * (EV'ID_var'+Cc(false)) )
+                * ( EK',' * Ct( EV'ID_type' * (EV'ID_var'+Cc(false)) ) )^0
+                * EK')'
 
     , STRING = CK( CK'"' * (P(1)-'"'-'\n')^0 * EK'"' )
 

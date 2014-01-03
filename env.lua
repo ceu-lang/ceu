@@ -21,6 +21,7 @@ _ENV = {
     },
 
     -- TODO: move to _TP
+    -- "len" is used to sort fields on generated "structs"
     c = {
         void = 0,
 
@@ -134,11 +135,12 @@ function newvar (me, blk, pre, tp, arr, id)
         end
     end
 
-    local tp_raw = _TP.noptr(tp)
-    local c = _ENV.c[tp_raw]
+    newtype(tp)
+    local tp_noptr = _TP.noptr(tp)
+    local c = _ENV.c[tp_noptr]
 
-    ASR(_ENV.clss[tp_raw] or c,
-        me, 'undeclared type `'..tp_raw..'´')
+    ASR(_ENV.clss[tp_noptr] or c,
+        me, 'undeclared type `'..tp_noptr..'´')
     ASR(not _ENV.clss_ifc[tp],
         me, 'cannot instantiate an interface')
     ASR(_TP.deref(tp) or (not c) or (tp=='void' and pre~='var') or c.len~=0,
@@ -181,6 +183,7 @@ function newvar (me, blk, pre, tp, arr, id)
 end
 
 function newint (me, blk, pre, tp, id)
+    newtype(tp)
     local var = newvar(me, blk, pre, 'void', false, id)
     local evt = {
         id  = id,
@@ -190,6 +193,25 @@ function newint (me, blk, pre, tp, id)
     }
     var.evt = evt
     _E = _E + 1
+    return var
+end
+
+function newfun (me, blk, pre, ins, out, id)
+    local old = blk.vars[id]
+    if old then
+        ASR(ins==old.fun.ins and out==old.fun.out,
+            me, 'function declaration does not match with the one in "'..
+                old.ln[1]..':'..old.ln[2]..'"')
+    end
+
+    local var = newvar(me, blk, pre, 'void', false, id)
+    local fun = {
+        id  = id,
+        ins = ins,
+        out = out,
+        pre = pre,
+    }
+    var.fun = fun
     return var
 end
 
@@ -389,18 +411,20 @@ F = {
     end,
 
     TupleType = function (me)
-        local tp = '_tceu'
+        local TP = '_tceu'
         for i, v in ipairs(me) do
-            --local tp_raw = _TP.noptr(v)
-            --local c = _ENV.c[tp_raw]
-            --ASR(c or _ENV.clss[tp_raw], me, 'undeclared type `'..tp_raw..'´')
+            local tp, id = unpack(v)
+            --local tp_noptr = _TP.noptr(v)
+            --local c = _ENV.c[tp_noptr]
+            --ASR(c or _ENV.clss[tp_noptr],
+                    --me, 'undeclared type `'..tp_noptr..'´')
             --me[i] = v
-            tp = tp .. '__'.._TP.c(v)
+            TP = TP .. '__'.._TP.c(tp)
         end
 
-        tp = string.gsub(tp, '*', '_')  -- TODO: '_' is not reliable
-        _ENV.c[tp] = { tag='type', id=tp, tuple=me, len=nil }
-        return tp
+        TP = string.gsub(TP, '*', '_')  -- TODO: '_' is not reliable
+        _ENV.c[TP] = { tag='type', id=TP, tuple=me, len=nil }
+        return TP
     end,
 
     Dcl_ext = function (me)
@@ -446,13 +470,11 @@ F = {
         local pre, tp, id = unpack(me)
         ASR(tp=='void' or tp=='int' or _TP.deref(tp) or _TP.isTuple(tp),
                 me, 'invalid event type')
-        newtype(tp)
         me.var = newint(me, _AST.iter'Block'(), pre, tp, id)
     end,
 
     Dcl_var = function (me)
         local pre, tp, arr, id, constr = unpack(me)
-        newtype(tp)
         me.var = newvar(me, _AST.iter'Block'(), pre, tp, arr, id)
         me.var.read_only = me.read_only
         if constr then
@@ -461,9 +483,9 @@ F = {
     end,
 
     Dcl_fun = function (me)
-        local ret, params, id, blk = unpack(me)
+        local pre, ins, out, id, blk = unpack(me)
         local cls = CLS()
-        me.var = newvar(me, _AST.iter'Block'(), pre, {tp1,tp2}, false, id)
+        me.var = newfun(me, _AST.iter'Block'(), pre, ins, out, id)
     end,
 
     Dcl_imp = function (me)
@@ -832,7 +854,8 @@ F = {
             local tup = _TP.isTuple(e1.tp)
             if tup then
                 local n = tonumber(string.match(id,'(%d+)'))
-                me.tp = tup[n] or 'void'
+                me.tp = tup[n][1] or 'void'
+                            -- [1]=tp, [2]=id
             else
                 me.tp = '_'
             end

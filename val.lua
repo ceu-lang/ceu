@@ -35,6 +35,8 @@ F =
                 else
                     var.val = CUR(me, var.id_)
                 end
+            elseif var.pre == 'function' then
+                var.val = 'CEU_'..cls.id..'_'..var.id
             end
         end
         if me.trl_orgs then

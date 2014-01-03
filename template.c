@@ -50,7 +50,7 @@ CEU_ATOMIC
     tceu_org
 
 === CLSS_DEFS
-    - main host
+    - host for main
     - clss
         - "typedef struct T T;"
         - methods prototypes:   <tp_r> CEU_T__f (<tp_ps>);
@@ -59,13 +59,19 @@ CEU_ATOMIC
         - struct
         - cstruct
         - host (+methods)
-    - main cls
+    - cls main
 
 === LABELS_ENUM
 
 tceu
 
 === IFCS_ACCS
+
+...     // TODO
+
+=== THREADS_C
+=== FUNCTIONS_C
+ceu_go
 */
 
 #include <string.h>
@@ -598,6 +604,8 @@ void* f (tceu_threads_p* p) {
  */
 === THREADS_C ===
 #endif
+
+=== FUNCTIONS_C ===
 
 void ceu_go (int _ceu_evt, tceu_evtp _ceu_evtp)
 {

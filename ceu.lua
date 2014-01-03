@@ -172,7 +172,8 @@ do
     tpl = sub(tpl, '=== CLSS_POOLS ===', _MEM.clss_pools)
     tpl = sub(tpl, '=== IFCS_ACCS ===',  _MEM.ifcs_accs)
 
-    tpl = sub(tpl, '=== THREADS_C ===', _CODE.threads)
+    tpl = sub(tpl, '=== THREADS_C ===',   _CODE.threads)
+    tpl = sub(tpl, '=== FUNCTIONS_C ===', _CODE.functions)
     --tpl = sub(tpl, '=== HOST ===',     _CODE.host)
     tpl = sub(tpl, '=== CODE ===',     _AST.root.code)
 
@@ -294,7 +295,8 @@ do
         for _,c in pairs(_ENV.c) do
             if c.tuple then
                 str = str .. 'typedef struct {\n'
-                for i, tp in ipairs(c.tuple) do
+                for i, v in ipairs(c.tuple) do
+                    local tp,_ = unpack(v)
                     if _ENV.clss[_TP.noptr(tp)] then
                         -- T* => void*
                         -- T** => void**
