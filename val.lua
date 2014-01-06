@@ -31,6 +31,7 @@ F =
         for _, var in ipairs(me.vars) do
             if var.pre == 'var' then
                 if var.isTmp then
+DBG(var.id)
                     var.val = '__ceu_'..var.id..'_'..var.n
                 else
                     var.val = CUR(me, var.id_)

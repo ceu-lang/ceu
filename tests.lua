@@ -252,31 +252,17 @@ escape _V;
 -- FUNCTIONS
 
 Test { [[
-function void f;
+function (void) f;
 escape 1;
 ]],
-    parser = 'ERR : tests.lua : line 1 : after `void´ : expected `=>´',
+    parser = 'ERR : tests.lua : line 1 : after `)´ : expected `=>´',
 }
 
 Test { [[
-function void => void f
+function (void) => void f
 escape 1;
 ]],
     parser = 'ERR : tests.lua : line 1 : after `f´ : expected `;´'
-}
-
-Test { [[
-function void => void f;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-function void => (void) f;
-escape 1;
-]],
-    parser = 'line 1 : after `=>´ : expected type',
 }
 
 Test { [[
@@ -287,7 +273,30 @@ escape 1;
 }
 
 Test { [[
-function void => void f do
+function void => (void) f;
+escape 1;
+]],
+    parser = 'line 1 : after `function´ : expected type list',
+}
+
+Test { [[
+function (void) => void f;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+function (int) => void f do
+    return 1;
+end
+escape 1;
+]],
+    env = 'line 1 : missing parameter identifier',
+}
+
+Test { [[
+function (void) => void f do
     event void i;
     emit i;
     await i;
@@ -298,7 +307,7 @@ escape 1;
 }
 
 Test { [[
-function void => void f do
+function (void) => void f do
     var int a = 1;
 end
 escape 1;
@@ -307,7 +316,7 @@ escape 1;
 }
 
 Test { [[
-function void => void f do
+function (void) => void f do
     return;
 end
 escape 1;
@@ -316,7 +325,7 @@ escape 1;
 }
 
 Test { [[
-function void => void f do
+function (void) => void f do
     return 1;
 end
 escape 1;
@@ -342,7 +351,7 @@ escape 1;
 }
 
 Test { [[
-function void=>int f do
+function (void)=>int f do
     return 1;
 end
 escape f();
@@ -351,7 +360,7 @@ escape f();
 }
 
 Test { [[
-function void=>int f do
+function (void)=>int f do
     return 1;
 end
 escape call f();
@@ -361,32 +370,47 @@ escape call f();
 }
 
 Test { [[
-function void => int f;
-function int  => int f;
+function (void) => int f;
+function (int)  => int f;
 escape 1;
 ]],
-    env = 'line 2 : function declaration does not match with the one in "tests.lua:1"',
+    env = 'line 2 : function declaration does not match the one at "tests.lua:1"',
 }
 
 Test { [[
-function void => int f;
-function int  => int f do end
+function (void) => int f;
+function (int)  => int f do end
 escape 1;
 ]],
-    env = 'line 2 : function declaration does not match with the one in "tests.lua:1"',
+    env = 'line 2 : function declaration does not match the one at "tests.lua:1"',
 }
 
 Test { [[
-function void => int f;
-function void => int f do end
+function (void) => int f;
+function (void) => int f do end
 escape 1;
 ]],
     run = 1,
 }
 
 Test { [[
-function int => (int,int) f;
-function int => (int,int) f do
+function (void,int) => int f;
+escape 1;
+]],
+    env = 'line 1 : invalid declaration',
+}
+
+Test { [[
+function (int) => void f;
+escape 1;
+]],
+    run = 1,
+}
+
+--]===]
+Test { [[
+function (int,int) => int f;
+function (int a, int b) => int f do
     return a + b;
 end
 escape 1;
@@ -394,8 +418,17 @@ escape 1;
     run = 1,
 }
 
-do return end
+Test { [[
+function (int,int) => int f;
+function (int a, int b) => int f do
+    return a + b;
+end
+escape f(1,2);
+]],
+    run = 3,
+}
 
+do return end
 
 -- OK: well tested
 
@@ -2514,7 +2547,6 @@ end
     ana = { isForever=true },
 }
 
---]===]
 Test { [[
 input (int,int) A;
 par do

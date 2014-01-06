@@ -11,7 +11,7 @@ F = {
             return                  -- only normal vars can be tmp
         end
         VARS[var] = true
-        var.isTmp = true          -- TODO: always "false" by now
+        var.isTmp = true
     end,
 
     Var = function (me)
@@ -19,6 +19,11 @@ F = {
 
         if _AST.iter'Thread'() then
             return                  -- all threads vars are "tmp"
+        end
+
+        if _AST.iter'Dcl_fun'() then
+DBG('var', var.id, var.isTmp)
+            return                  -- all function vars are "tmp"
         end
 
         if var.pre~='var' or var.cls then

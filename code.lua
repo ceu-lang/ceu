@@ -190,12 +190,25 @@ F = {
         if not blk then
             return
         end
+
+        -- input parameters
+        local _ins = {}
+        for _, v in ipairs(ins) do
+            local tp, id = unpack(v)
+            _ins[#_ins+1] = _TP.c(tp)..' '..(id or '')
+        end
+        _ins = table.concat(_ins, ', ')
+
         _CODE.functions = _CODE.functions .. [[
-]]..out..' '..me.var.val..' ('..ins..[[)
+]]..out..' '..V(me.var)..' ('.._ins..[[)
 {
 ]]..blk.code..[[
 }
 ]]
+    end,
+    Return = function (me)
+        local exp = unpack(me)
+        LINE(me, 'return '..(exp and V(exp) or '')..';')
     end,
 
     Dcl_cls = function (me)

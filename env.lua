@@ -199,8 +199,8 @@ end
 function newfun (me, blk, pre, ins, out, id)
     local old = blk.vars[id]
     if old then
-        ASR(ins==old.fun.ins and out==old.fun.out,
-            me, 'function declaration does not match with the one in "'..
+        ASR(ins.tp==old.fun.ins.tp and out==old.fun.out,
+            me, 'function declaration does not match the one at "'..
                 old.ln[1]..':'..old.ln[2]..'"')
     end
 
@@ -309,6 +309,18 @@ F = {
                     local var = n.var
                     ASR(not var.arr, vars, 'invalid argument')
                     n.new = newvar(vars, blk, 'var', var.tp, nil, var.id)
+                end
+            end
+        end
+
+        -- include arguments into function block
+        local fun = _AST.iter()()
+        if fun.tag == 'Dcl_fun' then
+            for _, v in ipairs(fun[2]) do
+                local tp, id = unpack(v)
+                if tp ~= 'void' then
+                    local var = newvar(me, me, 'var', tp, false, id)
+                    var.isTmp = true
                 end
             end
         end
@@ -424,7 +436,7 @@ F = {
 
         TP = string.gsub(TP, '*', '_')  -- TODO: '_' is not reliable
         _ENV.c[TP] = { tag='type', id=TP, tuple=me, len=nil }
-        return TP
+        me.tp = TP
     end,
 
     Dcl_ext = function (me)
@@ -486,6 +498,22 @@ F = {
         local pre, ins, out, id, blk = unpack(me)
         local cls = CLS()
         me.var = newfun(me, _AST.iter'Block'(), pre, ins, out, id)
+
+        -- "void" as parameter only if single
+        if #ins > 1 then
+            for _, v in ipairs(ins) do
+                ASR(v[1] ~= 'void', me, 'invalid declaration')
+            end
+        end
+
+        if not blk then
+            return
+        end
+
+        -- full definitions must contain parameter ids
+        for _, v in ipairs(ins) do
+            ASR(v[1]=='void' or v[2], me, 'missing parameter identifier')
+        end
     end,
 
     Dcl_imp = function (me)
@@ -854,8 +882,8 @@ F = {
             local tup = _TP.isTuple(e1.tp)
             if tup then
                 local n = tonumber(string.match(id,'(%d+)'))
-                me.tp = tup[n][1] or 'void'
-                            -- [1]=tp, [2]=id
+                me.tp = tup[n] and tup[n][1] or 'void'
+                                    -- [1]=tp, [2]=id
             else
                 me.tp = '_'
             end

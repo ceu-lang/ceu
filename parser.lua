@@ -54,6 +54,7 @@ local _V2NAME = {
     _Dcl_int = 'declaration',
     __Dcl_nat  = 'declaration',
     _Dcl_nat   = 'declaration',
+    TupleType = 'type list',
 }
 local EV = function (rule)
     return V(rule) + m.Cmt(P'',
@@ -113,7 +114,7 @@ local alphanum = m.R'az' + '_' + m.R'09'
 
 NUM = CK(m.R'09'^1) / tonumber
 
-_GG = { [1] = CK'' * V'_Dcl_funs'^0 * V'Stmts' * P(-1)-- + EM'expected EOF')
+_GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
 
                 -- "Ct" as a special case to avoid "too many captures" (HACK_1)
     , Stmts  = Ct (( V'_StmtS' * (EK';'*K';'^0) +
@@ -140,6 +141,7 @@ _GG = { [1] = CK'' * V'_Dcl_funs'^0 * V'Stmts' * P(-1)-- + EM'expected EOF')
              + V'Nothing'
              + V'RawStmt'
              --+ V'Import'
+             + V'_Dcl_fun0'
              + V'CallStmt' -- last
              --+ EM'statement'-- (missing `_´?)'
              + EM'statement (usually a missing `var´ or C prefix `_´)'
@@ -151,6 +153,7 @@ _GG = { [1] = CK'' * V'_Dcl_funs'^0 * V'Stmts' * P(-1)-- + EM'expected EOF')
              + V'Pause'
              + V'Dcl_ifc' + V'Dcl_cls'
              + V'Finalize'
+             + V'_Dcl_fun1'
 
     , _LstStmt  = V'_Escape' + V'Break' + V'_Continue' + V'AwaitN' + V'Return'
     , _LstStmtB = V'ParEver' + V'_Continue'
@@ -360,13 +363,7 @@ _GG = { [1] = CK'' * V'_Dcl_funs'^0 * V'Stmts' * P(-1)-- + EM'expected EOF')
 
     , _Dcl_imp = K'interface' * EV'ID_cls' * (K',' * EV'ID_cls')^0
 
-    , _Dcl_funs = V'_Dcl_fun0' * (EK';'*K';'^0)
-                + V'_Dcl_fun1' * K';'^0
-    , _Dcl_fun0 = CK'function' * (EV'ID_type'+EV'TupleType')
-                               * EK'=>' * EV'ID_type'
-                               * V'ID_var'
-    , _Dcl_fun1 = CK'function' * (EV'ID_type'+EV'TupleType')
-                               * EK'=>' * EV'ID_type'
+    , _Dcl_fun0 = CK'function' * EV'TupleType' * EK'=>' * EV'ID_type'
                                * V'ID_var'
     , _Dcl_fun1 = V'_Dcl_fun0' * V'_Do'
     , Return  = K'return' * EV'_Exp'^-1
