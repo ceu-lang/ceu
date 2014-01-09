@@ -249,507 +249,8 @@ escape _V;
     run = 100,
 }
 
--- FUNCTIONS
---]===]
-
-Test { [[
-function (void) f;
-escape 1;
-]],
-    parser = 'ERR : tests.lua : line 1 : after `)´ : expected `=>´',
-}
-
-Test { [[
-function (void) => void f
-escape 1;
-]],
-    parser = 'ERR : tests.lua : line 1 : after `f´ : expected `;´'
-}
-
-Test { [[
-function (void) => void f;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-function void => (void) f;
-escape 1;
-]],
-    parser = 'line 1 : after `function´ : expected type list',
-}
-
-Test { [[
-function (void) => void f;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-function (int) => void f do
-    return 1;
-end
-escape 1;
-]],
-    env = 'line 1 : missing parameter identifier',
-}
-
-Test { [[
-function (void) => void f do
-    event void i;
-    emit i;
-    await i;
-end
-escape 1;
-]],
-    props = 'ERR : tests.lua : line 3 : not permitted inside `function´',
-}
-
-Test { [[
-function (void) => void f do
-    var int a = 1;
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-function (void) => void f do
-    return;
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-function (void) => void f do
-    return 1;
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-do
-    return 1;
-end
-escape 1;
-]],
-    props = 'ERR : tests.lua : line 2 : not permitted outside a function',
-}
-
-Test { [[
-event int a;
-a = 1;
-escape 1;
-]],
-    env = 'invalid attribution',
-}
-
-Test { [[
-function (void)=>int f do
-    return 1;
-end
-escape f();
-]],
-    run = 1,
-}
-
-Test { [[
-function (void)=>int f do
-    return 1;
-end
-escape call f();
-]],
-    todo = 'call?',
-    run = 1,
-}
-
-Test { [[
-function (void) => int f;
-function (int)  => int f;
-escape 1;
-]],
-    env = 'line 2 : function declaration does not match the one at "tests.lua:1"',
-}
-
-Test { [[
-function (void) => int f;
-function (int)  => int f do end
-escape 1;
-]],
-    env = 'line 2 : function declaration does not match the one at "tests.lua:1"',
-}
-
-Test { [[
-function (void) => int f;
-function (void) => int f do end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-function (void,int) => int f;
-escape 1;
-]],
-    env = 'line 1 : invalid declaration',
-}
-
-Test { [[
-function (int) => void f;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-function (int,int) => int f;
-function (int a, int b) => int f do
-    return a + b;
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-function (int,int) => int f;
-function (int a, int b) => int f do
-    return a + b;
-end
-escape f(1,2);
-]],
-    run = 3,
-}
-
--- METHODS
-
-Test { [[
-native do
-    int V = 0;
-end
-class T with
-do
-    var int x;
-    this.x = 10;
-    _V = this.x;
-end
-var T t;
-escape _V;
-]],
-    run = 10,
-}
-
-Test { [[
-native do
-    int V = 0;
-end
-class T with
-do
-    function (int a, int b)=>int f do
-        return a + b;
-    end
-    _V = _V + f(1,2) + this.f(3,4);
-end
-var T[2] ts;
-escape _V;
-]],
-    run = 20,
-}
-
-Test { [[
-native do
-    int V = 0;
-end
-class T with
-do
-    var int v;
-    function (int a, int b)=>void f do
-        this.v = this.v + a + b;
-    end
-    f(1,2);
-    this.f(3,4);
-    _V = _V + v;
-end
-var T[2] ts;
-escape _V;
-]],
-    run = 20,
-}
-
-Test { [[
-class T with
-    var int a;
-    function (void)=>int f;
-do
-    var int b;
-    function (void)=>int f do
-        return this.b;
-    end
-    a = 1;
-    b = 2;
-end
-
-var T t;
-escape t.a + t.f();
-]],
-    run = 3,
-}
-Test { [[
-class T with
-    var int a;
-    function (void)=>int f do
-        return this.b;
-    end
-do
-    var int b;
-    a = 1;
-    b = 2;
-end
-
-var T t;
-escape t.a + t.f();
-]],
-    parser = 'line 3 : after `f´ : expected `;´',
-}
-
-Test { [[
-interface I with
-    var int v;
-    function (void)=>void f;
-end
-escape 10;
-]],
-    run = 10,
-}
-
-Test { [[
-class T with
-    var int v;
-    function (int)=>void f;
-do
-    v = 50;
-    this.f(10);
-
-    function (int v)=>int f do
-        this.v = this.v + v;
-        return this.v;
-    end
-end
-
-var T t;
-input void START;
-await START;
-escape t.v + t.f(20) + t.v;
-]],
-    env = 'line 8 : function declaration does not match the one at "tests.lua:3"',
-}
-
-Test { [[
-class T with
-    var int v;
-    function (int)=>int f;
-do
-    v = 50;
-    this.f(10);
-
-    function (int v)=>int f do
-        this.v = this.v + v;
-        return this.v;
-    end
-end
-
-var T t;
-input void START;
-await START;
-escape t.v + t.f(20) + t.v;
-]],
-    run = 220,
-}
-
-Test { [[
-interface I with
-    var int v;
-    function (int)=>void f;
-end
-
-class T with
-    var int v;
-    function (int)=>void f;
-do
-    v = 50;
-    this.f(10);
-
-    function (int v)=>void f do
-        this.v = this.v + v;
-    end
-end
-
-var T t;
-var I* i = &t;
-input void START;
-await START;
-i:f(100);
-escape i:v;
-]],
-    run = 160,
-}
-
-Test { [[
-interface I with
-    var int v;
-    function (int)=>void f;
-end
-
-class T with
-    interface I;
-do
-    v = 50;
-    this.f(10);
-
-    function (int a)=>void f do
-        v = v + a;
-    end
-end
-
-var T t;
-var I* i = &t;
-input void START;
-await START;
-i:f(100);
-escape i:v;
-]],
-    run = 160,
-}
-
-Test { [[
-interface I with
-    var int v;
-    function (void)=>int get;
-    function (int)=>void set;
-end
-
-class T with
-    interface I;
-    var int v = 50;
-do
-    function (void)=>int get do
-        return v;
-    end
-    function (int v)=>void set do
-        this.v= v;
-    end
-end
-
-var T t;
-var I* i = &t;
-var int v = i:v;
-i:set(100);
-escape v + i:get();
-]],
-    run = 150,
-}
-
-Test { [[
-interface I with
-    var int v;
-    function (int)=>void f;
-end
-
-class T with
-    interface I;
-do
-    v = 50;
-    this.f(10);
-
-    function (int v)=>void f do
-        this.v = this.v + v;
-    end
-end
-
-class U with
-    interface I;
-do
-    v = 50;
-    this.f(10);
-
-    function (int v)=>void f do
-        this.v = this.v + 2*v;
-    end
-end
-
-var T t;
-var U u;
-var I* i = &t;
-input void START;
-await START;
-i:f(100);
-var int ret = i:v;
-
-i=&u;
-i:f(200);
-
-escape ret + i:v;
-]],
-    run = 630,
-}
-
-Test { [[
-interface I with
-    function (void)=>int f;
-    function (void)=>int f1;
-end
-
-class T with
-    interface I;
-do
-    function (void)=>int f do
-        return this.f1();
-    end
-    function (void)=>int f1 do
-        return 1;
-    end
-end
-
-var T t;
-var I* i = &t;
-escape t.f() + i:f();
-]],
-    run = 2,
-}
-
-Test { [[
-interface I with
-    function (int)=>int g;
-end
-
-class T with
-    interface I;
-    var I* i;
-do
-    function (int v)=>int g do
-        if (v == 1) then
-            return 1;
-        end
-        return v * i:g(v-1);
-    end
-end
-
-var T t;
-var I* i = &t;
-t.i = i;
-escape i:g(5);
-]],
-    run = 120,
-}
-
 do return end
+--]===]
 
 -- OK: well tested
 
@@ -18592,12 +18093,23 @@ escape a.v;
 Test { [[
 class T with
     var int v;
-    native _f(), _t=10;   // TODO: refuse _t
+    native _f();
 do
 end
 escape 10;
 ]],
-    env = 'line 3 : only methods are allowed',
+    parser = 'line 2 : after `;´ : expected declaration',
+}
+
+Test { [[
+class T with
+    var int v;
+    native _t;
+do
+end
+escape 10;
+]],
+    parser = 'line 2 : after `;´ : expected declaration',
 }
 
 Test { [[
@@ -18827,7 +18339,7 @@ class T with
 do
 end
 ]],
-    parser = 'line 3 : before `;´ : expected identifier',
+    parser = 'line 3 : after `;´ : expected declaration',
 }
 
 Test { [[
@@ -20279,37 +19791,6 @@ escape 10;
 }
 
 Test { [[
-native do
-    typedef int (*f_t) (int v);
-end
-
-class T with
-    var int ret1, ret2;
-    native nohold _f1();
-    var _f_t f2;
-do
-    native do
-        int CEU_T__f1 (CEU_T* t, int v) {
-            return v;
-        }
-        int f2 (int v) {
-            return v;
-        }
-    end
-
-    ret1 = this._f1(1);
-    ret2 = this.f2(2);
-end
-
-var T t with
-    this.f2 = _f2;
-end;
-escape t.ret1 + t.ret2;
-]],
-    run = 3,
-}
-
-Test { [[
 native _assert();
 input int  BUTTON;
 input void F;
@@ -21689,28 +21170,6 @@ escape _V;
 ]],
     --loop = 1,
     run = { ['~>A']=10 },
-}
-
-Test { [[
-class T with
-    var int a;
-    native nohold _f();
-do
-    native do
-        int CEU_T__f (CEU_T *t) {
-            return t->b;
-        }
-    end
-
-    var int b;
-    a = 1;
-    b = 2;
-end
-
-var T t;
-escape t.a + t._f();
-]],
-    run = 3,
 }
 
 Test { [[
@@ -24425,251 +23884,6 @@ escape t.aa;
     run = 10,
 }
 
--- NATIVE METHODS
-
-Test { [[
-interface I with
-    var int v;
-    native _f(), _a;      // TODO: refuse _a
-end
-escape 10;
-]],
-    env = 'line 3 : only methods are allowed',
-    --run = 10,
-}
-
-Test { [[
-class T with
-    var int v;
-    native nohold _f();
-do
-    v = 50;
-    this._f(10);
-
-    native do
-        int CEU_T__f (CEU_T* t, int v) {
-            t->v += v;
-            return t->v;
-        }
-    end
-end
-
-var T t;
-input void START;
-await START;
-escape t.v + t._f(20) + t.v;
-]],
-    run = 220,
-}
-
-Test { [[
-interface I with
-    var int v;
-    native nohold _f();     // 1st parameter = I*
-end
-
-class T with
-    var int v;
-    native nohold _f();     // 1st parameter = T*
-do
-    v = 50;
-    this._f(10);
-
-    native do
-        void CEU_T__f (CEU_T* t, int v) {
-            t->v += v;
-        }
-    end
-end
-
-var T t;
-var I* i = &t;
-input void START;
-await START;
-i:_f(100);
-escape i:v;
-]],
-    env = 'line 21 : invalid attribution (I* vs T*)',
-}
-
-Test { [[
-interface I with
-    var int v;
-    native nohold _f();
-    native do
-        void CEU_I__f (CEU_I* i, int v);
-    end
-end
-
-class T with
-    interface I;
-do
-    v = 50;
-    this._f(10);
-
-    native do
-        void CEU_T__f (CEU_T* t, int v) {
-            t->v += v;
-        }
-    end
-end
-
-var T t;
-var I* i = &t;
-input void START;
-await START;
-i:_f(100);
-escape i:v;
-]],
-    run = 160,
-}
-
-Test { [[
-interface I with
-    var int v;
-    native nohold _get();
-    native nohold _set();
-    native do
-        int CEU_I__get (CEU_I* t);
-        void CEU_I__set (CEU_I* t, int v);
-    end
-end
-
-class T with
-    interface I;
-    var int v = 50;
-do
-    native do
-        int CEU_T__get (CEU_T* t) {
-            return t->v;
-        }
-        void CEU_T__set (CEU_T* t, int v) {
-            t->v= v;
-        }
-    end
-end
-
-var T t;
-var I* i = &t;
-var int v = i:v;
-i:_set(100);
-escape v + i:_get();
-]],
-    run = 150,
-}
-
-Test { [[
-interface I with
-    var int v;
-    native nohold _f();
-    native do
-        void CEU_I__f (CEU_I* i, int v);
-    end
-end
-
-class T with
-    interface I;
-do
-    v = 50;
-    this._f(10);
-
-    native do
-        void CEU_T__f (CEU_T* t, int v) {
-            t->v += v;
-        }
-    end
-end
-
-class U with
-    interface I;
-do
-    v = 50;
-    this._f(10);
-
-    native do
-        void CEU_U__f (CEU_U* t, int v) {
-            t->v += 2*v;
-        }
-    end
-end
-
-var T t;
-var U u;
-var I* i = &t;
-input void START;
-await START;
-i:_f(100);
-var int ret = i:v;
-
-i=&u;
-i:_f(200);
-
-escape ret + i:v;
-]],
-    run = 630,
-}
-
-Test { [[
-interface I with
-    native nohold _f();
-    native nohold _f1();
-end
-    native do
-        int CEU_I__f  (void* this);
-        int CEU_I__f1 (void* this);
-    end
-
-class T with
-    interface I;
-do
-    native do
-        int CEU_T__f (CEU_I* t) {
-            return ((CEU_T*)t)->_f1(t);
-        }
-        int CEU_T__f1 (CEU_I* t) {
-            return 1;
-        }
-    end
-end
-
-var T t;
-var I* i = &t;
-escape t._f() + i:_f();
-]],
-    run = 2,
-}
-
-Test { [[
-interface I with
-    native nohold _g();
-    native do
-        int CEU_I__g (CEU_I* i, int v);
-    end
-end
-
-class T with
-    interface I;
-    var I* i;
-do
-    native do
-        int CEU_T__g (CEU_T* t, int v) {
-            if (v == 1) {
-                return 1;
-            }
-            /*return v * t->i->_g(t->i, v-1);*/
-            return v * (*_CEU_I__g(t->i))(t->i, v-1);
-        }
-    end
-end
-
-var T t;
-var I* i = &t;
-t.i = i;
-escape i:_g(5);
-]],
-    run = 120,
-}
-
 Test { [[
 class T with
     var int a;
@@ -25068,127 +24282,6 @@ escape i:_ins();
     --env = 'line 13 : native function "CEU_I__ins" is not declared',
     env = 'line 13 : variable/event "_ins" is not declared',
 }
-Test { [[
-interface I with
-    var int v;
-    native nohold _ins();
-end
-
-class T with
-    var int v;
-do
-end
-
-var T t;
-    t.v = 10;
-var I* i = &t;
-escape i:_ins() + t._ins();;
-]],
-    --env = 'line 14 : native function "CEU_T__ins" is not declared',
-    env = 'line 13 : invalid attribution (I* vs T*)',
-}
-
-Test { [[
-interface I with
-    var int v;
-    native nohold _ins();
-    native do
-        int CEU_I__ins (CEU_I* i);
-    end
-end
-
-class T with
-    interface I;
-    //var int v;
-    //native nohold _ins();
-do
-native do
-    int CEU_T__ins (CEU_T* t) {
-        return t->v;
-    }
-end
-end
-
-var T t;
-    t.v = 10;
-var I* i = &t;
-escape i:_ins() + t._ins();
-]],
-    run = 20,
-}
-
-Test { [[
-interface F with
-    native nohold _f();
-    var int i=10;
-end
-]],
-    env = 'line 3 : invalid attribution',
-}
-
-Test { [[
-interface F with
-    var int i;
-    native nohold _f();
-    native do
-        void CEU_F__f (CEU_F* f, int i);
-    end
-end
-
-class T with
-    var int i=10;   // 1
-    interface F;
-do
-    this._f(1);
-native do
-    void CEU_T__f (CEU_T* t, int i) {
-        t->i += i;
-    }
-end
-end
-
-var T t1;
-
-var F* f = &t1;
-f:_f(3);
-
-escape t1.i + f:i;
-]],
-    run = 28,
-}
-
-Test { [[
-interface F with
-    native nohold _f();
-    var int i;
-    native do
-        void CEU_F__f (CEU_F* f, int i);
-    end
-end
-
-class T with
-    interface F;
-    var int i=10;   // 2
-do
-    this._f(1);
-native do
-    void CEU_T__f (CEU_T* t, int i) {
-        t->i += i;
-    }
-end
-
-end
-
-var T t1;
-
-var F* f = &t1;
-f:_f(3);
-
-escape t1.i + f:i;
-]],
-    run = 28,
-}
-
 Test { [[
 class T with do end
 class U with
@@ -25590,6 +24683,689 @@ end
 escape 10;
 ]],
     run = 10;
+}
+
+-- FUNCTIONS
+
+Test { [[
+function (void) f;
+escape 1;
+]],
+    parser = 'ERR : tests.lua : line 1 : after `)´ : expected `=>´',
+}
+
+Test { [[
+function (void) => void f
+escape 1;
+]],
+    parser = 'ERR : tests.lua : line 1 : after `f´ : expected `;´'
+}
+
+Test { [[
+function (void) => void f;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+function void => (void) f;
+escape 1;
+]],
+    parser = 'line 1 : after `function´ : expected type list',
+}
+
+Test { [[
+function (void) => void f;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+function (int) => void f do
+    return 1;
+end
+escape 1;
+]],
+    env = 'line 1 : missing parameter identifier',
+}
+
+Test { [[
+function (void) => void f do
+    event void i;
+    emit i;
+    await i;
+end
+escape 1;
+]],
+    props = 'ERR : tests.lua : line 3 : not permitted inside `function´',
+}
+
+Test { [[
+function (void) => void f do
+    var int a = 1;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+function (void) => void f do
+    return;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+function (void) => void f do
+    return 1;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+do
+    return 1;
+end
+escape 1;
+]],
+    props = 'ERR : tests.lua : line 2 : not permitted outside a function',
+}
+
+Test { [[
+event int a;
+a = 1;
+escape 1;
+]],
+    env = 'invalid attribution',
+}
+
+Test { [[
+function (void)=>int f do
+    return 1;
+end
+escape f();
+]],
+    run = 1,
+}
+
+Test { [[
+function (void)=>int f do
+    return 1;
+end
+escape call f();
+]],
+    todo = 'call?',
+    run = 1,
+}
+
+Test { [[
+function (void) => int f;
+function (int)  => int f;
+escape 1;
+]],
+    env = 'line 2 : function declaration does not match the one at "tests.lua:1"',
+}
+
+Test { [[
+function (void) => int f;
+function (int)  => int f do end
+escape 1;
+]],
+    env = 'line 2 : function declaration does not match the one at "tests.lua:1"',
+}
+
+Test { [[
+function (void) => int f;
+function (void) => int f do end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+function (void,int) => int f;
+escape 1;
+]],
+    env = 'line 1 : invalid declaration',
+}
+
+Test { [[
+function (int) => void f;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+function (int,int) => int f;
+function (int a, int b) => int f do
+    return a + b;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+function (int,int) => int f;
+function (int a, int b) => int f do
+    return a + b;
+end
+escape f(1,2);
+]],
+    run = 3,
+}
+
+-- METHODS
+
+Test { [[
+class T with
+    var int a;
+    function (void)=>int f;
+do
+    var int b;
+    function (void)=>int f do
+        return b;
+    end
+    a = 1;
+    b = 2;
+end
+
+var T t;
+escape t.a + t.f();
+]],
+    run = 3,
+}
+
+Test { [[
+interface I with
+    var int v;
+    native _f(), _a;      // TODO: refuse _a
+end
+escape 10;
+]],
+    parser = 'line 2 : after `;´ : expected declaration',
+    --run = 10,
+}
+
+Test { [[
+native do
+    int V = 0;
+end
+class T with
+do
+    var int x;
+    this.x = 10;
+    _V = this.x;
+end
+var T t;
+escape _V;
+]],
+    run = 10,
+}
+
+Test { [[
+native do
+    int V = 0;
+end
+class T with
+    function (int a, int b)=>int f do
+        return a + b;
+    end
+do
+    _V = _V + f(1,2) + this.f(3,4);
+end
+var T[2] ts;
+escape _V;
+]],
+    parser = 'line 5 : after `f´ : expected `;´',
+}
+
+Test { [[
+native do
+    int V = 0;
+end
+class T with
+do
+    function (int a, int b)=>int f do
+        return a + b;
+    end
+    _V = _V + f(1,2) + this.f(3,4);
+end
+var T[2] ts;
+escape _V;
+]],
+    run = 20,
+}
+
+Test { [[
+native do
+    int V = 0;
+end
+class T with
+do
+    var int v;
+    function (int a, int b)=>void f do
+        this.v = this.v + a + b;
+    end
+    f(1,2);
+    this.f(3,4);
+    _V = _V + v;
+end
+var T[2] ts;
+escape _V;
+]],
+    run = 20,
+}
+
+Test { [[
+class T with
+    var int a;
+    function (void)=>int f;
+do
+    var int b;
+    function (void)=>int f do
+        return this.b;
+    end
+    a = 1;
+    b = 2;
+end
+
+var T t;
+escape t.a + t.f();
+]],
+    run = 3,
+}
+Test { [[
+class T with
+    var int a;
+    function (void)=>int f do
+        return this.b;
+    end
+do
+    var int b;
+    a = 1;
+    b = 2;
+end
+
+var T t;
+escape t.a + t.f();
+]],
+    parser = 'line 3 : after `f´ : expected `;´',
+}
+
+Test { [[
+interface I with
+    var int v;
+    function (void)=>void f;
+end
+escape 10;
+]],
+    run = 10,
+}
+
+Test { [[
+class T with
+    var int v;
+    function (int)=>void f;
+do
+    v = 50;
+    this.f(10);
+
+    function (int v)=>int f do
+        this.v = this.v + v;
+        return this.v;
+    end
+end
+
+var T t;
+input void START;
+await START;
+escape t.v + t.f(20) + t.v;
+]],
+    env = 'line 8 : function declaration does not match the one at "tests.lua:3"',
+}
+
+Test { [[
+class T with
+    var int v;
+    function (int)=>int f;
+do
+    v = 50;
+    this.f(10);
+
+    function (int v)=>int f do
+        this.v = this.v + v;
+        return this.v;
+    end
+end
+
+var T t;
+input void START;
+await START;
+escape t.v + t.f(20) + t.v;
+]],
+    run = 220,
+}
+
+Test { [[
+interface I with
+    var int v;
+    function (int)=>void f;
+end
+
+class T with
+    var int v;
+    function (int)=>void f;
+do
+    v = 50;
+    this.f(10);
+
+    function (int v)=>void f do
+        this.v = this.v + v;
+    end
+end
+
+var T t;
+var I* i = &t;
+input void START;
+await START;
+i:f(100);
+escape i:v;
+]],
+    run = 160,
+}
+
+Test { [[
+interface I with
+    var int v;
+    function (int)=>void f;
+end
+
+class T with
+    interface I;
+do
+    v = 50;
+    this.f(10);
+
+    function (int a)=>void f do
+        v = v + a;
+    end
+end
+
+var T t;
+var I* i = &t;
+input void START;
+await START;
+i:f(100);
+escape i:v;
+]],
+    run = 160,
+}
+
+Test { [[
+interface I with
+    var int v;
+    function (void)=>int get;
+    function (int)=>void set;
+end
+
+class T with
+    interface I;
+    var int v = 50;
+do
+    function (void)=>int get do
+        return v;
+    end
+    function (int v)=>void set do
+        this.v= v;
+    end
+end
+
+var T t;
+var I* i = &t;
+var int v = i:v;
+i:set(100);
+escape v + i:get();
+]],
+    run = 150,
+}
+
+Test { [[
+interface I with
+    var int v;
+    function (int)=>void f;
+end
+
+class T with
+    interface I;
+do
+    v = 50;
+    this.f(10);
+
+    function (int v)=>void f do
+        this.v = this.v + v;
+    end
+end
+
+class U with
+    interface I;
+do
+    v = 50;
+    this.f(10);
+
+    function (int v)=>void f do
+        this.v = this.v + 2*v;
+    end
+end
+
+var T t;
+var U u;
+var I* i = &t;
+input void START;
+await START;
+i:f(100);
+var int ret = i:v;
+
+i=&u;
+i:f(200);
+
+escape ret + i:v;
+]],
+    run = 630,
+}
+
+Test { [[
+interface I with
+    function (void)=>int f;
+    function (void)=>int f1;
+end
+
+class T with
+    interface I;
+do
+    function (void)=>int f do
+        return this.f1();
+    end
+    function (void)=>int f1 do
+        return 1;
+    end
+end
+
+var T t;
+var I* i = &t;
+escape t.f() + i:f();
+]],
+    run = 2,
+}
+
+Test { [[
+interface I with
+    function (int)=>int g;
+end
+
+class T with
+    interface I;
+    var I* i;
+do
+    function (int v)=>int g do
+        if (v == 1) then
+            return 1;
+        end
+        return v * i:g(v-1);
+    end
+end
+
+var T t;
+var I* i = &t;
+t.i = i;
+escape i:g(5);
+]],
+    run = 120,
+}
+
+Test { [[
+native do
+    typedef int (*f_t) (int v);
+end
+
+class T with
+    var int ret1, ret2;
+    function (int)=>int f1;
+    var _f_t f2;
+do
+    native do
+        int f2 (int v) {
+            return v;
+        }
+    end
+
+    function (int v)=>int f1 do
+        return v;
+    end
+
+    ret1 = this.f1(1);
+    ret2 = this.f2(2);
+end
+
+var T t with
+    this.f2 = _f2;
+end;
+escape t.ret1 + t.ret2;
+]],
+    run = 3,
+}
+
+Test { [[
+interface I with
+    var int v;
+    function (void)=>void ins;
+end
+
+class T with
+    var int v;
+do
+end
+
+var T t;
+    t.v = 10;
+var I* i = &t;
+escape i:_ins() + t._ins();;
+]],
+    --env = 'line 14 : native function "CEU_T__ins" is not declared',
+    env = 'line 13 : invalid attribution (I* vs T*)',
+}
+
+Test { [[
+interface I with
+    var int v;
+    function (void)=>int ins;
+end
+
+class T with
+    interface I;
+    //var int v;
+    //native nohold _ins();
+do
+    function (void)=>int ins do
+        return v;
+    end
+end
+
+var T t;
+    t.v = 10;
+var I* i = &t;
+escape i:ins() + t.ins();
+]],
+    run = 20,
+}
+
+Test { [[
+interface F with
+    function (void)=>void f;
+    var int i=10;
+end
+]],
+    env = 'line 3 : invalid attribution',
+}
+
+Test { [[
+interface F with
+    var int i;
+    function (int i)=>void f;
+end
+
+class T with
+    var int i=10;   // 1
+    interface F;
+do
+    this.f(1);
+    function (int i)=>void f do
+        this.i = this.i + i;
+    end
+end
+
+var T t1;
+
+var F* f = &t1;
+f:f(3);
+
+escape t1.i + f:i;
+]],
+    run = 28,
+}
+
+Test { [[
+interface F with
+    var int i;
+    function (int)=>void f;
+end
+
+class T with
+    interface F;
+    var int i=10;   // 2
+do
+    this.f(1);
+    function (int i)=>void f do
+        this.i = this.i + i;
+    end
+end
+
+var T t1;
+
+var F* f = &t1;
+f:f(3);
+
+escape t1.i + f:i;
+]],
+    run = 28,
 }
 
 -- RET_VAL / RET_END

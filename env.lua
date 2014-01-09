@@ -128,11 +128,12 @@ function newvar (me, blk, pre, tp, arr, id)
                     WRN(false, me,
                         'declaration of "'..id..'" hides the one at line '
                             ..var.ln[2])
---[[
+
+                    -- allows interface/public and private variables
+                    --  to coexist
                     ASR( (blk ~= CLS().blk_ifc) and
                          (blk ~= CLS().blk_body), me,
                         'cannot hide at top-level block' )
-]]
                 end
             end
         end
@@ -449,6 +450,7 @@ F = {
         -- structs/tuples only for events
         if not _AST.iter'Dcl_fun'() then
             _ENV.c[TP] = { tag='type', id=TP, tuple=me, len=nil }
+            return TP   -- substitute me=>TP
         end
     end,
 

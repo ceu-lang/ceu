@@ -368,10 +368,8 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , _Dcl_fun1 = V'_Dcl_fun0' * V'_Do'
     , Return  = K'return' * EV'_Exp'^-1
 
-    , BlockI = ( (V'_Dcl_int'+V'_Dcl_var'+
-                   V'_Dcl_fun0'+V'_Dcl_fun1'+
-                   V'_Dcl_nat_ifc'+V'_Dcl_imp') * (EK';'*K';'^0)
-               + V'Host'    -- method prototypes
+    , BlockI = ( (EV'_Dcl_var'+V'_Dcl_int'+V'_Dcl_fun0'+V'_Dcl_imp')
+                  * (EK';'*K';'^0)
                )^0
     , Dcl_ifc = K'interface' * Cc(true)
               * Cc(false)

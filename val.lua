@@ -144,14 +144,13 @@ F =
     Op2_call = function (me)
         local _, f, exps = unpack(me)
         local ps = {}
-        if f.org then
-            local op = (_ENV.clss[f.org.tp].is_ifc and '') or '&'
-            ps[#ps+1] = op..V(f.org)   -- only native
-                -- avoids this.f(), where f is a pointer to func
-                -- vs this._f()
-        end
-        if f.tag == 'Var' then
-            ps[#ps+1] = CUR(me)
+        if f.var and f.var.fun then
+            if f.org then
+                local op = (_ENV.clss[f.org.tp].is_ifc and '') or '&'
+                ps[#ps+1] = op..V(f.org)   -- only native
+            else
+                ps[#ps+1] = CUR(me)
+            end
         end
         for i, exp in ipairs(exps) do
             ps[#ps+1] = V(exp)
