@@ -251,6 +251,8 @@ escape _V;
 
 -- FUNCTIONS
 
+--]===]
+
 Test { [[
 function (void) f;
 escape 1;
@@ -407,7 +409,6 @@ escape 1;
     run = 1,
 }
 
---]===]
 Test { [[
 function (int,int) => int f;
 function (int a, int b) => int f do
@@ -426,6 +427,59 @@ end
 escape f(1,2);
 ]],
     run = 3,
+}
+
+Test { [[
+native do
+    int V = 0;
+end
+class T with
+do
+    var int x;
+    this.x = 10;
+    _V = this.x;
+end
+var T t;
+escape _V;
+]],
+    run = 10,
+}
+
+Test { [[
+native do
+    int V = 0;
+end
+class T with
+do
+    function (int a, int b)=>int f do
+        return a + b;
+    end
+    _V = _V + f(1,2) + this.f(3,4);
+end
+var T[2] ts;
+escape _V;
+]],
+    run = 20,
+}
+
+Test { [[
+native do
+    int V = 0;
+end
+class T with
+do
+    var int v;
+    function (int a, int b)=>void f do
+        this.v = this.v + a + b;
+    end
+    f(1,2);
+    this.f(3,4);
+    _V = _V + v;
+end
+var T[2] ts;
+escape _V;
+]],
+    run = 20,
 }
 
 do return end

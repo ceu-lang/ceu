@@ -315,12 +315,14 @@ F = {
 
         -- include arguments into function block
         local fun = _AST.iter()()
+        local _, inp, out = unpack(fun)
         if fun.tag == 'Dcl_fun' then
-            for _, v in ipairs(fun[2]) do
+            for _, v in ipairs(inp) do
                 local tp, id = unpack(v)
                 if tp ~= 'void' then
                     local var = newvar(me, me, 'var', tp, false, id)
-                    var.isTmp = true
+                    var.isTmp = true -- TODO: var should be a node
+                    var.isFun = true
                 end
             end
         end
@@ -435,8 +437,12 @@ F = {
         end
 
         TP = string.gsub(TP, '*', '_')  -- TODO: '_' is not reliable
-        _ENV.c[TP] = { tag='type', id=TP, tuple=me, len=nil }
         me.tp = TP
+
+        -- structs/tuples only for events
+        if not _AST.iter'Dcl_fun'() then
+            _ENV.c[TP] = { tag='type', id=TP, tuple=me, len=nil }
+        end
     end,
 
     Dcl_ext = function (me)
@@ -512,7 +518,8 @@ F = {
 
         -- full definitions must contain parameter ids
         for _, v in ipairs(ins) do
-            ASR(v[1]=='void' or v[2], me, 'missing parameter identifier')
+            local tp, id = unpack(v)
+            ASR(tp=='void' or id, me, 'missing parameter identifier')
         end
     end,
 
@@ -866,7 +873,19 @@ F = {
             me.org = e1
 
             -- me[3]: id => Var
-            local var = ASR(cls.blk_ifc.vars[id], me,
+            local var
+            if e1.tag == 'This' then
+                -- accept private "body" vars
+                var = cls.blk_body.vars[id]
+                    --[[
+                    -- class T with
+                    -- do
+                    --     var int a;
+                    --     this.a = 1;
+                    -- end
+                    --]]
+            end
+            var = var or ASR(cls.blk_ifc.vars[id], me,
                         'variable/event "'..id..'" is not declared')
             me[3] = _AST.node('Var')(me.ln, '$'..id)
             me[3].var = var

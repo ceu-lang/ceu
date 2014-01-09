@@ -191,16 +191,16 @@ F = {
             return
         end
 
-        -- input parameters
-        local _ins = {}
+        -- input parameters (void* _ceu_org, int a, int b)
+        local dcl = { 'void* _ceu_org' }
         for _, v in ipairs(ins) do
             local tp, id = unpack(v)
-            _ins[#_ins+1] = _TP.c(tp)..' '..(id or '')
+            dcl[#dcl+1] = _TP.c(tp)..' '..(id or '')
         end
-        _ins = table.concat(_ins, ', ')
+        dcl  = table.concat(dcl,  ', ')
 
         _CODE.functions = _CODE.functions .. [[
-]]..out..' '..V(me.var)..' ('.._ins..[[)
+]]..out..' '..V(me.var)..' ('..dcl..[[)
 {
 ]]..blk.code..[[
 }
@@ -576,10 +576,15 @@ ceu_pool_init(&]]..pre..', '..n..', sizeof(CEU_'..node.cls.id..'), '
             if var.isTmp then
                 if var.arr then
                     LINE(me, _TP.c(_TP.deref(var.tp))
-                            ..' '..V(var)..'['..V(var.arr)..'];')
+                            ..' '..V(var)..'['..V(var.arr)..']')
                 else
-                    LINE(me, _TP.c(var.tp)..' '..V(var)..';')
+                    LINE(me, _TP.c(var.tp)..' '..V(var))
                 end
+                if var.isFun then
+                    -- __ceu_a = a
+                    LINE(me, ' = '..var.id)
+                end
+                LINE(me, ';')
             end
         end
     end,

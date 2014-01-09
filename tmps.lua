@@ -22,7 +22,6 @@ F = {
         end
 
         if _AST.iter'Dcl_fun'() then
-DBG('var', var.id, var.isTmp)
             return                  -- all function vars are "tmp"
         end
 

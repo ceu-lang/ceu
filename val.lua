@@ -31,7 +31,6 @@ F =
         for _, var in ipairs(me.vars) do
             if var.pre == 'var' then
                 if var.isTmp then
-DBG(var.id)
                     var.val = '__ceu_'..var.id..'_'..var.n
                 else
                     var.val = CUR(me, var.id_)
@@ -145,14 +144,17 @@ DBG(var.id)
     Op2_call = function (me)
         local _, f, exps = unpack(me)
         local ps = {}
-        for i, exp in ipairs(exps) do
-            ps[i] = V(exp)
-        end
-        if f.org and string.sub(me.c.id,1,1)=='_' then
+        if f.org then
             local op = (_ENV.clss[f.org.tp].is_ifc and '') or '&'
-            table.insert(ps, 1, op..V(f.org))   -- only native
+            ps[#ps+1] = op..V(f.org)   -- only native
                 -- avoids this.f(), where f is a pointer to func
                 -- vs this._f()
+        end
+        if f.tag == 'Var' then
+            ps[#ps+1] = CUR(me)
+        end
+        for i, exp in ipairs(exps) do
+            ps[#ps+1] = V(exp)
         end
         me.val = V(f)..'('..table.concat(ps,',')..')'
     end,
@@ -230,6 +232,8 @@ DBG(var.id)
                 elseif me.var.pre == 'event' then
                     me.val = nil    -- cannot be used as variable
                     me.org.val = '&'..me.org.val -- always via reference
+                else -- function
+                    me.val = me.var.val
                 end
             end
         else
