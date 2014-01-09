@@ -250,7 +250,6 @@ escape _V;
 }
 
 -- FUNCTIONS
-
 --]===]
 
 Test { [[
@@ -429,6 +428,8 @@ escape f(1,2);
     run = 3,
 }
 
+-- METHODS
+
 Test { [[
 native do
     int V = 0;
@@ -480,6 +481,272 @@ var T[2] ts;
 escape _V;
 ]],
     run = 20,
+}
+
+Test { [[
+class T with
+    var int a;
+    function (void)=>int f;
+do
+    var int b;
+    function (void)=>int f do
+        return this.b;
+    end
+    a = 1;
+    b = 2;
+end
+
+var T t;
+escape t.a + t.f();
+]],
+    run = 3,
+}
+Test { [[
+class T with
+    var int a;
+    function (void)=>int f do
+        return this.b;
+    end
+do
+    var int b;
+    a = 1;
+    b = 2;
+end
+
+var T t;
+escape t.a + t.f();
+]],
+    parser = 'line 3 : after `f´ : expected `;´',
+}
+
+Test { [[
+interface I with
+    var int v;
+    function (void)=>void f;
+end
+escape 10;
+]],
+    run = 10,
+}
+
+Test { [[
+class T with
+    var int v;
+    function (int)=>void f;
+do
+    v = 50;
+    this.f(10);
+
+    function (int v)=>int f do
+        this.v = this.v + v;
+        return this.v;
+    end
+end
+
+var T t;
+input void START;
+await START;
+escape t.v + t.f(20) + t.v;
+]],
+    env = 'line 8 : function declaration does not match the one at "tests.lua:3"',
+}
+
+Test { [[
+class T with
+    var int v;
+    function (int)=>int f;
+do
+    v = 50;
+    this.f(10);
+
+    function (int v)=>int f do
+        this.v = this.v + v;
+        return this.v;
+    end
+end
+
+var T t;
+input void START;
+await START;
+escape t.v + t.f(20) + t.v;
+]],
+    run = 220,
+}
+
+Test { [[
+interface I with
+    var int v;
+    function (int)=>void f;
+end
+
+class T with
+    var int v;
+    function (int)=>void f;
+do
+    v = 50;
+    this.f(10);
+
+    function (int v)=>void f do
+        this.v = this.v + v;
+    end
+end
+
+var T t;
+var I* i = &t;
+input void START;
+await START;
+i:f(100);
+escape i:v;
+]],
+    run = 160,
+}
+
+Test { [[
+interface I with
+    var int v;
+    function (int)=>void f;
+end
+
+class T with
+    interface I;
+do
+    v = 50;
+    this.f(10);
+
+    function (int a)=>void f do
+        v = v + a;
+    end
+end
+
+var T t;
+var I* i = &t;
+input void START;
+await START;
+i:f(100);
+escape i:v;
+]],
+    run = 160,
+}
+
+Test { [[
+interface I with
+    var int v;
+    function (void)=>int get;
+    function (int)=>void set;
+end
+
+class T with
+    interface I;
+    var int v = 50;
+do
+    function (void)=>int get do
+        return v;
+    end
+    function (int v)=>void set do
+        this.v= v;
+    end
+end
+
+var T t;
+var I* i = &t;
+var int v = i:v;
+i:set(100);
+escape v + i:get();
+]],
+    run = 150,
+}
+
+Test { [[
+interface I with
+    var int v;
+    function (int)=>void f;
+end
+
+class T with
+    interface I;
+do
+    v = 50;
+    this.f(10);
+
+    function (int v)=>void f do
+        this.v = this.v + v;
+    end
+end
+
+class U with
+    interface I;
+do
+    v = 50;
+    this.f(10);
+
+    function (int v)=>void f do
+        this.v = this.v + 2*v;
+    end
+end
+
+var T t;
+var U u;
+var I* i = &t;
+input void START;
+await START;
+i:f(100);
+var int ret = i:v;
+
+i=&u;
+i:f(200);
+
+escape ret + i:v;
+]],
+    run = 630,
+}
+
+Test { [[
+interface I with
+    function (void)=>int f;
+    function (void)=>int f1;
+end
+
+class T with
+    interface I;
+do
+    function (void)=>int f do
+        return this.f1();
+    end
+    function (void)=>int f1 do
+        return 1;
+    end
+end
+
+var T t;
+var I* i = &t;
+escape t.f() + i:f();
+]],
+    run = 2,
+}
+
+Test { [[
+interface I with
+    function (int)=>int g;
+end
+
+class T with
+    interface I;
+    var I* i;
+do
+    function (int v)=>int g do
+        if (v == 1) then
+            return 1;
+        end
+        return v * i:g(v-1);
+    end
+end
+
+var T t;
+var I* i = &t;
+t.i = i;
+escape i:g(5);
+]],
+    run = 120,
 }
 
 do return end
@@ -24157,6 +24424,8 @@ escape t.aa;
 ]],
     run = 10,
 }
+
+-- NATIVE METHODS
 
 Test { [[
 interface I with

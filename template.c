@@ -277,9 +277,14 @@ typedef struct {
 #endif
 
 #ifdef CEU_IFCS
-    s8    ifcs_clss[CEU_NCLS][=== IFCS_NIFCS ===]; /* TODO(ram): bitfield */
+    s8    ifcs_clss[CEU_NCLS][=== IFCS_NIFCS ===];
+            /* Does "cls" implements "ifc?"
+             * (I*) ifc = (I*) cls;     // returns null if not
+             * TODO(ram): bitfield
+             */
     u16   ifcs_flds[CEU_NCLS][=== IFCS_NFLDS ===];
     u16   ifcs_evts[CEU_NCLS][=== IFCS_NEVTS ===];
+    void* ifcs_funs[CEU_NCLS][=== IFCS_NFUNS ===];
 #endif
 
 #ifdef CEU_DEBUG
@@ -309,6 +314,9 @@ tceu CEU = {
     },
     {
 === IFCS_EVTS ===
+    },
+    {
+=== IFCS_FUNS ===
     },
 #endif
 #ifdef CEU_DEBUG

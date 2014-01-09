@@ -213,16 +213,15 @@ F =
         if me.org then
             local cls = _ENV.clss[me.org.tp]
             if cls and cls.is_ifc then
-                if me.var.pre == 'var' then
+                if me.var.pre == 'var' or
+                   me.var.pre == 'function' then
                     me.val = '(*('..me.var.ifc_acc..'('..me.org.val..')))'
-                elseif me.var.pre == 'event' then
+                else    -- event
                     me.val = nil    -- cannot be used as variable
                     local org = '((tceu_org*)'..me.org.val..')'
                     me.ifc_idx = '(CEU.ifcs_evts['..org..'->cls]['
                                     .._ENV.ifcs.evts[me.var.ifc_id]
-                                ..'])'
-                else
-                    error 'TODO'
+                               ..'])'
                 end
             else
                 if me.c then

@@ -12,6 +12,7 @@ _ENV = {
     ifcs  = {
         flds = {}, -- {[1]='A',[2]='B',A=0,B=1,...}
         evts = {}, -- ...
+        funs = {}, -- ...
     },
 
     exts = {
@@ -64,7 +65,7 @@ function var2ifc (var)
     elseif var.pre == 'event' then
         tp = var.evt.tp
     else
-        error 'TODO'
+        tp = var.fun.ins.tp..'$'..var.fun.out
     end
     return table.concat({
         var.id,
@@ -127,9 +128,11 @@ function newvar (me, blk, pre, tp, arr, id)
                     WRN(false, me,
                         'declaration of "'..id..'" hides the one at line '
                             ..var.ln[2])
+--[[
                     ASR( (blk ~= CLS().blk_ifc) and
                          (blk ~= CLS().blk_body), me,
                         'cannot hide at top-level block' )
+]]
                 end
             end
         end
@@ -204,7 +207,10 @@ function newfun (me, blk, pre, ins, out, id)
                 old.ln[1]..':'..old.ln[2]..'"')
     end
 
-    local var = newvar(me, blk, pre, 'void', false, id)
+    local var = newvar(me, blk, pre,
+                        '___typeof__(CEU_'..CLS().id..'_'..id..')',
+                        -- TODO: _TP.c eats one '_'
+                       false, id)
     local fun = {
         id  = id,
         ins = ins,
@@ -368,8 +374,9 @@ F = {
                     elseif var.pre == 'event' then
                         _ENV.ifcs.evts[var.ifc_id] = #_ENV.ifcs.evts
                         _ENV.ifcs.evts[#_ENV.ifcs.evts+1] = var.ifc_id
-                    else
-                        error 'TODO'
+                    else -- 'function'
+                        _ENV.ifcs.funs[var.ifc_id] = #_ENV.ifcs.funs
+                        _ENV.ifcs.funs[#_ENV.ifcs.funs+1] = var.ifc_id
                     end
                 end
             end
@@ -503,7 +510,15 @@ F = {
     Dcl_fun = function (me)
         local pre, ins, out, id, blk = unpack(me)
         local cls = CLS()
-        me.var = newfun(me, _AST.iter'Block'(), pre, ins, out, id)
+
+        -- implementation cannot be inside interface, so,
+        -- if it appears on blk_body, make it be in blk_ifc
+        local up = _AST.iter'Block'()
+        if blk and cls.blk_body==up and cls.blk_ifc.vars[id] then
+            up = cls.blk_ifc
+        end
+
+        me.var = newfun(me, up, pre, ins, out, id)
 
         -- "void" as parameter only if single
         if #ins > 1 then
@@ -537,7 +552,8 @@ F = {
             elseif var.pre == 'event' then
                 newint(me, _AST.iter'Block'(), var.pre, tp, var.id)
             else
-                error 'TODO'
+                newfun(me, _AST.iter'Block'(), var.pre,
+                           var.fun.ins, var.fun.out, var.id)
             end
             CLS().c[var.id] = ifc.c[var.id] -- also copy C properties
         end
@@ -560,15 +576,6 @@ F = {
                     and var
         me.ref  = me
         me.fst  = var
-    end,
-
-    Fun = function (me)
-        local id = unpack(me)
-        local fun = CLS()[id]
-        ASR(var, fun, 'function "'..id..'" is not declared')
-        me.fun  = fun
-        me.tp   = fun[1]    -- return type
-        me.lval = false
     end,
 
     Dcl_nat = function (me)

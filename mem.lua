@@ -38,6 +38,7 @@ F = {
                 _defs[#_defs+1] = 'typedef struct CEU_'..cls.id..
                                     ' CEU_'..cls.id..';'
             end
+            _defs[#_defs+1] = cls.funs
             _defs[#_defs+1] = protos
             _defs[#_defs+1] = table.concat(cls.ifc_accs_protos, '\n')
             _defs[#_defs+1] = cls.struct
@@ -72,7 +73,6 @@ ceu_pool_init(&]]..cls.pool..', '..cls.max..', sizeof(CEU_'..cls.id..'), '
 ]] .. src
     end,
 
-
     Dcl_cls_pre = function (me)
         -- whole class
         me.struct = [[
@@ -86,13 +86,14 @@ struct CEU_]]..me.id..[[ {
 typedef struct {
 ]]
         me.host = ''
+        me.funs = ''
 
         -- field accessors
         me.ifc_accs_protos = {}
         me.ifc_accs_impls  = {}
         if me.is_ifc then
             for _,var in ipairs(me.blk_ifc.vars) do
-                if var.pre == 'var' then   -- events cannot be accessed from C
+                if var.pre == 'var' then
                     var.ifc_acc = '_CEU_'..me.id..'_'..var.id
                                -- '_' to distingish from method prototypes
                     me.ifc_accs_protos[#me.ifc_accs_protos+1] =
@@ -106,6 +107,23 @@ _TP.c(var.tp)..'* '..var.ifc_acc..[[(]].._TP.c(me.id)..[[* org) {
             );
 }
 ]]
+                elseif var.pre == 'function' then
+                    var.ifc_acc = '_CEU_'..me.id..'_'..var.id
+                               -- '_' to distingish from method prototypes
+                    me.ifc_accs_protos[#me.ifc_accs_protos+1] =
+                        _TP.c(var.tp)..'* '..var.ifc_acc..' ('.._TP.c(me.id)..'* org);'
+DBG('fun', var.id, var.tp)
+                    me.ifc_accs_impls[#me.ifc_accs_impls+1] =
+_TP.c(var.tp)..'* '..var.ifc_acc..[[(]].._TP.c(me.id)..[[* org) {
+    return (]].._TP.c(var.tp)..[[*) (
+        CEU.ifcs_funs[((tceu_org*)org)->cls][
+            ]].._ENV.ifcs.funs[var.ifc_id]..[[
+        ]
+            );
+}
+]]
+                else
+                    -- events cannot be accessed from C
                 end
             end
         end
@@ -129,6 +147,26 @@ _TP.c(var.tp)..'* '..var.ifc_acc..[[(]].._TP.c(me.id)..[[* org) {
 DBG('===', me.id, me.trails_n, '('..tostring(me.max)..')')
 --DBG(me.struct)
 --DBG('======================')
+    end,
+
+    Dcl_fun = function (me)
+        local _, ins, out, id, blk = unpack(me)
+        local cls = CLS()
+
+        -- input parameters (void* _ceu_org, int a, int b)
+        local dcl = { 'void* _ceu_org' }
+        if ins[1][1] ~= 'void' then    -- ignore f(void)
+            for _, v in ipairs(ins) do
+                local tp, id = unpack(v)
+                dcl[#dcl+1] = _TP.c(tp)..' '..(id or '')
+            end
+        end
+        dcl = table.concat(dcl,  ', ')
+
+        me.proto = [[
+]]..out..' CEU_'..cls.id..'_'..id..' ('..dcl..[[)
+]]
+        cls.funs = cls.funs..me.proto..';\n'
     end,
 
     Stmts_pre = function (me)

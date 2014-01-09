@@ -187,24 +187,13 @@ F = {
 
     Dcl_fun = function (me)
         local _, ins, out, id, blk = unpack(me)
-        if not blk then
-            return
-        end
-
-        -- input parameters (void* _ceu_org, int a, int b)
-        local dcl = { 'void* _ceu_org' }
-        for _, v in ipairs(ins) do
-            local tp, id = unpack(v)
-            dcl[#dcl+1] = _TP.c(tp)..' '..(id or '')
-        end
-        dcl  = table.concat(dcl,  ', ')
-
-        _CODE.functions = _CODE.functions .. [[
-]]..out..' '..V(me.var)..' ('..dcl..[[)
+        if blk then
+            _CODE.functions = _CODE.functions .. me.proto ..[[
 {
 ]]..blk.code..[[
 }
 ]]
+        end
     end,
     Return = function (me)
         local exp = unpack(me)
