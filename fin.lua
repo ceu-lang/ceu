@@ -10,11 +10,45 @@ function node2blk (node)
     end
 end
 
+--[[
+-- When holding a parameter, a function could do either on native globals
+-- or on object fields:
+--
+--      function (void* v1, void* v2)=>void f do
+--          this.v = v1;    // OK
+--          _V     = v2;    // NO!
+--      end
+--
+-- For object fields, the caller must write a finalizer only if the
+-- parameter has a shorter scope than the object of the method call:
+--
+--      // w/o fin
+--      var void* p;
+--      var T t;
+--      t.f(p);     // t == p (scope)
+--
+--      // w/ fin
+--      var T t;
+--      do
+--          var void* p;
+--          t.f(p)      // t > p (scope)
+--              finalize with ... end;
+--      end
+--
+-- Native globals should be forbidden because we would need two different
+-- kinds of "nohold" annotations to distinguish the two scopes (object and
+-- global).
+--
+-- Native globals can be assigned in static functions requiring finalizer
+-- whenever appliable.
+]]
+
 F = {
     SetExp = function (me)
         local op, fr, to = unpack(me)
         to = to or _AST.iter'SetBlock'()[1]
 
+        local cls = CLS()
         local to_blk = node2blk(to)
         local req = false
 
@@ -86,32 +120,57 @@ F = {
                     req = fr_blk
 
                     -- class do int* a1; this.a2=a1; end (a1 is also top-level)
-                    if to_blk.depth == CLS().blk_ifc.depth and
-                       fr_blk.depth == CLS().blk_body.depth then
+                    if to_blk.depth == cls.blk_ifc.depth and
+                       fr_blk.depth == cls.blk_body.depth then
                         req = false
                     end
                 end
             end
         end
 
+        -- impossible to run finalizers on threads
         if _AST.iter'Thread'() then
-            req = false     -- impossible to run finalizers on threads
-        end
+            req = false
 
-        if req then
-            ASR((op==':=') or me.fin, me,
-                    'attribution requires `finalize´')
-        else
-            -- TODO: workaround that avoids checking := for fields
-            if not me.dont_check_nofin then
-                ASR((op=='=') and (not me.fin), me,
-                        'attribution does not require `finalize´')
+        --[[
+        -- Inside functions the assignment must be to from a "hold" parameter
+        -- to a class field.
+        -- They cannot have finalizers because different calls will have
+        -- different scopes for the parameters.
+        --]]
+        elseif _AST.iter'Dcl_fun'() then
+            local dcl = _AST.iter'Dcl_fun'()
+            if req then
+                -- to a class field
+                ASR(to_blk == cls.blk_ifc or
+                    to_blk == cls.blk_body,
+                        me, 'invalid attribution')
+                -- from a parameter
+                ASR(fr.var and fr.var.funIdx,
+                        me, 'invalid attribution')
+
+                -- must be hold
+                local _, ins, _, _, _ = unpack(dcl)
+                ASR(ins[fr.var.funIdx][1],
+                    me, 'parameter must be `hold´')
             end
-        end
 
-        if me.fin and me.fin.active then
-            req.fins = req.fins or {}
-            table.insert(req.fins, 1, me.fin)
+        else
+            if req then
+                ASR((op==':=') or me.fin, me,
+                        'attribution requires `finalize´')
+            else
+                -- TODO: workaround that avoids checking := for tuple fields
+                if not me.dont_check_nofin then
+                    ASR((op=='=') and (not me.fin), me,
+                            'attribution does not require `finalize´')
+                end
+            end
+
+            if me.fin and me.fin.active then
+                req.fins = req.fins or {}
+                table.insert(req.fins, 1, me.fin)
+            end
         end
     end,
 
@@ -174,7 +233,7 @@ F = {
             req = false     -- impossible to run finalizers on threads
         end
 
-        ASR((not req) or fin, me,
+        ASR((not req) or fin or _AST.iter'Dcl_fun'(), me,
             'call to "'..me.c.id..'" requires `finalize´')
         ASR((not fin) or req, me, 'invalid `finalize´')
 

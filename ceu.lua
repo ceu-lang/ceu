@@ -309,7 +309,7 @@ do
             if c.tuple then
                 str = str .. 'typedef struct {\n'
                 for i, v in ipairs(c.tuple) do
-                    local tp,_ = unpack(v)
+                    local _,tp,_ = unpack(v)
                     if _ENV.clss[_TP.noptr(tp)] then
                         -- T* => void*
                         -- T** => void**

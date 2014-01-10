@@ -816,7 +816,9 @@ for (;;) {
         LINE(me, [[
 }
 ]])
-        if me.has_break and (not _AST.iter(_AST.pred_async)()) then
+        if me.has_break and ( not (_AST.iter(_AST.pred_async)()
+                                or _AST.iter'Dcl_fun'()) )
+        then
             CLEAR(me)
             LINE(me, [[
 /* switch to 1st trail */

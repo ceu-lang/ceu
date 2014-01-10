@@ -249,8 +249,222 @@ escape _V;
     run = 100,
 }
 
-do return end
+Test { [[
+function () => void f;
+escape 1;
+]],
+    run = 1,
+}
+
+-------------------------------------------------------------------------------
 --]===]
+
+Test { [[
+native do
+    void* V;
+end
+function (void* v)=>void f do
+    _V = v;
+end
+escape 1;
+]],
+    fin = 'line 5 : invalid attribution',
+}
+
+Test { [[
+native do
+    void* V;
+end
+function (void* v)=>void f do
+end
+escape 1;
+]],
+    -- function can be "nohold v"
+    run = 1,
+}
+
+Test { [[
+native do
+    void* V;
+end
+class T with
+    function (void* v)=>void f;
+do
+    function (void* v)=>void f do
+        _V = v;
+    end
+end
+escape 1;
+]],
+    fin = 'line 8 : invalid attribution',
+}
+Test { [[
+native do
+    void* V;
+end
+class T with
+    function (void* v)=>void f;
+do
+    function (void* v)=>void f do
+        _V := v;
+    end
+end
+escape 1;
+]],
+    fin = 'line 8 : invalid attribution',
+}
+
+Test { [[
+class T with
+    var void* v;
+    function (void* v)=>void f;
+do
+    function (void* v)=>void f do
+    end
+end
+var T t;
+t.f();
+escape 1;
+]],
+    -- function can be "nohold v"
+    run = 1,
+}
+
+Test { [[
+class T with
+    var void* a;
+    function (void* v)=>void f;
+do
+    function (void* v)=>void f do
+        var void* a = v;
+    end
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+    var void* a;
+    function (void)=>void f;
+do
+    function (void)=>void f do
+        var void* v;
+        a = v;
+    end
+end
+escape 1;
+]],
+    -- not from paramter
+    fin = 'line 7 : invalid attribution',
+}
+Test { [[
+class T with
+    var void* a;
+    function (void* v)=>void f;
+do
+    function (void* v)=>void f do
+        a = v;
+    end
+end
+escape 1;
+]],
+    -- function must be "hold v"
+    fin = ' line 6 : parameter must be `hold´',
+}
+Test { [[
+class T with
+    var void* a;
+    function (hold void* v)=>void f;
+do
+    function (hold void* v)=>void f do
+        a = v;
+    end
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+    var void* v;
+    function (void* v)=>void f;
+do
+    function (hold void* v)=>void f do
+        this.v = v;
+    end
+end
+escape 1;
+]],
+    env = 'line 5 : function declaration does not match the one at "tests.lua:3"',
+}
+
+Test { [[
+class T with
+    var void* v;
+    function (hold void* v)=>void f;
+do
+    function (hold void* v)=>void f do
+        this.v = v;
+    end
+end
+var void* v;
+var T t;
+t.f(null);
+t.f(v);
+do
+    var void* v;
+    t.f(v);
+end
+escape 1;
+]],
+    -- function must be "hold v" and call must have fin
+    fin = 'line 12 : call to "f" requires `finalize´',
+}
+
+Test { [[
+class T with
+    var void* v;
+    function (hold void* v)=>void f;
+do
+    function (hold void* v)=>void f do
+        this.v = v;
+    end
+end
+var void* v;
+var T t;
+t.f(null);
+t.f(v);
+do
+    var void* v;
+    t.f(v)
+        finalize with
+            nothing;
+        end;
+end
+escape 1;
+]],
+    -- function must be "hold v" and call must have fin
+    fin = 'line 12 : call to "f" requires `finalize´',
+}
+
+Test { [[
+native do
+    void* V;
+end
+function (void* v)=>void f do
+    _V := v;
+end
+var void* x;
+f(x);
+escape 1;
+]],
+    fin = 'line 5 : invalid attribution',
+}
+
+--do return end
 
 -- OK: well tested
 

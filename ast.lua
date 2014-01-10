@@ -392,7 +392,7 @@ C = {
                                 v)
                     t[#t].fromAwait = awt
 
-                    -- TODO: workaround that avoids checking := for fields
+                    -- TODO: workaround that avoids checking := for tuple fields
                     t[#t].dont_check_nofin = true
                 end
                 stmts = node('Stmts')(ln, unpack(t))

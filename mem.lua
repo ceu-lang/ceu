@@ -155,9 +155,10 @@ DBG('===', me.id, me.trails_n, '('..tostring(me.max)..')')
 
         -- input parameters (void* _ceu_org, int a, int b)
         local dcl = { 'void* _ceu_org' }
-        if ins[1][1] ~= 'void' then    -- ignore f(void)
+        local _,tp,_ = unpack(ins[1])
+        if tp ~= 'void' then    -- ignore f(void)
             for _, v in ipairs(ins) do
-                local tp, id = unpack(v)
+                local hold, tp, id = unpack(v)
                 dcl[#dcl+1] = _TP.c(tp)..' '..(id or '')
             end
         end

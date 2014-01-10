@@ -324,12 +324,13 @@ F = {
         local fun = _AST.iter()()
         local _, inp, out = unpack(fun)
         if fun.tag == 'Dcl_fun' then
-            for _, v in ipairs(inp) do
-                local tp, id = unpack(v)
+            for i, v in ipairs(inp) do
+                local hold, tp, id = unpack(v)
                 if tp ~= 'void' then
                     local var = newvar(me, me, 'var', tp, false, id)
-                    var.isTmp = true -- TODO: var should be a node
-                    var.isFun = true
+                    var.isTmp  = true -- TODO: var should be a node
+                    var.isFun  = true
+                    var.funIdx = i
                 end
             end
         end
@@ -435,13 +436,13 @@ F = {
     TupleType = function (me)
         local TP = '_tceu'
         for i, v in ipairs(me) do
-            local tp, id = unpack(v)
+            local hold, tp, id = unpack(v)
             --local tp_noptr = _TP.noptr(v)
             --local c = _ENV.c[tp_noptr]
             --ASR(c or _ENV.clss[tp_noptr],
                     --me, 'undeclared type `'..tp_noptr..'´')
             --me[i] = v
-            TP = TP .. '__'.._TP.c(tp)
+            TP = TP .. '__'..(hold or '')..'_'.._TP.c(tp)
         end
 
         TP = string.gsub(TP, '*', '_')  -- TODO: '_' is not reliable
@@ -525,7 +526,8 @@ F = {
         -- "void" as parameter only if single
         if #ins > 1 then
             for _, v in ipairs(ins) do
-                ASR(v[1] ~= 'void', me, 'invalid declaration')
+                local _, tp, _ = unpack(v)
+                ASR(tp ~= 'void', me, 'invalid declaration')
             end
         end
 
@@ -535,7 +537,7 @@ F = {
 
         -- full definitions must contain parameter ids
         for _, v in ipairs(ins) do
-            local tp, id = unpack(v)
+            local hold, tp, id = unpack(v)
             ASR(tp=='void' or id, me, 'missing parameter identifier')
         end
     end,
@@ -783,7 +785,7 @@ F = {
                 me.c = f.c
             end
         else
-            id = '$anon'
+            id = (f.var and f.var.id) or '$anon'
             me.c = { tag='func', id=id, mod=nil }
         end
 
@@ -910,8 +912,12 @@ F = {
             local tup = _TP.isTuple(e1.tp)
             if tup then
                 local n = tonumber(string.match(id,'(%d+)'))
-                me.tp = tup[n] and tup[n][1] or 'void'
-                                    -- [1]=tp, [2]=id
+                if tup[n] then
+                    local _,tp,_ = unpack(tup[n])
+                    me.tp = tp
+                else
+                    me.tp = 'void'
+                end
             else
                 me.tp = '_'
             end

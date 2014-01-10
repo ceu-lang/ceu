@@ -104,6 +104,7 @@ KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'native'
      + 'thread'   + 'sync'
 -- functions
      + 'function' + 'call' + 'return' + 'delay' + 'call/delay'
+     + 'hold'
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
@@ -397,10 +398,9 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
                     return (string.gsub(id..star,' ',''))
                   end
 
-    , TupleType = K'('
-                * Ct( EV'ID_type' * (EV'ID_var'+Cc(false)) )
-                * ( EK',' * Ct( EV'ID_type' * (EV'ID_var'+Cc(false)) ) )^0
-                * EK')'
+    , _TupleType = Ct( (CK'hold'+Cc(false)) * EV'ID_type' *
+                      (EV'ID_var'+Cc(false)) )
+    , TupleType = K'(' * V'_TupleType' * (EK','*V'_TupleType')^0 * EK')'
 
     , STRING = CK( CK'"' * (P(1)-'"'-'\n')^0 * EK'"' )
 
