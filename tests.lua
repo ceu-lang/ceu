@@ -311,7 +311,8 @@ do
 end
 escape 1;
 ]],
-    fin = 'line 8 : invalid attribution',
+    --fin = 'line 8 : invalid attribution',
+    run = 1,
 }
 
 Test { [[
@@ -458,10 +459,54 @@ function (void* v)=>void f do
     _V := v;
 end
 var void* x;
-f(x);
-escape 1;
+f((void*)5);
+escape _V==(void*)5;
 ]],
-    fin = 'line 5 : invalid attribution',
+    --fin = 'line 5 : invalid attribution',
+    run = 1,
+}
+
+Test { [[
+native do
+    void* V;
+end
+function (void* v)=>void f do
+    _V := v;
+end
+var void* x;
+f((void*)5)
+    finalize with nothing; end;
+escape _V==(void*)5;
+]],
+    fin = 'line 8 : invalid `finalize´',
+}
+
+Test { [[
+native do
+    int V;
+end
+function (int v)=>void f do
+    _V := v;
+end
+var void* x;
+f(5);
+escape _V==5;
+]],
+    fin = 'line 5 : attribution does not require `finalize´',
+}
+
+Test { [[
+native do
+    int V;
+end
+function (int v)=>void f do
+    _V = v;
+end
+var void* x;
+f(5);
+escape _V==5;
+]],
+    run = 1,
 }
 
 --do return end

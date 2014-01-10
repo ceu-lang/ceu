@@ -112,7 +112,6 @@ _TP.c(var.tp)..'* '..var.ifc_acc..[[(]].._TP.c(me.id)..[[* org) {
                                -- '_' to distingish from method prototypes
                     me.ifc_accs_protos[#me.ifc_accs_protos+1] =
                         _TP.c(var.tp)..'* '..var.ifc_acc..' ('.._TP.c(me.id)..'* org);'
-DBG('fun', var.id, var.tp)
                     me.ifc_accs_impls[#me.ifc_accs_impls+1] =
 _TP.c(var.tp)..'* '..var.ifc_acc..[[(]].._TP.c(me.id)..[[* org) {
     return (]].._TP.c(var.tp)..[[*) (

@@ -141,18 +141,23 @@ F = {
         elseif _AST.iter'Dcl_fun'() then
             local dcl = _AST.iter'Dcl_fun'()
             if req then
-                -- to a class field
-                ASR(to_blk == cls.blk_ifc or
-                    to_blk == cls.blk_body,
-                        me, 'invalid attribution')
-                -- from a parameter
-                ASR(fr.var and fr.var.funIdx,
-                        me, 'invalid attribution')
+                if op ~= ':=' then
+                    -- to a class field
+                    ASR(to_blk == cls.blk_ifc or
+                        to_blk == cls.blk_body,
+                            me, 'invalid attribution')
+                    -- from a parameter
+                    ASR(fr.ref.var and fr.ref.var.funIdx,
+                            me, 'invalid attribution')
 
-                -- must be hold
-                local _, ins, _, _, _ = unpack(dcl)
-                ASR(ins[fr.var.funIdx][1],
-                    me, 'parameter must be `hold´')
+                    -- must be hold
+                    local _, ins, _, _, _ = unpack(dcl)
+                    ASR(ins[fr.ref.var.funIdx][1],
+                        me, 'parameter must be `hold´')
+                end
+            else
+                ASR(op == '=', me,
+                    'attribution does not require `finalize´')
             end
 
         else
@@ -215,17 +220,24 @@ F = {
                 -- avoids this.f(), where f is a pointer to func
                 -- vs this._f()
             end
-            for _, exp in ipairs(exps) do
-                -- int* pa; _f(pa); -- `pa´ termination must consider `_f´
-                local r = exp.fst and (
-                             _TP.deref(exp.tp)
-                          or (_TP.ext(exp.tp) and (not exp.c or
-                                                   exp.c.mod~='constant'))
-                          or _ENV.clss[_TP.noptr(exp.tp)])
-                r = r and ((exp.fst=='_' and _AST.root) or exp.fst.blk)
-                WRN( (not r) or (not req) or (r==req),
-                        me, 'invalid call (multiple scopes)')
-                req = req or r
+            for i, exp in ipairs(exps) do
+                local hold = true
+                if f.var and f.var.fun then
+                    hold,_,_ = unpack(f.var.fun.ins[i])
+                end
+                if hold then
+                    -- int* pa; _f(pa);
+                    --  (`pa´ termination must consider `_f´)
+                    local r = exp.fst and (
+                                 _TP.deref(exp.tp)
+                              or (_TP.ext(exp.tp) and (not exp.c or
+                                                       exp.c.mod~='constant'))
+                              or _ENV.clss[_TP.noptr(exp.tp)])
+                    r = r and ((exp.fst=='_' and _AST.root) or exp.fst.blk)
+                    WRN( (not r) or (not req) or (r==req),
+                            me, 'invalid call (multiple scopes)')
+                    req = req or r
+                end
             end
         end
 
