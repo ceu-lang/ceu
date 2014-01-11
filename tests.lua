@@ -5016,6 +5016,14 @@ end;
     -- TIME LATE
 
 Test { [[
+var int a, b;
+(a,b) = await 1s;
+escape 1;
+]],
+    env = 'line 2 : event "?" is not declared',
+}
+
+Test { [[
 input int F;
 var int late = 0;
 var int v;
@@ -13032,6 +13040,18 @@ escape ret;
 
 -- FINALLY
 
+Test { [[
+    native pure _Radio_getPayload();
+    var _message_t msg;
+    loop do
+        await 1s;
+        var _Cnt* snd = _Radio_getPayload(&msg, sizeof(_Cnt));
+    end
+]],
+    ana = {
+        isForever = true,
+    },
+}
 Test { [[
 do
 finalize with nothing; end
@@ -21350,7 +21370,8 @@ do
 end
 escape 1;
 ]],
-    fin = 'line 7 : attribution requires `finalize´',
+    --fin = 'line 7 : attribution requires `finalize´',
+    gcc = 'error: unknown type name ‘SDL_rect’',
 }
 
 Test { [[
@@ -21387,7 +21408,7 @@ native do
     } SDL_Rect;
     int UI_ALIGN_CENTER = 1;
     int UI_align (int a, int b, int c) {
-        escape 0;
+        return 0;
     }
 end
 class T with
@@ -21400,7 +21421,8 @@ do
 end
 escape 1;
 ]],
-    fin = 'line 17 : attribution requires `finalize´',
+    --fin = 'line 17 : attribution requires `finalize´',
+    run = 1,
 }
 
 Test { [[

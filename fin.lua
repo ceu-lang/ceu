@@ -76,12 +76,10 @@ F = {
                             end
                         end
                     end
-                    if fr.c.mod == 'pure' then
-                        fr_max_out = fr_min_in -- pure function returns min param as max
-                    end
 
+                    -- pure function never requires finalization
                     -- int* pa = _fopen();  -- pa(n) fin must consider _RET(_)
-                    if to_blk.depth > fr_max_out.depth then
+                    if fr.c.mod~='pure' and to_blk.depth>fr_max_out.depth then
                         req = to_blk
                     end
                 elseif fr.tag == 'RawExp' then

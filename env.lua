@@ -483,7 +483,7 @@ F = {
         -- changes TP from ast.lua
         if me.__ast_ref then
             local ref = me.__ast_ref
-            local evt = ref.evt or ref.var.evt
+            local evt = ref.evt or (ref.var and ref.var.evt)
             ASR(evt, me,
                 'event "'..(ref.var and ref.var.id or '?')..'" is not declared')
             if me[2] == 'TP' then
