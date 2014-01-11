@@ -730,6 +730,10 @@ C = {
             end
             ret = node('Op1_'..op)(ln, v2,
                                     C._Exp(ln, select(3,...)))
+        elseif v1=='call' or v1=='call/delay' then
+            ASR(v2.tag=='Op2_call', ln, 'invalid call')
+            v2[1] = v1  -- change op
+            ret = v2
         else                    -- binary expression
             -- v1=e1, v2=op, v3=e2, v4=?
             if v2 == ':' then

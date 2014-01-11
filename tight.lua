@@ -72,7 +72,7 @@ F = {
 
         local dcl = _AST.iter'Dcl_fun'()
         if dcl and isTight then
-            dcl.var.fun.delay = true
+            dcl.var.fun.isTight = true
         end
     end,
 
@@ -104,28 +104,54 @@ F = {
     AwaitS   = 'AwaitExt',
 
     Op2_call = function (me)
-        local _, f, _ = unpack(me)
+        local op, f, _ = unpack(me)
+DBG(op, f, _)
+
+        if not (f.var and f.var.fun) then
+            return  -- ignore native and pointer calls
+        end
+
+        -- if calling a tight (or unknown) function,
+        --  then the top function is also tight
         local dcl = _AST.iter'Dcl_fun'()
-        -- if the top function is calling a "delay" (or unknown) function,
-        --  then it is also "delay"
-        if dcl and f.var and f.var.fun and
-                   (f.var.fun.delay or f.var.fun.delay==nil) then
-            dcl.var.fun.delay = true
+        if dcl and (f.var.fun.isTight or f.var.fun.isTight==nil) then
+            dcl.var.fun.isTight = true
+            ASR(dcl.var.fun.mod.delay == true,
+                dcl, 'function must be declared with "delay"')
+        end
+
+        -- assert that the call is using call/delay correctly
+if dcl then
+    DBG('dcl', dcl.var.fun, dcl.var.id, dcl.var.fun.isTight)
+end
+DBG('fun', f.var.fun, f.var.fun.id, f.var.fun.isTight, op)
+        if f.var.fun.isTight then
+            ASR(op=='call/delay',
+                me, '`call/delay´ is required for "'..f.var.fun.id..'"')
+        else
+            ASR(op=='call',
+                me, '`call/delay´ is not required for "'..f.var.fun.id..'"')
         end
     end,
     Dcl_fun = function (me)
-        local _, _, _, _, _, blk = unpack(me)
+        local _, delay, _, _, _, blk = unpack(me)
         if not blk then
+            -- force interface function to follow delay modifier
+            if CLS().is_ifc then
+                me.var.fun.isTight = (not not delay)
+            end
             return
         end
 
-        -- if I'm not discovered as "delay", then I'm not "delay"
-        if me.var.fun.delay == nil then
-            me.var.fun.delay = false
+        -- if I'm not discovered as tight, then I'm not tight
+        if me.var.fun.isTight == nil then
+            me.var.fun.isTight = false
         end
-DBG(me.var.fun.mod.delay, me.var.fun.delay)
-        ASR(me.var.fun.mod.delay == me.var.fun.delay,
-            me, 'function must be declared with "delay"')
+DBG('DCL', me.var.fun.id, me.var.fun.mod.delay, me.var.fun.isTight)
+        ASR(me.var.fun.mod.delay == me.var.fun.isTight,
+            me, 'function must be declared '..
+                    (me.var.fun.isTight and 'with' or 'without')..
+                ' "delay"')
     end,
 }
 

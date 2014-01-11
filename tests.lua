@@ -273,8 +273,35 @@ escape 1;
 
 -------------------------------------------------------------------------------
 
-do return end
 --]===]
+-- put back to XXXX
+Test { [[
+interface I with
+    function (int)=>int g;
+end
+
+class T with
+    interface I;
+    var I* i;
+do
+    function (int v)=>int g do
+        if (v == 1) then
+            return 1;
+        end
+        return v * i:g(v-1);
+    end
+end
+
+var T t;
+var I* i = &t;
+t.i = i;
+escape i:g(5);
+]],
+    --run = 120,
+    tight = 'line 9 : function must be declared with "delay"',
+}
+
+do return end
 
 -- OK: well tested
 
@@ -25433,31 +25460,7 @@ escape t.f() + i:f();
     run = 2,
 }
 
-Test { [[
-interface I with
-    function (int)=>int g;
-end
-
-class T with
-    interface I;
-    var I* i;
-do
-    function (int v)=>int g do
-        if (v == 1) then
-            return 1;
-        end
-        return v * i:g(v-1);
-    end
-end
-
-var T t;
-var I* i = &t;
-t.i = i;
-escape i:g(5);
-]],
-    --run = 120,
-    tight = 'line 9 : function must be declared with "delay"',
-}
+-- XXXX
 
 Test { [[
 interface I with
@@ -25481,7 +25484,8 @@ var I* i = &t;
 t.i = i;
 escape i:g(5);
 ]],
-    run = 120,
+    tight = 'line 13 : `call/delay´ is required for "g"',
+    --run = 120,
 }
 
 Test { [[
@@ -26164,6 +26168,37 @@ function delay (int v)=>int f do
     return v*f(v-1);
 end
 escape f(5);
+]],
+    tight = 'line 6 : `call/delay´ is required for "f"',
+    --run = 120,
+}
+Test { [[
+call 1;
+]],
+    ast = 'invalid call',
+}
+
+Test { [[
+function delay (int v)=>int f;
+function delay (int v)=>int f do
+    if v == 0 then
+        return 1;
+    end
+    return v * (call/delay f(v-1));
+end
+escape f(5);
+]],
+    tight = 'line 8 : `call/delay´ is required for "f"',
+}
+Test { [[
+function delay (int v)=>int f;
+function delay (int v)=>int f do
+    if v == 0 then
+        return 1;
+    end
+    return v * call/delay f(v-1);
+end
+escape call/delay f(5);
 ]],
     run = 120,
 }

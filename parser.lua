@@ -262,7 +262,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
                     (
                         K'(' * Cc'call' * V'ExpList' * EK')' *
                             ( K'finalize' * EK'with' * V'Finally' * EK'end'
-                            + Cc(false)) +
+                              + Cc(false)) +
                         K'[' * Cc'idx'  * V'_Exp'    * EK']' +
                         (CK':' + CK'.')
                             * (CK(Alpha * (Alphanum+'?')^0) /
@@ -275,6 +275,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
               + V'Var'     + V'Nat'
               + V'NULL'    + V'NUMBER' + V'STRING'
               + V'Global'  + V'This'   + V'RawExp'
+              + (CK'call/delay' + CK'call') * EV'_Exp'
 
     , ExpList = ( V'_Exp'*(K','*EV'_Exp')^0 )^-1
 
