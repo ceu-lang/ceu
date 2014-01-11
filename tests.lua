@@ -256,10 +256,25 @@ escape 1;
     run = 1,
 }
 
+Test { [[
+do
+    var int* p, p1;
+    event int* e;
+    p = await e;
+    p1 = p;
+    await e;
+    escape *p1;
+end
+escape 1;
+]],
+    run = 0,
+    -- *p1 deveria dar erro
+}
+
 -------------------------------------------------------------------------------
 
+do return end
 --]===]
---do return end
 
 -- OK: well tested
 
@@ -14157,6 +14172,7 @@ await e;
 escape *v;
 ]],
     fin = 'line 4 : invalid access to awoken pointer "v"',
+    --fin = 'line 3 : cannot `await´ again on this block',
     --run = 0,
 }
 
@@ -14169,6 +14185,36 @@ end
 escape 1;
 ]],
     fin = 'line 4 : invalid block for awoken pointer "p"',
+}
+
+Test { [[
+var int* p1;
+do
+    var int* p;
+    event int* e;
+    p = await e;
+    p1 = p;
+    await e;
+    escape *p1;
+end
+escape 1;
+]],
+    fin = 'line 6 : attribution requires `finalize´',
+}
+
+Test { [[
+var int* p1;
+do
+    var int* p;
+    event int* e;
+    p = await e;
+    _f(p);
+    await e;
+    escape *p1;
+end
+escape 1;
+]],
+    fin = 'line 6 : call to "_f" requires `finalize´',
 }
 
 Test { [[
