@@ -10,6 +10,8 @@ function node2blk (node)
     end
 end
 
+local AWAITS = {}
+
 F = {
     SetExp = function (me)
         local op, fr, to = unpack(me)
@@ -139,19 +141,17 @@ F = {
         --[[
         -- For awaits, always yield error.
         -- Do not allow finalization.
-        -- Verify if the receiving variable goes out of scope immediatelly.
+        -- Verify if the receiving variable is not accessed after another
+        -- await.
+        -- Verify if the receiving variable is acessed in the same block it is 
+        -- defined.
         --]]
         elseif fr.__ast_fr and string.sub(fr.__ast_fr.tag,1,5)=='Await' then
             if req then
                 local var = to.ref.var.ast_original_var or to.ref.var
-                var.blk.__fin_no_more_awaits = to
-                for node in _AST.pars(fr.__ast_fr) do
-                    if node == var.blk then
-                        break   -- await.blk and to.blk must be the same
-                    end
-                    ASR(node.tag ~= 'Block',
-                        me, 'invalid block for "'..var.id..'"')
-                end
+                AWAITS[var] = false
+                ASR(var.blk == _AST.iter'Block'(), me,
+                    'invalid block for awoken pointer "'..var.id..'"')
             end
             ASR(op ~= ':=', me, 'invalid operator')
 
@@ -171,9 +171,14 @@ F = {
         end
     end,
 
+    Var = function (me)
+        ASR(not AWAITS[me.var], me,
+                'invalid access to awoken pointer "'..me.var.id..'"')
+    end,
+
     AwaitInt = function (me)
-        for node in _AST.iter() do
-            ASR(not node.__fin_no_more_awaits, me, 'cannot `await´ again on this block')
+        for var, _ in pairs(AWAITS) do
+            AWAITS[var] = true
         end
     end,
     AwaitExt = 'AwaitInt',

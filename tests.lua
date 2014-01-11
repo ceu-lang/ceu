@@ -259,235 +259,6 @@ escape 1;
 -------------------------------------------------------------------------------
 
 --]===]
-Test { [[
-event void* e;
-var void* v = await e;
-escape 1;
-]],
-    run = 0,
-}
-
-Test { [[
-event void* e;
-var void* v = await e;
-await e;
-escape 1;
-]],
-    fin = 'line 3 : cannot `await´ again on this block',
-}
-
-Test { [[
-var int* p;
-do
-    event int* e;
-    p = await e;
-end
-escape 1;
-]],
-    fin = 'line 4 : invalid block for "p"',
-}
-
-Test { [[
-var int* p;
-do
-    event int* e;
-    p = await e;
-end
-await 1s;
-escape 1;
-]],
-    fin = 'line 4 : invalid block for "p"',
-}
-
-Test { [[
-var int* p;
-par/and do
-    await 1s;
-with
-    event int* e;
-    p = await e;
-end
-escape *p;
-]],
-    fin = 'line 6 : invalid block for "p"',
-    --fin = 'line 6 : cannot `await´ again on this block',
-}
-
-Test { [[
-input int* A;
-var int v;
-par/or do
-    do
-        var int* p = await A;
-        v = *p;
-    end
-    await A;
-with
-    async do
-        var int v = 10;
-        emit A => &v;
-        emit A => null;
-    end
-end
-escape v;
-]],
-    run = 10,
-}
-
-Test { [[
-var int* p;
-var int ret;
-input void START;
-do
-    event int* e;
-    par/and do
-        finalize
-            p = await e;
-        with
-            ret = *p;
-            p = &ret;
-        end
-    with
-        await START;
-        var int i = 1;
-        emit e => &i;
-    end
-end
-escape ret + *p;
-]],
-    fin = 'line 8 : invalid block for "p"',
-    --fin = 'line 14 : cannot `await´ again on this block',
-}
-
-Test { [[
-var void* p;
-var int i;
-input void START;
-do
-    var int r;
-    do
-        event (int,void*) ptr;
-        par/or do
-            finalize
-                (i,p) = await ptr;
-            with
-                r = i;
-            end
-        with
-            await START;
-            emit ptr => (1, null);
-        end
-    end
-    _assert(r == 1);
-    escape r;
-end
-]],
-    adj = 'line 9 : invalid finalize',
-    --run = 1,
-    -- TODO: impossible to place the finally in the correct parameter?
-}
-
-Test { [[
-var int* p;
-var int ret;
-input void START;
-do
-    event int* e;
-    par/and do
-        p := await e;
-        ret = *p;
-    with
-        await START;
-        var int i = 1;
-        emit e => &i;
-    end
-end
-escape ret;
-]],
-    fin = 'line 7 : invalid block for "p"',
-    --fin = 'line 7 : invalid operator',
-    --run = 1,
-}
-
-Test { [[
-input void START;
-native nohold _fprintf(), _stderr;
-event (int,void*) ptr;
-var void* p;
-var int i;
-par/or do
-    (i,p) = await ptr;
-_fprintf(_stderr,"a\n");
-with
-    await START;
-    emit ptr => (1, null);
-end
-escape i;
-]],
-    fin = 'line 7 : invalid block for "p"',
-    --run = 1,
-}
-
-Test { [[
-event (int,void*) ptr;
-var void* p;
-var int i;
-(i,p) = await ptr;
-await 1s;
-escape i;
-]],
-    fin = 'line 5 : cannot `await´ again on this block',
-}
-
-Test { [[
-input void START;
-native nohold _fprintf(), _stderr;
-event (int,void*) ptr;
-var void* p;
-var int i;
-par/or do
-    (i,p) = await ptr;
-with
-    await START;
-    emit ptr => (1, null);
-end
-await 1s;
-escape i;
-]],
-    --run = 1,
-    fin = 'line 7 : invalid block for "p"',
-}
-
-Test { [[
-var void* p;
-var int i;
-input void START;
-do
-    event (int,void*) ptr;
-    par/or do
-        (i,p) := await ptr;
-    with
-        await START;
-        emit ptr => (1, null);
-    end
-end
-escape i;
-]],
-    fin = 'line 7 : invalid operator',
-    --run = 1,
-}
-
-Test { [[
-input (int,int,int*) A;
-async do
-    emit A =>
-        (1, 1, null);
-end
-escape 1;
-]],
-    run = 1;
-}
-
 --do return end
 
 -- OK: well tested
@@ -14359,6 +14130,247 @@ end
 escape ret + _V;
 ]],
     run = 16,
+}
+
+Test { [[
+event void* e;
+var void* v = await e;
+escape 1;
+]],
+    run = 0,
+}
+
+Test { [[
+event void* e;
+var void* v = await e;
+await e;
+escape 1;
+]],
+    --fin = 'line 3 : cannot `await´ again on this block',
+    run = 0,
+}
+
+Test { [[
+event int* e;
+var int* v = await e;
+await e;
+escape *v;
+]],
+    fin = 'line 4 : invalid access to awoken pointer "v"',
+    --run = 0,
+}
+
+Test { [[
+var int* p;
+do
+    event int* e;
+    p = await e;
+end
+escape 1;
+]],
+    fin = 'line 4 : invalid block for awoken pointer "p"',
+}
+
+Test { [[
+var int* p;
+do
+    event int* e;
+    p = await e;
+end
+await 1s;
+escape 1;
+]],
+    fin = 'line 4 : invalid block for awoken pointer "p"',
+}
+
+Test { [[
+var int* p;
+par/and do
+    await 1s;
+with
+    event int* e;
+    p = await e;
+end
+escape *p;
+]],
+    fin = 'line 6 : invalid block for awoken pointer "p"',
+    --fin = 'line 6 : cannot `await´ again on this block',
+}
+
+Test { [[
+input int* A;
+var int v;
+par/or do
+    do
+        var int* p = await A;
+        v = *p;
+    end
+    await A;
+with
+    async do
+        var int v = 10;
+        emit A => &v;
+        emit A => null;
+    end
+end
+escape v;
+]],
+    run = 10,
+}
+
+Test { [[
+var int* p;
+var int ret;
+input void START;
+do
+    event int* e;
+    par/and do
+        finalize
+            p = await e;
+        with
+            ret = *p;
+            p = &ret;
+        end
+    with
+        await START;
+        var int i = 1;
+        emit e => &i;
+    end
+end
+escape ret + *p;
+]],
+    fin = 'line 8 : invalid block for awoken pointer "p"',
+    --fin = 'line 14 : cannot `await´ again on this block',
+}
+
+Test { [[
+var void* p;
+var int i;
+input void START;
+do
+    var int r;
+    do
+        event (int,void*) ptr;
+        par/or do
+            finalize
+                (i,p) = await ptr;
+            with
+                r = i;
+            end
+        with
+            await START;
+            emit ptr => (1, null);
+        end
+    end
+    _assert(r == 1);
+    escape r;
+end
+]],
+    adj = 'line 9 : invalid finalize',
+    --run = 1,
+    -- TODO: impossible to place the finally in the correct parameter?
+}
+
+Test { [[
+var int* p;
+var int ret;
+input void START;
+do
+    event int* e;
+    par/and do
+        p := await e;
+        ret = *p;
+    with
+        await START;
+        var int i = 1;
+        emit e => &i;
+    end
+end
+escape ret;
+]],
+    fin = 'line 7 : invalid block for awoken pointer "p"',
+    --fin = 'line 7 : invalid operator',
+    --run = 1,
+}
+
+Test { [[
+input void START;
+native nohold _fprintf(), _stderr;
+event (int,void*) ptr;
+var void* p;
+var int i;
+par/or do
+    (i,p) = await ptr;
+_fprintf(_stderr,"a\n");
+with
+    await START;
+    emit ptr => (1, null);
+end
+escape i;
+]],
+    fin = 'line 7 : invalid block for awoken pointer "p"',
+    --run = 1,
+}
+
+Test { [[
+event (int,void*) ptr;
+var void* p;
+var int i;
+(i,p) = await ptr;
+await 1s;
+escape i;
+]],
+    --fin = 'line 5 : cannot `await´ again on this block',
+    run = 0,
+}
+
+Test { [[
+input void START;
+native nohold _fprintf(), _stderr;
+event (int,void*) ptr;
+var void* p;
+var int i;
+par/or do
+    (i,p) = await ptr;
+with
+    await START;
+    emit ptr => (1, null);
+end
+await 1s;
+escape i;
+]],
+    --run = 1,
+    fin = 'line 7 : invalid block for awoken pointer "p"',
+}
+
+Test { [[
+var void* p;
+var int i;
+input void START;
+do
+    event (int,void*) ptr;
+    par/or do
+        (i,p) := await ptr;
+    with
+        await START;
+        emit ptr => (1, null);
+    end
+end
+escape i;
+]],
+    fin = 'line 7 : invalid operator',
+    --run = 1,
+}
+
+Test { [[
+input (int,int,int*) A;
+async do
+    emit A =>
+        (1, 1, null);
+end
+escape 1;
+]],
+    run = 1;
 }
 
 -- TODO: bounded loop on finally
