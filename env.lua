@@ -200,10 +200,12 @@ function newint (me, blk, pre, tp, id)
     return var
 end
 
-function newfun (me, blk, pre, ins, out, id)
+function newfun (me, blk, pre, delay, ins, out, id)
+    delay = not not delay
     local old = blk.vars[id]
     if old then
-        ASR(ins.tp==old.fun.ins.tp and out==old.fun.out,
+        ASR(ins.tp==old.fun.ins.tp and out==old.fun.out and
+            delay==old.fun.mod.delay,
             me, 'function declaration does not match the one at "'..
                 old.ln[1]..':'..old.ln[2]..'"')
     end
@@ -217,6 +219,7 @@ function newfun (me, blk, pre, ins, out, id)
         ins = ins,
         out = out,
         pre = pre,
+        mod = { delay=delay },
     }
     var.fun = fun
     return var
@@ -322,7 +325,7 @@ F = {
 
         -- include arguments into function block
         local fun = _AST.iter()()
-        local _, inp, out = unpack(fun)
+        local _, _, inp, out = unpack(fun)
         if fun.tag == 'Dcl_fun' then
             for i, v in ipairs(inp) do
                 local hold, tp, id = unpack(v)
@@ -511,7 +514,7 @@ F = {
     end,
 
     Dcl_fun = function (me)
-        local pre, ins, out, id, blk = unpack(me)
+        local pre, delay, ins, out, id, blk = unpack(me)
         local cls = CLS()
 
         -- implementation cannot be inside interface, so,
@@ -521,7 +524,7 @@ F = {
             up = cls.blk_ifc
         end
 
-        me.var = newfun(me, up, pre, ins, out, id)
+        me.var = newfun(me, up, pre, delay, ins, out, id)
 
         -- "void" as parameter only if single
         if #ins > 1 then
@@ -556,7 +559,7 @@ F = {
             elseif var.pre == 'event' then
                 newint(me, _AST.iter'Block'(), var.pre, var.evt.tp, var.id)
             else
-                newfun(me, _AST.iter'Block'(), var.pre,
+                newfun(me, _AST.iter'Block'(), var.pre, var.fun.mod.delay,
                            var.fun.ins, var.fun.out, var.id)
             end
             CLS().c[var.id] = ifc.c[var.id] -- also copy C properties

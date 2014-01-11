@@ -25406,6 +25406,30 @@ var T t;
 var I* i = &t;
 escape t.f() + i:f();
 ]],
+    tight = 'line 9 : function must be declared with "delay"',
+}
+
+Test { [[
+interface I with
+    function (void)=>int f1;
+    function (void)=>int f;
+end
+
+class T with
+    interface I;
+do
+    function (void)=>int f1 do
+        return 1;
+    end
+    function (void)=>int f do
+        return this.f1();
+    end
+end
+
+var T t;
+var I* i = &t;
+escape t.f() + i:f();
+]],
     run = 2,
 }
 
@@ -25419,6 +25443,32 @@ class T with
     var I* i;
 do
     function (int v)=>int g do
+        if (v == 1) then
+            return 1;
+        end
+        return v * i:g(v-1);
+    end
+end
+
+var T t;
+var I* i = &t;
+t.i = i;
+escape i:g(5);
+]],
+    --run = 120,
+    tight = 'line 9 : function must be declared with "delay"',
+}
+
+Test { [[
+interface I with
+    function delay (int)=>int g;
+end
+
+class T with
+    interface I;
+    var I* i;
+do
+    function delay (int v)=>int g do
         if (v == 1) then
             return 1;
         end
@@ -26079,6 +26129,44 @@ end
     run = { ['~>A; ~>A']=2 },
 }
 
+Test { [[
+function (int v)=>int f;
+function (int v)=>int f do
+    if v == 0 then
+        return 1;
+    end
+    return v*f(v-1);
+end
+escape f(5);
+]],
+    tight = 'line 2 : function must be declared with "delay"',
+    --run = 120,
+}
+Test { [[
+function delay (int v)=>int f;
+function (int v)=>int f do
+    if v == 0 then
+        return 1;
+    end
+    return v*f(v-1);
+end
+escape f(5);
+]],
+    env = 'line 2 : function declaration does not match the one at "tests.lua:1"',
+    --run = 120,
+}
+Test { [[
+function delay (int v)=>int f;
+function delay (int v)=>int f do
+    if v == 0 then
+        return 1;
+    end
+    return v*f(v-1);
+end
+escape f(5);
+]],
+    run = 120,
+}
 -- UNTIL
 
 Test { [[

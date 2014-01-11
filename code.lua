@@ -186,7 +186,7 @@ F = {
     end,
 
     Dcl_fun = function (me)
-        local _, ins, out, id, blk = unpack(me)
+        local _, _, ins, out, id, blk = unpack(me)
         if blk then
             _CODE.functions = _CODE.functions .. me.proto ..[[
 {

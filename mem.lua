@@ -149,7 +149,7 @@ DBG('===', me.id, me.trails_n, '('..tostring(me.max)..')')
     end,
 
     Dcl_fun = function (me)
-        local _, ins, out, id, blk = unpack(me)
+        local _, _, ins, out, id, blk = unpack(me)
         local cls = CLS()
 
         -- input parameters (void* _ceu_org, int a, int b)

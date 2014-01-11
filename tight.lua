@@ -69,6 +69,11 @@ F = {
         WRN(not isTight, me, 'tight loop')
         _TIGHT = _TIGHT or isTight
         me.tl_blocks = (body.tl_awaits or body.tl_escapes) and me.isBounded~='var'
+
+        local dcl = _AST.iter'Dcl_fun'()
+        if dcl and isTight then
+            dcl.var.fun.delay = true
+        end
     end,
 
     SetBlock = function (me)
@@ -97,6 +102,31 @@ F = {
     AwaitT   = 'AwaitExt',
     AwaitN   = 'AwaitExt',
     AwaitS   = 'AwaitExt',
+
+    Op2_call = function (me)
+        local _, f, _ = unpack(me)
+        local dcl = _AST.iter'Dcl_fun'()
+        -- if the top function is calling a "delay" (or unknown) function,
+        --  then it is also "delay"
+        if dcl and f.var and f.var.fun and
+                   (f.var.fun.delay or f.var.fun.delay==nil) then
+            dcl.var.fun.delay = true
+        end
+    end,
+    Dcl_fun = function (me)
+        local _, _, _, _, _, blk = unpack(me)
+        if not blk then
+            return
+        end
+
+        -- if I'm not discovered as "delay", then I'm not "delay"
+        if me.var.fun.delay == nil then
+            me.var.fun.delay = false
+        end
+DBG(me.var.fun.mod.delay, me.var.fun.delay)
+        ASR(me.var.fun.mod.delay == me.var.fun.delay,
+            me, 'function must be declared with "delay"')
+    end,
 }
 
 _AST.visit(F)

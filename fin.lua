@@ -127,7 +127,7 @@ F = {
                             me, 'invalid attribution')
 
                     -- must be hold
-                    local _, ins, _, _, _ = unpack(dcl)
+                    local _, _, ins, _, _, _ = unpack(dcl)
                     ASR(ins[fr.ref.var.funIdx][1],
                         me, 'parameter must be `hold´')
                 end

@@ -364,7 +364,8 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
 
     , _Dcl_imp = K'interface' * EV'ID_cls' * (K',' * EV'ID_cls')^0
 
-    , _Dcl_fun0 = CK'function' * EV'TupleType' * EK'=>' * EV'ID_type'
+    , _Dcl_fun0 = CK'function' * (CK'delay'+Cc(false))
+                               * EV'TupleType' * EK'=>' * EV'ID_type'
                                * V'ID_var'
     , _Dcl_fun1 = V'_Dcl_fun0' * V'_Do'
     , Return  = K'return' * EV'_Exp'^-1
