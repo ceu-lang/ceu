@@ -481,8 +481,8 @@ F = {
 
     Dcl_var_pre = function (me)
         -- changes TP from ast.lua
-        if me.__ref then
-            local ref = me.__ref
+        if me.__ast_ref then
+            local ref = me.__ast_ref
             local evt = ref.evt or ref.var.evt
             ASR(evt, me,
                 'event "'..(ref.var and ref.var.id or '?')..'" is not declared')
@@ -665,9 +665,9 @@ F = {
                 'read-only variable')
         ASR(not CLS().is_ifc, me, 'invalid attribution')
 
-        if fr.from and (fr.from.tag == 'New') then
+        if fr.__ast_fr and (fr.__ast_fr.tag == 'New') then
             -- a = new T
-            fr.from.blk = to.ref.var.blk   -- to = me.__par[3]
+            fr.__ast_fr.blk = to.ref.var.blk   -- to = me.__par[3]
 
             -- refuses (x.ptr = new T;)
             ASR( _AST.isChild(CLS(),to.ref.var.blk), me,
@@ -690,24 +690,24 @@ F = {
 ]]
 
     SetVal = function (me)
-        if me.from.tag == 'AwaitT' then
+        if me.__ast_fr.tag == 'AwaitT' then
             me.tp = 's32'               -- late
-        elseif me.from.tag == 'AwaitS' then
+        elseif me.__ast_fr.tag == 'AwaitS' then
             me.tp = 'int'
-        elseif me.from.tag=='AwaitInt' then
-            me.tp = me.from[1].var.evt.tp   -- evt tp
-        elseif me.from.tag=='AwaitExt' then
-            me.tp = me.from[1].evt.tp   -- evt tp
-        elseif me.from.tag == 'New' then
-            me.tp = me.from[2]..'*'     -- class id
-        elseif me.from.tag == 'Spawn' then
+        elseif me.__ast_fr.tag=='AwaitInt' then
+            me.tp = me.__ast_fr[1].var.evt.tp   -- evt tp
+        elseif me.__ast_fr.tag=='AwaitExt' then
+            me.tp = me.__ast_fr[1].evt.tp   -- evt tp
+        elseif me.__ast_fr.tag == 'New' then
+            me.tp = me.__ast_fr[2]..'*'     -- class id
+        elseif me.__ast_fr.tag == 'Spawn' then
             me.tp = 'int'               -- 0/1
-        elseif me.from.tag == 'Thread' then
+        elseif me.__ast_fr.tag == 'Thread' then
             me.tp = 'int'               -- 0/1
         else
             error'unexpected error'
         end
-        me.fst = me.from.fst
+        me.fst = me.__ast_fr.fst
     end,
 
     Free = function (me)

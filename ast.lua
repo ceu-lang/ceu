@@ -23,6 +23,14 @@ function _AST.isChild (n1, n2)
         or n2.__par and _AST.isChild(n1, n2.__par)
 end
 
+function _AST.pars (node)
+    return
+        function ()
+            node = node.__par
+            return node
+        end
+end
+
 local _N = 0
 function _AST.node (tag)
     return function (ln, ...)
@@ -175,13 +183,14 @@ function _AST.visit (F, node)
     return visit_aux(node or _AST.root, F)
 end
 
-function _AST.SetAwaitUntil (ln, awt, op,to)
+function _AST.SetAwaitUntil (ln, awt, op, to, to_orig)
     local ret
 
     -- set await
     if op then
         local val = node('SetVal')(ln)
-        val.from = awt
+        val.__ast_fr = awt
+        val.to   = to_orig
         ret = node('Stmts')(ln,
                 awt,
                 node('SetExp')(ln, op, val, to))
@@ -378,10 +387,10 @@ C = {
                 local t = {
                     _AST.copy(evt), -- find out 'TP' before traversing tup
                     node('Dcl_var')(ln, 'var', 'TP*', false, tup),
-                    _AST.SetAwaitUntil(ln, awt, '=', node('Var')(ln,tup)),
+                    _AST.SetAwaitUntil(ln, awt, '=', node('Var')(ln,tup), to),
                                         -- assignment to struct must be '='
                 }
-                t[2].__ref = t[1] -- TP* is changed on env.lua
+                t[2].__ast_ref = t[1] -- TP* is changed on env.lua
 
                 for i, v in ipairs(to) do
                     t[#t+1] = node('SetExp')(ln, op,
@@ -390,15 +399,12 @@ C = {
                                         node('Var')(ln, tup)),
                                     '_'..i),
                                 v)
-                    t[#t].fromAwait = awt
-
-                    -- TODO: workaround that avoids checking := for tuple fields
-                    t[#t].dont_check_nofin = true
+                    t[#t][2].__ast_fr = awt
                 end
                 stmts = node('Stmts')(ln, unpack(t))
 
             else
-                stmts = _AST.SetAwaitUntil(ln, awt, op, to)
+                stmts = _AST.SetAwaitUntil(ln, awt, op, to, to)
             end
         end
 
@@ -486,7 +492,9 @@ C = {
                                 _AST.SetAwaitUntil(ln,
                                     node('AwaitInt')(ln, evt, false),
                                     '=',
-                                    node('Var')(ln, cur_id)),
+                                    node('Var')(ln, cur_id)
+                                    -- TODO: ,to_orig=same
+                                    ),
                                 node('If')(ln,
                                     node('Var')(ln, cur_id),
                                     on,
@@ -618,13 +626,15 @@ C = {
             local tup = '_tup_'.._N
             _N = _N + 1
 
+            -- await e => p1[1]=Var(e)
+
             local t = {
                 _AST.copy(p1[1]),   -- find out 'TP' before traversing tup
                 node('Dcl_var')(ln, 'var', 'TP*', false, tup),
-                _AST.SetAwaitUntil(ln, p1, '=', node('Var')(ln,tup)),
+                _AST.SetAwaitUntil(ln, p1, '=', node('Var')(ln,tup), to),
                                         -- assignment to struct must be '='
             }
-            t[2].__ref = t[1] -- TP* is changed on env.lua
+            t[2].__ast_ref = t[1] -- TP* is changed on env.lua
 
             for i, v in ipairs(to) do
                 t[#t+1] = node('SetExp')(ln, op,
@@ -633,10 +643,7 @@ C = {
                                     node('Var')(ln, tup)),
                                 '_'..i),
                             v)
-                t[#t].fromAwait = p1    -- p1 is an AwaitX
-
-                -- TODO: workaround that avoids checking := for fields
-                t[#t].dont_check_nofin = true
+                t[#t][2].__ast_fr = p1    -- p1 is an AwaitX
             end
             return node('Stmts')(ln, unpack(t))
 
@@ -644,7 +651,7 @@ C = {
             return node(tag)(ln, op, p1, to)
 
         elseif tag == '_SetAwait' then
-            return _AST.SetAwaitUntil(ln, p1, op, to)
+            return _AST.SetAwaitUntil(ln, p1, op, to, to)
 
         elseif tag == 'SetBlock' then
             return node(tag)(ln, p1, to)
@@ -653,7 +660,7 @@ C = {
             local thr = p1[2]
 
             local val = node('SetVal')(ln)
-            val.from = thr
+            val.__ast_fr = thr
             thr.setto = true
 
             p1[2] = node('Stmts')(ln, thr, node('SetExp')(ln,op,val,to))
@@ -661,7 +668,7 @@ C = {
 
         else -- '_SetNew', '_SetSpawn'
             local val = node('SetVal')(ln)
-            val.from = p1
+            val.__ast_fr = p1
             p1.setto = true
             return node('Stmts')(ln, p1, node('SetExp')(ln,op,val,to))
         end
@@ -690,7 +697,7 @@ C = {
                 _AST.copy(ext),  -- find out 'TP' before traversing tup
                 node('Dcl_var')(ln, 'var', 'TP', false, tup)
             }
-            t[2].__ref = t[1]    -- TP is changed on env.lua
+            t[2].__ast_ref = t[1]    -- TP is changed on env.lua
 
             for i, p in ipairs(ps) do
                 t[#t+1] = node('SetExp')(ln, '=',

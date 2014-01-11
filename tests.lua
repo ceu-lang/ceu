@@ -257,256 +257,235 @@ escape 1;
 }
 
 -------------------------------------------------------------------------------
+
 --]===]
-
 Test { [[
-native do
-    void* V;
-end
-function (void* v)=>void f do
-    _V = v;
-end
+event void* e;
+var void* v = await e;
 escape 1;
 ]],
-    fin = 'line 5 : invalid attribution',
+    run = 0,
 }
 
 Test { [[
-native do
-    void* V;
-end
-function (void* v)=>void f do
-end
+event void* e;
+var void* v = await e;
+await e;
 escape 1;
 ]],
-    -- function can be "nohold v"
-    run = 1,
+    fin = 'line 3 : cannot `await´ again on this block',
 }
 
 Test { [[
-native do
-    void* V;
-end
-class T with
-    function (void* v)=>void f;
+var int* p;
 do
-    function (void* v)=>void f do
-        _V = v;
+    event int* e;
+    p = await e;
+end
+escape 1;
+]],
+    fin = 'line 4 : invalid block for "p"',
+}
+
+Test { [[
+var int* p;
+do
+    event int* e;
+    p = await e;
+end
+await 1s;
+escape 1;
+]],
+    fin = 'line 4 : invalid block for "p"',
+}
+
+Test { [[
+var int* p;
+par/and do
+    await 1s;
+with
+    event int* e;
+    p = await e;
+end
+escape *p;
+]],
+    fin = 'line 6 : invalid block for "p"',
+    --fin = 'line 6 : cannot `await´ again on this block',
+}
+
+Test { [[
+input int* A;
+var int v;
+par/or do
+    do
+        var int* p = await A;
+        v = *p;
+    end
+    await A;
+with
+    async do
+        var int v = 10;
+        emit A => &v;
+        emit A => null;
     end
 end
-escape 1;
+escape v;
 ]],
-    fin = 'line 8 : invalid attribution',
+    run = 10,
 }
+
 Test { [[
-native do
-    void* V;
-end
-class T with
-    function (void* v)=>void f;
+var int* p;
+var int ret;
+input void START;
 do
-    function (void* v)=>void f do
-        _V := v;
+    event int* e;
+    par/and do
+        finalize
+            p = await e;
+        with
+            ret = *p;
+            p = &ret;
+        end
+    with
+        await START;
+        var int i = 1;
+        emit e => &i;
     end
 end
-escape 1;
+escape ret + *p;
 ]],
-    --fin = 'line 8 : invalid attribution',
-    run = 1,
+    fin = 'line 8 : invalid block for "p"',
+    --fin = 'line 14 : cannot `await´ again on this block',
 }
 
 Test { [[
-class T with
-    var void* v;
-    function (void* v)=>void f;
+var void* p;
+var int i;
+input void START;
 do
-    function (void* v)=>void f do
+    var int r;
+    do
+        event (int,void*) ptr;
+        par/or do
+            finalize
+                (i,p) = await ptr;
+            with
+                r = i;
+            end
+        with
+            await START;
+            emit ptr => (1, null);
+        end
+    end
+    _assert(r == 1);
+    escape r;
+end
+]],
+    adj = 'line 9 : invalid finalize',
+    --run = 1,
+    -- TODO: impossible to place the finally in the correct parameter?
+}
+
+Test { [[
+var int* p;
+var int ret;
+input void START;
+do
+    event int* e;
+    par/and do
+        p := await e;
+        ret = *p;
+    with
+        await START;
+        var int i = 1;
+        emit e => &i;
     end
 end
-var T t;
-t.f();
-escape 1;
+escape ret;
 ]],
-    -- function can be "nohold v"
-    run = 1,
+    fin = 'line 7 : invalid block for "p"',
+    --fin = 'line 7 : invalid operator',
+    --run = 1,
 }
 
 Test { [[
-class T with
-    var void* a;
-    function (void* v)=>void f;
+input void START;
+native nohold _fprintf(), _stderr;
+event (int,void*) ptr;
+var void* p;
+var int i;
+par/or do
+    (i,p) = await ptr;
+_fprintf(_stderr,"a\n");
+with
+    await START;
+    emit ptr => (1, null);
+end
+escape i;
+]],
+    fin = 'line 7 : invalid block for "p"',
+    --run = 1,
+}
+
+Test { [[
+event (int,void*) ptr;
+var void* p;
+var int i;
+(i,p) = await ptr;
+await 1s;
+escape i;
+]],
+    fin = 'line 5 : cannot `await´ again on this block',
+}
+
+Test { [[
+input void START;
+native nohold _fprintf(), _stderr;
+event (int,void*) ptr;
+var void* p;
+var int i;
+par/or do
+    (i,p) = await ptr;
+with
+    await START;
+    emit ptr => (1, null);
+end
+await 1s;
+escape i;
+]],
+    --run = 1,
+    fin = 'line 7 : invalid block for "p"',
+}
+
+Test { [[
+var void* p;
+var int i;
+input void START;
 do
-    function (void* v)=>void f do
-        var void* a = v;
+    event (int,void*) ptr;
+    par/or do
+        (i,p) := await ptr;
+    with
+        await START;
+        emit ptr => (1, null);
     end
 end
-escape 1;
+escape i;
 ]],
-    run = 1,
+    fin = 'line 7 : invalid operator',
+    --run = 1,
 }
 
 Test { [[
-class T with
-    var void* a;
-    function (void)=>void f;
-do
-    function (void)=>void f do
-        var void* v;
-        a = v;
-    end
+input (int,int,int*) A;
+async do
+    emit A =>
+        (1, 1, null);
 end
 escape 1;
 ]],
-    -- not from paramter
-    fin = 'line 7 : invalid attribution',
-}
-Test { [[
-class T with
-    var void* a;
-    function (void* v)=>void f;
-do
-    function (void* v)=>void f do
-        a = v;
-    end
-end
-escape 1;
-]],
-    -- function must be "hold v"
-    fin = ' line 6 : parameter must be `hold´',
-}
-Test { [[
-class T with
-    var void* a;
-    function (hold void* v)=>void f;
-do
-    function (hold void* v)=>void f do
-        a = v;
-    end
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-class T with
-    var void* v;
-    function (void* v)=>void f;
-do
-    function (hold void* v)=>void f do
-        this.v = v;
-    end
-end
-escape 1;
-]],
-    env = 'line 5 : function declaration does not match the one at "tests.lua:3"',
-}
-
-Test { [[
-class T with
-    var void* v;
-    function (hold void* v)=>void f;
-do
-    function (hold void* v)=>void f do
-        this.v = v;
-    end
-end
-var void* v;
-var T t;
-t.f(null);
-t.f(v);
-do
-    var void* v;
-    t.f(v);
-end
-escape 1;
-]],
-    -- function must be "hold v" and call must have fin
-    fin = 'line 12 : call to "f" requires `finalize´',
-}
-
-Test { [[
-class T with
-    var void* v;
-    function (hold void* v)=>void f;
-do
-    function (hold void* v)=>void f do
-        this.v = v;
-    end
-end
-var void* v;
-var T t;
-t.f(null);
-t.f(v);
-do
-    var void* v;
-    t.f(v)
-        finalize with
-            nothing;
-        end;
-end
-escape 1;
-]],
-    -- function must be "hold v" and call must have fin
-    fin = 'line 12 : call to "f" requires `finalize´',
-}
-
-Test { [[
-native do
-    void* V;
-end
-function (void* v)=>void f do
-    _V := v;
-end
-var void* x;
-f((void*)5);
-escape _V==(void*)5;
-]],
-    --fin = 'line 5 : invalid attribution',
-    run = 1,
-}
-
-Test { [[
-native do
-    void* V;
-end
-function (void* v)=>void f do
-    _V := v;
-end
-var void* x;
-f((void*)5)
-    finalize with nothing; end;
-escape _V==(void*)5;
-]],
-    fin = 'line 8 : invalid `finalize´',
-}
-
-Test { [[
-native do
-    int V;
-end
-function (int v)=>void f do
-    _V := v;
-end
-var void* x;
-f(5);
-escape _V==5;
-]],
-    fin = 'line 5 : attribution does not require `finalize´',
-}
-
-Test { [[
-native do
-    int V;
-end
-function (int v)=>void f do
-    _V = v;
-end
-var void* x;
-f(5);
-escape _V==5;
-]],
-    run = 1,
+    run = 1;
 }
 
 --do return end
@@ -14382,136 +14361,6 @@ escape ret + _V;
     run = 16,
 }
 
-Test { [[
-var int* p;
-var int ret;
-input void START;
-do
-    event int* e;
-    par/and do
-        finalize
-            p = await e;
-        with
-            ret = *p;
-            p = &ret;
-        end
-    with
-        await START;
-        var int i = 1;
-        emit e => &i;
-    end
-end
-escape ret + *p;
-]],
-    run = 2,
-}
-
-Test { [[
-var void* p;
-var int i;
-input void START;
-do
-    var int r;
-    do
-        event (int,void*) ptr;
-        par/or do
-            finalize
-                (i,p) = await ptr;
-            with
-                r = i;
-            end
-        with
-            await START;
-            emit ptr => (1, null);
-        end
-    end
-    _assert(r == 1);
-    escape r;
-end
-]],
-    adj = 'line 9 : invalid finalize',
-    --run = 1,
-    -- TODO: impossible to place the finally in the correct parameter?
-}
-
-Test { [[
-var int* p;
-do
-    event int* e;
-    p = await e;
-end
-escape 1;
-]],
-    fin = 'line 4 : attribution requires `finalize´',
-}
-
-Test { [[
-var int* p;
-var int ret;
-input void START;
-do
-    event int* e;
-    par/and do
-        p := await e;
-        ret = *p;
-    with
-        await START;
-        var int i = 1;
-        emit e => &i;
-    end
-end
-escape ret;
-]],
-    run = 1,
-}
-
-Test { [[
-input void START;
-native nohold _fprintf(), _stderr;
-event (int,void*) ptr;
-var void* p;
-var int i;
-par/or do
-    (i,p) = await ptr;
-_fprintf(_stderr,"a\n");
-with
-    await START;
-    emit ptr => (1, null);
-end
-escape i;
-]],
-    run = 1,
-}
-
-Test { [[
-var void* p;
-var int i;
-input void START;
-do
-    event (int,void*) ptr;
-    par/or do
-        (i,p) := await ptr;
-    with
-        await START;
-        emit ptr => (1, null);
-    end
-end
-escape i;
-]],
-    run = 1,
-}
-
-Test { [[
-input (int,int,int*) A;
-async do
-    emit A =>
-        (1, 1, null);
-end
-escape 1;
-]],
-    run = 1;
-}
-
 -- TODO: bounded loop on finally
 
     -- ASYNCHRONOUS
@@ -25625,6 +25474,256 @@ f:f(3);
 escape t1.i + f:i;
 ]],
     run = 28,
+}
+
+Test { [[
+native do
+    void* V;
+end
+function (void* v)=>void f do
+    _V = v;
+end
+escape 1;
+]],
+    fin = 'line 5 : invalid attribution',
+}
+
+Test { [[
+native do
+    void* V;
+end
+function (void* v)=>void f do
+end
+escape 1;
+]],
+    -- function can be "nohold v"
+    run = 1,
+}
+
+Test { [[
+native do
+    void* V;
+end
+class T with
+    function (void* v)=>void f;
+do
+    function (void* v)=>void f do
+        _V = v;
+    end
+end
+escape 1;
+]],
+    fin = 'line 8 : invalid attribution',
+}
+Test { [[
+native do
+    void* V;
+end
+class T with
+    function (void* v)=>void f;
+do
+    function (void* v)=>void f do
+        _V := v;
+    end
+end
+escape 1;
+]],
+    --fin = 'line 8 : invalid attribution',
+    run = 1,
+}
+
+Test { [[
+class T with
+    var void* v;
+    function (void* v)=>void f;
+do
+    function (void* v)=>void f do
+    end
+end
+var T t;
+t.f();
+escape 1;
+]],
+    -- function can be "nohold v"
+    run = 1,
+}
+
+Test { [[
+class T with
+    var void* a;
+    function (void* v)=>void f;
+do
+    function (void* v)=>void f do
+        var void* a = v;
+    end
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+    var void* a;
+    function (void)=>void f;
+do
+    function (void)=>void f do
+        var void* v;
+        a = v;
+    end
+end
+escape 1;
+]],
+    -- not from paramter
+    fin = 'line 7 : invalid attribution',
+}
+Test { [[
+class T with
+    var void* a;
+    function (void* v)=>void f;
+do
+    function (void* v)=>void f do
+        a = v;
+    end
+end
+escape 1;
+]],
+    -- function must be "hold v"
+    fin = ' line 6 : parameter must be `hold´',
+}
+Test { [[
+class T with
+    var void* a;
+    function (hold void* v)=>void f;
+do
+    function (hold void* v)=>void f do
+        a = v;
+    end
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+    var void* v;
+    function (void* v)=>void f;
+do
+    function (hold void* v)=>void f do
+        this.v = v;
+    end
+end
+escape 1;
+]],
+    env = 'line 5 : function declaration does not match the one at "tests.lua:3"',
+}
+
+Test { [[
+class T with
+    var void* v;
+    function (hold void* v)=>void f;
+do
+    function (hold void* v)=>void f do
+        this.v = v;
+    end
+end
+var void* v;
+var T t;
+t.f(null);
+t.f(v);
+do
+    var void* v;
+    t.f(v);
+end
+escape 1;
+]],
+    -- function must be "hold v" and call must have fin
+    fin = 'line 12 : call to "f" requires `finalize´',
+}
+
+Test { [[
+class T with
+    var void* v;
+    function (hold void* v)=>void f;
+do
+    function (hold void* v)=>void f do
+        this.v = v;
+    end
+end
+var void* v;
+var T t;
+t.f(null);
+t.f(v);
+do
+    var void* v;
+    t.f(v)
+        finalize with
+            nothing;
+        end;
+end
+escape 1;
+]],
+    -- function must be "hold v" and call must have fin
+    fin = 'line 12 : call to "f" requires `finalize´',
+}
+
+Test { [[
+native do
+    void* V;
+end
+function (void* v)=>void f do
+    _V := v;
+end
+var void* x;
+f((void*)5);
+escape _V==(void*)5;
+]],
+    --fin = 'line 5 : invalid attribution',
+    run = 1,
+}
+
+Test { [[
+native do
+    void* V;
+end
+function (void* v)=>void f do
+    _V := v;
+end
+var void* x;
+f((void*)5)
+    finalize with nothing; end;
+escape _V==(void*)5;
+]],
+    fin = 'line 8 : invalid `finalize´',
+}
+
+Test { [[
+native do
+    int V;
+end
+function (int v)=>void f do
+    _V := v;
+end
+var void* x;
+f(5);
+escape _V==5;
+]],
+    fin = 'line 5 : attribution does not require `finalize´',
+}
+
+Test { [[
+native do
+    int V;
+end
+function (int v)=>void f do
+    _V = v;
+end
+var void* x;
+f(5);
+escape _V==5;
+]],
+    run = 1,
 }
 
 -- RET_VAL / RET_END

@@ -10,39 +10,6 @@ function node2blk (node)
     end
 end
 
---[[
--- When holding a parameter, a function could do either on native globals
--- or on object fields:
---
---      function (void* v1, void* v2)=>void f do
---          this.v = v1;    // OK
---          _V     = v2;    // NO!
---      end
---
--- For object fields, the caller must write a finalizer only if the
--- parameter has a shorter scope than the object of the method call:
---
---      // w/o fin
---      var void* p;
---      var T t;
---      t.f(p);     // t == p (scope)
---
---      // w/ fin
---      var T t;
---      do
---          var void* p;
---          t.f(p)      // t > p (scope)
---              finalize with ... end;
---      end
---
--- Native globals should be forbidden because we would need two different
--- kinds of "nohold" annotations to distinguish the two scopes (object and
--- global).
---
--- Native globals can be assigned in static functions requiring finalizer
--- whenever appliable.
-]]
-
 F = {
     SetExp = function (me)
         local op, fr, to = unpack(me)
@@ -54,75 +21,84 @@ F = {
 
         if _TP.deref(to.tp,true) and _TP.deref(fr.tp,true) then
 
-            if me.fromAwait then
-                -- (a,b) = await X;
-                ----
-                -- var t* p;        -- wrong scope (p is a local)
-                -- p = await X;     -- right scope (where X is defined)
-                -- a = p:_1;
-                -- b = p:_2;
-                fr = me.fromAwait
-            end
+            -- "req" has the possibility to be "true"
 
-            -- var T t with
-            --  this.x = y;     -- blk of this? (same as block of t)
-            -- end;
-            -- spawn T with
-            --  this.x = y;     -- blk of this? (same as parent spawn/new)
-            -- end
-            local constr = _AST.iter'Dcl_constr'()
-            if constr then
-                local dcl = _AST.iter'Dcl_var'()
-                if dcl then
-                    to_blk = dcl.var.blk
-                else
-                    to_blk = constr.__par.blk
+            -- For all "awaits", any pointer assignment requires finalization
+            if fr.__ast_fr and string.sub(fr.__ast_fr.tag,1,5)=='Await' then
+                req = true
+
+            -- Normal assignments depend on the depths
+            else
+                if fr.__ast_fr then
+                    -- (a,b) = await X;
+                    ----
+                    -- var t* p;        -- wrong scope (p is a local)
+                    -- p = await X;     -- right scope (where X is defined)
+                    -- a = p:_1;
+                    -- b = p:_2;
+                    fr = fr.__ast_fr
                 end
-            end
 
-            if fr.tag == 'Op2_call' then
-                -- Maximum pointer depth that the function can return.
-                -- Default is the lowest depth, i.e., any global pointer.
-                local fr_max_out = _AST.root
-
-                -- Minimum pointer depth that the function can receive.
-                -- Default is the same as "to", i.e., as minimum as target variable.
-                local fr_min_in  = to_blk     -- max * depth passed as parameter
-
-                local _, _, exps, _ = unpack(fr)
-                for _, exp in ipairs(exps) do
-                    local blk = node2blk(exp)
-                    if blk.depth < fr_min_in.depth then
-                        if not (exp.const or
-                                exp.c and exp.c.mod=='constant') then
-                            fr_min_in = blk
-                        end
+                -- var T t with
+                --  this.x = y;     -- blk of this? (same as block of t)
+                -- end;
+                -- spawn T with
+                --  this.x = y;     -- blk of this? (same as parent spawn/new)
+                -- end
+                local constr = _AST.iter'Dcl_constr'()
+                if constr then
+                    local dcl = _AST.iter'Dcl_var'()
+                    if dcl then
+                        to_blk = dcl.var.blk
+                    else
+                        to_blk = constr.__par.blk
                     end
                 end
-                if fr.c.mod == 'pure' then
-                    fr_max_out = fr_min_in -- pure function returns min param as max
-                end
 
-                -- int* pa = _fopen();  -- pa(n) fin must consider _RET(_)
-                if to_blk.depth > fr_max_out.depth then
-                    req = to_blk
-                end
-            elseif fr.tag == 'RawExp' then
-                -- int* pa = { new X() };
-                if to_blk.depth > _AST.root.depth then
-                    req = to_blk
-                end
-            else
-                local fr_blk = node2blk(fr)
+                if fr.tag == 'Op2_call' then
+                    -- Maximum pointer depth that the function can return.
+                    -- Default is the lowest depth, i.e., any global pointer.
+                    local fr_max_out = _AST.root
 
-                -- int a; pa=&a;    -- `a´ termination must consider `pa´
-                if to_blk.depth < fr_blk.depth then
-                    req = fr_blk
+                    -- Minimum pointer depth that the function can receive.
+                    -- Default is the same as "to", i.e., as minimum as target variable.
+                    local fr_min_in  = to_blk     -- max * depth passed as parameter
 
-                    -- class do int* a1; this.a2=a1; end (a1 is also top-level)
-                    if to_blk.depth == cls.blk_ifc.depth and
-                       fr_blk.depth == cls.blk_body.depth then
-                        req = false
+                    local _, _, exps, _ = unpack(fr)
+                    for _, exp in ipairs(exps) do
+                        local blk = node2blk(exp)
+                        if blk.depth < fr_min_in.depth then
+                            if not (exp.const or
+                                    exp.c and exp.c.mod=='constant') then
+                                fr_min_in = blk
+                            end
+                        end
+                    end
+                    if fr.c.mod == 'pure' then
+                        fr_max_out = fr_min_in -- pure function returns min param as max
+                    end
+
+                    -- int* pa = _fopen();  -- pa(n) fin must consider _RET(_)
+                    if to_blk.depth > fr_max_out.depth then
+                        req = to_blk
+                    end
+                elseif fr.tag == 'RawExp' then
+                    -- int* pa = { new X() };
+                    if to_blk.depth > _AST.root.depth then
+                        req = to_blk
+                    end
+                else
+                    local fr_blk = node2blk(fr)
+
+                    -- int a; pa=&a;    -- `a´ termination must consider `pa´
+                    if to_blk.depth < fr_blk.depth then
+                        req = fr_blk
+
+                        -- class do int* a1; this.a2=a1; end (a1 is also top-level)
+                        if to_blk.depth == cls.blk_ifc.depth and
+                           fr_blk.depth == cls.blk_body.depth then
+                            req = false
+                        end
                     end
                 end
             end
@@ -160,16 +136,32 @@ F = {
                     'attribution does not require `finalize´')
             end
 
+        --[[
+        -- For awaits, always yield error.
+        -- Do not allow finalization.
+        -- Verify if the receiving variable goes out of scope immediatelly.
+        --]]
+        elseif fr.__ast_fr and string.sub(fr.__ast_fr.tag,1,5)=='Await' then
+            if req then
+                local var = to.ref.var.ast_original_var or to.ref.var
+                var.blk.__fin_no_more_awaits = to
+                for node in _AST.pars(fr.__ast_fr) do
+                    if node == var.blk then
+                        break   -- await.blk and to.blk must be the same
+                    end
+                    ASR(node.tag ~= 'Block',
+                        me, 'invalid block for "'..var.id..'"')
+                end
+            end
+            ASR(op ~= ':=', me, 'invalid operator')
+
         else
             if req then
                 ASR((op==':=') or me.fin, me,
                         'attribution requires `finalize´')
             else
-                -- TODO: workaround that avoids checking := for tuple fields
-                if not me.dont_check_nofin then
-                    ASR((op=='=') and (not me.fin), me,
-                            'attribution does not require `finalize´')
-                end
+                ASR((op=='=') and (not me.fin), me,
+                        'attribution does not require `finalize´')
             end
 
             if me.fin and me.fin.active then
@@ -178,6 +170,16 @@ F = {
             end
         end
     end,
+
+    AwaitInt = function (me)
+        for node in _AST.iter() do
+            ASR(not node.__fin_no_more_awaits, me, 'cannot `await´ again on this block')
+        end
+    end,
+    AwaitExt = 'AwaitInt',
+    AwaitT   = 'AwaitInt',
+    AwaitN   = 'AwaitInt',
+    AwaitS   = 'AwaitInt',
 
     Finalize_pre = function (me, set, fin)
         if not fin then
@@ -257,3 +259,59 @@ F = {
 }
 
 _AST.visit(F)
+
+--[[
+-- EVENTS:
+--
+-- The event emitter may pass a pointer that is already out of scope when the
+-- awaking trail uses it:
+--
+-- event void* e;
+-- var void* v = await e;
+-- await ...;   // v goes out of scope
+-- *v;          // segfault
+--
+-- We have to force the receiving "v" to go out of scope immediatelly:
+--
+--  event void* e;
+--  do
+--      var void* v = await e;
+--      await ...;   // ERROR: cannot inside the "v" enclosing do-end
+--      *v;
+--  end
+--
+-------------------------------------------------------------------------------
+--
+-- FUNCTIONS:
+--
+-- When holding a parameter, a function could do either on native globals
+-- or on object fields:
+--
+--      function (void* v1, void* v2)=>void f do
+--          this.v = v1;    // OK
+--          _V     = v2;    // NO!
+--      end
+--
+-- For object fields, the caller must write a finalizer only if the
+-- parameter has a shorter scope than the object of the method call:
+--
+--      // w/o fin
+--      var void* p;
+--      var T t;
+--      t.f(p);     // t == p (scope)
+--
+--      // w/ fin
+--      var T t;
+--      do
+--          var void* p;
+--          t.f(p)      // t > p (scope)
+--              finalize with ... end;
+--      end
+--
+-- Native globals should be forbidden because we would need two different
+-- kinds of "nohold" annotations to distinguish the two scopes (object and
+-- global).
+--
+-- Native globals can be assigned in static functions requiring finalizer
+-- whenever appliable.
+]]

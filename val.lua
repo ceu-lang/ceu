@@ -76,7 +76,7 @@ F =
     end,
 
     SetVal = function (me)
-        me.val = me.from.val
+        me.val = me.__ast_fr.val
     end,
     New = function (me)
         me.val = '(('.._TP.c(me[2])..'*)__ceu_new)'
