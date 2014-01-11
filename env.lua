@@ -550,11 +550,11 @@ F = {
 
         -- copy vars
         for _, var in ipairs(ifc.blk_ifc.vars) do
-            local tp = (var.arr and _TP.deref(var.tp)) or var.tp
             if var.pre == 'var' then
+                local tp = (var.arr and _TP.deref(var.tp)) or var.tp
                 newvar(me, _AST.iter'Block'(), var.pre, tp, var.arr, var.id)
             elseif var.pre == 'event' then
-                newint(me, _AST.iter'Block'(), var.pre, tp, var.id)
+                newint(me, _AST.iter'Block'(), var.pre, var.evt.tp, var.id)
             else
                 newfun(me, _AST.iter'Block'(), var.pre,
                            var.fun.ins, var.fun.out, var.id)

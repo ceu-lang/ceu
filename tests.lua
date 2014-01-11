@@ -24418,6 +24418,21 @@ escape t.a;
 }
 
 Test { [[
+interface MenuGamesListener with
+    event int ok_rm;
+    event int ok_go;
+end
+class MenuGames with
+    interface MenuGamesListener;
+do
+    var MenuGamesListener* lst = &this;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
 interface I with
     var int a;
 end
