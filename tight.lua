@@ -105,7 +105,6 @@ F = {
 
     Op2_call = function (me)
         local op, f, _ = unpack(me)
-DBG(op, f, _)
 
         if not (f.var and f.var.fun) then
             return  -- ignore native and pointer calls
@@ -121,11 +120,7 @@ DBG(op, f, _)
         end
 
         -- assert that the call is using call/delay correctly
-if dcl then
-    DBG('dcl', dcl.var.fun, dcl.var.id, dcl.var.fun.isTight)
-end
-DBG('fun', f.var.fun, f.var.fun.id, f.var.fun.isTight, op)
-        if f.var.fun.isTight then
+        if f.var.fun.mod.delay then
             ASR(op=='call/delay',
                 me, '`call/delay´ is required for "'..f.var.fun.id..'"')
         else
@@ -134,24 +129,62 @@ DBG('fun', f.var.fun, f.var.fun.id, f.var.fun.isTight, op)
         end
     end,
     Dcl_fun = function (me)
-        local _, delay, _, _, _, blk = unpack(me)
+        local _, delay, _, _, id, blk = unpack(me)
         if not blk then
-            -- force interface function to follow delay modifier
-            if CLS().is_ifc then
-                me.var.fun.isTight = (not not delay)
-            end
-            return
+            return          -- pure declarations
         end
 
         -- if I'm not discovered as tight, then I'm not tight
         if me.var.fun.isTight == nil then
             me.var.fun.isTight = false
         end
-DBG('DCL', me.var.fun.id, me.var.fun.mod.delay, me.var.fun.isTight)
         ASR(me.var.fun.mod.delay == me.var.fun.isTight,
             me, 'function must be declared '..
                     (me.var.fun.isTight and 'with' or 'without')..
                 ' "delay"')
+
+        -- copy isTight to all matching interfaces with method "id"
+        local matches = CLS().matches or {}
+        for ifc in pairs(matches) do
+            local var = ifc.blk_ifc.vars[id]
+            if var then
+                assert(var.fun)
+                local t = var.fun.__tights or {}
+                var.fun.__tights = t
+                t[#t+1] = me.var.fun.isTight
+            end
+        end
+    end,
+
+    Root = function (me)
+        -- check if all interface methods have "mod.delay"
+        -- respecting their implementations
+        for _, ifc in pairs(_ENV.clss_ifc) do
+            for _,var in ipairs(ifc.blk_ifc) do
+                if var.fun then
+                    -- If "delay", at least one implementation should
+                    -- not be isTight.
+                    if var.fun.mod.delay then
+                        local ok = false
+                        for _, isTight in ipairs(var.fun.__tights) do
+                            if isTight then
+                                ok = true
+                                break
+                            end
+                        end
+                        ASR(ok, var.fun,
+                            'function must be declared without "delay"')
+                    else
+                    -- If not "delay", all implementations should be
+                    -- isTight.
+                        for _, isTight in ipairs(var.fun.__tights) do
+                            ASR((not isTight), var.fun,
+                                'function must be declared with "delay"')
+                        end
+                    end
+                end
+            end
+        end
     end,
 }
 

@@ -273,35 +273,8 @@ escape 1;
 
 -------------------------------------------------------------------------------
 
---]===]
--- put back to XXXX
-Test { [[
-interface I with
-    function (int)=>int g;
-end
-
-class T with
-    interface I;
-    var I* i;
-do
-    function (int v)=>int g do
-        if (v == 1) then
-            return 1;
-        end
-        return v * i:g(v-1);
-    end
-end
-
-var T t;
-var I* i = &t;
-t.i = i;
-escape i:g(5);
-]],
-    --run = 120,
-    tight = 'line 9 : function must be declared with "delay"',
-}
-
 do return end
+--]===]
 
 -- OK: well tested
 
@@ -25460,7 +25433,234 @@ escape t.f() + i:f();
     run = 2,
 }
 
--- XXXX
+Test { [[
+interface I with
+    function (int)=>int g;
+end
+
+class T with
+    interface I;
+    var I* i;
+do
+    function (int v)=>int g do
+        if (v == 1) then
+            return 1;
+        end
+        return v * i:g(v-1);
+    end
+end
+
+var T t;
+var I* i = &t;
+t.i = i;
+escape i:g(5);
+]],
+    --run = 120,
+    tight = 'line 9 : function must be declared with "delay"',
+}
+
+Test { [[
+interface I with
+    function delay (int)=>int g;
+end
+
+class T with
+    interface I;
+    var I* i;
+do
+    function (int v)=>int g do
+        if (v == 1) then
+            return 1;
+        end
+        return v * i:g(v-1);
+    end
+end
+
+var T t;
+var I* i = &t;
+t.i = i;
+escape i:g(5);
+]],
+    --run = 120,
+    env = 'line 9 : function declaration does not match the one at "tests.lua:6"',
+}
+
+Test { [[
+interface I with
+    function (int)=>int g;
+end
+
+class T with
+    interface I;
+    var I* i;
+do
+    function delay (int v)=>int g do
+        if (v == 1) then
+            return 1;
+        end
+        return v * i:g(v-1);
+    end
+end
+
+var T t;
+var I* i = &t;
+t.i = i;
+escape i:g(5);
+]],
+    --run = 120,
+    env = 'line 9 : function declaration does not match the one at "tests.lua:6"',
+}
+
+Test { [[
+interface I with
+    function delay (int)=>int g;
+end
+
+class T with
+    interface I;
+    var I* i;
+do
+    function delay (int v)=>int g do
+        if (v == 1) then
+            return 1;
+        end
+        return v * i:g(v-1);
+    end
+end
+
+var T t;
+var I* i = &t;
+t.i = i;
+escape i:g(5);
+]],
+    --run = 120,
+    tight = 'line 13 : `call/delay´ is required for "g"',
+}
+
+Test { [[
+interface I with
+    function delay (int)=>int g;
+end
+
+class T with
+    interface I;
+    var I* i;
+do
+    function delay (int v)=>int g do
+        return 1;
+    end
+end
+
+var T t;
+var I* i = &t;
+t.i = i;
+escape i:g(5);
+]],
+    tight = 'line 9 : function must be declared without "delay"',
+}
+
+Test { [[
+interface I with
+    function (int)=>int g;
+end
+
+class T with
+    interface I;
+    var I* i;
+do
+    function (int v)=>int g do
+        return 1;
+    end
+end
+
+var T t;
+var I* i = &t;
+t.i = i;
+escape i:g(5);
+]],
+    run = 1,
+}
+
+Test { [[
+interface I with
+    function (int)=>int g;
+end
+
+class U with
+    interface I;
+    var I* i;
+do
+    function (int v)=>int g do
+        return 1;
+    end
+end
+
+class T with
+    interface I;
+    var I* i;
+do
+    function (int v)=>int g do
+        if (v == 1) then
+            return 1;
+        end
+        return v * i:g(v-1);
+    end
+end
+
+var T t;
+var I* i1 = &t;
+t.i = i1;
+
+var U u;
+var I* i2 = &u;
+t.i = i2;
+
+escape i1:g(5) + i2:g(5);
+]],
+    --run = 120,
+    tight = 'line 18 : function must be declared with "delay"',
+}
+
+Test { [[
+interface I with
+    function (int)=>int g;
+end
+
+class T with
+    interface I;
+    var I* i;
+do
+    function (int v)=>int g do
+        if (v == 1) then
+            return 1;
+        end
+        return v * i:g(v-1);
+    end
+end
+
+class U with
+    interface I;
+    var I* i;
+do
+    function (int v)=>int g do
+        return 1;
+    end
+end
+
+var T t;
+var I* i1 = &t;
+t.i = i1;
+
+var U u;
+var I* i2 = &u;
+t.i = i2;
+
+escape i1:g(5) + i2:g(5);
+]],
+    --run = 120,
+    tight = 'line 9 : function must be declared with "delay"',
+}
+
 
 Test { [[
 interface I with
