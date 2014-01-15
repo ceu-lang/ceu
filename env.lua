@@ -112,7 +112,7 @@ function newtype (tp)
     end
 end
 
-function newvar (me, blk, pre, tp, arr, id)
+function newvar (me, imp, blk, pre, tp, arr, id)
     for stmt in _AST.iter() do
         if _AST.pred_async(stmt) then
             break   -- search until Async/Thread
@@ -121,19 +121,12 @@ function newvar (me, blk, pre, tp, arr, id)
                 --ASR(var.id~=id or var.blk~=blk, me,
                     --'variable/event "'..var.id..
                     --'" is already declared at --line '..var.ln)
-                if (var.id == id) and
-                        -- ifc vs ifc ok (constant def)
-                    ( (    blk ~= CLS().blk_ifc) or
-                      (var.blk ~= CLS().blk_ifc) ) then
+                if (var.id == id) and (not imp) then
                     WRN(false, me,
                         'declaration of "'..id..'" hides the one at line '
                             ..var.ln[2])
-
-                    -- allows interface/public and private variables
-                    --  to coexist
-                    ASR( (blk ~= CLS().blk_ifc) and
-                         (blk ~= CLS().blk_body), me,
-                        'cannot hide at top-level block' )
+                    --if (blk==CLS().blk_ifc or blk==CLS().blk_body) then
+                        --ASR(false, me, 'cannot hide at top-level block' )
                 end
             end
         end
@@ -160,9 +153,11 @@ function newvar (me, blk, pre, tp, arr, id)
                 me, 'invalid declaration')
         end
 
-    local inTop = (blk == CLS().blk_ifc) or (blk == CLS().blk_body)
-    if inTop and blk.vars[id] then
-        return blk.vars[id]
+    -- Class definitions take priority over interface definitions:
+    --      * consts
+    --      * delay => nodelay methods
+    if  blk.vars[id] and (blk==CLS().blk_ifc) then
+        return true, blk.vars[id]
     end
 
     local var = {
@@ -172,7 +167,8 @@ function newvar (me, blk, pre, tp, arr, id)
         tp    = tp,
         cls   = cls,
         pre   = pre,
-        inTop = inTop,  -- var is in top-level of class (accessible from C)
+        inTop = (blk==CLS().blk_ifc) or (blk==CLS().blk_body),
+                -- (never "tmp")
         isTmp = false,
         arr   = arr,
         n     = _N,
@@ -183,12 +179,15 @@ function newvar (me, blk, pre, tp, arr, id)
     blk.vars[id] = var -- TODO: last/first/error?
     -- TODO: warning in C (hides)
 
-    return var
+    return false, var
 end
 
-function newint (me, blk, pre, tp, id)
+function newint (me, imp, blk, pre, tp, id)
     newtype(tp)
-    local var = newvar(me, blk, pre, 'void', false, id)
+    local has, var = newvar(me, imp, blk, pre, 'void', false, id)
+    if has then
+        return true, var
+    end
     local evt = {
         id  = id,
         idx = _E,
@@ -197,23 +196,32 @@ function newint (me, blk, pre, tp, id)
     }
     var.evt = evt
     _E = _E + 1
-    return var
+    return false, var
 end
 
-function newfun (me, blk, pre, delay, ins, out, id)
+function newfun (me, imp, blk, pre, delay, ins, out, id)
     delay = not not delay
     local old = blk.vars[id]
     if old then
         ASR(ins.tp==old.fun.ins.tp and out==old.fun.out and
-            delay==old.fun.mod.delay,
+            (delay==old.fun.mod.delay or imp),
             me, 'function declaration does not match the one at "'..
                 old.ln[1]..':'..old.ln[2]..'"')
+        -- Accept delay mismatch for "imp" because class implementation
+        -- might be "nodelay", e.g.:
+        -- interface with delay f;
+        -- class     with       f;
+        -- When calling from an interface, call/delay is still required,
+        -- but from class it is not.
     end
 
-    local var = newvar(me, blk, pre,
+    local has, var = newvar(me, imp, blk, pre,
                         '___typeof__(CEU_'..CLS().id..'_'..id..')',
                         -- TODO: _TP.c eats one '_'
                        false, id)
+    if has then
+        return true, var
+    end
     local fun = {
         id  = id,
         ins = ins,
@@ -222,7 +230,7 @@ function newfun (me, blk, pre, delay, ins, out, id)
         mod = { delay=delay },
     }
     var.fun = fun
-    return var
+    return false, var
 end
 
 function _ENV.getvar (id, blk)
@@ -315,10 +323,11 @@ F = {
         if _AST.pred_async(async) then
             local vars, blk = unpack(async)
             if vars then
-                for _, n in ipairs(vars) do -- create new variables for params
+                for i, n in ipairs(vars) do -- create new variables for params
                     local var = n.var
                     ASR(not var.arr, vars, 'invalid argument')
-                    n.new = newvar(vars, blk, 'var', var.tp, nil, var.id)
+                    local _
+                    _, n.new = newvar(vars, false, blk, 'var', var.tp, nil, var.id)
                 end
             end
         end
@@ -330,7 +339,8 @@ F = {
             for i, v in ipairs(inp) do
                 local hold, tp, id = unpack(v)
                 if tp ~= 'void' then
-                    local var = newvar(me, me, 'var', tp, false, id)
+                    local has,var = newvar(me, false, me, 'var', tp, false, id)
+                    assert(not has)
                     var.isTmp  = true -- TODO: var should be a node
                     var.isFun  = true
                     var.funIdx = i
@@ -501,12 +511,15 @@ F = {
         local pre, tp, id = unpack(me)
         ASR(tp=='void' or tp=='int' or _TP.deref(tp) or _TP.isTuple(tp),
                 me, 'invalid event type')
-        me.var = newint(me, _AST.iter'Block'(), pre, tp, id)
+        local _
+        _, me.var = newint(me, false, _AST.iter'Block'(), pre, tp, id)
     end,
 
     Dcl_var = function (me)
         local pre, tp, arr, id, constr = unpack(me)
-        me.var = newvar(me, _AST.iter'Block'(), pre, tp, arr, id)
+        local has
+        has, me.var = newvar(me, false, _AST.iter'Block'(), pre, tp, arr, id)
+        assert(not has or (me.var.read_only==nil))
         me.var.read_only = me.read_only
         if constr then
             constr.blk = me.var.blk
@@ -524,7 +537,8 @@ F = {
             up = cls.blk_ifc
         end
 
-        me.var = newfun(me, up, pre, delay, ins, out, id)
+        local _
+        _, me.var = newfun(me, false, up, pre, delay, ins, out, id)
 
         -- "void" as parameter only if single
         if #ins > 1 then
@@ -552,14 +566,15 @@ F = {
         ASR(ifc.is_ifc, me, '`'..id..'´ is not an interface')
 
         -- copy vars
+        local blk = _AST.iter'Block'()
         for _, var in ipairs(ifc.blk_ifc.vars) do
             if var.pre == 'var' then
                 local tp = (var.arr and _TP.deref(var.tp)) or var.tp
-                newvar(me, _AST.iter'Block'(), var.pre, tp, var.arr, var.id)
+                newvar(me, true, blk, var.pre, tp, var.arr, var.id)
             elseif var.pre == 'event' then
-                newint(me, _AST.iter'Block'(), var.pre, var.evt.tp, var.id)
+                newint(me, true, blk, var.pre, var.evt.tp, var.id)
             else
-                newfun(me, _AST.iter'Block'(), var.pre, var.fun.mod.delay,
+                newfun(me, true, blk, var.pre, var.fun.mod.delay,
                            var.fun.ins, var.fun.out, var.id)
             end
             CLS().c[var.id] = ifc.c[var.id] -- also copy C properties
@@ -595,7 +610,7 @@ F = {
             local cls = CLS()
             local tp = '___typeof__(CEU_'..cls.id..'_'..id..')'
             _ENV.c[tp] = { tag='type', id=tp }
-            newvar(me, _AST.iter'Block'(), 'var', tp..'*', false, id)
+            newvar(me, false, _AST.iter'Block'(), 'var', tp..'*', false, id)
             cls.c[id] = { tag=tag, id=id, mod=mod }
         else
             _ENV.c[id] = { tag=tag, id=id, len=len, mod=mod }

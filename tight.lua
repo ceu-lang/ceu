@@ -138,10 +138,13 @@ F = {
         if me.var.fun.isTight == nil then
             me.var.fun.isTight = false
         end
-        ASR(me.var.fun.mod.delay == me.var.fun.isTight,
-            me, 'function must be declared '..
-                    (me.var.fun.isTight and 'with' or 'without')..
-                ' "delay"')
+        if me.var.fun.isTight then
+            ASR(me.var.fun.mod.delay == me.var.fun.isTight,
+                me, 'function must be declared with delay')
+        else
+            WRN(me.var.fun.mod.delay == me.var.fun.isTight,
+                me, 'function may be declared without delay')
+        end
 
         -- copy isTight to all matching interfaces with method "id"
         local matches = CLS().matches or {}
@@ -160,25 +163,28 @@ F = {
         -- check if all interface methods have "mod.delay"
         -- respecting their implementations
         for _, ifc in pairs(_ENV.clss_ifc) do
-            for _,var in ipairs(ifc.blk_ifc) do
+            for _,var in ipairs(ifc.blk_ifc.vars) do
                 if var.fun then
+                    local t = var.fun.__tights or {}
+
                     -- If "delay", at least one implementation should
                     -- not be isTight.
                     if var.fun.mod.delay then
                         local ok = false
-                        for _, isTight in ipairs(var.fun.__tights) do
+                        for _, isTight in ipairs(t) do
                             if isTight then
                                 ok = true
                                 break
                             end
                         end
-                        ASR(ok, var.fun,
+                        WRN(ok, var.ln,
                             'function must be declared without "delay"')
-                    else
+
                     -- If not "delay", all implementations should be
                     -- isTight.
-                        for _, isTight in ipairs(var.fun.__tights) do
-                            ASR((not isTight), var.fun,
+                    else
+                        for _, isTight in ipairs(t) do
+                            ASR((not isTight), var.ln,
                                 'function must be declared with "delay"')
                         end
                     end

@@ -248,8 +248,7 @@ CEU_POOL_DCL(]]..node.pool..', CEU_'..node.cls.id..','..n..[[)
                 local dcl = [[
 #line ]]..var.ln[2]..' "'..var.ln[1]..[["
 ]]
-                var.id_ = var.id ..
-                            (var.inTop and '' or ('_'..var.n))
+                var.id_ = var.id..'_'..var.n
                 if var.arr then
                     dcl = dcl .. _TP.deref(tp)..' '..var.id_..'['..var.arr.cval..']'
                 else

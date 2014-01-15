@@ -272,9 +272,9 @@ escape 1;
 }
 
 -------------------------------------------------------------------------------
-
-do return end
 --]===]
+
+--do return end
 
 -- OK: well tested
 
@@ -408,6 +408,10 @@ Test { [[var int a = 1;]],
 Test { [[var int a=1;var int a=0; escape a;]],
     --env = 'line 1 : variable/event "a" is already declared at line 1',
     run = 0,
+}
+Test { [[var int b=2; var int a=1; b=a; var int a=0; escape b+a;]],
+    --env = 'line 1 : variable/event "a" is already declared at line 1',
+    run = 1,
 }
 Test { [[do var int a=1; end var int a=0; escape a;]],
     run = 0,
@@ -1048,7 +1052,7 @@ escape(1);
 ]],
     --env = 'line 2 : undeclared type `_t´',
     --env = 'line 3 : non-matching types on `emit´',
-    gcc = '2:1: error: unknown type name',
+    gcc = 'error: unknown type name',
 }
 Test { [[
 output int A;
@@ -15692,7 +15696,7 @@ var _char* p;
 *(p:a) = (_char)1;
 escape 1;
 ]],
-    gcc = ':3:35: error: request for member',
+    gcc = 'error: request for member',
 }
 
 Test { [[
@@ -16063,7 +16067,7 @@ end
 var int v = _A();
 escape v;
 ]],
-    gcc = ':5:30: error: void value not ignored as it ought to be',
+    gcc = 'error: void value not ignored as it ought to be',
 }
 
 Test { [[emit A => 10; escape 0;]],
@@ -16129,7 +16133,7 @@ end
 var int ret = _VD(10);
 escape ret;
 ]],
-    gcc = ':6:32: error: void value not ignored as it ought to be',
+    gcc = 'error: void value not ignored as it ought to be',
 }
 
 Test { [[
@@ -18457,7 +18461,8 @@ await START;
 escape t.a;
 ]],
     --run = 14,
-    env = 'line 5 : cannot hide at top-level block',
+    run = 8,
+    --env = 'line 5 : cannot hide at top-level block',
 }
 
 Test { [[
@@ -24516,7 +24521,7 @@ escape 1;
     --env = 'line 2 : undeclared type `G´',
     --run = 1,
     --gcc = '22:2: error: unknown type name ‘G’',
-    gcc = '22:2: error: unknown type name',
+    gcc = 'error: unknown type name',
 }
 
 Test { [[
@@ -25556,7 +25561,31 @@ var I* i = &t;
 t.i = i;
 escape i:g(5);
 ]],
-    tight = 'line 9 : function must be declared without "delay"',
+    --tight = 'line 9 : function may be declared without "delay"',
+    tight = 'line 17 : `call/delay´ is required for "g"',
+}
+
+Test { [[
+interface I with
+    function delay (int)=>int g;
+end
+
+class T with
+    interface I;
+    var I* i;
+do
+    function delay (int v)=>int g do
+        return v;
+    end
+end
+
+var T t;
+var I* i = &t;
+t.i = i;
+escape call/delay i:g(5);
+]],
+    --tight = 'line 9 : function may be declared without "delay"',
+    run = 5,
 }
 
 Test { [[
@@ -26071,6 +26100,136 @@ end
 var void* x;
 f(5);
 escape _V==5;
+]],
+    run = 1,
+}
+
+Test { [[
+interface I with
+    function (void)=>void f;
+end
+
+class T with
+    interface I;
+    function delay (void)=>void f;
+do
+    function delay (void)=>void f do
+        if 0 then
+            call/delay this.f();
+        end
+    end
+end
+
+var T t;
+call/delay t.f();
+
+var I* i = &t;
+call i:f();
+
+escape 1;
+]],
+    tight = 'line 2 : function must be declared with "delay"',
+}
+
+Test { [[
+interface I with
+    function delay (void)=>void f;
+end
+
+class T with
+    interface I;
+    function delay (void)=>void f;
+do
+    function delay (void)=>void f do
+        if 0 then
+            call/delay this.f();
+        end
+    end
+end
+
+var T t;
+call/delay t.f();
+
+var I* i = &t;
+call i:f();
+
+escape 1;
+]],
+    tight = 'line 20 : `call/delay´ is required for "f"',
+}
+
+Test { [[
+interface I with
+    function delay (void)=>void f;
+end
+
+class T with
+    interface I;
+    function delay (void)=>void f;
+do
+    function delay (void)=>void f do
+        if 0 then
+            call/delay this.f();
+        end
+    end
+end
+
+var T t;
+call/delay t.f();
+
+var I* i = &t;
+call/delay i:f();
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+interface I with
+    function delay (void)=>void f;
+end
+
+class T with
+    interface I;
+    function (void)=>void f; // ignored
+do
+    function (void)=>void f do
+    end
+end
+
+var T t;
+call t.f();
+
+var I* i = &t;
+call/delay i:f();
+
+escape 1;
+]],
+    --tight = 'line 9 : function may be declared without "delay"',
+    run = 1,
+}
+
+Test { [[
+interface I with
+    function delay (void)=>void f;
+end
+
+class T with
+    function (void)=>void f;
+    interface I;
+do
+    function (void)=>void f do
+    end
+end
+
+var T t;
+call t.f();
+
+var I* i = &t;
+call/delay i:f();
+
+escape 1;
 ]],
     run = 1,
 }
@@ -27234,7 +27393,7 @@ Test { [[
 #include "/tmp/_ceu_MOD1.ceu"
 escape _f();
 ]],
-    gcc = ':2:9: error: redefinition of',
+    gcc = 'error: redefinition of',
 }
 
 INCLUDE('/tmp/_ceu_MOD1.ceu', [[

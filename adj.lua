@@ -50,6 +50,22 @@ F = {
     end,
 ---
 
+-- BLOCKI: Put all Dcl_imp to the end,
+--         so that explicit redeclarations appear first
+    BlockI = function (me)
+        local N = #me
+        for i=1, N do
+            local node = me[i]
+            if node.tag == 'Dcl_imp' then
+                table.remove(me, i)
+                me[#me+1] = node
+                N = N - 1
+                i = i - 1
+            end
+        end
+    end,
+---
+
 --?
     SetBlock_pre = function (me)
         me.blk = _AST.iter'Block'()
