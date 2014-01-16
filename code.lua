@@ -2,6 +2,7 @@ _CODE = {
     has_goto  = false,   -- avoids "unused label"
     threads   = '',
     functions = '',
+    native    = '',
 }
 
 function CONC_ALL (me, t)
@@ -161,6 +162,16 @@ end
 F = {
     Node_pre = function (me)
         me.code = ''
+    end,
+
+    Host = function (me)
+        -- unescape `##´ => `#´
+        local src = string.gsub(me[1], '^%s*##',  '#')
+              src = string.gsub(src,   '\n%s*##', '\n#')
+        _CODE.native = _CODE.native .. [[
+
+#line ]]..me.ln[2]..' "'..me.ln[1]..[["
+]] .. src
     end,
 
     Do         = CONC_ALL,

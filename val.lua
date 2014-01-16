@@ -54,7 +54,7 @@ F =
     end,
 
     Global = function (me)
-        me.val = '&CEU.mem'
+        me.val = '(&CEU.mem)'
     end,
 
     This = function (me)
@@ -147,7 +147,7 @@ F =
         if f.var and f.var.fun then
             if f.org then
                 local op = (_ENV.clss[f.org.tp].is_ifc and '') or '&'
-                ps[#ps+1] = op..V(f.org)   -- only native
+                ps[#ps+1] = '('..op..V(f.org)..')'   -- only native
             else
                 ps[#ps+1] = CUR(me)
             end
@@ -211,14 +211,27 @@ F =
     ['Op2_.'] = function (me)
         if me.org then
             local cls = _ENV.clss[me.org.tp]
+            local gen = '((tceu_org*)'..me.org.val..')'
             if cls and cls.is_ifc then
-                if me.var.pre == 'var' or
-                   me.var.pre == 'function' then
-                    me.val = '(*('..me.var.ifc_acc..'('..me.org.val..')))'
+                if me.var.pre == 'var' then
+                    me.val = [[(*(
+(]].._TP.c(me.var.tp)..[[*) (
+        ((char*)]]..me.org.val..[[) + CEU.ifcs_flds[]]..gen..[[->cls][
+            ]].._ENV.ifcs.flds[me.var.ifc_id]..[[
+        ]
+            )
+))]]
+                elseif me.var.pre == 'function' then
+                    me.val = [[(*(
+(]].._TP.c(me.var.tp)..[[*) (
+        CEU.ifcs_funs[]]..gen..[[->cls][
+            ]].._ENV.ifcs.funs[me.var.ifc_id]..[[
+        ]
+            )
+))]]
                 else    -- event
                     me.val = nil    -- cannot be used as variable
-                    local org = '((tceu_org*)'..me.org.val..')'
-                    me.ifc_idx = '(CEU.ifcs_evts['..org..'->cls]['
+                    me.ifc_idx = '(CEU.ifcs_evts['..gen..'->cls]['
                                     .._ENV.ifcs.evts[me.var.ifc_id]
                                ..'])'
                 end
@@ -229,7 +242,7 @@ F =
                     me.val = me.org.val..'.'..me.var.id_
                 elseif me.var.pre == 'event' then
                     me.val = nil    -- cannot be used as variable
-                    me.org.val = '&'..me.org.val -- always via reference
+                    me.org.val = '(&'..me.org.val..')' -- always via reference
                 else -- function
                     me.val = me.var.val
                 end

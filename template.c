@@ -50,23 +50,17 @@ CEU_ATOMIC
     tceu_lnk
     tceu_org
 
+=== NATIVE
+
 === CLSS_DEFS
-    - host for main
     - clss
-        - "typedef struct T T;"
-        - methods prototypes:   <tp_r> CEU_T__f (<tp_ps>);
-        - accessors prototypes: <tp_f> _CEU_I__f (I* i);
-        - field accessors
         - struct
-        - cstruct
-        - host (+methods)
+        - functions
     - cls main
 
 === LABELS_ENUM
 
 tceu
-
-=== IFCS_ACCS
 
 ...     // TODO
 
@@ -261,6 +255,9 @@ typedef struct tceu_org
 
 } tceu_org;
 
+/* native code */
+=== NATIVE ===
+
 /* class definitions */
 === CLSS_DEFS ===
 
@@ -296,6 +293,8 @@ typedef struct {
     CEU_THREADS_COND_T  threads_cond;
 #endif
 
+    === POOLS_DCL ===
+
     CEU_Main    mem;
 } tceu;
 
@@ -328,11 +327,6 @@ static tceu CEU = {
 #endif
     {}                          /* TODO: o q ele gera? */
 };
-
-#ifdef CEU_IFCS
-/* iterface accessors */
-=== IFCS_ACCS ===   /* requires CEU.ifcs_flds */
-#endif
 
 /*#pragma pack(pop) */
 
@@ -463,7 +457,7 @@ void ceu_go_init ()
     signal(SIGSEGV, ceu_segfault);
 #endif
 #ifdef CEU_NEWS
-    === CLSS_POOLS ===
+    === POOLS_INIT ===
 #endif
     ceu_org_init((tceu_org*)&CEU.mem, CEU_NTRAILS, Class_Main, 0, NULL, 0);
     {

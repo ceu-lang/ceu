@@ -1,9 +1,9 @@
 _MEM = {
-    cls = {},       -- offsets for fixed fields inside classes
-    evt_off = 0,    -- max event index among all classes
-    clss_defs  = nil,
-    clss_pools = nil,
-    ifcs_accs  = nil,
+    clss  = '',
+    pools = {
+        dcl = '',
+        init = '',
+    },
 }
 
 function SPC ()
@@ -15,139 +15,39 @@ function pred_sort (v1, v2)
 end
 
 F = {
-    Root = function (me)
-
-        local _defs  = {}   -- pool / struct / cstruct / host
-        local _pools = {}   -- per-class pool (not per-block pool)
-        local _accs  = {}   -- interfaces accessors
-
-        -- Main.host must be before everything
-        local _host = _ENV.clss.Main.host
-        _ENV.clss.Main.host = ''
-
-        for _,cls in ipairs(_ENV.clss) do
-            local protos = ''
-            for p in string.gmatch(cls.host, '(%w+ CEU_'..cls.id..'[^{;]*)') do
-                protos = protos .. p .. ';\n'
-            end
-
-            if cls.is_ifc then
-                _defs[#_defs+1] = 'typedef void CEU_'..cls.id..';'
-                                    -- void* (no casts needed class=>interface)
-            else
-                _defs[#_defs+1] = 'typedef struct CEU_'..cls.id..
-                                    ' CEU_'..cls.id..';'
-            end
-            _defs[#_defs+1] = cls.funs
-            _defs[#_defs+1] = protos
-            _defs[#_defs+1] = table.concat(cls.ifc_accs_protos, '\n')
-            _defs[#_defs+1] = cls.struct
-            _defs[#_defs+1] = cls.cstruct
-            _defs[#_defs+1] = cls.host
-
-            _accs[#_accs+1] = table.concat(cls.ifc_accs_impls, '\n')
-
-            if cls.max and _PROPS.has_news_pool then
-                cls.pool = 'CEU_POOL_'..cls.id
-                _defs[#_defs+1] = [[
-CEU_POOL_DCL(]]..cls.pool..','..'CEU_'..cls.id..','..cls.max..[[);
-]]
-                _pools[#_pools+1] = [[
-ceu_pool_init(&]]..cls.pool..', '..cls.max..', sizeof(CEU_'..cls.id..'), '
-    ..'(char**)'..cls.pool..'_queue, (char*)'..cls.pool..[[_mem);
-]]
-            end
-        end
-        _MEM.clss_defs  = _host ..'\n'.. table.concat(_defs,'\n')
-        _MEM.clss_pools = table.concat(_pools, '\n')
-        _MEM.ifcs_accs  = table.concat(_accs,  '\n')
-    end,
-
-    Host = function (me)
-        -- unescape `##´ => `#´
-        local src = string.gsub(me[1], '^%s*##',  '#')
-              src = string.gsub(src,   '\n%s*##', '\n#')
-        CLS().host = CLS().host .. [[
-
-#line ]]..me.ln[2]..' "'..me.ln[1]..[["
-]] .. src
-    end,
-
     Dcl_cls_pre = function (me)
-        -- whole class
         me.struct = [[
-struct CEU_]]..me.id..[[ {
+typedef struct {
   struct tceu_org org;
   tceu_trl trls_[ ]]..me.trails_n..[[ ];
 ]]
-
-        -- only the constructor
-        me.cstruct = [[
-typedef struct {
-]]
-        me.host = ''
         me.funs = ''
-
-        -- field accessors
-        me.ifc_accs_protos = {}
-        me.ifc_accs_impls  = {}
-        if me.is_ifc then
-            for _,var in ipairs(me.blk_ifc.vars) do
-                if var.pre == 'var' then
-                    var.ifc_acc = '_CEU_'..me.id..'_'..var.id
-                               -- '_' to distingish from method prototypes
-                    me.ifc_accs_protos[#me.ifc_accs_protos+1] =
-                        'static '.._TP.c(var.tp)..'* '
-                            ..var.ifc_acc..' ('.._TP.c(me.id)..'* org);'
-                    me.ifc_accs_impls[#me.ifc_accs_impls+1] =
-'static '.._TP.c(var.tp)..'* '..var.ifc_acc..[[(]].._TP.c(me.id)..[[* org) {
-    return (]].._TP.c(var.tp)..[[*) (
-        ((char*)org) + CEU.ifcs_flds[((tceu_org*)org)->cls][
-            ]].._ENV.ifcs.flds[var.ifc_id]..[[
-        ]
-            );
-}
-]]
-                elseif var.pre == 'function' then
-                    var.ifc_acc = '_CEU_'..me.id..'_'..var.id
-                               -- '_' to distingish from method prototypes
-                    me.ifc_accs_protos[#me.ifc_accs_protos+1] =
-                        'static '.._TP.c(var.tp)..'* '..
-                            var.ifc_acc..' ('.._TP.c(me.id)..'* org);'
-                    me.ifc_accs_impls[#me.ifc_accs_impls+1] =
-'static '.._TP.c(var.tp)..'* '..var.ifc_acc..[[(]].._TP.c(me.id)..[[* org) {
-    return (]].._TP.c(var.tp)..[[*) (
-        CEU.ifcs_funs[((tceu_org*)org)->cls][
-            ]].._ENV.ifcs.funs[var.ifc_id]..[[
-        ]
-            );
-}
-]]
-                else
-                    -- events cannot be accessed from C
-                end
-            end
-        end
     end,
     Dcl_cls_pos = function (me)
-        me.cstruct = me.cstruct..'\n} T'.._TP.c(me.id)..';\n'
         if me.is_ifc then
-            me.struct = ''--'typedef void '.._TP.c(me.id)..';\n'
---[[
-            me.struct = 'typedef union {\n'
-            for cls in pairs(me.matches) do
-                me.struct = me.struct..'  '.._TP.c(cls.id)
-                                ..'* __'..cls.id..';\n'
-            end
-            me.struct = me.struct..'} '.._TP.c(me.id)..';\n'
-]]
-            return
+            me.struct = 'typedef void '.._TP.c(me.id)..';\n'
+        else
+            me.struct  = me.struct..'\n} '.._TP.c(me.id)..';\n'
         end
 
-        me.struct  = me.struct..'\n};\n'--.._TP.c(me.id)..';\n'
+        _MEM.clss = _MEM.clss .. me.struct .. '\n'
+        _MEM.clss = _MEM.clss .. me.funs   .. '\n'
 DBG('===', me.id, me.trails_n, '('..tostring(me.max)..')')
 --DBG(me.struct)
 --DBG('======================')
+
+        -- top class pool <class T[N] with ... end>
+        if me.max and _PROPS.has_news_pool then
+            local id = 'pool_'..me.id
+            me.pool = 'CEU.'..id
+            _MEM.pools.dcl = _MEM.pools.dcl .. [[
+CEU_POOL_DCL(]]..id..','..'CEU_'..me.id..','..me.max..[[);
+]]
+            _MEM.pools.init = _MEM.pools.init..[[
+ceu_pool_init(&]]..me.pool..', '..me.max..', sizeof(CEU_'..me.id..'), '
+    ..'(char**)'..me.pool..'_queue, (char*)'..me.pool..[[_mem);
+]]
+        end
     end,
 
     Dcl_fun = function (me)
@@ -257,9 +157,6 @@ CEU_POOL_DCL(]]..node.pool..', CEU_'..node.cls.id..','..n..[[)
                     dcl = dcl .. tp..' '..var.id_
                 end
                 cls.struct = cls.struct..SPC()..'  '..dcl..';\n'
-                if me == CLS().blk_ifc then
-                    cls.cstruct = cls.cstruct..SPC()..'  '..dcl..';\n'
-                end
             end
         end
     end,

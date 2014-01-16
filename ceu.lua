@@ -168,13 +168,13 @@ do
     tpl = sub(tpl, '=== LABELS_ENUM ===', _LBLS.code_enum)
 
     tpl = sub(tpl, '=== POOL_C ===', assert(io.open'pool.c'):read'*a')
-    tpl = sub(tpl, '=== CLSS_DEFS ===',  _MEM.clss_defs)
-    tpl = sub(tpl, '=== CLSS_POOLS ===', _MEM.clss_pools)
-    tpl = sub(tpl, '=== IFCS_ACCS ===',  _MEM.ifcs_accs)
+    tpl = sub(tpl, '=== CLSS_DEFS ===',  _MEM.clss)
+    tpl = sub(tpl, '=== POOLS_DCL ===',  _MEM.pools.dcl)
+    tpl = sub(tpl, '=== POOLS_INIT ===', _MEM.pools.init)
 
     tpl = sub(tpl, '=== THREADS_C ===',   _CODE.threads)
     tpl = sub(tpl, '=== FUNCTIONS_C ===', _CODE.functions)
-    --tpl = sub(tpl, '=== HOST ===',     _CODE.host)
+    tpl = sub(tpl, '=== NATIVE ===',      _CODE.native)
     tpl = sub(tpl, '=== CODE ===',     _AST.root.code)
 
     -- IFACES
