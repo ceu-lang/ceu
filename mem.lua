@@ -2,7 +2,7 @@ _MEM = {
     clss  = '',
     pools = {
         dcl = '',
-        init = '',
+        init = '',  -- TODO: move to code.lua?
     },
 }
 
