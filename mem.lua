@@ -54,8 +54,8 @@ ceu_pool_init(&]]..me.pool..', '..me.max..', sizeof(CEU_'..me.id..'), '
         local _, _, ins, out, id, blk = unpack(me)
         local cls = CLS()
 
-        -- input parameters (void* _ceu_org, int a, int b)
-        local dcl = { 'void* _ceu_org' }
+        -- input parameters (void* _ceu_go_org, int a, int b)
+        local dcl = { 'void* _ceu_go_org' }
         local _,tp,_ = unpack(ins[1])
         if tp ~= 'void' then    -- ignore f(void)
             for _, v in ipairs(ins) do

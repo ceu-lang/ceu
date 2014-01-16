@@ -18,9 +18,9 @@ end
 
 function CUR (me, id)
     if id then
-        return '(('.._TP.c(CLS().id)..'*)_ceu_org)->'..id
+        return '(('.._TP.c(CLS().id)..'*)_ceu_go_org)->'..id
     else
-        return '(('.._TP.c(CLS().id)..'*)_ceu_org)'
+        return '(('.._TP.c(CLS().id)..'*)_ceu_go_org)'
     end
 end
 
@@ -61,7 +61,7 @@ F =
         if _AST.iter'Dcl_constr'() then
             me.val = '__org'    -- set when calling constr
         else
-            me.val = '_ceu_org'
+            me.val = '_ceu_go_org'
         end
         me.val = '(*(('.._TP.c(me.tp)..'*)'..me.val..'))'
     end,
@@ -299,9 +299,9 @@ F =
         if me.iter_ini then
             if blk.trl_orgs then
                 me.val = [[
-( (_ceu_org->trls[ ]]..blk.trl_orgs[1]..[[ ].lnks[0].nxt->n == 0) ?
+( (_ceu_go_org->trls[ ]]..blk.trl_orgs[1]..[[ ].lnks[0].nxt->n == 0) ?
     NULL :
-    _ceu_org->trls[ ]]..blk.trl_orgs[1]..[[ ].lnks[0].nxt )
+    _ceu_go_org->trls[ ]]..blk.trl_orgs[1]..[[ ].lnks[0].nxt )
 ]]
             else
                 me.val = 'NULL'
