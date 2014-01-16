@@ -122,7 +122,9 @@ function newvar (me, imp, blk, pre, tp, arr, id)
                     --'variable/event "'..var.id..
                     --'" is already declared at --line '..var.ln)
                 if (var.id == id) and (not imp) then
-                    WRN(false, me,
+                    local fun = pre=='function' and stmt==CLS().blk_ifc -- dcl
+                                                and blk==CLS().blk_ifc  -- body
+                    WRN(fun, me,
                         'declaration of "'..id..'" hides the one at line '
                             ..var.ln[2])
                     --if (blk==CLS().blk_ifc or blk==CLS().blk_body) then

@@ -178,7 +178,7 @@ F = {
                             end
                         end
                         WRN(ok, var.ln,
-                            'function must be declared without "delay"')
+                            'function may be declared without "delay"')
 
                     -- If not "delay", all implementations should be
                     -- isTight.
