@@ -647,12 +647,11 @@ typedef struct {
 
 void ceu_go (int _ceu_evt, tceu_evtp _ceu_evtp)
 {
-    tceu_go _ceu_go = {
+    tceu_go _ceu_go;
 #ifdef CEU_CLEAR
-        .stop = NULL,   /* stop */
+        _ceu_go.stop = NULL;   /* stop */
 #endif
-        .stki = 0       /* stki */
-    };
+        _ceu_go.stki = 0;      /* stki */
 
     CEU.seqno++;
 
