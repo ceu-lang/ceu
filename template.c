@@ -301,7 +301,7 @@ typedef struct {
 
 /* TODO: fields that need no initialization? */
 
-tceu CEU = {
+static tceu CEU = {
 #ifdef CEU_WCLOCKS
     0, CEU_WCLOCK_INACTIVE, CEU_WCLOCK_INACTIVE,
 #endif

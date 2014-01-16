@@ -217,9 +217,9 @@ STATS = {
 }
 
 
-real	7m8.616s
-user	5m57.968s
-sys	0m57.996s
+real	7m6.950s
+user	5m54.588s
+sys	0m56.776s
 ]]
 
 os.execute('rm -f /tmp/_ceu_*')
