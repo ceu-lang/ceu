@@ -97,9 +97,10 @@ typedef struct {
                     var.ifc_acc = '_CEU_'..me.id..'_'..var.id
                                -- '_' to distingish from method prototypes
                     me.ifc_accs_protos[#me.ifc_accs_protos+1] =
-                        _TP.c(var.tp)..'* '..var.ifc_acc..' ('.._TP.c(me.id)..'* org);'
+                        'static '.._TP.c(var.tp)..'* '
+                            ..var.ifc_acc..' ('.._TP.c(me.id)..'* org);'
                     me.ifc_accs_impls[#me.ifc_accs_impls+1] =
-_TP.c(var.tp)..'* '..var.ifc_acc..[[(]].._TP.c(me.id)..[[* org) {
+'static '.._TP.c(var.tp)..'* '..var.ifc_acc..[[(]].._TP.c(me.id)..[[* org) {
     return (]].._TP.c(var.tp)..[[*) (
         ((char*)org) + CEU.ifcs_flds[((tceu_org*)org)->cls][
             ]].._ENV.ifcs.flds[var.ifc_id]..[[
@@ -111,9 +112,10 @@ _TP.c(var.tp)..'* '..var.ifc_acc..[[(]].._TP.c(me.id)..[[* org) {
                     var.ifc_acc = '_CEU_'..me.id..'_'..var.id
                                -- '_' to distingish from method prototypes
                     me.ifc_accs_protos[#me.ifc_accs_protos+1] =
-                        _TP.c(var.tp)..'* '..var.ifc_acc..' ('.._TP.c(me.id)..'* org);'
+                        'static '.._TP.c(var.tp)..'* '..
+                            var.ifc_acc..' ('.._TP.c(me.id)..'* org);'
                     me.ifc_accs_impls[#me.ifc_accs_impls+1] =
-_TP.c(var.tp)..'* '..var.ifc_acc..[[(]].._TP.c(me.id)..[[* org) {
+'static '.._TP.c(var.tp)..'* '..var.ifc_acc..[[(]].._TP.c(me.id)..[[* org) {
     return (]].._TP.c(var.tp)..[[*) (
         CEU.ifcs_funs[((tceu_org*)org)->cls][
             ]].._ENV.ifcs.funs[var.ifc_id]..[[

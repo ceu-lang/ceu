@@ -376,7 +376,7 @@ void ceu_trails_set_wclock (s32* t, s32 dt) {
 #ifdef CEU_NEWS
 #ifdef CEU_RUNTESTS
 /* TODO */
-int _ceu_dyns_ = 0;
+static int _ceu_dyns_ = 0;
 #endif
 #endif
 
