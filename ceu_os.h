@@ -1,0 +1,196 @@
+#ifndef _CEU_OS_H
+#define _CEU_OS_H
+
+#include "ceu_types.h"
+
+typedef u8 tceu_nevt;   /* max number of events */
+                        /* TODO: should "u8" be fixed? */
+
+#ifdef CEU_OS
+    #error os not supported
+#else
+    #include "_ceu_app.h"
+/* TODO: "_ceu_app.h" */
+#endif
+
+/* TCEU_TRL */
+
+typedef union tceu_trl {
+    tceu_nevt evt;
+    struct {                    /* TODO(ram): bitfields */
+        tceu_nevt evt1;
+        tceu_nlbl lbl;
+        u8        seqno;        /* TODO(ram): 2 bits is enough */
+    };
+    struct {                    /* TODO(ram): bitfields */
+        tceu_nevt evt2;
+        tceu_nlbl lbl2;
+        u8        stk;
+    };
+#ifdef CEU_ORGS
+    struct {                    /* TODO(ram): bad for alignment */
+        tceu_nevt evt3;
+        struct tceu_lnk* lnks;
+    };
+#endif
+} tceu_trl;
+
+/* TCEU_EVTP */
+
+typedef union tceu_evtp {
+    int   v;
+    void* ptr;
+    s32   dt;
+#ifdef CEU_THREADS
+    CEU_THREADS_T thread;
+#endif
+} tceu_evtp;
+
+/* TCEU_STK */
+
+/* TODO(speed): hold nxt trl to run */
+typedef struct tceu_stk {
+    tceu_evtp evtp;
+#ifdef CEU_INTS
+#ifdef CEU_ORGS
+    void*     evto;
+#endif
+#endif
+    tceu_nevt evt;
+} tceu_stk;
+
+/* TCEU_LNK */
+
+/* simulates an org prv/nxt */
+typedef struct tceu_lnk {
+    struct tceu_org* prv;   /* TODO(ram): lnks[0] does not use */
+    struct tceu_org* nxt;   /*      prv, n, lnk                  */
+    u8 n;                   /* use for ands/fins                 */
+    u8 lnk;
+} tceu_lnk;
+
+/* TCEU_ORG */
+
+typedef struct tceu_org
+{
+#ifdef CEU_ORGS
+    struct tceu_org* prv;   /* linked list for the scheduler */
+    struct tceu_org* nxt;
+    u8 n;                   /* number of trails (TODO(ram): opt, metadata) */
+    u8 lnk;
+    /* tceu_lnk */
+
+#ifdef CEU_IFCS
+    tceu_ncls cls;          /* class id */
+#endif
+
+#ifdef CEU_NEWS
+    u8 isDyn: 1;            /* created w/ new or spawn? */
+    u8 isSpw: 1;            /* free on termination? */
+#endif
+#endif  /* CEU_ORGS */
+
+#ifdef CEU_NEWS_POOL
+    void*  pool;            /* TODO(ram): opt, traverse lst of cls pools */
+#endif
+
+    tceu_trl trls[0];       /* first trail */
+
+} tceu_org;
+
+/* TCEU_GO */
+
+typedef struct tceu_go {
+    int         evt;
+    tceu_evtp   evtp;
+
+#ifdef CEU_INTS
+#ifdef CEU_ORGS
+    tceu_org* evto;       /* org that emitted current event */
+#endif
+#endif
+
+#ifdef CEU_ORGS
+    /* TODO: CEU_ORGS is calculable // CEU_NEWS isn't (255?) */
+    tceu_stk stk[CEU_MAX_STACK];
+#else
+    tceu_stk stk[CEU_NTRAILS];
+#endif
+
+    /* current traversal state */
+    int        stki;   /* points to next */
+    tceu_trl*  trl;
+    tceu_nlbl  lbl;
+    tceu_org* org;
+
+    /* traversals may be bounded to org/trl
+     * default (NULL) is to traverse everything */
+#ifdef CEU_CLEAR
+    void* stop;     /* stop at this trl/org */
+#endif
+} tceu_go;
+
+/* TCEU_LST */
+
+#ifdef CEU_DEBUG
+typedef struct tceu_lst {
+#ifdef CEU_ORGS
+    void*     org;
+#endif
+    tceu_trl* trl;
+    tceu_nlbl lbl;
+} tceu_lst;
+#endif
+
+/* TCEU_APP */
+
+typedef struct tceu_app {
+    /* global seqno: incremented on every reaction
+     * awaiting trails matches only if trl->seqno < seqno,
+     * i.e., previously awaiting the event
+     */
+    u8 seqno;
+
+#ifdef CEU_WCLOCKS
+    int         wclk_late;
+    s32         wclk_min;
+    s32         wclk_min_tmp;
+#endif
+
+#ifdef CEU_DEBUG
+    tceu_lst    lst; /* segfault printf */
+#endif
+
+#ifdef CEU_THREADS
+    CEU_THREADS_MUTEX_T threads_mutex;
+    CEU_THREADS_COND_T  threads_cond;
+#endif
+
+    int         (*code) (int* _ceu_ret, tceu_go* _ceu_go);
+    void        (*init) (void);
+    tceu_org*   mem;
+} tceu_app;
+
+/* RET_* */
+
+enum {
+    RET_HALT = 0,
+    RET_END,
+    /*RET_GOTO,*/
+#if defined(CEU_INTS) || defined(CEU_ORGS)
+    RET_ORG,
+#endif
+#if defined(CEU_CLEAR) || defined(CEU_ORGS)
+    RET_TRL
+#endif
+};
+
+void ceu_org_init (tceu_org* org, int n, int lbl, int seqno,
+                   tceu_org* par_org, int par_trl);
+
+int ceu_go_init (int* ret);
+int ceu_go_event (int* ret, int id, void* data);
+int ceu_go_async (int* ret);
+int ceu_go_wclock (int* ret, s32 dt);
+int ceu_go_all (void);
+#endif

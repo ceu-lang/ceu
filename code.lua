@@ -269,7 +269,11 @@ if (_ceu_go->org->isSpw) {
         --end
 
         if not (_ANA and me.ana.pos[false]) then
-            HALT(me)
+            if me == _MAIN then
+                LINE(me, '\treturn RET_END;')
+            else
+                HALT(me)
+            end
         end
     end,
 
@@ -676,9 +680,7 @@ ceu_pause(&_ceu_go->org->trls[ ]]..me.blk.trails[1]..[[ ],
         ATTR(me, to, fr)
         if to.tag=='Var' and to.var.id=='_ret' then
             LINE(me, [[
-#ifdef ceu_out_end
-    ceu_out_end(]]..V(to)..[[);
-#endif
+    *_ceu_ret = ]]..V(to)..[[;
 ]])
         end
 

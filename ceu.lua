@@ -1,8 +1,8 @@
 _OPTS = {
     input     = nil,
-    output    = '_ceu_code.cceu',
+    output    = '_ceu_app.c',
 
-    defs_file  = '_ceu_defs.h',
+    defs_file  = '_ceu_app.h',
 
     join      = true,
     c_calls   = false,
@@ -161,13 +161,8 @@ do
         return string.sub(str, 1, i-1) .. to .. string.sub(str, e+1)
     end
 
-    tpl = sub(tpl, '=== CEU_NTRAILS ===',  _MAIN.trails_n)
-
-    tpl = sub(tpl, '=== TCEU_NLBL ===',    's'..tps[_ENV.c.tceu_nlbl.len])
-
     tpl = sub(tpl, '=== LABELS_ENUM ===', _LBLS.code_enum)
 
-    tpl = sub(tpl, '=== POOL_C ===', assert(io.open'pool.c'):read'*a')
     tpl = sub(tpl, '=== CLSS_DEFS ===',  _MEM.clss)
     tpl = sub(tpl, '=== POOLS_DCL ===',  _MEM.pools.dcl)
     tpl = sub(tpl, '=== POOLS_INIT ===', _MEM.pools.init)
@@ -322,15 +317,18 @@ do
         end
     end
 
+-- TODO: create ceu_app.h
     if _OPTS.defs_file then
         local f = assert(io.open(_OPTS.defs_file,'w'))
         local h = [[
 #ifndef _CEU_DEFS_H
 #define _CEU_DEFS_H
-void ceu_go_init ();
-void ceu_go_event (int id, void* data);
-void ceu_go_async ();
-void ceu_go_wclock (s32 dt);
+/* TODO: lbl => unsigned */
+typedef s]]..tps[_ENV.c.tceu_nlbl.len]..[[ tceu_nlbl;
+
+/* TODO: remove */
+#define CEU_NTRAILS ]].._MAIN.trails_n..[[
+
 ]]
         f:write(h..str..[[
 #endif

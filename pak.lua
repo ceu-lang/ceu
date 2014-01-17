@@ -31,6 +31,7 @@ subst 'val.lua'
 subst 'code.lua'
 
 -- pool.c
+--[[
 do
     local pool = assert(io.open'pool.c'):read'*a'
 
@@ -39,6 +40,7 @@ do
             .. "[===[" .. pool .. "]===]" ..
           string.sub(fin, (e+1))
 end
+]]
 
 -- template.c
 do
