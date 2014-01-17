@@ -12,7 +12,7 @@
 
 -- async dentro de pause
 
---_VALGRIND = true
+_VALGRIND = true
 
 local function INCLUDE (fname, src)
     local f = assert(io.open(fname,'w'))
@@ -20702,6 +20702,7 @@ escape t.v + _V;        // * reads before
     }
 }
 
+-- TODO: valgrind
 Test { [[
 native _V;
 input void A, F, START;
@@ -21199,6 +21200,8 @@ escape a!=null and b!=null;
     run = 1,
 }
 
+--]===]
+-- TODO: valgrind
 Test { [[
 class [1] T with
     var int a;
@@ -21219,6 +21222,7 @@ escape a!=null and b!=null;
 ]],
     run = 1,
 }
+do return end
 
 Test { [[
 class [1] T with
@@ -27523,7 +27527,6 @@ escape 1;
 }
 
 -- ASYNCS // THREADS
---]===]
 
 if THREADS then
 
