@@ -21200,8 +21200,6 @@ escape a!=null and b!=null;
     run = 1,
 }
 
---]===]
--- TODO: valgrind
 Test { [[
 class [1] T with
     var int a;
@@ -21222,7 +21220,6 @@ escape a!=null and b!=null;
 ]],
     run = 1,
 }
-do return end
 
 Test { [[
 class [1] T with
@@ -23010,6 +23007,7 @@ escape _V;
     run = { ['~>1min']=20 },
 }
 
+--]===]
 Test { [[
 native _s=0;
 native do

@@ -79,8 +79,31 @@ F = {
         VARS = {}   -- NO: run in different ceu_call
     end,
 
+    New = function (me)
+        VARS = {}   -- NO: start organism
+    end,
+    Spawn = 'New',
+
     Loop_pre = function (me)
-        if (me.noAwtsEmts and (not _AST.iter(_AST.pred_async)())) or
+        local awaits = false
+        _AST.visit(
+            {
+                AwaitT = function (me)
+                    awaits = true
+                end,
+                AwaitInt = 'AwaitT',
+                AwaitExt = 'AwaitT',
+                AwaitN   = 'AwaitT',
+                AwaitS   = 'AwaitT',
+                EmitInt  = 'AwaitT',
+                Async    = 'AwaitT',
+                Thread   = 'AwaitT',
+                New      = 'AwaitT',
+                Spawn    = 'AwaitT',
+            },
+            me)
+
+        if ((not awaits) and (not _AST.iter(_AST.pred_async)())) or
             me.isAwaitUntil then
             return      -- OK: (tight loop outside Async) or (await ... until)
         end

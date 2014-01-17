@@ -164,7 +164,6 @@ F = {
 
     Loop_pre = function (me)
         me.brks = {}
-        me.noAwtsEmts = true
     end,
     Break = function (me)
         local loop = _AST.iter'Loop'()
@@ -245,29 +244,20 @@ F = {
             end
         end
     end,
-    _loop2 = function (me)
-        for loop in _AST.iter'Loop' do
-            loop.noAwtsEmts = false     -- TODO: move to tmps.lua
-        end
-    end,
 
     AwaitT = function (me)
         _PROPS.has_wclocks = true
         F._loop1(me)
-        F._loop2(me)
     end,
     AwaitInt = function (me)
         _PROPS.has_ints = true
         F._loop1(me)
-        F._loop2(me)
     end,
     AwaitExt = function (me)
         F._loop1(me)
-        F._loop2(me)
     end,
     AwaitN = function (me)
         F._loop1(me)
-        F._loop2(me)
     end,
     AwaitS = function (me)
         for _, awt in ipairs(me) do
@@ -283,7 +273,6 @@ F = {
 
     EmitInt = function (me)
         _PROPS.has_ints = true
-        F._loop2(me)
     end,
 
     EmitExt = function (me)

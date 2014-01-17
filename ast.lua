@@ -209,7 +209,7 @@ function _AST.SetAwaitUntil (ln, awt, op, to, to_orig)
                         node('If')(ln, cnd,
                             node('Break')(ln),
                             node('Nothing')(ln))))
-        ret.isAwaitUntil = true
+        ret.isAwaitUntil = true     -- see tmps.lua
     end
 
     return ret
