@@ -106,7 +106,7 @@ static void ceu_app_init ()
 #ifdef CEU_NEWS
     === POOLS_INIT ===
 #endif
-    ceu_org_init((tceu_org*)&CEU_APP.mem, CEU_NTRAILS, Class_Main, 0, NULL, 0);
+    ceu_org_init(CEU_APP.data, CEU_NTRAILS, Class_Main, 0, NULL, 0);
 }
 
 #ifdef CEU_RUNTESTS

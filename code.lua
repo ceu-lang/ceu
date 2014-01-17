@@ -978,7 +978,7 @@ _ceu_go->evtp.]]..field..' = '..V(exp)..[[;
         end
         LINE(me, [[
 #ifdef CEU_ORGS
-_ceu_go->org = (tceu_org*) &CEU_APP.mem;   /* TODO(speed): check if is_ifc */
+_ceu_go->org = CEU_APP.data;   /* TODO(speed): check if is_ifc */
 #endif
 /*goto _CEU_CALL_ORG_;*/
 return RET_ORG;

@@ -54,7 +54,7 @@ F =
     end,
 
     Global = function (me)
-        me.val = '(&CEU_APP.mem)'
+        me.val = '(CEU_APP.data)'
     end,
 
     This = function (me)

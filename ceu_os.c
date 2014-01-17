@@ -351,7 +351,7 @@ int ceu_go (int* ret, int evt, tceu_evtp evtp)
     for (;;)    /* STACK */
     {
         /* TODO: don't restart if kill is impossible (hold trl on stk) */
-        go.org = (tceu_org*) &_ceu_app->mem;    /* on pop(), always restart */
+        go.org = _ceu_app->data;    /* on pop(), always restart */
 #if defined(CEU_INTS) || defined(CEU_ORGS)
 _CEU_CALL_ORG_:
 #endif
@@ -391,7 +391,7 @@ fprintf(stderr, "GO[%d]: evt=%d stk=%d [%d]\n", _ceu_app->seqno,
 #endif
                 ])
             {
-                if (go.org == (tceu_org*) &_ceu_app->mem) {
+                if (go.org == _ceu_app->data) {
                     break;  /* pop stack */
                 }
 

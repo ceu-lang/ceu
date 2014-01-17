@@ -175,7 +175,7 @@ typedef struct tceu_app {
 
     int         (*code) (int* _ceu_ret, tceu_go* _ceu_go);
     void        (*init) (void);
-    tceu_org*   mem;
+    tceu_org*   data;
 } tceu_app;
 
 /* RET_* */
