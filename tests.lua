@@ -21805,7 +21805,6 @@ end
     env = 'line 3 : invalid attribution',
 }
 
---]===]
 Test { [[
 class T with do end
 var u8 ok;
@@ -21857,6 +21856,7 @@ class T with do
     await FOREVER;
 end
 var u8 ok;
+native do ##include <assert.h> end
 native _assert();
 do
     loop i, 100 do
@@ -21867,8 +21867,6 @@ do
     ok = spawn T;
     _assert(ok == 0);
 end
-native __ceu_dyns_;
-_assert(__ceu_dyns_ == 0);
 do
     loop i, 100 do
         ok = spawn T;
@@ -21888,6 +21886,7 @@ escape ok;
 }
 
 Test { [[
+native do ##include <assert.h> end
 native _V;
 native do
     int V = 0;
@@ -21934,7 +21933,7 @@ do
     end
 end
 ]],
-    env = 'line 5 : undeclared class',
+    env = 'line 4 : class "HelloWorld" is not declared',
 }
 
 Test { [[
@@ -22828,6 +22827,7 @@ escape _V;
 }
 
 Test { [[
+native do ##include <assert.h> end
 native _assert();
 native _V;
 native do
@@ -22856,6 +22856,7 @@ escape _V;
 }
 
 Test { [[
+native do ##include <assert.h> end
 native _assert();
 native _X, _Y;
 native do
@@ -22908,6 +22909,7 @@ escape 10;
 ]=]
 
 Test { [[
+native do ##include <assert.h> end
 native _V, _assert();
 native do
     int V = 0;
@@ -23118,6 +23120,7 @@ class T with
 do
 end
 
+native do ##include <assert.h> end
 native _V, _assert();
 native do
     int V=0;
@@ -23155,6 +23158,7 @@ class T with
 do
 end
 
+native do ##include <assert.h> end
 native _V, _assert();
 native do
     int V=0;
@@ -23174,7 +23178,7 @@ end
 
 escape _V;
 ]],
-    fin = 'line 21 : attribution requires `finalize´',
+    fin = 'line 22 : attribution requires `finalize´',
 }
 
 Test { [[
@@ -23188,6 +23192,7 @@ class T with
 do
 end
 
+native do ##include <assert.h> end
 native _V, _assert();
 native do
     int V=0;
@@ -23227,6 +23232,7 @@ class T with
 do
 end
 
+native do ##include <assert.h> end
 native _V, _assert();
 native do
     int V=0;
@@ -23753,6 +23759,7 @@ escape 10;
 -- CAST
 
 Test { [[
+native do ##include <assert.h> end
 native _assert();
 
 interface T with
@@ -26226,8 +26233,79 @@ escape 1;
     run = 1,
 }
 
+Test { [[
+function (int v)=>int f;
+function (int v)=>int f do
+    if v == 0 then
+        return 1;
+    end
+    return v*f(v-1);
+end
+escape f(5);
+]],
+    tight = 'line 2 : function must be declared with "delay"',
+    --run = 120,
+}
+Test { [[
+function delay (int v)=>int f;
+function (int v)=>int f do
+    if v == 0 then
+        return 1;
+    end
+    return v*f(v-1);
+end
+escape f(5);
+]],
+    env = 'line 2 : function declaration does not match the one at "tests.lua:1"',
+    --run = 120,
+}
+Test { [[
+function delay (int v)=>int f;
+function delay (int v)=>int f do
+    if v == 0 then
+        return 1;
+    end
+    return v*f(v-1);
+end
+escape f(5);
+]],
+    tight = 'line 6 : `call/delay´ is required for "f"',
+    --run = 120,
+}
+Test { [[
+call 1;
+]],
+    ast = 'invalid call',
+}
+
+Test { [[
+function delay (int v)=>int f;
+function delay (int v)=>int f do
+    if v == 0 then
+        return 1;
+    end
+    return v * (call/delay f(v-1));
+end
+escape f(5);
+]],
+    tight = 'line 8 : `call/delay´ is required for "f"',
+}
+Test { [[
+function delay (int v)=>int f;
+function delay (int v)=>int f do
+    if v == 0 then
+        return 1;
+    end
+    return v * call/delay f(v-1);
+end
+escape call/delay f(5);
+]],
+    run = 120,
+}
+
 -- RET_VAL / RET_END
 
+--[=[
 Test { [[
 native _ret_val, _ret_end;
 class T with
@@ -26438,6 +26516,7 @@ end
 
 Test { [[
 input void A;
+native do ##include <assert.h> end
 native _assert();
 native _ret_end, _ret_val;
 var int v = 1;
@@ -26485,74 +26564,35 @@ end
 }
 
 Test { [[
-function (int v)=>int f;
-function (int v)=>int f do
-    if v == 0 then
-        return 1;
+input void A,B;
+native do ##include <assert.h> end
+native _ret_val, _ret_end, _assert();
+_ret_val = 0;
+loop do
+    par/or do
+        loop do
+            await A;
+            _ret_val = _ret_val + 10;
+        end
+    with
+        loop do
+            await B;
+            _assert(_ret_val == 20);
+            _ret_val = 2;
+            _ret_end = 1;
+        end
     end
-    return v*f(v-1);
 end
-escape f(5);
 ]],
-    tight = 'line 2 : function must be declared with "delay"',
-    --run = 120,
-}
-Test { [[
-function delay (int v)=>int f;
-function (int v)=>int f do
-    if v == 0 then
-        return 1;
-    end
-    return v*f(v-1);
-end
-escape f(5);
-]],
-    env = 'line 2 : function declaration does not match the one at "tests.lua:1"',
-    --run = 120,
-}
-Test { [[
-function delay (int v)=>int f;
-function delay (int v)=>int f do
-    if v == 0 then
-        return 1;
-    end
-    return v*f(v-1);
-end
-escape f(5);
-]],
-    tight = 'line 6 : `call/delay´ is required for "f"',
-    --run = 120,
-}
-Test { [[
-call 1;
-]],
-    ast = 'invalid call',
+    ana = {
+        isForever = true,
+    },
+    awaits = 2,
+    run = { ['~>A;~>A; ~>B']=2 },
 }
 
-Test { [[
-function delay (int v)=>int f;
-function delay (int v)=>int f do
-    if v == 0 then
-        return 1;
-    end
-    return v * (call/delay f(v-1));
-end
-escape f(5);
-]],
-    tight = 'line 8 : `call/delay´ is required for "f"',
-}
-Test { [[
-function delay (int v)=>int f;
-function delay (int v)=>int f do
-    if v == 0 then
-        return 1;
-    end
-    return v * call/delay f(v-1);
-end
-escape call/delay f(5);
-]],
-    run = 120,
-}
+]=]
+
 -- UNTIL
 
 Test { [[
@@ -26806,33 +26846,6 @@ escape 1;
     },
     awaits = 0,     -- stmts
     run = false,
-}
-
-Test { [[
-input void A,B;
-native _ret_val, _ret_end, _assert();
-_ret_val = 0;
-loop do
-    par/or do
-        loop do
-            await A;
-            _ret_val = _ret_val + 10;
-        end
-    with
-        loop do
-            await B;
-            _assert(_ret_val == 20);
-            _ret_val = 2;
-            _ret_end = 1;
-        end
-    end
-end
-]],
-    ana = {
-        isForever = true,
-    },
-    awaits = 2,
-    run = { ['~>A;~>A; ~>B']=2 },
 }
 
 Test { [[
@@ -27282,6 +27295,7 @@ escape 1;
 
 INCLUDE('/tmp/_ceu_MOD1.ceu', [[
 input void A;
+native do ##include <assert.h> end
 _assert(0);
 ]])
 Test { [[
@@ -27290,7 +27304,7 @@ await A;
 escape 1;
 ]],
     --run = { ['~>A']=1 },
-    run = "ceu_go_one: Assertion `0' failed",
+    run = "ceu_app_go: Assertion `0' failed",
 }
 
 INCLUDE('/tmp/_ceu_MOD2.ceu', [[
@@ -27510,6 +27524,7 @@ escape 1;
 
 -- ASYNCS // THREADS
 
+--]===]
 if THREADS then
 
 Test { [[
@@ -27689,6 +27704,7 @@ with
         end
     end
 end
+native do ##include <assert.h> end
 _assert(v1 == v2);
 escape v1;
 ]],
@@ -27727,6 +27743,7 @@ with
         end
     end
 end
+native do ##include <assert.h> end
 _assert(v1 == v2);
 escape v1;
 ]],
@@ -27770,6 +27787,7 @@ with
         end
     end
 end
+native do ##include <assert.h> end
 _assert(v1 == v2);
 escape v1;
 ]],
@@ -27809,6 +27827,7 @@ with
         end
     end
 end
+native do ##include <assert.h> end
 _assert(v1 == v2);
 escape v1;
 ]],
@@ -27852,6 +27871,7 @@ with
     v2 = await t2.ok;
 end
 
+native do ##include <assert.h> end
 _assert(v1 == v2);
 escape v1;
 ]],
@@ -27936,6 +27956,7 @@ end
 }
 
 Test { [[
+native do ##include <assert.h> end
 native _assert();
 input void T;
 var int ret = 0;

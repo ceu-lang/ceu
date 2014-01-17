@@ -737,7 +737,8 @@ F = {
                         'class "'..id..'" is not declared')
     end,
 
-    New = function (me)
+    -- _pre: give error before "set" inside it
+    New_pre = function (me)
         local max, id, constr = unpack(me)
 
         me.cls = ASR(_ENV.clss[id], me,
@@ -757,10 +758,9 @@ F = {
                 me, 'invalid attribution ('..to.tp..' vs '..me.cls.id..'*)')
 ]]
     end,
-
-    Spawn = function (me, blk)
+    Spawn_pre = function (me, blk)
         local max, id, constr = unpack(me)
-        F.New(me)
+        F.New_pre(me)
         me.blk = ASR(_AST.iter'Do'(), me,
                         '`spawn´ requires enclosing `do ... end´')
         me.blk = me.blk[1]

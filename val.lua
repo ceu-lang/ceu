@@ -78,13 +78,16 @@ F =
     SetVal = function (me)
         me.val = me.__ast_fr.val
     end,
-    New = function (me)
+
+    -- SetExp is inside and requires .val
+    New_pre = function (me)
         me.val = '(('.._TP.c(me[2])..'*)__ceu_new)'
                                         -- defined by _New (code.lua)
     end,
-    Spawn = function (me)
+    Spawn_pre = function (me)
         me.val = '(__ceu_new != NULL)'
     end,
+
     Thread = function (me)
         me.thread_id = CUR(me, '__thread_id_'..me.n)
         me.thread_st = CUR(me, '__thread_st_'..me.n)
@@ -216,7 +219,7 @@ F =
                 if me.var.pre == 'var' then
                     me.val = [[(*(
 (]].._TP.c(me.var.tp)..[[*) (
-        ((char*)]]..me.org.val..[[) + CEU_APP.ifcs_flds[]]..gen..[[->cls][
+        ((char*)]]..me.org.val..[[) + _CEU_APP.ifcs_flds[]]..gen..[[->cls][
             ]].._ENV.ifcs.flds[me.var.ifc_id]..[[
         ]
             )
@@ -224,7 +227,7 @@ F =
                 elseif me.var.pre == 'function' then
                     me.val = [[(*(
 (]].._TP.c(me.var.tp)..[[*) (
-        CEU_APP.ifcs_funs[]]..gen..[[->cls][
+        _CEU_APP.ifcs_funs[]]..gen..[[->cls][
             ]].._ENV.ifcs.funs[me.var.ifc_id]..[[
         ]
             )
@@ -263,7 +266,7 @@ F =
             if cls.is_ifc then
                 -- TODO: out of bounds acc
                 val = '(('..val..' == NULL) ? NULL : '..
-                        '((CEU_APP.ifcs_clss[((tceu_org*)'..val..')->cls]'
+                        '((_CEU_APP.ifcs_clss[((tceu_org*)'..val..')->cls]'
                             ..'['..cls.n..']) ?'..val..' : NULL)'..
                       ')'
             else

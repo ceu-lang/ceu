@@ -396,69 +396,51 @@ case ]]..me.lbls_cnt[i].id..[[:;
         })
     end,
 
-    _New = function (me, t)
-        if not me.setto then
-            LINE(me, '{')   -- otherwise Stmts create the block
-        end
+    Spawn = 'New',
+    New = function (me)
+        local _, id, constr, set = unpack(me)
+        local pool = me.pool and CUR(me,me.pool) or me.cls.pool
+
         LINE(me, [[
+{
     tceu_org* __ceu_new;
 ]])
-        if t.pool then
+        if pool then
             LINE(me, [[
-    __ceu_new = (tceu_org*) ceu_pool_alloc(&]]..t.pool..[[);
+    __ceu_new = (tceu_org*) ceu_pool_alloc(&]]..pool..[[);
 ]])
         else
             LINE(me, [[
-    __ceu_new = (tceu_org*) ceu_alloc(sizeof(]].._TP.c(t.cls.id)..[[));
+    __ceu_new = (tceu_org*) ceu_alloc(sizeof(]].._TP.c(id)..[[));
 ]])
+        end
+
+        if set then
+            CONC(me, set)   -- <ptr=new T>, <ok=Spawn T>
         end
 
         LINE(me, [[
     if (__ceu_new != NULL) {
 ]])
-        if t.pool then
-            LINE(me, '__ceu_new->pool = &'..t.pool..';')
+        if pool then
+            LINE(me, '__ceu_new->pool = &'..pool..';')
         elseif _PROPS.has_news_pool then
             LINE(me, '__ceu_new->pool = NULL;')
         end
         F._ORG(me, {
             id      = 'dyn',
             isDyn   = 1,
-            isSpw   = t.isSpw,
-            cls     = t.cls,
+            isSpw   = (me.tag=='New' and 0) or 1,
+            cls     = me.cls,
             val     = '__ceu_new',
-            constr  = t.constr,
+            constr  = constr,
             arr     = false,
             par_trl_idx = me.blk.trl_orgs[1],
         })
         LINE(me, [[
     }
+}
 ]])
-        if not me.setto then
-            LINE(me, '}')   -- otherwise Stmts create the block
-        end
-    end,
-
-    New = function (me)
-        local max, id, constr = unpack(me)
-        F._New(me, {
-            cls     = me.cls,
-            isSpw   = 0,
-            pool    = me.pool and CUR(me,me.pool)
-                        or me.cls.pool,
-            constr  = constr,
-        })
-    end,
-
-    Spawn = function (me)
-        local max, id, constr = unpack(me)
-        F._New(me, {
-            cls     = me.cls,
-            isSpw   = 1,
-            pool    = me.pool and CUR(me,me.pool)
-                        or me.cls.pool,
-            constr  = constr,
-        })
     end,
 
     Free = function (me)

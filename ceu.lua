@@ -319,9 +319,11 @@ do
 -- TODO: create ceu_app.h
     if _OPTS.defs_file then
         local f = assert(io.open(_OPTS.defs_file,'w'))
-        local h = [[
+        f:write([[
 #ifndef _CEU_DEFS_H
 #define _CEU_DEFS_H
+]]..str..[[
+
 /* TODO: lbl => unsigned */
 typedef s]]..tps[_ENV.c.tceu_nlbl.len]..[[ tceu_nlbl;
 
@@ -333,8 +335,6 @@ typedef s]]..tps[_ENV.c.tceu_nlbl.len]..[[ tceu_nlbl;
 typedef ]]..'u'..tps[_ENV.c.tceu_ncls.len]..[[ tceu_ncls;
 #endif
 
-]]
-        f:write(str..h..[[
 #endif
 ]])
         f:close()

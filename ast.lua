@@ -670,7 +670,8 @@ C = {
             local val = node('SetVal')(ln)
             val.__ast_fr = p1
             p1.setto = true
-            return node('Stmts')(ln, p1, node('SetExp')(ln,op,val,to))
+            p1[#p1+1] = node('SetExp')(ln,op,val,to)
+            return p1
         end
     end,
 

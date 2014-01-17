@@ -83,7 +83,7 @@ static int _ceu_dyns_ = 0;  /* check if total of alloc/free match */
 void* ceu_alloc (size_t size) {
 #ifdef CEU_NEWS
 #ifdef CEU_RUNTESTS
-    if (_ceu_dyns_ > CEU_MAX_DYNS)
+    if (_ceu_dyns_ >= CEU_MAX_DYNS)
         return NULL;
     _ceu_dyns_++;           /* assumes no malloc fails */
 #endif
