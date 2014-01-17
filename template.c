@@ -1,4 +1,3 @@
-#define CEU_DEBUG_TRAILS
 /* TODO: #ifdef CEU_INTS: seqno, stki, CEU_STK */
 #line 1 "=== FILENAME ==="
 

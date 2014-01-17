@@ -1195,7 +1195,7 @@ case ]]..me.lbl.id..[[:;
         -- thread function
         local tp = _TP.c(CLS().id)
         _CODE.threads = _CODE.threads .. [[
-void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
+static void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
 {
     /* start thread */
 

@@ -222,7 +222,7 @@ STATS = {
     count   = 1541,
     mem     = 0,
     trails  = 3034,
-    bytes   = 14480576,
+    bytes   = 13586908,
 }
 
 
