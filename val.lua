@@ -54,7 +54,7 @@ F =
     end,
 
     Global = function (me)
-        me.val = '(&CEU.mem)'
+        me.val = '(&CEU_APP.mem)'
     end,
 
     This = function (me)
@@ -132,7 +132,7 @@ F =
         end
     end,
     AwaitT = function (me)
-        me.val      = 'CEU.wclk_late'
+        me.val      = 'CEU_APP.wclk_late'
         me.val_wclk = CUR(me, '__wclk_'..me.n)
     end,
 --[[
@@ -216,7 +216,7 @@ F =
                 if me.var.pre == 'var' then
                     me.val = [[(*(
 (]].._TP.c(me.var.tp)..[[*) (
-        ((char*)]]..me.org.val..[[) + CEU.ifcs_flds[]]..gen..[[->cls][
+        ((char*)]]..me.org.val..[[) + CEU_APP.ifcs_flds[]]..gen..[[->cls][
             ]].._ENV.ifcs.flds[me.var.ifc_id]..[[
         ]
             )
@@ -224,14 +224,14 @@ F =
                 elseif me.var.pre == 'function' then
                     me.val = [[(*(
 (]].._TP.c(me.var.tp)..[[*) (
-        CEU.ifcs_funs[]]..gen..[[->cls][
+        CEU_APP.ifcs_funs[]]..gen..[[->cls][
             ]].._ENV.ifcs.funs[me.var.ifc_id]..[[
         ]
             )
 ))]]
                 else    -- event
                     me.val = nil    -- cannot be used as variable
-                    me.ifc_idx = '(CEU.ifcs_evts['..gen..'->cls]['
+                    me.ifc_idx = '(CEU_APP.ifcs_evts['..gen..'->cls]['
                                     .._ENV.ifcs.evts[me.var.ifc_id]
                                ..'])'
                 end
@@ -263,7 +263,7 @@ F =
             if cls.is_ifc then
                 -- TODO: out of bounds acc
                 val = '(('..val..' == NULL) ? NULL : '..
-                        '((CEU.ifcs_clss[((tceu_org*)'..val..')->cls]'
+                        '((CEU_APP.ifcs_clss[((tceu_org*)'..val..')->cls]'
                             ..'['..cls.n..']) ?'..val..' : NULL)'..
                       ')'
             else

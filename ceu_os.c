@@ -270,7 +270,7 @@ int ceu_go_all (void)
      * - only COND_WAIT will allow threads to execute
      */
 
-    int _ret, ret;
+    int _ret, ret=0;
 
 #ifdef CEU_THREADS
     CEU_THREADS_MUTEX_LOCK(&_ceu_app->threads_mutex);

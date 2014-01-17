@@ -82,7 +82,7 @@ if (]]..V(pse.dcl.var)..[[) {
 ]])
         if me.tag == 'AwaitInt' then
             LINE(me, [[
-    _ceu_go->trl->seqno = CEU.seqno-1;   /* awake again */
+    _ceu_go->trl->seqno = CEU_APP.seqno-1;   /* awake again */
 ]])
         end
         LINE(me, [[
@@ -561,7 +561,7 @@ _ceu_go->org->trls[ ]]..me.trl_orgs[1]..[[ ].lnks =
 /*  FINALIZE */
 _ceu_go->org->trls[ ]]..me.trl_fins[1]..[[ ].evt   = CEU_IN__CLEAR;
 _ceu_go->org->trls[ ]]..me.trl_fins[1]..[[ ].lbl   = ]]..me.lbl_fin.id..[[;
-_ceu_go->org->trls[ ]]..me.trl_fins[1]..[[ ].seqno = CEU.seqno-1; /* awake now */
+_ceu_go->org->trls[ ]]..me.trl_fins[1]..[[ ].seqno = CEU_APP.seqno-1; /* awake now */
 ]])
             for _, fin in ipairs(me.fins) do
                 LINE(me, fin.val..' = 0;')
@@ -885,20 +885,26 @@ ceu_out_async(1);
 
         local emit
         if e2 then
-            emit = 'ceu_go_event(CEU_IN_'..evt.id ..', (void*)'..V(e2)..');'
+            emit = 'ceu_go_event(_ceu_ret, CEU_IN_'..evt.id ..', (void*)'..V(e2)..');'
         else
-            emit = 'ceu_go_event(CEU_IN_'..evt.id ..', NULL);'
+            emit = 'ceu_go_event(_ceu_ret, CEU_IN_'..evt.id ..', NULL);'
         end
+        if _AST.iter'Thread'() then
+            emit = 'CEU_ATOMIC('..emit..')'
+        end
+        LINE(me, [[
+{
+    int _ret = ]]..emit..[[
+    if (_ret)
+        return RET_END;
+}
+]])
 
         if _AST.iter'Async'() then
-            LINE(me, emit)
             HALT(me)
             LINE(me, [[
 case ]]..me.lbl_cnt.id..[[:;
 ]])
-        else
-            -- called from Thread
-            LINE(me, 'CEU_ATOMIC('..emit..')')
         end
     end,
 
@@ -914,9 +920,13 @@ _ceu_go->trl->lbl = ]]..me.lbl_cnt.id..[[;
         end
 
         local emit = [[
-ceu_go_wclock((s32)]]..V(exp)..[[);     \
-while (CEU.wclk_min <= 0) {             \
-    ceu_go_wclock(0);                   \
+{
+    int _ret = ceu_go_wclock(_ceu_ret, (s32)]]..V(exp)..[[);
+    while (!_ret && CEU_APP.wclk_min<=0) {
+        _ret = ceu_go_wclock(_ceu_ret, 0);
+    }
+    if (_ret)
+        return RET_END;
 }
 ]]
         if _AST.iter'Thread'() then
@@ -968,7 +978,7 @@ _ceu_go->evtp.]]..field..' = '..V(exp)..[[;
         end
         LINE(me, [[
 #ifdef CEU_ORGS
-_ceu_go->org = (tceu_org*) &CEU.mem;   /* TODO(speed): check if is_ifc */
+_ceu_go->org = (tceu_org*) &CEU_APP.mem;   /* TODO(speed): check if is_ifc */
 #endif
 /*goto _CEU_CALL_ORG_;*/
 return RET_ORG;
@@ -1023,7 +1033,7 @@ case ]]..me.lbl.id..[[:;
         LINE(me, [[
 #ifdef CEU_ORGS
     if ((tceu_org*)]]..org..[[ != _ceu_go->evto) {
-        _ceu_go->trl->seqno = CEU.seqno-1;   /* awake again */
+        _ceu_go->trl->seqno = CEU_APP.seqno-1;   /* awake again */
         goto ]]..no..[[;
     }
 #endif
@@ -1160,14 +1170,14 @@ case ]]..me.lbl.id..[[:;
         assert( CEU_THREADS_DETACH(]]..me.thread_id..[[) == 0 );
 
         /* wait for "p" to be copied inside the thread */
-        CEU_THREADS_MUTEX_UNLOCK(&CEU.threads_mutex);
+        CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
 
         while (1) {
-            CEU_THREADS_MUTEX_LOCK(&CEU.threads_mutex);
+            CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);
             int ok = (*(p.st) >= 1);   /* cpy ok? */
             if (ok)
                 break;
-            CEU_THREADS_MUTEX_UNLOCK(&CEU.threads_mutex);
+            CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
         }
 
         /* proceed with sync execution (already locked) */
@@ -1206,18 +1216,18 @@ static void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
     tceu_org* __ceu_org = _ceu_p.org;
 
     /* now safe for sync to proceed */
-    CEU_THREADS_MUTEX_LOCK(&CEU.threads_mutex);
+    CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);
     *(_ceu_p.st) = 1;
-    CEU_THREADS_MUTEX_UNLOCK(&CEU.threads_mutex);
+    CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
 
     /* ensures that sync reaquires the mutex and terminates
      * the current reaction before I proceed
      * otherwise I could lock below and reenter sync
      */
     while (1) {
-        CEU_THREADS_MUTEX_LOCK(&CEU.threads_mutex);
+        CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);
         int ok = (*(_ceu_p.st) >= 2);   /* lck ok? */
-        CEU_THREADS_MUTEX_UNLOCK(&CEU.threads_mutex);
+        CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
         if (ok)
             break;
     }
@@ -1233,7 +1243,7 @@ static void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
         tceu_evtp evtp;
         evtp.thread = CEU_THREADS_SELF();
         /*pthread_testcancel();*/
-        CEU_THREADS_MUTEX_LOCK(&CEU.threads_mutex);
+        CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);
     /* only if sync is not active */
         if (*(_ceu_p.st) < 3) {             /* 3=end */
             *(_ceu_p.st) = 3;
@@ -1241,7 +1251,7 @@ static void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
         } else {
             free(_ceu_p.st);                /* fin finished, I free */
         }
-        CEU_THREADS_MUTEX_UNLOCK(&CEU.threads_mutex);
+        CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
     }
 
     /* more correct would be two signals:
@@ -1249,7 +1259,7 @@ static void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
      * (2) finalizer, when sync finishes
      * now the program may hang if I never reach here
      */
-    CEU_THREADS_COND_SIGNAL(&CEU.threads_cond);
+    CEU_THREADS_COND_SIGNAL(&CEU_APP.threads_cond);
     return NULL;
 }
 ]]
@@ -1273,15 +1283,15 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
     Sync = function (me)
         local thr = _AST.iter'Thread'()
         LINE(me, [[
-CEU_THREADS_MUTEX_LOCK(&CEU.threads_mutex);
+CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);
 if (*(_ceu_p.st) == 3) {        /* 3=end */
-    CEU_THREADS_MUTEX_UNLOCK(&CEU.threads_mutex);
+    CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
     goto ]]..thr.lbl_out..[[;   /* exit if ended from "sync" */
 } else {                        /* othrewise, execute block */
 ]])
         CONC(me)
         LINE(me, [[
-    CEU_THREADS_MUTEX_UNLOCK(&CEU.threads_mutex);
+    CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
 }
 ]])
     end,

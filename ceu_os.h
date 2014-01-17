@@ -6,6 +6,13 @@
 typedef u8 tceu_nevt;   /* max number of events */
                         /* TODO: should "u8" be fixed? */
 
+#ifdef __cplusplus
+#define CEU_WCLOCK_INACTIVE 0x7fffffffL     /* TODO */
+#else
+#define CEU_WCLOCK_INACTIVE INT32_MAX
+#endif
+#define CEU_WCLOCK_EXPIRED (CEU_WCLOCK_INACTIVE-1)
+
 #ifdef CEU_OS
     #error os not supported
 #else
@@ -187,6 +194,11 @@ enum {
 
 void ceu_org_init (tceu_org* org, int n, int lbl, int seqno,
                    tceu_org* par_org, int par_trl);
+
+#ifdef CEU_WCLOCKS
+void ceu_trails_set_wclock (s32* t, s32 dt);
+int ceu_wclocks_expired (s32* t, s32 dt);
+#endif
 
 int ceu_go_init (int* ret);
 int ceu_go_event (int* ret, int id, void* data);

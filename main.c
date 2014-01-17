@@ -1,10 +1,5 @@
 #include <stdio.h>
 
-#ifdef CEU_ASYNCS
-    int async_more;
-    #define ceu_out_async(v) async_more=v
-#endif
-
 #include "ceu_os.h"
 
 int main (int argc, char *argv[])
