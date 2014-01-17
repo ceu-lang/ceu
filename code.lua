@@ -851,22 +851,20 @@ ceu_out_async(1);
 ]])
         end
 
-        local emit
-        if e2 then
-            emit = 'ceu_go_event(_ceu_ret, CEU_IN_'..evt.id ..', (void*)'..V(e2)..');'
-        else
-            emit = 'ceu_go_event(_ceu_ret, CEU_IN_'..evt.id ..', NULL);'
-        end
+        local param = e2 and '(void*)'..V(e2)
+                          or 'NULL'
+
         if _AST.iter'Thread'() then
-            emit = 'CEU_ATOMIC('..emit..')'
+            -- HACK_2: never terminates
+            LINE(me, [[
+                CEU_ATOMIC( ceu_go_event(NULL, CEU_IN_]]..evt.id..','..param..[[); );
+            ]])
+        else
+            LINE(me, [[
+                if ( ceu_go_event(_ceu_ret, CEU_IN_]]..evt.id..','..param..[[) )
+                    return RET_END;
+            ]])
         end
-        LINE(me, [[
-{
-    int _ret = ]]..emit..[[
-    if (_ret)
-        return RET_END;
-}
-]])
 
         if _AST.iter'Async'() then
             HALT(me)
@@ -1215,7 +1213,12 @@ static void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
     /* only if sync is not active */
         if (*(_ceu_p.st) < 3) {             /* 3=end */
             *(_ceu_p.st) = 3;
-            ceu_go(CEU_IN__THREAD, evtp);   /* keep locked */
+            ceu_go(NULL, CEU_IN__THREAD, evtp);   /* keep locked */
+                /* HACK_2:
+                 *  Never terminates the program because we include an
+                 *  <async do end> after it to enforce terminating from the
+                 *  main program.
+                 */
         } else {
             free(_ceu_p.st);                /* fin finished, I free */
         }

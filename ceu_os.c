@@ -25,36 +25,6 @@ tceu_app* _ceu_app = &CEU_APP;
 #include "ceu_pool.h"
 #endif
 
-/* TODO: app */
-#ifdef CEU_THREADS
-#ifndef CEU_THREADS_T
-#include <pthread.h>
-#define CEU_THREADS_T               pthread_t
-#define CEU_THREADS_MUTEX_T         pthread_mutex_t
-#define CEU_THREADS_COND_T          pthread_cond_t
-#define CEU_THREADS_SELF()          pthread_self()
-#define CEU_THREADS_CREATE(t,f,p)   pthread_create(t,NULL,f,p)
-#define CEU_THREADS_DETACH(t)       pthread_detach(t)
-/*
-#define CEU_THREADS_MUTEX_LOCK(m)   pthread_mutex_lock(m); printf("L[%d]\n",__LINE__)
-#define CEU_THREADS_MUTEX_UNLOCK(m) pthread_mutex_unlock(m); printf("U[%d]\n",__LINE__)
-*/
-#define CEU_THREADS_MUTEX_LOCK(m)   pthread_mutex_lock(m)
-#define CEU_THREADS_MUTEX_UNLOCK(m) pthread_mutex_unlock(m);
-#define CEU_THREADS_COND_WAIT(c,m)  pthread_cond_wait(c,m)
-#define CEU_THREADS_COND_SIGNAL(c)  pthread_cond_signal(c)
-#endif
-#endif
-
-#ifdef CEU_THREADS
-#   define CEU_ATOMIC(f)                                \
-            CEU_THREADS_MUTEX_LOCK(&_ceu_app->threads_mutex); \
-                f                                       \
-            CEU_THREADS_MUTEX_UNLOCK(&_ceu_app->threads_mutex);
-#else
-#   define CEU_ATOMIC(f) f
-#endif
-
 /*
  * pthread_t thread;
  * pthread_mutex_t mutex;
@@ -209,24 +179,7 @@ void ceu_pause (tceu_trl* trl, tceu_trl* trlF, int psed) {
 
 /**********************************************************************/
 
-#ifdef CEU_THREADS
-typedef struct {
-    tceu_org* org;
-    s8*       st; /* thread state:
-                   * 0=ini (sync  spawns)
-                   * 1=cpy (async copies)
-                   * 2=lck (sync  locks)
-                   * 3=end (sync/async terminates)
-                   */
-} tceu_threads_p;
-
-/* THREADS bodies (C functions)
-void* f (tceu_threads_p* p) {
-}
- */
-#endif
-
-static int ceu_go (int* ret, int evt, tceu_evtp evtp)
+int ceu_go (int* ret, int evt, tceu_evtp evtp)
 {
     tceu_go go;
         go.evt  = evt;

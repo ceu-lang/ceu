@@ -4,6 +4,18 @@
 #include <stddef.h>
 #include "ceu_types.h"
 
+#ifdef CEU_OS
+    #error os not supported
+#else
+    #include "_ceu_app.h"
+/* TODO: "_ceu_app.h" */
+#endif
+
+#ifdef CEU_THREADS
+/* TODO: app */
+#include "ceu_threads.h"
+#endif
+
 typedef u8 tceu_nevt;   /* max number of events */
                         /* TODO: should "u8" be fixed? */
 
@@ -13,13 +25,6 @@ typedef u8 tceu_nevt;   /* max number of events */
 #define CEU_WCLOCK_INACTIVE INT32_MAX
 #endif
 #define CEU_WCLOCK_EXPIRED (CEU_WCLOCK_INACTIVE-1)
-
-#ifdef CEU_OS
-    #error os not supported
-#else
-    #include "_ceu_app.h"
-/* TODO: "_ceu_app.h" */
-#endif
 
 /* TCEU_TRL */
 
@@ -151,6 +156,20 @@ typedef struct tceu_lst {
 } tceu_lst;
 #endif
 
+/* TCEU_THREADS_P */
+
+#ifdef CEU_THREADS
+typedef struct {
+    tceu_org* org;
+    s8*       st; /* thread state:
+                   * 0=ini (sync  spawns)
+                   * 1=cpy (async copies)
+                   * 2=lck (sync  locks)
+                   * 3=end (sync/async terminates)
+                   */
+} tceu_threads_p;
+#endif
+
 /* TCEU_APP */
 
 typedef struct tceu_app {
@@ -205,6 +224,7 @@ void ceu_trails_set_wclock (s32* t, s32 dt);
 int ceu_wclocks_expired (s32* t, s32 dt);
 #endif
 
+int ceu_go (int* ret, int evt, tceu_evtp evtp);
 int ceu_go_init (int* ret);
 int ceu_go_event (int* ret, int id, void* data);
 int ceu_go_async (int* ret);

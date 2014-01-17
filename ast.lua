@@ -273,7 +273,13 @@ C = {
                         node('Finally')(ln,
                             node('Block')(ln,
                                 node('Stmts')(ln,raw)))),
-                    thr)
+                    thr,
+                    node('Async')(ln, node('VarList')(ln),
+                                      node('Block')(ln, node('Stmts')(ln))))
+                    --[[ HACK_2:
+                    -- Include <async do end> after it to enforce terminating
+                    -- from the main program.
+                    --]]
     end,
 
     Async = node('Async'),

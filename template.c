@@ -7,6 +7,18 @@
 #ifdef CEU_RUNTESTS
 #include <string.h>     /* memset */
 #endif
+#ifdef CEU_THREADS
+#include <assert.h>
+#endif
+
+#ifdef CEU_THREADS
+#   define CEU_ATOMIC(f)                                      \
+            CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);   \
+                f                                             \
+            CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
+#else
+#   define CEU_ATOMIC(f) f
+#endif
 
 #ifdef CEU_NEWS
 #include "ceu_pool.h"

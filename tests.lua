@@ -27523,8 +27523,8 @@ escape 1;
 }
 
 -- ASYNCS // THREADS
-
 --]===]
+
 if THREADS then
 
 Test { [[
@@ -27901,6 +27901,23 @@ escape 10;
     ana = {
         isForever = false,
     },
+    --run = 10,
+    props = 'not permitted inside `thread´',
+}
+Test { [[
+input int A;
+par/or do
+    await A;
+with
+    async do
+        emit A=>10;
+    end
+end;
+escape 10;
+]],
+    ana = {
+        isForever = false,
+    },
     run = 10,
 }
 
@@ -27908,6 +27925,18 @@ Test { [[
 var int a;
 var int* pa = &a;
 async thread (pa) do
+    emit 1min;
+    *pa = 10;
+end;
+escape a + 1;
+]],
+    --run = 11,
+    props = 'not permitted inside `thread´',
+}
+Test { [[
+var int a;
+var int* pa = &a;
+async (pa) do
     emit 1min;
     *pa = 10;
 end;
@@ -27929,6 +27958,33 @@ par do
     escape v1 + v2;
 with
     async thread do
+        emit 5ms;
+        emit(5000)ms;
+    end
+end
+]],
+    ana = {
+        isForever = false,
+        abrt = 3,
+    },
+    --run = 5,
+    --run = 3,
+    --todo = 'nd excpt',
+    props = 'not permitted inside `thread´',
+}
+Test { [[
+par do
+    var int v1=4,v2=4;
+    par/or do
+        await 10ms;
+        v1 = 1;
+    with
+        await 10ms;
+        v2 = 2;
+    end
+    escape v1 + v2;
+with
+    async do
         emit 5ms;
         emit(5000)ms;
     end
@@ -28011,6 +28067,65 @@ with
 end
 escape ret;
 ]],
+    --run = 72000,
+    props = 'not permitted inside `thread´',
+}
+Test { [[
+native do ##include <assert.h> end
+native _assert();
+input void T;
+var int ret = 0;
+par/or do
+    loop do
+        var int late = await 10ms;
+        ret = ret + late;
+        _assert(late <= 10000);
+    end
+with
+    loop do
+        var int i = 0;
+        var int t;
+        par/or do
+            t = await 1s;
+        with
+            loop do
+                await T;
+                i = i + 1;
+            end
+        end
+    end
+with
+    async do
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+    end
+end
+escape ret;
+]],
     run = 72000,
 }
 
@@ -28031,6 +28146,38 @@ par do
     end;
 with
     async thread do
+        emit P2 => 0;
+        emit P2 => 0;
+        emit P2 => 0;
+        emit P2 => 0;
+        emit P2 => 0;
+        emit P2 => 0;
+        emit P2 => 0;
+        emit P2 => 1;
+    end;
+    await FOREVER;      // TODO: ele acha que o async termina
+end;
+]],
+    --run = 0,
+    props = 'not permitted inside `thread´',
+}
+Test { [[
+input int P2;
+par do
+    loop do
+        par/or do
+            var int p2 = await P2;
+            if p2 == 1 then
+                escape 0;
+            end;
+        with
+            loop do
+                await 200ms;
+            end;
+        end;
+    end;
+with
+    async do
         emit P2 => 0;
         emit P2 => 0;
         emit P2 => 0;

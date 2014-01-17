@@ -40,6 +40,15 @@ local NO_async = {
     Escape=true,
 }
 
+local NO_thread = {
+    Async=true, Thread=true,
+    ParEver=true, ParOr=true, ParAnd=true,
+    AwaitS=true, AwaitExt=true, AwaitInt=true, AwaitN=true, AwaitT=true,
+    EmitInt=true, EmitExt=true, EmitT=true,
+    Pause=true,
+    Escape=true,
+}
+
 local NO_constr = {
     --Finalize=true, Finally=true,
     Escape=true, Async=true, Thread=true,
@@ -89,8 +98,12 @@ F = {
                 'not permitted inside `finalize´')
         end
         if NO_async[me.tag] then
-            ASR(not _AST.iter(_AST.pred_async)(), me,
+            ASR(not _AST.iter'Async'(), me,
                     'not permitted inside `async´')
+        end
+        if NO_thread[me.tag] then
+            ASR(not _AST.iter'Thread'(), me,
+                    'not permitted inside `thread´')
         end
         if NO_constr[me.tag] then
             ASR(not _AST.iter'Dcl_constr'(), me,
