@@ -1,115 +1,13 @@
 /* TODO: #ifdef CEU_INTS: seqno, stki, CEU_STK */
-#line 1 "=== FILENAME ==="
 
-=== DEFS ===
+#define CEU_MAX_STACK   255     /* TODO */
 
-/* Order of C definitions:
-=== DEFS
-    -- external:
-    CEU_IN_*
-    CEU_OUT_*
-    CEU_OUT_n
-    CEU_FUN_*
-
-    -- ifdefs 1:
-    CEU_EXTS CEU_WCLOCKS CEU_INTS CEU_ASYNCS CEU_THREADS CEU_ORGS
-    CEU_NEWS CEU_NEWS_POOL CEU_NEWS_MALLOC CEU_IFCS CEU_CLEAR CEU_PSES
-
-    -- ifdefs 2:
-    CEU_GOTO CEU_RUNTESTS
-
-    -- tuples:
-    typedef struct {
-            void* _1;
-            void* _2;
-    } tceu__int___TCEU_Transaction_;
-
-=== POOL_C
-
-CEU_WCLOCK_INACTIVE
-CEU_WCLOCK_EXPIRED
-
-CEU_NMEM
-CEU_NTRAILS
-CEU_NCLS
-
-CEU_THREADS_*
-CEU_ATOMIC
-
--- limits
-    tceu_nevt
-    tceu_nlbl
-    tceu_ncls
-    CEU_MAX_STACK
-
--- types
-    tceu_trl
-    tceu_evtp
-    tceu_stk
-    tceu_lst
-    tceu_lnk
-    tceu_org
-
-=== NATIVE
-
-=== CLSS_DEFS
-    - clss
-        - struct
-        - functions
-    - cls main
-
-=== LABELS_ENUM
-
-tceu_proc
-
-...     // TODO
-
-=== THREADS_C
-=== FUNCTIONS_C
-ceu_go
-*/
-
-#include <string.h>
-#include <limits.h>
-
-#ifdef CEU_DEBUG
-#include <assert.h>
-#include <signal.h>
-#include <stdlib.h>
-#endif
-
-#if defined(CEU_NEWS) || defined(CEU_THREADS)
-#include <stdlib.h>     /* malloc / free */
-#endif
-
+/* TODO: app */
 #ifdef CEU_NEWS
 === POOL_C ===
 #endif
 
-#ifdef __cplusplus
-#define CEU_WCLOCK_INACTIVE 0x7fffffffL     /* TODO */
-#else
-#define CEU_WCLOCK_INACTIVE INT32_MAX
-#endif
-#define CEU_WCLOCK_EXPIRED (CEU_WCLOCK_INACTIVE-1)
-
-#define CEU_NMEM       (=== CEU_NMEM ===)
-#define CEU_NTRAILS    (=== CEU_NTRAILS ===)
-
-#ifdef CEU_IFCS
-#include <stddef.h>
-/* TODO: === direto? */
-#define CEU_NCLS       (=== CEU_NCLS ===)
-#endif
-
-/* Macros that can be defined:
- * ceu_out_pending() (sync?)
- * ceu_out_wclock(dt)
- * ceu_out_event(id, len, data)
- * ceu_out_async(more?);
- * ceu_out_end(v)
- */
-
+/* TODO: app */
 #ifdef CEU_THREADS
 #ifndef CEU_THREADS_T
 #include <pthread.h>
@@ -152,24 +50,6 @@ ceu_go
  * pthread_cond_wait(&cond, &mutex);
  * pthread_cond_signal(&cond);
 */
-
-/*typedef === TCEU_NEVT === tceu_nevt;    // (x) number of events */
-typedef u8 tceu_nevt;    /* (x) number of events */
-
-/* TODO: lbl => unsigned */
-typedef === TCEU_NLBL === tceu_nlbl;    /* (x) number of trails */
-
-#ifdef CEU_IFCS
-typedef === TCEU_NCLS === tceu_ncls;    /* (x) number of instances */
-#endif
-
-/* align all structs 1 byte
-// TODO: verify defaults for microcontrollers
-//#pragma pack(push)
-//#pragma pack(1)
-*/
-
-#define CEU_MAX_STACK   255     /* TODO */
 
 typedef union tceu_trl {
     tceu_nevt evt;
@@ -284,17 +164,6 @@ typedef struct {
 #endif
 } tceu_go;
 
-/* native code */
-=== NATIVE ===
-
-/* class definitions */
-=== CLSS_DEFS ===
-
-/* goto labels */
-enum {
-=== LABELS_ENUM ===
-};
-
 typedef struct {
     /* global seqno: incremented on every reaction
      * awaiting trails matches only if trl->seqno < seqno,
@@ -332,39 +201,6 @@ typedef struct {
 
     CEU_Main    mem;
 } tceu_proc;
-
-/* TODO: fields that need no initialization? */
-
-static tceu_proc CEU = {
-    0,
-#ifdef CEU_WCLOCKS
-    0, CEU_WCLOCK_INACTIVE, CEU_WCLOCK_INACTIVE,
-#endif
-#ifdef CEU_IFCS
-    {
-=== IFCS_CLSS ===
-    },
-    {
-=== IFCS_FLDS ===
-    },
-    {
-=== IFCS_EVTS ===
-    },
-    {
-=== IFCS_FUNS ===
-    },
-#endif
-#ifdef CEU_DEBUG
-    {},
-#endif
-#ifdef CEU_THREADS
-    PTHREAD_MUTEX_INITIALIZER,
-    PTHREAD_COND_INITIALIZER,
-#endif
-    {}                          /* TODO: o q ele gera? */
-};
-
-/*#pragma pack(pop) */
 
 /**********************************************************************/
 
@@ -406,7 +242,7 @@ void ceu_trails_set_wclock (s32* t, s32 dt) {
 #ifdef CEU_NEWS
 #ifdef CEU_RUNTESTS
 /* TODO */
-static int _ceu_dyns_ = 0;
+int _ceu_dyns_ = 0;
 #endif
 #endif
 
@@ -640,47 +476,7 @@ typedef struct {
 void* f (tceu_threads_p* p) {
 }
  */
-=== THREADS_C ===
 #endif
-
-=== FUNCTIONS_C ===
-
-enum {
-    RET_HALT = 0,
-    /*RET_GOTO,*/
-#if defined(CEU_INTS) || defined(CEU_ORGS)
-    RET_ORG,
-#endif
-#if defined(CEU_CLEAR) || defined(CEU_ORGS)
-    RET_TRL
-#endif
-};
-
-int ceu_go_one (tceu_go* _ceu_go)
-{
-#ifdef CEU_GOTO
-_CEU_GOTO_:
-#endif
-#ifdef CEU_DEBUG
-#ifdef CEU_ORGS
-            CEU.lst.org = _ceu_go->org;
-#endif
-            CEU.lst.trl = _ceu_go->trl;
-            CEU.lst.lbl = _ceu_go->lbl;
-#ifdef CEU_DEBUG_TRAILS
-fprintf(stderr, "TRK: o.%p / l.%d\n", _ceu_go->org, _ceu_go->lbl);
-#endif
-#endif
-
-#ifdef CEU_RUNTESTS
-            ceu_stack_clr();
-#endif
-
-    switch (_ceu_go->lbl) {
-        === CODE ===
-    }
-    /*return RET_HALT;*/
-}
 
 void ceu_go (int _ceu_evt, tceu_evtp _ceu_evtp)
 {
