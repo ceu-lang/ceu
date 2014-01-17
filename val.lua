@@ -231,7 +231,7 @@ F =
 ))]]
                 else    -- event
                     me.val = nil    -- cannot be used as variable
-                    me.ifc_idx = '(CEU_APP.ifcs_evts['..gen..'->cls]['
+                    me.ifc_idx = '(_CEU_APP.ifcs_evts['..gen..'->cls]['
                                     .._ENV.ifcs.evts[me.var.ifc_id]
                                ..'])'
                 end

@@ -4,19 +4,8 @@
  * https://github.com/tinyos/tinyos-main/blob/master/tos/system/PoolP.nc
  */
 
-typedef struct {
-    int     size;
-    int     free;
-    int     index;
-    int     unit;
-    char** queue;
-    char*  mem;
-} tceu_pool;
-
-#define CEU_POOL_DCL(name, type, size) \
-    type* name##_queue[size];          \
-    type  name##_mem[size];            \
-    tceu_pool name;
+#include <stdlib.h>
+#include "ceu_pool.h"
 
 void ceu_pool_init (tceu_pool* pool, int size, int unit,
                     char** queue, char* mem)

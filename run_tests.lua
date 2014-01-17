@@ -135,7 +135,7 @@ end
              or 'valgrind -q --leak-check=full ./ceu.exe 2>&1'
              --or 'valgrind -q --tool=helgrind ./ceu.exe 2>&1'
     local GCC = 'gcc -Wall -DCEU_DEBUG -ansi -o ceu.exe'..
-                ' main.c ceu_os.c _ceu_app.c 2>&1'
+                ' main.c ceu_os.c _ceu_app.c ceu_pool.c 2>&1'
     if _PROPS.has_threads then
         GCC = GCC .. ' -lpthread'
     end

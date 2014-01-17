@@ -1,6 +1,7 @@
 #ifndef _CEU_OS_H
 #define _CEU_OS_H
 
+#include <stddef.h>
 #include "ceu_types.h"
 
 typedef u8 tceu_nevt;   /* max number of events */
@@ -118,6 +119,7 @@ typedef struct tceu_go {
 #endif
 
 #ifdef CEU_ORGS
+    #define CEU_MAX_STACK   255     /* TODO */
     /* TODO: CEU_ORGS is calculable // CEU_NEWS isn't (255?) */
     tceu_stk stk[CEU_MAX_STACK];
 #else
@@ -191,6 +193,9 @@ enum {
     RET_TRL
 #endif
 };
+
+void* ceu_alloc (size_t size);
+void  ceu_free (void* ptr);
 
 void ceu_org_init (tceu_org* org, int n, int lbl, int seqno,
                    tceu_org* par_org, int par_trl);

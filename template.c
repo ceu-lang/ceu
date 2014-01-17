@@ -8,6 +8,10 @@
 #include <string.h>     /* memset */
 #endif
 
+#ifdef CEU_NEWS
+#include "ceu_pool.h"
+#endif
+
 #line 1 "=== FILENAME ==="
 
 === DEFS ===
@@ -16,10 +20,6 @@
 #include <stddef.h>
 /* TODO: === direto? */
 #define CEU_NCLS       (=== CEU_NCLS ===)
-#endif
-
-#ifdef CEU_IFCS
-typedef === TCEU_NCLS === tceu_ncls;    /* (x) number of instances */
 #endif
 
 /* native code */
@@ -86,10 +86,7 @@ static _tceu_app _CEU_APP = {
     },
     {
 === IFCS_FUNS ===
-    },
-#endif
-#ifdef CEU_NEWS
-    {},
+    }
 #endif
 };
 

@@ -221,7 +221,6 @@ do
             EVTS[#EVTS+1] = '\t\t{'..table.concat(evts,',')..'}'
             FUNS[#FUNS+1] = '\t\t{'..table.concat(funs,',')..'}'
         end
-        tpl = sub(tpl, '=== TCEU_NCLS ===',    'u'..tps[_ENV.c.tceu_ncls.len])
         tpl = sub(tpl, '=== CEU_NCLS ===',     #_ENV.clss_cls)
         tpl = sub(tpl, '=== IFCS_NIFCS ===',   #_ENV.clss_ifc)
         tpl = sub(tpl, '=== IFCS_NFLDS ===',   #_ENV.ifcs.flds)
@@ -329,8 +328,13 @@ typedef s]]..tps[_ENV.c.tceu_nlbl.len]..[[ tceu_nlbl;
 /* TODO: remove */
 #define CEU_NTRAILS ]].._MAIN.trails_n..[[
 
+#ifdef CEU_IFCS
+/* (x) number of different classes */
+typedef ]]..'u'..tps[_ENV.c.tceu_ncls.len]..[[ tceu_ncls;
+#endif
+
 ]]
-        f:write(h..str..[[
+        f:write(str..h..[[
 #endif
 ]])
         f:close()

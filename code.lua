@@ -409,23 +409,9 @@ case ]]..me.lbls_cnt[i].id..[[:;
 ]])
         else
             LINE(me, [[
-    __ceu_new = (tceu_org*) malloc(sizeof(]].._TP.c(t.cls.id)..[[));
+    __ceu_new = (tceu_org*) ceu_alloc(sizeof(]].._TP.c(t.cls.id)..[[));
 ]])
         end
-
-        LINE(me, [[
-/*fprintf(stderr, "MALLOC: %p\n", __ceu_new); */
-#ifdef CEU_RUNTESTS
-    if (__ceu_new != NULL) {
-        _ceu_dyns_++;
-        if (_ceu_dyns_ > CEU_MAX_DYNS) {
-            free(__ceu_new);
-            __ceu_new = NULL;
-            _ceu_dyns_--;
-        }
-    }
-#endif
-]])
 
         LINE(me, [[
     if (__ceu_new != NULL) {
@@ -1159,7 +1145,7 @@ case ]]..me.lbl.id..[[:;
 
         -- spawn thread
         LINE(me, [[
-]]..me.thread_st..[[  = malloc(sizeof(s8));
+]]..me.thread_st..[[  = ceu_alloc(sizeof(s8));
 *]]..me.thread_st..[[ = 0;  /* ini */
 {
     tceu_threads_p p = { _ceu_go->org, ]]..me.thread_st..[[ };

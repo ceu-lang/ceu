@@ -39,7 +39,7 @@ DBG('===', me.id, me.trails_n, '('..tostring(me.max)..')')
         -- top class pool <class T[N] with ... end>
         if me.max and _PROPS.has_news_pool then
             local id = 'pool_'..me.id
-            me.pool = 'CEU_APP.'..id
+            me.pool = '_CEU_APP.'..id
             _MEM.pools.dcl = _MEM.pools.dcl .. [[
 CEU_POOL_DCL(]]..id..','..'CEU_'..me.id..','..me.max..[[);
 ]]

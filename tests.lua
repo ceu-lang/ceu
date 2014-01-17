@@ -272,7 +272,6 @@ escape 1;
 }
 
 -------------------------------------------------------------------------------
---]===]
 
 --do return end
 
@@ -891,15 +890,12 @@ do
     var int v = 0;
 end
 event void e;
-native nohold _fprintf(), _stderr;
 par do
     await START;
     emit e;
-_fprintf(_stderr,"111\n");
     escape 1;       // 9
 with
     await e;
-_fprintf(_stderr,"222\n");
     escape 2;       // 12
 end
 ]],
@@ -949,6 +945,7 @@ escape x;
 }
 
 Test { [[
+native do ##include <assert.h> end
 input void START;
 event void a, b, c, d;
 native _assert();
@@ -1672,7 +1669,7 @@ escape v;
 
 Test { [[
 input int A;
-var int v;
+var int v = 0;
 if 0 then
     v = await A;
 end;
@@ -2341,13 +2338,17 @@ escape 1;
 }
 
 Test { [[
+native nohold _fprintf(), _stderr;
 input void A;
 var int ret;
 every A do
+_fprintf(_stderr,"222\n");
     ret = ret + 1;
     if ret == 3 then
+_fprintf(_stderr,"yes\n");
         escape ret;
     end
+_fprintf(_stderr,"no\n");
 end
 ]],
     run = { ['~>A;~>A;~>A']=3 }
@@ -3563,6 +3564,9 @@ escape a;
 }
 
 Test { [[
+native do
+    ##include <assert.h>
+end
 input void START;
 event void a, b, c, d;
 native _assert();
@@ -5148,6 +5152,7 @@ escape a;
 }
 
 Test { [[
+native do ##include <assert.h> end
 native _assert();
 input void T;
 var int ret = 0;
@@ -17813,9 +17818,6 @@ end
 }
 
 Test { [[
-native _ret_val, _ret_end;
-_ret_val = 1;
-_ret_end = 1;
 event void e, f;
 par do
     loop do
@@ -17824,14 +17826,12 @@ par do
         with
             await f;        // 20
         end
-_ret_val = _ret_val + 5;
         await e;            // 23
     end
 with
     loop do
         par/or do
             await f;        // 8
-_ret_val = _ret_val + 11;
         with
             emit e;         // 11
             await FOREVER;
@@ -17844,19 +17844,15 @@ end
         acc = 3,
     },
     awaits = 0,
-    run = 6,
+    run = 0,
 }
 
 Test { [[
-native _ret_val, _ret_end;
-_ret_val = 1;
-_ret_end = 1;
 event void e, f;
 par do
     loop do
         par/or do
             await f;        // 8
-_ret_val = _ret_val + 11;
         with
             emit e;         // 11
             await FOREVER;
@@ -17869,7 +17865,6 @@ with
         with
             await f;        // 20
         end
-_ret_val = _ret_val + 5;
         await e;            // 23
     end
 end
@@ -17879,19 +17874,15 @@ end
         acc = 3,
     },
     awaits = 0,
-    run = 6,
+    run = 0,
 }
 
 Test { [[
-native _ret_val, _ret_end;
-_ret_val = 1;
-_ret_end = 1;
 event void e, f;
 par do
     loop do
         par/or do
             emit e;     // 8
-_ret_val = _ret_val + 5;
             await FOREVER;
         with
             await f;
@@ -17900,7 +17891,6 @@ _ret_val = _ret_val + 5;
 with
     loop do
         await e;        // 17
-_ret_val = _ret_val + 11;
         par/or do
             emit f;     // 20
         with
@@ -17914,19 +17904,15 @@ end
         acc = 2,
     },
     awaits = 0,
-    run = 6
+    run = 0
 }
 
 Test { [[
 event void e, k1, k2;
-native _ret_val, _ret_end;
-_ret_val = 1;
-_ret_end = 1;
 par do
     loop do
         par/or do
             emit e;
-_ret_val = _ret_val + 5;
             await FOREVER;
         with
             await k1;
@@ -17936,7 +17922,6 @@ _ret_val = _ret_val + 5;
 with
     loop do
         await e;
-_ret_val = _ret_val + 11;
         par/or do
             emit k1;
         with
@@ -17950,7 +17935,7 @@ end
         acc = 1,
     },
     awaits = 1,
-    run = 6,
+    run = 0,
 }
 
 -- CLASSES, ORGS, ORGANISMS
@@ -19986,6 +19971,7 @@ escape 10;
 }
 
 Test { [[
+native do ##include <assert.h> end
 native _assert();
 input int  BUTTON;
 input void F;
@@ -20769,6 +20755,7 @@ escape ret + _V;        // * reads after
 -- KILL THEMSELVES
 
 Test { [[
+native do ##include <assert.h> end
 input void START;
 
 interface Global with
@@ -21818,6 +21805,7 @@ end
     env = 'line 3 : invalid attribution',
 }
 
+--]===]
 Test { [[
 class T with do end
 var u8 ok;
