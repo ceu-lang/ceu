@@ -891,12 +891,15 @@ do
     var int v = 0;
 end
 event void e;
+native nohold _fprintf(), _stderr;
 par do
     await START;
     emit e;
+_fprintf(_stderr,"111\n");
     escape 1;       // 9
 with
     await e;
+_fprintf(_stderr,"222\n");
     escape 2;       // 12
 end
 ]],
@@ -1693,12 +1696,16 @@ end
 }
 
 Test { [[
+native nohold _fprintf(), _stderr;
 var int a = do
     var int a = do
+        _fprintf(_stderr, "111\n");
         escape 1;
     end;
+        _fprintf(_stderr, "222 = %d\n", a);
     escape a;
 end;
+        _fprintf(_stderr, "333 = %d\n", a);
 escape a;
 ]],
     run = 1
@@ -14365,20 +14372,18 @@ escape ret;
 
 Test { [[
 input void START;
-native nohold _fprintf(), _stderr;
 event (int,void*) ptr;
 var void* p;
 var int i;
 par/or do
     (i,p) = await ptr;
-_fprintf(_stderr,"a\n");
 with
     await START;
     emit ptr => (1, null);
 end
 escape i;
 ]],
-    fin = 'line 7 : invalid block for awoken pointer "p"',
+    fin = 'line 6 : invalid block for awoken pointer "p"',
     --run = 1,
 }
 
@@ -14396,7 +14401,6 @@ escape i;
 
 Test { [[
 input void START;
-native nohold _fprintf(), _stderr;
 event (int,void*) ptr;
 var void* p;
 var int i;
@@ -14410,7 +14414,7 @@ await 1s;
 escape i;
 ]],
     --run = 1,
-    fin = 'line 7 : invalid block for awoken pointer "p"',
+    fin = 'line 6 : invalid block for awoken pointer "p"',
 }
 
 Test { [[
@@ -27298,7 +27302,7 @@ await A;
 escape 1;
 ]],
     --run = { ['~>A']=1 },
-    run = "ceu_go: Assertion `0' failed",
+    run = "ceu_go_one: Assertion `0' failed",
 }
 
 INCLUDE('/tmp/_ceu_MOD2.ceu', [[

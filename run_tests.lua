@@ -209,11 +209,20 @@ STATS = {
 
 -- w/ threads
 --[[
+-- before ceu_go_one
 STATS = {
     count   = 1541,
     mem     = 0,
     trails  = 3034,
     bytes   = 13218173,
+}
+
+
+STATS = {
+    count   = 1541,
+    mem     = 0,
+    trails  = 3034,
+    bytes   = 14480576,
 }
 
 

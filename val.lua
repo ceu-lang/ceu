@@ -18,9 +18,9 @@ end
 
 function CUR (me, id)
     if id then
-        return '(('.._TP.c(CLS().id)..'*)_ceu_go_org)->'..id
+        return '(('.._TP.c(CLS().id)..'*)_ceu_go->org)->'..id
     else
-        return '(('.._TP.c(CLS().id)..'*)_ceu_go_org)'
+        return '(('.._TP.c(CLS().id)..'*)_ceu_go->org)'
     end
 end
 
@@ -61,7 +61,7 @@ F =
         if _AST.iter'Dcl_constr'() then
             me.val = '__org'    -- set when calling constr
         else
-            me.val = '_ceu_go_org'
+            me.val = '_ceu_go->org'
         end
         me.val = '(*(('.._TP.c(me.tp)..'*)'..me.val..'))'
     end,
@@ -125,10 +125,10 @@ F =
     AwaitExt = function (me)
         local e1 = unpack(me)
         if _TP.deref( (e1.evt or e1.var.evt).tp ) then
-            me.val = '(('.._TP.c( (e1.evt or e1.var.evt).tp )..')_ceu_evtp.ptr)'
+            me.val = '(('.._TP.c( (e1.evt or e1.var.evt).tp )..')_ceu_go->evtp.ptr)'
         else
-            me.val = '(_ceu_evtp.v)'
-            --me.val = '*(('.._TP.c(e1.evt.tp)..'*)_ceu_evtp.ptr)'
+            me.val = '(_ceu_go->evtp.v)'
+            --me.val = '*(('.._TP.c(e1.evt.tp)..'*)_ceu_go->evtp.ptr)'
         end
     end,
     AwaitT = function (me)
@@ -299,9 +299,9 @@ F =
         if me.iter_ini then
             if blk.trl_orgs then
                 me.val = [[
-( (_ceu_go_org->trls[ ]]..blk.trl_orgs[1]..[[ ].lnks[0].nxt->n == 0) ?
+( (_ceu_go->org->trls[ ]]..blk.trl_orgs[1]..[[ ].lnks[0].nxt->n == 0) ?
     NULL :
-    _ceu_go_org->trls[ ]]..blk.trl_orgs[1]..[[ ].lnks[0].nxt )
+    _ceu_go->org->trls[ ]]..blk.trl_orgs[1]..[[ ].lnks[0].nxt )
 ]]
             else
                 me.val = 'NULL'
