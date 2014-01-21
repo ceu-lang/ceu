@@ -616,7 +616,8 @@ ceu_pause(&_ceu_go->org->trls[ ]]..me.blk.trails[1]..[[ ],
         ATTR(me, to, fr)
         if to.tag=='Var' and to.var.id=='_ret' then
             LINE(me, [[
-    *_ceu_ret = ]]..V(to)..[[;
+    if (_ceu_ret != NULL)
+        *_ceu_ret = ]]..V(to)..[[;
 ]])
         end
 

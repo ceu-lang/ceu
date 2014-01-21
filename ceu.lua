@@ -1,3 +1,21 @@
+_OPTS_NPARAMS = {
+    version   = 0,
+    input     = nil,
+
+    out_c     = 1,
+    out_h     = 1,
+
+    join      = 0,
+    c_calls   = 1,
+
+    cpp       = 0,
+    cpp_args  = 1,
+
+    tp_word    = 1,
+
+    os        = 0,
+}
+
 _OPTS = {
     input     = nil,
 
@@ -13,23 +31,6 @@ _OPTS = {
     tp_word   = 4,
 
     os        = false,
-}
-
-_OPTS_NPARAMS = {
-    input     = nil,
-
-    out_c     = 1,
-    out_h     = 1,
-
-    join      = 0,
-    c_calls   = 1,
-
-    cpp       = 0,
-    cpp_args  = 1,
-
-    tp_word    = 1,
-
-    os        = 0,
 }
 
 local params = {...}
@@ -61,6 +62,12 @@ do
         _OPTS.input = p
     end
 end
+
+if _OPTS.version then
+    print 'ceu 0.7'
+    os.exit(0)
+end
+
 if not _OPTS.input then
     io.stderr:write([[
 
@@ -82,10 +89,6 @@ if not _OPTS.input then
         --os                   # TODO
 ]])
     os.exit(1)
-end
-
-if _OPTS.version then
-    print 'ceu 0.7'
 end
 
 -- C_CALLS
@@ -219,8 +222,10 @@ do
     end
 
     if not _OPTS.os then
+        _FILES.ceu_os_c = string.gsub(_FILES.ceu_os_c, '#include "ceu_os.h"',
+                                      _FILES.ceu_os_h)
         CC = string.gsub(CC, '#include "ceu_types.h"',
-                              _FILES.ceu_types_h)
+                             _FILES.ceu_types_h)
         CC = string.gsub(CC, '#include "ceu_os.h"',
                              _FILES.ceu_os_h..'\n'.._FILES.ceu_os_c)
         CC = string.gsub(CC, '#include "ceu_pool.h"',
@@ -230,7 +235,7 @@ end
 
 -- TEMPLATE.H
 do
-    HH = assert(io.open'template.h'):read'*a'
+    HH = _FILES.template_h
 
     local tps = { [0]='void', [1]='8', [2]='16', [4]='32' }
     HH = sub(HH, '=== TCEU_NLBL ===',   's'..tps[_ENV.c.tceu_nlbl.len])
