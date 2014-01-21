@@ -12,7 +12,7 @@
 
 -- async dentro de pause
 
-_VALGRIND = true
+--_VALGRIND = true
 
 local function INCLUDE (fname, src)
     local f = assert(io.open(fname,'w'))
@@ -272,6 +272,7 @@ escape 1;
 }
 
 -------------------------------------------------------------------------------
+--]===]
 
 --do return end
 
@@ -18483,6 +18484,21 @@ end
 var T a;
 escape 1;
 ]],
+    props = 'line 5 : not permitted inside an interface',
+}
+Test { [[
+class T2 with
+do
+end
+class T with
+    var T2* x;
+do
+    var T2 xx;
+    this.x = &xx;
+end
+var T a;
+escape 1;
+]],
     run = 1,
 }
 
@@ -18507,6 +18523,34 @@ a.x.v = 5;
 a.v2 = 10;
 a.x.t3.v3 = 15;
 escape a . v + a.x .v + a .v2 + a.x  .  t3 . v3;
+]],
+    props = 'line 6 : not permitted inside an interface',
+}
+Test { [[
+class T3 with
+    var int v3;
+do
+end
+class T2 with
+    var T3* t3;
+    var int v;
+do
+    var T3 t33;
+    this.t3 = &t33;
+end
+class T with
+    var int v,v2;
+    var T2* x;
+do
+    var T2 xx;
+    x = &xx;
+end
+var T a;
+a.v = 5;
+a.x:v = 5;
+a.v2 = 10;
+a.x:t3:v3 = 15;
+escape a . v + a.x :v + a .v2 + a.x  :  t3 : v3;
 ]],
     run = 35,
 }
@@ -18583,6 +18627,32 @@ var T t with
     this.v = 10;
 end;
 escape t.v + t.u.x;
+]],
+    props = 'line 10 : not permitted inside an interface',
+}
+
+Test { [[
+
+var int v;
+class U with
+    var int x = 10;
+do
+end
+
+class T with
+    var int v=5;
+    var U* u;
+do
+    var U uu with
+        this.x = 20;
+    end;
+    this.u = &uu;
+    this.v = 100;
+end
+var T t with
+    this.v = 10;
+end;
+escape t.v + t.u:x;
 ]],
     run = 120,
 }
@@ -18834,6 +18904,26 @@ var Image_media img2;
 
 escape 1;
 ]],
+    props = 'line 7 : not permitted inside an interface',
+}
+Test { [[
+class Sm with
+do
+    var u8 id;
+end
+
+class Image_media with
+    var Sm* sm;
+do
+    var Sm smm;
+    this.sm = &smm;
+end
+
+var Image_media img1;
+var Image_media img2;
+
+escape 1;
+]],
     run = 1;
 }
 Test { [[
@@ -18857,6 +18947,32 @@ var Image_media img3;
     img3.sm.id = 11;
 
 escape img1.sm.id + img2.sm.id + img3.sm.id;
+]],
+    props = 'line 7 : not permitted inside an interface',
+}
+Test { [[
+class Sm with
+    var int id;
+do
+end
+
+class Image_media with
+    var Sm* sm;
+do
+    var Sm smm;
+    this.sm = &smm;
+end
+
+var Image_media img1;
+    img1.sm:id = 10;
+
+var Image_media img2;
+    img2.sm:id = 12;
+
+var Image_media img3;
+    img3.sm:id = 11;
+
+escape img1.sm:id + img2.sm:id + img3.sm:id;
 ]],
     run = 33;
 }
@@ -18882,6 +18998,36 @@ var Image_media img3;
     img3.sm.id = 11;
 
 escape img1.sm.id + img2.sm.id + img3.sm.id;
+]],
+    ana = {
+        reachs = 1,
+    },
+    props = 'line 7 : not permitted inside an interface',
+}
+Test { [[
+class Sm with
+    var int id;
+do
+end
+
+class Image_media with
+    var Sm* sm;
+do
+    var Sm smm;
+    this.sm = &smm;
+    par do with with with with end
+end
+
+var Image_media img1;
+    img1.sm:id = 10;
+
+var Image_media img2;
+    img2.sm:id = 12;
+
+var Image_media img3;
+    img3.sm:id = 11;
+
+escape img1.sm:id + img2.sm:id + img3.sm:id;
 ]],
     ana = {
         reachs = 1,
@@ -22389,6 +22535,30 @@ end
 var T t;
 escape 1;
 ]],
+    props = 'line 13 : not permitted inside an interface',
+}
+Test { [[
+
+class V with
+do
+end
+
+class U with
+    var V* v;
+do
+    var V* vv = new V;
+end
+
+class T with
+    var U* u;
+do
+    var U uu;
+    this.u = &uu;
+end
+
+var T t;
+escape 1;
+]],
     run = 1,
 }
 
@@ -22420,6 +22590,46 @@ end
 class T with
     var U u;
 do
+    //u.v = new V;
+    var V* v = new V;
+    await FOREVER;
+end
+
+var T t;
+escape _V;
+]],
+    props = 'line 26 : not permitted inside an interface',
+}
+Test { [[
+native _f(), _V;
+native do
+    int V = 1;
+    int* f (){ return NULL; }
+end
+
+class V with
+do
+    var int* v;
+    finalize
+        v = _f();
+    with
+        _V = _V+1;
+    end
+    await FOREVER;
+end
+
+class U with
+    var V* v;
+do
+    var V* vv = new V;
+    await FOREVER;
+end
+
+class T with
+    var U* u;
+do
+    var U uu;
+    u = &uu;
     //u.v = new V;
     var V* v = new V;
     await FOREVER;
@@ -22465,6 +22675,46 @@ end
 
 escape _V;
 ]],
+    props = 'line 16 : not permitted inside an interface',
+}
+Test { [[
+input void START;
+native _f(), _V;
+native do
+    int V = 1;
+end
+
+class V with
+do
+    finalize with
+        _V = _V+1;
+    end
+    await FOREVER;
+end
+
+class U with
+    var V* v;
+do
+    var V vv1;
+    v = &vv1;
+    var V* vv = new V;
+    await FOREVER;
+end
+
+class T with
+    var U* u;
+do
+    var U uu;
+    u = &uu;
+    await FOREVER;
+end
+
+do
+    var T t;
+end
+
+escape _V;
+]],
     run = 3,
 }
 
@@ -22497,6 +22747,50 @@ end
 class T with
     var U u;
 do
+    //u.v = new V;
+    var V* v = new V;
+    await FOREVER;
+end
+
+do
+    var T t;
+end
+
+escape _V;
+]],
+    props = 'line 27 : not permitted inside an interface',
+}
+Test { [[
+input void START;
+native _f(), _V;
+native do
+    int V = 1;
+    int* f (){ return NULL; }
+end
+
+class V with
+do
+    var int* v;
+    finalize
+        v = _f();
+    with
+        _V = _V+1;
+    end
+    await FOREVER;
+end
+
+class U with
+    var V* v;
+do
+    var V* vv = new V;
+    await FOREVER;
+end
+
+class T with
+    var U* u;
+do
+    var U uu;
+    u = &uu;
     //u.v = new V;
     var V* v = new V;
     await FOREVER;
@@ -22574,6 +22868,51 @@ end
 
 escape _V;
 ]],
+    props = 'line 27 : not permitted inside an interface',
+}
+Test { [[
+input void START;
+native _f(), _V;
+native do
+    int V = 1;
+    int* f (){ return NULL; }
+end
+
+class V with
+do
+    var int* v;
+    finalize
+        v = _f();
+    with
+        _V = _V+1;
+    end
+    await FOREVER;
+end
+
+class U with
+    var V* v;
+do
+    var V* vv = new V;
+    await FOREVER;
+end
+
+class T with
+    var U* u;
+do
+    var U uu;
+    u = &uu;
+    //u.v = new V;
+    var V* v = new V;
+    await FOREVER;
+end
+
+do
+    var T t;
+    await START;
+end
+
+escape _V;
+]],
     run = 3,
 }
 
@@ -22615,6 +22954,52 @@ var T t;
 do
     await START;
     var V* v = t.u.v;   // no more :=
+end
+
+escape _V;
+]],
+    props = 'line 27 : not permitted inside an interface',
+}
+Test { [[
+input void START;
+native _f(), _V;
+native do
+    int V = 1;
+    int* f (){ return NULL; }
+end
+
+class V with
+do
+    var int* v;
+    finalize
+        v = _f();
+    with
+        _V = _V+1;
+    end
+    await FOREVER;
+end
+
+class U with
+    var V* v;
+do
+    var V* vv = new V;
+    await FOREVER;
+end
+
+class T with
+    var U* u;
+do
+    var U uu;
+    u = &uu;
+    //u.v = new V;
+    var V* v = new V;
+    await FOREVER;
+end
+
+var T t;
+do
+    await START;
+    var V* v = t.u:v;   // no more :=
 end
 
 escape _V;
@@ -22661,6 +23046,54 @@ var T t;
 do
     var U u;
     u.v = t.u.v;
+    await START;
+end
+
+escape _V;
+]],
+    props = 'line 26 : not permitted inside an interface',
+}
+Test { [[
+native _f(), _V;
+native do
+    int V = 1;
+    int* f (){ return NULL; }
+end
+
+class V with
+do
+    var int* v;
+    finalize
+        v = _f();
+    with
+        _V = _V+1;
+    end
+    await FOREVER;
+end
+
+class U with
+    var V* v;
+do
+    var V* vv = new V;
+    await FOREVER;
+end
+
+class T with
+    var U* u;
+do
+    var U uu;
+    u = &uu;
+    //u.v = new V;
+    var V* v = new V;
+    await FOREVER;
+end
+
+input void START;
+
+var T t;
+do
+    var U u;
+    u.v = t.u:v;
     await START;
 end
 
@@ -23007,7 +23440,6 @@ escape _V;
     run = { ['~>1min']=20 },
 }
 
---]===]
 Test { [[
 native _s=0;
 native do
@@ -24402,6 +24834,17 @@ do
 end
 interface Media with
     var Sm sm;
+end
+escape 10;
+]],
+    props = 'line 5 : not permitted inside an interface',
+}
+Test { [[
+class Sm with
+do
+end
+interface Media with
+    var Sm* sm;
 end
 escape 10;
 ]],

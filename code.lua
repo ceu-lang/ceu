@@ -200,8 +200,10 @@ F = {
 
     BlockI = CONC_ALL,
     BlockI_pos = function (me)
-        me.code_ifc = me.code       -- see Dcl_cls
-        me.code = ''                -- avoid this code
+        -- Interface constants are initialized from outside
+        -- (another _ceu_go_org), need to use __ceu_org instead.
+        me.code_ifc = string.gsub(me.code, '_ceu_go%-%>org', '__ceu_org')
+        me.code = ''
     end,
 
     Dcl_fun = function (me)
@@ -225,26 +227,7 @@ F = {
             return
         end
 
-        -- copy all method pointers
-        local fs = ''
-        for id, t in pairs(me.c) do
-            -- "ifc_type = cls_type" (src is an interface method)
-            fs = fs ..  CUR(me,id)..' = ('.._TP.c(me.blk_ifc.vars[id].tp)..')'
-                                          ..'&CEU_'..me.id..'_'..id..';\n'
-        end
-
-        if me.has_pre then
-            CASE(me, me.lbl_pre)
-            LINE(me, fs)    -- method pointers
-                fs = ''     -- clear
-            me.code = me.code .. me.blk_ifc.code_pre
-            LINE(me, me.blk_ifc[1][1].code_ifc)   -- Block->Stmts->BlockI
-            HALT(me)
-        end
-
         CASE(me, me.lbl)
-        LINE(me, fs)    -- method pointers
-            fs = ''     -- clear
 
         -- TODO: move to _ORG? (_MAIN does not call _ORG)
         LINE(me, [[
@@ -283,20 +266,24 @@ if (_ceu_go->org->isSpw) {
 
         --[[
 class T with
-    <PRE>           -- 1    me.lbls_pre[i].id
+    <PRE>           -- 1    org: me.lbls_pre[i].id
     var int v = 0;
 do
-    <BODY>          -- 3    me.lbls_body[i].id
+    <BODY>          -- 3    org: me.lbls_body[i].id
 end
 
-<...>               -- 0
+<...>               -- 0    par:
 
 var T t with
-    <CONSTR>        -- 2    no lbl (cannot call anything)
+    <CONSTR>        -- 2    org: no lbl (cannot call anything)
 end;
 
-<CONT>              -- 4    me.lbls_cnt[i].id
+<CONT>              -- 4    par: me.lbls_cnt[i].id
 ]]
+
+        -- TODO: split in two loops:
+        -- In C: init, pre, constr
+        -- In Lua: body
 
         -- each org has its own trail on enclosing block
         for i=1, (t.arr and t.arr.sval or 1) do
@@ -313,40 +300,27 @@ end;
     /* resets org memory and starts org.trail[0]=Class_XXX */
     ceu_org_init(]]..org..[[, ]]
                 ..t.cls.trails_n..','
-                ..(t.cls.has_pre and t.cls.lbl_pre.id or t.cls.lbl.id)..[[,
+                ..t.cls.lbl.id..[[,
                 _ceu_go->stki+1,    /* run now */
                 _ceu_go->org, ]]..t.par_trl_idx..[[);
 ]])
 
-            if t.cls.has_pre then
-                LINE(me, [[
-    /* hold current blk trail: set to my continuation */
-    _ceu_go->trl->evt = CEU_IN__STK;
-    _ceu_go->trl->lbl = ]]..me.lbls_pre[i].id..[[;
-    _ceu_go->trl->stk = _ceu_go->stki;
-    _ceu_go->stk[_ceu_go->stki  ].evtp = _ceu_go->evtp;
-#ifdef CEU_INTS
-#ifdef CEU_ORGS
-    _ceu_go->stk[_ceu_go->stki  ].evto = _ceu_go->evto;
-#endif
-#endif
-    _ceu_go->stk[_ceu_go->stki++].evt  = _ceu_go->evt;
-
-    /* switch to ORG for PRE */
-    _ceu_go->org  = ]]..org..[[;
-    _ceu_go->stop = &_ceu_go->org->trls[_ceu_go->org->n]; /* don't follow the up link */
-    /*goto _CEU_CALL_ORG_;*/
-    return RET_ORG;
-
-case ]]..me.lbls_pre[i].id..[[:;
-    /* BACK FROM PRE */
+            -- PRE & CONSTR
+            LINE(me, [[
+{
+    tceu_org* __ceu_org = ]]..org..[[;
 ]])
+            if t.cls.has_pre then
+                LINE(me, t.cls.blk_ifc[1][1].code_ifc)   -- Block->Stmts->BlockI
             end
             if t.constr then
-                LINE(me, '{ tceu_org* __org = '..org..';')
                 CONC(me, t.constr)      -- constructor before executing
-                LINE(me, '}')
             end
+            LINE(me, [[
+}
+]])
+
+            -- BODY
             LINE(me, [[
     /* hold current blk trail: set to my continuation */
     _ceu_go->trl->evt = CEU_IN__STK;
@@ -545,12 +519,6 @@ ceu_pool_init(&]]..pre..', '..n..', sizeof(CEU_'..node.cls.id..'), '
     ..'(char**)'..pre..'_queue, (char*)'..pre..[[_mem);
 ]])
             end
-        end
-
-        -- above code must execute before PRE
-        if cls.has_pre and cls.blk_ifc==me then
-            me.code_pre = me.code
-            me.code = ''
         end
 
         -- declare tmps

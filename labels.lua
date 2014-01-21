@@ -68,9 +68,6 @@ F = {
 
     Dcl_cls = function (me)
         me.lbl = new{'Class_'..me.id, true}
-        if me.has_pre then
-            me.lbl_pre = new{'Class_Pre_'..me.id}
-        end
 -- TODO (-RAM)
         --if i_am_instantiable then
             me.lbl_clr = new{'Class_free_'..me.id}
@@ -78,9 +75,6 @@ F = {
     end,
     New = function (me)
         me.lbls_cnt = { new{me.tag..'_cont'} }
-        if me.cls.has_pre then
-            me.lbls_pre = { new{'Pre_cnt'} }
-        end
     end,
     Spawn = 'New',
     Free  = function (me)
@@ -141,13 +135,6 @@ F = {
     end,
     Dcl_var = function (me)
         if me.var.cls then
-            if me.var.cls.has_pre then
-                me.lbls_pre = {}
-                for i=1, (me.var.arr and me.var.arr.sval or 1) do
-                    me.lbls_pre[i] = new{'Pre_cnt'}
-                end
-            end
-
             me.lbls_cnt = {}
             for i=1, (me.var.arr and me.var.arr.sval or 1) do
                 me.lbls_cnt[i] = new{'Start_cnt'}

@@ -216,9 +216,9 @@ F = {
 
     Dcl_var = function (me)
         if me.var.cls then
-            if _AST.iter'BlockI'() then
-                CLS().has_pre = true   -- code for pre (before constr)
-            end
+            -- <class T with var U u; end>
+            ASR(not _AST.iter'BlockI'(), me,
+                    'not permitted inside an interface')
         end
     end,
 
