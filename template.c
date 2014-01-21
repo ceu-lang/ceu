@@ -26,7 +26,7 @@
 
 #line 1 "=== FILENAME ==="
 
-=== DEFS ===
+=== OUT_H ===
 
 #ifdef CEU_IFCS
 #include <stddef.h>

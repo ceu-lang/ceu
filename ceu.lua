@@ -1,8 +1,8 @@
 _OPTS = {
     input     = nil,
-    output    = '_ceu_app.c',
 
-    defs_file  = '_ceu_app.h',
+    out_c     = '_ceu_app.c',
+    out_h     = '_ceu_app.h',
 
     join      = true,
     c_calls   = false,
@@ -10,17 +10,16 @@ _OPTS = {
     cpp       = true,
     cpp_args  = false,
 
-    --m4        = false,
-    --m4_args   = false,
+    tp_word   = 4,
 
-    tp_word    = 4,
+    os        = false,
 }
 
 _OPTS_NPARAMS = {
     input     = nil,
-    output    = 1,
 
-    defs_file  = 1,
+    out_c     = 1,
+    out_h     = 1,
 
     join      = 0,
     c_calls   = 1,
@@ -28,11 +27,9 @@ _OPTS_NPARAMS = {
     cpp       = 0,
     cpp_args  = 1,
 
--- TODO: remove
-    --m4        = 0,
-    --m4_args   = 1,
-
     tp_word    = 1,
+
+    os        = 0,
 }
 
 local params = {...}
@@ -69,10 +66,9 @@ if not _OPTS.input then
 
     ./ceu <filename>           # Ceu input file, or `-´ for stdin
     
-        --output <filename>    # C output file (stdout)
+        --out-c <filename>     # C output source file (_ceu_app.c)
+        --out-h <filename>     # C output header file (_ceu_app.h)
     
-        --defs-file <filename> # define constants in a separate output file (no)
-
         --join (--no-join)     # join lines enclosed by /*{-{*/ and /*}-}*/ (join)
         --c-calls              # TODO
 
@@ -81,13 +77,16 @@ if not _OPTS.input then
 
         --tp-word              # sizeof a word in bytes    (4)
 
+        --version              # version of Ceu
+
+        --os                   # TODO
 ]])
     os.exit(1)
 end
 
--- TODO: remove
-        --m4 (--no-m4)         # preprocess the input with `m4´ (no-m4)
-        --m4-args              # preprocess the input with `m4´ passing arguments in between `"´ (no)
+if _OPTS.version then
+    print 'ceu 0.7'
+end
 
 -- C_CALLS
 if _OPTS.c_calls then
@@ -107,20 +106,6 @@ else
     inp = assert(io.open(_OPTS.input))
 end
 local source = inp:read'*a'
-
--- TODO: remove
---[[
-if _OPTS.m4 or _OPTS.m4_args then
-    local args = _OPTS.m4_args or ''
-    local m4_file = (_OPTS.input=='-' and '_ceu_tmp.ceu_m4') or _OPTS.input..'_m4'
-    local m4 = assert(io.popen('m4 '..args..' - > '..m4_file, 'w'))
-    m4:write(source)
-    m4:close()
-
-    source = assert(io.open(m4_file)):read'*a'
-    --os.remove(m4_file)
-end
-]]
 
 _OPTS.source = source
 
@@ -148,29 +133,30 @@ do
     dofile 'code.lua'
 end
 
-local tps = { [0]='void', [1]='8', [2]='16', [4]='32' }
+local sub = function (str, from, to)
+    assert(to, from)
+    local i,e = string.find(str, from)
+    return string.sub(str, 1, i-1) .. to .. string.sub(str, e+1)
+end
+local CC, HH
 
--- TEMPLATE
-local tpl
+-- TEMPLATE.C
 do
-    tpl = assert(io.open'template.c'):read'*a'
+    CC = assert(io.open'template.c'):read'*a'
 
-    local sub = function (str, from, to)
-        assert(to, from)
-        local i,e = string.find(str, from)
-        return string.sub(str, 1, i-1) .. to .. string.sub(str, e+1)
-    end
+    CC = sub(CC, '=== FILENAME ===', _OPTS.input)
+    --CC = string.gsub(CC, '^#line.-\n', '')
 
-    tpl = sub(tpl, '=== LABELS_ENUM ===', _LBLS.code_enum)
+    CC = sub(CC, '=== LABELS_ENUM ===', _LBLS.code_enum)
 
-    tpl = sub(tpl, '=== CLSS_DEFS ===',  _MEM.clss)
-    tpl = sub(tpl, '=== POOLS_DCL ===',  _MEM.pools.dcl)
-    tpl = sub(tpl, '=== POOLS_INIT ===', _MEM.pools.init)
+    CC = sub(CC, '=== CLSS_DEFS ===',  _MEM.clss)
+    CC = sub(CC, '=== POOLS_DCL ===',  _MEM.pools.dcl)
+    CC = sub(CC, '=== POOLS_INIT ===', _MEM.pools.init)
 
-    tpl = sub(tpl, '=== THREADS_C ===',   _CODE.threads)
-    tpl = sub(tpl, '=== FUNCTIONS_C ===', _CODE.functions)
-    tpl = sub(tpl, '=== NATIVE ===',      _CODE.native)
-    tpl = sub(tpl, '=== CODE ===',     _AST.root.code)
+    CC = sub(CC, '=== THREADS_C ===',   _CODE.threads)
+    CC = sub(CC, '=== FUNCTIONS_C ===', _CODE.functions)
+    CC = sub(CC, '=== NATIVE ===',      _CODE.native)
+    CC = sub(CC, '=== CODE ===',     _AST.root.code)
 
     -- IFACES
     if _PROPS.has_ifcs then
@@ -221,84 +207,108 @@ do
             EVTS[#EVTS+1] = '\t\t{'..table.concat(evts,',')..'}'
             FUNS[#FUNS+1] = '\t\t{'..table.concat(funs,',')..'}'
         end
-        tpl = sub(tpl, '=== CEU_NCLS ===',     #_ENV.clss_cls)
-        tpl = sub(tpl, '=== IFCS_NIFCS ===',   #_ENV.clss_ifc)
-        tpl = sub(tpl, '=== IFCS_NFLDS ===',   #_ENV.ifcs.flds)
-        tpl = sub(tpl, '=== IFCS_NEVTS ===',   #_ENV.ifcs.evts)
-        tpl = sub(tpl, '=== IFCS_NFUNS ===',   #_ENV.ifcs.funs)
-        tpl = sub(tpl, '=== IFCS_CLSS ===',    table.concat(CLSS,',\n'))
-        tpl = sub(tpl, '=== IFCS_FLDS ===',    table.concat(FLDS,',\n'))
-        tpl = sub(tpl, '=== IFCS_EVTS ===',    table.concat(EVTS,',\n'))
-        tpl = sub(tpl, '=== IFCS_FUNS ===',    table.concat(FUNS,',\n'))
+        CC = sub(CC, '=== CEU_NCLS ===',     #_ENV.clss_cls)
+        CC = sub(CC, '=== IFCS_NIFCS ===',   #_ENV.clss_ifc)
+        CC = sub(CC, '=== IFCS_NFLDS ===',   #_ENV.ifcs.flds)
+        CC = sub(CC, '=== IFCS_NEVTS ===',   #_ENV.ifcs.evts)
+        CC = sub(CC, '=== IFCS_NFUNS ===',   #_ENV.ifcs.funs)
+        CC = sub(CC, '=== IFCS_CLSS ===',    table.concat(CLSS,',\n'))
+        CC = sub(CC, '=== IFCS_FLDS ===',    table.concat(FLDS,',\n'))
+        CC = sub(CC, '=== IFCS_EVTS ===',    table.concat(EVTS,',\n'))
+        CC = sub(CC, '=== IFCS_FUNS ===',    table.concat(FUNS,',\n'))
     end
+end
 
-    -- EVENTS
-    -- inputs: [max_evt+1...) (including _FIN,_WCLOCK,_ASYNC)
-    --          cannot overlap w/ internal events
-    local str = ''
-    local t = {}
-    --local ins  = 0
-    local outs = 0
+-- TEMPLATE.H
+do
+    HH = assert(io.open'template.h'):read'*a'
 
-    -- TODO
-    str = str..'#define CEU_IN__NONE 0\n'
-
-    for i, evt in ipairs(_ENV.exts) do
-        if evt.pre == 'input' then
-            str = str..'#define CEU_IN_'..evt.id..' '
-                    ..(_ENV.max_evt+i)..'\n'
-            --ins = ins + 1
-        else
-            str = str..'#define CEU_OUT_'..evt.id..' '..outs..'\n'
-            outs = outs + 1
-        end
-        assert(evt.pre=='input' or evt.pre=='output')
-    end
-    --str = str..'#define CEU_IN_n  '..ins..'\n'
-    str = str..'#define CEU_OUT_n '..outs..'\n'
-
-    -- FUNCTIONS called
-    for id in pairs(_ENV.calls) do
-        if id ~= '$anon' then
-            str = str..'#define CEU_FUN'..id..'\n'
-        end
-    end
+    local tps = { [0]='void', [1]='8', [2]='16', [4]='32' }
+    HH = sub(HH, '=== TCEU_NLBL ===',   's'..tps[_ENV.c.tceu_nlbl.len])
+    HH = sub(HH, '=== TCEU_NCLS ===',   's'..tps[_ENV.c.tceu_ncls.len])
+    HH = sub(HH, '=== CEU_NTRAILS ===', _MAIN.trails_n)
 
     -- DEFINES
-    local t = {
-        has_exts    = 'CEU_EXTS',
-        has_wclocks = 'CEU_WCLOCKS',
-        has_ints    = 'CEU_INTS',
-        has_asyncs  = 'CEU_ASYNCS',
-        has_threads = 'CEU_THREADS',
-        has_orgs    = 'CEU_ORGS',
-        has_news    = 'CEU_NEWS',
-        has_news_pool   = 'CEU_NEWS_POOL',
-        has_news_malloc = 'CEU_NEWS_MALLOC',
-        has_ifcs    = 'CEU_IFCS',
-        has_clear   = 'CEU_CLEAR',
-        has_pses    = 'CEU_PSES',
-    }
-    for k, s in pairs(t) do
-        if _PROPS[k] then
-            str = str .. '#define ' .. s .. '\n'
-        end
-    end
-
-    if _CODE.has_goto then
-        str = str .. '#define CEU_GOTO\n'
-    end
-
-    -- TODO: goto _OPTS
-    --str = str .. '#define CEU_DEBUG_TRAILS\n'
-    --str = str .. '#define CEU_NOLINES\n'
-
-    if _OPTS.run_tests then
-        str = str .. '#define CEU_RUNTESTS\n'
-    end
-
-    -- tuples
     do
+        local str = ''
+        local t = {
+            -- props.lua
+            has_exts    = 'CEU_EXTS',
+            has_wclocks = 'CEU_WCLOCKS',
+            has_ints    = 'CEU_INTS',
+            has_asyncs  = 'CEU_ASYNCS',
+            has_threads = 'CEU_THREADS',
+            has_orgs    = 'CEU_ORGS',
+            has_news    = 'CEU_NEWS',
+            has_news_pool   = 'CEU_NEWS_POOL',
+            has_news_malloc = 'CEU_NEWS_MALLOC',
+            has_ifcs    = 'CEU_IFCS',
+            has_clear   = 'CEU_CLEAR',
+            has_pses    = 'CEU_PSES',
+            -- code.lua
+            has_goto    = 'CEU_GOTO',
+        }
+        for k, s in pairs(t) do
+            if _PROPS[k] or _CODE[k] then
+                str = str .. '#define ' .. s .. '\n'
+            end
+        end
+
+        -- TODO: goto _OPTS
+        --str = str .. '#define CEU_DEBUG_TRAILS\n'
+        --str = str .. '#define CEU_NOLINES\n'
+
+        if _OPTS.run_tests then
+            str = str .. '#define CEU_RUNTESTS\n'
+        end
+
+        HH = sub(HH, '=== DEFINES ===', str)
+    end
+
+
+    -- EVENTS
+    do
+        -- inputs: [max_evt+1...) (including _FIN,_WCLOCK,_ASYNC)
+        --          cannot overlap w/ internal events
+        local str = ''
+        local t = {}
+        --local ins  = 0
+        local outs = 0
+
+        -- TODO
+        str = str..'#define CEU_IN__NONE 0\n'
+
+        for i, evt in ipairs(_ENV.exts) do
+            if evt.pre == 'input' then
+                str = str..'#define CEU_IN_'..evt.id..' '
+                        ..(_ENV.max_evt+i)..'\n'
+                --ins = ins + 1
+            else
+                str = str..'#define CEU_OUT_'..evt.id..' '..outs..'\n'
+                outs = outs + 1
+            end
+            assert(evt.pre=='input' or evt.pre=='output')
+        end
+        --str = str..'#define CEU_IN_n  '..ins..'\n'
+        str = str..'#define CEU_OUT_n '..outs..'\n'
+
+        HH = sub(HH, '=== EVENTS ===', str)
+    end
+
+    -- FUNCTIONS called
+    do
+        local str = ''
+        for id in pairs(_ENV.calls) do
+            if id ~= '$anon' then
+                str = str..'#define CEU_FUN'..id..'\n'
+            end
+        end
+        HH = sub(HH, '=== FUNCTIONS ===', str)
+    end
+
+    -- TUPLES
+    do
+        local str = ''
         for _,c in pairs(_ENV.c) do
             if c.tuple then
                 str = str .. 'typedef struct {\n'
@@ -314,42 +324,11 @@ do
                 str = str .. '} '.._TP.c(c.id)..';\n'
             end
         end
+        HH = sub(HH, '=== TUPLES ===', str)
     end
-
--- TODO: create ceu_app.h
-    if _OPTS.defs_file then
-        local f = assert(io.open(_OPTS.defs_file,'w'))
-        f:write([[
-#ifndef _CEU_DEFS_H
-#define _CEU_DEFS_H
-]]..str..[[
-
-/* TODO: lbl => unsigned */
-typedef s]]..tps[_ENV.c.tceu_nlbl.len]..[[ tceu_nlbl;
-
-/* TODO: remove */
-#define CEU_NTRAILS ]].._MAIN.trails_n..[[
-
-#ifdef CEU_IFCS
-/* (x) number of different classes */
-typedef ]]..'u'..tps[_ENV.c.tceu_ncls.len]..[[ tceu_ncls;
-#endif
-
-#endif
-]])
-        f:close()
-        tpl = sub(tpl, '=== DEFS ===',
-                       '#include "'.. _OPTS.defs_file ..'"')
-    else
-        tpl = sub(tpl, '=== DEFS ===', str)
-    end
-
-    tpl = sub(tpl, '=== FILENAME ===', _OPTS.input)
-
-    --tpl = string.gsub(tpl, '^#line.-\n', '')
 end
 
-if _OPTS.verbose or true then
+if _OPTS.verbose then
     local T = {
         --mem  = _AST.root.mem.max,
         evts = _ENV.max_evt+#_ENV.exts,
@@ -378,11 +357,19 @@ if _OPTS.verbose or true then
 end
 
 -- OUTPUT
+
+if _OPTS.out_h then
+    local f = assert(io.open(_OPTS.out_h,'w'))
+    f:write(HH)
+    f:close()
+end
+CC = sub(CC, '=== OUT_H ===', HH)
+
 local out
-if _OPTS.output == '-' then
+if _OPTS.out_c == '-' then
     out = io.stdout
 else
-    out = assert(io.open(_OPTS.output,'w'))
+    out = assert(io.open(_OPTS.out_c,'w'))
 end
 out:write([[
 /*
@@ -413,4 +400,5 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-]] .. tpl)
+]] .. CC)
+out:close()
