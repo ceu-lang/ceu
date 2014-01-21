@@ -1,6 +1,8 @@
 #ifndef _CEU_DEFS_H
 #define _CEU_DEFS_H
 
+#include "ceu_types.h"
+
 === DEFINES ===     /* CEU_EXTS, CEU_WCLOCKS, CEU_INTS, ... */
 
 /* TODO: lbl => unsigned */

@@ -1,6 +1,11 @@
 #include <stdio.h>
 
-#include "ceu_os.h"
+#include "_ceu_app.h"
+#ifdef CEU_OS
+    #include "ceu_os.h"
+#else
+    #include "_ceu_app.c"
+#endif
 
 int main (int argc, char *argv[])
 {

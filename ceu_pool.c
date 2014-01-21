@@ -3,6 +3,8 @@
  * https://github.com/contiki-os/contiki/blob/master/core/lib/memb.c
  * https://github.com/tinyos/tinyos-main/blob/master/tos/system/PoolP.nc
  */
+#ifndef _CEU_POOL_C
+#define _CEU_POOL_C
 
 #include <stdlib.h>
 #include "ceu_pool.h"
@@ -53,3 +55,5 @@ int ceu_pool_inside (tceu_pool* pool, char* val) {
         && ((char*)val < pool->mem+(pool->size*pool->unit));
 }
 */
+
+#endif

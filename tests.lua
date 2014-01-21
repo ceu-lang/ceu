@@ -13,6 +13,7 @@
 -- async dentro de pause
 
 --_VALGRIND = true
+_OS = false   -- false, true, nil(random)
 
 local function INCLUDE (fname, src)
     local f = assert(io.open(fname,'w'))

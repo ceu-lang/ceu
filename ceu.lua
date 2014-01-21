@@ -142,7 +142,7 @@ local CC, HH
 
 -- TEMPLATE.C
 do
-    CC = assert(io.open'template.c'):read'*a'
+    CC = _FILES.template_c
 
     CC = sub(CC, '=== FILENAME ===', _OPTS.input)
     --CC = string.gsub(CC, '^#line.-\n', '')
@@ -217,6 +217,15 @@ do
         CC = sub(CC, '=== IFCS_EVTS ===',    table.concat(EVTS,',\n'))
         CC = sub(CC, '=== IFCS_FUNS ===',    table.concat(FUNS,',\n'))
     end
+
+    if not _OPTS.os then
+        CC = string.gsub(CC, '#include "ceu_types.h"',
+                              _FILES.ceu_types_h)
+        CC = string.gsub(CC, '#include "ceu_os.h"',
+                             _FILES.ceu_os_h..'\n'.._FILES.ceu_os_c)
+        CC = string.gsub(CC, '#include "ceu_pool.h"',
+                             _FILES.ceu_pool_h..'\n'.._FILES.ceu_pool_c)
+    end
 end
 
 -- TEMPLATE.H
@@ -257,6 +266,10 @@ do
         -- TODO: goto _OPTS
         --str = str .. '#define CEU_DEBUG_TRAILS\n'
         --str = str .. '#define CEU_NOLINES\n'
+
+        if _OPTS.os then
+            str = str .. '#define CEU_OS\n'
+        end
 
         if _OPTS.run_tests then
             str = str .. '#define CEU_RUNTESTS\n'

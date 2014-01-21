@@ -30,27 +30,24 @@ subst 'mem.lua'
 subst 'val.lua'
 subst 'code.lua'
 
--- pool.c
---[[
-do
-    local pool = assert(io.open'pool.c'):read'*a'
-
-    local s, e = string.find(fin, "assert%(io%.open'pool%.c'%):read'%*a'")
-    fin = string.sub(fin, 1, (s-1))
-            .. "[===[" .. pool .. "]===]" ..
-          string.sub(fin, (e+1))
-end
-]]
-
--- template.c
-do
-    local tpl = assert(io.open'template.c'):read'*a'
-
-    local s, e = string.find(fin, "assert%(io%.open'template%.c'%):read'%*a'")
-    fin = string.sub(fin, 1, (s-1))
-            .. "[===[" .. tpl .. "]===]" ..
-          string.sub(fin, (e+1))
-end
+fin = [[
+_FILES = {
+    ceu_types_h =
+        [====[]]..'\n'..assert(io.open'ceu_types.h'):read'*a'..[[]====],
+    template_h =
+        [====[]]..'\n'..assert(io.open'template.h'):read'*a'..[[]====],
+    template_c =
+        [====[]]..'\n'..assert(io.open'template.c'):read'*a'..[[]====],
+    ceu_os_h =
+        [====[]]..'\n'..assert(io.open'ceu_os.h'):read'*a'..[[]====],
+    ceu_os_c =
+        [====[]]..'\n'..assert(io.open'ceu_os.c'):read'*a'..[[]====],
+    ceu_pool_h =
+        [====[]]..'\n'..assert(io.open'ceu_pool.h'):read'*a'..[[]====],
+    ceu_pool_c =
+        [====[]]..'\n'..assert(io.open'ceu_pool.c'):read'*a'..[[]====],
+}
+]]..fin
 
 fout:write([=[
 #!/usr/bin/env lua
