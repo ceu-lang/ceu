@@ -5,10 +5,19 @@
 #include "ceu_types.h"
 
 #ifdef CEU_OS
-    #error os not supported
+    #define CEU_EXTS
+    #define CEU_WCLOCKS
+    #define CEU_INTS
+    #define CEU_ASYNCS
+    #define CEU_THREADS
+    #define CEU_ORGS
+    #define CEU_NEWS
+    #define CEU_NEWS_POOL
+    #define CEU_NEWS_MALLOC
+    #define CEU_CLEAR
+    #define CEU_PSES
 #else
     #include "_ceu_app.h"
-/* TODO: "_ceu_app.h" */
 #endif
 
 #ifdef CEU_THREADS
