@@ -41,8 +41,6 @@ tceu_app* _ceu_app = &CEU_APP;
 
 /**********************************************************************/
 
-/**********************************************************************/
-
 #ifdef CEU_NEWS
 #ifdef CEU_RUNTESTS
 #define CEU_MAX_DYNS 100
@@ -50,6 +48,7 @@ static int _ceu_dyns_ = 0;  /* check if total of alloc/free match */
 #endif
 #endif
 
+#if defined(CEU_NEWS) || defined(CEU_THREADS)
 void* ceu_alloc (size_t size) {
 #ifdef CEU_NEWS
 #ifdef CEU_RUNTESTS
@@ -70,6 +69,7 @@ void ceu_free (void* ptr) {
 #endif
     free(ptr);
 }
+#endif
 
 /**********************************************************************/
 
@@ -400,7 +400,7 @@ int ceu_go_init (int* ret)
 #ifdef CEU_DEBUG
     signal(SIGSEGV, ceu_segfault);
 #endif
-_ceu_app->init();
+    _ceu_app->init();
     {
         tceu_evtp p;
         p.ptr = NULL;
