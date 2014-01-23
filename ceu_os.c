@@ -333,8 +333,8 @@ _CEU_GO_:
                 int _ret = app->code(&go);
                 switch (_ret) {
                     case RET_END:
-#ifdef CEU_OS
-                        app->alive = 0;
+#if defined(CEU_RET) || defined(CEU_OS)
+                        app->isAlive = 0;
 #endif
                         return;
 /*

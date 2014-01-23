@@ -135,8 +135,7 @@ end
     local r = (math.random(2) == 1)
     if _OS==true or (_OS==nil and r) then
         CEU = './ceu _ceu_tmp.ceu --run-tests --os 2>&1'
-        GCC = [[gcc -Wall -DCEU_DEBUG -ansi -include _ceu_app.h -o ceu.exe
-                main.c ceu_os.c _ceu_app.c ceu_pool.c 2>&1]]
+        GCC = 'gcc -Wall -DCEU_DEBUG -ansi -include _ceu_app.h -o ceu.exe main.c ceu_os.c _ceu_app.c ceu_pool.c 2>&1'
     else
         CEU = './ceu _ceu_tmp.ceu --run-tests 2>&1'
         GCC = 'gcc -Wall -DCEU_DEBUG -ansi -o ceu.exe main.c 2>&1'

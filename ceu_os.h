@@ -202,7 +202,7 @@ typedef struct tceu_app {
      * i.e., previously awaiting the event
      */
     u8 seqno:         2;
-#ifdef CEU_RET
+#if defined(CEU_RET) || defined(CEU_OS)
     u8 isAlive:       1;
 #endif
 #ifdef CEU_ASYNCS
