@@ -17,6 +17,7 @@
     #define CEU_NEWS_MALLOC
     #define CEU_CLEAR
     #define CEU_PSES
+    #define CEU_RET
 
     #define CEU_IN__NONE          0
     #define CEU_IN__STK         255
@@ -200,11 +201,19 @@ typedef struct tceu_app {
      * awaiting trails matches only if trl->seqno < seqno,
      * i.e., previously awaiting the event
      */
-    u8 seqno;
-
+    u8 seqno:         2;
+#ifdef CEU_RET
+    u8 isAlive:       1;
+#endif
+#ifdef CEU_ASYNCS
+    u8 pendingAsyncs: 1;
+#endif
 #ifdef CEU_OS
-    s8               alive;
     struct tceu_app* nxt;
+#endif
+
+#ifdef CEU_RET
+    int ret;
 #endif
 
 #ifdef CEU_WCLOCKS
@@ -224,7 +233,7 @@ typedef struct tceu_app {
         /* TODO: u8? */
 #endif
 
-    int         (*code) (int* _ceu_ret, int* _ceu_async_end, tceu_go* _ceu_go);
+    int         (*code) (tceu_go* _ceu_go);
     void        (*init) (void);
     tceu_org*   data;
 } tceu_app;
@@ -257,12 +266,12 @@ void ceu_trails_set_wclock (tceu_app* app, s32* t, s32 dt);
 int ceu_wclocks_expired (tceu_app* app, s32* t, s32 dt);
 #endif
 
-int ceu_go        (int* ret, int* async_end, tceu_app* app, int evt, tceu_evtp evtp);
-int ceu_go_init   (int* ret, int* async_end, tceu_app* app);
-int ceu_go_event  (int* ret, int* async_end, tceu_app* app, int id, void* data);
-int ceu_go_async  (int* ret, int* async_end, tceu_app* app);
-int ceu_go_wclock (int* ret, int* async_end, tceu_app* app, s32 dt);
-int ceu_go_all (tceu_app* app);
+void ceu_go        (tceu_app* app, int evt, tceu_evtp evtp);
+void ceu_go_init   (tceu_app* app);
+void ceu_go_event  (tceu_app* app, int id, void* data);
+void ceu_go_async  (tceu_app* app);
+void ceu_go_wclock (tceu_app* app, s32 dt);
+int  ceu_go_all    (tceu_app* app);
 #endif
 
 #ifdef CEU_OS

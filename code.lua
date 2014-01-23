@@ -620,8 +620,9 @@ ceu_pause(&_ceu_go->org->trls[ ]]..me.blk.trails[1]..[[ ],
         ATTR(me, to, fr)
         if to.tag=='Var' and to.var.id=='_ret' then
             LINE(me, [[
-    if (_ceu_ret != NULL)
-        *_ceu_ret = ]]..V(to)..[[;
+#ifdef CEU_RET
+    CEU_APP.ret = ]]..V(to)..[[;
+#endif
 ]])
         end
 
@@ -634,7 +635,7 @@ ceu_pause(&_ceu_go->org->trls[ ]]..me.blk.trails[1]..[[ ],
     SetBlock_pos = function (me)
         local blk,_ = unpack(me)
         CONC(me, blk)
-        HALT(me)        -- must escape with `return´
+        HALT(me)        -- must escape with `escape´
         CASE(me, me.lbl_out)
         if me.has_escape then
             CLEAR(me)
@@ -830,7 +831,8 @@ error'not supported'
             ]])
         else
             LINE(me, [[
-                if ( ceu_go_event(_ceu_ret, _ceu_async_end, &CEU_APP, CEU_IN_]]..evt.id..','..param..[[) )
+                ceu_go_event(&CEU_APP, CEU_IN_]]..evt.id..','..param..[[);
+                if (! CEU_APP.isAlive)
                     return RET_END;
             ]])
         end
@@ -856,11 +858,11 @@ _ceu_go->trl->lbl = ]]..me.lbl_cnt.id..[[;
 
         local emit = [[
 {
-    int _ret = ceu_go_wclock(_ceu_ret, _ceu_async_end, &CEU_APP, (s32)]]..V(exp)..[[);
-    while (!_ret && CEU_APP.wclk_min<=0) {
-        _ret = ceu_go_wclock(_ceu_ret, _ceu_async_end, &CEU_APP, 0);
+    ceu_go_wclock(&CEU_APP, (s32)]]..V(exp)..[[);
+    while (CEU_APP.isAlive && CEU_APP.wclk_min<=0) {
+        ceu_go_wclock(&CEU_APP, 0);
     }
-    if (_ret)
+    if (! CEU_APP.isAlive)
         return RET_END;
 }
 ]]
@@ -1181,7 +1183,7 @@ static void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
     /* only if sync is not active */
         if (*(_ceu_p.st) < 3) {             /* 3=end */
             *(_ceu_p.st) = 3;
-            ceu_go(NULL, NULL, &CEU_APP, CEU_IN__THREAD, evtp);   /* keep locked 
+            ceu_go(&CEU_APP, CEU_IN__THREAD, evtp);   /* keep locked 
 */
                 /* HACK_2:
                  *  A thread never terminates the program because we include an

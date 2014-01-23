@@ -92,7 +92,7 @@ ceu_pool_init(&]]..me.pool..', '..me.max..', sizeof(CEU_'..me.id..'), '
 
         if me.trl_orgs then
             cls.struct = cls.struct .. SPC()
-                            ..'tceu_lnk __lnks_'..me.n..'[2];\n'
+                            ..'tceu_org_lnk __lnks_'..me.n..'[2];\n'
         end
 
         if me.fins then

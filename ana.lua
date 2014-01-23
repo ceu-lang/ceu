@@ -195,7 +195,7 @@ F = {
         if not blk.ana.pos[false] then
             --_ANA.ana.reachs = _ANA.ana.reachs + 1
             WRN( INC(me, 'reachs'),
-                 blk, 'missing `return´ statement for the block')
+                 blk, 'missing `escape´ statement for the block')
         end
     end,
 

@@ -161,7 +161,7 @@ void ceu_pause (tceu_trl* trl, tceu_trl* trlF, int psed) {
 
 /**********************************************************************/
 
-int ceu_go (int* ret, int* async_end, tceu_app* app, int evt, tceu_evtp evtp)
+void ceu_go (tceu_app* app, int evt, tceu_evtp evtp)
 {
     tceu_go go;
         go.evt  = evt;
@@ -330,13 +330,13 @@ _CEU_GO_:
             }
 
             {
-                int _ret = app->code(ret, async_end, &go);
+                int _ret = app->code(&go);
                 switch (_ret) {
                     case RET_END:
 #ifdef CEU_OS
                         app->alive = 0;
 #endif
-                        return 1;
+                        return;
 /*
                     case RET_GOTO:
                         goto _CEU_GOTO_;
@@ -351,8 +351,7 @@ _CEU_GO_:
 #endif
 #ifdef CEU_ASYNCS
                     case RET_ASYNC:
-                        if (async_end != NULL)
-                            *async_end = 0;
+                        app->pendingAsyncs = 1;
                         break;
 #endif
                     default:
@@ -377,22 +376,20 @@ _CEU_NEXT_:
 #endif
         go.evt  = go.stk[  go.stki].evt;
     }
-
-    return 0;
 }
 
-int ceu_go_init (int* ret, int* async_end, tceu_app* app)
+void ceu_go_init (tceu_app* app)
 {
     app->init();
     {
         tceu_evtp p;
         p.ptr = NULL;
-        return ceu_go(ret, async_end, app, CEU_IN__INIT, p);
+        ceu_go(app, CEU_IN__INIT, p);
     }
 }
 
 #ifdef CEU_EXTS
-int ceu_go_event (int* ret, int* async_end, tceu_app* app, int id, void* data)
+void ceu_go_event (tceu_app* app, int id, void* data)
 {
 #ifdef CEU_DEBUG_TRAILS
     fprintf(stderr, "====== %d\n", id);
@@ -400,13 +397,13 @@ int ceu_go_event (int* ret, int* async_end, tceu_app* app, int id, void* data)
     {
         tceu_evtp p;
         p.ptr = data;
-        return ceu_go(ret, async_end, app, id, p);
+        ceu_go(app, id, p);
     }
 }
 #endif
 
 #ifdef CEU_ASYNCS
-int ceu_go_async (int* ret, int* async_end, tceu_app* app)
+void ceu_go_async (tceu_app* app)
 {
 #ifdef CEU_DEBUG_TRAILS
     fprintf(stderr, "====== ASYNC\n");
@@ -414,16 +411,14 @@ int ceu_go_async (int* ret, int* async_end, tceu_app* app)
     {
         tceu_evtp p;
         p.ptr = NULL;
-        if (async_end != NULL)
-            *async_end = 1;
-        return ceu_go(ret, async_end, app, CEU_IN__ASYNC, p);
+        app->pendingAsyncs = 0;
+        ceu_go(app, CEU_IN__ASYNC, p);
     }
 }
 #endif
 
-int ceu_go_wclock (int* ret, int* async_end, tceu_app* app, s32 dt)
+void ceu_go_wclock (tceu_app* app, s32 dt)
 {
-    int _ret = 0;
 #ifdef CEU_WCLOCKS
 
 #ifdef CEU_DEBUG_TRAILS
@@ -440,7 +435,7 @@ int ceu_go_wclock (int* ret, int* async_end, tceu_app* app, s32 dt)
     {
         tceu_evtp p;
         p.dt = dt;
-        _ret = ceu_go(ret, async_end, app, CEU_IN__WCLOCK, p);
+        ceu_go(app, CEU_IN__WCLOCK, p);
     }
 
 #ifdef ceu_out_wclock
@@ -451,11 +446,7 @@ int ceu_go_wclock (int* ret, int* async_end, tceu_app* app, s32 dt)
     app->wclk_late = 0;
 
 #endif   /* CEU_WCLOCKS */
-
-    return _ret;
 }
-
-#ifndef CEU_OS
 
 int ceu_go_all (tceu_app* app)
 {
@@ -466,29 +457,26 @@ int ceu_go_all (tceu_app* app)
      * - only COND_WAIT will allow threads to execute
      */
 
-    int _ret, ret=0;
-    int async_end=1;
-
 #ifdef CEU_THREADS
     CEU_THREADS_MUTEX_LOCK(&app->threads_mutex);
 #endif
 
-    _ret = ceu_go_init(&ret, &async_end, app);
-    if (_ret) goto _CEU_END_;
+    ceu_go_init(app);
 
 #ifdef CEU_IN_START
-    _ret = ceu_go_event(&ret, &async_end, app, CEU_IN_START, NULL);
-    if (_ret) goto _CEU_END_;
+    if (app->isAlive)
+        ceu_go_event(app, CEU_IN_START, NULL);
 #endif
 
 #ifdef CEU_ASYNCS
-    for (;;) {
-        if (_ret || (
+    while( app->isAlive && (
 #ifdef CEU_THREADS
-            app->threads_n==0 &&
+                app->threads_n>0 ||
 #endif
-            async_end)) goto _CEU_END_;
-        _ret = ceu_go_async(&ret, &async_end, app);
+                app->pendingAsyncs
+            ) )
+    {
+        ceu_go_async(app);
 #ifdef CEU_THREADS
         CEU_THREADS_MUTEX_UNLOCK(&app->threads_mutex);
         /* allow threads to also execute */
@@ -508,14 +496,8 @@ int ceu_go_all (tceu_app* app)
 #endif
 */
 
-_CEU_END_:;
 #ifdef CEU_THREADS
     CEU_THREADS_MUTEX_UNLOCK(&app->threads_mutex);
-#endif
-
-#ifdef CEU_NEWS
-#ifdef CEU_RUNTESTS
-#endif
 #endif
 
 #ifdef CEU_NEWS
@@ -524,11 +506,14 @@ _CEU_END_:;
 #endif
 #endif
 
-    return ret;
+#ifdef CEU_RET
+    return app->ret;
+#else
+    return 0;
+#endif
 }
 
-#else   /* CEU_OS */
-
+#if 0
 int ceu_go_all (tceu_app* apps)
 {
     int ok  = 0;
@@ -594,16 +579,11 @@ int ceu_go_all (tceu_app* apps)
     return ret;
 }
 
-#endif  /* CEU_OS */
-
-
-#ifdef CEU_OS
-
-static tceu_app*  APPS = NULL;
-
 static tceu_queue QUEUE[CEU_QUEUE_MAX];
 static u8         QUEUE_n = 0;
 static u8         QUEUE_i = 0;
+
+static tceu_app*  APPS = NULL;
 
 static tceu_link* LINKS = NULL;
 
@@ -646,5 +626,4 @@ int ceu_sys_unlink (tceu_app* src_app, tceu_nevt src_evt,
 {
     return 0;
 }
-
 #endif

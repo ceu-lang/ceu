@@ -267,6 +267,7 @@ do
             has_ifcs    = 'CEU_IFCS',
             has_clear   = 'CEU_CLEAR',
             has_pses    = 'CEU_PSES',
+            has_ret     = 'CEU_RET',
             -- code.lua
             has_goto    = 'CEU_GOTO',
         }
@@ -306,12 +307,19 @@ do
 
         for i, evt in ipairs(_ENV.exts) do
             if evt.pre == 'input' then
-                str = str..'#define CEU_IN_'..evt.id..' '
-                        ..(256-i)..'\n'
+                local s = '#define CEU_IN_'..evt.id..' '..(256-i)
+                if _OPTS.verbose and i > 9 then
+                    DBG('', s)
+                end
+                str = str..s..'\n'
                 --ins = ins + 1
             else
-                str = str..'#define CEU_OUT_'..evt.id..' '..outs..'\n'
                 outs = outs + 1
+                local s = '#define CEU_OUT_'..evt.id..' '..outs
+                if _OPTS.verbose then
+                    DBG('', s)
+                end
+                str = str..s..'\n'
             end
             assert(evt.pre=='input' or evt.pre=='output')
         end
@@ -369,6 +377,7 @@ if _OPTS.verbose then
         orgs    = _PROPS.has_orgs,
         news    = _PROPS.has_news,
         ifcs    = _PROPS.has_ifcs,
+        ret     = _PROPS.has_ret,
     }
     local t = {}
     for k, v in pairs(T) do

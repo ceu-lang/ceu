@@ -11,6 +11,7 @@ _PROPS = {
     has_ifcs    = false,
     has_clear   = false,
     has_pses    = false,
+    has_ret     = false,
 }
 
 local NO_fun = {
@@ -296,6 +297,10 @@ F = {
 
         if _AST.iter'BlockI'() then
             CLS().has_pre = true   -- code for pre (before constr)
+        end
+
+        if to.tag=='Var' and to.var.id=='_ret' then
+            _PROPS.has_ret = true
         end
     end,
 

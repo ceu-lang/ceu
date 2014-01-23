@@ -45,7 +45,7 @@ enum {
 === LABELS_ENUM ===
 };
 
-static int      ceu_app_go   (int* _ceu_ret, int* _ceu_async_end, tceu_go* _ceu_go);
+static int      ceu_app_go   (tceu_go* _ceu_go);
 static void     ceu_app_init (void);
 static CEU_Main ceu_app_data;
 
@@ -54,9 +54,17 @@ static CEU_Main ceu_app_data;
 /* TODO: static */
 tceu_app CEU_APP = {
     0,          /* seqno */
+#ifdef CEU_RET
+    1,          /* isAlive */
+#endif
+#ifdef CEU_ASYNCS
+    0,          /* pendingAsyncs */
+#endif
 #ifdef CEU_OS
-    1,          /* alive */
     NULL,       /* nxt */
+#endif
+#ifdef CEU_RET
+    0,          /* ret */
 #endif
 #ifdef CEU_WCLOCKS
     0, CEU_WCLOCK_INACTIVE, CEU_WCLOCK_INACTIVE,
@@ -146,7 +154,7 @@ static void ceu_stack_clr () {
 }
 #endif
 
-static int ceu_app_go (int* _ceu_ret, int* _ceu_async_end, tceu_go* _ceu_go)
+static int ceu_app_go (tceu_go* _ceu_go)
 {
 #ifdef CEU_GOTO
 _CEU_GOTO_:
