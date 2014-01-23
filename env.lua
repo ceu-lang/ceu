@@ -300,11 +300,18 @@ F = {
         local evt = {id='_THREAD', pre='input'}
         _ENV.exts[#_ENV.exts+1] = evt
         _ENV.exts[evt.id] = evt
+
+        if _OPTS.os then
+            local evt = {id='START', pre='input', tp='void'}
+            _ENV.exts[#_ENV.exts+1] = evt
+            _ENV.exts[evt.id] = evt
+        end
     end,
 
     Root = function (me)
         _ENV.c.tceu_ncls.len = _TP.n2bytes(#_ENV.clss_cls)
-        ASR(_ENV.max_evt+#_ENV.exts <= 255, me, 'too many events')
+        ASR(_ENV.max_evt+#_ENV.exts < 255, me, 'too many events')
+                                    -- 0 = NONE
 
         -- matches all ifc vs cls
         for _, ifc in ipairs(_ENV.clss_ifc) do
@@ -475,6 +482,7 @@ F = {
         newtype(tp)
         if _ENV.exts[id] then
             WRN(false, me, 'event "'..id..'" is already declared')
+-- TODO: check fields?
             return
         end
         ASR(tp=='void' or tp=='int' or _TP.deref(tp) or _TP.isTuple(tp), me,

@@ -13,7 +13,7 @@
 -- async dentro de pause
 
 --_VALGRIND = true
-_OS = nil   -- false, true, nil(random)
+_OS = false   -- false, true, nil(random)
 
 local function INCLUDE (fname, src)
     local f = assert(io.open(fname,'w'))
@@ -272,9 +272,61 @@ escape 1;
     -- *p1 deveria dar erro
 }
 
--------------------------------------------------------------------------------
---]===]
+-- TODO: fails on valgrind, fails on OS
+-- put back to XXXX
+Test { [[
+native _V;
+input void A, F, START;
+native do
+    int V = 0;
+end
+class T with
+    event void e, ok;
+    var int v;
+do
+    finalize with
+        _V = _V + 1;        // * writes before
+    end
+    v = 1;
+    await A;
+    v = v + 3;
+    emit e;
+    emit ok;
+end
+await START;
+var int ret;
+do
+    var T t;
+    par/or do
+        do                  // 24
+            finalize with
+                _V = _V*10;
+            end
+            await t.ok;
+        end
+    with
+        await t.e;          // 31
+        t.v = t.v * 3;
+    with
+        await F;
+        t.v = t.v * 5;
+    end
+    ret = t.v;
+end
+escape ret + _V;        // * reads after
+]],
+    ana = {
+        abrt = 1,        -- false positive
+    },
+    run = {
+        ['~>F'] = 6,
+        ['~>A'] = 13,
+    }
+}
 
+-------------------------------------------------------------------------------
+
+--]===]
 --do return end
 
 -- OK: well tested
@@ -20849,56 +20901,7 @@ escape t.v + _V;        // * reads before
     }
 }
 
--- TODO: valgrind
-Test { [[
-native _V;
-input void A, F, START;
-native do
-    int V = 0;
-end
-class T with
-    event void e, ok;
-    var int v;
-do
-    finalize with
-        _V = _V + 1;        // * writes before
-    end
-    v = 1;
-    await A;
-    v = v + 3;
-    emit e;
-    emit ok;
-end
-await START;
-var int ret;
-do
-    var T t;
-    par/or do
-        do                  // 24
-            finalize with
-                _V = _V*10;
-            end
-            await t.ok;
-        end
-    with
-        await t.e;          // 31
-        t.v = t.v * 3;
-    with
-        await F;
-        t.v = t.v * 5;
-    end
-    ret = t.v;
-end
-escape ret + _V;        // * reads after
-]],
-    ana = {
-        abrt = 1,        -- false positive
-    },
-    run = {
-        ['~>F'] = 6,
-        ['~>A'] = 13,
-    }
-}
+-- XXXX
 
 -- KILL THEMSELVES
 

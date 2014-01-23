@@ -307,7 +307,7 @@ do
         for i, evt in ipairs(_ENV.exts) do
             if evt.pre == 'input' then
                 str = str..'#define CEU_IN_'..evt.id..' '
-                        ..(_ENV.max_evt+i)..'\n'
+                        ..(256-i)..'\n'
                 --ins = ins + 1
             else
                 str = str..'#define CEU_OUT_'..evt.id..' '..outs..'\n'

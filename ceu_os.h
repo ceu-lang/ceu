@@ -18,15 +18,16 @@
     #define CEU_CLEAR
     #define CEU_PSES
 
-    #define CEU_IN__NONE 0
-    #define CEU_IN__STK 2
-    #define CEU_IN__ORG 3
-    #define CEU_IN__ORG_PSED 4
-    #define CEU_IN__INIT 5
-    #define CEU_IN__CLEAR 6
-    #define CEU_IN__WCLOCK 7
-    #define CEU_IN__ASYNC 8
-    #define CEU_IN__THREAD 9
+    #define CEU_IN__NONE          0
+    #define CEU_IN__STK         255
+    #define CEU_IN__ORG         254
+    #define CEU_IN__ORG_PSED    253
+    #define CEU_IN__INIT        252
+    #define CEU_IN__CLEAR       251
+    #define CEU_IN__WCLOCK      250
+    #define CEU_IN__ASYNC       249
+    #define CEU_IN__THREAD      248
+    #define CEU_IN_START        247
 
     typedef s8 tceu_nlbl;
 #endif
