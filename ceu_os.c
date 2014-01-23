@@ -120,7 +120,7 @@ void ceu_org_init (tceu_org* org, int n, int lbl, int seqno,
 
     /* re-link */
     {
-        tceu_lnk* lst = &par_org->trls[par_trl].lnks[1];
+        tceu_org_lnk* lst = &par_org->trls[par_trl].lnks[1];
         lst->prv->nxt = org;
         org->prv = lst->prv;
         org->nxt = (tceu_org*)lst;
@@ -227,7 +227,7 @@ fprintf(stderr, "GO[%d]: evt=%d stk=%d [%d]\n", app->seqno,
                     tceu_org* _org = go.org->nxt;
                     tceu_trl* _trl = &_org->trls [
                                         (go.org->n == 0) ?
-                                         ((tceu_lnk*)go.org)->lnk : 0
+                                         ((tceu_org_lnk*)go.org)->lnk : 0
                                       ];
 
 #ifdef CEU_NEWS
@@ -333,6 +333,9 @@ _CEU_GO_:
                 int _ret = app->code(ret, async_end, &go);
                 switch (_ret) {
                     case RET_END:
+#ifdef CEU_OS
+                        app->alive = 0;
+#endif
                         return 1;
 /*
                     case RET_GOTO:
@@ -452,6 +455,8 @@ int ceu_go_wclock (int* ret, int* async_end, tceu_app* app, s32 dt)
     return _ret;
 }
 
+#ifndef CEU_OS
+
 int ceu_go_all (tceu_app* app)
 {
     /* All code run atomically:
@@ -521,3 +526,125 @@ _CEU_END_:;
 
     return ret;
 }
+
+#else   /* CEU_OS */
+
+int ceu_go_all (tceu_app* apps)
+{
+    int ok  = 0;
+    int ret = 0, _ret;
+    tceu_app* cur;
+
+    /* MAX OK */
+
+    cur = apps;
+    for (; cur; cur=cur->nxt) {
+        ok++;
+    }
+
+    /* INIT */
+
+    cur = apps;
+    for (; cur; cur=cur->nxt) {
+        if ( ceu_go_init(&_ret, NULL, cur) ) {
+            ok--;
+            ret += _ret;
+        }
+    }
+
+    /* START */
+
+#ifdef CEU_IN_START
+    cur = apps;
+    for (; cur; cur=cur->nxt) {
+        if ( cur->alive &&
+             ceu_go_event(&_ret, NULL, cur, CEU_IN_START, NULL) ) {
+            ok--;
+            ret += _ret;
+        }
+    }
+#endif
+
+    /* LOOP */
+
+    while (ok > 0)
+    {
+        /* WCLOCK */
+
+        cur = apps;
+        for (; cur; cur=cur->nxt) {
+            if ( cur->alive &&
+                 ceu_go_wclock(&_ret, NULL, cur, 10000) ) {
+                ok--;
+                ret += _ret;
+            }
+        }
+
+        /* ASYNC */
+
+        cur = apps;
+        for (; cur; cur=cur->nxt) {
+            if ( cur->alive &&
+                 ceu_go_async(&_ret, NULL, cur) ) {
+                ok--;
+                ret += _ret;
+            }
+        }
+    }
+    return ret;
+}
+
+#endif  /* CEU_OS */
+
+
+#ifdef CEU_OS
+
+static tceu_app*  APPS = NULL;
+
+static tceu_queue QUEUE[CEU_QUEUE_MAX];
+static u8         QUEUE_n = 0;
+static u8         QUEUE_i = 0;
+
+static tceu_link* LINKS = NULL;
+
+void ceu_sys_app (tceu_app* app)
+{
+    app->nxt = NULL;
+
+    /* add as head */
+    if (APPS == NULL) {
+        APPS = app;
+
+    /* add to tail */
+    } else {
+        tceu_app* cur = APPS;
+        while (cur->nxt != NULL)
+            cur = cur->nxt;
+        cur->nxt = app;
+    }
+}
+
+int ceu_sys_link (tceu_app* src_app, tceu_nevt src_evt,
+                  tceu_app* dst_app, tceu_nevt dst_evt)
+{
+    return 0;
+}
+
+int ceu_sys_event (tceu_app* app, tceu_nevt evt, tceu_evtp param) {
+    if (QUEUE_n >= CEU_QUEUE_MAX)
+        return 0;   /* TODO: add event FULL when CEU_QUEUE_MAX-1 */
+    QUEUE[QUEUE_i].app   = app;
+    QUEUE[QUEUE_i].evt   = evt;
+    QUEUE[QUEUE_i].param = param;
+    QUEUE_i = (QUEUE_i + 1) % CEU_QUEUE_MAX;
+    QUEUE_n++;
+    return 1;
+}
+
+int ceu_sys_unlink (tceu_app* src_app, tceu_nevt src_evt,
+                    tceu_app* dst_app, tceu_nevt dst_evt)
+{
+    return 0;
+}
+
+#endif

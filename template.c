@@ -53,7 +53,11 @@ static CEU_Main ceu_app_data;
 
 /* TODO: static */
 tceu_app CEU_APP = {
-    0,
+    0,          /* seqno */
+#ifdef CEU_OS
+    1,          /* alive */
+    NULL,       /* nxt */
+#endif
 #ifdef CEU_WCLOCKS
     0, CEU_WCLOCK_INACTIVE, CEU_WCLOCK_INACTIVE,
 #endif

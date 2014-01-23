@@ -491,7 +491,7 @@ case ]]..me.lbl_clr.id..[[:;
             LINE(me, [[
 _ceu_go->org->trls[ ]]..me.trl_orgs[1]..[[ ].evt  = CEU_IN__ORG;
 _ceu_go->org->trls[ ]]..me.trl_orgs[1]..[[ ].lnks =
-    (tceu_lnk*) &]]..me.trl_orgs.val..[[;
+    (tceu_org_lnk*) &]]..me.trl_orgs.val..[[;
 
 ]]..me.trl_orgs.val..'[0].nxt = (tceu_org*) &'..me.trl_orgs.val..'[1]'..[[;
 

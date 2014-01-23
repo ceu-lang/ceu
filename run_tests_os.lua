@@ -35,79 +35,23 @@ extern tceu_app _ceu_app_]]..i..[[;
     f:write([[
 int main (void)
 {
-    int APPS[] = { ]]..table.concat(zeros,',')..[[ };
-    int ok=0, ret=0;
-
+    int ret;
+    tceu_app* apps = &_ceu_app_1;
 ]])
-
     for i, _ in ipairs(T) do
-
-        f:write([[
-    {
-        int _ok, _ret;
-        if (APPS[ ]]..(i-1)..[[ ] == 0) {
-            _ok = ceu_go_init(&_ret, NULL, &_ceu_app_]]..i..[[);
-            if (_ok) {
-                APPS[ ]]..(i-1)..[[ ] = 1;
-                ok++;
-                ret += _ret;
-            }
-        }
-    }
+        if i > 1 then
+            f:write([[
+    _ceu_app_]]..(i-1)..[[.nxt = &_ceu_app_]]..i..[[;
 ]])
-
+        end
     end
-
     f:write([[
-    if (ok==]]..#T..[[) goto _CEU_END_;
-
-    for (;;) {
-]])
-
-    for i, _ in ipairs(T) do
-
-        f:write([[
-        {
-            int _ok, _ret;
-            if (APPS[ ]]..(i-1)..[[ ] == 0) {
-                _ok = ceu_go_wclock(&_ret, NULL, &_ceu_app_]]..i..[[, 10000);
-                if (_ok) {
-                    APPS[ ]]..(i-1)..[[ ] = 1;
-                    ok++;
-                    ret += _ret;
-                }
-            }
-        }
-        if (ok==]]..#T..[[) goto _CEU_END_;
-]])
-
-        f:write([[
-        {
-            int _ok, _ret;
-            if (APPS[ ]]..(i-1)..[[ ] == 0) {
-                _ok = ceu_go_async(&_ret, NULL, &_ceu_app_]]..i..[[);
-                if (_ok) {
-                    APPS[ ]]..(i-1)..[[ ] = 1;
-                    ok++;
-                    ret += _ret;
-                }
-            }
-        }
-        if (ok==]]..#T..[[) goto _CEU_END_;
-]])
-
-    end
-
-    f:write([[
-    }
-
-_CEU_END_:;
+    ret = ceu_go_all(apps);
     printf("*** END: %d\n", ret);
 	return ret;
 }
 ]])
-
-	f:close()
+    f:close()
 end
 
 Test = function (T)

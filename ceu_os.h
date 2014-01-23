@@ -30,6 +30,8 @@
     #define CEU_IN_START        247
 
     typedef s8 tceu_nlbl;
+
+    #define CEU_QUEUE_MAX       255
 #endif
 
 #ifdef CEU_THREADS
@@ -64,7 +66,7 @@ typedef union tceu_trl {
 #ifdef CEU_ORGS
     struct {                    /* TODO(ram): bad for alignment */
         tceu_nevt evt3;
-        struct tceu_lnk* lnks;
+        struct tceu_org_lnk* lnks;
     };
 #endif
 } tceu_trl;
@@ -96,12 +98,12 @@ typedef struct tceu_stk {
 /* TCEU_LNK */
 
 /* simulates an org prv/nxt */
-typedef struct tceu_lnk {
+typedef struct tceu_org_lnk {
     struct tceu_org* prv;   /* TODO(ram): lnks[0] does not use */
     struct tceu_org* nxt;   /*      prv, n, lnk                  */
     u8 n;                   /* use for ands/fins                 */
     u8 lnk;
-} tceu_lnk;
+} tceu_org_lnk;
 
 /* TCEU_ORG */
 
@@ -112,7 +114,7 @@ typedef struct tceu_org
     struct tceu_org* nxt;
     u8 n;                   /* number of trails (TODO(ram): opt, metadata) */
     u8 lnk;
-    /* tceu_lnk */
+    /* tceu_org_lnk */
 
 #ifdef CEU_IFCS
     tceu_ncls cls;          /* class id */
@@ -200,6 +202,11 @@ typedef struct tceu_app {
      */
     u8 seqno;
 
+#ifdef CEU_OS
+    s8               alive;
+    struct tceu_app* nxt;
+#endif
+
 #ifdef CEU_WCLOCKS
     int         wclk_late;
     s32         wclk_min;
@@ -256,4 +263,34 @@ int ceu_go_event  (int* ret, int* async_end, tceu_app* app, int id, void* data);
 int ceu_go_async  (int* ret, int* async_end, tceu_app* app);
 int ceu_go_wclock (int* ret, int* async_end, tceu_app* app, s32 dt);
 int ceu_go_all (tceu_app* app);
+#endif
+
+#ifdef CEU_OS
+
+/* TCEU_LINK */
+
+typedef struct tceu_link {
+    tceu_app* src_app;
+    tceu_nevt src_evt;
+    tceu_app* dst_app;
+    tceu_nevt dst_evt;
+    struct tceu_link* nxt;
+} tceu_link;
+
+/* TCEU_QUEUE */
+
+typedef struct {
+    tceu_app* app;
+    tceu_nevt evt;
+    tceu_evtp param;
+} tceu_queue;
+
+void ceu_sys_app (tceu_app* app);
+
+int ceu_sys_event (tceu_app* app, tceu_nevt evt, tceu_evtp param);
+
+int ceu_sys_link   (tceu_app* src_app, tceu_nevt src_evt,
+                    tceu_app* dst_app, tceu_nevt dst_evt);
+int ceu_sys_unlink (tceu_app* src_app, tceu_nevt src_evt,
+                    tceu_app* dst_app, tceu_nevt dst_evt);
 #endif
