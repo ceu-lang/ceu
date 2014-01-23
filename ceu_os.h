@@ -5,6 +5,7 @@
 #include "ceu_types.h"
 
 #ifdef CEU_OS
+    /* TODO: all should be configurable */
     #define CEU_EXTS
     #define CEU_WCLOCKS
     #define CEU_INTS
@@ -16,8 +17,7 @@
     #define CEU_NEWS_MALLOC
     #define CEU_CLEAR
     #define CEU_PSES
-#else
-    #include "_ceu_app.h"
+    typedef s8 tceu_nlbl;
 #endif
 
 #ifdef CEU_THREADS
@@ -200,10 +200,12 @@ typedef struct tceu_app {
 
 #ifdef CEU_THREADS
     CEU_THREADS_MUTEX_T threads_mutex;
-    CEU_THREADS_COND_T  threads_cond;
+    /*CEU_THREADS_COND_T  threads_cond;*/
+    u8                  threads_n;          /* number of running threads */
+        /* TODO: u8? */
 #endif
 
-    int         (*code) (int* _ceu_ret, tceu_go* _ceu_go);
+    int         (*code) (int* _ceu_ret, int* _ceu_async_end, tceu_go* _ceu_go);
     void        (*init) (void);
     tceu_org*   data;
 } tceu_app;
@@ -212,13 +214,16 @@ typedef struct tceu_app {
 
 enum {
     RET_HALT = 0,
-    RET_END,
+    RET_END
     /*RET_GOTO,*/
 #if defined(CEU_INTS) || defined(CEU_ORGS)
-    RET_ORG,
+    , RET_ORG
 #endif
 #if defined(CEU_CLEAR) || defined(CEU_ORGS)
-    RET_TRL
+    , RET_TRL
+#endif
+#ifdef CEU_ASYNCS
+    , RET_ASYNC
 #endif
 };
 
@@ -233,10 +238,10 @@ void ceu_trails_set_wclock (s32* t, s32 dt);
 int ceu_wclocks_expired (s32* t, s32 dt);
 #endif
 
-int ceu_go (int* ret, int evt, tceu_evtp evtp);
-int ceu_go_init (int* ret);
-int ceu_go_event (int* ret, int id, void* data);
-int ceu_go_async (int* ret);
-int ceu_go_wclock (int* ret, s32 dt);
+int ceu_go        (int* ret, int* async_end, int evt, tceu_evtp evtp);
+int ceu_go_init   (int* ret, int* async_end);
+int ceu_go_event  (int* ret, int* async_end, int id, void* data);
+int ceu_go_async  (int* ret, int* async_end);
+int ceu_go_wclock (int* ret, int* async_end, s32 dt);
 int ceu_go_all (void);
 #endif

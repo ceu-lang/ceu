@@ -6,7 +6,9 @@
 === DEFINES ===     /* CEU_EXTS, CEU_WCLOCKS, CEU_INTS, ... */
 
 /* TODO: lbl => unsigned */
+#ifndef CEU_OS
 typedef === TCEU_NLBL === tceu_nlbl;
+#endif
 
 #ifdef CEU_IFCS
 /* (x) number of different classes */

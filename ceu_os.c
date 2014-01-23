@@ -179,7 +179,7 @@ void ceu_pause (tceu_trl* trl, tceu_trl* trlF, int psed) {
 
 /**********************************************************************/
 
-int ceu_go (int* ret, int evt, tceu_evtp evtp)
+int ceu_go (int* ret, int* async_end, int evt, tceu_evtp evtp)
 {
     tceu_go go;
         go.evt  = evt;
@@ -348,14 +348,9 @@ _CEU_GO_:
             }
 
             {
-                int _ret = _ceu_app->code(ret, &go);
+                int _ret = _ceu_app->code(ret, async_end, &go);
                 switch (_ret) {
                     case RET_END:
-#ifdef CEU_NEWS
-#ifdef CEU_RUNTESTS
-                        assert(_ceu_dyns_ == 0);
-#endif
-#endif
                         return 1;
 /*
                     case RET_GOTO:
@@ -368,6 +363,12 @@ _CEU_GO_:
 #if defined(CEU_INTS) || defined(CEU_ORGS)
                     case RET_ORG:
                         goto _CEU_CALL_ORG_;
+#endif
+#ifdef CEU_ASYNCS
+                    case RET_ASYNC:
+                        if (async_end != NULL)
+                            *async_end = 0;
+                        break;
 #endif
                     default:
                         break;
@@ -395,7 +396,7 @@ _CEU_NEXT_:
     return 0;
 }
 
-int ceu_go_init (int* ret)
+int ceu_go_init (int* ret, int* async_end)
 {
 #ifdef CEU_DEBUG
     signal(SIGSEGV, ceu_segfault);
@@ -404,12 +405,12 @@ int ceu_go_init (int* ret)
     {
         tceu_evtp p;
         p.ptr = NULL;
-        return ceu_go(ret, CEU_IN__INIT, p);
+        return ceu_go(ret, async_end, CEU_IN__INIT, p);
     }
 }
 
 #ifdef CEU_EXTS
-int ceu_go_event (int* ret, int id, void* data)
+int ceu_go_event (int* ret, int* async_end, int id, void* data)
 {
 #ifdef CEU_DEBUG_TRAILS
     fprintf(stderr, "====== %d\n", id);
@@ -417,13 +418,13 @@ int ceu_go_event (int* ret, int id, void* data)
     {
         tceu_evtp p;
         p.ptr = data;
-        return ceu_go(ret, id, p);
+        return ceu_go(ret, async_end, id, p);
     }
 }
 #endif
 
 #ifdef CEU_ASYNCS
-int ceu_go_async (int* ret)
+int ceu_go_async (int* ret, int* async_end)
 {
 #ifdef CEU_DEBUG_TRAILS
     fprintf(stderr, "====== ASYNC\n");
@@ -431,12 +432,14 @@ int ceu_go_async (int* ret)
     {
         tceu_evtp p;
         p.ptr = NULL;
-        return ceu_go(ret, CEU_IN__ASYNC, p);
+        if (async_end != NULL)
+            *async_end = 1;
+        return ceu_go(ret, async_end, CEU_IN__ASYNC, p);
     }
 }
 #endif
 
-int ceu_go_wclock (int* ret, s32 dt)
+int ceu_go_wclock (int* ret, int* async_end, s32 dt)
 {
     int _ret = 0;
 #ifdef CEU_WCLOCKS
@@ -454,7 +457,7 @@ int ceu_go_wclock (int* ret, s32 dt)
     {
         tceu_evtp p;
         p.dt = dt;
-        _ret = ceu_go(ret, CEU_IN__WCLOCK, p);
+        _ret = ceu_go(ret, async_end, CEU_IN__WCLOCK, p);
     }
 
 #ifdef ceu_out_wclock
@@ -479,31 +482,38 @@ int ceu_go_all (void)
      */
 
     int _ret, ret=0;
+    int async_end=1;
 
 #ifdef CEU_THREADS
     CEU_THREADS_MUTEX_LOCK(&_ceu_app->threads_mutex);
 #endif
 
-    _ret = ceu_go_init(&ret);
+    _ret = ceu_go_init(&ret, &async_end);
     if (_ret) goto _CEU_END_;
 
 #ifdef CEU_IN_START
-    _ret = ceu_go_event(&ret, CEU_IN_START, NULL);
+    _ret = ceu_go_event(&ret, &async_end, CEU_IN_START, NULL);
     if (_ret) goto _CEU_END_;
 #endif
 
 #ifdef CEU_ASYNCS
     for (;;) {
-        _ret = ceu_go_async(&ret);
+        if (_ret || (
+#ifdef CEU_THREADS
+            _ceu_app->threads_n==0 &&
+#endif
+            async_end)) goto _CEU_END_;
+        _ret = ceu_go_async(&ret, &async_end);
 #ifdef CEU_THREADS
         CEU_THREADS_MUTEX_UNLOCK(&_ceu_app->threads_mutex);
         /* allow threads to also execute */
         CEU_THREADS_MUTEX_LOCK(&_ceu_app->threads_mutex);
 #endif
-        if (_ret) goto _CEU_END_;
     }
 #endif
 
+/*
+// TODO: remove!!
 #ifdef CEU_THREADS
     for (;;) {
         if (_ret) goto _CEU_END_;
@@ -511,10 +521,22 @@ int ceu_go_all (void)
                               &_ceu_app->threads_mutex);
     }
 #endif
+*/
 
 _CEU_END_:;
 #ifdef CEU_THREADS
     CEU_THREADS_MUTEX_UNLOCK(&_ceu_app->threads_mutex);
+#endif
+
+#ifdef CEU_NEWS
+#ifdef CEU_RUNTESTS
+#endif
+#endif
+
+#ifdef CEU_NEWS
+#ifdef CEU_RUNTESTS
+    assert(_ceu_dyns_ == 0);
+#endif
 #endif
 
     return ret;

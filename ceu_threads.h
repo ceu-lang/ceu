@@ -14,7 +14,9 @@
 */
 #define CEU_THREADS_MUTEX_LOCK(m)   pthread_mutex_lock(m)
 #define CEU_THREADS_MUTEX_UNLOCK(m) pthread_mutex_unlock(m);
+/*
 #define CEU_THREADS_COND_WAIT(c,m)  pthread_cond_wait(c,m)
 #define CEU_THREADS_COND_SIGNAL(c)  pthread_cond_signal(c)
+*/
 
 #endif

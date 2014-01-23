@@ -1,3 +1,6 @@
+#line 1 "=== FILENAME ==="
+
+=== OUT_H ===
 #include "ceu_os.h"
 
 #include <stdlib.h>
@@ -24,10 +27,6 @@
 #include "ceu_pool.h"
 #endif
 
-#line 1 "=== FILENAME ==="
-
-=== OUT_H ===
-
 #ifdef CEU_IFCS
 #include <stddef.h>
 /* TODO: === direto? */
@@ -45,7 +44,7 @@ enum {
 === LABELS_ENUM ===
 };
 
-static int      ceu_app_go   (int* _ceu_ret, tceu_go* _ceu_go);
+static int      ceu_app_go   (int* _ceu_ret, int* _ceu_async_end, tceu_go* _ceu_go);
 static void     ceu_app_init (void);
 static CEU_Main ceu_app_data;
 
@@ -62,7 +61,8 @@ tceu_app CEU_APP = {
 #endif
 #ifdef CEU_THREADS
     PTHREAD_MUTEX_INITIALIZER,
-    PTHREAD_COND_INITIALIZER,
+    /*PTHREAD_COND_INITIALIZER,*/
+    0,
 #endif
     &ceu_app_go,
     &ceu_app_init,
@@ -125,7 +125,7 @@ static void ceu_stack_clr () {
 }
 #endif
 
-static int ceu_app_go (int* _ceu_ret, tceu_go* _ceu_go)
+static int ceu_app_go (int* _ceu_ret, int* _ceu_async_end, tceu_go* _ceu_go)
 {
 #ifdef CEU_GOTO
 _CEU_GOTO_:

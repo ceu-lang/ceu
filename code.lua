@@ -45,12 +45,16 @@ function LINE (me, line, spc)
 ]] .. spc..line
 end
 
-function HALT (me, cond)
+function HALT (me, ret, cond)
     if cond then
         LINE(me, 'if ('..cond..') {')
     end
     --LINE(me, '\tgoto _CEU_NEXT_;')
-    LINE(me, '\treturn RET_HALT;')
+    if ret then
+        LINE(me, '\treturn '..ret..';')
+    else
+        LINE(me, '\treturn RET_HALT;')
+    end
     if cond then
         LINE(me, '}')
     end
@@ -253,7 +257,7 @@ if (_ceu_go->org->isSpw) {
 
         if not (_ANA and me.ana.pos[false]) then
             if me == _MAIN then
-                LINE(me, '\treturn RET_END;')
+                HALT(me, 'RET_END')
             else
                 HALT(me)
             end
@@ -724,7 +728,7 @@ _ceu_go->trl = &_ceu_go->org->trls[ ]]..me.trails[1]..[[ ];
         -- AFTER code :: test gates
         CASE(me, me.lbl_tst)
         for i, sub in ipairs(me) do
-            HALT(me, '!'..V(me)..'_'..i)
+            HALT(me, nil, '!'..V(me)..'_'..i)
         end
 
         LINE(me, [[
@@ -764,11 +768,8 @@ for (;;) {
 #endif
         _ceu_go->trl->evt = CEU_IN__ASYNC;
         _ceu_go->trl->lbl = ]]..me.lbl_asy.id..[[;
-#ifdef ceu_out_async
-        ceu_out_async(1);
-#endif
 ]])
-            HALT(me)
+            HALT(me, 'RET_ASYNC')
             LINE(me, [[
     }
     case ]]..me.lbl_asy.id..[[:;
@@ -814,9 +815,6 @@ _ceu_go->trl = &_ceu_go->org->trls[ ]]..me.trails[1]..[[ ];
             LINE(me, [[
 _ceu_go->trl->evt = CEU_IN__ASYNC;
 _ceu_go->trl->lbl = ]]..me.lbl_cnt.id..[[;
-#ifdef ceu_out_async
-ceu_out_async(1);
-#endif
 ]])
         end
 
@@ -825,18 +823,20 @@ ceu_out_async(1);
 
         if _AST.iter'Thread'() then
             -- HACK_2: never terminates
+error'not supported'
+-- TODO: remove!
             LINE(me, [[
                 CEU_ATOMIC( ceu_go_event(NULL, CEU_IN_]]..evt.id..','..param..[[); );
             ]])
         else
             LINE(me, [[
-                if ( ceu_go_event(_ceu_ret, CEU_IN_]]..evt.id..','..param..[[) )
+                if ( ceu_go_event(_ceu_ret, _ceu_async_end, CEU_IN_]]..evt.id..','..param..[[) )
                     return RET_END;
             ]])
         end
 
         if _AST.iter'Async'() then
-            HALT(me)
+            HALT(me, 'RET_ASYNC')
             LINE(me, [[
 case ]]..me.lbl_cnt.id..[[:;
 ]])
@@ -856,9 +856,9 @@ _ceu_go->trl->lbl = ]]..me.lbl_cnt.id..[[;
 
         local emit = [[
 {
-    int _ret = ceu_go_wclock(_ceu_ret, (s32)]]..V(exp)..[[);
+    int _ret = ceu_go_wclock(_ceu_ret, _ceu_async_end, (s32)]]..V(exp)..[[);
     while (!_ret && CEU_APP.wclk_min<=0) {
-        _ret = ceu_go_wclock(_ceu_ret, 0);
+        _ret = ceu_go_wclock(_ceu_ret, _ceu_async_end, 0);
     }
     if (_ret)
         return RET_END;
@@ -875,7 +875,7 @@ _ceu_go->trl->lbl = ]]..me.lbl_cnt.id..[[;
 ]])
 
         if _AST.iter'Async'() then
-            HALT(me)
+            HALT(me, 'RET_ASYNC')
             LINE(me, [[
 case ]]..me.lbl_cnt.id..[[:;
 ]])
@@ -1068,11 +1068,8 @@ case ]]..me.lbl.id..[[:;
         LINE(me, [[
 _ceu_go->trl->evt = CEU_IN__ASYNC;
 _ceu_go->trl->lbl = ]]..me.lbl.id..[[;
-#ifdef ceu_out_async
-ceu_out_async(1);
-#endif
 ]])
-        HALT(me)
+        HALT(me, 'RET_ASYNC')
 
         LINE(me, [[
 case ]]..me.lbl.id..[[:;
@@ -1094,6 +1091,7 @@ case ]]..me.lbl.id..[[:;
 
         -- spawn thread
         LINE(me, [[
+/* TODO: test it! */
 ]]..me.thread_st..[[  = ceu_alloc(sizeof(s8));
 *]]..me.thread_st..[[ = 0;  /* ini */
 {
@@ -1102,6 +1100,7 @@ case ]]..me.lbl.id..[[:;
         CEU_THREADS_CREATE(&]]..me.thread_id..[[, _ceu_thread_]]..me.n..[[, &p);
     if (ret == 0)
     {
+        CEU_APP.threads_n++;
         assert( CEU_THREADS_DETACH(]]..me.thread_id..[[) == 0 );
 
         /* wait for "p" to be copied inside the thread */
@@ -1182,14 +1181,15 @@ static void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
     /* only if sync is not active */
         if (*(_ceu_p.st) < 3) {             /* 3=end */
             *(_ceu_p.st) = 3;
-            ceu_go(NULL, CEU_IN__THREAD, evtp);   /* keep locked */
+            ceu_go(NULL, NULL, CEU_IN__THREAD, evtp);   /* keep locked */
                 /* HACK_2:
-                 *  Never terminates the program because we include an
+                 *  A thread never terminates the program because we include an
                  *  <async do end> after it to enforce terminating from the
                  *  main program.
                  */
         } else {
-            free(_ceu_p.st);                /* fin finished, I free */
+            ceu_free(_ceu_p.st);                /* fin finished, I free */
+            CEU_APP.threads_n--;
         }
         CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
     }
@@ -1198,8 +1198,8 @@ static void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
      * (1) above, when I finish
      * (2) finalizer, when sync finishes
      * now the program may hang if I never reach here
-     */
     CEU_THREADS_COND_SIGNAL(&CEU_APP.threads_cond);
+     */
     return NULL;
 }
 ]]
@@ -1212,7 +1212,8 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
     *]]..me.thread.thread_st..[[ = 3;
     /*assert( pthread_cancel(]]..me.thread.thread_id..[[) == 0 );*/
 } else {
-    free(]]..me.thread.thread_st..[[);      /* thr finished, I free */
+    ceu_free(]]..me.thread.thread_st..[[);      /* thr finished, I free */
+    CEU_APP.threads_n--;
 }
 ]]
         end

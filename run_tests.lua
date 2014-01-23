@@ -135,7 +135,7 @@ end
     local r = (math.random(2) == 1)
     if _OS==true or (_OS==nil and r) then
         CEU = './ceu _ceu_tmp.ceu --run-tests --os 2>&1'
-        GCC = 'gcc -Wall -DCEU_DEBUG -ansi -o ceu.exe'..
+        GCC = 'gcc -Wall -DCEU_DEBUG -ansi -include _ceu_app.h -o ceu.exe'..
               ' main.c ceu_os.c _ceu_app.c ceu_pool.c 2>&1'
     else
         CEU = './ceu _ceu_tmp.ceu --run-tests 2>&1'
@@ -143,21 +143,21 @@ end
               ' main.c 2>&1'
     end
 
-    local EXE = ((not _VALGRIND) and './ceu.exe 2>&1')
-             or 'valgrind -q --leak-check=full ./ceu.exe 2>&1'
-             --or 'valgrind -q --tool=helgrind ./ceu.exe 2>&1'
-
     if _PROPS.has_threads then
         GCC = GCC .. ' -lpthread'
     end
 
-    local f = function (src, exp)
+    local EXE = ((not _VALGRIND) and './ceu.exe 2>&1')
+             or 'valgrind -q --leak-check=full ./ceu.exe 2>&1'
+             --or 'valgrind -q --tool=helgrind ./ceu.exe 2>&1'
+
+    local go = function (src, exp)
         local ceu = assert(io.open('_ceu_tmp.ceu', 'w'))
         ceu:write(src)
         ceu:close()
         assert(os.execute(CEU) == 0)
 
-        local ret = io.popen(GCC):read'*a'
+        local ret = assert(io.popen(GCC)):read'*a'
         if T.gcc then
             assert( string.find(ret, T.gcc, nil, true), ret )
             return
@@ -170,14 +170,14 @@ end
         if v then
             assert(v==exp, ret..' vs '..exp..' expected')
         else
-            assert( string.find(ret, exp, nil, true) )
+            assert( string.find(ret, exp, nil, true), ret )
         end
     end
 
     -- T.run = N
     if type(T.run) ~= 'table' then
         print(source)
-        f(source, T.run)
+        go(source, T.run)
     else
         local par = (T.awaits and T.awaits>0 and 'par') or 'par/or'
         source =
@@ -195,7 +195,7 @@ end
             input = string.gsub(input, '[ ]*(%d+)[ ]*~>([^;]*);?', 'emit %2=>%1;')
             input = string.gsub(input, '~>([^;]*);?', 'emit %1;')
             local source = string.gsub(source, '`EVTS', input)
-            f(source, ret2)
+            go(source, ret2)
         end
     end
 
@@ -233,13 +233,13 @@ STATS = {
     count   = 1550,
     mem     = 0,
     trails  = 2987,
-    bytes   = 14599117,
+    bytes   = 14230348,
 }
 
 
-real	6m9.277s
-user	5m48.772s
-sys	0m47.880s
+real	6m24.066s
+user	6m2.348s
+sys	0m49.572s
 ]]
 
 os.execute('rm -f /tmp/_ceu_*')

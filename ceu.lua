@@ -222,7 +222,8 @@ do
     end
 
     if not _OPTS.os then
-        _FILES.ceu_os_c = string.gsub(_FILES.ceu_os_c, '#include "ceu_os.h"',
+        _FILES.ceu_os_c = string.gsub(string.gsub(_FILES.ceu_os_c,'%%','%%%%'),
+                                      '#include "ceu_os.h"',
                                       _FILES.ceu_os_h)
         CC = string.gsub(CC, '#include "ceu_types.h"',
                              _FILES.ceu_types_h)
