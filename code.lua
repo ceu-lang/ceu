@@ -830,7 +830,7 @@ error'not supported'
             ]])
         else
             LINE(me, [[
-                if ( ceu_go_event(_ceu_ret, _ceu_async_end, CEU_IN_]]..evt.id..','..param..[[) )
+                if ( ceu_go_event(_ceu_ret, _ceu_async_end, &CEU_APP, CEU_IN_]]..evt.id..','..param..[[) )
                     return RET_END;
             ]])
         end
@@ -856,9 +856,9 @@ _ceu_go->trl->lbl = ]]..me.lbl_cnt.id..[[;
 
         local emit = [[
 {
-    int _ret = ceu_go_wclock(_ceu_ret, _ceu_async_end, (s32)]]..V(exp)..[[);
+    int _ret = ceu_go_wclock(_ceu_ret, _ceu_async_end, &CEU_APP, (s32)]]..V(exp)..[[);
     while (!_ret && CEU_APP.wclk_min<=0) {
-        _ret = ceu_go_wclock(_ceu_ret, _ceu_async_end, 0);
+        _ret = ceu_go_wclock(_ceu_ret, _ceu_async_end, &CEU_APP, 0);
     }
     if (_ret)
         return RET_END;
@@ -1181,7 +1181,8 @@ static void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
     /* only if sync is not active */
         if (*(_ceu_p.st) < 3) {             /* 3=end */
             *(_ceu_p.st) = 3;
-            ceu_go(NULL, NULL, CEU_IN__THREAD, evtp);   /* keep locked */
+            ceu_go(NULL, NULL, &CEU_APP, CEU_IN__THREAD, evtp);   /* keep locked 
+*/
                 /* HACK_2:
                  *  A thread never terminates the program because we include an
                  *  <async do end> after it to enforce terminating from the

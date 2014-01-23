@@ -81,6 +81,21 @@ int main (void)
         if (ok==]]..#T..[[) goto _CEU_END_;
 ]])
 
+        f:write([[
+        {
+            int _ok, _ret;
+            if (APPS[ ]]..(i-1)..[[ ] == 0) {
+                _ok = ceu_go_async(&_ret, NULL, &_ceu_app_]]..i..[[);
+                if (_ok) {
+                    APPS[ ]]..(i-1)..[[ ] = 1;
+                    ok++;
+                    ret += _ret;
+                }
+            }
+        }
+        if (ok==]]..#T..[[) goto _CEU_END_;
+]])
+
     end
 
     f:write([[
