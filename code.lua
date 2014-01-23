@@ -931,7 +931,7 @@ case ]]..me.lbl_cnt.id..[[:;
         local no = '_CEU_NO_'..me.n..'_'
 
         LINE(me, [[
-ceu_trails_set_wclock(&]]..me.val_wclk..[[, (s32)]]..V(exp)..[[);
+ceu_trails_set_wclock(&CEU_APP, &]]..me.val_wclk..[[, (s32)]]..V(exp)..[[);
 ]]..no..[[:
     _ceu_go->trl->evt = CEU_IN__WCLOCK;
     _ceu_go->trl->lbl = ]]..me.lbl.id..[[;
@@ -944,7 +944,7 @@ case ]]..me.lbl.id..[[:;
 
         PAUSE(me, no)
         LINE(me, [[
-    if (!ceu_wclocks_expired(&]]..me.val_wclk..[[, _ceu_go->evtp.dt) )
+    if (!ceu_wclocks_expired(&CEU_APP, &]]..me.val_wclk..[[, _ceu_go->evtp.dt) )
         goto ]]..no..[[;
 ]])
         DEBUG_TRAILS(me)
@@ -1003,7 +1003,7 @@ error'AwaitInt que falha tem que setar stk=MAX'
         for _, awt in ipairs(me) do
             if awt.tag=='WCLOCKK' or awt.tag=='WCLOCKE' then
                 LINE(me, [[
-ceu_trails_set_wclock(PTR_cur(u32*,]]..awt.off..'),(s32)'..V(awt)..[[);
+ceu_trails_set_wclock(&CEU_APP, PTR_cur(u32*,]]..awt.off..'),(s32)'..V(awt)..[[);
 ]])
             end
         end

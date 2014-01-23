@@ -17,6 +17,17 @@
     #define CEU_NEWS_MALLOC
     #define CEU_CLEAR
     #define CEU_PSES
+
+    #define CEU_IN__NONE 0
+    #define CEU_IN__STK 2
+    #define CEU_IN__ORG 3
+    #define CEU_IN__ORG_PSED 4
+    #define CEU_IN__INIT 5
+    #define CEU_IN__CLEAR 6
+    #define CEU_IN__WCLOCK 7
+    #define CEU_IN__ASYNC 8
+    #define CEU_IN__THREAD 9
+
     typedef s8 tceu_nlbl;
 #endif
 
@@ -234,14 +245,14 @@ void ceu_org_init (tceu_org* org, int n, int lbl, int seqno,
                    tceu_org* par_org, int par_trl);
 
 #ifdef CEU_WCLOCKS
-void ceu_trails_set_wclock (s32* t, s32 dt);
-int ceu_wclocks_expired (s32* t, s32 dt);
+void ceu_trails_set_wclock (tceu_app* app, s32* t, s32 dt);
+int ceu_wclocks_expired (tceu_app* app, s32* t, s32 dt);
 #endif
 
-int ceu_go        (int* ret, int* async_end, int evt, tceu_evtp evtp);
-int ceu_go_init   (int* ret, int* async_end);
-int ceu_go_event  (int* ret, int* async_end, int id, void* data);
-int ceu_go_async  (int* ret, int* async_end);
-int ceu_go_wclock (int* ret, int* async_end, s32 dt);
-int ceu_go_all (void);
+int ceu_go        (int* ret, int* async_end, tceu_app* app, int evt, tceu_evtp evtp);
+int ceu_go_init   (int* ret, int* async_end, tceu_app* app);
+int ceu_go_event  (int* ret, int* async_end, tceu_app* app, int id, void* data);
+int ceu_go_async  (int* ret, int* async_end, tceu_app* app);
+int ceu_go_wclock (int* ret, int* async_end, tceu_app* app, s32 dt);
+int ceu_go_all (tceu_app* app);
 #endif

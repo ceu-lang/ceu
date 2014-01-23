@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #ifdef CEU_DEBUG
 #include <stdio.h>      /* fprintf */
+#include <signal.h>     /* signal */
 #endif
 #ifdef CEU_RUNTESTS
 #include <string.h>     /* memset */
@@ -104,6 +105,19 @@ static _tceu_app _CEU_APP = {
 
 /**********************************************************************/
 
+#ifdef CEU_DEBUG
+static void ceu_segfault (int sig_num) {
+#ifdef CEU_ORGS
+    fprintf(stderr, "SEGFAULT on %p : %d\n", CEU_APP.lst.org, CEU_APP.lst.lbl);
+#else
+    fprintf(stderr, "SEGFAULT on %d\n", CEU_APP.lst.lbl);
+#endif
+    exit(0);
+}
+#endif
+
+/**********************************************************************/
+
 #ifdef CEU_THREADS
 === THREADS_C ===
 #endif
@@ -112,6 +126,9 @@ static _tceu_app _CEU_APP = {
 
 static void ceu_app_init ()
 {
+#ifdef CEU_DEBUG
+    signal(SIGSEGV, ceu_segfault);
+#endif
 #ifdef CEU_NEWS
     === POOLS_INIT ===
 #endif

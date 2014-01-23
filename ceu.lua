@@ -4,6 +4,7 @@ _OPTS_NPARAMS = {
 
     out_c     = 1,
     out_h     = 1,
+    out_v     = 1,
 
     join      = 0,
     c_calls   = 1,
@@ -21,6 +22,7 @@ _OPTS = {
 
     out_c     = '_ceu_app.c',
     out_h     = '_ceu_app.h',
+    out_v     = 'CEU_APP',
 
     join      = true,
     c_calls   = false,
@@ -75,6 +77,7 @@ if not _OPTS.input then
     
         --out-c <filename>     # C output source file (_ceu_app.c)
         --out-h <filename>     # C output header file (_ceu_app.h)
+        --out-v <NAME>         # TODO (CEU_APP)
     
         --join (--no-join)     # join lines enclosed by /*{-{*/ and /*}-}*/ (join)
         --c-calls              # TODO
@@ -159,7 +162,7 @@ do
     CC = sub(CC, '=== THREADS_C ===',   _CODE.threads)
     CC = sub(CC, '=== FUNCTIONS_C ===', _CODE.functions)
     CC = sub(CC, '=== NATIVE ===',      _CODE.native)
-    CC = sub(CC, '=== CODE ===',     _AST.root.code)
+    CC = sub(CC, '=== CODE ===',        _AST.root.code)
 
     -- IFACES
     if _PROPS.has_ifcs then
@@ -231,6 +234,10 @@ do
                              _FILES.ceu_os_h..'\n'.._FILES.ceu_os_c)
         CC = string.gsub(CC, '#include "ceu_pool.h"',
                              _FILES.ceu_pool_h..'\n'.._FILES.ceu_pool_c)
+    end
+
+    if _OPTS.out_v ~= 'CEU_APP' then
+        CC = string.gsub(CC, 'CEU_APP', _OPTS.out_v)
     end
 end
 
