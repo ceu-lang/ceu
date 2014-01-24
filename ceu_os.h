@@ -32,7 +32,7 @@
 
     typedef s8 tceu_nlbl;
 
-    #define CEU_QUEUE_MAX       255
+    #define ceu_out_event(app,id,val) ceu_sys_event(app,id,val)
 #endif
 
 #ifdef CEU_THREADS
@@ -268,7 +268,7 @@ int ceu_wclocks_expired (tceu_app* app, s32* t, s32 dt);
 
 void ceu_go        (tceu_app* app, int evt, tceu_evtp evtp);
 void ceu_go_init   (tceu_app* app);
-void ceu_go_event  (tceu_app* app, int id, void* data);
+void ceu_go_event  (tceu_app* app, int id, tceu_evtp data);
 void ceu_go_async  (tceu_app* app);
 void ceu_go_wclock (tceu_app* app, s32 dt);
 int  ceu_go_all    (tceu_app* app);
@@ -278,13 +278,13 @@ int  ceu_go_all    (tceu_app* app);
 
 /* TCEU_LINK */
 
-typedef struct tceu_link {
+typedef struct tceu_lnk {
     tceu_app* src_app;
     tceu_nevt src_evt;
     tceu_app* dst_app;
     tceu_nevt dst_evt;
-    struct tceu_link* nxt;
-} tceu_link;
+    struct tceu_lnk* nxt;
+} tceu_lnk;
 
 /* TCEU_QUEUE */
 
@@ -294,12 +294,17 @@ typedef struct {
     tceu_evtp param;
 } tceu_queue;
 
-void ceu_sys_app (tceu_app* app);
+int ceu_scheduler_static (tceu_app* apps, tceu_lnk* lnks);
 
 int ceu_sys_event (tceu_app* app, tceu_nevt evt, tceu_evtp param);
+
+#if 0
+void ceu_sys_app (tceu_app* app);
 
 int ceu_sys_link   (tceu_app* src_app, tceu_nevt src_evt,
                     tceu_app* dst_app, tceu_nevt dst_evt);
 int ceu_sys_unlink (tceu_app* src_app, tceu_nevt src_evt,
                     tceu_app* dst_app, tceu_nevt dst_evt);
 #endif
+
+#endif  /* CEU_OS */

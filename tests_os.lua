@@ -75,4 +75,19 @@ escape(3);
 	run = 5,
 }
 
--- TODO: START
+Test {
+	[[input void START; await START; escape(1);]],
+	[[escape(2);]],
+	[[escape(3);]],
+	[[input void START; await START; escape(4);]],
+	run = 10,
+}
+
+Test {
+	[[output int A; emit A=>2;         escape 1;]],
+	[[input  int A; var int a=await A; escape a;]],
+	lnks = {
+		{ 1, 1, 2, 246 },
+	},
+	run = 3,
+}

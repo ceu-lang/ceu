@@ -819,8 +819,8 @@ _ceu_go->trl->lbl = ]]..me.lbl_cnt.id..[[;
 ]])
         end
 
-        local param = e2 and '(void*)'..V(e2)
-                          or 'NULL'
+        local param = e2 and '(tceu_evtp)(void*)'..V(e2)
+                          or '(tceu_evtp)NULL'
 
         if _AST.iter'Thread'() then
             -- HACK_2: never terminates

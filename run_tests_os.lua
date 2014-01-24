@@ -35,9 +35,12 @@ extern tceu_app _ceu_app_]]..i..[[;
     f:write([[
 int main (void)
 {
-    int ret;
+    int       ret;
     tceu_app* apps = &_ceu_app_1;
+    tceu_lnk* lnks = NULL;
 ]])
+
+    -- APPS
     for i, _ in ipairs(T) do
         if i > 1 then
             f:write([[
@@ -45,8 +48,37 @@ int main (void)
 ]])
         end
     end
+
+    -- LINKS
+    T.lnks = T.lnks or {}
+    for i, t in ipairs(T.lnks) do
+        local src_app, src_evt, dst_app, dst_evt = unpack(t)
+        f:write([[
+    tceu_lnk lnk_]]..i..[[ = {
+        &_ceu_app_]]..src_app..','..
+        src_evt..','..[[
+        &_ceu_app_]]..dst_app..','..
+        dst_evt..[[
+    };
+]])
+        if i == 1 then
+            f:write([[
+    lnks = &lnk_]]..i..[[;
+]])
+        else
+            f:write([[
+    lnk_]]..(i-1)..[[.nxt = &lnk_]]..i..[[;
+]])
+            if i == #T.lnks then
+                f:write([[
+    lnk_]]..i..[[.nxt = NULL;
+]])
+            end
+        end
+    end
+
     f:write([[
-    ret = ceu_go_all(apps);
+    ret = ceu_scheduler_static(apps, lnks);
     printf("*** END: %d\n", ret);
 	return ret;
 }
@@ -72,7 +104,8 @@ Test = function (T)
         local ceu = assert(io.open(name..'.ceu', 'w'))
 		ceu:write(src)
 		ceu:close()
-        local cmd = './ceu --os --out-c '..name..'.c '..
+        local cmd = './ceu --os --verbose '..
+                               '--out-c '..name..'.c '..
                                '--out-h '..name..'.h '..
                                '--out-v '..name..' '..
                                            name..'.ceu 2>&1'
