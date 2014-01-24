@@ -595,12 +595,13 @@ int ceu_scheduler_static (tceu_app* apps, tceu_lnk* lnks, int(*dt)())
         /* WCLOCK */
 
         app = apps;
+        int _dt = dt();
         for (; app; app=app->nxt)
         {
             if (! app->isAlive)
                 continue;
 
-            ceu_go_wclock(app, dt());
+            ceu_go_wclock(app, _dt);
 #ifdef CEU_RET
                 if (! app->isAlive) {
                     ok--;
