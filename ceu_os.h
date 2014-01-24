@@ -9,6 +9,7 @@
     #define CEU_EXTS
     #define CEU_WCLOCKS
 /*
+*/
     #define CEU_INTS
     #define CEU_ASYNCS
     #define CEU_THREADS
@@ -19,7 +20,6 @@
     #define CEU_CLEAR
     #define CEU_PSES
     #define CEU_RET
-*/
 
     #define CEU_IN__NONE          0
     #define CEU_IN__STK         255
