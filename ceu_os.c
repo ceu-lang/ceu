@@ -105,7 +105,7 @@ void ceu_org_init (tceu_org* org, int n, int lbl, int seqno,
     /* { evt=0, seqno=0, lbl=0 } for all trails */
     memset(&org->trls, 0, n*sizeof(tceu_trl));
 
-#ifdef CEU_ORGS
+#if defined(CEU_ORGS) || defined(CEU_OS)
     org->n = n;
 #endif
 
@@ -188,7 +188,7 @@ _CEU_CALL_TRL_:  /* restart from org->trls[i] */
 #endif
 
 #ifdef CEU_DEBUG_TRAILS
-#ifdef CEU_ORGS
+#ifdef defined(CEU_ORGS) || defined(CEU_OS)
 fprintf(stderr, "GO[%d]: evt=%d stk=%d org=%p [%d/%p]\n", app->seqno,
                 go.evt, go.stki, go.org, go.org->n, go.org->trls);
 #else
@@ -209,7 +209,7 @@ fprintf(stderr, "GO[%d]: evt=%d stk=%d [%d]\n", app->seqno,
             /* go.org has been traversed to the end? */
             if (go.trl ==
                 &go.org->trls[
-#ifdef CEU_ORGS
+#if defined(CEU_ORGS) || defined(CEU_OS)
                     go.org->n
 #else
                     CEU_NTRAILS
@@ -534,29 +534,35 @@ int ceu_sys_event (tceu_app* app, tceu_nevt evt, tceu_evtp param) {
     return 1;
 }
 
-int ceu_scheduler_static (tceu_app* apps, tceu_lnk* lnks)
+int ceu_scheduler_static (tceu_app* apps, tceu_lnk* lnks, int(*dt)())
 {
+#ifdef CEU_RET
     int ok  = 0;
     int ret = 0;
+#endif
     tceu_app* app;
     tceu_lnk* lnk;
 
     /* MAX OK */
 
+#ifdef CEU_RET
     app = apps;
     for (; app; app=app->nxt) {
         ok++;
     }
+#endif
 
     /* INIT */
 
     app = apps;
     for (; app; app=app->nxt) {
         ceu_go_init(app);
+#ifdef CEU_RET
         if (! app->isAlive) {
             ok--;
             ret += app->ret;
         }
+#endif
     }
 
     /* START */
@@ -569,16 +575,22 @@ int ceu_scheduler_static (tceu_app* apps, tceu_lnk* lnks)
             continue;
 
         ceu_go_event(app, CEU_IN_START, (tceu_evtp)NULL);
+#ifdef CEU_RET
             if (! app->isAlive) {
                 ok--;
                 ret += app->ret;
             }
+#endif
     }
 #endif
 
     /* LOOP */
 
+#ifdef CEU_RET
     while (ok > 0)
+#else
+    while (1)
+#endif
     {
         /* WCLOCK */
 
@@ -588,15 +600,17 @@ int ceu_scheduler_static (tceu_app* apps, tceu_lnk* lnks)
             if (! app->isAlive)
                 continue;
 
-            ceu_go_wclock(app, 10000);
+            ceu_go_wclock(app, dt());
+#ifdef CEU_RET
                 if (! app->isAlive) {
                     ok--;
                     ret += app->ret;
                 }
+#endif
         }
 
         /* ASYNC */
-
+#ifdef CEU_ASYNCS
         app = apps;
         for (; app; app=app->nxt)
         {
@@ -604,11 +618,14 @@ int ceu_scheduler_static (tceu_app* apps, tceu_lnk* lnks)
                 continue;
 
              ceu_go_async(app);
+#ifdef CEU_RET
                 if (! app->isAlive) {
                     ok--;
                     ret += app->ret;
                 }
+#endif
         }
+#endif
 
         /* EVENTS */
 
@@ -623,15 +640,22 @@ int ceu_scheduler_static (tceu_app* apps, tceu_lnk* lnks)
                 continue;
 
              ceu_go_event(lnk->dst_app, lnk->dst_evt, qu->param);
+#ifdef CEU_RET
                 if (! lnk->dst_app->isAlive) {
                     ok--;
                     ret += lnk->dst_app->ret;
                 }
+#endif
         }
         QUEUE_n--;
         QUEUE_0++;
     }
+
+#ifdef CEU_RET
     return ret;
+#else
+    return 0;
+#endif
 }
 
 #if 0

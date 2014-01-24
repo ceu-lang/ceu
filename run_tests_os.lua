@@ -33,6 +33,9 @@ extern tceu_app _ceu_app_]]..i..[[;
 	end
 
     f:write([[
+int dt () {
+    return 10000;
+}
 int main (void)
 {
     int       ret;
@@ -78,7 +81,7 @@ int main (void)
     end
 
     f:write([[
-    ret = ceu_scheduler_static(apps, lnks);
+    ret = ceu_scheduler_static(apps, lnks, dt);
     printf("*** END: %d\n", ret);
 	return ret;
 }

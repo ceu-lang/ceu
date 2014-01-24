@@ -8,6 +8,7 @@
     /* TODO: all should be configurable */
     #define CEU_EXTS
     #define CEU_WCLOCKS
+/*
     #define CEU_INTS
     #define CEU_ASYNCS
     #define CEU_THREADS
@@ -18,6 +19,7 @@
     #define CEU_CLEAR
     #define CEU_PSES
     #define CEU_RET
+*/
 
     #define CEU_IN__NONE          0
     #define CEU_IN__STK         255
@@ -131,6 +133,10 @@ typedef struct tceu_org
     void*  pool;            /* TODO(ram): opt, traverse lst of cls pools */
 #endif
 
+#if defined(CEU_OS) && !defined(CEU_ORGS)
+/* TODO: join with the one above */
+    u8 n;                   /* number of trails (TODO(ram): opt, metadata) */
+#endif
     tceu_trl trls[0];       /* first trail */
 
 } tceu_org;
@@ -147,7 +153,7 @@ typedef struct tceu_go {
 #endif
 #endif
 
-#ifdef CEU_ORGS
+#if defined(CEU_ORGS) || defined(CEU_OS)
     #define CEU_MAX_STACK   255     /* TODO */
     /* TODO: CEU_ORGS is calculable // CEU_NEWS isn't (255?) */
     tceu_stk stk[CEU_MAX_STACK];
@@ -272,7 +278,6 @@ void ceu_go_event  (tceu_app* app, int id, tceu_evtp data);
 void ceu_go_async  (tceu_app* app);
 void ceu_go_wclock (tceu_app* app, s32 dt);
 int  ceu_go_all    (tceu_app* app);
-#endif
 
 #ifdef CEU_OS
 
@@ -294,7 +299,7 @@ typedef struct {
     tceu_evtp param;
 } tceu_queue;
 
-int ceu_scheduler_static (tceu_app* apps, tceu_lnk* lnks);
+int ceu_scheduler_static (tceu_app* apps, tceu_lnk* lnks, int(*dt)());
 
 int ceu_sys_event (tceu_app* app, tceu_nevt evt, tceu_evtp param);
 
@@ -308,3 +313,5 @@ int ceu_sys_unlink (tceu_app* src_app, tceu_nevt src_evt,
 #endif
 
 #endif  /* CEU_OS */
+
+#endif  /* _CEU_OS_H */
