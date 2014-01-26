@@ -531,10 +531,10 @@ C = {
     AwaitT   = node('AwaitT'),
     AwaitS   = node('AwaitS'),
 
-    _Dcl_ext = function (ln, dir, tp, ...)
+    _Dcl_ext = function (ln, dir, delay, ins, out, ...)
         for _, v in ipairs{...} do
             table.insert(TOP, TOP_i,
-                node('Dcl_ext')(ln, dir, tp, v))
+                node('Dcl_ext')(ln, dir, delay, ins, out, v))
             TOP_i = TOP_i + 1
         end
     end,

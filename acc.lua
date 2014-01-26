@@ -102,7 +102,7 @@ F = {
         }
 --[[
         if e2 then
-            local tp = _TP.deref(e1.evt.tp, true)
+            local tp = _TP.deref(e1.evt.ins, true)
             if e2.accs and tp then
                 e2.accs[1][4] = (e2.accs[1][2] ~= 'no')   -- &x does not become 
                     "any"

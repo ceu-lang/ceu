@@ -63,7 +63,7 @@ function var2ifc (var)
     if var.pre == 'var' then
         tp = var.tp
     elseif var.pre == 'event' then
-        tp = var.evt.tp
+        tp = var.evt.ins
     else
         tp = var.fun.ins.tp..'$'..var.fun.out
     end
@@ -193,7 +193,7 @@ function newint (me, imp, blk, pre, tp, id)
     local evt = {
         id  = id,
         idx = _E,
-        tp  = (_TP.isTuple(tp) and tp..'*') or tp,
+        ins = (_TP.isTuple(tp) and tp..'*') or tp,
         pre = pre,
     }
     var.evt = evt
@@ -478,25 +478,30 @@ F = {
     end,
 
     Dcl_ext = function (me)
-        local dir, tp, id = unpack(me)
-        newtype(tp)
+        local dir, delay, ins, out, id = unpack(me)
         if _ENV.exts[id] then
             WRN(false, me, 'event "'..id..'" is already declared')
 -- TODO: check fields?
             return
         end
-        ASR(tp=='void' or tp=='int' or _TP.deref(tp) or _TP.isTuple(tp), me,
-                'invalid event type')
 
-        if _TP.isTuple(tp) then
-            tp = tp..'*'
+        -- TODO: ins?
+        newtype(ins)
+        ASR(ins=='void' or ins=='int' or _TP.deref(ins) or _TP.isTuple(ins),
+                me, 'invalid event type')
+
+        if _TP.isTuple(ins) then
+            ins = ins..'*'
         end
 
         me.evt = {
-            ln    = me.ln,
-            id    = id,
-            tp    = tp,
-            pre   = dir,
+            ln  = me.ln,
+            id  = id,
+            pre = dir,
+            ins = ins,
+            out = out or 'int',
+            mod = { delay=delay },
+            op  = (out and 'call' or 'emit')
         }
         _ENV.exts[#_ENV.exts+1] = me.evt
         _ENV.exts[id] = me.evt
@@ -510,9 +515,10 @@ F = {
             ASR(evt, me,
                 'event "'..(ref.var and ref.var.id or '?')..'" is not declared')
             if me[2] == 'TP' then
-                me[2] = _TP.deref(evt.tp)
+                me[2] = _TP.deref(evt.ins)
+                ASR( _TP.isTuple(me[2]), me, 'invalid type' )
             else    --  'TP*'
-                me[2] = evt.tp
+                me[2] = evt.ins
             end
         end
     end,
@@ -582,7 +588,7 @@ F = {
                 local tp = (var.arr and _TP.deref(var.tp)) or var.tp
                 newvar(me, true, blk, var.pre, tp, var.arr, var.id)
             elseif var.pre == 'event' then
-                newint(me, true, blk, var.pre, var.evt.tp, var.id)
+                newint(me, true, blk, var.pre, var.evt.ins, var.id)
             else
                 newfun(me, true, blk, var.pre, var.fun.mod.delay,
                            var.fun.ins, var.fun.out, var.id)
@@ -660,7 +666,7 @@ F = {
         local var = int.var
         ASR(var and var.pre=='event', me,
             'event "'..(var and var.id or '?')..'" is not declared')
-        ASR(var.evt.tp=='void' or (ps and _TP.contains(var.evt.tp,ps.tp,true)),
+        ASR(var.evt.ins=='void' or (ps and _TP.contains(var.evt.ins,ps.tp,true)),
             me, 'invalid emit')
     end,
 
@@ -673,10 +679,10 @@ F = {
         me.tp = 'int'
 
         if ps then
-            ASR(_TP.contains(ext.evt.tp,ps.tp,true), me,
+            ASR(_TP.contains(ext.evt.ins,ps.tp,true), me,
                 "non-matching types on `emit´")
         else
-            ASR(ext.evt.tp=='void', me,
+            ASR(ext.evt.ins=='void', me,
                 "missing parameters on `emit´")
         end
     end,
@@ -723,9 +729,9 @@ F = {
         elseif me.__ast_fr.tag == 'AwaitS' then
             me.tp = 'int'
         elseif me.__ast_fr.tag=='AwaitInt' then
-            me.tp = me.__ast_fr[1].var.evt.tp   -- evt tp
+            me.tp = me.__ast_fr[1].var.evt.ins   -- evt tp
         elseif me.__ast_fr.tag=='AwaitExt' then
-            me.tp = me.__ast_fr[1].evt.tp   -- evt tp
+            me.tp = me.__ast_fr[1].evt.ins   -- evt tp
         elseif me.__ast_fr.tag == 'New' then
             me.tp = me.__ast_fr[2]..'*'     -- class id
         elseif me.__ast_fr.tag == 'Spawn' then

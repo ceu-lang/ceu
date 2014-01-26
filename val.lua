@@ -95,37 +95,38 @@ F =
     end,
 
     EmitExt = function (me)
-        local e1, e2 = unpack(me)
-        if e1.evt.pre == 'input' then
+        local ext, param = unpack(me)
+        if ext.evt.pre == 'input' then
             return
         end
-        local len, val
+
+        local t1 = { '&CEU_APP', 'CEU_OUT_'..ext.evt.id }
+        local t2 = { '&CEU_APP' }
+
 -- TODO: remove len
-        if e2 then
-            local tp = _TP.deref(e1.evt.tp, true)
+        if param then
+            local tp = _TP.deref(ext.evt.ins, true)
+            local val
             if tp then
-                len = 'sizeof('.._TP.c(tp)..')'
-                if _TP.isTuple(tp) then
-                    val = '(void*)'..V(e2)
-                else
-                    val = V(e2)
-                end
+                val = '(void*)'..V(param)
             else
-                len = 'sizeof('.._TP.c(e1.evt.tp)..')'
-                val = V(e2)
+                val = V(param)
             end
+            t1[#t1+1] = '(tceu_evtp)'..val
+            t2[#t2+1] = val
         else
-            len = 0
-            val = 'NULL'
+            t1[#t1+1] = '(tceu_evtp)NULL'
         end
+        t1 = table.concat(t1, ', ')
+        t2 = table.concat(t2, ', ')
+
         me.val = '\n'..[[
-#if defined(ceu_out_emit_]]..e1.evt.id..[[)
-    #error removed support
-    ceu_out_emit_]]..e1.evt.id..'('..val..[[)
+#if defined(ceu_out_emit_]]..ext.evt.id..[[)
+    ceu_out_emit_]]..ext.evt.id..'('..val..[[)
 #elif defined(ceu_out_emit)
-    ceu_out_emit(&CEU_APP, CEU_OUT_]]..e1.evt.id..',(tceu_evtp)'..val..[[)
+    ceu_out_emit(&CEU_APP, CEU_OUT_]]..ext.evt.id..',(tceu_evtp)'..val..[[)
 #else
-    0
+    #error ceu_out_]]..ext.evt.op..[[_* is not defined
 #endif
 ]]
     end,
@@ -133,11 +134,11 @@ F =
     AwaitInt = 'AwaitExt',
     AwaitExt = function (me)
         local e1 = unpack(me)
-        if _TP.deref( (e1.evt or e1.var.evt).tp ) then
-            me.val = '(('.._TP.c( (e1.evt or e1.var.evt).tp )..')_ceu_go->evtp.ptr)'
+        if _TP.deref( (e1.evt or e1.var.evt).ins ) then
+            me.val = '(('.._TP.c( (e1.evt or e1.var.evt).ins )..')_ceu_go->evtp.ptr)'
         else
             me.val = '(_ceu_go->evtp.v)'
-            --me.val = '*(('.._TP.c(e1.evt.tp)..'*)_ceu_go->evtp.ptr)'
+            --me.val = '*(('.._TP.c(e1.evt.ins)..'*)_ceu_go->evtp.ptr)'
         end
     end,
     AwaitT = function (me)
