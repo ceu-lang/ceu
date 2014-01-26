@@ -460,12 +460,18 @@ int ceu_go_all (tceu_app* app)
     ceu_go_init(app);
 
 #ifdef CEU_IN_START
+#if defined(CEU_RET) || defined(CEU_OS)
     if (app->isAlive)
+#endif
         ceu_go_event(app, CEU_IN_START, (tceu_evtp)NULL);
 #endif
 
 #ifdef CEU_ASYNCS
-    while( app->isAlive && (
+    while(
+#if defined(CEU_RET) || defined(CEU_OS)
+            app->isAlive &&
+#endif
+            (
 #ifdef CEU_THREADS
                 app->threads_n>0 ||
 #endif
@@ -523,7 +529,7 @@ static u8         QUEUE_n = 0;
 static u8         QUEUE_0 = 0;
 static u8         QUEUE_i = 0;
 
-int ceu_sys_event (tceu_app* app, tceu_nevt evt, tceu_evtp param) {
+int ceu_sys_emit (tceu_app* app, tceu_nevt evt, tceu_evtp param) {
     if (QUEUE_n >= CEU_QUEUE_MAX)
         return 0;   /* TODO: add event FULL when CEU_QUEUE_MAX-1 */
     QUEUE[QUEUE_i].app   = app;

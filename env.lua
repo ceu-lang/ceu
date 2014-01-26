@@ -824,8 +824,8 @@ F = {
             me.c = { tag='func', id=id, mod=nil }
             _ENV.c[id] = me.c
         end
-        ASR(me.c and me.c.tag=='func', me,
-            'native function "'..id..'" is not declared')
+        --ASR(me.c and me.c.tag=='func', me,
+            --'native function "'..id..'" is not declared')
 
         _ENV.calls[id] = true
     end,

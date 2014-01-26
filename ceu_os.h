@@ -34,7 +34,7 @@
 
     typedef s8 tceu_nlbl;
 
-    #define ceu_out_event(app,id,val) ceu_sys_event(app,id,val)
+    #define ceu_out_emit(app,id,val) ceu_sys_emit(app,id,val)
 #endif
 
 #ifdef CEU_THREADS
@@ -301,7 +301,7 @@ typedef struct {
 
 int ceu_scheduler_static (tceu_app* apps, tceu_lnk* lnks, int(*dt)());
 
-int ceu_sys_event (tceu_app* app, tceu_nevt evt, tceu_evtp param);
+int ceu_sys_emit (tceu_app* app, tceu_nevt evt, tceu_evtp param);
 
 #if 0
 void ceu_sys_app (tceu_app* app);

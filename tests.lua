@@ -21,7 +21,6 @@ local function INCLUDE (fname, src)
     f:close()
 end
 
-local THREADS = true
 local THREADS_all = true
 --local FOREVER = true
 
@@ -325,8 +324,8 @@ escape ret + _V;        // * reads after
 }
 
 -------------------------------------------------------------------------------
-
 --]===]
+
 --do return end
 
 -- OK: well tested
@@ -582,7 +581,7 @@ escape x + 0.5;
 }
 
 Test { [[
-var char x = 256;
+var char x = 255;
 escape x + 0.5;
 ]],
     run = 0,
@@ -1066,7 +1065,7 @@ escape(1);
 }
 Test { [[
 native do
-    #define ceu_out_event(a,b,c) 1
+    #define ceu_out_emit(a,b,c) 1
 end
 output int A;
 if emit A => 1 then
@@ -1165,13 +1164,13 @@ native do
         int a;
         int b;
     } t;
-    ##define ceu_out_event(a,b,c) Fa(a,b,c)
+    ##define ceu_out_emit(a,b,c) Fa(a,b,c)
     int Fa (int id, int len, void* data) {
         assert(len == 8);
         t v = *((t*)data);
         escape v.a - v.b;
     }
-    ##define ceu_out_event_B(c) Fb(c)
+    ##define ceu_out_emit(c) Fb(c)
     int Fb (int data) {
         escape data - 1;
     }
@@ -3815,6 +3814,7 @@ with
     emit a;
 end
 ]],
+    todo = 'no more ret_val/ret_end',
     ana = {
         isForever = true,
         acc = 3,
@@ -13343,7 +13343,7 @@ escape v == null;
 Test { [[
 native _f();
 native do
-    V = 10;
+    int V = 10;
     int f (int v) {
         return v;
     }
@@ -14345,7 +14345,7 @@ par/or do
 with
     async do
         var int v = 10;
-        emit A => &v;
+        emit A => (void*) &v;
         emit A => null;
     end
 end
@@ -15410,7 +15410,20 @@ ptr2 = ptr1;
 escape (int)ptr2;
 ]],
     --env = 'line 4 : invalid attribution',
-    run = 255,
+    --run = 255,
+    gcc = 'error: assignment from incompatible pointer type'
+}
+Test { [[
+native _char=1;
+var _char* ptr1;
+var int* ptr2=(void*)0xFF;
+ptr1 = (_char*)ptr2;
+ptr2 = (int*) ptr1;
+escape (int)ptr2;
+]],
+    --env = 'line 4 : invalid attribution',
+    --run = 255,
+    gcc = 'error: cast from pointer to integer of different size',
 }
 Test { [[
 native _char=1;
@@ -15439,6 +15452,19 @@ var int* ptr1;
 var _FILE* ptr2;
 ptr1 = ptr2;
 ptr2 = ptr1;
+escape 1;
+]],
+    gcc = 'error: assignment from incompatible pointer type',
+    --run = 1,
+    --env = 'line 4 : invalid attribution',
+}
+
+Test { [[
+native _FILE=0;
+var int* ptr1;
+var _FILE* ptr2;
+ptr1 = (int*)ptr2;
+ptr2 = (_FILE*)ptr1;
 escape 1;
 ]],
     run = 1,
@@ -16092,7 +16118,7 @@ escape 0;
 
 Test { [[
 native do
-    int A (int v) {}
+    int A (int v) { return 1; }
 end
 escape 0;
 ]],
@@ -16108,15 +16134,17 @@ end
 _A();
 escape 0;
 ]],
-    env = 'line 5 : native function "_A" is not declared',
+    --env = 'line 5 : native function "_A" is not declared',
+    --run  = 1,
+    gcc = 'error: too few arguments to function ‘A’',
 }
 
 Test { [[
 native _A();
 native do
-    void A (int v) {}
+    void A (int v) { }
 end
-_A();
+_A(1);
 escape 0;
 ]],
     run = 0,
@@ -17032,7 +17060,7 @@ native nohold _strncpy(), _printf(), _strlen();
 native _char = 1;
 var _char[10] str;
 _strncpy(str, "123", 4);
-_printf("END: %d %s\n", _strlen(str), str);
+_printf("END: %d %s\n", (int)_strlen(str), str);
 escape 0;
 ]],
     run = '3 123'
@@ -17050,7 +17078,7 @@ var int len = 0;
 _strcpy(d,a);
 _strcpy(&d[_strlen(d)], b);
 _strcpy(&d[_strlen(d)], c);
-_printf("END: %d %s\n", _strlen(d), d);
+_printf("END: %d %s\n", (int)_strlen(d), d);
 escape 0;
 ]],
     run = '12 Hello World!'
@@ -17060,7 +17088,7 @@ Test { [[
 native _const_1();
 native do
     int const_1 () {
-        escape 1;
+        return 1;
     }
 end
 escape _const_1();
@@ -17072,7 +17100,7 @@ Test { [[
 native _const_1();
 native do
     int const_1 () {
-        escape 1;
+        return 1;
     }
 end
 escape _const_1() + _const_1();
@@ -17098,7 +17126,7 @@ Test { [[
 native pure _inv();
 native do
     int inv (int v) {
-        escape -v;
+        return -v;
     }
 end
 var int a;
@@ -17112,7 +17140,7 @@ Test { [[
 native _id();
 native do
     int id (int v) {
-        escape v;
+        return v;
     }
 end
 var int a;
@@ -18057,7 +18085,8 @@ var _TCEU_T t;
 t.a = 1;
 escape t.a;
 ]],
-    run = 1,
+    gcc = 'error: unknown type name ‘TCEU_T’',
+    --run = 1,
 }
 
 Test { [[
@@ -20499,7 +20528,7 @@ with
 with
     await b.ok;
 end
-escape _f(&a.a,&b.a);
+escape _f((char*)&a.a,(char*)&b.a);
 ]],
     run = 2,
 }
@@ -21581,7 +21610,7 @@ native do
     } SDL_Rect;
     int UI_ALIGN_CENTER = 1;
     int UI_align (int a, int b, int c) {
-        escape 0;
+        return 0;
     }
 end
 class T with
@@ -25422,6 +25451,15 @@ function (void) => void f do
 end
 escape 1;
 ]],
+    gcc = 'error: ‘return’ with a value, in function returning void',
+}
+
+Test { [[
+function (void) => void f do
+    return;
+end
+escape 1;
+]],
     run = 1,
 }
 
@@ -25479,7 +25517,7 @@ escape 1;
 
 Test { [[
 function (void) => int f;
-function (void) => int f do end
+function (void) => int f do return 1; end
 escape 1;
 ]],
     run = 1,
@@ -26367,7 +26405,7 @@ do
     end
 end
 var T t;
-t.f();
+t.f(null);
 escape 1;
 ]],
     -- function can be "nohold v"
@@ -27671,8 +27709,9 @@ escape 1;
 
 Test { [[
 native do
-    ##define ceu_out_event_RADIO_SEND(a) F(a)
-    void F (tceu__int___int_* v) {
+    ##define ceu_out_emit(a,b,c) F(c)
+    void F (tceu_evtp p) {
+        tceu___int____int_* v = (tceu___int____int_*) p.ptr;
         *(v->_1) = 1;
         *(v->_2) = 2;
     }
@@ -27949,7 +27988,7 @@ escape i;
 INCLUDE('/tmp/_ceu_MOD1.ceu', [[
 native do
     int f () {
-        return 10
+        return 10;
     }
     int A;
     int B;
@@ -27972,8 +28011,6 @@ escape 1;
 }
 
 -- ASYNCS // THREADS
-
-if THREADS then
 
 Test { [[
 var int  a=10, b=5;
@@ -28060,6 +28097,7 @@ end
 _usleep(]]..i..[[);
 escape ret;
 ]],
+        usleep = true,
         run = 1,
     }
     if _VALGRIND then
@@ -28087,6 +28125,7 @@ end
 _usleep(]]..i..[[+1);
 escape ret;
 ]],
+        usleep = true,
         run = 1,
     }
     if _VALGRIND then
@@ -28672,7 +28711,6 @@ escape ret;
 -- END: THREADS / EMITS
 
 end     -- THREADS_all
-end     -- THREADS
 
 --[==[
     -- MEM

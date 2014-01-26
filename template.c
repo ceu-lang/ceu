@@ -70,7 +70,12 @@ tceu_app CEU_APP = {
     0, CEU_WCLOCK_INACTIVE, CEU_WCLOCK_INACTIVE,
 #endif
 #ifdef CEU_DEBUG
-    {},
+    {
+#ifdef CEU_ORGS
+        NULL,
+#endif
+        NULL, 0
+    },
 #endif
 #ifdef CEU_THREADS
     PTHREAD_MUTEX_INITIALIZER,

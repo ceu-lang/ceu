@@ -131,14 +131,26 @@ end
         return
     end
 
+    -- TODO: pedantic
+    local O = ' -Wall -Wextra -Wformat=2 -Wstrict-overflow=3 -Werror '
+            ..' -Wno-missing-field-initializers'
+            ..' -Wno-unused'
+            ..' -ansi'
+            ..' -D CEU_DEBUG'
+
+    if T.usleep then
+        -- usleep is deprecated and gcc always complains
+        O = O .. ' -Wno-implicit-function-declaration'
+    end
+
     local CEU, GCC
     local r = (math.random(2) == 1)
     if _OS==true or (_OS==nil and r) then
         CEU = './ceu _ceu_tmp.ceu --run-tests --os 2>&1'
-        GCC = 'gcc -Wall -DCEU_DEBUG -ansi -include _ceu_app.h -o ceu.exe main.c ceu_os.c _ceu_app.c ceu_pool.c 2>&1'
+        GCC = 'gcc '..O..' -include _ceu_app.h -o ceu.exe main.c ceu_os.c _ceu_app.c ceu_pool.c 2>&1'
     else
         CEU = './ceu _ceu_tmp.ceu --run-tests 2>&1'
-        GCC = 'gcc -Wall -DCEU_DEBUG -ansi -o ceu.exe main.c 2>&1'
+        GCC = 'gcc '..O..' -o ceu.exe main.c 2>&1'
     end
 
     if _PROPS.has_threads then
@@ -155,10 +167,12 @@ end
         ceu:close()
         assert(os.execute(CEU) == 0)
 
-        local ret = assert(io.popen(GCC)):read'*a'
         if T.gcc then
+            local ret = assert(io.popen(GCC)):read'*a'
             assert( string.find(ret, T.gcc, nil, true), ret )
             return
+        else
+            assert(os.execute(GCC) == 0)
         end
 
         local ret = io.popen(EXE):read'*a'
@@ -197,10 +211,12 @@ end
         end
     end
 
-    local f = io.popen('du -b ceu.exe')
-    local n = string.match(f:read'*a', '(%d+)')
-    STATS.bytes = STATS.bytes + n
-    f:close()
+    if not T.gcc then
+        local f = io.popen('du -b ceu.exe')
+        local n = string.match(f:read'*a', '(%d+)')
+        STATS.bytes = STATS.bytes + n
+        f:close()
+    end
 end
 
 dofile 'tests.lua'
@@ -228,16 +244,16 @@ STATS = {
 }
 
 STATS = {
-    count   = 1549,
+    count   = 1551,
     mem     = 0,
-    trails  = 2981,
-    bytes   = 13743081,
+    trails  = 2982,
+    bytes   = 13665597,
 }
 
 
-real	6m24.085s
-user	5m58.028s
-sys	0m51.492s
+real	6m23.875s
+user	5m58.204s
+sys	0m52.108s
 ]]
 
 os.execute('rm -f /tmp/_ceu_*')

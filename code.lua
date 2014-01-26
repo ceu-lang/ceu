@@ -74,7 +74,7 @@ goto _CEU_GOTO_;
 ]])
 end
 
-function PAUSE (me, no)
+function AWAIT_PAUSE (me, no)
     if not _PROPS.has_pses then
         return
     end
@@ -819,8 +819,15 @@ _ceu_go->trl->lbl = ]]..me.lbl_cnt.id..[[;
 ]])
         end
 
-        local param = e2 and '(tceu_evtp)(void*)'..V(e2)
-                          or '(tceu_evtp)NULL'
+        local param
+        if e2 and _TP.deref(e2.tp) and _TP.isTuple(_TP.deref(e2.tp)) then
+            -- programmer cannot cast tuples himself
+            param = '(tceu_evtp)(void*)'..V(e2)
+        elseif e2 then
+            param = '(tceu_evtp)'..V(e2)
+        else
+            param = '(tceu_evtp)NULL'
+        end
 
         if _AST.iter'Thread'() then
             -- HACK_2: never terminates
@@ -944,7 +951,7 @@ ceu_trails_set_wclock(&CEU_APP, &]]..me.val_wclk..[[, (s32)]]..V(exp)..[[);
 case ]]..me.lbl.id..[[:;
 ]])
 
-        PAUSE(me, no)
+        AWAIT_PAUSE(me, no)
         LINE(me, [[
     if (!ceu_wclocks_expired(&CEU_APP, &]]..me.val_wclk..[[, _ceu_go->evtp.dt) )
         goto ]]..no..[[;
@@ -975,7 +982,7 @@ case ]]..me.lbl.id..[[:;
     }
 #endif
 ]])
-        PAUSE(me, no)
+        AWAIT_PAUSE(me, no)
         DEBUG_TRAILS(me)
     end,
 
@@ -993,7 +1000,7 @@ case ]]..me.lbl.id..[[:;
         LINE(me, [[
 case ]]..me.lbl.id..[[:;
 ]])
-        PAUSE(me, string.sub(no,1,-2))  -- remove `:´
+        AWAIT_PAUSE(me, string.sub(no,1,-2))  -- remove `:´
         DEBUG_TRAILS(me)
     end,
 
@@ -1022,7 +1029,7 @@ ceu_trails_set_wclock(&CEU_APP, PTR_cur(u32*,]]..awt.off..'),(s32)'..V(awt)..[[)
 case ]]..me.lbl.id..[[:;
 ]])
 
-        PAUSE(me, no)
+        AWAIT_PAUSE(me, no)
         if set then
             LINE(me, '{ int __ceu_'..me.n..'_AwaitS;')
         end

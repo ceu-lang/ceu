@@ -105,7 +105,11 @@ F =
             local tp = _TP.deref(e1.evt.tp, true)
             if tp then
                 len = 'sizeof('.._TP.c(tp)..')'
-                val = V(e2)
+                if _TP.isTuple(tp) then
+                    val = '(void*)'..V(e2)
+                else
+                    val = V(e2)
+                end
             else
                 len = 'sizeof('.._TP.c(e1.evt.tp)..')'
                 val = V(e2)
@@ -115,11 +119,11 @@ F =
             val = 'NULL'
         end
         me.val = '\n'..[[
-#if defined(ceu_out_event_]]..e1.evt.id..[[)
+#if defined(ceu_out_emit_]]..e1.evt.id..[[)
     #error removed support
-    ceu_out_event_]]..e1.evt.id..'('..val..[[)
-#elif defined(ceu_out_event)
-    ceu_out_event(&CEU_APP, CEU_OUT_]]..e1.evt.id..',(tceu_evtp)'..val..[[)
+    ceu_out_emit_]]..e1.evt.id..'('..val..[[)
+#elif defined(ceu_out_emit)
+    ceu_out_emit(&CEU_APP, CEU_OUT_]]..e1.evt.id..',(tceu_evtp)'..val..[[)
 #else
     0
 #endif
