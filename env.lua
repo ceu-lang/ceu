@@ -470,10 +470,13 @@ F = {
         TP = string.gsub(TP, '*', '_')  -- TODO: '_' is not reliable
         me.tp = TP
 
-        -- structs/tuples only for events
-        if not _AST.iter'Dcl_fun'() then
+        if _AST.iter'Dcl_fun'() then
+            -- keep the tables for functions
+            return
+        else
+            -- substitute the table for the struct type
             _ENV.c[TP] = { tag='type', id=TP, tuple=me, len=nil }
-            return TP   -- substitute me=>TP
+            return TP   -- me => TP
         end
     end,
 

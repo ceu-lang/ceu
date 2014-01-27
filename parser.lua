@@ -318,9 +318,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
 
     , EmitT    = K'emit' * (V'WCLOCKK'+V'WCLOCKE')
 
--- TODO: CK mod
     , EmitExt  = C(K'call/delay'+K'call'+K'emit') * EV'Ext' * V'__emit_ps'
--- TODO: CK mod
     , EmitInt  = CK'emit' * EV'_Exp' * V'__emit_ps'
     , __emit_ps = ( K'=>' * (V'_Exp' + K'(' * V'ExpList' * EK')')
                 +   Cc(false) )
@@ -341,7 +339,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , _Dcl_ext = (CK'input'+CK'output')
                     * (CK'delay'+Cc(false))
                     * ( V'TupleType' * K'=>' * EV'ID_type'
-                      + (V'TupleType'+V'ID_type') * Cc(false) )
+                      + (V'TupleType'+EV'ID_type') * Cc(false) )
                     * EV'ID_ext' * (K','*EV'ID_ext')^0
 
     , _Dcl_int  = CK'event' * (V'TupleType'+EV'ID_type') *

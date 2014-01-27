@@ -334,6 +334,9 @@ escape(1);
     parser = "line 1 : after `output´ : expected type",
 }
 Test { [[
+native do
+    ##define ceu_out_emit(a,b,c) 1
+end
 output int A;
 emit A => 1;
 escape(1);
@@ -394,6 +397,9 @@ escape(1);
     gcc = 'error: unknown type name',
 }
 Test { [[
+native do
+    #define ceu_out_emit(a,b,c) 1
+end
 output int A;
 native do
     typedef int t;
@@ -522,6 +528,9 @@ escape 0;
 }
 
 Test { [[
+native do
+    #define ceu_out_emit(a,b,c) 0
+end
 output void A, B;
 par/or do
     emit A;
@@ -538,6 +547,9 @@ escape 1;
 }
 
 Test { [[
+native do
+    #define ceu_out_emit(a,b,c) 0
+end
 safe A with B;
 output void A, B;
 par/or do

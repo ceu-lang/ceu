@@ -103,7 +103,6 @@ F =
         local t1 = { '&CEU_APP', 'CEU_OUT_'..ext.evt.id }
         local t2 = { '&CEU_APP' }
 
--- TODO: remove len
         if param then
             local tp = _TP.deref(ext.evt.ins, true)
             local val
@@ -122,9 +121,9 @@ F =
 
         me.val = '\n'..[[
 #if defined(ceu_out_emit_]]..ext.evt.id..[[)
-    ceu_out_emit_]]..ext.evt.id..'('..val..[[)
+    ceu_out_emit_]]..ext.evt.id..'('..t2..[[)
 #elif defined(ceu_out_emit)
-    ceu_out_emit(&CEU_APP, CEU_OUT_]]..ext.evt.id..',(tceu_evtp)'..val..[[)
+    ceu_out_emit(]]..t1..[[)
 #else
     #error ceu_out_]]..ext.evt.op..[[_* is not defined
 #endif
