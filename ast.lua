@@ -682,19 +682,19 @@ C = {
     end,
 
     EmitT = node('EmitT'),
-    EmitInt = function (ln, int, ps)
-        return C.EmitExt(ln, int, ps, 'EmitInt')
+    EmitInt = function (ln, mod, int, ps)
+        return C.EmitExt(ln, mod, int, ps, 'EmitInt')
     end,
-    EmitExt = function (ln, ext, ps, tag)
+    EmitExt = function (ln, mod, ext, ps, tag)
         tag = tag or 'EmitExt'
 
         -- no exp: emit e
         if not ps then
-            return node(tag)(ln, ext, false)
+            return node(tag)(ln, mod, ext, false)
 
         -- single: emit e => a
         elseif ps.tag~='ExpList' then
-            return node(tag)(ln, ext, ps)
+            return node(tag)(ln, mod, ext, ps)
 
         -- multiple: emit e => (a,b)
         else
@@ -713,7 +713,7 @@ C = {
                                 '_'..i))
             end
 
-            t[#t+1] = node(tag)(ln, ext,
+            t[#t+1] = node(tag)(ln, mod, ext,
                         node('Op1_&')(ln, '&',
                             node('Var')(ln, tup)))
 

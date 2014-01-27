@@ -319,9 +319,9 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
     , EmitT    = K'emit' * (V'WCLOCKK'+V'WCLOCKE')
 
 -- TODO: CK mod
-    , EmitExt  = (K'call/delay'+K'call'+K'emit') * EV'Ext'  * V'__emit_ps'
+    , EmitExt  = C(K'call/delay'+K'call'+K'emit') * EV'Ext' * V'__emit_ps'
 -- TODO: CK mod
-    , EmitInt  = K'emit' * EV'_Exp' * V'__emit_ps'
+    , EmitInt  = CK'emit' * EV'_Exp' * V'__emit_ps'
     , __emit_ps = ( K'=>' * (V'_Exp' + K'(' * V'ExpList' * EK')')
                 +   Cc(false) )
 

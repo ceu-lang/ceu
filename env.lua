@@ -662,7 +662,7 @@ F = {
     end,
 
     EmitInt = function (me)
-        local int, ps = unpack(me)
+        local _, int, ps = unpack(me)
         local var = int.var
         ASR(var and var.pre=='event', me,
             'event "'..(var and var.id or '?')..'" is not declared')
@@ -671,7 +671,7 @@ F = {
     end,
 
     EmitExt = function (me)
-        local ext, ps = unpack(me)
+        local _, ext, ps = unpack(me)
         if ext.evt.pre == 'input' then
             return
         end

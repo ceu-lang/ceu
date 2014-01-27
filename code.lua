@@ -801,7 +801,7 @@ _ceu_go->trl = &_ceu_go->org->trls[ ]]..me.trails[1]..[[ ];
     end,
 
     EmitExt = function (me)
-        local e1, e2 = unpack(me)
+        local _, e1, e2 = unpack(me)
         local evt = e1.evt
 
         if evt.pre == 'output' then  -- e1 not Exp
@@ -892,7 +892,7 @@ case ]]..me.lbl_cnt.id..[[:;
     end,
 
     EmitInt = function (me)
-        local int, exp = unpack(me)
+        local _, int, exp = unpack(me)
 
         -- [ ... | me=stk | ... | oth=stk ]
         LINE(me, [[

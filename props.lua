@@ -277,10 +277,11 @@ F = {
     end,
 
     EmitExt = function (me)
+        local _, ext = unpack(me)
         if _AST.iter(_AST.pred_async)() then
-            ASR(me[1].evt.pre=='input',  me, 'not permitted inside `async´')
+            ASR(ext.evt.pre=='input',  me, 'not permitted inside `async´')
         else
-            ASR(me[1].evt.pre=='output', me, 'not permitted outside `async´')
+            ASR(ext.evt.pre=='output', me, 'not permitted outside `async´')
         end
     end,
     EmitT = function (me)

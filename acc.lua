@@ -88,7 +88,7 @@ F = {
 ]=]
 
     EmitExt = function (me)
-        local e1, e2 = unpack(me)
+        local _, e1, e2 = unpack(me)
         if e1.evt.pre == 'input' then
             return
         end
@@ -132,7 +132,7 @@ F = {
     end,
 
     EmitInt = function (me)
-        local e1, e2 = unpack(me)
+        local _, e1, e2 = unpack(me)
         CHG(e1.ref.acc, 'tr')
         e1.ref.acc.node = me        -- emtChk
         me.emtChk = false

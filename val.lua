@@ -95,7 +95,7 @@ F =
     end,
 
     EmitExt = function (me)
-        local ext, param = unpack(me)
+        local _, ext, param = unpack(me)
         if ext.evt.pre == 'input' then
             return
         end
