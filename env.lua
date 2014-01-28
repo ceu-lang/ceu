@@ -193,7 +193,7 @@ function newint (me, imp, blk, pre, tp, id)
     local evt = {
         id  = id,
         idx = _E,
-        ins = (_TP.isTuple(tp) and tp..'*') or tp,
+        ins = tp,
         pre = pre,
     }
     var.evt = evt
@@ -476,6 +476,7 @@ F = {
         else
             -- substitute the table for the struct type
             _ENV.c[TP] = { tag='type', id=TP, tuple=me, len=nil }
+DBG('tup', TP)
             return TP   -- me => TP
         end
     end,
@@ -492,10 +493,6 @@ F = {
         newtype(ins)
         ASR(ins=='void' or ins=='int' or _TP.deref(ins) or _TP.isTuple(ins),
                 me, 'invalid event type')
-
-        if _TP.isTuple(ins) then
-            ins = ins..'*'
-        end
 
         me.evt = {
             ln  = me.ln,
@@ -517,12 +514,19 @@ F = {
             local evt = ref.evt or (ref.var and ref.var.evt)
             ASR(evt, me,
                 'event "'..(ref.var and ref.var.id or '?')..'" is not declared')
-            if me[2] == 'TP' then
-                me[2] = _TP.deref(evt.ins)
-                ASR( _TP.isTuple(me[2]), me, 'invalid type' )
-            else    --  'TP*'
-                me[2] = evt.ins
-            end
+            me[2] = evt.ins
+            ASR( _TP.isTuple(me[2]), me, 'invalid type' )
+        end
+    end,
+    Dcl_var = function (me)
+        local pre, tp, arr, id, constr = unpack(me)
+        local has
+        has, me.var = newvar(me, false, _AST.iter'Block'(), pre, tp, arr, id)
+        assert(not has or (me.var.read_only==nil))
+        me.var.read_only = me.read_only
+        me.var.__ast_tuple_await = me.__ast_tuple_await
+        if constr then
+            constr.blk = me.var.blk
         end
     end,
 
@@ -532,17 +536,6 @@ F = {
                 me, 'invalid event type')
         local _
         _, me.var = newint(me, false, _AST.iter'Block'(), pre, tp, id)
-    end,
-
-    Dcl_var = function (me)
-        local pre, tp, arr, id, constr = unpack(me)
-        local has
-        has, me.var = newvar(me, false, _AST.iter'Block'(), pre, tp, arr, id)
-        assert(not has or (me.var.read_only==nil))
-        me.var.read_only = me.read_only
-        if constr then
-            constr.blk = me.var.blk
-        end
     end,
 
     Dcl_fun = function (me)

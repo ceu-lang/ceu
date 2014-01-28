@@ -392,7 +392,7 @@ C = {
 
                 local t = {
                     _AST.copy(evt), -- find out 'TP' before traversing tup
-                    node('Dcl_var')(ln, 'var', 'TP*', false, tup),
+                    node('Dcl_var')(ln, 'var', 'TP', false, tup),
                     _AST.SetAwaitUntil(ln, awt, '=', node('Var')(ln,tup), to),
                                         -- assignment to struct must be '='
                 }
@@ -636,11 +636,12 @@ C = {
 
             local t = {
                 _AST.copy(p1[1]),   -- find out 'TP' before traversing tup
-                node('Dcl_var')(ln, 'var', 'TP*', false, tup),
+                node('Dcl_var')(ln, 'var', 'TP', false, tup),
                 _AST.SetAwaitUntil(ln, p1, '=', node('Var')(ln,tup), to),
                                         -- assignment to struct must be '='
             }
             t[2].__ast_ref = t[1] -- TP* is changed on env.lua
+            t[2].__ast_tuple_await = true -- has to be declared as pointer as it comes from outside
 
             for i, v in ipairs(to) do
                 t[#t+1] = node('SetExp')(ln, op,

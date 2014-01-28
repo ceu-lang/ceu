@@ -532,6 +532,8 @@ ceu_pool_init(&]]..pre..', '..n..', sizeof(CEU_'..node.cls.id..'), '
                 if var.arr then
                     LINE(me, _TP.c(_TP.deref(var.tp))
                             ..' '..V(var)..'['..V(var.arr)..']')
+                elseif _TP.isTuple(var.tp) then
+                    LINE(me, _TP.c(var.tp)..'* '..V(var))
                 else
                     LINE(me, _TP.c(var.tp)..' '..V(var))
                 end
@@ -801,10 +803,10 @@ _ceu_go->trl = &_ceu_go->org->trls[ ]]..me.trails[1]..[[ ];
     end,
 
     EmitExt = function (me)
-        local _, e1, e2 = unpack(me)
-        local evt = e1.evt
+        local _, ext, param = unpack(me)
+        local evt = ext.evt
 
-        if evt.pre == 'output' then  -- e1 not Exp
+        if evt.pre == 'output' then  -- ext not Exp
             LINE(me, V(me)..';')
             return
         end
@@ -819,14 +821,14 @@ _ceu_go->trl->lbl = ]]..me.lbl_cnt.id..[[;
 ]])
         end
 
-        local param
-        if e2 and _TP.deref(e2.tp) and _TP.isTuple(_TP.deref(e2.tp)) then
+        local v
+        if param and _TP.isTuple(ext.evt.ins) then
             -- programmer cannot cast tuples himself
-            param = '(tceu_evtp)(void*)'..V(e2)
-        elseif e2 then
-            param = '(tceu_evtp)'..V(e2)
+            v = '(tceu_evtp)(void*)'..V(param)
+        elseif param then
+            v = '(tceu_evtp)'..V(param)
         else
-            param = '(tceu_evtp)NULL'
+            v = '(tceu_evtp)NULL'
         end
 
         if _AST.iter'Thread'() then
@@ -834,11 +836,11 @@ _ceu_go->trl->lbl = ]]..me.lbl_cnt.id..[[;
 error'not supported'
 -- TODO: remove!
             LINE(me, [[
-                CEU_ATOMIC( ceu_go_event(NULL, CEU_IN_]]..evt.id..','..param..[[); );
+                CEU_ATOMIC( ceu_go_event(NULL, CEU_IN_]]..evt.id..','..v..[[); );
             ]])
         else
             LINE(me, [[
-                ceu_go_event(&CEU_APP, CEU_IN_]]..evt.id..','..param..[[);
+                ceu_go_event(&CEU_APP, CEU_IN_]]..evt.id..','..v..[[);
                 if (! CEU_APP.isAlive)
                     return RET_END;
             ]])

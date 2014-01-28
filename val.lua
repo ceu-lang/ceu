@@ -133,8 +133,11 @@ F =
     AwaitInt = 'AwaitExt',
     AwaitExt = function (me)
         local e1 = unpack(me)
-        if _TP.deref( (e1.evt or e1.var.evt).ins ) then
+        local tp = (e1.evt or e1.var.evt).ins
+        if _TP.deref(tp) then
             me.val = '(('.._TP.c( (e1.evt or e1.var.evt).ins )..')_ceu_go->evtp.ptr)'
+        elseif _TP.isTuple(tp) then
+            me.val = '(('.._TP.c( (e1.evt or e1.var.evt).ins )..'*)_ceu_go->evtp.ptr)'
         else
             me.val = '(_ceu_go->evtp.v)'
             --me.val = '*(('.._TP.c(e1.evt.ins)..'*)_ceu_go->evtp.ptr)'

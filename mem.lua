@@ -146,7 +146,7 @@ CEU_POOL_DCL(]]..node.pool..', CEU_'..node.cls.id..','..n..[[)
         end
 
         for _, var in ipairs(sorted) do
-            if var.pre == 'var' then
+            if var.pre=='var' and (not var.isTmp) then
                 local tp = _TP.c(var.tp)
                 local dcl = [[
 #line ]]..var.ln[2]..' "'..var.ln[1]..[["
@@ -154,6 +154,8 @@ CEU_POOL_DCL(]]..node.pool..', CEU_'..node.cls.id..','..n..[[)
                 var.id_ = var.id..'_'..var.n
                 if var.arr then
                     dcl = dcl .. _TP.deref(tp)..' '..var.id_..'['..var.arr.cval..']'
+                elseif var.__ast_tuple_await then
+                    dcl = dcl .. tp..'* '..var.id_
                 else
                     dcl = dcl .. tp..' '..var.id_
                 end
