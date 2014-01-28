@@ -7,7 +7,7 @@ _MEM = {
 }
 
 function SPC ()
-    return string.rep(' ',_AST.iter()().depth*2)
+    return string.rep(' ',_AST.iter()().__depth*2)
 end
 
 function pred_sort (v1, v2)

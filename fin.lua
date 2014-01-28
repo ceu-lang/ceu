@@ -29,7 +29,7 @@ F = {
             if fr.__ast_fr and string.sub(fr.__ast_fr.tag,1,5)=='Await' then
                 req = true
 
-            -- Normal assignments depend on the depths
+            -- Normal assignments depend on the __depths
             else
                 if fr.__ast_fr then
                     -- (a,b) = await X;
@@ -58,18 +58,18 @@ F = {
                 end
 
                 if fr.tag == 'Op2_call' then
-                    -- Maximum pointer depth that the function can return.
-                    -- Default is the lowest depth, i.e., any global pointer.
+                    -- Maximum pointer __depth that the function can return.
+                    -- Default is the lowest __depth, i.e., any global pointer.
                     local fr_max_out = _AST.root
 
-                    -- Minimum pointer depth that the function can receive.
+                    -- Minimum pointer __depth that the function can receive.
                     -- Default is the same as "to", i.e., as minimum as target variable.
-                    local fr_min_in  = to_blk     -- max * depth passed as parameter
+                    local fr_min_in  = to_blk     -- max * __depth passed as parameter
 
                     local _, _, exps, _ = unpack(fr)
                     for _, exp in ipairs(exps) do
                         local blk = node2blk(exp)
-                        if blk.depth < fr_min_in.depth then
+                        if blk.__depth < fr_min_in.__depth then
                             if not (exp.const or
                                     exp.c and exp.c.mod=='constant') then
                                 fr_min_in = blk
@@ -79,24 +79,24 @@ F = {
 
                     -- pure function never requires finalization
                     -- int* pa = _fopen();  -- pa(n) fin must consider _RET(_)
-                    if fr.c.mod~='pure' and to_blk.depth>fr_max_out.depth then
+                    if fr.c.mod~='pure' and to_blk.__depth>fr_max_out.__depth then
                         req = to_blk
                     end
                 elseif fr.tag == 'RawExp' then
                     -- int* pa = { new X() };
-                    if to_blk.depth > _AST.root.depth then
+                    if to_blk.__depth > _AST.root.__depth then
                         req = to_blk
                     end
                 else
                     local fr_blk = node2blk(fr)
 
                     -- int a; pa=&a;    -- `a´ termination must consider `pa´
-                    if to_blk.depth < fr_blk.depth then
+                    if to_blk.__depth < fr_blk.__depth then
                         req = fr_blk
 
                         -- class do int* a1; this.a2=a1; end (a1 is also top-level)
-                        if to_blk.depth == cls.blk_ifc.depth and
-                           fr_blk.depth == cls.blk_body.depth then
+                        if to_blk.__depth == cls.blk_ifc.__depth and
+                           fr_blk.__depth == cls.blk_body.__depth then
                             req = false
                         end
                     end

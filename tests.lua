@@ -797,7 +797,6 @@ escape ret;
     run = 2,
 }
 
---]===]
 Test { [[
 native do
     ##define ceu_out_call_F(a,b) F(a,b)
@@ -1702,6 +1701,7 @@ async do
 end;
 escape a + 1;
 ]],
+    --env = 'line 1 : variable/event "_ret" is not declared',
     props = 'line 4 : not permitted inside `async´',
 }
 
@@ -2692,7 +2692,7 @@ Test { [[
 loop i, 0 do
 end
 ]],
-    ast = 'line 1 : constant should not be `0´',
+    adj = 'line 1 : constant should not be `0´',
 }
 
 Test { [[
@@ -2831,6 +2831,7 @@ end
     run = 4;
     -- BUG: every w/ tuples
 }
+--]===]
 
 Test { [[
 input void A,F;
@@ -3434,7 +3435,7 @@ end
 escape sum;
 ]],
     --loop = true,
-    ast = 'line 2 : constant should not be `0´',
+    adj = 'line 2 : constant should not be `0´',
     run = 4,
 }
 Test { [[
@@ -26993,7 +26994,7 @@ escape f(5);
 Test { [[
 call 1;
 ]],
-    ast = 'invalid call',
+    adj = 'invalid call',
 }
 
 Test { [[
@@ -27799,7 +27800,7 @@ var int a, b;
 (a,b) = 1;
 escape 1;
 ]],
-    ast = 'line 2 : invalid attribution',
+    adj = 'line 2 : invalid attribution',
 }
 
 Test { [[

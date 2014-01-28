@@ -55,8 +55,12 @@ Test = function (t)
     if not check('lines')    then return end
     if not check('parser')   then return end
     if not check('ast')      then return end
-    --_AST.dump(_AST.root)
     if not check('adj')      then return end
+    DBG'======= ADJ'
+    _AST.dump(_AST.root)
+    if not check('tops')     then return end
+    DBG'======= TOPS'
+    _AST.dump(_AST.root)
     if not check('env')      then return end
     if not check('fin')      then return end
     if not check('tight')    then return end

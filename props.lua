@@ -175,14 +175,14 @@ F = {
         NEEDS_CLR(loop)
 
         local fin = _AST.iter'Finally'()
-        ASR(not fin or fin.depth<loop.depth, me,
+        ASR(not fin or fin.__depth<loop.__depth, me,
                 'not permitted inside `finalize´')
         -- TODO: same for return
 
         local async = _AST.iter(_AST.pred_async)()
         if async then
             local loop = _AST.iter'Loop'()
-            ASR(loop.depth>async.depth, me, '`break´ without loop')
+            ASR(loop.__depth>async.__depth, me, '`break´ without loop')
         end
     end,
 
@@ -292,7 +292,7 @@ F = {
         local _, _, to = unpack(me)
         local async = _AST.iter(_AST.pred_async)()
         if async and (not to) then
-            ASR( async.depth <= _AST.iter'SetBlock'().depth+1, me,
+            ASR( async.__depth <= _AST.iter'SetBlock'().__depth+1, me,
                     'invalid access from async')
         end
 
@@ -316,7 +316,7 @@ F = {
         if async then
             ASR(_AST.iter'VarList'() or         -- param list
                 me.ret or                       -- var assigned on return
-                async.depth < me.var.blk.depth, -- var is declared inside
+                async.__depth < me.var.blk.__depth, -- var is declared inside
                     me, 'invalid access from async')
         end
     end,
