@@ -746,10 +746,19 @@ escape 1;
 }
 
 Test { [[
+output (int)=>int F;
+emit F=>1;
+escape 1;
+]],
+    env = 'line 2 : invalid `emit´',
+    --run = 1,
+}
+
+Test { [[
 native do
     ##define ceu_out_emit_F(a,b) F(a,b)
-    int F (tceu_app* app, tceu_evtp p) {
-        return p.v+1;
+    int F (tceu_app* app, int v) {
+        return v+1;
     }
 end
 output (int)=>int F;
@@ -757,6 +766,7 @@ call F=>1;
 escape 1;
 ]],
     gcc = 'error: #error ceu_out_call_* is not defined',
+    --run = 1,
 }
 
 Test { [[
@@ -787,6 +797,7 @@ escape ret;
     run = 2,
 }
 
+--]===]
 Test { [[
 native do
     ##define ceu_out_call_F(a,b) F(a,b)
@@ -798,7 +809,8 @@ output (int)=>int F;
 var int ret = call F=>(1,2);
 escape ret;
 ]],
-    env = 'line 8 : invalid type',
+    env = 'line 8 : invalid attribution (void vs int)',
+    --env = 'line 8 : invalid type',
 }
 
 Test { [[
@@ -900,7 +912,6 @@ escape 1;
 }
 
 do return end
---]===]
 
 -- OK: well tested
 

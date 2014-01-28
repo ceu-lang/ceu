@@ -133,14 +133,19 @@ function _TP.contains (tp1, tp2, c)
         return true
     end
 
-    -- both are tuples
+    -- tuples vs (tuples or single types)
     local tup1 = _TP.isTuple(tp1)
     local tup2 = _TP.isTuple(tp2)
-    if tup1 and tup2 and (#tp1 == #tp2) then
-        for i=1, #tp1 do
-            -- [i][1]=type, [i][2]=id
-            if not _TP.contains(tp1[i][1], tp2[i][1]) then
-                return false
+    if tup1 or tup2 then
+        tup1 = tup1 or { {nil,tp1,nil} }
+        tup2 = tup2 or { {nil,tp1,nil} }
+        if #tp1 == #tp2 then
+            for i=1, #tp1 do
+                local hold, tp1, id = unpack(tp1[i])
+                local hold, tp2, id = unpack(tp1[i])
+                if not _TP.contains(tp1,tp2) then
+                    return false
+                end
             end
         end
         return true

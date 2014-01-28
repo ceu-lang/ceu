@@ -456,7 +456,7 @@ F = {
     end,
 
     TupleType = function (me)
-        local TP = '_tceu'
+        local TP = 'tceu'
         for i, v in ipairs(me) do
             local hold, tp, id = unpack(v)
             --local tp_noptr = _TP.noptr(v)
@@ -476,7 +476,6 @@ F = {
         else
             -- substitute the table for the struct type
             _ENV.c[TP] = { tag='type', id=TP, tuple=me, len=nil }
-DBG('tup', TP)
             return TP   -- me => TP
         end
     end,
@@ -667,11 +666,12 @@ DBG('tup', TP)
     end,
 
     EmitExt = function (me)
-        local _, ext, ps = unpack(me)
+        local op, ext, ps = unpack(me)
         if ext.evt.pre == 'input' then
             return
         end
         ASR(ext.evt.pre == 'output', me, 'invalid input `emit´')
+        ASR(ext.evt.op == op, me, 'invalid `'..op..'´')
         me.tp = 'int'
 
         if ps then
@@ -938,8 +938,8 @@ DBG('tup', TP)
                         and var
             me.ref  = me[3]
         else
-            ASR(_TP.ext(e1.tp,true), me, 'not a struct')
             local tup = _TP.isTuple(e1.tp)
+            ASR(tup or _TP.ext(e1.tp,true), me, 'not a struct')
             if tup then
                 local n = tonumber(string.match(id,'(%d+)'))
                 if tup[n] then

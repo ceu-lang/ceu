@@ -276,6 +276,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
               + V'NULL'    + V'NUMBER' + V'STRING'
               + V'Global'  + V'This'   + V'RawExp'
               + (CK'call/delay' + CK'call') * EV'_Exp'
+              + V'EmitExt'
 
     , ExpList = ( V'_Exp'*(K','*EV'_Exp')^0 )^-1
 
@@ -318,7 +319,7 @@ _GG = { [1] = CK'' * V'Stmts' * P(-1)-- + EM'expected EOF')
 
     , EmitT    = K'emit' * (V'WCLOCKK'+V'WCLOCKE')
 
-    , EmitExt  = C(K'call/delay'+K'call'+K'emit') * EV'Ext' * V'__emit_ps'
+    , EmitExt  = (CK'call/delay'+CK'call'+CK'emit') * EV'Ext' * V'__emit_ps'
     , EmitInt  = CK'emit' * EV'_Exp' * V'__emit_ps'
     , __emit_ps = ( K'=>' * (V'_Exp' + K'(' * V'ExpList' * EK')')
                 +   Cc(false) )

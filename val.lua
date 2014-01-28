@@ -95,7 +95,7 @@ F =
     end,
 
     EmitExt = function (me)
-        local _, ext, param = unpack(me)
+        local op, ext, param = unpack(me)
         if ext.evt.pre == 'input' then
             return
         end
@@ -119,13 +119,15 @@ F =
         t1 = table.concat(t1, ', ')
         t2 = table.concat(t2, ', ')
 
+        local op = (mod=='emit' and 'emit') or 'call'
+
         me.val = '\n'..[[
-#if defined(ceu_out_emit_]]..ext.evt.id..[[)
-    ceu_out_emit_]]..ext.evt.id..'('..t2..[[)
-#elif defined(ceu_out_emit)
-    ceu_out_emit(]]..t1..[[)
+#if defined(ceu_out_]]..op..'_'..ext.evt.id..[[)
+    ceu_out_]]..op..'_'..ext.evt.id..'('..t2..[[)
+#elif defined(ceu_out_]]..op..[[)
+    ceu_out_]]..op..'('..t1..[[)
 #else
-    #error ceu_out_]]..ext.evt.op..[[_* is not defined
+    #error ceu_out_]]..op..[[_* is not defined
 #endif
 ]]
     end,
