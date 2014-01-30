@@ -111,7 +111,11 @@ F =
             else
                 val = V(param)
             end
-            t1[#t1+1] = '(tceu_evtp)'..val
+            if _TP.isTuple(ext.evt.ins) then
+                t1[#t1+1] = '(tceu_evtp)(void*)'..val
+            else
+                t1[#t1+1] = '(tceu_evtp)'..val
+            end
             t2[#t2+1] = val
         else
             t1[#t1+1] = '(tceu_evtp)NULL'
@@ -119,7 +123,7 @@ F =
         t1 = table.concat(t1, ', ')
         t2 = table.concat(t2, ', ')
 
-        local op = (mod=='emit' and 'emit') or 'call'
+        local op = (op=='emit' and 'emit') or 'call'
 
         me.val = '\n'..[[
 #if defined(ceu_out_]]..op..'_'..ext.evt.id..[[)

@@ -302,7 +302,7 @@ F = {
         _ENV.exts[evt.id] = evt
 
         if _OPTS.os then
-            local evt = {id='START', pre='input', tp='void'}
+            local evt = {id='START', pre='input', ins='void'}
             _ENV.exts[#_ENV.exts+1] = evt
             _ENV.exts[evt.id] = evt
         end
