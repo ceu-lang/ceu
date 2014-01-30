@@ -911,6 +911,7 @@ escape 1;
 }
 
 do return end
+--]===]
 
 -- OK: well tested
 
@@ -990,6 +991,8 @@ Test { [[escape -9999;]], run=-9999 }
 Test { [[escape 'A';]], run=65, }
 Test { [[escape (((1)));]], run=1 }
 Test { [[escape 1+2*3;]], run=7 }
+Test { [[escape(4/2*3);]], run=6 }
+
 Test { [[escape 1==2;]], run=0 }
 Test { [[escape 0  or  10;]], run=1 }
 Test { [[escape 0 and 10;]], run=0 }
@@ -2103,16 +2106,12 @@ end
 }
 
 Test { [[
-native nohold _fprintf(), _stderr;
 var int a = do
     var int a = do
-        _fprintf(_stderr, "111\n");
         escape 1;
     end;
-        _fprintf(_stderr, "222 = %d\n", a);
     escape a;
 end;
-        _fprintf(_stderr, "333 = %d\n", a);
 escape a;
 ]],
     run = 1
@@ -2819,6 +2818,45 @@ Test { [[
 input (int,int) A;
 par do
     var int a, b;
+    (a,b) = await A;
+with
+    escape 1;
+end
+]],
+    run = 1;
+}
+
+Test { [[
+input (int,int) A;
+async do
+    emit A => (1,3);
+end
+escape 1;
+]],
+    run = 1;
+}
+
+Test { [[
+input (int,int) A;
+par do
+    loop do
+        var int a, b;
+        (a,b) = await A;
+        escape a+b;
+    end
+with
+    async do
+        emit A => (1,3);
+    end
+end
+]],
+    run = 4;
+}
+
+Test { [[
+input (int,int) A;
+par do
+    var int a, b;
     every (a,b) = A do
         escape a+b;
     end
@@ -2829,9 +2867,7 @@ with
 end
 ]],
     run = 4;
-    -- BUG: every w/ tuples
 }
---]===]
 
 Test { [[
 input void A,F;
@@ -13640,7 +13676,7 @@ Test { [[
 native _f();
 native do void f () {} end
 
-var void* p;
+var void* p=null;
 _f(p) finalize with nothing;
     end;
 escape 1;
@@ -13658,7 +13694,7 @@ _f(p!=null) finalize with nothing;
 escape 1;
 ]],
     fin = 'line 5 : invalid `finalize´',
-    run = 1,
+    --run = 1,
 }
 
 Test { [[
@@ -15736,14 +15772,28 @@ else
 end;
 escape 1;
 ]],
+    --gcc = 'may be used uninitialized in this function',
+    run = 1,
+}
+
+Test { [[
+var int* ptr1 = null;
+var void* ptr2 = null;
+if 1 then
+    ptr2 = (void*)ptr1;
+else
+    ptr2 = ptr2;
+end;
+escape 1;
+]],
     run = 1,
 }
 
 Test { [[
 var int* ptr1;
 var void* ptr2;
-ptr1 = ptr2;
-ptr2 = ptr1;
+ptr1 = (int*)ptr2;
+ptr2 = (void*)ptr1;
 escape 1;
 ]],
     run = 1,
@@ -18261,6 +18311,7 @@ end
 escape 1;
 ]],
     adj = 'ERR : tests.lua : line 3 : invalid `escape´',
+    --run = 1,
 }
 
 Test { [[
@@ -18395,6 +18446,7 @@ do
 end
 
 var int i = 0;
+
 var T[2] y with
     i = i + 1;
     this.a = i*10;
@@ -19383,6 +19435,21 @@ do
 end
 
 var _char* ptr;
+var T t with
+    this.ptr = ptr;
+end;
+escape 1;
+]],
+    --gcc = 'may be used uninitialized in this function',
+    run = 1,
+}
+Test { [[
+class T with
+    var _char* ptr;
+do
+end
+
+var _char* ptr = null;
 var T t with
     this.ptr = ptr;
 end;
@@ -21626,7 +21693,40 @@ do
     end
 end
 var T* b = new T;
-escape a!=null and b!=null;
+//native nohold _fprintf(), _stderr;
+        //_fprintf(_stderr, "%p %p\n",a, b);
+escape a!=null and b!=null and a==b;
+]],
+    run = 1,
+}
+
+Test { [[
+class [1] T with
+    var int a;
+do
+    this.a = 1;
+end
+var T* a, b;
+do
+    do
+        var T* aa = new T;
+        finalize
+            a = aa;
+        with
+            nothing;
+        end
+    end
+    var T* bb = new T;
+    finalize
+        b = bb;
+    with
+        nothing;
+    end
+end
+var T* c = new T;
+//native nohold _fprintf(), _stderr;
+        //_fprintf(_stderr, "%p %p\n",a, b);
+escape a!=null and b!=null and c!=null and a==b and b==c;
 ]],
     run = 1,
 }
@@ -26994,7 +27094,7 @@ escape f(5);
 Test { [[
 call 1;
 ]],
-    adj = 'invalid call',
+    ast = 'invalid call',
 }
 
 Test { [[

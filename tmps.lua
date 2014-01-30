@@ -30,6 +30,23 @@ F = {
             return                  -- only normal vars can be tmp
         end
 
+        --[[
+        --  var int i;
+        --  var T[2] t with
+        --      i = i + 1;      // "i" cannot be tmp
+        --  end;
+        --]]
+        local constr = _AST.par(me, 'Dcl_constr')
+        if constr and (var.blk.__depth < constr.__depth) then
+            local org = _AST.par(me, 'Dcl_var')
+            if org then
+                local _, _, arr = unpack(org)
+                if arr then
+                    var.isTmp = false
+                end
+            end
+        end
+
         local glb = _ENV.clss.Global
         if var.inTop or
             (var.blk==_ENV.clss.Main.blk_ifc and glb and glb.is_ifc and

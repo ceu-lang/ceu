@@ -148,11 +148,11 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
              + EM'statement (usually a missing `var´ or C prefix `_´)'
 
     , __StmtB = V'Do'    + V'Host'
-             + V'Async' + V'Thread' + V'Sync'
+             + V'Async' + V'_Thread' + V'Sync'
              + V'ParOr' + V'ParAnd'
              + V'If'    + V'_Loop'   + V'_Every'  + V'_Iter'
-             + V'Pause'
-             + V'Dcl_ifc' + V'Dcl_cls'
+             + V'_Pause'
+             + V'_Dcl_ifc' + V'Dcl_cls'
              + V'Finalize'
              + V'_Dcl_fun1'
 
@@ -160,7 +160,6 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , __LstStmtB = V'ParEver' + V'_Continue'
 
     , __SetBlock  = V'Do' + V'ParEver' + V'If' + V'_Loop' + V'_Every'
-    , _SetThread = V'Thread'
 
     , New = K'new' * ('['*NUM*EK']'+Cc(false)) * V'__ID_cls'
           * (EK'with' * V'Dcl_constr' * EK'end' + Cc(false))
@@ -174,7 +173,7 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
               + Cc'SetBlock'   * V'__SetBlock'
                                * Cc(false) * Cc(false)
                                     -- p1=[list,blk]
-              + Cc'_SetThread' * V'_SetThread'
+              + Cc'_SetThread' * V'_Thread'
                                * Cc(false) * Cc(false)
                                     -- p1=blk, p2=false, p3=false
               + Cc'SetExp'     * V'__Exp'
@@ -204,7 +203,7 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                              --+ EM'module' ) *S
 
     , Sync    = K'sync'  * V'__Do'
-    , Thread  = K'async' * K'thread'    * EV'VarList' * V'__Do'
+    , _Thread  = K'async' * K'thread'    * EV'VarList' * V'__Do'
     , Async   = K'async' * (-P'thread') * EV'VarList' * V'__Do'
     , VarList = ( K'(' * EV'Var' * (EK',' * EV'Var')^0 * EK')' )^-1
 
@@ -275,8 +274,8 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
               + V'Var'     + V'Nat'
               + V'NULL'    + V'NUMBER' + V'STRING'
               + V'Global'  + V'This'   + V'RawExp'
-              + K'call'       * EV'__Exp' * Cc'call'
-              + K'call/delay' * EV'__Exp' * Cc'call/delay'
+              + CK'call'       * EV'__Exp'
+              + CK'call/delay' * EV'__Exp'
 -- TODO
               --+ V'EmitExt'
 
@@ -303,7 +302,7 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                   + EM'<h,min,s,ms,us>'
               )
 
-    , Pause    = K'pause/if' * EV'__Exp' * V'__Do'
+    , _Pause   = K'pause/if' * EV'__Exp' * V'__Do'
 
     , AwaitN   = K'await' * K'FOREVER'
 
@@ -378,7 +377,7 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , BlockI = ( (EV'__Dcl_var'+V'_Dcl_int'+V'_Dcl_fun0'+V'_Dcl_imp')
                   * (EK';'*K';'^0)
                )^0
-    , Dcl_ifc = K'interface' * Cc(true)
+    , _Dcl_ifc = K'interface' * Cc(true)
               * Cc(false)
               * EV'__ID_cls'
               * EK'with' * V'BlockI' * EK'end'
@@ -404,9 +403,9 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                     return (string.gsub(id..star,' ',''))
                   end
 
-    , _TupleType = Ct( (CK'hold'+Cc(false)) * EV'__ID_type' *
+    , __tuple = Ct( (CK'hold'+Cc(false)) * EV'__ID_type' *
                       (EV'__ID_var'+Cc(false)) )
-    , TupleType = K'(' * V'_TupleType' * (EK','*V'_TupleType')^0 * EK')'
+    , TupleType = K'(' * V'__tuple' * (EK','*V'__tuple')^0 * EK')'
 
     , STRING = CK( CK'"' * (P(1)-'"'-'\n')^0 * EK'"' )
 

@@ -455,7 +455,7 @@ F = {
         ASR(_tp and _ENV.clss[_tp], me, 'invalid `free´')
     end,
 
-    TupleType = function (me)
+    TupleType_pos = function (me)
         local TP = 'tceu'
         for i, v in ipairs(me) do
             local hold, tp, id = unpack(v)
@@ -513,8 +513,12 @@ F = {
             local evt = ref.evt or (ref.var and ref.var.evt)
             ASR(evt, me,
                 'event "'..(ref.var and ref.var.id or '?')..'" is not declared')
-            me[2] = evt.ins
-            ASR( _TP.isTuple(me[2]), me, 'invalid type' )
+            if me[2] == 'TP' then
+                me[2] = evt.ins
+            else     -- 'TP*'
+                me[2] = evt.ins..'*'
+            end
+            ASR( _TP.isTuple(evt.ins), me, 'invalid type' )
         end
     end,
     Dcl_var = function (me)
@@ -523,7 +527,6 @@ F = {
         has, me.var = newvar(me, false, _AST.iter'Block'(), pre, tp, arr, id)
         assert(not has or (me.var.read_only==nil))
         me.var.read_only = me.read_only
-        me.var.__ast_tuple_await = me.__ast_tuple_await
         if constr then
             constr.blk = me.var.blk
         end
@@ -600,7 +603,7 @@ F = {
 
     Var = function (me)
         local id = unpack(me)
-        local blk = me.blk or _AST.iter('Block')()
+        local blk = me.__adj_blk or _AST.iter('Block')()
         local var = _ENV.getvar(id, blk)
         ASR(var, me, 'variable/event "'..id..'" is not declared')
         me.var  = var
@@ -635,7 +638,7 @@ F = {
     AwaitS = function (me)
         local wclock
         for _, awt in ipairs(me) do
-            if awt.isExp then
+            if awt.__ast_isexp then
                 F.AwaitInt(me, awt)
             elseif awt.tag~='Ext' then
                 ASR(not wclock, me,
@@ -928,7 +931,7 @@ F = {
             end
             var = var or ASR(cls.blk_ifc.vars[id], me,
                         'variable/event "'..id..'" is not declared')
-            me[3] = _AST.node('Var')(me.ln, '$'..id)
+            me[3] = _AST.node('Var', me.ln, '$'..id)
             me[3].var = var
 
             me.org  = e1

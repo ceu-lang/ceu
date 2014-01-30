@@ -154,8 +154,6 @@ CEU_POOL_DCL(]]..node.pool..', CEU_'..node.cls.id..','..n..[[)
                 var.id_ = var.id..'_'..var.n
                 if var.arr then
                     dcl = dcl .. _TP.deref(tp)..' '..var.id_..'['..var.arr.cval..']'
-                elseif var.__ast_tuple_await then
-                    dcl = dcl .. tp..'* '..var.id_
                 else
                     dcl = dcl .. tp..' '..var.id_
                 end
@@ -192,7 +190,7 @@ CEU_POOL_DCL(]]..node.pool..', CEU_'..node.cls.id..','..n..[[)
 --[[
     AwaitS = function (me)
         for _, awt in ipairs(me) do
-            if awt.isExp then
+            if awt.__ast_isexp then
             elseif awt.tag=='Ext' then
             else
                 awt.off = alloc(CLS().mem, 4)

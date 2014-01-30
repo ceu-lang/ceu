@@ -76,8 +76,9 @@ function _TP.c (tp)
 end
 ]]
 
-function _TP.isTuple (tp)
+function _TP.isTuple (tp,ptr)
     return _ENV.c[tp] and _ENV.c[tp].tuple
+        or _TP.deref(tp) and _TP.isTuple(_TP.deref(tp))
 end
 
 function _TP.c (tp)

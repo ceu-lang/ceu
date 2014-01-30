@@ -52,7 +52,7 @@ F = {
         -- labels which are finalizers
         local t = {}
         for _, lbl in ipairs(_LBLS.list) do
-            t[#t+1] = string.find(lbl.id,'__fin') and assert(lbl.depth) or 0
+            t[#t+1] = string.find(lbl.id,'__fin') and assert(lbl.__depth) or 0
         end
         _LBLS.code_fins = table.concat(t,',')
     end,
@@ -61,7 +61,7 @@ F = {
         local blk = unpack(me)
 
         if me.fins then
-            me.lbl_fin     = new{'Block__fin', depth=me.depth}
+            me.lbl_fin     = new{'Block__fin', __depth=me.__depth}
             me.lbl_fin_cnt = new{'Block_fin_cnt'}
         end
     end,
@@ -82,7 +82,7 @@ F = {
     end,
 
     SetBlock_pre = function (me)
-        me.lbl_out = new{'Set_out',  prio=me.depth}
+        me.lbl_out = new{'Set_out',  prio=me.__depth}
     end,
 
     _Par_pre = function (me)
@@ -99,7 +99,7 @@ F = {
     end,
     ParOr_pre = function (me)
         F._Par_pre(me)
-        me.lbl_out = new{'ParOr_out',  prio=me.depth}
+        me.lbl_out = new{'ParOr_out',  prio=me.__depth}
     end,
     ParAnd_pre = function (me)
         F._Par_pre(me)

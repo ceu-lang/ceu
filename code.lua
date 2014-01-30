@@ -126,6 +126,8 @@ function CLEAR (me)
         return
     end
 
+-- TODO: put it back!
+--[[
     -- check if top will clear during same reaction
     if (not me.needs_clr_fin) and _ANA then   -- fin must execute before any stmt
         local top = _AST.iter(_iter)()
@@ -133,6 +135,7 @@ function CLEAR (me)
             return  -- top will clear
         end
     end
+]]
 
     --LINE(me, 'ceu_trails_clr('..me.trails[1]..','..me.trails[2]..
                                 --', _ceu_go->org);')
@@ -532,8 +535,6 @@ ceu_pool_init(&]]..pre..', '..n..', sizeof(CEU_'..node.cls.id..'), '
                 if var.arr then
                     LINE(me, _TP.c(_TP.deref(var.tp))
                             ..' '..V(var)..'['..V(var.arr)..']')
-                elseif _TP.isTuple(var.tp) then
-                    LINE(me, _TP.c(var.tp)..'* '..V(var))
                 else
                     LINE(me, _TP.c(var.tp)..' '..V(var))
                 end
@@ -813,6 +814,8 @@ _ceu_go->trl = &_ceu_go->org->trls[ ]]..me.trails[1]..[[ ];
 
         assert(evt.pre == 'input')
 
+-- TODO: join w/ val.lua
+
         -- only async's need to split in two (to avoid stack growth)
         if _AST.iter'Async'() then
             LINE(me, [[
@@ -822,7 +825,7 @@ _ceu_go->trl->lbl = ]]..me.lbl_cnt.id..[[;
         end
 
         local v
-        if param and _TP.isTuple(ext.evt.ins) then
+        if param and _TP.isTuple(ext.evt.ins,true) then
             -- programmer cannot cast tuples himself
             v = '(tceu_evtp)(void*)'..V(param)
         elseif param then
@@ -1040,7 +1043,7 @@ case ]]..me.lbl.id..[[:;
                 LINE(me, [[
                     if (_ceu_go->evt == CEU_IN_]]..awt.evt.id..[[) {
                 ]])
-            elseif awt.isExp then
+            elseif awt.__ast_isexp then
                 local org = (awt.org and awt.org.val) or '_ceu_go->org'
                 LINE(me, [[
                     if ( (_ceu_go->evt == ]]..(awt.off or awt.evt.off)..[[)

@@ -262,7 +262,7 @@ F = {
     end,
     AwaitS = function (me)
         for _, awt in ipairs(me) do
-            if awt.isExp then
+            if awt.__ast_isexp then
                 F.AwaitInt(me)
             elseif awt.tag=='Ext' then
                 F.AwaitExt(me)

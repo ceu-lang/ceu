@@ -55,12 +55,14 @@ Test = function (t)
     if not check('lines')    then return end
     if not check('parser')   then return end
     if not check('ast')      then return end
+    --DBG'======= AST'
+    --_AST.dump(_AST.root)
     if not check('adj')      then return end
-    DBG'======= ADJ'
-    _AST.dump(_AST.root)
+    --DBG'======= ADJ'
+    --_AST.dump(_AST.root)
     if not check('tops')     then return end
-    DBG'======= TOPS'
-    _AST.dump(_AST.root)
+    --DBG'======= TOPS'
+    --_AST.dump(_AST.root)
     if not check('env')      then return end
     if not check('fin')      then return end
     if not check('tight')    then return end
@@ -75,6 +77,8 @@ Test = function (t)
     if not check('tmps')     then return end
     if not check('mem')      then return end
     if not check('val')      then return end
+    --DBG'======= VAL'
+    --_AST.dump(_AST.root)
     if not check('code')     then return end
 
     --STATS.mem     = STATS.mem     + _AST.root.mem.max
@@ -155,6 +159,7 @@ end
     else
         CEU = './ceu _ceu_tmp.ceu --run-tests 2>&1'
         GCC = 'gcc '..O..' -o ceu.exe main.c 2>&1'
+        --DBG(GCC)
     end
 
     if _PROPS.has_threads then
@@ -248,16 +253,16 @@ STATS = {
 }
 
 STATS = {
-    count   = 1551,
+    count   = 1535,
     mem     = 0,
-    trails  = 2982,
-    bytes   = 13665597,
+    trails  = 2985,
+    bytes   = 13773503,
 }
 
 
-real	6m23.875s
-user	5m58.204s
-sys	0m52.108s
+real	8m31.731s
+user	8m34.960s
+sys	0m59.432s
 ]]
 
 os.execute('rm -f /tmp/_ceu_*')

@@ -122,6 +122,7 @@ do
     dofile 'parser.lua'
     dofile 'ast.lua'
     dofile 'adj.lua'
+    dofile 'tops.lua'
     dofile 'env.lua'
     dofile 'fin.lua'
     dofile 'tight.lua'

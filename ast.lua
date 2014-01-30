@@ -35,7 +35,9 @@ end
 function _AST.copy (node, ln)
     local ret = setmetatable({}, MT)
     for k, v in pairs(node) do
-        if _AST.isNode(v) then
+        if k == '__par' then
+            ret[k] = v
+        elseif _AST.isNode(v) then
             ret[k] = _AST.copy(v, ln)
             ret[k].ln = ln or ret[k].ln
         else
@@ -106,7 +108,6 @@ function _AST.dump (me, spc)
     --ks = 'n='..(me.aw.n or '?')..',t='..t..',ever='..(me.aw.forever_ and 1 or 0)
     --ks = table.concat(me.trails,'-')
 --
---[[
 if me.ana then
     local f = function(v)
                 return type(v)=='table'
@@ -120,6 +121,7 @@ if me.ana then
     for k in pairs(me.ana.pos) do t[#t+1]=f(k) end
     ks = ks..'['..table.concat(t,',')..']'
 end
+--[[
 ]]
 --
     --ks = me.ns.trails..' / '..tostring(me.needs_clr)
@@ -158,14 +160,14 @@ local function visit_aux (me, F)
     if F.Node_pre then
         me = F.Node_pre(me) or me
         if me ~= _me then
-            DBG('Node_pre', me.tag, me)
+            --DBG('Node_pre', me.tag, me)
             return visit_aux(me, F)
         end
     end
     if pre then
         me = pre(me) or me
         if me ~= _me then
-            DBG('XXXX_pre', me.tag, me, _me.tag, _me)
+            --DBG('XXXX_pre', me.tag, me, _me.tag, _me)
             return visit_aux(me, F)
         end
     end
@@ -176,13 +178,12 @@ local function visit_aux (me, F)
         if _AST.isNode(sub) then
             if bef then assert(bef(me, sub, i)==nil) end
             me[i] = visit_aux(sub, F)
-            me[i].__par = me
             if aft then assert(aft(me, sub, i)==nil) end
         end
     end
 
     if mid then
-        assert(mid(me) == nil)
+        assert(mid(me) == nil, me.tag)
     end
     if F.Node then
         assert(F.Node(me) == nil)
@@ -192,13 +193,17 @@ local function visit_aux (me, F)
 
     if pos then
         me = pos(me) or me
-        me.__par = STACK[#STACK]
-        me.__depth = (me.__par and me.__par.__depth+1) or 0
+        if _AST.isNode(me) then
+            me.__par = STACK[#STACK]
+            me.__depth = (me.__par and me.__par.__depth+1) or 0
+        end
     end
     if F.Node_pos then
         me = F.Node_pos(me) or me
-        me.__par = STACK[#STACK]
-        me.__depth = (me.__par and me.__par.__depth+1) or 0
+        if _AST.isNode(me) then
+            me.__par = STACK[#STACK]
+            me.__depth = (me.__par and me.__par.__depth+1) or 0
+        end
     end
 
     return me
@@ -221,15 +226,34 @@ for tag, patt in pairs(_GG) do
     end
 end
 
-local function f (ln, v1, v2, v3, ...)
-    --DBG('2',ln,v1,v2,...)
-    if not v2 then
-        return v1
+local function f (ln, v1, op, v2, v3, ...)
+    --DBG('2',ln[2],v1,op,v2,v3,...)
+    local ret
+    if not op then
+        ret = v1
+    elseif v1=='call' or v1=='call/delay' then
+        -- Prim call
+        ASR(op.tag=='Op2_call', ln, 'invalid call')
+        op[1] = v1  -- change modifier
+        ret = op
     elseif v1 then
-        return _AST.node('Op2_'..v2, ln, v2, v1, f(ln,v3,...))
+        -- Op2_*
+        if op == 'call' then
+            ret = f(ln, _AST.node('Op2_'..op,ln,op,v1,v2,v3), ...)
+        else
+            ret = f(ln, _AST.node('Op2_'..op,ln,op,v1,v2), v3, ...)
+        end
     else
-        return _AST.node('Op1_'..v2, ln, v2, f(ln,v3,...))
+        -- Op1_*
+        if op == 'cast' then
+            -- consume the type
+            ret = _AST.node('Op1_'..op, ln, v2, f(ln,v3,...))
+        else
+            ret = _AST.node('Op1_'..op, ln, op, f(ln,v2,v3,...))
+        end
     end
+    ret.__ast_isexp = true
+    return ret
 end
 
 for i=1, 12 do
