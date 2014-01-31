@@ -167,21 +167,22 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , _Set  = (V'__Exp' + V'VarList') * V'__Sets'
     , __Sets = (CK'='+CK':=') * (
                                     -- p1=awt, p2=false, p3=false
-                Cc'_SetAwait'  * (V'AwaitS'+V'AwaitT'+V'AwaitExt'+V'AwaitInt')
-                               * Cc(false) * Cc(false)
+                Cc'__SetAwait'   * (V'AwaitS'+V'AwaitT'+V'AwaitExt'+V'AwaitInt')
+                                 * Cc(false) * Cc(false)
                                     -- p1=blk, p2=false, p3=false
-              + Cc'SetBlock'   * V'__SetBlock'
-                               * Cc(false) * Cc(false)
+              + Cc'SetBlock'     * V'__SetBlock'
+                                 * Cc(false) * Cc(false)
                                     -- p1=[list,blk]
-              + Cc'_SetThread' * V'_Thread'
-                               * Cc(false) * Cc(false)
+              + Cc'__SetThread'  * V'_Thread'
+                                 * Cc(false) * Cc(false)
                                     -- p1=blk, p2=false, p3=false
-              + Cc'SetExp'     * V'__Exp'
-                               * Cc(false) * Cc(false)
+              + Cc'SetExp'       * V'__Exp'
+                                 * Cc(false) * Cc(false)
                                     -- p1=New[max,cls,constr]
-              + Cc'_SetNew'    * V'New'
+              + Cc'__SetNew'     * V'New'
                                     -- p1=Spawn[max,cls,constr]
-              + Cc'_SetSpawn'  * V'Spawn'
+              + Cc'__SetSpawn'   * V'Spawn'
+              --+ Cc'__SetEmitExt' * V'EmitExt'
               + EM'expression'
               )
 
@@ -276,8 +277,6 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
               + V'Global'  + V'This'   + V'RawExp'
               + CK'call'       * EV'__Exp'
               + CK'call/delay' * EV'__Exp'
--- TODO
-              --+ V'EmitExt'
 
     , ExpList = ( V'__Exp'*(K','*EV'__Exp')^0 )^-1
 

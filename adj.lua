@@ -4,14 +4,13 @@ local node = _AST.node
 _MAIN = nil
 
 -- TODO: remove
-local function SetAwaitUntil (ln, awt, op, to, to_orig)
+local function SetAwaitUntil (ln, awt, op, to)
     local ret
 
     -- set await
     if op then
         local val = node('SetVal', ln)
         val.__ast_fr = awt
-        val.to   = to_orig
         ret = node('Stmts', ln,
                 awt,
                 node('SetExp', ln, op, val, to))
@@ -131,7 +130,7 @@ F = {
 
         local set
         if to and op then
-            set = node('_Set', me.ln, to, op, '_SetAwait', awt, false, false)
+            set = node('_Set', me.ln, to, op, '__SetAwait', awt, false, false)
         else
             set = awt
         end
@@ -438,14 +437,14 @@ F = {
         local to, op, tag, p1, p2, p3 = unpack(me)
 
         if to.tag == 'VarList' then
-            ASR(tag=='_SetAwait', me.ln,
+            ASR(tag=='__SetAwait', me.ln,
                 'invalid attribution (`await´ expected)')
         end
 
         if tag == 'SetExp' then
             return node(tag, me.ln, op, p1, to)
 
-        elseif tag == '_SetAwait' then
+        elseif tag == '__SetAwait' then
             if to.tag == 'VarList' then
                 local tup = '_tup_'..me.n
 
@@ -454,7 +453,7 @@ F = {
                 local t = {
                     _AST.copy(p1[1]),   -- find out 'TP' before traversing tup
                     node('Dcl_var', me.ln, 'var', 'TP*', false, tup),
-                    SetAwaitUntil(me.ln, p1, '=', node('Var', me.ln,tup), to),
+                    SetAwaitUntil(me.ln, p1, '=', node('Var', me.ln,tup)),
                                             -- assignment to struct must be '='
                 }
                 t[2].__ast_ref = t[1] -- TP* is changed on env.lua
@@ -470,13 +469,13 @@ F = {
                 end
                 return node('Stmts', me.ln, unpack(t))
             else
-                return SetAwaitUntil(me.ln, p1, op, to, to)
+                return SetAwaitUntil(me.ln, p1, op, to)
             end
 
         elseif tag == 'SetBlock' then
             return node(tag, me.ln, p1, to)
 
-        elseif tag == '_SetThread' then
+        elseif tag == '__SetThread' then
             local thr = p1
 
             local val = node('SetVal', me.ln)
@@ -485,7 +484,29 @@ F = {
 
             return node('Stmts', me.ln, thr, node('SetExp',me.ln,op,val,to))
 
-        else -- '_SetNew', '_SetSpawn'
+--[=[
+        elseif tag == '__SetEmitExt' then
+            --[[
+            --      v = call A(1,2);
+            -- becomes
+            --      do
+            --          var _tup t;
+            --          t._1 = 1;
+            --          t._2 = 2;
+            --          emit E => &t;
+            --          v = <ret>
+            --      end
+            --]]
+            local ret = node('Block', me.ln
+                            node('Stmts', me.ln,
+                                false,  -- Dcl_var
+                                false,  -- Sets
+                                p1,     -- EmitExt
+                                node('SetExp', me.ln, val, to))
+            error'oi'
+]=]
+
+        else -- '__SetNew', '__SetSpawn'
             local val = node('SetVal', me.ln)
             val.__ast_fr = p1
             p1.setto = true
@@ -572,7 +593,7 @@ F = {
                             node('Stmts', me.ln,
                                 node('_Set', me.ln,
                                     node('Var', me.ln, cur_id),
-                                    '=', '_SetAwait',
+                                    '=', '__SetAwait',
                                     node('AwaitInt', me.ln, evt, false),
                                     false, false),
                                 node('If', me.ln,

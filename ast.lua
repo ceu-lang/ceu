@@ -2,7 +2,14 @@ _AST = {
     root = nil,
 }
 
-local MT    = {}
+local MT = {
+    __index = function (t,k)
+        if t.tag == 'Ref' then
+            return t[1][k]
+        end
+    end,
+}
+
 local STACK = {}
 
 function _AST.isNode (node)
@@ -38,8 +45,12 @@ function _AST.copy (node, ln)
         if k == '__par' then
             ret[k] = v
         elseif _AST.isNode(v) then
-            ret[k] = _AST.copy(v, ln)
-            ret[k].ln = ln or ret[k].ln
+            if v.tag == 'Ref' then
+                ret[k] = v
+            else
+                ret[k] = _AST.copy(v, ln)
+                ret[k].ln = ln or ret[k].ln
+            end
         else
             ret[k] = v
         end
@@ -175,7 +186,7 @@ local function visit_aux (me, F)
     STACK[#STACK+1] = me
 
     for i, sub in ipairs(me) do
-        if _AST.isNode(sub) then
+        if _AST.isNode(sub) and sub.tag~='Ref' then
             if bef then assert(bef(me, sub, i)==nil) end
             me[i] = visit_aux(sub, F)
             if aft then assert(aft(me, sub, i)==nil) end
