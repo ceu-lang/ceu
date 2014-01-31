@@ -808,7 +808,7 @@ _ceu_go->trl = &_ceu_go->org->trls[ ]]..me.trails[1]..[[ ];
         local evt = ext.evt
 
         if evt.pre == 'output' then  -- ext not Exp
-            if not me.setto then
+            if not me.__ast_set then
                 LINE(me, V(me)..';')    -- already on <v = emit E>
             end
             return

@@ -61,8 +61,8 @@ Test = function (t)
     --DBG'======= ADJ'
     --_AST.dump(_AST.root)
     if not check('tops')     then return end
-    DBG'======= TOPS'
-    _AST.dump(_AST.root)
+    --DBG'======= TOPS'
+    --_AST.dump(_AST.root)
     if not check('env')      then return end
     if not check('fin')      then return end
     if not check('tight')    then return end
@@ -253,16 +253,16 @@ STATS = {
 }
 
 STATS = {
-    count   = 1535,
+    count   = 1572,
     mem     = 0,
-    trails  = 2985,
-    bytes   = 13773503,
+    trails  = 3013,
+    bytes   = 13984345,
 }
 
 
-real	6m49.053s
-user	6m15.692s
-sys	0m53.556s
+real	6m27.729s
+user	6m1.020s
+sys	0m53.204s
 ]]
 
 os.execute('rm -f /tmp/_ceu_*')

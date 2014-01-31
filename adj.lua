@@ -14,7 +14,6 @@ local function SetAwaitUntil (ln, awt, op, to)
                 node('SetExp', ln, op,
                     node('Ref', ln, awt),
                     to))
-        awt.setto = true
     else
         ret = awt
     end
@@ -476,7 +475,6 @@ F = {
             return node(tag, me.ln, p1, to)
 
         elseif tag == '__SetThread' then
-            p1.setto = true
             return node('Stmts', me.ln,
                         p1,
                         node('SetExp', me.ln, op,
@@ -495,7 +493,7 @@ F = {
             --          v = <ret>
             --      end
             --]]
-            p1.setto = true
+            p1.__ast_set = true
             local ret = node('Block', me.ln,
                             node('Stmts', me.ln,
                                 p1,  -- Dcl_var, Sets, EmitExt
@@ -505,7 +503,6 @@ F = {
             return ret
 
         else -- '__SetNew', '__SetSpawn'
-            p1.setto = true
             p1[#p1+1] = node('SetExp', me.ln, op,
                             node('Ref', me.ln, p1),
                             to)
@@ -529,7 +526,7 @@ F = {
         local tup = '_tup_'..me.n
         local t = {
             _AST.copy(ext),  -- find out 'TP' before traversing tup
-            node('Dcl_var', me.ln, 'var', 'TP', false, tup)
+            node('Dcl_var', me.ln, 'var', 'TP', false, tup),
         }
         t[2].__ast_ref = t[1]    -- TP is changed on env.lua
 
@@ -540,9 +537,9 @@ F = {
                             '_'..i))
         end
 
-        t[#t+1] = node(me.tag, me.ln, mod, ext,
-                    node('Op1_&', me.ln, '&',
-                        node('Var', me.ln, tup)))
+        me[3] = node('Op1_&', me.ln, '&',
+                    node('Var', me.ln, tup))
+        t[#t+1] = me
 
         return node('Stmts', me.ln, unpack(t))
     end,

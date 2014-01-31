@@ -324,6 +324,7 @@ escape ret + _V;        // * reads after
 }
 
 -------------------------------------------------------------------------------
+--]===]
 
 -- OUTPUT / CALL
 
@@ -815,7 +816,6 @@ escape ret;
     --env = 'line 8 : invalid type',
 }
 
---]===]
 Test { [[
 native do
     ##define ceu_out_call_F(a,b) F(a,b)
@@ -914,7 +914,7 @@ escape 1;
     run = 1,
 }
 
-do return end
+--do return end
 
 -- OK: well tested
 
@@ -1479,8 +1479,8 @@ Test { [[var int a = a+1; escape a;]],
 }
 
 Test { [[var int a; a = emit a => 1; escape a;]],
-    parser = 'line 1 : after `=´ : expected expression',
-    --ast = "line 1 : after `emit´ : expected event",
+    --parser = 'line 1 : after `=´ : expected expression',
+    parser = "line 1 : after `emit´ : expected event",
     --trig_wo = 1,
 }
 
@@ -15068,8 +15068,8 @@ async do
 end;
 escape a;
 ]],
-    --env = "line 4 : invalid input `emit´",
-    parser = 'line 4 : after `=´ : expected expression',
+    env = "line 4 : invalid attribution",
+    --parser = 'line 4 : after `=´ : expected expression',
 }
 
 Test { [[

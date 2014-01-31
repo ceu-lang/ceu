@@ -677,6 +677,8 @@ F = {
     EmitExt = function (me)
         local op, ext, ps = unpack(me)
         if ext.evt.pre == 'input' then
+            ASR(not me.__ast_set, me, 'invalid attribution')
+                -- <a = emit INPUT>
             return
         end
         ASR(ext.evt.pre == 'output', me, 'invalid input `emit´')
