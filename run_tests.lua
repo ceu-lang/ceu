@@ -61,8 +61,8 @@ Test = function (t)
     --DBG'======= ADJ'
     --_AST.dump(_AST.root)
     if not check('tops')     then return end
-    --DBG'======= TOPS'
-    --_AST.dump(_AST.root)
+    DBG'======= TOPS'
+    _AST.dump(_AST.root)
     if not check('env')      then return end
     if not check('fin')      then return end
     if not check('tight')    then return end

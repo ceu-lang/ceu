@@ -808,7 +808,9 @@ _ceu_go->trl = &_ceu_go->org->trls[ ]]..me.trails[1]..[[ ];
         local evt = ext.evt
 
         if evt.pre == 'output' then  -- ext not Exp
-            LINE(me, V(me)..';')
+            if not me.setto then
+                LINE(me, V(me)..';')    -- already on <v = emit E>
+            end
             return
         end
 

@@ -681,7 +681,12 @@ F = {
         end
         ASR(ext.evt.pre == 'output', me, 'invalid input `emit´')
         ASR(ext.evt.op == op, me, 'invalid `'..op..'´')
-        me.tp = 'int'
+
+        if op == 'call' then
+            me.tp = ext.evt.out     -- return value
+        else
+            me.tp = 'int'           -- [0,1] enqueued? (or 'int' return val)
+        end
 
         if ps then
             ASR(_TP.contains(ext.evt.ins,ps.tp,true), me,

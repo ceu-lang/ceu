@@ -457,14 +457,13 @@ native do
         int b;
     } t;
     ##define ceu_out_emit(a,b,c) Fa(a,b,c)
-    int Fa (int id, int len, void* data) {
-        assert(len == 8);
-        t v = *((t*)data);
-        escape v.a - v.b;
-    }
-    ##define ceu_out_emit(c) Fb(c)
-    int Fb (int data) {
-        escape data - 1;
+    int Fa (tceu_app* app, int evt, tceu_evtp p) {
+        if (evt == CEU_OUT_A) {
+            t v = *((t*)p.ptr);
+            return v.a + v.b;
+        } else {
+            return p.v;
+        }
     }
 end
 native _t = 8;
@@ -477,10 +476,12 @@ v.a = 1;
 v.b = -1;
 a = emit A => &v;
 b = emit B => 5;
+//native nohold _fprintf(), _stderr;
+//_fprintf(_stderr,"a=%d b=%d\n", a, b);
 escape a + b;
 ]],
-    --run = 6,
-    parser = 'line 26 : after `=´ : expected expression',
+    run = 5,
+    --parser = 'line 26 : after `=´ : expected expression',
 }
 
 Test { [[
@@ -492,7 +493,8 @@ end
 var _cahr v = emit A => 1;
 escape 0;
 ]],
-    parser = 'line 6 : after `=´ : expected expression',
+    env = 'line 6 : non-matching types on `emit´',
+    --parser = 'line 6 : after `=´ : expected expression',
     --env = 'line 6 : undeclared type `_cahr´',
 }
 Test { [[
@@ -501,7 +503,8 @@ output void A;
 var _char v = emit A => ;
 escape v;
 ]],
-    parser = 'line 3 : after `=´ : expected expression',
+    --parser = 'line 3 : after `=´ : expected expression',
+    parser = 'line 3 : before `=>´ : expected `;´',
     --env = 'line 3 : invalid attribution',
 }
 Test { [[
@@ -513,8 +516,8 @@ native _char = 1;
 var _char v = emit A => 1;
 escape 0;
 ]],
-    parser = 'line 6 : after `=´ : expected expression',
-    --env = 'line 6 : non-matching types on `emit´',
+    --parser = 'line 6 : after `=´ : expected expression',
+    env = 'line 6 : non-matching types on `emit´',
 }
 
 Test { [[
@@ -812,6 +815,7 @@ escape ret;
     --env = 'line 8 : invalid type',
 }
 
+--]===]
 Test { [[
 native do
     ##define ceu_out_call_F(a,b) F(a,b)
@@ -911,7 +915,6 @@ escape 1;
 }
 
 do return end
---]===]
 
 -- OK: well tested
 
@@ -2747,17 +2750,13 @@ escape 1;
 }
 
 Test { [[
-native nohold _fprintf(), _stderr;
 input void A;
 var int ret;
 every A do
-_fprintf(_stderr,"222\n");
     ret = ret + 1;
     if ret == 3 then
-_fprintf(_stderr,"yes\n");
         escape ret;
     end
-_fprintf(_stderr,"no\n");
 end
 ]],
     run = { ['~>A;~>A;~>A']=3 }

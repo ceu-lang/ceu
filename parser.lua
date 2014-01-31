@@ -182,7 +182,7 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
               + Cc'__SetNew'     * V'New'
                                     -- p1=Spawn[max,cls,constr]
               + Cc'__SetSpawn'   * V'Spawn'
-              --+ Cc'__SetEmitExt' * V'EmitExt'
+              + Cc'__SetEmitExt' * V'EmitExt'
               + EM'expression'
               )
 

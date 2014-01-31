@@ -483,7 +483,6 @@ F = {
                             node('Ref', me.ln, p1),
                             to))
 
---[=[
         elseif tag == '__SetEmitExt' then
             --[[
             --      v = call A(1,2);
@@ -496,14 +495,14 @@ F = {
             --          v = <ret>
             --      end
             --]]
-            local ret = node('Block', me.ln
+            p1.setto = true
+            local ret = node('Block', me.ln,
                             node('Stmts', me.ln,
-                                false,  -- Dcl_var
-                                false,  -- Sets
-                                p1,     -- EmitExt
-                                node('SetExp', me.ln, val, to))
-            error'oi'
-]=]
+                                p1,  -- Dcl_var, Sets, EmitExt
+                                node('SetExp', me.ln, op,
+                                    node('Ref', me.ln, p1),
+                                    to)))
+            return ret
 
         else -- '__SetNew', '__SetSpawn'
             p1.setto = true
