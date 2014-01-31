@@ -75,10 +75,6 @@ F =
         V(fr)     -- error on reads of internal events
     end,
 
-    SetVal = function (me)
-        me.val = me.__ast_fr.val
-    end,
-
     -- SetExp is inside and requires .val
     New_pre = function (me)
         me.val = '(('.._TP.c(me[2])..'*)__ceu_new)'

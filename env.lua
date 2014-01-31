@@ -654,9 +654,15 @@ F = {
         ASR(int.var and int.var.pre=='event', me,
             'event "'..(int.var and int.var.id or '?')..'" is not declared')
         me.fst = int.fst
+        me.tp = int.var.evt.ins     -- <a = await ...>
     end,
     AwaitExt = function (me)
+        local ext = unpack(me)
         me.fst = 'global'
+        me.tp = ext.evt.ins     -- <a = await ...>
+    end,
+    AwaitT = function (me)
+        me.tp = 's32'           -- <a = await ...>
     end,
 
     EmitInt = function (me)
@@ -698,49 +704,14 @@ F = {
                 'read-only variable')
         ASR(not CLS().is_ifc, me, 'invalid attribution')
 
-        if fr.__ast_fr and (fr.__ast_fr.tag == 'New') then
+        if fr.tag=='Ref' and fr[1].tag=='New' then
             -- a = new T
-            fr.__ast_fr.blk = to.ref.var.blk   -- to = me.__par[3]
+            fr[1].blk = to.ref.var.blk   -- to = me.__par[3]
 
             -- refuses (x.ptr = new T;)
             ASR( _AST.isChild(CLS(),to.ref.var.blk), me,
                     'invalid attribution (no scope)' )
         end
-    end,
-
---[[
--- TODO: remove?
--- await ... until?
-    SetAwait = function (me)
-        local _, awt, to = unpack(me)
-        ASR(to.lval, me, 'invalid attribution')
-
-        if awt.tag == 'Loop' then
-            awt = awt[1][1]         -- await ... until
-        end
-        me.awt = awt                -- will need me.awt.val
-    end,
-]]
-
-    SetVal = function (me)
-        if me.__ast_fr.tag == 'AwaitT' then
-            me.tp = 's32'               -- late
-        elseif me.__ast_fr.tag == 'AwaitS' then
-            me.tp = 'int'
-        elseif me.__ast_fr.tag=='AwaitInt' then
-            me.tp = me.__ast_fr[1].var.evt.ins   -- evt tp
-        elseif me.__ast_fr.tag=='AwaitExt' then
-            me.tp = me.__ast_fr[1].evt.ins   -- evt tp
-        elseif me.__ast_fr.tag == 'New' then
-            me.tp = me.__ast_fr[2]..'*'     -- class id
-        elseif me.__ast_fr.tag == 'Spawn' then
-            me.tp = 'int'               -- 0/1
-        elseif me.__ast_fr.tag == 'Thread' then
-            me.tp = 'int'               -- 0/1
-        else
-            error'unexpected error'
-        end
-        me.fst = me.__ast_fr.fst
     end,
 
     Free = function (me)
@@ -759,17 +730,7 @@ F = {
         ASR(not me.cls.is_ifc, me, 'cannot instantiate an interface')
         me.fst = 'global'   -- "a = new T"      ("a" will determine)
         me.fst = 'global'   -- "a = spawn T"    (constant value 0/1)
-
---[[
-        _AST.visit(F, me.__par[2][3])
-        F.Spawn(me, me.__par[2][3].ref.var.blk)    -- also sets me.cls
-
--- TODO: remove (SetExp should do)
-        ASR(to.lval and _TP.contains(to.tp,me.cls.id..'*')
-                         -- refuses (x.ptr = new T;)
-                     and _AST.isChild(CLS(),to.ref.var.blk),
-                me, 'invalid attribution ('..to.tp..' vs '..me.cls.id..'*)')
-]]
+        me.tp = id..'*'  -- class id
     end,
     Spawn_pre = function (me, blk)
         local max, id, constr = unpack(me)
@@ -777,6 +738,7 @@ F = {
         me.blk = ASR(_AST.iter'Do'(), me,
                         '`spawn´ requires enclosing `do ... end´')
         me.blk = me.blk[1]
+        me.tp = 'int'       -- 0/1
     end,
 
     Dcl_constr_pre = function (me)
@@ -798,6 +760,10 @@ F = {
     CallStmt = function (me)
         local call = unpack(me)
         ASR(call.tag == 'Op2_call', me, 'invalid statement')
+    end,
+
+    Thread = function (me)
+        me.tp = 'int'       -- 0/1
     end,
 
     --------------------------------------------------------------------------

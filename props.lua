@@ -289,7 +289,7 @@ F = {
     end,
 
     SetExp = function (me)
-        local _, _, to = unpack(me)
+        local _, fr, to = unpack(me)
         local async = _AST.iter(_AST.pred_async)()
         if async and (not to) then
             ASR( async.__depth <= _AST.iter'SetBlock'().__depth+1, me,
@@ -298,17 +298,15 @@ F = {
 
         if _AST.iter'BlockI'() then
             CLS().has_pre = true   -- code for pre (before constr)
+
+            -- new, spawn, async, await
+            ASR(fr.tag ~= 'Ref',
+                me, 'not permitted inside an interface')
         end
 
         if to.tag=='Var' and to.var.id=='_ret' then
             _PROPS.has_ret = true
         end
-    end,
-
-    SetVal = function (me)
-        -- new, spawn, async, await
-        ASR(not _AST.iter'BlockI'(), me,
-                'not permitted inside an interface')
     end,
 
     Var = function (me)

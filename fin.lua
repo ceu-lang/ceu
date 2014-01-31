@@ -26,8 +26,14 @@ F = {
             -- "req" has the possibility to be "true"
 
             -- For all "awaits", any pointer assignment requires finalization
-            if fr.__ast_fr and string.sub(fr.__ast_fr.tag,1,5)=='Await' then
+            if fr.tag=='Ref' and string.sub(fr[1].tag,1,5)=='Await'
+            or fr.__ast_fr then
                 req = true
+                if fr.__ast_fr then
+                    fr = fr.__ast_fr
+                else
+                    fr = fr[1]
+                end
 
             -- Normal assignments depend on the __depths
             else
@@ -39,6 +45,7 @@ F = {
                     -- a = p:_1;
                     -- b = p:_2;
                     fr = fr.__ast_fr
+                        -- lost pointer "tp"
                 end
 
                 -- var T t with
@@ -144,7 +151,7 @@ F = {
         -- Verify if the receiving variable is acessed in the same block it is 
         -- defined.
         --]]
-        elseif fr.__ast_fr and string.sub(fr.__ast_fr.tag,1,5)=='Await' then
+        elseif string.sub(fr.tag,1,5)=='Await' then
             if req then
                 local var = to.ref.var.ast_original_var or to.ref.var
                 AWAITS[var] = false

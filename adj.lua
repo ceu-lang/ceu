@@ -9,11 +9,11 @@ local function SetAwaitUntil (ln, awt, op, to)
 
     -- set await
     if op then
-        local val = node('SetVal', ln)
-        val.__ast_fr = awt
         ret = node('Stmts', ln,
                 awt,
-                node('SetExp', ln, op, val, to))
+                node('SetExp', ln, op,
+                    node('Ref', ln, awt),
+                    to))
         awt.setto = true
     else
         ret = awt
@@ -476,13 +476,12 @@ F = {
             return node(tag, me.ln, p1, to)
 
         elseif tag == '__SetThread' then
-            local thr = p1
-
-            local val = node('SetVal', me.ln)
-            val.__ast_fr = thr
-            thr.setto = true
-
-            return node('Stmts', me.ln, thr, node('SetExp',me.ln,op,val,to))
+            p1.setto = true
+            return node('Stmts', me.ln,
+                        p1,
+                        node('SetExp', me.ln, op,
+                            node('Ref', me.ln, p1),
+                            to))
 
 --[=[
         elseif tag == '__SetEmitExt' then
@@ -507,10 +506,10 @@ F = {
 ]=]
 
         else -- '__SetNew', '__SetSpawn'
-            local val = node('SetVal', me.ln)
-            val.__ast_fr = p1
             p1.setto = true
-            p1[#p1+1] = node('SetExp', me.ln,op,val,to)
+            p1[#p1+1] = node('SetExp', me.ln, op,
+                            node('Ref', me.ln, p1),
+                            to)
             return p1
         end
     end,

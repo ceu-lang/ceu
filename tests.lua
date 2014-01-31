@@ -14885,7 +14885,8 @@ do
 end
 escape i;
 ]],
-    fin = 'line 7 : invalid operator',
+    --fin = 'line 7 : invalid operator',
+    fin = 'line 7 : attribution does not require `finalize´',
     --run = 1,
 }
 
