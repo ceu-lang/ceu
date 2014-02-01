@@ -276,6 +276,8 @@ int ceu_wclocks_expired (tceu_app* app, s32* t, s32 dt);
 void ceu_pause (tceu_trl* trl, tceu_trl* trlF, int psed);
 #endif
 
+#define ceu_in_emit ceu_go_event
+
 void ceu_go        (tceu_app* app, int evt, tceu_evtp evtp);
 void ceu_go_init   (tceu_app* app);
 void ceu_go_event  (tceu_app* app, int id, tceu_evtp data);

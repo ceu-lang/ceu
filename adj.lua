@@ -50,8 +50,8 @@ F = {
         -- enclose the program with the "Main" class
         _MAIN = node('Dcl_cls', me.ln, false, false,
                       'Main',
-                      node('Stmts', me.ln),
-                      node('Stmts', me.ln, blk))
+                      node('Nothing', me.ln),
+                      blk)
         _MAIN.blk_ifc = blk
 
         -- [1] => ['Root']
@@ -340,17 +340,6 @@ F = {
                     --]]
     end,
 
--- Dcl_fun --------------------------------------------------------
-
-    _Dcl_fun0_pre = function (me)
-        me.tag = 'Dcl_fun'
-    end,
-    _Dcl_fun1_pre = function (me)
-        local dcl, blk = unpack(me)
-        dcl[#dcl+1] = blk
-        return dcl
-    end,
-
 -- Dcl_imp ------------------------------------------------------------
 
     BlockI_pre = function (me)
@@ -373,6 +362,44 @@ F = {
         end
     end,
 
+-- Dcl_fun, Dcl_ext --------------------------------------------------------
+
+    _Dcl_fun1_pre = function (me)
+        local dcl, blk = unpack(me)
+        dcl[#dcl+1] = blk
+        return dcl
+    end,
+    _Dcl_fun0_pre = function (me)
+        me.tag = 'Dcl_fun'
+    end,
+
+    _Dcl_ext1_pre = '_Dcl_fun1_pre',
+    _Dcl_ext0_pre = function (me)
+        local dir, delay, ins, out, id, blk = unpack(me)
+
+        -- single id + blk
+
+        if me[#me].tag == 'Block' then
+            ASR(me[#me]==blk, me, 'same body for multiple declarations')
+            return node('Stmts', me.ln,
+                    node('Dcl_fun',me.ln,dir,delay,ins,out,id,blk),
+                    node('Dcl_ext',me.ln,dir,delay,ins,out,id))
+        end
+
+        -- no blk
+
+        local ret = {}
+        local t = { unpack(me,5) }  -- skip "dir","delay","ins","out"
+
+        for _, v in ipairs(t) do
+            if out then
+                ret[#ret+1] = node('Dcl_fun',me.ln,dir,delay,ins,out,v)
+            end
+            ret[#ret+1] = node('Dcl_ext',me.ln,dir,delay,ins,out,v)
+        end
+        return node('Stmts', me.ln, unpack(ret))
+    end,
+
 -- Dcl_nat, Dcl_ext, Dcl_int, Dcl_var ---------------------
 
     _Dcl_nat_pre = function (me)
@@ -382,17 +409,6 @@ F = {
 
         for i=1, #t, 3 do   -- pure/const/false, type/func/var, id, len
             ret[#ret+1] = node('Dcl_nat', me.ln, mod, t[i], t[i+1], t[i+2])
-        end
-        return node('Stmts', me.ln, unpack(ret))
-    end,
-
-    _Dcl_ext_pre = function (me)
-        local dir, delay, ins, out = unpack(me)
-        local ret = {}
-        local t = { unpack(me,5) }  -- skip "dir","delay","ins","out"
-
-        for _, v in ipairs(t) do
-            ret[#ret+1] = node('Dcl_ext', me.ln, dir, delay, ins, out, v)
         end
         return node('Stmts', me.ln, unpack(ret))
     end,

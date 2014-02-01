@@ -216,11 +216,12 @@ F = {
     Dcl_fun = function (me)
         local _, _, ins, out, id, blk = unpack(me)
         if blk then
-            _CODE.functions = _CODE.functions .. me.proto ..[[
-{
-]]..blk.code..[[
-}
-]]
+            if me.var.fun.isExt then
+                _CODE.functions = _CODE.functions ..
+                    '#define ceu_in_call_'..id..' '..me.id..'\n'
+            end
+            _CODE.functions = _CODE.functions ..
+                me.proto .. '{'..blk.code..'}'..'\n'
         end
     end,
     Return = function (me)
@@ -811,51 +812,32 @@ _ceu_go->trl = &_ceu_go->org->trls[ ]]..me.trails[1]..[[ ];
             if not me.__ast_set then
                 LINE(me, V(me)..';')    -- already on <v = emit E>
             end
-            return
-        end
 
-        assert(evt.pre == 'input')
-
--- TODO: join w/ val.lua
-
-        -- only async's need to split in two (to avoid stack growth)
-        if _AST.iter'Async'() then
-            LINE(me, [[
+        else -- input
+            -- only async's need to split in two (to avoid stack growth)
+            if _AST.iter'Async'() then
+                LINE(me, [[
 _ceu_go->trl->evt = CEU_IN__ASYNC;
 _ceu_go->trl->lbl = ]]..me.lbl_cnt.id..[[;
 ]])
-        end
+            end
 
-        local v
-        if param and _TP.isTuple(ext.evt.ins,true) then
-            -- programmer cannot cast tuples himself
-            v = '(tceu_evtp)(void*)'..V(param)
-        elseif param then
-            v = '(tceu_evtp)'..V(param)
-        else
-            v = '(tceu_evtp)NULL'
-        end
+            if _AST.iter'Thread'() then
+                -- HACK_2: never terminates
+                error'not supported'
+            else
+                LINE(me, V(me)..[[;
+if (! CEU_APP.isAlive)
+    return RET_END;
+]])
+            end
 
-        if _AST.iter'Thread'() then
-            -- HACK_2: never terminates
-error'not supported'
--- TODO: remove!
-            LINE(me, [[
-                CEU_ATOMIC( ceu_go_event(NULL, CEU_IN_]]..evt.id..','..v..[[); );
-            ]])
-        else
-            LINE(me, [[
-                ceu_go_event(&CEU_APP, CEU_IN_]]..evt.id..','..v..[[);
-                if (! CEU_APP.isAlive)
-                    return RET_END;
-            ]])
-        end
-
-        if _AST.iter'Async'() then
-            HALT(me, 'RET_ASYNC')
-            LINE(me, [[
+            if _AST.iter'Async'() then
+                HALT(me, 'RET_ASYNC')
+                LINE(me, [[
 case ]]..me.lbl_cnt.id..[[:;
 ]])
+            end
         end
     end,
 

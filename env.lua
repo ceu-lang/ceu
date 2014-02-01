@@ -230,6 +230,7 @@ function newfun (me, imp, blk, pre, delay, ins, out, id)
         out = out,
         pre = pre,
         mod = { delay=delay },
+        isExt = string.upper(id)==id,
     }
     var.fun = fun
     return false, var
@@ -438,7 +439,7 @@ F = {
             cls = constr.cls
         else
             cls = CLS()
-            ASR(cls ~= _MAIN, me, 'invalid access')
+            --ASR(cls ~= _MAIN, me, 'invalid access')
         end
         ASR(cls, me, 'undeclared class')
 
@@ -676,12 +677,7 @@ F = {
 
     EmitExt = function (me)
         local op, ext, ps = unpack(me)
-        if ext.evt.pre == 'input' then
-            ASR(not me.__ast_set, me, 'invalid attribution')
-                -- <a = emit INPUT>
-            return
-        end
-        ASR(ext.evt.pre == 'output', me, 'invalid input `emit´')
+
         ASR(ext.evt.op == op, me, 'invalid `'..op..'´')
 
         if op == 'call' then

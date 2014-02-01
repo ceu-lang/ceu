@@ -133,7 +133,7 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     , __StmtS = V'AwaitS'   + V'AwaitT'    + V'AwaitExt'  + V'AwaitInt'
              + V'EmitT'    + V'EmitExt'   + V'EmitInt'
-             + V'_Dcl_nat' + V'_Dcl_ext'
+             + V'_Dcl_nat' + V'_Dcl_ext0'
              + V'_Dcl_int' + V'__Dcl_var'
              + V'Dcl_det'
              --+ V'Call'
@@ -154,7 +154,7 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
              + V'_Pause'
              + V'_Dcl_ifc' + V'Dcl_cls'
              + V'Finalize'
-             + V'_Dcl_fun1'
+             + V'_Dcl_fun1' + V'_Dcl_ext1'
 
     , __LstStmt  = V'_Escape' + V'Break' + V'_Continue' + V'AwaitN' + V'Return'
     , __LstStmtB = V'ParEver' + V'_Continue'
@@ -170,21 +170,21 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                 Cc'__SetAwait'   * (V'AwaitS'+V'AwaitT'+V'AwaitExt'+V'AwaitInt')
                                  * Cc(false) * Cc(false)
                                     -- p1=blk, p2=false, p3=false
-              + Cc'SetBlock'     * V'__SetBlock'
-                                 * Cc(false) * Cc(false)
-                                    -- p1=[list,blk]
               + Cc'__SetThread'  * V'_Thread'
                                  * Cc(false) * Cc(false)
                                     -- p1=blk, p2=false, p3=false
-              + Cc'SetExp'       * V'__Exp'
-                                 * Cc(false) * Cc(false)
-                                    -- p1=New[max,cls,constr]
-              + Cc'__SetNew'     * V'New'
-                                    -- p1=Spawn[max,cls,constr]
-              + Cc'__SetSpawn'   * V'Spawn'
               + Cc'__SetEmitExt' * ( V'EmitExt'
                                    + K'(' * V'EmitExt' * EK')' )
                                     -- p1=emt, p2=false, p3=false
+              + Cc'__SetNew'     * V'New'
+                                    -- p1=Spawn[max,cls,constr]
+              + Cc'__SetSpawn'   * V'Spawn'
+              + Cc'SetBlock'     * V'__SetBlock'
+                                 * Cc(false) * Cc(false)
+                                    -- p1=[list,blk]
+              + Cc'SetExp'       * V'__Exp'
+                                 * Cc(false) * Cc(false)
+                                    -- p1=New[max,cls,constr]
               + EM'expression'
               )
 
@@ -337,11 +337,12 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , _Dcl_nat = K'native' * (CK'pure'+CK'constant'+CK'nohold'+Cc(false))
                    * EV'__Dcl_nat' * (K',' * EV'__Dcl_nat')^0
 
-    , _Dcl_ext = (CK'input'+CK'output')
+    , _Dcl_ext0 = (CK'input'+CK'output')
                     * (CK'delay'+Cc(false))
                     * ( V'TupleType' * K'=>' * EV'__ID_type'
                       + (V'TupleType'+EV'__ID_type') * Cc(false) )
                     * EV'__ID_ext' * (K','*EV'__ID_ext')^0
+    , _Dcl_ext1 = V'_Dcl_ext0' * V'__Do'
 
     , _Dcl_int  = CK'event' * (V'TupleType'+EV'__ID_type') *
                     V'__Dcl_int' * (K','*V'__Dcl_int')^0

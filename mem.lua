@@ -66,8 +66,9 @@ ceu_pool_init(&]]..me.pool..', '..me.max..', sizeof(CEU_'..me.id..'), '
         dcl = table.concat(dcl,  ', ')
 
         -- TODO: static?
+        me.id = 'CEU_'..cls.id..'_'..id
         me.proto = [[
-]]..out..' CEU_'..cls.id..'_'..id..' ('..dcl..[[)
+]]..out..' '..me.id..' ('..dcl..[[)
 ]]
         cls.funs = cls.funs..me.proto..';\n'
     end,

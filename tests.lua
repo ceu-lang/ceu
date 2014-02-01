@@ -324,477 +324,19 @@ escape ret + _V;        // * reads after
 }
 
 -------------------------------------------------------------------------------
---]===]
-
--- OUTPUT / CALL
 
 Test { [[
-output xxx A;
-escape(1);
-]],
-    parser = "line 1 : after `output´ : expected type",
-}
-Test { [[
-native do
-    ##define ceu_out_emit(a,b,c) 1
+input (int a)=>int F,G do
+    return a + 1;
 end
-output int A;
-emit A => 1;
-escape(1);
 ]],
-    run=1
-}
-Test { [[
-output int A;
-if emit A => 1 then
-    escape 0;
-end
-escape(1);
-]],
-    parser = 'line 2 : after `if´ : expected expression',
-}
-Test { [[
-native do
-    #define ceu_out_emit(a,b,c) 1
-end
-output int A;
-if emit A => 1 then
-    escape 0;
-end
-escape(1);
-]],
-    parser = 'line 5 : after `if´ : expected expression',
+    adj = 'line 1 : same body for multiple declarations',
 }
 
 Test { [[
-output t A;
-emit A => 1;
-escape(1);
-]],
-    parser = 'line 1 : after `output´ : expected type',
-}
-Test { [[
-output t A;
-emit A => 1;
-escape(1);
-]],
-    parser = 'line 1 : after `output´ : expected type',
-}
-Test { [[
-output _t* A;
-emit A => 1;
-escape(1);
-]],
-    env = 'line 2 : non-matching types on `emit´',
-}
-Test { [[
-output int A;
-var _t v;
-emit A => v;
-escape(1);
-]],
-    --env = 'line 2 : undeclared type `_t´',
-    --env = 'line 3 : non-matching types on `emit´',
-    gcc = 'error: unknown type name',
-}
-Test { [[
-native do
-    #define ceu_out_emit(a,b,c) 1
+input (int a)=>int F do
+    return a + 1;
 end
-output int A;
-native do
-    typedef int t;
-end
-var _t v;
-emit A => v;
-escape(1);
-]],
-    --env = 'line 2 : undeclared type `_t´',
-    --env = 'line 3 : non-matching types on `emit´',
-    run = 1,
-}
-Test { [[
-output int A;
-var int a;
-emit A => &a;
-escape(1);
-]],
-    env = 'line 3 : non-matching types on `emit´',
-}
-Test { [[
-output int A;
-var int a;
-if emit A => &a then
-    escape 0;
-end
-escape(1);
-]],
-    parser = 'line 3 : after `if´ : expected expression',
-    --env = 'line 3 : non-matching types on `emit´',
-}
-Test { [[
-output _char A;
-]],
-    env = "line 1 : invalid event type",
-}
-
-Test { [[
-native do
-    /******/
-    int end = 1;
-    /******/
-end
-native _end;
-escape _end;
-]],
-    run = 1
-}
-
-Test { [[
-native do
-    ##include <assert.h>
-    typedef struct {
-        int a;
-        int b;
-    } t;
-    ##define ceu_out_emit(a,b,c) Fa(a,b,c)
-    int Fa (tceu_app* app, int evt, tceu_evtp p) {
-        if (evt == CEU_OUT_A) {
-            t v = *((t*)p.ptr);
-            return v.a + v.b;
-        } else {
-            return p.v;
-        }
-    }
-end
-native _t = 8;
-output _t* A;
-output int B;
-var int a, b;
-
-var _t v;
-v.a = 1;
-v.b = -1;
-a = emit A => &v;
-b = emit B => 5;
-//native nohold _fprintf(), _stderr;
-//_fprintf(_stderr,"a=%d b=%d\n", a, b);
-escape a + b;
-]],
-    run = 5,
-    --parser = 'line 26 : after `=´ : expected expression',
-}
-
-Test { [[
-native _char = 1;
-output void A;
-native do
-    void A (int v) {}
-end
-var _cahr v = emit A => 1;
-escape 0;
-]],
-    env = 'line 6 : non-matching types on `emit´',
-    --parser = 'line 6 : after `=´ : expected expression',
-    --env = 'line 6 : undeclared type `_cahr´',
-}
-Test { [[
-native _char = 1;
-output void A;
-var _char v = emit A => ;
-escape v;
-]],
-    --parser = 'line 3 : after `=´ : expected expression',
-    parser = 'line 3 : before `=>´ : expected `;´',
-    --env = 'line 3 : invalid attribution',
-}
-Test { [[
-output void A;
-native do
-    void A (int v) {}
-end
-native _char = 1;
-var _char v = emit A => 1;
-escape 0;
-]],
-    --parser = 'line 6 : after `=´ : expected expression',
-    env = 'line 6 : non-matching types on `emit´',
-}
-
-Test { [[
-native do
-    void A (int v) {}
-end
-emit A => 1;
-escape 0;
-]],
-    env = 'event "A" is not declared',
-}
-
-Test { [[
-native do
-    #define ceu_out_emit(a,b,c) 0
-end
-output void A, B;
-par/or do
-    emit A;
-with
-    emit B;
-end
-escape 1;
-]],
-    ana = {
-        acc = 1,
-        abrt = 3,
-    },
-    run = 1,
-}
-
-Test { [[
-native do
-    #define ceu_out_emit(a,b,c) 0
-end
-safe A with B;
-output void A, B;
-par/or do
-    emit A;
-with
-    emit B;
-end
-escape 1;
-]],
-    ana = {
-        abrt = 3,
-    },
-    run = 1,
-}
-
-Test { [[
-native do
-    ##define ceu_out_emit(a,b,c) F(c)
-    void F (tceu_evtp p) {
-        tceu___int____int_* v = (tceu___int____int_*) p.ptr;
-        *(v->_1) = 1;
-        *(v->_2) = 2;
-    }
-end
-
-output (int*,  int*) RADIO_SEND;
-var int a=1,b=1;
-emit RADIO_SEND => (&a,&b);
-
-escape a + b;
-]],
-    run = 3,
-}
-
-Test { [[
-native do
-    ##define ceu_out_emit(a,b,c) F(a,b,c)
-    void F (tceu_app* app, int evt, tceu_evtp p) {
-        tceu___int____int_* v = (tceu___int____int_*) p.ptr;
-        *(v->_1) = (evt == CEU_OUT_RADIO_SEND);
-        *(v->_2) = 2;
-    }
-end
-
-output (int*,  int*) RADIO_SEND;
-var int a=1,b=1;
-emit RADIO_SEND => (&a,&b);
-
-escape a + b;
-]],
-    run = 3,
-}
-
-Test { [[
-native _F();
-output int F;
-native do
-    void F() {};
-end
-par do
-    _F();
-with
-    emit F => 1;
-end
-]],
-    ana = {
-        reachs = 1,
-        acc = 1,
-        isForever = true,
-    },
-}
-
-Test { [[
-native _F();
-output int F,G;
-native do
-    void F() {};
-end
-par do
-    _F();
-with
-    emit F => 1;
-with
-    emit G => 0;
-end
-]],
-    ana = {
-        reachs = 1,
-        acc = 3,
-        isForever = true,
-    },
-}
-
-Test { [[
-native _F();
-safe _F with F,G;
-output int F,G;
-native do
-    void F() {};
-end
-par do
-    _F();
-with
-    emit F => 1;
-with
-    emit G => 0;
-end
-]],
-    todo = true,
-    ana = {
-        acc = 1,
-        isForever = true,
-    },
-}
-
-Test { [[
-native _F();
-output int* F,G;
-safe _F with F,G;
-int a = 1;
-int* b;
-native do
-    void F (int v) {};
-end
-par do
-    _F(&a);
-with
-    emit F => b;
-with
-    emit G => &a;
-end
-]],
-    todo = true,
-    ana = {
-        acc = 4,
-        isForever = true,
-    },
-}
-
-Test { [[
-native _F();
-pure _F;
-output int* F,G;
-int a = 1;
-int* b;
-native do
-    void F (int v) {};
-end
-par do
-    _F(&a);
-with
-    emit F => b;
-with
-    emit G => &a;
-end
-]],
-    todo = true,
-    ana = {
-        acc = 4,
-        isForever = true,
-    },
-}
-
-Test { [[
-native _F();
-safe F with G;
-output void F,G;
-par do
-    emit F;
-with
-    emit G;
-end
-]],
-    todo = true,
-    ana = {
-        reachs = 1,
-        isForever = true,
-    },
-}
-
-Test { [[
-output (int)=>int F;
-escape call F=>1;
-]],
-    parser = 'line 2 : after `call´ : expected expression',
-}
-
-Test { [[
-output (int)=>int F;
-call F=>1;
-escape 1;
-]],
-    gcc = 'error: #error ceu_out_call_* is not defined',
-}
-
-Test { [[
-output (int)=>int F;
-emit F=>1;
-escape 1;
-]],
-    env = 'line 2 : invalid `emit´',
-    --run = 1,
-}
-
-Test { [[
-native do
-    ##define ceu_out_emit_F(a,b) F(a,b)
-    int F (tceu_app* app, int v) {
-        return v+1;
-    }
-end
-output (int)=>int F;
-call F=>1;
-escape 1;
-]],
-    gcc = 'error: #error ceu_out_call_* is not defined',
-    --run = 1,
-}
-
-Test { [[
-native do
-    ##define ceu_out_call_F(a,b) F(a,b)
-    int F (tceu_app* app, int v) {
-        return v+1;
-    }
-end
-output (int)=>int F;
-call F=>1;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-native do
-    ##define ceu_out_call_F(a,b) F(a,b)
-    int F (tceu_app* app, int v) {
-        return v+1;
-    }
-end
-output (int)=>int F;
 var int ret = call F=>1;
 escape ret;
 ]],
@@ -802,119 +344,33 @@ escape ret;
 }
 
 Test { [[
-native do
-    ##define ceu_out_call_F(a,b) F(a,b)
-    int F (tceu_app* app, tceu_evtp p) {
-        return p.v+1;
-    }
+input (int a)=>void F do
+    this.v = a;
 end
-output (int)=>int F;
-var int ret = call F=>(1,2);
-escape ret;
+var int v = 0;
+call F=>1;
+escape this.v;
 ]],
-    env = 'line 8 : invalid attribution (void vs int)',
-    --env = 'line 8 : invalid type',
+    env = 'line 2 : variable/event "v" is not declared',
 }
 
 Test { [[
-native do
-    ##define ceu_out_call_F(a,b) F(a,b)
-    int F (tceu_app* app, tceu___int___int* p) {
-        return p->_1 + p->_2;
-    }
+native nohold _fprintf(), _stderr;
+var int v = 0;
+input (int a)=>void F do
+    this.v = a;
+    _fprintf(_stderr,"a=%d v=%d\n", a, v);
 end
-output (int,int)=>int F;
-var int ret = call F=>(1,2);
-escape ret;
-]],
-    run = 3,
-}
-
-Test { [[
-native do
-    ##define ceu_out_call(a,b,c) F(a,b,c)
-    int F (tceu_app* app, tceu_nevt evt, tceu_evtp p) {
-        return (evt == CEU_OUT_F) + p.v;
-    }
-end
-output (int)=>int F;
-var int ret = (call F=>2);
-escape ret;
-]],
-    run = 3,
-}
-
-Test { [[
-native do
-    ##define ceu_out_emit(a,b,c) F(a,b,c)
-    int F (tceu_app* app, tceu_nevt evt, tceu_evtp p) {
-        return (evt==CEU_OUT_F && p.ptr==NULL);
-    }
-end
-output void F;
-var int ret = (emit F);
-escape ret;
+_fprintf(_stderr,"v=%d\n", v);
+call F=>1;
+_fprintf(_stderr,"v=%d\n", v);
+escape this.v;
 ]],
     run = 1,
 }
 
-Test { [[
-native do
-    ##define ceu_out_emit_F(a) F(a)
-    int F (tceu_app* app) {
-        return 1;
-    }
-end
-output void F;
-var int ret = (emit F);
-escape ret;
-]],
-    run = 1,
-}
-
-Test { [[
-native do
-    ##define ceu_out_emit(a,b,c) F(a,b,c)
-    int F (tceu_app* app, tceu_nevt evt, tceu_evtp p) {
-        return (evt == CEU_OUT_F) + p.v;
-    }
-end
-output int F;
-par/and do
-    emit F=>1;
-with
-    emit F=>1;
-end
-escape 1;
-]],
-    ana = {
-        acc = 1,
-    },
-    run = 1,
-}
-
-Test { [[
-native do
-    ##define ceu_out_call(a,b,c) F(a,b,c)
-    int F (tceu_app* app, tceu_nevt evt, tceu_evtp p) {
-        return (evt == CEU_OUT_F) + p.v;
-    }
-end
-output (int)=>int F;
-par/and do
-    call F=>1;
-with
-    call F=>1;
-end
-escape 1;
-]],
-    ana = {
-        acc = 1,
-    },
-    run = 1,
-}
-
---do return end
+do return end
+--]===]
 
 -- OK: well tested
 
@@ -2538,7 +1994,7 @@ escape 1;
     ana = {
         unreachs = 1,
     },
-    run = { ['~>A;~>B']=1, }
+    run = { ['1~>A;2~>B']=1, }
 }
 
 Test { [[
@@ -2559,7 +2015,7 @@ escape 1;   // unreachs
 }
 
 Test { [[
-input int A,B;
+input void A,B;
 loop do
     par do
         await A;
@@ -3303,7 +2759,7 @@ escape sum;
 }
 
 Test { [[
-input int A;
+input void A;
 var int sum = 0;
 var int ret = 0;
 par/or do
@@ -3327,7 +2783,7 @@ escape ret;
 }
 
 Test { [[
-input int A;
+input void A;
 var int sum = 0;
 var int ret = 0;
 par/or do
@@ -5424,7 +4880,17 @@ end;
 }
 
 Test { [[
-input int F;
+input int A;
+async do
+    emit A;
+end
+escape 1;
+]],
+    env = 'line 3 : missing parameters on `emit´',
+}
+
+Test { [[
+input void F;
 var int a;
 par do
     await 5s;
@@ -5444,7 +4910,7 @@ end;
 }
 
 Test { [[
-input int F;
+input void F;
 do
     var int a=0, b=0, c=0;
     par do
@@ -6273,7 +5739,7 @@ escape a;
 }
 
 Test { [[
-input int A,B;
+input void A,B;
 var int a = 5;
 par/or do
     par/or do
@@ -6296,7 +5762,7 @@ escape a;
 }
 
 Test { [[
-input int A,B;
+input void A,B;
 var int a = 5;
 par/or do
     par/and do
@@ -7836,7 +7302,7 @@ escape a;
 }
 
 Test { [[
-input int A;
+input void A;
 var int a;
 par/or do
     await A;
@@ -9267,7 +8733,7 @@ escape 2;   // executes last
 }
 
 Test { [[
-input int A;
+input void A;
 loop do
     await A;
     par/or do
@@ -10308,7 +9774,7 @@ escape v1+v2+v3+v4+v5+v6;
 }
 
 Test { [[
-input int A;
+input void A;
 var int v1=0,v2=0,v3=0,v4=0,v5=0,v6=0;
 loop do
     par/or do
@@ -11032,7 +10498,7 @@ end;
 }
 
 Test { [[
-input int A,Z;
+input void A,Z;
 var int ret = 0;
 par/or do
     loop do
@@ -11053,7 +10519,8 @@ escape ret;
     run = { ['~>A;~>A;~>Z']=2 },
 }
 Test { [[
-input int A,Z,D;
+input int A;
+input void D,Z;
 var int b;
 par/or do
     b = 0;
@@ -11794,7 +11261,7 @@ escape 10;
         --isForever = true,
         --unreachs = 2,
     },
-    run = { ['1~>B;~>B']=10 },
+    run = { ['1~>B;1~>B']=10 },
 }
 
 Test { [[
@@ -11822,7 +11289,7 @@ escape aa;
     ana = {
         acc = 1,
     },
-    run = { ['1~>B;~>B']=10 },
+    run = { ['1~>B;1~>B']=10 },
 }
 
 Test { [[
@@ -11850,11 +11317,11 @@ escape aa;
     ana = {
         acc = 1,
     },
-    run = { ['1~>B;~>B']=10 },
+    run = { ['1~>B;1~>B']=10 },
 }
 
 Test { [[
-input int A;
+input void A;
 event int a,b;
 par/and do
     await A;
@@ -11873,7 +11340,7 @@ escape 0;
         unreachs = 2,
         --trig_wo = 1,
     },
-    run = { ['1~>A;~>A'] = 1 }
+    run = { ['~>A;~>A'] = 1 }
 }
 
 Test { [[
@@ -12203,7 +11670,7 @@ end;
 }
 
 Test { [[
-input int A,F;
+input void A,F;
 var int v;
 par do
     loop do
@@ -12716,7 +12183,7 @@ end;
 }
 
 Test { [[
-input int F;
+input void F;
 event int x;
 event int y;
 var int xx = 0;
@@ -13240,7 +12707,7 @@ end;
 }
 
 Test { [[
-input int A, B;
+input void A, B;
 do
     var int a = 1;
     var int tot = 0;
@@ -13272,7 +12739,7 @@ end;
 }
 
 Test { [[
-input int A, B;
+input void A, B;
 do
     var int a = 0;
     par/or do
@@ -13290,7 +12757,7 @@ end;
 }
 
 Test { [[
-input int A, B;
+input void A, B;
 var int a;
 par/or do
     var int a;
@@ -13324,7 +12791,7 @@ escape 0;
 }
 
 Test { [[
-input int A, B;
+input void A, B;
 var int i;
 do
     par/or do
@@ -15068,7 +14535,8 @@ async do
 end;
 escape a;
 ]],
-    env = "line 4 : invalid attribution",
+    --env = "line 4 : invalid attribution",
+    env = 'line 4 : variable/event "a" is not declared',
     --parser = 'line 4 : after `=´ : expected expression',
 }
 
@@ -15106,7 +14574,7 @@ end;
 emit X => 1;
 escape 0;
 ]],
-  props='not permitted outside `async´'
+  props='invalid `emit´'
 }
 Test { [[
 async do
@@ -15666,6 +15134,596 @@ escape *b;
 ]],
     run = 1,
 }
+
+-- OUTPUT / CALL
+
+if not _OS then
+
+Test { [[
+output xxx A;
+escape(1);
+]],
+    parser = "line 1 : after `output´ : expected type",
+}
+Test { [[
+native do
+    ##define ceu_out_emit(a,b,c) 1
+end
+output int A;
+emit A => 1;
+escape(1);
+]],
+    run=1
+}
+Test { [[
+output int A;
+if emit A => 1 then
+    escape 0;
+end
+escape(1);
+]],
+    parser = 'line 2 : after `if´ : expected expression',
+}
+Test { [[
+native do
+    #define ceu_out_emit(a,b,c) 1
+end
+output int A;
+if emit A => 1 then
+    escape 0;
+end
+escape(1);
+]],
+    parser = 'line 5 : after `if´ : expected expression',
+}
+
+Test { [[
+output t A;
+emit A => 1;
+escape(1);
+]],
+    parser = 'line 1 : after `output´ : expected type',
+}
+Test { [[
+output t A;
+emit A => 1;
+escape(1);
+]],
+    parser = 'line 1 : after `output´ : expected type',
+}
+Test { [[
+output _t* A;
+emit A => 1;
+escape(1);
+]],
+    env = 'line 2 : non-matching types on `emit´',
+}
+Test { [[
+output int A;
+var _t v;
+emit A => v;
+escape(1);
+]],
+    --env = 'line 2 : undeclared type `_t´',
+    --env = 'line 3 : non-matching types on `emit´',
+    gcc = 'error: unknown type name',
+}
+Test { [[
+native do
+    #define ceu_out_emit(a,b,c) 1
+end
+output int A;
+native do
+    typedef int t;
+end
+var _t v;
+emit A => v;
+escape(1);
+]],
+    --env = 'line 2 : undeclared type `_t´',
+    --env = 'line 3 : non-matching types on `emit´',
+    run = 1,
+}
+Test { [[
+output int A;
+var int a;
+emit A => &a;
+escape(1);
+]],
+    env = 'line 3 : non-matching types on `emit´',
+}
+Test { [[
+output int A;
+var int a;
+if emit A => &a then
+    escape 0;
+end
+escape(1);
+]],
+    parser = 'line 3 : after `if´ : expected expression',
+    --env = 'line 3 : non-matching types on `emit´',
+}
+Test { [[
+output _char A;
+]],
+    env = "line 1 : invalid event type",
+}
+
+Test { [[
+native do
+    /******/
+    int end = 1;
+    /******/
+end
+native _end;
+escape _end;
+]],
+    run = 1
+}
+
+Test { [[
+native do
+    ##include <assert.h>
+    typedef struct {
+        int a;
+        int b;
+    } t;
+    ##define ceu_out_emit(a,b,c) Fa(a,b,c)
+    int Fa (tceu_app* app, int evt, tceu_evtp p) {
+        if (evt == CEU_OUT_A) {
+            t v = *((t*)p.ptr);
+            return v.a + v.b;
+        } else {
+            return p.v;
+        }
+    }
+end
+native _t = 8;
+output _t* A;
+output int B;
+var int a, b;
+
+var _t v;
+v.a = 1;
+v.b = -1;
+a = emit A => &v;
+b = emit B => 5;
+escape a + b;
+]],
+    run = 5,
+    --parser = 'line 26 : after `=´ : expected expression',
+}
+
+Test { [[
+native _char = 1;
+output void A;
+native do
+    void A (int v) {}
+end
+var _cahr v = emit A => 1;
+escape 0;
+]],
+    env = 'line 6 : non-matching types on `emit´',
+    --parser = 'line 6 : after `=´ : expected expression',
+    --env = 'line 6 : undeclared type `_cahr´',
+}
+Test { [[
+native _char = 1;
+output void A;
+var _char v = emit A => ;
+escape v;
+]],
+    --parser = 'line 3 : after `=´ : expected expression',
+    parser = 'line 3 : before `=>´ : expected `;´',
+    --env = 'line 3 : invalid attribution',
+}
+Test { [[
+output void A;
+native do
+    void A (int v) {}
+end
+native _char = 1;
+var _char v = emit A => 1;
+escape 0;
+]],
+    --parser = 'line 6 : after `=´ : expected expression',
+    env = 'line 6 : non-matching types on `emit´',
+}
+
+Test { [[
+native do
+    void A (int v) {}
+end
+emit A => 1;
+escape 0;
+]],
+    env = 'event "A" is not declared',
+}
+
+Test { [[
+native do
+    #define ceu_out_emit(a,b,c) 0
+end
+output void A, B;
+par/or do
+    emit A;
+with
+    emit B;
+end
+escape 1;
+]],
+    ana = {
+        acc = 1,
+        abrt = 3,
+    },
+    run = 1,
+}
+
+Test { [[
+native do
+    #define ceu_out_emit(a,b,c) 0
+end
+safe A with B;
+output void A, B;
+par/or do
+    emit A;
+with
+    emit B;
+end
+escape 1;
+]],
+    ana = {
+        abrt = 3,
+    },
+    run = 1,
+}
+
+Test { [[
+native do
+    ##define ceu_out_emit(a,b,c) F(c)
+    void F (tceu_evtp p) {
+        tceu___int____int_* v = (tceu___int____int_*) p.ptr;
+        *(v->_1) = 1;
+        *(v->_2) = 2;
+    }
+end
+
+output (int*,  int*) RADIO_SEND;
+var int a=1,b=1;
+emit RADIO_SEND => (&a,&b);
+
+escape a + b;
+]],
+    run = 3,
+}
+
+Test { [[
+native do
+    ##define ceu_out_emit(a,b,c) F(a,b,c)
+    void F (tceu_app* app, int evt, tceu_evtp p) {
+        tceu___int____int_* v = (tceu___int____int_*) p.ptr;
+        *(v->_1) = (evt == CEU_OUT_RADIO_SEND);
+        *(v->_2) = 2;
+    }
+end
+
+output (int*,  int*) RADIO_SEND;
+var int a=1,b=1;
+emit RADIO_SEND => (&a,&b);
+
+escape a + b;
+]],
+    run = 3,
+}
+
+Test { [[
+native _F();
+output int F;
+native do
+    void F() {};
+end
+par do
+    _F();
+with
+    emit F => 1;
+end
+]],
+    ana = {
+        reachs = 1,
+        acc = 1,
+        isForever = true,
+    },
+}
+
+Test { [[
+native _F();
+output int F,G;
+native do
+    void F() {};
+end
+par do
+    _F();
+with
+    emit F => 1;
+with
+    emit G => 0;
+end
+]],
+    ana = {
+        reachs = 1,
+        acc = 3,
+        isForever = true,
+    },
+}
+
+Test { [[
+native _F();
+safe _F with F,G;
+output int F,G;
+native do
+    void F() {};
+end
+par do
+    _F();
+with
+    emit F => 1;
+with
+    emit G => 0;
+end
+]],
+    todo = true,
+    ana = {
+        acc = 1,
+        isForever = true,
+    },
+}
+
+Test { [[
+native _F();
+output int* F,G;
+safe _F with F,G;
+int a = 1;
+int* b;
+native do
+    void F (int v) {};
+end
+par do
+    _F(&a);
+with
+    emit F => b;
+with
+    emit G => &a;
+end
+]],
+    todo = true,
+    ana = {
+        acc = 4,
+        isForever = true,
+    },
+}
+
+Test { [[
+native _F();
+pure _F;
+output int* F,G;
+int a = 1;
+int* b;
+native do
+    void F (int v) {};
+end
+par do
+    _F(&a);
+with
+    emit F => b;
+with
+    emit G => &a;
+end
+]],
+    todo = true,
+    ana = {
+        acc = 4,
+        isForever = true,
+    },
+}
+
+Test { [[
+native _F();
+safe F with G;
+output void F,G;
+par do
+    emit F;
+with
+    emit G;
+end
+]],
+    todo = true,
+    ana = {
+        reachs = 1,
+        isForever = true,
+    },
+}
+
+Test { [[
+output (int)=>int F;
+escape call F=>1;
+]],
+    parser = 'line 2 : after `call´ : expected expression',
+}
+
+Test { [[
+output (int)=>int F;
+call F=>1;
+escape 1;
+]],
+    gcc = 'error: #error ceu_out_call_* is not defined',
+}
+
+Test { [[
+output (int)=>int F;
+emit F=>1;
+escape 1;
+]],
+    env = 'line 2 : invalid `emit´',
+    --run = 1,
+}
+
+Test { [[
+native do
+    ##define ceu_out_emit_F(a,b) F(a,b)
+    int F (tceu_app* app, int v) {
+        return v+1;
+    }
+end
+output (int)=>int F;
+call F=>1;
+escape 1;
+]],
+    gcc = 'error: #error ceu_out_call_* is not defined',
+    --run = 1,
+}
+
+Test { [[
+native do
+    ##define ceu_out_call_F(a,b) F(a,b)
+    int F (tceu_app* app, int v) {
+        return v+1;
+    }
+end
+output (int)=>int F;
+call F=>1;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native do
+    ##define ceu_out_call_F(a,b) F(a,b)
+    int F (tceu_app* app, int v) {
+        return v+1;
+    }
+end
+output (int)=>int F;
+var int ret = call F=>1;
+escape ret;
+]],
+    run = 2,
+}
+
+Test { [[
+native do
+    ##define ceu_out_call_F(a,b) F(a,b)
+    int F (tceu_app* app, tceu_evtp p) {
+        return p.v+1;
+    }
+end
+output (int)=>int F;
+var int ret = call F=>(1,2);
+escape ret;
+]],
+    env = 'line 8 : invalid attribution (void vs int)',
+    --env = 'line 8 : invalid type',
+}
+
+Test { [[
+native do
+    ##define ceu_out_call_F(a,b) F(a,b)
+    int F (tceu_app* app, tceu___int___int* p) {
+        return p->_1 + p->_2;
+    }
+end
+output (int,int)=>int F;
+var int ret = call F=>(1,2);
+escape ret;
+]],
+    run = 3,
+}
+
+Test { [[
+native do
+    ##define ceu_out_call(a,b,c) F(a,b,c)
+    int F (tceu_app* app, tceu_nevt evt, tceu_evtp p) {
+        return (evt == CEU_OUT_F) + p.v;
+    }
+end
+output (int)=>int F;
+var int ret = (call F=>2);
+escape ret;
+]],
+    run = 3,
+}
+
+Test { [[
+native do
+    ##define ceu_out_emit(a,b,c) F(a,b,c)
+    int F (tceu_app* app, tceu_nevt evt, tceu_evtp p) {
+        return (evt==CEU_OUT_F && p.ptr==NULL);
+    }
+end
+output void F;
+var int ret = (emit F);
+escape ret;
+]],
+    run = 1,
+}
+
+Test { [[
+native do
+    ##define ceu_out_emit_F(a) F(a)
+    int F (tceu_app* app) {
+        return 1;
+    }
+end
+output void F;
+var int ret = (emit F);
+escape ret;
+]],
+    run = 1,
+}
+
+Test { [[
+native do
+    ##define ceu_out_emit(a,b,c) F(a,b,c)
+    int F (tceu_app* app, tceu_nevt evt, tceu_evtp p) {
+        return (evt == CEU_OUT_F) + p.v;
+    }
+end
+output int F;
+par/and do
+    emit F=>1;
+with
+    emit F=>1;
+end
+escape 1;
+]],
+    ana = {
+        acc = 1,
+    },
+    run = 1,
+}
+
+Test { [[
+native do
+    ##define ceu_out_call(a,b,c) F(a,b,c)
+    int F (tceu_app* app, tceu_nevt evt, tceu_evtp p) {
+        return (evt == CEU_OUT_F) + p.v;
+    }
+end
+output (int)=>int F;
+par/and do
+    call F=>1;
+with
+    call F=>1;
+end
+escape 1;
+]],
+    ana = {
+        acc = 1,
+    },
+    run = 1,
+}
+
+end -- _OS (OUTPUT)
 
     -- POINTERS & ARRAYS
 
@@ -18798,8 +18856,8 @@ do
 end
 escape a;
 ]],
-    env = 'line 4 : invalid access',
-    --run = 14,
+    --env = 'line 4 : invalid access',
+    run = 14,
 }
 
 Test { [[
@@ -20929,7 +20987,8 @@ escape ret + ts[0].v + ts[1].v;
 }
 
 Test { [[
-input int S,F;
+input int S;
+input void F;
 class T with
     event void a,ok;
     var int aa;
@@ -24119,7 +24178,7 @@ with
 end
 escape ret;
 ]],
-    run = { ['10~>A; ~>B; 5~>A'] = 5 },
+    run = { ['10~>A; 1~>B; 5~>A'] = 5 },
 }
 
 Test { [[

@@ -92,12 +92,24 @@ F =
 
     EmitExt = function (me)
         local op, ext, param = unpack(me)
+
+        local DIR, dir, ptr
         if ext.evt.pre == 'input' then
-            return
+            DIR = 'IN'
+            dir = 'in'
+            if op == 'call' then
+                ptr = 'CEU_APP.data'
+            else
+                ptr = '&CEU_APP'
+            end
+        else
+            DIR = 'OUT'
+            dir = 'out'
+            ptr = '&CEU_APP'
         end
 
-        local t1 = { '&CEU_APP', 'CEU_OUT_'..ext.evt.id }
-        local t2 = { '&CEU_APP' }
+        local t1 = { ptr, 'CEU_'..DIR..'_'..ext.evt.id }
+        local t2 = { ptr }
 
         if param then
             local tp = _TP.deref(ext.evt.ins, true)
@@ -122,12 +134,12 @@ F =
         local op = (op=='emit' and 'emit') or 'call'
 
         me.val = '\n'..[[
-#if defined(ceu_out_]]..op..'_'..ext.evt.id..[[)
-    ceu_out_]]..op..'_'..ext.evt.id..'('..t2..[[)
-#elif defined(ceu_out_]]..op..[[)
-    ceu_out_]]..op..'('..t1..[[)
+#if defined(ceu_]]..dir..'_'..op..'_'..ext.evt.id..[[)
+    ceu_]]..dir..'_'..op..'_'..ext.evt.id..'('..t2..[[)
+#elif defined(ceu_]]..dir..'_'..op..[[)
+    ceu_]]..dir..'_'..op..'('..t1..[[)
 #else
-    #error ceu_out_]]..op..[[_* is not defined
+    #error ceu_]]..dir..'_'..op..[[_* is not defined
 #endif
 ]]
     end,
