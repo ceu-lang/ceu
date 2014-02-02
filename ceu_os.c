@@ -529,6 +529,8 @@ static u8         QUEUE_n = 0;
 static u8         QUEUE_0 = 0;
 static u8         QUEUE_i = 0;
 
+static tceu_lnk* LNKS;
+
 int ceu_sys_emit (tceu_app* app, tceu_nevt evt, tceu_evtp param) {
     if (QUEUE_n >= CEU_QUEUE_MAX)
         return 0;   /* TODO: add event FULL when CEU_QUEUE_MAX-1 */
@@ -540,6 +542,18 @@ int ceu_sys_emit (tceu_app* app, tceu_nevt evt, tceu_evtp param) {
     return 1;
 }
 
+tceu_evtp ceu_sys_call (tceu_app* app, tceu_nevt evt, tceu_evtp param) {
+    tceu_lnk* lnk = LNKS;
+    for (; lnk; lnk=lnk->nxt)
+    {
+        if (app!=lnk->src_app || evt!=lnk->src_evt)
+            continue;
+        return lnk->dst_app->calls(lnk->dst_evt, param);
+    }
+/* TODO: error? */
+    return (tceu_evtp)NULL;
+}
+
 int ceu_scheduler_static (tceu_app* apps, tceu_lnk* lnks, int(*dt)())
 {
 #ifdef CEU_RET
@@ -548,6 +562,8 @@ int ceu_scheduler_static (tceu_app* apps, tceu_lnk* lnks, int(*dt)())
 #endif
     tceu_app* app;
     tceu_lnk* lnk;
+
+    LNKS = lnks;
 
     /* MAX OK */
 

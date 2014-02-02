@@ -325,50 +325,6 @@ escape ret + _V;        // * reads after
 
 -------------------------------------------------------------------------------
 
-Test { [[
-input (int a)=>int F,G do
-    return a + 1;
-end
-]],
-    adj = 'line 1 : same body for multiple declarations',
-}
-
-Test { [[
-input (int a)=>int F do
-    return a + 1;
-end
-var int ret = call F=>1;
-escape ret;
-]],
-    run = 2,
-}
-
-Test { [[
-input (int a)=>void F do
-    this.v = a;
-end
-var int v = 0;
-call F=>1;
-escape this.v;
-]],
-    env = 'line 2 : variable/event "v" is not declared',
-}
-
-Test { [[
-native nohold _fprintf(), _stderr;
-var int v = 0;
-input (int a)=>void F do
-    this.v = a;
-    _fprintf(_stderr,"a=%d v=%d\n", a, v);
-end
-_fprintf(_stderr,"v=%d\n", v);
-call F=>1;
-_fprintf(_stderr,"v=%d\n", v);
-escape this.v;
-]],
-    run = 1,
-}
-
 do return end
 --]===]
 
@@ -15135,7 +15091,7 @@ escape *b;
     run = 1,
 }
 
--- OUTPUT / CALL
+-- INPUT / OUTPUT / CALL
 
 if not _OS then
 
@@ -15723,7 +15679,63 @@ escape 1;
     run = 1,
 }
 
-end -- _OS (OUTPUT)
+Test { [[
+input (int a)=>int F,G do
+    return a + 1;
+end
+]],
+    adj = 'line 1 : same body for multiple declarations',
+}
+
+Test { [[
+input (int a)=>int F do
+    return a + 1;
+end
+var int ret = call F=>1;
+escape ret;
+]],
+    run = 2,
+}
+
+Test { [[
+input (int a)=>int F do
+    return a + 1;
+end
+input (int a)=>int G;
+var int ret = call F=>1;
+escape ret;
+]],
+    code = 'line 4 : missing body',
+    --run = 2,
+}
+
+Test { [[
+input (int a)=>void F do
+    this.v = a;
+end
+var int v = 0;
+call F=>1;
+escape this.v;
+]],
+    env = 'line 2 : variable/event "v" is not declared',
+}
+
+Test { [[
+native nohold _fprintf(), _stderr;
+var int v = 0;
+input (int a)=>void F do
+    this.v = a;
+    _fprintf(_stderr,"a=%d v=%d\n", a, v);
+end
+_fprintf(_stderr,"v=%d\n", v);
+call F=>1;
+_fprintf(_stderr,"v=%d\n", v);
+escape this.v;
+]],
+    run = 1,
+}
+
+end -- _OS (INPUT/OUTPUT)
 
     -- POINTERS & ARRAYS
 

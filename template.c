@@ -45,9 +45,10 @@ enum {
 === LABELS_ENUM ===
 };
 
-static int      ceu_app_go   (tceu_go* _ceu_go);
-static void     ceu_app_init (void);
-static CEU_Main ceu_app_data;
+static int       ceu_app_go    (tceu_go* _ceu_go);
+static void      ceu_app_init  (void);
+static tceu_evtp ceu_app_calls (tceu_nevt evt, tceu_evtp param);
+static CEU_Main  ceu_app_data;
 
 /* TODO: fields that need no initialization? */
 
@@ -84,6 +85,9 @@ tceu_app CEU_APP = {
 #endif
     &ceu_app_go,
     &ceu_app_init,
+#ifdef CEU_OS
+    &ceu_app_calls,
+#endif
     (tceu_org*) &ceu_app_data
 };
 
@@ -140,6 +144,23 @@ static void ceu_segfault (int sig_num) {
 #endif
 
 === FUNCTIONS_C ===
+
+#ifdef CEU_OS
+static tceu_evtp ceu_app_calls (tceu_nevt evt, tceu_evtp param) {
+    switch (evt) {
+        === STUBS ===
+        /*
+        case CEU_IN_XXX:
+            return CEU_Main_XXX(param);
+        */
+        default:
+#ifdef CEU_DEBUG
+            fprintf(stderr, "invalid call %d\n", evt);
+#endif
+    }
+    return (tceu_evtp)NULL;
+}
+#endif
 
 static void ceu_app_init ()
 {

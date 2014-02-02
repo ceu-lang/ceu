@@ -2,7 +2,14 @@ _CODE = {
     has_goto  = false,   -- avoids "unused label"
     threads   = '',
     functions = '',
+    stubs     = '',     -- maps input functions to ceu_app_call switch cases
     native    = '',
+}
+
+-- Assert that all input functions have bodies.
+local INPUT_FUNCTIONS = {
+    -- F1 = false,  -- input function w/o body
+    -- F2 = true,   -- input functino w/  body
 }
 
 function CONC_ALL (me, t)
@@ -203,6 +210,11 @@ F = {
         --   and do not require _ceu_go
         _CODE.functions = string.gsub(_CODE.functions, '_ceu_go%-%>org', '__ceu_org')
         _CODE.threads   = string.gsub(_CODE.threads,   '_ceu_go%-%>org', '__ceu_org')
+
+        -- assert that all input functions have bodies
+        for evt, v in pairs(INPUT_FUNCTIONS) do
+            ASR(v, evt.ln, 'missing body')
+        end
     end,
 
     BlockI = CONC_ALL,
@@ -219,9 +231,25 @@ F = {
             if me.var.fun.isExt then
                 _CODE.functions = _CODE.functions ..
                     '#define ceu_in_call_'..id..' '..me.id..'\n'
+
+                local ps = {}
+                for i, _ in ipairs(ins) do
+                    ps[#ps+1] = '(('..ins.tp..'*)param.ptr)->_'..i
+                end
+                ps = table.concat(ps, ',')
+                _CODE.stubs = _CODE.stubs .. [[
+case CEU_IN_]]..id..[[:
+    return (tceu_evtp) ]]..me.id..'(CEU_APP.data,'..ps..[[);
+]]
             end
             _CODE.functions = _CODE.functions ..
                 me.proto .. '{'..blk.code..'}'..'\n'
+        end
+
+        -- assert that all input functions have bodies
+        local evt = _ENV.exts[id]
+        if me.var.fun.isExt and evt and evt.pre=='input' then
+            INPUT_FUNCTIONS[evt] = INPUT_FUNCTIONS[evt] or blk or false
         end
     end,
     Return = function (me)

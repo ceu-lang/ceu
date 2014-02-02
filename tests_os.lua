@@ -123,3 +123,27 @@ escape ret;
 	},
 	run = 6,
 }
+
+Test {
+    [[
+output (int)=>int A;
+call A=>2;
+escape 1;
+]],
+    [[
+input (int v)=>int A do
+    return 1;
+end
+await FOREVER;
+]],
+	lnks = {
+		{ 1, 1, 2, 246 },
+        -- src app
+        -- src evt
+        -- dst app
+        -- dst evt
+	},
+	run = 1,
+}
+
+

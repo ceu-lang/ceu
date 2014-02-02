@@ -34,8 +34,11 @@
 
     typedef s8 tceu_nlbl;
 
-    #define ceu_out_emit(app,id,val) ceu_sys_emit(app,id,val)
+    #define ceu_out_emit(app,id,param) ceu_sys_emit(app,id,param)
+    #define ceu_out_call(app,id,param) ceu_sys_call(app,id,param)
 #endif
+
+#define ceu_in_emit  ceu_go_event
 
 #ifdef CEU_THREADS
 /* TODO: app */
@@ -239,8 +242,11 @@ typedef struct tceu_app {
         /* TODO: u8? */
 #endif
 
-    int         (*code) (tceu_go* _ceu_go);
-    void        (*init) (void);
+    int         (*code)  (tceu_go* _ceu_go);
+    void        (*init)  (void);
+#ifdef CEU_OS
+    tceu_evtp   (*calls) (tceu_nevt evt, tceu_evtp param);
+#endif
     tceu_org*   data;
 } tceu_app;
 
@@ -276,8 +282,6 @@ int ceu_wclocks_expired (tceu_app* app, s32* t, s32 dt);
 void ceu_pause (tceu_trl* trl, tceu_trl* trlF, int psed);
 #endif
 
-#define ceu_in_emit ceu_go_event
-
 void ceu_go        (tceu_app* app, int evt, tceu_evtp evtp);
 void ceu_go_init   (tceu_app* app);
 void ceu_go_event  (tceu_app* app, int id, tceu_evtp data);
@@ -307,7 +311,8 @@ typedef struct {
 
 int ceu_scheduler_static (tceu_app* apps, tceu_lnk* lnks, int(*dt)());
 
-int ceu_sys_emit (tceu_app* app, tceu_nevt evt, tceu_evtp param);
+int       ceu_sys_emit (tceu_app* app, tceu_nevt evt, tceu_evtp param);
+tceu_evtp ceu_sys_call (tceu_app* app, tceu_nevt evt, tceu_evtp param);
 
 #if 0
 void ceu_sys_app (tceu_app* app);

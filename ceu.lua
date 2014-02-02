@@ -162,6 +162,7 @@ do
 
     CC = sub(CC, '=== THREADS_C ===',   _CODE.threads)
     CC = sub(CC, '=== FUNCTIONS_C ===', _CODE.functions)
+    CC = sub(CC, '=== STUBS ===',       _CODE.stubs)
     CC = sub(CC, '=== NATIVE ===',      _CODE.native)
     CC = sub(CC, '=== CODE ===',        _AST.root.code)
 
