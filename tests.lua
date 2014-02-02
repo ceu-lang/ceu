@@ -15525,8 +15525,8 @@ escape 1;
 
 Test { [[
 native do
-    ##define ceu_out_emit_F(a,b) F(a,b)
-    int F (tceu_app* app, int v) {
+    ##define ceu_out_emit_F(a) F(a)
+    int F (int v) {
         return v+1;
     }
 end
@@ -15540,8 +15540,8 @@ escape 1;
 
 Test { [[
 native do
-    ##define ceu_out_call_F(a,b) F(a,b)
-    int F (tceu_app* app, int v) {
+    ##define ceu_out_call_F(a) F(a)
+    int F (int v) {
         return v+1;
     }
 end
@@ -15554,8 +15554,8 @@ escape 1;
 
 Test { [[
 native do
-    ##define ceu_out_call_F(a,b) F(a,b)
-    int F (tceu_app* app, int v) {
+    ##define ceu_out_call_F(a) F(a)
+    int F (int v) {
         return v+1;
     }
 end
@@ -15568,9 +15568,9 @@ escape ret;
 
 Test { [[
 native do
-    ##define ceu_out_call_F(a,b) F(a,b)
-    int F (tceu_app* app, tceu_evtp p) {
-        return p.v+1;
+    ##define ceu_out_call_F(a) F(a)
+    int F (int v) {
+        return v+1;
     }
 end
 output (int)=>int F;
@@ -15583,8 +15583,8 @@ escape ret;
 
 Test { [[
 native do
-    ##define ceu_out_call_F(a,b) F(a,b)
-    int F (tceu_app* app, tceu___int___int* p) {
+    ##define ceu_out_call_F(a) F(a)
+    int F (tceu___int___int* p) {
         return p->_1 + p->_2;
     }
 end
@@ -15625,8 +15625,8 @@ escape ret;
 
 Test { [[
 native do
-    ##define ceu_out_emit_F(a) F(a)
-    int F (tceu_app* app) {
+    ##define ceu_out_emit_F() F()
+    int F () {
         return 1;
     }
 end
@@ -15733,6 +15733,20 @@ _fprintf(_stderr,"v=%d\n", v);
 escape this.v;
 ]],
     run = 1,
+}
+
+Test { [[
+var int v = 0;
+input (int a)=>int G do
+    return a + 1;
+end
+input (int a)=>void F do
+    this.v = call G=>a;
+end
+call F=>1;
+escape this.v;
+]],
+    run = 2,
 }
 
 end -- _OS (INPUT/OUTPUT)

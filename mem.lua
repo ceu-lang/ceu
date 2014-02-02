@@ -70,7 +70,11 @@ ceu_pool_init(&]]..me.pool..', '..me.max..', sizeof(CEU_'..me.id..'), '
         me.proto = [[
 ]]..out..' '..me.id..' ('..dcl..[[)
 ]]
-        cls.funs = cls.funs..me.proto..';\n'
+        if _OPTS.os and _ENV.exts[id].pre=='output' then
+            -- defined elsewhere
+        else
+            cls.funs = cls.funs..'static '..me.proto..';\n'
+        end
     end,
 
     Stmts_pre = function (me)

@@ -108,8 +108,12 @@ F =
             ptr = '&CEU_APP'
         end
 
-        local t1 = { ptr, 'CEU_'..DIR..'_'..ext.evt.id }
-        local t2 = { ptr }
+        local t1 = { }
+        if ext.evt.pre=='input' and op=='call' then
+            t1[#t1+1] = ptr     -- to access `this´
+        end
+
+        local t2 = { ptr, 'CEU_'..DIR..'_'..ext.evt.id }
 
         if param then
             local tp = _TP.deref(ext.evt.ins, true)
@@ -119,25 +123,42 @@ F =
             else
                 val = V(param)
             end
-            if _TP.isTuple(ext.evt.ins) then
-                t1[#t1+1] = '(tceu_evtp)(void*)'..val
+
+            local tup = _TP.isTuple(ext.evt.ins)
+            if tup and #tup>1 then
+                t2[#t2+1] = '(tceu_evtp)(void*)'..val
             else
-                t1[#t1+1] = '(tceu_evtp)'..val
+                t2[#t2+1] = '(tceu_evtp)'..val
             end
-            t2[#t2+1] = val
+            t1[#t1+1] = val
         else
-            t1[#t1+1] = '(tceu_evtp)NULL'
+            t2[#t2+1] = '(tceu_evtp)NULL'
         end
-        t1 = table.concat(t1, ', ')
         t2 = table.concat(t2, ', ')
+        t1 = table.concat(t1, ', ')
+
+        local ret = ''
+        if _OPTS.os and op=='call' then
+            -- when the call crosses the process,
+            -- the return val must be unpacked from tceu_evtp
+            if me.__ast_set then
+                if ext.evt.out == 'int' then
+                    ret = '.v'
+                else
+                    ret = '.ptr'
+                end
+            end
+        end
 
         local op = (op=='emit' and 'emit') or 'call'
 
         me.val = '\n'..[[
 #if defined(ceu_]]..dir..'_'..op..'_'..ext.evt.id..[[)
-    ceu_]]..dir..'_'..op..'_'..ext.evt.id..'('..t2..[[)
+    ceu_]]..dir..'_'..op..'_'..ext.evt.id..'('..t1..[[)
+
 #elif defined(ceu_]]..dir..'_'..op..[[)
-    ceu_]]..dir..'_'..op..'('..t1..[[)
+    ceu_]]..dir..'_'..op..'('..t2..')'..ret..[[
+
 #else
     #error ceu_]]..dir..'_'..op..[[_* is not defined
 #endif

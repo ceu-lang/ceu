@@ -233,8 +233,17 @@ F = {
                     '#define ceu_in_call_'..id..' '..me.id..'\n'
 
                 local ps = {}
-                for i, _ in ipairs(ins) do
-                    ps[#ps+1] = '(('..ins.tp..'*)param.ptr)->_'..i
+                if #ins > 1 then
+                    for i, _ in ipairs(ins) do
+                        ps[#ps+1] = '(('..ins.tp..'*)param.ptr)->_'..i
+                    end
+                else
+                    local _,tp,_ = unpack(ins[1])
+                    if tp == 'int' then
+                        ps[#ps+1] = 'param.v'
+                    else
+                        ps[#ps+1] = 'param.ptr'
+                    end
                 end
                 ps = table.concat(ps, ',')
                 _CODE.stubs = _CODE.stubs .. [[
@@ -243,7 +252,7 @@ case CEU_IN_]]..id..[[:
 ]]
             end
             _CODE.functions = _CODE.functions ..
-                me.proto .. '{'..blk.code..'}'..'\n'
+                me.proto..'{'..blk.code..'}'..'\n'
         end
 
         -- assert that all input functions have bodies
@@ -833,39 +842,41 @@ _ceu_go->trl = &_ceu_go->org->trls[ ]]..me.trails[1]..[[ ];
     end,
 
     EmitExt = function (me)
-        local _, ext, param = unpack(me)
+        local op, ext, param = unpack(me)
         local evt = ext.evt
 
-        if evt.pre == 'output' then  -- ext not Exp
+        if evt.pre~='input' or op~='emit' then
             if not me.__ast_set then
                 LINE(me, V(me)..';')    -- already on <v = emit E>
             end
+            return
+        end
 
-        else -- input
-            -- only async's need to split in two (to avoid stack growth)
-            if _AST.iter'Async'() then
-                LINE(me, [[
+        -- emit INPUT
+
+        -- only async's need to split in two (to avoid stack growth)
+        if _AST.iter'Async'() then
+            LINE(me, [[
 _ceu_go->trl->evt = CEU_IN__ASYNC;
 _ceu_go->trl->lbl = ]]..me.lbl_cnt.id..[[;
 ]])
-            end
+        end
 
-            if _AST.iter'Thread'() then
-                -- HACK_2: never terminates
-                error'not supported'
-            else
-                LINE(me, V(me)..[[;
+        if _AST.iter'Thread'() then
+            -- HACK_2: never terminates
+            error'not supported'
+        else
+            LINE(me, V(me)..[[;
 if (! CEU_APP.isAlive)
-    return RET_END;
+return RET_END;
 ]])
-            end
+        end
 
-            if _AST.iter'Async'() then
-                HALT(me, 'RET_ASYNC')
-                LINE(me, [[
+        if _AST.iter'Async'() then
+            HALT(me, 'RET_ASYNC')
+            LINE(me, [[
 case ]]..me.lbl_cnt.id..[[:;
 ]])
-            end
         end
     end,
 

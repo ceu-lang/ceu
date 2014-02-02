@@ -8,18 +8,18 @@
     /* TODO: all should be configurable */
     #define CEU_EXTS
     #define CEU_WCLOCKS
-/*
-*/
     #define CEU_INTS
-    #define CEU_ASYNCS
-    #define CEU_THREADS
     #define CEU_ORGS
-    #define CEU_NEWS
-    #define CEU_NEWS_POOL
-    #define CEU_NEWS_MALLOC
     #define CEU_CLEAR
     #define CEU_PSES
     #define CEU_RET
+    #define CEU_ASYNCS
+    #define CEU_THREADS
+    #define CEU_NEWS
+    #define CEU_NEWS_POOL
+    #define CEU_NEWS_MALLOC
+/*
+*/
 
     #define CEU_IN__NONE          0
     #define CEU_IN__STK         255
@@ -36,6 +36,8 @@
 
     #define ceu_out_emit(app,id,param) ceu_sys_emit(app,id,param)
     #define ceu_out_call(app,id,param) ceu_sys_call(app,id,param)
+#else
+    #include "_ceu_app.h"
 #endif
 
 #define ceu_in_emit  ceu_go_event

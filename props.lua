@@ -19,7 +19,7 @@ local NO_fun = {
     Host=true, Thread=true,
     ParEver=true, ParOr=true, ParAnd=true,
     AwaitS=true, AwaitExt=true, AwaitInt=true, AwaitN=true, AwaitT=true,
-    EmitInt=true, EmitExt=true,
+    EmitInt=true, --EmitExt=true,
     Pause=true,
 }
 
@@ -283,6 +283,10 @@ F = {
                 ASR(op=='call', me, 'invalid `'..op..'´')
                     -- no <emit I> on sync
             end
+        end
+
+        if _AST.par(me,'Dcl_fun') then
+            ASR(op=='call', me, 'invalid `emit´')
         end
     end,
     EmitT = function (me)

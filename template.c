@@ -47,7 +47,9 @@ enum {
 
 static int       ceu_app_go    (tceu_go* _ceu_go);
 static void      ceu_app_init  (void);
+#ifdef CEU_OS
 static tceu_evtp ceu_app_calls (tceu_nevt evt, tceu_evtp param);
+#endif
 static CEU_Main  ceu_app_data;
 
 /* TODO: fields that need no initialization? */
@@ -140,20 +142,23 @@ static void ceu_segfault (int sig_num) {
 /**********************************************************************/
 
 #ifdef CEU_THREADS
+/* THREADS_C */
 === THREADS_C ===
 #endif
 
+/* FUNCTIONS_C */
 === FUNCTIONS_C ===
 
 #ifdef CEU_OS
 static tceu_evtp ceu_app_calls (tceu_nevt evt, tceu_evtp param) {
     switch (evt) {
+        /* STUBS */
         === STUBS ===
         /*
         case CEU_IN_XXX:
             return CEU_Main_XXX(param);
         */
-        default:
+        default:;
 #ifdef CEU_DEBUG
             fprintf(stderr, "invalid call %d\n", evt);
 #endif

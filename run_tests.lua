@@ -253,16 +253,16 @@ STATS = {
 }
 
 STATS = {
-    count   = 1578,
+    count   = 1579,
     mem     = 0,
-    trails  = 3016,
-    bytes   = 14024629,
+    trails  = 3017,
+    bytes   = 14038116,
 }
 
 
-real	6m27.780s
-user	6m3.340s
-sys	0m52.784s
+real	6m28.715s
+user	6m9.856s
+sys	0m52.788s
 ]]
 
 os.execute('rm -f /tmp/_ceu_*')
