@@ -70,7 +70,7 @@ ceu_pool_init(&]]..me.pool..', '..me.max..', sizeof(CEU_'..me.id..'), '
         me.proto = [[
 ]]..out..' '..me.id..' ('..dcl..[[)
 ]]
-        if _OPTS.os and _ENV.exts[id].pre=='output' then
+        if _OPTS.os and _ENV.exts[id] and _ENV.exts[id].pre=='output' then
             -- defined elsewhere
         else
             cls.funs = cls.funs..'static '..me.proto..';\n'
