@@ -126,6 +126,27 @@ escape ret;
 
 Test {
     [[
+output (int)=>void A;
+call A=>2;
+escape 1;
+]],
+    [[
+input (int v)=>void A do
+end
+escape 1;
+]],
+	lnks = {
+		{ 1, 1, 2, 246 },
+        -- src app
+        -- src evt
+        -- dst app
+        -- dst evt
+	},
+	run = 2,
+}
+
+Test {
+    [[
 output (int)=>int A;
 call A=>2;
 escape 1;

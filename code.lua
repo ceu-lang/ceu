@@ -246,10 +246,21 @@ F = {
                     end
                 end
                 ps = table.concat(ps, ',')
+
+                local ret_value, ret_void
+                if out == 'void' then
+                    ret_value = ''
+                    ret_void  = 'return (tceu_evtp)NULL;'
+                else
+                    ret_value = 'return (tceu_evtp)'
+                    ret_void  = ''
+                end
+
                 _CODE.stubs = _CODE.stubs .. [[
 case CEU_IN_]]..id..[[:
-    return (tceu_evtp) ]]..me.id..'(CEU_APP.data,'..ps..[[);
-]]
+#line ]]..me.ln[2]..' "'..me.ln[1]..[["
+    ]]..ret_value..me.id..'(CEU_APP.data,'..ps..[[);
+]]..ret_void
             end
             _CODE.functions = _CODE.functions ..
                 me.proto..'{'..blk.code..'}'..'\n'
