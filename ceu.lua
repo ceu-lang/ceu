@@ -346,7 +346,7 @@ do
     do
         local str = ''
         for _,c in pairs(_ENV.c) do
-            if c.tuple then
+            if c.tuple and #c.tuple>0 then
                 str = str .. 'typedef struct {\n'
                 for i, v in ipairs(c.tuple) do
                     local _,tp,_ = unpack(v)

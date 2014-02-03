@@ -325,8 +325,61 @@ escape ret + _V;        // * reads after
 
 -------------------------------------------------------------------------------
 
-do return end
 --]===]
+Test { [[
+input (void,int) A;
+escape 1;
+]],
+    env = 'line 1 : invalid type',
+}
+Test { [[
+input (int,void) A;
+escape 1;
+]],
+    env = 'line 1 : invalid type',
+}
+Test { [[
+output (void,int) A;
+escape 1;
+]],
+    env = 'line 1 : invalid type',
+}
+Test { [[
+output (int,void) A;
+escape 1;
+]],
+    env = 'line 1 : invalid type',
+}
+
+Test { [[
+input (void)=>void A do
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input (void, int a)=>void A do
+    v = 1;
+end
+escape 1;
+]],
+    env = 'line 1 : invalid type',
+}
+
+Test { [[
+input void START;
+var int v = 0;
+input (void)=>void A do
+    v = 1;
+end
+call A;
+escape v;
+]],
+    run = 1,
+}
+do return end
 
 -- OK: well tested
 

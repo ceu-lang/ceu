@@ -56,12 +56,9 @@ ceu_pool_init(&]]..me.pool..', '..me.max..', sizeof(CEU_'..me.id..'), '
 
         -- input parameters (void* _ceu_go->org, int a, int b)
         local dcl = { 'void* __ceu_org' }
-        local _,tp,_ = unpack(ins[1])
-        if tp ~= 'void' then    -- ignore f(void)
-            for _, v in ipairs(ins) do
-                local hold, tp, id = unpack(v)
-                dcl[#dcl+1] = _TP.c(tp)..' '..(id or '')
-            end
+        for _, v in ipairs(ins) do
+            local hold, tp, id = unpack(v)
+            dcl[#dcl+1] = _TP.c(tp)..' '..(id or '')
         end
         dcl = table.concat(dcl,  ', ')
 

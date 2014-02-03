@@ -460,6 +460,14 @@ F = {
         local TP = 'tceu'
         for i, v in ipairs(me) do
             local hold, tp, id = unpack(v)
+
+            if tp == 'void' then
+                ASR(#me==1, me, 'invalid type')
+                TP = 'void'
+                me[1] = nil     -- empty tuple
+                break
+            end
+
             --local tp_noptr = _TP.noptr(v)
             --local c = _ENV.c[tp_noptr]
             --ASR(c or _ENV.clss[tp_noptr],
@@ -690,8 +698,9 @@ F = {
             ASR(_TP.contains(ext.evt.ins,ps.tp,true), me,
                 "non-matching types on `emit´")
         else
-            ASR(ext.evt.ins=='void', me,
-                "missing parameters on `emit´")
+            ASR(ext.evt.ins=='void' or
+                _TP.isTuple(ext.evt.ins) and #ext.evt.ins==0,
+                me, "missing parameters on `emit´")
         end
     end,
 

@@ -235,17 +235,19 @@ F = {
                 local ps = {}
                 if #ins > 1 then
                     for i, _ in ipairs(ins) do
-                        ps[#ps+1] = '(('..ins.tp..'*)param.ptr)->_'..i
+                        ps[#ps+1] = ', (('..ins.tp..'*)param.ptr)->_'..i
                     end
-                else
+                elseif #ins == 1 then
                     local _,tp,_ = unpack(ins[1])
                     if tp == 'int' then
-                        ps[#ps+1] = 'param.v'
+                        ps[#ps+1] = ', param.v'
                     else
-                        ps[#ps+1] = 'param.ptr'
+                        ps[#ps+1] = ', param.ptr'
                     end
+                else
+                    -- no parameters
                 end
-                ps = table.concat(ps, ',')
+                ps = table.concat(ps)
 
                 local ret_value, ret_void
                 if out == 'void' then
@@ -259,7 +261,7 @@ F = {
                 _CODE.stubs = _CODE.stubs .. [[
 case CEU_IN_]]..id..[[:
 #line ]]..me.ln[2]..' "'..me.ln[1]..[["
-    ]]..ret_value..me.id..'(CEU_APP.data,'..ps..[[);
+    ]]..ret_value..me.id..'(CEU_APP.data'..ps..[[);
 ]]..ret_void
             end
             _CODE.functions = _CODE.functions ..

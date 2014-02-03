@@ -7,6 +7,25 @@
 
 -- OK: well tested
 
+Test {
+[[
+var int v = 0;
+input (void)=>void A do
+    v = 1;
+end
+await START;
+escape v;
+]],
+[[
+output (void)=>void A;
+call A;
+escape 1;
+]],
+    run = 2,
+    lnks = { { 2,1, 1,246 } },
+}
+do return end
+
 Test { [[escape(1);]],
 	run = 1,
 }
