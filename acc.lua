@@ -184,6 +184,9 @@ F = {
     end,
 
     Var = function (me)
+        if me.__par.tag=='VarList' and me.__par.__par.tag=='Async' then
+            return  -- <async (v)> is not an access
+        end
         me.acc = INS {
             path = me.ana.pre,
             id  = me.var,

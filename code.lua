@@ -1111,10 +1111,7 @@ case ]]..me.lbl.id..[[:;
     end,
 
     Async = function (me)
-        local vars,blk = unpack(me)
-        for _, n in ipairs(vars) do
-            ATTR(me, n.new, n.var)
-        end
+        local _,blk = unpack(me)
         LINE(me, [[
 _ceu_go->trl->evt = CEU_IN__ASYNC;
 _ceu_go->trl->lbl = ]]..me.lbl.id..[[;

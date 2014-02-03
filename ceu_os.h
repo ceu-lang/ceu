@@ -8,12 +8,12 @@
     /* TODO: all should be configurable */
     #define CEU_EXTS
     #define CEU_WCLOCKS
+    #define CEU_ASYNCS
     #define CEU_INTS
     #define CEU_ORGS
     #define CEU_CLEAR
     #define CEU_PSES
     #define CEU_RET
-    #define CEU_ASYNCS
     #define CEU_THREADS
     #define CEU_NEWS
     #define CEU_NEWS_POOL

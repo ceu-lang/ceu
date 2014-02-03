@@ -114,8 +114,8 @@ end
 
 function newvar (me, imp, blk, pre, tp, arr, id)
     for stmt in _AST.iter() do
-        if _AST.pred_async(stmt) then
-            break   -- search until Async/Thread
+        if _AST.par(me, 'Thread') then
+            break   -- search until Thread
         elseif stmt.tag == 'Block' then
             for _, var in ipairs(stmt.vars) do
                 --ASR(var.id~=id or var.blk~=blk, me,
@@ -239,8 +239,13 @@ end
 function _ENV.getvar (id, blk)
     local blk = blk or _AST.iter('Block')()
     while blk do
-        if _AST.pred_async(blk) then
-            return nil                  -- async boundary (stop search)
+        if blk.tag == 'Thread' then
+            return nil      -- thread boundary: stop search
+        elseif blk.tag == 'Async' then
+            local vars = unpack(blk)
+            if not vars[id] then
+                return nil  -- async boundary: stop if not explicitly declared
+            end
         elseif blk.tag == 'Block' then
             for i=#blk.vars, 1, -1 do   -- n..1 (hidden vars)
                 local var = blk.vars[i]
@@ -329,9 +334,8 @@ F = {
 
     Block_pre = function (me)
         me.vars = {}
-        local async = _AST.iter()()
-        if _AST.pred_async(async) then
-            local vars, blk = unpack(async)
+        if me.__par.tag == 'Thread' then
+            local vars, blk = unpack(me.__par)
             if vars then
                 for i, n in ipairs(vars) do -- create new variables for params
                     local var = n.var

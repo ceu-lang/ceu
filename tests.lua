@@ -13,7 +13,7 @@
 -- async dentro de pause
 
 --_VALGRIND = true
-_OS = true   -- false, true, nil(random)
+_OS = false   -- false, true, nil(random)
 
 local function INCLUDE (fname, src)
     local f = assert(io.open(fname,'w'))
@@ -324,62 +324,9 @@ escape ret + _V;        // * reads after
 }
 
 -------------------------------------------------------------------------------
-
 --]===]
-Test { [[
-input (void,int) A;
-escape 1;
-]],
-    env = 'line 1 : invalid type',
-}
-Test { [[
-input (int,void) A;
-escape 1;
-]],
-    env = 'line 1 : invalid type',
-}
-Test { [[
-output (void,int) A;
-escape 1;
-]],
-    env = 'line 1 : invalid type',
-}
-Test { [[
-output (int,void) A;
-escape 1;
-]],
-    env = 'line 1 : invalid type',
-}
 
-Test { [[
-input (void)=>void A do
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-input (void, int a)=>void A do
-    v = 1;
-end
-escape 1;
-]],
-    env = 'line 1 : invalid type',
-}
-
-Test { [[
-input void START;
-var int v = 0;
-input (void)=>void A do
-    v = 1;
-end
-call A;
-escape v;
-]],
-    run = 1,
-}
-do return end
+--do return end
 
 -- OK: well tested
 
@@ -11597,7 +11544,8 @@ async (a) do
 end
 escape a;
 ]],
-    run = 0,
+    run = 1,
+    --run = 0,
 }
 
 Test { [[
@@ -14422,7 +14370,8 @@ async (a) do
 end;
 escape a;
 ]],
-    run = 12,
+    --run = 12,
+    run = 1,
 }
 Test { [[
 var int a,b;
@@ -15802,6 +15751,59 @@ escape this.v;
     run = 2,
 }
 
+Test { [[
+input (void,int) A;
+escape 1;
+]],
+    env = 'line 1 : invalid type',
+}
+Test { [[
+input (int,void) A;
+escape 1;
+]],
+    env = 'line 1 : invalid type',
+}
+Test { [[
+output (void,int) A;
+escape 1;
+]],
+    env = 'line 1 : invalid type',
+}
+Test { [[
+output (int,void) A;
+escape 1;
+]],
+    env = 'line 1 : invalid type',
+}
+
+Test { [[
+input (void)=>void A do
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input (void, int a)=>void A do
+    v = 1;
+end
+escape 1;
+]],
+    env = 'line 1 : invalid type',
+}
+
+Test { [[
+input void START;
+var int v = 0;
+input (void)=>void A do
+    v = 1;
+end
+call A;
+escape v;
+]],
+    run = 1,
+}
 end -- _OS (INPUT/OUTPUT)
 
     -- POINTERS & ARRAYS
@@ -25997,7 +25999,7 @@ Test { [[
 function (void,int) => int f;
 escape 1;
 ]],
-    env = 'line 1 : invalid declaration',
+    env = 'line 1 : invalid type',
 }
 
 Test { [[
@@ -28841,6 +28843,7 @@ escape 10;
     },
     --run = 10,
     props = 'not permitted inside `thread´',
+    --props = 'line 6 : invalid `emit´',
 }
 Test { [[
 input int A;

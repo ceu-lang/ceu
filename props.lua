@@ -89,7 +89,7 @@ function HAS_FINS ()
 end
 
 F = {
-    Node_pos = function (me)
+    Node_pre = function (me)
         if NO_fun[me.tag] then
             ASR(not _AST.iter'Dcl_fun'(), me,
                 'not permitted inside `function´')
@@ -279,10 +279,9 @@ F = {
     EmitExt = function (me)
         local op, ext = unpack(me)
         if ext.evt.pre == 'input' then
-            if not _AST.par(me,_AST.pred_async) then
-                ASR(op=='call', me, 'invalid `'..op..'´')
+            ASR( _AST.par(me,'Async') or op=='call',
+                me, 'invalid `'..op..'´')
                     -- no <emit I> on sync
-            end
         end
 
         if _AST.par(me,'Dcl_fun') then
@@ -290,15 +289,16 @@ F = {
         end
     end,
     EmitT = function (me)
-        ASR(_AST.iter(_AST.pred_async)(), me,'not permitted outside `async´')
+        ASR(_AST.par(me,'Async'),
+            me,'not permitted outside `async´')
     end,
 
     SetExp = function (me)
         local _, fr, to = unpack(me)
-        local async = _AST.iter(_AST.pred_async)()
-        if async and (not to) then
-            ASR( async.__depth <= _AST.iter'SetBlock'().__depth+1, me,
-                    'invalid access from async')
+        local thr = _AST.par(me, 'Thread')
+        if thr and (not to) then
+            ASR( thr.__depth <= _AST.iter'SetBlock'().__depth+1, me,
+                    'invalid access from `thread´')
         end
 
         if _AST.iter'BlockI'() then
@@ -315,12 +315,12 @@ F = {
     end,
 
     Var = function (me)
-        local async = _AST.iter(_AST.pred_async)()
-        if async then
+        local thr = _AST.par(me, 'Thread')
+        if thr then
             ASR(_AST.iter'VarList'() or         -- param list
                 me.ret or                       -- var assigned on return
-                async.__depth < me.var.blk.__depth, -- var is declared inside
-                    me, 'invalid access from async')
+                thr.__depth < me.var.blk.__depth, -- var is declared inside
+                    me, 'invalid access from `thread´')
         end
     end,
 

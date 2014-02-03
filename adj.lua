@@ -639,6 +639,15 @@ F = {
                 node('Op1_*', me.ln, '*', ptr),
                 fld)
     end,
+
+-- VarList ------------------------------------------------------------
+
+    VarList = function (me)
+        for _, var in ipairs(me) do
+            local id = unpack(var)
+            me[id] = var
+        end
+    end,
 }
 
 _AST.visit(F)
