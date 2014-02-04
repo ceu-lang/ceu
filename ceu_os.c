@@ -531,11 +531,8 @@ static u8   QUEUE_i = 0;
 
 static tceu_lnk* LNKS;
 
-int ceu_sys_emit_val (tceu_app* app, tceu_nevt evt, tceu_evtp param) {
-    return ceu_sys_emit_buf(app, evt, sizeof(tceu_evtp), (char*)&param);
-}
-
-int ceu_sys_emit_buf (tceu_app* app, tceu_nevt evt, int sz, char* buf) {
+int ceu_sys_emit (tceu_app* app, tceu_nevt evt, tceu_evtp param,
+                  int sz, char* buf) {
     int n = sizeof(tceu_queue) + sz;
     if (QUEUE_n+n >= CEU_QUEUE_MAX)
         return 0;   /* TODO: add event FULL when CEU_QUEUE_MAX-1 */
@@ -543,8 +540,16 @@ int ceu_sys_emit_buf (tceu_app* app, tceu_nevt evt, int sz, char* buf) {
         tceu_queue* qu = (tceu_queue*) &QUEUE[QUEUE_i];
         qu->app = app;
         qu->evt = evt;
-        qu->sz  = sz;
-        memcpy(qu->buf, buf, sz);
+
+        if (sz == 0) {
+            /* "param" is self-contained */
+            qu->param = param;
+        } else {
+            /* "param" points to "buf" */
+            qu->param.ptr = qu->buf;
+            qu->sz  = sz;
+            memcpy(qu->buf, buf, sz);
+        }
     }
     QUEUE_i += n;
     QUEUE_n += n;
@@ -671,7 +676,8 @@ int ceu_scheduler_static (tceu_app* apps, tceu_lnk* lnks, int(*dt)())
             if (qu->app!=lnk->src_app || qu->evt!=lnk->src_evt)
                 continue;
 
-             ceu_go_event(lnk->dst_app, lnk->dst_evt, *(tceu_evtp*)qu->buf);
+            ceu_go_event(lnk->dst_app, lnk->dst_evt, qu->param);
+
 #ifdef CEU_RET
                 if (! lnk->dst_app->isAlive) {
                     ok--;

@@ -9,6 +9,7 @@
     #define CEU_EXTS
     #define CEU_WCLOCKS
     #define CEU_ASYNCS
+/*
     #define CEU_INTS
     #define CEU_ORGS
     #define CEU_CLEAR
@@ -18,7 +19,6 @@
     #define CEU_NEWS
     #define CEU_NEWS_POOL
     #define CEU_NEWS_MALLOC
-/*
 */
 
     #define CEU_IN__NONE          0
@@ -34,8 +34,8 @@
 
     typedef s8 tceu_nlbl;
 
-    #define ceu_out_emit_buf(app,id,sz,buf) ceu_sys_emit_buf(app,id,sz,buf)
-    #define ceu_out_emit_val(app,id,param)  ceu_sys_emit_val(app,id,param)
+    #define ceu_out_emit_buf(app,id,sz,buf) ceu_sys_emit(app,id,(tceu_evtp)NULL,sz,buf)
+    #define ceu_out_emit_val(app,id,param)  ceu_sys_emit(app,id,param,0,NULL)
     #define ceu_out_call_val(app,id,param)  ceu_sys_call(app,id,param)
 #else
     #include "_ceu_app.h"
@@ -310,15 +310,16 @@ typedef struct tceu_lnk {
 typedef struct {
     tceu_app* app;
     tceu_nevt evt;
+    tceu_evtp param;
     u8        sz;       /* TODO: depends on CEU_QUEUE_MAX */
     char      buf[0];
 } tceu_queue;
 
 int ceu_scheduler_static (tceu_app* apps, tceu_lnk* lnks, int(*dt)());
 
-int       ceu_sys_emit_buf (tceu_app* app, tceu_nevt evt, int sz, char* buf);
-int       ceu_sys_emit_val (tceu_app* app, tceu_nevt evt, tceu_evtp param);
-tceu_evtp ceu_sys_call     (tceu_app* app, tceu_nevt evt, tceu_evtp param);
+int ceu_sys_emit (tceu_app* app, tceu_nevt evt, tceu_evtp param,
+                  int sz, char* buf);
+tceu_evtp ceu_sys_call (tceu_app* app, tceu_nevt evt, tceu_evtp param);
 
 #if 0
 void ceu_sys_app (tceu_app* app);
