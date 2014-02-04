@@ -547,7 +547,7 @@ int ceu_sys_emit (tceu_app* app, tceu_nevt evt, tceu_evtp param,
         } else {
             /* "param" points to "buf" */
             qu->param.ptr = qu->buf;
-            qu->sz  = sz;
+            qu->sz = sz;
             memcpy(qu->buf, buf, sz);
         }
     }

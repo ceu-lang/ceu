@@ -296,4 +296,75 @@ escape ret;
     lnks = { { 1,1, 2,246 } },
 }
 
+Test {
+[[
+var int v = 0;
+output (int,int) O;
+par/or do
+    loop do
+        await 1s;
+        var int a=1, b=2;
+        emit O => (a,b);
+        await 1s;
+    end
+with
+    await 2s;
+    v = v;
+    await 2s;
+end
+escape 0;
+]],
+[[
+input (int,int) I;
+var int ret = 0;
+par/or do
+    var int a,b;
+    (a,b) = await I;
+    ret = ret + a + b;
+with
+    await 2s;
+    await 2s;
+end
+escape ret;
+]],
+    run = 6,
+    lnks = { { 1,1, 2,246 } },
+}
+
+Test {
+[[
+var int v = 0;
+output (int,int) O;
+par/or do
+    loop do
+        await 1s;
+        var int a=1, b=2;
+        emit O => (a,b);
+        await 1s;
+    end
+with
+    await 2s;
+    v = v;
+    await 2s;
+end
+escape 0;
+]],
+[[
+input (int,int) I;
+var int ret = 0;
+par/or do
+    var int a,b;
+    (a,b) = await I
+            until a == 1;
+    ret = ret + a + b;
+with
+    await 2s;
+    await 2s;
+end
+escape ret;
+]],
+    run = 6,
+    lnks = { { 1,1, 2,246 } },
+}
+
 

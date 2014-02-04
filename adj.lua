@@ -3,37 +3,6 @@ local node = _AST.node
 -- TODO: remove
 _MAIN = nil
 
--- TODO: remove
-local function SetAwaitUntil (ln, awt, op, to)
-    local ret
-
-    -- set await
-    if op then
-        ret = node('Stmts', ln,
-                awt,
-                node('SetExp', ln, op,
-                    node('Ref', ln, awt),
-                    to))
-    else
-        ret = awt
-    end
-
-    -- await until
-    local cnd = awt[#awt]
-    awt[#awt] = false
-    if cnd then
-        ret = node('Loop', ln,
-                    node('Stmts', ln,
-                        ret,
-                        node('If', ln, cnd,
-                            node('Break', ln),
-                            node('Nothing', ln))))
-        ret.isAwaitUntil = true     -- see tmps.lua
-    end
-
-    return ret
-end
-
 F = {
 -- 1, Root --------------------------------------------------
 
@@ -433,13 +402,13 @@ F = {
         for i=1, #t, 6 do
             ret[#ret+1] = node('Dcl_var', me.ln, pre, tp, dim, t[i])
             if t[i+1] then
-                ret[#ret+1] = F._Set_pre { ln=me.ln,
+                ret[#ret+1] = node('_Set', me.ln,
                                 node('Var', me.ln, t[i]),  -- var
                                 t[i+1],                 -- op
                                 t[i+2],                 -- tag
                                 t[i+3],                 -- exp    (p1)
                                 t[i+4],                 -- max    (p2)
-                                t[i+5] }                -- constr (p3)
+                                t[i+5] )                -- constr (p3)
             end
         end
         return node('Stmts', me.ln, unpack(ret))
@@ -460,32 +429,64 @@ F = {
             return node(tag, me.ln, op, p1, to)
 
         elseif tag == '__SetAwait' then
+
+            local ret
+            local awt = p1
+            local T = node('Stmts', me.ln)
+
+            -- <await until> => loop
+            local cnd = awt[#awt]
+            awt[#awt] = false
+            if cnd then
+                ret = node('Loop', me.ln,
+                            node('Stmts', me.ln,
+                                T,
+                                node('If', me.ln, cnd,
+                                    node('Break', me.ln),
+                                    node('Nothing', me.ln))))
+                ret.isAwaitUntil = true     -- see tmps.lua
+            else
+                ret = T
+            end
+
+            local tup = '_tup_'..me.n
+
+            -- <a = await I>  => await I; a=I;
+            T[#T+1] = awt
+            if op then
+                if to.tag == 'VarList' then
+                    T[#T+1] = node('SetExp', me.ln, '=',
+                                    node('Ref', me.ln, awt),
+                                    node('Var', me.ln, tup))
+                                    -- assignment to struct must be '='
+                else
+                    T[#T+1] = node('SetExp', me.ln, op,
+                                    node('Ref', me.ln, awt),
+                                    to)
+                end
+            end
+
             if to.tag == 'VarList' then
-                local tup = '_tup_'..me.n
+                local var = unpack(awt) -- find out 'TP' before traversing tup
+                table.insert(T, 1, _AST.copy(var))
+                table.insert(T, 2,
+                    node('Dcl_var', me.ln, 'var', 'TP*', false, tup))
+                    T[2].__ast_ref = T[1] -- TP* is changed on env.lua
 
-                -- await e => p1[1]=Var(e)
-
-                local t = {
-                    _AST.copy(p1[1]),   -- find out 'TP' before traversing tup
-                    node('Dcl_var', me.ln, 'var', 'TP*', false, tup),
-                    SetAwaitUntil(me.ln, p1, '=', node('Var', me.ln,tup)),
-                                            -- assignment to struct must be '='
-                }
-                t[2].__ast_ref = t[1] -- TP* is changed on env.lua
+                -- T = { evt_var, dcl_tup, awt, set [_1,_N] }
 
                 for i, v in ipairs(to) do
-                    t[#t+1] = node('SetExp', me.ln, op,
+                    T[#T+1] = node('SetExp', me.ln, op,
                                 node('Op2_.', me.ln, '.',
                                     node('Op1_*', me.ln, '*',
                                         node('Var', me.ln, tup)),
                                     '_'..i),
                                 v)
-                    t[#t][2].__ast_fr = p1    -- p1 is an AwaitX
+                    T[#T][2].__ast_fr = p1    -- p1 is an AwaitX
                 end
-                return node('Stmts', me.ln, unpack(t))
-            else
-                return SetAwaitUntil(me.ln, p1, op, to)
             end
+
+            return ret
 
         elseif tag == 'SetBlock' then
             return node(tag, me.ln, p1, to)

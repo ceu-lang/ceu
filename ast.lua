@@ -23,7 +23,6 @@ end
 
 local _N = 0
 function _AST.node (tag, ln, ...)
---DBG('n', tag, ln, ...)
     local me
     if tag == '_Stmts' then
         -- "Ct" as a special case to avoid "too many captures" (HACK_1)

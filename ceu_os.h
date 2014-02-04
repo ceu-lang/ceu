@@ -10,6 +10,7 @@
     #define CEU_WCLOCKS
     #define CEU_ASYNCS
 /*
+*/
     #define CEU_INTS
     #define CEU_ORGS
     #define CEU_CLEAR
@@ -19,7 +20,6 @@
     #define CEU_NEWS
     #define CEU_NEWS_POOL
     #define CEU_NEWS_MALLOC
-*/
 
     #define CEU_IN__NONE          0
     #define CEU_IN__STK         255

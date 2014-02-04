@@ -326,6 +326,31 @@ escape ret + _V;        // * reads after
 -------------------------------------------------------------------------------
 --]===]
 
+Test { [[
+input (int,int) I;
+var int ret = 0;
+par/or do
+    loop do
+        var int a,b;
+        (a,b) = await I
+                until a == 1;
+        ret = ret + a + b;
+    end
+with
+    await 2s;
+    await 2s;
+with
+    async do
+        emit I => (1,2);
+        emit I => (1,2);
+        emit 5s;
+    end
+end
+escape ret;
+]],
+    run = 6,
+}
+
 --do return end
 
 -- OK: well tested
