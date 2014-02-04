@@ -524,21 +524,30 @@ int ceu_go_all (tceu_app* app)
  * - i: next position to enqueue
  */
 #define CEU_QUEUE_MAX 255
-static tceu_queue QUEUE[CEU_QUEUE_MAX];
-static u8         QUEUE_n = 0;
-static u8         QUEUE_0 = 0;
-static u8         QUEUE_i = 0;
+static char QUEUE[CEU_QUEUE_MAX];
+static u8   QUEUE_n = 0;
+static u8   QUEUE_0 = 0;
+static u8   QUEUE_i = 0;
 
 static tceu_lnk* LNKS;
 
-int ceu_sys_emit (tceu_app* app, tceu_nevt evt, tceu_evtp param) {
-    if (QUEUE_n >= CEU_QUEUE_MAX)
+int ceu_sys_emit_val (tceu_app* app, tceu_nevt evt, tceu_evtp param) {
+    return ceu_sys_emit_buf(app, evt, sizeof(tceu_evtp), (char*)&param);
+}
+
+int ceu_sys_emit_buf (tceu_app* app, tceu_nevt evt, int sz, char* buf) {
+    int n = sizeof(tceu_queue) + sz;
+    if (QUEUE_n+n >= CEU_QUEUE_MAX)
         return 0;   /* TODO: add event FULL when CEU_QUEUE_MAX-1 */
-    QUEUE[QUEUE_i].app   = app;
-    QUEUE[QUEUE_i].evt   = evt;
-    QUEUE[QUEUE_i].param = param;
-    QUEUE_i++;
-    QUEUE_n++;
+    {
+        tceu_queue* qu = (tceu_queue*) &QUEUE[QUEUE_i];
+        qu->app = app;
+        qu->evt = evt;
+        qu->sz  = sz;
+        memcpy(qu->buf, buf, sz);
+    }
+    QUEUE_i += n;
+    QUEUE_n += n;
     return 1;
 }
 
@@ -655,14 +664,14 @@ int ceu_scheduler_static (tceu_app* apps, tceu_lnk* lnks, int(*dt)())
         if (QUEUE_n == 0)
             continue;
 
-        tceu_queue* qu = &QUEUE[QUEUE_0];
+        tceu_queue* qu = (tceu_queue*) &QUEUE[QUEUE_0];
         lnk = lnks;
         for (; lnk; lnk=lnk->nxt)
         {
             if (qu->app!=lnk->src_app || qu->evt!=lnk->src_evt)
                 continue;
 
-             ceu_go_event(lnk->dst_app, lnk->dst_evt, qu->param);
+             ceu_go_event(lnk->dst_app, lnk->dst_evt, *(tceu_evtp*)qu->buf);
 #ifdef CEU_RET
                 if (! lnk->dst_app->isAlive) {
                     ok--;
@@ -670,8 +679,8 @@ int ceu_scheduler_static (tceu_app* apps, tceu_lnk* lnks, int(*dt)())
                 }
 #endif
         }
-        QUEUE_n--;
-        QUEUE_0++;
+        QUEUE_n -= sizeof(tceu_queue) + qu->sz;
+        QUEUE_0 += sizeof(tceu_queue) + qu->sz;
     }
 
 #ifdef CEU_RET

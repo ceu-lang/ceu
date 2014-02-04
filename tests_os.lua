@@ -7,25 +7,6 @@
 
 -- OK: well tested
 
-Test {
-[[
-var int v = 0;
-input (void)=>void A do
-    v = 1;
-end
-await START;
-escape v;
-]],
-[[
-output (void)=>void A;
-call A;
-escape 1;
-]],
-    run = 2,
-    lnks = { { 2,1, 1,246 } },
-}
-do return end
-
 Test { [[escape(1);]],
 	run = 1,
 }
@@ -266,6 +247,53 @@ escape v;
         -- dst evt
 	},
 	run = 7,
+}
+
+Test {
+[[
+var int v = 0;
+input (void)=>void A do
+    v = 1;
+end
+await START;
+escape v;
+]],
+[[
+output (void)=>void A;
+call A;
+escape 1;
+]],
+    run = 2,
+    lnks = { { 2,1, 1,246 } },
+}
+Test {
+[[
+var int v = 0;
+output (int,int) O;
+par/or do
+    every 1s do
+        var int a=1, b=2;
+        emit O => (a,b);
+    end
+with
+    await 2s;
+end
+escape 0;
+]],
+[[
+input (int,int) I;
+var int ret = 0;
+par/or do
+    var int a,b;
+    (a,b) = await I;
+    ret = ret + a + b;
+with
+    await 2s;
+end
+escape ret;
+]],
+    run = 6,
+    lnks = { { 1,1, 2,246 } },
 }
 
 

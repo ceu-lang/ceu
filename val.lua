@@ -93,7 +93,8 @@ F =
     EmitExt = function (me)
         local op, ext, param = unpack(me)
 
-        local DIR, dir, ptr
+        local DIR, dir, ptr, mode
+
         if ext.evt.pre == 'input' then
             DIR = 'IN'
             dir = 'in'
@@ -106,6 +107,13 @@ F =
             DIR = 'OUT'
             dir = 'out'
             ptr = '&CEU_APP'
+        end
+
+        local tup = _TP.isTuple(ext.evt.ins)
+        if op == 'call' or (not tup) or (tup == 1) then
+            mode = 'val'
+        else
+            mode = 'buf'
         end
 
         local t1 = { }
@@ -123,16 +131,26 @@ F =
             else
                 val = V(param)
             end
+            t1[#t1+1] = val
 
-            local tup = _TP.isTuple(ext.evt.ins)
             if tup and #tup>1 then
-                t2[#t2+1] = '(tceu_evtp)(void*)'..val
+                if mode == 'val' then
+                    t2[#t2+1] = '(tceu_evtp)(void*)'..val
+                else
+                    t2[#t2+1] = 'sizeof('..ext.evt.ins..')'
+                    t2[#t2+1] = '(char*)'..val
+                end
             else
+                assert(mode == 'val')
                 t2[#t2+1] = '(tceu_evtp)'..val
             end
-            t1[#t1+1] = val
         else
-            t2[#t2+1] = '(tceu_evtp)NULL'
+            if mode == 'val' then
+                t2[#t2+1] = '(tceu_evtp)NULL'
+            else
+                t2[#t2+1] = '0'
+                t2[#t2+1] = '(char*)NULL'
+            end
         end
         t2 = table.concat(t2, ', ')
         t1 = table.concat(t1, ', ')
@@ -156,8 +174,8 @@ F =
 #if defined(ceu_]]..dir..'_'..op..'_'..ext.evt.id..[[)
     ceu_]]..dir..'_'..op..'_'..ext.evt.id..'('..t1..[[)
 
-#elif defined(ceu_]]..dir..'_'..op..[[)
-    ceu_]]..dir..'_'..op..'('..t2..')'..ret..[[
+#elif defined(ceu_]]..dir..'_'..op..'_'..mode..[[)
+    ceu_]]..dir..'_'..op..'_'..mode..'('..t2..')'..ret..[[
 
 #else
     #error ceu_]]..dir..'_'..op..[[_* is not defined
