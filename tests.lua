@@ -15105,7 +15105,7 @@ escape(1);
 }
 Test { [[
 native do
-    ##define ceu_out_emit(a,b,c) 1
+    ##define ceu_out_emit_val(a,b,c) 1
 end
 output int A;
 emit A => 1;
@@ -15124,7 +15124,7 @@ escape(1);
 }
 Test { [[
 native do
-    #define ceu_out_emit(a,b,c) 1
+    #define ceu_out_emit_val(a,b,c) 1
 end
 output int A;
 if emit A => 1 then
@@ -15168,7 +15168,7 @@ escape(1);
 }
 Test { [[
 native do
-    #define ceu_out_emit(a,b,c) 1
+    #define ceu_out_emit_val(a,b,c) 1
 end
 output int A;
 native do
@@ -15226,7 +15226,7 @@ native do
         int a;
         int b;
     } t;
-    ##define ceu_out_emit(a,b,c) Fa(a,b,c)
+    ##define ceu_out_emit_val(a,b,c) Fa(a,b,c)
     int Fa (tceu_app* app, int evt, tceu_evtp p) {
         if (evt == CEU_OUT_A) {
             t v = *((t*)p.ptr);
@@ -15300,7 +15300,7 @@ escape 0;
 
 Test { [[
 native do
-    #define ceu_out_emit(a,b,c) 0
+    #define ceu_out_emit_val(a,b,c) 0
 end
 output void A, B;
 par/or do
@@ -15319,7 +15319,7 @@ escape 1;
 
 Test { [[
 native do
-    #define ceu_out_emit(a,b,c) 0
+    #define ceu_out_emit_val(a,b,c) 0
 end
 safe A with B;
 output void A, B;
@@ -15338,7 +15338,7 @@ escape 1;
 
 Test { [[
 native do
-    ##define ceu_out_emit(a,b,c) F(c)
+    ##define ceu_out_emit_val(a,b,c) F(c)
     void F (tceu_evtp p) {
         tceu___int____int_* v = (tceu___int____int_*) p.ptr;
         *(v->_1) = 1;
@@ -15357,7 +15357,7 @@ escape a + b;
 
 Test { [[
 native do
-    ##define ceu_out_emit(a,b,c) F(a,b,c)
+    ##define ceu_out_emit_val(a,b,c) F(a,b,c)
     void F (tceu_app* app, int evt, tceu_evtp p) {
         tceu___int____int_* v = (tceu___int____int_*) p.ptr;
         *(v->_1) = (evt == CEU_OUT_RADIO_SEND);
@@ -15599,7 +15599,7 @@ escape ret;
 
 Test { [[
 native do
-    ##define ceu_out_call(a,b,c) F(a,b,c)
+    ##define ceu_out_call_val(a,b,c) F(a,b,c)
     int F (tceu_app* app, tceu_nevt evt, tceu_evtp p) {
         return (evt == CEU_OUT_F) + p.v;
     }
@@ -15613,7 +15613,7 @@ escape ret;
 
 Test { [[
 native do
-    ##define ceu_out_emit(a,b,c) F(a,b,c)
+    ##define ceu_out_emit_val(a,b,c) F(a,b,c)
     int F (tceu_app* app, tceu_nevt evt, tceu_evtp p) {
         return (evt==CEU_OUT_F && p.ptr==NULL);
     }
@@ -15641,7 +15641,7 @@ escape ret;
 
 Test { [[
 native do
-    ##define ceu_out_emit(a,b,c) F(a,b,c)
+    ##define ceu_out_emit_val(a,b,c) F(a,b,c)
     int F (tceu_app* app, tceu_nevt evt, tceu_evtp p) {
         return (evt == CEU_OUT_F) + p.v;
     }
@@ -15662,7 +15662,7 @@ escape 1;
 
 Test { [[
 native do
-    ##define ceu_out_call(a,b,c) F(a,b,c)
+    ##define ceu_out_call_val(a,b,c) F(a,b,c)
     int F (tceu_app* app, tceu_nevt evt, tceu_evtp p) {
         return (evt == CEU_OUT_F) + p.v;
     }

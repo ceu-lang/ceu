@@ -39,6 +39,7 @@
     #define ceu_out_call_val(app,id,param)  ceu_sys_call(app,id,param)
 #else
     #include "_ceu_app.h"
+    #define ceu_out_emit_buf(app,id,sz,buf) ceu_out_emit_val(app,id,(tceu_evtp)(void*)buf)
 #endif
 
 #define ceu_in_emit_val  ceu_go_event

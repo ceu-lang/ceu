@@ -110,7 +110,8 @@ F =
         end
 
         local tup = _TP.isTuple(ext.evt.ins)
-        if op == 'call' or (not tup) or (tup == 1) then
+        if op == 'call' or dir == 'in' or
+                (not tup) or (tup == 1) then
             mode = 'val'
         else
             mode = 'buf'
