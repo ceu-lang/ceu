@@ -372,11 +372,11 @@ Test {
 [[
 output int O;
 var int ret = 0;
-    loop i, 10 do
-        var int a=1;
-        emit O => a;
-        ret = ret + a;
-    end
+loop i, 10 do
+    var int a=1;
+    emit O => a;
+    ret = ret + a;
+end
 escape ret;
 ]],
 [[

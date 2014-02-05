@@ -9,8 +9,6 @@
     #define CEU_EXTS
     #define CEU_WCLOCKS
     #define CEU_ASYNCS
-/*
-*/
     #define CEU_INTS
     #define CEU_ORGS
     #define CEU_CLEAR
@@ -20,6 +18,12 @@
     #define CEU_NEWS
     #define CEU_NEWS_POOL
     #define CEU_NEWS_MALLOC
+/*
+*/
+    #define CEU_QUEUE_MAX 65535
+/*
+    #define CEU_QUEUE_MAX 255
+*/
 
     #define CEU_IN__NONE          0
     #define CEU_IN__STK         255
@@ -311,11 +315,17 @@ typedef struct {
     tceu_app* app;
     tceu_nevt evt;
     tceu_evtp param;
-    u8        sz;       /* TODO: depends on CEU_QUEUE_MAX */
+#if CEU_QUEUE_MAX == 255
+    u8        sz;
+#else
+    u16       sz;
+#endif
     char      buf[0];
 } tceu_queue;
 
-int ceu_scheduler_static (tceu_app* apps, tceu_lnk* lnks, int(*dt)());
+int ceu_scheduler (int(*dt)());
+void ceu_sys_app (tceu_app* app);
+void ceu_sys_link (tceu_lnk* lnk);
 
 int ceu_sys_emit (tceu_app* app, tceu_nevt evt, tceu_evtp param,
                   int sz, char* buf);

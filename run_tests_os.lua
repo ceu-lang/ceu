@@ -38,18 +38,14 @@ int dt () {
 }
 int main (void)
 {
-    int       ret;
-    tceu_app* apps = &_ceu_app_1;
-    tceu_lnk* lnks = NULL;
+    int ret;
 ]])
 
     -- APPS
     for i, _ in ipairs(T) do
-        if i > 1 then
-            f:write([[
-    _ceu_app_]]..(i-1)..[[.nxt = &_ceu_app_]]..i..[[;
+        f:write([[
+    ceu_sys_app(&_ceu_app_]]..i..[[);
 ]])
-        end
     end
 
     -- LINKS
@@ -64,24 +60,13 @@ int main (void)
         dst_evt..[[
     };
 ]])
-        if i == 1 then
-            f:write([[
-    lnks = &lnk_]]..i..[[;
+        f:write([[
+    ceu_sys_link(&lnk_]]..i..[[);
 ]])
-        else
-            f:write([[
-    lnk_]]..(i-1)..[[.nxt = &lnk_]]..i..[[;
-]])
-            if i == #T.lnks then
-                f:write([[
-    lnk_]]..i..[[.nxt = NULL;
-]])
-            end
-        end
     end
 
     f:write([[
-    ret = ceu_scheduler_static(apps, lnks, dt);
+    ret = ceu_scheduler(dt);
     printf("*** END: %d\n", ret);
 	return ret;
 }
