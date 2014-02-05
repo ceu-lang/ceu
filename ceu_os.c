@@ -9,10 +9,8 @@
 #include <stdlib.h>     /* exit */
 #endif
 
-#ifdef CEU_NEWS
-#ifdef CEU_RUNTESTS
+#ifdef CEU_DEBUG
 #include <assert.h>
-#endif
 #endif
 
 /* TODO: app */
@@ -523,11 +521,19 @@ int ceu_go_all (tceu_app* app)
  * - 0: next position to consume
  * - i: next position to enqueue
  */
-#define CEU_QUEUE_MAX 255
-static char QUEUE[CEU_QUEUE_MAX];
-static u8   QUEUE_n = 0;
-static u8   QUEUE_0 = 0;
-static u8   QUEUE_i = 0;
+#if 1
+    #define CEU_QUEUE_MAX 65535
+    char QUEUE[CEU_QUEUE_MAX];
+    int  QUEUE_n = 0;
+    u16  QUEUE_0 = 0;
+    u16  QUEUE_i = 0;
+#else
+    #define CEU_QUEUE_MAX 255
+    char QUEUE[CEU_QUEUE_MAX];
+    int  QUEUE_n = 0;
+    u8   QUEUE_0 = 0;
+    u8   QUEUE_i = 0;
+#endif
 
 static tceu_lnk* LNKS;
 
@@ -536,10 +542,12 @@ int ceu_sys_emit (tceu_app* app, tceu_nevt evt, tceu_evtp param,
     int n = sizeof(tceu_queue) + sz;
     if (QUEUE_n+n >= CEU_QUEUE_MAX)
         return 0;   /* TODO: add event FULL when CEU_QUEUE_MAX-1 */
+
     {
         tceu_queue* qu = (tceu_queue*) &QUEUE[QUEUE_i];
         qu->app = app;
         qu->evt = evt;
+        qu->sz  = sz;
 
         if (sz == 0) {
             /* "param" is self-contained */
@@ -547,12 +555,11 @@ int ceu_sys_emit (tceu_app* app, tceu_nevt evt, tceu_evtp param,
         } else {
             /* "param" points to "buf" */
             qu->param.ptr = qu->buf;
-            qu->sz = sz;
             memcpy(qu->buf, buf, sz);
         }
-    }
     QUEUE_i += n;
     QUEUE_n += n;
+    }
     return 1;
 }
 
@@ -668,12 +675,17 @@ int ceu_scheduler_static (tceu_app* apps, tceu_lnk* lnks, int(*dt)())
 
         if (QUEUE_n == 0)
             continue;
+#ifdef CEU_DEBUG
+        assert(QUEUE_n > 0);
+#endif
 
         tceu_queue* qu = (tceu_queue*) &QUEUE[QUEUE_0];
         lnk = lnks;
         for (; lnk; lnk=lnk->nxt)
         {
             if (qu->app!=lnk->src_app || qu->evt!=lnk->src_evt)
+                continue;
+            if (! lnk->dst_app->isAlive)
                 continue;
 
             ceu_go_event(lnk->dst_app, lnk->dst_evt, qu->param);

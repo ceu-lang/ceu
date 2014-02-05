@@ -292,7 +292,7 @@ with
 end
 escape ret;
 ]],
-    run = 6,
+    run = 3,
     lnks = { { 1,1, 2,246 } },
 }
 
@@ -327,7 +327,7 @@ with
 end
 escape ret;
 ]],
-    run = 6,
+    run = 3,
     lnks = { { 1,1, 2,246 } },
 }
 
@@ -360,11 +360,233 @@ par/or do
 with
     await 2s;
     await 2s;
+    await 10ms;
 end
 escape ret;
 ]],
-    run = 6,
+    run = 3,
     lnks = { { 1,1, 2,246 } },
 }
 
+Test {
+[[
+output int O;
+var int ret = 0;
+    loop i, 10 do
+        var int a=1;
+        emit O => a;
+        ret = ret + a;
+    end
+escape ret;
+]],
+[[
+input int I;
+var int ret = 0;
+par/or do
+    loop do
+        var int a;
+        a = await I
+            until a == 1;
+        ret = ret + a;
+    end
+with
+    await 10min;
+end
+escape ret;
+]],
+    run = 20,
+    lnks = { { 1,1, 2,246 } },
+}
 
+Test {
+[[
+output (u8,u8) O;
+output void F;
+var int ret = 0;
+    loop i, 100 do
+        var int a=1, b=2;
+        emit O => (a,b);
+        ret = ret + a + b;
+    end
+    emit F;
+escape ret;
+]],
+[[
+input (u8,u8) I;
+input void F;
+var int ret = 0;
+par/or do
+    loop do
+        var int a,b;
+        (a,b) = await I
+                until a == 1;
+        ret = ret + a + b;
+    end
+with
+    await F;
+end
+escape ret;
+]],
+    run = 600,
+    lnks = {
+        { 1,1, 2,246 },
+        { 1,2, 2,245 },
+    },
+}
+
+Test {
+[[
+output (u8,u8) O;
+output int F;
+var int ret = 0;
+    loop i, 10000 do
+        var int a=1, b=2;
+        emit O => (a,b);
+        ret = ret + 1;
+    end
+    loop i, 10000 do
+        async do end
+    end
+    emit F=>0;
+escape ret;
+]],
+[[
+input (u8,u8) I;
+input int F;
+var int ret = 0;
+par/or do
+    loop do
+        var int a,b;
+        (a,b) = await I
+                until a == 1;
+        ret = ret + 1;
+    end
+with
+    await F;
+end
+escape ret;
+]],
+    run = 11927,
+    lnks = {
+        { 1,1, 2,246 },
+        { 1,2, 2,245 },
+    },
+}
+
+Test {
+[[
+output (int,int) O;
+var int ret = 0;
+    loop i, 1000 do
+        var int a=1, b=2;
+        emit O => (a,b);
+        ret = ret + a + b;
+    end
+escape ret;
+]],
+[[
+input (int,int) I;
+var int ret = 0;
+par/or do
+    loop do
+        var int a,b;
+        (a,b) = await I
+                until a == 1;
+        ret = ret + a + b;
+    end
+with
+    await 10min;
+end
+escape ret;
+]],
+    run = 6000,
+    lnks = { { 1,1, 2,246 } },
+}
+
+Test {
+[[
+output (u8,u8) O;
+output int F;
+var int ret = 0;
+    loop i, 10000 do
+        var int a=1, b=2;
+        emit O => (a,b);
+        ret = ret + 1;
+    end
+    loop i, 10000 do
+        async do end
+    end
+    emit F=>0;
+    loop i, 1000 do
+        var int a=1, b=2;
+        emit O => (a,b);
+        ret = ret + a + b;
+    end
+escape ret;
+]],
+[[
+input (u8,u8) I;
+input int F;
+var int ret = 0;
+par/or do
+    loop do
+        var int a,b;
+        (a,b) = await I
+                until a == 1;
+        ret = ret + 1;
+    end
+with
+    await F;
+end
+par/or do
+    loop do
+        var int a,b;
+        (a,b) = await I
+                until a == 1;
+        ret = ret + a + b;
+    end
+with
+    await 10min;
+end
+escape ret;
+]],
+    run = 17927,
+    lnks = {
+        { 1,1, 2,246 },
+        { 1,2, 2,245 },
+    },
+}
+
+Test {
+[[
+output (int,int) O;
+var int ret = 0;
+par/or do
+    every 1s do
+        var int a=1, b=2;
+        emit O => (a,b);
+        ret = ret + a + b;
+    end
+with
+    await 10min;
+end
+escape ret;
+]],
+[[
+input (int,int) I;
+var int ret = 0;
+par/or do
+    loop do
+        var int a,b;
+        (a,b) = await I
+                until a == 1;
+        ret = ret + a + b;
+    end
+with
+    await 10min;
+end
+escape ret;
+]],
+    run = 3597,
+    lnks = { { 1,1, 2,246 } },
+}
