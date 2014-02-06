@@ -9,6 +9,17 @@ F = {
     ['1_pre'] = function (me)
         local spc, stmts = unpack(me)
 
+        -- for OS: <par/or ... with await OS_STOP; escape 1; end>
+        if _OPTS.os then
+            stmts = node('ParOr', me.ln,
+                        stmts,
+                        node('Stmts', me.ln,
+                            node('AwaitExt', me.ln,
+                                node('Ext',me.ln,'OS_STOP'),
+                                false),
+                            node('_Escape', me.ln, node('NUMBER',me.ln,'1'))))
+        end
+
         -- enclose the main block with <ret = do ... end>
         local blk = node('Block', me.ln,
                         node('Stmts', me.ln,

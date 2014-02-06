@@ -39,6 +39,37 @@ escape ret;
     run = 17,
 }
 
+Test {
+	[[
+native nohold _ceu_sys_unapp();
+native do
+    extern tceu_app _ceu_app_2;
+end
+output int A;
+emit A=>2;
+emit A=>2;
+emit A=>2;
+await 1s;
+_ceu_sys_unapp(&__ceu_app_2);
+emit A=>2;
+await 1s;
+escape 1;
+]],
+    [[
+input int A;
+var int a;
+var int ret = 0;
+every a = A do
+    ret = ret + a;
+end
+escape ret;
+]],
+	lnks = {
+		{ 1, 1, 2, 245 },
+	},
+    run = 2,
+}
+
 --do return end
 
 -- OK: well tested
@@ -257,7 +288,6 @@ input (int v)=>int I do
     return v + 1;
 end
 var int ret = call O=>2;
-_printf("C = %d\n", ret);
 escape ret;
 ]],
     [[
@@ -266,12 +296,10 @@ output (int)=>int O;
 var int v;
 input (int v)=>int I do
     var int x = call O=>v;
-_printf("B = %d\n", x);
     this.v = x;
     return x + 1;
 end
 await OS_START;
-_printf("D = %d\n", v);
 escape v;
 ]],
 	lnks = {
