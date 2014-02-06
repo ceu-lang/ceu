@@ -56,7 +56,7 @@ escape ret;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 event int a, x, y;
 var int ret = 0;
 par do
@@ -68,7 +68,7 @@ par do
         escape 2;   // 15
     end;
 with
-    await START;
+    await OS_START;
     emit x => 1;       // in seq
     emit y => 1;       // in seq
 end
@@ -80,7 +80,7 @@ end
 }
 
 Test { [[
-input void START;
+input void OS_START;
 native _V;
 native do
     int V = 1;
@@ -88,9 +88,9 @@ end
 class T with
 do
     par/or do
-        await START;
+        await OS_START;
     with
-        await START;    // valgrind error
+        await OS_START;    // valgrind error
     end
     _V = 10;
 end
@@ -209,7 +209,7 @@ end
 }
 
 Test { [[
-input void START;
+input void OS_START;
 event (int,void*) ptr;
 var int* p;
 var int i;
@@ -218,7 +218,7 @@ par/or do
 with
     do
         var int b = 1;
-        await START;
+        await OS_START;
         emit ptr => (1, &b);
     end
 end
@@ -275,7 +275,7 @@ escape 1;
 -- put back to XXXX
 Test { [[
 native _V;
-input void A, F, START;
+input void A, F, OS_START;
 native do
     int V = 0;
 end
@@ -292,7 +292,7 @@ do
     emit e;
     emit ok;
 end
-await START;
+await OS_START;
 var int ret;
 do
     var T t;
@@ -940,9 +940,9 @@ escape a;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 event void e;
-every START do
+every OS_START do
     loop i, 10 do
         emit e;
     end
@@ -965,13 +965,13 @@ escape a;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 do
     var int v = 0;
 end
 event void e;
 par do
-    await START;
+    await OS_START;
     emit e;
     escape 1;       // 9
 with
@@ -987,13 +987,13 @@ end
 }
 
 Test { [[
-input void START;
+input void OS_START;
 event void a, b, c, d;
 native _assert();
 var int v=0;
 par do
     loop do
-        await START;
+        await OS_START;
         v = 0;
         emit a;
         v = 1;
@@ -1026,13 +1026,13 @@ escape x;
 
 Test { [[
 native do ##include <assert.h> end
-input void START;
+input void OS_START;
 event void a, b, c, d;
 native _assert();
 var int v=0;
 par do
     loop do
-        await START;
+        await OS_START;
         emit a;         // killed
         _assert(0);
     end
@@ -1051,10 +1051,10 @@ end
 }
 
 Test { [[
-input void START;
+input void OS_START;
 event void a,b;
 par do
-    await START;
+    await OS_START;
     emit a;
     escape 10;
 with
@@ -2157,11 +2157,11 @@ end
 }
 
 Test { [[
-input void START;
+input void OS_START;
 var int v = 1;
 loop do
     loop i, v do
-        await START;
+        await OS_START;
         escape 2;
     end
 end
@@ -2563,12 +2563,12 @@ escape 0;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 event void a,b;
 par/and do
     await a;
 with
-    await START;
+    await OS_START;
     emit b;
     emit a;
 end
@@ -3047,11 +3047,11 @@ escape a+f;
 -- INTERNAL EVENTS
 
 Test { [[
-input void START;
+input void OS_START;
 event int a;
 var int ret = 0;
 par/or do
-    await START;
+    await OS_START;
     emit a => 1;
 with
     ret = await a;
@@ -3065,14 +3065,14 @@ escape ret;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 var int ret;
 event void a,b;
 par/and do
-    await START;
+    await OS_START;
     emit a;
 with
-    await START;
+    await OS_START;
     emit b;
 with
     await a;
@@ -3090,15 +3090,15 @@ escape ret;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 var int ret;
 event void a,b;
 par/and do
-    await START;
+    await OS_START;
     emit a;         // 6
 with
     par/or do
-        await START;
+        await OS_START;
     with
         await 1s;
     end
@@ -3124,14 +3124,14 @@ escape ret;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 var int ret;
 event void a,b,c,d;
 par/and do
-    await START;
+    await OS_START;
     emit a;
 with
-    await START;
+    await OS_START;
     emit b;
 with
     await a;
@@ -3202,11 +3202,11 @@ escape a;
 -- ParOr
 
 Test { [[
-input void START;
+input void OS_START;
 event int a;
 var int aa = 3;
 par do
-    await START;
+    await OS_START;
     emit a => aa;      // 6
     escape aa;
 with
@@ -3221,11 +3221,11 @@ end;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 event int a;
 var int aa = 3;
 par do
-    await START;
+    await OS_START;
     emit a => aa;
     escape aa;
 with
@@ -3377,11 +3377,11 @@ escape a;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 event void e;
 var int v;
 par/or do           // 4
-    await START;
+    await OS_START;
     emit e;         // 6
     v = 1;
 with
@@ -3450,13 +3450,13 @@ Test { [[
 native do
     ##include <assert.h>
 end
-input void START;
+input void OS_START;
 event void a, b, c, d;
 native _assert();
 var int v=0;
 par do
     loop do
-        await START;
+        await OS_START;
         _assert(v==0);
         v = v + 1;
         emit a;
@@ -3571,7 +3571,7 @@ end;
 
 Test { [[
 event void a, b;
-input void START,A;
+input void OS_START,A;
 var int ret = 0 ;
 
 par/or do
@@ -3584,7 +3584,7 @@ with
     emit a;
     await FOREVER;
 with
-    await START;
+    await OS_START;
     emit a;
     await A;
     emit b;
@@ -3597,7 +3597,7 @@ escape ret;
 -- TODO: STACK
 Test { [[
 event void a, b;
-input void START;
+input void OS_START;
 var int ret = 0 ;
 
 par/or do
@@ -3610,7 +3610,7 @@ with
     emit a;
     await FOREVER;
 with
-    await START;
+    await OS_START;
     emit a;
     emit b;
 end
@@ -3623,7 +3623,7 @@ escape ret;
 -- TODO: STACK
 -- internal glb awaits
 Test { [[
-input void START;
+input void OS_START;
 event void a;
 native _ret_val, _ret_end;
 _ret_val = 0;
@@ -3639,7 +3639,7 @@ par do
         end
     end
 with
-    await START;
+    await OS_START;
     emit a;
     emit a;
 end
@@ -3655,12 +3655,12 @@ end
 }
 
 Test { [[
-input void START;
+input void OS_START;
 event int a, x, y;
 var int ret = 0;
 par do
     par/and do
-        await START;
+        await OS_START;
         emit x => 1;   // 7
         emit y => 1;   // 8
     with
@@ -3673,7 +3673,7 @@ par do
         end;
     end;
 with
-    await START;
+    await OS_START;
     emit x => 1;       // 20
     emit y => 1;       // 21
 end
@@ -3686,7 +3686,7 @@ end
 }
 
 Test { [[
-input void START;
+input void OS_START;
 event void a, b;
 par do
     par do
@@ -3697,10 +3697,10 @@ par do
         escape 2;   // 9
     end
 with
-    await START;    // 12
+    await OS_START;    // 12
     emit b;
 with
-    await START;    // 15
+    await OS_START;    // 15
     emit a;
 end
 ]],
@@ -5105,11 +5105,11 @@ escape ret;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 event int a;
 var int ret = 1;
 par/or do
-    await START;
+    await OS_START;
     emit a => 10;
 with
     ret = await a;
@@ -5140,11 +5140,11 @@ escape ret;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 event int a;
 var int ret = 1;
 par/and do
-    await START;
+    await OS_START;
     emit a => 10;
 with
     ret = await a;
@@ -5998,11 +5998,11 @@ escape 1;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 event int a,b,c;
 var int cc = 1;
 par/and do
-    await START;
+    await OS_START;
     emit b => 1;
     emit c => 1;
 with
@@ -7584,13 +7584,13 @@ end;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 event int a;
 var int b;
 par/or do
     b = await a;
 with
-    await START;
+    await OS_START;
     emit a => 3;
 end;
 escape b+b;
@@ -7623,11 +7623,11 @@ escape 0;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 event int b;
 var int i;
 par/or do
-    await START;
+    await OS_START;
     emit b => 1;
     i = 2;
 with
@@ -7643,11 +7643,11 @@ escape i;
     run = 1,
 }
 Test { [[
-input void START;
+input void OS_START;
 event int b,c;
 var int cc;
 par/or do
-    await START;
+    await OS_START;
     emit b => 1;
     cc = await c;
 with
@@ -8367,10 +8367,10 @@ end;
     run = 10,
 }
 Test { [[
-input void START;
+input void OS_START;
 event int a;
 par do
-    await START;
+    await OS_START;
     emit a => 1;
 with
     var int aa = await a;
@@ -9033,7 +9033,7 @@ escape 1;
     },
 }
 Test { [[
-input void START;
+input void OS_START;
 input int A;
 event int a;
 var int ret;
@@ -9056,10 +9056,10 @@ escape ret;
     run = { ['1~>A;2~>A;3~>A']=3 },
 }
 Test { [[
-input void START;
+input void OS_START;
 event int a;
 par do
-    await START;
+    await OS_START;
     emit a => 1;
     escape 1;
 with
@@ -11217,7 +11217,7 @@ escape 0;
     },
 }
 Test { [[
-input void START;
+input void OS_START;
 input int A,B;
 event int a;
 par/and do
@@ -11346,11 +11346,11 @@ escape d;
     },
 }
 Test { [[
-input void START;
+input void OS_START;
 event int a;
 var int aa;
 par/and do
-    await START;
+    await OS_START;
     emit a => 1;
 with
     par/or do
@@ -11404,7 +11404,7 @@ escape 1;
 ]]
 
 Test { [[
-input void START, A;
+input void OS_START, A;
 var int v = 0;
 event void a,b;
 par/or do
@@ -11419,7 +11419,7 @@ par/or do
         end;
     end;
 with
-    await START;
+    await OS_START;
     emit b;
     emit b;
     await A;
@@ -11434,7 +11434,7 @@ end;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 var int v = 0;
 event int a, b;
 par/or do
@@ -11444,7 +11444,7 @@ par/or do
         v = v + 1;
     end
 with
-    await START;
+    await OS_START;
     emit a => 1;
     escape v;
 end;
@@ -11456,7 +11456,7 @@ end;
 }
 
 Test { [[
-input void START, F;
+input void OS_START, F;
 event void a, b;
 par/or do
     loop do
@@ -11468,7 +11468,7 @@ par/or do
         end;
     end;
 with
-    await START;
+    await OS_START;
     emit a;
     await FOREVER;
 with
@@ -11480,7 +11480,7 @@ escape 1;
 }
 
 Test { [[
-input void START,A;
+input void OS_START,A;
 var int v = 0;
 var int x = 0;
 event int a, b;
@@ -11501,7 +11501,7 @@ par/or do
         x = x + 1;
     end;
 with
-    await START;
+    await OS_START;
     emit a => 1;
     await A;
     emit a => 1;
@@ -11825,7 +11825,7 @@ end;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 event int a, b;
 var int v=0;
 par/or do
@@ -11840,7 +11840,7 @@ with
         v = 3;
     end;
 with
-    await START;
+    await OS_START;
     emit a => 1;
     escape v;
 end;
@@ -11856,12 +11856,12 @@ escape 0;
     -- SYNC TRIGGER
 
 Test { [[
-input void START;
+input void OS_START;
 event int a;
 var int v1, v2;
 par/and do
     par/or do
-        await START;
+        await OS_START;
         emit a => 10;
         v1=10;
     with
@@ -11882,7 +11882,7 @@ escape v1 + v2;
 
 -- TODO: STACK
 Test { [[
-input void START,A;
+input void OS_START,A;
 event int a;
 var int aa=0;
 par/or do
@@ -11891,7 +11891,7 @@ par/or do
         aa = aa + 1;
     end;
 with
-    await START;
+    await OS_START;
     emit a => 1;
     emit a => aa;
     emit a => aa;
@@ -11906,7 +11906,7 @@ escape aa;
 }
 
 Test { [[
-input void START,A;
+input void OS_START,A;
 event int a;
 var int aa;
 par/or do
@@ -11915,7 +11915,7 @@ par/or do
         aa = aa + 1;
     end;
 with
-    await START;
+    await OS_START;
     emit a => 1;
     await A;
     emit a => aa;
@@ -11934,7 +11934,7 @@ escape aa;
 }
 
 Test { [[
-input void START, A;
+input void OS_START, A;
 event int a, b;
 var int bb;
 par/or do
@@ -11958,7 +11958,7 @@ with
     await A;
     emit b => bb;
 with
-    await START;
+    await OS_START;
     emit a => 1;
     bb = 0;
 end;
@@ -11972,11 +11972,11 @@ escape bb;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 event int a;
 var int aa;
 par/or do
-    await START;
+    await OS_START;
     emit a => 0;
 with
     aa = await a;
@@ -11990,11 +11990,11 @@ escape aa;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 event int a,b;
 var int aa;
 par/or do
-    await START;
+    await OS_START;
     emit a => 0;
 with
     aa=await a;
@@ -12013,7 +12013,7 @@ escape aa;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 input int A, F;
 event int c;
 var int cc = 0;
@@ -12036,11 +12036,11 @@ end;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 event int a;
 par do
     loop do
-        await START;
+        await OS_START;
         emit a => 0;
         emit a => 1;
         await 10s;
@@ -12064,11 +12064,11 @@ end;
 }
 
 Test { [[
-input void START, A;
+input void OS_START, A;
 event int a;
 par do
     loop do
-        await START;
+        await OS_START;
         emit a => 0;
         await A;
     emit a => 1;
@@ -12207,12 +12207,12 @@ end;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 event int a, b, c;
 var int x = 0;
 var int y = 0;
 par/or do
-    await START;
+    await OS_START;
     emit a => 0;
 with
     await b;
@@ -12293,11 +12293,11 @@ end;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 event int a;
 var int b;
 par/and do
-    await START;
+    await OS_START;
     emit a => 1;
     b = 1;
 with
@@ -12309,11 +12309,11 @@ escape b;
     run = 1,
 }
 Test { [[
-input void START;
+input void OS_START;
 event int a;
 var int b;
 par/or do
-    await START;
+    await OS_START;
     emit a => 1;
     b = 1;
 with
@@ -12330,14 +12330,14 @@ escape b;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 event int a;
 par do
     var int aa = await a;
     emit a => 1;
     escape aa;
 with
-    await START;
+    await OS_START;
     emit a => 2;
     escape 0;
 end;
@@ -12351,7 +12351,7 @@ end;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 event int a, b;
 var int aa;
 par/or do
@@ -12360,7 +12360,7 @@ par/or do
         emit b => 1;
     end;
 with
-    await START;
+    await OS_START;
     emit a => 1;
 with
     await b;
@@ -12379,11 +12379,11 @@ escape aa;
 
 -- TODO: STACK
 Test { [[
-input void START;
+input void OS_START;
 event int a;
 var int x = 0;
 par do
-    await START;
+    await OS_START;
     emit a => 1;
     emit a => 2;
     escape x;
@@ -12398,11 +12398,11 @@ end
     run = 1,
 }
 Test { [[
-input void START, A;
+input void OS_START, A;
 event int a;
 var int x = 0;
 par do
-    await START;
+    await OS_START;
     emit a => 1;
     await A;
     emit a => 2;
@@ -12436,11 +12436,11 @@ end
     },
 }
 Test { [[
-input void START;
+input void OS_START;
 event void a;
 var int x = 0;
 par/or do
-    await START;
+    await OS_START;
     emit a =>  1;
     // unreachable
 with
@@ -12497,12 +12497,12 @@ end;
 
 -- TODO: STACK
 Test { [[
-input void START;
+input void OS_START;
 event void x, y;
 var int ret = 0;
 par/or do
     par/and do
-        await START;
+        await OS_START;
         emit x;         // 7
         emit y;         // 8
     with
@@ -12517,7 +12517,7 @@ par/or do
         end;
     end;
 with
-    await START;
+    await OS_START;
     emit x;             // 22
     emit y;             // 23
 end;
@@ -12535,12 +12535,12 @@ escape ret;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 event int a, x, y;
 var int ret = 0;
 par do
     par/and do
-        await START;
+        await OS_START;
         emit x => 1;           // 7
         emit y => 1;           // 8
     with
@@ -12553,7 +12553,7 @@ par do
         end;
     end;
 with
-    await START;
+    await OS_START;
     ret = ret + 1;
     emit a => 1;
     ret = ret * 2;
@@ -12608,7 +12608,7 @@ end;
 
 -- TODO: STACK
 Test { [[
-input void START;
+input void OS_START;
 input int F;
 event int x, w, y, z, a, vis;
 var int xx=0, ww=0, yy=0, zz=0, aa=0, vvis=0;
@@ -12630,7 +12630,7 @@ par do
         aa = aa + 1;
     end;
 with
-    await START;
+    await OS_START;
     aa=1;
     emit a => aa;
     yy=1;
@@ -12924,12 +12924,12 @@ escape aa;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 var int ret;
 par/or do
     event int a;
     par/or do
-        await START;
+        await OS_START;
         emit a => 5;
         // unreachable
     with
@@ -13674,12 +13674,12 @@ escape ret;
 }
 
 Test { [[
-input void START;
-await START;
+input void OS_START;
+await OS_START;
 par/or do
-    await START;
+    await OS_START;
 with
-    await START;
+    await OS_START;
 end
 escape 1;
 ]],
@@ -13687,13 +13687,13 @@ escape 1;
 }
 
 Test { [[
-input void START;
-await START;
+input void OS_START;
+await OS_START;
 do
     finalize with
         var int ret = 1;
     end
-    await START;
+    await OS_START;
 end
 escape 1;
 ]],
@@ -14012,7 +14012,7 @@ escape(ret);
     run = 20,
 }
 Test { [[
-input void START;
+input void OS_START;
 native _t=4, _A;
 native _f();
 native do
@@ -14041,7 +14041,7 @@ par/or do
         end
         await FOREVER;
 with
-    await START;
+    await OS_START;
 end
 if _A then
     ret = ret + *_A;
@@ -14199,7 +14199,7 @@ escape v;
 Test { [[
 var int* p;
 var int ret;
-input void START;
+input void OS_START;
 do
     event int* e;
     par/and do
@@ -14210,7 +14210,7 @@ do
             p = &ret;
         end
     with
-        await START;
+        await OS_START;
         var int i = 1;
         emit e => &i;
     end
@@ -14224,7 +14224,7 @@ escape ret + *p;
 Test { [[
 var void* p;
 var int i;
-input void START;
+input void OS_START;
 do
     var int r;
     do
@@ -14236,7 +14236,7 @@ do
                 r = i;
             end
         with
-            await START;
+            await OS_START;
             emit ptr => (1, null);
         end
     end
@@ -14252,14 +14252,14 @@ end
 Test { [[
 var int* p;
 var int ret;
-input void START;
+input void OS_START;
 do
     event int* e;
     par/and do
         p := await e;
         ret = *p;
     with
-        await START;
+        await OS_START;
         var int i = 1;
         emit e => &i;
     end
@@ -14272,14 +14272,14 @@ escape ret;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 event (int,void*) ptr;
 var void* p;
 var int i;
 par/or do
     (i,p) = await ptr;
 with
-    await START;
+    await OS_START;
     emit ptr => (1, null);
 end
 escape i;
@@ -14301,14 +14301,14 @@ escape i;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 event (int,void*) ptr;
 var void* p;
 var int i;
 par/or do
     (i,p) = await ptr;
 with
-    await START;
+    await OS_START;
     emit ptr => (1, null);
 end
 await 1s;
@@ -14321,13 +14321,13 @@ escape i;
 Test { [[
 var void* p;
 var int i;
-input void START;
+input void OS_START;
 do
     event (int,void*) ptr;
     par/or do
         (i,p) := await ptr;
     with
-        await START;
+        await OS_START;
         emit ptr => (1, null);
     end
 end
@@ -15819,7 +15819,7 @@ escape 1;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 var int v = 0;
 input (void)=>void A do
     v = 1;
@@ -16361,12 +16361,12 @@ escape 1;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 var int h = 10;
 var int* p = &h;
 do
     var int x = 0;
-    await START;
+    await OS_START;
     var int z = 0;
 end
 escape *p;
@@ -18565,8 +18565,8 @@ var T y;
 var T x;
     x.a = 10;
 
-input void START;
-await START;
+input void OS_START;
+await OS_START;
 
 escape x.a;
 ]],
@@ -18770,7 +18770,7 @@ escape a.a;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 class T with
     var int v;
 do
@@ -18778,7 +18778,7 @@ do
 end
 var T a;
 a.v = 5;
-await START;
+await OS_START;
 escape a.v;
 ]],
     run = 5,
@@ -18866,7 +18866,7 @@ do
     _V = _V + 1;
 end
 
-input void START;
+input void OS_START;
 
 var T t1;
 _V = _V*3;
@@ -18874,7 +18874,7 @@ var T t2;
 _V = _V*3;
 var T t3;
 _V = _V*3;
-await START;
+await OS_START;
 escape _V;
 ]],
     run = 345;
@@ -18911,13 +18911,13 @@ do
     await FOREVER;
 end
 
-input void START;
+input void OS_START;
 event void a;
 
 var T t1;
 var T t2;
 emit a;
-await START;
+await OS_START;
 escape 1;
 ]],
     run = 1;
@@ -18941,7 +18941,7 @@ do
     await FOREVER;
 end
 
-input void START;
+input void OS_START;
 
 var T t1;
 _V = _V*3;
@@ -18949,7 +18949,7 @@ var T t2;
 _V = _V*3;
 var T t3;
 _V = _V*3;
-await START;
+await OS_START;
 escape _V;
 ]],
     run = 345;
@@ -18975,8 +18975,8 @@ do
     this.a = this.a + a + 5;
 end
 var T t;
-input void START;
-await START;
+input void OS_START;
+await OS_START;
 escape t.a;
 ]],
     --run = 14,
@@ -18995,8 +18995,8 @@ do
     end
 end
 var T t;
-input void START;
-await START;
+input void OS_START;
+await OS_START;
 escape t.a;
 ]],
     run = 14,
@@ -19187,7 +19187,7 @@ escape t.v + t.u:x;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 var int v;
 class T with
     var int v;
@@ -19195,7 +19195,7 @@ do
     v = 5;
 end
 var T a;
-await START;
+await OS_START;
 v = a.v;
 a.v = 4;
 escape a.v + v;
@@ -19204,7 +19204,7 @@ escape a.v + v;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 class T with
     var int v;
 do
@@ -19212,7 +19212,7 @@ do
 end
 do
     var T a;
-    await START;
+    await OS_START;
     var int v = a.v;
     a.v = 4;
     escape a.v + v;
@@ -19222,11 +19222,11 @@ end
 }
 
 Test { [[
-input void START, A;
+input void OS_START, A;
 class T with
     var int v;
 do
-    await START;
+    await OS_START;
     this.v = 5;
 end
 do
@@ -19240,7 +19240,7 @@ end
 }
 
 Test { [[
-input void START;
+input void OS_START;
 class T with
     event void go;
     var int v;
@@ -19250,7 +19250,7 @@ do
 end
 do
     var T a;
-    await START;
+    await OS_START;
     par/and do
         emit a.go;      // 13
     with
@@ -19268,7 +19268,7 @@ end
 }
 
 Test { [[
-input void START;
+input void OS_START;
 class T with
     event int a, go, ok;
     var int aa;
@@ -19280,7 +19280,7 @@ do
 end
 var T aa;
     par/or do
-        await START;
+        await OS_START;
         emit aa.go => 1;
     with
         await aa.ok;
@@ -19291,14 +19291,14 @@ escape aa.aa;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 class T with
     var int v;
 do
     v = 5;
 end
 var T a;
-    await START;
+    await OS_START;
 var int v = a.v;
 a.v = 4;
 escape a.v + v;
@@ -19655,7 +19655,7 @@ end
 }
 
 Test { [[
-input void START;
+input void OS_START;
 input void A,F;
 var int v = 0;
 class T with
@@ -19666,7 +19666,7 @@ do
     emit ok;
 end
 var T a;
-await START;
+await OS_START;
 par/or do
     loop i,3 do
         par/and do
@@ -19687,7 +19687,7 @@ escape v;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 input void A,F;
 var int v;
 class T with
@@ -19698,7 +19698,7 @@ do
     emit ok;
 end
 var T a;
-await START;
+await OS_START;
 par/or do
     loop i,3 do
         par/and do
@@ -19717,7 +19717,7 @@ escape v;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 input void A,F;
 var int v;
 class T with
@@ -19728,7 +19728,7 @@ do
         emit e;
     end
 end
-await START;
+await OS_START;
 var T a;
 par/or do
     loop i,3 do
@@ -19744,7 +19744,7 @@ escape v;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 input void A,F;
 var int v;
 class T with
@@ -19756,7 +19756,7 @@ do
     end
 end
 var T a;
-await START;
+await OS_START;
 loop i,3 do
     await a.e;
     v = v + 1;
@@ -19767,7 +19767,7 @@ escape v;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 class T with
     event void go, ok;
 do
@@ -19777,7 +19777,7 @@ do
 end
 var T aa;
 par/and do
-    await START;
+    await OS_START;
     emit aa.go;
 with
     await aa.ok;
@@ -19788,7 +19788,7 @@ escape 10;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 do
 class T with
     event void go, ok;
@@ -19799,7 +19799,7 @@ end
 end
 var T aa;
 par/and do
-    await START;
+    await OS_START;
 with
     await aa.ok;
 end
@@ -19820,7 +19820,7 @@ escape 0;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 input int F;
 do
     class T with
@@ -19833,7 +19833,7 @@ do
 end
 var T aa;
 par/and do
-    await START;
+    await OS_START;
 with
     await aa.ok;
 end
@@ -19848,7 +19848,7 @@ class T with
 do
 end
 
-input void F, START;
+input void F, OS_START;
 var int ret = 0;
 
 var T a, b;
@@ -19856,7 +19856,7 @@ par/and do
     await a.e;
     ret = 2;
 with
-    await START;
+    await OS_START;
     emit a.e;
 end
 escape ret;
@@ -19870,7 +19870,7 @@ class T with
 do
 end
 
-input void F, START;
+input void F, OS_START;
 var int ret = 0;
 
 var T a, b;
@@ -19879,7 +19879,7 @@ par/or do
         await a.e;
         ret = 2;
     with
-        await START;
+        await OS_START;
         emit b.e;
     end
 with
@@ -19892,7 +19892,7 @@ escape ret;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 input void F;
 class T1 with
     event void ok;
@@ -19919,7 +19919,7 @@ par/or do
     do
         var T aa;
         par/and do
-            await START;
+            await OS_START;
         with
             await aa.ok;
         end
@@ -19940,7 +19940,7 @@ escape ret;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 input void F;
 class T1 with
 do
@@ -19958,7 +19958,7 @@ var int ret = 10;
 var T aa;
 par/or do
     par/and do
-        await START;
+        await OS_START;
     with
         await FOREVER;
     end
@@ -19973,7 +19973,7 @@ escape ret;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 input void F;
 class T1 with
     event void ok;
@@ -20000,7 +20000,7 @@ var T aa;
 par/or do
     do
         par/and do
-            await START;
+            await OS_START;
         with
             await aa.ok;
         end
@@ -20071,7 +20071,7 @@ escape ret;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 input void F;
 class T with
     event void ok;
@@ -20108,7 +20108,7 @@ escape ret;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 input void F;
 native _V;
 native do
@@ -20149,7 +20149,7 @@ escape _V;
     --run = { ['~>1s']=0 },
 }
 Test { [[
-input void START;
+input void OS_START;
 input void F;
 class T1 with
     event void ok;
@@ -20198,7 +20198,7 @@ escape ret;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 input void F;
 class T with
     event void ok;
@@ -20210,7 +20210,7 @@ var T aa;
 var int ret = 10;
 par/or do
     par/and do
-        await START;
+        await OS_START;
     with
         await aa.ok;
     end
@@ -20228,7 +20228,7 @@ escape ret;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 input void F;
 class T with
     event void ok;
@@ -20308,7 +20308,7 @@ end
 }
 
 Test { [[
-input void START;
+input void OS_START;
 input void A;
 class T with
     event int a, ok;
@@ -20326,7 +20326,7 @@ do
 end
 var T aa;
 par/and do
-    await START;
+    await OS_START;
 with
     await aa.ok;
 end
@@ -20336,7 +20336,7 @@ escape aa.aa;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 class T with
     event int a;
     var int aa;
@@ -20350,7 +20350,7 @@ do
     end
 end
 var T aa;
-await START;
+await OS_START;
 escape aa.aa;
 ]],
     ana = {
@@ -20411,7 +20411,7 @@ escape p:a + t.a + _c + _d;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 class T with
     event void ok, go;
     var int v, going;
@@ -20425,7 +20425,7 @@ var T a;
 var T* ptr;
 ptr = &a;
 par/or do
-    await START;
+    await OS_START;
     emit a.go;
     if ptr:going then
         await FOREVER;
@@ -20520,15 +20520,15 @@ escape t1.a + t2.a;
     run = 30,
 }
 Test { [[
-input void START;
+input void OS_START;
 class T with
     var int a;
 do
-    await START;
+    await OS_START;
     a = 0;
 end
 var T[2] ts;
-await START;
+await OS_START;
 par/and do
     ts[0].a = 10;   // 11
 with
@@ -20542,15 +20542,15 @@ escape ts[0].a + ts[1].a;
     run = 30,
 }
 Test { [[
-input void START;
+input void OS_START;
 class T with
     var int a;
 do
-    await START;
+    await OS_START;
     this.a = 0;
 end
 var T[2] ts;
-await START;
+await OS_START;
 par/and do
     ts[0].a = 10;
 with
@@ -20564,15 +20564,15 @@ escape ts[0].a + ts[1].a;
     run = 30,
 }
 Test { [[
-input void START;
+input void OS_START;
 class T with
     var int a;
 do
-    await START;
+    await OS_START;
     a = 0;
 end
 var T t1, t2;
-await START;
+await OS_START;
 par/and do
     t1.a = 10;
 with
@@ -20586,15 +20586,15 @@ escape t1.a + t2.a;
     run = 30,
 }
 Test { [[
-input void START;
+input void OS_START;
 class T with
     var int a;
 do
-    await START;
+    await OS_START;
     this.a = 0;
 end
 var T t1, t2;
-await START;
+await OS_START;
 par/and do
     t1.a = 10;
 with
@@ -20608,18 +20608,18 @@ escape t1.a + t2.a;
     run = 30,
 }
 Test { [[
-input void START;
+input void OS_START;
 native nohold _f();
 native do
     void f (void* t) {}
 end
 class T with
 do
-    await START;
+    await OS_START;
     _f(&this);       // 9
 end
 var T[2] ts;
-await START;
+await OS_START;
 par/and do
     _f(&ts[0]);     // 14
 with
@@ -20634,18 +20634,18 @@ escape 10;
     run = 10,
 }
 Test { [[
-input void START;
+input void OS_START;
 native nohold _f();
 native do
     void f (void* t) {}
 end
 class T with
 do
-    await START;
+    await OS_START;
     _f(&this);       // 9
 end
 var T t0,t1;
-await START;
+await OS_START;
 par/and do
     _f(&t0);     // 14
 with
@@ -20797,8 +20797,8 @@ par/or do
         await aa.ok;
     end
 with
-    input void START;
-    await START;
+    input void OS_START;
+    await OS_START;
 end
 escape aa.aa;
 ]],
@@ -20824,8 +20824,8 @@ par/or do
         await aa.ok;
     end
 with
-    input void START;
-    await START;
+    input void OS_START;
+    await OS_START;
 end
 escape aa.aa;
 ]],
@@ -20833,7 +20833,7 @@ escape aa.aa;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 
 native _inc(), _V;
 native do
@@ -20844,14 +20844,14 @@ end
 _inc();
 event void x;
 emit x;
-await START;
+await OS_START;
 escape _V;
 ]],
     run = 1,
 }
 
 Test { [[
-    input void START;
+    input void OS_START;
 class T with
     event void a, ok, go, b;
     var int aa, bb;
@@ -20880,7 +20880,7 @@ par/or do
     await aa.ok;
     _V = _V+1;
 with
-    await START;
+    await OS_START;
     emit aa.a;
     _V = _V+2;
 end
@@ -20890,7 +20890,7 @@ escape _V + aa.aa + aa.bb;
 }
 
 Test { [[
-    input void START;
+    input void OS_START;
 class T with
     event void a, ok, go, b;
     var int aa, bb;
@@ -20913,7 +20913,7 @@ par/or do
     await aa.ok;
     ret = 1;
 with
-    await START;
+    await OS_START;
     emit aa.a;
     ret = 2;
 end
@@ -20923,7 +20923,7 @@ escape ret + aa.aa + aa.bb;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 class T with
     event void e, ok, go;
     var int ee;
@@ -20937,7 +20937,7 @@ do
 end
 var T a1, a2;
 var int ret = 0;
-await START;
+await OS_START;
 
 par/or do
     par/and do
@@ -20964,7 +20964,7 @@ escape ret;
 }
 Test { [[
 native nohold _f();
-input void START;
+input void OS_START;
 class T with
     event void e, ok, go, b;
     var u8 a;
@@ -20980,12 +20980,12 @@ native do
     }
 end
 par/and do
-    await START;
+    await OS_START;
     emit a.go;
 with
     await a.ok;
 with
-    await START;
+    await OS_START;
     emit b.go;
 with
     await b.ok;
@@ -20996,7 +20996,7 @@ escape _f((char*)&a.a,(char*)&b.a);
 }
 
 Test { [[
-input void START,B;
+input void OS_START,B;
 class T with
     event void ok, go, b;
     event void e, f;
@@ -21014,7 +21014,7 @@ ptr = &a;
 var int ret = 0;
 par/and do
     par/and do
-        await START;
+        await OS_START;
         emit ptr:go;
     with
         await ptr:ok;
@@ -21037,7 +21037,7 @@ escape ret + ptr:v + a.v;
 }
 
 Test { [[
-input void START, B;
+input void OS_START, B;
 class T with
     var int v;
     event void ok, go, b;
@@ -21054,7 +21054,7 @@ var T[2] ts;
 var int ret = 0;
 par/and do
     par/and do
-        await START;
+        await OS_START;
         emit ts[0].go;
     with
         await ts[0].ok;
@@ -21062,7 +21062,7 @@ par/and do
     ret = ret + 1;
 with
     par/and do
-        await START;
+        await OS_START;
         emit ts[1].go;
     with
         await ts[1].ok;
@@ -21121,7 +21121,7 @@ escape aa.aa;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 class T with
     var int v;
     event void e, f, ok;
@@ -21143,14 +21143,14 @@ par/and do
     end
     ret = ret + 1;
 with
-    await START;
+    await OS_START;
     emit ts[0].e;
     ret = ret + 1;
 with
     await ts[0].f;
     ret = ret + 1;
 with
-    await START;
+    await OS_START;
     emit ts[1].e;
     ret = ret + 1;
 with
@@ -21167,21 +21167,21 @@ escape ret + ts[0].v + ts[1].v;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 class T with
     var int v;
 do
     v = 1;
 end
 var T a, b;
-await START;
+await OS_START;
 escape a.v + b.v;
 ]],
     run = 2,
 }
 
 Test { [[
-input void START;
+input void OS_START;
 input void F;
 class T1 with
     event void ok;
@@ -21198,7 +21198,7 @@ do
     emit ok;
 end
 var int ret = 10;
-await START;
+await OS_START;
 par/or do
     do
         var T aa;
@@ -21282,8 +21282,8 @@ do
 end
 do
     var T t;
-    input void START;
-    await START;
+    input void OS_START;
+    await OS_START;
 end
 escape _V;
 ]],
@@ -21322,7 +21322,7 @@ native _V;
 native do
     static int V = 0;
 end
-input void START;
+input void OS_START;
 class T with
     // nothing
 do
@@ -21330,14 +21330,14 @@ do
         finalize with
             _V = 100;
         end
-        await START;
+        await OS_START;
     end
 end
 par/or do
     var T t;
-    await START;
+    await OS_START;
 with
-    await START;
+    await OS_START;
 end
 escape _V;
 ]],
@@ -21349,7 +21349,7 @@ escape _V;
 
 Test { [[
 native _V;
-input void A, F, START;
+input void A, F, OS_START;
 native do
     int V = 0;
 end
@@ -21367,7 +21367,7 @@ do
     emit ok;
 end
 var T t;
-await START;
+await OS_START;
 par/or do
     do                  // 22
         finalize with
@@ -21399,7 +21399,7 @@ escape t.v + _V;        // * reads before
 
 Test { [[
 native do ##include <assert.h> end
-input void START;
+input void OS_START;
 
 interface Global with
     event void e;
@@ -21409,7 +21409,7 @@ event void e;
 
 class T with
 do
-    await START;
+    await OS_START;
     emit global:e; // TODO: must also check if org trail is active
     native _assert();
     _assert(0);
@@ -21424,7 +21424,7 @@ escape 2;
     run = 2,
 }
 Test { [[
-input void START;
+input void OS_START;
 
 native _V, _assert();
 native do
@@ -21440,7 +21440,7 @@ event void e;
 
 class T with
 do
-    await START;
+    await OS_START;
     emit global:e; // TODO: must also check if org trail is active
     _V = 1;
     _assert(0);
@@ -21460,7 +21460,7 @@ escape _V;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 
 native _V, _assert();
 native do
@@ -21485,7 +21485,7 @@ par/or do
     await global:e;
     _V = 2;
 with
-    await START;
+    await OS_START;
     do
         var T t;
         await FOREVER;
@@ -21497,7 +21497,7 @@ escape _V;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 
 native _V, _assert();
 native do
@@ -21523,7 +21523,7 @@ par/or do
     await global:e;
     _V = 2;
 with
-    await START;
+    await OS_START;
     do
         var T t;
         _assert(0);
@@ -21536,7 +21536,7 @@ escape _V;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 
 native _X,_V, _assert();
 native do
@@ -21565,7 +21565,7 @@ par/or do
     await global:e;
     _V = 2;
 with
-    await START;
+    await OS_START;
     do
         var T[2] t;
         _assert(0);
@@ -21578,7 +21578,7 @@ escape _V+_X;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 
 native _V, _assert();
 native do
@@ -21590,7 +21590,7 @@ class T with
     var int x;
     event void ok;
 do
-    await START;
+    await OS_START;
     emit  ok;
     _assert(0);
 end
@@ -21610,7 +21610,7 @@ escape ret;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 
 native _V, _assert();
 native do
@@ -21622,7 +21622,7 @@ class T with
     var int x;
     event void ok;
 do
-    await START;
+    await OS_START;
     emit  ok;
     _assert(0);
 end
@@ -21631,7 +21631,7 @@ class U with
     var int x;
     event void ok;
 do
-    await START;
+    await OS_START;
     _assert(0);
     emit  ok;
 end
@@ -21665,14 +21665,14 @@ escape t:a;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 class T with
     var int a;
 do
     this.a = 1;
 end
 var T* t = new T;
-await START;
+await OS_START;
 escape t:a;
 ]],
     run = 1,
@@ -21699,14 +21699,14 @@ escape 10;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 class T with
     var int a;
 do
     this.a = 1;
 end
 var T* t = new T;
-await START;
+await OS_START;
 escape t:a;
 ]],
     run = 1,
@@ -22285,19 +22285,19 @@ native _V;
 native do
     int V=0;
 end
-input void START;
+input void OS_START;
 class T with
 do
     par/or do
     with
     end
     _V = _V + 1;
-    await START;
+    await OS_START;
     _V = _V + 1;
 end
 var T* t1 = new T;
 var T* t2 = new T;
-await START;
+await OS_START;
 escape _V;
 ]],
     --run = 2,  -- blk before org
@@ -22587,8 +22587,8 @@ do
         end
     end
 
-    input void START;
-    await START;
+    input void OS_START;
+    await OS_START;
 end
 native _assert();
 _assert(_V==100 and v==100);
@@ -22638,19 +22638,19 @@ escape _V;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 native _V;
 native do
     int V = 1;
 end
 class T with
 do
-    await START;
+    await OS_START;
     _V = 10;
 end
 do
     spawn T;
-    await START;
+    await OS_START;
 end
 escape _V;
 ]],
@@ -22659,7 +22659,7 @@ escape _V;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 native _V;
 native do
     int V = 1;
@@ -22670,7 +22670,7 @@ do
 end
 do
     spawn T;
-    await START;
+    await OS_START;
 end
 escape _V;
 ]],
@@ -22772,7 +22772,7 @@ escape _V;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 native _V;
 native do
     int V = 0;
@@ -22796,7 +22796,7 @@ do
     with
         nothing;
     end
-    await START;
+    await OS_START;
 end
 escape _V;
 ]],
@@ -22832,7 +22832,7 @@ escape _V;
     run = 10,
 }
 Test { [[
-input void START;
+input void OS_START;
 native _V;
 native do
     int V = 5;
@@ -22855,7 +22855,7 @@ do
     with
         nothing;
     end
-    await START;
+    await OS_START;
 end
 escape _V;
 ]],
@@ -22936,7 +22936,7 @@ a = new U;
 
 Test { [[
 native _V;
-input void START;
+input void OS_START;
 native do
     int V = 0;
 end
@@ -22955,7 +22955,7 @@ var int ret = 0;
 do
     var T* o;
     o = new T;
-    await START;
+    await OS_START;
     ret = o:a;
 end
 
@@ -22965,7 +22965,7 @@ escape ret + _V;
 }
 
 Test { [[
-input void START, F;
+input void OS_START, F;
 native _V;
 native do
     int V = 0;
@@ -22986,7 +22986,7 @@ var int ret = 0;
 par/or do
     var T* o;
     o = new T;
-    await START;
+    await OS_START;
     ret = o:a;
 with
     await F;
@@ -22998,7 +22998,7 @@ escape ret + _V;
 }
 
 Test { [[
-input void START, F;
+input void OS_START, F;
 native _V;
 native do
     int V = 0;
@@ -23019,7 +23019,7 @@ var int ret = 0;
 var T* o;
 par/or do
     o = new T;
-    await START;
+    await OS_START;
     ret = o:a;
 with
     await F;
@@ -23171,7 +23171,7 @@ escape _V;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 native _f(), _V;
 native do
     int V = 1;
@@ -23207,7 +23207,7 @@ escape _V;
     props = 'line 16 : not permitted inside an interface',
 }
 Test { [[
-input void START;
+input void OS_START;
 native _f(), _V;
 native do
     int V = 1;
@@ -23248,7 +23248,7 @@ escape _V;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 native _f(), _V;
 native do
     int V = 1;
@@ -23290,7 +23290,7 @@ escape _V;
     props = 'line 27 : not permitted inside an interface',
 }
 Test { [[
-input void START;
+input void OS_START;
 native _f(), _V;
 native do
     int V = 1;
@@ -23335,7 +23335,7 @@ escape _V;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 
 class V with
 do
@@ -23348,7 +23348,7 @@ end
 
 
 var U t;
-await START;
+await OS_START;
 
 native nohold _tceu_trl, _tceu_trl_, _sizeof();
 escape 2;
@@ -23357,7 +23357,7 @@ escape 2;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 native _f(), _V;
 native do
     int V = 1;
@@ -23392,7 +23392,7 @@ end
 
 do
     var T t;
-    await START;
+    await OS_START;
 end
 
 escape _V;
@@ -23400,7 +23400,7 @@ escape _V;
     props = 'line 27 : not permitted inside an interface',
 }
 Test { [[
-input void START;
+input void OS_START;
 native _f(), _V;
 native do
     int V = 1;
@@ -23437,7 +23437,7 @@ end
 
 do
     var T t;
-    await START;
+    await OS_START;
 end
 
 escape _V;
@@ -23446,7 +23446,7 @@ escape _V;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 native _f(), _V;
 native do
     int V = 1;
@@ -23481,7 +23481,7 @@ end
 
 var T t;
 do
-    await START;
+    await OS_START;
     var V* v = t.u.v;   // no more :=
 end
 
@@ -23490,7 +23490,7 @@ escape _V;
     props = 'line 27 : not permitted inside an interface',
 }
 Test { [[
-input void START;
+input void OS_START;
 native _f(), _V;
 native do
     int V = 1;
@@ -23527,7 +23527,7 @@ end
 
 var T t;
 do
-    await START;
+    await OS_START;
     var V* v = t.u:v;   // no more :=
 end
 
@@ -23569,13 +23569,13 @@ do
     await FOREVER;
 end
 
-input void START;
+input void OS_START;
 
 var T t;
 do
     var U u;
     u.v = t.u.v;
-    await START;
+    await OS_START;
 end
 
 escape _V;
@@ -23617,13 +23617,13 @@ do
     await FOREVER;
 end
 
-input void START;
+input void OS_START;
 
 var T t;
 do
     var U u;
     u.v = t.u:v;
-    await START;
+    await OS_START;
 end
 
 escape _V;
@@ -23656,7 +23656,7 @@ class V with
 do
 end
 
-input void START;
+input void OS_START;
 class U with
     var V* v;
     event void x;
@@ -23671,7 +23671,7 @@ end
 class T with
     var U* u;
 do
-    await START;
+    await OS_START;
     //u:v = new V;
     emit u:x;
 end
@@ -23680,7 +23680,7 @@ do
     var U u;
     var T t;
         t.u = &u;
-    await START;
+    await OS_START;
 end
 
 escape 10;
@@ -23692,7 +23692,7 @@ class V with
 do
 end
 
-input void START;
+input void OS_START;
 class U with
     var V* v;
 do
@@ -23701,7 +23701,7 @@ end
 class T with
     var U* u;
 do
-    await START;
+    await OS_START;
     u:v = new V;
 end
 
@@ -23709,7 +23709,7 @@ do
     var U u;
     var T t;
         t.u = &u;
-    await START;
+    await OS_START;
 end
 
 escape 10;
@@ -23722,7 +23722,7 @@ class V with
 do
 end
 
-input void A, START;
+input void A, OS_START;
 class U with
     var V* v;
 do
@@ -23732,7 +23732,7 @@ end
 class T with
     var U* u;
 do
-    await START;
+    await OS_START;
     u:v = new V;
 end
 
@@ -23740,7 +23740,7 @@ do
     var U u;
     var T t;
         t.u = &u;
-    await START;
+    await OS_START;
 end
 
 escape 10;
@@ -23898,8 +23898,8 @@ do
     p:v = 2;
     p = new T;
     p:v = 3;
-    input void START;
-    await START;
+    input void OS_START;
+    await OS_START;
 end
 _assert(_V == 6);
 escape _V;
@@ -24257,7 +24257,7 @@ escape 1;
 -- PAUSE/IF w/ ORGS
 
 Test { [[
-input void START;
+input void OS_START;
 input int A,B;
 
 class T with
@@ -24276,7 +24276,7 @@ par/or do
         ret = await t.e;
     end
 with
-    await START;
+    await OS_START;
     emit a => 1;
     await B;
     emit a => 0;
@@ -24288,7 +24288,7 @@ escape ret;
 }
 
 Test { [[
-input void A,X, START;
+input void A,X, OS_START;
 event int a;//=0;
 var int ret = 0;
 
@@ -24320,7 +24320,7 @@ par/or do
         end
     end
 with
-    await START;
+    await OS_START;
     emit a => 1;
     await X;
     emit a => 0;
@@ -24754,7 +24754,7 @@ escape 10;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 
 interface I with
     var int e;
@@ -24769,14 +24769,14 @@ end
 var T t;
 var I* i = &t;
 
-await START;
+await OS_START;
 escape i:e;
 ]],
     run = 100,
 }
 
 Test { [[
-input void START;
+input void OS_START;
 
 interface I with
     event void e;
@@ -24794,7 +24794,7 @@ end
 var T t;
 var I* i = &t;
 
-await START;
+await OS_START;
 emit i:e;
 escape i:ee;
 ]],
@@ -24802,7 +24802,7 @@ escape i:ee;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 
 interface I with
     event int e, f;
@@ -24823,13 +24823,13 @@ var I* i1 = &t1;
 
 var int ret = 0;
 par/and do
-    await START;
+    await OS_START;
     emit i1:e => 99;            // 21
 with
     var int v = await i1:f;
     ret = ret + v;
 with
-    await START;
+    await OS_START;
 end
 escape ret;
 ]],
@@ -24837,7 +24837,7 @@ escape ret;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 
 interface I with
     event int e, f;
@@ -24856,13 +24856,13 @@ var I* i2 = &t2;
 
 var int ret = 0;
 par/and do
-    await START;
+    await OS_START;
     emit i1:e => 99;            // 21
 with
     var int v = await i1:f;
     ret = ret + v;
 with
-    await START;
+    await OS_START;
     emit i2:e => 66;            // 27
 with
     var int v = await i2:f;
@@ -24894,7 +24894,7 @@ var I[10] a;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 interface Global with
     event int a?;
 end
@@ -24907,7 +24907,7 @@ class T with
     event int a?;
     var Global* g;
 do
-    await START;
+    await OS_START;
     emit g:a?  =>  10;
 end
 var U u;
@@ -25000,7 +25000,7 @@ escape 1;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 interface Global with
     event int a;
 end
@@ -25008,7 +25008,7 @@ event int a;
 class T with
     event int a;
 do
-    await START;
+    await OS_START;
     emit global:a  =>  10;
 end
 var T t;
@@ -25018,7 +25018,7 @@ escape v;
     run = 10,
 }
 Test { [[
-input void START;
+input void OS_START;
 interface Global with
     event int a;
     var int aa;
@@ -25032,7 +25032,7 @@ do
     aa = await global:a;
 end
 var T t;
-await START;
+await OS_START;
 emit a  =>  10;
 escape t.aa;
 ]],
@@ -25047,8 +25047,8 @@ do
 end
 var int a = 10;
 var T t;
-input void START;
-await START;
+input void OS_START;
+await OS_START;
 t.a = t.a + a;
 escape t.a;
 ]],
@@ -25067,8 +25067,8 @@ end
 do
     var int a = 10;
     var T t;
-input void START;
-await START;
+input void OS_START;
+await OS_START;
     t.a = t.a + a;
     escape t.a;
 end
@@ -25088,8 +25088,8 @@ end
 var int a = 10;
 do
     var T t;
-input void START;
-await START;
+input void OS_START;
+await OS_START;
     t.a = t.a + a;
     escape t.a;
 end
@@ -25118,8 +25118,8 @@ end
 var int a = 10;
 do
     var T t;
-input void START;
-await START;
+input void OS_START;
+await OS_START;
     t.a = t.a + a;
     escape t.a + global:a;
 end
@@ -25301,7 +25301,7 @@ escape 0;
 }
 
 Test { [[
-input void START;
+input void OS_START;
 class T with
     event int a;
     var int aa;
@@ -25322,14 +25322,14 @@ var I* i;
 var T t;
 i = &t;
 var J* j = i;
-await START;
+await OS_START;
 escape i:aa + j:aa + t.aa;
 ]],
     run = 30,
 }
 
 Test { [[
-input void START;
+input void OS_START;
 class T with
     var int v;
     var int* x;
@@ -25351,7 +25351,7 @@ var I* i;
 var T t;
 i = &t;
 var J* j = i;
-await START;
+await OS_START;
 escape i:a + j:a + t.a + i:v + t.v;
 ]],
     run = 32,
@@ -25420,8 +25420,8 @@ do
     a = 10;
 end
 var T t;
-input void START;
-await START;
+input void OS_START;
+await OS_START;
 escape t.a;
 ]],
     run = 10,
@@ -26217,8 +26217,8 @@ do
 end
 
 var T t;
-input void START;
-await START;
+input void OS_START;
+await OS_START;
 escape t.v + t.f(20) + t.v;
 ]],
     env = 'line 8 : function declaration does not match the one at "tests.lua:3"',
@@ -26239,8 +26239,8 @@ do
 end
 
 var T t;
-input void START;
-await START;
+input void OS_START;
+await OS_START;
 escape t.v + t.f(20) + t.v;
 ]],
     run = 220,
@@ -26266,8 +26266,8 @@ end
 
 var T t;
 var I* i = &t;
-input void START;
-await START;
+input void OS_START;
+await OS_START;
 i:f(100);
 escape i:v;
 ]],
@@ -26293,8 +26293,8 @@ end
 
 var T t;
 var I* i = &t;
-input void START;
-await START;
+input void OS_START;
+await OS_START;
 i:f(100);
 escape i:v;
 ]],
@@ -26360,8 +26360,8 @@ end
 var T t;
 var U u;
 var I* i = &t;
-input void START;
-await START;
+input void OS_START;
+await OS_START;
 i:f(100);
 var int ret = i:v;
 
@@ -27472,7 +27472,7 @@ end
 }
 
 Test { [[
-input void START;
+input void OS_START;
 event void a;
 native _ret_val, _ret_end;
 _ret_val = 0;
@@ -27485,7 +27485,7 @@ loop do
         await a;
         _ret_val = _ret_val + 2;
     with
-        await START;
+        await OS_START;
         emit a;
     end
 end
@@ -27609,7 +27609,7 @@ end
 }
 
 Test { [[
-input void START;
+input void OS_START;
 
 interface Global with
     var int x;
@@ -27624,7 +27624,7 @@ do
 end
 
 var T t;
-await START;
+await OS_START;
 escape t.x;
 ]],
     run = 10,
@@ -27673,39 +27673,39 @@ escape 1;
 Test { [[
 event void e;
 event int f;
-input void START;
+input void OS_START;
 await (e) or
       (f) or
-      (START);
+      (OS_START);
 escape 1;
 ]],
     run = 1,
 }
 
 Test { [[
-input void START;
-await (10ms) or (START);
+input void OS_START;
+await (10ms) or (OS_START);
 escape 1;
 ]],
     run = 1,
 }
 
 Test { [[
-input void START;
-var int* x = await (10ms) or (START);
+input void OS_START;
+var int* x = await (10ms) or (OS_START);
 escape 1;
 ]],
     env = 'line 2 : invalid attribution',
 }
 
 Test { [[
-input void START;
+input void OS_START;
 par/or do
     loop do
-        await (START) or (START);
+        await (OS_START) or (OS_START);
     end
 with
-    await START;
+    await OS_START;
 end
 escape 1;
 ]],
@@ -27713,8 +27713,8 @@ escape 1;
 }
 
 Test { [[
-input void START;
-await (10ms) or (START)
+input void OS_START;
+await (10ms) or (OS_START)
         until 1;
 escape 1;
 ]],
@@ -27722,16 +27722,16 @@ escape 1;
 }
 
 Test { [[
-input void START;
-var int i = await (10ms) or (START)
+input void OS_START;
+var int i = await (10ms) or (OS_START)
         until i==1;
 escape i;
 ]],
     run = 1,
 }
 Test { [[
-input void START;
-var int i = await (10ms) or (START)
+input void OS_START;
+var int i = await (10ms) or (OS_START)
         until i==0;
 escape i+1;
 ]],
@@ -28182,13 +28182,13 @@ escape 1;
 
 Test { [[
 event (int,int) a;
-input void START;
+input void OS_START;
 par/or do
     var int c,d;
     (c,d) = await a;
     escape c + d;
 with
-    await START;
+    await OS_START;
     emit a => (1,2);
 end
 escape 1;
