@@ -3,6 +3,42 @@
 --[===[
 --]===]
 
+Test {
+	[[
+native nohold _ceu_sys_unapp();
+native do
+    extern tceu_app _ceu_app_2;
+end
+output int A;
+emit A=>2;
+emit A=>2;
+emit A=>2;
+await 1s;
+_ceu_sys_unapp(&__ceu_app_2);
+emit A=>2;
+await 1s;
+escape 1;
+]],
+    [[
+input int A;
+var int a;
+var int ret = 0;
+par/or do
+    every a = A do
+        ret = ret + a;
+    end
+with
+    await OS_STOP;
+    ret = ret + 10;
+end
+escape ret;
+]],
+	lnks = {
+		{ 1, 1, 2, 245 },
+	},
+    run = 17,
+}
+
 --do return end
 
 -- OK: well tested
@@ -76,10 +112,10 @@ escape(3);
 }
 
 Test {
-	[[input void START; await START; escape(1);]],
+    [[input void OS_START; await OS_START; escape(1);]],
 	[[escape(2);]],
 	[[escape(3);]],
-	[[input void START; await START; escape(4);]],
+    [[input void OS_START; await OS_START; escape(4);]],
 	run = 10,
 }
 
@@ -87,7 +123,7 @@ Test {
 	[[output int A; emit A=>2;         escape 1;]],
 	[[input  int A; var int a=await A; escape a;]],
 	lnks = {
-		{ 1, 1, 2, 246 },
+		{ 1, 1, 2, 245 },
 	},
 	run = 3,
 }
@@ -97,8 +133,8 @@ Test {
 	[[input  int A; var int a=await A; escape a;]],
 	[[input  int A; var int a=await A; escape a;]],
 	lnks = {
-		{ 1, 1, 2, 246 },
-		{ 1, 1, 3, 246 },
+		{ 1, 1, 2, 245 },
+		{ 1, 1, 3, 245 },
 	},
 	run = 5,
 }
@@ -118,8 +154,8 @@ end
 escape ret;
 ]],
 	lnks = {
-		{ 1, 1, 2, 246 },
 		{ 1, 1, 2, 245 },
+		{ 1, 1, 2, 244 },
 	},
 	run = 6,
 }
@@ -136,7 +172,7 @@ end
 escape 1;
 ]],
 	lnks = {
-		{ 1, 1, 2, 246 },
+		{ 1, 1, 2, 245 },
         -- src app
         -- src evt
         -- dst app
@@ -158,7 +194,7 @@ end
 escape 1;
 ]],
 	lnks = {
-		{ 1, 1, 2, 246 },
+		{ 1, 1, 2, 245 },
         -- src app
         -- src evt
         -- dst app
@@ -180,7 +216,7 @@ end
 escape 1;
 ]],
 	lnks = {
-		{ 1, 1, 2, 246 },
+        { 1, 1, 2, 245 },
         -- src app
         -- src evt
         -- dst app
@@ -191,9 +227,9 @@ escape 1;
 
 Test {
     [[
-input void START;
+input void OS_START;
 output (int)=>int A;
-await START;
+await OS_START;
 var int ret = call A=>2;
 escape ret;
 ]],
@@ -205,7 +241,7 @@ end
 escape inc;
 ]],
 	lnks = {
-		{ 1, 1, 2, 246 },
+        { 1, 1, 2, 245 },
         -- src app
         -- src evt
         -- dst app
@@ -225,7 +261,7 @@ _printf("C = %d\n", ret);
 escape ret;
 ]],
     [[
-input void START;
+input void OS_START;
 output (int)=>int O;
 var int v;
 input (int v)=>int I do
@@ -234,13 +270,13 @@ _printf("B = %d\n", x);
     this.v = x;
     return x + 1;
 end
-await START;
+await OS_START;
 _printf("D = %d\n", v);
 escape v;
 ]],
 	lnks = {
-		{ 1, 1, 2, 245 },
-        { 2, 1, 1, 245 },
+        { 1, 1, 2, 244 },
+        { 2, 1, 1, 244 },
         -- src app
         -- src evt
         -- dst app
@@ -255,7 +291,7 @@ var int v = 0;
 input (void)=>void A do
     v = 1;
 end
-await START;
+await OS_START;
 escape v;
 ]],
 [[
@@ -264,7 +300,7 @@ call A;
 escape 1;
 ]],
     run = 2,
-    lnks = { { 2,1, 1,246 } },
+    lnks = { { 2,1, 1,245 } },
 }
 Test {
 [[
@@ -293,7 +329,7 @@ end
 escape ret;
 ]],
     run = 3,
-    lnks = { { 1,1, 2,246 } },
+    lnks = { { 1,1, 2,245 } },
 }
 
 Test {
@@ -328,7 +364,7 @@ end
 escape ret;
 ]],
     run = 3,
-    lnks = { { 1,1, 2,246 } },
+    lnks = { { 1,1, 2,245 } },
 }
 
 Test {
@@ -365,7 +401,7 @@ end
 escape ret;
 ]],
     run = 3,
-    lnks = { { 1,1, 2,246 } },
+    lnks = { { 1,1, 2,245 } },
 }
 
 Test {
@@ -395,7 +431,7 @@ end
 escape ret;
 ]],
     run = 20,
-    lnks = { { 1,1, 2,246 } },
+    lnks = { { 1,1, 2,245 } },
 }
 
 Test {
@@ -429,8 +465,8 @@ escape ret;
 ]],
     run = 600,
     lnks = {
-        { 1,1, 2,246 },
-        { 1,2, 2,245 },
+        { 1,1, 2,245 },
+        { 1,2, 2,244 },
     },
 }
 
@@ -468,8 +504,8 @@ escape ret;
 ]],
     run = 11927,
     lnks = {
-        { 1,1, 2,246 },
-        { 1,2, 2,245 },
+        { 1,1, 2,245 },
+        { 1,2, 2,244 },
     },
 }
 
@@ -500,7 +536,7 @@ end
 escape ret;
 ]],
     run = 6000,
-    lnks = { { 1,1, 2,246 } },
+    lnks = { { 1,1, 2,245 } },
 }
 
 Test {
@@ -552,8 +588,8 @@ escape ret;
 ]],
     run = 17927,
     lnks = {
-        { 1,1, 2,246 },
-        { 1,2, 2,245 },
+        { 1,1, 2,245 },
+        { 1,2, 2,244 },
     },
 }
 
@@ -588,5 +624,5 @@ end
 escape ret;
 ]],
     run = 3597,
-    lnks = { { 1,1, 2,246 } },
+    lnks = { { 1,1, 2,245 } },
 }
