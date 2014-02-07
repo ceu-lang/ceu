@@ -175,6 +175,30 @@ static void ceu_app_init ()
 #ifdef CEU_NEWS
     === POOLS_INIT ===
 #endif
+
+#ifdef CEU_OS
+    CEU_APP.seqno = 0;
+#if defined(CEU_RET) || defined(CEU_OS)
+    CEU_APP.isAlive = 1;
+#endif
+#ifdef CEU_ASYNCS
+    CEU_APP.pendingAsyncs = 1;
+#endif
+    CEU_APP.nxt = NULL;
+#ifdef CEU_RET
+    CEU_APP.ret = 0;
+#endif
+#ifdef CEU_WCLOCKS
+    CEU_APP.wclk_late = 0;
+    CEU_APP.wclk_min = CEU_WCLOCK_INACTIVE;
+    CEU_APP.wclk_min_tmp = CEU_WCLOCK_INACTIVE;
+#endif
+#ifdef CEU_THREADS
+    CEU_APP.threads_mutex = PTHREAD_MUTEX_INITIALIZER;
+    CEU_APP.threads_n     = 0;
+#endif
+#endif /* CEU_OS */
+
     ceu_org_init(CEU_APP.data, CEU_NTRAILS, Class_Main, 0, NULL, 0);
 }
 

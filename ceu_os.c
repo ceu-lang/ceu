@@ -686,7 +686,6 @@ void ceu_sys_start (tceu_app* app)
 
 void ceu_sys_stop (tceu_app* app)
 {
-printf("STOP: %p\n", app);
 #ifdef CEU_IN_OS_STOP
 	ceu_go_event(app, CEU_IN_OS_STOP, (tceu_evtp)NULL);
 #endif
