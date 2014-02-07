@@ -3,73 +3,6 @@
 --[===[
 --]===]
 
-Test {
-	[[
-native nohold _ceu_sys_unapp();
-native do
-    extern tceu_app _ceu_app_2;
-end
-output int A;
-emit A=>2;
-emit A=>2;
-emit A=>2;
-await 1s;
-_ceu_sys_unapp(&__ceu_app_2);
-emit A=>2;
-await 1s;
-escape 1;
-]],
-    [[
-input int A;
-var int a;
-var int ret = 0;
-par/or do
-    every a = A do
-        ret = ret + a;
-    end
-with
-    await OS_STOP;
-    ret = ret + 10;
-end
-escape ret;
-]],
-	lnks = {
-		{ 1, 1, 2, 245 },
-	},
-    run = 17,
-}
-
-Test {
-	[[
-native nohold _ceu_sys_unapp();
-native do
-    extern tceu_app _ceu_app_2;
-end
-output int A;
-emit A=>2;
-emit A=>2;
-emit A=>2;
-await 1s;
-_ceu_sys_unapp(&__ceu_app_2);
-emit A=>2;
-await 1s;
-escape 1;
-]],
-    [[
-input int A;
-var int a;
-var int ret = 0;
-every a = A do
-    ret = ret + a;
-end
-escape ret;
-]],
-	lnks = {
-		{ 1, 1, 2, 245 },
-	},
-    run = 2,
-}
-
 --do return end
 
 -- OK: well tested
@@ -264,7 +197,7 @@ await OS_START;
 var int ret = call A=>2;
 escape ret;
 ]],
-    [[
+[[
 var int inc = 3;
 input (int v)=>int A do
     return v + this.inc + inc;
@@ -273,6 +206,33 @@ escape inc;
 ]],
 	lnks = {
         { 1, 1, 2, 245 },
+        -- src app
+        -- src evt
+        -- dst app
+        -- dst evt
+	},
+    todo = 'should fail on call broken link',
+    run = 11,
+}
+Test {
+    [[
+var int inc = 3;
+input (int v)=>int A do
+_printf("2v = %d\n", v);
+    return v + this.inc + inc;
+end
+escape inc;
+]],
+    [[
+input void OS_START;
+output (int)=>int A;
+await OS_START;
+var int ret = call A=>2;
+_printf("1v = %d\n", ret);
+escape ret;
+]],
+	lnks = {
+        { 2, 1, 1, 245 },
         -- src app
         -- src evt
         -- dst app
@@ -319,7 +279,7 @@ var int v = 0;
 input (void)=>void A do
     v = 1;
 end
-await OS_START;
+await 1s;
 escape v;
 ]],
 [[
@@ -651,6 +611,73 @@ with
 end
 escape ret;
 ]],
-    run = 3597,
+    run = 3600,
     lnks = { { 1,1, 2,245 } },
+}
+
+Test {
+	[[
+native nohold _ceu_sys_stop();
+native do
+    extern tceu_app _ceu_app_2;
+end
+output int A;
+emit A=>2;
+emit A=>2;
+emit A=>2;
+await 1s;
+_ceu_sys_stop(&__ceu_app_2);
+emit A=>2;
+await 1s;
+escape 1;
+]],
+    [[
+input int A;
+var int a;
+var int ret = 0;
+par/or do
+    every a = A do
+        ret = ret + a;
+    end
+with
+    await OS_STOP;
+    ret = ret + 10;
+end
+escape ret;
+]],
+	lnks = {
+		{ 1, 1, 2, 245 },
+	},
+    run = 17,
+}
+
+Test {
+	[[
+native nohold _ceu_sys_stop();
+native do
+    extern tceu_app _ceu_app_2;
+end
+output int A;
+emit A=>2;
+emit A=>2;
+emit A=>2;
+await 1s;
+_ceu_sys_stop(&__ceu_app_2);
+emit A=>2;
+await 1s;
+escape 1;
+]],
+    [[
+input int A;
+var int a;
+var int ret = 0;
+every a = A do
+    ret = ret + a;
+end
+escape ret;
+]],
+	lnks = {
+		{ 1, 1, 2, 245 },
+	},
+    run = 2,
 }

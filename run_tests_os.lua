@@ -41,13 +41,6 @@ int main (void)
     int ret;
 ]])
 
-    -- APPS
-    for i, _ in ipairs(T) do
-        f:write([[
-    ceu_sys_app(&_ceu_app_]]..i..[[);
-]])
-    end
-
     -- LINKS
     T.lnks = T.lnks or {}
     for i, t in ipairs(T.lnks) do
@@ -65,6 +58,13 @@ int main (void)
 ]])
     end
 
+    -- APPS
+    for i, _ in ipairs(T) do
+        f:write([[
+    ceu_sys_start(&_ceu_app_]]..i..[[);
+]])
+    end
+
     f:write([[
     ret = ceu_scheduler(dt);
     printf("*** END: %d\n", ret);
@@ -76,8 +76,8 @@ end
 
 Test = function (T)
 
-	assert(T.todo == nil)
     if T.todo then
+        print('*** TODO: '..T.todo)
         return
     end
 

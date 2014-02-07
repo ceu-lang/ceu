@@ -561,9 +561,9 @@ int ceu_sys_emit (tceu_app* app, tceu_nevt evt, tceu_evtp param,
             qu->param.ptr = qu->buf;
             memcpy(qu->buf, buf, sz);
         }
+    }
     QUEUE_i += n;
     QUEUE_n += n;
-    }
     return 1;
 }
 
@@ -584,47 +584,6 @@ int ceu_scheduler (int(*dt)())
 	tceu_app* app;
     tceu_lnk* lnk;
 
-	/* MAX OK */
-
-#ifdef CEU_RET
-	app = CEU_APPS;
-    for (; app; app=app->nxt) {
-        ok++;
-    }
-#endif
-
-    /* INIT */
-
-	app = CEU_APPS;
-    for (; app; app=app->nxt) {
-        ceu_go_init(app);
-#ifdef CEU_RET
-        if (! app->isAlive) {
-            ok--;
-            ret += app->ret;
-        }
-#endif
-    }
-
-	/* OS_START */
-
-#ifdef CEU_IN_OS_START
-	app = CEU_APPS;
-    for (; app; app=app->nxt)
-    {
-        if (! app->isAlive)
-            continue;
-
-		ceu_go_event(app, CEU_IN_OS_START, (tceu_evtp)NULL);
-#ifdef CEU_RET
-            if (! app->isAlive) {
-                ok--;
-                ret += app->ret;
-            }
-#endif
-    }
-#endif
-
     /* LOOP */
 
 #ifdef CEU_RET
@@ -637,36 +596,20 @@ int ceu_scheduler (int(*dt)())
 #ifdef CEU_WCLOCKS
 		app = CEU_APPS;
         int _dt = dt();
-        for (; app; app=app->nxt)
-        {
-            if (! app->isAlive)
-                continue;
-
+        for (; app; app=app->nxt) {
             ceu_go_wclock(app, _dt);
-#ifdef CEU_RET
-                if (! app->isAlive) {
-                    ok--;
-                    ret += app->ret;
-                }
-#endif
+            if (! app->isAlive)
+                ceu_sys_stop(app);
         }
 #endif	/* CEU_WCLOCKS */
 
         /* ASYNC */
 #ifdef CEU_ASYNCS
 		app = CEU_APPS;
-        for (; app; app=app->nxt)
-        {
+        for (; app; app=app->nxt) {
+            ceu_go_async(app);
             if (! app->isAlive)
-                continue;
-
-             ceu_go_async(app);
-#ifdef CEU_RET
-                if (! app->isAlive) {
-                    ok--;
-                    ret += app->ret;
-                }
-#endif
+                ceu_sys_stop(app);
         }
 #endif	/* CEU_ASYNCS */
 
@@ -685,16 +628,10 @@ int ceu_scheduler (int(*dt)())
             if (qu->app!=lnk->src_app || qu->evt!=lnk->src_evt)
                 continue;
             if (! lnk->dst_app->isAlive)
-                continue;
-
+                continue;   /* TODO: remove when unlink on stop */
             ceu_go_event(lnk->dst_app, lnk->dst_evt, qu->param);
-
-#ifdef CEU_RET
-                if (! lnk->dst_app->isAlive) {
-                    ok--;
-                    ret += lnk->dst_app->ret;
-                }
-#endif
+            if (! lnk->dst_app->isAlive)
+                ceu_sys_stop(lnk->dst_app);
         }
         QUEUE_n -= sizeof(tceu_queue) + qu->sz;
         QUEUE_0 += sizeof(tceu_queue) + qu->sz;
@@ -707,7 +644,7 @@ int ceu_scheduler (int(*dt)())
 #endif
 }
 
-void ceu_sys_app (tceu_app* app)
+void ceu_sys_start (tceu_app* app)
 {
     app->nxt = NULL;
 
@@ -722,13 +659,43 @@ void ceu_sys_app (tceu_app* app)
             cur = cur->nxt;
         cur->nxt = app;
     }
+
+    /* MAX OK */
+#ifdef CEU_RET
+    ok++;
+#endif
+
+    /* INIT */
+
+    ceu_go_init(app);
+    if (! app->isAlive) {
+        ceu_sys_stop(app);
+        return;
+    }
+
+    /* OS_START */
+
+#ifdef CEU_IN_OS_START
+    ceu_go_event(app, CEU_IN_OS_START, (tceu_evtp)NULL);
+    if (! app->isAlive) {
+        ceu_sys_stop(app);
+        return;
+    }
+#endif
 }
 
-void ceu_sys_unapp (tceu_app* app)
+void ceu_sys_stop (tceu_app* app)
 {
+printf("STOP: %p\n", app);
+#ifdef CEU_IN_OS_STOP
+	ceu_go_event(app, CEU_IN_OS_STOP, (tceu_evtp)NULL);
+#endif
+
+#ifdef CEU_DEBUG
+    assert(CEU_APPS != NULL);
+#endif
+
 /* TODO: prv */
-	if (CEU_APPS == NULL)
-		return;
 
 	/* remove as head */
 	if (CEU_APPS == app) {
@@ -744,16 +711,15 @@ void ceu_sys_unapp (tceu_app* app)
 	}
 	app->nxt = NULL;
 
-#ifdef CEU_IN_OS_STOP
-	ceu_go_event(app, CEU_IN_OS_STOP, (tceu_evtp)NULL);
-#ifdef CEU_RET
-		if (! app->isAlive) {
-			ok--;
-			ret += app->ret;
-		}
-#endif
-#endif
+    /* TODO: remove links */
 
+#ifdef CEU_RET
+    ok--;
+    ret += app->ret;
+#endif
+#ifdef CEU_DEBUG
+    assert(! app->isAlive);
+#endif
 }
 
 void ceu_sys_link (tceu_lnk* lnk)

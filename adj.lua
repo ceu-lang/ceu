@@ -24,7 +24,8 @@ F = {
         local blk = node('Block', me.ln,
                         node('Stmts', me.ln,
                             node('Dcl_var', me.ln, 'var', 'int', false, '_ret'),
-                            node('SetBlock', me.ln, stmts,
+                            node('SetBlock', me.ln,
+                                stmts,
                                 node('Var', me.ln,'_ret'))))
 
         -- enclose the program with the "Main" class

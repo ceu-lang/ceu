@@ -9,17 +9,17 @@
     #define CEU_EXTS
     #define CEU_WCLOCKS
     #define CEU_ASYNCS
+    #define CEU_RET
+    #define CEU_CLEAR
 /*
 */
     #define CEU_INTS
     #define CEU_ORGS
-    #define CEU_CLEAR
     #define CEU_PSES
-    #define CEU_RET
-    #define CEU_THREADS
     #define CEU_NEWS
-    #define CEU_NEWS_POOL
     #define CEU_NEWS_MALLOC
+    #define CEU_NEWS_POOL
+    #define CEU_THREADS
 
     #define CEU_QUEUE_MAX 65535
 /*
@@ -327,8 +327,8 @@ typedef struct {
 
 int ceu_scheduler (int(*dt)());
 
-void ceu_sys_app   (tceu_app* app);
-void ceu_sys_unapp (tceu_app* app);
+void ceu_sys_start (tceu_app* app);
+void ceu_sys_stop  (tceu_app* app);
 void ceu_sys_link  (tceu_lnk* lnk);
 
 int ceu_sys_emit (tceu_app* app, tceu_nevt evt, tceu_evtp param,
@@ -336,10 +336,6 @@ int ceu_sys_emit (tceu_app* app, tceu_nevt evt, tceu_evtp param,
 tceu_evtp ceu_sys_call (tceu_app* app, tceu_nevt evt, tceu_evtp param);
 
 #if 0
-void ceu_sys_app (tceu_app* app);
-
-int ceu_sys_link   (tceu_app* src_app, tceu_nevt src_evt,
-                    tceu_app* dst_app, tceu_nevt dst_evt);
 int ceu_sys_unlink (tceu_app* src_app, tceu_nevt src_evt,
                     tceu_app* dst_app, tceu_nevt dst_evt);
 #endif
