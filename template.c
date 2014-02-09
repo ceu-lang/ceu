@@ -194,7 +194,7 @@ static void ceu_app_init ()
     CEU_APP.wclk_min_tmp = CEU_WCLOCK_INACTIVE;
 #endif
 #ifdef CEU_THREADS
-    CEU_APP.threads_mutex = PTHREAD_MUTEX_INITIALIZER;
+    pthread_mutex_init(&CEU_APP.threads_mutex, NULL);
     CEU_APP.threads_n     = 0;
 #endif
 #endif /* CEU_OS */

@@ -292,7 +292,7 @@ int ceu_wclocks_expired (tceu_app* app, s32* t, s32 dt);
 void ceu_pause (tceu_trl* trl, tceu_trl* trlF, int psed);
 #endif
 
-void ceu_go        (tceu_app* app, int evt, tceu_evtp evtp);
+void ceu_go        (tceu_app* app, int evt, tceu_evtp evtp); /* TODO: remove from .h? */
 void ceu_go_init   (tceu_app* app);
 void ceu_go_event  (tceu_app* app, int id, tceu_evtp data);
 void ceu_go_async  (tceu_app* app);
@@ -326,6 +326,7 @@ typedef struct {
 } tceu_queue;
 
 int ceu_scheduler (int(*dt)());
+tceu_queue* ceu_sys_dequeue (void);
 
 void ceu_sys_start (tceu_app* app);
 void ceu_sys_stop  (tceu_app* app);

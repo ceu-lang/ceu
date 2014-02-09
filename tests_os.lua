@@ -1,4 +1,4 @@
---_VALGRIND = true
+_VALGRIND = true
 
 --[===[
 --]===]
@@ -218,7 +218,7 @@ Test {
     [[
 var int inc = 3;
 input (int v)=>int A do
-_printf("2v = %d\n", v);
+_printf("A: v=%d this=%d\n", v,this.inc);
     return v + this.inc + inc;
 end
 escape inc;
@@ -238,6 +238,7 @@ escape ret;
         -- dst app
         -- dst evt
 	},
+    todo = 'should fail on call broken link',
     run = 11,
 }
 

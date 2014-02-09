@@ -573,10 +573,27 @@ tceu_evtp ceu_sys_call (tceu_app* app, tceu_nevt evt, tceu_evtp param) {
     {
         if (app!=lnk->src_app || evt!=lnk->src_evt)
             continue;
+        if (! lnk->dst_app->isAlive)
+            continue;   /* TODO: remove when unlink on stop */
         return lnk->dst_app->calls(lnk->dst_evt, param);
     }
 /* TODO: error? */
     return (tceu_evtp)NULL;
+}
+
+tceu_queue* ceu_sys_dequeue (void) {
+    if (QUEUE_n == 0) {
+        return NULL;
+    } else {
+        tceu_queue* qu;
+#ifdef CEU_DEBUG
+        assert(QUEUE_n > 0);
+#endif
+        qu = (tceu_queue*) &QUEUE[QUEUE_0];
+        QUEUE_n -= sizeof(tceu_queue) + qu->sz;
+        QUEUE_0 += sizeof(tceu_queue) + qu->sz;
+        return qu;
+    }
 }
 
 int ceu_scheduler (int(*dt)())
@@ -615,26 +632,21 @@ int ceu_scheduler (int(*dt)())
 
         /* EVENTS */
 
-        if (QUEUE_n == 0)
-            continue;
-#ifdef CEU_DEBUG
-        assert(QUEUE_n > 0);
-#endif
-
-        tceu_queue* qu = (tceu_queue*) &QUEUE[QUEUE_0];
-		lnk = CEU_LNKS;
-        for (; lnk; lnk=lnk->nxt)
+        tceu_queue* qu = ceu_sys_dequeue();
+        if (qu != NULL)
         {
-            if (qu->app!=lnk->src_app || qu->evt!=lnk->src_evt)
-                continue;
-            if (! lnk->dst_app->isAlive)
-                continue;   /* TODO: remove when unlink on stop */
-            ceu_go_event(lnk->dst_app, lnk->dst_evt, qu->param);
-            if (! lnk->dst_app->isAlive)
-                ceu_sys_stop(lnk->dst_app);
+            lnk = CEU_LNKS;
+            for (; lnk; lnk=lnk->nxt)
+            {
+                if (qu->app!=lnk->src_app || qu->evt!=lnk->src_evt)
+                    continue;
+                if (! lnk->dst_app->isAlive)
+                    continue;   /* TODO: remove when unlink on stop */
+                ceu_go_event(lnk->dst_app, lnk->dst_evt, qu->param);
+                if (! lnk->dst_app->isAlive)
+                    ceu_sys_stop(lnk->dst_app);
+            }
         }
-        QUEUE_n -= sizeof(tceu_queue) + qu->sz;
-        QUEUE_0 += sizeof(tceu_queue) + qu->sz;
     }
 
 #ifdef CEU_RET
@@ -687,7 +699,8 @@ void ceu_sys_start (tceu_app* app)
 void ceu_sys_stop (tceu_app* app)
 {
 #ifdef CEU_IN_OS_STOP
-	ceu_go_event(app, CEU_IN_OS_STOP, (tceu_evtp)NULL);
+    if (app->isAlive)
+        ceu_go_event(app, CEU_IN_OS_STOP, (tceu_evtp)NULL);
 #endif
 
 #ifdef CEU_DEBUG

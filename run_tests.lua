@@ -263,6 +263,17 @@ STATS = {
 real	6m30.104s
 user	6m10.720s
 sys	0m52.768s
+
+STATS = {
+    count   = 1587,
+    mem     = 0,
+    trails  = 3022,
+    bytes   = 14078620,
+}
+
+real	8m14.148s
+user	7m33.008s
+sys	0m47.560s
 ]]
 
 os.execute('rm -f /tmp/_ceu_*')
