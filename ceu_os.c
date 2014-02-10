@@ -581,19 +581,21 @@ tceu_evtp ceu_sys_call (tceu_app* app, tceu_nevt evt, tceu_evtp param) {
     return (tceu_evtp)NULL;
 }
 
-tceu_queue* ceu_sys_dequeue (void) {
+tceu_queue* ceu_sys_queue_nxt (void) {
     if (QUEUE_n == 0) {
         return NULL;
     } else {
-        tceu_queue* qu;
 #ifdef CEU_DEBUG
         assert(QUEUE_n > 0);
 #endif
-        qu = (tceu_queue*) &QUEUE[QUEUE_0];
-        QUEUE_n -= sizeof(tceu_queue) + qu->sz;
-        QUEUE_0 += sizeof(tceu_queue) + qu->sz;
-        return qu;
+        return (tceu_queue*) &QUEUE[QUEUE_0];
     }
+}
+
+void ceu_sys_queue_rem (void) {
+    tceu_queue* qu = (tceu_queue*) &QUEUE[QUEUE_0];
+    QUEUE_n -= sizeof(tceu_queue) + qu->sz;
+    QUEUE_0 += sizeof(tceu_queue) + qu->sz;
 }
 
 int ceu_scheduler (int(*dt)())
@@ -632,7 +634,7 @@ int ceu_scheduler (int(*dt)())
 
         /* EVENTS */
 
-        tceu_queue* qu = ceu_sys_dequeue();
+        tceu_queue* qu = ceu_sys_queue_nxt();
         if (qu != NULL)
         {
             lnk = CEU_LNKS;
@@ -646,6 +648,7 @@ int ceu_scheduler (int(*dt)())
                 if (! lnk->dst_app->isAlive)
                     ceu_sys_stop(lnk->dst_app);
             }
+            ceu_sys_queue_rem();
         }
     }
 

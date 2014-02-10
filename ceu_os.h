@@ -326,7 +326,8 @@ typedef struct {
 } tceu_queue;
 
 int ceu_scheduler (int(*dt)());
-tceu_queue* ceu_sys_dequeue (void);
+tceu_queue* ceu_sys_queue_nxt (void);
+void        ceu_sys_queue_rem (void);
 
 void ceu_sys_start (tceu_app* app);
 void ceu_sys_stop  (tceu_app* app);
