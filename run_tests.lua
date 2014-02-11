@@ -244,26 +244,6 @@ STATS = {
 
 -- w/ threads
 --[[
--- before ceu_go_one
-STATS = {
-    count   = 1541,
-    mem     = 0,
-    trails  = 3034,
-    bytes   = 13218173,
-}
-
-STATS = {
-    count   = 1586,
-    mem     = 0,
-    trails  = 3019,
-    bytes   = 14065020,
-}
-
-
-real	6m30.104s
-user	6m10.720s
-sys	0m52.768s
-
 STATS = {
     count   = 1587,
     mem     = 0,
@@ -271,9 +251,10 @@ STATS = {
     bytes   = 14078620,
 }
 
-real	8m14.148s
-user	7m33.008s
-sys	0m47.560s
+
+real	6m28.478s
+user	6m2.664s
+sys	0m53.184s
 ]]
 
 os.execute('rm -f /tmp/_ceu_*')

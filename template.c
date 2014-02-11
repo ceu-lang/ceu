@@ -57,8 +57,10 @@ static CEU_Main  ceu_app_data;
 /* TODO: static */
 tceu_app CEU_APP = {
     0,          /* seqno */
-#if defined(CEU_RET) || defined(CEU_OS)
+#if defined(CEU_OS)
     0,          /* isAlive */
+#elif defined(CEU_RET)
+    1,          /* isAlive */
 #endif
 #ifdef CEU_ASYNCS
     0,          /* pendingAsyncs */
