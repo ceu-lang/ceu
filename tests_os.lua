@@ -170,6 +170,7 @@ escape 1;
 Test {
     [[
 output (int)=>int A;
+await 10ms;
 var int ret = call A=>2;
 escape ret;
 ]],
@@ -177,6 +178,7 @@ escape ret;
 input (int v)=>int A do
     return v+1;
 end
+await 10ms;
 escape 1;
 ]],
 	lnks = {
@@ -248,6 +250,7 @@ output (int)=>int O;
 input (int v)=>int I do
     return v + 1;
 end
+await 10ms;
 var int ret = call O=>2;
 escape ret;
 ]],
@@ -261,6 +264,7 @@ input (int v)=>int I do
     return x + 1;
 end
 await OS_START;
+await 10ms;
 escape v;
 ]],
 	lnks = {
