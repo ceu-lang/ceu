@@ -376,16 +376,6 @@ _CEU_NEXT_:
     }
 }
 
-void ceu_go_init (tceu_app* app)
-{
-    app->init();
-    {
-        tceu_evtp p;
-        p.ptr = NULL;
-        ceu_go(app, CEU_IN__INIT, p);
-    }
-}
-
 #ifdef CEU_EXTS
 void ceu_go_event (tceu_app* app, int id, tceu_evtp data)
 {
@@ -455,7 +445,7 @@ int ceu_go_all (tceu_app* app)
     CEU_THREADS_MUTEX_LOCK(&app->threads_mutex);
 #endif
 
-    ceu_go_init(app);
+    app->init(app);
 
 #ifdef CEU_IN_OS_START
 #if defined(CEU_RET) || defined(CEU_OS)
@@ -514,6 +504,18 @@ int ceu_go_all (tceu_app* app)
 }
 
 #ifdef CEU_OS
+
+/* SYS_VECTOR
+ */
+__attribute__((used))
+void* CEU_SYS_VEC[CEU_SYS_MAX] = {
+    (void*) &ceu_sys_start,
+    (void*) &ceu_sys_stop,
+    (void*) &ceu_sys_link,
+    /*&ceu_sys_unlink,*/
+    (void*) &ceu_sys_emit,
+    (void*) &ceu_sys_call
+};
 
 /* QUEUE
  * - 255 avoids doing modulo operations
@@ -683,7 +685,7 @@ void ceu_sys_start (tceu_app* app)
 
     /* INIT */
 
-    ceu_go_init(app);
+    app->init(app);
     if (! app->isAlive) {
         ceu_sys_stop(app);
         return;

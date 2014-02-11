@@ -12,7 +12,6 @@
     #define CEU_RET
     #define CEU_CLEAR
 /*
-*/
     #define CEU_INTS
     #define CEU_ORGS
     #define CEU_PSES
@@ -20,11 +19,12 @@
     #define CEU_NEWS_MALLOC
     #define CEU_NEWS_POOL
     #define CEU_THREADS
-
-    #define CEU_QUEUE_MAX 65535
-/*
-    #define CEU_QUEUE_MAX 255
 */
+
+/*
+    #define CEU_QUEUE_MAX 65535
+*/
+    #define CEU_QUEUE_MAX 255
 
     #define CEU_IN__NONE          0
     #define CEU_IN__STK         255
@@ -270,7 +270,7 @@ typedef struct tceu_app {
 #endif
 
     int         (*code)  (tceu_go* _ceu_go);
-    void        (*init)  (void);
+    void        (*init)  (struct tceu_app* app);
 #ifdef CEU_OS
     tceu_evtp   (*calls) (tceu_nevt evt, tceu_evtp param);
     void**      sys_vec;
@@ -311,7 +311,6 @@ void ceu_pause (tceu_trl* trl, tceu_trl* trlF, int psed);
 #endif
 
 void ceu_go        (tceu_app* app, int evt, tceu_evtp evtp); /* TODO: remove from .h? */
-void ceu_go_init   (tceu_app* app);
 void ceu_go_event  (tceu_app* app, int id, tceu_evtp data);
 void ceu_go_async  (tceu_app* app);
 void ceu_go_wclock (tceu_app* app, s32 dt);
@@ -347,12 +346,17 @@ int ceu_scheduler (int(*dt)());
 tceu_queue* ceu_sys_queue_nxt (void);
 void        ceu_sys_queue_rem (void);
 
+__attribute__((used))
 void ceu_sys_start (tceu_app* app);
+__attribute__((used))
 void ceu_sys_stop  (tceu_app* app);
+__attribute__((used))
 void ceu_sys_link  (tceu_lnk* lnk);
 
+__attribute__((used))
 int ceu_sys_emit (tceu_app* app, tceu_nevt evt, tceu_evtp param,
                   int sz, char* buf);
+__attribute__((used))
 tceu_evtp ceu_sys_call (tceu_app* app, tceu_nevt evt, tceu_evtp param);
 
 enum {
@@ -363,15 +367,6 @@ enum {
     CEU_SYS_EMIT,
     CEU_SYS_CALL,
     CEU_SYS_MAX
-};
-
-static void* CEU_SYS_VEC[CEU_SYS_MAX] = {
-    (void*) &ceu_sys_start,
-    (void*) &ceu_sys_stop,
-    (void*) &ceu_sys_link,
-    /*&ceu_sys_unlink,*/
-    (void*) &ceu_sys_emit,
-    (void*) &ceu_sys_call
 };
 
 #if 0

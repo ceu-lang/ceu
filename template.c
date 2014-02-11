@@ -46,55 +46,14 @@ enum {
 };
 
 static int       ceu_app_go    (tceu_go* _ceu_go);
-static void      ceu_app_init  (void);
 #ifdef CEU_OS
 static tceu_evtp ceu_app_calls (tceu_nevt evt, tceu_evtp param);
 #endif
-static CEU_Main  ceu_app_data;
 
-/* TODO: fields that need no initialization? */
-
-/* TODO: static */
-tceu_app CEU_APP = {
-    0,          /* seqno */
-#if defined(CEU_OS)
-    0,          /* isAlive */
-#elif defined(CEU_RET)
-    1,          /* isAlive */
+#ifndef CEU_OS
+static CEU_Main ceu_app_data;
+static tceu_app CEU_APP;
 #endif
-#ifdef CEU_ASYNCS
-    0,          /* pendingAsyncs */
-#endif
-#ifdef CEU_OS
-    NULL,       /* nxt */
-#endif
-#ifdef CEU_RET
-    0,          /* ret */
-#endif
-#ifdef CEU_WCLOCKS
-    0, CEU_WCLOCK_INACTIVE, CEU_WCLOCK_INACTIVE,
-#endif
-#ifdef CEU_DEBUG
-    {
-#ifdef CEU_ORGS
-        NULL,
-#endif
-        NULL, 0
-    },
-#endif
-#ifdef CEU_THREADS
-    PTHREAD_MUTEX_INITIALIZER,
-    /*PTHREAD_COND_INITIALIZER,*/
-    0,
-#endif
-    &ceu_app_go,
-    &ceu_app_init,
-#ifdef CEU_OS
-    &ceu_app_calls,
-    NULL,           /* sys_vec */
-#endif
-    (tceu_org*) &ceu_app_data
-};
 
 typedef struct {
 #ifdef CEU_IFCS
@@ -112,6 +71,7 @@ typedef struct {
 #endif
 } _tceu_app;
 
+/* TODO: remove from RAM */
 static _tceu_app _CEU_APP = {
 #ifdef CEU_IFCS
     {
@@ -170,7 +130,7 @@ static tceu_evtp ceu_app_calls (tceu_nevt evt, tceu_evtp param) {
 }
 #endif
 
-static void ceu_app_init ()
+void ceu_app_init (tceu_app* app)
 {
 #ifdef CEU_DEBUG
     signal(SIGSEGV, ceu_segfault);
@@ -179,30 +139,40 @@ static void ceu_app_init ()
     === POOLS_INIT ===
 #endif
 
-#ifdef CEU_OS
-    CEU_APP.seqno = 0;
+    app->seqno = 0;
 #if defined(CEU_RET) || defined(CEU_OS)
-    CEU_APP.isAlive = 1;
+    app->isAlive = 1;
 #endif
 #ifdef CEU_ASYNCS
-    CEU_APP.pendingAsyncs = 1;
+    app->pendingAsyncs = 1;
 #endif
-    CEU_APP.nxt = NULL;
+#ifdef CEU_OS
+    app->nxt = NULL;
+#endif
 #ifdef CEU_RET
-    CEU_APP.ret = 0;
+    app->ret = 0;
 #endif
 #ifdef CEU_WCLOCKS
-    CEU_APP.wclk_late = 0;
-    CEU_APP.wclk_min = CEU_WCLOCK_INACTIVE;
-    CEU_APP.wclk_min_tmp = CEU_WCLOCK_INACTIVE;
+    app->wclk_late = 0;
+    app->wclk_min = CEU_WCLOCK_INACTIVE;
+    app->wclk_min_tmp = CEU_WCLOCK_INACTIVE;
 #endif
 #ifdef CEU_THREADS
-    pthread_mutex_init(&CEU_APP.threads_mutex, NULL);
-    CEU_APP.threads_n     = 0;
+    pthread_mutex_init(&app->threads_mutex, NULL);
+    /*PTHREAD_COND_INITIALIZER,*/
+    app->threads_n = 0;
 #endif
-#endif /* CEU_OS */
+    app->code = &ceu_app_go;
+#ifdef CEU_OS
+    app->call = &ceu_app_calls;
+    app->sys_vec = NULL;
+    app->data = NULL;
+#else
+    app->data = (tceu_org*) &ceu_app_data;
+#endif
 
-    ceu_org_init(CEU_APP.data, CEU_NTRAILS, Class_Main, 0, NULL, 0);
+    ceu_org_init(app->data, CEU_NTRAILS, Class_Main, 0, NULL, 0);
+    ceu_go(app, CEU_IN__INIT, (tceu_evtp)NULL);
 }
 
 #ifdef CEU_RUNTESTS
