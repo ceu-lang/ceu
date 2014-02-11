@@ -58,7 +58,7 @@ static CEU_Main  ceu_app_data;
 tceu_app CEU_APP = {
     0,          /* seqno */
 #if defined(CEU_RET) || defined(CEU_OS)
-    1,          /* isAlive */
+    0,          /* isAlive */
 #endif
 #ifdef CEU_ASYNCS
     0,          /* pendingAsyncs */
@@ -89,6 +89,7 @@ tceu_app CEU_APP = {
     &ceu_app_init,
 #ifdef CEU_OS
     &ceu_app_calls,
+    NULL,           /* sys_vec */
 #endif
     (tceu_org*) &ceu_app_data
 };

@@ -40,10 +40,27 @@
 
     typedef s8 tceu_nlbl;
 
-    #define ceu_out_emit_buf(app,id,sz,buf) ceu_sys_emit(app,id,(tceu_evtp)NULL,sz,buf)
-    #define ceu_out_emit_val(app,id,param)  ceu_sys_emit(app,id,param,0,NULL)
-    #define ceu_out_call_val(app,id,param)  ceu_sys_call(app,id,param)
-#else
+/*
+    #define ceu_out_emit_buf(app,id,sz,buf) \
+        ceu_sys_emit(app,id,(tceu_evtp)NULL,sz,buf)
+    #define ceu_out_emit_val(app,id,param) \
+        ceu_sys_emit(app,id,param,0,NULL)
+    #define ceu_out_call_val(app,id,param) \
+        ceu_sys_call(app,id,param)
+*/
+
+    #define ceu_out_emit_buf(app,id,sz,buf) \
+        ((__typeof__(ceu_sys_emit)*)((app)->sys_vec[CEU_SYS_EMIT]))(app,id,(tceu_evtp)NULL,sz,buf)
+
+    #define ceu_out_emit_val(app,id,param) \
+        ((__typeof__(ceu_sys_emit)*)((app)->sys_vec[CEU_SYS_EMIT]))(app,id,param,0,NULL)
+
+    #define ceu_out_call_val(app,id,param) \
+        ((__typeof__(ceu_sys_call)*)((app)->sys_vec[CEU_SYS_CALL]))(app,id,param)
+/*
+*/
+
+#else /* CEU_OS */
     #include "_ceu_app.h"
     #define ceu_out_emit_buf(app,id,sz,buf) ceu_out_emit_val(app,id,(tceu_evtp)(void*)buf)
 #endif
@@ -256,6 +273,7 @@ typedef struct tceu_app {
     void        (*init)  (void);
 #ifdef CEU_OS
     tceu_evtp   (*calls) (tceu_nevt evt, tceu_evtp param);
+    void**      sys_vec;
 #endif
     tceu_org*   data;
 } tceu_app;
@@ -336,6 +354,25 @@ void ceu_sys_link  (tceu_lnk* lnk);
 int ceu_sys_emit (tceu_app* app, tceu_nevt evt, tceu_evtp param,
                   int sz, char* buf);
 tceu_evtp ceu_sys_call (tceu_app* app, tceu_nevt evt, tceu_evtp param);
+
+enum {
+    CEU_SYS_START = 0,
+    CEU_SYS_STOP,
+    CEU_SYS_LINK,
+    /*CEU_SYS_UNLINK,*/
+    CEU_SYS_EMIT,
+    CEU_SYS_CALL,
+    CEU_SYS_MAX
+};
+
+static void* CEU_SYS_VEC[CEU_SYS_MAX] = {
+    (void*) &ceu_sys_start,
+    (void*) &ceu_sys_stop,
+    (void*) &ceu_sys_link,
+    /*&ceu_sys_unlink,*/
+    (void*) &ceu_sys_emit,
+    (void*) &ceu_sys_call
+};
 
 #if 0
 int ceu_sys_unlink (tceu_app* src_app, tceu_nevt src_evt,

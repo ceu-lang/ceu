@@ -568,7 +568,7 @@ int ceu_sys_emit (tceu_app* app, tceu_nevt evt, tceu_evtp param,
 }
 
 tceu_evtp ceu_sys_call (tceu_app* app, tceu_nevt evt, tceu_evtp param) {
-	tceu_lnk* lnk = CEU_LNKS;
+    tceu_lnk* lnk = CEU_LNKS;
     for (; lnk; lnk=lnk->nxt)
     {
         if (app!=lnk->src_app || evt!=lnk->src_evt)
@@ -662,6 +662,7 @@ int ceu_scheduler (int(*dt)())
 void ceu_sys_start (tceu_app* app)
 {
     app->nxt = NULL;
+    app->sys_vec = CEU_SYS_VEC;
 
     /* add as head */
 	if (CEU_APPS == NULL) {
