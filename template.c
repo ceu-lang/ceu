@@ -95,6 +95,13 @@ static void ceu_segfault (int sig_num) {
 #endif
 #endif
 
+#ifdef CEU_RUNTESTS
+static void ceu_stack_clr () {
+    int a[1000];
+    memset(a, 0, sizeof(a));
+}
+#endif
+
 /**********************************************************************/
 
 #ifdef CEU_THREADS
@@ -207,10 +214,3 @@ void ceu_app_init (tceu_app* app)
     ceu_org_init(app->data, CEU_NTRAILS, Class_Main, 0, NULL, 0);
     ceu_go(app, CEU_IN__INIT, (tceu_evtp)NULL);
 }
-
-#ifdef CEU_RUNTESTS
-static void ceu_stack_clr () {
-    int a[1000];
-    memset(a, 0, sizeof(a));
-}
-#endif
