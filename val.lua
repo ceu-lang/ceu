@@ -54,7 +54,7 @@ F =
     end,
 
     Global = function (me)
-        me.val = '(CEU_APP.data)'
+        me.val = '(_ceu_app->data)'
     end,
 
     This = function (me)
@@ -99,14 +99,14 @@ F =
             DIR = 'IN'
             dir = 'in'
             if op == 'call' then
-                ptr = 'CEU_APP.data'
+                ptr = '_ceu_app->data'
             else
-                ptr = '&CEU_APP'
+                ptr = '_ceu_app'
             end
         else
             DIR = 'OUT'
             dir = 'out'
-            ptr = '&CEU_APP'
+            ptr = '_ceu_app'
         end
 
         local tup = _TP.isTuple(ext.evt.ins)
@@ -119,7 +119,8 @@ F =
 
         local t1 = { }
         if ext.evt.pre=='input' and op=='call' then
-            t1[#t1+1] = ptr     -- to access `this´
+            t1[#t1+1] = '_ceu_app'  -- to access `app´
+            t1[#t1+1] = ptr         -- to access `this´
         end
 
         local t2 = { ptr, 'CEU_'..DIR..'_'..ext.evt.id }
@@ -198,7 +199,7 @@ F =
         end
     end,
     AwaitT = function (me)
-        me.val      = 'CEU_APP.wclk_late'
+        me.val      = '_ceu_app->wclk_late'
         me.val_wclk = CUR(me, '__wclk_'..me.n)
     end,
 --[[
@@ -211,6 +212,7 @@ F =
         local _, f, exps = unpack(me)
         local ps = {}
         if f.var and f.var.fun then
+            ps[#ps+1] = '_ceu_app'
             if f.org then
                 local op = (_ENV.clss[f.org.tp].is_ifc and '') or '&'
                 ps[#ps+1] = '('..op..V(f.org)..')'   -- only native

@@ -27,7 +27,7 @@ function main (T)
 
 		f:write([[
 #include "_ceu_app_]]..i..[[.h"
-extern tceu_app _ceu_app_]]..i..[[;
+extern void _ceu_app_]]..i..[[_init (tceu_app* app);
 ]])
 
 	end
@@ -61,7 +61,11 @@ int main (void)
     -- APPS
     for i, _ in ipairs(T) do
         f:write([[
-    ceu_sys_start(&_ceu_app_]]..i..[[);
+    char mem_]]..i..[[ [sizeof(_ceu_app_]]..i..[[) ];
+    tceu_app app_]]..i..[[;
+    app_]]..i..[[.data = (tceu_org*) &mem_]]..i..[[;
+    app_]]..i..[[.init = &_ceu_app_]]..i..[[_init;
+    ceu_sys_start(&app_]]..i..[[);
 ]])
     end
 
@@ -95,7 +99,8 @@ Test = function (T)
         local cmd = './ceu --os --verbose '..
                                '--out-c '..name..'.c '..
                                '--out-h '..name..'.h '..
-                               '--out-v '..name..' '..
+                               '--out-t '..name..' '..
+                               '--out-f '..name..'_init '..
                                            name..'.ceu 2>&1'
         assert(os.execute(cmd) == 0)
 

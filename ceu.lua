@@ -4,7 +4,8 @@ _OPTS_NPARAMS = {
 
     out_c     = 1,
     out_h     = 1,
-    out_v     = 1,
+    out_s     = 1,
+    out_f     = 1,
 
     join      = 0,
     c_calls   = 1,
@@ -22,7 +23,8 @@ _OPTS = {
 
     out_c     = '_ceu_app.c',
     out_h     = '_ceu_app.h',
-    out_v     = 'CEU_APP',
+    out_s     = 'CEU_SIZE',
+    out_f     = 'ceu_app_init',
 
     join      = true,
     c_calls   = false,
@@ -77,7 +79,8 @@ if not _OPTS.input then
     
         --out-c <filename>     # C output source file (_ceu_app.c)
         --out-h <filename>     # C output header file (_ceu_app.h)
-        --out-v <NAME>         # TODO (CEU_APP)
+        --out-s <NAME>         # TODO (CEU_SIZE)
+        --out-f <NAME>         # TODO (ceu_app_init)
     
         --join (--no-join)     # join lines enclosed by /*{-{*/ and /*}-}*/ (join)
         --c-calls              # TODO
@@ -238,8 +241,11 @@ do
                              _FILES.ceu_pool_h..'\n'.._FILES.ceu_pool_c)
     end
 
-    if _OPTS.out_v ~= 'CEU_APP' then
-        CC = string.gsub(CC, 'CEU_APP', _OPTS.out_v)
+    if _OPTS.out_s ~= 'CEU_SIZE' then
+        CC = string.gsub(CC, 'CEU_SIZE', _OPTS.out_s)
+    end
+    if _OPTS.out_f ~= 'ceu_app_init' then
+        CC = string.gsub(CC, 'ceu_app_init', _OPTS.out_f)
     end
 end
 

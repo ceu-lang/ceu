@@ -216,20 +216,6 @@ typedef struct tceu_lst {
 } tceu_lst;
 #endif
 
-/* TCEU_THREADS_P */
-
-#ifdef CEU_THREADS
-typedef struct {
-    tceu_org* org;
-    s8*       st; /* thread state:
-                   * 0=ini (sync  spawns)
-                   * 1=cpy (async copies)
-                   * 2=lck (sync  locks)
-                   * 3=end (sync/async terminates)
-                   */
-} tceu_threads_p;
-#endif
-
 /* TCEU_APP */
 
 typedef struct tceu_app {
@@ -269,7 +255,7 @@ typedef struct tceu_app {
         /* TODO: u8? */
 #endif
 
-    int         (*code)  (tceu_go* _ceu_go);
+    int         (*code)  (struct tceu_app* _ceu_app, tceu_go* _ceu_go);
     void        (*init)  (struct tceu_app* app);
 #ifdef CEU_OS
     tceu_evtp   (*calls) (tceu_nevt evt, tceu_evtp param);
@@ -277,6 +263,21 @@ typedef struct tceu_app {
 #endif
     tceu_org*   data;
 } tceu_app;
+
+/* TCEU_THREADS_P */
+
+#ifdef CEU_THREADS
+typedef struct {
+    tceu_app* app;
+    tceu_org* org;
+    s8*       st; /* thread state:
+                   * 0=ini (sync  spawns)
+                   * 1=cpy (async copies)
+                   * 2=lck (sync  locks)
+                   * 3=end (sync/async terminates)
+                   */
+} tceu_threads_p;
+#endif
 
 /* RET_* */
 

@@ -3728,7 +3728,7 @@ escape a + b;
 
 Test { [[
 input int A,B;
-var int a,b,c,d;
+var int a,b,c,d=0;
 par/or do
     par/and do          // 4
         a = await A;
@@ -11653,7 +11653,7 @@ end;
 
 Test { [[
 input void A,F;
-var int v;
+var int v=0;
 par do
     loop do
         par/or do
@@ -16154,7 +16154,7 @@ native do
         *v = 1;
     }
 end
-var int a, b;
+var int a, b=0;
 var int* pb = &b;
 par/or do
     a = 1;
@@ -19689,7 +19689,7 @@ escape v;
 Test { [[
 input void OS_START;
 input void A,F;
-var int v;
+var int v=0;
 class T with
     event void e, ok;
 do
@@ -19719,7 +19719,7 @@ escape v;
 Test { [[
 input void OS_START;
 input void A,F;
-var int v;
+var int v=0;
 class T with
     event void e;
 do
@@ -19746,7 +19746,7 @@ escape v;
 Test { [[
 input void OS_START;
 input void A,F;
-var int v;
+var int v=0;
 class T with
     event void e;
 do
@@ -26142,7 +26142,7 @@ native do
 end
 class T with
 do
-    var int v;
+    var int v=0;
     function (int a, int b)=>void f do
         this.v = this.v + a + b;
     end

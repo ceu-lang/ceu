@@ -17,9 +17,9 @@
 
 #ifdef CEU_THREADS
 #   define CEU_ATOMIC(f)                                      \
-            CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);   \
+            CEU_THREADS_MUTEX_LOCK(&_ceu_app->threads_mutex); \
                 f                                             \
-            CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
+            CEU_THREADS_MUTEX_UNLOCK(&_ceu_app->threads_mutex);
 #else
 #   define CEU_ATOMIC(f) f
 #endif
@@ -45,14 +45,9 @@ enum {
 === LABELS_ENUM ===
 };
 
-static int       ceu_app_go    (tceu_go* _ceu_go);
+static int       ceu_app_go    (tceu_app* _ceu_app, tceu_go* _ceu_go);
 #ifdef CEU_OS
 static tceu_evtp ceu_app_calls (tceu_nevt evt, tceu_evtp param);
-#endif
-
-#ifndef CEU_OS
-static CEU_Main ceu_app_data;
-static tceu_app CEU_APP;
 #endif
 
 typedef struct {
@@ -92,11 +87,12 @@ static _tceu_app _CEU_APP = {
 /**********************************************************************/
 
 #ifdef CEU_DEBUG
+tceu_app* CEU_APP_SIG = NULL;
 static void ceu_segfault (int sig_num) {
 #ifdef CEU_ORGS
-    fprintf(stderr, "SEGFAULT on %p : %d\n", CEU_APP.lst.org, CEU_APP.lst.lbl);
+    fprintf(stderr, "SEGFAULT on %p : %d\n", CEU_APP_SIG->lst.org, CEU_APP_SIG->lst.lbl);
 #else
-    fprintf(stderr, "SEGFAULT on %d\n", CEU_APP.lst.lbl);
+    fprintf(stderr, "SEGFAULT on %d\n", CEU_APP_SIG->lst.lbl);
 #endif
     exit(0);
 }
@@ -130,15 +126,10 @@ static tceu_evtp ceu_app_calls (tceu_nevt evt, tceu_evtp param) {
 }
 #endif
 
+int CEU_SIZE = sizeof(CEU_Main);
+
 void ceu_app_init (tceu_app* app)
 {
-#ifdef CEU_DEBUG
-    signal(SIGSEGV, ceu_segfault);
-#endif
-#ifdef CEU_NEWS
-    === POOLS_INIT ===
-#endif
-
     app->seqno = 0;
 #if defined(CEU_RET) || defined(CEU_OS)
     app->isAlive = 1;
@@ -161,14 +152,26 @@ void ceu_app_init (tceu_app* app)
     pthread_mutex_init(&app->threads_mutex, NULL);
     /*PTHREAD_COND_INITIALIZER,*/
     app->threads_n = 0;
+
+    /* All code run atomically:
+     * - the program is always locked as a whole
+     * -    thread spawns will unlock => re-lock
+     * - but program will still run to completion
+     */
+    CEU_THREADS_MUTEX_LOCK(&app->threads_mutex);
 #endif
     app->code = &ceu_app_go;
 #ifdef CEU_OS
-    app->call = &ceu_app_calls;
+    app->calls = &ceu_app_calls;
     app->sys_vec = NULL;
-    app->data = NULL;
-#else
-    app->data = (tceu_org*) &ceu_app_data;
+#endif
+
+#ifdef CEU_NEWS
+    === POOLS_INIT ===
+#endif
+#ifdef CEU_DEBUG
+    CEU_APP_SIG = app;
+    signal(SIGSEGV, ceu_segfault);
 #endif
 
     ceu_org_init(app->data, CEU_NTRAILS, Class_Main, 0, NULL, 0);
@@ -182,17 +185,17 @@ static void ceu_stack_clr () {
 }
 #endif
 
-static int ceu_app_go (tceu_go* _ceu_go)
+static int ceu_app_go (tceu_app* _ceu_app, tceu_go* _ceu_go)
 {
 #ifdef CEU_GOTO
 _CEU_GOTO_:
 #endif
 #ifdef CEU_DEBUG
 #ifdef CEU_ORGS
-    CEU_APP.lst.org = _ceu_go->org;
+    _ceu_app->lst.org = _ceu_go->org;
 #endif
-    CEU_APP.lst.trl = _ceu_go->trl;
-    CEU_APP.lst.lbl = _ceu_go->lbl;
+    _ceu_app->lst.trl = _ceu_go->trl;
+    _ceu_app->lst.lbl = _ceu_go->lbl;
 #ifdef CEU_DEBUG_TRAILS
 fprintf(stderr, "TRK: o.%p / l.%d\n", _ceu_go->org, _ceu_go->lbl);
 #endif

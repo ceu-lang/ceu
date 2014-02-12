@@ -328,7 +328,7 @@ _CEU_GO_:
             }
 
             {
-                int _ret = app->code(&go);
+                int _ret = app->code(app, &go);
                 switch (_ret) {
                     case RET_END:
 #if defined(CEU_RET) || defined(CEU_OS)
@@ -438,14 +438,8 @@ int ceu_go_all (tceu_app* app)
      * - the program is always locked as a whole
      * -    thread spawns will unlock => re-lock
      * - but program will still run to completion
-     * - only COND_WAIT will allow threads to execute
      */
-
-#ifdef CEU_THREADS
-    CEU_THREADS_MUTEX_LOCK(&app->threads_mutex);
-#endif
-
-    app->init(app);
+    app->init(app);     /* calls CEU_THREADS_MUTEX_LOCK() */
 
 #ifdef CEU_IN_OS_START
 #if defined(CEU_RET) || defined(CEU_OS)
@@ -474,17 +468,6 @@ int ceu_go_all (tceu_app* app)
 #endif
     }
 #endif
-
-/*
-// TODO: remove!!
-#ifdef CEU_THREADS
-    for (;;) {
-        if (_ret) goto _CEU_END_;
-        CEU_THREADS_COND_WAIT(&app->threads_cond,
-                              &app->threads_mutex);
-    }
-#endif
-*/
 
 #ifdef CEU_THREADS
     CEU_THREADS_MUTEX_UNLOCK(&app->threads_mutex);

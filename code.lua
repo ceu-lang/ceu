@@ -93,7 +93,7 @@ if (]]..V(pse.dcl.var)..[[) {
 ]])
         if me.tag == 'AwaitInt' then
             LINE(me, [[
-    _ceu_go->trl->seqno = CEU_APP.seqno-1;   /* awake again */
+    _ceu_go->trl->seqno = _ceu_app->seqno-1;   /* awake again */
 ]])
         end
         LINE(me, [[
@@ -261,7 +261,7 @@ F = {
                 _CODE.stubs = _CODE.stubs .. [[
 case CEU_IN_]]..id..[[:
 #line ]]..me.ln[2]..' "'..me.ln[1]..[["
-    ]]..ret_value..me.id..'(CEU_APP.data'..ps..[[);
+    ]]..ret_value..me.id..'(_ceu_app->data'..ps..[[);
 ]]..ret_void
             end
             _CODE.functions = _CODE.functions ..
@@ -561,7 +561,7 @@ _ceu_go->org->trls[ ]]..me.trl_orgs[1]..[[ ].lnks =
 /*  FINALIZE */
 _ceu_go->org->trls[ ]]..me.trl_fins[1]..[[ ].evt   = CEU_IN__CLEAR;
 _ceu_go->org->trls[ ]]..me.trl_fins[1]..[[ ].lbl   = ]]..me.lbl_fin.id..[[;
-_ceu_go->org->trls[ ]]..me.trl_fins[1]..[[ ].seqno = CEU_APP.seqno-1; /* awake now */
+_ceu_go->org->trls[ ]]..me.trl_fins[1]..[[ ].seqno = _ceu_app->seqno-1; /* awake now */
 ]])
             for _, fin in ipairs(me.fins) do
                 LINE(me, fin.val..' = 0;')
@@ -675,7 +675,7 @@ ceu_pause(&_ceu_go->org->trls[ ]]..me.blk.trails[1]..[[ ],
         if to.tag=='Var' and to.var.id=='_ret' then
             LINE(me, [[
 #ifdef CEU_RET
-    CEU_APP.ret = ]]..V(to)..[[;
+    _ceu_app->ret = ]]..V(to)..[[;
 #endif
 ]])
         end
@@ -880,8 +880,8 @@ _ceu_go->trl->lbl = ]]..me.lbl_cnt.id..[[;
             error'not supported'
         else
             LINE(me, V(me)..[[;
-if (! CEU_APP.isAlive)
-return RET_END;
+if (! _ceu_app->isAlive)
+    return RET_END;
 ]])
         end
 
@@ -906,11 +906,11 @@ _ceu_go->trl->lbl = ]]..me.lbl_cnt.id..[[;
 
         local emit = [[
 {
-    ceu_go_wclock(&CEU_APP, (s32)]]..V(exp)..[[);
-    while (CEU_APP.isAlive && CEU_APP.wclk_min<=0) {
-        ceu_go_wclock(&CEU_APP, 0);
+    ceu_go_wclock(_ceu_app, (s32)]]..V(exp)..[[);
+    while (_ceu_app->isAlive && _ceu_app->wclk_min<=0) {
+        ceu_go_wclock(_ceu_app, 0);
     }
-    if (! CEU_APP.isAlive)
+    if (! _ceu_app->isAlive)
         return RET_END;
 }
 ]]
@@ -963,7 +963,7 @@ _ceu_go->evtp.]]..field..' = '..V(exp)..[[;
         end
         LINE(me, [[
 #ifdef CEU_ORGS
-_ceu_go->org = CEU_APP.data;   /* TODO(speed): check if is_ifc */
+_ceu_go->org = _ceu_app->data;   /* TODO(speed): check if is_ifc */
 #endif
 /*goto _CEU_CALL_ORG_;*/
 return RET_ORG;
@@ -981,7 +981,7 @@ case ]]..me.lbl_cnt.id..[[:;
         local no = '_CEU_NO_'..me.n..'_'
 
         LINE(me, [[
-ceu_trails_set_wclock(&CEU_APP, &]]..me.val_wclk..[[, (s32)]]..V(exp)..[[);
+ceu_trails_set_wclock(_ceu_app, &]]..me.val_wclk..[[, (s32)]]..V(exp)..[[);
 ]]..no..[[:
     _ceu_go->trl->evt = CEU_IN__WCLOCK;
     _ceu_go->trl->lbl = ]]..me.lbl.id..[[;
@@ -994,7 +994,7 @@ case ]]..me.lbl.id..[[:;
 
         AWAIT_PAUSE(me, no)
         LINE(me, [[
-    if (!ceu_wclocks_expired(&CEU_APP, &]]..me.val_wclk..[[, _ceu_go->evtp.dt) )
+    if (!ceu_wclocks_expired(_ceu_app, &]]..me.val_wclk..[[, _ceu_go->evtp.dt) )
         goto ]]..no..[[;
 ]])
         DEBUG_TRAILS(me)
@@ -1018,7 +1018,7 @@ case ]]..me.lbl.id..[[:;
         LINE(me, [[
 #ifdef CEU_ORGS
     if ((tceu_org*)]]..org..[[ != _ceu_go->evto) {
-        _ceu_go->trl->seqno = CEU_APP.seqno-1;   /* awake again */
+        _ceu_go->trl->seqno = _ceu_app->seqno-1;   /* awake again */
         goto ]]..no..[[;
     }
 #endif
@@ -1053,7 +1053,7 @@ error'AwaitInt que falha tem que setar stk=MAX'
         for _, awt in ipairs(me) do
             if awt.tag=='WCLOCKK' or awt.tag=='WCLOCKE' then
                 LINE(me, [[
-ceu_trails_set_wclock(&CEU_APP, PTR_cur(u32*,]]..awt.off..'),(s32)'..V(awt)..[[);
+ceu_trails_set_wclock(_ceu_app, PTR_cur(u32*,]]..awt.off..'),(s32)'..V(awt)..[[);
 ]])
             end
         end
@@ -1142,23 +1142,23 @@ case ]]..me.lbl.id..[[:;
 ]]..me.thread_st..[[  = ceu_alloc(sizeof(s8));
 *]]..me.thread_st..[[ = 0;  /* ini */
 {
-    tceu_threads_p p = { _ceu_go->org, ]]..me.thread_st..[[ };
+    tceu_threads_p p = { _ceu_app, _ceu_go->org, ]]..me.thread_st..[[ };
     int ret =
         CEU_THREADS_CREATE(&]]..me.thread_id..[[, _ceu_thread_]]..me.n..[[, &p);
     if (ret == 0)
     {
-        CEU_APP.threads_n++;
+        _ceu_app->threads_n++;
         assert( CEU_THREADS_DETACH(]]..me.thread_id..[[) == 0 );
 
         /* wait for "p" to be copied inside the thread */
-        CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
+        CEU_THREADS_MUTEX_UNLOCK(&_ceu_app->threads_mutex);
 
         while (1) {
-            CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);
+            CEU_THREADS_MUTEX_LOCK(&_ceu_app->threads_mutex);
             int ok = (*(p.st) >= 1);   /* cpy ok? */
             if (ok)
                 break;
-            CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
+            CEU_THREADS_MUTEX_UNLOCK(&_ceu_app->threads_mutex);
         }
 
         /* proceed with sync execution (already locked) */
@@ -1194,21 +1194,22 @@ static void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
 
     /* copy param */
     tceu_threads_p _ceu_p = *((tceu_threads_p*) __ceu_p);
+    tceu_app* _ceu_app  = _ceu_p.app;
     tceu_org* __ceu_org = _ceu_p.org;
 
     /* now safe for sync to proceed */
-    CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);
+    CEU_THREADS_MUTEX_LOCK(&_ceu_app->threads_mutex);
     *(_ceu_p.st) = 1;
-    CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
+    CEU_THREADS_MUTEX_UNLOCK(&_ceu_app->threads_mutex);
 
     /* ensures that sync reaquires the mutex and terminates
      * the current reaction before I proceed
      * otherwise I could lock below and reenter sync
      */
     while (1) {
-        CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);
+        CEU_THREADS_MUTEX_LOCK(&_ceu_app->threads_mutex);
         int ok = (*(_ceu_p.st) >= 2);   /* lck ok? */
-        CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
+        CEU_THREADS_MUTEX_UNLOCK(&_ceu_app->threads_mutex);
         if (ok)
             break;
     }
@@ -1224,12 +1225,11 @@ static void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
         tceu_evtp evtp;
         evtp.thread = CEU_THREADS_SELF();
         /*pthread_testcancel();*/
-        CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);
+        CEU_THREADS_MUTEX_LOCK(&_ceu_app->threads_mutex);
     /* only if sync is not active */
         if (*(_ceu_p.st) < 3) {             /* 3=end */
             *(_ceu_p.st) = 3;
-            ceu_go(&CEU_APP, CEU_IN__THREAD, evtp);   /* keep locked 
-*/
+            ceu_go(_ceu_app, CEU_IN__THREAD, evtp);   /* keep locked */
                 /* HACK_2:
                  *  A thread never terminates the program because we include an
                  *  <async do end> after it to enforce terminating from the
@@ -1237,16 +1237,16 @@ static void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
                  */
         } else {
             ceu_free(_ceu_p.st);                /* fin finished, I free */
-            CEU_APP.threads_n--;
+            _ceu_app->threads_n--;
         }
-        CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
+        CEU_THREADS_MUTEX_UNLOCK(&_ceu_app->threads_mutex);
     }
 
     /* more correct would be two signals:
      * (1) above, when I finish
      * (2) finalizer, when sync finishes
      * now the program may hang if I never reach here
-    CEU_THREADS_COND_SIGNAL(&CEU_APP.threads_cond);
+    CEU_THREADS_COND_SIGNAL(&_ceu_app->threads_cond);
      */
     return NULL;
 }
@@ -1261,7 +1261,7 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
     /*assert( pthread_cancel(]]..me.thread.thread_id..[[) == 0 );*/
 } else {
     ceu_free(]]..me.thread.thread_st..[[);      /* thr finished, I free */
-    CEU_APP.threads_n--;
+    _ceu_app->threads_n--;
 }
 ]]
         end
@@ -1272,15 +1272,15 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
     Sync = function (me)
         local thr = _AST.iter'Thread'()
         LINE(me, [[
-CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);
+CEU_THREADS_MUTEX_LOCK(&_ceu_app->threads_mutex);
 if (*(_ceu_p.st) == 3) {        /* 3=end */
-    CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
+    CEU_THREADS_MUTEX_UNLOCK(&_ceu_app->threads_mutex);
     goto ]]..thr.lbl_out..[[;   /* exit if ended from "sync" */
 } else {                        /* othrewise, execute block */
 ]])
         CONC(me)
         LINE(me, [[
-    CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
+    CEU_THREADS_MUTEX_UNLOCK(&_ceu_app->threads_mutex);
 }
 ]])
     end,
