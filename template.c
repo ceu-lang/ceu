@@ -166,14 +166,9 @@ int CEU_SIZE = sizeof(CEU_Main);
 void ceu_app_init (tceu_app* app)
 {
     app->seqno = 0;
-#if defined(CEU_RET) || defined(CEU_OS)
     app->isAlive = 1;
-#endif
 #ifdef CEU_ASYNCS
     app->pendingAsyncs = 1;
-#endif
-#ifdef CEU_OS
-    app->nxt = NULL;
 #endif
 #ifdef CEU_RET
     app->ret = 0;

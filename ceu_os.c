@@ -414,8 +414,7 @@ void ceu_go_wclock (tceu_app* app, s32 dt)
 #endif
 
     if (app->wclk_min <= dt)
-        app->wclk_late = dt - app->wclk_min;   /* how much late the wclock is 
-*/
+        app->wclk_late = dt - app->wclk_min;   /* how much late the wclock is */
 
     app->wclk_min_tmp = app->wclk_min;
     app->wclk_min     = CEU_WCLOCK_INACTIVE;
@@ -602,7 +601,7 @@ int ceu_scheduler (int(*dt)())
     {
         /* WCLOCK */
 #ifdef CEU_WCLOCKS
-		app = CEU_APPS;
+        app = CEU_APPS;
         int _dt = dt();
         for (; app; app=app->nxt) {
             ceu_go_wclock(app, _dt);
@@ -696,6 +695,7 @@ void ceu_sys_stop (tceu_app* app)
 #endif
 
 #ifdef CEU_DEBUG
+    assert(! app->isAlive);
     assert(CEU_APPS != NULL);
 #endif
 
@@ -720,9 +720,6 @@ void ceu_sys_stop (tceu_app* app)
 #ifdef CEU_RET
     ok--;
     ret += app->ret;
-#endif
-#ifdef CEU_DEBUG
-    assert(! app->isAlive);
 #endif
 }
 

@@ -12,7 +12,6 @@
     #define CEU_RET
     #define CEU_CLEAR
 /*
-*/
     #define CEU_INTS
     #define CEU_ORGS
     #define CEU_PSES
@@ -20,11 +19,12 @@
     #define CEU_NEWS_MALLOC
     #define CEU_NEWS_POOL
     #define CEU_THREADS
-
-    #define CEU_QUEUE_MAX 65535
-/*
-    #define CEU_QUEUE_MAX 255
 */
+
+/*
+    #define CEU_QUEUE_MAX 65535
+*/
+    #define CEU_QUEUE_MAX 255
 
     #define CEU_IN__NONE          0
     #define CEU_IN__STK         255
