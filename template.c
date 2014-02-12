@@ -86,6 +86,7 @@ static _tceu_app _CEU_APP = {
 
 /**********************************************************************/
 
+#ifndef CEU_OS
 #ifdef CEU_DEBUG
 tceu_app* CEU_APP_SIG = NULL;
 static void ceu_segfault (int sig_num) {
@@ -96,6 +97,7 @@ static void ceu_segfault (int sig_num) {
 #endif
     exit(0);
 }
+#endif
 #endif
 
 /**********************************************************************/
@@ -169,9 +171,12 @@ void ceu_app_init (tceu_app* app)
 #ifdef CEU_NEWS
     === POOLS_INIT ===
 #endif
+
+#ifndef CEU_OS
 #ifdef CEU_DEBUG
     CEU_APP_SIG = app;
     signal(SIGSEGV, ceu_segfault);
+#endif
 #endif
 
     ceu_org_init(app->data, CEU_NTRAILS, Class_Main, 0, NULL, 0);
@@ -190,12 +195,15 @@ static int ceu_app_go (tceu_app* _ceu_app, tceu_go* _ceu_go)
 #ifdef CEU_GOTO
 _CEU_GOTO_:
 #endif
+
 #ifdef CEU_DEBUG
+#ifndef CEU_OS
 #ifdef CEU_ORGS
     _ceu_app->lst.org = _ceu_go->org;
 #endif
     _ceu_app->lst.trl = _ceu_go->trl;
     _ceu_app->lst.lbl = _ceu_go->lbl;
+#endif
 #ifdef CEU_DEBUG_TRAILS
 fprintf(stderr, "TRK: o.%p / l.%d\n", _ceu_go->org, _ceu_go->lbl);
 #endif

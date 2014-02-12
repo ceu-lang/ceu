@@ -244,8 +244,10 @@ typedef struct tceu_app {
     s32         wclk_min_tmp;
 #endif
 
+#ifndef CEU_OS
 #ifdef CEU_DEBUG
     tceu_lst    lst; /* segfault printf */
+#endif
 #endif
 
 #ifdef CEU_THREADS
