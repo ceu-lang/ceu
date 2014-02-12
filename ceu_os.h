@@ -12,6 +12,7 @@
     #define CEU_RET
     #define CEU_CLEAR
 /*
+*/
     #define CEU_INTS
     #define CEU_ORGS
     #define CEU_PSES
@@ -19,12 +20,11 @@
     #define CEU_NEWS_MALLOC
     #define CEU_NEWS_POOL
     #define CEU_THREADS
-*/
 
-/*
     #define CEU_QUEUE_MAX 65535
-*/
+/*
     #define CEU_QUEUE_MAX 255
+*/
 
     #define CEU_IN__NONE          0
     #define CEU_IN__STK         255
@@ -257,10 +257,10 @@ typedef struct tceu_app {
         /* TODO: u8? */
 #endif
 
-    int         (*code)  (struct tceu_app* _ceu_app, tceu_go* _ceu_go);
-    void        (*init)  (struct tceu_app* app);
+    int         (*code)  (struct tceu_app*,tceu_go*);
+    void        (*init)  (struct tceu_app*);
 #ifdef CEU_OS
-    tceu_evtp   (*calls) (tceu_nevt evt, tceu_evtp param);
+    tceu_evtp   (*calls) (struct tceu_app*,tceu_nevt,tceu_evtp);
     void**      sys_vec;
 #endif
     tceu_org*   data;
@@ -371,6 +371,11 @@ enum {
     CEU_SYS_CALL,
     CEU_SYS_MAX
 };
+
+/* SYS_VECTOR
+ */
+__attribute__((used))
+extern void* CEU_SYS_VEC[CEU_SYS_MAX];
 
 #if 0
 int ceu_sys_unlink (tceu_app* src_app, tceu_nevt src_evt,

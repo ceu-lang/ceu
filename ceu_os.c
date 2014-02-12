@@ -106,6 +106,10 @@ void ceu_org_init (tceu_org* org, int n, int lbl, int seqno,
 #if defined(CEU_ORGS) || defined(CEU_OS)
     org->n = n;
 #endif
+#ifdef CEU_NEWS
+    org->isDyn = 0;
+    org->isSpw = 0;
+#endif
 
     /* org.trls[0] == org.blk.trails[1] */
     org->trls[0].evt   = CEU_IN__STK;
@@ -560,7 +564,7 @@ tceu_evtp ceu_sys_call (tceu_app* app, tceu_nevt evt, tceu_evtp param) {
             continue;
         if (! lnk->dst_app->isAlive)
             continue;   /* TODO: remove when unlink on stop */
-        return lnk->dst_app->calls(lnk->dst_evt, param);
+        return lnk->dst_app->calls(lnk->dst_app, lnk->dst_evt, param);
     }
 /* TODO: error? */
     return (tceu_evtp)NULL;
@@ -647,7 +651,6 @@ int ceu_scheduler (int(*dt)())
 void ceu_sys_start (tceu_app* app)
 {
     app->nxt = NULL;
-    app->sys_vec = CEU_SYS_VEC;
 
     /* add as head */
 	if (CEU_APPS == NULL) {

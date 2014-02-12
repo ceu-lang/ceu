@@ -261,7 +261,7 @@ F = {
                 _CODE.stubs = _CODE.stubs .. [[
 case CEU_IN_]]..id..[[:
 #line ]]..me.ln[2]..' "'..me.ln[1]..[["
-    ]]..ret_value..me.id..'(_ceu_app->data'..ps..[[);
+    ]]..ret_value..me.id..'(_ceu_app, _ceu_app->data'..ps..[[);
 ]]..ret_void
             end
             _CODE.functions = _CODE.functions ..
@@ -349,18 +349,19 @@ end;
                 '((tceu_org*) '..t.val..'['..(i-1)..']'..')'
             or
                 '((tceu_org*) '..t.val..')'
-            LINE(me, [[
-#ifdef CEU_NEWS
-    ]]..org..[[->isDyn  = ]]..t.isDyn..[[;
-    ]]..org..[[->isSpw  = ]]..t.isSpw..[[;
-#endif
 
+            LINE(me, [[
     /* resets org memory and starts org.trail[0]=Class_XXX */
     ceu_org_init(]]..org..[[, ]]
                 ..t.cls.trails_n..','
                 ..t.cls.lbl.id..[[,
                 _ceu_go->stki+1,    /* run now */
                 _ceu_go->org, ]]..t.par_trl_idx..[[);
+
+#ifdef CEU_NEWS
+    ]]..org..[[->isDyn  = ]]..t.isDyn..[[;
+    ]]..org..[[->isSpw  = ]]..t.isSpw..[[;
+#endif
 ]])
 
             -- PRE & CONSTR

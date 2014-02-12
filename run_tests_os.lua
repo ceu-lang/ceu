@@ -28,9 +28,14 @@ function main (T)
 		f:write([[
 #include "_ceu_app_]]..i..[[.h"
 extern void _ceu_app_]]..i..[[_init (tceu_app* app);
+extern int  _ceu_app_]]..i..[[_size;
 ]])
-
-	end
+        for i, _ in ipairs(T) do
+            f:write([[
+tceu_app _ceu_app_]]..i..[[;
+]])
+        end
+    end
 
     f:write([[
 int dt () {
@@ -38,8 +43,20 @@ int dt () {
 }
 int main (void)
 {
+    char MEM[1000000];
+    int MEM_i = 0;
     int ret;
 ]])
+
+    -- APPS
+    for i, _ in ipairs(T) do
+        f:write([[
+    _ceu_app_]]..i..[[.data = (tceu_org*) &MEM[MEM_i];
+    MEM_i += _ceu_app_]]..i..[[_size;
+    _ceu_app_]]..i..[[.init = &_ceu_app_]]..i..[[_init;
+    _ceu_app_]]..i..[[.sys_vec = CEU_SYS_VEC;
+]])
+    end
 
     -- LINKS
     T.lnks = T.lnks or {}
@@ -61,11 +78,7 @@ int main (void)
     -- APPS
     for i, _ in ipairs(T) do
         f:write([[
-    char mem_]]..i..[[ [sizeof(_ceu_app_]]..i..[[) ];
-    tceu_app app_]]..i..[[;
-    app_]]..i..[[.data = (tceu_org*) &mem_]]..i..[[;
-    app_]]..i..[[.init = &_ceu_app_]]..i..[[_init;
-    ceu_sys_start(&app_]]..i..[[);
+    ceu_sys_start(&_ceu_app_]]..i..[[);
 ]])
     end
 
@@ -99,7 +112,7 @@ Test = function (T)
         local cmd = './ceu --os --verbose '..
                                '--out-c '..name..'.c '..
                                '--out-h '..name..'.h '..
-                               '--out-t '..name..' '..
+                               '--out-s '..name..'_size '..
                                '--out-f '..name..'_init '..
                                            name..'.ceu 2>&1'
         assert(os.execute(cmd) == 0)

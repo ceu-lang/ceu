@@ -290,7 +290,11 @@ do
         --str = str .. '#define CEU_NOLINES\n'
 
         if _OPTS.os then
-            str = str .. '#define CEU_OS\n'
+            str = str .. [[
+#ifndef CEU_OS
+#define CEU_OS
+#endif
+]]
         end
 
         if _OPTS.run_tests then

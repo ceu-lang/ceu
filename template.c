@@ -45,11 +45,6 @@ enum {
 === LABELS_ENUM ===
 };
 
-static int       ceu_app_go    (tceu_app* _ceu_app, tceu_go* _ceu_go);
-#ifdef CEU_OS
-static tceu_evtp ceu_app_calls (tceu_nevt evt, tceu_evtp param);
-#endif
-
 typedef struct {
 #ifdef CEU_IFCS
     s8    ifcs_clss[CEU_NCLS][=== IFCS_NIFCS ===];
@@ -111,7 +106,7 @@ static void ceu_segfault (int sig_num) {
 === FUNCTIONS_C ===
 
 #ifdef CEU_OS
-static tceu_evtp ceu_app_calls (tceu_nevt evt, tceu_evtp param) {
+static tceu_evtp ceu_app_calls (tceu_app* _ceu_app, tceu_nevt evt, tceu_evtp param) {
     switch (evt) {
         /* STUBS */
         === STUBS ===
@@ -127,6 +122,37 @@ static tceu_evtp ceu_app_calls (tceu_nevt evt, tceu_evtp param) {
     return (tceu_evtp)NULL;
 }
 #endif
+
+static int ceu_app_go (tceu_app* _ceu_app, tceu_go* _ceu_go)
+{
+#ifdef CEU_GOTO
+_CEU_GOTO_:
+#endif
+
+#ifdef CEU_DEBUG
+#ifndef CEU_OS
+#ifdef CEU_ORGS
+    _ceu_app->lst.org = _ceu_go->org;
+#endif
+    _ceu_app->lst.trl = _ceu_go->trl;
+    _ceu_app->lst.lbl = _ceu_go->lbl;
+#endif
+#ifdef CEU_DEBUG_TRAILS
+fprintf(stderr, "TRK: o.%p / l.%d\n", _ceu_go->org, _ceu_go->lbl);
+#endif
+#endif
+
+#ifdef CEU_RUNTESTS
+    ceu_stack_clr();
+#endif
+
+    switch (_ceu_go->lbl) {
+        === CODE ===
+    }
+    return RET_HALT;    /* TODO: should never be reached anyways */
+}
+
+/* EXPORTED ENTRY POINTS */
 
 int CEU_SIZE = sizeof(CEU_Main);
 
@@ -165,7 +191,6 @@ void ceu_app_init (tceu_app* app)
     app->code = &ceu_app_go;
 #ifdef CEU_OS
     app->calls = &ceu_app_calls;
-    app->sys_vec = NULL;
 #endif
 
 #ifdef CEU_NEWS
@@ -189,32 +214,3 @@ static void ceu_stack_clr () {
     memset(a, 0, sizeof(a));
 }
 #endif
-
-static int ceu_app_go (tceu_app* _ceu_app, tceu_go* _ceu_go)
-{
-#ifdef CEU_GOTO
-_CEU_GOTO_:
-#endif
-
-#ifdef CEU_DEBUG
-#ifndef CEU_OS
-#ifdef CEU_ORGS
-    _ceu_app->lst.org = _ceu_go->org;
-#endif
-    _ceu_app->lst.trl = _ceu_go->trl;
-    _ceu_app->lst.lbl = _ceu_go->lbl;
-#endif
-#ifdef CEU_DEBUG_TRAILS
-fprintf(stderr, "TRK: o.%p / l.%d\n", _ceu_go->org, _ceu_go->lbl);
-#endif
-#endif
-
-#ifdef CEU_RUNTESTS
-    ceu_stack_clr();
-#endif
-
-    switch (_ceu_go->lbl) {
-        === CODE ===
-    }
-    return RET_HALT;    /* TODO: should never be reached anyways */
-}
