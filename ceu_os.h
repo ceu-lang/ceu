@@ -12,6 +12,7 @@
     #define CEU_RET
     #define CEU_CLEAR
 /*
+*/
     #define CEU_INTS
     #define CEU_ORGS
     #define CEU_PSES
@@ -19,12 +20,11 @@
     #define CEU_NEWS_MALLOC
     #define CEU_NEWS_POOL
     #define CEU_THREADS
-*/
 
+    #define CEU_QUEUE_MAX 65536
 /*
-    #define CEU_QUEUE_MAX 65535
+    #define CEU_QUEUE_MAX 256
 */
-    #define CEU_QUEUE_MAX 255
 
     #define CEU_IN__NONE          0
     #define CEU_IN__STK         255
@@ -184,7 +184,7 @@ typedef struct tceu_go {
 #endif
 
 #if defined(CEU_ORGS) || defined(CEU_OS)
-    #define CEU_MAX_STACK   255     /* TODO */
+    #define CEU_MAX_STACK   255     /* TODO 256??? */
     /* TODO: CEU_ORGS is calculable // CEU_NEWS isn't (255?) */
     tceu_stk stk[CEU_MAX_STACK];
 #else
@@ -337,10 +337,10 @@ typedef struct {
     tceu_app* app;
     tceu_nevt evt;
     tceu_evtp param;
-#if CEU_QUEUE_MAX == 255
-    u8        sz;
+#if CEU_QUEUE_MAX == 256
+    s8        sz;
 #else
-    u16       sz;
+    s16       sz;   /* signed because of fill */
 #endif
     char      buf[0];
 } tceu_queue;

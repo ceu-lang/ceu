@@ -3,6 +3,22 @@ _VALGRIND = true
 --[===[
 --]===]
 
+Test { [[
+output int O;
+par/or do
+    loop do
+        await 250ms;
+        await 250ms;
+        emit O => 1;
+    end
+with
+    await 10min;
+end
+escape(1);
+]],
+	run = 1,
+}
+
 --do return end
 
 -- OK: well tested
@@ -437,6 +453,7 @@ var int ret = 0;
         emit O => (a,b);
         ret = ret + a + b;
     end
+    await 50ms;
     emit F;
 escape ret;
 ]],
@@ -468,15 +485,15 @@ Test {
 output (u8,u8) O;
 output int F;
 var int ret = 0;
-    loop i, 10000 do
-        var int a=1, b=2;
-        emit O => (a,b);
-        ret = ret + 1;
-    end
-    loop i, 10000 do
-        async do end
-    end
-    emit F=>0;
+loop i, 10000 do
+    var int a=1, b=2;
+    emit O => (a,b);
+    ret = ret + 1;
+end
+loop i, 10000 do
+    async do end
+end
+emit F=>0;
 escape ret;
 ]],
 [[

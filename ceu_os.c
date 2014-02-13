@@ -504,21 +504,21 @@ void* CEU_SYS_VEC[CEU_SYS_MAX] = {
 };
 
 /* QUEUE
- * - 255 avoids doing modulo operations
+ * - 256 avoids doing modulo operations
  * - n: number of entries
  * - 0: next position to consume
  * - i: next position to enqueue
  */
-#if CEU_QUEUE_MAX == 255
+#if CEU_QUEUE_MAX == 256
 	char QUEUE[CEU_QUEUE_MAX];
-    int  QUEUE_n = 0;
-    u8   QUEUE_0 = 0;
-    u8   QUEUE_i = 0;
+    int  QUEUE_tot = 0;
+    u8   QUEUE_get = 0;
+    u8   QUEUE_put = 0;
 #else
 	char QUEUE[CEU_QUEUE_MAX];
-    int  QUEUE_n = 0;
-    u16  QUEUE_0 = 0;
-    u16  QUEUE_i = 0;
+    int  QUEUE_tot = 0;
+    u16  QUEUE_get = 0;
+    u16  QUEUE_put = 0;
 #endif
 
 static tceu_app* CEU_APPS = NULL;
@@ -532,11 +532,18 @@ static tceu_lnk* CEU_LNKS = NULL;
 int ceu_sys_emit (tceu_app* app, tceu_nevt evt, tceu_evtp param,
                   int sz, char* buf) {
     int n = sizeof(tceu_queue) + sz;
-    if (QUEUE_n+n >= CEU_QUEUE_MAX)
+
+    /* An event+data must be continuous in the QUEUE. */
+    if (QUEUE_put+n>=CEU_QUEUE_MAX && evt!=CEU_IN__NONE) {
+        int fill = CEU_QUEUE_MAX - QUEUE_put - sizeof(tceu_queue);
+        ceu_sys_emit(app, CEU_IN__NONE, param, fill, NULL);
+    }
+
+    if (QUEUE_tot+n > CEU_QUEUE_MAX)
         return 0;   /* TODO: add event FULL when CEU_QUEUE_MAX-1 */
 
     {
-        tceu_queue* qu = (tceu_queue*) &QUEUE[QUEUE_i];
+        tceu_queue* qu = (tceu_queue*) &QUEUE[QUEUE_put];
         qu->app = app;
         qu->evt = evt;
         qu->sz  = sz;
@@ -544,14 +551,14 @@ int ceu_sys_emit (tceu_app* app, tceu_nevt evt, tceu_evtp param,
         if (sz == 0) {
             /* "param" is self-contained */
             qu->param = param;
-        } else {
+        } else if (evt != CEU_IN__NONE) {
             /* "param" points to "buf" */
             qu->param.ptr = qu->buf;
             memcpy(qu->buf, buf, sz);
         }
     }
-    QUEUE_i += n;
-    QUEUE_n += n;
+    QUEUE_put += n;
+    QUEUE_tot += n;
     return 1;
 }
 
@@ -569,21 +576,21 @@ tceu_evtp ceu_sys_call (tceu_app* app, tceu_nevt evt, tceu_evtp param) {
     return (tceu_evtp)NULL;
 }
 
-tceu_queue* ceu_sys_queue_nxt (void) {
-    if (QUEUE_n == 0) {
+tceu_queue* ceu_sys_queue_get (void) {
+    if (QUEUE_tot == 0) {
         return NULL;
     } else {
 #ifdef CEU_DEBUG
-        assert(QUEUE_n > 0);
+        assert(QUEUE_tot > 0);
 #endif
-        return (tceu_queue*) &QUEUE[QUEUE_0];
+        return (tceu_queue*) &QUEUE[QUEUE_get];
     }
 }
 
 void ceu_sys_queue_rem (void) {
-    tceu_queue* qu = (tceu_queue*) &QUEUE[QUEUE_0];
-    QUEUE_n -= sizeof(tceu_queue) + qu->sz;
-    QUEUE_0 += sizeof(tceu_queue) + qu->sz;
+    tceu_queue* qu = (tceu_queue*) &QUEUE[QUEUE_get];
+    QUEUE_tot -= sizeof(tceu_queue) + qu->sz;
+    QUEUE_get += sizeof(tceu_queue) + qu->sz;
 }
 
 int ceu_scheduler (int(*dt)())
@@ -622,7 +629,7 @@ int ceu_scheduler (int(*dt)())
 
         /* EVENTS */
 
-        tceu_queue* qu = ceu_sys_queue_nxt();
+        tceu_queue* qu = ceu_sys_queue_get();
         if (qu != NULL)
         {
             lnk = CEU_LNKS;

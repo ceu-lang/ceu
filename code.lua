@@ -881,8 +881,10 @@ _ceu_go->trl->lbl = ]]..me.lbl_cnt.id..[[;
             error'not supported'
         else
             LINE(me, V(me)..[[;
+#if defined(CEU_RET) || defined(CEU_OS)
 if (! _ceu_app->isAlive)
     return RET_END;
+#endif
 ]])
         end
 
@@ -908,11 +910,17 @@ _ceu_go->trl->lbl = ]]..me.lbl_cnt.id..[[;
         local emit = [[
 {
     ceu_go_wclock(_ceu_app, (s32)]]..V(exp)..[[);
-    while (_ceu_app->isAlive && _ceu_app->wclk_min<=0) {
+    while (
+#if defined(CEU_RET) || defined(CEU_OS)
+            _ceu_app->isAlive &&
+#endif
+            _ceu_app->wclk_min<=0) {
         ceu_go_wclock(_ceu_app, 0);
     }
+#if defined(CEU_RET) || defined(CEU_OS)
     if (! _ceu_app->isAlive)
         return RET_END;
+#endif
 }
 ]]
         if _AST.iter'Thread'() then
