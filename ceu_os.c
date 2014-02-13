@@ -510,12 +510,12 @@ void* CEU_SYS_VEC[CEU_SYS_MAX] = {
  * - i: next position to enqueue
  */
 #if CEU_QUEUE_MAX == 256
-	char QUEUE[CEU_QUEUE_MAX];
+    char QUEUE[CEU_QUEUE_MAX];
     int  QUEUE_tot = 0;
     u8   QUEUE_get = 0;
     u8   QUEUE_put = 0;
 #else
-	char QUEUE[CEU_QUEUE_MAX];
+    char QUEUE[CEU_QUEUE_MAX];
     int  QUEUE_tot = 0;
     u16  QUEUE_get = 0;
     u16  QUEUE_put = 0;
@@ -533,14 +533,14 @@ int ceu_sys_emit (tceu_app* app, tceu_nevt evt, tceu_evtp param,
                   int sz, char* buf) {
     int n = sizeof(tceu_queue) + sz;
 
+    if (QUEUE_tot+n > CEU_QUEUE_MAX)
+        return 0;   /* TODO: add event FULL when CEU_QUEUE_MAX-1 */
+
     /* An event+data must be continuous in the QUEUE. */
-    if (QUEUE_put+n>=CEU_QUEUE_MAX && evt!=CEU_IN__NONE) {
+    if (QUEUE_put+n+sizeof(tceu_queue)>=CEU_QUEUE_MAX && evt!=CEU_IN__NONE) {
         int fill = CEU_QUEUE_MAX - QUEUE_put - sizeof(tceu_queue);
         ceu_sys_emit(app, CEU_IN__NONE, param, fill, NULL);
     }
-
-    if (QUEUE_tot+n > CEU_QUEUE_MAX)
-        return 0;   /* TODO: add event FULL when CEU_QUEUE_MAX-1 */
 
     {
         tceu_queue* qu = (tceu_queue*) &QUEUE[QUEUE_put];
