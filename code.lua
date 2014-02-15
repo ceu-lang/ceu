@@ -352,7 +352,7 @@ end;
 
             LINE(me, [[
     /* resets org memory and starts org.trail[0]=Class_XXX */
-    ceu_org_init(]]..org..[[, ]]
+    ceu_out_org_init(]]..org..[[, ]]
                 ..t.cls.trails_n..','
                 ..t.cls.lbl.id..[[,
                 _ceu_go->stki+1,    /* run now */
@@ -1238,7 +1238,7 @@ static void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
     /* only if sync is not active */
         if (*(_ceu_p.st) < 3) {             /* 3=end */
             *(_ceu_p.st) = 3;
-            ceu_go(_ceu_app, CEU_IN__THREAD, evtp);   /* keep locked */
+            ceu_out_go(_ceu_app, CEU_IN__THREAD, evtp);   /* keep locked */
                 /* HACK_2:
                  *  A thread never terminates the program because we include an
                  *  <async do end> after it to enforce terminating from the

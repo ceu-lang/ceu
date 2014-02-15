@@ -40,15 +40,6 @@
 
     typedef s8 tceu_nlbl;
 
-/*
-    #define ceu_out_emit_buf(app,id,sz,buf) \
-        ceu_sys_emit(app,id,(tceu_evtp)NULL,sz,buf)
-    #define ceu_out_emit_val(app,id,param) \
-        ceu_sys_emit(app,id,param,0,NULL)
-    #define ceu_out_call_val(app,id,param) \
-        ceu_sys_call(app,id,param)
-*/
-
     #define ceu_out_emit_buf(app,id,sz,buf) \
         ((__typeof__(ceu_sys_emit)*)((app)->sys_vec[CEU_SYS_EMIT]))(app,id,(tceu_evtp)NULL,sz,buf)
 
@@ -57,12 +48,23 @@
 
     #define ceu_out_call_val(app,id,param) \
         ((__typeof__(ceu_sys_call)*)((app)->sys_vec[CEU_SYS_CALL]))(app,id,param)
+
+    #define ceu_out_go(app,evt,evtp) \
+        ((__typeof__(ceu_sys_go)*)((app)->sys_vec[CEU_SYS_GO]))(app,evt,evtp)
+
+    #define ceu_out_org_init(org,n,lbl,seqno,par_org,par_trl) \
+        ((__typeof__(ceu_sys_org_init)*)((app)->sys_vec[CEU_SYS_ORG_INIT]))(org,n,lbl,seqno,par_org,par_trl)
 /*
 */
 
 #else /* CEU_OS */
     #include "_ceu_app.h"
-    #define ceu_out_emit_buf(app,id,sz,buf) ceu_out_emit_val(app,id,(tceu_evtp)(void*)buf)
+    #define ceu_out_emit_buf(app,id,sz,buf) \
+            ceu_out_emit_val(app,id,(tceu_evtp)(void*)buf)
+    #define ceu_out_org_init(org,n,lbl,seqno,par_org,par_trl) \
+            ceu_sys_org_init(org,n,lbl,seqno,par_org,par_trl)
+    #define ceu_out_go(app,evt,evtp) \
+            ceu_sys_go(app,evt,evtp)
 #endif
 
 #define ceu_in_emit_val  ceu_go_event
@@ -301,19 +303,14 @@ enum {
 void* ceu_alloc (size_t size);
 void  ceu_free (void* ptr);
 
-void ceu_org_init (tceu_org* org, int n, int lbl, int seqno,
-                   tceu_org* par_org, int par_trl);
-
-#ifdef CEU_WCLOCKS
-void ceu_trails_set_wclock (tceu_app* app, s32* t, s32 dt);
-int ceu_wclocks_expired (tceu_app* app, s32* t, s32 dt);
-#endif
+void ceu_sys_org_init (tceu_org* org, int n, int lbl, int seqno,
+                       tceu_org* par_org, int par_trl);
 
 #ifdef CEU_PSES
 void ceu_pause (tceu_trl* trl, tceu_trl* trlF, int psed);
 #endif
 
-void ceu_go        (tceu_app* app, int evt, tceu_evtp evtp); /* TODO: remove from .h? */
+void ceu_sys_go    (tceu_app* app, int evt, tceu_evtp evtp);
 void ceu_go_event  (tceu_app* app, int id, tceu_evtp data);
 void ceu_go_async  (tceu_app* app);
 void ceu_go_wclock (tceu_app* app, s32 dt);
@@ -369,6 +366,8 @@ enum {
     /*CEU_SYS_UNLINK,*/
     CEU_SYS_EMIT,
     CEU_SYS_CALL,
+    CEU_SYS_GO,
+    CEU_SYS_ORG_INIT,
     CEU_SYS_MAX
 };
 

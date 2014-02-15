@@ -66,39 +66,8 @@ void ceu_free (void* ptr) {
 
 /**********************************************************************/
 
-#ifdef CEU_WCLOCKS
-
-void ceu_wclocks_min (tceu_app* app, s32 dt, int out) {
-    if (app->wclk_min > dt) {
-        app->wclk_min = dt;
-#ifdef ceu_out_wclock
-        if (out)
-            ceu_out_wclock(dt);
-#endif
-    }
-}
-
-int ceu_wclocks_expired (tceu_app* app, s32* t, s32 dt) {
-    if (*t>app->wclk_min_tmp || *t>dt) {
-        *t -= dt;
-        ceu_wclocks_min(app, *t, 0);
-        return 0;
-    }
-    return 1;
-}
-
-void ceu_trails_set_wclock (tceu_app* app, s32* t, s32 dt) {
-    s32 dt_ = dt - app->wclk_late;
-    *t = dt_;
-    ceu_wclocks_min(app, dt_, 1);
-}
-
-#endif  /* CEU_WCLOCKS */
-
-/**********************************************************************/
-
-void ceu_org_init (tceu_org* org, int n, int lbl, int seqno,
-                   tceu_org* par_org, int par_trl)
+void ceu_sys_org_init (tceu_org* org, int n, int lbl, int seqno,
+                       tceu_org* par_org, int par_trl)
 {
     /* { evt=0, seqno=0, lbl=0 } for all trails */
     memset(&org->trls, 0, n*sizeof(tceu_trl));
@@ -131,7 +100,7 @@ void ceu_org_init (tceu_org* org, int n, int lbl, int seqno,
 #endif  /* CEU_ORGS */
 }
 #ifndef CEU_ORGS
-#define ceu_org_init(a,b,c,d,e,f) ceu_org_init(a,b,c,d,NULL,0)
+#define ceu_sys_org_init(a,b,c,d,e,f) ceu_sys_org_init(a,b,c,d,NULL,0)
 #endif
 
 /**********************************************************************/
@@ -163,7 +132,7 @@ void ceu_pause (tceu_trl* trl, tceu_trl* trlF, int psed) {
 
 /**********************************************************************/
 
-void ceu_go (tceu_app* app, int evt, tceu_evtp evtp)
+void ceu_sys_go (tceu_app* app, int evt, tceu_evtp evtp)
 {
     tceu_go go;
         go.evt  = evt;
@@ -386,7 +355,7 @@ void ceu_go_event (tceu_app* app, int id, tceu_evtp data)
 #ifdef CEU_DEBUG_TRAILS
     fprintf(stderr, "====== %d\n", id);
 #endif
-    ceu_go(app, id, data);
+    ceu_sys_go(app, id, data);
 }
 #endif
 
@@ -400,7 +369,7 @@ void ceu_go_async (tceu_app* app)
         tceu_evtp p;
         p.ptr = NULL;
         app->pendingAsyncs = 0;
-        ceu_go(app, CEU_IN__ASYNC, p);
+        ceu_sys_go(app, CEU_IN__ASYNC, p);
     }
 }
 #endif
@@ -422,7 +391,7 @@ void ceu_go_wclock (tceu_app* app, s32 dt)
     {
         tceu_evtp p;
         p.dt = dt;
-        ceu_go(app, CEU_IN__WCLOCK, p);
+        ceu_sys_go(app, CEU_IN__WCLOCK, p);
     }
 
 #ifdef ceu_out_wclock
