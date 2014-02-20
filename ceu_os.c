@@ -629,23 +629,28 @@ int ceu_scheduler (int(*dt)())
         tceu_queue* qu = ceu_sys_queue_get();
         if (qu != NULL)
         {
-            /* OS_START is to a specific new process */
-            if (qu->evt == CEU_IN_OS_START) {
-                ceu_go_event(qu->app, CEU_IN_OS_START, (tceu_evtp)NULL);
+            /* self-emitted event */
+            ceu_go_event(qu->app, qu->evt, qu->param);
 
-            } else {
-                lnk = CEU_LNKS;
-                for (; lnk; lnk=lnk->nxt)
-                {
-                    if (qu->app!=lnk->src_app || qu->evt!=lnk->src_evt)
-                        continue;
-                    if (! lnk->dst_app->isAlive)
-                        continue;   /* TODO: remove when unlink on stop */
-                    ceu_go_event(lnk->dst_app, lnk->dst_evt, qu->param);
-                    if (! lnk->dst_app->isAlive)
-                        _ceu_sys_stop(lnk->dst_app);
-                }
+            /* TODO:
+             * If I can ensure that all IN events are below 127 and
+             * OUT events are above it, then I can test "qu->evt" and
+             * execute either the code above or the code below.
+             */
+
+            /* linked events */
+            lnk = CEU_LNKS;
+            for (; lnk; lnk=lnk->nxt)
+            {
+                if (qu->app!=lnk->src_app || qu->evt!=lnk->src_evt)
+                    continue;
+                if (! lnk->dst_app->isAlive)
+                    continue;   /* TODO: remove when unlink on stop */
+                ceu_go_event(lnk->dst_app, lnk->dst_evt, qu->param);
+                if (! lnk->dst_app->isAlive)
+                    _ceu_sys_stop(lnk->dst_app);
             }
+
             ceu_sys_queue_rem();
         }
     }
