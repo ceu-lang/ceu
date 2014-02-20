@@ -2,15 +2,20 @@
 
 #include "ceu_os.h"
 
+#ifdef CEU_OS
+#include <avr/pgmspace.h>
+u16 CEU_APP_ADDR = 0;
+#endif
+
 #include <string.h>
 
 #ifdef CEU_DEBUG
 #include <stdio.h>      /* fprintf */
-#include <stdlib.h>     /* exit */
+#include <assert.h>
 #endif
 
-#ifdef CEU_DEBUG
-#include <assert.h>
+#if defined(CEU_OS) || defined(CEU_DEBUG)
+#include <stdlib.h>     /* malloc/free, exit */
 #endif
 
 /* TODO: app */
@@ -41,8 +46,8 @@ static int _ceu_dyns_ = 0;  /* check if total of alloc/free match */
 #endif
 #endif
 
-#if defined(CEU_NEWS) || defined(CEU_THREADS)
-void* ceu_alloc (size_t size) {
+#if defined(CEU_NEWS) || defined(CEU_THREADS) || defined(CEU_OS)
+void* ceu_sys_malloc (size_t size) {
 #ifdef CEU_NEWS
 #ifdef CEU_RUNTESTS
     if (_ceu_dyns_ >= CEU_MAX_DYNS)
@@ -53,7 +58,7 @@ void* ceu_alloc (size_t size) {
     return malloc(size);
 }
 
-void ceu_free (void* ptr) {
+void ceu_sys_free (void* ptr) {
 #ifdef CEU_NEWS
 #ifdef CEU_RUNTESTS
     if (ptr != NULL)
@@ -301,7 +306,15 @@ _CEU_GO_:
             }
 
             {
+#ifdef CEU_OS
+                u16 __old = CEU_APP_ADDR;
+                CEU_APP_ADDR = app->addr;
+#endif
                 int _ret = app->code(app, &go);
+#ifdef CEU_OS
+                CEU_APP_ADDR = __old;
+#endif
+
                 switch (_ret) {
                     case RET_END:
 #if defined(CEU_RET) || defined(CEU_OS)
@@ -460,16 +473,21 @@ int ceu_go_all (tceu_app* app)
 
 #ifdef CEU_OS
 
+static int CEU_PID = 1;
+
 /* SYS_VECTOR
  */
-__attribute__((used))
-void* CEU_SYS_VEC[CEU_SYS_MAX] = {
+void* CEU_SYS_VEC[CEU_SYS_MAX] __attribute__((used)) = {
+    (void*) &ceu_sys_malloc,
+    (void*) &ceu_sys_free,
     (void*) &ceu_sys_start,
     (void*) &ceu_sys_stop,
     (void*) &ceu_sys_link,
     /*&ceu_sys_unlink,*/
     (void*) &ceu_sys_emit,
-    (void*) &ceu_sys_call
+    (void*) &ceu_sys_call,
+    (void*) &ceu_sys_go,
+    (void*) &ceu_sys_org_init,
 };
 
 /* QUEUE
@@ -539,7 +557,15 @@ tceu_evtp ceu_sys_call (tceu_app* app, tceu_nevt evt, tceu_evtp param) {
             continue;
         if (! lnk->dst_app->isAlive)
             continue;   /* TODO: remove when unlink on stop */
-        return lnk->dst_app->calls(lnk->dst_app, lnk->dst_evt, param);
+#ifdef CEU_OS
+        u16 __old = CEU_APP_ADDR;
+        CEU_APP_ADDR = lnk->dst_app->addr;
+#endif
+        tceu_evtp ret = lnk->dst_app->calls(lnk->dst_app, lnk->dst_evt, param);
+#ifdef CEU_OS
+        CEU_APP_ADDR = __old;
+#endif
+        return ret;
     }
 /* TODO: error? */
     return (tceu_evtp)NULL;
@@ -562,6 +588,8 @@ void ceu_sys_queue_rem (void) {
     QUEUE_get += sizeof(tceu_queue) + qu->sz;
 }
 
+void _ceu_sys_stop (tceu_app* app);
+
 int ceu_scheduler (int(*dt)())
 {
 	tceu_app* app;
@@ -582,7 +610,7 @@ int ceu_scheduler (int(*dt)())
         for (; app; app=app->nxt) {
             ceu_go_wclock(app, _dt);
             if (! app->isAlive)
-                ceu_sys_stop(app);
+                _ceu_sys_stop(app);
         }
 #endif	/* CEU_WCLOCKS */
 
@@ -592,7 +620,7 @@ int ceu_scheduler (int(*dt)())
         for (; app; app=app->nxt) {
             ceu_go_async(app);
             if (! app->isAlive)
-                ceu_sys_stop(app);
+                _ceu_sys_stop(app);
         }
 #endif	/* CEU_ASYNCS */
 
@@ -610,7 +638,7 @@ int ceu_scheduler (int(*dt)())
                     continue;   /* TODO: remove when unlink on stop */
                 ceu_go_event(lnk->dst_app, lnk->dst_evt, qu->param);
                 if (! lnk->dst_app->isAlive)
-                    ceu_sys_stop(lnk->dst_app);
+                    _ceu_sys_stop(lnk->dst_app);
             }
             ceu_sys_queue_rem();
         }
@@ -623,9 +651,25 @@ int ceu_scheduler (int(*dt)())
 #endif
 }
 
-void ceu_sys_start (tceu_app* app)
+/* START */
+
+u16 ceu_sys_start (u16 addr)
 {
+    tceu_app* app = (tceu_app*) ceu_sys_malloc(sizeof(tceu_app));
+    if (app == NULL)
+        return 0;
+
+    app->data = (tceu_org*) ceu_sys_malloc(pgm_read_word_near(addr));
+    if (app->data == NULL)
+        return 0;
+
+    /* TODO: free both on stop */
+
+    app->pid = CEU_PID++;
+    app->sys_vec = CEU_SYS_VEC;
     app->nxt = NULL;
+    app->init = (tceu_init) ((addr>>1) + pgm_read_word_near(addr+2));
+    app->addr = addr;
 
     /* add as head */
 	if (CEU_APPS == NULL) {
@@ -648,8 +692,8 @@ void ceu_sys_start (tceu_app* app)
 
     app->init(app);
     if (! app->isAlive) {
-        ceu_sys_stop(app);
-        return;
+        _ceu_sys_stop(app);
+        return app->pid;
     }
 
     /* OS_START */
@@ -657,14 +701,36 @@ void ceu_sys_start (tceu_app* app)
 #ifdef CEU_IN_OS_START
     ceu_go_event(app, CEU_IN_OS_START, (tceu_evtp)NULL);
     if (! app->isAlive) {
-        ceu_sys_stop(app);
-        return;
+        _ceu_sys_stop(app);
+        return app->pid;
     }
 #endif
+
+    return app->pid;
 }
 
-void ceu_sys_stop (tceu_app* app)
-{
+/* STOP */
+
+static tceu_app* ceu_pid2app (u16 pid) {
+    tceu_app* cur = CEU_APPS;
+    do {
+        if (cur->pid == pid)
+            return cur;
+    } while ((cur = cur->nxt));
+    return NULL;
+}
+
+int ceu_sys_stop (u16 pid) {
+    tceu_app* app = ceu_pid2app(pid);
+    if (app == NULL) {
+        return 0;
+    } else {
+        _ceu_sys_stop(app);
+        return 1;
+    }
+}
+
+void _ceu_sys_stop (tceu_app* app) {
 #ifdef CEU_IN_OS_STOP
     if (app->isAlive)
         ceu_go_event(app, CEU_IN_OS_STOP, (tceu_evtp)NULL);
@@ -697,11 +763,30 @@ void ceu_sys_stop (tceu_app* app)
     ok--;
     ret += app->ret;
 #endif
+
+    ceu_sys_free(app->data);
+    ceu_sys_free(app);
 }
 
-void ceu_sys_link (tceu_lnk* lnk)
+/* LINK & UNLINK */
+
+int ceu_sys_link (u16 src_pid, tceu_nevt src_evt,
+                   u16 dst_pid, tceu_nevt dst_evt)
 {
-	lnk->nxt = NULL;
+    tceu_app* src_app = ceu_pid2app(src_pid);
+    tceu_app* dst_app = ceu_pid2app(dst_pid);
+    if (src_app==NULL || dst_app==NULL)
+        return 0;
+
+    tceu_lnk* lnk = (tceu_lnk*) ceu_sys_malloc(sizeof(tceu_lnk));
+    if (lnk == NULL)
+        return 0;
+
+    lnk->src_app = src_app;
+    lnk->src_evt = src_evt;
+    lnk->dst_app = dst_app;
+    lnk->dst_evt = dst_evt;
+    lnk->nxt = NULL;
 
     /* add as head */
 	if (CEU_LNKS == NULL) {
@@ -714,6 +799,8 @@ void ceu_sys_link (tceu_lnk* lnk)
             cur = cur->nxt;
 		cur->nxt = lnk;
     }
+
+    return 1;
 }
 
 #if 0

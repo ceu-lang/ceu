@@ -143,31 +143,26 @@ do
     dofile 'code.lua'
 end
 
-local sub = function (str, from, to)
-    assert(to, from)
-    local i,e = string.find(str, from)
-    return string.sub(str, 1, i-1) .. to .. string.sub(str, e+1)
-end
 local CC, HH
 
 -- TEMPLATE.C
 do
     CC = _FILES.template_c
 
-    CC = sub(CC, '=== FILENAME ===', _OPTS.input)
+    CC = string.gsub(CC, '=== FILENAME ===', _OPTS.input)
     --CC = string.gsub(CC, '^#line.-\n', '')
 
-    CC = sub(CC, '=== LABELS_ENUM ===', _LBLS.code_enum)
+    CC = string.gsub(CC, '=== LABELS_ENUM ===', _LBLS.code_enum)
 
-    CC = sub(CC, '=== CLSS_DEFS ===',  _MEM.clss)
-    CC = sub(CC, '=== POOLS_DCL ===',  _MEM.pools.dcl)
-    CC = sub(CC, '=== POOLS_INIT ===', _MEM.pools.init)
+    CC = string.gsub(CC, '=== CLSS_DEFS ===',  _MEM.clss)
+    CC = string.gsub(CC, '=== POOLS_DCL ===',  _MEM.pools.dcl)
+    CC = string.gsub(CC, '=== POOLS_INIT ===', _MEM.pools.init)
 
-    CC = sub(CC, '=== THREADS_C ===',   _CODE.threads)
-    CC = sub(CC, '=== FUNCTIONS_C ===', _CODE.functions)
-    CC = sub(CC, '=== STUBS ===',       _CODE.stubs)
-    CC = sub(CC, '=== NATIVE ===',      _CODE.native)
-    CC = sub(CC, '=== CODE ===',        _AST.root.code)
+    CC = string.gsub(CC, '=== THREADS_C ===',   _CODE.threads)
+    CC = string.gsub(CC, '=== FUNCTIONS_C ===', _CODE.functions)
+    CC = string.gsub(CC, '=== STUBS ===',       _CODE.stubs)
+    CC = string.gsub(CC, '=== NATIVE ===',      _CODE.native)
+    CC = string.gsub(CC, '=== CODE ===',        _AST.root.code)
 
     -- IFACES
     if _PROPS.has_ifcs then
@@ -218,15 +213,15 @@ do
             EVTS[#EVTS+1] = '\t\t{'..table.concat(evts,',')..'}'
             FUNS[#FUNS+1] = '\t\t{'..table.concat(funs,',')..'}'
         end
-        CC = sub(CC, '=== CEU_NCLS ===',     #_ENV.clss_cls)
-        CC = sub(CC, '=== IFCS_NIFCS ===',   #_ENV.clss_ifc)
-        CC = sub(CC, '=== IFCS_NFLDS ===',   #_ENV.ifcs.flds)
-        CC = sub(CC, '=== IFCS_NEVTS ===',   #_ENV.ifcs.evts)
-        CC = sub(CC, '=== IFCS_NFUNS ===',   #_ENV.ifcs.funs)
-        CC = sub(CC, '=== IFCS_CLSS ===',    table.concat(CLSS,',\n'))
-        CC = sub(CC, '=== IFCS_FLDS ===',    table.concat(FLDS,',\n'))
-        CC = sub(CC, '=== IFCS_EVTS ===',    table.concat(EVTS,',\n'))
-        CC = sub(CC, '=== IFCS_FUNS ===',    table.concat(FUNS,',\n'))
+        CC = string.gsub(CC, '=== CEU_NCLS ===',     #_ENV.clss_cls)
+        CC = string.gsub(CC, '=== IFCS_NIFCS ===',   #_ENV.clss_ifc)
+        CC = string.gsub(CC, '=== IFCS_NFLDS ===',   #_ENV.ifcs.flds)
+        CC = string.gsub(CC, '=== IFCS_NEVTS ===',   #_ENV.ifcs.evts)
+        CC = string.gsub(CC, '=== IFCS_NFUNS ===',   #_ENV.ifcs.funs)
+        CC = string.gsub(CC, '=== IFCS_CLSS ===',    table.concat(CLSS,',\n'))
+        CC = string.gsub(CC, '=== IFCS_FLDS ===',    table.concat(FLDS,',\n'))
+        CC = string.gsub(CC, '=== IFCS_EVTS ===',    table.concat(EVTS,',\n'))
+        CC = string.gsub(CC, '=== IFCS_FUNS ===',    table.concat(FUNS,',\n'))
     end
 
     if not _OPTS.os then
@@ -254,9 +249,9 @@ do
     HH = _FILES.template_h
 
     local tps = { [0]='void', [1]='8', [2]='16', [4]='32' }
-    HH = sub(HH, '=== TCEU_NLBL ===',   's'..tps[_ENV.c.tceu_nlbl.len])
-    HH = sub(HH, '=== TCEU_NCLS ===',   's'..tps[_ENV.c.tceu_ncls.len])
-    HH = sub(HH, '=== CEU_NTRAILS ===', _MAIN.trails_n)
+    HH = string.gsub(HH, '=== TCEU_NLBL ===',   's'..tps[_ENV.c.tceu_nlbl.len])
+    HH = string.gsub(HH, '=== TCEU_NCLS ===',   's'..tps[_ENV.c.tceu_ncls.len])
+    HH = string.gsub(HH, '=== CEU_NTRAILS ===', _MAIN.trails_n)
 
     -- DEFINES
     do
@@ -301,7 +296,9 @@ do
             str = str .. '#define CEU_RUNTESTS\n'
         end
 
-        HH = sub(HH, '=== DEFINES ===', str)
+        HH = string.gsub(HH, '=== DEFS_H ===',
+                     string.upper(string.gsub(_OPTS.out_h,'%.','_')))
+        HH = string.gsub(HH, '=== DEFINES ===', str)
     end
 
 
@@ -338,7 +335,7 @@ do
         --str = str..'#define CEU_IN_n  '..ins..'\n'
         str = str..'#define CEU_OUT_n '..outs..'\n'
 
-        HH = sub(HH, '=== EVENTS ===', str)
+        HH = string.gsub(HH, '=== EVENTS ===', str)
     end
 
     -- FUNCTIONS called
@@ -349,7 +346,7 @@ do
                 str = str..'#define CEU_FUN'..id..'\n'
             end
         end
-        HH = sub(HH, '=== FUNCTIONS ===', str)
+        HH = string.gsub(HH, '=== FUNCTIONS ===', str)
     end
 
     -- TUPLES
@@ -370,7 +367,7 @@ do
                 str = str .. '} '.._TP.c(c.id)..';\n'
             end
         end
-        HH = sub(HH, '=== TUPLES ===', str)
+        HH = string.gsub(HH, '=== TUPLES ===', str)
     end
 end
 
@@ -410,7 +407,7 @@ if _OPTS.out_h then
     f:write(HH)
     f:close()
 end
-CC = sub(CC, '=== OUT_H ===', HH)
+CC = string.gsub(CC, '=== OUT_H ===', HH)
 
 local out
 if _OPTS.out_c == '-' then

@@ -192,7 +192,17 @@ fprintf(stderr, "TRK: o.%p / l.%d\n", _ceu_go->org, _ceu_go->lbl);
 
 /* EXPORTED ENTRY POINTS */
 
-int CEU_SIZE = sizeof(CEU_Main);
+void ceu_app_init (tceu_app* app)
+__attribute__((used));
+
+#ifdef CEU_OS
+#include <avr/pgmspace.h>
+PROGMEM u16   CEU_SIZE = sizeof(CEU_Main);
+PROGMEM void* CEU_INIT = &ceu_app_init;
+#else
+int   CEU_SIZE = sizeof(CEU_Main);
+void* CEU_INIT = &ceu_app_init;
+#endif
 
 void ceu_app_init (tceu_app* app)
 {
@@ -223,9 +233,9 @@ void ceu_app_init (tceu_app* app)
      */
     CEU_THREADS_MUTEX_LOCK(&app->threads_mutex);
 #endif
-    app->code = &ceu_app_go;
+    app->code  = (typeof(ceu_app_go)*)    ((app->addr>>1) + &ceu_app_go);
 #ifdef CEU_OS
-    app->calls = &ceu_app_calls;
+    app->calls = (typeof(ceu_app_calls)*) ((app->addr>>1) + &ceu_app_calls);
 #endif
 
 #ifdef CEU_NEWS
@@ -239,6 +249,6 @@ void ceu_app_init (tceu_app* app)
 #endif
 #endif
 
-    ceu_out_org_init(app->data, CEU_NTRAILS, Class_Main, 0, NULL, 0);
+    ceu_out_org_init(app, app->data, CEU_NTRAILS, Class_Main, 0, NULL, 0);
     ceu_out_go(app, CEU_IN__INIT, (tceu_evtp)NULL);
 }

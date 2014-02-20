@@ -12,7 +12,6 @@
     #define CEU_RET
     #define CEU_CLEAR
 /*
-*/
     #define CEU_INTS
     #define CEU_ORGS
     #define CEU_PSES
@@ -20,11 +19,12 @@
     #define CEU_NEWS_MALLOC
     #define CEU_NEWS_POOL
     #define CEU_THREADS
-
-    #define CEU_QUEUE_MAX 65536
-/*
-    #define CEU_QUEUE_MAX 256
 */
+
+/*
+    #define CEU_QUEUE_MAX 65536
+*/
+    #define CEU_QUEUE_MAX 256
 
     #define CEU_IN__NONE          0
     #define CEU_IN__STK         255
@@ -40,6 +40,17 @@
 
     typedef s8 tceu_nlbl;
 
+    #define ceu_out_malloc(app,size) \
+        ((__typeof__(ceu_sys_malloc)*)((app)->sys_vec[CEU_SYS_MALLOC]))(app,size)
+    #define ceu_out_free(app) \
+        ((__typeof__(ceu_sys_free)*)((app)->sys_vec[CEU_SYS_FREE]))()
+
+    /* TODO: make all ceu_out_* to pass "_ceu_app" automatically? */
+    #define ceu_out_start(addr) \
+        ((__typeof__(ceu_sys_start)*)((_ceu_app)->sys_vec[CEU_SYS_START]))(addr)
+    #define ceu_out_stop(pid) \
+        ((__typeof__(ceu_sys_stop)*)((_ceu_app)->sys_vec[CEU_SYS_STOP]))(pid)
+
     #define ceu_out_emit_buf(app,id,sz,buf) \
         ((__typeof__(ceu_sys_emit)*)((app)->sys_vec[CEU_SYS_EMIT]))(app,id,(tceu_evtp)NULL,sz,buf)
 
@@ -52,7 +63,7 @@
     #define ceu_out_go(app,evt,evtp) \
         ((__typeof__(ceu_sys_go)*)((app)->sys_vec[CEU_SYS_GO]))(app,evt,evtp)
 
-    #define ceu_out_org_init(org,n,lbl,seqno,par_org,par_trl) \
+    #define ceu_out_org_init(app,org,n,lbl,seqno,par_org,par_trl) \
         ((__typeof__(ceu_sys_org_init)*)((app)->sys_vec[CEU_SYS_ORG_INIT]))(org,n,lbl,seqno,par_org,par_trl)
 /*
 */
@@ -61,8 +72,8 @@
     #include "_ceu_app.h"
     #define ceu_out_emit_buf(app,id,sz,buf) \
             ceu_out_emit_val(app,id,(tceu_evtp)(void*)buf)
-    #define ceu_out_org_init(org,n,lbl,seqno,par_org,par_trl) \
-            ceu_sys_org_init(org,n,lbl,seqno,par_org,par_trl)
+    #define ceu_out_org_init(app,org,n,lbl,seqno,par_org,par_trl) \
+            ceu_sys_org_init(app,org,n,lbl,seqno,par_org,par_trl)
     #define ceu_out_go(app,evt,evtp) \
             ceu_sys_go(app,evt,evtp)
 #endif
@@ -136,8 +147,8 @@ typedef struct tceu_stk {
 typedef struct tceu_org_lnk {
     struct tceu_org* prv;   /* TODO(ram): lnks[0] does not use */
     struct tceu_org* nxt;   /*      prv, n, lnk                  */
-    u8 n;                   /* use for ands/fins                 */
     u8 lnk;
+    u8 n;                   /* use for ands/fins                 */
 } tceu_org_lnk;
 
 /* TCEU_ORG */
@@ -147,14 +158,17 @@ typedef struct tceu_org
 #ifdef CEU_ORGS
     struct tceu_org* prv;   /* linked list for the scheduler */
     struct tceu_org* nxt;
-    u8 n;                   /* number of trails (TODO(ram): opt, metadata) */
     u8 lnk;
-    /* tceu_org_lnk */
+#endif
+#if defined(CEU_ORGS) || defined(CEU_OS)
+    u8 n;                   /* number of trails (TODO(ram): opt, metadata) */
+#endif
+    /* prv/nxt/lnk/n must be in the same order as "tceu_org_lnk" */
 
+#ifdef CEU_ORGS
 #ifdef CEU_IFCS
     tceu_ncls cls;          /* class id */
 #endif
-
 #ifdef CEU_NEWS
     u8 isDyn: 1;            /* created w/ new or spawn? */
     u8 isSpw: 1;            /* free on termination? */
@@ -165,10 +179,6 @@ typedef struct tceu_org
     void*  pool;            /* TODO(ram): opt, traverse lst of cls pools */
 #endif
 
-#if defined(CEU_OS) && !defined(CEU_ORGS)
-/* TODO: join with the one above */
-    u8 n;                   /* number of trails (TODO(ram): opt, metadata) */
-#endif
     tceu_trl trls[0];       /* first trail */
 
 } tceu_org;
@@ -232,7 +242,9 @@ typedef struct tceu_app {
 #ifdef CEU_ASYNCS
     u8 pendingAsyncs: 1;
 #endif
+
 #ifdef CEU_OS
+    u16 pid;
     struct tceu_app* nxt;
 #endif
 
@@ -264,9 +276,14 @@ typedef struct tceu_app {
 #ifdef CEU_OS
     tceu_evtp   (*calls) (struct tceu_app*,tceu_nevt,tceu_evtp);
     void**      sys_vec;
+    u16         addr;
 #endif
     tceu_org*   data;
 } tceu_app;
+
+#ifdef CEU_OS
+typedef void (*tceu_init) (tceu_app* app);
+#endif
 
 /* TCEU_THREADS_P */
 
@@ -300,8 +317,8 @@ enum {
 #endif
 };
 
-void* ceu_alloc (size_t size);
-void  ceu_free (void* ptr);
+void* ceu_sys_malloc (size_t size);
+void  ceu_sys_free (void* ptr);
 
 void ceu_sys_org_init (tceu_org* org, int n, int lbl, int seqno,
                        tceu_org* par_org, int par_trl);
@@ -346,21 +363,18 @@ int ceu_scheduler (int(*dt)());
 tceu_queue* ceu_sys_queue_nxt (void);
 void        ceu_sys_queue_rem (void);
 
-__attribute__((used))
-void ceu_sys_start (tceu_app* app);
-__attribute__((used))
-void ceu_sys_stop  (tceu_app* app);
-__attribute__((used))
-void ceu_sys_link  (tceu_lnk* lnk);
+u16 ceu_sys_start (u16 addr);
+int ceu_sys_stop  (u16 pid);
+int ceu_sys_link (u16 src_pid, tceu_nevt src_evt, u16 dst_pid, tceu_nevt dst_evt);
 
-__attribute__((used))
 int ceu_sys_emit (tceu_app* app, tceu_nevt evt, tceu_evtp param,
                   int sz, char* buf);
-__attribute__((used))
 tceu_evtp ceu_sys_call (tceu_app* app, tceu_nevt evt, tceu_evtp param);
 
 enum {
-    CEU_SYS_START = 0,
+    CEU_SYS_MALLOC = 0,
+    CEU_SYS_FREE,
+    CEU_SYS_START,
     CEU_SYS_STOP,
     CEU_SYS_LINK,
     /*CEU_SYS_UNLINK,*/
@@ -373,7 +387,6 @@ enum {
 
 /* SYS_VECTOR
  */
-__attribute__((used))
 extern void* CEU_SYS_VEC[CEU_SYS_MAX];
 
 #if 0

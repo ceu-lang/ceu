@@ -444,7 +444,7 @@ case ]]..me.lbls_cnt[i].id..[[:;
 ]])
         else
             LINE(me, [[
-    __ceu_new = (tceu_org*) ceu_alloc(sizeof(]].._TP.c(id)..[[));
+    __ceu_new = (tceu_org*) ceu_out_malloc(sizeof(]].._TP.c(id)..[[));
 ]])
         end
 
@@ -1148,7 +1148,7 @@ case ]]..me.lbl.id..[[:;
         -- spawn thread
         LINE(me, [[
 /* TODO: test it! */
-]]..me.thread_st..[[  = ceu_alloc(sizeof(s8));
+]]..me.thread_st..[[  = ceu_out_malloc(sizeof(s8));
 *]]..me.thread_st..[[ = 0;  /* ini */
 {
     tceu_threads_p p = { _ceu_app, _ceu_go->org, ]]..me.thread_st..[[ };

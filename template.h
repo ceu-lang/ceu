@@ -1,5 +1,5 @@
-#ifndef _CEU_DEFS_H
-#define _CEU_DEFS_H
+#ifndef === DEFS_H ===
+#define === DEFS_H ===
 
 #include "ceu_types.h"
 
