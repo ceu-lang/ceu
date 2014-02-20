@@ -196,12 +196,14 @@ void ceu_app_init (tceu_app* app)
 __attribute__((used));
 
 #ifdef CEU_OS
+#ifdef __AVR
 #include <avr/pgmspace.h>
-PROGMEM u16   CEU_SIZE = sizeof(CEU_Main);
+PROGMEM uint  CEU_SIZE = sizeof(CEU_Main);
 PROGMEM void* CEU_INIT = &ceu_app_init;
 #else
-int   CEU_SIZE = sizeof(CEU_Main);
-void* CEU_INIT = &ceu_app_init;
+        uint  CEU_SIZE = sizeof(CEU_Main);
+        void* CEU_INIT = &ceu_app_init;
+#endif
 #endif
 
 void ceu_app_init (tceu_app* app)
@@ -233,9 +235,17 @@ void ceu_app_init (tceu_app* app)
      */
     CEU_THREADS_MUTEX_LOCK(&app->threads_mutex);
 #endif
-    app->code  = (typeof(ceu_app_go)*)    ((app->addr>>1) + &ceu_app_go);
+
+#ifdef __AVR
+    app->code  = (__typeof__(ceu_app_go)*)    (((uint)app->addr>>1) + &ceu_app_go);
 #ifdef CEU_OS
-    app->calls = (typeof(ceu_app_calls)*) ((app->addr>>1) + &ceu_app_calls);
+    app->calls = (__typeof__(ceu_app_calls)*) (((uint)app->addr>>1) + &ceu_app_calls);
+#endif
+#else
+    app->code  = (__typeof__(ceu_app_go)*)    (app->addr + &ceu_app_go);
+#ifdef CEU_OS
+    app->calls = (__typeof__(ceu_app_calls)*) ((app->addr>>1) + &ceu_app_calls);
+#endif
 #endif
 
 #ifdef CEU_NEWS

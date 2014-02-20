@@ -11,6 +11,7 @@ _OPTS_NPARAMS = {
     c_calls   = 1,
 
     cpp       = 0,
+    cpp_exe   = 1,
     cpp_args  = 1,
 
     tp_word    = 1,
@@ -30,6 +31,7 @@ _OPTS = {
     c_calls   = false,
 
     cpp       = true,
+    cpp_exe   = 'cpp',
     cpp_args  = false,
 
     tp_word   = 4,
@@ -86,6 +88,7 @@ if not _OPTS.input then
         --c-calls              # TODO
 
         --cpp (--no-cpp)       # preprocess the input with `cpp´ (no-cpp)
+        --cpp-exe              # preprocessor executable (cpp)
         --cpp-args             # preprocess the input with `cpp´ passing arguments in between `"´ (no)
 
         --tp-word              # sizeof a word in bytes    (4)

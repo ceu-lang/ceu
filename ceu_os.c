@@ -3,8 +3,11 @@
 #include "ceu_os.h"
 
 #ifdef CEU_OS
+#ifdef __AVR
 #include <avr/pgmspace.h>
-u16 CEU_APP_ADDR = 0;
+#include "Arduino.h"
+#endif
+void* CEU_APP_ADDR = NULL;
 #endif
 
 #include <string.h>
@@ -307,7 +310,7 @@ _CEU_GO_:
 
             {
 #ifdef CEU_OS
-                u16 __old = CEU_APP_ADDR;
+                void* __old = CEU_APP_ADDR;
                 CEU_APP_ADDR = app->addr;
 #endif
                 int _ret = app->code(app, &go);
@@ -516,7 +519,7 @@ static tceu_lnk* CEU_LNKS = NULL;
     int ret = 0;
 #endif
 
-int ceu_sys_emit (tceu_app* app, tceu_nevt evt, tceu_evtp param,
+int _ceu_sys_emit (tceu_app* app, tceu_nevt evt, tceu_evtp param,
                   int sz, char* buf) {
     int n = sizeof(tceu_queue) + sz;
 
@@ -526,7 +529,7 @@ int ceu_sys_emit (tceu_app* app, tceu_nevt evt, tceu_evtp param,
     /* An event+data must be continuous in the QUEUE. */
     if (QUEUE_put+n+sizeof(tceu_queue)>=CEU_QUEUE_MAX && evt!=CEU_IN__NONE) {
         int fill = CEU_QUEUE_MAX - QUEUE_put - sizeof(tceu_queue);
-        ceu_sys_emit(app, CEU_IN__NONE, param, fill, NULL);
+        _ceu_sys_emit(app, CEU_IN__NONE, param, fill, NULL);
     }
 
     {
@@ -549,6 +552,19 @@ int ceu_sys_emit (tceu_app* app, tceu_nevt evt, tceu_evtp param,
     return 1;
 }
 
+int ceu_sys_emit (tceu_app* app, tceu_nevt evt, tceu_evtp param,
+                  int sz, char* buf) {
+    int ret;
+#ifdef __AVR
+    noInterrupts();
+#endif
+    ret = _ceu_sys_emit(app, evt, param, sz, buf);
+#ifdef __AVR
+    interrupts();
+#endif
+    return ret;
+}
+
 tceu_evtp ceu_sys_call (tceu_app* app, tceu_nevt evt, tceu_evtp param) {
     tceu_lnk* lnk = CEU_LNKS;
     for (; lnk; lnk=lnk->nxt)
@@ -558,7 +574,7 @@ tceu_evtp ceu_sys_call (tceu_app* app, tceu_nevt evt, tceu_evtp param) {
         if (! lnk->dst_app->isAlive)
             continue;   /* TODO: remove when unlink on stop */
 #ifdef CEU_OS
-        u16 __old = CEU_APP_ADDR;
+        void* __old = CEU_APP_ADDR;
         CEU_APP_ADDR = lnk->dst_app->addr;
 #endif
         tceu_evtp ret = lnk->dst_app->calls(lnk->dst_app, lnk->dst_evt, param);
@@ -572,20 +588,34 @@ tceu_evtp ceu_sys_call (tceu_app* app, tceu_nevt evt, tceu_evtp param) {
 }
 
 tceu_queue* ceu_sys_queue_get (void) {
+    tceu_queue* ret;
+#ifdef __AVR
+    noInterrupts();
+#endif
     if (QUEUE_tot == 0) {
-        return NULL;
+        ret = NULL;
     } else {
 #ifdef CEU_DEBUG
         assert(QUEUE_tot > 0);
 #endif
-        return (tceu_queue*) &QUEUE[QUEUE_get];
+        ret = (tceu_queue*) &QUEUE[QUEUE_get];
     }
+#ifdef __AVR
+    interrupts();
+#endif
+    return ret;
 }
 
 void ceu_sys_queue_rem (void) {
+#ifdef __AVR
+    noInterrupts();
+#endif
     tceu_queue* qu = (tceu_queue*) &QUEUE[QUEUE_get];
     QUEUE_tot -= sizeof(tceu_queue) + qu->sz;
     QUEUE_get += sizeof(tceu_queue) + qu->sz;
+#ifdef __AVR
+    interrupts();
+#endif
 }
 
 void _ceu_sys_stop (tceu_app* app);
@@ -629,26 +659,38 @@ int ceu_scheduler (int(*dt)())
         tceu_queue* qu = ceu_sys_queue_get();
         if (qu != NULL)
         {
-            /* self-emitted event */
-            ceu_go_event(qu->app, qu->evt, qu->param);
+            /* global events (e.g. ISRs) */
+            if (qu->app == NULL) {
+                app = CEU_APPS;
+                for (; app; app=app->nxt) {
+                    ceu_go_event(app, qu->evt, qu->param);
+                    if (! app->isAlive)
+                        _ceu_sys_stop(app);
+                }
+            }
 
-            /* TODO:
-             * If I can ensure that all IN events are below 127 and
-             * OUT events are above it, then I can test "qu->evt" and
-             * execute either the code above or the code below.
-             */
+            else {
+                /* self-emitted event */
+                ceu_go_event(qu->app, qu->evt, qu->param);
 
-            /* linked events */
-            lnk = CEU_LNKS;
-            for (; lnk; lnk=lnk->nxt)
-            {
-                if (qu->app!=lnk->src_app || qu->evt!=lnk->src_evt)
-                    continue;
-                if (! lnk->dst_app->isAlive)
-                    continue;   /* TODO: remove when unlink on stop */
-                ceu_go_event(lnk->dst_app, lnk->dst_evt, qu->param);
-                if (! lnk->dst_app->isAlive)
-                    _ceu_sys_stop(lnk->dst_app);
+                /* TODO:
+                 * If I can ensure that all IN events are below 127 and
+                 * OUT events are above it, then I can test "qu->evt" and
+                 * execute either the code above or the code below.
+                 */
+
+                /* linked events */
+                lnk = CEU_LNKS;
+                for (; lnk; lnk=lnk->nxt)
+                {
+                    if (qu->app!=lnk->src_app || qu->evt!=lnk->src_evt)
+                        continue;
+                    if (! lnk->dst_app->isAlive)
+                        continue;   /* TODO: remove when unlink on stop */
+                    ceu_go_event(lnk->dst_app, lnk->dst_evt, qu->param);
+                    if (! lnk->dst_app->isAlive)
+                        _ceu_sys_stop(lnk->dst_app);
+                }
             }
 
             ceu_sys_queue_rem();
@@ -664,13 +706,17 @@ int ceu_scheduler (int(*dt)())
 
 /* START */
 
-u16 ceu_sys_start (u16 addr)
+uint ceu_sys_start (void* addr)
 {
     tceu_app* app = (tceu_app*) ceu_sys_malloc(sizeof(tceu_app));
     if (app == NULL)
         return 0;
 
-    app->data = (tceu_org*) ceu_sys_malloc(pgm_read_word_near(addr));
+#ifdef __AVR
+    app->data = (tceu_org*) ceu_sys_malloc(pgm_read_word_near((uint)addr));
+#else
+    app->data = (tceu_org*) ceu_sys_malloc(*((uint*)addr));
+#endif
     if (app->data == NULL)
         return 0;
 
@@ -679,7 +725,11 @@ u16 ceu_sys_start (u16 addr)
     app->pid = CEU_PID++;
     app->sys_vec = CEU_SYS_VEC;
     app->nxt = NULL;
-    app->init = (tceu_init) ((addr>>1) + pgm_read_word_near(addr+2));
+#ifdef __AVR
+    app->init = (tceu_init) (((uint)addr>>1) + pgm_read_word_near(addr+sizeof(uint)));
+#else
+    app->init = (tceu_init) (addr + *((uint*)(addr+sizeof(uint))));
+#endif
     app->addr = addr;
 
     /* add as head */
@@ -710,7 +760,7 @@ u16 ceu_sys_start (u16 addr)
     /* OS_START */
 
 #ifdef CEU_IN_OS_START
-    ceu_sys_emit (app, CEU_IN_OS_START, (tceu_evtp)NULL, 0, NULL);
+    ceu_sys_emit(app, CEU_IN_OS_START, (tceu_evtp)NULL, 0, NULL);
 #endif
 
     return app->pid;
@@ -818,5 +868,54 @@ int ceu_sys_unlink (tceu_app* src_app, tceu_nevt src_evt,
     return 0;
 }
 #endif
+
+/* Foreach ISR, call _ceu_sys_emit directly because interrupts are already 
+ * disabled.  */
+
+#if 0
+
+#ifdef UART0_UDRE_vect
+ISR(UART0_UDRE_vect, ISR_BLOCK) {
+    _ceu_sys_emit(NULL,CEU_IN_OS_INTERRUPT,(tceu_evtp)UART0_UDRE_vect,0,NULL);
+}
+#endif
+
+#ifdef UART_UDRE_vect
+ISR(UART_UDRE_vect, ISR_BLOCK) {
+    _ceu_sys_emit(NULL,CEU_IN_OS_INTERRUPT,(tceu_evtp)UART_UDRE_vect,0,NULL);
+}
+#endif
+
+#ifdef USART0_UDRE_vect
+ISR(USART0_UDRE_vect, ISR_BLOCK) {
+    _ceu_sys_emit(NULL,CEU_IN_OS_INTERRUPT,(tceu_evtp)USART0_UDRE_vect,0,NULL);
+}
+#endif
+
+#ifdef USART1_UDRE_vect
+ISR(USART1_UDRE_vect, ISR_BLOCK) {
+    _ceu_sys_emit(NULL,CEU_IN_OS_INTERRUPT,(tceu_evtp)USART1_UDRE_vect,0,NULL);
+}
+#endif
+
+#ifdef USART_UDRE_vect
+ISR(USART_UDRE_vect, ISR_BLOCK) {
+    _ceu_sys_emit(NULL,CEU_IN_OS_INTERRUPT,(tceu_evtp)USART_UDRE_vect,0,NULL);
+}
+#endif
+
+#ifdef USART2_UDRE_vect
+ISR(USART2_UDRE_vect, ISR_BLOCK) {
+    _ceu_sys_emit(NULL,CEU_IN_OS_INTERRUPT,(tceu_evtp)USART2_UDRE_vect,0,NULL);
+}
+#endif
+
+#ifdef USART3_UDRE_vect
+ISR(USART3_UDRE_vect, ISR_BLOCK) {
+    _ceu_sys_emit(NULL,CEU_IN_OS_INTERRUPT,(tceu_evtp)USART3_UDRE_vect,0,NULL);
+}
+#endif
+
+#endif /* 0 */
 
 #endif  /* CEU_OS */

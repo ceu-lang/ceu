@@ -276,7 +276,7 @@ typedef struct tceu_app {
 #ifdef CEU_OS
     tceu_evtp   (*calls) (struct tceu_app*,tceu_nevt,tceu_evtp);
     void**      sys_vec;
-    u16         addr;
+    void*       addr;
 #endif
     tceu_org*   data;
 } tceu_app;
@@ -363,7 +363,7 @@ int ceu_scheduler (int(*dt)());
 tceu_queue* ceu_sys_queue_nxt (void);
 void        ceu_sys_queue_rem (void);
 
-u16 ceu_sys_start (u16 addr);
+uint ceu_sys_start (void* addr);
 int ceu_sys_stop  (u16 pid);
 int ceu_sys_link (u16 src_pid, tceu_nevt src_evt, u16 dst_pid, tceu_nevt dst_evt);
 

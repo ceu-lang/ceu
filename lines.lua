@@ -75,7 +75,7 @@ if _OPTS.cpp or _OPTS.cpp_args then
     f:close()
 
     -- execute cpp
-    local ret = os.execute('cpp -C -dD '..args..' '..fin
+    local ret = os.execute(_OPTS.cpp_exe..' -C -dD '..args..' '..fin
                             ..' > '..fout..' 2>'..ferr)
             -- "-C":  keep comments (because of nesting)
             -- "-dD": repeat #define's (because of macros used as C functions)
