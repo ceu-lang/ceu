@@ -629,16 +629,22 @@ int ceu_scheduler (int(*dt)())
         tceu_queue* qu = ceu_sys_queue_get();
         if (qu != NULL)
         {
-            lnk = CEU_LNKS;
-            for (; lnk; lnk=lnk->nxt)
-            {
-                if (qu->app!=lnk->src_app || qu->evt!=lnk->src_evt)
-                    continue;
-                if (! lnk->dst_app->isAlive)
-                    continue;   /* TODO: remove when unlink on stop */
-                ceu_go_event(lnk->dst_app, lnk->dst_evt, qu->param);
-                if (! lnk->dst_app->isAlive)
-                    _ceu_sys_stop(lnk->dst_app);
+            /* OS_START is to a specific new process */
+            if (qu->evt == CEU_IN_OS_START) {
+                ceu_go_event(qu->app, CEU_IN_OS_START, (tceu_evtp)NULL);
+
+            } else {
+                lnk = CEU_LNKS;
+                for (; lnk; lnk=lnk->nxt)
+                {
+                    if (qu->app!=lnk->src_app || qu->evt!=lnk->src_evt)
+                        continue;
+                    if (! lnk->dst_app->isAlive)
+                        continue;   /* TODO: remove when unlink on stop */
+                    ceu_go_event(lnk->dst_app, lnk->dst_evt, qu->param);
+                    if (! lnk->dst_app->isAlive)
+                        _ceu_sys_stop(lnk->dst_app);
+                }
             }
             ceu_sys_queue_rem();
         }
@@ -699,11 +705,7 @@ u16 ceu_sys_start (u16 addr)
     /* OS_START */
 
 #ifdef CEU_IN_OS_START
-    ceu_go_event(app, CEU_IN_OS_START, (tceu_evtp)NULL);
-    if (! app->isAlive) {
-        _ceu_sys_stop(app);
-        return app->pid;
-    }
+    ceu_sys_emit (app, CEU_IN_OS_START, (tceu_evtp)NULL, 0, NULL);
 #endif
 
     return app->pid;
@@ -771,7 +773,7 @@ void _ceu_sys_stop (tceu_app* app) {
 /* LINK & UNLINK */
 
 int ceu_sys_link (u16 src_pid, tceu_nevt src_evt,
-                   u16 dst_pid, tceu_nevt dst_evt)
+                  u16 dst_pid, tceu_nevt dst_evt)
 {
     tceu_app* src_app = ceu_pid2app(src_pid);
     tceu_app* dst_app = ceu_pid2app(dst_pid);
@@ -781,6 +783,7 @@ int ceu_sys_link (u16 src_pid, tceu_nevt src_evt,
     tceu_lnk* lnk = (tceu_lnk*) ceu_sys_malloc(sizeof(tceu_lnk));
     if (lnk == NULL)
         return 0;
+    /* TODO free on unlink */
 
     lnk->src_app = src_app;
     lnk->src_evt = src_evt;
