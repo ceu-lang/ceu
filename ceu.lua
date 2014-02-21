@@ -146,26 +146,37 @@ do
     dofile 'code.lua'
 end
 
+local function SUB (str, from, to)
+    assert(to, from)
+    local i,e = string.find(str, from, 1, true)
+    if i then
+        return SUB(string.sub(str,1,i-1) .. to .. string.sub(str,e+1),
+                   from, to)
+    else
+        return str
+    end
+end
+
 local CC, HH
 
 -- TEMPLATE.C
 do
     CC = _FILES.template_c
 
-    CC = string.gsub(CC, '=== FILENAME ===', _OPTS.input)
-    --CC = string.gsub(CC, '^#line.-\n', '')
+    CC = SUB(CC, '=== FILENAME ===', _OPTS.input)
+    --CC = SUB(CC, '^#line.-\n', '')
 
-    CC = string.gsub(CC, '=== LABELS_ENUM ===', _LBLS.code_enum)
+    CC = SUB(CC, '=== LABELS_ENUM ===', _LBLS.code_enum)
 
-    CC = string.gsub(CC, '=== CLSS_DEFS ===',  _MEM.clss)
-    CC = string.gsub(CC, '=== POOLS_DCL ===',  _MEM.pools.dcl)
-    CC = string.gsub(CC, '=== POOLS_INIT ===', _MEM.pools.init)
+    CC = SUB(CC, '=== CLSS_DEFS ===',  _MEM.clss)
+    CC = SUB(CC, '=== POOLS_DCL ===',  _MEM.pools.dcl)
+    CC = SUB(CC, '=== POOLS_INIT ===', _MEM.pools.init)
 
-    CC = string.gsub(CC, '=== THREADS_C ===',   _CODE.threads)
-    CC = string.gsub(CC, '=== FUNCTIONS_C ===', _CODE.functions)
-    CC = string.gsub(CC, '=== STUBS ===',       _CODE.stubs)
-    CC = string.gsub(CC, '=== NATIVE ===',      _CODE.native)
-    CC = string.gsub(CC, '=== CODE ===',        _AST.root.code)
+    CC = SUB(CC, '=== THREADS_C ===',   _CODE.threads)
+    CC = SUB(CC, '=== FUNCTIONS_C ===', _CODE.functions)
+    CC = SUB(CC, '=== STUBS ===',       _CODE.stubs)
+    CC = SUB(CC, '=== NATIVE ===',      _CODE.native)
+    CC = SUB(CC, '=== CODE ===',        _AST.root.code)
 
     -- IFACES
     if _PROPS.has_ifcs then
@@ -216,34 +227,36 @@ do
             EVTS[#EVTS+1] = '\t\t{'..table.concat(evts,',')..'}'
             FUNS[#FUNS+1] = '\t\t{'..table.concat(funs,',')..'}'
         end
-        CC = string.gsub(CC, '=== CEU_NCLS ===',     #_ENV.clss_cls)
-        CC = string.gsub(CC, '=== IFCS_NIFCS ===',   #_ENV.clss_ifc)
-        CC = string.gsub(CC, '=== IFCS_NFLDS ===',   #_ENV.ifcs.flds)
-        CC = string.gsub(CC, '=== IFCS_NEVTS ===',   #_ENV.ifcs.evts)
-        CC = string.gsub(CC, '=== IFCS_NFUNS ===',   #_ENV.ifcs.funs)
-        CC = string.gsub(CC, '=== IFCS_CLSS ===',    table.concat(CLSS,',\n'))
-        CC = string.gsub(CC, '=== IFCS_FLDS ===',    table.concat(FLDS,',\n'))
-        CC = string.gsub(CC, '=== IFCS_EVTS ===',    table.concat(EVTS,',\n'))
-        CC = string.gsub(CC, '=== IFCS_FUNS ===',    table.concat(FUNS,',\n'))
+        CC = SUB(CC, '=== CEU_NCLS ===',     #_ENV.clss_cls)
+        CC = SUB(CC, '=== IFCS_NIFCS ===',   #_ENV.clss_ifc)
+        CC = SUB(CC, '=== IFCS_NFLDS ===',   #_ENV.ifcs.flds)
+        CC = SUB(CC, '=== IFCS_NEVTS ===',   #_ENV.ifcs.evts)
+        CC = SUB(CC, '=== IFCS_NFUNS ===',   #_ENV.ifcs.funs)
+        CC = SUB(CC, '=== IFCS_CLSS ===',    table.concat(CLSS,',\n'))
+        CC = SUB(CC, '=== IFCS_FLDS ===',    table.concat(FLDS,',\n'))
+        CC = SUB(CC, '=== IFCS_EVTS ===',    table.concat(EVTS,',\n'))
+        CC = SUB(CC, '=== IFCS_FUNS ===',    table.concat(FUNS,',\n'))
     end
 
     if not _OPTS.os then
-        _FILES.ceu_os_c = string.gsub(string.gsub(_FILES.ceu_os_c,'%%','%%%%'),
+        _FILES.ceu_os_c = SUB(_FILES.ceu_os_c,
                                       '#include "ceu_os.h"',
                                       _FILES.ceu_os_h)
-        CC = string.gsub(CC, '#include "ceu_types.h"',
+        CC = SUB(CC, '#include "ceu_types.h"',
                              _FILES.ceu_types_h)
-        CC = string.gsub(CC, '#include "ceu_os.h"',
+        CC = SUB(CC, '#include "ceu_os.h"',
                              _FILES.ceu_os_h..'\n'.._FILES.ceu_os_c)
-        CC = string.gsub(CC, '#include "ceu_pool.h"',
+
+        _FILES.ceu_pool_c = SUB(_FILES.ceu_pool_c, '#include "ceu_pool.h"', '')
+        CC = SUB(CC, '#include "ceu_pool.h"',
                              _FILES.ceu_pool_h..'\n'.._FILES.ceu_pool_c)
     end
 
     if _OPTS.out_s ~= 'CEU_SIZE' then
-        CC = string.gsub(CC, 'CEU_SIZE', _OPTS.out_s)
+        CC = SUB(CC, 'CEU_SIZE', _OPTS.out_s)
     end
     if _OPTS.out_f ~= 'ceu_app_init' then
-        CC = string.gsub(CC, 'ceu_app_init', _OPTS.out_f)
+        CC = SUB(CC, 'ceu_app_init', _OPTS.out_f)
     end
 end
 
@@ -252,9 +265,9 @@ do
     HH = _FILES.template_h
 
     local tps = { [0]='void', [1]='8', [2]='16', [4]='32' }
-    HH = string.gsub(HH, '=== TCEU_NLBL ===',   's'..tps[_ENV.c.tceu_nlbl.len])
-    HH = string.gsub(HH, '=== TCEU_NCLS ===',   's'..tps[_ENV.c.tceu_ncls.len])
-    HH = string.gsub(HH, '=== CEU_NTRAILS ===', _MAIN.trails_n)
+    HH = SUB(HH, '=== TCEU_NLBL ===',   's'..tps[_ENV.c.tceu_nlbl.len])
+    HH = SUB(HH, '=== TCEU_NCLS ===',   's'..tps[_ENV.c.tceu_ncls.len])
+    HH = SUB(HH, '=== CEU_NTRAILS ===', _MAIN.trails_n)
 
     -- DEFINES
     do
@@ -299,9 +312,9 @@ do
             str = str .. '#define CEU_RUNTESTS\n'
         end
 
-        HH = string.gsub(HH, '=== DEFS_H ===',
+        HH = SUB(HH, '=== DEFS_H ===',
                      string.upper(string.gsub(_OPTS.out_h,'%.','_')))
-        HH = string.gsub(HH, '=== DEFINES ===', str)
+        HH = SUB(HH, '=== DEFINES ===', str)
     end
 
 
@@ -338,7 +351,7 @@ do
         --str = str..'#define CEU_IN_n  '..ins..'\n'
         str = str..'#define CEU_OUT_n '..outs..'\n'
 
-        HH = string.gsub(HH, '=== EVENTS ===', str)
+        HH = SUB(HH, '=== EVENTS ===', str)
     end
 
     -- FUNCTIONS called
@@ -349,7 +362,7 @@ do
                 str = str..'#define CEU_FUN'..id..'\n'
             end
         end
-        HH = string.gsub(HH, '=== FUNCTIONS ===', str)
+        HH = SUB(HH, '=== FUNCTIONS ===', str)
     end
 
     -- TUPLES
@@ -370,7 +383,7 @@ do
                 str = str .. '} '.._TP.c(c.id)..';\n'
             end
         end
-        HH = string.gsub(HH, '=== TUPLES ===', str)
+        HH = SUB(HH, '=== TUPLES ===', str)
     end
 end
 
@@ -410,7 +423,7 @@ if _OPTS.out_h then
     f:write(HH)
     f:close()
 end
-CC = string.gsub(CC, '=== OUT_H ===', HH)
+CC = SUB(CC, '=== OUT_H ===', HH)
 
 local out
 if _OPTS.out_c == '-' then

@@ -38,9 +38,10 @@ Test = function (t)
         tp_lbl     = 2,
         warn_nondeterminism = true,
 
-        cpp    = true,
-        input  = 'tests.lua',
-        source = source,
+        cpp     = true,
+        cpp_exe = 'cpp',
+        input   = 'tests.lua',
+        source  = source,
     }
 
     --assert(T.todo == nil)
@@ -248,13 +249,13 @@ STATS = {
     count   = 1587,
     mem     = 0,
     trails  = 3022,
-    bytes   = 14532948,
+    bytes   = 14508026,
 }
 
 
-real	6m33.792s
-user	6m9.820s
-sys	0m51.792s
+real	6m34.661s
+user	6m21.596s
+sys	0m51.560s
 ]]
 
 os.execute('rm -f /tmp/_ceu_*')

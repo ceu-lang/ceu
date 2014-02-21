@@ -12,6 +12,7 @@
     #define CEU_RET
     #define CEU_CLEAR
 /*
+*/
     #define CEU_INTS
     #define CEU_ORGS
     #define CEU_PSES
@@ -19,12 +20,11 @@
     #define CEU_NEWS_MALLOC
     #define CEU_NEWS_POOL
     #define CEU_THREADS
-*/
 
-/*
     #define CEU_QUEUE_MAX 65536
-*/
+/*
     #define CEU_QUEUE_MAX 256
+*/
 
     #define CEU_IN__NONE          0
     #define CEU_IN__STK         255
@@ -42,8 +42,8 @@
 
     #define ceu_out_malloc(app,size) \
         ((__typeof__(ceu_sys_malloc)*)((app)->sys_vec[CEU_SYS_MALLOC]))(app,size)
-    #define ceu_out_free(app) \
-        ((__typeof__(ceu_sys_free)*)((app)->sys_vec[CEU_SYS_FREE]))()
+    #define ceu_out_free(app,ptr) \
+        ((__typeof__(ceu_sys_free)*)((app)->sys_vec[CEU_SYS_FREE]))(ptr)
 
     /* TODO: make all ceu_out_* to pass "_ceu_app" automatically? */
     #define ceu_out_start(addr) \
@@ -70,10 +70,14 @@
 
 #else /* CEU_OS */
     #include "_ceu_app.h"
+    #define ceu_out_malloc(app,size) \
+            ceu_sys_malloc(size)
+    #define ceu_out_free(app,ptr) \
+            ceu_sys_free(ptr)
     #define ceu_out_emit_buf(app,id,sz,buf) \
             ceu_out_emit_val(app,id,(tceu_evtp)(void*)buf)
     #define ceu_out_org_init(app,org,n,lbl,seqno,par_org,par_trl) \
-            ceu_sys_org_init(app,org,n,lbl,seqno,par_org,par_trl)
+            ceu_sys_org_init(org,n,lbl,seqno,par_org,par_trl)
     #define ceu_out_go(app,evt,evtp) \
             ceu_sys_go(app,evt,evtp)
 #endif
@@ -364,9 +368,10 @@ int ceu_scheduler (int(*dt)());
 tceu_queue* ceu_sys_queue_nxt (void);
 void        ceu_sys_queue_rem (void);
 
-uint ceu_sys_start (void* addr);
-int ceu_sys_stop  (u16 pid);
-int ceu_sys_link (u16 src_pid, tceu_nevt src_evt, u16 dst_pid, tceu_nevt dst_evt);
+uint ceu_sys_start  (void* addr);
+int  ceu_sys_stop   (u16 pid);
+int  ceu_sys_link   (u16 src_pid, tceu_nevt src_evt, u16 dst_pid, tceu_nevt dst_evt);
+int  ceu_sys_unlink (u16 src_pid, tceu_nevt src_evt, u16 dst_pid, tceu_nevt dst_evt);
 
 int ceu_sys_emit (tceu_app* app, tceu_nevt evt, tceu_evtp param,
                   int sz, char* buf);
@@ -378,7 +383,7 @@ enum {
     CEU_SYS_START,
     CEU_SYS_STOP,
     CEU_SYS_LINK,
-    /*CEU_SYS_UNLINK,*/
+    CEU_SYS_UNLINK,
     CEU_SYS_EMIT,
     CEU_SYS_CALL,
     CEU_SYS_GO,
@@ -389,11 +394,6 @@ enum {
 /* SYS_VECTOR
  */
 extern void* CEU_SYS_VEC[CEU_SYS_MAX];
-
-#if 0
-int ceu_sys_unlink (tceu_app* src_app, tceu_nevt src_evt,
-                    tceu_app* dst_app, tceu_nevt dst_evt);
-#endif
 
 #endif  /* CEU_OS */
 

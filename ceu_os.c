@@ -227,11 +227,11 @@ fprintf(stderr, "GO[%d]: evt=%d stk=%d [%d]\n", app->seqno,
                         ceu_pool_free(go.org->pool, (char*)go.org);
 #elif  defined(CEU_NEWS_POOL) &&  defined(CEU_NEWS_MALLOC)
                         if (go.org->pool == NULL)
-                            ceu_free(go.org);
+                            ceu_sys_free(go.org);
                         else
                             ceu_pool_free(go.org->pool, (char*)go.org);
 #elif !defined(CEU_NEWS_POOL) &&  defined(CEU_NEWS_MALLOC)
-                        ceu_free(go.org);
+                        ceu_sys_free(go.org);
 #endif
 
                         /* explicit free(me) or end of spawn */
@@ -433,7 +433,7 @@ int ceu_go_all (tceu_app* app)
 #if defined(CEU_RET) || defined(CEU_OS)
     if (app->isAlive)
 #endif
-		ceu_go_event(app, CEU_IN_OS_START, (tceu_evtp)NULL);
+        ceu_go_event(app, CEU_IN_OS_START, (tceu_evtp)NULL);
 #endif
 
 #ifdef CEU_ASYNCS
@@ -486,7 +486,7 @@ void* CEU_SYS_VEC[CEU_SYS_MAX] __attribute__((used)) = {
     (void*) &ceu_sys_start,
     (void*) &ceu_sys_stop,
     (void*) &ceu_sys_link,
-    /*&ceu_sys_unlink,*/
+    (void*) &ceu_sys_unlink,
     (void*) &ceu_sys_emit,
     (void*) &ceu_sys_call,
     (void*) &ceu_sys_go,
@@ -618,7 +618,7 @@ void ceu_sys_queue_rem (void) {
 #endif
 }
 
-void _ceu_sys_stop (tceu_app* app);
+tceu_app* _ceu_sys_stop (tceu_app* app);
 
 int ceu_scheduler (int(*dt)())
 {
@@ -637,20 +637,26 @@ int ceu_scheduler (int(*dt)())
 #ifdef CEU_WCLOCKS
         app = CEU_APPS;
         int _dt = dt();
-        for (; app; app=app->nxt) {
+        while (app) {
             ceu_go_wclock(app, _dt);
-            if (! app->isAlive)
-                _ceu_sys_stop(app);
+            if (! app->isAlive) {
+                app = _ceu_sys_stop(app);
+            } else {
+                app = app->nxt;
+            }
         }
 #endif	/* CEU_WCLOCKS */
 
         /* ASYNC */
 #ifdef CEU_ASYNCS
 		app = CEU_APPS;
-        for (; app; app=app->nxt) {
+        while (app) {
             ceu_go_async(app);
-            if (! app->isAlive)
-                _ceu_sys_stop(app);
+            if (! app->isAlive) {
+                app = _ceu_sys_stop(app);
+            } else {
+                app = app->nxt;
+            }
         }
 #endif	/* CEU_ASYNCS */
 
@@ -659,20 +665,24 @@ int ceu_scheduler (int(*dt)())
         tceu_queue* qu = ceu_sys_queue_get();
         if (qu != NULL)
         {
-            /* global events (e.g. ISRs) */
-            if (qu->app == NULL) {
+            /* event removed (emitting app terminated) */
+            if (qu->evt == CEU_IN__NONE) {
+                /* nothing; */
+
+            /* global events (e.g. OS_START, OS_INTERRUPT) */
+            } if (qu->app == NULL) {
                 app = CEU_APPS;
-                for (; app; app=app->nxt) {
+                while (app) {
                     ceu_go_event(app, qu->evt, qu->param);
-                    if (! app->isAlive)
-                        _ceu_sys_stop(app);
+                    if (! app->isAlive) {
+                        app = _ceu_sys_stop(app);
+                    } else {
+                        app = app->nxt;
+                    }
                 }
             }
 
             else {
-                /* self-emitted event */
-                ceu_go_event(qu->app, qu->evt, qu->param);
-
                 /* TODO:
                  * If I can ensure that all IN events are below 127 and
                  * OUT events are above it, then I can test "qu->evt" and
@@ -685,8 +695,6 @@ int ceu_scheduler (int(*dt)())
                 {
                     if (qu->app!=lnk->src_app || qu->evt!=lnk->src_evt)
                         continue;
-                    if (! lnk->dst_app->isAlive)
-                        continue;   /* TODO: remove when unlink on stop */
                     ceu_go_event(lnk->dst_app, lnk->dst_evt, qu->param);
                     if (! lnk->dst_app->isAlive)
                         _ceu_sys_stop(lnk->dst_app);
@@ -724,8 +732,6 @@ uint ceu_sys_start (void* addr)
     if (app->data == NULL)
         return 0;
 
-    /* TODO: free both on stop */
-
     app->pid = CEU_PID++;
     app->sys_vec = CEU_SYS_VEC;
     app->nxt = NULL;
@@ -735,17 +741,9 @@ uint ceu_sys_start (void* addr)
 #ifdef __AVR
     app->init = (tceu_init) (((word)addr>>1) + (word)init);
 #else
-    app->init = (tceu_init) (addr + (word)init);
+    app->init = (tceu_init) ((word)init);
 #endif
     app->addr = addr;
-
-/*
-printf("X %p sz=%d f=%lX %X %X %X\n", addr, *((uint*)addr),
-                        *((long*)(addr+sizeof(void*))),
-                        ((char*)app->init)[0],
-                        ((char*)app->init)[1],
-                        ((char*)app->init)[2]);
-*/
 
     /* add as head */
 	if (CEU_APPS == NULL) {
@@ -766,16 +764,27 @@ printf("X %p sz=%d f=%lX %X %X %X\n", addr, *((uint*)addr),
 
     /* INIT */
 
+/*
+printf(">>> %p %X %p[%x %x %x %x %x]\n", addr, size, init,
+        ((unsigned char*)init)[5],
+        ((unsigned char*)init)[6],
+        ((unsigned char*)init)[7],
+        ((unsigned char*)init)[8],
+        ((unsigned char*)init)[9]);
+printf("<<< %d %d\n", app->isAlive, app->ret);
+*/
     app->init(app);
+
     if (! app->isAlive) {
+        uint pid = app->pid;
         _ceu_sys_stop(app);
-        return app->pid;
+        return pid;
     }
 
     /* OS_START */
 
 #ifdef CEU_IN_OS_START
-    ceu_sys_emit(app, CEU_IN_OS_START, (tceu_evtp)NULL, 0, NULL);
+    ceu_sys_emit(NULL, CEU_IN_OS_START, (tceu_evtp)NULL, 0, NULL);
 #endif
 
     return app->pid;
@@ -802,7 +811,7 @@ int ceu_sys_stop (u16 pid) {
     }
 }
 
-void _ceu_sys_stop (tceu_app* app) {
+tceu_app* _ceu_sys_stop (tceu_app* app) {
 #ifdef CEU_IN_OS_STOP
     if (app->isAlive)
         ceu_go_event(app, CEU_IN_OS_STOP, (tceu_evtp)NULL);
@@ -813,12 +822,10 @@ void _ceu_sys_stop (tceu_app* app) {
     assert(CEU_APPS != NULL);
 #endif
 
-/* TODO: prv */
-
-	/* remove as head */
+    /* remove as head */
 	if (CEU_APPS == app) {
 		CEU_APPS = app->nxt;
-
+/* TODO: prv */
 	/* remove in the middle */
     } else {
 		tceu_app* cur = CEU_APPS;
@@ -827,17 +834,25 @@ void _ceu_sys_stop (tceu_app* app) {
 		if (cur->nxt != NULL)
 			cur->nxt = app->nxt;
 	}
-	app->nxt = NULL;
+    /*app->nxt = NULL;*/
 
-    /* TODO: remove links */
+    /* unlink all "from app" or "to app" */
+    ceu_sys_unlink(app->pid,0, 0,0);
+    ceu_sys_unlink(0,0, app->pid,0);
+
+    /* remove pending events (only required because of self-emitting events */
 
 #ifdef CEU_RET
     ok--;
     ret += app->ret;
 #endif
 
-    ceu_sys_free(app->data);
-    ceu_sys_free(app);
+    {
+        tceu_app* tmp = app->nxt;
+        ceu_sys_free(app->data);
+        ceu_sys_free(app);
+        return tmp;
+    }
 }
 
 /* LINK & UNLINK */
@@ -853,7 +868,6 @@ int ceu_sys_link (u16 src_pid, tceu_nevt src_evt,
     tceu_lnk* lnk = (tceu_lnk*) ceu_sys_malloc(sizeof(tceu_lnk));
     if (lnk == NULL)
         return 0;
-    /* TODO free on unlink */
 
     lnk->src_app = src_app;
     lnk->src_evt = src_evt;
@@ -876,18 +890,51 @@ int ceu_sys_link (u16 src_pid, tceu_nevt src_evt,
     return 1;
 }
 
-#if 0
-int ceu_sys_unlink (tceu_app* src_app, tceu_nevt src_evt,
-                    tceu_app* dst_app, tceu_nevt dst_evt)
+static tceu_lnk* _ceu_sys_unlink (tceu_lnk* lnk) {
+    /* remove as head */
+    if (CEU_LNKS == lnk) {
+        CEU_LNKS = lnk->nxt;
+/* TODO: prv */
+    /* remove in the middle */
+    } else {
+        tceu_lnk* cur = CEU_LNKS;
+        while (cur->nxt!=NULL && cur->nxt!=lnk)
+			cur = cur->nxt;
+		if (cur->nxt != NULL)
+            cur->nxt = lnk->nxt;
+	}
+
+    /*lnk->nxt = NULL;*/
+    {
+        tceu_lnk* tmp = lnk->nxt;
+        ceu_sys_free(lnk);
+        return tmp;
+    }
+}
+
+int ceu_sys_unlink (u16 src_pid, tceu_nevt src_evt,
+                    u16 dst_pid, tceu_nevt dst_evt)
 {
+    tceu_lnk* cur = CEU_LNKS;
+    while (cur != NULL) {
+        int src_pid = (src_pid == 0) || (src_pid == cur->src_app->pid);
+        int src_evt = (src_evt == 0) || (src_evt == cur->src_evt);
+        int dst_pid = (dst_pid == 0) || (dst_pid == cur->dst_app->pid);
+        int dst_evt = (dst_evt == 0) || (dst_evt == cur->dst_evt);
+        if (src_pid && src_evt && dst_pid && dst_evt) {
+            cur = _ceu_sys_unlink(cur);
+            return 1;
+        } else {
+            cur = cur->nxt;
+        }
+    }
     return 0;
 }
-#endif
+
+#if 0
 
 /* Foreach ISR, call _ceu_sys_emit directly because interrupts are already 
  * disabled.  */
-
-#if 0
 
 #ifdef UART0_UDRE_vect
 ISR(UART0_UDRE_vect, ISR_BLOCK) {

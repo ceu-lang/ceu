@@ -17,24 +17,16 @@ function main (T)
 	local f = assert(io.open('_ceu_main.c','w'))
 
     f:write([[
+#include <stdlib.h>
+#include <assert.h>
 #include <stdio.h>
 #include "ceu_os.h"
 ]])
 
-    local zeros = {}
     for i, _ in ipairs(T) do
-        zeros[#zeros+1] = 0
-
-		f:write([[
-#include "_ceu_app_]]..i..[[.h"
-extern void _ceu_app_]]..i..[[_init (tceu_app* app);
-extern int  _ceu_app_]]..i..[[_size;
+        f:write([[
+unsigned char* f]]..i..[[;
 ]])
-        for i, _ in ipairs(T) do
-            f:write([[
-tceu_app _ceu_app_]]..i..[[;
-]])
-        end
     end
 
     f:write([[
@@ -43,18 +35,22 @@ int dt () {
 }
 int main (void)
 {
-    char MEM[1000000];
-    int MEM_i = 0;
     int ret;
 ]])
 
     -- APPS
     for i, _ in ipairs(T) do
         f:write([[
-    _ceu_app_]]..i..[[.data = (tceu_org*) &MEM[MEM_i];
-    MEM_i += _ceu_app_]]..i..[[_size;
-    _ceu_app_]]..i..[[.init = &_ceu_app_]]..i..[[_init;
-    _ceu_app_]]..i..[[.sys_vec = CEU_SYS_VEC;
+    {
+        FILE* f = fopen("_ceu_app_]]..i..[[.o", "r");
+        assert(f != NULL);
+        fseek(f, 0, SEEK_END);
+        int sz = ftell(f) - 0x238;
+        f]]..i..[[ = malloc(sz);
+        fseek(f, 0x238, SEEK_SET);
+        fread(f]]..i..[[, 1, sz, f);
+        ceu_sys_start(f]]..i..[[);
+    }
 ]])
     end
 
@@ -75,15 +71,17 @@ int main (void)
 ]])
     end
 
-    -- APPS
+    f:write([[
+    ret = ceu_scheduler(dt);
+]])
+
     for i, _ in ipairs(T) do
         f:write([[
-    ceu_sys_start(&_ceu_app_]]..i..[[);
+    free(f]]..i..[[);
 ]])
     end
 
     f:write([[
-    ret = ceu_scheduler(dt);
     printf("*** END: %d\n", ret);
 	return ret;
 }
@@ -102,8 +100,6 @@ Test = function (T)
 
     main(T)
 
-    local objs = {}
-
     for i,src in ipairs(T) do
         local name = '_ceu_app_'..i
         local ceu = assert(io.open(name..'.ceu', 'w'))
@@ -112,20 +108,36 @@ Test = function (T)
         local cmd = './ceu --os --verbose '..
                                '--out-c '..name..'.c '..
                                '--out-h '..name..'.h '..
-                               '--out-s '..name..'_size '..
-                               '--out-f '..name..'_init '..
                                            name..'.ceu 2>&1'
         assert(os.execute(cmd) == 0)
 
-        cmd = 'gcc -Wall -DCEU_DEBUG -ansi -o '..name..'.o'..
-              ' -c '..name..'.c'
-        assert(os.execute(cmd) == 0)
+        cmd = 'gcc -Wall -DCEU_DEBUG -ansi '..
+              '-Wa,--execstack '..
+              '-fpie -nostartfiles '..
+              --'-static '..
+              '-Wl,-Telf_x86_64.x '..
+              --'-Wl,--strip-all ' ..
+              '-Wl,--no-export-dynamic '..
+              '-Wl,--gc-sections '..
+              --'-Wl,--no-check-sections '..
+              --'-Wl,--section-start=.export=0x400000 '..
+              --'-Wl,--section-start=.text=0x400026 '.. -- TODO: 0x26
+              --'-Wl,--section-start=.interp=0x400721 '.. -- TODO: 0x26
+              --'-Wl,--section-start=.rodata=0x40073d '.. -- TODO: 0x26
+              --'-Wl,--section-start=.note.gnu.build-id=0x40078c '.. -- TODO: 0x26
+              --'-Wl,--section-start=.eh_frame_hdr=0x4007b0 '.. -- TODO: 0x26
+              --'-Wl,--section-start=.gnuhash=0x4007f4 '.. -- TODO: 0x26
+              '-Wl,-uCEU_EXPORT '..
+              ' -o '..name..'.o '..name..'.c'
 
-        objs[#objs+1] = name..'.o'
+        assert(os.execute(cmd) == 0)
     end
 
-    local GCC = 'gcc -Wall -DCEU_OS -DCEU_DEBUG -ansi -lpthread -o ceu.exe'..
-                ' _ceu_main.c ceu_os.c ceu_pool.c '..table.concat(objs,' ')
+    local GCC = 'gcc -g -Wall -DCEU_OS -DCEU_DEBUG -ansi -lpthread '..
+                '-Wa,--execstack '..
+                '-o ceu.exe '..
+                '_ceu_main.c ceu_os.c ceu_pool.c'
+print(GCC)
     assert(os.execute(GCC) == 0)
 
     local EXE = ((not _VALGRIND) and './ceu.exe 2>&1')

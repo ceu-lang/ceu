@@ -692,7 +692,7 @@ Test { [[if (2) then  else escape 0; end;]],
     ana = {
         reachs = 1,
     },
-    run = 0,
+    run = 0,    -- TODO: may be anything
 }
 
 -- IF vs SEQ priority

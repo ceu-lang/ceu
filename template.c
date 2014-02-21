@@ -226,9 +226,9 @@ static void ceu_app_init (tceu_app* app)
     app->calls = (__typeof__(ceu_app_calls)*) (((word)app->addr>>1) + &ceu_app_calls);
 #endif
 #else
-    app->code  = (__typeof__(ceu_app_go)*)    (app->addr + (word)&ceu_app_go);
+    app->code  = (__typeof__(ceu_app_go)*)    (&ceu_app_go);
 #ifdef CEU_OS
-    app->calls = (__typeof__(ceu_app_calls)*) (app->addr + (word)&ceu_app_calls);
+    app->calls = (__typeof__(ceu_app_calls)*) (&ceu_app_calls);
 #endif
 #endif
 
@@ -256,6 +256,6 @@ static void ceu_app_init (tceu_app* app)
 __attribute__ ((section (".export")))
 void CEU_EXPORT (uint* size, tceu_init** init) {
     *size = sizeof(CEU_Main);
-    *init = &ceu_app_init;
+    *init = (tceu_init*) &ceu_app_init;
 }
 #endif
