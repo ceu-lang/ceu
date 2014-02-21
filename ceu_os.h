@@ -282,7 +282,8 @@ typedef struct tceu_app {
 } tceu_app;
 
 #ifdef CEU_OS
-typedef void (*tceu_init) (tceu_app* app);
+typedef void (*tceu_init)   (tceu_app* app);
+typedef void (*tceu_export) (uint* size, tceu_init** init);
 #endif
 
 /* TCEU_THREADS_P */

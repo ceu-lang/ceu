@@ -190,23 +190,7 @@ fprintf(stderr, "TRK: o.%p / l.%d\n", _ceu_go->org, _ceu_go->lbl);
     return RET_HALT;    /* TODO: should never be reached anyways */
 }
 
-/* EXPORTED ENTRY POINTS */
-
-void ceu_app_init (tceu_app* app)
-__attribute__((used));
-
-#ifdef CEU_OS
-#ifdef __AVR
-#include <avr/pgmspace.h>
-PROGMEM uint  CEU_SIZE = sizeof(CEU_Main);
-PROGMEM void* CEU_INIT = &ceu_app_init;
-#else
-        uint  CEU_SIZE = sizeof(CEU_Main);
-        void* CEU_INIT = &ceu_app_init;
-#endif
-#endif
-
-void ceu_app_init (tceu_app* app)
+static void ceu_app_init (tceu_app* app)
 {
     app->seqno = 0;
 #if defined(CEU_RET) || defined(CEU_OS)
@@ -237,14 +221,14 @@ void ceu_app_init (tceu_app* app)
 #endif
 
 #ifdef __AVR
-    app->code  = (__typeof__(ceu_app_go)*)    (((uint)app->addr>>1) + &ceu_app_go);
+    app->code  = (__typeof__(ceu_app_go)*)    (((word)app->addr>>1) + &ceu_app_go);
 #ifdef CEU_OS
-    app->calls = (__typeof__(ceu_app_calls)*) (((uint)app->addr>>1) + &ceu_app_calls);
+    app->calls = (__typeof__(ceu_app_calls)*) (((word)app->addr>>1) + &ceu_app_calls);
 #endif
 #else
-    app->code  = (__typeof__(ceu_app_go)*)    (app->addr + &ceu_app_go);
+    app->code  = (__typeof__(ceu_app_go)*)    (app->addr + (word)&ceu_app_go);
 #ifdef CEU_OS
-    app->calls = (__typeof__(ceu_app_calls)*) ((app->addr>>1) + &ceu_app_calls);
+    app->calls = (__typeof__(ceu_app_calls)*) (app->addr + (word)&ceu_app_calls);
 #endif
 #endif
 
@@ -262,3 +246,16 @@ void ceu_app_init (tceu_app* app)
     ceu_out_org_init(app, app->data, CEU_NTRAILS, Class_Main, 0, NULL, 0);
     ceu_out_go(app, CEU_IN__INIT, (tceu_evtp)NULL);
 }
+
+/* EXPORTED ENTRY POINT
+ * CEU_EXPORT is put in a separate section ".export".
+ * "gcc-ld" should place it at 0x00, before ".text".
+ */
+
+#ifdef CEU_OS
+__attribute__ ((section (".export")))
+void CEU_EXPORT (uint* size, tceu_init** init) {
+    *size = sizeof(CEU_Main);
+    *init = &ceu_app_init;
+}
+#endif

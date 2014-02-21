@@ -708,15 +708,19 @@ int ceu_scheduler (int(*dt)())
 
 uint ceu_sys_start (void* addr)
 {
+    uint       size;
+    tceu_init* init;
+#ifdef __AVR
+    ((tceu_export) ((word)addr>>1))(&size, &init);
+#else
+    ((tceu_export) addr)(&size, &init);
+#endif
+
     tceu_app* app = (tceu_app*) ceu_sys_malloc(sizeof(tceu_app));
     if (app == NULL)
         return 0;
 
-#ifdef __AVR
-    app->data = (tceu_org*) ceu_sys_malloc(pgm_read_word_near((uint)addr));
-#else
-    app->data = (tceu_org*) ceu_sys_malloc(*((uint*)addr));
-#endif
+    app->data = (tceu_org*) ceu_sys_malloc(size);
     if (app->data == NULL)
         return 0;
 
@@ -725,12 +729,23 @@ uint ceu_sys_start (void* addr)
     app->pid = CEU_PID++;
     app->sys_vec = CEU_SYS_VEC;
     app->nxt = NULL;
+
+    /* Assumes sizeof(void*)==sizeof(WORD) and
+        that gcc will word-align SIZE/INIT */
 #ifdef __AVR
-    app->init = (tceu_init) (((uint)addr>>1) + pgm_read_word_near(addr+sizeof(uint)));
+    app->init = (tceu_init) (((word)addr>>1) + (word)init);
 #else
-    app->init = (tceu_init) (addr + *((uint*)(addr+sizeof(uint))));
+    app->init = (tceu_init) (addr + (word)init);
 #endif
     app->addr = addr;
+
+/*
+printf("X %p sz=%d f=%lX %X %X %X\n", addr, *((uint*)addr),
+                        *((long*)(addr+sizeof(void*))),
+                        ((char*)app->init)[0],
+                        ((char*)app->init)[1],
+                        ((char*)app->init)[2]);
+*/
 
     /* add as head */
 	if (CEU_APPS == NULL) {
