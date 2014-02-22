@@ -116,7 +116,7 @@ F = {
             req = false
 
         --[[
-        -- Inside functions the assignment must be to from a "hold" parameter
+        -- Inside functions the assignment must be from a "hold" parameter
         -- to a class field.
         -- They cannot have finalizers because different calls will have
         -- different scopes for the parameters.

@@ -327,6 +327,77 @@ escape ret + _V;        // * reads after
 --]===]
 
 Test { [[
+input int F, E;
+var int n_shields = 0;
+var int ret = 1;
+par/or do
+    await F;
+with
+    loop do
+        var int v = await E until (n_shields > 0);
+        ret = ret + v;
+    end
+end
+
+escape ret;
+]],
+    run = { ['1~>E; 1~>E; 1~>F'] = 1 }
+}
+Test { [[
+input void F, E;
+var int n_shields = 0;
+var int ret = 1;
+par/or do
+    await F;
+with
+    loop do
+        await E until (n_shields > 0);
+        ret = ret + 10;
+    end
+end
+
+escape ret;
+]],
+    run = { ['~>E; ~>E; ~>F'] = 1 }
+}
+
+Test { [[
+interface Controller with
+    var float ax;
+end
+class KeyController with
+    interface Controller;
+    var int ax = 0;
+do
+end
+
+var KeyController c;
+var Controller*   i;
+i = &c;
+escape 1;
+]],
+    env = 'line 12 : invalid attribution (Controller* vs KeyController*)',
+}
+
+Test { [[
+interface Controller with
+    var float ax;
+end
+class KeyController with
+    interface Controller;
+    var float ax = 0;
+do
+end
+
+var KeyController c;
+var Controller*   i;
+i = &c;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
 input (int,int) I;
 var int ret = 0;
 par/or do
@@ -27578,6 +27649,7 @@ end
 ]=]
 
 -- UNTIL
+error'oi'
 
 Test { [[
 input int A;

@@ -429,6 +429,28 @@ F = {
         me.tag = 'Dcl_var'
     end,
 
+    AwaitExt_pre = function (me)
+        local exp, cnd = unpack(me)
+        if not cnd then
+            return me
+        end
+        if _AST.par(me, '_Set_pre') then
+            return me   -- TODO: join code below with _Set_pre
+        end
+
+        -- <await until> => loop
+
+        me[2] = false   -- remove "cnd" from "Await"
+        return node('Loop', me.ln,
+                node('Stmts', me.ln,
+                    me,
+                    node('If', me.ln, cnd,
+                        node('Break', me.ln),
+                        node('Nothing', me.ln))))
+    end,
+    AwaitInt_pre = 'AwaitExt_pre',
+    AwaitT_pre   = 'AwaitExt_pre',
+
     _Set_pre = function (me)
         local to, op, tag, p1, p2, p3 = unpack(me)
 
@@ -448,7 +470,7 @@ F = {
 
             -- <await until> => loop
             local cnd = awt[#awt]
-            awt[#awt] = false
+            awt[#awt] = false   -- remove "cnd" from "Await"
             if cnd then
                 ret = node('Loop', me.ln,
                             node('Stmts', me.ln,
