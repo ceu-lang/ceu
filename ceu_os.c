@@ -458,8 +458,6 @@ int ceu_go_all (tceu_app* app)
 
 #ifdef CEU_OS
 
-static uint CEU_PID = 0;
-
 /* SYS_VECTOR
  */
 void* CEU_SYS_VEC[CEU_SYS_MAX] __attribute__((used)) = {
@@ -663,8 +661,8 @@ static void __ceu_gc (void)
             }
 
             /* unlink all "from app" or "to app" */
-            ceu_sys_unlink(app->pid,0, 0,0);
-            ceu_sys_unlink(0,0, app->pid,0);
+            ceu_sys_unlink(app,0, 0,0);
+            ceu_sys_unlink(0,0, app,0);
 
 #ifdef CEU_RET
             ok--;
@@ -764,7 +762,7 @@ int ceu_scheduler (int(*dt)())
 
 /* START */
 
-uint ceu_sys_start (void* addr)
+tceu_app* ceu_sys_start (void* addr)
 {
     uint       size;
     tceu_init* init;
@@ -776,13 +774,12 @@ uint ceu_sys_start (void* addr)
 
     tceu_app* app = (tceu_app*) ceu_sys_malloc(sizeof(tceu_app));
     if (app == NULL)
-        return 0;
+        return NULL;
 
     app->data = (tceu_org*) ceu_sys_malloc(size);
     if (app->data == NULL)
-        return 0;
+        return NULL;
 
-    app->pid = ++CEU_PID;
     app->sys_vec = CEU_SYS_VEC;
     app->nxt = NULL;
 
@@ -832,30 +829,16 @@ printf("<<< %d %d\n", app->isAlive, app->ret);
     ceu_sys_emit(NULL, CEU_IN_OS_START, (tceu_evtp)NULL, 0, NULL);
 #endif
 
-    return CEU_PID;
+    return app;
 }
 
 /* STOP */
 
-static tceu_app* ceu_pid2app (uint pid) {
-    tceu_app* cur = CEU_APPS;
-    do {
-        if (cur->pid == pid)
-            return cur;
-    } while ((cur = cur->nxt));
-    return NULL;
-}
-
 /* LINK & UNLINK */
 
-int ceu_sys_link (uint src_pid, tceu_nevt src_evt,
-                  uint dst_pid, tceu_nevt dst_evt)
+int ceu_sys_link (tceu_app* src_app, tceu_nevt src_evt,
+                  tceu_app* dst_app, tceu_nevt dst_evt)
 {
-    tceu_app* src_app = ceu_pid2app(src_pid);
-    tceu_app* dst_app = ceu_pid2app(dst_pid);
-    if (src_app==NULL || dst_app==NULL)
-        return 0;
-
     tceu_lnk* lnk = (tceu_lnk*) ceu_sys_malloc(sizeof(tceu_lnk));
     if (lnk == NULL)
         return 0;
@@ -881,15 +864,15 @@ int ceu_sys_link (uint src_pid, tceu_nevt src_evt,
     return 1;
 }
 
-int ceu_sys_unlink (uint src_pid, tceu_nevt src_evt,
-                    uint dst_pid, tceu_nevt dst_evt)
+int ceu_sys_unlink (tceu_app* src_app, tceu_nevt src_evt,
+                    tceu_app* dst_app, tceu_nevt dst_evt)
 {
     tceu_lnk* cur = CEU_LNKS;
     while (cur != NULL) {
         tceu_lnk* nxt = cur->nxt;
-        if ( (src_pid==0 || src_pid==cur->src_app->pid)
+        if ( (src_app==0 || src_app==cur->src_app)
           && (src_evt==0 || src_evt==cur->src_evt)
-          && (dst_pid==0 || dst_pid==cur->dst_app->pid)
+          && (dst_app==0 || dst_app==cur->dst_app)
           && (dst_evt==0 || dst_evt==cur->dst_evt) ) {
             _ceu_sys_unlink(cur);
         }

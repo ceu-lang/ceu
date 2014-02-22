@@ -26,6 +26,7 @@ function main (T)
     for i, _ in ipairs(T) do
         f:write([[
 unsigned char* f_]]..i..[[;
+tceu_app* app_]]..i..[[;
 ]])
     end
 
@@ -49,7 +50,7 @@ int main (void)
         f_]]..i..[[ = malloc(sz);
         fseek(f, 0x238, SEEK_SET);
         fread(f_]]..i..[[, 1, sz, f);
-        ceu_sys_start(f_]]..i..[[);
+        app_]]..i..[[ = ceu_sys_start(f_]]..i..[[);
     }
 ]])
     end
@@ -57,6 +58,8 @@ int main (void)
     -- LINKS
     T.lnks = T.lnks or {}
     for i, t in ipairs(T.lnks) do
+        t[1] = 'app_'..t[1]
+        t[3] = 'app_'..t[3]
         f:write([[
     ceu_sys_link(]]..table.concat(t,',')..[[);
 ]])

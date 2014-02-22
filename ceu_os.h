@@ -247,7 +247,6 @@ typedef struct tceu_app {
 #endif
 
 #ifdef CEU_OS
-    uint pid;
     struct tceu_app* nxt;
 #endif
 
@@ -364,9 +363,9 @@ int ceu_scheduler (int(*dt)());
 tceu_queue* ceu_sys_queue_nxt (void);
 void        ceu_sys_queue_rem (void);
 
-uint ceu_sys_start  (void* addr);
-int  ceu_sys_link   (uint src_pid, tceu_nevt src_evt, uint dst_pid, tceu_nevt dst_evt);
-int  ceu_sys_unlink (uint src_pid, tceu_nevt src_evt, uint dst_pid, tceu_nevt dst_evt);
+tceu_app* ceu_sys_start  (void* addr);
+int  ceu_sys_link   (tceu_app* src_app, tceu_nevt src_evt, tceu_app* dst_app, tceu_nevt dst_evt);
+int  ceu_sys_unlink (tceu_app* src_app, tceu_nevt src_evt, tceu_app* dst_app, tceu_nevt dst_evt);
 
 int ceu_sys_emit (tceu_app* app, tceu_nevt evt, tceu_evtp param,
                   int sz, char* buf);
