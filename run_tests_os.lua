@@ -25,7 +25,7 @@ function main (T)
 
     for i, _ in ipairs(T) do
         f:write([[
-unsigned char* f]]..i..[[;
+unsigned char* f_]]..i..[[;
 ]])
     end
 
@@ -46,10 +46,10 @@ int main (void)
         assert(f != NULL);
         fseek(f, 0, SEEK_END);
         int sz = ftell(f) - 0x238;
-        f]]..i..[[ = malloc(sz);
+        f_]]..i..[[ = malloc(sz);
         fseek(f, 0x238, SEEK_SET);
-        fread(f]]..i..[[, 1, sz, f);
-        ceu_sys_start(f]]..i..[[);
+        fread(f_]]..i..[[, 1, sz, f);
+        printf("%d\n", ceu_sys_start(f_]]..i..[[));
     }
 ]])
     end
@@ -57,17 +57,8 @@ int main (void)
     -- LINKS
     T.lnks = T.lnks or {}
     for i, t in ipairs(T.lnks) do
-        local src_app, src_evt, dst_app, dst_evt = unpack(t)
         f:write([[
-    tceu_lnk lnk_]]..i..[[ = {
-        &_ceu_app_]]..src_app..','..
-        src_evt..','..[[
-        &_ceu_app_]]..dst_app..','..
-        dst_evt..[[
-    };
-]])
-        f:write([[
-    ceu_sys_link(&lnk_]]..i..[[);
+    ceu_sys_link(]]..table.concat(t,',')..[[);
 ]])
     end
 
@@ -77,7 +68,7 @@ int main (void)
 
     for i, _ in ipairs(T) do
         f:write([[
-    free(f]]..i..[[);
+    free(f_]]..i..[[);
 ]])
     end
 
@@ -130,6 +121,7 @@ Test = function (T)
               '-Wl,-uCEU_EXPORT '..
               ' -o '..name..'.o '..name..'.c'
 
+print(cmd)
         assert(os.execute(cmd) == 0)
     end
 

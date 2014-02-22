@@ -109,9 +109,9 @@ static void ceu_stack_clr () {
 static void ceu_wclocks_min (tceu_app* app, s32 dt, int out) {
     if (app->wclk_min > dt) {
         app->wclk_min = dt;
-#ifdef ceu_out_wclock
+#ifdef ceu_out_wclock_set
         if (out)
-            ceu_out_wclock(dt);
+            ceu_out_wclock_set(dt);
 #endif
     }
 }

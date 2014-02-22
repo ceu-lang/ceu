@@ -909,13 +909,13 @@ _ceu_go->trl->lbl = ]]..me.lbl_cnt.id..[[;
 
         local emit = [[
 {
-    ceu_go_wclock(_ceu_app, (s32)]]..V(exp)..[[);
+    ceu_out_go(_ceu_app, CEU_IN__WCLOCK, (tceu_evtp)(]]..V(exp)..[[));
     while (
 #if defined(CEU_RET) || defined(CEU_OS)
             _ceu_app->isAlive &&
 #endif
             _ceu_app->wclk_min<=0) {
-        ceu_go_wclock(_ceu_app, 0);
+        ceu_out_go(_ceu_app, CEU_IN__WCLOCK, (tceu_evtp)0);
     }
 #if defined(CEU_RET) || defined(CEU_OS)
     if (! _ceu_app->isAlive)

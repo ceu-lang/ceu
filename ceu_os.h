@@ -12,7 +12,6 @@
     #define CEU_RET
     #define CEU_CLEAR
 /*
-*/
     #define CEU_INTS
     #define CEU_ORGS
     #define CEU_PSES
@@ -20,6 +19,7 @@
     #define CEU_NEWS_MALLOC
     #define CEU_NEWS_POOL
     #define CEU_THREADS
+*/
 
     #define CEU_QUEUE_MAX 65536
 /*
@@ -65,8 +65,6 @@
 
     #define ceu_out_org_init(app,org,n,lbl,seqno,par_org,par_trl) \
         ((__typeof__(ceu_sys_org_init)*)((app)->sys_vec[CEU_SYS_ORG_INIT]))(org,n,lbl,seqno,par_org,par_trl)
-/*
-*/
 
 #else /* CEU_OS */
     #include "_ceu_app.h"
@@ -82,7 +80,8 @@
             ceu_sys_go(app,evt,evtp)
 #endif
 
-#define ceu_in_emit_val  ceu_go_event
+#define ceu_in_emit_val(app,id,param) \
+    ceu_out_go(app,id,param)
 
 #ifdef CEU_THREADS
 /* TODO: app */
@@ -248,7 +247,7 @@ typedef struct tceu_app {
 #endif
 
 #ifdef CEU_OS
-    u16 pid;
+    uint pid;
     struct tceu_app* nxt;
 #endif
 
@@ -333,9 +332,6 @@ void ceu_pause (tceu_trl* trl, tceu_trl* trlF, int psed);
 #endif
 
 void ceu_sys_go    (tceu_app* app, int evt, tceu_evtp evtp);
-void ceu_go_event  (tceu_app* app, int id, tceu_evtp data);
-void ceu_go_async  (tceu_app* app);
-void ceu_go_wclock (tceu_app* app, s32 dt);
 int  ceu_go_all    (tceu_app* app);
 
 #ifdef CEU_OS
@@ -369,9 +365,9 @@ tceu_queue* ceu_sys_queue_nxt (void);
 void        ceu_sys_queue_rem (void);
 
 uint ceu_sys_start  (void* addr);
-int  ceu_sys_stop   (u16 pid);
-int  ceu_sys_link   (u16 src_pid, tceu_nevt src_evt, u16 dst_pid, tceu_nevt dst_evt);
-int  ceu_sys_unlink (u16 src_pid, tceu_nevt src_evt, u16 dst_pid, tceu_nevt dst_evt);
+int  ceu_sys_stop   (uint pid);
+int  ceu_sys_link   (uint src_pid, tceu_nevt src_evt, uint dst_pid, tceu_nevt dst_evt);
+int  ceu_sys_unlink (uint src_pid, tceu_nevt src_evt, uint dst_pid, tceu_nevt dst_evt);
 
 int ceu_sys_emit (tceu_app* app, tceu_nevt evt, tceu_evtp param,
                   int sz, char* buf);
