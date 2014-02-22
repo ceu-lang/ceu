@@ -48,8 +48,6 @@
     /* TODO: make all ceu_out_* to pass "_ceu_app" automatically? */
     #define ceu_out_start(addr) \
         ((__typeof__(ceu_sys_start)*)((_ceu_app)->sys_vec[CEU_SYS_START]))(addr)
-    #define ceu_out_stop(pid) \
-        ((__typeof__(ceu_sys_stop)*)((_ceu_app)->sys_vec[CEU_SYS_STOP]))(pid)
 
     #define ceu_out_emit_buf(app,id,sz,buf) \
         ((__typeof__(ceu_sys_emit)*)((app)->sys_vec[CEU_SYS_EMIT]))(app,id,(tceu_evtp)NULL,sz,buf)
@@ -365,7 +363,6 @@ tceu_queue* ceu_sys_queue_nxt (void);
 void        ceu_sys_queue_rem (void);
 
 uint ceu_sys_start  (void* addr);
-int  ceu_sys_stop   (uint pid);
 int  ceu_sys_link   (uint src_pid, tceu_nevt src_evt, uint dst_pid, tceu_nevt dst_evt);
 int  ceu_sys_unlink (uint src_pid, tceu_nevt src_evt, uint dst_pid, tceu_nevt dst_evt);
 
@@ -377,7 +374,6 @@ enum {
     CEU_SYS_MALLOC = 0,
     CEU_SYS_FREE,
     CEU_SYS_START,
-    CEU_SYS_STOP,
     CEU_SYS_LINK,
     CEU_SYS_UNLINK,
     CEU_SYS_EMIT,

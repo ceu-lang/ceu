@@ -140,6 +140,8 @@ void ceu_pause (tceu_trl* trl, tceu_trl* trlF, int psed) {
 
 /**********************************************************************/
 
+u8 CEU_GC = 0;  /* execute __ceu_gc() when "true" */
+
 void ceu_sys_go (tceu_app* app, int evt, tceu_evtp evtp)
 {
     switch (evt) {
@@ -338,6 +340,7 @@ _CEU_GO_GO_:
                     case RET_END:
 #if defined(CEU_RET) || defined(CEU_OS)
                         app->isAlive = 0;
+                        CEU_GC = 1;
 #endif
                         goto _CEU_GO_QUIT_;
 /*
@@ -447,7 +450,7 @@ int ceu_go_all (tceu_app* app)
 
 #ifdef CEU_OS
 
-static uint CEU_PID = 1;
+static uint CEU_PID = 0;
 
 /* SYS_VECTOR
  */
@@ -455,7 +458,6 @@ void* CEU_SYS_VEC[CEU_SYS_MAX] __attribute__((used)) = {
     (void*) &ceu_sys_malloc,
     (void*) &ceu_sys_free,
     (void*) &ceu_sys_start,
-    (void*) &ceu_sys_stop,
     (void*) &ceu_sys_link,
     (void*) &ceu_sys_unlink,
     (void*) &ceu_sys_emit,
@@ -599,14 +601,97 @@ tceu_evtp ceu_sys_call (tceu_app* app, tceu_nevt evt, tceu_evtp param) {
     return (tceu_evtp)NULL;
 }
 
-void _ceu_sys_stop (tceu_app* app);
+static void _ceu_sys_unlink (tceu_lnk* lnk) {
+    /* remove as head */
+    if (CEU_LNKS == lnk) {
+        CEU_LNKS = lnk->nxt;
+/* TODO: prv */
+    /* remove in the middle */
+    } else {
+        tceu_lnk* cur = CEU_LNKS;
+        while (cur->nxt!=NULL && cur->nxt!=lnk)
+			cur = cur->nxt;
+		if (cur->nxt != NULL)
+            cur->nxt = lnk->nxt;
+	}
+
+    /*lnk->nxt = NULL;*/
+    ceu_sys_free(lnk);
+}
+
+static void __ceu_gc (void)
+{
+    if (! CEU_GC) return;
+    CEU_GC = 0;
+
+    /* remove pending events */
+    {
+#ifdef __AVR
+        noInterrupts();
+#endif
+        int i = 0;
+        while (i < QUEUE_tot) {
+            tceu_queue* qu = (tceu_queue*) &QUEUE[QUEUE_get+i];
+            if (qu->app!=NULL && !qu->app->isAlive) {
+                qu->evt = CEU_IN__NONE;
+            }
+            i += sizeof(tceu_queue) + qu->sz;
+        }
+#ifdef __AVR
+        interrupts();
+#endif
+    }
+
+    /* remove broken links */
+    {
+        tceu_lnk* cur = CEU_LNKS;
+        while (cur != NULL) {
+            tceu_lnk* nxt = cur->nxt;
+            if (!cur->src_app->isAlive || !cur->dst_app->isAlive)
+                _ceu_sys_unlink(cur);
+            cur = nxt;
+        }
+    }
+
+    /* remove dead apps */
+    tceu_app* app = CEU_APPS;
+    tceu_app* prv = NULL;
+    while (app)
+    {
+        tceu_app* nxt = app->nxt;
+
+        if (app->isAlive) {
+            prv = app;
+
+        } else {
+            if (CEU_APPS == app) {
+                CEU_APPS = nxt;     /* remove as head */
+            } else {
+                prv->nxt = nxt;     /* remove in the middle */
+            }
+
+            /* unlink all "from app" or "to app" */
+            ceu_sys_unlink(app->pid,0, 0,0);
+            ceu_sys_unlink(0,0, app->pid,0);
+
+#ifdef CEU_RET
+            ok--;
+            ret += app->ret;
+#endif
+
+            /* free app memory */
+            ceu_sys_free(app->data);
+            ceu_sys_free(app);
+        }
+
+        app = nxt;
+    }
+}
+
 
 int ceu_scheduler (int(*dt)())
 {
-	tceu_app* app;
-    tceu_lnk* lnk;
-
-    /* LOOP */
+    __ceu_gc();     /* apps already terminated from MAIN() */
 
 #ifdef CEU_RET
     while (ok > 0)
@@ -616,28 +701,26 @@ int ceu_scheduler (int(*dt)())
     {
         /* WCLOCK */
 #ifdef CEU_WCLOCKS
-        app = CEU_APPS;
-        int _dt = dt();
-        while (app) {
-            tceu_app* nxt = app->nxt;
-            ceu_sys_go(app, CEU_IN__WLOCK, (tceu_evtp)_dt);
-            if (! app->isAlive) {
-                _ceu_sys_stop(app);
+        {
+            tceu_app* app = CEU_APPS;
+            int _dt = dt();
+            while (app) {
+                ceu_sys_go(app, CEU_IN__WCLOCK, (tceu_evtp)_dt);
+                app = app->nxt;
             }
-            app = nxt;
+            __ceu_gc();
         }
 #endif	/* CEU_WCLOCKS */
 
         /* ASYNC */
 #ifdef CEU_ASYNCS
-		app = CEU_APPS;
-        while (app) {
-            tceu_app* nxt = app->nxt;
-            ceu_sys_go(app, CEU_IN__ASYNC, (tceu_evtp)NULL);
-            if (! app->isAlive) {
-                _ceu_sys_stop(app);
+        {
+            tceu_app* app = CEU_APPS;
+            while (app) {
+                ceu_sys_go(app, CEU_IN__ASYNC, (tceu_evtp)NULL);
+                app = app->nxt;
             }
-            app = nxt;
+            __ceu_gc();
         }
 #endif	/* CEU_ASYNCS */
 
@@ -648,30 +731,27 @@ int ceu_scheduler (int(*dt)())
         {
             /* global events (e.g. OS_START, OS_INTERRUPT) */
             if (qu->app == NULL) {
-                app = CEU_APPS;
+                tceu_app* app = CEU_APPS;
                 while (app) {
-                    tceu_app* nxt = app->nxt;
                     ceu_sys_go(app, qu->evt, qu->param);
-                    if (! app->isAlive) {
-                        _ceu_sys_stop(app);
-                    }
-                    app = nxt;
+                    app = app->nxt;
                 }
 
             } else {
                 /* linked events */
-                lnk = CEU_LNKS;
-                for (; lnk; lnk=lnk->nxt)
-                {
-                    if (qu->app!=lnk->src_app || qu->evt!=lnk->src_evt)
-                        continue;
-                    ceu_sys_go(lnk->dst_app, lnk->dst_evt, qu->param);
-                    if (! lnk->dst_app->isAlive)
-                        _ceu_sys_stop(lnk->dst_app);
+                tceu_lnk* lnk = CEU_LNKS;
+                while (lnk) {
+                    if ( qu->app==lnk->src_app
+                    &&   qu->evt==lnk->src_evt
+                    &&   lnk->dst_app->isAlive ) {
+                        ceu_sys_go(lnk->dst_app, lnk->dst_evt, qu->param);
+                    }
+                    lnk = lnk->nxt;
                 }
             }
 
             ceu_sys_queue_rem();
+            __ceu_gc();
         }
     }
 
@@ -702,7 +782,7 @@ uint ceu_sys_start (void* addr)
     if (app->data == NULL)
         return 0;
 
-    app->pid = CEU_PID++;
+    app->pid = ++CEU_PID;
     app->sys_vec = CEU_SYS_VEC;
     app->nxt = NULL;
 
@@ -730,6 +810,7 @@ uint ceu_sys_start (void* addr)
     /* MAX OK */
 #ifdef CEU_RET
     ok++;
+printf("ok = %d\n", ok);
 #endif
 
     /* INIT */
@@ -745,12 +826,6 @@ printf(">>> %p %X %p[%x %x %x %x %x]\n", addr, size, init,
     app->init(app);
 printf("<<< %d %d\n", app->isAlive, app->ret);
 
-    if (! app->isAlive) {
-        uint pid = app->pid;
-        _ceu_sys_stop(app);
-        return pid;
-    }
-
     /* OS_START */
 
     /* TODO: emit as global // should split load/start */
@@ -758,7 +833,7 @@ printf("<<< %d %d\n", app->isAlive, app->ret);
     ceu_sys_emit(NULL, CEU_IN_OS_START, (tceu_evtp)NULL, 0, NULL);
 #endif
 
-    return app->pid;
+    return CEU_PID;
 }
 
 /* STOP */
@@ -770,73 +845,6 @@ static tceu_app* ceu_pid2app (uint pid) {
             return cur;
     } while ((cur = cur->nxt));
     return NULL;
-}
-
-int ceu_sys_stop (uint pid) {
-    tceu_app* app = ceu_pid2app(pid);
-    if (app == NULL) {
-        return 0;
-    } else {
-        _ceu_sys_stop(app);
-        return 1;
-    }
-}
-
-void _ceu_sys_stop (tceu_app* app) {
-#ifdef CEU_IN_OS_STOP
-    if (app->isAlive)
-        ceu_sys_go(app, CEU_IN_OS_STOP, (tceu_evtp)NULL);
-#endif
-
-#ifdef CEU_DEBUG
-    assert(! app->isAlive);
-    assert(CEU_APPS != NULL);
-#endif
-
-    /* remove as head */
-	if (CEU_APPS == app) {
-		CEU_APPS = app->nxt;
-/* TODO: prv */
-	/* remove in the middle */
-    } else {
-		tceu_app* cur = CEU_APPS;
-		while (cur->nxt!=NULL && cur->nxt!=app)
-			cur = cur->nxt;
-		if (cur->nxt != NULL)
-			cur->nxt = app->nxt;
-	}
-    /*app->nxt = NULL;*/
-
-    /* unlink all "from app" or "to app" */
-    ceu_sys_unlink(app->pid,0, 0,0);
-    ceu_sys_unlink(0,0, app->pid,0);
-
-    /* remove pending events */
-    /* TODO: try to remove this code */
-/*
-#ifdef __AVR
-    noInterrupts();
-#endif
-    int i = 0;
-    while (i < QUEUE_tot) {
-        tceu_queue* qu = (tceu_queue*) &QUEUE[QUEUE_get+i];
-        if (qu->app == app) {
-            qu->evt = CEU_IN__NONE;
-        }
-        i += sizeof(tceu_queue) + qu->sz;
-    }
-#ifdef __AVR
-    interrupts();
-#endif
-*/
-
-#ifdef CEU_RET
-    ok--;
-    ret += app->ret;
-#endif
-
-    ceu_sys_free(app->data);
-    ceu_sys_free(app);
 }
 
 /* LINK & UNLINK */
@@ -874,35 +882,16 @@ int ceu_sys_link (uint src_pid, tceu_nevt src_evt,
     return 1;
 }
 
-static void _ceu_sys_unlink (tceu_lnk* lnk) {
-    /* remove as head */
-    if (CEU_LNKS == lnk) {
-        CEU_LNKS = lnk->nxt;
-/* TODO: prv */
-    /* remove in the middle */
-    } else {
-        tceu_lnk* cur = CEU_LNKS;
-        while (cur->nxt!=NULL && cur->nxt!=lnk)
-			cur = cur->nxt;
-		if (cur->nxt != NULL)
-            cur->nxt = lnk->nxt;
-	}
-
-    /*lnk->nxt = NULL;*/
-    ceu_sys_free(lnk);
-}
-
 int ceu_sys_unlink (uint src_pid, tceu_nevt src_evt,
                     uint dst_pid, tceu_nevt dst_evt)
 {
     tceu_lnk* cur = CEU_LNKS;
     while (cur != NULL) {
         tceu_lnk* nxt = cur->nxt;
-        int src_pid = (src_pid == 0) || (src_pid == cur->src_app->pid);
-        int src_evt = (src_evt == 0) || (src_evt == cur->src_evt);
-        int dst_pid = (dst_pid == 0) || (dst_pid == cur->dst_app->pid);
-        int dst_evt = (dst_evt == 0) || (dst_evt == cur->dst_evt);
-        if (src_pid && src_evt && dst_pid && dst_evt) {
+        if ( (src_pid==0 || src_pid==cur->src_app->pid)
+          && (src_evt==0 || src_evt==cur->src_evt)
+          && (dst_pid==0 || dst_pid==cur->dst_app->pid)
+          && (dst_evt==0 || dst_evt==cur->dst_evt) ) {
             _ceu_sys_unlink(cur);
         }
         cur = nxt;
