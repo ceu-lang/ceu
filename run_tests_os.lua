@@ -49,7 +49,7 @@ int main (void)
         f_]]..i..[[ = malloc(sz);
         fseek(f, 0x238, SEEK_SET);
         fread(f_]]..i..[[, 1, sz, f);
-        printf("%d\n", ceu_sys_start(f_]]..i..[[));
+        ceu_sys_start(f_]]..i..[[);
     }
 ]])
     end

@@ -10,6 +10,14 @@
 void* CEU_APP_ADDR = NULL;
 #endif
 
+#ifdef __AVR
+#define ISR_ON  interrupts()
+#define ISR_OFF noInterrupts()
+#else
+#define ISR_ON
+#define ISR_OFF
+#endif
+
 #include <string.h>
 
 #ifdef CEU_DEBUG
@@ -487,9 +495,7 @@ void* CEU_SYS_VEC[CEU_SYS_MAX] __attribute__((used)) = {
 
 tceu_queue* ceu_sys_queue_get (void) {
     tceu_queue* ret;
-#ifdef __AVR
-    noInterrupts();
-#endif
+    ISR_OFF;
     if (QUEUE_tot == 0) {
         ret = NULL;
     } else {
@@ -498,17 +504,13 @@ tceu_queue* ceu_sys_queue_get (void) {
 #endif
         ret = (tceu_queue*) &QUEUE[QUEUE_get];
     }
-#ifdef __AVR
-    interrupts();
-#endif
+    ISR_ON;
     return ret;
 }
 
 int ceu_sys_queue_put (tceu_app* app, tceu_nevt evt, tceu_evtp param,
                        int sz, char* buf) {
-#ifdef __AVR
-    noInterrupts();
-#endif
+    ISR_OFF;
 
     int n = sizeof(tceu_queue) + sz;
 
@@ -545,22 +547,16 @@ int ceu_sys_queue_put (tceu_app* app, tceu_nevt evt, tceu_evtp param,
     QUEUE_put += n;
     QUEUE_tot += n;
 
-#ifdef __AVR
-    interrupts();
-#endif
+    ISR_ON;
     return 1;
 }
 
 void ceu_sys_queue_rem (void) {
-#ifdef __AVR
-    noInterrupts();
-#endif
+    ISR_OFF;
     tceu_queue* qu = (tceu_queue*) &QUEUE[QUEUE_get];
     QUEUE_tot -= sizeof(tceu_queue) + qu->sz;
     QUEUE_get += sizeof(tceu_queue) + qu->sz;
-#ifdef __AVR
-    interrupts();
-#endif
+    ISR_ON;
 }
 
 /*****************************************************************************/
@@ -626,9 +622,7 @@ static void __ceu_gc (void)
 
     /* remove pending events */
     {
-#ifdef __AVR
-        noInterrupts();
-#endif
+        ISR_OFF;
         int i = 0;
         while (i < QUEUE_tot) {
             tceu_queue* qu = (tceu_queue*) &QUEUE[QUEUE_get+i];
@@ -637,9 +631,7 @@ static void __ceu_gc (void)
             }
             i += sizeof(tceu_queue) + qu->sz;
         }
-#ifdef __AVR
-        interrupts();
-#endif
+        ISR_ON;
     }
 
     /* remove broken links */
@@ -726,31 +718,39 @@ int ceu_scheduler (int(*dt)())
 
         /* EVENTS */
 
-        tceu_queue* qu = ceu_sys_queue_get();
-        if (qu != NULL)
         {
-            /* global events (e.g. OS_START, OS_INTERRUPT) */
-            if (qu->app == NULL) {
-                tceu_app* app = CEU_APPS;
-                while (app) {
-                    ceu_sys_go(app, qu->evt, qu->param);
-                    app = app->nxt;
-                }
+            /* clear the current size (ignore events emitted here) */
+            ISR_OFF;
+            int tot = QUEUE_tot;
+            ISR_ON;
+            while (tot > 0)
+            {
+                tceu_queue* qu = ceu_sys_queue_get();
+                tot -= sizeof(tceu_queue) + qu->sz;
 
-            } else {
-                /* linked events */
-                tceu_lnk* lnk = CEU_LNKS;
-                while (lnk) {
-                    if ( qu->app==lnk->src_app
-                    &&   qu->evt==lnk->src_evt
-                    &&   lnk->dst_app->isAlive ) {
-                        ceu_sys_go(lnk->dst_app, lnk->dst_evt, qu->param);
+                /* global events (e.g. OS_START, OS_INTERRUPT) */
+                if (qu->app == NULL) {
+                    tceu_app* app = CEU_APPS;
+                    while (app) {
+                        ceu_sys_go(app, qu->evt, qu->param);
+                        app = app->nxt;
                     }
-                    lnk = lnk->nxt;
-                }
-            }
 
-            ceu_sys_queue_rem();
+                } else {
+                    /* linked events */
+                    tceu_lnk* lnk = CEU_LNKS;
+                    while (lnk) {
+                        if ( qu->app==lnk->src_app
+                        &&   qu->evt==lnk->src_evt
+                        &&   lnk->dst_app->isAlive ) {
+                            ceu_sys_go(lnk->dst_app, lnk->dst_evt, qu->param);
+                        }
+                        lnk = lnk->nxt;
+                    }
+                }
+
+                ceu_sys_queue_rem();
+            }
             __ceu_gc();
         }
     }
@@ -810,21 +810,20 @@ uint ceu_sys_start (void* addr)
     /* MAX OK */
 #ifdef CEU_RET
     ok++;
-printf("ok = %d\n", ok);
 #endif
 
     /* INIT */
 
+/*
 printf(">>> %p %X %p[%x %x %x %x %x]\n", addr, size, init,
         ((unsigned char*)init)[5],
         ((unsigned char*)init)[6],
         ((unsigned char*)init)[7],
         ((unsigned char*)init)[8],
         ((unsigned char*)init)[9]);
-/*
+printf("<<< %d %d\n", app->isAlive, app->ret);
 */
     app->init(app);
-printf("<<< %d %d\n", app->isAlive, app->ret);
 
     /* OS_START */
 
