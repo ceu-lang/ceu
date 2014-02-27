@@ -463,6 +463,7 @@ int ceu_go_all (tceu_app* app)
 void* CEU_SYS_VEC[CEU_SYS_MAX] __attribute__((used)) = {
     (void*) &ceu_sys_malloc,
     (void*) &ceu_sys_free,
+    (void*) &ceu_sys_load,
     (void*) &ceu_sys_start,
     (void*) &ceu_sys_link,
     (void*) &ceu_sys_unlink,
@@ -765,9 +766,9 @@ int ceu_scheduler (int(*dt)())
 #endif
 }
 
-/* START */
+/* LOAD / START */
 
-tceu_app* ceu_sys_start (void* addr)
+tceu_app* ceu_sys_load (void* addr)
 {
     uint       size;
     tceu_init* init;
@@ -798,6 +799,11 @@ tceu_app* ceu_sys_start (void* addr)
 #endif
     app->addr = addr;
 
+    return app;
+}
+
+void ceu_sys_start (tceu_app* app)
+{
     /* add as head */
 	if (CEU_APPS == NULL) {
 		CEU_APPS = app;
@@ -831,15 +837,10 @@ printf("<<< %d %d\n", app->isAlive, app->ret);
 
     /* OS_START */
 
-    /* TODO: emit as global // should split load/start */
 #ifdef CEU_IN_OS_START
     ceu_sys_emit(NULL, CEU_IN_OS_START, (tceu_evtp)NULL, 0, NULL);
 #endif
-
-    return app;
 }
-
-/* STOP */
 
 /* LINK & UNLINK */
 

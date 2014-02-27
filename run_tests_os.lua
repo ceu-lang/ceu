@@ -39,7 +39,7 @@ int main (void)
     int ret;
 ]])
 
-    -- APPS
+    -- LOAD APPS
     for i, _ in ipairs(T) do
         f:write([[
     {
@@ -50,7 +50,7 @@ int main (void)
         f_]]..i..[[ = malloc(sz);
         fseek(f, 0x238, SEEK_SET);
         fread(f_]]..i..[[, 1, sz, f);
-        app_]]..i..[[ = ceu_sys_start(f_]]..i..[[);
+        app_]]..i..[[ = ceu_sys_load(f_]]..i..[[);
     }
 ]])
     end
@@ -62,6 +62,13 @@ int main (void)
         t[3] = 'app_'..t[3]
         f:write([[
     ceu_sys_link(]]..table.concat(t,',')..[[);
+]])
+    end
+
+    -- START APPS
+    for i, _ in ipairs(T) do
+        f:write([[
+    ceu_sys_start(app_]]..i..[[);
 ]])
     end
 

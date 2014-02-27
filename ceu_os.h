@@ -364,7 +364,8 @@ int ceu_scheduler (int(*dt)());
 tceu_queue* ceu_sys_queue_nxt (void);
 void        ceu_sys_queue_rem (void);
 
-tceu_app* ceu_sys_start  (void* addr);
+tceu_app* ceu_sys_load  (void* addr);
+void      ceu_sys_start (tceu_app* app);
 int  ceu_sys_link   (tceu_app* src_app, tceu_nevt src_evt, tceu_app* dst_app, tceu_nevt dst_evt);
 int  ceu_sys_unlink (tceu_app* src_app, tceu_nevt src_evt, tceu_app* dst_app, tceu_nevt dst_evt);
 
@@ -375,6 +376,7 @@ tceu_evtp ceu_sys_call (tceu_app* app, tceu_nevt evt, tceu_evtp param);
 enum {
     CEU_SYS_MALLOC = 0,
     CEU_SYS_FREE,
+    CEU_SYS_LOAD,
     CEU_SYS_START,
     CEU_SYS_LINK,
     CEU_SYS_UNLINK,
