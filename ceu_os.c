@@ -7,7 +7,7 @@
 #include <avr/pgmspace.h>
 #include "Arduino.h"
 #endif
-void* CEU_APP_ADDR = NULL;
+void* CEU_APP_ADDR = NULL;  /* TODO: only __AVR? */
 #endif
 
 #ifdef __AVR
@@ -678,7 +678,6 @@ static void __ceu_gc (void)
     }
 }
 
-
 int ceu_scheduler (int(*dt)())
 {
     __ceu_gc();     /* apps already terminated from MAIN() */
@@ -689,11 +688,14 @@ int ceu_scheduler (int(*dt)())
     while (1)
 #endif
     {
+        /* DT */
+        int _dt = dt();
+        ceu_sys_emit(NULL, CEU_IN_OS_DT, (tceu_evtp)_dt, 0, NULL);
+
         /* WCLOCK */
 #ifdef CEU_WCLOCKS
         {
             tceu_app* app = CEU_APPS;
-            int _dt = dt();
             while (app) {
                 ceu_sys_go(app, CEU_IN__WCLOCK, (tceu_evtp)_dt);
                 app = app->nxt;
@@ -725,9 +727,12 @@ int ceu_scheduler (int(*dt)())
             {
                 tceu_queue* qu = ceu_sys_queue_get();
                 tot -= sizeof(tceu_queue) + qu->sz;
+                if (qu->evt == CEU_IN__NONE) {
+                    /* nothing; */
+                    /* "fill event" */
 
                 /* global events (e.g. OS_START, OS_INTERRUPT) */
-                if (qu->app == NULL) {
+                } else if (qu->app == NULL) {
                     tceu_app* app = CEU_APPS;
                     while (app) {
                         ceu_sys_go(app, qu->evt, qu->param);
@@ -766,6 +771,7 @@ tceu_app* ceu_sys_start (void* addr)
 {
     uint       size;
     tceu_init* init;
+
 #ifdef __AVR
     ((tceu_export) ((word)addr>>1))(&size, &init);
 #else
@@ -820,6 +826,7 @@ printf(">>> %p %X %p[%x %x %x %x %x]\n", addr, size, init,
         ((unsigned char*)init)[9]);
 printf("<<< %d %d\n", app->isAlive, app->ret);
 */
+
     app->init(app);
 
     /* OS_START */

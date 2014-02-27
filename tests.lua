@@ -11828,6 +11828,117 @@ escape 0;
     run = 4,
 }
 
+Test { [[
+input void OS_START;
+await OS_START;
+
+native do
+##define pinMode(a,b)
+##define digitalWrite(a,b)
+end
+_pinMode(13, 1);
+_digitalWrite(13, 1);
+do escape 1; end
+
+par do
+    await OS_START;
+with
+    await OS_START;
+with
+    await OS_START;
+with
+    await OS_START;
+with
+    await OS_START;
+with
+    await OS_START;
+with
+    await OS_START;
+with
+    await OS_START;
+with
+    await OS_START;
+with
+    await OS_START;
+with
+    await OS_START;
+with
+    await OS_START;
+with
+    await OS_START;
+with
+    await OS_START;
+with
+    await OS_START;
+with
+    await OS_START;
+end
+]],
+    run = 1,
+}
+
+Test { [[
+input void OS_STOP;
+var int ret = 0;
+
+par/or do
+
+input void OS_START;
+
+await OS_START;
+
+finalize with
+    nothing;
+end
+
+par do
+    loop do
+        await 10min;
+    end
+with
+    await 1s;
+    loop do
+        par/or do
+            loop do
+                await 10min;
+            end
+        with
+            await 1s;
+            ret = ret + 1;
+        end
+    end
+end
+
+with
+    await OS_STOP;
+end
+
+escape ret;
+]],
+    run = { ['~>OS_START; ~>10s; ~>OS_STOP']=9 },
+}
+
+Test { [[
+var int ret = 0;
+input void STOP;
+par/or do
+    loop do
+        await 1s;
+        ret = ret + 1;
+    end
+
+    loop do
+        await 1s;
+        par/or do with end
+    end
+with
+    await STOP;
+end
+escape ret;
+]],
+    run = {['~>5s; ~>STOP']=5},
+}
+
     -- SYNC TRIGGER
 
 Test { [[

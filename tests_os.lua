@@ -90,7 +90,7 @@ Test {
 output int A;
 await OS_START;
 emit A=>2;
-await 20s;
+await 2s;
 escape 1;
 ]],
 	[[
@@ -99,7 +99,7 @@ var int a=await A;
 escape a;
 ]],
 	lnks = {
-		{ 1, 1, 2, 245 },
+        { 1, 1, 2, 244 },
 	},
 	run = 3,
 }
@@ -109,8 +109,8 @@ Test {
 	[[input  int A; var int a=await A; escape a;]],
 	[[input  int A; var int a=await A; escape a;]],
 	lnks = {
-		{ 1, 1, 2, 245 },
-		{ 1, 1, 3, 245 },
+        { 1, 1, 2, 244 },
+        { 1, 1, 3, 244 },
 	},
 	run = 5,
 }
@@ -130,8 +130,8 @@ end
 escape ret;
 ]],
 	lnks = {
-		{ 1, 1, 2, 245 },
-		{ 1, 1, 2, 244 },
+        { 1, 1, 2, 244 },
+		{ 1, 1, 2, 243 },
 	},
 	run = 6,
 }
@@ -150,7 +150,7 @@ await OS_START;
 escape 1;
 ]],
 	lnks = {
-		{ 1, 1, 2, 245 },
+		{ 1, 1, 2, 244 },
         -- src app
         -- src evt
         -- dst app
@@ -171,7 +171,7 @@ end
 escape 1;
 ]],
 	lnks = {
-		{ 1, 1, 2, 245 },
+		{ 1, 1, 2, 244 },
         -- src app
         -- src evt
         -- dst app
@@ -196,7 +196,7 @@ await OS_START;
 escape 1;
 ]],
 	lnks = {
-		{ 1, 1, 2, 245 },
+		{ 1, 1, 2, 244 },
         -- src app
         -- src evt
         -- dst app
@@ -219,7 +219,7 @@ escape 1;
 ]],
     todo = 'load/init/start',
 	lnks = {
-		{ 1, 1, 2, 245 },
+		{ 1, 1, 2, 244 },
         -- src app
         -- src evt
         -- dst app
@@ -243,7 +243,7 @@ await 10ms;
 escape 1;
 ]],
 	lnks = {
-        { 1, 1, 2, 245 },
+        { 1, 1, 2, 244 },
         -- src app
         -- src evt
         -- dst app
@@ -268,7 +268,7 @@ end
 escape inc;
 ]],
 	lnks = {
-        { 1, 1, 2, 245 },
+        { 1, 1, 2, 244 },
         -- src app
         -- src evt
         -- dst app
@@ -281,7 +281,6 @@ Test {
     [[
 var int inc = 3;
 input (int v)=>int A do
-_printf("A: v=%d this=%d\n", v,this.inc);
     return v + this.inc + inc;
 end
 escape inc;
@@ -291,11 +290,10 @@ input void OS_START;
 output (int)=>int A;
 await OS_START;
 var int ret = call A=>2;
-_printf("1v = %d\n", ret);
 escape ret;
 ]],
 	lnks = {
-        { 2, 1, 1, 245 },
+        { 2, 1, 1, 244 },
         -- src app
         -- src evt
         -- dst app
@@ -329,8 +327,8 @@ await 10ms;
 escape v;
 ]],
 	lnks = {
-        { 1, 1, 2, 244 },
-        { 2, 1, 1, 244 },
+        { 1, 1, 2, 243 },
+        { 2, 1, 1, 243 },
         -- src app
         -- src evt
         -- dst app
@@ -355,7 +353,7 @@ call A;
 escape 1;
 ]],
     run = 2,
-    lnks = { { 2,1, 1,245 } },
+    lnks = { { 2,1, 1,244 } },
 }
 Test {
 [[
@@ -384,7 +382,7 @@ end
 escape ret;
 ]],
     run = 3,
-    lnks = { { 1,1, 2,245 } },
+    lnks = { { 1,1, 2,244 } },
 }
 
 Test {
@@ -419,7 +417,7 @@ end
 escape ret;
 ]],
     run = 3,
-    lnks = { { 1,1, 2,245 } },
+    lnks = { { 1,1, 2,244 } },
 }
 
 Test {
@@ -456,7 +454,7 @@ end
 escape ret;
 ]],
     run = 3,
-    lnks = { { 1,1, 2,245 } },
+    lnks = { { 1,1, 2,244 } },
 }
 
 Test {
@@ -488,7 +486,7 @@ end
 escape ret;
 ]],
     run = 10,
-    lnks = { { 1,1, 2,245 } },
+    lnks = { { 1,1, 2,244 } },
 }
 
 Test {
@@ -521,7 +519,7 @@ end
 escape ret;
 ]],
     run = 20,
-    lnks = { { 1,1, 2,245 } },
+    lnks = { { 1,1, 2,244 } },
 }
 
 Test {
@@ -559,8 +557,8 @@ escape ret;
 ]],
     run = 600,
     lnks = {
-        { 1,1, 2,245 },
-        { 1,2, 2,244 },
+        { 1,1, 2,244 },
+        { 1,2, 2,243 },
     },
 }
 
@@ -597,8 +595,8 @@ escape ret;
 ]],
     run = 11927,
     lnks = {
-        { 1,1, 2,245 },
-        { 1,2, 2,244 },
+        { 1,1, 2,244 },
+        { 1,2, 2,243 },
     },
 }
 
@@ -637,8 +635,8 @@ escape ret;
 ]],
     run = 11927,
     lnks = {
-        { 1,1, 2,245 },
-        { 1,2, 2,244 },
+        { 1,1, 2,244 },
+        { 1,2, 2,243 },
     },
 }
 
@@ -670,7 +668,7 @@ end
 escape ret;
 ]],
     run = 6000,
-    lnks = { { 1,1, 2,245 } },
+    lnks = { { 1,1, 2,244 } },
 }
 
 Test {
@@ -723,8 +721,8 @@ escape ret;
 ]],
     run = 17927,
     lnks = {
-        { 1,1, 2,245 },
-        { 1,2, 2,244 },
+        { 1,1, 2,244 },
+        { 1,2, 2,243 },
     },
 }
 
@@ -761,7 +759,7 @@ end
 escape ret;
 ]],
     run = 3600,
-    lnks = { { 1,1, 2,245 } },
+    lnks = { { 1,1, 2,244 } },
 }
 
 Test { [[
@@ -778,6 +776,134 @@ end
 escape(1);
 ]],
 	run = 1,
+}
+
+Test { [[
+var int ret = 0;
+input void STOP;
+par/or do
+    loop do
+        await 1s;
+        ret = ret + 1;
+    end
+
+    par/or do with end
+with
+    await STOP;
+end
+escape ret;
+]],
+[[
+output void STOP;
+await 5s;
+emit STOP;
+await 20ms;
+escape 1;
+]],
+    lnks = {
+		{ 2, 1, 1, 244 },
+	},
+    run = 6;
+}
+
+Test { [[
+input void OS_START;
+await OS_START;
+
+native do
+##define pinMode(a,b)
+##define digitalWrite(a,b)
+end
+_pinMode(13, 1);
+_digitalWrite(13, 1);
+do escape 1; end
+
+par do
+    await OS_START;
+with
+    await OS_START;
+with
+    await OS_START;
+with
+    await OS_START;
+with
+    await OS_START;
+with
+    await OS_START;
+with
+    await OS_START;
+with
+    await OS_START;
+with
+    await OS_START;
+with
+    await OS_START;
+with
+    await OS_START;
+with
+    await OS_START;
+with
+    await OS_START;
+with
+    await OS_START;
+with
+    await OS_START;
+with
+    await OS_START;
+with
+    await OS_START;
+with
+    await OS_START;
+with
+    await OS_START;
+end
+]],
+    run = 1,
+}
+
+Test { [[
+await OS_START;
+
+input void F;
+var int ret = 0;
+
+finalize with
+    ret = -10;
+end
+
+par/or do
+    loop do
+        await 10min;
+    end
+with
+    await 1s;
+    loop do
+        par/or do
+            loop do
+                await 10min;
+            end
+        with
+            await 1s;
+            ret = ret + 1;
+        end
+    end
+with
+    await F;
+end
+escape ret;
+]],
+[[
+await OS_START;
+await 20s;
+output void F;
+emit F;
+await 20ms;
+escape 10;
+]],
+    lnks = {
+		{ 2, 1, 1, 244 },
+	},
+    run = 29,
 }
 
 do return end
