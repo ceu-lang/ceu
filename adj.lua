@@ -683,6 +683,59 @@ F = {
             me[id] = var
         end
     end,
+
+-- STRING ------------------------------------------------------------
+
+    STRING_pos = function (me)
+        if not _OPTS.os then
+            return
+        end
+
+        -- <"abc"> => <var str[4]; str[0]='a';str[1]='b';str[2]='c';str[3]='\0'>
+
+        local str = string.sub(me[1], 2, -2)    -- ignore opening/closing `"´
+        local len = string.len(str)
+        local id = '_str_'..me.n
+
+        local t = {
+            node('Dcl_var', me.ln, 'var', 'char', node('NUMBER',me.ln,len+1), id)
+        }
+
+        for i=1, len do
+            -- str[(i-1)] = str[i]  (lua => C)
+            t[#t+1] = node('SetExp', me.ln, '=',
+                        node('NUMBER', me.ln, string.byte(str,i)),
+                        node('Op2_idx', me.ln, 'idx',
+                            node('Var',me.ln,id),
+                            node('NUMBER',me.ln,i-1)))
+        end
+
+        -- str[len] = '\0'
+        t[#t+1] = node('SetExp', me.ln, '=',
+                    node('NUMBER', me.ln, 0),
+                    node('Op2_idx', me.ln, 'idx',
+                        node('Var',me.ln,id),
+                        node('NUMBER',me.ln,len)))
+
+        -- include this string into the outer block
+        local blk = _AST.par(me, 'Block')
+        local strs = blk.__ast_strings or {}
+        blk.__ast_strings = strs
+        strs[#strs+1] = node('Stmts', me.ln, unpack(t))
+
+        return node('Var',me.ln,id)
+    end,
+
+    Block = function (me)
+        local strs = me.__ast_strings
+        me.__ast_strings = nil
+        if strs then
+            -- insert all strings in the beginning of the block
+            for i, str in ipairs(strs) do
+                table.insert(me[1], i, str)
+            end
+        end
+    end,
 }
 
 _AST.visit(F)

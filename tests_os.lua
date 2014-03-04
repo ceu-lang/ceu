@@ -5,6 +5,73 @@ _VALGRIND = true
 --[===[
 --]===]
 
+Test { [[
+var char* a;
+a = "o";
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native _char=1;
+var _char* a = "Abcd12" ;
+escape 1;
+]],
+    run = 1
+}
+Test { [[
+native pure _strlen1();
+native do
+    int strlen1 (char* str) {
+        int n = 0;
+        while (1) {
+            if (str[n] == '\0')
+                return n;
+            n++;
+        }
+    }
+end
+escape _strlen1("123");
+]],
+    run=3
+}
+Test { [[
+native pure _strlen();
+native do
+    ##include <string.h>
+end
+escape _strlen("123");
+]],
+    run=3
+}
+Test { [[
+native nohold _strncpy(), _printf(), _strlen();
+native _char = 1;
+var _char[10] str;
+_strncpy(str, "123", 4);
+escape _strlen(str);
+]],
+    run = 3
+}
+
+Test { [[
+native nohold _strncpy(), _printf(), _strlen(), _strcpy();
+native _char = 1;
+var _char[6] a; _strcpy(a, "Hello");
+var _char[2] b; _strcpy(b, " ");
+var _char[7] c; _strcpy(c, "World!");
+var _char[30] d;
+
+var int len = 0;
+_strcpy(d,a);
+_strcpy(&d[_strlen(d)], b);
+_strcpy(&d[_strlen(d)], c);
+escape _strlen(d);
+]],
+    run = 12
+}
+
 --do return end
 
 -- OK: well tested

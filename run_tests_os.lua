@@ -112,9 +112,11 @@ Test = function (T)
                                            name..'.ceu 2>&1'
         assert(os.execute(cmd) == 0)
 
-        cmd = 'gcc -Wall -DCEU_DEBUG -ansi '..
+        cmd = 'gcc -Os -Wall -DCEU_DEBUG -ansi '..
               '-Wa,--execstack '..
               '-fpie -nostartfiles '..
+              --'-nostdlib '..
+              --'-static-libgcc -static-libstdc++ '..
               --'-static '..
               '-Wl,-Telf_x86_64.x '..
               --'-Wl,--strip-all ' ..
@@ -129,10 +131,13 @@ Test = function (T)
               --'-Wl,--section-start=.eh_frame_hdr=0x4007b0 '.. -- TODO: 0x26
               --'-Wl,--section-start=.gnuhash=0x4007f4 '.. -- TODO: 0x26
               '-Wl,-uCEU_EXPORT '..
-              ' -o '..name..'.o '..name..'.c'
+              ' -o '..name..'.o '..name..'.c '..
+              'libc.a '..
+              ''
 
 print(cmd)
         assert(os.execute(cmd) == 0)
+        assert(os.execute('objdump -h '..name..'.o | fgrep ".data"') ~= 0)
     end
 
     local GCC = 'gcc -g -Wall -DCEU_OS -DCEU_DEBUG -ansi -lpthread '..

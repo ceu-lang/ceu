@@ -989,7 +989,7 @@ F = {
     end,
 
     STRING = function (me)
-        me.tp   = '_char*'
+        me.tp   = 'char*'
         me.lval = false
         me.fst  = 'global'
         me.const = true

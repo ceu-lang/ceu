@@ -17562,6 +17562,30 @@ end
     -- STRINGS
 
 Test { [[
+var char[10] a;
+a = "oioioi";
+escape 1;
+]],
+    env = 'line 2 : invalid attribution',
+}
+
+Test { [[
+var char* a;
+a = "oioioi";
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+var int a;
+a = "oioioi";
+escape 1;
+]],
+    env = 'line 2 : invalid attribution (int vs char*)',
+}
+
+Test { [[
 native _char=1;
 var _char* a = "Abcd12" ;
 escape 1;
