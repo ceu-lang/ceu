@@ -693,7 +693,7 @@ F = {
 
         -- <"abc"> => <var str[4]; str[0]='a';str[1]='b';str[2]='c';str[3]='\0'>
 
-        local str = string.sub(me[1], 2, -2)    -- ignore opening/closing `"´
+        local str = loadstring('return '..me[1])()  -- eval `"´ and '\xx'
         local len = string.len(str)
         local id = '_str_'..me.n
 

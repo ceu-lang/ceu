@@ -154,7 +154,9 @@ static tceu_evtp ceu_app_calls (tceu_app* _ceu_app, tceu_nevt evt, tceu_evtp par
         */
         default:;
 #ifdef CEU_DEBUG
+#ifndef CEU_OS
             fprintf(stderr, "invalid call %d\n", evt);
+#endif
 #endif
     }
     return (tceu_evtp)NULL;
@@ -176,7 +178,9 @@ _CEU_GOTO_:
     _ceu_app->lst.lbl = _ceu_go->lbl;
 #endif
 #ifdef CEU_DEBUG_TRAILS
+#ifndef CEU_OS
 fprintf(stderr, "TRK: o.%p / l.%d\n", _ceu_go->org, _ceu_go->lbl);
+#endif
 #endif
 #endif
 

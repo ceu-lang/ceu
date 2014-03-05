@@ -38,7 +38,9 @@ end
 function DEBUG_TRAILS (me, lbl)
     LINE(me, [[
 #ifdef CEU_DEBUG_TRAILS
+#ifndef CEU_OS
 fprintf(stderr, "\tOK!\n");
+#endif
 #endif
 ]])
 end
