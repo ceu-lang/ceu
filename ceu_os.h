@@ -48,10 +48,14 @@
     #define ceu_out_free(app,ptr) \
         ((__typeof__(ceu_sys_free)*)((app)->sys_vec[CEU_SYS_FREE]))(ptr)
 
-    /* TODO: make all ceu_out_* to pass "_ceu_app" automatically? */
-    #define ceu_out_start(addr) \
-        ((__typeof__(ceu_sys_start)*)((_ceu_app)->sys_vec[CEU_SYS_START]))(addr)
+    #define ceu_out_load(addr) \
+        ((__typeof__(ceu_sys_load)*)((_ceu_app)->sys_vec[CEU_SYS_LOAD]))(addr)
+    #define ceu_out_start(app) \
+        ((__typeof__(ceu_sys_start)*)((_ceu_app)->sys_vec[CEU_SYS_START]))(app)
+    #define ceu_out_link(app1,evt1 , app2,evt2) \
+        ((__typeof__(ceu_sys_link)*)((_ceu_app)->sys_vec[CEU_SYS_LINK]))(app1,evt1,app2,evt2)
 
+    /* TODO: make all ceu_out_* to pass "_ceu_app" automatically? */
     #define ceu_out_emit_buf(app,id,sz,buf) \
         ((__typeof__(ceu_sys_emit)*)((app)->sys_vec[CEU_SYS_EMIT]))(app,id,(tceu_evtp)NULL,sz,buf)
 

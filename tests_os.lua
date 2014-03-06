@@ -46,6 +46,15 @@ escape _strlen("123");
     run=3
 }
 Test { [[
+native pure _strlen();
+native do
+    ##include <string.h>
+end
+escape _strlen("123\n");
+]],
+    run=4
+}
+Test { [[
 native nohold _strncpy(), _printf(), _strlen();
 native _char = 1;
 var _char[10] str;

@@ -6,6 +6,8 @@ dofile 'pak.lua'
 
 math.randomseed(os.time())
 
+local LIBC = '/opt/musl-0.9.15'
+
 STATS = {
     count   = 0,
     mem     = 0,
@@ -113,8 +115,10 @@ Test = function (T)
         assert(os.execute(cmd) == 0)
 
         cmd = 'gcc -Os -Wall -DCEU_DEBUG -ansi '..
+              '-I '..LIBC..'/include '..
               '-Wa,--execstack '..
               '-fpie -nostartfiles '..
+              --'-mcall-prologues -mshort-calls '..
               --'-nostdlib '..
               --'-static-libgcc -static-libstdc++ '..
               --'-static '..
@@ -132,12 +136,18 @@ Test = function (T)
               --'-Wl,--section-start=.gnuhash=0x4007f4 '.. -- TODO: 0x26
               '-Wl,-uCEU_EXPORT '..
               ' -o '..name..'.o '..name..'.c '..
-              'libc.a '..
+              LIBC..'/lib/libc.a '..
               ''
 
 print(cmd)
         assert(os.execute(cmd) == 0)
+
+        -- no data and no undefined symbols
         assert(os.execute('objdump -h '..name..'.o | fgrep ".data"') ~= 0)
+        assert(os.execute('nm -u      '..name..'.o | fgrep -v " U _start"') ~= 0)
+        -- cd /opt/musl-0.9.15
+        -- rm lib/libc.a
+        -- ar rc lib/libc.a src/string/*.o src/stdio/*.o
     end
 
     local GCC = 'gcc -g -Wall -DCEU_OS -DCEU_DEBUG -ansi -lpthread '..
@@ -179,27 +189,11 @@ STATS = {
 }
 ]])
 
--- w/ threads
 --[[
--- before ceu_go_one
 STATS = {
-    count   = 1541,
-    mem     = 0,
-    trails  = 3034,
-    bytes   = 13218173,
+	count = 39,
+	bytes = 1307901,
 }
-
-STATS = {
-    count   = 1550,
-    mem     = 0,
-    trails  = 2987,
-    bytes   = 14599117,
-}
-
-
-real	6m9.277s
-user	5m48.772s
-sys	0m47.880s
 ]]
 
 os.execute('rm -f /tmp/_ceu_*')
