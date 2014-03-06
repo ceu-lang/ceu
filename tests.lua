@@ -407,6 +407,7 @@ Test { [[escape 'A';]], run=65, }
 Test { [[escape (((1)));]], run=1 }
 Test { [[escape 1+2*3;]], run=7 }
 Test { [[escape(4/2*3);]], run=6 }
+Test { [[escape 2-1;]], run=1 }
 
 Test { [[escape 1==2;]], run=0 }
 Test { [[escape 0  or  10;]], run=1 }
@@ -1850,6 +1851,16 @@ escape b;
 }
 
     -- LOOP
+
+Test { [[
+var int ret = 0;
+loop i, 256-1 do
+    ret = ret + 1;
+end
+escape ret;
+]],
+    run = 255,
+}
 
 Test { [[
 break;

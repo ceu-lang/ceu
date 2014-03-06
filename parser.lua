@@ -286,7 +286,8 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     , SIZEOF = K'sizeof' * EK'(' * (V'__ID_type' + V'__Exp') * EK')'
 
-    , NUMBER = CK( #m.R'09' * (m.R'09'+m.S'xX'+m.R'AF'+m.R'af'+'.'+m.S'Ee'+'-')^1 )
+    , NUMBER = CK( #m.R'09' * (m.R'09'+m.S'xX'+m.R'AF'+m.R'af'+'.'
+                                      +(m.S'Ee'*'-')+m.S'Ee')^1 )
             + CK( "'" * (P(1)-"'")^0 * "'" )
 
     , NULL = CK'null'
