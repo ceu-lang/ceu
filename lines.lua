@@ -80,7 +80,7 @@ if _OPTS.cpp or _OPTS.cpp_args then
             -- "-C":  keep comments (because of nesting)
             -- "-dD": repeat #define's (because of macros used as C functions)
     os.remove(fin)
-    assert(ret == 0, assert(io.open(ferr)):read'*a')
+    assert(ret == 0 or ret == true, assert(io.open(ferr)):read'*a')
     os.remove(ferr)
 
     -- remove blank lines of #define's (because of "-dD")
