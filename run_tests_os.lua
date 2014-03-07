@@ -112,7 +112,8 @@ Test = function (T)
                                '--out-c '..name..'.c '..
                                '--out-h '..name..'.h '..
                                            name..'.ceu 2>&1'
-        assert(os.execute(cmd) == 0)
+        local exec_ceu = os.execute(cmd)
+        assert(exec_ceu == 0 or exec_ceu == true)
 
         cmd = 'gcc -Os -Wall -DCEU_DEBUG -ansi '..
               '-I '..LIBC..'/include '..
@@ -140,11 +141,14 @@ Test = function (T)
               ''
 
 print(cmd)
-        assert(os.execute(cmd) == 0)
+	local exec_cmd = os.execute(cmd)
+        assert(exec_cmd == 0 or exec_cmd == true)
 
         -- no data and no undefined symbols
-        assert(os.execute('objdump -h '..name..'.o | fgrep ".data"') ~= 0)
-        assert(os.execute('nm -u      '..name..'.o | fgrep -v " U _start"') ~= 0)
+        local exec_objdump = os.execute('objdump -h '..name..'.o | fgrep ".data"')
+        assert(not (exec_objdump == 0 or exec_objdump == true))
+        local exec_nm = os.execute('nm -u      '..name..'.o | fgrep -v " U _start"')
+        assert(not (exec_nm == 0 or exec_nm == true))
         -- cd /opt/musl-0.9.15
         -- rm lib/libc.a
         -- ar rc lib/libc.a src/string/*.o src/stdio/*.o
@@ -155,7 +159,8 @@ print(cmd)
                 '-o ceu.exe '..
                 '_ceu_main.c ceu_os.c ceu_pool.c'
 print(GCC)
-    assert(os.execute(GCC) == 0)
+    local exec_gcc = os.execute(GCC)
+    assert(exec_gcc == 0 or exec_gcc == true)
 
     local EXE = ((not _VALGRIND) and './ceu.exe 2>&1')
              or 'valgrind -q --leak-check=full ./ceu.exe 2>&1'
