@@ -175,14 +175,16 @@ end
         local ceu = assert(io.open('_ceu_tmp.ceu', 'w'))
         ceu:write(src)
         ceu:close()
-        assert(os.execute(CEU) == 0)
+        local exec_ceu = os.execute(CEU)
+        assert(exec_ceu == 0 or exec_ceu == true)
 
         if T.gcc then
             local ret = assert(io.popen(GCC)):read'*a'
             assert( string.find(ret, T.gcc, nil, true), ret )
             return
         else
-            assert(os.execute(GCC) == 0)
+            local exec_gcc = os.execute(GCC)
+            assert(exec_gcc == 0 or exec_gcc == true)
         end
 
         local ret = io.popen(EXE):read'*a'
