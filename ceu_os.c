@@ -394,11 +394,13 @@ _CEU_GO_NEXT_:
 _CEU_GO_QUIT_:;
 
 #ifdef CEU_WCLOCKS
+    if (evt == CEU_IN__WCLOCK) {
 #ifdef ceu_out_wclock_set
-    if (app->wclk_min != CEU_WCLOCK_INACTIVE)
-        ceu_out_wclock_set(app->wclk_min);   /* only signal after all */
+        if (app->wclk_min != CEU_WCLOCK_INACTIVE)
+            ceu_out_wclock_set(app->wclk_min);   /* only signal after all */
 #endif
-    app->wclk_late = 0;
+        app->wclk_late = 0;
+    }
 #endif
 }
 
