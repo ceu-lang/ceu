@@ -104,37 +104,6 @@ static void ceu_stack_clr () {
 
 /**********************************************************************/
 
-#ifdef CEU_WCLOCKS
-
-static void ceu_wclocks_min (tceu_app* app, s32 dt, int out) {
-    if (app->wclk_min > dt) {
-        app->wclk_min = dt;
-#ifdef ceu_out_wclock_set
-        if (out)
-            ceu_out_wclock_set(dt);
-#endif
-    }
-}
-
-static int ceu_wclocks_expired (tceu_app* app, s32* t, s32 dt) {
-    if (*t>app->wclk_min_tmp || *t>dt) {
-        *t -= dt;
-        ceu_wclocks_min(app, *t, 0);
-        return 0;
-    }
-    return 1;
-}
-
-static void ceu_trails_set_wclock (tceu_app* app, s32* t, s32 dt) {
-    s32 dt_ = dt - app->wclk_late;
-    *t = dt_;
-    ceu_wclocks_min(app, dt_, 1);
-}
-
-#endif  /* CEU_WCLOCKS */
-
-/**********************************************************************/
-
 #ifdef CEU_THREADS
 /* THREADS_C */
 === THREADS_C ===
@@ -247,7 +216,7 @@ static void ceu_app_init (tceu_app* app)
 #endif
 #endif
 
-    ceu_out_org_init(app, app->data, CEU_NTRAILS, Class_Main, 0, NULL, 0);
+    ceu_out_org(app, app->data, CEU_NTRAILS, Class_Main, 0, NULL, 0);
     ceu_out_go(app, CEU_IN__INIT, (tceu_evtp)NULL);
 }
 

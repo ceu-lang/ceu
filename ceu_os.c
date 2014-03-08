@@ -82,8 +82,8 @@ void ceu_sys_free (void* ptr) {
 
 /**********************************************************************/
 
-void ceu_sys_org_init (tceu_org* org, int n, int lbl, int seqno,
-                       tceu_org* par_org, int par_trl)
+void ceu_sys_org (tceu_org* org, int n, int lbl, int seqno,
+                  tceu_org* par_org, int par_trl)
 {
     /* { evt=0, seqno=0, lbl=0 } for all trails */
     memset(&org->trls, 0, n*sizeof(tceu_trl));
@@ -116,7 +116,46 @@ void ceu_sys_org_init (tceu_org* org, int n, int lbl, int seqno,
 #endif  /* CEU_ORGS */
 }
 #ifndef CEU_ORGS
-#define ceu_sys_org_init(a,b,c,d,e,f) ceu_sys_org_init(a,b,c,d,NULL,0)
+#define ceu_sys_org(a,b,c,d,e,f) ceu_sys_org(a,b,c,d,NULL,0)
+#endif
+
+/**********************************************************************/
+
+#ifdef CEU_WCLOCKS
+
+/* TODO: wclk_min_tmp to be global among all apps */
+
+int ceu_sys_wclock (tceu_app* app, s32 dt, s32* set, s32* get)
+{
+    s32 t;          /* track expiring time to calculate */
+    int ret = 0;    /* if track expired (only for "get") */
+
+    /* SET */
+    if (set != NULL) {
+        t = dt - app->wclk_late;
+        *set = t;
+
+    /* CHECK */
+    } else {
+        t = *get;
+        if (t>app->wclk_min_tmp || t>dt) {
+            *get -= dt;    /* don't expire yet */
+            t = *get;
+        } else {
+            ret = 1;    /* single "true" return */
+        }
+    }
+
+    if (app->wclk_min > t) {
+        app->wclk_min = t;
+#ifdef ceu_out_wclock_set
+        ceu_out_wclock_set(t);
+#endif
+    }
+
+    return ret;
+}
+
 #endif
 
 /**********************************************************************/
@@ -160,8 +199,9 @@ void ceu_sys_go (tceu_app* app, int evt, tceu_evtp evtp)
 #endif
 #ifdef CEU_WCLOCKS
         case CEU_IN__WCLOCK:
-            if (app->wclk_min <= evtp.dt)
+            if (app->wclk_min <= evtp.dt) {
                 app->wclk_late = evtp.dt - app->wclk_min;
+            }
             app->wclk_min_tmp = app->wclk_min;
             app->wclk_min     = CEU_WCLOCK_INACTIVE;
             break;
@@ -395,10 +435,14 @@ _CEU_GO_QUIT_:;
 
 #ifdef CEU_WCLOCKS
     if (evt == CEU_IN__WCLOCK) {
+/*
 #ifdef ceu_out_wclock_set
-        if (app->wclk_min != CEU_WCLOCK_INACTIVE)
-            ceu_out_wclock_set(app->wclk_min);   /* only signal after all */
+        if (app->wclk_min != CEU_WCLOCK_INACTIVE) {
+            ceu_out_wclock_set(app->wclk_min);   // only signal after all
+            ;
+        }
 #endif
+*/
         app->wclk_late = 0;
     }
 #endif
@@ -466,13 +510,16 @@ void* CEU_SYS_VEC[CEU_SYS_MAX] __attribute__((used)) = {
     (void*) &ceu_sys_malloc,
     (void*) &ceu_sys_free,
     (void*) &ceu_sys_load,
+    (void*) &ceu_sys_org,
     (void*) &ceu_sys_start,
     (void*) &ceu_sys_link,
     (void*) &ceu_sys_unlink,
     (void*) &ceu_sys_emit,
     (void*) &ceu_sys_call,
-    (void*) &ceu_sys_go,
-    (void*) &ceu_sys_org_init,
+#ifdef CEU_WCLOCKS
+    (void*) &ceu_sys_wclock,
+#endif
+    (void*) &ceu_sys_go
 };
 
 /*****************************************************************************
