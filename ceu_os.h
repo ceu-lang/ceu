@@ -364,7 +364,7 @@ typedef struct {
 #else
     s16       sz;   /* signed because of fill */
 #endif
-    char      buf[0];
+    byte      buf[0];
 } tceu_queue;
 
 int ceu_scheduler (int(*dt)());
@@ -378,7 +378,7 @@ void      ceu_sys_org    (tceu_org* org, int n, int lbl, int seqno, tceu_org* pa
 void      ceu_sys_start  (tceu_app* app);
 int       ceu_sys_link   (tceu_app* src_app, tceu_nevt src_evt, tceu_app* dst_app, tceu_nevt dst_evt);
 int       ceu_sys_unlink (tceu_app* src_app, tceu_nevt src_evt, tceu_app* dst_app, tceu_nevt dst_evt);
-int       ceu_sys_emit   (tceu_app* app, tceu_nevt evt, tceu_evtp param, int sz, char* buf);
+int       ceu_sys_emit   (tceu_app* app, tceu_nevt evt, tceu_evtp param, int sz, byte* buf);
 tceu_evtp ceu_sys_call   (tceu_app* app, tceu_nevt evt, tceu_evtp param);
 #ifdef CEU_WCLOCKS
 int       ceu_sys_wclock (tceu_app* app, s32 dt, s32* set, s32* get);

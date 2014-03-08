@@ -45,7 +45,7 @@ CEU_POOL_DCL(]]..id..','..'CEU_'..me.id..','..me.max..[[);
 ]]
             _MEM.pools.init = _MEM.pools.init..[[
 ceu_pool_init(&]]..me.pool..', '..me.max..', sizeof(CEU_'..me.id..'), '
-    ..'(char**)'..me.pool..'_queue, (char*)'..me.pool..[[_mem);
+    ..'(byte**)'..me.pool..'_queue, (byte*)'..me.pool..[[_mem);
 ]]
         end
     end,

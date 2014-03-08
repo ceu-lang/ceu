@@ -1,7 +1,7 @@
 _TP = {}
 
 local types = {
-    void=true, char=true,
+    void=true, char=true, byte=true,
     uint=true, int=true,
     u64=true,  s64=true,
     u32=true,  s32=true,

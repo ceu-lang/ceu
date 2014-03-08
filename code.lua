@@ -577,7 +577,7 @@ _ceu_go->org->trls[ ]]..me.trl_fins[1]..[[ ].seqno = _ceu_app->seqno-1; /* awake
                 local pre = CUR(me,node.pool)
                 LINE(me, [[
 ceu_pool_init(&]]..pre..', '..n..', sizeof(CEU_'..node.cls.id..'), '
-    ..'(char**)'..pre..'_queue, (char*)'..pre..[[_mem);
+    ..'(byte**)'..pre..'_queue, (byte*)'..pre..[[_mem);
 ]])
             end
         end

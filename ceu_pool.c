@@ -10,7 +10,7 @@
 #include "ceu_pool.h"
 
 void ceu_pool_init (tceu_pool* pool, int size, int unit,
-                    char** queue, char* mem)
+                    byte** queue, byte* mem)
 {
     int i;
     pool->size  = size;
@@ -24,8 +24,8 @@ void ceu_pool_init (tceu_pool* pool, int size, int unit,
     }
 }
 
-char* ceu_pool_alloc (tceu_pool* pool) {
-    char* ret;
+byte* ceu_pool_alloc (tceu_pool* pool) {
+    byte* ret;
 
     if (pool->free == 0) {
         return NULL;
@@ -40,7 +40,7 @@ char* ceu_pool_alloc (tceu_pool* pool) {
     return ret;
 }
 
-void ceu_pool_free (tceu_pool* pool, char* val) {
+void ceu_pool_free (tceu_pool* pool, byte* val) {
     int empty = pool->index + pool->free;
     if (empty >= pool->size) {
         empty -= pool->size;
@@ -50,9 +50,9 @@ void ceu_pool_free (tceu_pool* pool, char* val) {
 }
 
 /*
-int ceu_pool_inside (tceu_pool* pool, char* val) {
-    return ((char*)val >= pool->mem)
-        && ((char*)val < pool->mem+(pool->size*pool->unit));
+int ceu_pool_inside (tceu_pool* pool, byte* val) {
+    return ((byte*)val >= pool->mem)
+        && ((byte*)val < pool->mem+(pool->size*pool->unit));
 }
 */
 

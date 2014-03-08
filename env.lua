@@ -29,6 +29,7 @@ _ENV = {
         word     = _OPTS.tp_word,
         pointer  = _OPTS.tp_word,
 
+        byte     = 1,
         char     = 1,
         int      = _OPTS.tp_word,
         uint     = _OPTS.tp_word,

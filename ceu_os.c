@@ -290,12 +290,12 @@ fprintf(stderr, "GO[%d]: evt=%d stk=%d [%d]\n", app->seqno,
                         /*fprintf(stderr, "FREE: %p\n", go.org);*/
                         /* TODO(speed): avoid free if pool and blk out of scope */
 #if    defined(CEU_NEWS_POOL) && !defined(CEU_NEWS_MALLOC)
-                        ceu_pool_free(go.org->pool, (char*)go.org);
+                        ceu_pool_free(go.org->pool, (byte*)go.org);
 #elif  defined(CEU_NEWS_POOL) &&  defined(CEU_NEWS_MALLOC)
                         if (go.org->pool == NULL)
                             ceu_sys_free(go.org);
                         else
-                            ceu_pool_free(go.org->pool, (char*)go.org);
+                            ceu_pool_free(go.org->pool, (byte*)go.org);
 #elif !defined(CEU_NEWS_POOL) &&  defined(CEU_NEWS_MALLOC)
                         ceu_sys_free(go.org);
 #endif
@@ -530,12 +530,12 @@ void* CEU_SYS_VEC[CEU_SYS_MAX] __attribute__((used)) = {
  * - i: next position to enqueue
  */
 #if CEU_QUEUE_MAX == 256
-    char QUEUE[CEU_QUEUE_MAX];
+    byte QUEUE[CEU_QUEUE_MAX];
     int  QUEUE_tot = 0;
     u8   QUEUE_get = 0;
     u8   QUEUE_put = 0;
 #else
-    char QUEUE[CEU_QUEUE_MAX];
+    byte QUEUE[CEU_QUEUE_MAX];
     int  QUEUE_tot = 0;
     u16  QUEUE_get = 0;
     u16  QUEUE_put = 0;
@@ -557,7 +557,7 @@ tceu_queue* ceu_sys_queue_get (void) {
 }
 
 int ceu_sys_queue_put (tceu_app* app, tceu_nevt evt, tceu_evtp param,
-                       int sz, char* buf) {
+                       int sz, byte* buf) {
     ISR_OFF;
 
     int n = sizeof(tceu_queue) + sz;
@@ -619,7 +619,7 @@ static tceu_lnk* CEU_LNKS = NULL;
 
 /* TODO: remove this */
 int ceu_sys_emit (tceu_app* app, tceu_nevt evt, tceu_evtp param,
-                  int sz, char* buf) {
+                  int sz, byte* buf) {
     return ceu_sys_queue_put(app, evt, param, sz, buf);
 }
 

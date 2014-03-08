@@ -140,7 +140,7 @@ F =
                     t2[#t2+1] = '(tceu_evtp)(void*)'..val
                 else
                     t2[#t2+1] = 'sizeof('..ext.evt.ins..')'
-                    t2[#t2+1] = '(char*)'..val
+                    t2[#t2+1] = '(byte*)'..val
                 end
             else
                 assert(mode == 'val')
@@ -151,7 +151,7 @@ F =
                 t2[#t2+1] = '(tceu_evtp)NULL'
             else
                 t2[#t2+1] = '0'
-                t2[#t2+1] = '(char*)NULL'
+                t2[#t2+1] = '(byte*)NULL'
             end
         end
         t2 = table.concat(t2, ', ')
@@ -284,7 +284,7 @@ F =
                 if me.var.pre == 'var' then
                     me.val = [[(*(
 (]].._TP.c(me.var.tp)..[[*) (
-        ((char*)]]..me.org.val..[[) + _CEU_APP.ifcs_flds[]]..gen..[[->cls][
+        ((byte*)]]..me.org.val..[[) + _CEU_APP.ifcs_flds[]]..gen..[[->cls][
             ]].._ENV.ifcs.flds[me.var.ifc_id]..[[
         ]
             )
