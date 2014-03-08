@@ -241,7 +241,7 @@ local function f (ln, v1, op, v2, v3, ...)
     local ret
     if not op then
         ret = v1
-    elseif v1=='call' or v1=='call/delay' then
+    elseif v1=='call' or v1=='call/rec' then
         -- Prim call
         ASR(op.tag=='Op2_call', ln, 'invalid call')
         op[1] = v1  -- change modifier

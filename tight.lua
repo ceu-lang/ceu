@@ -115,21 +115,21 @@ F = {
         local dcl = _AST.iter'Dcl_fun'()
         if dcl and (f.var.fun.isTight or f.var.fun.isTight==nil) then
             dcl.var.fun.isTight = true
-            ASR(dcl.var.fun.mod.delay == true,
-                dcl, 'function must be declared with "delay"')
+            ASR(dcl.var.fun.mod.rec == true,
+                dcl, 'function must be declared with `recursive´')
         end
 
-        -- assert that the call is using call/delay correctly
-        if f.var.fun.mod.delay then
-            ASR(op=='call/delay',
-                me, '`call/delay´ is required for "'..f.var.fun.id..'"')
+        -- assert that the call is using call/rec correctly
+        if f.var.fun.mod.rec then
+            ASR(op=='call/rec',
+                me, '`call/rec´ is required for "'..f.var.fun.id..'"')
         else
             ASR(op=='call',
-                me, '`call/delay´ is not required for "'..f.var.fun.id..'"')
+                me, '`call/rec´ is not required for "'..f.var.fun.id..'"')
         end
     end,
     Dcl_fun = function (me)
-        local _, delay, _, _, id, blk = unpack(me)
+        local _, rec, _, _, id, blk = unpack(me)
         if not blk then
             return          -- pure declarations
         end
@@ -139,11 +139,11 @@ F = {
             me.var.fun.isTight = false
         end
         if me.var.fun.isTight then
-            ASR(me.var.fun.mod.delay == me.var.fun.isTight,
-                me, 'function must be declared with delay')
+            ASR(me.var.fun.mod.rec == me.var.fun.isTight,
+                me, 'function must be declared with `recursive´')
         else
-            WRN(me.var.fun.mod.delay == me.var.fun.isTight,
-                me, 'function may be declared without delay')
+            WRN(me.var.fun.mod.rec == me.var.fun.isTight,
+                me, 'function may be declared without `recursive´')
         end
 
         -- copy isTight to all matching interfaces with method "id"
@@ -160,16 +160,16 @@ F = {
     end,
 
     Root = function (me)
-        -- check if all interface methods have "mod.delay"
+        -- check if all interface methods have "mod.rec"
         -- respecting their implementations
         for _, ifc in pairs(_ENV.clss_ifc) do
             for _,var in ipairs(ifc.blk_ifc.vars) do
                 if var.fun then
                     local t = var.fun.__tights or {}
 
-                    -- If "delay", at least one implementation should
+                    -- If "rec", at least one implementation should
                     -- not be isTight.
-                    if var.fun.mod.delay then
+                    if var.fun.mod.rec then
                         local ok = false
                         for _, isTight in ipairs(t) do
                             if isTight then
@@ -178,14 +178,14 @@ F = {
                             end
                         end
                         WRN(ok, var.ln,
-                            'function may be declared without "delay"')
+                            'function may be declared without `recursive´')
 
-                    -- If not "delay", all implementations should be
+                    -- If not "rec", all implementations should be
                     -- isTight.
                     else
                         for _, isTight in ipairs(t) do
                             ASR((not isTight), var.ln,
-                                'function must be declared with "delay"')
+                                'function must be declared with `recursive´')
                         end
                     end
                 end

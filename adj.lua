@@ -356,27 +356,27 @@ F = {
 
     _Dcl_ext1_pre = '_Dcl_fun1_pre',
     _Dcl_ext0_pre = function (me)
-        local dir, delay, ins, out, id, blk = unpack(me)
+        local dir, rec, ins, out, id, blk = unpack(me)
 
         -- single id + blk
 
         if me[#me].tag == 'Block' then
             ASR(me[#me]==blk, me, 'same body for multiple declarations')
             return node('Stmts', me.ln,
-                    node('Dcl_fun',me.ln,dir,delay,ins,out,id,blk),
-                    node('Dcl_ext',me.ln,dir,delay,ins,out,id))
+                    node('Dcl_fun',me.ln,dir,rec,ins,out,id,blk),
+                    node('Dcl_ext',me.ln,dir,rec,ins,out,id))
         end
 
         -- no blk
 
         local ret = {}
-        local t = { unpack(me,5) }  -- skip "dir","delay","ins","out"
+        local t = { unpack(me,5) }  -- skip "dir","rec","ins","out"
 
         for _, v in ipairs(t) do
             if out then
-                ret[#ret+1] = node('Dcl_fun',me.ln,dir,delay,ins,out,v)
+                ret[#ret+1] = node('Dcl_fun',me.ln,dir,rec,ins,out,v)
             end
-            ret[#ret+1] = node('Dcl_ext',me.ln,dir,delay,ins,out,v)
+            ret[#ret+1] = node('Dcl_ext',me.ln,dir,rec,ins,out,v)
         end
         return node('Stmts', me.ln, unpack(ret))
     end,

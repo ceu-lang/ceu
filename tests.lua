@@ -15926,6 +15926,31 @@ escape v;
 ]],
     run = 1,
 }
+
+Test { [[
+input (int c)=>int WRITE do
+    return c + 1;
+end
+var byte b = 1;
+var int ret = call WRITE => b;
+escape ret;
+]],
+    run = 2,
+}
+
+Test { [[
+input (int c)=>int F1 do
+    return c + 1;
+end
+input (int c)=>void F2 do
+end
+call F2 => 0;
+var int ret = call F1 => 1;
+escape ret;
+]],
+    run = 2,
+}
+
 end -- _OS (INPUT/OUTPUT)
 
     -- POINTERS & ARRAYS
@@ -26515,7 +26540,7 @@ var T t;
 var I* i = &t;
 escape t.f() + i:f();
 ]],
-    tight = 'line 9 : function must be declared with "delay"',
+    tight = 'line 9 : function must be declared with `recursive´',
 }
 
 Test { [[
@@ -26565,12 +26590,12 @@ t.i = i;
 escape i:g(5);
 ]],
     --run = 120,
-    tight = 'line 9 : function must be declared with "delay"',
+    tight = 'line 9 : function must be declared with `recursive´',
 }
 
 Test { [[
 interface I with
-    function delay (int)=>int g;
+    function recursive (int)=>int g;
 end
 
 class T with
@@ -26603,7 +26628,7 @@ class T with
     interface I;
     var I* i;
 do
-    function delay (int v)=>int g do
+    function recursive (int v)=>int g do
         if (v == 1) then
             return 1;
         end
@@ -26622,14 +26647,14 @@ escape i:g(5);
 
 Test { [[
 interface I with
-    function delay (int)=>int g;
+    function recursive (int)=>int g;
 end
 
 class T with
     interface I;
     var I* i;
 do
-    function delay (int v)=>int g do
+    function recursive (int v)=>int g do
         if (v == 1) then
             return 1;
         end
@@ -26643,19 +26668,19 @@ t.i = i;
 escape i:g(5);
 ]],
     --run = 120,
-    tight = 'line 13 : `call/delay´ is required for "g"',
+    tight = 'line 13 : `call/rec´ is required for "g"',
 }
 
 Test { [[
 interface I with
-    function delay (int)=>int g;
+    function recursive (int)=>int g;
 end
 
 class T with
     interface I;
     var I* i;
 do
-    function delay (int v)=>int g do
+    function recursive (int v)=>int g do
         return 1;
     end
 end
@@ -26665,20 +26690,20 @@ var I* i = &t;
 t.i = i;
 escape i:g(5);
 ]],
-    --tight = 'line 9 : function may be declared without "delay"',
-    tight = 'line 17 : `call/delay´ is required for "g"',
+    --tight = 'line 9 : function may be declared without `recursive´',
+    tight = 'line 17 : `call/rec´ is required for "g"',
 }
 
 Test { [[
 interface I with
-    function delay (int)=>int g;
+    function recursive (int)=>int g;
 end
 
 class T with
     interface I;
     var I* i;
 do
-    function delay (int v)=>int g do
+    function recursive (int v)=>int g do
         return v;
     end
 end
@@ -26686,9 +26711,9 @@ end
 var T t;
 var I* i = &t;
 t.i = i;
-escape call/delay i:g(5);
+escape call/rec i:g(5);
 ]],
-    --tight = 'line 9 : function may be declared without "delay"',
+    --tight = 'line 9 : function may be declared without `recursive´',
     run = 5,
 }
 
@@ -26751,7 +26776,7 @@ t.i = i2;
 escape i1:g(5) + i2:g(5);
 ]],
     --run = 120,
-    tight = 'line 18 : function must be declared with "delay"',
+    tight = 'line 18 : function must be declared with `recursive´',
 }
 
 Test { [[
@@ -26791,20 +26816,20 @@ t.i = i2;
 escape i1:g(5) + i2:g(5);
 ]],
     --run = 120,
-    tight = 'line 9 : function must be declared with "delay"',
+    tight = 'line 9 : function must be declared with `recursive´',
 }
 
 
 Test { [[
 interface I with
-    function delay (int)=>int g;
+    function recursive (int)=>int g;
 end
 
 class T with
     interface I;
     var I* i;
 do
-    function delay (int v)=>int g do
+    function recursive (int v)=>int g do
         if (v == 1) then
             return 1;
         end
@@ -26817,7 +26842,7 @@ var I* i = &t;
 t.i = i;
 escape i:g(5);
 ]],
-    tight = 'line 13 : `call/delay´ is required for "g"',
+    tight = 'line 13 : `call/rec´ is required for "g"',
     --run = 120,
 }
 
@@ -27215,74 +27240,74 @@ end
 
 class T with
     interface I;
-    function delay (void)=>void f;
+    function recursive (void)=>void f;
 do
-    function delay (void)=>void f do
+    function recursive (void)=>void f do
         if 0 then
-            call/delay this.f();
+            call/rec this.f();
         end
     end
 end
 
 var T t;
-call/delay t.f();
+call/rec t.f();
 
 var I* i = &t;
 call i:f();
 
 escape 1;
 ]],
-    tight = 'line 2 : function must be declared with "delay"',
+    tight = 'line 2 : function must be declared with `recursive´',
 }
 
 Test { [[
 interface I with
-    function delay (void)=>void f;
+    function recursive (void)=>void f;
 end
 
 class T with
     interface I;
-    function delay (void)=>void f;
+    function recursive (void)=>void f;
 do
-    function delay (void)=>void f do
+    function recursive (void)=>void f do
         if 0 then
-            call/delay this.f();
+            call/rec this.f();
         end
     end
 end
 
 var T t;
-call/delay t.f();
+call/rec t.f();
 
 var I* i = &t;
 call i:f();
 
 escape 1;
 ]],
-    tight = 'line 20 : `call/delay´ is required for "f"',
+    tight = 'line 20 : `call/rec´ is required for "f"',
 }
 
 Test { [[
 interface I with
-    function delay (void)=>void f;
+    function recursive (void)=>void f;
 end
 
 class T with
     interface I;
-    function delay (void)=>void f;
+    function recursive (void)=>void f;
 do
-    function delay (void)=>void f do
+    function recursive (void)=>void f do
         if 0 then
-            call/delay this.f();
+            call/rec this.f();
         end
     end
 end
 
 var T t;
-call/delay t.f();
+call/rec t.f();
 
 var I* i = &t;
-call/delay i:f();
+call/rec i:f();
 
 escape 1;
 ]],
@@ -27291,7 +27316,7 @@ escape 1;
 
 Test { [[
 interface I with
-    function delay (void)=>void f;
+    function recursive (void)=>void f;
 end
 
 class T with
@@ -27306,17 +27331,17 @@ var T t;
 call t.f();
 
 var I* i = &t;
-call/delay i:f();
+call/rec i:f();
 
 escape 1;
 ]],
-    --tight = 'line 9 : function may be declared without "delay"',
+    --tight = 'line 9 : function may be declared without `recursive´',
     run = 1,
 }
 
 Test { [[
 interface I with
-    function delay (void)=>void f;
+    function recursive (void)=>void f;
 end
 
 class T with
@@ -27331,7 +27356,7 @@ var T t;
 call t.f();
 
 var I* i = &t;
-call/delay i:f();
+call/rec i:f();
 
 escape 1;
 ]],
@@ -27348,11 +27373,11 @@ function (int v)=>int f do
 end
 escape f(5);
 ]],
-    tight = 'line 2 : function must be declared with "delay"',
+    tight = 'line 2 : function must be declared with `recursive´',
     --run = 120,
 }
 Test { [[
-function delay (int v)=>int f;
+function recursive (int v)=>int f;
 function (int v)=>int f do
     if v == 0 then
         return 1;
@@ -27365,8 +27390,8 @@ escape f(5);
     --run = 120,
 }
 Test { [[
-function delay (int v)=>int f;
-function delay (int v)=>int f do
+function recursive (int v)=>int f;
+function recursive (int v)=>int f do
     if v == 0 then
         return 1;
     end
@@ -27374,7 +27399,7 @@ function delay (int v)=>int f do
 end
 escape f(5);
 ]],
-    tight = 'line 6 : `call/delay´ is required for "f"',
+    tight = 'line 6 : `call/rec´ is required for "f"',
     --run = 120,
 }
 Test { [[
@@ -27384,26 +27409,26 @@ call 1;
 }
 
 Test { [[
-function delay (int v)=>int f;
-function delay (int v)=>int f do
+function recursive (int v)=>int f;
+function recursive (int v)=>int f do
     if v == 0 then
         return 1;
     end
-    return v * (call/delay f(v-1));
+    return v * (call/rec f(v-1));
 end
 escape f(5);
 ]],
-    tight = 'line 8 : `call/delay´ is required for "f"',
+    tight = 'line 8 : `call/rec´ is required for "f"',
 }
 Test { [[
-function delay (int v)=>int f;
-function delay (int v)=>int f do
+function recursive (int v)=>int f;
+function recursive (int v)=>int f do
     if v == 0 then
         return 1;
     end
-    return v * call/delay f(v-1);
+    return v * call/rec f(v-1);
 end
-escape call/delay f(5);
+escape call/rec f(5);
 ]],
     run = 120,
 }

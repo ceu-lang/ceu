@@ -241,7 +241,7 @@ F = {
                     end
                 elseif #ins == 1 then
                     local _,tp,_ = unpack(ins[1])
-                    if tp == 'int' then
+                    if _TP.isNumeric(tp) then
                         ps[#ps+1] = ', param.v'
                     else
                         ps[#ps+1] = ', param.ptr'

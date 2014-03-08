@@ -158,7 +158,7 @@ function newvar (me, imp, blk, pre, tp, arr, id)
 
     -- Class definitions take priority over interface definitions:
     --      * consts
-    --      * delay => nodelay methods
+    --      * rec => norec methods
     if  blk.vars[id] and (blk==CLS().blk_ifc) then
         return true, blk.vars[id]
     end
@@ -202,19 +202,19 @@ function newint (me, imp, blk, pre, tp, id)
     return false, var
 end
 
-function newfun (me, imp, blk, pre, delay, ins, out, id)
-    delay = not not delay
+function newfun (me, imp, blk, pre, rec, ins, out, id)
+    rec = not not rec
     local old = blk.vars[id]
     if old then
         ASR(ins.tp==old.fun.ins.tp and out==old.fun.out and
-            (delay==old.fun.mod.delay or imp),
+            (rec==old.fun.mod.rec or imp),
             me, 'function declaration does not match the one at "'..
                 old.ln[1]..':'..old.ln[2]..'"')
-        -- Accept delay mismatch for "imp" because class implementation
-        -- might be "nodelay", e.g.:
-        -- interface with delay f;
-        -- class     with       f;
-        -- When calling from an interface, call/delay is still required,
+        -- Accept rec mismatch for "imp" because class implementation
+        -- might be "norec", e.g.:
+        -- interface with rec f;
+        -- class     with     f;
+        -- When calling from an interface, call/rec is still required,
         -- but from class it is not.
     end
 
@@ -230,7 +230,7 @@ function newfun (me, imp, blk, pre, delay, ins, out, id)
         ins = ins,
         out = out,
         pre = pre,
-        mod = { delay=delay },
+        mod = { rec=rec },
         isExt = string.upper(id)==id,
     }
     var.fun = fun
@@ -501,7 +501,7 @@ F = {
     end,
 
     Dcl_ext = function (me)
-        local dir, delay, ins, out, id = unpack(me)
+        local dir, rec, ins, out, id = unpack(me)
         if _ENV.exts[id] then
             WRN(false, me, 'event "'..id..'" is already declared')
 -- TODO: check fields?
@@ -519,7 +519,7 @@ F = {
             pre = dir,
             ins = ins,
             out = out or 'int',
-            mod = { delay=delay },
+            mod = { rec=rec },
             op  = (out and 'call' or 'emit')
         }
         _ENV.exts[#_ENV.exts+1] = me.evt
@@ -561,7 +561,7 @@ F = {
     end,
 
     Dcl_fun = function (me)
-        local pre, delay, ins, out, id, blk = unpack(me)
+        local pre, rec, ins, out, id, blk = unpack(me)
         local cls = CLS()
 
         -- implementation cannot be inside interface, so,
@@ -572,7 +572,7 @@ F = {
         end
 
         local _
-        _, me.var = newfun(me, false, up, pre, delay, ins, out, id)
+        _, me.var = newfun(me, false, up, pre, rec, ins, out, id)
 
         -- "void" as parameter only if single
         if #ins > 1 then
@@ -608,7 +608,7 @@ F = {
             elseif var.pre == 'event' then
                 newint(me, true, blk, var.pre, var.evt.ins, var.id)
             else
-                newfun(me, true, blk, var.pre, var.fun.mod.delay,
+                newfun(me, true, blk, var.pre, var.fun.mod.rec,
                            var.fun.ins, var.fun.out, var.id)
             end
             CLS().c[var.id] = ifc.c[var.id] -- also copy C properties

@@ -103,7 +103,7 @@ KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'native'
 -- export / version
      + 'thread'   + 'sync'
 -- functions
-     + 'function' + 'call' + 'return' + 'delay' + 'call/delay'
+     + 'function' + 'call' + 'return' + 'recursive' + 'call/rec'
      + 'hold'
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
@@ -277,8 +277,8 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
               + V'Var'     + V'Nat'
               + V'NULL'    + V'NUMBER' + V'STRING'
               + V'Global'  + V'This'   + V'RawExp'
-              + CK'call'       * EV'__Exp'
-              + CK'call/delay' * EV'__Exp'
+              + CK'call'     * EV'__Exp'
+              + CK'call/rec' * EV'__Exp'
 
     , ExpList = ( V'__Exp'*(K','*EV'__Exp')^0 )^-1
 
@@ -322,7 +322,7 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     , EmitT    = K'emit' * (V'WCLOCKK'+V'WCLOCKE')
 
-    , EmitExt  = (CK'call/delay'+CK'call'+CK'emit') * EV'Ext' * V'__emit_ps'
+    , EmitExt  = (CK'call/rec'+CK'call'+CK'emit') * EV'Ext' * V'__emit_ps'
     , EmitInt  = CK'emit' * EV'__Exp' * V'__emit_ps'
     , __emit_ps = ( K'=>' * (V'__Exp' + K'(' * V'ExpList' * EK')')
                 +   Cc(false) )
@@ -339,7 +339,7 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                    * EV'__Dcl_nat' * (K',' * EV'__Dcl_nat')^0
 
     , _Dcl_ext0 = (CK'input'+CK'output')
-                    * (CK'delay'+Cc(false))
+                    * (CK'recursive'+Cc(false))
                     * ( V'TupleType' * K'=>' * EV'__ID_type'
                       + (V'TupleType'+EV'__ID_type') * Cc(false) )
                     * EV'__ID_ext' * (K','*EV'__ID_ext')^0
@@ -371,7 +371,7 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     , _Dcl_imp = K'interface' * EV'__ID_cls' * (K',' * EV'__ID_cls')^0
 
-    , _Dcl_fun0 = CK'function' * (CK'delay'+Cc(false))
+    , _Dcl_fun0 = CK'function' * (CK'recursive'+Cc(false))
                                * EV'TupleType' * EK'=>' * EV'__ID_type'
                                * V'__ID_var'
     , _Dcl_fun1 = V'_Dcl_fun0' * V'__Do'

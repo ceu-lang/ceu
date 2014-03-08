@@ -6,6 +6,17 @@ _VALGRIND = true
 --]===]
 
 Test { [[
+input (int c)=>int WRITE do
+    return c + 1;
+end
+var byte b = 1;
+var int ret = call WRITE => b;
+escape ret;
+]],
+    run = 2,
+}
+
+Test { [[
 var char* a;
 a = "o";
 escape 1;
