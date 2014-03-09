@@ -41,6 +41,8 @@
     #define CEU_IN_OS_START     247
     #define CEU_IN_OS_STOP      246
     #define CEU_IN_OS_DT        245
+    #define CEU_IN_OS_INTERRUPT 244
+    #define CEU_IN              244
 
     typedef s8 tceu_nlbl;
 

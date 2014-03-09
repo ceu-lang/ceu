@@ -126,9 +126,9 @@ F =
         local t2 = { ptr, 'CEU_'..DIR..'_'..ext.evt.id }
 
         if param then
-            local tp = _TP.deref(ext.evt.ins, true)
+            local isPtr = _TP.deref(ext.evt.ins, true)
             local val
-            if tp then
+            if isPtr then
                 val = '(void*)'..V(param)
             else
                 val = V(param)
@@ -144,7 +144,11 @@ F =
                 end
             else
                 assert(mode == 'val')
-                t2[#t2+1] = '(tceu_evtp)'..val
+                if isPtr then
+                    t2[#t2+1] = '(tceu_evtp)'..val
+                else
+                    t2[#t2+1] = '(tceu_evtp)(int)'..val
+                end
             end
         else
             if mode == 'val' then

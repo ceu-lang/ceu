@@ -324,7 +324,7 @@ do
         --          cannot overlap w/ internal events
         local str = ''
         local t = {}
-        --local ins  = 0
+        local ins  = 0
         local outs = 0
 
         -- TODO
@@ -332,12 +332,12 @@ do
 
         for i, evt in ipairs(_ENV.exts) do
             if evt.pre == 'input' then
-                local s = '#define CEU_IN_'..evt.id..' '..(256-i)
+                ins = ins + 1
+                local s = '#define CEU_IN_'..evt.id..' '..(256-ins)
                 if _OPTS.verbose and i > 9 then
                     DBG('', s)
                 end
                 str = str..s..'\n'
-                --ins = ins + 1
             else
                 outs = outs + 1
                 local s = '#define CEU_OUT_'..evt.id..' '..outs
@@ -347,6 +347,7 @@ do
                 str = str..s..'\n'
             end
             assert(evt.pre=='input' or evt.pre=='output')
+            ASR(ins+outs < 255, me, 'too many events')
         end
         --str = str..'#define CEU_IN_n  '..ins..'\n'
         str = str..'#define CEU_OUT_n '..outs..'\n'
