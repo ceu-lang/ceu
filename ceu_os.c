@@ -6,16 +6,16 @@
 #ifdef __AVR
 #include <avr/pgmspace.h>
 #include "Arduino.h"
+void* CEU_APP_ADDR = NULL;
 #endif
-void* CEU_APP_ADDR = NULL;  /* TODO: only __AVR? */
 #endif
 
 #ifdef __AVR
-#define ISR_ON  interrupts()
-#define ISR_OFF noInterrupts()
+#define ISR_ON()  interrupts()
+#define ISR_OFF() noInterrupts()
 #else
-#define ISR_ON
-#define ISR_OFF
+#define ISR_ON()
+#define ISR_OFF()
 #endif
 
 #include <string.h>
@@ -375,13 +375,12 @@ _CEU_GO_GO_:
             }
 
             {
-#ifdef CEU_OS
-                void* __old = CEU_APP_ADDR;
+#if defined(CEU_OS) && defined(__AVR)
                 CEU_APP_ADDR = app->addr;
 #endif
                 int _ret = app->code(app, &go);
-#ifdef CEU_OS
-                CEU_APP_ADDR = __old;
+#if defined(CEU_OS) && defined(__AVR)
+                CEU_APP_ADDR = 0;
 #endif
 
                 switch (_ret) {
@@ -510,6 +509,9 @@ void* CEU_SYS_VEC[CEU_SYS_MAX] __attribute__((used)) = {
     (void*) &ceu_sys_malloc,
     (void*) &ceu_sys_free,
     (void*) &ceu_sys_load,
+#ifdef CEU_ISR
+    (void*) &ceu_sys_isr,
+#endif
     (void*) &ceu_sys_org,
     (void*) &ceu_sys_start,
     (void*) &ceu_sys_link,
@@ -543,7 +545,7 @@ void* CEU_SYS_VEC[CEU_SYS_MAX] __attribute__((used)) = {
 
 tceu_queue* ceu_sys_queue_get (void) {
     tceu_queue* ret;
-    ISR_OFF;
+    ISR_OFF();
     if (QUEUE_tot == 0) {
         ret = NULL;
     } else {
@@ -552,13 +554,13 @@ tceu_queue* ceu_sys_queue_get (void) {
 #endif
         ret = (tceu_queue*) &QUEUE[QUEUE_get];
     }
-    ISR_ON;
+    ISR_ON();
     return ret;
 }
 
 int ceu_sys_queue_put (tceu_app* app, tceu_nevt evt, tceu_evtp param,
                        int sz, byte* buf) {
-    ISR_OFF;
+    ISR_OFF();
 
     int n = sizeof(tceu_queue) + sz;
 
@@ -595,16 +597,16 @@ int ceu_sys_queue_put (tceu_app* app, tceu_nevt evt, tceu_evtp param,
     QUEUE_put += n;
     QUEUE_tot += n;
 
-    ISR_ON;
+    ISR_ON();
     return 1;
 }
 
 void ceu_sys_queue_rem (void) {
-    ISR_OFF;
+    ISR_OFF();
     tceu_queue* qu = (tceu_queue*) &QUEUE[QUEUE_get];
     QUEUE_tot -= sizeof(tceu_queue) + qu->sz;
     QUEUE_get += sizeof(tceu_queue) + qu->sz;
-    ISR_ON;
+    ISR_ON();
 }
 
 /*****************************************************************************/
@@ -629,14 +631,12 @@ tceu_evtp ceu_sys_call (tceu_app* app, tceu_nevt evt, tceu_evtp param) {
     {
         if (app!=lnk->src_app || evt!=lnk->src_evt)
             continue;
-        if (! lnk->dst_app->isAlive)
-            continue;   /* TODO: remove when unlink on stop */
-#ifdef CEU_OS
-        void* __old = CEU_APP_ADDR;
+#if defined(CEU_OS) && defined(__AVR)
+        void* __old = CEU_APP_ADDR; /* must remember to resume after call */
         CEU_APP_ADDR = lnk->dst_app->addr;
 #endif
         tceu_evtp ret = lnk->dst_app->calls(lnk->dst_app, lnk->dst_evt, param);
-#ifdef CEU_OS
+#if defined(CEU_OS) && defined(__AVR)
         CEU_APP_ADDR = __old;
 #endif
         return ret;
@@ -670,7 +670,7 @@ static void __ceu_gc (void)
 
     /* remove pending events */
     {
-        ISR_OFF;
+        ISR_OFF();
         int i = 0;
         while (i < QUEUE_tot) {
             tceu_queue* qu = (tceu_queue*) &QUEUE[QUEUE_get+i];
@@ -679,7 +679,7 @@ static void __ceu_gc (void)
             }
             i += sizeof(tceu_queue) + qu->sz;
         }
-        ISR_ON;
+        ISR_ON();
     }
 
     /* remove broken links */
@@ -728,6 +728,39 @@ static void __ceu_gc (void)
     }
 }
 
+#ifdef CEU_ISR
+
+typedef struct {
+    tceu_isr_f f;
+    tceu_app*  app;
+} tceu_isr;
+
+#define CEU_ISR_MAX 40
+tceu_isr CEU_ISR_VEC[CEU_ISR_MAX];
+
+int ceu_sys_isr (int n, tceu_isr_f f, tceu_app* app) {
+    tceu_isr* isr = &CEU_ISR_VEC[(n-1)];
+    if (f==NULL || isr->f==NULL) {
+        isr->f   = ((word)app->addr>>1) + f;
+        isr->app = app;
+                           /* "f" is relative to "app", make it absolute */
+        return 1;
+    } else {
+        return 0;
+    }
+}
+#endif
+
+void ceu_init (void) {
+#ifdef CEU_ISR
+    int i;
+    for (i=0; i<CEU_ISR_MAX; i++) {
+        CEU_ISR_VEC[i].f = NULL;      /* TODO: is this required? (bss=0) */
+    }
+    ISR_ON();       /* enable global interrupts to start */
+#endif
+}
+
 int ceu_scheduler (int(*dt)())
 {
     __ceu_gc();     /* apps already terminated from MAIN() */
@@ -770,9 +803,9 @@ int ceu_scheduler (int(*dt)())
 
         {
             /* clear the current size (ignore events emitted here) */
-            ISR_OFF;
+            ISR_OFF();
             int tot = QUEUE_tot;
-            ISR_ON;
+            ISR_ON();
             while (tot > 0)
             {
                 tceu_queue* qu = ceu_sys_queue_get();
@@ -938,53 +971,38 @@ int ceu_sys_unlink (tceu_app* src_app, tceu_nevt src_evt,
     return 0;
 }
 
-#if 0
+#ifdef CEU_ISR
 
-/* Foreach ISR, call _ceu_sys_emit directly because interrupts are already 
- * disabled.  */
+/* Foreach ISR, call ceu_sys_emit(CEU_IN_OS_INTERRUPT). */
 
-#ifdef UART0_UDRE_vect
-ISR(UART0_UDRE_vect, ISR_BLOCK) {
-    _ceu_sys_emit(NULL,CEU_IN_OS_INTERRUPT,(tceu_evtp)UART0_UDRE_vect,0,NULL);
-}
-#endif
+#define GEN_ISR(n)                                                  \
+    ISR(__vector_ ## n, ISR_BLOCK) {                                \
+        tceu_isr* isr = &CEU_ISR_VEC[n-1];                          \
+        if (isr->f != NULL) {                                       \
+#if defined(CEU_OS) && defined(__AVR)                               \
+            CEU_APP_ADDR = isr->app->addr;                          \
+#endif                                                              \
+            isr->f(isr->app, isr->app->data);                       \
+#if defined(CEU_OS) && defined(__AVR)                               \
+            CEU_APP_ADDR = 0;                                       \
+#endif                                                              \
+        }                                                           \
+        ceu_sys_emit(NULL,CEU_IN_OS_INTERRUPT,(tceu_evtp)n,0,NULL); \
+    }
+#define _GEN_ISR(n)
 
-#ifdef UART_UDRE_vect
-ISR(UART_UDRE_vect, ISR_BLOCK) {
-    _ceu_sys_emit(NULL,CEU_IN_OS_INTERRUPT,(tceu_evtp)UART_UDRE_vect,0,NULL);
-}
-#endif
+GEN_ISR(20);
+/*
+GEN_ISR( 1) GEN_ISR( 2) GEN_ISR( 3) GEN_ISR( 4) GEN_ISR( 5)
+GEN_ISR( 6) GEN_ISR( 7) GEN_ISR( 8) GEN_ISR( 9) GEN_ISR(10)
+GEN_ISR(11) GEN_ISR(12) GEN_ISR(13) GEN_ISR(14) GEN_ISR(15)
+GEN_ISR(16) GEN_ISR(17) _GEN_ISR(18) GEN_ISR(19) GEN_ISR(20)
+GEN_ISR(21) GEN_ISR(22) GEN_ISR(23) GEN_ISR(24) GEN_ISR(25)
+GEN_ISR(26) GEN_ISR(27) GEN_ISR(28) GEN_ISR(29) GEN_ISR(30)
+GEN_ISR(31) GEN_ISR(32) GEN_ISR(33) GEN_ISR(34) GEN_ISR(35)
+GEN_ISR(36) GEN_ISR(37) GEN_ISR(38) GEN_ISR(39) GEN_ISR(40)
+*/
 
-#ifdef USART0_UDRE_vect
-ISR(USART0_UDRE_vect, ISR_BLOCK) {
-    _ceu_sys_emit(NULL,CEU_IN_OS_INTERRUPT,(tceu_evtp)USART0_UDRE_vect,0,NULL);
-}
-#endif
-
-#ifdef USART1_UDRE_vect
-ISR(USART1_UDRE_vect, ISR_BLOCK) {
-    _ceu_sys_emit(NULL,CEU_IN_OS_INTERRUPT,(tceu_evtp)USART1_UDRE_vect,0,NULL);
-}
-#endif
-
-#ifdef USART_UDRE_vect
-ISR(USART_UDRE_vect, ISR_BLOCK) {
-    _ceu_sys_emit(NULL,CEU_IN_OS_INTERRUPT,(tceu_evtp)USART_UDRE_vect,0,NULL);
-}
-#endif
-
-#ifdef USART2_UDRE_vect
-ISR(USART2_UDRE_vect, ISR_BLOCK) {
-    _ceu_sys_emit(NULL,CEU_IN_OS_INTERRUPT,(tceu_evtp)USART2_UDRE_vect,0,NULL);
-}
-#endif
-
-#ifdef USART3_UDRE_vect
-ISR(USART3_UDRE_vect, ISR_BLOCK) {
-    _ceu_sys_emit(NULL,CEU_IN_OS_INTERRUPT,(tceu_evtp)USART3_UDRE_vect,0,NULL);
-}
-#endif
-
-#endif /* 0 */
+#endif /* CEU_ISR */
 
 #endif  /* CEU_OS */

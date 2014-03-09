@@ -4,6 +4,10 @@
 #include <stddef.h>
 #include "ceu_types.h"
 
+#ifdef __AVR
+#define CEU_ISR
+#endif
+
 #ifdef CEU_OS
     /* TODO: all should be configurable */
     #define CEU_EXTS
@@ -53,6 +57,11 @@
 
     #define ceu_out_load(addr) \
         ((__typeof__(ceu_sys_load)*)((_ceu_app)->sys_vec[CEU_SYS_LOAD]))(addr)
+
+#ifdef CEU_ISR
+    #define ceu_out_isr(n,f) \
+        ((__typeof__(ceu_sys_isr)*)((_ceu_app)->sys_vec[CEU_SYS_ISR]))(n,f,_ceu_app)
+#endif
 
     #define ceu_out_org(app,org,n,lbl,seqno,par_org,par_trl) \
         ((__typeof__(ceu_sys_org)*)((app)->sys_vec[CEU_SYS_ORG]))(org,n,lbl,seqno,par_org,par_trl)
@@ -369,13 +378,21 @@ typedef struct {
     byte      buf[0];
 } tceu_queue;
 
-int ceu_scheduler (int(*dt)());
+#ifdef CEU_ISR
+typedef void(*tceu_isr_f)(tceu_app* app, tceu_org* org);
+#endif
+
+void ceu_init      (void);
+int  ceu_scheduler (int(*dt)());
 tceu_queue* ceu_sys_queue_nxt (void);
 void        ceu_sys_queue_rem (void);
 
 void*     ceu_sys_malloc (size_t size);
 void      ceu_sys_free   (void* ptr);
 tceu_app* ceu_sys_load   (void* addr);
+#ifdef CEU_ISR
+int       ceu_sys_isr    (int n, tceu_isr_f f, tceu_app* app);
+#endif
 void      ceu_sys_org    (tceu_org* org, int n, int lbl, int seqno, tceu_org* par_org, int par_trl);
 void      ceu_sys_start  (tceu_app* app);
 int       ceu_sys_link   (tceu_app* src_app, tceu_nevt src_evt, tceu_app* dst_app, tceu_nevt dst_evt);
@@ -391,6 +408,9 @@ enum {
     CEU_SYS_MALLOC = 0,
     CEU_SYS_FREE,
     CEU_SYS_LOAD,
+#ifdef CEU_ISR
+    CEU_SYS_ISR,
+#endif
     CEU_SYS_ORG,
     CEU_SYS_START,
     CEU_SYS_LINK,

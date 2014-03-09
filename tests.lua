@@ -343,7 +343,7 @@ escape 1;
     run = 1,
 }
 
-do return end
+--do return end
 
 -- OK: well tested
 
