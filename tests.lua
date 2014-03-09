@@ -326,7 +326,24 @@ escape ret + _V;        // * reads after
 -------------------------------------------------------------------------------
 --]===]
 
---do return end
+Test { [[
+native do
+    ##define f(p)
+end
+par/or do
+    _f(_p)
+        finalize with
+            _f(null);
+        end;
+with
+    await FOREVER;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+do return end
 
 -- OK: well tested
 

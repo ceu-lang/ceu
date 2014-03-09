@@ -657,7 +657,7 @@ ceu_pause(&_ceu_go->org->trls[ ]]..me.blk.trails[1]..[[ ],
     Op2_call_pre = function (me)
         local _, f, exps, fin = unpack(me)
         if fin and fin.active then
-            LINE(_AST.iter'Stmts'(), fin.val..' = 1;  /* XXX */')
+            LINE(_AST.iter'Stmts'(), fin.val..' = 1;')
         end
     end,
     Finalize = function (me)

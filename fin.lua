@@ -245,7 +245,8 @@ F = {
                               or (_TP.ext(exp.tp) and (not exp.c or
                                                        exp.c.mod~='constant'))
                               or _ENV.clss[_TP.noptr(exp.tp)])
-                    r = r and ((exp.fst=='_' and _AST.root) or exp.fst.blk)
+                    r = r and ((exp.fst=='_' and _MAIN.blk_ifc) or exp.fst.blk)
+                                                 -- outermost block
                     WRN( (not r) or (not req) or (r==req),
                             me, 'invalid call (multiple scopes)')
                     req = req or r
