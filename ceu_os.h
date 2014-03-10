@@ -5,7 +5,13 @@
 #include "ceu_types.h"
 
 #ifdef __AVR
+#include "Arduino.h"
 #define CEU_ISR
+#define ISR_ON()  interrupts()
+#define ISR_OFF() noInterrupts()
+#else
+#define ISR_ON()
+#define ISR_OFF()
 #endif
 
 #ifdef CEU_OS

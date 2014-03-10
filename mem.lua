@@ -55,7 +55,7 @@ ceu_pool_init(&]]..me.pool..', '..me.max..', sizeof(CEU_'..me.id..'), '
         local cls = CLS()
 
         -- input parameters (void* _ceu_go->org, int a, int b)
-        local dcl = { 'tceu_app* _ceu_app', 'void* __ceu_org' }
+        local dcl = { 'tceu_app* _ceu_app', 'tceu_org* __ceu_org' }
         for _, v in ipairs(ins) do
             local hold, tp, id = unpack(v)
             dcl[#dcl+1] = _TP.c(tp)..' '..(id or '')

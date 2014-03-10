@@ -216,6 +216,7 @@ F =
         local _, f, exps = unpack(me)
         local ps = {}
         if f.var and f.var.fun then
+            -- (tceu_app*, tceu_org*, ...)
             ps[#ps+1] = '_ceu_app'
             if f.org then
                 local op = (_ENV.clss[f.org.tp].is_ifc and '') or '&'
@@ -223,6 +224,7 @@ F =
             else
                 ps[#ps+1] = CUR(me)
             end
+            ps[#ps] = '(tceu_org*)'..ps[#ps]
         end
         for i, exp in ipairs(exps) do
             ps[#ps+1] = V(exp)

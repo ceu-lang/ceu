@@ -5,17 +5,8 @@
 #ifdef CEU_OS
 #ifdef __AVR
 #include <avr/pgmspace.h>
-#include "Arduino.h"
 void* CEU_APP_ADDR = NULL;
 #endif
-#endif
-
-#ifdef __AVR
-#define ISR_ON()  interrupts()
-#define ISR_OFF() noInterrupts()
-#else
-#define ISR_ON()
-#define ISR_OFF()
 #endif
 
 #include <string.h>
@@ -979,13 +970,9 @@ int ceu_sys_unlink (tceu_app* src_app, tceu_nevt src_evt,
     ISR(__vector_ ## n, ISR_BLOCK) {                                \
         tceu_isr* isr = &CEU_ISR_VEC[n-1];                          \
         if (isr->f != NULL) {                                       \
-#if defined(CEU_OS) && defined(__AVR)                               \
             CEU_APP_ADDR = isr->app->addr;                          \
-#endif                                                              \
             isr->f(isr->app, isr->app->data);                       \
-#if defined(CEU_OS) && defined(__AVR)                               \
             CEU_APP_ADDR = 0;                                       \
-#endif                                                              \
         }                                                           \
         ceu_sys_emit(NULL,CEU_IN_OS_INTERRUPT,(tceu_evtp)n,0,NULL); \
     }
