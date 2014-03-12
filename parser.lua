@@ -104,7 +104,7 @@ KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'native'
      + 'thread'   + 'sync'
 -- functions
      + 'function' + 'call' + 'return' + 'recursive' + 'call/rec'
-     + 'hold'
+     + 'hold' + 'isr'
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
@@ -371,9 +371,11 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     , _Dcl_imp = K'interface' * EV'__ID_cls' * (K',' * EV'__ID_cls')^0
 
-    , _Dcl_fun0 = CK'function' * (CK'recursive'+Cc(false))
+    , _Dcl_fun0 = K'function' * CK'isr' * EK'[' * NUM * EK']' * (CK'recursive'+Cc(false))
+                + CK'function' * (CK'recursive'+Cc(false))
                                * EV'TupleType' * EK'=>' * EV'__ID_type'
                                * V'__ID_var'
+
     , _Dcl_fun1 = V'_Dcl_fun0' * V'__Do'
     , Return  = K'return' * EV'__Exp'^-1
 

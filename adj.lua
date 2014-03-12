@@ -352,6 +352,48 @@ F = {
     end,
     _Dcl_fun0_pre = function (me)
         me.tag = 'Dcl_fun'
+
+        local isr, n, rec, blk = unpack(me)
+
+        -- ISR: include "ceu_out_isr(id)"
+        if isr == 'isr' then
+            -- convert to 'function'
+                me[1] = 'function'
+                me[2] = rec
+                me[3] = node('TupleType', me.ln, {false,'void',false})
+                me[4] = 'void'
+                me[5] = n
+                me[6] = blk
+
+            --[[
+            -- _ceu_out_isr(20, rx_isr)
+            --      finalize with
+            --          _ceu_out_isr(20, null);
+            --      end
+            --]]
+            return node('Stmts', me.ln,
+                me,
+                node('CallStmt', me.ln,
+                    node('Op2_call', me.ln, 'call',
+                        node('Nat', me.ln, '_ceu_out_isr'),
+                        node('ExpList', me.ln,
+                            node('NUMBER', me.ln, n),
+                            node('Var', me.ln, n)))),
+                node('Finalize', me.ln,
+                    false,
+                    node('Finally', me.ln,
+                        node('Block', me.ln,
+                            node('Stmts', me.ln,
+                                node('CallStmt', me.ln,
+                                    node('Op2_call', me.ln, 'call',
+                                        node('Nat', me.ln, '_ceu_out_isr'),
+                                        node('ExpList', me.ln,
+                                            node('NUMBER', me.ln, n),
+                                            node('NULL', me.ln)))))))))
+        -- FUN
+        else
+            return me
+        end
     end,
 
     _Dcl_ext1_pre = '_Dcl_fun1_pre',

@@ -327,6 +327,35 @@ escape ret + _V;        // * reads after
 --]===]
 
 Test { [[
+function recursive (void)=>void f;
+var int a;
+function isr [20] do
+    a = 1;
+end
+escape 1;
+]],
+    gcc = 'error: implicit declaration of function ‘ceu_out_isr’',
+}
+
+Test { [[
+native do
+    int V = 0;
+    void ceu_out_isr (int v, void* f) {
+        V = V + 1;
+    }
+end
+var int a;
+do
+    function isr [20] do
+        a = 1;
+    end
+end             // TODO: forcing finalize out_isr(null)
+escape _V;
+]],
+    run = 2,
+}
+
+Test { [[
 native do
     ##define f(p)
 end
