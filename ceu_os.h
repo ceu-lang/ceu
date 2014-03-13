@@ -7,11 +7,11 @@
 #ifdef __AVR
 #include "Arduino.h"
 #define CEU_ISR
-#define ISR_ON()  interrupts()
-#define ISR_OFF() noInterrupts()
+#define CEU_ISR_ON()  interrupts()
+#define CEU_ISR_OFF() noInterrupts()
 #else
-#define ISR_ON()
-#define ISR_OFF()
+#define CEU_ISR_ON()
+#define CEU_ISR_OFF()
 #endif
 
 #ifdef CEU_OS

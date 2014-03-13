@@ -14,6 +14,18 @@ _PROPS = {
     has_ret     = false,
 }
 
+local NO_atomic = {
+    Finalize=true, Finally=true,
+    Host=true, Thread=true,
+    ParEver=true, ParOr=true, ParAnd=true,
+    AwaitS=true, AwaitExt=true, AwaitInt=true, AwaitN=true, AwaitT=true,
+    EmitInt=true, EmitExt=true,
+    Pause=true,
+    -- TODO:
+    Loop=true, Break=true, Escape=true,
+    Op2_call=true,
+}
+
 local NO_fun = {
     Finalize=true, Finally=true,
     Host=true, Thread=true,
@@ -90,24 +102,28 @@ end
 
 F = {
     Node_pre = function (me)
+        if NO_atomic[me.tag] then
+            ASR(not _AST.par(me,'Atomic'), me,
+                'not permitted inside `atomic´')
+        end
         if NO_fun[me.tag] then
-            ASR(not _AST.iter'Dcl_fun'(), me,
+            ASR(not _AST.par(me,'Dcl_fun'), me,
                 'not permitted inside `function´')
         end
         if NO_fin[me.tag] then
-            ASR(not _AST.iter'Finally'(), me,
+            ASR(not _AST.par(me,'Finally'), me,
                 'not permitted inside `finalize´')
         end
         if NO_async[me.tag] then
-            ASR(not _AST.iter'Async'(), me,
+            ASR(not _AST.par(me,'Async'), me,
                     'not permitted inside `async´')
         end
         if NO_thread[me.tag] then
-            ASR(not _AST.iter'Thread'(), me,
+            ASR(not _AST.par(me,'Thread'), me,
                     'not permitted inside `thread´')
         end
         if NO_constr[me.tag] then
-            ASR(not _AST.iter'Dcl_constr'(), me,
+            ASR(not _AST.par(me,'Dcl_constr'), me,
                     'not permitted inside a constructor')
         end
     end,

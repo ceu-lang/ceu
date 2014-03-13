@@ -413,7 +413,7 @@ F = {
                     elseif var.pre == 'event' then
                         _ENV.ifcs.evts[var.ifc_id] = #_ENV.ifcs.evts
                         _ENV.ifcs.evts[#_ENV.ifcs.evts+1] = var.ifc_id
-                    else -- 'function'
+                    elseif var.pre == 'function' then
                         _ENV.ifcs.funs[var.ifc_id] = #_ENV.ifcs.funs
                         _ENV.ifcs.funs[#_ENV.ifcs.funs+1] = var.ifc_id
                     end
@@ -962,9 +962,10 @@ F = {
 
     Nat = function (me)
         local id = unpack(me)
-        local c = _ENV.c[id]
-        ASR((not c) or c.tag~='type', me,
+        local c = _ENV.c[id] or {}
+        ASR(c.tag~='type', me,
             'native variable/function "'..id..'" is not declared')
+        me.id   = id
         me.tp   = '_'
         me.lval = me
         me.ref  = me

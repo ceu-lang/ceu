@@ -37,6 +37,8 @@ F =
                 end
             elseif var.pre == 'function' then
                 var.val = 'CEU_'..cls.id..'_'..var.id
+            elseif var.pre == 'isr' then
+                var.val = 'CEU_'..cls.id..'_'..var.id
             end
         end
         if me.trl_orgs then

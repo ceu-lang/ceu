@@ -68,7 +68,7 @@ F = {
                             and (not me.isBounded)
         WRN(not isTight, me, 'tight loop')
         _TIGHT = _TIGHT or isTight
-        me.tl_blocks = (body.tl_awaits or body.tl_escapes) and me.isBounded~='var'
+        me.tl_blocks = me.isBounded or (body.tl_awaits or body.tl_escapes)
 
         local dcl = _AST.iter'Dcl_fun'()
         if dcl and isTight then

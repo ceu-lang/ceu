@@ -104,7 +104,9 @@ KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'native'
      + 'thread'   + 'sync'
 -- functions
      + 'function' + 'call' + 'return' + 'recursive' + 'call/rec'
-     + 'hold' + 'isr'
+     + 'hold'
+-- isrs
+     + 'isr' + 'atomic'
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
@@ -148,7 +150,7 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
              + EM'statement (usually a missing `var´ or C prefix `_´)'
 
     , __StmtB = V'Do'    + V'Host'
-             + V'Async' + V'_Thread' + V'Sync'
+             + V'Async' + V'_Thread' + V'Sync' + V'Atomic'
              + V'ParOr' + V'ParAnd'
              + V'If'    + V'_Loop'   + V'_Every'  + V'_Iter'
              + V'_Pause'
@@ -205,7 +207,8 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     --, Import = K'import' * ( C( (P(1)-m.S'\t\n\r ;')^1 )
                              --+ EM'module' ) *S
 
-    , Sync    = K'sync'  * V'__Do'
+    , Atomic  = K'atomic' * V'__Do'
+    , Sync    = K'sync'   * V'__Do'
     , _Thread  = K'async' * K'thread'    * EV'VarList' * V'__Do'
     , Async   = K'async' * (-P'thread') * EV'VarList' * V'__Do'
     , VarList = ( K'(' * EV'Var' * (EK',' * EV'Var')^0 * EK')' )^-1

@@ -233,7 +233,7 @@ F = {
                             blk,
                             nxt_i))
         loop.blk = blk      -- continue
-        loop.isBounded = (_j.tag=='NUMBER' and 'const') or 'var'
+        loop.isBounded = (_j.tag=='NUMBER' and 'const')
 
         return node('Block', me.ln,
                 node('Stmts', me.ln,
@@ -358,7 +358,7 @@ F = {
         -- ISR: include "ceu_out_isr(id)"
         if isr == 'isr' then
             -- convert to 'function'
-                me[1] = 'function'
+                --me[1] = 'function'
                 me[2] = rec
                 me[3] = node('TupleType', me.ln, {false,'void',false})
                 me[4] = 'void'

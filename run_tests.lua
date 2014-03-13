@@ -54,6 +54,11 @@ Test = function (t)
     dofile 'tp.lua'
 
     if not check('lines')    then return end
+    local _WRN = WRN
+    if (not t.wrn) and (not t._ana) then
+        WRN = ASR
+    end
+
     if not check('parser')   then return end
     if not check('ast')      then return end
     --DBG'======= AST'
@@ -65,11 +70,12 @@ Test = function (t)
     --DBG'======= TOPS'
     --_AST.dump(_AST.root)
     if not check('env')      then return end
+    if not check('isr')      then return end
     if not check('fin')      then return end
     if not check('tight')    then return end
     --dofile 'awaits.lua'
     if not check('props')    then return end
-    dofile 'ana.lua'
+    if not check('ana')      then return end
     dofile 'acc.lua'
 
     if not check('trails')   then return end
@@ -81,6 +87,10 @@ Test = function (t)
     --DBG'======= VAL'
     --_AST.dump(_AST.root)
     if not check('code')     then return end
+
+    if (not t.wrn) and (not t._ana) then
+        WRN = _WRN
+    end
 
     --STATS.mem     = STATS.mem     + _AST.root.mem.max
     STATS.trails  = STATS.trails  + _AST.root.trails_n
@@ -95,8 +105,8 @@ Test = function (t)
         assert(T.tot==_MEM.max, 'mem '.._MEM.max)
     end
 
-    assert(_TIGHT and T.loop or
-           not (_TIGHT or T.loop))
+    assert(t._ana or (_TIGHT and T.loop) or
+                     (not (_TIGHT or T.loop)))
 
     -- ANALYSIS
     --_AST.dump(_AST.root)
@@ -109,16 +119,16 @@ Test = function (t)
 if k ~= 'excpt' then
 if k ~= 'abrt' then
 if k ~= 'unreachs' then
-            assert( v==_defs[k] and (T.ana==nil or T.ana[k]==nil)
-                    or (T.ana and T.ana[k]==v),
-                    --or (T.ana and T.ana.acc==_ANALYSIS.acc),
+            assert( v==_defs[k] and (T._ana==nil or T._ana[k]==nil)
+                    or (T._ana and T._ana[k]==v),
+                    --or (T._ana and T._ana.acc==_ANALYSIS.acc),
                             k..' = '..tostring(v))
 end
 end
 end
         end
-        if T.ana then
-            for k, v in pairs(T.ana) do
+        if T._ana then
+            for k, v in pairs(T._ana) do
 if k ~= 'excpt' then
 if k ~= 'abrt' then
 if k ~= 'unreachs' then
@@ -136,7 +146,7 @@ end
     -- RUN
 
     if not (T.run or T.gcc) then
-        assert(T.loop or T.ana, 'missing run value')
+        assert(T.loop or T._ana, 'missing run value')
         return
     end
 
@@ -248,16 +258,15 @@ STATS = {
 -- w/ threads
 --[[
 STATS = {
-    count   = 1602,
+    count   = 1647,
     mem     = 0,
-    trails  = 3060,
-    bytes   = 14582135,
+    trails  = 3071,
+    bytes   = 14662197,
 }
 
-
-real	6m34.923s
-user	6m8.416s
-sys	0m54.776s
+real	6m45.341s
+user	6m34.108s
+sys	0m54.840s
 ]]
 
 os.execute('rm -f /tmp/_ceu_*')

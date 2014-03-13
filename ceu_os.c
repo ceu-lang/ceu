@@ -536,7 +536,7 @@ void* CEU_SYS_VEC[CEU_SYS_MAX] __attribute__((used)) = {
 
 tceu_queue* ceu_sys_queue_get (void) {
     tceu_queue* ret;
-    ISR_OFF();
+    CEU_ISR_OFF();
     if (QUEUE_tot == 0) {
         ret = NULL;
     } else {
@@ -545,13 +545,13 @@ tceu_queue* ceu_sys_queue_get (void) {
 #endif
         ret = (tceu_queue*) &QUEUE[QUEUE_get];
     }
-    ISR_ON();
+    CEU_ISR_ON();
     return ret;
 }
 
 int ceu_sys_queue_put (tceu_app* app, tceu_nevt evt, tceu_evtp param,
                        int sz, byte* buf) {
-    ISR_OFF();
+    CEU_ISR_OFF();
 
     int n = sizeof(tceu_queue) + sz;
 
@@ -588,16 +588,16 @@ int ceu_sys_queue_put (tceu_app* app, tceu_nevt evt, tceu_evtp param,
     QUEUE_put += n;
     QUEUE_tot += n;
 
-    ISR_ON();
+    CEU_ISR_ON();
     return 1;
 }
 
 void ceu_sys_queue_rem (void) {
-    ISR_OFF();
+    CEU_ISR_OFF();
     tceu_queue* qu = (tceu_queue*) &QUEUE[QUEUE_get];
     QUEUE_tot -= sizeof(tceu_queue) + qu->sz;
     QUEUE_get += sizeof(tceu_queue) + qu->sz;
-    ISR_ON();
+    CEU_ISR_ON();
 }
 
 /*****************************************************************************/
@@ -661,7 +661,7 @@ static void __ceu_gc (void)
 
     /* remove pending events */
     {
-        ISR_OFF();
+        CEU_ISR_OFF();
         int i = 0;
         while (i < QUEUE_tot) {
             tceu_queue* qu = (tceu_queue*) &QUEUE[QUEUE_get+i];
@@ -670,7 +670,7 @@ static void __ceu_gc (void)
             }
             i += sizeof(tceu_queue) + qu->sz;
         }
-        ISR_ON();
+        CEU_ISR_ON();
     }
 
     /* remove broken links */
@@ -748,7 +748,7 @@ void ceu_init (void) {
     for (i=0; i<CEU_ISR_MAX; i++) {
         CEU_ISR_VEC[i].f = NULL;      /* TODO: is this required? (bss=0) */
     }
-    ISR_ON();       /* enable global interrupts to start */
+    CEU_ISR_ON();       /* enable global interrupts to start */
 #endif
 }
 
@@ -794,9 +794,9 @@ int ceu_scheduler (int(*dt)())
 
         {
             /* clear the current size (ignore events emitted here) */
-            ISR_OFF();
+            CEU_ISR_OFF();
             int tot = QUEUE_tot;
-            ISR_ON();
+            CEU_ISR_ON();
             while (tot > 0)
             {
                 tceu_queue* qu = ceu_sys_queue_get();
