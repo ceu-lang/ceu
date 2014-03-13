@@ -1298,9 +1298,9 @@ if (*(_ceu_p.st) == 3) {        /* 3=end */
     end,
 
     Atomic = function (me)
-        LINE(me, 'CEU_ISR_OFF();')
-        CONC(me)
         LINE(me, 'CEU_ISR_ON();')
+        CONC(me)
+        LINE(me, 'CEU_ISR_OFF();')
     end,
 }
 
