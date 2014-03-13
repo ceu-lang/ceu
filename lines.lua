@@ -85,7 +85,7 @@ if _OPTS.cpp or _OPTS.cpp_args then
 
     -- remove blank lines of #define's (because of "-dD")
     _OPTS.source = assert(io.open(fout)):read'*a'
-    _OPTS.source = string.gsub(_OPTS.source, '(#define[^\n]*)(\n)(\n)', '%1%3')
+    --_OPTS.source = string.gsub(_OPTS.source, '(#define[^\n]*)(\n)(\n)', '%1%3')
     os.remove(fout)
     --print(_OPTS.source)
 end
