@@ -10,6 +10,7 @@ typedef unsigned int  word;
 #endif
 typedef unsigned int  uint;
 typedef unsigned char byte;
+typedef unsigned char bool;
 
 typedef int64_t  s64;
 typedef int32_t  s32;

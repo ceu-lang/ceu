@@ -79,7 +79,7 @@ local EM = function (msg)
         end)
 end
 
-TYPES = P'void' + 'char' + 'byte'
+TYPES = P'void' + 'char' + 'byte' + 'bool' + 'word'
       + 'int' + 'uint'
       + 'u8' + 'u16' + 'u32' + 'u64'
       + 's8' + 's16' + 's32' + 's64'

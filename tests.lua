@@ -326,330 +326,6 @@ escape ret + _V;        // * reads after
 -------------------------------------------------------------------------------
 --]===]
 
-Test { [[
-#define OI
-
-a = 1;
-]],
-    env = 'line 3 : variable/event "a" is not declared',
-}
-
-Test { [[
-atomic do
-    await 1s;
-end
-escape 1;
-]],
-    props = 'line 2 : not permitted inside `atomic´',
-}
-
-Test { [[
-atomic do
-    par/or do
-        nothing;
-    with
-        nothing;
-    end
-end
-escape 1;
-]],
-    props = 'line 2 : not permitted inside `atomic´',
-}
-
-Test { [[
-output void O;
-atomic do
-    emit O;
-end
-escape 1;
-]],
-    props = 'line 3 : not permitted inside `atomic´',
-}
-
-Test { [[
-output int O;
-atomic do
-    _f();
-end
-escape 1;
-]],
-    props = 'line 3 : not permitted inside `atomic´',
-}
-
-Test { [[
-output int O;
-function (void)=>void f;
-atomic do
-    f();
-end
-escape 1;
-]],
-    props = 'line 4 : not permitted inside `atomic´',
-}
-
-Test { [[
-output int O;
-atomic do
-    loop do
-    end
-end
-escape 1;
-]],
-    props = 'line 3 : not permitted inside `atomic´',
-    wrn = true,
-}
-
-Test { [[
-loop do
-    atomic do
-        break;
-    end
-end
-escape 1;
-]],
-    props = 'line 3 : not permitted inside `atomic´',
-}
-
-Test { [[
-function recursive (void)=>void f;
-var int a;
-function isr [20] do
-    a = 1;
-end
-escape 1;
-]],
-    gcc = 'error: implicit declaration of function ‘ceu_out_isr’',
-}
-
-Test { [[
-native do
-    int V = 0;
-    void ceu_out_isr (int v, void* f) {
-        V = V + 1;
-    }
-end
-var int a;
-do
-    function isr [20] do
-        a = 1;
-    end
-end             // TODO: forcing finalize out_isr(null)
-escape _V;
-]],
-    run = 2,
-}
-
-Test { [[
-var int[10] v;
-v[0] = 2;
-function isr [20] do
-    v[0] = 1;
-end
-escape v[0];
-]],
-    isr = 'line 2 : access to "v" must be atomic',
-}
-
-Test { [[
-var int[10] v;
-atomic do
-    v[0] = 2;
-end
-function isr [20] do
-    v[0] = 1;
-end
-atomic do
-    escape v[0];
-end
-]],
-    props = 'line 9 : not permitted inside `atomic´',
-}
-
-Test { [[
-native do
-    void ceu_out_isr (int v, void* f) {
-    }
-end
-var int[10] v;
-atomic do
-    v[0] = 2;
-end
-function isr [20] do
-    v[0] = 1;
-end
-var int ret;
-atomic do
-    ret = v[0];
-end
-escape ret;
-]],
-    run = 2,
-}
-
-Test { [[
-var int v = 2;
-function isr [20] do
-    v = 1;
-end
-escape v;
-]],
-    isr = 'line 1 : access to "v" must be atomic',
-}
-
-Test { [[
-var int* v;
-function isr [20] do
-    *v = 1;
-end
-escape 1;
-]],
-    isr = 'line 3 : pointer access breaks the static check for `atomic´ sections',
-}
-
-Test { [[
-function (void)=>int f do
-    return 2;
-end
-var int v = f();
-function isr [20] do
-    f();
-end
-escape v;
-]],
-    isr = 'line 6 : call breaks the static check for `atomic´ sections',
-}
-
-Test { [[
-function (void)=>int f do
-    return 2;
-end
-var int v = f();
-function isr [20] do
-    f();
-end
-escape v;
-]],
-    wrn = true,
-    isr = 'line 4 : access to "f" must be atomic',
-}
-
-Test { [[
-var int v = _f();
-function isr [20] do
-    _f();
-end
-escape v;
-]],
-    wrn = true,
-    isr = 'line 1 : access to "_f" must be atomic',
-}
-
-Test { [[
-native pure _f();
-native do
-    int f (void) {
-        return 2;
-    }
-    void ceu_out_isr (int v, void* f) {
-    }
-end
-var int v = _f();
-function isr [20] do
-    _f();
-end
-escape v;
-]],
-    run = 2,
-}
-
-Test { [[
-var int v;
-v = 2;
-function isr [20] do
-    v = 1;
-end
-escape v;
-]],
-    isr = 'line 2 : access to "v" must be atomic',
-}
-
-Test { [[
-var int v;
-atomic do
-    v = 2;
-end
-function isr [20] do
-    this.v = 1;
-end
-escape v;
-]],
-    isr = 'line 8 : access to "v" must be atomic',
-}
-
-Test { [[
-native do
-    void ceu_out_isr (int v, void* f) {
-    }
-end
-var int v;
-atomic do
-    v = 2;
-end
-function isr [20] do
-    this.v = 1;
-    v = 1;
-end
-var int ret;
-atomic do
-    ret = v;
-end
-escape ret;
-]],
-    run = 2,
-}
-
-Test { [[
-var int v;
-atomic do
-    v = 2;
-end
-function isr [20] do
-    this.v = 1;
-end
-escape v;
-]],
-    isr = 'line 8 : access to "v" must be atomic',
-}
-
-Test { [[
-var int v;
-var int* p;
-atomic do
-    v = 2;
-    p = &v;
-end
-function isr [20] do
-    this.v = 1;
-end
-escape 1;
-]],
-    isr = 'line 5 : reference access breaks the static check for `atomic´ sections',
-}
-
-Test { [[
-var int[10] v;
-var int* p;
-atomic do
-    p = &v;
-end
-function isr [20] do
-    this.v[1] = 1;
-end
-escape 1;
-]],
-    env = 'line 4 : invalid operand to unary "&"',
-}
-
 --do return end
 
 -- OK: well tested
@@ -878,6 +554,33 @@ input void A;
 var int a? = 1;
 a_ = 2;
 escape a?;
+]],
+    run = 2,
+}
+
+Test { [[
+input void A;
+var bool a? = 1;
+a_ = 2;
+escape a?;
+]],
+    run = 2,
+}
+
+Test { [[
+input void A;
+var word a = 1;
+a = 2;
+escape a;
+]],
+    run = 2,
+}
+
+Test { [[
+input void A;
+var byte a = 1;
+a = 2;
+escape a;
 ]],
     run = 2,
 }
@@ -18547,6 +18250,14 @@ end
     -- CPP / DEFINE / PREPROCESSOR
 
 Test { [[
+#define OI
+
+a = 1;
+]],
+    env = 'line 3 : variable/event "a" is not declared',
+}
+
+Test { [[
 native do
     #define N 1
 end
@@ -28084,6 +27795,324 @@ end
 escape call/rec f(5);
 ]],
     run = 120,
+}
+
+-- ISR / ATOMIC
+
+Test { [[
+atomic do
+    await 1s;
+end
+escape 1;
+]],
+    props = 'line 2 : not permitted inside `atomic´',
+}
+
+Test { [[
+atomic do
+    par/or do
+        nothing;
+    with
+        nothing;
+    end
+end
+escape 1;
+]],
+    props = 'line 2 : not permitted inside `atomic´',
+}
+
+Test { [[
+output void O;
+atomic do
+    emit O;
+end
+escape 1;
+]],
+    props = 'line 3 : not permitted inside `atomic´',
+}
+
+Test { [[
+output int O;
+atomic do
+    _f();
+end
+escape 1;
+]],
+    props = 'line 3 : not permitted inside `atomic´',
+}
+
+Test { [[
+output int O;
+function (void)=>void f;
+atomic do
+    f();
+end
+escape 1;
+]],
+    props = 'line 4 : not permitted inside `atomic´',
+}
+
+Test { [[
+output int O;
+atomic do
+    loop do
+    end
+end
+escape 1;
+]],
+    props = 'line 3 : not permitted inside `atomic´',
+    wrn = true,
+}
+
+Test { [[
+loop do
+    atomic do
+        break;
+    end
+end
+escape 1;
+]],
+    props = 'line 3 : not permitted inside `atomic´',
+}
+
+Test { [[
+function recursive (void)=>void f;
+var int a;
+function isr [20] do
+    a = 1;
+end
+escape 1;
+]],
+    gcc = 'error: implicit declaration of function ‘ceu_out_isr’',
+}
+
+Test { [[
+native do
+    int V = 0;
+    void ceu_out_isr (int v, void* f) {
+        V = V + 1;
+    }
+end
+var int a;
+do
+    function isr [20] do
+        a = 1;
+    end
+end             // TODO: forcing finalize out_isr(null)
+escape _V;
+]],
+    run = 2,
+}
+
+Test { [[
+var int[10] v;
+v[0] = 2;
+function isr [20] do
+    v[0] = 1;
+end
+escape v[0];
+]],
+    isr = 'line 2 : access to "v" must be atomic',
+}
+
+Test { [[
+var int[10] v;
+atomic do
+    v[0] = 2;
+end
+function isr [20] do
+    v[0] = 1;
+end
+atomic do
+    escape v[0];
+end
+]],
+    props = 'line 9 : not permitted inside `atomic´',
+}
+
+Test { [[
+native do
+    void ceu_out_isr (int v, void* f) {
+    }
+end
+var int[10] v;
+atomic do
+    v[0] = 2;
+end
+function isr [20] do
+    v[0] = 1;
+end
+var int ret;
+atomic do
+    ret = v[0];
+end
+escape ret;
+]],
+    run = 2,
+}
+
+Test { [[
+var int v = 2;
+function isr [20] do
+    v = 1;
+end
+escape v;
+]],
+    isr = 'line 1 : access to "v" must be atomic',
+}
+
+Test { [[
+var int* v;
+function isr [20] do
+    *v = 1;
+end
+escape 1;
+]],
+    isr = 'line 3 : pointer access breaks the static check for `atomic´ sections',
+}
+
+Test { [[
+function (void)=>int f do
+    return 2;
+end
+var int v = f();
+function isr [20] do
+    f();
+end
+escape v;
+]],
+    isr = 'line 6 : call breaks the static check for `atomic´ sections',
+}
+
+Test { [[
+function (void)=>int f do
+    return 2;
+end
+var int v = f();
+function isr [20] do
+    f();
+end
+escape v;
+]],
+    wrn = true,
+    isr = 'line 4 : access to "f" must be atomic',
+}
+
+Test { [[
+var int v = _f();
+function isr [20] do
+    _f();
+end
+escape v;
+]],
+    wrn = true,
+    isr = 'line 1 : access to "_f" must be atomic',
+}
+
+Test { [[
+native pure _f();
+native do
+    int f (void) {
+        return 2;
+    }
+    void ceu_out_isr (int v, void* f) {
+    }
+end
+var int v = _f();
+function isr [20] do
+    _f();
+end
+escape v;
+]],
+    run = 2,
+}
+
+Test { [[
+var int v;
+v = 2;
+function isr [20] do
+    v = 1;
+end
+escape v;
+]],
+    isr = 'line 2 : access to "v" must be atomic',
+}
+
+Test { [[
+var int v;
+atomic do
+    v = 2;
+end
+function isr [20] do
+    this.v = 1;
+end
+escape v;
+]],
+    isr = 'line 8 : access to "v" must be atomic',
+}
+
+Test { [[
+native do
+    void ceu_out_isr (int v, void* f) {
+    }
+end
+var int v;
+atomic do
+    v = 2;
+end
+function isr [20] do
+    this.v = 1;
+    v = 1;
+end
+var int ret;
+atomic do
+    ret = v;
+end
+escape ret;
+]],
+    run = 2,
+}
+
+Test { [[
+var int v;
+atomic do
+    v = 2;
+end
+function isr [20] do
+    this.v = 1;
+end
+escape v;
+]],
+    isr = 'line 8 : access to "v" must be atomic',
+}
+
+Test { [[
+var int v;
+var int* p;
+atomic do
+    v = 2;
+    p = &v;
+end
+function isr [20] do
+    this.v = 1;
+end
+escape 1;
+]],
+    isr = 'line 5 : reference access breaks the static check for `atomic´ sections',
+}
+
+Test { [[
+var int[10] v;
+var int* p;
+atomic do
+    p = &v;
+end
+function isr [20] do
+    this.v[1] = 1;
+end
+escape 1;
+]],
+    env = 'line 4 : invalid operand to unary "&"',
 }
 
 -- RET_VAL / RET_END
