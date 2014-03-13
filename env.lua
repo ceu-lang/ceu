@@ -558,7 +558,7 @@ F = {
 
     Dcl_int = function (me)
         local pre, tp, id = unpack(me)
-        ASR(tp=='void' or tp=='int' or _TP.deref(tp) or _TP.isTuple(tp),
+        ASR(tp=='void' or _TP.isNumeric(tp) or _TP.deref(tp) or _TP.isTuple(tp),
                 me, 'invalid event type')
         local _
         _, me.var = newint(me, false, _AST.iter'Block'(), pre, tp, id)
@@ -765,7 +765,7 @@ F = {
         me.blk = ASR(_AST.iter'Do'(), me,
                         '`spawn´ requires enclosing `do ... end´')
         me.blk = me.blk[1]
-        me.tp = 'int'       -- 0/1
+        me.tp = 'bool'       -- 0/1
     end,
 
     Dcl_constr_pre = function (me)

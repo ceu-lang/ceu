@@ -519,6 +519,52 @@ Test { [[var int a; a=1 ; ]],
     }
 }
 
+-- TYPE / BOOL
+
+Test { [[
+input void A;
+var bool a? = 1;
+a_ = 2;
+escape a?;
+]],
+    run = 2,
+}
+
+Test { [[
+var bool v? = true;
+v? = false;
+if v? then
+    escape 1;
+else
+    escape 2;
+end
+]],
+    run = 2,
+}
+
+Test { [[
+var bool v? = false;
+v? = true;
+if v? then
+    escape 1;
+else
+    escape 2;
+end
+]],
+    run = 1,
+}
+
+Test { [[
+event bool a;
+pause/if a do
+end
+escape 1;
+]],
+    run = 1,
+}
+
+-- TYPE / NATIVE
+
 Test { [[
 native _abc = 0;
 event void a;
@@ -552,15 +598,6 @@ var _abc a;
 Test { [[
 input void A;
 var int a? = 1;
-a_ = 2;
-escape a?;
-]],
-    run = 2,
-}
-
-Test { [[
-input void A;
-var bool a? = 1;
 a_ = 2;
 escape a?;
 ]],
@@ -18500,17 +18537,8 @@ escape 0;
 }
 
 Test { [[
-event int a;
-pause/if a do
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
 input int A, B;
-event int a;
+event bool a;
 par/or do
     loop do
         var int v = await A;
@@ -18570,7 +18598,7 @@ escape ret;
 
 Test { [[
 input int A, B, Z;
-event int a, b;
+event bool a, b;
 var int ret = 0;
 par/or do
     loop do
@@ -18628,7 +18656,7 @@ escape ret;
 Test { [[
 input int  A;
 input void Z;
-event int a;
+event bool a;
 var int ret = 0;
 par/or do
     emit a => 1;
@@ -18683,7 +18711,7 @@ escape ret;
 Test { [[
 input int  A,B,F;
 input void Z;
-event int a;
+event bool a;
 var int ret = 50;
 par/or do
     loop do
@@ -22441,7 +22469,7 @@ do
 end
 do
     loop i, 1000 do
-        var int ok = spawn [1] T;
+        var bool ok = spawn [1] T;
         if not ok then
             escape 0;
         end
@@ -22486,7 +22514,7 @@ do
 end
 do
     loop i, 1000 do
-        var int ok = spawn [1] T;
+        var bool ok = spawn [1] T;
         if not ok then
             escape 10;
         end
@@ -22951,7 +22979,7 @@ end
 
 Test { [[
 class T with do end
-var u8 ok;
+var bool ok;
 do
     ok = spawn T;
 end
@@ -22964,7 +22992,7 @@ Test { [[
 class T with do
     await FOREVER;
 end
-var u8 ok;
+var bool ok;
 native _assert();
 do
     loop i, 5 do
@@ -22981,7 +23009,7 @@ Test { [[
 class T with do
     await FOREVER;
 end
-var u8 ok;
+var bool ok;
 native _assert();
 do
     loop i, 100 do

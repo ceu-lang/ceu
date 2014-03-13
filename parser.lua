@@ -107,6 +107,8 @@ KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'native'
      + 'hold'
 -- isrs
      + 'isr' + 'atomic'
+-- bool
+     + 'true' + 'false'
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
@@ -292,6 +294,8 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , NUMBER = CK( #m.R'09' * (m.R'09'+m.S'xX'+m.R'AF'+m.R'af'+'.'
                                       +(m.S'Ee'*'-')+m.S'Ee')^1 )
             + CK( "'" * (P(1)-"'")^0 * "'" )
+            + K'false' / function() return 0 end
+            + K'true'  / function() return 1 end
 
     , NULL = CK'null'
 
