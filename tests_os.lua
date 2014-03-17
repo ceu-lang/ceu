@@ -1,7 +1,5 @@
 _VALGRIND = true
 
--- TODO: elminate all "await 20ms"
-
 --[===[
 --]===]
 
@@ -192,7 +190,7 @@ escape a;
 }
 
 Test {
-    [[output int A; emit A=>2;         await 20ms; escape 1;]],
+    [[output int A; emit A=>2; escape 1;]],
 	[[input  int A; var int a=await A; escape a;]],
 	[[input  int A; var int a=await A; escape a;]],
 	lnks = {
@@ -203,7 +201,7 @@ Test {
 }
 
 Test {
-    [[output int A; emit A=>2; await 20ms; escape 1;]],
+    [[output int A; emit A=>2; escape 1;]],
 	[[
 input int A, B;
 var int ret = 0;
@@ -318,7 +316,7 @@ escape 1;
 Test {
     [[
 output (int)=>int A;
-await 10ms;
+await OS_START;
 var int ret = call A=>2;
 escape ret;
 ]],
@@ -326,7 +324,6 @@ escape ret;
 input (int v)=>int A do
     return v+1;
 end
-await 10ms;
 escape 1;
 ]],
 	lnks = {
@@ -396,7 +393,7 @@ output (int)=>int O;
 input (int v)=>int I do
     return v + 1;
 end
-await 10ms;
+await OS_START;
 var int ret = call O=>2;
 escape ret;
 ]],
@@ -410,7 +407,6 @@ input (int v)=>int I do
     return x + 1;
 end
 await OS_START;
-await 10ms;
 escape v;
 ]],
 	lnks = {
@@ -430,7 +426,7 @@ var int v = 0;
 input (void)=>void A do
     v = 1;
 end
-await 1s;
+await OS_START;
 escape v;
 ]],
 [[
@@ -439,8 +435,26 @@ await OS_START;
 call A;
 escape 1;
 ]],
-    run = 2,
+    run = 1,
     lnks = { { 2,1, 1,243 } },
+}
+Test {
+[[
+output (void)=>void A;
+await OS_START;
+call A;
+escape 1;
+]],
+[[
+var int v = 0;
+input (void)=>void A do
+    v = 1;
+end
+await OS_START;
+escape v;
+]],
+    run = 2,
+    lnks = { { 1,1, 2,243 } },
 }
 Test {
 [[
@@ -572,7 +586,7 @@ with
 end
 escape ret;
 ]],
-    run = 10,
+    run = 20,
     lnks = { { 1,1, 2,243 } },
 }
 
@@ -620,9 +634,7 @@ loop i, 100 do
     emit O => (a,b);
     ret = ret + a + b;
 end
-await 50ms;
 emit F;
-await 50ms;
 escape ret;
 ]],
 [[
@@ -659,9 +671,8 @@ loop i, 10000 do
     emit O => (a,b);
     ret = ret + 1;
 end
-await 20ms;
+await 30ms;     // queue is full, <emit F> would fail
 emit F=>0;
-await 20ms;
 escape ret;
 ]],
 [[
@@ -701,7 +712,6 @@ loop i, 10000 do
     async do end
 end
 emit F=>0;
-await 20ms;
 escape ret;
 ]],
 [[
@@ -736,7 +746,6 @@ var int ret = 0;
         emit O => (a,b);
         ret = ret + a + b;
     end
-await 20ms;
 escape ret;
 ]],
 [[
@@ -777,7 +786,6 @@ var int ret = 0;
         emit O => (a,b);
         ret = ret + a + b;
     end
-    await 20ms;
 escape ret;
 ]],
 [[
@@ -820,12 +828,11 @@ var int ret = 0;
 par/or do
     every 1s do
         var int a=1, b=2;
-        emit O => (a,b);
+        emit O => (a,b);    // last is lost by app2
         ret = ret + a + b;
     end
 with
     await 10min;
-    await 20ms;
 end
 escape ret;
 ]],
@@ -841,11 +848,10 @@ par/or do
     end
 with
     await 10min;
-    await 20ms;
 end
 escape ret;
 ]],
-    run = 3600,
+    run = 3597,
     lnks = { { 1,1, 2,243 } },
 }
 
@@ -984,78 +990,10 @@ await OS_START;
 await 20s;
 output void F;
 emit F;
-await 20ms;
 escape 10;
 ]],
     lnks = {
 		{ 2, 1, 1, 243 },
 	},
     run = 29,
-}
-
-do return end
-
--- need to know the addr of the other APP
-
-Test {
-	[[
-output int A;
-emit A=>2;
-emit A=>2;
-emit A=>2;
-await 1s;
-_ceu_sys_stop(&__ceu_app_2);
-emit A=>2;
-await 1s;
-escape 1;
-]],
-    [[
-input int A;
-var int a;
-var int ret = 0;
-par/or do
-    every a = A do
-        ret = ret + a;
-    end
-with
-    await OS_STOP;
-    ret = ret + 10;
-end
-escape ret;
-]],
-	lnks = {
-		{ 1, 1, 2, 243 },
-	},
-    run = 17,
-}
-
-Test {
-	[[
-native nohold _ceu_sys_stop();
-native do
-    extern tceu_app _ceu_app_2;
-end
-output int A;
-emit A=>2;
-emit A=>2;
-emit A=>2;
-await 1s;
-_ceu_sys_stop(&__ceu_app_2);
-emit A=>2;
-await 1s;
-escape 1;
-]],
-    [[
-input int A;
-var int a;
-var int ret = 0;
-every a = A do
-    ret = ret + a;
-end
-escape ret;
-]],
-	lnks = {
-		{ 1, 1, 2, 243 },
-	},
-    run = 2,
 }

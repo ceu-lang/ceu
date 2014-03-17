@@ -48,7 +48,7 @@ int main (void)
         FILE* f = fopen("_ceu_app_]]..i..[[.o", "r");
         assert(f != NULL);
         fseek(f, 0, SEEK_END);
-        int sz = ftell(f) - 0x238;
+        int sz = ftell(f) - 0x238;  /* CEU_EXPORT offset */
         f_]]..i..[[ = malloc(sz);
         fseek(f, 0x238, SEEK_SET);
         fread(f_]]..i..[[, 1, sz, f);

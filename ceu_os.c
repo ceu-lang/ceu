@@ -754,7 +754,13 @@ void ceu_init (void) {
 
 int ceu_scheduler (int(*dt)())
 {
-    __ceu_gc();     /* apps already terminated from MAIN() */
+    /*
+     * Intercalate DT->WCLOCK->ASYNC->QUEUE->...
+     * QUEUE last to separate app->init() from OS_START.
+     * QUEUE handles one event at a time to intercalate with WCLOCK.
+     * __ceu_gc() only if QUEUE is emtpy: has to keep data from events 
+     * accessible.
+     */
 
 #ifdef CEU_RET
     while (ok > 0)
@@ -762,9 +768,20 @@ int ceu_scheduler (int(*dt)())
     while (1)
 #endif
     {
-        /* DT */
+#if defined(CEU_WCLOCKS) || defined(CEU_IN_OS_DT)
         int _dt = dt();
-        ceu_sys_emit(NULL, CEU_IN_OS_DT, (tceu_evtp)_dt, 0, NULL);
+#endif
+
+        /* DT */
+#ifdef CEU_IN_OS_DT
+        {
+            tceu_app* app = CEU_APPS;
+            while (app) {
+                ceu_sys_go(app, CEU_IN_OS_DT, (tceu_evtp)_dt);
+                app = app->nxt;
+            }
+        }
+#endif	/* CEU_IN_OS_DT */
 
         /* WCLOCK */
 #ifdef CEU_WCLOCKS
@@ -774,7 +791,6 @@ int ceu_scheduler (int(*dt)())
                 ceu_sys_go(app, CEU_IN__WCLOCK, (tceu_evtp)_dt);
                 app = app->nxt;
             }
-            __ceu_gc();
         }
 #endif	/* CEU_WCLOCKS */
 
@@ -786,18 +802,16 @@ int ceu_scheduler (int(*dt)())
                 ceu_sys_go(app, CEU_IN__ASYNC, (tceu_evtp)NULL);
                 app = app->nxt;
             }
-            __ceu_gc();
         }
 #endif	/* CEU_ASYNCS */
 
         /* EVENTS */
-
         {
             /* clear the current size (ignore events emitted here) */
             CEU_ISR_OFF();
             int tot = QUEUE_tot;
             CEU_ISR_ON();
-            while (tot > 0)
+            if (tot > 0)
             {
                 tceu_queue* qu = ceu_sys_queue_get();
                 tot -= sizeof(tceu_queue) + qu->sz;
@@ -828,7 +842,10 @@ int ceu_scheduler (int(*dt)())
 
                 ceu_sys_queue_rem();
             }
-            __ceu_gc();
+            else
+            {
+                __ceu_gc();     /* only when queue is empty */
+            }
         }
     }
 

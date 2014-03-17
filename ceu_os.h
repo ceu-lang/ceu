@@ -57,7 +57,7 @@
     typedef s8 tceu_nlbl;
 
     #define ceu_out_malloc(size) \
-        ((__typeof__(ceu_sys_malloc)*)((_ceu_app)->sys_vec[CEU_SYS_MALLOC]))(_ceu_app,size)
+        ((__typeof__(ceu_sys_malloc)*)((_ceu_app)->sys_vec[CEU_SYS_MALLOC]))(size)
     #define ceu_out_free(ptr) \
         ((__typeof__(ceu_sys_free)*)((_ceu_app)->sys_vec[CEU_SYS_FREE]))(ptr)
 
