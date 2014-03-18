@@ -136,7 +136,7 @@ Test = function (T)
               --'-Wl,--section-start=.eh_frame_hdr=0x4007b0 '.. -- TODO: 0x26
               --'-Wl,--section-start=.gnuhash=0x4007f4 '.. -- TODO: 0x26
               '-Wl,-uCEU_EXPORT '..
-              ' -o '..name..'.o '..name..'.c '..
+              ' -o '..name..'.o ceu_pool.c '..name..'.c '..
               LIBC..'/lib/libc.a '..
               ''
 

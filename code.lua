@@ -360,9 +360,9 @@ end;
                 _ceu_go->stki+1,    /* run now */
                 _ceu_go->org, ]]..t.par_trl_idx..[[);
 
-#ifdef CEU_NEWS
     ]]..org..[[->isDyn  = ]]..t.isDyn..[[;
     ]]..org..[[->isSpw  = ]]..t.isSpw..[[;
+#ifdef CEU_NEWS
 #endif
 ]])
 
@@ -459,7 +459,7 @@ case ]]..me.lbls_cnt[i].id..[[:;
 ]])
         if pool then
             LINE(me, '__ceu_new->pool = &'..pool..';')
-        elseif _PROPS.has_news_pool then
+        elseif _PROPS.has_news_pool or _OPTS.os then
             LINE(me, '__ceu_new->pool = NULL;')
         end
         F._ORG(me, {
