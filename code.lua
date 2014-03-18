@@ -360,9 +360,9 @@ end;
                 _ceu_go->stki+1,    /* run now */
                 _ceu_go->org, ]]..t.par_trl_idx..[[);
 
+#ifdef CEU_NEWS
     ]]..org..[[->isDyn  = ]]..t.isDyn..[[;
     ]]..org..[[->isSpw  = ]]..t.isSpw..[[;
-#ifdef CEU_NEWS
 #endif
 ]])
 

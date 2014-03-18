@@ -54,7 +54,7 @@
     #define CEU_IN_OS_INTERRUPT 244
     #define CEU_IN              244
 
-    typedef s8 tceu_nlbl;
+    typedef s8 tceu_nlbl;   /* TODO: to small!! */
 
     #define ceu_out_malloc(size) \
         ((__typeof__(ceu_sys_malloc)*)((_ceu_app)->sys_vec[CEU_SYS_MALLOC]))(size)

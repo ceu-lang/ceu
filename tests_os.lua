@@ -3,95 +3,6 @@ _VALGRIND = true
 --[===[
 --]===]
 
-Test { [[
-input (int c)=>int WRITE do
-    return c + 1;
-end
-var byte b = 1;
-var int ret = call WRITE => b;
-escape ret;
-]],
-    run = 2,
-}
-
-Test { [[
-var char* a;
-a = "o";
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-native _char=1;
-var _char* a = "Abcd12" ;
-escape 1;
-]],
-    run = 1
-}
-Test { [[
-native pure _strlen1();
-native do
-    int strlen1 (char* str) {
-        int n = 0;
-        while (1) {
-            if (str[n] == '\0')
-                return n;
-            n++;
-        }
-    }
-end
-escape _strlen1("123");
-]],
-    run=3
-}
-Test { [[
-native pure _strlen();
-native do
-    ##include <string.h>
-end
-escape _strlen("123");
-]],
-    run=3
-}
-Test { [[
-native pure _strlen();
-native do
-    ##include <string.h>
-end
-escape _strlen("123\n");
-]],
-    run=4
-}
-Test { [[
-native nohold _strncpy(), _printf(), _strlen();
-native _char = 1;
-var _char[10] str;
-_strncpy(str, "123", 4);
-escape _strlen(str);
-]],
-    run = 3
-}
-
-Test { [[
-native nohold _strncpy(), _printf(), _strlen(), _strcpy();
-native _char = 1;
-var _char[6] a; _strcpy(a, "Hello");
-var _char[2] b; _strcpy(b, " ");
-var _char[7] c; _strcpy(c, "World!");
-var _char[30] d;
-
-var int len = 0;
-_strcpy(d,a);
-_strcpy(&d[_strlen(d)], b);
-_strcpy(&d[_strlen(d)], c);
-escape _strlen(d);
-]],
-    run = 12
-}
-
---do return end
-
 -- OK: well tested
 
 Test { [[escape(1);]],
@@ -997,3 +908,820 @@ escape 10;
 	},
     run = 29,
 }
+
+Test { [[
+input (int c)=>int WRITE do
+    return c + 1;
+end
+var byte b = 1;
+var int ret = call WRITE => b;
+escape ret;
+]],
+    run = 2,
+}
+
+-- STRINGS / STDLIB
+
+Test { [[
+var char* a;
+a = "o";
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native _char=1;
+var _char* a = "Abcd12" ;
+escape 1;
+]],
+    run = 1
+}
+Test { [[
+native pure _strlen1();
+native do
+    int strlen1 (char* str) {
+        int n = 0;
+        while (1) {
+            if (str[n] == '\0')
+                return n;
+            n++;
+        }
+    }
+end
+escape _strlen1("123");
+]],
+    run=3
+}
+Test { [[
+native pure _strlen();
+native do
+    ##include <string.h>
+end
+escape _strlen("123");
+]],
+    run=3
+}
+Test { [[
+native pure _strlen();
+native do
+    ##include <string.h>
+end
+escape _strlen("123\n");
+]],
+    run=4
+}
+Test { [[
+native nohold _strncpy(), _printf(), _strlen();
+native _char = 1;
+var _char[10] str;
+_strncpy(str, "123", 4);
+escape _strlen(str);
+]],
+    run = 3
+}
+
+Test { [[
+native nohold _strncpy(), _printf(), _strlen(), _strcpy();
+native _char = 1;
+var _char[6] a; _strcpy(a, "Hello");
+var _char[2] b; _strcpy(b, " ");
+var _char[7] c; _strcpy(c, "World!");
+var _char[30] d;
+
+var int len = 0;
+_strcpy(d,a);
+_strcpy(&d[_strlen(d)], b);
+_strcpy(&d[_strlen(d)], c);
+escape _strlen(d);
+]],
+    run = 12
+}
+
+--do return end
+
+-- REQUESTS / RAW
+
+-- normal: request -> return
+Test { [[
+output (int,int)     REQUEST;
+output int           CANCEL;
+input  (int,int,int) RETURN;
+
+par/or do
+    emit REQUEST => (1, 10);
+    await RETURN;
+    escape 1;
+with
+    await 10s;
+end
+await 100ms;
+escape 100;
+]],[[
+input  (int,int)     REQUEST;
+input  int           CANCEL;
+output (int,int,int) RETURN;
+
+do
+    par/or do
+        await REQUEST;
+        emit RETURN => (1, 0, 1);
+        await 20ms;
+        escape 1;
+    with
+        await 2s;
+    end
+end
+await 100ms;
+escape 200;
+]],
+    lnks = {
+        { 1, 1, 2, 243 },
+        { 1, 2, 2, 242 },
+        { 2, 1, 1, 243 },
+    },
+    run = 2,
+}
+
+Test { [[
+output (int,int)     REQUEST;
+output int           CANCEL;
+input  (int,int,int) RETURN;
+
+var int gid = 0;
+
+par/or do
+    var int id = gid;
+    gid = gid + 1;
+    emit REQUEST => (id, 20);
+    finalize with
+        emit CANCEL => id;
+        gid = gid - 1;
+    end
+    var int id2, err, ret;
+    (id2, err, ret) = await RETURN
+                      until id == id2;
+    escape ret;
+with
+    await 1s;
+end
+escape 100;
+]],[[
+input  (int,int)     REQUEST;
+input  int           CANCEL;
+output (int,int,int) RETURN;
+
+class Line with
+    var int id;
+    var int param;
+do
+    finalize with
+        var int err = 1;
+        emit RETURN => (this.id,err,0);
+    end
+    par/or do
+        emit RETURN => (this.id, 0, param+1);
+    with
+        await 100ms;
+    with
+        var int v = await CANCEL
+                    until v == this.id;
+    end
+end
+var int ret = 0;
+do
+    par/or do
+        var int id;
+        var int param;
+        every (id,param) = REQUEST do
+            ret = param;
+            var bool ok? = spawn Line with
+                this.id = id;
+                this.param = param;
+            end;
+            if not ok? then
+                var int err = 2;
+                emit RETURN => (id,err,0);
+            end
+        end
+    with
+        await 100ms;
+    end
+end
+escape ret;
+]],
+    lnks = {
+        { 1, 1, 2, 243 },
+        { 1, 2, 2, 242 },
+        { 2, 1, 1, 243 },
+    },
+    run = 41,
+}
+
+-- error: request -> return(err)
+Test { [[
+output (int,int)     REQUEST;
+output int           CANCEL;
+input  (int,int,int) RETURN;
+
+var int gid = 5;
+var int ret = 0;
+
+par/or do
+    var int id = gid;
+    gid = gid + 1;
+    emit REQUEST => (id, 10);   // id=5
+    finalize with
+        emit CANCEL => id;
+        gid = gid - 1;
+    end
+    ret = 15;
+    await 2s;
+with
+    var int id,err,v;
+    (id,err,v) = await RETURN;
+    escape id + err + v;        // 5 + x + x
+with
+    await 10s;
+end
+escape ret;     // ret = 6
+]],[[
+input  (int,int)     REQUEST;
+input  int           CANCEL;
+output (int,int,int) RETURN;
+
+input int RET;
+
+class Line with
+    var int id;
+    var int param;
+    var int ret = 0;
+do
+    finalize with
+        var int err = 1;
+        emit RETURN => (this.id,err,0);     // 5,1,0
+    end
+    par/or do
+        await 2s;
+        emit RETURN => (this.id, 0, param+1);
+    with
+        await 1s;
+    end
+end
+var int ret = 0;
+do
+    par/or do
+        var int id;
+        var int param;
+        every (id,param) = REQUEST do
+            ret = param;    // 10
+            var bool ok? = spawn Line with
+                this.id = id;
+                this.param = param;
+            end;
+            if not ok? then
+                var int err = 2;
+                emit RETURN => (id,err,0);
+            end
+        end
+    with
+        await 2s;
+    end
+end
+escape ret;     // 10
+]],
+    lnks = {
+        { 1, 1, 2, 243 },
+        { 1, 2, 2, 242 },
+        { 2, 1, 1, 243 },
+    },
+    run = 16,
+}
+
+-- error: request -> return(err) (spawn[0])
+Test { [[
+output (int,int)     REQUEST;
+output int           CANCEL;
+input  (int,int,int) RETURN;
+
+var int gid = 5;
+var int ret = 0;
+
+par/or do
+    var int id = gid;
+    gid = gid + 1;
+    emit REQUEST => (id, 10);   // id=5
+    finalize with
+        emit CANCEL => id;
+        gid = gid - 1;
+    end
+    ret = 15;
+    await 2s;
+with
+    var int id,err,v;
+    (id,err,v) = await RETURN;
+    escape id + err + v;        // 5 + 2 + 0
+with
+    await 10s;
+end
+escape ret;     // ret = 7
+]],[[
+input  (int,int)     REQUEST;
+input  int           CANCEL;
+output (int,int,int) RETURN;
+
+input int RET;
+
+class Line with
+    var int id;
+    var int param;
+    var int ret = 0;
+do
+    finalize with
+        var int err = 1;
+        emit RETURN => (this.id,err,0);     // 2,1,0
+    end
+    par/or do
+        await 2s;
+        emit RETURN => (this.id, 0, param+1);
+    with
+        await 1s;
+    end
+end
+var int ret = 0;
+do
+    par/or do
+        var int id;
+        var int param;
+        every (id,param) = REQUEST do
+            ret = param;    // 10
+            var bool ok? = spawn[0] Line with
+                this.id = id;
+                this.param = param;
+            end;
+            if not ok? then
+                var int err = 2;
+                emit RETURN => (id,err,0);  // 5,2,0
+            end
+        end
+    with
+        await 2s;
+    end
+end
+escape ret;     // 10
+]],
+    lnks = {
+        { 1, 1, 2, 243 },
+        { 1, 2, 2, 242 },
+        { 2, 1, 1, 243 },
+    },
+    run = 17,
+}
+
+-- cancel: request + cancel
+Test { [[
+output (int,int)     REQUEST;
+output int           CANCEL;
+input  (int,int,int) RETURN;
+
+var int gid = 5;
+var int ret = 0;
+
+par/or do
+    var int id = gid;
+    gid = gid + 1;
+    emit REQUEST => (id, 10);
+    finalize with
+        emit CANCEL => id;
+        gid = gid - 1;
+    end
+    ret = 15;
+with
+    await RETURN;
+with
+    await 10s;
+end
+escape ret;
+]],[[
+input  (int,int)     REQUEST;
+input  int           CANCEL;
+output (int,int,int) RETURN;
+
+input int RET;
+
+class Line with
+    var int id;
+    var int param;
+    var int ret = 0;
+do
+    finalize with
+        var int err = 1;
+        emit RETURN => (this.id,err,0);
+    end
+    par/or do
+        await 1s;
+        emit RETURN => (this.id, 0, param+1);
+    with
+        await 10s;
+    with
+        var int v = await CANCEL
+                    until v == this.id;     // v = 5
+        ret = 10+v;                         // ret = 15
+    end
+    async (ret) do
+        emit RET => ret;                    // RET = 15
+    end
+end
+var int ret = 0;
+do
+    par/or do
+        var int id;
+        var int param;
+        every (id,param) = REQUEST do
+            ret = param;
+            var bool ok? = spawn Line with
+                this.id = id;
+                this.param = param;
+            end;
+            if not ok? then
+                var int err = 2;
+                emit RETURN => (id,err,0);
+            end
+        end
+    with
+        ret = await RET;    // ret = 15
+        ret = ret + 5;      // ret = 20
+    with
+        await 2s;
+    end
+end
+escape ret;
+]],
+    lnks = {
+        { 1, 1, 2, 243 },
+        { 1, 2, 2, 242 },
+        { 2, 1, 1, 243 },
+    },
+    run = 35,
+}
+
+-- REQUESTS / DCLS
+
+Test { [[
+input/output (int max)=>char* [10] LINE;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input/output (int max)=>char* [10] LINE1, LINE2;
+escape 1;
+]],
+    run = 1,
+}
+
+-- normal: request -> return
+Test { [[
+output/input (int)=>int EVT;
+
+par/or do
+    emit EVT_REQUEST => (1, 10);
+    await EVT_RETURN;
+    escape 1;
+with
+    await 10s;
+end
+await 100ms;
+escape 100;
+]],[[
+input/output (int)=>int EVT;
+
+do
+    par/or do
+        await EVT_REQUEST;
+        emit EVT_RETURN => (1, 0, 1);
+        await 20ms;
+        escape 1;
+    with
+        await 2s;
+    end
+end
+await 100ms;
+escape 200;
+]],
+    lnks = {
+        { 1, 1, 2, 243 },
+        { 1, 2, 2, 242 },
+        { 2, 1, 1, 243 },
+    },
+    run = 2,
+}
+
+Test { [[
+output/input (int)=>int EVT;
+
+var int gid = 0;
+
+par/or do
+    var int id = gid;
+    gid = gid + 1;
+    emit EVT_REQUEST => (id, 20);
+    finalize with
+        emit EVT_CANCEL => id;
+        gid = gid - 1;
+    end
+    var int id2, err, ret;
+    (id2, err, ret) = await EVT_RETURN
+                      until id == id2;
+    escape ret;
+with
+    await 1s;
+end
+escape 100;
+]],[[
+input/output (int)=>int EVT;
+
+class Line with
+    var int id;
+    var int param;
+do
+    finalize with
+        var int err = 1;
+        emit EVT_RETURN => (this.id,err,0);
+    end
+    par/or do
+        emit EVT_RETURN => (this.id, 0, param+1);
+    with
+        await 100ms;
+    with
+        var int v = await EVT_CANCEL
+                    until v == this.id;
+    end
+end
+var int ret = 0;
+do
+    par/or do
+        var int id;
+        var int param;
+        every (id,param) = EVT_REQUEST do
+            ret = param;
+            var bool ok? = spawn Line with
+                this.id = id;
+                this.param = param;
+            end;
+            if not ok? then
+                var int err = 2;
+                emit EVT_RETURN => (id,err,0);
+            end
+        end
+    with
+        await 100ms;
+    end
+end
+escape ret;
+]],
+    lnks = {
+        { 1, 1, 2, 243 },
+        { 1, 2, 2, 242 },
+        { 2, 1, 1, 243 },
+    },
+    run = 41,
+}
+
+-- error: request -> return(err)
+Test { [[
+output/input (int)=>int EVT;
+
+var int gid = 5;
+var int ret = 0;
+
+par/or do
+    var int id = gid;
+    gid = gid + 1;
+    emit EVT_REQUEST => (id, 10);   // id=5
+    finalize with
+        emit EVT_CANCEL => id;
+        gid = gid - 1;
+    end
+    ret = 15;
+    await 2s;
+with
+    var int id,err,v;
+    (id,err,v) = await EVT_RETURN;
+    escape id + err + v;        // 5 + x + x
+with
+    await 10s;
+end
+escape ret;     // ret = 6
+]],[[
+input/output (int)=>int EVT;
+
+input int RET;
+
+class Line with
+    var int id;
+    var int param;
+    var int ret = 0;
+do
+    finalize with
+        var int err = 1;
+        emit EVT_RETURN => (this.id,err,0);     // 5,1,0
+    end
+    par/or do
+        await 2s;
+        emit EVT_RETURN => (this.id, 0, param+1);
+    with
+        await 1s;
+    end
+end
+var int ret = 0;
+do
+    par/or do
+        var int id;
+        var int param;
+        every (id,param) = EVT_REQUEST do
+            ret = param;    // 10
+            var bool ok? = spawn Line with
+                this.id = id;
+                this.param = param;
+            end;
+            if not ok? then
+                var int err = 2;
+                emit EVT_RETURN => (id,err,0);
+            end
+        end
+    with
+        await 2s;
+    end
+end
+escape ret;     // 10
+]],
+    lnks = {
+        { 1, 1, 2, 243 },
+        { 1, 2, 2, 242 },
+        { 2, 1, 1, 243 },
+    },
+    run = 16,
+}
+
+-- error: request -> return(err) (spawn[0])
+Test { [[
+output/input (int)=>int EVT;
+
+var int gid = 5;
+var int ret = 0;
+
+par/or do
+    var int id = gid;
+    gid = gid + 1;
+    emit EVT_REQUEST => (id, 10);   // id=5
+    finalize with
+        emit EVT_CANCEL => id;
+        gid = gid - 1;
+    end
+    ret = 15;
+    await 2s;
+with
+    var int id,err,v;
+    (id,err,v) = await EVT_RETURN;
+    escape id + err + v;        // 5 + 2 + 0
+with
+    await 10s;
+end
+escape ret;     // ret = 7
+]],[[
+input/output (int)=>int EVT;
+
+input int RET;
+
+class Line with
+    var int id;
+    var int param;
+    var int ret = 0;
+do
+    finalize with
+        var int err = 1;
+        emit EVT_RETURN => (this.id,err,0);     // 2,1,0
+    end
+    par/or do
+        await 2s;
+        emit EVT_RETURN => (this.id, 0, param+1);
+    with
+        await 1s;
+    end
+end
+var int ret = 0;
+do
+    par/or do
+        var int id;
+        var int param;
+        every (id,param) = EVT_REQUEST do
+            ret = param;    // 10
+            var bool ok? = spawn[0] Line with
+                this.id = id;
+                this.param = param;
+            end;
+            if not ok? then
+                var int err = 2;
+                emit EVT_RETURN => (id,err,0);  // 5,2,0
+            end
+        end
+    with
+        await 2s;
+    end
+end
+escape ret;     // 10
+]],
+    lnks = {
+        { 1, 1, 2, 243 },
+        { 1, 2, 2, 242 },
+        { 2, 1, 1, 243 },
+    },
+    run = 17,
+}
+
+-- cancel: request + cancel
+Test { [[
+output/input (int)=>int EVT;
+
+var int gid = 5;
+var int ret = 0;
+
+par/or do
+    var int id = gid;
+    gid = gid + 1;
+    emit EVT_REQUEST => (id, 10);
+    finalize with
+        emit EVT_CANCEL => id;
+        gid = gid - 1;
+    end
+    ret = 15;
+with
+    await EVT_RETURN;
+with
+    await 10s;
+end
+escape ret;
+]],[[
+input/output (int)=>int EVT;
+
+input int RET;
+
+class Line with
+    var int id;
+    var int param;
+    var int ret = 0;
+do
+    finalize with
+        var int err = 1;
+        emit EVT_RETURN => (this.id,err,0);
+    end
+    par/or do
+        await 1s;
+        emit EVT_RETURN => (this.id, 0, param+1);
+    with
+        await 10s;
+    with
+        var int v = await EVT_CANCEL
+                    until v == this.id;     // v = 5
+        ret = 10+v;                         // ret = 15
+    end
+    async (ret) do
+        emit RET => ret;                    // RET = 15
+    end
+end
+var int ret = 0;
+do
+    par/or do
+        var int id;
+        var int param;
+        every (id,param) = EVT_REQUEST do
+            ret = param;
+            var bool ok? = spawn Line with
+                this.id = id;
+                this.param = param;
+            end;
+            if not ok? then
+                var int err = 2;
+                emit EVT_RETURN => (id,err,0);
+            end
+        end
+    with
+        ret = await RET;    // ret = 15
+        ret = ret + 5;      // ret = 20
+    with
+        await 2s;
+    end
+end
+escape ret;
+]],
+    lnks = {
+        { 1, 1, 2, 243 },
+        { 1, 2, 2, 242 },
+        { 2, 1, 1, 243 },
+    },
+    run = 35,
+}
+
+

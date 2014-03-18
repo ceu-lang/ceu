@@ -109,6 +109,8 @@ KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'native'
      + 'isr' + 'atomic'
 -- bool
      + 'true' + 'false'
+-- requests
+     + 'input/output' + 'output/input'
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
@@ -123,7 +125,7 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
                 -- "Ct" as a special case to avoid "too many captures" (HACK_1)
     , _Stmts  = Ct (( V'__StmtS' * (EK';'*K';'^0) +
-                     V'__StmtB' * (K';'^0)
+                      V'__StmtB' * (K';'^0)
                    )^0
                  * ( V'__LstStmt' * (EK';'*K';'^0) +
                      V'__LstStmtB' * (K';'^0)
@@ -345,11 +347,23 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , _Dcl_nat = K'native' * (CK'pure'+CK'constant'+CK'nohold'+Cc(false))
                    * EV'__Dcl_nat' * (K',' * EV'__Dcl_nat')^0
 
-    , _Dcl_ext0 = (CK'input'+CK'output')
-                    * (CK'recursive'+Cc(false))
-                    * ( V'TupleType' * K'=>' * EV'__ID_type'
-                      + (V'TupleType'+EV'__ID_type') * Cc(false) )
-                    * EV'__ID_ext' * (K','*EV'__ID_ext')^0
+    , __Dcl_ext_call = (CK'input'+CK'output')
+                     * (CK'recursive'+Cc(false))
+                     * V'TupleType' * K'=>' * EV'__ID_type'
+                     * Cc(false)     -- spawn array
+                     * EV'__ID_ext' * (K','*EV'__ID_ext')^0
+    , __Dcl_ext_evt  = (CK'input'+CK'output')
+                     * Cc(false)     -- recursive
+                     * (V'TupleType'+EV'__ID_type') * Cc(false)
+                     * Cc(false)     -- spawn array
+                     * EV'__ID_ext' * (K','*EV'__ID_ext')^0
+    , __Dcl_ext_io   = (CK'input/output'+CK'output/input')
+                     * Cc(false)     -- recursive
+                     * V'TupleType' * K'=>' * EV'__ID_type'
+                     * ('['*NUM*EK']'+Cc(false))
+                     * EV'__ID_ext' * (K','*EV'__ID_ext')^0
+
+    , _Dcl_ext0 = V'__Dcl_ext_io' + V'__Dcl_ext_call' + V'__Dcl_ext_evt'
     , _Dcl_ext1 = V'_Dcl_ext0' * V'__Do'
 
     , _Dcl_int  = CK'event' * (V'TupleType'+EV'__ID_type') *

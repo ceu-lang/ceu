@@ -345,11 +345,13 @@ F = {
 
 -- Dcl_fun, Dcl_ext --------------------------------------------------------
 
+    _Dcl_ext1_pre = '_Dcl_fun1_pre',
     _Dcl_fun1_pre = function (me)
         local dcl, blk = unpack(me)
-        dcl[#dcl+1] = blk
+        dcl[#dcl+1] = blk           -- include body on DCL0
         return dcl
     end,
+
     _Dcl_fun0_pre = function (me)
         me.tag = 'Dcl_fun'
 
@@ -396,29 +398,56 @@ F = {
         end
     end,
 
-    _Dcl_ext1_pre = '_Dcl_fun1_pre',
     _Dcl_ext0_pre = function (me)
-        local dir, rec, ins, out, id, blk = unpack(me)
-
-        -- single id + blk
+        local dir, rec, ins, out, spw, id, blk = unpack(me)
 
         if me[#me].tag == 'Block' then
+            -- refuses id1,i2 + blk
             ASR(me[#me]==blk, me, 'same body for multiple declarations')
-            return node('Stmts', me.ln,
-                    node('Dcl_fun',me.ln,dir,rec,ins,out,id,blk),
-                    node('Dcl_ext',me.ln,dir,rec,ins,out,id))
+            -- removes blk from the list of ids
+            me[#me] = nil
+        else
+            -- blk is actually another id, keep #me
+            blk = nil
         end
 
-        -- no blk
+        local ids = { unpack(me,6) }  -- skip dir,rec,ins,out,spw
 
         local ret = {}
-        local t = { unpack(me,5) }  -- skip "dir","rec","ins","out"
+        for _, id in ipairs(ids) do
+            if dir=='input/output' or dir=='output/input' then
+                --[[
+                --      output/input (T1,...)=>T2 LINE;
+                -- becomes
+                --      input  (tceu_req,T1,...) LINE_REQUEST;
+                --      input  tceu_req          LINE_CANCEL;
+                --      output (tceu_req,u8,T2)  LINE_RETURN;
+                --]]
+                local d1, d2 = string.match(dir, '([^/]*)/(.*)')
+                assert(out)
+                assert(rec == false)
+                local tp = 'int'
 
-        for _, v in ipairs(t) do
-            if out then
-                ret[#ret+1] = node('Dcl_fun',me.ln,dir,rec,ins,out,v)
+                local ins_req = node('TupleType', me.ln,
+                                    {false,tp,false},
+                                    unpack(ins))                -- T1,...
+                local ins_ret = node('TupleType', me.ln,
+                                    {false,tp,  false},
+                                    {false,'u8',false},
+                                    {false,out, false})
+
+                ret[#ret+1] = node('Dcl_ext', me.ln, d1, false,
+                                   ins_req, false, id..'_REQUEST')
+                ret[#ret+1] = node('Dcl_ext', me.ln, d1, false,
+                                   tp,      false, id..'_CANCEL')
+                ret[#ret+1] = node('Dcl_ext', me.ln, d2, false,
+                                   ins_ret, false, id..'_RETURN')
+            else
+                if out then
+                    ret[#ret+1] = node('Dcl_fun',me.ln,dir,rec,ins,out,id, blk)
+                end
+                ret[#ret+1] = node('Dcl_ext',me.ln,dir,rec,ins,out,id)
             end
-            ret[#ret+1] = node('Dcl_ext',me.ln,dir,rec,ins,out,v)
         end
         return node('Stmts', me.ln, unpack(ret))
     end,
