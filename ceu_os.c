@@ -93,8 +93,9 @@ void ceu_sys_org (tceu_org* org, int n, int lbl, int seqno,
     org->trls[0].seqno = seqno;
 
 #ifdef CEU_ORGS
-    if (par_org == NULL)
+    if (par_org == NULL) {
         return;             /* main class */
+    }
 
     /* re-link */
     {
@@ -269,8 +270,8 @@ fprintf(stderr, "GO[%d]: evt=%d stk=%d [%d]\n", app->seqno,
 #ifdef CEU_NEWS
                     /* org has been cleared to the end? */
                     if ( go.evt == CEU_IN__CLEAR
-                    &&   go.org->isDyn
-                    &&   go.org->n != 0 )  /* TODO: avoids LNKs */
+                    &&   go.org->n != 0 /* TODO: avoids LNKs (must be before isDyn */
+                    &&   go.org->isDyn )
                     {
                         /* re-link PRV <-> NXT */
                         go.org->prv->nxt = go.org->nxt;
@@ -369,6 +370,7 @@ _CEU_GO_GO_:
 #if defined(CEU_OS) && defined(__AVR)
                 CEU_APP_ADDR = app->addr;
 #endif
+                /*** CODE ***/
                 int _ret = app->code(app, &go);
 #if defined(CEU_OS) && defined(__AVR)
                 CEU_APP_ADDR = 0;
