@@ -3,6 +3,8 @@ _VALGRIND = true
 --[===[
 --]===]
 
+--do return end
+
 -- OK: well tested
 
 Test { [[escape(1);]],
@@ -2067,4 +2069,385 @@ escape ret;
         { 2, 1, 1, 243 },
     },
     run = 35,
+}
+
+-- REQUESTS
+
+Test { [[
+input/output (int max)=>int [10] LINE do
+    return max + 1;
+end
+await 1s;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input/output (int max)=>int [10] LINE do
+    return max + 1;
+end
+await 1s;
+escape 1;
+]],[[
+output/input (int max)=>int [10] LINE;
+var int ret = 1;
+par/or do
+    ret = request LINE=>10;
+with
+end
+escape ret;
+]],
+    run = 2,
+}
+
+Test { [[
+output/input (int max)=>int [10] LINE;
+var int ret = 1;
+var int err = 1;
+par/or do
+    (err,ret) = request LINE=>10;
+with
+    async do
+        emit LINE_RETURN => (1,2,10);
+    end
+end
+escape ret+err;
+]],
+    run = 12,
+}
+
+Test { [[
+input/output (int max)=>int [10] LINE do
+    return max + 1;
+end
+await 1s;
+escape 1;
+]],[[
+output/input (int max)=>int [10] LINE;
+var int ret = 1;
+var int err = 1;
+(err,ret) = request LINE=>10;
+escape ret;
+]],
+    run = 12,
+    lnks = {
+        { 2,1 , 1,243},
+        { 2,2 , 1,242},
+        { 1,1 , 2,243},
+    },
+}
+
+Test { [[
+input/output (int max)=>int [10] LINE do
+    return max * 2;
+end
+await 1s;
+escape 111;
+]],[[
+output/input (int max)=>int LINE;
+var int ret = 0;
+par/and do
+    var int err, v;
+    (err,v) = request LINE => 10;
+    ret = ret + err + v;
+with
+    var int err, v;
+    (err,v) = request LINE => 20;
+    ret = ret + err + v;
+with
+    var int err, v;
+    (err,v) = request LINE => 30;
+    ret = ret + err + v;
+end
+escape ret;
+]],
+    run = 231,
+    lnks = {
+        { 2,1 , 1,243},
+        { 2,2 , 1,242},
+        { 1,1 , 2,243},
+    },
+}
+
+Test { [[
+input/output (int max)=>int [2] LINE do
+    await 1s;
+    return max + 1;
+end
+await 1s;
+escape 111;
+]],[[
+output/input (int max)=>int LINE;
+var int ret = 0;
+par/and do
+    var int v, err;
+    (err,v) = request LINE => 10;
+    ret = ret + v + err;
+with
+    var int v, err;
+    (err,v) = request LINE => 20;
+    ret = ret + v + err;
+with
+    var int v, err;
+    (err,v) = request LINE => 30;
+    ret = ret + v + err;
+end
+escape ret;
+]],
+    run = 116,
+    lnks = {
+        { 2,1 , 1,243},
+        { 2,2 , 1,242},
+        { 1,1 , 2,243},
+    },
+}
+
+Test { [[
+input/output (int max)=>int [2] LINE do
+    await 1s;
+    return max * 2;
+end
+await 2s;
+escape 111;
+]],[[
+output/input (int max)=>int [2] LINE;
+var int ret = 0;
+par/and do
+    var int v, err;
+    (err,v) = request LINE => 10;
+    ret = ret + v + err;
+with
+    var int v, err;
+    (err,v) = request LINE => 20;
+    ret = ret + v + err;
+with
+    var int v, err;
+    (err,v) = request LINE => 30;
+    ret = ret + v + err;
+end
+escape ret;
+]],
+    run = 172,
+    lnks = {
+        { 2,1 , 1,243},
+        { 2,2 , 1,242},
+        { 1,1 , 2,243},
+    },
+}
+
+Test { [[
+input/output (int max)=>int [2] LINE do
+    await 1s;
+    return max * 2;
+end
+await 3s;
+escape 0;
+]],[[
+output/input (int max)=>int [2] LINE;
+var int ret = 0;
+par/and do
+    var int v, err;
+    (err,v) = request LINE => 10;
+    ret = ret + v + err;
+with
+    var int v, err;
+    (err,v) = request LINE => 20;
+    ret = ret + v + err;
+with
+    var int v, err;
+    (err,v) = request LINE => 30;
+    ret = ret + v + err;
+with
+    await 1s500ms;
+    var int v, err;
+    (err,v) = request LINE => 40;
+    ret = ret + v + err;
+with
+    await 1s500ms;
+    var int v, err;
+    (err,v) = request LINE => 50;
+    ret = ret + v + err;
+with
+    await 1s500ms;
+    var int v, err;
+    (err,v) = request LINE => 60;
+    ret = ret + v + err;
+end
+escape ret;
+]],
+    run = 240+1+1,
+    lnks = {
+        { 2,1 , 1,243},
+        { 2,2 , 1,242},
+        { 1,1 , 2,243},
+    },
+}
+
+Test { [[
+input/output (int max)=>int [1] LINE do
+    await 1s;
+    return max * 2;
+end
+await 3s;
+escape 1000;
+]],[[
+output/input (int max)=>int [1] LINE;
+var int ret = 0;
+par/and do
+    var int v, err;
+    (err,v) = request LINE => 10;
+    ret = ret + v + err;
+with
+    var int v, err;
+    (err,v) = request LINE => 20;
+    ret = ret + v + err;
+with
+    var int v, err;
+    (err,v) = request LINE => 30;
+    ret = ret + v + err;
+with
+    await 1s500ms;
+    var int v, err;
+    (err,v) = request LINE => 40;
+    ret = ret + v + err;
+with
+    await 1s500ms;
+    var int v, err;
+    (err,v) = request LINE => 50;
+    ret = ret + v + err;
+with
+    await 1s500ms;
+    var int v, err;
+    (err,v) = request LINE => 60;
+    ret = ret + v + err;
+end
+escape ret;
+]],
+    run = 1104,
+    lnks = {
+        { 2,1 , 1,243},
+        { 2,2 , 1,242},
+        { 1,1 , 2,243},
+    },
+}
+
+Test { [[
+input/output (int max)=>int [0] LINE do
+    await 1s;
+    return max * 2;
+end
+await 3s;
+escape 1000;
+]],[[
+output/input (int max)=>int [0] LINE;
+var int ret = 0;
+par/and do
+    var int v, err;
+    (err,v) = request LINE => 10;
+    ret = ret + v + err;
+with
+    var int v, err;
+    (err,v) = request LINE => 20;
+    ret = ret + v + err;
+with
+    var int v, err;
+    (err,v) = request LINE => 30;
+    ret = ret + v + err;
+with
+    await 1s500ms;
+    var int v, err;
+    (err,v) = request LINE => 40;
+    ret = ret + v + err;
+with
+    await 1s500ms;
+    var int v, err;
+    (err,v) = request LINE => 50;
+    ret = ret + v + err;
+with
+    await 1s500ms;
+    var int v, err;
+    (err,v) = request LINE => 60;
+    ret = ret + v + err;
+end
+escape ret;
+]],
+    run = 1006,
+    lnks = {
+        { 2,1 , 1,243},
+        { 2,2 , 1,242},
+        { 1,1 , 2,243},
+    },
+}
+
+Test { [[
+input/output (int max)=>int [1] LINE do
+    await 1s;
+    return max * 2;
+end
+await 3s;
+escape 1000;
+]],[[
+output/input (int max)=>int [1] LINE;
+var int ret = 0;
+par/or do
+    var int v, err;
+    (err,v) = request LINE => 10;
+    ret = ret + v + err;
+with
+end
+do
+    var int v, err;
+    (err,v) = request LINE => 20;
+    ret = ret + v + err;
+end
+escape ret;
+]],
+    run = 1040,
+    lnks = {
+        { 2,1 , 1,243},
+        { 2,2 , 1,242},
+        { 1,1 , 2,243},
+    },
+}
+
+Test { [[
+input/output (int max)=>int [2] LINE do
+    await 1s;
+    return max * 2;
+end
+await 3s;
+escape 1000;
+]],[[
+output/input (int max)=>int [2] LINE;
+var int ret = 0;
+par/and do
+    var int v, err;
+    (err,v) = request LINE => 10;
+    ret = ret + v + err;
+with
+    par/or do
+        var int v, err;
+        (err,v) = request LINE => 20;
+        ret = ret + v + err;
+    with
+    end
+    par/and do
+        var int v, err;
+        (err,v) = request LINE => 30;
+        ret = ret + v + err;
+    with
+        var int v, err;
+        (err,v) = request LINE => 40;
+        ret = ret + v + err;
+    end
+end
+escape ret;
+]],
+    run = 1081,
+    lnks = {
+        { 2,1 , 1,243},
+        { 2,2 , 1,242},
+        { 1,1 , 2,243},
+    },
 }

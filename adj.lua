@@ -66,7 +66,7 @@ function REQUEST (me)
             node('Dcl_var', me.ln, 'var', tp_req, false, id_req),
             node('Dcl_var', me.ln, 'var', tp_req, false, id_req2),
             node('SetExp', me.ln, '=',
-                node('RawExp', me.ln, 'ceu_sys_req()'),
+                node('RawExp', me.ln, 'ceu_out_req()'),
                 node('Var', me.ln, id_req)),
             node('EmitExt', me.ln, 'emit',
                 node('Ext', me.ln, id_evt..'_REQUEST'),
@@ -622,6 +622,18 @@ F = {
                     node('BlockI', me.ln, unpack(ifc)),
                     node('Block', me.ln,
                         node('Stmts', me.ln,
+                            node('Finalize', me.ln,
+                                false,
+                                node('Finally', me.ln,
+                                    node('Block', me.ln,
+                                        node('Stmts', me.ln,
+                                            node('EmitExt', me.ln, 'emit',
+                                                node('Ext', me.ln, id_evt..'_RETURN'),
+                                                    node('ExpList', me.ln,
+                                                        node('Var', me.ln, id_req),
+                                                        node('NUMBER', me.ln, 2),
+                                                                -- TODO: err=2?
+                                                        node('NUMBER', me.ln, 0))))))),
                             node('ParOr', me.ln,
                                 node('Block', me.ln,
                                     node('Stmts', me.ln, blk)),
@@ -709,7 +721,7 @@ F = {
                                                     node('ExpList', me.ln,
                                                         node('Var', me.ln, id_req),
                                                         node('NUMBER', me.ln, 1),
-                                                                        -- TODO: 1??
+                                                                -- TODO: err=1?
                                                         node('NUMBER', me.ln, 0)))),
                                             false)))))))
         end

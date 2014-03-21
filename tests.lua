@@ -16386,7 +16386,7 @@ with
 end
 escape 1;
 ]],
-    props = 'line 5 : invalid `emit´',
+    props = 'line 4 : invalid `emit´',
 }
 
 Test { [[

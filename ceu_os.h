@@ -400,6 +400,7 @@ void        ceu_sys_queue_rem (void);
 
 void*     ceu_sys_malloc (size_t size);
 void      ceu_sys_free   (void* ptr);
+int       ceu_sys_req    (void);
 tceu_app* ceu_sys_load   (void* addr);
 #ifdef CEU_ISR
 int       ceu_sys_isr    (int n, tceu_isr_f f, tceu_app* app);

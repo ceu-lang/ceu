@@ -196,8 +196,8 @@ STATS = {
 
 --[[
 STATS = {
-	count = 40,
-	bytes = 1364956,
+	count = 70,
+	bytes = 2413196,
 }
 ]]
 
