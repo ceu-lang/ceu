@@ -170,7 +170,6 @@ do
     CC = SUB(CC, '=== LABELS_ENUM ===', _LBLS.code_enum)
 
     CC = SUB(CC, '=== CLSS_DEFS ===',  _MEM.clss)
-    CC = SUB(CC, '=== POOLS_DCL ===',  _MEM.pools.dcl)
     CC = SUB(CC, '=== POOLS_INIT ===', _MEM.pools.init)
 
     CC = SUB(CC, '=== THREADS_C ===',   _CODE.threads)

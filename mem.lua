@@ -21,6 +21,9 @@ typedef struct {
   struct tceu_org org;
   tceu_trl trls_[ ]]..me.trails_n..[[ ];
 ]]
+        if me.id == 'Main' then
+            me.struct = me.struct .. _MEM.pools.dcl
+        end
         me.funs = ''
     end,
     Dcl_cls_pos = function (me)
@@ -39,13 +42,15 @@ DBG('===', me.id, me.trails_n, '('..tostring(me.max)..')')
         -- top class pool <class T[N] with ... end>
         if me.max and _PROPS.has_news_pool then
             local id = 'pool_'..me.id
-            me.pool = '_CEU_APP.'..id
+            me.pool = '((CEU_Main*)_ceu_app->data)->'..id
             _MEM.pools.dcl = _MEM.pools.dcl .. [[
 CEU_POOL_DCL(]]..id..','..'CEU_'..me.id..','..me.max..[[);
 ]]
+
+            local pool = '((CEU_Main*)app->data)->'..id
             _MEM.pools.init = _MEM.pools.init..[[
-ceu_pool_init(&]]..me.pool..', '..me.max..', sizeof(CEU_'..me.id..'), '
-    ..'(byte**)'..me.pool..'_queue, (byte*)'..me.pool..[[_mem);
+ceu_pool_init(&]]..pool..', '..me.max..', sizeof(CEU_'..me.id..'), '
+    ..'(byte**)'..pool..'_queue, (byte*)'..pool..[[_mem);
 ]]
         end
     end,

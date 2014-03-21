@@ -47,6 +47,9 @@ enum {
 
 typedef struct {
 #ifdef CEU_IFCS
+#ifdef CEU_OS
+#error remove from RAM!
+#endif
     s8    ifcs_clss[CEU_NCLS][=== IFCS_NIFCS ===];
             /* Does "cls" implements "ifc?"
              * (I*) ifc = (I*) cls;     // returns null if not
@@ -56,14 +59,14 @@ typedef struct {
     u16   ifcs_evts[CEU_NCLS][=== IFCS_NEVTS ===];
     void* ifcs_funs[CEU_NCLS][=== IFCS_NFUNS ===];
 #endif
-#ifdef CEU_NEWS
-    === POOLS_DCL ===
-#endif
 } _tceu_app;
 
 /* TODO: remove from RAM */
 static _tceu_app _CEU_APP = {
 #ifdef CEU_IFCS
+#ifdef CEU_OS
+#error remove from RAM!
+#endif
     {
 === IFCS_CLSS ===
     },
