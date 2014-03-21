@@ -1,6 +1,7 @@
 _VALGRIND = true
 
 --[===[
+--]===]
 
 -- OK: well tested
 
@@ -1723,41 +1724,7 @@ escape ret;
     run = 35,
 }
 
---]===]
 -- REQUESTS / FULL
-
-Test { [[
-input/output (int max)=>char* [10] LINE;
-request LINE;
-escape 1;
-]],
-    env = 'line 2 : missing parameters on `emit´',
-}
-
-Test { [[
-input/output (int max)=>char* [10] LINE;
-request LINE => "oi";
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-input/output (int max)=>char* [10] LINE;
-request LINE => 10;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-input/output (int max)=>char* [10] LINE;
-var u8 err, ret;
-(err, ret) = request LINE => 10;
-escape 1;
-]],
-    run = 1,
-}
 
 -- normal: request -> return
 Test { [[
@@ -2101,7 +2068,3 @@ escape ret;
     },
     run = 35,
 }
-
---]===]
-
-

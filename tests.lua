@@ -324,6 +324,7 @@ escape ret + _V;        // * reads after
 }
 
 -------------------------------------------------------------------------------
+
 --]===]
 
 --do return end
@@ -16225,6 +16226,73 @@ escape ret;
 end -- _OS (INPUT/OUTPUT)
 
 -- REQUESTS
+
+Test { [[
+input/output (int max)=>char* [10] LINE;
+request LINE;
+escape 1;
+]],
+    env = 'line 2 : missing parameters on `emit´',
+}
+
+Test { [[
+input/output (int max)=>char* [10] LINE;
+request LINE => "oi";
+escape 1;
+]],
+    env = 'line 2 : invalid attribution (int vs char*)',
+}
+
+Test { [[
+input/output (int max)=>char* [10] LINE;
+request LINE => 10;
+escape 1;
+]],
+    props = 'line 2 : invalid `emit´',
+}
+
+Test { [[
+native do
+    ##define ceu_out_emit_val(a,b,c) 1
+end
+output/input (int max)=>char* [10] LINE;
+par/or do
+    request LINE => 10;
+with
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+output/input (int max)=>char* [10] LINE;
+var u8 err;
+var char* ret;
+par/or do
+    (err, ret) = request LINE => 10;
+with
+end
+escape 1;
+]],
+    fin = 'line 5 : invalid block for awoken pointer "ret"',
+}
+
+Test { [[
+output/input (int max)=>char* [10] LINE;
+native do
+    ##define ceu_out_emit_val(a,b,c) 1
+end
+var u8 err;
+par/or do
+    var char* ret;
+    (err, ret) = request LINE => 10;
+with
+end
+escape 1;
+]],
+    run = 1,
+}
 
 Test { [[
 input/output (int max)=>char* [10] LINE;

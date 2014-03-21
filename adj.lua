@@ -89,11 +89,13 @@ F = {
 
     ['1_pre'] = function (me)
         local spc, stmts = unpack(me)
+        local blk_ifc_body = node('Block', me.ln, stmts)
+        local ret = blk_ifc_body
 
         -- for OS: <par/or ... with await OS_STOP; escape 1; end>
         if _OPTS.os then
-            stmts = node('ParOr', me.ln,
-                        node('Block', me.ln, stmts),
+            ret = node('ParOr', me.ln,
+                        node('Block', me.ln, ret),
                         node('Block', me.ln,
                             node('Stmts', me.ln,
                                 node('AwaitExt', me.ln,
@@ -108,7 +110,7 @@ F = {
                         node('Stmts', me.ln,
                             node('Dcl_var', me.ln, 'var', 'int', false, '_ret'),
                             node('SetBlock', me.ln,
-                                stmts,
+                                ret,
                                 node('Var', me.ln,'_ret'))))
 
         --[[
@@ -116,7 +118,7 @@ F = {
         -- above:
         --
         -- par/or do
-        --      <stmts>
+        --      <ret>
         -- with
         --      par do
         --          every REQ1 do ... end
@@ -146,7 +148,8 @@ F = {
                       'Main',
                       node('Nothing', me.ln),
                       blk)
-        _MAIN.blk_ifc = blk
+        _MAIN.blk_ifc  = blk_ifc_body   -- Main has no ifc:
+        _MAIN.blk_body = blk_ifc_body   -- ifc/body are the same
 
         -- [1] => ['Root']
         _AST.root = node('Root', me.ln, _MAIN)
