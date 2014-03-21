@@ -1,7 +1,6 @@
 _VALGRIND = true
 
 --[===[
---]===]
 
 -- OK: well tested
 
@@ -1723,5 +1722,386 @@ escape ret;
     },
     run = 35,
 }
+
+--]===]
+-- REQUESTS / FULL
+
+Test { [[
+input/output (int max)=>char* [10] LINE;
+request LINE;
+escape 1;
+]],
+    env = 'line 2 : missing parameters on `emit´',
+}
+
+Test { [[
+input/output (int max)=>char* [10] LINE;
+request LINE => "oi";
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input/output (int max)=>char* [10] LINE;
+request LINE => 10;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input/output (int max)=>char* [10] LINE;
+var u8 err, ret;
+(err, ret) = request LINE => 10;
+escape 1;
+]],
+    run = 1,
+}
+
+-- normal: request -> return
+Test { [[
+output/input (int)=>int EVT;
+
+par/or do
+    emit EVT_REQUEST => (1, 10);
+    await EVT_RETURN;
+    escape 1;
+with
+    await 10s;
+end
+await 100ms;
+escape 100;
+]],[[
+input/output (int)=>int EVT;
+
+do
+    par/or do
+        await EVT_REQUEST;
+        emit EVT_RETURN => (1, 0, 1);
+        await 20ms;
+        escape 1;
+    with
+        await 2s;
+    end
+end
+await 100ms;
+escape 200;
+]],
+    lnks = {
+        { 1, 1, 2, 243 },
+        { 1, 2, 2, 242 },
+        { 2, 1, 1, 243 },
+    },
+    run = 2,
+}
+
+Test { [[
+output/input (int)=>int EVT;
+
+var int gid = 0;
+
+par/or do
+    var int id = gid;
+    gid = gid + 1;
+    emit EVT_REQUEST => (id, 20);
+    finalize with
+        emit EVT_CANCEL => id;
+        gid = gid - 1;
+    end
+    var int id2, err, ret;
+    (id2, err, ret) = await EVT_RETURN
+                      until id == id2;
+    escape ret;
+with
+    await 1s;
+end
+escape 100;
+]],[[
+input/output (int)=>int EVT;
+
+class Line with
+    var int id;
+    var int param;
+do
+    finalize with
+        var int err = 1;
+        emit EVT_RETURN => (this.id,err,0);
+    end
+    par/or do
+        emit EVT_RETURN => (this.id, 0, param+1);
+    with
+        await 100ms;
+    with
+        var int v = await EVT_CANCEL
+                    until v == this.id;
+    end
+end
+var int ret = 0;
+do
+    par/or do
+        var int id;
+        var int param;
+        every (id,param) = EVT_REQUEST do
+            ret = param;
+            var bool ok? = spawn Line with
+                this.id = id;
+                this.param = param;
+            end;
+            if not ok? then
+                var int err = 2;
+                emit EVT_RETURN => (id,err,0);
+            end
+        end
+    with
+        await 100ms;
+    end
+end
+escape ret;
+]],
+    lnks = {
+        { 1, 1, 2, 243 },
+        { 1, 2, 2, 242 },
+        { 2, 1, 1, 243 },
+    },
+    run = 41,
+}
+
+-- error: request -> return(err)
+Test { [[
+output/input (int)=>int EVT;
+
+var int gid = 5;
+var int ret = 0;
+
+par/or do
+    var int id = gid;
+    gid = gid + 1;
+    emit EVT_REQUEST => (id, 10);   // id=5
+    finalize with
+        emit EVT_CANCEL => id;
+        gid = gid - 1;
+    end
+    ret = 15;
+    await 2s;
+with
+    var int id,err,v;
+    (id,err,v) = await EVT_RETURN;
+    escape id + err + v;        // 5 + x + x
+with
+    await 10s;
+end
+escape ret;     // ret = 6
+]],[[
+input/output (int)=>int EVT;
+
+input int RET;
+
+class Line with
+    var int id;
+    var int param;
+    var int ret = 0;
+do
+    finalize with
+        var int err = 1;
+        emit EVT_RETURN => (this.id,err,0);     // 5,1,0
+    end
+    par/or do
+        await 2s;
+        emit EVT_RETURN => (this.id, 0, param+1);
+    with
+        await 1s;
+    end
+end
+var int ret = 0;
+do
+    par/or do
+        var int id;
+        var int param;
+        every (id,param) = EVT_REQUEST do
+            ret = param;    // 10
+            var bool ok? = spawn Line with
+                this.id = id;
+                this.param = param;
+            end;
+            if not ok? then
+                var int err = 2;
+                emit EVT_RETURN => (id,err,0);
+            end
+        end
+    with
+        await 2s;
+    end
+end
+escape ret;     // 10
+]],
+    lnks = {
+        { 1, 1, 2, 243 },
+        { 1, 2, 2, 242 },
+        { 2, 1, 1, 243 },
+    },
+    run = 16,
+}
+
+-- error: request -> return(err) (spawn[0])
+Test { [[
+output/input (int)=>int EVT;
+
+var int gid = 5;
+var int ret = 0;
+
+par/or do
+    var int id = gid;
+    gid = gid + 1;
+    emit EVT_REQUEST => (id, 10);   // id=5
+    finalize with
+        emit EVT_CANCEL => id;
+        gid = gid - 1;
+    end
+    ret = 15;
+    await 2s;
+with
+    var int id,err,v;
+    (id,err,v) = await EVT_RETURN;
+    escape id + err + v;        // 5 + 2 + 0
+with
+    await 10s;
+end
+escape ret;     // ret = 7
+]],[[
+input/output (int)=>int EVT;
+
+input int RET;
+
+class Line with
+    var int id;
+    var int param;
+    var int ret = 0;
+do
+    finalize with
+        var int err = 1;
+        emit EVT_RETURN => (this.id,err,0);     // 2,1,0
+    end
+    par/or do
+        await 2s;
+        emit EVT_RETURN => (this.id, 0, param+1);
+    with
+        await 1s;
+    end
+end
+var int ret = 0;
+do
+    par/or do
+        var int id;
+        var int param;
+        every (id,param) = EVT_REQUEST do
+            ret = param;    // 10
+            var bool ok? = spawn[0] Line with
+                this.id = id;
+                this.param = param;
+            end;
+            if not ok? then
+                var int err = 2;
+                emit EVT_RETURN => (id,err,0);  // 5,2,0
+            end
+        end
+    with
+        await 2s;
+    end
+end
+escape ret;     // 10
+]],
+    lnks = {
+        { 1, 1, 2, 243 },
+        { 1, 2, 2, 242 },
+        { 2, 1, 1, 243 },
+    },
+    run = 17,
+}
+
+-- cancel: request + cancel
+Test { [[
+output/input (int)=>int EVT;
+
+var int gid = 5;
+var int ret = 0;
+
+par/or do
+    var int id = gid;
+    gid = gid + 1;
+    emit EVT_REQUEST => (id, 10);
+    finalize with
+        emit EVT_CANCEL => id;
+        gid = gid - 1;
+    end
+    ret = 15;
+with
+    await EVT_RETURN;
+with
+    await 10s;
+end
+escape ret;
+]],[[
+input/output (int)=>int EVT;
+
+input int RET;
+
+class Line with
+    var int id;
+    var int param;
+    var int ret = 0;
+do
+    finalize with
+        var int err = 1;
+        emit EVT_RETURN => (this.id,err,0);
+    end
+    par/or do
+        await 1s;
+        emit EVT_RETURN => (this.id, 0, param+1);
+    with
+        await 10s;
+    with
+        var int v = await EVT_CANCEL
+                    until v == this.id;     // v = 5
+        ret = 10+v;                         // ret = 15
+    end
+    async (ret) do
+        emit RET => ret;                    // RET = 15
+    end
+end
+var int ret = 0;
+do
+    par/or do
+        var int id;
+        var int param;
+        every (id,param) = EVT_REQUEST do
+            ret = param;
+            var bool ok? = spawn Line with
+                this.id = id;
+                this.param = param;
+            end;
+            if not ok? then
+                var int err = 2;
+                emit EVT_RETURN => (id,err,0);
+            end
+        end
+    with
+        ret = await RET;    // ret = 15
+        ret = ret + 5;      // ret = 20
+    with
+        await 2s;
+    end
+end
+escape ret;
+]],
+    lnks = {
+        { 1, 1, 2, 243 },
+        { 1, 2, 2, 242 },
+        { 2, 1, 1, 243 },
+    },
+    run = 35,
+}
+
+--]===]
 
 

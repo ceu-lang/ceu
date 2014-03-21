@@ -627,7 +627,8 @@ F = {
 
     Var = function (me)
         local id = unpack(me)
-        local blk = me.__adj_blk or _AST.iter('Block')()
+        local blk = me.__adj_blk and assert(_AST.par(me.__adj_blk,'Block'))
+                        or _AST.iter('Block')()
         local var = _ENV.getvar(id, blk)
         ASR(var, me, 'variable/event "'..id..'" is not declared')
         me.var  = var
@@ -695,7 +696,7 @@ F = {
         ASR(var and var.pre=='event', me,
             'event "'..(var and var.id or '?')..'" is not declared')
         ASR(var.evt.ins=='void' or (ps and _TP.contains(var.evt.ins,ps.tp,true)),
-            me, 'invalid emit')
+            me, 'invalid `emit´')
     end,
 
     EmitExt = function (me)

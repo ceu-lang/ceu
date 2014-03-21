@@ -201,7 +201,7 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , Free  = K'free'  * V'__Exp'
     , Spawn = K'spawn' * ('['*NUM*EK']'+Cc(false))
             * EV'__ID_cls'
-            * (EK'with' * V'Dcl_constr' * EK'end' + Cc(false))
+            * (EK'with'*V'Dcl_constr'* EK'end' + Cc(false))
 
     , CallStmt = m.Cmt(V'__Exp',
                     function (s,i,...)
@@ -331,7 +331,8 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     , EmitT    = K'emit' * (V'WCLOCKK'+V'WCLOCKE')
 
-    , EmitExt  = (CK'call/rec'+CK'call'+CK'emit') * EV'Ext' * V'__emit_ps'
+    , EmitExt  = (CK'call/rec'+CK'call'+CK'emit'+CK'request')
+               * EV'Ext' * V'__emit_ps'
     , EmitInt  = CK'emit' * EV'__Exp' * V'__emit_ps'
     , __emit_ps = ( K'=>' * (V'__Exp' + K'(' * V'ExpList' * EK')')
                 +   Cc(false) )

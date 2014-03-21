@@ -75,7 +75,7 @@ F = {
 
         local top = _AST.iter()()
         me.ana = {
-            pre  = (top and top.ana.pre) or { [true]=true },
+            pre  = (top and COPY(top.ana.pre)) or { [true]=true },
         }
     end,
     Node = function (me)

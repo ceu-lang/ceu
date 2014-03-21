@@ -141,8 +141,8 @@ end
                            ' p='..(me.__par and me.__par.n or '')..
                            ') '..ks)
     for i, sub in ipairs(me) do
-        if _AST.isNode(sub) then
-            _AST.dump(sub, spc+2)
+        if me.tag~='Ref' and _AST.isNode(sub) then
+            _AST.dump(sub, spc+2)   -- 'Ref' create cycles
         else
             DBG(string.rep(' ',spc+2) .. '['..tostring(sub)..']')
         end

@@ -137,7 +137,6 @@ do
     dofile 'props.lua'
     dofile 'ana.lua'
     dofile 'acc.lua'
-    --_AST.dump(_AST.root)
     dofile 'trails.lua'
     dofile 'sval.lua'
     dofile 'labels.lua'
@@ -145,6 +144,7 @@ do
     dofile 'mem.lua'
     dofile 'val.lua'
     dofile 'code.lua'
+    --_AST.dump(_AST.root)
 end
 
 local function SUB (str, from, to)

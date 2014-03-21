@@ -3421,7 +3421,7 @@ end
 emit a;
 escape ret;
 ]],
-    env = 'line 10 : invalid emit',
+    env = 'line 10 : invalid `emit´',
 }
 
 Test { [[
@@ -16224,6 +16224,517 @@ escape ret;
 
 end -- _OS (INPUT/OUTPUT)
 
+-- REQUESTS
+
+Test { [[
+input/output (int max)=>char* [10] LINE;
+request LINE;
+escape 1;
+]],
+    env = 'line 2 : missing parameters on `emit´',
+}
+
+Test { [[
+input/output (int max)=>char* [10] LINE;
+request LINE => "oi";
+escape 1;
+]],
+    env = 'line 2 : invalid attribution (int vs char*)',
+}
+
+Test { [[
+input/output (int max)=>char* [10] LINE;
+request LINE => 10;
+escape 1;
+]],
+    props = 'line 2 : invalid `emit´',
+}
+
+Test { [[
+native do
+    ##define ceu_out_emit_val(a,b,c) 1
+end
+output/input (int max)=>char* [10] LINE;
+par/or do
+    request LINE => 10;
+with
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+output/input (int max)=>char* [10] LINE;
+var u8 err, ret;
+(err, ret) = request LINE => 10;
+escape 1;
+]],
+    env = 'line 3 : invalid attribution (u8 vs char*)',
+}
+
+Test { [[
+native do
+    ##define ceu_out_emit_val(a,b,c) 1
+end
+output/input (int max)=>int [10] LINE;
+par/or do
+    var u8 err, ret;
+    (err, ret) = request LINE => 10;
+with
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native do
+    ##define ceu_out_emit_val(a,b,c) 1
+end
+output/input (int)=>int [10] LINE do
+    return 1;     // missing <int "id">
+end
+par/or do
+    var u8 err, ret;
+    (err, ret) = request LINE => 10;
+with
+end
+escape 1;
+]],
+    adj = 'line 4 : missing parameter identifier',
+}
+
+Test { [[
+native do
+    ##define ceu_out_emit_val(a,b,c) 1
+end
+output/input (int max)=>int [10] LINE do
+    return 1;
+end
+par/or do
+    var u8 err, ret;
+    (err, ret) = request LINE => 10;
+with
+end
+escape 1;
+]],
+    props = 'line 5 : invalid `emit´',
+}
+
+Test { [[
+native do
+    ##define ceu_out_emit_val(a,b,c) 1
+end
+input/output (int max)=>int [10] LINE do
+    return 1;
+end
+par/or do
+    var u8 err, ret;
+    (err, ret) = request LINE => 10;
+with
+end
+escape 1;
+]],
+    props = 'line 9 : invalid `emit´',
+}
+
+Test { [[
+native do
+    ##define ceu_out_emit_val(a,b,c) 1
+end
+input/output (int max)=>int [10] LINE do
+    return 1;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native do
+    ##define ceu_out_emit_val(a,b,c) 1
+end
+var int ret = 0;
+input/output (int max)=>int [10] LINE do
+    ret = 1;
+end
+escape ret;
+]],
+    env = 'line 6 : variable/event "ret" is not declared',
+}
+
+Test { [[
+par do
+    native do
+        ##define ceu_out_emit_val(a,b,c) 1
+        int V = 0;
+    end
+    input/output (int max)=>int [10] LINE do
+        _V = 10;
+    end
+    await 1s;
+    escape _V+1;
+with
+    async do
+        emit LINE_REQUEST => (1,10);
+        emit 1s;
+    end
+end
+]],
+    run = 11,
+}
+
+Test { [[
+par do
+    native do
+        ##define ceu_out_emit_val(a,b,c) 1
+        int V = 0;
+    end
+    input/output (int max)=>int [10] LINE do
+        _V = max;
+    end
+    await 1s;
+    escape _V+1;
+with
+    async do
+        emit LINE_REQUEST => (1,10);
+        emit 1s;
+    end
+end
+]],
+    run = 11,
+}
+
+Test { [[
+par do
+    native do
+        ##define ceu_out_emit_val(a,b,c) 1
+        int V = 0;
+    end
+    input/output (int max)=>int [10] LINE do
+        _V = _V + max;
+    end
+    await 1s;
+    escape _V+1;
+with
+    async do
+        emit LINE_REQUEST => (1,10);
+        emit LINE_REQUEST => (2,20);
+        emit LINE_REQUEST => (3,30);
+        emit 1s;
+    end
+end
+]],
+    run = 61,
+}
+
+Test { [[
+par do
+    native do
+        ##define ceu_out_emit_val(a,b,c) 1
+        int V = 0;
+    end
+    input/output (int max)=>int [2] LINE do
+        await 1s;
+        _V = _V + max;
+    end
+    await 1s;
+    escape _V+1;
+with
+    async do
+        emit LINE_REQUEST => (1,10);
+        emit LINE_REQUEST => (2,20);
+        emit LINE_REQUEST => (3,30);
+        emit 1s;
+    end
+end
+]],
+    _ana = {
+        acc = 1,
+    },
+    run = 1,
+}
+
+Test { [[
+par do
+    native do
+        ##define ceu_out_emit_val(a,b,c) 1
+        int V = 0;
+    end
+    input/output (int max)=>int [2] LINE do
+        await 1s;
+        _V = _V + max;
+    end
+    await 2s;
+    escape _V+1;
+with
+    async do
+        emit LINE_REQUEST => (1,10);
+        emit LINE_REQUEST => (2,20);
+        emit LINE_REQUEST => (3,30);
+        emit 2s;
+    end
+end
+]],
+    _ana = {
+        acc = 1,
+    },
+    run = 31,
+}
+
+Test { [[
+par do
+    native do
+        ##define ceu_out_emit_val(a,b,c) 1
+        int V = 0;
+    end
+    input/output (int max)=>int [2] LINE do
+        await 1s;
+        _V = _V + max;
+    end
+    await 3s;
+    escape _V+1;
+with
+    async do
+        emit LINE_REQUEST => (1,11);
+        emit LINE_REQUEST => (2,22);
+        emit LINE_REQUEST => (3,30);
+        emit 1s;
+        emit LINE_REQUEST => (4,13);
+        emit LINE_REQUEST => (5,24);
+        emit LINE_REQUEST => (6,30);
+        emit 2s;
+    end
+end
+]],
+    _ana = {
+        acc = 1,
+    },
+    run = 71,
+}
+
+Test { [[
+par do
+    native do
+        ##define ceu_out_emit_val(a,b,c) 1
+        int V = 0;
+    end
+    input/output (int max)=>int [1] LINE do
+        await 1s;
+        _V = _V + max;
+    end
+    await 3s;
+    escape _V+1;
+with
+    async do
+        emit LINE_REQUEST => (1,11);
+        emit LINE_REQUEST => (2,22);
+        emit LINE_REQUEST => (3,30);
+        emit 1s;
+        emit LINE_REQUEST => (4,13);
+        emit LINE_REQUEST => (5,24);
+        emit LINE_REQUEST => (6,30);
+        emit 2s;
+    end
+end
+]],
+    _ana = {
+        acc = 1,
+    },
+    run = 25,
+}
+
+Test { [[
+par do
+    native do
+        ##define ceu_out_emit_val(a,b,c) 1
+        int V = 0;
+    end
+    input/output (int max)=>int [0] LINE do
+        await 1s;
+        _V = _V + max;
+    end
+    await 3s;
+    escape _V+1;
+with
+    async do
+        emit LINE_REQUEST => (1,11);
+        emit LINE_REQUEST => (2,22);
+        emit LINE_REQUEST => (3,30);
+        emit 1s;
+        emit LINE_REQUEST => (4,13);
+        emit LINE_REQUEST => (5,24);
+        emit LINE_REQUEST => (6,30);
+        emit 2s;
+    end
+end
+]],
+    _ana = {
+        acc = 1,
+    },
+    run = 1,
+}
+
+Test { [[
+par do
+    native do
+        ##define ceu_out_emit_val(a,b,c) 1
+        int V = 0;
+    end
+    input/output (int max)=>int [10] LINE do
+        await 1s;
+        _V = _V + max;
+    end
+    input void F;
+    await F;
+    escape _V+1;
+with
+    async do
+        emit LINE_REQUEST => (1,11);
+        emit LINE_REQUEST => (2,22);
+        emit LINE_CANCEL => 1;
+        emit 3s;
+        emit F;
+    end
+end
+]],
+    run = 23,
+}
+
+Test { [[
+par do
+    native do
+        ##define ceu_out_emit_val(a,b,c) 1
+        int V = 0;
+    end
+    input/output (int max)=>int [10] LINE do
+        await 1s;
+        _V = _V + max;
+    end
+    input void F;
+    await F;
+    escape _V+1;
+with
+    async do
+        emit LINE_REQUEST => (1,11);
+        emit LINE_REQUEST => (2,22);
+        emit LINE_CANCEL => 2;
+        emit 3s;
+        emit F;
+    end
+end
+]],
+    run = 12,
+}
+
+Test { [[
+par do
+    native do
+        ##define ceu_out_emit_val(a,b,c) 1
+        int V = 0;
+    end
+    input/output (int max)=>int [10] LINE do
+        await 1s;
+        _V = _V + max;
+    end
+    input void F;
+    await F;
+    escape _V+1;
+with
+    async do
+        emit LINE_REQUEST => (1,11);
+        emit LINE_REQUEST => (2,22);
+        emit LINE_CANCEL => 2;
+        emit LINE_CANCEL => 1;
+        emit 3s;
+        emit F;
+    end
+end
+]],
+    run = 1,
+}
+
+Test { [[
+par do
+    native do
+        ##define ceu_out_emit_val(a,b,c) 1
+        int V = 0;
+    end
+    output/input (int max)=>int LINE;
+    var int v   = 0;
+    var int err = 0;
+    par/or do
+        (err,v) = request LINE=>10;
+    with
+        await 5s;
+        escape 999;
+    end
+    escape v+err;
+with
+    async do
+        emit LINE_RETURN => (1,1,10);
+        emit 5s;
+    end
+end
+]],
+    run = 11,
+}
+
+Test { [[
+par do
+    native do
+        ##define ceu_out_emit_val(a,b,c) 1
+        int V = 0;
+    end
+    output/input (int max)=>int LINE;
+    var int v   = 0;
+    var int err = 0;
+    par/or do
+        (err,v) = request LINE=>10;
+    with
+        await 5s;
+        escape 999;
+    end
+    escape v+err;
+with
+    async do
+        emit LINE_RETURN => (2,1,10);
+        emit 5s;
+    end
+end
+]],
+    run = 999,
+}
+
+Test { [[
+par do
+    native do
+        ##define ceu_out_emit_val(a,b,c) 1
+        int V = 0;
+    end
+    output/input (int max)=>int LINE;
+    var int v   = 0;
+    var int err = 0;
+    par/or do
+        (err,v) = request LINE=>10;
+    with
+        await 5s;
+        escape 999;
+    end
+    escape v+err;
+with
+    async do
+        emit LINE_RETURN => (2,1,10);
+        emit 4s;
+        emit LINE_RETURN => (1,0,-1);
+        emit 1s;
+    end
+end
+]],
+    run = -1,
+}
+
     -- POINTERS & ARRAYS
 
 -- int_int
@@ -29017,7 +29528,8 @@ var int a, b;
 (a,b) = 1;
 escape 1;
 ]],
-    adj = 'line 2 : invalid attribution',
+    env = 'line 2 : invalid attribution',
+    --run = 1,
 }
 
 Test { [[

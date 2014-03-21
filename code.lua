@@ -180,7 +180,7 @@ end
 
 F = {
     Node_pre = function (me)
-        me.code = ''
+        me.code = '/* NODE: '..me.tag..' '..me.n..' */\n'
     end,
 
     Host = function (me)
@@ -614,7 +614,7 @@ ceu_pool_init(&]]..pre..', '..n..', sizeof(CEU_'..node.cls.id..'), '
 _ceu_go->trl = &_ceu_go->org->trls[ ]]..stmts.trails[1]..[[ ];
 ]])
         end
-        CONC(me, blk)
+        CONC(me, stmts)
 
         if me.fins then
             GOTO(me, me.lbl_fin_cnt)

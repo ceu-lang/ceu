@@ -3,6 +3,87 @@ local node = _AST.node
 -- TODO: remove
 _MAIN = nil
 
+function REQUEST (me)
+    --[[
+    --      (ret, v) = (request LINE=>10);
+    -- becomes
+    --      var _reqid id = _ceu_sys_request();
+    --      var _reqid id';
+    --      emit _LINE_request => (id, 10);
+    --      finalize with
+    --          _ceu_sys_unrequest(id);
+    --          emit _LINE_cancel => id;
+    --      end
+    --      (id', ret, v) = await LINE_return
+    --                      until id == id';
+    --]]
+
+    local to, op, _, emit
+    if me.tag == 'EmitExt' then
+        to   = nil
+        emit = me
+    else
+        -- _Set
+        to, op, _, emit = unpack(me)
+    end
+
+    local op_emt, ext, ps = unpack(emit)
+    local id_evt = ext[1]
+    local id_req  = '_reqid_'..me.n
+    local id_req2 = '_reqid2_'..me.n
+
+    local XX = 'int'    -- TODO
+
+    if ps then
+        -- insert "id" into "emit REQUEST => (id,...)"
+        if ps.tag == 'ExpList' then
+            table.insert(ps, 1, node('Var',me.ln,id_req))
+        else
+            ps = node('ExpList', me.ln,
+                    node('Var', me.ln, id_req),
+                    ps)
+        end
+    end
+
+    local awt = node('AwaitExt', me.ln,
+                    node('Ext', me.ln, id_evt..'_RETURN'),
+                    node('Op2_==', me.ln, '==',
+                        node('Var', me.ln, id_req),
+                        node('Var', me.ln, id_req2)))
+    if to then
+        -- v = await RETURN
+
+        -- insert "id" into "v = await RETURN"
+        if to.tag ~= 'VarList' then
+            to = node('VarList', me.ln, to)
+        end
+        table.insert(to, 1, node('Var',me.ln,id_req2))
+
+        awt = node('_Set', me.ln, to, op, '__SetAwait', awt, false, false)
+    end
+
+    return node('Stmts', me.ln,
+            node('Dcl_var', me.ln, 'var', XX, false, id_req),
+            node('Dcl_var', me.ln, 'var', XX, false, id_req2),
+            node('SetExp', me.ln, '=',
+                node('NUMBER', me.ln, 1),  -- TODO: 1
+                node('Var', me.ln, id_req)),
+            node('EmitExt', me.ln, 'emit',
+                node('Ext', me.ln, id_evt..'_REQUEST'),
+                ps),
+            node('Finalize', me.ln,
+                false,
+                node('Finally', me.ln,
+                    node('Block', me.ln,
+                        node('Stmts', me.ln,
+                            node('Nothing', me.ln), -- TODO: unrequest
+                            node('EmitExt', me.ln, 'emit',
+                                node('Ext', me.ln, id_evt..'_CANCEL'),
+                                node('Var', me.ln, id_req)))))),
+            awt
+    )
+end
+
 F = {
 -- 1, Root --------------------------------------------------
 
@@ -12,12 +93,14 @@ F = {
         -- for OS: <par/or ... with await OS_STOP; escape 1; end>
         if _OPTS.os then
             stmts = node('ParOr', me.ln,
-                        stmts,
-                        node('Stmts', me.ln,
-                            node('AwaitExt', me.ln,
-                                node('Ext',me.ln,'OS_STOP'),
-                                false),
-                            node('_Escape', me.ln, node('NUMBER',me.ln,'1'))))
+                        node('Block', me.ln, stmts),
+                        node('Block', me.ln,
+                            node('Stmts', me.ln,
+                                node('AwaitExt', me.ln,
+                                    node('Ext',me.ln,'OS_STOP'),
+                                    false),
+                                node('_Escape', me.ln,
+                                    node('NUMBER',me.ln,'1')))))
         end
 
         -- enclose the main block with <ret = do ... end>
@@ -27,6 +110,36 @@ F = {
                             node('SetBlock', me.ln,
                                 stmts,
                                 node('Var', me.ln,'_ret'))))
+
+        --[[
+        -- Prepare request loops to run in "par/or" with the Block->Stmts
+        -- above:
+        --
+        -- par/or do
+        --      <stmts>
+        -- with
+        --      par do
+        --          every REQ1 do ... end
+        --      with
+        --          every REQ2 do ... end
+        --      end
+        -- end
+        --]]
+        do
+            local stmts = blk[1]
+            local paror = node('ParOr', me.ln,
+                            node('Block', me.ln, stmts),
+                            node('Block', me.ln, node('Stmts',me.ln,node('XXX',me.ln))))
+                                                -- XXX = Par or Stmts
+            blk[1] = paror
+            _ADJ_REQS = { blk=blk, orig=stmts, reqs=paror[2][1][1] }
+                --[[
+                -- Use "_ADJ_REQS" to hold the "par/or", which can be
+                -- substituted by the original "stmts" if there are no requests
+                -- in the program (avoiding the unnecessary "par/or->par").
+                -- See also ['Root'].
+                --]]
+        end
 
         -- enclose the program with the "Main" class
         _MAIN = node('Dcl_cls', me.ln, false, false,
@@ -38,6 +151,17 @@ F = {
         -- [1] => ['Root']
         _AST.root = node('Root', me.ln, _MAIN)
         return _AST.root
+    end,
+
+    Root = function (me)
+        if #_ADJ_REQS.reqs == 0 then
+            -- no requests, substitute the "par/or" by the original "stmts"
+            _ADJ_REQS.blk[1] = _ADJ_REQS.orig
+        elseif #_ADJ_REQS.reqs == 1 then
+            _ADJ_REQS.reqs.tag = 'Stmts'
+        else
+            _ADJ_REQS.reqs.tag = 'Par'
+        end
     end,
 
 -- Dcl_cls/_ifc --------------------------------------------------
@@ -71,7 +195,14 @@ F = {
         local to = _AST.copy(to)    -- escape from multiple places
             to.ln = me.ln
 
-        to.__adj_blk = assert(_AST.par(set, 'Block')) -- refers to "set" scope
+        --[[
+        --  a = do
+        --      var int a;
+        --      escape 1;   -- "set" block (outer)
+        --  end
+        --]]
+        to.__adj_blk = set
+
 -- TODO: remove
         to.ret = true
 
@@ -399,7 +530,7 @@ F = {
     end,
 
     _Dcl_ext0_pre = function (me)
-        local dir, rec, ins, out, spw, id, blk = unpack(me)
+        local dir, rec, ins, out, spw, id_evt, blk = unpack(me)
 
         if me[#me].tag == 'Block' then
             -- refuses id1,i2 + blk
@@ -407,14 +538,14 @@ F = {
             -- removes blk from the list of ids
             me[#me] = nil
         else
-            -- blk is actually another id, keep #me
+            -- blk is actually another id_evt, keep #me
             blk = nil
         end
 
         local ids = { unpack(me,6) }  -- skip dir,rec,ins,out,spw
 
         local ret = {}
-        for _, id in ipairs(ids) do
+        for _, id_evt in ipairs(ids) do
             if dir=='input/output' or dir=='output/input' then
                 --[[
                 --      output/input (T1,...)=>T2 LINE;
@@ -426,30 +557,179 @@ F = {
                 local d1, d2 = string.match(dir, '([^/]*)/(.*)')
                 assert(out)
                 assert(rec == false)
-                local tp = 'int'
+                local XX = 'int'    -- TODO
 
                 local ins_req = node('TupleType', me.ln,
-                                    {false,tp,false},
+                                    {false,XX,false},
                                     unpack(ins))                -- T1,...
                 local ins_ret = node('TupleType', me.ln,
-                                    {false,tp,  false},
+                                    {false,XX,  false},
                                     {false,'u8',false},
                                     {false,out, false})
 
                 ret[#ret+1] = node('Dcl_ext', me.ln, d1, false,
-                                   ins_req, false, id..'_REQUEST')
+                                   ins_req, false, id_evt..'_REQUEST')
                 ret[#ret+1] = node('Dcl_ext', me.ln, d1, false,
-                                   tp,      false, id..'_CANCEL')
+                                   XX,      false, id_evt..'_CANCEL')
                 ret[#ret+1] = node('Dcl_ext', me.ln, d2, false,
-                                   ins_ret, false, id..'_RETURN')
+                                   ins_ret, false, id_evt..'_RETURN')
             else
                 if out then
-                    ret[#ret+1] = node('Dcl_fun',me.ln,dir,rec,ins,out,id, blk)
+                    ret[#ret+1] = node('Dcl_fun',me.ln,dir,rec,ins,out,id_evt, blk)
                 end
-                ret[#ret+1] = node('Dcl_ext',me.ln,dir,rec,ins,out,id)
+                ret[#ret+1] = node('Dcl_ext',me.ln,dir,rec,ins,out,id_evt)
             end
         end
+
+        if blk and (dir=='input/output' or dir=='output/input') then
+            --[[
+            -- input/output (int max)=>char* LINE [10] do ... end
+            --      becomes
+            -- class [10] Line with
+            --     var _reqid id;
+            --     var int max;
+            -- do
+            --     finalize with
+            --         emit _LINE_return => (this.id,XX,null);
+            --     end
+            --     par/or do
+            --         ...
+            --     with
+            --         var int v = await _LINE_cancel
+            --                     until v == this.id;
+            --     end
+            -- end
+            --]]
+            local id_cls = string.sub(id_evt,1,1)..string.lower(string.sub(id_evt,2,-1))
+            local XX = 'int'    -- TODO
+            local id_req = '_req_'..me.n
+
+            local ifc = {
+                node('Dcl_var', me.ln, 'var', XX, false, id_req)
+            }
+            for _, t in ipairs(ins) do
+                local mod, tp, id = unpack(t)
+                ASR(tp=='void' or id, me, 'missing parameter identifier')
+                --id = '_'..id..'_'..me.n
+                ifc[#ifc+1] = node('Dcl_var', me.ln, 'var', tp, false, id)
+            end
+
+            local cls =
+                node('Dcl_cls', me.ln, false, spw, id_cls,
+                    node('BlockI', me.ln, unpack(ifc)),
+                    node('Block', me.ln,
+                        node('Stmts', me.ln,
+                            node('ParOr', me.ln,
+                                node('Block', me.ln,
+                                    node('Stmts', me.ln, blk)),
+                                node('Block', me.ln,
+                                    node('Stmts', me.ln,
+                                        node('Dcl_var', me.ln, 'var', XX, false, 'id_req'),
+                                        node('_Set', me.ln,
+                                            node('Var', me.ln, 'id_req'),
+                                            '=', '__SetAwait',
+                                            node('AwaitExt', me.ln,
+                                                node('Ext', me.ln, id_evt..'_CANCEL'),
+                                                node('Op2_==', me.ln, '==',
+                                                    node('Var', me.ln, 'id_req'),
+                                                    node('Op2_.', me.ln, '.',
+                                                        node('This',me.ln),
+                                                        id_req))),
+                                            false, false)))))))
+            cls.__ast_req = {id_evt=id_evt, id_req=id_req}
+            ret[#ret+1] = cls
+
+            --[[
+            -- Include the request loop in parallel with the top level
+            -- stmts:
+            --
+            -- do
+            --     var XX id_req_;
+            --     var tpN, idN_;
+            --     every (id_req,idN) = _LINE_request do
+            --         var bool ok? = spawn Line with
+            --             this.id_req = id_req_;
+            --             this.idN    = idN_;
+            --         end
+            --         if not ok? then
+            --             emit _LINE_return => (id_req,err,0);
+            --         end
+            --     end
+            -- end
+            ]]
+
+            local dcls = {
+                node('Dcl_var', me.ln, 'var', XX, false, id_req)
+            }
+            local vars = node('VarList', me.ln, node('Var',me.ln,id_req))
+            local sets = {
+                node('_Set', me.ln,
+                    node('Op2_.', me.ln, '.', node('This',me.ln), id_req),
+                    '=', 'SetExp',
+                    node('Var', me.ln, id_req))
+            }
+            for _, t in ipairs(ins) do
+                local mod, tp, id = unpack(t)
+                ASR(tp=='void' or id, me, 'missing parameter identifier')
+                local _id = '_'..id..'_'..me.n
+                dcls[#dcls+1] = node('Dcl_var', me.ln, 'var', tp, false, _id)
+                vars[#vars+1] = node('Var', me.ln, _id)
+                sets[#sets+1] = node('_Set', me.ln,
+                                    node('Op2_.', me.ln, '.', node('This',me.ln), id),
+                                    '=', 'SetExp',
+                                    node('Var', me.ln, _id))
+            end
+
+            local reqs = _ADJ_REQS.reqs
+            reqs[#reqs+1] =
+                node('Do', me.ln,
+                    node('Block', me.ln,
+                        node('Stmts', me.ln,
+                            node('Stmts', me.ln, unpack(dcls)),
+                            node('_Every', me.ln, vars, '=',
+                                node('Ext', me.ln, id_evt..'_REQUEST'),
+                                node('Block', me.ln,
+                                    node('Stmts', me.ln,
+                                        node('Dcl_var', me.ln, 'var', 'bool', 
+                                        false, 'ok_'),
+                                        node('_Set', me.ln,
+                                            node('Var', me.ln, 'ok_'),
+                                            '=', '__SetSpawn',
+                                            node('Spawn', me.ln, false, id_cls,
+                                                node('Dcl_constr', me.ln, unpack(sets)))),
+                                        node('If', me.ln,
+                                            node('Op1_not', me.ln, 'not',
+                                                node('Var', me.ln, 'ok_')),
+                                            node('Block', me.ln,
+                                                node('EmitExt', me.ln, 'emit',
+                                                    node('Ext', me.ln, id_evt..'_RETURN'),
+                                                    node('ExpList', me.ln,
+                                                        node('Var', me.ln, id_req),
+                                                        node('NUMBER', me.ln, 1),
+                                                                        -- TODO: 1??
+                                                        node('NUMBER', me.ln, 0)))),
+                                            false)))))))
+        end
+
         return node('Stmts', me.ln, unpack(ret))
+    end,
+
+    Return_pre = function (me)
+        local cls = _AST.par(me, 'Dcl_cls')
+        if cls and cls.__ast_req then
+            --[[
+            --      return ret;
+            -- becomes
+            --      emit RETURN => (this.id, 0, ret);
+            --]]
+            return node('EmitExt', me.ln, 'emit',
+                        node('Ext', me.ln, cls.__ast_req.id_evt..'_RETURN'),
+                        node('ExpList', me.ln,
+                            node('Var', me.ln, cls.__ast_req.id_req),
+                            node('NUMBER', me.ln, 0),
+                            me[1])  -- return expression
+                    )
+        end
     end,
 
 -- Dcl_nat, Dcl_ext, Dcl_int, Dcl_var ---------------------
@@ -525,10 +805,13 @@ F = {
     _Set_pre = function (me)
         local to, op, tag, p1, p2, p3 = unpack(me)
 
+--[[
+-- remove! now "request" generates EmitExt that returns tuple
         if to.tag == 'VarList' then
             ASR(tag=='__SetAwait', me.ln,
                 'invalid attribution (`await´ expected)')
         end
+]]
 
         if tag == 'SetExp' then
             return node(tag, me.ln, op, p1, to)
@@ -604,25 +887,31 @@ F = {
                             to))
 
         elseif tag == '__SetEmitExt' then
-            --[[
-            --      v = call A(1,2);
-            -- becomes
-            --      do
-            --          var _tup t;
-            --          t._1 = 1;
-            --          t._2 = 2;
-            --          emit E => &t;
-            --          v = <ret>
-            --      end
-            --]]
-            p1.__ast_set = true
-            local ret = node('Block', me.ln,
+            assert(p1.tag == 'EmitExt')
+            local op_emt, ext, ps = unpack(p1)
+            if op_emt == 'request' then
+                return REQUEST(me)
+
+            else
+                --[[
+                --      v = call A(1,2);
+                -- becomes
+                --      do
+                --          var _tup t;
+                --          t._1 = 1;
+                --          t._2 = 2;
+                --          emit E => &t;
+                --          v = <ret>
+                --      end
+                --]]
+                p1.__ast_set = true
+                return node('Block', me.ln,
                             node('Stmts', me.ln,
                                 p1,  -- Dcl_var, Sets, EmitExt
                                 node('SetExp', me.ln, op,
                                     node('Ref', me.ln, p1),
                                     to)))
-            return ret
+            end
 
         else -- '__SetNew', '__SetSpawn'
             p1[#p1+1] = node('SetExp', me.ln, op,
@@ -634,9 +923,17 @@ F = {
 
 -- EmitExt --------------------------------------------------------
 
+    EmitExt_pre = function (me)
+        local op, ext, ps = unpack(me)
+        if op ~= 'request' then
+            return
+        end
+        return REQUEST(me)
+    end,
+
     EmitInt_pre = 'EmitExt_pos',
     EmitExt_pos = function (me)
-        local mod, ext, ps = unpack(me)
+        local op, ext, ps = unpack(me)
 
         -- no exp: emit e
         -- single: emit e => a

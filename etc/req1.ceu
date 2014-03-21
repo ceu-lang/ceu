@@ -1,0 +1,45 @@
+output/input (int)=>char* LINE;
+
+
+
+var _ret ret;    // 0=success
+var char* v;
+
+par/or do
+    (ret, v) = (request LINE=>10);
+
+
+
+
+
+
+
+with
+    await 10s;
+end
+
+//////////////////////
+
+
+
+
+
+input/output (int max)=>char* LINE [10] do
+
+
+
+
+
+
+    par/or do
+        var char* line;
+        ...
+        return line;
+    with
+        await 10s;
+    end
+end
+
+
+-- forca ser global e responder a cada
+-- evento
