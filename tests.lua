@@ -325,9 +325,8 @@ escape ret + _V;        // * reads after
 
 -------------------------------------------------------------------------------
 
+do return end
 --]===]
-
---do return end
 
 -- OK: well tested
 
@@ -29629,6 +29628,15 @@ event (int,int) a;
 escape 1;
 ]],
     run = 1;
+}
+
+Test { [[
+input (int,int) LINE;
+var int v;
+v = await LINE;
+escape 1;
+]],
+    todo = 'arity error',
 }
 
 Test { [[

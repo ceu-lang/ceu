@@ -73,6 +73,14 @@ void ceu_sys_free (void* ptr) {
 
 /**********************************************************************/
 
+int CEU_REQS = 0;
+int ceu_sys_req (void) {
+    CEU_REQS++;
+    return CEU_REQS;
+}
+
+/**********************************************************************/
+
 void ceu_sys_org (tceu_org* org, int n, int lbl, int seqno,
                   tceu_org* par_org, int par_trl)
 {
@@ -501,6 +509,7 @@ int ceu_go_all (tceu_app* app)
 void* CEU_SYS_VEC[CEU_SYS_MAX] __attribute__((used)) = {
     (void*) &ceu_sys_malloc,
     (void*) &ceu_sys_free,
+    (void*) &ceu_sys_req,
     (void*) &ceu_sys_load,
 #ifdef CEU_ISR
     (void*) &ceu_sys_isr,

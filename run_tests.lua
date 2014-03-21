@@ -258,16 +258,16 @@ STATS = {
 -- w/ threads
 --[[
 STATS = {
-    count   = 1677,
+    count   = 1683,
     mem     = 0,
-    trails  = 3153,
-    bytes   = 15005709,
+    trails  = 3159,
+    bytes   = 15128525,
 }
 
 
-real	7m11.698s
-user	6m37.424s
-sys	0m54.812s
+real	7m2.951s
+user	6m33.512s
+sys	0m54.936s
 ]]
 
 os.execute('rm -f /tmp/_ceu_*')

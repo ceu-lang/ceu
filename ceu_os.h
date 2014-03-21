@@ -61,6 +61,9 @@
     #define ceu_out_free(ptr) \
         ((__typeof__(ceu_sys_free)*)((_ceu_app)->sys_vec[CEU_SYS_FREE]))(ptr)
 
+    #define ceu_out_req() \
+        ((__typeof__(ceu_sys_req)*)((_ceu_app)->sys_vec[CEU_SYS_REQ]))()
+
     #define ceu_out_load(addr) \
         ((__typeof__(ceu_sys_load)*)((_ceu_app)->sys_vec[CEU_SYS_LOAD]))(addr)
 
@@ -100,6 +103,8 @@
             ceu_sys_malloc(size)
     #define ceu_out_free(ptr) \
             ceu_sys_free(ptr)
+    #define ceu_out_req() \
+            ceu_sys_req()
     #define ceu_out_org(app,org,n,lbl,seqno,par_org,par_trl) \
             ceu_sys_org(org,n,lbl,seqno,par_org,par_trl)
     #define ceu_out_emit_buf(app,id,sz,buf) \
@@ -413,6 +418,7 @@ void      ceu_sys_go     (tceu_app* app, int evt, tceu_evtp evtp);
 enum {
     CEU_SYS_MALLOC = 0,
     CEU_SYS_FREE,
+    CEU_SYS_REQ,
     CEU_SYS_LOAD,
 #ifdef CEU_ISR
     CEU_SYS_ISR,

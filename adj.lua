@@ -5,7 +5,7 @@ _MAIN = nil
 
 function REQUEST (me)
     --[[
-    --      (ret, v) = (request LINE=>10);
+    --      (err, v) = (request LINE=>10);
     -- becomes
     --      var _reqid id = _ceu_sys_request();
     --      var _reqid id';
@@ -14,7 +14,7 @@ function REQUEST (me)
     --          _ceu_sys_unrequest(id);
     --          emit _LINE_cancel => id;
     --      end
-    --      (id', ret, v) = await LINE_return
+    --      (id', err, v) = await LINE_return
     --                      until id == id';
     --]]
 
@@ -32,7 +32,7 @@ function REQUEST (me)
     local id_req  = '_reqid_'..me.n
     local id_req2 = '_reqid2_'..me.n
 
-    local XX = 'int'    -- TODO
+    local tp_req = 'int'
 
     if ps then
         -- insert "id" into "emit REQUEST => (id,...)"
@@ -63,10 +63,10 @@ function REQUEST (me)
     end
 
     return node('Stmts', me.ln,
-            node('Dcl_var', me.ln, 'var', XX, false, id_req),
-            node('Dcl_var', me.ln, 'var', XX, false, id_req2),
+            node('Dcl_var', me.ln, 'var', tp_req, false, id_req),
+            node('Dcl_var', me.ln, 'var', tp_req, false, id_req2),
             node('SetExp', me.ln, '=',
-                node('NUMBER', me.ln, 1),  -- TODO: 1
+                node('RawExp', me.ln, 'ceu_sys_req()'),
                 node('Var', me.ln, id_req)),
             node('EmitExt', me.ln, 'emit',
                 node('Ext', me.ln, id_evt..'_REQUEST'),
@@ -560,20 +560,20 @@ F = {
                 local d1, d2 = string.match(dir, '([^/]*)/(.*)')
                 assert(out)
                 assert(rec == false)
-                local XX = 'int'    -- TODO
+                local tp_req = 'int'
 
                 local ins_req = node('TupleType', me.ln,
-                                    {false,XX,false},
+                                    {false,tp_req,false},
                                     unpack(ins))                -- T1,...
                 local ins_ret = node('TupleType', me.ln,
-                                    {false,XX,  false},
+                                    {false,tp_req,  false},
                                     {false,'u8',false},
                                     {false,out, false})
 
                 ret[#ret+1] = node('Dcl_ext', me.ln, d1, false,
                                    ins_req, false, id_evt..'_REQUEST')
                 ret[#ret+1] = node('Dcl_ext', me.ln, d1, false,
-                                   XX,      false, id_evt..'_CANCEL')
+                                   tp_req,  false, id_evt..'_CANCEL')
                 ret[#ret+1] = node('Dcl_ext', me.ln, d2, false,
                                    ins_ret, false, id_evt..'_RETURN')
             else
@@ -604,11 +604,11 @@ F = {
             -- end
             --]]
             local id_cls = string.sub(id_evt,1,1)..string.lower(string.sub(id_evt,2,-1))
-            local XX = 'int'    -- TODO
+            local tp_req = 'int'
             local id_req = '_req_'..me.n
 
             local ifc = {
-                node('Dcl_var', me.ln, 'var', XX, false, id_req)
+                node('Dcl_var', me.ln, 'var', tp_req, false, id_req)
             }
             for _, t in ipairs(ins) do
                 local mod, tp, id = unpack(t)
@@ -627,7 +627,7 @@ F = {
                                     node('Stmts', me.ln, blk)),
                                 node('Block', me.ln,
                                     node('Stmts', me.ln,
-                                        node('Dcl_var', me.ln, 'var', XX, false, 'id_req'),
+                                        node('Dcl_var', me.ln, 'var', tp_req, false, 'id_req'),
                                         node('_Set', me.ln,
                                             node('Var', me.ln, 'id_req'),
                                             '=', '__SetAwait',
@@ -647,7 +647,7 @@ F = {
             -- stmts:
             --
             -- do
-            --     var XX id_req_;
+            --     var tp_req id_req_;
             --     var tpN, idN_;
             --     every (id_req,idN) = _LINE_request do
             --         var bool ok? = spawn Line with
@@ -662,7 +662,7 @@ F = {
             ]]
 
             local dcls = {
-                node('Dcl_var', me.ln, 'var', XX, false, id_req)
+                node('Dcl_var', me.ln, 'var', tp_req, false, id_req)
             }
             local vars = node('VarList', me.ln, node('Var',me.ln,id_req))
             local sets = {
@@ -729,7 +729,7 @@ F = {
                         node('Ext', me.ln, cls.__ast_req.id_evt..'_RETURN'),
                         node('ExpList', me.ln,
                             node('Var', me.ln, cls.__ast_req.id_req),
-                            node('NUMBER', me.ln, 0),
+                            node('NUMBER', me.ln, 0), -- no error
                             me[1])  -- return expression
                     )
         end
@@ -859,6 +859,11 @@ F = {
 
             if to.tag == 'VarList' then
                 local var = unpack(awt) -- find out 'TP' before traversing tup
+
+                -- TODO:
+                --ASR( #to == y, me,
+                    --'invalid arity ('..#to..' vs '..y..')')
+
                 table.insert(T, 1, _AST.copy(var))
                 table.insert(T, 2,
                     node('Dcl_var', me.ln, 'var', 'TP*', false, tup))
