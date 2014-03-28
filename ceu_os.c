@@ -21,7 +21,7 @@ void* CEU_APP_ADDR = NULL;
 #endif
 
 /* TODO: app */
-#ifdef CEU_NEWS
+#ifdef CEU_NEWS_POOL
 #include "ceu_pool.h"
 #endif
 

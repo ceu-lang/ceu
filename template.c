@@ -24,8 +24,9 @@
 #   define CEU_ATOMIC(f) f
 #endif
 
-#ifdef CEU_NEWS
+#ifdef CEU_NEWS_POOL
 #include "ceu_pool.h"
+#include "ceu_pool.c"
 #endif
 
 #ifdef CEU_IFCS
@@ -196,19 +197,23 @@ static void ceu_app_init (tceu_app* app)
     CEU_THREADS_MUTEX_LOCK(&app->threads_mutex);
 #endif
 
+#ifdef CEU_OS
+
 #ifdef __AVR
     app->code  = (__typeof__(ceu_app_go)*)    (((word)app->addr>>1) + &ceu_app_go);
-#ifdef CEU_OS
     app->calls = (__typeof__(ceu_app_calls)*) (((word)app->addr>>1) + &ceu_app_calls);
-#endif
 #else
     app->code  = (__typeof__(ceu_app_go)*)    (&ceu_app_go);
-#ifdef CEU_OS
     app->calls = (__typeof__(ceu_app_calls)*) (&ceu_app_calls);
 #endif
-#endif
 
-#ifdef CEU_NEWS
+#else   /* !CEU_OS */
+
+    app->code  = (__typeof__(ceu_app_go)*)    (&ceu_app_go);
+
+#endif  /* CEU_OS */
+
+#ifdef CEU_NEWS_POOL
     === POOLS_INIT ===
 #endif
 
