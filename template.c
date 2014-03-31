@@ -26,7 +26,6 @@
 
 #ifdef CEU_NEWS_POOL
 #include "ceu_pool.h"
-#include "ceu_pool.c"
 #endif
 
 #ifdef CEU_IFCS

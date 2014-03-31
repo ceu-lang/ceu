@@ -21,11 +21,6 @@ local function INCLUDE (fname, src)
     f:close()
 end
 
-local THREADS_all = true
---local FOREVER = true
-
-repeat  -- FOREVER
-
 --[===[
 
 Test { [[
@@ -2311,7 +2306,7 @@ escape 1;
 
 Test { [[
 input void A;
-var int ret;
+var int ret = 0;
 every A do
     ret = ret + 1;
     if ret == 3 then
@@ -2323,7 +2318,7 @@ end
 }
 
 Test { [[
-var int ret;
+var int ret = 0;
 every 1s do
     await 1s;
     ret = ret + 1;
@@ -2336,7 +2331,7 @@ end
 }
 
 Test { [[
-var int ret;
+var int ret = 0;
 every 1s do
     ret = ret + 1;
     if ret == 10 then
@@ -2348,7 +2343,7 @@ end
 }
 
 Test { [[
-var int ret;
+var int ret = 0;
 var int dt;
 every dt = 1s do
     ret = ret + dt;
@@ -8299,7 +8294,7 @@ escape v;
 }
 Test { [[
 input int A,B,Z;
-var int a;
+var int a = 0;
 par do
     loop do
         if a then
@@ -10559,7 +10554,7 @@ escape v;
 -- Testa prio em DFA.lua
 Test { [[
 input int A;
-var int b,c,d;
+var int b=0,c=0,d=0;
 par/or do
     par/and do
         loop do
@@ -10591,7 +10586,7 @@ escape b+c+d;
 
 Test { [[
 input int A;
-var int b,c,d;
+var int b=0,c=0,d=0;
 par/or do
     par/and do
         loop do
@@ -15054,7 +15049,7 @@ native _a;
 native do
     int a = 1;
 end
-var int a;
+var int a=0;
 safe a with _a;
 par/or do
     _a = 1;
@@ -15124,7 +15119,7 @@ escape ret;
 Test { [[
 input int F;
 var int ret = 0;
-var int f;
+var int f = 0;
 par/or do
     ret = do
         var int sum = 0;
@@ -17504,6 +17499,8 @@ native do
     }
 end
 var int[2] a;
+a[0] = 0;
+a[1] = 0;
 var int b;
 par/or do
     b = 2;
@@ -26597,6 +26594,10 @@ class T with
 do
 end
 var T** t := _malloc(10 * sizeof(T**));
+native nohold _free();
+finalize with
+    _free(t);
+end
 escape 10;
 ]],
     run = 10;
@@ -30033,6 +30034,10 @@ escape 1;
 
 -- ASYNCS // THREADS
 
+if _VALGRIND then
+    return
+end
+
 Test { [[
 var int  a=10, b=5;
 var int* p = &b;
@@ -30257,8 +30262,6 @@ escape v1;
 ]],
     run = 900,
 }
-
-if THREADS_all and (not _VALGRIND) then
 
 Test { [[
 var int  v1, v2;
@@ -30732,8 +30735,6 @@ escape ret;
 
 -- END: THREADS / EMITS
 
-end     -- THREADS_all
-
 --[==[
     -- MEM
 
@@ -30987,5 +30988,3 @@ end
     tot = 12,
 }
 ]==]
-
-until (not FOREVER)

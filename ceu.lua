@@ -246,11 +246,12 @@ do
                              _FILES.ceu_types_h)
         CC = SUB(CC, '#include "ceu_os.h"',
                              _FILES.ceu_os_h..'\n'.._FILES.ceu_os_c)
-
-        _FILES.ceu_pool_c = SUB(_FILES.ceu_pool_c, '#include "ceu_pool.h"', '')
-        CC = SUB(CC, '#include "ceu_pool.h"',
-                             _FILES.ceu_pool_h..'\n'.._FILES.ceu_pool_c)
     end
+
+    -- TODO: move above (if not _OPTS.os) when pool* becomes sys_calls
+    _FILES.ceu_pool_c = SUB(_FILES.ceu_pool_c, '#include "ceu_pool.h"', '')
+    CC = SUB(CC, '#include "ceu_pool.h"',
+                         _FILES.ceu_pool_h..'\n'.._FILES.ceu_pool_c)
 
     if _OPTS.out_s ~= 'CEU_SIZE' then
         CC = SUB(CC, 'CEU_SIZE', _OPTS.out_s)
