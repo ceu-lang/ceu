@@ -190,6 +190,8 @@ u8 CEU_GC = 0;  /* execute __ceu_gc() when "true" */
 
 void ceu_sys_go (tceu_app* app, int evt, tceu_evtp evtp)
 {
+    tceu_go go;
+
     switch (evt) {
 #ifdef CEU_ASYNCS
         case CEU_IN__ASYNC:
@@ -207,12 +209,11 @@ void ceu_sys_go (tceu_app* app, int evt, tceu_evtp evtp)
 #endif
     }
 
-    tceu_go go;
-        go.evt  = evt;
-        go.evtp = evtp;
-        go.stki = 0;      /* stki */
+    go.evt  = evt;
+    go.evtp = evtp;
+    go.stki = 0;      /* stki */
 #ifdef CEU_CLEAR
-        go.stop = NULL;   /* stop */
+    go.stop = NULL;   /* stop */
 #endif
 
     app->seqno++;

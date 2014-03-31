@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include "ceu_types.h"
 
+#ifdef CEU_OS
 #ifdef __AVR
 #include "Arduino.h"
 #define CEU_ISR
@@ -12,6 +13,7 @@
 #else
 #define CEU_ISR_ON()
 #define CEU_ISR_OFF()
+#endif
 #endif
 
 #ifdef CEU_OS
@@ -107,8 +109,10 @@
             ceu_sys_req()
     #define ceu_out_org(app,org,n,lbl,seqno,par_org,par_trl) \
             ceu_sys_org(org,n,lbl,seqno,par_org,par_trl)
+#ifdef ceu_out_emit_val
     #define ceu_out_emit_buf(app,id,sz,buf) \
             ceu_out_emit_val(app,id,(tceu_evtp)(void*)buf)
+#endif
 #ifdef CEU_WCLOCKS
     #define ceu_out_wclock(app,dt,set,get) \
             ceu_sys_wclock(app,dt,set,get)
