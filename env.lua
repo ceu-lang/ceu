@@ -116,8 +116,8 @@ end
 
 function newvar (me, imp, blk, pre, tp, arr, id)
     for stmt in _AST.iter() do
-        if _AST.par(me, 'Thread') then
-            break   -- search until Thread
+        if stmt.tag=='Async' or stmt.tag=='Thread' then
+            break   -- search until Async boundary
         elseif stmt.tag == 'Block' then
             for _, var in ipairs(stmt.vars) do
                 --ASR(var.id~=id or var.blk~=blk, me,
@@ -241,12 +241,10 @@ end
 function _ENV.getvar (id, blk)
     local blk = blk or _AST.iter('Block')()
     while blk do
-        if blk.tag == 'Thread' then
-            return nil      -- thread boundary: stop search
-        elseif blk.tag == 'Async' then
-            local vars = unpack(blk)
-            if not vars[id] then
-                return nil  -- async boundary: stop if not explicitly declared
+        if blk.tag=='Async' or blk.tag=='Thread' then
+            local vars = unpack(blk)    -- VarList
+            if not (vars and vars[id] and vars[id][1]) then
+                return nil  -- async boundary: stop unles declared with `&´
             end
         elseif blk.tag == 'Block' then
             for i=#blk.vars, 1, -1 do   -- n..1 (hidden vars)
@@ -345,14 +343,19 @@ F = {
 
     Block_pre = function (me)
         me.vars = {}
-        if me.__par.tag == 'Thread' then
+        if me.__par.tag=='Async' or me.__par.tag=='Thread' then
             local vars, blk = unpack(me.__par)
             if vars then
-                for i, n in ipairs(vars) do -- create new variables for params
+                -- { &1, var2, &2, var2, ... }
+                for i=1, #vars, 2 do -- create new variables for params
+                    local isRef, n = vars[i], vars[i+1]
                     local var = n.var
-                    ASR(not var.arr, vars, 'invalid argument')
-                    local _
-                    _, n.new = newvar(vars, false, blk, 'var', var.tp, nil, var.id)
+                    --ASR(not var.arr, vars, 'invalid argument')
+
+                    if not isRef then
+                        local _
+                        _,n.new = newvar(vars, false, blk, 'var', var.tp, nil, var.id)
+                    end
                 end
             end
         end

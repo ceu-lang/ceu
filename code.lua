@@ -1129,7 +1129,17 @@ case ]]..me.lbl.id..[[:;
 ]=]
 
     Async = function (me)
-        local _,blk = unpack(me)
+        local vars,blk = unpack(me)
+
+        if vars then
+            for i=1, #vars, 2 do
+                local isRef, n = vars[i], vars[i+1]
+                if not isRef then
+                    ATTR(me, n.new, n.var)      -- copy async parameters
+                end
+            end
+        end
+
         LINE(me, [[
 _ceu_go->trl->evt = CEU_IN__ASYNC;
 _ceu_go->trl->lbl = ]]..me.lbl.id..[[;
@@ -1153,8 +1163,14 @@ case ]]..me.lbl.id..[[:;
 
     Thread = function (me)
         local vars,blk = unpack(me)
-        for _, n in ipairs(vars) do
-            ATTR(me, n.new, n.var)      -- copy async parameters
+
+        if vars then
+            for i=1, #vars, 2 do
+                local isRef, n = vars[i], vars[i+1]
+                if not isRef then
+                    ATTR(me, n.new, n.var)      -- copy async parameters
+                end
+            end
         end
 
         -- spawn thread

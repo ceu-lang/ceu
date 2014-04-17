@@ -19,7 +19,6 @@ function INS (acc, exists)
         acc.md = 'no'                       -- protected acc
     end
 ]]
-
     if not exists then
         acc.cls = CLS()                     -- cls that acc resides
     end
@@ -152,6 +151,12 @@ F = {
         F.AwaitExt(me)  -- flow
     end,
 
+    ['Op2_idx'] = function (me)
+        if not (me.ref.var and me.ref.var.arr) then
+            me.ref.acc.any = true
+        end
+        me.ref.acc.tp = _TP.deref(me.ref.acc.tp,true)
+    end,
     ['Op1_*'] = function (me)
         me.ref.acc.any = true
         me.ref.acc.tp  = _TP.deref(me.ref.acc.tp,true)
@@ -189,7 +194,7 @@ F = {
     end,
 
     Var = function (me)
-        local tag = me.__par.tag=='VarList' and me.__par.__par.tag
+        local tag = me.__par.tag=='RefVarList' and me.__par.__par.tag
         if tag=='Async' or tag=='Thread' then
             return  -- <async (v)> is not an access
         end
@@ -378,18 +383,6 @@ function CHK_ACC (accs1, accs2, NO_par, NO_emts)
                         DBG('WRN : abortion : '..
                                 acc1.err..' vs '..acc2.err)
                         _ANA.ana.abrt = _ANA.ana.abrt + 1
---[[
-DBG'==============='
-DBG(acc1.cls.id, acc1, acc1.id, acc1.md, acc1.tp, acc1.any, acc1.err)
-for k in pairs(path1) do
-    DBG('path1', acc1.path, type(k)=='table' and k[1].id or k)
-end
-DBG(acc2.cls.id, acc2, acc2.id, acc2.md, acc2.tp, acc2.any, acc2.err)
-for k in pairs(path2) do
-    DBG('path2', acc2.path, type(k)=='table' and k[1].id or k)
-end
-DBG'==============='
-]]
                         if acc1.md == 'par' then
                             acc1.id.parChk = true
                         end
@@ -437,6 +430,18 @@ DBG'==============='
                             or (_ENV.dets[acc1.id] and _ENV.dets[acc1.id][acc2.id])
 
         --DBG(id_, c_,c1,c2, acc1.any,acc2.any)
+--[[
+DBG'==============='
+DBG(acc1.cls.id, acc1, acc1.id, acc1.md, acc1.tp, acc1.any, acc1.err)
+for k in pairs(path1) do
+    DBG('path1', acc1.path, type(k)=='table' and k[1].id or k)
+end
+DBG(acc2.cls.id, acc2, acc2.id, acc2.md, acc2.tp, acc2.any, acc2.err)
+for k in pairs(path2) do
+    DBG('path2', acc2.path, type(k)=='table' and k[1].id or k)
+end
+DBG'==============='
+]]
                     if cls_ and org_ and id_ and (not c_)
                     then
                         if _OPTS.warn_nondeterminism then

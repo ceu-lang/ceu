@@ -309,6 +309,163 @@ escape ret + _V;        // * reads after
 -------------------------------------------------------------------------------
 --]===]
 
+Test { [[
+var int[2] v;
+var int* p = v;
+par/and do
+    v[0] = 1;
+with
+    p[1] = 2;
+end
+escape v[0] + v[1];
+]],
+    _ana = {
+        acc = 1,
+    },
+    run = 3,
+}
+Test { [[
+var int[2] v;
+var int[2] p;
+par/and do
+    v[0] = 1;
+with
+    p[1] = 2;
+end
+escape v[0] + p[1];
+]],
+    run = 3,
+}
+
+Test { [[
+var int x = 0;
+async do
+    x = 2;
+end
+escape x;
+]],
+    env = 'line 3 : variable/event "x" is not declared',
+}
+
+Test { [[
+var int x = 0;
+async thread do
+    x = 2;
+end
+escape x;
+]],
+    env = 'line 3 : variable/event "x" is not declared',
+}
+
+Test { [[
+var int x = 0;
+par/and do
+    x = 1;
+with
+    async (x) do
+        x = 2;
+    end
+end
+escape x;
+]],
+    run = 1,
+}
+
+Test { [[
+var int x = 0;
+par/and do
+    x = 1;
+with
+    async thread (x) do
+        x = 2;
+    end
+end
+escape x;
+]],
+    run = 1,
+}
+
+Test { [[
+var int x = 0;
+par/and do
+    x = 1;
+with
+    async thread (&x) do
+        x = 2;
+    end
+end
+escape x;
+]],
+    _ana = {
+        acc = 1,
+    },
+    run = 2,
+}
+
+Test { [[
+var int x = 0;
+par/and do
+    await 1s;
+    x = 1;
+with
+    var int y = x;
+    async thread (&y) do
+        y = 2;
+    end
+    x = x + y;
+end
+escape x;
+]],
+    run = { ['~>1s']=3 },
+}
+
+Test { [[
+var int x  = 0;
+var int* p = &x;
+par/and do
+    *p = 1;
+with
+    var int y = x;
+    async thread (&y) do
+        y = 2;
+    end
+    x = x + y;
+end
+escape x;
+]],
+    _ana = {
+        acc = 3,
+    },
+    run = 3,
+}
+
+Test { [[
+var int[10] x;
+async thread (x) do
+    x[0] = 2;
+end
+escape x[0];
+]],
+    run = 2,
+}
+
+Test { [[
+var int[10] x;
+par/and do
+    async thread (x) do
+        x[0] = x[1] + 2;
+    end
+with
+    x[1] = 5;
+end
+escape x[0];
+]],
+    run = 7,
+    _ana = {
+        acc = 2,
+    },
+}
+
 --do return end
 
 -- OK: well tested
@@ -11715,7 +11872,7 @@ escape x + v;
 
 Test { [[
 var int a = 0;
-async (a) do
+async (&a) do
     a = 1;
     do
     end
@@ -11723,7 +11880,18 @@ end
 escape a;
 ]],
     run = 1,
-    --run = 0,
+}
+
+Test { [[
+var int a = 0;
+async (a) do
+    a = 1;
+    do
+    end
+end
+escape a;
+]],
+    run = 0,
 }
 
 Test { [[
@@ -11742,7 +11910,7 @@ end
 escape ret + v;
 ]],
     _ana = {
-        acc = 2,
+        acc = 1,
     },
 }
 
@@ -14734,16 +14902,6 @@ escape a;
     parser = 'line 1 : before `async´ : expected expression',
 }
 
-Test { [[
-var int a=12, b;
-async (a) do
-    a = 1;
-end;
-escape a;
-]],
-    --run = 12,
-    run = 1,
-}
 Test { [[
 var int a,b;
 async (b) do

@@ -170,6 +170,8 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , New = K'new' * ('['*NUM*EK']'+Cc(false)) * V'__ID_cls'
           * (EK'with' * V'Dcl_constr' * EK'end' + Cc(false))
 
+    , VarList = ( K'(' * EV'Var' * (EK',' * EV'Var')^0 * EK')' )
+
     , _Set  = (V'__Exp' + V'VarList') * V'__Sets'
     , __Sets = (CK'='+CK':=') * (
                                     -- p1=awt, p2=false, p3=false
@@ -213,9 +215,11 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     , Atomic  = K'atomic' * V'__Do'
     , Sync    = K'sync'   * V'__Do'
-    , _Thread = K'async' * K'thread'    * EV'VarList' * V'__Do'
-    , Async   = K'async' * (-P'thread') * EV'VarList' * V'__Do'
-    , VarList = ( K'(' * EV'Var' * (EK',' * EV'Var')^0 * EK')' )^-1
+    , _Thread = K'async' * K'thread'    * (V'RefVarList'+Cc(false)) * V'__Do'
+    , Async   = K'async' * (-P'thread') * (V'RefVarList'+Cc(false)) * V'__Do'
+
+    , __var      = (CK'&'+Cc(false)) * EV'Var'
+    , RefVarList = ( K'(' * EV'__var' * (EK',' * EV'__var')^0 * EK')' )
 
     , _Escape = K'escape' * EV'__Exp'
 

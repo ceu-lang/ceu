@@ -1063,12 +1063,14 @@ F = {
                 fld)
     end,
 
--- VarList ------------------------------------------------------------
+-- RefVarList ------------------------------------------------------------
 
-    VarList = function (me)
-        for _, var in ipairs(me) do
+    RefVarList = function (me)
+        -- { &1, var2, &2, var2, ... }
+        for i=1, #me, 2 do
+            local isRef, var = me[i], me[i+1]
             local id = unpack(var)
-            me[id] = var
+            me[id] = { isRef, var }
         end
     end,
 
