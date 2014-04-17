@@ -213,7 +213,7 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     , Atomic  = K'atomic' * V'__Do'
     , Sync    = K'sync'   * V'__Do'
-    , _Thread  = K'async' * K'thread'    * EV'VarList' * V'__Do'
+    , _Thread = K'async' * K'thread'    * EV'VarList' * V'__Do'
     , Async   = K'async' * (-P'thread') * EV'VarList' * V'__Do'
     , VarList = ( K'(' * EV'Var' * (EK',' * EV'Var')^0 * EK')' )^-1
 

@@ -11,9 +11,14 @@ function iter (n)
 end
 
 function INS (acc, exists)
-    if _AST.iter'Thread'() then
-        acc.md = 'no'                       -- no acc inside threads
+--[[
+    if _AST.iter'Async'() then
+        acc.md = 'no'                       -- protected acc
     end
+    if _AST.iter'Sync'() then
+        acc.md = 'no'                       -- protected acc
+    end
+]]
 
     if not exists then
         acc.cls = CLS()                     -- cls that acc resides
@@ -184,7 +189,8 @@ F = {
     end,
 
     Var = function (me)
-        if me.__par.tag=='VarList' and me.__par.__par.tag=='Async' then
+        local tag = me.__par.tag=='VarList' and me.__par.__par.tag
+        if tag=='Async' or tag=='Thread' then
             return  -- <async (v)> is not an access
         end
         me.acc = INS {

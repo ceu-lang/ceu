@@ -1,15 +1,3 @@
--- acertar acesso concorrente em srp.lua
--- remover testes para PAR e ON
-
--- needChk, quase nunca necessario
--- desabilitar p/ ver o melhor resultado
--- se o par/obj nao emit ou emite somente
--- eventos definidos dentro (e fora da ifc), need=false
--- ana.lua pode melhorar ja que teste so eh necessario
--- para a parte tight [true]=true
-
--- ceu_evt_param em ceu_call p/ passar p/ o prox
-
 -- async dentro de pause
 
 --_VALGRIND = true
@@ -319,9 +307,9 @@ escape ret + _V;        // * reads after
 }
 
 -------------------------------------------------------------------------------
-
-do return end
 --]===]
+
+--do return end
 
 -- OK: well tested
 
@@ -15468,6 +15456,91 @@ escape ret;
     run = 23,
 }
 
+Test { [[
+var int x = 0;
+par/and do
+    x = 1;
+with
+    var int* p = &x;
+    *p = 2;
+    async thread (p) do
+        *p = 2;
+    end
+end
+escape x;
+]],
+    _ana = {
+        acc = 2,
+    },
+    run = 2,
+}
+
+Test { [[
+var int x = 0;
+par/and do
+    x = 1;
+with
+    var int* p = &x;
+    *p = 2;
+    async thread (p) do
+        sync do
+            *p = 2;
+        end
+    end
+end
+escape x;
+]],
+    _ana = {
+        acc = 2,
+    },
+    run = 2,
+}
+
+Test { [[
+var int  a=10, b=5;
+var int* p = &b;
+async thread (a, p) do
+    a = a + *p;
+    *p = a;
+end
+escape a + b + *p;
+]],
+    run = 40,
+}
+
+Test { [[
+var int  a=10, b=5;
+var int* p = &b;
+par/and do
+    async thread (a, p) do
+        a = a + *p;
+        *p = a;
+    end
+with
+    *p = 2;
+end
+escape a + b + *p;
+]],
+    _ana = {
+        acc = 5,
+    },
+    run = 34,
+}
+
+Test { [[
+var int  a=10, b=5;
+var int* p = &b;
+async thread (a, p) do
+    sync do
+        a = a + *p;
+        *p = a;
+    end
+end
+escape a + b + *p;
+]],
+    run = 40,
+}
+
 -- HIDDEN
 Test { [[
 var int a = 1;
@@ -30153,6 +30226,7 @@ escape ret;
 ]],
         usleep = true,
         run = 1,
+        _ana = { acc=1 },
     }
     if _VALGRIND then
         break   -- run only once with valgrind
@@ -30734,6 +30808,75 @@ escape ret;
 }
 
 -- END: THREADS / EMITS
+
+-- ALGEBRAIC DATATYPES
+--[=[
+Test { [[
+/*
+data Tree with
+    tag null;
+with
+    tag NODE with
+        var int   v     = 0;
+        var Tree* left  = null;
+        var Tree* right = null;
+    end
+end
+*/
+
+data Tree with
+    var int   v     = 0;
+    var Tree* left  = null;
+    var Tree* right = null;
+end
+
+var Tree* t1 = null;
+var Tree* t2 = NODE { 1,null,null };
+var Tree* t3 = NODE { v=1, left=null, right=null };
+
+data Name1 with
+    var data with
+        var int     a;
+        var float   b;
+        var char    c;
+    end var;
+    var int d;
+end
+
+data Symtab with
+    var int   flags;
+    var char* name;
+    var int   utype;
+    data u with
+        tag INT with
+            var int   val;
+        end
+        tag FLOAT with
+            var float val;
+        end
+        tag STRING with
+            var char* val;
+        end
+    end
+end
+var Symtab[NSYM];
+
+function (Tree* t)=>int count do
+    if t == null then
+        *pt = xxx; // error
+        t   = xxx; // error
+        return 0;
+    else
+        *pt = xxx; // error
+        t   = xxx; // error
+        return 1 + count(t->left) + count(t->right);
+    end
+end
+
+]],
+    run = 1,
+}
+]=]
 
 --[==[
     -- MEM
