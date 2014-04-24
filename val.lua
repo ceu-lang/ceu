@@ -411,7 +411,7 @@ F =
         me.val = me[1]
     end,
     NULL = function (me)
-        me.val = '((void *)0)'
+        me.val = 'NULL'
     end,
 }
 

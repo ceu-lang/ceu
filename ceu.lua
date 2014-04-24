@@ -212,7 +212,7 @@ do
                 else    -- function
                     local i = _ENV.ifcs.funs[var.ifc_id]
                     if i then
-                        funs[i+1] = var.val
+                        funs[i+1] = '(void*)'..var.val
                     end
                 end
             end

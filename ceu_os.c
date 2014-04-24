@@ -290,12 +290,12 @@ fprintf(stderr, "GO[%d]: evt=%d stk=%d [%d]\n", app->seqno,
                         /*fprintf(stderr, "FREE: %p\n", go.org);*/
                         /* TODO(speed): avoid free if pool and blk out of scope */
 #if    defined(CEU_NEWS_POOL) && !defined(CEU_NEWS_MALLOC)
-                        ceu_pool_free(go.org->pool, (byte*)go.org);
+                        ceu_pool_free((tceu_pool*)go.org->pool, (byte*)go.org);
 #elif  defined(CEU_NEWS_POOL) &&  defined(CEU_NEWS_MALLOC)
                         if (go.org->pool == NULL)
                             ceu_sys_free(go.org);
                         else
-                            ceu_pool_free(go.org->pool, (byte*)go.org);
+                            ceu_pool_free((tceu_pool*)go.org->pool, (byte*)go.org);
 #elif !defined(CEU_NEWS_POOL) &&  defined(CEU_NEWS_MALLOC)
                         ceu_sys_free(go.org);
 #endif
@@ -425,7 +425,7 @@ _CEU_GO_NEXT_:
         go.evtp = go.stk[--go.stki].evtp;
 #ifdef CEU_INTS
 #ifdef CEU_ORGS
-        go.evto = go.stk[  go.stki].evto;
+        go.evto = (tceu_org*) go.stk[  go.stki].evto;
 #endif
 #endif
         go.evt  = go.stk[  go.stki].evt;
