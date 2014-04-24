@@ -14,6 +14,12 @@
 #define CEU_ISR_OFF()
 #endif
 
+#ifdef __cplusplus
+#define CEU_EVTP(v) (tceu_evtp(v))
+#else
+#define CEU_EVTP(v) ((tceu_evtp)v)
+#endif
+
 #ifdef CEU_OS
     /* TODO: all should be configurable */
     #define CEU_EXTS
@@ -81,7 +87,7 @@
         ((__typeof__(ceu_sys_link)*)((_ceu_app)->sys_vec[CEU_SYS_LINK]))(app1,evt1,app2,evt2)
 
     #define ceu_out_emit_buf(app,id,sz,buf) \
-        ((__typeof__(ceu_sys_emit)*)((app)->sys_vec[CEU_SYS_EMIT]))(app,id,(tceu_evtp)NULL,sz,buf)
+        ((__typeof__(ceu_sys_emit)*)((app)->sys_vec[CEU_SYS_EMIT]))(app,id,CEU_EVTP((void*)NULL),sz,buf)
 
     #define ceu_out_emit_val(app,id,param) \
         ((__typeof__(ceu_sys_emit)*)((app)->sys_vec[CEU_SYS_EMIT]))(app,id,param,0,NULL)
@@ -109,7 +115,7 @@
             ceu_sys_org(org,n,lbl,seqno,par_org,par_trl)
 /*#ifdef ceu_out_emit_val*/
     #define ceu_out_emit_buf(app,id,sz,buf) \
-            ceu_out_emit_val(app,id,(tceu_evtp)(void*)buf)
+            ceu_out_emit_val(app,id,CEU_EVTP((void*)buf))
 /*#endif*/
 #ifdef CEU_WCLOCKS
     #define ceu_out_wclock(app,dt,set,get) \
@@ -167,6 +173,12 @@ typedef union tceu_evtp {
     s32   dt;
 #ifdef CEU_THREADS
     CEU_THREADS_T thread;
+#endif
+#ifdef __cplusplus
+    tceu_evtp () {}
+    tceu_evtp (void* vv) : ptr(vv) {}
+    tceu_evtp (s32   vv) : dt(vv)  {}
+    /*tceu_evtp (int   vv) : v(vv)   {}*/
 #endif
 } tceu_evtp;
 

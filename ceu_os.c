@@ -461,7 +461,7 @@ int ceu_go_all (tceu_app* app)
 #if defined(CEU_RET) || defined(CEU_OS)
     if (app->isAlive)
 #endif
-        ceu_sys_go(app, CEU_IN_OS_START, (tceu_evtp)NULL);
+        ceu_sys_go(app, CEU_IN_OS_START, CEU_EVTP((void*)NULL));
 #endif
 
 #ifdef CEU_ASYNCS
@@ -476,7 +476,7 @@ int ceu_go_all (tceu_app* app)
                 app->pendingAsyncs
             ) )
     {
-        ceu_sys_go(app, CEU_IN__ASYNC, (tceu_evtp)NULL);
+        ceu_sys_go(app, CEU_IN__ASYNC, CEU_EVTP((void*)NULL));
 #ifdef CEU_THREADS
         CEU_THREADS_MUTEX_UNLOCK(&app->threads_mutex);
         /* allow threads to also execute */
@@ -644,7 +644,7 @@ tceu_evtp ceu_sys_call (tceu_app* app, tceu_nevt evt, tceu_evtp param) {
         return ret;
     }
 /* TODO: error? */
-    return (tceu_evtp)NULL;
+    return CEU_EVTP((void*)NULL);
 }
 
 static void _ceu_sys_unlink (tceu_lnk* lnk) {
@@ -788,7 +788,7 @@ int ceu_scheduler (int(*dt)())
         {
             tceu_app* app = CEU_APPS;
             while (app) {
-                ceu_sys_go(app, CEU_IN_OS_DT, (tceu_evtp)_dt);
+                ceu_sys_go(app, CEU_IN_OS_DT, CEU_EVTP(_dt));
                 app = app->nxt;
             }
         }
@@ -799,7 +799,7 @@ int ceu_scheduler (int(*dt)())
         {
             tceu_app* app = CEU_APPS;
             while (app) {
-                ceu_sys_go(app, CEU_IN__WCLOCK, (tceu_evtp)_dt);
+                ceu_sys_go(app, CEU_IN__WCLOCK, CEU_EVTP(_dt));
                 app = app->nxt;
             }
         }
@@ -810,7 +810,7 @@ int ceu_scheduler (int(*dt)())
         {
             tceu_app* app = CEU_APPS;
             while (app) {
-                ceu_sys_go(app, CEU_IN__ASYNC, (tceu_evtp)NULL);
+                ceu_sys_go(app, CEU_IN__ASYNC, CEU_EVTP((void*)NULL));
                 app = app->nxt;
             }
         }
@@ -939,7 +939,7 @@ printf("<<< %d %d\n", app->isAlive, app->ret);
     /* OS_START */
 
 #ifdef CEU_IN_OS_START
-    ceu_sys_emit(NULL, CEU_IN_OS_START, (tceu_evtp)NULL, 0, NULL);
+    ceu_sys_emit(NULL, CEU_IN_OS_START, CEU_EVTP((void*)NULL), 0, NULL);
 #endif
 }
 
@@ -1002,7 +1002,7 @@ int ceu_sys_unlink (tceu_app* src_app, tceu_nevt src_evt,
             isr->f(isr->app, isr->app->data);                       \
             CEU_APP_ADDR = 0;                                       \
         }                                                           \
-        ceu_sys_emit(NULL,CEU_IN_OS_INTERRUPT,(tceu_evtp)n,0,NULL); \
+        ceu_sys_emit(NULL,CEU_IN_OS_INTERRUPT,CEU_EVTP(n),0,NULL); \
     }
 #define _GEN_ISR(n)
 

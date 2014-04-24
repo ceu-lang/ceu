@@ -253,17 +253,17 @@ F = {
 
                 local ret_value, ret_void
                 if out == 'void' then
-                    ret_value = ''
-                    ret_void  = 'return (tceu_evtp)NULL;'
+                    ret_value = '('
+                    ret_void  = 'return CEU_EVTP((void*)NULL);'
                 else
-                    ret_value = 'return (tceu_evtp)'
+                    ret_value = 'return CEU_EVTP('
                     ret_void  = ''
                 end
 
                 _CODE.stubs = _CODE.stubs .. [[
 case CEU_IN_]]..id..[[:
 #line ]]..me.ln[2]..' "'..me.ln[1]..[["
-    ]]..ret_value..me.id..'(_ceu_app, _ceu_app->data'..ps..[[);
+    ]]..ret_value..me.id..')(_ceu_app, _ceu_app->data'..ps..[[);
 ]]..ret_void
             end
             _CODE.functions = _CODE.functions ..
@@ -917,13 +917,13 @@ _ceu_go->trl->lbl = ]]..me.lbl_cnt.id..[[;
 
         local emit = [[
 {
-    ceu_out_go(_ceu_app, CEU_IN__WCLOCK, (tceu_evtp)(]]..V(exp)..[[));
+    ceu_out_go(_ceu_app, CEU_IN__WCLOCK, CEU_EVTP((]]..V(exp)..[[)));
     while (
 #if defined(CEU_RET) || defined(CEU_OS)
             _ceu_app->isAlive &&
 #endif
             _ceu_app->wclk_min<=0) {
-        ceu_out_go(_ceu_app, CEU_IN__WCLOCK, (tceu_evtp)0);
+        ceu_out_go(_ceu_app, CEU_IN__WCLOCK, CEU_EVTP(0));
     }
 #if defined(CEU_RET) || defined(CEU_OS)
     if (! _ceu_app->isAlive)

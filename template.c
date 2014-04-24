@@ -131,7 +131,7 @@ static tceu_evtp ceu_app_calls (tceu_app* _ceu_app, tceu_nevt evt, tceu_evtp par
 #endif
 #endif
     }
-    return (tceu_evtp)NULL;
+    return CEU_EVTP((void*)NULL);
 }
 #endif
 
@@ -224,7 +224,7 @@ static void ceu_app_init (tceu_app* app)
 #endif
 
     ceu_out_org(app, app->data, CEU_NTRAILS, Class_Main, 0, NULL, 0);
-    ceu_out_go(app, CEU_IN__INIT, (tceu_evtp)NULL);
+    ceu_out_go(app, CEU_IN__INIT, CEU_EVTP((void*)NULL));
 }
 
 /* EXPORTED ENTRY POINT

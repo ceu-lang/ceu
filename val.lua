@@ -139,7 +139,7 @@ F =
 
             if tup and #tup>1 then
                 if mode == 'val' then
-                    t2[#t2+1] = '(tceu_evtp)(void*)'..val
+                    t2[#t2+1] = 'CEU_EVTP((void*)'..val..')'
                 else
                     t2[#t2+1] = 'sizeof('..ext.evt.ins..')'
                     t2[#t2+1] = '(byte*)'..val
@@ -147,14 +147,14 @@ F =
             else
                 assert(mode == 'val')
                 if isPtr then
-                    t2[#t2+1] = '(tceu_evtp)'..val
+                    t2[#t2+1] = 'CEU_EVTP('..val..')'
                 else
-                    t2[#t2+1] = '(tceu_evtp)(int)'..val
+                    t2[#t2+1] = 'CEU_EVTP((int)'..val..')'
                 end
             end
         else
             if mode == 'val' then
-                t2[#t2+1] = '(tceu_evtp)NULL'
+                t2[#t2+1] = 'CEU_EVTP((void*)NULL)'
             else
                 t2[#t2+1] = '0'
                 t2[#t2+1] = '(byte*)NULL'
