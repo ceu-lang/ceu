@@ -261,6 +261,8 @@ F = {
     _Iter_pre = function (me)
         local id2, tp2, blk = unpack(me)
 
+        ASR(_AST.iter'Do'(), me, 'missing block')
+
         local id1 = '_i'..me.n
         local tp1 = '_tceu_org*'
 

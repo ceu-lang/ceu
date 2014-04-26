@@ -497,36 +497,8 @@ escape x[0];
     },
 }
 
-XXX
-
-Test { [[
-loop u, Unit* do
-end
-]],
-    run = 'erro no ceu',
-}
-
-Test { [[
-input _vldoor_t* T_VERTICAL_DOOR;
-class T_VerticalDoor with
-    var void* v;
-do
-end
-
-do
-    var _vldoor_t* door;
-    every door = T_VERTICAL_DOOR do
-        spawn T_VerticalDoor with
-            this.v = door;
-        end;
-    end
-end
-]],
-    fin = 'v vs door',
-}
-
-do return end
 --]===]
+do return end
 
 -- OK: well tested
 
@@ -14915,6 +14887,25 @@ escape i;
 }
 
 Test { [[
+input _vldoor_t* T_VERTICAL_DOOR;
+class T_VerticalDoor with
+    var void* v;
+do
+end
+
+var _vldoor_t* door;
+do
+    every door = T_VERTICAL_DOOR do
+        spawn T_VerticalDoor with
+            this.v = door;
+        end;
+    end
+end
+]],
+    fin = 'line 9 : invalid block for awoken pointer "door"',
+}
+
+Test { [[
 var void* p;
 var int i;
 input void OS_START;
@@ -26942,6 +26933,30 @@ do
 end
 ]],
     fin = 'line 6 : attribution requires `finalize´',
+}
+
+Test { [[
+interface Unit with
+end
+loop u, Unit* do
+end
+escape 1;
+]],
+    adj = 'missing block',
+}
+
+Test { [[
+interface Unit with
+end
+var int ret = 1;
+do
+    loop u, Unit* do
+        ret = ret + 1;
+    end
+end
+escape ret;
+]],
+    run = 1,
 }
 
 Test { [[
