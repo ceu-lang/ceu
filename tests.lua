@@ -1,4 +1,5 @@
 -- async dentro de pause
+-- async thread spawn falhou, e ai?
 
 --_VALGRIND = true
 _OS = false   -- false, true, nil(random)
@@ -307,7 +308,37 @@ escape ret + _V;        // * reads after
 }
 
 -------------------------------------------------------------------------------
---]===]
+
+-- TODO_TYPECAST (search and replace)
+Test { [[
+class T with
+do
+end
+// TODO: "typecast" esconde "call", finalization nao acha que eh call
+var T** t := (T**)_malloc(10 * sizeof(T**));
+native nohold _free();
+finalize with
+    _free(t);
+end
+escape 10;
+]],
+    run = 10;
+}
+
+input (int tilex, int tiley, bool vertical?, int lock, int door, word* 
+      position)
+      DOOR_SPAWN;
+
+                            if (_ISPOINTER(check) && ((check:x+_MINDIST) >> 
+                                _TILESHIFT) == tilex ) then
+                                escape 0;
+
+var tp* v;
+_a := v;
+_b = _a;    // _a pode ter escopo menor e nao reclama de FIN
+
+native_printf();
+loopdo await250ms;_printf("Hello World!\n");end
 
 Test { [[
 var int[2] v;
@@ -466,7 +497,36 @@ escape x[0];
     },
 }
 
---do return end
+XXX
+
+Test { [[
+loop u, Unit* do
+end
+]],
+    run = 'erro no ceu',
+}
+
+Test { [[
+input _vldoor_t* T_VERTICAL_DOOR;
+class T_VerticalDoor with
+    var void* v;
+do
+end
+
+do
+    var _vldoor_t* door;
+    every door = T_VERTICAL_DOOR do
+        spawn T_VerticalDoor with
+            this.v = door;
+        end;
+    end
+end
+]],
+    fin = 'v vs door',
+}
+
+do return end
+--]===]
 
 -- OK: well tested
 
@@ -657,6 +717,28 @@ Test { [[var int a; a=1 ; ]],
         reachs = 1,
         isForever = true,
     }
+}
+
+Test { [[
+inputintMY_EVT;
+ifv==0thenbreak;end
+]],
+    parser = 'line 2 : after `0´ : expected `;´',
+}
+Test { [[
+inputintMY_EVT;
+escape 1;
+]],
+    env = 'line 1 : variable/event "inputintMY_EVT" is not declared',
+}
+
+Test { [[
+// input event identifiers must be all in uppercase
+// 'MY_EVT' is an event of ints
+native_printf();
+escape 0;
+]],
+    env = 'line 3 : variable/event "native_printf" is not declared',
 }
 
 -- TYPE / BOOL
@@ -13561,7 +13643,7 @@ escape v;
 
 Test { [[
 native _f();
-native do void f () {} end
+native do void f (void* p) {} end
 
 var void* p=null;
 _f(p) finalize with nothing;
@@ -26833,6 +26915,8 @@ escape 10;
 ]],
     run = 10;
 }
+
+-- TODO_TYPECAST
 
 -- IFACES / IFCS / ITERATORS
 Test { [[

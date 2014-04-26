@@ -377,6 +377,11 @@ void ceu_pause (tceu_trl* trl, tceu_trl* trlF, int psed);
 
 int  ceu_go_all    (tceu_app* app);
 
+#ifdef CEU_WCLOCKS
+int       ceu_sys_wclock (tceu_app* app, s32 dt, s32* set, s32* get);
+#endif
+void      ceu_sys_go     (tceu_app* app, int evt, tceu_evtp evtp);
+
 #ifdef CEU_OS
 
 /* TCEU_LINK */
@@ -425,10 +430,6 @@ int       ceu_sys_link   (tceu_app* src_app, tceu_nevt src_evt, tceu_app* dst_ap
 int       ceu_sys_unlink (tceu_app* src_app, tceu_nevt src_evt, tceu_app* dst_app, tceu_nevt dst_evt);
 int       ceu_sys_emit   (tceu_app* app, tceu_nevt evt, tceu_evtp param, int sz, byte* buf);
 tceu_evtp ceu_sys_call   (tceu_app* app, tceu_nevt evt, tceu_evtp param);
-#ifdef CEU_WCLOCKS
-int       ceu_sys_wclock (tceu_app* app, s32 dt, s32* set, s32* get);
-#endif
-void      ceu_sys_go     (tceu_app* app, int evt, tceu_evtp evtp);
 
 enum {
     CEU_SYS_MALLOC = 0,

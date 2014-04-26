@@ -18,8 +18,16 @@ typedef === TCEU_NCLS === tceu_ncls;
 /* TODO: remove */
 #define CEU_NTRAILS === CEU_NTRAILS ===
 
+#include "ceu_os.h"
+
 === EVENTS ===      /* CEU_IN_, CEU_OUT_ */
 === FUNCTIONS ===   /* CEU_FUN_ */
 === TUPLES ===
+
+/* class definitions */
+/*
+// TODO: host language to have access to classes
+=== CLSS_DEFS ===
+*/
 
 #endif

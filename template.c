@@ -38,6 +38,7 @@
 === NATIVE ===
 
 /* class definitions */
+/* may use types defined above in "NATIVE" */
 === CLSS_DEFS ===
 
 /* goto labels */

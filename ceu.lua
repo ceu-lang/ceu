@@ -169,7 +169,7 @@ do
 
     CC = SUB(CC, '=== LABELS_ENUM ===', _LBLS.code_enum)
 
-    CC = SUB(CC, '=== CLSS_DEFS ===',  _MEM.clss)
+    CC = SUB(CC, '=== CLSS_DEFS ===',  _MEM.clss)   -- TODO: move to HH
     CC = SUB(CC, '=== POOLS_INIT ===', _MEM.pools.init)
 
     CC = SUB(CC, '=== THREADS_C ===',   _CODE.threads)
@@ -264,11 +264,13 @@ end
 -- TEMPLATE.H
 do
     HH = _FILES.template_h
+    HH = SUB(HH, '#include "ceu_os.h"', _FILES.ceu_os_h)
 
     local tps = { [0]='void', [1]='8', [2]='16', [4]='32' }
     HH = SUB(HH, '=== TCEU_NLBL ===',   's'..tps[_ENV.c.tceu_nlbl.len])
     HH = SUB(HH, '=== TCEU_NCLS ===',   's'..tps[_ENV.c.tceu_ncls.len])
     HH = SUB(HH, '=== CEU_NTRAILS ===', _MAIN.trails_n)
+    --HH = SUB(HH, '=== CLSS_DEFS ===',  _MEM.clss)
 
     -- DEFINES
     do
