@@ -307,7 +307,14 @@ escape ret + _V;        // * reads after
     }
 }
 
--------------------------------------------------------------------------------
+Test { [[
+var _tp* v;
+_a := v;
+_b = _a;    // _a pode ter escopo menor e nao reclama de FIN
+escape 1;
+]],
+    run = 1,
+}
 
 -- TODO_TYPECAST (search and replace)
 Test { [[
@@ -325,180 +332,10 @@ escape 10;
     run = 10;
 }
 
-input (int tilex, int tiley, bool vertical?, int lock, int door, word* 
-      position)
-      DOOR_SPAWN;
+-------------------------------------------------------------------------------
 
-                            if (_ISPOINTER(check) && ((check:x+_MINDIST) >> 
-                                _TILESHIFT) == tilex ) then
-                                escape 0;
-
-var tp* v;
-_a := v;
-_b = _a;    // _a pode ter escopo menor e nao reclama de FIN
-
-native_printf();
-loopdo await250ms;_printf("Hello World!\n");end
-
-Test { [[
-var int[2] v;
-var int* p = v;
-par/and do
-    v[0] = 1;
-with
-    p[1] = 2;
-end
-escape v[0] + v[1];
-]],
-    _ana = {
-        acc = 1,
-    },
-    run = 3,
-}
-Test { [[
-var int[2] v;
-var int[2] p;
-par/and do
-    v[0] = 1;
-with
-    p[1] = 2;
-end
-escape v[0] + p[1];
-]],
-    run = 3,
-}
-
-Test { [[
-var int x = 0;
-async do
-    x = 2;
-end
-escape x;
-]],
-    env = 'line 3 : variable/event "x" is not declared',
-}
-
-Test { [[
-var int x = 0;
-async thread do
-    x = 2;
-end
-escape x;
-]],
-    env = 'line 3 : variable/event "x" is not declared',
-}
-
-Test { [[
-var int x = 0;
-par/and do
-    x = 1;
-with
-    async (x) do
-        x = 2;
-    end
-end
-escape x;
-]],
-    run = 1,
-}
-
-Test { [[
-var int x = 0;
-par/and do
-    x = 1;
-with
-    async thread (x) do
-        x = 2;
-    end
-end
-escape x;
-]],
-    run = 1,
-}
-
-Test { [[
-var int x = 0;
-par/and do
-    x = 1;
-with
-    async thread (&x) do
-        x = 2;
-    end
-end
-escape x;
-]],
-    _ana = {
-        acc = 1,
-    },
-    run = 2,
-}
-
-Test { [[
-var int x = 0;
-par/and do
-    await 1s;
-    x = 1;
-with
-    var int y = x;
-    async thread (&y) do
-        y = 2;
-    end
-    x = x + y;
-end
-escape x;
-]],
-    run = { ['~>1s']=3 },
-}
-
-Test { [[
-var int x  = 0;
-var int* p = &x;
-par/and do
-    *p = 1;
-with
-    var int y = x;
-    async thread (&y) do
-        y = 2;
-    end
-    x = x + y;
-end
-escape x;
-]],
-    _ana = {
-        acc = 3,
-    },
-    run = 3,
-}
-
-Test { [[
-var int[10] x;
-async thread (x) do
-    x[0] = 2;
-end
-escape x[0];
-]],
-    run = 2,
-}
-
-Test { [[
-var int[10] x;
-par/and do
-    async thread (x) do
-        x[0] = x[1] + 2;
-    end
-with
-    x[1] = 5;
-end
-escape x[0];
-]],
-    run = 7,
-    _ana = {
-        acc = 2,
-    },
-}
-
---]===]
 do return end
+--]===]
 
 -- OK: well tested
 
@@ -713,6 +550,13 @@ escape 0;
     env = 'line 3 : variable/event "native_printf" is not declared',
 }
 
+Test { [[
+native_printf();
+loopdo await250ms;_printf("Hello World!\n");end
+]],
+    parser = 'line 2 : after `loopdo´ : expected `;´',
+}
+
 -- TYPE / BOOL
 
 Test { [[
@@ -860,6 +704,16 @@ var char x = 255;
 escape x + 0.5;
 ]],
     run = 0,
+}
+
+Test { [[
+
+                            if (_ISPOINTER(check) && ((check:x+_MINDIST) >> 
+                                _TILESHIFT) == tilex ) then
+                                escape 0;
+end
+]],
+    env = 'line 2 : variable/event "check" is not declared',
 }
 
     -- IF
@@ -15787,7 +15641,7 @@ escape *b;
 
 -- INPUT / OUTPUT / CALL
 
-if not _OS then
+--if not _OS then
 
 Test { [[
 output xxx A;
@@ -16521,7 +16375,26 @@ escape ret;
     run = 2,
 }
 
-end -- _OS (INPUT/OUTPUT)
+--end -- _OS (INPUT/OUTPUT)
+
+Test { [[
+input (int tilex, int tiley, bool vertical?, int lock, int door, word* 
+      position)
+      DOOR_SPAWN;
+
+    var int tilex;
+    var int tiley;
+    var bool vertical?;
+    var int lock;
+    var int door;
+    var word* position;
+    every (tilex,tiley,vertical?,lock,door,position) = DOOR_SPAWN do
+    end
+]],
+    _ana = {
+        isForever = true,
+    },
+}
 
 -- REQUESTS
 
@@ -31062,6 +30935,165 @@ end
 escape ret;
 ]],
     run = { ['~>A;~>1s'] = 4 },
+}
+
+-- ASYNC/NONDET
+
+Test { [[
+var int[2] v;
+var int* p = v;
+par/and do
+    v[0] = 1;
+with
+    p[1] = 2;
+end
+escape v[0] + v[1];
+]],
+    _ana = {
+        acc = 1,
+    },
+    run = 3,
+}
+Test { [[
+var int[2] v;
+var int[2] p;
+par/and do
+    v[0] = 1;
+with
+    p[1] = 2;
+end
+escape v[0] + p[1];
+]],
+    run = 3,
+}
+
+Test { [[
+var int x = 0;
+async do
+    x = 2;
+end
+escape x;
+]],
+    env = 'line 3 : variable/event "x" is not declared',
+}
+
+Test { [[
+var int x = 0;
+async thread do
+    x = 2;
+end
+escape x;
+]],
+    env = 'line 3 : variable/event "x" is not declared',
+}
+
+Test { [[
+var int x = 0;
+par/and do
+    x = 1;
+with
+    async (x) do
+        x = 2;
+    end
+end
+escape x;
+]],
+    run = 1,
+}
+
+Test { [[
+var int x = 0;
+par/and do
+    x = 1;
+with
+    async thread (x) do
+        x = 2;
+    end
+end
+escape x;
+]],
+    run = 1,
+}
+
+Test { [[
+var int x = 0;
+par/and do
+    x = 1;
+with
+    async thread (&x) do
+        x = 2;
+    end
+end
+escape x;
+]],
+    _ana = {
+        acc = 1,
+    },
+    run = 2,
+}
+
+Test { [[
+var int x = 0;
+par/and do
+    await 1s;
+    x = 1;
+with
+    var int y = x;
+    async thread (&y) do
+        y = 2;
+    end
+    x = x + y;
+end
+escape x;
+]],
+    run = { ['~>1s']=3 },
+}
+
+Test { [[
+var int x  = 0;
+var int* p = &x;
+par/and do
+    *p = 1;
+with
+    var int y = x;
+    async thread (&y) do
+        y = 2;
+    end
+    x = x + y;
+end
+escape x;
+]],
+    _ana = {
+        acc = 3,
+    },
+    run = 3,
+}
+
+Test { [[
+var int[10] x;
+async thread (x) do
+    x[0] = 2;
+end
+escape x[0];
+]],
+    run = 2,
+}
+
+Test { [[
+var int[10] x;
+par/and do
+    async thread (x) do
+        x[0] = x[1] + 2;
+    end
+with
+    x[1] = 5;
+end
+escape x[0];
+]],
+    run = 7,
+    _ana = {
+        acc = 2,
+    },
 }
 
 -- END: THREADS / EMITS
