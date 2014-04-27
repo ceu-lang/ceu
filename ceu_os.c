@@ -211,9 +211,13 @@ void ceu_sys_go (tceu_app* app, int evt, tceu_evtp evtp)
 
     go.evt  = evt;
     go.evtp = evtp;
-    go.stki = 0;      /* stki */
+    go.stki = 0;
 #ifdef CEU_CLEAR
-    go.stop = NULL;   /* stop */
+    go.stop = NULL;     /* traverse all (don't stop) */
+#endif
+
+#ifdef CEU_NEWS
+    tceu_org* lst_free = NULL;  /* "to free" list (only on reaction end) */
 #endif
 
     app->seqno++;
@@ -289,16 +293,21 @@ fprintf(stderr, "GO[%d]: evt=%d stk=%d [%d]\n", app->seqno,
                         /* TODO: check if needed? (freed manually?) */
                         /*fprintf(stderr, "FREE: %p\n", go.org);*/
                         /* TODO(speed): avoid free if pool and blk out of scope */
-#if    defined(CEU_NEWS_POOL) && !defined(CEU_NEWS_MALLOC)
-                        ceu_pool_free((tceu_pool*)go.org->pool, (byte*)go.org);
-#elif  defined(CEU_NEWS_POOL) &&  defined(CEU_NEWS_MALLOC)
-                        if (go.org->pool == NULL)
-                            ceu_sys_free(go.org);
-                        else
-                            ceu_pool_free((tceu_pool*)go.org->pool, (byte*)go.org);
-#elif !defined(CEU_NEWS_POOL) &&  defined(CEU_NEWS_MALLOC)
-                        ceu_sys_free(go.org);
-#endif
+
+                        /* insert "org" into "lst_free" to be
+                         *  freed on reaction end */
+                        {
+                            tceu_org* nxt = lst_free;
+                            go.org->nxt_free = NULL;    /* no next element */
+                            if (lst_free == NULL) {
+                                lst_free = go.org;      /* new first element */
+                            } else {
+                                while (nxt->nxt_free != NULL) {
+                                    nxt = nxt->nxt_free; /* find last element */
+                                }
+                                nxt->nxt_free = go.org;  /* put after that */
+                            }
+                        }
 
                         /* explicit free(me) or end of spawn */
                         if (go.stop == go.org)
@@ -444,6 +453,24 @@ _CEU_GO_QUIT_:;
 #endif
 */
         app->wclk_late = 0;
+    }
+#endif
+
+    /* free all orgs on "lst_free" on reaction termination */
+#ifdef CEU_NEWS
+    while (lst_free != NULL) {
+        tceu_org* org = lst_free;
+        lst_free = org->nxt_free;
+#if    defined(CEU_NEWS_POOL) && !defined(CEU_NEWS_MALLOC)
+        ceu_pool_free((tceu_pool*)org->pool, (byte*)org);
+#elif  defined(CEU_NEWS_POOL) &&  defined(CEU_NEWS_MALLOC)
+        if (org->pool == NULL)
+            ceu_sys_free(org);
+        else
+            ceu_pool_free((tceu_pool*)org->pool, (byte*)org);
+#elif !defined(CEU_NEWS_POOL) &&  defined(CEU_NEWS_MALLOC)
+        ceu_sys_free(org);
+#endif
     }
 #endif
 }

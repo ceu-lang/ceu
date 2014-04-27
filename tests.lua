@@ -334,7 +334,108 @@ escape 10;
 
 -------------------------------------------------------------------------------
 
+Test { [[
+class T with
+do
+end
+pool T t;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+do
+end
+pool T[1] t;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+do
+end
+pool T[1] t;
+var int ret = 0;
+ret = ret + spawn T[t] with
+            end;
+ret = ret + spawn T[t];
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
+end
+pool T[1] ts;
+var int ret = 0;
+ret = ret + spawn T[ts] with
+                this.v = 10;
+            end;
+ret = ret + spawn T[ts];
+loop t, ts do
+    ret = ret + t.v;
+end
+escape 11;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
+end
+pool T[1] ts;
+var T a with
+    a.v = 15;
+end
+var int ret = 0;
+ret = ret + spawn T[ts] with
+                this.v = 10;
+            end;
+ret = ret + spawn T[ts];
+loop t, (ts,a) do
+    ret = ret + t.v;
+end
+escape 26;
+]],
+    run = 1,
+}
+
+Test { [[
+interface I with
+    var int v;
+end
+class T with
+    interface I;
+do
+end
+pool T[1] ts;
+var T a with
+    a.v = 15;
+end
+var int ret = 0;
+ret = ret + spawn T[ts] with
+                this.v = 10;
+            end;
+ret = ret + spawn T[ts];
+loop i, (I*)(ts,a) do
+    ret = ret + i:v;
+end
+escape 26;
+]],
+    run = 1,
+}
+
 do return end
+
 --]===]
 
 -- OK: well tested
@@ -23084,8 +23185,8 @@ do
 end
 var T* a = new T;
 free(a);
-var T* b = new T;
-escape a!=null and b!=null;
+var T* b = new T;   // fails (a is freed on end)
+escape a!=null and b==null;
 ]],
     run = 1,
 }
@@ -23105,10 +23206,10 @@ do
         nothing;
     end
 end
-var T* b = new T;
+var T* b = new T;   // fails (a is free on end)
 //native nohold _fprintf(), _stderr;
         //_fprintf(_stderr, "%p %p\n",a, b);
-escape a!=null and b!=null and a==b;
+escape a!=null and b==null and a!=b;
 ]],
     run = 1,
 }
@@ -23129,17 +23230,17 @@ do
             nothing;
         end
     end
-    var T* bb = new T;
+    var T* bb = new T;  // fails
     finalize
         b = bb;
     with
         nothing;
     end
 end
-var T* c = new T;
+var T* c = new T;       // fails
 //native nohold _fprintf(), _stderr;
         //_fprintf(_stderr, "%p %p\n",a, b);
-escape a!=null and b!=null and c!=null and a==b and b==c;
+escape a!=null and b==null and c==null and a!=b and b==c;
 ]],
     run = 1,
 }
@@ -23159,8 +23260,8 @@ do
         nothing;
     end
 end
-var T* b = new T;
-escape a!=null and b!=null;
+var T* b = new T;   // fails
+escape a!=null and b==null;
 ]],
     run = 1,
 }
@@ -23221,7 +23322,7 @@ do
 end
 do
     loop i, 1000 do
-        var bool ok = spawn [1] T;
+        var bool ok = spawn [1] T;  // 999 fails
         if not ok then
             escape 0;
         end
@@ -23230,7 +23331,8 @@ end
 escape _V;
 ]],
     --loop = 1,
-    run = 1000,
+    --run = 1000,
+    run = 0;
 }
 Test { [[
 input void A;
@@ -25923,6 +26025,46 @@ escape v;
 ]],
     _ana = { acc=0 },
     run = { ['~>10s;~>A']=10 }
+}
+
+Test { [[
+class T with
+    var int v;
+do
+end
+var T* t = new T with
+             this.v = 10;
+           end;
+free(t);
+escape t:v;
+]],
+    run = 10,
+}
+
+Test { [[
+interface I with
+    var int v;
+    event void e;
+end
+class T with
+    interface I;
+do
+    await e;
+end
+var int ret = 0;
+do
+    spawn T with
+        this.v = 10;
+    end;
+    async do end;
+    loop t, I* do
+        emit t:e;
+        ret = ret + t:v;
+    end
+end
+escape ret;
+]],
+    run = 10,
 }
 
 -- TODO pause hierarquico dentro de um org
