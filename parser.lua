@@ -129,6 +129,8 @@ KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'native'
      + 'input/output' + 'output/input'
 -- time
      --+ 'h' + 'min' + 's' + 'ms' + 'us'
+-- loop/every
+     + 'in'
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
@@ -260,15 +262,15 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , _Continue = KEY'continue'
 
     , _Loop    = KEY'loop' *
-                    (V'__ID_var' * (K','*EV'__Exp' + Cc(false)) +
+                    (V'__ID_var' * (EKEY'in'*EV'__Exp' + Cc(false)) +
                         Cc(false)*Cc(false)) *
                 V'__Do'
 
-    , _Iter   = KEY'loop' * V'__ID_var' * K',' * V'__ID_type'
+    , _Iter   = KEY'loop' * V'__ID_var' * KEY'in' * V'__ID_type'
               * V'__Do'
 
-    , _Every  = KEY'every' * ( (EV'__Exp'+V'VarList') *(CK'='+CK':=')
-                            + Cc(false)*Cc(false) )
+    , _Every  = KEY'every' * ( (EV'__Exp'+V'VarList') * EKEY'in'
+                            + Cc(false) )
               *  (V'WCLOCKK' + V'WCLOCKE' + EV'Ext' + EV'__Exp')
               * V'__Do'
 

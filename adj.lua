@@ -223,7 +223,7 @@ F = {
 -- Every --------------------------------------------------
 
     _Every_pre = function (me)
-        local to, op, ext, blk = unpack(me)
+        local to, ext, blk = unpack(me)
 
         --[[
         --      every a=EXT do ... end
@@ -243,8 +243,8 @@ F = {
             awt.isEvery = true  -- refuses other "awaits"
 
         local set
-        if to and op then
-            set = node('_Set', me.ln, to, op, '__SetAwait', awt, false, false)
+        if to then
+            set = node('_Set', me.ln, to, '=', '__SetAwait', awt, false, false)
         else
             set = awt
         end
@@ -308,6 +308,7 @@ F = {
                             nxt1,nxt2))
         loop.blk = blk      -- continue
         loop.isBounded = true
+        loop.isEvery = true  -- refuses other "awaits"
 
         return node('Block', me.ln, node('Stmts', me.ln, dcl1,dcl2, ini1,ini2, loop))
     end,
@@ -703,7 +704,7 @@ F = {
                     node('Block', me.ln,
                         node('Stmts', me.ln,
                             node('Stmts', me.ln, unpack(dcls)),
-                            node('_Every', me.ln, vars, '=',
+                            node('_Every', me.ln, vars,
                                 node('Ext', me.ln, id_evt..'_REQUEST'),
                                 node('Block', me.ln,
                                     node('Stmts', me.ln,

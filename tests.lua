@@ -141,7 +141,7 @@ do
         end
     with
         every 1s do
-            loop i, I* do
+            loop i in I* do
                 emit i:inc;         // mata o org enquanto o percorre iterador
                 ret = ret + i:v;
             end
@@ -379,7 +379,7 @@ ret = ret + spawn T[ts] with
                 this.v = 10;
             end;
 ret = ret + spawn T[ts];
-loop t, ts do
+loop t in ts do
     ret = ret + t.v;
 end
 escape 11;
@@ -401,7 +401,7 @@ ret = ret + spawn T[ts] with
                 this.v = 10;
             end;
 ret = ret + spawn T[ts];
-loop t, (ts,a) do
+loop t in (ts in a) do
     ret = ret + t.v;
 end
 escape 26;
@@ -426,7 +426,7 @@ ret = ret + spawn T[ts] with
                 this.v = 10;
             end;
 ret = ret + spawn T[ts];
-loop i, (I*)(ts,a) do
+loop i in (I*)(ts in a) do
     ret = ret + i:v;
 end
 escape 26;
@@ -437,6 +437,7 @@ escape 26;
 do return end
 
 --]===]
+-------------------------------------------------------------------------------
 
 -- OK: well tested
 
@@ -1151,7 +1152,7 @@ Test { [[
 input void OS_START;
 event void e;
 every OS_START do
-    loop i, 10 do
+    loop i in 10 do
         emit e;
     end
     do break; end
@@ -1166,7 +1167,7 @@ Test { [[
 input void OS_START;
 event void e;
 every OS_START do
-    loop i, 10 do
+    loop i in 10 do
         emit e;
     end
     do break; end
@@ -2105,7 +2106,7 @@ escape b;
 
 Test { [[
 var int ret = 0;
-loop i, 256-1 do
+loop i in 256-1 do
     ret = ret + 1;
 end
 escape ret;
@@ -2114,7 +2115,7 @@ escape ret;
 }
 Test { [[
 var int ret = 0;
-loop i, 256-1 do
+loop i in 256-1 do
     ret = ret + 1;
 end
 escape ret;
@@ -2368,7 +2369,7 @@ end;
 }
 
 Test { [[
-loop i, -1 do
+loop i in -1 do
 end
 escape 1;
 ]],
@@ -2378,14 +2379,14 @@ escape 1;
     -- TODO: with sval -1 would be constant
 }
 Test { [[
-loop i, -1 do
+loop i in -1 do
 end
 escape 1;
 ]],
     tight = 'line 1 : tight loop',
 }
 Test { [[
-loop i, 0 do
+loop i in 0 do
 end
 ]],
     adj = 'line 1 : constant should not be `0´',
@@ -2405,7 +2406,7 @@ end
 Test { [[
 input void A;
 loop do
-    loop i, 1 do
+    loop i in 1 do
         await A;
     end
 end
@@ -2417,7 +2418,7 @@ Test { [[
 input void OS_START;
 var int v = 1;
 loop do
-    loop i, v do
+    loop i in v do
         await OS_START;
         escape 2;
     end
@@ -2432,7 +2433,7 @@ Test { [[
 input void OS_START;
 var int v = 1;
 loop do
-    loop i, v do
+    loop i in v do
         await OS_START;
         escape 2;
     end
@@ -2499,7 +2500,7 @@ end
 Test { [[
 var int ret = 0;
 var int dt;
-every dt = 1s do
+every dt in 1s do
     ret = ret + dt;
     if ret == 10000000 then
         escape ret;
@@ -2583,7 +2584,7 @@ Test { [[
 input (int,int) A;
 par do
     var int a, b;
-    every (a,b) = A do
+    every (a,b) in A do
         escape a+b;
     end
 with
@@ -2598,7 +2599,7 @@ Test { [[
 input (int,int) A;
 par do
     var int a, b;
-    every (a,b) = A do
+    every (a,b) in A do
         escape a+b;
     end
 with
@@ -2630,7 +2631,7 @@ escape ret;
 
 Test { [[
 var int ret = 1;
-loop i,10 do
+loop i in 10 do
     if 1 then
         continue;
     end
@@ -2693,7 +2694,7 @@ end
 
 Test { [[
 var int ret = 0;
-loop i, 10 do
+loop i in 10 do
     if i%2 == 0 then
         ret = ret + 1;
         await 1s;
@@ -3021,7 +3022,7 @@ Test { [[
 input int A;
 var int sum = 0;
 par/or do
-    loop i, 1+1 do
+    loop i in 1+1 do
         await A;
     end
     sum = 0;
@@ -3042,7 +3043,7 @@ Test { [[
 input int A;
 var int sum = 0;
 par/or do
-    loop i, 1 do    // 4
+    loop i in 1 do    // 4
         await A;
     end
     sum = 0;
@@ -3063,7 +3064,7 @@ input void A;
 var int sum = 0;
 var int ret = 0;
 par/or do
-    loop i, 2 do
+    loop i in 2 do
         await A;
         ret = ret + 1;
     end
@@ -3087,7 +3088,7 @@ input void A;
 var int sum = 0;
 var int ret = 0;
 par/or do
-    loop i, 3 do
+    loop i in 3 do
         await A;
         ret = ret + 1;
     end
@@ -3111,7 +3112,7 @@ Test { [[
 input int A;
 var int sum = 0;
 par/or do
-    loop i, 1 do    // 4
+    loop i in 1 do    // 4
         await A;
         async do
             var int a = 1;
@@ -3135,7 +3136,7 @@ input int A;
 var int sum = 0;
 par/or do
     sum = 5;            // 4
-    loop i, 10 do       // 5
+    loop i in 10 do       // 5
         await A;
         async do
             var int a = 1;
@@ -3143,7 +3144,7 @@ par/or do
     end
     sum = 0;            // 11
 with
-    loop i, 2 do        // 13
+    loop i in 2 do        // 13
         async do
             var int a = 1;
         end
@@ -3157,7 +3158,7 @@ escape sum;
 
 Test { [[
 var int sum = 0;
-loop i, 100 do
+loop i in 100 do
     sum = sum + (i+1);
 end
 escape sum;
@@ -3179,7 +3180,7 @@ escape sum;
 }
 Test { [[
 var int sum = 5050;
-loop i, 100 do
+loop i in 100 do
     sum = sum - (i+1);
 end
 escape sum;
@@ -3190,7 +3191,7 @@ escape sum;
 Test { [[
 var int sum = 5050;
 var int v = 0;
-loop i, 100 do
+loop i in 100 do
     v = i;
     if sum == 100 then
         break;
@@ -3206,7 +3207,7 @@ Test { [[
 input void A;
 var int sum = 0;
 var int v = 0;
-loop i, 101 do
+loop i in 101 do
     v = i;
     if sum == 6 then
         break;
@@ -3220,7 +3221,7 @@ escape v;
 }
 Test { [[
 var int sum = 4;
-loop i, 0 do
+loop i in 0 do
     sum = sum - i;
 end
 escape sum;
@@ -3232,7 +3233,7 @@ escape sum;
 Test { [[
 input void A, B;
 var int sum = 0;
-loop i, 10 do
+loop i in 10 do
     await A;
     sum = sum + 1;
 end
@@ -13486,7 +13487,7 @@ loop do
     end
 end
 ]],
-    loop = 'line 1 : tight loop',    -- TODO: par/and
+    loop = 'line 1 : tight loop', -- TODO: par/and
     props = "line 8 : not permitted inside `finalize´",
 }
 
@@ -14850,7 +14851,7 @@ end
 
 var _vldoor_t* door;
 do
-    every door = T_VERTICAL_DOOR do
+    every door in T_VERTICAL_DOOR do
         spawn T_VerticalDoor with
             this.v = door;
         end;
@@ -15616,7 +15617,7 @@ with
     par/and do
         var int v = async do
             var int v;
-            loop i, 5 do
+            loop i in 5 do
                 v = v + i;
             end
             escape v;
@@ -15625,7 +15626,7 @@ with
     with
         var int v = async do
             var int v;
-            loop i, 5 do
+            loop i in 5 do
                 v = v + i;
             end
             escape v;
@@ -16489,7 +16490,7 @@ input (int tilex, int tiley, bool vertical?, int lock, int door, word*
     var int lock;
     var int door;
     var word* position;
-    every (tilex,tiley,vertical?,lock,door,position) = DOOR_SPAWN do
+    every (tilex,tiley,vertical?,lock,door,position) in DOOR_SPAWN do
     end
 ]],
     _ana = {
@@ -19055,13 +19056,13 @@ native _char=1;
 var u8[10] v1;
 var _char[10] v2;
 
-loop i, 10 do
+loop i in 10 do
     v1[i] = i;
     v2[i] = (_char) (i*2);
 end
 
 var int ret = 0;
-loop i, 10 do
+loop i in 10 do
     ret = ret + (u8)v2[i] - v1[i];
 end
 
@@ -19194,11 +19195,11 @@ native do
     #define N 5
 end
 var int[_N] vec;
-loop i, _N do
+loop i in _N do
     vec[i] = i;
 end
 var int ret = 0;
-loop i, _N do
+loop i in _N do
     ret = ret + vec[i];
 end
 escape ret;
@@ -19625,7 +19626,7 @@ escape ret;
 -- TIGHT LOOPS
 
 Test { [[
-loop i, 10 do
+loop i in 10 do
     i = 0;
 end
 ]],
@@ -19643,14 +19644,14 @@ loop i do end
     tight = 'line 1 : tight loop',
 }
 Test { [[
-loop i,10 do end
+loop i in 10 do end
 escape 2;
 ]],
     run = 2,
 }
 Test { [[
 var int v;
-loop i,v do end
+loop i in v do end
 ]],
     tight = 'line 2 : tight loop',
 }
@@ -20982,7 +20983,7 @@ end
 var T a;
 await OS_START;
 par/or do
-    loop i,3 do
+    loop i in 3 do
         par/and do
             emit a.go;
         with
@@ -21014,7 +21015,7 @@ end
 var T a;
 await OS_START;
 par/or do
-    loop i,3 do
+    loop i in 3 do
         par/and do
             await a.e;
             v = v + 1;
@@ -21045,7 +21046,7 @@ end
 await OS_START;
 var T a;
 par/or do
-    loop i,3 do
+    loop i in 3 do
         await a.e;
         v = v + 1;
     end
@@ -21071,7 +21072,7 @@ do
 end
 var T a;
 await OS_START;
-loop i,3 do
+loop i in 3 do
     await a.e;
     v = v + 1;
 end
@@ -23277,10 +23278,10 @@ do
     await FOREVER;
 end
 do
-    loop i, 2 do
+    loop i in 2 do
         spawn [1] T;
     end
-    loop i, 2 do
+    loop i in 2 do
         spawn T;
     end
 end
@@ -23299,10 +23300,10 @@ do
     await FOREVER;
 end
 do
-    loop i, 2 do
+    loop i in 2 do
         spawn [1] T;
     end
-    loop i, 2 do
+    loop i in 2 do
         spawn T;
     end
 end
@@ -23321,7 +23322,7 @@ do
     _V = _V + 1;
 end
 do
-    loop i, 1000 do
+    loop i in 1000 do
         var bool ok = spawn [1] T;  // 999 fails
         if not ok then
             escape 0;
@@ -23346,7 +23347,7 @@ do
     await A;
 end
 do
-    loop i, 10 do
+    loop i in 10 do
         spawn [1] T;
     end
 end
@@ -23367,7 +23368,7 @@ do
     await A;
 end
 do
-    loop i, 1000 do
+    loop i in 1000 do
         var bool ok = spawn [1] T;
         if not ok then
             escape 10;
@@ -23849,7 +23850,7 @@ end
 var bool ok;
 native _assert();
 do
-    loop i, 5 do
+    loop i in 5 do
         ok = spawn T;
     end
 end
@@ -23866,7 +23867,7 @@ end
 var bool ok;
 native _assert();
 do
-    loop i, 100 do
+    loop i in 100 do
         ok = spawn T;
     end
     ok = spawn T;
@@ -23885,7 +23886,7 @@ var u8 ok;
 native do ##include <assert.h> end
 native _assert();
 do
-    loop i, 100 do
+    loop i in 100 do
         ok = spawn T;
     end
     _assert(ok == 1);
@@ -23894,13 +23895,13 @@ do
     _assert(ok == 0);
 end
 do
-    loop i, 100 do
+    loop i in 100 do
         ok = spawn T;
     end
     _assert(ok == 1);
 end
 do
-    loop i, 101 do
+    loop i in 101 do
         ok = spawn T;
     end
     _assert(ok == 0);
@@ -23927,7 +23928,7 @@ do
 end
 var int v = 0;
 do
-    loop i, 200 do
+    loop i in 200 do
         var int ok =
             spawn T with
                 this.inc = 1;
@@ -25189,7 +25190,7 @@ end
 
 do
     var T* ptr = null;
-    loop i, 100 do
+    loop i in 100 do
         if ptr != null then
             free ptr;
         end
@@ -25212,7 +25213,7 @@ var void* ptr;
 class T with
 do
 end
-loop i, 100000 do
+loop i in 100000 do
     ptr = new T;
 end
 escape 10;
@@ -25233,7 +25234,7 @@ class T with
 do
     finalize with
         do
-            loop i, 1 do
+            loop i in 1 do
                 do break; end
             end
             _V = _V + this.v;
@@ -25298,7 +25299,7 @@ do
     par/and do
         await 10ms;
     with
-        loop i, 5 do
+        loop i in 5 do
             if i==2 then
                 break;
             end
@@ -25309,7 +25310,7 @@ do
 end
 
 do
-    loop i, 10 do
+    loop i in 10 do
         await 1s;
         spawn T;
     end
@@ -25382,7 +25383,7 @@ do
 end
 
 do
-    loop i, 10 do
+    loop i in 10 do
         var _s* p = null;
         spawn T with
             this.ptr = p;
@@ -25442,7 +25443,7 @@ native do
 end
 
 do
-    loop i, 10 do
+    loop i in 10 do
         var _s* p = null;
         spawn T with
             finalize
@@ -25482,7 +25483,7 @@ end
 var T* ui;
 do
     var _s* p = null;
-    loop i, 10 do
+    loop i in 10 do
         ui = new T with
             this.ptr = p;
         end;
@@ -25516,7 +25517,7 @@ end
 var T* ui;
 do
     var _s* p = null;
-    loop i, 10 do
+    loop i in 10 do
         ui = new T with
             finalize
                 this.ptr = p;
@@ -25554,7 +25555,7 @@ native do
 end
 
 do
-    loop i, 10 do
+    loop i in 10 do
         var _s* p = null;
         var T* ui = new T with
             finalize
@@ -26057,7 +26058,7 @@ do
         this.v = 10;
     end;
     async do end;
-    loop t, I* do
+    loop t in I* do
         emit t:e;
         ret = ret + t:v;
     end
@@ -26071,6 +26072,19 @@ escape ret;
 -- SDL/samples/sdl4.ceu
 
 -- INTERFACES / IFACES / IFCES
+
+Test { [[
+interface T with
+end
+do
+    loop i in T* do
+        await 1s;
+    end
+end
+escape 1;
+]],
+    props = 'line 5 : `every´ cannot contain `await´',
+}
 
 Test { [[
 native _ptr;
@@ -26929,7 +26943,7 @@ Test { [[
 interface I with
 end
 do
-    loop i, I* do
+    loop i in I* do
         _f(i);
     end
 end
@@ -26942,7 +26956,7 @@ interface I with
 end
 var I* p;
 do
-    loop i, I* do
+    loop i in I* do
         p = i;
     end
 end
@@ -26953,7 +26967,7 @@ end
 Test { [[
 interface Unit with
 end
-loop u, Unit* do
+loop u in Unit* do
 end
 escape 1;
 ]],
@@ -26965,7 +26979,7 @@ interface Unit with
 end
 var int ret = 1;
 do
-    loop u, Unit* do
+    loop u in Unit* do
         ret = ret + 1;
     end
 end
@@ -26979,7 +26993,7 @@ interface I with
 end
 var I* p;
 do
-    loop i, I* do
+    loop i in I* do
         p := i;
     end
 end
@@ -26997,7 +27011,7 @@ native do
     }
 end
 do
-    loop i, I* do
+    loop i in I* do
         _f(i);
     end
 end
@@ -27015,7 +27029,7 @@ native do
     }
 end
 do
-    loop i, I* do
+    loop i in I* do
         _f(i) finalize with nothing; end;
     end
 end
@@ -27048,7 +27062,7 @@ do
         this.v = 3;
     end;
 
-    loop i, I* do
+    loop i in I* do
         ret = ret + i:v;
     end
 end
@@ -27131,7 +27145,7 @@ do
         this.v = 3;
     end;
 
-    loop i, I* do
+    loop i in I* do
         ret = ret + i:v;
     end
 end
@@ -27153,7 +27167,7 @@ end
 
 var int ret = 1;
 do
-    loop i, I* do
+    loop i in I* do
         ret = ret + i:v;
     end
 end
@@ -27185,7 +27199,7 @@ do
         this.v = 3;
     end;
 
-    loop i, I* do
+    loop i in I* do
         ret = ret + i:v;
     end
 end
@@ -27221,7 +27235,7 @@ do
         this.v = 3;
     end;
 
-    loop i, I* do
+    loop i in I* do
         emit i:inc;
         ret = ret + i:v;
     end
@@ -27262,7 +27276,7 @@ do
         end
     with
         every 1s do
-            loop i, I* do
+            loop i in I* do
                 emit i:inc;
                 ret = ret + i:v;
             end
@@ -27281,7 +27295,7 @@ do
 end
 
 do
-    loop t, T* do
+    loop t in T* do
         t:a = 1;
     end
 end
@@ -29672,7 +29686,7 @@ end
 Test { [[
 input void A;
 await A;
-loop i, 10 do
+loop i in 10 do
 end
 escape 1;
 ]],
@@ -30578,8 +30592,8 @@ var int* p2 = &v2;
 par/and do
     async thread (p1) do
         var int ret = 0;
-        loop i, 10 do
-            loop j, 10 do
+        loop i in 10 do
+            loop j in 10 do
                 ret = ret + i + j;
             end
         end
@@ -30591,8 +30605,8 @@ par/and do
 with
     async thread (p2) do
         var int ret = 0;
-        loop i, 10 do
-            loop j, 10 do
+        loop i in 10 do
+            loop j in 10 do
                 ret = ret + i + j;
             end
         end
@@ -30660,8 +30674,8 @@ var int* p2 = &v2;
 par/and do
     async thread (p1) do
         var int ret = 0;
-        loop i, 50000 do
-            loop j, 50000 do
+        loop i in 50000 do
+            loop j in 50000 do
                 ret = ret + i + j;
             end
         end
@@ -30673,8 +30687,8 @@ par/and do
 with
     async thread (p2) do
         var int ret = 0;
-        loop i, 50000 do
-            loop j, 50000 do
+        loop i in 50000 do
+            loop j in 50000 do
                 ret = ret + i + j;
             end
         end
@@ -30706,8 +30720,8 @@ do
     var int* p = &v;
     async thread (p) do
         var int ret = 0;
-        loop i, 50000 do
-            loop j, 50000 do
+        loop i in 50000 do
+            loop j in 50000 do
                 ret = ret + i + j;
             end
         end
