@@ -34,6 +34,7 @@ function _AST.node (tag, ln, ...)
     me.n = _N
     _N = _N + 1
     me.ln  = ln
+    --me.ln[2] = me.n
     me.tag = tag
     return me
 end

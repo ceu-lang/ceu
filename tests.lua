@@ -16443,7 +16443,6 @@ input (int tilex, int tiley, bool vertical?, int lock, int door, word*
 }
 
 -- REQUESTS
---[==[
 
 Test { [[
 input/output (int max)=>char* [10] LINE;
@@ -16715,6 +16714,51 @@ end
     run = 61,
 }
 
+Test { [[
+par do
+    native do
+        ##define ceu_out_emit_val(a,b,c) 1
+    end
+    input/output (int max)=>int [2] LINE do
+        await 1s;
+    end
+    await 1s;
+    escape 1;
+with
+    async do
+        emit LINE_REQUEST => (1,10);
+        emit LINE_REQUEST => (1,10);
+        emit 1s;
+    end
+end
+]],
+    run = 1,
+}
+Test { [[
+par do
+    native do
+        ##define ceu_out_emit_val(a,b,c) 1
+        int V = 0;
+    end
+    input/output (int max)=>int LINE do
+        await 1s;
+        _V = _V + max;
+    end
+    await 1s;
+    escape _V+1;
+with
+    async do
+        emit LINE_REQUEST => (1,10);
+        emit LINE_REQUEST => (1,10);
+        emit 1s;
+    end
+end
+]],
+    _ana = {
+        acc = 1,
+    },
+    run = 1,
+}
 Test { [[
 par do
     native do
@@ -17020,7 +17064,6 @@ end
 ]],
     run = -1,
 }
---]==]
 
     -- POINTERS & ARRAYS
 

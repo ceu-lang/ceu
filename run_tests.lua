@@ -270,11 +270,6 @@ real	7m47.530s
 user	7m7.744s
 sys	1m2.192s
 }
-
-
-real	7m5.929s
-user	6m38.312s
-sys	0m58.120s
 ]]
 
 os.execute('rm -f /tmp/_ceu_*')

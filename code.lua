@@ -588,7 +588,7 @@ _ceu_go->org->trls[ ]]..me.trl_fins[1]..[[ ].seqno = _ceu_app->seqno-1; /* awake
             elseif var.pre=='pool' and var.arr then
                 local id = V(var)
                 LINE(me, [[
-ceu_pool_init(&]]..id..', '..var.arr.cval..',sizeof('.._TP.c(var.tp)..'), '
+ceu_pool_init(&]]..id..', '..var.arr.cval..',sizeof('.._TP.c(_TP.deref(var.tp))..'), '
     ..'(byte**)'..id..'_queue, (byte*)'..id..[[_mem);
 ]])
             end

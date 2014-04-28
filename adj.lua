@@ -553,7 +553,6 @@ F = {
         local ret = {}
         for _, id_evt in ipairs(ids) do
             if dir=='input/output' or dir=='output/input' then
-error('spw->criar pool de tamanho "spw"')
                 --[[
                 --      output/input (T1,...)=>T2 LINE;
                 -- becomes
@@ -591,8 +590,10 @@ error('spw->criar pool de tamanho "spw"')
         if blk and (dir=='input/output' or dir=='output/input') then
             --[[
             -- input/output (int max)=>char* LINE [10] do ... end
+            --
             --      becomes
-            -- class [10] Line with
+            --
+            -- class Line with
             --     var _reqid id;
             --     var int max;
             -- do
@@ -622,7 +623,7 @@ error('spw->criar pool de tamanho "spw"')
             end
 
             local cls =
-                node('Dcl_cls', me.ln, false, spw, id_cls,
+                node('Dcl_cls', me.ln, false, id_cls,
                     node('BlockI', me.ln, unpack(ifc)),
                     node('Block', me.ln,
                         node('Stmts', me.ln,
@@ -663,10 +664,11 @@ error('spw->criar pool de tamanho "spw"')
             -- stmts:
             --
             -- do
+            --     pool Line[10] _Lines;
             --     var tp_req id_req_;
             --     var tpN, idN_;
             --     every (id_req,idN) = _LINE_request do
-            --         var bool ok? = spawn Line with
+            --         var bool ok? = spawn Line in _Lines with
             --             this.id_req = id_req_;
             --             this.idN    = idN_;
             --         end
@@ -704,6 +706,9 @@ error('spw->criar pool de tamanho "spw"')
                 node('Do', me.ln,
                     node('Block', me.ln,
                         node('Stmts', me.ln,
+                            node('Dcl_pool', me.ln, 'pool', id_cls,
+                                (spw and node('NUMBER',me.ln,spw)) or false,
+                                '_'..id_cls..'s'),
                             node('Stmts', me.ln, unpack(dcls)),
                             node('_Every', me.ln, vars,
                                 node('Ext', me.ln, id_evt..'_REQUEST'),
@@ -714,7 +719,8 @@ error('spw->criar pool de tamanho "spw"')
                                         node('_Set', me.ln,
                                             node('Var', me.ln, 'ok_'),
                                             '=', '__SetSpawn',
-                                            node('Spawn', me.ln, id_cls, false,
+                                            node('Spawn', me.ln, id_cls,
+                                                node('Var', me.ln, '_'..id_cls..'s'),
                                                 node('Dcl_constr', me.ln, unpack(sets)))),
                                         node('If', me.ln,
                                             node('Op1_not', me.ln, 'not',
