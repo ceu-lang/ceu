@@ -139,7 +139,14 @@ F = {
             if var.cls then
                 me.needs_clr = true
                 _PROPS.has_clear = true
-                break
+            end
+            if var.pre=='pool' then
+                _PROPS.has_news = true
+                if var.arr then
+                    _PROPS.has_news_pool = true
+                else
+                    _PROPS.has_news_malloc = true
+                end
             end
         end
 
@@ -152,17 +159,11 @@ F = {
         _PROPS.has_clear = true
     end,
     New = function (me)
-        local max,_,_ = unpack(me)
+        local _,pool,_ = unpack(me)
 
         _PROPS.has_news = true
-        if max or me.cls.max then
+        if pool and pool.var.arr then
             _PROPS.has_news_pool = true
-
-            if max then
-                local blk = me.blk
-                blk.pools = blk.pools or {}
-                blk.pools[me] = max
-            end
         else
             _PROPS.has_news_malloc = true
         end

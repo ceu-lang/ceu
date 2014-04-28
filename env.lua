@@ -378,9 +378,8 @@ F = {
     end,
 
     Dcl_cls_pre = function (me)
-        local ifc, max, id, blk = unpack(me)
+        local ifc, id, blk = unpack(me)
         me.is_ifc = ifc
-        me.max    = max
         me.id     = id
         me.c      = {}      -- holds all "native _f()"
         ASR(not _ENV.clss[id], me,
@@ -558,6 +557,7 @@ F = {
             constr.blk = me.var.blk
         end
     end,
+    Dcl_pool = 'Dcl_var',
 
     Dcl_int = function (me)
         local pre, tp, id = unpack(me)
@@ -754,7 +754,7 @@ F = {
 
     -- _pre: give error before "set" inside it
     New_pre = function (me)
-        local max, id, constr = unpack(me)
+        local id, pool, constr = unpack(me)
 
         me.cls = ASR(_ENV.clss[id], me,
                         'class "'..id..'" is not declared')
@@ -763,14 +763,16 @@ F = {
         me.fst = 'global'   -- "a = spawn T"    (constant value 0/1)
         me.tp = id..'*'  -- class id
     end,
-    Spawn_pre = function (me, blk)
-        local max, id, constr = unpack(me)
+    Spawn_pre = function (me)
         F.New_pre(me)
-        me.blk = ASR(_AST.iter'Do'(), me,
-                        '`spawn´ requires enclosing `do ... end´')
-        me.blk = me.blk[1]
         me.tp = 'bool'       -- 0/1
     end,
+    New = function (me)
+        local _,pool,_ = unpack(me)
+        me.blk = (pool and pool.var.blk) or CLS().blk_ifc
+                 -- bind org to pool scope or class scope
+    end,
+    Spawn = 'New',
 
     Dcl_constr_pre = function (me)
         local spw = _AST.iter'Spawn'()
@@ -779,9 +781,9 @@ F = {
 
         -- type check for this.* inside constructor
         if spw then
-            me.cls = _ENV.clss[ spw[2] ]   -- checked on Spawn
+            me.cls = _ENV.clss[ spw[1] ]   -- checked on Spawn
         elseif new then
-            me.cls = _ENV.clss[ new[2] ]   -- checked on SetExp
+            me.cls = _ENV.clss[ new[1] ]   -- checked on SetExp
         elseif dcl then
             me.cls = _ENV.clss[ dcl[2] ]   -- checked on Dcl_var
         end

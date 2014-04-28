@@ -332,83 +332,7 @@ escape 10;
     run = 10;
 }
 
--------------------------------------------------------------------------------
-
-Test { [[
-class T with
-do
-end
-pool T t;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-class T with
-do
-end
-pool T[1] t;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-class T with
-do
-end
-pool T[1] t;
-var int ret = 0;
-ret = ret + spawn T[t] with
-            end;
-ret = ret + spawn T[t];
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-class T with
-    var int v = 0;
-do
-end
-pool T[1] ts;
-var int ret = 0;
-ret = ret + spawn T[ts] with
-                this.v = 10;
-            end;
-ret = ret + spawn T[ts];
-loop t in ts do
-    ret = ret + t.v;
-end
-escape 11;
-]],
-    run = 1,
-}
-
-Test { [[
-class T with
-    var int v = 0;
-do
-end
-pool T[1] ts;
-var T a with
-    a.v = 15;
-end
-var int ret = 0;
-ret = ret + spawn T[ts] with
-                this.v = 10;
-            end;
-ret = ret + spawn T[ts];
-loop t in (ts in a) do
-    ret = ret + t.v;
-end
-escape 26;
-]],
-    run = 1,
-}
-
+-- varlist to iter
 Test { [[
 interface I with
     var int v;
@@ -434,10 +358,30 @@ escape 26;
     run = 1,
 }
 
+Test { [[
+class T with
+    var void* ptr = null;
+do
+end
+var T* ui;
+do
+    pool T[] ts;
+    var void* p = null;
+    ui = new T in ts with // ui > ts (should require fin)
+        this.ptr = p;
+    end;
+end
+escape 10;
+]],
+    run = 1,
+}
+
+-------------------------------------------------------------------------------
+
 do return end
 
---]===]
 -------------------------------------------------------------------------------
+--]===]
 
 -- OK: well tested
 
@@ -16499,6 +16443,7 @@ input (int tilex, int tiley, bool vertical?, int lock, int door, word*
 }
 
 -- REQUESTS
+--[==[
 
 Test { [[
 input/output (int max)=>char* [10] LINE;
@@ -17075,6 +17020,7 @@ end
 ]],
     run = -1,
 }
+--]==]
 
     -- POINTERS & ARRAYS
 
@@ -19810,7 +19756,7 @@ escape _V;
 }
 
 Test { [[
-class [10] T with do end
+class T with do end
 escape 1;
 ]],
     run = 1,
@@ -23129,25 +23075,161 @@ escape 10;
 -- MEM/MEMORY POOL
 
 Test { [[
-class [0] T with
+class T with
+do
+end
+pool T t;
+escape 1;
+]],
+    parser = 'line 4 : after `T´ : expected `[´',
+}
+
+Test { [[
+class T with
+do
+end
+pool T[] t;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+do
+end
+pool T[1] t;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+do
+end
+pool T[1] t;
+var int ok1 = spawn T in t with end;
+var int ok2 = spawn T in t;
+escape ok1 + ok2;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
+end
+pool T[1] ts;
+var int ok1 = spawn T in ts with
+                this.v = 10;
+              end;
+var int ok2 = 0;// spawn T in ts;
+var int ret = 0;
+loop (T*)t in ts do
+    ret = ret + t:v;
+end
+escape ok1 + ok2 + ret;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
+    async do end;
+end
+pool T[1] ts;
+var int ok1 = spawn T in ts with
+                this.v = 10;
+              end;
+var int ok2 = 0;// spawn T in ts;
+var int ret = 0;
+loop (T*)t in ts do
+    ret = ret + t:v;
+end
+escape ok1 + ok2 + ret;
+]],
+    run = 11,
+}
+
+Test { [[
+class T with
+do
+end
+pool T[] t;
+spawn T in t;
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+class T with
+do
+end
+spawn T;
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+class T with
+do
+end
+pool T[] t;
+spawn T in t;
+spawn T;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
+    async do end;
+end
+pool T[] ts;
+spawn T in ts with
+    this.v = 10;
+end;
+spawn T with
+    this.v = 20;
+end;
+var int ret = 0;
+loop (T*)t in ts do
+    ret = ret + t:v;
+end
+escape ret;
+]],
+    run = 30,
+}
+
+Test { [[
+pool T[0] ts;
+class T with
     var int a;
 do
     this.a = 1;
 end
-var T* t = new T;
+var T* t = new T in ts;
 escape t == null;
 ]],
     run = 1,
 }
 
 Test { [[
-class [1] T with
+pool T[1] ts;
+class T with
     var int a;
 do
     this.a = 1;
 end
-var T* a = new T;
-var T* b = new T;
+var T* a = new T in ts;
+var T* b = new T in ts;
 escape a!=null and b==null;
 ]],
     run = 1,
@@ -23159,8 +23241,11 @@ class T with
 do
     this.a = 1;
 end
-var T* t = new [0] T;
+do
+pool T[0] ts;
+var T* t = new T in ts;
 escape t == null;
+end
 ]],
     run = 1,
 }
@@ -23171,43 +23256,47 @@ class T with
 do
     this.a = 1;
 end
-var T* a = new [1] T;
-var T* b = new [0] T;
+pool T[1] as;
+pool T[0] bs;
+var T* a = new T in as;
+var T* b = new T in bs;
 escape a!=null and b==null;
 ]],
     run = 1,
 }
 
 Test { [[
-class [1] T with
+pool T[1] ts;
+class T with
     var int a;
 do
     this.a = 1;
 end
-var T* a = new T;
+var T* a = new T in ts;
 free(a);
-var T* b = new T;   // fails (a is freed on end)
+var T* b = new T in ts;   // fails (a is freed on end)
 escape a!=null and b==null;
 ]],
     run = 1,
 }
 
 Test { [[
-class [1] T with
+pool T[1] ts;
+class T with
     var int a;
 do
     this.a = 1;
 end
 var T* a;
 do
-    var T* aa = new T;
+    var T* aa = new T in ts;
     finalize
         a = aa;
     with
         nothing;
     end
 end
-var T* b = new T;   // fails (a is free on end)
+var T* b = new T in ts;   // fails (a is free on end)
 //native nohold _fprintf(), _stderr;
         //_fprintf(_stderr, "%p %p\n",a, b);
 escape a!=null and b==null and a!=b;
@@ -23216,7 +23305,8 @@ escape a!=null and b==null and a!=b;
 }
 
 Test { [[
-class [1] T with
+pool T[1] ts;
+class T with
     var int a;
 do
     this.a = 1;
@@ -23224,21 +23314,21 @@ end
 var T* a, b;
 do
     do
-        var T* aa = new T;
+        var T* aa = new T in ts;
         finalize
             a = aa;
         with
             nothing;
         end
     end
-    var T* bb = new T;  // fails
+    var T* bb = new T in ts;  // fails
     finalize
         b = bb;
     with
         nothing;
     end
 end
-var T* c = new T;       // fails
+var T* c = new T in ts;       // fails
 //native nohold _fprintf(), _stderr;
         //_fprintf(_stderr, "%p %p\n",a, b);
 escape a!=null and b==null and c==null and a!=b and b==c;
@@ -23247,21 +23337,22 @@ escape a!=null and b==null and c==null and a!=b and b==c;
 }
 
 Test { [[
-class [1] T with
+pool T[1] ts;
+class T with
     var int a;
 do
     this.a = 1;
 end
 var T* a;
 do
-    var T* aa = new T;
+    var T* aa = new T in ts;
     finalize
         a = aa;
     with
         nothing;
     end
 end
-var T* b = new T;   // fails
+var T* b = new T in ts;   // fails
 escape a!=null and b==null;
 ]],
     run = 1,
@@ -23271,28 +23362,7 @@ Test { [[
 native do
     int V = 0;
 end
-class [1] T with
-    var int a;
-do
-    _V = _V + 1;
-    await FOREVER;
-end
-do
-    loop i in 2 do
-        spawn [1] T;
-    end
-    loop i in 2 do
-        spawn T;
-    end
-end
-escape _V;
-]],
-    run = 2,
-}
-Test { [[
-native do
-    int V = 0;
-end
+pool T[1] ts;
 class T with
     var int a;
 do
@@ -23301,7 +23371,30 @@ do
 end
 do
     loop i in 2 do
-        spawn [1] T;
+        spawn T in ts;
+    end
+    loop i in 2 do
+        spawn T;
+    end
+end
+escape _V;
+]],
+    run = 3,
+}
+Test { [[
+native do
+    int V = 0;
+end
+pool T[1] ts;
+class T with
+    var int a;
+do
+    _V = _V + 1;
+    await FOREVER;
+end
+do
+    loop i in 2 do
+        spawn T in ts;
     end
     loop i in 2 do
         spawn T;
@@ -23322,8 +23415,9 @@ do
     _V = _V + 1;
 end
 do
+    pool T[1] ts;
     loop i in 1000 do
-        var bool ok = spawn [1] T;  // 999 fails
+        var bool ok = spawn T in ts;  // 999 fails
         if not ok then
             escape 0;
         end
@@ -23346,9 +23440,10 @@ do
     _V = _V + 1;
     await A;
 end
+pool T[1] ts;
 do
     loop i in 10 do
-        spawn [1] T;
+        spawn T in ts;
     end
 end
 escape _V;
@@ -23367,9 +23462,10 @@ do
     _V = _V + 1;
     await A;
 end
+pool T[1] ts;
 do
     loop i in 1000 do
-        var bool ok = spawn [1] T;
+        var bool ok = spawn T in ts;
         if not ok then
             escape 10;
         end
@@ -23765,8 +23861,10 @@ escape 0;
 Test { [[
 class T with do end
 spawn T;
+escape 1;
 ]],
-    env = 'line 2 : `spawn´ requires enclosing `do ... end´',
+    --env = 'line 2 : `spawn´ requires enclosing `do ... end´',
+    run = 1,
 }
 
 Test { [[
@@ -23928,9 +24026,10 @@ do
 end
 var int v = 0;
 do
+    pool T[] ts;
     loop i in 200 do
         var int ok =
-            spawn T with
+            spawn T in ts with
                 this.inc = 1;
             end;
         if not ok then
@@ -24109,7 +24208,8 @@ end
 var T* a;
 var T aa;
 do
-    var T* b = new T;
+    pool T[] ts;
+    var T* b = new T in ts;
     b:v = 10;
     finalize
         a = b;      // no more :=
@@ -24140,7 +24240,8 @@ end
 var T* a;
 var T aa;
 do
-    var T* b = new T;
+    pool T[] ts;
+    var T* b = new T in ts;
     b:v = 10;
     finalize
         a = b;
@@ -24170,7 +24271,8 @@ end
 
 var T* a;
 do
-    var T* b = new T;
+    pool T[] ts;
+    var T* b = new T in ts;
     b:v = 10;
     finalize
         a = b;      // no more :=
@@ -24199,7 +24301,8 @@ end
 
 var T* a;
 do
-    var T* b = new T;
+    pool T[] ts;
+    var T* b = new T in ts;
     b:v = 10;
     finalize
         a = b;      // no more :=
@@ -24335,8 +24438,9 @@ end
 var int ret = 0;
 
 par/or do
+    pool T[] ts;
     var T* o;
-    o = new T;
+    o = new T in ts;
     await OS_START;
     ret = o:a;
 with
@@ -25323,6 +25427,40 @@ escape _V;
 }
 
 Test { [[
+class T with
+    var _s* ptr = null;
+do
+end
+do
+    var _s* p = null;
+    var T* ui = new T with
+        this.ptr = p;   // ptr > p
+    end;
+end
+escape 10;
+]],
+    fin = 'line 8 : attribution requires `finalize´',
+}
+
+Test { [[
+class T with
+    var void* ptr = null;
+do
+end
+do
+    pool T[] ts;
+    var void* p = null;
+    var T* ui;
+    ui = new T in ts with
+        this.ptr = p;
+    end;
+end
+escape 10;
+]],
+    run = 10,
+}
+
+Test { [[
 native _s=0;
 native do
     typedef int s;
@@ -25342,7 +25480,7 @@ end
 
 escape 10;
 ]],
-    run = 10,
+    fin = 'line 14 : attribution requires `finalize´',
 }
 
 Test { [[
@@ -25706,8 +25844,9 @@ end
 
 par/or do
     do
+        pool T[] ts;
         loop i do
-            spawn T with
+            spawn T in ts with
                 this.c = i;
             end;
             await 1s;
@@ -25743,8 +25882,9 @@ event int pse;
 par/or do
     pause/if pse do
         do
+            pool T[] ts;
             loop i do
-                spawn T with
+                spawn T in ts with
                     this.c = i;
                 end;
                 await 1s;
@@ -25786,9 +25926,10 @@ event int pse;
 
 par/or do
     do
+        pool T[] ts;
         loop i do
             pause/if pse do
-                spawn T with
+                spawn T in ts with
                     this.c = i;
                 end;
                 await 1s;
@@ -25830,9 +25971,10 @@ event int pse;
 
 par/or do
     do
+        pool T[] ts;
         loop i do
             pause/if pse do
-                spawn T with
+                spawn T in ts with
                     this.c = i;
                 end;
                 await 1s;
@@ -25876,8 +26018,9 @@ event int pse;
 par/or do
     pause/if pse do
         do
+            pool T[] ts;
             loop i do
-                spawn T with
+                spawn T in ts with
                     this.c = i;
                 end;
                 await 1s;
@@ -25920,9 +26063,10 @@ event int pse;
 
 par/or do
     do
+        pool T[] ts;
         loop i do
             pause/if pse do
-                spawn T with
+                spawn T in ts with
                     this.c = i;
                 end;
                 await 1s;
@@ -25965,8 +26109,9 @@ event int pse;
 par/or do
     pause/if pse do
         do
+            pool T[] ts;
             loop i do
-                spawn T with
+                spawn T in ts with
                     this.c = i;
                 end;
                 await 1s;
@@ -26047,6 +26192,7 @@ interface I with
     var int v;
     event void e;
 end
+pool T[] ts;
 class T with
     interface I;
 do
@@ -26054,11 +26200,11 @@ do
 end
 var int ret = 0;
 do
-    spawn T with
+    spawn T in ts with
         this.v = 10;
     end;
     async do end;
-    loop t in I* do
+    loop (I*)t in ts do
         emit t:e;
         ret = ret + t:v;
     end
@@ -26074,16 +26220,36 @@ escape ret;
 -- INTERFACES / IFACES / IFCES
 
 Test { [[
-interface T with
+interface I with
 end
+class T with
+    interface I;
+do end
 do
-    loop i in T* do
+    pool T[] ts;
+    loop (I*)i in ts do
         await 1s;
     end
 end
 escape 1;
 ]],
-    props = 'line 5 : `every´ cannot contain `await´',
+    props = 'line 9 : `every´ cannot contain `await´',
+}
+
+Test { [[
+interface I with
+    var int a;
+end
+class T with
+do end
+do
+    pool T[] ts;
+    loop (I*)i in ts do
+    end
+end
+escape 1;
+]],
+    run = 1,
 }
 
 Test { [[
@@ -26940,46 +27106,49 @@ escape 10;
 
 -- IFACES / IFCS / ITERATORS
 Test { [[
-interface I with
-end
+interface I with end
+class T with do end
+pool T[] ts;
 do
-    loop i in I* do
+    loop (I*)i in ts do
         _f(i);
     end
 end
 ]],
-    fin = 'line 5 : call to "_f" requires `finalize´',
+    fin = 'line 6 : call to "_f" requires `finalize´',
 }
 
 Test { [[
-interface I with
-end
+interface I with end
+class T with do end
+pool T[] ts;
 var I* p;
 do
-    loop i in I* do
+    loop (I*)i in ts do
         p = i;
     end
 end
 ]],
-    fin = 'line 6 : attribution requires `finalize´',
+    fin = 'line 7 : attribution requires `finalize´',
 }
 
 Test { [[
-interface Unit with
-end
-loop u in Unit* do
+interface Unit with end
+class CUnit with do end
+pool CUnit[] us;
+loop (Unit*)u in us do
 end
 escape 1;
 ]],
-    adj = 'missing block',
+    run = 1,
 }
 
 Test { [[
-interface Unit with
-end
+class Unit with do end
+pool Unit[] us;
 var int ret = 1;
 do
-    loop u in Unit* do
+    loop (Unit*)u in us do
         ret = ret + 1;
     end
 end
@@ -26989,11 +27158,11 @@ escape ret;
 }
 
 Test { [[
-interface I with
-end
-var I* p;
+class Unit with do end
+pool Unit[] us;
+var Unit* p;
 do
-    loop i in I* do
+    loop (Unit*)i in us do
         p := i;
     end
 end
@@ -27003,15 +27172,15 @@ escape 10;
 }
 
 Test { [[
-interface I with
-end
+class I with do end
+pool I[] is;
 native nohold _f();
 native do
     void f (void* p) {
     }
 end
 do
-    loop i in I* do
+    loop (I*)i in is do
         _f(i);
     end
 end
@@ -27021,15 +27190,15 @@ escape 10;
 }
 
 Test { [[
-interface I with
-end
+class I with do end
+pool I[] is;
 native _f();
 native do
     void f (void* p) {
     }
 end
 do
-    loop i in I* do
+    loop (I*)i in is do
         _f(i) finalize with nothing; end;
     end
 end
@@ -27050,19 +27219,20 @@ do
     await FOREVER;
 end
 
+pool T[] ts;
 var int ret = 0;
 do
-    spawn T with
+    spawn T in ts with
         this.v = 1;
     end;
-    spawn T with
+    spawn T in ts with
         this.v = 2;
     end;
-    spawn T with
+    spawn T in ts with
         this.v = 3;
     end;
 
-    loop i in I* do
+    loop (I*)i in ts do
         ret = ret + i:v;
     end
 end
@@ -27125,6 +27295,7 @@ class T with
 do
     await FOREVER;
 end
+pool T[] ts;
 
 class U with
     var int z;
@@ -27141,11 +27312,11 @@ do
     spawn U with
         this.v = 2;
     end;
-    spawn T with
+    spawn T in ts with
         this.v = 3;
     end;
 
-    loop i in I* do
+    loop (I*)i in ts do
         ret = ret + i:v;
     end
 end
@@ -27164,10 +27335,11 @@ class T with
     interface I;
 do
 end
+pool T[] ts;
 
 var int ret = 1;
 do
-    loop i in I* do
+    loop (I*)i in ts do
         ret = ret + i:v;
     end
 end
@@ -27186,20 +27358,21 @@ class T with
     interface I;
 do
 end
+pool T[] ts;
 
 var int ret = 1;
 do
-    spawn T with
+    spawn T in ts with
         this.v = 1;
     end;
-    spawn T with
+    spawn T in ts with
         this.v = 2;
     end;
-    spawn T with
+    spawn T in ts with
         this.v = 3;
     end;
 
-    loop i in I* do
+    loop (I*)i in ts do
         ret = ret + i:v;
     end
 end
@@ -27223,19 +27396,20 @@ do
     this.v = v + 1;
 end
 
+pool T[] ts;
 var int ret = 1;
 do
-    spawn T with
+    spawn T in ts with
         this.v = 1;
     end;
-    spawn T with
+    spawn T in ts with
         this.v = 2;
     end;
-    spawn T with
+    spawn T in ts with
         this.v = 3;
     end;
 
-    loop i in I* do
+    loop (I*)i in ts do
         emit i:inc;
         ret = ret + i:v;
     end
@@ -27261,6 +27435,7 @@ do
     this.v = v + 1;
     await FOREVER;
 end
+pool T[] ts;
 
 var int ret = 0;
 do
@@ -27269,14 +27444,14 @@ do
     with
         var int i=1;
         every 1s do
-            spawn T with
+            spawn T in ts with
                 this.v = i;
                 i = i + 1;
             end;
         end
     with
         every 1s do
-            loop i in I* do
+            loop (I*)i in ts do
                 emit i:inc;
                 ret = ret + i:v;
             end
@@ -27293,9 +27468,10 @@ class T with
     var int a;
 do
 end
+pool T[] ts;
 
 do
-    loop t in T* do
+    loop (T*)t in ts do
         t:a = 1;
     end
 end

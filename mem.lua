@@ -1,9 +1,5 @@
 _MEM = {
     clss  = '',
-    pools = {
-        dcl = '',
-        init = '',  -- TODO: move to code.lua?
-    },
 }
 
 function SPC ()
@@ -21,9 +17,6 @@ typedef struct {
   struct tceu_org org;
   tceu_trl trls_[ ]]..me.trails_n..[[ ];
 ]]
-        if me.id == 'Main' then
-            me.struct = me.struct .. _MEM.pools.dcl
-        end
         me.funs = ''
     end,
     Dcl_cls_pos = function (me)
@@ -35,24 +28,9 @@ typedef struct {
 
         _MEM.clss = _MEM.clss .. me.struct .. '\n'
         _MEM.clss = _MEM.clss .. me.funs   .. '\n'
-DBG('===', me.id, me.trails_n, '('..tostring(me.max)..')')
+DBG('===', me.id, me.trails_n)
 --DBG(me.struct)
 --DBG('======================')
-
-        -- top class pool <class T[N] with ... end>
-        if me.max and _PROPS.has_news_pool then
-            local id = 'pool_'..me.id
-            me.pool = '((CEU_Main*)_ceu_app->data)->'..id
-            _MEM.pools.dcl = _MEM.pools.dcl .. [[
-CEU_POOL_DCL(]]..id..','..'CEU_'..me.id..','..me.max..[[);
-]]
-
-            local pool = '((CEU_Main*)app->data)->'..id
-            _MEM.pools.init = _MEM.pools.init..[[
-ceu_pool_init(&]]..pool..', '..me.max..', sizeof(CEU_'..me.id..'), '
-    ..'(byte**)'..pool..'_queue, (byte*)'..pool..[[_mem);
-]]
-        end
     end,
 
     Dcl_fun = function (me)
@@ -109,16 +87,6 @@ ceu_pool_init(&]]..pool..', '..me.max..', sizeof(CEU_'..me.id..'), '
             end
         end
 
-        -- memory pools from spawn/new
-        if me.pools then
-            for node, n in pairs(me.pools) do
-                node.pool = '__pool_'..node.n..'_'..node.cls.id
-                cls.struct = cls.struct .. [[
-CEU_POOL_DCL(]]..node.pool..', CEU_'..node.cls.id..','..n..[[)
-]]
-            end
-        end
-
         for _, var in ipairs(me.vars) do
             local len
             --if var.isTmp or var.pre=='event' then  --
@@ -126,11 +94,13 @@ CEU_POOL_DCL(]]..node.pool..', CEU_'..node.cls.id..','..n..[[)
                 len = 0
             elseif var.pre == 'event' then --
                 len = 1   --
+            elseif var.pre=='pool' and var.arr then
+                len = 10    -- TODO: it should be big
             elseif var.cls then
-                len = 10    -- TODO: no static types
+                len = 10    -- TODO: it should be big
                 --len = (var.arr or 1) * ?
             elseif var.arr then
-                len = 10    -- TODO: no static types
+                len = 10    -- TODO: it should be big
 --[[
                 local _tp = _TP.deref(var.tp)
                 len = var.arr * (_TP.deref(_tp) and _ENV.c.pointer.len
@@ -153,21 +123,25 @@ CEU_POOL_DCL(]]..node.pool..', CEU_'..node.cls.id..','..n..[[)
         end
 
         for _, var in ipairs(sorted) do
+            local tp = _TP.c(var.tp)
+            var.id_ = var.id .. '_' .. var.n
+            --var.id_ = var.id .. (var.inTop and '' or ('_'..var.n))
+                -- id's inside interfaces are kept (to be used from C)
+
             if var.pre=='var' and (not var.isTmp) then
-                local tp = _TP.c(var.tp)
                 local dcl = [[
 #line ]]..var.ln[2]..' "'..var.ln[1]..[["
 ]]
-                var.id_ = var.id .. '_' .. var.n
-                --var.id_ = var.id .. (var.inTop and '' or ('_'..var.n))
-                    -- id's inside interfaces are kept (to be used from C)
-
                 if var.arr then
                     dcl = dcl .. _TP.deref(tp)..' '..var.id_..'['..var.arr.cval..']'
                 else
                     dcl = dcl .. tp..' '..var.id_
                 end
                 cls.struct = cls.struct..SPC()..'  '..dcl..';\n'
+            elseif var.pre=='pool' and var.arr then
+                cls.struct = cls.struct .. [[
+CEU_POOL_DCL(]]..var.id_..','.._TP.deref(tp)..','..var.arr.cval..[[)
+]]
             end
         end
     end,

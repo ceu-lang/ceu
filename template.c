@@ -213,10 +213,6 @@ static void ceu_app_init (tceu_app* app)
 
 #endif  /* CEU_OS */
 
-#ifdef CEU_NEWS_POOL
-    === POOLS_INIT ===
-#endif
-
 #ifndef CEU_OS
 #ifdef CEU_DEBUG
     CEU_APP_SIG = app;

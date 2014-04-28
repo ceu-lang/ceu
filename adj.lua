@@ -144,7 +144,7 @@ F = {
         end
 
         -- enclose the program with the "Main" class
-        _MAIN = node('Dcl_cls', me.ln, false, false,
+        _MAIN = node('Dcl_cls', me.ln, false,
                       'Main',
                       node('Nothing', me.ln),
                       blk)
@@ -171,7 +171,7 @@ F = {
 
     _Dcl_ifc_pos = 'Dcl_cls_pos',
     Dcl_cls_pos = function (me)
-        local is_ifc, n, id, blk_ifc, blk_body = unpack(me)
+        local is_ifc, id, blk_ifc, blk_body = unpack(me)
         local blk = node('Block', me.ln,
                          node('Stmts',me.ln,blk_ifc,blk_body))
 
@@ -180,8 +180,8 @@ F = {
         end
         me.blk_body = blk_body
         me.tag = 'Dcl_cls'  -- Dcl_ifc => Dcl_cls
-        me[4]  = blk        -- both blocks 'ifc' and 'body'
-        me[5]  = nil        -- remove 'body'
+        me[3]  = blk        -- both blocks 'ifc' and 'body'
+        me[4]  = nil        -- remove 'body'
     end,
 
 -- Escape --------------------------------------------------
@@ -259,58 +259,58 @@ F = {
 -- Iter --------------------------------------------------
 
     _Iter_pre = function (me)
-        local id2, tp2, blk = unpack(me)
+        local to_tp, to_id, fr_var, blk = unpack(me)
 
-        ASR(_AST.iter'Do'(), me, 'missing block')
+        local fr_id = '_i'..me.n
+        local fr_tp = '_tceu_org*'
 
-        local id1 = '_i'..me.n
-        local tp1 = '_tceu_org*'
+        local fr_fvar = function() return node('Var', me.ln, fr_id) end
+        local to_fvar = function() return node('Var', me.ln, to_id) end
 
-        local var1 = function() return node('Var', me.ln, id1) end
-        local var2 = function() return node('Var', me.ln, id2) end
+        local fr_dcl = node('Dcl_var', me.ln, 'var', fr_tp, false, fr_id)
+        local to_dcl = node('Dcl_var', me.ln, 'var', to_tp, false, to_id)
+        to_dcl.read_only = true
 
-        local dcl1 = node('Dcl_var', me.ln, 'var', tp1, false, id1)
-        local dcl2 = node('Dcl_var', me.ln, 'var', tp2, false, id2)
-        dcl2.read_only = true
-
-        local ini1 = node('SetExp', me.ln, ':=',
+        local fr_ini = node('SetExp', me.ln, ':=',
                                         node('RawExp', me.ln,nil), -- see val.lua
-                                        var1())
-        ini1[2].iter_ini = true
-        local ini2 = node('SetExp', me.ln, '=',
-                        node('Op1_cast', me.ln, tp2, var1()),
-                        var2())
-        ini2.read_only = true   -- accept this write
+                                        fr_fvar())
+        fr_ini[2].iter_ini = { orig=fr_var }
+        local to_ini = node('SetExp', me.ln, '=',
+                        node('Op1_cast', me.ln, to_tp, fr_fvar()),
+                        to_fvar())
+        to_ini.read_only = true   -- accept this write
 
-        local nxt1 = node('SetExp', me.ln, ':=',
+        local fr_nxt = node('SetExp', me.ln, ':=',
                                         node('RawExp', me.ln,nil), -- see val.lua
-                                        var1())
-        nxt1[2].iter_nxt = nxt1[3]   -- var
-        local nxt2 = node('SetExp', me.ln, '=',
-                        node('Op1_cast', me.ln, tp2, var1()),
-                        var2())
-        nxt2.read_only = true   -- accept this write
+                                        fr_fvar())
+        fr_nxt[2].iter_nxt = { orig=fr_var, nxt=fr_nxt[3] }
+        local to_nxt = node('SetExp', me.ln, '=',
+                        node('Op1_cast', me.ln, to_tp, fr_fvar()),
+                        to_fvar())
+        to_nxt.read_only = true   -- accept this write
 
         local loop = node('Loop', me.ln,
                         node('Stmts', me.ln,
                             node('If', me.ln,
                                 node('Op2_==', me.ln, '==',
-                                                   var1(),
+                                                   fr_fvar(),
                                                    node('NULL', me.ln)),
                                 node('Break', me.ln),
                                 node('Nothing', me.ln)),
                             node('If', me.ln,
                                 node('Op2_==', me.ln, '==',
-                                                   var2(),
+                                                   to_fvar(),
                                                    node('NULL', me.ln)),
                                 node('Nothing', me.ln),
                                 blk),
-                            nxt1,nxt2))
+                            fr_nxt,to_nxt), fr_var) -- let f_var be parsed
         loop.blk = blk      -- continue
         loop.isBounded = true
         loop.isEvery = true  -- refuses other "awaits"
 
-        return node('Block', me.ln, node('Stmts', me.ln, dcl1,dcl2, ini1,ini2, loop))
+        return node('Block', me.ln, node('Stmts', me.ln, fr_dcl,to_dcl,
+                                                         fr_ini,to_ini,
+                                                         loop))
     end,
 
 -- Loop --------------------------------------------------
@@ -553,6 +553,7 @@ F = {
         local ret = {}
         for _, id_evt in ipairs(ids) do
             if dir=='input/output' or dir=='output/input' then
+error('spw->criar pool de tamanho "spw"')
                 --[[
                 --      output/input (T1,...)=>T2 LINE;
                 -- becomes
@@ -713,7 +714,7 @@ F = {
                                         node('_Set', me.ln,
                                             node('Var', me.ln, 'ok_'),
                                             '=', '__SetSpawn',
-                                            node('Spawn', me.ln, false, id_cls,
+                                            node('Spawn', me.ln, id_cls, false,
                                                 node('Dcl_constr', me.ln, unpack(sets)))),
                                         node('If', me.ln,
                                             node('Op1_not', me.ln, 'not',
@@ -750,7 +751,7 @@ F = {
         end
     end,
 
--- Dcl_nat, Dcl_ext, Dcl_int, Dcl_var ---------------------
+-- Dcl_nat, Dcl_ext, Dcl_int, Dcl_pool, Dcl_var ---------------------
 
     _Dcl_nat_pre = function (me)
         local mod = unpack(me)
@@ -769,6 +770,16 @@ F = {
         local t = { unpack(me,3) }  -- skip "pre","tp"
         for i=1, #t do
             ret[#ret+1] = node('Dcl_int', me.ln, pre, tp, t[i])
+        end
+        return node('Stmts', me.ln, unpack(ret))
+    end,
+
+    _Dcl_pool_pre = function (me)
+        local pre, arr, tp = unpack(me)
+        local ret = {}
+        local t = { unpack(me,4) }  -- skip "pre","arr","tp"
+        for i=1, #t do
+            ret[#ret+1] = node('Dcl_pool', me.ln, pre, arr, tp, t[i])
         end
         return node('Stmts', me.ln, unpack(ret))
     end,

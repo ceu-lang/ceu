@@ -29,7 +29,7 @@ F =
     Block_pre = function (me)
         local cls = CLS()
         for _, var in ipairs(me.vars) do
-            if var.pre == 'var' then
+            if var.pre=='var' or var.pre=='pool' then
                 if var.isTmp then
                     var.val = '__ceu_'..var.id..'_'..var.n
                 else
@@ -79,7 +79,8 @@ F =
 
     -- SetExp is inside and requires .val
     New_pre = function (me)
-        me.val = '(('.._TP.c(me[2])..'*)__ceu_new)'
+        local tp,_,_ = unpack(me)
+        me.val = '(('.._TP.c(tp)..'*)__ceu_new)'
                                         -- defined by _New (code.lua)
     end,
     Spawn_pre = function (me)
@@ -370,25 +371,19 @@ F =
         me.val = unpack(me)
 
         -- handle org iterators
-        local blk = _AST.iter'Do'()
-        blk = blk and blk[1]
         if me.iter_ini then
-            if blk.trl_orgs then
-                me.val = [[
+            local blk = me.iter_ini.orig.var.blk
+            assert(blk.trl_orgs)
+            me.val = [[
 ( (_ceu_go->org->trls[ ]]..blk.trl_orgs[1]..[[ ].lnks[0].nxt->n == 0) ?
-    NULL :
+    NULL :    /* marks end of linked list */
     _ceu_go->org->trls[ ]]..blk.trl_orgs[1]..[[ ].lnks[0].nxt )
 ]]
-            else
-                me.val = 'NULL'
-            end
         elseif me.iter_nxt then
-            if blk.trl_orgs then
-                local var = me.iter_nxt.var.val
-                me.val = '(('..var..'->nxt->n==0) ? NULL : '..var..'->nxt)'
-            else
-                me.val = 'NULL'
-            end
+            local blk = me.iter_nxt.orig.var.blk
+            assert(blk.trl_orgs)
+            local var = V(me.iter_nxt.nxt.var)
+            me.val = '(('..var..'->nxt->n==0) ? NULL : '..var..'->nxt)'
         end
     end,
 

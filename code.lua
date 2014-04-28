@@ -433,16 +433,15 @@ case ]]..me.lbls_cnt[i].id..[[:;
 
     Spawn = 'New',
     New = function (me)
-        local _, id, constr, set = unpack(me)
-        local pool = me.pool and CUR(me,me.pool) or me.cls.pool
+        local id, pool, constr, set = unpack(me)
 
         LINE(me, [[
 {
     tceu_org* __ceu_new;
 ]])
-        if pool then
+        if pool and pool.var.arr then
             LINE(me, [[
-    __ceu_new = (tceu_org*) ceu_pool_alloc(&]]..pool..[[);
+    __ceu_new = (tceu_org*) ceu_pool_alloc(&]]..V(pool.var)..[[);
 ]])
         else
             LINE(me, [[
@@ -457,8 +456,8 @@ case ]]..me.lbls_cnt[i].id..[[:;
         LINE(me, [[
     if (__ceu_new != NULL) {
 ]])
-        if pool then
-            LINE(me, '__ceu_new->pool = &'..pool..';')
+        if pool and pool.var.arr then
+            LINE(me, '__ceu_new->pool = &'..V(pool.var)..';')
         elseif _PROPS.has_news_pool or _OPTS.os then
             LINE(me, '__ceu_new->pool = NULL;')
         end
@@ -554,7 +553,7 @@ _ceu_go->org->trls[ ]]..me.trl_orgs[1]..[[ ].lnks =
 
 ]]..me.trl_orgs.val..'[1].prv = (tceu_org*) &'..me.trl_orgs.val..'[0]'..[[;
 ]]..me.trl_orgs.val..'[1].nxt =  '..[[_ceu_go->org;
-]]..me.trl_orgs.val..'[1].n   =  '..[[0;
+]]..me.trl_orgs.val..'[1].n   =  '..[[0;    /* marks end of linked list */
 ]]..me.trl_orgs.val..'[1].lnk =  '..me.trl_orgs[1]..[[+1;
 ]])
         end
@@ -571,18 +570,7 @@ _ceu_go->org->trls[ ]]..me.trl_fins[1]..[[ ].seqno = _ceu_app->seqno-1; /* awake
             end
         end
 
-        -- initialize pools for new/spawn
-        if me.pools then
-            for node, n in pairs(me.pools) do
-                local pre = CUR(me,node.pool)
-                LINE(me, [[
-ceu_pool_init(&]]..pre..', '..n..', sizeof(CEU_'..node.cls.id..'), '
-    ..'(byte**)'..pre..'_queue, (byte*)'..pre..[[_mem);
-]])
-            end
-        end
-
-        -- declare tmps
+        -- declare tmps & initialize pools
         LINE(me, '{')       -- close in Block_pos
         for _, var in ipairs(me.vars) do
             if var.isTmp then
@@ -597,6 +585,12 @@ ceu_pool_init(&]]..pre..', '..n..', sizeof(CEU_'..node.cls.id..'), '
                     LINE(me, ' = '..var.id)
                 end
                 LINE(me, ';')
+            elseif var.pre=='pool' and var.arr then
+                local id = V(var)
+                LINE(me, [[
+ceu_pool_init(&]]..id..', '..var.arr.cval..',sizeof('.._TP.c(var.tp)..'), '
+    ..'(byte**)'..id..'_queue, (byte*)'..id..[[_mem);
+]])
             end
         end
     end,

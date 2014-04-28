@@ -68,6 +68,7 @@ local _V2NAME = {
     __ID_type = 'type',
     __Dcl_var = 'declaration',
     _Dcl_int = 'declaration',
+    _Dcl_pool = 'declaration',
     __Dcl_nat  = 'declaration',
     _Dcl_nat   = 'declaration',
     TupleType = 'type list',
@@ -131,6 +132,8 @@ KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'native'
      --+ 'h' + 'min' + 's' + 'ms' + 'us'
 -- loop/every
      + 'in'
+-- pool
+     + 'pool'
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
@@ -160,7 +163,7 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , __StmtS = V'AwaitS'   + V'AwaitT'    + V'AwaitExt'  + V'AwaitInt'
              + V'EmitT'    + V'EmitExt'   + V'EmitInt'
              + V'_Dcl_nat' + V'_Dcl_ext0'
-             + V'_Dcl_int' + V'__Dcl_var'
+             + V'_Dcl_int' + V'__Dcl_var' + V'_Dcl_pool'
              + V'Dcl_det'
              --+ V'Call'
              + V'_Set'
@@ -186,9 +189,6 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , __LstStmtB = V'ParEver' + V'_Continue'
 
     , __SetBlock  = V'Do' + V'ParEver' + V'If' + V'_Loop' + V'_Every'
-
-    , New = KEY'new' * ('['*NUM*EK']'+Cc(false)) * V'__ID_cls'
-          * (EKEY'with' * V'Dcl_constr' * EKEY'end' + Cc(false))
 
     , VarList = ( K'(' * EV'Var' * (EK',' * EV'Var')^0 * EK')' )
 
@@ -221,8 +221,9 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , Finally  = V'Block'
 
     , Free  = KEY'free'  * V'__Exp'
-    , Spawn = KEY'spawn' * ('['*NUM*EK']'+Cc(false))
-            * EV'__ID_cls'
+    , New   = KEY'new'   * EV'__ID_cls' * (KEY'in'*EV'Var' + Cc(false))
+            * (EKEY'with'*V'Dcl_constr'*EKEY'end' + Cc(false))
+    , Spawn = KEY'spawn' * EV'__ID_cls' * (KEY'in'*EV'Var' + Cc(false))
             * (EKEY'with'*V'Dcl_constr'* EKEY'end' + Cc(false))
 
     , CallStmt = m.Cmt(V'__Exp',
@@ -266,7 +267,8 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                         Cc(false)*Cc(false)) *
                 V'__Do'
 
-    , _Iter   = KEY'loop' * V'__ID_var' * KEY'in' * V'__ID_type'
+    , _Iter   = KEY'loop' * K'('*EV'__ID_type'*EK')'
+              *     V'__ID_var' * KEY'in' * EV'Var'
               * V'__Do'
 
     , _Every  = KEY'every' * ( (EV'__Exp'+V'VarList') * EKEY'in'
@@ -389,10 +391,13 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , _Dcl_ext1 = V'_Dcl_ext0' * V'__Do'
 
     , _Dcl_int  = CKEY'event' * (V'TupleType'+EV'__ID_type') *
-                    V'__Dcl_int' * (K','*V'__Dcl_int')^0
-    , __Dcl_int = EV'__ID_var' --* (V'__Sets' +
-                             --   Cc(false)*Cc(false)*Cc(false))
+                    EV'__ID_var' * (K','*EV'__ID_var')^0
 
+    , _Dcl_pool = CKEY'pool' * EV'__ID_cls' *
+                    EK'[' * (V'__Exp' + Cc(false)) * EK']' *
+                        EV'__ID_var' * (K','*EV'__ID_var')^0
+
+    -------
     , __Dcl_var   = V'_Dcl_var_1' + V'_Dcl_var_2'
 
     -- w/o constructor
@@ -411,6 +416,7 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     , __dcl_var = EV'__ID_var' * (V'__Sets' +
                                 Cc(false)*Cc(false)*Cc(false)*Cc(false)*Cc(false))
+    -------
 
     , _Dcl_imp = KEY'interface' * EV'__ID_cls' * (K',' * EV'__ID_cls')^0
 
@@ -422,17 +428,15 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , _Dcl_fun1 = V'_Dcl_fun0' * V'__Do'
     , Return  = KEY'return' * EV'__Exp'^-1
 
-    , BlockI = ( (EV'__Dcl_var'+V'_Dcl_int'+V'_Dcl_fun0'+V'_Dcl_imp')
+    , BlockI = ( (EV'__Dcl_var'+V'_Dcl_int'+V'_Dcl_pool'+V'_Dcl_fun0'+V'_Dcl_imp')
                   * (EK';'*K';'^0)
                )^0
     , _Dcl_ifc = KEY'interface' * Cc(true)
-              * Cc(false)
-              * EV'__ID_cls'
-              * EKEY'with' * V'BlockI' * EKEY'end'
-    , Dcl_cls = KEY'class'     * Cc(false)
-              * ('['*NUM*EK']' + Cc(false))
-              * EV'__ID_cls'
-              * EKEY'with' * V'BlockI' * V'__Do'
+               * EV'__ID_cls'
+               * EKEY'with' * V'BlockI' * EKEY'end'
+    , Dcl_cls  = KEY'class'     * Cc(false)
+               * EV'__ID_cls'
+               * EKEY'with' * V'BlockI' * V'__Do'
 
     , Global  = KEY'global'
     , This    = KEY'this'

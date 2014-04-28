@@ -44,6 +44,10 @@ F = {
     end,
     Spawn = 'New',
 
+    Dcl_pool = function (me)
+        _AST.iter'Block'().trl_orgs = true
+    end,
+
     Block = function (me)
         MAX_all(me)
 
