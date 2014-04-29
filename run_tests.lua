@@ -70,6 +70,7 @@ Test = function (t)
     --DBG'======= TOPS'
     --_AST.dump(_AST.root)
     if not check('env')      then return end
+    if not check('sval')     then return end
     if not check('isr')      then return end
     if not check('fin')      then return end
     if not check('tight')    then return end
@@ -79,7 +80,6 @@ Test = function (t)
     dofile 'acc.lua'
 
     if not check('trails')   then return end
-    if not check('sval')     then return end
     if not check('labels')   then return end
     if not check('tmps')     then return end
     if not check('mem')      then return end
@@ -259,16 +259,16 @@ STATS = {
 -- w/ threads
 --[[
 STATS = {
-    count   = 1708,
+    count   = 1739,
     mem     = 0,
-    trails  = 3198,
-    bytes   = 15304578,
+    trails  = 3310,
+    bytes   = 15774062,
 }
 
 
-real	7m47.530s
-user	7m7.744s
-sys	1m2.192s
+real	9m51.883s
+user	9m34.796s
+sys	1m8.536s
 }
 ]]
 

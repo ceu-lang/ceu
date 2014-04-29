@@ -67,6 +67,10 @@ F = {
     end,
 
     Dcl_cls = function (me)
+        if me.is_ifc then
+            return
+        end
+
         me.lbl = new{'Class_'..me.id, true}
 -- TODO (-RAM)
         --if i_am_instantiable then

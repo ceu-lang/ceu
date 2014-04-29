@@ -94,7 +94,7 @@ DBG('===', me.id, me.trails_n)
                 len = 0
             elseif var.pre == 'event' then --
                 len = 1   --
-            elseif var.pre=='pool' and var.arr then
+            elseif var.pre=='pool' and var.arr.sval>=0 then
                 len = 10    -- TODO: it should be big
             elseif var.cls then
                 len = 10    -- TODO: it should be big
@@ -138,9 +138,9 @@ DBG('===', me.id, me.trails_n)
                     dcl = dcl .. tp..' '..var.id_
                 end
                 cls.struct = cls.struct..SPC()..'  '..dcl..';\n'
-            elseif var.pre=='pool' and var.arr then
+            elseif var.pre=='pool' and var.arr.sval>=0 then
                 cls.struct = cls.struct .. [[
-CEU_POOL_DCL(]]..var.id_..','.._TP.deref(tp)..','..var.arr.cval..[[)
+CEU_POOL_DCL(]]..var.id_..','.._TP.deref(tp)..','..var.arr.sval..[[)
 ]]
             end
         end

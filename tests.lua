@@ -378,6 +378,37 @@ escape 10;
 
 -------------------------------------------------------------------------------
 
+Test { [[
+class T with
+    var _int to;
+do
+end
+
+var _int to = 1;
+
+var T move with
+    this.to = to;  // TODO: := ??
+end;
+
+escape move.to;
+]],
+    run = 1,
+}
+
+Test { [[
+native do
+    int v;
+    int* f () {
+        v = 1;
+        return &v;
+    }
+end
+var _int to = *_f();
+escape to;
+]],
+    run = 1,
+}
+
 do return end
 
 -------------------------------------------------------------------------------
@@ -27010,7 +27041,7 @@ end
 var T t;
 escape t.a;
 ]],
-    env = 'line 5 : interface "J" is not declared',
+    tops = 'line 5 : interface "J" is not declared',
 }
 
 Test { [[
@@ -27089,7 +27120,7 @@ do
 end
 escape 0;
 ]],
-    env = 'line 3 : `T´ is not an interface',
+    tops = 'line 3 : interface "T" is not declared',
 }
 
 Test { [[
@@ -28133,7 +28164,7 @@ t.i = i;
 escape i:g(5);
 ]],
     --run = 120,
-    env = 'line 9 : function declaration does not match the one at "tests.lua:6"',
+    env = 'line 9 : function declaration does not match the one at "tests.lua:2"',
 }
 
 Test { [[
@@ -28159,7 +28190,7 @@ t.i = i;
 escape i:g(5);
 ]],
     --run = 120,
-    env = 'line 9 : function declaration does not match the one at "tests.lua:6"',
+    tight = 'line 9 : function must be declared with `recursive´',
 }
 
 Test { [[
@@ -28804,7 +28835,8 @@ call i:f();
 
 escape 1;
 ]],
-    tight = 'line 2 : function must be declared with `recursive´',
+    env = 'line 2 : function declaration does not match the one at "tests.lua:7"',
+    --tight = 'line 2 : function must be declared with `recursive´',
 }
 
 Test { [[
@@ -29300,6 +29332,423 @@ escape 1;
     env = 'line 4 : invalid operand to unary "&"',
 }
 
+-- POOLS / 1ST-CLASS
+
+Test { [[
+class U with do end;
+
+interface I with
+    pool U[10] us;
+end
+
+class T with
+    interface I;
+do
+end
+
+var T t;
+var I* i = &t;
+spawn U in i:us;
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+interface I with
+    var int[10] vs;
+end
+
+interface Global with
+    interface I;
+end
+var int[10]  vs;
+
+class T with
+    interface I;
+do
+    global:vs[0] = 1;
+end
+
+vs[0] = 1;
+global:vs[0] = 1;
+
+var T t;
+t.vs[0] = 1;
+
+var I* i = &t;
+i:vs[0] = 1;
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class U with do end;
+
+interface I with
+    pool U[10] us;
+end
+
+interface Global with
+    interface I;
+end
+pool U[]  us;
+
+class T with
+    pool U[10] us;
+    interface I;
+do
+    spawn U in global:us;
+end
+
+spawn U in us;
+spawn U in global:us;
+
+pool U[1] us1;
+spawn U in us1;
+
+var T t;
+spawn U in t.us;
+
+var I* i = &t;
+spawn U in i:us;
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+interface Global with
+    var int[10] vs;
+    var int     v;
+end
+var int[10] vs;
+var int     v = 0;
+
+loop i in 10 do
+    vs[i] = i;
+end
+var int ret = 0;
+loop i in 10 do
+    ret = ret + global:vs[i] + global:v;
+end
+escape ret;
+]],
+    run = 45,
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
+    async do end;
+end
+
+interface Global with
+    pool T[] ts;
+end
+
+pool T[] ts;
+
+spawn T in ts with
+    this.v = 10;
+end;
+
+var int ret = 0;
+loop (T*)t in ts do
+    ret = ret + t:v;
+end
+
+escape ret;
+]],
+    run = 10,
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
+    async do end;
+end
+
+interface Global with
+    pool T[1] ts;
+end
+
+pool T[1] ts;
+
+spawn T in ts with
+    this.v = 10;
+end;
+
+var int ret = 0;
+loop (T*)t in ts do
+    ret = ret + t:v;
+end
+
+escape ret;
+]],
+    run = 10,
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
+    async do end;
+end
+
+interface Global with
+    pool T[] ts;
+end
+
+pool T[] ts;
+
+spawn T in global:ts with
+    this.v = 10;
+end;
+
+var int ret = 0;
+loop (T*)t in global:ts do
+    ret = ret + t:v;
+end
+
+escape ret;
+]],
+    run = 10,
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
+    async do end;
+end
+
+interface Global with
+    pool T[] ts;
+end
+
+pool T[] ts;
+
+spawn T in global:ts with
+    this.v = 10;
+end;
+
+var int ret = 0;
+loop (T*)t in global:ts do
+    ret = ret + t:v;
+end
+
+escape ret;
+]],
+    run = 10,
+}
+
+Test { [[
+class T with
+do
+end
+
+interface Global with
+    pool T[] ts;
+end
+
+pool T[] ts;
+
+class U with
+    var int v = 0;
+do
+    spawn T in global:ts with
+    end;
+end
+
+var U u;
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+class T with
+    var int v = 0;
+do
+    async do end;
+end
+
+interface Global with
+    pool T[] ts;
+end
+
+pool T[] ts;
+
+class U with
+    var int v = 0;
+do
+    spawn T in global:ts with
+        this.v = 10;
+    end;
+    spawn T in global:ts with
+        this.v = 20;
+    end;
+
+    loop (T*)t in global:ts do
+        this.v = this.v + 10;
+    end
+end
+
+var int ret = 0;
+
+do
+    var U u;
+    ret = ret + u.v;
+end
+
+loop (T*)t in global:ts do
+    ret = ret + t:v;
+end
+
+escape ret;
+]],
+    run = 50,
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
+    async do end;
+end
+
+interface Global with
+    pool T[1] ts;
+end
+
+pool T[1] ts;
+
+class U with
+    var int v = 0;
+do
+    spawn T in global:ts with
+        this.v = 10;
+    end;
+    spawn T in global:ts with
+        this.v = 20;
+    end;
+
+    loop (T*)t in global:ts do
+        this.v = this.v + 10;
+    end
+end
+
+var int ret = 0;
+
+do
+    var U u;
+    ret = ret + u.v;
+end
+
+loop (T*)t in global:ts do
+    ret = ret + t:v;
+end
+
+escape ret;
+]],
+    run = 20,
+}
+
+Test { [[
+native do
+    int V = 0;
+end
+
+class T with
+    var int v = 0;
+do
+    finalize with
+        _V = _V + 1;
+    end
+    await FOREVER;
+end
+
+class U with
+    var int v = 0;
+    pool T[1] ts;
+do
+    await FOREVER;
+end
+
+var int ret = 0;
+
+do
+    var U u;
+    spawn T in u.ts with
+        this.v = 10;
+    end;
+    spawn T in u.ts with
+        this.v = 20;
+    end;
+
+    loop (T*)t in u.ts do
+        ret = ret + t:v;
+    end
+end
+
+async do end;
+
+escape ret + _V;
+]],
+    run = 11,
+}
+
+Test { [[
+native do
+    int V = 0;
+end
+
+class T with
+    var int v = 0;
+do
+    finalize with
+        _V = _V + 1;
+    end
+    await FOREVER;
+end
+
+class U with
+    var int v = 0;
+    pool T[] ts;
+do
+    await FOREVER;
+end
+
+var int ret = 0;
+
+do
+    var U u;
+    spawn T in u.ts with
+        this.v = 10;
+    end;
+    spawn T in u.ts with
+        this.v = 20;
+    end;
+
+    loop (T*)t in u.ts do
+        ret = ret + t:v;
+    end
+end
+
+async do end;
+
+escape ret + _V;
+]],
+    run = 32,
+}
+
 -- RET_VAL / RET_END
 
 --[=[
@@ -29693,6 +30142,7 @@ var Controller*   i;
 i = &c;
 escape 1;
 ]],
+    wrn = true,
     env = 'line 12 : invalid attribution (Controller* vs KeyController*)',
 }
 
@@ -29711,6 +30161,7 @@ var Controller*   i;
 i = &c;
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 

@@ -62,18 +62,20 @@ end
 
 function var2ifc (var)
     local tp
-    if var.pre == 'var' then
+    if var.pre=='var' or var.pre=='pool' then
         tp = var.tp
     elseif var.pre == 'event' then
         tp = var.evt.ins
-    else
+    elseif var.pre == 'function' then
         tp = var.fun.ins.tp..'$'..var.fun.out
+    else
+        error 'not implemented'
     end
     return table.concat({
         var.id,
         tp,
         tostring(var.pre),
-        tostring(var.arr),
+        var.arr and '[]' or '',
     }, '$')
 end
 
@@ -114,7 +116,7 @@ function newtype (tp)
     end
 end
 
-function newvar (me, imp, blk, pre, tp, arr, id)
+function newvar (me, blk, pre, tp, arr, id)
     for stmt in _AST.iter() do
         if stmt.tag=='Async' or stmt.tag=='Thread' then
             break   -- search until Async boundary
@@ -123,7 +125,7 @@ function newvar (me, imp, blk, pre, tp, arr, id)
                 --ASR(var.id~=id or var.blk~=blk, me,
                     --'variable/event "'..var.id..
                     --'" is already declared at --line '..var.ln)
-                if (var.id == id) and (not imp) then
+                if var.id == id then
                     local fun = pre=='function' and stmt==CLS().blk_ifc -- dcl
                                                 and blk==CLS().blk_ifc  -- body
                     WRN(fun, me,
@@ -186,9 +188,9 @@ function newvar (me, imp, blk, pre, tp, arr, id)
     return false, var
 end
 
-function newint (me, imp, blk, pre, tp, id)
+function newint (me, blk, pre, tp, id)
     newtype(tp)
-    local has, var = newvar(me, imp, blk, pre, 'void', false, id)
+    local has, var = newvar(me, blk, pre, 'void', false, id)
     if has then
         return true, var
     end
@@ -203,23 +205,22 @@ function newint (me, imp, blk, pre, tp, id)
     return false, var
 end
 
-function newfun (me, imp, blk, pre, rec, ins, out, id)
+function newfun (me, blk, pre, rec, ins, out, id)
     rec = not not rec
     local old = blk.vars[id]
     if old then
         ASR(ins.tp==old.fun.ins.tp and out==old.fun.out and
-            (rec==old.fun.mod.rec or imp),
+            (rec==old.fun.mod.rec or (not old.fun.mod.rec)),
             me, 'function declaration does not match the one at "'..
                 old.ln[1]..':'..old.ln[2]..'"')
-        -- Accept rec mismatch for "imp" because class implementation
-        -- might be "norec", e.g.:
+        -- Accept rec mismatch if old is not (old is the concrete impl):
         -- interface with rec f;
         -- class     with     f;
         -- When calling from an interface, call/rec is still required,
         -- but from class it is not.
     end
 
-    local has, var = newvar(me, imp, blk, pre,
+    local has, var = newvar(me, blk, pre,
                         '___typeof__(CEU_'..CLS().id..'_'..id..')',
                         -- TODO: _TP.c eats one '_'
                        false, id)
@@ -354,7 +355,7 @@ F = {
 
                     if not isRef then
                         local _
-                        _,n.new = newvar(vars, false, blk, 'var', var.tp, nil, var.id)
+                        _,n.new = newvar(vars, blk, 'var', var.tp, nil, var.id)
                     end
                 end
             end
@@ -367,7 +368,7 @@ F = {
             for i, v in ipairs(inp) do
                 local hold, tp, id = unpack(v)
                 if tp ~= 'void' then
-                    local has,var = newvar(me, false, me, 'var', tp, false, id)
+                    local has,var = newvar(me, me, 'var', tp, false, id)
                     assert(not has)
                     var.isTmp  = true -- TODO: var should be a node
                     var.isFun  = true
@@ -410,7 +411,7 @@ F = {
             for _, var in pairs(me.blk_ifc.vars) do
                 var.ifc_id = var.ifc_id or var2ifc(var)
                 if not _ENV.ifcs[var.ifc_id] then
-                    if var.pre == 'var' then
+                    if var.pre=='var' or var.pre=='pool' then
                         _ENV.ifcs.flds[var.ifc_id] = #_ENV.ifcs.flds
                         _ENV.ifcs.flds[#_ENV.ifcs.flds+1] = var.ifc_id
                     elseif var.pre == 'event' then
@@ -550,7 +551,7 @@ F = {
     Dcl_var = function (me)
         local pre, tp, arr, id, constr = unpack(me)
         local has
-        has, me.var = newvar(me, false, _AST.iter'Block'(), pre, tp, arr, id)
+        has, me.var = newvar(me, _AST.iter'Block'(), pre, tp, arr, id)
         assert(not has or (me.var.read_only==nil))
         me.var.read_only = me.read_only
         if constr then
@@ -564,7 +565,7 @@ F = {
         ASR(tp=='void' or _TP.isNumeric(tp) or _TP.deref(tp) or _TP.isTuple(tp),
                 me, 'invalid event type')
         local _
-        _, me.var = newint(me, false, _AST.iter'Block'(), pre, tp, id)
+        _, me.var = newint(me, _AST.iter'Block'(), pre, tp, id)
     end,
 
     Dcl_fun = function (me)
@@ -579,7 +580,7 @@ F = {
         end
 
         local _
-        _, me.var = newfun(me, false, up, pre, rec, ins, out, id)
+        _, me.var = newfun(me, up, pre, rec, ins, out, id)
 
         -- "void" as parameter only if single
         if #ins > 1 then
@@ -601,6 +602,8 @@ F = {
     end,
 
     Dcl_imp = function (me)
+error'oi'
+--[[
         local id = unpack(me)
         local ifc = ASR(_ENV.clss[id], me,
                         'interface "'..id..'" is not declared')
@@ -609,7 +612,7 @@ F = {
         -- copy vars
         local blk = _AST.iter'Block'()
         for _, var in ipairs(ifc.blk_ifc.vars) do
-            if var.pre == 'var' then
+            if var.pre=='var' or var.pre=='pool' then
                 local tp = (var.arr and _TP.deref(var.tp)) or var.tp
                 newvar(me, true, blk, var.pre, tp, var.arr, var.id)
             elseif var.pre == 'event' then
@@ -620,6 +623,7 @@ F = {
             end
             CLS().c[var.id] = ifc.c[var.id] -- also copy C properties
         end
+]]
     end,
 
     Ext = function (me)
@@ -769,10 +773,13 @@ F = {
     end,
     New = function (me)
         local _,pool,_ = unpack(me)
-        me.blk = (pool and pool.var.blk) or CLS().blk_ifc
+        local ref = pool and ASR(pool.ref, me, 'not a pool')
+        me.blk = (pool and ref.var.blk) or CLS().blk_ifc
                  -- bind org to pool scope or class scope
     end,
     Spawn = 'New',
+    IterIni = 'RawExp',
+    IterNxt = 'RawExp',
 
     Dcl_constr_pre = function (me)
         local spw = _AST.iter'Spawn'()
@@ -805,6 +812,7 @@ F = {
         local _, f, _, _ = unpack(me)
         me.tp  = '_'
         me.fst = '_'
+        me.ref = me
         local id
         if f.tag == 'Nat' then
             id   = f[1]

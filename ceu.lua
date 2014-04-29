@@ -130,6 +130,7 @@ do
     dofile 'adj.lua'
     dofile 'tops.lua'
     dofile 'env.lua'
+    dofile 'sval.lua'
     dofile 'isr.lua'
     dofile 'fin.lua'
     dofile 'tight.lua'
@@ -138,7 +139,6 @@ do
     dofile 'ana.lua'
     dofile 'acc.lua'
     dofile 'trails.lua'
-    dofile 'sval.lua'
     dofile 'labels.lua'
     dofile 'tmps.lua'
     dofile 'mem.lua'
@@ -203,16 +203,21 @@ do
                     if i then
                         evts[i+1] = var.evt.idx
                     end
-                elseif var.pre == 'var' then
-                    local i = _ENV.ifcs.flds[var.ifc_id]
-                    if i then
-                        flds[i+1] = 'offsetof(CEU_'..cls.id..','..(var.id_ or var.id)..')'
+                elseif var.pre=='var' or var.pre=='pool' then
+                    if var.pre=='var' or var.arr.sval>=0 then
+                                        -- malloc pools are not vars
+                        local i = _ENV.ifcs.flds[var.ifc_id]
+                        if i then
+                            flds[i+1] = 'offsetof(CEU_'..cls.id..','..(var.id_ or var.id)..')'
+                        end
                     end
-                else    -- function
+                elseif var.pre == 'function' then
                     local i = _ENV.ifcs.funs[var.ifc_id]
                     if i then
                         funs[i+1] = '(void*)'..var.val
                     end
+                else
+                    error 'not implemented'
                 end
             end
 

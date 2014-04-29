@@ -121,11 +121,12 @@ F = {
         local _, f, exps = unpack(me)
         local ps = {}
         CHG(f.ref.acc, 'cl')
+        me.acc = f.ref.acc
         for i, exp in ipairs(exps) do
             local tp = _TP.deref(exp.tp, true)
             if tp then
                 local v = exp.ref
-                if v then   -- ignore constants
+                if v and v.acc then   -- ignore constants
 --DBG(exp.tag, exp.ref)
                     v.acc.any = exp.lval    -- f(&x) // a[N] f(a) // not "any"
                     CHG(v.acc, (me.c and me.c.mod=='pure' and 'rd') or 'wr')
@@ -133,6 +134,18 @@ F = {
                 end
             end
         end
+
+        -- TODO: never tested
+--[[
+        me.acc = INS {
+            path = me.ana.pre,
+            id  = f,
+            md  = 'cl',
+            tp  = '_',
+            any = true,
+            err = 'call to `'..f.id..'´ (line '..me.ln[2]..')',
+        }
+]]
     end,
 
     EmitInt = function (me)

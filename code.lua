@@ -348,7 +348,7 @@ end;
         -- each org has its own trail on enclosing block
         for i=1, (t.arr and t.arr.sval or 1) do
             local org = t.arr and
-                '((tceu_org*) '..t.val..'['..(i-1)..']'..')'
+                '((tceu_org*) &'..t.val..'['..(i-1)..']'..')'
             or
                 '((tceu_org*) '..t.val..')'
 
@@ -357,8 +357,12 @@ end;
     ceu_out_org(_ceu_app, ]]..org..[[, ]]
                 ..t.cls.trails_n..','
                 ..t.cls.lbl.id..[[,
-                _ceu_go->stki+1,    /* run now */
-                _ceu_go->org, ]]..t.par_trl_idx..[[);
+                _ceu_go->stki+1,    /* run now */]]
+                ..t.par_org..', '
+                ..t.par_trl_idx..[[);
+/* TODO: currently idx is always "1" for all interfaces access because pools 
+ * are all together there. When we have separate trls for pools, we'll have to 
+ * indirectly access the offset in the interface. */
 
 #ifdef CEU_NEWS
     ]]..org..[[->isDyn  = ]]..t.isDyn..[[;
@@ -424,9 +428,10 @@ case ]]..me.lbls_cnt[i].id..[[:;
             isDyn   = 0,
             isSpw   = 0,
             cls     = var.cls,
-            val     = '&'..var.val,
+            val     = var.val,
             constr  = constr,
             arr     = var.arr,
+            par_org = '_ceu_go->org',
             par_trl_idx = var.blk.trl_orgs[1],
         })
     end,
@@ -439,9 +444,9 @@ case ]]..me.lbls_cnt[i].id..[[:;
 {
     tceu_org* __ceu_new;
 ]])
-        if pool and pool.var.arr then
+        if pool and pool.var.arr.sval>=0 then
             LINE(me, [[
-    __ceu_new = (tceu_org*) ceu_pool_alloc(&]]..V(pool.var)..[[);
+    __ceu_new = (tceu_org*) ceu_pool_alloc((tceu_pool*)]]..V(pool)..[[);
 ]])
         else
             LINE(me, [[
@@ -456,11 +461,17 @@ case ]]..me.lbls_cnt[i].id..[[:;
         LINE(me, [[
     if (__ceu_new != NULL) {
 ]])
-        if pool and pool.var.arr then
-            LINE(me, '__ceu_new->pool = &'..V(pool.var)..';')
+        if pool and pool.var.arr.sval>=0 then
+            LINE(me, '__ceu_new->pool = '..V(pool)..';')
         elseif _PROPS.has_news_pool or _OPTS.os then
             LINE(me, '__ceu_new->pool = NULL;')
         end
+
+        local org = '_ceu_go->org'
+        if pool and pool.org then
+            org = '((tceu_org*)'..V(pool.org)..')'
+        end
+
         F._ORG(me, {
             id      = 'dyn',
             isDyn   = 1,
@@ -469,6 +480,7 @@ case ]]..me.lbls_cnt[i].id..[[:;
             val     = '__ceu_new',
             constr  = constr,
             arr     = false,
+            par_org = org,
             par_trl_idx = me.blk.trl_orgs[1],
         })
         LINE(me, [[
@@ -585,11 +597,11 @@ _ceu_go->org->trls[ ]]..me.trl_fins[1]..[[ ].seqno = _ceu_app->seqno-1; /* awake
                     LINE(me, ' = '..var.id)
                 end
                 LINE(me, ';')
-            elseif var.pre=='pool' and var.arr then
-                local id = V(var)
+            elseif var.pre=='pool' and var.arr.sval>=0 then
+                local dcl = var.val_dcl
                 LINE(me, [[
-ceu_pool_init(&]]..id..', '..var.arr.cval..',sizeof('.._TP.c(_TP.deref(var.tp))..'), '
-    ..'(byte**)'..id..'_queue, (byte*)'..id..[[_mem);
+ceu_pool_init(]]..dcl..','..var.arr.sval..',sizeof('.._TP.c(_TP.deref(var.tp))..'),'
+    ..'(byte**)'..dcl..'_queue, (byte*)'..dcl..[[_mem);
 ]])
             end
         end

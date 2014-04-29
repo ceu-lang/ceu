@@ -102,7 +102,7 @@ F = {
                                     node('Ext',me.ln,'OS_STOP'),
                                     false),
                                 node('_Escape', me.ln,
-                                    node('NUMBER',me.ln,'1')))))
+                                    node('NUMBER',me.ln,1)))))
         end
 
         -- enclose the main block with <ret = do ... end>
@@ -259,7 +259,7 @@ F = {
 -- Iter --------------------------------------------------
 
     _Iter_pre = function (me)
-        local to_tp, to_id, fr_var, blk = unpack(me)
+        local to_tp, to_id, fr_exp, blk = unpack(me)
 
         local fr_id = '_i'..me.n
         local fr_tp = '_tceu_org*'
@@ -271,19 +271,18 @@ F = {
         local to_dcl = node('Dcl_var', me.ln, 'var', to_tp, false, to_id)
         to_dcl.read_only = true
 
-        local fr_ini = node('SetExp', me.ln, ':=',
-                                        node('RawExp', me.ln,nil), -- see val.lua
+        local fr_ini = node('SetExp', me.ln, '=',
+                                        node('IterIni', me.ln, fr_exp),
                                         fr_fvar())
-        fr_ini[2].iter_ini = { orig=fr_var }
         local to_ini = node('SetExp', me.ln, '=',
                         node('Op1_cast', me.ln, to_tp, fr_fvar()),
                         to_fvar())
         to_ini.read_only = true   -- accept this write
 
-        local fr_nxt = node('SetExp', me.ln, ':=',
-                                        node('RawExp', me.ln,nil), -- see val.lua
+        local fr_nxt = node('SetExp', me.ln, '=',
+                                        node('IterNxt', me.ln, fr_fvar()),
                                         fr_fvar())
-        fr_nxt[2].iter_nxt = { orig=fr_var, nxt=fr_nxt[3] }
+        fr_nxt[2].iter_nxt = fr_nxt[3]
         local to_nxt = node('SetExp', me.ln, '=',
                         node('Op1_cast', me.ln, to_tp, fr_fvar()),
                         to_fvar())
@@ -303,7 +302,7 @@ F = {
                                                    node('NULL', me.ln)),
                                 node('Nothing', me.ln),
                                 blk),
-                            fr_nxt,to_nxt), fr_var) -- let f_var be parsed
+                            fr_nxt,to_nxt))
         loop.blk = blk      -- continue
         loop.isBounded = true
         loop.isEvery = true  -- refuses other "awaits"
@@ -327,11 +326,10 @@ F = {
         local i = function() return node('Var', me.ln, _i) end
         local dcl_i = node('Dcl_var', me.ln, 'var', 'int', false, _i)
         dcl_i.read_only = true
-        local set_i = node('SetExp', me.ln, '=', node('NUMBER', me.ln,'0'), i())
+        local set_i = node('SetExp', me.ln, '=', node('NUMBER', me.ln,0), i())
         set_i.read_only = true  -- accept this write
         local nxt_i = node('SetExp', me.ln, '=',
-                        node('Op2_+', me.ln, '+', i(), node('NUMBER', 
-                        me.ln,'1')),
+                        node('Op2_+', me.ln, '+', i(), node('NUMBER', me.ln,1)),
                         i())
         nxt_i.read_only = true  -- accept this write
 
@@ -458,26 +456,21 @@ F = {
                     --]]
     end,
 
--- Dcl_imp ------------------------------------------------------------
+-- BlockI ------------------------------------------------------------
 
-    BlockI_pre = function (me)
-        -- BLOCKI: Put all Dcl_imp to the end,
-        --         so that explicit redeclarations appear first
-        local N = #me
-        for i=1, N do
-            local IFC = me[i]
-            if IFC.tag == '_Dcl_imp' then
-                table.remove(me, i)
-
-                -- expand _Dcl_imp to N x Dcl_imp
-                for _, ifc in ipairs(IFC) do
-                    me[#me+1] = node('Dcl_imp', IFC.ln, ifc)
+    -- expand collapsed declarations inside Stmts
+    BlockI_pos = function (me)
+        local new = {}
+        for _, dcl in ipairs(me) do
+            if dcl.tag == 'Stmts' then
+                for _, v in ipairs(dcl) do
+                    new[#new+1] = v
                 end
-
-                N = N - 1
-                i = i - 1
+            else
+                new[#new+1] = dcl
             end
         end
+        return node('BlockI', me.ln, unpack(new))
     end,
 
 -- Dcl_fun, Dcl_ext --------------------------------------------------------
@@ -707,7 +700,7 @@ F = {
                     node('Block', me.ln,
                         node('Stmts', me.ln,
                             node('Dcl_pool', me.ln, 'pool', id_cls,
-                                (spw and node('NUMBER',me.ln,spw)) or false,
+                                node('NUMBER',me.ln,(spw or -1)),
                                 '_'..id_cls..'s'),
                             node('Stmts', me.ln, unpack(dcls)),
                             node('_Every', me.ln, vars,
@@ -781,11 +774,15 @@ F = {
     end,
 
     _Dcl_pool_pre = function (me)
-        local pre, arr, tp = unpack(me)
+        local pre, tp, arr = unpack(me)
         local ret = {}
-        local t = { unpack(me,4) }  -- skip "pre","arr","tp"
+        local t = { unpack(me,4) }  -- skip "pre","tp","arr"
         for i=1, #t do
-            ret[#ret+1] = node('Dcl_pool', me.ln, pre, arr, tp, t[i])
+            ret[#ret+1] = node('Dcl_pool', me.ln, pre, tp,
+                            arr or node('NUMBER',me.ln,-1),
+                                -- [N] => pool   (n>=0)
+                                -- []  => malloc (n=-1)
+                            t[i])
         end
         return node('Stmts', me.ln, unpack(ret))
     end,
@@ -1040,7 +1037,7 @@ F = {
                 node('Stmts', me.ln,
                     cur_dcl,    -- Dcl_var(cur_id)
                     node('SetExp', me.ln, '=',
-                        node('NUMBER', me.ln, '0'),
+                        node('NUMBER', me.ln, 0),
                         node('Var', me.ln, cur_id)),
                     node('ParOr', me.ln,
                         node('Loop', me.ln,

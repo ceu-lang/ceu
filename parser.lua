@@ -221,9 +221,9 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , Finally  = V'Block'
 
     , Free  = KEY'free'  * V'__Exp'
-    , New   = KEY'new'   * EV'__ID_cls' * (KEY'in'*EV'Var' + Cc(false))
+    , New   = KEY'new'   * EV'__ID_cls' * (KEY'in'*EV'__Exp' + Cc(false))
             * (EKEY'with'*V'Dcl_constr'*EKEY'end' + Cc(false))
-    , Spawn = KEY'spawn' * EV'__ID_cls' * (KEY'in'*EV'Var' + Cc(false))
+    , Spawn = KEY'spawn' * EV'__ID_cls' * (KEY'in'*EV'__Exp' + Cc(false))
             * (EKEY'with'*V'Dcl_constr'* EKEY'end' + Cc(false))
 
     , CallStmt = m.Cmt(V'__Exp',
@@ -268,7 +268,7 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                 V'__Do'
 
     , _Iter   = KEY'loop' * K'('*EV'__ID_type'*EK')'
-              *     V'__ID_var' * KEY'in' * EV'Var'
+              *     V'__ID_var' * KEY'in' * EV'__Exp'
               * V'__Do'
 
     , _Every  = KEY'every' * ( (EV'__Exp'+V'VarList') * EKEY'in'

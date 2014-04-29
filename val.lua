@@ -29,16 +29,38 @@ F =
     Block_pre = function (me)
         local cls = CLS()
         for _, var in ipairs(me.vars) do
-            if var.pre=='var' or var.pre=='pool' then
+            if var.pre == 'var' then
                 if var.isTmp then
                     var.val = '__ceu_'..var.id..'_'..var.n
                 else
                     var.val = CUR(me, var.id_)
                 end
+                if var.arr then
+                    -- normalize all arrays acesses to pointers to arr[0]
+                    -- (because of interface accesses that must be done through a pointer)
+                    var.val = '(&'..var.val..'[0])'
+                elseif var.cls then
+                    -- normalize all org acesses to pointers to it
+                    -- (because of interface accesses that must be done through a pointer)
+                    var.val = '(&'..var.val..')'
+                end
+            elseif var.pre == 'pool' then
+                -- normalize all pool acesses to pointers to it
+                -- (because of interface accesses that must be done through a pointer)
+                var.val_dcl = '&'..CUR(me, var.id_)
+                var.val = '(&'..CUR(me, var.id_)..')'
             elseif var.pre == 'function' then
                 var.val = 'CEU_'..cls.id..'_'..var.id
             elseif var.pre == 'isr' then
                 var.val = 'CEU_'..cls.id..'_'..var.id
+            elseif var.pre == 'event' then
+                var.val = nil
+            elseif var.pre == 'output' then
+                var.val = nil
+            elseif var.pre == 'input' then
+                var.val = nil
+            else
+                error 'not implemented'
             end
         end
         if me.trl_orgs then
@@ -65,7 +87,8 @@ F =
         else
             me.val = '_ceu_go->org'
         end
-        me.val = '(*(('.._TP.c(me.tp)..'*)'..me.val..'))'
+        --me.val = '(*(('.._TP.c(me.tp)..'*)'..me.val..'))'
+        me.val = '(('.._TP.c(me.tp)..'*)'..me.val..')'
     end,
 
     Var = function (me)
@@ -85,6 +108,24 @@ F =
     end,
     Spawn_pre = function (me)
         me.val = '(__ceu_new != NULL)'
+    end,
+
+    IterIni = function (me)
+        local fr_exp = unpack(me)
+        ASR(fr_exp.ref.var, me, 'not a pool')
+        local blk = fr_exp.ref.var.blk
+        assert(blk.trl_orgs)
+        local org = fr_exp.org and V(fr_exp.org) or '_ceu_go->org'
+        org = '((tceu_org*)'..org..')'
+        me.val = [[
+( (]]..org..[[->trls[ ]]..blk.trl_orgs[1]..[[ ].lnks[0].nxt->n == 0) ?
+    NULL :    /* marks end of linked list */
+    ]]..org..[[->trls[ ]]..blk.trl_orgs[1]..[[ ].lnks[0].nxt )
+]]
+    end,
+    IterNxt = function (me)
+        local fr_var = unpack(me)
+        me.val = '(('..V(fr_var)..'->nxt->n==0) ? NULL : '..V(fr_var)..'->nxt)'
     end,
 
     Thread = function (me)
@@ -222,8 +263,7 @@ F =
             -- (tceu_app*, tceu_org*, ...)
             ps[#ps+1] = '_ceu_app'
             if f.org then
-                local op = (_ENV.clss[f.org.tp].is_ifc and '') or '&'
-                ps[#ps+1] = '('..op..V(f.org)..')'   -- only native
+                ps[#ps+1] = V(f.org)   -- only native
             else
                 ps[#ps+1] = CUR(me)
             end
@@ -238,6 +278,10 @@ F =
     Op2_idx = function (me)
         local _, arr, idx = unpack(me)
         me.val = V(arr)..'['..V(idx)..']'
+        if _ENV.clss[me.tp] then
+            me.val = '(&'..me.val..')'
+                -- class accesses must be normalized to references
+        end
     end,
 
     Op2_any = function (me)
@@ -274,15 +318,19 @@ F =
     ['Op1_*'] = function (me)
         local op, e1 = unpack(me)
         local cls = _ENV.clss[_TP.deref(e1.tp)]
-        if cls and cls.is_ifc then
-            me.val = V(e1)
+        if cls then
+            me.val = V(e1) -- class accesses should remain normalized to references
         else
             me.val = '('..ceu2c(op)..V(e1)..')'
         end
     end,
     ['Op1_&'] = function (me)
         local op, e1 = unpack(me)
-        me.val = '('..ceu2c(op)..V(e1)..')'
+        if _ENV.clss[e1.tp] then
+            me.val = V(e1) -- class accesses are already normalized to references
+        else
+            me.val = '('..ceu2c(op)..V(e1)..')'
+        end
     end,
 
     ['Op2_.'] = function (me)
@@ -290,14 +338,24 @@ F =
             local cls = _ENV.clss[me.org.tp]
             local gen = '((tceu_org*)'..me.org.val..')'
             if cls and cls.is_ifc then
-                if me.var.pre == 'var' then
-                    me.val = [[(*(
+                if me.var.pre == 'var'
+                or me.var.pre == 'pool' then
+                    if me.var.arr then
+                        me.val = [[(
+(]].._TP.c(me.var.tp)..[[) (
+        ((byte*)]]..me.org.val..[[) + _CEU_APP.ifcs_flds[]]..gen..[[->cls][
+            ]].._ENV.ifcs.flds[me.var.ifc_id]..[[
+        ]
+))]]
+                    else
+                        me.val = [[(*(
 (]].._TP.c(me.var.tp)..[[*) (
         ((byte*)]]..me.org.val..[[) + _CEU_APP.ifcs_flds[]]..gen..[[->cls][
             ]].._ENV.ifcs.flds[me.var.ifc_id]..[[
         ]
             )
 ))]]
+                    end
                 elseif me.var.pre == 'function' then
                     me.val = [[(*(
 (]].._TP.c(me.var.tp)..[[*) (
@@ -306,22 +364,39 @@ F =
         ]
             )
 ))]]
-                else    -- event
+                elseif me.var.pre == 'event' then
                     me.val = nil    -- cannot be used as variable
                     me.ifc_idx = '(_CEU_APP.ifcs_evts['..gen..'->cls]['
                                     .._ENV.ifcs.evts[me.var.ifc_id]
                                ..'])'
+                else
+                    error 'not implemented'
                 end
             else
                 if me.c then
                     me.val = me.c.id_
                 elseif me.var.pre == 'var' then
-                    me.val = me.org.val..'.'..me.var.id_
+                    me.val = me.org.val..'->'..me.var.id_
+                    if me.var.arr then
+                        -- normalize all arrays acesses to pointers to arr[0]
+                        -- (because of interface accesses that must be done through a pointer)
+                        me.val = '(&'..me.val..'[0])'
+                    elseif me.var.cls then
+                        -- normalize all org acesses to pointers to it
+                        -- (because of interface accesses that must be done through a pointer)
+                        me.val = '(&'..me.val..')'
+                    end
+                elseif me.var.pre == 'pool' then
+                    -- normalize all pool acesses to pointers to it
+                    -- (because of interface accesses that must be done through a pointer)
+                    me.val = '(&'..me.org.val..'->'..me.var.id_..')'
                 elseif me.var.pre == 'event' then
                     me.val = nil    -- cannot be used as variable
-                    me.org.val = '(&'..me.org.val..')' -- always via reference
-                else -- function
+                    --me.org.val = '(&'..me.org.val..')' -- always via reference
+                elseif me.var.pre == 'function' then
                     me.val = me.var.val
+                else
+                    error 'not implemented'
                 end
             end
         else
@@ -369,22 +444,6 @@ F =
 
     RawExp = function (me)
         me.val = unpack(me)
-
-        -- handle org iterators
-        if me.iter_ini then
-            local blk = me.iter_ini.orig.var.blk
-            assert(blk.trl_orgs)
-            me.val = [[
-( (_ceu_go->org->trls[ ]]..blk.trl_orgs[1]..[[ ].lnks[0].nxt->n == 0) ?
-    NULL :    /* marks end of linked list */
-    _ceu_go->org->trls[ ]]..blk.trl_orgs[1]..[[ ].lnks[0].nxt )
-]]
-        elseif me.iter_nxt then
-            local blk = me.iter_nxt.orig.var.blk
-            assert(blk.trl_orgs)
-            local var = V(me.iter_nxt.nxt.var)
-            me.val = '(('..var..'->nxt->n==0) ? NULL : '..var..'->nxt)'
-        end
     end,
 
     Nat = function (me)
