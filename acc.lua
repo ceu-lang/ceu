@@ -74,8 +74,9 @@ F = {
 
     Spawn = 'New',
     New = function (me)
-        for _,acc in ipairs(me.cls.ana.accs) do
-            INS(acc, true)
+        local sz = #me.cls.ana.accs -- avoid ipairs due to "spawn myself"
+        for i=1, sz do
+            INS(me.cls.ana.accs[1], true)
         end
     end,
 

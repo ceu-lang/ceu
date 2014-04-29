@@ -1,35 +1,34 @@
-local TOP   = {}    -- holds all clss/exts/nats
-local TOP_i = 1     -- next top
--- TODO: pra q serve?
+_TOPS  = {}    -- holds all clss/exts/nats
 
 local node = _AST.node
 
 F = {
     Root_pos = function (me)
-        _AST.root = node('Root', me.ln, unpack(TOP))
+        _AST.root = node('Root', me.ln, unpack(_TOPS))
         return _AST.root
     end,
 
     Dcl_cls_pos = function (me)
-        table.insert(TOP, TOP_i, me)
-        TOP_i = TOP_i + 1
+        local ifc, id, blk = unpack(me)
+        me.is_ifc = ifc
+        me.id     = id
+        _TOPS[#_TOPS+1] = me
+        _TOPS[id] = me
         return node('Nothing', me.ln)
     end,
 
     Dcl_nat_pos = function (me)
-        table.insert(TOP, TOP_i, me)
-        TOP_i = TOP_i + 1
+        _TOPS[#_TOPS+1] = me
         return node('Nothing', me.ln)
     end,
     Dcl_ext_pos = function (me)
-        table.insert(TOP, TOP_i, me)
-        TOP_i = TOP_i + 1
+        _TOPS[#_TOPS+1] = me
         return node('Nothing', me.ln)
     end,
 }
 
 local function id2ifc (id)
-    for _, cls in ipairs(TOP) do
+    for _, cls in ipairs(_TOPS) do
         local _,id2 = unpack(cls)
         if id2 == id then
             return cls
@@ -41,7 +40,7 @@ end
 _AST.visit(F)
 
 -- substitute all Dcl_imp for the referred fields
-for _, cls in ipairs(TOP) do
+for _, cls in ipairs(_TOPS) do
     if cls.tag=='Dcl_cls' and cls[2]~='Main' then
         local dcls1 = cls.blk_ifc[1][1]
         assert(dcls1.tag == 'BlockI')

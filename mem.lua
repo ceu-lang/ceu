@@ -13,7 +13,7 @@ end
 F = {
     Dcl_cls_pre = function (me)
         me.struct = [[
-typedef struct {
+typedef struct CEU_]]..me.id..[[ {
   struct tceu_org org;
   tceu_trl trls_[ ]]..me.trails_n..[[ ];
 ]]
@@ -127,6 +127,10 @@ DBG('===', me.id, me.trails_n)
             var.id_ = var.id .. '_' .. var.n
             --var.id_ = var.id .. (var.inTop and '' or ('_'..var.n))
                 -- id's inside interfaces are kept (to be used from C)
+
+            if CLS().id == _TP.noptr(var.tp) then
+                tp = 'struct '..tp  -- for types w/ pointers for themselves
+            end
 
             if var.pre=='var' and (not var.isTmp) then
                 local dcl = [[

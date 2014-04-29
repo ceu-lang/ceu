@@ -142,9 +142,9 @@ function newvar (me, blk, pre, tp, arr, id)
     local tp_noptr = _TP.noptr(tp)
     local c = _ENV.c[tp_noptr]
 
-    ASR(_ENV.clss[tp_noptr] or c,
+    ASR(_TOPS[tp_noptr] or c,
         me, 'undeclared type `'..tp_noptr..'´')
-    ASR(not _ENV.clss_ifc[tp],
+    ASR(not (_TOPS[tp] and _TOPS[tp].is_ifc),
         me, 'cannot instantiate an interface')
     ASR(_TP.deref(tp) or (not c) or (tp=='void' and pre~='var') or c.len~=0,
         me, 'cannot instantiate type "'..tp..'"')
@@ -153,7 +153,7 @@ function newvar (me, blk, pre, tp, arr, id)
     tp = (arr and tp..'*') or tp
 
     local tp_ = _TP.deref(tp)
-    local cls = _ENV.clss[tp] or (arr and tp_ and _ENV.clss[tp_])
+    local cls = _TOPS[tp] or (arr and tp_ and _TOPS[tp_])
         if cls then
             ASR(cls ~=_AST.iter'Dcl_cls'(),
                 me, 'invalid declaration')
@@ -380,8 +380,6 @@ F = {
 
     Dcl_cls_pre = function (me)
         local ifc, id, blk = unpack(me)
-        me.is_ifc = ifc
-        me.id     = id
         me.c      = {}      -- holds all "native _f()"
         ASR(not _ENV.clss[id], me,
                 'interface/class "'..id..'" is already declared')
