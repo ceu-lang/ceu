@@ -136,6 +136,9 @@
 typedef u8 tceu_nevt;   /* max number of events */
                         /* TODO: should "u8" be fixed? */
 
+typedef u8 tceu_ntrl;   /* max number of trails per class */
+                        /* TODO: should "u8" be fixed? */
+
 #ifdef __cplusplus
 #define CEU_WCLOCK_INACTIVE 0x7fffffffL     /* TODO */
 #else
@@ -202,7 +205,7 @@ typedef struct tceu_org_lnk {
     struct tceu_org* prv;   /* TODO(ram): lnks[0] does not use */
     struct tceu_org* nxt;   /*      prv, n, lnk                  */
     u8 lnk;
-    u8 n;                   /* use for ands/fins                 */
+    tceu_ntrl n;            /* use for ands/fins                 */
 } tceu_org_lnk;
 
 /* TCEU_ORG */
@@ -215,7 +218,7 @@ typedef struct tceu_org
     u8 lnk;
 #endif
 #if defined(CEU_ORGS) || defined(CEU_OS)
-    u8 n;                   /* number of trails (TODO(ram): opt, metadata) */
+    tceu_ntrl n;            /* number of trails (TODO(ram): opt, metadata) */
 #endif
     /* prv/nxt/lnk/n must be in the same order as "tceu_org_lnk" */
 

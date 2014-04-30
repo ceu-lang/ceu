@@ -76,7 +76,7 @@ F = {
     New = function (me)
         local sz = #me.cls.ana.accs -- avoid ipairs due to "spawn myself"
         for i=1, sz do
-            INS(me.cls.ana.accs[1], true)
+            INS(me.cls.ana.accs[i], true)
         end
     end,
 

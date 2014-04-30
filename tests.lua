@@ -377,42 +377,7 @@ escape 10;
 }
 
 -------------------------------------------------------------------------------
---]===]
 
-Test { [[
-interface Global with
-    pool Unit[] units;
-end
-class Unit with
-do
-    spawn Unit in global:units;
-end
-pool Unit[] units;
-escape 1;
-]],
-    run = 1,
-}
-Test { [[
-interface Global with
-    pool Unit[] units;
-end
-native nohold _SDL_Has;
-
-class Unit with
-    var int rect;
-do
-    loop (Unit*)oth in global:units do
-        if oth!=&this and &oth:rect==&this.rect then
-            spawn Unit in global:units;
-        end
-    end
-end
-
-pool Unit[] units;
-escape 1;
-]],
-    run = 1,
-}
 do return end
 
 Test { [[
@@ -449,6 +414,7 @@ escape to;
 do return end
 
 -------------------------------------------------------------------------------
+--]===]
 
 -- OK: well tested
 
@@ -29785,6 +29751,40 @@ escape ret + _V;
     run = 32,
 }
 
+Test { [[
+interface Global with
+    pool Unit[] units;
+end
+class Unit with
+do
+    spawn Unit in global:units;
+end
+pool Unit[] units;
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+interface Global with
+    pool Unit[] units;
+end
+native nohold _SDL_Has;
+
+class Unit with
+    var int rect;
+do
+    loop (Unit*)oth in global:units do
+        if oth!=&this and &oth:rect==&this.rect then
+            spawn Unit in global:units;
+        end
+    end
+end
+
+pool Unit[] units;
+escape 1;
+]],
+    run = 1,
+}
 -- RET_VAL / RET_END
 
 --[=[
