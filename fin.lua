@@ -60,7 +60,10 @@ F = {
                     if dcl then
                         to_blk = dcl.var.blk
                     else
-                        to_blk = constr.__par.blk
+                        assert(constr.__par.tag=='New' or
+                               constr.__par.tag=='Spawn')
+                        local _,pool,_ = unpack(constr.__par)
+                        to_blk = pool.ref.var.blk
                     end
                 end
 

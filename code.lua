@@ -432,7 +432,7 @@ case ]]..me.lbls_cnt[i].id..[[:;
             constr  = constr,
             arr     = var.arr,
             par_org = '_ceu_go->org',
-            par_trl_idx = var.blk.trl_orgs[1],
+            par_trl_idx = var.trl_orgs[1],
         })
     end,
 
@@ -481,7 +481,8 @@ case ]]..me.lbls_cnt[i].id..[[:;
             constr  = constr,
             arr     = false,
             par_org = org,
-            par_trl_idx = me.blk.trl_orgs[1],
+            par_trl_idx = pool.ifc_idx or pool.ref.var.trl_orgs[1],
+                            -- converted to interface access or original
         })
         LINE(me, [[
     }
@@ -555,21 +556,6 @@ case ]]..me.lbl_clr.id..[[:;
             return
         end
 
-        if me.trl_orgs then
-            LINE(me, [[
-_ceu_go->org->trls[ ]]..me.trl_orgs[1]..[[ ].evt  = CEU_IN__ORG;
-_ceu_go->org->trls[ ]]..me.trl_orgs[1]..[[ ].lnks =
-    (tceu_org_lnk*) &]]..me.trl_orgs.val..[[;
-
-]]..me.trl_orgs.val..'[0].nxt = (tceu_org*) &'..me.trl_orgs.val..'[1]'..[[;
-
-]]..me.trl_orgs.val..'[1].prv = (tceu_org*) &'..me.trl_orgs.val..'[0]'..[[;
-]]..me.trl_orgs.val..'[1].nxt =  '..[[_ceu_go->org;
-]]..me.trl_orgs.val..'[1].n   =  '..[[0;    /* marks end of linked list */
-]]..me.trl_orgs.val..'[1].lnk =  '..me.trl_orgs[1]..[[+1;
-]])
-        end
-
         if me.fins then
             LINE(me, [[
 /*  FINALIZE */
@@ -602,6 +588,23 @@ _ceu_go->org->trls[ ]]..me.trl_fins[1]..[[ ].seqno = _ceu_app->seqno-1; /* awake
                 LINE(me, [[
 ceu_pool_init(]]..dcl..','..var.arr.sval..',sizeof('.._TP.c(_TP.deref(var.tp))..'),'
     ..'(byte**)'..dcl..'_queue, (byte*)'..dcl..[[_mem);
+]])
+            end
+
+            -- initialize trails for ORG_STATS_I & ORG_POOL_I
+            -- "first" avoids repetition for STATS in sequence
+            if var.trl_orgs and var.trl_orgs_first then
+                LINE(me, [[
+_ceu_go->org->trls[ ]]..var.trl_orgs[1]..[[ ].evt  = CEU_IN__ORG;
+_ceu_go->org->trls[ ]]..var.trl_orgs[1]..[[ ].lnks =
+    (tceu_org_lnk*) &]]..var.trl_orgs.val..[[;
+
+]]..var.trl_orgs.val..'[0].nxt = (tceu_org*) &'..var.trl_orgs.val..'[1]'..[[;
+
+]]..var.trl_orgs.val..'[1].prv = (tceu_org*) &'..var.trl_orgs.val..'[0]'..[[;
+]]..var.trl_orgs.val..'[1].nxt =  '..[[_ceu_go->org;
+]]..var.trl_orgs.val..'[1].n   =  '..[[0;    /* marks end of linked list */
+]]..var.trl_orgs.val..'[1].lnk =  '..var.trl_orgs[1]..[[+1;
 ]])
             end
         end

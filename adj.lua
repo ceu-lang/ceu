@@ -178,10 +178,18 @@ F = {
         if not me.blk_ifc then  -- Main already set
             me.blk_ifc  = blk   -- top-most block for `this´
         end
-        me.blk_body = blk_body
+        me.blk_body = me.blk_body or blk_body
         me.tag = 'Dcl_cls'  -- Dcl_ifc => Dcl_cls
         me[3]  = blk        -- both blocks 'ifc' and 'body'
         me[4]  = nil        -- remove 'body'
+
+        -- insert class pool for orphan new/spawn
+        if me.__ast_has_malloc then
+            table.insert(me.blk_body[1], 1,
+                node('Dcl_pool', me.ln, 'pool', '_TOP_POOL',
+                    node('NUMBER', me.ln, -1),
+                    '_top_pool'))
+        end
     end,
 
 -- Escape --------------------------------------------------
@@ -454,6 +462,18 @@ F = {
                     -- Include <async do end> after it to enforce terminating
                     -- from the main program.
                     --]]
+    end,
+
+-- Spawn & New ------------------------------------------------------------
+
+    -- implicit pool in enclosing class if no "in pool"
+    Spawn = 'New',
+    New = function (me)
+        local _,pool = unpack(me)
+        if not pool then
+            _AST.par(me,'Dcl_cls').__ast_has_malloc = true
+            me[2] = node('Var', me.ln, '_top_pool')
+        end
     end,
 
 -- BlockI ------------------------------------------------------------

@@ -183,11 +183,13 @@ do
         local FLDS = {}
         local EVTS = {}
         local FUNS = {}
+        local TRLS = {}
         for _, cls in ipairs(_ENV.clss_cls) do
             local clss = {}
             local flds = {}
             local evts = {}
             local funs = {}
+            local trls = {}
             for i=1, #_ENV.ifcs.flds do
                 flds[i] = 0
             end
@@ -196,6 +198,9 @@ do
             end
             for i=1, #_ENV.ifcs.funs do
                 funs[i] = 'NULL'
+            end
+            for i=1, #_ENV.ifcs.trls do
+                trls[i] = 0
             end
             for _, var in ipairs(cls.blk_ifc.vars) do
                 if var.pre == 'event' then
@@ -209,6 +214,12 @@ do
                         local i = _ENV.ifcs.flds[var.ifc_id]
                         if i then
                             flds[i+1] = 'offsetof(CEU_'..cls.id..','..(var.id_ or var.id)..')'
+                        end
+                    end
+                    if var.pre == 'pool' then
+                        local i = _ENV.ifcs.trls[var.ifc_id]
+                        if i then
+                            trls[i+1] = var.trl_orgs[1]
                         end
                     end
                 elseif var.pre == 'function' then
@@ -230,16 +241,19 @@ do
             FLDS[#FLDS+1] = '\t\t{'..table.concat(flds,',')..'}'
             EVTS[#EVTS+1] = '\t\t{'..table.concat(evts,',')..'}'
             FUNS[#FUNS+1] = '\t\t{'..table.concat(funs,',')..'}'
+            TRLS[#TRLS+1] = '\t\t{'..table.concat(trls,',')..'}'
         end
         CC = SUB(CC, '=== CEU_NCLS ===',     #_ENV.clss_cls)
         CC = SUB(CC, '=== IFCS_NIFCS ===',   #_ENV.clss_ifc)
         CC = SUB(CC, '=== IFCS_NFLDS ===',   #_ENV.ifcs.flds)
         CC = SUB(CC, '=== IFCS_NEVTS ===',   #_ENV.ifcs.evts)
         CC = SUB(CC, '=== IFCS_NFUNS ===',   #_ENV.ifcs.funs)
+        CC = SUB(CC, '=== IFCS_NTRLS ===',   #_ENV.ifcs.trls)
         CC = SUB(CC, '=== IFCS_CLSS ===',    table.concat(CLSS,',\n'))
         CC = SUB(CC, '=== IFCS_FLDS ===',    table.concat(FLDS,',\n'))
         CC = SUB(CC, '=== IFCS_EVTS ===',    table.concat(EVTS,',\n'))
         CC = SUB(CC, '=== IFCS_FUNS ===',    table.concat(FUNS,',\n'))
+        CC = SUB(CC, '=== IFCS_TRLS ===',    table.concat(TRLS,',\n'))
     end
 
     if not _OPTS.os then

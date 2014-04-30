@@ -377,64 +377,9 @@ escape 10;
 }
 
 -------------------------------------------------------------------------------
+-- TODO: working soon
 
---]===]
-Test { [[
-native do
-    int _ = 3;
-end
-native constant __;
-
-var int _ = 1;
-var int _ = 2;
-
-escape __;
-]],
-    env = 'line 6 : variable/event "_" is not declared',
-    --run = 3,
-}
-Test { [[
-native do
-    int _ = 3;
-end
-native constant __;
-
-var int _;
-var int _;
-do
-    var char _;
-end
-
-escape __;
-]],
-    run = 3,
-}
-do return end
-
-Test { [[
-class T with
-    var int a;
-do
-    this.a = 1;
-end
-var T* t = new T;
-escape t:a;
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-class T with do end
-spawn T;
-escape 1;
-]],
-    --env = 'line 2 : `spawn´ requires enclosing `do ... end´',
-    run = 1,
-}
-
-do return end
-
+-- TODO: should require finalization
 Test { [[
 class T with
     var _int to;
@@ -452,24 +397,134 @@ escape move.to;
     run = 1,
 }
 
+-- TODO: I[100]
 Test { [[
-native do
-    int v;
-    int* f () {
-        v = 1;
-        return &v;
-    }
+interface I with
+    var int v;
 end
-var _int to = *_f();
-escape to;
+
+class T with
+    interface I;
+do
+    await FOREVER;
+end
+
+pool I[100] is;
+
+var int ret = 0;
+
+spawn T with
+    this.v = 1;
+end;
+
+spawn T in is with
+    this.v = 3;
+end;
+
+loop (I*)i in is do
+    ret = ret + i:v;
+end
+
+escape ret;
 ]],
-    run = 1,
+    run = 3,
 }
 
-do return end
+-- TODO: spawn wrong type
+Test { [[
+interface I with
+    var int v;
+    event void inc;
+end
+
+class T with
+    interface I;
+do
+    await FOREVER;
+end
+pool I[] is;
+
+class U with
+    var int z;
+    var int v;
+do
+    await FOREVER;
+end
+
+var int ret = 0;
+do
+    spawn T with
+        this.v = 1;
+    end;
+    spawn U in is with
+        this.v = 2;
+    end;
+    spawn T in is with
+        this.v = 3;
+    end;
+
+    loop (I*)i in is do
+        ret = ret + i:v;
+    end
+end
+escape ret;
+]],
+    run = 5,
+}
 
 -------------------------------------------------------------------------------
+-- ??: working now
 
+--]===]
+Test { [[
+class U with
+    var int v = 0;
+do
+    await FOREVER;
+end;
+
+interface I with
+    pool U[2] us2;
+end
+
+class T with
+    pool U[2] us1;
+    interface I;
+do
+end
+
+var T t;
+spawn U in t.us2 with
+    this.v = 1;
+end;
+
+var I* i = &t;
+spawn U in i:us2 with
+    this.v = 2;
+end;
+
+var int ret = 0;
+
+_printf("CLS\n");
+loop (U*)u in t.us2 do
+    ret = ret + u:v;
+    _printf("\t%d\n", u:v);
+end
+
+_printf("IFC\n");
+loop (U*)u in i:us2 do
+    ret = ret + u:v;
+    _printf("\t%d\n", u:v);
+end
+
+escape ret;
+]],
+    run = 6,
+}
+
+--do return end
+
+-------------------------------------------------------------------------------
 -- OK: well tested
 
 Test { [[escape(1);]],
@@ -734,7 +789,53 @@ escape 1;
     run = 1,
 }
 
--- TYPE / NATIVE
+-- TYPE / NATIVE / ANON
+
+Test { [[
+native do
+    int _ = 3;
+end
+native constant __;
+
+var int _ = 1;
+var int _ = 2;
+
+escape __;
+]],
+    env = 'line 6 : variable/event "_" is not declared',
+    --run = 3,
+}
+Test { [[
+native do
+    int _ = 3;
+end
+native constant __;
+native constant _;      // `_´ is special (not C)
+
+var int _ = 1;
+var int _ = 2;
+
+escape __;
+]],
+    parser = 'line 5 : after `constant´ : expected declaration',
+    --run = 3,
+}
+Test { [[
+native do
+    int _ = 3;
+end
+native constant __;
+
+var int _;
+var int _;
+do
+    var char _;
+end
+
+escape __;
+]],
+    run = 3,
+}
 
 Test { [[
 native _abc = 0;
@@ -23317,6 +23418,9 @@ escape 1;
 }
 
 Test { [[
+native do
+    int V = 0;
+end
 class T with
     var int v = 0;
 do
@@ -23325,17 +23429,73 @@ end
 pool T[] ts;
 spawn T in ts with
     this.v = 10;
+    _V = _V + 10;
 end;
 spawn T with
     this.v = 20;
+    _V = _V + 20;
 end;
 var int ret = 0;
 loop (T*)t in ts do
     ret = ret + t:v;
 end
-escape ret;
+escape ret + _V;
 ]],
-    run = 30,
+    run = 40,
+}
+
+Test { [[
+native do
+    int V = 0;
+end
+class T with
+    var int v = 0;
+do
+    async do end;
+end
+pool T[] ts;
+spawn T with
+    this.v = 10;
+    _V = _V + 10;
+end;
+spawn T in ts with
+    this.v = 20;
+    _V = _V + 20;
+end;
+var int ret = 0;
+loop (T*)t in ts do
+    ret = ret + t:v;
+end
+escape ret + _V;
+]],
+    run = 50,
+}
+
+Test { [[
+native do
+    int V = 0;
+end
+class T with
+    var int v = 0;
+do
+    async do end;
+end
+pool T[] ts;
+spawn T in ts with
+    this.v = 10;
+    _V = _V + 10;
+end;
+spawn T in ts with
+    this.v = 20;
+    _V = _V + 20;
+end;
+var int ret = 0;
+loop (T*)t in ts do
+    ret = ret + t:v;
+end
+escape ret + _V;
+]],
+    run = 60,
 }
 
 Test { [[
@@ -27452,7 +27612,80 @@ do
 end
 escape ret;
 ]],
-    run = 4,
+    run = 3,
+}
+
+Test { [[
+interface I with
+    var int v;
+end
+
+class T with
+    interface I;
+do
+    await FOREVER;
+end
+
+pool I[] is;
+
+var int ret = 0;
+
+spawn T with
+    this.v = 1;
+end;
+
+spawn T in is with
+    this.v = 3;
+end;
+
+loop (I*)i in is do
+    ret = ret + i:v;
+end
+
+escape ret;
+]],
+    run = 3,
+}
+
+Test { [[
+interface I with
+    var int v;
+    event void inc;
+end
+
+pool I[] is;
+
+class T with
+    interface I;
+do
+    await FOREVER;
+end
+
+class U with
+    interface I;
+do
+    await FOREVER;
+end
+
+var int ret = 0;
+do
+    spawn T with
+        this.v = 1;
+    end;
+    spawn U in is with
+        this.v = 2;
+    end;
+    spawn T in is with
+        this.v = 3;
+    end;
+
+    loop (I*)i in is do
+        ret = ret + i:v;
+    end
+end
+escape ret;
+]],
+    run = 5,
 }
 
 Test { [[

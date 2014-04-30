@@ -62,9 +62,10 @@ F =
             else
                 error 'not implemented'
             end
-        end
-        if me.trl_orgs then
-            me.trl_orgs.val = CUR(me, '__lnks_'..me.n)
+            if var.trl_orgs then
+                -- ORG_STATS (shared for sequential), ORG_POOL (unique for each)
+                var.trl_orgs.val = CUR(me, '__lnks_'..me.n..'_'..var.trl_orgs[1])
+            end
         end
         if me.fins then
             for i, fin in ipairs(me.fins) do
@@ -113,14 +114,16 @@ F =
     IterIni = function (me)
         local fr_exp = unpack(me)
         ASR(fr_exp.ref.var, me, 'not a pool')
-        local blk = fr_exp.ref.var.blk
-        assert(blk.trl_orgs)
+        local var = fr_exp.ref.var
+        assert(var.trl_orgs)
+        local idx = fr_exp.ifc_idx or var.trl_orgs[1]
+                    -- converted to interface access or original
         local org = fr_exp.org and V(fr_exp.org) or '_ceu_go->org'
         org = '((tceu_org*)'..org..')'
         me.val = [[
-( (]]..org..[[->trls[ ]]..blk.trl_orgs[1]..[[ ].lnks[0].nxt->n == 0) ?
+( (]]..org..[[->trls[ ]]..idx..[[ ].lnks[0].nxt->n == 0) ?
     NULL :    /* marks end of linked list */
-    ]]..org..[[->trls[ ]]..blk.trl_orgs[1]..[[ ].lnks[0].nxt )
+    ]]..org..[[->trls[ ]]..idx..[[ ].lnks[0].nxt )
 ]]
     end,
     IterNxt = function (me)
@@ -355,6 +358,11 @@ F =
         ]
             )
 ))]]
+                    end
+                    if me.var.pre == 'pool' then
+                        me.ifc_idx = '(_CEU_APP.ifcs_trls['..gen..'->cls]['
+                                        .._ENV.ifcs.trls[me.var.ifc_id]
+                                   ..'])'
                     end
                 elseif me.var.pre == 'function' then
                     me.val = [[(*(

@@ -75,11 +75,6 @@ DBG('===', me.id, me.trails_n)
 
         cls.struct = cls.struct..SPC()..'struct { /* BLOCK ln='..me.ln[2]..' */\n'
 
-        if me.trl_orgs then
-            cls.struct = cls.struct .. SPC()
-                            ..'tceu_org_lnk __lnks_'..me.n..'[2];\n'
-        end
-
         if me.fins then
             for i=1, #me.fins do
             cls.struct = cls.struct .. SPC()
@@ -146,6 +141,13 @@ DBG('===', me.id, me.trails_n)
                 cls.struct = cls.struct .. [[
 CEU_POOL_DCL(]]..var.id_..','.._TP.deref(tp)..','..var.arr.sval..[[)
 ]]
+            end
+
+            -- pointers ini/end to list of orgs
+            if var.cls then
+                cls.struct = cls.struct .. SPC() ..
+                   'tceu_org_lnk __lnks_'..me.n..'_'..var.trl_orgs[1]..'[2];\n'
+                    -- see val.lua for the (complex) naming
             end
         end
     end,

@@ -142,10 +142,10 @@ F = {
             end
             if var.pre=='pool' then
                 _PROPS.has_news = true
-                if var.arr then
-                    _PROPS.has_news_pool = true
+                if var.arr.sval >= 0 then
+                    _PROPS.has_news_pool = true         -- pool T[N] ts
                 else
-                    _PROPS.has_news_malloc = true
+                    _PROPS.has_news_malloc = true       -- pool T[]  ts
                 end
             end
         end
@@ -161,15 +161,15 @@ F = {
     New = function (me)
         local _,pool,_ = unpack(me)
 
-        _PROPS.has_news = true
+        --_PROPS.has_news = true    (pool does this)
         if pool and pool.ref.var.arr.sval>=0 then
-            _PROPS.has_news_pool = true
+            _PROPS.has_news_pool = true         -- pool T[N] ts
         else
-            _PROPS.has_news_malloc = true
+            _PROPS.has_news_malloc = true       -- pool T[]  ts
         end
 
-        _PROPS.has_clear = true
-        me.blk.needs_clr = true
+        --_PROPS.has_clear = true   (var.cls does this)
+        --me.blk.needs_clr = true   (var.cls does this)
         ASR(not _AST.iter'BlockI'(), me,
                 'not permitted inside an interface')
     end,

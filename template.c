@@ -51,14 +51,16 @@ typedef struct {
 #ifdef CEU_OS
 #error remove from RAM!
 #endif
-    s8    ifcs_clss[CEU_NCLS][=== IFCS_NIFCS ===];
+    s8        ifcs_clss[CEU_NCLS][=== IFCS_NIFCS ===];
             /* Does "cls" implements "ifc?"
              * (I*) ifc = (I*) cls;     // returns null if not
              * TODO(ram): bitfield
              */
-    u16   ifcs_flds[CEU_NCLS][=== IFCS_NFLDS ===];
-    u16   ifcs_evts[CEU_NCLS][=== IFCS_NEVTS ===];
-    void* ifcs_funs[CEU_NCLS][=== IFCS_NFUNS ===];
+
+    u16       ifcs_flds[CEU_NCLS][=== IFCS_NFLDS ===];
+    u16       ifcs_evts[CEU_NCLS][=== IFCS_NEVTS ===];
+    void*     ifcs_funs[CEU_NCLS][=== IFCS_NFUNS ===];
+    tceu_ntrl ifcs_trls[CEU_NCLS][=== IFCS_NTRLS ===];
 #endif
 } _tceu_app;
 
@@ -79,6 +81,9 @@ static _tceu_app _CEU_APP = {
     },
     {
 === IFCS_FUNS ===
+    },
+    {
+=== IFCS_TRLS ===
     }
 #endif
 };

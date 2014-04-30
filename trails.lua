@@ -33,20 +33,6 @@ F = {
 
         ASR(me.trails_n < 256, me, 'too many trails')
     end,
-    Dcl_var = function (me)
-        if me.var.cls then
-            me.var.blk.trl_orgs = true
-        end
-    end,
-
-    New = function (me)
-        me.blk.trl_orgs = true
-    end,
-    Spawn = 'New',
-
-    Dcl_pool = function (me)
-        _AST.iter'Block'().trl_orgs = true
-    end,
 
     Block = function (me)
         MAX_all(me)
@@ -56,11 +42,41 @@ F = {
             me.trails_n = me.trails_n + 1
         end
 
-        -- pointer to my first org
+        -- [ CLR | ORG_STATS_I | ORG_POOL_I | ... | STMTS | FIN ]
         -- clear trail
-        -- [ CLR | IN__ORG | STMTS | FIN ]
-        if me.trl_orgs then
-            me.trails_n = me.trails_n + 1 + 1
+        -- pointer to contiguous static orgs
+        -- pointers to each of the pools
+        -- statements
+        -- finalization
+        -- STATS and POOL must interleave to respect execution order:
+        -- var  T a;
+        -- pool T ts;
+        -- var  T b;
+        -- First execute a, then all ts, then b.
+
+        me.has_orgs = false
+        for i=1, #me.vars do
+            local var = me.vars[i]
+            if var.cls then
+                me.has_orgs = true
+                me.trails_n = me.trails_n + 1   -- ORG_POOL_I/ORG_STATS_I
+                var.trl_orgs_first = true       -- avoids repetition in initialization of STATS
+
+                -- for STATS, unify all skipping all non-pool vars
+                if var.pre ~= 'pool' then
+                    for j=i+1, #me.vars do
+                        local var2 = me.vars[j]
+                        if var2.pre == 'pool' then
+                            break
+                        else
+                            i = i + 1   -- skip on outer loop
+                        end
+                    end
+                end
+            end
+        end
+        if me.has_orgs then
+            me.trails_n = me.trails_n + 1           -- CLR
         end
     end,
 
@@ -104,13 +120,37 @@ G = {
 
         local t0 = me.trails[1]
 
-        -- ORGS (pointer to the first org here)
-        -- (this is not the linked list from my parent)
-        -- [ IN__ORGS_DOWN | fst | lst ]
-        if me.trl_orgs then
-            t0 = t0 + 1                 -- clr
-            me.trl_orgs = { t0, t0 }
-                t0 = t0 + 1             -- org0
+        -- [ CLR | ORG_STATS | ORG_POOL_I | STMTS | FIN ]
+        -- clear trail
+        -- pointer to all static orgs
+        -- pointers to each of the pools
+        -- statements
+        -- finalization
+
+        if me.has_orgs then
+            t0 = t0 + 1                             -- CLR
+        end
+        for i=1, #me.vars do
+            local var = me.vars[i]
+            if var.cls then
+                var.trl_orgs = { t0, t0 }   -- ORG_POOL_I/ORG_STATS_I
+                t0 = t0 + 1
+
+                -- for STATS, unify all skipping all non-pool vars
+                if var.pre ~= 'pool' then
+                    for j=i+1, #me.vars do
+                        local var2 = me.vars[j]
+                        if var2.pre == 'pool' then
+                            break
+                        else
+                            if var2.cls then
+                                var2.trl_orgs = { t0-1, t0-1 }   -- ORG_STATS_I
+                            end
+                            i = i + 1   -- skip on outer loop
+                        end
+                    end
+                end
+            end
         end
 
         -- BLOCK

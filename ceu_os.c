@@ -237,7 +237,7 @@ _CEU_GO_CALL_TRL_:  /* restart from org->trls[i] */
 #endif
 
 #ifdef CEU_DEBUG_TRAILS
-#ifdef defined(CEU_ORGS) || defined(CEU_OS)
+#if defined(CEU_ORGS) || defined(CEU_OS)
 fprintf(stderr, "GO[%d]: evt=%d stk=%d org=%p [%d/%p]\n", app->seqno,
                 go.evt, go.stki, go.org, go.org->n, go.org->trls);
 #else
@@ -280,7 +280,7 @@ fprintf(stderr, "GO[%d]: evt=%d stk=%d [%d]\n", app->seqno,
                                       ];
 
 #ifdef CEU_NEWS
-                    /* org has been cleared to the end? */
+                    /* org has been traversed and *CLEARED* to the end? */
                     if ( go.evt == CEU_IN__CLEAR
                     &&   go.org->n != 0 /* TODO: avoids LNKs (must be before isDyn */
                     &&   go.org->isDyn )
@@ -295,7 +295,7 @@ fprintf(stderr, "GO[%d]: evt=%d stk=%d [%d]\n", app->seqno,
                         /* TODO(speed): avoid free if pool and blk out of scope */
 
                         /* insert "org" into "lst_free" to be
-                         *  freed on reaction end */
+                         *  free'd on reaction end */
                         {
                             tceu_org* nxt = lst_free;
                             go.org->nxt_free = NULL;    /* no next element */

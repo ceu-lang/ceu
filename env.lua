@@ -13,6 +13,7 @@ _ENV = {
         flds = {}, -- {[1]='A',[2]='B',A=0,B=1,...}
         evts = {}, -- ...
         funs = {}, -- ...
+        trls = {}, -- ...
     },
 
     exts = {
@@ -144,8 +145,10 @@ function newvar (me, blk, pre, tp, arr, id)
 
     ASR(_TOPS[tp_noptr] or c,
         me, 'undeclared type `'..tp_noptr..'´')
-    ASR(not (_TOPS[tp] and _TOPS[tp].is_ifc),
-        me, 'cannot instantiate an interface')
+    if _TOPS[tp] and _TOPS[tp].is_ifc then
+        ASR(pre == 'pool', me,
+            'cannot instantiate an interface')
+    end
     ASR(_TP.deref(tp) or (not c) or (tp=='void' and pre~='var') or c.len~=0,
         me, 'cannot instantiate type "'..tp..'"')
     --ASR((not arr) or arr>0, me, 'invalid array dimension')
@@ -170,7 +173,7 @@ function newvar (me, blk, pre, tp, arr, id)
         id    = id,
         blk   = blk,
         tp    = tp,
-        cls   = cls,
+        cls   = cls or (pre=='pool'),   -- (case of _TOP_POOL & ifaces)
         pre   = pre,
         inTop = (blk==CLS().blk_ifc) or (blk==CLS().blk_body),
                 -- (never "tmp")
@@ -403,7 +406,7 @@ F = {
     Dcl_cls = function (me)
         _ENV.max_evt = MAX(_ENV.max_evt, _E)
 
-        -- all identifiers in all interfaces get a unique N
+        -- all identifiers in all interfaces get a unique (sequential) N
         if me.is_ifc then
             for _, var in pairs(me.blk_ifc.vars) do
                 var.ifc_id = var.ifc_id or var2ifc(var)
@@ -411,6 +414,10 @@ F = {
                     if var.pre=='var' or var.pre=='pool' then
                         _ENV.ifcs.flds[var.ifc_id] = #_ENV.ifcs.flds
                         _ENV.ifcs.flds[#_ENV.ifcs.flds+1] = var.ifc_id
+                        if var.pre == 'pool' then
+                            _ENV.ifcs.trls[var.ifc_id] = #_ENV.ifcs.trls
+                            _ENV.ifcs.trls[#_ENV.ifcs.trls+1] = var.ifc_id
+                        end
                     elseif var.pre == 'event' then
                         _ENV.ifcs.evts[var.ifc_id] = #_ENV.ifcs.evts
                         _ENV.ifcs.evts[#_ENV.ifcs.evts+1] = var.ifc_id
@@ -776,9 +783,8 @@ error'oi'
     end,
     New = function (me)
         local _,pool,_ = unpack(me)
-        local ref = pool and ASR(pool.ref, me, 'not a pool')
-        me.blk = (pool and ref.var.blk) or CLS().blk_ifc
-                 -- bind org to pool scope or class scope
+        ASR(pool and pool.ref and pool.ref.var and pool.ref.var.arr, me,
+            'invalid pool')
     end,
     Spawn = 'New',
     IterIni = 'RawExp',
