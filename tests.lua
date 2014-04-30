@@ -378,6 +378,61 @@ escape 10;
 
 -------------------------------------------------------------------------------
 
+--]===]
+Test { [[
+native do
+    int _ = 3;
+end
+native constant __;
+
+var int _ = 1;
+var int _ = 2;
+
+escape __;
+]],
+    env = 'line 6 : variable/event "_" is not declared',
+    --run = 3,
+}
+Test { [[
+native do
+    int _ = 3;
+end
+native constant __;
+
+var int _;
+var int _;
+do
+    var char _;
+end
+
+escape __;
+]],
+    run = 3,
+}
+do return end
+
+Test { [[
+class T with
+    var int a;
+do
+    this.a = 1;
+end
+var T* t = new T;
+escape t:a;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+class T with do end
+spawn T;
+escape 1;
+]],
+    --env = 'line 2 : `spawn´ requires enclosing `do ... end´',
+    run = 1,
+}
+
 do return end
 
 Test { [[
@@ -414,7 +469,6 @@ escape to;
 do return end
 
 -------------------------------------------------------------------------------
---]===]
 
 -- OK: well tested
 

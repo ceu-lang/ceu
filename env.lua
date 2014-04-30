@@ -155,8 +155,7 @@ function newvar (me, blk, pre, tp, arr, id)
     local tp_ = _TP.deref(tp)
     local cls = _TOPS[tp] or (arr and tp_ and _TOPS[tp_])
         if cls then
-            ASR(cls ~=_AST.iter'Dcl_cls'(),
-                me, 'invalid declaration')
+            ASR(cls ~=_AST.iter'Dcl_cls'(), me, 'invalid declaration')
         end
 
     -- Class definitions take priority over interface definitions:
@@ -548,6 +547,9 @@ F = {
     end,
     Dcl_var = function (me)
         local pre, tp, arr, id, constr = unpack(me)
+        if id == '_' then
+            id = id..me.n
+        end
         local has
         has, me.var = newvar(me, _AST.iter'Block'(), pre, tp, arr, id)
         assert(not has or (me.var.read_only==nil))
@@ -560,6 +562,9 @@ F = {
 
     Dcl_int = function (me)
         local pre, tp, id = unpack(me)
+        if id == '_' then
+            id = id..me.n
+        end
         ASR(tp=='void' or _TP.isNumeric(tp) or _TP.deref(tp) or _TP.isTuple(tp),
                 me, 'invalid event type')
         local _
