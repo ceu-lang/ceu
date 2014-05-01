@@ -472,10 +472,47 @@ escape ret;
     run = 5,
 }
 
+-- U[10] vs U[] mismatch
+Test { [[
+class U with do end;
+
+interface I with
+    pool U[10] us;
+end
+
+interface Global with
+    interface I;
+end
+pool U[]  us;
+
+class T with
+    pool U[10] us;
+    interface I;
+do
+    spawn U in global:us;
+end
+
+spawn U in us;
+spawn U in global:us;
+
+pool U[1] us1;
+spawn U in us1;
+
+var T t;
+spawn U in t.us;
+
+var I* i = &t;
+spawn U in i:us;
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
 -------------------------------------------------------------------------------
 -- ??: working now
 
---]===]
 Test { [[
 class U with
     var int v = 0;
@@ -522,7 +559,284 @@ escape ret;
     run = 6,
 }
 
---do return end
+Test { [[
+class T with
+    var int v = 0;
+do
+end
+
+event T* e;
+var int ret = 0;
+
+par/or do
+    var T t with
+        this.v = 10;
+    end;
+    async do end;
+    emit e => &t;
+with
+    var T* p = await e;
+    ret = p:v;
+end
+
+escape ret;
+]],
+    run = 10,
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
+end
+
+event T* e;
+var int ret = 0;
+
+par/or do
+    var T t with
+        this.v = 10;
+    end;
+    async do end;
+    emit e => &t;
+with
+    var T* p = await e;
+    async do end;
+    ret = p:v;
+end
+
+escape ret;
+]],
+    fin = 'line 18 : invalid access to awoken pointer "p"',
+}
+
+Test { [[
+interface I with
+    var int v;
+end
+
+class T with
+    var int v = 0;
+do
+end
+
+event T* e;
+var int ret = 0;
+
+par/or do
+    var T t with
+        this.v = 10;
+    end;
+    async do end;
+    emit e => &t;
+with
+    var I* p = await e;
+    async do end;
+    ret = p:v;
+end
+
+escape ret;
+]],
+    fin = 'line 22 : invalid access to awoken pointer "p"',
+}
+
+Test { [[
+interface I with
+    var int v;
+end
+
+class T with
+    var int v = 0;
+do
+end
+
+var I* p = new T with
+    p:v = 10;
+end;
+escape p:v;
+]],
+    run = 10,
+    --fin = 'line 22 : invalid access to awoken pointer "p"',
+}
+
+Test { [[
+interface I with
+    var int v;
+end
+
+class T with
+    var int v = 0;
+do
+end
+
+var I* p = new T with
+    p:v = 10;
+end;
+async do end;
+
+escape p:v;
+]],
+    fin = 'line 15 : invalid access to awoken pointer "p"',
+}
+
+-- tracking para await e new
+--]===]
+
+Test { [[
+interface I with
+    var int v;
+
+    var bool killed?;
+    event void ok_killed;
+end
+
+class T with
+    interface I;
+    var int v = 0;
+    var bool killed? = false;
+do
+    killed? = true;
+    emit ok_killed;
+end
+
+event T* e;
+var int ret = 0;
+
+par/and do
+    var T t with
+        this.v = 10;
+    end;
+    async do end;
+    emit e => &t;
+with
+    var I* p = await e;
+    par/or do
+        finalize with
+            if ret == 0 then
+                ret = -1;
+            end
+        end
+        async do end;
+        ret = p:v;
+    with
+        if not p:killed? then
+            await p:ok_killed;
+        end
+_printf("killed\n");
+    end
+end
+
+escape ret;
+]],
+    wrn = true,
+    run = -1,
+}
+
+Test { [[
+interface I with
+    var int v;
+
+    var bool killed?;
+    event void ok_killed;
+end
+
+class T with
+    interface I;
+    var int v = 0;
+    var bool killed? = false;
+do
+    await 1s;
+    killed? = true;
+    emit ok_killed;
+end
+
+event T* e;
+var int ret = 0;
+
+par/and do
+    var T t with
+        this.v = 10;
+    end;
+    async do end;
+    emit e => &t;
+with
+    var I* p = await e;
+    par/or do
+        finalize with
+            if ret == 0 then
+                ret = -1;
+            end
+        end
+        async do end;
+        ret = p:v;
+    with
+        if not p:killed? then
+            await p:ok_killed;
+        end
+_printf("killed\n");
+    end
+end
+
+escape ret;
+]],
+    wrn = true,
+    run = 10,
+}
+
+Test { [[
+interface I with
+    var int v;
+
+    var bool killed?;
+    event void ok_killed;
+end
+
+class T with
+    interface I;
+    var int v = 0;
+    var bool killed? = false;
+do
+    await 1s;
+    killed? = true;
+_printf("killed\n");
+    emit ok_killed;
+end
+
+event T* e;
+var int ret = 0;
+
+par/and do
+    var T t with
+        this.v = 10;
+    end;
+    async do end;
+    emit e => &t;
+with
+    var I* p = await e;
+    par/or do
+        finalize with
+            if ret == 0 then
+                ret = -1;
+            end
+        end
+        await 1s;
+_printf("AWAKE\n");
+        ret = p:v;
+    with
+        if not p:killed? then
+            await p:ok_killed;
+        end
+_printf("KILLED\n");
+    end
+end
+
+escape ret;
+]],
+    wrn = true,
+    run = { ['~>1s']=10 },
+}
+
+do return end
 
 -------------------------------------------------------------------------------
 -- OK: well tested
@@ -29684,7 +29998,7 @@ end
 interface Global with
     interface I;
 end
-pool U[]  us;
+pool U[10]  us;
 
 class T with
     pool U[10] us;

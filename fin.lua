@@ -10,7 +10,12 @@ function node2blk (node)
     end
 end
 
-local AWAITS = {}
+-- Tracks "access to awoken pointer":
+local AWAITS = {
+    --[var] = false,  -- track variable from an await that needs finalization
+    --[var] = true,   -- tracked variable and another "await" happened
+                      --   now, any access to "var" yields error
+}
 
 F = {
     SetExp = function (me)
@@ -21,18 +26,22 @@ F = {
         local to_blk = node2blk(to)
         local req = false
 
+        -- Spawn, New, Thread, EmitExt
+        if fr.tag == 'Ref' then
+            fr = fr[1]
+        end
+
         if _TP.deref(to.tp,true) and _TP.deref(fr.tp,true) then
 
             -- "req" has the possibility to be "true"
 
             -- For all "awaits", any pointer assignment requires finalization
-            if fr.tag=='Ref' and string.sub(fr[1].tag,1,5)=='Await'
-            or fr.__ast_fr then
+            -- For "new" too, because life is dynamic (terminates with their bodies)
+            if string.sub(fr.tag,1,5)=='Await' or fr.__ast_fr
+            or fr.tag=='New' then
                 req = true
                 if fr.__ast_fr then
                     fr = fr.__ast_fr
-                else
-                    fr = fr[1]
                 end
 
             -- Normal assignments depend on the __depths
@@ -154,7 +163,7 @@ F = {
         -- Verify if the receiving variable is acessed in the same block it is 
         -- defined.
         --]]
-        elseif string.sub(fr.tag,1,5)=='Await' then
+        elseif string.sub(fr.tag,1,5)=='Await' or fr.tag=='New' then
             if req then
                 local var = to.ref.var.ast_original_var or to.ref.var
                 AWAITS[var] = false
@@ -193,6 +202,8 @@ F = {
     AwaitT   = 'AwaitInt',
     AwaitN   = 'AwaitInt',
     AwaitS   = 'AwaitInt',
+    Async    = 'AwaitInt',
+    Thread   = 'AwaitInt',
 
     Finalize_pre = function (me, set, fin)
         if not fin then
