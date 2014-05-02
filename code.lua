@@ -298,18 +298,15 @@ _ceu_go->org->cls = ]]..me.n..[[;
 
         CONC_ALL(me)
 
--- TODO(rom): avoid clss w/o new
-        --if i_am_instantiable then
-            LINE(me, [[
+        LINE(me, [[
 #ifdef CEU_NEWS
-/*if (_ceu_go->org->isSpw) {*/
+if (_ceu_go->org->isDyn) {
 ]])
             F.Free(me)
             LINE(me, [[
-/*}*/
+}
 #endif
 ]])
-        --end
 
         if not (_ANA and me.ana.pos[false]) then
             if me == _MAIN then
@@ -491,62 +488,72 @@ case ]]..me.lbls_cnt[i].id..[[:;
     end,
 
     Free = function (me)
+        assert(me.tag ~= 'Free')    -- `free´ removed
+
         local exp = unpack(me)
 
         local cls, val
+--[[
         if me.tag == 'Free' then
             cls = me.cls
             val = V(exp)
         else    -- Dcl_cls
+]]
             cls = me
             val = '_ceu_go->org'
+--[[
         end
+]]
 
         local lbls = table.concat(cls.lbls,',')
         LINE(me, [[
 {
     tceu_org* __ceu_tofree = (tceu_org*) ]]..val..[[;
-    if (__ceu_tofree != NULL)
-    {
-        /* TODO: assert isDyn */
+    __ceu_tofree->isAlive = 0;
+        /* normal termination:
+         * forces explicit "pool_free", because pool is still alive
+         */
 ]])
 
+--[=[
         if me.tag == 'Free' then
             -- only if freeing someone else
             LINE(me, [[
-        /* save my continuation */
-        _ceu_go->trl->evt = CEU_IN__STK;
-        _ceu_go->trl->stk = _ceu_go->stki;
-        _ceu_go->trl->lbl = ]]..me.lbl_clr.id..[[;
+    /* save my continuation */
+    _ceu_go->trl->evt = CEU_IN__STK;
+    _ceu_go->trl->stk = _ceu_go->stki;
+    _ceu_go->trl->lbl = ]]..me.lbl_clr.id..[[;
 ]])
         end
+]=]
 
         LINE(me, [[
-        /* clear all __ceu_tofree [ trls[0], ... [ */
-        /* this will call free() */
-        _ceu_go->stop = __ceu_tofree;
-        _ceu_go->trl  = &__ceu_tofree->trls[0];
+    /* clear all __ceu_tofree [ trls[0], ... [ */
+    /* this will call free() */
+    _ceu_go->stop = __ceu_tofree;
+    _ceu_go->trl  = &__ceu_tofree->trls[0];
 ]])
+--[=[
         if me.tag == 'Free' then    -- (or __ceu_tofree is already me)
             LINE(me, [[
-        _ceu_go->org  = __ceu_tofree;
+    _ceu_go->org  = __ceu_tofree;
 ]])
         end
+]=]
         LINE(me, [[
-        _ceu_go->stk[_ceu_go->stki  ].evtp = _ceu_go->evtp;
+    _ceu_go->stk[_ceu_go->stki  ].evtp = _ceu_go->evtp;
 #ifdef CEU_INTS
 #ifdef CEU_ORGS
-        _ceu_go->stk[_ceu_go->stki  ].evto = _ceu_go->evto;
+    _ceu_go->stk[_ceu_go->stki  ].evto = _ceu_go->evto;
 #endif
 #endif
-        _ceu_go->stk[_ceu_go->stki++].evt  = _ceu_go->evt;
+    _ceu_go->stk[_ceu_go->stki++].evt  = _ceu_go->evt;
 
-        _ceu_go->evt = CEU_IN__CLEAR;
-        /*goto _CEU_CALL_TRL_;*/
-        return RET_TRL;
-    }
+    _ceu_go->evt = CEU_IN__CLEAR;
+    /*goto _CEU_CALL_TRL_;*/
+    return RET_TRL;
 }
-case ]]..me.lbl_clr.id..[[:;
+/*case ]]..me.lbl_clr.id..[[:;*/
 ]])
     end,
 

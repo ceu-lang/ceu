@@ -88,8 +88,8 @@ void ceu_sys_org (tceu_org* org, int n, int lbl, int seqno,
 
 #if defined(CEU_ORGS) || defined(CEU_OS)
     org->n = n;
-#endif
     org->isAlive = 1;
+#endif
 #ifdef CEU_NEWS
     org->isDyn = 0;
     /*org->isSpw = 0;*/
@@ -288,8 +288,6 @@ fprintf(stderr, "GO[%d]: evt=%d stk=%d [%d]\n", app->seqno,
 #endif
                     )
                     {
-                        go.org->isAlive = 0;
-
 /* TODO: stack will overflow!!! */
                         /* emit this.ok */
                         /*go.stk[go.stki].evtp = ?*/
@@ -302,13 +300,20 @@ fprintf(stderr, "GO[%d]: evt=%d stk=%d [%d]\n", app->seqno,
                         go.org->prv->nxt = go.org->nxt;
                         go.org->nxt->prv = go.org->prv;
 
-                        /* FREE */
-                        /* TODO: check if needed? (freed manually?) */
-                        /*fprintf(stderr, "FREE: %p\n", go.org);*/
-                        /* TODO(speed): avoid free if pool and blk out of scope */
-
-                        /* insert "org" into "lst_free" to be
-                         *  free'd on reaction end */
+                        /* Should be freed if (malloc'ed) or
+                         *                    (pool still on scope):
+                         * - malloc'ed:     (org->pool==NULL)
+                         * - pool on scope: (!org->isAlive)
+                         */
+#ifdef CEU_NEWS_POOL
+                        if (!go.org->isAlive
+#ifdef CEU_NEWS_MALLOC
+                        || go.org->pool == NULL
+#endif
+                        )
+#else
+                        /* malloc'ed for sure, no if required */
+#endif
                         {
                             tceu_org* nxt = lst_free;
                             go.org->nxt_free = NULL;    /* no next element */
@@ -321,10 +326,13 @@ fprintf(stderr, "GO[%d]: evt=%d stk=%d [%d]\n", app->seqno,
                                 nxt->nxt_free = go.org;  /* put after that */
                             }
                         }
+                        go.org->isAlive = 0;
 
                         /* explicit free(me) or end of spawn */
                         if (go.stop == go.org)
                             break;  /* pop stack */
+#else
+                        go.org->isAlive = 0;
 #endif  /* CEU_NEWS */
                     }
 

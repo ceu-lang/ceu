@@ -513,489 +513,8 @@ escape 1;
 -------------------------------------------------------------------------------
 -- ??: working now
 
-Test { [[
-class U with
-    var int v = 0;
-do
-    await FOREVER;
-end;
-
-interface I with
-    pool U[2] us2;
-end
-
-class T with
-    pool U[2] us1;
-    interface I;
-do
-end
-
-var T t;
-spawn U in t.us2 with
-    this.v = 1;
-end;
-
-var I* i = &t;
-spawn U in i:us2 with
-    this.v = 2;
-end;
-
-var int ret = 0;
-
-_printf("CLS\n");
-loop (U*)u in t.us2 do
-    ret = ret + u:v;
-    _printf("\t%d\n", u:v);
-end
-
-_printf("IFC\n");
-loop (U*)u in i:us2 do
-    ret = ret + u:v;
-    _printf("\t%d\n", u:v);
-end
-
-escape ret;
-]],
-    run = 6,
-}
-
-Test { [[
-class T with
-    var int v = 0;
-do
-end
-
-event T* e;
-var int ret = 0;
-
-par/or do
-    var T t with
-        this.v = 10;
-    end;
-    async do end;
-    emit e => &t;
-with
-    var T* p = await e;
-    ret = p:v;
-end
-
-escape ret;
-]],
-    run = 10,
-}
-
-Test { [[
-class T with
-    var int v = 0;
-do
-end
-
-event T* e;
-var int ret = 0;
-
-par/or do
-    var T t with
-        this.v = 10;
-    end;
-    async do end;
-    emit e => &t;
-with
-    var T* p = await e;
-    async do end;
-    ret = p:v;
-end
-
-escape ret;
-]],
-    fin = 'line 18 : invalid access to awoken pointer "p"',
-}
-
-Test { [[
-interface I with
-    var int v;
-end
-
-class T with
-    var int v = 0;
-do
-end
-
-event T* e;
-var int ret = 0;
-
-par/or do
-    var T t with
-        this.v = 10;
-    end;
-    async do end;
-    emit e => &t;
-with
-    var I* p = await e;
-    async do end;
-    ret = p:v;
-end
-
-escape ret;
-]],
-    fin = 'line 22 : invalid access to awoken pointer "p"',
-}
-
-Test { [[
-interface I with
-    var int v;
-end
-
-class T with
-    var int v = 0;
-do
-end
-
-var I* p = new T with
-    p:v = 10;
-end;
-escape p:v;
-]],
-    run = 10,
-    --fin = 'line 22 : invalid access to awoken pointer "p"',
-}
-
-Test { [[
-interface I with
-    var int v;
-end
-
-class T with
-    var int v = 0;
-do
-end
-
-var I* p = new T with
-    p:v = 10;
-end;
-async do end;
-
-escape p:v;
-]],
-    fin = 'line 15 : invalid access to awoken pointer "p"',
-}
-
--- tracking para await e new
-
 --]===]
-Test { [[
-class T with
-    var int v = 0;
-do
-end
-
-event T* e;
-var int ret = 0;
-
-par/and do
-    async do end;
-    var T t with
-        this.v = 10;
-    end;
-    emit e => &t;
-    await 1s;
-with
-    var T* p = await e;
-    watching p do
-        finalize with
-            if ret == 0 then
-                ret = -1;
-            end
-        end
-        await 5s;
-        ret = p:v;
-    end
-end
-
-escape ret;
-]],
-    run = { ['~>5s']=-1 },
-}
-
-Test { [[
-class T with
-    var int v = 0;
-do
-end
-
-event T* e;
-var int ret = 0;
-
-par/and do
-    async do end;
-    var T t with
-        this.v = 10;
-    end;
-    emit e => &t;
-with
-    var T* p = await e;
-    watching p do
-        finalize with
-            if ret == 0 then
-                ret = -1;
-            end
-        end
-        await 5s;
-        ret = p:v;
-    end
-end
-
-escape ret;
-]],
-    run = { ['~>5s']=-1 },
-}
-
-Test { [[
-class T with
-    var int v = 0;
-do
-    await 4s;
-end
-
-event T* e;
-var int ret = 0;
-
-par/and do
-    async do end;
-    var T t with
-        this.v = 10;
-    end;
-    emit e => &t;
-    await 6s;
-with
-    var T* p = await e;
-    watching p do
-        finalize with
-            if ret == 0 then
-                ret = -1;
-            end
-        end
-        await 5s;
-        ret = p:v;
-    end
-end
-
-escape ret;
-]],
-    run = { ['~>10s']=10 },
-}
-
-Test { [[
-class T with
-    var int v = 0;
-do
-    await 6s;
-end
-
-event T* e;
-var int ret = 0;
-
-par/and do
-    async do end;
-    var T t with
-        this.v = 10;
-    end;
-    emit e => &t;
-    await 6s;
-with
-    var T* p = await e;
-    watching p do
-        finalize with
-            if ret == 0 then
-                ret = -1;
-            end
-        end
-        await 5s;
-        ret = p:v;
-    end
-end
-
-escape ret;
-]],
-    run = { ['~>10s']=10 },
-}
-
-Test { [[
-class T with
-    var int v = 0;
-do
-end
-
-event T* e;
-var int ret = 0;
-
-par/and do
-    async do end;
-    pool T[] ts;
-    var T* t = new T in ts with
-        this.v = 10;
-    end;
-    emit e => t;
-    await 1s;
-with
-    var T* p = await e;
-    watching p do
-        finalize with
-            if ret == 0 then
-                ret = -1;
-            end
-        end
-        await 5s;
-        ret = p:v;
-    end
-end
-
-escape ret;
-]],
-    run = { ['~>1s;~>1s;~>1s;~>1s;~>1s']=-1 },
-}
-
-Test { [[
-class T with
-    var int v = 0;
-do
-end
-
-event T* e;
-var int ret = 0;
-
-par/and do
-    async do end;
-    pool T[] ts;
-    var T* t = new T in ts with
-        this.v = 10;
-    end;
-    emit e => t;
-with
-    var T* p = await e;
-    watching p do
-        finalize with
-            if ret == 0 then
-                ret = -1;
-            end
-        end
-        await 5s;
-        ret = p:v;
-    end
-end
-
-escape ret;
-]],
-    run = { ['~>1s;~>1s;~>1s;~>1s;~>1s']=-1 },
-}
-
-Test { [[
-class T with
-    var int v = 0;
-do
-    await 4s;
-end
-
-event T* e;
-var int ret = 0;
-
-par/and do
-    async do end;
-    pool T[] ts;
-    var T* t = new T in ts with
-        this.v = 10;
-    end;
-    emit e => t;
-    await 6s;
-with
-    var T* p = await e;
-    watching p do
-        finalize with
-            if ret == 0 then
-                ret = -1;
-            end
-        end
-        await 5s;
-        ret = p:v;
-    end
-end
-
-escape ret;
-]],
-    run = { ['~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s']=-1 },
-}
-
-Test { [[
-class T with
-    var int v = 0;
-do
-    await 6s;
-end
-
-event T* e;
-var int ret = 0;
-
-par/and do
-    async do end;
-    pool T[] ts;
-    var T* t = new T in ts with
-        this.v = 10;
-    end;
-    emit e => t;
-    await 6s;
-with
-    var T* p = await e;
-    watching p do
-        finalize with
-            if ret == 0 then
-                ret = -1;
-            end
-        end
-        await 5s;
-        ret = p:v;
-    end
-end
-
-escape ret;
-]],
-    run = { ['~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s']=10 },
-}
-
-Test { [[
-class T with
-    var int v = 0;
-do
-    await 6s;
-end
-
-event T* e;
-var int ret = 0;
-
-par/and do
-    async do end;
-    pool T[] ts;
-    var T* t = new T in ts with
-        this.v = 10;
-    end;
-    emit e => t;
-with
-    var T* p = await e;
-    watching p do
-        finalize with
-            if ret == 0 then
-                ret = -1;
-            end
-        end
-        await 5s;
-        ret = p:v;
-    end
-end
-
-escape ret;
-]],
-    run = { ['~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s']=-1 },
-}
-
-do return end
+--do return end
 
 -------------------------------------------------------------------------------
 -- OK: well tested
@@ -16248,91 +15767,6 @@ escape ret;
     run = 23,
 }
 
-Test { [[
-var int x = 0;
-par/and do
-    x = 1;
-with
-    var int* p = &x;
-    *p = 2;
-    async thread (p) do
-        *p = 2;
-    end
-end
-escape x;
-]],
-    _ana = {
-        acc = 2,
-    },
-    run = 2,
-}
-
-Test { [[
-var int x = 0;
-par/and do
-    x = 1;
-with
-    var int* p = &x;
-    *p = 2;
-    async thread (p) do
-        sync do
-            *p = 2;
-        end
-    end
-end
-escape x;
-]],
-    _ana = {
-        acc = 2,
-    },
-    run = 2,
-}
-
-Test { [[
-var int  a=10, b=5;
-var int* p = &b;
-async thread (a, p) do
-    a = a + *p;
-    *p = a;
-end
-escape a + b + *p;
-]],
-    run = 40,
-}
-
-Test { [[
-var int  a=10, b=5;
-var int* p = &b;
-par/and do
-    async thread (a, p) do
-        a = a + *p;
-        *p = a;
-    end
-with
-    *p = 2;
-end
-escape a + b + *p;
-]],
-    _ana = {
-        acc = 5,
-    },
-    run = 34,
-}
-
-Test { [[
-var int  a=10, b=5;
-var int* p = &b;
-async thread (a, p) do
-    sync do
-        a = a + *p;
-        *p = a;
-    end
-end
-escape a + b + *p;
-]],
-    run = 40,
-}
-
 -- HIDDEN
 Test { [[
 var int a = 1;
@@ -24042,7 +23476,7 @@ do
     this.a = 1;
 end
 var T* a = new T in ts;
-free(a);
+//free(a);
 var T* b = new T in ts;   // fails (a is freed on end)
 escape a!=null and b==null;
 ]],
@@ -24525,7 +23959,7 @@ escape _V;
 Test { [[
 class T with do end
 var T* a = null;
-free a;
+//free a;
 escape 10;
 ]],
     run = 10,
@@ -24534,7 +23968,7 @@ escape 10;
 Test { [[
 class T with do end
 var T* a = new T;
-free a;
+//free a;
 escape 10;
 ]],
     run = 10,
@@ -24543,20 +23977,9 @@ escape 10;
 Test { [[
 class T with do end
 var T* a = new T;
-free a;
+//free a;
 var T* b = new T;
-free b;
-escape 10;
-]],
-    run = 10,
-}
-
-Test { [[
-class T with do end
-var T* a = new T;
-var T* b = new T;
-free a;
-free b;
+//free b;
 escape 10;
 ]],
     run = 10,
@@ -24566,8 +23989,19 @@ Test { [[
 class T with do end
 var T* a = new T;
 var T* b = new T;
-free b;
-free a;
+//free a;
+//free b;
+escape 10;
+]],
+    run = 10,
+}
+
+Test { [[
+class T with do end
+var T* a = new T;
+var T* b = new T;
+//free b;
+//free a;
 escape 10;
 ]],
     run = 10,
@@ -24586,7 +24020,7 @@ do
 end
 
 var T* a = new T;
-free a;
+//free a;
 escape _V;
 ]],
     run = 1,
@@ -24606,8 +24040,8 @@ end
 
 var T* a = new T;
 var T* b = new T;
-free b;
-free a;
+//free b;
+//free a;
 escape _V;
 ]],
     run = 2,
@@ -24619,9 +24053,10 @@ escape _V;
 Test { [[
 class T with do end
 var T a;
-free a;
+//free a;
 escape 0;
 ]],
+    todo = 'removed free',
     env = 'line 3 : invalid `free´',
 }
 
@@ -25292,6 +24727,7 @@ escape 1;
 ]],
     props = 'line 13 : not permitted inside an interface',
 }
+
 Test { [[
 
 class V with
@@ -25311,7 +24747,9 @@ do
     this.u = &uu;
 end
 
+_printf("oioi\n");
 var T t;
+_printf("oioi\n");
 escape 1;
 ]],
     run = 1,
@@ -25558,6 +24996,20 @@ end
 escape _V;
 ]],
     run = 3,
+}
+
+Test { [[
+class V with
+do
+end
+class U with
+do
+    var V* vv = new V;
+end
+var U u;
+escape 2;
+]],
+    run = 2,
 }
 
 Test { [[
@@ -25914,6 +25366,7 @@ escape 10;
 ]],
     wrn = true,
     run = 10,
+    fin = 'line 12 : invalid block for awoken pointer "v"',
 }
 Test { [[
 class V with
@@ -26036,7 +25489,7 @@ end
 do
     var T* a;
     a = new T;
-    free a;
+    //free a;
     _assert(_V == 9);
     await 1s;
 end
@@ -26068,7 +25521,7 @@ do
     var T* ptr = null;
     loop i in 100 do
         if ptr != null then
-            free ptr;
+            //free ptr;
         end
         ptr = new T;
     end
@@ -26078,6 +25531,43 @@ end
 _assert(_X == 100 and _Y == 100);
 escape 10;
 ]],
+    --loop = true,
+    fin = 'line 24 : invalid block for awoken pointer "ptr"',
+}
+
+Test { [[
+native do ##include <assert.h> end
+native _assert();
+native _X, _Y;
+native do
+    int X = 0;
+    int Y = 0;
+end
+
+class T with
+do
+    finalize with
+        _Y = _Y + 1;
+    end
+    _X = _X + 1;
+    await FOREVER;
+end
+
+do
+    var T* ptr = null;
+    loop i in 100 do
+        if ptr != null then
+            //free ptr;
+        end
+        ptr = new T;
+    end
+    _assert(_X == 100 and _Y == 99);
+end
+
+_assert(_X == 100 and _Y == 100);
+escape 10;
+]],
+    todo = 'free',
     --loop = true,
     run = 10,
 }
@@ -26953,7 +26443,7 @@ end
 var T* t = new T with
              this.v = 10;
            end;
-free(t);
+//free(t);
 escape t:v;
 ]],
     run = 10,
@@ -30554,6 +30044,484 @@ escape 1;
 ]],
     run = 1,
 }
+
+-- TRACKING / WATCHING
+
+Test { [[
+class U with
+    var int v = 0;
+do
+    await FOREVER;
+end;
+
+interface I with
+    pool U[2] us2;
+end
+
+class T with
+    pool U[2] us1;
+    interface I;
+do
+end
+
+var T t;
+spawn U in t.us2 with
+    this.v = 1;
+end;
+
+var I* i = &t;
+spawn U in i:us2 with
+    this.v = 2;
+end;
+
+var int ret = 0;
+
+loop (U*)u in t.us2 do
+    ret = ret + u:v;
+end
+
+loop (U*)u in i:us2 do
+    ret = ret + u:v;
+end
+
+escape ret;
+]],
+    run = 6,
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
+end
+
+event T* e;
+var int ret = 0;
+
+par/or do
+    var T t with
+        this.v = 10;
+    end;
+    async do end;
+    emit e => &t;
+with
+    var T* p = await e;
+    ret = p:v;
+end
+
+escape ret;
+]],
+    run = 10,
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
+end
+
+event T* e;
+var int ret = 0;
+
+par/or do
+    var T t with
+        this.v = 10;
+    end;
+    async do end;
+    emit e => &t;
+with
+    var T* p = await e;
+    async do end;
+    ret = p:v;
+end
+
+escape ret;
+]],
+    fin = 'line 18 : invalid access to awoken pointer "p"',
+}
+
+Test { [[
+interface I with
+    var int v;
+end
+
+class T with
+    var int v = 0;
+do
+end
+
+event T* e;
+var int ret = 0;
+
+par/or do
+    var T t with
+        this.v = 10;
+    end;
+    async do end;
+    emit e => &t;
+with
+    var I* p = await e;
+    async do end;
+    ret = p:v;
+end
+
+escape ret;
+]],
+    fin = 'line 22 : invalid access to awoken pointer "p"',
+}
+
+Test { [[
+interface I with
+    var int v;
+end
+
+class T with
+    var int v = 0;
+do
+end
+
+var I* p = new T with
+    this.v = 10;
+end;
+escape p:v;
+]],
+    run = 10,
+    --fin = 'line 22 : invalid access to awoken pointer "p"',
+}
+
+Test { [[
+interface I with
+    var int v;
+end
+
+class T with
+    var int v = 0;
+do
+end
+
+var I* p = new T with
+    p:v = 10;
+end;
+async do end;
+
+escape p:v;
+]],
+    fin = 'line 15 : invalid access to awoken pointer "p"',
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
+end
+
+event T* e;
+var int ret = 0;
+
+par/and do
+    async do end;
+    var T t with
+        this.v = 10;
+    end;
+    emit e => &t;
+    await 1s;
+with
+    var T* p = await e;
+    watching p do
+        finalize with
+            if ret == 0 then
+                ret = -1;
+            end
+        end
+        await 5s;
+        ret = p:v;
+    end
+end
+
+escape ret;
+]],
+    run = { ['~>5s']=-1 },
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
+end
+
+event T* e;
+var int ret = 0;
+
+par/and do
+    async do end;
+    var T t with
+        this.v = 10;
+    end;
+    emit e => &t;
+with
+    var T* p = await e;
+    watching p do
+        finalize with
+            if ret == 0 then
+                ret = -1;
+            end
+        end
+        await 5s;
+        ret = p:v;
+    end
+end
+
+escape ret;
+]],
+    run = { ['~>5s']=-1 },
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
+    await 4s;
+end
+
+event T* e;
+var int ret = 0;
+
+par/and do
+    async do end;
+    var T t with
+        this.v = 10;
+    end;
+    emit e => &t;
+    await 6s;
+with
+    var T* p = await e;
+    watching p do
+        finalize with
+            if ret == 0 then
+                ret = -1;
+            end
+        end
+        await 5s;
+        ret = p:v;
+    end
+end
+
+escape ret;
+]],
+    run = { ['~>10s']=10 },
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
+    await 6s;
+end
+
+event T* e;
+var int ret = 0;
+
+par/and do
+    async do end;
+    var T t with
+        this.v = 10;
+    end;
+    emit e => &t;
+    await 6s;
+with
+    var T* p = await e;
+    watching p do
+        finalize with
+            if ret == 0 then
+                ret = -1;
+            end
+        end
+        await 5s;
+        ret = p:v;
+    end
+end
+
+escape ret;
+]],
+    run = { ['~>10s']=10 },
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
+end
+
+event T* e;
+var int ret = 0;
+
+par/and do
+    async do end;
+    pool T[] ts;
+    var T* t = new T in ts with
+        this.v = 10;
+    end;
+    emit e => t;
+    await 1s;
+with
+    var T* p = await e;
+    watching p do
+        finalize with
+            if ret == 0 then
+                ret = -1;
+            end
+        end
+        await 5s;
+        ret = p:v;
+    end
+end
+
+escape ret;
+]],
+    run = { ['~>1s;~>1s;~>1s;~>1s;~>1s']=-1 },
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
+end
+
+event T* e;
+var int ret = 0;
+
+par/and do
+    async do end;
+    pool T[] ts;
+    var T* t = new T in ts with
+        this.v = 10;
+    end;
+    emit e => t;
+with
+    var T* p = await e;
+    watching p do
+        finalize with
+            if ret == 0 then
+                ret = -1;
+            end
+        end
+        await 5s;
+        ret = p:v;
+    end
+end
+
+escape ret;
+]],
+    run = { ['~>1s;~>1s;~>1s;~>1s;~>1s']=-1 },
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
+    await 4s;
+end
+
+event T* e;
+var int ret = 0;
+
+par/and do
+    async do end;
+    pool T[] ts;
+    var T* t = new T in ts with
+        this.v = 10;
+    end;
+    emit e => t;
+    await 6s;
+with
+    var T* p = await e;
+    watching p do
+        finalize with
+            if ret == 0 then
+                ret = -1;
+            end
+        end
+        await 5s;
+        ret = p:v;
+    end
+end
+
+escape ret;
+]],
+    run = { ['~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s']=-1 },
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
+    await 6s;
+end
+
+event T* e;
+var int ret = 0;
+
+par/and do
+    async do end;
+    pool T[] ts;
+    var T* t = new T in ts with
+        this.v = 10;
+    end;
+    emit e => t;
+    await 6s;
+with
+    var T* p = await e;
+    watching p do
+        finalize with
+            if ret == 0 then
+                ret = -1;
+            end
+        end
+        await 5s;
+        ret = p:v;
+    end
+end
+
+escape ret;
+]],
+    run = { ['~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s']=10 },
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
+    await 6s;
+end
+
+event T* e;
+var int ret = 0;
+
+par/and do
+    async do end;
+    pool T[] ts;
+    var T* t = new T in ts with
+        this.v = 10;
+    end;
+    emit e => t;
+with
+    var T* p = await e;
+    watching p do
+        finalize with
+            if ret == 0 then
+                ret = -1;
+            end
+        end
+        await 5s;
+        ret = p:v;
+    end
+end
+
+escape ret;
+]],
+    run = { ['~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s']=-1 },
+}
+
 -- RET_VAL / RET_END
 
 --[=[
@@ -31937,6 +31905,91 @@ end
 escape 1;
 ]],
     props = 'line 2 : not permitted outside `thread´',
+}
+
+Test { [[
+var int x = 0;
+par/and do
+    x = 1;
+with
+    var int* p = &x;
+    *p = 2;
+    async thread (p) do
+        *p = 2;
+    end
+end
+escape x;
+]],
+    _ana = {
+        acc = 2,
+    },
+    run = 2,
+}
+
+Test { [[
+var int x = 0;
+par/and do
+    x = 1;
+with
+    var int* p = &x;
+    *p = 2;
+    async thread (p) do
+        sync do
+            *p = 2;
+        end
+    end
+end
+escape x;
+]],
+    _ana = {
+        acc = 2,
+    },
+    run = 2,
+}
+
+Test { [[
+var int  a=10, b=5;
+var int* p = &b;
+async thread (a, p) do
+    a = a + *p;
+    *p = a;
+end
+escape a + b + *p;
+]],
+    run = 40,
+}
+
+Test { [[
+var int  a=10, b=5;
+var int* p = &b;
+par/and do
+    async thread (a, p) do
+        a = a + *p;
+        *p = a;
+    end
+with
+    *p = 2;
+end
+escape a + b + *p;
+]],
+    _ana = {
+        acc = 5,
+    },
+    run = 34,
+}
+
+Test { [[
+var int  a=10, b=5;
+var int* p = &b;
+async thread (a, p) do
+    sync do
+        a = a + *p;
+        *p = a;
+    end
+end
+escape a + b + *p;
+]],
+    run = 40,
 }
 
 for i=1, 50 do

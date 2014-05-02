@@ -259,6 +259,20 @@ STATS = {
 -- w/ threads
 --[[
 STATS = {
+    count   = 1763,
+    mem     = 0,
+    trails  = 3414,
+    bytes   = 15826585,
+}
+
+
+real	11m6.712s
+user	9m45.480s
+sys	1m31.960s
+
+
+
+STATS = {
     count   = 1749,
     mem     = 0,
     trails  = 3366,

@@ -168,7 +168,7 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
              + V'Dcl_det'
              --+ V'Call'
              + V'_Set'
-             + V'Free'     + V'Spawn'
+             + V'Spawn'    --+ V'Free'
              + V'Nothing'
              + V'RawStmt'
              --+ V'Import'
