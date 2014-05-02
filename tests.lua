@@ -681,241 +681,217 @@ escape p:v;
 
 -- tracking para await e new
 
-Test { [[
-class T with
-    var int v = 0;
-do
-end
-
-event T* e;
-var int ret = 0;
-
-par/and do
-    async do end;
-    var T t with
-        this.v = 10;
-    end;
-    emit e => &t;
-    await 1s;
-with
-    var T* p = await e;
-    par/or do
-        finalize with
-            if ret == 0 then
-                ret = -1;
-            end
-        end
-        await 5s;
-        ret = p:v;
-    with
-        if ((_tceu_org*)p):isAlive then
-            await p:ok;
-        end
-    end
-end
-
-escape ret;
-]],
-    run = { ['~>5s']=-1 },
-}
-
-Test { [[
-class T with
-    var int v = 0;
-do
-end
-
-event T* e;
-var int ret = 0;
-
-par/and do
-    async do end;
-    var T t with
-        this.v = 10;
-    end;
-    emit e => &t;
-with
-    var T* p = await e;
-    par/or do
-        finalize with
-            if ret == 0 then
-                ret = -1;
-            end
-        end
-        await 5s;
-        ret = p:v;
-    with
-        if ((_tceu_org*)p):isAlive then
-            await p:ok;
-        end
-    end
-end
-
-escape ret;
-]],
-    run = { ['~>5s']=-1 },
-}
-
-Test { [[
-class T with
-    var int v = 0;
-do
-    await 4s;
-end
-
-event T* e;
-var int ret = 0;
-
-par/and do
-    async do end;
-    var T t with
-        this.v = 10;
-    end;
-    emit e => &t;
-    await 6s;
-with
-    var T* p = await e;
-    par/or do
-        finalize with
-            if ret == 0 then
-                ret = -1;
-            end
-        end
-        await 5s;
-        ret = p:v;
-    with
-        if ((_tceu_org*)p):isAlive then
-            await p:ok;
-        end
-    end
-end
-
-escape ret;
-]],
-    run = { ['~>10s']=10 },
-}
-
-Test { [[
-class T with
-    var int v = 0;
-do
-    await 6s;
-end
-
-event T* e;
-var int ret = 0;
-
-par/and do
-    async do end;
-    var T t with
-        this.v = 10;
-    end;
-    emit e => &t;
-    await 6s;
-with
-    var T* p = await e;
-    par/or do
-        finalize with
-            if ret == 0 then
-                ret = -1;
-            end
-        end
-        await 5s;
-        ret = p:v;
-    with
-        if ((_tceu_org*)p):isAlive then
-            await p:ok;
-        end
-    end
-end
-
-escape ret;
-]],
-    run = { ['~>10s']=10 },
-}
-
-Test { [[
-class T with
-    var int v = 0;
-do
-end
-
-event T* e;
-var int ret = 0;
-
-par/and do
-    async do end;
-    pool T[] ts;
-    var T* t = new T in ts with
-        this.v = 10;
-    end;
-    emit e => t;
-    await 1s;
-with
-    var T* p = await e;
-    par/or do
-        finalize with
-            if ret == 0 then
-                ret = -1;
-            end
-        end
-        await 5s;
-        ret = p:v;
-    with
-        if ((_tceu_org*)p):isAlive then
-            await p:ok;
-        end
-    end
-end
-
-escape ret;
-]],
-    run = { ['~>5s']=-1 },
-}
-
-Test { [[
-class T with
-    var int v = 0;
-do
-end
-
-event T* e;
-var int ret = 0;
-
-par/and do
-    async do end;
-    pool T[] ts;
-    var T* t = new T in ts with
-        this.v = 10;
-    end;
-    emit e => t;
-with
-    var T* p = await e;
-    par/or do
-        finalize with
-            if ret == 0 then
-                ret = -1;
-            end
-        end
-        await 5s;
-        ret = p:v;
-    with
-        if ((_tceu_org*)p):isAlive then
-            await p:ok;
-        end
-    end
-end
-
-escape ret;
-]],
-    run = { ['~>5s']=-1 },
-}
-
 --]===]
 Test { [[
 class T with
     var int v = 0;
 do
+end
+
+event T* e;
+var int ret = 0;
+
+par/and do
+    async do end;
+    var T t with
+        this.v = 10;
+    end;
+    emit e => &t;
+    await 1s;
+with
+    var T* p = await e;
+    watching p do
+        finalize with
+            if ret == 0 then
+                ret = -1;
+            end
+        end
+        await 5s;
+        ret = p:v;
+    end
+end
+
+escape ret;
+]],
+    run = { ['~>5s']=-1 },
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
+end
+
+event T* e;
+var int ret = 0;
+
+par/and do
+    async do end;
+    var T t with
+        this.v = 10;
+    end;
+    emit e => &t;
+with
+    var T* p = await e;
+    watching p do
+        finalize with
+            if ret == 0 then
+                ret = -1;
+            end
+        end
+        await 5s;
+        ret = p:v;
+    end
+end
+
+escape ret;
+]],
+    run = { ['~>5s']=-1 },
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
+    await 4s;
+end
+
+event T* e;
+var int ret = 0;
+
+par/and do
+    async do end;
+    var T t with
+        this.v = 10;
+    end;
+    emit e => &t;
+    await 6s;
+with
+    var T* p = await e;
+    watching p do
+        finalize with
+            if ret == 0 then
+                ret = -1;
+            end
+        end
+        await 5s;
+        ret = p:v;
+    end
+end
+
+escape ret;
+]],
+    run = { ['~>10s']=10 },
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
+    await 6s;
+end
+
+event T* e;
+var int ret = 0;
+
+par/and do
+    async do end;
+    var T t with
+        this.v = 10;
+    end;
+    emit e => &t;
+    await 6s;
+with
+    var T* p = await e;
+    watching p do
+        finalize with
+            if ret == 0 then
+                ret = -1;
+            end
+        end
+        await 5s;
+        ret = p:v;
+    end
+end
+
+escape ret;
+]],
+    run = { ['~>10s']=10 },
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
+end
+
+event T* e;
+var int ret = 0;
+
+par/and do
+    async do end;
+    pool T[] ts;
+    var T* t = new T in ts with
+        this.v = 10;
+    end;
+    emit e => t;
+    await 1s;
+with
+    var T* p = await e;
+    watching p do
+        finalize with
+            if ret == 0 then
+                ret = -1;
+            end
+        end
+        await 5s;
+        ret = p:v;
+    end
+end
+
+escape ret;
+]],
+    run = { ['~>1s;~>1s;~>1s;~>1s;~>1s']=-1 },
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
+end
+
+event T* e;
+var int ret = 0;
+
+par/and do
+    async do end;
+    pool T[] ts;
+    var T* t = new T in ts with
+        this.v = 10;
+    end;
+    emit e => t;
+with
+    var T* p = await e;
+    watching p do
+        finalize with
+            if ret == 0 then
+                ret = -1;
+            end
+        end
+        await 5s;
+        ret = p:v;
+    end
+end
+
+escape ret;
+]],
+    run = { ['~>1s;~>1s;~>1s;~>1s;~>1s']=-1 },
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
     await 4s;
 end
 
@@ -932,7 +908,7 @@ par/and do
     await 6s;
 with
     var T* p = await e;
-    par/or do
+    watching p do
         finalize with
             if ret == 0 then
                 ret = -1;
@@ -940,16 +916,12 @@ with
         end
         await 5s;
         ret = p:v;
-    with
-        if ((_tceu_org*)p):isAlive then
-            await p:ok;
-        end
     end
 end
 
 escape ret;
 ]],
-    run = { ['~>10s']=-1 },
+    run = { ['~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s']=-1 },
 }
 
 Test { [[
@@ -972,7 +944,7 @@ par/and do
     await 6s;
 with
     var T* p = await e;
-    par/or do
+    watching p do
         finalize with
             if ret == 0 then
                 ret = -1;
@@ -980,16 +952,47 @@ with
         end
         await 5s;
         ret = p:v;
-    with
-        if ((_tceu_org*)p):isAlive then
-            await p:ok;
-        end
     end
 end
 
 escape ret;
 ]],
-    run = { ['~>10s']=10 },
+    run = { ['~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s']=10 },
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
+    await 6s;
+end
+
+event T* e;
+var int ret = 0;
+
+par/and do
+    async do end;
+    pool T[] ts;
+    var T* t = new T in ts with
+        this.v = 10;
+    end;
+    emit e => t;
+with
+    var T* p = await e;
+    watching p do
+        finalize with
+            if ret == 0 then
+                ret = -1;
+            end
+        end
+        await 5s;
+        ret = p:v;
+    end
+end
+
+escape ret;
+]],
+    run = { ['~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s']=-1 },
 }
 
 do return end

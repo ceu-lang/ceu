@@ -129,7 +129,7 @@ function newvar (me, blk, pre, tp, arr, id)
                 if var.id == id then
                     local fun = pre=='function' and stmt==CLS().blk_ifc -- dcl
                                                 and blk==CLS().blk_ifc  -- body
-                    WRN(fun or id=='ok', me,
+                    WRN(fun or id=='_ok', me,
                         'declaration of "'..id..'" hides the one at line '
                             ..var.ln[2])
                     --if (blk==CLS().blk_ifc or blk==CLS().blk_body) then
@@ -691,6 +691,22 @@ error'oi'
         error'me.fst'
         --me.fst = ?
     end,
+
+    AwaitInt_pre = function (me)
+        local int = unpack(me)
+        if me.isWatching then
+            -- ORG: "await org" => "await org._ok"
+            if _ENV.clss[_TP.deref(int.tp)] then
+                me[1] = _AST.node('Op2_.', me.ln, '.',
+                            _AST.node('Op1_*', me.ln, '*', int),
+                            '_ok')
+
+            -- EVT:
+            else
+                error'oi'
+            end
+        end
+    end,
     AwaitInt = function (me, int)
         local int = int or unpack(me)
         ASR(int.var and int.var.pre=='event', me,
@@ -698,6 +714,7 @@ error'oi'
         me.fst = int.fst
         me.tp = int.var.evt.ins     -- <a = await ...>
     end,
+
     AwaitExt = function (me)
         local ext = unpack(me)
         me.fst = 'global'

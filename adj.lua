@@ -196,7 +196,7 @@ F = {
         -- The idx must be constant as the runtime uses it blindly.
         -- (generated in env.ceu)
         table.insert(me.blk_ifc[1][1], 1,
-            node('Dcl_int', me.ln, 'event', 'void', 'ok'))  -- TODO: _ok
+            node('Dcl_int', me.ln, 'event', 'void', '_ok'))
 
         -- insert class pool for orphan new/spawn
         if me.__ast_has_malloc then
@@ -241,6 +241,52 @@ F = {
         return node('Stmts', me.ln,
                     node('SetExp', me.ln, '=', exp, to, fr),
                     node('Escape', me.ln))
+    end,
+
+-- Watching --------------------------------------------------
+
+    _Watching_pre = function (me)
+        --[[
+        --      watching <EVT>|<ORG> do
+        --          ...
+        --      end
+        -- becomes
+        --      par/or do
+        --          ...
+        --      with
+        --          if <ORG>->isAlive
+        --              await <EVT>|<ORG>.ok;
+        --          end
+        --      end
+        --]]
+        local evt, blk = unpack(me)
+
+        local awt
+        if evt.tag=='WCLOCKK' or evt.tag=='WCLOCKE' then
+            awt = node('AwaitT', me.ln, evt, false)
+        elseif evt.tag=='Ext' then
+            awt = node('AwaitExt', me.ln, evt, false)
+        else
+            awt = node('AwaitInt', me.ln, evt, false)
+            awt.isWatching = true
+                -- converts "await org" to "await org._ok" in env.lua
+        end
+
+        local ret = node('ParOr', me.ln,
+                        blk,
+                        node('Block', me.ln,
+                            node('Stmts', me.ln,
+                                node('If', me.ln,
+                                    node('Op2_.', me.ln, '.',
+                                        node('Op1_*', me.ln, '*',
+                                            node('Op1_cast', me.ln,
+                                                '_tceu_org*',
+                                                evt)),
+                                        'isAlive'),
+                                    awt,
+                                    node('Nothing', me.ln)))))
+        ret.isWatching = evt
+        return ret
     end,
 
 -- Every --------------------------------------------------

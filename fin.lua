@@ -189,8 +189,24 @@ F = {
     end,
 
     Var = function (me)
-        ASR(not AWAITS[me.var], me,
-                'invalid access to awoken pointer "'..me.var.id..'"')
+        if not AWAITS[me.var] then
+            return
+        end
+
+        -- possible dangling pointer "me.var" is accessed across await
+
+        if _ENV.clss[_TP.deref(me.tp)] then
+            -- pointer to org: check if it is enclosed by "watching me.var"
+            for n in _AST.iter('ParOr') do
+                local var = n.isWatching and n.isWatching.ref and n.isWatching.ref.var
+                if var == me.var then
+                    return      -- ok, I'm safely watching "me.var"
+                end
+            end
+        end
+
+        -- invalid access!
+        ASR(false, me, 'invalid access to awoken pointer "'..me.var.id..'"')
     end,
 
     AwaitInt = function (me)

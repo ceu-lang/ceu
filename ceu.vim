@@ -14,7 +14,12 @@ syn match	Macro	"\<_\w*\>"
 syn keyword	cConstant	this global null true false _
 syn keyword	cOperator	not or and sizeof
 syn keyword	cType   	byte bool word uint f32 f64 u8 u16 u32 u64 s8 s16 s32 s64 constant nohold safe pure hold recursive
-syn keyword	cStatement async await break native continue do else emit end event every finalize FOREVER if input loop nothing output par pause return then until var with class include interface free new spawn thread sync function escape call rec recursive isr atomic request in pool
+syn keyword	cStatement async await break native continue do else emit end
+syn keyword cStatement event every finalize FOREVER if input loop nothing
+syn keyword cStatement output par pause return then until var with class
+syn keyword cStatement include interface free new spawn thread sync function
+syn keyword cStatement escape call rec recursive isr atomic request in pool
+syn keyword cStatement watching
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 " A bunch of useful C keywords

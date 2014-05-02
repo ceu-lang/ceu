@@ -134,6 +134,7 @@ KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'native'
      + 'in'
 -- pool
      + 'pool'
+     + 'watching'
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
@@ -178,7 +179,7 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     , __StmtB = V'Do'    + V'Host'
              + V'Async' + V'_Thread' + V'Sync' + V'Atomic'
-             + V'ParOr' + V'ParAnd'
+             + V'ParOr' + V'ParAnd'  + V'_Watching'
              + V'If'    + V'_Loop'   + V'_Every'  + V'_Iter'
              + V'_Pause'
              + V'_Dcl_ifc' + V'Dcl_cls'
@@ -241,9 +242,11 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     , _Escape = KEY'escape' * EV'__Exp'
 
-    , ParOr   = KEY'par/or' * EKEY'do' *
-                    V'Block' * (EKEY'with' * V'Block')^1 *
-                EKEY'end'
+    , _Watching = KEY'watching' * EV'__awaits' * EKEY'do' * V'Block' * EKEY'end'
+    , ParOr     = KEY'par/or' * EKEY'do' *
+                      V'Block' * (EKEY'with' * V'Block')^1 *
+                  EKEY'end'
+
     , ParAnd  = KEY'par/and' * EKEY'do' *
                     V'Block' * (EKEY'with' * V'Block')^1 *
                 EKEY'end'
@@ -346,10 +349,9 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , AwaitT   = KEY'await' * (V'WCLOCKK'+V'WCLOCKE')
                                      * (V'__until' + Cc(false))
 
-    , __awaits = K'(' *
-                    (V'WCLOCKK' + V'WCLOCKE' + V'Ext' + EV'__Exp')
-                 * EK')'
-    , AwaitS   = KEY'await' * V'__awaits' * (EKEY'or' * V'__awaits')^1
+    , __awaits = (V'WCLOCKK' + V'WCLOCKE' + V'Ext' + EV'__Exp')
+    , ___awaits = K'(' * V'__awaits' * EK')'
+    , AwaitS   = KEY'await' * V'___awaits' * (EKEY'or' * V'___awaits')^1
                                      * (V'__until' + Cc(false))
 
     , EmitT    = KEY'emit' * (V'WCLOCKK'+V'WCLOCKE')

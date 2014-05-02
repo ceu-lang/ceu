@@ -1036,7 +1036,7 @@ case ]]..me.lbl.id..[[:;
     _ceu_go->trl->evt = ]]..(int.ifc_idx or int.var.evt.idx)..[[;
     _ceu_go->trl->lbl = ]]..me.lbl.id..[[;
 ]])
-        if int.var.evt.id == 'ok' then      -- TODO: _ok
+        if int.var.evt.id == '_ok' then
             LINE(me, [[
     _ceu_go->trl->seqno = _ceu_app->seqno-1;   /* always ready to awake */
 ]])
