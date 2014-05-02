@@ -266,23 +266,9 @@ STATS = {
 }
 
 
-real	11m6.712s
-user	9m45.480s
-sys	1m31.960s
-
-
-
-STATS = {
-    count   = 1749,
-    mem     = 0,
-    trails  = 3366,
-    bytes   = 15594645,
-}
-
-
-real	7m35.335s
-user	6m59.948s
-sys	0m58.684s
+real	7m38.080s
+user	7m30.016s
+sys	0m56.800s
 }
 ]]
 

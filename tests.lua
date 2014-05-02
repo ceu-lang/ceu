@@ -513,7 +513,76 @@ escape 1;
 -------------------------------------------------------------------------------
 -- ??: working now
 
---]===]
+]===]
+Test { [[
+input int I;
+var int ret = -5;
+watching I do
+    await 1s;
+    ret = 5;
+end
+escape ret;
+]],
+    run = {
+        ['100~>I; ~>1s'] = -5,
+        ['~>1s; 100~>I'] = 5,
+    }
+}
+
+Test { [[
+input int I;
+var int ret = -5;
+var int dt = await I;
+watching (dt)ms do
+    await 1s;
+    ret = 5;
+end
+escape ret;
+]],
+    run = {
+        ['100~>I; ~>1s'] = -5,
+        ['1000~>I; ~>1s'] = 5,
+    }
+}
+
+Test { [[
+input int I;
+var int ret = -5;
+event void e;
+par/or do
+    loop do
+        var int dt = await I;
+        if dt == 100 then
+            emit e;
+        end
+    end
+with
+    watching e do
+        await 1s;
+        ret = 5;
+    end
+end
+escape ret;
+]],
+    run = {
+        ['100~>I; ~>1s'] = -5,
+        ['1000~>I; ~>1s'] = 5,
+    }
+}
+
+-- TODO: "e" has type "T*"
+Test { [[
+event T* e;
+var int ret = -1;
+watching e do
+    await 1s;
+    ret = 1;
+end
+escape 1;
+]],
+    run = { ['~>1s'] = 1 }
+}
+
 --do return end
 
 -------------------------------------------------------------------------------

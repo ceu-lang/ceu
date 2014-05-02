@@ -277,6 +277,7 @@ F = {
                         node('Block', me.ln,
                             node('Stmts', me.ln,
                                 node('If', me.ln,
+                                    -- changes to "false" if normal event in env.lua
                                     node('Op2_.', me.ln, '.',
                                         node('Op1_*', me.ln, '*',
                                             node('Op1_cast', me.ln,

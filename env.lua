@@ -692,18 +692,31 @@ error'oi'
         --me.fst = ?
     end,
 
+    ParOr = function (me)
+        -- detects if "isWatching" a real event (not an org)
+        --  to remove the "isAlive" test
+        if me.isWatching then
+            local ptr = me.isWatching.tp and _TP.deref(me.isWatching.tp)
+            if not (ptr and _ENV.clss[_TP.deref(ptr)]) then
+                local if_ = me[2][1][1]
+                assert(if_.tag == 'If')
+                if_[1] = _AST.node('NUMBER', me.ln, 1)
+            end
+        end
+    end,
+
     AwaitInt_pre = function (me)
         local int = unpack(me)
         if me.isWatching then
             -- ORG: "await org" => "await org._ok"
-            if _ENV.clss[_TP.deref(int.tp)] then
+            local ptr = int.tp and _TP.deref(int.tp)
+            if _ENV.clss[ptr] then
                 me[1] = _AST.node('Op2_.', me.ln, '.',
                             _AST.node('Op1_*', me.ln, '*', int),
                             '_ok')
 
             -- EVT:
             else
-                error'oi'
             end
         end
     end,
