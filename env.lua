@@ -129,7 +129,7 @@ function newvar (me, blk, pre, tp, arr, id)
                 if var.id == id then
                     local fun = pre=='function' and stmt==CLS().blk_ifc -- dcl
                                                 and blk==CLS().blk_ifc  -- body
-                    WRN(fun, me,
+                    WRN(fun or id=='ok', me,
                         'declaration of "'..id..'" hides the one at line '
                             ..var.ln[2])
                     --if (blk==CLS().blk_ifc or blk==CLS().blk_body) then

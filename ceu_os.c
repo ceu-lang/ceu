@@ -89,9 +89,10 @@ void ceu_sys_org (tceu_org* org, int n, int lbl, int seqno,
 #if defined(CEU_ORGS) || defined(CEU_OS)
     org->n = n;
 #endif
+    org->isAlive = 1;
 #ifdef CEU_NEWS
     org->isDyn = 0;
-    org->isSpw = 0;
+    /*org->isSpw = 0;*/
 #endif
 
     /* org.trls[0] == org.blk.trails[1] */
@@ -279,12 +280,24 @@ fprintf(stderr, "GO[%d]: evt=%d stk=%d [%d]\n", app->seqno,
                                          ((tceu_org_lnk*)go.org)->lnk : 0
                                       ];
 
-#ifdef CEU_NEWS
                     /* org has been traversed and *CLEARED* to the end? */
                     if ( go.evt == CEU_IN__CLEAR
+#ifdef CEU_NEWS
                     &&   go.org->n != 0 /* TODO: avoids LNKs (must be before isDyn */
-                    &&   go.org->isDyn )
+                    &&   go.org->isDyn
+#endif
+                    )
                     {
+                        go.org->isAlive = 0;
+
+/* TODO: stack will overflow!!! */
+                        /* emit this.ok */
+                        /*go.stk[go.stki].evtp = ?*/
+                        go.stk[go.stki].evto = go.org;
+                        go.stk[go.stki].evt  = 1;   /* TODO !!!*/
+                        go.stki++;
+
+#ifdef CEU_NEWS
                         /* re-link PRV <-> NXT */
                         go.org->prv->nxt = go.org->nxt;
                         go.org->nxt->prv = go.org->prv;
@@ -312,8 +325,8 @@ fprintf(stderr, "GO[%d]: evt=%d stk=%d [%d]\n", app->seqno,
                         /* explicit free(me) or end of spawn */
                         if (go.stop == go.org)
                             break;  /* pop stack */
-                    }
 #endif  /* CEU_NEWS */
+                    }
 
                     go.org = _org;
                     go.trl = _trl;

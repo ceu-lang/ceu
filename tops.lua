@@ -39,9 +39,9 @@ end
 
 _AST.visit(F)
 
--- substitute all Dcl_imp for the referred fields
+-- substitute all Dcl_imp for the referred fields (simplifies later phases)
 for _, cls in ipairs(_TOPS) do
-    if cls.tag=='Dcl_cls' and cls[2]~='Main' then
+    if cls.tag=='Dcl_cls' and cls[2]~='Main' then   -- "Main" has no Dcl_imp's
         local dcls1 = cls.blk_ifc[1][1]
         assert(dcls1.tag == 'BlockI')
         for i=1, #dcls1 do

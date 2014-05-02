@@ -150,16 +150,22 @@ typedef u8 tceu_ntrl;   /* max number of trails per class */
 
 typedef union tceu_trl {
     tceu_nevt evt;
+
+    /* normal await // IN__CLEAR */
     struct {                    /* TODO(ram): bitfields */
         tceu_nevt evt1;
         tceu_nlbl lbl;
         u8        seqno;        /* TODO(ram): 2 bits is enough */
     };
+
+    /* IN__STK */
     struct {                    /* TODO(ram): bitfields */
         tceu_nevt evt2;
         tceu_nlbl lbl2;
         u8        stk;
     };
+
+    /* IN__ORG */
 #ifdef CEU_ORGS
     struct {                    /* TODO(ram): bad for alignment */
         tceu_nevt evt3;
@@ -226,9 +232,10 @@ typedef struct tceu_org
 #ifdef CEU_IFCS
     tceu_ncls cls;          /* class id */
 #endif
+    u8 isAlive: 1;          /* required by "watching o" */
 #ifdef CEU_NEWS
     u8 isDyn: 1;            /* created w/ new or spawn? */
-    u8 isSpw: 1;            /* free on termination? */
+    /*u8 isSpw: 1;            // free on termination? */
     struct tceu_org* nxt_free;  /* "to free" list (only on reaction end) */
 #endif
 #endif  /* CEU_ORGS */

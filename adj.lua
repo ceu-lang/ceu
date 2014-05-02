@@ -89,7 +89,10 @@ F = {
 
     ['1_pre'] = function (me)
         local spc, stmts = unpack(me)
-        local blk_ifc_body = node('Block', me.ln, stmts)
+        local blk_ifc_body = node('Block', me.ln,       -- same structure of
+                                node('Stmts', me.ln,    -- other classes
+                                    node('BlockI', me.ln),
+                                    stmts))
         local ret = blk_ifc_body
 
         -- for OS: <par/or ... with await OS_STOP; escape 1; end>
@@ -183,9 +186,21 @@ F = {
         me[3]  = blk        -- both blocks 'ifc' and 'body'
         me[4]  = nil        -- remove 'body'
 
+        assert(me.blk_ifc.tag == 'Block' and
+               me.blk_ifc[1]    and me.blk_ifc[1].tag   =='Stmts' and
+               me.blk_ifc[1][1] and me.blk_ifc[1][1].tag=='BlockI')
+
+        -- All orgs have an implicit event emitted automatically on
+        -- their termination:
+        -- event void _ok;
+        -- The idx must be constant as the runtime uses it blindly.
+        -- (generated in env.ceu)
+        table.insert(me.blk_ifc[1][1], 1,
+            node('Dcl_int', me.ln, 'event', 'void', 'ok'))  -- TODO: _ok
+
         -- insert class pool for orphan new/spawn
         if me.__ast_has_malloc then
-            table.insert(me.blk_body[1], 1,
+            table.insert(me.blk_ifc[1][1], 2,
                 node('Dcl_pool', me.ln, 'pool', '_TOP_POOL',
                     node('NUMBER', me.ln, -1),
                     '_top_pool'))

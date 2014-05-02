@@ -680,160 +680,316 @@ escape p:v;
 }
 
 -- tracking para await e new
+
+Test { [[
+class T with
+    var int v = 0;
+do
+end
+
+event T* e;
+var int ret = 0;
+
+par/and do
+    async do end;
+    var T t with
+        this.v = 10;
+    end;
+    emit e => &t;
+    await 1s;
+with
+    var T* p = await e;
+    par/or do
+        finalize with
+            if ret == 0 then
+                ret = -1;
+            end
+        end
+        await 5s;
+        ret = p:v;
+    with
+        if ((_tceu_org*)p):isAlive then
+            await p:ok;
+        end
+    end
+end
+
+escape ret;
+]],
+    run = { ['~>5s']=-1 },
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
+end
+
+event T* e;
+var int ret = 0;
+
+par/and do
+    async do end;
+    var T t with
+        this.v = 10;
+    end;
+    emit e => &t;
+with
+    var T* p = await e;
+    par/or do
+        finalize with
+            if ret == 0 then
+                ret = -1;
+            end
+        end
+        await 5s;
+        ret = p:v;
+    with
+        if ((_tceu_org*)p):isAlive then
+            await p:ok;
+        end
+    end
+end
+
+escape ret;
+]],
+    run = { ['~>5s']=-1 },
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
+    await 4s;
+end
+
+event T* e;
+var int ret = 0;
+
+par/and do
+    async do end;
+    var T t with
+        this.v = 10;
+    end;
+    emit e => &t;
+    await 6s;
+with
+    var T* p = await e;
+    par/or do
+        finalize with
+            if ret == 0 then
+                ret = -1;
+            end
+        end
+        await 5s;
+        ret = p:v;
+    with
+        if ((_tceu_org*)p):isAlive then
+            await p:ok;
+        end
+    end
+end
+
+escape ret;
+]],
+    run = { ['~>10s']=10 },
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
+    await 6s;
+end
+
+event T* e;
+var int ret = 0;
+
+par/and do
+    async do end;
+    var T t with
+        this.v = 10;
+    end;
+    emit e => &t;
+    await 6s;
+with
+    var T* p = await e;
+    par/or do
+        finalize with
+            if ret == 0 then
+                ret = -1;
+            end
+        end
+        await 5s;
+        ret = p:v;
+    with
+        if ((_tceu_org*)p):isAlive then
+            await p:ok;
+        end
+    end
+end
+
+escape ret;
+]],
+    run = { ['~>10s']=10 },
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
+end
+
+event T* e;
+var int ret = 0;
+
+par/and do
+    async do end;
+    pool T[] ts;
+    var T* t = new T in ts with
+        this.v = 10;
+    end;
+    emit e => t;
+    await 1s;
+with
+    var T* p = await e;
+    par/or do
+        finalize with
+            if ret == 0 then
+                ret = -1;
+            end
+        end
+        await 5s;
+        ret = p:v;
+    with
+        if ((_tceu_org*)p):isAlive then
+            await p:ok;
+        end
+    end
+end
+
+escape ret;
+]],
+    run = { ['~>5s']=-1 },
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
+end
+
+event T* e;
+var int ret = 0;
+
+par/and do
+    async do end;
+    pool T[] ts;
+    var T* t = new T in ts with
+        this.v = 10;
+    end;
+    emit e => t;
+with
+    var T* p = await e;
+    par/or do
+        finalize with
+            if ret == 0 then
+                ret = -1;
+            end
+        end
+        await 5s;
+        ret = p:v;
+    with
+        if ((_tceu_org*)p):isAlive then
+            await p:ok;
+        end
+    end
+end
+
+escape ret;
+]],
+    run = { ['~>5s']=-1 },
+}
+
 --]===]
-
 Test { [[
-interface I with
-    var int v;
-
-    var bool killed?;
-    event void ok_killed;
-end
-
 class T with
-    interface I;
     var int v = 0;
-    var bool killed? = false;
 do
-    killed? = true;
-    emit ok_killed;
+    await 4s;
 end
 
 event T* e;
 var int ret = 0;
 
 par/and do
-    var T t with
+    async do end;
+    pool T[] ts;
+    var T* t = new T in ts with
         this.v = 10;
     end;
-    async do end;
-    emit e => &t;
+    emit e => t;
+    await 6s;
 with
-    var I* p = await e;
+    var T* p = await e;
     par/or do
         finalize with
             if ret == 0 then
                 ret = -1;
             end
         end
-        async do end;
+        await 5s;
         ret = p:v;
     with
-        if not p:killed? then
-            await p:ok_killed;
+        if ((_tceu_org*)p):isAlive then
+            await p:ok;
         end
-_printf("killed\n");
     end
 end
 
 escape ret;
 ]],
-    wrn = true,
-    run = -1,
+    run = { ['~>10s']=-1 },
 }
 
 Test { [[
-interface I with
-    var int v;
-
-    var bool killed?;
-    event void ok_killed;
-end
-
 class T with
-    interface I;
     var int v = 0;
-    var bool killed? = false;
 do
-    await 1s;
-    killed? = true;
-    emit ok_killed;
+    await 6s;
 end
 
 event T* e;
 var int ret = 0;
 
 par/and do
-    var T t with
+    async do end;
+    pool T[] ts;
+    var T* t = new T in ts with
         this.v = 10;
     end;
-    async do end;
-    emit e => &t;
+    emit e => t;
+    await 6s;
 with
-    var I* p = await e;
+    var T* p = await e;
     par/or do
         finalize with
             if ret == 0 then
                 ret = -1;
             end
         end
-        async do end;
+        await 5s;
         ret = p:v;
     with
-        if not p:killed? then
-            await p:ok_killed;
+        if ((_tceu_org*)p):isAlive then
+            await p:ok;
         end
-_printf("killed\n");
     end
 end
 
 escape ret;
 ]],
-    wrn = true,
-    run = 10,
-}
-
-Test { [[
-interface I with
-    var int v;
-
-    var bool killed?;
-    event void ok_killed;
-end
-
-class T with
-    interface I;
-    var int v = 0;
-    var bool killed? = false;
-do
-    await 1s;
-    killed? = true;
-_printf("killed\n");
-    emit ok_killed;
-end
-
-event T* e;
-var int ret = 0;
-
-par/and do
-    var T t with
-        this.v = 10;
-    end;
-    async do end;
-    emit e => &t;
-with
-    var I* p = await e;
-    par/or do
-        finalize with
-            if ret == 0 then
-                ret = -1;
-            end
-        end
-        await 1s;
-_printf("AWAKE\n");
-        ret = p:v;
-    with
-        if not p:killed? then
-            await p:ok_killed;
-        end
-_printf("KILLED\n");
-    end
-end
-
-escape ret;
-]],
-    wrn = true,
-    run = { ['~>1s']=10 },
+    run = { ['~>10s']=10 },
 }
 
 do return end
@@ -23516,7 +23672,7 @@ var T* t = new T;
 await OS_START;
 escape t:a;
 ]],
-    run = 1,
+    fin = 'line 9 : invalid access to awoken pointer "t"',
 }
 
 Test { [[
@@ -23540,17 +23696,23 @@ escape 10;
 }
 
 Test { [[
-input void OS_START;
 class T with
-    var int a;
 do
-    this.a = 1;
+    par/or do
+        await 10s;
+    with
+        await 10s;
+    with
+        await 10s;
+    end
 end
-var T* t = new T;
-await OS_START;
-escape t:a;
+var T* t;
+    t = new T;
+    t = new T;
+    t = new T;
+escape 10;
 ]],
-    run = 1,
+    run = 10;
 }
 
 Test { [[
@@ -23572,7 +23734,7 @@ do
 end
 escape 10;
 ]],
-    run = 10;
+    fin = 'line 13 : invalid block for awoken pointer "t"',
 }
 
 Test { [[
@@ -24972,7 +25134,8 @@ do
 end
 escape 10;
 ]],
-    run = 10,
+    --run = 10,
+    fin = 'line 4 : invalid block for awoken pointer "t"',
 }
 
 Test { [[
@@ -25019,7 +25182,8 @@ end
 
 escape ret + _V;
 ]],
-    run = 11,
+    --run = 11,
+    fin = 'line 22 : invalid access to awoken pointer "o"',
 }
 
 Test { [[
@@ -25045,7 +25209,7 @@ par/or do
     pool T[] ts;
     var T* o;
     o = new T in ts;
-    await OS_START;
+    //await OS_START;
     ret = o:a;
 with
     await F;
@@ -25075,10 +25239,10 @@ end
 
 var int ret = 0;
 
-var T* o;
 par/or do
+    var T* o;
     o = new T;
-    await OS_START;
+    //await OS_START;
     ret = o:a;
 with
     await F;
@@ -25707,7 +25871,8 @@ await 1s;
 escape 1;
 
 ]],
-    run = { ['~>1s']=1, }
+    fin = 'line 9 : invalid block for awoken pointer "v"',
+    --run = { ['~>1s']=1, }
 }
 
 Test { [[

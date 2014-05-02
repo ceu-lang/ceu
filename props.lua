@@ -222,7 +222,10 @@ F = {
     end,
 
     Dcl_cls = function (me)
-        _PROPS.has_orgs = _PROPS.has_orgs or (me.id~='Main')
+        if me.id ~= 'Main' then
+            _PROPS.has_orgs = true
+            _PROPS.has_ints = true      -- all have "emit _ok"
+        end
         if me.is_ifc then
             _PROPS.has_ifcs = true
         end

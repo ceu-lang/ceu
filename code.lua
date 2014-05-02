@@ -302,11 +302,11 @@ _ceu_go->org->cls = ]]..me.n..[[;
         --if i_am_instantiable then
             LINE(me, [[
 #ifdef CEU_NEWS
-if (_ceu_go->org->isSpw) {
+/*if (_ceu_go->org->isSpw) {*/
 ]])
             F.Free(me)
             LINE(me, [[
-}
+/*}*/
 #endif
 ]])
         --end
@@ -366,7 +366,7 @@ end;
 
 #ifdef CEU_NEWS
     ]]..org..[[->isDyn  = ]]..t.isDyn..[[;
-    ]]..org..[[->isSpw  = ]]..t.isSpw..[[;
+    /*]]..org..[[->isSpw  = ]]..t.isSpw..[[;*/
 #endif
 ]])
 
@@ -426,7 +426,7 @@ case ]]..me.lbls_cnt[i].id..[[:;
         F._ORG(me, {
             id      = var.id,
             isDyn   = 0,
-            isSpw   = 0,
+            isSpw   = 'TODO REMOVE',--0,
             cls     = var.cls,
             val     = var.val,
             constr  = constr,
@@ -475,7 +475,7 @@ case ]]..me.lbls_cnt[i].id..[[:;
         F._ORG(me, {
             id      = 'dyn',
             isDyn   = 1,
-            isSpw   = (me.tag=='New' and 0) or 1,
+            isSpw   = 'TODO REVOME', --(me.tag=='New' and 0) or 1,
             cls     = me.cls,
             val     = '__ceu_new',
             constr  = constr,
@@ -836,7 +836,7 @@ for (;;) {
         _ceu_go->trl->evt = CEU_IN__ASYNC;
         _ceu_go->trl->lbl = ]]..me.lbl_asy.id..[[;
 #ifdef ceu_out_async
-        ceu_out_async(1);
+        ceu_out_async(_ceu_app);
 #endif
 ]])
             HALT(me, 'RET_ASYNC')
@@ -888,7 +888,7 @@ _ceu_go->trl = &_ceu_go->org->trls[ ]]..me.trails[1]..[[ ];
 _ceu_go->trl->evt = CEU_IN__ASYNC;
 _ceu_go->trl->lbl = ]]..me.lbl_cnt.id..[[;
 #ifdef ceu_out_async
-ceu_out_async(1);
+ceu_out_async(_ceu_app);
 #endif
 ]])
         end
@@ -1036,6 +1036,11 @@ case ]]..me.lbl.id..[[:;
     _ceu_go->trl->evt = ]]..(int.ifc_idx or int.var.evt.idx)..[[;
     _ceu_go->trl->lbl = ]]..me.lbl.id..[[;
 ]])
+        if int.var.evt.id == 'ok' then      -- TODO: _ok
+            LINE(me, [[
+    _ceu_go->trl->seqno = _ceu_app->seqno-1;   /* always ready to awake */
+]])
+        end
         HALT(me)
 
         LINE(me, [[
@@ -1153,7 +1158,7 @@ case ]]..me.lbl.id..[[:;
 _ceu_go->trl->evt = CEU_IN__ASYNC;
 _ceu_go->trl->lbl = ]]..me.lbl.id..[[;
 #ifdef ceu_out_async
-ceu_out_async(1);
+ceu_out_async(_ceu_app);
 #endif
 ]])
         HALT(me, 'RET_ASYNC')
