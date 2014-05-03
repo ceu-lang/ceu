@@ -316,6 +316,7 @@ F =
     end,
     ['Op1_~']   = 'Op1_any',
     ['Op1_-']   = 'Op1_any',
+    ['Op1_+']   = 'Op1_any',
     ['Op1_not'] = 'Op1_any',
 
     ['Op1_*'] = function (me)

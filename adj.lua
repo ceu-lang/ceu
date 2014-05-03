@@ -262,12 +262,13 @@ F = {
         local evt, blk = unpack(me)
 
         local awt
+        local ref = node('Ref', me.ln, evt) -- "evt" must be parsed before "awt"
         if evt.tag=='WCLOCKK' or evt.tag=='WCLOCKE' then
-            awt = node('AwaitT', me.ln, evt, false)
+            awt = node('AwaitT', me.ln, ref, false)
         elseif evt.tag=='Ext' then
-            awt = node('AwaitExt', me.ln, evt, false)
+            awt = node('AwaitExt', me.ln, ref, false)
         else
-            awt = node('AwaitInt', me.ln, evt, false)
+            awt = node('AwaitInt', me.ln, ref, false)
             awt.isWatching = true
                 -- converts "await org" to "await org._ok" in env.lua
         end
@@ -276,16 +277,17 @@ F = {
                         blk,
                         node('Block', me.ln,
                             node('Stmts', me.ln,
+                                evt,  -- parses here, than uses "Ref" in "awt"
                                 node('If', me.ln,
-                                    -- changes to "false" if normal event in env.lua
+                                    -- changes to "true" if normal event in env.lua
                                     node('Op2_.', me.ln, '.',
                                         node('Op1_*', me.ln, '*',
                                             node('Op1_cast', me.ln,
                                                 '_tceu_org*',
-                                                evt)),
+                                                _AST.copy(evt))),
                                         'isAlive'),
-                                    awt,
-                                    node('Nothing', me.ln)))))
+                                    node('Block',me.ln,node('Stmts',me.ln,awt)),
+                                    node('Block',me.ln,node('Stmts',me.ln,node('Nothing', me.ln)))))))
         ret.isWatching = evt
         return ret
     end,

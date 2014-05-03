@@ -132,6 +132,7 @@ DBG('===', me.id, me.trails_n)
 #line ]]..var.ln[2]..' "'..var.ln[1]..[["
 ]]
                 if var.arr then
+                    ASR(var.arr.cval, me, 'invalid constant')
                     dcl = dcl .. _TP.deref(tp)..' '..var.id_..'['..var.arr.cval..']'
                 else
                     dcl = dcl .. tp..' '..var.id_
