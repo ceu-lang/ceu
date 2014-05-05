@@ -130,6 +130,7 @@ do
     dofile 'adj.lua'
     dofile 'tops.lua'
     dofile 'env.lua'
+    dofile 'src.lua'
     dofile 'sval.lua'
     dofile 'isr.lua'
     dofile 'fin.lua'

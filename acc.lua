@@ -120,10 +120,9 @@ F = {
 
     Op2_call = function (me)
         local _, f, exps = unpack(me)
-        local ps = {}
         CHG(f.ref.acc, 'cl')
         me.acc = f.ref.acc
-        for i, exp in ipairs(exps) do
+        for _, exp in ipairs(exps) do
             local tp = _TP.deref(exp.tp, true)
             if tp then
                 local v = exp.ref

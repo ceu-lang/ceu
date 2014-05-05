@@ -240,21 +240,6 @@ escape 1;
     run = 1,
 }
 
-Test { [[
-do
-    var int* p, p1;
-    event int* e;
-    p = await e;
-    p1 = p;
-    await e;
-    escape *p1;
-end
-escape 1;
-]],
-    run = 0,
-    -- *p1 deveria dar erro
-}
-
 -- TODO: fails on valgrind, fails on OS
 -- put back to XXXX
 Test { [[
@@ -305,15 +290,6 @@ escape ret + _V;        // * reads after
         ['~>F'] = 6,
         ['~>A'] = 13,
     }
-}
-
-Test { [[
-var _tp* v;
-_a := v;
-_b = _a;    // _a pode ter escopo menor e nao reclama de FIN
-escape 1;
-]],
-    run = 1,
 }
 
 -- TODO_TYPECAST (search and replace)
@@ -512,7 +488,36 @@ escape 1;
 
 -------------------------------------------------------------------------------
 -- ??: working now
-]===]
+
+Test { [[
+do
+    var int* p, p1;
+    event int* e;
+    p = await e;
+    p1 = p;
+    await e;
+    escape *p1;
+end
+]],
+    run = 1,
+    -- *p1 deveria dar erro
+}
+
+Test { [[
+var _tp* v;
+_a := v;
+_b = _a;    // _a pode ter escopo menor e nao reclama de FIN
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+var int ret;
+escape ret;
+]],
+    src = 'line 2 : access to unitialized variable',
+}
 
 --do return end
 
@@ -1487,7 +1492,7 @@ escape 10;
 }
 
 Test { [[
-var int a;
+var int a = 0;
 async do
     emit 1min;
     escape 10;
@@ -3720,6 +3725,7 @@ escape ret;
 
 Test { [[
 var int[2] v;
+v[0] = 1;
 var int ret;
 par/or do
     ret = v[0];
@@ -7969,7 +7975,7 @@ end;
 
 Test { [[
 event int a;
-var int v,aa;
+var int v,aa=1;
 loop do
     par do
         v = aa;
@@ -7987,7 +7993,7 @@ end;
 Test { [[
 input int A;
 event int b;
-var int a,v;
+var int a=1,v;
 par do
     loop do
         v = a;
@@ -11994,6 +12000,16 @@ end;
 
 Test { [[
 var int v=2;
+async (v) do
+    var int a = v;
+end;
+escape v;
+]],
+    run = 2,
+}
+
+Test { [[
+var int v=2;
 var int x=v;
 var int* px = &x;
 async (px, v) do
@@ -12032,7 +12048,7 @@ Test { [[
 input void F;
 var int v=2;
 var int ret;
-var int* pret;
+var int* pret = &ret;
 par/or do
     async (pret,v) do        // nd
         *pret = v + 1;
@@ -13602,7 +13618,7 @@ Test { [[
 loop do
     var int* a;
     do
-        var int* b;
+        var int* b = null;
         finalize
             a = b;
         with
@@ -13709,7 +13725,7 @@ Test { [[
 native _f();
 native do void f () {} end
 
-var void* p;
+var void* p = null;
 _f(p!=null) finalize with nothing;
     end;
 escape 1;
@@ -13721,9 +13737,9 @@ escape 1;
 Test { [[
 native _f();
 do
-    var int* p1;
+    var int* p1 = null;
     do
-        var int* p2;
+        var int* p2 = null;
         _f(p1, p2);
     end
 end
@@ -13734,9 +13750,9 @@ escape 1;
 Test { [[
 native _f();
 do
-    var int* p1;
+    var int* p1 = null;
     do
-        var int* p2;
+        var int* p2 = null;
         _f(p1, p2);
     end
 end
@@ -14782,7 +14798,7 @@ escape 1;
 }
 
 Test { [[
-var int* p1;
+var int* p1 = null;
 do
     var int* p;
     event int* e;
@@ -14973,7 +14989,7 @@ class T_VerticalDoor with
 do
 end
 
-var _vldoor_t* door;
+var _vldoor_t* door = null;
 do
     every door in T_VERTICAL_DOOR do
         spawn T_VerticalDoor with
@@ -15130,6 +15146,7 @@ end;
     props = 'line 2 : not permitted inside `async´',
 }
 
+]===]
 Test { [[
 var int a;
 var int* pa = &a;

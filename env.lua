@@ -247,7 +247,7 @@ function _ENV.getvar (id, blk)
         if blk.tag=='Async' or blk.tag=='Thread' then
             local vars = unpack(blk)    -- VarList
             if not (vars and vars[id] and vars[id][1]) then
-                return nil  -- async boundary: stop unles declared with `&´
+                return nil  -- async boundary: stop unless declared with `&´
             end
         elseif blk.tag == 'Block' then
             for i=#blk.vars, 1, -1 do   -- n..1 (hidden vars)
@@ -350,6 +350,7 @@ F = {
             local vars, blk = unpack(me.__par)
             if vars then
                 -- { &1, var2, &2, var2, ... }
+-- TODO: make on adj.lua ?
                 for i=1, #vars, 2 do -- create new variables for params
                     local isRef, n = vars[i], vars[i+1]
                     local var = n.var
