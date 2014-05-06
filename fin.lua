@@ -31,6 +31,8 @@ F = {
             fr = fr[1]
         end
 
+        -- Pointer assignments may require finalization
+
         if _TP.deref(to.tp,true) and _TP.deref(fr.tp,true) then
 
             -- "req" has the possibility to be "true"
@@ -46,17 +48,6 @@ F = {
 
             -- Normal assignments depend on the __depths
             else
-                if fr.__ast_fr then
-                    -- (a,b) = await X;
-                    ----
-                    -- var t* p;        -- wrong scope (p is a local)
-                    -- p = await X;     -- right scope (where X is defined)
-                    -- a = p:_1;
-                    -- b = p:_2;
-                    fr = fr.__ast_fr
-                        -- lost pointer "tp"
-                end
-
                 -- var T t with
                 --  this.x = y;     -- blk of this? (same as block of t)
                 -- end;
