@@ -333,7 +333,7 @@ F = {
     _Iter_pre = function (me)
         local to_tp, to_id, fr_exp, blk = unpack(me)
 
-        local fr_id = '_i'..me.n
+        local fr_id = '_iter_'..me.n
         local fr_tp = '_tceu_org*'
 
         local fr_fvar = function() return node('Var', me.ln, fr_id) end

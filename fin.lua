@@ -1,19 +1,19 @@
 function node2blk (node)
     if not node.fst then
-        return _AST.root
+        return _MAIN.blk_ifc
     elseif node.fst == '_' then
-        return _AST.root
+        return _MAIN.blk_ifc
     elseif node.fst == 'global' then
-        return _AST.root
+        return _MAIN.blk_ifc
     else
         return node.fst.blk
     end
 end
 
 -- Tracks "access to awoken pointer":
-local AWAITS = {
-    --[var] = false,  -- track variable from an await that needs finalization
-    --[var] = true,   -- tracked variable and another "await" happened
+local TRACK = {
+    --[var] = false,  -- track acess to pointer "var" from assignment
+    --[var] = true,   -- another "await" happened while tracking "var"
                       --   now, any access to "var" yields error
 }
 
@@ -22,166 +22,216 @@ F = {
         local op, fr, to = unpack(me)
         to = to or _AST.iter'SetBlock'()[1]
 
-        local cls = CLS()
-        local to_blk = node2blk(to)
-        local req = false
-
-        -- Spawn, New, Thread, EmitExt
         if fr.tag == 'Ref' then
-            fr = fr[1]
+            fr = fr[1]  -- Spawn, New, Thread, EmitExt
         end
 
-        -- Pointer assignments may require finalization
+        local cls = CLS()
 
-        if _TP.deref(to.tp,true) and _TP.deref(fr.tp,true) then
+        --
+        -- NON-POINTER ATTRIBUTIONS (always safe)
+        --
 
-            -- "req" has the possibility to be "true"
+        if not (_TP.deref(to.tp,true) and _TP.deref(fr.tp,true)) then
+            ASR(op == '=', me, 'invalid operator')
+            ASR(not me.fin, me, 'attribution does not require `finalize´')
+            return
+        end
 
-            -- For all "awaits", any pointer assignment requires finalization
-            -- For "new" too, because life is dynamic (terminates with their bodies)
-            if string.sub(fr.tag,1,5)=='Await' or fr.__ast_fr
-            or fr.tag=='New' then
-                req = true
-                if fr.__ast_fr then
-                    fr = fr.__ast_fr
-                end
+        --
+        -- POINTER ATTRIBUTIONS
+        --
 
-            -- Normal assignments depend on the __depths
+        -- iterators are safe
+        if fr.ref and fr.ref.var and string.sub(fr.ref.var.id,1,5)=='_iter'
+        or to.ref and to.ref.var and string.sub(to.ref.var.id,1,5)=='_iter'
+        then
+            return
+        end
+
+        -- constants are safe
+        if fr.sval then
+            ASR(op == '=', me, 'invalid operator')
+            ASR(not me.fin, me, 'attribution does not require `finalize´')
+            return
+        end
+
+        -- NON-CONSTANT ATTRIBUTIONS
+
+        -- TO_BLK: block/scope for "to"
+        local to_blk
+        local constr = _AST.iter'Dcl_constr'()
+        if constr then
+            -- var T t with
+            --  this.x = y;     -- blk of this is the same as block of t
+            -- end;
+            -- spawn T with
+            --  this.x = y;     -- blk of this is the same spawn/new pool
+            -- end
+            local dcl = _AST.iter'Dcl_var'()
+            if dcl then
+                to_blk = dcl.var.blk
             else
-                -- var T t with
-                --  this.x = y;     -- blk of this? (same as block of t)
-                -- end;
-                -- spawn T with
-                --  this.x = y;     -- blk of this? (same as parent spawn/new)
-                -- end
-                local constr = _AST.iter'Dcl_constr'()
-                if constr then
-                    local dcl = _AST.iter'Dcl_var'()
-                    if dcl then
-                        to_blk = dcl.var.blk
-                    else
-                        assert(constr.__par.tag=='New' or
-                               constr.__par.tag=='Spawn')
-                        local _,pool,_ = unpack(constr.__par)
-                        to_blk = pool.ref.var.blk
-                    end
+                assert(constr.__par.tag=='New' or
+                       constr.__par.tag=='Spawn')
+                local _,pool,_ = unpack(constr.__par)
+                to_blk = pool.ref.var.blk
+            end
+        else
+            -- block where variable is defined
+            to_blk = node2blk(to)
+        end
+
+        -- Assignments that outlive function invocations are always unsafe.
+        if _AST.iter'Dcl_fun'() then
+            -- to a class field
+            if to.ref.tag=='Nat' or to_blk==cls.blk_ifc or to_blk==cls.blk_body 
+                then
+                ASR(op == ':=', me, 'unsafe pointer attribution')
+
+                if to.ref.tag ~= 'Nat' then
+                    -- must be hold
+                    local dcl = _AST.iter'Dcl_fun'()
+                    local _, _, ins, _, _, _ = unpack(dcl)
+                    ASR(ins[fr.ref.var.funIdx][1], me, 'parameter must be `hold´')
                 end
+            else
+                ASR(op == '=', me, 'invalid operator')
+            end
+        end
 
-                if fr.tag == 'Op2_call' then
-                    -- Maximum pointer __depth that the function can return.
-                    -- Default is the lowest __depth, i.e., any global pointer.
-                    local fr_max_out = _AST.root
+        if fr.ref and fr.ref.tag=='Op2_call' then
+            -- A pure call returns, in the worst case, a pointer to a the
+            -- parameter with biggest scope.
+            -- We set "fr" to it:
+            --      int* a = _f(ptr);   // a = ptr
+            --      int* a = _f(&b);    // a = b
+            if fr.ref.c.mod == 'pure' then
+                -- Minimum pointer __depth that the function can receive.
+                -- Default is the same as "to", i.e., as minimum as target variable.
+                local fr_min     = to     -- max * __depth passed as parameter
+                local fr_min_blk = node2blk(to)
 
-                    -- Minimum pointer __depth that the function can receive.
-                    -- Default is the same as "to", i.e., as minimum as target variable.
-                    local fr_min_in  = to_blk     -- max * __depth passed as parameter
-
-                    local _, _, exps, _ = unpack(fr)
-                    for _, exp in ipairs(exps) do
-                        local blk = node2blk(exp)
-                        if blk.__depth < fr_min_in.__depth then
-                            if not (exp.const or
-                                    exp.c and exp.c.mod=='constant') then
-                                fr_min_in = blk
+                local _, _, exps, _ = unpack(fr.ref)
+                for _, exp in ipairs(exps) do
+                    if _TP.deref(exp.tp) then
+                        if exp.ref then         -- skip constants
+                            if exp.ref.amp then
+                                if node2blk(exp.ref).__depth < fr_min_blk.__depth then
+                                    fr_min = exp.ref
+                                end
+                            else
+                                fr_min = exp    -- non-ref access (worst case)
+                                break           -- we don't know the scope
                             end
                         end
                     end
-
-                    -- pure function never requires finalization
-                    -- int* pa = _fopen();  -- pa(n) fin must consider _RET(_)
-                    if fr.c.mod~='pure' and to_blk.__depth>fr_max_out.__depth then
-                        req = to_blk
-                    end
-                elseif fr.tag == 'RawExp' then
-                    -- int* pa = { new X() };
-                    if to_blk.__depth > _AST.root.__depth then
-                        req = to_blk
-                    end
+                end
+                -- fr_min holds minimum depth (most dangerous "fr")
+                if to_blk.__depth >= fr_min_blk.__depth then
+                    ASR(op == '=', me, 'invalid operator')
+                    ASR(not me.fin, me,
+                        'attribution does not require `finalize´')
                 else
-                    local fr_blk = node2blk(fr)
-
-                    -- int a; pa=&a;    -- `a´ termination must consider `pa´
-                    if to_blk.__depth < fr_blk.__depth then
-                        req = fr_blk
-
-                        -- class do int* a1; this.a2=a1; end (a1 is also top-level)
-                        if to_blk.__depth == cls.blk_ifc.__depth and
-                           fr_blk.__depth == cls.blk_body.__depth then
-                            req = false
-                        end
+                    ASR((op==':=') or me.fin, me,
+                        'attribution requires `finalize´')
+                    if me.fin then
+                        fr_min_blk.fins = fr_min_blk.fins or {}
+                        table.insert(fr_min_blk.fins, 1, me.fin)
                     end
                 end
+                return
+
+            -- We assume that a impure function that returns a global pointer
+            -- creates memory (e.g. malloc, fopen):
+            --      int* pa = _fopen();
+            -- In this case, the memory persists when the local goes out of
+            -- scope, hence, we enforce finalization.
+            else
+                ASR((op==':=') or me.fin, me,
+                        'attribution requires `finalize´')
+                if me.fin then
+                    to_blk.fins = to_blk.fins or {}
+                    table.insert(to_blk.fins, 1, me.fin)
+                end
+                return
             end
         end
 
-        -- impossible to run finalizers on threads
-        if _AST.iter'Thread'() then
-            req = false
+        if fr.tag == 'RawExp' then
+            -- We assume that a RawExp that returns a global pointer
+            -- creates memory (e.g. { new T }):
+            --      int* pa = { new T() };
+            -- In this case, the memory persists when the local goes out of
+            -- scope, hence, we enforce finalization.
+            ASR((op==':=') or me.fin, me,
+                    'attribution requires `finalize´')
+            if me.fin then
+                to_blk.fins = to_blk.fins or {}
+                table.insert(to_blk.fins, 1, me.fin)
+            end
+            return
+        end
 
-        --[[
-        -- Inside functions the assignment must be from a "hold" parameter
-        -- to a class field.
-        -- They cannot have finalizers because different calls will have
-        -- different scopes for the parameters.
-        --]]
-        elseif _AST.iter'Dcl_fun'() then
-            local dcl = _AST.iter'Dcl_fun'()
-            if req then
-                if op ~= ':=' then
-                    -- to a class field
-                    ASR(to_blk == cls.blk_ifc or
-                        to_blk == cls.blk_body,
-                            me, 'invalid attribution')
-                    -- from a parameter
-                    ASR(fr.ref.var and fr.ref.var.funIdx,
-                            me, 'invalid attribution')
+        -- new / awaits are unsafe
+        -- int* v = await e;
+        if string.sub(fr.tag,1,5)=='Await' or fr.tag=='New' then
+            if op == '=' then
+                --local var = to.ref.var.ast_original_var or to.ref.var
+                TRACK[to.ref.var.ast_original_var or to.ref.var] = false
+                --ASR(var.blk == _AST.iter'Block'(), me,
+                    --'invalid block for awoken pointer "'..var.id..'"')
+            end
+            return
+        end
 
-                    -- must be hold
-                    local _, _, ins, _, _, _ = unpack(dcl)
-                    ASR(ins[fr.ref.var.funIdx][1],
-                        me, 'parameter must be `hold´')
+        -- non-ref access are unsafe
+        -- pa = pb;  // I have no idea what "pb" refers to and its scope
+        if not (fr.ref and fr.ref.amp) then
+            if op == '=' then
+                if to.org then
+                    -- cannot track access inside another class, yield error now!
+                    ASR(op == ':=', me, 'unsafe pointer attribution')
+                else
+                    TRACK[to.ref.var or to.ref.id] = false
                 end
-            else
-                ASR(op == '=', me,
-                    'attribution does not require `finalize´')
             end
+            --ASR(op == ':=', me, 'unsafe pointer attribution')
+            ASR(not me.fin, me, 'attribution does not require `finalize´')
+            return
+        end
 
-        --[[
-        -- For awaits, always yield error.
-        -- Do not allow finalization.
-        -- Verify if the receiving variable is not accessed after another
-        -- await.
-        -- Verify if the receiving variable is acessed in the same block it is 
-        -- defined.
-        --]]
-        elseif string.sub(fr.tag,1,5)=='Await' or fr.tag=='New' then
-            if req then
-                local var = to.ref.var.ast_original_var or to.ref.var
-                AWAITS[var] = false
-                ASR(var.blk == _AST.iter'Block'(), me,
-                    'invalid block for awoken pointer "'..var.id..'"')
-            end
-            ASR(op ~= ':=', me, 'invalid operator')
+        -- REF ATTRIBUTIONS
 
+        -- OK: "fr" `&´ reference has bigger scope than "to"
+        -- int a; int* pa; pa=&a;
+        -- int a; do int* pa; pa=&a; end
+        local fr_blk = node2blk(fr)
+        if to_blk.__depth >= node2blk(fr).__depth
+        or to_blk.__depth==cls.blk_ifc.__depth and fr_blk.__depth==cls.blk_body.__depth
+        then
+            ASR(op == '=', me, 'invalid operator')
+            ASR(not me.fin, me, 'attribution does not require `finalize´')
         else
-            if req then
-                ASR((op==':=') or me.fin, me,
-                        'attribution requires `finalize´')
-            else
-                ASR((op=='=') and (not me.fin), me,
-                        'attribution does not require `finalize´')
-            end
-
-            if me.fin and me.fin.active then
-                req.fins = req.fins or {}
-                table.insert(req.fins, 1, me.fin)
+            ASR((op==':=') or me.fin, me,
+                    'attribution requires `finalize´')
+            if me.fin then
+                fr_blk.fins = fr_blk.fins or {}
+                table.insert(fr_blk.fins, 1, me.fin)
             end
         end
     end,
 
+    Nat = function (me)
+        if TRACK[me.id] ~= true then
+            return  -- no await happened yet
+        end
+        -- invalid access!
+        ASR(false, me, 'invalid access to pointer across `await´')
+    end,
     Var = function (me)
-        if not AWAITS[me.var] then
-            return
+        if TRACK[me.var] ~= true then
+            return  -- no await happened yet
         end
 
         -- possible dangling pointer "me.var" is accessed across await
@@ -197,12 +247,14 @@ F = {
         end
 
         -- invalid access!
-        ASR(false, me, 'invalid access to awoken pointer "'..me.var.id..'"')
+        ASR(false, me, 'invalid access to pointer across `await´')
     end,
 
     AwaitInt = function (me)
-        for var, _ in pairs(AWAITS) do
-            AWAITS[var] = true
+        if me.tl_awaits then
+            for var, _ in pairs(TRACK) do
+                TRACK[var] = true
+            end
         end
     end,
     AwaitExt = 'AwaitInt',
@@ -211,6 +263,10 @@ F = {
     AwaitS   = 'AwaitInt',
     Async    = 'AwaitInt',
     Thread   = 'AwaitInt',
+    ParOr    = 'AwaitInt',
+    ParAnd   = 'AwaitInt',
+    Par      = 'AwaitInt',
+    Loop     = 'AwaitInt',
 
     Finalize_pre = function (me, set, fin)
         if not fin then

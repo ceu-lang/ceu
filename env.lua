@@ -850,8 +850,8 @@ error'oi'
     --------------------------------------------------------------------------
 
     Op2_call = function (me)
-        local _, f, _, _ = unpack(me)
-        me.tp  = '_'
+        local _, f, p, _ = unpack(me)
+        me.tp  = f.var and f.var.fun and f.var.fun.out or '_'
         me.fst = '_'
         me.ref = me
         local id
@@ -955,6 +955,7 @@ error'oi'
         me.tp   = e1.tp..'*'
         me.lval = false
         me.ref  = e1.ref
+        me.ref.amp = true
         me.fst  = e1.fst
     end,
 

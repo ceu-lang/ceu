@@ -95,7 +95,15 @@ function _TP.isNumeric (tp, c)
 end
 
 function _TP.deref (tp, c)
-    return string.match(tp,'(.-)%*$') or (c and _TP.ext(tp,c))
+    local ptr = string.match(tp,'(.-)%*$')
+    if ptr then
+        return ptr
+    elseif c and _TP.ext(tp,c) then
+        return not (_ENV.c and _ENV.c[tp] and _ENV.c[tp].mod=='plain')
+            and tp
+    else
+        return false
+    end
 end
 
 function _TP.ext (tp, loc)
