@@ -455,10 +455,12 @@ F = {
     end,
 
     This = function (me)
+        local constr = unpack(me)
         local cls
 
-        local constr = _AST.iter'Dcl_constr'()
         if constr then
+            constr = _AST.iter'Dcl_constr'()
+            ASR(constr, me, 'invalid access to `_´')
             cls = constr.cls
         else
             cls = CLS()
@@ -645,6 +647,11 @@ error'oi'
 
     Var = function (me)
         local id = unpack(me)
+
+        -- '_' inside constructor becomes
+        if id == '_' and xxx then
+        end
+
         local blk = me.__adj_blk and assert(_AST.par(me.__adj_blk,'Block'))
                         or _AST.iter('Block')()
         local var = _ENV.getvar(id, blk)

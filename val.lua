@@ -83,7 +83,8 @@ F =
     end,
 
     This = function (me)
-        if _AST.iter'Dcl_constr'() then
+        local constr = unpack(me)
+        if constr then
             me.val = '__ceu_org'    -- set when calling constr
         else
             me.val = '_ceu_go->org'

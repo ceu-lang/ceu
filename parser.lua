@@ -443,7 +443,7 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                * EKEY'with' * V'BlockI' * V'__Do'
 
     , Global  = KEY'global'
-    , This    = KEY'this'
+    , This    = KEY'this' * Cc(false)
 
     , Ext     = V'__ID_ext'
     , Var     = V'__ID_var'

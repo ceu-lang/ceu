@@ -762,7 +762,7 @@ F = {
             local vars = node('VarList', me.ln, node('Var',me.ln,id_req))
             local sets = {
                 node('_Set', me.ln,
-                    node('Op2_.', me.ln, '.', node('This',me.ln), id_req),
+                    node('Op2_.', me.ln, '.', node('This',me.ln,true), id_req),
                     '=', 'SetExp',
                     node('Var', me.ln, id_req))
             }
@@ -773,7 +773,9 @@ F = {
                 dcls[#dcls+1] = node('Dcl_var', me.ln, 'var', tp, false, _id)
                 vars[#vars+1] = node('Var', me.ln, _id)
                 sets[#sets+1] = node('_Set', me.ln,
-                                    node('Op2_.', me.ln, '.', node('This',me.ln), id),
+                                    node('Op2_.', me.ln, '.',
+                                        node('This',me.ln,true),
+                                        id),
                                     '=', 'SetExp',
                                     node('Var', me.ln, _id))
             end
@@ -1162,6 +1164,20 @@ F = {
         return node('Op2_.', me.ln, '.',
                 node('Op1_*', me.ln, '*', ptr),
                 fld)
+    end,
+
+-- Var ------------------------------------------------------------
+
+    --[[
+    --  var T xx with
+    --      _.x = 1;
+    --  end
+    --]]
+    Var_pre = function (me)
+        local id = unpack(me)
+        if id == '_' then
+            return _AST.node('This', me.ln, true)
+        end
     end,
 
 -- RefVarList ------------------------------------------------------------

@@ -905,7 +905,8 @@ var int _ = 2;
 
 escape __;
 ]],
-    env = 'line 6 : variable/event "_" is not declared',
+    env = 'line 6 : invalid access to `_´',
+    --env = 'line 6 : variable/event "_" is not declared',
     --run = 3,
 }
 Test { [[
@@ -15184,7 +15185,7 @@ var _vldoor_t* door = null;
 do
     every door in T_VERTICAL_DOOR do
         spawn T_VerticalDoor with
-            this.v = door;
+            _.v = door;
         end;
     end
 end
@@ -20362,7 +20363,7 @@ var int i = 0;
 
 var T[2] y with
     i = i + 1;
-    this.a = i*10;
+    _.a = i*10;
 end;
 
 var T x;
@@ -20866,7 +20867,7 @@ class T with
 do
 end
 var T t with
-    this.v = 10;
+    _.v = 10;
 end;
 escape t.v;
 ]],
@@ -20881,7 +20882,7 @@ do
     this.v = 100;
 end
 var T t with
-    this.v = 10;
+    _.v = 10;
 end;
 escape t.v;
 ]],
@@ -20899,13 +20900,13 @@ end
 class T with
     var int v=5;
     var U u with
-        this.x = 20;
+        _.x = 20;
     end;
 do
     this.v = 100;
 end
 var T t with
-    this.v = 10;
+    _.v = 10;
 end;
 escape t.v + t.u.x;
 ]],
@@ -20925,13 +20926,13 @@ class T with
     var U* u;
 do
     var U uu with
-        this.x = 20;
+        _.x = 20;
     end;
     this.u = &uu;
     this.v = 100;
 end
 var T t with
-    this.v = 10;
+    _.v = 10;
 end;
 escape t.v + t.u:x;
 ]],
@@ -21369,7 +21370,7 @@ end
 var T t with
     do
         var _char* ptr=null;
-        this.ptr = ptr;
+        _.ptr = ptr;
     end
 end;
 escape 1;
@@ -23373,7 +23374,7 @@ end
 var int ret=1;
 do
     var T t with
-        this.x = 10;
+        _.x = 10;
     end;
 
     await t.ok;
@@ -23414,7 +23415,7 @@ end
 var int ret=0;
 do
     var T t with
-        this.x = 10;
+        _.x = 10;
     end;
     var T u;
     await t.ok;
@@ -23609,7 +23610,7 @@ do
 end
 pool T[1] ts;
 var int ok1 = spawn T in ts with
-                this.v = 10;
+                _.v = 10;
               end;
 var int ok2 = 0;// spawn T in ts;
 var int ret = 0;
@@ -23629,7 +23630,7 @@ do
 end
 pool T[1] ts;
 var int ok1 = spawn T in ts with
-                this.v = 10;
+                _.v = 10;
               end;
 var int ok2 = 0;// spawn T in ts;
 var int ret = 0;
@@ -23683,11 +23684,11 @@ do
 end
 pool T[] ts;
 spawn T in ts with
-    this.v = 10;
+    _.v = 10;
     _V = _V + 10;
 end;
 spawn T with
-    this.v = 20;
+    _.v = 20;
     _V = _V + 20;
 end;
 var int ret = 0;
@@ -23710,11 +23711,11 @@ do
 end
 pool T[] ts;
 spawn T with
-    this.v = 10;
+    _.v = 10;
     _V = _V + 10;
 end;
 spawn T in ts with
-    this.v = 20;
+    _.v = 20;
     _V = _V + 20;
 end;
 var int ret = 0;
@@ -23737,11 +23738,11 @@ do
 end
 pool T[] ts;
 spawn T in ts with
-    this.v = 10;
+    _.v = 10;
     _V = _V + 10;
 end;
 spawn T in ts with
-    this.v = 20;
+    _.v = 20;
     _V = _V + 20;
 end;
 var int ret = 0;
@@ -24180,7 +24181,7 @@ do
 end
 
 var T t1, t2 with
-    this.a = 10;
+    _.a = 10;
 end;
 
 escape t1.b;
@@ -24197,12 +24198,37 @@ do
 end
 
 var T[2] t with
-    this.a = 10;
+    _.a = 10;
 end;
 
 escape t[0].b + t[1].b;
 ]],
     run = 40;
+}
+
+Test { [[
+interface I with
+end
+
+class U with
+    var I* i;
+do
+end
+
+class T with
+    var int ret = 0;
+do
+    var U u with
+        _.i = &this;
+    end;
+    this.ret = u.i == &this;
+end
+
+var T t;
+
+escape t.ret;
+]],
+    run = 1,
 }
 
 Test { [[
@@ -24231,7 +24257,7 @@ do
 end
 
 var T t with
-    this.a = 10;
+    _.a = 10;
 end;
 
 escape t.b;
@@ -24249,7 +24275,7 @@ end
 
 var T* t =
     new T with
-        this.a = 10;
+        _.a = 10;
     end;
 
 escape t:b;
@@ -24444,7 +24470,7 @@ do
 end
 do
     spawn T with
-        this.a = 10;
+        _.a = 10;
     end;
 end
 escape _V;
@@ -24561,7 +24587,7 @@ do
     loop i in 200 do
         var int ok =
             spawn T in ts with
-                this.inc = 1;
+                _.inc = 1;
             end;
         if not ok then
             v = v + 1;
@@ -24584,7 +24610,7 @@ do
     var int i = 1;
     every 1s do
         spawn HelloWorld with
-            this.id = i;
+            _.id = i;
         end;
         i = i + 1;
     end
@@ -26074,7 +26100,7 @@ end
 do
     var _s* p = null;
     var T* ui = new T with
-        this.ptr = p;   // ptr > p
+        _.ptr = p;   // ptr > p
     end;
 end
 escape 10;
@@ -26093,7 +26119,7 @@ do
     var void* p = null;
     var T* ui;
     ui = new T in ts with
-        this.ptr = p;
+        _.ptr = p;
     end;
 end
 escape 10;
@@ -26116,7 +26142,7 @@ end
 do
     var _s* p = null;
     var T* ui = new T with
-        this.ptr = p;
+        _.ptr = p;
     end;
 end
 
@@ -26142,7 +26168,7 @@ do
     var _s* p = null;
     do
         ui = new T with
-            this.ptr = p;
+            _.ptr = p;
         end;
     end
 end
@@ -26168,7 +26194,7 @@ do
     loop i in 10 do
         var _s* p = null;
         spawn T with
-            this.ptr = p;
+            _.ptr = p;
         end;
         await 1s;
     end
@@ -26230,7 +26256,7 @@ do
         var _s* p = null;
         spawn T with
             finalize
-                this.ptr = p;
+                _.ptr = p;
             with
                 _V = _V + 1;
             end
@@ -26268,7 +26294,7 @@ do
     var _s* p = null;
     loop i in 10 do
         ui = new T with
-            this.ptr = p;
+            _.ptr = p;
         end;
         await 1s;
     end
@@ -26303,7 +26329,7 @@ do
     loop i in 10 do
         ui = new T with
             finalize
-                this.ptr = p;
+                _.ptr = p;
             with
                 _V = _V + 1;
             end
@@ -26342,7 +26368,7 @@ do
         var _s* p = null;
         var T* ui = new T with
             finalize
-                this.ptr = p;   // p == ptr
+                _.ptr = p;   // p == ptr
             with
                 _V = _V + 1;
             end
@@ -26492,7 +26518,7 @@ par/or do
         pool T[] ts;
         loop i do
             spawn T in ts with
-                this.c = i;
+                _.c = i;
             end;
             await 1s;
         end
@@ -26530,7 +26556,7 @@ par/or do
             pool T[] ts;
             loop i do
                 spawn T in ts with
-                    this.c = i;
+                    _.c = i;
                 end;
                 await 1s;
             end
@@ -26575,7 +26601,7 @@ par/or do
         loop i do
             pause/if pse do
                 spawn T in ts with
-                    this.c = i;
+                    _.c = i;
                 end;
                 await 1s;
             end
@@ -26620,7 +26646,7 @@ par/or do
         loop i do
             pause/if pse do
                 spawn T in ts with
-                    this.c = i;
+                    _.c = i;
                 end;
                 await 1s;
             end
@@ -26666,7 +26692,7 @@ par/or do
             pool T[] ts;
             loop i do
                 spawn T in ts with
-                    this.c = i;
+                    _.c = i;
                 end;
                 await 1s;
             end
@@ -26712,7 +26738,7 @@ par/or do
         loop i do
             pause/if pse do
                 spawn T in ts with
-                    this.c = i;
+                    _.c = i;
                 end;
                 await 1s;
             end
@@ -26757,7 +26783,7 @@ par/or do
             pool T[] ts;
             loop i do
                 spawn T in ts with
-                    this.c = i;
+                    _.c = i;
                 end;
                 await 1s;
             end
@@ -26824,7 +26850,7 @@ class T with
 do
 end
 var T* t = new T with
-             this.v = 10;
+             _.v = 10;
            end;
 //free(t);
 escape t:v;
@@ -26846,7 +26872,7 @@ end
 var int ret = 0;
 do
     spawn T in ts with
-        this.v = 10;
+        _.v = 10;
     end;
     async do end;
     loop (I*)t in ts do
@@ -27926,13 +27952,13 @@ pool T[] ts;
 var int ret = 0;
 do
     spawn T in ts with
-        this.v = 1;
+        _.v = 1;
     end;
     spawn T in ts with
-        this.v = 2;
+        _.v = 2;
     end;
     spawn T in ts with
-        this.v = 3;
+        _.v = 3;
     end;
 
     loop (I*)i in ts do
@@ -28010,13 +28036,13 @@ end
 var int ret = 0;
 do
     spawn T with
-        this.v = 1;
+        _.v = 1;
     end;
     spawn U with
-        this.v = 2;
+        _.v = 2;
     end;
     spawn T in ts with
-        this.v = 3;
+        _.v = 3;
     end;
 
     loop (I*)i in ts do
@@ -28044,11 +28070,11 @@ pool I[] is;
 var int ret = 0;
 
 spawn T with
-    this.v = 1;
+    _.v = 1;
 end;
 
 spawn T in is with
-    this.v = 3;
+    _.v = 3;
 end;
 
 loop (I*)i in is do
@@ -28083,13 +28109,13 @@ end
 var int ret = 0;
 do
     spawn T with
-        this.v = 1;
+        _.v = 1;
     end;
     spawn U in is with
-        this.v = 2;
+        _.v = 2;
     end;
     spawn T in is with
-        this.v = 3;
+        _.v = 3;
     end;
 
     loop (I*)i in is do
@@ -28139,13 +28165,13 @@ pool T[] ts;
 var int ret = 1;
 do
     spawn T in ts with
-        this.v = 1;
+        _.v = 1;
     end;
     spawn T in ts with
-        this.v = 2;
+        _.v = 2;
     end;
     spawn T in ts with
-        this.v = 3;
+        _.v = 3;
     end;
 
     loop (I*)i in ts do
@@ -28176,13 +28202,13 @@ pool T[] ts;
 var int ret = 1;
 do
     spawn T in ts with
-        this.v = 1;
+        _.v = 1;
     end;
     spawn T in ts with
-        this.v = 2;
+        _.v = 2;
     end;
     spawn T in ts with
-        this.v = 3;
+        _.v = 3;
     end;
 
     loop (I*)i in ts do
@@ -28221,7 +28247,7 @@ do
         var int i=1;
         every 1s do
             spawn T in ts with
-                this.v = i;
+                _.v = i;
                 i = i + 1;
             end;
         end
@@ -29192,7 +29218,7 @@ do
 end
 
 var T t with
-    this.f2 = _f2;
+    _.f2 = _f2;
 end;
 escape t.ret1 + t.ret2;
 ]],
@@ -29224,7 +29250,7 @@ do
 end
 
 var T t with
-    this.f2 := _f2;
+    _.f2 := _f2;
 end;
 escape t.ret1 + t.ret2;
 ]],
@@ -30241,7 +30267,7 @@ end
 pool T[] ts;
 
 spawn T in ts with
-    this.v = 10;
+    _.v = 10;
 end;
 
 var int ret = 0;
@@ -30268,7 +30294,7 @@ end
 pool T[1] ts;
 
 spawn T in ts with
-    this.v = 10;
+    _.v = 10;
 end;
 
 var int ret = 0;
@@ -30295,7 +30321,7 @@ end
 pool T[] ts;
 
 spawn T in global:ts with
-    this.v = 10;
+    _.v = 10;
 end;
 
 var int ret = 0;
@@ -30322,7 +30348,7 @@ end
 pool T[] ts;
 
 spawn T in global:ts with
-    this.v = 10;
+    _.v = 10;
 end;
 
 var int ret = 0;
@@ -30375,10 +30401,10 @@ class U with
     var int v = 0;
 do
     spawn T in global:ts with
-        this.v = 10;
+        _.v = 10;
     end;
     spawn T in global:ts with
-        this.v = 20;
+        _.v = 20;
     end;
 
     loop (T*)t in global:ts do
@@ -30419,10 +30445,10 @@ class U with
     var int v = 0;
 do
     spawn T in global:ts with
-        this.v = 10;
+        _.v = 10;
     end;
     spawn T in global:ts with
-        this.v = 20;
+        _.v = 20;
     end;
 
     loop (T*)t in global:ts do
@@ -30472,10 +30498,10 @@ var int ret = 0;
 do
     var U u;
     spawn T in u.ts with
-        this.v = 10;
+        _.v = 10;
     end;
     spawn T in u.ts with
-        this.v = 20;
+        _.v = 20;
     end;
 
     loop (T*)t in u.ts do
@@ -30516,10 +30542,10 @@ var int ret = 0;
 do
     var U u;
     spawn T in u.ts with
-        this.v = 10;
+        _.v = 10;
     end;
     spawn T in u.ts with
-        this.v = 20;
+        _.v = 20;
     end;
 
     loop (T*)t in u.ts do
@@ -30681,12 +30707,12 @@ end
 
 var T t;
 spawn U in t.us2 with
-    this.v = 1;
+    _.v = 1;
 end;
 
 var I* i = &t;
 spawn U in i:us2 with
-    this.v = 2;
+    _.v = 2;
 end;
 
 var int ret = 0;
@@ -30715,7 +30741,7 @@ var int ret = 0;
 
 par/or do
     var T t with
-        this.v = 10;
+        _.v = 10;
     end;
     async do end;
     emit e => &t;
@@ -30740,7 +30766,7 @@ var int ret = 0;
 
 par/or do
     var T t with
-        this.v = 10;
+        _.v = 10;
     end;
     async do end;
     emit e => &t;
@@ -30770,7 +30796,7 @@ var int ret = 0;
 
 par/or do
     var T t with
-        this.v = 10;
+        _.v = 10;
     end;
     async do end;
     emit e => &t;
@@ -30796,7 +30822,7 @@ do
 end
 
 var I* p = new T with
-    this.v = 10;
+    _.v = 10;
 end;
 escape p:v;
 ]],
@@ -30836,7 +30862,7 @@ var int ret = 0;
 par/and do
     async do end;
     var T t with
-        this.v = 10;
+        _.v = 10;
     end;
     emit e => &t;
     await 1s;
@@ -30870,7 +30896,7 @@ var int ret = 0;
 par/and do
     async do end;
     var T t with
-        this.v = 10;
+        _.v = 10;
     end;
     emit e => &t;
 with
@@ -30904,7 +30930,7 @@ var int ret = 0;
 par/and do
     async do end;
     var T t with
-        this.v = 10;
+        _.v = 10;
     end;
     emit e => &t;
     await 6s;
@@ -30939,7 +30965,7 @@ var int ret = 0;
 par/and do
     async do end;
     var T t with
-        this.v = 10;
+        _.v = 10;
     end;
     emit e => &t;
     await 6s;
@@ -30974,7 +31000,7 @@ par/and do
     async do end;
     pool T[] ts;
     var T* t = new T in ts with
-        this.v = 10;
+        _.v = 10;
     end;
     emit e => t;
     await 1s;
@@ -31009,7 +31035,7 @@ par/and do
     async do end;
     pool T[] ts;
     var T* t = new T in ts with
-        this.v = 10;
+        _.v = 10;
     end;
     emit e => t;
 with
@@ -31044,7 +31070,7 @@ par/and do
     async do end;
     pool T[] ts;
     var T* t = new T in ts with
-        this.v = 10;
+        _.v = 10;
     end;
     emit e => t;
     await 6s;
@@ -31080,7 +31106,7 @@ par/and do
     async do end;
     pool T[] ts;
     var T* t = new T in ts with
-        this.v = 10;
+        _.v = 10;
     end;
     emit e => t;
     await 6s;
@@ -31116,7 +31142,7 @@ par/and do
     async do end;
     pool T[] ts;
     var T* t = new T in ts with
-        this.v = 10;
+        _.v = 10;
     end;
     emit e => t;
 with
