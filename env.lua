@@ -117,7 +117,7 @@ function newtype (tp)
     end
 end
 
-function newvar (me, blk, pre, tp, arr, id)
+function newvar (me, blk, pre, tp, arr, id, isImp)
     for stmt in _AST.iter() do
         if stmt.tag=='Async' or stmt.tag=='Thread' then
             break   -- search until Async boundary
@@ -129,7 +129,7 @@ function newvar (me, blk, pre, tp, arr, id)
                 if var.id == id then
                     local fun = pre=='function' and stmt==CLS().blk_ifc -- dcl
                                                 and blk==CLS().blk_ifc  -- body
-                    WRN(fun or id=='_ok', me,
+                    WRN(fun or id=='_ok' or isImp, me,
                         'declaration of "'..id..'" hides the one at line '
                             ..var.ln[2])
                     --if (blk==CLS().blk_ifc or blk==CLS().blk_body) then
@@ -190,9 +190,9 @@ function newvar (me, blk, pre, tp, arr, id)
     return false, var
 end
 
-function newint (me, blk, pre, tp, id)
+function newint (me, blk, pre, tp, id, isImp)
     newtype(tp)
-    local has, var = newvar(me, blk, pre, 'void', false, id)
+    local has, var = newvar(me, blk, pre, 'void', false, id, isImp)
     if has then
         return true, var
     end
@@ -207,7 +207,7 @@ function newint (me, blk, pre, tp, id)
     return false, var
 end
 
-function newfun (me, blk, pre, rec, ins, out, id)
+function newfun (me, blk, pre, rec, ins, out, id, isImp)
     rec = not not rec
     local old = blk.vars[id]
     if old then
@@ -225,7 +225,7 @@ function newfun (me, blk, pre, rec, ins, out, id)
     local has, var = newvar(me, blk, pre,
                         '___typeof__(CEU_'..CLS().id..'_'..id..')',
                         -- TODO: _TP.c eats one '_'
-                       false, id)
+                       false, id, isImp)
     if has then
         return true, var
     end
@@ -358,7 +358,7 @@ F = {
 
                     if not isRef then
                         local _
-                        _,n.new = newvar(vars, blk, 'var', var.tp, nil, var.id)
+                        _,n.new = newvar(vars, blk, 'var', var.tp, nil, var.id, false)
                     end
                 end
             end
@@ -371,7 +371,7 @@ F = {
             for i, v in ipairs(inp) do
                 local hold, tp, id = unpack(v)
                 if tp ~= 'void' then
-                    local has,var = newvar(me, me, 'var', tp, false, id)
+                    local has,var = newvar(me, me, 'var', tp, false, id, false)
                     assert(not has)
                     var.isTmp  = true -- TODO: var should be a node
                     var.isFun  = true
@@ -561,7 +561,7 @@ F = {
             id = id..me.n
         end
         local has
-        has, me.var = newvar(me, _AST.iter'Block'(), pre, tp, arr, id)
+        has, me.var = newvar(me, _AST.iter'Block'(), pre, tp, arr, id, me.isImp)
         assert(not has or (me.var.read_only==nil))
         me.var.read_only = me.read_only
         if constr then
@@ -578,7 +578,7 @@ F = {
         ASR(tp=='void' or _TP.isNumeric(tp) or _TP.deref(tp) or _TP.isTuple(tp),
                 me, 'invalid event type')
         local _
-        _, me.var = newint(me, _AST.iter'Block'(), pre, tp, id)
+        _, me.var = newint(me, _AST.iter'Block'(), pre, tp, id, me.isImp)
     end,
 
     Dcl_fun = function (me)
@@ -593,7 +593,7 @@ F = {
         end
 
         local _
-        _, me.var = newfun(me, up, pre, rec, ins, out, id)
+        _, me.var = newfun(me, up, pre, rec, ins, out, id, me.isImp)
 
         -- "void" as parameter only if single
         if #ins > 1 then
@@ -674,7 +674,7 @@ error'oi'
             local cls = CLS()
             local tp = '___typeof__(CEU_'..cls.id..'_'..id..')'
             _ENV.c[tp] = { tag='type', id=tp }
-            newvar(me, false, _AST.iter'Block'(), 'var', tp..'*', false, id)
+            newvar(me, false, _AST.iter'Block'(), 'var', tp..'*', false, id, false)
             cls.c[id] = { tag=tag, id=id, mod=mod }
         else
             _ENV.c[id] = { tag=tag, id=id, len=len, mod=mod }
@@ -708,7 +708,8 @@ error'oi'
             if not (tp and _ENV.clss[tp]) then
                 local if_ = me[2][1][2]
                 assert(if_.tag == 'If')
-                if_[1] = _AST.node('NUMBER', me.ln, 1)
+                me[2][1][2] = if_[2]    -- changes "if" for the "await" (true branch)
+                --if_[1] = _AST.node('NUMBER', me.ln, 1)
             end
         end
     end,
@@ -1009,7 +1010,7 @@ error'oi'
                     me.tp = 'void'
                 end
             else
-                me.tp = '_'
+                me.tp = e1.tp --'_'
             end
             me.lval = e1.lval
             me.ref  = e1.ref

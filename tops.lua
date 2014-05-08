@@ -55,9 +55,10 @@ for _, cls in ipairs(_TOPS) do
                     local dcls2 = ifc.blk_ifc[1][1]
                     assert(dcls2.tag == 'BlockI')
                     for _, dcl2 in ipairs(dcls2) do
-                        assert(dcl2.tag ~= 'Dcl_imp')   -- impossible, I'm going in order
-                        dcls1[#dcls1+1] = _AST.copy(dcl2)
-                            -- fields from interface should go to the end indeed
+                        assert(dcl2.tag ~= 'Dcl_imp')   -- impossible because I'm going in order
+                        local new = _AST.copy(dcl2)
+                        dcls1[#dcls1+1] = new -- fields from interface should go to the end
+                        new.isImp = true      -- to avoid redeclaration warnings indeed
                     end
                 end
                 table.remove(dcls1, i) -- remove _Dcl_imp

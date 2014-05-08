@@ -586,6 +586,7 @@ _ceu_go->org->trls[ ]]..me.trl_fins[1]..[[ ].seqno = _ceu_app->seqno-1; /* awake
                     LINE(me, _TP.c(var.tp)..' '..V(var))
                 end
                 if var.isFun then
+                    -- function parameter
                     -- __ceu_a = a
                     LINE(me, ' = '..var.id)
                 end

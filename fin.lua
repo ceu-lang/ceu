@@ -83,17 +83,20 @@ F = {
         end
 
         -- Assignments that outlive function invocations are always unsafe.
-        if _AST.iter'Dcl_fun'() then
-            -- to a class field
-            if to.ref.tag=='Nat' or to_blk==cls.blk_ifc or to_blk==cls.blk_body 
-                then
+        local fun = _AST.iter'Dcl_fun'()
+        if fun then
+            -- to a class field, _NAT, or parameter
+            if to.ref.tag=='Nat' or to_blk==cls.blk_ifc
+                                 or to_blk==cls.blk_body
+            or to.ref.var and to.ref.var.isFun then
+                              -- function parameter
                 ASR(op == ':=', me, 'unsafe pointer attribution')
 
-                if to.ref.tag ~= 'Nat' then
+                if to_blk==cls.blk_ifc or to_blk==cls.blk_body then
                     -- must be hold
-                    local dcl = _AST.iter'Dcl_fun'()
-                    local _, _, ins, _, _, _ = unpack(dcl)
-                    ASR(ins[fr.ref.var.funIdx][1], me, 'parameter must be `hold´')
+                    local _, _, ins, _, _, _ = unpack(fun)
+                    ASR(ins[fr.ref.var.funIdx][1], me,
+                        'parameter must be `hold´')
                 end
             else
                 ASR(op == '=', me, 'invalid operator')

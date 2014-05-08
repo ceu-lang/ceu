@@ -573,6 +573,7 @@ escape 10;
 
 -------------------------------------------------------------------------------
 -- ??: working now
+]===]
 
 Test { [[
 interface I with
@@ -583,9 +584,8 @@ do
 end
 class U with
 do
-    var I* me = &this;
     var T move with
-        this.parent = me;
+        _.parent = &this;
     end;
 end
 escape 1;
@@ -603,32 +603,88 @@ do
     escape *p1;
 end
 ]],
-    run = 1,
-    -- *p1 deveria dar erro
+    --run = 1,
+    fin = 'line 7 : invalid access to pointer across `await´',
 }
 
 Test { [[
+native do
+    typedef int tp;
+end
 var _tp* v;
-_a := v;
+_a = v;
+await 1s;
 _b = _a;    // _a pode ter escopo menor e nao reclama de FIN
+escape 1;
+]],
+    fin = 'line 7 : invalid access to pointer across `await´',
+}
+
+Test { [[
+native plain _SDL_Rect, _SDL_Point;
+var _SDL_Point pos;
+
+var _SDL_Rect rect;
+    rect.x = pos.x;    // centered position
+    rect.y = pos.y;    // centered position
+await 1s;
+var _SDL_Rect r = rect;
+escape 1;
+]],
+    gcc = 'error: unknown type name ‘SDL_Point’',
+}
+
+Test { [[
+native plain _SDL_Rect, _SDL_Point;
+var _SDL_Point pos;
+
+var _SDL_Rect rect;
+    rect.x = (int)pos.x;    // centered position
+    rect.y = (int)pos.y;    // centered position
+await 1s;
+var _SDL_Rect r = rect;
+    r.x = r.x - r.w/2;
+    r.y = r.y - r.h/2;
+escape 1;
+]],
+    gcc = 'error: unknown type name ‘SDL_Point’',
+}
+
+Test { [[
+function (int id, void** o1, void** o2)=>int getVS do
+    if (*o1) then
+        return 1;
+    else/if (*o2) then
+        var void* tmp = *o1;
+        *o1 := *o2;
+        *o2 := tmp;
+            // tmp is an alias to "o1"
+        return 1;
+    else
+        //*o1 = NULL;
+        //*o2 = NULL;
+        return 0;
+    end
+end
 escape 1;
 ]],
     run = 1,
 }
 
 Test { [[
-var int ret;
-escape ret;
+class T with do end;
+pool T[] ts;
+loop (T*)t in ts do
+    await 1s;
+end
 ]],
-    src = 'line 2 : access to unitialized variable',
+    props = 'line 4 : `every´ cannot contain `await´',
 }
 
-
-do return end
+--do return end
 
 -------------------------------------------------------------------------------
 -- OK: well tested
-]===]
 
 Test { [[escape(1);]],
     _ana = {
@@ -29589,15 +29645,16 @@ var void* x;
 f((void*)5);
 escape _V==(void*)5;
 ]],
+    fin = 'line 5 : parameter must be `hold´',
     --fin = 'line 5 : invalid attribution',
-    run = 1,
+    --run = 1,
 }
 
 Test { [[
 native do
     void* V;
 end
-function (void* v)=>void f do
+function (hold void* v)=>void f do
     _V := v;
 end
 var void* x;

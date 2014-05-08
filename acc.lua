@@ -10,6 +10,10 @@ function iter (n)
         or n.tag=='Dcl_cls'
 end
 
+function ERR (me, msg)
+    return msg..' ('..me.ln[1]..':'..me.ln[2]..')'
+end
+
 function INS (acc, exists)
 --[[
     if _AST.iter'Async'() then
@@ -103,7 +107,7 @@ F = {
             md  = 'cl',
             tp  = '_',
             any = false,
-            err = 'event `'..e1.evt.id..'´ (line '..me.ln[2]..')'
+            err = ERR(me, 'event `'..e1.evt.id..'´')
         }
 --[[
         if e2 then
@@ -191,7 +195,7 @@ F = {
             md  = 'rd',
             tp  = me.tp,
             any = true,
-            err = 'variable `global´ (line '..me.ln[2]..')',
+            err = ERR(me, 'variable `global´'),
         }
     end,
 
@@ -202,7 +206,7 @@ F = {
             md  = 'rd',
             tp  = me.tp,
             any = true,
-            err = 'variable `this´ (line '..me.ln[2]..')',
+            err = ERR(me, 'variable `this´'),
         }
     end,
 
@@ -217,7 +221,7 @@ F = {
             md  = 'rd',
             tp  = me.var.tp,
             any = false,
-            err = 'variable/event `'..me.var.id..'´ (line '..me.ln[2]..')',
+            err = ERR(me, 'variable/event `'..me.var.id..'´'),
         }
     end,
 
@@ -228,7 +232,7 @@ F = {
             md  = 'rd',
             tp  = '_',
             any = false,
-            err = 'symbol `'..me[1]..'´ (line '..me.ln[2]..')',
+            err = ERR(me, 'symbol `'..me[1]..'´'),
         }
     end,
 
@@ -242,7 +246,7 @@ F = {
             path = PRE,
             id  = top,
             md  = 'esc',
-            err = 'escape (line '..me.ln[2]..')',
+            err = ERR(me, 'escape'),
         }
     end,
     Escape = function (me)
@@ -263,7 +267,7 @@ F = {
                     path = me.ana.pre,
                     id   = me,--.__par,
                     md   = 'par',
-                    err  = 'par enter (line '..me.ln[2]..')',
+                    err  = ERR(me,'par enter'),
                 }
             end
         end
@@ -274,7 +278,7 @@ F = {
             path = me.ana.pos,
             id  = me,--_AST.iter(TAG)(),
             md  = 'awk',
-            err = 'awake (line '..me.ln[2]..')',
+            err = ERR(me, 'awake'),
         }
     end,
     AwaitT = 'AwaitExt',
@@ -393,8 +397,10 @@ function CHK_ACC (accs1, accs2, NO_par, NO_emts)
                     if _AST.isChild(acc1.id, acc2.id)
                     or _AST.isChild(acc2.id, acc1.id)
                     then
-                        DBG('WRN : abortion : '..
-                                acc1.err..' vs '..acc2.err)
+                        if _OPTS.warn_nondeterminism then
+                            DBG('WRN : abortion : '..
+                                    acc1.err..' vs '..acc2.err)
+                        end
                         _ANA.ana.abrt = _ANA.ana.abrt + 1
                         if acc1.md == 'par' then
                             acc1.id.parChk = true
