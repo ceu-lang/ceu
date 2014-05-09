@@ -573,104 +573,8 @@ escape 10;
 
 -------------------------------------------------------------------------------
 -- ??: working now
-]===]
 
-Test { [[
-interface I with
-end
-class T with
-    var I* parent;
-do
-end
-class U with
-do
-    var T move with
-        _.parent = &this;
-    end;
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-do
-    var int* p, p1;
-    event int* e;
-    p = await e;
-    p1 = p;
-    await e;
-    escape *p1;
-end
-]],
-    --run = 1,
-    fin = 'line 7 : invalid access to pointer across `await´',
-}
-
-Test { [[
-native do
-    typedef int tp;
-end
-var _tp* v;
-_a = v;
-await 1s;
-_b = _a;    // _a pode ter escopo menor e nao reclama de FIN
-escape 1;
-]],
-    fin = 'line 7 : invalid access to pointer across `await´',
-}
-
-Test { [[
-native plain _SDL_Rect, _SDL_Point;
-var _SDL_Point pos;
-
-var _SDL_Rect rect;
-    rect.x = pos.x;    // centered position
-    rect.y = pos.y;    // centered position
-await 1s;
-var _SDL_Rect r = rect;
-escape 1;
-]],
-    gcc = 'error: unknown type name ‘SDL_Point’',
-}
-
-Test { [[
-native plain _SDL_Rect, _SDL_Point;
-var _SDL_Point pos;
-
-var _SDL_Rect rect;
-    rect.x = (int)pos.x;    // centered position
-    rect.y = (int)pos.y;    // centered position
-await 1s;
-var _SDL_Rect r = rect;
-    r.x = r.x - r.w/2;
-    r.y = r.y - r.h/2;
-escape 1;
-]],
-    gcc = 'error: unknown type name ‘SDL_Point’',
-}
-
-Test { [[
-function (int id, void** o1, void** o2)=>int getVS do
-    if (*o1) then
-        return 1;
-    else/if (*o2) then
-        var void* tmp = *o1;
-        *o1 := *o2;
-        *o2 := tmp;
-            // tmp is an alias to "o1"
-        return 1;
-    else
-        //*o1 = NULL;
-        //*o2 = NULL;
-        return 0;
-    end
-end
-escape 1;
-]],
-    run = 1,
-}
-
+-- TODO: error message
 Test { [[
 class T with do end;
 pool T[] ts;
@@ -685,6 +589,7 @@ end
 
 -------------------------------------------------------------------------------
 -- OK: well tested
+]===]
 
 Test { [[escape(1);]],
     _ana = {
@@ -18650,6 +18555,63 @@ escape _V;
     fin = 'line 7 : invalid access to pointer across `await´',
 }
 
+Test { [[
+do
+    var int* p, p1;
+    event int* e;
+    p = await e;
+    p1 = p;
+    await e;
+    escape *p1;
+end
+]],
+    --run = 1,
+    fin = 'line 7 : invalid access to pointer across `await´',
+}
+
+Test { [[
+native do
+    typedef int tp;
+end
+var _tp* v;
+_a = v;
+await 1s;
+_b = _a;    // _a pode ter escopo menor e nao reclama de FIN
+escape 1;
+]],
+    fin = 'line 7 : invalid access to pointer across `await´',
+}
+
+Test { [[
+native plain _SDL_Rect, _SDL_Point;
+var _SDL_Point pos;
+
+var _SDL_Rect rect;
+    rect.x = pos.x;    // centered position
+    rect.y = pos.y;    // centered position
+await 1s;
+var _SDL_Rect r = rect;
+escape 1;
+]],
+    gcc = 'error: unknown type name ‘SDL_Point’',
+}
+
+Test { [[
+native plain _SDL_Rect, _SDL_Point;
+var _SDL_Point pos;
+
+var _SDL_Rect rect;
+    rect.x = (int)pos.x;    // centered position
+    rect.y = (int)pos.y;    // centered position
+await 1s;
+var _SDL_Rect r = rect;
+    r.x = r.x - r.w/2;
+    r.y = r.y - r.h/2;
+escape 1;
+]],
+    gcc = 'error: unknown type name ‘SDL_Point’',
+}
+
 --[=[
 
 PRE = [[
@@ -27056,6 +27018,24 @@ escape 10;
 }
 
 Test { [[
+interface I with
+end
+class T with
+    var I* parent;
+do
+end
+class U with
+do
+    var T move with
+        _.parent = &this;
+    end;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
 input void OS_START;
 
 interface I with
@@ -28525,6 +28505,27 @@ end
 escape f(1,2);
 ]],
     run = 3,
+}
+
+Test { [[
+function (int id, void** o1, void** o2)=>int getVS do
+    if (*o1) then
+        return 1;
+    else/if (*o2) then
+        var void* tmp = *o1;
+        *o1 := *o2;
+        *o2 := tmp;
+            // tmp is an alias to "o1"
+        return 1;
+    else
+        //*o1 = NULL;
+        //*o2 = NULL;
+        return 0;
+    end
+end
+escape 1;
+]],
+    run = 1,
 }
 
 -- METHODS
