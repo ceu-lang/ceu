@@ -66,6 +66,7 @@ local _V2NAME = {
     __ID_ext  = 'identifier',
     __ID_cls  = 'identifier',
     __ID_type = 'type',
+    __ID_field = 'identifier',
     __Dcl_var = 'declaration',
     _Dcl_int = 'declaration',
     _Dcl_pool = 'declaration',
@@ -169,6 +170,7 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
              + V'_Dcl_int' + V'__Dcl_var' + V'_Dcl_pool'
              + V'Dcl_det'
              --+ V'Call'
+             + V'_Set_constr'   -- must be before "_Set"
              + V'_Set'
              + V'Spawn'    --+ V'Free'
              + V'Nothing'
@@ -301,11 +303,7 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                             ( KEY'finalize' * EKEY'with' * V'Finally' * EKEY'end'
                               + Cc(false)) +
                         K'[' * Cc'idx'  * V'__Exp'    * EK']' +
-                        (CK':' + CK'.')
-                            * (CK(Alpha * (Alphanum+'?')^0) /
-                                function (id)
-                                    return (string.gsub(id,'%?','_'))
-                                end)
+                        (CK':' + CK'.') * EV'__ID_field'
                     )^0
     , __13     = V'__Prim'
     , __Prim   = V'__Parens' + V'SIZEOF'
@@ -417,6 +415,7 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                  * EV'__ID_var'
                  * EKEY'with' * V'Dcl_constr' * EKEY'end'
     , Dcl_constr = V'_Stmts'     -- TODO: Block?
+    , _Set_constr = KEY'_' * K'.' * EV'__ID_field' * (CK'='+CK':=') * V'__Exp'
 
     , __dcl_var = EV'__ID_var' * (V'__Sets' +
                                 Cc(false)*Cc(false)*Cc(false)*Cc(false)*Cc(false))
@@ -459,6 +458,11 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                       function (id, star)
                         return (string.gsub(id..star,' ',''))
                       end
+
+    , __ID_field = (CK(Alpha * (Alphanum+'?')^0) /
+                    function (id)
+                        return (string.gsub(id,'%?','_'))
+                    end)
 
     , __tuple = Ct( (CKEY'hold'+Cc(false)) * EV'__ID_type' *
                       (EV'__ID_var'+Cc(false)) )

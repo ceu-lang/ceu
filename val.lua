@@ -105,12 +105,13 @@ F =
     end,
 
     This = function (me)
-        local constr = unpack(me)
-        if constr then
-            me.val = '__ceu_org'    -- set when calling constr
-        else
-            me.val = '_ceu_go->org'
-        end
+        me.val = '_ceu_go->org'
+        --me.val = '(*(('.._TP.c(me.tp)..'*)'..me.val..'))'
+        me.val = '(('.._TP.c(me.tp)..'*)'..me.val..')'
+    end,
+
+    This_ = function (me)
+        me.val = '__ceu_org'    -- set when calling constr
         --me.val = '(*(('.._TP.c(me.tp)..'*)'..me.val..'))'
         me.val = '(('.._TP.c(me.tp)..'*)'..me.val..')'
     end,

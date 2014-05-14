@@ -455,19 +455,21 @@ F = {
     end,
 
     This = function (me)
-        local constr = unpack(me)
-        local cls
-
-        if constr then
-            constr = _AST.iter'Dcl_constr'()
-            ASR(constr, me, 'invalid access to `_´')
-            cls = constr.cls
-        else
-            cls = CLS()
+        local cls = CLS()
             --ASR(cls ~= _MAIN, me, 'invalid access')
-        end
         ASR(cls, me, 'undeclared class')
+        me.tp   = cls.id
+        me.lval = false
+        me.ref  = me
+        me.fst  = me
+        me.blk  = cls.blk_ifc
+    end,
 
+    This_ = function (me)
+        local constr = _AST.iter'Dcl_constr'()
+        ASR(constr, me, 'invalid access to `_´')
+        local cls = constr.cls
+        ASR(cls, me, 'undeclared class')
         me.tp   = cls.id
         me.lval = false
         me.ref  = me

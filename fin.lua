@@ -253,7 +253,7 @@ F = {
         local set = _AST.par(me, 'SetExp')
         if set then
             local _, fr, to = unpack(set)
-            if to.tag=='Op2_.' and to[2].tag=='This' and to[2][1]==true then
+            if to.tag=='Op2_.' and to[2].tag=='This_' then
                 if to[3]==me then
                     return
                 end

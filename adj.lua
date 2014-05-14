@@ -762,7 +762,7 @@ F = {
             local vars = node('VarList', me.ln, node('Var',me.ln,id_req))
             local sets = {
                 node('_Set', me.ln,
-                    node('Op2_.', me.ln, '.', node('This',me.ln,true), id_req),
+                    node('Op2_.', me.ln, '.', node('This_',me.ln), id_req),
                     '=', 'SetExp',
                     node('Var', me.ln, id_req))
             }
@@ -774,7 +774,7 @@ F = {
                 vars[#vars+1] = node('Var', me.ln, _id)
                 sets[#sets+1] = node('_Set', me.ln,
                                     node('Op2_.', me.ln, '.',
-                                        node('This',me.ln,true),
+                                        node('This_',me.ln),
                                         id),
                                     '=', 'SetExp',
                                     node('Var', me.ln, _id))
@@ -1172,28 +1172,24 @@ F = {
                 fld)
     end,
 
--- Var ------------------------------------------------------------
+-- _Set_constr ------------------------------------------------------------
 
     --[[
     --  var T xx with
     --      _.x = 1;
     --  end
     --]]
-    Var_pre = function (me)
-        local id = unpack(me)
-        if id == '_' then
-            -- constructor assignments are byRef
-            local set = _AST.par(me, 'SetExp')
-            if set then
-                set[2].byRef = true     -- first assignment
-                set[3].byRef = true     -- first assignment
-            end
-
-            -- _.x=1    =>    this.x=1
-            return _AST.node('This', me.ln, true)
--- TODO: This => Constr
--- special fixed syntax _.id = xxx
-        end
+    _Set_constr_pre = function (me)
+        ASR(_AST.par(me,'Dcl_constr'), me, 'invalid statement')
+        local id, op, exp = unpack(me)
+        local set = node('SetExp', me.ln, op,
+                        exp,
+                        node('Op2_.', me.ln, '.',
+                            node('This_', me.ln),
+                            id))
+        set[2].byRef = true     -- first assignment
+        set[3].byRef = true     -- first assignment
+        return set
     end,
 
 -- RefVarList ------------------------------------------------------------

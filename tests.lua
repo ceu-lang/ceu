@@ -1019,8 +1019,8 @@ var int _ = 2;
 
 escape __;
 ]],
-    env = 'line 6 : invalid access to `_´',
-    --env = 'line 6 : variable/event "_" is not declared',
+    --env = 'line 6 : invalid access to `_´',
+    env = 'line 6 : variable/event "_" is not declared',
     --run = 3,
 }
 Test { [[
