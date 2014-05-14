@@ -60,7 +60,7 @@ G = {
         end
     end,
     ['Op1_&'] = function (me)
-        if accs[me.ref.var] then
+        if accs[me.base.var] then
             WRN(false, me, 'reference access '..msg)
         end
     end,

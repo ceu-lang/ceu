@@ -449,8 +449,6 @@ F = {
             'interface "Global" is not defined')
         me.tp   = 'Global*'
         me.lval = false
-        me.ref  = me
-        me.fst  = me
         me.blk  = _AST.root
     end,
 
@@ -460,8 +458,6 @@ F = {
         ASR(cls, me, 'undeclared class')
         me.tp   = cls.id
         me.lval = false
-        me.ref  = me
-        me.fst  = me
         me.blk  = cls.blk_ifc
     end,
 
@@ -472,8 +468,6 @@ F = {
         ASR(cls, me, 'undeclared class')
         me.tp   = cls.id
         me.lval = false
-        me.ref  = me
-        me.fst  = me
         me.blk  = cls.blk_ifc
     end,
 
@@ -660,8 +654,6 @@ error'oi'
         me.tp   = var.tp
         me.lval = not (var.pre~='var' or var.cls or var.arr)
                     and var
-        me.ref  = me
-        me.fst  = var
     end,
 
     Dcl_nat = function (me)
@@ -730,17 +722,15 @@ error'oi'
             end
         end
     end,
-    AwaitInt = function (me, int)
-        local int = int or unpack(me)
+    AwaitInt = function (me)
+        local int = unpack(me)
         ASR(int.var and int.var.pre=='event', me,
             'event "'..(int.var and int.var.id or '?')..'" is not declared')
-        me.fst = int.fst
         me.tp = int.var.evt.ins     -- <a = await ...>
     end,
 
     AwaitExt = function (me)
         local ext = unpack(me)
-        me.fst = 'global'
         me.tp = ext.evt.ins     -- <a = await ...>
     end,
     AwaitT = function (me)
@@ -789,15 +779,6 @@ error'oi'
                 'read-only variable')
         ASR(not CLS().is_ifc, me, 'invalid attribution')
 
-        if fr.tag=='Ref' and fr[1].tag=='New' then
-            -- a = new T
-            fr[1].blk = to.ref.var.blk   -- to = me.__par[3]
-
-            -- refuses (x.ptr = new T;)
-            ASR( _AST.isChild(CLS(),to.ref.var.blk), me,
-                    'invalid attribution (no scope)' )
-        end
-
         -- remove byRef flag if normal assignment
         if not _TP.deref(to.tp) then
             to.byRef = false
@@ -819,20 +800,12 @@ error'oi'
         me.cls = ASR(_ENV.clss[id], me,
                         'class "'..id..'" is not declared')
         ASR(not me.cls.is_ifc, me, 'cannot instantiate an interface')
-        me.fst = 'global'   -- "a = new T"      ("a" will determine)
-        me.fst = 'global'   -- "a = spawn T"    (constant value 0/1)
         me.tp = id..'*'  -- class id
     end,
     Spawn_pre = function (me)
         F.New_pre(me)
         me.tp = 'bool'       -- 0/1
     end,
-    New = function (me)
-        local _,pool,_ = unpack(me)
-        ASR(pool and pool.ref and pool.ref.var and pool.ref.var.arr, me,
-            'invalid pool')
-    end,
-    Spawn = 'New',
     IterIni = 'RawExp',
     IterNxt = 'RawExp',
 
@@ -866,8 +839,6 @@ error'oi'
     Op2_call = function (me)
         local _, f, p, _ = unpack(me)
         me.tp  = f.var and f.var.fun and f.var.fun.out or '_'
-        me.fst = '_'
-        me.ref = me
         local id
         if f.tag == 'Nat' then
             id   = f[1]
@@ -903,8 +874,6 @@ error'oi'
         ASR(tp and _TP.isNumeric(idx.tp,true), me, 'invalid array index')
         me.tp = tp
         me.lval = (not _ENV.clss[tp]) and arr
-        me.ref  = arr.ref
-        me.fst  = arr.fst
     end,
 
     Op2_int_int = function (me)
@@ -958,8 +927,6 @@ error'oi'
         local op, e1 = unpack(me)
         me.tp   = _TP.deptr(e1.tp, true)
         me.lval = e1.lval and e1
-        me.ref  = e1.ref
-        me.fst  = e1.fst
         ASR(me.tp, me, 'invalid operand to unary "*"')
     end,
 
@@ -968,9 +935,6 @@ error'oi'
         ASR(_ENV.clss[e1.tp] or e1.lval, me, 'invalid operand to unary "&"')
         me.tp   = e1.tp..'*'
         me.lval = false
-        me.ref  = e1.ref
-        me.ref.amp = true
-        me.fst  = e1.fst
     end,
 
     ['Op2_.'] = function (me)
@@ -1004,7 +968,6 @@ error'oi'
             me.tp   = var.tp
             me.lval = not (var.pre~='var' or var.cls or var.arr)
                         and var
-            me.ref  = me[3]
         else
             local tup = _TP.isTuple(e1.tp)
             ASR(tup or _TP.ext(e1.tp,true), me, 'not a struct')
@@ -1020,17 +983,13 @@ error'oi'
                 me.tp = e1.tp --'_'
             end
             me.lval = e1.lval
-            me.ref  = e1.ref
         end
-        me.fst = e1.fst
     end,
 
     Op1_cast = function (me)
         local tp, exp = unpack(me)
         me.tp   = tp
         me.lval = exp.lval
-        me.ref  = exp.ref
-        me.fst  = exp.fst
     end,
 
     Nat = function (me)
@@ -1041,35 +1000,28 @@ error'oi'
         me.id   = id
         me.tp   = '_'
         me.lval = me
-        me.ref  = me
-        me.fst  = '_'
         me.c    = c
     end,
     RawExp = function (me)
         me.tp   = '_'
         me.lval = me
-        me.ref  = me
-        me.fst  = '_'
     end,
 
     WCLOCKK = function (me)
         me.tp   = 'int'
         me.lval = false
-        me.fst  = 'global'
     end,
     WCLOCKE = 'WCLOCKK',
 
     SIZEOF = function (me)
         me.tp   = 'int'
         me.lval = false
-        me.fst  = 'global'
         me.const = true
     end,
 
     STRING = function (me)
         me.tp   = 'char*'
         me.lval = false
-        me.fst  = 'global'
         me.const = true
     end,
     NUMBER = function (me)
@@ -1081,13 +1033,11 @@ error'oi'
             me.tp = 'int'
         end
         me.lval = false
-        me.fst  = 'global'
         me.const = true
     end,
     NULL = function (me)
         me.tp   = 'null*'
         me.lval = false
-        me.fst  = 'global'
         me.const = true
     end,
 }

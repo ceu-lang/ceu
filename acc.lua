@@ -124,14 +124,14 @@ F = {
 
     Op2_call = function (me)
         local _, f, exps = unpack(me)
-        CHG(f.ref.acc, 'cl')
-        me.acc = f.ref.acc
+        CHG(f.base.acc, 'cl')
+        me.acc = f.base.acc
         for _, exp in ipairs(exps) do
             local tp = _TP.deptr(exp.tp, true)
             if tp then
-                local v = exp.ref
+                local v = exp.base
                 if v and v.acc then   -- ignore constants
---DBG(exp.tag, exp.ref)
+--DBG(exp.tag, exp.base)
                     v.acc.any = exp.lval    -- f(&x) // a[N] f(a) // not "any"
                     CHG(v.acc, (me.c and me.c.mod=='pure' and 'rd') or 'wr')
                     v.acc.tp  = tp
@@ -154,37 +154,37 @@ F = {
 
     EmitInt = function (me)
         local _, e1, e2 = unpack(me)
-        CHG(e1.ref.acc, 'tr')
-        e1.ref.acc.node = me        -- emtChk
+        CHG(e1.base.acc, 'tr')
+        e1.base.acc.node = me        -- emtChk
         me.emtChk = false
     end,
 
     SetExp = function (me)
         local _,_,to = unpack(me)
-        CHG(to.ref.acc, 'wr')
+        CHG(to.base.acc, 'wr')
     end,
     AwaitInt = function (me)
-        CHG(me[1].ref.acc, 'aw')
+        CHG(me[1].base.acc, 'aw')
         F.AwaitExt(me)  -- flow
     end,
 
     ['Op2_idx'] = function (me)
-        if not (me.ref.var and me.ref.var.arr) then
-            me.ref.acc.any = true
+        if not (me.base.var and me.base.var.arr) then
+            me.base.acc.any = true
         end
-        me.ref.acc.tp = _TP.deptr(me.ref.acc.tp,true)
+        me.base.acc.tp = _TP.deptr(me.base.acc.tp,true)
     end,
     ['Op1_*'] = function (me)
-        me.ref.acc.any = true
-        me.ref.acc.tp  = _TP.deptr(me.ref.acc.tp,true)
+        me.base.acc.any = true
+        me.base.acc.tp  = _TP.deptr(me.base.acc.tp,true)
     end,
     ['Op1_&'] = function (me)
-        CHG(me.ref.acc, 'no')
+        CHG(me.base.acc, 'no')
     end,
 
     ['Op2_.'] = function (me)
         if me.org then
-            me.ref.acc.org = me.org.ref
+            me.base.acc.org = me.org.base
         end
     end,
 

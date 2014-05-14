@@ -162,7 +162,7 @@ F = {
         local _,pool,_ = unpack(me)
 
         --_PROPS.has_news = true    (pool does this)
-        if pool and pool.ref.var.arr.sval>=0 then
+        if pool and pool.base.var.arr.sval>=0 then
             _PROPS.has_news_pool = true         -- pool T[N] ts
         else
             _PROPS.has_news_malloc = true       -- pool T[]  ts

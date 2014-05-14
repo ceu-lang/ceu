@@ -43,8 +43,8 @@ F = {
         --
 
         -- iterators are safe
-        if fr.ref and fr.ref.var and string.sub(fr.ref.var.id,1,5)=='_iter'
-        or to.ref and to.ref.var and string.sub(to.ref.var.id,1,5)=='_iter'
+        if fr.base and fr.base.var and string.sub(fr.base.var.id,1,5)=='_iter'
+        or to.base and to.base.var and string.sub(to.base.var.id,1,5)=='_iter'
         then
             return
         end
@@ -75,7 +75,7 @@ F = {
                 assert(constr.__par.tag=='New' or
                        constr.__par.tag=='Spawn')
                 local _,pool,_ = unpack(constr.__par)
-                to_blk = pool.ref.var.blk
+                to_blk = pool.base.var.blk
             end
         else
             -- block where variable is defined
@@ -86,16 +86,16 @@ F = {
         local fun = _AST.iter'Dcl_fun'()
         if fun then
             -- to a class field, _NAT, or parameter
-            if to.ref.tag=='Nat' or to_blk==cls.blk_ifc
+            if to.base.tag=='Nat' or to_blk==cls.blk_ifc
                                  or to_blk==cls.blk_body
-            or to.ref.var and to.ref.var.isFun then
+            or to.base.var and to.base.var.isFun then
                               -- function parameter
                 ASR(op == ':=', me, 'unsafe pointer attribution')
 
                 if to_blk==cls.blk_ifc or to_blk==cls.blk_body then
                     -- must be hold
                     local _, _, ins, _, _, _ = unpack(fun)
-                    ASR(ins[fr.ref.var.funIdx][1], me,
+                    ASR(ins[fr.base.var.funIdx][1], me,
                         'parameter must be `hold´')
                 end
             else
@@ -103,25 +103,25 @@ F = {
             end
         end
 
-        if fr.ref and fr.ref.tag=='Op2_call' then
+        if fr.base and fr.base.tag=='Op2_call' then
             -- A pure call returns, in the worst case, a pointer to a the
             -- parameter with biggest scope.
             -- We set "fr" to it:
             --      int* a = _f(ptr);   // a = ptr
             --      int* a = _f(&b);    // a = b
-            if fr.ref.c.mod == 'pure' then
+            if fr.base.c.mod == 'pure' then
                 -- Minimum pointer __depth that the function can receive.
                 -- Default is the same as "to", i.e., as minimum as target variable.
                 local fr_min     = to     -- max * __depth passed as parameter
                 local fr_min_blk = node2blk(to)
 
-                local _, _, exps, _ = unpack(fr.ref)
+                local _, _, exps, _ = unpack(fr.base)
                 for _, exp in ipairs(exps) do
                     if _TP.deptr(exp.tp) then
-                        if exp.ref then         -- skip constants
-                            if exp.ref.amp then
-                                if node2blk(exp.ref).__depth < fr_min_blk.__depth then
-                                    fr_min = exp.ref
+                        if exp.base then         -- skip constants
+                            if exp.base.amp then
+                                if node2blk(exp.base).__depth < fr_min_blk.__depth then
+                                    fr_min = exp.base
                                 end
                             else
                                 fr_min = exp    -- non-ref access (worst case)
@@ -180,8 +180,8 @@ F = {
         -- int* v = await e;
         if string.sub(fr.tag,1,5)=='Await' or fr.tag=='New' then
             if op == '=' then
-                --local var = to.ref.var.ast_original_var or to.ref.var
-                TRACK[to.ref.var.ast_original_var or to.ref.var] = false
+                --local var = to.base.var.ast_original_var or to.base.var
+                TRACK[to.base.var.ast_original_var or to.base.var] = false
                 --ASR(var.blk == _AST.iter'Block'(), me,
                     --'invalid block for awoken pointer "'..var.id..'"')
             end
@@ -190,13 +190,13 @@ F = {
 
         -- non-ref access are unsafe
         -- pa = pb;  // I have no idea what "pb" refers to and its scope
-        if not (fr.ref and fr.ref.amp) then
+        if not (fr.base and fr.base.amp) then
             if op == '=' then
                 if to.org then
                     -- cannot track access inside another class, yield error now!
                     ASR(op == ':=', me, 'unsafe pointer attribution')
                 else
-                    TRACK[to.ref.var or to.ref.id] = false
+                    TRACK[to.base.var or to.base.id] = false
                 end
             end
             --ASR(op == ':=', me, 'unsafe pointer attribution')
@@ -265,7 +265,7 @@ F = {
         if _ENV.clss[_TP.deptr(me.tp)] then
             -- pointer to org: check if it is enclosed by "watching me.var"
             for n in _AST.iter('ParOr') do
-                local var = n.isWatching and n.isWatching.ref and n.isWatching.ref.var
+                local var = n.isWatching and n.isWatching.base and n.isWatching.base.var
                 if var == me.var then
                     return      -- ok, I'm safely watching "me.var"
                 end

@@ -68,7 +68,7 @@ F = {
         local v = VARS[var]
 
         local op = _AST.iter'Op1_&'()
-        local isRef = op and (op.ref == me)
+        local isRef = op and (op.base == me)
 
         if _AST.iter'Finally'() or      -- finally executes through "call"
            _AST.iter'AwaitInt'() or     -- await ptr:a (ptr is tested on awake)

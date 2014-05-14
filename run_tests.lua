@@ -70,6 +70,7 @@ Test = function (t)
     --DBG'======= TOPS'
     --_AST.dump(_AST.root)
     if not check('env')      then return end
+    if not check('exp')      then return end
     if not check('sval')     then return end
     if not check('isr')      then return end
     if not check('tight')    then return end

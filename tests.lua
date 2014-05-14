@@ -25991,7 +25991,7 @@ end
 escape 10;
 ]],
     --run = 10,
-    env = 'line 15 : invalid attribution (no scope)',
+    exp = 'line 15 : invalid attribution (no scope)',
 }
 Test { [[
 class V with
@@ -26022,7 +26022,7 @@ end
 escape 10;
 ]],
     --run = { ['~>A']=10 },
-    env = 'line 16 : invalid attribution',
+    exp = 'line 16 : invalid attribution',
 }
 
 Test { [[
@@ -26062,7 +26062,7 @@ _assert(_V == 10);
 escape _V;
 ]],
     --run = { ['~>2s']=10, }       -- TODO: stack change
-    env = 'line 21 : invalid attribution',
+    exp = 'line 21 : invalid attribution',
 }
 
 Test { [[
@@ -31876,6 +31876,7 @@ escape ret;
 
 -- AWAITS // AWAIT MANY // SELECT
 
+--[=[
 Test { [[
 await (10ms);
 escape 1;
@@ -31913,7 +31914,6 @@ escape 1;
     env = 'line 3 : event "f" is not declared',
 }
 
---[=[
 Test { [[
 event void e;
 event int f;

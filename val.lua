@@ -137,8 +137,8 @@ F =
 
     IterIni = function (me)
         local fr_exp = unpack(me)
-        ASR(fr_exp.ref.var, me, 'not a pool')
-        local var = fr_exp.ref.var
+        ASR(fr_exp.base.var, me, 'not a pool')
+        local var = fr_exp.base.var
         assert(var.trl_orgs)
         local idx = fr_exp.ifc_idx or var.trl_orgs[1]
                     -- converted to interface access or original
