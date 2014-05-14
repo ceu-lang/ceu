@@ -111,7 +111,7 @@ F = {
         }
 --[[
         if e2 then
-            local tp = _TP.deref(e1.evt.ins, true)
+            local tp = _TP.deptr(e1.evt.ins, true)
             if e2.accs and tp then
                 e2.accs[1][4] = (e2.accs[1][2] ~= 'no')   -- &x does not become 
                     "any"
@@ -127,7 +127,7 @@ F = {
         CHG(f.ref.acc, 'cl')
         me.acc = f.ref.acc
         for _, exp in ipairs(exps) do
-            local tp = _TP.deref(exp.tp, true)
+            local tp = _TP.deptr(exp.tp, true)
             if tp then
                 local v = exp.ref
                 if v and v.acc then   -- ignore constants
@@ -172,11 +172,11 @@ F = {
         if not (me.ref.var and me.ref.var.arr) then
             me.ref.acc.any = true
         end
-        me.ref.acc.tp = _TP.deref(me.ref.acc.tp,true)
+        me.ref.acc.tp = _TP.deptr(me.ref.acc.tp,true)
     end,
     ['Op1_*'] = function (me)
         me.ref.acc.any = true
-        me.ref.acc.tp  = _TP.deref(me.ref.acc.tp,true)
+        me.ref.acc.tp  = _TP.deptr(me.ref.acc.tp,true)
     end,
     ['Op1_&'] = function (me)
         CHG(me.ref.acc, 'no')

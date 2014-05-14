@@ -14,7 +14,7 @@ end
 function V (me)
     ASR(me.val, me, 'invalid expression')
 
-    local ref = me.tp and _TP.deref2(me.tp)
+    local ref = me.tp and _TP.deref(me.tp)
     if me.byRef and
         (not (_ENV.clss[me.tp] or ref and _ENV.clss[ref]))
     then
@@ -55,7 +55,7 @@ F =
                     -- (because of interface accesses that must be done through a pointer)
                     var.val = '(&'..var.val..')'
                 else
-                    local ref = _TP.deref2(var.tp)
+                    local ref = _TP.deref(var.tp)
                     if ref then
                         if _ENV.clss[ref] then
                             -- orgs vars byRef, do nothing
@@ -197,7 +197,7 @@ F =
         local t2 = { ptr, 'CEU_'..DIR..'_'..ext.evt.id }
 
         if param then
-            local isPtr = _TP.deref(ext.evt.ins, true)
+            local isPtr = _TP.deptr(ext.evt.ins, true)
             local val
             if isPtr then
                 val = '(void*)'..V(param)
@@ -264,9 +264,9 @@ F =
     AwaitExt = function (me)
         local e1 = unpack(me)
         local tp = (e1.evt or e1.var.evt).ins
-        if _TP.deref(tp) then
+        if _TP.deptr(tp) then
             me.val = '(('.._TP.c( (e1.evt or e1.var.evt).ins )..')_ceu_go->evtp.ptr)'
-        elseif _TP.deref2(tp) then
+        elseif _TP.deref(tp) then
             me.val = '(*(('.._TP.c( (e1.evt or e1.var.evt).ins )..')_ceu_go->evtp.ptr))'
                     -- byRef from awake SetExp removes the `*´
         elseif _TP.isTuple(tp) then
@@ -348,7 +348,7 @@ F =
 
     ['Op1_*'] = function (me)
         local op, e1 = unpack(me)
-        local cls = _ENV.clss[_TP.deref(e1.tp)]
+        local cls = _ENV.clss[_TP.deptr(e1.tp)]
         if cls then
             me.val = V(e1) -- class accesses should remain normalized to references
         else
@@ -366,7 +366,7 @@ F =
 
     ['Op2_.'] = function (me)
         if me.org then
-            local cls = _ENV.clss[_TP.deref2(me.org.tp) or me.org.tp]
+            local cls = _ENV.clss[_TP.deref(me.org.tp) or me.org.tp]
             local gen = '((tceu_org*)'..me.org.val..')'
             if cls and cls.is_ifc then
                 if me.var.pre == 'var'
@@ -445,7 +445,7 @@ F =
         local tp, exp = unpack(me)
         local val = V(exp)
 
-        local _tp = _TP.deref(tp)
+        local _tp = _TP.deptr(tp)
         local cls = _tp and _ENV.clss[_tp]
         if cls then
             if cls.is_ifc then

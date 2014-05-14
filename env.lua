@@ -149,13 +149,13 @@ function newvar (me, blk, pre, tp, arr, id, isImp)
         ASR(pre == 'pool', me,
             'cannot instantiate an interface')
     end
-    ASR(_TP.deref(tp) or (not c) or (tp=='void' and pre~='var') or c.len~=0,
+    ASR(_TP.deptr(tp) or (not c) or (tp=='void' and pre~='var') or c.len~=0,
         me, 'cannot instantiate type "'..tp..'"')
     --ASR((not arr) or arr>0, me, 'invalid array dimension')
 
     tp = (arr and tp..'*') or tp
 
-    local tp_ = _TP.deref(tp)
+    local tp_ = _TP.deptr(tp)
     local cls = _TOPS[tp] or (arr and tp_ and _TOPS[tp_])
         if cls then
             ASR(cls ~=_AST.iter'Dcl_cls'(), me, 'invalid declaration')
@@ -479,7 +479,7 @@ F = {
 
     Free = function (me)
         local exp = unpack(me)
-        local _tp = _TP.deref(exp.tp)
+        local _tp = _TP.deptr(exp.tp)
         ASR(_tp and _ENV.clss[_tp], me, 'invalid `free´')
     end,
 
@@ -526,8 +526,8 @@ F = {
 
         -- TODO: ins?
         newtype(ins)
-        ASR(ins=='void' or ins=='int' or _TP.deref(ins) or _TP.isTuple(ins),
-                me, 'invalid event type')
+        ASR(ins=='void' or ins=='int' or _TP.deptr(ins) or _TP.isTuple(ins), me,
+            'invalid event type')
 
         me.evt = {
             ln  = me.ln,
@@ -578,7 +578,8 @@ F = {
         if id == '_' then
             id = id..me.n   -- avoids clash with other '_'
         end
-        ASR(tp=='void' or _TP.isNumeric(tp) or _TP.deref(tp) or _TP.deref2(tp) or _TP.isTuple(tp),
+        ASR(tp=='void' or _TP.isNumeric(tp) or _TP.deptr(tp) or
+                          _TP.deref(tp) or _TP.isTuple(tp),
                 me, 'invalid event type')
         local _
         _, me.var = newint(me, _AST.iter'Block'(), pre, tp, id, me.isImp)
@@ -629,7 +630,7 @@ error'oi'
         local blk = _AST.iter'Block'()
         for _, var in ipairs(ifc.blk_ifc.vars) do
             if var.pre=='var' or var.pre=='pool' then
-                local tp = (var.arr and _TP.deref(var.tp)) or var.tp
+                local tp = (var.arr and _TP.deptr(var.tp)) or var.tp
                 newvar(me, true, blk, var.pre, tp, var.arr, var.id)
             elseif var.pre == 'event' then
                 newint(me, true, blk, var.pre, var.evt.ins, var.id)
@@ -703,7 +704,7 @@ error'oi'
         -- detects if "isWatching" a real event (not an org)
         --  to remove the "isAlive" test
         if me.isWatching then
-            local tp = me.isWatching.tp and _TP.deref(me.isWatching.tp)
+            local tp = me.isWatching.tp and _TP.deptr(me.isWatching.tp)
             if not (tp and _ENV.clss[tp]) then
                 local if_ = me[2][1][2]
                 assert(if_.tag == 'If')
@@ -717,7 +718,7 @@ error'oi'
         local int = unpack(me)
         if me.isWatching then
             -- ORG: "await org" => "await org._ok"
-            local tp = int.tp and _TP.deref(int.tp)
+            local tp = int.tp and _TP.deptr(int.tp)
             if _ENV.clss[tp] then
                 me[1] = _AST.node('Op2_.', me.ln, '.',
                             _AST.node('Op1_*', me.ln, '*', int),
@@ -798,7 +799,7 @@ error'oi'
         end
 
         -- remove byRef flag if normal assignment
-        if not _TP.deref2(to.tp) then
+        if not _TP.deref(to.tp) then
             to.byRef = false
             fr.byRef = false
         end
@@ -806,7 +807,7 @@ error'oi'
 
     Free = function (me)
         local exp = unpack(me)
-        local id = ASR(_TP.deref(exp.tp), me, 'invalid `free´')
+        local id = ASR(_TP.deptr(exp.tp), me, 'invalid `free´')
         me.cls = ASR( _ENV.clss[id], me,
                         'class "'..id..'" is not declared')
     end,
@@ -898,7 +899,7 @@ error'oi'
 
     Op2_idx = function (me)
         local _, arr, idx = unpack(me)
-        local tp = ASR(_TP.deref(arr.tp,true), me, 'cannot index a non array')
+        local tp = ASR(_TP.deptr(arr.tp,true), me, 'cannot index a non array')
         ASR(tp and _TP.isNumeric(idx.tp,true), me, 'invalid array index')
         me.tp = tp
         me.lval = (not _ENV.clss[tp]) and arr
@@ -955,7 +956,7 @@ error'oi'
 
     ['Op1_*'] = function (me)
         local op, e1 = unpack(me)
-        me.tp   = _TP.deref(e1.tp, true)
+        me.tp   = _TP.deptr(e1.tp, true)
         me.lval = e1.lval and e1
         me.ref  = e1.ref
         me.fst  = e1.fst
@@ -974,7 +975,7 @@ error'oi'
 
     ['Op2_.'] = function (me)
         local op, e1, id = unpack(me)
-        local cls = _ENV.clss[_TP.deref2(e1.tp) or e1.tp]
+        local cls = _ENV.clss[_TP.deref(e1.tp) or e1.tp]
         me.id = id
         if cls then
             me.org = e1

@@ -348,7 +348,7 @@ F = {
 
     Op1_cast = function (me)
         local tp, _ = unpack(me)
-        local _tp = _TP.deref(tp)
+        local _tp = _TP.deptr(tp)
         if _tp and _ENV.clss[_tp] then
             _PROPS.has_ifcs = true      -- cast must check org->cls_id
         end

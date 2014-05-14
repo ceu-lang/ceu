@@ -61,7 +61,7 @@ function _TP.ceil (v)
     end
 end
 
--- TODO: enforce passing parameter `c´ to isNumeric/deref/contains/max ?
+-- TODO: enforce passing parameter `c´ to isNumeric/deptr/contains/max ?
 
 -- TODO: rename to clean
 function _TP.noptr (tp)
@@ -81,7 +81,7 @@ end
 
 function _TP.isTuple (tp,ptr)
     return _ENV.c[tp] and _ENV.c[tp].tuple
-        or _TP.deref(tp) and _TP.isTuple(_TP.deref(tp))
+        or _TP.deptr(tp) and _TP.isTuple(_TP.deptr(tp))
 end
 
 function _TP.c (tp)
@@ -95,15 +95,14 @@ function _TP.c (tp)
 end
 
 function _TP.isNumeric (tp, c)
-    local ref = _TP.deref2(tp)
+    local ref = _TP.deref(tp)
     if ref then
         tp = ref
     end
     return tp~='void' and types[tp] or (c and _TP.ext(tp,c))
 end
 
--- TODO: rename to deptr
-function _TP.deref (tp, c)
+function _TP.deptr (tp, c)
     local ptr = string.match(tp,'(.-)%*$')
     if ptr then
         return ptr
@@ -116,13 +115,13 @@ function _TP.deref (tp, c)
 end
 
 -- TODO: rename to deref
-function _TP.deref2 (tp)
+function _TP.deref (tp)
     return string.match(tp,'(.-)%&$')
 end
 
 function _TP.ext (tp, loc)
     return (tp=='_' and '_') or
-           (loc and (not _TP.deref(tp)) and (string.sub(tp,1,1) == '_') and tp)
+           (loc and (not _TP.deptr(tp)) and (string.sub(tp,1,1) == '_') and tp)
 end
 
 function _TP.contains (tp1, tp2, c)
@@ -132,9 +131,9 @@ function _TP.contains (tp1, tp2, c)
     end
 
     -- in case of refs `&´, compare as if they where pointers
-    local ref1 = (_TP.deref2(tp1) or tp1)..'*'
-    local ref2 = (_TP.deref2(tp2) or tp2)..'*'
-    if _TP.deref2(tp1) or _TP.deref2(tp2) then
+    local ref1 = (_TP.deref(tp1) or tp1)..'*'
+    local ref2 = (_TP.deref(tp2) or tp2)..'*'
+    if _TP.deref(tp1) or _TP.deref(tp2) then
         return _TP.contains(ref1,ref2,c)
     end
 
@@ -144,7 +143,7 @@ function _TP.contains (tp1, tp2, c)
     end
 
     -- both are pointers
-    local _tp1, _tp2 = _TP.deref(tp1,c), _TP.deref(tp2,c)
+    local _tp1, _tp2 = _TP.deptr(tp1,c), _TP.deptr(tp2,c)
     if _tp1 and _tp2 then
         local cls1 = _ENV.clss[_tp1]
         local cls2 = _ENV.clss[_tp2]

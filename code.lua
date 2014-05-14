@@ -581,7 +581,7 @@ _ceu_go->org->trls[ ]]..me.trl_fins[1]..[[ ].seqno = _ceu_app->seqno-1; /* awake
         for _, var in ipairs(me.vars) do
             if var.isTmp then
                 if var.arr then
-                    LINE(me, _TP.c(_TP.deref(var.tp))
+                    LINE(me, _TP.c(_TP.deptr(var.tp))
                             ..' '..V(var)..'['..V(var.arr)..']')
                 else
                     LINE(me, _TP.c(var.tp)..' __ceu_'..var.id..'_'..var.n)
@@ -595,7 +595,7 @@ _ceu_go->org->trls[ ]]..me.trl_fins[1]..[[ ].seqno = _ceu_app->seqno-1; /* awake
             elseif var.pre=='pool' and var.arr.sval>=0 then
                 local dcl = var.val_dcl
                 LINE(me, [[
-ceu_pool_init(]]..dcl..','..var.arr.sval..',sizeof('.._TP.c(_TP.deref(var.tp))..'),'
+ceu_pool_init(]]..dcl..','..var.arr.sval..',sizeof('.._TP.c(_TP.deptr(var.tp))..'),'
     ..'(byte**)'..dcl..'_queue, (byte*)'..dcl..[[_mem);
 ]])
             end
@@ -991,8 +991,8 @@ _ceu_go->evto = (tceu_org*) ]]..((int.org and int.org.val) or '_ceu_go->org')..[
 #endif
 ]])
         if exp then
-            local ref = _TP.deref2(int.var.evt.ins)
-            local field = (_TP.deref(exp.tp) or ref) and 'ptr'
+            local ref = _TP.deref(int.var.evt.ins)
+            local field = (_TP.deptr(exp.tp) or ref) and 'ptr'
                             or 'v'
             local op = ref and '&' or ''
             LINE(me, [[

@@ -32,7 +32,7 @@ F = {
         -- NON-POINTER ATTRIBUTIONS (always safe)
         --
 
-        if not (_TP.deref(to.tp,true) and _TP.deref(fr.tp,true)) then
+        if not (_TP.deptr(to.tp,true) and _TP.deptr(fr.tp,true)) then
             ASR(op == '=', me, 'invalid operator')
             ASR(not me.fin, me, 'attribution does not require `finalize´')
             return
@@ -117,7 +117,7 @@ F = {
 
                 local _, _, exps, _ = unpack(fr.ref)
                 for _, exp in ipairs(exps) do
-                    if _TP.deref(exp.tp) then
+                    if _TP.deptr(exp.tp) then
                         if exp.ref then         -- skip constants
                             if exp.ref.amp then
                                 if node2blk(exp.ref).__depth < fr_min_blk.__depth then
@@ -226,7 +226,7 @@ F = {
     end,
 
     Dcl_var = function (me)
-        if _TP.deref(me.var.tp,true) and
+        if _TP.deptr(me.var.tp,true) and
             me.var.blk==CLS().blk_ifc and CLS().id~='Main'
         then
             -- track all variable in interfaces
@@ -262,7 +262,7 @@ F = {
 
         -- possible dangling pointer "me.var" is accessed across await
 
-        if _ENV.clss[_TP.deref(me.tp)] then
+        if _ENV.clss[_TP.deptr(me.tp)] then
             -- pointer to org: check if it is enclosed by "watching me.var"
             for n in _AST.iter('ParOr') do
                 local var = n.isWatching and n.isWatching.ref and n.isWatching.ref.var
@@ -343,7 +343,7 @@ F = {
                 if hold then
                     -- int* pa; _f(pa);
                     --  (`pa´ termination must consider `_f´)
-                    local r = exp.fst and (_TP.deref(exp.tp) or _TP.ext(exp.tp)) and
+                    local r = exp.fst and (_TP.deptr(exp.tp) or _TP.ext(exp.tp)) and
                                 (not exp.c or exp.c.mod~='constant')  -- except constants
 
                     r = r and ((exp.fst=='_' and _MAIN.blk_ifc) or exp.fst.blk)

@@ -26447,6 +26447,40 @@ do
     loop i in 10 do
         var _s* p = null;
         spawn T with
+            _.ptr = p;
+        end;
+        await 1s;
+    end
+    _assert(_V == 10);
+end
+
+escape _V;
+]],
+    fin = 'line 21 : unsafe pointer attribution',
+    --props = 'line 23 : not permitted inside a constructor',
+}
+
+Test { [[
+native _s=0;
+native do
+    typedef int s;
+end
+
+class T with
+    var _s* ptr = null;
+do
+end
+
+native do ##include <assert.h> end
+native _V, _assert();
+native do
+    int V=0;
+end
+
+do
+    loop i in 10 do
+        var _s* p = null;
+        spawn T with
             finalize
                 _.ptr = p;
             with
@@ -26460,6 +26494,7 @@ end
 
 escape _V;
 ]],
+    env = 'line 22 : variable/event "_" is not declared',
     fin = 'only empty finalizers inside constructors',
     --props = 'line 23 : not permitted inside a constructor',
 }
@@ -26534,7 +26569,8 @@ end
 
 escape _V;
 ]],
-    fin = 'only empty finalizers inside constructors',
+    env = 'line 23 : variable/event "_" is not declared',
+    --fin = 'only empty finalizers inside constructors',
     --props = 'line 24 : not permitted inside a constructor',
 }
 
@@ -26572,7 +26608,8 @@ end
 
 escape _V;
 ]],
-    fin = 'only empty finalizers inside constructors',
+    env = 'line 22 : variable/event "_" is not declared',
+    --fin = 'only empty finalizers inside constructors',
     --fin = 'line 21 : invalid `finalize´',
 }
 

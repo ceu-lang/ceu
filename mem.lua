@@ -97,12 +97,12 @@ DBG('===', me.id, me.trails_n)
             elseif var.arr then
                 len = 10    -- TODO: it should be big
 --[[
-                local _tp = _TP.deref(var.tp)
-                len = var.arr * (_TP.deref(_tp) and _ENV.c.pointer.len
+                local _tp = _TP.deptr(var.tp)
+                len = var.arr * (_TP.deptr(_tp) and _ENV.c.pointer.len
                              or (_ENV.c[_tp] and _ENV.c[_tp].len
                                  or _ENV.c.word.len)) -- defaults to word
 ]]
-            elseif _TP.deref(var.tp) or _TP.deref2(var.tp) then
+            elseif _TP.deptr(var.tp) or _TP.deref(var.tp) then
                 len = _ENV.c.pointer.len
             else
                 len = _ENV.c[var.tp].len
@@ -134,14 +134,14 @@ DBG('===', me.id, me.trails_n)
 ]]
                 if var.arr then
                     ASR(var.arr.cval, me, 'invalid constant')
-                    dcl = dcl .. _TP.deref(tp)..' '..var.id_..'['..var.arr.cval..']'
+                    dcl = dcl .. _TP.deptr(tp)..' '..var.id_..'['..var.arr.cval..']'
                 else
                     dcl = dcl .. tp..' '..var.id_
                 end
                 cls.struct = cls.struct..SPC()..'  '..dcl..';\n'
             elseif var.pre=='pool' and var.arr.sval>=0 then
                 cls.struct = cls.struct .. [[
-CEU_POOL_DCL(]]..var.id_..','.._TP.deref(tp)..','..var.arr.sval..[[)
+CEU_POOL_DCL(]]..var.id_..','.._TP.deptr(tp)..','..var.arr.sval..[[)
 ]]
             end
 

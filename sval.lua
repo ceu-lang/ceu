@@ -100,7 +100,7 @@ F =
         end
 
         if type(tp) == 'string' then    -- sizeof(type) vs sizeof(exp)
-            local t = (_TP.deref(tp) and _ENV.c.pointer) or _ENV.c[tp]
+            local t = (_TP.deptr(tp) and _ENV.c.pointer) or _ENV.c[tp]
             ASR(t and (t.tag=='type' or t.tag=='unk'), me,
                     'undeclared type '..tp)
             t.tag = 'type'
