@@ -593,6 +593,7 @@ escape u.t.v;
 ]],
     run = 10,
 }
+]===]
 
 Test { [[
 class Map with
@@ -14097,10 +14098,16 @@ escape 1;
 Test { [[
 native _f();
 native _v;
-_f(_v);
-escape 0;
+native do
+    int v = 1;
+    int f (int v) {
+        return v + 1;
+    }
+end
+escape _f(_v);
 ]],
-    fin = 'line 3 : call to "_f" requires `finalize´',
+    --fin = 'line 3 : call to "_f" requires `finalize´',
+    run = 2,
 }
 
 Test { [[
@@ -14197,12 +14204,10 @@ var int* pa;
 do
     var int v;
     if 1 then
-_printf("1\n");
         finalize
             pa = &v;
         with
             ret = ret + 1;
-_printf("2 (%d)\n", ret);
     end
     else
         finalize
@@ -14212,7 +14217,6 @@ _printf("2 (%d)\n", ret);
     end
     end
 end
-_printf("3 (%d)\n", ret);
 escape ret;
 ]],
     run = 1,
@@ -18145,6 +18149,21 @@ with
 end
 escape 1;
 ]],
+    fin = 'line 5 : invalid `finalize´',
+    --run = 1,
+}
+
+Test { [[
+native do
+    ##define f(p)
+end
+par/or do
+    _f(_p);
+with
+    await FOREVER;
+end
+escape 1;
+]],
     run = 1,
 }
 
@@ -19324,10 +19343,10 @@ with
 end
 ]],
     _ana = {
-        acc = 24,        -- TODO: nao conferi
+        acc = 48,        -- TODO: nao conferi
         isForever = true,
     },
-    fin = 'line 4 : call to "_digitalWrite" requires `finalize´',
+    --fin = 'line 4 : call to "_digitalWrite" requires `finalize´',
 }
 
 Test { [[
@@ -19470,14 +19489,15 @@ Test { [[
 native _inv();
 native do
     int inv (int v) {
-        escape -v;
+        return -v;
     }
 end
 var int a;
 a = _inv(_inv(1));
 escape a;
 ]],
-    fin = 'line 8 : call to "_inv" requires `finalize´',
+    --fin = 'line 8 : call to "_inv" requires `finalize´',
+    run = 1,
 }
 
 Test { [[
@@ -24410,7 +24430,6 @@ escape t[0].b + t[1].b;
     run = 40;
 }
 
-]===]
 Test { [[
 interface I with
 end

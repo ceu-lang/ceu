@@ -26,6 +26,7 @@ F = {
         me.fst = me
     end,
     This_ = 'This',
+    Global = 'This',
 
     Op2_idx = function (me)
         local _, arr, idx = unpack(me)

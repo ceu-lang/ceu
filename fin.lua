@@ -1,17 +1,13 @@
-function node2blk (node)
-    if node.fst then
-        return node.fst.blk
-    else
-        return _MAIN.blk_ifc
-    end
-end
-
 -- Tracks "access to awoken pointer":
 local TRACK = {
     --[var] = false,  -- track acess to pointer "var" from assignment
     --[var] = true,   -- another "await" happened while tracking "var"
                       --   now, any access to "var" yields error
 }
+
+local function node2blk (n)
+    return n.fst and n.fst.blk or _MAIN.blk_ifc
+end
 
 F = {
     SetExp = function (me)
@@ -99,69 +95,15 @@ F = {
             end
         end
 
-        if fr.base and fr.base.tag=='Op2_call' then
-            -- A pure call returns, in the worst case, a pointer to a the
-            -- parameter with biggest scope.
-            -- We set "fr" to it:
-            --      int* a = _f(ptr);   // a = ptr
-            --      int* a = _f(&b);    // a = b
-            if fr.base.c.mod == 'pure' then
-                -- Minimum pointer __depth that the function can receive.
-                -- Default is the same as "to", i.e., as minimum as target variable.
-                local fr_min     = to     -- max * __depth passed as parameter
-                local fr_min_blk = node2blk(to)
-
-                local _, _, exps, _ = unpack(fr.base)
-                for _, exp in ipairs(exps) do
-                    if _TP.deptr(exp.tp) then
-                        if exp.base then         -- skip constants
-                            if exp.base.amp then
-                                if node2blk(exp.base).__depth < fr_min_blk.__depth then
-                                    fr_min = exp.base
-                                end
-                            else
-                                fr_min = exp    -- non-ref access (worst case)
-                                break           -- we don't know the scope
-                            end
-                        end
-                    end
-                end
-                -- fr_min holds minimum depth (most dangerous "fr")
-                if to_blk.__depth >= fr_min_blk.__depth then
-                    ASR(op == '=', me, 'invalid operator')
-                    ASR(not me.fin, me,
-                        'attribution does not require `finalize´')
-                else
-                    ASR((op==':=') or me.fin, me,
-                        'attribution requires `finalize´')
-                    if me.fin then
-                        fr_min_blk.fins = fr_min_blk.fins or {}
-                        table.insert(fr_min_blk.fins, 1, me.fin)
-                    end
-                end
-                return
-
+        if fr.base and fr.base.tag=='Op2_call' and fr.base.c.mod~='pure'
+        or fr.tag == 'RawExp' then
             -- We assume that a impure function that returns a global pointer
             -- creates memory (e.g. malloc, fopen):
             --      int* pa = _fopen();
-            -- In this case, the memory persists when the local goes out of
-            -- scope, hence, we enforce finalization.
-            else
-                ASR((op==':=') or me.fin, me,
-                        'attribution requires `finalize´')
-                if me.fin then
-                    to_blk.fins = to_blk.fins or {}
-                    table.insert(to_blk.fins, 1, me.fin)
-                end
-                return
-            end
-        end
-
-        if fr.tag == 'RawExp' then
             -- We assume that a RawExp that returns a global pointer
             -- creates memory (e.g. { new T }):
             --      int* pa = { new T() };
-            -- In this case, the memory persists when the local goes out of
+            -- In these cases, the memory persists when the local goes out of
             -- scope, hence, we enforce finalization.
             ASR((op==':=') or me.fin, me,
                     'attribution requires `finalize´')
@@ -206,7 +148,7 @@ F = {
         -- int a; int* pa; pa=&a;
         -- int a; do int* pa; pa=&a; end
         local fr_blk = node2blk(fr)
-        if to_blk.__depth >= node2blk(fr).__depth
+        if to_blk.__depth >= fr_blk.__depth
         or to_blk.__depth==cls.blk_ifc.__depth and fr_blk.__depth==cls.blk_body.__depth
         then
             ASR(op == '=', me, 'invalid operator')
@@ -344,7 +286,7 @@ F = {
                               (not exp.c or exp.c.mod~='constant')
                                     -- except constants
 
-                    r = r and node2blk(exp)
+                    r = r and exp.fst and exp.fst.blk
                                 -- need to hold block
                     WRN( (not r) or (not req) or (r==req),
                             me, 'invalid call (multiple scopes)')
