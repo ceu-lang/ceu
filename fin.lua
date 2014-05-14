@@ -225,6 +225,16 @@ F = {
         end
     end,
 
+    Dcl_var = function (me)
+        if _TP.deref(me.var.tp,true) and
+            me.var.blk==CLS().blk_ifc and CLS().id~='Main'
+        then
+            -- track all variable in interfaces
+            -- they can be assigned externally from constructors
+            TRACK[me.var] = false
+        end
+    end,
+
     Nat = function (me)
         if TRACK[me.id] ~= true then
             return  -- no await happened yet
@@ -235,6 +245,19 @@ F = {
     Var = function (me)
         if TRACK[me.var] ~= true then
             return  -- no await happened yet
+        end
+
+        -- Ignore org constructor "_.v=x":
+        -- Track is in the class interface vs class body:
+        --  class with var int* v; do await 1s; *v=1; end
+        local set = _AST.par(me, 'SetExp')
+        if set then
+            local _, fr, to = unpack(set)
+            if to.tag=='Op2_.' and to[2].tag=='This' and to[2][1]==true then
+                if to[3]==me then
+                    return
+                end
+            end
         end
 
         -- possible dangling pointer "me.var" is accessed across await

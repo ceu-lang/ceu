@@ -27,8 +27,9 @@ function CONC (me, sub, tab)
     me.code = me.code .. string.gsub(sub.code, '(.-)\n', tab..'%1\n')
 end
 
-function ATTR (me, n1, n2)
-    LINE(me, V(n1)..' = '..V(n2)..';')
+function ATTR (me, to, fr)
+--COMM(me, tostring(to.byRef)..' '..tostring(fr.byRef))
+    LINE(me, V(to)..' = '..V(fr)..';')
 end
 
 function CASE (me, lbl)
@@ -583,7 +584,7 @@ _ceu_go->org->trls[ ]]..me.trl_fins[1]..[[ ].seqno = _ceu_app->seqno-1; /* awake
                     LINE(me, _TP.c(_TP.deref(var.tp))
                             ..' '..V(var)..'['..V(var.arr)..']')
                 else
-                    LINE(me, _TP.c(var.tp)..' '..V(var))
+                    LINE(me, _TP.c(var.tp)..' __ceu_'..var.id..'_'..var.n)
                 end
                 if var.isFun then
                     -- function parameter
@@ -990,9 +991,12 @@ _ceu_go->evto = (tceu_org*) ]]..((int.org and int.org.val) or '_ceu_go->org')..[
 #endif
 ]])
         if exp then
-            local field = _TP.deref(exp.tp) and 'ptr' or 'v'
+            local ref = _TP.deref2(int.var.evt.ins)
+            local field = (_TP.deref(exp.tp) or ref) and 'ptr'
+                            or 'v'
+            local op = ref and '&' or ''
             LINE(me, [[
-_ceu_go->evtp.]]..field..' = '..V(exp)..[[;
+_ceu_go->evtp.]]..field..' = '..op..V(exp)..[[;
 ]])
         end
         LINE(me, [[

@@ -102,7 +102,7 @@ DBG('===', me.id, me.trails_n)
                              or (_ENV.c[_tp] and _ENV.c[_tp].len
                                  or _ENV.c.word.len)) -- defaults to word
 ]]
-            elseif _TP.deref(var.tp) then
+            elseif _TP.deref(var.tp) or _TP.deref2(var.tp) then
                 len = _ENV.c.pointer.len
             else
                 len = _ENV.c[var.tp].len
@@ -119,6 +119,7 @@ DBG('===', me.id, me.trails_n)
 
         for _, var in ipairs(sorted) do
             local tp = _TP.c(var.tp)
+
             var.id_ = var.id .. '_' .. var.n
             --var.id_ = var.id .. (var.inTop and '' or ('_'..var.n))
                 -- id's inside interfaces are kept (to be used from C)

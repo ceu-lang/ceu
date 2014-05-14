@@ -890,6 +890,8 @@ F = {
                                 t[i+3],                 -- exp    (p1)
                                 t[i+4],                 -- max    (p2)
                                 t[i+5] )                -- constr (p3)
+                ret[#ret][1].byRef = true  -- first assignment
+                ret[#ret][4].byRef = true  -- first assignment
             end
         end
         return node('Stmts', me.ln, unpack(ret))
@@ -969,6 +971,7 @@ F = {
                     T[#T+1] = node('SetExp', me.ln, op,
                                     node('Ref', me.ln, awt),
                                     to)
+                    to.byRef = true
                 end
             end
 
@@ -993,6 +996,8 @@ F = {
                                         node('Var', me.ln, tup)),
                                     '_'..i),
                                 v)
+                    v.byRef = true
+                        --"fr" is already by ref
                     T[#T][2].__ast_fr = p1    -- p1 is an AwaitX
                 end
             end
@@ -1054,7 +1059,7 @@ F = {
         return REQUEST(me)
     end,
 
-    EmitInt_pre = 'EmitExt_pos',
+    EmitInt_pos = 'EmitExt_pos',
     EmitExt_pos = function (me)
         local op, ext, ps = unpack(me)
 
@@ -1077,6 +1082,7 @@ F = {
                         p,
                         node('Op2_.', me.ln, '.', node('Var',me.ln,tup),
                             '_'..i))
+            p.byRef = true
         end
 
         me[3] = node('Op1_&', me.ln, '&',
@@ -1176,7 +1182,17 @@ F = {
     Var_pre = function (me)
         local id = unpack(me)
         if id == '_' then
+            -- constructor assignments are byRef
+            local set = _AST.par(me, 'SetExp')
+            if set then
+                set[2].byRef = true     -- first assignment
+                set[3].byRef = true     -- first assignment
+            end
+
+            -- _.x=1    =>    this.x=1
             return _AST.node('This', me.ln, true)
+-- TODO: This => Constr
+-- special fixed syntax _.id = xxx
         end
     end,
 

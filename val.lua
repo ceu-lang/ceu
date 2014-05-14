@@ -13,7 +13,18 @@ end
 
 function V (me)
     ASR(me.val, me, 'invalid expression')
-    return me.val
+
+    local ref = me.tp and _TP.deref2(me.tp)
+    if me.byRef and
+        (not (_ENV.clss[me.tp] or ref and _ENV.clss[ref]))
+    then
+                    -- already by ref
+        local ret = '&'..me.val
+        return string.gsub(ret, '%&([^)])%*', '%1')
+                -- &((*(...))) => (((...)))
+    else
+        return me.val
+    end
 end
 
 function CUR (me, id)
@@ -43,6 +54,17 @@ F =
                     -- normalize all org acesses to pointers to it
                     -- (because of interface accesses that must be done through a pointer)
                     var.val = '(&'..var.val..')'
+                else
+                    local ref = _TP.deref2(var.tp)
+                    if ref then
+                        if _ENV.clss[ref] then
+                            -- orgs vars byRef, do nothing
+                            -- (normalized to pointer)
+                        else
+                            -- normal vars byRef
+                            var.val = '(*('..var.val..'))'
+                        end
+                    end
                 end
             elseif var.pre == 'pool' then
                 -- normalize all pool acesses to pointers to it
@@ -243,6 +265,9 @@ F =
         local tp = (e1.evt or e1.var.evt).ins
         if _TP.deref(tp) then
             me.val = '(('.._TP.c( (e1.evt or e1.var.evt).ins )..')_ceu_go->evtp.ptr)'
+        elseif _TP.deref2(tp) then
+            me.val = '(*(('.._TP.c( (e1.evt or e1.var.evt).ins )..')_ceu_go->evtp.ptr))'
+                    -- byRef from awake SetExp removes the `*´
         elseif _TP.isTuple(tp) then
             me.val = '(('.._TP.c( (e1.evt or e1.var.evt).ins )..'*)_ceu_go->evtp.ptr)'
         else
@@ -340,7 +365,7 @@ F =
 
     ['Op2_.'] = function (me)
         if me.org then
-            local cls = _ENV.clss[me.org.tp]
+            local cls = _ENV.clss[_TP.deref2(me.org.tp) or me.org.tp]
             local gen = '((tceu_org*)'..me.org.val..')'
             if cls and cls.is_ifc then
                 if me.var.pre == 'var'

@@ -558,8 +558,9 @@ F = {
     Dcl_var = function (me)
         local pre, tp, arr, id, constr = unpack(me)
         if id == '_' then
-            id = id..me.n
+            id = id..me.n   -- avoids clash with other '_'
         end
+-- TODO: native type '_' => '@'
         local has
         has, me.var = newvar(me, _AST.iter'Block'(), pre, tp, arr, id, me.isImp)
         assert(not has or (me.var.read_only==nil))
@@ -573,9 +574,9 @@ F = {
     Dcl_int = function (me)
         local pre, tp, id = unpack(me)
         if id == '_' then
-            id = id..me.n
+            id = id..me.n   -- avoids clash with other '_'
         end
-        ASR(tp=='void' or _TP.isNumeric(tp) or _TP.deref(tp) or _TP.isTuple(tp),
+        ASR(tp=='void' or _TP.isNumeric(tp) or _TP.deref(tp) or _TP.deref2(tp) or _TP.isTuple(tp),
                 me, 'invalid event type')
         local _
         _, me.var = newint(me, _AST.iter'Block'(), pre, tp, id, me.isImp)
@@ -647,10 +648,6 @@ error'oi'
 
     Var = function (me)
         local id = unpack(me)
-
-        -- '_' inside constructor becomes
-        if id == '_' and xxx then
-        end
 
         local blk = me.__adj_blk and assert(_AST.par(me.__adj_blk,'Block'))
                         or _AST.iter('Block')()
@@ -796,6 +793,12 @@ error'oi'
             -- refuses (x.ptr = new T;)
             ASR( _AST.isChild(CLS(),to.ref.var.blk), me,
                     'invalid attribution (no scope)' )
+        end
+
+        -- remove byRef flag if normal assignment
+        if not _TP.deref2(to.tp) then
+            to.byRef = false
+            fr.byRef = false
         end
     end,
 
@@ -969,7 +972,7 @@ error'oi'
 
     ['Op2_.'] = function (me)
         local op, e1, id = unpack(me)
-        local cls = _ENV.clss[e1.tp]
+        local cls = _ENV.clss[_TP.deref2(e1.tp) or e1.tp]
         me.id = id
         if cls then
             me.org = e1
@@ -991,6 +994,7 @@ error'oi'
                         'variable/event "'..id..'" is not declared')
             me[3] = _AST.node('Var', me.ln, '$'..id)
             me[3].var = var
+            me[3].tp  = var.tp
 
             me.org  = e1
             me.var  = var

@@ -454,10 +454,11 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , __ID_var  = (-KEYS * CK(m.R'az'*(Alphanum+'?')^0) + CK'_'*-Alphanum)
                     / function(id) return (string.gsub(id,'%?','_')) end
     , __ID_nat  = CK(  P'_' *Alphanum^1)
-    , __ID_type = (CK(TYPES)+V'__ID_nat'+V'__ID_cls') * C(P'*'^0)*S /
-                  function (id, star)
-                    return (string.gsub(id..star,' ',''))
-                  end
+    , __ID_type = (CK(TYPES)+V'__ID_nat'+V'__ID_cls') *
+                    (C'&' + C(P'*'^0)) *S /
+                      function (id, star)
+                        return (string.gsub(id..star,' ',''))
+                      end
 
     , __tuple = Ct( (CKEY'hold'+Cc(false)) * EV'__ID_type' *
                       (EV'__ID_var'+Cc(false)) )

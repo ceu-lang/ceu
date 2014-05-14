@@ -573,6 +573,160 @@ escape 10;
 
 -------------------------------------------------------------------------------
 -- ??: working now
+]===]
+
+Test { [[
+class Map with
+    event (int,int) go_xy;
+do
+end
+
+var Map* m;
+emit m:go_xy => (1,1);
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+var int a = 1;
+var int& b = a;
+a = 2;
+escape b;
+]],
+    run = 2,
+}
+
+Test { [[
+input void OS_START;
+var int a = 1;
+event int& e;
+par do
+    var int& v = await e;
+    v = v + 1;
+with
+    await OS_START;
+    var int b = 10;
+    emit e => b;
+    escape b;
+end
+]],
+    run = 11,
+}
+
+Test { [[
+input void OS_START;
+var int a = 1;
+event (int,int&) e;
+par do
+    var int& r;
+    var int  v;
+    (v,r) = await e;
+    r = r + v;
+with
+    await OS_START;
+    var int b = 10;
+    emit e => (4,b);
+    escape b;
+end
+]],
+    run = 14,
+}
+
+Test { [[
+interface Object with
+    var _SDL_Rect rect;
+end
+class MoveObject with
+    var Object* obj = null;
+do
+    _assert(this.obj != null);
+    await 1s;
+    obj:rect.x = 1;
+end
+escape 1;
+]],
+    fin = 'line 9 : invalid access to pointer across `await´',
+}
+
+Test { [[
+native plain _int;
+interface Object with
+    var _int v;
+end
+class MoveObject with
+    var Object& obj;
+do
+    await 1s;
+    obj.v = 1;
+end
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+native plain _int;
+interface Object with
+    var _int v;
+end
+class O with
+    interface Object;
+do
+    this.v = 10;
+end
+class MoveObject with
+    var Object& obj;
+do
+    await 1s;
+    obj.v = 1;
+end
+var O o;
+escape o.v;
+]],
+    run = 10,
+}
+Test { [[
+class T with
+    var int v = 0;
+do
+end
+var T t with
+    _.v = 10;
+end;
+var T& tt = t;
+tt.v = 5;
+escape t.v;
+]],
+    run = 5,
+}
+
+Test { [[
+native plain _int;
+interface Object with
+    var _int v;
+end
+class O with
+    interface Object;
+do
+    this.v = 10;
+end
+class MoveObject with
+    var Object& obj;
+do
+    await 1s;
+    obj.v = 1;
+end
+var O o;
+var MoveObject m with
+    _.obj = o;
+end;
+await 2s;
+escape o.v;
+]],
+    run = { ['~>2s']=1 },
+}
+--do return end
 
 -- TODO: error message
 Test { [[
@@ -589,7 +743,6 @@ end
 
 -------------------------------------------------------------------------------
 -- OK: well tested
-]===]
 
 Test { [[escape(1);]],
     _ana = {
@@ -13617,6 +13770,20 @@ Test { [[
         var _Cnt* snd = _Radio_getPayload(&msg, sizeof(_Cnt));
     end
 ]],
+    --fin = 'line 5 : invalid access to pointer across `await´',
+    _ana = {
+        isForever = true,
+    },
+}
+Test { [[
+    native plain _message_t;
+    native pure _Radio_getPayload();
+    var _message_t msg;
+    loop do
+        await 1s;
+        var _Cnt* snd = _Radio_getPayload(&msg, sizeof(_Cnt));
+    end
+]],
     _ana = {
         isForever = true,
     },
@@ -25517,7 +25684,7 @@ do
 end
 
 class U with
-    var V* v;
+    var V* x;
 do
     var V* vv = new V;
     await FOREVER;
@@ -25534,11 +25701,12 @@ end
 var T t;
 do
     await OS_START;
-    var V* v = t.u.v;   // no more :=
+    var V* v = t.u.x;
 end
 
 escape _V;
 ]],
+    fin = 'line 37 : invalid access to pointer across `await´',
     props = 'line 27 : not permitted inside an interface',
 }
 Test { [[
@@ -25585,6 +25753,7 @@ end
 
 escape _V;
 ]],
+    fin = 'line 39 : invalid access to pointer across `await´',
     run = 1,
 }
 
@@ -25632,6 +25801,7 @@ end
 
 escape _V;
 ]],
+    fin = 'line 38 : invalid access to pointer across `await´',
     props = 'line 26 : not permitted inside an interface',
 }
 Test { [[
@@ -25678,7 +25848,8 @@ end
 
 escape _V;
 ]],
-    fin = 'line 38 : unsafe pointer attribution',
+    fin = 'line 38 : invalid access to pointer across `await´',
+    --fin = 'line 38 : unsafe pointer attribution',
     --props = 'line 26 : not permitted inside an interface',
 }
 Test { [[
@@ -25727,6 +25898,7 @@ end
 
 escape _V;
 ]],
+    fin = 'line 40 : invalid access to pointer across `await´',
     run = 2,
 }
 
@@ -25748,6 +25920,7 @@ escape 1;
 
 ]],
     --fin = 'line 9 : invalid block for awoken pointer "v"',
+    fin = 'line 9 : invalid access to pointer across `await´',
     run = { ['~>1s']=1, }
 }
 
@@ -25787,6 +25960,7 @@ escape 10;
 ]],
     wrn = true,
     run = 10,
+    fin = 'line 12 : invalid access to pointer across `await´',
     --fin = 'line 12 : invalid block for awoken pointer "v"',
 }
 Test { [[
@@ -27199,6 +27373,7 @@ t.g = &u;
 var int v = await g:a?;
 escape v;
 ]],
+    todo = 'watching',
     run = 10,
 }
 

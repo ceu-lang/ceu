@@ -63,8 +63,11 @@ end
 
 -- TODO: enforce passing parameter `c´ to isNumeric/deref/contains/max ?
 
+-- TODO: rename to clean
 function _TP.noptr (tp)
-    return (string.match(tp, '^([^%*]*)%**'))
+    return (string.match(
+            (string.match(tp, '^([^%*]*)%**')),
+            '^([^%&]*)%&?'))
 end
 
 --[[
@@ -82,6 +85,7 @@ function _TP.isTuple (tp,ptr)
 end
 
 function _TP.c (tp)
+    tp = string.gsub(tp,'%&','%*')
     local cls = _ENV.clss[_TP.noptr(tp)]
     if cls then
         return 'CEU_'..tp
@@ -91,9 +95,14 @@ function _TP.c (tp)
 end
 
 function _TP.isNumeric (tp, c)
+    local ref = _TP.deref2(tp)
+    if ref then
+        tp = ref
+    end
     return tp~='void' and types[tp] or (c and _TP.ext(tp,c))
 end
 
+-- TODO: rename to deptr
 function _TP.deref (tp, c)
     local ptr = string.match(tp,'(.-)%*$')
     if ptr then
@@ -106,6 +115,11 @@ function _TP.deref (tp, c)
     end
 end
 
+-- TODO: rename to deref
+function _TP.deref2 (tp)
+    return string.match(tp,'(.-)%&$')
+end
+
 function _TP.ext (tp, loc)
     return (tp=='_' and '_') or
            (loc and (not _TP.deref(tp)) and (string.sub(tp,1,1) == '_') and tp)
@@ -115,6 +129,13 @@ function _TP.contains (tp1, tp2, c)
     -- same exact type
     if tp1 == tp2 then
         return true
+    end
+
+    -- in case of refs `&´, compare as if they where pointers
+    local ref1 = (_TP.deref2(tp1) or tp1)..'*'
+    local ref2 = (_TP.deref2(tp2) or tp2)..'*'
+    if _TP.deref2(tp1) or _TP.deref2(tp2) then
+        return _TP.contains(ref1,ref2,c)
     end
 
     -- both are numeric
