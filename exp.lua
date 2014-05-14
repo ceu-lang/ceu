@@ -19,10 +19,13 @@ F = {
         local _,pool,_ = unpack(me)
         ASR(pool and pool.base and pool.base.var and pool.base.var.arr, me,
             'invalid pool')
-        me.fst = 'global'   -- "a = new T"      ("a" will determine)
-        me.fst = 'global'   -- "a = spawn T"    (constant value 0/1)
     end,
     Spawn = 'New',
+
+    This = function (me)
+        me.fst = me
+    end,
+    This_ = 'This',
 
     Op2_idx = function (me)
         local _, arr, idx = unpack(me)
@@ -58,19 +61,8 @@ F = {
         local tp, exp = unpack(me)
         me.base = exp.base
         me.fst  = exp.fst
+        me.isConst = exp.isConst
     end,
-
-    Op2_call = function (me)
-        me.fst = '_'
-    end,
-    Nat = 'Op2_call',
-    RawExp = 'Op2_call',
-
-    Global = function (me)
-        me.fst  = me
-    end,
-    This  = 'Global',
-    This_ = 'Global',
 
     Var = function (me)
         me.fst = me.var
@@ -80,14 +72,11 @@ F = {
         me.fst = int.fst
     end,
 
-    AwaitExt = function (me)
-        me.fst = 'global'
+    NUMBER = function (me)
+        me.isConst = true
     end,
-    WCLOCKK = 'AwaitExt',
-    SIZEOF  = 'AwaitExt',
-    STRING  = 'AwaitExt',
-    NUMBER  = 'AwaitExt',
-    NULL    = 'AwaitExt',
+    STRING = 'NUMBER',
+    NULL   = 'NUMBER',
 }
 
 _AST.visit(F)

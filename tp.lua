@@ -120,7 +120,7 @@ function _TP.deref (tp)
 end
 
 function _TP.ext (tp, loc)
-    return (tp=='_' and '_') or
+    return (tp=='@' and '@') or
            (loc and (not _TP.deptr(tp)) and (string.sub(tp,1,1) == '_') and tp)
 end
 
@@ -153,7 +153,7 @@ function _TP.contains (tp1, tp2, c)
                    cls2 and cls1.is_ifc and _ENV.ifc_vs_cls(cls1,cls2)
         end
         return tp1=='void*' or tp2=='void*' or tp2=='null*'
-                or c and (tp1=='_' or tp2=='_')
+                or c and (tp1=='@' or tp2=='@')
                 or _TP.contains(_tp1, _tp2, c)
     end
 

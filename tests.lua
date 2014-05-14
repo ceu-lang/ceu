@@ -573,7 +573,26 @@ escape 10;
 
 -------------------------------------------------------------------------------
 -- ??: working now
-]===]
+
+Test { [[
+native do
+    typedef struct t {
+        int v;
+    } t;
+end
+
+class Unit with
+    var _t t;
+do
+end
+
+spawn Unit with
+    _.t.v  =  30;
+end;
+escape u.t.v;
+]],
+    run = 10,
+}
 
 Test { [[
 class Map with
@@ -24391,6 +24410,7 @@ escape t[0].b + t[1].b;
     run = 40;
 }
 
+]===]
 Test { [[
 interface I with
 end

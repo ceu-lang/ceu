@@ -556,7 +556,6 @@ F = {
         if id == '_' then
             id = id..me.n   -- avoids clash with other '_'
         end
--- TODO: native type '_' => '@'
         local has
         has, me.var = newvar(me, _AST.iter'Block'(), pre, tp, arr, id, me.isImp)
         assert(not has or (me.var.read_only==nil))
@@ -838,7 +837,7 @@ error'oi'
 
     Op2_call = function (me)
         local _, f, p, _ = unpack(me)
-        me.tp  = f.var and f.var.fun and f.var.fun.out or '_'
+        me.tp  = f.var and f.var.fun and f.var.fun.out or '@'
         local id
         if f.tag == 'Nat' then
             id   = f[1]
@@ -980,7 +979,7 @@ error'oi'
                     me.tp = 'void'
                 end
             else
-                me.tp = e1.tp --'_'
+                me.tp = e1.tp --'@'
             end
             me.lval = e1.lval
         end
@@ -998,12 +997,12 @@ error'oi'
         ASR(c.tag~='type', me,
             'native variable/function "'..id..'" is not declared')
         me.id   = id
-        me.tp   = '_'
+        me.tp   = '@'
         me.lval = me
         me.c    = c
     end,
     RawExp = function (me)
-        me.tp   = '_'
+        me.tp   = '@'
         me.lval = me
     end,
 

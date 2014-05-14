@@ -1,12 +1,8 @@
 function node2blk (node)
-    if not node.fst then
-        return _MAIN.blk_ifc
-    elseif node.fst == '_' then
-        return _MAIN.blk_ifc
-    elseif node.fst == 'global' then
-        return _MAIN.blk_ifc
-    else
+    if node.fst then
         return node.fst.blk
+    else
+        return _MAIN.blk_ifc
     end
 end
 
@@ -343,10 +339,12 @@ F = {
                 if hold then
                     -- int* pa; _f(pa);
                     --  (`pa´ termination must consider `_f´)
-                    local r = exp.fst and (_TP.deptr(exp.tp) or _TP.ext(exp.tp)) and
-                                (not exp.c or exp.c.mod~='constant')  -- except constants
+                    local r = (_TP.deptr(exp.tp) or _TP.ext(exp.tp)) and
+                              (not exp.isConst) and
+                              (not exp.c or exp.c.mod~='constant')
+                                    -- except constants
 
-                    r = r and ((exp.fst=='_' and _MAIN.blk_ifc) or exp.fst.blk)
+                    r = r and node2blk(exp)
                                 -- need to hold block
                     WRN( (not r) or (not req) or (r==req),
                             me, 'invalid call (multiple scopes)')
