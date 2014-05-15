@@ -572,8 +572,16 @@ F = {
             id = id..me.n   -- avoids clash with other '_'
         end
         ASR(tp=='void' or _TP.isNumeric(tp) or _TP.deptr(tp) or
-                          _TP.deref(tp) or _TP.isTuple(tp),
+                          _TP.isTuple(tp),
                 me, 'invalid event type')
+        if _TP.isTuple(tp) then
+            for _, t in ipairs(_ENV.c[tp].tuple) do
+                local _,v,_ = unpack(t)
+                ASR((_TP.isNumeric(v) or _TP.deptr(v)) and
+                    (not _TP.deref(v)),
+                    me, 'invalid event type')
+            end
+        end
         local _
         _, me.var = newint(me, _AST.iter'Block'(), pre, tp, id, me.isImp)
     end,

@@ -971,7 +971,6 @@ F = {
                     T[#T+1] = node('SetExp', me.ln, op,
                                     node('Ref', me.ln, awt),
                                     to)
-                    to.byRef = true
                 end
             end
 
@@ -996,8 +995,6 @@ F = {
                                         node('Var', me.ln, tup)),
                                     '_'..i),
                                 v)
-                    v.byRef = true
-                        --"fr" is already by ref
                     T[#T][2].__ast_fr = p1    -- p1 is an AwaitX
                 end
             end
@@ -1082,7 +1079,6 @@ F = {
                         p,
                         node('Op2_.', me.ln, '.', node('Var',me.ln,tup),
                             '_'..i))
-            p.byRef = true
         end
 
         me[3] = node('Op1_&', me.ln, '&',

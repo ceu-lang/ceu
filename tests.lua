@@ -575,6 +575,59 @@ escape 10;
 -- ??: working now
 ]===]
 Test { [[
+class T with
+    var int x;
+do
+end
+class U with do end;
+event T& e;
+par/and do
+   do
+      await 1s;
+      var T t;
+      emit e => t;
+   end
+   var U u;
+with
+   var T& t = await e;
+   t.x = 1;
+   await 1s;
+   _printf("x = %d\n", t.x);
+end
+escape 1;
+]],
+    env = 'line 6 : invalid event type',
+}
+
+Test { [[
+class T with
+    var int x;
+do
+end
+class U with do end;
+event (T&,int) e;
+par/and do
+   do
+      await 1s;
+      var T t;
+      emit e => (t,1);
+   end
+   var U u;
+with
+   var T& t;
+   var int i;
+   (t,i) = await e;
+   t.x = 1;
+   await 1s;
+   _printf("x = %d\n", t.x);
+end
+escape 1;
+]],
+    env = 'line 6 : invalid event type',
+    --run = 1,
+}
+
+Test { [[
 var int& i = 1;
 escape 1;
 ]],
@@ -772,7 +825,8 @@ with
     escape b;
 end
 ]],
-    run = 14,
+    env = 'line 3 : invalid event type',
+    --run = 14,
 }
 
 Test { [[

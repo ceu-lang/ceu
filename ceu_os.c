@@ -305,6 +305,7 @@ fprintf(stderr, "GO[%d]: evt=%d stk=%d [%d]\n", app->seqno,
                          * - malloc'ed:     (org->pool==NULL)
                          * - pool on scope: (!org->isAlive)
                          */
+/* TODO: what if both happens at the same time (body and pool terminate?) */
 #ifdef CEU_NEWS_POOL
                         if (!go.org->isAlive
 #ifdef CEU_NEWS_MALLOC
