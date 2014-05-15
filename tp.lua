@@ -107,7 +107,9 @@ function _TP.deptr (tp, c)
     if ptr then
         return ptr
     elseif c and _TP.ext(tp,c) then
-        return not (_ENV.c and _ENV.c[tp] and _ENV.c[tp].mod=='plain')
+        local ref = _TP.deref(tp)
+        return not (_ENV.c and _ENV.c[tp]  and _ENV.c[tp].mod=='plain' or
+                    _ENV.c and _ENV.c[ref] and _ENV.c[ref].mod=='plain')
             and tp
     else
         return false

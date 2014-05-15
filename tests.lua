@@ -573,6 +573,72 @@ escape 10;
 
 -------------------------------------------------------------------------------
 -- ??: working now
+]===]
+
+Test { [[
+native plain _t;
+native nohold _f();
+native do
+    #define f(a)
+    typedef int t;
+end
+class T with
+    var _t& t;
+do
+    await 1s;
+    _f(&t);
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+interface I with end;
+class T with
+    var I* i = null;
+do
+end
+
+var T t;
+await 1s;
+_assert(t.i == null);
+escape 1;
+]],
+    run = { ['~>1s'] = 1 },
+}
+
+Test { [[
+interface I with end;
+class T with
+    var I* i = null;
+do
+end
+
+var T t;
+var I* i = t.i;
+await 1s;
+_assert(t.i == null);
+escape 1;
+]],
+    run = { ['~>1s'] = 1 },
+}
+
+Test { [[
+interface I with end;
+class T with
+    var I* i = null;
+do
+end
+
+var T t;
+var I* i = t.i;
+await 1s;
+_assert(i == null);
+escape 1;
+]],
+    fin = 'line 10 : invalid access to pointer across `await´',
+}
 
 Test { [[
 class T with do end
@@ -600,7 +666,6 @@ escape 1;
     run = 1,
 }
 
-]===]
 Test { [[
 native do
     typedef struct t {
@@ -25771,7 +25836,7 @@ end
 
 escape _V;
 ]],
-    fin = 'line 37 : invalid access to pointer across `await´',
+    --fin = 'line 37 : invalid access to pointer across `await´',
     props = 'line 27 : not permitted inside an interface',
 }
 Test { [[
@@ -25818,7 +25883,7 @@ end
 
 escape _V;
 ]],
-    fin = 'line 39 : invalid access to pointer across `await´',
+    --fin = 'line 39 : invalid access to pointer across `await´',
     run = 1,
 }
 
@@ -25866,7 +25931,7 @@ end
 
 escape _V;
 ]],
-    fin = 'line 38 : invalid access to pointer across `await´',
+    --fin = 'line 38 : invalid access to pointer across `await´',
     props = 'line 26 : not permitted inside an interface',
 }
 Test { [[
@@ -25913,8 +25978,8 @@ end
 
 escape _V;
 ]],
-    fin = 'line 38 : invalid access to pointer across `await´',
-    --fin = 'line 38 : unsafe pointer attribution',
+    --fin = 'line 38 : invalid access to pointer across `await´',
+    fin = 'line 38 : unsafe pointer attribution',
     --props = 'line 26 : not permitted inside an interface',
 }
 Test { [[
@@ -25963,7 +26028,7 @@ end
 
 escape _V;
 ]],
-    fin = 'line 40 : invalid access to pointer across `await´',
+    --fin = 'line 40 : invalid access to pointer across `await´',
     run = 2,
 }
 

@@ -10,6 +10,10 @@ local function node2blk (n)
 end
 
 F = {
+    Dcl_cls_pre = function (me)
+        TRACK = {}  -- restart tracking for each class
+    end,
+
     SetExp = function (me)
         local op, fr, to = unpack(me)
         to = to or _AST.iter'SetBlock'()[1]
@@ -165,7 +169,9 @@ F = {
 
     Dcl_var = function (me)
         if _TP.deptr(me.var.tp,true) and
-            me.var.blk==CLS().blk_ifc and CLS().id~='Main'
+            me.var.blk==CLS().blk_ifc and CLS().id~='Main' and
+                                          CLS().id~='Global'
+                                          -- main/global always in scope
         then
             -- track all variable in interfaces
             -- they can be assigned externally from constructors
