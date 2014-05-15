@@ -170,7 +170,6 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
              + V'_Dcl_int' + V'__Dcl_var' + V'_Dcl_pool'
              + V'Dcl_det'
              --+ V'Call'
-             + V'_Set_constr'   -- must be before "_Set"
              + V'_Set'
              + V'Spawn'    --+ V'Free'
              + V'Nothing'
@@ -415,7 +414,6 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                  * EV'__ID_var'
                  * EKEY'with' * V'Dcl_constr' * EKEY'end'
     , Dcl_constr = V'_Stmts'     -- TODO: Block?
-    , _Set_constr = KEY'_' * K'.' * EV'__ID_field' * (CK'='+CK':=') * V'__Exp'
 
     , __dcl_var = EV'__ID_var' * (V'__Sets' +
                                 Cc(false)*Cc(false)*Cc(false)*Cc(false)*Cc(false))

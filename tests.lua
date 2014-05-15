@@ -575,6 +575,33 @@ escape 10;
 -- ??: working now
 
 Test { [[
+class T with do end
+
+class Pool with
+    pool T[] all;
+do
+    await FOREVER;
+end
+
+interface Global with
+    var Pool* p;
+end
+var Pool* p = null;
+
+class S with
+do
+    await 1s;
+    spawn T in global:p:all with
+    end;
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
+]===]
+Test { [[
 native do
     typedef struct t {
         int v;
@@ -586,14 +613,13 @@ class Unit with
 do
 end
 
-spawn Unit with
+var Unit u with
     _.t.v  =  30;
 end;
 escape u.t.v;
 ]],
-    run = 10,
+    run = 30,
 }
-]===]
 
 Test { [[
 class Map with
@@ -26533,7 +26559,7 @@ end
 
 escape _V;
 ]],
-    env = 'line 22 : variable/event "_" is not declared',
+    --env = 'line 22 : variable/event "_" is not declared',
     fin = 'only empty finalizers inside constructors',
     --props = 'line 23 : not permitted inside a constructor',
 }
@@ -26608,8 +26634,8 @@ end
 
 escape _V;
 ]],
-    env = 'line 23 : variable/event "_" is not declared',
-    --fin = 'only empty finalizers inside constructors',
+    --env = 'line 23 : variable/event "_" is not declared',
+    fin = 'only empty finalizers inside constructors',
     --props = 'line 24 : not permitted inside a constructor',
 }
 
@@ -26647,8 +26673,8 @@ end
 
 escape _V;
 ]],
-    env = 'line 22 : variable/event "_" is not declared',
-    --fin = 'only empty finalizers inside constructors',
+    --env = 'line 22 : variable/event "_" is not declared',
+    fin = 'only empty finalizers inside constructors',
     --fin = 'line 21 : invalid `finalize´',
 }
 

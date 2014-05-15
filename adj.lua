@@ -1172,23 +1172,23 @@ F = {
                 fld)
     end,
 
--- _Set_constr ------------------------------------------------------------
+-- Var ------------------------------------------------------------
 
     --[[
     --  var T xx with
-    --      _.x = 1;
+    --      _.x = 1;    ==>   this_.x = 1
     --  end
     --]]
-    _Set_constr_pre = function (me)
-        ASR(_AST.par(me,'Dcl_constr'), me, 'invalid statement')
-        local id, op, exp = unpack(me)
-        local set = node('SetExp', me.ln, op,
-                        exp,
-                        node('Op2_.', me.ln, '.',
-                            node('This_', me.ln),
-                            id))
-        set[2].byRef = true     -- first assignment
-        set[3].byRef = true     -- first assignment
+    Var_pre = function (me)
+        local id = unpack(me)
+        if id == '_' then
+            local set = _AST.par(me,'SetExp')
+            if _AST.par(me,'Dcl_constr') and set then
+                set[2].byRef = true     -- first assignment
+                set[3].byRef = true     -- first assignment
+                return node('This_', me.ln)
+            end
+        end
         return set
     end,
 
