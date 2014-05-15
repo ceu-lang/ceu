@@ -574,6 +574,36 @@ escape 10;
 -------------------------------------------------------------------------------
 -- ??: working now
 ]===]
+Test { [[
+var int& i = 1;
+escape 1;
+]],
+    exp = 'line 1 : invalid attribution',
+}
+
+Test { [[
+var int* p;
+var int& i = *p;
+escape 1;
+]],
+    exp = 'line 2 : invalid attribution',
+}
+
+Test { [[
+event int e;
+var int& i = await e;
+escape 1;
+]],
+    exp = 'line 2 : invalid attribution',
+}
+
+Test { [[
+event int& e;
+var int& i = await e;
+escape 1;
+]],
+    run = 0,
+}
 
 Test { [[
 native plain _t;

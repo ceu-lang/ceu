@@ -13,6 +13,18 @@ F = {
             ASR( _AST.isChild(CLS(),to.base.var.blk), me,
                     'invalid attribution (no scope)' )
         end
+
+        -- refuses:
+        -- var int& i = 1;
+        -- var int& i = *p;
+        if to.byRef and (not _TP.deref(fr.tp)) then
+            ASR(fr.lval or (fr.base and (fr.base.tag=='This' or
+                                         fr.base.var and fr.base.var.cls)),
+                                           -- orgs are not lval
+                me, 'invalid attribution')
+            ASR(not _AST.child(fr,'Op1_*'), me, 'invalid attribution')
+        end
+
     end,
 
     New = function (me)

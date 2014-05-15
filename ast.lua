@@ -82,6 +82,23 @@ function _AST.par (me, pred)
     end
 end
 
+function _AST.child (me, pred)
+    if type(pred) == 'string' then
+        local tag = pred
+        pred = function(me) return me.tag==tag end
+    end
+    if pred(me) then
+        return me
+    end
+    for i, sub in ipairs(me) do
+        if _AST.isNode(sub) and sub.tag~='Ref' then
+            if _AST.child(sub,pred) then
+                return sub
+            end
+        end
+    end
+end
+
 function _AST.iter (pred, inc)
     if pred == nil then
         pred = _AST.pred_true
