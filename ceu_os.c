@@ -40,6 +40,31 @@ void* CEU_APP_ADDR = NULL;
 
 /**********************************************************************/
 
+#ifdef CEU_LUA
+int ceu_lua_number (tceu_app* app, char* exp) {
+    char buf[255];
+    strcpy(buf, "return ");
+    strncat(buf, exp, 200);
+    int top = lua_gettop(app->lua);
+    int ret = 0;
+    if (luaL_dostring(app->lua, buf) == 0) {
+        if (lua_isnumber(app->lua,-1)) {
+            ret = lua_tonumber(app->lua,-1);
+            goto _CEU_LUA_OK_;
+        } else if (lua_isboolean(app->lua,-1)) {
+            ret = lua_toboolean(app->lua,-1);
+            goto _CEU_LUA_OK_;
+        }
+    }
+    /* TODO: err */
+_CEU_LUA_OK_:
+    lua_settop(app->lua, top);
+    return ret;
+}
+#endif
+
+/**********************************************************************/
+
 #ifdef CEU_NEWS
 #ifdef CEU_RUNTESTS
 #define CEU_MAX_DYNS 100

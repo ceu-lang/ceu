@@ -791,6 +791,13 @@ error'oi'
             to.byRef = false
             fr.byRef = false
         end
+
+        -- lua type
+        if fr.tp == '*' then
+            fr.tp = to.tp
+            ASR(_TP.isNumeric(fr.tp) or fr.tp=='bool' or fr.tp=='char*', me,
+                'invalid attribution')
+        end
     end,
 
     Free = function (me)
@@ -1012,6 +1019,11 @@ error'oi'
     RawExp = function (me)
         me.tp   = '@'
         me.lval = me
+    end,
+
+    LuaExp = function (me)
+        me.tp   = '*'
+        me.lval = false
     end,
 
     WCLOCKK = function (me)

@@ -1038,11 +1038,17 @@ F = {
                                     to)))
             end
 
-        else -- '__SetNew', '__SetSpawn'
+        elseif tag=='__SetNew' or tag=='__SetSpawn' then
             p1[#p1+1] = node('SetExp', me.ln, op,
                             node('Ref', me.ln, p1),
                             to)
             return p1
+
+        elseif tag == '__SetLua' then
+            return node('SetExp', me.ln, op, p1, to)
+
+        else
+            error 'not implemented'
         end
     end,
 

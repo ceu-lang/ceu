@@ -309,6 +309,7 @@ do
             has_clear   = 'CEU_CLEAR',
             has_pses    = 'CEU_PSES',
             has_ret     = 'CEU_RET',
+            has_lua     = 'CEU_LUA',
             -- code.lua
             has_goto    = 'CEU_GOTO',
         }

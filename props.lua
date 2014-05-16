@@ -12,6 +12,7 @@ _PROPS = {
     has_clear   = false,
     has_pses    = false,
     has_ret     = false,
+    has_lua     = false,
 }
 
 local NO_atomic = {
@@ -352,7 +353,12 @@ F = {
         if _tp and _ENV.clss[_tp] then
             _PROPS.has_ifcs = true      -- cast must check org->cls_id
         end
-    end
+    end,
+
+    LuaStmt = 'LuaExp',
+    LuaExp = function (me)
+        _PROPS.has_lua = true
+    end,
 }
 
 _AST.visit(F)

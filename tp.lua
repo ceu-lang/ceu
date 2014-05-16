@@ -132,6 +132,11 @@ function _TP.contains (tp1, tp2, c)
         return true
     end
 
+    -- any type (Lua scripts)
+    if tp1=='*' or tp2=='*' then
+        return true
+    end
+
     -- in case of refs `&´, compare as if they where pointers
     local ref1 = (_TP.deref(tp1) or tp1)..'*'
     local ref2 = (_TP.deref(tp2) or tp2)..'*'

@@ -133,6 +133,12 @@
 #include "ceu_threads.h"
 #endif
 
+#ifdef CEU_LUA
+#include <lua5.1/lua.h>
+#include <lua5.1/lauxlib.h>
+#include <lua5.1/lualib.h>
+#endif
+
 typedef u8 tceu_nevt;   /* max number of events */
                         /* TODO: should "u8" be fixed? */
 
@@ -338,6 +344,9 @@ typedef struct tceu_app {
     /*CEU_THREADS_COND_T  threads_cond;*/
     u8                  threads_n;          /* number of running threads */
         /* TODO: u8? */
+#endif
+#ifdef CEU_LUA
+    lua_State*  lua;
 #endif
 
     int         (*code)  (struct tceu_app*,tceu_go*);

@@ -1332,6 +1332,21 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
         LINE(me, me[1])
     end,
 
+    LuaStmt = function (me)
+        if _AST.par(me, 'SetExp') then
+            return      -- I'm an expression
+        end
+        local str = unpack(me)
+        LINE(me, [[
+{
+    int top = lua_gettop(_ceu_app->lua);
+    int err = luaL_dostring(_ceu_app->lua, ]]..string.format('%q',str)..[[);
+    /* TODO: err */
+    lua_settop(_ceu_app->lua, top);
+}
+]])
+    end,
+
     Sync = function (me)
         local thr = _AST.iter'Thread'()
         LINE(me, [[

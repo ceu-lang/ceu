@@ -201,6 +201,12 @@ static void ceu_app_init (tceu_app* app)
      */
     CEU_THREADS_MUTEX_LOCK(&app->threads_mutex);
 #endif
+#ifdef CEU_LUA
+    app->lua = luaL_newstate();
+    /* TODO: lua_close(CEU_L); */
+    assert(app->lua != NULL);
+    luaL_openlibs(app->lua);
+#endif
 
 #ifdef CEU_OS
 

@@ -574,6 +574,82 @@ escape 10;
 -------------------------------------------------------------------------------
 -- ??: working now
 ]===]
+
+Test { [==[
+[[
+    a = 1
+]]
+var int a = [[a]];
+escape a;
+]==],
+    run = 1,
+}
+
+Test { [==[
+[[
+    --[[oi]]
+    a = 1
+]]
+var int a = [[a]];
+escape a;
+]==],
+    parser = 'line 3 : after `1´ : expected `;´',
+}
+
+Test { [==[
+[=[
+    --[[oi]]
+    a = 1
+]=]
+var int a = [[a]];
+escape a;
+]==],
+    run = 1,
+}
+
+Test { [=[
+var int v = [["ok" == 'ok']];
+escape v;
+]=],
+    run = 1,
+}
+
+Test { [=[
+var int v = [[true]];
+escape v;
+]=],
+    run = 1,
+}
+
+Test { [=[
+var int v = [[false]];
+escape v;
+]=],
+    run = 0,
+}
+
+Test { [==[
+[[
+    print '*** END: 10'
+]]
+var int v = [[1]];
+escape v;
+]==],
+    run = 10,
+}
+
+Test { [=[
+var int a = [[1]];
+[[
+    a = @a
+]]
+[[a]] = a;
+]=],
+    run = 1,
+}
+
+do return end
+
 Test { [[
 class T with
     var int x;

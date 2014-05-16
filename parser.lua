@@ -188,6 +188,7 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
              + V'_Dcl_ifc' + V'Dcl_cls'
              + V'Finalize'
              + V'_Dcl_fun1' + V'_Dcl_ext1'
+             + V'LuaStmt'
 
     , __LstStmt  = V'_Escape' + V'Break' + V'_Continue' + V'AwaitN' + V'Return'
     , __LstStmtB = V'ParEver' + V'_Continue'
@@ -217,6 +218,8 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
               + Cc'SetExp'       * V'__Exp'
                                  * Cc(false) * Cc(false)
                                     -- p1=New[max,cls,constr]
+              + Cc'__SetLua'     * V'LuaExp'
+                                 * Cc(false) * Cc(false)
               + EM'expression'
               )
 
@@ -489,10 +492,20 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                 + V'__comm'
                 )^0
 
-    , __comm    = '/' * m.Cg(P'*'^1,'comm') * (P(1)-V'__commcmp')^0 * V'__commcl'
+    , __comm    = '/' * m.Cg(P'*'^1,'comm') * (P(1)-V'__commcmp')^0 * 
+                    V'__commcl'
                     / function () end
     , __commcl  = C(P'*'^1) * '/'
     , __commcmp = m.Cmt(V'__commcl' * m.Cb'comm',
+                    function (s,i,a,b) return a == b end)
+
+    , LuaStmt  = V'__lua'
+    , LuaExp   = V'__lua'
+    , __lua    = '[' * m.Cg(P'='^0,'lua') * '[' *
+                    C((P(1)-V'__luacmp')^0) *
+                 V'__luacl' *S
+    , __luacl  = ']' * C(P'='^0) * ']'
+    , __luacmp = m.Cmt(V'__luacl' * m.Cb'lua',
                     function (s,i,a,b) return a == b end)
 }
 

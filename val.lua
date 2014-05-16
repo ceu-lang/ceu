@@ -482,6 +482,16 @@ F =
         me.val = unpack(me)
     end,
 
+    LuaExp = function (me)
+        local str = unpack(me)
+        if _TP.isNumeric(me.tp) or me.tp=='bool' then
+            me.val = 'ceu_lua_number(_ceu_app, '..string.format('%q',str)..')'
+        else
+            assert(me.tp=='char*')
+            me.val = 'ceu_lua_string(_ceu_app, '..string.format('%q',str)..')'
+        end
+    end,
+
     Nat = function (me)
         me.val = string.sub(me[1], 2)
     end,

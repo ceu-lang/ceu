@@ -178,6 +178,9 @@ end
     if _PROPS.has_threads then
         GCC = GCC .. ' -lpthread'
     end
+    if _PROPS.has_lua then
+        GCC = GCC .. ' -llua5.1'
+    end
 
     local EXE = ((not _VALGRIND) and './ceu.exe 2>&1')
              or 'valgrind -q --leak-check=full ./ceu.exe 2>&1'
