@@ -508,7 +508,7 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     , __lua    = K'[' * m.Cg(P'='^0,'lua') * '[' *
                 ( V'__luaext' + C((P(1)-V'__luaext'-V'__luacmp')^1) )^0
-                 * V'__luacl' *S
+                 * (V'__luacl'/function()end) *S
     , __luaext = K'@' * V'__Exp'
     , __luacl  = ']' * C(P'='^0) * EK']'
     , __luacmp = m.Cmt(V'__luacl' * m.Cb'lua',

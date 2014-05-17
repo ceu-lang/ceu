@@ -867,7 +867,8 @@ error'oi'
         elseif f.tag == 'Op2_.' then
             id   = f.id
             if f.org then   -- t._f()
-                me.c = assert(_ENV.clss[f.org.tp]).c[f.id]
+                local ref = _TP.deref(f.org.tp)
+                me.c = assert(_ENV.clss[ref or f.org.tp]).c[f.id]
             else            -- _x._f()
                 me.c = f.c
             end
