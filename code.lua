@@ -1346,6 +1346,10 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
                 LINE(me, [[
         lua_pushnumber(_ceu_app->lua,]]..V(p)..[[);
 ]])
+            elseif p.tp=='char*' then
+                LINE(me, [[
+        lua_pushstring(_ceu_app->lua,]]..V(p)..[[);
+]])
             else
                 error 'not implemented'
             end
@@ -1367,6 +1371,18 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
                 err = 1;
             }
             ]]..V(me.ret)..[[ = ret;
+            lua_pop(_ceu_app->lua, 1);
+]])
+            elseif me.ret.tp == 'char*' then
+                ASR(me.ret.var and me.ret.var.arr, me,
+                    'invalid attribution (requires a buffer)')
+                LINE(me, [[
+            if (lua_isstring(_ceu_app->lua,-1)) {
+                const char* ret = lua_tostring(_ceu_app->lua,-1);
+                strncpy(]]..V(me.ret)..[[, ret, ]]..me.ret.var.arr.sval..[[);
+            } else {
+                err = 1;
+            }
             lua_pop(_ceu_app->lua, 1);
 ]])
             else

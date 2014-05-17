@@ -574,31 +574,32 @@ escape 10;
 -------------------------------------------------------------------------------
 -- ??: working now
 
+]===]
+Test { [=[
+native nohold _strcmp();
+var char* str = "oioioi";
+[[ str = @str ]]
+var bool ret = [[ str == 'oioioi' ]];
+var char[10] cpy = [[ str ]];
+escape ret and (not _strcmp(str,cpy));
+]=],
+    run = 1,
+}
+
 Test { [=[
 var int a = [[1]];
 var int b = 10;
 [[
     @a = @a+@b
     a = @a
-print('aaa', @a, @b, a)
 ]]
 var int ret = [[a]];
 escape ret;
 ]=],
+    todo = 'error: assign to @a',
     run = 11,
 }
 
-Test { [=[
-var int a = [[1]];
-[[
-    a = @b c=@d
-]]
-//[[a]] = a;
-]=],
-    run = 1,
-}
-
-]===]
 Test { [==[
 [[
     a = 1
