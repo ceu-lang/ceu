@@ -206,6 +206,7 @@ static void ceu_app_init (tceu_app* app)
     /* TODO: lua_close(CEU_L); */
     assert(app->lua != NULL);
     luaL_openlibs(app->lua);
+    lua_atpanic(app->lua, ceu_lua_atpanic);
 #endif
 
 #ifdef CEU_OS

@@ -1332,17 +1332,59 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
         LINE(me, me[1])
     end,
 
-    LuaStmt = function (me)
-        if _AST.par(me, 'SetExp') then
-            return      -- I'm an expression
-        end
-        local str = unpack(me)
+    Lua = function (me)
+        local nargs = #me.params
+        local nrets = (me.ret and 1) or 0
         LINE(me, [[
 {
-    int top = lua_gettop(_ceu_app->lua);
-    int err = luaL_dostring(_ceu_app->lua, ]]..string.format('%q',str)..[[);
-    /* TODO: err */
-    lua_settop(_ceu_app->lua, top);
+    int err = luaL_loadstring(_ceu_app->lua, ]]..string.format('%q',me.lua)..[[);
+    if (! err) {
+]])
+
+        for _, p in ipairs(me.params) do
+            if _TP.isNumeric(p.tp) or p.tp=='bool' then
+                LINE(me, [[
+        lua_pushnumber(_ceu_app->lua,]]..V(p)..[[);
+]])
+            else
+                error 'not implemented'
+            end
+        end
+
+        LINE(me, [[
+        err = lua_pcall(_ceu_app->lua, ]]..nargs..','..nrets..[[, 0);
+        if (! err) {
+]])
+        if me.ret then
+            if _TP.isNumeric(me.ret.tp) or me.ret.tp=='bool' then
+                LINE(me, [[
+            int ret;
+            if (lua_isnumber(_ceu_app->lua,-1)) {
+                ret = lua_tonumber(_ceu_app->lua,-1);
+            } else if (lua_isboolean(_ceu_app->lua,-1)) {
+                ret = lua_toboolean(_ceu_app->lua,-1);
+            } else {
+                err = 1;
+            }
+            ]]..V(me.ret)..[[ = ret;
+            lua_pop(_ceu_app->lua, 1);
+]])
+            else
+                error 'not implemented'
+            end
+        end
+
+        LINE(me, [[
+            if (! err) {
+                goto _CEU_LUA_OK_]]..me.n..[[;
+            }
+        }
+    }
+/* ERROR */
+    lua_error(_ceu_app->lua); /* TODO */
+
+/* OK */
+_CEU_LUA_OK_]]..me.n..[[:;
 }
 ]])
     end,

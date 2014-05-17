@@ -355,8 +355,7 @@ F = {
         end
     end,
 
-    LuaStmt = 'LuaExp',
-    LuaExp = function (me)
+    Lua = function (me)
         _PROPS.has_lua = true
     end,
 }

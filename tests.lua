@@ -573,8 +573,32 @@ escape 10;
 
 -------------------------------------------------------------------------------
 -- ??: working now
-]===]
 
+Test { [=[
+var int a = [[1]];
+var int b = 10;
+[[
+    @a = @a+@b
+    a = @a
+print('aaa', @a, @b, a)
+]]
+var int ret = [[a]];
+escape ret;
+]=],
+    run = 11,
+}
+
+Test { [=[
+var int a = [[1]];
+[[
+    a = @b c=@d
+]]
+//[[a]] = a;
+]=],
+    run = 1,
+}
+
+]===]
 Test { [==[
 [[
     a = 1
@@ -638,17 +662,39 @@ escape v;
     run = 10,
 }
 
+Test { [==[
+[[
+    aa $ aa
+]]
+escape 1;
+]==],
+    run = "LUA_ATPANIC: [string \"    aa $ aa \"]:1: '=' expected near '$'",
+}
+
 Test { [=[
 var int a = [[1]];
 [[
-    a = @a
+    a = @a+1
 ]]
-[[a]] = a;
+var int ret = [[a]];
+escape ret;
 ]=],
-    run = 1,
+    run = 2,
 }
 
-do return end
+Test { [=[
+var int a = [[1]];
+var int b = 10;
+[[
+    a = @a+@b
+]]
+var int ret = [[a]];
+escape ret;
+]=],
+    run = 11,
+}
+
+--do return end
 
 Test { [[
 class T with

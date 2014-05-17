@@ -1045,12 +1045,51 @@ F = {
             return p1
 
         elseif tag == '__SetLua' then
-            return node('SetExp', me.ln, op, p1, to)
+            p1.ret = to     -- node Lua will assign to "to"
+            return node('Stmts', me.ln, to, p1)
 
         else
             error 'not implemented'
         end
     end,
+
+-- Lua --------------------------------------------------------
+
+    _LuaExp = function (me)
+        --[[
+        -- a = @a ; b = @b
+        --
+        -- __ceu_1, __ceu_2 = ...
+        -- a = __ceu_1 ; b = __ceu_2
+        --]]
+        local params = {}
+        local code = {}
+        local names = {}
+        for _, v in ipairs(me) do
+            if type(v) == 'table' then
+                params[#params+1] = v
+                code[#code+1] = '_ceu_'..#params
+                names[#names+1] = code[#code]
+            else
+                code[#code+1] = v;
+            end
+        end
+
+        -- me.ret:    node to assign result ("_Set_pre")
+        -- me.params: @v1, @v2
+        -- me.lua:    code as string
+
+        me.params = params
+        if #params == 0 then
+            me.lua = table.concat(code,' ')
+        else
+            me.lua = table.concat(names,', ')..' = ...\n'..
+                     table.concat(code,' ')
+        end
+
+        me.tag = 'Lua'
+    end,
+    _LuaStmt = '_LuaExp',
 
 -- EmitExt --------------------------------------------------------
 

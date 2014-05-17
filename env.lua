@@ -800,6 +800,13 @@ error'oi'
         end
     end,
 
+    Lua = function (me)
+        if me.ret then
+            ASR(not _TP.deref(me.ret.tp), me, 'invalid attribution')
+            me.ret.byRef = false
+        end
+    end,
+
     Free = function (me)
         local exp = unpack(me)
         local id = ASR(_TP.deptr(exp.tp), me, 'invalid `free´')
@@ -1019,11 +1026,6 @@ error'oi'
     RawExp = function (me)
         me.tp   = '@'
         me.lval = me
-    end,
-
-    LuaExp = function (me)
-        me.tp   = '*'
-        me.lval = false
     end,
 
     WCLOCKK = function (me)
