@@ -143,10 +143,10 @@ F = {
             end
             if var.pre=='pool' then
                 _PROPS.has_news = true
-                if var.arr.sval >= 0 then
-                    _PROPS.has_news_pool = true         -- pool T[N] ts
-                else
+                if var.tp.arr==true then
                     _PROPS.has_news_malloc = true       -- pool T[]  ts
+                else
+                    _PROPS.has_news_pool = true         -- pool T[N] ts
                 end
             end
         end
@@ -163,10 +163,10 @@ F = {
         local _,pool,_ = unpack(me)
 
         --_PROPS.has_news = true    (pool does this)
-        if pool and pool.base.var.arr.sval>=0 then
-            _PROPS.has_news_pool = true         -- pool T[N] ts
-        else
+        if pool and pool.base.var.tp.arr==true then
             _PROPS.has_news_malloc = true       -- pool T[]  ts
+        else
+            _PROPS.has_news_pool = true         -- pool T[N] ts
         end
 
         --_PROPS.has_clear = true   (var.cls does this)
@@ -349,8 +349,7 @@ F = {
 
     Op1_cast = function (me)
         local tp, _ = unpack(me)
-        local _tp = _TP.deptr(tp)
-        if _tp and _ENV.clss[_tp] then
+        if tp.ptr>0 and _ENV.clss[tp.id] then
             _PROPS.has_ifcs = true      -- cast must check org->cls_id
         end
     end,

@@ -28,7 +28,10 @@ F = {
         -- NON-POINTER ATTRIBUTIONS (always safe)
         --
 
-        if not (_TP.deptr(to.tp,true) and _TP.deptr(fr.tp,true)) then
+        local noptr =  (to.tp.ptr==0 and ((not to.tp.ext) or to.tp.plain))
+                    or (fr.tp.ptr==0 and ((not fr.tp.ext) or fr.tp.plain))
+
+        if noptr then
             ASR(op == '=', me, 'invalid operator')
             ASR(not me.fin, me, 'attribution does not require `finalize´')
             return
@@ -168,7 +171,7 @@ F = {
     end,
 
     Dcl_var = function (me)
-        if _TP.deptr(me.var.tp,true) and
+        if me.var.tp.ptr>0 and
             me.var.blk==CLS().blk_ifc and CLS().id~='Main' and
                                           CLS().id~='Global'
                                           -- main/global always in scope
@@ -206,7 +209,7 @@ F = {
 
         -- possible dangling pointer "me.var" is accessed across await
 
-        if _ENV.clss[_TP.deptr(me.tp)] then
+        if me.tp.ptr>0 and _ENV.clss[me.tp.id] then
             -- pointer to org: check if it is enclosed by "watching me.var"
             for n in _AST.iter('ParOr') do
                 local var = n.isWatching and n.isWatching.base and n.isWatching.base.var
@@ -287,7 +290,7 @@ F = {
                 if hold then
                     -- int* pa; _f(pa);
                     --  (`pa´ termination must consider `_f´)
-                    local r = (_TP.deptr(exp.tp) or _TP.ext(exp.tp)) and
+                    local r = (exp.tp.ptr>0 or exp.tp.ext) and
                               (not exp.isConst) and
                               (not exp.c or exp.c.mod~='constant')
                                     -- except constants

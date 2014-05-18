@@ -21,9 +21,9 @@ typedef struct CEU_]]..me.id..[[ {
     end,
     Dcl_cls_pos = function (me)
         if me.is_ifc then
-            me.struct = 'typedef void '.._TP.c(me.id)..';\n'
+            me.struct = 'typedef void '.._TP.toc(me.tp)..';\n'
         else
-            me.struct  = me.struct..'\n} '.._TP.c(me.id)..';\n'
+            me.struct  = me.struct..'\n} '.._TP.toc(me.tp)..';\n'
         end
 
         _MEM.clss = _MEM.clss .. me.struct .. '\n'
@@ -41,14 +41,14 @@ DBG('===', me.id, me.trails_n)
         local dcl = { 'tceu_app* _ceu_app', 'tceu_org* __ceu_org' }
         for _, v in ipairs(ins) do
             local hold, tp, id = unpack(v)
-            dcl[#dcl+1] = _TP.c(tp)..' '..(id or '')
+            dcl[#dcl+1] = _TP.toc(tp)..' '..(id or '')
         end
         dcl = table.concat(dcl,  ', ')
 
         -- TODO: static?
         me.id = 'CEU_'..cls.id..'_'..id
         me.proto = [[
-]]..out..' '..me.id..' ('..dcl..[[)
+]].._TP.toc(out)..' '..me.id..' ('..dcl..[[)
 ]]
         if _OPTS.os and _ENV.exts[id] and _ENV.exts[id].pre=='output' then
             -- defined elsewhere
@@ -89,23 +89,23 @@ DBG('===', me.id, me.trails_n)
                 len = 0
             elseif var.pre == 'event' then --
                 len = 1   --
-            elseif var.pre=='pool' and var.arr.sval>=0 then
+            elseif var.pre=='pool' and (type(var.tp.arr)=='table') then
                 len = 10    -- TODO: it should be big
             elseif var.cls then
                 len = 10    -- TODO: it should be big
-                --len = (var.arr or 1) * ?
-            elseif var.arr then
+                --len = (var.tp.arr or 1) * ?
+            elseif var.tp.arr then
                 len = 10    -- TODO: it should be big
 --[[
                 local _tp = _TP.deptr(var.tp)
-                len = var.arr * (_TP.deptr(_tp) and _ENV.c.pointer.len
+                len = var.tp.arr * (_TP.deptr(_tp) and _ENV.c.pointer.len
                              or (_ENV.c[_tp] and _ENV.c[_tp].len
                                  or _ENV.c.word.len)) -- defaults to word
 ]]
-            elseif _TP.deptr(var.tp) or _TP.deref(var.tp) then
+            elseif var.tp.ptr>0 or var.tp.ref then
                 len = _ENV.c.pointer.len
             else
-                len = _ENV.c[var.tp].len
+                len = _ENV.c[var.tp.id].len
             end
             var.len = len
         end
@@ -118,13 +118,13 @@ DBG('===', me.id, me.trails_n)
         end
 
         for _, var in ipairs(sorted) do
-            local tp = _TP.c(var.tp)
+            local tp = _TP.toc(var.tp)
 
             var.id_ = var.id .. '_' .. var.n
             --var.id_ = var.id .. (var.inTop and '' or ('_'..var.n))
                 -- id's inside interfaces are kept (to be used from C)
 
-            if CLS().id == _TP.noptr(var.tp) then
+            if CLS().id == var.tp.id then
                 tp = 'struct '..tp  -- for types w/ pointers for themselves
             end
 
@@ -132,17 +132,19 @@ DBG('===', me.id, me.trails_n)
                 local dcl = [[
 #line ]]..var.ln[2]..' "'..var.ln[1]..[["
 ]]
-                if var.arr then
-                    ASR(var.arr.cval, me, 'invalid constant')
-                    dcl = dcl .. _TP.deptr(tp)..' '..var.id_..'['..var.arr.cval..']'
+                if var.tp.arr then
+                    local tp = string.sub(tp,1,-2)  -- remove leading `*´
+                    ASR(var.tp.arr.cval, me, 'invalid constant')
+                    dcl = dcl .. tp..' '..var.id_..'['..var.tp.arr.cval..']'
                 else
                     dcl = dcl .. tp..' '..var.id_
                 end
                 cls.struct = cls.struct..SPC()..'  '..dcl..';\n'
-            elseif var.pre=='pool' and var.arr.sval>=0 then
+            elseif var.pre=='pool' and (type(var.tp.arr)=='table') then
                 cls.struct = cls.struct .. [[
-CEU_POOL_DCL(]]..var.id_..','.._TP.deptr(tp)..','..var.arr.sval..[[)
+CEU_POOL_DCL(]]..var.id_..',CEU_'..var.tp.id..','..var.tp.arr.sval..[[)
 ]]
+                            -- TODO: bad (explicit CEU_)
             end
 
             -- pointers ini/end to list of orgs

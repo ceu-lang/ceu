@@ -574,7 +574,28 @@ escape 10;
 -------------------------------------------------------------------------------
 -- ??: working now
 
-]===]
+Test { [[
+var int i = 1;
+var int[] v = &i;
+
+class T with
+    var int*  p = null;
+    var int[] v = null;
+do
+end
+
+var T t with
+    _.p = v;
+    _.v = v;
+end;
+
+escape *(t.p) + *(t.v);
+]],
+    run = 1,
+}
+
+--do return end
+
 Test { [=[
 native nohold _strcmp();
 var char* str = "oioioi";
@@ -1368,7 +1389,7 @@ do
     var char _;
 end
 
-escape __;
+escape (int) __;
 ]],
     run = 3,
 }
@@ -4239,7 +4260,8 @@ end
 emit a;
 escape ret;
 ]],
-    env = 'line 10 : invalid `emit´',
+    --env = 'line 10 : missing parameters on `emit´',
+    env = 'line 10 : invalid arity',
 }
 
 Test { [[
@@ -5856,7 +5878,8 @@ async do
 end
 escape 1;
 ]],
-    env = 'line 3 : missing parameters on `emit´',
+    env = 'line 3 : invalid arity',
+    --env = 'line 3 : missing parameters on `emit´',
 }
 
 Test { [[
@@ -13585,6 +13608,36 @@ escape x;
         unreachs = 2,
     },
     run = 1,
+    env = 'line 6 : invalid arity',
+    --env = 'line 6 : non-matching types on `emit´ (void vs int)',
+}
+
+Test { [[
+input void OS_START;
+event int a;
+var int x = 0;
+par/or do
+    await OS_START;
+    emit a =>  1;
+    // unreachable
+with
+    await a;
+    x = x + 1;
+    await a;        // 11
+    x = x + 1;
+with
+    await a;
+    emit a => 1;         // 15
+    // unreachable
+end
+escape x;
+]],
+    _ana = {
+        abrt = 1,
+        acc = 1,
+        unreachs = 2,
+    },
+    run = 1,
 }
 
 Test { [[
@@ -14294,7 +14347,7 @@ escape(a);
     --env = 'line 8 : native variable/function "_f" is not declared',
     --fin = 'line 8 : unsafe pointer attribution',
     fin = 'line 11 : invalid access to pointer across `await´',
-    run = 10,
+    --run = { ['~>1s']=10 },
 }
 
 Test { [[
@@ -14306,6 +14359,26 @@ native do
 end
 native _t = 4;
 var _t v := _f;
+await 1s;
+var int a;
+v(&a) finalize with nothing; end;
+escape(a);
+]],
+    --env = 'line 8 : native variable/function "_f" is not declared',
+    --fin = 'line 8 : unsafe pointer attribution',
+    --fin = 'line 11 : invalid access to pointer across `await´',
+    run = { ['~>1s']=10 },
+}
+
+Test { [[
+native do
+    void f (int* a) {
+        *a = 10;
+    }
+    typedef void (*t)(int*);
+end
+native _t = 4;
+var _t v = _f;
 var int a;
 v(&a) finalize with nothing; end;
 escape(a);
@@ -14406,7 +14479,23 @@ escape _f(_v);
 ]],
     --fin = 'line 3 : call to "_f" requires `finalize´',
     run = 2,
+    --fin = 'line 9 : attribution requires `finalize´',
 }
+Test { [[
+native pure _f();
+native _v;
+native do
+    int v = 1;
+    int f (int v) {
+        return v + 1;
+    }
+end
+escape _f(_v);
+]],
+    --fin = 'line 3 : call to "_f" requires `finalize´',
+    run = 2,
+}
+
 
 Test { [[
 native pure _f();
@@ -14422,7 +14511,7 @@ escape v == null;
 }
 
 Test { [[
-native _f();
+native pure _f();
 native do
     int V = 10;
     int f (int v) {
@@ -15263,7 +15352,7 @@ native do
 end
 native _t=4;
 native nohold _f();
-var _t v := _f;
+var _t v = _f;
 var int ret;
 do
     var int a;
@@ -15287,11 +15376,11 @@ native do
 end
 var int ret = 0;
 if _A then
-    ret = ret + *_A;
+    ret = ret + *(int*)_A;
 end
 do
     var int a = 10;;
-    var _t v := _f;
+    var _t v = _f;
     v(&a)
         finalize with
             do
@@ -15300,11 +15389,11 @@ do
         end
             end;
     if _A then
-        a = a + *_A;
+        a = a + *(int*)_A;
     end
 end
 if _A then
-    ret = ret + *_A;
+    ret = ret + *(int*)_A;
 end
 escape(ret);
 ]],
@@ -15323,11 +15412,11 @@ native do
 end
 var int ret = 0;
 if _A then
-    ret = ret + *_A;
+    ret = ret + *(int*)_A;
 end
 par/or do
         var int a = 10;;
-        var _t v := _f;
+        var _t v = _f;
         v(&a)
             finalize with
                 do
@@ -15336,14 +15425,14 @@ par/or do
             end
                 end;
         if _A then
-            a = a + *_A;
+            a = a + *(int*)_A;
         end
         await FOREVER;
 with
     await OS_START;
 end
 if _A then
-    ret = ret + *_A;
+    ret = ret + *(int*)_A;
 end
 escape(ret);
 ]],
@@ -15490,7 +15579,7 @@ par/or do
 with
     async do
         var int v = 10;
-        emit A => (void*) &v;
+        emit A => &v;
         emit A => null;
     end
 end
@@ -15498,6 +15587,29 @@ escape v;
 ]],
     wrn = true,
     run = 10,
+}
+
+Test { [[
+input int* A;
+var int v;
+par/or do
+    do
+        var int* p = await A;
+        v = *p;
+    end
+    await A;
+with
+    async do
+        var int v = 10;
+        emit A => (void*) &v;
+        emit A => null;
+    end
+end
+escape v;
+]],
+    env = 'line 12 : non-matching types on `emit´ (int* vs void*)',
+    --wrn = true,
+    --run = 10,
 }
 
 Test { [[
@@ -15635,6 +15747,27 @@ do
     every door in T_VERTICAL_DOOR do
         spawn T_VerticalDoor with
             _.v = door;
+        end;
+    end
+end
+]],
+    --env = 'line 11 : invalid attribution (void* vs _vldoor_t*)',
+    fin = 'line 11 : unsafe pointer attribution',
+    --fin = 'line 9 : invalid block for awoken pointer "door"',
+}
+
+Test { [[
+input _vldoor_t* T_VERTICAL_DOOR;
+class T_VerticalDoor with
+    var void* v;
+do
+end
+
+var _vldoor_t* door = null;
+do
+    every door in T_VERTICAL_DOOR do
+        spawn T_VerticalDoor with
+            _.v = (void*)door;
         end;
     end
 end
@@ -16700,7 +16833,8 @@ end
 var _cahr v = emit A => 1;
 escape 0;
 ]],
-    env = 'line 6 : non-matching types on `emit´',
+    env = 'line 6 : invalid arity',
+    --env = 'line 6 : non-matching types on `emit´',
     --parser = 'line 6 : after `=´ : expected expression',
     --env = 'line 6 : undeclared type `_cahr´',
 }
@@ -16724,7 +16858,8 @@ var _char v = emit A => 1;
 escape 0;
 ]],
     --parser = 'line 6 : after `=´ : expected expression',
-    env = 'line 6 : non-matching types on `emit´',
+    --env = 'line 6 : non-matching types on `emit´',
+    env = 'line 6 : invalid arity',
 }
 
 Test { [[
@@ -16779,7 +16914,7 @@ Test { [[
 native do
     ##define ceu_out_emit_val(a,b,c) F(c)
     void F (tceu_evtp p) {
-        tceu___int____int_* v = (tceu___int____int_*) p.ptr;
+        tceu__int___int_* v = (tceu__int___int_*) p.ptr;
         *(v->_1) = 1;
         *(v->_2) = 2;
     }
@@ -16798,7 +16933,7 @@ Test { [[
 native do
     ##define ceu_out_emit_val(a,b,c) F(a,b,c)
     void F (tceu_app* app, int evt, tceu_evtp p) {
-        tceu___int____int_* v = (tceu___int____int_*) p.ptr;
+        tceu__int___int_* v = (tceu__int___int_*) p.ptr;
         *(v->_1) = (evt == CEU_OUT_RADIO_SEND);
         *(v->_2) = 2;
     }
@@ -17018,14 +17153,63 @@ output (int)=>int F;
 var int ret = call F=>(1,2);
 escape ret;
 ]],
-    env = 'line 8 : invalid attribution (void vs int)',
+    env = 'line 8 : invalid arity',
+    --env = 'line 8 : invalid attribution (void vs int)',
     --env = 'line 8 : invalid type',
+}
+
+Test { [[
+output int E;
+emit E=>(1,2);
+escape 1;
+]],
+    env = 'line 2 : invalid arity',
+}
+
+Test { [[
+event (int) e;
+emit e=>(1,2);
+escape 1;
+]],
+    env = 'line 2 : invalid arity',
+}
+
+Test { [[
+event (int) e;
+emit e;
+escape 1;
+]],
+    env = 'line 2 : invalid arity',
+}
+
+Test { [[
+output int E;
+emit E;
+escape 1;
+]],
+    env = 'line 2 : invalid arity',
+}
+
+Test { [[
+output (int,int) E;
+emit E=>1;
+escape 1;
+]],
+    env = 'line 2 : invalid arity',
+}
+
+Test { [[
+event (int,int) e;
+emit e=>(1);
+escape 1;
+]],
+    env = 'line 2 : invalid arity',
 }
 
 Test { [[
 native do
     ##define ceu_out_call_F(a) F(a)
-    int F (tceu___int___int* p) {
+    int F (tceu__int__int* p) {
         return p->_1 + p->_2;
     }
 end
@@ -17292,15 +17476,16 @@ input (int tilex, int tiley, bool vertical?, int lock, int door, word*
 -- REQUESTS
 
 Test { [[
-input/output (int max)=>char* [10] LINE;
+input/output [10] (int max)=>char* LINE;
 request LINE;
 escape 1;
 ]],
-    env = 'line 2 : missing parameters on `emit´',
+    env = 'line 2 : invalid arity',
+    --env = 'line 2 : missing parameters on `emit´',
 }
 
 Test { [[
-input/output (int max)=>char* [10] LINE;
+input/output [10] (int max)=>char* LINE;
 request LINE => "oi";
 escape 1;
 ]],
@@ -17308,7 +17493,7 @@ escape 1;
 }
 
 Test { [[
-input/output (int max)=>char* [10] LINE;
+input/output [10] (int max)=>char* LINE;
 request LINE => 10;
 escape 1;
 ]],
@@ -17319,7 +17504,7 @@ Test { [[
 native do
     ##define ceu_out_emit_val(a,b,c) 1
 end
-output/input (int max)=>char* [10] LINE;
+output/input [10] (int max)=>char* LINE;
 par/or do
     request LINE => 10;
 with
@@ -17330,7 +17515,7 @@ escape 1;
 }
 
 Test { [[
-output/input (int max)=>char* [10] LINE;
+output/input [10] (int max)=>char* LINE;
 var u8 err;
 var char* ret;
 par/or do
@@ -17344,7 +17529,7 @@ escape *ret;
 }
 
 Test { [[
-output/input (int max)=>char* [10] LINE;
+output/input [10] (int max)=>char* LINE;
 native do
     ##define ceu_out_emit_val(a,b,c) 1
 end
@@ -17360,15 +17545,16 @@ escape 1;
 }
 
 Test { [[
-input/output (int max)=>char* [10] LINE;
+input/output [10] (int max)=>char* LINE;
 request LINE;
 escape 1;
 ]],
-    env = 'line 2 : missing parameters on `emit´',
+    env = 'line 2 : invalid arity',
+    --env = 'line 2 : missing parameters on `emit´',
 }
 
 Test { [[
-input/output (int max)=>char* [10] LINE;
+input/output [10] (int max)=>char* LINE;
 request LINE => "oi";
 escape 1;
 ]],
@@ -17376,7 +17562,7 @@ escape 1;
 }
 
 Test { [[
-input/output (int max)=>char* [10] LINE;
+input/output [10] (int max)=>char* LINE;
 request LINE => 10;
 escape 1;
 ]],
@@ -17387,7 +17573,7 @@ Test { [[
 native do
     ##define ceu_out_emit_val(a,b,c) 1
 end
-output/input (int max)=>char* [10] LINE;
+output/input [10] (int max)=>char* LINE;
 par/or do
     request LINE => 10;
 with
@@ -17398,7 +17584,7 @@ escape 1;
 }
 
 Test { [[
-output/input (int max)=>char* [10] LINE;
+output/input [10] (int max)=>char* LINE;
 var u8 err, ret;
 (err, ret) = request LINE => 10;
 escape 1;
@@ -17410,7 +17596,7 @@ Test { [[
 native do
     ##define ceu_out_emit_val(a,b,c) 1
 end
-output/input (int max)=>int [10] LINE;
+output/input [10] (int max)=>int LINE;
 par/or do
     var u8 err, ret;
     (err, ret) = request LINE => 10;
@@ -17425,7 +17611,7 @@ Test { [[
 native do
     ##define ceu_out_emit_val(a,b,c) 1
 end
-output/input (int)=>int [10] LINE do
+output/input [10] (int)=>int LINE do
     return 1;     // missing <int "id">
 end
 par/or do
@@ -17442,7 +17628,7 @@ Test { [[
 native do
     ##define ceu_out_emit_val(a,b,c) 1
 end
-output/input (int max)=>int [10] LINE do
+output/input [10] (int max)=>int LINE do
     return 1;
 end
 par/or do
@@ -17459,7 +17645,7 @@ Test { [[
 native do
     ##define ceu_out_emit_val(a,b,c) 1
 end
-input/output (int max)=>int [10] LINE do
+input/output [10] (int max)=>int LINE do
     return 1;
 end
 par/or do
@@ -17476,7 +17662,7 @@ Test { [[
 native do
     ##define ceu_out_emit_val(a,b,c) 1
 end
-input/output (int max)=>int [10] LINE do
+input/output [10] (int max)=>int LINE do
     return 1;
 end
 escape 1;
@@ -17489,7 +17675,7 @@ native do
     ##define ceu_out_emit_val(a,b,c) 1
 end
 var int ret = 0;
-input/output (int max)=>int [10] LINE do
+input/output [10] (int max)=>int LINE do
     ret = 1;
 end
 escape ret;
@@ -17497,24 +17683,34 @@ escape ret;
     env = 'line 6 : variable/event "ret" is not declared',
 }
 
+]===]
 Test { [[
 par do
     native do
         ##define ceu_out_emit_val(a,b,c) 1
         int V = 0;
     end
-    input/output (int max)=>int [10] LINE do
+    input/output [10] (int max)=>int LINE do
+_printf("1\n");
         _V = 10;
+_printf("1\n");
+        return 1;
     end
+_printf("0\n");
     await 1s;
+_printf("2\n");
     escape _V+1;
 with
     async do
+_printf("a\n");
         emit LINE_REQUEST => (1,10);
+_printf("b\n");
         emit 1s;
+_printf("c\n");
     end
 end
 ]],
+    _ana = {acc=3},
     run = 11,
 }
 
@@ -17524,7 +17720,7 @@ par do
         ##define ceu_out_emit_val(a,b,c) 1
         int V = 0;
     end
-    input/output (int max)=>int [10] LINE do
+    input/output [10] (int max)=>int LINE do
         _V = max;
     end
     await 1s;
@@ -17545,7 +17741,7 @@ par do
         ##define ceu_out_emit_val(a,b,c) 1
         int V = 0;
     end
-    input/output (int max)=>int [10] LINE do
+    input/output [10] (int max)=>int LINE do
         _V = _V + max;
     end
     await 1s;
@@ -17567,7 +17763,7 @@ par do
     native do
         ##define ceu_out_emit_val(a,b,c) 1
     end
-    input/output (int max)=>int [2] LINE do
+    input/output [2] (int max)=>int LINE do
         await 1s;
     end
     await 1s;
@@ -17613,7 +17809,7 @@ par do
         ##define ceu_out_emit_val(a,b,c) 1
         int V = 0;
     end
-    input/output (int max)=>int [2] LINE do
+    input/output [2] (int max)=>int LINE do
         await 1s;
         _V = _V + max;
     end
@@ -17640,7 +17836,7 @@ par do
         ##define ceu_out_emit_val(a,b,c) 1
         int V = 0;
     end
-    input/output (int max)=>int [2] LINE do
+    input/output [2] (int max)=>int LINE do
         await 1s;
         _V = _V + max;
     end
@@ -17667,7 +17863,7 @@ par do
         ##define ceu_out_emit_val(a,b,c) 1
         int V = 0;
     end
-    input/output (int max)=>int [2] LINE do
+    input/output [2] (int max)=>int LINE do
         await 1s;
         _V = _V + max;
     end
@@ -17698,7 +17894,7 @@ par do
         ##define ceu_out_emit_val(a,b,c) 1
         int V = 0;
     end
-    input/output (int max)=>int [1] LINE do
+    input/output [1] (int max)=>int LINE do
         await 1s;
         _V = _V + max;
     end
@@ -17729,7 +17925,7 @@ par do
         ##define ceu_out_emit_val(a,b,c) 1
         int V = 0;
     end
-    input/output (int max)=>int [0] LINE do
+    input/output [0] (int max)=>int LINE do
         await 1s;
         _V = _V + max;
     end
@@ -17760,7 +17956,7 @@ par do
         ##define ceu_out_emit_val(a,b,c) 1
         int V = 0;
     end
-    input/output (int max)=>int [10] LINE do
+    input/output [10] (int max)=>int LINE do
         await 1s;
         _V = _V + max;
     end
@@ -17786,7 +17982,7 @@ par do
         ##define ceu_out_emit_val(a,b,c) 1
         int V = 0;
     end
-    input/output (int max)=>int [10] LINE do
+    input/output [10] (int max)=>int LINE do
         await 1s;
         _V = _V + max;
     end
@@ -17812,7 +18008,7 @@ par do
         ##define ceu_out_emit_val(a,b,c) 1
         int V = 0;
     end
-    input/output (int max)=>int [10] LINE do
+    input/output [10] (int max)=>int LINE do
         await 1s;
         _V = _V + max;
     end
@@ -18052,6 +18248,7 @@ ptr1 = ptr2;
 ptr2 = ptr1;
 escape 1;
 ]],
+    env = 'line 4 : invalid attribution (int* vs void*)',
     run = 1,
 }
 
@@ -18063,6 +18260,7 @@ ptr1 = ptr2;
 ptr2 = ptr1;
 escape (int)ptr2;
 ]],
+    env = 'line 3 : invalid attribution (int* vs void*)',
     --env = 'line 4 : invalid attribution',
     --run = 255,
     gcc = 'error: assignment from incompatible pointer type'
@@ -18075,6 +18273,7 @@ ptr1 = (_char*)ptr2;
 ptr2 = (int*) ptr1;
 escape (int)ptr2;
 ]],
+    env = 'line 3 : invalid attribution (int* vs void*)',
     --env = 'line 4 : invalid attribution',
     --run = 255,
     gcc = 'error: cast from pointer to integer of different size',
@@ -18108,6 +18307,7 @@ ptr1 = ptr2;
 ptr2 = ptr1;
 escape 1;
 ]],
+    env = 'line 4 : invalid attribution (int* vs _FILE*)',
     gcc = 'error: assignment from incompatible pointer type',
     --run = 1,
     --env = 'line 4 : invalid attribution',
@@ -18225,7 +18425,7 @@ escape a + b;
 ]],
     run = 2,
     _ana = {
-        acc = 7,
+        acc = 9,
     },
 }
 
@@ -18252,7 +18452,7 @@ escape a + b;
     run = 1,
     _ana = {
         abrt = 6,
-        acc = 7,
+        acc = 9,
     },
 }
 
@@ -18491,7 +18691,8 @@ escape *p;
     -- ARRAYS
 
 Test { [[input int[1] E; escape 0;]],
-    parser = "line 1 : after `int´ : expected identifier",
+    env = 'invalid event type',
+    --parser = "line 1 : after `int´ : expected identifier",
 }
 Test { [[var int[0] v; escape 0;]],
     run = 0,
@@ -18685,6 +18886,16 @@ escape c;
 Test { [[
 native plain _int;
 var _int a=1, b=1;
+a = b;
+await 1s;
+escape a==b;
+]],
+    run = { ['~>1s'] = 1 },
+}
+
+Test { [[
+native plain _int;
+var int a=1, b=1;
 a = b;
 await 1s;
 escape a==b;
@@ -19641,7 +19852,7 @@ with
 end
 ]],
     _ana = {
-        acc = 48,        -- TODO: nao conferi
+        acc = 12,        -- TODO: nao conferi
         isForever = true,
     },
     --fin = 'line 4 : call to "_digitalWrite" requires `finalize´',
@@ -24090,7 +24301,8 @@ end
 pool T t;
 escape 1;
 ]],
-    parser = 'line 4 : after `T´ : expected `[´',
+    env = 'line 4 : missing `pool´ dimension',
+    --parser = 'line 4 : after `T´ : expected `[´',
 }
 
 Test { [[
@@ -24691,7 +24903,7 @@ var int a with
 end;
 escape 0;
 ]],
-    parser = 'line 1 : after `a´ : expected `;´',
+    env = 'line 1 : invalid type',
 }
 
 Test { [[
@@ -27514,7 +27726,9 @@ end
 var I* i = _ptr;
 escape 10;
 ]],
-    env = 'line 8 : invalid attribution',
+    --env = 'line 8 : invalid attribution',
+    todo = 'i=ptr',
+    run = 10,
 }
 
 Test { [[
@@ -31770,296 +31984,6 @@ escape ret;
     run = { ['~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s']=-1 },
 }
 
--- RET_VAL / RET_END
-
---[=[
-Test { [[
-native _ret_val, _ret_end;
-class T with
-do
-    _ret_val = 10;
-    _ret_end = 1;
-end
-var T a;
-await FOREVER;
-]],
-    _ana = {
-        isForever = true,
-    },
-    run = 10,
-}
-
-Test { [[
-input int A;
-native _ret_val, _ret_end;
-class T with
-    var int i;
-do
-    loop do
-        i = await A;
-        _ret_val = i;
-        _ret_end = 1;
-    end
-end
-var T a;
-async do
-    emit A => 1;
-end
-await FOREVER;
-]],
-    _ana = {
-        isForever = true,
-    },
-    awaits = 1,
-    run = 1,
-}
-
-Test { [[
-input int A;
-native _ret_val, _ret_end;
-_ret_val=0;
-class T with
-    var int i;
-do
-    loop do
-        i = await A;
-        _ret_val = i+_ret_val;
-        _ret_end = 1;
-    end
-end
-var T[10] a;
-async do
-    emit A => 1;
-end
-await FOREVER;
-]],
-    _ana = {
-        isForever = true,
-    },
-    awaits = 1,
-    run = 10,
-}
-
-Test { [[
-input int A;
-native _ret_val, _ret_end;
-_ret_val = 10;
-class T with
-    event int i, x;
-    var int ii;
-do
-    par do
-        loop do
-            ii = await A;
-            ii = ii + 1;
-            emit i => ii;
-        end
-    with
-        loop do
-            var int v = await x;
-            ii = v+1;
-            emit i => ii;
-        end
-    end
-end
-var T a,b;
-par do
-    loop do
-        var int v = await a.i;
-        emit a.x => v;
-        _ret_val = _ret_val + a.ii;      // 24
-        _ret_end = 1;                   // 25
-    end
-with
-    loop do
-        var int v = await b.i;
-        emit b.x => v+1;
-        _ret_val = _ret_val + b.ii*2;    // 31
-        _ret_end = 1;                   // 32
-    end
-with
-    async do
-        emit A => 2;
-    end
-    await FOREVER;
-end
-]],
-    _ana = {
-        isForever = true,
-        acc = 4,
-    },
-    awaits = 2,
-    run = 24,
-}
-
-Test { [[
-input int A;
-native _ret_val, _ret_end;
-class T with
-    event int i;
-do
-    loop do
-        var int ii = await A;
-        emit i => ii+1;
-    end
-end
-var T a,b;
-par do
-    loop do
-        var int v = await a.i;
-        _ret_val = _ret_val + v;
-        _ret_end = 1;
-    end
-with
-    loop do
-        var int v = await a.i;
-        _ret_val = _ret_val + v;
-        _ret_end = 1;
-    end
-with
-    async do
-        emit A => 2;
-    end
-    await FOREVER;
-end
-]],
-    _ana = {
-        isForever = true,
-        --acc = 4,
-    },
-    awaits = 1,
-    run = 6,
-}
-
-Test { [[
-input void A;
-native _ret_val, _ret_end;
-_ret_val = 0;
-loop do
-    par/or do
-        await A;
-        _ret_val = _ret_val + 1;
-        _ret_end = 1;
-    with
-        await A;
-        _ret_val = _ret_val + 2;
-    end
-end
-]],
-    _ana = {
-        isForever = true,
-        acc = 3,
-        abrt = 1,
-    },
-    run = { ['~>A']=1 },
-}
-
-Test { [[
-input void OS_START;
-event void a;
-native _ret_val, _ret_end;
-_ret_val = 0;
-loop do
-    par/or do
-        await a;
-        _ret_val = _ret_val + 1;
-        _ret_end = 1;
-    with
-        await a;
-        _ret_val = _ret_val + 2;
-    with
-        await OS_START;
-        emit a;
-    end
-end
-]],
-    _ana = {
-        isForever = true,
-        acc = 3,
-        abrt = 1,
-    },
-    run = 1,
-}
-
-Test { [[
-input void A;
-native do ##include <assert.h> end
-native _assert();
-native _ret_end, _ret_val;
-var int v = 1;
-par do
-    loop do
-        await A;
-        v = v + 1;
-        _assert(v == 2);
-    end
-with
-    loop do
-        await A;
-        v = v * 2;
-        _assert(v == 4);
-        _ret_val = v;
-        _ret_end = 1;
-    end
-end
-]],
-    _ana = {
-        isForever = true,
-        acc = 7,
-    },
-    awaits = 1,
-    run = { ['~>A']=4 };
-}
-
-Test { [[
-input void A;
-native _ret_val, _ret_end;
-_ret_val = 0;
-loop do
-    await A;
-    _ret_val = _ret_val+1;
-    if _ret_val == 2 then
-        _ret_end = 1;
-    end
-end
-]],
-    _ana = {
-        isForever = true,
-    },
-    awaits = 1,
-    run = { ['~>A; ~>A']=2 },
-}
-
-Test { [[
-input void A,B;
-native do ##include <assert.h> end
-native _ret_val, _ret_end, _assert();
-_ret_val = 0;
-loop do
-    par/or do
-        loop do
-            await A;
-            _ret_val = _ret_val + 10;
-        end
-    with
-        loop do
-            await B;
-            _assert(_ret_val == 20);
-            _ret_val = 2;
-            _ret_end = 1;
-        end
-    end
-end
-]],
-    _ana = {
-        isForever = true,
-    },
-    awaits = 2,
-    run = { ['~>A;~>A; ~>B']=2 },
-}
-
-]=]
-
 -- UNTIL
 
 Test { [[
@@ -32793,7 +32717,8 @@ event (int,int) e;
 emit e => (1,2,3);
 escape 1;
 ]],
-    env = 'line 2 : invalid attribution (void vs int)',
+    env = 'invalid arity',
+    --env = 'line 2 : invalid attribution (void vs int)',
 }
 
 -- INCLUDE
@@ -34009,6 +33934,7 @@ end
 escape x[0];
 ]],
     run = 2,
+    gcc = 'error: lvalue required as left operand of assignment',
 }
 
 Test { [[
@@ -34024,8 +33950,9 @@ escape x[0];
 ]],
     run = 7,
     _ana = {
-        acc = 2,
+        --acc = 2,
     },
+    gcc = 'error: lvalue required as left operand of assignment',
 }
 
 -- END: THREADS / EMITS
@@ -34098,257 +34025,3 @@ end
     run = 1,
 }
 ]=]
-
---[==[
-    -- MEM
-
---[[
-0-3: $ret
-]]
-
-Test { [[
-await FOREVER;
-]],
-    tot = 4,
-    _ana = {
-        isForever = true,
-    }
-}
-
-Test { [[
-escape 0;
-]],
-    tot = 4,
-    run = 0,
-}
-
---[[
-0-18:
-     0-3: $ret
-    4-18: a..f
-]]
-
-Test { [[
-int a, b, c;
-u8 d, e, f;
-escape 0;
-]],
-    tot = 19,
-    run = 0,
-}
-
---[[
-0-15:       _Root
-     0-3:       $ret
-    4-15:       a,b,c
-     4-6:       d,e,f   // TODO: first
-]]
-
-Test { [[
-do
-    int a, b, c;
-end
-u8 d, e, f;
-escape 0;
-]],
-    tot = 19,
-    run = 0,
-}
-
---[[
-0-15:       _Root
-     0-4:       $ret
-    4-15:       a..c
-     4-6:       d..f
-]]
-
-Test { [[
-do
-    int a, b, c;
-end
-do
-    u8 d, e, f;
-end
-escape 0;
-]],
-    tot = 16,
-    run = 0,
-}
-
-Test { [[
-int ret = 0;
-do
-    s16 a=1, b=2, c=3;
-    ret = ret + a + b + c;
-    do
-        s8 a=10, b=20, c=30;
-        ret = ret + a + b + c;
-    end
-end
-u8 d=4, e=5, f=6;
-escape ret + d + e + f;
-]],
-    tot = 20,
-    run = 81,
-}
-
-Test { [[
-int ret = 0;
-par/and do
-    ret = ret + 1;
-with
-    ret = ret + 1;
-with
-    ret = ret + 1;
-end
-par/and do
-    ret = ret + 1;
-with
-    ret = ret + 1;
-with
-    ret = ret + 1;
-end
-escape ret;
-]],
-    tot = 11,
-    _ana = {
-        acc = 18,
-    },
-    run = 6,
-}
-
-Test { [[
-int ret = 10;
-do
-    int v = -5;
-    ret = ret + v;
-end
-par/or do
-    int a = 1;
-    ret = ret + a;
-    par/and do
-        s8 a = 10;
-        ret = ret + a;
-    with
-        ret = ret + 1;
-    with
-        int b = 5;
-        ret = ret + b;
-    end
-with
-    u8 a=1, b=2, c=3;
-    ret = ret + a + b + c;
-end
-int a = 10;
-do
-    int v = -5;
-    ret = ret + v;
-end
-escape ret+a;
-]],
-    _ana = {
-        acc = 21,
-    },
-    tot = 28,
-    run = 33;
-}
-
-Test { [[
-input void A, B, Z;
-s16 ret = 0;
-par do
-    s16 a = 10;
-    await A;
-    ret = ret + a;
-    a = 10;
-with
-    s16 a = 100;
-    await B;
-    ret = ret + a;
-with
-    s16 a = 1000;
-    await Z;
-    ret = ret + a;
-end
-]],
-    _ana = {
-        isForever = true,
-        reachs = 1,
-    },
-    tot = 21,
-}
-
-Test { [[
-input void A, B, Z;
-s16 ret = 0;
-par/and do
-    s16 a = 10;
-    await A;
-    ret = ret + a;
-    a = 10;
-with
-    s16 a = 100;
-    await B;
-    ret = ret + a;
-with
-    s16 a = 1000;
-    await Z;
-    ret = ret + a;
-end
-escape ret;
-]],
-    tot = 24,
-    run = {
-        ['~>A;~>B;~>Z'] = 1110,
-        ['~>B;~>A;~>Z'] = 1110,
-        ['~>Z;~>B;~>A'] = 1110,
-    }
-}
-Test { [[
-input void A, B, Z;
-s16 ret = 0;
-par do
-    s16 a = 10;
-    await A;
-    ret = ret + a;
-    a = 10;
-    escape ret;
-with
-    s16 a = 100;
-    await B;
-    ret = ret + a;
-with
-    loop do
-        s16 a = 1000;
-        await Z;
-        ret = ret + a;
-    end
-end
-]],
-    tot = 21,
-    run = {
-        ['~>A;~>B;~>Z'] = 10,
-        ['~>B;~>B;~>A;~>Z'] = 110,
-        ['~>Z;~>B;~>Z;~>A'] = 2110,
-    }
-}
-
-Test { [[
-par do
-    do
-        do
-            int a;
-        end
-    end
-
-with
-    int b;
-end
-]],
-    _ana = {
-        isForever = true,
-        reachs = 1,
-    },
-    tot = 12,
-}
-]==]

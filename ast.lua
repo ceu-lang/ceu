@@ -41,6 +41,8 @@ end
 
 function _AST.copy (node, ln)
     local ret = setmetatable({}, MT)
+    ret.n = _N
+    _N = _N + 1
     for k, v in pairs(node) do
         if k == '__par' then
             ret[k] = v

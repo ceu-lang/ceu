@@ -105,7 +105,7 @@ F = {
             path = me.ana.pre,
             id  = e1.evt.id,    -- like functions (not table events)
             md  = 'cl',
-            tp  = '@',
+            tp  = _TP.fromstr'@',
             any = false,
             err = ERR(me, 'event `'..e1.evt.id..'´')
         }
@@ -127,14 +127,14 @@ F = {
         CHG(f.base.acc, 'cl')
         me.acc = f.base.acc
         for _, exp in ipairs(exps) do
-            local tp = _TP.deptr(exp.tp, true)
-            if tp then
+            if exp.tp.ptr>0 then
                 local v = exp.base
                 if v and v.acc then   -- ignore constants
 --DBG(exp.tag, exp.base)
                     v.acc.any = exp.lval    -- f(&x) // a[N] f(a) // not "any"
                     CHG(v.acc, (me.c and me.c.mod=='pure' and 'rd') or 'wr')
-                    v.acc.tp  = tp
+                    v.acc.tp = _TP.copy(exp.tp)
+                    v.acc.tp.ptr = v.acc.tp.ptr - 1     -- f may deref exp
                 end
             end
         end
@@ -145,7 +145,7 @@ F = {
             path = me.ana.pre,
             id  = f,
             md  = 'cl',
-            tp  = '@',
+            tp  = _TP.fromstr'@',
             any = true,
             err = 'call to `'..f.id..'´ (line '..me.ln[2]..')',
         }
@@ -169,14 +169,14 @@ F = {
     end,
 
     ['Op2_idx'] = function (me)
-        if not (me.base.var and me.base.var.arr) then
+        if not (me.base.var and me.base.var.tp.arr) then
             me.base.acc.any = true
         end
-        me.base.acc.tp = _TP.deptr(me.base.acc.tp,true)
+        me.base.acc.tp = me.tp  -- deptr'd
     end,
     ['Op1_*'] = function (me)
         me.base.acc.any = true
-        me.base.acc.tp  = _TP.deptr(me.base.acc.tp,true)
+        me.base.acc.tp = me.tp  -- deptr'd
     end,
     ['Op1_&'] = function (me)
         CHG(me.base.acc, 'no')
@@ -232,7 +232,7 @@ F = {
             path = me.ana.pre,
             id  = me[1],
             md  = 'rd',
-            tp  = '@',
+            tp  = _TP.fromstr'@',
             any = false,
             err = ERR(me, 'symbol `'..me[1]..'´'),
         }

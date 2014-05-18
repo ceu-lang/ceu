@@ -14,7 +14,7 @@ end
 function V (me)
     ASR(me.val, me, 'invalid expression')
 
-    local ref = me.tp and _TP.deref(me.tp)
+    local ref = me.tp and me.tp.ref and me.tp.id
     if me.byRef and
         (not (_ENV.clss[me.tp] or ref and _ENV.clss[ref]))
     then
@@ -29,9 +29,9 @@ end
 
 function CUR (me, id)
     if id then
-        return '(('.._TP.c(CLS().id)..'*)_ceu_go->org)->'..id
+        return '(('.._TP.toc(CLS().tp)..'*)_ceu_go->org)->'..id
     else
-        return '(('.._TP.c(CLS().id)..'*)_ceu_go->org)'
+        return '(('.._TP.toc(CLS().tp)..'*)_ceu_go->org)'
     end
 end
 
@@ -46,7 +46,7 @@ F =
                 else
                     var.val = CUR(me, var.id_)
                 end
-                if var.arr then
+                if var.tp.arr then
                     -- normalize all arrays acesses to pointers to arr[0]
                     -- (because of interface accesses that must be done through a pointer)
                     var.val = '(&'..var.val..'[0])'
@@ -55,9 +55,8 @@ F =
                     -- (because of interface accesses that must be done through a pointer)
                     var.val = '(&'..var.val..')'
                 else
-                    local ref = _TP.deref(var.tp)
-                    if ref then
-                        if _ENV.clss[ref] then
+                    if var.tp.ref then
+                        if _ENV.clss[var.tp.id] then
                             -- orgs vars byRef, do nothing
                             -- (normalized to pointer)
                         else
@@ -106,14 +105,14 @@ F =
 
     This = function (me)
         me.val = '_ceu_go->org'
-        --me.val = '(*(('.._TP.c(me.tp)..'*)'..me.val..'))'
-        me.val = '(('.._TP.c(me.tp)..'*)'..me.val..')'
+        --me.val = '(*(('.._TP.toc(me.tp)..'*)'..me.val..'))'
+        me.val = '(('.._TP.toc(me.tp)..'*)'..me.val..')'
     end,
 
     This_ = function (me)
         me.val = '__ceu_org'    -- set when calling constr
-        --me.val = '(*(('.._TP.c(me.tp)..'*)'..me.val..'))'
-        me.val = '(('.._TP.c(me.tp)..'*)'..me.val..')'
+        --me.val = '(*(('.._TP.toc(me.tp)..'*)'..me.val..'))'
+        me.val = '(('.._TP.toc(me.tp)..'*)'..me.val..')'
     end,
 
     Var = function (me)
@@ -127,8 +126,8 @@ F =
 
     -- SetExp is inside and requires .val
     New_pre = function (me)
-        local tp,_,_ = unpack(me)
-        me.val = '(('.._TP.c(tp)..'*)__ceu_new)'
+        local id,_,_ = unpack(me)
+        me.val = '((CEU_'..id..'*)__ceu_new)'
                                         -- defined by _New (code.lua)
     end,
     Spawn_pre = function (me)
@@ -180,9 +179,9 @@ F =
             ptr = '_ceu_app'
         end
 
-        local tup = _TP.isTuple(ext.evt.ins)
-        if op == 'call' or dir == 'in' or
-                (not tup) or (tup == 1) then
+        local tup = ext.evt.ins.tup
+        if op=='call' or dir=='in' or
+                (not tup) or (#tup == 1) then
             mode = 'val'
         else
             mode = 'buf'
@@ -197,7 +196,7 @@ F =
         local t2 = { ptr, 'CEU_'..DIR..'_'..ext.evt.id }
 
         if param then
-            local isPtr = _TP.deptr(ext.evt.ins, true)
+            local isPtr = ext.evt.ins.ptr>0
             local val
             if isPtr then
                 val = '(void*)'..V(param)
@@ -210,7 +209,7 @@ F =
                 if mode == 'val' then
                     t2[#t2+1] = 'CEU_EVTP((void*)'..val..')'
                 else
-                    t2[#t2+1] = 'sizeof('..ext.evt.ins..')'
+                    t2[#t2+1] = 'sizeof('.._TP.toc(ext.evt.ins)..')'
                     t2[#t2+1] = '(byte*)'..val
                 end
             else
@@ -264,16 +263,16 @@ F =
     AwaitExt = function (me)
         local e1 = unpack(me)
         local tp = (e1.evt or e1.var.evt).ins
-        if _TP.deptr(tp) then
-            me.val = '(('.._TP.c( (e1.evt or e1.var.evt).ins )..')_ceu_go->evtp.ptr)'
-        elseif _TP.deref(tp) then
-            me.val = '(*(('.._TP.c( (e1.evt or e1.var.evt).ins )..')_ceu_go->evtp.ptr))'
+        if tp.ptr>0 then
+            me.val = '(('.._TP.toc(me.tp)..')_ceu_go->evtp.ptr)'
+        elseif tp.ref then
+            me.val = '(*(('.._TP.toc(me.tp)..')_ceu_go->evtp.ptr))'
                     -- byRef from awake SetExp removes the `*´
-        elseif _TP.isTuple(tp) then
-            me.val = '(('.._TP.c( (e1.evt or e1.var.evt).ins )..'*)_ceu_go->evtp.ptr)'
+        elseif tp.tup then
+            me.val = '(('.._TP.toc(me.tp)..'*)_ceu_go->evtp.ptr)'
         else
             me.val = '(_ceu_go->evtp.v)'
-            --me.val = '*(('.._TP.c(e1.evt.ins)..'*)_ceu_go->evtp.ptr)'
+            --me.val = '*(('.._TP.toc(e1.evt.ins)..'*)_ceu_go->evtp.ptr)'
         end
     end,
     AwaitT = function (me)
@@ -308,7 +307,7 @@ F =
     Op2_idx = function (me)
         local _, arr, idx = unpack(me)
         me.val = V(arr)..'['..V(idx)..']'
-        if _ENV.clss[me.tp] then
+        if me.tp.ptr==0 and _ENV.clss[me.tp.id] then
             me.val = '(&'..me.val..')'
                 -- class accesses must be normalized to references
         end
@@ -348,7 +347,7 @@ F =
 
     ['Op1_*'] = function (me)
         local op, e1 = unpack(me)
-        local cls = _ENV.clss[_TP.deptr(e1.tp)]
+        local cls = e1.tp.ptr==1 and _ENV.clss[e1.tp.id]
         if cls then
             me.val = V(e1) -- class accesses should remain normalized to references
         else
@@ -357,7 +356,7 @@ F =
     end,
     ['Op1_&'] = function (me)
         local op, e1 = unpack(me)
-        if _ENV.clss[e1.tp] then
+        if _ENV.clss[e1.tp.id] then
             me.val = V(e1) -- class accesses are already normalized to references
         else
             me.val = '('..ceu2c(op)..V(e1)..')'
@@ -366,21 +365,21 @@ F =
 
     ['Op2_.'] = function (me)
         if me.org then
-            local cls = _ENV.clss[_TP.deref(me.org.tp) or me.org.tp]
+            local cls = me.org.tp.ptr==0 and _ENV.clss[me.org.tp.id]
             local gen = '((tceu_org*)'..me.org.val..')'
             if cls and cls.is_ifc then
                 if me.var.pre == 'var'
                 or me.var.pre == 'pool' then
-                    if me.var.arr then
+                    if me.var.tp.arr then
                         me.val = [[(
-(]].._TP.c(me.var.tp)..[[) (
+(]].._TP.toc(me.var.tp)..[[) (
         ((byte*)]]..me.org.val..[[) + _CEU_APP.ifcs_flds[]]..gen..[[->cls][
             ]].._ENV.ifcs.flds[me.var.ifc_id]..[[
         ]
 ))]]
                     else
                         me.val = [[(*(
-(]].._TP.c(me.var.tp)..[[*) (
+(]].._TP.toc(me.var.tp)..[[*) (
         ((byte*)]]..me.org.val..[[) + _CEU_APP.ifcs_flds[]]..gen..[[->cls][
             ]].._ENV.ifcs.flds[me.var.ifc_id]..[[
         ]
@@ -394,7 +393,7 @@ F =
                     end
                 elseif me.var.pre == 'function' then
                     me.val = [[(*(
-(]].._TP.c(me.var.tp)..[[*) (
+(]].._TP.toc(me.var.tp)..[[*) (
         _CEU_APP.ifcs_funs[]]..gen..[[->cls][
             ]].._ENV.ifcs.funs[me.var.ifc_id]..[[
         ]
@@ -413,7 +412,7 @@ F =
                     me.val = me.c.id_
                 elseif me.var.pre == 'var' then
                     me.val = me.org.val..'->'..me.var.id_
-                    if me.var.arr then
+                    if me.var.tp.arr then
                         -- normalize all arrays acesses to pointers to arr[0]
                         -- (because of interface accesses that must be done through a pointer)
                         me.val = '(&'..me.val..'[0])'
@@ -445,8 +444,7 @@ F =
         local tp, exp = unpack(me)
         local val = V(exp)
 
-        local _tp = _TP.deptr(tp)
-        local cls = _tp and _ENV.clss[_tp]
+        local cls = tp.ptr==1 and _ENV.clss[tp.id]
         if cls then
             if cls.is_ifc then
                 -- TODO: out of bounds acc
@@ -462,7 +460,7 @@ F =
             end
         end
 
-        me.val = '(('.._TP.c(tp)..')'..val..')'
+        me.val = '(('.._TP.toc(tp)..')'..val..')'
     end,
 
     WCLOCKK = function (me)
@@ -482,17 +480,17 @@ F =
         me.val = unpack(me)
     end,
 
+    Type = function (me)
+        me.val = _TP.toc(me)
+    end,
+
     Nat = function (me)
         me.val = string.sub(me[1], 2)
     end,
     SIZEOF = function (me)
         --me.val = me.sval
         local tp = unpack(me)
-        if type(tp) == 'string' then
-            me.val = 'sizeof('.._TP.c(me[1])..')'
-        else
-            me.val = 'sizeof('..tp.val..')'
-        end
+        me.val = 'sizeof('..tp.val..')'
     end,
     STRING = function (me)
         me.val = me[1]

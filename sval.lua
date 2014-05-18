@@ -13,8 +13,8 @@ F =
 {
     Dcl_var = function (me)
         if me.var.cls then
-            if me.var.arr then
-                ASR(me.var.arr.sval, me, 'invalid static expression')
+            if me.var.tp.arr then
+                ASR(me.var.tp.arr.sval, me, 'invalid static expression')
             end
         end
     end,
@@ -82,7 +82,7 @@ F =
     Op1_cast = function (me)
         local tp, exp = unpack(me)
         if exp.cval then
-            me.cval = '(('.._TP.c(tp)..')'..exp.cval..')'
+            me.cval = '(('.._TP.toc(tp)..')'..exp.cval..')'
         end
     end,
 
@@ -96,11 +96,11 @@ F =
     SIZEOF = function (me)
         local tp = unpack(me)
         if type(tp) == 'string' then
-            me.cval = 'sizeof('.._TP.c(me[1])..')'
+            me.cval = 'sizeof('.._TP.toc(me[1])..')'
         end
 
         if type(tp) == 'string' then    -- sizeof(type) vs sizeof(exp)
-            local t = (_TP.deptr(tp) and _ENV.c.pointer) or _ENV.c[tp]
+            local t = (tp.ptr>0 and _ENV.c.pointer) or _ENV.c[tp]
             ASR(t and (t.tag=='type' or t.tag=='unk'), me,
                     'undeclared type '..tp)
             t.tag = 'type'

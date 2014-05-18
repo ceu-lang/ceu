@@ -415,7 +415,7 @@ case ]]..me.lbls_cnt[i].id..[[:;
     end,
 
     Dcl_var = function (me)
-        local _,_,_,_,constr = unpack(me)
+        local _,_,_,constr = unpack(me)
         local var = me.var
         if not var.cls then
             return
@@ -428,7 +428,7 @@ case ]]..me.lbls_cnt[i].id..[[:;
             cls     = var.cls,
             val     = var.val,
             constr  = constr,
-            arr     = var.arr,
+            arr     = var.tp.arr,
             par_org = '_ceu_go->org',
             par_trl_idx = var.trl_orgs[1],
         })
@@ -442,13 +442,13 @@ case ]]..me.lbls_cnt[i].id..[[:;
 {
     tceu_org* __ceu_new;
 ]])
-        if pool and pool.var.arr.sval>=0 then
+        if pool and (type(pool.var.tp.arr)=='table') then
             LINE(me, [[
     __ceu_new = (tceu_org*) ceu_pool_alloc((tceu_pool*)]]..V(pool)..[[);
 ]])
         else
             LINE(me, [[
-    __ceu_new = (tceu_org*) ceu_out_malloc(sizeof(]].._TP.c(id)..[[));
+    __ceu_new = (tceu_org*) ceu_out_malloc(sizeof(CEU_]]..id..[[));
 ]])
         end
 
@@ -459,7 +459,7 @@ case ]]..me.lbls_cnt[i].id..[[:;
         LINE(me, [[
     if (__ceu_new != NULL) {
 ]])
-        if pool and pool.var.arr.sval>=0 then
+        if pool and (type(pool.var.tp.arr)=='table') then
             LINE(me, '__ceu_new->pool = '..V(pool)..';')
         elseif _PROPS.has_news_pool or _OPTS.os then
             LINE(me, '__ceu_new->pool = NULL;')
@@ -580,11 +580,11 @@ _ceu_go->org->trls[ ]]..me.trl_fins[1]..[[ ].seqno = _ceu_app->seqno-1; /* awake
         LINE(me, '{')       -- close in Block_pos
         for _, var in ipairs(me.vars) do
             if var.isTmp then
-                if var.arr then
-                    LINE(me, _TP.c(_TP.deptr(var.tp))
-                            ..' '..V(var)..'['..V(var.arr)..']')
+                if var.tp.arr then
+                    LINE(me, _TP.toc(var.tp)
+                            ..' '..V(var)..'['..V(var.tp.arr)..']')
                 else
-                    LINE(me, _TP.c(var.tp)..' __ceu_'..var.id..'_'..var.n)
+                    LINE(me, _TP.toc(var.tp)..' __ceu_'..var.id..'_'..var.n)
                 end
                 if var.isFun then
                     -- function parameter
@@ -592,10 +592,11 @@ _ceu_go->org->trls[ ]]..me.trl_fins[1]..[[ ].seqno = _ceu_app->seqno-1; /* awake
                     LINE(me, ' = '..var.id)
                 end
                 LINE(me, ';')
-            elseif var.pre=='pool' and var.arr.sval>=0 then
+            elseif var.pre=='pool' and (type(var.tp.arr)=='table') then
                 local dcl = var.val_dcl
                 LINE(me, [[
-ceu_pool_init(]]..dcl..','..var.arr.sval..',sizeof('.._TP.c(_TP.deptr(var.tp))..'),'
+ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'),'
+                                                    -- TODO: bad (explicit CEU_)
     ..'(byte**)'..dcl..'_queue, (byte*)'..dcl..[[_mem);
 ]])
             end
@@ -991,12 +992,9 @@ _ceu_go->evto = (tceu_org*) ]]..((int.org and int.org.val) or '_ceu_go->org')..[
 #endif
 ]])
         if exp then
-            local ref = _TP.deref(int.var.evt.ins)
-            local field = (_TP.deptr(exp.tp) or ref) and 'ptr'
-                            or 'v'
-            local op = ref and '&' or ''
+            local field = exp.tp.ptr>0 and 'ptr' or 'v'
             LINE(me, [[
-_ceu_go->evtp.]]..field..' = '..op..V(exp)..[[;
+_ceu_go->evtp.]]..field..' = '..V(exp)..[[;
 ]])
         end
         LINE(me, [[
@@ -1190,6 +1188,7 @@ case ]]..me.lbl.id..[[:;
     Thread = function (me)
         local vars,blk = unpack(me)
 
+-- TODO: transform to SetExp
         if vars then
             for i=1, #vars, 2 do
                 local isRef, n = vars[i], vars[i+1]
@@ -1249,7 +1248,6 @@ case ]]..me.lbl.id..[[:;
         DEBUG_TRAILS(me)
 
         -- thread function
-        local tp = _TP.c(CLS().id)
         _CODE.threads = _CODE.threads .. [[
 static void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
 {
@@ -1374,12 +1372,12 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
             lua_pop(_ceu_app->lua, 1);
 ]])
             elseif me.ret.tp == 'char*' then
-                ASR(me.ret.var and me.ret.var.arr, me,
+                ASR(me.ret.var and me.ret.var.tp.arr, me,
                     'invalid attribution (requires a buffer)')
                 LINE(me, [[
             if (lua_isstring(_ceu_app->lua,-1)) {
                 const char* ret = lua_tostring(_ceu_app->lua,-1);
-                strncpy(]]..V(me.ret)..[[, ret, ]]..me.ret.var.arr.sval..[[);
+                strncpy(]]..V(me.ret)..[[, ret, ]]..me.ret.var.tp.arr.sval..[[);
             } else {
                 err = 1;
             }

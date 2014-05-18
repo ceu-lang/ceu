@@ -210,7 +210,7 @@ do
                         evts[i+1] = var.evt.idx
                     end
                 elseif var.pre=='var' or var.pre=='pool' then
-                    if var.pre=='var' or var.arr.sval>=0 then
+                    if var.pre=='var' or (type(var.tp.arr)=='table') then
                                         -- malloc pools are not vars
                         local i = _ENV.ifcs.flds[var.ifc_id]
                         if i then
@@ -397,14 +397,14 @@ do
                 str = str .. 'typedef struct {\n'
                 for i, v in ipairs(c.tuple) do
                     local _,tp,_ = unpack(v)
-                    if _ENV.clss[_TP.noptr(tp)] then
+                    if _ENV.clss[tp.id] then
                         -- T* => void*
                         -- T** => void**
                         tp = 'void'..string.match(tp,'(%*+)')
                     end
-                    str = str..'\t'.._TP.c(tp)..' _'..i..';\n'
+                    str = str..'\t'.._TP.toc(tp)..' _'..i..';\n'
                 end
-                str = str .. '} '.._TP.c(c.id)..';\n'
+                str = str .. '} '.._TP.toc(c.tuple)..';\n'
             end
         end
         HH = SUB(HH, '=== TUPLES ===', str)

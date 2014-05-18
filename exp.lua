@@ -17,7 +17,7 @@ F = {
         -- refuses:
         -- var int& i = 1;
         -- var int& i = *p;
-        if to.byRef and (not _TP.deref(fr.tp)) then
+        if to.byRef and (not fr.tp.ref) then
             ASR(fr.lval or (fr.base and (fr.base.tag=='This' or
                                          fr.base.var and fr.base.var.cls)),
                                            -- orgs are not lval
@@ -29,7 +29,7 @@ F = {
 
     New = function (me)
         local _,pool,_ = unpack(me)
-        ASR(pool and pool.base and pool.base.var and pool.base.var.arr, me,
+        ASR(pool and pool.base and pool.base.var and pool.base.var.tp.arr, me,
             'invalid pool')
     end,
     Spawn = 'New',
@@ -61,7 +61,7 @@ F = {
 
     ['Op2_.'] = function (me)
         local op, e1, id = unpack(me)
-        local cls = _ENV.clss[_TP.deref(e1.tp) or e1.tp]
+        local cls = e1.tp.ptr==0 and _ENV.clss[e1.tp.id]
         if cls then
             me.base  = me[3]
         else

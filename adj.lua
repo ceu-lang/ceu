@@ -32,7 +32,7 @@ function REQUEST (me)
     local id_req  = '_reqid_'..me.n
     local id_req2 = '_reqid2_'..me.n
 
-    local tp_req = 'int'
+    local tp_req = node('Type', me.ln, 'int', 0, false, false)
 
     if ps then
         -- insert "id" into "emit REQUEST => (id,...)"
@@ -63,8 +63,8 @@ function REQUEST (me)
     end
 
     return node('Stmts', me.ln,
-            node('Dcl_var', me.ln, 'var', tp_req, false, id_req),
-            node('Dcl_var', me.ln, 'var', tp_req, false, id_req2),
+            node('Dcl_var', me.ln, 'var', tp_req, id_req),
+            node('Dcl_var', me.ln, 'var', tp_req, id_req2),
             node('SetExp', me.ln, '=',
                 node('RawExp', me.ln, 'ceu_out_req()'),
                 node('Var', me.ln, id_req)),
@@ -111,7 +111,9 @@ F = {
         -- enclose the main block with <ret = do ... end>
         local blk = node('Block', me.ln,
                         node('Stmts', me.ln,
-                            node('Dcl_var', me.ln, 'var', 'int', false, '_ret'),
+                            node('Dcl_var', me.ln, 'var',
+                                node('Type', me.ln, 'int', 0, false, false),
+                                '_ret'),
                             node('SetBlock', me.ln,
                                 ret,
                                 node('Var', me.ln,'_ret'))))
@@ -196,13 +198,15 @@ F = {
         -- The idx must be constant as the runtime uses it blindly.
         -- (generated in env.ceu)
         table.insert(me.blk_ifc[1][1], 1,
-            node('Dcl_int', me.ln, 'event', 'void', '_ok'))
+            node('Dcl_int', me.ln, 'event',
+                node('Type', me.ln, 'void', 0, false, false),
+                '_ok'))
 
         -- insert class pool for orphan new/spawn
         if me.__ast_has_malloc then
             table.insert(me.blk_ifc[1][1], 2,
-                node('Dcl_pool', me.ln, 'pool', '_TOP_POOL',
-                    node('NUMBER', me.ln, -1),
+                node('Dcl_pool', me.ln, 'pool',
+                    node('Type', me.ln, '_TOP_POOL', 0, true, false),
                     '_top_pool'))
         end
     end,
@@ -283,7 +287,7 @@ F = {
                                     node('Op2_.', me.ln, '.',
                                         node('Op1_*', me.ln, '*',
                                             node('Op1_cast', me.ln,
-                                                '_tceu_org*',
+                                                node('Type', me.ln, '_tceu_org', 1, false, false),
                                                 _AST.copy(evt))),
                                         'isAlive'),
                                     node('Block',me.ln,node('Stmts',me.ln,awt)),
@@ -316,7 +320,7 @@ F = {
 
         local set
         if to then
-            set = node('_Set', me.ln, to, '=', '__SetAwait', awt, false, false)
+            set = node('_Set', me.ln, to, '=', '__SetAwait', awt, false)
         else
             set = awt
         end
@@ -339,8 +343,10 @@ F = {
         local fr_fvar = function() return node('Var', me.ln, fr_id) end
         local to_fvar = function() return node('Var', me.ln, to_id) end
 
-        local fr_dcl = node('Dcl_var', me.ln, 'var', fr_tp, false, fr_id)
-        local to_dcl = node('Dcl_var', me.ln, 'var', to_tp, false, to_id)
+        local fr_dcl = node('Dcl_var', me.ln, 'var',
+                        node('Type', me.ln, fr_tp, 0, false, false),
+                        fr_id)
+        local to_dcl = node('Dcl_var', me.ln, 'var', to_tp, to_id)
         to_dcl.read_only = true
 
         local fr_ini = node('SetExp', me.ln, '=',
@@ -396,7 +402,9 @@ F = {
         end
 
         local i = function() return node('Var', me.ln, _i) end
-        local dcl_i = node('Dcl_var', me.ln, 'var', 'int', false, _i)
+        local dcl_i = node('Dcl_var', me.ln, 'var',
+                        node('Type', me.ln, 'int', 0, false, false),
+                        _i)
         dcl_i.read_only = true
         local set_i = node('SetExp', me.ln, '=', node('NUMBER', me.ln,0), i())
         set_i.read_only = true  -- accept this write
@@ -426,7 +434,9 @@ F = {
         else
             local j_name = '_j'..blk.n
             j = function() return node('Var', me.ln, j_name) end
-            dcl_j = node('Dcl_var', me.ln, 'var', 'int', false, j_name)
+            dcl_j = node('Dcl_var', me.ln, 'var',
+                        node('Type', me.ln ,'int', 0, false, false),
+                        j_name)
             set_j = node('SetExp', me.ln, '=', _j, j())
         end
 
@@ -576,7 +586,10 @@ F = {
             -- convert to 'function'
                 --me[1] = 'function'
                 me[2] = rec
-                me[3] = node('TupleType', me.ln, {false,'void',false})
+                me[3] = node('TupleType', me.ln,
+                            node('TupleTypeItem', me.ln, false,
+                                node('Type', me.ln, 'void', 0, false, false),
+                                false))
                 me[4] = 'void'
                 me[5] = n
                 me[6] = blk
@@ -613,7 +626,7 @@ F = {
     end,
 
     _Dcl_ext0_pre = function (me)
-        local dir, rec, ins, out, spw, id_evt, blk = unpack(me)
+        local dir, spw, rec, ins, out, id_evt, blk = unpack(me)
 
         if me[#me].tag == 'Block' then
             -- refuses id1,i2 + blk
@@ -625,7 +638,7 @@ F = {
             blk = nil
         end
 
-        local ids = { unpack(me,6) }  -- skip dir,rec,ins,out,spw
+        local ids = { unpack(me,6) }  -- skip dir,spw,rec,ins,out
 
         local ret = {}
         for _, id_evt in ipairs(ids) do
@@ -640,20 +653,24 @@ F = {
                 local d1, d2 = string.match(dir, '([^/]*)/(.*)')
                 assert(out)
                 assert(rec == false)
-                local tp_req = 'int'
+                local tp_req = node('Type', me.ln, 'int', 0, false, false)
 
                 local ins_req = node('TupleType', me.ln,
-                                    {false,tp_req,false},
+                                    node('TupleTypeItem', me.ln,
+                                        false,_AST.copy(tp_req),false),
                                     unpack(ins))                -- T1,...
                 local ins_ret = node('TupleType', me.ln,
-                                    {false,tp_req,  false},
-                                    {false,'u8',false},
-                                    {false,out, false})
+                                    node('TupleTypeItem', me.ln,
+                                        false,_AST.copy(tp_req),false),
+                                    node('TupleTypeItem', me.ln,
+                                        false,node('Type',me.ln,'u8',0,false,false),false),
+                                    node('TupleTypeItem', me.ln,
+                                        false, out, false))
 
                 ret[#ret+1] = node('Dcl_ext', me.ln, d1, false,
                                    ins_req, false, id_evt..'_REQUEST')
                 ret[#ret+1] = node('Dcl_ext', me.ln, d1, false,
-                                   tp_req,  false, id_evt..'_CANCEL')
+                                   _AST.copy(tp_req),  false, id_evt..'_CANCEL')
                 ret[#ret+1] = node('Dcl_ext', me.ln, d2, false,
                                    ins_ret, false, id_evt..'_RETURN')
             else
@@ -686,17 +703,17 @@ F = {
             -- end
             --]]
             local id_cls = string.sub(id_evt,1,1)..string.lower(string.sub(id_evt,2,-1))
-            local tp_req = 'int'
+            local tp_req = node('Type', me.ln, 'int', 0, false, false)
             local id_req = '_req_'..me.n
 
             local ifc = {
-                node('Dcl_var', me.ln, 'var', tp_req, false, id_req)
+                node('Dcl_var', me.ln, 'var', tp_req, id_req)
             }
             for _, t in ipairs(ins) do
                 local mod, tp, id = unpack(t)
-                ASR(tp=='void' or id, me, 'missing parameter identifier')
+                ASR(tp.id=='void' or id, me, 'missing parameter identifier')
                 --id = '_'..id..'_'..me.n
-                ifc[#ifc+1] = node('Dcl_var', me.ln, 'var', tp, false, id)
+                ifc[#ifc+1] = node('Dcl_var', me.ln, 'var', tp, id)
             end
 
             local cls =
@@ -721,7 +738,7 @@ F = {
                                     node('Stmts', me.ln, blk)),
                                 node('Block', me.ln,
                                     node('Stmts', me.ln,
-                                        node('Dcl_var', me.ln, 'var', tp_req, false, 'id_req'),
+                                        node('Dcl_var', me.ln, 'var', tp_req, 'id_req'),
                                         node('_Set', me.ln,
                                             node('Var', me.ln, 'id_req'),
                                             '=', '__SetAwait',
@@ -732,7 +749,7 @@ F = {
                                                     node('Op2_.', me.ln, '.',
                                                         node('This',me.ln),
                                                         id_req))),
-                                            false, false)))))))
+                                            false)))))))
             cls.__ast_req = {id_evt=id_evt, id_req=id_req}
             ret[#ret+1] = cls
 
@@ -757,7 +774,7 @@ F = {
             ]]
 
             local dcls = {
-                node('Dcl_var', me.ln, 'var', tp_req, false, id_req)
+                node('Dcl_var', me.ln, 'var', tp_req, id_req)
             }
             local vars = node('VarList', me.ln, node('Var',me.ln,id_req))
             local sets = {
@@ -770,7 +787,7 @@ F = {
                 local mod, tp, id = unpack(t)
                 ASR(tp=='void' or id, me, 'missing parameter identifier')
                 local _id = '_'..id..'_'..me.n
-                dcls[#dcls+1] = node('Dcl_var', me.ln, 'var', tp, false, _id)
+                dcls[#dcls+1] = node('Dcl_var', me.ln, 'var', tp, _id)
                 vars[#vars+1] = node('Var', me.ln, _id)
                 sets[#sets+1] = node('_Set', me.ln,
                                     node('Op2_.', me.ln, '.',
@@ -785,16 +802,17 @@ F = {
                 node('Do', me.ln,
                     node('Block', me.ln,
                         node('Stmts', me.ln,
-                            node('Dcl_pool', me.ln, 'pool', id_cls,
-                                node('NUMBER',me.ln,(spw or -1)),
+                            node('Dcl_pool', me.ln, 'pool',
+                                node('Type', me.ln, id_cls, 0, spw, false),
                                 '_'..id_cls..'s'),
                             node('Stmts', me.ln, unpack(dcls)),
                             node('_Every', me.ln, vars,
                                 node('Ext', me.ln, id_evt..'_REQUEST'),
                                 node('Block', me.ln,
                                     node('Stmts', me.ln,
-                                        node('Dcl_var', me.ln, 'var', 'bool', 
-                                        false, 'ok_'),
+                                        node('Dcl_var', me.ln, 'var',
+                                            node('Type', me.ln, 'bool', 0, false, false),
+                                            'ok_'),
                                         node('_Set', me.ln,
                                             node('Var', me.ln, 'ok_'),
                                             '=', '__SetSpawn',
@@ -860,44 +878,42 @@ F = {
     end,
 
     _Dcl_pool_pre = function (me)
-        local pre, tp, arr = unpack(me)
+        local pre, tp = unpack(me)
         local ret = {}
-        local t = { unpack(me,4) }  -- skip "pre","tp","arr"
+        local t = { unpack(me,3) }  -- skip "pre","tp"
         for i=1, #t do
-            ret[#ret+1] = node('Dcl_pool', me.ln, pre, tp,
-                            arr or node('NUMBER',me.ln,-1),
-                                -- [N] => pool   (n>=0)
-                                -- []  => malloc (n=-1)
-                            t[i])
+            ret[#ret+1] = node('Dcl_pool', me.ln, pre, tp, t[i])
         end
         return node('Stmts', me.ln, unpack(ret))
     end,
 
     -- "_pre" because of SetBlock assignment
-    _Dcl_var_2_pre = function (me)
-        local pre, tp, dim = unpack(me)
+    _Dcl_var_pre = function (me)
+        local pre, tp, hasConstr = unpack(me)
         local ret = {}
-        local t = { unpack(me,4) }  -- skip "pre","tp","dim"
+        local t = { unpack(me,4) }  -- skip pre,tp,hasConstr
 
-        -- id, op, tag, exp, max, constr
-        for i=1, #t, 6 do
-            ret[#ret+1] = node('Dcl_var', me.ln, pre, tp, dim, t[i])
+        if hasConstr then
+            table.remove(me, 3)
+            me.tag = 'Dcl_var'
+            return
+        end
+
+        -- id, op, tag, exp, constr
+        for i=1, #t, 5 do
+            ret[#ret+1] = node('Dcl_var', me.ln, pre, tp, t[i])
             if t[i+1] then
                 ret[#ret+1] = node('_Set', me.ln,
                                 node('Var', me.ln, t[i]),  -- var
                                 t[i+1],                 -- op
                                 t[i+2],                 -- tag
                                 t[i+3],                 -- exp    (p1)
-                                t[i+4],                 -- max    (p2)
-                                t[i+5] )                -- constr (p3)
+                                t[i+4] )                -- constr (p2)
                 ret[#ret][1].byRef = true  -- first assignment
                 ret[#ret][4].byRef = true  -- first assignment
             end
         end
         return node('Stmts', me.ln, unpack(ret))
-    end,
-    _Dcl_var_1_pre = function (me)
-        me.tag = 'Dcl_var'
     end,
 
     AwaitExt_pre = function (me)
@@ -977,14 +993,12 @@ F = {
             if to.tag == 'VarList' then
                 local var = unpack(awt) -- find out 'TP' before traversing tup
 
-                -- TODO:
-                --ASR( #to == y, me,
-                    --'invalid arity ('..#to..' vs '..y..')')
-
                 table.insert(T, 1, _AST.copy(var))
                 table.insert(T, 2,
-                    node('Dcl_var', me.ln, 'var', 'TP*', false, tup))
-                    T[2].__ast_ref = T[1] -- TP* is changed on env.lua
+                    node('Dcl_var', me.ln, 'var',
+                        node('Type', me.ln, 'char', 1, false, false),
+                        tup))
+                    T[2].__ast_ref = T[1] -- TP is changed on env.lua
 
                 -- T = { evt_var, dcl_tup, awt, set [_1,_N] }
 
@@ -995,6 +1009,7 @@ F = {
                                         node('Var', me.ln, tup)),
                                     '_'..i),
                                 v)
+                    T[#T][2].__ast_chk = { T[1], i }
                     T[#T][2].__ast_fr = p1    -- p1 is an AwaitX
                 end
             end
@@ -1104,6 +1119,7 @@ F = {
     EmitInt_pos = 'EmitExt_pos',
     EmitExt_pos = function (me)
         local op, ext, ps = unpack(me)
+        me.ps = ps  -- save for arity check
 
         -- no exp: emit e
         -- single: emit e => a
@@ -1115,7 +1131,9 @@ F = {
         local tup = '_tup_'..me.n
         local t = {
             _AST.copy(ext),  -- find out 'TP' before traversing tup
-            node('Dcl_var', me.ln, 'var', 'TP', false, tup),
+            node('Dcl_var', me.ln, 'var',
+                node('Type', me.ln, 'TP', 0, false, false),
+                tup),
         }
         t[2].__ast_ref = t[1]    -- TP is changed on env.lua
 
@@ -1124,6 +1142,7 @@ F = {
                         p,
                         node('Op2_.', me.ln, '.', node('Var',me.ln,tup),
                             '_'..i))
+            t[#t][3].__ast_chk = { t[1], i }
         end
 
         me[3] = node('Op1_&', me.ln, '&',
@@ -1155,7 +1174,9 @@ F = {
     _Pause_pre = function (me)
         local evt, blk = unpack(me)
         local cur_id  = '_cur_'..blk.n
-        local cur_dcl = node('Dcl_var', me.ln, 'var', 'u8', false, cur_id)
+        local cur_dcl = node('Dcl_var', me.ln, 'var',
+                            node('Type', me.ln, 'u8', 0, false, false),
+                            cur_id)
 
         local PSE = node('Pause', me.ln, blk)
         PSE.dcl = cur_dcl
@@ -1258,7 +1279,9 @@ F = {
         local id = '_str_'..me.n
 
         local t = {
-            node('Dcl_var', me.ln, 'var', 'char', node('NUMBER',me.ln,len+1), id)
+            node('Dcl_var', me.ln, 'var',
+                node('Type', me.ln, 'char', 0, node('NUMBER',me.ln,len+1), false),
+                id)
         }
 
         for i=1, len do

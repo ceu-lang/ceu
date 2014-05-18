@@ -40,8 +40,8 @@ F = {
         if constr and (var.blk.__depth < constr.__depth) then
             local org = _AST.par(me, 'Dcl_var')
             if org then
-                local _, _, arr = unpack(org)
-                if arr then
+                local _, tp = unpack(org)
+                if tp.arr then
                     var.isTmp = false
                 end
             end
@@ -73,7 +73,7 @@ F = {
         if _AST.iter'Finally'() or      -- finally executes through "call"
            _AST.iter'AwaitInt'() or     -- await ptr:a (ptr is tested on awake)
            isRef or                     -- reference may escape
-           var.arr                      -- array may escape: TODO conservative
+           var.tp.arr                   -- array may escape: TODO conservative
                                         -- (arrays as parameters)
         then
             var.isTmp = false

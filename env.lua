@@ -64,19 +64,20 @@ end
 function var2ifc (var)
     local tp
     if var.pre=='var' or var.pre=='pool' then
-        tp = var.tp
+        tp = _TP.toc(var.tp)
     elseif var.pre == 'event' then
-        tp = var.evt.ins
+        tp = _TP.toc(var.evt.ins)
     elseif var.pre == 'function' then
-        tp = var.fun.ins.tp..'$'..var.fun.out
+        tp = _TP.toc(var.fun.ins)..'$'.._TP.toc(var.fun.out)
     else
         error 'not implemented'
     end
+    tp = var.pre..'__'..tp
     return table.concat({
         var.id,
         tp,
         tostring(var.pre),
-        var.arr and '[]' or '',
+        var.tp.arr and '[]' or '',
     }, '$')
 end
 
@@ -110,14 +111,7 @@ end
 local _N = 0
 local _E = 1    -- 0=NONE
 
-function newtype (tp)
-    local raw = _TP.noptr(tp)
-    if string.sub(raw,1,1)=='_' and (not _ENV.c[raw]) then
-        _ENV.c[raw] = { tag='type', id=raw, len=nil, mod=nil }
-    end
-end
-
-function newvar (me, blk, pre, tp, arr, id, isImp)
+function newvar (me, blk, pre, tp, id, isImp)
     for stmt in _AST.iter() do
         if stmt.tag=='Async' or stmt.tag=='Thread' then
             break   -- search until Async boundary
@@ -139,24 +133,18 @@ function newvar (me, blk, pre, tp, arr, id, isImp)
         end
     end
 
-    newtype(tp)
-    local tp_noptr = _TP.noptr(tp)
-    local c = _ENV.c[tp_noptr]
+    local c = _ENV.c[tp.id]
 
-    ASR(_TOPS[tp_noptr] or c,
-        me, 'undeclared type `'..tp_noptr..'´')
-    if _TOPS[tp] and _TOPS[tp].is_ifc then
+    ASR(_TOPS[tp.id] or c, me, 'undeclared type `'..(tp.id or '?')..'´')
+    if _TOPS[tp.id] and _TOPS[tp.id].is_ifc and tp.ptr==0 then
         ASR(pre == 'pool', me,
             'cannot instantiate an interface')
     end
-    ASR(_TP.deptr(tp) or (not c) or (tp=='void' and pre~='var') or c.len~=0,
-        me, 'cannot instantiate type "'..tp..'"')
+    ASR(tp.ptr>0 or (not c) or (tp.id=='void' and pre~='var') or c.len~=0,
+        me, 'cannot instantiate type "'..tp.id..'"')
     --ASR((not arr) or arr>0, me, 'invalid array dimension')
 
-    tp = (arr and tp..'*') or tp
-
-    local tp_ = _TP.deptr(tp)
-    local cls = _TOPS[tp] or (arr and tp_ and _TOPS[tp_])
+    local cls = tp.ptr==0 and _TOPS[tp.id]
         if cls then
             ASR(cls ~=_AST.iter'Dcl_cls'(), me, 'invalid declaration')
         end
@@ -178,7 +166,7 @@ function newvar (me, blk, pre, tp, arr, id, isImp)
         inTop = (blk==CLS().blk_ifc) or (blk==CLS().blk_body),
                 -- (never "tmp")
         isTmp = false,
-        arr   = arr,
+        --arr   = arr,
         n     = _N,
     }
 
@@ -191,8 +179,9 @@ function newvar (me, blk, pre, tp, arr, id, isImp)
 end
 
 function newint (me, blk, pre, tp, id, isImp)
-    newtype(tp)
-    local has, var = newvar(me, blk, pre, 'void', false, id, isImp)
+    local has, var = newvar(me, blk, pre,
+                        {id='void',ptr=0,arr=false,ref=false,ext=false},
+                        id, isImp)
     if has then
         return true, var
     end
@@ -211,7 +200,8 @@ function newfun (me, blk, pre, rec, ins, out, id, isImp)
     rec = not not rec
     local old = blk.vars[id]
     if old then
-        ASR(ins.tp==old.fun.ins.tp and out==old.fun.out and
+        ASR(_TP.toc(ins)==_TP.toc(old.fun.ins) and
+            _TP.toc(out)==_TP.toc(old.fun.out) and
             (rec==old.fun.mod.rec or (not old.fun.mod.rec)),
             me, 'function declaration does not match the one at "'..
                 old.ln[1]..':'..old.ln[2]..'"')
@@ -223,9 +213,9 @@ function newfun (me, blk, pre, rec, ins, out, id, isImp)
     end
 
     local has, var = newvar(me, blk, pre,
-                        '___typeof__(CEU_'..CLS().id..'_'..id..')',
-                        -- TODO: _TP.c eats one '_'
-                       false, id, isImp)
+                        _TP.fromstr('___typeof__(CEU_'..CLS().id..'_'..id..')'),
+                        -- TODO: _TP.toc eats one '_'
+                        id, isImp)
     if has then
         return true, var
     end
@@ -273,6 +263,80 @@ function det2id (v)
 end
 
 F = {
+    Type = function (me)
+        local id, ptr, arr, ref = unpack(me)
+
+        me.id  = id
+        me.ptr = ptr
+        me.arr = arr
+        me.ref = ref
+        me.ext = (string.sub(id,1,1) == '_') or (id=='@')
+        me.plain = (_ENV.c[id] and _ENV.c[id].mod=='plain')
+
+-- TODO: remove?
+        if me.ext and (not _ENV.c[me.id]) then
+            _ENV.c[me.id] = { tag='type', id=me.id, len=nil, mod=nil }
+        end
+    end,
+
+    TupleType_pos = function (me)
+        me.id  = nil
+        me.ptr = (#me==1 and 0) or 1
+        me.arr = false
+        me.ref = false
+        me.ext = false
+
+        me.tup = {}
+        for i, t in ipairs(me) do
+            local _, tp, _ = unpack(t)
+
+            if tp.id=='void' and tp.ptr==0 then
+                ASR(#me==1, me, 'invalid type')
+                me[1] = nil     -- empty tuple
+                break
+            end
+
+            me.tup[#me.tup+1] = tp
+        end
+
+        if not _AST.par(me,'Dcl_fun') then
+            _ENV.c[_TP.toc(me)] = { tag='type', id=TP, tuple=me, len=nil }
+        end
+
+do return end
+
+        local TP = 'tceu'
+        for i, v in ipairs(me) do
+            local hold, tp, id = unpack(v)
+
+            if tp == 'void' then
+                ASR(#me==1, me, 'invalid type')
+                TP = 'void'
+                me[1] = nil     -- empty tuple
+                break
+            end
+
+            --local tp_noptr = _TP.noptr(v)
+            --local c = _ENV.c[tp_noptr]
+            --ASR(c or _ENV.clss[tp_noptr],
+                    --me, 'undeclared type `'..tp_noptr..'´')
+            --me[i] = v
+            TP = TP .. '__'..(hold or '')..'_'.._TP.toc(tp)
+        end
+
+        TP = string.gsub(TP, '*', '_')  -- TODO: '_' is not reliable
+        me.tp = TP
+
+        if _AST.iter'Dcl_fun'() then
+            -- keep the tables for functions
+            return
+        else
+            -- substitute the table for the struct type
+            _ENV.c[TP] = { tag='type', id=TP, tuple=me, len=nil }
+            return TP   -- me => TP
+        end
+    end,
+
     Root_pre = function (me)
         -- TODO: NONE=0
         -- TODO: if _PROPS.* then ... end
@@ -358,7 +422,7 @@ F = {
 
                     if not isRef then
                         local _
-                        _,n.new = newvar(vars, blk, 'var', var.tp, nil, var.id, false)
+                        _,n.new = newvar(vars, blk, 'var', var.tp, var.id, false)
                     end
                 end
             end
@@ -371,7 +435,7 @@ F = {
             for i, v in ipairs(inp) do
                 local hold, tp, id = unpack(v)
                 if tp ~= 'void' then
-                    local has,var = newvar(me, me, 'var', tp, false, id, false)
+                    local has,var = newvar(me, me, 'var', tp, id, false)
                     assert(not has)
                     var.isTmp  = true -- TODO: var should be a node
                     var.isFun  = true
@@ -383,7 +447,8 @@ F = {
 
     Dcl_cls_pre = function (me)
         local ifc, id, blk = unpack(me)
-        me.c      = {}      -- holds all "native _f()"
+        me.c = {}      -- holds all "native _f()"
+        me.tp = _TP.fromstr(id)
         ASR(not _ENV.clss[id], me,
                 'interface/class "'..id..'" is already declared')
 
@@ -447,7 +512,7 @@ F = {
     Global = function (me)
         ASR(_ENV.clss.Global and _ENV.clss.Global.is_ifc, me,
             'interface "Global" is not defined')
-        me.tp   = 'Global*'
+        me.tp   =_TP.fromstr'Global*'
         me.lval = false
         me.blk  = _AST.root
     end,
@@ -456,7 +521,7 @@ F = {
         local cls = CLS()
             --ASR(cls ~= _MAIN, me, 'invalid access')
         ASR(cls, me, 'undeclared class')
-        me.tp   = cls.id
+        me.tp   = cls.tp
         me.lval = false
         me.blk  = cls.blk_ifc
     end,
@@ -466,48 +531,14 @@ F = {
         ASR(constr, me, 'invalid access to `_´')
         local cls = constr.cls
         ASR(cls, me, 'undeclared class')
-        me.tp   = cls.id
+        me.tp   = cls.tp
         me.lval = false
         me.blk  = cls.blk_ifc
     end,
 
     Free = function (me)
         local exp = unpack(me)
-        local _tp = _TP.deptr(exp.tp)
-        ASR(_tp and _ENV.clss[_tp], me, 'invalid `free´')
-    end,
-
-    TupleType_pos = function (me)
-        local TP = 'tceu'
-        for i, v in ipairs(me) do
-            local hold, tp, id = unpack(v)
-
-            if tp == 'void' then
-                ASR(#me==1, me, 'invalid type')
-                TP = 'void'
-                me[1] = nil     -- empty tuple
-                break
-            end
-
-            --local tp_noptr = _TP.noptr(v)
-            --local c = _ENV.c[tp_noptr]
-            --ASR(c or _ENV.clss[tp_noptr],
-                    --me, 'undeclared type `'..tp_noptr..'´')
-            --me[i] = v
-            TP = TP .. '__'..(hold or '')..'_'.._TP.c(tp)
-        end
-
-        TP = string.gsub(TP, '*', '_')  -- TODO: '_' is not reliable
-        me.tp = TP
-
-        if _AST.iter'Dcl_fun'() then
-            -- keep the tables for functions
-            return
-        else
-            -- substitute the table for the struct type
-            _ENV.c[TP] = { tag='type', id=TP, tuple=me, len=nil }
-            return TP   -- me => TP
-        end
+        ASR(exp.tp.ptr==1 and _ENV.clss[exp.tp.id], me, 'invalid `free´')
     end,
 
     Dcl_ext = function (me)
@@ -518,10 +549,10 @@ F = {
             return
         end
 
-        -- TODO: ins?
-        newtype(ins)
-        ASR(ins=='void' or ins=='int' or _TP.deptr(ins) or _TP.isTuple(ins), me,
-            'invalid event type')
+        ASR(ins.tup or ins.id=='void' or ins.id=='int' or ins.ptr>0,
+            me, 'invalid event type')
+        ASR((not ins.arr) and (not ins.ref),
+            me, 'invalid event type')
 
         me.evt = {
             ln  = me.ln,
@@ -543,42 +574,41 @@ F = {
             local evt = ref.evt or (ref.var and ref.var.evt)
             ASR(evt, me,
                 'event "'..(ref.var and ref.var.id or '?')..'" is not declared')
-            if me[2] == 'TP' then
-                me[2] = evt.ins
-            else     -- 'TP*'
-                me[2] = evt.ins..'*'
-            end
-            ASR( _TP.isTuple(evt.ins), me, 'invalid type' )
+            ASR(evt.ins.tup, me, 'invalid arity' )
+            me[2][1] = '_'.._TP.toc(evt.ins)
         end
     end,
     Dcl_var = function (me)
-        local pre, tp, arr, id, constr = unpack(me)
+        local pre, tp, id, constr = unpack(me)
         if id == '_' then
             id = id..me.n   -- avoids clash with other '_'
         end
         local has
-        has, me.var = newvar(me, _AST.iter'Block'(), pre, tp, arr, id, me.isImp)
+        has, me.var = newvar(me, _AST.iter'Block'(), pre, tp, id, me.isImp)
         assert(not has or (me.var.read_only==nil))
         me.var.read_only = me.read_only
         if constr then
+            ASR(me.var.cls, me, 'invalid type')
             constr.blk = me.var.blk
         end
     end,
-    Dcl_pool = 'Dcl_var',
+    Dcl_pool = function (me)
+        local pre, tp, id, constr = unpack(me)
+        ASR(tp.arr, me, 'missing `pool´ dimension')
+        F.Dcl_var(me)
+    end,
 
     Dcl_int = function (me)
         local pre, tp, id = unpack(me)
         if id == '_' then
             id = id..me.n   -- avoids clash with other '_'
         end
-        ASR(tp=='void' or _TP.isNumeric(tp) or _TP.deptr(tp) or
-                          _TP.isTuple(tp),
+        ASR(tp.id=='void' or _TP.isNumeric(tp) or
+            tp.ptr>0      or tp.tup,
                 me, 'invalid event type')
-        if _TP.isTuple(tp) then
-            for _, t in ipairs(_ENV.c[tp].tuple) do
-                local _,v,_ = unpack(t)
-                ASR((_TP.isNumeric(v) or _TP.deptr(v)) and
-                    (not _TP.deref(v)),
+        if tp.tup then
+            for _, t in ipairs(tp.tup) do
+                ASR((_TP.isNumeric(t) or t.ptr>0) and (not t.ref),
                     me, 'invalid event type')
             end
         end
@@ -619,31 +649,6 @@ F = {
         end
     end,
 
-    Dcl_imp = function (me)
-error'oi'
---[[
-        local id = unpack(me)
-        local ifc = ASR(_ENV.clss[id], me,
-                        'interface "'..id..'" is not declared')
-        ASR(ifc.is_ifc, me, '`'..id..'´ is not an interface')
-
-        -- copy vars
-        local blk = _AST.iter'Block'()
-        for _, var in ipairs(ifc.blk_ifc.vars) do
-            if var.pre=='var' or var.pre=='pool' then
-                local tp = (var.arr and _TP.deptr(var.tp)) or var.tp
-                newvar(me, true, blk, var.pre, tp, var.arr, var.id)
-            elseif var.pre == 'event' then
-                newint(me, true, blk, var.pre, var.evt.ins, var.id)
-            else
-                newfun(me, true, blk, var.pre, var.fun.mod.rec,
-                           var.fun.ins, var.fun.out, var.id)
-            end
-            CLS().c[var.id] = ifc.c[var.id] -- also copy C properties
-        end
-]]
-    end,
-
     Ext = function (me)
         local id = unpack(me)
         me.evt = ASR(_ENV.exts[id], me,
@@ -659,7 +664,7 @@ error'oi'
         ASR(var, me, 'variable/event "'..id..'" is not declared')
         me.var  = var
         me.tp   = var.tp
-        me.lval = not (var.pre~='var' or var.cls or var.arr)
+        me.lval = not (var.pre~='var' or var.cls or var.tp.arr)
                     and var
     end,
 
@@ -673,7 +678,7 @@ error'oi'
             local cls = CLS()
             local tp = '___typeof__(CEU_'..cls.id..'_'..id..')'
             _ENV.c[tp] = { tag='type', id=tp }
-            newvar(me, false, _AST.iter'Block'(), 'var', tp..'*', false, id, false)
+            newvar(me, false, _AST.iter'Block'(), 'var', tp..'*', id, false)
             cls.c[id] = { tag=tag, id=id, mod=mod }
         else
             _ENV.c[id] = { tag=tag, id=id, len=len, mod=mod }
@@ -703,7 +708,7 @@ error'oi'
         -- detects if "isWatching" a real event (not an org)
         --  to remove the "isAlive" test
         if me.isWatching then
-            local tp = me.isWatching.tp and _TP.deptr(me.isWatching.tp)
+            local tp = me.isWatching.tp and me.isWatching.tp.ptr>0
             if not (tp and _ENV.clss[tp]) then
                 local if_ = me[2][1][2]
                 assert(if_.tag == 'If')
@@ -717,8 +722,7 @@ error'oi'
         local int = unpack(me)
         if me.isWatching then
             -- ORG: "await org" => "await org._ok"
-            local tp = int.tp and _TP.deptr(int.tp)
-            if _ENV.clss[tp] then
+            if int.tp.ptr==1 and _ENV.clss[int.tp.id] then
                 me[1] = _AST.node('Op2_.', me.ln, '.',
                             _AST.node('Op1_*', me.ln, '*', int),
                             '_ok')
@@ -733,15 +737,49 @@ error'oi'
         local int = unpack(me)
         ASR(int.var and int.var.pre=='event', me,
             'event "'..(int.var and int.var.id or '?')..'" is not declared')
-        me.tp = int.var.evt.ins     -- <a = await ...>
+        if int.var.evt.ins.tup then
+            me.tp = _TP.fromstr('_'.._TP.toc(int.var.evt.ins)..'*') -- convert to pointer
+        else
+            me.tp = int.var.evt.ins
+        end
     end,
 
     AwaitExt = function (me)
         local ext = unpack(me)
-        me.tp = ext.evt.ins     -- <a = await ...>
+        if ext.evt.ins.tup then
+            me.tp = _TP.fromstr('_'.._TP.toc(ext.evt.ins)..'*') -- convert to pointer
+        else
+            me.tp = ext.evt.ins
+        end
     end,
     AwaitT = function (me)
-        me.tp = 's32'           -- <a = await ...>
+        me.tp = _TP.fromstr's32'    -- <a = await ...>
+    end,
+
+    __arity = function (me, ins, ps)
+        local n_evt, n_exp
+        if ins.tup then
+            n_evt = #ins.tup
+        elseif ins.id=='void' and ins.ptr==0 then
+            n_evt = 0
+        else
+            n_evt = 1
+        end
+        if ps then
+            if ps.tag == 'ExpList' then
+                n_exp = #ps
+            else
+                n_exp = 1
+            end
+        else
+            n_exp = 0
+        end
+        ASR(n_evt==n_exp, me, 'invalid arity')
+
+        if n_evt == 1 then
+            ASR(_TP.contains(ins,ps.tp), me,
+                'non-matching types on `emit´ ('.._TP.tostr(ins)..' vs '.._TP.tostr(ps.tp)..')')
+        end
     end,
 
     EmitInt = function (me)
@@ -749,29 +787,56 @@ error'oi'
         local var = int.var
         ASR(var and var.pre=='event', me,
             'event "'..(var and var.id or '?')..'" is not declared')
-        ASR(var.evt.ins=='void' or (ps and _TP.contains(var.evt.ins,ps.tp,true)),
-            me, 'invalid `emit´')
+        --ASR(var.evt.ins.id=='void' or (ps and _TP.contains(var.evt.ins,ps.tp)),
+            --me, 'invalid `emit´')
+        F.__arity(me, var.evt.ins, me.ps)
+
+--[[
+-- should fail on arity or individual assignments
+        if ps then
+            local tp = var.evt.ins
+            if var.evt.ins.tup then
+                tp = _TP.fromstr('_'.._TP.toc(tp)..'*') -- convert to pointer
+            end
+            ASR(_TP.contains(tp,ps.tp), me,
+                'non-matching types on `emit´ ('.._TP.tostr(tp)..' vs '.._TP.tostr(ps.tp)..')')
+        else
+            ASR(var.evt.ins.id=='void' or
+                var.evt.ins.tup and #var.evt.ins.tup==0,
+                me, "missing parameters on `emit´")
+        end
+]]
     end,
 
     EmitExt = function (me)
         local op, ext, ps = unpack(me)
 
         ASR(ext.evt.op == op, me, 'invalid `'..op..'´')
+        F.__arity(me, ext.evt.ins, me.ps)
 
         if op == 'call' then
             me.tp = ext.evt.out     -- return value
         else
-            me.tp = 'int'           -- [0,1] enqueued? (or 'int' return val)
+            me.tp = _TP.fromstr'int'           -- [0,1] enqueued? (or 'int' return val)
         end
 
+--[[
+-- should fail on arity or individual assignments
         if ps then
-            ASR(_TP.contains(ext.evt.ins,ps.tp,true), me,
-                "non-matching types on `emit´")
+            local tp = ext.evt.ins
+            if ext.evt.ins.tup then
+                --tp = _TP.fromstr('_'.._TP.toc(tp)..'*') -- convert to pointer
+            end
+DBG('alo', tp.tag, ps.tag)
+DBG(_TP.toc(ext.evt.ins), _TP.toc(ps.tp), ps.tag, unpack(ps.tp))
+            ASR(_TP.contains(tp,ps.tp), me,
+                'non-matching types on `'..op..'´ ('.._TP.tostr(tp)..' vs '.._TP.tostr(ps.tp)..')')
         else
-            ASR(ext.evt.ins=='void' or
-                _TP.isTuple(ext.evt.ins) and #ext.evt.ins==0,
+            ASR(ext.evt.ins.id=='void' or
+                ext.evt.ins.tup and #ext.evt.ins.tup==0,
                 me, "missing parameters on `emit´")
         end
+]]
     end,
 
     --------------------------------------------------------------------------
@@ -780,36 +845,39 @@ error'oi'
         local _, fr, to = unpack(me)
         to = to or _AST.iter'SetBlock'()[1]
         ASR(to and to.lval, me, 'invalid attribution')
-        ASR(_TP.contains(to.tp,fr.tp,true), me,
-                'invalid attribution ('..to.tp..' vs '..fr.tp..')')
+DBG(_TP.toc(to.tp), _TP.toc(fr.tp))
+        ASR(_TP.contains(to.tp,fr.tp), me,
+            'invalid attribution ('.._TP.tostr(to.tp)..' vs '.._TP.tostr(fr.tp)..')')
         ASR(me.read_only or (not to.lval.read_only), me,
-                'read-only variable')
+            'read-only variable')
         ASR(not CLS().is_ifc, me, 'invalid attribution')
 
         -- remove byRef flag if normal assignment
-        if not _TP.deref(to.tp) then
+        if not to.tp.ref then
             to.byRef = false
             fr.byRef = false
         end
 
         -- lua type
-        if fr.tp == '*' then
+--[[
+        if fr.tp == '@' then
             fr.tp = to.tp
             ASR(_TP.isNumeric(fr.tp) or fr.tp=='bool' or fr.tp=='char*', me,
                 'invalid attribution')
         end
+]]
     end,
 
     Lua = function (me)
         if me.ret then
-            ASR(not _TP.deref(me.ret.tp), me, 'invalid attribution')
+            ASR(not me.ret.tp.ref, me, 'invalid attribution')
             me.ret.byRef = false
         end
     end,
 
     Free = function (me)
         local exp = unpack(me)
-        local id = ASR(_TP.deptr(exp.tp), me, 'invalid `free´')
+        local id = ASR(exp.tp.ptr>0, me, 'invalid `free´')
         me.cls = ASR( _ENV.clss[id], me,
                         'class "'..id..'" is not declared')
     end,
@@ -821,11 +889,11 @@ error'oi'
         me.cls = ASR(_ENV.clss[id], me,
                         'class "'..id..'" is not declared')
         ASR(not me.cls.is_ifc, me, 'cannot instantiate an interface')
-        me.tp = id..'*'  -- class id
+        me.tp = _TP.fromstr(id..'*')  -- class id
     end,
     Spawn_pre = function (me)
         F.New_pre(me)
-        me.tp = 'bool'       -- 0/1
+        me.tp = _TP.fromstr'bool'       -- 0/1
     end,
     IterIni = 'RawExp',
     IterNxt = 'RawExp',
@@ -841,7 +909,7 @@ error'oi'
         elseif new then
             me.cls = _ENV.clss[ new[1] ]   -- checked on SetExp
         elseif dcl then
-            me.cls = _ENV.clss[ dcl[2] ]   -- checked on Dcl_var
+            me.cls = _ENV.clss[ dcl[2].id ]   -- checked on Dcl_var
         end
         --assert(me.cls)
     end,
@@ -852,14 +920,14 @@ error'oi'
     end,
 
     Thread = function (me)
-        me.tp = 'int'       -- 0/1
+        me.tp = _TP.fromstr'int'       -- 0/1
     end,
 
     --------------------------------------------------------------------------
 
     Op2_call = function (me)
         local _, f, p, _ = unpack(me)
-        me.tp  = f.var and f.var.fun and f.var.fun.out or '@'
+        me.tp  = f.var and f.var.fun and f.var.fun.out or _TP.fromstr'@'
         local id
         if f.tag == 'Nat' then
             id   = f[1]
@@ -867,8 +935,7 @@ error'oi'
         elseif f.tag == 'Op2_.' then
             id   = f.id
             if f.org then   -- t._f()
-                local ref = _TP.deref(f.org.tp)
-                me.c = assert(_ENV.clss[ref or f.org.tp]).c[f.id]
+                me.c = assert(_ENV.clss[f.org.tp.id]).c[f.id]
             else            -- _x._f()
                 me.c = f.c
             end
@@ -892,16 +959,28 @@ error'oi'
 
     Op2_idx = function (me)
         local _, arr, idx = unpack(me)
-        local tp = ASR(_TP.deptr(arr.tp,true), me, 'cannot index a non array')
-        ASR(tp and _TP.isNumeric(idx.tp,true), me, 'invalid array index')
-        me.tp = tp
-        me.lval = (not _ENV.clss[tp]) and arr
+        ASR(arr.tp.arr or arr.tp.ptr>0 or arr.tp.ext, me,
+            'cannot index a non array')
+        ASR(_TP.isNumeric(idx.tp), me, 'invalid array index')
+
+        me.tp = _TP.copy(arr.tp)
+            if arr.tp.arr then
+                me.tp.arr = false
+            elseif (not arr.tp.ext) then
+                me.tp.ptr = me.tp.ptr - 1
+            end
+
+        if me.tp.ptr==0 and _ENV.clss[me.tp.id] then
+            me.lval = false
+        else
+            me.lval = arr
+        end
     end,
 
     Op2_int_int = function (me)
         local op, e1, e2 = unpack(me)
-        me.tp  = 'int'
-        ASR(_TP.isNumeric(e1.tp,true) and _TP.isNumeric(e2.tp,true), me,
+        me.tp  = _TP.fromstr'int'
+        ASR(_TP.isNumeric(e1.tp) and _TP.isNumeric(e2.tp), me,
                 'invalid operands to binary "'..op..'"')
     end,
     ['Op2_-']  = 'Op2_int_int',
@@ -917,8 +996,8 @@ error'oi'
 
     Op1_int = function (me)
         local op, e1 = unpack(me)
-        me.tp  = 'int'
-        ASR(_TP.isNumeric(e1.tp,true), me,
+        me.tp  = _TP.fromstr'int'
+        ASR(_TP.isNumeric(e1.tp), me,
                 'invalid operand to unary "'..op..'"')
     end,
     ['Op1_~']  = 'Op1_int',
@@ -927,9 +1006,9 @@ error'oi'
 
     Op2_same = function (me)
         local op, e1, e2 = unpack(me)
-        me.tp  = 'int'
-        ASR(_TP.max(e1.tp,e2.tp,true), me,
-                'invalid operands to binary "'..op..'"')
+        me.tp  = _TP.fromstr'int'
+        ASR(_TP.max(e1.tp,e2.tp), me,
+            'invalid operands to binary "'..op..'"')
     end,
     ['Op2_=='] = 'Op2_same',
     ['Op2_!='] = 'Op2_same',
@@ -939,7 +1018,7 @@ error'oi'
     ['Op2_<']  = 'Op2_same',
 
     Op2_any = function (me)
-        me.tp  = 'int'
+        me.tp  = _TP.fromstr'int'
     end,
     ['Op2_or']  = 'Op2_any',
     ['Op2_and'] = 'Op2_any',
@@ -947,21 +1026,23 @@ error'oi'
 
     ['Op1_*'] = function (me)
         local op, e1 = unpack(me)
-        me.tp   = _TP.deptr(e1.tp, true)
         me.lval = e1.lval and e1
-        ASR(me.tp, me, 'invalid operand to unary "*"')
+        me.tp   = _TP.copy(e1.tp)
+        me.tp.ptr = me.tp.ptr - 1
+        ASR(me.tp.ptr >= 0, me, 'invalid operand to unary "*"')
     end,
 
     ['Op1_&'] = function (me)
         local op, e1 = unpack(me)
-        ASR(_ENV.clss[e1.tp] or e1.lval, me, 'invalid operand to unary "&"')
-        me.tp   = e1.tp..'*'
+        ASR(_ENV.clss[e1.tp.id] or e1.lval, me, 'invalid operand to unary "&"')
         me.lval = false
+        me.tp   = _TP.copy(e1.tp)
+        me.tp.ptr = me.tp.ptr + 1
     end,
 
     ['Op2_.'] = function (me)
         local op, e1, id = unpack(me)
-        local cls = _ENV.clss[_TP.deref(e1.tp) or e1.tp]
+        local cls = e1.tp.ptr==0 and _ENV.clss[e1.tp.id]
         me.id = id
         if cls then
             me.org = e1
@@ -988,21 +1069,23 @@ error'oi'
             me.org  = e1
             me.var  = var
             me.tp   = var.tp
-            me.lval = not (var.pre~='var' or var.cls or var.arr)
+            me.lval = not (var.pre~='var' or var.cls or var.tp.arr)
                         and var
         else
-            local tup = _TP.isTuple(e1.tp)
-            ASR(tup or _TP.ext(e1.tp,true), me, 'not a struct')
-            if tup then
-                local n = tonumber(string.match(id,'(%d+)'))
-                if tup[n] then
-                    local _,tp,_ = unpack(tup[n])
-                    me.tp = tp
-                else
-                    me.tp = 'void'
-                end
+            assert(not e1.tp.tup)   -- TODO: remove
+            ASR(me.__ast_chk or e1.tp.ext, me, 'not a struct')
+            if me.__ast_chk then
+                -- check Emit/Await-Ext/Int param
+                local t, i = unpack(me.__ast_chk)
+                local evt = t.evt or t.var.evt  -- EmitExt or EmitInt
+                assert(evt.ins and evt.ins.tup)
+                me.tp = ASR(evt.ins.tup[i], me, 'invalid arity')
             else
-                me.tp = e1.tp --'@'
+                me.tp = _TP.fromstr'@'
+                me.tp.plain = e1.tp.plain
+                if me.tp.plain then
+                    me.tp.ptr = 0
+                end
             end
             me.lval = e1.lval
         end
@@ -1020,29 +1103,29 @@ error'oi'
         ASR(c.tag~='type', me,
             'native variable/function "'..id..'" is not declared')
         me.id   = id
-        me.tp   = '@'
+        me.tp   = _TP.fromstr'_'
         me.lval = me
         me.c    = c
     end,
     RawExp = function (me)
-        me.tp   = '@'
+        me.tp   = _TP.fromstr'_'
         me.lval = me
     end,
 
     WCLOCKK = function (me)
-        me.tp   = 'int'
+        me.tp   = _TP.fromstr'int'
         me.lval = false
     end,
     WCLOCKE = 'WCLOCKK',
 
     SIZEOF = function (me)
-        me.tp   = 'int'
+        me.tp   = _TP.fromstr'int'
         me.lval = false
         me.const = true
     end,
 
     STRING = function (me)
-        me.tp   = 'char*'
+        me.tp   = _TP.fromstr'char*'
         me.lval = false
         me.const = true
     end,
@@ -1050,15 +1133,15 @@ error'oi'
         local v = unpack(me)
         ASR(string.sub(v,1,1)=="'" or tonumber(v), me, 'malformed number')
         if string.find(v,'%.') or string.find(v,'e') or string.find(v,'E') then
-            me.tp = 'float'
+            me.tp = _TP.fromstr'float'
         else
-            me.tp = 'int'
+            me.tp = _TP.fromstr'int'
         end
         me.lval = false
         me.const = true
     end,
     NULL = function (me)
-        me.tp   = 'null*'
+        me.tp   = _TP.fromstr'null*'
         me.lval = false
         me.const = true
     end,

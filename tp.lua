@@ -63,105 +63,129 @@ end
 
 -- TODO: enforce passing parameter `c´ to isNumeric/deptr/contains/max ?
 
--- TODO: rename to clean
-function _TP.noptr (tp)
-    return (string.match(
-            (string.match(tp, '^([^%*]*)%**')),
-            '^([^%&]*)%&?'))
+function _TP.copy (t)
+    local ret = {}
+    for k,v in pairs(t) do
+        ret[k] = v
+    end
+    return ret
 end
 
---[[
-function _TP.c (tp)
-    -- _tp->tp
-    -- class->CEU_XXX
-    -- class*->CEU_XXX* (too!)
-    return (string.gsub(string.gsub(tp,'^%u[_%w]*%*?','char*'), '^_', ''))
-end
-]]
+function _TP.fromstr (str)
+    local id, ptr = string.match(str, '^(.-)(%**)$')
+    assert(id and ptr)
 
-function _TP.isTuple (tp,ptr)
-    return _ENV.c[tp] and _ENV.c[tp].tuple
-        or _TP.deptr(tp) and _TP.isTuple(_TP.deptr(tp))
+    local ret = {
+        id  = id,
+        ptr = (id=='@' and 1) or string.len(ptr);
+        arr = false,
+        ref = false,
+        ext = (string.sub(id,1,1) == '_') or (id=='@'),
+        plain = (_ENV.c[id] and _ENV.c[id].mod=='plain'),
+    }
+-- TODO: remove?
+    if ret.ext and (not _ENV.c[ret.id]) then
+        _ENV.c[ret.id] = { tag='type', id=ret.id, len=nil, mod=nil }
+    end
+    return ret
 end
 
-function _TP.c (tp)
-    tp = string.gsub(tp,'%&','%*')
-    local cls = _ENV.clss[_TP.noptr(tp)]
-    if cls then
-        return 'CEU_'..tp
+function _TP.toc (tp)
+    if tp.tup then
+        local t = { 'tceu' }
+        for _, v in ipairs(tp.tup) do
+            t[#t+1] = _TP.toc(v)
+        end
+        return string.gsub(table.concat(t,'__'),'%*','_')
     end
 
-    return (string.gsub(tp,'^_', ''))
-end
+    local ret = tp.id
 
-function _TP.isNumeric (tp, c)
-    local ref = _TP.deref(tp)
-    if ref then
-        tp = ref
+    if _TOPS[tp.id] then
+        ret = 'CEU_'..ret
     end
-    return tp~='void' and types[tp] or (c and _TP.ext(tp,c))
-end
 
-function _TP.deptr (tp, c)
-    local ptr = string.match(tp,'(.-)%*$')
-    if ptr then
-        return ptr
-    elseif c and _TP.ext(tp,c) then
-        local ref = _TP.deref(tp)
-        return not (_ENV.c and _ENV.c[tp]  and _ENV.c[tp].mod=='plain' or
-                    _ENV.c and _ENV.c[ref] and _ENV.c[ref].mod=='plain')
-            and tp
-    else
-        return false
+    ret = ret .. string.rep('*',tp.ptr)
+
+    if tp.arr then
+        --error'not implemented'
+        ret = ret .. '*'
     end
+
+    if tp.ref then
+        ret = ret .. '*'
+    end
+
+    return (string.gsub(ret,'^_', ''))
 end
 
--- TODO: rename to deref
-function _TP.deref (tp)
-    return string.match(tp,'(.-)%&$')
+function _TP.tostr (tp)
+    if tp.tup then
+        local ret = {}
+        for _, t in ipairs(tp.tup) do
+            ret[#ret+1] = _TP.tostr(t)
+        end
+        return '('..table.concat(ret,',')..')'
+    end
+
+    local ret = tp.id
+    ret = ret .. string.rep('*',tp.ptr)
+    if tp.arr then
+        ret = ret .. '[]'
+    end
+    if tp.ref then
+        ret = ret .. '&'
+    end
+    return ret
 end
 
-function _TP.ext (tp, loc)
-    return (tp=='@' and '@') or
-           (loc and (not _TP.deptr(tp)) and (string.sub(tp,1,1) == '_') and tp)
+function _TP.isNumeric (tp)
+    return tp.id~='void' and types[tp.id] and tp.ptr==0 and (not tp.arr)
+            or (tp.ext and tp.ptr==0)
+            or tp.id=='@'
 end
 
-function _TP.contains (tp1, tp2, c)
+function _TP.contains (tp1, tp2)
     -- same exact type
-    if tp1 == tp2 then
+    if _TP.toc(tp1) == _TP.toc(tp2) then
         return true
     end
 
-    -- any type (Lua scripts)
-    if tp1=='*' or tp2=='*' then
+    -- any type (calls, Lua scripts)
+    if tp1.id=='@' or tp2.id=='@' then
         return true
     end
 
-    -- in case of refs `&´, compare as if they where pointers
-    local ref1 = (_TP.deref(tp1) or tp1)..'*'
-    local ref2 = (_TP.deref(tp2) or tp2)..'*'
-    if _TP.deref(tp1) or _TP.deref(tp2) then
-        return _TP.contains(ref1,ref2,c)
+    if (tp1.ext and tp1.ptr==0) or (tp2.ext and tp2.ptr==0) then
+        return true     -- let external types be handled by gcc
     end
 
     -- both are numeric
-    if _TP.isNumeric(tp1,c) and _TP.isNumeric(tp2,c) then
+    if _TP.isNumeric(tp1) and _TP.isNumeric(tp2) then
         return true
     end
 
     -- both are pointers
-    local _tp1, _tp2 = _TP.deptr(tp1,c), _TP.deptr(tp2,c)
-    if _tp1 and _tp2 then
-        local cls1 = _ENV.clss[_tp1]
-        local cls2 = _ENV.clss[_tp2]
-        -- assigning to a cls (cast is enforced)
-        if cls1 then
-            return tp2 == 'null*' or
-                   cls2 and cls1.is_ifc and _ENV.ifc_vs_cls(cls1,cls2)
+    if tp1.ptr>0 and tp2.ptr>0 then
+        if tp1.id=='char' and tp1.ptr==1
+        or tp1.id=='void' and tp1.ptr==1 then
+            return true     -- any pointer can be cast to char*/void*
+            -- TODO: void* too???
         end
-        return tp1=='void*' or tp2=='void*' or tp2=='null*'
-                or c and (tp1=='@' or tp2=='@')
-                or _TP.contains(_tp1, _tp2, c)
+        if tp2.id == 'null' then
+            return true     -- any pointer can be assigned "null"
+        end
+
+        if tp1.ptr == tp2.ptr then
+            local cls1 = _ENV.clss[tp1.id]
+            local cls2 = _ENV.clss[tp2.id]
+            -- assigning to a cls (cast is enforced)
+            if cls1 then
+                return cls2 and cls1.is_ifc and _ENV.ifc_vs_cls(cls1,cls2)
+            end
+        end
+
+        return false
     end
 
     -- c=accept ext // and at least one is ext
@@ -170,16 +194,14 @@ function _TP.contains (tp1, tp2, c)
     end
 
     -- tuples vs (tuples or single types)
-    local tup1 = _TP.isTuple(tp1)
-    local tup2 = _TP.isTuple(tp2)
-    if tup1 or tup2 then
-        tup1 = tup1 or { {nil,tp1,nil} }
-        tup2 = tup2 or { {nil,tp1,nil} }
-        if #tp1 == #tp2 then
-            for i=1, #tp1 do
-                local hold, tp1, id = unpack(tp1[i])
-                local hold, tp2, id = unpack(tp1[i])
-                if not _TP.contains(tp1,tp2) then
+    if tp1.tup or tp2.tup then
+        tup1 = tp1.tup or { tp1 }
+        tup2 = tp2.tup or { tp2 }
+        if #tup1 == #tup2 then
+            for i=1, #tup1 do
+                local t1 = tup1[i]
+                local t2 = tup2[i]
+                if not _TP.contains(t1,t2) then
                     return false
                 end
             end
@@ -190,10 +212,10 @@ function _TP.contains (tp1, tp2, c)
     return false
 end
 
-function _TP.max (tp1, tp2, c)
-    if _TP.contains(tp1, tp2, c) then
+function _TP.max (tp1, tp2)
+    if _TP.contains(tp1, tp2) then
         return tp1
-    elseif _TP.contains(tp2, tp1, c) then
+    elseif _TP.contains(tp2, tp1) then
         return tp2
     else
         return nil
