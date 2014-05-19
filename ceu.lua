@@ -392,18 +392,19 @@ do
     -- TUPLES
     do
         local str = ''
-        for _,tp in pairs(_TP.types) do
-            if tp.tup and #tp.tup>0 then
+        for _,T in pairs(_TP.types) do
+            if T.tup and #T.tup>0 then
                 str = str .. 'typedef struct {\n'
-                for i, tp in ipairs(tp.tup) do
-                    if _ENV.clss[tp.id] then
+                for i, t in ipairs(T.tup) do
+                    local tmp = _TP.toc(t)
+                    if _ENV.clss[t.id] then
                         -- T* => void*
                         -- T** => void**
-                        tp = 'void'..string.match(tp,'(%*+)')
+                        tmp = 'void'..string.match(tmp,'(%*+)')
                     end
-                    str = str..'\t'.._TP.toc(tp)..' _'..i..';\n'
+                    str = str..'\t'..tmp..' _'..i..';\n'
                 end
-                str = str .. '} '.._TP.toc(c.tuple)..';\n'
+                str = str .. '} '.._TP.toc(T)..';\n'
             end
         end
         HH = SUB(HH, '=== TUPLES ===', str)

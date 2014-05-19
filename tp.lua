@@ -175,12 +175,6 @@ function _TP.isNumeric (tp)
 end
 
 function _TP.contains (tp1, tp2)
-    -- same exact type
--- TODO: remove
-    if _TP.toc(tp1) == _TP.toc(tp2) then
-        --return true
-    end
-
     -- same type
     if tp1.id==tp2.id and tp1.ptr==tp2.ptr and tp1.arr==tp2.arr then
                                               -- i.e. false

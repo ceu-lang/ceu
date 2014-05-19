@@ -607,6 +607,63 @@ end
 
 --do return end
 
+]===]
+Test { [[
+class T with
+    var _SDL_Rect* cell_rects = null;
+do
+    var _SDL_Rect* cell_rect = &this.cell_rects[1];
+end
+escape 1;
+]],
+    gcc = 'error: unknown type name ‘SDL_Rect’',
+}
+
+Test { [[
+native do
+    int  vs[] = { 1, 2 };
+    int* BGS[] = { &vs[0], &vs[1] };
+end
+escape *_BGS[1];
+]],
+    run = 2,
+}
+
+Test { [[
+native do
+    typedef int* t;
+end
+var int v = 2;
+var _t p = &v;
+escape *p;
+]],
+    run = 2,
+}
+
+Test { [[
+native plain _t;
+native do
+    typedef int t;
+end
+var _t v = 2;
+escape *v;
+]],
+    env = 'line 6 : invalid operand to unary "*"',
+}
+
+Test { [[
+native plain _rect;
+native do
+    typedef struct rect {
+        int x, y;
+    };
+end
+var _rect r;
+escape *(r.x);
+]],
+    env = 'line 8 : invalid operand to unary "*"',
+}
+
 -------------------------------------------------------------------------------
 -- OK: well tested
 
@@ -18189,8 +18246,8 @@ var _char* p;
 *(p:a) = (_char)1;
 escape 1;
 ]],
-    env = 'line 3 : invalid operand to unary "*"',
-    --gcc = 'error: request for member',
+    --env = 'line 3 : invalid operand to unary "*"',
+    gcc = 'error: request for member',
 }
 
 Test { [[
@@ -18402,7 +18459,6 @@ escape c;
     run = 1,
 }
 
-]===]
 Test { [[
 native plain _int;
 var _int a=1, b=1;

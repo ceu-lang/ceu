@@ -892,7 +892,7 @@ F = {
         me.tp = _TP.copy(arr.tp)
             if arr.tp.arr then
                 me.tp.arr = false
-            elseif (not arr.tp.ext) then
+            elseif arr.tp.ptr>0 then
                 me.tp.ptr = me.tp.ptr - 1
             end
 
@@ -954,8 +954,11 @@ F = {
         local op, e1 = unpack(me)
         me.lval = e1.lval and e1
         me.tp   = _TP.copy(e1.tp)
-        me.tp.ptr = me.tp.ptr - 1
-        ASR(me.tp.ptr >= 0, me, 'invalid operand to unary "*"')
+        if e1.tp.ptr > 0 then
+            me.tp.ptr = me.tp.ptr - 1
+        end
+        ASR(e1.tp.ptr>0 or (me.tp.ext and (not me.tp.plain) and (not _TP.get(me.tp.id).plain)),
+            me, 'invalid operand to unary "*"')
     end,
 
     ['Op1_&'] = function (me)
@@ -1007,9 +1010,12 @@ F = {
                 assert(evt.ins and evt.ins.tup)
                 me.tp = ASR(evt.ins.tup[i], me, 'invalid arity')
             else
+                -- rect.x = 1 (_SDL_Rect)
                 me.tp = _TP.fromstr'@'
-                if _TP.get(me.tp.id) then
-                    me.tp.ptr = 0
+                local tp = _TP.get(e1.tp.id)
+                if tp.plain and e1.tp.ptr==0 then
+                    me.tp.plain = true
+                    me.tp.ptr   = 0
                 end
             end
             me.lval = e1.lval

@@ -29,9 +29,11 @@ F = {
         --
 
         local noptr =  (to.tp.ptr==0 and
-                            ((not to.tp.ext) or _TP.get(to.tp.id).plain))
+                        ((not to.tp.ext) or _TP.get(to.tp.id).plain or to.tp.plain))
                     or (fr.tp.ptr==0 and
-                            ((not fr.tp.ext) or _TP.get(fr.tp.id).plain))
+                        ((not fr.tp.ext) or _TP.get(fr.tp.id).plain or fr.tp.plain))
+                                            -- either native dcl or derived
+                                            -- from s.field
 
         if noptr then
             ASR(op == '=', me, 'invalid operator')
