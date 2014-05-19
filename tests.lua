@@ -574,6 +574,18 @@ escape 10;
 -------------------------------------------------------------------------------
 -- ??: working now
 
+]===]
+Test { [[
+var int[] v;
+do
+    var int i = 1;
+    v = &i;
+end
+escape *v;
+]],
+    fin = 'line 4 : attribution requires `finalize´',
+}
+
 Test { [[
 var int i = 1;
 var int[] v = &i;
@@ -585,13 +597,36 @@ do
 end
 
 var T t with
-    _.p = v;
+    _.p := v;
     _.v = v;
 end;
 
 escape *(t.p) + *(t.v);
 ]],
-    run = 1,
+    run = 2,
+}
+
+Test { [[
+var int i = 1;
+var int[] v = &i;
+
+class T with
+    var int*  p = null;
+    var int[] v = null;
+do
+    await 1s;
+    *v = 1;
+    *p = 1;
+end
+
+var T t with
+    _.p := v;
+    _.v = v;
+end;
+
+escape *(t.p) + *(t.v);
+]],
+    fin = 'line 10 : invalid access to pointer across `await´',
 }
 
 -- TODO: error message
@@ -607,7 +642,6 @@ end
 
 --do return end
 
-]===]
 Test { [[
 class T with
     var _SDL_Rect* cell_rects = null;

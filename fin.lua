@@ -35,6 +35,9 @@ F = {
                                             -- either native dcl or derived
                                             -- from s.field
 
+        -- var int[] a; do var int[] b=a; end
+        noptr = noptr or (to.tp.mem and fr.tp.mem)
+
         if noptr then
             ASR(op == '=', me, 'invalid operator')
             ASR(not me.fin, me, 'attribution does not require `finalize´')
@@ -197,18 +200,8 @@ F = {
         if TRACK[me.var] ~= true then
             return  -- no await happened yet
         end
-
-        -- Ignore org constructor "_.v=x":
-        -- Track is in the class interface vs class body:
-        --  class with var int* v; do await 1s; *v=1; end
-        local set = _AST.par(me, 'SetExp')
-        if set then
-            local _, fr, to = unpack(set)
-            if to.tag=='Op2_.' and to[2].tag=='This_' then
-                if to[3]==me then
-                    return
-                end
-            end
+        if me.var.tp.mem then
+            return  -- ignore tracked vars with []
         end
 
         -- possible dangling pointer "me.var" is accessed across await
