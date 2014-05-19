@@ -1,43 +1,94 @@
-_TP = {}
-
-local types = {
-    void=true, char=true, byte=true, bool=true, word=true,
-    uint=true, int=true,
-    u64=true,  s64=true,
-    u32=true,  s32=true,
-    u16=true,  s16=true,
-    u8=true,   s8=true,
-    float=true,
-    f32=true,  f64=true,
+_TP = {
+    types = {}
 }
 
--- len aligned to word size
-function _TP.sizeof (len)
-    local al = len
-    if al > _ENV.c.word.len then
-        al = _ENV.c.word.len   -- maximum adjust is the word size
-    end
-    local r = len % al
-    if r > 0 then
-        len = len + (al-r)
-    end
-    return len
+local __empty = {}
+function _TP.get (id)
+    return _TP.types[id] or __empty
 end
 
--- returns off/aligned + len
-function _TP.align (off, len)
-    if len > _ENV.c.word.len then
-        len = _ENV.c.word.len   -- maximum adjust is the word size
-    elseif len == 0 then
-        len = 1                 -- minimum alignment (TODO: why?)
+function _TP.new (me)
+    if me.tag == 'Type' then
+        local id, ptr, arr, ref = unpack(me)
+
+        me.id  = id
+        me.ptr = ptr
+        me.arr = arr
+        me.ref = ref
+        me.ext = (string.sub(id,1,1) == '_') or (id=='@')
+        me.hold = true      -- holds by default
+
+        -- set from outside (see "types" above and Dcl_nat in env.lua)
+        me.prim  = false     -- if primitive
+        me.num   = false     -- if numeric
+        me.len   = nil       -- sizeof type
+        me.plain = false     -- if plain type (no pointers inside it)
+
+-- TODO: remove?
+        if _ENV and me.ext and (not _ENV.c[me.id]) then
+            _ENV.c[me.id] = { tag='type', id=me.id, len=nil, mod=nil }
+        end
+
+    else
+        assert(me.tag == 'TupleType')
+        me.id  = nil
+        me.ptr = (#me==1 and 0) or 1
+        me.arr = false
+        me.ref = false
+        me.ext = false
+
+        me.tup = {}
+        for i, t in ipairs(me) do
+            local hold, tp, _ = unpack(t)
+            tp.hold = hold
+
+            if tp.id=='void' and tp.ptr==0 then
+                ASR(#me==1, me, 'invalid type')
+                me[1] = nil     -- empty tuple
+                break
+            end
+
+            me.tup[#me.tup+1] = tp
+        end
+
+        if not _AST.par(me,'Dcl_fun') then
+            _TP.types[_TP.toc(me)] = me     -- dump typedefs
+        end
     end
-    local r = off % len
-    if r > 0 then
-        off = off + (len-r)
-    end
-    return off
+    return me
 end
 
+-- primitive / numeric / len
+local types = {
+    void  = { true, false, 0 },
+    char  = { true, true, 1 },
+    byte  = { true, true, 1 },
+    bool  = { true, true, 1 },
+    word  = { true, true, _OPTS.tp_word },
+    uint  = { true, true, _OPTS.tp_word },
+    int   = { true, true, _OPTS.tp_word },
+    u64   = { true, true, 8 },
+    s64   = { true, true, 8 },
+    u32   = { true, true, 4 },
+    s32   = { true, true, 4 },
+    u16   = { true, true, 2 },
+    s16   = { true, true, 2 },
+    u8    = { true, true, 1 },
+    s8    = { true, true, 1 },
+    float = { true, true, _OPTS.tp_word },
+    f32   = { true, true, 4 },
+    f64   = { true, true, 8 },
+
+    pointer   = { false, false, _OPTS.tp_word },
+    tceu_ncls = { false, false, true }, -- len set in "env.lua"
+    tceu_nlbl = { false, false, true }, -- len set in "labels.lua"
+}
+for id, t in pairs(types) do
+    _TP.types[id] = _TP.new{ tag='Type', id, false, false, false }
+    _TP.types[id].prim = t[1]
+    _TP.types[id].num  = t[2]
+    _TP.types[id].len  = t[3]
+end
 
 function _TP.n2bytes (n)
     if n < 2^8 then
@@ -50,19 +101,6 @@ function _TP.n2bytes (n)
     error'out of bounds'
 end
 
-function _TP.ceil (v)
-    local w = _OPTS.tp_word
-    while true do
-        if v % w == 0 then
-            return v
-        else
-            v = v + 1
-        end
-    end
-end
-
--- TODO: enforce passing parameter `c´ to isNumeric/deptr/contains/max ?
-
 function _TP.copy (t)
     local ret = {}
     for k,v in pairs(t) do
@@ -74,21 +112,8 @@ end
 function _TP.fromstr (str)
     local id, ptr = string.match(str, '^(.-)(%**)$')
     assert(id and ptr)
-
-    local ret = {
-        id  = id,
-        ptr = (id=='@' and 1) or string.len(ptr);
-        arr = false,
-        ref = false,
-        ext = (string.sub(id,1,1) == '_') or (id=='@'),
-        plain = (_ENV.c[id] and _ENV.c[id].mod=='plain'),
-        hold = false,
-    }
--- TODO: remove?
-    if ret.ext and (not _ENV.c[ret.id]) then
-        _ENV.c[ret.id] = { tag='type', id=ret.id, len=nil, mod=nil }
-    end
-    return ret
+    ptr = (id=='@' and 1) or string.len(ptr);
+    return _TP.new{ tag='Type', id, ptr, false, false }
 end
 
 function _TP.toc (tp)
@@ -144,7 +169,7 @@ function _TP.tostr (tp)
 end
 
 function _TP.isNumeric (tp)
-    return tp.id~='void' and types[tp.id] and tp.ptr==0 and (not tp.arr)
+    return _TP.get(tp.id).num and tp.ptr==0 and (not tp.arr)
             or (tp.ext and tp.ptr==0)
             or tp.id=='@'
 end

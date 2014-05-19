@@ -7,7 +7,7 @@ function SPC ()
 end
 
 function pred_sort (v1, v2)
-    return (v1.len or _ENV.c.word.len) > (v2.len or _ENV.c.word.len)
+    return (v1.len or _TP.types.word.len) > (v2.len or _TP.types.word.len)
 end
 
 F = {
@@ -40,7 +40,7 @@ DBG('===', me.id, me.trails_n)
         -- input parameters (void* _ceu_go->org, int a, int b)
         local dcl = { 'tceu_app* _ceu_app', 'tceu_org* __ceu_org' }
         for _, v in ipairs(ins) do
-            local hold, tp, id = unpack(v)
+            local _, tp, id = unpack(v)
             dcl[#dcl+1] = _TP.toc(tp)..' '..(id or '')
         end
         dcl = table.concat(dcl,  ', ')
@@ -98,12 +98,12 @@ DBG('===', me.id, me.trails_n)
                 len = 10    -- TODO: it should be big
 --[[
                 local _tp = _TP.deptr(var.tp)
-                len = var.tp.arr * (_TP.deptr(_tp) and _ENV.c.pointer.len
+                len = var.tp.arr * (_TP.deptr(_tp) and _TP.types.pointer.len
                              or (_ENV.c[_tp] and _ENV.c[_tp].len
-                                 or _ENV.c.word.len)) -- defaults to word
+                                 or _TP.types.word.len)) -- defaults to word
 ]]
             elseif var.tp.ptr>0 or var.tp.ref then
-                len = _ENV.c.pointer.len
+                len = _TP.types.pointer.len
             else
                 len = _ENV.c[var.tp.id].len
             end

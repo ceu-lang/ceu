@@ -286,8 +286,8 @@ do
     HH = SUB(HH, '#include "ceu_os.h"', _FILES.ceu_os_h)
 
     local tps = { [0]='void', [1]='8', [2]='16', [4]='32' }
-    HH = SUB(HH, '=== TCEU_NLBL ===',   's'..tps[_ENV.c.tceu_nlbl.len])
-    HH = SUB(HH, '=== TCEU_NCLS ===',   's'..tps[_ENV.c.tceu_ncls.len])
+    HH = SUB(HH, '=== TCEU_NLBL ===',   's'..tps[_TP.types.tceu_nlbl.len])
+    HH = SUB(HH, '=== TCEU_NCLS ===',   's'..tps[_TP.types.tceu_ncls.len])
     HH = SUB(HH, '=== CEU_NTRAILS ===', _MAIN.trails_n)
     --HH = SUB(HH, '=== CLSS_DEFS ===',  _MEM.clss)
 
@@ -392,11 +392,10 @@ do
     -- TUPLES
     do
         local str = ''
-        for _,c in pairs(_ENV.c) do
-            if c.tuple and #c.tuple>0 then
+        for _,tp in pairs(_TP.types) do
+            if tp.tup and #tp.tup>0 then
                 str = str .. 'typedef struct {\n'
-                for i, v in ipairs(c.tuple) do
-                    local _,tp,_ = unpack(v)
+                for i, tp in ipairs(tp.tup) do
                     if _ENV.clss[tp.id] then
                         -- T* => void*
                         -- T** => void**

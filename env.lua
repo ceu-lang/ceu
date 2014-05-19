@@ -141,7 +141,8 @@ function newvar (me, blk, pre, tp, id, isImp)
         ASR(pre == 'pool', me,
             'cannot instantiate an interface')
     end
-    ASR(tp.ptr>0 or (not c) or (tp.id=='void' and pre~='var') or c.len~=0,
+
+    ASR(tp.ptr>0 or _TP.get(tp.id).len~=0 or (tp.id=='void' and pre=='event'),
         me, 'cannot instantiate type "'..tp.id..'"')
     --ASR((not arr) or arr>0, me, 'invalid array dimension')
 
@@ -265,80 +266,9 @@ end
 
 F = {
     Type = function (me)
-        local id, ptr, arr, ref = unpack(me)
-
-        me.id  = id
-        me.ptr = ptr
-        me.arr = arr
-        me.ref = ref
-        me.ext = (string.sub(id,1,1) == '_') or (id=='@')
-        me.plain = (_ENV.c[id] and _ENV.c[id].mod=='plain')
-        me.hold = false
-
--- TODO: remove?
-        if me.ext and (not _ENV.c[me.id]) then
-            _ENV.c[me.id] = { tag='type', id=me.id, len=nil, mod=nil }
-        end
+        _TP.new(me)
     end,
-
-    TupleType_pos = function (me)
-        me.id  = nil
-        me.ptr = (#me==1 and 0) or 1
-        me.arr = false
-        me.ref = false
-        me.ext = false
-
-        me.tup = {}
-        for i, t in ipairs(me) do
-            local hold, tp, _ = unpack(t)
-            tp.hold = hold
-
-            if tp.id=='void' and tp.ptr==0 then
-                ASR(#me==1, me, 'invalid type')
-                me[1] = nil     -- empty tuple
-                break
-            end
-
-            me.tup[#me.tup+1] = tp
-        end
-
-        if not _AST.par(me,'Dcl_fun') then
-            _ENV.c[_TP.toc(me)] = { tag='type', id=TP, tuple=me, len=nil }
-        end
-
-do return end
-
-        local TP = 'tceu'
-        for i, v in ipairs(me) do
-            local hold, tp, id = unpack(v)
-
-            if tp == 'void' then
-                ASR(#me==1, me, 'invalid type')
-                TP = 'void'
-                me[1] = nil     -- empty tuple
-                break
-            end
-
-            --local tp_noptr = _TP.noptr(v)
-            --local c = _ENV.c[tp_noptr]
-            --ASR(c or _ENV.clss[tp_noptr],
-                    --me, 'undeclared type `'..tp_noptr..'´')
-            --me[i] = v
-            TP = TP .. '__'..(hold or '')..'_'.._TP.toc(tp)
-        end
-
-        TP = string.gsub(TP, '*', '_')  -- TODO: '_' is not reliable
-        me.tp = TP
-
-        if _AST.iter'Dcl_fun'() then
-            -- keep the tables for functions
-            return
-        else
-            -- substitute the table for the struct type
-            _ENV.c[TP] = { tag='type', id=TP, tuple=me, len=nil }
-            return TP   -- me => TP
-        end
-    end,
+    TupleType_pos = 'Type',
 
     Root_pre = function (me)
         -- TODO: NONE=0
@@ -394,7 +324,7 @@ do return end
     end,
 
     Root = function (me)
-        _ENV.c.tceu_ncls.len = _TP.n2bytes(#_ENV.clss_cls)
+        _TP.types.tceu_ncls.len = _TP.n2bytes(#_ENV.clss_cls)
         ASR(_ENV.max_evt+#_ENV.exts < 255, me, 'too many events')
                                     -- 0 = NONE
 
@@ -436,7 +366,7 @@ do return end
         local _, _, inp, out = unpack(fun)
         if fun.tag == 'Dcl_fun' then
             for i, v in ipairs(inp) do
-                local hold, tp, id = unpack(v)
+                local _, tp, id = unpack(v)
                 if tp ~= 'void' then
                     local has,var = newvar(me, me, 'var', tp, id, false)
                     assert(not has)
@@ -648,7 +578,7 @@ do return end
 
         -- full definitions must contain parameter ids
         for _, v in ipairs(ins) do
-            local hold, tp, id = unpack(v)
+            local _, tp, id = unpack(v)
             ASR(tp=='void' or id, me, 'missing parameter identifier')
         end
     end,
@@ -674,19 +604,14 @@ do return end
 
     Dcl_nat = function (me)
         local mod, tag, id, len = unpack(me)
-        --assert(not len) -- TODO: not using len anymore
-
-        if _AST.iter'BlockI'() then
-            ASR(tag == 'func', me, 'only methods are allowed')
-            -- native _f()  =>  CEU_T__f  (must be defined manually)
-            local cls = CLS()
-            local tp = '___typeof__(CEU_'..cls.id..'_'..id..')'
-            _ENV.c[tp] = { tag='type', id=tp }
-            newvar(me, false, _AST.iter'Block'(), 'var', tp..'*', id, false)
-            cls.c[id] = { tag=tag, id=id, mod=mod }
-        else
-            _ENV.c[id] = { tag=tag, id=id, len=len, mod=mod }
+        if tag=='type' or mod=='plain' then
+            local tp = _TP.fromstr(id)
+            tp.len   = len
+            tp.plain = (mod=='plain')
+            _TP.types[id] = tp
         end
+        -- TODO: remove
+        _ENV.c[id] = { tag=tag, id=id, len=len, mod=mod }
     end,
 
     Dcl_pure = function (me)
@@ -1083,8 +1008,7 @@ do return end
                 me.tp = ASR(evt.ins.tup[i], me, 'invalid arity')
             else
                 me.tp = _TP.fromstr'@'
-                me.tp.plain = e1.tp.plain
-                if me.tp.plain then
+                if _TP.get(me.tp.id) then
                     me.tp.ptr = 0
                 end
             end

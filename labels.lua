@@ -41,7 +41,7 @@ F = {
     Root = function (me)
         -- 0, 1,-1, tot,-tot
         -- <0 = off (for internal events)
-        _ENV.c.tceu_nlbl.len  = _TP.n2bytes(1+2 + #_LBLS.list*2)
+        _TP.types.tceu_nlbl.len  = _TP.n2bytes(1+2 + #_LBLS.list*2)
 
         -- enum of labels
         for i, lbl in ipairs(_LBLS.list) do

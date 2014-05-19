@@ -594,8 +594,6 @@ escape *(t.p) + *(t.v);
     run = 1,
 }
 
-]===]
-
 -- TODO: error message
 Test { [[
 class T with do end;
@@ -880,7 +878,7 @@ Test { [[
 native do
     int _ = 3;
 end
-native constant __;
+native const __;
 
 var int _ = 1;
 var int _ = 2;
@@ -895,22 +893,22 @@ Test { [[
 native do
     int _ = 3;
 end
-native constant __;
-native constant _;      // `_´ is special (not C)
+native const __;
+native const _;      // `_´ is special (not C)
 
 var int _ = 1;
 var int _ = 2;
 
 escape __;
 ]],
-    parser = 'line 5 : after `constant´ : expected declaration',
+    parser = 'line 5 : after `const´ : expected declaration',
     --run = 3,
 }
 Test { [[
 native do
     int _ = 3;
 end
-native constant __;
+native const __;
 
 var int _;
 var int _;
@@ -14047,7 +14045,7 @@ native do
         return v;
     }
 end
-native constant _V;
+native const _V;
 escape _f(_V);
 ]],
     run = 10;
@@ -15696,7 +15694,7 @@ escape _a+_b;
 }
 
 Test { [[
-constant _a;
+const _a;
 safe _b with _c;
 native do
     int a = 1;
@@ -18191,7 +18189,8 @@ var _char* p;
 *(p:a) = (_char)1;
 escape 1;
 ]],
-    gcc = 'error: request for member',
+    env = 'line 3 : invalid operand to unary "*"',
+    --gcc = 'error: request for member',
 }
 
 Test { [[
@@ -18403,6 +18402,7 @@ escape c;
     run = 1,
 }
 
+]===]
 Test { [[
 native plain _int;
 var _int a=1, b=1;
@@ -19315,7 +19315,7 @@ escape _a;
 }
 
 Test { [[
-constant _HIGH, _LOW;
+const _HIGH, _LOW;
 par do
     loop do
         _digitalWrite(11, _HIGH);
@@ -19379,7 +19379,7 @@ end
 }
 
 Test { [[
-native constant _LOW, _HIGH;
+native const _LOW, _HIGH;
 native _digitalWrite();
 par do
     loop do
@@ -24285,7 +24285,7 @@ escape 1;
 }
 
 Test { [[
-native constant _UI_ALIGN_CENTER;
+native const _UI_ALIGN_CENTER;
 native pure _UI_align();
 native do
     typedef struct {
@@ -24310,7 +24310,7 @@ escape 1;
 }
 
 Test { [[
-native constant _UI_ALIGN_CENTER;
+native const _UI_ALIGN_CENTER;
 native pure _UI_align();
 native do
     typedef struct {
@@ -24337,7 +24337,7 @@ escape 1;
 }
 
 Test { [[
-native constant _UI_ALIGN_CENTER;
+native const _UI_ALIGN_CENTER;
 native pure _UI_align();
 native do
     typedef struct {

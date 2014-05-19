@@ -93,20 +93,6 @@ F =
     Nat = function (me)
         me.cval = string.sub(me[1], 2)
     end,
-    SIZEOF = function (me)
-        local tp = unpack(me)
-        if type(tp) == 'string' then
-            me.cval = 'sizeof('.._TP.toc(me[1])..')'
-        end
-
-        if type(tp) == 'string' then    -- sizeof(type) vs sizeof(exp)
-            local t = (tp.ptr>0 and _ENV.c.pointer) or _ENV.c[tp]
-            ASR(t and (t.tag=='type' or t.tag=='unk'), me,
-                    'undeclared type '..tp)
-            t.tag = 'type'
-            me.sval = t and t.len
-        end
-    end,
     STRING = function (me)
         me.cval = me[1]
     end,

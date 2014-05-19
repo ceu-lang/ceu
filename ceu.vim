@@ -13,7 +13,7 @@ endif
 syn match	Macro	"\<_\w*\>"
 syn keyword	cConstant	this global null true false _
 syn keyword	cOperator	not or and sizeof
-syn keyword	cType   	byte bool word uint f32 f64 u8 u16 u32 u64 s8 s16 s32 s64 constant nohold safe pure hold recursive
+syn keyword	cType   	byte bool word uint f32 f64 u8 u16 u32 u64 s8 s16 s32 s64 const nohold safe pure hold recursive
 syn keyword	cStatement async await break native continue do else emit end
 syn keyword cStatement event every finalize FOREVER if input loop nothing
 syn keyword cStatement output par pause return then until var with class

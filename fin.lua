@@ -28,8 +28,10 @@ F = {
         -- NON-POINTER ATTRIBUTIONS (always safe)
         --
 
-        local noptr =  (to.tp.ptr==0 and ((not to.tp.ext) or to.tp.plain))
-                    or (fr.tp.ptr==0 and ((not fr.tp.ext) or fr.tp.plain))
+        local noptr =  (to.tp.ptr==0 and
+                            ((not to.tp.ext) or _TP.get(to.tp.id).plain))
+                    or (fr.tp.ptr==0 and
+                            ((not fr.tp.ext) or _TP.get(fr.tp.id).plain))
 
         if noptr then
             ASR(op == '=', me, 'invalid operator')
@@ -285,14 +287,14 @@ F = {
             for i, exp in ipairs(exps) do
                 local hold = true
                 if f.var and f.var.fun then
-                    hold,_,_ = unpack(f.var.fun.ins[i])
+                    hold = f.var.fun.ins.tup[i].hold
                 end
                 if hold then
                     -- int* pa; _f(pa);
                     --  (`pa´ termination must consider `_f´)
                     local r = (exp.tp.ptr>0 or exp.tp.ext) and
                               (not exp.isConst) and
-                              (not exp.c or exp.c.mod~='constant')
+                              (not exp.c or exp.c.mod~='const')
                                     -- except constants
 
                     r = r and exp.fst and exp.fst.blk

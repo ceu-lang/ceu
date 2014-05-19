@@ -432,27 +432,27 @@ function CHK_ACC (accs1, accs2, NO_par, NO_emts)
                     local o2 = (acc2.org or acc1.org)
                     o2 = o2 and o2.acc or _nil
 
-                    -- orgs are compatible
+                    -- orgs are compatible?
                     local org_ = (o1 == o2)
                               or o1.any
                               or o2.any
 
-                    -- orgs are compatible
+                    -- orgs are compatible?
                     local org_ = o1.id == o2.id
                               or o1.any
                               or o2.any
 
-                    -- ids are compatible
+                    -- ids are compatible?
                     local id_ = acc1.id == acc2.id
                              or acc1.md=='cl' and acc2.md=='cl'
                              or acc1.any and _TP.contains(acc1.tp,acc2.tp)
                              or acc2.any and _TP.contains(acc2.tp,acc1.tp)
 
-                    -- C's are det
+                    -- C's are det?
                     local c1 = _ENV.c[acc1.id]
-                    c1 = c1 and (c1.mod=='pure' or c1.mod=='constant')
+                    c1 = c1 and (c1.mod=='pure' or c1.mod=='const')
                     local c2 = _ENV.c[acc2.id]
-                    c2 = c2 and (c2.mod=='pure' or c2.mod=='constant')
+                    c2 = c2 and (c2.mod=='pure' or c2.mod=='const')
                     local c_ = c1 or c2
                             or (_ENV.dets[acc1.id] and _ENV.dets[acc1.id][acc2.id])
 

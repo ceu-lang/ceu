@@ -107,7 +107,7 @@ TYPES = P'void' + 'char' + 'byte' + 'bool' + 'word'
       + 'float' + 'f32' + 'f64'
 
 KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'native'
-     + 'constant' + 'continue' + 'safe'     + 'do'
+     + 'const'    + 'continue' + 'safe'     + 'do'
      + 'else'     + 'else/if'  + 'emit'     + 'end'      + 'event'
      + 'every'    + 'finalize' + 'FOREVER'  + 'if'       + 'input'
      + 'loop'     + 'nohold'   + 'not'      + 'nothing'  + 'null'
@@ -371,7 +371,7 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                 + Cc'func' * V'__ID_nat' * '()' * Cc(false)
                 + Cc'unk'  * V'__ID_nat'        * Cc(false)
 
-    , _Dcl_nat = KEY'native' * (CKEY'pure'+CKEY'constant'+CKEY'nohold'+CK'plain'+Cc(false))
+    , _Dcl_nat = KEY'native' * (CKEY'pure'+CKEY'const'+CKEY'nohold'+CK'plain'+Cc(false))
                    * EV'__Dcl_nat' * (K',' * EV'__Dcl_nat')^0
 
     , __Dcl_ext_call = (CKEY'input'+CKEY'output')
