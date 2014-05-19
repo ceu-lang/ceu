@@ -1340,11 +1340,11 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
 ]])
 
         for _, p in ipairs(me.params) do
-            if _TP.isNumeric(p.tp) or p.tp=='bool' then
+            if _TP.isNumeric(p.tp) then
                 LINE(me, [[
         lua_pushnumber(_ceu_app->lua,]]..V(p)..[[);
 ]])
-            elseif p.tp=='char*' then
+            elseif p.tp.id=='char' and p.tp.ptr==1 then
                 LINE(me, [[
         lua_pushstring(_ceu_app->lua,]]..V(p)..[[);
 ]])
@@ -1371,7 +1371,7 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
             ]]..V(me.ret)..[[ = ret;
             lua_pop(_ceu_app->lua, 1);
 ]])
-            elseif me.ret.tp == 'char*' then
+            elseif me.ret.tp.id=='char' and me.ret.tp.arr then
                 ASR(me.ret.var and me.ret.var.tp.arr, me,
                     'invalid attribution (requires a buffer)')
                 LINE(me, [[

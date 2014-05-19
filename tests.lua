@@ -594,478 +594,7 @@ escape *(t.p) + *(t.v);
     run = 1,
 }
 
---do return end
-
-Test { [=[
-native nohold _strcmp();
-var char* str = "oioioi";
-[[ str = @str ]]
-var bool ret = [[ str == 'oioioi' ]];
-var char[10] cpy = [[ str ]];
-escape ret and (not _strcmp(str,cpy));
-]=],
-    run = 1,
-}
-
-Test { [=[
-var int a = [[1]];
-var int b = 10;
-[[
-    @a = @a+@b
-    a = @a
-]]
-var int ret = [[a]];
-escape ret;
-]=],
-    todo = 'error: assign to @a',
-    run = 11,
-}
-
-Test { [==[
-[[
-    a = 1
-]]
-var int a = [[a]];
-escape a;
-]==],
-    run = 1,
-}
-
-Test { [==[
-[[
-    --[[oi]]
-    a = 1
-]]
-var int a = [[a]];
-escape a;
-]==],
-    parser = 'line 3 : after `1´ : expected `;´',
-}
-
-Test { [==[
-[=[
-    --[[oi]]
-    a = 1
-]=]
-var int a = [[a]];
-escape a;
-]==],
-    run = 1,
-}
-
-Test { [=[
-var int v = [["ok" == 'ok']];
-escape v;
-]=],
-    run = 1,
-}
-
-Test { [=[
-var int v = [[true]];
-escape v;
-]=],
-    run = 1,
-}
-
-Test { [=[
-var int v = [[false]];
-escape v;
-]=],
-    run = 0,
-}
-
-Test { [==[
-[[
-    print '*** END: 10'
-]]
-var int v = [[1]];
-escape v;
-]==],
-    run = 10,
-}
-
-Test { [==[
-[[
-    aa $ aa
-]]
-escape 1;
-]==],
-    run = 'LUA_ATPANIC: [string "    aa $ aa"]:1: \'=\' expected near \'$\'',
-}
-
-Test { [=[
-var int a = [[1]];
-[[
-    a = @a+1
-]]
-var int ret = [[a]];
-escape ret;
-]=],
-    run = 2,
-}
-
-Test { [=[
-var int a = [[1]];
-var int b = 10;
-[[
-    a = @a+@b
-]]
-var int ret = [[a]];
-escape ret;
-]=],
-    run = 11,
-}
-
---do return end
-
-Test { [[
-class T with
-    var int x;
-do
-end
-class U with do end;
-event T& e;
-par/and do
-   do
-      await 1s;
-      var T t;
-      emit e => t;
-   end
-   var U u;
-with
-   var T& t = await e;
-   t.x = 1;
-   await 1s;
-   _printf("x = %d\n", t.x);
-end
-escape 1;
-]],
-    env = 'line 6 : invalid event type',
-}
-
-Test { [[
-class T with
-    var int x;
-do
-end
-class U with do end;
-event (T&,int) e;
-par/and do
-   do
-      await 1s;
-      var T t;
-      emit e => (t,1);
-   end
-   var U u;
-with
-   var T& t;
-   var int i;
-   (t,i) = await e;
-   t.x = 1;
-   await 1s;
-   _printf("x = %d\n", t.x);
-end
-escape 1;
-]],
-    env = 'line 6 : invalid event type',
-    --run = 1,
-}
-
-Test { [[
-var int& i = 1;
-escape 1;
-]],
-    exp = 'line 1 : invalid attribution',
-}
-
-Test { [[
-var int* p;
-var int& i = *p;
-escape 1;
-]],
-    exp = 'line 2 : invalid attribution',
-}
-
-Test { [[
-event int e;
-var int& i = await e;
-escape 1;
-]],
-    exp = 'line 2 : invalid attribution',
-}
-
-Test { [[
-event int& e;
-var int& i = await e;
-escape 1;
-]],
-    run = 0,
-}
-
-Test { [[
-native plain _t;
-native nohold _f();
-native do
-    #define f(a)
-    typedef int t;
-end
-class T with
-    var _t& t;
-do
-    await 1s;
-    _f(&t);
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-interface I with end;
-class T with
-    var I* i = null;
-do
-end
-
-var T t;
-await 1s;
-_assert(t.i == null);
-escape 1;
-]],
-    run = { ['~>1s'] = 1 },
-}
-
-Test { [[
-interface I with end;
-class T with
-    var I* i = null;
-do
-end
-
-var T t;
-var I* i = t.i;
-await 1s;
-_assert(t.i == null);
-escape 1;
-]],
-    run = { ['~>1s'] = 1 },
-}
-
-Test { [[
-interface I with end;
-class T with
-    var I* i = null;
-do
-end
-
-var T t;
-var I* i = t.i;
-await 1s;
-_assert(i == null);
-escape 1;
-]],
-    fin = 'line 10 : invalid access to pointer across `await´',
-}
-
-Test { [[
-class T with do end
-
-class Pool with
-    pool T[] all;
-do
-    await FOREVER;
-end
-
-interface Global with
-    var Pool* p;
-end
-var Pool* p = null;
-
-class S with
-do
-    await 1s;
-    spawn T in global:p:all with
-    end;
-end
-
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-native do
-    typedef struct t {
-        int v;
-    } t;
-end
-
-class Unit with
-    var _t t;
-do
-end
-
-var Unit u with
-    _.t.v  =  30;
-end;
-escape u.t.v;
-]],
-    run = 30,
-}
-
-Test { [[
-class Map with
-    event (int,int) go_xy;
-do
-end
-
-var Map* m;
-emit m:go_xy => (1,1);
-
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-var int a = 1;
-var int& b = a;
-a = 2;
-escape b;
-]],
-    run = 2,
-}
-
-Test { [[
-input void OS_START;
-var int a = 1;
-event int& e;
-par do
-    var int& v = await e;
-    v = v + 1;
-with
-    await OS_START;
-    var int b = 10;
-    emit e => b;
-    escape b;
-end
-]],
-    run = 11,
-}
-
-Test { [[
-input void OS_START;
-var int a = 1;
-event (int,int&) e;
-par do
-    var int& r;
-    var int  v;
-    (v,r) = await e;
-    r = r + v;
-with
-    await OS_START;
-    var int b = 10;
-    emit e => (4,b);
-    escape b;
-end
-]],
-    env = 'line 3 : invalid event type',
-    --run = 14,
-}
-
-Test { [[
-interface Object with
-    var _SDL_Rect rect;
-end
-class MoveObject with
-    var Object* obj = null;
-do
-    _assert(this.obj != null);
-    await 1s;
-    obj:rect.x = 1;
-end
-escape 1;
-]],
-    fin = 'line 9 : invalid access to pointer across `await´',
-}
-
-Test { [[
-native plain _int;
-interface Object with
-    var _int v;
-end
-class MoveObject with
-    var Object& obj;
-do
-    await 1s;
-    obj.v = 1;
-end
-escape 1;
-]],
-    run = 1,
-}
-Test { [[
-native plain _int;
-interface Object with
-    var _int v;
-end
-class O with
-    interface Object;
-do
-    this.v = 10;
-end
-class MoveObject with
-    var Object& obj;
-do
-    await 1s;
-    obj.v = 1;
-end
-var O o;
-escape o.v;
-]],
-    run = 10,
-}
-Test { [[
-class T with
-    var int v = 0;
-do
-end
-var T t with
-    _.v = 10;
-end;
-var T& tt = t;
-tt.v = 5;
-escape t.v;
-]],
-    run = 5,
-}
-
-Test { [[
-native plain _int;
-interface Object with
-    var _int v;
-end
-class O with
-    interface Object;
-do
-    this.v = 10;
-end
-class MoveObject with
-    var Object& obj;
-do
-    await 1s;
-    obj.v = 1;
-end
-var O o;
-var MoveObject m with
-    _.obj = o;
-end;
-await 2s;
-escape o.v;
-]],
-    run = { ['~>2s']=1 },
-}
---do return end
+]===]
 
 -- TODO: error message
 Test { [[
@@ -17683,7 +17212,6 @@ escape ret;
     env = 'line 6 : variable/event "ret" is not declared',
 }
 
-]===]
 Test { [[
 par do
     native do
@@ -17691,26 +17219,18 @@ par do
         int V = 0;
     end
     input/output [10] (int max)=>int LINE do
-_printf("1\n");
         _V = 10;
-_printf("1\n");
         return 1;
     end
-_printf("0\n");
     await 1s;
-_printf("2\n");
     escape _V+1;
 with
     async do
-_printf("a\n");
         emit LINE_REQUEST => (1,10);
-_printf("b\n");
         emit 1s;
-_printf("c\n");
     end
 end
 ]],
-    _ana = {acc=3},
     run = 11,
 }
 
@@ -19919,6 +19439,13 @@ escape 1;
 Test { [[
 native _char=1;
 var _char* a = "Abcd12" ;
+escape 1;
+]],
+    env = 'line 2 : invalid attribution (_char* vs char*)',
+}
+Test { [[
+native _char=1;
+var _char* a = (_char*)"Abcd12" ;
 escape 1;
 ]],
     run = 1
@@ -33956,6 +33483,479 @@ escape x[0];
 }
 
 -- END: THREADS / EMITS
+
+-- REFS / &
+
+Test { [[
+class T with
+    var int x;
+do
+end
+class U with do end;
+event T& e;
+par/and do
+   do
+      await 1s;
+      var T t;
+      emit e => t;
+   end
+   var U u;
+with
+   var T& t = await e;
+   t.x = 1;
+   await 1s;
+   _printf("x = %d\n", t.x);
+end
+escape 1;
+]],
+    env = 'line 6 : invalid event type',
+}
+
+Test { [[
+class T with
+    var int x;
+do
+end
+class U with do end;
+event (T&,int) e;
+par/and do
+   do
+      await 1s;
+      var T t;
+      emit e => (t,1);
+   end
+   var U u;
+with
+   var T& t;
+   var int i;
+   (t,i) = await e;
+   t.x = 1;
+   await 1s;
+   _printf("x = %d\n", t.x);
+end
+escape 1;
+]],
+    env = 'line 6 : invalid event type',
+    --run = 1,
+}
+
+Test { [[
+var int& i = 1;
+escape 1;
+]],
+    exp = 'line 1 : invalid attribution',
+}
+
+Test { [[
+var int* p;
+var int& i = *p;
+escape 1;
+]],
+    exp = 'line 2 : invalid attribution',
+}
+
+Test { [[
+event int e;
+var int& i = await e;
+escape 1;
+]],
+    exp = 'line 2 : invalid attribution',
+}
+
+Test { [[
+event int& e;
+var int& i = await e;
+escape 1;
+]],
+    env = 'line 1 : invalid event type',
+}
+
+Test { [[
+native plain _t;
+native nohold _f();
+native do
+    #define f(a)
+    typedef int t;
+end
+class T with
+    var _t& t;
+do
+    await 1s;
+    _f(&t);
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+interface I with end;
+class T with
+    var I* i = null;
+do
+end
+
+var T t;
+await 1s;
+_assert(t.i == null);
+escape 1;
+]],
+    run = { ['~>1s'] = 1 },
+}
+
+Test { [[
+interface I with end;
+class T with
+    var I* i = null;
+do
+end
+
+var T t;
+var I* i = t.i;
+await 1s;
+_assert(t.i == null);
+escape 1;
+]],
+    run = { ['~>1s'] = 1 },
+}
+
+Test { [[
+interface I with end;
+class T with
+    var I* i = null;
+do
+end
+
+var T t;
+var I* i = t.i;
+await 1s;
+_assert(i == null);
+escape 1;
+]],
+    fin = 'line 10 : invalid access to pointer across `await´',
+}
+
+Test { [[
+class T with do end
+
+class Pool with
+    pool T[] all;
+do
+    await FOREVER;
+end
+
+interface Global with
+    var Pool* p;
+end
+var Pool* p = null;
+
+class S with
+do
+    await 1s;
+    spawn T in global:p:all with
+    end;
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native do
+    typedef struct t {
+        int v;
+    } t;
+end
+
+class Unit with
+    var _t t;
+do
+end
+
+var Unit u with
+    _.t.v  =  30;
+end;
+escape u.t.v;
+]],
+    run = 30,
+}
+
+Test { [[
+class Map with
+    event (int,int) go_xy;
+do
+end
+
+var Map* m;
+emit m:go_xy => (1,1);
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+var int a = 1;
+var int& b = a;
+a = 2;
+escape b;
+]],
+    run = 2,
+}
+
+Test { [[
+input void OS_START;
+var int a = 1;
+event int& e;
+par do
+    var int& v = await e;
+    v = v + 1;
+with
+    await OS_START;
+    var int b = 10;
+    emit e => b;
+    escape b;
+end
+]],
+    env = 'line 3 : invalid event type',
+    --run = 11,
+}
+
+Test { [[
+input void OS_START;
+var int a = 1;
+event (int,int&) e;
+par do
+    var int& r;
+    var int  v;
+    (v,r) = await e;
+    r = r + v;
+with
+    await OS_START;
+    var int b = 10;
+    emit e => (4,b);
+    escape b;
+end
+]],
+    env = 'line 3 : invalid event type',
+    --run = 14,
+}
+
+Test { [[
+interface Object with
+    var _SDL_Rect rect;
+end
+class MoveObject with
+    var Object* obj = null;
+do
+    _assert(this.obj != null);
+    await 1s;
+    obj:rect.x = 1;
+end
+escape 1;
+]],
+    fin = 'line 9 : invalid access to pointer across `await´',
+}
+
+Test { [[
+native plain _int;
+interface Object with
+    var _int v;
+end
+class MoveObject with
+    var Object& obj;
+do
+    await 1s;
+    obj.v = 1;
+end
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+native plain _int;
+interface Object with
+    var _int v;
+end
+class O with
+    interface Object;
+do
+    this.v = 10;
+end
+class MoveObject with
+    var Object& obj;
+do
+    await 1s;
+    obj.v = 1;
+end
+var O o;
+escape o.v;
+]],
+    run = 10,
+}
+Test { [[
+class T with
+    var int v = 0;
+do
+end
+var T t with
+    _.v = 10;
+end;
+var T& tt = t;
+tt.v = 5;
+escape t.v;
+]],
+    run = 5,
+}
+
+Test { [[
+native plain _int;
+interface Object with
+    var _int v;
+end
+class O with
+    interface Object;
+do
+    this.v = 10;
+end
+class MoveObject with
+    var Object& obj;
+do
+    await 1s;
+    obj.v = 1;
+end
+var O o;
+var MoveObject m with
+    _.obj = o;
+end;
+await 2s;
+escape o.v;
+]],
+    run = { ['~>2s']=1 },
+}
+
+-- LUA
+
+Test { [=[
+native nohold _strcmp();
+var char* str = "oioioi";
+[[ str = @str ]]
+var bool ret = [[ str == 'oioioi' ]];
+var char[10] cpy = [[ str ]];
+escape ret and (not _strcmp(str,cpy));
+]=],
+    run = 1,
+}
+
+Test { [=[
+var int a = [[1]];
+var int b = 10;
+[[
+    @a = @a+@b
+    a = @a
+]]
+var int ret = [[a]];
+escape ret;
+]=],
+    todo = 'error: assign to @a',
+    run = 11,
+}
+
+Test { [==[
+[[
+    a = 1
+]]
+var int a = [[a]];
+escape a;
+]==],
+    run = 1,
+}
+
+Test { [==[
+[[
+    --[[oi]]
+    a = 1
+]]
+var int a = [[a]];
+escape a;
+]==],
+    parser = 'line 3 : after `1´ : expected `;´',
+}
+
+Test { [==[
+[=[
+    --[[oi]]
+    a = 1
+]=]
+var int a = [[a]];
+escape a;
+]==],
+    run = 1,
+}
+
+Test { [=[
+var int v = [["ok" == 'ok']];
+escape v;
+]=],
+    run = 1,
+}
+
+Test { [=[
+var int v = [[true]];
+escape v;
+]=],
+    run = 1,
+}
+
+Test { [=[
+var int v = [[false]];
+escape v;
+]=],
+    run = 0,
+}
+
+Test { [==[
+[[
+    print '*** END: 10'
+]]
+var int v = [[1]];
+escape v;
+]==],
+    run = 10,
+}
+
+Test { [==[
+[[
+    aa $ aa
+]]
+escape 1;
+]==],
+    run = 'LUA_ATPANIC: [string "    aa $ aa"]:1: \'=\' expected near \'$\'',
+}
+
+Test { [=[
+var int a = [[1]];
+[[
+    a = @a+1
+]]
+var int ret = [[a]];
+escape ret;
+]=],
+    run = 2,
+}
+
+Test { [=[
+var int a = [[1]];
+var int b = 10;
+[[
+    a = @a+@b
+]]
+var int ret = [[a]];
+escape ret;
+]=],
+    run = 11,
+}
 
 -- ALGEBRAIC DATATYPES
 --[=[

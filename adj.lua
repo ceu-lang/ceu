@@ -271,7 +271,7 @@ F = {
             awt = node('AwaitT', me.ln, ref, false)
         elseif evt.tag=='Ext' then
             awt = node('AwaitExt', me.ln, ref, false)
-        else
+        else  -- maybe an org
             awt = node('AwaitInt', me.ln, ref, false)
             awt.isWatching = true
                 -- converts "await org" to "await org._ok" in env.lua
@@ -286,6 +286,8 @@ F = {
                                     -- changes to "true" if normal event in env.lua
                                     node('Op2_.', me.ln, '.',
                                         node('Op1_*', me.ln, '*',
+                                            -- this cast confuses acc.lua (see Op1_* there)
+                                            -- TODO: HACK_3
                                             node('Op1_cast', me.ln,
                                                 node('Type', me.ln, '_tceu_org', 1, false, false),
                                                 _AST.copy(evt))),
@@ -590,7 +592,7 @@ F = {
                             node('TupleTypeItem', me.ln, false,
                                 node('Type', me.ln, 'void', 0, false, false),
                                 false))
-                me[4] = 'void'
+                me[4] = node('Type', me.ln, 'void', 0, false, false)
                 me[5] = n
                 me[6] = blk
 
@@ -607,18 +609,16 @@ F = {
                         node('Nat', me.ln, '_ceu_out_isr'),
                         node('ExpList', me.ln,
                             node('NUMBER', me.ln, n),
-                            node('Var', me.ln, n)))),
-                node('Finalize', me.ln,
-                    false,
-                    node('Finally', me.ln,
-                        node('Block', me.ln,
-                            node('Stmts', me.ln,
-                                node('CallStmt', me.ln,
-                                    node('Op2_call', me.ln, 'call',
-                                        node('Nat', me.ln, '_ceu_out_isr'),
-                                        node('ExpList', me.ln,
-                                            node('NUMBER', me.ln, n),
-                                            node('NULL', me.ln)))))))))
+                            node('Var', me.ln, n)),
+                        node('Finally', me.ln,
+                            node('Block', me.ln,
+                                node('Stmts', me.ln,
+                                    node('CallStmt', me.ln,
+                                        node('Op2_call', me.ln, 'call',
+                                            node('Nat', me.ln, '_ceu_out_isr'),
+                                            node('ExpList', me.ln,
+                                                node('NUMBER', me.ln, n),
+                                                node('NULL', me.ln))))))))))
         -- FUN
         else
             return me
@@ -785,7 +785,8 @@ F = {
             }
             for _, t in ipairs(ins) do
                 local mod, tp, id = unpack(t)
-                ASR(tp=='void' or id, me, 'missing parameter identifier')
+                ASR(tp.id=='void' and tp.ptr==0 or id, me,
+                    'missing parameter identifier')
                 local _id = '_'..id..'_'..me.n
                 dcls[#dcls+1] = node('Dcl_var', me.ln, 'var', tp, _id)
                 vars[#vars+1] = node('Var', me.ln, _id)
@@ -803,7 +804,7 @@ F = {
                     node('Block', me.ln,
                         node('Stmts', me.ln,
                             node('Dcl_pool', me.ln, 'pool',
-                                node('Type', me.ln, id_cls, 0, spw, false),
+                                node('Type', me.ln, id_cls, 0, (spw or true), false),
                                 '_'..id_cls..'s'),
                             node('Stmts', me.ln, unpack(dcls)),
                             node('_Every', me.ln, vars,

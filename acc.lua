@@ -177,6 +177,12 @@ F = {
     ['Op1_*'] = function (me)
         me.base.acc.any = true
         me.base.acc.tp = me.tp  -- deptr'd
+
+        -- TODO: HACK_3
+        -- ignore cast to tceu_org
+        if me[2].tag=='Op1_cast' and me[2][1][1]=='_tceu_org' then
+            me.base.acc.tp = me[2][2].tp  -- change to uncast type
+        end
     end,
     ['Op1_&'] = function (me)
         CHG(me.base.acc, 'no')
@@ -453,11 +459,11 @@ function CHK_ACC (accs1, accs2, NO_par, NO_emts)
         --DBG(id_, c_,c1,c2, acc1.any,acc2.any)
 --[[
 DBG'==============='
-DBG(acc1.cls.id, acc1, acc1.id, acc1.md, acc1.tp, acc1.any, acc1.err)
+DBG(acc1.cls.id, acc1, acc1.id, acc1.md, _TP.toc(acc1.tp), acc1.any, acc1.err)
 for k in pairs(path1) do
     DBG('path1', acc1.path, type(k)=='table' and k[1].id or k)
 end
-DBG(acc2.cls.id, acc2, acc2.id, acc2.md, acc2.tp, acc2.any, acc2.err)
+DBG(acc2.cls.id, acc2, acc2.id, acc2.md, _TP.toc(acc2.tp), acc2.any, acc2.err)
 for k in pairs(path2) do
     DBG('path2', acc2.path, type(k)=='table' and k[1].id or k)
 end

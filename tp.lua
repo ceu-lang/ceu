@@ -82,6 +82,7 @@ function _TP.fromstr (str)
         ref = false,
         ext = (string.sub(id,1,1) == '_') or (id=='@'),
         plain = (_ENV.c[id] and _ENV.c[id].mod=='plain'),
+        hold = false,
     }
 -- TODO: remove?
     if ret.ext and (not _ENV.c[ret.id]) then
@@ -95,6 +96,9 @@ function _TP.toc (tp)
         local t = { 'tceu' }
         for _, v in ipairs(tp.tup) do
             t[#t+1] = _TP.toc(v)
+            if v.hold then
+                t[#t] = t[#t] .. 'h'
+            end
         end
         return string.gsub(table.concat(t,'__'),'%*','_')
     end
@@ -147,7 +151,19 @@ end
 
 function _TP.contains (tp1, tp2)
     -- same exact type
+-- TODO: remove
     if _TP.toc(tp1) == _TP.toc(tp2) then
+        --return true
+    end
+
+    -- same type
+    if tp1.id==tp2.id and tp1.ptr==tp2.ptr and tp1.arr==tp2.arr then
+                                              -- i.e. false
+        return true
+    end
+
+    -- tp[] vs tp*
+    if tp1.id==tp2.id and ((tp1.ptr==1 and tp2.arr) or (tp2.ptr==1 and tp1.arr)) then
         return true
     end
 
@@ -165,6 +181,18 @@ function _TP.contains (tp1, tp2)
         return true
     end
 
+    -- compatible classes (same classes is handled above)
+    local cls1 = _ENV.clss[tp1.id]
+    local cls2 = _ENV.clss[tp2.id]
+    if cls1 and cls2 then
+        if tp1.ref or tp2.ref or (tp1.ptr>0 and tp2.ptr>0) then
+            if tp1.ptr == tp2.ptr then
+                return cls1.is_ifc and _ENV.ifc_vs_cls(cls1,cls2)
+            end
+        end
+        return false
+    end
+
     -- both are pointers
     if tp1.ptr>0 and tp2.ptr>0 then
         if tp1.id=='char' and tp1.ptr==1
@@ -175,16 +203,6 @@ function _TP.contains (tp1, tp2)
         if tp2.id == 'null' then
             return true     -- any pointer can be assigned "null"
         end
-
-        if tp1.ptr == tp2.ptr then
-            local cls1 = _ENV.clss[tp1.id]
-            local cls2 = _ENV.clss[tp2.id]
-            -- assigning to a cls (cast is enforced)
-            if cls1 then
-                return cls2 and cls1.is_ifc and _ENV.ifc_vs_cls(cls1,cls2)
-            end
-        end
-
         return false
     end
 

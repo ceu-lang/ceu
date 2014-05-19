@@ -16,7 +16,7 @@ function V (me)
 
     local ref = me.tp and me.tp.ref and me.tp.id
     if me.byRef and
-        (not (_ENV.clss[me.tp] or ref and _ENV.clss[ref]))
+        (not (_ENV.clss[me.tp.id] or ref and _ENV.clss[ref]))
     then
                     -- already by ref
         local ret = '&'..me.val

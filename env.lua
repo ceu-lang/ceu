@@ -24,6 +24,7 @@ _ENV = {
 
     -- TODO: move to _TP
     -- "len" is used to sort fields on generated "structs"
+    -- TODO: try to remove _ENV.c, a lot is shared w/ Type (e.g. hold)
     c = {
         void = 0,
 
@@ -136,7 +137,7 @@ function newvar (me, blk, pre, tp, id, isImp)
     local c = _ENV.c[tp.id]
 
     ASR(_TOPS[tp.id] or c, me, 'undeclared type `'..(tp.id or '?')..'´')
-    if _TOPS[tp.id] and _TOPS[tp.id].is_ifc and tp.ptr==0 then
+    if _TOPS[tp.id] and _TOPS[tp.id].is_ifc and tp.ptr==0 and (not tp.ref) then
         ASR(pre == 'pool', me,
             'cannot instantiate an interface')
     end
@@ -144,7 +145,7 @@ function newvar (me, blk, pre, tp, id, isImp)
         me, 'cannot instantiate type "'..tp.id..'"')
     --ASR((not arr) or arr>0, me, 'invalid array dimension')
 
-    local cls = tp.ptr==0 and _TOPS[tp.id]
+    local cls = (tp.ptr==0 and (not tp.ref) and _TOPS[tp.id])
         if cls then
             ASR(cls ~=_AST.iter'Dcl_cls'(), me, 'invalid declaration')
         end
@@ -272,6 +273,7 @@ F = {
         me.ref = ref
         me.ext = (string.sub(id,1,1) == '_') or (id=='@')
         me.plain = (_ENV.c[id] and _ENV.c[id].mod=='plain')
+        me.hold = false
 
 -- TODO: remove?
         if me.ext and (not _ENV.c[me.id]) then
@@ -288,7 +290,8 @@ F = {
 
         me.tup = {}
         for i, t in ipairs(me) do
-            local _, tp, _ = unpack(t)
+            local hold, tp, _ = unpack(t)
+            tp.hold = hold
 
             if tp.id=='void' and tp.ptr==0 then
                 ASR(#me==1, me, 'invalid type')
@@ -606,6 +609,7 @@ do return end
         ASR(tp.id=='void' or _TP.isNumeric(tp) or
             tp.ptr>0      or tp.tup,
                 me, 'invalid event type')
+        ASR(not tp.ref, me, 'invalid event type')
         if tp.tup then
             for _, t in ipairs(tp.tup) do
                 ASR((_TP.isNumeric(t) or t.ptr>0) and (not t.ref),
@@ -708,8 +712,8 @@ do return end
         -- detects if "isWatching" a real event (not an org)
         --  to remove the "isAlive" test
         if me.isWatching then
-            local tp = me.isWatching.tp and me.isWatching.tp.ptr>0
-            if not (tp and _ENV.clss[tp]) then
+            local tp = me.isWatching.tp
+            if not (tp and tp.ptr==1 and _ENV.clss[tp.id]) then
                 local if_ = me[2][1][2]
                 assert(if_.tag == 'If')
                 me[2][1][2] = if_[2]    -- changes "if" for the "await" (true branch)
@@ -827,8 +831,6 @@ do return end
             if ext.evt.ins.tup then
                 --tp = _TP.fromstr('_'.._TP.toc(tp)..'*') -- convert to pointer
             end
-DBG('alo', tp.tag, ps.tag)
-DBG(_TP.toc(ext.evt.ins), _TP.toc(ps.tp), ps.tag, unpack(ps.tp))
             ASR(_TP.contains(tp,ps.tp), me,
                 'non-matching types on `'..op..'´ ('.._TP.tostr(tp)..' vs '.._TP.tostr(ps.tp)..')')
         else
@@ -845,7 +847,6 @@ DBG(_TP.toc(ext.evt.ins), _TP.toc(ps.tp), ps.tag, unpack(ps.tp))
         local _, fr, to = unpack(me)
         to = to or _AST.iter'SetBlock'()[1]
         ASR(to and to.lval, me, 'invalid attribution')
-DBG(_TP.toc(to.tp), _TP.toc(fr.tp))
         ASR(_TP.contains(to.tp,fr.tp), me,
             'invalid attribution ('.._TP.tostr(to.tp)..' vs '.._TP.tostr(fr.tp)..')')
         ASR(me.read_only or (not to.lval.read_only), me,

@@ -385,7 +385,7 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                      * (V'TupleType'+EV'Type') * Cc(false)
                      * EV'__ID_ext' * (K','*EV'__ID_ext')^0
     , __Dcl_ext_io   = (CKEY'input/output'+CKEY'output/input')
-                     * ('['*NUM*EK']'+Cc(false))
+                     * ('['*(V'__Exp'+Cc(true))*EK']'+Cc(false))
                      * Cc(false)     -- recursive
                      * V'TupleType' * K'=>' * EV'Type'
                      * EV'__ID_ext' * (K','*EV'__ID_ext')^0
@@ -452,7 +452,7 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                         return string.len(s)
                        end) *S
            * (K'['*(V'__Exp'+Cc(true))*K']' + Cc(false))
-           * (C'&' + Cc(false))
+           * (CK'&' + Cc(false))
             -- id, *, [], &
 
     , __ID_field = (CK(Alpha * (Alphanum+'?')^0) /
