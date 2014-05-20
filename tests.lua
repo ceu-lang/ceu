@@ -576,6 +576,20 @@ escape 10;
 
 ]===]
 Test { [[
+class T with
+do
+end
+
+var T   t;
+var T*  p  = &t;
+var T** pp = &p;
+
+escape (p==&t and pp==&p and *pp==&t);
+]],
+    run = 1,
+}
+
+Test { [[
 var int[] v;
 do
     var int i = 1;

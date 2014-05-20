@@ -356,7 +356,7 @@ F =
     end,
     ['Op1_&'] = function (me)
         local op, e1 = unpack(me)
-        if _ENV.clss[e1.tp.id] then
+        if _ENV.clss[e1.tp.id] and e1.tp.ptr==0 then
             me.val = V(e1) -- class accesses are already normalized to references
         else
             me.val = '('..ceu2c(op)..V(e1)..')'
