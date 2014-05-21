@@ -104,7 +104,6 @@ void ceu_sys_org (tceu_org* org, int n, int lbl, int seqno,
 #endif
 #ifdef CEU_NEWS
     org->isDyn = 0;
-    /*org->isSpw = 0;*/
 #endif
 
     /* org.trls[0] == org.blk.trails[1] */

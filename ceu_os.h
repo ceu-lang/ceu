@@ -246,7 +246,6 @@ typedef struct tceu_org
                              */
 #ifdef CEU_NEWS
     u8 isDyn: 1;            /* created w/ new or spawn? */
-    /*u8 isSpw: 1;            // free on termination? */
     struct tceu_org* nxt_free;  /* "to free" list (only on reaction end) */
 #endif
 #endif  /* CEU_ORGS */

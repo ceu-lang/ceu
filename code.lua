@@ -364,7 +364,6 @@ end;
 
 #ifdef CEU_NEWS
     ]]..org..[[->isDyn  = ]]..t.isDyn..[[;
-    /*]]..org..[[->isSpw  = ]]..t.isSpw..[[;*/
 #endif
 ]])
 
@@ -424,7 +423,6 @@ case ]]..me.lbls_cnt[i].id..[[:;
         F._ORG(me, {
             id      = var.id,
             isDyn   = 0,
-            isSpw   = 'TODO REMOVE',--0,
             cls     = var.cls,
             val     = var.val,
             constr  = constr,
@@ -473,7 +471,6 @@ case ]]..me.lbls_cnt[i].id..[[:;
         F._ORG(me, {
             id      = 'dyn',
             isDyn   = 1,
-            isSpw   = 'TODO REVOME', --(me.tag=='New' and 0) or 1,
             cls     = me.cls,
             val     = '__ceu_new',
             constr  = constr,
