@@ -1122,28 +1122,44 @@ F = {
         local op, ext, ps = unpack(me)
         me.ps = ps  -- save for arity check
 
-        -- no exp: emit e
-        -- single: emit e => a
-        if (not ps) or ps.tag~='ExpList' then
+        -- (1) no exp: emit e
+        if not ps then
             return
         end
 
-        -- multiple: emit e => (a,b)
+        local t = { }
+
+        -- (2) single: emit e => a
+        if ps.tag ~= 'ExpList' then
+            -- avoid emitting tmps (see tmps.lua)
+            if me.tag == 'EmitInt' then
+                t[#t+1] = node('EmitNoTmp', me.ln)
+            end
+
+            t[#t+1] = me
+            return node('Stmts', me.ln, unpack(t))
+        end
+
+        -- (3) multiple: emit e => (a,b)
         local tup = '_tup_'..me.n
-        local t = {
-            _AST.copy(ext),  -- find out 'TP' before traversing tup
-            node('Dcl_var', me.ln, 'var',
-                node('Type', me.ln, 'TP', 0, false, false),
-                tup),
-        }
-        t[2].__ast_ref = t[1]    -- TP is changed on env.lua
+        local ext = _AST.copy(ext)   -- find out 'TP' before traversing local 
+        t[#t+1] = ext
+        t[#t+1] = node('Dcl_var', me.ln, 'var',
+                    node('Type', me.ln, 'TP', 0, false, false),
+                    tup)
+        t[#t].__ast_ref = ext -- TP is changed on env.lua
+
+        -- avoid emitting tmps (see tmps.lua)
+        if me.tag == 'EmitInt' then
+            t[#t+1] = node('EmitNoTmp', me.ln)
+        end
 
         for i, p in ipairs(ps) do
             t[#t+1] = node('SetExp', me.ln, '=',
                         p,
                         node('Op2_.', me.ln, '.', node('Var',me.ln,tup),
                             '_'..i))
-            t[#t][3].__ast_chk = { t[1], i }
+            t[#t][3].__ast_chk = { ext, i }
         end
 
         me[3] = node('Op1_&', me.ln, '&',

@@ -15198,6 +15198,22 @@ escape ret;
 
 Test { [[
 input void OS_START;
+var int ret;
+event (bool,int) ok;
+par/or do
+    await OS_START;
+    emit ok => (true,10);
+with
+    var bool b;
+    (b,ret) = await ok;
+end
+escape ret;
+]],
+    run = 10,
+}
+
+Test { [[
+input void OS_START;
 event (int,void*) ptr;
 var void* p;
 var int i;
@@ -31961,6 +31977,9 @@ escape 1;
     run = { ['~>1s'] = 1 },
 }
 Test { [[
+native do
+    int V = 0;
+end
 class U with do end;
 class T with
     var U* u;
@@ -31968,11 +31987,8 @@ do
     watching u do
         await FOREVER;
     end
+    _V = 1;
 end
-native do
-    int V = 0;
-end
-var T t;
 do
     var U u;
     spawn T with
@@ -31995,7 +32011,6 @@ do
     end
 end
 
-var T t;
 do
     var U u;
     spawn T with
@@ -32023,7 +32038,6 @@ do
 end
 
 var X x;
-var T t;
 do
     var U u;
     spawn T in x.ts with

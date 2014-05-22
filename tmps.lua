@@ -17,17 +17,20 @@ F = {
     Var = function (me)
         local var = me.var
 
+        -- all threads vars are "tmp"
         if _AST.iter'Thread'() then
-            return                  -- all threads vars are "tmp"
+            return
         end
 
+        -- all function vars are "tmp"
         if _AST.iter'Dcl_fun'() then
-            return                  -- all function vars are "tmp"
+            return
         end
 
+        -- only normal vars can be tmp
         if var.pre~='var' or var.cls then
             var.isTmp = false
-            return                  -- only normal vars can be tmp
+            return
         end
 
         --[[
@@ -92,6 +95,7 @@ F = {
         end
     end,
 
+    EmitNoTmp = 'EmitInt',
     EmitInt = function (me)
         VARS = {}   -- NO: run in different ceu_call
     end,
