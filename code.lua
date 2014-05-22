@@ -476,7 +476,7 @@ case ]]..me.lbls_cnt[i].id..[[:;
             constr  = constr,
             arr     = false,
             par_org = org,
-            par_trl_idx = pool.ifc_idx or pool.base.var.trl_orgs[1],
+            par_trl_idx = pool.ifc_idx or pool.lst.var.trl_orgs[1],
                             -- converted to interface access or original
         })
         LINE(me, [[

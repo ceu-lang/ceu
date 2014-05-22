@@ -124,13 +124,13 @@ F = {
 
     Op2_call = function (me)
         local _, f, exps = unpack(me)
-        CHG(f.base.acc, 'cl')
-        me.acc = f.base.acc
+        CHG(f.lst.acc, 'cl')
+        me.acc = f.lst.acc
         for _, exp in ipairs(exps) do
             if exp.tp.ptr>0 then
-                local v = exp.base
+                local v = exp.lst
                 if v and v.acc then   -- ignore constants
---DBG(exp.tag, exp.base)
+--DBG(exp.tag, exp.lst)
                     v.acc.any = exp.lval    -- f(&x) // a[N] f(a) // not "any"
                     CHG(v.acc, (me.c and me.c.mod=='pure' and 'rd') or 'wr')
                     v.acc.tp = _TP.copy(exp.tp)
@@ -154,43 +154,43 @@ F = {
 
     EmitInt = function (me)
         local _, e1, e2 = unpack(me)
-        CHG(e1.base.acc, 'tr')
-        e1.base.acc.node = me        -- emtChk
+        CHG(e1.lst.acc, 'tr')
+        e1.lst.acc.node = me        -- emtChk
         me.emtChk = false
     end,
 
     SetExp = function (me)
         local _,_,to = unpack(me)
-        CHG(to.base.acc, 'wr')
+        CHG(to.lst.acc, 'wr')
     end,
     AwaitInt = function (me)
-        CHG(me[1].base.acc, 'aw')
+        CHG(me[1].lst.acc, 'aw')
         F.AwaitExt(me)  -- flow
     end,
 
     ['Op2_idx'] = function (me)
-        if not (me.base.var and me.base.var.tp.arr) then
-            me.base.acc.any = true
+        if not (me.lst.var and me.lst.var.tp.arr) then
+            me.lst.acc.any = true
         end
-        me.base.acc.tp = me.tp  -- deptr'd
+        me.lst.acc.tp = me.tp  -- deptr'd
     end,
     ['Op1_*'] = function (me)
-        me.base.acc.any = true
-        me.base.acc.tp = me.tp  -- deptr'd
+        me.lst.acc.any = true
+        me.lst.acc.tp = me.tp  -- deptr'd
 
         -- TODO: HACK_3
         -- ignore cast to tceu_org
         if me[2].tag=='Op1_cast' and me[2][1][1]=='_tceu_org' then
-            me.base.acc.tp = me[2][2].tp  -- change to uncast type
+            me.lst.acc.tp = me[2][2].tp  -- change to uncast type
         end
     end,
     ['Op1_&'] = function (me)
-        CHG(me.base.acc, 'no')
+        CHG(me.lst.acc, 'no')
     end,
 
     ['Op2_.'] = function (me)
         if me.org then
-            me.base.acc.org = me.org.base
+            me.lst.acc.org = me.org.lst
         end
     end,
 

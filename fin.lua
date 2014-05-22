@@ -6,7 +6,9 @@ local TRACK = {
 }
 
 local function node2blk (n)
-    return n.fst and n.fst.blk or _MAIN.blk_ifc
+    return n.fst and n.fst.blk or
+           n.fst and n.fst.var and n.fst.var.blk or
+           _MAIN.blk_ifc
 end
 
 F = {
@@ -35,6 +37,9 @@ F = {
                                             -- either native dcl or derived
                                             -- from s.field
 
+        -- byRef behaves like pointers
+        noptr = noptr and (not to.byRef)
+
         -- var int[] a; do var int[] b=a; end
         noptr = noptr or (to.tp.mem and fr.tp.mem)
 
@@ -49,8 +54,8 @@ F = {
         --
 
         -- iterators are safe
-        if fr.base and fr.base.var and string.sub(fr.base.var.id,1,5)=='_iter'
-        or to.base and to.base.var and string.sub(to.base.var.id,1,5)=='_iter'
+        if fr.lst and fr.lst.var and string.sub(fr.lst.var.id,1,5)=='_iter'
+        or to.lst and to.lst.var and string.sub(to.lst.var.id,1,5)=='_iter'
         then
             return
         end
@@ -81,7 +86,12 @@ F = {
                 assert(constr.__par.tag=='New' or
                        constr.__par.tag=='Spawn')
                 local _,pool,_ = unpack(constr.__par)
-                to_blk = pool.base.var.blk
+                -- spawn x in a.b.c
+                -- take "b"
+                local c = pool.lst
+                local b = _AST.par(c, 'Op2_.')
+                local v = (b and assert(b.org).lst) or c
+                to_blk = assert(v.var).blk
             end
         else
             -- block where variable is defined
@@ -92,16 +102,16 @@ F = {
         local fun = _AST.iter'Dcl_fun'()
         if fun then
             -- to a class field, _NAT, or parameter
-            if to.base.tag=='Nat' or to_blk==cls.blk_ifc
+            if to.lst.tag=='Nat' or to_blk==cls.blk_ifc
                                  or to_blk==cls.blk_body
-            or to.base.var and to.base.var.isFun then
+            or to.lst.var and to.lst.var.isFun then
                               -- function parameter
                 ASR(op == ':=', me, 'unsafe pointer attribution')
 
                 if to_blk==cls.blk_ifc or to_blk==cls.blk_body then
                     -- must be hold
                     local _, _, ins, _, _, _ = unpack(fun)
-                    ASR(ins[fr.base.var.funIdx][1], me,
+                    ASR(ins[fr.lst.var.funIdx][1], me,
                         'parameter must be `hold´')
                 end
             else
@@ -109,7 +119,7 @@ F = {
             end
         end
 
-        if fr.base and fr.base.tag=='Op2_call' and fr.base.c.mod~='pure'
+        if fr.lst and fr.lst.tag=='Op2_call' and fr.lst.c.mod~='pure'
         or fr.tag == 'RawExp' then
             -- We assume that a impure function that returns a global pointer
             -- creates memory (e.g. malloc, fopen):
@@ -132,8 +142,8 @@ F = {
         -- int* v = await e;
         if string.sub(fr.tag,1,5)=='Await' or fr.tag=='New' then
             if op == '=' then
-                --local var = to.base.var.ast_original_var or to.base.var
-                TRACK[to.base.var.ast_original_var or to.base.var] = false
+                --local var = to.lst.var.ast_original_var or to.lst.var
+                TRACK[to.lst.var.ast_original_var or to.lst.var] = false
                 --ASR(var.blk == _AST.iter'Block'(), me,
                     --'invalid block for awoken pointer "'..var.id..'"')
             end
@@ -142,13 +152,13 @@ F = {
 
         -- non-ref access are unsafe
         -- pa = pb;  // I have no idea what "pb" refers to and its scope
-        if not (fr.base and fr.base.amp) then
+        if not (fr.byRef or fr.lst and fr.lst.amp) then
             if op == '=' then
                 if to.org then
                     -- cannot track access inside another class, yield error now!
                     ASR(op == ':=', me, 'unsafe pointer attribution')
                 else
-                    TRACK[to.base.var or to.base.id] = false
+                    TRACK[to.lst.var or to.lst.id] = false
                 end
             end
             --ASR(op == ':=', me, 'unsafe pointer attribution')
@@ -162,8 +172,11 @@ F = {
         -- int a; int* pa; pa=&a;
         -- int a; do int* pa; pa=&a; end
         local fr_blk = node2blk(fr)
-        if to_blk.__depth >= fr_blk.__depth
-        or to_blk.__depth==cls.blk_ifc.__depth and fr_blk.__depth==cls.blk_body.__depth
+        if (_AST.par(to_blk,'Dcl_cls') == _AST.par(fr_blk,'Dcl_cls')) and
+           (   to_blk.__depth >= fr_blk.__depth
+           or (to_blk.__depth==cls.blk_ifc.__depth and
+               fr_blk.__depth==cls.blk_body.__depth)
+           )
         then
             ASR(op == '=', me, 'invalid operator')
             ASR(not me.fin, me, 'attribution does not require `finalize´')
@@ -209,7 +222,7 @@ F = {
         if me.tp.ptr>0 and _ENV.clss[me.tp.id] then
             -- pointer to org: check if it is enclosed by "watching me.var"
             for n in _AST.iter('ParOr') do
-                local var = n.isWatching and n.isWatching.base and n.isWatching.base.var
+                local var = n.isWatching and n.isWatching.lst and n.isWatching.lst.var
                 if var == me.var then
                     return      -- ok, I'm safely watching "me.var"
                 end
@@ -292,7 +305,8 @@ F = {
                               (not exp.c or exp.c.mod~='const')
                                     -- except constants
 
-                    r = r and exp.fst and exp.fst.blk
+                    r = r and exp.fst and exp.fst.blk or
+                        r and exp.fst and exp.fst.var and exp.fst.var.blk
                                 -- need to hold block
                     WRN( (not r) or (not req) or (r==req),
                             me, 'invalid call (multiple scopes)')
