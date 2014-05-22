@@ -573,75 +573,7 @@ escape 10;
 
 -------------------------------------------------------------------------------
 -- ??: working now
-
 ]===]
-Test { [[
-class T with
-do
-end
-
-var T   t;
-var T*  p  = &t;
-var T** pp = &p;
-
-escape (p==&t and pp==&p and *pp==&t);
-]],
-    run = 1,
-}
-
-Test { [[
-var int[] v;
-do
-    var int i = 1;
-    v = &i;
-end
-escape *v;
-]],
-    fin = 'line 4 : attribution requires `finalize´',
-}
-
-Test { [[
-var int i = 1;
-var int[] v = &i;
-
-class T with
-    var int*  p = null;
-    var int[] v = null;
-do
-end
-
-var T t with
-    _.p := v;
-    _.v = v;
-end;
-
-escape *(t.p) + *(t.v);
-]],
-    run = 2,
-}
-
-Test { [[
-var int i = 1;
-var int[] v = &i;
-
-class T with
-    var int*  p = null;
-    var int[] v = null;
-do
-    await 1s;
-    *v = 1;
-    *p = 1;
-end
-
-var T t with
-    _.p := v;
-    _.v = v;
-end;
-
-escape *(t.p) + *(t.v);
-]],
-    fin = 'line 10 : invalid access to pointer across `await´',
-}
 
 -- TODO: error message
 Test { [[
@@ -655,62 +587,6 @@ end
 }
 
 --do return end
-
-Test { [[
-class T with
-    var _SDL_Rect* cell_rects = null;
-do
-    var _SDL_Rect* cell_rect = &this.cell_rects[1];
-end
-escape 1;
-]],
-    gcc = 'error: unknown type name ‘SDL_Rect’',
-}
-
-Test { [[
-native do
-    int  vs[] = { 1, 2 };
-    int* BGS[] = { &vs[0], &vs[1] };
-end
-escape *_BGS[1];
-]],
-    run = 2,
-}
-
-Test { [[
-native do
-    typedef int* t;
-end
-var int v = 2;
-var _t p = &v;
-escape *p;
-]],
-    run = 2,
-}
-
-Test { [[
-native plain _t;
-native do
-    typedef int t;
-end
-var _t v = 2;
-escape *v;
-]],
-    env = 'line 6 : invalid operand to unary "*"',
-}
-
-Test { [[
-native plain _rect;
-native do
-    typedef struct rect {
-        int x, y;
-    };
-end
-var _rect r;
-escape *(r.x);
-]],
-    env = 'line 8 : invalid operand to unary "*"',
-}
 
 -------------------------------------------------------------------------------
 -- OK: well tested
@@ -21304,6 +21180,130 @@ escape t.v + t.u:x;
 }
 
 Test { [[
+class T with
+do
+end
+
+var T   t;
+var T*  p  = &t;
+var T** pp = &p;
+
+escape (p==&t and pp==&p and *pp==&t);
+]],
+    run = 1,
+}
+
+Test { [[
+var int[] v;
+do
+    var int i = 1;
+    v = &i;
+end
+escape *v;
+]],
+    fin = 'line 4 : attribution requires `finalize´',
+}
+
+Test { [[
+var int i = 1;
+var int[] v = &i;
+
+class T with
+    var int*  p = null;
+    var int[] v = null;
+do
+end
+
+var T t with
+    _.p := v;
+    _.v = v;
+end;
+
+escape *(t.p) + *(t.v);
+]],
+    run = 2,
+}
+
+Test { [[
+var int i = 1;
+var int[] v = &i;
+
+class T with
+    var int*  p = null;
+    var int[] v = null;
+do
+    await 1s;
+    *v = 1;
+    *p = 1;
+end
+
+var T t with
+    _.p := v;
+    _.v = v;
+end;
+
+escape *(t.p) + *(t.v);
+]],
+    fin = 'line 10 : invalid access to pointer across `await´',
+}
+
+Test { [[
+class T with
+    var _SDL_Rect* cell_rects = null;
+do
+    var _SDL_Rect* cell_rect = &this.cell_rects[1];
+end
+escape 1;
+]],
+    gcc = 'error: unknown type name ‘SDL_Rect’',
+}
+
+Test { [[
+native do
+    int  vs[] = { 1, 2 };
+    int* BGS[] = { &vs[0], &vs[1] };
+end
+escape *_BGS[1];
+]],
+    run = 2,
+}
+
+Test { [[
+native do
+    typedef int* t;
+end
+var int v = 2;
+var _t p = &v;
+escape *p;
+]],
+    run = 2,
+}
+
+Test { [[
+native plain _t;
+native do
+    typedef int t;
+end
+var _t v = 2;
+escape *v;
+]],
+    env = 'line 6 : invalid operand to unary "*"',
+}
+
+Test { [[
+native plain _rect;
+native do
+    typedef struct rect {
+        int x, y;
+    };
+end
+var _rect r;
+escape *(r.x);
+]],
+    env = 'line 8 : invalid operand to unary "*"',
+}
+
+Test { [[
 input void OS_START;
 var int v;
 class T with
@@ -26346,6 +26346,268 @@ escape 10;
     todo = 'free',
     --loop = true,
     run = 10,
+}
+
+Test { [[
+class U with do end;
+class T with
+    var U* u;
+do
+end
+
+do
+    var U u;
+    spawn T with
+        _.u = &u;
+    end;
+end
+escape 1;
+]],
+    --fin = 'line 10 : attribution requires `finalize´',
+    run = 1,
+}
+
+Test { [[
+class U with do end;
+class T with
+    var U& u;
+do
+end
+
+do
+    var U u;
+    spawn T with
+        _.u = u;
+    end;
+end
+escape 1;
+]],
+    fin = 'line 10 : attribution requires `finalize´',
+}
+
+Test { [[
+class U with do end;
+class T with
+    var U* u;
+do
+end
+
+    var U u;
+    spawn T with
+        _.u = &u;
+    end;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class U with do end;
+class T with
+    var U& u;
+do
+end
+
+    var U u;
+    spawn T with
+        _.u = u;
+    end;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class U with do end;
+class T with
+    var U* u;
+do
+    var U* u1 = u;
+    await 1s;
+end
+
+do
+    var U u;
+    spawn T with
+        _.u = &u;
+    end;
+end
+escape 1;
+]],
+    --fin = 'line 12 : attribution requires `finalize´',
+    run = 1,
+}
+
+Test { [[
+class U with do end;
+class T with
+    var U* u;
+do
+    var U* u1 = u;
+    await 1s;
+end
+
+    var U u;
+    spawn T with
+        _.u = &u;
+    end;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class U with do end;
+class T with
+    var U* u;
+do
+    var U* u1 = u;
+    await 1s;
+    var U* u2 = u;
+end
+
+do
+    var U u;
+    spawn T with
+        _.u = &u;
+    end;
+end
+escape 1;
+]],
+    fin = 'line 7 : invalid access to pointer across `await´',
+}
+
+Test { [[
+interface UI with
+end
+
+class T with
+    interface UI;
+do
+end
+
+class UIGridItem with
+    var UI* ui;
+do
+    watching ui do
+        await FOREVER;
+    end
+end
+
+class UIGridPool with
+    pool UIGridItem[] all;
+do
+    await FOREVER;
+end
+
+class UIGrid with
+    var UIGridPool& uis;
+do
+end
+
+do
+    var UIGridPool pool1;
+    var UIGrid g1 with
+        _.uis = pool1;
+    end;
+
+    var T g2;
+    spawn UIGridItem in g1.uis.all with
+        _.ui = &g2;
+    end;
+end
+
+escape 1;
+]],
+    --fin = 'line 36 : attribution requires `finalize´',
+    run = 1,
+}
+Test { [[
+interface UI with
+end
+
+class T with
+    interface UI;
+do
+end
+
+class UIGridItem with
+    var UI* ui;
+do
+    watching ui do
+        await FOREVER;
+    end
+end
+
+class UIGridPool with
+    pool UIGridItem[] all;
+do
+    await FOREVER;
+end
+
+class UIGrid with
+    var UIGridPool& uis;
+do
+end
+
+    var UIGridPool pool1;
+    var UIGrid g1 with
+        _.uis = pool1;
+    end;
+
+    var T g2;
+    spawn UIGridItem in g1.uis.all with
+        _.ui = &g2;
+    end;
+escape 1;
+]],
+    --fin = 'line 35 : attribution requires `finalize´',
+    run = 1,
+}
+
+Test { [[
+interface UI with
+end
+
+class T with
+    interface UI;
+do
+end
+
+class UIGridItem with
+    var UI* ui;
+do
+    watching ui do
+        await FOREVER;
+    end
+end
+
+class UIGridPool with
+    pool UIGridItem[] all;
+do
+    await FOREVER;
+end
+
+class UIGrid with
+    var UIGridPool& uis;
+do
+end
+
+do
+    var UIGridPool pool1;
+    var UIGrid g1 with
+        _.uis = pool1;
+    end;
+
+    var T g2;
+    spawn UIGridItem in pool1.all with
+        _.ui = &g2;
+    end;
+end
+
+escape 1;
+]],
+    run = 1,
 }
 
 -- TODO: mem out e mem ever
@@ -31613,6 +31875,164 @@ end
 escape ret;
 ]],
     run = { ['~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s']=-1 },
+}
+
+Test { [[
+class U with
+do
+end
+native do
+    int V = 0;
+end
+class Item with
+    var U* u;
+do
+    watching u do
+        await FOREVER;
+    end
+    _V = 1;
+end
+do
+    var U u;
+    spawn Item with
+        _.u = &u;
+    end;
+    await 1s;
+end
+_assert(_V == 1);
+escape 1;
+]],
+    run = { ['~>1s'] = 1 },
+}
+Test { [[
+class U with
+do
+    await FOREVER;
+end
+native do
+    int V = 0;
+end
+class Item with
+    var U* u;
+do
+    watching u do
+        await FOREVER;
+    end
+    _V = 1;
+end
+do
+    var U u;
+    spawn Item with
+        _.u = &u;
+    end;
+    await 1s;
+end
+_assert(_V == 1);
+escape 1;
+]],
+    run = { ['~>1s'] = 1 },
+}
+--do return end
+
+Test { [[
+class U with do end;
+class T with
+    var U* u;
+do
+    watching u do
+        await FOREVER;
+    end
+end
+
+native do
+    int V = 0;
+end
+
+do
+    var U u;
+    spawn T with
+        _.u = &u;
+    end;
+    await 1s;
+end
+_assert(_V == 1);
+escape 1;
+]],
+    run = { ['~>1s'] = 1 },
+}
+Test { [[
+class U with do end;
+class T with
+    var U* u;
+do
+    watching u do
+        await FOREVER;
+    end
+end
+native do
+    int V = 0;
+end
+var T t;
+do
+    var U u;
+    spawn T with
+        _.u = &u;
+    end;
+    await 1s;
+end
+_assert(_V == 1);
+escape 1;
+]],
+    run = { ['~>1s'] = 1 },
+}
+Test { [[
+class U with do end;
+class T with
+    var U* u;
+do
+    watching u do
+        await FOREVER;
+    end
+end
+
+var T t;
+do
+    var U u;
+    spawn T with
+        _.u = &u;
+    end;
+end
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+class U with do end;
+class T with
+    var U* u;
+do
+    watching u do
+        await FOREVER;
+    end
+end
+
+class X with
+    pool T[] ts;
+do
+    await FOREVER;
+end
+
+var X x;
+var T t;
+do
+    var U u;
+    spawn T in x.ts with
+        _.u = &u;
+    end;
+end
+escape 1;
+]],
+    run = 1,
 }
 
 -- UNTIL

@@ -166,17 +166,28 @@ F = {
             return
         end
 
-        -- REF ATTRIBUTIONS
+        -- PTR ATTRIBUTIONS
+
+        --[[
+        -- OK: passing a pointer to an anonymous org, even if pool>v:
+        -- spawn T in pool with
+        --      _.ptr = &v;
+        -- end
+        -- The pointer cannot be accessed from outside because org is anon.
+        -- Inside, access must use watching anyways.
+        --]]
+        local spawn_new = _AST.par(me,'Spawn') or _AST.par(me,'New')
 
         -- OK: "fr" `&´ reference has bigger scope than "to"
         -- int a; int* pa; pa=&a;
         -- int a; do int* pa; pa=&a; end
         local fr_blk = node2blk(fr)
-        if (_AST.par(to_blk,'Dcl_cls') == _AST.par(fr_blk,'Dcl_cls')) and
-           (   to_blk.__depth >= fr_blk.__depth
-           or (to_blk.__depth==cls.blk_ifc.__depth and
-               fr_blk.__depth==cls.blk_body.__depth)
-           )
+        if (spawn_new and to.tp.ptr==1) or
+           (_AST.par(to_blk,'Dcl_cls') == _AST.par(fr_blk,'Dcl_cls')) and
+               (   to_blk.__depth >= fr_blk.__depth
+               or (to_blk.__depth==cls.blk_ifc.__depth and
+                   fr_blk.__depth==cls.blk_body.__depth)
+               )
         then
             ASR(op == '=', me, 'invalid operator')
             ASR(not me.fin, me, 'attribution does not require `finalize´')

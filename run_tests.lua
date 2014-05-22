@@ -191,7 +191,7 @@ end
         ceu:write(src)
         ceu:close()
         local exec_ceu = os.execute(CEU)
-        assert(exec_ceu == 0 or exec_ceu == true)
+        assert(exec_ceu==0 or exec_ceu==true)
 
         if T.gcc then
             local ret = assert(io.popen(GCC)):read'*a'
@@ -199,9 +199,10 @@ end
             return
         else
             local exec_gcc = os.execute(GCC)
-            assert(exec_gcc == 0 or exec_gcc == true)
+            assert(exec_gcc==0 or exec_gcc==true)
         end
 
+        -- test output
         local ret = io.popen(EXE):read'*a'
         assert(not string.find(ret, '==%d+=='), 'valgrind error')
         local v = tonumber( string.match(ret, 'END: (.-)\n') )
