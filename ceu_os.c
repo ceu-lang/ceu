@@ -236,6 +236,9 @@ void ceu_sys_go (tceu_app* app, int evt, tceu_evtp evtp)
 
     for (;;)    /* STACK */
     {
+#ifdef CEU_DEBUG
+        assert(go.stki < 250);
+#endif
         /* TODO: don't restart if kill is impossible (hold trl on stk) */
         go.org = app->data;    /* on pop(), always restart */
 #if defined(CEU_INTS) || defined(CEU_ORGS)
@@ -293,12 +296,15 @@ fprintf(stderr, "GO[%d]: evt=%d stk=%d [%d]\n", app->seqno,
 
                     /* org has been traversed and *CLEARED* to the end? */
                     if (go.evt == CEU_IN__CLEAR) {
+
+#ifdef CEU_ORGS_WATCHING
                         /* TODO: stack will overflow!!! T[9999] */
                         /* emit this.ok */
                         /*go.stk[go.stki].evtp = ?*/
                         go.stk[go.stki].evto = go.org;
                         go.stk[go.stki].evt  = 1;   /* TODO: 1==_ok */
                         go.stki++;
+#endif
 
 #ifdef CEU_NEWS
                         if ( go.org->n != 0 /* TODO: avoids LNKs (must be before isDyn */

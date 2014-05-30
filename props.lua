@@ -13,6 +13,7 @@ _PROPS = {
     has_pses    = false,
     has_ret     = false,
     has_lua     = false,
+    has_orgs_watching = false,
 }
 
 local NO_atomic = {
@@ -179,6 +180,14 @@ F = {
     ParOr = function (me)
         me.needs_clr = true
         _PROPS.has_clear = true
+
+        -- detects if "isWatching" an org
+        if me.isWatching then
+            local tp = me.isWatching.tp
+            if (tp and tp.ptr==1 and _ENV.clss[tp.id]) then
+                _PROPS.has_orgs_watching = true
+            end
+        end
     end,
 
     Loop_pre = function (me)

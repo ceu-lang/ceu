@@ -574,6 +574,30 @@ escape 10;
 -------------------------------------------------------------------------------
 -- ??: working now
 ]===]
+Test { [[
+class Rect with
+do
+    await FOREVER;
+end
+
+var int n = 0;
+
+par/or do
+    await 1s;
+with
+    pool Rect[1000] rs;
+    every 40ms do
+        loop i in 40 do
+            n = n + 1;
+            spawn Rect in rs;
+        end
+    end
+end
+escape n;
+]],
+    run = { ['~>1s']=960 },
+}
+do return end
 
 -- TODO: error message
 Test { [[
