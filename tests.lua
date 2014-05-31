@@ -299,7 +299,7 @@ do
 end
 // TODO: "typecast" esconde "call", finalization nao acha que eh call
 var T** t := (T**)_malloc(10 * sizeof(T**));
-native nohold _free();
+native @nohold _free();
 finalize with
     _free(t);
 end
@@ -388,7 +388,7 @@ escape v == &v[0] ;
 }
 
 Test { [[
-native nohold _strncpy(), _printf(), _strlen();
+native @nohold _strncpy(), _printf(), _strlen();
 native _char = 1;
 var _char[10] str;
 _strncpy(str, "123", 4);
@@ -574,6 +574,19 @@ escape 10;
 -------------------------------------------------------------------------------
 -- ??: working now
 ]===]
+
+Test { [[
+escape outer;
+]],
+    env = 'line 1 : invalid attribution (int vs Main)',
+}
+
+Test { [[
+_f(outer);
+]],
+    props = 'line 1 : `outer´ can only be unsed inside constructors',
+}
+
 Test { [[
 class Rect with
 do
@@ -597,7 +610,7 @@ escape n;
 ]],
     run = { ['~>1s']=960 },
 }
-do return end
+--do return end
 
 -- TODO: error message
 Test { [[
@@ -883,7 +896,7 @@ Test { [[
 native do
     int _ = 3;
 end
-native const __;
+native @const __;
 
 var int _ = 1;
 var int _ = 2;
@@ -898,22 +911,22 @@ Test { [[
 native do
     int _ = 3;
 end
-native const __;
-native const _;      // `_´ is special (not C)
+native @const __;
+native @const _;      // `_´ is special (not C)
 
 var int _ = 1;
 var int _ = 2;
 
 escape __;
 ]],
-    parser = 'line 5 : after `const´ : expected declaration',
+    parser = 'line 5 : after `@const´ : expected declaration',
     --run = 3,
 }
 Test { [[
 native do
     int _ = 3;
 end
-native const __;
+native @const __;
 
 var int _;
 var int _;
@@ -13666,7 +13679,7 @@ escape ret;
 -- FINALLY
 
 Test { [[
-    native pure _Radio_getPayload();
+    native @pure _Radio_getPayload();
     var _message_t msg;
     loop do
         await 1s;
@@ -13679,8 +13692,8 @@ Test { [[
     },
 }
 Test { [[
-    native plain _message_t;
-    native pure _Radio_getPayload();
+    native @plain _message_t;
+    native @pure _Radio_getPayload();
     var _message_t msg;
     loop do
         await 1s;
@@ -14014,7 +14027,7 @@ escape _f(_v);
     --fin = 'line 9 : attribution requires `finalize´',
 }
 Test { [[
-native pure _f();
+native @pure _f();
 native _v;
 native do
     int v = 1;
@@ -14030,7 +14043,7 @@ escape _f(_v);
 
 
 Test { [[
-native pure _f();
+native @pure _f();
 native do
     int* f (int a) {
         return NULL;
@@ -14043,14 +14056,14 @@ escape v == null;
 }
 
 Test { [[
-native pure _f();
+native @pure _f();
 native do
     int V = 10;
     int f (int v) {
         return v;
     }
 end
-native const _V;
+native @const _V;
 escape _f(_V);
 ]],
     run = 10;
@@ -14070,7 +14083,7 @@ escape _f(&v) == 1;
 }
 
 Test { [[
-native nohold _f();
+native @nohold _f();
 native do
     int f (int* v) {
         return 1;
@@ -14084,7 +14097,7 @@ escape _f(&v) == 1;
 
 Test { [[
 native _V;
-native nohold _f();
+native @nohold _f();
 native do
     int V=1;
     int f (int* v) {
@@ -14883,7 +14896,7 @@ native do
     typedef void (*t)(int*);
 end
 native _t=4;
-native nohold _f();
+native @nohold _f();
 var _t v = _f;
 var int ret;
 do
@@ -15294,7 +15307,7 @@ var _vldoor_t* door = null;
 do
     every door in T_VERTICAL_DOOR do
         spawn T_VerticalDoor with
-            _.v = door;
+            this.v = door;
         end;
     end
 end
@@ -15315,7 +15328,7 @@ var _vldoor_t* door = null;
 do
     every door in T_VERTICAL_DOOR do
         spawn T_VerticalDoor with
-            _.v = (void*)door;
+            this.v = (void*)door;
         end;
     end
 end
@@ -15436,7 +15449,7 @@ escape 1;
     fin = 'line 4 : attribution requires `finalize´',
 }
 Test { [[
-native nohold _free();
+native @nohold _free();
 native do
     void* ptr;
 end
@@ -15715,8 +15728,8 @@ escape _a+_b;
 }
 
 Test { [[
-const _a;
-safe _b with _c;
+@const _a;
+@safe _b with _c;
 native do
     int a = 1;
     int b;
@@ -15782,7 +15795,7 @@ native do
     int a = 1;
 end
 var int a=0;
-safe a with _a;
+@safe a with _a;
 par/or do
     _a = 1;
 with
@@ -16443,7 +16456,7 @@ Test { [[
 native do
     #define ceu_out_emit_val(a,b,c) 0
 end
-safe A with B;
+@safe A with B;
 output void A, B;
 par/or do
     emit A;
@@ -16538,7 +16551,7 @@ end
 
 Test { [[
 native _F();
-safe _F with F,G;
+@safe _F with F,G;
 output int F,G;
 native do
     void F() {};
@@ -16561,7 +16574,7 @@ end
 Test { [[
 native _F();
 output int* F,G;
-safe _F with F,G;
+@safe _F with F,G;
 int a = 1;
 int* b;
 native do
@@ -16584,7 +16597,7 @@ end
 
 Test { [[
 native _F();
-pure _F;
+@pure _F;
 output int* F,G;
 int a = 1;
 int* b;
@@ -16608,7 +16621,7 @@ end
 
 Test { [[
 native _F();
-safe F with G;
+@safe F with G;
 output void F,G;
 par do
     emit F;
@@ -16894,7 +16907,7 @@ escape this.v;
 }
 
 Test { [[
-native nohold _fprintf(), _stderr;
+native @nohold _fprintf(), _stderr;
 var int v = 0;
 input (int a)=>void F do
     this.v = a;
@@ -17910,7 +17923,7 @@ Test { [[
 var int b = 1;
 var int c = 2;
 var int* a = &c;
-safe b with a, c;
+@safe b with a, c;
 par/and do
     b = 1;
 with
@@ -17922,7 +17935,7 @@ escape *a+b+c;
 }
 
 Test { [[
-native nohold _f();
+native @nohold _f();
 native do
     void f (int* v) {
         *v = 1;
@@ -17943,7 +17956,7 @@ escape a + b;
 }
 
 Test { [[
-native nohold _f();
+native @nohold _f();
 native do
     void f (int* v) {
         *v = 1;
@@ -17969,7 +17982,7 @@ escape a + b;
 }
 
 Test { [[
-native nohold _f();
+native @nohold _f();
 native do
     void f (int* v) {
         *v = 1;
@@ -17996,7 +18009,7 @@ escape a + b;
 }
 
 Test { [[
-pure _f;
+@pure _f;
 native do
     void f (int* v) {
         *v = 1;
@@ -18023,7 +18036,7 @@ escape a + b;
 }
 
 Test { [[
-pure _f;
+@pure _f;
 native do
     void f (int* v) {
         *v = 1;
@@ -18111,7 +18124,7 @@ escape *p;
     run = 10,
 }
 Test { [[
-native pure _f();    // its actually impure
+native @pure _f();    // its actually impure
 native do
     int a;
     int* f () {
@@ -18345,7 +18358,7 @@ escape v == &v[0] ;
 }
 
 Test { [[
-native nohold _f();
+native @nohold _f();
 native do
     void f (int* p) {
         *p = 1;
@@ -18364,7 +18377,7 @@ escape a[0] + b;
 }
 
 Test { [[
-native nohold _f();
+native @nohold _f();
 native do
     void f (int* p) {
         *p = 1;
@@ -18424,7 +18437,7 @@ escape c;
 }
 
 Test { [[
-native plain _int;
+native @plain _int;
 var _int a=1, b=1;
 a = b;
 await 1s;
@@ -18434,7 +18447,7 @@ escape a==b;
 }
 
 Test { [[
-native plain _int;
+native @plain _int;
 var int a=1, b=1;
 a = b;
 await 1s;
@@ -18769,7 +18782,7 @@ escape c;
 }
 
 Test { [[
-native nohold _f1(), _f2();
+native @nohold _f1(), _f2();
 native do
     int f1 (u8* v) {
         return v[0]+v[1];
@@ -18837,7 +18850,7 @@ escape 1;
 }
 
 Test { [[
-native plain _SDL_Rect, _SDL_Point;
+native @plain _SDL_Rect, _SDL_Point;
 var _SDL_Point pos;
 
 var _SDL_Rect rect;
@@ -18851,7 +18864,7 @@ escape 1;
 }
 
 Test { [[
-native plain _SDL_Rect, _SDL_Point;
+native @plain _SDL_Rect, _SDL_Point;
 var _SDL_Point pos;
 
 var _SDL_Rect rect;
@@ -18870,7 +18883,7 @@ escape 1;
 
 PRE = [[
 native do
-    static inline int idx (const int* vec, int i) {
+    static inline int idx (@const int* vec, int i) {
         return vec[i];
     }
     static inline int set (int* vec, int i, int val) {
@@ -18878,7 +18891,7 @@ native do
         return val;
     }
 end
-pure _idx;
+@pure _idx;
 int[2] va;
 
 ]]
@@ -18950,21 +18963,21 @@ escape 1;
 }
 
 PRE = [[
-pure _f3, _f5;
+@pure _f3, _f5;
 native do
 int f1 (int* a, int* b) {
     return *a + *b;
 }
-int f2 (const int* a, int* b) {
+int f2 (@const int* a, int* b) {
     return *a + *b;
 }
-int f3 (const int* a, const int* b) {
+int f3 (@const int* a, const int* b) {
     return *a + *b;
 }
 int f4 (int* a) {
     return *a;
 }
-int f5 (const int* a) {
+int f5 (@const int* a) {
     return *a;
 }
 end
@@ -19302,7 +19315,7 @@ escape 0;
 }
 
 Test { [[
-safe _printf with _assert;
+@safe _printf with _assert;
 native do ##include <assert.h> end
 par/and do
     _printf("END: 1\n");
@@ -19335,7 +19348,7 @@ escape _a;
 }
 
 Test { [[
-const _HIGH, _LOW;
+@const _HIGH, _LOW;
 par do
     loop do
         _digitalWrite(11, _HIGH);
@@ -19399,7 +19412,7 @@ end
 }
 
 Test { [[
-native const _LOW, _HIGH;
+native @const _LOW, _HIGH;
 native _digitalWrite();
 par do
     loop do
@@ -19489,7 +19502,7 @@ native _printf();
 _printf("END: 1%d%d\n",2,3); escape 0;]], run=123 }
 
 Test { [[
-native nohold _strncpy(), _printf(), _strlen();
+native @nohold _strncpy(), _printf(), _strlen();
 native _char = 1;
 var _char[10] str;
 _strncpy(str, "123", 4);
@@ -19500,7 +19513,7 @@ escape 0;
 }
 
 Test { [[
-native nohold _strncpy(), _printf(), _strlen(), _strcpy();
+native @nohold _strncpy(), _printf(), _strlen(), _strcpy();
 native _char = 1;
 var _char[6] a; _strcpy(a, "Hello");
 var _char[2] b; _strcpy(b, " ");
@@ -19557,7 +19570,7 @@ escape a;
 }
 
 Test { [[
-native pure _inv();
+native @pure _inv();
 native do
     int inv (int v) {
         return -v;
@@ -19753,7 +19766,7 @@ Test { [[
 }
 
 Test { [[
-native plain _char=1;
+native @plain _char=1;
 var u8[10] v1;
 var _char[10] v2;
 
@@ -20643,7 +20656,7 @@ var int i = 0;
 
 var T[2] y with
     i = i + 1;
-    _.a = i*10;
+    this.a = i*10;
 end;
 
 var T x;
@@ -21147,7 +21160,7 @@ class T with
 do
 end
 var T t with
-    _.v = 10;
+    this.v = 10;
 end;
 escape t.v;
 ]],
@@ -21162,7 +21175,7 @@ do
     this.v = 100;
 end
 var T t with
-    _.v = 10;
+    this.v = 10;
 end;
 escape t.v;
 ]],
@@ -21180,13 +21193,13 @@ end
 class T with
     var int v=5;
     var U u with
-        _.x = 20;
+        this.x = 20;
     end;
 do
     this.v = 100;
 end
 var T t with
-    _.v = 10;
+    this.v = 10;
 end;
 escape t.v + t.u.x;
 ]],
@@ -21206,13 +21219,13 @@ class T with
     var U* u;
 do
     var U uu with
-        _.x = 20;
+        this.x = 20;
     end;
     this.u = &uu;
     this.v = 100;
 end
 var T t with
-    _.v = 10;
+    this.v = 10;
 end;
 escape t.v + t.u:x;
 ]],
@@ -21255,8 +21268,8 @@ do
 end
 
 var T t with
-    _.p := v;
-    _.v = v;
+    this.p := v;
+    this.v = v;
 end;
 
 escape *(t.p) + *(t.v);
@@ -21278,8 +21291,8 @@ do
 end
 
 var T t with
-    _.p := v;
-    _.v = v;
+    this.p := v;
+    this.v = v;
 end;
 
 escape *(t.p) + *(t.v);
@@ -21320,7 +21333,7 @@ escape *p;
 }
 
 Test { [[
-native plain _t;
+native @plain _t;
 native do
     typedef int t;
 end
@@ -21331,7 +21344,7 @@ escape *v;
 }
 
 Test { [[
-native plain _rect;
+native @plain _rect;
 native do
     typedef struct rect {
         int x, y;
@@ -21774,7 +21787,7 @@ end
 var T t with
     do
         var _char* ptr=null;
-        _.ptr = ptr;
+        this.ptr = ptr;
     end
 end;
 escape 1;
@@ -22789,7 +22802,7 @@ escape t1.a + t2.a;
 }
 Test { [[
 input void OS_START;
-native nohold _f();
+native @nohold _f();
 native do
     void f (void* t) {}
 end
@@ -22815,7 +22828,7 @@ escape 10;
 }
 Test { [[
 input void OS_START;
-native nohold _f();
+native @nohold _f();
 native do
     void f (void* t) {}
 end
@@ -23143,7 +23156,7 @@ escape ret;
     run = { ['~>1s']=1 },
 }
 Test { [[
-native nohold _f();
+native @nohold _f();
 input void OS_START;
 class T with
     event void e, ok, go, b;
@@ -23778,7 +23791,7 @@ end
 var int ret=1;
 do
     var T t with
-        _.x = 10;
+        this.x = 10;
     end;
 
     await t.ok;
@@ -23819,7 +23832,7 @@ end
 var int ret=0;
 do
     var T t with
-        _.x = 10;
+        this.x = 10;
     end;
     var T u;
     await t.ok;
@@ -24015,7 +24028,7 @@ do
 end
 pool T[1] ts;
 var int ok1 = spawn T in ts with
-                _.v = 10;
+                this.v = 10;
               end;
 var int ok2 = 0;// spawn T in ts;
 var int ret = 0;
@@ -24035,7 +24048,7 @@ do
 end
 pool T[1] ts;
 var int ok1 = spawn T in ts with
-                _.v = 10;
+                this.v = 10;
               end;
 var int ok2 = 0;// spawn T in ts;
 var int ret = 0;
@@ -24089,11 +24102,11 @@ do
 end
 pool T[] ts;
 spawn T in ts with
-    _.v = 10;
+    this.v = 10;
     _V = _V + 10;
 end;
 spawn T with
-    _.v = 20;
+    this.v = 20;
     _V = _V + 20;
 end;
 var int ret = 0;
@@ -24116,11 +24129,11 @@ do
 end
 pool T[] ts;
 spawn T with
-    _.v = 10;
+    this.v = 10;
     _V = _V + 10;
 end;
 spawn T in ts with
-    _.v = 20;
+    this.v = 20;
     _V = _V + 20;
 end;
 var int ret = 0;
@@ -24143,11 +24156,11 @@ do
 end
 pool T[] ts;
 spawn T in ts with
-    _.v = 10;
+    this.v = 10;
     _V = _V + 10;
 end;
 spawn T in ts with
-    _.v = 20;
+    this.v = 20;
     _V = _V + 20;
 end;
 var int ret = 0;
@@ -24244,7 +24257,7 @@ do
         a = aa;
 end
 var T* b = new T in ts;   // fails (a is free on end)
-//native nohold _fprintf(), _stderr;
+//native @nohold _fprintf(), _stderr;
         //_fprintf(_stderr, "%p %p\n",a, b);
 escape a!=null and b==null and a!=b;
 ]],
@@ -24268,7 +24281,7 @@ do
         b = bb;
 end
 var T* c = new T in ts;       // fails
-//native nohold _fprintf(), _stderr;
+//native @nohold _fprintf(), _stderr;
         //_fprintf(_stderr, "%p %p\n",a, b);
 escape a!=null and b==null and c==null and a!=b and b==c;
 ]],
@@ -24413,7 +24426,7 @@ escape _V;
 }
 
 Test { [[
-native pure _UI_align();
+native @pure _UI_align();
 class T with
     var _SDL_rect rect;
 do
@@ -24429,8 +24442,8 @@ escape 1;
 }
 
 Test { [[
-native const _UI_ALIGN_CENTER;
-native pure _UI_align();
+native @const _UI_ALIGN_CENTER;
+native @pure _UI_align();
 native do
     typedef struct {
         int x, w;
@@ -24454,8 +24467,8 @@ escape 1;
 }
 
 Test { [[
-native const _UI_ALIGN_CENTER;
-native pure _UI_align();
+native @const _UI_ALIGN_CENTER;
+native @pure _UI_align();
 native do
     typedef struct {
         int x, w;
@@ -24481,8 +24494,8 @@ escape 1;
 }
 
 Test { [[
-native const _UI_ALIGN_CENTER;
-native pure _UI_align();
+native @const _UI_ALIGN_CENTER;
+native @pure _UI_align();
 native do
     typedef struct {
         int x, w;
@@ -24586,7 +24599,7 @@ do
 end
 
 var T t1, t2 with
-    _.a = 10;
+    this.a = 10;
 end;
 
 escape t1.b;
@@ -24603,7 +24616,7 @@ do
 end
 
 var T[2] t with
-    _.a = 10;
+    this.a = 10;
 end;
 
 escape t[0].b + t[1].b;
@@ -24624,7 +24637,7 @@ class T with
     var int ret = 0;
 do
     var U u with
-        _.i = &this;
+        this.i = &outer;
     end;
     this.ret = u.i == &this;
 end
@@ -24662,7 +24675,7 @@ do
 end
 
 var T t with
-    _.a = 10;
+    this.a = 10;
 end;
 
 escape t.b;
@@ -24680,7 +24693,7 @@ end
 
 var T* t =
     new T with
-        _.a = 10;
+        this.a = 10;
     end;
 
 escape t:b;
@@ -24875,7 +24888,7 @@ do
 end
 do
     spawn T with
-        _.a = 10;
+        this.a = 10;
     end;
 end
 escape _V;
@@ -24992,7 +25005,7 @@ do
     loop i in 200 do
         var int ok =
             spawn T in ts with
-                _.inc = 1;
+                this.inc = 1;
             end;
         if not ok then
             v = v + 1;
@@ -25015,7 +25028,7 @@ do
     var int i = 1;
     every 1s do
         spawn HelloWorld with
-            _.id = i;
+            this.id = i;
         end;
         i = i + 1;
     end
@@ -25789,7 +25802,7 @@ end
 var U t;
 await OS_START;
 
-native nohold _tceu_trl, _tceu_trl_, _sizeof();
+native @nohold _tceu_trl, _tceu_trl_, _sizeof();
 escape 2;
 ]],
     run = 2,
@@ -26398,7 +26411,7 @@ end
 do
     var U u;
     spawn T with
-        _.u = &u;
+        this.u = &u;
     end;
 end
 escape 1;
@@ -26417,7 +26430,7 @@ end
 do
     var U u;
     spawn T with
-        _.u = u;
+        this.u = u;
     end;
 end
 escape 1;
@@ -26434,7 +26447,7 @@ end
 
     var U u;
     spawn T with
-        _.u = &u;
+        this.u = &u;
     end;
 escape 1;
 ]],
@@ -26450,7 +26463,7 @@ end
 
     var U u;
     spawn T with
-        _.u = u;
+        this.u = u;
     end;
 escape 1;
 ]],
@@ -26469,7 +26482,7 @@ end
 do
     var U u;
     spawn T with
-        _.u = &u;
+        this.u = &u;
     end;
 end
 escape 1;
@@ -26489,7 +26502,7 @@ end
 
     var U u;
     spawn T with
-        _.u = &u;
+        this.u = &u;
     end;
 escape 1;
 ]],
@@ -26509,7 +26522,7 @@ end
 do
     var U u;
     spawn T with
-        _.u = &u;
+        this.u = &u;
     end;
 end
 escape 1;
@@ -26548,12 +26561,12 @@ end
 do
     var UIGridPool pool1;
     var UIGrid g1 with
-        _.uis = pool1;
+        this.uis = pool1;
     end;
 
     var T g2;
     spawn UIGridItem in g1.uis.all with
-        _.ui = &g2;
+        this.ui = &g2;
     end;
 end
 
@@ -26592,12 +26605,12 @@ end
 
     var UIGridPool pool1;
     var UIGrid g1 with
-        _.uis = pool1;
+        this.uis = pool1;
     end;
 
     var T g2;
     spawn UIGridItem in g1.uis.all with
-        _.ui = &g2;
+        this.ui = &g2;
     end;
 escape 1;
 ]],
@@ -26636,12 +26649,12 @@ end
 do
     var UIGridPool pool1;
     var UIGrid g1 with
-        _.uis = pool1;
+        this.uis = pool1;
     end;
 
     var T g2;
     spawn UIGridItem in pool1.all with
-        _.ui = &g2;
+        this.ui = &g2;
     end;
 end
 
@@ -26774,7 +26787,7 @@ end
 do
     var _s* p = null;
     var T* ui = new T with
-        _.ptr = p;   // ptr > p
+        this.ptr = p;   // ptr > p
     end;
 end
 escape 10;
@@ -26793,7 +26806,7 @@ do
     var void* p = null;
     var T* ui;
     ui = new T in ts with
-        _.ptr = p;
+        this.ptr = p;
     end;
 end
 escape 10;
@@ -26816,7 +26829,7 @@ end
 do
     var _s* p = null;
     var T* ui = new T with
-        _.ptr = p;
+        this.ptr = p;
     end;
 end
 
@@ -26842,7 +26855,7 @@ do
     var _s* p = null;
     do
         ui = new T with
-            _.ptr = p;
+            this.ptr = p;
         end;
     end
 end
@@ -26868,7 +26881,7 @@ do
     loop i in 10 do
         var _s* p = null;
         spawn T with
-            _.ptr = p;
+            this.ptr = p;
         end;
         await 1s;
     end
@@ -26929,7 +26942,7 @@ do
     loop i in 10 do
         var _s* p = null;
         spawn T with
-            _.ptr = p;
+            this.ptr = p;
         end;
         await 1s;
     end
@@ -26964,7 +26977,7 @@ do
         var _s* p = null;
         spawn T with
             finalize
-                _.ptr = p;
+                this.ptr = p;
             with
                 _V = _V + 1;
             end
@@ -27003,7 +27016,7 @@ do
     var _s* p = null;
     loop i in 10 do
         ui = new T with
-            _.ptr = p;
+            this.ptr = p;
         end;
         await 1s;
     end
@@ -27038,7 +27051,7 @@ do
     loop i in 10 do
         ui = new T with
             finalize
-                _.ptr = p;
+                this.ptr = p;
             with
                 _V = _V + 1;
             end
@@ -27078,7 +27091,7 @@ do
         var _s* p = null;
         var T* ui = new T with
             finalize
-                _.ptr = p;   // p == ptr
+                this.ptr = p;   // p == ptr
             with
                 _V = _V + 1;
             end
@@ -27229,7 +27242,7 @@ par/or do
         pool T[] ts;
         loop i do
             spawn T in ts with
-                _.c = i;
+                this.c = i;
             end;
             await 1s;
         end
@@ -27267,7 +27280,7 @@ par/or do
             pool T[] ts;
             loop i do
                 spawn T in ts with
-                    _.c = i;
+                    this.c = i;
                 end;
                 await 1s;
             end
@@ -27312,7 +27325,7 @@ par/or do
         loop i do
             pause/if pse do
                 spawn T in ts with
-                    _.c = i;
+                    this.c = i;
                 end;
                 await 1s;
             end
@@ -27357,7 +27370,7 @@ par/or do
         loop i do
             pause/if pse do
                 spawn T in ts with
-                    _.c = i;
+                    this.c = i;
                 end;
                 await 1s;
             end
@@ -27403,7 +27416,7 @@ par/or do
             pool T[] ts;
             loop i do
                 spawn T in ts with
-                    _.c = i;
+                    this.c = i;
                 end;
                 await 1s;
             end
@@ -27449,7 +27462,7 @@ par/or do
         loop i do
             pause/if pse do
                 spawn T in ts with
-                    _.c = i;
+                    this.c = i;
                 end;
                 await 1s;
             end
@@ -27494,7 +27507,7 @@ par/or do
             pool T[] ts;
             loop i do
                 spawn T in ts with
-                    _.c = i;
+                    this.c = i;
                 end;
                 await 1s;
             end
@@ -27561,7 +27574,7 @@ class T with
 do
 end
 var T* t = new T with
-             _.v = 10;
+             this.v = 10;
            end;
 //free(t);
 escape t:v;
@@ -27583,7 +27596,7 @@ end
 var int ret = 0;
 do
     spawn T in ts with
-        _.v = 10;
+        this.v = 10;
     end;
     async do end;
     loop (I*)t in ts do
@@ -27722,7 +27735,7 @@ end
 class U with
 do
     var T move with
-        _.parent = &this;
+        this.parent = &outer;
     end;
 end
 escape 1;
@@ -28076,7 +28089,7 @@ end
 }
 
 Test { [[
-native nohold _attr();
+native @nohold _attr();
 native do
     void attr (void* org) {
         IFC_Global_a() = CEU_T_a(org) + 1;
@@ -28552,7 +28565,7 @@ class T with
 do
 end
 var T** t := _malloc(10 * sizeof(T**));
-native nohold _free();
+native @nohold _free();
 finalize with
     _free(t);
 end
@@ -28635,7 +28648,7 @@ escape 10;
 Test { [[
 class I with do end
 pool I[] is;
-native nohold _f();
+native @nohold _f();
 native do
     void f (void* p) {
     }
@@ -28684,13 +28697,13 @@ pool T[] ts;
 var int ret = 0;
 do
     spawn T in ts with
-        _.v = 1;
+        this.v = 1;
     end;
     spawn T in ts with
-        _.v = 2;
+        this.v = 2;
     end;
     spawn T in ts with
-        _.v = 3;
+        this.v = 3;
     end;
 
     loop (I*)i in ts do
@@ -28727,7 +28740,7 @@ var U u;
 var I* i1 = &t;
 var I* i2 = (I*) &u;
 
-native pure _f();
+native @pure _f();
 native do
     void* f (void* org) {
         return org;
@@ -28768,13 +28781,13 @@ end
 var int ret = 0;
 do
     spawn T with
-        _.v = 1;
+        this.v = 1;
     end;
     spawn U with
-        _.v = 2;
+        this.v = 2;
     end;
     spawn T in ts with
-        _.v = 3;
+        this.v = 3;
     end;
 
     loop (I*)i in ts do
@@ -28802,11 +28815,11 @@ pool I[] is;
 var int ret = 0;
 
 spawn T with
-    _.v = 1;
+    this.v = 1;
 end;
 
 spawn T in is with
-    _.v = 3;
+    this.v = 3;
 end;
 
 loop (I*)i in is do
@@ -28841,13 +28854,13 @@ end
 var int ret = 0;
 do
     spawn T with
-        _.v = 1;
+        this.v = 1;
     end;
     spawn U in is with
-        _.v = 2;
+        this.v = 2;
     end;
     spawn T in is with
-        _.v = 3;
+        this.v = 3;
     end;
 
     loop (I*)i in is do
@@ -28897,13 +28910,13 @@ pool T[] ts;
 var int ret = 1;
 do
     spawn T in ts with
-        _.v = 1;
+        this.v = 1;
     end;
     spawn T in ts with
-        _.v = 2;
+        this.v = 2;
     end;
     spawn T in ts with
-        _.v = 3;
+        this.v = 3;
     end;
 
     loop (I*)i in ts do
@@ -28934,13 +28947,13 @@ pool T[] ts;
 var int ret = 1;
 do
     spawn T in ts with
-        _.v = 1;
+        this.v = 1;
     end;
     spawn T in ts with
-        _.v = 2;
+        this.v = 2;
     end;
     spawn T in ts with
-        _.v = 3;
+        this.v = 3;
     end;
 
     loop (I*)i in ts do
@@ -28979,7 +28992,7 @@ do
         var int i=1;
         every 1s do
             spawn T in ts with
-                _.v = i;
+                this.v = i;
                 i = i + 1;
             end;
         end
@@ -29624,7 +29637,7 @@ escape i:g(5);
 
 Test { [[
 interface I with
-    function recursive (int)=>int g;
+    function @rec (int)=>int g;
 end
 
 class T with
@@ -29657,7 +29670,7 @@ class T with
     interface I;
     var I* i;
 do
-    function recursive (int v)=>int g do
+    function @rec (int v)=>int g do
         if (v == 1) then
             return 1;
         end
@@ -29676,14 +29689,14 @@ escape i:g(5);
 
 Test { [[
 interface I with
-    function recursive (int)=>int g;
+    function @rec (int)=>int g;
 end
 
 class T with
     interface I;
     var I* i;
 do
-    function recursive (int v)=>int g do
+    function @rec (int v)=>int g do
         if (v == 1) then
             return 1;
         end
@@ -29702,14 +29715,14 @@ escape i:g(5);
 
 Test { [[
 interface I with
-    function recursive (int)=>int g;
+    function @rec (int)=>int g;
 end
 
 class T with
     interface I;
     var I* i;
 do
-    function recursive (int v)=>int g do
+    function @rec (int v)=>int g do
         return 1;
     end
 end
@@ -29724,14 +29737,14 @@ escape i:g(5);
 }
 Test { [[
 interface I with
-    function recursive (int)=>int g;
+    function @rec (int)=>int g;
 end
 
 class T with
     interface I;
     var I* i;
 do
-    function recursive (int v)=>int g do
+    function @rec (int v)=>int g do
         return 1;
     end
 end
@@ -29747,14 +29760,14 @@ escape i:g(5);
 
 Test { [[
 interface I with
-    function recursive (int)=>int g;
+    function @rec (int)=>int g;
 end
 
 class T with
     interface I;
     var I* i;
 do
-    function recursive (int v)=>int g do
+    function @rec (int v)=>int g do
         return v;
     end
 end
@@ -29772,14 +29785,14 @@ escape call/rec i:g(5);
 
 Test { [[
 interface I with
-    function recursive (int)=>int g;
+    function @rec (int)=>int g;
 end
 
 class T with
     interface I;
     var I* i;
 do
-    function recursive (int v)=>int g do
+    function @rec (int v)=>int g do
         return v;
     end
 end
@@ -29922,14 +29935,14 @@ escape i1:g(5) + i2:g(5);
 
 Test { [[
 interface I with
-    function recursive (int)=>int g;
+    function @rec (int)=>int g;
 end
 
 class T with
     interface I;
     var I* i;
 do
-    function recursive (int v)=>int g do
+    function @rec (int v)=>int g do
         if (v == 1) then
             return 1;
         end
@@ -29971,7 +29984,7 @@ do
 end
 
 var T t with
-    _.f2 = _f2;
+    this.f2 = _f2;
 end;
 escape t.ret1 + t.ret2;
 ]],
@@ -30003,7 +30016,7 @@ do
 end
 
 var T t with
-    _.f2 := _f2;
+    this.f2 := _f2;
 end;
 escape t.ret1 + t.ret2;
 ]],
@@ -30039,7 +30052,7 @@ end
 class T with
     interface I;
     //var int v;
-    //native nohold _ins();
+    //native @nohold _ins();
 do
     function (void)=>int ins do
         return v;
@@ -30138,7 +30151,7 @@ function (void* v)=>void f do
 end
 escape 1;
 ]],
-    -- function can be "nohold v"
+    -- function can be "@nohold v"
     run = 1,
 }
 
@@ -30187,7 +30200,7 @@ var T t;
 t.f(null);
 escape 1;
 ]],
-    -- function can be "nohold v"
+    -- function can be "@nohold v"
     wrn = true,
     run = 1,
 }
@@ -30233,7 +30246,7 @@ do
 end
 escape 1;
 ]],
-    -- function must be "hold v"
+    -- function must be "@hold v"
     fin = 'line 6 : unsafe pointer attribution',
     --fin = ' line 6 : parameter must be `hold´',
 }
@@ -30248,15 +30261,15 @@ do
 end
 escape 1;
 ]],
-    -- function must be "hold v"
+    -- function must be "@hold v"
     fin = ' line 6 : parameter must be `hold´',
 }
 Test { [[
 class T with
     var void* a;
-    function (hold void* v)=>void f;
+    function (@hold void* v)=>void f;
 do
-    function (hold void* v)=>void f do
+    function (@hold void* v)=>void f do
         a := v;
     end
 end
@@ -30270,7 +30283,7 @@ class T with
     var void* v;
     function (void* v)=>void f;
 do
-    function (hold void* v)=>void f do
+    function (@hold void* v)=>void f do
         this.v = v;
     end
 end
@@ -30283,9 +30296,9 @@ escape 1;
 Test { [[
 class T with
     var void* v;
-    function (hold void* v)=>void f;
+    function (@hold void* v)=>void f;
 do
-    function (hold void* v)=>void f do
+    function (@hold void* v)=>void f do
         this.v := v;
     end
 end
@@ -30300,16 +30313,16 @@ end
 escape 1;
 ]],
     wrn = true,
-    -- function must be "hold v" and call must have fin
+    -- function must be "@hold v" and call must have fin
     fin = 'line 12 : call to "f" requires `finalize´',
 }
 
 Test { [[
 class T with
     var void* v;
-    function (hold void* v)=>void f;
+    function (@hold void* v)=>void f;
 do
-    function (hold void* v)=>void f do
+    function (@hold void* v)=>void f do
         this.v := v;
     end
 end
@@ -30327,7 +30340,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    -- function must be "hold v" and call must have fin
+    -- function must be "@hold v" and call must have fin
     fin = 'line 12 : call to "f" requires `finalize´',
 }
 
@@ -30351,7 +30364,7 @@ Test { [[
 native do
     void* V;
 end
-function (hold void* v)=>void f do
+function (@hold void* v)=>void f do
     _V := v;
 end
 var void* x;
@@ -30383,9 +30396,9 @@ end
 
 class T with
     interface I;
-    function recursive (void)=>void f;
+    function @rec (void)=>void f;
 do
-    function recursive (void)=>void f do
+    function @rec (void)=>void f do
         if 0 then
             call/rec this.f();
         end
@@ -30406,14 +30419,14 @@ escape 1;
 
 Test { [[
 interface I with
-    function recursive (void)=>void f;
+    function @rec (void)=>void f;
 end
 
 class T with
     interface I;
-    function recursive (void)=>void f;
+    function @rec (void)=>void f;
 do
-    function recursive (void)=>void f do
+    function @rec (void)=>void f do
         if 0 then
             call/rec this.f();
         end
@@ -30433,14 +30446,14 @@ escape 1;
 
 Test { [[
 interface I with
-    function recursive (void)=>void f;
+    function @rec (void)=>void f;
 end
 
 class T with
     interface I;
-    function recursive (void)=>void f;
+    function @rec (void)=>void f;
 do
-    function recursive (void)=>void f do
+    function @rec (void)=>void f do
         if 0 then
             call/rec this.f();
         end
@@ -30460,7 +30473,7 @@ escape 1;
 
 Test { [[
 interface I with
-    function recursive (void)=>void f;
+    function @rec (void)=>void f;
 end
 
 class T with
@@ -30486,7 +30499,7 @@ escape 1;
 
 Test { [[
 interface I with
-    function recursive (void)=>void f;
+    function @rec (void)=>void f;
 end
 
 class T with
@@ -30523,7 +30536,7 @@ escape f(5);
     --run = 120,
 }
 Test { [[
-function recursive (int v)=>int f;
+function @rec (int v)=>int f;
 function (int v)=>int f do
     if v == 0 then
         return 1;
@@ -30536,8 +30549,8 @@ escape f(5);
     --run = 120,
 }
 Test { [[
-function recursive (int v)=>int f;
-function recursive (int v)=>int f do
+function @rec (int v)=>int f;
+function @rec (int v)=>int f do
     if v == 0 then
         return 1;
     end
@@ -30555,8 +30568,8 @@ call 1;
 }
 
 Test { [[
-function recursive (int v)=>int f;
-function recursive (int v)=>int f do
+function @rec (int v)=>int f;
+function @rec (int v)=>int f do
     if v == 0 then
         return 1;
     end
@@ -30567,8 +30580,8 @@ escape f(5);
     tight = 'line 8 : `call/rec´ is required for "f"',
 }
 Test { [[
-function recursive (int v)=>int f;
-function recursive (int v)=>int f do
+function @rec (int v)=>int f;
+function @rec (int v)=>int f do
     if v == 0 then
         return 1;
     end
@@ -30658,7 +30671,7 @@ escape 1;
 }
 
 Test { [[
-function recursive (void)=>void f;
+function @rec (void)=>void f;
 var int a;
 function isr [20] do
     a = 1;
@@ -30792,7 +30805,7 @@ escape v;
 }
 
 Test { [[
-native pure _f();
+native @pure _f();
 native do
     int f (void) {
         return 2;
@@ -31021,7 +31034,7 @@ end
 pool T[] ts;
 
 spawn T in ts with
-    _.v = 10;
+    this.v = 10;
 end;
 
 var int ret = 0;
@@ -31048,7 +31061,7 @@ end
 pool T[1] ts;
 
 spawn T in ts with
-    _.v = 10;
+    this.v = 10;
 end;
 
 var int ret = 0;
@@ -31075,7 +31088,7 @@ end
 pool T[] ts;
 
 spawn T in global:ts with
-    _.v = 10;
+    this.v = 10;
 end;
 
 var int ret = 0;
@@ -31102,7 +31115,7 @@ end
 pool T[] ts;
 
 spawn T in global:ts with
-    _.v = 10;
+    this.v = 10;
 end;
 
 var int ret = 0;
@@ -31155,10 +31168,10 @@ class U with
     var int v = 0;
 do
     spawn T in global:ts with
-        _.v = 10;
+        this.v = 10;
     end;
     spawn T in global:ts with
-        _.v = 20;
+        this.v = 20;
     end;
 
     loop (T*)t in global:ts do
@@ -31199,10 +31212,10 @@ class U with
     var int v = 0;
 do
     spawn T in global:ts with
-        _.v = 10;
+        this.v = 10;
     end;
     spawn T in global:ts with
-        _.v = 20;
+        this.v = 20;
     end;
 
     loop (T*)t in global:ts do
@@ -31252,10 +31265,10 @@ var int ret = 0;
 do
     var U u;
     spawn T in u.ts with
-        _.v = 10;
+        this.v = 10;
     end;
     spawn T in u.ts with
-        _.v = 20;
+        this.v = 20;
     end;
 
     loop (T*)t in u.ts do
@@ -31296,10 +31309,10 @@ var int ret = 0;
 do
     var U u;
     spawn T in u.ts with
-        _.v = 10;
+        this.v = 10;
     end;
     spawn T in u.ts with
-        _.v = 20;
+        this.v = 20;
     end;
 
     loop (T*)t in u.ts do
@@ -31331,7 +31344,7 @@ Test { [[
 interface Global with
     pool Unit[] units;
 end
-native nohold _SDL_Has;
+native @nohold _SDL_Has;
 
 class Unit with
     var int rect;
@@ -31461,12 +31474,12 @@ end
 
 var T t;
 spawn U in t.us2 with
-    _.v = 1;
+    this.v = 1;
 end;
 
 var I* i = &t;
 spawn U in i:us2 with
-    _.v = 2;
+    this.v = 2;
 end;
 
 var int ret = 0;
@@ -31495,7 +31508,7 @@ var int ret = 0;
 
 par/or do
     var T t with
-        _.v = 10;
+        this.v = 10;
     end;
     async do end;
     emit e => &t;
@@ -31520,7 +31533,7 @@ var int ret = 0;
 
 par/or do
     var T t with
-        _.v = 10;
+        this.v = 10;
     end;
     async do end;
     emit e => &t;
@@ -31550,7 +31563,7 @@ var int ret = 0;
 
 par/or do
     var T t with
-        _.v = 10;
+        this.v = 10;
     end;
     async do end;
     emit e => &t;
@@ -31576,7 +31589,7 @@ do
 end
 
 var I* p = new T with
-    _.v = 10;
+    this.v = 10;
 end;
 escape p:v;
 ]],
@@ -31616,7 +31629,7 @@ var int ret = 0;
 par/and do
     async do end;
     var T t with
-        _.v = 10;
+        this.v = 10;
     end;
     emit e => &t;
     await 1s;
@@ -31650,7 +31663,7 @@ var int ret = 0;
 par/and do
     async do end;
     var T t with
-        _.v = 10;
+        this.v = 10;
     end;
     emit e => &t;
 with
@@ -31684,7 +31697,7 @@ var int ret = 0;
 par/and do
     async do end;
     var T t with
-        _.v = 10;
+        this.v = 10;
     end;
     emit e => &t;
     await 6s;
@@ -31719,7 +31732,7 @@ var int ret = 0;
 par/and do
     async do end;
     var T t with
-        _.v = 10;
+        this.v = 10;
     end;
     emit e => &t;
     await 6s;
@@ -31754,7 +31767,7 @@ par/and do
     async do end;
     pool T[] ts;
     var T* t = new T in ts with
-        _.v = 10;
+        this.v = 10;
     end;
     emit e => t;
     await 1s;
@@ -31789,7 +31802,7 @@ par/and do
     async do end;
     pool T[] ts;
     var T* t = new T in ts with
-        _.v = 10;
+        this.v = 10;
     end;
     emit e => t;
 with
@@ -31824,7 +31837,7 @@ par/and do
     async do end;
     pool T[] ts;
     var T* t = new T in ts with
-        _.v = 10;
+        this.v = 10;
     end;
     emit e => t;
     await 6s;
@@ -31860,7 +31873,7 @@ par/and do
     async do end;
     pool T[] ts;
     var T* t = new T in ts with
-        _.v = 10;
+        this.v = 10;
     end;
     emit e => t;
     await 6s;
@@ -31896,7 +31909,7 @@ par/and do
     async do end;
     pool T[] ts;
     var T* t = new T in ts with
-        _.v = 10;
+        this.v = 10;
     end;
     emit e => t;
 with
@@ -31935,7 +31948,7 @@ end
 do
     var U u;
     spawn Item with
-        _.u = &u;
+        this.u = &u;
     end;
     await 1s;
 end
@@ -31963,7 +31976,7 @@ end
 do
     var U u;
     spawn Item with
-        _.u = &u;
+        this.u = &u;
     end;
     await 1s;
 end
@@ -31991,7 +32004,7 @@ end
 do
     var U u;
     spawn T with
-        _.u = &u;
+        this.u = &u;
     end;
     await 1s;
 end
@@ -32016,7 +32029,7 @@ end
 do
     var U u;
     spawn T with
-        _.u = &u;
+        this.u = &u;
     end;
     await 1s;
 end
@@ -32038,7 +32051,7 @@ end
 do
     var U u;
     spawn T with
-        _.u = &u;
+        this.u = &u;
     end;
 end
 escape 1;
@@ -32065,7 +32078,7 @@ var X x;
 do
     var U u;
     spawn T in x.ts with
-        _.u = &u;
+        this.u = &u;
     end;
 end
 escape 1;
@@ -34133,8 +34146,8 @@ escape 1;
 }
 
 Test { [[
-native plain _t;
-native nohold _f();
+native @plain _t;
+native @nohold _f();
 native do
     #define f(a)
     typedef int t;
@@ -34236,7 +34249,7 @@ do
 end
 
 var Unit u with
-    _.t.v  =  30;
+    this.t.v  =  30;
 end;
 escape u.t.v;
 ]],
@@ -34321,7 +34334,7 @@ escape 1;
 }
 
 Test { [[
-native plain _int;
+native @plain _int;
 interface Object with
     var _int v;
 end
@@ -34336,7 +34349,7 @@ escape 1;
     run = 1,
 }
 Test { [[
-native plain _int;
+native @plain _int;
 interface Object with
     var _int v;
 end
@@ -34362,7 +34375,7 @@ class T with
 do
 end
 var T t with
-    _.v = 10;
+    this.v = 10;
 end;
 var T& tt = t;
 tt.v = 5;
@@ -34372,7 +34385,7 @@ escape t.v;
 }
 
 Test { [[
-native plain _int;
+native @plain _int;
 interface Object with
     var _int v;
 end
@@ -34389,7 +34402,7 @@ do
 end
 var O o;
 var MoveObject m with
-    _.obj = o;
+    this.obj = o;
 end;
 await 2s;
 escape o.v;
@@ -34400,7 +34413,7 @@ escape o.v;
 -- LUA
 
 Test { [=[
-native nohold _strcmp();
+native @nohold _strcmp();
 var char* str = "oioioi";
 [[ str = @str ]]
 var bool ret = [[ str == 'oioioi' ]];

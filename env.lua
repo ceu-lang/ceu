@@ -604,10 +604,10 @@ F = {
 
     Dcl_nat = function (me)
         local mod, tag, id, len = unpack(me)
-        if tag=='type' or mod=='plain' then
+        if tag=='type' or mod=='@plain' then
             local tp = _TP.fromstr(id)
             tp.len   = len
-            tp.plain = (mod=='plain')
+            tp.plain = (mod=='@plain')
             _TP.types[id] = tp
         end
         -- TODO: remove

@@ -107,12 +107,12 @@ TYPES = P'void' + 'char' + 'byte' + 'bool' + 'word'
       + 'float' + 'f32' + 'f64'
 
 KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'native'
-     + 'const'    + 'continue' + 'safe'     + 'do'
+     + 'continue' + 'do'
      + 'else'     + 'else/if'  + 'emit'     + 'end'      + 'event'
      + 'every'    + 'finalize' + 'FOREVER'  + 'if'       + 'input'
-     + 'loop'     + 'nohold'   + 'not'      + 'nothing'  + 'null'
+     + 'loop'     + 'not'      + 'nothing'  + 'null'
      + 'or'       + 'output'   + 'par'      + 'par/and'  + 'par/or'
-     + 'pause/if' + 'pure'     + 'escape'   + 'sizeof'   + 'then'
+     + 'pause/if' + 'escape'   + 'sizeof'   + 'then'
      + 'until'    + 'var'      + 'with'
      + TYPES
 -- ceu-orgs only
@@ -124,8 +124,7 @@ KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'native'
 -- export / version
      + 'thread'   + 'sync'
 -- functions
-     + 'function' + 'call' + 'return' + 'recursive' + 'call/rec'
-     + 'hold'
+     + 'function' + 'call' + 'return' + 'call/rec'
 -- isrs
      + 'isr' + 'atomic'
 -- bool
@@ -140,7 +139,9 @@ KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'native'
      + 'pool'
      + 'watching'
 --
-     + 'plain'
+     + P'@' * (
+         P'const' + 'hold' + 'nohold' + 'plain' + 'pure' + 'rec' + 'safe'
+       )
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
@@ -365,19 +366,19 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                 +   Cc(false) )
 
     , __ID     = V'__ID_nat' + V'__ID_ext' + V'Var'
-    , Dcl_det  = KEY'safe' * EV'__ID' * EKEY'with' *
+    , Dcl_det  = KEY'@safe' * EV'__ID' * EKEY'with' *
                      EV'__ID' * (K',' * EV'__ID')^0
 
     , __Dcl_nat = Cc'type' * V'__ID_nat' * K'=' * NUM
                 + Cc'func' * V'__ID_nat' * '()' * Cc(false)
                 + Cc'unk'  * V'__ID_nat'        * Cc(false)
 
-    , _Dcl_nat = KEY'native' * (CKEY'pure'+CKEY'const'+CKEY'nohold'+CK'plain'+Cc(false))
+    , _Dcl_nat = KEY'native' * (CKEY'@pure'+CKEY'@const'+CKEY'@nohold'+CK'@plain'+Cc(false))
                    * EV'__Dcl_nat' * (K',' * EV'__Dcl_nat')^0
 
     , __Dcl_ext_call = (CKEY'input'+CKEY'output')
                      * Cc(false)     -- spawn array
-                     * (CKEY'recursive'+Cc(false))
+                     * (CKEY'@rec'+Cc(false))
                      * V'TupleType' * K'=>' * EV'Type'
                      * EV'__ID_ext' * (K','*EV'__ID_ext')^0
     , __Dcl_ext_evt  = (CKEY'input'+CKEY'output')
@@ -416,8 +417,8 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     , _Dcl_imp = KEY'interface' * EV'__ID_cls' * (K',' * EV'__ID_cls')^0
 
-    , _Dcl_fun0 = KEY'function' * CKEY'isr' * EK'[' * NUM * EK']' * (CKEY'recursive'+Cc(false))
-                + CKEY'function' * (CKEY'recursive'+Cc(false))
+    , _Dcl_fun0 = KEY'function' * CKEY'isr' * EK'[' * NUM * EK']' * (CKEY'@rec'+Cc(false))
+                + CKEY'function' * (CKEY'@rec'+Cc(false))
                                * EV'TupleType' * EK'=>' * EV'Type'
                                * V'__ID_var'
 
@@ -462,7 +463,7 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                         return (string.gsub(id,'%?','_'))
                     end)
 
-    , TupleTypeItem = (CKEY'hold'+Cc(false)) * EV'Type' * (EV'__ID_var'+Cc(false))
+    , TupleTypeItem = (CKEY'@hold'+Cc(false)) * EV'Type' * (EV'__ID_var'+Cc(false))
     , TupleType = K'(' * V'TupleTypeItem' * (EK','*V'TupleTypeItem')^0 * EK')'
 
     , STRING = CK( CK'"' * (P(1)-'"'-'\n')^0 * EK'"' )

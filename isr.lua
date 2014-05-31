@@ -28,13 +28,13 @@ F = {
         end
     end,
     Nat = function (me)
-        if inIsr(me) and (me.c.mod~='pure') then
+        if inIsr(me) and (me.c.mod~='@pure') then
             accs[me.id] = true
         end
     end,
     Op2_call = function (me)
         if inIsr(me) then
-            WRN((me.c and me.c.mod=='pure'), me,
+            WRN((me.c and me.c.mod=='@pure'), me,
                 'call '..msg)
         end
     end,

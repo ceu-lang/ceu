@@ -119,7 +119,7 @@ F = {
             end
         end
 
-        if fr.lst and fr.lst.tag=='Op2_call' and fr.lst.c.mod~='pure'
+        if fr.lst and fr.lst.tag=='Op2_call' and fr.lst.c.mod~='@pure'
         or fr.tag == 'RawExp' then
             -- We assume that a impure function that returns a global pointer
             -- creates memory (e.g. malloc, fopen):
@@ -297,7 +297,7 @@ F = {
 
         local req = false
 
-        if not (me.c and (me.c.mod=='pure' or me.c.mod=='nohold')) then
+        if not (me.c and (me.c.mod=='@pure' or me.c.mod=='@nohold')) then
             if f.org and string.sub(me.c.id,1,1)=='_' then
                 --exps = { f.org, unpack(exps) }  -- only native
                 -- avoids this.f(), where f is a pointer to func

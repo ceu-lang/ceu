@@ -115,7 +115,7 @@ F = {
             if e2.accs and tp then
                 e2.accs[1][4] = (e2.accs[1][2] ~= 'no')   -- &x does not become 
                     "any"
-                e2.accs[1][2] = (me.c and me.c.mod=='pure' and 'rd') or 'wr'
+                e2.accs[1][2] = (me.c and me.c.mod=='@pure' and 'rd') or 'wr'
                 e2.accs[1][3] = tp
             end
         end
@@ -132,7 +132,7 @@ F = {
                 if v and v.acc then   -- ignore constants
 --DBG(exp.tag, exp.lst)
                     v.acc.any = exp.lval    -- f(&x) // a[N] f(a) // not "any"
-                    CHG(v.acc, (me.c and me.c.mod=='pure' and 'rd') or 'wr')
+                    CHG(v.acc, (me.c and me.c.mod=='@pure' and 'rd') or 'wr')
                     v.acc.tp = _TP.copy(exp.tp)
                     v.acc.tp.ptr = v.acc.tp.ptr - 1     -- f may deref exp
                 end
@@ -462,9 +462,9 @@ function CHK_ACC (accs1, accs2, NO_par, NO_emts)
 
                     -- C's are det?
                     local c1 = _ENV.c[acc1.id]
-                    c1 = c1 and (c1.mod=='pure' or c1.mod=='const')
+                    c1 = c1 and (c1.mod=='@pure' or c1.mod=='const')
                     local c2 = _ENV.c[acc2.id]
-                    c2 = c2 and (c2.mod=='pure' or c2.mod=='const')
+                    c2 = c2 and (c2.mod=='@pure' or c2.mod=='const')
                     local c_ = c1 or c2
                             or (_ENV.dets[acc1.id] and _ENV.dets[acc1.id][acc2.id])
 
