@@ -205,9 +205,21 @@ F = {
         }
     end,
 
-    -- TODO: This_ = 'This'?,
+    Outer = function (me)
+        me.acc = INS {
+            path = me.ana.pre,
+            id  = me,
+            md  = 'rd',
+            tp  = me.tp,
+            any = true,
+            err = ERR(me, 'variable `outer´'),
+        }
+    end,
 
     This = function (me)
+        if _AST.iter'Dcl_constr'() then
+            return  -- org being created cannot be in parallel
+        end
         me.acc = INS {
             path = me.ana.pre,
             id  = me,

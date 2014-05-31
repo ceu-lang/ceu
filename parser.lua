@@ -117,7 +117,7 @@ KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'native'
      + TYPES
 -- ceu-orgs only
      + 'class'    + 'global'   + 'interface'
-     + 'free'     + 'new'      + 'this'
+     + 'free'     + 'new'      + 'this' + 'outer'
      + 'spawn'
 --
      --+ 'import'  --+ 'as'
@@ -310,7 +310,8 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , __Prim   = V'__Parens' + V'SIZEOF'
               + V'Var'     + V'Nat'
               + V'NULL'    + V'NUMBER' + V'STRING'
-              + V'Global'  + V'This'   + V'RawExp'
+              + V'Global'  + V'This'   + V'Outer'
+              + V'RawExp'
               + CKEY'call'     * EV'__Exp'
               + CKEY'call/rec' * EV'__Exp'
 
@@ -435,6 +436,7 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     , Global  = KEY'global'
     , This    = KEY'this' * Cc(false)
+    , Outer   = KEY'outer'
 
     , Ext     = V'__ID_ext'
     , Var     = V'__ID_var'

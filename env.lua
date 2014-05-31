@@ -450,7 +450,7 @@ F = {
         me.blk  = _AST.root
     end,
 
-    This = function (me)
+    Outer = function (me)
         local cls = CLS()
             --ASR(cls ~= _MAIN, me, 'invalid access')
         ASR(cls, me, 'undeclared class')
@@ -459,10 +459,10 @@ F = {
         me.blk  = cls.blk_ifc
     end,
 
-    This_ = function (me)
+    This = function (me)
+        -- if inside constructor, change scope to the class being created
         local constr = _AST.iter'Dcl_constr'()
-        ASR(constr, me, 'invalid access to `_´')
-        local cls = constr.cls
+        local cls = constr and constr.cls or CLS()
         ASR(cls, me, 'undeclared class')
         me.tp   = cls.tp
         me.lval = false

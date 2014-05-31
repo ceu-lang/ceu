@@ -103,16 +103,22 @@ F =
         me.val = '(_ceu_app->data)'
     end,
 
-    This = function (me)
-        me.val = '_ceu_go->org'
-        --me.val = '(*(('.._TP.toc(me.tp)..'*)'..me.val..'))'
-        me.val = '(('.._TP.toc(me.tp)..'*)'..me.val..')'
+    Outer = function (me)
+            me.val = '_ceu_go->org'
+            --me.val = '(*(('.._TP.toc(me.tp)..'*)'..me.val..'))'
+            me.val = '(('.._TP.toc(me.tp)..'*)'..me.val..')'
     end,
 
-    This_ = function (me)
-        me.val = '__ceu_org'    -- set when calling constr
-        --me.val = '(*(('.._TP.toc(me.tp)..'*)'..me.val..'))'
-        me.val = '(('.._TP.toc(me.tp)..'*)'..me.val..')'
+    This = function (me)
+        if _AST.iter'Dcl_constr'() then
+            me.val = '__ceu_org'    -- set when calling constr
+            --me.val = '(*(('.._TP.toc(me.tp)..'*)'..me.val..'))'
+            me.val = '(('.._TP.toc(me.tp)..'*)'..me.val..')'
+        else
+            me.val = '_ceu_go->org'
+            --me.val = '(*(('.._TP.toc(me.tp)..'*)'..me.val..'))'
+            me.val = '(('.._TP.toc(me.tp)..'*)'..me.val..')'
+        end
     end,
 
     Var = function (me)
