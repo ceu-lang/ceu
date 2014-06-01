@@ -75,7 +75,8 @@ local _V2NAME = {
     _Dcl_pool = 'declaration',
     __Dcl_nat  = 'declaration',
     _Dcl_nat   = 'declaration',
-    TupleType = 'type list',
+    _TupleType_1 = 'type list',
+    _TupleType_2 = 'param list',
 }
 local EV = function (rule)
     return V(rule) + m.Cmt(P'',
@@ -379,23 +380,23 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , __Dcl_ext_call = (CKEY'input'+CKEY'output')
                      * Cc(false)     -- spawn array
                      * (CKEY'@rec'+Cc(false))
-                     * V'TupleType' * K'=>' * EV'Type'
+                     * V'_TupleType_2' * K'=>' * EV'Type'
                      * EV'__ID_ext' * (K','*EV'__ID_ext')^0
     , __Dcl_ext_evt  = (CKEY'input'+CKEY'output')
                      * Cc(false)     -- spawn array
                      * Cc(false)     -- recursive
-                     * (V'TupleType'+EV'Type') * Cc(false)
+                     * (V'_TupleType_1'+EV'Type') * Cc(false)
                      * EV'__ID_ext' * (K','*EV'__ID_ext')^0
     , __Dcl_ext_io   = (CKEY'input/output'+CKEY'output/input')
                      * ('['*(V'__Exp'+Cc(true))*EK']'+Cc(false))
                      * Cc(false)     -- recursive
-                     * V'TupleType' * K'=>' * EV'Type'
+                     * V'_TupleType_2' * K'=>' * EV'Type'
                      * EV'__ID_ext' * (K','*EV'__ID_ext')^0
 
     , _Dcl_ext0 = V'__Dcl_ext_io' + V'__Dcl_ext_call' + V'__Dcl_ext_evt'
     , _Dcl_ext1 = V'_Dcl_ext0' * V'__Do'
 
-    , _Dcl_int  = CKEY'event' * (V'TupleType'+EV'Type') *
+    , _Dcl_int  = CKEY'event' * (V'_TupleType_1'+EV'Type') *
                     EV'__ID_var' * (K','*EV'__ID_var')^0
 
     , _Dcl_pool = CKEY'pool' * EV'Type' * EV'__ID_var' * (K','*EV'__ID_var')^0
@@ -419,7 +420,7 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     , _Dcl_fun0 = KEY'function' * CKEY'isr' * EK'[' * NUM * EK']' * (CKEY'@rec'+Cc(false))
                 + CKEY'function' * (CKEY'@rec'+Cc(false))
-                               * EV'TupleType' * EK'=>' * EV'Type'
+                               * EV'_TupleType_2' * EK'=>' * EV'Type'
                                * V'__ID_var'
 
     , _Dcl_fun1 = V'_Dcl_fun0' * V'__Do'
@@ -463,8 +464,13 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                         return (string.gsub(id,'%?','_'))
                     end)
 
-    , TupleTypeItem = (CKEY'@hold'+Cc(false)) * EV'Type' * (EV'__ID_var'+Cc(false))
-    , TupleType = K'(' * V'TupleTypeItem' * (EK','*V'TupleTypeItem')^0 * EK')'
+    -- (int, void*)
+    , _TupleTypeItem_1 = Cc(false) * EV'Type' * Cc(false)
+    , _TupleType_1 = K'(' * EV'_TupleTypeItem_1' * (EK','*V'_TupleTypeItem_1')^0 * EK')'
+
+    -- (int v, nohold void* ptr)
+    , _TupleTypeItem_2 = (CKEY'@hold'+Cc(false)) * EV'Type' * (EV'__ID_var'+Cc(false))
+    , _TupleType_2 = K'(' * EV'_TupleTypeItem_2' * (EK','*V'_TupleTypeItem_2')^0 * EK')'
 
     , STRING = CK( CK'"' * (P(1)-'"'-'\n')^0 * EK'"' )
 

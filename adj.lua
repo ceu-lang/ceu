@@ -917,6 +917,17 @@ F = {
         return node('Stmts', me.ln, unpack(ret))
     end,
 
+-- Tuples ---------------------
+
+    _TupleItem_2 = '_TupleItem_1',
+    _TupleItem_1 = function (me)
+        me.tag = 'TupleItem'
+    end,
+    _TupleType_2 = '_TupleType_1',
+    _TupleType_1 = function (me)
+        me.tag = 'TupleType'
+    end,
+
     AwaitExt_pre = function (me)
         local exp, cnd = unpack(me)
         if not cnd then

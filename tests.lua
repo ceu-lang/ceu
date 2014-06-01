@@ -17029,6 +17029,7 @@ input (int tilex, int tiley, bool vertical?, int lock, int door, word*
     every (tilex,tiley,vertical?,lock,door,position) in DOOR_SPAWN do
     end
 ]],
+    parser = 'line 2 : before `)´ : expected `,´',
     _ana = {
         isForever = true,
     },
@@ -29055,7 +29056,7 @@ Test { [[
 function void => (void) f;
 escape 1;
 ]],
-    parser = 'line 1 : after `function´ : expected type list',
+    parser = 'line 1 : after `function´ : expected param list',
     --parser = 'line 1 : after `=>´ : expected type',
 }
 
