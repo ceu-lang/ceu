@@ -366,6 +366,8 @@ Examples:
 
 ### Events
 
+See also [Event handling](#event-handling).
+
 #### External events
 
 External events are used as interfaces between programs and devices from the 
@@ -409,8 +411,8 @@ The availability of external events depends on the platform in use.
 Therefore, external declarations just make pre-existing events visible to a 
 program.
 
-Refer to the Section [Environment](#environment) for information about 
-interfacing with external events in the platform level.
+Refer to [Environment](#environment) for information about interfacing with 
+external events in the platform level.
 
 ##### Requests
 
@@ -636,29 +638,34 @@ See section [Await statements](#await-statements).
 
 ### Emit assignment
 
-See Section [Emit statements](#emit-statements).
+See [Emit statements](#emit-statements).
 
 ### Thread assignment
 
-See Section [Threads](#threads).
+See [Threads](#threads).
 
 ### New & Spawn assignment
 
-See Section [Dynamic organisms](#dynamic-organisms).
+See [Dynamic organisms](#dynamic-organisms).
 
 Calls
 -----
 
+<pre><code>Call ::= [ <b>call</b>|<b>call/rec</b> ] Exp * `(´ [ExpList] `)´
+ExpList = Exp { `,´ Exp }
+</code></pre>
+
 ### Function calls
+
+TODO
+
+### External calls
+
+TODO
 
 ### Native calls
 
 Functions defined in C can be called from Céu:
-
-```
-Call ::=  Exp `(` ExpList `)`
-```
-
 Expressions that evaluate to C functions can also be called. 
 
 Examples:
@@ -670,25 +677,34 @@ ptr:f();
 
 <!--[ TODO: unbounded execution ]-->
 
-Event manipulation
-------------------
+Event handling
+--------------
 
-The fundamental concept in Céu, accounting for its reactive nature, is that of events.
+Events are the most fundamental concept of Céu, accounting for its reactive 
+nature.
 
-Events are manipulated through the <tt>await</tt> and <tt>emit</tt> statements.
+Events are manipulated through the `await` and `emit` statements.
 
 Waiting for an event halts the running trail until that event occurs.
 
-The occurrence of an event is broadcast to all awaiting trails at the same time.
+The occurrence of an event is broadcast to all awaiting trails.
 
 ### Await statements
 
-The <tt>await</tt> statement halts the running trail forever or until the referred *wall-clock* time, [[#sec.stmts.decls.external|input event]], or [[#sec.stmts.decls.internal|internal event]] occurs.
+The `await` statement halts the running trail until the referred *wall-clock* 
+time, [input event](#external), or [internal event](#internal) occurs.
 
-<pre><code>Await ::= (Exp `=`)? ( <b>await</b> (ID_ext|ID_var)
-                     | <b>await</b> (WCLOCKK|WCLOCKE)
-                     )
-       |  <b>await</b> <b>FOREVER</b>
+<pre><code>Await ::= [(Exp|VarList) `=´] (
+            <b>await</b> ID_ext |
+            <b>await</b> Exp    |
+            <b>await</b> (WCLOCKK|WCLOCKE)
+          ) [ <b>until</b> Exp ]
+       | <b>await</b> <b>FOREVER</b>
+
+VarList = `(´ Var  { `,´ Var } `)´
+
+WCLOCKK ::= [NUM <b>h</b>] [NUM <b>min</b>] [NUM <b>s</b>] [NUM <b>ms</b>] [NUM <b>us</b>]
+WCLOCKE ::= `(` Exp `)` (<b>h</b>|<b>min</b>|<b>s</b>|<b>ms</b>|<b>us</b>)
 </code></pre>
 
 Examples:
@@ -702,64 +718,98 @@ await (t)ms;              // awaits the current value of the variable `t` in mil
 await FOREVER;            // awaits forever
 </code></pre>
 
-An optional assignment captures the value the <tt>await</tt> evaluates to.
+An `await` may evaluate to zero or more values which can be captured with the 
+optional assignment syntax.
+
+The optional `until` clause tests an additional condition required to awake.
+It can be understood as the following expansion:
+
+<pre><code><b>loop do</b>
+    <Await>
+    <b>if</b> <Exp> <b>then</b>
+        <b>break</b>;
+    <b>end</b>
+<b>end</b>
+</code></pre>
 
 #### Await event
 
-For await statements referring to an event identifier, the running trail halts until that event occurs.
-When the event occurs, the statement resumes and evaluates to the triggered value.
+For await statements with [internal](#internal) or [external](#external) 
+events, the running trail awakes when the referred event is emitted.
+The `await` evaluates to the type of the event.
 
-<pre><code>input int A;
-var int v = await A;       // `v` is assigned the value of next occurrence of `A`
+<pre><code>input int E;
+var int v = await E;
+
+event (int,int*) e;
+var int  v;
+var int* ptr;
+(v,ptr) await e;
 </code></pre>
 
-#### Await *wall-clock*
+#### Await time
 
-For await statements referring to *wall-clock* time (i.e., time measured in minutes, milliseconds, etc.), the running trail halts until the referred time elapses.
+For await statements with *wall-clock* time (i.e., time measured in minutes, 
+milliseconds, etc.), the running trail awakes when the referred time elapses.
 
-<tt>WCLOCKK</tt> and <tt>WCLOCKE</tt> are described as follows:
+A constant time is expressed with a sequence of value/unit-of-time pairs (see 
+`WCLOCKK` above).
+An expression time is specified with an expression in parenthesis followed by a 
+single unit of time (see `WCLOCKE` above).
 
-<pre><code>WCLOCKK ::= (NUM <b>h</b>)? (NUM <b>min</b>)? (NUM <b>s</b>)? (NUM 
-<b>ms</b>)?  (NUM <b>us</b>)?
-WCLOCKE ::= `(` Exp `)` (<b>h</b>|<b>min</b>|<b>s</b>|<b>ms</b>|<b>us</b>)
+The `await` evaluates to the *residual delta time (dt)* (i.e.  elapsed time 
+*minus* requested time), measured in microseconds:
+
+<pre><code><b>var int</b> dt = <b>await</b> 30ms;    // if 31ms elapses, then dt=1000
 </code></pre>
 
-A constant time (<tt>WCLOCKK</tt>) is expressed with a sequence of value/unit-of-time pairs.
-An expression time (<tt>WCLOCKE</tt>) is specified with an expression in parenthesis followed by a single unit of time.
+*Note: `dt` is always greater than or equal to 0.*
 
-After the referred time elapses, the <tt>await</tt> statement evaluates to the *residual delta time (dt)* (i.e. elapsed time *minus* requested time), measured in microseconds:
-
-<pre><code>var int dt = await 30ms;    // if 31ms elapses, then dt=1000
-</code></pre>
-
-*Note: <tt>dt</tt> is always greater than or equal to 0.*
-
-Refer to the Section [[#Environment]] for information about storage types for *wall-clock* time.
+<!--
+Refer to [[#Environment]] for information about storage types for *wall-clock* 
+time.
+-->
 
 <span id="sec.stmts.events.await.forever"></span>
 
 #### Await FOREVER
 
-The <tt>await FOREVER</tt> statement halts the running trail forever.
-It never evaluates to anything, and cannot be used in assignments.
-
-<span id="sec.stmts.events.emit"></span>
+The `await FOREVER` halts the running trail forever.
+It cannot be used in assignments, because it never evaluates to anything.
 
 ### Emit statements
 
-The <tt>emit</tt> statement triggers the referred *wall-clock* time, [[#sec.stmts.decls.external|external event]], or [[#sec.stmts.decls.internal|internal event]], awaking all trails waiting for that event (time).
+The `emit` statement triggers the referred *wall-clock* time, [input 
+event](#external), or [internal event](#internal), awaking all trails waiting 
+for it.
 
-<pre><code>Emit ::= <b>emit</b> (ID_ext|ID_var) (`(` Exp `)`)?
+<pre><code>Emit ::= <b>emit</b> Exp    [ `=>´ (Exp | `(´ ExpList `)´)
+      |  <b>emit</b> ID_ext [ `=>´ (Exp | `(´ ExpList `)´)
       |  <b>emit</b> (WCLOCKK|WCLOCKE)
 </code></pre>
 
 #### Emit event
 
-* External events:
-:
-: For [[#sec.stmts.decls.external|external events]], the assignment expression is obligatory and represents the trigger value of the event (unless the event is of type <tt>void</tt>).
-:
-: An emit on an output event returns immediately a status code of the action that runs asynchronously with the program.
+Emit statements with [internal](#internal) or [external](#external) events 
+expect parameters that match the event type (unless the event is of type 
+`void`).
+
+Examples:
+
+<pre><code>output int E;
+emit E => 1;
+
+event (int,int) e;
+emit e => (1,2);
+</code></pre>
+
+External input events can only be emitted inside [asynchronous 
+blocks](#asynchronous-blocks).
+
+TODO: EmitExt evaluates to "int"
+<!--
+: An emit on an output event returns immediately a status code of the action 
+that runs asynchronously with the program.
 : Both the status code and that asynchronous actions are platform dependent. The status code is always of type <tt>int</tt>.
 :
 : Example:
@@ -770,105 +820,105 @@ if not emit Send(1) then
 end
 </code></pre>
 :
-: Input events can only be emitted inside [[#sec.stmts.asyncs|asyncs]] for the [[#sec.stmts.asyncs.simulation|simulation]] of programs.
+-->
 
-* Internal events:
-:
-: For [[#sec.stmts.decls.internal|internal events]], the assignment expression is optional, and evaluates *before* the <tt>emit</tt>.
-: The two following are equivalent:
-:
-    emit a(4);
-and
-    a = 4;
-    emit a();
-:
-: The emit on an internal event suspends and resumes only after all the corresponding awaiting statements react to it. See also Section [[#Execution model]] for a precise description.
-:
-: Internal emits have no return status and cannot be used as expressions.
-
-<span id="sec.stmts.events.emit.wclock"></span>
+TODO: stack/queue
 
 #### Emit time
 
-The <tt>WCLOCKK</tt> and <tt>WCLOCKE</tt> parameters refer to *wall-clock* time, as described in Section [[#Await statements]].
+Emit statements with *wall-clock* time expect expressions with units of time, 
+as described in [Await time](#await-time).
 
-Just like for [[#sec.stmts.decls.external|input events]], wall-clock time can only be emitted inside [[#sec.stmts.asyncs|asyncs]].
-
-<!------------------------------------------------------------>
-
-<span id="sec.stmts.flow"></span>
+Like input events, time can only be emitted inside [asynchronous 
+blocks](#asynchronous-blocks).
 
 Flow control
 ------------
 
 ### if-then-else
 
-Céu provides an <tt>if–then–else</tt> statement as follows:
+Conditional flow uses the `if-then-else` statement:
 
 <pre><code>If ::= <b>if</b> Exp <b>then</b>
            Block
-       (<b>else/if</b> Exp <b>then</b>
-           Block)*
-       (<b>else</b>
-           Block)?
+       { <b>else/if</b> Exp <b>then</b>
+           Block }
+       [ <b>else</b>
+           Block ]
        <b>end</b>
 </code></pre>
 
-The if–then–else statement executes the block following <tt>then</tt> if the condition expression evaluates to a non-zero value.
-Otherwise, it retries the process with the (optional) <tt>else/if</tt> alternatives.
-Finally, it they all fail, the block following the (optional) <tt>else</tt> is executed.
-
-*Note: the condition is not required to be surrounded by parenthesis.*
-
-<span id="sec.stmts.loop"></span>
+The block following `then` executes if the condition expression after the `if` 
+evaluates to a non-zero value.
+Otherwise, the same process holds each `else/if` alternative.
+Finally, it they all fail, the block following the `else` executes.
 
 ### loop
 
-The <tt>loop</tt> statement continuously executes the block on its body until it reaches its specified limit or a <tt>break</tt> statement.
+A `loop` continuously executes its body block:
 
-<pre><code>Loop ::= <b>loop</b> (ID_var (`,` Exp)?)? <b>do</b> Block <b>end</b>
+<pre><code>Loop ::= <b>loop</b> [ ID_var [<b>in</b> Exp] ] <b>do</b>
+             Block
+         <b>end</b>
 </code></pre>
 
-The optional variable is automatically declared and initialized with zero.
-Its visibility is restricted to the loop body.
-The variable is read-only, but is automatically incremented after each iteration of the loop.
-
-The optional limiting expression is evaluated once, before the loop starts.
-If no limiting expression is specified, the loop runs forever.
+A `loop` terminates when reaches a `break` in its body or when the specified 
+iterator terminates.
 
 #### break
 
-The <tt>break</tt> statement escapes the innermost enclosing loop.
+A `break` escapes the innermost enclosing loop.
 
 Example:
-<pre><code>loop do                   // loop 1
+
+<pre><code><b>loop do</b>                   // loop 1
     ...
-    loop do               // loop 2
-        if cond then
-            break;        // escapes loop 2
-        end
-    end
+    <b>loop do</b>               // loop 2
+        <b>if</b> cond-1 <b>then</b>
+            <b>break</b>;        // escapes loop 2
+        <b>end</b>
+    <b>end</b>
     ...
-    if cond 2 then
-        break;            // escapes loop 1
-    end
+    <b>if</b> cond-2 <b>then</b>
+        <b>break</b>;            // escapes loop 1
+    <b>end</b>
     ...
-end
+<b>end</b>
 </code></pre>
 
-<!------------------------------------------------------------>
+#### Iterators
+
+##### Incremental index
+
+For iterators with `Exp` empty or of type `int`, the `ID_var` is incremented 
+after each loop iteration.
+`ID_var` is automatically declared read-only, with visibility restricted to the 
+loop body, and is initialized to zero.
+The optional `Exp`, which is evaluated once before the loop starts, limits the 
+number of iterations.
+
+##### Pool instances
+
+TODO
+
+#### every
+
+TODO
 
 Parallel compositions
 ---------------------
 
-The parallel statements <tt>par/and</tt>, <tt>par/or</tt>, and <tt>par</tt> split the running trail in multiple others.
-They differ only on how trails rejoin in the future.
+The parallel statements `par/and`, `par/or`, and `par` split the running trail 
+in multiple others.
+They differ only on how trails terminate (rejoin).
 
-See also Section [[#Execution model]] for a detailed description of parallel execution.
+See [Execution model](#execution-model) for a detailed description of parallel 
+execution.
 
 ### par/and
 
-The <tt>par/and</tt> statement stands for *parallel-and*, meaning that the trails in parallel rejoin only after *all of them terminate*.
+The `par/and` statement stands for *parallel-and* and rejoins when all trails 
+terminate:
 
 <pre><code>ParAnd ::= <b>par/and</b> <b>do</b>
                Block
@@ -879,7 +929,8 @@ The <tt>par/and</tt> statement stands for *parallel-and*, meaning that the trail
 
 ### par/or
 
-The <tt>par/or</tt> statement stands for *parallel-or*, meaning that the trails in parallel rejoin after *any of them terminate*.
+The `par/or` statement stands for *parallel-or* and rejoins when any of the 
+trails terminate:
 
 <pre><code>ParOr ::= <b>par/or</b> <b>do</b>
               Block
@@ -890,7 +941,8 @@ The <tt>par/or</tt> statement stands for *parallel-or*, meaning that the trails 
 
 ### par
 
-The <tt>par</tt> statement never rejoins and should be used when the trails in parallel are supposed to run forever (e.g. a <tt>loop</tt> without <tt>break</tt>).
+The `par` statement never rejoins and should be used when the trails in 
+parallel are supposed to run forever:
 
 <pre><code>Par ::= <b>par</b> <b>do</b>
             Block
@@ -909,89 +961,99 @@ TODO
 Asynchronous execution
 ----------------------
 
+Asynchronous execution permit that programs execute time consuming computations 
+without interfering with the *synchronous side* of applications (i.e., 
+everything, except asynchronous statements).
+
 ### Asynchronous blocks
 
-Asynchronous blocks (*asyncs*) permit that programs in Céu execute time consuming computations without interfering with reactions to input events (referred to as the *synchronous side* of applications).
-The syntax for asyncs is as follows:
+Asynchronous blocks are the simplest alternative for asynchronous execution:
 
-<pre><code>Async   ::= <b>async</b> ( `(` VarList `)` )? <b>do</b> Block 
-<b>end</b>
-VarList ::= ID_var (`,` ID_var)*
+<pre><code>Async ::= <b>async</b> [RefVarList] <b>do</b>
+              Block
+          <b>end</b>
+
+RefVarList ::= `(´ [`&´] ID_var { `,´ [`&´] ID_var } `)´
 </code></pre>
 
-An async body can contain non-awaiting loops (*tight loops*), which are [[#sec.model.constraints.bounded|disallowed]] on the synchronous side to ensure that programs remain reactive.
+An `async` body can contain non-awaiting loops (*tight loops*), which are 
+[disallowed](#bounded) on the synchronous side to ensure that programs remain 
+reactive.
 
-The optional list of variables can be used to copy values from the current scope to be used inside the async body.
-Each identifier that appears on the list is automatically declared as new variable in the async body and initialized with the value of the variable with the same name in the current scope.
+The optional list of variables copies values between the synchronous and 
+asynchronous scopes.
+With the prefix `&`, the variable is passed by reference and can be altered 
+from inside the `async`.
 
-The following example executes a long computation inside an async in order to keep the program reactive.
+The next example uses an `async` to execute a time-consuming computation, 
+keeping the synchronous side reactive.
 In a parallel trail, the program awaits one second to kill the computation if it takes too long:
 
-<pre><code>var int fat;
-var int Value;
-par/or do
-    var int v = await Value;
+<pre><code><b>var int</b> fat;
+<b>par/or do</b>
+    <b>var int</b> v = ...
 
     // calculates the factorial of v
-    fat = async (v) do
-        var int fat = 1;
-        loop i, v do   // a tight loop
+    fat = <b>async</b> (v) <b>do</b>
+        <b>var int</b> fat = 1;
+        <b>loop</b> i <b>in</b> v <b>do</b>   // a tight loop
             // v varies from 0 to (v-1)
             fat = fat * (i+1);
-        end
-        return fat;
-    end;
-with
-    await 1s;          // watchdog to kill the async if it takes too long
+        <b>end</b>
+        <b>return</b> fat;
+    <b>end</b>;
+<b>with</b>
+    <b>await</b> 1s;          // watchdog to kill the async if it takes too long
     fat = 0;
-end
-return fat;
+<b>end</b>
+<b>return</b> fat;
 </code></pre>
 
-The following restrictions are imposed to asyncs:
+An `async` has the following restrictions:
 
-* Asyncs only execute when there are no pending reactions to input events.
-* Asyncs are suspended whenever a new input event occurs.
-* Asyncs cannot use parallel compositions.
-* Asyncs cannot nest other asyncs.
-* Asyncs cannot await events.
-* Asyncs cannot emit internal events.
-* Asyncs do not share memory with the synchronous side.
+1. Only executes if there are no pending input events.
+2. Yields control on every `loop` iteration on its body.
+3. Cannot use parallel compositions.
+4. Cannot nest other asyncs.
+5. Cannot `await` events.
+6. Cannot `emit` internal events.
 
-A lower priority for asyncs is fundamental to ensure that input events are handled as fast as possible.
+<!--
+A lower priority for `async` is fundamental to ensure that input events are 
+handled as fast as possible.
+-->
 
 #### Simulation
 
-As asyncs run *detached* from the synchronous side, they are allowed to trigger [[#sec.stmts.events.emit.event|input events]] and the [[#sec.stmts.events.emit.wclock|passage of time]], providing a way to test programs in the own language:
+An `async` is allowed to trigger [input events](#emit-event) and the [passage 
+of time](#emit-time), providing a way to test programs in the language itself:
 
-<pre><code>input int A;
+<pre><code><b>input int</b> A;
 
 // tests a program with a simulation in parallel
-par do
+<b>par do</b>
 
     // original program
-    var int v = await A;
-    loop do
-        await 10ms;
-        _printf("v = %d\n", v);
-        v = v + 1;
-    end
+    <b>var int</b> v = <b>await</b> A;
+    <b>loop i do</b>
+        <b>await</b> 10ms;
+        _printf("v = %d\n", v+i);
+    <b>end</b>
 
-with
+<b>with</b>
 
     // input simulation
-    async do
-        emit A(0);      // initial value for `v'
-        emit 1s35ms;    // the loop executes 103 times
-    end
-    return 0;
-end
-
-// (try online!)
+    <b>async do</b>
+        <b>emit</b> A(0);      // initial value for "v"
+        <b>emit</b> 1s35ms;    // the loop executes 103 times
+    <b>end</b>
+    <b>return</b> 0;
+<b>end</b>
 </code></pre>
 
-Whenever an async emits an event, it is suspeded due to its low priority compared to synchronous code.
-The example prints the message exactly 103 times.
+Every time the `async` emits an event, it suspends (due to rule `1` of previous 
+section).
+The example prints the `v = <v+i>` message exactly 103 times.
 
 ### Threads
 
@@ -1011,18 +1073,18 @@ Whatever is written inside a C block is placed on the top of the final output of
 
 Example:
 
-<pre><code>native _assert(), _inc();
-native do
+<pre><code>
+<b>native do</b>
     #include <assert.h>
     int inc (int i) {
         return i+1;
     }
-end
+<b>end</b>
 _assert(_inc(0) == 1);
 </code></pre>
 
-If the code in C contains the terminating <tt>end</tt> keyword of Céu, the 
-native block must be delimited with a custom comment to avoid confusing the 
+If the code in C contains the terminating `end` keyword of Céu, the `native`
+block should be delimited with any matching comments to avoid confusing the 
 parser:
 
 <pre><code>native do
@@ -1035,9 +1097,37 @@ end
 Expressions
 ===========
 
-Besides [[#sec.lex.literals|constants]], [[#sec.stmts.decls.variables|variables]], [[#sec.stmts.C|C symbols]], [[#sec.stmts.events.emit.event|output emits]], and [[#sec.stmts.C.calls|function calls]], Céu supports a wide range of expressions.
+The syntax for expressions in Céu is as follows:
 
-Most operators and expressions in Céu follow the same semantics of C.
+<code><pre>Exp ::= Prim
+     |  Exp (<b>or</b>|<b>and</b>) Exp
+     |  Exp (`|´|`^´|`&´) Exp
+     |  Exp (`!=´|`==´) Exp
+     |  Exp (`<=´|`<´|`>´|`>=´) Exp
+     |  Exp (`<<´|`>>´) Exp
+     |  Exp (`+´|`-´) Exp
+     |  Exp (`*´|`/´|`%´) Exp
+     |  <b>not</b> Exp
+     |  `&´ Exp
+     |  (`-´|`+´) Exp
+     |  `~´ Exp
+     |  `*´ Exp
+     |  `(´ Type `)´ Exp
+     |  Exp `(´ [ExpList] `)´ [<b>finalize with</b> Block <b>end</b>]
+     |  Exp `[´ Exp `]´
+     |  Exp (`.´|`:´) ID
+
+Prim ::= `(´ Exp `)´
+      |  Sizeof
+      |  ID_var | ID_nat
+      |  <b>null</b> | NUM | String
+      |  <b>global</b> | <b>this</b> | <b>outer</b>
+      |  (<b>call</b> | <b>call/rec</b>) Exp
+</code></pre>
+
+TODO: RawExp
+
+Most operators follow the same semantics of C.
 
 *Note: assignments are not expressions in Céu.*
 
@@ -1090,10 +1180,10 @@ which correspond to *not*, *and*, *or*, *xor*, *left-shift*, and *right-shift*.
 Vector indexing
 ---------------
 
-Céu uses square brackets to index [[#sec.stmts.decls.variables|vectors]]:
+Céu uses square brackets to index [vectors](#Vectors):
 
 ```
-Index ::= Exp `[` Exp `]`
+Index ::= Exp `[´ Exp `]´
 ```
 
 The expression on the left side is expected to evaluate to a vector.
@@ -1107,38 +1197,45 @@ Pointers
 The operator `*` dereferences its pointer operand, while the operator `&amp;` returns a pointer to its operand:
 
 ```
-Deref ::= `*` Exp
-Ref   ::= `&` Exp
+Deref ::= `*´ Exp
+Ref   ::= `&´ Exp
 ```
 
 The operand to `&amp;` must be an [[#sec.exps.assignable|assignable expression]].
 
-Structs
--------
+Fields
+------
 
-The operators `.` and `:` access the fields of structs.
+### Structs
+
+The operators `.´ and `:´ access the fields of structs.
 
 ```
-Dot   ::= Exp `.` Exp
-Colon ::= Exp `:` Exp
+Dot   ::= Exp `.´ Exp
+Colon ::= Exp `:´ Exp
 ```
 
-The operator `.` expects a struct as its left operand, while the operator `:` expects a reference to a struct.
+The operator `.` expects a `struct` as its left operand, while the operator `:` 
+expects a reference to a `struct`.
 
 Example:
 
-<pre><code>native do
+<pre><code><b>native do</b>
     typedef struct {
         int v;
     } mystruct;
 end
-var _mystruct s;
-var _mystruct* p = &s;
+<b>var</b> _mystruct s;
+<b>var</b> _mystruct* p = &s;
 s.v = 1;
 p:v = 0;
 </code></pre>
 
-*Note: structs must be declared in C, as Céu currently has no support for it.*
+*Note: `struct` must be declared in C, as Céu currently has no support for it.*
+
+### Organisms
+
+TODO
 
 Type casting
 ------------
@@ -1146,7 +1243,7 @@ Type casting
 Céu uses angle brackets for type casting:
 
 </code></pre>
-Cast ::= `<` ID_type `>`
+Cast ::= `<´ ID_type `>´
 </code></pre>
 
 Sizeof
@@ -1154,7 +1251,7 @@ Sizeof
 
 A <tt>sizeof</tt> expression returns the size of a type, in bytes:
 
-<pre><code>Sizeof ::= `sizeof` `<` ID_type `>`
+<pre><code>Sizeof ::= `sizeof´ `<´ ID_type `>´
 </code></pre>
 
 The expression is evaluated at compile time.
@@ -1206,19 +1303,20 @@ An assignable expression (also known as an *l-value*) can be a variable, vector 
 L-values are required in [[#sec.stmts.assignments|assignments]] and [[#sec.exps.pointers|references]].
 
 Examples:
-<pre><code>var int a;
+
+<pre><code><b>var int</b> a;
 a = 1;
 
-var int[2] v;
+<b>var int</b>[2] v;
 v[0] = 1;
 
-var int* p;
+<b>var int</b>* p;
 *p = 1;
 
-var _mystruct s;
+<b>var</b> _mystruct s;
 s.v = 1;
 
-var _mystruct* ps;
+<b>var</b> _mystruct* ps;
 ps:v = 1;
 </code></pre>
 
@@ -1270,9 +1368,10 @@ return v;
 Initially, the trails in parallel are awaiting `A` and `B` to return different values.
 If the event `A` occurs, the composition yields `1`, killing the trail awaiting `B`.
 
-See Section [[#Rejoining of tracks]] for the detailed semantics of rejoins.
+See [[#Rejoining of tracks]] for the detailed semantics of rejoins.
 
-See Section [[#Deterministic execution]] for information on how Céu avoids non-determinism in parallel compositions.
+See [[#Deterministic execution]] for information on how Céu avoids 
+non-determinism in parallel compositions.
 -->
 
 <!------------------------------------------------------------>
