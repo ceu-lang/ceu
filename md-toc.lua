@@ -48,7 +48,7 @@ for _, t in ipairs(T) do
         t[3] = idx
         idx = toc[#toc]
     local lnk = string.lower(string.gsub(v,' ','-'))
-    v = spc..idx..' ['..v..'](#'..lnk..')'
+    v = spc..idx..'. ['..v..'](#'..lnk..')'
     print(v)
     TOC = TOC .. v .. '\n'
 end
