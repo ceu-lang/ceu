@@ -28,12 +28,21 @@ end
 local MANUAL = assert(io.open('manual.md')):read'*a'
 local T = { P(G):match(MANUAL) }
 
+local TOC = [[
+<style media="screen" type="text/css">
+OL { counter-reset: item }
+LI { display: block }
+LI:before { content: counters(item, ".") " "; counter-increment: item }
+</style>
+<ol>
+]]
+
 local toc = { 0 }
-local TOC = ''
 for _, t in ipairs(T) do
     local i, v = unpack(t)
     if i < #toc then
         for j=i+1, #toc do
+            TOC = TOC .. '</li></ol>'
             toc[j] = nil
         end
     end
@@ -42,15 +51,19 @@ for _, t in ipairs(T) do
     else
         assert(i > #toc)
         toc[#toc+1] = 1
+        TOC = TOC .. '<ol>'
     end
     local spc = string.rep(' ',i*4-4)
     local idx = table.concat(toc,'.')
         t[3] = idx
-        idx = toc[#toc]
-    local lnk = string.lower(string.gsub(v,' ','-'))
-    v = spc..idx..'. ['..v..'](#'..lnk..')'
+        idx = ''--toc[#toc]
+    local lnk = string.lower(string.gsub(string.gsub(v,'/',''),' ','-'))
+    v = spc..'<li>'..idx..' ['..v..'](#'..lnk..')'
     print(v)
     TOC = TOC .. v .. '\n'
+end
+for _ in ipairs(toc) do
+    TOC = TOC .. '</li></ol>'
 end
 
 local f = assert(io.open('manual-toc.md','w'))
