@@ -20,8 +20,8 @@ G = {
 for lvl=1, 6 do
     local hi = 'h'..lvl
     local str = P(string.rep('#',lvl))
-    G[hi] = G[hi] + P'\n' * str * P' '^1 *
-                        Cp() * C((P(1) - (P' '^-1 * (str+'\n')))^0)
+    G[hi] = G[hi] + P'\n' * Cp() * str * P' '^1 *
+                        C((P(1) - (P' '^-1 * (str+'\n')))^0)
     G[hi] = G[hi] / function(pos, v) return {lvl,pos,v} end
 end
 
@@ -55,7 +55,9 @@ end
 for i=#T, 1, -1 do
     local t = T[i]
     local lvl, pos, v, idx = unpack(t)
-    MANUAL = string.sub(MANUAL,1,pos-1)..' '..idx..'. '..string.sub(MANUAL,pos)
+    MANUAL = string.sub(MANUAL,1,pos-1)..
+                '<font size="+'..(7-lvl)..'">'..idx..'</font>\n'..
+             string.sub(MANUAL,pos)
 end
 
 local f = assert(io.open('manual-toc.md','w'))
