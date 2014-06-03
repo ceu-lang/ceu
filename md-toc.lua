@@ -45,6 +45,8 @@ for _, t in ipairs(T) do
     end
     local spc = string.rep(' ',i*4-4)
     local idx = table.concat(toc,'.')
+        t[3] = idx
+        idx = toc[#toc]
     local lnk = string.lower(string.gsub(v,' ','-'))
     v = spc..idx..' ['..v..'](#'..lnk..')'
     print(v)
