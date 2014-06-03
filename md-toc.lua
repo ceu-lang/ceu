@@ -1,69 +1,61 @@
 require 'lpeg'
-local P, C, V = lpeg.P, lpeg.C, lpeg.V
+local P, C, V, Cp = lpeg.P, lpeg.C, lpeg.V, lpeg.Cp
 
 G = {
     [1] = (V'h1' + V'h2' + V'h3' + V'h4' + V'h5' + V'h6' + 1)^0
-    ,
-    h1 = P'\n' * C((P(1)-'\n')^1) * '\n' * '==='
-    ,
-    h2 = P'\n' * C((P(1)-'\n')^1) * '\n' * '---'
-    ,
+,
+    h1 = P'\n' * Cp() * C((P(1)-'\n')^1) * '\n' * '==='
+,
+    h2 = P'\n' * Cp() * C((P(1)-'\n')^1) * '\n' * '---'
+,
     h3 = P(false)
-    ,
+,
     h4 = P(false)
-    ,
+,
     h5 = P(false)
-    ,
+,
     h6 = P(false)
 }
 
-for i=1, 6 do
-    local hi = 'h'..i
-    local str = P(string.rep('#',i))
+for lvl=1, 6 do
+    local hi = 'h'..lvl
+    local str = P(string.rep('#',lvl))
     G[hi] = G[hi] + P'\n' * str * P' '^1 *
-                        C((P(1) - (P' '^-1 * (str+'\n')))^0)
-    G[hi] = G[hi] / function(v) return {i,v} end
+                        Cp() * C((P(1) - (P' '^-1 * (str+'\n')))^0)
+    G[hi] = G[hi] / function(pos, v) return {lvl,pos,v} end
 end
 
 local MANUAL = assert(io.open('manual.md')):read'*a'
 local T = { P(G):match(MANUAL) }
 
-local TOC = [[
-<style media="screen" type="text/css">
-OL { counter-reset: item }
-LI { display: block }
-LI:before { content: counters(item, ".") " "; counter-increment: item }
-</style>
-<ol>
-]]
-
 local toc = { 0 }
+local TOC = ''
 for _, t in ipairs(T) do
-    local i, v = unpack(t)
-    if i < #toc then
-        for j=i+1, #toc do
-            TOC = TOC .. '</li></ol>'
+    local lvl, pos, v = unpack(t)
+    if lvl < #toc then
+        for j=lvl+1, #toc do
             toc[j] = nil
         end
     end
-    if i == #toc then
-        toc[i] = toc[i] + 1
+    if lvl == #toc then
+        toc[lvl] = toc[lvl] + 1
     else
-        assert(i > #toc)
+        assert(lvl > #toc)
         toc[#toc+1] = 1
-        TOC = TOC .. '<ol>'
     end
-    local spc = string.rep(' ',i*4-4)
+    local spc = string.rep(' ',lvl*4-4)
     local idx = table.concat(toc,'.')
-        t[3] = idx
-        idx = ''--toc[#toc]
-    local lnk = string.lower(string.gsub(string.gsub(v,'/',''),' ','-'))
-    v = spc..'<li>'..idx..' ['..v..'](#'..lnk..')'
+        t[4] = idx
+    local lnk = string.lower(string.gsub(v,' ','-'))
+    v = spc..'* '..idx..' ['..v..'](#'..lnk..')'
     print(v)
     TOC = TOC .. v .. '\n'
 end
-for _ in ipairs(toc) do
-    TOC = TOC .. '</li></ol>'
+
+for i=#T, 1, -1 do
+    local t = T[i]
+    local lvl, pos, v, idx = unpack(t)
+    MANUAL = string.sub(MANUAL,1,pos-1)..' '..idx..'. '..string.sub(MANUAL,pos)
 end
 
 local f = assert(io.open('manual-toc.md','w'))
