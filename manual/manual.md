@@ -11,38 +11,188 @@ rawexp, luaexp
 Introduction
 ============
 
-Céu is a reactive language targeted at embedded systems and intended to offer a 
+Céu is a language targeting reactive applications, aiming to offer a 
 higher-level and safer alternative to C.
 Reactive applications interact continuously with the environment and are mostly 
 guided through input events from it.
 
-Céu supports multiple lines of execution, known as *trails*, which are allowed 
-to share variables in a safe and seamless way (e.g. no need for locks or 
-semaphores).
+Céu is a concurrent language in which multiple lines of execution---known as 
+*trails*---continuously react to input events from the environment.
+Waiting for an event halts the running trail until that event occurs.
+The environment broadcasts an occurring event to all active trails, which share 
+a single global time reference (the event itself).
 The synchronous concurrency model of Céu greatly diverges from conventional 
-multithreading (e.g. *pthreads*) and the actor model (e.g. *erlang*):
-
-In Céu, trails execute synchronized in reaction to a single input event at a 
-time, being impossible to have trails reacting to different events.
-The disciplined step-by-step execution in Céu enables a rigorous analysis that 
-guarantees at compile time that programs are completely race free.
+multithreading (e.g. *pthreads*) and the actor model (e.g. *erlang*).
+For instance, trails can share variables in a safe and seamless way (e.g. no 
+need for locks or semaphores).
+See the [execution model of Céu](#execution-model).
 
 Céu integrates well with C, being possible to define and call C functions from 
 within Céu programs.
 
+Céu is [free software](#license).
+
 <!--
 Céu has a memory footprint of around 2Kb of ROM and 50b of RAM (on embedded 
 platform such as Arduino).
--->
-
-Céu is [free software](#license).
 
 For a gentle introduction about Céu, see the [interactive 
 tutorial](http://www.ceu-lang.org/try.php).
 
-See also the complete [Syntax](#syntax) of Céu for further reference.
+See also the complete [Syntax](#syntax) of Céu.
+-->
 
-Lexical Rules
+Execution model
+===============
+
+Céu is grounded on a precise definition of *logical time* as a discrete 
+sequence of external input events:
+a sequence because only a single input event is handled at a logical time; 
+discrete because reactions to events are guaranteed to execute in bounded time 
+(here the *physical* notion of time, see [Bounded 
+execution](#bounded-execution)).
+
+The execution model for Céu programs is as follows:
+
+1. The program initiates the *boot reaction* in a single trail.
+2. Active trails, one after another, execute until they await or terminate.
+      This step is named a *reaction chain*, and always runs in bounded time.
+3. The program goes idle and the environment takes control.
+4. On the occurrence of a new external input event, the environment awakes 
+      *all* trails awaiting that event.
+      It then goes to step 2.
+
+The synchronous execution model of Céu is based on the hypothesis that internal 
+reactions run *infinitely faster* in comparison to the rate of external events.
+An internal reaction is the set of computations that execute when an external 
+event occurs.
+Conceptually, a program takes no time on step 2 and is always idle on step 3.
+In practice, if a new external input event occurs while a reaction chain is 
+running (step 2), it is enqueued to run in the next reaction.
+When multiple trails are active at a logical time (i.e. awaking on the same 
+event), Céu schedules them in the order they appear in the program text.
+This policy is somewhat arbitrary, but provides a priority scheme for trails, 
+and also ensures deterministic and reproducible execution for programs.
+Note that, at any time, at most one trail is executing.
+
+The program and diagram that follows illustrate the behavior of the scheduler 
+of Céu:
+
+<pre><code> 1:  <b>input void</b> A, B, C;
+ 2:  <b>par/and do</b>
+ 3:      // trail 1
+ 4:      &lt;...&gt;         // &lt;...&gt; represents non-awaiting statements
+ 5:      <b>await</b> A;
+ 6:      &lt;...&gt;
+ 7:  <b>with</b>
+ 8:      // trail 2
+ 9:      &lt;...&gt;
+10:      <b>await</b> B;
+11:      &lt;...&gt;
+12:  <b>with</b>
+13:      // trail 3
+14:      &lt;...&gt;
+15:      <b>await</b> A;
+16:      &lt;...&gt;
+17:      <b>await</b> B;
+18:      <b>par/and do</b>
+19:          // trail 3
+20:          &lt;...&gt;
+21:      <b>with</b>
+22:          // trail 4
+23:          &lt;...&gt;
+24:      <b>end</b>
+25:  <b>end</b>
+</code></pre>
+
+![a](reaction.png)
+
+The program starts in the boot reaction and is split in three trails.
+Following the order of declaration, the scheduler first executes *trail-1*
+until it awaits `A` in line 5;
+then *trail-2* executes until it awaits `B` in line 10;
+then *trail-3* is scheduled and also awaits `A`, in line 15.
+%
+As no other trails are pending, the reaction chain terminates and the scheduler 
+remains idle until the occurrence of `A`:
+*trail-1* awakes, executes and terminates;
+and then *trail-3* executes and waits for `B` in line 17.
+*Trail-2* remains suspended, as it is not awaiting `A`.
+%
+During this reaction, new instances of events `A`, `B`, and `C` occur and are 
+enqueued to be handled in the reactions that follow.
+%
+As `A` happened first, it is used in the next reaction.
+However, no trails are awaiting it, so an empty reaction chain takes place.
+%
+The next reaction dequeues event `B`:
+*trail-2* awakes, executes and terminates;
+then *trail-3* is split in two and both terminate.
+%
+The program terminates and does not react to the pending event `C`.
+% (the \code{par/and}, to be introduced in the next section, rejoins when its 
+%sub-trails terminate).
+%
+Note that each step in the logical time line (*t0*, *t1*, etc.) is identified 
+by the event it handles.
+Inside a reaction, trails only react to that identifying event (or remain 
+suspended).
+
+TODO: ints
+<!--
+A reaction chain may also contain emissions and reactions to internal events, 
+which are presented in Section~\ref{sec.ceu.ints}.
+-->
+
+Bounded execution
+-----------------
+
+Reaction chains should run in bounded time to guarantee that programs are 
+responsive and can handle upcoming input events from the environment.
+Céu requires that each possible path in a loop body contains at least one 
+`await` or `break` statement, thus avoiding *tight loops* (i.e., unbounded 
+loops that do not await).
+
+In the example that follows, the `if` true branch may never execute, resulting 
+in a tight loop (which the compiler complains about):
+
+<pre><code><b>loop do</b>
+    <b>if</b> &lt;cond&gt; <b>then</b>
+        <b>break</b>;
+    <b>end</b>
+<b>end</b>
+</code></pre>
+
+For time-consuming algorithms that require unrestricted loops (e.g., 
+cryptography, image processing), Céu provides [Asynchronous 
+execution](#asynchronous-execution).
+
+Parallel compositions and abortion
+----------------------------------
+
+The use of trails in parallel allows programs to wait for multiple events at 
+the same time.
+Céu supports three kinds of parallel constructs differing in how they rejoin 
+(to proceed to the statement in sequence):
+
+1. a `par/and` rejoins after all trails in parallel terminate;
+2. a `par/or` rejoins after any trail in parallel terminates;
+3. a `par` never rejoins (even if all trails terminate).
+
+The termination of a trail inside a `par/or` aborts the other trails in 
+parallel, which must be necessarily awaiting (from rule 2 of [Execution 
+model](#execution-model)).
+Before aborting, a trail has a last opportunity to execute all active 
+[finalization statements](finalization).
+
+<!--
+Shared-memory concurrency
+-------------------------
+
+TODO
+-->
+
+Lexical rules
 =============
 
 Keywords
@@ -476,7 +626,7 @@ TODO
 
 TODO
 
-#### Interrupt Service Routines
+#### Interrupt service routines
 
 TODO
 
@@ -1394,6 +1544,11 @@ TODO
 
 <!--
 
+In Céu, trails execute synchronized in reaction to a single input event at a 
+time, being impossible to have trails reacting to different events.
+The disciplined step-by-step execution in Céu enables a rigorous analysis that 
+guarantees at compile time that programs are completely race free.
+
 === Rejoining of trails ===
 
 A [[#sec.stmts.parallel.par/or|par/or]], [[#sec.stmts.loop|loop]], or [[#sec.stmts.assignments.block|block assignment]] may terminate (rejoin) concurrently from different trails in parallel.
@@ -1807,3 +1962,30 @@ Prim ::= `(´ Exp `)´
     ()    []    :    .     // call, index
 
 </code></pre>
+
+License
+=======
+
+Céu is distributed under the MIT license reproduced below:
+
+```
+ Copyright (C) 2012 Francisco Sant'Anna
+ 
+ Permission is hereby granted, free of charge, to any person obtaining a copy of
+ this software and associated documentation files (the "Software"), to deal in
+ the Software without restriction, including without limitation the rights to
+ use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ of the Software, and to permit persons to whom the Software is furnished to do
+ so, subject to the following conditions:
+ 
+ The above copyright notice and this permission notice shall be included in all
+ copies or substantial portions of the Software.
+ 
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ SOFTWARE.
+```

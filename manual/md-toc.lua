@@ -55,8 +55,7 @@ end
 for i=#T, 1, -1 do
     local t = T[i]
     local lvl, pos, v, idx = unpack(t)
-    MANUAL = string.sub(MANUAL,1,pos-1)..
-                '<font size="+'..(7-lvl)..'">'..idx..'</font>\n'..
+    MANUAL = string.sub(MANUAL,1,pos-1)..string.rep('#',lvl+1)..' '..idx..'\n'..
              string.sub(MANUAL,pos)
 end
 
