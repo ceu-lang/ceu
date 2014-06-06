@@ -1,112 +1,118 @@
 * 1 [Introduction](#introduction)
-* 2 [Execution model](#execution-model)
-    * 2.1 [Bounded execution](#bounded-execution)
-    * 2.2 [Parallel compositions and abortion](#parallel-compositions-and-abortion)
-    * 2.3 [Shared-memory concurrency](#shared-memory-concurrency)
-* 3 [Lexical rules](#lexical-rules)
-    * 3.1 [Keywords](#keywords)
-    * 3.2 [Identifiers](#identifiers)
-    * 3.3 [Literals](#literals)
-        * 3.3.1 [Booleans](#booleans)
-        * 3.3.2 [Integers](#integers)
-        * 3.3.3 [Floats](#floats)
-        * 3.3.4 [Null pointer](#null-pointer)
-        * 3.3.5 [Strings](#strings)
-    * 3.4 [Comments](#comments)
-* 4 [Types](#types)
-    * 4.1 [Primitive types](#primitive-types)
-    * 4.2 [Native types](#native-types)
-    * 4.3 [Type modifiers](#type-modifiers)
-        * 4.3.1 [Pointers](#pointers)
-        * 4.3.2 [References](#references)
-        * 4.3.3 [Buffer pointers](#buffer-pointers)
-        * 4.3.4 [Vectors](#vectors)
-* 5 [Statements](#statements)
-    * 5.1 [Blocks](#blocks)
-        * 5.1.1 [do-end](#do-end)
-    * 5.2 [Nothing](#nothing)
-    * 5.3 [Declarations](#declarations)
-        * 5.3.1 [Variables](#variables)
-        * 5.3.2 [Events](#events)
-            * 5.3.2.1 [External events](#external-events)
-                * 5.3.2.1.1 [Requests](#requests)
-            * 5.3.2.2 [Internal events](#internal-events)
-        * 5.3.3 [Functions](#functions)
-            * 5.3.3.1 [Internal functions](#internal-functions)
-                * 5.3.3.1.1 [return](#return)
-            * 5.3.3.2 [External functions](#external-functions)
-            * 5.3.3.3 [Interrupt service routines](#interrupt-service-routines)
-        * 5.3.4 [Classes and Interfaces](#classes-and-interfaces)
-        * 5.3.5 [Pools](#pools)
-        * 5.3.6 [Native symbols](#native-symbols)
-        * 5.3.7 [Safe annotations](#safe-annotations)
-    * 5.4 [Assignments](#assignments)
-        * 5.4.1 [Simple assignment](#simple-assignment)
-        * 5.4.2 [Block assignment](#block-assignment)
-            * 5.4.2.1 [escape](#escape)
-        * 5.4.3 [Await assignment](#await-assignment)
-        * 5.4.4 [Emit assignment](#emit-assignment)
-        * 5.4.5 [Thread assignment](#thread-assignment)
-        * 5.4.6 [New & Spawn assignment](#new-&-spawn-assignment)
-    * 5.5 [Calls](#calls)
-        * 5.5.1 [Function calls](#function-calls)
-        * 5.5.2 [External calls](#external-calls)
-        * 5.5.3 [Native calls](#native-calls)
-    * 5.6 [Event handling](#event-handling)
-        * 5.6.1 [Await statements](#await-statements)
-            * 5.6.1.1 [Await event](#await-event)
-            * 5.6.1.2 [Await time](#await-time)
-            * 5.6.1.3 [Await FOREVER](#await-forever)
-        * 5.6.2 [Emit statements](#emit-statements)
-            * 5.6.2.1 [Emit event](#emit-event)
-            * 5.6.2.2 [Emit time](#emit-time)
-    * 5.7 [Flow control](#flow-control)
-        * 5.7.1 [if-then-else](#if-then-else)
-        * 5.7.2 [loop](#loop)
-            * 5.7.2.1 [break](#break)
-            * 5.7.2.2 [Iterators](#iterators)
-                * 5.7.2.2.1 [Incremental index](#incremental-index)
-                * 5.7.2.2.2 [Pool instances](#pool-instances)
-            * 5.7.2.3 [every](#every)
-    * 5.8 [Finalization](#finalization)
-    * 5.9 [Parallel compositions](#parallel-compositions)
-        * 5.9.1 [par/and](#par/and)
-        * 5.9.2 [par/or](#par/or)
-        * 5.9.3 [par](#par)
-        * 5.9.4 [watching](#watching)
-    * 5.10 [pause/if](#pause/if)
-    * 5.11 [Dynamic organisms](#dynamic-organisms)
-    * 5.12 [Asynchronous execution](#asynchronous-execution)
-        * 5.12.1 [Asynchronous blocks](#asynchronous-blocks)
-            * 5.12.1.1 [Simulation](#simulation)
-        * 5.12.2 [Threads](#threads)
-            * 5.12.2.1 [Synchronous blocks](#synchronous-blocks)
-    * 5.13 [Native blocks](#native-blocks)
-* 6 [Expressions](#expressions)
-    * 6.1 [Primary](#primary)
-    * 6.2 [Arithmetic](#arithmetic)
-    * 6.3 [Relational](#relational)
-    * 6.4 [Logical](#logical)
-    * 6.5 [Bitwise](#bitwise)
-    * 6.6 [Vector indexing](#vector-indexing)
-    * 6.7 [Pointers](#pointers)
-    * 6.8 [Fields](#fields)
-        * 6.8.1 [Structs](#structs)
-        * 6.8.2 [Organisms](#organisms)
-    * 6.9 [Type casting](#type-casting)
-    * 6.10 [Sizeof](#sizeof)
-    * 6.11 [Precedence](#precedence)
-    * 6.12 [Assignable expressions](#assignable-expressions)
-* 7 [Execution model](#execution-model)
-* 8 [Environment](#environment)
-    * 8.1 [C API](#c-api)
-        * 8.1.1 [Functions](#functions)
-        * 8.1.2 [Macros](#macros)
-        * 8.1.3 [Constants & Defines](#constants-&-defines)
-        * 8.1.4 [Types](#types)
-    * 8.2 [Compiler](#compiler)
-* 9 [Syntax](#syntax)
-* 10 [License](#license)
+    * 1.1 [Execution model](#execution-model)
+        * 1.1.1 [Parallel compositions and abortion](#parallel-compositions-and-abortion)
+        * 1.1.2 [Bounded execution](#bounded-execution)
+        * 1.1.3 [Deterministic execution](#deterministic-execution)
+* 2 [Lexical rules](#lexical-rules)
+    * 2.1 [Keywords](#keywords)
+    * 2.2 [Identifiers](#identifiers)
+    * 2.3 [Literals](#literals)
+        * 2.3.1 [Booleans](#booleans)
+        * 2.3.2 [Integers](#integers)
+        * 2.3.3 [Floats](#floats)
+        * 2.3.4 [Null pointer](#null-pointer)
+        * 2.3.5 [Strings](#strings)
+    * 2.4 [Comments](#comments)
+* 3 [Types](#types)
+    * 3.1 [Primitive types](#primitive-types)
+    * 3.2 [Native types](#native-types)
+    * 3.3 [Type modifiers](#type-modifiers)
+        * 3.3.1 [Pointers](#pointers)
+        * 3.3.2 [References](#references)
+        * 3.3.3 [Buffer pointers](#buffer-pointers)
+        * 3.3.4 [Vectors](#vectors)
+* 4 [Statements](#statements)
+    * 4.1 [Blocks](#blocks)
+        * 4.1.1 [do-end](#do-end)
+    * 4.2 [Nothing](#nothing)
+    * 4.3 [Declarations](#declarations)
+        * 4.3.1 [Variables](#variables)
+        * 4.3.2 [Events](#events)
+            * 4.3.2.1 [External events](#external-events)
+                * 4.3.2.1.1 [Requests](#requests)
+            * 4.3.2.2 [Internal events](#internal-events)
+        * 4.3.3 [Functions](#functions)
+            * 4.3.3.1 [Internal functions](#internal-functions)
+                * 4.3.3.1.1 [return](#return)
+            * 4.3.3.2 [External functions](#external-functions)
+            * 4.3.3.3 [Interrupt service routines](#interrupt-service-routines)
+        * 4.3.4 [Classes and Interfaces](#classes-and-interfaces)
+        * 4.3.5 [Pools](#pools)
+        * 4.3.6 [Native symbols](#native-symbols)
+        * 4.3.7 [Safe annotations](#safe-annotations)
+    * 4.4 [Assignments](#assignments)
+        * 4.4.1 [Simple assignment](#simple-assignment)
+        * 4.4.2 [Block assignment](#block-assignment)
+            * 4.4.2.1 [escape](#escape)
+        * 4.4.3 [Await assignment](#await-assignment)
+        * 4.4.4 [Emit assignment](#emit-assignment)
+        * 4.4.5 [Thread assignment](#thread-assignment)
+        * 4.4.6 [New & Spawn assignment](#new-&-spawn-assignment)
+    * 4.5 [Calls](#calls)
+        * 4.5.1 [Function calls](#function-calls)
+        * 4.5.2 [External calls](#external-calls)
+        * 4.5.3 [Native calls](#native-calls)
+    * 4.6 [Event handling](#event-handling)
+        * 4.6.1 [Await statements](#await-statements)
+            * 4.6.1.1 [Await event](#await-event)
+            * 4.6.1.2 [Await time](#await-time)
+            * 4.6.1.3 [Await FOREVER](#await-forever)
+        * 4.6.2 [Emit statements](#emit-statements)
+            * 4.6.2.1 [Emit event](#emit-event)
+            * 4.6.2.2 [Emit time](#emit-time)
+    * 4.7 [Flow control](#flow-control)
+        * 4.7.1 [if-then-else](#if-then-else)
+        * 4.7.2 [loop](#loop)
+            * 4.7.2.1 [break](#break)
+            * 4.7.2.2 [Iterators](#iterators)
+                * 4.7.2.2.1 [Incremental index](#incremental-index)
+                * 4.7.2.2.2 [Pool instances](#pool-instances)
+            * 4.7.2.3 [every](#every)
+    * 4.8 [Finalization](#finalization)
+    * 4.9 [Parallel compositions](#parallel-compositions)
+        * 4.9.1 [par/and](#par/and)
+        * 4.9.2 [par/or](#par/or)
+        * 4.9.3 [par](#par)
+        * 4.9.4 [watching](#watching)
+    * 4.10 [pause/if](#pause/if)
+    * 4.11 [Dynamic organisms](#dynamic-organisms)
+    * 4.12 [Asynchronous execution](#asynchronous-execution)
+        * 4.12.1 [Asynchronous blocks](#asynchronous-blocks)
+            * 4.12.1.1 [Simulation](#simulation)
+        * 4.12.2 [Threads](#threads)
+            * 4.12.2.1 [Synchronous blocks](#synchronous-blocks)
+    * 4.13 [Native blocks](#native-blocks)
+* 5 [Expressions](#expressions)
+    * 5.1 [Primary](#primary)
+    * 5.2 [Arithmetic](#arithmetic)
+    * 5.3 [Relational](#relational)
+    * 5.4 [Logical](#logical)
+    * 5.5 [Bitwise](#bitwise)
+    * 5.6 [Vector indexing](#vector-indexing)
+    * 5.7 [Pointers](#pointers)
+    * 5.8 [Fields](#fields)
+        * 5.8.1 [Structs](#structs)
+        * 5.8.2 [Organisms](#organisms)
+    * 5.9 [Type casting](#type-casting)
+    * 5.10 [Sizeof](#sizeof)
+    * 5.11 [Precedence](#precedence)
+    * 5.12 [Assignable expressions](#assignable-expressions)
+* 6 [Static analysis](#static-analysis)
+    * 6.1 [Types](#types)
+    * 6.2 [Loops](#loops)
+    * 6.3 [Finalization](#finalization)
+* 7 [Environment](#environment)
+    * 7.1 [The C API](#the-c-api)
+        * 7.1.1 [Types](#types)
+        * 7.1.2 [Functions](#functions)
+        * 7.1.3 [Macros and constants](#macros-and-constants)
+        * 7.1.4 [Functions](#functions)
+        * 7.1.5 [Macros](#macros)
+        * 7.1.6 [Constants & Defines](#constants-&-defines)
+        * 7.1.7 [Types](#types)
+    * 7.2 [Compiler](#compiler)
+* 8 [Syntax](#syntax)
+* 9 [License](#license)
 <title>Céu 0.8 - Reference Manual</title>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/></p>
 
@@ -152,9 +158,9 @@ tutorial](http://www.ceu-lang.org/try.php).
 See also the complete [Syntax](#syntax) of Céu.
 -->
 
-## 2
+### 1.1
 Execution model
-===============
+---------------
 
 Céu is grounded on a precise definition of *logical time* as a discrete 
 sequence of external input events:
@@ -185,6 +191,8 @@ event), Céu schedules them in the order they appear in the program text.
 This policy is somewhat arbitrary, but provides a priority scheme for trails, 
 and also ensures deterministic and reproducible execution for programs.
 Note that, at any time, at most one trail is executing.
+Trails are created with [parallel 
+compositions](#parallel-compositions-and-abortion).
 
 The program and diagram that follows illustrate the behavior of the scheduler 
 of Céu:
@@ -216,48 +224,65 @@ of Céu:
 25:  <b>end</b>
 </code></pre>
 
-![a](reaction.png)
+![](reaction.png)
 
-The program starts in the boot reaction and is split in three trails.
+The program starts in the boot reaction and is split in three trails (a 
+[`par/and`](#parallel-compositions-and-abortion) rejoins after all trails 
+terminate).
 Following the order of declaration, the scheduler first executes *trail-1*
-until it awaits `A` in line 5;
-then *trail-2* executes until it awaits `B` in line 10;
-then *trail-3* is scheduled and also awaits `A`, in line 15.
-%
+up to the `await A` in line 5;
+then *trail-2* executes up to the `await B` in line 10;
+then *trail-3*, up to `await A`, in line 15.
 As no other trails are pending, the reaction chain terminates and the scheduler 
-remains idle until the occurrence of `A`:
-*trail-1* awakes, executes and terminates;
-and then *trail-3* executes and waits for `B` in line 17.
-*Trail-2* remains suspended, as it is not awaiting `A`.
-%
+remains idle until the event `A` occurs:
+
+- *trail-1* awakes, executes and terminates;
+- *trail-2* remains suspended, as it is not awaiting `A`.
+- *trail-3* executes to `await B`, in line 17.
+
 During this reaction, new instances of events `A`, `B`, and `C` occur and are 
 enqueued to be handled in the reactions that follow.
-%
 As `A` happened first, it is used in the next reaction.
 However, no trails are awaiting it, so an empty reaction chain takes place.
-%
 The next reaction dequeues event `B`:
-*trail-2* awakes, executes and terminates;
-then *trail-3* is split in two and both terminate.
-%
-The program terminates and does not react to the pending event `C`.
-% (the \code{par/and}, to be introduced in the next section, rejoins when its 
-%sub-trails terminate).
-%
+
+- *trail-2* awakes, executes and terminates;
+- *trail-3* is split in two and both terminate.
+
+With all trails terminated, the program also terminates and does not react to 
+the pending event `C`.
 Note that each step in the logical time line (*t0*, *t1*, etc.) is identified 
 by the event it handles.
 Inside a reaction, trails only react to that identifying event (or remain 
 suspended).
 
-TODO: ints
+TODO (internal events: stack-based execution)
+
 <!--
 A reaction chain may also contain emissions and reactions to internal events, 
 which are presented in Section~\ref{sec.ceu.ints}.
 -->
 
-### 2.1
-Bounded execution
------------------
+#### 1.1.1
+### Parallel compositions and abortion
+
+The use of trails in parallel allows programs to wait for multiple events at 
+the same time.
+Céu supports three kinds of parallel constructs differing in how they rejoin 
+(to proceed to the statement in sequence):
+
+1. a `par/and` rejoins after all trails in parallel terminate;
+2. a `par/or` rejoins after any trail in parallel terminates;
+3. a `par` never rejoins (even if all trails terminate).
+
+The termination of a trail inside a `par/or` aborts the other trails in 
+parallel, which must be necessarily awaiting (from rule 2 of [Execution 
+model](#execution-model)).
+Before aborting, a trail has a last opportunity to execute all active 
+[finalization statements](finalization).
+
+#### 1.1.2
+### Bounded execution
 
 Reaction chains should run in bounded time to guarantee that programs are 
 responsive and can handle upcoming input events from the environment.
@@ -279,38 +304,22 @@ For time-consuming algorithms that require unrestricted loops (e.g.,
 cryptography, image processing), Céu provides [Asynchronous 
 execution](#asynchronous-execution).
 
-### 2.2
-Parallel compositions and abortion
-----------------------------------
+#### 1.1.3
+### Deterministic execution
 
-The use of trails in parallel allows programs to wait for multiple events at 
-the same time.
-Céu supports three kinds of parallel constructs differing in how they rejoin 
-(to proceed to the statement in sequence):
-
-1. a `par/and` rejoins after all trails in parallel terminate;
-2. a `par/or` rejoins after any trail in parallel terminates;
-3. a `par` never rejoins (even if all trails terminate).
-
-The termination of a trail inside a `par/or` aborts the other trails in 
-parallel, which must be necessarily awaiting (from rule 2 of [Execution 
-model](#execution-model)).
-Before aborting, a trail has a last opportunity to execute all active 
-[finalization statements](finalization).
+TODO (deterministic scheduler + optional static analysis)
 
 <!--
-### 2.3
 Shared-memory concurrency
--------------------------
 
 TODO
 -->
 
-## 3
+## 2
 Lexical rules
 =============
 
-### 3.1
+### 2.1
 Keywords
 --------
 
@@ -353,7 +362,7 @@ Keywords in Céu are reserved names that cannot be used as identifiers:
 
 </b></code></pre>
 
-### 3.2
+### 2.2
 Identifiers
 -----------
 
@@ -378,16 +387,16 @@ _printf("hello world!\n");    // "_printf" is a native symbol
 </code></pre>
 
 
-### 3.3
+### 2.3
 Literals
 --------
 
-#### 3.3.1
+#### 2.3.1
 ### Booleans
 
 Boolean types have the values `true` and `false`.
 
-#### 3.3.2
+#### 2.3.2
 ### Integers
 
 Integer values can be written in different bases and also as ASCII characters:
@@ -410,17 +419,17 @@ v = 0x7F;
 c = '\n';
 ```
 
-#### 3.3.3
+#### 2.3.3
 ### Floats
 
-TODO
+TODO (like C)
 
-#### 3.3.4
+#### 2.3.4
 ### Null pointer
 
 The `null` literal represents null [pointers](#pointers).
 
-#### 3.3.5
+#### 2.3.5
 ### Strings
 
 A sequence of characters surrounded by `"` is converted into a *null-terminated 
@@ -432,7 +441,7 @@ Example:
 _printf("Hello World!\n");
 ```
 
-### 3.4
+### 2.4
 Comments
 --------
 
@@ -458,7 +467,7 @@ a = 1;
 </code></pre>
 
 
-## 4
+## 3
 Types
 =====
 
@@ -491,7 +500,7 @@ Examples:
 <b>var char</b>* buf;  // "buf" is a pointer to a `char`
 </code></pre>
 
-### 4.1
+### 3.1
 Primitive types
 ---------------
 
@@ -513,24 +522,19 @@ Céu has the following primitive types:
 
 See also the [literals](#literals) for these types.
 
-### 4.2
+### 3.2
 Native types
 ------------
 
 Types defined externally in C can be prefixed by `_` to be used in Céu programs.
 
-The syntax for types in Céu is as follows:
-
-```
-TODO
-```
-
 Example:
 
-<pre><code><b>var</b> _rect r;    // "r" is of external native type "rect"
+<pre><code><b>var</b> _message_t msg;      // "message_t" is a C type defined in an external library
 </code></pre>
 
-TODO: type annotations
+Native types support [annotation](#native-symbols) to provide additional 
+information to the compiler.
 
 <!--
 The size of an external type must be explicitly [[#sec.stmts.decls.types|declared]].
@@ -540,28 +544,28 @@ Example:
     native _char = 1;  // declares the external native type `_char` of 1 byte
 -->
 
-### 4.3
+### 3.3
 Type modifiers
 --------------
 
 Types can be suffixed with the following modifiers: `*`, `&`, `[]`, and `[N]`.
 
-#### 4.3.1
+#### 3.3.1
 ### Pointers
 
-TODO
+TODO (like C)
 
-#### 4.3.2
+#### 3.3.2
 ### References
 
-TODO
+TODO (more or less like C++)
 
-#### 4.3.3
+#### 3.3.3
 ### Buffer pointers
 
-TODO
+TODO (more or less like pointers)
 
-#### 4.3.4
+#### 3.3.4
 ### Vectors
 
 One-dimensional vectors are declared by suffixing the variable type (instead of 
@@ -575,11 +579,11 @@ Example:
 <pre><code><b>var int</b>[2] v;       // declares a vector "v" of 2 integers
 </code></pre>
 
-## 5
+## 4
 Statements
 ==========
 
-### 5.1
+### 4.1
 Blocks
 ------
 
@@ -598,7 +602,7 @@ for statements inside the block.
 Compound statements (e.g. [if-then-else](#if-then-else)) create new blocks and 
 can be nested for an arbitrary level.
 
-#### 5.1.1
+#### 4.1.1
 ### do-end
 
 A block can also be explicitly created with the `do-end` statement:
@@ -606,36 +610,7 @@ A block can also be explicitly created with the `do-end` statement:
 <pre><code>Do ::= <b>do</b> Block <b>end</b>
 </code></pre>
 
-<!--
-
-TODO: FINALIZATION
-
-The optional <tt>finally</tt> block is executed even if the whole <tt>do-finally-end</tt> block is killed by a trail in parallel.
-
-*Note: the whole *<tt>do-end</tt>* defines a single block, i.e., variables defined in the *<tt>do</tt>* part are also visible to the *<tt>finally</tt>* part.*
-
-Consider the example that follows:
-
-<pre><code>par/or do
-    do
-        _FILE* f = _fopen("/tmp/test.txt");
-        await A;
-        // use f
-    finally
-        _fclose(f);
-    end
-with
-    await B;
-end
-</code></pre>
-
-Even if event <tt>B</tt> occurs before <tt>A</tt>, the opened file <tt>f</tt> is safely closed.
-
-TODO: escape analysis / `:=` assignments
-
--->
-
-### 5.2
+### 4.2
 Nothing
 -------
 
@@ -644,11 +619,11 @@ Nothing
 <pre><code>Nothing ::= <b>nothing</b>
 </code></pre>
 
-### 5.3
+### 4.3
 Declarations
 ------------
 
-#### 5.3.1
+#### 4.3.1
 ### Variables
 
 The syntax for the definition of variables is as follows:
@@ -667,12 +642,12 @@ Examples:
 <b>var int</b>[2] v;       // declares a vector `v` of size 2
 </code></pre>
 
-#### 5.3.2
+#### 4.3.2
 ### Events
 
 See also [Event handling](#event-handling).
 
-##### 5.3.2.1
+##### 4.3.2.1
 #### External events
 
 External events are used as interfaces between programs and devices from the 
@@ -719,12 +694,12 @@ program.
 Refer to [Environment](#environment) for information about interfacing with 
 external events in the platform level.
 
-###### 5.3.2.1.1
+###### 4.3.2.1.1
 ##### Requests
 
-TODO
+TODO (emit + await)
 
-##### 5.3.2.2
+##### 4.3.2.2
 #### Internal events
 
 Internal events have the same purpose of external events, but for communication 
@@ -744,13 +719,13 @@ Internal events cannot be of a vector type.
 
 <span id="sec.stmts.decls.c"></span>
 
-#### 5.3.3
+#### 4.3.3
 ### Functions
 
-##### 5.3.3.1
+##### 4.3.3.1
 #### Internal functions
 
-TODO
+TODO (like function in any language)
 
 <pre><code>Dcl_fun ::= <b>function</b> [<b>@rec</b>] ParList `=>´ Type ID_var
             [ <b>do</b> Block <b>end</b> ]
@@ -759,25 +734,25 @@ ParList     ::= `(´ ParListItem [ { `,´ ParListItem } ] `)´
 ParListItem ::= [<b>@hold</b>] Type [ID_var]
 </code></pre>
 
-###### 5.3.3.1.1
+###### 4.3.3.1.1
 ##### return
 
-TODO
+TODO (like return in any language)
 
 <pre><code>Return ::= <b>return</b> [Exp]
 </code></pre>
 
-##### 5.3.3.2
+##### 4.3.3.2
 #### External functions
 
-TODO
+TODO (like system calls)
 
-##### 5.3.3.3
+##### 4.3.3.3
 #### Interrupt service routines
 
-TODO
+TODO (special/restricted functions)
 
-#### 5.3.4
+#### 4.3.4
 ### Classes and Interfaces
 
 <pre><code>Dcl_cls ::= <b>class</b> ID_cls <b>with</b>
@@ -795,17 +770,17 @@ Dcls = { (Dcl_var | Dcl_int | Dcl_pool | Dcl_fun | Dcl_imp) `;´ }
 Dcl_imp = <b>interface</b> ID_cls { `,´ ID_cls }
 </code></pre>
 
-TODO
+TODO (a lot to say)
 
-#### 5.3.5
+#### 4.3.5
 ### Pools
 
 <pre><code>Dcl_pool = <b>pool</b> Type ID_var { `,´ ID_var }
 </code></pre>
 
-TODO
+TODO (a lot to say)
 
-#### 5.3.6
+#### 4.3.6
 ### Native symbols
 
 Native declarations provide additional information about external C symbols.
@@ -818,7 +793,8 @@ Nat_func  ::= ID_nat `(´ `)´
 Nat_var   ::= ID_nat
 </code></pre>
 
-A type declaration may define its size in bytes (TODO: why?).
+A type declaration may define its size in bytes to help the compiler organizing 
+memory.
 A type of size `0` is an *opaque type* and cannot be instantiated as a variable 
 that is not a pointer.
 
@@ -831,7 +807,8 @@ Native symbols can have the following annotations:
 **@pure** states that the function has no side effects.
 **@nohold** states that the function does not hold pointers passed as parameters.
 
-TODO
+The [static analysis](#static-analysis) of Céu relies on annotations.
+
 <!--
 By default, [concurrent](#concurrency) accesses to external symbols are 
 considered [non-deterministic](#deterministic), because the Céu compiler has no 
@@ -854,7 +831,7 @@ Examples:
 
 <span id="sec.stmts.decls.det"></span>
 
-#### 5.3.7
+#### 4.3.7
 ### Safe annotations
 
 A variable or function can be declared as `@safe` with a set of other functions 
@@ -882,7 +859,7 @@ Example:
 
 Safe annotations are discussed in more depth in section TODO(determinism).
 
-### 5.4
+### 4.4
 Assignments
 -----------
 
@@ -898,7 +875,7 @@ SetExp ::= Exp | &lt;do-end&gt; | &lt;if-then-else&gt; | &lt;loop&gt;
 
 The expression on the left side must be [assignable](#assignable).
 
-#### 5.4.1
+#### 4.4.1
 ### Simple assignment
 
 The simpler form of assignment uses [expressions](#expressions) as values.
@@ -909,7 +886,7 @@ Example:
 a = b + 1;
 </code></pre>
 
-#### 5.4.2
+#### 4.4.2
 ### Block assignment
 
 A whole block can be used as an assignment value by escaping from it.
@@ -917,7 +894,7 @@ The following block statements can be used in assignments: [`do-end´](#do-end)
 [`if-then-else`](#if-then-else), [`loop`](#loop), [`every`](#every), and 
 [`par`](#par).
 
-##### 5.4.2.1
+##### 4.4.2.1
 #### escape
 
 An `escape` statement escapes the deepest block being assigned to a variable.
@@ -958,27 +935,27 @@ should read as
     <b>end</b>;
 </code></pre>
 
-#### 5.4.3
+#### 4.4.3
 ### Await assignment
 
 See [Await statements](#await-statements).
 
-#### 5.4.4
+#### 4.4.4
 ### Emit assignment
 
 See [Emit statements](#emit-statements).
 
-#### 5.4.5
+#### 4.4.5
 ### Thread assignment
 
 See [Threads](#threads).
 
-#### 5.4.6
+#### 4.4.6
 ### New & Spawn assignment
 
 See [Dynamic organisms](#dynamic-organisms).
 
-### 5.5
+### 4.5
 Calls
 -----
 
@@ -986,17 +963,17 @@ Calls
 ExpList = Exp { `,´ Exp }
 </code></pre>
 
-#### 5.5.1
+#### 4.5.1
 ### Function calls
 
 TODO
 
-#### 5.5.2
+#### 4.5.2
 ### External calls
 
 TODO
 
-#### 5.5.3
+#### 4.5.3
 ### Native calls
 
 Functions defined in C can be called from Céu:
@@ -1011,7 +988,7 @@ ptr:f();
 
 <!--[ TODO: unbounded execution ]-->
 
-### 5.6
+### 4.6
 Event handling
 --------------
 
@@ -1024,7 +1001,7 @@ Waiting for an event halts the running trail until that event occurs.
 
 The occurrence of an event is broadcast to all awaiting trails.
 
-#### 5.6.1
+#### 4.6.1
 ### Await statements
 
 The `await` statement halts the running trail until the referred *wall-clock* 
@@ -1067,7 +1044,7 @@ It can be understood as the following expansion:
 <b>end</b>
 </code></pre>
 
-##### 5.6.1.1
+##### 4.6.1.1
 #### Await event
 
 For await statements with [internal](#internal) or [external](#external) 
@@ -1083,7 +1060,7 @@ The `await` evaluates to the type of the event.
 (v,ptr) = <b>await</b> e;
 </code></pre>
 
-##### 5.6.1.2
+##### 4.6.1.2
 #### Await time
 
 For await statements with *wall-clock* time (i.e., time measured in minutes, 
@@ -1109,13 +1086,13 @@ time.
 
 <span id="sec.stmts.events.await.forever"></span>
 
-##### 5.6.1.3
+##### 4.6.1.3
 #### Await FOREVER
 
 The `await FOREVER` halts the running trail forever.
 It cannot be used in assignments, because it never evaluates to anything.
 
-#### 5.6.2
+#### 4.6.2
 ### Emit statements
 
 The `emit` statement triggers the referred *wall-clock* time, [input 
@@ -1127,7 +1104,7 @@ for it.
       |  <b>emit</b> (WCLOCKK|WCLOCKE)
 </code></pre>
 
-##### 5.6.2.1
+##### 4.6.2.1
 #### Emit event
 
 Emit statements with [internal](#internal) or [external](#external) events 
@@ -1164,7 +1141,7 @@ that runs asynchronously with the program.
 
 TODO: stack/queue
 
-##### 5.6.2.2
+##### 4.6.2.2
 #### Emit time
 
 Emit statements with *wall-clock* time expect expressions with units of time, 
@@ -1173,11 +1150,11 @@ as described in [Await time](#await-time).
 Like input events, time can only be emitted inside [asynchronous 
 blocks](#asynchronous-blocks).
 
-### 5.7
+### 4.7
 Flow control
 ------------
 
-#### 5.7.1
+#### 4.7.1
 ### if-then-else
 
 Conditional flow uses the `if-then-else` statement:
@@ -1196,7 +1173,7 @@ evaluates to a non-zero value.
 Otherwise, the same process holds each `else/if` alternative.
 Finally, it they all fail, the block following the `else` executes.
 
-#### 5.7.2
+#### 4.7.2
 ### loop
 
 A `loop` continuously executes its body block:
@@ -1209,7 +1186,7 @@ A `loop` continuously executes its body block:
 A `loop` terminates when reaches a `break` in its body or when the specified 
 iterator terminates.
 
-##### 5.7.2.1
+##### 4.7.2.1
 #### break
 
 A `break` escapes the innermost enclosing loop.
@@ -1231,10 +1208,10 @@ Example:
 <b>end</b>
 </code></pre>
 
-##### 5.7.2.2
+##### 4.7.2.2
 #### Iterators
 
-###### 5.7.2.2.1
+###### 4.7.2.2.1
 ##### Incremental index
 
 For iterators with `Exp` empty or of type `int`, the `ID_var` is incremented 
@@ -1244,12 +1221,12 @@ loop body, and is initialized to zero.
 The optional `Exp`, which is evaluated once before the loop starts, limits the 
 number of iterations.
 
-###### 5.7.2.2.2
+###### 4.7.2.2.2
 ##### Pool instances
 
 TODO
 
-##### 5.7.2.3
+##### 4.7.2.3
 #### every
 
 TODO
@@ -1259,7 +1236,7 @@ TODO
           <b>end</b>
 </code></pre>
 
-### 5.8
+### 4.8
 Finalization
 ------------
 
@@ -1270,7 +1247,37 @@ TODO
              <b>end</b>
 </code></pre>
 
-### 5.9
+<!--
+
+The optional <tt>finally</tt> block is executed even if the whole 
+<tt>do-finally-end</tt> block is killed by a trail in parallel.
+
+*Note: the whole *<tt>do-end</tt>* defines a single block, i.e., variables 
+defined in the *<tt>do</tt>* part are also visible to the *<tt>finally</tt>* 
+part.*
+
+Consider the example that follows:
+
+<pre><code>par/or do
+    do
+        _FILE* f = _fopen("/tmp/test.txt");
+        await A;
+        // use f
+    finally
+        _fclose(f);
+    end
+with
+    await B;
+end
+</code></pre>
+
+Even if event <tt>B</tt> occurs before <tt>A</tt>, the opened file <tt>f</tt> is safely closed.
+
+TODO: escape analysis / `:=` assignments
+
+-->
+
+### 4.9
 Parallel compositions
 ---------------------
 
@@ -1291,19 +1298,19 @@ They differ only on how trails terminate (rejoin).
 See [Execution model](#execution-model) for a detailed description of parallel 
 execution.
 
-#### 5.9.1
+#### 4.9.1
 ### par/and
 
 The `par/and` statement stands for *parallel-and* and rejoins when all trails 
 terminate:
 
-#### 5.9.2
+#### 4.9.2
 ### par/or
 
 The `par/or` statement stands for *parallel-or* and rejoins when any of the 
 trails terminate:
 
-#### 5.9.3
+#### 4.9.3
 ### par
 
 The `par` statement never rejoins and should be used when the trails in 
@@ -1311,7 +1318,7 @@ parallel are supposed to run forever:
 
 <!--[TODO: static analysis or halt]-->
 
-#### 5.9.4
+#### 4.9.4
 ### watching
 
 TODO: translates to `par/or`
@@ -1321,7 +1328,7 @@ TODO: translates to `par/or`
              <b>end</b>
 </code></pre>
 
-### 5.10
+### 4.10
 pause/if
 --------
 
@@ -1332,7 +1339,7 @@ TODO
           <b>end</b>
 </code></pre>
 
-### 5.11
+### 4.11
 Dynamic organisms
 -----------------
 
@@ -1346,7 +1353,7 @@ Dyn ::= (<b>new</b>|<b>spawn</b>) ID_cls [<b>in</b> Exp]
 
 TODO: Constructor
 
-### 5.12
+### 4.12
 Asynchronous execution
 ----------------------
 
@@ -1361,7 +1368,7 @@ everything, except asynchronous statements).
 RefVarList ::= `(´ [`&´] ID_var { `,´ [`&´] ID_var } `)´
 </code></pre>
 
-#### 5.12.1
+#### 4.12.1
 ### Asynchronous blocks
 
 Asynchronous blocks (`async`) are the simplest alternative for asynchronous 
@@ -1414,7 +1421,7 @@ A lower priority for `async` is fundamental to ensure that input events are
 handled as fast as possible.
 -->
 
-##### 5.12.1.1
+##### 4.12.1.1
 #### Simulation
 
 An `async` is allowed to trigger [input events](#emit-event) and the [passage 
@@ -1447,12 +1454,12 @@ Every time the `async` emits an event, it suspends (due to rule `1` of previous
 section).
 The example prints the `v = <v+i>` message exactly 103 times.
 
-#### 5.12.2
+#### 4.12.2
 ### Threads
 
 TODO
 
-##### 5.12.2.1
+##### 4.12.2.1
 #### Synchronous blocks
 
 TODO
@@ -1462,7 +1469,7 @@ TODO
          <b>end</b>
 </code></pre>
 
-### 5.13
+### 4.13
 Native blocks
 -------------
 
@@ -1499,7 +1506,7 @@ parser:
 <b>end</b>
 </code></pre>
 
-## 6
+## 5
 Expressions
 ===========
 
@@ -1537,13 +1544,13 @@ Most operators follow the same semantics of C.
 
 *Note: assignments are not expressions in Céu.*
 
-### 6.1
+### 5.1
 Primary
 -------
 
 TODO: global, this, outer,
 
-### 6.2
+### 5.2
 Arithmetic
 ----------
 
@@ -1556,7 +1563,7 @@ The arithmetic operators of Céu are
 which correspond to *addition*, *subtraction*, *modulo (remainder)*, *multiplication*, *division*, *unary-plus*, and *unary-minus*.
 <!-- *Note: Céu has no support for pointer arithmetic.* -->
 
-### 6.3
+### 5.3
 Relational
 ----------
 
@@ -1570,7 +1577,7 @@ which correspond to *equal-to*, *not-equal-to*, *greater-than*, *less-than*, *gr
 
 Relational expressions evaluate to 1 (*true*) or 0 (*false*).
 
-### 6.4
+### 5.4
 Logical
 -------
 
@@ -1583,7 +1590,7 @@ The logical operators of Céu are
 which correspond to *not*, *and*, *or*.
 -->
 
-### 6.5
+### 5.5
 Bitwise
 -------
 
@@ -1595,7 +1602,7 @@ The bitwise operators of Céu are
 
 which correspond to *not*, *and*, *or*, *xor*, *left-shift*, and *right-shift*.
 
-### 6.6
+### 5.6
 Vector indexing
 ---------------
 
@@ -1610,7 +1617,7 @@ The expression on the left side is expected to evaluate to a vector.
 Vector indexes start at zero.
 <!-- TODO: limites e recolocar "pointer arith" -->
 
-### 6.7
+### 5.7
 Pointers
 --------
 
@@ -1623,11 +1630,11 @@ Ref   ::= `&´ Exp
 
 The operand to `&amp;` must be an [[#sec.exps.assignable|assignable expression]].
 
-### 6.8
+### 5.8
 Fields
 ------
 
-#### 6.8.1
+#### 5.8.1
 ### Structs
 
 The operators `.´ and `:´ access the fields of structs.
@@ -1655,12 +1662,12 @@ p:v = 0;
 
 *Note: `struct` must be declared in C, as Céu currently has no support for it.*
 
-#### 6.8.2
+#### 5.8.2
 ### Organisms
 
 TODO
 
-### 6.9
+### 5.9
 Type casting
 ------------
 
@@ -1669,7 +1676,7 @@ Céu uses parenthesis for type casting:
 <pre><code>Cast ::= `(´ ID_type `)´
 </code></pre>
 
-### 6.10
+### 5.10
 Sizeof
 ------
 
@@ -1682,7 +1689,7 @@ A `sizeof` expression returns the size of a type or expression, in bytes:
 The expression is evaluated at compile time.
 -->
 
-### 6.11
+### 5.11
 Precedence
 ----------
 
@@ -1719,7 +1726,7 @@ Céu follows the same precedence of C operators:
     ()    []    :    .     // call, index
 </code></pre>
 
-### 6.12
+### 5.12
 Assignable expressions
 ----------------------
 
@@ -1745,89 +1752,105 @@ ps:v = 1;
 </code></pre>
 
 
-## 7
-Execution model
+## 6
+Static analysis
 ===============
+
+TODO (introduction)
+
+### 6.1
+Types
+-----
+
+TODO (weakly typed, like C)
+
+### 6.2
+Loops
+-----
+
+TODO
+
+### 6.3
+Finalization
+------------
+
+TODO
+
+## 7
+Environment
+===========
+
+As a reactive language, Céu depends on an external environment (the host 
+platform) to provide input and output events to programs.
+The environment is responsible for sensing the world and notifying Céu about changes.
+The actual events vary from environment to environment, as well as the 
+implementation for the notification mechanism (e.g. *polling* or 
+*interrupt-driven*).
+
+### 7.1
+The C API
+---------
+
+The final output of the compiler of Céu is a program in C that follows a 
+standard application programming interface.
+The interface specifies some types, macros, and functions, which the 
+environment has to manipulate in order to guide the execution of the original 
+program in Céu.
+
+The example that follows illustrates a possible `main` for a host platform:
+
+```c
+#include "_ceu_app.c"
+
+int main (void)
+{
+    char mem[sizeof(CEU_Main)];
+    tceu_app app;
+        app.data = &mem;
+    ceu_app_init(&app);
+
+    while(app->isAlive) {
+        ceu_sys_go(app, CEU_IN__ASYNC,  CEU_EVTP((void*)NULL));
+        ceu_sys_go(app, CEU_IN__WCLOCK, CEU_EVTP((void*)NULL));
+        if (occuring(CEU_IN_EVT1)) {
+            ceu_sys_go(app, CEU_IN__EVT1,   param1);
+        }
+        ...
+        if (occuring(CEU_IN_EVTn)) {
+            ceu_sys_go(app, CEU_IN__EVTn,   paramN);
+        }
+    }
+    return app->ret;
+}
+```
+
+`tceu_app` is a type that represents an application in Céu.
+The field `app.data` expects a pointer to the memory of the application, which 
+has to be previously declared.
+
+TODO
+
+#### 7.1.1
+### Types
+
+TODO
+
+#### 7.1.2
+### Functions
+
+TODO
+
+#### 7.1.3
+### Macros and constants
+
+TODO
+
+#### 7.1.4
+### Functions
 
 TODO
 
 <!--
-
-In Céu, trails execute synchronized in reaction to a single input event at a 
-time, being impossible to have trails reacting to different events.
-The disciplined step-by-step execution in Céu enables a rigorous analysis that 
-guarantees at compile time that programs are completely race free.
-
-=== Rejoining of trails ===
-
-A [[#sec.stmts.parallel.par/or|par/or]], [[#sec.stmts.loop|loop]], or [[#sec.stmts.assignments.block|block assignment]] may terminate (rejoin) concurrently from different trails in parallel.
-In this case, Céu ensures that all trails execute before rejoining the composition.
-
-In the following example, both trails terminate the <tt>par/or</tt> concurrently:
-
-<pre><code>int v1 = 0;
-int v2 = 0;
-par/or do
-    v1 = 1;
-with
-    v2 = 2;
-end
-return v1 + v2;
-</code></pre>
-
-Céu ensures that both assignments in parallel execute before the <tt>par/or</tt> terminates.
-The program always returns `3`.
-
-However, it is also possible that trails in parallel rejoin a composition independently, when other trails are waiting for different events.
-In this case, all awaiting trails nested within the composition are *killed*, i.e., they will never resume again.
-
-The following example illustrates this behavior:
-
-<pre><code>input void A, B;
-int v =
-    par do
-        await A;
-        return 1;
-    with
-        await B;
-        return 2;
-    end
-end
-return v;
-</code></pre>
-
-Initially, the trails in parallel are awaiting `A` and `B` to return different values.
-If the event `A` occurs, the composition yields `1`, killing the trail awaiting `B`.
-
-See [[#Rejoining of tracks]] for the detailed semantics of rejoins.
-
-See [[#Deterministic execution]] for information on how Céu avoids 
-non-determinism in parallel compositions.
--->
-
-<!------------------------------------------------------------>
-<!------------------------------------------------------------>
-
-
-## 8
-Environment
-===========
-
-As a reactive language, Céu depends on an external environment (platform) to provide input and output events to programs.
-The environment is responsible for sensing the world and notifying Céu about changes.
-
-The actual events vary from environment to environment, and an implementation may use a polling or interrupt-driven notification mechanism.
-
-The Céu compiler generates a C output with hooks following a standard interface that the target platform should comply.
-
-### 8.1
-C API
------
-
-The following sections specify the available mechanisms of interaction between the environment and the Céu runtime.
-
-#### 8.1.1
-### Functions
 
 The following functions should be called by the environment to command the execution of Céu programs:
 
@@ -1863,7 +1886,7 @@ Other functions:
 
 <span id="sec.env.api.macros"></span>
 
-#### 8.1.2
+#### 7.1.5
 ### Macros
 
 The following macros can be optionally defined by the environment to customize the behavior of the Céu runtime:
@@ -1893,7 +1916,7 @@ The following macros can be optionally defined by the environment to customize t
 : If this macro is defined for a given event, only this macro is called on the occurrence of that event.
 :
 
-#### 8.1.3
+#### 7.1.6
 ### Constants & Defines
 
 The following constants and defines are generated by the Céu compiler to be used by the environment.
@@ -1932,7 +1955,7 @@ The following constants and defines are generated by the Céu compiler to be use
 : The values between input and output events are unrelated.
 : Also, the values need not to be continuous.
 
-#### 8.1.4
+#### 7.1.7
 ### Types
 
 Céu expects the following scalar types to be defined by the environment: <tt>s32</tt>, <tt>s16</tt>, <tt>s8</tt>, <tt>u32</tt>, <tt>u16</tt>, and <tt>u8</tt>.
@@ -1953,7 +1976,10 @@ typedef unsigned char      u8;
 These types are used internally by the language runtime, and can also be used by programmers in Céu programs.
 For instance, Céu internally uses a <tt>u64</tt> type to represent wall-clock time.
 
-### 8.2
+-->
+
+
+### 7.2
 Compiler
 --------
 
@@ -1980,7 +2006,7 @@ The command line options for the compiler are as follows:
 
 The values in parenthesis show the defaults for the options that are omitted.
 
-## 9
+## 8
 Syntax
 ======
 
@@ -2180,7 +2206,7 @@ Prim ::= `(´ Exp `)´
 
 </code></pre>
 
-## 10
+## 9
 License
 =======
 

@@ -43,7 +43,7 @@ See also the complete [Syntax](#syntax) of Céu.
 -->
 
 Execution model
-===============
+---------------
 
 Céu is grounded on a precise definition of *logical time* as a discrete 
 sequence of external input events:
@@ -74,6 +74,8 @@ event), Céu schedules them in the order they appear in the program text.
 This policy is somewhat arbitrary, but provides a priority scheme for trails, 
 and also ensures deterministic and reproducible execution for programs.
 Note that, at any time, at most one trail is executing.
+Trails are created with [parallel 
+compositions](#parallel-compositions-and-abortion).
 
 The program and diagram that follows illustrate the behavior of the scheduler 
 of Céu:
@@ -105,47 +107,63 @@ of Céu:
 25:  <b>end</b>
 </code></pre>
 
-![a](reaction.png)
+![](reaction.png)
 
-The program starts in the boot reaction and is split in three trails.
+The program starts in the boot reaction and is split in three trails (a 
+[`par/and`](#parallel-compositions-and-abortion) rejoins after all trails 
+terminate).
 Following the order of declaration, the scheduler first executes *trail-1*
-until it awaits `A` in line 5;
-then *trail-2* executes until it awaits `B` in line 10;
-then *trail-3* is scheduled and also awaits `A`, in line 15.
-%
+up to the `await A` in line 5;
+then *trail-2* executes up to the `await B` in line 10;
+then *trail-3*, up to `await A`, in line 15.
 As no other trails are pending, the reaction chain terminates and the scheduler 
-remains idle until the occurrence of `A`:
-*trail-1* awakes, executes and terminates;
-and then *trail-3* executes and waits for `B` in line 17.
-*Trail-2* remains suspended, as it is not awaiting `A`.
-%
+remains idle until the event `A` occurs:
+
+- *trail-1* awakes, executes and terminates;
+- *trail-2* remains suspended, as it is not awaiting `A`.
+- *trail-3* executes to `await B`, in line 17.
+
 During this reaction, new instances of events `A`, `B`, and `C` occur and are 
 enqueued to be handled in the reactions that follow.
-%
 As `A` happened first, it is used in the next reaction.
 However, no trails are awaiting it, so an empty reaction chain takes place.
-%
 The next reaction dequeues event `B`:
-*trail-2* awakes, executes and terminates;
-then *trail-3* is split in two and both terminate.
-%
-The program terminates and does not react to the pending event `C`.
-% (the \code{par/and}, to be introduced in the next section, rejoins when its 
-%sub-trails terminate).
-%
+
+- *trail-2* awakes, executes and terminates;
+- *trail-3* is split in two and both terminate.
+
+With all trails terminated, the program also terminates and does not react to 
+the pending event `C`.
 Note that each step in the logical time line (*t0*, *t1*, etc.) is identified 
 by the event it handles.
 Inside a reaction, trails only react to that identifying event (or remain 
 suspended).
 
-TODO: ints
+TODO (internal events: stack-based execution)
+
 <!--
 A reaction chain may also contain emissions and reactions to internal events, 
 which are presented in Section~\ref{sec.ceu.ints}.
 -->
 
-Bounded execution
------------------
+### Parallel compositions and abortion
+
+The use of trails in parallel allows programs to wait for multiple events at 
+the same time.
+Céu supports three kinds of parallel constructs differing in how they rejoin 
+(to proceed to the statement in sequence):
+
+1. a `par/and` rejoins after all trails in parallel terminate;
+2. a `par/or` rejoins after any trail in parallel terminates;
+3. a `par` never rejoins (even if all trails terminate).
+
+The termination of a trail inside a `par/or` aborts the other trails in 
+parallel, which must be necessarily awaiting (from rule 2 of [Execution 
+model](#execution-model)).
+Before aborting, a trail has a last opportunity to execute all active 
+[finalization statements](finalization).
+
+### Bounded execution
 
 Reaction chains should run in bounded time to guarantee that programs are 
 responsive and can handle upcoming input events from the environment.
@@ -167,27 +185,12 @@ For time-consuming algorithms that require unrestricted loops (e.g.,
 cryptography, image processing), Céu provides [Asynchronous 
 execution](#asynchronous-execution).
 
-Parallel compositions and abortion
-----------------------------------
+### Deterministic execution
 
-The use of trails in parallel allows programs to wait for multiple events at 
-the same time.
-Céu supports three kinds of parallel constructs differing in how they rejoin 
-(to proceed to the statement in sequence):
-
-1. a `par/and` rejoins after all trails in parallel terminate;
-2. a `par/or` rejoins after any trail in parallel terminates;
-3. a `par` never rejoins (even if all trails terminate).
-
-The termination of a trail inside a `par/or` aborts the other trails in 
-parallel, which must be necessarily awaiting (from rule 2 of [Execution 
-model](#execution-model)).
-Before aborting, a trail has a last opportunity to execute all active 
-[finalization statements](finalization).
+TODO (deterministic scheduler + optional static analysis)
 
 <!--
 Shared-memory concurrency
--------------------------
 
 TODO
 -->
@@ -292,7 +295,7 @@ c = '\n';
 
 ### Floats
 
-TODO
+TODO (like C)
 
 ### Null pointer
 
@@ -392,18 +395,13 @@ Native types
 
 Types defined externally in C can be prefixed by `_` to be used in Céu programs.
 
-The syntax for types in Céu is as follows:
-
-```
-TODO
-```
-
 Example:
 
-<pre><code><b>var</b> _rect r;    // "r" is of external native type "rect"
+<pre><code><b>var</b> _message_t msg;      // "message_t" is a C type defined in an external library
 </code></pre>
 
-TODO: type annotations
+Native types support [annotation](#native-symbols) to provide additional 
+information to the compiler.
 
 <!--
 The size of an external type must be explicitly [[#sec.stmts.decls.types|declared]].
@@ -420,15 +418,15 @@ Types can be suffixed with the following modifiers: `*`, `&`, `[]`, and `[N]`.
 
 ### Pointers
 
-TODO
+TODO (like C)
 
 ### References
 
-TODO
+TODO (more or less like C++)
 
 ### Buffer pointers
 
-TODO
+TODO (more or less like pointers)
 
 ### Vectors
 
@@ -470,35 +468,6 @@ A block can also be explicitly created with the `do-end` statement:
 
 <pre><code>Do ::= <b>do</b> Block <b>end</b>
 </code></pre>
-
-<!--
-
-TODO: FINALIZATION
-
-The optional <tt>finally</tt> block is executed even if the whole <tt>do-finally-end</tt> block is killed by a trail in parallel.
-
-*Note: the whole *<tt>do-end</tt>* defines a single block, i.e., variables defined in the *<tt>do</tt>* part are also visible to the *<tt>finally</tt>* part.*
-
-Consider the example that follows:
-
-<pre><code>par/or do
-    do
-        _FILE* f = _fopen("/tmp/test.txt");
-        await A;
-        // use f
-    finally
-        _fclose(f);
-    end
-with
-    await B;
-end
-</code></pre>
-
-Even if event <tt>B</tt> occurs before <tt>A</tt>, the opened file <tt>f</tt> is safely closed.
-
-TODO: escape analysis / `:=` assignments
-
--->
 
 Nothing
 -------
@@ -581,7 +550,7 @@ external events in the platform level.
 
 ##### Requests
 
-TODO
+TODO (emit + await)
 
 #### Internal events
 
@@ -606,7 +575,7 @@ Internal events cannot be of a vector type.
 
 #### Internal functions
 
-TODO
+TODO (like function in any language)
 
 <pre><code>Dcl_fun ::= <b>function</b> [<b>@rec</b>] ParList `=>´ Type ID_var
             [ <b>do</b> Block <b>end</b> ]
@@ -617,18 +586,18 @@ ParListItem ::= [<b>@hold</b>] Type [ID_var]
 
 ##### return
 
-TODO
+TODO (like return in any language)
 
 <pre><code>Return ::= <b>return</b> [Exp]
 </code></pre>
 
 #### External functions
 
-TODO
+TODO (like system calls)
 
 #### Interrupt service routines
 
-TODO
+TODO (special/restricted functions)
 
 ### Classes and Interfaces
 
@@ -647,14 +616,14 @@ Dcls = { (Dcl_var | Dcl_int | Dcl_pool | Dcl_fun | Dcl_imp) `;´ }
 Dcl_imp = <b>interface</b> ID_cls { `,´ ID_cls }
 </code></pre>
 
-TODO
+TODO (a lot to say)
 
 ### Pools
 
 <pre><code>Dcl_pool = <b>pool</b> Type ID_var { `,´ ID_var }
 </code></pre>
 
-TODO
+TODO (a lot to say)
 
 ### Native symbols
 
@@ -668,7 +637,8 @@ Nat_func  ::= ID_nat `(´ `)´
 Nat_var   ::= ID_nat
 </code></pre>
 
-A type declaration may define its size in bytes (TODO: why?).
+A type declaration may define its size in bytes to help the compiler organizing 
+memory.
 A type of size `0` is an *opaque type* and cannot be instantiated as a variable 
 that is not a pointer.
 
@@ -681,7 +651,8 @@ Native symbols can have the following annotations:
 **@pure** states that the function has no side effects.
 **@nohold** states that the function does not hold pointers passed as parameters.
 
-TODO
+The [static analysis](#static-analysis) of Céu relies on annotations.
+
 <!--
 By default, [concurrent](#concurrency) accesses to external symbols are 
 considered [non-deterministic](#deterministic), because the Céu compiler has no 
@@ -1089,6 +1060,36 @@ TODO
                  Block
              <b>end</b>
 </code></pre>
+
+<!--
+
+The optional <tt>finally</tt> block is executed even if the whole 
+<tt>do-finally-end</tt> block is killed by a trail in parallel.
+
+*Note: the whole *<tt>do-end</tt>* defines a single block, i.e., variables 
+defined in the *<tt>do</tt>* part are also visible to the *<tt>finally</tt>* 
+part.*
+
+Consider the example that follows:
+
+<pre><code>par/or do
+    do
+        _FILE* f = _fopen("/tmp/test.txt");
+        await A;
+        // use f
+    finally
+        _fclose(f);
+    end
+with
+    await B;
+end
+</code></pre>
+
+Even if event <tt>B</tt> occurs before <tt>A</tt>, the opened file <tt>f</tt> is safely closed.
+
+TODO: escape analysis / `:=` assignments
+
+-->
 
 Parallel compositions
 ---------------------
@@ -1537,85 +1538,99 @@ ps:v = 1;
 </code></pre>
 
 
-Execution model
+Static analysis
 ===============
+
+TODO (introduction)
+
+Types
+-----
+
+TODO (weakly typed, like C)
+
+Loops
+-----
 
 TODO
 
-<!--
+Finalization
+------------
 
-In Céu, trails execute synchronized in reaction to a single input event at a 
-time, being impossible to have trails reacting to different events.
-The disciplined step-by-step execution in Céu enables a rigorous analysis that 
-guarantees at compile time that programs are completely race free.
-
-=== Rejoining of trails ===
-
-A [[#sec.stmts.parallel.par/or|par/or]], [[#sec.stmts.loop|loop]], or [[#sec.stmts.assignments.block|block assignment]] may terminate (rejoin) concurrently from different trails in parallel.
-In this case, Céu ensures that all trails execute before rejoining the composition.
-
-In the following example, both trails terminate the <tt>par/or</tt> concurrently:
-
-<pre><code>int v1 = 0;
-int v2 = 0;
-par/or do
-    v1 = 1;
-with
-    v2 = 2;
-end
-return v1 + v2;
-</code></pre>
-
-Céu ensures that both assignments in parallel execute before the <tt>par/or</tt> terminates.
-The program always returns `3`.
-
-However, it is also possible that trails in parallel rejoin a composition independently, when other trails are waiting for different events.
-In this case, all awaiting trails nested within the composition are *killed*, i.e., they will never resume again.
-
-The following example illustrates this behavior:
-
-<pre><code>input void A, B;
-int v =
-    par do
-        await A;
-        return 1;
-    with
-        await B;
-        return 2;
-    end
-end
-return v;
-</code></pre>
-
-Initially, the trails in parallel are awaiting `A` and `B` to return different values.
-If the event `A` occurs, the composition yields `1`, killing the trail awaiting `B`.
-
-See [[#Rejoining of tracks]] for the detailed semantics of rejoins.
-
-See [[#Deterministic execution]] for information on how Céu avoids 
-non-determinism in parallel compositions.
--->
-
-<!------------------------------------------------------------>
-<!------------------------------------------------------------>
-
+TODO
 
 Environment
 ===========
 
-As a reactive language, Céu depends on an external environment (platform) to provide input and output events to programs.
+As a reactive language, Céu depends on an external environment (the host 
+platform) to provide input and output events to programs.
 The environment is responsible for sensing the world and notifying Céu about changes.
+The actual events vary from environment to environment, as well as the 
+implementation for the notification mechanism (e.g. *polling* or 
+*interrupt-driven*).
 
-The actual events vary from environment to environment, and an implementation may use a polling or interrupt-driven notification mechanism.
+The C API
+---------
 
-The Céu compiler generates a C output with hooks following a standard interface that the target platform should comply.
+The final output of the compiler of Céu is a program in C that follows a 
+standard application programming interface.
+The interface specifies some types, macros, and functions, which the 
+environment has to manipulate in order to guide the execution of the original 
+program in Céu.
 
-C API
------
+The example that follows illustrates a possible `main` for a host platform:
 
-The following sections specify the available mechanisms of interaction between the environment and the Céu runtime.
+```c
+#include "_ceu_app.c"
+
+int main (void)
+{
+    char mem[sizeof(CEU_Main)];
+    tceu_app app;
+        app.data = &mem;
+    ceu_app_init(&app);
+
+    while(app->isAlive) {
+        ceu_sys_go(app, CEU_IN__ASYNC,  CEU_EVTP((void*)NULL));
+        ceu_sys_go(app, CEU_IN__WCLOCK, CEU_EVTP(<how-much-time-since-previous-iteration>));
+        if (occuring(CEU_IN_EVT1)) {
+            ceu_sys_go(app, CEU_IN__EVT1, param1);
+        }
+        ...
+        if (occuring(CEU_IN_EVTn)) {
+            ceu_sys_go(app, CEU_IN__EVTn, paramN);
+        }
+    }
+    return app->ret;
+}
+
+int occurring (int evt_id) {
+    <platform dependent>
+}
+```
+
+`tceu_app` is a type that represents an application in Céu.
+The field `app.data` expects a pointer to the memory of the application, which 
+has to be previously declared.
+
+TODO
+
+### Types
+
+TODO
 
 ### Functions
+
+TODO
+
+### Macros and constants
+
+TODO
+
+### Functions
+
+TODO
+
+<!--
 
 The following functions should be called by the environment to command the execution of Céu programs:
 
@@ -1737,6 +1752,9 @@ typedef unsigned char      u8;
 
 These types are used internally by the language runtime, and can also be used by programmers in Céu programs.
 For instance, Céu internally uses a <tt>u64</tt> type to represent wall-clock time.
+
+-->
+
 
 Compiler
 --------
