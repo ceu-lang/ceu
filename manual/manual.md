@@ -22,10 +22,18 @@ Waiting for an event halts the running trail until that event occurs.
 The environment broadcasts an occurring event to all active trails, which share 
 a single global time reference (the event itself).
 The synchronous concurrency model of Céu greatly diverges from conventional 
-multithreading (e.g. *pthreads*) and the actor model (e.g. *erlang*).
-For instance, trails can share variables in a safe and seamless way (e.g. no 
-need for locks or semaphores).
-See the [execution model of Céu](#execution-model).
+multithreading (e.g. *pthreads* and *Java threads*) and the actor model (e.g.  
+*erlang* and *Go*).
+On the one hand, trails can share variables in a deterministic and seamless way 
+(e.g. no need for locks or semaphores).
+On the other hand, there is no real parallelism (e.g. multi-core execution) in 
+the standard synchronous operation mode of the language.
+Céu is a language for real-time concurrency with complex control 
+specifications, but not for algorithm-intensive or distributed applications.
+
+TODO (organisms)
+
+TODO (emphasize synchronous+organisms)
 
 Céu integrates well with C, being possible to define and call C functions from 
 within Céu programs.
@@ -42,8 +50,8 @@ tutorial](http://www.ceu-lang.org/try.php).
 See also the complete [Syntax](#syntax) of Céu.
 -->
 
-Execution model
----------------
+Synchronous execution model
+---------------------------
 
 Céu is grounded on a precise definition of *logical time* as a discrete 
 sequence of external input events:
@@ -109,7 +117,7 @@ of Céu:
 
 ![](reaction.png)
 
-The program starts in the boot reaction and is split in three trails (a 
+The program starts in the boot reaction and is split into three trails (a 
 [`par/and`](#parallel-compositions-and-abortion) rejoins after all trails 
 terminate).
 Following the order of declaration, the scheduler first executes *trail-1*
@@ -139,8 +147,6 @@ by the event it handles.
 Inside a reaction, trails only react to that identifying event (or remain 
 suspended).
 
-TODO (internal events: stack-based execution)
-
 <!--
 A reaction chain may also contain emissions and reactions to internal events, 
 which are presented in Section~\ref{sec.ceu.ints}.
@@ -159,9 +165,14 @@ Céu supports three kinds of parallel constructs differing in how they rejoin
 
 The termination of a trail inside a `par/or` aborts the other trails in 
 parallel, which must be necessarily awaiting (from rule 2 of [Execution 
-model](#execution-model)).
+model](#synchronous-execution-model)).
 Before aborting, a trail has a last opportunity to execute all active 
 [finalization statements](finalization).
+
+As mentioned in the introduction and emphasized in the execution model, trails 
+inside parallel compositions do execute with real parallelism.
+It is more accurate to think of parallel compositions as *trails awaiting in 
+parallel*, given that conceptually they are always waiting.
 
 ### Bounded execution
 
@@ -193,6 +204,233 @@ TODO (deterministic scheduler + optional static analysis)
 Shared-memory concurrency
 
 TODO
+-->
+
+### Internal reactions
+
+TODO (internal events: stack-based execution)
+
+Organisms as abstractions
+-------------------------
+
+Céu uses an abstraction mechanism that reconciles data and control state into 
+the single concept of an *organism*, which provide multiple lines of execution 
+(control state) and an object-like interface (data state).
+
+An organism class is composed of an *interface* and a single *execution body*.
+The interface exposes public variables, methods, and internal events, much like 
+object oriented programming.
+The body can contain any valid code in Céu (including parallel compositions) 
+and starts to execute on instantiation in parallel with the program.
+
+TODO
+
+<!--
+ce the instance of a class is equivalent to a trail, having access to all 
+presented functionality provided by \CEU, such as parallel compositions, $C$ 
+calls, timers, etc.
+An organism is instantiated by declaring a variable of the desired class, and 
+its body is automatically spawned in a \code{par/or} with the enclosing block.
+A method can be simulated by exposing an internal event in the interface of the 
+class and using the same technique of Figure~\ref{lst.func}.
+
+The first column of Figure~\ref{lst.orgs} re-implements the example of 
+Figure~\ref{lst.all} to blink two LEDs with different frequencies.
+The \code{Blink} class exposes the \code{led} and \code{freq} variables to be 
+configured by the application, which then creates two instances and initializes 
+them.
+
+The second column shows how the organisms bodies are expanded to run in a 
+\code{par/or} together with the enclosing block body.
+The expansion is illustrative, i.e., the code is not duplicated.
+Note that in the expansion, the bodies of the organisms are followed by 
+\code{await~FOREVER}%
+\footnote{\code{FOREVER} is a reserved keyword in \CEU, and represents an 
+external input event that never occurs.}%
+, meaning that only the enclosing block can terminate the \code{par/or}.
+Note also that the block body runs first and properly initializes the organisms 
+before they are spawned.
+
+Once the enclosing block terminates, declared organisms are killed and all 
+memory can be reused, just as happens in standard parallel compositions.
+The allocation and deallocation of organisms is static, with no runtime 
+overhead such as garbage collection.
+
+\begin{figure}[t]
+%\rule{8.5cm}{0.37pt}
+\begin{minipage}[t]{0.45\linewidth}
+{\small
+\begin{verbatim}
+C _on(), _off();
+
+class Blink with
+   var int led;
+   var int freq;
+do
+   loop do
+      _on(this.led);
+      await (this.freq)s;
+      _off(this.led);
+      await (this.freq/2)s;
+   end
+end
+
+var Blink b1;
+b1.led  = 0;
+b1.freq = 2;
+
+var Blink b2;
+b2.led  = 1;
+b2.freq = 4;
+
+await 1min;
+\end{verbatim}
+}
+\end{minipage}
+%
+\hspace{0.0cm}
+%
+\begin{minipage}[t]{0.45\linewidth}
+%\fbox{
+{\small
+\begin{verbatim}
+C _on(), _off();
+var Blink b1, b2;
+par/or do
+   b1.led  = 0;
+   b1.freq = 2;
+   b2.led  = 1;
+   b2.freq = 4;
+   await 1min;
+with
+   loop do
+      _on(b1.led);
+      await (b1.freq)s;
+      _off(b1.led);
+      await (b1.freq/2)s;
+   end
+   await FOREVER;
+with
+   loop do
+      _on(b2.led);
+      await (b2.freq)s;
+      _off(b2.led);
+      await (b2.freq/2)s;
+   end
+   await FOREVER;
+end
+\end{verbatim}
+%}
+}
+\end{minipage}
+\rule{8.5cm}{0.37pt}
+\caption{ ``Two blinking LEDs'' using organisms.
+\label{lst.orgs}
+}
+\end{figure}
+
+Figure~\ref{lst.srp} shows part of our port of the SRP routing 
+protocol~\cite{wsn.teps} to \CEU.
+The protocol specifies a fixed number of \emph{forwarders} responsible for 
+routing received messages to neighbours based on a static table.
+Given that a forwarder holds internal state (i.e. a message buffer and the 
+forwarding activity), we define a \code{Forwarder} class and create multiple 
+instances to serve requests.
+
+The first column of Figure~\ref{lst.srp} shows the receiving loop of the 
+protocol, which invokes \code{emit~go} when a message needs to be forwarded.
+The event is declared as global, so that \code{Forwarder} instances have access 
+to it.
+The forwarders are declared in a vector, creating \code{COUNT} different 
+instances.
+As the vector is local, all instances are automatically killed when the 
+protocol is stopped.
+(Note the use of the start/stop pattern of Figure~\ref{lst.radio} again.)
+
+The second column of Figure~\ref{lst.srp} shows the \code{Forwarder} class.
+Initially, all forwarders are in the same state, waiting for the global event 
+\code{go}.
+Once the receiving loop emits the event in the top-level body, the forwarders 
+awake in the order they were declared.
+The first forwarder atomically sets the \code{gotcha} variable, indicating that 
+the message will be handled and that other forwarders should ignore it:
+all other forwarders will await again for the next \code{go} emission.
+With this technique, we eliminated the need of an explicit queue.
+In the case that all forwarders become busy, the \code{go} emission will be 
+missed (with \code{gotcha=0}), acting just like a full queue.
+
+%begin{comment}
+Note that \CEU organisms are not global entities and do not use the heap for 
+memory.
+Instead, they are bounded to the scope they are declared, and all memory is 
+statically allocated, just like \CEU does for standard local variables.
+Also, when an organism goes out of scope, the same automatic bookkeeping of 
+\code{par/or} compositions holds, all internal trails are killed and 
+finalization blocks execute (if any).
+Hence, the ``garbage collection'' for both the memory and code in organisms is 
+efficient and static.
+Although \CEU does not support dynamic creation (which could lead do unbounded 
+memory), scoped organisms offer some degree of flexibility when compared to 
+systems providing global objects only~\cite{wsn.virgil,wsn.flowtalk}.
+%end{comment}
+
+% TODO: ND access
+
+\begin{figure}[t]
+%\rule{8.5cm}{0.37pt}
+\begin{minipage}[t]{0.45\linewidth}
+{\small
+\begin{verbatim}
+event _fwd_t go;
+loop do
+  await SRP_START;
+  par/or do
+    await SRP_STOP;
+  with
+    var Forwarder[COUNT] fwds;
+    <initialize fwds>
+    loop do
+      await SRP_RECEIVE;
+      <receive or forward>
+      if hops_left > 0 then
+        <prepare fwd>
+        emit go=&fwd;
+      end
+    end
+  end
+end
+\end{verbatim}
+}
+\end{minipage}
+%
+\hspace{0.0cm}
+%
+\begin{minipage}[t]{0.45\linewidth}
+%\fbox{
+{\small
+\begin{verbatim}
+class Forwarder with
+  <...>
+do
+  loop do
+    fwd = await global:go;
+    if fwd:gotcha then
+      continue;
+    end
+    fwd:gotcha = 1;
+    <send message>
+    <...>
+  end
+end
+\end{verbatim}
+%}
+}
+\end{minipage}
+\rule{8.5cm}{0.37pt}
+\caption{ SRP forwarders as organisms.
+\label{lst.srp}
+}
+\end{figure}
 -->
 
 Lexical rules
@@ -575,7 +813,7 @@ Internal events cannot be of a vector type.
 
 #### Internal functions
 
-TODO (like function in any language)
+TODO (like functions in any language)
 
 <pre><code>Dcl_fun ::= <b>function</b> [<b>@rec</b>] ParList `=>´ Type ID_var
             [ <b>do</b> Block <b>end</b> ]
@@ -593,7 +831,7 @@ TODO (like return in any language)
 
 #### External functions
 
-TODO (like system calls)
+TODO (more or less like dynamically loaded functions)
 
 #### Interrupt service routines
 
@@ -700,7 +938,7 @@ Example:
 <b>end</b>
 </code></pre>
 
-Safe annotations are discussed in more depth in section TODO(determinism).
+See also [Static analysis](#static-analysis).
 
 Assignments
 -----------
@@ -793,19 +1031,27 @@ See [Dynamic organisms](#dynamic-organisms).
 Calls
 -----
 
+The syntax for function calls is as follows:
+
 <pre><code>Call ::= [ <b>call</b>|<b>call/rec</b> ] Exp * `(´ [ExpList] `)´
 ExpList = Exp { `,´ Exp }
 </code></pre>
 
-### Function calls
+The called expression has to evaluate to a [internal](#internal-functions), 
+[external](#external-functions)), or [native](#native-symbols) function.
+The `call` operator is optional, but recursive functions must use the 
+`call/rec` operator (see [Static analysis](#static-analysis)).
+
+<!--
+--### Function calls
 
 TODO
 
-### External calls
+--### External calls
 
 TODO
 
-### Native calls
+--### Native calls
 
 Functions defined in C can be called from Céu:
 Expressions that evaluate to C functions can also be called. 
@@ -818,6 +1064,7 @@ ptr:f();
 ```
 
 <!--[ TODO: unbounded execution ]-->
+-->
 
 Event handling
 --------------
@@ -947,7 +1194,9 @@ Examples:
 External input events can only be emitted inside [asynchronous 
 blocks](#asynchronous-blocks).
 
-TODO: EmitExt evaluates to "int"
+TODO (stack/queue)
+TODO (emit output evaluates to "int")
+
 <!--
 : An emit on an output event returns immediately a status code of the action 
 that runs asynchronously with the program.
@@ -962,8 +1211,6 @@ that runs asynchronously with the program.
 </code></pre>
 :
 -->
-
-TODO: stack/queue
 
 #### Emit time
 
@@ -1087,7 +1334,7 @@ end
 
 Even if event <tt>B</tt> occurs before <tt>A</tt>, the opened file <tt>f</tt> is safely closed.
 
-TODO: escape analysis / `:=` assignments
+TODO (escape analysis / `:=` assignments)
 
 -->
 
@@ -1108,8 +1355,8 @@ in multiple others:
 
 They differ only on how trails terminate (rejoin).
 
-See [Execution model](#execution-model) for a detailed description of parallel 
-execution.
+See [Synchronous execution model](#synchronous-execution-model) for a detailed 
+description of parallel execution.
 
 ### par/and
 
@@ -1130,7 +1377,7 @@ parallel are supposed to run forever:
 
 ### watching
 
-TODO: translates to `par/or`
+TODO (translates to `par/or`, supports org refs)
 
 <pre><code>Watching ::= <b>watching</b> (WCLOCKK|WCLOCKE|ID_ext|Exp) <b>do</b>
                  Block
@@ -1338,7 +1585,7 @@ Prim ::= `(´ Exp `)´
       |  (<b>call</b> | <b>call/rec</b>) Exp
 </code></pre>
 
-TODO: RawExp
+<!--TODO: RawExp-->
 
 Most operators follow the same semantics of C.
 
