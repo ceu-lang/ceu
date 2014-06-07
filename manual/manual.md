@@ -85,8 +85,7 @@ Note that, at any time, at most one trail is executing.
 Trails are created with [parallel 
 compositions](#parallel-compositions-and-abortion).
 
-The program and diagram that follows illustrate the behavior of the scheduler 
-of Céu:
+The program and diagram below illustrate the behavior of the scheduler of Céu:
 
 <pre><code> 1:  <b>input void</b> A, B, C;
  2:  <b>par/and do</b>
@@ -118,8 +117,7 @@ of Céu:
 ![](reaction.png)
 
 The program starts in the boot reaction and is split into three trails (a 
-[`par/and`](#parallel-compositions-and-abortion) rejoins after all trails 
-terminate).
+`par/and` rejoins after all trails terminate).
 Following the order of declaration, the scheduler first executes *trail-1*
 up to the `await A` in line 5;
 then *trail-2* executes up to the `await B` in line 10;
@@ -182,8 +180,8 @@ Céu requires that each possible path in a loop body contains at least one
 `await` or `break` statement, thus avoiding *tight loops* (i.e., unbounded 
 loops that do not await).
 
-In the example that follows, the `if` true branch may never execute, resulting 
-in a tight loop (which the compiler complains about):
+In the example below, the `if` true branch may never execute, resulting in a 
+tight loop (which the compiler complains about):
 
 <pre><code><b>loop do</b>
     <b>if</b> &lt;cond&gt; <b>then</b>
@@ -217,220 +215,120 @@ Céu uses an abstraction mechanism that reconciles data and control state into
 the single concept of an *organism*, which provide multiple lines of execution 
 (control state) and an object-like interface (data state).
 
-An organism class is composed of an *interface* and a single *execution body*.
+A class of organisms is composed of an *interface* and a single *execution 
+body*.
 The interface exposes public variables, methods, and internal events, much like 
 object oriented programming.
 The body can contain any valid code in Céu (including parallel compositions) 
-and starts to execute on instantiation in parallel with the program.
+and starts to execute on instantiation and in parallel with the program.
+Organism instantiation can be either [static](#variables) or 
+[dynamic](#dynamic-organisms).
 
-TODO
+The example below (in the right) blinks two LEDs in parallel with different 
+frequencies.
+Each blinking LED is instantiated as an organism of the `Blink` class:
 
-<!--
-ce the instance of a class is equivalent to a trail, having access to all 
-presented functionality provided by \CEU, such as parallel compositions, $C$ 
-calls, timers, etc.
-An organism is instantiated by declaring a variable of the desired class, and 
-its body is automatically spawned in a \code{par/or} with the enclosing block.
-A method can be simulated by exposing an internal event in the interface of the 
-class and using the same technique of Figure~\ref{lst.func}.
+<table>
+<tr valign="top">
+<td>
+<pre><code>
+ 1:  <b>class</b> Blink <b>with</b>
+ 2:      <b>var int</b> led;
+ 3:      <b>var int</b> freq;
+ 4:  <b>do</b><font style="background-color: yellow">
+ 5:      <b>loop do</b>
+ 6:          _on(<b>this</b>.led);
+ 7:          <b>await</b> (<b>this</b>.freq)s;
+ 8:          _off(<b>this</b>.led);
+ 9:          <b>await</b> (<b>this</b>.freq/2)s;
+10:      <b>end</b>
+11:  <b>end</b></font>
+12:
+13:  <b>var</b> Blink b1 <b>with</b>
+14:       <b>this</b>.led  = 0;
+15:       <b>this</b>.freq = 2;
+16:  <b>end</b>
+17:
+18:  <b>var</b> Blink b2 <b>with</b>
+19:       <b>this</b>.led  = 1;
+20:       <b>this</b>.freq = 4;
+21:  <b>end</b>
+22:
+23:  <b>await</b> 1min;
+</code></pre>
+</td>
 
-The first column of Figure~\ref{lst.orgs} re-implements the example of 
-Figure~\ref{lst.all} to blink two LEDs with different frequencies.
-The \code{Blink} class exposes the \code{led} and \code{freq} variables to be 
-configured by the application, which then creates two instances and initializes 
-them.
+<td>
+<pre><code>
+ 1:  <b>var</b> _Blink b1 <b>with</b>
+ 2:      <b>this</b>.led  = 0;
+ 3:      <b>this</b>.freq = 2;
+ 4:  <b>end</b>
+ 5:
+ 6:  <b>var</b> _Blink b2 <b>with</b>
+ 7:      <b>this</b>.led  = 1;
+ 8:      <b>this</b>.freq = 4;
+ 9:  <b>end</b>
+10:
+11:  <b>par/or do</b>
+12:      // body of b1
+13:      <b>loop do</b>
+14:          _on(b1.led);
+15:          <b>await</b> (b1.freq)s;
+16:          _off(b1.led);
+17:          <b>await</b> (b1.freq)s;
+18:      <b>end</b>
+19:      <b>await FOREVER</b>;
+20:  <b>with</b>
+21:      // body of b2
+22:      <b>loop do</b>
+23:          _on(b2.led);
+24:          <b>await</b> (b2.freq)s;
+25:          _off(b2.led);
+26:          <b>await</b> (b2.freq)s;
+27:      <b>end</b>
+28:      <b>await FOREVER</b>;
+29:  <b>with</b>
+30:      <b>await</b> 1min;
+31:  <b>end</b>
+</code></pre>
+</td>
+</tr>
+</table>
 
-The second column shows how the organisms bodies are expanded to run in a 
-\code{par/or} together with the enclosing block body.
-The expansion is illustrative, i.e., the code is not duplicated.
-Note that in the expansion, the bodies of the organisms are followed by 
-\code{await~FOREVER}%
+The `Blink` class (lines 1-11) exposes the `led` and `freq` fields, which 
+correspond to the LED port and blinking frequency to be configured for each 
+instance.
+The application creates two instances, specifying the fields in the 
+constructors (lines 13-16 and 18-21).
+A constructor starts the instance body to execute in parallel with the 
+application.
+When reaching the `await 1min` (line 23), each instance already has its body 
+switching between `_on()` and `_off()` every `freq` milliseconds (lines 5-10).
+
+The code in the left is semantically equivalent to the one in the right, which 
+expands the organisms bodies (lines 13-18 and 22-27) in a `par/or` with the 
+rest of the application (`await 1min`, in line 30).
+Note the `await FOREVER` statements (lines 19 and 28) that avoid the organisms 
+bodies to terminate the `par/or`.
+The `_Blink` type corresponds to a simple datatype without execution body, just 
+like a *struct* or an *object*.
+
+See also [Organism declarations](#organisms) and [Class and Interface 
+declarations](#classes-and-interfaces).
+
+<!-- TODO
 \footnote{\code{FOREVER} is a reserved keyword in \CEU, and represents an 
 external input event that never occurs.}%
 , meaning that only the enclosing block can terminate the \code{par/or}.
+
 Note also that the block body runs first and properly initializes the organisms 
 before they are spawned.
 
-Once the enclosing block terminates, declared organisms are killed and all 
+Once the enclosing block terminates, declared organisms are aborted and all 
 memory can be reused, just as happens in standard parallel compositions.
 The allocation and deallocation of organisms is static, with no runtime 
 overhead such as garbage collection.
-
-\begin{figure}[t]
-%\rule{8.5cm}{0.37pt}
-\begin{minipage}[t]{0.45\linewidth}
-{\small
-\begin{verbatim}
-C _on(), _off();
-
-class Blink with
-   var int led;
-   var int freq;
-do
-   loop do
-      _on(this.led);
-      await (this.freq)s;
-      _off(this.led);
-      await (this.freq/2)s;
-   end
-end
-
-var Blink b1;
-b1.led  = 0;
-b1.freq = 2;
-
-var Blink b2;
-b2.led  = 1;
-b2.freq = 4;
-
-await 1min;
-\end{verbatim}
-}
-\end{minipage}
-%
-\hspace{0.0cm}
-%
-\begin{minipage}[t]{0.45\linewidth}
-%\fbox{
-{\small
-\begin{verbatim}
-C _on(), _off();
-var Blink b1, b2;
-par/or do
-   b1.led  = 0;
-   b1.freq = 2;
-   b2.led  = 1;
-   b2.freq = 4;
-   await 1min;
-with
-   loop do
-      _on(b1.led);
-      await (b1.freq)s;
-      _off(b1.led);
-      await (b1.freq/2)s;
-   end
-   await FOREVER;
-with
-   loop do
-      _on(b2.led);
-      await (b2.freq)s;
-      _off(b2.led);
-      await (b2.freq/2)s;
-   end
-   await FOREVER;
-end
-\end{verbatim}
-%}
-}
-\end{minipage}
-\rule{8.5cm}{0.37pt}
-\caption{ ``Two blinking LEDs'' using organisms.
-\label{lst.orgs}
-}
-\end{figure}
-
-Figure~\ref{lst.srp} shows part of our port of the SRP routing 
-protocol~\cite{wsn.teps} to \CEU.
-The protocol specifies a fixed number of \emph{forwarders} responsible for 
-routing received messages to neighbours based on a static table.
-Given that a forwarder holds internal state (i.e. a message buffer and the 
-forwarding activity), we define a \code{Forwarder} class and create multiple 
-instances to serve requests.
-
-The first column of Figure~\ref{lst.srp} shows the receiving loop of the 
-protocol, which invokes \code{emit~go} when a message needs to be forwarded.
-The event is declared as global, so that \code{Forwarder} instances have access 
-to it.
-The forwarders are declared in a vector, creating \code{COUNT} different 
-instances.
-As the vector is local, all instances are automatically killed when the 
-protocol is stopped.
-(Note the use of the start/stop pattern of Figure~\ref{lst.radio} again.)
-
-The second column of Figure~\ref{lst.srp} shows the \code{Forwarder} class.
-Initially, all forwarders are in the same state, waiting for the global event 
-\code{go}.
-Once the receiving loop emits the event in the top-level body, the forwarders 
-awake in the order they were declared.
-The first forwarder atomically sets the \code{gotcha} variable, indicating that 
-the message will be handled and that other forwarders should ignore it:
-all other forwarders will await again for the next \code{go} emission.
-With this technique, we eliminated the need of an explicit queue.
-In the case that all forwarders become busy, the \code{go} emission will be 
-missed (with \code{gotcha=0}), acting just like a full queue.
-
-%begin{comment}
-Note that \CEU organisms are not global entities and do not use the heap for 
-memory.
-Instead, they are bounded to the scope they are declared, and all memory is 
-statically allocated, just like \CEU does for standard local variables.
-Also, when an organism goes out of scope, the same automatic bookkeeping of 
-\code{par/or} compositions holds, all internal trails are killed and 
-finalization blocks execute (if any).
-Hence, the ``garbage collection'' for both the memory and code in organisms is 
-efficient and static.
-Although \CEU does not support dynamic creation (which could lead do unbounded 
-memory), scoped organisms offer some degree of flexibility when compared to 
-systems providing global objects only~\cite{wsn.virgil,wsn.flowtalk}.
-%end{comment}
-
-% TODO: ND access
-
-\begin{figure}[t]
-%\rule{8.5cm}{0.37pt}
-\begin{minipage}[t]{0.45\linewidth}
-{\small
-\begin{verbatim}
-event _fwd_t go;
-loop do
-  await SRP_START;
-  par/or do
-    await SRP_STOP;
-  with
-    var Forwarder[COUNT] fwds;
-    <initialize fwds>
-    loop do
-      await SRP_RECEIVE;
-      <receive or forward>
-      if hops_left > 0 then
-        <prepare fwd>
-        emit go=&fwd;
-      end
-    end
-  end
-end
-\end{verbatim}
-}
-\end{minipage}
-%
-\hspace{0.0cm}
-%
-\begin{minipage}[t]{0.45\linewidth}
-%\fbox{
-{\small
-\begin{verbatim}
-class Forwarder with
-  <...>
-do
-  loop do
-    fwd = await global:go;
-    if fwd:gotcha then
-      continue;
-    end
-    fwd:gotcha = 1;
-    <send message>
-    <...>
-  end
-end
-\end{verbatim}
-%}
-}
-\end{minipage}
-\rule{8.5cm}{0.37pt}
-\caption{ SRP forwarders as organisms.
-\label{lst.srp}
-}
-\end{figure}
 -->
 
 Lexical rules
@@ -734,6 +632,83 @@ Examples:
 
 <pre><code><b>var int</b> a=0, b=3;   // declares and initializes integer variables `a` and `b`
 <b>var int</b>[2] v;       // declares a vector `v` of size 2
+</code></pre>
+
+#### Organisms
+
+An organism is a variable, in which the type is the identifier of a [class 
+declaration](#classes-and-interfaces].
+An optional constructor can initialize the organism fields:
+
+<pre><code>Dcl_org ::= <b>var</b> Type ID_var [ <b>with</b>
+              Block
+            <b>end</b> ]
+</code></pre>
+
+Example:
+
+<pre><code><b>class</b> T <b>with</b>
+    <b>var int</b> v;
+<b>do</b>
+    ...
+<b>end</b>
+<b>var</b> T t <b>with</b>       // "t" is an organism of class "T"
+    <b>this</b>.v = 0;    // whose field "v" is initialized to "0"
+<b>end</b>
+</code></pre>
+
+After being declared, the body of an organism starts to execute in parallel 
+with the rest of the application.
+The table below shows the transformation of an organism declaration to an 
+equivalent code with the organism body expanded:
+
+<table>
+<tr valign="top">
+<td>
+<pre><code>&lt;code-pre-declaration&gt;
+<b>var</b> T t <b>with</b>
+    &lt;code-constructor-of-t&gt;
+<b>end</b>;
+&lt;code-pos-declaration&gt;
+</code></pre>
+</td>
+
+<td>
+<pre><code>&lt;code-pre-declaration&gt;
+<b>par/or do</b>
+    &lt;code-constructor-of-t&gt;
+    &lt;code-body-of-class-T&gt;
+    <b>await FOREVER;</b>
+<b>with</b>
+    &lt;code-pos-declaration&gt;
+<b>end</b>
+</code></pre>
+</td>
+</tr>
+</table>
+
+TODO (vectors of organisms: copy the declaration N times)
+
+TODO (lexical scope: abortion)
+
+##### Constructors
+
+Inside constructors the expression `this` refers to the new organism, while the 
+expression `outer` refers to the organism creating the new organism:
+
+<pre><code><b>class</b> U <b>with</b>
+    <b>var int</b> v;
+<b>do</b>
+    ...
+<b>end</b>
+
+<b>class</b> T <b>with</b>
+    <b>var int</b> v;
+<b>do</b>
+    <b>var</b> U u <b>with</b>
+        <b>this</b>.v = <b>outer</b>.v;   // "this" is of class "U", "outer" is of class "T"
+    <b>end</b>;
+<b>end</b>
 </code></pre>
 
 ### Events
@@ -1110,7 +1085,7 @@ An `await` may evaluate to zero or more values which can be captured with the
 optional assignment syntax.
 
 The optional `until` clause tests an additional condition required to awake.
-It can be understood as the following expansion:
+It can be understood as the expansion below:
 
 <pre><code><b>loop do</b>
     <Await>
@@ -1317,7 +1292,7 @@ The optional <tt>finally</tt> block is executed even if the whole
 defined in the *<tt>do</tt>* part are also visible to the *<tt>finally</tt>* 
 part.*
 
-Consider the example that follows:
+Consider the example below:
 
 <pre><code>par/or do
     do
@@ -1824,7 +1799,7 @@ The interface specifies some types, macros, and functions, which the
 environment has to manipulate in order to guide the execution of the original 
 program in Céu.
 
-The example that follows illustrates a possible `main` for a host platform:
+The example below illustrates a possible `main` for a host platform:
 
 ```c
 #include "_ceu_app.c"
@@ -2044,8 +2019,11 @@ Stmt ::= &lt;empty-string&gt;
 
     /* Declarations */
 
-        /* variable, events, and pools */
+        /* variable, organisms, events, and pools */
         | <b>var</b> Type ID_var [`=´ SetExp] { `,´ ID_var [`=´ SetExp] }
+        | <b>var</b> Type ID_var <b>with</b>
+              Block
+          <b>end</b>
         | <b>input</b> (Type|TypeList) ID_ext { `,´ ID_ext }
         | <b>output</b> Type ID_ext { `,´ ID_ext }
         | <b>event</b> (Type|TypeList) ID_var { `,´ ID_var }
@@ -2068,7 +2046,7 @@ Stmt ::= &lt;empty-string&gt;
               Dcls
           <b>end</b>
             <i>where</i>
-                Dcls    ::= { (Dcl_var | Dcl_int | Dcl_pool | Dcl_fun | Dcl_imp) `;´ }
+                Dcls    ::= { (&lt;var&gt; | &lt;event&gt; | &lt;pool&gt; | &lt;function&gt; | Dcl_imp) `;´ }
                 Dcl_imp ::= <b>interface</b> ID_cls { `,´ ID_cls }
 
         /* native symbols */
