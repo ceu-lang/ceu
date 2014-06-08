@@ -111,6 +111,8 @@
     * 7.2 [Compiler](#compiler)
 * 8 [Syntax](#syntax)
 * 9 [License](#license)
+
+
 <title>Céu 0.8 - Reference Manual</title>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/></p>
 
@@ -145,9 +147,11 @@ the standard synchronous operation mode of the language.
 Céu is a language for real-time concurrency with complex control 
 specifications, but not for algorithm-intensive or distributed applications.
 
+<!--
 TODO (organisms)
 
 TODO (emphasize synchronous+organisms)
+-->
 
 Céu integrates well with C, being possible to define and call C functions from 
 within Céu programs.
@@ -970,14 +974,29 @@ TODO (special/restricted functions)
 #### 4.3.4
 ### Classes and Interfaces
 
+A `class` is a template for creating organisms.
+It contains an *interface* and a *body* common to all instances of the class.
+The interface connects an organism with the rest of the application, exposing 
+internal variable, events, and methods that other organisms can manipulate 
+directly.
+The body specifies the behavior of the organism and executes when it is 
+instantiated.
+
+An `interface` is a template for classes that shares the same interface (as 
+described above, the term *interface* is overloaded here).
+The body and methods implementations may vary across classes sharing the same 
+interface.
+
+The declaration of classes and interfaces is as follows:
+
 <pre><code>Dcl_cls ::= <b>class</b> ID_cls <b>with</b>
-                Dcls
+                Dcls    // interface
             <b>do</b>
-                Block
+                Block   // body
             <b>end</b>
 
 Dcl_ifc ::= <b>interface</b> ID_cls <b>with</b>
-                Dcls
+                Dcls    // interface
             <b>end</b>
 
 Dcls = { (Dcl_var | Dcl_int | Dcl_pool | Dcl_fun | Dcl_imp) `;´ }
@@ -985,15 +1004,36 @@ Dcls = { (Dcl_var | Dcl_int | Dcl_pool | Dcl_fun | Dcl_imp) `;´ }
 Dcl_imp = <b>interface</b> ID_cls { `,´ ID_cls }
 </code></pre>
 
-TODO (a lot to say)
+`Dcls` is a sequence of variables, events, pools, and functions (methods) 
+declarations.
+It can also refer other interfaces through a `Dcl_imp` clause, which copies all 
+declarations from the referred interfaces (similarly to the `implements` clause 
+of Java).
 
 #### 4.3.5
 ### Pools
 
+A pool is a container for dynamic instances of organisms of the same type:
+
 <pre><code>Dcl_pool = <b>pool</b> Type ID_var { `,´ ID_var }
 </code></pre>
 
-TODO (a lot to say)
+The type has to be a class or interface identifier with a [vector 
+modifier](#vector).
+For pools of classes, the number inside the vector brackets represents the 
+maximum number of instances supported by the pool.
+For pools of interfaces, the number represents the maximum number of bytes for 
+all instances (as each instance may have a different size).
+The number inside the vector modifier brackets is optional, though.
+In this case, the number of instances in the pool is unbounded.
+
+Examples:
+
+<code><pre><b>pool</b> T[10]  ts;      // a pool of at most 10 instances of class "T"
+<b>pool</b> T[]    ts;      // an unbounded pool of instances of class "T"
+<b>pool</b> I[100] is;      // a pool of at most 100 bytes of instances of interface "I"
+<b>pool</b> I[]    is;      // an unbounded pool of instances of interface "I"
+</pre></code>
 
 #### 4.3.6
 ### Native symbols

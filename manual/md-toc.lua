@@ -63,5 +63,5 @@ for i=#T, 1, -1 do
 end
 
 local f = assert(io.open('manual-toc.md','w'))
-f:write(TOC..MANUAL)
+f:write(TOC..'\n\n'..MANUAL)
 f:close()
