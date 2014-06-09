@@ -18,11 +18,12 @@
 * 3 [Types](#types)
     * 3.1 [Primitive types](#primitive-types)
     * 3.2 [Native types](#native-types)
-    * 3.3 [Type modifiers](#type-modifiers)
-        * 3.3.1 [Pointers](#pointers)
-        * 3.3.2 [References](#references)
-        * 3.3.3 [Buffer pointers](#buffer-pointers)
-        * 3.3.4 [Vectors](#vectors)
+    * 3.3 [Class and Interface types](#class-and-interface-types)
+    * 3.4 [Type modifiers](#type-modifiers)
+        * 3.4.1 [Pointers](#pointers)
+        * 3.4.2 [References](#references)
+        * 3.4.3 [Buffer pointers](#buffer-pointers)
+        * 3.4.4 [Vectors](#vectors)
 * 4 [Statements](#statements)
     * 4.1 [Blocks](#blocks)
         * 4.1.1 [do-end](#do-end)
@@ -151,6 +152,10 @@ specifications, but not for algorithm-intensive or distributed applications.
 TODO (organisms)
 
 TODO (emphasize synchronous+organisms)
+
+The two main peculiarities of Céu are the [synchronous execution 
+model](#synchronous-execution-model) and the use of [organisms as 
+abstractions](#organisms-as-abstractions).
 -->
 
 Céu integrates well with C, being possible to define and call C functions from 
@@ -329,7 +334,46 @@ TODO
 #### 1.1.4
 ### Internal reactions
 
-TODO (internal events: stack-based execution)
+Céu provides a inter-trail communication through *internal events*.
+Trails use the `await` and `emit` operations to manipulate internal events, 
+i.e., a trail that emits an event can awake trails previously awaiting the same 
+event.
+
+An `emit` starts a new *internal reaction* in the program:
+
+1. On an `emit`, the scheduler saves the statement following it to execute 
+later.
+2. All trails awaiting the emitted event awake and execute (like rule 2 for 
+external reactions).
+3. The emitting trail resumes execution on the saved statement.
+
+If an awaking trail emits another internal event, a new internal reaction 
+starts.
+The scheduler uses a stack policy (first in, last out) for saved continuation 
+statements in rule 1.
+
+Example:
+
+<pre><code>1:  <b>par/and do</b>
+2:      <b>await</b> e;
+3:      <b>emit</b> f;
+4:  <b>with</b>
+5:      <b>await</b> f;
+6:  <b>with</b>
+7:      ...
+8:      <b>emit</b> e;
+9:  <b>end</b>
+</code></pre>
+
+The `emit e` in *trail-3* (line 8) starts an internal reaction that awakes the 
+`await e` in *trail-1* (line 2).
+Then, the `emit f` (line 3) starts another internal reaction that awakes the 
+`await f` in *trail-2* (line 5).
+*Trail-2* terminates and the `emit f` resumes in *trail-1*.
+*Trail-1* terminates and the `emit e` resumes in *trail-3*.
+*Trail-3* terminates.
+Finally, the `par/and` rejoins (all trails have terminated) and the program 
+terminates.
 
 ### 1.2
 Organisms as abstractions
@@ -636,8 +680,9 @@ identifier](#identifiers), or one of the primitive types:
 Examples:
 
 <pre><code><b>var u8</b> v;       // "v" is of 8-bit unsigned integer type
-<b>var</b> _rect r;    // "r" is of external native type `rect`
-<b>var char</b>* buf;  // "buf" is a pointer to a `char`
+<b>var</b> _rect r;    // "r" is of external native type "rect"
+<b>var char</b>* buf;  // "buf" is a pointer to a "char"
+<b>var</b> T t;        // "t" is an organism of class "T"
 </code></pre>
 
 ### 3.1
@@ -673,7 +718,7 @@ Example:
 <pre><code><b>var</b> _message_t msg;      // "message_t" is a C type defined in an external library
 </code></pre>
 
-Native types support [annotation](#native-symbols) to provide additional 
+Native types support [annotations](#native-symbols) which provide additional 
 information to the compiler.
 
 <!--
@@ -685,27 +730,33 @@ Example:
 -->
 
 ### 3.3
+Class and Interface types
+-------------------------
+
+See [Classes and Interfaces](#classes-and-interfaces).
+
+### 3.4
 Type modifiers
 --------------
 
 Types can be suffixed with the following modifiers: `*`, `&`, `[]`, and `[N]`.
 
-#### 3.3.1
+#### 3.4.1
 ### Pointers
 
 TODO (like C)
 
-#### 3.3.2
+#### 3.4.2
 ### References
 
 TODO (more or less like C++)
 
-#### 3.3.3
+#### 3.4.3
 ### Buffer pointers
 
 TODO (more or less like pointers)
 
-#### 3.3.4
+#### 3.4.4
 ### Vectors
 
 One-dimensional vectors are declared by suffixing the variable type (instead of 
@@ -921,8 +972,8 @@ TODO (emit + await)
 ##### 4.3.2.2
 #### Internal events
 
-Internal events have the same purpose of external events, but for communication 
-within trails in a program.
+Internal events have the same purpose of external events, but for 
+[communication within trails in a program](#internal-reactions).
 
 The declaration of internal events is as follows:
 
@@ -999,9 +1050,9 @@ Dcl_ifc ::= <b>interface</b> ID_cls <b>with</b>
                 Dcls    // interface
             <b>end</b>
 
-Dcls = { (Dcl_var | Dcl_int | Dcl_pool | Dcl_fun | Dcl_imp) `;´ }
+Dcls ::= { (Dcl_var | Dcl_int | Dcl_pool | Dcl_fun | Dcl_imp) `;´ }
 
-Dcl_imp = <b>interface</b> ID_cls { `,´ ID_cls }
+Dcl_imp ::= <b>interface</b> ID_cls { `,´ ID_cls }
 </code></pre>
 
 `Dcls` is a sequence of variables, events, pools, and functions (methods) 
@@ -1015,11 +1066,11 @@ of Java).
 
 A pool is a container for dynamic instances of organisms of the same type:
 
-<pre><code>Dcl_pool = <b>pool</b> Type ID_var { `,´ ID_var }
+<pre><code>Dcl_pool ::= <b>pool</b> Type ID_var { `,´ ID_var }
 </code></pre>
 
-The type has to be a class or interface identifier with a [vector 
-modifier](#vector).
+The type has to be a [class or interface identifier](#identifiers) followed by 
+a [vector modifier](#vectors).
 For pools of classes, the number inside the vector brackets represents the 
 maximum number of instances supported by the pool.
 For pools of interfaces, the number represents the maximum number of bytes for 
@@ -1033,7 +1084,7 @@ Examples:
 <b>pool</b> T[]    ts;      // an unbounded pool of instances of class "T"
 <b>pool</b> I[100] is;      // a pool of at most 100 bytes of instances of interface "I"
 <b>pool</b> I[]    is;      // an unbounded pool of instances of interface "I"
-</pre></code>
+</code></pre>
 
 #### 4.3.6
 ### Native symbols
@@ -1225,28 +1276,22 @@ The called expression has to evaluate to a [internal](#internal-functions),
 The `call` operator is optional, but recursive functions must use the 
 `call/rec` operator (see [Static analysis](#static-analysis)).
 
-<!--
---### Function calls
-
-TODO
-
---### External calls
-
-TODO
-
---### Native calls
-
-Functions defined in C can be called from Céu:
-Expressions that evaluate to C functions can also be called. 
-
 Examples:
 
 ```
-_printf("Hello World!\n");
-ptr:f();
+_printf("Hello World!\n");  // calls native "printf"
+o.f();                      // calls method "f" of organism "o"
+F(1,2,3);                   // calls external function "F"
 ```
 
-<!--[ TODO: unbounded execution ]-->
+<!--
+TODO: unbounded execution
+Native functions cannot be \CEU does not extend the bounded execution analysis 
+to $C$ function calls.
+On the one hand, $C$ calls must be carefully analyzed in order to keep programs
+responsive.
+On the other hand, they also provide means to circumvent the rigor of \CEU in a
+well-marked way (the special underscore syntax).
 -->
 
 ### 4.6
@@ -1385,6 +1430,7 @@ External input events can only be emitted inside [asynchronous
 blocks](#asynchronous-blocks).
 
 TODO (stack/queue)
+
 TODO (emit output evaluates to "int")
 
 <!--
@@ -1439,13 +1485,14 @@ Finally, it they all fail, the block following the `else` executes.
 
 A `loop` continuously executes its body block:
 
-<pre><code>Loop ::= <b>loop</b> [ ID_var [<b>in</b> Exp] ] <b>do</b>
+<pre><code>Loop ::= <b>loop</b> [ Iterator ] <b>do</b>
              Block
          <b>end</b>
+Iterator ::= [`(´ Type `)´] ID_var [<b>in</b> Exp]
 </code></pre>
 
-A `loop` terminates when reaches a `break` in its body or when the specified 
-iterator terminates.
+A `loop` terminates when it reaches a [`break`](#break) or its (optional) 
+[iterator](#iterators) terminates.
 
 ##### 4.7.2.1
 #### break
@@ -1472,20 +1519,35 @@ Example:
 ##### 4.7.2.2
 #### Iterators
 
+A `loop` may specify an iterator that yields a new value on each loop 
+iteration.
+
 ###### 4.7.2.2.1
 ##### Incremental index
 
-For iterators with `Exp` empty or of type `int`, the `ID_var` is incremented 
-after each loop iteration.
+For iterators in which `Exp` is empty or is of type `int`, `ID_var` is 
+incremented after each loop iteration.
 `ID_var` is automatically declared read-only, with visibility restricted to the 
 loop body, and is initialized to zero.
-The optional `Exp`, which is evaluated once before the loop starts, limits the 
-number of iterations.
+The optional `Exp` limits the number of iterations, and is evaluated once 
+before the loop starts.
+
+Example:
+
+<pre><code><b>loop</b> i <b>in</b> 10 <b>do</b>
+    _printf("i = %d\n", i);     // prints "i = 0" up to "i = 9"
+<b>end</b>
+</code></pre>
 
 ###### 4.7.2.2.2
 ##### Pool instances
 
-TODO
+For iterators in which `Exp` evaluates to a pool, `ID_var´ evaluates to the 
+instances on the pool, one at a time, from the oldest to the newest.
+`ID_var` is automatically declared read-only, with visibility restricted to the 
+loop body.
+
+The optional typecast tries
 
 ##### 4.7.2.3
 #### every
@@ -2377,7 +2439,7 @@ Stmt ::= &lt;empty-string&gt;
           <b>end</b>
 
         /* loops */
-        | <b>loop</b> [ ID_var [<b>in</b> Exp] ] <b>do</b>
+        | <b>loop</b> [ [`(´ Type `)´] ID_var [<b>in</b> Exp] ] <b>do</b>
               Block
           <b>end</b>
         | <b>every</b> (Exp|VarList) <b>in</b> (WCLOCKK|WCLOCKE|ID_ext|Exp) <b>do</b>
