@@ -160,7 +160,7 @@ which are presented in Section~\ref{sec.ceu.ints}.
 
 The use of trails in parallel allows programs to wait for multiple events at 
 the same time.
-Céu supports three kinds of parallel constructs differing in how they rejoin 
+Céu supports three kinds of parallel compositions differing in how they rejoin 
 (to proceed to the statement in sequence):
 
 1. a `par/and` rejoins after all trails in parallel terminate;
@@ -267,7 +267,7 @@ object oriented programming.
 The body can contain any valid code in Céu (including parallel compositions) 
 and starts to execute on instantiation and in parallel with the program.
 Organism instantiation can be either [static](#variables) or 
-[dynamic](#dynamic-organisms).
+[dynamic](#dynamic-execution).
 
 The example below (in the right) blinks two LEDs in parallel with different 
 frequencies.
@@ -359,8 +359,9 @@ bodies to terminate the `par/or`.
 The `_Blink` type corresponds to a simple datatype without execution body, just 
 like a *struct* or an *object*.
 
-See also [Organism declarations](#organisms) and [Class and Interface 
-declarations](#classes-and-interfaces).
+See also [Organism declarations](#organisms), [Class and Interface 
+declarations](#classes-and-interfaces), and [Dynamic 
+execution](#dynamic-execution).
 
 <!-- TODO
 \footnote{\code{FOREVER} is a reserved keyword in \CEU, and represents an 
@@ -646,7 +647,7 @@ terminating semicolon.*
 A block creates a new scope for [variables](#variables), which are only visible 
 for statements inside the block.
 
-Compound statements (e.g. [if-then-else](#if-then-else)) create new blocks and 
+Compound statements (e.g. [if-then-else](#conditional)) create new blocks and 
 can be nested for an arbitrary level.
 
 ### do-end
@@ -688,7 +689,7 @@ Examples:
 #### Organisms
 
 An organism is a variable, in which the type is the identifier of a [class 
-declaration](#classes-and-interfaces].
+declaration](#classes-and-interfaces).
 An optional constructor can initialize the organism fields:
 
 <pre><code>Dcl_org ::= <b>var</b> Type ID_var [ <b>with</b>
@@ -738,9 +739,11 @@ equivalent code with the organism body expanded:
 </tr>
 </table>
 
-TODO (vectors of organisms: copy the declaration N times)
+Being a variable, the life of an organism is restricted to the block it is 
+declared.
+When an organism goes out of scope, its body is aborted.
 
-TODO (lexical scope: abortion)
+TODO (vectors of organisms: copy the declaration N times)
 
 ##### Constructors
 
@@ -925,6 +928,12 @@ Examples:
 <b>pool</b> I[]    is;      // an unbounded pool of instances of interface "I"
 </code></pre>
 
+The life of all organisms inside a pool is restricted to the block it is 
+declared.
+When the pool goes out of scope, all organism bodies are aborted.
+
+See [Dynamic execution](#dynamic-execution) for organisms allocation.
+
 ### Native symbols
 
 Native declarations provide additional information about external C symbols.
@@ -1031,7 +1040,7 @@ a = b + 1;
 
 A whole block can be used as an assignment value by escaping from it.
 The following block statements can be used in assignments: [`do-end´](#do-end) 
-[`if-then-else`](#if-then-else), [`loop`](#loop), [`every`](#every), and 
+[`if-then-else`](#conditional), [`loop`](#repetition), [`every`](#every), and 
 [`par`](#par).
 
 #### escape
@@ -1088,7 +1097,7 @@ See [Threads](#threads).
 
 ### New and Spawn assignment
 
-See [Dynamic organisms](#dynamic-organisms).
+See [Dynamic execution](#dynamic-execution).
 
 Calls
 -----
@@ -1127,12 +1136,16 @@ Event handling
 
 Events are the most fundamental concept of Céu, accounting for its reactive 
 nature.
+Programs manipulate events through the `await` and `emit` statements.
+An `await` halts the running trail until that event occurs.
+An event occurrence is broadcast to all trails trails awaiting that event, 
+awaking them to resume execution.
 
-Events are manipulated through the `await` and `emit` statements.
-
-Waiting for an event halts the running trail until that event occurs.
-
-The occurrence of an event is broadcast to all awaiting trails.
+Céu supports external and internal events.
+External events are triggered by the [environment](#environment), while 
+internal events, by the `emit` statement.
+See also [Synchronous execution model] for the differences between external and 
+internal reactions.
 
 ### Await statements
 
@@ -1250,7 +1263,8 @@ Examples:
 External input events can only be emitted inside [asynchronous 
 blocks](#asynchronous-blocks).
 
-TODO (stack/queue)
+The emission of internal events start new [internal 
+reactions](#internal-reactions).
 
 TODO (emit output evaluates to "int")
 
@@ -1277,10 +1291,8 @@ as described in [Await time](#await-time).
 Like input events, time can only be emitted inside [asynchronous 
 blocks](#asynchronous-blocks).
 
-Flow control
-------------
-
-### if-then-else
+Conditional
+-----------
 
 Conditional flow uses the `if-then-else` statement:
 
@@ -1298,7 +1310,8 @@ evaluates to a non-zero value.
 Otherwise, the same process holds each `else/if` alternative.
 Finally, it they all fail, the block following the `else` executes.
 
-### loop
+Repetition
+----------
 
 A `loop` continuously executes its body block:
 
@@ -1364,52 +1377,81 @@ The optional typecast tries
 
 #### every
 
-TODO
+The `every` statement continuously awaits an event and executes its body:
 
 <pre><code>Every ::= <b>every</b> (Exp|VarList) <b>in</b> (WCLOCKK|WCLOCKE|ID_ext|Exp) <b>do</b>
               Block
           <b>end</b>
 </code></pre>
 
+An `every` expands to a `loop` as illustrated below:
+
+<table width="100%">
+<tr valign="top">
+<td>
+<pre><code><b>every</b> &lt;attr&gt; <b>in</b> &lt;event&gt; <b>do</b>
+    &lt;block&gt;
+<b>end</b>
+</code></pre>
+</td>
+
+<td>
+<pre><code><b>loop do</b>
+    &lt;attr&gt; = <b>await</b> &lt;event&gt;
+    &lt;block&gt;
+<b>end</b>
+</code></pre>
+</td>
+</tr>
+</table>
+
+The body of an `every` cannot contain an `await`, ensuring that no occurrences 
+of `&lt;event&gt;` are ever missed.
+
 Finalization
 ------------
 
-TODO
+The `finalize` statement postpones the execution of its body to happen when its 
+associated block goes out of scope:
 
-<pre><code>Finalize ::= <b>finalize</b> [Exp `=´ SetExp] <b>with</b>
+<pre><code>Finalize ::= <b>finalize</b>
+                 [Exp `=´ SetExp]
+             <b>with</b>
                  Block
              <b>end</b>
 </code></pre>
 
-<!--
+The presence of the optional attribution clause determines which block to 
+associate with the `finalize`:
 
-The optional <tt>finally</tt> block is executed even if the whole 
-<tt>do-finally-end</tt> block is killed by a trail in parallel.
+1. The enclosing block, if the attribution is absent.
+2. The block of the variable being assigned, if the attribution is present.
 
-*Note: the whole *<tt>do-end</tt>* defines a single block, i.e., variables 
-defined in the *<tt>do</tt>* part are also visible to the *<tt>finally</tt>* 
-part.*
+Example:
 
-Consider the example below:
-
-<pre><code>par/or do
-    do
-        _FILE* f = _fopen("/tmp/test.txt");
-        await A;
-        // use f
-    finally
+<pre><code>
+<b>input int</b> A;
+<b>par/or do</b>
+    <b>var _FILE* f;
+    <b>finalize</b>
+        f = _fopen("/tmp/test.txt");
+    <b>with</b>
         _fclose(f);
-    end
-with
-    await B;
-end
+    <b>end</b>
+    <b>every</b> v <b>in</b> A <b>do</b>
+        fwrite(&v, ..., f);
+    <b>end</b>
+<b>with</b>
+    <b>await</b> 1s;
+<b>end</b>
 </code></pre>
 
-Even if event <tt>B</tt> occurs before <tt>A</tt>, the opened file <tt>f</tt> is safely closed.
+The program open `f` and writes to it on every occurrence of `A`.
+The writing trail is aborted after one second, but the `finalize` safely closes
+the file, because it is associated to the block that declares `f`.
 
-TODO (escape analysis / `:=` assignments)
-
--->
+The [static analysis](#static-analysis) of Céu enforces the use of `finalize` 
+for unsafe attributions.
 
 Parallel compositions
 ---------------------
@@ -1450,12 +1492,36 @@ parallel are supposed to run forever:
 
 ### watching
 
-TODO (translates to `par/or`, supports org refs)
+The `watching` statement aborts its body when its associated event occurs:
 
 <pre><code>Watching ::= <b>watching</b> (WCLOCKK|WCLOCKE|ID_ext|Exp) <b>do</b>
                  Block
              <b>end</b>
 </code></pre>
+
+A `wacthing` expands to a `par/or` as illustrated below:
+
+<table width="100%">
+<tr valign="top">
+<td>
+<pre><code><b>watching</b> &lt;event&gt; <b>do</b>
+    &lt;block&gt;
+<b>end</b>
+</code></pre>
+</td>
+
+<td>
+<pre><code><b>par/or do</b>
+    &lt;block&gt;
+<b>with</b>
+    <b>await</b> &lt;event&gt;
+<b>end</b>
+</code></pre>
+</td>
+</tr>
+</table>
+
+TODO (supports org refs)
 
 pause/if
 --------
@@ -1467,18 +1533,37 @@ TODO
           <b>end</b>
 </code></pre>
 
-Dynamic organisms
+Dynamic execution
 -----------------
 
-TODO
-<!-- TODO [free] -->
+The `spawn` and `new` statements create instances of organisms dynamically:
 
-<pre><code>
-Dyn ::= (<b>new</b>|<b>spawn</b>) ID_cls [<b>in</b> Exp]
+<pre><code>Dyn ::= (<b>new</b>|<b>spawn</b>) ID_cls [<b>in</b> Exp]
             [ <b>with</b> Constructor <b>end</b> ]
 </code></pre>
 
-TODO: Constructor
+The `spawn` returns if the allocation succeeded, i.e., `true` in case of 
+success, or `false` otherwise.
+The `new` returns a pointer to the allocated organism, or `null` in the case of 
+failure.
+
+The optional `in` clause allows the statement to specify in which 
+[pool](#pools) the organisms will live.
+If absent, the organism is allocated on an implicit pool in the outermost block 
+of the class the allocation happens.
+
+On allocation, the body of the organism starts to execute in parallel with the 
+rest of the application, just like happens for [static organisms](#organisms).
+The constructor clause is also the same as for [static 
+organisms](#constructors).
+
+A dynamic organism is also automatically deallocated when its execution body 
+terminates.
+
+See [Static analysis](#organisms-references) for the restrictions on 
+manipulating pointers and references to organisms.
+
+<!-- TODO [free] -->
 
 Asynchronous execution
 ----------------------
@@ -1884,6 +1969,11 @@ TODO
 
 TODO (index clash)
 
+Organisms references
+--------------------
+
+TODO
+
 Environment
 ===========
 
@@ -2191,7 +2281,7 @@ Stmt ::= &lt;empty-string&gt;
         | <b>emit</b> (WCLOCKK|WCLOCKE)
         | <b>emit</b> ID_ext [ `=>´ (Exp | `(´ ExpList `)´)
 
-    /* Dynamic organisms */
+    /* Dynamic execution */
         | (<b>new</b>|<b>spawn</b>) * ID_cls * [<b>in</b> Exp]
               [ <b>with</b> Constructor <b>end</b> ]
 

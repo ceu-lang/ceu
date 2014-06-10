@@ -62,28 +62,27 @@
         * 4.6.2 [Emit statements](#emit-statements)
             * 4.6.2.1 [Emit event](#emit-event)
             * 4.6.2.2 [Emit time](#emit-time)
-    * 4.7 [Flow control](#flow-control)
-        * 4.7.1 [if-then-else](#if-then-else)
-        * 4.7.2 [loop](#loop)
-            * 4.7.2.1 [break](#break)
-            * 4.7.2.2 [Iterators](#iterators)
-                * 4.7.2.2.1 [Incremental index](#incremental-index)
-                * 4.7.2.2.2 [Pool instances](#pool-instances)
-            * 4.7.2.3 [every](#every)
-    * 4.8 [Finalization](#finalization)
-    * 4.9 [Parallel compositions](#parallel-compositions)
-        * 4.9.1 [par/and](#parand)
-        * 4.9.2 [par/or](#paror)
-        * 4.9.3 [par](#par)
-        * 4.9.4 [watching](#watching)
-    * 4.10 [pause/if](#pauseif)
-    * 4.11 [Dynamic organisms](#dynamic-organisms)
-    * 4.12 [Asynchronous execution](#asynchronous-execution)
-        * 4.12.1 [Asynchronous blocks](#asynchronous-blocks)
-            * 4.12.1.1 [Simulation](#simulation)
-        * 4.12.2 [Threads](#threads)
-            * 4.12.2.1 [Synchronous blocks](#synchronous-blocks)
-    * 4.13 [Native blocks](#native-blocks)
+    * 4.7 [Conditional](#conditional)
+    * 4.8 [Repetition](#repetition)
+            * 4.8.1 [break](#break)
+            * 4.8.1.1 [Iterators](#iterators)
+                * 4.8.1.1.1 [Incremental index](#incremental-index)
+                * 4.8.1.1.2 [Pool instances](#pool-instances)
+            * 4.8.1.2 [every](#every)
+    * 4.9 [Finalization](#finalization)
+    * 4.10 [Parallel compositions](#parallel-compositions)
+        * 4.10.1 [par/and](#parand)
+        * 4.10.2 [par/or](#paror)
+        * 4.10.3 [par](#par)
+        * 4.10.4 [watching](#watching)
+    * 4.11 [pause/if](#pauseif)
+    * 4.12 [Dynamic execution](#dynamic-execution)
+    * 4.13 [Asynchronous execution](#asynchronous-execution)
+        * 4.13.1 [Asynchronous blocks](#asynchronous-blocks)
+            * 4.13.1.1 [Simulation](#simulation)
+        * 4.13.2 [Threads](#threads)
+            * 4.13.2.1 [Synchronous blocks](#synchronous-blocks)
+    * 4.14 [Native blocks](#native-blocks)
 * 5 [Expressions](#expressions)
     * 5.1 [Primary](#primary)
     * 5.2 [Arithmetic](#arithmetic)
@@ -103,6 +102,7 @@
     * 6.1 [Types](#types)
     * 6.2 [Loops](#loops)
     * 6.3 [Finalization](#finalization)
+    * 6.4 [Organisms references](#organisms-references)
 * 7 [Environment](#environment)
     * 7.1 [The C API](#the-c-api)
         * 7.1.1 [Types](#types)
@@ -279,7 +279,7 @@ which are presented in Section~\ref{sec.ceu.ints}.
 
 The use of trails in parallel allows programs to wait for multiple events at 
 the same time.
-Céu supports three kinds of parallel constructs differing in how they rejoin 
+Céu supports three kinds of parallel compositions differing in how they rejoin 
 (to proceed to the statement in sequence):
 
 1. a `par/and` rejoins after all trails in parallel terminate;
@@ -390,7 +390,7 @@ object oriented programming.
 The body can contain any valid code in Céu (including parallel compositions) 
 and starts to execute on instantiation and in parallel with the program.
 Organism instantiation can be either [static](#variables) or 
-[dynamic](#dynamic-organisms).
+[dynamic](#dynamic-execution).
 
 The example below (in the right) blinks two LEDs in parallel with different 
 frequencies.
@@ -482,8 +482,9 @@ bodies to terminate the `par/or`.
 The `_Blink` type corresponds to a simple datatype without execution body, just 
 like a *struct* or an *object*.
 
-See also [Organism declarations](#organisms) and [Class and Interface 
-declarations](#classes-and-interfaces).
+See also [Organism declarations](#organisms), [Class and Interface 
+declarations](#classes-and-interfaces), and [Dynamic 
+execution](#dynamic-execution).
 
 <!-- TODO
 \footnote{\code{FOREVER} is a reserved keyword in \CEU, and represents an 
@@ -790,7 +791,7 @@ terminating semicolon.*
 A block creates a new scope for [variables](#variables), which are only visible 
 for statements inside the block.
 
-Compound statements (e.g. [if-then-else](#if-then-else)) create new blocks and 
+Compound statements (e.g. [if-then-else](#conditional)) create new blocks and 
 can be nested for an arbitrary level.
 
 #### 4.1.1
@@ -837,7 +838,7 @@ Examples:
 #### Organisms
 
 An organism is a variable, in which the type is the identifier of a [class 
-declaration](#classes-and-interfaces].
+declaration](#classes-and-interfaces).
 An optional constructor can initialize the organism fields:
 
 <pre><code>Dcl_org ::= <b>var</b> Type ID_var [ <b>with</b>
@@ -887,9 +888,11 @@ equivalent code with the organism body expanded:
 </tr>
 </table>
 
-TODO (vectors of organisms: copy the declaration N times)
+Being a variable, the life of an organism is restricted to the block it is 
+declared.
+When an organism goes out of scope, its body is aborted.
 
-TODO (lexical scope: abortion)
+TODO (vectors of organisms: copy the declaration N times)
 
 ###### 4.3.1.1.1
 ##### Constructors
@@ -1086,6 +1089,12 @@ Examples:
 <b>pool</b> I[]    is;      // an unbounded pool of instances of interface "I"
 </code></pre>
 
+The life of all organisms inside a pool is restricted to the block it is 
+declared.
+When the pool goes out of scope, all organism bodies are aborted.
+
+See [Dynamic execution](#dynamic-execution) for organisms allocation.
+
 #### 4.3.6
 ### Native symbols
 
@@ -1197,7 +1206,7 @@ a = b + 1;
 
 A whole block can be used as an assignment value by escaping from it.
 The following block statements can be used in assignments: [`do-end´](#do-end) 
-[`if-then-else`](#if-then-else), [`loop`](#loop), [`every`](#every), and 
+[`if-then-else`](#conditional), [`loop`](#repetition), [`every`](#every), and 
 [`par`](#par).
 
 ##### 4.4.2.1
@@ -1259,7 +1268,7 @@ See [Threads](#threads).
 #### 4.4.6
 ### New and Spawn assignment
 
-See [Dynamic organisms](#dynamic-organisms).
+See [Dynamic execution](#dynamic-execution).
 
 ### 4.5
 Calls
@@ -1300,12 +1309,16 @@ Event handling
 
 Events are the most fundamental concept of Céu, accounting for its reactive 
 nature.
+Programs manipulate events through the `await` and `emit` statements.
+An `await` halts the running trail until that event occurs.
+An event occurrence is broadcast to all trails trails awaiting that event, 
+awaking them to resume execution.
 
-Events are manipulated through the `await` and `emit` statements.
-
-Waiting for an event halts the running trail until that event occurs.
-
-The occurrence of an event is broadcast to all awaiting trails.
+Céu supports external and internal events.
+External events are triggered by the [environment](#environment), while 
+internal events, by the `emit` statement.
+See also [Synchronous execution model] for the differences between external and 
+internal reactions.
 
 #### 4.6.1
 ### Await statements
@@ -1429,7 +1442,8 @@ Examples:
 External input events can only be emitted inside [asynchronous 
 blocks](#asynchronous-blocks).
 
-TODO (stack/queue)
+The emission of internal events start new [internal 
+reactions](#internal-reactions).
 
 TODO (emit output evaluates to "int")
 
@@ -1458,11 +1472,8 @@ Like input events, time can only be emitted inside [asynchronous
 blocks](#asynchronous-blocks).
 
 ### 4.7
-Flow control
-------------
-
-#### 4.7.1
-### if-then-else
+Conditional
+-----------
 
 Conditional flow uses the `if-then-else` statement:
 
@@ -1480,8 +1491,9 @@ evaluates to a non-zero value.
 Otherwise, the same process holds each `else/if` alternative.
 Finally, it they all fail, the block following the `else` executes.
 
-#### 4.7.2
-### loop
+### 4.8
+Repetition
+----------
 
 A `loop` continuously executes its body block:
 
@@ -1494,7 +1506,7 @@ Iterator ::= [`(´ Type `)´] ID_var [<b>in</b> Exp]
 A `loop` terminates when it reaches a [`break`](#break) or its (optional) 
 [iterator](#iterators) terminates.
 
-##### 4.7.2.1
+##### 4.8.1
 #### break
 
 A `break` escapes the innermost enclosing loop.
@@ -1516,13 +1528,13 @@ Example:
 <b>end</b>
 </code></pre>
 
-##### 4.7.2.2
+##### 4.8.1.1
 #### Iterators
 
 A `loop` may specify an iterator that yields a new value on each loop 
 iteration.
 
-###### 4.7.2.2.1
+###### 4.8.1.1.1
 ##### Incremental index
 
 For iterators in which `Exp` is empty or is of type `int`, `ID_var` is 
@@ -1539,7 +1551,7 @@ Example:
 <b>end</b>
 </code></pre>
 
-###### 4.7.2.2.2
+###### 4.8.1.1.2
 ##### Pool instances
 
 For iterators in which `Exp` evaluates to a pool, `ID_var´ evaluates to the 
@@ -1549,58 +1561,87 @@ loop body.
 
 The optional typecast tries
 
-##### 4.7.2.3
+##### 4.8.1.2
 #### every
 
-TODO
+The `every` statement continuously awaits an event and executes its body:
 
 <pre><code>Every ::= <b>every</b> (Exp|VarList) <b>in</b> (WCLOCKK|WCLOCKE|ID_ext|Exp) <b>do</b>
               Block
           <b>end</b>
 </code></pre>
 
-### 4.8
+An `every` expands to a `loop` as illustrated below:
+
+<table width="100%">
+<tr valign="top">
+<td>
+<pre><code><b>every</b> &lt;attr&gt; <b>in</b> &lt;event&gt; <b>do</b>
+    &lt;block&gt;
+<b>end</b>
+</code></pre>
+</td>
+
+<td>
+<pre><code><b>loop do</b>
+    &lt;attr&gt; = <b>await</b> &lt;event&gt;
+    &lt;block&gt;
+<b>end</b>
+</code></pre>
+</td>
+</tr>
+</table>
+
+The body of an `every` cannot contain an `await`, ensuring that no occurrences 
+of `&lt;event&gt;` are ever missed.
+
+### 4.9
 Finalization
 ------------
 
-TODO
+The `finalize` statement postpones the execution of its body to happen when its 
+associated block goes out of scope:
 
-<pre><code>Finalize ::= <b>finalize</b> [Exp `=´ SetExp] <b>with</b>
+<pre><code>Finalize ::= <b>finalize</b>
+                 [Exp `=´ SetExp]
+             <b>with</b>
                  Block
              <b>end</b>
 </code></pre>
 
-<!--
+The presence of the optional attribution clause determines which block to 
+associate with the `finalize`:
 
-The optional <tt>finally</tt> block is executed even if the whole 
-<tt>do-finally-end</tt> block is killed by a trail in parallel.
+1. The enclosing block, if the attribution is absent.
+2. The block of the variable being assigned, if the attribution is present.
 
-*Note: the whole *<tt>do-end</tt>* defines a single block, i.e., variables 
-defined in the *<tt>do</tt>* part are also visible to the *<tt>finally</tt>* 
-part.*
+Example:
 
-Consider the example below:
-
-<pre><code>par/or do
-    do
-        _FILE* f = _fopen("/tmp/test.txt");
-        await A;
-        // use f
-    finally
+<pre><code>
+<b>input int</b> A;
+<b>par/or do</b>
+    <b>var _FILE* f;
+    <b>finalize</b>
+        f = _fopen("/tmp/test.txt");
+    <b>with</b>
         _fclose(f);
-    end
-with
-    await B;
-end
+    <b>end</b>
+    <b>every</b> v <b>in</b> A <b>do</b>
+        fwrite(&v, ..., f);
+    <b>end</b>
+<b>with</b>
+    <b>await</b> 1s;
+<b>end</b>
 </code></pre>
 
-Even if event <tt>B</tt> occurs before <tt>A</tt>, the opened file <tt>f</tt> is safely closed.
+The program open `f` and writes to it on every occurrence of `A`.
+The writing trail is aborted after one second, but the `finalize` safely closes
+the file, because it is associated to the block that declares `f`.
 
-TODO (escape analysis / `:=` assignments)
+The [static analysis](#static-analysis) of Céu enforces the use of `finalize` 
+for unsafe attributions.
 
--->
-
-### 4.9
+### 4.10
 Parallel compositions
 ---------------------
 
@@ -1621,19 +1662,19 @@ They differ only on how trails terminate (rejoin).
 See [Synchronous execution model](#synchronous-execution-model) for a detailed 
 description of parallel execution.
 
-#### 4.9.1
+#### 4.10.1
 ### par/and
 
 The `par/and` statement stands for *parallel-and* and rejoins when all trails 
 terminate:
 
-#### 4.9.2
+#### 4.10.2
 ### par/or
 
 The `par/or` statement stands for *parallel-or* and rejoins when any of the 
 trails terminate:
 
-#### 4.9.3
+#### 4.10.3
 ### par
 
 The `par` statement never rejoins and should be used when the trails in 
@@ -1641,17 +1682,41 @@ parallel are supposed to run forever:
 
 <!--[TODO: static analysis or halt]-->
 
-#### 4.9.4
+#### 4.10.4
 ### watching
 
-TODO (translates to `par/or`, supports org refs)
+The `watching` statement aborts its body when its associated event occurs:
 
 <pre><code>Watching ::= <b>watching</b> (WCLOCKK|WCLOCKE|ID_ext|Exp) <b>do</b>
                  Block
              <b>end</b>
 </code></pre>
 
-### 4.10
+A `wacthing` expands to a `par/or` as illustrated below:
+
+<table width="100%">
+<tr valign="top">
+<td>
+<pre><code><b>watching</b> &lt;event&gt; <b>do</b>
+    &lt;block&gt;
+<b>end</b>
+</code></pre>
+</td>
+
+<td>
+<pre><code><b>par/or do</b>
+    &lt;block&gt;
+<b>with</b>
+    <b>await</b> &lt;event&gt;
+<b>end</b>
+</code></pre>
+</td>
+</tr>
+</table>
+
+TODO (supports org refs)
+
+### 4.11
 pause/if
 --------
 
@@ -1662,21 +1727,40 @@ TODO
           <b>end</b>
 </code></pre>
 
-### 4.11
-Dynamic organisms
+### 4.12
+Dynamic execution
 -----------------
 
-TODO
-<!-- TODO [free] -->
+The `spawn` and `new` statements create instances of organisms dynamically:
 
-<pre><code>
-Dyn ::= (<b>new</b>|<b>spawn</b>) ID_cls [<b>in</b> Exp]
+<pre><code>Dyn ::= (<b>new</b>|<b>spawn</b>) ID_cls [<b>in</b> Exp]
             [ <b>with</b> Constructor <b>end</b> ]
 </code></pre>
 
-TODO: Constructor
+The `spawn` returns if the allocation succeeded, i.e., `true` in case of 
+success, or `false` otherwise.
+The `new` returns a pointer to the allocated organism, or `null` in the case of 
+failure.
 
-### 4.12
+The optional `in` clause allows the statement to specify in which 
+[pool](#pools) the organisms will live.
+If absent, the organism is allocated on an implicit pool in the outermost block 
+of the class the allocation happens.
+
+On allocation, the body of the organism starts to execute in parallel with the 
+rest of the application, just like happens for [static organisms](#organisms).
+The constructor clause is also the same as for [static 
+organisms](#constructors).
+
+A dynamic organism is also automatically deallocated when its execution body 
+terminates.
+
+See [Static analysis](#organisms-references) for the restrictions on 
+manipulating pointers and references to organisms.
+
+<!-- TODO [free] -->
+
+### 4.13
 Asynchronous execution
 ----------------------
 
@@ -1691,7 +1775,7 @@ everything, except asynchronous statements).
 RefVarList ::= `(´ [`&´] ID_var { `,´ [`&´] ID_var } `)´
 </code></pre>
 
-#### 4.12.1
+#### 4.13.1
 ### Asynchronous blocks
 
 Asynchronous blocks (`async`) are the simplest alternative for asynchronous 
@@ -1744,7 +1828,7 @@ A lower priority for `async` is fundamental to ensure that input events are
 handled as fast as possible.
 -->
 
-##### 4.12.1.1
+##### 4.13.1.1
 #### Simulation
 
 An `async` is allowed to trigger [input events](#emit-event) and the [passage 
@@ -1777,12 +1861,12 @@ Every time the `async` emits an event, it suspends (due to rule `1` of previous
 section).
 The example prints the `v = <v+i>` message exactly 103 times.
 
-#### 4.12.2
+#### 4.13.2
 ### Threads
 
 TODO
 
-##### 4.12.2.1
+##### 4.13.2.1
 #### Synchronous blocks
 
 TODO
@@ -1792,7 +1876,7 @@ TODO
          <b>end</b>
 </code></pre>
 
-### 4.13
+### 4.14
 Native blocks
 -------------
 
@@ -2104,6 +2188,12 @@ Finalization
 TODO
 
 TODO (index clash)
+
+### 6.4
+Organisms references
+--------------------
+
+TODO
 
 ## 7
 Environment
@@ -2420,7 +2510,7 @@ Stmt ::= &lt;empty-string&gt;
         | <b>emit</b> (WCLOCKK|WCLOCKE)
         | <b>emit</b> ID_ext [ `=>´ (Exp | `(´ ExpList `)´)
 
-    /* Dynamic organisms */
+    /* Dynamic execution */
         | (<b>new</b>|<b>spawn</b>) * ID_cls * [<b>in</b> Exp]
               [ <b>with</b> Constructor <b>end</b> ]
 
