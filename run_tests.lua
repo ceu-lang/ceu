@@ -263,16 +263,16 @@ STATS = {
 
 --[[
 STATS = {
-    count   = 1869,
+    count   = 1871,
     mem     = 0,
-    trails  = 3588,
-    bytes   = 17157413,
+    trails  = 3600,
+    bytes   = 17192647,
 }
 
 
-real	8m4.709s
-user	7m24.960s
-sys	1m3.224s
+real	8m8.207s
+user	7m26.736s
+sys	0m59.696s
 
 ]]
 

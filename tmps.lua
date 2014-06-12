@@ -7,9 +7,16 @@ end
 F = {
     Dcl_var_pre = function (me)
         local var = me.var
+
+        if var.cls then
+            VARS = {}
+            return
+        end
+
         if var.pre~='var' or var.cls or var.inTop then
             return                  -- only normal vars can be tmp
         end
+
         VARS[var] = true
         var.isTmp = true
     end,

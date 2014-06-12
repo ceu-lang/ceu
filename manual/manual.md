@@ -13,11 +13,16 @@ Introduction
 
 Céu is a language targeting reactive applications, aiming to offer a 
 higher-level and safer alternative to C.
-Reactive applications interact continuously with the environment and are mostly 
-guided through input events from it.
+The two main peculiarities of Céu are the [synchronous execution 
+model](#synchronous-execution-model) and the use of [organisms as 
+abstractions](#organisms-as-abstractions).
 
-Céu is a concurrent language in which multiple lines of execution---known as 
-*trails*---continuously react to input events from the environment.
+Reactive applications are those that interact continuously with the environment 
+and are mostly guided through input events from it.
+Examples are games, GUIs, and real-time embedded systems.
+
+Céu supports concurrent lines of execution---known as *trails*---which react 
+continuously to input events from the environment.
 Waiting for an event halts the running trail until that event occurs.
 The environment broadcasts an occurring event to all active trails, which share 
 a single global time reference (the event itself).
@@ -36,9 +41,6 @@ TODO (organisms)
 
 TODO (emphasize synchronous+organisms)
 
-The two main peculiarities of Céu are the [synchronous execution 
-model](#synchronous-execution-model) and the use of [organisms as 
-abstractions](#organisms-as-abstractions).
 -->
 
 Céu integrates well with C, being possible to define and call C functions from 

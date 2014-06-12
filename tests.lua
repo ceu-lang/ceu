@@ -22580,6 +22580,19 @@ var T* p = a;
 }
 
 Test { [[
+class T with do end;
+do
+    var int a = 1;
+    var int* pa = &a;
+    var T t;
+    var int ret = *pa;
+    escape ret;
+end
+]],
+    run = 1,
+}
+
+Test { [[
 native _c, _d;
 native do
     int c, d;
@@ -23587,6 +23600,58 @@ escape t.v + _V;        // * reads before
     }
 }
 
+Test { [[
+class U with
+    event void ok;
+do
+    finalize with
+        _V = _V + 4;
+    end
+    await 1ms;
+    emit this.ok;
+    await FOREVER;
+end;
+class T with do
+    finalize with
+        _V = _V + 2;
+    end
+    var U u;
+    await FOREVER;
+end;
+native do
+    int V = 1;
+end
+finalize with
+    _V = 1000;
+end
+finalize with
+    _V = 1000;
+end
+finalize with
+    _V = 1000;
+end
+par/or do
+    await 1s;
+with
+    do
+        var T t;
+        var U u;
+        par/or do
+            await u.ok;
+        with
+            await u.ok;
+        end;
+    end
+    var T t1;
+    var U u1;
+    await u1.ok;
+    _assert(_V == 11);
+end
+_assert(_V == 21);
+escape _V;
+]],
+    run = { ['~>1s']=21 },
+}
 -- XXXX
 
 -- KILL THEMSELVES
