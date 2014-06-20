@@ -28,7 +28,7 @@ typedef struct CEU_]]..me.id..[[ {
 
         _MEM.clss = _MEM.clss .. me.struct .. '\n'
         _MEM.clss = _MEM.clss .. me.funs   .. '\n'
-DBG('===', me.id, me.trails_n)
+--DBG('===', me.id, me.trails_n)
 --DBG(me.struct)
 --DBG('======================')
     end,

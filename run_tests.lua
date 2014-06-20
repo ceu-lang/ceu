@@ -146,7 +146,7 @@ end
 
     -- RUN
 
-    if not (T.run or T.gcc) then
+    if not (T.run or T.gcc or T.asr) then
         assert(T.loop or T._ana, 'missing run value')
         return
     end
@@ -198,19 +198,24 @@ end
             assert( string.find(ret, T.gcc, nil, true), ret )
             return
         else
-            local exec_gcc = os.execute(GCC)
-            assert(exec_gcc==0 or exec_gcc==true)
+            local gcc = os.execute(GCC)
+            assert(gcc==0 or gcc==true)
         end
 
-        -- test output
-        local ret = io.popen(EXE):read'*a'
-        assert(not string.find(ret, '==%d+=='), 'valgrind error')
-        local v = tonumber( string.match(ret, 'END: (.-)\n') )
-
-        if v then
-            assert(v==exp, ret..' vs '..exp..' expected')
+        if T.asr then
+            local exe = os.execute(EXE)
+            assert(exe ~= 256)  -- 256 = OK
         else
-            assert( string.find(ret, exp, nil, true), ret )
+            -- test output
+            local ret = io.popen(EXE):read'*a'
+            assert(not string.find(ret, '==%d+=='), 'valgrind error')
+            local v = tonumber( string.match(ret, 'END: (.-)\n') )
+
+            if v then
+                assert(v==exp, ret..' vs '..exp..' expected')
+            else
+                assert( string.find(ret, exp, nil, true), ret )
+            end
         end
     end
 

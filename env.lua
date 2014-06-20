@@ -368,7 +368,7 @@ F = {
             for i, v in ipairs(inp) do
                 local _, tp, id = unpack(v)
                 if tp ~= 'void' then
-                    local has,var = newvar(me, me, 'var', tp, id, false)
+                    local has,var = newvar(fun, me, 'var', tp, id, false)
                     assert(not has)
                     var.isTmp  = true -- TODO: var should be a node
                     var.isFun  = true
@@ -476,9 +476,11 @@ F = {
 
     Dcl_ext = function (me)
         local dir, rec, ins, out, id = unpack(me)
-        if _ENV.exts[id] then
-            WRN(false, me, 'event "'..id..'" is already declared')
--- TODO: check fields?
+        local ext = _ENV.exts[id]
+        if ext then
+            local eq = (ext.pre==dir and ext.mod.rec==rec and
+                        ext.out==(out or 'int') and _TP.contains(ext.ins,ins))
+            WRN(eq, me, 'event "'..id..'" is already declared')
             return
         end
 

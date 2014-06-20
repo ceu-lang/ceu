@@ -395,9 +395,10 @@ F = {
 -- Loop --------------------------------------------------
 
     _Loop_pre  = function (me)
-        local _i, _j, blk = unpack(me)
+        local max, _i, _j, blk = unpack(me)
 
         if not _i then
+            ASR(not max, me, 'invalid loop')
             local n = node('Loop', me.ln, blk)
             n.blk = blk     -- continue
             return n
@@ -415,12 +416,26 @@ F = {
                         i())
         nxt_i.read_only = true  -- accept this write
 
+        local isBounded = max
+        if max then
+            max = node('CallStmt', me.ln,
+                    node('Op2_call', me.ln, 'call',
+                        node('Nat', me.ln, '_assert'),
+                        node('ExpList', me.ln,
+                            node('Op2_<', me.ln, '<', i(),
+                                node('NUMBER', me.ln, max)))))
+        else
+            max = node('Nothing', me.ln)
+        end
+
         if not _j then
             local n = node('Loop', me.ln,
                         node('Stmts', me.ln,
+                            max,
                             blk,
                             nxt_i))
             n.blk = blk     -- _Continue needs this
+            n.isBounded = isBounded
             return node('Block', me.ln,
                     node('Stmts', me.ln, dcl_i, set_i, n))
         end
@@ -428,6 +443,7 @@ F = {
         local dcl_j, set_j, j
 
         if _j.tag == 'NUMBER' then
+            isBounded = true
             ASR(tonumber(_j[1]) > 0, me.ln,
                 'constant should not be `0´')
             j = function () return _j end
@@ -449,10 +465,11 @@ F = {
                             node('If', me.ln, cmp,
                                 node('Break', me.ln),
                                 node('Nothing', me.ln)),
+                            max,
                             blk,
                             nxt_i))
         loop.blk = blk      -- continue
-        loop.isBounded = (_j.tag=='NUMBER' and 'const')
+        loop.isBounded = isBounded
 
         return node('Block', me.ln,
                 node('Stmts', me.ln,

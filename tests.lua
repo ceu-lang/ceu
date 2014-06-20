@@ -576,6 +576,46 @@ escape 10;
 ]===]
 
 Test { [[
+input void A;
+input void A;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input void A;
+input int A;
+escape 1;
+]],
+    env = 'line 2 : event "A" is already declared',
+}
+
+Test { [[
+loop/10 do
+end
+escape 1;
+]],
+    adj = 'line 1 : invalid loop',
+}
+
+Test { [[
+loop/10 i in 10 do
+end
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+loop/10 i do
+end
+escape 1;
+]],
+    asr = true,
+}
+do return end
+
+Test { [[
 escape outer;
 ]],
     env = 'line 1 : invalid attribution (int vs Main)',
