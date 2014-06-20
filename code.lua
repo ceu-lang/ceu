@@ -1,5 +1,7 @@
 _CODE = {
     has_goto  = false,   -- avoids "unused label"
+    pres      = '',
+    constrs   = '',
     threads   = '',
     functions = '',
     stubs     = '',     -- maps input functions to ceu_app_call switch cases
@@ -132,6 +134,9 @@ end
 function CLEAR (me)
     COMM(me, 'CLEAR: '..me.tag..' ('..me.ln[2]..')')
 
+    if _ANA and me.ana.pos[false] then
+        return
+    end
     if not me.needs_clr then
         return
     end
@@ -158,22 +163,8 @@ function CLEAR (me)
     trl->stk = _ceu_go->stki;
     trl->lbl = ]]..me.lbl_clr.id..[[;
 }
-_ceu_go->stk[_ceu_go->stki  ].evtp = _ceu_go->evtp;
-#ifdef CEU_INTS
-#ifdef CEU_ORGS
-_ceu_go->stk[_ceu_go->stki  ].evto = _ceu_go->evto;
-#endif
-#endif
-_ceu_go->stk[_ceu_go->stki++].evt  = _ceu_go->evt;
-
-/* [ trails[1]+1, trails[2] [ */
-_ceu_go->trl  = &_ceu_go->org->trls[ ]]..(me.trails[1]+1)..[[ ];
-                                /* trails[1]+1 is in */
-_ceu_go->stop = &_ceu_go->org->trls[ ]]..(me.trails[2]+1)..[[ ];
-                                /* trails[2]+1 is out */
-_ceu_go->evt = CEU_IN__CLEAR;
-/*goto _CEU_CALL_TRL_;*/
-return RET_TRL;
+return ceu_sys_clear(_ceu_go, ]]..(me.trails[1]+1)..','..[[
+                     &_ceu_go->org->trls[ ]]..(me.trails[2]+1)..[[ ]);
 
 case ]]..me.lbl_clr.id..[[:;
 ]])
@@ -196,7 +187,15 @@ F = {
 
     Do         = CONC_ALL,
     Finally    = CONC_ALL,
-    Dcl_constr = CONC_ALL,
+
+    Dcl_constr = function (me)
+        CONC_ALL(me)
+        _CODE.constrs = _CODE.constrs .. [[
+static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org, tceu_go* _ceu_go) {
+]] .. me.code .. [[
+}
+]]
+    end,
 
     Stmts = function (me)
         LINE(me, '{')   -- allows C declarations for New/Spawn
@@ -287,6 +286,13 @@ case CEU_IN_]]..id..[[:
             CONC_ALL(me)
             return
         end
+        if me.has_pre then
+            _CODE.pres = _CODE.pres .. [[
+static void _ceu_pre_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org) {
+]] .. me.blk_ifc[1][1].code_ifc .. [[
+}
+]]
+        end
 
         CASE(me, me.lbl)
 
@@ -299,22 +305,29 @@ _ceu_go->org->cls = ]]..me.n..[[;
 
         CONC_ALL(me)
 
+        if _ANA and me.ana.pos[false] then
+            return      -- never reachable
+        end
+
+        -- might need "free"
+
+        -- TODO: this posts a "CLEAR" that will eventually execute the "free"
+        -- inside the scheduler. However, we could call the "free" from here
+        -- because all trails are already clean at this point.
         LINE(me, [[
 #ifdef CEU_NEWS
 if (_ceu_go->org->isDyn) {
-]])
-            F.Free(me)
-            LINE(me, [[
+    _ceu_go->org->isAlive = 0;
+    return ceu_sys_clear(_ceu_go, 0, _ceu_go->org);
 }
 #endif
 ]])
 
-        if not (_ANA and me.ana.pos[false]) then
-            if me == _MAIN then
-                HALT(me, 'RET_END')
-            else
-                HALT(me)
-            end
+        -- stop
+        if me == _MAIN then
+            HALT(me, 'RET_END')
+        else
+            HALT(me)
         end
     end,
 
@@ -339,75 +352,50 @@ end;
 <CONT>              -- 4    par: me.lbls_cnt[i].id
 ]]
 
-        -- TODO: split in two loops:
-        -- In C: init, pre, constr
-        -- In Lua: body
-
-        -- each org has its own trail on enclosing block
-        for i=1, (t.arr and t.arr.sval or 1) do
-            local org = t.arr and
-                '((tceu_org*) &'..t.val..'['..(i-1)..']'..')'
-            or
-                '((tceu_org*) '..t.val..')'
-
-            LINE(me, [[
-    /* resets org memory and starts org.trail[0]=Class_XXX */
-    ceu_out_org(_ceu_app, ]]..org..[[, ]]
-                ..t.cls.trails_n..','
-                ..t.cls.lbl.id..[[,
-                _ceu_go->stki+1,    /* run now */]]
+        -- ceu_out_org, _ceu_constr_
+        local org = t.arr and '((tceu_org*) &'..t.val..'[i]'..')'
+                           or '((tceu_org*) '..t.val..')'
+        LINE(me, [[
+/* each org has its own trail on enclosing block */
+{
+    int i;
+    for (i=0; i<]]..(t.arr and t.arr.sval or 1)..[[; i++) {
+        /* resets org memory and starts org.trail[0]=Class_XXX */
+        ceu_out_org(_ceu_app, ]]..org..','..t.cls.trails_n..','..t.cls.lbl.id..[[,
+                _ceu_go->stki+1,    /* run now */
+#ifdef CEU_NEWS
+                ]]..t.isDyn..[[,
+#endif
+]]
                 ..t.par_org..', '
                 ..t.par_trl_idx..[[);
 /* TODO: currently idx is always "1" for all interfaces access because pools 
  * are all together there. When we have separate trls for pools, we'll have to 
  * indirectly access the offset in the interface. */
-
-#ifdef CEU_NEWS
-    ]]..org..[[->isDyn  = ]]..t.isDyn..[[;
-#endif
 ]])
-
-            -- PRE & CONSTR
+        if t.cls.has_pre then
             LINE(me, [[
-{
-    tceu_org* __ceu_org = ]]..org..[[;
+        _ceu_pre_]]..t.cls.n..[[(_ceu_app, ]]..org..[[);
 ]])
-            if t.cls.has_pre then
-                LINE(me, t.cls.blk_ifc[1][1].code_ifc)   -- Block->Stmts->BlockI
-            end
-            if t.constr then
-                CONC(me, t.constr)      -- constructor before executing
-            end
+        end
+        if t.constr then
             LINE(me, [[
+        _ceu_constr_]]..t.constr.n..[[(_ceu_app, ]]..org..[[, _ceu_go);
+]])
+        end
+        LINE(me, [[
+    }
 }
 ]])
 
-            -- BODY
+        -- TODO: move to the loop above (requires persistent "i")
+        -- ceu_org_spawn
+        for i=1, (t.arr and t.arr.sval or 1) do
+            local org = t.arr and '((tceu_org*) &'..t.val..'['..(i-1)..']'..')'
+                               or '((tceu_org*) '..t.val..')'
             LINE(me, [[
-    /* hold current blk trail: set to my continuation */
-    _ceu_go->trl->evt = CEU_IN__STK;
-    _ceu_go->trl->lbl = ]]..me.lbls_cnt[i].id..[[;
-    _ceu_go->trl->stk = _ceu_go->stki;
-
-    _ceu_go->stk[_ceu_go->stki  ].evtp = _ceu_go->evtp;
-#ifdef CEU_INTS
-#ifdef CEU_ORGS
-    _ceu_go->stk[_ceu_go->stki  ].evto = _ceu_go->evto;
-#endif
-#endif
-    _ceu_go->stk[_ceu_go->stki++].evt  = _ceu_go->evt;
-
-    /* switch to ORG */
-
-    ]]..org..[[->trls[0].evt = CEU_IN__STK;
-    ]]..org..[[->trls[0].lbl = ]]..t.cls.lbl.id..[[;
-    ]]..org..[[->trls[0].stk = _ceu_go->stki;
-
-    _ceu_go->org  = ]]..org..[[;
-    _ceu_go->stop = &_ceu_go->org->trls[_ceu_go->org->n]; /* don't follow the up link */
-    /*goto _CEU_CALL_ORG_;*/
-    return RET_ORG;
-
+/* TODO: CEU_OS */
+    return ceu_org_spawn(_ceu_go, ]]..me.lbls_cnt[i].id..','..org..','..t.cls.lbl.id..[[);
 case ]]..me.lbls_cnt[i].id..[[:;
 ]])
         end
@@ -485,76 +473,6 @@ case ]]..me.lbls_cnt[i].id..[[:;
 ]])
     end,
 
-    Free = function (me)
-        assert(me.tag ~= 'Free')    -- `free´ removed
-
-        local exp = unpack(me)
-
-        local cls, val
---[[
-        if me.tag == 'Free' then
-            cls = me.cls
-            val = V(exp)
-        else    -- Dcl_cls
-]]
-            cls = me
-            val = '_ceu_go->org'
---[[
-        end
-]]
-
-        local lbls = table.concat(cls.lbls,',')
-        LINE(me, [[
-{
-    tceu_org* __ceu_tofree = (tceu_org*) ]]..val..[[;
-    __ceu_tofree->isAlive = 0;
-        /* normal termination:
-         * forces explicit "pool_free", because pool is still alive
-         */
-]])
-
---[=[
-        if me.tag == 'Free' then
-            -- only if freeing someone else
-            LINE(me, [[
-    /* save my continuation */
-    _ceu_go->trl->evt = CEU_IN__STK;
-    _ceu_go->trl->stk = _ceu_go->stki;
-    _ceu_go->trl->lbl = ]]..me.lbl_clr.id..[[;
-]])
-        end
-]=]
-
-        LINE(me, [[
-    /* clear all __ceu_tofree [ trls[0], ... [ */
-    /* this will call free() */
-    _ceu_go->stop = __ceu_tofree;
-    _ceu_go->trl  = &__ceu_tofree->trls[0];
-]])
---[=[
-        if me.tag == 'Free' then    -- (or __ceu_tofree is already me)
-            LINE(me, [[
-    _ceu_go->org  = __ceu_tofree;
-]])
-        end
-]=]
-        LINE(me, [[
-    _ceu_go->stk[_ceu_go->stki  ].evtp = _ceu_go->evtp;
-#ifdef CEU_INTS
-#ifdef CEU_ORGS
-    _ceu_go->stk[_ceu_go->stki  ].evto = _ceu_go->evto;
-#endif
-#endif
-    _ceu_go->stk[_ceu_go->stki++].evt  = _ceu_go->evt;
-
-    _ceu_go->evt = CEU_IN__CLEAR;
-    /*goto _CEU_CALL_TRL_;*/
-    return RET_TRL;
-}
-/*case ]]..me.lbl_clr.id..[[:;*/
-]])
-    end,
-
     Block_pre = function (me)
         local cls = CLS()
         if cls.is_ifc then
@@ -600,18 +518,11 @@ ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'),'
 
             -- initialize trails for ORG_STATS_I & ORG_POOL_I
             -- "first" avoids repetition for STATS in sequence
+-- TODO: join w/ ceu_out_org (removing start from the latter?)
             if var.trl_orgs and var.trl_orgs_first then
                 LINE(me, [[
-_ceu_go->org->trls[ ]]..var.trl_orgs[1]..[[ ].evt  = CEU_IN__ORG;
-_ceu_go->org->trls[ ]]..var.trl_orgs[1]..[[ ].lnks =
-    (tceu_org_lnk*) &]]..var.trl_orgs.val..[[;
-
-]]..var.trl_orgs.val..'[0].nxt = (tceu_org*) &'..var.trl_orgs.val..'[1]'..[[;
-
-]]..var.trl_orgs.val..'[1].prv = (tceu_org*) &'..var.trl_orgs.val..'[0]'..[[;
-]]..var.trl_orgs.val..'[1].nxt =  '..[[_ceu_go->org;
-]]..var.trl_orgs.val..'[1].n   =  '..[[0;    /* marks end of linked list */
-]]..var.trl_orgs.val..'[1].lnk =  '..var.trl_orgs[1]..[[+1;
+/* TODO: CEU_OS */
+ceu_org_trail(_ceu_go->org, ]]..var.trl_orgs[1]..[[, (tceu_org_lnk*) &]]..var.trl_orgs.val..[[);
 ]])
             end
         end
@@ -729,6 +640,7 @@ _ceu_go->trl = &_ceu_go->org->trls[ ]] ..me.trails[1]..[[ ];
         for i, sub in ipairs(me) do
             if i > 1 then
                 LINE(me, [[
+/* TODO: function? */
 {
     tceu_trl* trl = &_ceu_go->org->trls[ ]]..sub.trails[1]..[[ ];
     trl->evt = CEU_IN__STK;

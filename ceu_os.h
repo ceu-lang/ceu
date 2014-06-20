@@ -78,8 +78,8 @@
         ((__typeof__(ceu_sys_isr)*)((_ceu_app)->sys_vec[CEU_SYS_ISR]))(n,f,_ceu_app)
 #endif
 
-    #define ceu_out_org(app,org,n,lbl,seqno,par_org,par_trl) \
-        ((__typeof__(ceu_sys_org)*)((app)->sys_vec[CEU_SYS_ORG]))(org,n,lbl,seqno,par_org,par_trl)
+    #define ceu_out_org(app,org,n,lbl,seqno,isDyn,par_org,par_trl) \
+        ((__typeof__(ceu_sys_org)*)((app)->sys_vec[CEU_SYS_ORG]))(org,n,lbl,seqno,isDyn,par_org,par_trl)
 
     #define ceu_out_start(app) \
         ((__typeof__(ceu_sys_start)*)((_ceu_app)->sys_vec[CEU_SYS_START]))(app)
@@ -111,8 +111,13 @@
             ceu_sys_free(ptr)
     #define ceu_out_req() \
             ceu_sys_req()
+#ifdef CEU_NEWS
+    #define ceu_out_org(app,org,n,lbl,seqno,isDyn,par_org,par_trl) \
+            ceu_sys_org(org,n,lbl,seqno,isDyn,par_org,par_trl)
+#else
     #define ceu_out_org(app,org,n,lbl,seqno,par_org,par_trl) \
             ceu_sys_org(org,n,lbl,seqno,par_org,par_trl)
+#endif
 /*#ifdef ceu_out_emit_val*/
     #define ceu_out_emit_buf(app,id,sz,buf) \
             ceu_out_emit_val(app,id,CEU_EVTP((void*)buf))
@@ -134,9 +139,15 @@
 #endif
 
 #ifdef CEU_LUA
-#include <lua5.1/lua.h>
-#include <lua5.1/lauxlib.h>
-#include <lua5.1/lualib.h>
+#ifdef __ANDROID__
+    #include "lua.h"
+    #include "lauxlib.h"
+    #include "lualib.h"
+#else
+    #include <lua5.1/lua.h>
+    #include <lua5.1/lauxlib.h>
+    #include <lua5.1/lualib.h>
+#endif
 #endif
 
 typedef u8 tceu_nevt;   /* max number of events */
@@ -271,7 +282,11 @@ typedef struct tceu_go {
 #endif
 
 #if defined(CEU_ORGS) || defined(CEU_OS)
-    #define CEU_MAX_STACK   255     /* TODO 256??? */
+#ifdef __AVR
+    #define CEU_MAX_STACK   32
+#else
+    #define CEU_MAX_STACK   256
+#endif
     /* TODO: CEU_ORGS is calculable // CEU_NEWS isn't (255?) */
     tceu_stk stk[CEU_MAX_STACK];
 #else

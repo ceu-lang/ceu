@@ -84,6 +84,7 @@ void ceu_sys_free (void* ptr) {
 
 /**********************************************************************/
 
+/* TODO: ifndef CEU_OS? */
 int CEU_REQS = 0;
 int ceu_sys_req (void) {
     CEU_REQS++;
@@ -92,7 +93,53 @@ int ceu_sys_req (void) {
 
 /**********************************************************************/
 
+/* TODO: CEU_OS */
+#ifdef CEU_ORGS
+
+void ceu_org_trail (tceu_org* org, int idx, tceu_org_lnk* lnk) {
+    org->trls[idx].evt  = CEU_IN__ORG;
+    org->trls[idx].lnks = lnk;
+    lnk[0].nxt = (tceu_org*) &lnk[1];
+    lnk[1].prv = (tceu_org*) &lnk[0];
+    lnk[1].nxt =  org;
+    lnk[1].n   =  0;    /* marks end of linked list */
+    lnk[1].lnk =  idx+1;
+}
+
+int ceu_org_spawn (tceu_go* _ceu_go, tceu_nlbl lbl_cnt, tceu_org* org, 
+tceu_nlbl lbl_org) {
+    /* hold current blk trail: set to my continuation */
+    _ceu_go->trl->evt = CEU_IN__STK;
+    _ceu_go->trl->lbl = lbl_cnt;
+    _ceu_go->trl->stk = _ceu_go->stki;
+
+    _ceu_go->stk[_ceu_go->stki  ].evtp = _ceu_go->evtp;
+#ifdef CEU_INTS
+#ifdef CEU_ORGS
+    _ceu_go->stk[_ceu_go->stki  ].evto = _ceu_go->evto;
+#endif
+#endif
+    _ceu_go->stk[_ceu_go->stki++].evt  = _ceu_go->evt;
+
+    /* switch to ORG */
+
+    org->trls[0].evt = CEU_IN__STK;
+    org->trls[0].lbl = lbl_org;
+    org->trls[0].stk = _ceu_go->stki;
+
+    _ceu_go->org  = org;
+#ifdef CEU_CLEAR
+    _ceu_go->stop = &_ceu_go->org->trls[_ceu_go->org->n]; /* don't follow the up link */
+#endif
+    return RET_ORG;
+}
+
+#endif
+
 void ceu_sys_org (tceu_org* org, int n, int lbl, int seqno,
+#ifdef CEU_NEWS
+                  int isDyn,
+#endif
                   tceu_org* par_org, int par_trl)
 {
     /* { evt=0, seqno=0, lbl=0 } for all trails */
@@ -103,7 +150,7 @@ void ceu_sys_org (tceu_org* org, int n, int lbl, int seqno,
     org->isAlive = 1;
 #endif
 #ifdef CEU_NEWS
-    org->isDyn = 0;
+    org->isDyn = isDyn;
 #endif
 
     /* org.trls[0] == org.blk.trails[1] */
@@ -198,6 +245,24 @@ void ceu_pause (tceu_trl* trl, tceu_trl* trlF, int psed) {
 
 /**********************************************************************/
 
+#ifdef CEU_CLEAR
+/* TODO: CEU_OS map (ceu_out_* )*/
+int ceu_sys_clear (tceu_go* go, int start, void* stop) {
+    go->stk[go->stki  ].evtp = go->evtp;
+#ifdef CEU_INTS
+#ifdef CEU_ORGS
+    go->stk[go->stki  ].evto = go->evto;
+#endif
+#endif
+    go->stk[go->stki++].evt  = go->evt;
+    go->trl  = &go->org->trls[start];
+    go->stop = stop;
+    go->evt = CEU_IN__CLEAR;
+    return RET_TRL;
+}
+#endif
+
+/* TODO: ifndef CEU_OS? */
 u8 CEU_GC = 0;  /* execute __ceu_gc() when "true" */
 
 void ceu_sys_go (tceu_app* app, int evt, tceu_evtp evtp)

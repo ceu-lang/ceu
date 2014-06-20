@@ -113,6 +113,14 @@ static void ceu_stack_clr () {
 
 /**********************************************************************/
 
+#ifdef CEU_ORGS
+=== PRES_C ===
+#endif
+
+#ifdef CEU_ORGS
+=== CONSTRS_C ===
+#endif
+
 #ifdef CEU_THREADS
 /* THREADS_C */
 === THREADS_C ===
@@ -232,7 +240,11 @@ static void ceu_app_init (tceu_app* app)
 #endif
 #endif
 
-    ceu_out_org(app, app->data, CEU_NTRAILS, Class_Main, 0, NULL, 0);
+    ceu_out_org(app, app->data, CEU_NTRAILS, Class_Main, 0,
+#ifdef CEU_NEWS
+                0,
+#endif
+                NULL, 0);
     ceu_out_go(app, CEU_IN__INIT, CEU_EVTP((void*)NULL));
 }
 

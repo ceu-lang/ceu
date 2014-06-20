@@ -172,6 +172,8 @@ do
 
     CC = SUB(CC, '=== CLSS_DEFS ===',  _MEM.clss)   -- TODO: move to HH
 
+    CC = SUB(CC, '=== CONSTRS_C ===',   _CODE.constrs)
+    CC = SUB(CC, '=== PRES_C ===',      _CODE.pres)
     CC = SUB(CC, '=== THREADS_C ===',   _CODE.threads)
     CC = SUB(CC, '=== FUNCTIONS_C ===', _CODE.functions)
     CC = SUB(CC, '=== STUBS ===',       _CODE.stubs)
