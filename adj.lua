@@ -384,7 +384,7 @@ F = {
                                 blk),
                             fr_nxt,to_nxt))
         loop.blk = blk      -- continue
-        loop.isBounded = true
+        loop.bound = true   -- guaranteed to be bounded
         loop.isEvery = true  -- refuses other "awaits"
 
         return node('Block', me.ln, node('Stmts', me.ln, fr_dcl,to_dcl,
@@ -396,6 +396,8 @@ F = {
 
     _Loop_pre  = function (me)
         local max, _i, _j, blk = unpack(me)
+        local bound = max and { true, max }
+                                -- must be limited to "max" (must have sval)
 
         if not _i then
             ASR(not max, me, 'invalid loop')
@@ -416,14 +418,13 @@ F = {
                         i())
         nxt_i.read_only = true  -- accept this write
 
-        local isBounded = max
         if max then
             max = node('CallStmt', me.ln,
                     node('Op2_call', me.ln, 'call',
                         node('Nat', me.ln, '_assert'),
                         node('ExpList', me.ln,
                             node('Op2_<', me.ln, '<', i(),
-                                node('NUMBER', me.ln, max)))))
+                                max))))
         else
             max = node('Nothing', me.ln)
         end
@@ -435,15 +436,16 @@ F = {
                             blk,
                             nxt_i))
             n.blk = blk     -- _Continue needs this
-            n.isBounded = isBounded
+            n.bound = bound
             return node('Block', me.ln,
                     node('Stmts', me.ln, dcl_i, set_i, n))
         end
 
+        bound = bound or { false, _j }
+                            -- may be limited to "_j" (if has sval)
         local dcl_j, set_j, j
 
         if _j.tag == 'NUMBER' then
-            isBounded = true
             ASR(tonumber(_j[1]) > 0, me.ln,
                 'constant should not be `0´')
             j = function () return _j end
@@ -469,7 +471,7 @@ F = {
                             blk,
                             nxt_i))
         loop.blk = blk      -- continue
-        loop.isBounded = isBounded
+        loop.bound = bound
 
         return node('Block', me.ln,
                 node('Stmts', me.ln,
@@ -1027,7 +1029,7 @@ F = {
                     node('Dcl_var', me.ln, 'var',
                         node('Type', me.ln, 'char', 1, false, false),
                         tup))
-                    T[2].__ast_ref = T[1] -- TP is changed on env.lua
+                    T[2].__ast_ref = { T, 1 } -- TP is changed on env.lua
 
                 -- T = { evt_var, dcl_tup, awt, set [_1,_N] }
 
@@ -1038,7 +1040,7 @@ F = {
                                         node('Var', me.ln, tup)),
                                     '_'..i),
                                 v)
-                    T[#T][2].__ast_chk = { T[1], i }
+                    T[#T][2].__ast_chk = { {T,1}, i }
                     T[#T][2].__ast_fr = p1    -- p1 is an AwaitX
                 end
             end
@@ -1170,12 +1172,12 @@ F = {
 
         -- (3) multiple: emit e => (a,b)
         local tup = '_tup_'..me.n
-        local ext = _AST.copy(ext)   -- find out 'TP' before traversing local 
-        t[#t+1] = ext
+        t[#t+1] = _AST.copy(ext)   -- find out 'TP' before traversing local
+        local I = #t
         t[#t+1] = node('Dcl_var', me.ln, 'var',
                     node('Type', me.ln, 'TP', 0, false, false),
                     tup)
-        t[#t].__ast_ref = ext -- TP is changed on env.lua
+        t[#t].__ast_ref = { t, #t-1 } -- TP is changed on env.lua
 
         -- avoid emitting tmps (see tmps.lua)
         if me.tag == 'EmitInt' then
@@ -1187,7 +1189,7 @@ F = {
                         p,
                         node('Op2_.', me.ln, '.', node('Var',me.ln,tup),
                             '_'..i))
-            t[#t][3].__ast_chk = { ext, i }
+            t[#t][3].__ast_chk = { {t,I}, i }
         end
 
         me[3] = node('Op1_&', me.ln, '&',

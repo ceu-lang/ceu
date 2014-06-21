@@ -272,7 +272,7 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , Break    = KEY'break'
     , _Continue = KEY'continue'
 
-    , _Loop    = KEY'loop' * ('/'*NUM + Cc(false)) *
+    , _Loop    = KEY'loop' * ('/'*EV'__Exp' + Cc(false)) *
                     (V'__ID_var' * (EKEY'in'*EV'__Exp' + Cc(false)) +
                         Cc(false)*Cc(false)) *
                 V'__Do'

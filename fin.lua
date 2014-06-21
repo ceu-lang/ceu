@@ -107,6 +107,8 @@ F = {
             or to.lst.var and to.lst.var.isFun then
                               -- function parameter
                 ASR(op == ':=', me, 'unsafe pointer attribution')
+                -- TODO: it is ok a pointer to a class field that is not acessed
+                -- across reactions or that is watched
 
                 if to_blk==cls.blk_ifc or to_blk==cls.blk_body then
                     -- must be hold

@@ -60,15 +60,33 @@ F = {
     Break = function (me)
         me.tl_blocks = true
     end,
+
+    Loop_pre = function (me)
+        if me.bound then
+            if me.bound == true then
+                return      -- already "true"
+            end
+            local must, v = unpack(me.bound)
+            if must then
+                ASR(v.cval, me, '`loop´ bound must be constant')
+                me.bound = true
+            elseif v.cval then
+                me.bound = true
+            else
+                me.bound = false
+            end
+        end
+    end,
+
     Loop = function (me)
         local body = unpack(me)
         SAME(me, body)
         local isTight = (not _AST.iter(_AST.pred_async)())
                             and (not body.tl_blocks)
-                            and (not me.isBounded)
+                            and (not me.bound)
         WRN(not isTight, me, 'tight loop')
         _TIGHT = _TIGHT or isTight
-        me.tl_blocks = me.isBounded or (body.tl_awaits or body.tl_escapes)
+        me.tl_blocks = me.bound or (body.tl_awaits or body.tl_escapes)
 
         local dcl = _AST.iter'Dcl_fun'()
         if dcl and isTight then

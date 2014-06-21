@@ -505,7 +505,8 @@ F = {
     Dcl_var_pre = function (me)
         -- changes TP from ast.lua
         if me.__ast_ref then
-            local ref = me.__ast_ref
+            local t, i = unpack(me.__ast_ref)
+            local ref = t[i]
             local evt = ref.evt or (ref.var and ref.var.evt)
             ASR(evt, me,
                 'event "'..(ref.var and ref.var.id or '?')..'" is not declared')
@@ -1007,8 +1008,10 @@ F = {
             ASR(me.__ast_chk or e1.tp.ext, me, 'not a struct')
             if me.__ast_chk then
                 -- check Emit/Await-Ext/Int param
-                local t, i = unpack(me.__ast_chk)
-                local evt = t.evt or t.var.evt  -- EmitExt or EmitInt
+                local T, i = unpack(me.__ast_chk)
+                local t, j = unpack(T)
+                local chk = t[j]
+                local evt = chk.evt or chk.var.evt  -- EmitExt or EmitInt
                 assert(evt.ins and evt.ins.tup)
                 me.tp = ASR(evt.ins.tup[i], me, 'invalid arity')
             else

@@ -576,6 +576,24 @@ escape 10;
 ]===]
 
 Test { [[
+class T with
+    event (int,int) ok_game;
+do
+    await 1s;
+    emit this.ok_game => (1,2);
+end
+var T t;
+var T* i = &t;
+var int a,b;
+(a,b) = await i:ok_game;
+emit i:ok_game => (a,b);
+escape a+b;
+]],
+    run = { ['~>1s']=3 },
+}
+
+
+Test { [[
 input void A;
 input void A;
 escape 1;
@@ -607,13 +625,35 @@ escape 1;
     run = 1,
 }
 Test { [[
+var int a = 0;
+loop/a i do
+end
+escape 1;
+]],
+    tight = '`loop´ bound must be constant',
+}
+Test { [[
 loop/10 i do
 end
 escape 1;
 ]],
     asr = true,
 }
-do return end
+Test { [[
+native do
+    ##define A 10
+end
+#define A 10
+
+var int ret = 0;
+var int lim = 10 + 10 + _A + A;
+loop/(10+10+_A+A) i in lim do
+    ret = ret + 1;
+end
+escape ret;
+]],
+    run = 40;
+}
 
 Test { [[
 escape outer;
@@ -1278,7 +1318,7 @@ Test { [[input  int A;]],
     },
 }
 Test { [[input int A,A; escape 0;]],
-    env = 'event "A" is already declared',
+    --env = 'event "A" is already declared',
     run = 0,
 }
 Test { [[input int A,A; escape 0;]],
@@ -2385,7 +2425,7 @@ loop i in 256-1 do
 end
 escape ret;
 ]],
-    tight = 'line 2 : tight loop',
+    run = 255,
 }
 Test { [[
 var int ret = 0;
@@ -2394,7 +2434,7 @@ loop i in 256-1 do
 end
 escape ret;
 ]],
-    loop = true,
+    --loop = true,
     wrn = true,
     run = 255,
 }
@@ -2647,7 +2687,7 @@ loop i in -1 do
 end
 escape 1;
 ]],
-    loop = true,
+    --loop = true,
     wrn = true,
     run = 1,
     -- TODO: with sval -1 would be constant
@@ -2657,7 +2697,8 @@ loop i in -1 do
 end
 escape 1;
 ]],
-    tight = 'line 1 : tight loop',
+    --tight = 'line 1 : tight loop',
+    run = 1,
 }
 Test { [[
 loop i in 0 do
@@ -19976,7 +20017,7 @@ loop i in _N do
 end
 escape ret;
 ]],
-    loop = true,
+    --loop = true,
     wrn = true,
     run = 10,
 }

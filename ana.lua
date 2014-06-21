@@ -203,7 +203,7 @@ F = {
     Break    = 'Escape',
 
     Loop = function (me)
-        if me.isBounded then
+        if me.bound then
             me.ana.pos = COPY(me[1].ana.pos)
             return      -- guaranteed to terminate
         end
