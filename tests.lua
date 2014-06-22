@@ -610,6 +610,18 @@ escape 1;
 }
 
 Test { [[
+class T with
+    var int v;
+do end;
+var T _ with
+    this.v = 1;
+end;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
 input void OS_START;
 class T with
     event void ok;
