@@ -177,6 +177,7 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
              --+ V'Call'
              + V'_Set'
              + V'Spawn'    --+ V'Free'
+             + V'DoOrg'
              + V'Nothing'
              + V'RawStmt'
              --+ V'Import'
@@ -215,6 +216,7 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
               + Cc'__SetNew'     * V'New'
                                     -- p1=Spawn[max,cls,constr]
               + Cc'__SetSpawn'   * V'Spawn'
+              + Cc'__SetDoOrg'   * V'DoOrg'
               + Cc'SetBlock'     * V'__SetBlock' * Cc(false)
                                                    -- constr
               + Cc'SetExp'       * V'__Exp' * Cc(false)
@@ -233,6 +235,10 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
             * (EKEY'with'*V'Dcl_constr'*EKEY'end' + Cc(false))
     , Spawn = KEY'spawn' * EV'__ID_cls' * (KEY'in'*EV'__Exp' + Cc(false))
             * (EKEY'with'*V'Dcl_constr'* EKEY'end' + Cc(false))
+
+    , DoOrg = KEY'do' * EV'__ID_cls'
+            * (EKEY'with'*V'Dcl_constr'* EKEY'end' + Cc(false))
+
 
     , CallStmt = m.Cmt(V'__Exp',
                     function (s,i,...)

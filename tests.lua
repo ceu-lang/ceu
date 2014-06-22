@@ -576,6 +576,157 @@ escape 10;
 ]===]
 
 Test { [[
+do T;
+escape 0;
+]],
+    env = 'line 1 : undeclared type `T´',
+}
+
+Test { [[
+class T with
+do
+end
+do T;
+escape 0;
+]],
+    env = 'line 4 : variable/event "ok" is not declared',
+}
+
+Test { [[
+class T with
+    event void ok;
+do
+    emit ok;
+end
+par/or do
+    loop do
+        do T;
+    end
+with
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+class T with
+    event void ok;
+do
+    emit ok;
+end
+par do
+    do T;
+    escape 1;
+with
+    await OS_START;
+    escape 2;
+end
+]],
+    run = 2,
+}
+
+Test { [[
+input void OS_START;
+class T with
+    event void ok;
+do
+    await OS_START;
+    emit ok;
+end
+do T;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+class T with
+    event int ok;
+do
+    await OS_START;
+    emit ok => 1;
+end
+do T;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+class T with
+    var int v;
+    event int ok;
+do
+    await OS_START;
+    emit ok => v;
+end
+var int v = do T with
+    this.v = 10;
+end;
+escape v;
+]],
+    run = 10,
+}
+
+Test { [[
+input void OS_START;
+class T with
+    var int v;
+    event int ok;
+do
+    await OS_START;
+    emit ok => v;
+end
+var int v;
+v = do T with
+    this.v = 10;
+end;
+escape v;
+]],
+    run = 10,
+}
+
+Test { [[
+input void OS_START;
+class T with
+    var int v;
+    event void ok;
+do
+    await OS_START;
+    emit ok;
+end
+var int v = do T with
+    this.v = 10;
+end;
+escape v;
+]],
+    env = 'line 9 : invalid attribution (int vs void)',
+}
+
+Test { [[
+input void OS_START;
+class T with
+    var int v;
+    event (int,int) ok;
+do
+    await OS_START;
+    emit ok => (v,v*2);
+end
+var int v1, v2;
+(v1,v2) = do T with
+    this.v = 10;
+end;
+_printf("%d %d\n", v1, v2);
+escape v1+v2;
+]],
+    run = 30,
+}
+
+Test { [[
 class T with
     event (int,int) ok_game;
 do

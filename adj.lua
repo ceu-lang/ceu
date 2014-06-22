@@ -571,6 +571,42 @@ F = {
         end
     end,
 
+-- DoOrg ------------------------------------------------------------
+
+    DoOrg_pre = function (me, to)
+        --[[
+        --  x = do T ... (handled on _Set_pre)
+        --
+        --  do T with ... end;
+        --
+        --      becomes
+        --
+        --  do
+        --      var T t with ... end;
+        --      await t.ok;
+        --  end
+        --]]
+        local id_cls, constr = unpack(me);
+
+        local awt = node('AwaitInt', me.ln,
+                        node('Op2_.', me.ln, '.',
+                            node('Var', me.ln, '_org_'..me.n),
+                                'ok'),
+                            false)
+        if to then
+            awt = node('_Set', me.ln, to, '=', '__SetAwait', awt, false, false)
+        end
+
+        return node('Do', me.ln,
+                node('Block', me.ln,
+                    node('Stmts', me.ln,
+                        node('Dcl_var', me.ln, 'var',
+                            node('Type', me.ln, id_cls, 0, false, false),
+                            '_org_'..me.n,
+                            constr),
+                        awt)))
+    end,
+
 -- BlockI ------------------------------------------------------------
 
     -- expand collapsed declarations inside Stmts
@@ -1089,6 +1125,9 @@ F = {
                             node('Ref', me.ln, p1),
                             to)
             return p1
+
+        elseif tag == '__SetDoOrg' then
+            return F.DoOrg_pre(p1, to)
 
         elseif tag == '__SetLua' then
             p1.ret = to     -- node Lua will assign to "to"
