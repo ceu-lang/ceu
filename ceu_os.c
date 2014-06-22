@@ -515,6 +515,9 @@ _CEU_GO_GO_:
 #endif
 #ifdef CEU_ASYNCS
                     case RET_ASYNC:
+#ifdef ceu_out_async
+                        ceu_out_async(app);
+#endif
                         app->pendingAsyncs = 1;
                         break;
 #endif

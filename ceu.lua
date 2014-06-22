@@ -70,7 +70,7 @@ do
 end
 
 if _OPTS.version then
-    print 'ceu 0.7'
+    print 'ceu 0.8'
     os.exit(0)
 end
 
@@ -159,7 +159,144 @@ local function SUB (str, from, to)
     end
 end
 
-local CC, HH
+local HH, CC
+
+-- TEMPLATE.H
+do
+    HH = _FILES.template_h
+    HH = SUB(HH, '#include "ceu_os.h"', _FILES.ceu_os_h)
+
+    local tps = { [0]='void', [1]='8', [2]='16', [4]='32' }
+    HH = SUB(HH, '=== TCEU_NLBL ===',   's'..tps[_TP.types.tceu_nlbl.len])
+    HH = SUB(HH, '=== TCEU_NCLS ===',   's'..tps[_TP.types.tceu_ncls.len])
+    HH = SUB(HH, '=== CEU_NTRAILS ===', _MAIN.trails_n)
+    --HH = SUB(HH, '=== CLSS_DEFS ===',  _MEM.clss)
+
+    -- DEFINES
+    do
+        local str = ''
+        local t = {
+            -- props.lua
+            has_exts    = 'CEU_EXTS',
+            has_wclocks = 'CEU_WCLOCKS',
+            has_ints    = 'CEU_INTS',
+            has_asyncs  = 'CEU_ASYNCS',
+            has_threads = 'CEU_THREADS',
+            has_orgs    = 'CEU_ORGS',
+            has_news    = 'CEU_NEWS',
+            has_news_pool   = 'CEU_NEWS_POOL',
+            has_news_malloc = 'CEU_NEWS_MALLOC',
+            has_ifcs    = 'CEU_IFCS',
+            has_clear   = 'CEU_CLEAR',
+            has_pses    = 'CEU_PSES',
+            has_ret     = 'CEU_RET',
+            has_lua     = 'CEU_LUA',
+            has_orgs_watching = 'CEU_ORGS_WATCHING',
+            -- code.lua
+            has_goto    = 'CEU_GOTO',
+        }
+        for k, s in pairs(t) do
+            if _PROPS[k] or _CODE[k] then
+                str = str .. '#define ' .. s .. '\n'
+            end
+        end
+
+        -- TODO: goto _OPTS
+        --str = str .. '#define CEU_DEBUG_TRAILS\n'
+        --str = str .. '#define CEU_NOLINES\n'
+
+        if _OPTS.os then
+            str = str .. [[
+#ifndef CEU_OS
+#define CEU_OS
+#endif
+]]
+        end
+
+        if _OPTS.run_tests then
+            str = str .. '#define CEU_RUNTESTS\n'
+        end
+
+        local h = _OPTS.out_h
+        if _OPTS.out_h == '-' then
+            h = '_STDIN_H'
+        end
+
+        HH = SUB(HH, '=== DEFS_H ===',
+                     string.upper(string.gsub(h,'%.','_')))
+        HH = SUB(HH, '=== DEFINES ===', str)
+    end
+
+
+    -- EVENTS
+    do
+        -- inputs: [max_evt+1...) (including _FIN,_WCLOCK,_ASYNC)
+        --          cannot overlap w/ internal events
+        local str = ''
+        local t = {}
+        local ins  = 0
+        local outs = 0
+
+        -- TODO
+        str = str..'#define CEU_IN__NONE 0\n'
+
+        for i, evt in ipairs(_ENV.exts) do
+            if evt.pre == 'input' then
+                ins = ins + 1
+                local s = '#define CEU_IN_'..evt.id..' '..(256-ins)
+                if _OPTS.verbose and i > 9 then
+                    DBG('', s)
+                end
+                str = str..s..'\n'
+            else
+                outs = outs + 1
+                local s = '#define CEU_OUT_'..evt.id..' '..outs
+                if _OPTS.verbose then
+                    DBG('', s)
+                end
+                str = str..s..'\n'
+            end
+            assert(evt.pre=='input' or evt.pre=='output')
+            ASR(ins+outs < 255, me, 'too many events')
+        end
+        --str = str..'#define CEU_IN_n  '..ins..'\n'
+        str = str..'#define CEU_OUT_n '..outs..'\n'
+
+        HH = SUB(HH, '=== EVENTS ===', str)
+    end
+
+    -- FUNCTIONS called
+    do
+        local str = ''
+        for id in pairs(_ENV.calls) do
+            if id ~= '$anon' then
+                str = str..'#define CEU_FUN'..id..'\n'
+            end
+        end
+        HH = SUB(HH, '=== FUNCTIONS ===', str)
+    end
+
+    -- TUPLES
+    do
+        local str = ''
+        for _,T in pairs(_TP.types) do
+            if T.tup and #T.tup>0 then
+                str = str .. 'typedef struct {\n'
+                for i, t in ipairs(T.tup) do
+                    local tmp = _TP.toc(t)
+                    if _ENV.clss[t.id] then
+                        -- T* => void*
+                        -- T** => void**
+                        tmp = 'void'..string.match(tmp,'(%*+)')
+                    end
+                    str = str..'\t'..tmp..' _'..i..';\n'
+                end
+                str = str .. '} '.._TP.toc(T)..';\n'
+            end
+        end
+        HH = SUB(HH, '=== TUPLES ===', str)
+    end
+end
 
 -- TEMPLATE.C
 do
@@ -282,138 +419,6 @@ do
     end
 end
 
--- TEMPLATE.H
-do
-    HH = _FILES.template_h
-    HH = SUB(HH, '#include "ceu_os.h"', _FILES.ceu_os_h)
-
-    local tps = { [0]='void', [1]='8', [2]='16', [4]='32' }
-    HH = SUB(HH, '=== TCEU_NLBL ===',   's'..tps[_TP.types.tceu_nlbl.len])
-    HH = SUB(HH, '=== TCEU_NCLS ===',   's'..tps[_TP.types.tceu_ncls.len])
-    HH = SUB(HH, '=== CEU_NTRAILS ===', _MAIN.trails_n)
-    --HH = SUB(HH, '=== CLSS_DEFS ===',  _MEM.clss)
-
-    -- DEFINES
-    do
-        local str = ''
-        local t = {
-            -- props.lua
-            has_exts    = 'CEU_EXTS',
-            has_wclocks = 'CEU_WCLOCKS',
-            has_ints    = 'CEU_INTS',
-            has_asyncs  = 'CEU_ASYNCS',
-            has_threads = 'CEU_THREADS',
-            has_orgs    = 'CEU_ORGS',
-            has_news    = 'CEU_NEWS',
-            has_news_pool   = 'CEU_NEWS_POOL',
-            has_news_malloc = 'CEU_NEWS_MALLOC',
-            has_ifcs    = 'CEU_IFCS',
-            has_clear   = 'CEU_CLEAR',
-            has_pses    = 'CEU_PSES',
-            has_ret     = 'CEU_RET',
-            has_lua     = 'CEU_LUA',
-            has_orgs_watching = 'CEU_ORGS_WATCHING',
-            -- code.lua
-            has_goto    = 'CEU_GOTO',
-        }
-        for k, s in pairs(t) do
-            if _PROPS[k] or _CODE[k] then
-                str = str .. '#define ' .. s .. '\n'
-            end
-        end
-
-        -- TODO: goto _OPTS
-        --str = str .. '#define CEU_DEBUG_TRAILS\n'
-        --str = str .. '#define CEU_NOLINES\n'
-
-        if _OPTS.os then
-            str = str .. [[
-#ifndef CEU_OS
-#define CEU_OS
-#endif
-]]
-        end
-
-        if _OPTS.run_tests then
-            str = str .. '#define CEU_RUNTESTS\n'
-        end
-
-        HH = SUB(HH, '=== DEFS_H ===',
-                     string.upper(string.gsub(_OPTS.out_h,'%.','_')))
-        HH = SUB(HH, '=== DEFINES ===', str)
-    end
-
-
-    -- EVENTS
-    do
-        -- inputs: [max_evt+1...) (including _FIN,_WCLOCK,_ASYNC)
-        --          cannot overlap w/ internal events
-        local str = ''
-        local t = {}
-        local ins  = 0
-        local outs = 0
-
-        -- TODO
-        str = str..'#define CEU_IN__NONE 0\n'
-
-        for i, evt in ipairs(_ENV.exts) do
-            if evt.pre == 'input' then
-                ins = ins + 1
-                local s = '#define CEU_IN_'..evt.id..' '..(256-ins)
-                if _OPTS.verbose and i > 9 then
-                    DBG('', s)
-                end
-                str = str..s..'\n'
-            else
-                outs = outs + 1
-                local s = '#define CEU_OUT_'..evt.id..' '..outs
-                if _OPTS.verbose then
-                    DBG('', s)
-                end
-                str = str..s..'\n'
-            end
-            assert(evt.pre=='input' or evt.pre=='output')
-            ASR(ins+outs < 255, me, 'too many events')
-        end
-        --str = str..'#define CEU_IN_n  '..ins..'\n'
-        str = str..'#define CEU_OUT_n '..outs..'\n'
-
-        HH = SUB(HH, '=== EVENTS ===', str)
-    end
-
-    -- FUNCTIONS called
-    do
-        local str = ''
-        for id in pairs(_ENV.calls) do
-            if id ~= '$anon' then
-                str = str..'#define CEU_FUN'..id..'\n'
-            end
-        end
-        HH = SUB(HH, '=== FUNCTIONS ===', str)
-    end
-
-    -- TUPLES
-    do
-        local str = ''
-        for _,T in pairs(_TP.types) do
-            if T.tup and #T.tup>0 then
-                str = str .. 'typedef struct {\n'
-                for i, t in ipairs(T.tup) do
-                    local tmp = _TP.toc(t)
-                    if _ENV.clss[t.id] then
-                        -- T* => void*
-                        -- T** => void**
-                        tmp = 'void'..string.match(tmp,'(%*+)')
-                    end
-                    str = str..'\t'..tmp..' _'..i..';\n'
-                end
-                str = str .. '} '.._TP.toc(T)..';\n'
-            end
-        end
-        HH = SUB(HH, '=== TUPLES ===', str)
-    end
-end
-
 if _OPTS.verbose then
     local T = {
         --mem  = _AST.root.mem.max,
@@ -445,7 +450,7 @@ end
 
 -- OUTPUT
 
-if _OPTS.out_h then
+if _OPTS.out_h and _OPTS.out_h~='-' then
     local f = assert(io.open(_OPTS.out_h,'w'))
     f:write(HH)
     f:close()

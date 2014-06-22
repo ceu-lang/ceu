@@ -104,7 +104,6 @@
         ((__typeof__(ceu_sys_go)*)((app)->sys_vec[CEU_SYS_GO]))(app,evt,evtp)
 
 #else /* ! CEU_OS */
-    #include "_ceu_app.h"
     #define ceu_out_malloc(size) \
             ceu_sys_malloc(size)
     #define ceu_out_free(ptr) \

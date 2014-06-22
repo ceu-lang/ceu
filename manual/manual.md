@@ -3,9 +3,11 @@
 
 <!--
 TODO:
-rawstmt, atomic,
-lua,
-rawexp, luaexp
+- loop/N
+- `_´ identifier
+- rawstmt, atomic,
+- lua,
+- rawexp, luaexp
 -->
 
 Introduction

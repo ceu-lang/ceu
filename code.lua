@@ -754,9 +754,6 @@ for (;;) {
 #endif
         _ceu_go->trl->evt = CEU_IN__ASYNC;
         _ceu_go->trl->lbl = ]]..me.lbl_asy.id..[[;
-#ifdef ceu_out_async
-        ceu_out_async(_ceu_app);
-#endif
 ]])
             HALT(me, 'RET_ASYNC')
             LINE(me, [[
@@ -806,9 +803,6 @@ _ceu_go->trl = &_ceu_go->org->trls[ ]]..me.trails[1]..[[ ];
             LINE(me, [[
 _ceu_go->trl->evt = CEU_IN__ASYNC;
 _ceu_go->trl->lbl = ]]..me.lbl_cnt.id..[[;
-#ifdef ceu_out_async
-ceu_out_async(_ceu_app);
-#endif
 ]])
         end
 
@@ -1076,9 +1070,6 @@ case ]]..me.lbl.id..[[:;
         LINE(me, [[
 _ceu_go->trl->evt = CEU_IN__ASYNC;
 _ceu_go->trl->lbl = ]]..me.lbl.id..[[;
-#ifdef ceu_out_async
-ceu_out_async(_ceu_app);
-#endif
 ]])
         HALT(me, 'RET_ASYNC')
 
