@@ -67,6 +67,9 @@ function _TP.new (me)
     return me
 end
 
+_OPTS.tp_word = assert(tonumber(_OPTS.tp_word),
+    'missing `--tp-word´ parameter')
+
 -- primitive / numeric / len
 local types = {
     void  = { true, false, 0 },

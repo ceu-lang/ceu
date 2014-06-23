@@ -1,6 +1,3 @@
-_OPTS.tp_word = assert(tonumber(_OPTS.tp_word),
-    'missing `--tp-word´ parameter')
-
 _ENV = {
     clss  = {},     -- { [1]=cls, ... [cls]=0 }
     clss_ifc = {},
