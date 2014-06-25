@@ -1,3 +1,19 @@
+* v0.8 (jun'14)
+    (+) manual
+    (+) `pool´ for organisms
+    (+) `watching´ for organisms and events
+    (+) `outer´ accessor inside constructors
+    (+) `loop/N´ for bounded tight loops
+    (+) `_´ as an anonymous identifier
+    (+) `&´ references
+    (+) `[]´ plain pointers
+    (+) `plain´ type annotation
+    (+) experimental: embedded Lua source
+    (+) experimental: `do T with ... end;´
+    (^) `@´ prefix for all annotations
+    (^) `in´ token for loops (instead of `,´ and `=´)
+    (-) `free´ for organisms
+
 * v0.7 (apr'14)
     (+) new primitive types: bool, char, uint, word, float, f32, f64
     (+) `true´, `false´ constants
