@@ -576,6 +576,41 @@ escape 10;
 ]===]
 
 Test { [[
+class T with do end;
+pool T[] ts;
+loop (T*)t in ts do
+end
+escape 1;
+]],
+    run = 1,
+}
+do return end
+
+Test { [[
+var int v = 1;
+async (&v) do
+    finalize with
+        v = 2;
+    end
+end;
+escape v;
+]],
+    props = 'line 3 : not permitted inside `async´',
+}
+Test { [[
+var int v = 1;
+async thread (&v) do
+    finalize with
+        v = 2;
+    end
+end;
+escape v;
+]],
+    props = 'line 3 : not permitted inside `thread´',
+}
+do return end
+
+Test { [[
 do T;
 escape 0;
 ]],

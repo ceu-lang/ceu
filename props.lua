@@ -53,6 +53,7 @@ local NO_async = {
     EmitInt=true,
     Pause=true,
     Escape=true,
+    Finalize=true,
 }
 
 local NO_thread = {
@@ -62,6 +63,7 @@ local NO_thread = {
     EmitInt=true, EmitExt=true, EmitT=true,
     Pause=true,
     Escape=true,
+    Finalize=true,
 }
 
 local NO_constr = {
