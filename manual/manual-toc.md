@@ -119,26 +119,30 @@
 
 <!--
 TODO:
-rawstmt, atomic,
-lua,
-rawexp, luaexp
+- loop/N
+- `_´ identifier
+- rawstmt, atomic,
+- lua,
+- rawexp, luaexp
 -->
 
 ## 1
 Introduction
 ============
 
-Céu is a language targeting reactive applications, aiming to offer a 
+Céu is a programming language for reactive applications and intends to offer a 
 higher-level and safer alternative to C.
 The two main peculiarities of Céu are the [synchronous execution 
 model](#synchronous-execution-model) and the use of [organisms as 
 abstractions](#organisms-as-abstractions).
 
-Reactive applications are those that interact continuously with the environment 
-and are mostly guided through input events from it.
-Examples are games, GUIs, and real-time embedded systems.
+Reactive applications interact in real time and continuously with external 
+stimuli.
+They represent a wide range of software areas and platforms: from games in 
+powerful desktops, *"apps"* in capable smart phones, to the emerging internet 
+of things in constrained embedded systems.
 
-Céu supports concurrent lines of execution---known as *trails*---which react 
+Céu supports concurrent lines of execution---known as *trails*---that react 
 continuously to input events from the environment.
 Waiting for an event halts the running trail until that event occurs.
 The environment broadcasts an occurring event to all active trails, which share 
@@ -183,12 +187,12 @@ Céu is grounded on a precise definition of *logical time* as a discrete
 sequence of external input events:
 a sequence because only a single input event is handled at a logical time; 
 discrete because reactions to events are guaranteed to execute in bounded time 
-(here the *physical* notion of time, see [Bounded 
-execution](#bounded-execution)).
+(here the human notion of time, see [Bounded execution](#bounded-execution)).
 
 The execution model for Céu programs is as follows:
 
-1. The program initiates the *boot reaction* in a single trail.
+1. The program initiates the *boot reaction* from the first line of code in a
+      single trail.
 2. Active trails, one after another, execute until they await or terminate.
       This step is named a *reaction chain*, and always runs in bounded time.
 3. The program goes idle and the environment takes control.
@@ -214,9 +218,9 @@ compositions](#parallel-compositions-and-abortion).
 The program and diagram below illustrate the behavior of the scheduler of Céu:
 
 <pre><code> 1:  <b>input void</b> A, B, C;
- 2:  <b>par/and do</b>
+ 2:  <b>par/and do</b>           // A, B, and C are external input events
  3:      // trail 1
- 4:      &lt;...&gt;         // &lt;...&gt; represents non-awaiting statements
+ 4:      &lt;...&gt;            // &lt;...&gt; represents non-awaiting statements
  5:      <b>await</b> A;
  6:      &lt;...&gt;
  7:  <b>with</b>
@@ -242,27 +246,31 @@ The program and diagram below illustrate the behavior of the scheduler of Céu:
 
 ![](reaction.png)
 
-The program starts in the boot reaction and is split into three trails (a 
-`par/and` rejoins after all trails terminate).
-Following the order of declaration, the scheduler first executes *trail-1*
-up to the `await A` in line 5;
-then *trail-2* executes up to the `await B` in line 10;
-then *trail-3*, up to `await A`, in line 15.
+The program starts in the boot reaction and splits in three trails (a `par/and` 
+rejoins after all trails terminate).
+Following the order of declaration for the trails, they are scheduled as 
+follows (*t0* in the diagram):
+
+- *trail-1* executes up to the `await A` (line 5);
+- *trail-2*, up to the `await B` (line 10);
+- *trail-3*, up to `await A` (line 15).
+
 As no other trails are pending, the reaction chain terminates and the scheduler 
-remains idle until the event `A` occurs:
+remains idle until the event `A` occurs (*t1* in the diagram):
 
-- *trail-1* awakes, executes and terminates;
+- *trail-1* awakes, executes and terminates (line 6);
 - *trail-2* remains suspended, as it is not awaiting `A`.
-- *trail-3* executes to `await B`, in line 17.
+- *trail-3* executes up to `await B` (line 17).
 
-During this reaction, new instances of events `A`, `B`, and `C` occur and are 
-enqueued to be handled in the reactions that follow.
+During this reaction, new instances of events `A`, `B`, and `C` occur (*t1* in 
+the diagram) and are enqueued to be handled in the reactions that follow.
 As `A` happened first, it is used in the next reaction.
-However, no trails are awaiting it, so an empty reaction chain takes place.
-The next reaction dequeues event `B`:
+However, no trails are awaiting it, so an empty reaction chain takes place 
+(*t2* in the diagram).
+The next reaction dequeues the event `B` (*t3* in the diagram):
 
 - *trail-2* awakes, executes and terminates;
-- *trail-3* is split in two and both terminate.
+- *trail-3* splits in two and they both terminate.
 
 With all trails terminated, the program also terminates and does not react to 
 the pending event `C`.
@@ -282,7 +290,7 @@ which are presented in Section~\ref{sec.ceu.ints}.
 The use of trails in parallel allows programs to wait for multiple events at 
 the same time.
 Céu supports three kinds of parallel compositions differing in how they rejoin 
-(to proceed to the statement in sequence):
+and proceed to the statement in sequence:
 
 1. a `par/and` rejoins after all trails in parallel terminate;
 2. a `par/or` rejoins after any trail in parallel terminates;
@@ -297,16 +305,16 @@ Before aborting, a trail has a last opportunity to execute all active
 As mentioned in the introduction and emphasized in the execution model, trails 
 inside parallel compositions do execute with real parallelism.
 It is more accurate to think of parallel compositions as *trails awaiting in 
-parallel*, given that conceptually they are always waiting.
+parallel*, given that conceptually trails are always awaiting.
 
 #### 1.1.2
 ### Bounded execution
 
 Reaction chains should run in bounded time to guarantee that programs are 
 responsive and can handle upcoming input events from the environment.
-Céu requires that each possible path in a loop body contains at least one 
-`await` or `break` statement, thus avoiding *tight loops* (i.e., unbounded 
-loops that do not await).
+For any loop statement in a program, Céu requires that every possible path 
+inside its body contains at least one `await` or `break` statement, thus 
+avoiding *tight loops* (i.e., unbounded loops that do not await).
 
 In the example below, the `if` true branch may never execute, resulting in a 
 tight loop (which the compiler complains about):
@@ -336,7 +344,7 @@ TODO
 #### 1.1.4
 ### Internal reactions
 
-Céu provides a inter-trail communication through *internal events*.
+Céu provides inter-trail communication through *internal events*.
 Trails use the `await` and `emit` operations to manipulate internal events, 
 i.e., a trail that emits an event can awake trails previously awaiting the same 
 event.
@@ -352,7 +360,7 @@ external reactions).
 If an awaking trail emits another internal event, a new internal reaction 
 starts.
 The scheduler uses a stack policy (first in, last out) for saved continuation 
-statements in rule 1.
+statements from rule 1.
 
 Example:
 
@@ -382,21 +390,22 @@ Organisms as abstractions
 -------------------------
 
 Céu uses an abstraction mechanism that reconciles data and control state into 
-the single concept of an *organism*, which provide multiple lines of execution 
-(control state) and an object-like interface (data state).
+the single concept of an *organism*.
+Organisms provide an object-like interface (data state) as well as multiple 
+lines of execution (control state).
 
 A class of organisms is composed of an *interface* and a single *execution 
 body*.
-The interface exposes public variables, methods, and internal events, much like 
+The interface exposes public variables, methods, and internal events, like in 
 object oriented programming.
 The body can contain any valid code in Céu (including parallel compositions) 
-and starts to execute on instantiation and in parallel with the program.
+and starts on organism instantiation, executing in parallel with the program.
 Organism instantiation can be either [static](#variables) or 
 [dynamic](#dynamic-execution).
 
 The example below (in the right) blinks two LEDs in parallel with different 
 frequencies.
-Each blinking LED is instantiated as an organism of the `Blink` class:
+Each blinking LED is a static instance organism of the `Blink` class:
 
 <table width="100%">
 <tr valign="top">
@@ -481,8 +490,8 @@ expands the organisms bodies (lines 13-18 and 22-27) in a `par/or` with the
 rest of the application (`await 1min`, in line 30).
 Note the `await FOREVER` statements (lines 19 and 28) that avoid the organisms 
 bodies to terminate the `par/or`.
-The `_Blink` type corresponds to a simple datatype without execution body, just 
-like a *struct* or an *object*.
+The `_Blink` type corresponds to a simple datatype without execution body 
+(i.e., conventional *structs* or *records* or objects).
 
 See also [Organism declarations](#organisms), [Class and Interface 
 declarations](#classes-and-interfaces), and [Dynamic 
@@ -510,7 +519,8 @@ Lexical rules
 Keywords
 --------
 
-Keywords in Céu are reserved names that cannot be used as identifiers:
+Keywords in Céu are reserved names that cannot be used as identifiers (e.g., 
+variable and class names):
 
 <pre><code><b>
         and         async       atomic      await       bool
@@ -558,10 +568,10 @@ events*,  *classes/interfaces*, and*native symbols*.
 
 ```
 ID      ::= <a-z, A-Z, 0-9, _> +
-ID_var  ::= ID    // beginning with a lowercase letter
-ID_ext  ::= ID    // all in uppercase, not beginning with a digit
-ID_cls  ::= ID    // beginning with an uppercase letter
-ID_nat  ::= ID    // beginning with an underscore
+ID_var  ::= ID    // beginning with a lowercase letter (variables and internal events)
+ID_ext  ::= ID    // all in uppercase, not beginning with a digit (external events)
+ID_cls  ::= ID    // beginning with an uppercase letter (classes)
+ID_nat  ::= ID    // beginning with an underscore (native symbols)
 ```
 
 Examples:
