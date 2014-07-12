@@ -137,7 +137,7 @@ model](#synchronous-execution-model) and the use of [organisms as
 abstractions](#organisms-as-abstractions).
 
 Reactive applications interact in real time and continuously with external 
-stimuli.
+stimuli from the environment.
 They represent a wide range of software areas and platforms: from games in 
 powerful desktops, *"apps"* in capable smart phones, to the emerging internet 
 of things in constrained embedded systems.
@@ -746,6 +746,8 @@ Example:
 Class and Interface types
 -------------------------
 
+TODO (brief description)
+
 See [Classes and Interfaces](#classes-and-interfaces).
 
 ### 3.4
@@ -772,16 +774,16 @@ TODO (more or less like pointers)
 #### 3.4.4
 ### Vectors
 
-One-dimensional vectors are declared by suffixing the variable type (instead of 
-its name) with the vector length surrounded by `[` and `]`.
+One-dimensional vectors are declared by suffixing the variable type with the 
+vector length surrounded by `[` and `]`.
 The first index of a vector is zero.
-
-*Note: currently, Céu has no syntax for initializing vectors.*
 
 Example:
 
 <pre><code><b>var int</b>[2] v;       // declares a vector "v" of 2 integers
 </code></pre>
+
+*Note: currently, Céu has no syntax for initializing vectors.*
 
 ## 4
 Statements
@@ -809,7 +811,7 @@ can be nested for an arbitrary level.
 #### 4.1.1
 ### do-end
 
-A block can also be explicitly created with the `do-end` statement:
+A block can be explicitly created with the `do-end` statement:
 
 <pre><code>Do ::= <b>do</b> Block <b>end</b>
 </code></pre>
@@ -842,14 +844,14 @@ Variables are only visible inside the [block](#blocks) they are defined.
 
 Examples:
 
-<pre><code><b>var int</b> a=0, b=3;   // declares and initializes integer variables `a` and `b`
-<b>var int</b>[2] v;       // declares a vector `v` of size 2
+<pre><code><b>var int</b> a=0, b=3;   // declares and initializes integer variables "a" and "b"
+<b>var int</b>[2] v;       // declares a vector "v" of size 2
 </code></pre>
 
 ##### 4.3.1.1
 #### Organisms
 
-An organism is a variable, in which the type is the identifier of a [class 
+An organism is a variable whose type is the identifier of a [class 
 declaration](#classes-and-interfaces).
 An optional constructor can initialize the organism fields:
 
@@ -863,17 +865,17 @@ Example:
 <pre><code><b>class</b> T <b>with</b>
     <b>var int</b> v;
 <b>do</b>
-    ...
+    &lt;body-of-T&gt;
 <b>end</b>
 <b>var</b> T t <b>with</b>       // "t" is an organism of class "T"
     <b>this</b>.v = 0;    // whose field "v" is initialized to "0"
 <b>end</b>
 </code></pre>
 
-After being declared, the body of an organism starts to execute in parallel 
+After the declaration, the body of an organism starts to execute in parallel 
 with the rest of the application.
-The table below shows the transformation of an organism declaration to an 
-equivalent code with the organism body expanded:
+The table below shows the equivalent expansion of an organism declaration to a 
+[`par/or`](#par/or) composition containing the class body:
 
 <table width="100%">
 <tr valign="top">
@@ -900,10 +902,12 @@ equivalent code with the organism body expanded:
 </tr>
 </table>
 
-Being a variable, the life of an organism is restricted to the block it is 
-declared.
-When an organism goes out of scope, its body is aborted.
+Given that an organism is a variable, the block it is declared restricts its 
+life.
+In the expansion, the `par/or` makes the organism to go out of scope when 
+`&lt;code-pos-declaration&gt;` terminates.
 
+TODO (assumes code-pos-declaration closes the block exactly on the end)
 TODO (vectors of organisms: copy the declaration N times)
 
 ###### 4.3.1.1.1
