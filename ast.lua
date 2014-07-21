@@ -1,4 +1,4 @@
-_AST = {
+AST = {
     root = nil,
 }
 
@@ -12,17 +12,17 @@ local MT = {
 
 local STACK = {}
 
-function _AST.isNode (node)
+function AST.isNode (node)
     return (getmetatable(node) == MT) and node.tag
 end
 
-function _AST.isChild (n1, n2)
+function AST.isChild (n1, n2)
     return n1 == n2
-        or n2.__par and _AST.isChild(n1, n2.__par)
+        or n2.__par and AST.isChild(n1, n2.__par)
 end
 
 local _N = 0
-function _AST.node (tag, ln, ...)
+function AST.node (tag, ln, ...)
     local me
     if tag == '_Stmts' then
         -- "Ct" as a special case to avoid "too many captures" (HACK_1)
@@ -39,18 +39,18 @@ function _AST.node (tag, ln, ...)
     return me
 end
 
-function _AST.copy (node, ln)
+function AST.copy (node, ln)
     local ret = setmetatable({}, MT)
     ret.n = _N
     _N = _N + 1
     for k, v in pairs(node) do
         if k == '__par' then
             ret[k] = v
-        elseif _AST.isNode(v) then
+        elseif AST.isNode(v) then
             if v.tag == 'Ref' then
                 ret[k] = v
             else
-                ret[k] = _AST.copy(v, ln)
+                ret[k] = AST.copy(v, ln)
                 ret[k].ln = ln or ret[k].ln
             end
         else
@@ -60,17 +60,17 @@ function _AST.copy (node, ln)
     return ret
 end
 
-function _AST.pred_async (me)
+function AST.pred_async (me)
     local tag = me.tag
     return tag=='Async' or tag=='Thread'
 end
-function _AST.pred_par (me)
+function AST.pred_par (me)
     local tag = me.tag
     return tag=='ParOr' or tag=='ParAnd' or tag=='ParEver'
 end
-function _AST.pred_true (me) return true end
+function AST.pred_true (me) return true end
 
-function _AST.par (me, pred)
+function AST.par (me, pred)
     if type(pred) == 'string' then
         local tag = pred
         pred = function(me) return me.tag==tag end
@@ -80,11 +80,11 @@ function _AST.par (me, pred)
     elseif pred(me.__par) then
         return me.__par
     else
-        return _AST.par(me.__par, pred)
+        return AST.par(me.__par, pred)
     end
 end
 
-function _AST.child (me, pred)
+function AST.child (me, pred)
     if type(pred) == 'string' then
         local tag = pred
         pred = function(me) return me.tag==tag end
@@ -93,17 +93,17 @@ function _AST.child (me, pred)
         return me
     end
     for i, sub in ipairs(me) do
-        if _AST.isNode(sub) and sub.tag~='Ref' then
-            if _AST.child(sub,pred) then
+        if AST.isNode(sub) and sub.tag~='Ref' then
+            if AST.child(sub,pred) then
                 return sub
             end
         end
     end
 end
 
-function _AST.iter (pred, inc)
+function AST.iter (pred, inc)
     if pred == nil then
-        pred = _AST.pred_true
+        pred = AST.pred_true
     elseif type(pred) == 'string' then
         local tag = pred
         pred = function(me) return me.tag==tag end
@@ -123,7 +123,7 @@ function _AST.iter (pred, inc)
     end
 end
 
-function _AST.dump (me, spc)
+function AST.dump (me, spc)
     spc = spc or 0
     local ks = ''
 --[[
@@ -161,8 +161,8 @@ end
                            ' p='..(me.__par and me.__par.n or '')..
                            ') '..ks)
     for i, sub in ipairs(me) do
-        if me.tag~='Ref' and _AST.isNode(sub) then
-            _AST.dump(sub, spc+2)   -- 'Ref' create cycles
+        if me.tag~='Ref' and AST.isNode(sub) then
+            AST.dump(sub, spc+2)   -- 'Ref' create cycles
         else
             DBG(string.rep(' ',spc+2) .. '['..tostring(sub)..']')
         end
@@ -205,7 +205,7 @@ local function visit_aux (me, F)
     STACK[#STACK+1] = me
 
     for i, sub in ipairs(me) do
-        if _AST.isNode(sub) and sub.tag~='Ref' then
+        if AST.isNode(sub) and sub.tag~='Ref' then
             if bef then assert(bef(me, sub, i)==nil) end
             me[i] = visit_aux(sub, F)
             if aft then assert(aft(me, sub, i)==nil) end
@@ -223,14 +223,14 @@ local function visit_aux (me, F)
 
     if pos then
         me = pos(me) or me
-        if _AST.isNode(me) then
+        if AST.isNode(me) then
             me.__par = STACK[#STACK]
             me.__depth = (me.__par and me.__par.__depth+1) or 0
         end
     end
     if F.Node_pos then
         me = F.Node_pos(me) or me
-        if _AST.isNode(me) then
+        if AST.isNode(me) then
             me.__par = STACK[#STACK]
             me.__depth = (me.__par and me.__par.__depth+1) or 0
         end
@@ -238,21 +238,21 @@ local function visit_aux (me, F)
 
     return me
 end
-_AST.visit_aux = visit_aux
+AST.visit_aux = visit_aux
 
-function _AST.visit (F, node)
-    assert(_AST)
+function AST.visit (F, node)
+    assert(AST)
     --STACK = {}
-    return visit_aux(node or _AST.root, F)
+    return visit_aux(node or AST.root, F)
 end
 
 local function i2l (p)
-    return _LINES.i2l[p]
+    return LINES.i2l[p]
 end
 
-for tag, patt in pairs(_GG) do
+for tag, patt in pairs(GG) do
     if string.sub(tag,1,2) ~= '__' then
-        _GG[tag] = m.Cc(tag) * (m.Cp()/i2l) * patt / _AST.node
+        GG[tag] = m.Cc(tag) * (m.Cp()/i2l) * patt / AST.node
     end
 end
 
@@ -269,17 +269,17 @@ local function f (ln, v1, op, v2, v3, ...)
     elseif v1 then
         -- Op2_*
         if op == 'call' then
-            ret = f(ln, _AST.node('Op2_'..op,ln,op,v1,v2,v3), ...)
+            ret = f(ln, AST.node('Op2_'..op,ln,op,v1,v2,v3), ...)
         else
-            ret = f(ln, _AST.node('Op2_'..op,ln,op,v1,v2), v3, ...)
+            ret = f(ln, AST.node('Op2_'..op,ln,op,v1,v2), v3, ...)
         end
     else
         -- Op1_*
         if op == 'cast' then
             -- consume the type
-            ret = _AST.node('Op1_'..op, ln, v2, f(ln,v3,...))
+            ret = AST.node('Op1_'..op, ln, v2, f(ln,v3,...))
         else
-            ret = _AST.node('Op1_'..op, ln, op, f(ln,v2,v3,...))
+            ret = AST.node('Op1_'..op, ln, op, f(ln,v2,v3,...))
         end
     end
     ret.__ast_isexp = true
@@ -288,8 +288,8 @@ end
 
 for i=1, 12 do
     local tag = '__'..i
-    _GG[tag] = (m.Cp()/i2l) * _GG[tag] / f
+    GG[tag] = (m.Cp()/i2l) * GG[tag] / f
 end
 
-_AST.root = m.P(_GG):match(_OPTS.source)
---DBG('oi',_AST.root)
+AST.root = m.P(GG):match(OPTS.source)
+--DBG('oi',AST.root)

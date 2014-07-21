@@ -1,7 +1,7 @@
-local node = _AST.node
+local node = AST.node
 
 -- TODO: remove
-_MAIN = nil
+MAIN = nil
 
 function REQUEST (me)
     --[[
@@ -96,7 +96,7 @@ F = {
         local ret = blk_ifc_body
 
         -- for OS: <par/or ... with await OS_STOP; escape 1; end>
-        if _OPTS.os then
+        if OPTS.os then
             ret = node('ParOr', me.ln,
                         node('Block', me.ln, ret),
                         node('Block', me.ln,
@@ -139,9 +139,9 @@ F = {
                             node('Block', me.ln, node('Stmts',me.ln,node('XXX',me.ln))))
                                                 -- XXX = Par or Stmts
             blk[1] = paror
-            _ADJ_REQS = { blk=blk, orig=stmts, reqs=paror[2][1][1] }
+            ADJ_REQS = { blk=blk, orig=stmts, reqs=paror[2][1][1] }
                 --[[
-                -- Use "_ADJ_REQS" to hold the "par/or", which can be
+                -- Use "ADJ_REQS" to hold the "par/or", which can be
                 -- substituted by the original "stmts" if there are no requests
                 -- in the program (avoiding the unnecessary "par/or->par").
                 -- See also ['Root'].
@@ -149,26 +149,26 @@ F = {
         end
 
         -- enclose the program with the "Main" class
-        _MAIN = node('Dcl_cls', me.ln, false,
+        MAIN = node('Dcl_cls', me.ln, false,
                       'Main',
                       node('Nothing', me.ln),
                       blk)
-        _MAIN.blk_ifc  = blk_ifc_body   -- Main has no ifc:
-        _MAIN.blk_body = blk_ifc_body   -- ifc/body are the same
+        MAIN.blk_ifc  = blk_ifc_body   -- Main has no ifc:
+        MAIN.blk_body = blk_ifc_body   -- ifc/body are the same
 
         -- [1] => ['Root']
-        _AST.root = node('Root', me.ln, _MAIN)
-        return _AST.root
+        AST.root = node('Root', me.ln, MAIN)
+        return AST.root
     end,
 
     Root = function (me)
-        if #_ADJ_REQS.reqs == 0 then
+        if #ADJ_REQS.reqs == 0 then
             -- no requests, substitute the "par/or" by the original "stmts"
-            _ADJ_REQS.blk[1] = _ADJ_REQS.orig
-        elseif #_ADJ_REQS.reqs == 1 then
-            _ADJ_REQS.reqs.tag = 'Stmts'
+            ADJ_REQS.blk[1] = ADJ_REQS.orig
+        elseif #ADJ_REQS.reqs == 1 then
+            ADJ_REQS.reqs.tag = 'Stmts'
         else
-            _ADJ_REQS.reqs.tag = 'Par'
+            ADJ_REQS.reqs.tag = 'Par'
         end
     end,
 
@@ -216,13 +216,13 @@ F = {
     _Escape_pos = function (me)
         local exp = unpack(me)
 
-        local cls = _AST.par(me, 'Dcl_cls')
-        local set = _AST.par(me, 'SetBlock')
+        local cls = AST.par(me, 'Dcl_cls')
+        local set = AST.par(me, 'SetBlock')
         ASR(set and set.__depth>cls.__depth,
             me, 'invalid `escape´')
 
         local _,to = unpack(set)
-        local to = _AST.copy(to)    -- escape from multiple places
+        local to = AST.copy(to)    -- escape from multiple places
             to.ln = me.ln
 
         --[[
@@ -290,7 +290,7 @@ F = {
                                             -- TODO: HACK_3
                                             node('Op1_cast', me.ln,
                                                 node('Type', me.ln, '_tceu_org', 1, false, false),
-                                                _AST.copy(evt))),
+                                                AST.copy(evt))),
                                         'isAlive'),
                                     node('Block',me.ln,node('Stmts',me.ln,awt)),
                                     node('Block',me.ln,node('Stmts',me.ln,node('Nothing', me.ln)))))))
@@ -483,8 +483,8 @@ F = {
 -- Continue --------------------------------------------------
 
     _Continue_pos = function (me)
-        local _if  = _AST.iter('If')()
-        local loop = _AST.iter('Loop')()
+        local _if  = AST.iter('If')()
+        local loop = AST.iter('Loop')()
         ASR(_if and loop, me, 'invalid `continue´')
         local _,_,_else = unpack(_if)
 
@@ -494,7 +494,7 @@ F = {
             me.__depth  == _if.__depth+3   and   -- If->Block->Stmts->Continue
              _if.__depth == loop.blk.__depth+2 , -- Block->Stmts->If
             me, 'invalid `continue´')
-        return _AST.node('Nothing', me.ln)
+        return AST.node('Nothing', me.ln)
     end,
 
     Loop_pos = function (me)
@@ -512,7 +512,7 @@ F = {
                 if n.hasContinue then
                     has = true
                     N = i-1
-                    local _else = _AST.node('Stmts', n.ln)
+                    local _else = AST.node('Stmts', n.ln)
                     n[3] = _else
                     for j=i+1, #stmts do
                         _else[#_else+1] = stmts[j]
@@ -566,7 +566,7 @@ F = {
     New = function (me)
         local _,pool = unpack(me)
         if not pool then
-            _AST.par(me,'Dcl_cls').__ast_has_malloc = true
+            AST.par(me,'Dcl_cls').__ast_has_malloc = true
             me[2] = node('Var', me.ln, '_top_pool')
         end
     end,
@@ -712,11 +712,11 @@ F = {
 
                 local ins_req = node('TupleType', me.ln,
                                     node('TupleTypeItem', me.ln,
-                                        false,_AST.copy(tp_req),false),
+                                        false,AST.copy(tp_req),false),
                                     unpack(ins))                -- T1,...
                 local ins_ret = node('TupleType', me.ln,
                                     node('TupleTypeItem', me.ln,
-                                        false,_AST.copy(tp_req),false),
+                                        false,AST.copy(tp_req),false),
                                     node('TupleTypeItem', me.ln,
                                         false,node('Type',me.ln,'u8',0,false,false),false),
                                     node('TupleTypeItem', me.ln,
@@ -725,7 +725,7 @@ F = {
                 ret[#ret+1] = node('Dcl_ext', me.ln, d1, false,
                                    ins_req, false, id_evt..'_REQUEST')
                 ret[#ret+1] = node('Dcl_ext', me.ln, d1, false,
-                                   _AST.copy(tp_req),  false, id_evt..'_CANCEL')
+                                   AST.copy(tp_req),  false, id_evt..'_CANCEL')
                 ret[#ret+1] = node('Dcl_ext', me.ln, d2, false,
                                    ins_ret, false, id_evt..'_RETURN')
             else
@@ -853,7 +853,7 @@ F = {
                                     node('Var', me.ln, _id))
             end
 
-            local reqs = _ADJ_REQS.reqs
+            local reqs = ADJ_REQS.reqs
             reqs[#reqs+1] =
                 node('Do', me.ln,
                     node('Block', me.ln,
@@ -893,7 +893,7 @@ F = {
     end,
 
     Return_pre = function (me)
-        local cls = _AST.par(me, 'Dcl_cls')
+        local cls = AST.par(me, 'Dcl_cls')
         if cls and cls.__ast_req then
             --[[
             --      return ret;
@@ -988,7 +988,7 @@ F = {
         if not cnd then
             return me
         end
-        if _AST.par(me, '_Set_pre') then
+        if AST.par(me, '_Set_pre') then
             return me   -- TODO: join code below with _Set_pre
         end
 
@@ -1060,7 +1060,7 @@ F = {
             if to.tag == 'VarList' then
                 local var = unpack(awt) -- find out 'TP' before traversing tup
 
-                table.insert(T, 1, _AST.copy(var))
+                table.insert(T, 1, AST.copy(var))
                 table.insert(T, 2,
                     node('Dcl_var', me.ln, 'var',
                         node('Type', me.ln, 'char', 1, false, false),
@@ -1211,7 +1211,7 @@ F = {
 
         -- (3) multiple: emit e => (a,b)
         local tup = '_tup_'..me.n
-        t[#t+1] = _AST.copy(ext)   -- find out 'TP' before traversing local
+        t[#t+1] = AST.copy(ext)   -- find out 'TP' before traversing local
         local I = #t
         t[#t+1] = node('Dcl_var', me.ln, 'var',
                     node('Type', me.ln, 'TP', 0, false, false),
@@ -1324,8 +1324,8 @@ F = {
 
     -- constructor assignments are first assignments "byRef"
     This = function (me)
-        local set = _AST.par(me,'SetExp')
-        if _AST.par(me,'Dcl_constr') and set then
+        local set = AST.par(me,'SetExp')
+        if AST.par(me,'Dcl_constr') and set then
             set[2].byRef = true     -- first assignment
             set[3].byRef = true     -- first assignment
         end
@@ -1345,7 +1345,7 @@ F = {
 -- STRING ------------------------------------------------------------
 
     STRING_pos = function (me)
-        if not _OPTS.os then
+        if not OPTS.os then
             return
         end
 
@@ -1378,7 +1378,7 @@ F = {
                         node('NUMBER',me.ln,len)))
 
         -- include this string into the outer block
-        local blk = _AST.par(me, 'Block')
+        local blk = AST.par(me, 'Block')
         local strs = blk.__ast_strings or {}
         blk.__ast_strings = strs
         strs[#strs+1] = node('Stmts', me.ln, unpack(t))
@@ -1398,4 +1398,4 @@ F = {
     end,
 }
 
-_AST.visit(F)
+AST.visit(F)

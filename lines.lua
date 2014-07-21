@@ -3,23 +3,23 @@ m.setmaxstack(1000)
 
 local CNT  = 1
 local LINE = 1
-local FILE = _OPTS.input
+local FILE = OPTS.input
 local patt
 
-_LINES = {
+LINES = {
     i2l = {},
 }
 
 local open = m.Cmt('/*{-{*/',
     function ()
-        if _OPTS.join then
+        if OPTS.join then
             CNT = CNT - 1
         end
         return true
     end )
 local close = m.Cmt('/*}-}*/',
     function ()
-        if _OPTS.join then
+        if OPTS.join then
             CNT = CNT + 1
         end
         return true
@@ -27,8 +27,8 @@ local close = m.Cmt('/*}-}*/',
 
 local line = m.Cmt('\n',
     function (s,i)
-        for i=#_LINES.i2l, i do
-            _LINES.i2l[i] = { FILE, LINE }
+        for i=#LINES.i2l, i do
+            LINES.i2l[i] = { FILE, LINE }
         end
         if CNT > 0 then
             LINE = LINE + 1
@@ -54,12 +54,12 @@ local dir_lins = m.Cmt( m.P'#' *SS* m.P'line'^-1
 
 patt = (line + open + close + dir_lins + 1)^0
 
-_OPTS.source = '#line 1 "'.._OPTS.input..'"\n'.._OPTS.source
+OPTS.source = '#line 1 "'..OPTS.input..'"\n'..OPTS.source
 
-if _OPTS.cpp or _OPTS.cpp_args then
-    local args = _OPTS.cpp_args or ''
-    local orig = (_OPTS.input=='-' and 'tmp.ceu')
-                    or _OPTS.input
+if OPTS.cpp or OPTS.cpp_args then
+    local args = OPTS.cpp_args or ''
+    local orig = (OPTS.input=='-' and 'tmp.ceu')
+                    or OPTS.input
     local base, name = string.match(orig, '(.*/)(.*)')
     if not base then
         base = ''
@@ -71,11 +71,11 @@ if _OPTS.cpp or _OPTS.cpp_args then
     local ferr = fout..'.err'
     local fin  = fout..'.in'
     local f = assert( io.open(fin,'w') )
-    f:write(_OPTS.source)
+    f:write(OPTS.source)
     f:close()
 
     -- execute cpp
-    local ret = os.execute(_OPTS.cpp_exe..' -C -dD '..args..' '..fin
+    local ret = os.execute(OPTS.cpp_exe..' -C -dD '..args..' '..fin
                             ..' > '..fout..' 2>'..ferr)
             -- "-C":  keep comments (because of nesting)
             -- "-dD": repeat #define's (because of macros used as C functions)
@@ -84,13 +84,13 @@ if _OPTS.cpp or _OPTS.cpp_args then
     os.remove(ferr)
 
     -- remove blank lines of #define's (because of "-dD")
-    _OPTS.source = assert(io.open(fout)):read'*a'
-    --_OPTS.source = string.gsub(_OPTS.source, '(#define[^\n]*)(\n)(\n)', '%1%3')
+    OPTS.source = assert(io.open(fout)):read'*a'
+    --OPTS.source = string.gsub(OPTS.source, '(#define[^\n]*)(\n)(\n)', '%1%3')
     os.remove(fout)
-    --print(_OPTS.source)
+    --print(OPTS.source)
 end
 
-patt:match(_OPTS.source..'\n')
+patt:match(OPTS.source..'\n')
 
 -------------------------------------------------------------------------------
 
@@ -110,15 +110,15 @@ function MAX (v1, v2)
 end
 
 function WRN (cond, ln, msg)
-    ln = (_AST.isNode(ln) and ln.ln) or ln
+    ln = (AST.isNode(ln) and ln.ln) or ln
     if not cond then
         DBG('WRN : '..ln[1]..' : line '..ln[2]..' : '..msg)
     end
     return cond
 end
 function ASR (cond, ln, msg)
-    ln = (_AST.isNode(ln) and ln.ln) or ln
-    if _RUNTESTS and (not cond) then
+    ln = (AST.isNode(ln) and ln.ln) or ln
+    if RUNTESTS and (not cond) then
         return assert(false, 'ERR : '..ln[1]..' : line '..ln[2]..' : '..msg)
     else
         if not cond then

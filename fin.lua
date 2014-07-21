@@ -8,7 +8,7 @@ local TRACK = {
 local function node2blk (n)
     return n.fst and n.fst.blk or
            n.fst and n.fst.var and n.fst.var.blk or
-           _MAIN.blk_ifc
+           MAIN.blk_ifc
 end
 
 F = {
@@ -18,7 +18,7 @@ F = {
 
     SetExp = function (me)
         local op, fr, to = unpack(me)
-        to = to or _AST.iter'SetBlock'()[1]
+        to = to or AST.iter'SetBlock'()[1]
 
         if fr.tag == 'Ref' then
             fr = fr[1]  -- Spawn, New, Thread, EmitExt
@@ -31,9 +31,9 @@ F = {
         --
 
         local noptr =  (to.tp.ptr==0 and
-                        ((not to.tp.ext) or _TP.get(to.tp.id).plain or to.tp.plain))
+                        ((not to.tp.ext) or TP.get(to.tp.id).plain or to.tp.plain))
                     or (fr.tp.ptr==0 and
-                        ((not fr.tp.ext) or _TP.get(fr.tp.id).plain or fr.tp.plain))
+                        ((not fr.tp.ext) or TP.get(fr.tp.id).plain or fr.tp.plain))
                                             -- either native dcl or derived
                                             -- from s.field
 
@@ -71,7 +71,7 @@ F = {
 
         -- TO_BLK: block/scope for "to"
         local to_blk
-        local constr = _AST.iter'Dcl_constr'()
+        local constr = AST.iter'Dcl_constr'()
         if constr then
             -- var T t with
             --  this.x = y;     -- blk of this is the same as block of t
@@ -79,7 +79,7 @@ F = {
             -- spawn T with
             --  this.x = y;     -- blk of this is the same spawn/new pool
             -- end
-            local dcl = _AST.iter'Dcl_var'()
+            local dcl = AST.iter'Dcl_var'()
             if dcl then
                 to_blk = dcl.var.blk
             else
@@ -89,7 +89,7 @@ F = {
                 -- spawn x in a.b.c
                 -- take "b"
                 local c = pool.lst
-                local b = _AST.par(c, 'Op2_.')
+                local b = AST.par(c, 'Op2_.')
                 local v = (b and assert(b.org).lst) or c
                 to_blk = assert(v.var).blk
             end
@@ -99,7 +99,7 @@ F = {
         end
 
         -- Assignments that outlive function invocations are always unsafe.
-        local fun = _AST.iter'Dcl_fun'()
+        local fun = AST.iter'Dcl_fun'()
         if fun then
             -- to a class field, _NAT, or parameter
             if to.lst.tag=='Nat' or to_blk==cls.blk_ifc
@@ -146,7 +146,7 @@ F = {
             if op == '=' then
                 --local var = to.lst.var.ast_original_var or to.lst.var
                 TRACK[to.lst.var.ast_original_var or to.lst.var] = false
-                --ASR(var.blk == _AST.iter'Block'(), me,
+                --ASR(var.blk == AST.iter'Block'(), me,
                     --'invalid block for awoken pointer "'..var.id..'"')
             end
             return
@@ -178,14 +178,14 @@ F = {
         -- The pointer cannot be accessed from outside because org is anon.
         -- Inside, access must use watching anyways.
         --]]
-        local spawn_new = _AST.par(me,'Spawn') or _AST.par(me,'New')
+        local spawn_new = AST.par(me,'Spawn') or AST.par(me,'New')
 
         -- OK: "fr" `&´ reference has bigger scope than "to"
         -- int a; int* pa; pa=&a;
         -- int a; do int* pa; pa=&a; end
         local fr_blk = node2blk(fr)
         if (spawn_new and to.tp.ptr==1) or
-           (_AST.par(to_blk,'Dcl_cls') == _AST.par(fr_blk,'Dcl_cls')) and
+           (AST.par(to_blk,'Dcl_cls') == AST.par(fr_blk,'Dcl_cls')) and
                (   to_blk.__depth >= fr_blk.__depth
                or (to_blk.__depth==cls.blk_ifc.__depth and
                    fr_blk.__depth==cls.blk_body.__depth)
@@ -232,9 +232,9 @@ F = {
 
         -- possible dangling pointer "me.var" is accessed across await
 
-        if me.tp.ptr>0 and _ENV.clss[me.tp.id] then
+        if me.tp.ptr>0 and ENV.clss[me.tp.id] then
             -- pointer to org: check if it is enclosed by "watching me.var"
-            for n in _AST.iter('ParOr') do
+            for n in AST.iter('ParOr') do
                 local var = n.isWatching and n.isWatching.lst and n.isWatching.lst.var
                 if var == me.var then
                     return      -- ok, I'm safely watching "me.var"
@@ -274,7 +274,7 @@ F = {
                         (#fin[1][1]>1 or
                          fin[1][1][1] and fin[1][1][1].tag~='Nothing')
 
-        if _AST.iter'Dcl_constr'() then
+        if AST.iter'Dcl_constr'() then
             ASR(not fin.active, me,
                     'only empty finalizers inside constructors')
         end
@@ -282,7 +282,7 @@ F = {
         if set then
             set.fin = fin                   -- let call/set handle
         elseif fin.active then
-            local blk = _AST.iter'Block'()
+            local blk = AST.iter'Block'()
             blk.fins = blk.fins or {}
             table.insert(blk.fins, 1, fin)  -- force finalize for this blk
         end
@@ -328,11 +328,11 @@ F = {
             end
         end
 
-        if _AST.iter'Thread'() then
+        if AST.iter'Thread'() then
             req = false     -- impossible to run finalizers on threads
         end
 
-        ASR((not req) or fin or _AST.iter'Dcl_fun'(), me,
+        ASR((not req) or fin or AST.iter'Dcl_fun'(), me,
             'call to "'..me.c.id..'" requires `finalize´')
         ASR((not fin) or req, me, 'invalid `finalize´')
 
@@ -343,7 +343,7 @@ F = {
     end,
 }
 
-_AST.visit(F)
+AST.visit(F)
 
 --[[
 -- EVENTS:

@@ -34,7 +34,7 @@ subst 'val.lua'
 subst 'code.lua'
 
 fin = [[
-_FILES = {
+FILES = {
     ceu_types_h =
         [====[]]..'\n'..assert(io.open'ceu_types.h'):read'*a'..[[]====],
     template_h =

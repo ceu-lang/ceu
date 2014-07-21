@@ -6,7 +6,7 @@ F = {
             fr[1].blk = to.lst.var.blk   -- to = me.__par[3]
 
             -- refuses (x.ptr = new T;)
-            ASR( _AST.isChild(CLS(),to.lst.var.blk), me,
+            ASR( AST.isChild(CLS(),to.lst.var.blk), me,
                     'invalid attribution (no scope)' )
         end
 
@@ -18,7 +18,7 @@ F = {
                                         fr.lst.var and fr.lst.var.cls)),
                                            -- orgs are not lval
                 me, 'invalid attribution (not a reference)')
-            ASR(not _AST.child(fr,'Op1_*'), me, 'invalid attribution')
+            ASR(not AST.child(fr,'Op1_*'), me, 'invalid attribution')
         end
 
     end,
@@ -58,7 +58,7 @@ F = {
 
     ['Op2_.'] = function (me)
         local op, e1, id = unpack(me)
-        local cls = e1.tp.ptr==0 and _ENV.clss[e1.tp.id]
+        local cls = e1.tp.ptr==0 and ENV.clss[e1.tp.id]
         if cls then
             -- org.var => var
             me.lst = me[3]
@@ -83,4 +83,4 @@ F = {
     NULL   = 'NUMBER',
 }
 
-_AST.visit(F)
+AST.visit(F)

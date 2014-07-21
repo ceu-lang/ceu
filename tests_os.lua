@@ -1,4 +1,4 @@
-_VALGRIND = true
+VALGRIND = true
 
 --[===[
 --]===]

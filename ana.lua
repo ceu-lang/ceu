@@ -1,5 +1,5 @@
 -- TODO: rename to flow
-_ANA = {
+ANA = {
     ana = {
         isForever  = nil,
         reachs   = 0,      -- unexpected reaches
@@ -14,7 +14,7 @@ function INC (me, c)
     if __inc[me] then
         return true
     else
-        _ANA.ana[c] = _ANA.ana[c] + 1
+        ANA.ana[c] = ANA.ana[c] + 1
         __inc[me] = true
         return false
     end
@@ -45,11 +45,11 @@ function COPY (n)
     return ret
 end
 
-function _ANA.CMP (n1, n2)
-    return _ANA.HAS(n1, n2) and _ANA.HAS(n2, n1)
+function ANA.CMP (n1, n2)
+    return ANA.HAS(n1, n2) and ANA.HAS(n2, n1)
 end
 
-function _ANA.HAS (n1, n2)
+function ANA.HAS (n1, n2)
     for k2 in pairs(n2) do
         if not n1[k2] then
             return false
@@ -65,7 +65,7 @@ local LST = {
 
 F = {
     Root_pos = function (me)
-        _ANA.ana.isForever = not (not me.ana.pos[false])
+        ANA.ana.isForever = not (not me.ana.pos[false])
     end,
 
     Node_pre = function (me)
@@ -73,7 +73,7 @@ F = {
             return
         end
 
-        local top = _AST.iter()()
+        local top = AST.iter()()
         me.ana = {
             pre  = (top and COPY(top.ana.pre)) or { [true]=true },
         }
@@ -90,7 +90,7 @@ F = {
     end,
 
     Dcl_cls_pre = function (me)
-        if me ~= _MAIN then
+        if me ~= MAIN then
             me.ana.pre = { [me.id]=true }
         end
     end,
@@ -107,7 +107,7 @@ F = {
         else
             -- broken sequences
             if me[i-1].ana.pos[false] and (not me[i-1].ana.pre[false]) then
-                --_ANA.ana.unreachs = _ANA.ana.unreachs + 1
+                --ANA.ana.unreachs = ANA.ana.unreachs + 1
                 me.__unreach = true
                 WRN( INC(me, 'unreachs'),
                      sub, 'statement is not reachable')
@@ -125,7 +125,7 @@ F = {
             OR(me, sub, true)
         end
         if me.ana.pos[false] then
-            --_ANA.ana.unreachs = _ANA.ana.unreachs + 1
+            --ANA.ana.unreachs = ANA.ana.unreachs + 1
             WRN( INC(me, 'unreachs'),
                  me, 'at least one trail should terminate')
         end
@@ -137,7 +137,7 @@ F = {
         for _, sub in ipairs(me) do
             if sub.ana.pos[false] then
                 me.ana.pos = { [false]=true }
-                --_ANA.ana.unreachs = _ANA.ana.unreachs + 1
+                --ANA.ana.unreachs = ANA.ana.unreachs + 1
                 WRN( INC(me, 'unreachs'),
                      sub, 'trail should terminate')
                 return
@@ -168,7 +168,7 @@ F = {
             end
         end
         if not ok then
-            --_ANA.ana.reachs = _ANA.ana.reachs + 1
+            --ANA.ana.reachs = ANA.ana.reachs + 1
             WRN( INC(me, 'reachs'),
                  me, 'all trails terminate')
         end
@@ -185,7 +185,7 @@ F = {
         me.ana.pos = { [false]=true }   -- `return/break´ may change this
     end,
     Escape = function (me)
-        local top = _AST.iter((me.tag=='Escape' and 'SetBlock') or 'Loop')()
+        local top = AST.iter((me.tag=='Escape' and 'SetBlock') or 'Loop')()
         me.ana.pos = COPY(me.ana.pre)
         OR(top, me, true)
         me.ana.pos = { [false]='esc' }   -- diff from [false]=true
@@ -193,7 +193,7 @@ F = {
     SetBlock = function (me)
         local blk = me[1]
         if not blk.ana.pos[false] then
-            --_ANA.ana.reachs = _ANA.ana.reachs + 1
+            --ANA.ana.reachs = ANA.ana.reachs + 1
             WRN( INC(me, 'reachs'),
                  blk, 'missing `escape´ statement for the block')
         end
@@ -209,7 +209,7 @@ F = {
         end
 
         if me[1].ana.pos[false] then
-            --_ANA.ana.unreachs = _ANA.ana.unreachs + 1
+            --ANA.ana.unreachs = ANA.ana.unreachs + 1
             WRN( INC(me, 'unreachs'),
                  me, '`loop´ iteration is not reachable')
         end
@@ -294,7 +294,7 @@ end
 
 -- TODO: remove
 -- if nested node is reachable from "pre", join with loop POS
-function _ANA.union (root, pre, POS)
+function ANA.union (root, pre, POS)
     local t = {
         Node = function (me)
             if me.ana.pre[pre] then         -- if matches loop begin
@@ -302,7 +302,7 @@ function _ANA.union (root, pre, POS)
             end
         end,
     }
-    _AST.visit(t, root)
+    AST.visit(t, root)
 end
 
-_AST.visit(F)
+AST.visit(F)

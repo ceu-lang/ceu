@@ -1,4 +1,4 @@
-_TIGHT = false
+TIGHT = false
 
 function OR_all (me, t)
     t = t or me
@@ -6,7 +6,7 @@ function OR_all (me, t)
     me.tl_escapes = false
     me.tl_blocks  = false
     for _, sub in ipairs(t) do
-        if _AST.isNode(sub) then
+        if AST.isNode(sub) then
             me.tl_awaits  = me.tl_awaits  or sub.tl_awaits
             me.tl_escapes = me.tl_escapes or sub.tl_escapes
             me.tl_blocks  = me.tl_blocks  or sub.tl_blocks
@@ -20,7 +20,7 @@ function AND_all (me, t)
     me.tl_escapes = true
     me.tl_blocks  = true
     for _, sub in ipairs(t) do
-        if _AST.isNode(sub) then
+        if AST.isNode(sub) then
             me.tl_awaits  = me.tl_awaits  and sub.tl_awaits
             me.tl_escapes = me.tl_escapes and sub.tl_escapes
             me.tl_blocks  = me.tl_blocks  and sub.tl_blocks
@@ -81,14 +81,14 @@ F = {
     Loop = function (me)
         local body = unpack(me)
         SAME(me, body)
-        local isTight = (not _AST.iter(_AST.pred_async)())
+        local isTight = (not AST.iter(AST.pred_async)())
                             and (not body.tl_blocks)
                             and (not me.bound)
         WRN(not isTight, me, 'tight loop')
-        _TIGHT = _TIGHT or isTight
+        TIGHT = TIGHT or isTight
         me.tl_blocks = me.bound or (body.tl_awaits or body.tl_escapes)
 
-        local dcl = _AST.iter'Dcl_fun'()
+        local dcl = AST.iter'Dcl_fun'()
         if dcl and isTight then
             dcl.var.fun.isTight = true
         end
@@ -130,7 +130,7 @@ F = {
 
         -- if calling a tight (or unknown) function,
         --  then the top function is also tight
-        local dcl = _AST.iter'Dcl_fun'()
+        local dcl = AST.iter'Dcl_fun'()
         if dcl and (f.var.fun.isTight or f.var.fun.isTight==nil) then
             dcl.var.fun.isTight = true
             ASR(dcl.var.fun.mod.rec == true,
@@ -180,7 +180,7 @@ F = {
     Root = function (me)
         -- check if all interface methods have "mod.rec"
         -- respecting their implementations
-        for _, ifc in pairs(_ENV.clss_ifc) do
+        for _, ifc in pairs(ENV.clss_ifc) do
             for _,var in ipairs(ifc.blk_ifc.vars) do
                 if var.fun then
                     local t = var.fun.__tights or {}
@@ -212,4 +212,4 @@ F = {
     end,
 }
 
-_AST.visit(F)
+AST.visit(F)

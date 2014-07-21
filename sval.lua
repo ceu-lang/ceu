@@ -82,7 +82,7 @@ F =
     Op1_cast = function (me)
         local tp, exp = unpack(me)
         if exp.cval then
-            me.cval = '(('.._TP.toc(tp)..')'..exp.cval..')'
+            me.cval = '(('..TP.toc(tp)..')'..exp.cval..')'
         end
     end,
 
@@ -106,4 +106,4 @@ F =
     end,
 }
 
-_AST.visit(F)
+AST.visit(F)

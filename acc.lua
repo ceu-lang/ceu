@@ -1,6 +1,6 @@
-_ANA.ana.acc  = 0      -- nd accesses
-_ANA.ana.abrt  = 0      -- nd flows
-_ANA.ana.excpt = 0      -- nd excpt
+ANA.ana.acc  = 0      -- nd accesses
+ANA.ana.abrt  = 0      -- nd flows
+ANA.ana.excpt = 0      -- nd excpt
 
 -- any variable access calls this function
 -- to be inserted on parent Parallel sub[i] or Class
@@ -16,17 +16,17 @@ end
 
 function INS (acc, exists)
 --[[
-    if _AST.iter'Async'() then
+    if AST.iter'Async'() then
         acc.md = 'no'                       -- protected acc
     end
-    if _AST.iter'Sync'() then
+    if AST.iter'Sync'() then
         acc.md = 'no'                       -- protected acc
     end
 ]]
     if not exists then
         acc.cls = CLS()                     -- cls that acc resides
     end
-    local n = _AST.iter(iter)()             -- child Block from PAR
+    local n = AST.iter(iter)()             -- child Block from PAR
     if n then
         n.ana.accs[#n.ana.accs+1] = acc
     end
@@ -34,7 +34,7 @@ function INS (acc, exists)
 end
 
 function CHG (acc, md)
-    if _AST.iter'Thread'() then
+    if AST.iter'Thread'() then
         return
     end
     acc.md = md
@@ -55,7 +55,7 @@ F = {
 
     ParOr_pos = function (me)
         -- insert all my subs on my parent Par
-        if _AST.iter(_AST.pred_par) then -- requires ParX_pos
+        if AST.iter(AST.pred_par) then -- requires ParX_pos
             for _, sub in ipairs(me) do
                 for _,acc in ipairs(sub.ana.accs) do
     -- check par/enter only against immediate pars
@@ -105,13 +105,13 @@ F = {
             path = me.ana.pre,
             id  = e1.evt.id,    -- like functions (not table events)
             md  = 'cl',
-            tp  = _TP.fromstr'@',
+            tp  = TP.fromstr'@',
             any = false,
             err = ERR(me, 'event `'..e1.evt.id..'´')
         }
 --[[
         if e2 then
-            local tp = _TP.deptr(e1.evt.ins, true)
+            local tp = TP.deptr(e1.evt.ins, true)
             if e2.accs and tp then
                 e2.accs[1][4] = (e2.accs[1][2] ~= 'no')   -- &x does not become 
                     "any"
@@ -133,7 +133,7 @@ F = {
 --DBG(exp.tag, exp.lst)
                     v.acc.any = exp.lval    -- f(&x) // a[N] f(a) // not "any"
                     CHG(v.acc, (me.c and me.c.mod=='@pure' and 'rd') or 'wr')
-                    v.acc.tp = _TP.copy(exp.tp)
+                    v.acc.tp = TP.copy(exp.tp)
                     v.acc.tp.ptr = v.acc.tp.ptr - 1     -- f may deref exp
                 end
             end
@@ -145,7 +145,7 @@ F = {
             path = me.ana.pre,
             id  = f,
             md  = 'cl',
-            tp  = _TP.fromstr'@',
+            tp  = TP.fromstr'@',
             any = true,
             err = 'call to `'..f.id..'´ (line '..me.ln[2]..')',
         }
@@ -217,7 +217,7 @@ F = {
     end,
 
     This = function (me)
-        if _AST.iter'Dcl_constr'() then
+        if AST.iter'Dcl_constr'() then
             return  -- org being created cannot be in parallel
         end
         me.acc = INS {
@@ -250,7 +250,7 @@ F = {
             path = me.ana.pre,
             id  = me[1],
             md  = 'rd',
-            tp  = _TP.fromstr'@',
+            tp  = TP.fromstr'@',
             any = false,
             err = ERR(me, 'symbol `'..me[1]..'´'),
         }
@@ -261,7 +261,7 @@ F = {
     Break = function (me, TAG, PRE)
         TAG = TAG or 'Loop'
         PRE = PRE or me.ana.pre
-        local top = _AST.iter(TAG)()
+        local top = AST.iter(TAG)()
         INS {
             path = PRE,
             id  = top,
@@ -296,7 +296,7 @@ F = {
     AwaitExt = function (me)
         INS {
             path = me.ana.pos,
-            id  = me,--_AST.iter(TAG)(),
+            id  = me,--AST.iter(TAG)(),
             md  = 'awk',
             err = ERR(me, 'awake'),
         }
@@ -305,7 +305,7 @@ F = {
     --AwaitInt = <see above>,
 }
 
-_AST.visit(F)
+AST.visit(F)
 
 ------------------------------------------------------------------------------
 
@@ -414,14 +414,14 @@ function CHK_ACC (accs1, accs2, NO_par, NO_emts)
 
 -- FLOW
                 if ND.flw[acc1.md][acc2.md] then
-                    if _AST.isChild(acc1.id, acc2.id)
-                    or _AST.isChild(acc2.id, acc1.id)
+                    if AST.isChild(acc1.id, acc2.id)
+                    or AST.isChild(acc2.id, acc1.id)
                     then
-                        if _OPTS.warn_nondeterminism then
+                        if OPTS.warn_nondeterminism then
                             DBG('WRN : abortion : '..
                                     acc1.err..' vs '..acc2.err)
                         end
-                        _ANA.ana.abrt = _ANA.ana.abrt + 1
+                        ANA.ana.abrt = ANA.ana.abrt + 1
                         if acc1.md == 'par' then
                             acc1.id.parChk = true
                         end
@@ -457,25 +457,25 @@ function CHK_ACC (accs1, accs2, NO_par, NO_emts)
                     -- ids are compatible?
                     local id_ = acc1.id == acc2.id
                              or acc1.md=='cl' and acc2.md=='cl'
-                             or acc1.any and _TP.contains(acc1.tp,acc2.tp)
-                             or acc2.any and _TP.contains(acc2.tp,acc1.tp)
+                             or acc1.any and TP.contains(acc1.tp,acc2.tp)
+                             or acc2.any and TP.contains(acc2.tp,acc1.tp)
 
                     -- C's are det?
-                    local c1 = _ENV.c[acc1.id]
+                    local c1 = ENV.c[acc1.id]
                     c1 = c1 and (c1.mod=='@pure' or c1.mod=='const')
-                    local c2 = _ENV.c[acc2.id]
+                    local c2 = ENV.c[acc2.id]
                     c2 = c2 and (c2.mod=='@pure' or c2.mod=='const')
                     local c_ = c1 or c2
-                            or (_ENV.dets[acc1.id] and _ENV.dets[acc1.id][acc2.id])
+                            or (ENV.dets[acc1.id] and ENV.dets[acc1.id][acc2.id])
 
         --DBG(id_, c_,c1,c2, acc1.any,acc2.any)
 --[[
 DBG'==============='
-DBG(acc1.cls.id, acc1, acc1.id, acc1.md, _TP.toc(acc1.tp), acc1.any, acc1.err)
+DBG(acc1.cls.id, acc1, acc1.id, acc1.md, TP.toc(acc1.tp), acc1.any, acc1.err)
 for k in pairs(path1) do
     DBG('path1', acc1.path, type(k)=='table' and k[1].id or k)
 end
-DBG(acc2.cls.id, acc2, acc2.id, acc2.md, _TP.toc(acc2.tp), acc2.any, acc2.err)
+DBG(acc2.cls.id, acc2, acc2.id, acc2.md, TP.toc(acc2.tp), acc2.any, acc2.err)
 for k in pairs(path2) do
     DBG('path2', acc2.path, type(k)=='table' and k[1].id or k)
 end
@@ -483,11 +483,11 @@ DBG'==============='
 ]]
                     if cls_ and org_ and id_ and (not c_)
                     then
-                        if _OPTS.warn_nondeterminism then
+                        if OPTS.warn_nondeterminism then
                             DBG('WRN : nondeterminism : '..acc1.err
                                     ..' vs '..acc2.err)
                         end
-                        _ANA.ana.acc = _ANA.ana.acc + 1
+                        ANA.ana.acc = ANA.ana.acc + 1
                     end
                 end
             end
@@ -513,10 +513,10 @@ function CHK_EXCPT (s1, s2, isOR)
                s2.ana.pos[false] --or       -- ~terminates (return/break)
                --s2.ana.pos[true]                 -- terminates tight
             then
-                if _OPTS.warn_exception then
+                if OPTS.warn_exception then
                     DBG('WRN : exception : line '..s2.ln[2]..' vs '..ana.err)
                 end
-                _ANA.ana.excpt = _ANA.ana.excpt + 1
+                ANA.ana.excpt = ANA.ana.excpt + 1
                 ana.node.emtChk = true
             end
         end
@@ -559,14 +559,14 @@ G = {
                     end
                 end
                 for acc in pairs(ALL) do
-                    if _ANA.CMP(acc.path, me.ana.pre) then
+                    if ANA.CMP(acc.path, me.ana.pre) then
                         NO_emts[acc] = true -- instantaneous emit
                     end
                 end
 
                 CHK_ACC(me[i].ana.accs, me[j].ana.accs,
                         me.ana.pre,
-                        --_ANA.union(me.ana.pre,me.ana.pos),
+                        --ANA.union(me.ana.pre,me.ana.pos),
                         NO_emts)
                 CHK_EXCPT(me[i], me[j], me.tag=='ParOr')
                 CHK_EXCPT(me[j], me[i], me.tag=='ParOr')
@@ -581,9 +581,9 @@ G = {
     Loop = function (me)
         -- pre = pre U pos
         if not me[1].ana.pos[false] then
-            _ANA.union(me[1], next(me.ana.pre), me[1].ana.pos)
+            ANA.union(me[1], next(me.ana.pre), me[1].ana.pos)
         end
     end,
 }
 
-_AST.visit(G)
+AST.visit(G)

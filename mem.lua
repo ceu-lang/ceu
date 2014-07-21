@@ -1,13 +1,13 @@
-_MEM = {
+MEM = {
     clss  = '',
 }
 
 function SPC ()
-    return string.rep(' ',_AST.iter()().__depth*2)
+    return string.rep(' ',AST.iter()().__depth*2)
 end
 
 function pred_sort (v1, v2)
-    return (v1.len or _TP.types.word.len) > (v2.len or _TP.types.word.len)
+    return (v1.len or TP.types.word.len) > (v2.len or TP.types.word.len)
 end
 
 F = {
@@ -21,13 +21,13 @@ typedef struct CEU_]]..me.id..[[ {
     end,
     Dcl_cls_pos = function (me)
         if me.is_ifc then
-            me.struct = 'typedef void '.._TP.toc(me.tp)..';\n'
+            me.struct = 'typedef void '..TP.toc(me.tp)..';\n'
         else
-            me.struct  = me.struct..'\n} '.._TP.toc(me.tp)..';\n'
+            me.struct  = me.struct..'\n} '..TP.toc(me.tp)..';\n'
         end
 
-        _MEM.clss = _MEM.clss .. me.struct .. '\n'
-        _MEM.clss = _MEM.clss .. me.funs   .. '\n'
+        MEM.clss = MEM.clss .. me.struct .. '\n'
+        MEM.clss = MEM.clss .. me.funs   .. '\n'
 --DBG('===', me.id, me.trails_n)
 --DBG(me.struct)
 --DBG('======================')
@@ -41,16 +41,16 @@ typedef struct CEU_]]..me.id..[[ {
         local dcl = { 'tceu_app* _ceu_app', 'tceu_org* __ceu_org' }
         for _, v in ipairs(ins) do
             local _, tp, id = unpack(v)
-            dcl[#dcl+1] = _TP.toc(tp)..' '..(id or '')
+            dcl[#dcl+1] = TP.toc(tp)..' '..(id or '')
         end
         dcl = table.concat(dcl,  ', ')
 
         -- TODO: static?
         me.id = 'CEU_'..cls.id..'_'..id
         me.proto = [[
-]].._TP.toc(out)..' '..me.id..' ('..dcl..[[)
+]]..TP.toc(out)..' '..me.id..' ('..dcl..[[)
 ]]
-        if _OPTS.os and _ENV.exts[id] and _ENV.exts[id].pre=='output' then
+        if OPTS.os and ENV.exts[id] and ENV.exts[id].pre=='output' then
             -- defined elsewhere
         else
             cls.funs = cls.funs..'static '..me.proto..';\n'
@@ -97,15 +97,15 @@ typedef struct CEU_]]..me.id..[[ {
             elseif var.tp.arr then
                 len = 10    -- TODO: it should be big
 --[[
-                local _tp = _TP.deptr(var.tp)
-                len = var.tp.arr * (_TP.deptr(_tp) and _TP.types.pointer.len
-                             or (_ENV.c[_tp] and _ENV.c[_tp].len
-                                 or _TP.types.word.len)) -- defaults to word
+                local _tp = TP.deptr(var.tp)
+                len = var.tp.arr * (TP.deptr(_tp) and TP.types.pointer.len
+                             or (ENV.c[_tp] and ENV.c[_tp].len
+                                 or TP.types.word.len)) -- defaults to word
 ]]
             elseif var.tp.ptr>0 or var.tp.ref then
-                len = _TP.types.pointer.len
+                len = TP.types.pointer.len
             else
-                len = _ENV.c[var.tp.id].len
+                len = ENV.c[var.tp.id].len
             end
             var.len = len
         end
@@ -118,7 +118,7 @@ typedef struct CEU_]]..me.id..[[ {
         end
 
         for _, var in ipairs(sorted) do
-            local tp = _TP.toc(var.tp)
+            local tp = TP.toc(var.tp)
 
             var.id_ = var.id .. '_' .. var.n
             --var.id_ = var.id .. (var.inTop and '' or ('_'..var.n))
@@ -202,4 +202,4 @@ CEU_POOL_DCL(]]..var.id_..',CEU_'..var.tp.id..','..var.tp.arr.sval..[[)
     Thread_pos = 'ParOr_pos',
 }
 
-_AST.visit(F)
+AST.visit(F)

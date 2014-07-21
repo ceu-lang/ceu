@@ -1,8 +1,8 @@
 -- async dentro de pause
 -- async thread spawn falhou, e ai?
 
---_VALGRIND = true
-_OS = false   -- false, true, nil(random)
+--VALGRIND = true
+OS = false   -- false, true, nil(random)
 
 local function INCLUDE (fname, src)
     local f = assert(io.open(fname,'w'))
@@ -584,7 +584,7 @@ escape 1;
 ]],
     run = 1,
 }
-do return end
+--do return end
 
 Test { [[
 var int v = 1;
@@ -608,7 +608,7 @@ escape v;
 ]],
     props = 'line 3 : not permitted inside `thread´',
 }
-do return end
+--do return end
 
 Test { [[
 do T;
@@ -16507,7 +16507,7 @@ escape *b;
 
 -- INPUT / OUTPUT / CALL
 
---if not _OS then
+--if not OS then
 
 Test { [[
 output xxx A;
@@ -17292,7 +17292,7 @@ escape ret;
     run = 2,
 }
 
---end -- _OS (INPUT/OUTPUT)
+--end -- OS (INPUT/OUTPUT)
 
 Test { [[
 input (int tilex, int tiley, bool vertical?, int lock, int door, word* 
@@ -33456,7 +33456,7 @@ escape 1;
 
 -- ASYNCS // THREADS
 
-if _VALGRIND then
+if VALGRIND then
     return
 end
 
@@ -33633,7 +33633,7 @@ escape ret;
         usleep = true,
         run = 1,
     }
-    if _VALGRIND then
+    if VALGRIND then
         break   -- run only once with valgrind
     end
 end
@@ -33662,7 +33662,7 @@ escape ret;
         run = 1,
         _ana = { acc=1 },
     }
-    if _VALGRIND then
+    if VALGRIND then
         break   -- run only once with valgrind
     end
 end

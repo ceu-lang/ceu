@@ -153,7 +153,7 @@ local alphanum = m.R'az' + '_' + m.R'09'
 
 NUM = CK(m.R'09'^1) / tonumber
 
-_GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
+GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
                 -- "Ct" as a special case to avoid "too many captures" (HACK_1)
     , _Stmts  = Ct (( V'__StmtS' * (EK';'*K';'^0) +
@@ -524,17 +524,17 @@ _GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 function err ()
     local x = (ERR_i<LST_i) and 'before' or 'after'
 --DBG(LST_i, ERR_i, ERR_msg, _I2L[LST_i], I2TK[LST_i])
-    local file, line = unpack(_LINES.i2l[LST_i])
+    local file, line = unpack(LINES.i2l[LST_i])
     return 'ERR : '..file..
               ' : line '..line..
               ' : '..x..' `'..(I2TK[LST_i] or '?').."´"..
               ' : '..ERR_msg
 end
 
-if _RUNTESTS then
-    assert(m.P(_GG):match(_OPTS.source), err())
+if RUNTESTS then
+    assert(m.P(GG):match(OPTS.source), err())
 else
-    if not m.P(_GG):match(_OPTS.source) then     -- TODO: match only in ast.lua?
+    if not m.P(GG):match(OPTS.source) then     -- TODO: match only in ast.lua?
         DBG(err())
         os.exit(1)
     end

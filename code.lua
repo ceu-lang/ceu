@@ -1,4 +1,4 @@
-_CODE = {
+CODE = {
     has_goto  = false,   -- avoids "unused label"
     pres      = '',
     constrs   = '',
@@ -17,7 +17,7 @@ local INPUT_FUNCTIONS = {
 function CONC_ALL (me, t)
     t = t or me
     for _, sub in ipairs(t) do
-        if _AST.isNode(sub) then
+        if AST.isNode(sub) then
             CONC(me, sub)
         end
     end
@@ -73,7 +73,7 @@ function HALT (me, ret, cond)
 end
 
 function GOTO (me, lbl, org)
-    _CODE.has_goto = true
+    CODE.has_goto = true
     if org then
         LINE(me, [[
 _ceu_go->org = ]]..org..[[;
@@ -87,11 +87,11 @@ goto _CEU_GOTO_;
 end
 
 function AWAIT_PAUSE (me, no)
-    if not _PROPS.has_pses then
+    if not PROPS.has_pses then
         return
     end
 
-    for pse in _AST.iter'Pause' do
+    for pse in AST.iter'Pause' do
         COMM(me, 'PAUSE: '..pse.dcl.var.id)
         LINE(me, [[
 if (]]..V(pse.dcl.var)..[[) {
@@ -134,7 +134,7 @@ end
 function CLEAR (me)
     COMM(me, 'CLEAR: '..me.tag..' ('..me.ln[2]..')')
 
-    if _ANA and me.ana.pos[false] then
+    if ANA and me.ana.pos[false] then
         return
     end
     if not me.needs_clr then
@@ -144,9 +144,9 @@ function CLEAR (me)
 -- TODO: put it back!
 --[[
     -- check if top will clear during same reaction
-    if (not me.needs_clr_fin) and _ANA then   -- fin must execute before any stmt
-        local top = _AST.iter(_iter)()
-        if top and _ANA.CMP(top.ana.pos, me.ana.pos) then
+    if (not me.needs_clr_fin) and ANA then   -- fin must execute before any stmt
+        local top = AST.iter(_iter)()
+        if top and ANA.CMP(top.ana.pos, me.ana.pos) then
             return  -- top will clear
         end
     end
@@ -179,7 +179,7 @@ F = {
         -- unescape `##´ => `#´
         local src = string.gsub(me[1], '^%s*##',  '#')
               src = string.gsub(src,   '\n%s*##', '\n#')
-        _CODE.native = _CODE.native .. [[
+        CODE.native = CODE.native .. [[
 
 #line ]]..me.ln[2]..' "'..me.ln[1]..[["
 ]] .. src
@@ -190,7 +190,7 @@ F = {
 
     Dcl_constr = function (me)
         CONC_ALL(me)
-        _CODE.constrs = _CODE.constrs .. [[
+        CODE.constrs = CODE.constrs .. [[
 static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org, tceu_go* _ceu_go) {
 ]] .. me.code .. [[
 }
@@ -204,14 +204,14 @@ static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org, t
     end,
 
     Root = function (me)
-        for _, cls in ipairs(_ENV.clss_cls) do
+        for _, cls in ipairs(ENV.clss_cls) do
             CONC(me, cls)
         end
 
         -- functions and threads receive __ceu_org as parameter
         --   and do not require _ceu_go
-        _CODE.functions = string.gsub(_CODE.functions, '_ceu_go%-%>org', '__ceu_org')
-        _CODE.threads   = string.gsub(_CODE.threads,   '_ceu_go%-%>org', '__ceu_org')
+        CODE.functions = string.gsub(CODE.functions, '_ceu_go%-%>org', '__ceu_org')
+        CODE.threads   = string.gsub(CODE.threads,   '_ceu_go%-%>org', '__ceu_org')
 
         -- assert that all input functions have bodies
         for evt, v in pairs(INPUT_FUNCTIONS) do
@@ -231,7 +231,7 @@ static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org, t
         local _, _, ins, out, id, blk = unpack(me)
         if blk then
             if me.var.fun.isExt then
-                _CODE.functions = _CODE.functions ..
+                CODE.functions = CODE.functions ..
                     '#define ceu_in_call_'..id..' '..me.id..'\n'
 
                 local ps = {}
@@ -241,7 +241,7 @@ static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org, t
                     end
                 elseif #ins == 1 then
                     local _,tp,_ = unpack(ins[1])
-                    if _TP.isNumeric(tp) then
+                    if TP.isNumeric(tp) then
                         ps[#ps+1] = ', param.v'
                     else
                         ps[#ps+1] = ', param.ptr'
@@ -260,18 +260,18 @@ static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org, t
                     ret_void  = ''
                 end
 
-                _CODE.stubs = _CODE.stubs .. [[
+                CODE.stubs = CODE.stubs .. [[
 case CEU_IN_]]..id..[[:
 #line ]]..me.ln[2]..' "'..me.ln[1]..[["
     ]]..ret_value..me.id..')(_ceu_app, _ceu_app->data'..ps..[[);
 ]]..ret_void
             end
-            _CODE.functions = _CODE.functions ..
+            CODE.functions = CODE.functions ..
                 me.proto..'{'..blk.code..'}'..'\n'
         end
 
         -- assert that all input functions have bodies
-        local evt = _ENV.exts[id]
+        local evt = ENV.exts[id]
         if me.var.fun.isExt and evt and evt.pre=='input' then
             INPUT_FUNCTIONS[evt] = INPUT_FUNCTIONS[evt] or blk or false
         end
@@ -287,7 +287,7 @@ case CEU_IN_]]..id..[[:
             return
         end
         if me.has_pre then
-            _CODE.pres = _CODE.pres .. [[
+            CODE.pres = CODE.pres .. [[
 static void _ceu_pre_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org) {
 ]] .. me.blk_ifc[1][1].code_ifc .. [[
 }
@@ -296,7 +296,7 @@ static void _ceu_pre_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org) {
 
         CASE(me, me.lbl)
 
-        -- TODO: move to _ORG? (_MAIN does not call _ORG)
+        -- TODO: move to _ORG? (MAIN does not call _ORG)
         LINE(me, [[
 #ifdef CEU_IFCS
 _ceu_go->org->cls = ]]..me.n..[[;
@@ -305,7 +305,7 @@ _ceu_go->org->cls = ]]..me.n..[[;
 
         CONC_ALL(me)
 
-        if _ANA and me.ana.pos[false] then
+        if ANA and me.ana.pos[false] then
             return      -- never reachable
         end
 
@@ -324,7 +324,7 @@ if (_ceu_go->org->isDyn) {
 ]])
 
         -- stop
-        if me == _MAIN then
+        if me == MAIN then
             HALT(me, 'RET_END')
         else
             HALT(me)
@@ -447,7 +447,7 @@ case ]]..me.lbls_cnt[i].id..[[:;
 ]])
         if pool and (type(pool.var.tp.arr)=='table') then
             LINE(me, '__ceu_new->pool = '..V(pool)..';')
-        elseif _PROPS.has_news_pool or _OPTS.os then
+        elseif PROPS.has_news_pool or OPTS.os then
             LINE(me, '__ceu_new->pool = NULL;')
         end
 
@@ -496,10 +496,10 @@ _ceu_go->org->trls[ ]]..me.trl_fins[1]..[[ ].seqno = _ceu_app->seqno-1; /* awake
         for _, var in ipairs(me.vars) do
             if var.isTmp then
                 if var.tp.arr then
-                    LINE(me, _TP.toc(var.tp)
+                    LINE(me, TP.toc(var.tp)
                             ..' '..V(var)..'['..V(var.tp.arr)..']')
                 else
-                    LINE(me, _TP.toc(var.tp)..' __ceu_'..var.id..'_'..var.n)
+                    LINE(me, TP.toc(var.tp)..' __ceu_'..var.id..'_'..var.n)
                 end
                 if var.isFun then
                     -- function parameter
@@ -560,7 +560,7 @@ if (]]..fin.val..[[) {
         LINE(me, '}')       -- open in Block_pre
 
 -- TODO: remove!
-        if not (_ANA and me.ana.pos[false]) then
+        if not (ANA and me.ana.pos[false]) then
             LINE(me, [[
 /* switch to 1st trail */
 /* TODO: only if not joining with outer prio */
@@ -584,7 +584,7 @@ ceu_pause(&_ceu_go->org->trls[ ]]..me.blk.trails[1]..[[ ],
     Op2_call_pre = function (me)
         local _, f, exps, fin = unpack(me)
         if fin and fin.active then
-            LINE(_AST.iter'Stmts'(), fin.val..' = 1;')
+            LINE(AST.iter'Stmts'(), fin.val..' = 1;')
         end
     end,
     Finalize = function (me)
@@ -631,7 +631,7 @@ _ceu_go->trl = &_ceu_go->org->trls[ ]] ..me.trails[1]..[[ ];
         end
     end,
     Escape = function (me)
-        GOTO(me, _AST.iter'SetBlock'().lbl_out)
+        GOTO(me, AST.iter'SetBlock'().lbl_out)
     end,
 
     _Par = function (me)
@@ -675,13 +675,13 @@ _ceu_go->trl = &_ceu_go->org->trls[ ]] ..me.trails[1]..[[ ];
             end
             CONC(me, sub)
 
-            if not (_ANA and sub.ana.pos[false]) then
+            if not (ANA and sub.ana.pos[false]) then
                 COMM(me, 'PAROR JOIN')
                 GOTO(me, me.lbl_out)
             end
         end
 
-        if not (_ANA and me.ana.pos[false]) then
+        if not (ANA and me.ana.pos[false]) then
             CASE(me, me.lbl_out)
             CLEAR(me)
             LINE(me, [[
@@ -744,7 +744,7 @@ if (]]..V(c)..[[) {
 for (;;) {
 ]])
         CONC(me)
-        local async = _AST.iter'Async'()
+        local async = AST.iter'Async'()
         if async then
             LINE(me, [[
 #ifdef ceu_out_pending
@@ -764,8 +764,8 @@ for (;;) {
         LINE(me, [[
 }
 ]])
-        if me.has_break and ( not (_AST.iter(_AST.pred_async)()
-                                or _AST.iter'Dcl_fun'()) )
+        if me.has_break and ( not (AST.iter(AST.pred_async)()
+                                or AST.iter'Dcl_fun'()) )
         then
             CLEAR(me)
             LINE(me, [[
@@ -799,14 +799,14 @@ _ceu_go->trl = &_ceu_go->org->trls[ ]]..me.trails[1]..[[ ];
         -- emit INPUT
 
         -- only async's need to split in two (to avoid stack growth)
-        if _AST.iter'Async'() then
+        if AST.iter'Async'() then
             LINE(me, [[
 _ceu_go->trl->evt = CEU_IN__ASYNC;
 _ceu_go->trl->lbl = ]]..me.lbl_cnt.id..[[;
 ]])
         end
 
-        if _AST.iter'Thread'() then
+        if AST.iter'Thread'() then
             -- HACK_2: never terminates
             error'not supported'
         else
@@ -818,7 +818,7 @@ if (! _ceu_app->isAlive)
 ]])
         end
 
-        if _AST.iter'Async'() then
+        if AST.iter'Async'() then
             HALT(me, 'RET_ASYNC')
             LINE(me, [[
 case ]]..me.lbl_cnt.id..[[:;
@@ -830,7 +830,7 @@ case ]]..me.lbl_cnt.id..[[:;
         local exp = unpack(me)
 
         -- only async's need to split in two (to avoid stack growth)
-        if _AST.iter'Async'() then
+        if AST.iter'Async'() then
             LINE(me, [[
 _ceu_go->trl->evt = CEU_IN__ASYNC;
 _ceu_go->trl->lbl = ]]..me.lbl_cnt.id..[[;
@@ -853,7 +853,7 @@ _ceu_go->trl->lbl = ]]..me.lbl_cnt.id..[[;
 #endif
 }
 ]]
-        if _AST.iter'Thread'() then
+        if AST.iter'Thread'() then
             emit = 'CEU_ATOMIC( '..emit..' )\n'
         end
 
@@ -863,7 +863,7 @@ _ceu_go->trl->lbl = ]]..me.lbl_cnt.id..[[;
 #endif
 ]])
 
-        if _AST.iter'Async'() then
+        if AST.iter'Async'() then
             HALT(me, 'RET_ASYNC')
             LINE(me, [[
 case ]]..me.lbl_cnt.id..[[:;
@@ -973,7 +973,7 @@ case ]]..me.lbl.id..[[:;
 
     AwaitExt = function (me)
         local e = unpack(me)
-        local no = _AST.iter'Pause'() and '_CEU_NO_'..me.n..'_:'
+        local no = AST.iter'Pause'() and '_CEU_NO_'..me.n..'_:'
                     or ''
         LINE(me, [[
 ]]..no..[[
@@ -992,7 +992,7 @@ case ]]..me.lbl.id..[[:;
 --[=[
     AwaitS = function (me)
         local LBL_OUT = '__CEU_'..me.n..'_AWAITS'
-        local set = _AST.iter'SetAwait'()
+        local set = AST.iter'SetAwait'()
 
         for _, awt in ipairs(me) do
             if awt.tag=='WCLOCKK' or awt.tag=='WCLOCKE' then
@@ -1148,7 +1148,7 @@ case ]]..me.lbl.id..[[:;
         DEBUG_TRAILS(me)
 
         -- thread function
-        _CODE.threads = _CODE.threads .. [[
+        CODE.threads = CODE.threads .. [[
 static void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
 {
     /* start thread */
@@ -1240,7 +1240,7 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
 ]])
 
         for _, p in ipairs(me.params) do
-            if _TP.isNumeric(p.tp) then
+            if TP.isNumeric(p.tp) then
                 LINE(me, [[
         lua_pushnumber(_ceu_app->lua,]]..V(p)..[[);
 ]])
@@ -1258,7 +1258,7 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
         if (! err) {
 ]])
         if me.ret then
-            if _TP.isNumeric(me.ret.tp) or me.ret.tp=='bool' then
+            if TP.isNumeric(me.ret.tp) or me.ret.tp=='bool' then
                 LINE(me, [[
             int ret;
             if (lua_isnumber(_ceu_app->lua,-1)) {
@@ -1304,7 +1304,7 @@ _CEU_LUA_OK_]]..me.n..[[:;
     end,
 
     Sync = function (me)
-        local thr = _AST.iter'Thread'()
+        local thr = AST.iter'Thread'()
         LINE(me, [[
 CEU_THREADS_MUTEX_LOCK(&_ceu_app->threads_mutex);
 if (*(_ceu_p.st) == 3) {        /* 3=end */
@@ -1326,4 +1326,4 @@ if (*(_ceu_p.st) == 3) {        /* 3=end */
     end,
 }
 
-_AST.visit(F)
+AST.visit(F)

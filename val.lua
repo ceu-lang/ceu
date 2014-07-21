@@ -16,7 +16,7 @@ function V (me)
 
     local ref = me.tp and me.tp.ref and me.tp.id
     if me.byRef and
-        (not (_ENV.clss[me.tp.id] or ref and _ENV.clss[ref]))
+        (not (ENV.clss[me.tp.id] or ref and ENV.clss[ref]))
     then
                     -- already by ref
         local ret = '&'..me.val
@@ -29,9 +29,9 @@ end
 
 function CUR (me, id)
     if id then
-        return '(('.._TP.toc(CLS().tp)..'*)_ceu_go->org)->'..id
+        return '(('..TP.toc(CLS().tp)..'*)_ceu_go->org)->'..id
     else
-        return '(('.._TP.toc(CLS().tp)..'*)_ceu_go->org)'
+        return '(('..TP.toc(CLS().tp)..'*)_ceu_go->org)'
     end
 end
 
@@ -56,7 +56,7 @@ F =
                     var.val = '(&'..var.val..')'
                 else
                     if var.tp.ref then
-                        if _ENV.clss[var.tp.id] then
+                        if ENV.clss[var.tp.id] then
                             -- orgs vars byRef, do nothing
                             -- (normalized to pointer)
                         else
@@ -105,19 +105,19 @@ F =
 
     Outer = function (me)
             me.val = '_ceu_go->org'
-            --me.val = '(*(('.._TP.toc(me.tp)..'*)'..me.val..'))'
-            me.val = '(('.._TP.toc(me.tp)..'*)'..me.val..')'
+            --me.val = '(*(('..TP.toc(me.tp)..'*)'..me.val..'))'
+            me.val = '(('..TP.toc(me.tp)..'*)'..me.val..')'
     end,
 
     This = function (me)
-        if _AST.iter'Dcl_constr'() then
+        if AST.iter'Dcl_constr'() then
             me.val = '__ceu_org'    -- set when calling constr
-            --me.val = '(*(('.._TP.toc(me.tp)..'*)'..me.val..'))'
-            me.val = '(('.._TP.toc(me.tp)..'*)'..me.val..')'
+            --me.val = '(*(('..TP.toc(me.tp)..'*)'..me.val..'))'
+            me.val = '(('..TP.toc(me.tp)..'*)'..me.val..')'
         else
             me.val = '_ceu_go->org'
-            --me.val = '(*(('.._TP.toc(me.tp)..'*)'..me.val..'))'
-            me.val = '(('.._TP.toc(me.tp)..'*)'..me.val..')'
+            --me.val = '(*(('..TP.toc(me.tp)..'*)'..me.val..'))'
+            me.val = '(('..TP.toc(me.tp)..'*)'..me.val..')'
         end
     end,
 
@@ -215,7 +215,7 @@ F =
                 if mode == 'val' then
                     t2[#t2+1] = 'CEU_EVTP((void*)'..val..')'
                 else
-                    t2[#t2+1] = 'sizeof('.._TP.toc(ext.evt.ins)..')'
+                    t2[#t2+1] = 'sizeof('..TP.toc(ext.evt.ins)..')'
                     t2[#t2+1] = '(byte*)'..val
                 end
             else
@@ -238,7 +238,7 @@ F =
         t1 = table.concat(t1, ', ')
 
         local ret = ''
-        if _OPTS.os and op=='call' then
+        if OPTS.os and op=='call' then
             -- when the call crosses the process,
             -- the return val must be unpacked from tceu_evtp
             if me.__ast_set then
@@ -270,15 +270,15 @@ F =
         local e1 = unpack(me)
         local tp = (e1.evt or e1.var.evt).ins
         if tp.ptr>0 then
-            me.val = '(('.._TP.toc(me.tp)..')_ceu_go->evtp.ptr)'
+            me.val = '(('..TP.toc(me.tp)..')_ceu_go->evtp.ptr)'
         elseif tp.ref then
-            me.val = '(*(('.._TP.toc(me.tp)..')_ceu_go->evtp.ptr))'
+            me.val = '(*(('..TP.toc(me.tp)..')_ceu_go->evtp.ptr))'
                     -- byRef from awake SetExp removes the `*´
         elseif tp.tup then
-            me.val = '(('.._TP.toc(me.tp)..'*)_ceu_go->evtp.ptr)'
+            me.val = '(('..TP.toc(me.tp)..'*)_ceu_go->evtp.ptr)'
         else
             me.val = '(_ceu_go->evtp.v)'
-            --me.val = '*(('.._TP.toc(e1.evt.ins)..'*)_ceu_go->evtp.ptr)'
+            --me.val = '*(('..TP.toc(e1.evt.ins)..'*)_ceu_go->evtp.ptr)'
         end
     end,
     AwaitT = function (me)
@@ -313,7 +313,7 @@ F =
     Op2_idx = function (me)
         local _, arr, idx = unpack(me)
         me.val = V(arr)..'['..V(idx)..']'
-        if me.tp.ptr==0 and _ENV.clss[me.tp.id] then
+        if me.tp.ptr==0 and ENV.clss[me.tp.id] then
             me.val = '(&'..me.val..')'
                 -- class accesses must be normalized to references
         end
@@ -353,7 +353,7 @@ F =
 
     ['Op1_*'] = function (me)
         local op, e1 = unpack(me)
-        local cls = e1.tp.ptr==1 and _ENV.clss[e1.tp.id]
+        local cls = e1.tp.ptr==1 and ENV.clss[e1.tp.id]
         if cls then
             me.val = V(e1) -- class accesses should remain normalized to references
         else
@@ -362,7 +362,7 @@ F =
     end,
     ['Op1_&'] = function (me)
         local op, e1 = unpack(me)
-        if _ENV.clss[e1.tp.id] and e1.tp.ptr==0 then
+        if ENV.clss[e1.tp.id] and e1.tp.ptr==0 then
             me.val = V(e1) -- class accesses are already normalized to references
         else
             me.val = '('..ceu2c(op)..V(e1)..')'
@@ -371,44 +371,44 @@ F =
 
     ['Op2_.'] = function (me)
         if me.org then
-            local cls = me.org.tp.ptr==0 and _ENV.clss[me.org.tp.id]
+            local cls = me.org.tp.ptr==0 and ENV.clss[me.org.tp.id]
             local gen = '((tceu_org*)'..me.org.val..')'
             if cls and cls.is_ifc then
                 if me.var.pre == 'var'
                 or me.var.pre == 'pool' then
                     if me.var.tp.arr then
                         me.val = [[(
-(]].._TP.toc(me.var.tp)..[[) (
+(]]..TP.toc(me.var.tp)..[[) (
         ((byte*)]]..me.org.val..[[) + _CEU_APP.ifcs_flds[]]..gen..[[->cls][
-            ]].._ENV.ifcs.flds[me.var.ifc_id]..[[
+            ]]..ENV.ifcs.flds[me.var.ifc_id]..[[
         ]
 ))]]
                     else
                         me.val = [[(*(
-(]].._TP.toc(me.var.tp)..[[*) (
+(]]..TP.toc(me.var.tp)..[[*) (
         ((byte*)]]..me.org.val..[[) + _CEU_APP.ifcs_flds[]]..gen..[[->cls][
-            ]].._ENV.ifcs.flds[me.var.ifc_id]..[[
+            ]]..ENV.ifcs.flds[me.var.ifc_id]..[[
         ]
             )
 ))]]
                     end
                     if me.var.pre == 'pool' then
                         me.ifc_idx = '(_CEU_APP.ifcs_trls['..gen..'->cls]['
-                                        .._ENV.ifcs.trls[me.var.ifc_id]
+                                        ..ENV.ifcs.trls[me.var.ifc_id]
                                    ..'])'
                     end
                 elseif me.var.pre == 'function' then
                     me.val = [[(*(
-(]].._TP.toc(me.var.tp)..[[*) (
+(]]..TP.toc(me.var.tp)..[[*) (
         _CEU_APP.ifcs_funs[]]..gen..[[->cls][
-            ]].._ENV.ifcs.funs[me.var.ifc_id]..[[
+            ]]..ENV.ifcs.funs[me.var.ifc_id]..[[
         ]
             )
 ))]]
                 elseif me.var.pre == 'event' then
                     me.val = nil    -- cannot be used as variable
                     me.ifc_idx = '(_CEU_APP.ifcs_evts['..gen..'->cls]['
-                                    .._ENV.ifcs.evts[me.var.ifc_id]
+                                    ..ENV.ifcs.evts[me.var.ifc_id]
                                ..'])'
                 else
                     error 'not implemented'
@@ -450,7 +450,7 @@ F =
         local tp, exp = unpack(me)
         local val = V(exp)
 
-        local cls = tp.ptr==1 and _ENV.clss[tp.id]
+        local cls = tp.ptr==1 and ENV.clss[tp.id]
         if cls then
             if cls.is_ifc then
                 -- TODO: out of bounds acc
@@ -466,7 +466,7 @@ F =
             end
         end
 
-        me.val = '(('.._TP.toc(tp)..')'..val..')'
+        me.val = '(('..TP.toc(tp)..')'..val..')'
     end,
 
     WCLOCKK = function (me)
@@ -487,7 +487,7 @@ F =
     end,
 
     Type = function (me)
-        me.val = _TP.toc(me)
+        me.val = TP.toc(me)
     end,
 
     Nat = function (me)
@@ -509,4 +509,4 @@ F =
     end,
 }
 
-_AST.visit(F)
+AST.visit(F)

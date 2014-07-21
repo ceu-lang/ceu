@@ -1,4 +1,4 @@
-_OPTS_NPARAMS = {
+OPTS_NPARAMS = {
     version   = 0,
     input     = nil,
 
@@ -19,7 +19,7 @@ _OPTS_NPARAMS = {
     os        = 0,
 }
 
-_OPTS = {
+OPTS = {
     input     = nil,
 
     out_c     = '_ceu_app.c',
@@ -47,7 +47,7 @@ do
     i = i + 1
 
     if p == '-' then
-        _OPTS.input = '-'
+        OPTS.input = '-'
 
     elseif string.sub(p, 1, 2) == '--' then
         local no = false
@@ -56,25 +56,25 @@ do
             no = true
             opt = string.sub(opt, 4)
         end
-        if _OPTS_NPARAMS[opt]==0 or _OPTS_NPARAMS[opt]==nil then
-            _OPTS[opt] = not no
+        if OPTS_NPARAMS[opt]==0 or OPTS_NPARAMS[opt]==nil then
+            OPTS[opt] = not no
         else
             local opt = string.gsub(string.sub(p,3), '%-', '_')
-            _OPTS[opt] = string.match(params[i], "%'?(.*)%'?")
+            OPTS[opt] = string.match(params[i], "%'?(.*)%'?")
             i = i + 1
         end
 
     else
-        _OPTS.input = p
+        OPTS.input = p
     end
 end
 
-if _OPTS.version then
+if OPTS.version then
     print 'ceu 0.8'
     os.exit(0)
 end
 
-if not _OPTS.input then
+if not OPTS.input then
     io.stderr:write([[
 
     ./ceu <filename>           # Ceu input file, or `-´ for stdin
@@ -101,25 +101,25 @@ if not _OPTS.input then
 end
 
 -- C_CALLS
-if _OPTS.c_calls then
+if OPTS.c_calls then
     local t = {}
-    for v in string.gmatch(_OPTS.c_calls, "([_%w]+)") do
+    for v in string.gmatch(OPTS.c_calls, "([_%w]+)") do
         t[v] = true
     end
-    _OPTS.c_calls = t
+    OPTS.c_calls = t
 end
 
 
 -- INPUT
 local inp
-if _OPTS.input == '-' then
+if OPTS.input == '-' then
     inp = io.stdin
 else
-    inp = assert(io.open(_OPTS.input))
+    inp = assert(io.open(OPTS.input))
 end
 local source = inp:read'*a'
 
-_OPTS.source = source
+OPTS.source = source
 
 -- PARSE
 do
@@ -145,7 +145,7 @@ do
     dofile 'mem.lua'
     dofile 'val.lua'
     dofile 'code.lua'
-    --_AST.dump(_AST.root)
+    --AST.dump(AST.root)
 end
 
 local function SUB (str, from, to)
@@ -163,14 +163,14 @@ local HH, CC
 
 -- TEMPLATE.H
 do
-    HH = _FILES.template_h
-    HH = SUB(HH, '#include "ceu_os.h"', _FILES.ceu_os_h)
+    HH = FILES.template_h
+    HH = SUB(HH, '#include "ceu_os.h"', FILES.ceu_os_h)
 
     local tps = { [0]='void', [1]='8', [2]='16', [4]='32' }
-    HH = SUB(HH, '=== TCEU_NLBL ===',   's'..tps[_TP.types.tceu_nlbl.len])
-    HH = SUB(HH, '=== TCEU_NCLS ===',   's'..tps[_TP.types.tceu_ncls.len])
-    HH = SUB(HH, '=== CEU_NTRAILS ===', _MAIN.trails_n)
-    --HH = SUB(HH, '=== CLSS_DEFS ===',  _MEM.clss)
+    HH = SUB(HH, '=== TCEU_NLBL ===',   's'..tps[TP.types.tceu_nlbl.len])
+    HH = SUB(HH, '=== TCEU_NCLS ===',   's'..tps[TP.types.tceu_ncls.len])
+    HH = SUB(HH, '=== CEU_NTRAILS ===', MAIN.trails_n)
+    --HH = SUB(HH, '=== CLSS_DEFS ===',  MEM.clss)
 
     -- DEFINES
     do
@@ -196,16 +196,16 @@ do
             has_goto    = 'CEU_GOTO',
         }
         for k, s in pairs(t) do
-            if _PROPS[k] or _CODE[k] then
+            if PROPS[k] or CODE[k] then
                 str = str .. '#define ' .. s .. '\n'
             end
         end
 
-        -- TODO: goto _OPTS
+        -- TODO: goto OPTS
         --str = str .. '#define CEU_DEBUG_TRAILS\n'
         --str = str .. '#define CEU_NOLINES\n'
 
-        if _OPTS.os then
+        if OPTS.os then
             str = str .. [[
 #ifndef CEU_OS
 #define CEU_OS
@@ -213,12 +213,12 @@ do
 ]]
         end
 
-        if _OPTS.run_tests then
+        if OPTS.run_tests then
             str = str .. '#define CEU_RUNTESTS\n'
         end
 
-        local h = _OPTS.out_h
-        if _OPTS.out_h == '-' then
+        local h = OPTS.out_h
+        if OPTS.out_h == '-' then
             h = '_STDIN_H'
         end
 
@@ -240,18 +240,18 @@ do
         -- TODO
         str = str..'#define CEU_IN__NONE 0\n'
 
-        for i, evt in ipairs(_ENV.exts) do
+        for i, evt in ipairs(ENV.exts) do
             if evt.pre == 'input' then
                 ins = ins + 1
                 local s = '#define CEU_IN_'..evt.id..' '..(256-ins)
-                if _OPTS.verbose and i > 9 then
+                if OPTS.verbose and i > 9 then
                     DBG('', s)
                 end
                 str = str..s..'\n'
             else
                 outs = outs + 1
                 local s = '#define CEU_OUT_'..evt.id..' '..outs
-                if _OPTS.verbose then
+                if OPTS.verbose then
                     DBG('', s)
                 end
                 str = str..s..'\n'
@@ -268,7 +268,7 @@ do
     -- FUNCTIONS called
     do
         local str = ''
-        for id in pairs(_ENV.calls) do
+        for id in pairs(ENV.calls) do
             if id ~= '$anon' then
                 str = str..'#define CEU_FUN'..id..'\n'
             end
@@ -279,19 +279,19 @@ do
     -- TUPLES
     do
         local str = ''
-        for _,T in pairs(_TP.types) do
+        for _,T in pairs(TP.types) do
             if T.tup and #T.tup>0 then
                 str = str .. 'typedef struct {\n'
                 for i, t in ipairs(T.tup) do
-                    local tmp = _TP.toc(t)
-                    if _ENV.clss[t.id] then
+                    local tmp = TP.toc(t)
+                    if ENV.clss[t.id] then
                         -- T* => void*
                         -- T** => void**
                         tmp = 'void'..string.match(tmp,'(%*+)')
                     end
                     str = str..'\t'..tmp..' _'..i..';\n'
                 end
-                str = str .. '} '.._TP.toc(T)..';\n'
+                str = str .. '} '..TP.toc(T)..';\n'
             end
         end
         HH = SUB(HH, '=== TUPLES ===', str)
@@ -300,70 +300,70 @@ end
 
 -- TEMPLATE.C
 do
-    CC = _FILES.template_c
+    CC = FILES.template_c
 
-    CC = SUB(CC, '=== FILENAME ===', _OPTS.input)
+    CC = SUB(CC, '=== FILENAME ===', OPTS.input)
     --CC = SUB(CC, '^#line.-\n', '')
 
-    CC = SUB(CC, '=== LABELS_ENUM ===', _LBLS.code_enum)
+    CC = SUB(CC, '=== LABELS_ENUM ===', LBLS.code_enum)
 
-    CC = SUB(CC, '=== CLSS_DEFS ===',  _MEM.clss)   -- TODO: move to HH
+    CC = SUB(CC, '=== CLSS_DEFS ===',  MEM.clss)   -- TODO: move to HH
 
-    CC = SUB(CC, '=== CONSTRS_C ===',   _CODE.constrs)
-    CC = SUB(CC, '=== PRES_C ===',      _CODE.pres)
-    CC = SUB(CC, '=== THREADS_C ===',   _CODE.threads)
-    CC = SUB(CC, '=== FUNCTIONS_C ===', _CODE.functions)
-    CC = SUB(CC, '=== STUBS ===',       _CODE.stubs)
-    CC = SUB(CC, '=== NATIVE ===',      _CODE.native)
-    CC = SUB(CC, '=== CODE ===',        _AST.root.code)
+    CC = SUB(CC, '=== CONSTRS_C ===',   CODE.constrs)
+    CC = SUB(CC, '=== PRES_C ===',      CODE.pres)
+    CC = SUB(CC, '=== THREADS_C ===',   CODE.threads)
+    CC = SUB(CC, '=== FUNCTIONS_C ===', CODE.functions)
+    CC = SUB(CC, '=== STUBS ===',       CODE.stubs)
+    CC = SUB(CC, '=== NATIVE ===',      CODE.native)
+    CC = SUB(CC, '=== CODE ===',        AST.root.code)
 
     -- IFACES
-    if _PROPS.has_ifcs then
+    if PROPS.has_ifcs then
         local CLSS = {}
         local FLDS = {}
         local EVTS = {}
         local FUNS = {}
         local TRLS = {}
-        for _, cls in ipairs(_ENV.clss_cls) do
+        for _, cls in ipairs(ENV.clss_cls) do
             local clss = {}
             local flds = {}
             local evts = {}
             local funs = {}
             local trls = {}
-            for i=1, #_ENV.ifcs.flds do
+            for i=1, #ENV.ifcs.flds do
                 flds[i] = 0
             end
-            for i=1, #_ENV.ifcs.evts do
+            for i=1, #ENV.ifcs.evts do
                 evts[i] = 0
             end
-            for i=1, #_ENV.ifcs.funs do
+            for i=1, #ENV.ifcs.funs do
                 funs[i] = 'NULL'
             end
-            for i=1, #_ENV.ifcs.trls do
+            for i=1, #ENV.ifcs.trls do
                 trls[i] = 0
             end
             for _, var in ipairs(cls.blk_ifc.vars) do
                 if var.pre == 'event' then
-                    local i = _ENV.ifcs.evts[var.ifc_id]
+                    local i = ENV.ifcs.evts[var.ifc_id]
                     if i then
                         evts[i+1] = var.evt.idx
                     end
                 elseif var.pre=='var' or var.pre=='pool' then
                     if var.pre=='var' or (type(var.tp.arr)=='table') then
                                         -- malloc pools are not vars
-                        local i = _ENV.ifcs.flds[var.ifc_id]
+                        local i = ENV.ifcs.flds[var.ifc_id]
                         if i then
                             flds[i+1] = 'offsetof(CEU_'..cls.id..','..(var.id_ or var.id)..')'
                         end
                     end
                     if var.pre == 'pool' then
-                        local i = _ENV.ifcs.trls[var.ifc_id]
+                        local i = ENV.ifcs.trls[var.ifc_id]
                         if i then
                             trls[i+1] = var.trl_orgs[1]
                         end
                     end
                 elseif var.pre == 'function' then
-                    local i = _ENV.ifcs.funs[var.ifc_id]
+                    local i = ENV.ifcs.funs[var.ifc_id]
                     if i then
                         funs[i+1] = '(void*)'..var.val
                     end
@@ -373,7 +373,7 @@ do
             end
 
             -- IFCS_CLSS
-            for _,ifc in ipairs(_ENV.clss_ifc) do
+            for _,ifc in ipairs(ENV.clss_ifc) do
                 clss[#clss+1] = cls.matches[ifc] and 1 or 0
             end
 
@@ -383,12 +383,12 @@ do
             FUNS[#FUNS+1] = '\t\t{'..table.concat(funs,',')..'}'
             TRLS[#TRLS+1] = '\t\t{'..table.concat(trls,',')..'}'
         end
-        CC = SUB(CC, '=== CEU_NCLS ===',     #_ENV.clss_cls)
-        CC = SUB(CC, '=== IFCS_NIFCS ===',   #_ENV.clss_ifc)
-        CC = SUB(CC, '=== IFCS_NFLDS ===',   #_ENV.ifcs.flds)
-        CC = SUB(CC, '=== IFCS_NEVTS ===',   #_ENV.ifcs.evts)
-        CC = SUB(CC, '=== IFCS_NFUNS ===',   #_ENV.ifcs.funs)
-        CC = SUB(CC, '=== IFCS_NTRLS ===',   #_ENV.ifcs.trls)
+        CC = SUB(CC, '=== CEU_NCLS ===',     #ENV.clss_cls)
+        CC = SUB(CC, '=== IFCS_NIFCS ===',   #ENV.clss_ifc)
+        CC = SUB(CC, '=== IFCS_NFLDS ===',   #ENV.ifcs.flds)
+        CC = SUB(CC, '=== IFCS_NEVTS ===',   #ENV.ifcs.evts)
+        CC = SUB(CC, '=== IFCS_NFUNS ===',   #ENV.ifcs.funs)
+        CC = SUB(CC, '=== IFCS_NTRLS ===',   #ENV.ifcs.trls)
         CC = SUB(CC, '=== IFCS_CLSS ===',    table.concat(CLSS,',\n'))
         CC = SUB(CC, '=== IFCS_FLDS ===',    table.concat(FLDS,',\n'))
         CC = SUB(CC, '=== IFCS_EVTS ===',    table.concat(EVTS,',\n'))
@@ -396,45 +396,45 @@ do
         CC = SUB(CC, '=== IFCS_TRLS ===',    table.concat(TRLS,',\n'))
     end
 
-    if not _OPTS.os then
-        _FILES.ceu_os_c = SUB(_FILES.ceu_os_c,
+    if not OPTS.os then
+        FILES.ceu_os_c = SUB(FILES.ceu_os_c,
                                       '#include "ceu_os.h"',
-                                      _FILES.ceu_os_h)
+                                      FILES.ceu_os_h)
         CC = SUB(CC, '#include "ceu_types.h"',
-                             _FILES.ceu_types_h)
+                             FILES.ceu_types_h)
         CC = SUB(CC, '#include "ceu_os.h"',
-                             _FILES.ceu_os_h..'\n'.._FILES.ceu_os_c)
+                             FILES.ceu_os_h..'\n'..FILES.ceu_os_c)
     end
 
-    -- TODO: move above (if not _OPTS.os) when pool* becomes sys_calls
-    _FILES.ceu_pool_c = SUB(_FILES.ceu_pool_c, '#include "ceu_pool.h"', '')
+    -- TODO: move above (if not OPTS.os) when pool* becomes sys_calls
+    FILES.ceu_pool_c = SUB(FILES.ceu_pool_c, '#include "ceu_pool.h"', '')
     CC = SUB(CC, '#include "ceu_pool.h"',
-                         _FILES.ceu_pool_h..'\n'.._FILES.ceu_pool_c)
+                         FILES.ceu_pool_h..'\n'..FILES.ceu_pool_c)
 
-    if _OPTS.out_s ~= 'CEU_SIZE' then
-        CC = SUB(CC, 'CEU_SIZE', _OPTS.out_s)
+    if OPTS.out_s ~= 'CEU_SIZE' then
+        CC = SUB(CC, 'CEU_SIZE', OPTS.out_s)
     end
-    if _OPTS.out_f ~= 'ceu_app_init' then
-        CC = SUB(CC, 'ceu_app_init', _OPTS.out_f)
+    if OPTS.out_f ~= 'ceu_app_init' then
+        CC = SUB(CC, 'ceu_app_init', OPTS.out_f)
     end
 end
 
-if _OPTS.verbose then
+if OPTS.verbose then
     local T = {
-        --mem  = _AST.root.mem.max,
-        evts = _ENV.max_evt+#_ENV.exts,
-        lbls = #_LBLS.list,
+        --mem  = AST.root.mem.max,
+        evts = ENV.max_evt+#ENV.exts,
+        lbls = #LBLS.list,
 
-        trls       = _AST.root.trails_n,
+        trls    = AST.root.trails_n,
 
-        exts    = _PROPS.has_exts,
-        wclocks = _PROPS.has_wclocks,
-        ints    = _PROPS.has_ints,
-        asyncs  = _PROPS.has_asyncs,
-        orgs    = _PROPS.has_orgs,
-        news    = _PROPS.has_news,
-        ifcs    = _PROPS.has_ifcs,
-        ret     = _PROPS.has_ret,
+        exts    = PROPS.has_exts,
+        wclocks = PROPS.has_wclocks,
+        ints    = PROPS.has_ints,
+        asyncs  = PROPS.has_asyncs,
+        orgs    = PROPS.has_orgs,
+        news    = PROPS.has_news,
+        ifcs    = PROPS.has_ifcs,
+        ret     = PROPS.has_ret,
     }
     local t = {}
     for k, v in pairs(T) do
@@ -450,18 +450,18 @@ end
 
 -- OUTPUT
 
-if _OPTS.out_h and _OPTS.out_h~='-' then
-    local f = assert(io.open(_OPTS.out_h,'w'))
+if OPTS.out_h and OPTS.out_h~='-' then
+    local f = assert(io.open(OPTS.out_h,'w'))
     f:write(HH)
     f:close()
 end
 CC = SUB(CC, '=== OUT_H ===', HH)
 
 local out
-if _OPTS.out_c == '-' then
+if OPTS.out_c == '-' then
     out = io.stdout
 else
-    out = assert(io.open(_OPTS.out_c,'w'))
+    out = assert(io.open(OPTS.out_c,'w'))
 end
 out:write([[
 /*

@@ -1,6 +1,6 @@
 #!/usr/bin/env lua
 
-_RUNTESTS = true
+RUNTESTS = true
 
 dofile 'pak.lua'
 
@@ -32,7 +32,7 @@ Test = function (t)
     --local source = 'C _fprintf(), _stderr;'..T[1]
     print('\n=============\n---\n'..source..'\n---\n')
 
-    _OPTS = {
+    OPTS = {
         tp_word    = 4,
         tp_off     = 2,
         tp_lbl     = 2,
@@ -62,13 +62,13 @@ Test = function (t)
     if not check('parser')   then return end
     if not check('ast')      then return end
     --DBG'======= AST'
-    --_AST.dump(_AST.root)
+    --AST.dump(AST.root)
     if not check('adj')      then return end
     --DBG'======= ADJ'
-    --_AST.dump(_AST.root)
+    --AST.dump(AST.root)
     if not check('tops')     then return end
     --DBG'======= TOPS'
-    --_AST.dump(_AST.root)
+    --AST.dump(AST.root)
     if not check('env')      then return end
     if not check('exp')      then return end
     if not check('sval')     then return end
@@ -86,15 +86,15 @@ Test = function (t)
     if not check('mem')      then return end
     if not check('val')      then return end
     --DBG'======= VAL'
-    --_AST.dump(_AST.root)
+    --AST.dump(AST.root)
     if not check('code')     then return end
 
     if (not t.wrn) and (not t._ana) then
         WRN = _WRN
     end
 
-    --STATS.mem     = STATS.mem     + _AST.root.mem.max
-    STATS.trails  = STATS.trails  + _AST.root.trails_n
+    --STATS.mem     = STATS.mem     + AST.root.mem.max
+    STATS.trails  = STATS.trails  + AST.root.trails_n
 
 --[[
     if T.awaits then
@@ -103,26 +103,26 @@ Test = function (t)
 ]]
 
     if T.tot then
-        assert(T.tot==_MEM.max, 'mem '.._MEM.max)
+        assert(T.tot==MEM.max, 'mem '..MEM.max)
     end
 
-    assert(t._ana or (_TIGHT and T.loop) or
-                     (not (_TIGHT or T.loop)))
+    assert(t._ana or (TIGHT and T.loop) or
+                     (not (TIGHT or T.loop)))
 
     -- ANALYSIS
-    --_AST.dump(_AST.root)
+    --AST.dump(AST.root)
     assert((not T.unreachs) and (not T.isForever)) -- move to analysis
     do
         local _defs = { reachs=0, unreachs=0, isForever=false,
                         acc=0, abrt=0, excpt=0 }
-        for k, v in pairs(_ANA.ana) do
+        for k, v in pairs(ANA.ana) do
 -- TODO
 if k ~= 'excpt' then
 if k ~= 'abrt' then
 if k ~= 'unreachs' then
             assert( v==_defs[k] and (T._ana==nil or T._ana[k]==nil)
                     or (T._ana and T._ana[k]==v),
-                    --or (T._ana and T._ana.acc==_ANALYSIS.acc),
+                    --or (T._ana and T._ana.acc==ANALYSIS.acc),
                             k..' = '..tostring(v))
 end
 end
@@ -133,8 +133,8 @@ end
 if k ~= 'excpt' then
 if k ~= 'abrt' then
 if k ~= 'unreachs' then
-                assert( v == _ANA.ana[k],
-                            k..' = '..tostring(_ANA.ana[k]))
+                assert( v == ANA.ana[k],
+                            k..' = '..tostring(ANA.ana[k]))
 end
 end
 end
@@ -166,7 +166,7 @@ end
 
     local CEU, GCC
     local r = (math.random(2) == 1)
-    if _OS==true or (_OS==nil and r) then
+    if OS==true or (OS==nil and r) then
         CEU = './ceu _ceu_tmp.ceu --run-tests --os 2>&1'
         GCC = 'gcc '..O..' -include _ceu_app.h -o ceu.exe main.c ceu_os.c _ceu_app.c 2>&1'
     else
@@ -175,14 +175,14 @@ end
     end
 --DBG(GCC)
 
-    if _PROPS.has_threads then
+    if PROPS.has_threads then
         GCC = GCC .. ' -lpthread'
     end
-    if _PROPS.has_lua then
+    if PROPS.has_lua then
         GCC = GCC .. ' -llua5.1'
     end
 
-    local EXE = ((not _VALGRIND) and './ceu.exe 2>&1')
+    local EXE = ((not VALGRIND) and './ceu.exe 2>&1')
              or 'valgrind -q --leak-check=full ./ceu.exe 2>&1'
              --or 'valgrind -q --tool=helgrind ./ceu.exe 2>&1'
 

@@ -1,4 +1,4 @@
-_PROPS = {
+PROPS = {
     has_exts    = false,
     has_wclocks = false,
     has_ints    = false,
@@ -79,14 +79,14 @@ local NO_constr = {
 -- if break/return are in parallel w/ something
 --                  or inside block that needs_clr
 function NEEDS_CLR (top)
-    for n in _AST.iter() do
+    for n in AST.iter() do
         if n.tag == top.tag then
             break
         elseif n.tag == 'ParEver' or
                n.tag == 'ParAnd'  or
                n.tag == 'ParOr'   or
                n.tag == 'Block' and n.needs_clr then
-            _PROPS.has_clear = true
+            PROPS.has_clear = true
             top.needs_clr = true
             break
         end
@@ -94,7 +94,7 @@ function NEEDS_CLR (top)
 end
 
 function HAS_FINS ()
-    for n in _AST.iter() do
+    for n in AST.iter() do
         if n.tag == 'Block'    or
            n.tag == 'ParOr'    or
            n.tag == 'Loop'     or
@@ -107,27 +107,27 @@ end
 F = {
     Node_pre = function (me)
         if NO_atomic[me.tag] then
-            ASR(not _AST.par(me,'Atomic'), me,
+            ASR(not AST.par(me,'Atomic'), me,
                 'not permitted inside `atomic´')
         end
         if NO_fun[me.tag] then
-            ASR(not _AST.par(me,'Dcl_fun'), me,
+            ASR(not AST.par(me,'Dcl_fun'), me,
                 'not permitted inside `function´')
         end
         if NO_fin[me.tag] then
-            ASR(not _AST.par(me,'Finally'), me,
+            ASR(not AST.par(me,'Finally'), me,
                 'not permitted inside `finalize´')
         end
         if NO_async[me.tag] then
-            ASR(not _AST.par(me,'Async'), me,
+            ASR(not AST.par(me,'Async'), me,
                     'not permitted inside `async´')
         end
         if NO_thread[me.tag] then
-            ASR(not _AST.par(me,'Thread'), me,
+            ASR(not AST.par(me,'Thread'), me,
                     'not permitted inside `thread´')
         end
         if NO_constr[me.tag] then
-            ASR(not _AST.par(me,'Dcl_constr'), me,
+            ASR(not AST.par(me,'Dcl_constr'), me,
                     'not permitted inside a constructor')
         end
     end,
@@ -136,20 +136,20 @@ F = {
         if me.fins then
             me.needs_clr = true
             me.needs_clr_fin = true
-            _PROPS.has_clear = true
+            PROPS.has_clear = true
         end
 
         for _, var in ipairs(me.vars) do
             if var.cls then
                 me.needs_clr = true
-                _PROPS.has_clear = true
+                PROPS.has_clear = true
             end
             if var.pre=='pool' then
-                _PROPS.has_news = true
+                PROPS.has_news = true
                 if var.tp.arr==true then
-                    _PROPS.has_news_malloc = true       -- pool T[]  ts
+                    PROPS.has_news_malloc = true       -- pool T[]  ts
                 else
-                    _PROPS.has_news_pool = true         -- pool T[N] ts
+                    PROPS.has_news_pool = true         -- pool T[N] ts
                 end
             end
         end
@@ -159,35 +159,35 @@ F = {
         end
     end,
     Free = function (me)
-        _PROPS.has_news = true
-        _PROPS.has_clear = true
+        PROPS.has_news = true
+        PROPS.has_clear = true
     end,
     New = function (me)
         local _,pool,_ = unpack(me)
 
-        --_PROPS.has_news = true    (pool does this)
+        --PROPS.has_news = true    (pool does this)
         if pool and pool.lst.var.tp.arr==true then
-            _PROPS.has_news_malloc = true       -- pool T[]  ts
+            PROPS.has_news_malloc = true       -- pool T[]  ts
         else
-            _PROPS.has_news_pool = true         -- pool T[N] ts
+            PROPS.has_news_pool = true         -- pool T[N] ts
         end
 
-        --_PROPS.has_clear = true   (var.cls does this)
+        --PROPS.has_clear = true   (var.cls does this)
         --me.blk.needs_clr = true   (var.cls does this)
-        ASR(not _AST.iter'BlockI'(), me,
+        ASR(not AST.iter'BlockI'(), me,
                 'not permitted inside an interface')
     end,
     Spawn = 'New',
 
     ParOr = function (me)
         me.needs_clr = true
-        _PROPS.has_clear = true
+        PROPS.has_clear = true
 
         -- detects if "isWatching" an org
         if me.isWatching then
             local tp = me.isWatching.tp
-            if (tp and tp.ptr==1 and _ENV.clss[tp.id]) then
-                _PROPS.has_orgs_watching = true
+            if (tp and tp.ptr==1 and ENV.clss[tp.id]) then
+                PROPS.has_orgs_watching = true
             end
         end
     end,
@@ -196,32 +196,32 @@ F = {
         me.brks = {}
     end,
     Break = function (me)
-        local loop = _AST.iter'Loop'()
+        local loop = AST.iter'Loop'()
         ASR(loop, me, 'break without loop')
         loop.brks[me] = true
         loop.has_break = true
 
         NEEDS_CLR(loop)
 
-        local fin = _AST.iter'Finally'()
+        local fin = AST.iter'Finally'()
         ASR(not fin or fin.__depth<loop.__depth, me,
                 'not permitted inside `finalize´')
         -- TODO: same for return
 
-        local async = _AST.iter(_AST.pred_async)()
+        local async = AST.iter(AST.pred_async)()
         if async then
-            local loop = _AST.iter'Loop'()
+            local loop = AST.iter'Loop'()
             ASR(loop.__depth>async.__depth, me, '`break´ without loop')
         end
     end,
 
     SetBlock_pre = function (me)
         me.rets = {}
-        ASR(not _AST.iter'BlockI'(), me,
+        ASR(not AST.iter'BlockI'(), me,
                 'not permitted inside an interface')
     end,
     Escape = function (me)
-        local blk = _AST.iter'SetBlock'()
+        local blk = AST.iter'SetBlock'()
         blk.rets[me] = true
         blk.has_escape = true
 
@@ -229,53 +229,53 @@ F = {
     end,
 
     Return = function (me)
-        ASR(_AST.iter'Dcl_fun'(), me,
+        ASR(AST.iter'Dcl_fun'(), me,
                 'not permitted outside a function')
     end,
 
     Outer = function (me)
-        ASR(_AST.par(me,'Dcl_constr'), me,
+        ASR(AST.par(me,'Dcl_constr'), me,
             '`outer´ can only be unsed inside constructors')
     end,
 
     Dcl_cls = function (me)
         if me.id ~= 'Main' then
-            _PROPS.has_orgs = true
-            _PROPS.has_ints = true      -- all have "emit _ok"
+            PROPS.has_orgs = true
+            PROPS.has_ints = true      -- all have "emit _ok"
         end
         if me.is_ifc then
-            _PROPS.has_ifcs = true
+            PROPS.has_ifcs = true
         end
     end,
 
     Dcl_ext = function (me)
-        _PROPS.has_exts = true
+        PROPS.has_exts = true
     end,
 
     Dcl_var = function (me)
         if me.var.cls then
             -- <class T with var U u; end>
-            ASR(not _AST.iter'BlockI'(), me,
+            ASR(not AST.iter'BlockI'(), me,
                     'not permitted inside an interface')
         end
     end,
 
     Async = function (me)
-        _PROPS.has_asyncs = true
+        PROPS.has_asyncs = true
     end,
     Thread = function (me)
-        _PROPS.has_threads = true
+        PROPS.has_threads = true
     end,
     Sync = function (me)
-        ASR(_AST.iter'Thread'(), me,'not permitted outside `thread´')
+        ASR(AST.iter'Thread'(), me,'not permitted outside `thread´')
     end,
 
     Pause = function (me)
-        _PROPS.has_pses = true
+        PROPS.has_pses = true
     end,
 
     _loop1 = function (me)
-        for loop in _AST.iter'Loop' do
+        for loop in AST.iter'Loop' do
             if loop.isEvery then
                 ASR(me.isEvery, me,
                     '`every´ cannot contain `await´')
@@ -284,11 +284,11 @@ F = {
     end,
 
     AwaitT = function (me)
-        _PROPS.has_wclocks = true
+        PROPS.has_wclocks = true
         F._loop1(me)
     end,
     AwaitInt = function (me)
-        _PROPS.has_ints = true
+        PROPS.has_ints = true
         F._loop1(me)
     end,
     AwaitExt = function (me)
@@ -310,35 +310,35 @@ F = {
     end,
 
     EmitInt = function (me)
-        _PROPS.has_ints = true
+        PROPS.has_ints = true
     end,
 
     EmitExt = function (me)
         local op, ext = unpack(me)
         if ext.evt.pre == 'input' then
-            ASR( _AST.par(me,'Async') or op=='call',
+            ASR( AST.par(me,'Async') or op=='call',
                 me, 'invalid `'..op..'´')
                     -- no <emit I> on sync
         end
 
-        if _AST.par(me,'Dcl_fun') then
+        if AST.par(me,'Dcl_fun') then
             ASR(op=='call', me, 'invalid `emit´')
         end
     end,
     EmitT = function (me)
-        ASR(_AST.par(me,'Async'),
+        ASR(AST.par(me,'Async'),
             me,'not permitted outside `async´')
     end,
 
     SetExp = function (me)
         local _, fr, to = unpack(me)
-        local thr = _AST.par(me, 'Thread')
+        local thr = AST.par(me, 'Thread')
         if thr and (not to) then
-            ASR( thr.__depth <= _AST.iter'SetBlock'().__depth+1, me,
+            ASR( thr.__depth <= AST.iter'SetBlock'().__depth+1, me,
                     'invalid access from `thread´')
         end
 
-        if _AST.iter'BlockI'() then
+        if AST.iter'BlockI'() then
             CLS().has_pre = true   -- code for pre (before constr)
 
             -- new, spawn, async, await
@@ -347,15 +347,15 @@ F = {
         end
 
         if to.tag=='Var' and to.var.id=='_ret' then
-            _PROPS.has_ret = true
+            PROPS.has_ret = true
         end
     end,
 
 --[[
     Var = function (me)
-        local thr = _AST.par(me, 'Thread')
+        local thr = AST.par(me, 'Thread')
         if thr then
-            ASR(_AST.iter'RefVarList'() or        -- param list
+            ASR(AST.iter'RefVarList'() or        -- param list
                 me.ret or                         -- var assigned on return
                 thr.__depth < me.var.blk.__depth, -- var is declared inside
                     me, 'invalid access from `thread´')
@@ -365,14 +365,14 @@ F = {
 
     Op1_cast = function (me)
         local tp, _ = unpack(me)
-        if tp.ptr>0 and _ENV.clss[tp.id] then
-            _PROPS.has_ifcs = true      -- cast must check org->cls_id
+        if tp.ptr>0 and ENV.clss[tp.id] then
+            PROPS.has_ifcs = true      -- cast must check org->cls_id
         end
     end,
 
     Lua = function (me)
-        _PROPS.has_lua = true
+        PROPS.has_lua = true
     end,
 }
 
-_AST.visit(F)
+AST.visit(F)

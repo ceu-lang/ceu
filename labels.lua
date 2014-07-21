@@ -1,4 +1,4 @@
-_LBLS = {
+LBLS = {
     list = {},      -- { [lbl]={}, [i]=lbl }
     code_enum = '',
     code_fins = '',
@@ -8,17 +8,17 @@ function new (lbl)
     if lbl[2] then
         lbl.id = lbl[1]
     else
-        lbl.id = CLS().id..'_'..lbl[1]..'_'..#_LBLS.list
+        lbl.id = CLS().id..'_'..lbl[1]..'_'..#LBLS.list
     end
     lbl.id = string.gsub(lbl.id, '%*','')
     lbl.id = string.gsub(lbl.id, '%.','')
     lbl.id = string.gsub(lbl.id, '%$','')
     lbl.id = string.gsub(lbl.id, '%%','')
-    _LBLS.list[lbl] = true
-    lbl.n = #_LBLS.list                   -- starts from 0
-    _LBLS.list[#_LBLS.list+1] = lbl
+    LBLS.list[lbl] = true
+    lbl.n = #LBLS.list                   -- starts from 0
+    LBLS.list[#LBLS.list+1] = lbl
 
-    for n in _AST.iter() do
+    for n in AST.iter() do
         if n.lbls_all then
             n.lbls_all[lbl] = true
         end
@@ -29,10 +29,10 @@ end
 
 F = {
     Node_pre = function (me)
-        me.lbls = { #_LBLS.list }
+        me.lbls = { #LBLS.list }
     end,
     Node = function (me)
-        me.lbls[2] = #_LBLS.list-1
+        me.lbls[2] = #LBLS.list-1
     end,
 
     Root_pre = function (me)
@@ -41,20 +41,20 @@ F = {
     Root = function (me)
         -- 0, 1,-1, tot,-tot
         -- <0 = off (for internal events)
-        _TP.types.tceu_nlbl.len  = _TP.n2bytes(1+2 + #_LBLS.list*2)
+        TP.types.tceu_nlbl.len  = TP.n2bytes(1+2 + #LBLS.list*2)
 
         -- enum of labels
-        for i, lbl in ipairs(_LBLS.list) do
-            _LBLS.code_enum = _LBLS.code_enum..'    '
+        for i, lbl in ipairs(LBLS.list) do
+            LBLS.code_enum = LBLS.code_enum..'    '
                                 ..lbl.id..' = '..lbl.n..',\n'
         end
 
         -- labels which are finalizers
         local t = {}
-        for _, lbl in ipairs(_LBLS.list) do
+        for _, lbl in ipairs(LBLS.list) do
             t[#t+1] = string.find(lbl.id,'__fin') and assert(lbl.__depth) or 0
         end
-        _LBLS.code_fins = table.concat(t,',')
+        LBLS.code_fins = table.concat(t,',')
     end,
 
     Block = function (me)
@@ -117,20 +117,20 @@ F = {
     end,
 
     Loop_pre = function (me)
-        if _AST.iter'Async'() then
+        if AST.iter'Async'() then
             me.lbl_asy = new{'Async_cnt'}
         end
     end,
 
     EmitExt = function (me)
         -- only async needs to break up (avoids stack growth)
-        if _AST.iter'Async'() then
+        if AST.iter'Async'() then
             me.lbl_cnt = new{'Async_cont'}
         end
     end,
     EmitT = function (me)
         -- only async needs to break up (avoids stack growth)
-        if _AST.iter'Async'() then
+        if AST.iter'Async'() then
             me.lbl_cnt = new{'Async_cont'}
         end
     end,
@@ -168,4 +168,4 @@ F = {
     SetBlock_pos = 'ParOr_pos',
 }
 
-_AST.visit(F)
+AST.visit(F)

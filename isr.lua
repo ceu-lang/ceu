@@ -13,7 +13,7 @@
 local accs = {}
 
 local function inIsr (me)
-    local fun = _AST.par(me, 'Dcl_fun')
+    local fun = AST.par(me, 'Dcl_fun')
     return fun and fun.var.pre=='isr'
 end
 
@@ -42,20 +42,20 @@ F = {
 
 G = {
     Var = function (me)
-        if inIsr(me) or _AST.par(me,'Dcl_var') then
+        if inIsr(me) or AST.par(me,'Dcl_var') then
             return  -- ignore isrs and var declarations
         end
         if accs[me.var] then
-            ASR( _AST.par(me,'Atomic'), me,
+            ASR( AST.par(me,'Atomic'), me,
                     'access to "'..me.var.id..'" must be atomic' )
         end
     end,
     Nat = function (me)
-        if inIsr(me) or _AST.par(me,'Native') then
+        if inIsr(me) or AST.par(me,'Native') then
             return  -- ignore isrs and native declarations
         end
         if accs[me.id] then
-            ASR( _AST.par(me,'Atomic'), me,
+            ASR( AST.par(me,'Atomic'), me,
                     'access to "'..me.id..'" must be atomic' )
         end
     end,
@@ -66,5 +66,5 @@ G = {
     end,
 }
 
-_AST.visit(F)
-_AST.visit(G)
+AST.visit(F)
+AST.visit(G)

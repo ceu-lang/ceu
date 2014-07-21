@@ -1,34 +1,34 @@
-_TOPS  = {}    -- holds all clss/exts/nats
+TOPS  = {}    -- holds all clss/exts/nats
 
-local node = _AST.node
+local node = AST.node
 
 F = {
     Root_pos = function (me)
-        _AST.root = node('Root', me.ln, unpack(_TOPS))
-        return _AST.root
+        AST.root = node('Root', me.ln, unpack(TOPS))
+        return AST.root
     end,
 
     Dcl_cls_pos = function (me)
         local ifc, id, blk = unpack(me)
         me.is_ifc = ifc
         me.id     = id
-        _TOPS[#_TOPS+1] = me
-        _TOPS[id] = me
+        TOPS[#TOPS+1] = me
+        TOPS[id] = me
         return node('Nothing', me.ln)
     end,
 
     Dcl_nat_pos = function (me)
-        _TOPS[#_TOPS+1] = me
+        TOPS[#TOPS+1] = me
         return node('Nothing', me.ln)
     end,
     Dcl_ext_pos = function (me)
-        _TOPS[#_TOPS+1] = me
+        TOPS[#TOPS+1] = me
         return node('Nothing', me.ln)
     end,
 }
 
 local function id2ifc (id)
-    for _, cls in ipairs(_TOPS) do
+    for _, cls in ipairs(TOPS) do
         local _,id2 = unpack(cls)
         if id2 == id then
             return cls
@@ -37,10 +37,10 @@ local function id2ifc (id)
     return nil
 end
 
-_AST.visit(F)
+AST.visit(F)
 
 -- substitute all Dcl_imp for the referred fields (simplifies later phases)
-for _, cls in ipairs(_TOPS) do
+for _, cls in ipairs(TOPS) do
     if cls.tag=='Dcl_cls' and cls[2]~='Main' then   -- "Main" has no Dcl_imp's
         local dcls1 = cls.blk_ifc[1][1]
         assert(dcls1.tag == 'BlockI')
@@ -56,7 +56,7 @@ for _, cls in ipairs(_TOPS) do
                     assert(dcls2.tag == 'BlockI')
                     for _, dcl2 in ipairs(dcls2) do
                         assert(dcl2.tag ~= 'Dcl_imp')   -- impossible because I'm going in order
-                        local new = _AST.copy(dcl2)
+                        local new = AST.copy(dcl2)
                         dcls1[#dcls1+1] = new -- fields from interface should go to the end
                         new.isImp = true      -- to avoid redeclaration warnings indeed
                     end

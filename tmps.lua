@@ -1,6 +1,6 @@
 local VARS = {}
 
-if not _ANA then
+if not ANA then
     return          -- isTmp=false for all vars
 end
 
@@ -25,12 +25,12 @@ F = {
         local var = me.var
 
         -- all threads vars are "tmp"
-        if _AST.iter'Thread'() then
+        if AST.iter'Thread'() then
             return
         end
 
         -- all function vars are "tmp"
-        if _AST.iter'Dcl_fun'() then
+        if AST.iter'Dcl_fun'() then
             return
         end
 
@@ -46,9 +46,9 @@ F = {
         --      i = i + 1;      // "i" cannot be tmp
         --  end;
         --]]
-        local constr = _AST.par(me, 'Dcl_constr')
+        local constr = AST.par(me, 'Dcl_constr')
         if constr and (var.blk.__depth < constr.__depth) then
-            local org = _AST.par(me, 'Dcl_var')
+            local org = AST.par(me, 'Dcl_var')
             if org then
                 local _, tp = unpack(org)
                 if tp.arr then
@@ -57,16 +57,16 @@ F = {
             end
         end
 
-        local glb = _ENV.clss.Global
+        local glb = ENV.clss.Global
         if var.inTop or
-            (var.blk==_ENV.clss.Main.blk_ifc and glb and glb.is_ifc and
+            (var.blk==ENV.clss.Main.blk_ifc and glb and glb.is_ifc and
              glb.blk_ifc.vars[var.id])
         then
             var.isTmp = false
             return                  -- vars in interfaces cannot be tmp
         end
 
-        local dcl = _AST.iter'Dcl_var'()
+        local dcl = AST.iter'Dcl_var'()
         if dcl and dcl[1]==var.id then
             return                  -- my declaration is not an access
         end
@@ -77,11 +77,11 @@ F = {
 
         local v = VARS[var]
 
-        local op = _AST.iter'Op1_&'()
+        local op = AST.iter'Op1_&'()
         local isRef = op and (op.base == me)
 
-        if _AST.iter'Finally'() or      -- finally executes through "call"
-           _AST.iter'AwaitInt'() or     -- await ptr:a (ptr is tested on awake)
+        if AST.iter'Finally'() or      -- finally executes through "call"
+           AST.iter'AwaitInt'() or     -- await ptr:a (ptr is tested on awake)
            isRef or                     -- reference may escape
            var.tp.arr                   -- array may escape: TODO conservative
                                         -- (arrays as parameters)
@@ -96,7 +96,7 @@ F = {
             return                  -- first access
         end
 
-        if not (v and _ANA.CMP(v,me.ana.pre)) then
+        if not (v and ANA.CMP(v,me.ana.pre)) then
             var.isTmp = false       -- found a Par or Await in the path
             return
         end
@@ -114,7 +114,7 @@ F = {
 
     Loop_pre = function (me)
         local awaits = false
-        _AST.visit(
+        AST.visit(
             {
                 AwaitT = function (me)
                     awaits = true
@@ -131,7 +131,7 @@ F = {
             },
             me)
 
-        if ((not awaits) and (not _AST.iter(_AST.pred_async)())) or
+        if ((not awaits) and (not AST.iter(AST.pred_async)())) or
             me.isAwaitUntil then
             return      -- OK: (tight loop outside Async) or (await ... until)
         end
@@ -172,4 +172,4 @@ F = {
     Async     = 'ParOr_pre',
 }
 
-_AST.visit(F)
+AST.visit(F)

@@ -1,4 +1,4 @@
-_ENV = {
+ENV = {
     clss  = {},     -- { [1]=cls, ... [cls]=0 }
     clss_ifc = {},
     clss_cls = {},
@@ -19,24 +19,24 @@ _ENV = {
         --[N]={_WCLOCK},    [id]={},
     },
 
-    -- TODO: move to _TP
+    -- TODO: move to TP
     -- "len" is used to sort fields on generated "structs"
-    -- TODO: try to remove _ENV.c, a lot is shared w/ Type (e.g. hold)
+    -- TODO: try to remove ENV.c, a lot is shared w/ Type (e.g. hold)
     c = {
         void = 0,
 
-        word     = _OPTS.tp_word,
-        pointer  = _OPTS.tp_word,
+        word     = OPTS.tp_word,
+        pointer  = OPTS.tp_word,
 
         bool     = 1,
         byte     = 1,
         char     = 1,
-        int      = _OPTS.tp_word,
-        uint     = _OPTS.tp_word,
+        int      = OPTS.tp_word,
+        uint     = OPTS.tp_word,
         u8=1, u16=2, u32=4, u64=8,
         s8=1, s16=2, s32=4, s64=8,
 
-        float    = _OPTS.tp_word,
+        float    = OPTS.tp_word,
         f32=4, f64=8,
 
         tceu_ncls = true,    -- env.lua
@@ -47,26 +47,26 @@ _ENV = {
     max_evt = 0,    -- max # of internal events (exts+1 start from it)
 }
 
-for k, v in pairs(_ENV.c) do
+for k, v in pairs(ENV.c) do
     if v == true then
-        _ENV.c[k] = { tag='type', id=k, len=nil }
+        ENV.c[k] = { tag='type', id=k, len=nil }
     else
-        _ENV.c[k] = { tag='type', id=k, len=v }
+        ENV.c[k] = { tag='type', id=k, len=v }
     end
 end
 
 function CLS ()
-    return _AST.iter'Dcl_cls'()
+    return AST.iter'Dcl_cls'()
 end
 
 function var2ifc (var)
     local tp
     if var.pre=='var' or var.pre=='pool' then
-        tp = _TP.toc(var.tp)
+        tp = TP.toc(var.tp)
     elseif var.pre == 'event' then
-        tp = _TP.toc(var.evt.ins)
+        tp = TP.toc(var.evt.ins)
     elseif var.pre == 'function' then
-        tp = _TP.toc(var.fun.ins)..'$'.._TP.toc(var.fun.out)
+        tp = TP.toc(var.fun.ins)..'$'..TP.toc(var.fun.out)
     else
         error 'not implemented'
     end
@@ -79,7 +79,7 @@ function var2ifc (var)
     }, '$')
 end
 
-function _ENV.ifc_vs_cls (ifc, cls)
+function ENV.ifc_vs_cls (ifc, cls)
     -- check if they have been checked
     ifc.matches = ifc.matches or {}
     cls.matches = cls.matches or {}
@@ -110,7 +110,7 @@ local _N = 0
 local _E = 1    -- 0=NONE
 
 function newvar (me, blk, pre, tp, id, isImp)
-    for stmt in _AST.iter() do
+    for stmt in AST.iter() do
         if stmt.tag=='Async' or stmt.tag=='Thread' then
             break   -- search until Async boundary
         elseif stmt.tag == 'Block' then
@@ -131,21 +131,21 @@ function newvar (me, blk, pre, tp, id, isImp)
         end
     end
 
-    local c = _ENV.c[tp.id]
+    local c = ENV.c[tp.id]
 
-    ASR(_TOPS[tp.id] or c, me, 'undeclared type `'..(tp.id or '?')..'´')
-    if _TOPS[tp.id] and _TOPS[tp.id].is_ifc and tp.ptr==0 and (not tp.ref) then
+    ASR(TOPS[tp.id] or c, me, 'undeclared type `'..(tp.id or '?')..'´')
+    if TOPS[tp.id] and TOPS[tp.id].is_ifc and tp.ptr==0 and (not tp.ref) then
         ASR(pre == 'pool', me,
             'cannot instantiate an interface')
     end
 
-    ASR(tp.ptr>0 or _TP.get(tp.id).len~=0 or (tp.id=='void' and pre=='event'),
+    ASR(tp.ptr>0 or TP.get(tp.id).len~=0 or (tp.id=='void' and pre=='event'),
         me, 'cannot instantiate type "'..tp.id..'"')
     --ASR((not arr) or arr>0, me, 'invalid array dimension')
 
-    local cls = (tp.ptr==0 and (not tp.ref) and _TOPS[tp.id])
+    local cls = (tp.ptr==0 and (not tp.ref) and TOPS[tp.id])
         if cls then
-            ASR(cls ~=_AST.iter'Dcl_cls'(), me, 'invalid declaration')
+            ASR(cls ~=AST.iter'Dcl_cls'(), me, 'invalid declaration')
         end
 
     -- Class definitions take priority over interface definitions:
@@ -199,8 +199,8 @@ function newfun (me, blk, pre, rec, ins, out, id, isImp)
     rec = not not rec
     local old = blk.vars[id]
     if old then
-        ASR(_TP.toc(ins)==_TP.toc(old.fun.ins) and
-            _TP.toc(out)==_TP.toc(old.fun.out) and
+        ASR(TP.toc(ins)==TP.toc(old.fun.ins) and
+            TP.toc(out)==TP.toc(old.fun.out) and
             (rec==old.fun.mod.rec or (not old.fun.mod.rec)),
             me, 'function declaration does not match the one at "'..
                 old.ln[1]..':'..old.ln[2]..'"')
@@ -212,8 +212,8 @@ function newfun (me, blk, pre, rec, ins, out, id, isImp)
     end
 
     local has, var = newvar(me, blk, pre,
-                        _TP.fromstr('___typeof__(CEU_'..CLS().id..'_'..id..')'),
-                        -- TODO: _TP.toc eats one '_'
+                        TP.fromstr('___typeof__(CEU_'..CLS().id..'_'..id..')'),
+                        -- TODO: TP.toc eats one '_'
                         id, isImp)
     if has then
         return true, var
@@ -230,8 +230,8 @@ function newfun (me, blk, pre, rec, ins, out, id, isImp)
     return false, var
 end
 
-function _ENV.getvar (id, blk)
-    local blk = blk or _AST.iter('Block')()
+function ENV.getvar (id, blk)
+    local blk = blk or AST.iter('Block')()
     while blk do
         if blk.tag=='Async' or blk.tag=='Thread' then
             local vars = unpack(blk)    -- VarList
@@ -263,77 +263,77 @@ end
 
 F = {
     Type = function (me)
-        _TP.new(me)
+        TP.new(me)
     end,
     TupleType_pos = 'Type',
 
     Root_pre = function (me)
         -- TODO: NONE=0
-        -- TODO: if _PROPS.* then ... end
+        -- TODO: if PROPS.* then ... end
 
         local evt = {id='_STK', pre='input'}
-        _ENV.exts[#_ENV.exts+1] = evt
-        _ENV.exts[evt.id] = evt
+        ENV.exts[#ENV.exts+1] = evt
+        ENV.exts[evt.id] = evt
 
         -- TODO: shared with _INIT?
         local evt = {id='_ORG', pre='input'}
-        _ENV.exts[#_ENV.exts+1] = evt
-        _ENV.exts[evt.id] = evt
+        ENV.exts[#ENV.exts+1] = evt
+        ENV.exts[evt.id] = evt
 
         local evt = {id='_ORG_PSED', pre='input'}
-        _ENV.exts[#_ENV.exts+1] = evt
-        _ENV.exts[evt.id] = evt
+        ENV.exts[#ENV.exts+1] = evt
+        ENV.exts[evt.id] = evt
 
         local evt = {id='_INIT', pre='input'}
-        _ENV.exts[#_ENV.exts+1] = evt
-        _ENV.exts[evt.id] = evt
+        ENV.exts[#ENV.exts+1] = evt
+        ENV.exts[evt.id] = evt
 
         local evt = {id='_CLEAR', pre='input'}
-        _ENV.exts[#_ENV.exts+1] = evt
-        _ENV.exts[evt.id] = evt
+        ENV.exts[#ENV.exts+1] = evt
+        ENV.exts[evt.id] = evt
 
         local evt = {id='_WCLOCK', pre='input'}
-        _ENV.exts[#_ENV.exts+1] = evt
-        _ENV.exts[evt.id] = evt
+        ENV.exts[#ENV.exts+1] = evt
+        ENV.exts[evt.id] = evt
 
         local evt = {id='_ASYNC', pre='input'}
-        _ENV.exts[#_ENV.exts+1] = evt
-        _ENV.exts[evt.id] = evt
+        ENV.exts[#ENV.exts+1] = evt
+        ENV.exts[evt.id] = evt
 
         local evt = {id='_THREAD', pre='input'}
-        _ENV.exts[#_ENV.exts+1] = evt
-        _ENV.exts[evt.id] = evt
+        ENV.exts[#ENV.exts+1] = evt
+        ENV.exts[evt.id] = evt
 
-        if _OPTS.os then
+        if OPTS.os then
             local evt = {id='OS_START',     pre='input', ins='void'}
-            _ENV.exts[#_ENV.exts+1] = evt
-            _ENV.exts[evt.id] = evt
+            ENV.exts[#ENV.exts+1] = evt
+            ENV.exts[evt.id] = evt
             local evt = {id='OS_STOP',      pre='input', ins='void'}
-            _ENV.exts[#_ENV.exts+1] = evt
-            _ENV.exts[evt.id] = evt
+            ENV.exts[#ENV.exts+1] = evt
+            ENV.exts[evt.id] = evt
             local evt = {id='OS_DT',        pre='input', ins='int'}
-            _ENV.exts[#_ENV.exts+1] = evt
-            _ENV.exts[evt.id] = evt
+            ENV.exts[#ENV.exts+1] = evt
+            ENV.exts[evt.id] = evt
             local evt = {id='OS_INTERRUPT', pre='input', ins='int'}
-            _ENV.exts[#_ENV.exts+1] = evt
-            _ENV.exts[evt.id] = evt
+            ENV.exts[#ENV.exts+1] = evt
+            ENV.exts[evt.id] = evt
         end
     end,
 
     Root = function (me)
-        _TP.types.tceu_ncls.len = _TP.n2bytes(#_ENV.clss_cls)
-        ASR(_ENV.max_evt+#_ENV.exts < 255, me, 'too many events')
+        TP.types.tceu_ncls.len = TP.n2bytes(#ENV.clss_cls)
+        ASR(ENV.max_evt+#ENV.exts < 255, me, 'too many events')
                                     -- 0 = NONE
 
         -- matches all ifc vs cls
-        for _, ifc in ipairs(_ENV.clss_ifc) do
-            for _, cls in ipairs(_ENV.clss_cls) do
-                _ENV.ifc_vs_cls(ifc, cls)
+        for _, ifc in ipairs(ENV.clss_ifc) do
+            for _, cls in ipairs(ENV.clss_cls) do
+                ENV.ifc_vs_cls(ifc, cls)
             end
         end
-        local glb = _ENV.clss.Global
+        local glb = ENV.clss.Global
         if glb then
-            ASR(glb.is_ifc and glb.matches[_ENV.clss.Main], me,
+            ASR(glb.is_ifc and glb.matches[ENV.clss.Main], me,
                 'interface "Global" must be implemented by class "Main"')
         end
     end,
@@ -359,7 +359,7 @@ F = {
         end
 
         -- include arguments into function block
-        local fun = _AST.iter()()
+        local fun = AST.iter()()
         local _, _, inp, out = unpack(fun)
         if fun.tag == 'Dcl_fun' then
             for i, v in ipairs(inp) do
@@ -378,78 +378,78 @@ F = {
     Dcl_cls_pre = function (me)
         local ifc, id, blk = unpack(me)
         me.c = {}      -- holds all "native _f()"
-        me.tp = _TP.fromstr(id)
-        ASR(not _ENV.clss[id], me,
+        me.tp = TP.fromstr(id)
+        ASR(not ENV.clss[id], me,
                 'interface/class "'..id..'" is already declared')
 
         -- restart variables/events counting
         _N = 0
         _E = 1  -- 0=NONE
 
-        _ENV.clss[id] = me
-        _ENV.clss[#_ENV.clss+1] = me
+        ENV.clss[id] = me
+        ENV.clss[#ENV.clss+1] = me
 
         if me.is_ifc then
-            me.n = #_ENV.clss_ifc   -- TODO: n=>?
-            _ENV.clss_ifc[id] = me
-            _ENV.clss_ifc[#_ENV.clss_ifc+1] = me
+            me.n = #ENV.clss_ifc   -- TODO: n=>?
+            ENV.clss_ifc[id] = me
+            ENV.clss_ifc[#ENV.clss_ifc+1] = me
         else
-            me.n = #_ENV.clss_cls   -- TODO: remove Main?   -- TODO: n=>?
-            _ENV.clss_cls[id] = me
-            _ENV.clss_cls[#_ENV.clss_cls+1] = me
+            me.n = #ENV.clss_cls   -- TODO: remove Main?   -- TODO: n=>?
+            ENV.clss_cls[id] = me
+            ENV.clss_cls[#ENV.clss_cls+1] = me
         end
     end,
     Dcl_cls = function (me)
-        _ENV.max_evt = MAX(_ENV.max_evt, _E)
+        ENV.max_evt = MAX(ENV.max_evt, _E)
 
         -- all identifiers in all interfaces get a unique (sequential) N
         if me.is_ifc then
             for _, var in pairs(me.blk_ifc.vars) do
                 var.ifc_id = var.ifc_id or var2ifc(var)
-                if not _ENV.ifcs[var.ifc_id] then
+                if not ENV.ifcs[var.ifc_id] then
                     if var.pre=='var' or var.pre=='pool' then
-                        _ENV.ifcs.flds[var.ifc_id] = #_ENV.ifcs.flds
-                        _ENV.ifcs.flds[#_ENV.ifcs.flds+1] = var.ifc_id
+                        ENV.ifcs.flds[var.ifc_id] = #ENV.ifcs.flds
+                        ENV.ifcs.flds[#ENV.ifcs.flds+1] = var.ifc_id
                         if var.pre == 'pool' then
-                            _ENV.ifcs.trls[var.ifc_id] = #_ENV.ifcs.trls
-                            _ENV.ifcs.trls[#_ENV.ifcs.trls+1] = var.ifc_id
+                            ENV.ifcs.trls[var.ifc_id] = #ENV.ifcs.trls
+                            ENV.ifcs.trls[#ENV.ifcs.trls+1] = var.ifc_id
                         end
                     elseif var.pre == 'event' then
-                        _ENV.ifcs.evts[var.ifc_id] = #_ENV.ifcs.evts
-                        _ENV.ifcs.evts[#_ENV.ifcs.evts+1] = var.ifc_id
+                        ENV.ifcs.evts[var.ifc_id] = #ENV.ifcs.evts
+                        ENV.ifcs.evts[#ENV.ifcs.evts+1] = var.ifc_id
                     elseif var.pre == 'function' then
-                        _ENV.ifcs.funs[var.ifc_id] = #_ENV.ifcs.funs
-                        _ENV.ifcs.funs[#_ENV.ifcs.funs+1] = var.ifc_id
+                        ENV.ifcs.funs[var.ifc_id] = #ENV.ifcs.funs
+                        ENV.ifcs.funs[#ENV.ifcs.funs+1] = var.ifc_id
                     end
                 end
             end
         end
     end,
 
-    Dcl_det = function (me)                 -- TODO: verify in _ENV.c
+    Dcl_det = function (me)                 -- TODO: verify in ENV.c
         local id1 = det2id(me[1])
-        local t1 = _ENV.dets[id1] or {}
-        _ENV.dets[id1] = t1
+        local t1 = ENV.dets[id1] or {}
+        ENV.dets[id1] = t1
         for i=2, #me do
             local id2 = det2id(me[i])
-            local t2 = _ENV.dets[id2] or {}
-            _ENV.dets[id2] = t2
+            local t2 = ENV.dets[id2] or {}
+            ENV.dets[id2] = t2
             t1[id2] = true
             t2[id1] = true
         end
     end,
 
     Global = function (me)
-        ASR(_ENV.clss.Global and _ENV.clss.Global.is_ifc, me,
+        ASR(ENV.clss.Global and ENV.clss.Global.is_ifc, me,
             'interface "Global" is not defined')
-        me.tp   =_TP.fromstr'Global*'
+        me.tp   =TP.fromstr'Global*'
         me.lval = false
-        me.blk  = _AST.root
+        me.blk  = AST.root
     end,
 
     Outer = function (me)
         local cls = CLS()
-            --ASR(cls ~= _MAIN, me, 'invalid access')
+            --ASR(cls ~= MAIN, me, 'invalid access')
         ASR(cls, me, 'undeclared class')
         me.tp   = cls.tp
         me.lval = false
@@ -458,7 +458,7 @@ F = {
 
     This = function (me)
         -- if inside constructor, change scope to the class being created
-        local constr = _AST.iter'Dcl_constr'()
+        local constr = AST.iter'Dcl_constr'()
         local cls = constr and constr.cls or CLS()
         ASR(cls, me, 'undeclared class')
         me.tp   = cls.tp
@@ -468,15 +468,15 @@ F = {
 
     Free = function (me)
         local exp = unpack(me)
-        ASR(exp.tp.ptr==1 and _ENV.clss[exp.tp.id], me, 'invalid `free´')
+        ASR(exp.tp.ptr==1 and ENV.clss[exp.tp.id], me, 'invalid `free´')
     end,
 
     Dcl_ext = function (me)
         local dir, rec, ins, out, id = unpack(me)
-        local ext = _ENV.exts[id]
+        local ext = ENV.exts[id]
         if ext then
             local eq = (ext.pre==dir and ext.mod.rec==rec and
-                        ext.out==(out or 'int') and _TP.contains(ext.ins,ins))
+                        ext.out==(out or 'int') and TP.contains(ext.ins,ins))
             WRN(eq, me, 'event "'..id..'" is already declared')
             return
         end
@@ -495,8 +495,8 @@ F = {
             mod = { rec=rec },
             op  = (out and 'call' or 'emit')
         }
-        _ENV.exts[#_ENV.exts+1] = me.evt
-        _ENV.exts[id] = me.evt
+        ENV.exts[#ENV.exts+1] = me.evt
+        ENV.exts[id] = me.evt
     end,
 
     Dcl_var_pre = function (me)
@@ -508,7 +508,7 @@ F = {
             ASR(evt, me,
                 'event "'..(ref.var and ref.var.id or '?')..'" is not declared')
             ASR(evt.ins.tup, me, 'invalid arity' )
-            me[2][1] = '_'.._TP.toc(evt.ins)
+            me[2][1] = '_'..TP.toc(evt.ins)
         end
     end,
     Dcl_var = function (me)
@@ -517,7 +517,7 @@ F = {
             id = id..me.n   -- avoids clash with other '_'
         end
         local has
-        has, me.var = newvar(me, _AST.iter'Block'(), pre, tp, id, me.isImp)
+        has, me.var = newvar(me, AST.iter'Block'(), pre, tp, id, me.isImp)
         assert(not has or (me.var.read_only==nil))
         me.var.read_only = me.read_only
         if constr then
@@ -536,18 +536,18 @@ F = {
         if id == '_' then
             id = id..me.n   -- avoids clash with other '_'
         end
-        ASR(tp.id=='void' or _TP.isNumeric(tp) or
+        ASR(tp.id=='void' or TP.isNumeric(tp) or
             tp.ptr>0      or tp.tup,
                 me, 'invalid event type')
         ASR(not tp.ref, me, 'invalid event type')
         if tp.tup then
             for _, t in ipairs(tp.tup) do
-                ASR((_TP.isNumeric(t) or t.ptr>0) and (not t.ref),
+                ASR((TP.isNumeric(t) or t.ptr>0) and (not t.ref),
                     me, 'invalid event type')
             end
         end
         local _
-        _, me.var = newint(me, _AST.iter'Block'(), pre, tp, id, me.isImp)
+        _, me.var = newint(me, AST.iter'Block'(), pre, tp, id, me.isImp)
     end,
 
     Dcl_fun = function (me)
@@ -556,7 +556,7 @@ F = {
 
         -- implementation cannot be inside interface, so,
         -- if it appears on blk_body, make it be in blk_ifc
-        local up = _AST.iter'Block'()
+        local up = AST.iter'Block'()
         if blk and cls.blk_body==up and cls.blk_ifc.vars[id] then
             up = cls.blk_ifc
         end
@@ -585,16 +585,16 @@ F = {
 
     Ext = function (me)
         local id = unpack(me)
-        me.evt = ASR(_ENV.exts[id], me,
+        me.evt = ASR(ENV.exts[id], me,
                     'event "'..id..'" is not declared')
     end,
 
     Var = function (me)
         local id = unpack(me)
 
-        local blk = me.__adj_blk and assert(_AST.par(me.__adj_blk,'Block'))
-                        or _AST.iter('Block')()
-        local var = _ENV.getvar(id, blk)
+        local blk = me.__adj_blk and assert(AST.par(me.__adj_blk,'Block'))
+                        or AST.iter('Block')()
+        local var = ENV.getvar(id, blk)
         ASR(var, me, 'variable/event "'..id..'" is not declared')
         me.var  = var
         me.tp   = var.tp
@@ -605,17 +605,17 @@ F = {
     Dcl_nat = function (me)
         local mod, tag, id, len = unpack(me)
         if tag=='type' or mod=='@plain' then
-            local tp = _TP.fromstr(id)
+            local tp = TP.fromstr(id)
             tp.len   = len
             tp.plain = (mod=='@plain')
-            _TP.types[id] = tp
+            TP.types[id] = tp
         end
         -- TODO: remove
-        _ENV.c[id] = { tag=tag, id=id, len=len, mod=mod }
+        ENV.c[id] = { tag=tag, id=id, len=len, mod=mod }
     end,
 
     Dcl_pure = function (me)
-        _ENV.pures[me[1]] = true
+        ENV.pures[me[1]] = true
     end,
 
     AwaitS = function (me)
@@ -638,11 +638,11 @@ F = {
         --  to remove the "isAlive" test
         if me.isWatching then
             local tp = me.isWatching.tp
-            if not (tp and tp.ptr==1 and _ENV.clss[tp.id]) then
+            if not (tp and tp.ptr==1 and ENV.clss[tp.id]) then
                 local if_ = me[2][1][2]
                 assert(if_.tag == 'If')
                 me[2][1][2] = if_[2]    -- changes "if" for the "await" (true branch)
-                --if_[1] = _AST.node('NUMBER', me.ln, 1)
+                --if_[1] = AST.node('NUMBER', me.ln, 1)
             end
         end
     end,
@@ -651,9 +651,9 @@ F = {
         local int = unpack(me)
         if me.isWatching then
             -- ORG: "await org" => "await org._ok"
-            if int.tp.ptr==1 and _ENV.clss[int.tp.id] then
-                me[1] = _AST.node('Op2_.', me.ln, '.',
-                            _AST.node('Op1_*', me.ln, '*', int),
+            if int.tp.ptr==1 and ENV.clss[int.tp.id] then
+                me[1] = AST.node('Op2_.', me.ln, '.',
+                            AST.node('Op1_*', me.ln, '*', int),
                             '_ok')
 
             -- EVT:
@@ -667,7 +667,7 @@ F = {
         ASR(int.var and int.var.pre=='event', me,
             'event "'..(int.var and int.var.id or '?')..'" is not declared')
         if int.var.evt.ins.tup then
-            me.tp = _TP.fromstr('_'.._TP.toc(int.var.evt.ins)..'*') -- convert to pointer
+            me.tp = TP.fromstr('_'..TP.toc(int.var.evt.ins)..'*') -- convert to pointer
         else
             me.tp = int.var.evt.ins
         end
@@ -676,13 +676,13 @@ F = {
     AwaitExt = function (me)
         local ext = unpack(me)
         if ext.evt.ins.tup then
-            me.tp = _TP.fromstr('_'.._TP.toc(ext.evt.ins)..'*') -- convert to pointer
+            me.tp = TP.fromstr('_'..TP.toc(ext.evt.ins)..'*') -- convert to pointer
         else
             me.tp = ext.evt.ins
         end
     end,
     AwaitT = function (me)
-        me.tp = _TP.fromstr's32'    -- <a = await ...>
+        me.tp = TP.fromstr's32'    -- <a = await ...>
     end,
 
     __arity = function (me, ins, ps)
@@ -706,8 +706,8 @@ F = {
         ASR(n_evt==n_exp, me, 'invalid arity')
 
         if n_evt == 1 then
-            ASR(_TP.contains(ins,ps.tp), me,
-                'non-matching types on `emit´ ('.._TP.tostr(ins)..' vs '.._TP.tostr(ps.tp)..')')
+            ASR(TP.contains(ins,ps.tp), me,
+                'non-matching types on `emit´ ('..TP.tostr(ins)..' vs '..TP.tostr(ps.tp)..')')
         end
     end,
 
@@ -716,7 +716,7 @@ F = {
         local var = int.var
         ASR(var and var.pre=='event', me,
             'event "'..(var and var.id or '?')..'" is not declared')
-        --ASR(var.evt.ins.id=='void' or (ps and _TP.contains(var.evt.ins,ps.tp)),
+        --ASR(var.evt.ins.id=='void' or (ps and TP.contains(var.evt.ins,ps.tp)),
             --me, 'invalid `emit´')
         F.__arity(me, var.evt.ins, me.ps)
 
@@ -725,10 +725,10 @@ F = {
         if ps then
             local tp = var.evt.ins
             if var.evt.ins.tup then
-                tp = _TP.fromstr('_'.._TP.toc(tp)..'*') -- convert to pointer
+                tp = TP.fromstr('_'..TP.toc(tp)..'*') -- convert to pointer
             end
-            ASR(_TP.contains(tp,ps.tp), me,
-                'non-matching types on `emit´ ('.._TP.tostr(tp)..' vs '.._TP.tostr(ps.tp)..')')
+            ASR(TP.contains(tp,ps.tp), me,
+                'non-matching types on `emit´ ('..TP.tostr(tp)..' vs '..TP.tostr(ps.tp)..')')
         else
             ASR(var.evt.ins.id=='void' or
                 var.evt.ins.tup and #var.evt.ins.tup==0,
@@ -746,7 +746,7 @@ F = {
         if op == 'call' then
             me.tp = ext.evt.out     -- return value
         else
-            me.tp = _TP.fromstr'int'           -- [0,1] enqueued? (or 'int' return val)
+            me.tp = TP.fromstr'int'           -- [0,1] enqueued? (or 'int' return val)
         end
 
 --[[
@@ -754,10 +754,10 @@ F = {
         if ps then
             local tp = ext.evt.ins
             if ext.evt.ins.tup then
-                --tp = _TP.fromstr('_'.._TP.toc(tp)..'*') -- convert to pointer
+                --tp = TP.fromstr('_'..TP.toc(tp)..'*') -- convert to pointer
             end
-            ASR(_TP.contains(tp,ps.tp), me,
-                'non-matching types on `'..op..'´ ('.._TP.tostr(tp)..' vs '.._TP.tostr(ps.tp)..')')
+            ASR(TP.contains(tp,ps.tp), me,
+                'non-matching types on `'..op..'´ ('..TP.tostr(tp)..' vs '..TP.tostr(ps.tp)..')')
         else
             ASR(ext.evt.ins.id=='void' or
                 ext.evt.ins.tup and #ext.evt.ins.tup==0,
@@ -770,10 +770,10 @@ F = {
 
     SetExp = function (me)
         local _, fr, to = unpack(me)
-        to = to or _AST.iter'SetBlock'()[1]
+        to = to or AST.iter'SetBlock'()[1]
         ASR(to and to.lval, me, 'invalid attribution')
-        ASR(_TP.contains(to.tp,fr.tp), me,
-            'invalid attribution ('.._TP.tostr(to.tp)..' vs '.._TP.tostr(fr.tp)..')')
+        ASR(TP.contains(to.tp,fr.tp), me,
+            'invalid attribution ('..TP.tostr(to.tp)..' vs '..TP.tostr(fr.tp)..')')
         ASR(me.read_only or (not to.lval.read_only), me,
             'read-only variable')
         ASR(not CLS().is_ifc, me, 'invalid attribution')
@@ -788,7 +788,7 @@ F = {
 --[[
         if fr.tp == '@' then
             fr.tp = to.tp
-            ASR(_TP.isNumeric(fr.tp) or fr.tp=='bool' or fr.tp=='char*', me,
+            ASR(TP.isNumeric(fr.tp) or fr.tp=='bool' or fr.tp=='char*', me,
                 'invalid attribution')
         end
 ]]
@@ -804,7 +804,7 @@ F = {
     Free = function (me)
         local exp = unpack(me)
         local id = ASR(exp.tp.ptr>0, me, 'invalid `free´')
-        me.cls = ASR( _ENV.clss[id], me,
+        me.cls = ASR( ENV.clss[id], me,
                         'class "'..id..'" is not declared')
     end,
 
@@ -812,30 +812,30 @@ F = {
     New_pre = function (me)
         local id, pool, constr = unpack(me)
 
-        me.cls = ASR(_ENV.clss[id], me,
+        me.cls = ASR(ENV.clss[id], me,
                         'class "'..id..'" is not declared')
         ASR(not me.cls.is_ifc, me, 'cannot instantiate an interface')
-        me.tp = _TP.fromstr(id..'*')  -- class id
+        me.tp = TP.fromstr(id..'*')  -- class id
     end,
     Spawn_pre = function (me)
         F.New_pre(me)
-        me.tp = _TP.fromstr'bool'       -- 0/1
+        me.tp = TP.fromstr'bool'       -- 0/1
     end,
     IterIni = 'RawExp',
     IterNxt = 'RawExp',
 
     Dcl_constr_pre = function (me)
-        local spw = _AST.iter'Spawn'()
-        local new = _AST.iter'New'()
-        local dcl = _AST.iter'Dcl_var'()
+        local spw = AST.iter'Spawn'()
+        local new = AST.iter'New'()
+        local dcl = AST.iter'Dcl_var'()
 
         -- type check for this.* inside constructor
         if spw then
-            me.cls = _ENV.clss[ spw[1] ]   -- checked on Spawn
+            me.cls = ENV.clss[ spw[1] ]   -- checked on Spawn
         elseif new then
-            me.cls = _ENV.clss[ new[1] ]   -- checked on SetExp
+            me.cls = ENV.clss[ new[1] ]   -- checked on SetExp
         elseif dcl then
-            me.cls = _ENV.clss[ dcl[2].id ]   -- checked on Dcl_var
+            me.cls = ENV.clss[ dcl[2].id ]   -- checked on Dcl_var
         end
         --assert(me.cls)
     end,
@@ -846,22 +846,22 @@ F = {
     end,
 
     Thread = function (me)
-        me.tp = _TP.fromstr'int'       -- 0/1
+        me.tp = TP.fromstr'int'       -- 0/1
     end,
 
     --------------------------------------------------------------------------
 
     Op2_call = function (me)
         local _, f, p, _ = unpack(me)
-        me.tp  = f.var and f.var.fun and f.var.fun.out or _TP.fromstr'@'
+        me.tp  = f.var and f.var.fun and f.var.fun.out or TP.fromstr'@'
         local id
         if f.tag == 'Nat' then
             id   = f[1]
-            me.c = _ENV.c[id]
+            me.c = ENV.c[id]
         elseif f.tag == 'Op2_.' then
             id   = f.id
             if f.org then   -- t._f()
-                me.c = assert(_ENV.clss[f.org.tp.id]).c[f.id]
+                me.c = assert(ENV.clss[f.org.tp.id]).c[f.id]
             else            -- _x._f()
                 me.c = f.c
             end
@@ -870,33 +870,33 @@ F = {
             me.c = { tag='func', id=id, mod=nil }
         end
 
-        ASR((not _OPTS.c_calls) or _OPTS.c_calls[id], me,
+        ASR((not OPTS.c_calls) or OPTS.c_calls[id], me,
                 'native calls are disabled')
 
         if not me.c then
             me.c = { tag='func', id=id, mod=nil }
-            _ENV.c[id] = me.c
+            ENV.c[id] = me.c
         end
         --ASR(me.c and me.c.tag=='func', me,
             --'native function "'..id..'" is not declared')
 
-        _ENV.calls[id] = true
+        ENV.calls[id] = true
     end,
 
     Op2_idx = function (me)
         local _, arr, idx = unpack(me)
         ASR(arr.tp.arr or arr.tp.ptr>0 or arr.tp.ext, me,
             'cannot index a non array')
-        ASR(_TP.isNumeric(idx.tp), me, 'invalid array index')
+        ASR(TP.isNumeric(idx.tp), me, 'invalid array index')
 
-        me.tp = _TP.copy(arr.tp)
+        me.tp = TP.copy(arr.tp)
             if arr.tp.arr then
                 me.tp.arr = false
             elseif arr.tp.ptr>0 then
                 me.tp.ptr = me.tp.ptr - 1
             end
 
-        if me.tp.ptr==0 and _ENV.clss[me.tp.id] then
+        if me.tp.ptr==0 and ENV.clss[me.tp.id] then
             me.lval = false
         else
             me.lval = arr
@@ -905,8 +905,8 @@ F = {
 
     Op2_int_int = function (me)
         local op, e1, e2 = unpack(me)
-        me.tp  = _TP.fromstr'int'
-        ASR(_TP.isNumeric(e1.tp) and _TP.isNumeric(e2.tp), me,
+        me.tp  = TP.fromstr'int'
+        ASR(TP.isNumeric(e1.tp) and TP.isNumeric(e2.tp), me,
                 'invalid operands to binary "'..op..'"')
     end,
     ['Op2_-']  = 'Op2_int_int',
@@ -922,8 +922,8 @@ F = {
 
     Op1_int = function (me)
         local op, e1 = unpack(me)
-        me.tp  = _TP.fromstr'int'
-        ASR(_TP.isNumeric(e1.tp), me,
+        me.tp  = TP.fromstr'int'
+        ASR(TP.isNumeric(e1.tp), me,
                 'invalid operand to unary "'..op..'"')
     end,
     ['Op1_~']  = 'Op1_int',
@@ -932,8 +932,8 @@ F = {
 
     Op2_same = function (me)
         local op, e1, e2 = unpack(me)
-        me.tp  = _TP.fromstr'int'
-        ASR(_TP.max(e1.tp,e2.tp), me,
+        me.tp  = TP.fromstr'int'
+        ASR(TP.max(e1.tp,e2.tp), me,
             'invalid operands to binary "'..op..'"')
     end,
     ['Op2_=='] = 'Op2_same',
@@ -944,7 +944,7 @@ F = {
     ['Op2_<']  = 'Op2_same',
 
     Op2_any = function (me)
-        me.tp  = _TP.fromstr'int'
+        me.tp  = TP.fromstr'int'
     end,
     ['Op2_or']  = 'Op2_any',
     ['Op2_and'] = 'Op2_any',
@@ -953,25 +953,25 @@ F = {
     ['Op1_*'] = function (me)
         local op, e1 = unpack(me)
         me.lval = e1.lval and e1
-        me.tp   = _TP.copy(e1.tp)
+        me.tp   = TP.copy(e1.tp)
         if e1.tp.ptr > 0 then
             me.tp.ptr = me.tp.ptr - 1
         end
-        ASR(e1.tp.ptr>0 or (me.tp.ext and (not me.tp.plain) and (not _TP.get(me.tp.id).plain)),
+        ASR(e1.tp.ptr>0 or (me.tp.ext and (not me.tp.plain) and (not TP.get(me.tp.id).plain)),
             me, 'invalid operand to unary "*"')
     end,
 
     ['Op1_&'] = function (me)
         local op, e1 = unpack(me)
-        ASR(_ENV.clss[e1.tp.id] or e1.lval, me, 'invalid operand to unary "&"')
+        ASR(ENV.clss[e1.tp.id] or e1.lval, me, 'invalid operand to unary "&"')
         me.lval = false
-        me.tp   = _TP.copy(e1.tp)
+        me.tp   = TP.copy(e1.tp)
         me.tp.ptr = me.tp.ptr + 1
     end,
 
     ['Op2_.'] = function (me)
         local op, e1, id = unpack(me)
-        local cls = e1.tp.ptr==0 and _ENV.clss[e1.tp.id]
+        local cls = e1.tp.ptr==0 and ENV.clss[e1.tp.id]
         me.id = id
         if cls then
             me.org = e1
@@ -991,7 +991,7 @@ F = {
             end
             var = var or ASR(cls.blk_ifc.vars[id], me,
                         'variable/event "'..id..'" is not declared')
-            me[3] = _AST.node('Var', me.ln, '$'..id)
+            me[3] = AST.node('Var', me.ln, '$'..id)
             me[3].var = var
             me[3].tp  = var.tp
 
@@ -1013,8 +1013,8 @@ F = {
                 me.tp = ASR(evt.ins.tup[i], me, 'invalid arity')
             else
                 -- rect.x = 1 (_SDL_Rect)
-                me.tp = _TP.fromstr'@'
-                local tp = _TP.get(e1.tp.id)
+                me.tp = TP.fromstr'@'
+                local tp = TP.get(e1.tp.id)
                 if tp.plain and e1.tp.ptr==0 then
                     me.tp.plain = true
                     me.tp.ptr   = 0
@@ -1032,33 +1032,33 @@ F = {
 
     Nat = function (me)
         local id = unpack(me)
-        local c = _ENV.c[id] or {}
+        local c = ENV.c[id] or {}
         ASR(c.tag~='type', me,
             'native variable/function "'..id..'" is not declared')
         me.id   = id
-        me.tp   = _TP.fromstr'_'
+        me.tp   = TP.fromstr'_'
         me.lval = me
         me.c    = c
     end,
     RawExp = function (me)
-        me.tp   = _TP.fromstr'_'
+        me.tp   = TP.fromstr'_'
         me.lval = me
     end,
 
     WCLOCKK = function (me)
-        me.tp   = _TP.fromstr'int'
+        me.tp   = TP.fromstr'int'
         me.lval = false
     end,
     WCLOCKE = 'WCLOCKK',
 
     SIZEOF = function (me)
-        me.tp   = _TP.fromstr'int'
+        me.tp   = TP.fromstr'int'
         me.lval = false
         me.const = true
     end,
 
     STRING = function (me)
-        me.tp   = _TP.fromstr'char*'
+        me.tp   = TP.fromstr'char*'
         me.lval = false
         me.const = true
     end,
@@ -1066,18 +1066,18 @@ F = {
         local v = unpack(me)
         ASR(string.sub(v,1,1)=="'" or tonumber(v), me, 'malformed number')
         if string.find(v,'%.') or string.find(v,'e') or string.find(v,'E') then
-            me.tp = _TP.fromstr'float'
+            me.tp = TP.fromstr'float'
         else
-            me.tp = _TP.fromstr'int'
+            me.tp = TP.fromstr'int'
         end
         me.lval = false
         me.const = true
     end,
     NULL = function (me)
-        me.tp   = _TP.fromstr'null*'
+        me.tp   = TP.fromstr'null*'
         me.lval = false
         me.const = true
     end,
 }
 
-_AST.visit(F)
+AST.visit(F)

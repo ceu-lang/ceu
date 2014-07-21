@@ -1,7 +1,7 @@
 function MAX_all (me, t)
     t = t or me
     for _, sub in ipairs(t) do
-        if _AST.isNode(sub) then
+        if AST.isNode(sub) then
             me.trails_n = MAX(me.trails_n, sub.trails_n)
         end
     end
@@ -27,7 +27,7 @@ F = {
 
         -- pointer to next org or parent/trail
         -- [ IN__ORG_UP/DOWN ]
-        if me ~= _MAIN then
+        if me ~= MAIN then
             me.trails_n = me.trails_n + 1
         end
 
@@ -90,7 +90,7 @@ F = {
     end,
 }
 
-_AST.visit(F)
+AST.visit(F)
 
 -------------------------------------------------------------------------------
 
@@ -108,7 +108,7 @@ G = {
         if me.trails then
             return
         end
-        me.trails  = _AST.iter(pred)().trails
+        me.trails  = AST.iter(pred)().trails
     end,
 
     Block_pre = function (me)
@@ -116,7 +116,7 @@ G = {
 
         -- [ 1, 1, S, 1 ] (clr, org0, stmts, fin)
 
-        me.trails = me.trails or _AST.iter(pred)().trails
+        me.trails = me.trails or AST.iter(pred)().trails
 
         local t0 = me.trails[1]
 
@@ -165,7 +165,7 @@ G = {
     end,
 
     _Par_pre = function (me)
-        me.trails = _AST.iter(pred)().trails
+        me.trails = AST.iter(pred)().trails
 
         for i, sub in ipairs(me) do
             sub.trails = {}
@@ -184,4 +184,4 @@ G = {
     ParEver_pre = '_Par_pre',
 }
 
-_AST.visit(G)
+AST.visit(G)
