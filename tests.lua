@@ -576,6 +576,40 @@ escape 10;
 ]===]
 
 Test { [[
+class Unit with
+    event int move;
+do
+end
+var Unit* u;
+do
+    var Unit unit;
+    u = &unit;
+    await 1min;
+end
+emit u:move => 0;
+escape 2;
+]],
+    fin = 'line 8 : attribution requires `finalize´',
+}
+
+Test { [[
+class Unit with
+    event int move;
+do
+end
+var Unit* u;
+do
+    pool Unit[] units;
+    u = new Unit in units;  -- deveria falhar aqui!
+    await 1min;
+end
+emit u:move => 0;           -- mas esta falhando aqui?
+escape 2;
+]],
+    run = 1,
+}
+
+Test { [[
 class T with do end;
 pool T[] ts;
 loop (T*)t in ts do
