@@ -155,9 +155,13 @@ end
     local O = ' -Wall -Wextra -Wformat=2 -Wstrict-overflow=3 -Werror '
             ..' -Wno-missing-field-initializers'
             ..' -Wno-unused'
+            ..' -Wno-unused-parameter'
             ..' -ansi'
             ..' -D CEU_DEBUG'
-            --..' -g'
+
+    if VALGRIND then
+        O = O .. ' -g'
+    end
 
     if T.usleep then
         -- usleep is deprecated and gcc always complains
@@ -268,15 +272,16 @@ STATS = {
 
 --[[
 STATS = {
-    count   = 1879,
+    count   = 1894,
     mem     = 0,
-    trails  = 3610,
-    bytes   = 17178134,
+    trails  = 3642,
+    bytes   = 17291870,
 }
 
-real	8m10.250s
-user	7m28.992s
-sys	1m0.088s
+
+real	8m30.753s
+user	8m9.539s
+sys	1m28.686s
 ]]
 
 os.execute('rm -f /tmp/_ceu_*')

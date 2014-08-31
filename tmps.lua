@@ -9,7 +9,7 @@ F = {
         local var = me.var
 
         if var.cls then
-            VARS = {}
+            VARS = {}       -- org dcls eliminate all current possible tmps
             return
         end
 
@@ -89,6 +89,19 @@ F = {
             var.isTmp = false
             VARS[var] = nil
             return
+        end
+
+        -- Not tmp if defined in the same block of an org:
+        --      var T t;
+        --      var int ret = 1;
+        -- becomes
+        --      var int ret;
+        --      start t
+        --      ret = 1;
+        for _,oth in pairs(var.blk.vars) do
+            if oth.cls then
+                v = false
+            end
         end
 
         if v == true then

@@ -573,7 +573,6 @@ escape 10;
 
 -------------------------------------------------------------------------------
 -- ??: working now
-]===]
 
 Test { [[
 class Unit with
@@ -619,6 +618,7 @@ escape 1;
     run = 1,
 }
 --do return end
+]===]
 
 Test { [[
 var int v = 1;
@@ -22890,6 +22890,28 @@ var T a;
 var T* p = a;
 ]],
     env = 'line 3 : invalid attribution',
+}
+
+Test { [[
+class T with do end;
+do
+    var int ret = 1;
+    var T t;
+    escape ret;
+end
+]],
+    run = 1,
+}
+
+Test { [[
+class T with do end;
+do
+    var T t;
+    var int ret = 1;
+    escape ret;
+end
+]],
+    run = 1,
 }
 
 Test { [[
