@@ -573,368 +573,6 @@ escape 10;
 
 -------------------------------------------------------------------------------
 -- ??: working now
-]===]
-
-Test { [[
-class Unit with
-    event int move;
-do
-end
-var Unit* u;
-do
-    var Unit unit;
-    u = &unit;
-    await 1min;
-end
-emit u:move => 0;
-escape 2;
-]],
-    fin = 'line 8 : attribution requires `finalize´',
-}
-
-Test { [[
-class Unit with
-    event int move;
-do
-end
-var Unit* u;
-do
-    pool Unit[] units;
-    u = spawn Unit in units;  // deveria falhar aqui!
-    await 1min;
-end
-emit u:move => 0;
-escape 2;
-]],
-    fin = 'line 8 : unsafe pointer attribution',
-}
-
-Test { [[
-class T with do end;
-pool T[] ts;
-loop (T*)t in ts do
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-var int v = 1;
-async (&v) do
-    finalize with
-        v = 2;
-    end
-end;
-escape v;
-]],
-    props = 'line 3 : not permitted inside `async´',
-}
-Test { [[
-var int v = 1;
-async thread (&v) do
-    finalize with
-        v = 2;
-    end
-end;
-escape v;
-]],
-    props = 'line 3 : not permitted inside `thread´',
-}
---do return end
-
-Test { [[
-do T;
-escape 0;
-]],
-    env = 'line 1 : undeclared type `T´',
-}
-
-Test { [[
-class T with
-do
-end
-do T;
-escape 0;
-]],
-    env = 'line 4 : variable/event "ok" is not declared',
-}
-
-Test { [[
-class T with
-    event void ok;
-do
-    emit ok;
-end
-par/or do
-    loop do
-        do T;
-    end
-with
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-class T with
-    var int v;
-do end;
-var T _ with
-    this.v = 1;
-end;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-input void OS_START;
-class T with
-    event void ok;
-do
-    emit ok;
-end
-par do
-    do T;
-    escape 1;
-with
-    await OS_START;
-    escape 2;
-end
-]],
-    run = 2,
-}
-
-Test { [[
-input void OS_START;
-class T with
-    event void ok;
-do
-    await OS_START;
-    emit ok;
-end
-do T;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-input void OS_START;
-class T with
-    event int ok;
-do
-    await OS_START;
-    emit ok => 1;
-end
-do T;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-input void OS_START;
-class T with
-    var int v;
-    event int ok;
-do
-    await OS_START;
-    emit ok => v;
-end
-var int v = do T with
-    this.v = 10;
-end;
-escape v;
-]],
-    run = 10,
-}
-
-Test { [[
-input void OS_START;
-class T with
-    var int v;
-    event int ok;
-do
-    await OS_START;
-    emit ok => v;
-end
-var int v;
-v = do T with
-    this.v = 10;
-end;
-escape v;
-]],
-    run = 10,
-}
-
-Test { [[
-input void OS_START;
-class T with
-    var int v;
-    event void ok;
-do
-    await OS_START;
-    emit ok;
-end
-var int v = do T with
-    this.v = 10;
-end;
-escape v;
-]],
-    env = 'line 9 : invalid attribution (int vs void)',
-}
-
-Test { [[
-input void OS_START;
-class T with
-    var int v;
-    event (int,int) ok;
-do
-    await OS_START;
-    emit ok => (v,v*2);
-end
-var int v1, v2;
-(v1,v2) = do T with
-    this.v = 10;
-end;
-_printf("%d %d\n", v1, v2);
-escape v1+v2;
-]],
-    run = 30,
-}
-
-Test { [[
-class T with
-    event (int,int) ok_game;
-do
-    await 1s;
-    emit this.ok_game => (1,2);
-end
-var T t;
-var T* i = &t;
-var int a,b;
-(a,b) = await i:ok_game;
-emit i:ok_game => (a,b);
-escape a+b;
-]],
-    run = { ['~>1s']=3 },
-}
-
-
-Test { [[
-input void A;
-input void A;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-input void A;
-input int A;
-escape 1;
-]],
-    env = 'line 2 : event "A" is already declared',
-}
-
-Test { [[
-loop/10 do
-end
-escape 1;
-]],
-    adj = 'line 1 : invalid loop',
-}
-
-Test { [[
-loop/10 i in 10 do
-end
-escape 1;
-]],
-    run = 1,
-}
-Test { [[
-var int a = 0;
-loop/a i do
-end
-escape 1;
-]],
-    tight = '`loop´ bound must be constant',
-}
-Test { [[
-loop/10 i do
-end
-escape 1;
-]],
-    asr = true,
-}
-Test { [[
-native do
-    ##define A 10
-end
-#define A 10
-
-var int ret = 0;
-var int lim = 10 + 10 + _A + A;
-loop/(10+10+_A+A) i in lim do
-    ret = ret + 1;
-end
-escape ret;
-]],
-    run = 40;
-}
-
-Test { [[
-escape outer;
-]],
-    env = 'line 1 : invalid attribution (int vs Main)',
-}
-
-Test { [[
-_f(outer);
-]],
-    props = 'line 1 : `outer´ can only be unsed inside constructors',
-}
-
-Test { [[
-class Rect with
-do
-    await FOREVER;
-end
-
-var int n = 0;
-
-par/or do
-    await 1s;
-with
-    pool Rect[1000] rs;
-    every 40ms do
-        loop i in 40 do
-            n = n + 1;
-            spawn Rect in rs;
-        end
-    end
-end
-escape n;
-]],
-    run = { ['~>1s']=960 },
-}
---do return end
-
--- TODO: error message
-Test { [[
-class T with do end;
-pool T[] ts;
-loop (T*)t in ts do
-    await 1s;
-end
-]],
-    props = 'line 4 : `every´ cannot contain `await´',
-}
-
---do return end
 
 -------------------------------------------------------------------------------
 -- OK: well tested
@@ -1755,6 +1393,29 @@ end
     },
     run = 2,
 }
+Test { [[
+input void OS_START;
+do
+    var int v = 0;
+end
+event void e;
+par do
+    await OS_START;
+    emit e;
+    escape 1;       // 9
+with
+    await e;
+    escape 2;       // 12
+end
+]],
+    safety = 2,
+    _ana = {
+        acc   = 1,
+        excpt = 1,
+        --unreachs = 1,
+    },
+    run = 2,
+}
 
 Test { [[
 input void OS_START;
@@ -1778,6 +1439,34 @@ end
 ]],
     wrn = true,
     run = 1,
+}
+
+Test { [[
+input void OS_START;
+event void a, b, c, d;
+native _assert();
+var int v=0;
+par do
+    loop do
+        await OS_START;
+        v = 0;
+        emit a;
+        v = 1;
+        escape v;
+    end
+with
+    loop do
+        await a;
+        v = 2;
+    end
+end
+]],
+    safety = 2,
+    wrn = true,
+    run = 1,
+    _ana = {
+        acc = 3,
+    },
 }
 
 Test { [[
@@ -2200,6 +1889,34 @@ escape a;
 }
 
 Test { [[
+input void F;
+var int a = 0;
+loop do
+    par/or do       // 4
+        await 2s;
+    with
+        a = a + 1;          // 7
+        await F;
+        break;
+    with
+        await 1s;   // 11
+        loop do
+            a = a * 2;      // 13
+            await 1s;   // 14
+        end
+    end
+end
+escape a;
+]],
+    _ana = {
+        abrt = 2,
+        acc  = 3,
+    },
+    run = { ['~>5s; ~>F']=14 },
+    safety = 2,
+}
+
+Test { [[
 var int a;
 loop do
     par/or do
@@ -2572,6 +2289,41 @@ escape a;
         ['1~>B; ~>20ms; 1~>F'] = 1,
         ['~>20ms; 5~>B; 2~>F'] = 10000,
     }
+}
+
+Test { [[
+input int A,B,F;
+var int a = do
+        par/or do
+            par do
+                var int v;
+                par/or do
+                    var int v = await 10ms;
+                    escape v; //  8
+                with
+                    v = await A;
+                end;
+                escape v;     // 12
+            with
+                var int v = await B;
+                escape v;     // 15
+            end;
+        with
+            await F;
+        end;
+        escape 0;
+    end;
+escape a;
+]],
+    wrn = true,
+    run = {
+        ['1~>B; ~>20ms; 1~>F'] = 1,
+        ['~>20ms; 5~>B; 2~>F'] = 10000,
+    },
+    safety = 2,
+    _ana = {
+        acc = 2,
+    },
 }
 
 Test { [[
@@ -2990,6 +2742,54 @@ escape 1;
     run = 2,
 }
 
+-- LOOP / BOUNDED
+
+Test { [[
+loop/10 do
+end
+escape 1;
+]],
+    adj = 'line 1 : invalid loop',
+}
+
+Test { [[
+loop/10 i in 10 do
+end
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+var int a = 0;
+loop/a i do
+end
+escape 1;
+]],
+    tight = '`loop´ bound must be constant',
+}
+Test { [[
+loop/10 i do
+end
+escape 1;
+]],
+    asr = true,
+}
+Test { [[
+native do
+    ##define A 10
+end
+#define A 10
+
+var int ret = 0;
+var int lim = 10 + 10 + _A + A;
+loop/(10+10+_A+A) i in lim do
+    ret = ret + 1;
+end
+escape ret;
+]],
+    run = 40;
+}
+
 -- EVERY
 
 Test { [[
@@ -3067,6 +2867,20 @@ every inc do
 end
 ]],
     _ana = { isForever=true },
+}
+
+]===]
+Test { [[
+input (int,int) A;
+par do
+    var int a, b;
+    (a,b) = await A;
+with
+    await A;
+    escape 1;
+end
+]],
+    run = 1;
 }
 
 Test { [[
@@ -16540,6 +16354,22 @@ escape *b;
 
 -- INPUT / OUTPUT / CALL
 
+Test { [[
+input void A;
+input void A;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input void A;
+input int A;
+escape 1;
+]],
+    env = 'line 2 : event "A" is already declared',
+}
+
 --if not OS then
 
 Test { [[
@@ -25025,6 +24855,18 @@ escape t[0].b + t[1].b;
 }
 
 Test { [[
+escape outer;
+]],
+    env = 'line 1 : invalid attribution (int vs Main)',
+}
+
+Test { [[
+_f(outer);
+]],
+    props = 'line 1 : `outer´ can only be unsed inside constructors',
+}
+
+Test { [[
 interface I with
 end
 
@@ -25230,6 +25072,189 @@ escape 0;
     todo = 'removed free',
     env = 'line 3 : invalid `free´',
 }
+
+-- DO T
+
+Test { [[
+do T;
+escape 0;
+]],
+    env = 'line 1 : undeclared type `T´',
+}
+
+Test { [[
+class T with
+do
+end
+do T;
+escape 0;
+]],
+    env = 'line 4 : variable/event "ok" is not declared',
+}
+
+Test { [[
+class T with
+    event void ok;
+do
+    emit ok;
+end
+par/or do
+    loop do
+        do T;
+    end
+with
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+    var int v;
+do end;
+var T _ with
+    this.v = 1;
+end;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+class T with
+    event void ok;
+do
+    emit ok;
+end
+par do
+    do T;
+    escape 1;
+with
+    await OS_START;
+    escape 2;
+end
+]],
+    run = 2,
+}
+
+Test { [[
+input void OS_START;
+class T with
+    event void ok;
+do
+    await OS_START;
+    emit ok;
+end
+do T;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+class T with
+    event int ok;
+do
+    await OS_START;
+    emit ok => 1;
+end
+do T;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+class T with
+    var int v;
+    event int ok;
+do
+    await OS_START;
+    emit ok => v;
+end
+var int v = do T with
+    this.v = 10;
+end;
+escape v;
+]],
+    run = 10,
+}
+
+Test { [[
+input void OS_START;
+class T with
+    var int v;
+    event int ok;
+do
+    await OS_START;
+    emit ok => v;
+end
+var int v;
+v = do T with
+    this.v = 10;
+end;
+escape v;
+]],
+    run = 10,
+}
+
+Test { [[
+input void OS_START;
+class T with
+    var int v;
+    event void ok;
+do
+    await OS_START;
+    emit ok;
+end
+var int v = do T with
+    this.v = 10;
+end;
+escape v;
+]],
+    env = 'line 9 : invalid attribution (int vs void)',
+}
+
+Test { [[
+input void OS_START;
+class T with
+    var int v;
+    event (int,int) ok;
+do
+    await OS_START;
+    emit ok => (v,v*2);
+end
+var int v1, v2;
+(v1,v2) = do T with
+    this.v = 10;
+end;
+_printf("%d %d\n", v1, v2);
+escape v1+v2;
+]],
+    run = 30,
+}
+
+Test { [[
+class T with
+    event (int,int) ok_game;
+do
+    await 1s;
+    emit this.ok_game => (1,2);
+end
+var T t;
+var T* i = &t;
+var int a,b;
+(a,b) = await i:ok_game;
+emit i:ok_game => (a,b);
+escape a+b;
+]],
+    run = { ['~>1s']=3 },
+}
+
 
 -- SPAWN
 
@@ -27063,6 +27088,41 @@ escape 1;
     run = 1,
 }
 
+Test { [[
+class Rect with
+do
+    await FOREVER;
+end
+
+var int n = 0;
+
+par/or do
+    await 1s;
+with
+    pool Rect[1000] rs;
+    every 40ms do
+        loop i in 40 do
+            n = n + 1;
+            spawn Rect in rs;
+        end
+    end
+end
+escape n;
+]],
+    run = { ['~>1s']=960 },
+}
+
+-- TODO: error message
+Test { [[
+class T with do end;
+pool T[] ts;
+loop (T*)t in ts do
+    await 1s;
+end
+]],
+    props = 'line 4 : `every´ cannot contain `await´',
+}
+
 -- TODO: mem out e mem ever
 --[=[
 Test { [[
@@ -27538,6 +27598,50 @@ emit game.go => (1, 1, null);
 escape 1;
 ]],
     run = 1;
+}
+
+Test { [[
+class Unit with
+    event int move;
+do
+end
+var Unit* u;
+do
+    var Unit unit;
+    u = &unit;
+    await 1min;
+end
+emit u:move => 0;
+escape 2;
+]],
+    fin = 'line 8 : attribution requires `finalize´',
+}
+
+Test { [[
+class Unit with
+    event int move;
+do
+end
+var Unit* u;
+do
+    pool Unit[] units;
+    u = spawn Unit in units;  // deveria falhar aqui!
+    await 1min;
+end
+emit u:move => 0;
+escape 2;
+]],
+    fin = 'line 8 : unsafe pointer attribution',
+}
+
+Test { [[
+class T with do end;
+pool T[] ts;
+loop (T*)t in ts do
+end
+escape 1;
+]],
+    run = 1,
 }
 
 -- PAUSE/IF w/ ORGS
@@ -34457,6 +34561,28 @@ escape x[0];
     gcc = 'error: lvalue required as left operand of assignment',
 }
 
+Test { [[
+var int v = 1;
+async (&v) do
+    finalize with
+        v = 2;
+    end
+end;
+escape v;
+]],
+    props = 'line 3 : not permitted inside `async´',
+}
+Test { [[
+var int v = 1;
+async thread (&v) do
+    finalize with
+        v = 2;
+    end
+end;
+escape v;
+]],
+    props = 'line 3 : not permitted inside `thread´',
+}
 -- END: THREADS / EMITS
 
 -- REFS / &

@@ -14,7 +14,9 @@ OPTS_NPARAMS = {
     cpp_exe   = 1,
     cpp_args  = 1,
 
-    tp_word    = 1,
+    safety    = 1,
+
+    tp_word   = 1,
 
     os        = 0,
 }
@@ -33,6 +35,8 @@ OPTS = {
     cpp       = true,
     cpp_exe   = 'cpp',
     cpp_args  = false,
+
+    safety    = 0,
 
     tp_word   = 4,
 
@@ -91,7 +95,9 @@ if not OPTS.input then
         --cpp-exe              # preprocessor executable (cpp)
         --cpp-args             # preprocess the input with `cpp´ passing arguments in between `"´ (no)
 
-        --tp-word              # sizeof a word in bytes    (4)
+        --safety <LEVEL>       # safety checks (*0=none*, 1=event, 2=par)
+
+        --tp-word <SIZE>       # sizeof a word in bytes (4)
 
         --version              # version of Ceu
 

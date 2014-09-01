@@ -242,6 +242,9 @@ F = {
             any = false,
             err = ERR(me, 'variable/event `'..me.var.id..'´'),
         }
+        if string.sub(me.var.id,1,4) == '_tup' then
+            me.acc.md = 'no' -- TODO: ignore tuple assignments for now "(a,b)=await A"
+        end
     end,
 
     Nat = function (me)
@@ -310,18 +313,18 @@ AST.visit(F)
 
 local ND = {
     acc = { par={},awk={},esc={},
-        cl  = { cl=true, tr=true,  wr=true,  rd=true,  aw=true  },
-        tr  = { cl=true, tr=true,  wr=false, rd=false, aw=true  },
-        wr  = { cl=true, tr=false, wr=true,  rd=true,  aw=false },
-        rd  = { cl=true, tr=false, wr=true,  rd=false, aw=false },
-        aw  = { cl=true, tr=true,  wr=false, rd=false, aw=false },
+        cl  = { cl=2, tr=2,     wr=2,     rd=2,     aw=2  },
+        tr  = { cl=2, tr=2,     wr=false, rd=false, aw=1  },
+        wr  = { cl=2, tr=false, wr=2,     rd=2,     aw=false },
+        rd  = { cl=2, tr=false, wr=2,     rd=false, aw=false },
+        aw  = { cl=2, tr=1,     wr=false, rd=false, aw=false },
         no  = {},   -- never ND ('ref')
     },
 
     flw = { cl={},tr={},wr={},rd={},aw={},no={},
-        par = { par=false, awk=false, esc=true },
-        awk = { par=false, awk=false, esc=true },
-        esc = { par=true,  awk=true,  esc=true },
+        par = { par=false, awk=false, esc=1 },
+        awk = { par=false, awk=false, esc=1 },
+        esc = { par=1,     awk=1,     esc=1 },
     },
 }
 
@@ -381,7 +384,7 @@ function par_rem (path, NO_par)
     return path
 end
 
-function par_isConc (path1, path2, T)
+function par_level1 (path1, path2)
     for id1 in pairs(path1) do
         for id2 in pairs(path2) do
             if (id1 == false) then
@@ -409,85 +412,87 @@ function CHK_ACC (accs1, accs2, NO_par, NO_emts)
         for _, acc2 in ipairs(accs2) do
             local path2 = int2exts(acc2.path, NO_emts)
                   path2 = par_rem(path2, NO_par)
-            if par_isConc(path1,path2) then
 
--- FLOW
-                if ND.flw[acc1.md][acc2.md] then
-                    if AST.isParent(acc1.id, acc2.id)
-                    or AST.isParent(acc2.id, acc1.id)
-                    then
-                        if OPTS.warn_nondeterminism then
-                            DBG('WRN : abortion : '..
-                                    acc1.err..' vs '..acc2.err)
-                        end
-                        ANA.ana.abrt = ANA.ana.abrt + 1
-                        if acc1.md == 'par' then
-                            acc1.id.parChk = true
-                        end
-                        if acc2.md == 'par' then
-                            acc2.id.parChk = true
-                        end
+            local isLvl1 = par_level1(path1,path2)
+
+-- FLOW (only in safety level-1)
+            if isLvl1 and ND.flw[acc1.md][acc2.md] then
+                if AST.isParent(acc1.id, acc2.id)
+                or AST.isParent(acc2.id, acc1.id)
+                then
+                    if OPTS.safety > 0 then
+                        DBG('WRN : abortion : '..
+                                acc1.err..' vs '..acc2.err)
+                    end
+                    ANA.ana.abrt = ANA.ana.abrt + 1
+                    if acc1.md == 'par' then
+                        acc1.id.parChk = true
+                    end
+                    if acc2.md == 'par' then
+                        acc2.id.parChk = true
                     end
                 end
+            end
 
--- ACC
-                if ND.acc[acc1.md][acc2.md] then
-                    -- this.x vs this.x (both accs bounded to cls)
-                    local cls_ = (acc1.cls == cls) or
-                                 (acc2.cls == cls)
+-- ACC (in both safety levels, ignore aw/tr for level-2)
+--DBG(acc1.md,acc2.md, OPTS.safety, ND.acc[acc1.md],ND.acc[acc2.md])
+            if par_level1(path1,path2) and ND.acc[acc1.md][acc2.md] or
+               OPTS.safety==2 and ND.acc[acc1.md][acc2.md]==2 then
+                -- this.x vs this.x (both accs bounded to cls)
+                local cls_ = (acc1.cls == cls) or
+                             (acc2.cls == cls)
 
-                    -- a.x vs this.x
-                    local _nil = {}
-                    local o1 = (acc1.org or acc2.org)
-                    o1 = o1 and o1.acc or _nil
-                    local o2 = (acc2.org or acc1.org)
-                    o2 = o2 and o2.acc or _nil
+                -- a.x vs this.x
+                local _nil = {}
+                local o1 = (acc1.org or acc2.org)
+                o1 = o1 and o1.acc or _nil
+                local o2 = (acc2.org or acc1.org)
+                o2 = o2 and o2.acc or _nil
 
-                    -- orgs are compatible?
-                    local org_ = (o1 == o2)
-                              or o1.any
-                              or o2.any
+                -- orgs are compatible?
+                local org_ = (o1 == o2)
+                          or o1.any
+                          or o2.any
 
-                    -- orgs are compatible?
-                    local org_ = o1.id == o2.id
-                              or o1.any
-                              or o2.any
+                -- orgs are compatible?
+                local org_ = o1.id == o2.id
+                          or o1.any
+                          or o2.any
 
-                    -- ids are compatible?
-                    local id_ = acc1.id == acc2.id
-                             or acc1.md=='cl' and acc2.md=='cl'
-                             or acc1.any and TP.contains(acc1.tp,acc2.tp)
-                             or acc2.any and TP.contains(acc2.tp,acc1.tp)
+                -- ids are compatible?
+                local id_ = acc1.id == acc2.id
+                         or acc1.md=='cl' and acc2.md=='cl'
+                         or acc1.any and TP.contains(acc1.tp,acc2.tp)
+                         or acc2.any and TP.contains(acc2.tp,acc1.tp)
 
-                    -- C's are det?
-                    local c1 = ENV.c[acc1.id]
-                    c1 = c1 and (c1.mod=='@pure' or c1.mod=='const')
-                    local c2 = ENV.c[acc2.id]
-                    c2 = c2 and (c2.mod=='@pure' or c2.mod=='const')
-                    local c_ = c1 or c2
-                            or (ENV.dets[acc1.id] and ENV.dets[acc1.id][acc2.id])
+                -- C's are det?
+                local c1 = ENV.c[acc1.id]
+                c1 = c1 and (c1.mod=='@pure' or c1.mod=='const')
+                local c2 = ENV.c[acc2.id]
+                c2 = c2 and (c2.mod=='@pure' or c2.mod=='const')
+                local c_ = c1 or c2
+                        or (ENV.dets[acc1.id] and ENV.dets[acc1.id][acc2.id])
 
-        --DBG(id_, c_,c1,c2, acc1.any,acc2.any)
+    --DBG(id_, c_,c1,c2, acc1.any,acc2.any)
 --[[
 DBG'==============='
 DBG(acc1.cls.id, acc1, acc1.id, acc1.md, TP.toc(acc1.tp), acc1.any, acc1.err)
 for k in pairs(path1) do
-    DBG('path1', acc1.path, type(k)=='table' and k[1].id or k)
+DBG('path1', acc1.path, type(k)=='table' and k[1].id or k)
 end
 DBG(acc2.cls.id, acc2, acc2.id, acc2.md, TP.toc(acc2.tp), acc2.any, acc2.err)
 for k in pairs(path2) do
-    DBG('path2', acc2.path, type(k)=='table' and k[1].id or k)
+DBG('path2', acc2.path, type(k)=='table' and k[1].id or k)
 end
 DBG'==============='
 ]]
-                    if cls_ and org_ and id_ and (not c_)
-                    then
-                        if OPTS.warn_nondeterminism then
-                            DBG('WRN : nondeterminism : '..acc1.err
-                                    ..' vs '..acc2.err)
-                        end
-                        ANA.ana.acc = ANA.ana.acc + 1
+                if cls_ and org_ and id_ and (not c_)
+                then
+                    if OPTS.safety > 0 then
+                        DBG('WRN : nondeterminism : '..acc1.err
+                                ..' vs '..acc2.err)
                     end
+                    ANA.ana.acc = ANA.ana.acc + 1
                 end
             end
         end

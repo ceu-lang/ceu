@@ -33,10 +33,10 @@ Test = function (t)
     print('\n=============\n---\n'..source..'\n---\n')
 
     OPTS = {
-        tp_word    = 4,
-        tp_off     = 2,
-        tp_lbl     = 2,
-        warn_nondeterminism = true,
+        tp_word = 4,
+        tp_off  = 2,
+        tp_lbl  = 2,
+        safety  = t.safety or 1,
 
         cpp     = true,
         cpp_exe = 'cpp',
