@@ -414,8 +414,8 @@ function CHK_ACC (accs1, accs2, NO_par, NO_emts)
 
 -- FLOW
                 if ND.flw[acc1.md][acc2.md] then
-                    if AST.isChild(acc1.id, acc2.id)
-                    or AST.isChild(acc2.id, acc1.id)
+                    if AST.isParent(acc1.id, acc2.id)
+                    or AST.isParent(acc2.id, acc1.id)
                     then
                         if OPTS.warn_nondeterminism then
                             DBG('WRN : abortion : '..

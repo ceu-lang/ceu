@@ -16,9 +16,9 @@ function AST.isNode (node)
     return (getmetatable(node) == MT) and node.tag
 end
 
-function AST.isChild (n1, n2)
+function AST.isParent (n1, n2)
     return n1 == n2
-        or n2.__par and AST.isChild(n1, n2.__par)
+        or n2.__par and AST.isParent(n1, n2.__par)
 end
 
 local _N = 0

@@ -140,9 +140,25 @@ F = {
             return
         end
 
-        -- new / awaits are unsafe
+        -- new to outer scope than pool
+        --      var Unit* u;
+        --      do
+        --          pool Unit[] units;
+        --          u = new Unit in units;  -- deveria falhar aqui!
+        --      end
+        if fr.tag == 'New' then
+            local _, pool, _, _ = unpack(fr)
+            if not AST.isParent(pool.var.blk,to.lst.var.blk) then
+                ASR(op == ':=', me, 'unsafe pointer attribution')
+            end
+            if op == '=' then
+                TRACK[to.lst.var.ast_original_var or to.lst.var] = false
+            end
+        end
+
+        -- awaits are unsafe
         -- int* v = await e;
-        if string.sub(fr.tag,1,5)=='Await' or fr.tag=='New' then
+        if string.sub(fr.tag,1,5) == 'Await' then
             if op == '=' then
                 --local var = to.lst.var.ast_original_var or to.lst.var
                 TRACK[to.lst.var.ast_original_var or to.lst.var] = false

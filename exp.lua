@@ -6,7 +6,7 @@ F = {
             fr[1].blk = to.lst.var.blk   -- to = me.__par[3]
 
             -- refuses (x.ptr = new T;)
-            ASR( AST.isChild(CLS(),to.lst.var.blk), me,
+            ASR( AST.isParent(CLS(),to.lst.var.blk), me,
                     'invalid attribution (no scope)' )
         end
 

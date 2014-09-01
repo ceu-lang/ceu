@@ -573,6 +573,7 @@ escape 10;
 
 -------------------------------------------------------------------------------
 -- ??: working now
+]===]
 
 Test { [[
 class Unit with
@@ -599,13 +600,13 @@ end
 var Unit* u;
 do
     pool Unit[] units;
-    u = new Unit in units;  -- deveria falhar aqui!
+    u = new Unit in units;  // deveria falhar aqui!
     await 1min;
 end
-emit u:move => 0;           -- mas esta falhando aqui?
+emit u:move => 0;
 escape 2;
 ]],
-    run = 1,
+    fin = 'line 8 : unsafe pointer attribution',
 }
 
 Test { [[
@@ -617,8 +618,6 @@ escape 1;
 ]],
     run = 1,
 }
---do return end
-]===]
 
 Test { [[
 var int v = 1;
