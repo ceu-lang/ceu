@@ -21,7 +21,7 @@ F = {
         to = to or AST.iter'SetBlock'()[1]
 
         if fr.tag == 'Ref' then
-            fr = fr[1]  -- Spawn, New, Thread, EmitExt
+            fr = fr[1]  -- Spawn, Thread, EmitExt
         end
 
         local cls = CLS()
@@ -77,14 +77,13 @@ F = {
             --  this.x = y;     -- blk of this is the same as block of t
             -- end;
             -- spawn T with
-            --  this.x = y;     -- blk of this is the same spawn/new pool
+            --  this.x = y;     -- blk of this is the same spawn pool
             -- end
             local dcl = AST.iter'Dcl_var'()
             if dcl then
                 to_blk = dcl.var.blk
             else
-                assert(constr.__par.tag=='New' or
-                       constr.__par.tag=='Spawn')
+                assert(constr.__par.tag=='Spawn')
                 local _,pool,_ = unpack(constr.__par)
                 -- spawn x in a.b.c
                 -- take "b"
@@ -144,9 +143,9 @@ F = {
         --      var Unit* u;
         --      do
         --          pool Unit[] units;
-        --          u = new Unit in units;  -- deveria falhar aqui!
+        --          u = spawn Unit in units;  -- deveria falhar aqui!
         --      end
-        if fr.tag == 'New' then
+        if fr.tag == 'Spawn' then
             local _, pool, _, _ = unpack(fr)
             if not AST.isParent(pool.var.blk,to.lst.var.blk) then
                 ASR(op == ':=', me, 'unsafe pointer attribution')
@@ -194,7 +193,7 @@ F = {
         -- The pointer cannot be accessed from outside because org is anon.
         -- Inside, access must use watching anyways.
         --]]
-        local spawn_new = AST.par(me,'Spawn') or AST.par(me,'New')
+        local spawn_new = AST.par(me,'Spawn')
 
         -- OK: "fr" `&´ reference has bigger scope than "to"
         -- int a; int* pa; pa=&a;

@@ -120,10 +120,9 @@ F = {
         VARS = {}   -- NO: run in different ceu_call
     end,
 
-    New = function (me)
+    Spawn = function (me)
         VARS = {}   -- NO: start organism
     end,
-    Spawn = 'New',
 
     Loop_pre = function (me)
         local awaits = false
@@ -139,7 +138,6 @@ F = {
                 EmitInt  = 'AwaitT',
                 Async    = 'AwaitT',
                 Thread   = 'AwaitT',
-                New      = 'AwaitT',
                 Spawn    = 'AwaitT',
             },
             me)

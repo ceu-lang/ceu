@@ -52,7 +52,7 @@
         * 4.4.3 [Await assignment](#await-assignment)
         * 4.4.4 [Emit assignment](#emit-assignment)
         * 4.4.5 [Thread assignment](#thread-assignment)
-        * 4.4.6 [New and Spawn assignment](#new-and-spawn-assignment)
+        * 4.4.6 [Spawn assignment](#spawn-assignment)
     * 4.5 [Calls](#calls)
     * 4.6 [Event handling](#event-handling)
         * 4.6.1 [Await statements](#await-statements)
@@ -537,21 +537,21 @@ variable and class names):
 
         in          input       input/output    int     interface
 
-        isr         loop        native      new         not
+        isr         loop        native      not         nothing
 
-        nothing     null        or          outer       output
+        null        or          outer       output      output/input
 
-        output/input    par     par/and     par/or      pause/if
+        par         par/and     par/or      pause/if    pool
 
-        pool        return      s16         s32         s64
+        return      s16         s32         s64         s8
 
-        s8          sizeof      spawn       sync        then
+        sizeof      spawn       sync        then        this
 
-        this        thread      true        u16         u32
+        thread      true        u16         u32         u64
 
-        u64         u8          uint        until       var
+        u8          uint        until       var         void
 
-        void        watching    with        word
+        watching    with        word
 
         @const      @hold       @nohold     @plain      @pure
 
@@ -1199,7 +1199,7 @@ Céu supports many kinds of assignments:
 <pre><code>Set ::= Exp `=´ SetExp
 SetExp ::= Exp | &lt;do-end&gt; | &lt;if-then-else&gt; | &lt;loop&gt;
                | &lt;every&gt;  | &lt;par&gt; | &lt;await&gt; | &lt;emit (output)&gt;
-               | &lt;thread&gt; | &lt;new&gt; | &lt;spawn&gt; )
+               | &lt;thread&gt; | &lt;spawn&gt; )
 </code></pre>
 
 <!-- TODO: Lua -->
@@ -1282,7 +1282,7 @@ See [Emit statements](#emit-statements).
 See [Threads](#threads).
 
 #### 4.4.6
-### New and Spawn assignment
+### Spawn assignment
 
 See [Dynamic execution](#dynamic-execution).
 
@@ -1747,16 +1747,14 @@ TODO
 Dynamic execution
 -----------------
 
-The `spawn` and `new` statements create instances of organisms dynamically:
+The `spawn` statement creates instances of organisms dynamically:
 
-<pre><code>Dyn ::= (<b>new</b>|<b>spawn</b>) ID_cls [<b>in</b> Exp]
+<pre><code>Dyn ::= <b>spawn</b> ID_cls [<b>in</b> Exp]
             [ <b>with</b> Constructor <b>end</b> ]
 </code></pre>
 
-The `spawn` returns if the allocation succeeded, i.e., `true` in case of 
-success, or `false` otherwise.
-The `new` returns a pointer to the allocated organism, or `null` in the case of 
-failure.
+The `spawn` returns a pointer to the allocated organism, or `null` in the case 
+of failure.
 
 The optional `in` clause allows the statement to specify in which 
 [pool](#pools) the organisms will live.
@@ -2527,7 +2525,7 @@ Stmt ::= &lt;empty-string&gt;
         | <b>emit</b> ID_ext [ `=>´ (Exp | `(´ ExpList `)´)
 
     /* Dynamic execution */
-        | (<b>new</b>|<b>spawn</b>) * ID_cls * [<b>in</b> Exp]
+        | <b>spawn</b> * ID_cls * [<b>in</b> Exp]
               [ <b>with</b> Constructor <b>end</b> ]
 
     /* Flow control */
@@ -2587,7 +2585,7 @@ Stmt ::= &lt;empty-string&gt;
 VarList ::= `(´ ID_var  { `,´ ID_var } `)´
 SetExp  ::= Exp | &lt;do-end&gt; | &lt;if-then-else&gt; | &lt;loop&gt;
                 | &lt;every&gt;  | &lt;par&gt; | &lt;await&gt; | &lt;emit (output)&gt;
-                | &lt;thread&gt; | &lt;new&gt; | &lt;spawn&gt; )
+                | &lt;thread&gt; | &lt;spawn&gt; )
 
 WCLOCKK ::= [NUM <b>h</b>] [NUM <b>min</b>] [NUM <b>s</b>] [NUM <b>ms</b>] [NUM <b>us</b>]
 WCLOCKE ::= `(´ Exp `)´ (<b>h</b>|<b>min</b>|<b>s</b>|<b>ms</b>|<b>us</b>)

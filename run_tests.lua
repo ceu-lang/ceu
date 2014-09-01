@@ -177,6 +177,10 @@ end
         CEU = './ceu _ceu_tmp.ceu --run-tests 2>&1'
         GCC = 'gcc '..O..' -o ceu.exe main.c 2>&1'
     end
+    --local line = debug.getinfo(2).currentline
+    --os.execute('echo "/*'..line..'*/" > /tmp/line')
+    --os.execute('cat /tmp/line _ceu_app.c > /tmp/file')
+    --os.execute('mv /tmp/file _ceu_app.c')
 --DBG(GCC)
 
     if PROPS.has_threads then
@@ -272,16 +276,16 @@ STATS = {
 
 --[[
 STATS = {
-    count   = 1894,
+    count   = 1897,
     mem     = 0,
-    trails  = 3642,
-    bytes   = 17291870,
+    trails  = 3645,
+    bytes   = 17305702,
 }
 
 
-real	8m30.753s
-user	8m9.539s
-sys	1m28.686s
+real	8m5.500s
+user	7m51.632s
+sys	1m22.435s
 ]]
 
 os.execute('rm -f /tmp/_ceu_*')

@@ -76,8 +76,7 @@ F = {
     ParAnd_pos  = 'ParOr_pos',
     ParEver_pos = 'ParAnd_pos',
 
-    Spawn = 'New',
-    New = function (me)
+    Spawn = function (me)
         local sz = #me.cls.ana.accs -- avoid ipairs due to "spawn myself"
         for i=1, sz do
             INS(me.cls.ana.accs[i], true)

@@ -131,13 +131,10 @@ F =
     end,
 
     -- SetExp is inside and requires .val
-    New_pre = function (me)
+    Spawn_pre = function (me)
         local id,_,_ = unpack(me)
         me.val = '((CEU_'..id..'*)__ceu_new)'
-                                        -- defined by _New (code.lua)
-    end,
-    Spawn_pre = function (me)
-        me.val = '(__ceu_new != NULL)'
+                                        -- defined by _Spawn (code.lua)
     end,
 
     IterIni = function (me)

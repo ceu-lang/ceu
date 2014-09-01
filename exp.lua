@@ -1,11 +1,11 @@
 F = {
     SetExp = function (me)
         local _, fr, to = unpack(me)
-        if fr.tag=='Ref' and fr[1].tag=='New' then
-            -- a = new T
+        if fr.tag=='Ref' and fr[1].tag=='Spawn' then
+            -- a = spawn T
             fr[1].blk = to.lst.var.blk   -- to = me.__par[3]
 
-            -- refuses (x.ptr = new T;)
+            -- refuses (x.ptr = spawn T;)
             ASR( AST.isParent(CLS(),to.lst.var.blk), me,
                     'invalid attribution (no scope)' )
         end
@@ -23,12 +23,11 @@ F = {
 
     end,
 
-    New = function (me)
+    Spawn = function (me)
         local _,pool,_ = unpack(me)
         ASR(pool and pool.lst and pool.lst.var and pool.lst.var.tp.arr, me,
             'invalid pool')
     end,
-    Spawn = 'New',
 
 -- EXPS --
 

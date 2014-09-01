@@ -77,10 +77,9 @@ F = {
             me.lbl_clr = new{'Class_free_'..me.id}
         --end
     end,
-    New = function (me)
+    Spawn = function (me)
         me.lbls_cnt = { new{me.tag..'_cont'} }
     end,
-    Spawn = 'New',
     Free  = function (me)
         me.lbl_clr = new{'Free_clr'}
     end,

@@ -162,7 +162,7 @@ F = {
         PROPS.has_news = true
         PROPS.has_clear = true
     end,
-    New = function (me)
+    Spawn = function (me)
         local _,pool,_ = unpack(me)
 
         --PROPS.has_news = true    (pool does this)
@@ -177,7 +177,6 @@ F = {
         ASR(not AST.iter'BlockI'(), me,
                 'not permitted inside an interface')
     end,
-    Spawn = 'New',
 
     ParOr = function (me)
         me.needs_clr = true

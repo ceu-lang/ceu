@@ -118,7 +118,7 @@ KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'native'
      + TYPES
 -- ceu-orgs only
      + 'class'    + 'global'   + 'interface'
-     + 'free'     + 'new'      + 'this' + 'outer'
+     + 'free'     + 'this' + 'outer'
      + 'spawn'
 --
      --+ 'import'  --+ 'as'
@@ -213,9 +213,8 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
               + Cc'__SetEmitExt' * ( V'EmitExt'
                                    + K'(' * V'EmitExt' * EK')' )
                                     -- p1=emt, p2=false, p3=false
-              + Cc'__SetNew'     * V'New'
-                                    -- p1=Spawn[max,cls,constr]
               + Cc'__SetSpawn'   * V'Spawn'
+                                    -- p1=Spawn[max,cls,constr]
               + Cc'__SetDoOrg'   * V'DoOrg'
               + Cc'SetBlock'     * V'__SetBlock' * Cc(false)
                                                    -- constr
@@ -231,8 +230,6 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , Finally  = V'Block'
 
     , Free  = KEY'free'  * V'__Exp'
-    , New   = KEY'new'   * EV'__ID_cls' * (KEY'in'*EV'__Exp' + Cc(false))
-            * (EKEY'with'*V'Dcl_constr'*EKEY'end' + Cc(false))
     , Spawn = KEY'spawn' * EV'__ID_cls' * (KEY'in'*EV'__Exp' + Cc(false))
             * (EKEY'with'*V'Dcl_constr'* EKEY'end' + Cc(false))
 

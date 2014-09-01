@@ -202,7 +202,7 @@ F = {
                 node('Type', me.ln, 'void', 0, false, false),
                 '_ok'))
 
-        -- insert class pool for orphan new/spawn
+        -- insert class pool for orphan spawn
         if me.__ast_has_malloc then
             table.insert(me.blk_ifc[1][1], 2,
                 node('Dcl_pool', me.ln, 'pool',
@@ -559,11 +559,10 @@ F = {
                     --]]
     end,
 
--- Spawn & New ------------------------------------------------------------
+-- Spawn ------------------------------------------------------------
 
     -- implicit pool in enclosing class if no "in pool"
-    Spawn = 'New',
-    New = function (me)
+    Spawn = function (me)
         local _,pool = unpack(me)
         if not pool then
             AST.par(me,'Dcl_cls').__ast_has_malloc = true
@@ -817,11 +816,11 @@ F = {
             --     var tp_req id_req_;
             --     var tpN, idN_;
             --     every (id_req,idN) = _LINE_request do
-            --         var bool ok? = spawn Line in _Lines with
+            --         var Line* new = spawn Line in _Lines with
             --             this.id_req = id_req_;
             --             this.idN    = idN_;
             --         end
-            --         if not ok? then
+            --         if new==null then
             --             emit _LINE_return => (id_req,err,0);
             --         end
             --     end
@@ -867,7 +866,7 @@ F = {
                                 node('Block', me.ln,
                                     node('Stmts', me.ln,
                                         node('Dcl_var', me.ln, 'var',
-                                            node('Type', me.ln, 'bool', 0, false, false),
+                                            node('Type', me.ln, 'void', 1, false, false),
                                             'ok_'),
                                         node('_Set', me.ln,
                                             node('Var', me.ln, 'ok_'),
@@ -876,8 +875,9 @@ F = {
                                                 node('Var', me.ln, '_'..id_cls..'s'),
                                                 node('Dcl_constr', me.ln, unpack(sets)))),
                                         node('If', me.ln,
-                                            node('Op1_not', me.ln, 'not',
-                                                node('Var', me.ln, 'ok_')),
+                                            node('Op2_==', me.ln, '==',
+                                                node('Var', me.ln, 'ok_'),
+                                                node('NULL',me.ln)),
                                             node('Block', me.ln,
                                                 node('EmitExt', me.ln, 'emit',
                                                     node('Ext', me.ln, id_evt..'_RETURN'),
@@ -1120,7 +1120,7 @@ F = {
                                     to)))
             end
 
-        elseif tag=='__SetNew' or tag=='__SetSpawn' then
+        elseif tag=='__SetSpawn' then
             p1[#p1+1] = node('SetExp', me.ln, op,
                             node('Ref', me.ln, p1),
                             to)

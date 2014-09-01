@@ -198,7 +198,7 @@ static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org, t
     end,
 
     Stmts = function (me)
-        LINE(me, '{')   -- allows C declarations for New/Spawn
+        LINE(me, '{')   -- allows C declarations for Spawn
         CONC_ALL(me)
         LINE(me, '}')
     end,
@@ -420,8 +420,7 @@ case ]]..me.lbls_cnt[i].id..[[:;
         })
     end,
 
-    Spawn = 'New',
-    New = function (me)
+    Spawn = function (me)
         local id, pool, constr, set = unpack(me)
 
         LINE(me, [[
@@ -439,7 +438,7 @@ case ]]..me.lbls_cnt[i].id..[[:;
         end
 
         if set then
-            CONC(me, set)   -- <ptr=new T>, <ok=Spawn T>
+            CONC(me, set)   -- <ptr=Spawn T>
         end
 
         LINE(me, [[

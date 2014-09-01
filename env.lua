@@ -809,7 +809,7 @@ F = {
     end,
 
     -- _pre: give error before "set" inside it
-    New_pre = function (me)
+    Spawn_pre = function (me)
         local id, pool, constr = unpack(me)
 
         me.cls = ASR(ENV.clss[id], me,
@@ -817,23 +817,16 @@ F = {
         ASR(not me.cls.is_ifc, me, 'cannot instantiate an interface')
         me.tp = TP.fromstr(id..'*')  -- class id
     end,
-    Spawn_pre = function (me)
-        F.New_pre(me)
-        me.tp = TP.fromstr'bool'       -- 0/1
-    end,
     IterIni = 'RawExp',
     IterNxt = 'RawExp',
 
     Dcl_constr_pre = function (me)
         local spw = AST.iter'Spawn'()
-        local new = AST.iter'New'()
         local dcl = AST.iter'Dcl_var'()
 
         -- type check for this.* inside constructor
         if spw then
             me.cls = ENV.clss[ spw[1] ]   -- checked on Spawn
-        elseif new then
-            me.cls = ENV.clss[ new[1] ]   -- checked on SetExp
         elseif dcl then
             me.cls = ENV.clss[ dcl[2].id ]   -- checked on Dcl_var
         end
