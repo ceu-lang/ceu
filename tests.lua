@@ -571,8 +571,86 @@ escape 10;
     fin = 'line 5 : invalid pointer "ptr"',
 }
 
+-- TODO: t.v // T.v
+Test { [[
+class T with
+    var int v;
+do
+    v = 1;
+end
+var T t;
+t.v = 10;
+escape t.v;
+]],
+    run = 10,
+}
+
+-- global vs assert??
+Test { [[
+interface Global with
+    event void e;
+end
+event void e;
+par/or do
+    emit global:e;
+with
+    _assert(0);
+end
+escape 1;
+]],
+    run = 1,
+}
+
+-- this vs _iter??
+Test { [[
+interface I with
+    var int v;
+end
+
+class T with
+    interface I;
+do
+    this.v = 1;
+end
+pool T[] ts;
+
+par/or do
+    spawn T in ts with
+    end;
+with
+    loop (I*)i in ts do
+    end
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
+-- TODO: spawn vs watching impossible
+Test { [[
+class T with
+do
+end
+
+par/and do
+    pool T[] ts;
+    var T* t = spawn T in ts with
+    end;
+with
+    var T* p;
+    watching p do
+    end
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
 -------------------------------------------------------------------------------
 -- ??: working now
+]===]
 
 -------------------------------------------------------------------------------
 -- OK: well tested
@@ -2869,7 +2947,6 @@ end
     _ana = { isForever=true },
 }
 
-]===]
 Test { [[
 input (int,int) A;
 par do
@@ -2878,6 +2955,10 @@ par do
 with
     await A;
     escape 1;
+with
+    async do
+        emit A => (1,1);
+    end
 end
 ]],
     run = 1;
@@ -3376,6 +3457,34 @@ end
     },
 }
 
+Test { [[
+input int A;
+var int a;
+par do
+    loop do
+        par/or do
+            a = 1;      // 6
+            await A;    // 7
+        with
+            await A;    // 9
+            a = 2;      // 10
+        end;
+    end
+with
+    loop do
+        await A;
+        a = 3;          // 16
+    end
+end
+]],
+    _ana = {
+        isForever = true,
+        acc = 3,        -- 6/16  10/16  6/10
+        abrt = 3,
+    },
+    safety = 2,
+}
+
 -- FOR
 
 Test { [[
@@ -3517,6 +3626,35 @@ escape sum;
 }
 
 Test { [[
+input int A;
+var int sum = 0;
+par/or do
+    sum = 5;            // 4
+    loop i in 10 do       // 5
+        await A;
+        async do
+            var int a = 1;
+        end
+    end
+    sum = 0;            // 11
+with
+    loop i in 2 do        // 13
+        async do
+            var int a = 1;
+        end
+        sum = sum + 1;  // 17
+    end
+end
+escape sum;
+]],
+    run = 7,
+    safety = 2,
+    _ana = {
+        acc = 4,
+    },
+}
+
+Test { [[
 var int sum = 0;
 loop i in 100 do
     sum = sum + (i+1);
@@ -3617,6 +3755,23 @@ escape ret;
 Test { [[
 input int A,B,Z,D,F;
 var int ret;
+par/and do
+    ret = await A;
+with
+    ret = await B;
+end;
+escape ret;
+]],
+    run = { ['1~>A;2~>B'] = 2 },
+    safety = 2,
+    _ana = {
+        acc = 1,
+    },
+}
+
+Test { [[
+input int A,B,Z,D,F;
+var int ret;
 par/or do
     par/and do
         ret = await A;
@@ -3638,6 +3793,36 @@ end;
 escape ret;
 ]],
     run = { ['1~>F'] = 1 }
+}
+
+Test { [[
+input int A,B,Z,D,F;
+var int ret;
+par/or do
+    par/and do
+        ret = await A;
+    with
+        ret = await B;
+    end;
+    par/or do
+        par/or do               // 10
+            ret = await B;
+        with
+            ret = await Z;      // 13 (false w/ 10)
+        end;
+    with
+        ret = await D;          // 16 (false w/10,9)
+    end;
+with
+    ret = await F;
+end;
+escape ret;
+]],
+    run = { ['1~>F'] = 1 },
+    safety = 2,
+    _ana = {
+        acc = 9,
+    },
 }
 
 Test { [[
@@ -3671,6 +3856,25 @@ end;
 ]],
     _ana = {
         isForever = false,
+    },
+    run = { ['~>1min; ~>1min ; 0~>F'] = 1 },
+}
+
+Test { [[
+input int F;
+var int a = 0;
+par do
+    a = a + 1;
+    await FOREVER;
+with
+    await F;
+    escape a;
+end;
+]],
+    safety = 2,
+    _ana = {
+        isForever = false,
+        acc = 1,
     },
     run = { ['~>1min; ~>1min ; 0~>F'] = 1 },
 }
@@ -3906,6 +4110,29 @@ event int a;
 var int aa = 3;
 par do
     await OS_START;
+    emit a => aa;      // 6
+    escape aa;
+with
+    loop do
+        var int v = await a;
+        aa = v+1;
+    end;
+end;
+]],
+    awaits = 0,
+    run = 4,
+    safety = 2,
+    _ana = {
+        acc = 2,
+    },
+}
+
+Test { [[
+input void OS_START;
+event int a;
+var int aa = 3;
+par do
+    await OS_START;
     emit a => aa;
     escape aa;
 with
@@ -4077,6 +4304,31 @@ escape v;
         excpt = 1,
     },
     run = 2,
+}
+
+Test { [[
+input void OS_START;
+event void e;
+var int v;
+par/or do           // 4
+    await OS_START;
+    emit e;         // 6
+    v = 1;
+with
+    await e;        // 9
+    emit e;
+    v = 2;
+end
+escape v;
+]],
+    _ana = {
+        excpt = 1,
+    },
+    run = 2,
+    safety = 2,
+    _ana = {
+        acc = 1,
+    },
 }
 
 Test { [[
@@ -5077,6 +5329,33 @@ var int a;
 loop do
     par/or do
         loop do
+            await (10)us;
+            await 10ms;
+            if 1 then
+                a = 1;      // 9
+                break;
+            end
+        end
+    with
+        loop do
+            a = 1;          // 15
+            await A;
+        end
+    end
+end
+]],
+    safety = 2,
+    _ana = {
+        acc = 1,
+        isForever = true,
+    },
+}
+Test { [[
+input int A;
+var int a;
+loop do
+    par/or do
+        loop do
             await 10ms;
             await (10)us;
             if 1 then
@@ -5603,6 +5882,42 @@ end;
         ['~>5s; ~>F'] = 555,
         ['~>F'] = 0,
     }
+}
+
+Test { [[
+input void F;
+do
+    var int a=0, b=0, c=0;
+    par do
+        loop do
+            await 10ms;
+            a = a + 1;
+        end;
+    with
+        loop do
+            await 100ms;
+            b = b + 1;
+        end;
+    with
+        loop do
+            await 1000ms;
+            c = c + 1;
+        end;
+    with
+        await F;
+        escape a + b + c;
+    end;
+end;
+]],
+    run = {
+        ['~>999ms; ~>F'] = 108,
+        ['~>5s; ~>F'] = 555,
+        ['~>F'] = 0,
+    },
+    safety = 2,
+    _ana = {
+        acc = 3,
+    },
 }
 
     -- TIME LATE
@@ -9216,6 +9531,32 @@ end
     run = 1,
 }
 Test { [[
+input int Z;
+event int a;
+var int aa = 0;
+par do
+    emit a => 1;
+    aa = 1;
+    escape aa;
+with
+    par/and do
+        aa = await a;
+    with
+    with
+        await Z;
+    end;
+    escape aa;
+end
+]],
+    safety = 2,
+    _ana = {
+        acc = 5,
+        --nd_esc = 1,
+        abrt = 1,
+    },
+    run = 1,
+}
+Test { [[
 input int B,Z;
 event int a;
 var int aa;
@@ -9780,6 +10121,29 @@ escape aa;
         --nd_esc = 1,
         --unreachs = 1,
         acc = 2,
+        abrt = 2,
+    },
+}
+Test { [[
+event int a;
+var int aa;
+par/or do
+    emit a => 1;
+    aa = 1;
+with
+    aa = await a;
+    aa = aa + 1;
+with
+    var int aa = await a;
+    var int v = aa;
+end;
+escape aa;
+]],
+    safety = 2,
+    _ana = {
+        --nd_esc = 1,
+        --unreachs = 1,
+        acc = 5,
         abrt = 2,
     },
 }
@@ -10582,6 +10946,31 @@ Test { [[
 input int A,B,Z,D;
 var int a = 0;
 a = par do
+    par/and do
+        await A;
+    with
+        await B;
+    end;
+    escape a+1;
+with
+    await Z;
+    escape a;
+end;
+a = a + 1;
+await D;
+escape a;
+]],
+    run = { ['0~>A;0~>B;0~>Z;0~>D'] = 2 },
+    safety = 2,
+    _ana = {
+        acc = 3,
+    },
+}
+
+Test { [[
+input int A,B,Z,D;
+var int a = 0;
+a = par do
     par do
         await A;
         escape a;
@@ -11285,6 +11674,34 @@ end;
 }
 
 Test { [[
+input int A;
+var int counter;
+event int c;
+par/and do
+    loop do
+        await A;
+        counter = counter + 1;
+    end;
+with
+    loop do
+        await c;
+        // unreachable
+        if counter == 200 then
+            counter = 0;
+        end;
+    end;
+end;
+// unreachable
+]],
+    safety = 2,
+    _ana = {
+        isForever = true,
+        unreachs = 3,
+        acc = 3,
+    },
+}
+
+Test { [[
 event int a;
 emit a => 8;
 escape 8;
@@ -11400,6 +11817,47 @@ end;
 }
 
 Test { [[
+input int D, E;
+event int a, b;
+var int c;
+par/or do
+    await D;
+    par/or do
+        emit a => 8;
+    with
+        emit b => 5;
+    end;
+    var int v = await D;
+    escape v;
+with
+    c = 0;
+    loop do
+        var int aa=0,bb=0;
+        par/or do
+            aa=await a;
+        with
+            bb=await b;
+        end;
+        c = aa + bb;
+    end;
+with
+    await E;
+    escape c;
+end;
+]],
+    safety = 2,
+    _ana = {
+        abrt = 2,
+        unreachs = 1,
+        acc = 3,
+        --trig_wo = 1,
+    },
+    run = {
+        ['1~>D ; 1~>E'] = 8,    -- TODO: stack change (8 or 5)
+    },
+}
+
+Test { [[
 input int A,B;
 event int a,b;
 var int v;
@@ -11421,6 +11879,39 @@ with
 end;
 ]],
     _ana = {
+        --nd_esc = 2,
+        unreachs = 4,
+    },
+    run = {
+        ['10~>A'] = 10,
+        ['4~>B'] = 1,
+    }
+}
+
+Test { [[
+input int A,B;
+event int a,b;
+var int v;
+par/or do
+    par/and do
+        var int v = await A;
+        emit a => v;
+    with
+        await B;
+        emit b => 1;
+    end;
+    escape v;
+with
+    v = await a;
+    escape v;       // 15
+with
+    var int bb = await b;
+    escape bb;       // 18
+end;
+]],
+    safety = 2,
+    _ana = {
+        acc = 4,
         --nd_esc = 2,
         unreachs = 4,
     },
@@ -12529,6 +13020,61 @@ end;
 }
 
 Test { [[
+input int F;
+event int draw, occurring, sleeping;
+var int x, vis;
+par do
+    await F;
+    escape vis;
+with
+    par/and do
+        loop do
+            await draw;
+            x = x + 1;
+        end;
+    with
+        loop do
+            vis = await occurring;      // 15
+        end;
+    with
+        loop do
+            var int s;
+            par/or do
+                s = await sleeping;     // 21
+            with
+                s = await sleeping;     // 23
+            end;
+            if s== 0 then
+                vis = 1;                // 26
+            else
+                vis = 0;                // 28
+            end;
+        end;
+    with
+        loop do
+            await 100ms;
+            emit draw => 1;
+        end;
+    with
+        loop do
+            await 100ms;
+            emit sleeping => 1;
+            await 100ms;
+            emit occurring => 1;
+        end;
+    end;
+end;
+]],
+    safety = 2,
+    _ana = {
+        unreachs = 1,
+        acc = 6,
+        abrt = 1,
+    },
+    run = { ['~>1000ms;1~>F'] = 1 }
+}
+
+Test { [[
 input void OS_START;
 event int a, b;
 var int v=0;
@@ -12854,6 +13400,33 @@ end;
 
 Test { [[
 input void OS_START;
+input int A, F;
+event int c;
+var int cc = 0;
+par do
+    loop do
+        await A;
+        emit c => cc;
+    end;
+with
+    loop do
+        cc = await c;
+        cc = cc + 1;
+    end;
+with
+    await F;
+    escape cc;
+end;
+]],
+    run = { ['1~>A;1~>A;1~>A;1~>F'] = 3 },
+    safety = 2,
+    _ana = {
+        acc = 4,
+    },
+}
+
+Test { [[
+input void OS_START;
 event int a;
 par do
     loop do
@@ -13019,6 +13592,50 @@ with
 end;
 ]],
     _ana = {
+        abrt = 2,
+    },
+    run = { ['~>1100ms ; ~>F'] = 66 }   -- TODO: stack change
+}
+
+Test { [[
+input void F;
+event int x;
+event int y;
+var int xx = 0;
+var int yy = 0;
+var int a = 0;
+var int b = 0;
+var int c = 0;
+par do
+    loop do
+        await 100ms;
+        par/or do
+            xx = xx + 1;
+            emit x => xx;
+        with
+            yy = yy + 1;
+            emit y => yy;
+        end;
+    end;
+with
+    loop do
+        par/or do
+            var int xx = await x;
+            a = a + xx;
+        with
+            var int yy = await y;
+            b = b + yy;
+        end;
+        c = a + b;
+    end;
+with
+    await F;
+    escape c;
+end;
+]],
+    safety = 2,
+    _ana = {
+        acc = 1,
         abrt = 2,
     },
     run = { ['~>1100ms ; ~>F'] = 66 }   -- TODO: stack change
@@ -13216,6 +13833,29 @@ end
     run = 1,
 }
 Test { [[
+input void OS_START;
+event int a;
+var int x = 0;
+par do
+    await OS_START;
+    emit a => 1;
+    emit a => 2;
+    escape x;
+with
+    loop do
+        await a;
+        x = x + 1;
+    end
+end
+]],
+    --run = 2,
+    run = 1,
+    safety = 2,
+    _ana = {
+        acc = 1,
+    },
+}
+Test { [[
 input void OS_START, A;
 event int a;
 var int x = 0;
@@ -13233,6 +13873,29 @@ with
 end
 ]],
     run = {['~>A']=2,},
+}
+Test { [[
+input void OS_START, A;
+event int a;
+var int x = 0;
+par do
+    await OS_START;
+    emit a => 1;
+    await A;
+    emit a => 2;
+    escape x;
+with
+    await a;
+    x = x + 1;
+    await a;
+    x = x + 1;
+end
+]],
+    run = {['~>A']=2,},
+    safety = 2,
+    _ana = {
+        acc = 2,
+    },
 }
 Test { [[
 event int a;
@@ -14534,6 +15197,36 @@ escape ret;
 }
 
 Test { [[
+input void A, B;
+var int ret = 1;
+par/or do
+    do
+        finalize with
+            ret = 1;
+    end
+        await A;
+    end
+with
+    do
+        await B;
+        finalize with
+            ret = 2;
+    end
+    end
+end
+escape ret;
+]],
+    safety = 2,
+    _ana = {
+        acc = 1,
+    },
+    run = {
+        ['~>A']=1,
+        ['~>B']=1
+    },
+}
+
+Test { [[
 input void A, B, Z;
 var int ret = 1;
 par/or do
@@ -14628,6 +15321,43 @@ escape ret;
 ]],
     _ana = {
         acc = 3,
+    },
+    run = {
+        ['~>A'] = 9,
+        ['~>B'] = 12,
+    },
+}
+
+Test { [[
+input void A, B, Z;
+event void a;
+var int ret = 1;
+par/or do
+    do
+        finalize with
+            ret = ret * 2;      // 7
+    end
+        await A;
+        emit a;
+    end
+with
+    do
+        finalize with
+            ret = ret + 5;      // 15
+    end
+        await B;
+    end
+with
+    loop do
+        await a;
+        ret = ret + 1;
+    end
+end
+escape ret;
+]],
+    safety = 2,
+    _ana = {
+        acc = 9,
     },
     run = {
         ['~>A'] = 9,
@@ -15272,6 +16002,32 @@ par/or do
 with
     async do
         var int v = 10;
+        emit A => &v;
+        emit A => null;
+    end
+end
+escape v;
+]],
+    wrn = true,
+    run = 10,
+    safety = 2,
+    _ana = {
+        acc = 1,
+    },
+}
+
+Test { [[
+input int* A;
+var int v;
+par/or do
+    do
+        var int* p = await A;
+        v = *p;
+    end
+    await A;
+with
+    async do
+        var int v = 10;
         emit A => (void*) &v;
         emit A => null;
     end
@@ -15357,6 +16113,32 @@ escape ret;
     --fin = 'line 7 : invalid block for awoken pointer "p"',
     --fin = 'line 7 : invalid operator',
     run = 1,
+}
+
+Test { [[
+var int* p;
+var int ret;
+input void OS_START;
+do
+    event int* e;
+    par/and do
+        p := await e;
+        ret = *p;
+    with
+        await OS_START;
+        var int i = 1;
+        emit e => &i;
+    end
+end
+escape ret;
+]],
+    --fin = 'line 7 : invalid block for awoken pointer "p"',
+    --fin = 'line 7 : invalid operator',
+    run = 1,
+    safety = 2,
+    _ana = {
+        acc = 1,
+    },
 }
 
 Test { [[
@@ -15610,6 +16392,27 @@ escape ret;
 }
 
 Test { [[
+input void A;
+var int ret;
+var int* pret = &ret;
+par/or do
+   async(pret) do
+      *pret=10;
+    end;
+with
+   await A;
+   ret = 1;
+end
+escape ret;
+]],
+    run = { ['~>A']=10 },
+    safety = 2,
+    _ana = {
+        acc = 1,
+    },
+}
+
+Test { [[
 async do
     escape 1;
 end;
@@ -15673,6 +16476,24 @@ end;
     --abrt = 1,
     run = 2,
     _ana = {
+        unreachs = 3,
+    },
+}
+
+Test { [[
+par/and do
+    async do
+    end;
+    escape 1;
+with
+    escape 2;
+end;
+]],
+    --abrt = 1,
+    run = 2,
+    safety = 2,
+    _ana = {
+        acc = 1,
         unreachs = 3,
     },
 }
@@ -15856,6 +16677,7 @@ escape _a+_b;
 Test { [[
 @const _a;
 @safe _b with _c;
+
 native do
     int a = 1;
     int b;
@@ -16042,6 +16864,37 @@ end;
 escape ret+f;
 ]],
     run = { ['10~>F']=5060 }
+}
+
+Test { [[
+input int F;
+var int ret = 0;
+var int f;
+var int* pret=&ret;
+par/and do
+    async(pret) do
+        var int sum = 0;
+        var int i = 0;
+        loop do
+            sum = sum + i;
+            if i == 100 then
+                break;
+            else
+                i = i + 1;
+            end
+        end
+        *pret = sum;
+    end;
+with
+    f = await F;
+end;
+escape ret+f;
+]],
+    run = { ['10~>F']=5060 },
+    safety = 2,
+    _ana = {
+        acc = 1,
+    },
 }
 
 Test { [[
@@ -22672,6 +23525,38 @@ escape aa.aa;
 
 Test { [[
 input void OS_START;
+input void A;
+class T with
+    event int a, ok;
+    var int aa;
+do
+    par/or do
+        await A;
+        emit a => 10;
+        this.aa = 5;
+    with
+        aa = await a;
+        aa = 7;
+    end
+    emit ok => 1;
+end
+var T aa;
+par/and do
+    await OS_START;
+with
+    await aa.ok;
+end
+escape aa.aa;
+]],
+    run = { ['~>A']=7 },
+    safety = 2,
+    _ana = {
+        acc = 2,
+    },
+}
+
+Test { [[
+input void OS_START;
 class T with
     event int a;
     var int aa;
@@ -23258,6 +24143,49 @@ end
 escape _V + aa.aa + aa.bb;
 ]],
     run = 11,
+}
+
+Test { [[
+    input void OS_START;
+class T with
+    event void a, ok, go, b;
+    var int aa, bb;
+do
+
+    par/and do
+        await a;
+        emit b;
+    with
+        await b;
+    end
+    aa = 5;
+    bb = 4;
+    emit ok;
+end
+var T aa;
+
+native _inc(), _V;
+native do
+    int V = 0;
+    void inc() { V++; }
+end
+
+_inc();
+par/or do
+    await aa.ok;
+    _V = _V+1;
+with
+    await OS_START;
+    emit aa.a;
+    _V = _V+2;
+end
+escape _V + aa.aa + aa.bb;
+]],
+    run = 11,
+    safety = 2,
+    _ana = {
+        acc = 3,
+    },
 }
 
 Test { [[
@@ -32043,6 +32971,35 @@ par/or do
     emit e => &t;
 with
     var T* p = await e;
+    ret = p:v;
+end
+
+escape ret;
+]],
+    run = 10,
+    safety = 2,
+    _ana = {
+        acc = 1,
+    },
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
+end
+
+event T* e;
+var int ret = 0;
+
+par/or do
+    var T t with
+        this.v = 10;
+    end;
+    async do end;
+    emit e => &t;
+with
+    var T* p = await e;
     async do end;
     ret = p:v;
 end
@@ -32153,6 +33110,44 @@ end
 escape ret;
 ]],
     run = { ['~>5s']=-1 },
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
+end
+
+event T* e;
+var int ret = 0;
+
+par/and do
+    async do end;
+    var T t with
+        this.v = 10;
+    end;
+    emit e => &t;
+    await 1s;
+with
+    var T* p = await e;
+    watching p do
+        finalize with
+            if ret == 0 then
+                ret = -1;
+            end
+        end
+        await 5s;
+        ret = p:v;
+    end
+end
+
+escape ret;
+]],
+    run = { ['~>5s']=-1 },
+    safety = 2,
+    _ana = {
+        acc = 1,
+    },
 }
 
 Test { [[
@@ -33049,6 +34044,55 @@ with
 end
 ]],
     _ana = {
+        isForever = true,
+    },
+    awaits = 3,
+    run = false,
+}
+Test { [[
+input void A, B;
+class T with
+    event void e;
+do
+    await A;
+    await A;
+end
+var T a,b;
+native _f();
+var int c;
+par do
+    loop do
+        _f();
+        await A;
+        if 0 then
+            break;
+        end
+    end
+with
+    loop do
+        await 2s;
+        if _f() then
+            break;
+        end
+    end
+with
+    loop do
+        await B;
+        c = 1;
+    end
+with
+    loop do
+        await a.e;
+    end
+with
+    loop do
+        await b.e;
+    end
+end
+]],
+    safety = 2,
+    _ana = {
+        acc = 1,
         isForever = true,
     },
     awaits = 3,
@@ -34510,6 +35554,27 @@ end
 escape x;
 ]],
     run = { ['~>1s']=3 },
+}
+
+Test { [[
+var int x = 0;
+par/and do
+    await 1s;
+    x = 1;
+with
+    var int y = x;
+    async thread (&y) do
+        y = 2;
+    end
+    x = x + y;
+end
+escape x;
+]],
+    run = { ['~>1s']=3 },
+    safety = 2,
+    _ana = {
+        acc = 3,
+    },
 }
 
 Test { [[

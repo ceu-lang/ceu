@@ -243,7 +243,8 @@ F = {
             err = ERR(me, 'variable/event `'..me.var.id..'´'),
         }
         if string.sub(me.var.id,1,4) == '_tup' then
-            me.acc.md = 'no' -- TODO: ignore tuple assignments for now "(a,b)=await A"
+            -- TODO: ignore tuple assignments for now "(a,b)=await A"
+            me.acc.md = 'no'
         end
     end,
 
@@ -314,7 +315,7 @@ AST.visit(F)
 local ND = {
     acc = { par={},awk={},esc={},
         cl  = { cl=2, tr=2,     wr=2,     rd=2,     aw=2  },
-        tr  = { cl=2, tr=2,     wr=false, rd=false, aw=1  },
+        tr  = { cl=2, tr=1,     wr=false, rd=false, aw=1  },
         wr  = { cl=2, tr=false, wr=2,     rd=2,     aw=false },
         rd  = { cl=2, tr=false, wr=2,     rd=false, aw=false },
         aw  = { cl=2, tr=1,     wr=false, rd=false, aw=false },
