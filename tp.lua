@@ -22,9 +22,9 @@ function TP.new (me)
         -- (for pools `[]´ has another meaning)
         if (not (AST and AST.par(me,'Dcl_pool'))) and me.arr==true then
             me.arr = false
-            me.mem = true
-            ASR(me.ptr==0, me, 'invalid type')
-            me.ptr = 1
+            me.buffer = true
+            --ASR(me.ptr==0, me, 'invalid type')
+            me.ptr = me.ptr + 1
         end
 
         -- set from outside (see "types" above and Dcl_nat in env.lua)
