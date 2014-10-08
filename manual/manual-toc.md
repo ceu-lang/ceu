@@ -64,11 +64,11 @@
             * 4.6.2.2 [Emit time](#emit-time)
     * 4.7 [Conditional](#conditional)
     * 4.8 [Repetition](#repetition)
-            * 4.8.1 [break](#break)
-            * 4.8.1.1 [Iterators](#iterators)
-                * 4.8.1.1.1 [Incremental index](#incremental-index)
-                * 4.8.1.1.2 [Pool instances](#pool-instances)
-            * 4.8.1.2 [every](#every)
+        * 4.8.1 [break](#break)
+        * 4.8.2 [Iterators](#iterators)
+            * 4.8.2.1 [Incremental index](#incremental-index)
+            * 4.8.2.2 [Pool instances](#pool-instances)
+        * 4.8.3 [every](#every)
     * 4.9 [Finalization](#finalization)
     * 4.10 [Parallel compositions](#parallel-compositions)
         * 4.10.1 [par/and](#parand)
@@ -1522,8 +1522,8 @@ Iterator ::= [`(´ Type `)´] ID_var [<b>in</b> Exp]
 A `loop` terminates when it reaches a [`break`](#break) or its (optional) 
 [iterator](#iterators) terminates.
 
-##### 4.8.1
-#### break
+#### 4.8.1
+### break
 
 A `break` escapes the innermost enclosing loop.
 
@@ -1544,14 +1544,14 @@ Example:
 <b>end</b>
 </code></pre>
 
-##### 4.8.1.1
-#### Iterators
+#### 4.8.2
+### Iterators
 
 A `loop` may specify an iterator that yields a new value on each loop 
 iteration.
 
-###### 4.8.1.1.1
-##### Incremental index
+##### 4.8.2.1
+#### Incremental index
 
 For iterators in which `Exp` is empty or is of type `int`, `ID_var` is 
 incremented after each loop iteration.
@@ -1567,8 +1567,8 @@ Example:
 <b>end</b>
 </code></pre>
 
-###### 4.8.1.1.2
-##### Pool instances
+##### 4.8.2.2
+#### Pool instances
 
 For iterators in which `Exp` evaluates to a pool, `ID_var´ evaluates to the 
 instances on the pool, one at a time, from the oldest to the newest.
@@ -1577,8 +1577,8 @@ loop body.
 
 The optional typecast tries
 
-##### 4.8.1.2
-#### every
+#### 4.8.3
+### every
 
 The `every` statement continuously awaits an event and executes its body:
 

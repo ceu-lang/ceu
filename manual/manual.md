@@ -1340,7 +1340,7 @@ Iterator ::= [`(´ Type `)´] ID_var [<b>in</b> Exp]
 A `loop` terminates when it reaches a [`break`](#break) or its (optional) 
 [iterator](#iterators) terminates.
 
-#### break
+### break
 
 A `break` escapes the innermost enclosing loop.
 
@@ -1361,12 +1361,12 @@ Example:
 <b>end</b>
 </code></pre>
 
-#### Iterators
+### Iterators
 
 A `loop` may specify an iterator that yields a new value on each loop 
 iteration.
 
-##### Incremental index
+#### Incremental index
 
 For iterators in which `Exp` is empty or is of type `int`, `ID_var` is 
 incremented after each loop iteration.
@@ -1382,7 +1382,7 @@ Example:
 <b>end</b>
 </code></pre>
 
-##### Pool instances
+#### Pool instances
 
 For iterators in which `Exp` evaluates to a pool, `ID_var´ evaluates to the 
 instances on the pool, one at a time, from the oldest to the newest.
@@ -1391,7 +1391,7 @@ loop body.
 
 The optional typecast tries
 
-#### every
+### every
 
 The `every` statement continuously awaits an event and executes its body:
 
