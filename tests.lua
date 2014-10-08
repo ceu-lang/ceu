@@ -650,7 +650,203 @@ escape 1;
 
 -------------------------------------------------------------------------------
 -- ??: working now
+Test { [[
+input void    START,   STOP;
+input _pkt_t* RECEIVE, SENDACK;
+
+native @nohold _memcpy(), _send_dequeue(), _pkt_setRoute(), _pkt_setContents(), 
+_receive();
+
+class Forwarder with
+   var _pkt_t pkt;
+   event void ok;
+do
+   loop do
+      var bool enq;
+      enq = _send_enqueue(&pkt)
+            finalize with
+               _send_dequeue(&pkt);
+            end;
+      if not enq then
+         await (_rand()%100)ms;
+         continue;
+      end
+      var _pkt_t* done;
+      done = await SENDACK
+             until (done == &pkt);
+      break;
+   end
+   emit this.ok;
+end
+
+class Client with
+do
+   loop seq do
+      par/and do
+         await 1min;
+      with
+         do Forwarder with
+            _pkt_setRoute(&this.pkt, seq);
+            _pkt_setContents(&this.pkt, seq);
+         end;
+      end
+   end
+end
+
+loop do
+   await START;
+   par/or do
+      await STOP;
+   with
+      pool Forwarder[10] forwarders;
+      var  Client   [10] clients;
+
+      var _pkt_t* pkt;
+      every pkt in RECEIVE do
+         if pkt:left == 0 then
+            _receive(pkt);
+         else
+            pkt:left = pkt:left - 1;
+            spawn Forwarder with
+               _memcpy(&this.pkt, pkt, pkt:len);
+            end;
+         end
+      end
+   end
+end
+]],
+    run = 0,
+}
+
+Test { [[
+input int* A;
+par/or do
+    var int* snd = await A;
+    *snd = *snd;
+    await FOREVER;
+with
+    var int* snd =
+        await A
+            until *snd == 1;
+    escape *snd;
+with
+    async do
+        var int i = 2;
+        emit A => &i;
+        i = 1;
+        emit A => &i;
+    end
+end
+escape 0;
+]],
+    _ana = {
+        acc = 4,
+    },
+    run = 1;
+}
+do return end
+
+Test { [[
+class Rect with
+do
+    await FOREVER;
+end
+
+if false then
+    interface Bird with end
+    var Bird* ptr = null;
+    watching ptr do end
+else
+    pool Rect[257] rs;
+    loop i in 257 do
+        spawn Rect in rs;
+    end
+end
+
+escape 10;
+]],
+    run = 10,
+}
+do return end
+
 ]===]
+-- TODO: ok
+
+Test { [[
+var int a;
+a := 1;
+escape 1;
+]],
+    fin = 'line 2 : invalid operator',
+}
+Test { [[
+var int a;
+finalize
+    a = 1;
+with
+    nothing;
+end
+escape 1;
+]],
+    fin = 'line 3 : attribution does not require `finalize´',
+}
+Test { [[
+var int* a;
+a := null;
+escape 1;
+]],
+    fin = 'line 2 : invalid operator',
+}
+Test { [[
+var int* a;
+finalize
+    a = null;
+with
+    nothing;
+end
+escape 1;
+]],
+    fin = 'line 3 : attribution does not require `finalize´',
+}
+Test { [[
+function (void)=>void f do
+    var int* a;
+    a := null;
+end
+escape 1;
+]],
+    fin = 'line 3 : invalid operator',
+}
+Test { [[
+var int a;
+var int* pa := &a;
+escape 1;
+]],
+    fin = 'line 2 : invalid operator',
+}
+Test { [[
+var int a;
+var int* pa;
+finalize
+    pa = &a;
+with
+    nothing;
+end
+escape 1;
+]],
+    fin = 'line 4 : attribution does not require `finalize´',
+}
+Test { [[
+function (void* o1)=>void f do
+    var void* tmp := o1;
+end
+escape 1;
+]],
+    fin = 'line 2 : invalid operator',
+}
+
+
+--do return end
 
 -------------------------------------------------------------------------------
 -- OK: well tested

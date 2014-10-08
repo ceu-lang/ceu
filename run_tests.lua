@@ -1,5 +1,9 @@
 #!/usr/bin/env lua
 
+XXX_file = assert(io.open('/tmp/fin.txt','w'))
+XXX_msg = false
+XXX_trace = ''
+
 RUNTESTS = true
 
 dofile 'pak.lua'
@@ -18,7 +22,11 @@ function check (mod)
     assert(T[mod]==nil or T[mod]==false or type(T[mod])=='string')
     local ok, msg = pcall(dofile, mod..'.lua')
     if T[mod]~=nil then
+        assert(ok==false, 'no error found')
         assert(string.find(msg, T[mod], nil, true), tostring(msg))
+        if XXX_msg then
+            XXX_file:write(msg..'\n================\n\n\n')
+        end
         return false
     else
         assert(ok==true, msg)
@@ -28,7 +36,9 @@ end
 
 Test = function (t)
     T = t
+    XXX_msg = false
     local source = T[1]
+    XXX_trace = '==============\n'..source..'\n---\n'..debug.traceback()..'\n---\n'
     --local source = 'C _fprintf(), _stderr;'..T[1]
     print('\n=============\n---\n'..source..'\n---\n')
 
@@ -143,6 +153,7 @@ end
     end
 --[[
 ]]
+--do return end
 
     -- RUN
 

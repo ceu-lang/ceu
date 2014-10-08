@@ -44,7 +44,15 @@ F = {
         noptr = noptr or (to.tp.mem and fr.tp.mem)
 
         if noptr then
+            if op ~= '=' then
+                XXX_msg = true
+                XXX_file:write('[ERR 1] not pointer\n'..XXX_trace)
+            end
             ASR(op == '=', me, 'invalid operator')
+            if me.fin then
+                XXX_msg = true
+                XXX_file:write('[ERR 1.1] not pointer\n'..XXX_trace)
+            end
             ASR(not me.fin, me, 'attribution does not require `finalize´')
             return
         end
@@ -62,7 +70,15 @@ F = {
 
         -- constants are safe
         if fr.sval then
+            if op ~= '=' then
+                XXX_msg = true
+                XXX_file:write('[ERR 2] constant\n'..XXX_trace)
+            end
             ASR(op == '=', me, 'invalid operator')
+            if me.fin then
+                XXX_msg = true
+                XXX_file:write('[ERR 2.1] not pointer\n'..XXX_trace)
+            end
             ASR(not me.fin, me, 'attribution does not require `finalize´')
             return
         end
@@ -105,6 +121,10 @@ F = {
                                  or to_blk==cls.blk_body
             or to.lst.var and to.lst.var.isFun then
                               -- function parameter
+                if op ~= ':=' then
+                    XXX_msg = true
+                    XXX_file:write('[ERR 3] ???\n'..XXX_trace)
+                end
                 ASR(op == ':=', me, 'unsafe pointer attribution')
                 -- TODO: it is ok a pointer to a class field that is not acessed
                 -- across reactions or that is watched
@@ -112,10 +132,18 @@ F = {
                 if to_blk==cls.blk_ifc or to_blk==cls.blk_body then
                     -- must be hold
                     local _, _, ins, _, _, _ = unpack(fun)
+                    if not ins[fr.lst.var.funIdx][1] then
+                        XXX_msg = true
+                        XXX_file:write('[ERR 4] ???\n'..XXX_trace)
+                    end
                     ASR(ins[fr.lst.var.funIdx][1], me,
                         'parameter must be `hold´')
                 end
             else
+                if op ~= '=' then
+                    XXX_msg = true
+                    XXX_file:write('[ERR 5] ???\n'..XXX_trace)
+                end
                 ASR(op == '=', me, 'invalid operator')
             end
         end
@@ -130,6 +158,10 @@ F = {
             --      int* pa = { new T() };
             -- In these cases, the memory persists when the local goes out of
             -- scope, hence, we enforce finalization.
+            if not ((op==':=') or me.fin) then
+                XXX_msg = true
+                XXX_file:write('[ERR 6] ???\n'..XXX_trace)
+            end
             ASR((op==':=') or me.fin, me,
                     'attribution requires `finalize´')
             if me.fin then
@@ -139,7 +171,7 @@ F = {
             return
         end
 
-        -- new to outer scope than pool
+        -- spawn to outer scope than pool
         --      var Unit* u;
         --      do
         --          pool Unit[] units;
@@ -148,6 +180,10 @@ F = {
         if fr.tag == 'Spawn' then
             local _, pool, _, _ = unpack(fr)
             if not AST.isParent(pool.var.blk,to.lst.var.blk) then
+                if op ~= ':=' then
+                    XXX_msg = true
+                    XXX_file:write('[ERR 7] ???\n'..XXX_trace)
+                end
                 ASR(op == ':=', me, 'unsafe pointer attribution')
             end
             if op == '=' then
@@ -173,12 +209,20 @@ F = {
             if op == '=' then
                 if to.org then
                     -- cannot track access inside another class, yield error now!
+                    if op ~= ':=' then
+                        XXX_msg = true
+                        XXX_file:write('[ERR 8] ???\n'..XXX_trace)
+                    end
                     ASR(op == ':=', me, 'unsafe pointer attribution')
                 else
                     TRACK[to.lst.var or to.lst.id] = false
                 end
             end
             --ASR(op == ':=', me, 'unsafe pointer attribution')
+            if me.fin then
+                XXX_msg = true
+                XXX_file:write('[ERR 9] no finalize required\n'..XXX_trace)
+            end
             ASR(not me.fin, me, 'attribution does not require `finalize´')
             return
         end
@@ -206,9 +250,21 @@ F = {
                    fr_blk.__depth==cls.blk_body.__depth)
                )
         then
+            if op ~= '=' then
+                XXX_msg = true
+                XXX_file:write('[ERR 10] ???\n'..XXX_trace)
+            end
             ASR(op == '=', me, 'invalid operator')
+            if me.fin then
+                XXX_msg = true
+                XXX_file:write('[ERR 11] ???\n'..XXX_trace)
+            end
             ASR(not me.fin, me, 'attribution does not require `finalize´')
         else
+            if not((op==':=') or me.fin) then
+                XXX_msg = true
+                XXX_file:write('[ERR 12] ???\n'..XXX_trace)
+            end
             ASR((op==':=') or me.fin, me,
                     'attribution requires `finalize´')
             if me.fin then
@@ -235,6 +291,10 @@ F = {
             return  -- no await happened yet
         end
         -- invalid access!
+        if true then
+            XXX_msg = true
+            XXX_file:write('[ERR 13] ???\n'..XXX_trace)
+        end
         ASR(false, me, 'invalid access to pointer across `await´')
     end,
     Var = function (me)
@@ -258,6 +318,10 @@ F = {
         end
 
         -- invalid access!
+        if true then
+            XXX_msg = true
+            XXX_file:write('[ERR 14] access across await\n'..XXX_trace)
+        end
         ASR(false, me, 'invalid access to pointer across `await´')
     end,
 
@@ -277,7 +341,17 @@ F = {
     ParOr    = 'AwaitInt',
     ParAnd   = 'AwaitInt',
     Par      = 'AwaitInt',
-    Loop     = 'AwaitInt',
+
+    Loop = 'AwaitInt',
+--[[
+    Loop = function (me)
+        if me.isAwaitUntil then
+            return
+        else
+            F.AwaitInt(me)
+        end
+    end,
+]]
 
     Finalize_pre = function (me, set, fin)
         if not fin then
@@ -290,6 +364,10 @@ F = {
                          fin[1][1][1] and fin[1][1][1].tag~='Nothing')
 
         if AST.iter'Dcl_constr'() then
+            if fin.active then
+                XXX_msg = true
+                XXX_file:write('[ERR 15] ???\n'..XXX_trace)
+            end
             ASR(not fin.active, me,
                     'only empty finalizers inside constructors')
         end
@@ -347,8 +425,16 @@ F = {
             req = false     -- impossible to run finalizers on threads
         end
 
+        if not((not req) or fin or AST.iter'Dcl_fun'()) then
+            XXX_msg = true
+            XXX_file:write('[ERR 16] ???\n'..XXX_trace)
+        end
         ASR((not req) or fin or AST.iter'Dcl_fun'(), me,
             'call to "'..me.c.id..'" requires `finalize´')
+        if not ((not fin) or req) then
+            XXX_msg = true
+            XXX_file:write('[ERR 17] ???\n'..XXX_trace)
+        end
         ASR((not fin) or req, me, 'invalid `finalize´')
 
         if fin and fin.active then
