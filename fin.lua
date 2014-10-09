@@ -47,7 +47,7 @@ F = {
         noptr = noptr or (to.tp.buffer and fr.tp.buffer)
 
         if noptr then
-            ASR(op == '=', me, 1101, 'invalid operator')
+            ASR(op == '=', me, 1101, 'wrong operator')
             ASR(not me.fin, me, 1102, 'attribution does not require `finalize´')
             return
         end
@@ -69,7 +69,7 @@ F = {
 
         -- constants are safe
         if fr.sval then
-            ASR(op == '=', me, 1103, 'invalid operator')
+            ASR(op == '=', me, 1103, 'wrong operator')
             ASR(not me.fin, me, 1104, 'attribution does not require `finalize´')
             return
         end
@@ -175,7 +175,7 @@ F = {
                     --     p = &i;
                     -- end
             else
-                ASR(op=='=', me, 'invalid operator')
+                ASR(op=='=', me, 'wrong operator')
             end
         end
 
@@ -286,7 +286,7 @@ F = {
 
         if AST.iter'Dcl_constr'() then
             ASR(not fin.active, me, 1108,
-                    'only empty finalizers inside constructors')
+                    '`finalize´ inside constructor')
         end
 
         if set then
@@ -310,11 +310,6 @@ F = {
         local req = false
 
         if not (me.c and (me.c.mod=='@pure' or me.c.mod=='@nohold')) then
-            if f.org and string.sub(me.c.id,1,1)=='_' then
-                --exps = { f.org, unpack(exps) }  -- only native
-                -- avoids this.f(), where f is a pointer to func
-                -- vs this._f()
-            end
             for i, exp in ipairs(exps) do
                 local hold = true
                 if f.var and f.var.fun then
@@ -323,7 +318,7 @@ F = {
                 if hold then
                     -- int* pa; _f(pa);
                     --  (`pa´ termination must consider `_f´)
-                    local r = (exp.tp.ptr>0 or exp.tp.ext) and
+                    local r = (exp.tp.ptr>0 or exp.tp.ext or exp.tp.arr) and
                               (not exp.isConst) and
                               (not exp.c or exp.c.mod~='const')
                                     -- except constants
@@ -343,7 +338,7 @@ F = {
         end
 
         ASR((not req) or fin or AST.iter'Dcl_fun'(), me, 1109,
-            'call to "'..me.c.id..'" requires `finalize´')
+            'call requires `finalize´')
         ASR((not fin) or req, me, 1110, 'invalid `finalize´')
 
         if fin and fin.active then

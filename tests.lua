@@ -818,12 +818,11 @@ escape 1;
     run = 1,
 }
 
-]===]
-
 --do return end
 
 -------------------------------------------------------------------------------
 -- OK: well tested
+]===]
 
 Test { [[escape(1);]],
     _ana = {
@@ -14682,6 +14681,12 @@ escape 0;
 }
 
 Test { [[
+var int* ptr = _malloc();
+]],
+    fin = 'line 1 : destination pointer must be declared with the `[]´ buffer modifier',
+}
+
+Test { [[
 native _f();
 do
     var int* a;
@@ -14751,6 +14756,15 @@ end
     --props = "line 8 : not permitted inside `finalize´",
     --fin = 'line 6 : attribution does not require `finalize´',
     --fin = 'line 6 : attribution to pointer with greater scope',
+}
+
+Test { [[
+var int v = 10;
+var int* ptr = &v;
+await 1s;
+escape *ptr;
+]],
+    fin = 'line 4 : pointer access across `await´',
 }
 
 Test { [[
@@ -14997,6 +15011,22 @@ escape 1;
     fin = 'line 6 : invalid call (multiple scopes)',
 }
 Test { [[
+var char* buf;
+_enqueue(buf);
+escape 1;
+]],
+    fin = 'line 2 : call requires `finalize´',
+}
+
+Test { [[
+var char[255] buf;
+_enqueue(buf);
+escape 1;
+]],
+    fin = 'line 2 : call requires `finalize´',
+}
+
+Test { [[
 native _f();
 do
     var int* p1 = null;
@@ -15008,7 +15038,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    fin = 'line 6 : call to "_f" requires `finalize´',
+    fin = 'line 6 : call requires `finalize´',
     -- multiple scopes
 }
 
@@ -15023,7 +15053,7 @@ native do
 end
 escape _f(_v);
 ]],
-    --fin = 'line 3 : call to "_f" requires `finalize´',
+    --fin = 'line 3 : call requires `finalize´',
     run = 2,
     --fin = 'line 9 : attribution requires `finalize´',
 }
@@ -15038,7 +15068,7 @@ native do
 end
 escape _f(_v);
 ]],
-    --fin = 'line 3 : call to "_f" requires `finalize´',
+    --fin = 'line 3 : call requires `finalize´',
     run = 2,
 }
 
@@ -15080,7 +15110,7 @@ end
 var int v;
 escape _f(&v) == 1;
 ]],
-    fin = 'line 8 : call to "_f" requires `finalize´',
+    fin = 'line 8 : call requires `finalize´',
 }
 
 Test { [[
@@ -16179,7 +16209,7 @@ do
 end
 escape 1;
 ]],
-    fin = 'line 6 : call to "_f" requires `finalize´',
+    fin = 'line 6 : call requires `finalize´',
 }
 
 Test { [[
@@ -16374,7 +16404,7 @@ end
 escape ret;
 ]],
     --fin = 'line 7 : invalid block for awoken pointer "p"',
-    --fin = 'line 7 : invalid operator',
+    --fin = 'line 7 : wrong operator',
     run = 1,
 }
 
@@ -16396,7 +16426,7 @@ end
 escape ret;
 ]],
     --fin = 'line 7 : invalid block for awoken pointer "p"',
-    --fin = 'line 7 : invalid operator',
+    --fin = 'line 7 : wrong operator',
     run = 1,
     safety = 2,
     _ana = {
@@ -16599,7 +16629,7 @@ do
 end
 escape i;
 ]],
-    fin = 'line 7 : invalid operator',
+    fin = 'line 7 : wrong operator',
     --fin = 'line 7 : attribution does not require `finalize´',
     --run = 1,
 }
@@ -16621,7 +16651,7 @@ do
 end
 escape i;
 ]],
-    --fin = 'line 7 : invalid operator',
+    --fin = 'line 7 : wrong operator',
     --fin = 'line 7 : attribution does not require `finalize´',
     run = 1,
 }
@@ -16644,7 +16674,7 @@ do
 end
 escape i;
 ]],
-    --fin = 'line 7 : invalid operator',
+    --fin = 'line 7 : wrong operator',
     --fin = 'line 7 : attribution does not require `finalize´',
     fin = 'line 14 : pointer access across `await´',
     --run = 1,
@@ -20742,7 +20772,7 @@ end
         acc = 12,        -- TODO: nao conferi
         isForever = true,
     },
-    --fin = 'line 4 : call to "_digitalWrite" requires `finalize´',
+    --fin = 'line 4 : call requires `finalize´',
 }
 
 Test { [[
@@ -20899,7 +20929,7 @@ var int a;
 a = _inv(_inv(1));
 escape a;
 ]],
-    --fin = 'line 8 : call to "_inv" requires `finalize´',
+    --fin = 'line 8 : call requires `finalize´',
     run = 1,
 }
 
@@ -21281,11 +21311,17 @@ escape 1;
 }
 
 Test { [[
+var int a := 1;
+escape 1;
+]],
+    fin = 'line 1 : wrong operator',
+}
+Test { [[
 var int a;
 a := 1;
 escape 1;
 ]],
-    fin = 'line 2 : invalid operator',
+    fin = 'line 2 : wrong operator',
 }
 Test { [[
 var int a;
@@ -21299,11 +21335,17 @@ escape 1;
     fin = 'line 3 : attribution does not require `finalize´',
 }
 Test { [[
+var int* a := null;
+escape 1;
+]],
+    fin = 'line 1 : wrong operator',
+}
+Test { [[
 var int* a;
 a := null;
 escape 1;
 ]],
-    fin = 'line 2 : invalid operator',
+    fin = 'line 2 : wrong operator',
 }
 Test { [[
 var int* a;
@@ -21323,14 +21365,14 @@ function (void)=>void f do
 end
 escape 1;
 ]],
-    fin = 'line 3 : invalid operator',
+    fin = 'line 3 : wrong operator',
 }
 Test { [[
 var int a;
 var int* pa := &a;
 escape 1;
 ]],
-    fin = 'line 2 : invalid operator',
+    fin = 'line 2 : wrong operator',
     run = 1,
 }
 Test { [[
@@ -21351,7 +21393,7 @@ function (void* o1)=>void f do
 end
 escape 1;
 ]],
-    fin = 'line 2 : invalid operator',
+    fin = 'line 2 : wrong operator',
     --fin = 'line 2 : pointer access across `await´',
 }
 
@@ -29428,6 +29470,44 @@ escape _V;
 }
 
 Test { [[
+class T with
+    var void* ptr;
+do
+end
+
+var T t with
+    finalize
+        this.ptr = _malloc(10);
+    with
+        _free(this.ptr);
+    end
+end;
+]],
+    --env = 'line 22 : variable/event "_" is not declared',
+    fin = 'line 7 : `finalize´ inside constructor',
+    --props = 'line 23 : not permitted inside a constructor',
+}
+
+Test { [[
+class T with
+    var void* ptr;
+do
+end
+
+spawn T with
+    finalize
+        this.ptr = _malloc(10);
+    with
+        _free(this.ptr);
+    end
+end;
+]],
+    --env = 'line 22 : variable/event "_" is not declared',
+    fin = 'line 7 : `finalize´ inside constructor',
+    --props = 'line 23 : not permitted inside a constructor',
+}
+
+Test { [[
 native _s=0;
 native do
     typedef int s;
@@ -29462,7 +29542,7 @@ end
 escape _V;
 ]],
     --env = 'line 22 : variable/event "_" is not declared',
-    fin = 'only empty finalizers inside constructors',
+    fin = '`finalize´ inside constructor',
     --props = 'line 23 : not permitted inside a constructor',
 }
 
@@ -29539,7 +29619,7 @@ end
 escape _V;
 ]],
     --env = 'line 23 : variable/event "_" is not declared',
-    fin = 'only empty finalizers inside constructors',
+    fin = '`finalize´ inside constructor',
     --props = 'line 24 : not permitted inside a constructor',
 }
 
@@ -29578,7 +29658,7 @@ end
 escape _V;
 ]],
     --env = 'line 22 : variable/event "_" is not declared',
-    fin = 'only empty finalizers inside constructors',
+    fin = '`finalize´ inside constructor',
     --fin = 'line 21 : invalid `finalize´',
 }
 
@@ -31108,7 +31188,7 @@ do
     end
 end
 ]],
-    fin = 'line 6 : call to "_f" requires `finalize´',
+    fin = 'line 6 : call requires `finalize´',
 }
 
 Test { [[
@@ -32811,7 +32891,7 @@ escape 1;
 ]],
     wrn = true,
     -- function must be "@hold v" and call must have fin
-    fin = 'line 12 : call to "f" requires `finalize´',
+    fin = 'line 12 : call requires `finalize´',
     --fin = 'line 6 : organism pointer attribution only inside constructors',
 }
 
@@ -32839,7 +32919,7 @@ escape 1;
 ]],
     wrn = true,
     -- function must be "@hold v" and call must have fin
-    fin = 'line 12 : call to "f" requires `finalize´',
+    fin = 'line 12 : call requires `finalize´',
     --fin = 'line 6 : organism pointer attribution only inside constructors',
 }
 
