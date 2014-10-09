@@ -109,22 +109,65 @@ function MAX (v1, v2)
     return (v1 > v2) and v1 or v2
 end
 
-function WRN (cond, ln, msg)
-    ln = (AST.isNode(ln) and ln.ln) or ln
-    if not cond then
-        DBG('WRN : '..ln[1]..' : line '..ln[2]..' : '..msg)
+function WRN (cond, ln, code, msg)
+    if cond then
+        return cond
     end
+
+    if msg==nil then
+        msg = code
+        code = '0000'
+    end
+    ln = (AST.isNode(ln) and ln.ln) or ln
+    msg = 'WRN ['..code..'] : '..ln[1]..' : line '..ln[2]..' : '..msg
+
+    if RUNTESTS_file and tonumber(code)>1100 then
+        RUNTESTS_file:write([[
+==============
+]]..msg..[[
+
+--------------
+]]..T[1]..[[
+--------------
+]]..debug.traceback()..[[
+
+==============
+]])
+    end
+
+    DBG('WRN ['..code..'] : '..ln[1]..' : line '..ln[2]..' : '..msg)
     return cond
 end
-function ASR (cond, ln, msg)
-    ln = (AST.isNode(ln) and ln.ln) or ln
-    if RUNTESTS and (not cond) then
-        return assert(false, 'ERR : '..ln[1]..' : line '..ln[2]..' : '..msg)
-    else
-        if not cond then
-            DBG('ERR : '..ln[1]..' : line '..ln[2]..' : '..msg)
-            os.exit(1)
-        end
+function ASR (cond, ln, code, msg)
+    if cond then
         return cond
+    end
+
+    if msg==nil then
+        msg = code
+        code = '0000'
+    end
+    ln = (AST.isNode(ln) and ln.ln) or ln
+    msg = 'ERR ['..code..'] : '..ln[1]..' : line '..ln[2]..' : '..msg
+
+    if RUNTESTS_file and tonumber(code)>1100 then
+        RUNTESTS_file:write([[
+==============
+]]..msg..[[
+
+--------------
+]]..T[1]..[[
+--------------
+]]..debug.traceback()..[[
+==============
+]])
+    end
+
+    if RUNTESTS then
+        return assert(false, msg)
+                -- TODO: error(msg) ???
+    else
+        DBG(msg)
+        os.exit(1)
     end
 end

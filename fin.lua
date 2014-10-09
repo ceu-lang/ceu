@@ -1,7 +1,3 @@
-XXX_file = assert(io.open('/tmp/fin.txt','w'))
-XXX_msg = false
-XXX_trace = ''
-
 -- Track all declared pointers to assert that they are not accessed across
 -- await statements:
 local TRACK = {
@@ -51,16 +47,8 @@ F = {
         noptr = noptr or (to.tp.buffer and fr.tp.buffer)
 
         if noptr then
-            if op ~= '=' then
-                XXX_msg = true
-                XXX_file:write('[ERR 1] not pointer\n'..XXX_trace)
-            end
-            ASR(op == '=', me, 'invalid operator')
-            if me.fin then
-                XXX_msg = true
-                XXX_file:write('[ERR 2] not pointer\n'..XXX_trace)
-            end
-            ASR(not me.fin, me, 'attribution does not require `finalize´')
+            ASR(op == '=', me, 1101, 'invalid operator')
+            ASR(not me.fin, me, 1102, 'attribution does not require `finalize´')
             return
         end
 
@@ -81,16 +69,8 @@ F = {
 
         -- constants are safe
         if fr.sval then
-            if op ~= '=' then
-                XXX_msg = true
-                XXX_file:write('[ERR 3] constant\n'..XXX_trace)
-            end
-            ASR(op == '=', me, 'invalid operator')
-            if me.fin then
-                XXX_msg = true
-                XXX_file:write('[ERR 4] not pointer\n'..XXX_trace)
-            end
-            ASR(not me.fin, me, 'attribution does not require `finalize´')
+            ASR(op == '=', me, 1103, 'invalid operator')
+            ASR(not me.fin, me, 1104, 'attribution does not require `finalize´')
             return
         end
 
@@ -138,12 +118,7 @@ F = {
             -- the local goes out of scope, hence, we require finalization.
             -- The "to" pointers must be `[]´.
 
-            if not (to.tp.buffer or to.tp.ext) then
-                XXX_msg = true
-                XXX_file:write('[ERR 8] ???\n'..XXX_trace)
-            end
-
-            ASR(to.tp.buffer or to.tp.ext, me,
+            ASR(to.tp.buffer or to.tp.ext, me, 1105,
                     'destination pointer must be declared with the `[]´ buffer modifier')
                 -- var void* ptr = _malloc(1);  // no
                 -- _ptr = _malloc(1);           // ok
@@ -204,65 +179,28 @@ F = {
             end
         end
 
-    -- ATTRIBUTIONS INSIDE FUNCTIONS
+    -- FORCE @hold FOR UNSAFE ATTRIBUTIONS INSIDE FUNCTIONS
 
         local fun = AST.iter'Dcl_fun'()
-        if fun then
-            -- refuse attributions to a
-            --  - class field (this or body)
-            --  - _NAT
-            --  - function argument
-            if to.lst.tag=='Nat' or to_blk==cls.blk_ifc
-                                 or to_blk==cls.blk_body
-            or to.lst.var and to.lst.var.isFun then
-                              -- function parameter
-                if op ~= ':=' then
-                    XXX_msg = true
-                    XXX_file:write('[ERR 5] ???\n'..XXX_trace)
-                end
--- TODO: join all unsafe pointer attribution, they are always unsafe
-                ASR(op==':=', me, 'attribution to pointer with greater scope')
-                    -- function (void* v)=>void f do
-                    --    _V = v;       -- _V is global
-                    -- end
-                    --
-                    -- function (void)=>void f do
-                    --     var void* v;
-                    --     this.a = v;  -- a is top level
-                    -- end
-                    --
-                    -- function (void* v)=>void f do
-                    --     this.a = v;  -- a is top level
-                    -- end
-
--- TODO: it is ok a pointer to a class field that is not acessed
--- across reactions or that is watched
-
-                if to_blk==cls.blk_ifc or to_blk==cls.blk_body then
-                    -- must be hold
-                    local _, _, ins, _, _, _ = unpack(fun)
-                    if not ins[fr.lst.var.funIdx][1] then
-                        XXX_msg = true
-                        XXX_file:write('[ERR 6] ???\n'..XXX_trace)
-                    end
-                    -- functions/methods that hold pointers
-                    -- must annotate those arguments
-                    ASR(ins[fr.lst.var.funIdx][1], me,
-                        'parameter must be `hold´')
-                        -- function (void* v)=>void f do
-                        --     _V := v;
-                        -- end
-                        -- class T with
-                        --     var void* a;
-                        -- do
-                        --     function (void* v)=>void f do
-                        --         this.a := v;
-                        --     end
-                        -- end
-                end
-            end
+        if op==':=' and fun and                          -- unsafe attribution
+           (to_blk==cls.blk_ifc or to_blk==cls.blk_body) -- inside a function
+        then                                             -- to ifc/body field
+            -- must be hold
+            local _, _, ins, _, _, _ = unpack(fun)
+            -- functions/methods that hold pointers
+            -- must annotate those arguments
+            ASR(ins[fr.lst.var.funIdx][1], me, 1106, 'parameter must be `hold´')
+                -- function (void* v)=>void f do
+                --     _V := v;
+                -- end
+                -- class T with
+                --     var void* a;
+                -- do
+                --     function (void* v)=>void f do
+                --         this.a := v;
+                --     end
+                -- end
         end
-
     end,
 
     Dcl_var = function (me)
@@ -303,11 +241,7 @@ F = {
         end
 
         -- invalid access!
-        if true then
-            XXX_msg = true
-            XXX_file:write('[ERR 11] access across await\n'..XXX_trace)
-        end
-        ASR(false, me, 'pointer access across `await´')
+        ASR(false, me, 1107, 'pointer access across `await´')
     end,
 
     AwaitInt = function (me)
@@ -351,11 +285,7 @@ F = {
                          fin[1][1][1] and fin[1][1][1].tag~='Nothing')
 
         if AST.iter'Dcl_constr'() then
-            if fin.active then
-                XXX_msg = true
-                XXX_file:write('[ERR 12] ???\n'..XXX_trace)
-            end
-            ASR(not fin.active, me,
+            ASR(not fin.active, me, 1108,
                     'only empty finalizers inside constructors')
         end
 
@@ -412,17 +342,9 @@ F = {
             req = false     -- impossible to run finalizers on threads
         end
 
-        if not((not req) or fin or AST.iter'Dcl_fun'()) then
-            XXX_msg = true
-            XXX_file:write('[ERR 13] ???\n'..XXX_trace)
-        end
-        ASR((not req) or fin or AST.iter'Dcl_fun'(), me,
+        ASR((not req) or fin or AST.iter'Dcl_fun'(), me, 1109,
             'call to "'..me.c.id..'" requires `finalize´')
-        if not ((not fin) or req) then
-            XXX_msg = true
-            XXX_file:write('[ERR 14] ???\n'..XXX_trace)
-        end
-        ASR((not fin) or req, me, 'invalid `finalize´')
+        ASR((not fin) or req, me, 1110, 'invalid `finalize´')
 
         if fin and fin.active then
             req.fins = req.fins or {}

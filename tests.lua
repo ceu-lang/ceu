@@ -818,46 +818,6 @@ escape 1;
     run = 1,
 }
 
----
--- TODO: ok
-
-Test { [[
-function (int id, void** o1, void** o2)=>int getVS do
-    if (*o1) then
-        return 1;
-    else/if (*o2) then
-        var void* tmp = *o1;
-        *o1 := *o2;
-        *o2 := tmp;
-            // tmp is an alias to "o1"
-        return 1;
-    else
-        //*o1 = NULL;
-        //*o2 = NULL;
-        return 0;
-    end
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-native do
-    void* V;
-end
-class T with
-    function (void* v)=>void f;
-do
-    function (void* v)=>void f do
-        _V := v;
-    end
-end
-escape 1;
-]],
-    --fin = 'line 8 : invalid attribution',
-    run = 1,
-}
 ]===]
 
 --do return end
@@ -16889,7 +16849,7 @@ end;
 escape a;
 ]],
     wrn = true,
-    props = 'ERR : tests.lua : line 5 : not permitted inside `async´',
+    props = 'line 5 : not permitted inside `async´',
 }
 
 Test { [[
@@ -21705,6 +21665,44 @@ escape 1;
     run = 1,
 }
 
+Test { [[
+function (int id, void** o1, void** o2)=>int getVS do
+    if (*o1) then
+        return 1;
+    else/if (*o2) then
+        var void* tmp = *o1;
+        *o1 = *o2;
+        *o2 := tmp;
+            // tmp is an alias to "o1"
+        return 1;
+    else
+        //*o1 = NULL;
+        //*o2 = NULL;
+        return 0;
+    end
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native do
+    void* V;
+end
+class T with
+    function (void* v)=>void f;
+do
+    function (void* v)=>void f do
+        _V := v;
+    end
+end
+escape 1;
+]],
+    --fin = 'line 8 : invalid attribution',
+    run = 1,
+}
+
     -- CPP / DEFINE / PREPROCESSOR
 
 Test { [[
@@ -22370,7 +22368,7 @@ do
 end
 escape 1;
 ]],
-    adj = 'ERR : tests.lua : line 3 : invalid `escape´',
+    adj = 'line 3 : invalid `escape´',
     --run = 1,
 }
 
@@ -31557,14 +31555,14 @@ Test { [[
 function (void) f;
 escape 1;
 ]],
-    parser = 'ERR : tests.lua : line 1 : after `)´ : expected `=>´',
+    parser = 'line 1 : after `)´ : expected `=>´',
 }
 
 Test { [[
 function (void) => void f
 escape 1;
 ]],
-    parser = 'ERR : tests.lua : line 1 : after `f´ : expected `;´'
+    parser = 'line 1 : after `f´ : expected `;´'
 }
 
 Test { [[
@@ -31606,7 +31604,7 @@ function (void) => void f do
 end
 escape 1;
 ]],
-    props = 'ERR : tests.lua : line 3 : not permitted inside `function´',
+    props = 'line 3 : not permitted inside `function´',
 }
 
 Test { [[
@@ -31651,7 +31649,7 @@ do
 end
 escape 1;
 ]],
-    props = 'ERR : tests.lua : line 2 : not permitted outside a function',
+    props = 'line 2 : not permitted outside a function',
 }
 
 Test { [[
@@ -35529,7 +35527,7 @@ nothing;
 await A;
 escape 1;
 ]],
-    parser = 'ERR : /tmp/_ceu_MOD1.ceu : line 4 : after `A´ : expected `;´',
+    parser = '/tmp/_ceu_MOD1.ceu : line 4 : after `A´ : expected `;´',
 }
 
 INCLUDE('/tmp/_ceu_MOD1.ceu', [[
@@ -35572,7 +35570,7 @@ Test { [[
 await A;
 escape 1;
 ]],
-    parser = 'ERR : /tmp/_ceu_MOD2.ceu : line 2 : after `nothing´ : expected `;´',
+    parser = '/tmp/_ceu_MOD2.ceu : line 2 : after `nothing´ : expected `;´',
 }
 
 INCLUDE('/tmp/_ceu_MOD2.ceu', [[
@@ -35610,7 +35608,7 @@ Test { [[
 await A;
 escape 1;
 ]],
-    parser = 'ERR : /tmp/_ceu_MOD1.ceu : line 2 : after `A´ : expected `;´',
+    parser = '/tmp/_ceu_MOD1.ceu : line 2 : after `A´ : expected `;´',
 }
 
 INCLUDE('/tmp/_ceu_MOD1.ceu', [[
@@ -35676,7 +35674,7 @@ end
 var int i = 10;
 escape i;
 ]],
-    env = 'ERR : tests.lua : line 4 : interface/class "T" is already declared',
+    env = 'tests.lua : line 4 : interface/class "T" is already declared',
 }
 
 INCLUDE('/tmp/_ceu_MOD1.ceu', [[
@@ -35695,7 +35693,7 @@ end
 var int i = 10;
 escape i;
 ]],
-    env = 'ERR : /tmp/_ceu_MOD1.ceu : line 1 : interface/class "T" is already declared',
+    env = '/tmp/_ceu_MOD1.ceu : line 1 : interface/class "T" is already declared',
 }
 
 INCLUDE('/tmp/_ceu_MOD1.ceu', [[
