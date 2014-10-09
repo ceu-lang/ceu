@@ -256,11 +256,11 @@ F = {
         --      end
         -- becomes
         --      par/or do
-        --          ...
-        --      with
         --          if <ORG>->isAlive
         --              await <EVT>|<ORG>.ok;
         --          end
+        --      with
+        --          ...
         --      end
         --]]
         local evt, blk = unpack(me)
@@ -278,7 +278,6 @@ F = {
         end
 
         local ret = node('ParOr', me.ln,
-                        blk,
                         node('Block', me.ln,
                             node('Stmts', me.ln,
                                 evt,  -- parses here, than uses "Ref" in "awt"
@@ -293,7 +292,8 @@ F = {
                                                 AST.copy(evt))),
                                         'isAlive'),
                                     node('Block',me.ln,node('Stmts',me.ln,awt)),
-                                    node('Block',me.ln,node('Stmts',me.ln,node('Nothing', me.ln)))))))
+                                    node('Block',me.ln,node('Stmts',me.ln,node('Nothing', me.ln)))))),
+                        blk)
         ret.isWatching = evt
         return ret
     end,

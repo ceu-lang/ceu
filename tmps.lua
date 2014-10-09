@@ -120,7 +120,7 @@ F = {
         VARS = {}   -- NO: run in different ceu_call
     end,
 
-    Spawn = function (me)
+    Spawn_pre = function (me)
         VARS = {}   -- NO: start organism
     end,
 

@@ -174,6 +174,11 @@ F = {
         me.lst.acc.tp = me.tp  -- deptr'd
     end,
     ['Op1_*'] = function (me)
+        if not me.lst.acc then
+            assert(me.lst.const)
+            return  -- constants
+        end
+
         me.lst.acc.any = true
         me.lst.acc.tp = me.tp  -- deptr'd
 
