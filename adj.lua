@@ -351,17 +351,19 @@ F = {
         local to_dcl = node('Dcl_var', me.ln, 'var', to_tp, to_id)
         to_dcl.read_only = true
 
-        local fr_ini = node('SetExp', me.ln, ':=',  -- fr_dcl is in outer scope
+        local fr_ini = node('SetExp', me.ln, '=',
                                         node('IterIni', me.ln, fr_exp),
                                         fr_fvar())
+              fr_ini.__ast_iter = true  -- don't check in fin.lua
         local to_ini = node('SetExp', me.ln, '=',
                         node('Op1_cast', me.ln, to_tp, fr_fvar()),
                         to_fvar())
         to_ini.read_only = true   -- accept this write
 
-        local fr_nxt = node('SetExp', me.ln, ':=',  -- fr_dcl is in outer scope
+        local fr_nxt = node('SetExp', me.ln, '=',
                                         node('IterNxt', me.ln, fr_fvar()),
                                         fr_fvar())
+              fr_nxt.__ast_iter = true  -- don't check in fin.lua
         fr_nxt[2].iter_nxt = fr_nxt[3]
         local to_nxt = node('SetExp', me.ln, '=',
                         node('Op1_cast', me.ln, to_tp, fr_fvar()),

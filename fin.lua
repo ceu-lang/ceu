@@ -33,9 +33,9 @@ F = {
 
         local cls = CLS()
 
-        --
-        -- NON-POINTER ATTRIBUTIONS (always safe)
-        --
+    --
+    -- NON-POINTER ATTRIBUTIONS (always safe)
+    --
 
         local noptr =  (to.tp.ptr==0 and (not to.tp.arr) and
                         ((not to.tp.ext) or TP.get(to.tp.id).plain or to.tp.plain))
@@ -64,9 +64,14 @@ F = {
             return
         end
 
-        --
-        -- POINTER ATTRIBUTIONS
-        --
+    --
+    -- POINTER ATTRIBUTIONS
+    --
+
+        -- attribution in pool iterators
+        if me.__ast_iter then
+            return
+        end
 
         -- an attribution restarts tracking accesses to "to"
         -- variables or native symbols
@@ -89,9 +94,9 @@ F = {
             return
         end
 
-        -- NON-CONSTANT ATTRIBUTIONS
+    -- NON-CONSTANT ATTRIBUTIONS
 
-        -- TO_BLK: block/scope for "to"
+        -- determine "to_blk": block/scope for "to"
         local to_blk
         local constr = AST.iter'Dcl_constr'()
         if constr then
@@ -111,7 +116,7 @@ F = {
                 -- take "b"
                 local c = pool.lst
                 local b = AST.par(c, 'Op2_.')
-                local v = (b and assert(b.org).lst) or c
+                local v = (b and assert(b.org).fst) or c
                 to_blk = assert(v.var).blk
             end
         else
@@ -119,10 +124,85 @@ F = {
             to_blk = node2blk(to)
         end
 
-        -- Assignments that outlive function invocations are always unsafe.
+    -- CHECK IF "FINALIZE" IS REQUIRED
+
+        if fr.lst and fr.lst.tag=='Op2_call' and fr.lst.c.mod~='@pure'
+        or fr.tag == 'RawExp' then
+            -- We assume that a impure function that returns a global pointer
+            -- creates memory (e.g. malloc, fopen):
+            --      var int[] pa = _fopen();
+            -- We assume that a RawExp that returns a global pointer
+            -- creates memory (e.g. { new T }):
+            --      var int[] pa = { new T() };
+            -- In these cases, the return memory would persist when
+            -- the local goes out of scope, hence, we require finalization.
+            -- The "to" pointers must be `[]´.
+
+            if not (to.tp.buffer or to.tp.ext) then
+                XXX_msg = true
+                XXX_file:write('[ERR 8] ???\n'..XXX_trace)
+            end
+
+            ASR(to.tp.buffer or to.tp.ext, me,
+                    'destination pointer must be declared with the `[]´ buffer modifier')
+                -- var void* ptr = _malloc(1);  // no
+                -- _ptr = _malloc(1);           // ok
+
+            ASR(me.fin, me, 'attribution requires `finalize´')
+                -- var void[] ptr = _malloc(1);
+            if me.fin then
+                to_blk.fins = to_blk.fins or {}
+                table.insert(to_blk.fins, 1, me.fin)
+            end
+            return
+        end
+        ASR(not me.fin, me, 'attribution does not require `finalize´')
+
+    -- REFUSE THE FOLLOWING POINTER ATTRIBUTIONS
+    -- (CHECK IF ":=" IS REQUIRED)
+
+        -- refuse "org.x=y", unless "this" (inside constructor or not)
+        -- "this" is easy to follow inside the single body
+        -- other assignments are spread in multiple bodies
+        if to.org and to.fst.tag~='This' then
+            ASR(op==':=', me,
+                'organism pointer attribution only inside constructors')
+                -- var T t;
+                -- t.v = null;
+
+        else
+            -- OK: "fr" is a pointer to org (watching makes it safe)
+            -- OK: "fr" `&´ reference has bigger scope than "to"
+            -- int a; int* pa; pa=&a;
+            -- int a; do int* pa; pa=&a; end
+            local fr_blk = node2blk(fr)
+            if not (fr.const or ENV.clss[to.tp.id] or
+-- TODO: descomentar
+           --(AST.par(to_blk,'Dcl_cls') == AST.par(fr_blk,'Dcl_cls')) and
+                   (   to_blk.__depth >= fr_blk.__depth
+                   or (to_blk.__depth==cls.blk_ifc.__depth and
+                       fr_blk.__depth==cls.blk_body.__depth)
+                   ))
+            then
+                ASR(op==':=', me, 'attribution to pointer with greater scope')
+                    -- NO:
+                    -- var int* p;
+                    -- do
+                    --     var int i;
+                    --     p = &i;
+                    -- end
+            else
+                ASR(op=='=', me, 'invalid operator')
+            end
+        end
+
+    -- ATTRIBUTIONS INSIDE FUNCTIONS
+
         local fun = AST.iter'Dcl_fun'()
         if fun then
-            -- to a class field, _NAT, or parameter
+            -- attribution to a class field (this or body),
+            --                  _NAT,
+            --                  function argument
             if to.lst.tag=='Nat' or to_blk==cls.blk_ifc
                                  or to_blk==cls.blk_body
             or to.lst.var and to.lst.var.isFun then
@@ -171,104 +251,9 @@ F = {
                         --     end
                         -- end
                 end
-            else
--- TODO: join all pointer attributions that do not cross await, they are always safe
-                if op ~= '=' then
-                    XXX_msg = true
-                    XXX_file:write('[ERR 7] ???\n'..XXX_trace)
-                end
-                ASR(op == '=', me, 'invalid operator')
             end
         end
 
-        if fr.lst and fr.lst.tag=='Op2_call' and fr.lst.c.mod~='@pure'
-        or fr.tag == 'RawExp' then
-            -- We assume that a impure function that returns a global pointer
-            -- creates memory (e.g. malloc, fopen):
-            --      var int[] pa = _fopen();
-            -- We assume that a RawExp that returns a global pointer
-            -- creates memory (e.g. { new T }):
-            --      var int[] pa = { new T() };
-            -- In these cases, the return memory would persist when
-            -- the local goes out of scope, hence, we require finalization.
-            -- The "to" pointers must be `[]´.
-            if not (to.tp.buffer or to.tp.ext) then
-                XXX_msg = true
-                XXX_file:write('[ERR 8] ???\n'..XXX_trace)
-            end
-            ASR(to.tp.buffer or to.tp.ext, me,
-                    'destination pointer must be declared with the `[]´ buffer modifier')
-                -- var void* ptr = _malloc(1);  // no
-                -- _ptr = _malloc(1);           // ok
-            if not ((op==':=') or me.fin) then
-                XXX_msg = true
-                XXX_file:write('[ERR 9] ???\n'..XXX_trace)
-            end
-            --ASR((op==':=') or me.fin, me,
-                    --'attribution requires `finalize´')
-            ASR(me.fin, me, 'attribution requires `finalize´')
-                -- var void[] ptr = _malloc(1);
-            if me.fin then
-                to_blk.fins = to_blk.fins or {}
-                table.insert(to_blk.fins, 1, me.fin)
-            end
-            return
-        end
-
--- TODO: := only for across await
--- TODO: global!!! accesses
-
-        -- non-ref access are unsafe
-        -- pa = pb;  // I have no idea what "pb" refers to and its scope
-        if not (fr.byRef or fr.lst and fr.lst.amp) then
-            if to.org then
-                ASR(op==':=' or to.fst.tag=='This', me,
-                    'organism pointer attribution only inside constructors')
-                    -- difficult to track accesses from interfaces and from
-                    -- inside the body
-                    -- var T t;
-                    -- t.v = null;
-            end
-            if me.fin then
-                XXX_msg = true
-                XXX_file:write('[ERR 10] no finalize required\n'..XXX_trace)
-            end
--- TODO: deveria estar no corpo principal, depois dos testes de quem realmente precisa de finalize
-            ASR(not me.fin, me, 'attribution does not require `finalize´')
-        end
-
-        -- PTR ATTRIBUTIONS
-
-        --[[
-        -- OK: passing a pointer to an anonymous org, even if pool>v:
-        -- spawn T in pool with
-        --      _.ptr = &v;
-        -- end
-        -- The pointer cannot be accessed from outside because org is anon.
-        -- Inside, access must use watching anyways.
-        --]]
-        local spawn_new = AST.par(me,'Spawn')
-
-        -- OK: "fr" `&´ reference has bigger scope than "to"
-        -- int a; int* pa; pa=&a;
-        -- int a; do int* pa; pa=&a; end
-        local fr_blk = node2blk(fr)
-        if (spawn_new and to.tp.ptr==1) or fr.const or
-           --(AST.par(to_blk,'Dcl_cls') == AST.par(fr_blk,'Dcl_cls')) and
-               (   to_blk.__depth >= fr_blk.__depth
-               or (to_blk.__depth==cls.blk_ifc.__depth and
-                   fr_blk.__depth==cls.blk_body.__depth)
-               )
-        then
-            ASR(not me.fin, me, 'attribution does not require `finalize´')
-        else
-            ASR(op==':=', me, 'attribution to pointer with greater scope')
-                -- var int* p;
-                -- do
-                --     var int i;
-                --     p = &i;
-                -- end
-        end
     end,
 
     Dcl_var = function (me)

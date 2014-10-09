@@ -822,8 +822,74 @@ escape 1;
 -- TODO: ok
 
 Test { [[
+function (int id, void** o1, void** o2)=>int getVS do
+    if (*o1) then
+        return 1;
+    else/if (*o2) then
+        var void* tmp = *o1;
+        *o1 := *o2;
+        *o2 := tmp;
+            // tmp is an alias to "o1"
+        return 1;
+    else
+        //*o1 = NULL;
+        //*o2 = NULL;
+        return 0;
+    end
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native do
+    void* V;
+end
 class T with
-    var _t[] ptr;
+    function (void* v)=>void f;
+do
+    function (void* v)=>void f do
+        _V := v;
+    end
+end
+escape 1;
+]],
+    --fin = 'line 8 : invalid attribution',
+    run = 1,
+}
+
+---
+]===]
+
+Test { [[
+interface I with
+end
+
+interface Global with
+    var I* t;
+end
+
+class T with
+do
+    global:t = &this;
+end
+
+var I* t;
+
+escape 1;
+]],
+    --fin = 'line 10 : attribution requires `finalize´'
+    --fin = 'line 10 : attribution to pointer with greater scope',
+    fin = 'line 10 : organism pointer attribution only inside constructors',
+}
+
+Test { [[
+native do
+    void* v;
+end
+class T with
+    var _void[] ptr;
 do
 end
 var T t with
@@ -834,7 +900,6 @@ escape 1;
     run = 1,
 }
 
-]===]
 Test { [[
 class T with
     var char [] str;
@@ -939,7 +1004,7 @@ var int a;
 var int* pa := &a;
 escape 1;
 ]],
-    --fin = 'line 2 : invalid operator',
+    fin = 'line 2 : invalid operator',
     run = 1,
 }
 Test { [[
@@ -15221,7 +15286,7 @@ escape 1;
 Test { [[
 var int* a;
 var int* b = null;
-a := b;
+a = b;
 await 1s;
 var int* c = a;
 escape 1;
@@ -15231,7 +15296,7 @@ escape 1;
 Test { [[
 var int[] a;
 var int* b = null;
-a := b;
+a = b;
 await 1s;
 var int* c = a;
 escape 1;
@@ -15340,7 +15405,7 @@ native do
     typedef void (*t)(int*);
 end
 native _t = 4;
-var _t v := _f;
+var _t v = _f;
 await 1s;
 var int a;
 v(&a) finalize with nothing; end;
@@ -15358,7 +15423,7 @@ native do
     typedef void (*t)(int*);
 end
 native _t = 4;
-var _t v := _f;
+var _t v = _f;
 await 1s;
 var int a;
 _f(&a) finalize with nothing; end;
@@ -15607,7 +15672,23 @@ end
 escape ret;
 ]],
     --run = 1,
-    fin = 'line 7 : attribution to pointer with greater scope',
+    fin = 'line 7 : attribution does not require `finalize´',
+}
+Test { [[
+var int ret = 0;
+var int* pa;
+do
+    var int v;
+    if 1 then
+            pa = &v;
+    else
+            pa = &v;
+    end
+end
+escape ret;
+]],
+    --run = 1,
+    fin = 'line 6 : attribution to pointer with greater scope',
 }
 
 Test { [[
@@ -16801,7 +16882,7 @@ input void OS_START;
 do
     event int* e;
     par/and do
-        p := await e;
+        p = await e;
         ret = *p;
     with
         await OS_START;
@@ -16823,7 +16904,7 @@ input void OS_START;
 do
     event int* e;
     par/and do
-        p := await e;
+        p = await e;
         ret = *p;
     with
         await OS_START;
@@ -20583,11 +20664,11 @@ native do
     void* V;
 end
 var void* v=null;
-_V := v;
+_V = v;
 await 1s;
 escape _V==null;
 ]],
-    run = { ['~>1s']=1 }
+    run = false,
     --fin = 'line 7 : pointer access across `await´',
 }
 
@@ -23041,7 +23122,7 @@ do
 end
 
 var T t with
-    this.p := v;
+    this.p = v;
     this.v = v;
 end;
 
@@ -26227,7 +26308,7 @@ end
 var T* a;
 do
     var T* aa = spawn T in ts;
-        a := aa;
+        a = aa;
 end
 var T* b = spawn T in ts;   // fails (a is free on end)
 //native @nohold _fprintf(), _stderr;
@@ -26247,7 +26328,7 @@ end
 var T* a;
 do
     var T* aa = spawn T in ts;
-        a := aa;
+        a = aa;
 end
 var T* b = spawn T in ts;   // fails (a is free on end)
 escape b==null;
@@ -26266,10 +26347,10 @@ var T* a, b;
 do
     do
         var T* aa = spawn T in ts;
-            a := aa;
+            a = aa;
     end
     var T* bb = spawn T in ts;  // fails
-        b := bb;
+        b = bb;
 end
 var T* c = spawn T in ts;       // fails
 //native @nohold _fprintf(), _stderr;
@@ -26291,10 +26372,10 @@ var bool b?;
 do
     do
         var T* aa = spawn T in ts;
-            a := aa;
+            a = aa;
     end
     var T* bb = spawn T in ts;  // fails
-        b := bb;
+        b = bb;
     b? = (b != null);
 end
 var T* c = spawn T in ts;       // fails
@@ -26315,7 +26396,7 @@ end
 var T* a;
 do
     var T* aa = spawn T in ts;
-        a := aa;
+        a = aa;
 end
 var T* b = spawn T in ts;   // fails
 escape a!=null and b==null;
@@ -26333,7 +26414,7 @@ end
 var T* a;
 do
     var T* aa = spawn T in ts;
-        a := aa;
+        a = aa;
 end
 var T* b = spawn T in ts;   // fails
 escape b==null;
@@ -27454,7 +27535,7 @@ var T* a;
 do
     var T* b = spawn T;
     b:v = 10;
-    a := b;
+    a = b;
 end
 escape a:v;
 ]],
@@ -27472,7 +27553,7 @@ var T* a;
 do
     var T* b = spawn T;
     b:v = 10;
-    a := b;
+    a = b;
     escape a:v;
 end
 ]],
@@ -27490,7 +27571,7 @@ var T* a;
 do
     var T* b = spawn T;
     b:v = 10;
-    a := b;
+    a = b;
 end
 await 1s;
 escape a:v;
@@ -27544,7 +27625,7 @@ do
     pool T[] ts;
     var T* b = spawn T in ts;
     b:v = 10;
-        a := b;
+        a = b;
 end
 escape _V;
 ]],
@@ -27572,7 +27653,7 @@ do
     pool T[] ts;
     var T* b = spawn T in ts;
     b:v = 10;
-        a := b;
+        a = b;
     await OS_START;
 end
 escape _V;
@@ -27599,7 +27680,7 @@ do
     pool T[] ts;
     var T* b = spawn T in ts;
     b:v = 10;
-        a := b;
+        a = b;
 end
 escape _V;
 ]],
@@ -27625,7 +27706,7 @@ do
     pool T[] ts;
     var T* b = spawn T in ts;
     b:v = 10;
-        a := b;
+        a = b;
     await OS_START;
 end
 escape _V;
@@ -27637,7 +27718,7 @@ class T with
     var int* i1;
 do
     var int i2;
-    i1 := &i2;
+    i1 = &i2;
 end
 var T a;
 escape 10;
@@ -27651,7 +27732,7 @@ var T* t1;
 do
 do
     var T t2;
-    t1 := &t2;
+    t1 = &t2;
 end
 end
 escape 10;
@@ -27667,7 +27748,7 @@ do
 do
     var T t2;
     //finalize
-        t1 := &t2;
+        t1 = &t2;
     //with
         //nothing;
     //end
@@ -28321,7 +28402,7 @@ end
 var T t;
 do
     await OS_START;
-    var V* v = t.u:v;   // no more :=
+    var V* v = t.u:v;
 end
 
 escape _V;
@@ -28776,7 +28857,7 @@ end
 do
     var U u;
     spawn T with
-        this.u := u;
+        this.u = u;
     end;
 end
 escape 1;
@@ -29164,7 +29245,7 @@ end
 escape 10;
 ]],
     --fin = 'line 8 : attribution requires `finalize´',
-    --fin = 'line 8 : attribution to pointer with greater scope',
+    fin = 'line 8 : attribution to pointer with greater scope',
     run = 10,
 }
 
@@ -29208,7 +29289,7 @@ end
 escape 10;
 ]],
     run = 10,
-    --fin = 'line 14 : attribution to pointer with greater scope',
+    fin = 'line 14 : attribution to pointer with greater scope',
     --fin = 'line 14 : attribution requires `finalize´',
 }
 
@@ -29236,7 +29317,7 @@ end
 escape 10;
 ]],
     run = 10,
-    --fin = 'line 16 : attribution to pointer with greater scope',
+    fin = 'line 16 : attribution to pointer with greater scope',
     --fin = 'line 16 : attribution requires `finalize´',
 }
 
@@ -29264,7 +29345,7 @@ end
 escape 1;
 ]],
     run = { ['~>1min']=1 },
-    --fin = 'line 15 : attribution to pointer with greater scope',
+    fin = 'line 15 : attribution to pointer with greater scope',
     --fin = 'line 15 : attribution requires `finalize´',
 }
 Test { [[
@@ -29328,7 +29409,7 @@ end
 escape _V;
 ]],
     run = { ['~>1min']=10 },
-    --fin = 'line 21 : attribution to pointer with greater scope',
+    fin = 'line 22 : attribution to pointer with greater scope',
     --props = 'line 23 : not permitted inside a constructor',
 }
 
@@ -29404,7 +29485,7 @@ end
 escape _V;
 ]],
     run = { ['~>1min']=10 },
-    --fin = 'line 22 : attribution to pointer with greater scope',
+    fin = 'line 23 : attribution to pointer with greater scope',
 }
 
 Test { [[
@@ -29534,7 +29615,8 @@ emit u:move => 0;
 escape 2;
 ]],
     --fin = 'line 8 : attribution requires `finalize´',
-    fin = 'line 8 : attribution to pointer with greater scope',
+    --fin = 'line 8 : attribution to pointer with greater scope',
+    fin = 'line 11 : pointer access across `await´',
 }
 
 Test { [[
@@ -30332,27 +30414,6 @@ escape v;
 }
 
 Test { [[
-interface I with
-end
-
-interface Global with
-    var I* t;
-end
-
-class T with
-do
-    global:t = &this;
-end
-
-var I* t;
-
-escape 1;
-]],
-    --fin = 'line 10 : attribution requires `finalize´'
-    fin = 'line 10 : attribution to pointer with greater scope',
-}
-
-Test { [[
 interface Global with
     var int* a;
 end
@@ -31043,7 +31104,7 @@ pool T[] ts;
 var I* p;
 do
     loop (I*)i in ts do
-        p := i;
+        p = i;
     end
 end
 escape 1;
@@ -31083,7 +31144,7 @@ pool Unit[] us;
 var Unit* p;
 do
     loop (Unit*)i in us do
-        p := i;
+        p = i;
     end
 end
 escape 10;
@@ -31660,27 +31721,6 @@ end
 escape f(1,2);
 ]],
     run = 3,
-}
-
-Test { [[
-function (int id, void** o1, void** o2)=>int getVS do
-    if (*o1) then
-        return 1;
-    else/if (*o2) then
-        var void* tmp = *o1;
-        *o1 := *o2;
-        *o2 := tmp;
-            // tmp is an alias to "o1"
-        return 1;
-    else
-        //*o1 = NULL;
-        //*o2 = NULL;
-        return 0;
-    end
-end
-escape 1;
-]],
-    run = 1,
 }
 
 -- METHODS
@@ -32475,7 +32515,7 @@ do
 end
 
 var T t with
-    this.f2 := _f2;
+    this.f2 = _f2;
 end;
 escape t.ret1 + t.ret2;
 ]],
@@ -32629,22 +32669,6 @@ escape 1;
 ]],
     --fin = 'line 8 : invalid attribution',
     fin = 'line 8 : attribution to pointer with greater scope',
-}
-Test { [[
-native do
-    void* V;
-end
-class T with
-    function (void* v)=>void f;
-do
-    function (void* v)=>void f do
-        _V := v;
-    end
-end
-escape 1;
-]],
-    --fin = 'line 8 : invalid attribution',
-    run = 1,
 }
 
 Test { [[

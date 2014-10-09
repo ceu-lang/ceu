@@ -158,7 +158,7 @@ end
     -- RUN
 
     if not (T.run or T.gcc or T.asr) then
-        assert(T.loop or T._ana, 'missing run value')
+        assert(T.run==false or T.loop or T._ana, 'missing run value')
         return
     end
 
