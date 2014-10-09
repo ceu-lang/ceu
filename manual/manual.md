@@ -438,7 +438,7 @@ Identifiers
 -----------
 
 Céu uses identifiers to refer to *variables*, *internal events*, *external 
-events*,  *classes/interfaces*, and*native symbols*.
+events*,  *classes/interfaces*, and *native symbols*.
 
 ```
 ID      ::= <a-z, A-Z, 0-9, _> +
@@ -2219,14 +2219,14 @@ The values in parenthesis show the defaults for the options that are omitted.
 Errors
 ======
 
-Pointer attributions
---------------------
+Pointer attributions (11xx)
+---------------------------
 
 ### 1101 : *wrong operator*
 
-Use of the unsafe `:=` operator for non-pointer attributions.
+Use of the unsafe operator ":=" for non-pointer attributions.
 
-Instead, should use `=`.
+Instead, use `=`.
 
 Example:
 
@@ -2235,11 +2235,11 @@ Example:
 >>> ERR [1101] : file.ceu : line 1 : wrong operator
 </code></pre>
 
-### 1102 : *attribution does not require `finalize´*
+### 1102 : *attribution does not require "finalize"*
 
 Use of `finalize` for non-pointer attributions.
 
-Instead, should not use `finalize`.
+Instead, do not use `finalize`.
 
 Example:
 
@@ -2247,17 +2247,17 @@ Example:
 <b>finalize</b>
     v = 1;
 <b>with</b>
-    <b>nothing</b>;
+    <...>
 <b>end</b>
 
->>> ERR [1102] : file.lua : line 3 : attribution does not require `finalize´
+>>> ERR [1102] : file.lua : line 3 : attribution does not require "finalize"
 </code></pre>
 
 ### 1103 : *wrong operator*
 
-Use of the unsafe `:=` operator for constant pointer attributions.
+Use of the unsafe operator `:=` for constant pointer attributions.
 
-Instead, should use `=`.
+Instead, use `=`.
 
 Example:
 
@@ -2266,11 +2266,11 @@ Example:
 >>> ERR [1103] : file.ceu : line 1 : wrong operator
 </code></pre>
 
-### 1104 : *attribution does not require `finalize´*
+### 1104 : *attribution does not require "finalize"*
 
 Use of `finalize` for constant pointer attributions.
 
-Instead, should not use `finalize`.
+Instead, do not use `finalize`.
 
 Example:
 
@@ -2278,17 +2278,17 @@ Example:
 <b>finalize</b>
     ptr = null;
 <b>with</b>
-    <b>nothing</b>;
+    <...>
 <b>end</b>
 
 >>> ERR [1104] : file.lua : line 3 : attribution does not require `finalize´
 </code></pre>
 
-### 1105 : *destination pointer must be declared with the `[]´ buffer modifier*
+### 1105 : *destination pointer must be declared with the "[]" buffer modifier*
 
 Use of normal pointer `*` to hold pointer to acquired resource.
 
-Instead, should use `[]`.
+Instead, use `[]`.
 
 Example:
 
@@ -2297,11 +2297,11 @@ Example:
 >>> ERR [1105] : file.ceu : line 1 : destination pointer must be declared with the `[]´ buffer modifier
 </code></pre>
 
-### 1106 : *parameter must be `hold´*
+### 1106 : *parameter must be "hold"*
 
 Omit `@hold` annotation for function parameter held in the class or global.
 
-Instead, should annotate the parameter declaration with `@hold`.
+Instead, annotate the parameter declaration with `@hold`.
 
 Examples:
 
@@ -2328,7 +2328,7 @@ Examples:
 >>> ERR [1106] : file.ceu : line 5 : parameter must be `hold´
 </code></pre>
 
-### 1107 : *pointer access across `await´*
+### 1107 : *pointer access across "await"*
 
 Access to pointer across an `await` statement.
 The pointed data may go out of scope between reactions to events.
@@ -2360,7 +2360,7 @@ Examples:
 >>> ERR [1107] : file.ceu : line 8 : pointer access across `await´
 </code></pre>
 
-### 1108 : *`finalize´ inside constructor*
+### 1108 : *"finalize" inside constructor*
 
 Use of `finalize` inside constructor.
 
@@ -2403,7 +2403,7 @@ Examples:
 >>> ERR [1008] : file.ceu : line 7 : `finalize´ inside constructor
 </code></pre>
 
-### 1109 : *call requires `finalize´*
+### 1109 : *call requires "finalize"*
 
 Call missing `finalize` clause.
 
@@ -2421,7 +2421,7 @@ _enqueue(buf);
 >>> ERR [1009] : file.ceu : line 2 : call requires `finalize´'
 </code></pre>
 
-### 1110 : *invalid `finalize´*
+### 1110 : *invalid "finalize"*
 
 Call a function that does not require a `finalize`.
 

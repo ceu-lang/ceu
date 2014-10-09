@@ -47,8 +47,9 @@ for _, t in ipairs(T) do
     local idx = table.concat(toc,'.')
         t[4] = idx
     local lnk = v
-          lnk = string.gsub(lnk,'/','')
-          lnk = string.gsub(lnk,' ','-')
+--io.stderr:write('antes '..lnk..'\n')
+          lnk = string.gsub(lnk,'[%/%*% %´%`%[%]%:]','-')
+--io.stderr:write('depois '..lnk..'\n')
           lnk = string.lower(lnk)
     v = spc..'* '..idx..' ['..v..'](#'..lnk..')'
     print(v)

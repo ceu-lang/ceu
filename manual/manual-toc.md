@@ -71,11 +71,11 @@
         * 4.8.3 [every](#every)
     * 4.9 [Finalization](#finalization)
     * 4.10 [Parallel compositions](#parallel-compositions)
-        * 4.10.1 [par/and](#parand)
-        * 4.10.2 [par/or](#paror)
+        * 4.10.1 [par/and](#par-and)
+        * 4.10.2 [par/or](#par-or)
         * 4.10.3 [par](#par)
         * 4.10.4 [watching](#watching)
-    * 4.11 [pause/if](#pauseif)
+    * 4.11 [pause/if](#pause-if)
     * 4.12 [Dynamic execution](#dynamic-execution)
     * 4.13 [Asynchronous execution](#asynchronous-execution)
         * 4.13.1 [Asynchronous blocks](#asynchronous-blocks)
@@ -111,17 +111,17 @@
         * 7.1.4 [Constants and Defines](#constants-and-defines)
     * 7.2 [Compiler](#compiler)
 * 8 [Errors](#errors)
-    * 8.1 [Pointer attributions](#pointer-attributions)
-        * 8.1.1 [1101 : *wrong operator*](#1101-:-*wrong-operator*)
-        * 8.1.2 [1102 : *attribution does not require `finalize´*](#1102-:-*attribution-does-not-require-`finalize´*)
-        * 8.1.3 [1103 : *wrong operator*](#1103-:-*wrong-operator*)
-        * 8.1.4 [1104 : *attribution does not require `finalize´*](#1104-:-*attribution-does-not-require-`finalize´*)
-        * 8.1.5 [1105 : *destination pointer must be declared with the `[]´ buffer modifier*](#1105-:-*destination-pointer-must-be-declared-with-the-`[]´-buffer-modifier*)
-        * 8.1.6 [1106 : *parameter must be `hold´*](#1106-:-*parameter-must-be-`hold´*)
-        * 8.1.7 [1107 : *pointer access across `await´*](#1107-:-*pointer-access-across-`await´*)
-        * 8.1.8 [1108 : *`finalize´ inside constructor*](#1108-:-*`finalize´-inside-constructor*)
-        * 8.1.9 [1109 : *call requires `finalize´*](#1109-:-*call-requires-`finalize´*)
-        * 8.1.10 [1110 : *invalid `finalize´*](#1110-:-*invalid-`finalize´*)
+    * 8.1 [Pointer attributions (11xx)](#pointer-attributions-(11xx))
+        * 8.1.1 [1101 : *wrong operator*](#1101----wrong-operator-)
+        * 8.1.2 [1102 : *attribution does not require "finalize"*](#1102----attribution-does-not-require-"finalize"-)
+        * 8.1.3 [1103 : *wrong operator*](#1103----wrong-operator-)
+        * 8.1.4 [1104 : *attribution does not require "finalize"*](#1104----attribution-does-not-require-"finalize"-)
+        * 8.1.5 [1105 : *destination pointer must be declared with the "[]" buffer modifier*](#1105----destination-pointer-must-be-declared-with-the-"--"-buffer-modifier-)
+        * 8.1.6 [1106 : *parameter must be "hold"*](#1106----parameter-must-be-"hold"-)
+        * 8.1.7 [1107 : *pointer access across "await"*](#1107----pointer-access-across-"await"-)
+        * 8.1.8 [1108 : *"finalize" inside constructor*](#1108----"finalize"-inside-constructor-)
+        * 8.1.9 [1109 : *call requires "finalize"*](#1109----call-requires-"finalize"-)
+        * 8.1.10 [1110 : *invalid "finalize"*](#1110----invalid-"finalize"-)
 * 9 [Syntax](#syntax)
 * 10 [License](#license)
 
@@ -576,7 +576,7 @@ Identifiers
 -----------
 
 Céu uses identifiers to refer to *variables*, *internal events*, *external 
-events*,  *classes/interfaces*, and*native symbols*.
+events*,  *classes/interfaces*, and *native symbols*.
 
 ```
 ID      ::= <a-z, A-Z, 0-9, _> +
@@ -2461,15 +2461,15 @@ Errors
 ======
 
 ### 8.1
-Pointer attributions
---------------------
+Pointer attributions (11xx)
+---------------------------
 
 #### 8.1.1
 ### 1101 : *wrong operator*
 
-Use of the unsafe `:=` operator for non-pointer attributions.
+Use of the unsafe operator ":=" for non-pointer attributions.
 
-Instead, should use `=`.
+Instead, use `=`.
 
 Example:
 
@@ -2479,11 +2479,11 @@ Example:
 </code></pre>
 
 #### 8.1.2
-### 1102 : *attribution does not require `finalize´*
+### 1102 : *attribution does not require "finalize"*
 
 Use of `finalize` for non-pointer attributions.
 
-Instead, should not use `finalize`.
+Instead, do not use `finalize`.
 
 Example:
 
@@ -2491,18 +2491,18 @@ Example:
 <b>finalize</b>
     v = 1;
 <b>with</b>
-    <b>nothing</b>;
+    <...>
 <b>end</b>
 
->>> ERR [1102] : file.lua : line 3 : attribution does not require `finalize´
+>>> ERR [1102] : file.lua : line 3 : attribution does not require "finalize"
 </code></pre>
 
 #### 8.1.3
 ### 1103 : *wrong operator*
 
-Use of the unsafe `:=` operator for constant pointer attributions.
+Use of the unsafe operator `:=` for constant pointer attributions.
 
-Instead, should use `=`.
+Instead, use `=`.
 
 Example:
 
@@ -2512,11 +2512,11 @@ Example:
 </code></pre>
 
 #### 8.1.4
-### 1104 : *attribution does not require `finalize´*
+### 1104 : *attribution does not require "finalize"*
 
 Use of `finalize` for constant pointer attributions.
 
-Instead, should not use `finalize`.
+Instead, do not use `finalize`.
 
 Example:
 
@@ -2524,18 +2524,18 @@ Example:
 <b>finalize</b>
     ptr = null;
 <b>with</b>
-    <b>nothing</b>;
+    <...>
 <b>end</b>
 
 >>> ERR [1104] : file.lua : line 3 : attribution does not require `finalize´
 </code></pre>
 
 #### 8.1.5
-### 1105 : *destination pointer must be declared with the `[]´ buffer modifier*
+### 1105 : *destination pointer must be declared with the "[]" buffer modifier*
 
 Use of normal pointer `*` to hold pointer to acquired resource.
 
-Instead, should use `[]`.
+Instead, use `[]`.
 
 Example:
 
@@ -2545,11 +2545,11 @@ Example:
 </code></pre>
 
 #### 8.1.6
-### 1106 : *parameter must be `hold´*
+### 1106 : *parameter must be "hold"*
 
 Omit `@hold` annotation for function parameter held in the class or global.
 
-Instead, should annotate the parameter declaration with `@hold`.
+Instead, annotate the parameter declaration with `@hold`.
 
 Examples:
 
@@ -2577,7 +2577,7 @@ Examples:
 </code></pre>
 
 #### 8.1.7
-### 1107 : *pointer access across `await´*
+### 1107 : *pointer access across "await"*
 
 Access to pointer across an `await` statement.
 The pointed data may go out of scope between reactions to events.
@@ -2610,7 +2610,7 @@ Examples:
 </code></pre>
 
 #### 8.1.8
-### 1108 : *`finalize´ inside constructor*
+### 1108 : *"finalize" inside constructor*
 
 Use of `finalize` inside constructor.
 
@@ -2654,7 +2654,7 @@ Examples:
 </code></pre>
 
 #### 8.1.9
-### 1109 : *call requires `finalize´*
+### 1109 : *call requires "finalize"*
 
 Call missing `finalize` clause.
 
@@ -2673,7 +2673,7 @@ _enqueue(buf);
 </code></pre>
 
 #### 8.1.10
-### 1110 : *invalid `finalize´*
+### 1110 : *invalid "finalize"*
 
 Call a function that does not require a `finalize`.
 
