@@ -351,7 +351,7 @@ F = {
         local to_dcl = node('Dcl_var', me.ln, 'var', to_tp, to_id)
         to_dcl.read_only = true
 
-        local fr_ini = node('SetExp', me.ln, '=',
+        local fr_ini = node('SetExp', me.ln, ':=',  -- fr_dcl is in outer scope
                                         node('IterIni', me.ln, fr_exp),
                                         fr_fvar())
         local to_ini = node('SetExp', me.ln, '=',
@@ -359,7 +359,7 @@ F = {
                         to_fvar())
         to_ini.read_only = true   -- accept this write
 
-        local fr_nxt = node('SetExp', me.ln, '=',
+        local fr_nxt = node('SetExp', me.ln, ':=',  -- fr_dcl is in outer scope
                                         node('IterNxt', me.ln, fr_fvar()),
                                         fr_fvar())
         fr_nxt[2].iter_nxt = fr_nxt[3]

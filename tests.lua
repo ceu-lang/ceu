@@ -820,7 +820,32 @@ escape 1;
 
 ---
 -- TODO: ok
+
+Test { [[
+class T with
+    var _t[] ptr;
+do
+end
+var T t with
+    this.ptr = _v;
+end;
+escape 1;
+]],
+    run = 1,
+}
+
 ]===]
+Test { [[
+class T with
+    var char [] str;
+do
+    str = "oioi";
+    this.str = "oioi";
+end
+escape 1;
+]],
+    run = 1,
+}
 
 Test { [[
 var int* p;
@@ -15179,7 +15204,7 @@ end
     tight = 'line 1 : tight loop', -- TODO: par/and
     --props = "line 8 : not permitted inside `finalize´",
     --fin = 'line 6 : attribution does not require `finalize´',
-    --fin = 'line 6 : unsafe pointer attribution',
+    --fin = 'line 6 : attribution to pointer with greater scope',
 }
 
 Test { [[
@@ -15230,7 +15255,7 @@ end
     --loop = 'line 1 : tight loop', -- TODO: par/and
     --props = "line 8 : not permitted inside `finalize´",
     fin = 'line 6 : attribution does not require `finalize´',
-    --fin = 'line 6 : unsafe pointer attribution',
+    --fin = 'line 6 : attribution to pointer with greater scope',
 }
 
 Test { [[
@@ -15302,7 +15327,7 @@ v(&a) finalize with nothing; end;
 escape(a);
 ]],
     --env = 'line 8 : native variable/function "_f" is not declared',
-    --fin = 'line 8 : unsafe pointer attribution',
+    --fin = 'line 8 : attribution to pointer with greater scope',
     fin = 'line 11 : pointer access across `await´',
     --run = { ['~>1s']=10 },
 }
@@ -15322,7 +15347,7 @@ v(&a) finalize with nothing; end;
 escape(a);
 ]],
     --env = 'line 8 : native variable/function "_f" is not declared',
-    --fin = 'line 8 : unsafe pointer attribution',
+    --fin = 'line 8 : attribution to pointer with greater scope',
     fin = 'line 11 : pointer access across `await´',
 }
 Test { [[
@@ -15340,7 +15365,7 @@ _f(&a) finalize with nothing; end;
 escape(a);
 ]],
     --env = 'line 8 : native variable/function "_f" is not declared',
-    --fin = 'line 8 : unsafe pointer attribution',
+    --fin = 'line 8 : attribution to pointer with greater scope',
     --fin = 'line 11 : pointer access across `await´',
     run = { ['~>1s']=10 },
 }
@@ -16918,7 +16943,7 @@ do
 end
 ]],
     --env = 'line 11 : invalid attribution (void* vs _vldoor_t*)',
-    --fin = 'line 11 : unsafe pointer attribution',
+    --fin = 'line 11 : attribution to pointer with greater scope',
     --fin = 'line 9 : invalid block for awoken pointer "door"',
     _ana = {
         isForever = true,
@@ -16941,7 +16966,7 @@ do
     end
 end
 ]],
-    --fin = 'line 11 : unsafe pointer attribution',
+    --fin = 'line 11 : attribution to pointer with greater scope',
     --fin = 'line 9 : invalid block for awoken pointer "door"',
     _ana = {
         isForever = true,
@@ -16961,7 +16986,7 @@ t.v = ptr;
 escape 1;
 ]],
     fin = 'line 9 : organism pointer attribution only inside constructors',
-    --fin = 'line 9 : unsafe pointer attribution',
+    --fin = 'line 9 : attribution to pointer with greater scope',
     run = 1,
 }
 Test { [[
@@ -16978,7 +17003,7 @@ t.v = ptr;
 escape 1;
 ]],
     fin = 'line 10 : organism pointer attribution only inside constructors',
-    --fin = 'line 9 : unsafe pointer attribution',
+    --fin = 'line 9 : attribution to pointer with greater scope',
     run = 1,
 }
 
@@ -20229,7 +20254,7 @@ var void[] p;
 p := { NULL };
 escape p==null;
 ]],
-    run = 1,
+    fin = 'line 2 : attribution requires `finalize´',
 }
 
 Test { [[
@@ -23524,7 +23549,7 @@ escape 1;
 ]],
     --gcc = 'may be used uninitialized in this function',
     run = 1,
-    --fin = 'line 8 : unsafe pointer attribution',
+    --fin = 'line 8 : attribution to pointer with greater scope',
 }
 Test { [[
 class T with
@@ -23540,7 +23565,7 @@ var T t with
 end;
 escape 1;
 ]],
-    --fin = 'line 9 : unsafe pointer attribution',
+    --fin = 'line 9 : attribution to pointer with greater scope',
     --fin = 'line 9 : attribution requires `finalize´',
     fin = 'line 9 : attribution to pointer with greater scope',
 }
@@ -28351,7 +28376,7 @@ escape _V;
 ]],
     --fin = 'line 38 : pointer access across `await´',
     props = 'line 26 : not permitted inside an interface',
-    fin = 'line 38 : organism pointer attribution only inside constructors',
+    --fin = 'line 38 : organism pointer attribution only inside constructors',
 }
 Test { [[
 native _f(), _V;
@@ -28398,7 +28423,7 @@ end
 escape _V;
 ]],
     --fin = 'line 38 : pointer access across `await´',
-    --fin = 'line 38 : unsafe pointer attribution',
+    --fin = 'line 38 : attribution to pointer with greater scope',
     --props = 'line 26 : not permitted inside an interface',
     fin = 'line 38 : organism pointer attribution only inside constructors',
 }
@@ -28449,8 +28474,8 @@ end
 escape _V;
 ]],
     --fin = 'line 40 : pointer access across `await´',
-    fin = 'line 40 : organism pointer attribution only inside constructors',
-    --run = 2,
+    --fin = 'line 40 : organism pointer attribution only inside constructors',
+    run = 2,
 }
 
 Test { [[
@@ -29139,7 +29164,7 @@ end
 escape 10;
 ]],
     --fin = 'line 8 : attribution requires `finalize´',
-    --fin = 'line 8 : unsafe pointer attribution',
+    --fin = 'line 8 : attribution to pointer with greater scope',
     run = 10,
 }
 
@@ -29158,7 +29183,7 @@ do
 end
 escape 10;
 ]],
-    --fin = 'line 10 : unsafe pointer attribution',
+    --fin = 'line 10 : attribution to pointer with greater scope',
     run = 10,
 }
 
@@ -29183,7 +29208,7 @@ end
 escape 10;
 ]],
     run = 10,
-    --fin = 'line 14 : unsafe pointer attribution',
+    --fin = 'line 14 : attribution to pointer with greater scope',
     --fin = 'line 14 : attribution requires `finalize´',
 }
 
@@ -29211,7 +29236,7 @@ end
 escape 10;
 ]],
     run = 10,
-    --fin = 'line 16 : unsafe pointer attribution',
+    --fin = 'line 16 : attribution to pointer with greater scope',
     --fin = 'line 16 : attribution requires `finalize´',
 }
 
@@ -29239,7 +29264,7 @@ end
 escape 1;
 ]],
     run = { ['~>1min']=1 },
-    --fin = 'line 15 : unsafe pointer attribution',
+    --fin = 'line 15 : attribution to pointer with greater scope',
     --fin = 'line 15 : attribution requires `finalize´',
 }
 Test { [[
@@ -29303,7 +29328,7 @@ end
 escape _V;
 ]],
     run = { ['~>1min']=10 },
-    --fin = 'line 21 : unsafe pointer attribution',
+    --fin = 'line 21 : attribution to pointer with greater scope',
     --props = 'line 23 : not permitted inside a constructor',
 }
 
@@ -29379,7 +29404,7 @@ end
 escape _V;
 ]],
     run = { ['~>1min']=10 },
-    --fin = 'line 22 : unsafe pointer attribution',
+    --fin = 'line 22 : attribution to pointer with greater scope',
 }
 
 Test { [[
@@ -30356,7 +30381,7 @@ end
 escape 1;
 ]],
     run = 1,
-    --fin = 'line 6 : unsafe pointer attribution',
+    --fin = 'line 6 : attribution to pointer with greater scope',
     fin = 'line 6 : organism pointer attribution only inside constructors',
 }
 Test { [[
@@ -30373,7 +30398,7 @@ do
 end
 escape 1;
 ]],
-    --fin = 'line 6 : unsafe pointer attribution',
+    --fin = 'line 6 : attribution to pointer with greater scope',
     fin = 'line 6 : organism pointer attribution only inside constructors',
 }
 Test { [[
@@ -30402,7 +30427,7 @@ end
 var int* a;
 escape 1;
 ]],
-    --fin = 'line 7 : unsafe pointer attribution',
+    --fin = 'line 7 : attribution to pointer with greater scope',
     fin = 'line 7 : organism pointer attribution only inside constructors',
 }
 
@@ -30980,7 +31005,12 @@ Test { [[
 class T with
 do
 end
-var T*[] t := _malloc(10 * sizeof(T**));
+var T*[] t;
+finalize
+    t = _malloc(10 * sizeof(T**));
+with
+    nothing;
+end
 native @nohold _free();
 finalize with
     _free(t);
@@ -32202,7 +32232,7 @@ t.i = i;
 escape call/rec i:g(5);
 ]],
     fin = 'line 16 : organism pointer attribution only inside constructors',
-    --fin = 'line 16 : unsafe pointer attribution',
+    --fin = 'line 16 : attribution to pointer with greater scope',
     --tight = 'line 9 : function may be declared without `recursive´',
     wrn = true,
     --run = 5,
@@ -32227,7 +32257,7 @@ var I* i = &t;
 t.i := i;
 escape call/rec i:g(5);
 ]],
-    fin = 'line 16 : organism pointer attribution only inside constructors',
+    --fin = 'line 16 : organism pointer attribution only inside constructors',
     --tight = 'line 9 : function may be declared without `recursive´',
     wrn = true,
     run = 5,
@@ -32253,7 +32283,7 @@ t.i = i;
 escape i:g(5);
 ]],
     fin = 'line 16 : organism pointer attribution only inside constructors',
-    --fin = 'line 16 : unsafe pointer attribution',
+    --fin = 'line 16 : attribution to pointer with greater scope',
     --run = 1,
 }
 
@@ -32276,8 +32306,8 @@ var I* i = &t;
 t.i := i;
 escape i:g(5);
 ]],
-    fin = 'line 16 : organism pointer attribution only inside constructors',
-    --run = 1,
+    --fin = 'line 16 : organism pointer attribution only inside constructors',
+    run = 1,
 }
 
 Test { [[
@@ -32416,7 +32446,7 @@ var T t with
 end;
 escape t.ret1 + t.ret2;
 ]],
-   --fin = 'line 25 : unsafe pointer attribution',
+   --fin = 'line 25 : attribution to pointer with greater scope',
     run = 3,
 }
 
@@ -32568,7 +32598,7 @@ function (void* v)=>void f do
 end
 escape 1;
 ]],
-    fin = 'line 5 : unsafe pointer attribution',
+    fin = 'line 5 : attribution to pointer with greater scope',
     --fin = 'line 5 : invalid attribution',
 }
 
@@ -32598,7 +32628,7 @@ end
 escape 1;
 ]],
     --fin = 'line 8 : invalid attribution',
-    fin = 'line 8 : unsafe pointer attribution',
+    fin = 'line 8 : attribution to pointer with greater scope',
 }
 Test { [[
 native do
@@ -32662,7 +32692,7 @@ end
 escape 1;
 ]],
     -- not from paramter
-    fin = 'line 7 : unsafe pointer attribution',
+    fin = 'line 7 : attribution to pointer with greater scope',
 }
 Test { [[
 class T with
@@ -32676,7 +32706,7 @@ end
 escape 1;
 ]],
     -- function must be "@hold v"
-    fin = 'line 6 : unsafe pointer attribution',
+    fin = 'line 6 : attribution to pointer with greater scope',
     --fin = ' line 6 : parameter must be `hold´',
 }
 Test { [[
@@ -32743,8 +32773,8 @@ escape 1;
 ]],
     wrn = true,
     -- function must be "@hold v" and call must have fin
-    --fin = 'line 12 : call to "f" requires `finalize´',
-    fin = 'line 6 : organism pointer attribution only inside constructors',
+    fin = 'line 12 : call to "f" requires `finalize´',
+    --fin = 'line 6 : organism pointer attribution only inside constructors',
 }
 
 Test { [[
@@ -32771,8 +32801,8 @@ escape 1;
 ]],
     wrn = true,
     -- function must be "@hold v" and call must have fin
-    --fin = 'line 12 : call to "f" requires `finalize´',
-    fin = 'line 6 : organism pointer attribution only inside constructors',
+    fin = 'line 12 : call to "f" requires `finalize´',
+    --fin = 'line 6 : organism pointer attribution only inside constructors',
 }
 
 Test { [[
