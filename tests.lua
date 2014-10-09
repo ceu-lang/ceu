@@ -769,8 +769,100 @@ escape 10;
 }
 do return end
 
-]===]
+Test { [[
+class T with do end;
+pool T[] ts;
+loop (T*)t in ts do
+    await 1s;
+end
+escape 1;
+]],
+    props = 'line 4 : `every´ cannot contain `await´',
+}
+
+Test { [[
+interface I with
+end
+class T with
+    interface I;
+do end
+do
+    pool T[] ts;
+    loop (I*)i in ts do
+        await 1s;
+    end
+end
+escape 1;
+]],
+    props = 'line 9 : `every´ cannot contain `await´',
+}
+
+Test { [[
+interface I with
+    var int v;
+end
+
+var I* i=null;
+
+par/or do
+    await 1s;
+with
+    watching i do
+        await 1s;
+        var int v = i:v;
+    end
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
+---
 -- TODO: ok
+]===]
+
+Test { [[
+var int* p;
+do
+    var int i;
+    p = &i;
+end
+escape 1;
+]],
+    fin = 'line 4 : attribution to pointer with greater scope',
+}
+Test { [[
+var int* p;
+do
+    var int i;
+    p := &i;
+end
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+class T with
+do
+end
+var int*[] v;
+var T*[] t;
+escape 1;
+]],
+    run = 1;
+}
+
+Test { [[
+class T with
+do
+end
+var int[]* v;
+var T[]* t;
+escape 1;
+]],
+    parser = 'line 4 : after `]´ : expected identifier',
+}
 
 Test { [[
 var int a;
@@ -822,7 +914,8 @@ var int a;
 var int* pa := &a;
 escape 1;
 ]],
-    fin = 'line 2 : invalid operator',
+    --fin = 'line 2 : invalid operator',
+    run = 1,
 }
 Test { [[
 var int a;
@@ -843,8 +936,318 @@ end
 escape 1;
 ]],
     fin = 'line 2 : invalid operator',
+    --fin = 'line 2 : pointer access across `await´',
 }
 
+Test { [[
+var int* u;
+var int[1] i;
+await 1s;
+u = i;
+escape 1;
+]],
+    run = { ['~>1s']=1 },
+}
+Test { [[
+var int* u;
+do
+    var int[1] i;
+    i[0] = 2;
+    u = i;
+end
+do
+    var int[1] i;
+    i[0] = 5;
+end
+escape *u;
+]],
+    fin = 'line 5 : attribution to pointer with greater scope',
+}
+Test { [[
+class Unit with
+    event int move;
+do
+end
+var Unit* u;
+do
+    pool Unit[] units;
+    u = spawn Unit in units;
+end
+watching u do
+    emit u:move => 0;
+end
+escape 2;
+]],
+    run = 2,
+}
+Test { [[
+class Unit with
+    event int move;
+do
+end
+var Unit* u;
+do
+    pool Unit[] units;
+    u = spawn Unit in units;
+    await 1min;
+end
+watching u do
+    emit u:move => 0;
+end
+escape 2;
+]],
+    fin = 'line 11 : pointer access across `await´',
+}
+
+Test { [[
+class T with
+    var int* v;
+do
+    *v = 1;
+    await 1s;
+    *v = 2;
+end
+escape 1;
+]],
+    fin = 'line 6 : pointer access across `await´',
+}
+
+Test { [[
+interface Global with
+    var int* a;
+end
+var int* a;
+class T with
+    var int* v;
+do
+end
+var T t with
+    this.v = global:a;
+end;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+interface Global with
+    var int* a;
+end
+var int* a = null;
+class T with
+    var int* v;
+do
+end
+await OS_START;
+var T t with
+    this.v = global:a;
+end;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+interface I with
+    var int v;
+end
+
+class T with
+    var I* i = null;
+do
+    watching i do
+        var int v = i:v;
+    end
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+interface I with
+    var int v;
+end
+
+class T with
+    var I* i = null;
+do
+    await 1s;
+    watching i do
+        var int v = i:v;
+    end
+end
+
+escape 1;
+]],
+    fin = 'line 9 : pointer access across `await´',
+}
+
+Test { [[
+interface I with
+    var int v;
+end
+
+class T with
+    var I* i = null;
+do
+    watching i do
+        await 1s;
+        var int v = i:v;
+    end
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+interface I with
+    var int v;
+    event void e;
+end
+
+var I* i=null;
+
+await 1s;
+
+await i:e;
+
+watching i do
+    await 1s;
+    var int v = i:v;
+end
+
+escape 1;
+]],
+    fin = 'line 10 : pointer access across `await´',
+}
+Test { [[
+interface I with
+    var int v;
+    event void e;
+end
+
+var I* i=null;
+
+await 1s;
+
+watching i do
+    await 1s;
+    var int v = i:v;
+end
+
+escape 1;
+]],
+    fin = 'line 10 : pointer access across `await´',
+}
+
+Test { [[
+input void OS_START;
+interface Global with
+    var int* p;
+end
+var int i = 1;
+var int* p = null;
+await OS_START;
+p = p;
+escape *p;
+]],
+    fin = 'line 8 : pointer access across `await´',
+}
+
+Test { [[
+input void OS_START;
+interface Global with
+    var int* p;
+end
+var int i = 1;
+var int* p = null;
+await OS_START;
+p = &i;
+escape *p;
+]],
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+class T with
+    var int* p;
+do
+end
+var int i = 1;
+var T t with
+    this.p = null;
+end;
+await OS_START;
+t.p = &i;
+escape *t.p;
+]],
+    fin = 'line 11 : pointer access across `await´',
+}
+
+Test { [[
+input int SDL_KEYUP;
+var int key;
+key = await SDL_KEYUP;
+escape key;
+]],
+    run = { ['1 ~> SDL_KEYUP']=1 }
+}
+
+Test { [[
+input int* SDL_KEYUP;
+par/or do
+    var int* key;
+    key = await SDL_KEYUP;
+with
+    async do
+        emit SDL_KEYUP => null;
+    end
+end
+escape 1;
+]],
+    run = 1.
+}
+
+Test { [[
+input _SDL_KeyboardEvent* SDL_KEYUP;
+var _SDL_KeyboardEvent* key;
+every key in SDL_KEYUP do
+    if key:keysym.sym == 1 then
+    else/if key:keysym.sym == 1 then
+    end
+end
+]],
+    _ana = {
+        isForever = true,
+    },
+}
+
+Test { [[
+interface I with
+    var int v;
+end
+
+var I* i=null;
+
+par/or do
+    watching i do
+        await 1s;
+        var int v = i:v;
+    end
+with
+    await 1s;
+end
+
+escape 1;
+]],
+    run = 1,
+}
 
 --do return end
 
@@ -14671,7 +15074,7 @@ Test { [[
         var _Cnt* snd = _Radio_getPayload(&msg, sizeof(_Cnt));
     end
 ]],
-    --fin = 'line 5 : invalid access to pointer across `await´',
+    --fin = 'line 5 : pointer access across `await´',
     _ana = {
         isForever = true,
     },
@@ -14718,13 +15121,27 @@ do
     end
 end
 ]],
+    fin = 'line 5 : destination pointer must be declared with the `[]´ buffer modifier',
+}
+
+Test { [[
+native _f();
+do
+    var int[] a;
+    finalize
+        a = _f();
+    with
+        do await FOREVER; end;
+    end
+end
+]],
     props = "line 7 : not permitted inside `finalize´",
 }
 
 Test { [[
 native _f();
 do
-    var int* a;
+    var int[] a;
     finalize
         a = _f();
     with
@@ -14739,7 +15156,7 @@ end
 Test { [[
 native _f();
 do
-    var int* a;
+    var int[] a;
     finalize
         a = _f();
     with
@@ -14773,11 +15190,21 @@ await 1s;
 var int* c = a;
 escape 1;
 ]],
-    fin = 'line 5 : invalid access to pointer across `await´',
+    fin = 'line 5 : pointer access across `await´',
 }
 
 Test { [[
 var int* a;
+var int* b = null;
+a := b;
+await 1s;
+var int* c = a;
+escape 1;
+]],
+    fin = 'line 5 : pointer access across `await´',
+}
+Test { [[
+var int[] a;
 var int* b = null;
 a := b;
 await 1s;
@@ -14847,7 +15274,7 @@ Test { [[
 native _f();
 var int r = 0;
 do
-    var int* a;
+    var int[] a;
     finalize
         a = _f();
     with
@@ -14876,7 +15303,7 @@ escape(a);
 ]],
     --env = 'line 8 : native variable/function "_f" is not declared',
     --fin = 'line 8 : unsafe pointer attribution',
-    fin = 'line 11 : invalid access to pointer across `await´',
+    fin = 'line 11 : pointer access across `await´',
     --run = { ['~>1s']=10 },
 }
 
@@ -14896,7 +15323,25 @@ escape(a);
 ]],
     --env = 'line 8 : native variable/function "_f" is not declared',
     --fin = 'line 8 : unsafe pointer attribution',
-    --fin = 'line 11 : invalid access to pointer across `await´',
+    fin = 'line 11 : pointer access across `await´',
+}
+Test { [[
+native do
+    void f (int* a) {
+        *a = 10;
+    }
+    typedef void (*t)(int*);
+end
+native _t = 4;
+var _t v := _f;
+await 1s;
+var int a;
+_f(&a) finalize with nothing; end;
+escape(a);
+]],
+    --env = 'line 8 : native variable/function "_f" is not declared',
+    --fin = 'line 8 : unsafe pointer attribution',
+    --fin = 'line 11 : pointer access across `await´',
     run = { ['~>1s']=10 },
 }
 
@@ -15136,7 +15581,8 @@ do
 end
 escape ret;
 ]],
-    run = 1,
+    --run = 1,
+    fin = 'line 7 : attribution to pointer with greater scope',
 }
 
 Test { [[
@@ -16033,7 +16479,19 @@ if _A then
 end
 escape(ret);
 ]],
+    --fin = 'line 32 : pointer access across `await´',
     run = 20,
+}
+Test { [[
+var int v = 1;
+par/or do
+    nothing;
+with
+    v = *(int*)null;
+end
+escape v;
+]],
+    run = 1,
 }
 
 Test { [[
@@ -16088,7 +16546,7 @@ var int* v = await e;
 await e;
 escape *v;
 ]],
-    fin = 'line 4 : invalid access to pointer across `await´',
+    fin = 'line 4 : pointer access across `await´',
     --fin = 'line 3 : cannot `await´ again on this block',
     --run = 0,
 }
@@ -16118,7 +16576,8 @@ end
 escape 1;
 ]],
     --fin = 'line 6 : attribution requires `finalize´',
-    fin = 'line 8 : invalid access to pointer across `await´',
+    --fin = 'line 8 : pointer access across `await´',
+    fin = 'line 6 : attribution to pointer with greater scope',
 }
 
 Test { [[
@@ -16159,7 +16618,7 @@ with
 end
 escape *p;
 ]],
-    fin = 'line 8 : invalid access to pointer across `await´',
+    fin = 'line 8 : pointer access across `await´',
     --fin = 'line 6 : invalid block for pointer across `await´',
     --fin = 'line 6 : cannot `await´ again on this block',
 }
@@ -16256,7 +16715,28 @@ do
 end
 escape ret + *p;
 ]],
-    fin = 'line 19 : invalid access to pointer across `await´',
+    fin = 'line 8 : attribution does not require `finalize´',
+    --fin = 'line 8 : invalid block for awoken pointer "p"',
+    --fin = 'line 14 : cannot `await´ again on this block',
+}
+
+Test { [[
+var int* p;
+var int ret;
+input void OS_START;
+do
+    event int* e;
+    par/and do
+        p = await e;
+    with
+        await OS_START;
+        var int i = 1;
+        emit e => &i;
+    end
+end
+escape ret + *p;
+]],
+    fin = 'line 14 : pointer access across `await´',
     --fin = 'line 8 : invalid block for awoken pointer "p"',
     --fin = 'line 14 : cannot `await´ again on this block',
 }
@@ -16367,6 +16847,25 @@ end
 escape i;
 ]],
     --fin = 'line 6 : invalid block for awoken pointer "p"',
+    fin = 'line 6 : attribution to pointer with greater scope',
+    --run = 1,
+}
+Test { [[
+input void OS_START;
+event (int,void*) ptr;
+var void* p;
+var int i;
+par/or do
+    var void* p1;
+    (i,p1) = await ptr;
+    p := p1;
+with
+    await OS_START;
+    emit ptr => (1, null);
+end
+escape i;
+]],
+    --fin = 'line 6 : invalid block for awoken pointer "p"',
     run = 1,
 }
 
@@ -16388,7 +16887,9 @@ event (int,void*) ptr;
 var void* p;
 var int i;
 par/or do
-    (i,p) = await ptr;
+    var void* p1;
+    (i,p1) = await ptr;
+    p := p1;
 with
     await OS_START;
     emit ptr => (1, null);
@@ -16417,8 +16918,11 @@ do
 end
 ]],
     --env = 'line 11 : invalid attribution (void* vs _vldoor_t*)',
-    fin = 'line 11 : unsafe pointer attribution',
+    --fin = 'line 11 : unsafe pointer attribution',
     --fin = 'line 9 : invalid block for awoken pointer "door"',
+    _ana = {
+        isForever = true,
+    },
 }
 
 Test { [[
@@ -16437,8 +16941,11 @@ do
     end
 end
 ]],
-    fin = 'line 11 : unsafe pointer attribution',
+    --fin = 'line 11 : unsafe pointer attribution',
     --fin = 'line 9 : invalid block for awoken pointer "door"',
+    _ana = {
+        isForever = true,
+    },
 }
 
 Test { [[
@@ -16453,7 +16960,26 @@ var void* ptr = null;
 t.v = ptr;
 escape 1;
 ]],
-    fin = 'line 9 : unsafe pointer attribution',
+    fin = 'line 9 : organism pointer attribution only inside constructors',
+    --fin = 'line 9 : unsafe pointer attribution',
+    run = 1,
+}
+Test { [[
+class T with
+    var void* v;
+do
+end
+
+var T t with
+    this.v = null;
+end;
+var void* ptr = null;
+t.v = ptr;
+escape 1;
+]],
+    fin = 'line 10 : organism pointer attribution only inside constructors',
+    --fin = 'line 9 : unsafe pointer attribution',
+    run = 1,
 }
 
 Test { [[
@@ -16467,7 +16993,8 @@ t.v = null;
 t.v = s.v;
 escape 1;
 ]],
-    fin = 'line 8 : unsafe pointer attribution',
+    fin = 'line 8 : organism pointer attribution only inside constructors',
+    run = 1,
 }
 
 Test { [[
@@ -16497,7 +17024,9 @@ input void OS_START;
 do
     event (int,void*) ptr;
     par/or do
-        (i,p) = await ptr;
+        var void* p1;
+        (i,p1) = await ptr;
+        p := p1;
     with
         await OS_START;
         emit ptr => (1, null);
@@ -16517,7 +17046,9 @@ input void OS_START;
 do
     event (int,int*) ptr;
     par/or do
-        (i,p) = await ptr;
+        var int* p1;
+        (i,p1) = await ptr;
+        p := p1;
     with
         await OS_START;
         emit ptr => (1, null);
@@ -16528,7 +17059,7 @@ escape i;
 ]],
     --fin = 'line 7 : invalid operator',
     --fin = 'line 7 : attribution does not require `finalize´',
-    fin = 'line 12 : invalid access to pointer across `await´',
+    fin = 'line 14 : pointer access across `await´',
     --run = 1,
 }
 
@@ -18268,16 +18799,34 @@ escape 1;
 }
 
 Test { [[
+input void* A;
+do
+    var void* p;
+    p = await A
+        until p==null;
+    var void* p1 = p;
+end
+await FOREVER;
+]],
+    _ana = {
+        isForever = true,
+    },
+}
+
+Test { [[
 output/input [10] (int max)=>char* LINE;
 var u8 err;
 var char* ret;
 par/or do
-    (err, ret) = request LINE => 10;
+    var char* ret1;
+    (err, ret1) = request LINE => 10;
+    ret := ret1;
 with
+    await FOREVER;
 end
 escape *ret;
 ]],
-    fin = 'line 8 : invalid access to pointer across `await´',
+    fin = 'line 11 : pointer access across `await´',
     --fin = 'line 5 : invalid block for awoken pointer "ret"',
 }
 
@@ -18959,6 +19508,7 @@ end;
 escape 1;
 ]],
     --gcc = 'may be used uninitialized in this function',
+    --fin = 'line 6 : pointer access across `await´',
     run = 1,
 }
 
@@ -18972,6 +19522,7 @@ else
 end;
 escape 1;
 ]],
+    --fin = 'line 6 : pointer access across `await´',
     run = 1,
 }
 
@@ -19271,7 +19822,7 @@ native do
         escape &a;
     }
 end
-var int* p = _f();
+var int[] p = _f();
 escape *p;
 ]],
     fin = 'line 8 : attribution requires `finalize´',
@@ -19286,7 +19837,7 @@ native do
         return &a;
     }
 end
-var int* p;
+var int[] p;
 finalize
     p = _f();
 with
@@ -19305,7 +19856,7 @@ native do
         return &a;
     }
 end
-var int* p;
+var int[] p;
 finalize
     p = _f();
 with
@@ -19340,7 +19891,7 @@ native do
 end
 var int a;
 do
-    var int* p;
+    var int[] p;
     finalize
         p = _f();
     with
@@ -19362,7 +19913,7 @@ native do
 end
 var int a = 10;
 do
-    var int* p;
+    var int[] p;
     do
         finalize
             p = _f();
@@ -19422,7 +19973,7 @@ escape 1;
 Test { [[
 input void OS_START;
 var int h = 10;
-var int* p = &h;
+var int[] p = &h;
 do
     var int x = 0;
     await OS_START;
@@ -19662,7 +20213,7 @@ escape _V;
 }
 
 Test { [[
-var void* p;
+var void[] p;
 finalize
     p = { NULL };
 with
@@ -19674,7 +20225,7 @@ escape p==null;
 }
 
 Test { [[
-var void* p;
+var void[] p;
 p := { NULL };
 escape p==null;
 ]],
@@ -20006,12 +20557,13 @@ Test { [[
 native do
     void* V;
 end
-var void* v;
-_V = v;
+var void* v=null;
+_V := v;
 await 1s;
-escape _V;
+escape _V==null;
 ]],
-    fin = 'line 7 : invalid access to pointer across `await´',
+    run = { ['~>1s']=1 }
+    --fin = 'line 7 : pointer access across `await´',
 }
 
 Test { [[
@@ -20025,7 +20577,7 @@ do
 end
 ]],
     --run = 1,
-    fin = 'line 7 : invalid access to pointer across `await´',
+    fin = 'line 7 : pointer access across `await´',
 }
 
 Test { [[
@@ -20036,9 +20588,12 @@ var _tp* v;
 _a = v;
 await 1s;
 _b = _a;    // _a pode ter escopo menor e nao reclama de FIN
-escape 1;
+await FOREVER;
 ]],
-    fin = 'line 7 : invalid access to pointer across `await´',
+    --fin = 'line 7 : pointer access across `await´',
+    _ana = {
+        isForever = true,
+    },
 }
 
 Test { [[
@@ -22446,7 +23001,8 @@ do
 end
 escape *v;
 ]],
-    fin = 'line 4 : attribution requires `finalize´',
+    --fin = 'line 4 : attribution requires `finalize´',
+    fin = 'line 4 : attribution to pointer with greater scope',
 }
 
 Test { [[
@@ -22489,7 +23045,7 @@ end;
 
 escape *(t.p) + *(t.v);
 ]],
-    fin = 'line 10 : invalid access to pointer across `await´',
+    fin = 'line 10 : pointer access across `await´',
 }
 
 Test { [[
@@ -22967,8 +23523,8 @@ end;
 escape 1;
 ]],
     --gcc = 'may be used uninitialized in this function',
-    --run = 1,
-    fin = 'line 8 : unsafe pointer attribution',
+    run = 1,
+    --fin = 'line 8 : unsafe pointer attribution',
 }
 Test { [[
 class T with
@@ -22984,8 +23540,9 @@ var T t with
 end;
 escape 1;
 ]],
-    fin = 'line 9 : unsafe pointer attribution',
+    --fin = 'line 9 : unsafe pointer attribution',
     --fin = 'line 9 : attribution requires `finalize´',
+    fin = 'line 9 : attribution to pointer with greater scope',
 }
 
 Test { [[
@@ -23876,16 +24433,19 @@ end
 var T a;
 var T* ptr;
 ptr = &a;
-par/or do
-    await OS_START;
-    emit a.go;
-    if ptr:going then
-        await FOREVER;
+watching ptr do
+    par/or do
+        await OS_START;
+        emit a.go;
+        if ptr:going then
+            await FOREVER;
+        end
+    with
+        await ptr:ok;
     end
-with
-    await ptr:ok;
+    escape ptr:v + a.v;
 end
-escape ptr:v + a.v;
+escape 0;
 ]],
     run = 20,
 }
@@ -24506,24 +25066,27 @@ end
 var T a;
 var T* ptr;
 ptr = &a;
-var int ret = 0;
-par/and do
+watching ptr do
+    var int ret = 0;
     par/and do
-        await OS_START;
-        emit ptr:go;
+        par/and do
+            await OS_START;
+            emit ptr:go;
+        with
+            await ptr:ok;
+        end
+        ret = ret + 1;      // 24
     with
-        await ptr:ok;
+            await B;
+        emit ptr:e;
+        ret = ret + 1;
+    with
+        await ptr:f;
+        ret = ret + 1;      // 31
     end
-    ret = ret + 1;      // 24
-with
-        await B;
-    emit ptr:e;
-    ret = ret + 1;
-with
-    await ptr:f;
-    ret = ret + 1;      // 31
+    escape ret + ptr:v + a.v;
 end
-escape ret + ptr:v + a.v;
+escape 0;
 ]],
     _ana = {
         --acc = 3,
@@ -25222,7 +25785,7 @@ var T* t = spawn T;
 await OS_START;
 escape t:a;
 ]],
-    fin = 'line 9 : invalid access to pointer across `await´',
+    fin = 'line 9 : pointer access across `await´',
 }
 
 Test { [[
@@ -25391,6 +25954,31 @@ loop (T*)t in ts do
 end
 escape (ok1!=null) + ok2 + ret;
 ]],
+    --fin = 'line 14 : pointer access across `await´',
+    run = 1,
+}
+Test { [[
+class T with
+    var int v = 0;
+do
+end
+pool T[1] ts;
+var T*  ok1 = spawn T in ts with
+                this.v = 10;
+              end;
+watching ok1 do
+    var int ok2 = 0;// spawn T in ts;
+    var int ret = 0;
+    loop (T*)t in ts do
+        ret = ret + t:v;
+    end
+    escape (ok1!=null) + ok2 + ret;
+end
+escape 1;
+]],
+    _ana = {
+        acc = 6,
+    },
     run = 1,
 }
 
@@ -25404,13 +25992,19 @@ pool T[1] ts;
 var T* ok1 = spawn T in ts with
                 this.v = 10;
               end;
-var int ok2 = 0;// spawn T in ts;
-var int ret = 0;
-loop (T*)t in ts do
-    ret = ret + t:v;
+watching ok1 do
+    var int ok2 = 0;// spawn T in ts;
+    var int ret = 0;
+    loop (T*)t in ts do
+        ret = ret + t:v;
+    end
+    escape (ok1!=null) + ok2 + ret;
 end
-escape (ok1!=null) + ok2 + ret;
+escape 1;
 ]],
+    _ana = {
+        acc = 6,
+    },
     run = 11,
 }
 
@@ -25608,12 +26202,30 @@ end
 var T* a;
 do
     var T* aa = spawn T in ts;
-        a = aa;
+        a := aa;
 end
 var T* b = spawn T in ts;   // fails (a is free on end)
 //native @nohold _fprintf(), _stderr;
         //_fprintf(_stderr, "%p %p\n",a, b);
 escape a!=null and b==null and a!=b;
+]],
+    --fin = 'line 15 : pointer access across `await´',
+    run = 1,
+}
+Test { [[
+pool T[1] ts;
+class T with
+    var int a;
+do
+    this.a = 1;
+end
+var T* a;
+do
+    var T* aa = spawn T in ts;
+        a := aa;
+end
+var T* b = spawn T in ts;   // fails (a is free on end)
+escape b==null;
 ]],
     run = 1,
 }
@@ -25629,15 +26241,41 @@ var T* a, b;
 do
     do
         var T* aa = spawn T in ts;
-            a = aa;
+            a := aa;
     end
     var T* bb = spawn T in ts;  // fails
-        b = bb;
+        b := bb;
 end
 var T* c = spawn T in ts;       // fails
 //native @nohold _fprintf(), _stderr;
         //_fprintf(_stderr, "%p %p\n",a, b);
 escape a!=null and b==null and c==null and a!=b and b==c;
+]],
+    --fin = 'line 19 : pointer access across `await´',
+    run = 1,
+}
+Test { [[
+pool T[1] ts;
+class T with
+    var int a;
+do
+    this.a = 1;
+end
+var T* a, b;
+var bool b?;
+do
+    do
+        var T* aa = spawn T in ts;
+            a := aa;
+    end
+    var T* bb = spawn T in ts;  // fails
+        b := bb;
+    b? = (b != null);
+end
+var T* c = spawn T in ts;       // fails
+//native @nohold _fprintf(), _stderr;
+        //_fprintf(_stderr, "%p %p\n",a, b);
+escape b?==false and c==null;
 ]],
     run = 1,
 }
@@ -25652,10 +26290,28 @@ end
 var T* a;
 do
     var T* aa = spawn T in ts;
-        a = aa;
+        a := aa;
 end
 var T* b = spawn T in ts;   // fails
 escape a!=null and b==null;
+]],
+    --fin = 'line 13 : pointer access across `await´',
+    run = 1,
+}
+Test { [[
+pool T[1] ts;
+class T with
+    var int a;
+do
+    this.a = 1;
+end
+var T* a;
+do
+    var T* aa = spawn T in ts;
+        a := aa;
+end
+var T* b = spawn T in ts;   // fails
+escape b==null;
 ]],
     run = 1,
 }
@@ -26372,8 +27028,10 @@ end
 var T t;
 var T* i = &t;
 var int a,b;
-(a,b) = await i:ok_game;
-emit i:ok_game => (a,b);
+watching i do
+    (a,b) = await i:ok_game;
+    emit i:ok_game => (a,b);
+end
 escape a+b;
 ]],
     run = { ['~>1s']=3 },
@@ -26457,11 +27115,24 @@ end
 Test { [[
 class T with do end
 var T* ok;
+var bool ok?;
+do
+    ok = spawn T;
+    ok? = (ok != null);
+end
+escape ok?;
+]],
+    run = 1,
+}
+Test { [[
+class T with do end
+var T* ok;
 do
     ok = spawn T;
 end
 escape ok!=null;
 ]],
+    --fin = 'line 6 : pointer access across `await´',
     run = 1,
 }
 
@@ -26479,9 +27150,47 @@ end
 escape ok!=null;
 ]],
     --loop = 1,
+    --fin = 'line 11 : pointer access across `await´',
+    run = 1,
+}
+Test { [[
+class T with do
+    await FOREVER;
+end
+var T* ok;
+var bool ok?;
+native _assert();
+do
+    loop i in 5 do
+        ok = spawn T;
+        ok? = (ok != null);
+    end
+end
+escape ok?;
+]],
+    --loop = 1,
     run = 1,
 }
 
+Test { [[
+class T with do
+    await FOREVER;
+end
+var T* ok;
+var bool ok?;
+native _assert();
+do
+    loop i in 100 do
+        ok = spawn T;
+    end
+    var T* ok1 = spawn T;
+    ok? = (ok1 != null);
+end
+escape ok?+1;
+]],
+    --loop = 1,
+    run = 1,
+}
 Test { [[
 class T with do
     await FOREVER;
@@ -26497,6 +27206,7 @@ end
 escape (ok!=null)+1;
 ]],
     --loop = 1,
+    --fin = 'line 10 : pointer access across `await´',
     run = 1,
 }
 
@@ -26520,7 +27230,7 @@ do
     loop i in 100 do
         ok = spawn T;
     end
-    _assert(ok != null);
+    _assert(ok == null);
 end
 do
     loop i in 101 do
@@ -26528,10 +27238,47 @@ do
     end
     _assert(ok == null);
 end
-escape ok!=null;
+escape ok==null;
 ]],
     --loop = 1,
-    run = 0,
+    --fin = 'line 11 : pointer access across `await´',
+    run = 1,
+}
+Test { [[
+class T with do
+    await FOREVER;
+end
+native do ##include <assert.h> end
+native _assert();
+do
+    loop i in 100 do
+        var T* ok;
+        ok = spawn T;
+        _assert(ok != null);
+    end
+    var T* ok1 = spawn T;
+    _assert(ok1 == null);
+    var T* ok2 = spawn T;
+    _assert(ok2 == null);
+end
+do
+    loop i in 100 do
+        var T* ok;
+        ok = spawn T;
+        _assert(ok != null);
+    end
+end
+do
+    loop i in 101 do
+        var T* ok;
+        ok = spawn T;
+        _assert(i<100 or ok==null);
+    end
+end
+escape 1;
+]],
+    --loop = 1,
+    run = 1,
 }
 
 Test { [[
@@ -26682,9 +27429,27 @@ var T* a;
 do
     var T* b = spawn T;
     b:v = 10;
-    a = b;
+    a := b;
 end
 escape a:v;
+]],
+    --fin = 'line 10 : attribution requires `finalize´',
+    --fin = 'line 12 : pointer access across `await´',
+    run = 10,
+}
+Test { [[
+class T with
+    var int v;
+do
+end
+
+var T* a;
+do
+    var T* b = spawn T;
+    b:v = 10;
+    a := b;
+    escape a:v;
+end
 ]],
     --fin = 'line 10 : attribution requires `finalize´',
     run = 10,
@@ -26700,12 +27465,12 @@ var T* a;
 do
     var T* b = spawn T;
     b:v = 10;
-    a = b;
+    a := b;
 end
 await 1s;
 escape a:v;
 ]],
-    fin = 'line 13 : invalid access to pointer across `await´'
+    fin = 'line 13 : pointer access across `await´'
 }
 
 Test { [[
@@ -26754,7 +27519,7 @@ do
     pool T[] ts;
     var T* b = spawn T in ts;
     b:v = 10;
-        a = b;      // no more :=
+        a := b;
 end
 escape _V;
 ]],
@@ -26782,7 +27547,7 @@ do
     pool T[] ts;
     var T* b = spawn T in ts;
     b:v = 10;
-        a = b;
+        a := b;
     await OS_START;
 end
 escape _V;
@@ -26809,7 +27574,7 @@ do
     pool T[] ts;
     var T* b = spawn T in ts;
     b:v = 10;
-        a = b;      // no more :=
+        a := b;
 end
 escape _V;
 ]],
@@ -26835,7 +27600,7 @@ do
     pool T[] ts;
     var T* b = spawn T in ts;
     b:v = 10;
-        a = b;      // no more :=
+        a := b;
     await OS_START;
 end
 escape _V;
@@ -26847,7 +27612,7 @@ class T with
     var int* i1;
 do
     var int i2;
-    i1 = &i2;
+    i1 := &i2;
 end
 var T a;
 escape 10;
@@ -26861,12 +27626,13 @@ var T* t1;
 do
 do
     var T t2;
-    t1 = &t2;
+    t1 := &t2;
 end
 end
 escape 10;
 ]],
-    fin = 'line 6 : attribution requires `finalize´',
+    --fin = 'line 6 : attribution requires `finalize´',
+    run = 10,
 }
 
 Test { [[
@@ -26875,11 +27641,11 @@ var T* t1;
 do
 do
     var T t2;
-    finalize
-        t1 = &t2;
-    with
-        nothing;
-    end
+    //finalize
+        t1 := &t2;
+    //with
+        //nothing;
+    //end
 end
 end
 escape 10;
@@ -26944,7 +27710,7 @@ end
 escape ret + _V;
 ]],
     --run = 11,
-    fin = 'line 22 : invalid access to pointer across `await´',
+    fin = 'line 22 : pointer access across `await´',
 }
 
 Test { [[
@@ -27087,7 +27853,7 @@ end
 
 class V with
 do
-    var int* v;
+    var int[] v;
     finalize
         v = _f();
     with
@@ -27125,7 +27891,7 @@ end
 
 class V with
 do
-    var int* v;
+    var int[] v;
     finalize
         v = _f();
     with
@@ -27244,7 +28010,7 @@ end
 
 class V with
 do
-    var int* v;
+    var int[] v;
     finalize
         v = _f();
     with
@@ -27286,7 +28052,7 @@ end
 
 class V with
 do
-    var int* v;
+    var int[] v;
     finalize
         v = _f();
     with
@@ -27367,7 +28133,7 @@ end
 
 class V with
 do
-    var int* v;
+    var int[] v;
     finalize
         v = _f();
     with
@@ -27410,7 +28176,7 @@ end
 
 class V with
 do
-    var int* v;
+    var int[] v;
     finalize
         v = _f();
     with
@@ -27456,7 +28222,7 @@ end
 
 class V with
 do
-    var int* v;
+    var int[] v;
     finalize
         v = _f();
     with
@@ -27488,7 +28254,7 @@ end
 
 escape _V;
 ]],
-    --fin = 'line 37 : invalid access to pointer across `await´',
+    --fin = 'line 37 : pointer access across `await´',
     props = 'line 27 : not permitted inside an interface',
 }
 Test { [[
@@ -27501,7 +28267,7 @@ end
 
 class V with
 do
-    var int* v;
+    var int[] v;
     finalize
         v = _f();
     with
@@ -27535,7 +28301,7 @@ end
 
 escape _V;
 ]],
-    --fin = 'line 39 : invalid access to pointer across `await´',
+    --fin = 'line 39 : pointer access across `await´',
     run = 1,
 }
 
@@ -27548,7 +28314,7 @@ end
 
 class V with
 do
-    var int* v;
+    var int[] v;
     finalize
         v = _f();
     with
@@ -27583,8 +28349,9 @@ end
 
 escape _V;
 ]],
-    --fin = 'line 38 : invalid access to pointer across `await´',
+    --fin = 'line 38 : pointer access across `await´',
     props = 'line 26 : not permitted inside an interface',
+    fin = 'line 38 : organism pointer attribution only inside constructors',
 }
 Test { [[
 native _f(), _V;
@@ -27595,7 +28362,7 @@ end
 
 class V with
 do
-    var int* v;
+    var int[] v;
     finalize
         v = _f();
     with
@@ -27630,9 +28397,10 @@ end
 
 escape _V;
 ]],
-    --fin = 'line 38 : invalid access to pointer across `await´',
-    fin = 'line 38 : unsafe pointer attribution',
+    --fin = 'line 38 : pointer access across `await´',
+    --fin = 'line 38 : unsafe pointer attribution',
     --props = 'line 26 : not permitted inside an interface',
+    fin = 'line 38 : organism pointer attribution only inside constructors',
 }
 Test { [[
 native _f(), _V;
@@ -27643,7 +28411,7 @@ end
 
 class V with
 do
-    var int* v;
+    var int[] v;
     finalize
         v = _f();
     with
@@ -27680,8 +28448,9 @@ end
 
 escape _V;
 ]],
-    --fin = 'line 40 : invalid access to pointer across `await´',
-    run = 2,
+    --fin = 'line 40 : pointer access across `await´',
+    fin = 'line 40 : organism pointer attribution only inside constructors',
+    --run = 2,
 }
 
 Test { [[
@@ -27702,7 +28471,7 @@ escape 1;
 
 ]],
     --fin = 'line 9 : invalid block for awoken pointer "v"',
-    fin = 'line 9 : invalid access to pointer across `await´',
+    --fin = 'line 9 : pointer access across `await´',
     run = { ['~>1s']=1, }
 }
 
@@ -27726,15 +28495,18 @@ end
 class T with
     var U* u;
 do
-    await OS_START;
-    //u:v = spawn V;
-    emit u:x;
+    watching u do
+        await OS_START;
+        //u:v = spawn V;
+        emit u:x;
+    end
 end
 
 do
     var U u;
-    var T t;
-        t.u = &u;
+    var T t with
+        this.u = &u;
+    end;
     await OS_START;
 end
 
@@ -27742,7 +28514,7 @@ escape 10;
 ]],
     wrn = true,
     run = 10,
-    fin = 'line 12 : invalid access to pointer across `await´',
+    --fin = 'line 12 : pointer access across `await´',
     --fin = 'line 12 : invalid block for awoken pointer "v"',
 }
 Test { [[
@@ -27979,12 +28751,13 @@ end
 do
     var U u;
     spawn T with
-        this.u = u;
+        this.u := u;
     end;
 end
 escape 1;
 ]],
-    fin = 'line 10 : attribution requires `finalize´',
+    --fin = 'line 10 : attribution requires `finalize´',
+    run = 1,
 }
 
 Test { [[
@@ -28076,7 +28849,7 @@ do
 end
 escape 1;
 ]],
-    fin = 'line 7 : invalid access to pointer across `await´',
+    fin = 'line 7 : pointer access across `await´',
 }
 
 Test { [[
@@ -28236,17 +29009,6 @@ escape n;
     run = { ['~>1s']=960 },
 }
 
--- TODO: error message
-Test { [[
-class T with do end;
-pool T[] ts;
-loop (T*)t in ts do
-    await 1s;
-end
-]],
-    props = 'line 4 : `every´ cannot contain `await´',
-}
-
 -- TODO: mem out e mem ever
 --[=[
 Test { [[
@@ -28365,11 +29127,11 @@ escape _V;
 
 Test { [[
 class T with
-    var _s* ptr = null;
+    var int* ptr = null;
 do
 end
 do
-    var _s* p = null;
+    var int* p = null;
     var T* ui = spawn T with
         this.ptr = p;   // ptr > p
     end;
@@ -28377,7 +29139,8 @@ end
 escape 10;
 ]],
     --fin = 'line 8 : attribution requires `finalize´',
-    fin = 'line 8 : unsafe pointer attribution',
+    --fin = 'line 8 : unsafe pointer attribution',
+    run = 10,
 }
 
 Test { [[
@@ -28395,8 +29158,8 @@ do
 end
 escape 10;
 ]],
-    fin = 'line 10 : unsafe pointer attribution',
-    --run = 10,
+    --fin = 'line 10 : unsafe pointer attribution',
+    run = 10,
 }
 
 Test { [[
@@ -28419,7 +29182,8 @@ end
 
 escape 10;
 ]],
-    fin = 'line 14 : unsafe pointer attribution',
+    run = 10,
+    --fin = 'line 14 : unsafe pointer attribution',
     --fin = 'line 14 : attribution requires `finalize´',
 }
 
@@ -28446,7 +29210,8 @@ end
 
 escape 10;
 ]],
-    fin = 'line 16 : unsafe pointer attribution',
+    run = 10,
+    --fin = 'line 16 : unsafe pointer attribution',
     --fin = 'line 16 : attribution requires `finalize´',
 }
 
@@ -28471,9 +29236,10 @@ do
     end
 end
 
-escape 0;
+escape 1;
 ]],
-    fin = 'line 15 : unsafe pointer attribution',
+    run = { ['~>1min']=1 },
+    --fin = 'line 15 : unsafe pointer attribution',
     --fin = 'line 15 : attribution requires `finalize´',
 }
 Test { [[
@@ -28514,6 +29280,7 @@ end
 class T with
     var _s* ptr = null;
 do
+    _V = _V + 1;
 end
 
 native do ##include <assert.h> end
@@ -28535,7 +29302,8 @@ end
 
 escape _V;
 ]],
-    fin = 'line 21 : unsafe pointer attribution',
+    run = { ['~>1min']=10 },
+    --fin = 'line 21 : unsafe pointer attribution',
     --props = 'line 23 : not permitted inside a constructor',
 }
 
@@ -28587,6 +29355,7 @@ end
 class T with
     var _s* ptr = null;
 do
+    _V = _V + 1;
 end
 
 native do ##include <assert.h> end
@@ -28609,7 +29378,8 @@ end
 
 escape _V;
 ]],
-    fin = 'line 22 : unsafe pointer attribution',
+    run = { ['~>1min']=10 },
+    --fin = 'line 22 : unsafe pointer attribution',
 }
 
 Test { [[
@@ -28738,7 +29508,8 @@ end
 emit u:move => 0;
 escape 2;
 ]],
-    fin = 'line 8 : attribution requires `finalize´',
+    --fin = 'line 8 : attribution requires `finalize´',
+    fin = 'line 8 : attribution to pointer with greater scope',
 }
 
 Test { [[
@@ -28755,7 +29526,7 @@ end
 emit u:move => 0;
 escape 2;
 ]],
-    fin = 'line 8 : unsafe pointer attribution',
+    fin = 'line 11 : pointer access across `await´',
 }
 
 Test { [[
@@ -29244,23 +30015,6 @@ escape ret;
 
 Test { [[
 interface I with
-end
-class T with
-    interface I;
-do end
-do
-    pool T[] ts;
-    loop (I*)i in ts do
-        await 1s;
-    end
-end
-escape 1;
-]],
-    props = 'line 9 : `every´ cannot contain `await´',
-}
-
-Test { [[
-interface I with
     var int a;
 end
 class T with
@@ -29386,9 +30140,11 @@ end
 
 var T t;
 var I* i = &t;
-
-await OS_START;
-escape i:e;
+watching i do
+    await OS_START;
+    escape i:e;
+end
+escape 0;
 ]],
     run = 100,
 }
@@ -29412,9 +30168,12 @@ end
 var T t;
 var I* i = &t;
 
-await OS_START;
-emit i:e;
-escape i:ee;
+watching i do
+    await OS_START;
+    emit i:e;
+    escape i:ee;
+end
+escape 0;
 ]],
     run = 100,
 }
@@ -29439,17 +30198,20 @@ end
 var T t1;
 var I* i1 = &t1;
 
-var int ret = 0;
-par/and do
-    await OS_START;
-    emit i1:e => 99;            // 21
-with
-    var int v = await i1:f;
-    ret = ret + v;
-with
-    await OS_START;
+watching i1 do
+    var int ret = 0;
+    par/and do
+        await OS_START;
+        emit i1:e => 99;            // 21
+    with
+        var int v = await i1:f;
+        ret = ret + v;
+    with
+        await OS_START;
+    end
+    escape ret;
 end
-escape ret;
+escape 0;
 ]],
     run = 99,
 }
@@ -29470,26 +30232,31 @@ end
 
 var T t1, t2;
 var I* i1 = &t1;
-var I* i2 = &t2;
 
-var int ret = 0;
-par/and do
-    await OS_START;
-    emit i1:e => 99;            // 21
-with
-    var int v = await i1:f;
-    ret = ret + v;
-with
-    await OS_START;
-    emit i2:e => 66;            // 27
-with
-    var int v = await i2:f;
-    ret = ret + v;
+watching i1 do
+    var I* i2 = &t2;
+    watching i2 do
+        var int ret = 0;
+        par/and do
+            await OS_START;
+            emit i1:e => 99;            // 21
+        with
+            var int v = await i1:f;
+            ret = ret + v;
+        with
+            await OS_START;
+            emit i2:e => 66;            // 27
+        with
+            var int v = await i2:f;
+            ret = ret + v;
+        end
+        escape ret;
+    end
 end
-escape ret;
+escape 0;
 ]],
     _ana = {
-        acc = 1,
+        acc = 2,    -- TODO: not verified
     },
     run = 165,
 }
@@ -29556,7 +30323,8 @@ var I* t;
 
 escape 1;
 ]],
-    fin = 'line 10 : attribution requires `finalize´'
+    --fin = 'line 10 : attribution requires `finalize´'
+    fin = 'line 10 : attribution to pointer with greater scope',
 }
 
 Test { [[
@@ -29582,12 +30350,31 @@ var int* a;
 var int* b;
 global:a = b;       // don't use global
 do
-    var int* c;
+    var int* c=null;
     global:a = c;
 end
 escape 1;
 ]],
-    fin = 'line 6 : unsafe pointer attribution',
+    run = 1,
+    --fin = 'line 6 : unsafe pointer attribution',
+    fin = 'line 6 : organism pointer attribution only inside constructors',
+}
+Test { [[
+interface Global with
+    var int* a;
+end
+var int* a;
+var int* b;
+global:a = b;       // don't use global
+do
+    var int* c;
+    await 1s;
+    global:a = c;
+end
+escape 1;
+]],
+    --fin = 'line 6 : unsafe pointer attribution',
+    fin = 'line 6 : organism pointer attribution only inside constructors',
 }
 Test { [[
 interface Global with
@@ -29615,7 +30402,8 @@ end
 var int* a;
 escape 1;
 ]],
-    fin = 'line 7 : unsafe pointer attribution',
+    --fin = 'line 7 : unsafe pointer attribution',
+    fin = 'line 7 : organism pointer attribution only inside constructors',
 }
 
 Test { [[
@@ -29971,7 +30759,7 @@ var J* j = i;
 await OS_START;
 escape i:aa + j:aa + t.aa;
 ]],
-    fin = 'line 23 : invalid access to pointer across `await´',
+    fin = 'line 23 : pointer access across `await´',
 }
 
 Test { [[
@@ -30028,7 +30816,7 @@ var J* j = i;
 await OS_START;
 escape i:a + j:a + t.a + i:v + t.v;
 ]],
-    fin = 'line 24 : invalid access to pointer across `await´',
+    fin = 'line 24 : pointer access across `await´',
     --run = 32,
 }
 
@@ -30192,7 +30980,7 @@ Test { [[
 class T with
 do
 end
-var T** t := _malloc(10 * sizeof(T**));
+var T*[] t := _malloc(10 * sizeof(T**));
 native @nohold _free();
 finalize with
     _free(t);
@@ -30225,7 +31013,7 @@ pool T[] ts;
 var I* p;
 do
     loop (I*)i in ts do
-        p = i;
+        p := i;
     end
 end
 escape 1;
@@ -31080,9 +31868,12 @@ end
 var T t;
 var I* i = &t;
 input void OS_START;
-await OS_START;
-i:f(100);
-escape i:v;
+watching i do
+    await OS_START;
+    i:f(100);
+    escape i:v;
+end
+escape 0;
 ]],
     wrn = true,
     run = 160,
@@ -31108,9 +31899,12 @@ end
 var T t;
 var I* i = &t;
 input void OS_START;
-await OS_START;
-i:f(100);
-escape i:v;
+watching i do
+    await OS_START;
+    i:f(100);
+    escape i:v;
+end
+escape 0;
 ]],
     run = 160,
 }
@@ -31176,14 +31970,16 @@ var T t;
 var U u;
 var I* i = &t;
 input void OS_START;
-await OS_START;
-i:f(100);
-var int ret = i:v;
+watching i do
+    await OS_START;
+    i:f(100);
+    var int ret = i:v;
 
-i=&u;
-i:f(200);
-
-escape ret + i:v;
+    i=&u;
+    i:f(200);
+    escape ret + i:v;
+end
+escape 0;
 ]],
     wrn = true,
     run = 630,
@@ -31405,10 +32201,11 @@ var I* i = &t;
 t.i = i;
 escape call/rec i:g(5);
 ]],
-    fin = 'line 16 : unsafe pointer attribution',
+    fin = 'line 16 : organism pointer attribution only inside constructors',
+    --fin = 'line 16 : unsafe pointer attribution',
     --tight = 'line 9 : function may be declared without `recursive´',
     wrn = true,
-    run = 5,
+    --run = 5,
 }
 
 Test { [[
@@ -31430,6 +32227,7 @@ var I* i = &t;
 t.i := i;
 escape call/rec i:g(5);
 ]],
+    fin = 'line 16 : organism pointer attribution only inside constructors',
     --tight = 'line 9 : function may be declared without `recursive´',
     wrn = true,
     run = 5,
@@ -31454,7 +32252,8 @@ var I* i = &t;
 t.i = i;
 escape i:g(5);
 ]],
-    fin = 'line 16 : unsafe pointer attribution',
+    fin = 'line 16 : organism pointer attribution only inside constructors',
+    --fin = 'line 16 : unsafe pointer attribution',
     --run = 1,
 }
 
@@ -31477,7 +32276,8 @@ var I* i = &t;
 t.i := i;
 escape i:g(5);
 ]],
-    run = 1,
+    fin = 'line 16 : organism pointer attribution only inside constructors',
+    --run = 1,
 }
 
 Test { [[
@@ -31616,7 +32416,8 @@ var T t with
 end;
 escape t.ret1 + t.ret2;
 ]],
-   fin = 'line 25 : unsafe pointer attribution',
+   --fin = 'line 25 : unsafe pointer attribution',
+    run = 3,
 }
 
 Test { [[
@@ -31942,7 +32743,8 @@ escape 1;
 ]],
     wrn = true,
     -- function must be "@hold v" and call must have fin
-    fin = 'line 12 : call to "f" requires `finalize´',
+    --fin = 'line 12 : call to "f" requires `finalize´',
+    fin = 'line 6 : organism pointer attribution only inside constructors',
 }
 
 Test { [[
@@ -31969,7 +32771,8 @@ escape 1;
 ]],
     wrn = true,
     -- function must be "@hold v" and call must have fin
-    fin = 'line 12 : call to "f" requires `finalize´',
+    --fin = 'line 12 : call to "f" requires `finalize´',
+    fin = 'line 6 : organism pointer attribution only inside constructors',
 }
 
 Test { [[
@@ -33041,7 +33844,8 @@ escape ret;
 ]],
     run = {
         ['100~>I; ~>1s'] = -5,
-        ['1000~>I; ~>1s'] = 5,
+        ['1000~>I; ~>1s'] = -5,
+        ['1001~>I; ~>1s'] = 5,
     }
 }
 
@@ -33202,7 +34006,7 @@ end
 
 escape ret;
 ]],
-    fin = 'line 18 : invalid access to pointer across `await´',
+    fin = 'line 18 : pointer access across `await´',
 }
 
 Test { [[
@@ -33232,7 +34036,7 @@ end
 
 escape ret;
 ]],
-    fin = 'line 22 : invalid access to pointer across `await´',
+    fin = 'line 22 : pointer access across `await´',
 }
 
 Test { [[
@@ -33271,7 +34075,7 @@ async do end;
 
 escape p:v;
 ]],
-    fin = 'line 15 : invalid access to pointer across `await´',
+    fin = 'line 15 : pointer access across `await´',
 }
 
 Test { [[
@@ -33481,7 +34285,9 @@ end
 
 escape ret;
 ]],
-    run = { ['~>1s;~>1s;~>1s;~>1s;~>1s']=-1 },
+    -- TODO: p terminates immediatelly and the block doesn't execute at all?
+    --run = { ['~>1s;~>1s;~>1s;~>1s;~>1s']=-1 },
+    run = { ['~>1s;~>1s;~>1s;~>1s;~>1s']=0 },
 }
 
 Test { [[
@@ -33515,7 +34321,9 @@ end
 
 escape ret;
 ]],
-    run = { ['~>1s;~>1s;~>1s;~>1s;~>1s']=-1 },
+    -- TODO: p terminates immediatelly and the block doesn't execute at all?
+    --run = { ['~>1s;~>1s;~>1s;~>1s;~>1s']=-1 },
+    run = { ['~>1s;~>1s;~>1s;~>1s;~>1s']=0 },
 }
 
 Test { [[
@@ -33779,6 +34587,38 @@ end
 escape 1;
 ]],
     run = 1,
+}
+
+Test { [[
+class Unit with
+    event int move;
+do
+end
+var Unit* u;
+pool Unit[] units;
+u = spawn Unit in units;
+await 2s;
+watching u do
+    emit u:move => 0;
+end
+escape 2;
+]],
+    fin = 'line 9 : pointer access across `await´',
+}
+Test { [[
+class Unit with
+    event int move;
+do
+end
+var Unit* u;
+pool Unit[] units;
+u = spawn Unit in units;
+watching u do
+    emit u:move => 0;
+end
+escape 2;
+]],
+    run = 2,
 }
 
 -- UNTIL
@@ -34861,7 +35701,7 @@ end
 
 Test { [[
 var int  a=10, b=5;
-var int* p = &b;
+var int[] p = &b;
 async thread do
 end
 escape a + b + *p;
@@ -34880,7 +35720,7 @@ escape (ret == 1);
 
 Test { [[
 var int  a=10, b=5;
-var int* p = &b;
+var int[] p = &b;
 async thread (a, p) do
     a = a + *p;
     sync do
@@ -34894,7 +35734,7 @@ escape a + b + *p;
 
 Test { [[
 var int  a=10, b=5;
-var int* p = &b;
+var int[] p = &b;
 var int ret =
     async thread (a, p) do
         a = a + *p;
@@ -34968,7 +35808,7 @@ escape x;
 
 Test { [[
 var int  a=10, b=5;
-var int* p = &b;
+var int[] p = &b;
 async thread (a, p) do
     a = a + *p;
     *p = a;
@@ -34980,7 +35820,7 @@ escape a + b + *p;
 
 Test { [[
 var int  a=10, b=5;
-var int* p = &b;
+var int[] p = &b;
 par/and do
     async thread (a, p) do
         a = a + *p;
@@ -34999,7 +35839,7 @@ escape a + b + *p;
 
 Test { [[
 var int  a=10, b=5;
-var int* p = &b;
+var int[] p = &b;
 async thread (a, p) do
     sync do
         a = a + *p;
@@ -35017,7 +35857,7 @@ native do
     ##include <unistd.h>
 end
 var int ret = 1;
-var int* p = &ret;
+var int[] p = &ret;
 par/or do
     async thread (p) do
         sync do
@@ -35043,7 +35883,7 @@ native do
     ##include <unistd.h>
 end
 var int ret = 0;
-var int* p = &ret;
+var int[] p = &ret;
 par/or do
     async thread (p) do
         _usleep(]]..i..[[);
@@ -35068,8 +35908,8 @@ end
 
 Test { [[
 var int  v1=10, v2=5;
-var int* p1 = &v1;
-var int* p2 = &v2;
+var int[] p1 = &v1;
+var int[] p2 = &v2;
 
 par/and do
     async thread (v1, p1) do
@@ -35091,8 +35931,8 @@ escape v1+v2;
 
 Test { [[
 var int  v1, v2;
-var int* p1 = &v1;
-var int* p2 = &v2;
+var int[] p1 = &v1;
+var int[] p2 = &v2;
 
 native do
     int calc ()
@@ -35133,8 +35973,8 @@ escape v1;
 
 Test { [[
 var int  v1, v2;
-var int* p1 = &v1;
-var int* p2 = &v2;
+var int[] p1 = &v1;
+var int[] p2 = &v2;
 
 par/and do
     async thread (p1) do
@@ -35172,8 +36012,8 @@ escape v1;
 
 Test { [[
 var int  v1, v2;
-var int* p1 = &v1;
-var int* p2 = &v2;
+var int[] p1 = &v1;
+var int[] p2 = &v2;
 
 native do
     int calc ()
@@ -35215,8 +36055,8 @@ escape v1;
 
 Test { [[
 var int  v1, v2;
-var int* p1 = &v1;
-var int* p2 = &v2;
+var int[] p1 = &v1;
+var int[] p2 = &v2;
 
 par/and do
     async thread (p1) do
@@ -35264,7 +36104,7 @@ class T with
     event int ok;
 do
     var int v;
-    var int* p = &v;
+    var int[] p = &v;
     async thread (p) do
         var int ret = 0;
         loop i in 50000 do
@@ -35655,6 +36495,22 @@ escape v[0] + v[1];
     _ana = {
         acc = 1,
     },
+    --fin = 'line 6 : pointer access across `await´',
+    run = 3;
+}
+Test { [[
+var int[2] v;
+par/and do
+    v[0] = 1;
+with
+    var int* p = v;
+    p[1] = 2;
+end
+escape v[0] + v[1];
+]],
+    _ana = {
+        acc = 2,
+    },
     run = 3,
 }
 Test { [[
@@ -35994,7 +36850,7 @@ await 1s;
 _assert(i == null);
 escape 1;
 ]],
-    fin = 'line 10 : invalid access to pointer across `await´',
+    fin = 'line 10 : pointer access across `await´',
 }
 
 Test { [[
@@ -36117,7 +36973,7 @@ do
 end
 escape 1;
 ]],
-    fin = 'line 9 : invalid access to pointer across `await´',
+    fin = 'line 9 : pointer access across `await´',
 }
 
 Test { [[
