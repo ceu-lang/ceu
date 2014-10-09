@@ -158,7 +158,9 @@ F = {
         end
         ASR(not me.fin, me, 'attribution does not require `finalize´')
 
-    -- REFUSE THE FOLLOWING POINTER ATTRIBUTIONS
+    -- REFUSE THE FOLLOWING POINTER ATTRIBUTIONS:
+        -- to pointers inside organisms (e.g., org.x=y)
+        -- to pointers with greater scope than source
     -- (CHECK IF ":=" IS REQUIRED)
 
         -- refuse "org.x=y", unless "this" (inside constructor or not)
@@ -176,14 +178,20 @@ F = {
             -- int a; int* pa; pa=&a;
             -- int a; do int* pa; pa=&a; end
             local fr_blk = node2blk(fr)
-            if not (fr.const or ENV.clss[to.tp.id] or
--- TODO: descomentar
-           --(AST.par(to_blk,'Dcl_cls') == AST.par(fr_blk,'Dcl_cls')) and
-                   (   to_blk.__depth >= fr_blk.__depth
-                   or (to_blk.__depth==cls.blk_ifc.__depth and
-                       fr_blk.__depth==cls.blk_body.__depth)
-                   ))
-            then
+            if not (
+                fr.const                            or -- constants are globals
+                fr.fst.tag == 'Nat'                 or -- natives are globals
+                fr.tag=='Op2_call' and fr[2].fst.tag=='Nat' or  -- native calls are globals
+                (fr.org and fr.org.tp.id=='Global') or -- "global:*" is global
+                ENV.clss[to.tp.id]                  or -- organisms must use "watching"
+                (   -- same class and scope of "to" <= "fr"
+                    (AST.par(to_blk,'Dcl_cls') == AST.par(fr_blk,'Dcl_cls')) and
+                        (   to_blk.__depth >= fr_blk.__depth            -- to <= fr
+                        or (to_blk.__depth==cls.blk_ifc.__depth and     --    or
+                            fr_blk.__depth==cls.blk_body.__depth)       -- ifc/bdy
+                        )
+                )
+            ) then
                 ASR(op==':=', me, 'attribution to pointer with greater scope')
                     -- NO:
                     -- var int* p;
@@ -200,9 +208,10 @@ F = {
 
         local fun = AST.iter'Dcl_fun'()
         if fun then
-            -- attribution to a class field (this or body),
-            --                  _NAT,
-            --                  function argument
+            -- refuse attributions to a
+            --  - class field (this or body)
+            --  - _NAT
+            --  - function argument
             if to.lst.tag=='Nat' or to_blk==cls.blk_ifc
                                  or to_blk==cls.blk_body
             or to.lst.var and to.lst.var.isFun then

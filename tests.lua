@@ -858,486 +858,7 @@ escape 1;
     --fin = 'line 8 : invalid attribution',
     run = 1,
 }
-
----
 ]===]
-
-Test { [[
-interface I with
-end
-
-interface Global with
-    var I* t;
-end
-
-class T with
-do
-    global:t = &this;
-end
-
-var I* t;
-
-escape 1;
-]],
-    --fin = 'line 10 : attribution requires `finalize´'
-    --fin = 'line 10 : attribution to pointer with greater scope',
-    fin = 'line 10 : organism pointer attribution only inside constructors',
-}
-
-Test { [[
-native do
-    void* v;
-end
-class T with
-    var _void[] ptr;
-do
-end
-var T t with
-    this.ptr = _v;
-end;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-class T with
-    var char [] str;
-do
-    str = "oioi";
-    this.str = "oioi";
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-var int* p;
-do
-    var int i;
-    p = &i;
-end
-escape 1;
-]],
-    fin = 'line 4 : attribution to pointer with greater scope',
-}
-Test { [[
-var int* p;
-do
-    var int i;
-    p := &i;
-end
-escape 1;
-]],
-    run = 1,
-}
-Test { [[
-class T with
-do
-end
-var int*[] v;
-var T*[] t;
-escape 1;
-]],
-    run = 1;
-}
-
-Test { [[
-class T with
-do
-end
-var int[]* v;
-var T[]* t;
-escape 1;
-]],
-    parser = 'line 4 : after `]´ : expected identifier',
-}
-
-Test { [[
-var int a;
-a := 1;
-escape 1;
-]],
-    fin = 'line 2 : invalid operator',
-}
-Test { [[
-var int a;
-finalize
-    a = 1;
-with
-    nothing;
-end
-escape 1;
-]],
-    fin = 'line 3 : attribution does not require `finalize´',
-}
-Test { [[
-var int* a;
-a := null;
-escape 1;
-]],
-    fin = 'line 2 : invalid operator',
-}
-Test { [[
-var int* a;
-finalize
-    a = null;
-with
-    nothing;
-end
-escape 1;
-]],
-    fin = 'line 3 : attribution does not require `finalize´',
-}
-Test { [[
-function (void)=>void f do
-    var int* a;
-    a := null;
-end
-escape 1;
-]],
-    fin = 'line 3 : invalid operator',
-}
-Test { [[
-var int a;
-var int* pa := &a;
-escape 1;
-]],
-    fin = 'line 2 : invalid operator',
-    run = 1,
-}
-Test { [[
-var int a;
-var int* pa;
-finalize
-    pa = &a;
-with
-    nothing;
-end
-escape 1;
-]],
-    fin = 'line 4 : attribution does not require `finalize´',
-}
-Test { [[
-function (void* o1)=>void f do
-    var void* tmp := o1;
-end
-escape 1;
-]],
-    fin = 'line 2 : invalid operator',
-    --fin = 'line 2 : pointer access across `await´',
-}
-
-Test { [[
-var int* u;
-var int[1] i;
-await 1s;
-u = i;
-escape 1;
-]],
-    run = { ['~>1s']=1 },
-}
-Test { [[
-var int* u;
-do
-    var int[1] i;
-    i[0] = 2;
-    u = i;
-end
-do
-    var int[1] i;
-    i[0] = 5;
-end
-escape *u;
-]],
-    fin = 'line 5 : attribution to pointer with greater scope',
-}
-Test { [[
-class Unit with
-    event int move;
-do
-end
-var Unit* u;
-do
-    pool Unit[] units;
-    u = spawn Unit in units;
-end
-watching u do
-    emit u:move => 0;
-end
-escape 2;
-]],
-    run = 2,
-}
-Test { [[
-class Unit with
-    event int move;
-do
-end
-var Unit* u;
-do
-    pool Unit[] units;
-    u = spawn Unit in units;
-    await 1min;
-end
-watching u do
-    emit u:move => 0;
-end
-escape 2;
-]],
-    fin = 'line 11 : pointer access across `await´',
-}
-
-Test { [[
-class T with
-    var int* v;
-do
-    *v = 1;
-    await 1s;
-    *v = 2;
-end
-escape 1;
-]],
-    fin = 'line 6 : pointer access across `await´',
-}
-
-Test { [[
-interface Global with
-    var int* a;
-end
-var int* a;
-class T with
-    var int* v;
-do
-end
-var T t with
-    this.v = global:a;
-end;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-input void OS_START;
-interface Global with
-    var int* a;
-end
-var int* a = null;
-class T with
-    var int* v;
-do
-end
-await OS_START;
-var T t with
-    this.v = global:a;
-end;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-interface I with
-    var int v;
-end
-
-class T with
-    var I* i = null;
-do
-    watching i do
-        var int v = i:v;
-    end
-end
-
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-interface I with
-    var int v;
-end
-
-class T with
-    var I* i = null;
-do
-    await 1s;
-    watching i do
-        var int v = i:v;
-    end
-end
-
-escape 1;
-]],
-    fin = 'line 9 : pointer access across `await´',
-}
-
-Test { [[
-interface I with
-    var int v;
-end
-
-class T with
-    var I* i = null;
-do
-    watching i do
-        await 1s;
-        var int v = i:v;
-    end
-end
-
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-interface I with
-    var int v;
-    event void e;
-end
-
-var I* i=null;
-
-await 1s;
-
-await i:e;
-
-watching i do
-    await 1s;
-    var int v = i:v;
-end
-
-escape 1;
-]],
-    fin = 'line 10 : pointer access across `await´',
-}
-Test { [[
-interface I with
-    var int v;
-    event void e;
-end
-
-var I* i=null;
-
-await 1s;
-
-watching i do
-    await 1s;
-    var int v = i:v;
-end
-
-escape 1;
-]],
-    fin = 'line 10 : pointer access across `await´',
-}
-
-Test { [[
-input void OS_START;
-interface Global with
-    var int* p;
-end
-var int i = 1;
-var int* p = null;
-await OS_START;
-p = p;
-escape *p;
-]],
-    fin = 'line 8 : pointer access across `await´',
-}
-
-Test { [[
-input void OS_START;
-interface Global with
-    var int* p;
-end
-var int i = 1;
-var int* p = null;
-await OS_START;
-p = &i;
-escape *p;
-]],
-    run = 1,
-}
-
-Test { [[
-input void OS_START;
-class T with
-    var int* p;
-do
-end
-var int i = 1;
-var T t with
-    this.p = null;
-end;
-await OS_START;
-t.p = &i;
-escape *t.p;
-]],
-    fin = 'line 11 : pointer access across `await´',
-}
-
-Test { [[
-input int SDL_KEYUP;
-var int key;
-key = await SDL_KEYUP;
-escape key;
-]],
-    run = { ['1 ~> SDL_KEYUP']=1 }
-}
-
-Test { [[
-input int* SDL_KEYUP;
-par/or do
-    var int* key;
-    key = await SDL_KEYUP;
-with
-    async do
-        emit SDL_KEYUP => null;
-    end
-end
-escape 1;
-]],
-    run = 1.
-}
-
-Test { [[
-input _SDL_KeyboardEvent* SDL_KEYUP;
-var _SDL_KeyboardEvent* key;
-every key in SDL_KEYUP do
-    if key:keysym.sym == 1 then
-    else/if key:keysym.sym == 1 then
-    end
-end
-]],
-    _ana = {
-        isForever = true,
-    },
-}
-
-Test { [[
-interface I with
-    var int v;
-end
-
-var I* i=null;
-
-par/or do
-    watching i do
-        await 1s;
-        var int v = i:v;
-    end
-with
-    await 1s;
-end
-
-escape 1;
-]],
-    run = 1,
-}
 
 --do return end
 
@@ -21705,6 +21226,485 @@ end
     parser = "line 4 : after `end´ : expected `;´",
 }
 
+    -- POINTER ASSIGNMENTS
+
+Test { [[
+interface I with
+end
+
+interface Global with
+    var I* t;
+end
+
+class T with
+do
+    global:t = &this;
+end
+
+var I* t;
+
+escape 1;
+]],
+    --fin = 'line 10 : attribution requires `finalize´'
+    --fin = 'line 10 : attribution to pointer with greater scope',
+    fin = 'line 10 : organism pointer attribution only inside constructors',
+}
+
+Test { [[
+native do
+    void* v;
+end
+class T with
+    var _void[] ptr;
+do
+end
+var T t with
+    this.ptr = _v;
+end;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+    var char [] str;
+do
+    str = "oioi";
+    this.str = "oioi";
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+var int* p;
+do
+    var int i;
+    p = &i;
+end
+escape 1;
+]],
+    fin = 'line 4 : attribution to pointer with greater scope',
+}
+Test { [[
+var int* p;
+do
+    var int i;
+    p := &i;
+end
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+class T with
+do
+end
+var int*[] v;
+var T*[] t;
+escape 1;
+]],
+    run = 1;
+}
+
+Test { [[
+class T with
+do
+end
+var int[]* v;
+var T[]* t;
+escape 1;
+]],
+    parser = 'line 4 : after `]´ : expected identifier',
+}
+
+Test { [[
+var int a;
+a := 1;
+escape 1;
+]],
+    fin = 'line 2 : invalid operator',
+}
+Test { [[
+var int a;
+finalize
+    a = 1;
+with
+    nothing;
+end
+escape 1;
+]],
+    fin = 'line 3 : attribution does not require `finalize´',
+}
+Test { [[
+var int* a;
+a := null;
+escape 1;
+]],
+    fin = 'line 2 : invalid operator',
+}
+Test { [[
+var int* a;
+finalize
+    a = null;
+with
+    nothing;
+end
+escape 1;
+]],
+    fin = 'line 3 : attribution does not require `finalize´',
+}
+Test { [[
+function (void)=>void f do
+    var int* a;
+    a := null;
+end
+escape 1;
+]],
+    fin = 'line 3 : invalid operator',
+}
+Test { [[
+var int a;
+var int* pa := &a;
+escape 1;
+]],
+    fin = 'line 2 : invalid operator',
+    run = 1,
+}
+Test { [[
+var int a;
+var int* pa;
+finalize
+    pa = &a;
+with
+    nothing;
+end
+escape 1;
+]],
+    fin = 'line 4 : attribution does not require `finalize´',
+}
+Test { [[
+function (void* o1)=>void f do
+    var void* tmp := o1;
+end
+escape 1;
+]],
+    fin = 'line 2 : invalid operator',
+    --fin = 'line 2 : pointer access across `await´',
+}
+
+Test { [[
+var int* u;
+var int[1] i;
+await 1s;
+u = i;
+escape 1;
+]],
+    run = { ['~>1s']=1 },
+}
+Test { [[
+var int* u;
+do
+    var int[1] i;
+    i[0] = 2;
+    u = i;
+end
+do
+    var int[1] i;
+    i[0] = 5;
+end
+escape *u;
+]],
+    fin = 'line 5 : attribution to pointer with greater scope',
+}
+Test { [[
+class Unit with
+    event int move;
+do
+end
+var Unit* u;
+do
+    pool Unit[] units;
+    u = spawn Unit in units;
+end
+watching u do
+    emit u:move => 0;
+end
+escape 2;
+]],
+    run = 2,
+}
+Test { [[
+class Unit with
+    event int move;
+do
+end
+var Unit* u;
+do
+    pool Unit[] units;
+    u = spawn Unit in units;
+    await 1min;
+end
+watching u do
+    emit u:move => 0;
+end
+escape 2;
+]],
+    fin = 'line 11 : pointer access across `await´',
+}
+
+Test { [[
+class T with
+    var int* v;
+do
+    *v = 1;
+    await 1s;
+    *v = 2;
+end
+escape 1;
+]],
+    fin = 'line 6 : pointer access across `await´',
+}
+
+Test { [[
+interface Global with
+    var int* a;
+end
+var int* a;
+class T with
+    var int* v;
+do
+end
+var T t with
+    this.v = global:a;
+end;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+interface Global with
+    var int* a;
+end
+var int* a = null;
+class T with
+    var int* v;
+do
+end
+await OS_START;
+var T t with
+    this.v = global:a;
+end;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+interface I with
+    var int v;
+end
+
+class T with
+    var I* i = null;
+do
+    watching i do
+        var int v = i:v;
+    end
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+interface I with
+    var int v;
+end
+
+class T with
+    var I* i = null;
+do
+    await 1s;
+    watching i do
+        var int v = i:v;
+    end
+end
+
+escape 1;
+]],
+    fin = 'line 9 : pointer access across `await´',
+}
+
+Test { [[
+interface I with
+    var int v;
+end
+
+class T with
+    var I* i = null;
+do
+    watching i do
+        await 1s;
+        var int v = i:v;
+    end
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+interface I with
+    var int v;
+    event void e;
+end
+
+var I* i=null;
+
+await 1s;
+
+await i:e;
+
+watching i do
+    await 1s;
+    var int v = i:v;
+end
+
+escape 1;
+]],
+    fin = 'line 10 : pointer access across `await´',
+}
+Test { [[
+interface I with
+    var int v;
+    event void e;
+end
+
+var I* i=null;
+
+await 1s;
+
+watching i do
+    await 1s;
+    var int v = i:v;
+end
+
+escape 1;
+]],
+    fin = 'line 10 : pointer access across `await´',
+}
+
+Test { [[
+input void OS_START;
+interface Global with
+    var int* p;
+end
+var int i = 1;
+var int* p = null;
+await OS_START;
+p = p;
+escape *p;
+]],
+    fin = 'line 8 : pointer access across `await´',
+}
+
+Test { [[
+input void OS_START;
+interface Global with
+    var int* p;
+end
+var int i = 1;
+var int* p = null;
+await OS_START;
+p = &i;
+escape *p;
+]],
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+class T with
+    var int* p;
+do
+end
+var int i = 1;
+var T t with
+    this.p = null;
+end;
+await OS_START;
+t.p = &i;
+escape *t.p;
+]],
+    fin = 'line 11 : pointer access across `await´',
+}
+
+Test { [[
+input int SDL_KEYUP;
+var int key;
+key = await SDL_KEYUP;
+escape key;
+]],
+    run = { ['1 ~> SDL_KEYUP']=1 }
+}
+
+Test { [[
+input int* SDL_KEYUP;
+par/or do
+    var int* key;
+    key = await SDL_KEYUP;
+with
+    async do
+        emit SDL_KEYUP => null;
+    end
+end
+escape 1;
+]],
+    run = 1.
+}
+
+Test { [[
+input _SDL_KeyboardEvent* SDL_KEYUP;
+var _SDL_KeyboardEvent* key;
+every key in SDL_KEYUP do
+    if key:keysym.sym == 1 then
+    else/if key:keysym.sym == 1 then
+    end
+end
+]],
+    _ana = {
+        isForever = true,
+    },
+}
+
+Test { [[
+interface I with
+    var int v;
+end
+
+var I* i=null;
+
+par/or do
+    watching i do
+        await 1s;
+        var int v = i:v;
+    end
+with
+    await 1s;
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
     -- CPP / DEFINE / PREPROCESSOR
 
 Test { [[
@@ -26539,6 +26539,22 @@ escape _V;
 ]],
     --loop = 1,
     run = { ['~>A']=10 },
+}
+
+Test { [[
+native @pure _UI_align();
+class T with
+    var _SDL_rect rect;
+do
+    do
+        var _SDL_Rect r;
+        r.x = _N;
+    end
+end
+escape 1;
+]],
+    --fin = 'line 7 : attribution requires `finalize´',
+    gcc = 'error: unknown type name ‘SDL_rect’',
 }
 
 Test { [[
