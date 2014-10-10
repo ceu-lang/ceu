@@ -21459,6 +21459,24 @@ escape 2;
 
 Test { [[
 class T with
+    var char* str;
+do
+end
+
+do
+    spawn T with
+        var char* s = "str";
+        this.str = s;
+    end;
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
     var int* v;
 do
     *v = 1;
@@ -21765,6 +21783,28 @@ end
     _ana = {
         isForever = true,
     },
+}
+
+Test { [[
+class Unit with
+    var _SDL_Texture* tex;
+do
+end
+
+interface Global with
+    pool Unit[] all;
+end
+
+pool Unit[] all;
+
+class Nest with
+do
+    spawn Unit in global:all with
+        this.tex := _TEX_STORMTROOPER;
+    end;
+end
+]],
+    fin = 'line 15 : wrong operator',
 }
 
     -- CPP / DEFINE / PREPROCESSOR
@@ -23725,7 +23765,8 @@ escape 1;
 ]],
     --fin = 'line 9 : attribution to pointer with greater scope',
     --fin = 'line 9 : attribution requires `finalize´',
-    fin = 'line 9 : attribution to pointer with greater scope',
+    --fin = 'line 9 : attribution to pointer with greater scope',
+    run = 1,
 }
 
 Test { [[
@@ -29341,7 +29382,7 @@ end
 escape 10;
 ]],
     --fin = 'line 8 : attribution requires `finalize´',
-    fin = 'line 8 : attribution to pointer with greater scope',
+    --fin = 'line 8 : attribution to pointer with greater scope',
     run = 10,
 }
 
@@ -29385,7 +29426,7 @@ end
 escape 10;
 ]],
     run = 10,
-    fin = 'line 14 : attribution to pointer with greater scope',
+    --fin = 'line 14 : attribution to pointer with greater scope',
     --fin = 'line 14 : attribution requires `finalize´',
 }
 
@@ -29413,7 +29454,7 @@ end
 escape 10;
 ]],
     run = 10,
-    fin = 'line 16 : attribution to pointer with greater scope',
+    --fin = 'line 16 : attribution to pointer with greater scope',
     --fin = 'line 16 : attribution requires `finalize´',
 }
 
@@ -29441,7 +29482,7 @@ end
 escape 1;
 ]],
     run = { ['~>1min']=1 },
-    fin = 'line 15 : attribution to pointer with greater scope',
+    --fin = 'line 15 : attribution to pointer with greater scope',
     --fin = 'line 15 : attribution requires `finalize´',
 }
 Test { [[
@@ -29505,7 +29546,7 @@ end
 escape _V;
 ]],
     run = { ['~>1min']=10 },
-    fin = 'line 22 : attribution to pointer with greater scope',
+    --fin = 'line 22 : attribution to pointer with greater scope',
     --props = 'line 23 : not permitted inside a constructor',
 }
 
@@ -29619,7 +29660,7 @@ end
 escape _V;
 ]],
     run = { ['~>1min']=10 },
-    fin = 'line 23 : attribution to pointer with greater scope',
+    --fin = 'line 23 : attribution to pointer with greater scope',
 }
 
 Test { [[

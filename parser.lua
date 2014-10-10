@@ -413,7 +413,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                     Cc(false) * V'__dcl_var' * (K','*V'__dcl_var')^0
                  )
 
-    , Dcl_constr = V'_Stmts'     -- TODO: Block?
+    , Dcl_constr = V'Block'
 
     , __dcl_var = EV'__ID_var' * (V'__Sets' +
                                 Cc(false)*Cc(false)*Cc(false)*Cc(false))

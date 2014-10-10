@@ -92,12 +92,8 @@ F = {
             else
                 assert(constr.__par.tag=='Spawn')
                 local _,pool,_ = unpack(constr.__par)
-                -- spawn x in a.b.c
-                -- take "b"
-                local c = pool.lst
-                local b = AST.par(c, 'Op2_.')
-                local v = (b and assert(b.org).fst) or c
-                to_blk = assert(v.var).blk
+                assert(assert(pool.lst).var)
+                to_blk = pool.lst.var.blk
             end
         else
             -- block where variable is defined
@@ -163,11 +159,11 @@ F = {
                 fr.fst.tag == 'Nat'        or -- natives are globals
                 (fr.tag=='Op2_call' and       -- native calls are globals
                  fr[2].fst.tag=='Nat')     or
+                AST.iter'Dcl_constr'()     or -- org bodies can't hold
                 (fr.org and                   -- "global:*" is global
                  fr.org.tp.id=='Global')   or
                 (ENV.clss[to.tp.id] and       -- organisms must use "watching"
-                 (fr.tag~='Op1_&' or AST.iter'Dcl_constr'())) or
-                                              -- (but avoid &org unless in constructors)
+                 fr.tag~='Op1_&')          or -- (but avoid &org)
                 string.sub(fr.tag,1,5) == 'Await' or -- pointer from outside
                 (   -- same class and scope of "to" <= "fr"
                     (AST.par(to_blk,'Dcl_cls') == AST.par(fr_blk,'Dcl_cls')) and
