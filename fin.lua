@@ -143,6 +143,7 @@ F = {
         -- refuse "org.x=y", unless "this" (inside constructor or not)
         -- "this" is easy to follow inside the single body
         -- other assignments are spread in multiple bodies
+--[[
         if to.org and to.fst.tag~='This' then
 -- TODO: code
             ASR(op==':=', me,
@@ -151,6 +152,7 @@ F = {
                 -- t.v = null;
 
         else
+]]
             -- OK: "fr" is a pointer to org (watching makes it safe)
             -- OK: "fr" `&´ reference has bigger scope than "to"
             -- int a; int* pa; pa=&a;
@@ -165,6 +167,7 @@ F = {
                  fr.org.tp.id=='Global')   or
                 (ENV.clss[to.tp.id] and       -- organisms must use "watching"
                  fr.tag~='Op1_&')          or -- (but avoid &org)
+                string.sub(fr.tag,1,5) == 'Await' or -- pointer from outside
                 (   -- same class and scope of "to" <= "fr"
                     (AST.par(to_blk,'Dcl_cls') == AST.par(fr_blk,'Dcl_cls')) and
                         (   to_blk.__depth >= fr_blk.__depth            -- to <= fr
@@ -185,7 +188,7 @@ F = {
 -- TODO: code
                 ASR(op=='=', me, 'wrong operator')
             end
-        end
+        --end
 
     -- FORCE @hold FOR UNSAFE ATTRIBUTIONS INSIDE FUNCTIONS
 

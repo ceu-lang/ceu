@@ -16577,7 +16577,7 @@ var void* ptr = null;
 t.v = ptr;
 escape 1;
 ]],
-    fin = 'line 9 : organism pointer attribution only inside constructors',
+    --fin = 'line 9 : organism pointer attribution only inside constructors',
     --fin = 'line 9 : attribution to pointer with greater scope',
     run = 1,
 }
@@ -16594,7 +16594,7 @@ var void* ptr = null;
 t.v = ptr;
 escape 1;
 ]],
-    fin = 'line 10 : organism pointer attribution only inside constructors',
+    --fin = 'line 10 : organism pointer attribution only inside constructors',
     --fin = 'line 9 : attribution to pointer with greater scope',
     run = 1,
 }
@@ -16610,7 +16610,7 @@ t.v = null;
 t.v = s.v;
 escape 1;
 ]],
-    fin = 'line 8 : organism pointer attribution only inside constructors',
+    --fin = 'line 8 : organism pointer attribution only inside constructors',
     run = 1,
 }
 
@@ -21236,8 +21236,8 @@ var I* t;
 escape 1;
 ]],
     --fin = 'line 10 : attribution requires `finalize´'
-    --fin = 'line 10 : attribution to pointer with greater scope',
-    fin = 'line 10 : organism pointer attribution only inside constructors',
+    fin = 'line 10 : attribution to pointer with greater scope',
+    --fin = 'line 10 : organism pointer attribution only inside constructors',
 }
 
 Test { [[
@@ -22529,6 +22529,21 @@ await OS_START;
 escape x.a;
 ]],
     run = 10,
+}
+
+Test { [[
+input _SDL_MouseButtonEvent* SDL_MOUSEBUTTONUP;
+class UITexture with
+    var int pad_y = 0;
+do
+    var _SDL_MouseButtonEvent* but = await SDL_MOUSEBUTTONUP;
+end
+await FOREVER;
+]],
+    --run = 1,
+    _ana = {
+        isForever = true,
+    },
 }
 
 Test { [[
@@ -28528,7 +28543,7 @@ input void OS_START;
 var T t;
 do
     var U u;
-    u.v := t.u.v;
+    u.v = t.u.v;
     await OS_START;
 end
 
@@ -28584,8 +28599,8 @@ escape _V;
 ]],
     --fin = 'line 38 : pointer access across `await´',
     --fin = 'line 38 : attribution to pointer with greater scope',
-    --props = 'line 26 : not permitted inside an interface',
-    fin = 'line 38 : organism pointer attribution only inside constructors',
+    props = 'line 26 : not permitted inside an interface',
+    --fin = 'line 38 : organism pointer attribution only inside constructors',
 }
 Test { [[
 native _f(), _V;
@@ -28627,7 +28642,7 @@ input void OS_START;
 var T t;
 do
     var U u;
-    u.v := t.u:v;
+    u.v = t.u:v;
     await OS_START;
 end
 
@@ -30562,8 +30577,8 @@ end
 escape 1;
 ]],
     run = 1,
-    --fin = 'line 6 : attribution to pointer with greater scope',
-    fin = 'line 6 : organism pointer attribution only inside constructors',
+    fin = 'line 6 : attribution to pointer with greater scope',
+    --fin = 'line 6 : organism pointer attribution only inside constructors',
 }
 Test { [[
 interface Global with
@@ -30579,8 +30594,8 @@ do
 end
 escape 1;
 ]],
-    --fin = 'line 6 : attribution to pointer with greater scope',
-    fin = 'line 6 : organism pointer attribution only inside constructors',
+    fin = 'line 6 : attribution to pointer with greater scope',
+    --fin = 'line 6 : organism pointer attribution only inside constructors',
 }
 Test { [[
 interface Global with
@@ -30608,8 +30623,8 @@ end
 var int* a;
 escape 1;
 ]],
-    --fin = 'line 7 : attribution to pointer with greater scope',
-    fin = 'line 7 : organism pointer attribution only inside constructors',
+    fin = 'line 7 : attribution to pointer with greater scope',
+    --fin = 'line 7 : organism pointer attribution only inside constructors',
 }
 
 Test { [[
@@ -32391,11 +32406,11 @@ var I* i = &t;
 t.i = i;
 escape call/rec i:g(5);
 ]],
-    fin = 'line 16 : organism pointer attribution only inside constructors',
+    --fin = 'line 16 : organism pointer attribution only inside constructors',
     --fin = 'line 16 : attribution to pointer with greater scope',
     --tight = 'line 9 : function may be declared without `recursive´',
     wrn = true,
-    --run = 5,
+    run = 5,
 }
 
 Test { [[
@@ -32414,7 +32429,7 @@ end
 
 var T t;
 var I* i = &t;
-t.i := i;
+t.i = i;
 escape call/rec i:g(5);
 ]],
     --fin = 'line 16 : organism pointer attribution only inside constructors',
@@ -32442,9 +32457,9 @@ var I* i = &t;
 t.i = i;
 escape i:g(5);
 ]],
-    fin = 'line 16 : organism pointer attribution only inside constructors',
+    --fin = 'line 16 : organism pointer attribution only inside constructors',
     --fin = 'line 16 : attribution to pointer with greater scope',
-    --run = 1,
+    run = 1,
 }
 
 Test { [[
@@ -32463,7 +32478,7 @@ end
 
 var T t;
 var I* i = &t;
-t.i := i;
+t.i = i;
 escape i:g(5);
 ]],
     --fin = 'line 16 : organism pointer attribution only inside constructors',
