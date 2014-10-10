@@ -818,7 +818,7 @@ escape 1;
     run = 1,
 }
 
---do return end
+do return end
 
 -------------------------------------------------------------------------------
 -- OK: well tested
@@ -21745,6 +21745,28 @@ escape 1;
     run = 1,
 }
 
+Test { [[
+class Forwarder with
+    var _pkt_t out;
+do
+end
+
+native @nohold _memcpy();
+
+input _pkt_t* RECEIVE;
+
+var _pkt_t* inc;
+every inc in RECEIVE do
+    spawn Forwarder with
+        _memcpy(&this.out, inc, inc:len);
+    end;
+end
+]],
+    _ana = {
+        isForever = true,
+    },
+}
+
     -- CPP / DEFINE / PREPROCESSOR
 
 Test { [[
@@ -27793,7 +27815,7 @@ end
 end
 escape 10;
 ]],
-    --fin = 'line 6 : attribution requires `finalize´',
+    fin = 'line 6 : attribution to pointer with greater scope',
     run = 10,
 }
 
@@ -27812,6 +27834,7 @@ end
 end
 escape 10;
 ]],
+    fin = 'line 7 : attribution to pointer with greater scope',
     run = 10,
 }
 
@@ -28900,6 +28923,8 @@ end
 escape 1;
 ]],
     --fin = 'line 10 : attribution requires `finalize´',
+    fin = 'line 10 : attribution to pointer with greater scope',
+    -- TODO: could accept this
     run = 1,
 }
 
@@ -28972,6 +28997,7 @@ end
 escape 1;
 ]],
     --fin = 'line 12 : attribution requires `finalize´',
+    fin = 'line 12 : attribution to pointer with greater scope',
     run = 1,
 }
 
@@ -29709,8 +29735,8 @@ emit u:move => 0;
 escape 2;
 ]],
     --fin = 'line 8 : attribution requires `finalize´',
-    --fin = 'line 8 : attribution to pointer with greater scope',
-    fin = 'line 11 : pointer access across `await´',
+    fin = 'line 8 : attribution to pointer with greater scope',
+    --fin = 'line 11 : pointer access across `await´',
 }
 
 Test { [[
@@ -34607,6 +34633,7 @@ _assert(_V == 1);
 escape 1;
 ]],
     run = { ['~>1s'] = 1 },
+    fin = 'line 18 : attribution to pointer with greater scope',
 }
 Test { [[
 class U with
@@ -34635,6 +34662,7 @@ _assert(_V == 1);
 escape 1;
 ]],
     run = { ['~>1s'] = 1 },
+    fin = 'line 19 : attribution to pointer with greater scope',
 }
 --do return end
 
@@ -34663,6 +34691,7 @@ _assert(_V == 1);
 escape 1;
 ]],
     run = { ['~>1s'] = 1 },
+    fin = 'line 17 : attribution to pointer with greater scope',
 }
 Test { [[
 native do
@@ -34688,6 +34717,7 @@ _assert(_V == 1);
 escape 1;
 ]],
     run = { ['~>1s'] = 1 },
+    fin = 'line 16 : attribution to pointer with greater scope',
 }
 Test { [[
 class U with do end;
@@ -34708,6 +34738,7 @@ end
 escape 1;
 ]],
     run = 1,
+    fin = 'line 13 : attribution to pointer with greater scope',
 }
 Test { [[
 class U with do end;
@@ -34735,6 +34766,7 @@ end
 escape 1;
 ]],
     run = 1,
+    fin = 'line 20 : attribution to pointer with greater scope',
 }
 
 Test { [[
@@ -34769,6 +34801,77 @@ escape 2;
     run = 2,
 }
 
+Test { [[
+class Unit with
+    var int pos;
+do end;
+
+var Unit* ptr;
+do
+    var Unit u;
+    ptr = &u;
+end
+ptr:pos = 0;
+escape 1;
+]],
+    fin = 'line 8 : attribution to pointer with greater scope',
+}
+
+Test { [[
+class Unit with
+    var int pos;
+do end;
+
+class T with
+    event Unit* org;
+    event int   ok;
+do
+    var Unit* u = await org;
+    var int pos = 0;
+    watching u do
+        pos = u:pos;
+    end
+    await 1s;
+    emit ok => pos;
+end
+
+var T t;
+await 1s;
+
+do
+    var Unit u with
+        this.pos = 10;
+    end;
+    emit t.org => &u;
+end
+
+var int v = await t.ok;
+escape v;
+]],
+    run = { ['~>2s']=10 },
+}
+
+Test { [[
+class Unit with
+    var int pos;
+do end;
+
+var Unit* ptr;
+do
+    var Unit u;
+    u.pos = 10;
+    ptr = &u;
+end
+do
+    var int[100] v;
+    loop i in 100 do
+        v[i] = i;
+    end
+end
+escape ptr:pos;
+]],
+    fin = 'line 9 : attribution to pointer with greater scope',
+}
 -- UNTIL
 
 Test { [[

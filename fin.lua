@@ -123,6 +123,7 @@ F = {
                 -- var void* ptr = _malloc(1);  // no
                 -- _ptr = _malloc(1);           // ok
 
+-- TODO: code
             ASR(me.fin, me, 'attribution requires `finalize´')
                 -- var void[] ptr = _malloc(1);
             if me.fin then
@@ -131,6 +132,7 @@ F = {
             end
             return
         end
+-- TODO: code
         ASR(not me.fin, me, 'attribution does not require `finalize´')
 
     -- REFUSE THE FOLLOWING POINTER ATTRIBUTIONS:
@@ -142,6 +144,7 @@ F = {
         -- "this" is easy to follow inside the single body
         -- other assignments are spread in multiple bodies
         if to.org and to.fst.tag~='This' then
+-- TODO: code
             ASR(op==':=', me,
                 'organism pointer attribution only inside constructors')
                 -- var T t;
@@ -154,11 +157,14 @@ F = {
             -- int a; do int* pa; pa=&a; end
             local fr_blk = node2blk(fr)
             if not (
-                fr.const                            or -- constants are globals
-                fr.fst.tag == 'Nat'                 or -- natives are globals
-                fr.tag=='Op2_call' and fr[2].fst.tag=='Nat' or  -- native calls are globals
-                (fr.org and fr.org.tp.id=='Global') or -- "global:*" is global
-                ENV.clss[to.tp.id]                  or -- organisms must use "watching"
+                fr.const                   or -- constants are globals
+                fr.fst.tag == 'Nat'        or -- natives are globals
+                (fr.tag=='Op2_call' and       -- native calls are globals
+                 fr[2].fst.tag=='Nat')     or
+                (fr.org and                   -- "global:*" is global
+                 fr.org.tp.id=='Global')   or
+                (ENV.clss[to.tp.id] and       -- organisms must use "watching"
+                 fr.tag~='Op1_&')          or -- (but avoid &org)
                 (   -- same class and scope of "to" <= "fr"
                     (AST.par(to_blk,'Dcl_cls') == AST.par(fr_blk,'Dcl_cls')) and
                         (   to_blk.__depth >= fr_blk.__depth            -- to <= fr
@@ -167,6 +173,7 @@ F = {
                         )
                 )
             ) then
+-- TODO: code
                 ASR(op==':=', me, 'attribution to pointer with greater scope')
                     -- NO:
                     -- var int* p;
@@ -175,6 +182,7 @@ F = {
                     --     p = &i;
                     -- end
             else
+-- TODO: code
                 ASR(op=='=', me, 'wrong operator')
             end
         end
@@ -326,6 +334,7 @@ F = {
                     r = r and exp.fst and exp.fst.blk or
                         r and exp.fst and exp.fst.var and exp.fst.var.blk
                                 -- need to hold block
+-- TODO: ERR 10xx
                     WRN( (not r) or (not req) or (r==req),
                             me, 'invalid call (multiple scopes)')
                     req = req or r
