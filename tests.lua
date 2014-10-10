@@ -28938,8 +28938,7 @@ end
 escape 1;
 ]],
     --fin = 'line 10 : attribution requires `finalize´',
-    fin = 'line 10 : attribution to pointer with greater scope',
-    -- TODO: could accept this
+    --fin = 'line 10 : attribution to pointer with greater scope',
     run = 1,
 }
 
@@ -29012,7 +29011,7 @@ end
 escape 1;
 ]],
     --fin = 'line 12 : attribution requires `finalize´',
-    fin = 'line 12 : attribution to pointer with greater scope',
+    --fin = 'line 12 : attribution to pointer with greater scope',
     run = 1,
 }
 
@@ -34648,7 +34647,7 @@ _assert(_V == 1);
 escape 1;
 ]],
     run = { ['~>1s'] = 1 },
-    fin = 'line 18 : attribution to pointer with greater scope',
+    --fin = 'line 18 : attribution to pointer with greater scope',
 }
 Test { [[
 class U with
@@ -34677,7 +34676,7 @@ _assert(_V == 1);
 escape 1;
 ]],
     run = { ['~>1s'] = 1 },
-    fin = 'line 19 : attribution to pointer with greater scope',
+    --fin = 'line 19 : attribution to pointer with greater scope',
 }
 --do return end
 
@@ -34706,7 +34705,7 @@ _assert(_V == 1);
 escape 1;
 ]],
     run = { ['~>1s'] = 1 },
-    fin = 'line 17 : attribution to pointer with greater scope',
+    --fin = 'line 17 : attribution to pointer with greater scope',
 }
 Test { [[
 native do
@@ -34732,7 +34731,7 @@ _assert(_V == 1);
 escape 1;
 ]],
     run = { ['~>1s'] = 1 },
-    fin = 'line 16 : attribution to pointer with greater scope',
+    --fin = 'line 16 : attribution to pointer with greater scope',
 }
 Test { [[
 class U with do end;
@@ -34753,7 +34752,7 @@ end
 escape 1;
 ]],
     run = 1,
-    fin = 'line 13 : attribution to pointer with greater scope',
+    --fin = 'line 13 : attribution to pointer with greater scope',
 }
 Test { [[
 class U with do end;
@@ -34781,7 +34780,7 @@ end
 escape 1;
 ]],
     run = 1,
-    fin = 'line 20 : attribution to pointer with greater scope',
+    --fin = 'line 20 : attribution to pointer with greater scope',
 }
 
 Test { [[

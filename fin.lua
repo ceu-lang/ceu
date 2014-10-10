@@ -166,7 +166,8 @@ F = {
                 (fr.org and                   -- "global:*" is global
                  fr.org.tp.id=='Global')   or
                 (ENV.clss[to.tp.id] and       -- organisms must use "watching"
-                 fr.tag~='Op1_&')          or -- (but avoid &org)
+                 (fr.tag~='Op1_&' or AST.iter'Dcl_constr'())) or
+                                              -- (but avoid &org unless in constructors)
                 string.sub(fr.tag,1,5) == 'Await' or -- pointer from outside
                 (   -- same class and scope of "to" <= "fr"
                     (AST.par(to_blk,'Dcl_cls') == AST.par(fr_blk,'Dcl_cls')) and
