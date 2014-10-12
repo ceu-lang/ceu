@@ -277,6 +277,7 @@ void ceu_sys_go (tceu_app* app, int evt, tceu_evtp evtp)
 #endif
 #ifdef CEU_WCLOCKS
         case CEU_IN__WCLOCK:
+        case CEU_IN__WCLOCK_:
             if (app->wclk_min <= evtp.dt) {
                 app->wclk_late = evtp.dt - app->wclk_min;
             }
@@ -302,7 +303,7 @@ void ceu_sys_go (tceu_app* app, int evt, tceu_evtp evtp)
     for (;;)    /* STACK */
     {
 #ifdef CEU_DEBUG
-        assert(go.stki < 250);
+        assert(go.stki < 32000);
 #endif
         /* TODO: don't restart if kill is impossible (hold trl on stk) */
         go.org = app->data;    /* on pop(), always restart */
@@ -547,7 +548,7 @@ _CEU_GO_NEXT_:
 _CEU_GO_QUIT_:;
 
 #ifdef CEU_WCLOCKS
-    if (evt == CEU_IN__WCLOCK) {
+    if (evt==CEU_IN__WCLOCK || evt==CEU_IN__WCLOCK_) {
 /*
 #ifdef ceu_out_wclock_set
         if (app->wclk_min != CEU_WCLOCK_INACTIVE) {
@@ -930,6 +931,7 @@ int ceu_scheduler (int(*dt)())
         {
             tceu_app* app = CEU_APPS;
             while (app) {
+#error TODO: CEU_IN__WCLOCK_
                 ceu_sys_go(app, CEU_IN__WCLOCK, CEU_EVTP(_dt));
                 app = app->nxt;
             }

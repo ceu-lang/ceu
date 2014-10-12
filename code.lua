@@ -917,11 +917,12 @@ case ]]..me.lbl_cnt.id..[[:;
     AwaitT = function (me)
         local exp = unpack(me)
         local no = '_CEU_NO_'..me.n..'_'
+        local evt = (exp.tm and 'CEU_IN__WCLOCK_') or 'CEU_IN__WCLOCK'
 
         LINE(me, [[
 ceu_out_wclock(_ceu_app, (s32)]]..V(exp)..[[, &]]..me.val_wclk..[[, NULL);
 ]]..no..[[:
-    _ceu_go->trl->evt = CEU_IN__WCLOCK;
+    _ceu_go->trl->evt = ]]..evt..[[;
     _ceu_go->trl->lbl = ]]..me.lbl.id..[[;
 ]])
         HALT(me)

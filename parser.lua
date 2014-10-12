@@ -340,11 +340,11 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                 (NUM * K's'   + Cc(0)) *
                 (NUM * K'ms'  + Cc(0)) *
                 (NUM * K'us'  + Cc(0)) *
-                (NUM * EM'<h,min,s,ms,us>')^-1
+                (NUM * EM'<h,min,s,ms,us>')^-1 * (CK'_' + Cc(false))
     , WCLOCKE = K'(' * V'__Exp' * EK')' * (
                     CK'h' + CK'min' + CK's' + CK'ms' + CK'us'
                   + EM'<h,min,s,ms,us>'
-              )
+              ) * (CK'_' + Cc(false))
 
     , _Pause   = KEY'pause/if' * EV'__Exp' * V'__Do'
 
