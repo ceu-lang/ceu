@@ -119,6 +119,13 @@ F = {
     EmitInt = function (me)
         VARS = {}   -- NO: run in different ceu_call
     end,
+    EmitExt = function (me)
+        local op, ext, param = unpack(me)
+        local evt = ext.evt
+        if evt.pre == 'input' then
+            VARS = {}
+        end
+    end,
 
     Spawn_pre = function (me)
         VARS = {}   -- NO: start organism
