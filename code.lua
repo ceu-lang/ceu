@@ -738,6 +738,7 @@ if (]]..V(c)..[[) {
 
     Loop_pos = function (me)
         local body = unpack(me)
+        local no = '_CEU_NO_'..me.n..'_'
 
         LINE(me, [[
 for (;;) {
@@ -751,6 +752,7 @@ for (;;) {
 #else
     {
 #endif
+]]..no..[[:
         _ceu_go->trl->evt = CEU_IN__ASYNC;
         _ceu_go->trl->lbl = ]]..me.lbl_asy.id..[[;
 ]])
@@ -759,6 +761,7 @@ for (;;) {
     }
     case ]]..me.lbl_asy.id..[[:;
 ]])
+            AWAIT_PAUSE(me, no)
         end
         LINE(me, [[
 }
@@ -787,6 +790,7 @@ _ceu_go->trl = &_ceu_go->org->trls[ ]]..me.trails[1]..[[ ];
     EmitExt = function (me)
         local op, ext, param = unpack(me)
         local evt = ext.evt
+        local no = '_CEU_NO_'..me.n..'_'
 
         if evt.pre~='input' or op~='emit' then
             if not me.__ast_set then
@@ -800,6 +804,7 @@ _ceu_go->trl = &_ceu_go->org->trls[ ]]..me.trails[1]..[[ ];
         -- only async's need to split in two (to avoid stack growth)
         if AST.iter'Async'() then
             LINE(me, [[
+]]..no..[[:
 _ceu_go->trl->evt = CEU_IN__ASYNC;
 _ceu_go->trl->lbl = ]]..me.lbl_cnt.id..[[;
 ]])
@@ -822,15 +827,18 @@ if (! _ceu_app->isAlive)
             LINE(me, [[
 case ]]..me.lbl_cnt.id..[[:;
 ]])
+            AWAIT_PAUSE(me, no)
         end
     end,
 
     EmitT = function (me)
         local exp = unpack(me)
+        local no = '_CEU_NO_'..me.n..'_'
 
         -- only async's need to split in two (to avoid stack growth)
         if AST.iter'Async'() then
             LINE(me, [[
+]]..no..[[:
 _ceu_go->trl->evt = CEU_IN__ASYNC;
 _ceu_go->trl->lbl = ]]..me.lbl_cnt.id..[[;
 ]])
@@ -867,6 +875,7 @@ _ceu_go->trl->lbl = ]]..me.lbl_cnt.id..[[;
             LINE(me, [[
 case ]]..me.lbl_cnt.id..[[:;
 ]])
+            AWAIT_PAUSE(me, no)
         end
     end,
 
@@ -1057,6 +1066,7 @@ case ]]..me.lbl.id..[[:;
 
     Async = function (me)
         local vars,blk = unpack(me)
+        local no = '_CEU_NO_'..me.n..'_'
 
         if vars then
             for i=1, #vars, 2 do
@@ -1068,6 +1078,7 @@ case ]]..me.lbl.id..[[:;
         end
 
         LINE(me, [[
+]]..no..[[:
 _ceu_go->trl->evt = CEU_IN__ASYNC;
 _ceu_go->trl->lbl = ]]..me.lbl.id..[[;
 ]])
@@ -1076,6 +1087,7 @@ _ceu_go->trl->lbl = ]]..me.lbl.id..[[;
         LINE(me, [[
 case ]]..me.lbl.id..[[:;
 ]])
+        AWAIT_PAUSE(me, no)
         CONC(me, blk)
     end,
 
