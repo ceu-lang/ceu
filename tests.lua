@@ -648,6 +648,40 @@ escape 1;
     run = 1,
 }
 
+-- TODO: explicit interface implementations only
+Test { [[
+interface I with
+    var int v;
+end
+
+class T with
+    var int u,v,x;
+do
+end
+
+class U with
+    var int v;
+do
+end
+
+class V with
+    var int v;
+do
+    pool I[10] is;
+    spawn T in is;
+    spawn U in is;
+end
+
+pool I[10] is;
+
+spawn T in is;
+spawn U in is;
+spawn V in is;
+
+escape sizeof(CEU_T) > sizeof(CEU_U);
+]],
+    run = 1,
+}
 -------------------------------------------------------------------------------
 -- ??: working now
 Test { [[
@@ -818,11 +852,67 @@ escape 1;
     run = 1,
 }
 
+]===]
+Test { [[
+interface I with
+    var int v;
+end
+
+class T with
+    var int u,v,x;
+do
+end
+
+class U with
+    var int v;
+do
+end
+
+pool I[10] is;
+
+spawn T in is;
+spawn U in is;
+
+escape sizeof(CEU_T) > sizeof(CEU_U);
+]],
+    run = 1,
+}
+Test { [[
+interface I with
+    var int v;
+end
+
+class T with
+    var int u,v,x;
+do
+end
+
+class U with
+    var int v;
+do
+end
+
+class V with
+do
+    pool I[10] is;
+    spawn T in is;
+    spawn U in is;
+end
+
+pool I[10] is;
+
+spawn T in is;
+spawn U in is;
+spawn V in is;
+
+escape sizeof(CEU_T) > sizeof(CEU_U);
+]],
+    run = 1,
+}
 do return end
 
 -------------------------------------------------------------------------------
 -- OK: well tested
-]===]
 
 Test { [[escape(1);]],
     _ana = {

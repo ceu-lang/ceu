@@ -508,11 +508,19 @@ _ceu_go->org->trls[ ]]..me.trl_fins[1]..[[ ].seqno = _ceu_app->seqno-1; /* awake
                 LINE(me, ';')
             elseif var.pre=='pool' and (type(var.tp.arr)=='table') then
                 local dcl = var.val_dcl
-                LINE(me, [[
+                if ENV.clss[var.tp.id].is_ifc then
+                    LINE(me, [[
+ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'_delayed),'
+                                                    -- TODO: bad (explicit CEU_)
+    ..'(byte**)'..dcl..'_queue, (byte*)'..dcl..[[_mem);
+]])
+                else
+                    LINE(me, [[
 ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'),'
                                                     -- TODO: bad (explicit CEU_)
     ..'(byte**)'..dcl..'_queue, (byte*)'..dcl..[[_mem);
 ]])
+                end
             end
 
             -- initialize trails for ORG_STATS_I & ORG_POOL_I

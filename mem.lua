@@ -22,10 +22,23 @@ typedef struct CEU_]]..me.id..[[ {
     Dcl_cls_pos = function (me)
         if me.is_ifc then
             me.struct = 'typedef void '..TP.toc(me.tp)..';\n'
+            -- interface full declarations must be delayed to after its impls.  
+            local struct = [[
+typedef union CEU_]]..me.id..[[_delayed {
+]]
+            for k, v in pairs(me.matches) do
+                if v then
+                    struct = struct..'\t'..TP.toc(k.tp)..' '..k.id..';\n'
+                end
+            end
+            struct = struct .. [[
+} CEU_]]..me.id..[[_delayed;
+]]
+            -- TODO: HACK_4: delayed declaration until use
+            me.struct_delayed = struct .. '\n'
         else
             me.struct  = me.struct..'\n} '..TP.toc(me.tp)..';\n'
         end
-
         MEM.clss = MEM.clss .. me.struct .. '\n'
         MEM.clss = MEM.clss .. me.funs   .. '\n'
 --DBG('===', me.id, me.trails_n)
@@ -141,10 +154,21 @@ typedef struct CEU_]]..me.id..[[ {
                 end
                 cls.struct = cls.struct..SPC()..'  '..dcl..';\n'
             elseif var.pre=='pool' and (type(var.tp.arr)=='table') then
-                cls.struct = cls.struct .. [[
+                local pool_cls = ENV.clss[var.tp.id]
+                if pool_cls.is_ifc then
+                    -- TODO: HACK_4: delayed declaration until use
+                    MEM.clss = MEM.clss .. pool_cls.struct_delayed .. '\n'
+                    pool_cls.struct_delayed = ''
+                    cls.struct = cls.struct .. [[
+CEU_POOL_DCL(]]..var.id_..',CEU_'..var.tp.id..'_delayed,'..var.tp.arr.sval..[[)
+]]
+                           -- TODO: bad (explicit CEU_)
+                else
+                    cls.struct = cls.struct .. [[
 CEU_POOL_DCL(]]..var.id_..',CEU_'..var.tp.id..','..var.tp.arr.sval..[[)
 ]]
-                            -- TODO: bad (explicit CEU_)
+                           -- TODO: bad (explicit CEU_)
+                end
             end
 
             -- pointers ini/end to list of orgs
