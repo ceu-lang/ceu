@@ -11,12 +11,23 @@ function pred_sort (v1, v2)
 end
 
 F = {
+    Host = function (me)
+        -- unescape `##´ => `#´
+        local src = string.gsub(me[1], '^%s*##',  '#')
+              src = string.gsub(src,   '\n%s*##', '\n#')
+        CLS().native = CLS().native .. [[
+
+#line ]]..me.ln[2]..' "'..me.ln[1]..[["
+]] .. src
+    end,
+
     Dcl_cls_pre = function (me)
         me.struct = [[
 typedef struct CEU_]]..me.id..[[ {
   struct tceu_org org;
   tceu_trl trls_[ ]]..me.trails_n..[[ ];
 ]]
+        me.native = ''
         me.funs = ''
     end,
     Dcl_cls_pos = function (me)
@@ -39,8 +50,13 @@ typedef union CEU_]]..me.id..[[_delayed {
         else
             me.struct  = me.struct..'\n} '..TP.toc(me.tp)..';\n'
         end
+
+        if me.id ~= 'Main' then
+            MEM.clss = MEM.clss .. me.native .. '\n'
+        end
         MEM.clss = MEM.clss .. me.struct .. '\n'
-        MEM.clss = MEM.clss .. me.funs   .. '\n'
+
+        MEM.clss = MEM.clss .. me.funs .. '\n'
 --DBG('===', me.id, me.trails_n)
 --DBG(me.struct)
 --DBG('======================')
@@ -133,9 +149,13 @@ typedef union CEU_]]..me.id..[[_delayed {
         for _, var in ipairs(sorted) do
             local tp = TP.toc(var.tp)
 
-            var.id_ = var.id .. '_' .. var.n
-            --var.id_ = var.id .. (var.inTop and '' or ('_'..var.n))
-                -- id's inside interfaces are kept (to be used from C)
+            if var.inTop then
+                var.id_ = var.id
+                    -- id's inside interfaces are kept (to be used from C)
+            else
+                var.id_ = var.id .. '_' .. var.n
+                    -- otherwise use counter to avoid clash inside struct/union
+            end
 
             if CLS().id == var.tp.id then
                 tp = 'struct '..tp  -- for types w/ pointers for themselves

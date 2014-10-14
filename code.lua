@@ -5,7 +5,6 @@ CODE = {
     threads   = '',
     functions = '',
     stubs     = '',     -- maps input functions to ceu_app_call switch cases
-    native    = '',
 }
 
 -- Assert that all input functions have bodies.
@@ -173,16 +172,6 @@ end
 F = {
     Node_pre = function (me)
         me.code = '/* NODE: '..me.tag..' '..me.n..' */\n'
-    end,
-
-    Host = function (me)
-        -- unescape `##´ => `#´
-        local src = string.gsub(me[1], '^%s*##',  '#')
-              src = string.gsub(src,   '\n%s*##', '\n#')
-        CODE.native = CODE.native .. [[
-
-#line ]]..me.ln[2]..' "'..me.ln[1]..[["
-]] .. src
     end,
 
     Do         = CONC_ALL,

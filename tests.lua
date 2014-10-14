@@ -852,11 +852,35 @@ escape 1;
     run = 1,
 }
 
+Test { [[
+class T with
+do
+    native do
+        int XXX = sizeof(CEU_T);
+    end
+end
+escape _XXX > 0;
+]],
+    gcc = 'error: ‘CEU_T’ undeclared here (not in a function)',
+}
+
+Test { [[
+class U with do end;
+class T with
+do
+    native do
+        int XXX = sizeof(CEU_U);
+    end
+end
+escape _XXX > 0;
+]],
+    run = 1,
+}
+
 do return end
 
 -------------------------------------------------------------------------------
 -- OK: well tested
-]===]
 
 Test { [[escape(1);]],
     _ana = {
@@ -23014,6 +23038,7 @@ escape a;
     run = 14,
 }
 
+]===]
 Test { [[
 class T with
     var int a;
@@ -23027,6 +23052,7 @@ input void OS_START;
 await OS_START;
 escape t.a;
 ]],
+    gcc = 'error: duplicate member ‘a’',
     wrn = true,
     --run = 14,
     run = 8,

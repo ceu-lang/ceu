@@ -320,7 +320,7 @@ do
     CC = SUB(CC, '=== THREADS_C ===',   CODE.threads)
     CC = SUB(CC, '=== FUNCTIONS_C ===', CODE.functions)
     CC = SUB(CC, '=== STUBS ===',       CODE.stubs)
-    CC = SUB(CC, '=== NATIVE ===',      CODE.native)
+    CC = SUB(CC, '=== NATIVE ===',      MAIN.native)
     CC = SUB(CC, '=== CODE ===',        AST.root.code)
 
     -- IFACES

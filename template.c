@@ -34,11 +34,12 @@
 #define CEU_NCLS       (=== CEU_NCLS ===)
 #endif
 
-/* native code */
+/* native code from the Main class */
 === NATIVE ===
 
 /* class definitions */
 /* may use types defined above in "NATIVE" */
+/* each class may define new native code that appear after its struct declaration */
 === CLSS_DEFS ===
 
 /* goto labels */
