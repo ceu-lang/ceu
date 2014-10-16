@@ -855,10 +855,10 @@ escape 1;
 BUG de "&" para org across await
 
 do return end
-]===]
 
 -------------------------------------------------------------------------------
 -- OK: well tested
+]===]
 
 Test { [[escape(1);]],
     _ana = {
@@ -19294,7 +19294,7 @@ ptr1 = ptr2;
 ptr2 = ptr1;
 escape 1;
 ]],
-    env = 'line 4 : invalid attribution (int* vs _FILE*)',
+    --env = 'line 4 : invalid attribution (int* vs _FILE*)',
     gcc = 'error: assignment from incompatible pointer type',
     --run = 1,
     --env = 'line 4 : invalid attribution',
@@ -19771,6 +19771,16 @@ vec[9].c = 100;
 escape i + vec[9].c + vec[3].v[5];
 ]],
     run = 220,
+}
+
+Test { [[
+var int i = do
+    var char[5] abcd;
+    escape 1;
+end;
+escape i;
+]],
+    run = 1,
 }
 
 Test { [[var int[2] v; await v;     escape 0;]],
@@ -20913,7 +20923,8 @@ native _char=1;
 var _char* a = "Abcd12" ;
 escape 1;
 ]],
-    env = 'line 2 : invalid attribution (_char* vs char*)',
+    --env = 'line 2 : invalid attribution (_char* vs char*)',
+    run = 1,
 }
 Test { [[
 native _char=1;

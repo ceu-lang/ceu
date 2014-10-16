@@ -484,8 +484,9 @@ _ceu_go->org->trls[ ]]..me.trl_fins[1]..[[ ].seqno = _ceu_app->seqno-1; /* awake
         for _, var in ipairs(me.vars) do
             if var.isTmp then
                 if var.tp.arr then
-                    LINE(me, TP.toc(var.tp)
-                            ..' '..V(var)..'['..V(var.tp.arr)..']')
+            local tp = TP.toc(var.tp)
+                    local tp = string.sub(TP.toc(var.tp),1,-2)  -- remove leading `*´
+                    LINE(me, tp..' '..var.id_..'['..var.tp.arr.cval..']')
                 else
                     LINE(me, TP.toc(var.tp)..' __ceu_'..var.id..'_'..var.n)
                 end
