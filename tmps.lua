@@ -115,6 +115,13 @@ F = {
         end
     end,
 
+    ['Op1_&'] = function (me)
+        local op, e1 = unpack(me)
+        if e1.fst.var then
+            e1.fst.var.isTmp = false    -- assigned to a pointer
+        end
+    end,
+
     EmitNoTmp = 'EmitInt',
     EmitInt = function (me)
         VARS = {}   -- NO: run in different ceu_call

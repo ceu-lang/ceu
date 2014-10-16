@@ -852,32 +852,10 @@ escape 1;
     run = 1,
 }
 
-Test { [[
-class T with
-do
-    native do
-        int XXX = sizeof(CEU_T);
-    end
-end
-escape _XXX > 0;
-]],
-    gcc = 'error: ‘CEU_T’ undeclared here (not in a function)',
-}
-
-Test { [[
-class U with do end;
-class T with
-do
-    native do
-        int XXX = sizeof(CEU_U);
-    end
-end
-escape _XXX > 0;
-]],
-    run = 1,
-}
+BUG de "&" para org across await
 
 do return end
+]===]
 
 -------------------------------------------------------------------------------
 -- OK: well tested
@@ -1304,6 +1282,45 @@ Test { [[
 end
 ]],
     env = 'line 2 : variable/event "check" is not declared',
+}
+
+Test { [[
+native do
+    int V = 10;
+end
+var int& v;
+v = &_V;
+escape v;
+]],
+    env = 'line 5 : invalid attribution (int& vs _*)',
+    run = 10;
+}
+
+Test { [[
+native do
+    int V = 10;
+end
+var int[] v;
+v = &_V;
+escape *v;
+]],
+    run = 10;
+}
+
+Test { [[
+native do
+    int V = 10;
+end
+var int vv = 10;
+var int[] v;
+v = &vv;
+await 1s;
+do
+    var int vvv = 1;
+end
+escape *v;
+]],
+    run = { ['~>1s']=10 };
 }
 
     -- IF
@@ -22995,6 +23012,31 @@ escape 1;
 }
 
 Test { [[
+class T with
+do
+    native do
+        int XXX = sizeof(CEU_T);
+    end
+end
+escape _XXX > 0;
+]],
+    gcc = 'error: ‘CEU_T’ undeclared here (not in a function)',
+}
+
+Test { [[
+class U with do end;
+class T with
+do
+    native do
+        int XXX = sizeof(CEU_U);
+    end
+end
+escape _XXX > 0;
+]],
+    run = 1,
+}
+
+Test { [[
 native _V;
 native do
     int V = 1;
@@ -23038,7 +23080,6 @@ escape a;
     run = 14,
 }
 
-]===]
 Test { [[
 class T with
     var int a;

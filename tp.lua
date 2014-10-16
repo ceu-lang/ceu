@@ -203,10 +203,6 @@ function TP.contains (tp1, tp2)
         return true
     end
 
-    if (tp1.ext and tp1.ptr==0) or (tp2.ext and tp2.ptr==0) then
-        return true     -- let external types be handled by gcc
-    end
-
     -- both are numeric
     if TP.isNumeric(tp1) and TP.isNumeric(tp2) then
         return true
@@ -226,19 +222,28 @@ function TP.contains (tp1, tp2)
 
     -- both are pointers
     if tp1.ptr>0 and tp2.ptr>0 then
-        if tp1.id=='char' and tp1.ptr==1
-        or tp1.id=='void' and tp1.ptr==1 then
-            return true     -- any pointer can be cast to char*/void*
+        if tp1.id=='char' and tp1.ptr==1 -- cast to char*
+        or tp1.id=='void' and tp1.ptr==1 -- cast to void*
+        or tp1.ext or tp2.ext then       -- let gcc handle
+            return true
             -- TODO: void* too???
         end
         if tp2.id == 'null' then
             return true     -- any pointer can be assigned "null"
         end
         return false
+    elseif tp1.ptr>0 or tp2.ptr>0 then
+        if tp1.ptr>0 and tp2.ext then
+            return true
+        elseif tp2.ptr>0 and tp1.ext then
+            return true
+        else
+            return false
+        end
     end
 
-    -- c=accept ext // and at least one is ext
-    if c and (TP.ext(tp1) or TP.ext(tp2)) then
+    -- let external types be handled by gcc
+    if tp1.ext or tp2.ext then
         return true
     end
 
