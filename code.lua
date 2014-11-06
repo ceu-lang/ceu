@@ -852,7 +852,7 @@ _ceu_go->trl->lbl = ]]..me.lbl_cnt.id..[[;
             _ceu_app->isAlive &&
 #endif
             _ceu_app->wclk_min]]..suf..[[<=0) {
-        ceu_out_go(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, CEU_EVTP(0));
+        ceu_out_go(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, CEU_EVTP((s32)0));
     }
 #if defined(CEU_RET) || defined(CEU_OS)
     if (! _ceu_app->isAlive)

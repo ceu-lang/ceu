@@ -1,8 +1,3 @@
-input int  SDL_DT;
-input void SDL_REDRAW;
-input _SDL_KeyboardEvent* SDL_KEYDOWN;
-input _SDL_KeyboardEvent* SDL_KEYUP;
-
 native @nohold _queue_put();
 native @pure   _queue_get();
 
@@ -12,8 +7,24 @@ native do
     };
 end
 
+#ifndef TM_INPUT_DT
+#error Missing "TM_INPUT_DT"
+#endif
+#ifndef TM_INPUT_FRAME
+#error Missing "TM_INPUT_FRAME"
+#endif
+
+#define TM_SNAP
+
+interface IIOTimeMachine with
+    event void         go_on;
+    event void         go_off;
+    event _tceu_queue* go_queue;
+end
+
 class TimeMachine with
     var App& app;
+    var IIOTimeMachine& io;
     event void go_on, go_off;
     //event void ok_restart;
 
@@ -23,52 +34,43 @@ class TimeMachine with
     event int  go_forward;
 
     var   bool seeking? = false;
-    event void ok;
+    event void ok_seek;
     #define TM_AWAIT_SEEK(me)  \
         if me.seeking? then    \
-            await me.ok;       \
+            await me.ok_seek;  \
         end
 
     var int time_total = 0;
     var int time_now;
 do
-    _SNAP_data := (char*) &this.app;
     _QUEUE_get = 0;
-    _SNAP_put = 0;
 
+    _SNAP_data := (char*) &this.app;
+    _SNAP_put = 0;
     _snap_put(_QUEUE_put, this.time_total);     // 0, 0
+#ifdef TM_SNAP
     var int next_snap = _SNAP_ms;
+#endif
 
     loop do
         watching this.go_on do
-            par do
-                var int dt;
-                every dt in SDL_DT do
-                    this.time_total = this.time_total + dt;
+            var int dt;
+            every dt in TM_INPUT_DT do
+                this.time_total = this.time_total + dt;
 //_printf("DT %d %d\n", this.time_total, this.app.v);
-                    _assert(dt > 0);
-                    _queue_put(_CEU_IN__WCLOCK, _CEU_EVTP(dt), 0, null);
-                    if _SNAP_ms!=0 and this.time_total>=next_snap then
-                        next_snap = next_snap + _SNAP_ms;
-                        _snap_put(_QUEUE_put, this.time_total);
-                    end
+                _assert(dt > 0);
+                _queue_put(_CEU_IN__WCLOCK, _CEU_EVTP(dt), 0, null);
+#ifdef TM_SNAP
+                if this.time_total >= next_snap then
+                    next_snap = next_snap + _SNAP_ms;
+                    _snap_put(_QUEUE_put, this.time_total);
                 end
-            with
-                var _SDL_KeyboardEvent* key;
-                every key in SDL_KEYDOWN do
-                    _queue_put(_CEU_IN_SDL_KEYDOWN, _CEU_EVTP(null),
-                               sizeof(_SDL_KeyboardEvent), (byte*)key);
-                end
-            with
-                var _SDL_KeyboardEvent* key;
-                every key in SDL_KEYUP do
-                    _queue_put(_CEU_IN_SDL_KEYUP, _CEU_EVTP(null),
-                               sizeof(_SDL_KeyboardEvent), (byte*)key);
-                end
+#endif
             end
         end
 
         _CEU_TIMEMACHINE_ON = _CEU_TIMEMACHINE_ON + 1;
+        emit this.io.go_on;
 
         par/or do
             finalize with
@@ -76,9 +78,12 @@ do
                 this.time_total = time_now;     // drop future
                 _QUEUE_put = _QUEUE_get;
                 _QUEUE_tot = _QUEUE_get;
+#ifdef TM_SNAP
                 next_snap = _snap_set(time_now);
+#endif
             end
             await this.go_off;
+            emit this.io.go_off;
         with
             var int speed = 0;
                 // initialization avoids valgrind "uninitalized access" below
@@ -117,7 +122,6 @@ do
                         if speed == 0 then
                             this.seeking? = true;
                         end
-#define TM_DELAY
 #ifndef TM_DELAY
                         var int late = 0;
 #endif
@@ -189,7 +193,7 @@ TODO: old, remove
                                         awt = dt*-speed;
                                     end
 #ifdef TM_DELAY
-                                    _SDL_Delay(awt);
+                                    TM_DELAY(awt);
 #else
 //_printf("AWT: %d %d\n", awt, late);
                                     if awt > late then
@@ -206,34 +210,25 @@ TODO: old, remove
 
                                 async(dt) do
                                     emit (dt)ms;
-                                    emit SDL_DT => dt;
-                                end
-
-                            else/if qu:evt == _CEU_IN_SDL_KEYDOWN then
-                                async(qu) do
-                                    emit SDL_KEYDOWN => qu:param.ptr;
-                                end
-                            else/if qu:evt == _CEU_IN_SDL_KEYUP then
-                                async(qu) do
-                                    emit SDL_KEYUP => qu:param.ptr;
+                                    emit TM_INPUT_DT => dt;
                                 end
                             else
-                                _assert(0);
+                                emit io.go_queue => qu;
                             end
                             if speed != 0 then
                                 async do
-                                    emit SDL_REDRAW;
+                                    emit TM_INPUT_FRAME;
                                 end
                             end
                         end
                         async do
-                            emit SDL_REDRAW;
+                            emit TM_INPUT_FRAME;
                         end
 /*
 */
                         if this.seeking? then
                             this.seeking? = false;
-                            emit this.ok;
+                            emit this.ok_seek;
                         end
                         await FOREVER;
                     end
@@ -273,7 +268,7 @@ TODO: old, remover
                             emit this.go_seek => now;   // don't awake myself
                             me? = false;
                             par/and do
-                                await this.ok;
+                                await this.ok_seek;
                             with
                                 var int awt;
                                 if bk_speed > 0 then
@@ -316,7 +311,7 @@ TODO: old, remover
                             emit this.go_seek => now; // don't awake myself (above)
                             me? = false;
                             par/and do
-                                await this.ok;
+                                await this.ok_seek;
                             with
                                 await (awt)ms_;     // other iterations
                             end
@@ -350,8 +345,10 @@ TODO: old, remover
                             // 30FPS * 2events/frame
             // 1h of events with 2 events/frame
             // 3600*1000 = 3600000 =>/30 = 120000 =>2 = 240000 = 240K events
-*/
 
+        #undef QUEUE_MAX
+        #define QUEUE_MAX 1000
+*/
 
         byte QUEUE[QUEUE_MAX];
         u32  QUEUE_tot = 0;
@@ -362,9 +359,10 @@ TODO: old, remover
                                int sz, byte* buf) {
             int n = sizeof(tceu_queue) + sz;
 
-            if (QUEUE_tot+n > QUEUE_MAX)
+            if (QUEUE_tot+n > QUEUE_MAX) {
                 assert(0);
                 /*return 0;   TODO: add event FULL when QUEUE_MAX-1 */
+            }
 
             /* An event+data must be continuous in the QUEUE. */
             if (QUEUE_put+n+sizeof(tceu_queue)>=QUEUE_MAX && evt!=CEU_IN__NONE) {
@@ -412,7 +410,11 @@ TODO: old, remover
 
         #define SNAP_ms 2000  /* 10s = 30*10 = at most 300 frames to traverse */
                               /* 0 means "do not take snaps" */
+#ifdef TM_SNAP
         #define SNAP_N  6*60  /* 10s*6*60=1h  (360*56K-rocks = 1.8Mb) */
+#else
+        #define SNAP_N  1
+#endif
 
         typedef struct {
             CEU_App data;
