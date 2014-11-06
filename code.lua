@@ -833,6 +833,8 @@ case ]]..me.lbl_cnt.id..[[:;
         local exp = unpack(me)
         local no = '_CEU_NO_'..me.n..'_'
 
+        local suf = (exp.tm and '_') or ''
+
         -- only async's need to split in two (to avoid stack growth)
         if AST.iter'Async'() then
             LINE(me, [[
@@ -844,13 +846,13 @@ _ceu_go->trl->lbl = ]]..me.lbl_cnt.id..[[;
 
         local emit = [[
 {
-    ceu_out_go(_ceu_app, CEU_IN__WCLOCK, CEU_EVTP((]]..V(exp)..[[)));
+    ceu_out_go(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, CEU_EVTP((]]..V(exp)..[[)));
     while (
 #if defined(CEU_RET) || defined(CEU_OS)
             _ceu_app->isAlive &&
 #endif
-            _ceu_app->wclk_min<=0) {
-        ceu_out_go(_ceu_app, CEU_IN__WCLOCK, CEU_EVTP(0));
+            _ceu_app->wclk_min]]..suf..[[<=0) {
+        ceu_out_go(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, CEU_EVTP(0));
     }
 #if defined(CEU_RET) || defined(CEU_OS)
     if (! _ceu_app->isAlive)
@@ -924,12 +926,13 @@ case ]]..me.lbl_cnt.id..[[:;
     AwaitT = function (me)
         local exp = unpack(me)
         local no = '_CEU_NO_'..me.n..'_'
-        local evt = (exp.tm and 'CEU_IN__WCLOCK_') or 'CEU_IN__WCLOCK'
+        local suf = (exp.tm and '_') or ''
 
         LINE(me, [[
-ceu_out_wclock(_ceu_app, (s32)]]..V(exp)..[[, &]]..me.val_wclk..[[, NULL);
+ceu_out_wclock]]..suf..[[(_ceu_app, (s32)]]..V(exp)..[[, &]]..me.val_wclk..[[, 
+NULL);
 ]]..no..[[:
-    _ceu_go->trl->evt = ]]..evt..[[;
+    _ceu_go->trl->evt = CEU_IN__WCLOCK]]..suf..[[;
     _ceu_go->trl->lbl = ]]..me.lbl.id..[[;
 ]])
         HALT(me)
@@ -940,7 +943,7 @@ case ]]..me.lbl.id..[[:;
 
         AWAIT_PAUSE(me, no)
         LINE(me, [[
-    if (!ceu_out_wclock(_ceu_app, _ceu_go->evtp.dt, NULL, &]]..me.val_wclk..[[) )
+    if (!ceu_out_wclock]]..suf..[[(_ceu_app, _ceu_go->evtp.dt, NULL, &]]..me.val_wclk..[[) )
         goto ]]..no..[[;
 ]])
         DEBUG_TRAILS(me)

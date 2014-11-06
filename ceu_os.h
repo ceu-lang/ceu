@@ -1,3 +1,5 @@
+#define CEU_TIMEMACHINE
+
 #ifndef _CEU_OS_H
 #define _CEU_OS_H
 
@@ -99,6 +101,9 @@
 #ifdef CEU_WCLOCKS
     #define ceu_out_wclock(app,dt,set,get) \
         ((__typeof__(ceu_sys_wclock)*)((app)->sys_vec[CEU_SYS_WCLOCK]))(app,dt,set,get)
+#ifdef CEU_TIMEMACHINE
+    #error TIMEMACHINE
+#endif
 #endif
 
     #define ceu_out_go(app,evt,evtp) \
@@ -125,6 +130,10 @@
 #ifdef CEU_WCLOCKS
     #define ceu_out_wclock(app,dt,set,get) \
             ceu_sys_wclock(app,dt,set,get)
+#ifdef CEU_TIMEMACHINE
+    #define ceu_out_wclock_(app,dt,set,get) \
+            ceu_sys_wclock_(app,dt,set,get)
+#endif
 #endif
     #define ceu_out_go(app,evt,evtp) \
             ceu_sys_go(app,evt,evtp)
@@ -345,6 +354,11 @@ typedef struct tceu_app {
     int         wclk_late;
     s32         wclk_min;
     s32         wclk_min_tmp;
+#ifdef CEU_TIMEMACHINE
+    int         wclk_late_;
+    s32         wclk_min_;
+    s32         wclk_min_tmp_;
+#endif
 #endif
 
 #ifndef CEU_OS
