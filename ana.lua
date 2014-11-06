@@ -106,7 +106,7 @@ F = {
             }
         else
             -- broken sequences
-            if me[i-1].ana.pos[false] and (not me[i-1].ana.pre[false]) then
+            if sub.tag~='Host' and me[i-1].ana.pos[false] and (not me[i-1].ana.pre[false]) then
                 --ANA.ana.unreachs = ANA.ana.unreachs + 1
                 me.__unreach = true
                 WRN( INC(me, 'unreachs'),
