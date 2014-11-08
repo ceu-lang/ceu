@@ -71,7 +71,6 @@ do
             var int dt;
             every dt in TM_INPUT_DT do
                 this.time_total = this.time_total + dt;
-//_printf("DT %d %d\n", this.time_total, this.app.v);
                 _assert(dt >= 0);
                 _queue_put(_CEU_IN__WCLOCK, _CEU_EVTP(dt), 0, null);
 #ifdef TM_SNAP
@@ -228,20 +227,22 @@ do
                             await FOREVER;
                         end
                         var int now = this.time_now;
-//_printf("=======back from now [%d]\n", now);
 
+#ifndef TM_BACKWARD_TICK
+#define TM_BACKWARD_TICK 30 // TODO: adaptative
+#endif
                         var int awt;
                         if bk_speed > 0 then
-                            awt = 30/bk_speed;
+                            awt = TM_BACKWARD_TICK/bk_speed;
                         else/if bk_speed < 0 then
-                            awt = 30*-bk_speed;
+                            awt = TM_BACKWARD_TICK*-bk_speed;
                         else
                             _assert(0);
                         end
                         await (awt)ms_;             // first iteration
 
                         loop i do
-                            now = now - 30;
+                            now = now - TM_BACKWARD_TICK;
                             if now < 0 then
                                 now = 0; // one last time to stop exactly at 0
                             end
