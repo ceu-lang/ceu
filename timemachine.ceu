@@ -10,11 +10,20 @@ end
 #ifndef TM_INPUT_DT
 #error Missing "TM_INPUT_DT"
 #endif
-#ifndef TM_INPUT_FRAME
-#error Missing "TM_INPUT_FRAME"
+#ifndef TM_INPUT_REDRAW
+#error Missing "TM_INPUT_REDRAW"
 #endif
-
-#define TM_SNAP
+#ifndef TM_QUEUE_MAX
+#error Missing "TM_QUEUE_MAX"
+#endif
+#ifdef TM_SNAP
+#ifndef TM_SNAP_MS
+#error Missing "TM_SNAP_MS"
+#endif
+#ifndef TM_SNAP_N
+#error Missing "TM_SNAP_N"
+#endif
+#endif
 
 interface IIOTimeMachine with
     event void         go_on;
@@ -33,11 +42,16 @@ class TimeMachine with
     event int  go_backward;
     event int  go_forward;
 
+    var   bool ticking? = false;
+    event void ok_tick;
     var   bool seeking? = false;
-    event void ok_seek;
-    #define TM_AWAIT_SEEK(me)  \
-        if me.seeking? then    \
-            await me.ok_seek;  \
+    event int  ok_seek;
+    #define TM_AWAIT_SEEK(me)   \
+        if me.ticking? then     \
+            await me.ok_tick;   \
+        end                     \
+        if me.seeking? then     \
+            await me.ok_seek;   \
         end
 
     var int time_total = 0;
@@ -49,7 +63,7 @@ do
     _SNAP_put = 0;
     _snap_put(_QUEUE_put, this.time_total);     // 0, 0
 #ifdef TM_SNAP
-    var int next_snap = _SNAP_ms;
+    var int next_snap = TM_SNAP_MS;
 #endif
 
     loop do
@@ -58,11 +72,11 @@ do
             every dt in TM_INPUT_DT do
                 this.time_total = this.time_total + dt;
 //_printf("DT %d %d\n", this.time_total, this.app.v);
-                _assert(dt > 0);
+                _assert(dt >= 0);
                 _queue_put(_CEU_IN__WCLOCK, _CEU_EVTP(dt), 0, null);
 #ifdef TM_SNAP
                 if this.time_total >= next_snap then
-                    next_snap = next_snap + _SNAP_ms;
+                    next_snap = next_snap + TM_SNAP_MS;
                     _snap_put(_QUEUE_put, this.time_total);
                 end
 #endif
@@ -101,6 +115,7 @@ do
                         time_req = tmp;
                         this.time_now = _snap_get(time_req);
                         speed = 0;
+                        this.seeking? = true;
                         //emit this.ok_restart;
                         //_queue_reset();
                     with
@@ -119,53 +134,9 @@ do
                         speed    = s;
                         time_req = this.time_total;
                     with
-                        if speed == 0 then
-                            this.seeking? = true;
-                        end
 #ifndef TM_DELAY
                         var int late = 0;
 #endif
-/*
-TODO: old, remove
-                        async (&time_now, speed, time_req, time_total) do
-                            loop do
-                                if time_req == _TM_REQ_PAUSE then
-                                    break;  // already there
-                                end
-                                var int get = _QUEUE_get;
-                                var _tceu_queue[] qu = _queue_get();
-                                if qu == null then
-                                    break;
-                                end
-                                //_assert(qu != null);
-                                if qu:evt == _CEU_IN__WCLOCK then
-                                    var int dt = qu:param.v;
-                                    if time_now+dt > time_req then
-                                        _QUEUE_get = get;   // undo get
-                                        break;  // stop before this emission
-                                    end
-                                    time_now = time_now + dt;
-                                    emit (dt)ms;
-                                    emit SDL_DT => dt;
-                                    if speed > 0 then
-                                        _SDL_Delay(dt/speed);
-                                    else/if speed < 0 then
-                                        _SDL_Delay(dt*-speed);
-                                    end
-                                else/if qu:evt == _CEU_IN_SDL_KEYDOWN then
-                                    emit SDL_KEYDOWN => qu:param.ptr;
-                                else/if qu:evt == _CEU_IN_SDL_KEYUP then
-                                    emit SDL_KEYUP => qu:param.ptr;
-                                else
-                                    _assert(0);
-                                end
-                                if speed != 0 then
-                                    emit SDL_REDRAW;
-                                end
-                            end
-                            emit SDL_REDRAW;
-                        end
-*/
                         loop do
                             if time_req == _TM_REQ_PAUSE then
                                 break;  // already there
@@ -175,12 +146,14 @@ TODO: old, remove
                             if qu == null then
                                 break;
                             end
+                            this.ticking? = true;
                             //_assert(qu != null);
                             if qu:evt == _CEU_IN__WCLOCK then
-                                var int dt = qu:param.v;
-                                _assert(dt > 0);
+                                var int dt = ((_tceu_queue_dt*)qu):dt;
+                                _assert(dt >= 0);
                                 if time_now+dt > time_req then
                                     _QUEUE_get = get;   // undo get
+                                    this.ticking? = false;  // (no wait since =true)
                                     break;  // stop before this emission
                                 end
                                 time_now = time_now + dt;
@@ -193,16 +166,14 @@ TODO: old, remove
                                         awt = dt*-speed;
                                     end
 #ifdef TM_DELAY
+#error Are you sure?
                                     TM_DELAY(awt);
 #else
-//_printf("AWT: %d %d\n", awt, late);
                                     if awt > late then
-//_printf("\tyes\n");
                                         late = await (awt-late) ms_;
                                         _assert(late%1000 == 0);
                                         late = late / 1000;
                                     else
-//_printf("\tno\n");
                                         late = late - awt;
                                     end
 #endif
@@ -217,18 +188,18 @@ TODO: old, remove
                             end
                             if speed != 0 then
                                 async do
-                                    emit TM_INPUT_FRAME;
+                                    emit TM_INPUT_REDRAW;
                                 end
                             end
+                            this.ticking? = false;
+                            emit this.ok_tick;
                         end
                         async do
-                            emit TM_INPUT_FRAME;
+                            emit TM_INPUT_REDRAW;
                         end
-/*
-*/
                         if this.seeking? then
                             this.seeking? = false;
-                            emit this.ok_seek;
+                            emit this.ok_seek => time_now;
                         end
                         await FOREVER;
                     end
@@ -253,39 +224,6 @@ TODO: old, remove
                         end
                         go? = false;
                     with
-/*
-TODO: old, remover
-                        if not go? then
-                            await FOREVER;
-                        end
-                        var int now = this.time_now;
-                        loop i do
-                            now = now - 30;
-                            if now < 0 then
-                                now = 0; // one last time to stop exactly at 0
-                            end
-                            me? = true;
-                            emit this.go_seek => now;   // don't awake myself
-                            me? = false;
-                            par/and do
-                                await this.ok_seek;
-                            with
-                                var int awt;
-                                if bk_speed > 0 then
-                                    awt = 30/bk_speed;
-                                else/if bk_speed < 0 then
-                                    awt = 30*-bk_speed;
-                                else
-                                    _assert(0);
-                                end
-                                await (awt)ms_;
-                            end
-                            if now == 0 then
-                                break;
-                            end
-                        end
-                        await FOREVER;
-*/
                         if not go? then
                             await FOREVER;
                         end
@@ -320,8 +258,6 @@ TODO: old, remover
                             end
                         end
                         await FOREVER;
-/*
-*/
                     end
                 end
             end
@@ -331,51 +267,31 @@ TODO: old, remover
     native do
         typedef struct {
             tceu_nevt evt;
+            u8        dt;
+        } tceu_queue_dt;
+        typedef struct {
+            tceu_nevt evt;
             tceu_evtp param;
             s32       sz;
             byte      buf[0];
         } tceu_queue;
 
-        #define QUEUE_MAX 60*60*1000           \
-                          * sizeof(tceu_queue) \
-                          / 30 * 2
-/*
-                            // 60min*60sec*1000ms=(1h in ms)
-                            // * minimum size of an event
-                            // 30FPS * 2events/frame
-            // 1h of events with 2 events/frame
-            // 3600*1000 = 3600000 =>/30 = 120000 =>2 = 240000 = 240K events
-
-        #undef QUEUE_MAX
-        #define QUEUE_MAX 1000
-*/
-
-        byte QUEUE[QUEUE_MAX];
+        byte QUEUE[TM_QUEUE_MAX];
         u32  QUEUE_tot = 0;
         u32  QUEUE_get = 0;
         u32  QUEUE_put = 0;
 
         int queue_put (tceu_nevt evt, tceu_evtp param,
                                int sz, byte* buf) {
-            int n = sizeof(tceu_queue) + sz;
+            int n = (evt==CEU_IN__WCLOCK) ?  sizeof(tceu_queue_dt) :
+                                             sizeof(tceu_queue) + sz;
+            assert(QUEUE_tot+n <= TM_QUEUE_MAX);
 
-            if (QUEUE_tot+n > QUEUE_MAX) {
-                assert(0);
-                /*return 0;   TODO: add event FULL when QUEUE_MAX-1 */
-            }
-
-            /* An event+data must be continuous in the QUEUE. */
-            if (QUEUE_put+n+sizeof(tceu_queue)>=QUEUE_MAX && evt!=CEU_IN__NONE) {
-                assert(0);
-                int fill = QUEUE_MAX - QUEUE_put - sizeof(tceu_queue);
-                tceu_queue* qu = (tceu_queue*) &QUEUE[QUEUE_put];
-                qu->evt = CEU_IN__NONE;
-                qu->sz  = fill;
-                QUEUE_put += sizeof(tceu_queue) + fill;
-                QUEUE_tot += sizeof(tceu_queue) + fill;
-            }
-
-            {
+            if (evt == CEU_IN__WCLOCK) {
+                tceu_queue_dt* qu = (tceu_queue_dt*) &QUEUE[QUEUE_put];
+                qu->evt = evt;
+                qu->dt  = param.v;
+            } else {
                 tceu_queue* qu = (tceu_queue*) &QUEUE[QUEUE_put];
                 qu->evt = evt;
                 qu->sz  = sz;
@@ -389,6 +305,7 @@ TODO: old, remover
                     memcpy(qu->buf, buf, sz);
                 }
             }
+
             QUEUE_put += n;
             QUEUE_tot += n;
 
@@ -401,19 +318,19 @@ TODO: old, remover
             } else {
                 assert(QUEUE_tot > 0);
                 tceu_queue* qu = (tceu_queue*) &QUEUE[QUEUE_get];
-                QUEUE_get += sizeof(tceu_queue) + qu->sz;
+                if (qu->evt == CEU_IN__WCLOCK) {
+                    QUEUE_get += sizeof(tceu_queue_dt);
+                } else {
+                    QUEUE_get += sizeof(tceu_queue) + qu->sz;
+                }
                 return qu;
             }
         }
 
         /**********************************************************************/
 
-        #define SNAP_ms 2000  /* 10s = 30*10 = at most 300 frames to traverse */
-                              /* 0 means "do not take snaps" */
-#ifdef TM_SNAP
-        #define SNAP_N  6*60  /* 10s*6*60=1h  (360*56K-rocks = 1.8Mb) */
-#else
-        #define SNAP_N  1
+#ifndef TM_SNAP
+        #define TM_SNAP_N  1
 #endif
 
         typedef struct {
@@ -422,12 +339,12 @@ TODO: old, remover
             u32     queue;
         } tceu_snap;
 
-        tceu_snap SNAP[SNAP_N];
+        tceu_snap SNAP[TM_SNAP_N];
         int SNAP_put = 0;
         char* SNAP_data;
 
         void snap_put (u32 queue, u32 time) {
-            assert(SNAP_put < SNAP_N);
+            assert(SNAP_put < TM_SNAP_N);
             SNAP[SNAP_put].data  = *((CEU_App*)SNAP_data);
             SNAP[SNAP_put].queue = queue;
             SNAP[SNAP_put].time  = time;
@@ -442,7 +359,11 @@ TODO: old, remover
                     return SNAP[i].time;
                 }
             }
-            return SNAP[SNAP_put-1].time + SNAP_ms;
+#ifdef TM_SNAP
+            return SNAP[SNAP_put-1].time + TM_SNAP_MS;
+#else
+            return 0;
+#endif
         }
 
         u32 snap_get (u32 time) {
@@ -455,6 +376,7 @@ TODO: old, remover
                 }
             }
             assert(0);
+            return 0;
         }
     end
 end
