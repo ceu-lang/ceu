@@ -1,5 +1,3 @@
-#define CEU_TIMEMACHINE
-
 #ifndef _CEU_OS_H
 #define _CEU_OS_H
 
@@ -351,11 +349,11 @@ typedef struct tceu_app {
 #endif
 
 #ifdef CEU_WCLOCKS
-    int         wclk_late;
+    s32         wclk_late;
     s32         wclk_min;
     s32         wclk_min_tmp;
 #ifdef CEU_TIMEMACHINE
-    int         wclk_late_;
+    s32         wclk_late_;
     s32         wclk_min_;
     s32         wclk_min_tmp_;
 #endif
@@ -466,7 +464,7 @@ typedef void(*tceu_isr_f)(tceu_app* app, tceu_org* org);
 #endif
 
 void ceu_init      (void);
-int  ceu_scheduler (int(*dt)());
+int  ceu_scheduler (s32(*dt)());
 tceu_queue* ceu_sys_queue_nxt (void);
 void        ceu_sys_queue_rem (void);
 

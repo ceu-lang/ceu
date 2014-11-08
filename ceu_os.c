@@ -106,8 +106,7 @@ void ceu_org_trail (tceu_org* org, int idx, tceu_org_lnk* lnk) {
     lnk[1].lnk =  idx+1;
 }
 
-int ceu_org_spawn (tceu_go* _ceu_go, tceu_nlbl lbl_cnt, tceu_org* org, 
-tceu_nlbl lbl_org) {
+int ceu_org_spawn (tceu_go* _ceu_go, tceu_nlbl lbl_cnt, tceu_org* org, tceu_nlbl lbl_org) {
     /* hold current blk trail: set to my continuation */
     _ceu_go->trl->evt = CEU_IN__STK;
     _ceu_go->trl->lbl = lbl_cnt;
@@ -975,7 +974,7 @@ int ceu_scheduler (int(*dt)())
 #endif
     {
 #if defined(CEU_WCLOCKS) || defined(CEU_IN_OS_DT)
-        int _dt = dt();
+        s32 _dt = dt();
 #endif
 
         /* DT */

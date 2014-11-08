@@ -471,7 +471,7 @@ F =
     WCLOCKK = function (me)
         local h,min,s,ms,us, tm = unpack(me)
         me.us  = us*t2n.us + ms*t2n.ms + s*t2n.s + min*t2n.min + h*t2n.h
-        me.val = me.us
+        me.val = '((s32)'..me.us..')'
         me.tm  = tm
         ASR(me.us>0 and me.us<=2000000000, me, 'constant is out of range')
     end,
@@ -479,7 +479,7 @@ F =
     WCLOCKE = function (me)
         local exp, unit, tm = unpack(me)
         me.us   = nil
-        me.val  = V(exp) .. '*' .. t2n[unit]-- .. 'L'
+        me.val  = '((s32)'.. V(exp) .. ')*' .. t2n[unit]
         me.tm  = tm
     end,
 

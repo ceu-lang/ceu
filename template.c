@@ -197,6 +197,11 @@ static void ceu_app_init (tceu_app* app)
     app->wclk_late = 0;
     app->wclk_min = CEU_WCLOCK_INACTIVE;
     app->wclk_min_tmp = CEU_WCLOCK_INACTIVE;
+#ifdef CEU_TIMEMACHINE
+    app->wclk_late_ = 0;
+    app->wclk_min_ = CEU_WCLOCK_INACTIVE;
+    app->wclk_min_tmp_ = CEU_WCLOCK_INACTIVE;
+#endif
 #endif
 #ifdef CEU_THREADS
     pthread_mutex_init(&app->threads_mutex, NULL);
