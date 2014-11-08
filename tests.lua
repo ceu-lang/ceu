@@ -855,10 +855,10 @@ escape 1;
 BUG de "&" para org across await
 
 do return end
+]===]
 
 -------------------------------------------------------------------------------
 -- OK: well tested
-]===]
 
 Test { [[escape(1);]],
     _ana = {
@@ -1123,6 +1123,13 @@ escape 1;
 }
 
 -- TYPE / NATIVE / ANON
+
+Test { [[
+escape 1;
+native do end
+]],
+    run = 1,
+}
 
 Test { [[
 native do
@@ -37525,6 +37532,93 @@ await 2s;
 escape o.v;
 ]],
     run = { ['~>2s']=1 },
+}
+
+-- TIMEMACHINE
+
+Test { [[
+native do
+    int CEU_TIMEMACHINE_ON = 0;
+end
+
+class App with
+    var int v = 0;
+do
+    every 1s do
+        this.v = this.v + 1;
+_printf("awake inside: %d\n", this.v);
+    end
+end
+var App app;
+
+input int DT;
+input void REDRAW;
+
+#define TM_INPUT_DT DT
+#define TM_INPUT_REDRAW REDRAW
+#define TM_QUEUE_MAX 1000000
+#define TM_SNAP
+#define TM_SNAP_MS 2000
+#define TM_SNAP_N  1000
+
+#include "timemachine.ceu"
+var TimeMachine tm with
+    this.app = app;
+end;
+
+par/or do
+    await 3s_;
+    _assert(app.v == 3);
+    emit tm.go_on;
+
+    await 1s_;
+    emit tm.go_seek => 0;
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 0);
+
+    await 1s_;
+    emit tm.go_forward => 2;
+    _assert(app.v == 0);
+
+    await 1s500ms_;
+    _assert(app.v == 2);
+
+    emit tm.go_seek => tm.time_total;
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 3);
+
+    emit tm.go_backward => 2;
+    _assert(app.v == 3);
+
+    await 1s1ms_;
+    _assert(app.v == 1);
+with
+    input int DT;
+    async (&tm) do
+        loop do
+            if not _CEU_TIMEMACHINE_ON then
+                emit 50ms;
+                emit DT => 50;
+            end
+            emit 50ms_;
+
+            // TODO: forces this async to be slower
+            input void SLOW;
+            emit SLOW;
+            emit SLOW;
+            emit SLOW;
+            emit SLOW;
+        end
+    end
+end
+
+escape app.v;
+]],
+    cpp_args = '-DCEU_TIMEMACHINE',
+    _ana = {
+        acc = 41,
+    },
+    run = 1,
 }
 
 -- LUA

@@ -43,6 +43,7 @@ Test = function (t)
 
         cpp     = true,
         cpp_exe = 'cpp',
+        cpp_args = T.cpp_args,
         input   = 'tests.lua',
         source  = source,
     }
@@ -161,7 +162,8 @@ end
             ..' -Wno-unused'
             ..' -Wno-unused-parameter'
             ..' -ansi'
-            ..' -D CEU_DEBUG'
+            ..' -DCEU_DEBUG'
+            ..' '..(T.cpp_args or '')
 
     if VALGRIND then
         O = O .. ' -g'
@@ -173,12 +175,13 @@ end
     end
 
     local CEU, GCC
+    local cpp = (T.cpp_args and '--cpp-args "'..T.cpp_args..'"') or ''
     local r = (math.random(2) == 1)
     if OS==true or (OS==nil and r) then
-        CEU = './ceu _ceu_tmp.ceu --run-tests --os 2>&1'
+        CEU = './ceu _ceu_tmp.ceu '..cpp..' --run-tests --os 2>&1'
         GCC = 'gcc '..O..' -include _ceu_app.h -o ceu.exe main.c ceu_os.c _ceu_app.c 2>&1'
     else
-        CEU = './ceu _ceu_tmp.ceu --run-tests 2>&1'
+        CEU = './ceu _ceu_tmp.ceu '..cpp..' --run-tests 2>&1'
         GCC = 'gcc '..O..' -o ceu.exe main.c 2>&1'
     end
     --local line = debug.getinfo(2).currentline
@@ -280,16 +283,16 @@ STATS = {
 
 --[[
 STATS = {
-    count   = 2006,
+    count   = 2014,
     mem     = 0,
-    trails  = 3934,
-    bytes   = 18429223,
+    trails  = 3958,
+    bytes   = 18531631,
 }
 
 
-real	8m30.987s
-user	8m10.705s
-sys	1m28.609s
+real	8m29.583s
+user	8m3.839s
+sys	1m31.816s
 ]]
 
 os.execute('rm -f /tmp/_ceu_*')
