@@ -112,6 +112,7 @@ Test = function (T)
                                '--out-c '..name..'.c '..
                                '--out-h '..name..'.h '..
                                            name..'.ceu 2>&1'
+print(cmd)
         local exec_ceu = os.execute(cmd)
         assert(exec_ceu == 0 or exec_ceu == true)
 

@@ -95,7 +95,7 @@ F = {
                                     stmts))
         local ret = blk_ifc_body
 
-        -- for OS: <par/or ... with await OS_STOP; escape 1; end>
+        -- for OS: <par/or do [blk_ifc_body] with await OS_STOP; escape 1; end>
         if OPTS.os then
             ret = node('ParOr', me.ln,
                         node('Block', me.ln, ret),
@@ -622,6 +622,14 @@ F = {
                 new[#new+1] = dcl
             end
         end
+--[[
+        if #new > #me then
+            for i,v in ipairs(new) do
+                me[i] = v
+            end
+        end
+]]
+        -- changes the node reference
         return node('BlockI', me.ln, unpack(new))
     end,
 
@@ -1379,22 +1387,22 @@ F = {
                         node('Var',me.ln,id),
                         node('NUMBER',me.ln,len)))
 
-        -- include this string into the outer block
-        local blk = AST.par(me, 'Block')
-        local strs = blk.__ast_strings or {}
-        blk.__ast_strings = strs
+        -- include this string into the enclosing block
+        local stmt = AST.par(me, 'Stmts')
+        local strs = stmt.__ast_strings or {}
+        stmt.__ast_strings = strs
         strs[#strs+1] = node('Stmts', me.ln, unpack(t))
 
         return node('Var',me.ln,id)
     end,
 
-    Block = function (me)
+    Stmts = function (me)
         local strs = me.__ast_strings
         me.__ast_strings = nil
         if strs then
             -- insert all strings in the beginning of the block
             for i, str in ipairs(strs) do
-                table.insert(me[1], i, str)
+                table.insert(me, i, str)
             end
         end
     end,
