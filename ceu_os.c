@@ -708,6 +708,7 @@ void* CEU_SYS_VEC[CEU_SYS_MAX] __attribute__((used)) = {
 #ifdef CEU_ISR
     (void*) &ceu_sys_isr,
 #endif
+    (void*) &ceu_sys_clear,
     (void*) &ceu_sys_org,
     (void*) &ceu_sys_start,
     (void*) &ceu_sys_link,
@@ -993,7 +994,9 @@ int ceu_scheduler (int(*dt)())
         {
             tceu_app* app = CEU_APPS;
             while (app) {
+/*
 #error TODO: CEU_IN__WCLOCK_
+*/
                 ceu_sys_go(app, CEU_IN__WCLOCK, CEU_EVTP(_dt));
                 app = app->nxt;
             }

@@ -52,7 +52,9 @@
     #define CEU_IN__INIT        252
     #define CEU_IN__CLEAR       251
     #define CEU_IN__WCLOCK      250
+/*
 #error TODO: CEU_IN__WCLOCK_
+*/
     #define CEU_IN__ASYNC       249
     #define CEU_IN__THREAD      248
     #define CEU_IN_OS_START     247
@@ -78,6 +80,9 @@
     #define ceu_out_isr(n,f) \
         ((__typeof__(ceu_sys_isr)*)((_ceu_app)->sys_vec[CEU_SYS_ISR]))(n,f,_ceu_app)
 #endif
+
+    #define ceu_out_clear(go,start,stop) \
+        ((__typeof__(ceu_sys_clear)*)((_ceu_app)->sys_vec[CEU_SYS_CLEAR]))(go,start,stop)
 
     #define ceu_out_org(app,org,n,lbl,seqno,isDyn,par_org,par_trl) \
         ((__typeof__(ceu_sys_org)*)((app)->sys_vec[CEU_SYS_ORG]))(org,n,lbl,seqno,isDyn,par_org,par_trl)
@@ -114,6 +119,10 @@
             ceu_sys_free(ptr)
     #define ceu_out_req() \
             ceu_sys_req()
+#ifdef CEU_CLEAR
+    #define ceu_out_clear(go,start,stop) \
+            ceu_sys_clear(go,start,stop)
+#endif
 #ifdef CEU_NEWS
     #define ceu_out_org(app,org,n,lbl,seqno,isDyn,par_org,par_trl) \
             ceu_sys_org(org,n,lbl,seqno,isDyn,par_org,par_trl)
@@ -490,6 +499,7 @@ enum {
 #ifdef CEU_ISR
     CEU_SYS_ISR,
 #endif
+    CEU_SYS_CLEAR,
     CEU_SYS_ORG,
     CEU_SYS_START,
     CEU_SYS_LINK,

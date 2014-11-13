@@ -162,7 +162,7 @@ function CLEAR (me)
     trl->stk = _ceu_go->stki;
     trl->lbl = ]]..me.lbl_clr.id..[[;
 }
-return ceu_sys_clear(_ceu_go, ]]..(me.trails[1]+1)..','..[[
+return ceu_out_clear(_ceu_go, ]]..(me.trails[1]+1)..','..[[
                      &_ceu_go->org->trls[ ]]..(me.trails[2]+1)..[[ ]);
 
 case ]]..me.lbl_clr.id..[[:;
@@ -307,7 +307,7 @@ _ceu_go->org->cls = ]]..me.n..[[;
 #ifdef CEU_NEWS
 if (_ceu_go->org->isDyn) {
     _ceu_go->org->isAlive = 0;
-    return ceu_sys_clear(_ceu_go, 0, _ceu_go->org);
+    return ceu_out_clear(_ceu_go, 0, _ceu_go->org);
 }
 #endif
 ]])

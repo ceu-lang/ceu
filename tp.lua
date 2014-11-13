@@ -96,7 +96,7 @@ local types = {
     tceu_nlbl = { false, false, true }, -- len set in "labels.lua"
 }
 for id, t in pairs(types) do
-    TP.types[id] = TP.new{ tag='Type', id, false, false, false }
+    TP.types[id] = TP.new{ tag='Type', id, 0, false, false }
     TP.types[id].prim = t[1]
     TP.types[id].num  = t[2]
     TP.types[id].len  = t[3]
