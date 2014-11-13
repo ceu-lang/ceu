@@ -6,7 +6,7 @@ dofile 'pak.lua'
 
 math.randomseed(os.time())
 
-local LIBC = '/opt/musl'
+local LIBC = '/opt/musl-1.0.4'
 
 STATS = {
     count   = 0,

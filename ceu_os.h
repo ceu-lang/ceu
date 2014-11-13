@@ -484,7 +484,8 @@ tceu_app* ceu_sys_load   (void* addr);
 #ifdef CEU_ISR
 int       ceu_sys_isr    (int n, tceu_isr_f f, tceu_app* app);
 #endif
-void      ceu_sys_org    (tceu_org* org, int n, int lbl, int seqno, tceu_org* par_org, int par_trl);
+int       ceu_sys_clear  (tceu_go* go, int start, void* stop);
+void      ceu_sys_org    (tceu_org* org, int n, int lbl, int seqno, int isDyn, tceu_org* par_org, int par_trl);
 void      ceu_sys_start  (tceu_app* app);
 int       ceu_sys_link   (tceu_app* src_app, tceu_nevt src_evt, tceu_app* dst_app, tceu_nevt dst_evt);
 int       ceu_sys_unlink (tceu_app* src_app, tceu_nevt src_evt, tceu_app* dst_app, tceu_nevt dst_evt);
