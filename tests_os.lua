@@ -1,6 +1,7 @@
 VALGRIND = true
 
 --[===[
+--]===]
 
 --do return end
 
@@ -1044,7 +1045,6 @@ escape 200;
     run = 2,
 }
 
---]===]
 Test { [[
 output (int,int)     REQUEST;
 output int           CANCEL;
@@ -1175,13 +1175,13 @@ do
     par/or do
         var int id;
         var int param;
-        every (id,param) = REQUEST do
+        every (id,param) in REQUEST do
             ret = param;    // 10
-            var bool ok? = spawn Line with
+            var Line* ok = spawn Line with
                 this.id = id;
                 this.param = param;
             end;
-            if not ok? then
+            if ok == null then
                 var int err = 2;
                 emit RETURN => (id,err,0);
             end
@@ -1255,13 +1255,14 @@ do
     par/or do
         var int id;
         var int param;
-        every (id,param) = REQUEST do
+        pool Line[0] lines;
+        every (id,param) in REQUEST do
             ret = param;    // 10
-            var bool ok? = spawn[0] Line with
+            var Line* ok = spawn Line in lines with
                 this.id = id;
                 this.param = param;
             end;
-            if not ok? then
+            if ok == null then
                 var int err = 2;
                 emit RETURN => (id,err,0);  // 5,2,0
             end
@@ -1339,13 +1340,13 @@ do
     par/or do
         var int id;
         var int param;
-        every (id,param) = REQUEST do
+        every (id,param) in REQUEST do
             ret = param;
-            var bool ok? = spawn Line with
+            var Line* ok = spawn Line with
                 this.id = id;
                 this.param = param;
             end;
-            if not ok? then
+            if ok == null then
                 var int err = 2;
                 emit RETURN => (id,err,0);
             end
@@ -1466,13 +1467,13 @@ do
     par/or do
         var int id;
         var int param;
-        every (id,param) = EVT_REQUEST do
+        every (id,param) in EVT_REQUEST do
             ret = param;
-            var bool ok? = spawn Line with
+            var Line* ok = spawn Line with
                 this.id = id;
                 this.param = param;
             end;
-            if not ok? then
+            if ok == null then
                 var int err = 2;
                 emit EVT_RETURN => (id,err,0);
             end
@@ -1542,13 +1543,13 @@ do
     par/or do
         var int id;
         var int param;
-        every (id,param) = EVT_REQUEST do
+        every (id,param) in EVT_REQUEST do
             ret = param;    // 10
-            var bool ok? = spawn Line with
+            var Line* ok = spawn Line with
                 this.id = id;
                 this.param = param;
             end;
-            if not ok? then
+            if ok == null then
                 var int err = 2;
                 emit EVT_RETURN => (id,err,0);
             end
@@ -1618,13 +1619,14 @@ do
     par/or do
         var int id;
         var int param;
-        every (id,param) = EVT_REQUEST do
+        pool Line[0] lines;
+        every (id,param) in EVT_REQUEST do
             ret = param;    // 10
-            var bool ok? = spawn[0] Line with
+            var Line* ok = spawn Line in lines with
                 this.id = id;
                 this.param = param;
             end;
-            if not ok? then
+            if ok == null then
                 var int err = 2;
                 emit EVT_RETURN => (id,err,0);  // 5,2,0
             end
@@ -1698,13 +1700,13 @@ do
     par/or do
         var int id;
         var int param;
-        every (id,param) = EVT_REQUEST do
+        every (id,param) in EVT_REQUEST do
             ret = param;
-            var bool ok? = spawn Line with
+            var Line* ok = spawn Line with
                 this.id = id;
                 this.param = param;
             end;
-            if not ok? then
+            if ok == null then
                 var int err = 2;
                 emit EVT_RETURN => (id,err,0);
             end
@@ -1811,13 +1813,13 @@ do
     par/or do
         var int id;
         var int param;
-        every (id,param) = EVT_REQUEST do
+        every (id,param) in EVT_REQUEST do
             ret = param;
-            var bool ok? = spawn Line with
+            var Line* ok = spawn Line with
                 this.id = id;
                 this.param = param;
             end;
-            if not ok? then
+            if ok == null then
                 var int err = 2;
                 emit EVT_RETURN => (id,err,0);
             end
@@ -1887,13 +1889,13 @@ do
     par/or do
         var int id;
         var int param;
-        every (id,param) = EVT_REQUEST do
+        every (id,param) in EVT_REQUEST do
             ret = param;    // 10
-            var bool ok? = spawn Line with
+            var Line* ok = spawn Line with
                 this.id = id;
                 this.param = param;
             end;
-            if not ok? then
+            if ok == null then
                 var int err = 2;
                 emit EVT_RETURN => (id,err,0);
             end
@@ -1963,13 +1965,14 @@ do
     par/or do
         var int id;
         var int param;
-        every (id,param) = EVT_REQUEST do
+        pool Line[0] lines;
+        every (id,param) in EVT_REQUEST do
             ret = param;    // 10
-            var bool ok? = spawn[0] Line with
+            var Line* ok = spawn Line in lines with
                 this.id = id;
                 this.param = param;
             end;
-            if not ok? then
+            if ok == null then
                 var int err = 2;
                 emit EVT_RETURN => (id,err,0);  // 5,2,0
             end
@@ -2043,13 +2046,13 @@ do
     par/or do
         var int id;
         var int param;
-        every (id,param) = EVT_REQUEST do
+        every (id,param) in EVT_REQUEST do
             ret = param;
-            var bool ok? = spawn Line with
+            var Line* ok = spawn Line with
                 this.id = id;
                 this.param = param;
             end;
-            if not ok? then
+            if ok == null then
                 var int err = 2;
                 emit EVT_RETURN => (id,err,0);
             end
@@ -2074,7 +2077,7 @@ escape ret;
 -- REQUESTS
 
 Test { [[
-input/output (int max)=>int [10] LINE do
+input/output [10] (int max)=>int LINE do
     return max + 1;
 end
 await 1s;
@@ -2084,13 +2087,13 @@ escape 1;
 }
 
 Test { [[
-input/output (int max)=>int [10] LINE do
+input/output [10] (int max)=>int LINE do
     return max + 1;
 end
 await 1s;
 escape 1;
 ]],[[
-output/input (int max)=>int [10] LINE;
+output/input [10] (int max)=>int LINE;
 var int ret = 1;
 par/or do
     ret = request LINE=>10;
@@ -2102,7 +2105,7 @@ escape ret;
 }
 
 Test { [[
-output/input (int max)=>int [10] LINE;
+output/input [10] (int max)=>int LINE;
 var int ret = 1;
 var int err = 1;
 par/or do
@@ -2118,13 +2121,13 @@ escape ret+err;
 }
 
 Test { [[
-input/output (int max)=>int [10] LINE do
+input/output [10] (int max)=>int LINE do
     return max + 1;
 end
 await 1s;
 escape 1;
 ]],[[
-output/input (int max)=>int [10] LINE;
+output/input [10] (int max)=>int LINE;
 var int ret = 1;
 var int err = 1;
 (err,ret) = request LINE=>10;
@@ -2139,7 +2142,7 @@ escape ret;
 }
 
 Test { [[
-input/output (int max)=>int [10] LINE do
+input/output [10] (int max)=>int LINE do
     return max * 2;
 end
 await 1s;
@@ -2171,7 +2174,7 @@ escape ret;
 }
 
 Test { [[
-input/output (int max)=>int [2] LINE do
+input/output [2] (int max)=>int LINE do
     await 1s;
     return max + 1;
 end
@@ -2204,14 +2207,14 @@ escape ret;
 }
 
 Test { [[
-input/output (int max)=>int [2] LINE do
+input/output [2] (int max)=>int LINE do
     await 1s;
     return max * 2;
 end
 await 2s;
 escape 111;
 ]],[[
-output/input (int max)=>int [2] LINE;
+output/input [2] (int max)=>int LINE;
 var int ret = 0;
 par/and do
     var int v, err;
@@ -2237,14 +2240,14 @@ escape ret;
 }
 
 Test { [[
-input/output (int max)=>int [2] LINE do
+input/output [2] (int max)=>int LINE do
     await 1s;
     return max * 2;
 end
 await 3s;
 escape 0;
 ]],[[
-output/input (int max)=>int [2] LINE;
+output/input [2] (int max)=>int LINE;
 var int ret = 0;
 par/and do
     var int v, err;
@@ -2285,14 +2288,14 @@ escape ret;
 }
 
 Test { [[
-input/output (int max)=>int [1] LINE do
+input/output [1] (int max)=>int LINE do
     await 1s;
     return max * 2;
 end
 await 3s;
 escape 1000;
 ]],[[
-output/input (int max)=>int [1] LINE;
+output/input [1] (int max)=>int LINE;
 var int ret = 0;
 par/and do
     var int v, err;
@@ -2333,14 +2336,14 @@ escape ret;
 }
 
 Test { [[
-input/output (int max)=>int [0] LINE do
+input/output [0] (int max)=>int LINE do
     await 1s;
     return max * 2;
 end
 await 3s;
 escape 1000;
 ]],[[
-output/input (int max)=>int [0] LINE;
+output/input [0] (int max)=>int LINE;
 var int ret = 0;
 par/and do
     var int v, err;
@@ -2381,14 +2384,14 @@ escape ret;
 }
 
 Test { [[
-input/output (int max)=>int [1] LINE do
+input/output [1] (int max)=>int LINE do
     await 1s;
     return max * 2;
 end
 await 3s;
 escape 1000;
 ]],[[
-output/input (int max)=>int [1] LINE;
+output/input [1] (int max)=>int LINE;
 var int ret = 0;
 par/or do
     var int v, err;
@@ -2412,14 +2415,14 @@ escape ret;
 }
 
 Test { [[
-input/output (int max)=>int [2] LINE do
+input/output [2] (int max)=>int LINE do
     await 1s;
     return max * 2;
 end
 await 3s;
 escape 1000;
 ]],[[
-output/input (int max)=>int [2] LINE;
+output/input [2] (int max)=>int LINE;
 var int ret = 0;
 par/and do
     var int v, err;

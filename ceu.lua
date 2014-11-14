@@ -19,6 +19,8 @@ OPTS_NPARAMS = {
     tp_word   = 1,
 
     os        = 0,
+
+    timemachine = 0,
 }
 
 OPTS = {
@@ -41,6 +43,8 @@ OPTS = {
     tp_word   = 4,
 
     os        = false,
+
+    timemachine = false,
 }
 
 local params = {...}
@@ -102,6 +106,7 @@ if not OPTS.input then
         --version              # version of Ceu
 
         --os                   # TODO
+        --timemachine          # TODO
 ]])
     os.exit(1)
 end
@@ -215,6 +220,14 @@ do
             str = str .. [[
 #ifndef CEU_OS
 #define CEU_OS
+#endif
+]]
+        end
+
+        if OPTS.timemachine then
+            str = str .. [[
+#ifndef CEU_TIMEMACHINE
+#define CEU_TIMEMACHINE
 #endif
 ]]
         end

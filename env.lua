@@ -296,13 +296,11 @@ F = {
         ENV.exts[#ENV.exts+1] = evt
         ENV.exts[evt.id] = evt
 
---[[
         if OPTS.timemachine then
             local evt = {id='_WCLOCK_', pre='input'}
             ENV.exts[#ENV.exts+1] = evt
             ENV.exts[evt.id] = evt
         end
-]]
 
         local evt = {id='_ASYNC', pre='input'}
         ENV.exts[#ENV.exts+1] = evt

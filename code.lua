@@ -384,7 +384,7 @@ end;
                                or '((tceu_org*) '..t.val..')'
             LINE(me, [[
 /* TODO: CEU_OS */
-    return ceu_org_spawn(_ceu_go, ]]..me.lbls_cnt[i].id..','..org..','..t.cls.lbl.id..[[);
+    return ceu_out_org_spawn(_ceu_go, ]]..me.lbls_cnt[i].id..','..org..','..t.cls.lbl.id..[[);
 case ]]..me.lbls_cnt[i].id..[[:;
 ]])
         end
@@ -519,7 +519,7 @@ ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'),'
             if var.trl_orgs and var.trl_orgs_first then
                 LINE(me, [[
 /* TODO: CEU_OS */
-ceu_org_trail(_ceu_go->org, ]]..var.trl_orgs[1]..[[, (tceu_org_lnk*) &]]..var.trl_orgs.val..[[);
+ceu_out_org_trail(_ceu_go->org, ]]..var.trl_orgs[1]..[[, (tceu_org_lnk*) &]]..var.trl_orgs.val..[[);
 ]])
             end
         end

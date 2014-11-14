@@ -96,7 +96,7 @@ int ceu_sys_req (void) {
 /* TODO: CEU_OS */
 #ifdef CEU_ORGS
 
-void ceu_org_trail (tceu_org* org, int idx, tceu_org_lnk* lnk) {
+void ceu_sys_org_trail (tceu_org* org, int idx, tceu_org_lnk* lnk) {
     org->trls[idx].evt  = CEU_IN__ORG;
     org->trls[idx].lnks = lnk;
     lnk[0].nxt = (tceu_org*) &lnk[1];
@@ -106,7 +106,7 @@ void ceu_org_trail (tceu_org* org, int idx, tceu_org_lnk* lnk) {
     lnk[1].lnk =  idx+1;
 }
 
-int ceu_org_spawn (tceu_go* _ceu_go, tceu_nlbl lbl_cnt, tceu_org* org, tceu_nlbl lbl_org) {
+int ceu_sys_org_spawn (tceu_go* _ceu_go, tceu_nlbl lbl_cnt, tceu_org* org, tceu_nlbl lbl_org) {
     /* hold current blk trail: set to my continuation */
     _ceu_go->trl->evt = CEU_IN__STK;
     _ceu_go->trl->lbl = lbl_cnt;
@@ -710,6 +710,10 @@ void* CEU_SYS_VEC[CEU_SYS_MAX] __attribute__((used)) = {
 #endif
     (void*) &ceu_sys_clear,
     (void*) &ceu_sys_org,
+#ifdef CEU_ORGS
+    (void*) &ceu_sys_org_trail,
+    (void*) &ceu_sys_org_spawn,
+#endif
     (void*) &ceu_sys_start,
     (void*) &ceu_sys_link,
     (void*) &ceu_sys_unlink,

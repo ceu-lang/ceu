@@ -198,8 +198,13 @@ STATS = {
 --[[
 STATS = {
 	count = 70,
-	bytes = 2413196,
+	bytes = 2282150,
 }
+
+
+real	0m43.778s
+user	0m33.665s
+sys	0m10.338s
 ]]
 
 os.execute('rm -f /tmp/_ceu_*')

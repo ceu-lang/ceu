@@ -52,16 +52,18 @@
     #define CEU_IN__INIT        252
     #define CEU_IN__CLEAR       251
     #define CEU_IN__WCLOCK      250
-#ifdef CEU_TIMEMACHINE
-    #error TODO: CEU_IN__WCLOCK_
-#endif
     #define CEU_IN__ASYNC       249
     #define CEU_IN__THREAD      248
     #define CEU_IN_OS_START     247
     #define CEU_IN_OS_STOP      246
     #define CEU_IN_OS_DT        245
     #define CEU_IN_OS_INTERRUPT 244
+#ifdef CEU_TIMEMACHINE
+    #define CEU_IN__WCLOCK_     243
+    #define CEU_IN              243
+#else
     #define CEU_IN              244
+#endif
 
     typedef s8 tceu_nlbl;   /* TODO: to small!! */
 
@@ -86,6 +88,14 @@
 
     #define ceu_out_org(app,org,n,lbl,seqno,isDyn,par_org,par_trl) \
         ((__typeof__(ceu_sys_org)*)((app)->sys_vec[CEU_SYS_ORG]))(org,n,lbl,seqno,isDyn,par_org,par_trl)
+
+#ifdef CEU_ORGS
+    #define ceu_out_org_trail(org,idx,lnk) \
+        ((__typeof__(ceu_sys_org_trail)*)((_ceu_app)->sys_vec[CEU_SYS_ORG_TRAIL]))(org,idx,lnk)
+
+    #define ceu_out_org_spawn(go, lbl_cnt, org, lbl_org) \
+        ((__typeof__(ceu_sys_org_spawn)*)((_ceu_app)->sys_vec[CEU_SYS_ORG_SPAWN]))(go,lbl_cnt,org,lbl_org)
+#endif
 
     #define ceu_out_start(app) \
         ((__typeof__(ceu_sys_start)*)((_ceu_app)->sys_vec[CEU_SYS_START]))(app)
@@ -129,6 +139,12 @@
 #else
     #define ceu_out_org(app,org,n,lbl,seqno,par_org,par_trl) \
             ceu_sys_org(org,n,lbl,seqno,par_org,par_trl)
+#endif
+#ifdef CEU_ORGS
+    #define ceu_out_org_trail(org,idx,lnk) \
+            ceu_sys_org_trail(org,idx,lnk)
+    #define ceu_out_org_spawn(go, lbl_cnt, org, lbl_org) \
+            ceu_sys_org_spawn(go, lbl_cnt, org, lbl_org)
 #endif
 /*#ifdef ceu_out_emit_val*/
     #define ceu_out_emit_buf(app,id,sz,buf) \
@@ -477,20 +493,24 @@ int  ceu_scheduler (s32(*dt)());
 tceu_queue* ceu_sys_queue_nxt (void);
 void        ceu_sys_queue_rem (void);
 
-void*     ceu_sys_malloc (size_t size);
-void      ceu_sys_free   (void* ptr);
-int       ceu_sys_req    (void);
-tceu_app* ceu_sys_load   (void* addr);
+void*     ceu_sys_malloc    (size_t size);
+void      ceu_sys_free      (void* ptr);
+int       ceu_sys_req       (void);
+tceu_app* ceu_sys_load      (void* addr);
 #ifdef CEU_ISR
-int       ceu_sys_isr    (int n, tceu_isr_f f, tceu_app* app);
+int       ceu_sys_isr       (int n, tceu_isr_f f, tceu_app* app);
 #endif
-int       ceu_sys_clear  (tceu_go* go, int start, void* stop);
-void      ceu_sys_org    (tceu_org* org, int n, int lbl, int seqno, int isDyn, tceu_org* par_org, int par_trl);
-void      ceu_sys_start  (tceu_app* app);
-int       ceu_sys_link   (tceu_app* src_app, tceu_nevt src_evt, tceu_app* dst_app, tceu_nevt dst_evt);
-int       ceu_sys_unlink (tceu_app* src_app, tceu_nevt src_evt, tceu_app* dst_app, tceu_nevt dst_evt);
-int       ceu_sys_emit   (tceu_app* app, tceu_nevt evt, tceu_evtp param, int sz, byte* buf);
-tceu_evtp ceu_sys_call   (tceu_app* app, tceu_nevt evt, tceu_evtp param);
+int       ceu_sys_clear     (tceu_go* go, int start, void* stop);
+void      ceu_sys_org       (tceu_org* org, int n, int lbl, int seqno, int isDyn, tceu_org* par_org, int par_trl);
+#ifdef CEU_ORGS
+void      ceu_sys_org_trail (tceu_org* org, int idx, tceu_org_lnk* lnk);
+int       ceu_sys_org_spawn (tceu_go* _ceu_go, tceu_nlbl lbl_cnt, tceu_org* org, tceu_nlbl lbl_org);
+#endif
+void      ceu_sys_start     (tceu_app* app);
+int       ceu_sys_link      (tceu_app* src_app, tceu_nevt src_evt, tceu_app* dst_app, tceu_nevt dst_evt);
+int       ceu_sys_unlink    (tceu_app* src_app, tceu_nevt src_evt, tceu_app* dst_app, tceu_nevt dst_evt);
+int       ceu_sys_emit      (tceu_app* app, tceu_nevt evt, tceu_evtp param, int sz, byte* buf);
+tceu_evtp ceu_sys_call      (tceu_app* app, tceu_nevt evt, tceu_evtp param);
 
 enum {
     CEU_SYS_MALLOC = 0,
@@ -502,6 +522,10 @@ enum {
 #endif
     CEU_SYS_CLEAR,
     CEU_SYS_ORG,
+#ifdef CEU_ORGS
+    CEU_SYS_ORG_TRAIL,
+    CEU_SYS_ORG_SPAWN,
+#endif
     CEU_SYS_START,
     CEU_SYS_LINK,
     CEU_SYS_UNLINK,

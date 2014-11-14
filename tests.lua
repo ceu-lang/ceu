@@ -855,10 +855,10 @@ escape 1;
 BUG de "&" para org across await
 
 do return end
-]===]
 
 -------------------------------------------------------------------------------
 -- OK: well tested
+]===]
 
 Test { [[escape(1);]],
     _ana = {
@@ -37614,7 +37614,7 @@ end
 
 escape app.v;
 ]],
-    cpp_args = '-DCEU_TIMEMACHINE',
+    timemachine = true,
     _ana = {
         acc = 41,
     },
