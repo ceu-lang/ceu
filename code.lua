@@ -241,7 +241,7 @@ static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org, t
                 ps = table.concat(ps)
 
                 local ret_value, ret_void
-                if out == 'void' then
+                if TP.toc(out) == 'void' then
                     ret_value = '('
                     ret_void  = 'return CEU_EVTP((void*)NULL);'
                 else
@@ -252,7 +252,7 @@ static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org, t
                 CODE.stubs = CODE.stubs .. [[
 case CEU_IN_]]..id..[[:
 #line ]]..me.ln[2]..' "'..me.ln[1]..[["
-    ]]..ret_value..me.id..')(_ceu_app, _ceu_app->data'..ps..[[);
+    ]]..ret_value..me.id..'(_ceu_app, _ceu_app->data'..ps..[[));
 ]]..ret_void
             end
             CODE.functions = CODE.functions ..

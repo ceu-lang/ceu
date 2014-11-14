@@ -52,9 +52,9 @@
     #define CEU_IN__INIT        252
     #define CEU_IN__CLEAR       251
     #define CEU_IN__WCLOCK      250
-/*
-#error TODO: CEU_IN__WCLOCK_
-*/
+#ifdef CEU_TIMEMACHINE
+    #error TODO: CEU_IN__WCLOCK_
+#endif
     #define CEU_IN__ASYNC       249
     #define CEU_IN__THREAD      248
     #define CEU_IN_OS_START     247

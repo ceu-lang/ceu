@@ -1,7 +1,6 @@
 VALGRIND = true
 
 --[===[
---]===]
 
 --do return end
 
@@ -26,9 +25,9 @@ Test {
 }
 
 Test {
-	[[escape(2);]],
-	[[await 50ms; escape(3);]],
-	run = 5,
+    [[escape(2);]],
+    [[await 50ms; escape(10);]],
+    run = 12,
 }
 
 Test {
@@ -476,7 +475,7 @@ Test {
 output int O;
 var int ret = 0;
 await OS_START;
-loop i, 10 do
+loop i in 10 do
     var int a=1;
     emit O => a;
     ret = ret + a;
@@ -508,7 +507,7 @@ Test {
 output int O;
 var int ret = 0;
 await OS_START;
-loop i, 10 do
+loop i in 10 do
     var int a=1;
     emit O => a;
     ret = ret + a;
@@ -542,7 +541,7 @@ output (u8,u8) O;
 output void F;
 await OS_START;
 var int ret = 0;
-loop i, 100 do
+loop i in 100 do
     var int a=1, b=2;
     emit O => (a,b);
     ret = ret + a + b;
@@ -579,7 +578,7 @@ Test {
 output (u8,u8) O;
 output int F;
 var int ret = 0;
-loop i, 10000 do
+loop i in 10000 do
     var int a=1, b=2;
     emit O => (a,b);
     ret = ret + 1;
@@ -616,12 +615,12 @@ Test {
 output (u8,u8) O;
 output int F;
 var int ret = 0;
-loop i, 10000 do
+loop i in 10000 do
     var int a=1, b=2;
     emit O => (a,b);
     ret = ret + 1;
 end
-loop i, 10000 do
+loop i in 10000 do
     async do end
 end
 emit F=>0;
@@ -654,7 +653,7 @@ Test {
 [[
 output (int,int) O;
 var int ret = 0;
-    loop i, 1000 do
+    loop i in 1000 do
         var int a=1, b=2;
         emit O => (a,b);
         ret = ret + a + b;
@@ -685,16 +684,16 @@ Test {
 output (u8,u8) O;
 output int F;
 var int ret = 0;
-    loop i, 10000 do
+    loop i in 10000 do
         var int a=1, b=2;
         emit O => (a,b);
         ret = ret + 1;
     end
-    loop i, 10000 do
+    loop i in 10000 do
         async do end
     end
     emit F=>0;
-    loop i, 1000 do
+    loop i in 1000 do
         var int a=1, b=2;
         emit O => (a,b);
         ret = ret + a + b;
@@ -934,13 +933,13 @@ escape 1;
 
 Test { [[
 native _char=1;
-var _char* a = "Abcd12" ;
+var _char* a = (_char*)"Abcd12" ;
 escape 1;
 ]],
     run = 1
 }
 Test { [[
-native pure _strlen1();
+native @pure _strlen1();
 native do
     int strlen1 (char* str) {
         int n = 0;
@@ -956,7 +955,7 @@ escape _strlen1("123");
     run=3
 }
 Test { [[
-native pure _strlen();
+native @pure _strlen();
 native do
     ##include <string.h>
 end
@@ -965,7 +964,7 @@ escape _strlen("123");
     run=3
 }
 Test { [[
-native pure _strlen();
+native @pure _strlen();
 native do
     ##include <string.h>
 end
@@ -974,7 +973,7 @@ escape _strlen("123\n");
     run=4
 }
 Test { [[
-native nohold _strncpy(), _printf(), _strlen();
+native @nohold _strncpy(), _strlen();
 native _char = 1;
 var _char[10] str;
 _strncpy(str, "123", 4);
@@ -984,7 +983,7 @@ escape _strlen(str);
 }
 
 Test { [[
-native nohold _strncpy(), _printf(), _strlen(), _strcpy();
+native @nohold _strncpy(), _strlen(), _strcpy();
 native _char = 1;
 var _char[6] a; _strcpy(a, "Hello");
 var _char[2] b; _strcpy(b, " ");
@@ -1045,6 +1044,7 @@ escape 200;
     run = 2,
 }
 
+--]===]
 Test { [[
 output (int,int)     REQUEST;
 output int           CANCEL;
@@ -1095,13 +1095,13 @@ do
     par/or do
         var int id;
         var int param;
-        every (id,param) = REQUEST do
+        every (id,param) in REQUEST do
             ret = param;
-            var bool ok? = spawn Line with
+            var Line* ok = spawn Line with
                 this.id = id;
                 this.param = param;
             end;
-            if not ok? then
+            if ok == null then
                 var int err = 2;
                 emit RETURN => (id,err,0);
             end

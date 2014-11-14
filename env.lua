@@ -296,10 +296,13 @@ F = {
         ENV.exts[#ENV.exts+1] = evt
         ENV.exts[evt.id] = evt
 
--- TODO: if OPTS.timemachine
-        local evt = {id='_WCLOCK_', pre='input'}
-        ENV.exts[#ENV.exts+1] = evt
-        ENV.exts[evt.id] = evt
+--[[
+        if OPTS.timemachine then
+            local evt = {id='_WCLOCK_', pre='input'}
+            ENV.exts[#ENV.exts+1] = evt
+            ENV.exts[evt.id] = evt
+        end
+]]
 
         local evt = {id='_ASYNC', pre='input'}
         ENV.exts[#ENV.exts+1] = evt
@@ -309,19 +312,27 @@ F = {
         ENV.exts[#ENV.exts+1] = evt
         ENV.exts[evt.id] = evt
 
+        -- need to reserve these events so that they always have the same code
         if OPTS.os then
-            local evt = {id='OS_START',     pre='input', ins=TP.types.void}
-            ENV.exts[#ENV.exts+1] = evt
-            ENV.exts[evt.id] = evt
-            local evt = {id='OS_STOP',      pre='input', ins=TP.types.void}
-            ENV.exts[#ENV.exts+1] = evt
-            ENV.exts[evt.id] = evt
-            local evt = {id='OS_DT',        pre='input', ins=TP.types.int}
-            ENV.exts[#ENV.exts+1] = evt
-            ENV.exts[evt.id] = evt
-            local evt = {id='OS_INTERRUPT', pre='input', ins=TP.types.int}
-            ENV.exts[#ENV.exts+1] = evt
-            ENV.exts[evt.id] = evt
+            local t = {
+                { 'OS_START',     'void' },
+                { 'OS_STOP',      'void' },
+                { 'OS_DT',        'int'  },
+                { 'OS_INTERRUPT', 'int'  },
+            }
+            for _, v in ipairs(t) do
+                local id, tp = unpack(v)
+                local evt = {
+                    ln  = me.ln,
+                    id  = id,
+                    pre = 'input',
+                    ins = AST.node('Type', me.ln, tp, 0, false, false),
+                    mod = { rec=false },
+                }
+                TP.new(evt.ins)
+                ENV.exts[#ENV.exts+1] = evt
+                ENV.exts[id] = evt
+            end
         end
     end,
 

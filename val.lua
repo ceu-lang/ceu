@@ -239,7 +239,7 @@ F =
             -- when the call crosses the process,
             -- the return val must be unpacked from tceu_evtp
             if me.__ast_set then
-                if ext.evt.out == 'int' then
+                if TP.toc(ext.evt.out) == 'int' then
                     ret = '.v'
                 else
                     ret = '.ptr'
