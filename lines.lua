@@ -58,6 +58,9 @@ OPTS.source = '#line 1 "'..OPTS.input..'"\n'..OPTS.source
 
 if OPTS.cpp or OPTS.cpp_args then
     local args = OPTS.cpp_args or ''
+    if OPTS.timemachine then
+        args = args .. ' -DCEU_TIMEMACHINE'
+    end
     local orig = (OPTS.input=='-' and 'tmp.ceu')
                     or OPTS.input
     local base, name = string.match(orig, '(.*/)(.*)')

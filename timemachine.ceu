@@ -136,6 +136,7 @@ do
 #ifndef TM_DELAY
                         var int late = 0;
 #endif
+                        //var int prv = 0;
                         loop do
                             if time_req == _TM_REQ_PAUSE then
                                 break;  // already there
@@ -152,6 +153,13 @@ do
                                 _assert(dt >= 0);
                                 if time_now+dt > time_req then
                                     _QUEUE_get = get;   // undo get
+/*
+_QUEUE_get = prv;
+_printf("seek: now=%d get=%d x=%d\n",
+    time_now, _QUEUE_get, ((_CEU_App*)&app):r1_7.rect.x);
+_queue_dump();
+_QUEUE_get = get;
+*/
                                     this.ticking? = false;  // (no wait since =true)
                                     break;  // stop before this emission
                                 end
@@ -192,6 +200,7 @@ do
                             end
                             this.ticking? = false;
                             emit this.ok_tick;
+                            //prv=get;
                         end
                         async do
                             emit TM_INPUT_REDRAW;
@@ -227,6 +236,7 @@ do
                             await FOREVER;
                         end
                         var int now = this.time_now;
+//_printf("BACK: %d\n", this.time_now);
 
 #ifndef TM_BACKWARD_TICK
 #define TM_BACKWARD_TICK 30 // TODO: adaptative
@@ -247,6 +257,8 @@ do
                                 now = 0; // one last time to stop exactly at 0
                             end
                             me? = true;
+//_printf("back: now=%d get=%d x=%d\n",
+    //now, _QUEUE_get, ((_CEU_App*)&app):r1_7.rect.x);
                             emit this.go_seek => now; // don't awake myself (above)
                             me? = false;
                             par/and do
@@ -327,6 +339,25 @@ do
                 return qu;
             }
         }
+
+/*
+        void queue_dump (void) {
+            int i;
+            int DT = 0;
+            for (i=0; i<=QUEUE_get;) {
+                tceu_queue* qu = (tceu_queue*) &QUEUE[i];
+                if (qu->evt == CEU_IN__WCLOCK) {
+                    printf("[%d:%d] ", i, ((tceu_queue_dt*)qu)->dt);
+                    DT += ((tceu_queue_dt*)qu)->dt;
+                    i += sizeof(tceu_queue_dt);
+                } else {
+                    printf("[%d:%d] ", i, -1);
+                    i += sizeof(tceu_queue) + qu->sz;
+                }
+            }
+            printf("\n==>%d\n", DT);
+        }
+*/
 
         /**********************************************************************/
 
