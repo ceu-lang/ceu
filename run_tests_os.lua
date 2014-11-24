@@ -6,7 +6,8 @@ dofile 'pak.lua'
 
 math.randomseed(os.time())
 
-local LIBC = '/opt/musl-1.0.4'
+-- TODO: libc requirement removed (just some tests with str*)
+--local LIBC = '/opt/musl-1.0.4'
 
 STATS = {
     count   = 0,
@@ -117,7 +118,7 @@ print(cmd)
         assert(exec_ceu == 0 or exec_ceu == true)
 
         cmd = 'gcc -Os -Wall -DCEU_DEBUG -ansi '..
-              '-I '..LIBC..'/include '..
+              --'-I '..LIBC..'/include '..
               '-Wa,--execstack '..
               '-fpie -nostartfiles '..
               --'-mcall-prologues -mshort-calls '..
@@ -138,7 +139,7 @@ print(cmd)
               --'-Wl,--section-start=.gnuhash=0x4007f4 '.. -- TODO: 0x26
               '-Wl,-uCEU_EXPORT '..
               ' -o '..name..'.o '..name..'.c '..
-              LIBC..'/lib/libc.a '..
+              --LIBC..'/lib/libc.a '..
               ''
 
 print(cmd)

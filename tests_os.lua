@@ -955,6 +955,7 @@ escape _strlen1("123");
 ]],
     run=3
 }
+--[=[
 Test { [[
 native @pure _strlen();
 native do
@@ -999,6 +1000,7 @@ escape _strlen(d);
 ]],
     run = 12
 }
+--]=]
 
 --do return end
 
