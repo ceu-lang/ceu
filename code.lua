@@ -929,8 +929,7 @@ case ]]..me.lbl_cnt.id..[[:;
         local suf = (exp.tm and '_') or ''
 
         LINE(me, [[
-ceu_out_wclock]]..suf..[[(_ceu_app, (s32)]]..V(exp)..[[, &]]..me.val_wclk..[[, 
-NULL);
+ceu_out_wclock]]..suf..[[(_ceu_app, (s32)]]..V(exp)..[[, &]]..me.val_wclk..[[, NULL);
 ]]..no..[[:
     _ceu_go->trl->evt = CEU_IN__WCLOCK]]..suf..[[;
     _ceu_go->trl->lbl = ]]..me.lbl.id..[[;
