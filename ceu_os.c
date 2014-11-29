@@ -304,7 +304,7 @@ int ceu_sys_clear (tceu_go* go, int start, void* stop) {
 #endif
 
 /* TODO: ifndef CEU_OS? */
-u8 CEU_GC = 0;  /* execute __ceu_gc() when "true" */
+u8 CEU_GC = 0;  /* execute __ceu_os_gc() when "true" */
 
 void ceu_sys_go (tceu_app* app, int evt, tceu_evtp evtp)
 {
@@ -864,7 +864,7 @@ static void _ceu_sys_unlink (tceu_lnk* lnk) {
     ceu_sys_free(lnk);
 }
 
-static void __ceu_gc (void)
+static void __ceu_os_gc (void)
 {
     if (! CEU_GC) return;
     CEU_GC = 0;
@@ -952,7 +952,7 @@ int ceu_sys_isr (int n, tceu_isr_f f, tceu_app* app) {
 }
 #endif
 
-void ceu_init (void) {
+void ceu_os_init (void) {
 #ifdef CEU_ISR
     int i;
     for (i=0; i<CEU_ISR_MAX; i++) {
@@ -962,13 +962,13 @@ void ceu_init (void) {
 #endif
 }
 
-int ceu_scheduler (int(*dt)())
+int ceu_os_scheduler (int(*dt)())
 {
     /*
      * Intercalate DT->WCLOCK->ASYNC->QUEUE->...
      * QUEUE last to separate app->init() from OS_START.
      * QUEUE handles one event at a time to intercalate with WCLOCK.
-     * __ceu_gc() only if QUEUE is emtpy: has to keep data from events 
+     * __ceu_os_gc() only if QUEUE is emtpy: has to keep data from events 
      * accessible.
      */
 
@@ -1057,7 +1057,7 @@ int ceu_scheduler (int(*dt)())
             }
             else
             {
-                __ceu_gc();     /* only when queue is empty */
+                __ceu_os_gc();     /* only when queue is empty */
             }
         }
     }

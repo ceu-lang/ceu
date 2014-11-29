@@ -76,7 +76,7 @@ int main (void)
     end
 
     f:write([[
-    ret = ceu_scheduler(dt);
+    ret = ceu_os_scheduler(dt);
 ]])
 
     for i, _ in ipairs(T) do
