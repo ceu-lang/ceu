@@ -19134,6 +19134,13 @@ Test { [[var int a; var int*pa; (pa+10)=&a; escape a;]],
         env='invalid operands to binary'}
 Test { [[var int a; var int*pa; a=1; pa=&a; *pa=3; escape a;]], run=3 }
 
+Test { [[
+*((u32*)0x100) = _V;
+escape 1;
+]],
+    gcc = 'error: ‘V’ undeclared (first use in this function)',
+}
+
 Test { [[var int  a;  var int* pa=a; escape a;]], env='invalid attribution' }
 Test { [[var int* pa; var int a=pa;  escape a;]], env='invalid attribution' }
 Test { [[
@@ -21452,7 +21459,7 @@ escape 1;
     fin = 'line 3 : attribution does not require `finalize´',
 }
 Test { [[
-function (void)=>void f do
+function (void)=>void faca do
     var int* a;
     a := null;
 end

@@ -160,7 +160,11 @@ F = {
 
     SetExp = function (me)
         local _,_,to = unpack(me)
-        CHG(to.lst.acc, 'wr')
+        if to.lst.acc then
+            CHG(to.lst.acc, 'wr')
+        else
+            -- *((u32*)0x100) = v  (no acc)
+        end
     end,
     AwaitInt = function (me)
         CHG(me[1].lst.acc, 'aw')

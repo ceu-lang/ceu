@@ -1035,6 +1035,9 @@ F = {
         local tp, exp = unpack(me)
         me.tp   = tp
         me.lval = exp.lval
+        if tp.ptr > 0 then
+            me.lval = true      -- *((u32*)0x100)=v
+        end
     end,
 
     Nat = function (me)
