@@ -16,7 +16,7 @@ void* CEU_APP_ADDR = NULL;
 #include <assert.h>
 #endif
 
-#if defined(CEU_OS) || defined(CEU_DEBUG)
+#if defined(CEU_DEBUG) || defined(CEU_NEWS) || defined(CEU_THREADS) || defined(CEU_OS)
 #include <stdlib.h>     /* malloc/free, exit */
 #endif
 
@@ -733,12 +733,12 @@ void* CEU_SYS_VEC[CEU_SYS_MAX] __attribute__((used)) = {
  * - i: next position to enqueue
  */
 #if CEU_QUEUE_MAX == 256
-    byte QUEUE[CEU_QUEUE_MAX];
+    byte QUEUE[CEU_QUEUE_MAX] = {0};    /* {0} avoids .bss */
     int  QUEUE_tot = 0;
     u8   QUEUE_get = 0;
     u8   QUEUE_put = 0;
 #else
-    byte QUEUE[CEU_QUEUE_MAX];
+    byte QUEUE[CEU_QUEUE_MAX] = {0};    /* {0} avoids .bss */
     int  QUEUE_tot = 0;
     u16  QUEUE_get = 0;
     u16  QUEUE_put = 0;
@@ -1083,12 +1083,14 @@ tceu_app* ceu_sys_load (void* addr)
 #endif
 
     tceu_app* app = (tceu_app*) ceu_sys_malloc(sizeof(tceu_app));
-    if (app == NULL)
+    if (app == NULL) {
         return NULL;
+    }
 
     app->data = (tceu_org*) ceu_sys_malloc(size);
-    if (app->data == NULL)
+    if (app->data == NULL) {
         return NULL;
+    }
 
     app->sys_vec = CEU_SYS_VEC;
     app->nxt = NULL;
@@ -1137,6 +1139,19 @@ printf("<<< %d %d\n", app->isAlive, app->ret);
 */
 
     app->init(app);
+
+/*
+#define GPFSEL1 ((uint*)0x20200004)
+#define GPSET0  ((uint*)0x2020001C)
+#define GPCLR0  ((uint*)0x20200028)
+uint ra;
+ra = *GPFSEL1;
+ra = ra & ~(7<<18);
+ra = ra | 1<<18;
+*GPFSEL1 = ra;
+*GPCLR0 = 1<<16;   // GPIO16 on
+// *GPSET0 = 1<<16;   // GPIO16 off
+*/
 
     /* OS_START */
 

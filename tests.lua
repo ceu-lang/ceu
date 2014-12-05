@@ -854,11 +854,87 @@ escape 1;
 
 BUG de "&" para org across await
 
+-- TODO: (_XXX) eh um cast => msg melhor!
+Test { [[
+if (_XXX) then
+end
+]],
+    run = 1,
+}
+
+Test { [[
+input (char* str, int len, int x, int y)=>int DRAW_STRING do
+    return x + y + len;
+end
+
+var int ret = call DRAW_STRING => ("Welcome to Ceu/OS!\n", 20, 100, 100);
+
+escape ret;
+]],
+    run = 220,
+}
+
+]===]
+Test { [=[
+native @nohold _strcmp();
+
+[[
+-- this is lua code
+v_from_lua = 100
+]]
+
+var int v_from_ceu = [[v_from_lua]];
+
+[[
+str_from_lua = 'string from lua'
+]]
+var char[100] str_from_ceu = [[str_from_lua]];
+_assert(not _strcmp(str_from_ceu, "string from lua"));
+
+[[
+print(@v_from_ceu)
+v_from_lua = v_from_lua + @v_from_ceu
+]]
+
+//v_from_ceu = [[nil]];
+
+var int ret = [[v_from_lua]];
+escape ret;
+]=],
+    run = 200,
+}
+do return end
+
+
+Test { [[
+native do
+    typedef struct {
+        char* str;
+        u32   length;
+        u32   x;
+        u32   y;
+    } draw_string_t;
+end
+
+input (_draw_string_t* ptr)=>void DRAW_STRING do
+end
+
+var _draw_string_t v;
+    v.str = "Welcome to Ceu/OS!\n";
+    v.length = 20;
+    v.x = 100;
+    v.y = 100;
+call DRAW_STRING => &v;
+
+escape 1;
+]],
+    run = 1,
+}
+
 do return end
 
 -------------------------------------------------------------------------------
 -- OK: well tested
-]===]
 
 Test { [[escape(1);]],
     _ana = {

@@ -224,9 +224,10 @@ static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org, t
                     '#define ceu_in_call_'..id..' '..me.id..'\n'
 
                 local ps = {}
-                if #ins > 1 then
+                local tup = ins.tup
+                if tup and #tup > 1 then
                     for i, _ in ipairs(ins) do
-                        ps[#ps+1] = ', (('..ins.tp..'*)param.ptr)->_'..i
+                        ps[#ps+1] = ', (('..TP.toc(ins)..'*)param.ptr)->_'..i
                     end
                 elseif #ins == 1 then
                     local _,tp,_ = unpack(ins[1])
@@ -1245,9 +1246,11 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
     Lua = function (me)
         local nargs = #me.params
         local nrets = (me.ret and 1) or 0
+        local lua = string.format(me.lua, '%q', me.lua)
+        lua = string.gsub(lua, '\n', '\92n')
         LINE(me, [[
 {
-    int err = luaL_loadstring(_ceu_app->lua, ]]..string.format('%q',me.lua)..[[);
+    int err = luaL_loadstring(_ceu_app->lua, "]]..lua..[[");
     if (! err) {
 ]])
 

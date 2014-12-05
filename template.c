@@ -181,7 +181,9 @@ fprintf(stderr, "TRK: o.%p / l.%d\n", _ceu_go->org, _ceu_go->lbl);
     return RET_HALT;    /* TODO: should never be reached anyways */
 }
 
-static void ceu_app_init (tceu_app* app)
+static __attribute__((noinline))  __attribute__((noclone))
+void
+ceu_app_init (tceu_app* app)
 {
     app->seqno = 0;
 #if defined(CEU_RET) || defined(CEU_OS)
@@ -260,7 +262,7 @@ static void ceu_app_init (tceu_app* app)
  */
 
 #ifdef CEU_OS
-__attribute__ ((section (".export")))
+//__attribute__ ((section (".export")))
 void CEU_EXPORT (uint* size, tceu_init** init) {
     *size = sizeof(CEU_Main);
     *init = (tceu_init*) &ceu_app_init;
