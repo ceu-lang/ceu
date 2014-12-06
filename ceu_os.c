@@ -306,10 +306,10 @@ int ceu_sys_clear (tceu_go* go, int start, void* stop) {
 /* TODO: ifndef CEU_OS? */
 u8 CEU_GC = 0;  /* execute __ceu_os_gc() when "true" */
 
+static tceu_go go = {0};
+
 void ceu_sys_go (tceu_app* app, int evt, tceu_evtp evtp)
 {
-    tceu_go go;
-
     switch (evt) {
 #ifdef CEU_ASYNCS
         case CEU_IN__ASYNC:
