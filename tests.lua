@@ -37776,7 +37776,7 @@ Test { [==[
 ]]
 escape 1;
 ]==],
-    run = 'LUA_ATPANIC: [string "    aa $ aa"]:1: \'=\' expected near \'$\'',
+    run = '2: \'=\' expected near \'$\'',
 }
 
 Test { [=[
