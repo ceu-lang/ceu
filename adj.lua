@@ -197,10 +197,12 @@ F = {
         -- event void _ok;
         -- The idx must be constant as the runtime uses it blindly.
         -- (generated in env.ceu)
-        table.insert(me.blk_ifc[1][1], 1,
-            node('Dcl_int', me.ln, 'event',
-                node('Type', me.ln, 'void', 0, false, false),
-                '_ok'))
+        if not is_ifc then
+            table.insert(me.blk_ifc[1][1], 1,
+                node('Dcl_int', me.ln, 'event',
+                    node('Type', me.ln, 'void', 0, false, false),
+                    '_ok'))
+        end
 
         -- insert class pool for orphan spawn
         if me.__ast_has_malloc then

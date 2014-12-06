@@ -1246,11 +1246,11 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
     Lua = function (me)
         local nargs = #me.params
         local nrets = (me.ret and 1) or 0
-        local lua = string.format(me.lua, '%q', me.lua)
-        lua = string.gsub(lua, '\n', '\92n')
+        local lua = string.format('%q', me.lua)
+        lua = string.gsub(lua, '\n', 'n') -- undo format for \n
         LINE(me, [[
 {
-    int err = luaL_loadstring(_ceu_app->lua, "]]..lua..[[");
+    int err = luaL_loadstring(_ceu_app->lua, ]]..lua..[[);
     if (! err) {
 ]])
 
@@ -1259,7 +1259,7 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
                 LINE(me, [[
         lua_pushnumber(_ceu_app->lua,]]..V(p)..[[);
 ]])
-            elseif p.tp.id=='char' and p.tp.ptr==1 then
+            elseif TP.toc(p.tp)=='char*' then
                 LINE(me, [[
         lua_pushstring(_ceu_app->lua,]]..V(p)..[[);
 ]])
@@ -1286,13 +1286,21 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
             ]]..V(me.ret)..[[ = ret;
             lua_pop(_ceu_app->lua, 1);
 ]])
-            elseif me.ret.tp.id=='char' and me.ret.tp.arr then
-                ASR(me.ret.var and me.ret.var.tp.arr, me,
-                    'invalid attribution (requires a buffer)')
+            elseif TP.toc(me.ret.tp) == 'char*' then
+                --ASR(me.ret.var and me.ret.var.tp.arr, me,
+                    --'invalid attribution (requires a buffer)')
                 LINE(me, [[
             if (lua_isstring(_ceu_app->lua,-1)) {
                 const char* ret = lua_tostring(_ceu_app->lua,-1);
-                strncpy(]]..V(me.ret)..[[, ret, ]]..me.ret.var.tp.arr.sval..[[);
+]])
+                local sval = me.ret.var and me.ret.var.tp.arr and me.ret.var.tp.arr.sval
+                if sval then
+                    LINE(me, 'strncpy('..V(me.ret)..', ret, '..(sval-1)..');')
+                    LINE(me, V(me.ret)..'['..(sval-1).."] = '\\0';")
+                else
+                    LINE(me, 'strcpy('..V(me.ret)..', ret);')
+                end
+                LINE(me, [[
             } else {
                 err = 1;
             }

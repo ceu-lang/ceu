@@ -874,38 +874,6 @@ escape ret;
     run = 220,
 }
 
-]===]
-Test { [=[
-native @nohold _strcmp();
-
-[[
--- this is lua code
-v_from_lua = 100
-]]
-
-var int v_from_ceu = [[v_from_lua]];
-
-[[
-str_from_lua = 'string from lua'
-]]
-var char[100] str_from_ceu = [[str_from_lua]];
-_assert(not _strcmp(str_from_ceu, "string from lua"));
-
-[[
-print(@v_from_ceu)
-v_from_lua = v_from_lua + @v_from_ceu
-]]
-
-//v_from_ceu = [[nil]];
-
-var int ret = [[v_from_lua]];
-escape ret;
-]=],
-    run = 200,
-}
-do return end
-
-
 Test { [[
 native do
     typedef struct {
@@ -933,8 +901,10 @@ escape 1;
 
 do return end
 
+
 -------------------------------------------------------------------------------
 -- OK: well tested
+]===]
 
 Test { [[escape(1);]],
     _ana = {
@@ -30554,6 +30524,37 @@ escape ret;
 -- INTERFACES / IFACES / IFCES
 
 Test { [[
+interface A with
+    var int a1,a2;
+end
+interface B with
+    var int b1,b2;
+end
+interface C with
+    var int c1,c2;
+end
+interface I with
+    interface A;
+    interface B,C;
+end
+class T with
+    interface I;
+do
+end
+var T t with
+    this.a1 = 1;
+    this.a2 = 2;
+    this.b1 = 3;
+    this.b2 = 4;
+    this.c1 = 5;
+    this.c2 = 6;
+end;
+var I* i = &t;
+escape i:a1+i:a2+i:b1+i:b2+i:c1+i:c2;
+]],
+    run = 21,
+}
+Test { [[
 interface I with
     var int a;
 end
@@ -37706,31 +37707,6 @@ escape app.v;
 
 -- LUA
 
-Test { [=[
-native @nohold _strcmp();
-var char* str = "oioioi";
-[[ str = @str ]]
-var bool ret = [[ str == 'oioioi' ]];
-var char[10] cpy = [[ str ]];
-escape ret and (not _strcmp(str,cpy));
-]=],
-    run = 1,
-}
-
-Test { [=[
-var int a = [[1]];
-var int b = 10;
-[[
-    @a = @a+@b
-    a = @a
-]]
-var int ret = [[a]];
-escape ret;
-]=],
-    todo = 'error: assign to @a',
-    run = 11,
-}
-
 Test { [==[
 [[
     a = 1
@@ -37825,6 +37801,96 @@ escape ret;
 ]=],
     run = 11,
 }
+
+Test { [=[
+native @nohold _strcmp();
+var char* str = "oioioi";
+[[ str = @str ]]
+var bool ret = [[ str == 'oioioi' ]];
+var char[10] cpy = [[ str ]];
+escape ret and (not _strcmp(str,cpy));
+]=],
+    run = 1,
+}
+
+Test { [=[
+native @nohold _strcmp(), _strcpy();
+var char[10] str;
+_strcpy(str,"oioioi");
+[[ str = @str ]]
+var bool ret = [[ str == 'oioioi' ]];
+var char[10] cpy;
+var char* ptr = cpy;
+ptr = [[ str ]];
+escape ret and (not _strcmp(str,cpy));
+]=],
+    run = 1,
+}
+
+Test { [=[
+native @nohold _strcmp();
+[[ str = '1234567890' ]]
+var char[2] cpy = [[ str ]];
+escape (not _strcmp(cpy,"1"));
+]=],
+    run = 1,
+}
+
+Test { [=[
+native @nohold _strcmp();
+[[ str = '1234567890' ]]
+var char[2] cpy;
+var char[20] cpy_;
+var char* ptr = cpy;
+ptr = [[ str ]];
+escape (not _strcmp(cpy,"1234567890"));
+]=],
+    run = 1,
+}
+
+Test { [=[
+var int a = [[1]];
+var int b = 10;
+[[
+    @a = @a+@b
+    a = @a
+]]
+var int ret = [[a]];
+escape ret;
+]=],
+    todo = 'error: assign to @a',
+    run = 11,
+}
+
+Test { [=[
+native @nohold _strcmp();
+
+[[
+-- this is lua code
+v_from_lua = 100
+]]
+
+var int v_from_ceu = [[v_from_lua]];
+
+[[
+str_from_lua = 'string from lua'
+]]
+var char[100] str_from_ceu = [[str_from_lua]];
+_assert(not _strcmp(str_from_ceu, "string from lua"));
+
+[[
+print(@v_from_ceu)
+v_from_lua = v_from_lua + @v_from_ceu
+]]
+
+//v_from_ceu = [[nil]];
+
+var int ret = [[v_from_lua]];
+escape ret;
+]=],
+    run = 200,
+}
+
 
 -- ALGEBRAIC DATATYPES
 --[=[

@@ -44,7 +44,8 @@ for _, cls in ipairs(TOPS) do
     if cls.tag=='Dcl_cls' and cls[2]~='Main' then   -- "Main" has no Dcl_imp's
         local dcls1 = cls.blk_ifc[1][1]
         assert(dcls1.tag == 'BlockI')
-        for i=1, #dcls1 do
+        local i = 1
+        while i <= #dcls1 do
             local imp = dcls1[i]
             if imp.tag == '_Dcl_imp' then
                 -- interface A,B,...
@@ -65,6 +66,7 @@ for _, cls in ipairs(TOPS) do
                 i = i - 1                    -- repeat
             else
             end
+            i = i + 1
         end
     end
 end
