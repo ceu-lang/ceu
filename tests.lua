@@ -899,12 +899,20 @@ escape 1;
     run = 1,
 }
 
+]===]
+Test { [[
+#define UART0_BASE 0x20201000
+#define UART0_CR ((u32*)(UART0_BASE + 0x30))
+*UART0_CR = 0x00000000;
+escape 1;
+]],
+    run = 1,
+}
 do return end
 
 
 -------------------------------------------------------------------------------
 -- OK: well tested
-]===]
 
 Test { [[escape(1);]],
     _ana = {

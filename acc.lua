@@ -179,7 +179,7 @@ F = {
     end,
     ['Op1_*'] = function (me)
         if not me.lst.acc then
-            assert(me.lst.const)
+            assert(me.lst.sval)
             return  -- constants
         end
 
