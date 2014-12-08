@@ -180,6 +180,11 @@ function TP.tostr (tp)
     return ret
 end
 
+function TP.isFloat (tp)
+    return (tp.id=='float' or tp.id=='f32' or tp.id=='f64')
+            and tp.ptr==0 and (not tp.arr)
+end
+
 function TP.isNumeric (tp)
     return TP.get(tp.id).num and tp.ptr==0 and (not tp.arr)
             or (tp.ext and tp.ptr==0)

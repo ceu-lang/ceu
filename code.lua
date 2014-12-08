@@ -904,7 +904,14 @@ _ceu_go->evto = (tceu_org*) ]]..((int.org and int.org.val) or '_ceu_go->org')..[
 #endif
 ]])
         if exp then
-            local field = exp.tp.ptr>0 and 'ptr' or 'v'
+            local field
+            if exp.tp.ptr>0 then
+                field = 'ptr'
+            elseif TP.isFloat(exp.tp) then
+                field = 'f'
+            else
+                field = 'v'
+            end
             LINE(me, [[
 _ceu_go->evtp.]]..field..' = '..V(exp)..[[;
 ]])

@@ -899,20 +899,12 @@ escape 1;
     run = 1,
 }
 
-]===]
-Test { [[
-#define UART0_BASE 0x20201000
-#define UART0_CR ((u32*)(UART0_BASE + 0x30))
-*UART0_CR = 0x00000000;
-escape 1;
-]],
-    run = 1,
-}
 do return end
 
 
 -------------------------------------------------------------------------------
 -- OK: well tested
+]===]
 
 Test { [[escape(1);]],
     _ana = {
@@ -4386,6 +4378,36 @@ escape a;
 ]],
     run = 1,
     --trig_wo = 1,
+}
+
+Test { [[
+input void OS_START;
+event float x;
+var float ret = 0;
+par/and do
+    ret = await x;
+with
+    await OS_START;
+    emit x => 1.1;
+end
+escape ret>1.0 and ret<1.2;
+]],
+    run = 1,
+}
+
+Test { [[
+input float X;
+var float ret;
+par/and do
+    ret = await X;
+with
+    async do
+        emit X => 1.1;
+    end
+end
+escape ret>1.0 and ret<1.2;
+]],
+    run = 1,
 }
 
 -- ParOr
@@ -22049,6 +22071,14 @@ escape ret;
     run = 10,
 }
 
+Test { [[
+#define UART0_BASE 0x20201000
+#define UART0_CR ((u32*)(UART0_BASE + 0x30))
+*UART0_CR = 0x00000000;
+escape 1;
+]],
+    run = 1,
+}
 -- ASYNC
 
 Test { [[

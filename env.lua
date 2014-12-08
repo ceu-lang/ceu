@@ -495,7 +495,7 @@ F = {
             return
         end
 
-        ASR(ins.tup or ins.id=='void' or ins.id=='int' or ins.ptr>0,
+        ASR(ins.tup or ins.id=='void' or ins.id=='int' or ins.id=='float' or ins.ptr>0,
             me, 'invalid event type')
         ASR((not ins.arr) and (not ins.ref),
             me, 'invalid event type')

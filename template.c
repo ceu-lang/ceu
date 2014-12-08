@@ -262,7 +262,7 @@ ceu_app_init (tceu_app* app)
  */
 
 #ifdef CEU_OS
-//__attribute__ ((section (".export")))
+__attribute__ ((section (".export")))
 void CEU_EXPORT (uint* size, tceu_init** init) {
     *size = sizeof(CEU_Main);
     *init = (tceu_init*) &ceu_app_init;

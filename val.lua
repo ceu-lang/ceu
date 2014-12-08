@@ -219,6 +219,8 @@ F =
                 assert(mode == 'val')
                 if isPtr then
                     t2[#t2+1] = 'CEU_EVTP('..val..')'
+                elseif TP.isFloat(ext.evt.ins) then
+                    t2[#t2+1] = 'CEU_EVTP((float)'..val..')'
                 else
                     t2[#t2+1] = 'CEU_EVTP((int)'..val..')'
                 end
@@ -273,6 +275,8 @@ F =
                     -- byRef from awake SetExp removes the `*´
         elseif tp.tup then
             me.val = '(('..TP.toc(me.tp)..'*)_ceu_go->evtp.ptr)'
+        elseif TP.isFloat(tp) then
+            me.val = '(_ceu_go->evtp.f)'
         else
             me.val = '(_ceu_go->evtp.v)'
             --me.val = '*(('..TP.toc(e1.evt.ins)..'*)_ceu_go->evtp.ptr)'
