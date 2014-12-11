@@ -32,7 +32,7 @@ OPTS = {
     out_f     = 'ceu_app_init',
 
     join      = true,
-    c_calls   = false,
+    c_calls   = nil,    -- [nil=accept]
 
     cpp       = true,
     cpp_exe   = 'cpp',
@@ -333,8 +333,8 @@ do
     CC = SUB(CC, '=== THREADS_C ===',   CODE.threads)
     CC = SUB(CC, '=== FUNCTIONS_C ===', CODE.functions)
     CC = SUB(CC, '=== STUBS ===',       CODE.stubs)
-    CC = SUB(CC, '=== NATIVE ===',      MAIN.native)
     CC = SUB(CC, '=== CODE ===',        AST.root.code)
+    CC = SUB(CC, '=== NATIVE ===', (OPTS.c_calls and '') or MAIN.native)
 
     -- IFACES
     if PROPS.has_ifcs then
