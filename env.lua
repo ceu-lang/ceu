@@ -538,7 +538,14 @@ F = {
             ASR(me.var.cls, me, 'invalid type')
             constr.blk = me.var.blk
         end
+
+        if me.var.cls and me.var.tp.arr then
+            -- var T[10] ts;  // needs _i_ to iterate for the constructor
+            _, me.var.constructor_iterator =
+                newvar(me, AST.iter'Block'(), 'var', TP.fromstr'int', '_i_'..id, false)
+        end
     end,
+
     Dcl_pool = function (me)
         local pre, tp, id, constr = unpack(me)
         ASR(tp.arr, me, 'missing `pool´ dimension')

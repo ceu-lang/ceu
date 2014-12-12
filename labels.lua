@@ -78,7 +78,7 @@ F = {
         --end
     end,
     Spawn = function (me)
-        me.lbls_cnt = { new{me.tag..'_cont'} }
+        me.lbls_cnt = new{me.tag..'_cont'}
     end,
     Free  = function (me)
         me.lbl_clr = new{'Free_clr'}
@@ -138,10 +138,7 @@ F = {
     end,
     Dcl_var = function (me)
         if me.var.cls then
-            me.lbls_cnt = {}
-            for i=1, (me.var.tp.arr and me.var.tp.arr.sval or 1) do
-                me.lbls_cnt[i] = new{'Start_cnt'}
-            end
+            me.lbls_cnt = new{'Start_cnt'}
         end
     end,
 

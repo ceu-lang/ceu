@@ -71,15 +71,10 @@ function HALT (me, ret, cond)
     end
 end
 
-function GOTO (me, lbl, org)
+function GOTO (me, lbl)
     CODE.has_goto = true
-    if org then
-        LINE(me, [[
-_ceu_go->org = ]]..org..[[;
-]])
-    end
     LINE(me, [[
-_ceu_go->lbl = ]]..lbl.id..[[;
+_CEU_LBL = ]]..lbl.id..[[;
 goto _CEU_GOTO_;
 /*return RET_GOTO;*/
 ]])
@@ -97,7 +92,7 @@ if (]]..V(pse.dcl.var)..[[) {
 ]])
         if me.tag == 'AwaitInt' then
             LINE(me, [[
-    _ceu_go->trl->seqno = _ceu_app->seqno-1;   /* awake again */
+    _STK.trl->seqno = _ceu_app->seqno-1;   /* awake again */
 ]])
         end
         LINE(me, [[
@@ -152,18 +147,30 @@ function CLEAR (me)
 ]]
 
     --LINE(me, 'ceu_trails_clr('..me.trails[1]..','..me.trails[2]..
-                                --', _ceu_go->org);')
+                                --', _STK_ORG);')
 
     LINE(me, [[
-/* trails[1] points to ORG blk */
 {
-    tceu_trl* trl = &_ceu_go->org->trls[ ]]..me.trails[1]..[[ ];
+    /* save the continuation to run after the clear */
+    /* trails[1] points to ORG blk */
+    tceu_trl* trl = &_STK_ORG->trls[ ]]..me.trails[1]..[[ ];
     trl->evt = CEU_IN__STK;
     trl->stk = _ceu_go->stki;
+       /* awake in the same level as we are now (-1 vs the clear push below) */
     trl->lbl = ]]..me.lbl_clr.id..[[;
 }
-return ceu_out_clear(_ceu_go, ]]..(me.trails[1]+1)..','..[[
-                     &_ceu_go->org->trls[ ]]..(me.trails[2]+1)..[[ ]);
+{
+    /* clear from start->stop */
+    tceu_stk stk;
+             stk.evt = CEU_IN__CLEAR,
+#ifdef CEU_ORGS
+             stk.org  = _STK_ORG;
+#endif
+             stk.trl  = &_STK_ORG->trls[ ]]..(me.trails[1]+1)..[[ ];
+             stk.stop = &_STK_ORG->trls[ ]]..(me.trails[2]+1)..[[ ];
+    stack_push(*_ceu_go, stk);
+}
+return RET_TRL;
 
 case ]]..me.lbl_clr.id..[[:;
 ]])
@@ -199,8 +206,8 @@ static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org, t
 
         -- functions and threads receive __ceu_org as parameter
         --   and do not require _ceu_go
-        CODE.functions = string.gsub(CODE.functions, '_ceu_go%-%>org', '__ceu_org')
-        CODE.threads   = string.gsub(CODE.threads,   '_ceu_go%-%>org', '__ceu_org')
+        CODE.functions = string.gsub(CODE.functions, '_STK_ORG', '__ceu_org')
+        CODE.threads   = string.gsub(CODE.threads,   '_STK_ORG', '__ceu_org')
 
         -- assert that all input functions have bodies
         for evt, v in pairs(INPUT_FUNCTIONS) do
@@ -212,7 +219,7 @@ static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org, t
     BlockI_pos = function (me)
         -- Interface constants are initialized from outside
         -- (another _ceu_go_org), need to use __ceu_org instead.
-        me.code_ifc = string.gsub(me.code, '_ceu_go%-%>org', '__ceu_org')
+        me.code_ifc = string.gsub(me.code, '_STK_ORG', '__ceu_org')
         me.code = ''
     end,
 
@@ -289,7 +296,7 @@ static void _ceu_pre_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org) {
         -- TODO: move to _ORG? (MAIN does not call _ORG)
         LINE(me, [[
 #ifdef CEU_IFCS
-_ceu_go->org->cls = ]]..me.n..[[;
+_STK_ORG->cls = ]]..me.n..[[;
 #endif
 ]])
 
@@ -304,11 +311,22 @@ _ceu_go->org->cls = ]]..me.n..[[;
         -- TODO: this posts a "CLEAR" that will eventually execute the "free"
         -- inside the scheduler. However, we could call the "free" from here
         -- because all trails are already clean at this point.
+        -- (but remeber that the "free" should be delayed)
         LINE(me, [[
 #ifdef CEU_NEWS
-if (_ceu_go->org->isDyn) {
-    _ceu_go->org->isAlive = 0;
-    return ceu_out_clear(_ceu_go, 0, _ceu_go->org);
+if (_STK_ORG->isDyn) {
+    _STK_ORG->isAlive = 0;
+    {
+        /* clear from all org */
+        tceu_stk stk;
+                 stk.evt = CEU_IN__CLEAR,
+#ifdef CEU_ORGS
+                 stk.org  = _STK_ORG;
+#endif
+                 stk.trl  = &_STK_ORG->trls[0];
+                 stk.stop = _STK_ORG;
+        stack_push(*_ceu_go, stk);
+    }
 }
 #endif
 ]])
@@ -333,26 +351,28 @@ do
     <BODY>          -- 3    org: me.lbls_body[i].id
 end
 
-<...>               -- 0    par:
+<...>               -- 0    parent:
 
 var T t with
     <CONSTR>        -- 2    org: no lbl (cannot call anything)
 end;
 
-<CONT>              -- 4    par: me.lbls_cnt[i].id
+<CONT>              -- 4    parent: me.lbls_cnt.id
 ]]
 
         -- ceu_out_org, _ceu_constr_
-        local org = t.arr and '((tceu_org*) &'..t.val..'[i]'..')'
+        local org = t.arr and '((tceu_org*) &'..t.val..'['..V(t.i)..']'..')'
                            or '((tceu_org*) '..t.val..')'
-        LINE(me, [[
-/* each org has its own trail on enclosing block */
+        -- each org has its own trail on enclosing block
+        if t.arr then
+            LINE(me, [[
+for (]]..V(t.i)..[[=0; ]]..V(t.i)..'<'..t.arr.sval..';'..V(t.i)..[[++)
 {
-    int i;
-    for (i=0; i<]]..(t.arr and t.arr.sval or 1)..[[; i++) {
-        /* resets org memory and starts org.trail[0]=Class_XXX */
-        ceu_out_org(_ceu_app, ]]..org..','..t.cls.trails_n..','..t.cls.lbl.id..[[,
-                _ceu_go->stki+1,    /* run now */
+]])     end
+        LINE(me, [[
+    /* resets org memory and starts org.trail[0]=Class_XXX */
+    ceu_out_org(_ceu_app, ]]..org..','..t.cls.trails_n..','..t.cls.lbl.id..[[,
+            _ceu_go->stki+1,    /* run now */
 #ifdef CEU_NEWS
                 ]]..t.isDyn..[[,
 #endif
@@ -365,28 +385,21 @@ end;
 ]])
         if t.cls.has_pre then
             LINE(me, [[
-        _ceu_pre_]]..t.cls.n..[[(_ceu_app, ]]..org..[[);
+    _ceu_pre_]]..t.cls.n..[[(_ceu_app, ]]..org..[[);
 ]])
         end
         if t.constr then
             LINE(me, [[
-        _ceu_constr_]]..t.constr.n..[[(_ceu_app, ]]..org..[[, _ceu_go);
+    _ceu_constr_]]..t.constr.n..[[(_ceu_app, ]]..org..[[, _ceu_go);
 ]])
         end
         LINE(me, [[
-    }
-}
+    return ceu_out_org_spawn(_ceu_go, ]]..me.lbls_cnt.id..','..org..','..t.cls.lbl.id..[[);
+case ]]..me.lbls_cnt.id..[[:;
 ]])
-
-        -- TODO: move to the loop above (requires persistent "i")
-        -- ceu_org_spawn
-        for i=1, (t.arr and t.arr.sval or 1) do
-            local org = t.arr and '((tceu_org*) &'..t.val..'['..(i-1)..']'..')'
-                               or '((tceu_org*) '..t.val..')'
+        if t.arr then
             LINE(me, [[
-/* TODO: CEU_OS */
-    return ceu_out_org_spawn(_ceu_go, ]]..me.lbls_cnt[i].id..','..org..','..t.cls.lbl.id..[[);
-case ]]..me.lbls_cnt[i].id..[[:;
+}
 ]])
         end
     end,
@@ -405,7 +418,8 @@ case ]]..me.lbls_cnt[i].id..[[:;
             val     = var.val,
             constr  = constr,
             arr     = var.tp.arr,
-            par_org = '_ceu_go->org',
+            i       = var.constructor_iterator,
+            par_org = '_STK_ORG',
             par_trl_idx = var.trl_orgs[1],
         })
     end,
@@ -440,7 +454,7 @@ case ]]..me.lbls_cnt[i].id..[[:;
             LINE(me, '__ceu_new->pool = NULL;')
         end
 
-        local org = '_ceu_go->org'
+        local org = '_STK_ORG'
         if pool and pool.org then
             org = '((tceu_org*)'..V(pool.org)..')'
         end
@@ -471,9 +485,9 @@ case ]]..me.lbls_cnt[i].id..[[:;
         if me.fins then
             LINE(me, [[
 /*  FINALIZE */
-_ceu_go->org->trls[ ]]..me.trl_fins[1]..[[ ].evt   = CEU_IN__CLEAR;
-_ceu_go->org->trls[ ]]..me.trl_fins[1]..[[ ].lbl   = ]]..me.lbl_fin.id..[[;
-_ceu_go->org->trls[ ]]..me.trl_fins[1]..[[ ].seqno = _ceu_app->seqno-1; /* awake now */
+_STK_ORG->trls[ ]]..me.trl_fins[1]..[[ ].evt   = CEU_IN__CLEAR;
+_STK_ORG->trls[ ]]..me.trl_fins[1]..[[ ].lbl   = ]]..me.lbl_fin.id..[[;
+_STK_ORG->trls[ ]]..me.trl_fins[1]..[[ ].seqno = _ceu_app->seqno-1; /* awake now */
 ]])
             for _, fin in ipairs(me.fins) do
                 LINE(me, fin.val..' = 0;')
@@ -520,7 +534,7 @@ ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'),'
             if var.trl_orgs and var.trl_orgs_first then
                 LINE(me, [[
 /* TODO: CEU_OS */
-ceu_out_org_trail(_ceu_go->org, ]]..var.trl_orgs[1]..[[, (tceu_org_lnk*) &]]..var.trl_orgs.val..[[);
+ceu_out_org_trail(_STK_ORG, ]]..var.trl_orgs[1]..[[, (tceu_org_lnk*) &]]..var.trl_orgs.val..[[);
 ]])
             end
         end
@@ -536,7 +550,7 @@ ceu_out_org_trail(_ceu_go->org, ]]..var.trl_orgs[1]..[[, (tceu_org_lnk*) &]]..va
         if me.trails[1] ~= stmts.trails[1] then
             LINE(me, [[
 /* switch to blk trail */
-_ceu_go->trl = &_ceu_go->org->trls[ ]]..stmts.trails[1]..[[ ];
+_STK.trl = &_STK_ORG->trls[ ]]..stmts.trails[1]..[[ ];
 ]])
         end
         CONC(me, stmts)
@@ -562,7 +576,7 @@ if (]]..fin.val..[[) {
             LINE(me, [[
 /* switch to 1st trail */
 /* TODO: only if not joining with outer prio */
-/*_ceu_go->trl = &_ceu_go->org->trls[ ]]..me.trails[1]..[[ ]; */
+/*_STK.trl = &_STK_ORG->trls[ ]]..me.trails[1]..[[ ]; */
 ]])
         end
     end,
@@ -572,8 +586,8 @@ if (]]..fin.val..[[) {
     PauseX = function (me)
         local psed = unpack(me)
         LINE(me, [[
-ceu_pause(&_ceu_go->org->trls[ ]]..me.blk.trails[1]..[[ ],
-          &_ceu_go->org->trls[ ]]..me.blk.trails[2]..[[ ],
+ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
+          &_STK_ORG->trls[ ]]..me.blk.trails[2]..[[ ],
         ]]..psed..[[);
 ]])
     end,
@@ -624,7 +638,7 @@ ceu_pause(&_ceu_go->org->trls[ ]]..me.blk.trails[1]..[[ ],
             LINE(me, [[
 /* switch to 1st trail */
 /* TODO: only if not joining with outer prio */
-_ceu_go->trl = &_ceu_go->org->trls[ ]] ..me.trails[1]..[[ ];
+_STK.trl = &_STK_ORG->trls[ ]] ..me.trails[1]..[[ ];
 ]])
         end
     end,
@@ -638,12 +652,12 @@ _ceu_go->trl = &_ceu_go->org->trls[ ]] ..me.trails[1]..[[ ];
         for i, sub in ipairs(me) do
             if i > 1 then
                 LINE(me, [[
-/* TODO: function? */
 {
-    tceu_trl* trl = &_ceu_go->org->trls[ ]]..sub.trails[1]..[[ ];
+    /* mark all trails to start (1st run immediatelly) */
+    tceu_trl* trl = &_STK_ORG->trls[ ]]..sub.trails[1]..[[ ];
     trl->evt = CEU_IN__STK;
     trl->lbl = ]]..me.lbls_in[i].id..[[;
-    trl->stk = _ceu_go->stki;
+    trl->stk = _ceu_go->stki;   /* awake in the same level as we are now */
 }
 ]])
             end
@@ -685,7 +699,7 @@ _ceu_go->trl = &_ceu_go->org->trls[ ]] ..me.trails[1]..[[ ];
             LINE(me, [[
 /* switch to 1st trail */
 /* TODO: only if not joining with outer prio */
-_ceu_go->trl = &_ceu_go->org->trls[ ]]..me.trails[1]..[[ ];
+_STK.trl = &_STK_ORG->trls[ ]]..me.trails[1]..[[ ];
 ]])
         end
     end,
@@ -718,7 +732,7 @@ _ceu_go->trl = &_ceu_go->org->trls[ ]]..me.trails[1]..[[ ];
         LINE(me, [[
 /* switch to 1st trail */
 /* TODO: only if not joining with outer prio */
-_ceu_go->trl = &_ceu_go->org->trls[ ]]..me.trails[1]..[[ ];
+_STK.trl = &_STK_ORG->trls[ ]]..me.trails[1]..[[ ];
 ]])
     end,
 
@@ -752,8 +766,8 @@ for (;;) {
     {
 #endif
 ]]..no..[[:
-        _ceu_go->trl->evt = CEU_IN__ASYNC;
-        _ceu_go->trl->lbl = ]]..me.lbl_asy.id..[[;
+        _STK.trl->evt = CEU_IN__ASYNC;
+        _STK.trl->lbl = ]]..me.lbl_asy.id..[[;
 ]])
             HALT(me, 'RET_ASYNC')
             LINE(me, [[
@@ -772,7 +786,7 @@ for (;;) {
             LINE(me, [[
 /* switch to 1st trail */
 /* TODO: only if not joining with outer prio */
-_ceu_go->trl = &_ceu_go->org->trls[ ]]..me.trails[1]..[[ ];
+_STK.trl = &_STK_ORG->trls[ ]]..me.trails[1]..[[ ];
 ]])
         end
     end,
@@ -804,8 +818,8 @@ _ceu_go->trl = &_ceu_go->org->trls[ ]]..me.trails[1]..[[ ];
         if AST.iter'Async'() then
             LINE(me, [[
 ]]..no..[[:
-_ceu_go->trl->evt = CEU_IN__ASYNC;
-_ceu_go->trl->lbl = ]]..me.lbl_cnt.id..[[;
+_STK.trl->evt = CEU_IN__ASYNC;
+_STK.trl->lbl = ]]..me.lbl_cnt.id..[[;
 ]])
         end
 
@@ -840,8 +854,8 @@ case ]]..me.lbl_cnt.id..[[:;
         if AST.iter'Async'() then
             LINE(me, [[
 ]]..no..[[:
-_ceu_go->trl->evt = CEU_IN__ASYNC;
-_ceu_go->trl->lbl = ]]..me.lbl_cnt.id..[[;
+_STK.trl->evt = CEU_IN__ASYNC;
+_STK.trl->lbl = ]]..me.lbl_cnt.id..[[;
 ]])
         end
 
@@ -885,22 +899,18 @@ case ]]..me.lbl_cnt.id..[[:;
 
         -- [ ... | me=stk | ... | oth=stk ]
         LINE(me, [[
-_ceu_go->stk[_ceu_go->stki].evtp = _ceu_go->evtp;
-#ifdef CEU_INTS
-#ifdef CEU_ORGS
-_ceu_go->stk[_ceu_go->stki].evto = _ceu_go->evto;
-#endif
-#endif
-_ceu_go->stk[_ceu_go->stki].evt  = _ceu_go->evt;    /* 3rd (stk) other trails */
+/* save the continuation to run after the emit */
+_STK.trl->evt = CEU_IN__STK;
+_STK.trl->lbl = ]]..me.lbl_cnt.id..[[;
+_STK.trl->stk = _ceu_go->stki;
+   /* awake in the same level as we are now (-1 vs the emit push below) */
 
-_ceu_go->trl->evt = CEU_IN__STK;
-_ceu_go->trl->stk = _ceu_go->stki++;                /* 2nd (stk) me */
-_ceu_go->trl->lbl = ]]..me.lbl_cnt.id..[[;
-                                            /* 1st (stk+1) my lsts */
-/* TRIGGER EVENT */
-_ceu_go->evt  = ]]..(int.ifc_idx or int.var.evt.idx)..[[;
+/* trigger the event */
+{
+    tceu_stk stk;
+             stk.evt = ]]..(int.ifc_idx or int.var.evt.idx)..[[;
 #ifdef CEU_ORGS
-_ceu_go->evto = (tceu_org*) ]]..((int.org and int.org.val) or '_ceu_go->org')..[[;
+             stk.evto = (tceu_org*) ]]..((int.org and int.org.val) or '_STK_ORG')..[[;
 #endif
 ]])
         if exp then
@@ -913,13 +923,16 @@ _ceu_go->evto = (tceu_org*) ]]..((int.org and int.org.val) or '_ceu_go->org')..[
                 field = 'v'
             end
             LINE(me, [[
-_ceu_go->evtp.]]..field..' = '..V(exp)..[[;
+             stk.evtp.]]..field..' = '..V(exp)..[[;
 ]])
         end
         LINE(me, [[
 #ifdef CEU_ORGS
-_ceu_go->org = _ceu_app->data;   /* TODO(speed): check if is_ifc */
+             stk.org = _ceu_app->data;   /* TODO(speed): check if is_ifc */
 #endif
+    stack_push(*_ceu_go, stk);
+}
+
 /*goto _CEU_CALL_ORG_;*/
 return RET_ORG;
 
@@ -939,8 +952,8 @@ case ]]..me.lbl_cnt.id..[[:;
         LINE(me, [[
 ceu_out_wclock]]..suf..[[(_ceu_app, (s32)]]..V(exp)..[[, &]]..me.val_wclk..[[, NULL);
 ]]..no..[[:
-    _ceu_go->trl->evt = CEU_IN__WCLOCK]]..suf..[[;
-    _ceu_go->trl->lbl = ]]..me.lbl.id..[[;
+    _STK.trl->evt = CEU_IN__WCLOCK]]..suf..[[;
+    _STK.trl->lbl = ]]..me.lbl.id..[[;
 ]])
         HALT(me)
 
@@ -950,7 +963,7 @@ case ]]..me.lbl.id..[[:;
 
         AWAIT_PAUSE(me, no)
         LINE(me, [[
-    if (!ceu_out_wclock]]..suf..[[(_ceu_app, _ceu_go->evtp.dt, NULL, &]]..me.val_wclk..[[) )
+    if (!ceu_out_wclock]]..suf..[[(_ceu_app, _STK.evtp.dt, NULL, &]]..me.val_wclk..[[) )
         goto ]]..no..[[;
 ]])
         DEBUG_TRAILS(me)
@@ -958,17 +971,17 @@ case ]]..me.lbl.id..[[:;
 
     AwaitInt = function (me)
         local int = unpack(me)
-        local org = (int.org and int.org.val) or '_ceu_go->org'
+        local org = (int.org and int.org.val) or '_STK_ORG'
         local no = '_CEU_NO_'..me.n..'_'
 
         LINE(me, [[
 ]]..no..[[:
-    _ceu_go->trl->evt = ]]..(int.ifc_idx or int.var.evt.idx)..[[;
-    _ceu_go->trl->lbl = ]]..me.lbl.id..[[;
+    _STK.trl->evt = ]]..(int.ifc_idx or int.var.evt.idx)..[[;
+    _STK.trl->lbl = ]]..me.lbl.id..[[;
 ]])
         if int.var.evt.id == '_ok' then
             LINE(me, [[
-    _ceu_go->trl->seqno = _ceu_app->seqno-1;   /* always ready to awake */
+    _STK.trl->seqno = _ceu_app->seqno-1;   /* always ready to awake */
 ]])
         end
         HALT(me)
@@ -978,8 +991,8 @@ case ]]..me.lbl.id..[[:;
 ]])
         LINE(me, [[
 #ifdef CEU_ORGS
-    if ((tceu_org*)]]..org..[[ != _ceu_go->evto) {
-        _ceu_go->trl->seqno = _ceu_app->seqno-1;   /* awake again */
+    if ((tceu_org*)]]..org..[[ != _STK.evto) {
+        _STK.trl->seqno = _ceu_app->seqno-1;   /* awake again */
         goto ]]..no..[[;
     }
 #endif
@@ -994,8 +1007,8 @@ case ]]..me.lbl.id..[[:;
                     or ''
         LINE(me, [[
 ]]..no..[[
-    _ceu_go->trl->evt = CEU_IN_]]..e.evt.id..[[;
-    _ceu_go->trl->lbl = ]]..me.lbl.id..[[;
+    _STK.trl->evt = CEU_IN_]]..e.evt.id..[[;
+    _STK.trl->lbl = ]]..me.lbl.id..[[;
 ]])
         HALT(me)
 
@@ -1022,8 +1035,8 @@ ceu_trails_set_wclock(_ceu_app, PTR_cur(u32*,]]..awt.off..'),(s32)'..V(awt)..[[)
         local no = '_CEU_NO_'..me.n..'_'
         LINE(me, [[
 ]]..no..[[:
-    _ceu_go->trl->evt = CEU_IN__ANY;
-    _ceu_go->trl->lbl = ]]..me.lbl.id..[[;
+    _STK.trl->evt = CEU_IN__ANY;
+    _STK.trl->lbl = ]]..me.lbl.id..[[;
 ]])
         HALT(me)
 
@@ -1038,22 +1051,22 @@ case ]]..me.lbl.id..[[:;
         for i, awt in ipairs(me) do
             if awt.tag == 'Ext' then
                 LINE(me, [[
-                    if (_ceu_go->evt == CEU_IN_]]..awt.evt.id..[[) {
+                    if (_STK.evt == CEU_IN_]]..awt.evt.id..[[) {
                 ]])
             elseif awt.__ast_isexp then
-                local org = (awt.org and awt.org.val) or '_ceu_go->org'
+                local org = (awt.org and awt.org.val) or '_STK_ORG'
                 LINE(me, [[
-                    if ( (_ceu_go->evt == ]]..(awt.off or awt.evt.off)..[[)
+                    if ( (_STK.evt == ]]..(awt.off or awt.evt.off)..[[)
                     #ifdef CEU_ORGS
-                        && (]]..org..[[ != _ceu_go->evtp.org)
+                        && (]]..org..[[ != _STK.evtp.org)
                     #endif
                     ) {
                 ]])
             else -- WCLOCK
                 LINE(me, [[
-                    if ( (_ceu_go->evt == CEU_IN__WCLOCK)
+                    if ( (_STK.evt == CEU_IN__WCLOCK)
                     &&   (!ceu_wclocks_not(PTR_cur(s32*,]]..awt.off..
-                            [[), _ceu_go->evtp.dt)) ) {
+                            [[), _STK.evtp.dt)) ) {
                 ]])
             end
             if set then
@@ -1087,8 +1100,8 @@ case ]]..me.lbl.id..[[:;
 
         LINE(me, [[
 ]]..no..[[:
-_ceu_go->trl->evt = CEU_IN__ASYNC;
-_ceu_go->trl->lbl = ]]..me.lbl.id..[[;
+_STK.trl->evt = CEU_IN__ASYNC;
+_STK.trl->lbl = ]]..me.lbl.id..[[;
 ]])
         HALT(me, 'RET_ASYNC')
 
@@ -1124,7 +1137,7 @@ case ]]..me.lbl.id..[[:;
 ]]..me.thread_st..[[  = ceu_out_malloc(sizeof(s8));
 *]]..me.thread_st..[[ = 0;  /* ini */
 {
-    tceu_threads_p p = { _ceu_app, _ceu_go->org, ]]..me.thread_st..[[ };
+    tceu_threads_p p = { _ceu_app, _STK_ORG, ]]..me.thread_st..[[ };
     int ret =
         CEU_THREADS_CREATE(&]]..me.thread_id..[[, _ceu_thread_]]..me.n..[[, &p);
     if (ret == 0)
@@ -1151,15 +1164,15 @@ case ]]..me.lbl.id..[[:;
         local no = '_CEU_NO_'..me.n..'_'
         LINE(me, [[
 ]]..no..[[:
-        _ceu_go->trl->evt = CEU_IN__THREAD;
-        _ceu_go->trl->lbl = ]]..me.lbl.id..[[;
+        _STK.trl->evt = CEU_IN__THREAD;
+        _STK.trl->lbl = ]]..me.lbl.id..[[;
 ]])
         HALT(me)
 
         -- continue
         LINE(me, [[
 case ]]..me.lbl.id..[[:;
-        if (_ceu_go->evtp.thread != ]]..me.thread_id..[[) {
+        if (_STK.evtp.thread != ]]..me.thread_id..[[) {
             goto ]]..no..[[; /* another thread is terminating: await again */
         }
     }

@@ -83,9 +83,6 @@
         ((__typeof__(ceu_sys_isr)*)((_ceu_app)->sys_vec[CEU_SYS_ISR]))(n,f,_ceu_app)
 #endif
 
-    #define ceu_out_clear(go,start,stop) \
-        ((__typeof__(ceu_sys_clear)*)((_ceu_app)->sys_vec[CEU_SYS_CLEAR]))(go,start,stop)
-
     #define ceu_out_org(app,org,n,lbl,seqno,isDyn,par_org,par_trl) \
         ((__typeof__(ceu_sys_org)*)((app)->sys_vec[CEU_SYS_ORG]))(org,n,lbl,seqno,isDyn,par_org,par_trl)
 
@@ -129,10 +126,6 @@
             ceu_sys_free(ptr)
     #define ceu_out_req() \
             ceu_sys_req()
-#ifdef CEU_CLEAR
-    #define ceu_out_clear(go,start,stop) \
-            ceu_sys_clear(go,start,stop)
-#endif
 #ifdef CEU_NEWS
     #define ceu_out_org(app,org,n,lbl,seqno,isDyn,par_org,par_trl) \
             ceu_sys_org(org,n,lbl,seqno,isDyn,par_org,par_trl)
@@ -246,13 +239,23 @@ typedef union tceu_evtp {
 
 /* TODO(speed): hold nxt trl to run */
 typedef struct tceu_stk {
+    tceu_nevt evt;  /* TODO: small in the end of struct? */
     tceu_evtp evtp;
 #ifdef CEU_INTS
 #ifdef CEU_ORGS
-    void*     evto;
+    void* evto;
 #endif
 #endif
-    tceu_nevt evt;
+
+    tceu_trl* trl;  /* trail being traversed */
+#ifdef CEU_ORGS
+    void* org;      /* org being traversed */
+#endif
+#ifdef CEU_CLEAR
+    void* stop;     /* stop at this trl/org */
+        /* traversals may be bounded to org/trl
+         * default (NULL) is to traverse everything */
+#endif
 } tceu_stk;
 
 /* TCEU_LNK */
@@ -305,40 +308,44 @@ typedef struct tceu_org
 
 /* TCEU_GO */
 
+/* TODO: tceu_go => tceu_stk? */
 typedef struct tceu_go {
-    int         evt;
-    tceu_evtp   evtp;
-
-#ifdef CEU_INTS
-#ifdef CEU_ORGS
-    tceu_org* evto;       /* org that emitted current event */
-#endif
-#endif
-
 #if defined(CEU_ORGS) || defined(CEU_OS)
-#ifdef __AVR
-    #define CEU_MAX_STACK   32
-#else
-    #define CEU_MAX_STACK   32768
-#endif
+    #define CEU_MAX_STACK   128
     /* TODO: CEU_ORGS is calculable // CEU_NEWS isn't (255?) */
-    tceu_stk stk[CEU_MAX_STACK];
 #else
-    tceu_stk stk[CEU_NTRAILS];
+    #define CEU_MAX_STACK   (CEU_NTRAILS+1) /* current +1 for each trail */
 #endif
-
-    /* current traversal state */
-    int        stki;   /* points to next */
-    tceu_trl*  trl;
-    tceu_nlbl  lbl;
-    tceu_org* org;
-
-    /* traversals may be bounded to org/trl
-     * default (NULL) is to traverse everything */
-#ifdef CEU_CLEAR
-    void* stop;     /* stop at this trl/org */
-#endif
+    tceu_stk stk[CEU_MAX_STACK];
+    int stki;
 } tceu_go;
+
+#define stack_init(go) (go).stki = -1
+#define stack_get(go) ((go).stk[(go).stki])
+#define stack_pop(go) \
+    go.stki--
+
+#ifdef CEU_DEBUG
+#define stack_push(go,elem)             \
+    assert((go).stki+1 < CEU_MAX_STACK);  \
+    (go).stk[++((go).stki)] = elem
+#else
+#define stack_push(go,elem)             \
+    (go).stk[++((go).stki)] = elem
+#endif
+
+#define STK  stack_get(go)
+#define _STK stack_get(*_ceu_go)
+#ifdef CEU_ORGS
+#define STK_ORG_ATTR  (STK.org)
+#define _STK_ORG_ATTR (_STK.org)
+#else
+#define STK_ORG_ATTR  (app->data)
+#define _STK_ORG_ATTR (_ceu_app->data)
+#endif
+#define STK_ORG  ((tceu_org*)STK_ORG_ATTR)    /* not an lvalue */
+#define _STK_ORG ((tceu_org*)_STK_ORG_ATTR)   /* not an lvalue */
+#define STK_LBL (STK.trl->lbl)
 
 /* TCEU_LST */
 
@@ -502,7 +509,6 @@ tceu_app* ceu_sys_load      (void* addr);
 #ifdef CEU_ISR
 int       ceu_sys_isr       (int n, tceu_isr_f f, tceu_app* app);
 #endif
-int       ceu_sys_clear     (tceu_go* go, int start, void* stop);
 void      ceu_sys_org       (tceu_org* org, int n, int lbl, int seqno, int isDyn, tceu_org* par_org, int par_trl);
 #ifdef CEU_ORGS
 void      ceu_sys_org_trail (tceu_org* org, int idx, tceu_org_lnk* lnk);
@@ -522,7 +528,6 @@ enum {
 #ifdef CEU_ISR
     CEU_SYS_ISR,
 #endif
-    CEU_SYS_CLEAR,
     CEU_SYS_ORG,
 #ifdef CEU_ORGS
     CEU_SYS_ORG_TRAIL,

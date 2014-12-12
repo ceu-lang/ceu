@@ -899,12 +899,192 @@ escape 1;
     run = 1,
 }
 
+Test { [[
+native do
+    int V = 0;
+end
+class T with
+do
+    _V = _V + 1;
+end
+
+var T[20000] ts;
+
+escape _V;
+]],
+    run = 20000,
+}
+
+Test { [[
+native do
+    int V = 10;
+end
+event void a;
+par/or do
+    await 1s;
+    emit a;
+    _V = 1;
+with
+    await a;
+end
+await 1s;
+escape _V;
+]],
+    run = { ['~>2s']=10 },
+}
+Test { [[
+native do
+    int V = 10;
+end
+event void a;
+par/or do
+    await a;
+with
+    await 1s;
+    emit a;
+    _V = 1;
+end
+await 1s;
+escape _V;
+]],
+    run = { ['~>2s']=10 },
+}
+Test { [[
+native do
+    int V = 10;
+end
+
+class T with
+    event void e;
+do
+    await 1s;
+_printf("1\n");
+    emit e;
+_printf("no\n");
+    _V = 1;
+end
+
+do
+    var T t;
+    await t.e;
+_printf("2\n");
+end
+_printf("3\n");
+await 1s;
+_printf("4\n");
+escape _V;
+]],
+    run = { ['~>2s']=10 },
+}
+Test { [[
+interface Global with
+    event void e;
+end
+event void e;
+
+class T with
+do
+    _printf("1\n");
+    emit global:e;
+    _printf("NO!\n");
+end
+
+var int ret = 0;
+par/or do
+    await 1s;
+    _printf("\n0\n");
+    do
+        var T t;
+        await FOREVER;
+    end
+with
+    await global:e;
+    _printf("2\n");
+    ret = 1;
+with
+    async do
+        emit 1s;
+    end
+end
+_printf("3\n");
+escape ret;
+]],
+    run = 1,
+}
+do return end
+Test { [[
+native do
+    int V = 10;
+end
+
+interface Global with
+    event void e;
+end
+event void e;
+
+class T with
+do
+_printf("1\n");
+    emit global:e;
+_printf("no-V\n");
+    _V = 1;
+end
+
+par/or do
+    event void a;
+    par/or do
+        await 1s;
+_printf("0\n");
+        do
+_printf("?\n");
+            var T t;
+            emit a;
+            _V = 1;
+        end
+    with
+_printf("E\n");
+        await global:e;
+_printf("2\n");
+    with
+        await a;
+_printf("no-a\n");
+    end
+_printf("3\n");
+    await 1s;
+_printf("4\n");
+with
+    async do
+        emit 1s;
+    end
+end
+_printf("5\n");
+escape _V;
+]],
+    run = 10,
+}
 do return end
 
+Test { [[
+class U with do end;
+
+pool U[10]  us;
+
+pool U[1] us1;
+spawn U in us1;
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+do return end
+
+--TODO: test stack overflow no spawn
+
+do return end
 
 -------------------------------------------------------------------------------
 -- OK: well tested
-]===]
 
 Test { [[escape(1);]],
     _ana = {
@@ -1155,15 +1335,6 @@ if v? then
 else
     escape 2;
 end
-]],
-    run = 1,
-}
-
-Test { [[
-event bool a;
-pause/if a do
-end
-escape 1;
 ]],
     run = 1,
 }
@@ -22242,6 +22413,15 @@ end
     -- PAUSE
 
 Test { [[
+event bool a;
+pause/if a do
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
 input void A;
 pause/if A do
 end
@@ -24854,37 +25034,6 @@ escape p:a + t.a + _c + _d;
 }
 
 Test { [[
-input void OS_START;
-class T with
-    event void ok, go;
-    var int v, going;
-do
-    await go;
-    going = 1;
-    v = 10;
-    emit ok;
-end
-var T a;
-var T* ptr;
-ptr = &a;
-watching ptr do
-    par/or do
-        await OS_START;
-        emit a.go;
-        if ptr:going then
-            await FOREVER;
-        end
-    with
-        await ptr:ok;
-    end
-    escape ptr:v + a.v;
-end
-escape 0;
-]],
-    run = 20,
-}
-
-Test { [[
 input void F, B;
 
 var s16 x = 10;
@@ -25482,50 +25631,6 @@ end
 escape _f((char*)&a.a,(char*)&b.a);
 ]],
     run = 2,
-}
-
-Test { [[
-input void OS_START,B;
-class T with
-    event void ok, go, b;
-    event void e, f;
-    var int v;
-do
-    v = 10;
-    await e;
-    emit f;
-    v = 100;
-    emit ok;
-end
-var T a;
-var T* ptr;
-ptr = &a;
-watching ptr do
-    var int ret = 0;
-    par/and do
-        par/and do
-            await OS_START;
-            emit ptr:go;
-        with
-            await ptr:ok;
-        end
-        ret = ret + 1;      // 24
-    with
-            await B;
-        emit ptr:e;
-        ret = ret + 1;
-    with
-        await ptr:f;
-        ret = ret + 1;      // 31
-    end
-    escape ret + ptr:v + a.v;
-end
-escape 0;
-]],
-    _ana = {
-        --acc = 3,
-    },
-    run = { ['~>B']=203, }
 }
 
 Test { [[
@@ -26391,57 +26496,6 @@ escape (ok1!=null) + ok2 + ret;
     --fin = 'line 14 : pointer access across `await´',
     run = 1,
 }
-Test { [[
-class T with
-    var int v = 0;
-do
-end
-pool T[1] ts;
-var T*  ok1 = spawn T in ts with
-                this.v = 10;
-              end;
-watching ok1 do
-    var int ok2 = 0;// spawn T in ts;
-    var int ret = 0;
-    loop (T*)t in ts do
-        ret = ret + t:v;
-    end
-    escape (ok1!=null) + ok2 + ret;
-end
-escape 1;
-]],
-    _ana = {
-        acc = 6,
-    },
-    run = 1,
-}
-
-Test { [[
-class T with
-    var int v = 0;
-do
-    async do end;
-end
-pool T[1] ts;
-var T* ok1 = spawn T in ts with
-                this.v = 10;
-              end;
-watching ok1 do
-    var int ok2 = 0;// spawn T in ts;
-    var int ret = 0;
-    loop (T*)t in ts do
-        ret = ret + t:v;
-    end
-    escape (ok1!=null) + ok2 + ret;
-end
-escape 1;
-]],
-    _ana = {
-        acc = 6,
-    },
-    run = 11,
-}
-
 Test { [[
 class T with
 do
@@ -27523,26 +27577,6 @@ escape v1+v2;
 ]],
     run = 30,
 }
-
-Test { [[
-class T with
-    event (int,int) ok_game;
-do
-    await 1s;
-    emit this.ok_game => (1,2);
-end
-var T t;
-var T* i = &t;
-var int a,b;
-watching i do
-    (a,b) = await i:ok_game;
-    emit i:ok_game => (a,b);
-end
-escape a+b;
-]],
-    run = { ['~>1s']=3 },
-}
-
 
 -- SPAWN
 
@@ -28990,48 +29024,6 @@ end
 input void OS_START;
 class U with
     var V* v;
-    event void x;
-do
-    loop do
-        await x;
-        v = spawn V;
-        break;
-    end
-end
-
-class T with
-    var U* u;
-do
-    watching u do
-        await OS_START;
-        //u:v = spawn V;
-        emit u:x;
-    end
-end
-
-do
-    var U u;
-    var T t with
-        this.u = &u;
-    end;
-    await OS_START;
-end
-
-escape 10;
-]],
-    wrn = true,
-    run = 10,
-    --fin = 'line 12 : pointer access across `await´',
-    --fin = 'line 12 : invalid block for awoken pointer "v"',
-}
-Test { [[
-class V with
-do
-end
-
-input void OS_START;
-class U with
-    var V* v;
 do
 end
 
@@ -29359,139 +29351,6 @@ end
 escape 1;
 ]],
     fin = 'line 7 : pointer access across `await´',
-}
-
-Test { [[
-interface UI with
-end
-
-class T with
-    interface UI;
-do
-end
-
-class UIGridItem with
-    var UI* ui;
-do
-    watching ui do
-        await FOREVER;
-    end
-end
-
-class UIGridPool with
-    pool UIGridItem[] all;
-do
-    await FOREVER;
-end
-
-class UIGrid with
-    var UIGridPool& uis;
-do
-end
-
-do
-    var UIGridPool pool1;
-    var UIGrid g1 with
-        this.uis = pool1;
-    end;
-
-    var T g2;
-    spawn UIGridItem in g1.uis.all with
-        this.ui = &g2;
-    end;
-end
-
-escape 1;
-]],
-    --fin = 'line 36 : attribution requires `finalize´',
-    run = 1,
-}
-Test { [[
-interface UI with
-end
-
-class T with
-    interface UI;
-do
-end
-
-class UIGridItem with
-    var UI* ui;
-do
-    watching ui do
-        await FOREVER;
-    end
-end
-
-class UIGridPool with
-    pool UIGridItem[] all;
-do
-    await FOREVER;
-end
-
-class UIGrid with
-    var UIGridPool& uis;
-do
-end
-
-    var UIGridPool pool1;
-    var UIGrid g1 with
-        this.uis = pool1;
-    end;
-
-    var T g2;
-    spawn UIGridItem in g1.uis.all with
-        this.ui = &g2;
-    end;
-escape 1;
-]],
-    --fin = 'line 35 : attribution requires `finalize´',
-    run = 1,
-}
-
-Test { [[
-interface UI with
-end
-
-class T with
-    interface UI;
-do
-end
-
-class UIGridItem with
-    var UI* ui;
-do
-    watching ui do
-        await FOREVER;
-    end
-end
-
-class UIGridPool with
-    pool UIGridItem[] all;
-do
-    await FOREVER;
-end
-
-class UIGrid with
-    var UIGridPool& uis;
-do
-end
-
-do
-    var UIGridPool pool1;
-    var UIGrid g1 with
-        this.uis = pool1;
-    end;
-
-    var T g2;
-    spawn UIGridItem in pool1.all with
-        this.ui = &g2;
-    end;
-end
-
-escape 1;
-]],
-    run = 1,
 }
 
 Test { [[
@@ -30702,142 +30561,6 @@ end
 escape 1;
 ]],
     run = 1,
-}
-
-Test { [[
-input void OS_START;
-
-interface I with
-    var int e;
-end
-
-class T with
-    var int e;
-do
-    e = 100;
-end
-
-var T t;
-var I* i = &t;
-watching i do
-    await OS_START;
-    escape i:e;
-end
-escape 0;
-]],
-    run = 100,
-}
-
-Test { [[
-input void OS_START;
-
-interface I with
-    event void e;
-    var int ee;
-end
-
-class T with
-    event void e;
-    var int ee;
-do
-    await e;
-    ee = 100;
-end
-
-var T t;
-var I* i = &t;
-
-watching i do
-    await OS_START;
-    emit i:e;
-    escape i:ee;
-end
-escape 0;
-]],
-    run = 100,
-}
-
-Test { [[
-input void OS_START;
-
-interface I with
-    event int e, f;
-    var int vv;
-end
-
-class T with
-    event int e, f;
-    var int vv;
-do
-    var int v = await e;
-    vv = v;
-    emit f => v;
-end
-
-var T t1;
-var I* i1 = &t1;
-
-watching i1 do
-    var int ret = 0;
-    par/and do
-        await OS_START;
-        emit i1:e => 99;            // 21
-    with
-        var int v = await i1:f;
-        ret = ret + v;
-    with
-        await OS_START;
-    end
-    escape ret;
-end
-escape 0;
-]],
-    run = 99,
-}
-
-Test { [[
-input void OS_START;
-
-interface I with
-    event int e, f;
-end
-
-class T with
-    event int e, f;
-do
-    var int v = await e;
-    emit f => v;
-end
-
-var T t1, t2;
-var I* i1 = &t1;
-
-watching i1 do
-    var I* i2 = &t2;
-    watching i2 do
-        var int ret = 0;
-        par/and do
-            await OS_START;
-            emit i1:e => 99;            // 21
-        with
-            var int v = await i1:f;
-            ret = ret + v;
-        with
-            await OS_START;
-            emit i2:e => 66;            // 27
-        with
-            var int v = await i2:f;
-            ret = ret + v;
-        end
-        escape ret;
-    end
-end
-escape 0;
-]],
-    _ana = {
-        acc = 2,    -- TODO: not verified
-    },
-    run = 165,
 }
 
 Test { [[
@@ -32387,144 +32110,6 @@ escape t.v + t.f(20) + t.v;
 ]],
     wrn = true,
     run = 220,
-}
-
-Test { [[
-interface I with
-    var int v;
-    function (int)=>void f;
-end
-
-class T with
-    var int v;
-    function (int)=>void f;
-do
-    v = 50;
-    this.f(10);
-
-    function (int v)=>void f do
-        this.v = this.v + v;
-    end
-end
-
-var T t;
-var I* i = &t;
-input void OS_START;
-watching i do
-    await OS_START;
-    i:f(100);
-    escape i:v;
-end
-escape 0;
-]],
-    wrn = true,
-    run = 160,
-}
-
-Test { [[
-interface I with
-    var int v;
-    function (int)=>void f;
-end
-
-class T with
-    interface I;
-do
-    v = 50;
-    this.f(10);
-
-    function (int a)=>void f do
-        v = v + a;
-    end
-end
-
-var T t;
-var I* i = &t;
-input void OS_START;
-watching i do
-    await OS_START;
-    i:f(100);
-    escape i:v;
-end
-escape 0;
-]],
-    run = 160,
-}
-
-Test { [[
-interface I with
-    var int v;
-    function (void)=>int get;
-    function (int)=>void set;
-end
-
-class T with
-    interface I;
-    var int v = 50;
-do
-    function (void)=>int get do
-        return v;
-    end
-    function (int v)=>void set do
-        this.v= v;
-    end
-end
-
-var T t;
-var I* i = &t;
-var int v = i:v;
-i:set(100);
-escape v + i:get();
-]],
-    wrn = true,
-    run = 150,
-}
-
-Test { [[
-interface I with
-    var int v;
-    function (int)=>void f;
-end
-
-class T with
-    interface I;
-do
-    v = 50;
-    this.f(10);
-
-    function (int v)=>void f do
-        this.v = this.v + v;
-    end
-end
-
-class U with
-    interface I;
-do
-    v = 50;
-    this.f(10);
-
-    function (int v)=>void f do
-        this.v = this.v + 2*v;
-    end
-end
-
-var T t;
-var U u;
-var I* i = &t;
-input void OS_START;
-watching i do
-    await OS_START;
-    i:f(100);
-    var int ret = i:v;
-
-    i=&u;
-    i:f(200);
-    escape ret + i:v;
-end
-escape 0;
-]],
-    wrn = true,
-    run = 630,
 }
 
 Test { [[
@@ -35204,6 +34789,49 @@ escape v;
 }
 
 Test { [[
+input void OS_START,B;
+class T with
+    event void ok, go, b;
+    event void e, f;
+    var int v;
+do
+    v = 10;
+    await e;
+    emit f;
+    v = 100;
+    emit ok;
+end
+var T a;
+var T* ptr;
+ptr = &a;
+watching ptr do
+    var int ret = 0;
+    par/and do
+        par/and do
+            await OS_START;
+            emit ptr:go;
+        with
+            await ptr:ok;
+        end
+        ret = ret + 1;      // 24
+    with
+            await B;
+        emit ptr:e;
+        ret = ret + 1;
+    with
+        await ptr:f;
+        ret = ret + 1;      // 31
+    end
+    escape ret + ptr:v + a.v;
+end
+escape 0;
+]],
+    _ana = {
+        --acc = 3,
+    },
+    run = { ['~>B']=203, }
+}
+Test { [[
 class Unit with
     var int pos;
 do end;
@@ -35224,6 +34852,572 @@ escape ptr:pos;
 ]],
     fin = 'line 9 : attribution to pointer with greater scope',
 }
+
+Test { [[
+input void OS_START;
+class T with
+    event void ok, go;
+    var int v, going;
+do
+    await go;
+    going = 1;
+    v = 10;
+    emit ok;
+end
+var T a;
+var T* ptr;
+ptr = &a;
+watching ptr do
+    par/or do
+        await OS_START;
+        emit a.go;
+        if ptr:going then
+            await FOREVER;
+        end
+    with
+        await ptr:ok;
+    end
+    escape ptr:v + a.v;
+end
+escape 0;
+]],
+    run = 20,
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
+end
+pool T[1] ts;
+var T*  ok1 = spawn T in ts with
+                this.v = 10;
+              end;
+watching ok1 do
+    var int ok2 = 0;// spawn T in ts;
+    var int ret = 0;
+    loop (T*)t in ts do
+        ret = ret + t:v;
+    end
+    escape (ok1!=null) + ok2 + ret;
+end
+escape 1;
+]],
+    _ana = {
+        acc = 6,
+    },
+    run = 1,
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
+    async do end;
+end
+pool T[1] ts;
+var T* ok1 = spawn T in ts with
+                this.v = 10;
+              end;
+watching ok1 do
+    var int ok2 = 0;// spawn T in ts;
+    var int ret = 0;
+    loop (T*)t in ts do
+        ret = ret + t:v;
+    end
+    escape (ok1!=null) + ok2 + ret;
+end
+escape 1;
+]],
+    _ana = {
+        acc = 6,
+    },
+    run = 11,
+}
+
+Test { [[
+class T with
+    event (int,int) ok_game;
+do
+    await 1s;
+    emit this.ok_game => (1,2);
+end
+var T t;
+var T* i = &t;
+var int a,b;
+watching i do
+    (a,b) = await i:ok_game;
+    emit i:ok_game => (a,b);
+end
+escape a+b;
+]],
+    run = { ['~>1s']=3 },
+}
+
+
+Test { [[
+class V with
+do
+end
+
+input void OS_START;
+class U with
+    var V* v;
+    event void x;
+do
+    loop do
+        await x;
+        v = spawn V;
+        break;
+    end
+end
+
+class T with
+    var U* u;
+do
+    watching u do
+        await OS_START;
+        //u:v = spawn V;
+        emit u:x;
+    end
+end
+
+do
+    var U u;
+    var T t with
+        this.u = &u;
+    end;
+    await OS_START;
+end
+
+escape 10;
+]],
+    wrn = true,
+    run = 10,
+    --fin = 'line 12 : pointer access across `await´',
+    --fin = 'line 12 : invalid block for awoken pointer "v"',
+}
+Test { [[
+interface UI with
+end
+
+class T with
+    interface UI;
+do
+end
+
+class UIGridItem with
+    var UI* ui;
+do
+    watching ui do
+        await FOREVER;
+    end
+end
+
+class UIGridPool with
+    pool UIGridItem[] all;
+do
+    await FOREVER;
+end
+
+class UIGrid with
+    var UIGridPool& uis;
+do
+end
+
+do
+    var UIGridPool pool1;
+    var UIGrid g1 with
+        this.uis = pool1;
+    end;
+
+    var T g2;
+    spawn UIGridItem in g1.uis.all with
+        this.ui = &g2;
+    end;
+end
+
+escape 1;
+]],
+    --fin = 'line 36 : attribution requires `finalize´',
+    run = 1,
+}
+Test { [[
+interface UI with
+end
+
+class T with
+    interface UI;
+do
+end
+
+class UIGridItem with
+    var UI* ui;
+do
+    watching ui do
+        await FOREVER;
+    end
+end
+
+class UIGridPool with
+    pool UIGridItem[] all;
+do
+    await FOREVER;
+end
+
+class UIGrid with
+    var UIGridPool& uis;
+do
+end
+
+    var UIGridPool pool1;
+    var UIGrid g1 with
+        this.uis = pool1;
+    end;
+
+    var T g2;
+    spawn UIGridItem in g1.uis.all with
+        this.ui = &g2;
+    end;
+escape 1;
+]],
+    --fin = 'line 35 : attribution requires `finalize´',
+    run = 1,
+}
+
+Test { [[
+interface UI with
+end
+
+class T with
+    interface UI;
+do
+end
+
+class UIGridItem with
+    var UI* ui;
+do
+    watching ui do
+        await FOREVER;
+    end
+end
+
+class UIGridPool with
+    pool UIGridItem[] all;
+do
+    await FOREVER;
+end
+
+class UIGrid with
+    var UIGridPool& uis;
+do
+end
+
+do
+    var UIGridPool pool1;
+    var UIGrid g1 with
+        this.uis = pool1;
+    end;
+
+    var T g2;
+    spawn UIGridItem in pool1.all with
+        this.ui = &g2;
+    end;
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
+]===]
+Test { [[
+class T with
+do
+end
+var T t;
+watching &t do
+end
+escape 0;
+]],
+    run = 100,
+}
+do return end
+
+Test { [[
+input void OS_START;
+
+interface I with
+    var int e;
+end
+
+class T with
+    var int e;
+do
+    e = 100;
+end
+
+var T t;
+var I* i = &t;
+watching i do
+    await OS_START;
+    escape i:e;
+end
+escape 0;
+]],
+    run = 100,
+}
+
+Test { [[
+input void OS_START;
+
+interface I with
+    event void e;
+    var int ee;
+end
+
+class T with
+    event void e;
+    var int ee;
+do
+    await e;
+    ee = 100;
+end
+
+var T t;
+var I* i = &t;
+
+watching i do
+    await OS_START;
+    emit i:e;
+    escape i:ee;
+end
+escape 0;
+]],
+    run = 100,
+}
+
+Test { [[
+input void OS_START;
+
+interface I with
+    event int e, f;
+    var int vv;
+end
+
+class T with
+    event int e, f;
+    var int vv;
+do
+    var int v = await e;
+    vv = v;
+    emit f => v;
+end
+
+var T t1;
+var I* i1 = &t1;
+
+watching i1 do
+    var int ret = 0;
+    par/and do
+        await OS_START;
+        emit i1:e => 99;            // 21
+    with
+        var int v = await i1:f;
+        ret = ret + v;
+    with
+        await OS_START;
+    end
+    escape ret;
+end
+escape 0;
+]],
+    run = 99,
+}
+
+Test { [[
+input void OS_START;
+
+interface I with
+    event int e, f;
+end
+
+class T with
+    event int e, f;
+do
+    var int v = await e;
+    emit f => v;
+end
+
+var T t1, t2;
+var I* i1 = &t1;
+
+watching i1 do
+    var I* i2 = &t2;
+    watching i2 do
+        var int ret = 0;
+        par/and do
+            await OS_START;
+            emit i1:e => 99;            // 21
+        with
+            var int v = await i1:f;
+            ret = ret + v;
+        with
+            await OS_START;
+            emit i2:e => 66;            // 27
+        with
+            var int v = await i2:f;
+            ret = ret + v;
+        end
+        escape ret;
+    end
+end
+escape 0;
+]],
+    _ana = {
+        acc = 2,    -- TODO: not verified
+    },
+    run = 165,
+}
+
+Test { [[
+interface I with
+    var int v;
+    function (int)=>void f;
+end
+
+class T with
+    var int v;
+    function (int)=>void f;
+do
+    v = 50;
+    this.f(10);
+
+    function (int v)=>void f do
+        this.v = this.v + v;
+    end
+end
+
+var T t;
+var I* i = &t;
+input void OS_START;
+watching i do
+    await OS_START;
+    i:f(100);
+    escape i:v;
+end
+escape 0;
+]],
+    wrn = true,
+    run = 160,
+}
+
+Test { [[
+interface I with
+    var int v;
+    function (int)=>void f;
+end
+
+class T with
+    interface I;
+do
+    v = 50;
+    this.f(10);
+
+    function (int a)=>void f do
+        v = v + a;
+    end
+end
+
+var T t;
+var I* i = &t;
+input void OS_START;
+watching i do
+    await OS_START;
+    i:f(100);
+    escape i:v;
+end
+escape 0;
+]],
+    run = 160,
+}
+
+Test { [[
+interface I with
+    var int v;
+    function (void)=>int get;
+    function (int)=>void set;
+end
+
+class T with
+    interface I;
+    var int v = 50;
+do
+    function (void)=>int get do
+        return v;
+    end
+    function (int v)=>void set do
+        this.v= v;
+    end
+end
+
+var T t;
+var I* i = &t;
+var int v = i:v;
+i:set(100);
+escape v + i:get();
+]],
+    wrn = true,
+    run = 150,
+}
+
+Test { [[
+interface I with
+    var int v;
+    function (int)=>void f;
+end
+
+class T with
+    interface I;
+do
+    v = 50;
+    this.f(10);
+
+    function (int v)=>void f do
+        this.v = this.v + v;
+    end
+end
+
+class U with
+    interface I;
+do
+    v = 50;
+    this.f(10);
+
+    function (int v)=>void f do
+        this.v = this.v + 2*v;
+    end
+end
+
+var T t;
+var U u;
+var I* i = &t;
+input void OS_START;
+watching i do
+    await OS_START;
+    i:f(100);
+    var int ret = i:v;
+
+    i=&u;
+    i:f(200);
+    escape ret + i:v;
+end
+escape 0;
+]],
+    wrn = true,
+    run = 630,
+}
+
 -- UNTIL
 
 Test { [[

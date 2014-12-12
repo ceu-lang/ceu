@@ -29,9 +29,9 @@ end
 
 function CUR (me, id)
     if id then
-        return '(('..TP.toc(CLS().tp)..'*)_ceu_go->org)->'..id
+        return '(('..TP.toc(CLS().tp)..'*)_STK_ORG)->'..id
     else
-        return '(('..TP.toc(CLS().tp)..'*)_ceu_go->org)'
+        return '(('..TP.toc(CLS().tp)..'*)_STK_ORG)'
     end
 end
 
@@ -104,7 +104,7 @@ F =
     end,
 
     Outer = function (me)
-            me.val = '_ceu_go->org'
+            me.val = '_STK_ORG'
             --me.val = '(*(('..TP.toc(me.tp)..'*)'..me.val..'))'
             me.val = '(('..TP.toc(me.tp)..'*)'..me.val..')'
     end,
@@ -115,7 +115,7 @@ F =
             --me.val = '(*(('..TP.toc(me.tp)..'*)'..me.val..'))'
             me.val = '(('..TP.toc(me.tp)..'*)'..me.val..')'
         else
-            me.val = '_ceu_go->org'
+            me.val = '_STK_ORG'
             --me.val = '(*(('..TP.toc(me.tp)..'*)'..me.val..'))'
             me.val = '(('..TP.toc(me.tp)..'*)'..me.val..')'
         end
@@ -144,7 +144,7 @@ F =
         assert(var.trl_orgs)
         local idx = fr_exp.ifc_idx or var.trl_orgs[1]
                     -- converted to interface access or original
-        local org = fr_exp.org and V(fr_exp.org) or '_ceu_go->org'
+        local org = fr_exp.org and V(fr_exp.org) or '_STK_ORG'
         org = '((tceu_org*)'..org..')'
         me.val = [[
 ( (]]..org..[[->trls[ ]]..idx..[[ ].lnks[0].nxt->n == 0) ?
@@ -269,17 +269,17 @@ F =
         local e1 = unpack(me)
         local tp = (e1.evt or e1.var.evt).ins
         if tp.ptr>0 then
-            me.val = '(('..TP.toc(me.tp)..')_ceu_go->evtp.ptr)'
+            me.val = '(('..TP.toc(me.tp)..')_STK.evtp.ptr)'
         elseif tp.ref then
-            me.val = '(*(('..TP.toc(me.tp)..')_ceu_go->evtp.ptr))'
+            me.val = '(*(('..TP.toc(me.tp)..')_STK.evtp.ptr))'
                     -- byRef from awake SetExp removes the `*´
         elseif tp.tup then
-            me.val = '(('..TP.toc(me.tp)..'*)_ceu_go->evtp.ptr)'
+            me.val = '(('..TP.toc(me.tp)..'*)_STK.evtp.ptr)'
         elseif TP.isFloat(tp) then
-            me.val = '(_ceu_go->evtp.f)'
+            me.val = '(_STK.evtp.f)'
         else
-            me.val = '(_ceu_go->evtp.v)'
-            --me.val = '*(('..TP.toc(e1.evt.ins)..'*)_ceu_go->evtp.ptr)'
+            me.val = '(_STK.evtp.v)'
+            --me.val = '*(('..TP.toc(e1.evt.ins)..'*)_STK.evtp.ptr)'
         end
     end,
     AwaitT = function (me)

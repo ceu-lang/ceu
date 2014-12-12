@@ -163,6 +163,7 @@ end
             ..' -Wno-unused-parameter'
             ..' -ansi'
             ..' -DCEU_DEBUG'
+            ..' -DCEU_DEBUG_TRAILS'
             ..' '..(T.cpp_args or '')
 
     if VALGRIND then
@@ -284,16 +285,16 @@ STATS = {
 
 --[[
 STATS = {
-    count   = 2014,
+    count   = 2023,
     mem     = 0,
-    trails  = 3958,
-    bytes   = 18534791,
+    trails  = 3971,
+    bytes   = 18645683,
 }
 
 
-real	8m23.231s
-user	7m55.057s
-sys	1m36.981s
+real	8m27.078s
+user	8m5.424s
+sys	1m30.731s
 ]]
 
 os.execute('rm -f /tmp/_ceu_*')
