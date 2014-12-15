@@ -450,8 +450,7 @@ fprintf(stderr, "STACK[%d]: evt=%d : seqno=%d : ntrls=%d\n",
 
                         /* 4: emit this.ok; */
 #ifdef CEU_ORGS_WATCHING
-    /* TODO(speed): only if was ever watched! */
-                        /* TODO: stack will overflow!!! T[9999] */
+                        /* TODO(speed): only if was ever watched! */
                         {
                             tceu_stk stk;
                                      stk.evt  = 1;  /* TODO: 1==_ok */

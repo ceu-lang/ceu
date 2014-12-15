@@ -1079,7 +1079,36 @@ escape 1;
 }
 do return end
 
---TODO: test stack overflow no spawn
+--TODO: access t0 after the watching
+Test { [[
+input void OS_START;
+class T with
+    var int id = 0;
+do
+    await OS_START;
+end
+
+pool T[9999] ts;
+var T* t0 = null;
+loop i in 9999 do
+    var T* t = spawn T with
+        this.id = 9999-i;
+    end;
+    if t0 == null then
+        t0 = t;
+    end
+end
+
+watching t0 do
+    await FOREVER;
+end
+var int ret = t0:id;
+
+escape ret;
+]],
+    run = 9999,
+}
+
 
 do return end
 
@@ -33397,6 +33426,51 @@ escape p:v;
 ]],
     run = 10,
     --fin = 'line 22 : invalid access to awoken pointer "p"',
+}
+
+Test { [[
+native do
+    int V = 0;
+end
+input void OS_START;
+class T with
+    var int id = 0;
+do
+    await OS_START;
+    _V = _V + 1;
+end
+
+pool T[10000] ts;
+var T* t0 = null;
+var T* tF = null;
+loop i in 10000 do
+    var T* t = spawn T in ts with
+        this.id = 10000-i;
+    end;
+    if t0 == null then
+        t0 = t;
+    end
+    tF = t;
+_printf("%d\n", tF:id);
+end
+_assert(t0!=null and tF!=null);
+
+var int ret1=0, ret2=0;
+//par/and do
+    //watching t0 do
+        //ret1 = t0:id;
+        //await FOREVER;
+    //end
+//with
+    watching tF do          // TODO: par/and (wrongly) recognizes this as "across await"
+        ret2 = tF:id;
+        await FOREVER;
+    end
+//end
+
+escape ret1+ret2+_V;
+]],
+    run = 10001,
 }
 
 Test { [[
