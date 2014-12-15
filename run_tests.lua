@@ -163,7 +163,7 @@ end
             ..' -Wno-unused-parameter'
             ..' -ansi'
             ..' -DCEU_DEBUG'
-            ..' -DCEU_DEBUG_TRAILS'
+            --..' -DCEU_DEBUG_TRAILS'
             ..' '..(T.cpp_args or '')
 
     if VALGRIND then
@@ -199,7 +199,7 @@ end
         GCC = GCC .. ' -llua5.1'
     end
 
-    local EXE = ((not VALGRIND) and './ceu.exe 2>&1')
+    local EXE = (((not VALGRIND) or T.valgrind==false) and './ceu.exe 2>&1')
              or 'valgrind -q --leak-check=full ./ceu.exe 2>&1'
              --or 'valgrind -q --tool=helgrind ./ceu.exe 2>&1'
 
@@ -284,6 +284,7 @@ STATS = {
 ]])
 
 --[[
+-- BEFORE REFACTORING
 STATS = {
     count   = 2023,
     mem     = 0,
@@ -295,6 +296,19 @@ STATS = {
 real	8m27.078s
 user	8m5.424s
 sys	1m30.731s
+--
+-- AFTER REFACTORING
+STATS = {
+    count   = 2025,
+    mem     = 0,
+    trails  = 3979,
+    bytes   = 20621407,
+}
+
+
+real	8m40.844s
+user	8m20.696s
+sys	1m33.932s
 ]]
 
 os.execute('rm -f /tmp/_ceu_*')

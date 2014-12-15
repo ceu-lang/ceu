@@ -76,7 +76,6 @@ function GOTO (me, lbl)
     LINE(me, [[
 _CEU_LBL = ]]..lbl.id..[[;
 goto _CEU_GOTO_;
-/*return RET_GOTO;*/
 ]])
 end
 
@@ -154,6 +153,8 @@ function CLEAR (me)
     /* save the continuation to run after the clear */
     /* trails[1] points to ORG blk */
     tceu_trl* trl = &_STK_ORG->trls[ ]]..me.trails[1]..[[ ];
+    _STK.trl = trl;  /* after the clear stk level pops, retry from here */
+                     /* TODO(speed): retry from trails[2] because all will be 0 */
     trl->evt = CEU_IN__STK;
     trl->stk = _ceu_go->stki;
        /* awake in the same level as we are now (-1 vs the clear push below) */
@@ -170,7 +171,7 @@ function CLEAR (me)
              stk.stop = &_STK_ORG->trls[ ]]..(me.trails[2]+1)..[[ ];
     stack_push(*_ceu_go, stk);
 }
-return RET_TRL;
+return RET_RESTART;
 
 case ]]..me.lbl_clr.id..[[:;
 ]])
@@ -324,7 +325,9 @@ if (_STK_ORG->isDyn) {
                  stk.org  = _STK_ORG;
 #endif
                  stk.trl  = &_STK_ORG->trls[0];
+#ifdef CEU_CLEAR
                  stk.stop = _STK_ORG;
+#endif
         stack_push(*_ceu_go, stk);
     }
 }
@@ -333,7 +336,7 @@ if (_STK_ORG->isDyn) {
 
         -- stop
         if me == MAIN then
-            HALT(me, 'RET_END')
+            HALT(me, 'RET_QUIT')
         else
             HALT(me)
         end
@@ -533,7 +536,6 @@ ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'),'
 -- TODO: join w/ ceu_out_org (removing start from the latter?)
             if var.trl_orgs and var.trl_orgs_first then
                 LINE(me, [[
-/* TODO: CEU_OS */
 ceu_out_org_trail(_STK_ORG, ]]..var.trl_orgs[1]..[[, (tceu_org_lnk*) &]]..var.trl_orgs.val..[[);
 ]])
             end
@@ -830,7 +832,7 @@ _STK.trl->lbl = ]]..me.lbl_cnt.id..[[;
             LINE(me, V(me)..[[;
 #if defined(CEU_RET) || defined(CEU_OS)
 if (! _ceu_app->isAlive)
-    return RET_END;
+    return RET_QUIT;
 #endif
 ]])
         end
@@ -871,7 +873,7 @@ _STK.trl->lbl = ]]..me.lbl_cnt.id..[[;
     }
 #if defined(CEU_RET) || defined(CEU_OS)
     if (! _ceu_app->isAlive)
-        return RET_END;
+        return RET_QUIT;
 #endif
 }
 ]]
@@ -908,9 +910,9 @@ _STK.trl->stk = _ceu_go->stki;
 /* trigger the event */
 {
     tceu_stk stk;
-             stk.evt = ]]..(int.ifc_idx or int.var.evt.idx)..[[;
+             stk.evt   = ]]..(int.ifc_idx or int.var.evt.idx)..[[;
 #ifdef CEU_ORGS
-             stk.evto = (tceu_org*) ]]..((int.org and int.org.val) or '_STK_ORG')..[[;
+             stk.evto  = (tceu_org*) ]]..((int.org and int.org.val) or '_STK_ORG')..[[;
 #endif
 ]])
         if exp then
@@ -928,13 +930,16 @@ _STK.trl->stk = _ceu_go->stki;
         end
         LINE(me, [[
 #ifdef CEU_ORGS
-             stk.org = _ceu_app->data;   /* TODO(speed): check if is_ifc */
+             stk.org  = _ceu_app->data;   /* TODO(speed): check if is_ifc */
+#endif
+             stk.trl  = &_ceu_app->data->trls[0];
+#ifdef CEU_CLEAR
+             stk.stop = NULL;
 #endif
     stack_push(*_ceu_go, stk);
 }
 
-/*goto _CEU_CALL_ORG_;*/
-return RET_ORG;
+return RET_RESTART;
 
 case ]]..me.lbl_cnt.id..[[:;
 ]])

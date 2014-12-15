@@ -1085,6 +1085,7 @@ do return end
 
 -------------------------------------------------------------------------------
 -- OK: well tested
+]===]
 
 Test { [[escape(1);]],
     _ana = {
@@ -14963,7 +14964,7 @@ escape ret;
     run = 5,
 }
 
--- FINALLY
+-- FINALLY / FINALIZE
 
 Test { [[
     native @pure _Radio_getPayload();
@@ -16848,102 +16849,6 @@ escape i;
 }
 
 Test { [[
-input _vldoor_t* T_VERTICAL_DOOR;
-class T_VerticalDoor with
-    var void* v;
-do
-end
-
-var _vldoor_t* door = null;
-do
-    every door in T_VERTICAL_DOOR do
-        spawn T_VerticalDoor with
-            this.v = door;
-        end;
-    end
-end
-]],
-    --env = 'line 11 : invalid attribution (void* vs _vldoor_t*)',
-    --fin = 'line 11 : attribution to pointer with greater scope',
-    --fin = 'line 9 : invalid block for awoken pointer "door"',
-    _ana = {
-        isForever = true,
-    },
-}
-
-Test { [[
-input _vldoor_t* T_VERTICAL_DOOR;
-class T_VerticalDoor with
-    var void* v;
-do
-end
-
-var _vldoor_t* door = null;
-do
-    every door in T_VERTICAL_DOOR do
-        spawn T_VerticalDoor with
-            this.v = (void*)door;
-        end;
-    end
-end
-]],
-    --fin = 'line 11 : attribution to pointer with greater scope',
-    --fin = 'line 9 : invalid block for awoken pointer "door"',
-    _ana = {
-        isForever = true,
-    },
-}
-
-Test { [[
-class T with
-    var void* v;
-do
-end
-
-var T t;
-t.v = null;
-var void* ptr = null;
-t.v = ptr;
-escape 1;
-]],
-    --fin = 'line 9 : organism pointer attribution only inside constructors',
-    --fin = 'line 9 : attribution to pointer with greater scope',
-    run = 1,
-}
-Test { [[
-class T with
-    var void* v;
-do
-end
-
-var T t with
-    this.v = null;
-end;
-var void* ptr = null;
-t.v = ptr;
-escape 1;
-]],
-    --fin = 'line 10 : organism pointer attribution only inside constructors',
-    --fin = 'line 9 : attribution to pointer with greater scope',
-    run = 1,
-}
-
-Test { [[
-class T with
-    var void* v;
-do
-end
-
-var T t, s;
-t.v = null;
-t.v = s.v;
-escape 1;
-]],
-    --fin = 'line 8 : organism pointer attribution only inside constructors',
-    run = 1,
-}
-
-Test { [[
 var void* p;
 var int i;
 input void OS_START;
@@ -18701,651 +18606,6 @@ input (int tilex, int tiley, bool vertical?, int lock, int door, word*
     _ana = {
         isForever = true,
     },
-}
-
--- REQUESTS
-
-Test { [[
-input/output [10] (int max)=>char* LINE;
-request LINE;
-escape 1;
-]],
-    env = 'line 2 : invalid arity',
-    --env = 'line 2 : missing parameters on `emit´',
-}
-
-Test { [[
-input/output [10] (int max)=>char* LINE;
-request LINE => "oi";
-escape 1;
-]],
-    env = 'line 2 : invalid attribution (int vs char*)',
-}
-
-Test { [[
-input/output [10] (int max)=>char* LINE;
-request LINE => 10;
-escape 1;
-]],
-    props = 'line 2 : invalid `emit´',
-}
-
-Test { [[
-native do
-    ##define ceu_out_emit_val(a,b,c) 1
-end
-output/input [10] (int max)=>char* LINE;
-par/or do
-    request LINE => 10;
-with
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-input void* A;
-do
-    var void* p;
-    p = await A
-        until p==null;
-    var void* p1 = p;
-end
-await FOREVER;
-]],
-    _ana = {
-        isForever = true,
-    },
-}
-
-Test { [[
-output/input [10] (int max)=>char* LINE;
-var u8 err;
-var char* ret;
-par/or do
-    var char* ret1;
-    (err, ret1) = request LINE => 10;
-    ret := ret1;
-with
-    await FOREVER;
-end
-escape *ret;
-]],
-    fin = 'line 11 : pointer access across `await´',
-    --fin = 'line 5 : invalid block for awoken pointer "ret"',
-}
-
-Test { [[
-output/input [10] (int max)=>char* LINE;
-native do
-    ##define ceu_out_emit_val(a,b,c) 1
-end
-var u8 err;
-par/or do
-    var char* ret;
-    (err, ret) = request LINE => 10;
-with
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-input/output [10] (int max)=>char* LINE;
-request LINE;
-escape 1;
-]],
-    env = 'line 2 : invalid arity',
-    --env = 'line 2 : missing parameters on `emit´',
-}
-
-Test { [[
-input/output [10] (int max)=>char* LINE;
-request LINE => "oi";
-escape 1;
-]],
-    env = 'line 2 : invalid attribution (int vs char*)',
-}
-
-Test { [[
-input/output [10] (int max)=>char* LINE;
-request LINE => 10;
-escape 1;
-]],
-    props = 'line 2 : invalid `emit´',
-}
-
-Test { [[
-native do
-    ##define ceu_out_emit_val(a,b,c) 1
-end
-output/input [10] (int max)=>char* LINE;
-par/or do
-    request LINE => 10;
-with
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-output/input [10] (int max)=>char* LINE;
-var u8 err, ret;
-(err, ret) = request LINE => 10;
-escape 1;
-]],
-    env = 'line 3 : invalid attribution (u8 vs char*)',
-}
-
-Test { [[
-native do
-    ##define ceu_out_emit_val(a,b,c) 1
-end
-output/input [10] (int max)=>int LINE;
-par/or do
-    var u8 err, ret;
-    (err, ret) = request LINE => 10;
-with
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-native do
-    ##define ceu_out_emit_val(a,b,c) 1
-end
-output/input [10] (int)=>int LINE do
-    return 1;     // missing <int "id">
-end
-par/or do
-    var u8 err, ret;
-    (err, ret) = request LINE => 10;
-with
-end
-escape 1;
-]],
-    adj = 'line 4 : missing parameter identifier',
-}
-
-Test { [[
-native do
-    ##define ceu_out_emit_val(a,b,c) 1
-end
-output/input [10] (int max)=>int LINE do
-    return 1;
-end
-par/or do
-    var u8 err, ret;
-    (err, ret) = request LINE => 10;
-with
-end
-escape 1;
-]],
-    props = 'line 4 : invalid `emit´',
-}
-
-Test { [[
-native do
-    ##define ceu_out_emit_val(a,b,c) 1
-end
-input/output [10] (int max)=>int LINE do
-    return 1;
-end
-par/or do
-    var u8 err, ret;
-    (err, ret) = request LINE => 10;
-with
-end
-escape 1;
-]],
-    props = 'line 9 : invalid `emit´',
-}
-
-Test { [[
-native do
-    ##define ceu_out_emit_val(a,b,c) 1
-end
-input/output [10] (int max)=>int LINE do
-    return 1;
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-native do
-    ##define ceu_out_emit_val(a,b,c) 1
-end
-var int ret = 0;
-input/output [10] (int max)=>int LINE do
-    ret = 1;
-end
-escape ret;
-]],
-    env = 'line 6 : variable/event "ret" is not declared',
-}
-
-Test { [[
-par do
-    native do
-        ##define ceu_out_emit_val(a,b,c) 1
-        int V = 0;
-    end
-    input/output [10] (int max)=>int LINE do
-        _V = 10;
-        return 1;
-    end
-    await 1s;
-    escape _V+1;
-with
-    async do
-        emit LINE_REQUEST => (1,10);
-        emit 1s;
-    end
-end
-]],
-    run = 11,
-}
-
-Test { [[
-par do
-    native do
-        ##define ceu_out_emit_val(a,b,c) 1
-        int V = 0;
-    end
-    input/output [10] (int max)=>int LINE do
-        _V = max;
-    end
-    await 1s;
-    escape _V+1;
-with
-    async do
-        emit LINE_REQUEST => (1,10);
-        emit 1s;
-    end
-end
-]],
-    run = 11,
-}
-
-Test { [[
-par do
-    native do
-        ##define ceu_out_emit_val(a,b,c) 1
-        int V = 0;
-    end
-    input/output [10] (int max)=>int LINE do
-        _V = _V + max;
-    end
-    await 1s;
-    escape _V+1;
-with
-    async do
-        emit LINE_REQUEST => (1,10);
-        emit LINE_REQUEST => (2,20);
-        emit LINE_REQUEST => (3,30);
-        emit 1s;
-    end
-end
-]],
-    run = 61,
-}
-
-Test { [[
-par do
-    native do
-        ##define ceu_out_emit_val(a,b,c) 1
-    end
-    input/output [2] (int max)=>int LINE do
-        await 1s;
-    end
-    await 1s;
-    escape 1;
-with
-    async do
-        emit LINE_REQUEST => (1,10);
-        emit LINE_REQUEST => (1,10);
-        emit 1s;
-    end
-end
-]],
-    run = 1,
-}
-Test { [[
-par do
-    native do
-        ##define ceu_out_emit_val(a,b,c) 1
-        int V = 0;
-    end
-    input/output (int max)=>int LINE do
-        await 1s;
-        _V = _V + max;
-    end
-    await 1s;
-    escape _V+1;
-with
-    async do
-        emit LINE_REQUEST => (1,10);
-        emit LINE_REQUEST => (1,10);
-        emit 1s;
-    end
-end
-]],
-    _ana = {
-        acc = 1,
-    },
-    run = 1,
-}
-Test { [[
-par do
-    native do
-        ##define ceu_out_emit_val(a,b,c) 1
-        int V = 0;
-    end
-    input/output [2] (int max)=>int LINE do
-        await 1s;
-        _V = _V + max;
-    end
-    await 1s;
-    escape _V+1;
-with
-    async do
-        emit LINE_REQUEST => (1,10);
-        emit LINE_REQUEST => (2,20);
-        emit LINE_REQUEST => (3,30);
-        emit 1s;
-    end
-end
-]],
-    _ana = {
-        acc = 1,
-    },
-    run = 1,
-}
-
-Test { [[
-par do
-    native do
-        ##define ceu_out_emit_val(a,b,c) 1
-        int V = 0;
-    end
-    input/output [2] (int max)=>int LINE do
-        await 1s;
-        _V = _V + max;
-    end
-    await 2s;
-    escape _V+1;
-with
-    async do
-        emit LINE_REQUEST => (1,10);
-        emit LINE_REQUEST => (2,20);
-        emit LINE_REQUEST => (3,30);
-        emit 2s;
-    end
-end
-]],
-    _ana = {
-        acc = 1,
-    },
-    run = 31,
-}
-
-Test { [[
-par do
-    native do
-        ##define ceu_out_emit_val(a,b,c) 1
-        int V = 0;
-    end
-    input/output [2] (int max)=>int LINE do
-        await 1s;
-        _V = _V + max;
-    end
-    await 3s;
-    escape _V+1;
-with
-    async do
-        emit LINE_REQUEST => (1,11);
-        emit LINE_REQUEST => (2,22);
-        emit LINE_REQUEST => (3,30);
-        emit 1s;
-        emit LINE_REQUEST => (4,13);
-        emit LINE_REQUEST => (5,24);
-        emit LINE_REQUEST => (6,30);
-        emit 2s;
-    end
-end
-]],
-    _ana = {
-        acc = 1,
-    },
-    run = 71,
-}
-
-Test { [[
-par do
-    native do
-        ##define ceu_out_emit_val(a,b,c) 1
-        int V = 0;
-    end
-    input/output [1] (int max)=>int LINE do
-        await 1s;
-        _V = _V + max;
-    end
-    await 3s;
-    escape _V+1;
-with
-    async do
-        emit LINE_REQUEST => (1,11);
-        emit LINE_REQUEST => (2,22);
-        emit LINE_REQUEST => (3,30);
-        emit 1s;
-        emit LINE_REQUEST => (4,13);
-        emit LINE_REQUEST => (5,24);
-        emit LINE_REQUEST => (6,30);
-        emit 2s;
-    end
-end
-]],
-    _ana = {
-        acc = 1,
-    },
-    run = 25,
-}
-
-Test { [[
-par do
-    native do
-        ##define ceu_out_emit_val(a,b,c) 1
-        int V = 0;
-    end
-    input/output [0] (int max)=>int LINE do
-        await 1s;
-        _V = _V + max;
-    end
-    await 3s;
-    escape _V+1;
-with
-    async do
-        emit LINE_REQUEST => (1,11);
-        emit LINE_REQUEST => (2,22);
-        emit LINE_REQUEST => (3,30);
-        emit 1s;
-        emit LINE_REQUEST => (4,13);
-        emit LINE_REQUEST => (5,24);
-        emit LINE_REQUEST => (6,30);
-        emit 2s;
-    end
-end
-]],
-    _ana = {
-        acc = 1,
-    },
-    run = 1,
-}
-
-Test { [[
-par do
-    native do
-        ##define ceu_out_emit_val(a,b,c) 1
-        int V = 0;
-    end
-    input/output [10] (int max)=>int LINE do
-        await 1s;
-        _V = _V + max;
-    end
-    input void F;
-    await F;
-    escape _V+1;
-with
-    async do
-        emit LINE_REQUEST => (1,11);
-        emit LINE_REQUEST => (2,22);
-        emit LINE_CANCEL => 1;
-        emit 3s;
-        emit F;
-    end
-end
-]],
-    run = 23,
-}
-
-Test { [[
-par do
-    native do
-        ##define ceu_out_emit_val(a,b,c) 1
-        int V = 0;
-    end
-    input/output [10] (int max)=>int LINE do
-        await 1s;
-        _V = _V + max;
-    end
-    input void F;
-    await F;
-    escape _V+1;
-with
-    async do
-        emit LINE_REQUEST => (1,11);
-        emit LINE_REQUEST => (2,22);
-        emit LINE_CANCEL => 2;
-        emit 3s;
-        emit F;
-    end
-end
-]],
-    run = 12,
-}
-
-Test { [[
-par do
-    native do
-        ##define ceu_out_emit_val(a,b,c) 1
-        int V = 0;
-    end
-    input/output [10] (int max)=>int LINE do
-        await 1s;
-        _V = _V + max;
-    end
-    input void F;
-    await F;
-    escape _V+1;
-with
-    async do
-        emit LINE_REQUEST => (1,11);
-        emit LINE_REQUEST => (2,22);
-        emit LINE_CANCEL => 2;
-        emit LINE_CANCEL => 1;
-        emit 3s;
-        emit F;
-    end
-end
-]],
-    run = 1,
-}
-
-Test { [[
-par do
-    native do
-        ##define ceu_out_emit_val(a,b,c) 1
-        int V = 0;
-    end
-    output/input (int max)=>int LINE;
-    var int v   = 0;
-    var int err = 0;
-    par/or do
-        (err,v) = request LINE=>10;
-    with
-        await 5s;
-        escape 999;
-    end
-    escape v+err;
-with
-    async do
-        emit LINE_RETURN => (1,1,10);
-        emit 5s;
-    end
-end
-]],
-    run = 11,
-}
-
-Test { [[
-par do
-    native do
-        ##define ceu_out_emit_val(a,b,c) 1
-        int V = 0;
-    end
-    output/input (int max)=>int LINE;
-    var int v   = 0;
-    var int err = 0;
-    par/or do
-        (err,v) = request LINE=>10;
-    with
-        await 5s;
-        escape 999;
-    end
-    escape v+err;
-with
-    async do
-        emit LINE_RETURN => (2,1,10);
-        emit 5s;
-    end
-end
-]],
-    run = 999,
-}
-
-Test { [[
-par do
-    native do
-        ##define ceu_out_emit_val(a,b,c) 1
-        int V = 0;
-    end
-    output/input (int max)=>int LINE;
-    var int v   = 0;
-    var int err = 0;
-    par/or do
-        (err,v) = request LINE=>10;
-    with
-        await 5s;
-        escape 999;
-    end
-    escape v+err;
-with
-    async do
-        emit LINE_RETURN => (2,1,10);
-        emit 4s;
-        emit LINE_RETURN => (1,0,-1);
-        emit 1s;
-    end
-end
-]],
-    run = -1,
 }
 
     -- POINTERS & ARRAYS
@@ -21566,56 +20826,6 @@ end
     -- POINTER ASSIGNMENTS
 
 Test { [[
-interface I with
-end
-
-interface Global with
-    var I* t;
-end
-
-class T with
-do
-    global:t = &this;
-end
-
-var I* t;
-
-escape 1;
-]],
-    --fin = 'line 10 : attribution requires `finalize´'
-    fin = 'line 10 : attribution to pointer with greater scope',
-    --fin = 'line 10 : organism pointer attribution only inside constructors',
-}
-
-Test { [[
-native do
-    void* v;
-end
-class T with
-    var _void[] ptr;
-do
-end
-var T t with
-    this.ptr = _v;
-end;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-class T with
-    var char [] str;
-do
-    str = "oioi";
-    this.str = "oioi";
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
 var int* p;
 do
     var int i;
@@ -21635,28 +20845,6 @@ escape 1;
 ]],
     run = 1,
 }
-Test { [[
-class T with
-do
-end
-var int*[] v;
-var T*[] t;
-escape 1;
-]],
-    run = 1;
-}
-
-Test { [[
-class T with
-do
-end
-var int[]* v;
-var T[]* t;
-escape 1;
-]],
-    parser = 'line 4 : after `]´ : expected identifier',
-}
-
 Test { [[
 var int a := 1;
 escape 1;
@@ -21769,251 +20957,6 @@ escape *u;
     fin = 'line 5 : attribution to pointer with greater scope',
 }
 Test { [[
-class Unit with
-    event int move;
-do
-end
-var Unit* u;
-do
-    pool Unit[] units;
-    u = spawn Unit in units;
-end
-watching u do
-    emit u:move => 0;
-end
-escape 2;
-]],
-    run = 2,
-}
-Test { [[
-class Unit with
-    event int move;
-do
-end
-var Unit* u;
-do
-    pool Unit[] units;
-    u = spawn Unit in units;
-    await 1min;
-end
-watching u do
-    emit u:move => 0;
-end
-escape 2;
-]],
-    fin = 'line 11 : pointer access across `await´',
-}
-
-Test { [[
-class T with
-    var char* str;
-do
-end
-
-do
-    spawn T with
-        var char* s = "str";
-        this.str = s;
-    end;
-end
-
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-class T with
-    var int* v;
-do
-    *v = 1;
-    await 1s;
-    *v = 2;
-end
-escape 1;
-]],
-    fin = 'line 6 : pointer access across `await´',
-}
-
-Test { [[
-interface Global with
-    var int* a;
-end
-var int* a;
-class T with
-    var int* v;
-do
-end
-var T t with
-    this.v = global:a;
-end;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-input void OS_START;
-interface Global with
-    var int* a;
-end
-var int* a = null;
-class T with
-    var int* v;
-do
-end
-await OS_START;
-var T t with
-    this.v = global:a;
-end;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-interface I with
-    var int v;
-end
-
-class T with
-    var I* i = null;
-do
-    watching i do
-        var int v = i:v;
-    end
-end
-
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-interface I with
-    var int v;
-end
-
-class T with
-    var I* i = null;
-do
-    await 1s;
-    watching i do
-        var int v = i:v;
-    end
-end
-
-escape 1;
-]],
-    fin = 'line 9 : pointer access across `await´',
-}
-
-Test { [[
-interface I with
-    var int v;
-end
-
-class T with
-    var I* i = null;
-do
-    watching i do
-        await 1s;
-        var int v = i:v;
-    end
-end
-
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-interface I with
-    var int v;
-    event void e;
-end
-
-var I* i=null;
-
-await 1s;
-
-await i:e;
-
-watching i do
-    await 1s;
-    var int v = i:v;
-end
-
-escape 1;
-]],
-    fin = 'line 10 : pointer access across `await´',
-}
-Test { [[
-interface I with
-    var int v;
-    event void e;
-end
-
-var I* i=null;
-
-await 1s;
-
-watching i do
-    await 1s;
-    var int v = i:v;
-end
-
-escape 1;
-]],
-    fin = 'line 10 : pointer access across `await´',
-}
-
-Test { [[
-input void OS_START;
-interface Global with
-    var int* p;
-end
-var int i = 1;
-var int* p = null;
-await OS_START;
-p = p;
-escape *p;
-]],
-    fin = 'line 8 : pointer access across `await´',
-}
-
-Test { [[
-input void OS_START;
-interface Global with
-    var int* p;
-end
-var int i = 1;
-var int* p = null;
-await OS_START;
-p = &i;
-escape *p;
-]],
-    run = 1,
-}
-
-Test { [[
-input void OS_START;
-class T with
-    var int* p;
-do
-end
-var int i = 1;
-var T t with
-    this.p = null;
-end;
-await OS_START;
-t.p = &i;
-escape *t.p;
-]],
-    fin = 'line 11 : pointer access across `await´',
-}
-
-Test { [[
 input int SDL_KEYUP;
 var int key;
 key = await SDL_KEYUP;
@@ -22052,27 +20995,6 @@ end
 }
 
 Test { [[
-interface I with
-    var int v;
-end
-
-var I* i=null;
-
-par/or do
-    watching i do
-        await 1s;
-        var int v = i:v;
-    end
-with
-    await 1s;
-end
-
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
 function (int id, void** o1, void** o2)=>int getVS do
     if (*o1) then
         return 1;
@@ -22091,67 +21013,6 @@ end
 escape 1;
 ]],
     run = 1,
-}
-
-Test { [[
-native do
-    void* V;
-end
-class T with
-    function (void* v)=>void f;
-do
-    function (void* v)=>void f do
-        _V := v;
-    end
-end
-escape 1;
-]],
-    --fin = 'line 8 : invalid attribution',
-    run = 1,
-}
-
-Test { [[
-class Forwarder with
-    var _pkt_t out;
-do
-end
-
-native @nohold _memcpy();
-
-input _pkt_t* RECEIVE;
-
-var _pkt_t* inc;
-every inc in RECEIVE do
-    spawn Forwarder with
-        _memcpy(&this.out, inc, inc:len);
-    end;
-end
-]],
-    _ana = {
-        isForever = true,
-    },
-}
-
-Test { [[
-class Unit with
-    var _SDL_Texture* tex;
-do
-end
-
-interface Global with
-    pool Unit[] all;
-end
-
-pool Unit[] all;
-
-class Nest with
-do
-    spawn Unit in global:all with
-        this.tex := _TEX_STORMTROOPER;
-    end;
-end
-]],
-    fin = 'line 15 : wrong operator',
 }
 
     -- CPP / DEFINE / PREPROCESSOR
@@ -22248,6 +21109,7 @@ Test { [[
 *UART0_CR = 0x00000000;
 escape 1;
 ]],
+    valgrind = false,
     run = 1,
 }
 -- ASYNC
@@ -23135,10 +21997,25 @@ escape a.v;
 }
 
 Test { [[
+native do
+    int V = 10;
+end
+class T with
+do
+    _V = 100;
+end
+var T a;
+escape _V;
+]],
+    run = 100,
+}
+
+Test { [[
 class T with
     var int a;
 do
-    this.a = do escape 1; end;
+    this.a =
+        do escape 1; end;
 end
 var T a;
 escape a.a;
@@ -26299,7 +25176,631 @@ escape ret;
     run = 10;
 }
 
--- NEW / FREE
+Test { [[
+class T with
+    var int* a1;
+do
+    var int* a2=null;
+    a1 = a2;
+end
+escape 10;
+]],
+    run = 10,
+}
+
+Test { [[
+native @pure _UI_align();
+class T with
+    var _SDL_rect rect;
+do
+    do
+        var _SDL_Rect r;
+        r.x = _N;
+    end
+end
+escape 1;
+]],
+    --fin = 'line 7 : attribution requires `finalize´',
+    gcc = 'error: unknown type name ‘SDL_rect’',
+}
+
+Test { [[
+native @pure _UI_align();
+class T with
+    var _SDL_rect rect;
+do
+    do
+        var _SDL_Rect r;
+        r.x = _UI_align(r.w, _UI_ALIGN_CENTER);
+    end
+end
+escape 1;
+]],
+    --fin = 'line 7 : attribution requires `finalize´',
+    gcc = 'error: unknown type name ‘SDL_rect’',
+}
+
+Test { [[
+native @const _UI_ALIGN_CENTER;
+native @pure _UI_align();
+native do
+    typedef struct {
+        int x, w;
+    } SDL_Rect;
+    int UI_ALIGN_CENTER = 1;
+    int UI_align (int a, int b) {
+        return 0;
+    }
+end
+class T with
+    var _SDL_Rect rect;
+do
+    do
+        var _SDL_Rect r;
+        r.x = _UI_align(r.w, _UI_ALIGN_CENTER);
+    end
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native @const _UI_ALIGN_CENTER;
+native @pure _UI_align();
+native do
+    typedef struct {
+        int x, w;
+    } SDL_Rect;
+    int UI_ALIGN_CENTER = 1;
+    int UI_align (int a, int b, int c) {
+        return 0;
+    }
+end
+class T with
+    var _SDL_Rect rect;
+do
+    do
+        var _SDL_Rect r;
+            r.w = 1;
+        r.x = _UI_align(this.rect.w, r.w, _UI_ALIGN_CENTER);
+    end
+end
+escape 1;
+]],
+    --fin = 'line 17 : attribution requires `finalize´',
+    run = 1,
+}
+
+Test { [[
+native @const _UI_ALIGN_CENTER;
+native @pure _UI_align();
+native do
+    typedef struct {
+        int x, w;
+    } SDL_Rect;
+    int UI_ALIGN_CENTER = 1;
+    int UI_align (int a, int b, int c) {
+        return 0;
+    }
+end
+class T with
+    var _SDL_Rect rect;
+do
+    do
+        var _SDL_Rect r;
+        r.x = (int) _UI_align(this.rect.w, r.w, _UI_ALIGN_CENTER);
+    end
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+#define N 5
+native do
+    int V = 0;
+end
+class T with
+do
+    _V = _V + 1;
+end
+var T[N] ts;
+escape _V;
+]],
+    run = 5,
+}
+
+Test { [[
+#define N 5
+native do
+    int V = 0;
+end
+class T with
+do
+    _V = _V + 1;
+end
+var T[N+1] ts;
+escape _V;
+]],
+    run = 6,
+}
+
+Test { [[
+#define N 5
+native do
+    int V = 0;
+end
+class T with
+do
+    _V = _V + 1;
+end
+var T[N+1] ts;
+escape _V;
+]],
+    run = 6,
+}
+
+Test { [[
+#define N 5
+native do
+    int V = 0;
+end
+class T with
+do
+    _V = _V + 1;
+end
+#error oi
+var T[N+1] ts;
+escape _V;
+]],
+    lines = 'error oi',
+}
+
+-- CONSTRUCTOR
+
+Test { [[
+var int a with
+    nothing;
+end;
+escape 0;
+]],
+    env = 'line 1 : invalid type',
+}
+
+Test { [[
+class T with
+    var int a;
+    var int b;
+do
+    b = a * 2;
+end
+
+var T t1, t2 with
+    this.a = 10;
+end;
+
+escape t1.b;
+]],
+    parser = 'line 8 : after `t2´ : expected `;´',
+}
+
+Test { [[
+class T with
+    var int a;
+    var int b;
+do
+    b = a * 2;
+end
+
+var T[2] t with
+    this.a = 10;
+end;
+
+escape t[0].b + t[1].b;
+]],
+    run = 40;
+}
+
+Test { [[
+escape outer;
+]],
+    env = 'line 1 : invalid attribution (int vs Main)',
+}
+
+Test { [[
+_f(outer);
+]],
+    props = 'line 1 : `outer´ can only be unsed inside constructors',
+}
+
+Test { [[
+interface I with
+end
+
+class U with
+    var I* i;
+do
+end
+
+class T with
+    var int ret = 0;
+do
+    var U u with
+        this.i = &outer;
+    end;
+    this.ret = u.i == &this;
+end
+
+var T t;
+
+escape t.ret;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+    var int a;
+    var int b;
+do
+    b = a * 2;
+end
+
+var T t with
+    await 1s;
+end;
+
+escape t.b;
+]],
+    props = 'line 9 : not permitted inside a constructor',
+}
+
+Test { [[
+class T with
+    var int a;
+    var int b;
+do
+    b = a * 2;
+end
+
+var T t with
+    this.a = 10;
+end;
+
+escape t.b;
+]],
+    run = 20,
+}
+
+Test { [[
+class T with
+do
+end
+do T;
+escape 0;
+]],
+    env = 'line 4 : variable/event "ok" is not declared',
+}
+
+Test { [[
+class T with
+    event void ok;
+do
+    emit ok;
+end
+par/or do
+    loop do
+        do T;
+    end
+with
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+    var int v;
+do end;
+var T _ with
+    this.v = 1;
+end;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+class T with
+    event void ok;
+do
+    emit ok;
+end
+par do
+    do T;
+    escape 1;
+with
+    await OS_START;
+    escape 2;
+end
+]],
+    run = 2,
+}
+
+Test { [[
+input void OS_START;
+class T with
+    event void ok;
+do
+    await OS_START;
+    emit ok;
+end
+do T;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+class T with
+    event int ok;
+do
+    await OS_START;
+    emit ok => 1;
+end
+do T;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+class T with
+    var int v;
+    event int ok;
+do
+    await OS_START;
+    emit ok => v;
+end
+var int v = do T with
+    this.v = 10;
+end;
+escape v;
+]],
+    run = 10,
+}
+
+Test { [[
+input void OS_START;
+class T with
+    var int v;
+    event int ok;
+do
+    await OS_START;
+    emit ok => v;
+end
+var int v;
+v = do T with
+    this.v = 10;
+end;
+escape v;
+]],
+    run = 10,
+}
+
+Test { [[
+input void OS_START;
+class T with
+    var int v;
+    event void ok;
+do
+    await OS_START;
+    emit ok;
+end
+var int v = do T with
+    this.v = 10;
+end;
+escape v;
+]],
+    env = 'line 9 : invalid attribution (int vs void)',
+}
+
+Test { [[
+input void OS_START;
+class T with
+    var int v;
+    event (int,int) ok;
+do
+    await OS_START;
+    emit ok => (v,v*2);
+end
+var int v1, v2;
+(v1,v2) = do T with
+    this.v = 10;
+end;
+_printf("%d %d\n", v1, v2);
+escape v1+v2;
+]],
+    run = 30,
+}
+
+-- SPAWN
+
+Test { [[
+class T with do end
+spawn T;
+escape 1;
+]],
+    --env = 'line 2 : `spawn´ requires enclosing `do ... end´',
+    run = 1,
+}
+
+Test { [[
+native _V;
+native do
+    int V = 0;
+end
+class T with
+do
+    _V = 10;
+end
+do
+    spawn U;
+end
+escape _V;
+]],
+    env = 'line 10 : class "U" is not declared',
+}
+
+Test { [[
+native _V;
+native do
+    int V = 0;
+end
+class T with
+do
+    _V = 10;
+end
+do
+    spawn T;
+end
+escape _V;
+]],
+    run = 10,
+}
+
+Test { [[
+native _V;
+native do
+    int V = 0;
+end
+class T with
+    var int a;
+do
+    _V = this.a;
+end
+do
+    spawn T with
+        this.a = 10;
+    end;
+end
+escape _V;
+]],
+    run = 10,
+}
+
+Test { [[
+class T with do end
+do
+    var u8* x = spawn T;
+end
+]],
+    env = 'line 3 : invalid attribution',
+}
+
+Test { [[
+class T with do end
+var T* ok;
+var bool ok?;
+do
+    ok = spawn T;
+    ok? = (ok != null);
+end
+escape ok?;
+]],
+    run = 1,
+}
+Test { [[
+class T with do end
+var T* ok;
+do
+    ok = spawn T;
+end
+escape ok!=null;
+]],
+    --fin = 'line 6 : pointer access across `await´',
+    run = 1,
+}
+
+Test { [[
+class T with do
+    await FOREVER;
+end
+var T* ok;
+native _assert();
+do
+    loop i in 5 do
+        ok = spawn T;
+    end
+end
+escape ok!=null;
+]],
+    --loop = 1,
+    --fin = 'line 11 : pointer access across `await´',
+    run = 1,
+}
+Test { [[
+class T with do
+    await FOREVER;
+end
+var T* ok;
+var bool ok?;
+native _assert();
+do
+    loop i in 5 do
+        ok = spawn T;
+        ok? = (ok != null);
+    end
+end
+escape ok?;
+]],
+    --loop = 1,
+    run = 1,
+}
+
+Test { [[
+class T with do
+    await FOREVER;
+end
+var T* ok;
+var bool ok?;
+native _assert();
+do
+    loop i in 100 do
+        ok = spawn T;
+    end
+    var T* ok1 = spawn T;
+    ok? = (ok1 != null);
+end
+escape ok?+1;
+]],
+    --loop = 1,
+    run = 1,
+}
+Test { [[
+class T with do
+    await FOREVER;
+end
+var T* ok;
+native _assert();
+do
+    loop i in 100 do
+        ok = spawn T;
+    end
+    ok = spawn T;
+end
+escape (ok!=null)+1;
+]],
+    --loop = 1,
+    --fin = 'line 10 : pointer access across `await´',
+    run = 1,
+}
 
 Test { [[
 class T with
@@ -26414,18 +25915,6 @@ class T with do end
 do
     var T* t;
     t = spawn T;
-end
-escape 10;
-]],
-    run = 10,
-}
-
-Test { [[
-class T with
-    var int* a1;
-do
-    var int* a2=null;
-    a1 = a2;
 end
 escape 10;
 ]],
@@ -26924,176 +26413,6 @@ escape _V;
 }
 
 Test { [[
-native @pure _UI_align();
-class T with
-    var _SDL_rect rect;
-do
-    do
-        var _SDL_Rect r;
-        r.x = _N;
-    end
-end
-escape 1;
-]],
-    --fin = 'line 7 : attribution requires `finalize´',
-    gcc = 'error: unknown type name ‘SDL_rect’',
-}
-
-Test { [[
-native @pure _UI_align();
-class T with
-    var _SDL_rect rect;
-do
-    do
-        var _SDL_Rect r;
-        r.x = _UI_align(r.w, _UI_ALIGN_CENTER);
-    end
-end
-escape 1;
-]],
-    --fin = 'line 7 : attribution requires `finalize´',
-    gcc = 'error: unknown type name ‘SDL_rect’',
-}
-
-Test { [[
-native @const _UI_ALIGN_CENTER;
-native @pure _UI_align();
-native do
-    typedef struct {
-        int x, w;
-    } SDL_Rect;
-    int UI_ALIGN_CENTER = 1;
-    int UI_align (int a, int b) {
-        return 0;
-    }
-end
-class T with
-    var _SDL_Rect rect;
-do
-    do
-        var _SDL_Rect r;
-        r.x = _UI_align(r.w, _UI_ALIGN_CENTER);
-    end
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-native @const _UI_ALIGN_CENTER;
-native @pure _UI_align();
-native do
-    typedef struct {
-        int x, w;
-    } SDL_Rect;
-    int UI_ALIGN_CENTER = 1;
-    int UI_align (int a, int b, int c) {
-        return 0;
-    }
-end
-class T with
-    var _SDL_Rect rect;
-do
-    do
-        var _SDL_Rect r;
-            r.w = 1;
-        r.x = _UI_align(this.rect.w, r.w, _UI_ALIGN_CENTER);
-    end
-end
-escape 1;
-]],
-    --fin = 'line 17 : attribution requires `finalize´',
-    run = 1,
-}
-
-Test { [[
-native @const _UI_ALIGN_CENTER;
-native @pure _UI_align();
-native do
-    typedef struct {
-        int x, w;
-    } SDL_Rect;
-    int UI_ALIGN_CENTER = 1;
-    int UI_align (int a, int b, int c) {
-        return 0;
-    }
-end
-class T with
-    var _SDL_Rect rect;
-do
-    do
-        var _SDL_Rect r;
-        r.x = (int) _UI_align(this.rect.w, r.w, _UI_ALIGN_CENTER);
-    end
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-#define N 5
-native do
-    int V = 0;
-end
-class T with
-do
-    _V = _V + 1;
-end
-var T[N] ts;
-escape _V;
-]],
-    run = 5,
-}
-
-Test { [[
-#define N 5
-native do
-    int V = 0;
-end
-class T with
-do
-    _V = _V + 1;
-end
-var T[N+1] ts;
-escape _V;
-]],
-    run = 6,
-}
-
-Test { [[
-#define N 5
-native do
-    int V = 0;
-end
-class T with
-do
-    _V = _V + 1;
-end
-var T[N+1] ts;
-escape _V;
-]],
-    run = 6,
-}
-
-Test { [[
-#define N 5
-native do
-    int V = 0;
-end
-class T with
-do
-    _V = _V + 1;
-end
-#error oi
-var T[N+1] ts;
-escape _V;
-]],
-    lines = 'error oi',
-}
-
-Test { [[
 interface I with
     var int v;
 end
@@ -27149,122 +26468,6 @@ escape sizeof(CEU_T) > sizeof(CEU_U);
 ]],
     run = 1,
 }
--- CONSTRUCTOR
-
-Test { [[
-var int a with
-    nothing;
-end;
-escape 0;
-]],
-    env = 'line 1 : invalid type',
-}
-
-Test { [[
-class T with
-    var int a;
-    var int b;
-do
-    b = a * 2;
-end
-
-var T t1, t2 with
-    this.a = 10;
-end;
-
-escape t1.b;
-]],
-    parser = 'line 8 : after `t2´ : expected `;´',
-}
-
-Test { [[
-class T with
-    var int a;
-    var int b;
-do
-    b = a * 2;
-end
-
-var T[2] t with
-    this.a = 10;
-end;
-
-escape t[0].b + t[1].b;
-]],
-    run = 40;
-}
-
-Test { [[
-escape outer;
-]],
-    env = 'line 1 : invalid attribution (int vs Main)',
-}
-
-Test { [[
-_f(outer);
-]],
-    props = 'line 1 : `outer´ can only be unsed inside constructors',
-}
-
-Test { [[
-interface I with
-end
-
-class U with
-    var I* i;
-do
-end
-
-class T with
-    var int ret = 0;
-do
-    var U u with
-        this.i = &outer;
-    end;
-    this.ret = u.i == &this;
-end
-
-var T t;
-
-escape t.ret;
-]],
-    run = 1,
-}
-
-Test { [[
-class T with
-    var int a;
-    var int b;
-do
-    b = a * 2;
-end
-
-var T t with
-    await 1s;
-end;
-
-escape t.b;
-]],
-    props = 'line 9 : not permitted inside a constructor',
-}
-
-Test { [[
-class T with
-    var int a;
-    var int b;
-do
-    b = a * 2;
-end
-
-var T t with
-    this.a = 10;
-end;
-
-escape t.b;
-]],
-    run = 20,
-}
-
 Test { [[
 class T with
     var int a;
@@ -27420,334 +26623,6 @@ do T;
 escape 0;
 ]],
     env = 'line 1 : undeclared type `T´',
-}
-
-Test { [[
-class T with
-do
-end
-do T;
-escape 0;
-]],
-    env = 'line 4 : variable/event "ok" is not declared',
-}
-
-Test { [[
-class T with
-    event void ok;
-do
-    emit ok;
-end
-par/or do
-    loop do
-        do T;
-    end
-with
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-class T with
-    var int v;
-do end;
-var T _ with
-    this.v = 1;
-end;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-input void OS_START;
-class T with
-    event void ok;
-do
-    emit ok;
-end
-par do
-    do T;
-    escape 1;
-with
-    await OS_START;
-    escape 2;
-end
-]],
-    run = 2,
-}
-
-Test { [[
-input void OS_START;
-class T with
-    event void ok;
-do
-    await OS_START;
-    emit ok;
-end
-do T;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-input void OS_START;
-class T with
-    event int ok;
-do
-    await OS_START;
-    emit ok => 1;
-end
-do T;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-input void OS_START;
-class T with
-    var int v;
-    event int ok;
-do
-    await OS_START;
-    emit ok => v;
-end
-var int v = do T with
-    this.v = 10;
-end;
-escape v;
-]],
-    run = 10,
-}
-
-Test { [[
-input void OS_START;
-class T with
-    var int v;
-    event int ok;
-do
-    await OS_START;
-    emit ok => v;
-end
-var int v;
-v = do T with
-    this.v = 10;
-end;
-escape v;
-]],
-    run = 10,
-}
-
-Test { [[
-input void OS_START;
-class T with
-    var int v;
-    event void ok;
-do
-    await OS_START;
-    emit ok;
-end
-var int v = do T with
-    this.v = 10;
-end;
-escape v;
-]],
-    env = 'line 9 : invalid attribution (int vs void)',
-}
-
-Test { [[
-input void OS_START;
-class T with
-    var int v;
-    event (int,int) ok;
-do
-    await OS_START;
-    emit ok => (v,v*2);
-end
-var int v1, v2;
-(v1,v2) = do T with
-    this.v = 10;
-end;
-_printf("%d %d\n", v1, v2);
-escape v1+v2;
-]],
-    run = 30,
-}
-
--- SPAWN
-
-Test { [[
-class T with do end
-spawn T;
-escape 1;
-]],
-    --env = 'line 2 : `spawn´ requires enclosing `do ... end´',
-    run = 1,
-}
-
-Test { [[
-native _V;
-native do
-    int V = 0;
-end
-class T with
-do
-    _V = 10;
-end
-do
-    spawn U;
-end
-escape _V;
-]],
-    env = 'line 10 : class "U" is not declared',
-}
-
-Test { [[
-native _V;
-native do
-    int V = 0;
-end
-class T with
-do
-    _V = 10;
-end
-do
-    spawn T;
-end
-escape _V;
-]],
-    run = 10,
-}
-
-Test { [[
-native _V;
-native do
-    int V = 0;
-end
-class T with
-    var int a;
-do
-    _V = this.a;
-end
-do
-    spawn T with
-        this.a = 10;
-    end;
-end
-escape _V;
-]],
-    run = 10,
-}
-
-Test { [[
-class T with do end
-do
-    var u8* x = spawn T;
-end
-]],
-    env = 'line 3 : invalid attribution',
-}
-
-Test { [[
-class T with do end
-var T* ok;
-var bool ok?;
-do
-    ok = spawn T;
-    ok? = (ok != null);
-end
-escape ok?;
-]],
-    run = 1,
-}
-Test { [[
-class T with do end
-var T* ok;
-do
-    ok = spawn T;
-end
-escape ok!=null;
-]],
-    --fin = 'line 6 : pointer access across `await´',
-    run = 1,
-}
-
-Test { [[
-class T with do
-    await FOREVER;
-end
-var T* ok;
-native _assert();
-do
-    loop i in 5 do
-        ok = spawn T;
-    end
-end
-escape ok!=null;
-]],
-    --loop = 1,
-    --fin = 'line 11 : pointer access across `await´',
-    run = 1,
-}
-Test { [[
-class T with do
-    await FOREVER;
-end
-var T* ok;
-var bool ok?;
-native _assert();
-do
-    loop i in 5 do
-        ok = spawn T;
-        ok? = (ok != null);
-    end
-end
-escape ok?;
-]],
-    --loop = 1,
-    run = 1,
-}
-
-Test { [[
-class T with do
-    await FOREVER;
-end
-var T* ok;
-var bool ok?;
-native _assert();
-do
-    loop i in 100 do
-        ok = spawn T;
-    end
-    var T* ok1 = spawn T;
-    ok? = (ok1 != null);
-end
-escape ok?+1;
-]],
-    --loop = 1,
-    run = 1,
-}
-Test { [[
-class T with do
-    await FOREVER;
-end
-var T* ok;
-native _assert();
-do
-    loop i in 100 do
-        ok = spawn T;
-    end
-    ok = spawn T;
-end
-escape (ok!=null)+1;
-]],
-    --loop = 1,
-    --fin = 'line 10 : pointer access across `await´',
-    run = 1,
 }
 
 Test { [[
@@ -31276,6 +30151,347 @@ escape 10;
     run = 10;
 }
 
+Test { [[
+input _vldoor_t* T_VERTICAL_DOOR;
+class T_VerticalDoor with
+    var void* v;
+do
+end
+
+var _vldoor_t* door = null;
+do
+    every door in T_VERTICAL_DOOR do
+        spawn T_VerticalDoor with
+            this.v = door;
+        end;
+    end
+end
+]],
+    --env = 'line 11 : invalid attribution (void* vs _vldoor_t*)',
+    --fin = 'line 11 : attribution to pointer with greater scope',
+    --fin = 'line 9 : invalid block for awoken pointer "door"',
+    _ana = {
+        isForever = true,
+    },
+}
+
+Test { [[
+input _vldoor_t* T_VERTICAL_DOOR;
+class T_VerticalDoor with
+    var void* v;
+do
+end
+
+var _vldoor_t* door = null;
+do
+    every door in T_VERTICAL_DOOR do
+        spawn T_VerticalDoor with
+            this.v = (void*)door;
+        end;
+    end
+end
+]],
+    --fin = 'line 11 : attribution to pointer with greater scope',
+    --fin = 'line 9 : invalid block for awoken pointer "door"',
+    _ana = {
+        isForever = true,
+    },
+}
+
+Test { [[
+class T with
+    var void* v;
+do
+end
+
+var T t;
+t.v = null;
+var void* ptr = null;
+t.v = ptr;
+escape 1;
+]],
+    --fin = 'line 9 : organism pointer attribution only inside constructors',
+    --fin = 'line 9 : attribution to pointer with greater scope',
+    run = 1,
+}
+Test { [[
+class T with
+    var void* v;
+do
+end
+
+var T t with
+    this.v = null;
+end;
+var void* ptr = null;
+t.v = ptr;
+escape 1;
+]],
+    --fin = 'line 10 : organism pointer attribution only inside constructors',
+    --fin = 'line 9 : attribution to pointer with greater scope',
+    run = 1,
+}
+
+Test { [[
+class T with
+    var void* v;
+do
+end
+
+var T t, s;
+t.v = null;
+t.v = s.v;
+escape 1;
+]],
+    --fin = 'line 8 : organism pointer attribution only inside constructors',
+    run = 1,
+}
+
+Test { [[
+interface I with
+end
+
+interface Global with
+    var I* t;
+end
+
+class T with
+do
+    global:t = &this;
+end
+
+var I* t;
+
+escape 1;
+]],
+    --fin = 'line 10 : attribution requires `finalize´'
+    fin = 'line 10 : attribution to pointer with greater scope',
+    --fin = 'line 10 : organism pointer attribution only inside constructors',
+}
+
+Test { [[
+native do
+    void* v;
+end
+class T with
+    var _void[] ptr;
+do
+end
+var T t with
+    this.ptr = _v;
+end;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+    var char [] str;
+do
+    str = "oioi";
+    this.str = "oioi";
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+do
+end
+var int*[] v;
+var T*[] t;
+escape 1;
+]],
+    run = 1;
+}
+
+Test { [[
+class T with
+do
+end
+var int[]* v;
+var T[]* t;
+escape 1;
+]],
+    parser = 'line 4 : after `]´ : expected identifier',
+}
+
+Test { [[
+class T with
+    var char* str;
+do
+end
+
+do
+    spawn T with
+        var char* s = "str";
+        this.str = s;
+    end;
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+    var int* v;
+do
+    *v = 1;
+    await 1s;
+    *v = 2;
+end
+escape 1;
+]],
+    fin = 'line 6 : pointer access across `await´',
+}
+
+Test { [[
+interface Global with
+    var int* a;
+end
+var int* a;
+class T with
+    var int* v;
+do
+end
+var T t with
+    this.v = global:a;
+end;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+interface Global with
+    var int* a;
+end
+var int* a = null;
+class T with
+    var int* v;
+do
+end
+await OS_START;
+var T t with
+    this.v = global:a;
+end;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+interface Global with
+    var int* p;
+end
+var int i = 1;
+var int* p = null;
+await OS_START;
+p = p;
+escape *p;
+]],
+    fin = 'line 8 : pointer access across `await´',
+}
+
+Test { [[
+input void OS_START;
+interface Global with
+    var int* p;
+end
+var int i = 1;
+var int* p = null;
+await OS_START;
+p = &i;
+escape *p;
+]],
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+class T with
+    var int* p;
+do
+end
+var int i = 1;
+var T t with
+    this.p = null;
+end;
+await OS_START;
+t.p = &i;
+escape *t.p;
+]],
+    fin = 'line 11 : pointer access across `await´',
+}
+
+Test { [[
+native do
+    void* V;
+end
+class T with
+    function (void* v)=>void f;
+do
+    function (void* v)=>void f do
+        _V := v;
+    end
+end
+escape 1;
+]],
+    --fin = 'line 8 : invalid attribution',
+    run = 1,
+}
+
+Test { [[
+class Forwarder with
+    var _pkt_t out;
+do
+end
+
+native @nohold _memcpy();
+
+input _pkt_t* RECEIVE;
+
+var _pkt_t* inc;
+every inc in RECEIVE do
+    spawn Forwarder with
+        _memcpy(&this.out, inc, inc:len);
+    end;
+end
+]],
+    _ana = {
+        isForever = true,
+    },
+}
+
+Test { [[
+class Unit with
+    var _SDL_Texture* tex;
+do
+end
+
+interface Global with
+    pool Unit[] all;
+end
+
+pool Unit[] all;
+
+class Nest with
+do
+    spawn Unit in global:all with
+        this.tex := _TEX_STORMTROOPER;
+    end;
+end
+]],
+    fin = 'line 15 : wrong operator',
+}
+
 -- TODO_TYPECAST
 
 -- IFACES / IFCS / ITERATORS
@@ -33456,6 +32672,20 @@ escape 1;
 
 Test { [[
 class U with do end;
+class T with
+    pool U[0] us;
+do
+end
+
+var T t;
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class U with do end;
 
 interface I with
     pool U[10] us;
@@ -34190,6 +33420,173 @@ escape p:v;
 }
 
 Test { [[
+class Unit with
+    event int move;
+do
+end
+var Unit* u;
+do
+    pool Unit[] units;
+    u = spawn Unit in units;
+end
+watching u do
+    emit u:move => 0;
+end
+escape 2;
+]],
+    run = 2,
+}
+Test { [[
+class Unit with
+    event int move;
+do
+end
+var Unit* u;
+do
+    pool Unit[] units;
+    u = spawn Unit in units;
+    await 1min;
+end
+watching u do
+    emit u:move => 0;
+end
+escape 2;
+]],
+    fin = 'line 11 : pointer access across `await´',
+}
+
+Test { [[
+interface I with
+    var int v;
+end
+
+class T with
+    var I* i = null;
+do
+    watching i do
+        var int v = i:v;
+    end
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+interface I with
+    var int v;
+end
+
+class T with
+    var I* i = null;
+do
+    await 1s;
+    watching i do
+        var int v = i:v;
+    end
+end
+
+escape 1;
+]],
+    fin = 'line 9 : pointer access across `await´',
+}
+
+Test { [[
+interface I with
+    var int v;
+end
+
+class T with
+    var I* i = null;
+do
+    watching i do
+        await 1s;
+        var int v = i:v;
+    end
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+interface I with
+    var int v;
+    event void e;
+end
+
+var I* i=null;
+
+await 1s;
+
+await i:e;
+
+watching i do
+    await 1s;
+    var int v = i:v;
+end
+
+escape 1;
+]],
+    fin = 'line 10 : pointer access across `await´',
+}
+Test { [[
+interface I with
+    var int v;
+    event void e;
+end
+
+var I* i=null;
+
+await 1s;
+
+watching i do
+    await 1s;
+    var int v = i:v;
+end
+
+escape 1;
+]],
+    fin = 'line 10 : pointer access across `await´',
+}
+
+Test { [[
+interface I with
+    var int v;
+end
+
+var I* i=null;
+
+par/or do
+    watching i do
+        await 1s;
+        var int v = i:v;
+    end
+with
+    await 1s;
+end
+
+escape 1;
+]],
+    todo = '*i vai dar segfault',
+    run = 1,
+}
+
+Test { [[
+class T with
+do
+end
+var T t;
+watching &t do
+end
+escape 100;
+]],
+    run = 100,
+}
+
+Test { [[
 class T with
     var int v = 0;
 do
@@ -34789,6 +34186,9 @@ escape v;
 }
 
 Test { [[
+native do
+    int V = 0;
+end
 input void OS_START,B;
 class T with
     event void ok, go, b;
@@ -34815,21 +34215,26 @@ watching ptr do
         end
         ret = ret + 1;      // 24
     with
-            await B;
+        await B;
         emit ptr:e;
         ret = ret + 1;
     with
         await ptr:f;
         ret = ret + 1;      // 31
     end
+    _printf("ret = %d\n", ret + ptr:v + a.v);
+    _V = ret + ptr:v + a.v;
     escape ret + ptr:v + a.v;
+        // this escape the outer block, which kills ptr,
+        // which kills the watching, which escapes again with 0
 end
-escape 0;
+escape _V + 1;
 ]],
     _ana = {
         --acc = 3,
     },
-    run = { ['~>B']=203, }
+    --run = { ['~>B']=203, }
+    run = { ['~>B']=204, }
 }
 Test { [[
 class Unit with
@@ -34854,6 +34259,9 @@ escape ptr:pos;
 }
 
 Test { [[
+native do
+    int V = 0;
+end
 input void OS_START;
 class T with
     event void ok, go;
@@ -34877,11 +34285,12 @@ watching ptr do
     with
         await ptr:ok;
     end
+    _V = ptr:v + a.v;
     escape ptr:v + a.v;
 end
-escape 0;
+escape _V + 1;
 ]],
-    run = 20,
+    run = 21,
 }
 
 Test { [[
@@ -34910,6 +34319,9 @@ escape 1;
 }
 
 Test { [[
+native do
+    int V = 0;
+end
 class T with
     var int v = 0;
 do
@@ -34925,14 +34337,15 @@ watching ok1 do
     loop (T*)t in ts do
         ret = ret + t:v;
     end
+    _V = (ok1!=null) + ok2 + ret;
     escape (ok1!=null) + ok2 + ret;
 end
-escape 1;
+escape _V + 1;
 ]],
     _ana = {
-        acc = 6,
+        acc = 8,
     },
-    run = 11,
+    run = 12,
 }
 
 Test { [[
@@ -35130,21 +34543,10 @@ escape 1;
     run = 1,
 }
 
-]===]
 Test { [[
-class T with
-do
+native do
+    int V = 0;
 end
-var T t;
-watching &t do
-end
-escape 0;
-]],
-    run = 100,
-}
-do return end
-
-Test { [[
 input void OS_START;
 
 interface I with
@@ -35161,14 +34563,19 @@ var T t;
 var I* i = &t;
 watching i do
     await OS_START;
+    _V = i:e;
     escape i:e;
 end
-escape 0;
+escape _V + 1;
 ]],
-    run = 100,
+    run = 101,
 }
 
 Test { [[
+native do
+    int V = 0;
+end
+
 input void OS_START;
 
 interface I with
@@ -35190,14 +34597,19 @@ var I* i = &t;
 watching i do
     await OS_START;
     emit i:e;
+    _V = i:ee;
     escape i:ee;
 end
-escape 0;
+escape _V + 1;
 ]],
-    run = 100,
+    run = 101,
 }
 
 Test { [[
+native do
+    int V = 0;
+end
+
 input void OS_START;
 
 interface I with
@@ -35228,14 +34640,19 @@ watching i1 do
     with
         await OS_START;
     end
+    _V = ret;
     escape ret;
 end
-escape 0;
+escape _V+1;
 ]],
-    run = 99,
+    run = 100,
 }
 
 Test { [[
+native do
+    int V = 0;
+end
+
 input void OS_START;
 
 interface I with
@@ -35269,18 +34686,23 @@ watching i1 do
             var int v = await i2:f;
             ret = ret + v;
         end
+        _V = ret;
         escape ret;
     end
 end
-escape 0;
+escape _V + 1;
 ]],
     _ana = {
         acc = 2,    -- TODO: not verified
     },
-    run = 165,
+    run = 166,
 }
 
 Test { [[
+native do
+    int V = 0;
+end
+
 interface I with
     var int v;
     function (int)=>void f;
@@ -35304,15 +34726,20 @@ input void OS_START;
 watching i do
     await OS_START;
     i:f(100);
+    _V = i:v;
     escape i:v;
 end
-escape 0;
+escape _V+1;
 ]],
     wrn = true,
-    run = 160,
+    run = 161,
 }
 
 Test { [[
+native do
+    int V = 0;
+end
+
 interface I with
     var int v;
     function (int)=>void f;
@@ -35335,11 +34762,12 @@ input void OS_START;
 watching i do
     await OS_START;
     i:f(100);
+    _V = i:v;
     escape i:v;
 end
-escape 0;
+escape _V+1;
 ]],
-    run = 160,
+    run = 161,
 }
 
 Test { [[
@@ -35372,6 +34800,10 @@ escape v + i:get();
 }
 
 Test { [[
+native do
+    int V = 0;
+end
+
 interface I with
     var int v;
     function (int)=>void f;
@@ -35410,12 +34842,13 @@ watching i do
 
     i=&u;
     i:f(200);
+    _V = ret + i:v;
     escape ret + i:v;
 end
-escape 0;
+escape _V+1;
 ]],
     wrn = true,
-    run = 630,
+    run = 631,
 }
 
 -- UNTIL
@@ -37848,6 +37281,651 @@ await 2s;
 escape o.v;
 ]],
     run = { ['~>2s']=1 },
+}
+
+-- REQUESTS
+
+Test { [[
+input/output [10] (int max)=>char* LINE;
+request LINE;
+escape 1;
+]],
+    env = 'line 2 : invalid arity',
+    --env = 'line 2 : missing parameters on `emit´',
+}
+
+Test { [[
+input/output [10] (int max)=>char* LINE;
+request LINE => "oi";
+escape 1;
+]],
+    env = 'line 2 : invalid attribution (int vs char*)',
+}
+
+Test { [[
+input/output [10] (int max)=>char* LINE;
+request LINE => 10;
+escape 1;
+]],
+    props = 'line 2 : invalid `emit´',
+}
+
+Test { [[
+native do
+    ##define ceu_out_emit_val(a,b,c) 1
+end
+output/input [10] (int max)=>char* LINE;
+par/or do
+    request LINE => 10;
+with
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input void* A;
+do
+    var void* p;
+    p = await A
+        until p==null;
+    var void* p1 = p;
+end
+await FOREVER;
+]],
+    _ana = {
+        isForever = true,
+    },
+}
+
+Test { [[
+output/input [10] (int max)=>char* LINE;
+var u8 err;
+var char* ret;
+par/or do
+    var char* ret1;
+    (err, ret1) = request LINE => 10;
+    ret := ret1;
+with
+    await FOREVER;
+end
+escape *ret;
+]],
+    fin = 'line 11 : pointer access across `await´',
+    --fin = 'line 5 : invalid block for awoken pointer "ret"',
+}
+
+Test { [[
+output/input [10] (int max)=>char* LINE;
+native do
+    ##define ceu_out_emit_val(a,b,c) 1
+end
+var u8 err;
+par/or do
+    var char* ret;
+    (err, ret) = request LINE => 10;
+with
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input/output [10] (int max)=>char* LINE;
+request LINE;
+escape 1;
+]],
+    env = 'line 2 : invalid arity',
+    --env = 'line 2 : missing parameters on `emit´',
+}
+
+Test { [[
+input/output [10] (int max)=>char* LINE;
+request LINE => "oi";
+escape 1;
+]],
+    env = 'line 2 : invalid attribution (int vs char*)',
+}
+
+Test { [[
+input/output [10] (int max)=>char* LINE;
+request LINE => 10;
+escape 1;
+]],
+    props = 'line 2 : invalid `emit´',
+}
+
+Test { [[
+native do
+    ##define ceu_out_emit_val(a,b,c) 1
+end
+output/input [10] (int max)=>char* LINE;
+par/or do
+    request LINE => 10;
+with
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+output/input [10] (int max)=>char* LINE;
+var u8 err, ret;
+(err, ret) = request LINE => 10;
+escape 1;
+]],
+    env = 'line 3 : invalid attribution (u8 vs char*)',
+}
+
+Test { [[
+native do
+    ##define ceu_out_emit_val(a,b,c) 1
+end
+output/input [10] (int max)=>int LINE;
+par/or do
+    var u8 err, ret;
+    (err, ret) = request LINE => 10;
+with
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native do
+    ##define ceu_out_emit_val(a,b,c) 1
+end
+output/input [10] (int)=>int LINE do
+    return 1;     // missing <int "id">
+end
+par/or do
+    var u8 err, ret;
+    (err, ret) = request LINE => 10;
+with
+end
+escape 1;
+]],
+    adj = 'line 4 : missing parameter identifier',
+}
+
+Test { [[
+native do
+    ##define ceu_out_emit_val(a,b,c) 1
+end
+output/input [10] (int max)=>int LINE do
+    return 1;
+end
+par/or do
+    var u8 err, ret;
+    (err, ret) = request LINE => 10;
+with
+end
+escape 1;
+]],
+    props = 'line 4 : invalid `emit´',
+}
+
+Test { [[
+native do
+    ##define ceu_out_emit_val(a,b,c) 1
+end
+input/output [10] (int max)=>int LINE do
+    return 1;
+end
+par/or do
+    var u8 err, ret;
+    (err, ret) = request LINE => 10;
+with
+end
+escape 1;
+]],
+    props = 'line 9 : invalid `emit´',
+}
+
+Test { [[
+native do
+    ##define ceu_out_emit_val(a,b,c) 1
+end
+input/output [10] (int max)=>int LINE do
+    return 1;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native do
+    ##define ceu_out_emit_val(a,b,c) 1
+end
+var int ret = 0;
+input/output [10] (int max)=>int LINE do
+    ret = 1;
+end
+escape ret;
+]],
+    env = 'line 6 : variable/event "ret" is not declared',
+}
+
+Test { [[
+par do
+    native do
+        ##define ceu_out_emit_val(a,b,c) 1
+        int V = 0;
+    end
+    input/output [10] (int max)=>int LINE do
+        _V = 10;
+        return 1;
+    end
+    await 1s;
+    escape _V+1;
+with
+    async do
+        emit LINE_REQUEST => (1,10);
+        emit 1s;
+    end
+end
+]],
+    run = 11,
+}
+
+Test { [[
+par do
+    native do
+        ##define ceu_out_emit_val(a,b,c) 1
+        int V = 0;
+    end
+    input/output [10] (int max)=>int LINE do
+        _V = max;
+    end
+    await 1s;
+    escape _V+1;
+with
+    async do
+        emit LINE_REQUEST => (1,10);
+        emit 1s;
+    end
+end
+]],
+    run = 11,
+}
+
+Test { [[
+par do
+    native do
+        ##define ceu_out_emit_val(a,b,c) 1
+        int V = 0;
+    end
+    input/output [10] (int max)=>int LINE do
+        _V = _V + max;
+    end
+    await 1s;
+    escape _V+1;
+with
+    async do
+        emit LINE_REQUEST => (1,10);
+        emit LINE_REQUEST => (2,20);
+        emit LINE_REQUEST => (3,30);
+        emit 1s;
+    end
+end
+]],
+    run = 61,
+}
+
+Test { [[
+par do
+    native do
+        ##define ceu_out_emit_val(a,b,c) 1
+    end
+    input/output [2] (int max)=>int LINE do
+        await 1s;
+    end
+    await 1s;
+    escape 1;
+with
+    async do
+        emit LINE_REQUEST => (1,10);
+        emit LINE_REQUEST => (1,10);
+        emit 1s;
+    end
+end
+]],
+    run = 1,
+}
+Test { [[
+par do
+    native do
+        ##define ceu_out_emit_val(a,b,c) 1
+        int V = 0;
+    end
+    input/output (int max)=>int LINE do
+        await 1s;
+        _V = _V + max;
+    end
+    await 1s;
+    escape _V+1;
+with
+    async do
+        emit LINE_REQUEST => (1,10);
+        emit LINE_REQUEST => (1,10);
+        emit 1s;
+    end
+end
+]],
+    _ana = {
+        acc = 1,
+    },
+    run = 1,
+}
+Test { [[
+par do
+    native do
+        ##define ceu_out_emit_val(a,b,c) 1
+        int V = 0;
+    end
+    input/output [2] (int max)=>int LINE do
+        await 1s;
+        _V = _V + max;
+    end
+    await 1s;
+    escape _V+1;
+with
+    async do
+        emit LINE_REQUEST => (1,10);
+        emit LINE_REQUEST => (2,20);
+        emit LINE_REQUEST => (3,30);
+        emit 1s;
+    end
+end
+]],
+    _ana = {
+        acc = 1,
+    },
+    run = 1,
+}
+
+Test { [[
+par do
+    native do
+        ##define ceu_out_emit_val(a,b,c) 1
+        int V = 0;
+    end
+    input/output [2] (int max)=>int LINE do
+        await 1s;
+        _V = _V + max;
+    end
+    await 2s;
+    escape _V+1;
+with
+    async do
+        emit LINE_REQUEST => (1,10);
+        emit LINE_REQUEST => (2,20);
+        emit LINE_REQUEST => (3,30);
+        emit 2s;
+    end
+end
+]],
+    _ana = {
+        acc = 1,
+    },
+    run = 31,
+}
+
+Test { [[
+par do
+    native do
+        ##define ceu_out_emit_val(a,b,c) 1
+        int V = 0;
+    end
+    input/output [2] (int max)=>int LINE do
+        await 1s;
+        _V = _V + max;
+    end
+    await 3s;
+    escape _V+1;
+with
+    async do
+        emit LINE_REQUEST => (1,11);
+        emit LINE_REQUEST => (2,22);
+        emit LINE_REQUEST => (3,30);
+        emit 1s;
+        emit LINE_REQUEST => (4,13);
+        emit LINE_REQUEST => (5,24);
+        emit LINE_REQUEST => (6,30);
+        emit 2s;
+    end
+end
+]],
+    _ana = {
+        acc = 1,
+    },
+    run = 71,
+}
+
+Test { [[
+par do
+    native do
+        ##define ceu_out_emit_val(a,b,c) 1
+        int V = 0;
+    end
+    input/output [1] (int max)=>int LINE do
+        await 1s;
+        _V = _V + max;
+    end
+    await 3s;
+    escape _V+1;
+with
+    async do
+        emit LINE_REQUEST => (1,11);
+        emit LINE_REQUEST => (2,22);
+        emit LINE_REQUEST => (3,30);
+        emit 1s;
+        emit LINE_REQUEST => (4,13);
+        emit LINE_REQUEST => (5,24);
+        emit LINE_REQUEST => (6,30);
+        emit 2s;
+    end
+end
+]],
+    _ana = {
+        acc = 1,
+    },
+    run = 25,
+}
+
+Test { [[
+par do
+    native do
+        ##define ceu_out_emit_val(a,b,c) 1
+        int V = 0;
+    end
+    input/output [0] (int max)=>int LINE do
+        await 1s;
+        _V = _V + max;
+    end
+    await 3s;
+    escape _V+1;
+with
+    async do
+        emit LINE_REQUEST => (1,11);
+        emit LINE_REQUEST => (2,22);
+        emit LINE_REQUEST => (3,30);
+        emit 1s;
+        emit LINE_REQUEST => (4,13);
+        emit LINE_REQUEST => (5,24);
+        emit LINE_REQUEST => (6,30);
+        emit 2s;
+    end
+end
+]],
+    _ana = {
+        acc = 1,
+    },
+    run = 1,
+}
+
+Test { [[
+par do
+    native do
+        ##define ceu_out_emit_val(a,b,c) 1
+        int V = 0;
+    end
+    input/output [10] (int max)=>int LINE do
+        await 1s;
+        _V = _V + max;
+    end
+    input void F;
+    await F;
+    escape _V+1;
+with
+    async do
+        emit LINE_REQUEST => (1,11);
+        emit LINE_REQUEST => (2,22);
+        emit LINE_CANCEL => 1;
+        emit 3s;
+        emit F;
+    end
+end
+]],
+    run = 23,
+}
+
+Test { [[
+par do
+    native do
+        ##define ceu_out_emit_val(a,b,c) 1
+        int V = 0;
+    end
+    input/output [10] (int max)=>int LINE do
+        await 1s;
+        _V = _V + max;
+    end
+    input void F;
+    await F;
+    escape _V+1;
+with
+    async do
+        emit LINE_REQUEST => (1,11);
+        emit LINE_REQUEST => (2,22);
+        emit LINE_CANCEL => 2;
+        emit 3s;
+        emit F;
+    end
+end
+]],
+    run = 12,
+}
+
+Test { [[
+par do
+    native do
+        ##define ceu_out_emit_val(a,b,c) 1
+        int V = 0;
+    end
+    input/output [10] (int max)=>int LINE do
+        await 1s;
+        _V = _V + max;
+    end
+    input void F;
+    await F;
+    escape _V+1;
+with
+    async do
+        emit LINE_REQUEST => (1,11);
+        emit LINE_REQUEST => (2,22);
+        emit LINE_CANCEL => 2;
+        emit LINE_CANCEL => 1;
+        emit 3s;
+        emit F;
+    end
+end
+]],
+    run = 1,
+}
+
+Test { [[
+par do
+    native do
+        ##define ceu_out_emit_val(a,b,c) 1
+        int V = 0;
+    end
+    output/input (int max)=>int LINE;
+    var int v   = 0;
+    var int err = 0;
+    par/or do
+        (err,v) = request LINE=>10;
+    with
+        await 5s;
+        escape 999;
+    end
+    escape v+err;
+with
+    async do
+        emit LINE_RETURN => (1,1,10);
+        emit 5s;
+    end
+end
+]],
+    run = 11,
+}
+
+Test { [[
+par do
+    native do
+        ##define ceu_out_emit_val(a,b,c) 1
+        int V = 0;
+    end
+    output/input (int max)=>int LINE;
+    var int v   = 0;
+    var int err = 0;
+    par/or do
+        (err,v) = request LINE=>10;
+    with
+        await 5s;
+        escape 999;
+    end
+    escape v+err;
+with
+    async do
+        emit LINE_RETURN => (2,1,10);
+        emit 5s;
+    end
+end
+]],
+    run = 999,
+}
+
+Test { [[
+par do
+    native do
+        ##define ceu_out_emit_val(a,b,c) 1
+        int V = 0;
+    end
+    output/input (int max)=>int LINE;
+    var int v   = 0;
+    var int err = 0;
+    par/or do
+        (err,v) = request LINE=>10;
+    with
+        await 5s;
+        escape 999;
+    end
+    escape v+err;
+with
+    async do
+        emit LINE_RETURN => (2,1,10);
+        emit 4s;
+        emit LINE_RETURN => (1,0,-1);
+        emit 1s;
+    end
+end
+]],
+    run = -1,
 }
 
 -- TIMEMACHINE

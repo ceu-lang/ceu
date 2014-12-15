@@ -11,6 +11,9 @@ extern void ceu_app_init (tceu_app* app);
 int main (int argc, char *argv[])
 {
     byte CEU_DATA[sizeof(CEU_Main)];
+#ifdef CEU_DEBUG
+    memset(CEU_DATA, 0, sizeof(CEU_Main));
+#endif
     tceu_app app;
         app.data = (tceu_org*) &CEU_DATA;
         app.init = &ceu_app_init;

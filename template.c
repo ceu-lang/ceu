@@ -166,7 +166,7 @@ _CEU_GOTO_:
 #endif
 #ifdef CEU_DEBUG_TRAILS
 #ifndef CEU_OS
-fprintf(stderr, "OK: o.%p / l.%d\n", _STK_ORG, _CEU_LBL);
+fprintf(stderr, "OK : lbl=%d : org=%p\n", _CEU_LBL, _STK_ORG);
 #endif
 #endif
 #endif
@@ -178,6 +178,9 @@ fprintf(stderr, "OK: o.%p / l.%d\n", _STK_ORG, _CEU_LBL);
     switch (_CEU_LBL) {
         === CODE ===
     }
+#ifdef CEU_DEBUG
+    assert(0);
+#endif
     return RET_HALT;    /* TODO: should never be reached anyways */
 }
 
