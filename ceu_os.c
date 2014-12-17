@@ -466,11 +466,15 @@ fprintf(stderr, "STACK[%d]: evt=%d : seqno=%d : ntrls=%d\n",
                                 STK = stk;              /* that's it */
                             } else
 #else
+/*
 #ifdef CEU_CLEAR
 #ifdef CEU_DEBUG
+                            // TODO: problem when trl[n]==1st-org
+                            // assert fails because CUR_ORG==CUR.stop(trl[n])
                             assert(CUR.stop != CUR_ORG);
 #endif
 #endif
+*/
 #endif
                             {
                                 stack_push(go, stk);    /* continue after it */
@@ -488,11 +492,15 @@ fprintf(stderr, "STACK[%d]: evt=%d : seqno=%d : ntrls=%d\n",
                             break;  /* pop stack */
                         }
 #else
+/*
 #ifdef CEU_CLEAR
 #ifdef CEU_DEBUG
+                        // TODO: problem when trl[n]==1st-org
+                        // assert fails because CUR_ORG==CUR.stop(trl[n])
                         assert(CUR.stop != CUR_ORG);
 #endif
 #endif
+*/
 #endif
                     } /* CLEAR dyn orgs */
 

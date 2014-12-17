@@ -157,7 +157,7 @@ G = {
         stmts.trails = { t0, t0+stmts.trails_n-1 }
             t0 = t0 + stmts.trails_n    -- stmts
 
-        -- FINS (must be the last to proper nest fins)
+        -- FINS (must be the last to properly nest fins)
         if me.fins then
             me.trl_fins  = { t0, t0 }
                 t0 = t0 + 1             -- fin
