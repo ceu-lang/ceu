@@ -67,6 +67,10 @@ void ceu_sys_assert (int v) {
 #endif
 }
 
+void ceu_sys_log (char* s) {
+    puts(s);
+}
+
 #if defined(CEU_NEWS) || defined(CEU_THREADS) || defined(CEU_OS)
 void* ceu_sys_realloc (void* ptr, size_t size) {
 #ifdef CEU_NEWS
