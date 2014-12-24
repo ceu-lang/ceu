@@ -425,11 +425,12 @@ do
                              FILES.ceu_types_h)
         CC = SUB(CC, '#include "ceu_os.h"',
                              FILES.ceu_os_h..'\n'..FILES.ceu_os_c)
-
-        FILES.ceu_pool_c = SUB(FILES.ceu_pool_c, '#include "ceu_pool.h"', '')
-        CC = SUB(CC, '#include "ceu_pool.h"',
-                             FILES.ceu_pool_h..'\n'..FILES.ceu_pool_c)
     end
+
+    -- TODO: ceu_pool_* => ceu_sys_pool_*
+    FILES.ceu_pool_c = SUB(FILES.ceu_pool_c, '#include "ceu_pool.h"', '')
+    CC = SUB(CC, '#include "ceu_pool.h"',
+                         FILES.ceu_pool_h..'\n'..FILES.ceu_pool_c)
 
     if OPTS.out_s ~= 'CEU_SIZE' then
         CC = SUB(CC, 'CEU_SIZE', OPTS.out_s)

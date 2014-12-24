@@ -143,7 +143,7 @@ print(cmd)
               ''
 
 print(cmd)
-	local exec_cmd = os.execute(cmd)
+        local exec_cmd = os.execute(cmd)
         assert(exec_cmd == 0 or exec_cmd == true)
 
         -- no data and no undefined symbols
@@ -199,13 +199,13 @@ STATS = {
 --[[
 STATS = {
 	count = 66,
-	bytes = 2152402,
+	bytes = 2126998,
 }
 
 
-real	0m45.277s
-user	0m35.892s
-sys	0m9.380s
+real	0m59.161s
+user	0m47.622s
+sys	0m10.297s
 ]]
 
 os.execute('rm -f /tmp/_ceu_*')
