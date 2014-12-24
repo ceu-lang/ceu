@@ -444,7 +444,7 @@ case ]]..me.lbls_cnt.id..[[:;
 ]])
         else
             LINE(me, [[
-    __ceu_new = (tceu_org*) ceu_out_malloc(sizeof(CEU_]]..id..[[));
+    __ceu_new = (tceu_org*) ceu_out_realloc(NULL, sizeof(CEU_]]..id..[[));
 ]])
         end
 
@@ -1143,7 +1143,7 @@ case ]]..me.lbl.id..[[:;
         -- spawn thread
         LINE(me, [[
 /* TODO: test it! */
-]]..me.thread_st..[[  = ceu_out_malloc(sizeof(s8));
+]]..me.thread_st..[[  = ceu_out_realloc(NULL, sizeof(s8));
 *]]..me.thread_st..[[ = 0;  /* ini */
 {
     tceu_threads_p p = { _ceu_app, _STK_ORG, ]]..me.thread_st..[[ };
@@ -1239,7 +1239,7 @@ static void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
                  *  main program.
                  */
         } else {
-            ceu_out_free(_ceu_p.st);  /* fin finished, I free */
+            ceu_out_realloc(_ceu_p.st, 0);  /* fin finished, I free */
             _ceu_app->threads_n--;
         }
         CEU_THREADS_MUTEX_UNLOCK(&_ceu_app->threads_mutex);
@@ -1263,7 +1263,7 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
     *]]..me.thread.thread_st..[[ = 3;
     /*assert( pthread_cancel(]]..me.thread.thread_id..[[) == 0 );*/
 } else {
-    ceu_out_free(]]..me.thread.thread_st..[[); /* thr finished, I free */
+    ceu_out_realloc(]]..me.thread.thread_st..[[, 0); /* thr finished, I free */
     _ceu_app->threads_n--;
 }
 ]]

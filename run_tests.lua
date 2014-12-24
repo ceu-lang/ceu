@@ -190,6 +190,7 @@ end
     --os.execute('echo "/*'..line..'*/" > /tmp/line')
     --os.execute('cat /tmp/line _ceu_app.c > /tmp/file')
     --os.execute('mv /tmp/file _ceu_app.c')
+--DBG(CEU)
 --DBG(GCC)
 
     if PROPS.has_threads then
@@ -217,6 +218,10 @@ end
         else
             local gcc = os.execute(GCC)
             assert(gcc==0 or gcc==true)
+        end
+
+        if exp == true then
+            return  -- T.run==true, do not run
         end
 
         if T.asr then

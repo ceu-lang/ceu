@@ -17,7 +17,7 @@ void* CEU_APP_ADDR = NULL;
 #endif
 
 #if defined(CEU_DEBUG) || defined(CEU_NEWS) || defined(CEU_THREADS) || defined(CEU_OS)
-#include <stdlib.h>     /* malloc/free, exit */
+#include <stdlib.h>     /* realloc, exit */
 #endif
 
 #ifdef CEU_NEWS_POOL
@@ -60,27 +60,22 @@ static int _ceu_dyns_ = 0;  /* check if total of alloc/free match */
 #endif
 
 #if defined(CEU_NEWS) || defined(CEU_THREADS) || defined(CEU_OS)
-void* ceu_sys_malloc (size_t size) {
+void* ceu_sys_realloc (void* ptr, size_t size) {
 #ifdef CEU_NEWS
 #ifdef CEU_RUNTESTS
-    if (_ceu_dyns_ >= CEU_MAX_DYNS) {
-        return NULL;
-    }
-    _ceu_dyns_++;           /* assumes no malloc fails */
-#endif
-#endif
-    return malloc(size);
-}
-
-void ceu_sys_free (void* ptr) {
-#ifdef CEU_NEWS
-#ifdef CEU_RUNTESTS
-    if (ptr != NULL) {
-        _ceu_dyns_--;
+    if (size == 0) {
+        if (ptr != NULL) {
+            _ceu_dyns_--;
+        }
+    } else {
+        if (_ceu_dyns_ >= CEU_MAX_DYNS) {
+            return NULL;
+        }
+        _ceu_dyns_++;           /* assumes no malloc fails */
     }
 #endif
 #endif
-    free(ptr);
+    return realloc(ptr, size);
 }
 #endif
 
@@ -658,12 +653,12 @@ _CEU_GO_QUIT_:;
         ceu_pool_free((tceu_pool*)org->pool, (byte*)org);
 #elif  defined(CEU_NEWS_POOL) &&  defined(CEU_NEWS_MALLOC)
         if (org->pool == NULL) {
-            ceu_sys_free(org);
+            ceu_sys_realloc(org, 0);
         } else {
             ceu_pool_free((tceu_pool*)org->pool, (byte*)org);
         }
 #elif !defined(CEU_NEWS_POOL) &&  defined(CEU_NEWS_MALLOC)
-        ceu_sys_free(org);
+        ceu_sys_realloc(org, 0);
 #endif
     }
 #endif
@@ -730,8 +725,7 @@ int ceu_go_all (tceu_app* app)
 /* SYS_VECTOR
  */
 void* CEU_SYS_VEC[CEU_SYS_MAX] __attribute__((used)) = {
-    (void*) &ceu_sys_malloc,
-    (void*) &ceu_sys_free,
+    (void*) &ceu_sys_realloc,
     (void*) &ceu_sys_req,
     (void*) &ceu_sys_load,
 #ifdef CEU_ISR
@@ -893,7 +887,7 @@ static void _ceu_sys_unlink (tceu_lnk* lnk) {
 	}
 
     /*lnk->nxt = NULL;*/
-    ceu_sys_free(lnk);
+    ceu_sys_realloc(lnk, 0);
 }
 
 static void __ceu_os_gc (void)
@@ -954,8 +948,8 @@ static void __ceu_os_gc (void)
 #endif
 
             /* free app memory */
-            ceu_sys_free(app->data);
-            ceu_sys_free(app);
+            ceu_sys_realloc(app->data, 0);
+            ceu_sys_realloc(app, 0);
         }
 
         app = nxt;
@@ -1115,12 +1109,12 @@ tceu_app* ceu_sys_load (void* addr)
     ((tceu_export) addr)(&size, &init);
 #endif
 
-    tceu_app* app = (tceu_app*) ceu_sys_malloc(sizeof(tceu_app));
+    tceu_app* app = (tceu_app*) ceu_sys_realloc(NULL, sizeof(tceu_app));
     if (app == NULL) {
         return NULL;
     }
 
-    app->data = (tceu_org*) ceu_sys_malloc(size);
+    app->data = (tceu_org*) ceu_sys_realloc(NULL, size);
     if (app->data == NULL) {
         return NULL;
     }
@@ -1199,7 +1193,7 @@ ra = ra | 1<<18;
 int ceu_sys_link (tceu_app* src_app, tceu_nevt src_evt,
                   tceu_app* dst_app, tceu_nevt dst_evt)
 {
-    tceu_lnk* lnk = (tceu_lnk*) ceu_sys_malloc(sizeof(tceu_lnk));
+    tceu_lnk* lnk = (tceu_lnk*) ceu_sys_realloc(NULL, sizeof(tceu_lnk));
     if (lnk == NULL) {
         return 0;
     }

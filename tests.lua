@@ -1109,12 +1109,158 @@ escape ret;
     run = 9999,
 }
 
+-- TODO: finalize not required
+Test { [[
+native do
+    #define ceu_out_call_VVV(x) x
+end
+
+output (int n)=>int VVV;
+var int v;
+finalize
+    v = (call VVV => 10);
+with
+    nothing;
+end
+escape v;
+]],
+    run = 10,
+}
+
+-- TODO: finalize required
+Test { [[
+native do
+    #define ceu_out_call_MALLOC(x) NULL
+end
+
+output (int n)=>void* MALLOC;
+var char* buf;
+buf = (call MALLOC => 10);
+escape 1;
+]],
+    run = 1,
+}
+
+-- TODO: finalize required
+Test { [[
+native do
+    #define ceu_out_call_SEND(x) 0
+end
+
+output (char* buf)=>void SEND;
+var char[255] buf;
+call SEND => buf;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native/pre do
+    typedef struct {
+        int a,b,c;
+    } F;
+end
+native do
+    F* fff;
+end
+
+input (char* path, char* mode)=>_F* OPEN do
+    return _fff;
+end
+
+input (_F* f)=>int CLOSE do
+    return 1;
+end
+
+input (_F* f)=>int SIZE do
+    return 1;
+end
+
+input (void* ptr, int size, int nmemb, _F* f)=>int READ do
+    return 1;
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native/pre do
+    typedef struct {
+        int a,b,c;
+    } F;
+end
+native do
+    F* f;
+    #define ceu_out_call_OPEN(x) f
+end
+output (char* path, char* mode)=>_F* OPEN;
+
+// Default device
+var _F[] f;
+    f = (call OPEN => ("/boot/rpi-boot.cfg", "r"));
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+output (char* path, char* mode)=>_F* OPEN;
+output (_F* f)=>int CLOSE;
+output (_F* f)=>int SIZE;
+output (void* ptr, int size, int nmemb, _F* f)=>int READ;
+
+// Default device
+var _F[] f;
+finalize
+    f = (call OPEN => ("/boot/rpi-boot.cfg", "r"));
+with
+    call CLOSE => f;
+end
+
+if f == null then
+    await FOREVER;
+end
+
+var int flen = (call SIZE => f);
+//char *buf = (char *)malloc(flen+1);
+var char[255] buf;
+buf[flen] = 0;
+call READ => (buf, 1, flen, f);
+
+#define GPFSEL1 ((uint*)0x20200004)
+#define GPSET0  ((uint*)0x2020001C)
+#define GPCLR0  ((uint*)0x20200028)
+var uint ra;
+ra = *GPFSEL1;
+ra = ra & ~(7<<18);
+ra = ra | 1<<18;
+*GPFSEL1 = ra;
+
+var char* orig = "multiboot";
+
+loop do
+    loop i in 9 do
+        if buf[i] != orig[i] then
+            await FOREVER;
+        end
+        *GPCLR0 = 1<<16;
+        await 1s;
+        *GPSET0 = 1<<16;
+        await 1s;
+    end
+end
+]],
+    todo = 'finalize is lost!',
+}
 
 do return end
+]===]
 
 -------------------------------------------------------------------------------
 -- OK: well tested
-]===]
 
 Test { [[escape(1);]],
     _ana = {

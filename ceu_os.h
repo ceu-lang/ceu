@@ -4,6 +4,10 @@
 #include <stddef.h>
 #include "ceu_types.h"
 
+#ifdef CEU_DEBUG
+#include <assert.h>
+#endif
+
 #if defined(CEU_OS) && defined(__AVR)
 #include "Arduino.h"
 #define CEU_ISR
@@ -67,10 +71,8 @@
 
     typedef s8 tceu_nlbl;   /* TODO: to small!! */
 
-    #define ceu_out_malloc(size) \
-        ((__typeof__(ceu_sys_malloc)*)((_ceu_app)->sys_vec[CEU_SYS_MALLOC]))(size)
-    #define ceu_out_free(ptr) \
-        ((__typeof__(ceu_sys_free)*)((_ceu_app)->sys_vec[CEU_SYS_FREE]))(ptr)
+    #define ceu_out_realloc(ptr, size) \
+        ((__typeof__(ceu_sys_realloc)*)((_ceu_app)->sys_vec[CEU_SYS_REALLOC]))(ptr,size)
 
     #define ceu_out_req() \
         ((__typeof__(ceu_sys_req)*)((_ceu_app)->sys_vec[CEU_SYS_REQ]))()
@@ -120,10 +122,8 @@
         ((__typeof__(ceu_sys_go)*)((app)->sys_vec[CEU_SYS_GO]))(app,evt,evtp)
 
 #else /* ! CEU_OS */
-    #define ceu_out_malloc(size) \
-            ceu_sys_malloc(size)
-    #define ceu_out_free(ptr) \
-            ceu_sys_free(ptr)
+    #define ceu_out_realloc(ptr,size) \
+            ceu_sys_realloc(ptr,size)
     #define ceu_out_req() \
             ceu_sys_req()
 #ifdef CEU_NEWS
@@ -501,8 +501,7 @@ int  ceu_os_scheduler (int(*dt)());
 tceu_queue* ceu_sys_queue_nxt (void);
 void        ceu_sys_queue_rem (void);
 
-void*     ceu_sys_malloc    (size_t size);
-void      ceu_sys_free      (void* ptr);
+void*     ceu_sys_realloc   (void* ptr, size_t size);
 int       ceu_sys_req       (void);
 tceu_app* ceu_sys_load      (void* addr);
 #ifdef CEU_ISR
@@ -520,8 +519,7 @@ int       ceu_sys_emit      (tceu_app* app, tceu_nevt evt, tceu_evtp param, int 
 tceu_evtp ceu_sys_call      (tceu_app* app, tceu_nevt evt, tceu_evtp param);
 
 enum {
-    CEU_SYS_MALLOC = 0,
-    CEU_SYS_FREE,
+    CEU_SYS_REALLOC = 0,
     CEU_SYS_REQ,
     CEU_SYS_LOAD,
 #ifdef CEU_ISR
