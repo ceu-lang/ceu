@@ -242,7 +242,7 @@ function TP.contains (tp1, tp2)
     end
 
     -- both are pointers
-    local ptr2 = (tp2.ptr>0 and tp2.ptr) or (tp2.arr and tp2.ptr+1)
+    local ptr2 = (tp2.ptr>0 and tp2.ptr) or (tp2.arr and tp2.ptr+1) or 0
     if tp1.ptr>0 and ptr2>0 then
         if tp1.id=='char' and tp1.ptr==1 -- cast to char*
         or tp1.id=='void' and tp1.ptr==1 -- cast to void*

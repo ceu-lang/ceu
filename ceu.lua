@@ -259,7 +259,7 @@ do
         -- TODO
         str = str..'#define CEU_IN__NONE 0\n'
 
-        HH = SUB(HH, '=== NATIVE_PRE ===', (OPTS.c_calls and '') or MAIN.native[true])
+        HH = SUB(HH, '=== NATIVE_PRE ===', (OPTS.c_calls and '') or MEM.native_pre)
 
         for i, evt in ipairs(ENV.exts) do
             if evt.pre == 'input' then

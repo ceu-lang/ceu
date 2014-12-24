@@ -1,5 +1,6 @@
 MEM = {
     clss  = '',
+    native_pre = '',
 }
 
 function SPC ()
@@ -53,8 +54,8 @@ typedef union CEU_]]..me.id..[[_delayed {
         end
 
         if me.id ~= 'Main' then
-            -- native/pre goes w/ MAIN
-            MAIN.native[true] = MAIN.native[true] .. me.native[true]
+            -- native/pre goes before everything
+            MEM.native_pre = MEM.native_pre ..  me.native[true]
 
             -- native goes after class declaration
             MEM.clss = MEM.clss .. me.native[false] .. '\n'

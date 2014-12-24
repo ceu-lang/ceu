@@ -312,34 +312,44 @@ F = {
             F.Finalize_pre(me, me, fin)
         end
     end,
+
+    __check_params = function (me, ins, params)
+        local req = false
+        for i, param in ipairs(params) do
+            local hold = true
+            if ins then
+                hold = ins.tup[i].hold
+            end
+            if hold then
+                -- int* pa; _f(pa);
+                --  (`pa´ termination must consider `_f´)
+                local r = (param.tp.ptr>0 or param.tp.ext or param.tp.arr) and
+                          (not param.isConst) and
+                          (not param.c or param.c.mod~='const')
+                                -- except constants
+
+                r = r and param.fst and param.fst.blk or
+                    r and param.fst and param.fst.var and param.fst.var.blk
+                            -- need to hold block
+-- TODO: ERR 10xx
+                WRN( (not r) or (not req) or (r==req),
+                        me, 'invalid call (multiple scopes)')
+                req = req or r
+            end
+        end
+        return req
+    end,
+
     Op2_call = function (me)
-        local _, f, exps, fin = unpack(me)
+        local _, f, params, fin = unpack(me)
 
         local req = false
 
         if not (me.c and (me.c.mod=='@pure' or me.c.mod=='@nohold')) then
-            for i, exp in ipairs(exps) do
-                local hold = true
-                if f.var and f.var.fun then
-                    hold = f.var.fun.ins.tup[i].hold
-                end
-                if hold then
-                    -- int* pa; _f(pa);
-                    --  (`pa´ termination must consider `_f´)
-                    local r = (exp.tp.ptr>0 or exp.tp.ext or exp.tp.arr) and
-                              (not exp.isConst) and
-                              (not exp.c or exp.c.mod~='const')
-                                    -- except constants
-
-                    r = r and exp.fst and exp.fst.blk or
-                        r and exp.fst and exp.fst.var and exp.fst.var.blk
-                                -- need to hold block
--- TODO: ERR 10xx
-                    WRN( (not r) or (not req) or (r==req),
-                            me, 'invalid call (multiple scopes)')
-                    req = req or r
-                end
-            end
+            req = F.__check_params(
+                    me,
+                    f.var and f.var.fun and f.var.fun.ins,
+                    params)
         end
 
         if AST.iter'Thread'() then
