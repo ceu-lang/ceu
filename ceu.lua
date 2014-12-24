@@ -259,6 +259,8 @@ do
         -- TODO
         str = str..'#define CEU_IN__NONE 0\n'
 
+        HH = SUB(HH, '=== NATIVE_PRE ===', (OPTS.c_calls and '') or MAIN.native[true])
+
         for i, evt in ipairs(ENV.exts) do
             if evt.pre == 'input' then
                 ins = ins + 1
@@ -334,7 +336,7 @@ do
     CC = SUB(CC, '=== FUNCTIONS_C ===', CODE.functions)
     CC = SUB(CC, '=== STUBS ===',       CODE.stubs)
     CC = SUB(CC, '=== CODE ===',        AST.root.code)
-    CC = SUB(CC, '=== NATIVE ===', (OPTS.c_calls and '') or MAIN.native)
+    CC = SUB(CC, '=== NATIVE ===', (OPTS.c_calls and '') or MAIN.native[false])
 
     -- IFACES
     if PROPS.has_ifcs then

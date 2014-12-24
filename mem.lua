@@ -12,10 +12,11 @@ end
 
 F = {
     Host = function (me)
+        local pre, code = unpack(me)
         -- unescape `##´ => `#´
-        local src = string.gsub(me[1], '^%s*##',  '#')
+        local src = string.gsub(code, '^%s*##',  '#')
               src = string.gsub(src,   '\n%s*##', '\n#')
-        CLS().native = CLS().native .. [[
+        CLS().native[pre] = CLS().native[pre] .. [[
 
 #line ]]..me.ln[2]..' "'..me.ln[1]..[["
 ]] .. src
@@ -27,7 +28,7 @@ typedef struct CEU_]]..me.id..[[ {
   struct tceu_org org;
   tceu_trl trls_[ ]]..me.trails_n..[[ ];
 ]]
-        me.native = ''
+        me.native = { [true]='', [false]='' }
         me.funs = ''
     end,
     Dcl_cls_pos = function (me)
@@ -52,7 +53,11 @@ typedef union CEU_]]..me.id..[[_delayed {
         end
 
         if me.id ~= 'Main' then
-            MEM.clss = MEM.clss .. me.native .. '\n'
+            -- native/pre goes w/ MAIN
+            MAIN.native[true] = MAIN.native[true] .. me.native[true]
+
+            -- native goes after class declaration
+            MEM.clss = MEM.clss .. me.native[false] .. '\n'
         end
         MEM.clss = MEM.clss .. me.struct .. '\n'
 

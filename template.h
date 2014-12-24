@@ -20,6 +20,7 @@ typedef === TCEU_NCLS === tceu_ncls;
 
 #include "ceu_os.h"
 
+=== NATIVE_PRE ===
 === EVENTS ===      /* CEU_IN_, CEU_OUT_ */
 === FUNCTIONS ===   /* CEU_FUN_ */
 === TUPLES ===

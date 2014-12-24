@@ -107,7 +107,7 @@ TYPES = P'void' + 'char' + 'byte' + 'bool' + 'word'
       + 's8' + 's16' + 's32' + 's64'
       + 'float' + 'f32' + 'f64'
 
-KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'native'
+KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'native' + 'native/pre'
      + 'continue' + 'do'
      + 'else'     + 'else/if'  + 'emit'     + 'end'      + 'event'
      + 'every'    + 'finalize' + 'FOREVER'  + 'if'       + 'input'
@@ -478,7 +478,8 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     , STRING = CK( CK'"' * (P(1)-'"'-'\n')^0 * EK'"' )
 
-    , Host    = KEY'native' * (#EKEY'do')*'do' * --m.S' \n\t'^0 *
+    , Host    = (KEY'native/pre'*Cc(true) + KEY'native'*Cc(false))
+                * (#EKEY'do')*'do' * --m.S' \n\t'^0 *
                     ( C(V'_C') + C((P(1)-(m.S'\t\n\r '*'end'*P';'^0*'\n'))^0) )
                 *S* EKEY'end'
 
