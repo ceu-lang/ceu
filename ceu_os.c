@@ -18,6 +18,7 @@ void* CEU_APP_ADDR = NULL;
 
 #if defined(CEU_DEBUG) || defined(CEU_NEWS) || defined(CEU_THREADS) || defined(CEU_OS)
 #include <stdlib.h>     /* realloc, exit */
+void *realloc(void *ptr, size_t size);
 #endif
 
 #ifdef CEU_NEWS_POOL
@@ -738,6 +739,7 @@ int ceu_go_all (tceu_app* app)
  */
 void* CEU_SYS_VEC[CEU_SYS_MAX] __attribute__((used)) = {
     (void*) &ceu_sys_assert,
+    (void*) &ceu_sys_log,
     (void*) &ceu_sys_realloc,
     (void*) &ceu_sys_req,
     (void*) &ceu_sys_load,

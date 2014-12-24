@@ -54,6 +54,7 @@ int main (void)
         fseek(f, 0x238, SEEK_SET);
         fread(f_]]..i..[[, 1, sz, f);
         app_]]..i..[[ = ceu_sys_load(f_]]..i..[[);
+        ceu_sys_assert(app_]]..i..[[ != NULL);
     }
 ]])
     end

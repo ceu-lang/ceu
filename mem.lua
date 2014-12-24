@@ -53,10 +53,10 @@ typedef union CEU_]]..me.id..[[_delayed {
             me.struct  = me.struct..'\n} '..TP.toc(me.tp)..';\n'
         end
 
-        if me.id ~= 'Main' then
-            -- native/pre goes before everything
-            MEM.native_pre = MEM.native_pre ..  me.native[true]
+        -- native/pre goes before everything
+        MEM.native_pre = MEM.native_pre ..  me.native[true]
 
+        if me.id ~= 'Main' then
             -- native goes after class declaration
             MEM.clss = MEM.clss .. me.native[false] .. '\n'
         end
