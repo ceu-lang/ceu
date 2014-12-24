@@ -728,7 +728,8 @@ F = {
 
         if n_evt == 1 then
             ASR(TP.contains(ins,ps.tp), me,
-                'non-matching types on `emit´ ('..TP.tostr(ins)..' vs '..TP.tostr(ps.tp)..')')
+                'non-matching types on `emit´ ('..
+                    TP.tostr(ins)..' vs '..TP.tostr(ps.tp)..')')
         end
     end,
 

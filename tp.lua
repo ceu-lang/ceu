@@ -225,33 +225,6 @@ function TP.contains (tp1, tp2)
         return false
     end
 
-    -- both are pointers
-    if tp1.ptr>0 and tp2.ptr>0 then
-        if tp1.id=='char' and tp1.ptr==1 -- cast to char*
-        or tp1.id=='void' and tp1.ptr==1 -- cast to void*
-        or tp1.ext or tp2.ext then       -- let gcc handle
-            return true
-            -- TODO: void* too???
-        end
-        if tp2.id == 'null' then
-            return true     -- any pointer can be assigned "null"
-        end
-        return false
-    elseif tp1.ptr>0 or tp2.ptr>0 then
-        if tp1.ptr>0 and tp2.ext then
-            return true
-        elseif tp2.ptr>0 and tp1.ext then
-            return true
-        else
-            return false
-        end
-    end
-
-    -- let external types be handled by gcc
-    if tp1.ext or tp2.ext then
-        return true
-    end
-
     -- tuples vs (tuples or single types)
     if tp1.tup or tp2.tup then
         tup1 = tp1.tup or { tp1 }
@@ -265,6 +238,34 @@ function TP.contains (tp1, tp2)
                 end
             end
         end
+        return true
+    end
+
+    -- both are pointers
+    local ptr2 = (tp2.ptr>0 and tp2.ptr) or (tp2.arr and tp2.ptr+1)
+    if tp1.ptr>0 and ptr2>0 then
+        if tp1.id=='char' and tp1.ptr==1 -- cast to char*
+        or tp1.id=='void' and tp1.ptr==1 -- cast to void*
+        or tp1.ext or tp2.ext then       -- let gcc handle
+            return true
+            -- TODO: void* too???
+        end
+        if tp2.id == 'null' then
+            return true     -- any pointer can be assigned "null"
+        end
+        return false
+    elseif tp1.ptr>0 or ptr2>0 then
+        if tp1.ptr>0 and tp2.ext then
+            return true
+        elseif ptr2>0 and tp1.ext then
+            return true
+        else
+            return false
+        end
+    end
+
+    -- let external types be handled by gcc
+    if tp1.ext or tp2.ext then
         return true
     end
 
