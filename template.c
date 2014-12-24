@@ -11,9 +11,6 @@
 #ifdef CEU_RUNTESTS
 #include <string.h>     /* memset */
 #endif
-#ifdef CEU_THREADS
-#include <assert.h>
-#endif
 
 #ifdef CEU_THREADS
 #   define CEU_ATOMIC(f)                                      \
@@ -179,7 +176,7 @@ fprintf(stderr, "OK : lbl=%d : org=%p\n", _CEU_LBL, _STK_ORG);
         === CODE ===
     }
 #ifdef CEU_DEBUG
-    assert(0);
+    ceu_out_assert(0);
 #endif
     return RET_HALT;    /* TODO: should never be reached anyways */
 }
@@ -223,7 +220,7 @@ ceu_app_init (tceu_app* app)
 #ifdef CEU_LUA
     app->lua = luaL_newstate();
     /* TODO: lua_close(CEU_L); */
-    assert(app->lua != NULL);
+    ceu_out_assert(app->lua != NULL);
     luaL_openlibs(app->lua);
     lua_atpanic(app->lua, ceu_lua_atpanic);
 #endif

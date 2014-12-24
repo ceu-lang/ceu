@@ -13,7 +13,7 @@ void* CEU_APP_ADDR = NULL;
 
 #ifdef CEU_DEBUG
 #include <stdio.h>      /* fprintf */
-#include <assert.h>
+#include <assert.h>     /* sys_assert */
 #endif
 
 #if defined(CEU_DEBUG) || defined(CEU_NEWS) || defined(CEU_THREADS) || defined(CEU_OS)
@@ -58,6 +58,14 @@ int ceu_lua_atpanic (lua_State* lua) {
 static int _ceu_dyns_ = 0;  /* check if total of alloc/free match */
 #endif
 #endif
+
+void ceu_sys_assert (int v) {
+#ifdef CEU_DEBUG
+    assert(v);
+#else
+    (void)v;
+#endif
+}
 
 #if defined(CEU_NEWS) || defined(CEU_THREADS) || defined(CEU_OS)
 void* ceu_sys_realloc (void* ptr, size_t size) {
@@ -456,7 +464,7 @@ fprintf(stderr, "STACK[%d]: evt=%d : seqno=%d : ntrls=%d\n",
 #ifdef CEU_NEWS
                             if (CUR.stop == CUR_ORG) {
 #ifdef CEU_DEBUG
-                                assert(CUR_ORG->isDyn);
+                                ceu_sys_assert(CUR_ORG->isDyn);
 #endif
                                 STK = stk;              /* that's it */
                             } else
@@ -466,7 +474,7 @@ fprintf(stderr, "STACK[%d]: evt=%d : seqno=%d : ntrls=%d\n",
 #ifdef CEU_DEBUG
                             // TODO: problem when trl[n]==1st-org
                             // assert fails because CUR_ORG==CUR.stop(trl[n])
-                            assert(CUR.stop != CUR_ORG);
+                            ceu_sys_assert(CUR.stop != CUR_ORG);
 #endif
 #endif
 */
@@ -482,7 +490,7 @@ fprintf(stderr, "STACK[%d]: evt=%d : seqno=%d : ntrls=%d\n",
 #ifdef CEU_NEWS
                         if (CUR.stop == CUR_ORG) {
 #ifdef CEU_DEBUG
-                            assert(CUR_ORG->isDyn);
+                            ceu_sys_assert(CUR_ORG->isDyn);
 #endif
                             break;  /* pop stack */
                         }
@@ -492,7 +500,7 @@ fprintf(stderr, "STACK[%d]: evt=%d : seqno=%d : ntrls=%d\n",
 #ifdef CEU_DEBUG
                         // TODO: problem when trl[n]==1st-org
                         // assert fails because CUR_ORG==CUR.stop(trl[n])
-                        assert(CUR.stop != CUR_ORG);
+                        ceu_sys_assert(CUR.stop != CUR_ORG);
 #endif
 #endif
 */
@@ -587,7 +595,7 @@ if (STK.trl->evt==CEU_IN__ORG) {
 #endif
                     default:
 #ifdef CEU_DEBUG
-                        assert(0);
+                        ceu_sys_assert(0);
 #endif
                         break;
                 }
@@ -709,7 +717,7 @@ int ceu_go_all (tceu_app* app)
 
 #ifdef CEU_NEWS
 #ifdef CEU_RUNTESTS
-    assert(_ceu_dyns_ == 0);
+    ceu_sys_assert(_ceu_dyns_ == 0);
 #endif
 #endif
 
@@ -725,6 +733,7 @@ int ceu_go_all (tceu_app* app)
 /* SYS_VECTOR
  */
 void* CEU_SYS_VEC[CEU_SYS_MAX] __attribute__((used)) = {
+    (void*) &ceu_sys_assert,
     (void*) &ceu_sys_realloc,
     (void*) &ceu_sys_req,
     (void*) &ceu_sys_load,
@@ -773,7 +782,7 @@ tceu_queue* ceu_sys_queue_get (void) {
         ret = NULL;
     } else {
 #ifdef CEU_DEBUG
-        assert(QUEUE_tot > 0);
+        ceu_sys_assert(QUEUE_tot > 0);
 #endif
         ret = (tceu_queue*) &QUEUE[QUEUE_get];
     }

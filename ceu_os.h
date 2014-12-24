@@ -71,6 +71,9 @@
 
     typedef s8 tceu_nlbl;   /* TODO: to small!! */
 
+    #define ceu_out_assert(v) \
+        ((__typeof__(ceu_sys_assert)*)((_ceu_app)->sys_vec[CEU_SYS_ASSERT]))(v)
+
     #define ceu_out_realloc(ptr, size) \
         ((__typeof__(ceu_sys_realloc)*)((_ceu_app)->sys_vec[CEU_SYS_REALLOC]))(ptr,size)
 
@@ -122,6 +125,8 @@
         ((__typeof__(ceu_sys_go)*)((app)->sys_vec[CEU_SYS_GO]))(app,evt,evtp)
 
 #else /* ! CEU_OS */
+    #define ceu_out_assert(v) \
+            ceu_sys_assert(v)
     #define ceu_out_realloc(ptr,size) \
             ceu_sys_realloc(ptr,size)
     #define ceu_out_req() \
@@ -327,7 +332,7 @@ typedef struct tceu_go {
 
 #ifdef CEU_DEBUG
 #define stack_push(go,elem)             \
-    assert((go).stki+1 < CEU_MAX_STACK);  \
+    ceu_out_assert((go).stki+1 < CEU_MAX_STACK);  \
     (go).stk[++((go).stki)] = elem
 #else
 #define stack_push(go,elem)             \
@@ -501,6 +506,7 @@ int  ceu_os_scheduler (int(*dt)());
 tceu_queue* ceu_sys_queue_nxt (void);
 void        ceu_sys_queue_rem (void);
 
+void      ceu_sys_assert    (int v);
 void*     ceu_sys_realloc   (void* ptr, size_t size);
 int       ceu_sys_req       (void);
 tceu_app* ceu_sys_load      (void* addr);
@@ -519,7 +525,8 @@ int       ceu_sys_emit      (tceu_app* app, tceu_nevt evt, tceu_evtp param, int 
 tceu_evtp ceu_sys_call      (tceu_app* app, tceu_nevt evt, tceu_evtp param);
 
 enum {
-    CEU_SYS_REALLOC = 0,
+    CEU_SYS_ASSERT = 0,
+    CEU_SYS_REALLOC,
     CEU_SYS_REQ,
     CEU_SYS_LOAD,
 #ifdef CEU_ISR
