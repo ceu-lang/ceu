@@ -1127,11 +1127,18 @@ tceu_app* ceu_sys_load (void* addr)
 {
     uint       size;
     tceu_init* init;
+#ifdef CEU_OS_LUA
+    char**     luaifc;
+#endif
 
 #ifdef __AVR
     ((tceu_export) ((word)addr>>1))(&size, &init);
 #else
-    ((tceu_export) addr)(&size, &init);
+    ((tceu_export) addr)(&size, &init
+#ifdef CEU_OS_LUA
+                        , &luaifc
+#endif
+                        );
 #endif
 
     tceu_app* app = (tceu_app*) ceu_sys_realloc(NULL, sizeof(tceu_app));
@@ -1155,6 +1162,10 @@ tceu_app* ceu_sys_load (void* addr)
     app->init = (tceu_init) ((word)init);
 #endif
     app->addr = addr;
+
+#ifdef CEU_OS_LUA
+    app->luaifc = *luaifc;
+#endif
 
     return app;
 }

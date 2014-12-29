@@ -19,6 +19,7 @@ OPTS_NPARAMS = {
     tp_word   = 1,
 
     os        = 0,
+    os_lua    = 0,
 
     timemachine = 0,
 }
@@ -43,6 +44,7 @@ OPTS = {
     tp_word   = 4,
 
     os        = false,
+    os_lua    = false,
 
     timemachine = false,
 }
@@ -80,6 +82,10 @@ end
 if OPTS.version then
     print 'ceu 0.8'
     os.exit(0)
+end
+
+if OPTS.os_lua then
+    assert(OPTS.os, '`--os-lua´ requires `--os´')
 end
 
 if not OPTS.input then
@@ -222,6 +228,13 @@ do
 #define CEU_OS
 #endif
 ]]
+            if OPTS.os_lua then
+                str = str .. [[
+#ifndef CEU_OS_LUA
+#define CEU_OS_LUA
+#endif
+]]
+            end
         end
 
         if OPTS.timemachine then
@@ -264,14 +277,16 @@ do
         for i, evt in ipairs(ENV.exts) do
             if evt.pre == 'input' then
                 ins = ins + 1
-                local s = '#define CEU_IN_'..evt.id..' '..(256-ins)
+                evt.n = (256-ins)
+                local s = '#define CEU_IN_'..evt.id..' '..evt.n
                 if OPTS.verbose and i > 9 then
                     DBG('', s)
                 end
                 str = str..s..'\n'
             else
                 outs = outs + 1
-                local s = '#define CEU_OUT_'..evt.id..' '..outs
+                evt.n = outs
+                local s = '#define CEU_OUT_'..evt.id..' '..evt.n
                 if OPTS.verbose then
                     DBG('', s)
                 end
@@ -437,6 +452,25 @@ do
     end
     if OPTS.out_f ~= 'ceu_app_init' then
         CC = SUB(CC, 'ceu_app_init', OPTS.out_f)
+    end
+
+    -- app lua interface
+    if OPTS.os_lua then
+        local ifc = ''
+        for i, evt in ipairs(ENV.exts) do
+            if string.sub(evt.id,1,1) ~= '_' then
+                ifc = ifc ..[[
+{
+    ln  = { ']]..evt.ln[1].."', "..evt.ln[2]..[[ },
+    id  = ']]..evt.id..[[',
+    pre = ']]..evt.pre..[[',
+    n   = ]]..evt.n..[[,
+},
+]]
+            end
+        end
+        ifc = 'return {\n'..ifc..'}'
+        CC = SUB(CC, '=== APP_LUAIFC ===', string.format("%q",ifc))
     end
 end
 

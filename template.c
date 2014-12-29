@@ -265,8 +265,15 @@ ceu_app_init (tceu_app* _ceu_app)
 
 #ifdef CEU_OS
 __attribute__ ((section (".export")))
-void CEU_EXPORT (uint* size, tceu_init** init) {
+void CEU_EXPORT (uint* size, tceu_init** init
+#ifdef CEU_OS_LUA
+                , char** luaifc
+#endif
+) {
     *size = sizeof(CEU_Main);
     *init = (tceu_init*) &ceu_app_init;
+#ifdef CEU_OS_LUA
+    *luaifc = (=== APP_LUAIFC ===);
+#endif
 }
 #endif

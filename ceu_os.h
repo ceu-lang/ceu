@@ -191,8 +191,8 @@
         set = ceu_out_call_val(_ceu_app, CEU_OUT_LUA_NEW, CEU_EVTP((void*)NULL)).ptr; \
     }
 
-    #define ceu_lua_atpanic(l, f) { \
-        ceu_out_assert(0);  /* TODO */
+    #define ceu_lua_atpanic(l, f) {     \
+        ceu_out_assert(0);  /* TODO */  \
     }
 
     #define ceu_luaL_loadstring(set, l, str) {  \
@@ -528,13 +528,20 @@ typedef struct tceu_app {
     tceu_evtp   (*calls) (struct tceu_app*,tceu_nevt,tceu_evtp);
     void**      sys_vec;
     void*       addr;
+#ifdef CEU_OS_LUA
+    char*       luaifc;
+#endif
 #endif
     tceu_org*   data;
 } tceu_app;
 
 #ifdef CEU_OS
 typedef void (*tceu_init)   (tceu_app* app);
-typedef void (*tceu_export) (uint* size, tceu_init** init);
+typedef void (*tceu_export) (uint* size, tceu_init** init
+#ifdef CEU_OS_LUA
+                            , char** luaifc
+#endif
+);
 #endif
 
 /* TCEU_THREADS_P */
