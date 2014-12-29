@@ -1357,6 +1357,7 @@ F = {
 -- STRING ------------------------------------------------------------
 
     STRING_pos = function (me)
+do return end
         if not OPTS.os then
             return
         end

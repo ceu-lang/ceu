@@ -1256,8 +1256,51 @@ end
     todo = 'finalize is lost!',
 }
 
-do return end
+Test { [[
+native do
+    ##define ceu_out_call_LUA_GETGLOBAL
+end
+
+output (int*,char*)=>void LUA_GETGLOBAL;
+function @rec (int* l)=>void load do
+    // TODO: load file
+    call LUA_GETGLOBAL => (l, "apps");              // [ apps ]
+    call LUA_GETGLOBAL => (l, "apps");              // [ apps ]
+    loop i do
+        var int has = 1;
+        if has==0 then
+            break;                                  // [ apps ]
+        end
+        _ceu_out_log("oi");
+    end
+
+    /*
+    var int len = (call LUA_OBJLEN => (l, -1));     // [ apps ]
+    loop i in len do
+        call LUA_RAWGETI => (l, -1);                // [ apps | apps[i] ]
+    end
+    */
+end
+call/rec load(null);
+
+escape 1;
+]],
+    run = 1,
+}
+
 ]===]
+
+Test { [=[
+var int a;
+var void* ptr1 = &a;
+[[ ptr = @ptr1 ]];
+var void* ptr2 = [[ ptr ]];
+escape ptr2==&a;
+]=],
+    run = 1,
+}
+
+do return end
 
 -------------------------------------------------------------------------------
 -- OK: well tested

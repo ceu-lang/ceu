@@ -1292,6 +1292,10 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
                 LINE(me, [[
         lua_pushstring(_ceu_app->lua,]]..V(p)..[[);
 ]])
+            elseif p.tp.ptr>0 then
+                LINE(me, [[
+        lua_pushlightuserdata(_ceu_app->lua,]]..V(p)..[[);
+]])
             else
                 error 'not implemented'
             end
@@ -1333,6 +1337,17 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
             } else {
                 err = 1;
             }
+            lua_pop(_ceu_app->lua, 1);
+]])
+            elseif me.ret.tp.ptr > 0 then
+                LINE(me, [[
+            void* ret;
+            if (lua_islightuserdata(_ceu_app->lua,-1)) {
+                ret = lua_touserdata(_ceu_app->lua,-1);
+            } else {
+                err = 1;
+            }
+            ]]..V(me.ret)..[[ = ret;
             lua_pop(_ceu_app->lua, 1);
 ]])
             else

@@ -74,8 +74,8 @@
     #define ceu_out_assert(v) \
         ((__typeof__(ceu_sys_assert)*)((_ceu_app)->sys_vec[CEU_SYS_ASSERT]))(v)
 
-    #define ceu_out_log(str) \
-        ((__typeof__(ceu_sys_log)*)((_ceu_app)->sys_vec[CEU_SYS_LOG]))(str)
+    #define ceu_out_log(mode,str) \
+        ((__typeof__(ceu_sys_log)*)((_ceu_app)->sys_vec[CEU_SYS_LOG]))(mode,str)
 
     #define ceu_out_realloc(ptr, size) \
         ((__typeof__(ceu_sys_realloc)*)((_ceu_app)->sys_vec[CEU_SYS_REALLOC]))(ptr,size)
@@ -130,8 +130,8 @@
 #else /* ! CEU_OS */
     #define ceu_out_assert(v) \
             ceu_sys_assert(v)
-    #define ceu_out_log(str) \
-            ceu_sys_log(str)
+    #define ceu_out_log(mode,str) \
+            ceu_sys_log(mode,str)
     #define ceu_out_realloc(ptr,size) \
             ceu_sys_realloc(ptr,size)
     #define ceu_out_req() \
@@ -174,7 +174,9 @@
 #endif
 
 #ifdef CEU_LUA
-#ifdef __ANDROID__
+#include <stdio.h>      /* BUFSIZ */
+#include <string.h>     /* strcpy */
+#if defined(__ANDROID__) || defined(CEU_OS)
     #include "lua.h"
     #include "lauxlib.h"
     #include "lualib.h"
@@ -512,7 +514,7 @@ tceu_queue* ceu_sys_queue_nxt (void);
 void        ceu_sys_queue_rem (void);
 
 void      ceu_sys_assert    (int v);
-void      ceu_sys_log       (char* str);
+void      ceu_sys_log       (int mode, char* str);
 void*     ceu_sys_realloc   (void* ptr, size_t size);
 int       ceu_sys_req       (void);
 tceu_app* ceu_sys_load      (void* addr);
