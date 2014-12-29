@@ -1279,22 +1279,22 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
         lua = string.gsub(lua, '\n', 'n') -- undo format for \n
         LINE(me, [[
 {
-    int err = luaL_loadstring(_ceu_app->lua, ]]..lua..[[);
+    int err = ceu_luaL_loadstring(_ceu_app->lua, ]]..lua..[[);
     if (! err) {
 ]])
 
         for _, p in ipairs(me.params) do
             if TP.isNumeric(p.tp) then
                 LINE(me, [[
-        lua_pushnumber(_ceu_app->lua,]]..V(p)..[[);
+        ceu_lua_pushnumber(_ceu_app->lua,]]..V(p)..[[);
 ]])
             elseif TP.toc(p.tp)=='char*' then
                 LINE(me, [[
-        lua_pushstring(_ceu_app->lua,]]..V(p)..[[);
+        ceu_lua_pushstring(_ceu_app->lua,]]..V(p)..[[);
 ]])
             elseif p.tp.ptr>0 then
                 LINE(me, [[
-        lua_pushlightuserdata(_ceu_app->lua,]]..V(p)..[[);
+        ceu_lua_pushlightuserdata(_ceu_app->lua,]]..V(p)..[[);
 ]])
             else
                 error 'not implemented'
@@ -1302,29 +1302,29 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
         end
 
         LINE(me, [[
-        err = lua_pcall(_ceu_app->lua, ]]..nargs..','..nrets..[[, 0);
+        err = ceu_lua_pcall(_ceu_app->lua, ]]..nargs..','..nrets..[[, 0);
         if (! err) {
 ]])
         if me.ret then
             if TP.isNumeric(me.ret.tp) or me.ret.tp=='bool' then
                 LINE(me, [[
             int ret;
-            if (lua_isnumber(_ceu_app->lua,-1)) {
-                ret = lua_tonumber(_ceu_app->lua,-1);
-            } else if (lua_isboolean(_ceu_app->lua,-1)) {
-                ret = lua_toboolean(_ceu_app->lua,-1);
+            if (ceu_lua_isnumber(_ceu_app->lua,-1)) {
+                ret = ceu_lua_tonumber(_ceu_app->lua,-1);
+            } else if (ceu_lua_isboolean(_ceu_app->lua,-1)) {
+                ret = ceu_lua_toboolean(_ceu_app->lua,-1);
             } else {
                 err = 1;
             }
             ]]..V(me.ret)..[[ = ret;
-            lua_pop(_ceu_app->lua, 1);
+            ceu_lua_pop(_ceu_app->lua, 1);
 ]])
             elseif TP.toc(me.ret.tp) == 'char*' then
                 --ASR(me.ret.var and me.ret.var.tp.arr, me,
                     --'invalid attribution (requires a buffer)')
                 LINE(me, [[
-            if (lua_isstring(_ceu_app->lua,-1)) {
-                const char* ret = lua_tostring(_ceu_app->lua,-1);
+            if (ceu_lua_isstring(_ceu_app->lua,-1)) {
+                const char* ret = ceu_lua_tostring(_ceu_app->lua,-1);
 ]])
                 local sval = me.ret.var and me.ret.var.tp.arr and me.ret.var.tp.arr.sval
                 if sval then
@@ -1337,18 +1337,18 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
             } else {
                 err = 1;
             }
-            lua_pop(_ceu_app->lua, 1);
+            ceu_lua_pop(_ceu_app->lua, 1);
 ]])
             elseif me.ret.tp.ptr > 0 then
                 LINE(me, [[
             void* ret;
-            if (lua_islightuserdata(_ceu_app->lua,-1)) {
-                ret = lua_touserdata(_ceu_app->lua,-1);
+            if (ceu_lua_islightuserdata(_ceu_app->lua,-1)) {
+                ret = ceu_lua_touserdata(_ceu_app->lua,-1);
             } else {
                 err = 1;
             }
             ]]..V(me.ret)..[[ = ret;
-            lua_pop(_ceu_app->lua, 1);
+            ceu_lua_pop(_ceu_app->lua, 1);
 ]])
             else
                 error 'not implemented'
@@ -1362,7 +1362,7 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
         }
     }
 /* ERROR */
-    lua_error(_ceu_app->lua); /* TODO */
+    ceu_lua_error(_ceu_app->lua); /* TODO */
 
 /* OK */
 _CEU_LUA_OK_]]..me.n..[[:;

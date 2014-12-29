@@ -1288,22 +1288,11 @@ escape 1;
     run = 1,
 }
 
-]===]
-
-Test { [=[
-var int a;
-var void* ptr1 = &a;
-[[ ptr = @ptr1 ]];
-var void* ptr2 = [[ ptr ]];
-escape ptr2==&a;
-]=],
-    run = 1,
-}
-
 do return end
 
 -------------------------------------------------------------------------------
 -- OK: well tested
+]===]
 
 Test { [[escape(1);]],
     _ana = {
@@ -38462,6 +38451,18 @@ var int ret = [[v_from_lua]];
 escape ret;
 ]=],
     run = 200,
+}
+
+Test { [=[
+var int a;
+var void* ptr1 = &a;
+[[ ptr = @ptr1 ]];
+var void* ptr2 = [[ ptr ]];
+native @pure _printf;
+_printf("%p %p %p\n", ptr1, ptr2, &a);
+escape ptr2==&a;
+]=],
+    run = 1,
 }
 
 

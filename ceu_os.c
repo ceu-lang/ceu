@@ -41,18 +41,6 @@ void *realloc(void *ptr, size_t size);
 
 /**********************************************************************/
 
-#ifdef CEU_LUA
-int ceu_lua_atpanic (lua_State* lua) {
-#ifdef CEU_DEBUG
-    fprintf(stderr, "LUA_ATPANIC: %s\n",
-            lua_tostring(lua,-1));
-#endif
-    return 0;
-}
-#endif
-
-/**********************************************************************/
-
 #ifdef CEU_NEWS
 #ifdef CEU_RUNTESTS
 #define CEU_MAX_DYNS 100
@@ -68,12 +56,12 @@ void ceu_sys_assert (int v) {
 #endif
 }
 
-void ceu_sys_log (int mode, char* s) {
+void ceu_sys_log (int mode, const void* s) {
 #ifdef CEU_OS
     ceu_log(mode, s);
 #else
     if (mode == 0) {
-        fprintf(stderr, "%s", s);
+        fprintf(stderr, "%s", (char*)s);
     } else {
         fprintf(stderr, "%lX", (long)s);
     }
@@ -264,6 +252,20 @@ int ceu_sys_wclock_ (tceu_app* app, s32 dt, s32* set, s32* get)
 }
 #endif
 
+#endif
+
+/**********************************************************************/
+
+#ifdef CEU_LUA
+int ceu_lua_atpanic_f (lua_State* lua) {
+#ifdef CEU_DEBUG
+    ceu_out_log(0, "LUA_ATPANIC: ");
+    ceu_out_log(0, lua_tostring(lua,-1));
+    ceu_out_log(0, "\n");
+#endif
+    /*ceu_out_assert(0);*/
+    return 0;
+}
 #endif
 
 /**********************************************************************/

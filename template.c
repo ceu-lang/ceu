@@ -11,9 +11,6 @@
 #ifdef CEU_RUNTESTS
 #include <string.h>     /* memset */
 #endif
-#ifdef CEU_THREADS
-#include <assert.h>
-#endif
 
 #ifdef CEU_THREADS
 #   define CEU_ATOMIC(f)                                      \
@@ -179,84 +176,84 @@ fprintf(stderr, "OK : lbl=%d : org=%p\n", _CEU_LBL, _STK_ORG);
         === CODE ===
     }
 #ifdef CEU_DEBUG
-    assert(0);
+    ceu_out_assert(0);
 #endif
     return RET_HALT;    /* TODO: should never be reached anyways */
 }
 
 static __attribute__((noinline))  __attribute__((noclone))
 void
-ceu_app_init (tceu_app* app)
+ceu_app_init (tceu_app* _ceu_app)
 {
-    app->seqno = 0;
+    _ceu_app->seqno = 0;
 #if defined(CEU_RET) || defined(CEU_OS)
-    app->isAlive = 1;
+    _ceu_app->isAlive = 1;
 #endif
 #ifdef CEU_ASYNCS
-    app->pendingAsyncs = 1;
+    _ceu_app->pendingAsyncs = 1;
 #endif
 #ifdef CEU_RET
-    app->ret = 0;
+    _ceu_app->ret = 0;
 #endif
 #ifdef CEU_WCLOCKS
-    app->wclk_late = 0;
-    app->wclk_min = CEU_WCLOCK_INACTIVE;
-    app->wclk_min_tmp = CEU_WCLOCK_INACTIVE;
+    _ceu_app->wclk_late = 0;
+    _ceu_app->wclk_min = CEU_WCLOCK_INACTIVE;
+    _ceu_app->wclk_min_tmp = CEU_WCLOCK_INACTIVE;
 #ifdef CEU_TIMEMACHINE
-    app->wclk_late_ = 0;
-    app->wclk_min_ = CEU_WCLOCK_INACTIVE;
-    app->wclk_min_tmp_ = CEU_WCLOCK_INACTIVE;
+    _ceu_app->wclk_late_ = 0;
+    _ceu_app->wclk_min_ = CEU_WCLOCK_INACTIVE;
+    _ceu_app->wclk_min_tmp_ = CEU_WCLOCK_INACTIVE;
 #endif
 #endif
 #ifdef CEU_THREADS
-    pthread_mutex_init(&app->threads_mutex, NULL);
+    pthread_mutex_init(&_ceu_app->threads_mutex, NULL);
     /*PTHREAD_COND_INITIALIZER,*/
-    app->threads_n = 0;
+    _ceu_app->threads_n = 0;
 
     /* All code run atomically:
      * - the program is always locked as a whole
      * -    thread spawns will unlock => re-lock
      * - but program will still run to completion
      */
-    CEU_THREADS_MUTEX_LOCK(&app->threads_mutex);
+    CEU_THREADS_MUTEX_LOCK(&_ceu_app->threads_mutex);
 #endif
 #ifdef CEU_LUA
-    app->lua = luaL_newstate();
+    _ceu_app->lua = ceu_luaL_newstate();
     /* TODO: lua_close(CEU_L); */
-    assert(app->lua != NULL);
-    luaL_openlibs(app->lua);
-    lua_atpanic(app->lua, ceu_lua_atpanic);
+    ceu_out_assert(_ceu_app->lua != NULL);
+    ceu_luaL_openlibs(_ceu_app->lua);
+    ceu_lua_atpanic(_ceu_app->lua, ceu_lua_atpanic_f);    /* TODO: CEU_OS */
 #endif
 
 #ifdef CEU_OS
 
 #ifdef __AVR
-    app->code  = (__typeof__(ceu_app_go)*)    (((word)app->addr>>1) + &ceu_app_go);
-    app->calls = (__typeof__(ceu_app_calls)*) (((word)app->addr>>1) + &ceu_app_calls);
+    _ceu_app->code  = (__typeof__(ceu_app_go)*)    (((word)_ceu_app->addr>>1) + &ceu_app_go);
+    _ceu_app->calls = (__typeof__(ceu_app_calls)*) (((word)_ceu_app->addr>>1) + &ceu_app_calls);
 #else
-    app->code  = (__typeof__(ceu_app_go)*)    (&ceu_app_go);
-    app->calls = (__typeof__(ceu_app_calls)*) (&ceu_app_calls);
+    _ceu_app->code  = (__typeof__(ceu_app_go)*)    (&ceu_app_go);
+    _ceu_app->calls = (__typeof__(ceu_app_calls)*) (&ceu_app_calls);
 #endif
 
 #else   /* !CEU_OS */
 
-    app->code  = (__typeof__(ceu_app_go)*)    (&ceu_app_go);
+    _ceu_app->code  = (__typeof__(ceu_app_go)*)    (&ceu_app_go);
 
 #endif  /* CEU_OS */
 
 #ifndef CEU_OS
 #ifdef CEU_DEBUG
-    CEU_APP_SIG = app;
+    CEU_APP_SIG = _ceu_app;
     signal(SIGSEGV, ceu_segfault);
 #endif
 #endif
 
-    ceu_out_org(app, app->data, CEU_NTRAILS, Class_Main, 0,
+    ceu_out_org(_ceu_app, _ceu_app->data, CEU_NTRAILS, Class_Main, 0,
 #ifdef CEU_NEWS
                 0,
 #endif
                 NULL, 0);
-    ceu_out_go(app, CEU_IN__INIT, CEU_EVTP((void*)NULL));
+    ceu_out_go(_ceu_app, CEU_IN__INIT, CEU_EVTP((void*)NULL));
 }
 
 /* EXPORTED ENTRY POINT

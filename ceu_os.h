@@ -185,6 +185,45 @@
     #include <lua5.1/lauxlib.h>
     #include <lua5.1/lualib.h>
 #endif
+
+#ifdef CEU_OS
+    #define ceu_luaL_newstate() \
+        ceu_out_call_val(_ceu_app, CEU_OUT_LUA_NEW, CEU_EVTP((void*)NULL)).ptr
+    #define ceu_luaL_openlibs(l)             #error
+    #define ceu_lua_atpanic(l, f)            #error
+    #define ceu_luaL_loadstring(l, str)      #error
+    #define ceu_lua_pushnumber(l, v)         #error
+    #define ceu_lua_pushstring(l, v)         #error
+    #define ceu_lua_pushlightuserdata(l, v)  #error
+    #define ceu_lua_pcall(l,nargs,nrets,err) #error
+    #define ceu_lua_isnumber(l, idx)         #error
+    #define ceu_lua_tonumber(l, idx)         #error
+    #define ceu_lua_isboolean(l, idx)        #error
+    #define ceu_lua_pop(l, n)                #error
+    #define ceu_lua_isstring(l, idx)         #error
+    #define ceu_lua_tostring(l, idx)         #error
+    #define ceu_lua_islightuserdata(l, idx)  #error
+    #define ceu_lua_touserdata(l, idx)       #error
+#else
+    #define ceu_luaL_newstate()              luaL_newstate()
+    #define ceu_luaL_openlibs(l)             luaL_openlibs(l)
+    #define ceu_lua_atpanic(l, f)            lua_atpanic(l, f)
+    #define ceu_luaL_loadstring(l, str)      luaL_loadstring(l, str)
+    #define ceu_lua_pushnumber(l, v)         lua_pushnumber(l, v)
+    #define ceu_lua_pushstring(l, v)         lua_pushstring(l, v)
+    #define ceu_lua_pushlightuserdata(l, v)  lua_pushlightuserdata(l, v)
+    #define ceu_lua_pcall(l,nargs,nrets,err) lua_pcall(l,nargs,nrets,err)
+    #define ceu_lua_isnumber(l, idx)         lua_isnumber(l, idx)
+    #define ceu_lua_tonumber(l, idx)         lua_tonumber(l, idx)
+    #define ceu_lua_isboolean(l, idx)        lua_isboolean(l, idx)
+    #define ceu_lua_toboolean(l, idx)        lua_toboolean(l, idx)
+    #define ceu_lua_pop(l, n)                lua_pop(l, n)
+    #define ceu_lua_isstring(l, idx)         lua_isstring(l, idx)
+    #define ceu_lua_tostring(l, idx)         lua_tostring(l, idx)
+    #define ceu_lua_islightuserdata(l, idx)  lua_islightuserdata(l, idx)
+    #define ceu_lua_touserdata(l, idx)       lua_touserdata(l, idx)
+    #define ceu_lua_error(l)                 lua_error(l)
+#endif
 #endif
 
 typedef u8 tceu_nevt;   /* max number of events */
@@ -514,7 +553,7 @@ tceu_queue* ceu_sys_queue_nxt (void);
 void        ceu_sys_queue_rem (void);
 
 void      ceu_sys_assert    (int v);
-void      ceu_sys_log       (int mode, char* str);
+void      ceu_sys_log       (int mode, const void* str);
 void*     ceu_sys_realloc   (void* ptr, size_t size);
 int       ceu_sys_req       (void);
 tceu_app* ceu_sys_load      (void* addr);
