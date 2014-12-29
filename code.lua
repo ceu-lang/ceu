@@ -1279,7 +1279,8 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
         lua = string.gsub(lua, '\n', 'n') -- undo format for \n
         LINE(me, [[
 {
-    int err = ceu_luaL_loadstring(_ceu_app->lua, ]]..lua..[[);
+    int err;
+    ceu_luaL_loadstring(err,_ceu_app->lua, ]]..lua..[[);
     if (! err) {
 ]])
 
@@ -1302,19 +1303,24 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
         end
 
         LINE(me, [[
-        err = ceu_lua_pcall(_ceu_app->lua, ]]..nargs..','..nrets..[[, 0);
+        ceu_lua_pcall(err, _ceu_app->lua, ]]..nargs..','..nrets..[[, 0);
         if (! err) {
 ]])
         if me.ret then
             if TP.isNumeric(me.ret.tp) or me.ret.tp=='bool' then
                 LINE(me, [[
+            int is;
             int ret;
-            if (ceu_lua_isnumber(_ceu_app->lua,-1)) {
-                ret = ceu_lua_tonumber(_ceu_app->lua,-1);
-            } else if (ceu_lua_isboolean(_ceu_app->lua,-1)) {
-                ret = ceu_lua_toboolean(_ceu_app->lua,-1);
+            ceu_lua_isnumber(is, _ceu_app->lua,-1);
+            if (is) {
+                ceu_lua_tonumber(ret, _ceu_app->lua,-1);
             } else {
-                err = 1;
+                ceu_lua_isboolean(is, _ceu_app->lua,-1);
+                if (is) {
+                    ceu_lua_toboolean(ret, _ceu_app->lua,-1);
+                } else {
+                    err = 1;
+                }
             }
             ]]..V(me.ret)..[[ = ret;
             ceu_lua_pop(_ceu_app->lua, 1);
@@ -1323,8 +1329,11 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
                 --ASR(me.ret.var and me.ret.var.tp.arr, me,
                     --'invalid attribution (requires a buffer)')
                 LINE(me, [[
-            if (ceu_lua_isstring(_ceu_app->lua,-1)) {
-                const char* ret = ceu_lua_tostring(_ceu_app->lua,-1);
+            int is;
+            ceu_lua_isstring(is, _ceu_app->lua,-1);
+            if (is) {
+                const char* ret;
+                ceu_lua_tostring(ret, _ceu_app->lua,-1);
 ]])
                 local sval = me.ret.var and me.ret.var.tp.arr and me.ret.var.tp.arr.sval
                 if sval then
@@ -1342,8 +1351,10 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
             elseif me.ret.tp.ptr > 0 then
                 LINE(me, [[
             void* ret;
-            if (ceu_lua_islightuserdata(_ceu_app->lua,-1)) {
-                ret = ceu_lua_touserdata(_ceu_app->lua,-1);
+            int is;
+            ceu_lua_islightuserdata(is, _ceu_app->lua,-1);
+            if (is) {
+                ceu_lua_touserdata(ret,_ceu_app->lua,-1);
             } else {
                 err = 1;
             }

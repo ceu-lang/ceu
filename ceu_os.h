@@ -187,42 +187,44 @@
 #endif
 
 #ifdef CEU_OS
-    #define ceu_luaL_newstate() \
+    #define ceu_luaL_newstate(set) \
         ceu_out_call_val(_ceu_app, CEU_OUT_LUA_NEW, CEU_EVTP((void*)NULL)).ptr
-    #define ceu_luaL_openlibs(l)             #error
-    #define ceu_lua_atpanic(l, f)            #error
-    #define ceu_luaL_loadstring(l, str)      #error
-    #define ceu_lua_pushnumber(l, v)         #error
-    #define ceu_lua_pushstring(l, v)         #error
-    #define ceu_lua_pushlightuserdata(l, v)  #error
-    #define ceu_lua_pcall(l,nargs,nrets,err) #error
-    #define ceu_lua_isnumber(l, idx)         #error
-    #define ceu_lua_tonumber(l, idx)         #error
-    #define ceu_lua_isboolean(l, idx)        #error
-    #define ceu_lua_pop(l, n)                #error
-    #define ceu_lua_isstring(l, idx)         #error
-    #define ceu_lua_tostring(l, idx)         #error
-    #define ceu_lua_islightuserdata(l, idx)  #error
-    #define ceu_lua_touserdata(l, idx)       #error
+    #define ceu_lua_atpanic(l, f)            not-implemented
+    #define ceu_luaL_loadstring(l, str)      \
+        ceu_out_call_val(_ceu_app, CEU_OUT_LUA_NEW, CEU_EVTP((void*)str))
+    #define ceu_lua_pushnumber(l, v)         not-implemented
+    #define ceu_lua_pushstring(l, v)         not-implemented
+    #define ceu_lua_pushlightuserdata(l, v)  not-implemented
+    #define ceu_lua_pcall(l,nargs,nrets,err) not-implemented
+    #define ceu_lua_isnumber(l, idx)         not-implemented
+    #define ceu_lua_tonumber(l, idx)         not-implemented
+    #define ceu_lua_isboolean(l, idx)        not-implemented
+    #define ceu_lua_pop(l, n)                not-implemented
+    #define ceu_lua_isstring(l, idx)         not-implemented
+    #define ceu_lua_tostring(l, idx)         not-implemented
+    #define ceu_lua_islightuserdata(l, idx)  not-implemented
+    #define ceu_lua_touserdata(l, idx)       not-implemented
+    #define ceu_lua_error(l)                 \
+        ceu_out_call_val(_ceu_app, CEU_OUT_LUA_ERROR, CEU_EVTP((void*)str))
 #else
-    #define ceu_luaL_newstate()              luaL_newstate()
-    #define ceu_luaL_openlibs(l)             luaL_openlibs(l)
-    #define ceu_lua_atpanic(l, f)            lua_atpanic(l, f)
-    #define ceu_luaL_loadstring(l, str)      luaL_loadstring(l, str)
-    #define ceu_lua_pushnumber(l, v)         lua_pushnumber(l, v)
-    #define ceu_lua_pushstring(l, v)         lua_pushstring(l, v)
-    #define ceu_lua_pushlightuserdata(l, v)  lua_pushlightuserdata(l, v)
-    #define ceu_lua_pcall(l,nargs,nrets,err) lua_pcall(l,nargs,nrets,err)
-    #define ceu_lua_isnumber(l, idx)         lua_isnumber(l, idx)
-    #define ceu_lua_tonumber(l, idx)         lua_tonumber(l, idx)
-    #define ceu_lua_isboolean(l, idx)        lua_isboolean(l, idx)
-    #define ceu_lua_toboolean(l, idx)        lua_toboolean(l, idx)
-    #define ceu_lua_pop(l, n)                lua_pop(l, n)
-    #define ceu_lua_isstring(l, idx)         lua_isstring(l, idx)
-    #define ceu_lua_tostring(l, idx)         lua_tostring(l, idx)
-    #define ceu_lua_islightuserdata(l, idx)  lua_islightuserdata(l, idx)
-    #define ceu_lua_touserdata(l, idx)       lua_touserdata(l, idx)
-    #define ceu_lua_error(l)                 lua_error(l)
+    #define ceu_luaL_newstate(set)                set = luaL_newstate()
+    #define ceu_luaL_openlibs(l)                  luaL_openlibs(l)
+    #define ceu_lua_atpanic(l, f)                 lua_atpanic(l, f)
+    #define ceu_luaL_loadstring(set, l, str)      set = luaL_loadstring(l, str)
+    #define ceu_lua_pushnumber(l, v)              lua_pushnumber(l, v)
+    #define ceu_lua_pushstring(l, v)              lua_pushstring(l, v)
+    #define ceu_lua_pushlightuserdata(l, v)       lua_pushlightuserdata(l, v)
+    #define ceu_lua_pcall(set,l,nargs,nrets,err)  set = lua_pcall(l,nargs,nrets,err)
+    #define ceu_lua_isnumber(set, l, idx)         set = lua_isnumber(l, idx)
+    #define ceu_lua_tonumber(set, l, idx)         set = lua_tonumber(l, idx)
+    #define ceu_lua_isboolean(set, l, idx)        set = lua_isboolean(l, idx)
+    #define ceu_lua_toboolean(set, l, idx)        set = lua_toboolean(l, idx)
+    #define ceu_lua_pop(l, n)                     lua_pop(l, n)
+    #define ceu_lua_isstring(set, l, idx)         set = lua_isstring(l, idx)
+    #define ceu_lua_tostring(set, l, idx)         set = lua_tostring(l, idx)
+    #define ceu_lua_islightuserdata(set, l, idx)  set = lua_islightuserdata(l, idx)
+    #define ceu_lua_touserdata(set, l, idx)       set = lua_touserdata(l, idx)
+    #define ceu_lua_error(l)                      lua_error(l)
 #endif
 #endif
 
