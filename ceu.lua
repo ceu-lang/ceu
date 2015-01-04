@@ -460,9 +460,8 @@ do
         for i, evt in ipairs(ENV.exts) do
             if string.sub(evt.id,1,1) ~= '_' then
                 ifc = ifc ..[[
-{
+[ ]]..evt.id..[[ ] = {
     ln  = { ']]..evt.ln[1].."', "..evt.ln[2]..[[ },
-    id  = ']]..evt.id..[[',
     pre = ']]..evt.pre..[[',
     n   = ]]..evt.n..[[,
 },

@@ -1288,6 +1288,59 @@ escape 1;
     run = 1,
 }
 
+Test { [[
+    class Queue with
+      pool QueueForever[] val;
+    do
+      //
+    end
+
+    class QueueForever with
+      var Queue& queue;
+      var int val, maxval;
+    do
+      _printf("%d popped, pushing %d+1\n", val, val);
+      if val < maxval then
+        spawn QueueForever in queue.val with
+          this.queue = outer.queue;
+          this.val = outer.val + 1;
+          this.maxval = outer.maxval;
+        end;
+      end
+    end
+
+    var Queue queue;
+
+    watching 1000us do
+      spawn QueueForever in queue.val with
+        this.queue = queue;
+        this.val = 0;
+        this.maxval = 1000;
+      end;
+    end
+    escape 0;
+]],
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+event int v;
+par do
+    var int x;
+    x = await v until x == 10;
+    escape 10;
+with
+    await OS_START;
+    emit v => 0;
+    emit v => 1;
+    emit v => 10;
+    await FOREVER;
+end
+]],
+    run = 10;
+}
+
 do return end
 
 -------------------------------------------------------------------------------

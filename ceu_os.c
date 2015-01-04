@@ -262,6 +262,8 @@ int ceu_lua_atpanic_f (lua_State* lua) {
     ceu_out_log(0, "LUA_ATPANIC: ");
     ceu_out_log(0, lua_tostring(lua,-1));
     ceu_out_log(0, "\n");
+/*
+*/
 #endif
     /*ceu_out_assert(0);*/
     return 0;
@@ -1128,7 +1130,7 @@ tceu_app* ceu_sys_load (void* addr)
     uint       size;
     tceu_init* init;
 #ifdef CEU_OS_LUA
-    char**     luaifc;
+    char*      luaifc;
 #endif
 
 #ifdef __AVR
@@ -1164,7 +1166,7 @@ tceu_app* ceu_sys_load (void* addr)
     app->addr = addr;
 
 #ifdef CEU_OS_LUA
-    app->luaifc = *luaifc;
+    app->luaifc = luaifc;
 #endif
 
     return app;

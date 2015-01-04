@@ -217,15 +217,6 @@ ceu_app_init (tceu_app* _ceu_app)
      */
     CEU_THREADS_MUTEX_LOCK(&_ceu_app->threads_mutex);
 #endif
-#ifdef CEU_LUA
-    ceu_luaL_newstate(_ceu_app->lua);
-    /* TODO: lua_close(CEU_L); */
-    ceu_out_assert(_ceu_app->lua != NULL);
-#ifndef CEU_OS
-    ceu_luaL_openlibs(_ceu_app->lua);
-#endif
-    ceu_lua_atpanic(_ceu_app->lua, ceu_lua_atpanic_f);    /* TODO: CEU_OS */
-#endif
 
 #ifdef CEU_OS
 
@@ -255,6 +246,15 @@ ceu_app_init (tceu_app* _ceu_app)
                 0,
 #endif
                 NULL, 0);
+
+#ifdef CEU_LUA
+    ceu_luaL_newstate(_ceu_app->lua);
+    /* TODO: lua_close(CEU_L); */
+    ceu_out_assert(_ceu_app->lua != NULL);
+    ceu_luaL_openlibs(_ceu_app->lua);
+    ceu_lua_atpanic(_ceu_app->lua, ceu_lua_atpanic_f);    /* TODO: CEU_OS */
+#endif
+
     ceu_out_go(_ceu_app, CEU_IN__INIT, CEU_EVTP((void*)NULL));
 }
 

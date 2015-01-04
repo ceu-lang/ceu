@@ -1198,7 +1198,7 @@ The optional `until` clause tests an additional condition required to awake.
 It can be understood as the expansion below:
 
 <pre><code><b>loop do</b>
-    <Await>
+    <b>await</b> &lt;...&gt;;
     <b>if</b> &lt;Exp&gt; <b>then</b>
         <b>break</b>;
     <b>end</b>

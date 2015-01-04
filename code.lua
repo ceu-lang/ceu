@@ -1319,6 +1319,7 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
                 if (is) {
                     ceu_lua_toboolean(ret, _ceu_app->lua,-1);
                 } else {
+                    ceu_lua_pushstring(_ceu_app->lua, "not implemented [1]");
                     err = 1;
                 }
             }
@@ -1344,6 +1345,7 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
                 end
                 LINE(me, [[
             } else {
+                ceu_lua_pushstring(_ceu_app->lua, "not implemented [2]");
                 err = 1;
             }
             ceu_lua_pop(_ceu_app->lua, 1);
@@ -1356,6 +1358,7 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
             if (is) {
                 ceu_lua_touserdata(ret,_ceu_app->lua,-1);
             } else {
+                ceu_lua_pushstring(_ceu_app->lua, "not implemented [3]");
                 err = 1;
             }
             ]]..V(me.ret)..[[ = ret;

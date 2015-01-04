@@ -191,8 +191,11 @@
         set = ceu_out_call_val(_ceu_app, CEU_OUT_LUA_NEW, CEU_EVTP((void*)NULL)).ptr; \
     }
 
+    #define ceu_luaL_openlibs(l) { \
+        ceu_out_call_val(_ceu_app, CEU_OUT_LUAL_OPENLIBS, CEU_EVTP((void*)l)); \
+    }
+
     #define ceu_lua_atpanic(l, f) {     \
-        ceu_out_assert(0);  /* TODO */  \
     }
 
     #define ceu_luaL_loadstring(set, l, str) {  \
@@ -206,7 +209,7 @@
     }
 
     #define ceu_lua_pushstring(l, v) {      \
-        tceu__lua_State___int p = { l, v }; \
+        tceu__lua_State___char_ p = { l, v }; \
         ceu_out_call_val(_ceu_app, CEU_OUT_LUA_PUSHSTRING, CEU_EVTP((void*)&p)); \
     }
 
@@ -215,7 +218,9 @@
         ceu_out_call_val(_ceu_app, CEU_OUT_LUA_PUSHLIGHTUSERDATA, CEU_EVTP((void*)&p)); \
     }
 
-    #define ceu_lua_pcall(set,l,nargs,nrets,err) {      \
+    #define ceu_lua_pcall(set,l,nargs,nrets,err) {                  \
+        tceu__lua_State___int__int__int p = { l, nargs, nrets, err }; \
+        ceu_out_call_val(_ceu_app, CEU_OUT_LUA_PCALL, CEU_EVTP((void*)&p)); \
     }
 
     #define ceu_lua_isnumber(set, l, idx) {     \
@@ -264,7 +269,7 @@
     }
 
     #define ceu_lua_error(l) {  \
-        ceu_out_call_val(_ceu_app, CEU_OUT_LUA_ERROR, CEU_EVTP((void*)NULL)); \
+        ceu_out_call_val(_ceu_app, CEU_OUT_LUA_ERROR, CEU_EVTP((void*)l)); \
     }
 #else
     #define ceu_luaL_newstate(set)               set = luaL_newstate()
@@ -518,8 +523,12 @@ typedef struct tceu_app {
     u8                  threads_n;          /* number of running threads */
         /* TODO: u8? */
 #endif
+#if defined(CEU_LUA) || defined(CEU_OS)
 #ifdef CEU_LUA
-    lua_State*  lua;
+    lua_State*  lua;    /* TODO: move to data? */
+#else
+    void*       lua;
+#endif
 #endif
 
     int         (*code)  (struct tceu_app*,tceu_go*);
