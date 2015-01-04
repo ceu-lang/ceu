@@ -14,6 +14,7 @@ F = {
         me.id     = id
         TOPS[#TOPS+1] = me
         TOPS[id] = me
+        me.tops_i = #TOPS
         return node('Nothing', me.ln)
     end,
 

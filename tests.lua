@@ -1288,41 +1288,7 @@ escape 1;
     run = 1,
 }
 
-Test { [[
-    class Queue with
-      pool QueueForever[] val;
-    do
-      //
-    end
-
-    class QueueForever with
-      var Queue& queue;
-      var int val, maxval;
-    do
-      _printf("%d popped, pushing %d+1\n", val, val);
-      if val < maxval then
-        spawn QueueForever in queue.val with
-          this.queue = outer.queue;
-          this.val = outer.val + 1;
-          this.maxval = outer.maxval;
-        end;
-      end
-    end
-
-    var Queue queue;
-
-    watching 1000us do
-      spawn QueueForever in queue.val with
-        this.queue = queue;
-        this.val = 0;
-        this.maxval = 1000;
-      end;
-    end
-    escape 0;
-]],
-    run = 1,
-}
-
+-- TODO: not "awake once" for await-until
 Test { [[
 input void OS_START;
 event int v;
@@ -1346,13 +1312,6 @@ do return end
 -------------------------------------------------------------------------------
 -- OK: well tested
 ]===]
-
-Test { [[escape(1);]],
-    _ana = {
-        isForever = false,
-    },
-    run = 1,
-}
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -22196,7 +22155,7 @@ end
 var T aa;
 escape 0;
 ]],
-    env = 'line 4 : invalid declaration',
+    env = 'line 4 : undeclared type `T´',
 }
 
 Test { [[
@@ -25915,7 +25874,7 @@ do
 end
 escape _V;
 ]],
-    env = 'line 10 : class "U" is not declared',
+    env = 'line 10 : undeclared type `U´',
 }
 
 Test { [[
@@ -26167,7 +26126,7 @@ class T with do end
 var T* a;
 a = spawn U;
 ]],
-    env = 'line 3 : class "U" is not declared'
+    env = 'line 3 : undeclared type `U´',
 }
 
 Test { [[
@@ -27005,7 +26964,7 @@ do
     end
 end
 ]],
-    env = 'line 4 : class "HelloWorld" is not declared',
+    env = 'line 4 : undeclared type `HelloWorld´',
 }
 
 Test { [[
@@ -33360,6 +33319,19 @@ escape ret + _V;
 }
 
 Test { [[
+class Unit with
+do
+    spawn Unit in global:units;
+end
+interface Global with
+    pool Unit[] units;
+end
+pool Unit[] units;
+escape 1;
+]],
+    env = 'line 3 : undeclared type `Unit´',
+}
+Test { [[
 interface Global with
     pool Unit[] units;
 end
@@ -33370,27 +33342,142 @@ end
 pool Unit[] units;
 escape 1;
 ]],
-    run = 1,
+    env = 'line 2 : undeclared type `Unit´',
 }
 Test { [[
+interface U with end;
+
 interface Global with
-    pool Unit[] units;
+    pool U[] units;
 end
 native @nohold _SDL_Has;
 
+class V with
+    interface U;
+do
+end
+
 class Unit with
+    interface U;
     var int rect;
 do
-    loop (Unit*)oth in global:units do
-        if oth!=&this and &oth:rect==&this.rect then
-            spawn Unit in global:units;
+    loop (U*)oth in global:units do
+        if oth!=&this then
+            spawn V in global:units;
         end
     end
 end
 
-pool Unit[] units;
+pool U[] units;
 escape 1;
 ]],
+    run = 1,
+}
+
+-- declaration order for clss, ifcs, pools
+
+Test { [[
+    class Queue with
+      pool QueueForever[] val;
+    do
+      //
+    end
+    escape 1;
+]],
+    env = 'line 2 : undeclared type `QueueForever´',
+}
+Test { [[
+    var Queue q;
+    class Queue with
+    do
+        var Queue q;
+    end
+    escape 1;
+]],
+    env = 'line 4 : undeclared type `Queue´',
+}
+Test { [[
+    var Queue q;
+    class Queue with
+    do
+        var Queue* q;
+    end
+    escape 1;
+]],
+    run = 1,
+}
+Test { [[
+    class Queue with
+      pool QueueForever[] val;
+    do
+    end
+
+    class QueueForever with
+    do
+    end
+
+    escape 1;
+]],
+    env = 'line 2 : undeclared type `QueueForever´',
+}
+Test { [[
+    interface I with
+      var int val;
+    end
+    spawn I;
+    escape 1;
+]],
+    env = 'line 4 : cannot instantiate an interface',
+}
+Test { [[
+    class QueueForever with
+      var int val, maxval;
+    do
+        spawn QueueForever;
+    end
+    escape 1;
+]],
+    env = 'line 4 : undeclared type `QueueForever´',
+}
+Test { [[
+    class Queue with
+      pool QueueForever[] val;
+    do
+      //
+    end
+
+    class QueueForever with
+      var Queue& queue;
+      var int val, maxval;
+    do
+      _printf("%d popped, pushing %d+1\n", val, val);
+      if val < maxval then
+        spawn QueueForever in queue.val with
+          this.queue = outer.queue;
+          this.val = outer.val + 1;
+          this.maxval = outer.maxval;
+        end;
+      end
+    end
+
+    var Queue queue;
+
+    watching 1000us do
+      spawn QueueForever in queue.val with
+        this.queue = queue;
+        this.val = 0;
+        this.maxval = 1000;
+      end;
+    end
+    escape 0;
+]],
+    env = 'line 2 : undeclared type `QueueForever´',
+}
+
+Test { [[escape(1);]],
+    _ana = {
+        isForever = false,
+    },
     run = 1,
 }
 

@@ -110,6 +110,7 @@ local _N = 0
 local _E = 1    -- 0=NONE
 
 function newvar (me, blk, pre, tp, id, isImp)
+    local ME = CLS()
     for stmt in AST.iter() do
         if stmt.tag=='Async' or stmt.tag=='Thread' then
             break   -- search until Async boundary
@@ -119,39 +120,40 @@ function newvar (me, blk, pre, tp, id, isImp)
                     --'variable/event "'..var.id..
                     --'" is already declared at --line '..var.ln)
                 if var.id == id then
-                    local fun = pre=='function' and stmt==CLS().blk_ifc -- dcl
-                                                and blk==CLS().blk_ifc  -- body
+                    local fun = pre=='function' and stmt==ME.blk_ifc -- dcl
+                                                and blk==ME.blk_ifc  -- body
                     WRN(fun or id=='_ok' or isImp, me,
                         'declaration of "'..id..'" hides the one at line '
                             ..var.ln[2])
-                    --if (blk==CLS().blk_ifc or blk==CLS().blk_body) then
+                    --if (blk==ME.blk_ifc or blk==ME.blk_body) then
                         --ASR(false, me, 'cannot hide at top-level block' )
                 end
             end
         end
     end
 
-    local c = ENV.c[tp.id]
+    ASR(ENV.c[tp.id] or TOPS[tp.id],
+        me, 'undeclared type `'..(tp.id or '?')..'´')
 
-    ASR(TOPS[tp.id] or c, me, 'undeclared type `'..(tp.id or '?')..'´')
-    if TOPS[tp.id] and TOPS[tp.id].is_ifc and tp.ptr==0 and (not tp.ref) then
-        ASR(pre == 'pool', me,
-            'cannot instantiate an interface')
+    local cls = (tp.ptr==0 and (not tp.ref) and TOPS[tp.id])
+    if cls then
+        ASR(cls.tops_i < ME.tops_i,
+            me, 'undeclared type `'..(tp.id or '?')..'´')
     end
 
     ASR(tp.ptr>0 or TP.get(tp.id).len~=0 or (tp.id=='void' and pre=='event'),
         me, 'cannot instantiate type "'..tp.id..'"')
     --ASR((not arr) or arr>0, me, 'invalid array dimension')
 
-    local cls = (tp.ptr==0 and (not tp.ref) and TOPS[tp.id])
-        if cls then
-            ASR(cls ~=AST.iter'Dcl_cls'(), me, 'invalid declaration')
-        end
+    if TOPS[tp.id] and TOPS[tp.id].is_ifc and tp.ptr==0 and (not tp.ref) then
+        ASR(pre == 'pool', me,
+            'cannot instantiate an interface')
+    end
 
     -- Class definitions take priority over interface definitions:
     --      * consts
     --      * rec => norec methods
-    if  blk.vars[id] and (blk==CLS().blk_ifc) then
+    if  blk.vars[id] and (blk==ME.blk_ifc) then
         return true, blk.vars[id]
     end
 
@@ -162,7 +164,7 @@ function newvar (me, blk, pre, tp, id, isImp)
         tp    = tp,
         cls   = cls or (pre=='pool'),   -- (case of _TOP_POOL & ifaces)
         pre   = pre,
-        inTop = (blk==CLS().blk_ifc) or (blk==CLS().blk_body),
+        inTop = (blk==ME.blk_ifc) or (blk==ME.blk_body),
                 -- (never "tmp")
         isTmp = false,
         --arr   = arr,
@@ -833,9 +835,9 @@ F = {
     -- _pre: give error before "set" inside it
     Spawn_pre = function (me)
         local id, pool, constr = unpack(me)
-
-        me.cls = ASR(ENV.clss[id], me,
-                        'class "'..id..'" is not declared')
+        me.cls = ENV.clss[id]
+        ASR(me.cls, me, 'undeclared type `'..id..'´')
+        ASR(me.cls.tops_i < CLS().tops_i, me, 'undeclared type `'..id..'´')
         ASR(not me.cls.is_ifc, me, 'cannot instantiate an interface')
         me.tp = TP.fromstr(id..'*')  -- class id
     end,
