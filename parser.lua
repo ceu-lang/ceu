@@ -170,7 +170,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     , Nothing = KEY'nothing'
 
-    , __StmtS = V'AwaitS'   + V'AwaitT'    + V'AwaitExt'  + V'AwaitInt'
+    , __StmtS = V'AwaitT'  + V'AwaitExt'  + V'AwaitInt'
              + V'EmitT'    + V'EmitExt'   + V'EmitInt'
              + V'_Dcl_nat' + V'_Dcl_ext0'
              + V'_Dcl_int' + V'_Dcl_var' + V'_Dcl_pool'
@@ -207,8 +207,8 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , _Set  = (V'__Exp' + V'VarList') * V'__Sets'
     , __Sets = (CK'='+CK':=') * (
                                     -- p1=awt,
-                Cc'__SetAwait'   * (V'AwaitS'+V'AwaitT'+V'AwaitExt'+V'AwaitInt') * Cc(false)
-                                                                                   -- constr
+                Cc'__SetAwait'   * (V'AwaitT'+V'AwaitExt'+V'AwaitInt') * Cc(false)
+                                                                         -- constr
               + Cc'__SetThread'  * V'_Thread' * Cc(false)
                                                 -- constr
               + Cc'__SetEmitExt' * ( V'EmitExt'
@@ -359,8 +359,8 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     , __awaits = (V'WCLOCKK' + V'WCLOCKE' + V'Ext' + EV'__Exp')
     , ___awaits = K'(' * V'__awaits' * EK')'
-    , AwaitS   = KEY'await' * V'___awaits' * (EKEY'or' * V'___awaits')^1
-                                     * (V'__until' + Cc(false))
+    --, AwaitS   = KEY'await' * V'___awaits' * (EKEY'or' * V'___awaits')^1
+                                     --* (V'__until' + Cc(false))
 
     , EmitT    = KEY'emit' * (V'WCLOCKK'+V'WCLOCKE')
 

@@ -22624,6 +22624,24 @@ escape t.v;
 }
 
 Test { [[
+class Foo with
+  event void bar;
+do
+  // nothing
+end
+
+class Baz with
+  var Foo* qux;
+do
+  await (*qux).bar;
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
 var int v;
 class T with
     var int v=5;
