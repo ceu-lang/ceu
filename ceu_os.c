@@ -2,8 +2,9 @@
 
 #include "ceu_os.h"
 
-#ifdef CEU_OS
 #ifdef __AVR
+#error Understand this again!
+#ifdef CEU_OS
 #include <avr/pgmspace.h>
 void* CEU_APP_ADDR = NULL;
 #endif
@@ -13,10 +14,12 @@ void* CEU_APP_ADDR = NULL;
 
 #ifdef CEU_DEBUG
 #include <stdio.h>      /* fprintf */
+#ifndef CEU_NOSTDLIB
 #include <assert.h>     /* sys_assert */
 #endif
+#endif
 
-#if defined(CEU_DEBUG) || defined(CEU_NEWS) || defined(CEU_THREADS) || defined(CEU_OS)
+#if defined(CEU_DEBUG) || defined(CEU_NEWS) || defined(CEU_THREADS) || defined(CEU_OS_KERNEL)
 #include <stdlib.h>     /* realloc, exit */
 void *realloc(void *ptr, size_t size);
 #endif
@@ -39,14 +42,13 @@ void *realloc(void *ptr, size_t size);
  * pthread_cond_signal(&cond);
 */
 
-/**********************************************************************/
+/**********************************************************************
+ * "APPS" running on the OS do not need any of the below.
+ **********************************************************************/
 
-#ifdef CEU_NEWS
-#ifdef CEU_RUNTESTS
-#define CEU_MAX_DYNS 100
-static int _ceu_dyns_ = 0;  /* check if total of alloc/free match */
-#endif
-#endif
+#ifndef CEU_OS_APP
+
+#ifndef CEU_NOSTDLIB
 
 void ceu_sys_assert (int v) {
 #ifdef CEU_DEBUG
@@ -57,18 +59,21 @@ void ceu_sys_assert (int v) {
 }
 
 void ceu_sys_log (int mode, const void* s) {
-#ifdef CEU_OS
-    ceu_log(mode, s);
-#else
     if (mode == 0) {
         fprintf(stderr, "%s", (char*)s);
     } else {
         fprintf(stderr, "%lX", (long)s);
     }
-#endif
 }
 
-#if defined(CEU_NEWS) || defined(CEU_THREADS) || defined(CEU_OS)
+#ifdef CEU_NEWS
+#ifdef CEU_RUNTESTS
+#define CEU_MAX_DYNS 100
+static int _ceu_dyns_ = 0;  /* check if total of alloc/free match */
+#endif
+#endif
+
+#if defined(CEU_NEWS) || defined(CEU_THREADS) || defined(CEU_OS_KERNEL)
 void* ceu_sys_realloc (void* ptr, size_t size) {
 #ifdef CEU_NEWS
 #ifdef CEU_RUNTESTS
@@ -88,9 +93,8 @@ void* ceu_sys_realloc (void* ptr, size_t size) {
 }
 #endif
 
-/**********************************************************************/
+#endif /* ifndef CEU_NOSTDLIB */
 
-/* TODO: ifndef CEU_OS? */
 int CEU_REQS = 0;
 int ceu_sys_req (void) {
     CEU_REQS++;
@@ -99,7 +103,6 @@ int ceu_sys_req (void) {
 
 /**********************************************************************/
 
-/* TODO: CEU_OS */
 #ifdef CEU_ORGS
 
 void ceu_sys_org_trail (tceu_org* org, int idx, tceu_org_lnk* lnk) {
@@ -149,7 +152,7 @@ void ceu_sys_org (tceu_org* org, int n, int lbl, int seqno,
     /* { evt=0, seqno=0, lbl=0 } for all trails */
     memset(&org->trls, 0, n*sizeof(tceu_trl));
 
-#if defined(CEU_ORGS) || defined(CEU_OS)
+#if defined(CEU_ORGS) || defined(CEU_OS_KERNEL)
     org->n = n;
     org->isAlive = 1;
 #endif
@@ -265,7 +268,7 @@ int ceu_lua_atpanic_f (lua_State* lua) {
 /*
 */
 #endif
-    /*ceu_out_assert(0);*/
+    ceu_out_assert(0);
     return 0;
 }
 #endif
@@ -273,6 +276,9 @@ int ceu_lua_atpanic_f (lua_State* lua) {
 /**********************************************************************/
 
 #ifdef CEU_PSES
+#ifdef CEU_OS_KERNEL
+#error Not implemented!
+#endif
 void ceu_pause (tceu_trl* trl, tceu_trl* trlF, int psed) {
     do {
         if (psed) {
@@ -309,7 +315,6 @@ void ceu_pause (tceu_trl* trl, tceu_trl* trlF, int psed) {
 
 /**********************************************************************/
 
-/* TODO: ifndef CEU_OS? */
 u8 CEU_GC = 0;  /* execute __ceu_os_gc() when "true" */
 
 void ceu_sys_go (tceu_app* app, int evt, tceu_evtp evtp)
@@ -368,7 +373,7 @@ void ceu_sys_go (tceu_app* app, int evt, tceu_evtp evtp)
         for (;;) /* TRL // TODO(speed): only range of trails that apply */
         {        /* (e.g. events that do not escape an org) */
 #ifdef CEU_DEBUG_TRAILS
-#if defined(CEU_ORGS) || defined(CEU_OS)
+#if defined(CEU_ORGS) || defined(CEU_OS_KERNEL)
 fprintf(stderr, "STACK[%d]: evt=%d : seqno=%d : org=%p/%d : [%d/%p]\n",
                 go.stki, STK.evt, app->seqno,
                 STK_ORG, STK_ORG==app->data, STK_ORG->n, STK_ORG->trls);
@@ -388,7 +393,7 @@ fprintf(stderr, "STACK[%d]: evt=%d : seqno=%d : ntrls=%d\n",
             /* STK_ORG has been traversed to the end? */
             if (STK.trl ==
                 &STK_ORG->trls[
-#if defined(CEU_ORGS) || defined(CEU_OS)
+#if defined(CEU_ORGS) || defined(CEU_OS_KERNEL)
                     STK_ORG->n
 #else
                     CEU_NTRAILS
@@ -578,12 +583,12 @@ if (STK.trl->evt==CEU_IN__ORG) {
                 STK.trl->evt   = CEU_IN__NONE;  /* clear trail */
                 STK.trl->seqno = app->seqno;    /* don't awake again */
 
-#if defined(CEU_OS) && defined(__AVR)
+#if defined(CEU_OS_KERNEL) && defined(__AVR)
                 CEU_APP_ADDR = app->addr;
 #endif
                 /*** CODE ***/
                 int _ret = app->code(app, &go);
-#if defined(CEU_OS) && defined(__AVR)
+#if defined(CEU_OS_KERNEL) && defined(__AVR)
                 CEU_APP_ADDR = 0;
 #endif
 
@@ -604,7 +609,7 @@ if (STK.trl->evt==CEU_IN__ORG) {
 #endif
 #ifdef CEU_RET
                     case RET_QUIT:
-#if defined(CEU_RET) || defined(CEU_OS)
+#if defined(CEU_RET) || defined(CEU_OS_KERNEL)
                         app->isAlive = 0;
                         CEU_GC = 1;
 #endif
@@ -699,7 +704,7 @@ int ceu_go_all (tceu_app* app)
     app->init(app);     /* calls CEU_THREADS_MUTEX_LOCK() */
 
 #ifdef CEU_IN_OS_START
-#if defined(CEU_RET) || defined(CEU_OS)
+#if defined(CEU_RET) || defined(CEU_OS_KERNEL)
     if (app->isAlive)
 #endif
     {
@@ -709,7 +714,7 @@ int ceu_go_all (tceu_app* app)
 
 #ifdef CEU_ASYNCS
     while(
-#if defined(CEU_RET) || defined(CEU_OS)
+#if defined(CEU_RET) || defined(CEU_OS_KERNEL)
             app->isAlive &&
 #endif
             (
@@ -745,9 +750,14 @@ int ceu_go_all (tceu_app* app)
 #endif
 }
 
-#ifdef CEU_OS
+/**********************************************************************
+ * Only the OS kernel needs any of the below.
+ **********************************************************************/
 
-/* SYS_VECTOR
+#ifdef CEU_OS_KERNEL
+
+/*
+ * SYS_VECTOR:
  */
 void* CEU_SYS_VEC[CEU_SYS_MAX] __attribute__((used)) = {
     (void*) &ceu_sys_assert,
@@ -883,12 +893,12 @@ tceu_evtp ceu_sys_call (tceu_app* app, tceu_nevt evt, tceu_evtp param) {
         if (app!=lnk->src_app || evt!=lnk->src_evt) {
             continue;
         }
-#if defined(CEU_OS) && defined(__AVR)
+#if defined(CEU_OS_KERNEL) && defined(__AVR)
         void* __old = CEU_APP_ADDR; /* must remember to resume after call */
         CEU_APP_ADDR = lnk->dst_app->addr;
 #endif
         tceu_evtp ret = lnk->dst_app->calls(lnk->dst_app, lnk->dst_evt, param);
-#if defined(CEU_OS) && defined(__AVR)
+#if defined(CEU_OS_KERNEL) && defined(__AVR)
         CEU_APP_ADDR = __old;
 #endif
         return ret;
@@ -1206,19 +1216,6 @@ printf("<<< %d %d\n", app->isAlive, app->ret);
 
     app->init(app);
 
-/*
-#define GPFSEL1 ((uint*)0x20200004)
-#define GPSET0  ((uint*)0x2020001C)
-#define GPCLR0  ((uint*)0x20200028)
-uint ra;
-ra = *GPFSEL1;
-ra = ra & ~(7<<18);
-ra = ra | 1<<18;
-*GPFSEL1 = ra;
-*GPCLR0 = 1<<16;   // GPIO16 on
-// *GPSET0 = 1<<16;   // GPIO16 off
-*/
-
     /* OS_START */
 
 #ifdef CEU_IN_OS_START
@@ -1305,4 +1302,6 @@ GEN_ISR(36) GEN_ISR(37) GEN_ISR(38) GEN_ISR(39) GEN_ISR(40)
 
 #endif /* CEU_ISR */
 
-#endif  /* CEU_OS */
+#endif /* ifdef CEU_OS_KERNEL */
+
+#endif /* ifndef CEU_OS_APP */

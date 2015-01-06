@@ -112,6 +112,8 @@ if not OPTS.input then
         --version              # version of Ceu
 
         --os                   # TODO
+        --os-luaifc            # TODO
+
         --timemachine          # TODO
 ]])
     os.exit(1)
@@ -224,8 +226,8 @@ do
 
         if OPTS.os then
             str = str .. [[
-#ifndef CEU_OS
-#define CEU_OS
+#ifndef CEU_OS_APP
+#define CEU_OS_APP
 #endif
 ]]
             if OPTS.os_luaifc then

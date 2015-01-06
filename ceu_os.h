@@ -9,6 +9,7 @@
 #endif
 
 #if defined(CEU_OS) && defined(__AVR)
+#error Understand this again!
 #include "Arduino.h"
 #define CEU_ISR
 #define CEU_ISR_ON()  interrupts()
@@ -24,6 +25,10 @@
 #define CEU_EVTP(v) ((tceu_evtp)v)
 #endif
 
+#if defined(CEU_OS_KERNEL) || defined(CEU_OS_APP)
+#define CEU_OS
+#endif
+
 #ifdef CEU_OS
     /* TODO: all should be configurable */
     #define CEU_EXTS
@@ -35,7 +40,7 @@
 #endif
     #define CEU_INTS
     #define CEU_ORGS
-    #define CEU_PSES
+    /*#define CEU_PSES*/ /* TODO: never tried */
     #define CEU_NEWS
     #define CEU_NEWS_MALLOC
     #define CEU_NEWS_POOL
@@ -71,6 +76,7 @@
 
     typedef s8 tceu_nlbl;   /* TODO: to small!! */
 
+#ifdef CEU_OS_APP
     #define ceu_out_assert(v) \
         ((__typeof__(ceu_sys_assert)*)((_ceu_app)->sys_vec[CEU_SYS_ASSERT]))(v)
 
@@ -126,6 +132,7 @@
 
     #define ceu_out_go(app,evt,evtp) \
         ((__typeof__(ceu_sys_go)*)((app)->sys_vec[CEU_SYS_GO]))(app,evt,evtp)
+#endif
 
 #else /* ! CEU_OS */
     #define ceu_out_assert(v) \
@@ -186,7 +193,7 @@
     #include <lua5.1/lualib.h>
 #endif
 
-#ifdef CEU_OS
+#ifdef CEU_OS_APP
     #define ceu_luaL_newstate(set) { \
         set = ceu_out_call_val(_ceu_app, CEU_OUT_LUA_NEW, CEU_EVTP((void*)NULL)).ptr; \
     }

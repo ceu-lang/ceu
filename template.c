@@ -46,7 +46,7 @@ enum {
 
 typedef struct {
 #ifdef CEU_IFCS
-#ifdef CEU_OS
+#ifdef CEU_OS_APP
 #error remove from RAM!
 #endif
     s8        ifcs_clss[CEU_NCLS][=== IFCS_NIFCS ===];
@@ -65,7 +65,7 @@ typedef struct {
 /* TODO: remove from RAM */
 static _tceu_app _CEU_APP = {
 #ifdef CEU_IFCS
-#ifdef CEU_OS
+#ifdef CEU_OS_APP
 #error remove from RAM!
 #endif
     {
@@ -88,7 +88,7 @@ static _tceu_app _CEU_APP = {
 
 /**********************************************************************/
 
-#ifndef CEU_OS
+#ifndef CEU_OS_APP
 #ifdef CEU_DEBUG
 tceu_app* CEU_APP_SIG = NULL;
 static void ceu_segfault (int sig_num) {
@@ -127,7 +127,7 @@ static void ceu_stack_clr () {
 /* FUNCTIONS_C */
 === FUNCTIONS_C ===
 
-#ifdef CEU_OS
+#ifdef CEU_OS_APP
 static tceu_evtp ceu_app_calls (tceu_app* _ceu_app, tceu_nevt evt, tceu_evtp param) {
     switch (evt) {
         /* STUBS */
@@ -138,9 +138,7 @@ static tceu_evtp ceu_app_calls (tceu_app* _ceu_app, tceu_nevt evt, tceu_evtp par
         */
         default:;
 #ifdef CEU_DEBUG
-#ifndef CEU_OS
-            fprintf(stderr, "invalid call %d\n", evt);
-#endif
+        ceu_out_log(0, "invalid call\n");
 #endif
     }
     return CEU_EVTP((void*)NULL);
@@ -154,7 +152,7 @@ _CEU_GOTO_:
 #endif
 
 #ifdef CEU_DEBUG
-#ifndef CEU_OS
+#ifndef CEU_OS_APP
 #ifdef CEU_ORGS
     _ceu_app->lst.org = _STK_ORG;
 #endif
@@ -162,7 +160,7 @@ _CEU_GOTO_:
     _ceu_app->lst.lbl = _CEU_LBL;
 #endif
 #ifdef CEU_DEBUG_TRAILS
-#ifndef CEU_OS
+#ifndef CEU_OS_APP
 fprintf(stderr, "OK : lbl=%d : org=%p\n", _CEU_LBL, _STK_ORG);
 #endif
 #endif
@@ -186,7 +184,7 @@ void
 ceu_app_init (tceu_app* _ceu_app)
 {
     _ceu_app->seqno = 0;
-#if defined(CEU_RET) || defined(CEU_OS)
+#if defined(CEU_RET) || defined(CEU_OS_APP)
     _ceu_app->isAlive = 1;
 #endif
 #ifdef CEU_ASYNCS
@@ -218,7 +216,7 @@ ceu_app_init (tceu_app* _ceu_app)
     CEU_THREADS_MUTEX_LOCK(&_ceu_app->threads_mutex);
 #endif
 
-#ifdef CEU_OS
+#ifdef CEU_OS_APP
 
 #ifdef __AVR
     _ceu_app->code  = (__typeof__(ceu_app_go)*)    (((word)_ceu_app->addr>>1) + &ceu_app_go);
@@ -228,13 +226,13 @@ ceu_app_init (tceu_app* _ceu_app)
     _ceu_app->calls = (__typeof__(ceu_app_calls)*) (&ceu_app_calls);
 #endif
 
-#else   /* !CEU_OS */
+#else   /* !CEU_OS_APP */
 
     _ceu_app->code  = (__typeof__(ceu_app_go)*)    (&ceu_app_go);
 
-#endif  /* CEU_OS */
+#endif  /* CEU_OS_APP */
 
-#ifndef CEU_OS
+#ifndef CEU_OS_APP
 #ifdef CEU_DEBUG
     CEU_APP_SIG = _ceu_app;
     signal(SIGSEGV, ceu_segfault);
@@ -263,7 +261,7 @@ ceu_app_init (tceu_app* _ceu_app)
  * "gcc-ld" should place it at 0x00, before ".text".
  */
 
-#ifdef CEU_OS
+#ifdef CEU_OS_APP
 __attribute__ ((section (".export")))
 void CEU_EXPORT (uint* size, tceu_init** init
 #ifdef CEU_OS_LUAIFC

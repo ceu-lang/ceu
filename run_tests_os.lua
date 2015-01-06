@@ -118,7 +118,7 @@ print(cmd)
         local exec_ceu = os.execute(cmd)
         assert(exec_ceu == 0 or exec_ceu == true)
 
-        cmd = 'gcc -Os -Wall -DCEU_DEBUG -ansi '..
+        cmd = 'gcc -Os -Wall -ansi -DCEU_OS_APP -DCEU_DEBUG '..
               --'-I '..LIBC..'/include '..
               '-Wa,--execstack '..
               '-fpie -nostartfiles '..
@@ -157,7 +157,7 @@ print(cmd)
         -- ar rc lib/libc.a src/string/*.o src/stdio/*.o
     end
 
-    local GCC = 'gcc -g -Wall -DCEU_OS -DCEU_DEBUG -ansi -lpthread '..
+    local GCC = 'gcc -g -Wall -DCEU_OS_KERNEL -DCEU_DEBUG -ansi -lpthread '..
                 '-Wa,--execstack '..
                 '-o ceu.exe '..
                 '_ceu_main.c ceu_os.c ceu_pool.c'
