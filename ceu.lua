@@ -19,7 +19,7 @@ OPTS_NPARAMS = {
     tp_word   = 1,
 
     os        = 0,
-    os_lua    = 0,
+    os_luaifc = 0,
 
     timemachine = 0,
 }
@@ -44,7 +44,7 @@ OPTS = {
     tp_word   = 4,
 
     os        = false,
-    os_lua    = false,
+    os_luaifc = false,
 
     timemachine = false,
 }
@@ -84,8 +84,8 @@ if OPTS.version then
     os.exit(0)
 end
 
-if OPTS.os_lua then
-    assert(OPTS.os, '`--os-lua´ requires `--os´')
+if OPTS.os_luaifc then
+    assert(OPTS.os, '`--os-luaifc´ requires `--os´')
 end
 
 if not OPTS.input then
@@ -228,10 +228,10 @@ do
 #define CEU_OS
 #endif
 ]]
-            if OPTS.os_lua then
+            if OPTS.os_luaifc then
                 str = str .. [[
-#ifndef CEU_OS_LUA
-#define CEU_OS_LUA
+#ifndef CEU_OS_LUAIFC
+#define CEU_OS_LUAIFC
 #endif
 ]]
             end
@@ -455,12 +455,12 @@ do
     end
 
     -- app lua interface
-    if OPTS.os_lua then
+    if OPTS.os_luaifc then
         local ifc = ''
         for i, evt in ipairs(ENV.exts) do
             if string.sub(evt.id,1,1) ~= '_' then
                 ifc = ifc ..[[
-[ ]]..evt.id..[[ ] = {
+[ ']]..evt.id..[[' ] = {
     ln  = { ']]..evt.ln[1].."', "..evt.ln[2]..[[ },
     pre = ']]..evt.pre..[[',
     n   = ]]..evt.n..[[,

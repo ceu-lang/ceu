@@ -1129,7 +1129,7 @@ tceu_app* ceu_sys_load (void* addr)
 {
     uint       size;
     tceu_init* init;
-#ifdef CEU_OS_LUA
+#ifdef CEU_OS_LUAIFC
     char*      luaifc;
 #endif
 
@@ -1137,7 +1137,7 @@ tceu_app* ceu_sys_load (void* addr)
     ((tceu_export) ((word)addr>>1))(&size, &init);
 #else
     ((tceu_export) addr)(&size, &init
-#ifdef CEU_OS_LUA
+#ifdef CEU_OS_LUAIFC
                         , &luaifc
 #endif
                         );
@@ -1165,7 +1165,7 @@ tceu_app* ceu_sys_load (void* addr)
 #endif
     app->addr = addr;
 
-#ifdef CEU_OS_LUA
+#ifdef CEU_OS_LUAIFC
     app->luaifc = luaifc;
 #endif
 
