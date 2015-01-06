@@ -1285,7 +1285,7 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
 ]])
 
         for _, p in ipairs(me.params) do
-            ASR(TP.toc(p.tp)~='@*', me, 'unknown type')
+            ASR(p.tp.id~='_' and p.tp.id~='@', me, 'unknown type')
             if TP.isNumeric(p.tp) then
                 LINE(me, [[
         ceu_lua_pushnumber(_ceu_app->lua,]]..V(p)..[[);
