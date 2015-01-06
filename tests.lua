@@ -2340,6 +2340,7 @@ Test { [[await FOREVER; escape 0;]],
 }
 
 Test { [[emit 1ms; escape 0;]], props='not permitted outside `async´' }
+
 Test { [[
 var int a;
 a = async do
@@ -7019,7 +7020,7 @@ Test { [[
 event int a;
 par do
     emit a => 1;
-    escape 0;
+    escape 1;
 with
     escape 2;
 end;
@@ -7030,8 +7031,7 @@ end;
         abrt = 3,
         --trig_wo = 1,
     },
-    run = false,    -- TODO: stack change
-    --run = 2,
+    run = 1,
 }
 Test { [[
 event int a;
@@ -14394,7 +14394,7 @@ escape x + y;
 }
 
 Test { [[
-input int F;
+input void F;
 event int x;
 event int y;
 var int xx = 0;
@@ -14433,15 +14433,14 @@ end;
     _ana = {
         abrt = 2,
     },
-    run = false,    -- TODO: stack change (ND)
-    run1 = {
+    run = {
         ['~>99ms;  ~>F'] = 0,
-        ['~>199ms; ~>F'] = 3,
-        ['~>299ms; ~>F'] = 10,
-        ['~>300ms; ~>F'] = 23,
-        ['~>330ms; ~>F'] = 23,
-        ['~>430ms; ~>F'] = 44,
-        ['~>501ms; ~>F'] = 75,
+        ['~>199ms; ~>F'] = 2,
+        ['~>299ms; ~>F'] = 6,
+        ['~>300ms; ~>F'] = 13,
+        ['~>330ms; ~>F'] = 13,
+        ['~>430ms; ~>F'] = 24,
+        ['~>501ms; ~>F'] = 40,
     }
 }
 
@@ -14800,8 +14799,7 @@ end;
         --trig_wo = 2,
         unreachs = 1,
     },
-    run = false,        -- TODO: stack change (ND)
-    --run = 18,
+    run = 18,
 }
 
 Test { [[
@@ -20500,7 +20498,7 @@ escape 0;
     _ana = {
         acc = 1,
     },
-    run = false,
+    run = 1,
 }
 
 Test { [[
@@ -35722,8 +35720,8 @@ end
     _ana = {
         isForever = true,
     },
+    gcc = 'error: implicit declaration of function',
     awaits = 3,
-    run = false,
 }
 Test { [[
 input void A, B;
@@ -35772,7 +35770,7 @@ end
         isForever = true,
     },
     awaits = 3,
-    run = false,
+    gcc = 'error: implicit declaration of function',
 }
 --do escape end
 
@@ -35821,7 +35819,7 @@ end
         isForever = true,
     },
     awaits = 1,
-    run = false,
+    gcc = 'error: implicit declaration of function',
 }
 
 Test { [[

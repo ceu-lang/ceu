@@ -151,8 +151,9 @@ end
 
     -- RUN
 
-    if not (T.run or T.gcc or T.asr) then
-        assert(T.run==false or T.loop or T._ana, 'missing run value')
+    if (not T.run) then
+        assert(T.run==false or T.gcc or T.asr or T.loop or T._ana,
+            'missing run value')
         return
     end
 
@@ -328,10 +329,10 @@ user	10m16.559s
 sys	1m46.887s
 
 STATS = {
-    count   = 2035,
+    count   = 2036,
     mem     = 0,
-    trails  = 3983,
-    bytes   = 20738409,
+    trails  = 3985,
+    bytes   = 20783385,
 }
 
 ]]
