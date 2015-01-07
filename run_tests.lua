@@ -290,7 +290,9 @@ STATS = {
 ]])
 
 --[[
+
 -- BEFORE REFACTORING
+
 STATS = {
     count   = 2023,
     mem     = 0,
@@ -302,8 +304,9 @@ STATS = {
 real	8m27.078s
 user	8m5.424s
 sys	1m30.731s
---
+
 -- AFTER REFACTORING
+
 STATS = {
     count   = 2025,
     mem     = 0,
@@ -316,24 +319,19 @@ real	8m40.844s
 user	8m20.696s
 sys	1m33.932s
 
+-- TODO: descobrir pq ficou mais lento
+
 STATS = {
-    count   = 2027,
+    count   = 2050,
     mem     = 0,
-    trails  = 3984,
-    bytes   = 20226585,
+    trails  = 4017,
+    bytes   = 20945262,
 }
 
 
-real	11m12.307s
-user	10m16.559s
-sys	1m46.887s
-
-STATS = {
-    count   = 2036,
-    mem     = 0,
-    trails  = 3985,
-    bytes   = 20783385,
-}
+real	10m57.118s
+user	10m11.979s
+sys	1m41.815s
 
 ]]
 

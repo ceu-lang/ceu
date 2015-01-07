@@ -662,9 +662,9 @@ F = {
         if me.isWatching then
             local tp = me.isWatching.tp
             if not (tp and tp.ptr==1 and ENV.clss[tp.id]) then
-                local if_ = me[1][1][2]
+                local if_ = me[2][1][2]
                 assert(if_ and if_.tag == 'If')
-                me[1][1][2] = if_[2]    -- changes "if" for the "await" (true branch)
+                me[2][1][2] = if_[2]    -- changes "if" for the "await" (true branch)
                 --if_[1] = AST.node('NUMBER', me.ln, 1)
             end
         end

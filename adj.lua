@@ -258,12 +258,17 @@ F = {
         --      end
         -- becomes
         --      par/or do
+        --          ...     // has the chance to execute/finalize even if
+        --                  // the org terminated just after the spawn
+        --      with
         --          if <ORG>->isAlive
         --              await <EVT>|<ORG>.ok;
         --          end
-        --      with
-        --          ...
         --      end
+        --
+        -- TODO: because the order is inverted, if the same error occurs in
+        -- both sides, the message will point to "..." which appears after in
+        -- the code
         --]]
         local evt, blk = unpack(me)
 
@@ -280,6 +285,7 @@ F = {
         end
 
         local ret = node('ParOr', me.ln,
+                        blk,
                         node('Block', me.ln,
                             node('Stmts', me.ln,
                                 evt,  -- parses here, than uses "Ref" in "awt"
@@ -294,8 +300,7 @@ F = {
                                                 AST.copy(evt))),
                                         'isAlive'),
                                     node('Block',me.ln,node('Stmts',me.ln,awt)),
-                                    node('Block',me.ln,node('Stmts',me.ln,node('Nothing', me.ln)))))),
-                        blk)
+                                    node('Block',me.ln,node('Stmts',me.ln,node('Nothing', me.ln)))))))
         ret.isWatching = evt
         return ret
     end,

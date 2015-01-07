@@ -682,6 +682,26 @@ escape sizeof(CEU_T) > sizeof(CEU_U);
 ]],
     run = 1,
 }
+
+-- TODO: not "awake once" for await-until
+Test { [[
+input void OS_START;
+event int v;
+par do
+    var int x;
+    x = await v until x == 10;
+    escape 10;
+with
+    await OS_START;
+    emit v => 0;
+    emit v => 1;
+    emit v => 10;
+    await FOREVER;
+end
+]],
+    run = 10;
+}
+
 -------------------------------------------------------------------------------
 -- ??: working now
 Test { [[
@@ -862,6 +882,7 @@ end
     run = 1,
 }
 
+-- TODO: chamar input function pelo proprio programa
 Test { [[
 input (char* str, int len, int x, int y)=>int DRAW_STRING do
     return x + y + len;
@@ -874,240 +895,7 @@ escape ret;
     run = 220,
 }
 
-Test { [[
-native do
-    typedef struct {
-        char* str;
-        u32   length;
-        u32   x;
-        u32   y;
-    } draw_string_t;
-end
-
-input (_draw_string_t* ptr)=>void DRAW_STRING do
-end
-
-var _draw_string_t v;
-    v.str = "Welcome to Ceu/OS!\n";
-    v.length = 20;
-    v.x = 100;
-    v.y = 100;
-call DRAW_STRING => &v;
-
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-native do
-    int V = 0;
-end
-class T with
-do
-    _V = _V + 1;
-end
-
-var T[20000] ts;
-
-escape _V;
-]],
-    run = 20000,
-}
-
-Test { [[
-native do
-    int V = 10;
-end
-event void a;
-par/or do
-    await 1s;
-    emit a;
-    _V = 1;
-with
-    await a;
-end
-await 1s;
-escape _V;
-]],
-    run = { ['~>2s']=10 },
-}
-Test { [[
-native do
-    int V = 10;
-end
-event void a;
-par/or do
-    await a;
-with
-    await 1s;
-    emit a;
-    _V = 1;
-end
-await 1s;
-escape _V;
-]],
-    run = { ['~>2s']=10 },
-}
-Test { [[
-native do
-    int V = 10;
-end
-
-class T with
-    event void e;
-do
-    await 1s;
-_printf("1\n");
-    emit e;
-_printf("no\n");
-    _V = 1;
-end
-
-do
-    var T t;
-    await t.e;
-_printf("2\n");
-end
-_printf("3\n");
-await 1s;
-_printf("4\n");
-escape _V;
-]],
-    run = { ['~>2s']=10 },
-}
-Test { [[
-interface Global with
-    event void e;
-end
-event void e;
-
-class T with
-do
-    _printf("1\n");
-    emit global:e;
-    _printf("NO!\n");
-end
-
-var int ret = 0;
-par/or do
-    await 1s;
-    _printf("\n0\n");
-    do
-        var T t;
-        await FOREVER;
-    end
-with
-    await global:e;
-    _printf("2\n");
-    ret = 1;
-with
-    async do
-        emit 1s;
-    end
-end
-_printf("3\n");
-escape ret;
-]],
-    run = 1,
-}
 do return end
-Test { [[
-native do
-    int V = 10;
-end
-
-interface Global with
-    event void e;
-end
-event void e;
-
-class T with
-do
-_printf("1\n");
-    emit global:e;
-_printf("no-V\n");
-    _V = 1;
-end
-
-par/or do
-    event void a;
-    par/or do
-        await 1s;
-_printf("0\n");
-        do
-_printf("?\n");
-            var T t;
-            emit a;
-            _V = 1;
-        end
-    with
-_printf("E\n");
-        await global:e;
-_printf("2\n");
-    with
-        await a;
-_printf("no-a\n");
-    end
-_printf("3\n");
-    await 1s;
-_printf("4\n");
-with
-    async do
-        emit 1s;
-    end
-end
-_printf("5\n");
-escape _V;
-]],
-    run = 10,
-}
-do return end
-
-Test { [[
-class U with do end;
-
-pool U[10]  us;
-
-pool U[1] us1;
-spawn U in us1;
-
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-do return end
-
---TODO: access t0 after the watching
-Test { [[
-input void OS_START;
-class T with
-    var int id = 0;
-do
-    await OS_START;
-end
-
-pool T[9999] ts;
-var T* t0 = null;
-loop i in 9999 do
-    var T* t = spawn T with
-        this.id = 9999-i;
-    end;
-    if t0 == null then
-        t0 = t;
-    end
-end
-
-watching t0 do
-    await FOREVER;
-end
-var int ret = t0:id;
-
-escape ret;
-]],
-    run = 9999,
-}
 
 -- TODO: finalize not required
 Test { [[
@@ -1155,37 +943,7 @@ escape 1;
     run = 1,
 }
 
-Test { [[
-native/pre do
-    typedef struct {
-        int a,b,c;
-    } F;
-end
-native do
-    F* fff;
-end
-
-input (char* path, char* mode)=>_F* OPEN do
-    return _fff;
-end
-
-input (_F* f)=>int CLOSE do
-    return 1;
-end
-
-input (_F* f)=>int SIZE do
-    return 1;
-end
-
-input (void* ptr, int size, int nmemb, _F* f)=>int READ do
-    return 1;
-end
-
-escape 1;
-]],
-    run = 1,
-}
-
+-- TODO: finalize required
 Test { [[
 native/pre do
     typedef struct {
@@ -1253,65 +1011,15 @@ loop do
     end
 end
 ]],
-    todo = 'finalize is lost!',
-}
-
-Test { [[
-native do
-    ##define ceu_out_call_LUA_GETGLOBAL
-end
-
-output (int*,char*)=>void LUA_GETGLOBAL;
-function @rec (int* l)=>void load do
-    // TODO: load file
-    call LUA_GETGLOBAL => (l, "apps");              // [ apps ]
-    call LUA_GETGLOBAL => (l, "apps");              // [ apps ]
-    loop i do
-        var int has = 1;
-        if has==0 then
-            break;                                  // [ apps ]
-        end
-        _ceu_out_log("oi");
-    end
-
-    /*
-    var int len = (call LUA_OBJLEN => (l, -1));     // [ apps ]
-    loop i in len do
-        call LUA_RAWGETI => (l, -1);                // [ apps | apps[i] ]
-    end
-    */
-end
-call/rec load(null);
-
-escape 1;
-]],
     run = 1,
-}
-
--- TODO: not "awake once" for await-until
-Test { [[
-input void OS_START;
-event int v;
-par do
-    var int x;
-    x = await v until x == 10;
-    escape 10;
-with
-    await OS_START;
-    emit v => 0;
-    emit v => 1;
-    emit v => 10;
-    await FOREVER;
-end
-]],
-    run = 10;
+    --todo = 'finalize is lost!',
 }
 
 do return end
+]===]
 
 -------------------------------------------------------------------------------
 -- OK: well tested
-]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -5365,6 +5073,40 @@ end
 }
 
 Test { [[
+native do
+    int V = 10;
+end
+event void a;
+par/or do
+    await 1s;
+    emit a;
+    _V = 1;
+with
+    await a;
+end
+await 1s;
+escape _V;
+]],
+    run = { ['~>2s']=10 },
+}
+Test { [[
+native do
+    int V = 10;
+end
+event void a;
+par/or do
+    await a;
+with
+    await 1s;
+    emit a;
+    _V = 1;
+end
+await 1s;
+escape _V;
+]],
+    run = { ['~>2s']=10 },
+}
+Test { [[
 input int A;
 var int a, b;
 par/and do
@@ -5407,6 +5149,8 @@ escape a + b + c + d;
     --run = { ['0~>A;5~>B']=8 },
     --todo = 'nd excpt',
 }
+
+---
 
 Test { [[
 input int A,B;
@@ -20066,6 +19810,64 @@ escape 1;
     gcc = 'error: unknown type name ‘SDL_Point’',
 }
 
+-- NATIVE/PRE
+
+Test { [[
+native/pre do
+    typedef struct {
+        int a,b,c;
+    } F;
+end
+native do
+    F* fff;
+end
+
+input (char* path, char* mode)=>_F* OPEN do
+    return _fff;
+end
+
+input (_F* f)=>int CLOSE do
+    return 1;
+end
+
+input (_F* f)=>int SIZE do
+    return 1;
+end
+
+input (void* ptr, int size, int nmemb, _F* f)=>int READ do
+    return 1;
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native/pre do
+    typedef struct {
+        char* str;
+        u32   length;
+        u32   x;
+        u32   y;
+    } draw_string_t;
+end
+
+input (_draw_string_t* ptr)=>void DRAW_STRING do
+end
+
+var _draw_string_t v;
+    v.str = "Welcome to Ceu/OS!\n";
+    v.length = 20;
+    v.x = 100;
+    v.y = 100;
+call DRAW_STRING => &v;
+
+escape 1;
+]],
+    run = 1,
+}
+
 --[=[
 
 PRE = [[
@@ -22081,6 +21883,22 @@ escape x.a + y[0].a + y[1].a;
 }
 
 Test { [[
+native do
+    int V = 0;
+end
+class T with
+do
+    _V = _V + 1;
+end
+
+var T[20000] ts;
+
+escape _V;
+]],
+    run = 20000,
+}
+
+Test { [[
 class T with
     var int v;
 do
@@ -22394,6 +22212,28 @@ escape 1;
     run = 1;
 }
 
+Test { [[
+native do
+    int V = 10;
+end
+
+class T with
+    event void e;
+do
+    await 1s;
+    emit e;
+    _V = 1;
+end
+
+do
+    var T t;
+    await t.e;
+end
+await 1s;
+escape _V;
+]],
+    run = { ['~>2s']=10 },
+}
 Test { [[
 class T with
 do
@@ -29690,6 +29530,8 @@ var I[10] a;
     env = 'line 3 : cannot instantiate an interface',
 }
 
+-- GLOBAL
+
 Test { [[
 input void OS_START;
 interface Global with
@@ -29927,6 +29769,46 @@ end
 }
 
 Test { [[
+native do
+    int V = 10;
+end
+
+interface Global with
+    event void e;
+end
+event void e;
+
+class T with
+do
+    emit global:e;
+    _V = 1;
+end
+
+par/or do
+    event void a;
+    par/or do
+        await 1s;
+        do
+            var T t;
+            emit a;
+            _V = 1;
+        end
+    with
+        await global:e;
+    with
+        await a;
+    end
+    await 1s;
+with
+    async do
+        emit 1s;
+    end
+end
+escape _V;
+]],
+    run = 10,
+}
+Test { [[
 interface I with
     event int a;
 end
@@ -29936,6 +29818,36 @@ escape 10;
     env = 'line 4 : cannot instantiate an interface',
 }
 
+Test { [[
+interface Global with
+    event void e;
+end
+event void e;
+
+class T with
+do
+    emit global:e;
+end
+
+var int ret = 0;
+par/or do
+    await 1s;
+    do
+        var T t;
+        await FOREVER;
+    end
+with
+    await global:e;
+    ret = 1;
+with
+    async do
+        emit 1s;
+    end
+end
+escape ret;
+]],
+    run = 1,
+}
 Test { [[
 interface I with
     event int a;
@@ -31367,6 +31279,39 @@ end
 escape f(1,2);
 ]],
     run = 3,
+}
+
+Test { [[
+native do
+    ##define ceu_out_call_LUA_GETGLOBAL
+end
+
+output (int*,char*)=>void LUA_GETGLOBAL;
+function @rec (int* l)=>void load do
+    // TODO: load file
+    call LUA_GETGLOBAL => (l, "apps");              // [ apps ]
+    call LUA_GETGLOBAL => (l, "apps");              // [ apps ]
+    loop i do
+        var int has = 1;
+        if has==0 then
+            break;                                  // [ apps ]
+        end
+        _ceu_out_log("oi");
+    end
+
+    /*
+    var int len = (call LUA_OBJLEN => (l, -1));     // [ apps ]
+    loop i in len do
+        call LUA_RAWGETI => (l, -1);                // [ apps | apps[i] ]
+    end
+    */
+end
+call/rec load(null);
+
+escape 1;
+]],
+    tight = 'tight loop',
+    run = 1,
 }
 
 -- METHODS
@@ -32903,6 +32848,20 @@ escape 1;
     env = 'line 4 : invalid operand to unary "&"',
 }
 
+Test { [[
+class U with do end;
+
+pool U[10]  us;
+
+pool U[1] us1;
+spawn U in us1;
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
 -- POOLS / 1ST-CLASS
 
 Test { [[
@@ -33548,7 +33507,7 @@ escape ret;
 ]],
     run = {
         ['100~>I; ~>1s'] = -5,
-        ['1000~>I; ~>1s'] = -5,
+        ['1000~>I; ~>1s'] = 5,
         ['1001~>I; ~>1s'] = 5,
     }
 }
@@ -33860,7 +33819,7 @@ watching u do
 end
 escape 2;
 ]],
-    fin = 'line 11 : pointer access across `await´',
+    fin = 'line 12 : pointer access across `await´',
 }
 
 Test { [[
@@ -33897,7 +33856,7 @@ end
 
 escape 1;
 ]],
-    fin = 'line 9 : pointer access across `await´',
+    fin = 'line 10 : pointer access across `await´',
 }
 
 Test { [[
@@ -33957,7 +33916,7 @@ end
 
 escape 1;
 ]],
-    fin = 'line 10 : pointer access across `await´',
+    fin = 'line 12 : pointer access across `await´',
 }
 
 Test { [[
@@ -34201,9 +34160,7 @@ end
 
 escape ret;
 ]],
-    -- TODO: p terminates immediatelly and the block doesn't execute at all?
-    --run = { ['~>1s;~>1s;~>1s;~>1s;~>1s']=-1 },
-    run = { ['~>1s;~>1s;~>1s;~>1s;~>1s']=0 },
+    run = { ['~>1s;~>1s;~>1s;~>1s;~>1s']=-1 },
 }
 
 Test { [[
@@ -34237,9 +34194,7 @@ end
 
 escape ret;
 ]],
-    -- TODO: p terminates immediatelly and the block doesn't execute at all?
-    --run = { ['~>1s;~>1s;~>1s;~>1s;~>1s']=-1 },
-    run = { ['~>1s;~>1s;~>1s;~>1s;~>1s']=0 },
+    run = { ['~>1s;~>1s;~>1s;~>1s;~>1s']=-1 },
 }
 
 Test { [[
@@ -34525,7 +34480,7 @@ watching u do
 end
 escape 2;
 ]],
-    fin = 'line 9 : pointer access across `await´',
+    fin = 'line 10 : pointer access across `await´',
 }
 Test { [[
 class Unit with
@@ -34753,7 +34708,7 @@ escape _V + 1;
     _ana = {
         acc = 8,
     },
-    run = 12,
+    run = 11,
 }
 
 Test { [[
@@ -35257,6 +35212,93 @@ escape _V+1;
 ]],
     wrn = true,
     run = 631,
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
+    this.v = 10;
+end
+
+var int ret = 0;
+var T* t = spawn T;
+watching t do
+    finalize with
+        ret = t:v;
+    end
+    await FOREVER;
+end
+
+escape ret;
+]],
+    run = 10,
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
+    this.v = 10;
+end
+
+var T* t = spawn T;
+watching t do
+    await FOREVER;
+end
+
+escape t:v;
+]],
+    fin = 'line 12 : pointer access across `await´',
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
+    this.v = 10;
+end
+
+var T* t = spawn T;
+watching t do
+    await FOREVER;
+end
+
+await 1s;
+
+escape t:v;
+]],
+    fin = 'line 14 : pointer access across `await´',
+}
+
+Test { [[
+input void OS_START;
+class T with
+    var int id = 0;
+do
+    await OS_START;
+end
+
+pool T[9999] ts;
+var T* t0 = null;
+loop i in 9999 do
+    var T* t = spawn T with
+        this.id = 9999-i;
+    end;
+    if t0 == null then
+        t0 = t;
+    end
+end
+
+watching t0 do
+    await FOREVER;
+end
+var int ret = t0:id;
+
+escape ret;
+]],
+    fin = 'line 22 : pointer access across `await´',
+    --run = 9999,
 }
 
 -- UNTIL

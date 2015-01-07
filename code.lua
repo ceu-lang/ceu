@@ -254,7 +254,7 @@ static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org, t
                     ret_value = '('
                     ret_void  = 'return CEU_EVTP((void*)NULL);'
                 else
-                    if out.ptr then
+                    if out.ptr>0 then
                         ret_value = 'return CEU_EVTP((void*)'
                     else
                         ret_value = 'return CEU_EVTP('
