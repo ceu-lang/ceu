@@ -218,7 +218,7 @@ F =
             else
                 assert(mode == 'val')
                 if isPtr then
-                    t2[#t2+1] = 'CEU_EVTP('..val..')'
+                    t2[#t2+1] = 'CEU_EVTP((void*)'..val..')'
                 elseif TP.isFloat(ext.evt.ins) then
                     t2[#t2+1] = 'CEU_EVTP((float)'..val..')'
                 else
@@ -231,6 +231,9 @@ F =
             else
                 t2[#t2+1] = '0'
                 t2[#t2+1] = '(byte*)NULL'
+            end
+            if dir=='in' then
+                t1[#t1+1] = 'CEU_EVTP((void*)NULL)'
             end
         end
         t2 = table.concat(t2, ', ')

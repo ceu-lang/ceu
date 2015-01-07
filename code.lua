@@ -228,26 +228,32 @@ static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org, t
         local _, _, ins, out, id, blk = unpack(me)
         if blk then
             if me.var.fun.isExt then
-                local ps = {}
+                local ps_call = {}  -- see difference between
+                local ps_stub = {}  -- call/stub below
                 local tup = ins.tup
                 if tup and #tup > 1 then
                     for i, _ in ipairs(ins) do
-                        ps[#ps+1] = '(('..TP.toc(ins)..'*)CEU_EVTP(param).ptr)->_'..i
+                        ps_call[#ps_call+1] = '(('..TP.toc(ins)..'*)CEU_EVTP(param).ptr)->_'..i
+                        ps_stub[#ps_stub+1] = ps_call[#ps_call]
                     end
                 elseif #ins == 1 then
                     local _,tp,_ = unpack(ins[1])
                     if TP.isNumeric(tp) then
-                        ps[#ps+1] = 'CEU_EVTP(param).v'
+                        -- difference here: "param" is of type tceu_evtp
+                        ps_call[#ps_call+1] = 'CEU_EVTP((int)param).v'
+                        ps_stub[#ps_stub+1] = 'param.v'
                     else
-                        ps[#ps+1] = 'CEU_EVTP(param).ptr'
+                        ps_call[#ps_call+1] = 'CEU_EVTP((void*)param).ptr'
+                        ps_stub[#ps_stub+1] = ps_call[#ps_call]
                     end
                 else
                     -- no parameters
                 end
-                ps = table.concat(ps, ',')
+                ps_call = (#ps_call>0 and ',' or '')..table.concat(ps_call, ',')
+                ps_stub = (#ps_stub>0 and ',' or '')..table.concat(ps_stub, ',')
 
                 CODE.functions = CODE.functions .. [[
-#define ceu_in_call_]]..id..[[(app,org,param) ]]..me.id..[[(app,org,]]..ps..[[)
+#define ceu_in_call_]]..id..[[(app,org,param) ]]..me.id..[[(app,org ]]..ps_call..[[)
 ]]
 
                 local ret_value, ret_void
@@ -266,7 +272,7 @@ static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org, t
                 CODE.stubs = CODE.stubs .. [[
 case CEU_IN_]]..id..[[:
 #line ]]..me.ln[2]..' "'..me.ln[1]..[["
-    ]]..ret_value..me.id..'(_ceu_app, _ceu_app->data, '..ps..[[));
+    ]]..ret_value..me.id..'(_ceu_app, _ceu_app->data '..ps_stub..[[));
 ]]..ret_void
             end
             CODE.functions = CODE.functions ..

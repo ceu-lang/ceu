@@ -882,7 +882,6 @@ end
     run = 1,
 }
 
-]===]
 -- PROCURAR XXX e recolocar tudo ate o OK la
 
 Test { [[
@@ -890,6 +889,17 @@ input (int a)=>int F do
     return a + 1;
 end
 var int ret = call F=>1;
+escape ret;
+]],
+    run = 2,
+}
+
+Test { [[
+input (int c)=>int WRITE do
+    return c + 1;
+end
+var byte b = 1;
+var int ret = call WRITE => b;
 escape ret;
 ]],
     run = 2,
@@ -1041,6 +1051,7 @@ do return end
 
 -------------------------------------------------------------------------------
 -- OK: well tested
+]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
