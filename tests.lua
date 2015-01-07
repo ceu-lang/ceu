@@ -882,7 +882,29 @@ end
     run = 1,
 }
 
--- TODO: chamar input function pelo proprio programa
+]===]
+-- PROCURAR XXX e recolocar tudo ate o OK la
+
+Test { [[
+input (int a)=>int F do
+    return a + 1;
+end
+var int ret = call F=>1;
+escape ret;
+]],
+    run = 2,
+}
+
+Test { [[
+input (int a, int b)=>int F do
+    return a + b;
+end
+var int ret = call F=>(1,2);
+escape ret;
+]],
+    run = 3,
+}
+
 Test { [[
 input (char* str, int len, int x, int y)=>int DRAW_STRING do
     return x + y + len;
@@ -1016,7 +1038,6 @@ end
 }
 
 do return end
-]===]
 
 -------------------------------------------------------------------------------
 -- OK: well tested
@@ -18407,16 +18428,7 @@ end
     adj = 'line 1 : same body for multiple declarations',
 }
 
-Test { [[
-input (int a)=>int F do
-    return a + 1;
-end
-var int ret = call F=>1;
-escape ret;
-]],
-    run = 2,
-}
-
+-- XXX
 Test { [[
 input (int a)=>int F do
     return a + 1;
