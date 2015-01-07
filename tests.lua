@@ -916,6 +916,20 @@ escape ret;
 }
 
 Test { [[
+native/pre do
+    typedef int lua_State;
+    void lua_pushnil (lua_State* l) {}
+end
+
+input (_lua_State* l)=>void PUSHNIL do
+    _lua_pushnil(l);
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
 input (char* str, int len, int x, int y)=>int DRAW_STRING do
     return x + y + len;
 end
@@ -1048,10 +1062,10 @@ end
 }
 
 do return end
+]===]
 
 -------------------------------------------------------------------------------
 -- OK: well tested
-]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }

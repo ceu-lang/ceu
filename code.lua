@@ -244,7 +244,7 @@ static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org, t
                         ps_stub[#ps_stub+1] = 'param.v'
                     else
                         ps_call[#ps_call+1] = 'CEU_EVTP((void*)param).ptr'
-                        ps_stub[#ps_stub+1] = ps_call[#ps_call]
+                        ps_stub[#ps_stub+1] = 'param.ptr'
                     end
                 else
                     -- no parameters

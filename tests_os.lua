@@ -11,6 +11,20 @@ Test { [[escape(1);]],
 	run = 1,
 }
 
+Test { [[
+native/pre do
+    typedef int lua_State;
+    void lua_pushnil (lua_State* l) {}
+end
+
+input (_lua_State* l)=>void PUSHNIL do
+    _lua_pushnil(l);
+end
+escape 1;
+]],
+    run = 1,
+}
+
 Test {
 	[[escape(2);]],
 	[[escape(3);]],
