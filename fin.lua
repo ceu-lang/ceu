@@ -102,8 +102,18 @@ F = {
 
     -- CHECK IF "FINALIZE" IS REQUIRED
 
-        if fr.lst and fr.lst.tag=='Op2_call' and fr.lst.c.mod~='@pure'
-        or fr.tag == 'RawExp' then
+        local func_impure, input_call = false, false
+        local T = fr.lst
+        if T then
+            if T.tag == 'Op2_call' then
+                func_impure = (T.c.mod~='@pure')
+            elseif T.tag == 'EmitExt' then
+                local op, ext, param = unpack(T)
+                input_call = op=='call' and ext.evt.pre=='input'
+            end
+        end
+
+        if func_impure or input_call or fr.tag=='RawExp' then
             -- We assume that a impure function that returns a global pointer
             -- creates memory (e.g. malloc, fopen):
             --      var int[] pa = _fopen();
@@ -119,7 +129,7 @@ F = {
                 -- var void* ptr = _malloc(1);  // no
                 -- _ptr = _malloc(1);           // ok
 
--- TODO: code
+-- TODO: error code
             ASR(me.fin, me, 'attribution requires `finalize´')
                 -- var void[] ptr = _malloc(1);
             if me.fin then
@@ -128,7 +138,7 @@ F = {
             end
             return
         end
--- TODO: code
+-- TODO: error code
         ASR(not me.fin, me, 'attribution does not require `finalize´')
 
     -- REFUSE THE FOLLOWING POINTER ATTRIBUTIONS:
@@ -141,7 +151,7 @@ F = {
         -- other assignments are spread in multiple bodies
 --[[
         if to.org and to.fst.tag~='This' then
--- TODO: code
+-- TODO: error code
             ASR(op==':=', me,
                 'organism pointer attribution only inside constructors')
                 -- var T t;
@@ -173,7 +183,7 @@ F = {
                         )
                 )
             ) then
--- TODO: code
+-- TODO: error code
                 ASR(op==':=', me, 'attribution to pointer with greater scope')
                     -- NO:
                     -- var int* p;
@@ -182,7 +192,7 @@ F = {
                     --     p = &i;
                     -- end
             else
--- TODO: code
+-- TODO: error code
                 ASR(op=='=', me, 'wrong operator')
             end
         --end
@@ -294,10 +304,14 @@ F = {
 
         if AST.iter'Dcl_constr'() then
             ASR(not fin.active, me, 1108,
-                    '`finalize´ inside constructor')
+                    'constructor cannot contain `finalize´')
         end
 
         if set then
+            -- EmitExt changes the AST
+            if set.tag=='Block' then
+                set = set[1][2] -- Block->Stmt->SetExp
+            end
             set.fin = fin                   -- let call/set handle
         elseif fin.active then
             local blk = AST.iter'Block'()
@@ -352,6 +366,7 @@ F = {
                     params)
         end
 
+-- TODO: should yield error if requires finalize and is inside Thread?
         if AST.iter'Thread'() then
             req = false     -- impossible to run finalizers on threads
         end
@@ -365,6 +380,114 @@ F = {
             table.insert(req.fins, 1, fin)
         end
     end,
+
+--[=[
+    EmitExt = function (me)
+        local op, ext, params, fin = unpack(me)
+DBG('EmitExt', params)
+        params = params or {}
+DBG('',params.tag)
+
+        local req = F.__check_params(me, ext.evt.ins, params)
+
+DBG('req', req, 'fin', fin)
+        ASR((not req) or fin or AST.iter'Dcl_fun'(), me, 1109,
+            'call requires `finalize´')
+        ASR((not fin) or req, me, 1110, 'invalid `finalize´')
+
+        if fin and fin.active then
+            req.fins = req.fins or {}
+            table.insert(req.fins, 1, fin)
+        end
+---
+do return end
+
+        local tup = ext.evt.ins.tup
+        if op=='call' or dir=='in' or
+                (not tup) or (#tup == 1) then
+            mode = 'val'
+        else
+            mode = 'buf'
+        end
+
+        local t1 = { }
+        if ext.evt.pre=='input' and op=='call' then
+            t1[#t1+1] = '_ceu_app'  -- to access `app´
+            t1[#t1+1] = ptr         -- to access `this´
+        end
+
+        local t2 = { ptr, 'CEU_'..DIR..'_'..ext.evt.id }
+
+        if param then
+            local isPtr = ext.evt.ins.ptr>0
+            local val
+            if isPtr then
+                val = '(void*)'..V(param)
+            else
+                val = V(param)
+            end
+            t1[#t1+1] = val
+
+            if tup and #tup>1 then
+                if mode == 'val' then
+                    t2[#t2+1] = 'CEU_EVTP((void*)'..val..')'
+                else
+                    t2[#t2+1] = 'sizeof('..TP.toc(ext.evt.ins)..')'
+                    t2[#t2+1] = '(byte*)'..val
+                end
+            else
+                assert(mode == 'val')
+                if isPtr then
+                    t2[#t2+1] = 'CEU_EVTP((void*)'..val..')'
+                elseif TP.isFloat(ext.evt.ins) then
+                    t2[#t2+1] = 'CEU_EVTP((float)'..val..')'
+                else
+                    t2[#t2+1] = 'CEU_EVTP((int)'..val..')'
+                end
+            end
+        else
+            if mode == 'val' then
+                t2[#t2+1] = 'CEU_EVTP((void*)NULL)'
+            else
+                t2[#t2+1] = '0'
+                t2[#t2+1] = '(byte*)NULL'
+            end
+            if dir=='in' then
+                t1[#t1+1] = 'CEU_EVTP((void*)NULL)'
+            end
+        end
+        t2 = table.concat(t2, ', ')
+        t1 = table.concat(t1, ', ')
+
+        local ret = ''
+        if OPTS.os and op=='call' then
+            -- when the call crosses the process,
+            -- the return val must be unpacked from tceu_evtp
+            if me.__ast_set then
+                if TP.toc(ext.evt.out) == 'int' then
+                    ret = '.v'
+                else
+                    ret = '.ptr'
+                end
+            end
+        end
+
+        local op = (op=='emit' and 'emit') or 'call'
+
+        me.val = '\n'..[[
+#if defined(ceu_]]..dir..'_'..op..'_'..ext.evt.id..[[)
+    ceu_]]..dir..'_'..op..'_'..ext.evt.id..'('..t1..[[)
+
+#elif defined(ceu_]]..dir..'_'..op..'_'..mode..[[)
+    ceu_]]..dir..'_'..op..'_'..mode..'('..t2..')'..ret..[[
+
+#else
+    #error ceu_]]..dir..'_'..op..[[_* is not defined
+#endif
+]]
+    end,
+]=]
+
 }
 
 AST.visit(F)

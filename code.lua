@@ -212,7 +212,7 @@ static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org, t
 
         -- assert that all input functions have bodies
         for evt, v in pairs(INPUT_FUNCTIONS) do
-            ASR(v, evt.ln, 'missing body')
+            ASR(v, evt.ln, 'missing function body')
         end
     end,
 

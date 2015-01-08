@@ -941,6 +941,326 @@ escape ret;
     run = 220,
 }
 
+Test { [[
+input (void)=>void* MALLOC;
+var void* ptr = (call MALLOC);
+]],
+    fin = 'line 2 : destination pointer must be declared with the `[]´ buffer modifier',
+}
+
+Test { [[
+input (void)=>void* MALLOC;
+var void[] ptr = (call MALLOC);
+]],
+    fin = 'line 2 : attribution requires `finalize´',
+}
+
+Test { [[
+input (void)=>void* MALLOC;
+var void[] ptr;
+finalize
+    ptr = (call MALLOC);
+with
+end
+escape 1;
+]],
+    code = 'line 1 : missing function body',
+}
+
+Test { [[
+input (int,int)=>void* MALLOC;
+var void[] ptr;
+finalize
+    ptr = (call MALLOC=>(1,1));
+with
+end
+escape 1;
+]],
+    code = 'line 1 : missing function body',
+}
+
+Test { [[
+input (int,int)=>int MALLOC;
+var int v;
+finalize
+    v = (call MALLOC=>(1,1));
+with
+end
+escape 1;
+]],
+    fin = 'line 4 : attribution does not require `finalize´',
+}
+
+Test { [[
+input (int a, int b, void* ptr)=>void* MALLOC do
+    if a+b == 11 then
+        return ptr;
+    else
+        return null;
+    end
+end
+
+var int i;
+var void[] ptr;
+finalize
+    ptr = (call MALLOC=>(10,1, &i));
+with
+end
+escape ptr==&i;
+]],
+    run = 1,
+}
+Test { [[
+input (int a, int b, void* ptr)=>void* MALLOC do
+    if a+b == 11 then
+        return ptr;
+    else
+        return null;
+    end
+end
+
+var int i;
+var void[] ptr;
+finalize
+    ptr = (call MALLOC=>(1,1, &i));
+with
+end
+escape ptr==null;
+]],
+    run = 1,
+}
+
+Test { [[
+input (void)=>void* MALLOC;
+native _f();
+do
+    var void* a;
+    finalize
+        a = (call MALLOC);
+    with
+        do await FOREVER; end;
+    end
+end
+]],
+    fin = 'line 6 : destination pointer must be declared with the `[]´ buffer modifier',
+}
+
+Test { [[
+input (void* v)=>void F do
+    _V = v;
+end
+escape 1;
+]],
+    fin = 'line 2 : attribution to pointer with greater scope',
+}
+
+Test { [[
+input (void* v)=>void F do
+    _V := v;
+end
+escape 1;
+]],
+    fin = 'line 2 : parameter must be `hold´',
+}
+
+Test { [[
+native do
+    void* V;
+end
+input (@hold void* v)=>void F do
+    _V := v;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input (char* buf)=>void F do
+end;
+var char* buf;
+call F => (buf);
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input (char* buf, int i)=>void F do
+end;
+var char* buf;
+call F => (buf, 1);
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input (void)=>void F do
+end;
+var char* buf;
+call F;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input (char* buf)=>void F do
+end;
+var char* buf;
+call F => buf;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input (@hold char* buf)=>void F do
+end;
+var char* buf;
+call F => buf;
+escape 1;
+]],
+    fin = 'line 2 : call requires `finalize´',
+}
+
+Test { [[
+var char[255] buf;
+_enqueue(buf);
+escape 1;
+]],
+    fin = 'line 2 : call requires `finalize´',
+}
+
+Test { [[
+native _f();
+do
+    var int* p1 = null;
+    do
+        var int* p2 = null;
+        _f(p1, p2);
+    end
+end
+escape 1;
+]],
+    wrn = true,
+    fin = 'line 6 : call requires `finalize´',
+    -- multiple scopes
+}
+
+Test { [[
+native _f();
+native _v;
+native do
+    int v = 1;
+    int f (int v) {
+        return v + 1;
+    }
+end
+escape _f(_v);
+]],
+    --fin = 'line 3 : call requires `finalize´',
+    run = 2,
+    --fin = 'line 9 : attribution requires `finalize´',
+}
+Test { [[
+native @pure _f();
+native _v;
+native do
+    int v = 1;
+    int f (int v) {
+        return v + 1;
+    }
+end
+escape _f(_v);
+]],
+    --fin = 'line 3 : call requires `finalize´',
+    run = 2,
+}
+
+
+Test { [[
+native @pure _f();
+native do
+    int* f (int a) {
+        return NULL;
+    }
+end
+var int* v = _f(0);
+escape v == null;
+]],
+    run = 1,
+}
+
+Test { [[
+native @pure _f();
+native do
+    int V = 10;
+    int f (int v) {
+        return v;
+    }
+end
+native @const _V;
+escape _f(_V);
+]],
+    run = 10;
+}
+
+Test { [[
+native _f();
+native do
+    int f (int* v) {
+        return 1;
+    }
+end
+var int v;
+escape _f(&v) == 1;
+]],
+    fin = 'line 8 : call requires `finalize´',
+}
+
+Test { [[
+native @nohold _f();
+native do
+    int f (int* v) {
+        return 1;
+    }
+end
+var int v;
+escape _f(&v) == 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native _V;
+native @nohold _f();
+native do
+    int V=1;
+    int f (int* v) {
+        return 1;
+    }
+end
+var int v;
+escape _f(&v) == _V;
+]],
+    run = 1,
+}
+
+Test { [[
+input (int* p1, int* p2)=>void F;
+do
+    var int* p1 = null;
+    do
+        var int* p2 = null;
+        call F => (p1, p2);
+    end
+end
+escape 1;
+]],
+    fin = 'line 6 : invalid call (multiple scopes)',
+}
 do return end
 
 -- TODO: finalize not required
@@ -1062,10 +1382,10 @@ end
 }
 
 do return end
-]===]
 
 -------------------------------------------------------------------------------
 -- OK: well tested
+]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -18462,7 +18782,7 @@ input (int a)=>int G;
 var int ret = call F=>1;
 escape ret;
 ]],
-    code = 'line 4 : missing body',
+    code = 'line 4 : missing function body',
     --run = 2,
 }
 
@@ -28677,7 +28997,7 @@ var T t with
 end;
 ]],
     --env = 'line 22 : variable/event "_" is not declared',
-    fin = 'line 7 : `finalize´ inside constructor',
+    fin = 'line 7 : constructor cannot contain `finalize´',
     --props = 'line 23 : not permitted inside a constructor',
 }
 
@@ -28696,7 +29016,7 @@ spawn T with
 end;
 ]],
     --env = 'line 22 : variable/event "_" is not declared',
-    fin = 'line 7 : `finalize´ inside constructor',
+    fin = 'line 7 : constructor cannot contain `finalize´',
     --props = 'line 23 : not permitted inside a constructor',
 }
 
@@ -28735,7 +29055,7 @@ end
 escape _V;
 ]],
     --env = 'line 22 : variable/event "_" is not declared',
-    fin = '`finalize´ inside constructor',
+    fin = 'constructor cannot contain `finalize´',
     --props = 'line 23 : not permitted inside a constructor',
 }
 
@@ -28812,7 +29132,7 @@ end
 escape _V;
 ]],
     --env = 'line 23 : variable/event "_" is not declared',
-    fin = '`finalize´ inside constructor',
+    fin = 'constructor cannot contain `finalize´',
     --props = 'line 24 : not permitted inside a constructor',
 }
 
@@ -28851,7 +29171,7 @@ end
 escape _V;
 ]],
     --env = 'line 22 : variable/event "_" is not declared',
-    fin = '`finalize´ inside constructor',
+    fin = 'constructor cannot contain `finalize´',
     --fin = 'line 21 : invalid `finalize´',
 }
 

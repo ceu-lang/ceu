@@ -799,11 +799,11 @@ F = {
                                         node('Stmts', me.ln,
                                             node('EmitExt', me.ln, 'emit',
                                                 node('Ext', me.ln, id_evt..'_RETURN'),
-                                                    node('ExpList', me.ln,
-                                                        node('Var', me.ln, id_req),
-                                                        node('NUMBER', me.ln, 2),
-                                                                -- TODO: err=2?
-                                                        node('NUMBER', me.ln, 0))))))),
+                                                node('ExpList', me.ln,
+                                                    node('Var', me.ln, id_req),
+                                                    node('NUMBER', me.ln, 2),
+                                                            -- TODO: err=2?
+                                                    node('NUMBER', me.ln, 0))))))),
                             node('ParOr', me.ln,
                                 node('Block', me.ln,
                                     node('Stmts', me.ln, blk)),
@@ -1197,6 +1197,20 @@ F = {
 
     EmitExt_pre = function (me)
         local op, ext, ps = unpack(me)
+
+--[[
+        -- adjust to ExpList
+        if ps == false then
+            -- emit A;
+            -- emit A => ();
+            me[3] = node('ExpList', me.ln)
+        elseif ps.tag=='Exp' then
+            -- emit A => 1;
+            -- emit A => (1);
+            me[3] = node('ExpList', me.ln, ps)
+        end
+]]
+
         if op ~= 'request' then
             return
         end
