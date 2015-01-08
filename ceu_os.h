@@ -353,7 +353,7 @@ typedef union tceu_evtp {
 #endif
 #ifdef __cplusplus
     tceu_evtp () {}
-    tceu_evtp (float vv) : float(vv) {}
+    tceu_evtp (float vv) : f(vv)     {}
     tceu_evtp (void* vv) : ptr(vv)   {}
     tceu_evtp (s32   vv) : dt(vv)    {}
     /*tceu_evtp (int   vv) : v(vv)   {}*/
