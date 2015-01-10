@@ -179,7 +179,9 @@ fprintf(stderr, "OK : lbl=%d : org=%p\n", _CEU_LBL, _STK_ORG);
     return RET_HALT;    /* TODO: should never be reached anyways */
 }
 
+#ifdef CEU_OS_APP
 static __attribute__((noinline))  __attribute__((noclone))
+#endif
 void
 ceu_app_init (tceu_app* _ceu_app)
 {

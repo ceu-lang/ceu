@@ -858,10 +858,6 @@ case ]]..me.lbl_cnt.id..[[:;
         end
     end,
 
-    EmitT = function (me)
-
-    end,
-
     EmitInt = function (me)
         local _, int, exp = unpack(me)
 
