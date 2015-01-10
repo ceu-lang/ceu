@@ -352,8 +352,10 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , AwaitN   = KEY'await' * KEY'FOREVER'
 
     , __until  = KEY'until' * EV'__Exp'
-    , AwaitExt = KEY'await' * (EV'Ext'+V'WCLOCKK'+V'WCLOCKE')
-                                     * (V'__until' + Cc(false))
+    , AwaitExt = KEY'await' * (
+                    (EV'Ext' * Cc(false)) +
+                    Cc(false) * (V'WCLOCKK'+V'WCLOCKE')
+                 ) * (V'__until' + Cc(false))
     , AwaitInt = KEY'await' * EV'__Exp' * Cc(false)
                                      * (V'__until' + Cc(false))
 

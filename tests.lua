@@ -882,26 +882,6 @@ end
     run = 1,
 }
 
--- XXX-UNTIL
-Test { [[
-input int A;
-var int v = 0;
-par do
-    await 10s until v;
-    escape 10;
-with
-    await 10min;
-    v = 1;
-end
-]],
-    _ana = {
-        acc = 1,
-    },
-    run = {
-        ['~>10min10s'] = 10,
-    },
-}
-
 -- PROCURAR XXX e recolocar tudo ate o OK la
 
 Test { [[
@@ -27704,9 +27684,7 @@ do
     this.u = &uu;
 end
 
-_printf("oioi\n");
 var T t;
-_printf("oioi\n");
 escape 1;
 ]],
     run = 1,
@@ -35704,7 +35682,78 @@ escape x;
     },
 }
 
--- XXX-UNTIL
+Test { [[
+native do
+    int V = 0;
+end
+input int A;
+var int v = 0;
+par/or do
+    every 10s do
+        _V = _V + 1;
+    end
+with
+    await 10s until v;
+with
+    await 10s;
+    v = 1;
+    await FOREVER;
+end
+escape _V;
+]],
+    _ana = {
+        acc = 1,
+    },
+    run = {
+        ['~>1min'] = 2,
+    },
+}
+
+Test { [[
+native do
+    int V = 0;
+end
+input int A;
+var int v = 0;
+par/or do
+    every 10s do
+        _V = _V + 1;
+    end
+with
+    await 10s until v;
+with
+    await 20s;
+    v = 1;
+    await FOREVER;
+end
+escape _V;
+]],
+    _ana = {
+        acc = 1,
+    },
+    run = {
+        ['~>1min'] = 3,
+    },
+}
+
+Test { [[
+input int A;
+var int v = 0;
+par do
+    await 10s until v;
+    escape 10;
+with
+    await 10min;
+    v = 1;
+end
+]],
+    _ana = {
+        acc = 1,
+    },
+    run = {
+        ['~>10min10s'] = 10,
+    },
+}
 
 Test { [[
 input void OS_START;

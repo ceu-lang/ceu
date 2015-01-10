@@ -274,15 +274,21 @@ F = {
         --]]
         local e, blk = unpack(me)
 
-        local tag
+        local tag, v1, v2
         if e.tag=='WCLOCKK' or e.tag=='WCLOCKE' then
             tag = 'AwaitExt'
+            v1 = false
+            v2 = e
         elseif e.tag == 'Ext' then
             tag = 'AwaitExt'
+            v1 = e
+            v2 = false
         else
             tag = 'AwaitInt'
+            v1 = e
+            v2 = false
         end
-        local awt = node(tag, me.ln, e, false, false)
+        local awt = node(tag, me.ln, v1, v2, false)
 
         -- converts "await org" to "await org._ok" in env.lua
         awt.isWatching = true
@@ -319,15 +325,21 @@ F = {
         --      loop do a=await EXT; ... end
         --]]
 
-        local tag
+        local tag, v1, v2
         if e.tag=='WCLOCKK' or e.tag=='WCLOCKE' then
             tag = 'AwaitExt'
+            v1 = false
+            v2 = e
         elseif e.tag == 'Ext' then
             tag = 'AwaitExt'
+            v1 = e
+            v2 = false
         else
             tag = 'AwaitInt'
+            v1 = e
+            v2 = false
         end
-        local awt = node(tag, me.ln, e, false, false)
+        local awt = node(tag, me.ln, v1, v2, false)
         awt.isEvery = true  -- refuses other "awaits"
 
         local set
@@ -1006,17 +1018,15 @@ F = {
     end,
 
     AwaitExt_pre = function (me)
-        local e, cnd = unpack(me)
-        assert(e.tag ~= 'Ref', 'bug found')
+        local e, dt, cnd = unpack(me)
 
-        if e.tag=='WCLOCKK' or e.tag=='WCLOCKE' then
-            -- wclock event, change "e" and insert "dt"
+        -- wclock event, change "e" and insert "dt"
+        if dt then
             me[1] = node('Ext', me.ln, '_WCLOCK')
-            table.insert(me, 2, e)
-        else
-            -- normal event, no "dt" parameter
-            table.insert(me, 2, false)
         end
+        me[3] = nil   -- remove "cnd" from "Await"
+
+        assert(me[1].tag ~= 'Ref', 'bug found')
 
         if not cnd then
             return me
@@ -1027,7 +1037,6 @@ F = {
 
         -- <await until> => loop
 
-        me[2] = false   -- remove "cnd" from "Await"
         return node('Loop', me.ln,
                 node('Stmts', me.ln,
                     me,
@@ -1082,7 +1091,8 @@ F = {
             end
 
             if to.tag == 'VarList' then
-                local var = unpack(awt) -- find out 'TP' before traversing tup
+                local v1, v2 = unpack(awt) -- find out 'TP' before traversing tup
+                local var = v1 or v2       -- either Ext or dt
 
                 table.insert(T, 1, AST.copy(var))
                 table.insert(T, 2,
