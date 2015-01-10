@@ -17004,7 +17004,8 @@ do
 end
 escape ret + *p;
 ]],
-    fin = 'line 8 : attribution does not require `finalize´',
+    adj = 'line 7 : invalid `finalize´',
+    --fin = 'line 8 : attribution does not require `finalize´',
     --fin = 'line 8 : invalid block for awoken pointer "p"',
     --fin = 'line 14 : cannot `await´ again on this block',
 }
@@ -17053,7 +17054,7 @@ do
     escape r;
 end
 ]],
-    --adj = 'line 9 : invalid finalize',
+    adj = 'line 9 : invalid `finalize´',
     --run = 1,
     -- TODO: impossible to place the finally in the correct parameter?
 }
@@ -17136,8 +17137,8 @@ end
 escape i;
 ]],
     --fin = 'line 6 : invalid block for awoken pointer "p"',
-    fin = 'line 6 : attribution to pointer with greater scope',
-    --run = 1,
+    --fin = 'line 6 : attribution to pointer with greater scope',
+    run = 1,
 }
 Test { [[
 input void OS_START;

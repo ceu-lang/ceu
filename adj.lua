@@ -1107,6 +1107,7 @@ F = {
                             node('Ref', me.ln, awt),
                             node('Var', me.ln, tup_id))
                             -- assignment to struct must be '='
+            T[#T].__ast_tuple = true
 
             -- v1 = tup_id->_1;
             -- v2 = tup_id->_2;
@@ -1118,6 +1119,7 @@ F = {
                                     node('Var', me.ln, tup_id)),
                                 '_'..i),
                             v)
+                T[#T].__ast_tuple = true
                 -- HACK_7: tup_id->i looses type information (see env.lua)
                 T[#T].__ast_original_fr = {PAR=awt, I=(e and 1 or 2), i=i};
                 --local op2_dot = T[#T][2]
@@ -1305,6 +1307,13 @@ F = {
             T[#T+1] = me
 
         return T
+    end,
+
+-- Finalize ------------------------------------------------------
+
+    Finalize_pos = function (me)
+        ASR( (not me[1]) or (me[1].tag=='SetExp'),
+            me, 'invalid `finalize´')
     end,
 
 -- Pause ---------------------------------------------------------

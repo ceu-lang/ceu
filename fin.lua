@@ -174,7 +174,7 @@ F = {
                  fr.org.tp.id=='Global')   or
                 (ENV.clss[to.tp.id] and       -- organisms must use "watching"
                  fr.tag~='Op1_&')          or -- (but avoid &org)
-                fr.tag == 'Await'          or -- pointer from outside
+                me.__ast_tuple             or -- tuple attribution ok
                 (   -- same class and scope of "to" <= "fr"
                     (AST.par(to_blk,'Dcl_cls') == AST.par(fr_blk,'Dcl_cls')) and
                         (   to_blk.__depth >= fr_blk.__depth            -- to <= fr
@@ -183,7 +183,6 @@ F = {
                         )
                 )
             ) then
--- TODO: error code
                 ASR(op==':=', me, 'attribution to pointer with greater scope')
                     -- NO:
                     -- var int* p;
@@ -241,6 +240,10 @@ F = {
         if me.var.tp.buffer or me.var.tp.arr then
             return  -- ignore tracked vars with []
         end
+        if string.sub(me.var.id,1,5)=='_tup_' then
+            return  -- ignore tuple acesses
+        end
+
         if AST.iter'Dcl_constr'() and me.__par.fst.tag=='This' then
             return  -- constructor access
         end
