@@ -192,6 +192,22 @@ function TP.isNumeric (tp)
 end
 
 function TP.contains (tp1, tp2)
+    if tp1.tup or tp2.tup then
+        if tp1.tup and tp2.tup then
+            if #tp1.tup == #tp2.tup then
+                for i=1, #tp1.tup do
+                    local t1 = tp1.tup[i]
+                    local t2 = tp2.tup[i]
+                    if not TP.contains(t1,t2) then
+                        return false
+                    end
+                end
+                return true
+            end
+        end
+        return false
+    end
+
     -- same type
     if tp1.id==tp2.id and tp1.ptr==tp2.ptr and tp1.arr==tp2.arr then
                                               -- i.e. false
@@ -223,22 +239,6 @@ function TP.contains (tp1, tp2)
             end
         end
         return false
-    end
-
-    -- tuples vs (tuples or single types)
-    if tp1.tup or tp2.tup then
-        tup1 = tp1.tup or { tp1 }
-        tup2 = tp2.tup or { tp2 }
-        if #tup1 == #tup2 then
-            for i=1, #tup1 do
-                local t1 = tup1[i]
-                local t2 = tup2[i]
-                if not TP.contains(t1,t2) then
-                    return false
-                end
-            end
-        end
-        return true
     end
 
     -- both are pointers

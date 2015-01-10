@@ -2050,6 +2050,19 @@ Test { [[await A; escape 0;]],
 
 Test { [[
 input void A;
+par/or do
+    await A;
+with
+    async do
+        emit A;
+    end
+end
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+input void A;
 await A;
 escape 1;
 ]],
@@ -6758,7 +6771,7 @@ var int a, b;
 (a,b) = await 1s;
 escape 1;
 ]],
-    env = 'line 2 : event "?" is not declared',
+    run = 1,
 }
 
 Test { [[
@@ -17040,7 +17053,7 @@ do
     escape r;
 end
 ]],
-    adj = 'line 9 : invalid finalize',
+    --adj = 'line 9 : invalid finalize',
     --run = 1,
     -- TODO: impossible to place the finally in the correct parameter?
 }
@@ -18238,8 +18251,10 @@ escape(1);
 }
 Test { [[
 output _char A;
+escape 1;
 ]],
-    env = "line 1 : invalid event type",
+    run = 1,
+    --env = "line 1 : invalid event type",
 }
 
 Test { [[
@@ -19520,7 +19535,8 @@ escape *p;
     -- ARRAYS
 
 Test { [[input int[1] E; escape 0;]],
-    env = 'invalid event type',
+    run = 0,
+    --env = 'invalid event type',
     --parser = "line 1 : after `int´ : expected identifier",
 }
 Test { [[var int[0] v; escape 0;]],
@@ -21672,12 +21688,25 @@ escape 0;
 
 Test { [[
 event void a;
+var int v = await a;
+escape 0;
+]],
+    --env = 'line 2 : event type must be numeric',
+    --env = 'line 2 : invalid attribution',
+    --env = 'line 2 : invalid arity',
+    env = 'line 2 : invalid attribution (int vs void)',
+}
+
+Test { [[
+event void a;
 pause/if a do
 end
 escape 0;
 ]],
     --env = 'line 2 : event type must be numeric',
-    env = 'line 2 : invalid attribution',
+    --env = 'line 2 : invalid arity',
+    --env = 'line 2 : invalid attribution',
+    env = 'line 2 : invalid attribution (bool vs void)',
 }
 
 Test { [[
@@ -38184,7 +38213,7 @@ input/output [10] (int max)=>char* LINE;
 request LINE => "oi";
 escape 1;
 ]],
-    env = 'line 2 : invalid attribution (int vs char*)',
+    env = 'line 2 : non-matching types on `emit´ parameter #2 (int vs char*)',
 }
 
 Test { [[
@@ -38271,7 +38300,7 @@ input/output [10] (int max)=>char* LINE;
 request LINE => "oi";
 escape 1;
 ]],
-    env = 'line 2 : invalid attribution (int vs char*)',
+    env = 'line 2 : non-matching types on `emit´ parameter #2 (int vs char*)',
 }
 
 Test { [[

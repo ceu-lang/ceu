@@ -686,6 +686,18 @@ F = {
     _Dcl_ext0_pre = function (me)
         local dir, spw, rec, ins, out, id_evt, blk = unpack(me)
 
+        -- Type => TupleType
+        if ins.tag == 'Type' then
+            local id, ptr, arr, ref = unpack(ins)
+            if id=='void' and ptr=='' and arr==false and ref==false then
+                ins = node('TupleType', ins.ln)
+            else
+                ins = node('TupleType', ins.ln,
+                            node('TupleTypeItem', ins.ln, false, ins, false))
+            end
+            me[4] = ins
+        end
+
         if me[#me].tag == 'Block' then
             -- refuses id1,i2 + blk
             ASR(me[#me]==blk, me, 'same body for multiple declarations')
@@ -717,6 +729,9 @@ F = {
                                     node('TupleTypeItem', me.ln,
                                         false,AST.copy(tp_req),false),
                                     unpack(ins))                -- T1,...
+                local ins_cancel = node('TupleType', me.ln,
+                                    node('TupleTypeItem', me.ln,
+                                        false,AST.copy(tp_req),false))
                 local ins_ret = node('TupleType', me.ln,
                                     node('TupleTypeItem', me.ln,
                                         false,AST.copy(tp_req),false),
@@ -728,7 +743,7 @@ F = {
                 ret[#ret+1] = node('Dcl_ext', me.ln, d1, false,
                                    ins_req, false, id_evt..'_REQUEST')
                 ret[#ret+1] = node('Dcl_ext', me.ln, d1, false,
-                                   AST.copy(tp_req),  false, id_evt..'_CANCEL')
+                                   ins_cancel, false, id_evt..'_CANCEL')
                 ret[#ret+1] = node('Dcl_ext', me.ln, d2, false,
                                    ins_ret, false, id_evt..'_RETURN')
             else
@@ -931,6 +946,14 @@ F = {
 
     _Dcl_int_pre = function (me)
         local pre, tp = unpack(me)
+
+        -- Type => TupleType
+        if tp.tag == 'Type' then
+            tp = node('TupleType', tp.ln,
+                        node('TupleTypeItem', tp.ln, false, tp, false))
+            me[2] = tp
+        end
+
         local ret = {}
         local t = { unpack(me,3) }  -- skip "pre","tp"
         for i=1, #t do
@@ -980,9 +1003,9 @@ F = {
 
 -- Tuples ---------------------
 
-    _TupleItem_2 = '_TupleItem_1',
-    _TupleItem_1 = function (me)
-        me.tag = 'TupleItem'
+    _TupleTypeItem_2 = '_TupleItem_1',
+    _TupleTypeItem_1 = function (me)
+        me.tag = 'TupleTypeItem'
     end,
     _TupleType_2 = '_TupleType_1',
     _TupleType_1 = function (me)
@@ -1029,6 +1052,10 @@ F = {
             local awt = p1
             local T = node('Stmts', me.ln)
 
+            if to.tag ~= 'VarList' then
+                to = node('VarList', me.ln, to)
+            end
+
             -- <await until> => loop
             local cnd = awt[#awt]
             awt[#awt] = false   -- remove "cnd" from "Await"
@@ -1044,46 +1071,59 @@ F = {
                 ret = T
             end
 
-            local tup = '_tup_'..me.n
+            -- (v1, v2) = await e;
+            --      <becomes>
+            -- <e>;                 // required by tup_tp
+            -- var _tup_tp* tup_id; // requires type of "e"
+            -- tup_id = await e;
+            -- v1 = tup_id->_1;
+            -- v2 = tup_id->_2;
+            -- vn = tup_id->_n;
 
-            -- <a = await I>  => await I; a=I;
-            T[#T+1] = awt
-            if op then
-                if to.tag == 'VarList' then
-                    T[#T+1] = node('SetExp', me.ln, '=',
-                                    node('Ref', me.ln, awt),
-                                    node('Var', me.ln, tup))
-                                    -- assignment to struct must be '='
-                else
-                    T[#T+1] = node('SetExp', me.ln, op,
-                                    node('Ref', me.ln, awt),
-                                    to)
-                end
+            -- <e>;
+            local e, dt = unpack(awt) -- determines type before traversing tup
+            local var = e or dt       -- TODO: hacky
+            T[#T+1] = AST.copy(var)
+            --assert(var.tag=='Ext' or var.tag=='Var' or
+                   --var.tag=='WCLOCKK' or var.tag=='WCLOCKE',
+                    --'TODO: org.evt tambem: '..var.tag)
+
+            -- var _tup_tp* tup_id;
+            local tup_id = '_tup_'..me.n
+            local tup_tp
+            if var.tag=='WCLOCKK' or var.tag=='WCLOCKE' then
+                tup_tp = AST.node('Type', me.ln, '_tceu__s32', 1, false, false)
+            else
+                tup_tp = {__ast_pending=true, PAR=T, I=#T, ptr=1} -- pointer to receive
+                            -- HACK_5: substitute with type of "var" (env.lua)
             end
+            T[#T+1] = node('Dcl_var', me.ln, 'var', tup_tp, tup_id)
 
-            if to.tag == 'VarList' then
-                local e, dt = unpack(awt) -- find out 'TP' before traversing tup
-                local var = e or dt       -- TODO: hacky
+            -- tup_id = await e;
+            --      <becomes>
+            -- await e; tup_id=<e>;
+            T[#T+1] = awt
+            T[#T+1] = node('SetExp', me.ln, '=',
+                            node('Ref', me.ln, awt),
+                            node('Var', me.ln, tup_id))
+                            -- assignment to struct must be '='
 
-                table.insert(T, 1, AST.copy(var))
-                table.insert(T, 2,
-                    node('Dcl_var', me.ln, 'var',
-                        node('Type', me.ln, 'char', 1, false, false),
-                        tup))
-                    T[2].__ast_ref = { T, 1 } -- TP is changed on env.lua
-
-                -- T = { evt_var, dcl_tup, awt, set [_1,_N] }
-
-                for i, v in ipairs(to) do
-                    T[#T+1] = node('SetExp', me.ln, op,
-                                node('Op2_.', me.ln, '.',
-                                    node('Op1_*', me.ln, '*',
-                                        node('Var', me.ln, tup)),
-                                    '_'..i),
-                                v)
-                    T[#T][2].__ast_chk = { {T,1}, i }
-                    T[#T][2].__ast_fr = p1    -- p1 is an AwaitX
-                end
+            -- v1 = tup_id->_1;
+            -- v2 = tup_id->_2;
+            -- vn = tup_id->_n;
+            for i, v in ipairs(to) do
+                T[#T+1] = node('SetExp', me.ln, op,
+                            node('Op2_.', me.ln, '.',
+                                node('Op1_*', me.ln, '*',
+                                    node('Var', me.ln, tup_id)),
+                                '_'..i),
+                            v)
+                -- HACK_7: tup_id->i looses type information (see env.lua)
+                T[#T].__ast_original_fr = {PAR=awt, I=(e and 1 or 2), i=i};
+                --local op2_dot = T[#T][2]
+                --op2_dot.__ast_pending = v   -- same type of
+-- TODO: entender esse __ast
+                T[#T][2].__ast_fr = p1    -- p1 is an AwaitX
             end
 
             return ret
@@ -1183,6 +1223,7 @@ F = {
 
 -- EmitExt --------------------------------------------------------
 
+    EmitInt_pre = 'EmitExt_pre',
     EmitExt_pre = function (me)
         local op, e, ps = unpack(me)
 
@@ -1190,6 +1231,20 @@ F = {
         if e == false then
             me[2] = node('Ext', me.ln, '_WCLOCK')
         end
+
+        -- adjust to ExpList
+        if ps == false then
+            -- emit A;
+            -- emit A => ();
+            ps = node('ExpList', me.ln)
+        elseif ps.tag == 'ExpList' then
+            -- ok
+        else
+            -- emit A => 1;
+            -- emit A => (1);
+            ps = node('ExpList', me.ln, ps)
+        end
+        me[3] = ps
 
         if op ~= 'request' then
             return
@@ -1200,71 +1255,56 @@ F = {
     EmitInt_pos = 'EmitExt_pos',
     EmitExt_pos = function (me)
         local op, e, ps = unpack(me)
-        me.ps = ps  -- save for arity check
+        me.__ast_original_params = ps  -- save for arity check
+        assert(ps.tag == 'ExpList', ps.tag)
 
-        -- (1) no exp: emit e
-        if not ps then
+        if #ps == 0 then
+            me[3] = false   -- nothing to pass
             return
         end
 
-        local t = { }
+        -- statements to assign the parameters
+        local T = node('Stmts', me.ln)
 
-        -- (2) single: emit e => a
-        if ps.tag ~= 'ExpList' then
-            -- avoid emitting tmps (see tmps.lua)
-            if me.tag == 'EmitInt' then
-                t[#t+1] = node('EmitNoTmp', me.ln)
-            end
+        -- emit e => (v1,v2);
+        --      <becomes>
+        -- <e>;                 // required by tup_tp
+        -- var _tup_tp tup_id;  // requires type of "e"
+        -- tup_id._1 = v1;
+        -- tup_id._2 = v2;
+        -- emit e => &tup_id;
 
-            t[#t+1] = me
-            return node('Stmts', me.ln, unpack(t))
-        end
+        -- <e>;
+        T[#T+1] = AST.copy(e) -- determines type before traversing tup
+        --assert(e.tag=='Ext' or e.tag=='Var', 'TODO: org.evt tambem')
 
-        -- (3) multiple: emit e => (a,b)
-        local tup = '_tup_'..me.n
-        t[#t+1] = AST.copy(e)   -- find out 'TP' before traversing local
-        local I = #t
-        t[#t+1] = node('Dcl_var', me.ln, 'var',
-                    node('Type', me.ln, 'TP', 0, false, false),
-                    tup)
-        t[#t].__ast_ref = { t, #t-1 } -- TP is changed on env.lua
+        -- var _tup_tp* tup_id;
+        local tup_id = '_tup_'..me.n
+        local tup_tp = {__ast_pending=true, PAR=T, I=#T, ptr=0} -- plain var to emit
+                            -- HACK_5: substitute with type of "var" (env.lua)
+        T[#T+1] = node('Dcl_var', me.ln, 'var', tup_tp, tup_id)
+        T[#T].__ast_tmp = true
 
+-- TODO: understand this again
         -- avoid emitting tmps (see tmps.lua)
         if me.tag == 'EmitInt' then
-            t[#t+1] = node('EmitNoTmp', me.ln)
+            T[#T+1] = node('EmitNoTmp', me.ln)
         end
 
         for i, p in ipairs(ps) do
-            t[#t+1] = node('SetExp', me.ln, '=',
+            T[#T+1] = node('SetExp', me.ln, '=',
                         p,
-                        node('Op2_.', me.ln, '.', node('Var',me.ln,tup),
+                        node('Op2_.', me.ln, '.', node('Var',me.ln,tup_id),
                             '_'..i))
-            t[#t][3].__ast_chk = { {t,I}, i }
+-- TODO: understand this again
+            --T[#T][3].__ast_chk = { {T,I}, i }
         end
 
         me[3] = node('Op1_&', me.ln, '&',
-                    node('Var', me.ln, tup))
-        t[#t+1] = me
+                    node('Var', me.ln, tup_id))
+            T[#T+1] = me
 
-        return node('Stmts', me.ln, unpack(t))
-    end,
-
--- Finalize ------------------------------------------------------
-
-    Finalize_pos = function (me)
-        if (not me[1]) or (me[1].tag ~= 'Stmts') then
-            return      -- normal finalize
-        end
-
-        ASR(me[1][1].tag=='Await' and me[1][1][1].tag~='Ext',
-                                        -- internal event
-            me, 'invalid finalize (multiple scopes)')
-
-        -- invert fin <=> await
-        local ret = me[1]   -- return stmts
-        me[1] = ret[2]      -- await => fin
-        ret[2] = me         -- fin => stmts[2]
-        return ret
+        return T
     end,
 
 -- Pause ---------------------------------------------------------
@@ -1273,7 +1313,7 @@ F = {
         local evt, blk = unpack(me)
         local cur_id  = '_cur_'..blk.n
         local cur_dcl = node('Dcl_var', me.ln, 'var',
-                            node('Type', me.ln, 'u8', 0, false, false),
+                            node('Type', me.ln, 'bool', 0, false, false),
                             cur_id)
 
         local PSE = node('Pause', me.ln, blk)

@@ -323,13 +323,16 @@ F = {
 
         for _, v in ipairs(t) do
             local id, tp = unpack(v)
+            local _tp = AST.node('Type', me.ln, tp, 0, false, false)
             local evt = {
                 ln  = me.ln,
                 id  = id,
                 pre = 'input',
-                ins = AST.node('Type', me.ln, tp, 0, false, false),
+                ins = AST.node('TupleType', me.ln,
+                            AST.node('TupleTypeItem', me.ln, false, _tp, false)),
                 mod = { rec=false },
             }
+            TP.new(_tp)
             TP.new(evt.ins)
             ENV.exts[#ENV.exts+1] = evt
             ENV.exts[id] = evt
@@ -498,11 +501,6 @@ F = {
             return
         end
 
-        ASR(ins.tup or ins.id=='void' or ins.id=='int' or ins.id=='float' or ins.ptr>0,
-            me, 'invalid event type')
-        ASR((not ins.arr) and (not ins.ref),
-            me, 'invalid event type')
-
         me.evt = {
             ln  = me.ln,
             id  = id,
@@ -517,17 +515,23 @@ F = {
     end,
 
     Dcl_var_pre = function (me)
-        -- changes TP from ast.lua
-        if me.__ast_ref then
-            local t, i = unpack(me.__ast_ref)
-            local ref = t[i]
-            local evt = ref.evt or (ref.var and ref.var.evt)
-            ASR(evt, me,
-                'event "'..(ref.var and ref.var.id or '?')..'" is not declared')
-            ASR(evt.ins.tup, me, 'invalid arity' )
-            me[2][1] = '_'..TP.toc(evt.ins)
+        -- HACK_5: substitute with type of "to" (adj.lua)
+        local _, tp = unpack(me)
+        if tp.__ast_pending then
+            local e = tp.PAR[tp.I]
+            --assert(e.tag=='Ext' or e.tag=='Var'
+                --or e.tag=='WCLOCKK', 'TODO: org.evt tambem')
+            local evt = (e.var or e).evt
+            ASR(evt, me, 'event "'
+                .. ((e.var or e).id or '?')
+                .. '" is not declared')
+            assert(evt.ins and evt.ins.tag=='TupleType', 'bug found')
+            me[2] = AST.node('Type', me.ln,
+                        '_'..TP.toc(evt.ins), tp.ptr, false, false)
+                        -- actual type of Dcl_var
         end
     end,
+
     Dcl_var = function (me)
         local pre, tp, id, constr = unpack(me)
         if id == '_' then
@@ -681,59 +685,42 @@ F = {
                 me.tp = e.evt.ins
             end
         else
-            local int = unpack(me)
-            ASR(int.var and int.var.pre=='event', me,
-                'event "'..(int.var and int.var.id or '?')..'" is not declared')
-            if int.var.evt.ins.tup then
-                me.tp = TP.fromstr('_'..TP.toc(int.var.evt.ins)..'*') -- convert to pointer
+            ASR(e.var and e.var.pre=='event', me,
+                'event "'..(e.var and e.var.id or '?')..'" is not declared')
+            if e.var.evt.ins.tup then
+                me.tp = TP.fromstr('_'..TP.toc(e.var.evt.ins)..'*') -- convert to pointer
             else
-                me.tp = int.var.evt.ins
+                me.tp = e.var.evt.ins
             end
         end
     end,
 
     __arity = function (me, ins, ps)
-        local n_evt, n_exp
-        if ins.tup then
-            n_evt = #ins.tup
-        elseif ins.id=='void' and ins.ptr==0 then
-            n_evt = 0
-        else
-            n_evt = 1
-        end
-        if ps then
-            if ps.tag == 'ExpList' then
-                n_exp = #ps
-            else
-                n_exp = 1
-            end
-        else
-            n_exp = 0
-        end
-        ASR(n_evt==n_exp, me, 'invalid arity')
-
-        if n_evt == 1 then
-            ASR(TP.contains(ins,ps.tp), me,
-                'non-matching types on `emit´ ('..
-                    TP.tostr(ins)..' vs '..TP.tostr(ps.tp)..')')
+        assert(ins.tag=='TupleType', 'bug found')
+        assert(ps.tag=='ExpList', 'bug found')
+        ASR(#ins==#ps, me, 'invalid arity')
+        for i=1, #ins do
+            local _, tp, _ = unpack(ins[i])
+            local msg = (#ins==1 and '') or (' parameter #'..i)
+            ASR(TP.contains(tp,ps[i].tp), me,
+                'non-matching types on `emit´'..msg..' ('..
+                    TP.tostr(tp)..' vs '..TP.tostr(ps[i].tp)..')')
         end
     end,
 
     EmitInt = function (me)
-        local _, int, ps = unpack(me)
+        local _, int, _ = unpack(me)
         local var = int.var
         ASR(var and var.pre=='event', me,
             'event "'..(var and var.id or '?')..'" is not declared')
-        --ASR(var.evt.ins.id=='void' or (ps and TP.contains(var.evt.ins,ps.tp)),
-            --me, 'invalid `emit´')
-        F.__arity(me, var.evt.ins, me.ps)
+        F.__arity(me, var.evt.ins, me.__ast_original_params)
     end,
 
     EmitExt = function (me)
-        local op, e, ps = unpack(me)
+        local op, e, _ = unpack(me)
 
         ASR(e.evt.op == op, me, 'invalid `'..op..'´')
-        F.__arity(me, e.evt.ins, me.ps)
+        F.__arity(me, e.evt.ins, me.__ast_original_params)
 
         if op == 'call' then
             me.tp = e.evt.out       -- return value
@@ -747,18 +734,44 @@ F = {
     SetExp = function (me)
         local _, fr, to = unpack(me)
         to = to or AST.iter'SetBlock'()[1]
-        ASR(to and to.lval, me, 'invalid attribution')
-        ASR(TP.contains(to.tp,fr.tp), me,
-            'invalid attribution ('..TP.tostr(to.tp)..' vs '..TP.tostr(fr.tp)..')')
-        ASR(me.read_only or (not to.lval.read_only), me,
-            'read-only variable')
-        ASR(not CLS().is_ifc, me, 'invalid attribution')
 
         -- remove byRef flag if normal assignment
-        if not to.tp.ref then
+        if to.tp and (not to.tp.ref) then
             to.byRef = false
             fr.byRef = false
         end
+
+        if to.tag=='Var' and string.sub(to.var.id,1,5)=='_tup_' then
+            -- SetAwait:
+            -- (a,b) = await E;
+            -- Individual assignments will be checked:
+            -- tup = await E;
+            -- a = tup->_1;
+            -- b = tup->_2;
+            return
+        end
+
+        local fr_tp = fr.tp
+
+        -- HACK_7: tup_id->i looses type information (see adj.lua)
+        local t = me.__ast_original_fr
+        if t then
+            local e, i = t.PAR[t.I], t.i
+            local evt = (e.var or e).evt  -- Ext or Int
+            if evt then
+                fr_tp = assert(assert(evt.ins).tup)[i] or TP.types.void
+            else
+                fr_tp = e.tp                -- WCLOCK
+            end
+            assert(fr_tp.tag == 'Type')
+        end
+
+        ASR(to and to.lval, me, 'invalid attribution')
+        ASR(TP.contains(to.tp,fr_tp), me,
+            'invalid attribution ('..TP.tostr(to.tp)..' vs '..TP.tostr(fr_tp)..')')
+        ASR(me.read_only or (not to.lval.read_only), me,
+            'read-only variable')
+        ASR(not CLS().is_ifc, me, 'invalid attribution')
 
         -- lua type
 --[[
