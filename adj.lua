@@ -27,8 +27,8 @@ function REQUEST (me)
         to, op, _, emit = unpack(me)
     end
 
-    local op_emt, ext, ps = unpack(emit)
-    local id_evt = ext[1]
+    local op_emt, e, ps = unpack(emit)
+    local id_evt = e[1]
     local id_req  = '_reqid_'..me.n
     local id_req2 = '_reqid2_'..me.n
 
@@ -1100,7 +1100,7 @@ F = {
 
         elseif tag == '__SetEmitExt' then
             assert(p1.tag == 'EmitExt')
-            local op_emt, ext, ps = unpack(p1)
+            local op_emt, e, ps = unpack(p1)
             if op_emt == 'request' then
                 return REQUEST(me)
 
@@ -1184,20 +1184,12 @@ F = {
 -- EmitExt --------------------------------------------------------
 
     EmitExt_pre = function (me)
-        local op, ext, ps = unpack(me)
+        local op, e, ps = unpack(me)
 
---[[
-        -- adjust to ExpList
-        if ps == false then
-            -- emit A;
-            -- emit A => ();
-            me[3] = node('ExpList', me.ln)
-        elseif ps.tag=='Exp' then
-            -- emit A => 1;
-            -- emit A => (1);
-            me[3] = node('ExpList', me.ln, ps)
+        -- wclock event, set "e"
+        if e == false then
+            me[2] = node('Ext', me.ln, '_WCLOCK')
         end
-]]
 
         if op ~= 'request' then
             return
@@ -1207,7 +1199,7 @@ F = {
 
     EmitInt_pos = 'EmitExt_pos',
     EmitExt_pos = function (me)
-        local op, ext, ps = unpack(me)
+        local op, e, ps = unpack(me)
         me.ps = ps  -- save for arity check
 
         -- (1) no exp: emit e
@@ -1230,7 +1222,7 @@ F = {
 
         -- (3) multiple: emit e => (a,b)
         local tup = '_tup_'..me.n
-        t[#t+1] = AST.copy(ext)   -- find out 'TP' before traversing local
+        t[#t+1] = AST.copy(e)   -- find out 'TP' before traversing local
         local I = #t
         t[#t+1] = node('Dcl_var', me.ln, 'var',
                     node('Type', me.ln, 'TP', 0, false, false),

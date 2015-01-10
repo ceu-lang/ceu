@@ -334,6 +334,7 @@ F = {
             ENV.exts[#ENV.exts+1] = evt
             ENV.exts[id] = evt
         end
+        ENV.exts._WCLOCK.op = 'emit'
     end,
 
     Root = function (me)
@@ -726,51 +727,19 @@ F = {
         --ASR(var.evt.ins.id=='void' or (ps and TP.contains(var.evt.ins,ps.tp)),
             --me, 'invalid `emit´')
         F.__arity(me, var.evt.ins, me.ps)
-
---[[
--- should fail on arity or individual assignments
-        if ps then
-            local tp = var.evt.ins
-            if var.evt.ins.tup then
-                tp = TP.fromstr('_'..TP.toc(tp)..'*') -- convert to pointer
-            end
-            ASR(TP.contains(tp,ps.tp), me,
-                'non-matching types on `emit´ ('..TP.tostr(tp)..' vs '..TP.tostr(ps.tp)..')')
-        else
-            ASR(var.evt.ins.id=='void' or
-                var.evt.ins.tup and #var.evt.ins.tup==0,
-                me, "missing parameters on `emit´")
-        end
-]]
     end,
 
     EmitExt = function (me)
-        local op, ext, ps = unpack(me)
+        local op, e, ps = unpack(me)
 
-        ASR(ext.evt.op == op, me, 'invalid `'..op..'´')
-        F.__arity(me, ext.evt.ins, me.ps)
+        ASR(e.evt.op == op, me, 'invalid `'..op..'´')
+        F.__arity(me, e.evt.ins, me.ps)
 
         if op == 'call' then
-            me.tp = ext.evt.out     -- return value
+            me.tp = e.evt.out       -- return value
         else
-            me.tp = TP.fromstr'int'           -- [0,1] enqueued? (or 'int' return val)
+            me.tp = TP.fromstr'int' -- [0,1] enqueued? (or 'int' return val)
         end
-
---[[
--- should fail on arity or individual assignments
-        if ps then
-            local tp = ext.evt.ins
-            if ext.evt.ins.tup then
-                --tp = TP.fromstr('_'..TP.toc(tp)..'*') -- convert to pointer
-            end
-            ASR(TP.contains(tp,ps.tp), me,
-                'non-matching types on `'..op..'´ ('..TP.tostr(tp)..' vs '..TP.tostr(ps.tp)..')')
-        else
-            ASR(ext.evt.ins.id=='void' or
-                ext.evt.ins.tup and #ext.evt.ins.tup==0,
-                me, "missing parameters on `emit´")
-        end
-]]
     end,
 
     --------------------------------------------------------------------------

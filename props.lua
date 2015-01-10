@@ -60,7 +60,7 @@ local NO_thread = {
     Async=true, Thread=true,
     ParEver=true, ParOr=true, ParAnd=true,
     Await=true, AwaitN=true,
-    EmitInt=true, EmitExt=true, EmitT=true,
+    EmitInt=true, EmitExt=true,
     Pause=true,
     Escape=true,
     Finalize=true,
@@ -310,10 +310,6 @@ F = {
         if AST.par(me,'Dcl_fun') then
             ASR(op=='call', me, 'invalid `emit´')
         end
-    end,
-    EmitT = function (me)
-        ASR(AST.par(me,'Async'),
-            me,'not permitted outside `async´')
     end,
 
     SetExp = function (me)

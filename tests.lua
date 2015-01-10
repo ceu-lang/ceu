@@ -2413,7 +2413,9 @@ Test { [[await FOREVER; escape 0;]],
     parser = "line 1 : before `;´ : expected event",
 }
 
-Test { [[emit 1ms; escape 0;]], props='not permitted outside `async´' }
+Test { [[emit 1ms; escape 0;]],
+    props = 'invalid `emit´'
+}
 
 Test { [[
 var int a;
@@ -32857,7 +32859,7 @@ escape f(5);
 Test { [[
 call 1;
 ]],
-    ast = 'invalid call',
+    parser = 'line 1 : after `1´ : expected <h,min,s,ms,us>',
 }
 
 Test { [[

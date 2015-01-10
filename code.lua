@@ -815,8 +815,8 @@ _STK.trl = &_STK_ORG->trls[ ]]..me.trails[1]..[[ ];
     end,
 
     EmitExt = function (me)
-        local op, ext, param = unpack(me)
-        local evt = ext.evt
+        local op, e, param = unpack(me)
+        local evt = e.evt
         local no = '_CEU_NO_'..me.n..'_'
 
         if evt.pre~='input' or op~='emit' then
@@ -840,14 +840,14 @@ _STK.trl->lbl = ]]..me.lbl_cnt.id..[[;
         if AST.iter'Thread'() then
             -- HACK_2: never terminates
             error'not supported'
-        else
-            LINE(me, V(me)..[[;
+        end
+
+        LINE(me, V(me)..[[;
 #if defined(CEU_RET) || defined(CEU_OS)
 if (! _ceu_app->isAlive)
     return RET_QUIT;
 #endif
 ]])
-        end
 
         if AST.iter'Async'() then
             HALT(me, 'RET_ASYNC')
@@ -859,53 +859,7 @@ case ]]..me.lbl_cnt.id..[[:;
     end,
 
     EmitT = function (me)
-        local exp = unpack(me)
-        local no = '_CEU_NO_'..me.n..'_'
 
-        local suf = (exp.tm and '_') or ''
-
-        -- only async's need to split in two (to avoid stack growth)
-        if AST.iter'Async'() then
-            LINE(me, [[
-]]..no..[[:
-_STK.trl->evt = CEU_IN__ASYNC;
-_STK.trl->lbl = ]]..me.lbl_cnt.id..[[;
-]])
-        end
-
-        local emit = [[
-{
-    ceu_out_go(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, CEU_EVTP((s32)(]]..V(exp)..[[)));
-    while (
-#if defined(CEU_RET) || defined(CEU_OS)
-            _ceu_app->isAlive &&
-#endif
-            _ceu_app->wclk_min]]..suf..[[<=0) {
-        ceu_out_go(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, CEU_EVTP((s32)0));
-    }
-#if defined(CEU_RET) || defined(CEU_OS)
-    if (! _ceu_app->isAlive)
-        return RET_QUIT;
-#endif
-}
-]]
-        if AST.iter'Thread'() then
-            emit = 'CEU_ATOMIC( '..emit..' )\n'
-        end
-
-        LINE(me, [[
-#ifdef CEU_WCLOCKS
-    ]]..emit..[[
-#endif
-]])
-
-        if AST.iter'Async'() then
-            HALT(me, 'RET_ASYNC')
-            LINE(me, [[
-case ]]..me.lbl_cnt.id..[[:;
-]])
-            AWAIT_PAUSE(me, no)
-        end
     end,
 
     EmitInt = function (me)

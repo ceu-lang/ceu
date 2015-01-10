@@ -171,7 +171,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , Nothing = KEY'nothing'
 
     , __StmtS = V'Await'
-             + V'EmitT'    + V'EmitExt'   + V'EmitInt'
+             + V'EmitExt'  + V'EmitInt'
              + V'_Dcl_nat' + V'_Dcl_ext0'
              + V'_Dcl_int' + V'_Dcl_var' + V'_Dcl_pool'
              + V'Dcl_det'
@@ -356,10 +356,9 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , Await    = KEY'await' * V'__awaits'
                     * (KEY'until'*EV'__Exp' + Cc(false))
 
-    , EmitT    = KEY'emit' * (V'WCLOCKK'+V'WCLOCKE')
-
     , EmitExt  = (CKEY'call/rec'+CKEY'call'+CKEY'emit'+CKEY'request')
-               * EV'Ext' * V'__emit_ps'
+               * ( Cc(false) * (V'WCLOCKK'+V'WCLOCKE')
+                 + EV'Ext' * V'__emit_ps' )
     , EmitInt  = CKEY'emit' * EV'__Exp' * V'__emit_ps'
     , __emit_ps = ( K'=>' * (V'__Exp' + K'(' * V'ExpList' * EK')')
                 +   Cc(false) )

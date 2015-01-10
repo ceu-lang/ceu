@@ -164,11 +164,31 @@ F =
     end,
 
     EmitExt = function (me)
-        local op, ext, param = unpack(me)
+        local op, e, param = unpack(me)
+
+        -- TODO: join w/ the code below
+        if e[1] == '_WCLOCK' then
+            local suf = (e.tm and '_') or ''
+            me.val = [[
+#ifdef CEU_WCLOCKS
+{
+    ceu_out_go(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, CEU_EVTP((s32)(]]..V(param)..[[)));
+    while (
+#if defined(CEU_RET) || defined(CEU_OS)
+            _ceu_app->isAlive &&
+#endif
+            _ceu_app->wclk_min]]..suf..[[<=0) {
+        ceu_out_go(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, CEU_EVTP((s32)0));
+    }
+}
+#endif
+]]
+            return
+        end
 
         local DIR, dir, ptr, mode
 
-        if ext.evt.pre == 'input' then
+        if e.evt.pre == 'input' then
             DIR = 'IN'
             dir = 'in'
             if op == 'call' then
@@ -182,7 +202,7 @@ F =
             ptr = '_ceu_app'
         end
 
-        local tup = ext.evt.ins.tup
+        local tup = e.evt.ins.tup
         if op=='call' or dir=='in' or
                 (not tup) or (#tup == 1) then
             mode = 'val'
@@ -191,15 +211,15 @@ F =
         end
 
         local t1 = { }
-        if ext.evt.pre=='input' and op=='call' then
+        if e.evt.pre=='input' and op=='call' then
             t1[#t1+1] = '_ceu_app'  -- to access `app´
             t1[#t1+1] = ptr         -- to access `this´
         end
 
-        local t2 = { ptr, 'CEU_'..DIR..'_'..ext.evt.id }
+        local t2 = { ptr, 'CEU_'..DIR..'_'..e.evt.id }
 
         if param then
-            local isPtr = ext.evt.ins.ptr>0
+            local isPtr = e.evt.ins.ptr>0
             local val
             if isPtr then
                 val = '(void*)'..V(param)
@@ -212,14 +232,14 @@ F =
                 if mode == 'val' then
                     t2[#t2+1] = 'CEU_EVTP((void*)'..val..')'
                 else
-                    t2[#t2+1] = 'sizeof('..TP.toc(ext.evt.ins)..')'
+                    t2[#t2+1] = 'sizeof('..TP.toc(e.evt.ins)..')'
                     t2[#t2+1] = '(byte*)'..val
                 end
             else
                 assert(mode == 'val')
                 if isPtr then
                     t2[#t2+1] = 'CEU_EVTP((void*)'..val..')'
-                elseif TP.isFloat(ext.evt.ins) then
+                elseif TP.isFloat(e.evt.ins) then
                     t2[#t2+1] = 'CEU_EVTP((float)'..val..')'
                 else
                     t2[#t2+1] = 'CEU_EVTP((int)'..val..')'
@@ -244,7 +264,7 @@ F =
             -- when the call crosses the process,
             -- the return val must be unpacked from tceu_evtp
             if me.__ast_set then
-                if TP.toc(ext.evt.out) == 'int' then
+                if TP.toc(e.evt.out) == 'int' then
                     ret = '.v'
                 else
                     ret = '.ptr'
@@ -255,8 +275,8 @@ F =
         local op = (op=='emit' and 'emit') or 'call'
 
         me.val = '\n'..[[
-#if defined(ceu_]]..dir..'_'..op..'_'..ext.evt.id..[[)
-    ceu_]]..dir..'_'..op..'_'..ext.evt.id..'('..t1..[[)
+#if defined(ceu_]]..dir..'_'..op..'_'..e.evt.id..[[)
+    ceu_]]..dir..'_'..op..'_'..e.evt.id..'('..t1..[[)
 
 #elif defined(ceu_]]..dir..'_'..op..'_'..mode..[[)
     ceu_]]..dir..'_'..op..'_'..mode..'('..t2..')'..ret..[[
