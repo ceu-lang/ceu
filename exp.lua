@@ -55,17 +55,16 @@ F = {
         me.lst.amp = true
     end,
 
+    Field = function (me)
+        local op, e1, var = unpack(me)
+        me.fst = e1.fst
+        me.lst = var    -- org.var => var
+    end,
+
     ['Op2_.'] = function (me)
         local op, e1, id = unpack(me)
-        local cls = e1.tp.ptr==0 and ENV.clss[e1.tp.id]
-        if cls then
-            -- org.var => var
-            me.lst = me[3]
-        else
-            -- s.x => s
-            me.lst = e1.lst
-        end
         me.fst = e1.fst
+        me.lst = e1.lst -- s.x => s
     end,
 
     Op1_cast = function (me)

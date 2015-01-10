@@ -20,7 +20,7 @@ local NO_atomic = {
     Finalize=true, Finally=true,
     Host=true, Thread=true,
     ParEver=true, ParOr=true, ParAnd=true,
-    AwaitS=true, AwaitExt=true, AwaitInt=true, AwaitN=true, AwaitT=true,
+    AwaitS=true, AwaitExt=true, AwaitInt=true, AwaitN=true,
     EmitInt=true, EmitExt=true,
     Pause=true,
     -- TODO:
@@ -32,7 +32,7 @@ local NO_fun = {
     Finalize=true, Finally=true,
     Host=true, Thread=true,
     ParEver=true, ParOr=true, ParAnd=true,
-    AwaitS=true, AwaitExt=true, AwaitInt=true, AwaitN=true, AwaitT=true,
+    AwaitS=true, AwaitExt=true, AwaitInt=true, AwaitN=true,
     EmitInt=true, --EmitExt=true,
     Pause=true,
 }
@@ -41,7 +41,7 @@ local NO_fin = {
     Finalize=true, Finally=true,
     Host=true, Escape=true, Async=true, Thread=true,
     ParEver=true, ParOr=true, ParAnd=true,
-    AwaitS=true, AwaitExt=true, AwaitInt=true, AwaitN=true, AwaitT=true,
+    AwaitS=true, AwaitExt=true, AwaitInt=true, AwaitN=true,
     EmitInt=true,
     Pause=true,
 }
@@ -49,7 +49,7 @@ local NO_fin = {
 local NO_async = {
     Async=true, Thread=true,
     ParEver=true, ParOr=true, ParAnd=true,
-    AwaitS=true, AwaitExt=true, AwaitInt=true, AwaitN=true, AwaitT=true,
+    AwaitS=true, AwaitExt=true, AwaitInt=true, AwaitN=true,
     EmitInt=true,
     Pause=true,
     Escape=true,
@@ -59,7 +59,7 @@ local NO_async = {
 local NO_thread = {
     Async=true, Thread=true,
     ParEver=true, ParOr=true, ParAnd=true,
-    AwaitS=true, AwaitExt=true, AwaitInt=true, AwaitN=true, AwaitT=true,
+    AwaitS=true, AwaitExt=true, AwaitInt=true, AwaitN=true,
     EmitInt=true, EmitExt=true, EmitT=true,
     Pause=true,
     Escape=true,
@@ -70,7 +70,7 @@ local NO_constr = {
     --Finalize=true, Finally=true,
     Escape=true, Async=true, Thread=true,
     ParEver=true, ParOr=true, ParAnd=true,
-    AwaitS=true, AwaitExt=true, AwaitInt=true, AwaitN=true, AwaitT=true,
+    AwaitS=true, AwaitExt=true, AwaitInt=true, AwaitN=true,
     EmitInt=true,
     Pause=true,
 }
@@ -282,20 +282,22 @@ F = {
         end
     end,
 
-    AwaitT = function (me)
-        PROPS.has_wclocks = true
-        F._loop1(me)
-    end,
     AwaitInt = function (me)
         PROPS.has_ints = true
         F._loop1(me)
     end,
     AwaitExt = function (me)
+        local _, dt = unpack(me)
+        if dt then
+            PROPS.has_wclocks = true
+        end
         F._loop1(me)
     end,
     AwaitN = function (me)
         F._loop1(me)
     end,
+--[[
+-- deprecated?
     AwaitS = function (me)
         for _, awt in ipairs(me) do
             if awt.__ast_isexp then
@@ -303,10 +305,11 @@ F = {
             elseif awt.tag=='Ext' then
                 F.AwaitExt(me)
             else
-                F.AwaitT(me)
+                F._AwaitT(me)
             end
         end
     end,
+]]
 
     EmitInt = function (me)
         PROPS.has_ints = true

@@ -294,16 +294,6 @@ F = {
         ENV.exts[#ENV.exts+1] = evt
         ENV.exts[evt.id] = evt
 
-        local evt = {id='_WCLOCK', pre='input'}
-        ENV.exts[#ENV.exts+1] = evt
-        ENV.exts[evt.id] = evt
-
-        if OPTS.timemachine then
-            local evt = {id='_WCLOCK_', pre='input'}
-            ENV.exts[#ENV.exts+1] = evt
-            ENV.exts[evt.id] = evt
-        end
-
         local evt = {id='_ASYNC', pre='input'}
         ENV.exts[#ENV.exts+1] = evt
         ENV.exts[evt.id] = evt
@@ -312,27 +302,37 @@ F = {
         ENV.exts[#ENV.exts+1] = evt
         ENV.exts[evt.id] = evt
 
+        -- EVENTS USED DIRECTLY BY THE USER
         -- need to reserve these events so that they always have the same code
+        -- common by all apps
+
+        local t = {}
+        t[#t+1] = { '_WCLOCK', 's32' }
+
         if OPTS.os then
-            local t = {
-                { 'OS_START',     'void' },
-                { 'OS_STOP',      'void' },
-                { 'OS_DT',        'int'  },
-                { 'OS_INTERRUPT', 'int'  },
+            t[#t+1] = { '_WCLOCK',      's32'  }
+            t[#t+1] = { 'OS_START',     'void' }
+            t[#t+1] = { 'OS_STOP',      'void' }
+            t[#t+1] = { 'OS_DT',        'int'  }
+            t[#t+1] = { 'OS_INTERRUPT', 'int'  }
+        end
+
+        if OPTS.timemachine then
+            t[#t+1] = { '_WCLOCK_', 's32' }
+        end
+
+        for _, v in ipairs(t) do
+            local id, tp = unpack(v)
+            local evt = {
+                ln  = me.ln,
+                id  = id,
+                pre = 'input',
+                ins = AST.node('Type', me.ln, tp, 0, false, false),
+                mod = { rec=false },
             }
-            for _, v in ipairs(t) do
-                local id, tp = unpack(v)
-                local evt = {
-                    ln  = me.ln,
-                    id  = id,
-                    pre = 'input',
-                    ins = AST.node('Type', me.ln, tp, 0, false, false),
-                    mod = { rec=false },
-                }
-                TP.new(evt.ins)
-                ENV.exts[#ENV.exts+1] = evt
-                ENV.exts[id] = evt
-            end
+            TP.new(evt.ins)
+            ENV.exts[#ENV.exts+1] = evt
+            ENV.exts[id] = evt
         end
     end,
 
@@ -615,9 +615,9 @@ F = {
     Var = function (me)
         local id = unpack(me)
 
-        local blk = me.__adj_blk and assert(AST.par(me.__adj_blk,'Block'))
+        local blk = me.__ast_blk and assert(AST.par(me.__ast_blk,'Block'))
                         or AST.iter('Block')()
-        local var = ENV.getvar(id, blk)
+        local var = me.var or ENV.getvar(id, blk)
         ASR(var, me, 'variable/event "'..id..'" is not declared')
         me.var  = var
         me.tp   = var.tp
@@ -657,13 +657,13 @@ F = {
     end,
 
     ParOr = function (me)
-        -- detects if "isWatching" a real event (not an org)
+        -- HACK_6: detects if "isWatching" a real event (not an org)
         --  to remove the "isAlive" test
         if me.isWatching then
             local tp = me.isWatching.tp
             if not (tp and tp.ptr==1 and ENV.clss[tp.id]) then
                 local if_ = me[2][1][2]
-                assert(if_ and if_.tag == 'If')
+                assert(if_ and if_.tag == 'If', 'bug found')
                 me[2][1][2] = if_[2]    -- changes "if" for the "await" (true branch)
                 --if_[1] = AST.node('NUMBER', me.ln, 1)
             end
@@ -697,15 +697,12 @@ F = {
     end,
 
     AwaitExt = function (me)
-        local ext = unpack(me)
-        if ext.evt.ins.tup then
-            me.tp = TP.fromstr('_'..TP.toc(ext.evt.ins)..'*') -- convert to pointer
+        local e = unpack(me)
+        if e.evt.ins.tup then
+            me.tp = TP.fromstr('_'..TP.toc(e.evt.ins)..'*') -- convert to pointer
         else
-            me.tp = ext.evt.ins
+            me.tp = e.evt.ins
         end
-    end,
-    AwaitT = function (me)
-        me.tp = TP.fromstr's32'    -- <a = await ...>
     end,
 
     __arity = function (me, ins, ps)
@@ -993,7 +990,6 @@ F = {
         if cls then
             me.org = e1
 
-            -- me[3]: id => Var
             local var
             if e1.tag == 'This' then
                 -- accept private "body" vars
@@ -1006,12 +1002,17 @@ F = {
                     -- end
                     --]]
             end
-            var = var or ASR(cls.blk_ifc.vars[id], me,
+            local blk = cls.blk_ifc
+            var = var or ASR(blk.vars[id], me,
                         'variable/event "'..id..'" is not declared')
-            me[3] = AST.node('Var', me.ln, '$'..id)
-            me[3].var = var
-            me[3].tp  = var.tp
+            local node = AST.node('Var', me.ln, '$'..id)
+            node.var = var
+            node.tp  = var.tp
+            node.__ast_blk = blk[1]
+            me[3] = node
 
+            -- Op2_. => Field
+            me.tag = 'Field'
             me.org  = e1
             me.var  = var
             me.tp   = var.tp

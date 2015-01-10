@@ -47,6 +47,7 @@ function REQUEST (me)
 
     local awt = node('AwaitExt', me.ln,
                     node('Ext', me.ln, id_evt..'_RETURN'),
+                    false,
                     node('Op2_==', me.ln, '==',
                         node('Var', me.ln, id_req),
                         node('Var', me.ln, id_req2)))
@@ -103,6 +104,7 @@ F = {
                             node('Stmts', me.ln,
                                 node('AwaitExt', me.ln,
                                     node('Ext',me.ln,'OS_STOP'),
+                                    false,
                                     false),
                                 node('_Escape', me.ln,
                                     node('NUMBER',me.ln,1)))))
@@ -233,7 +235,7 @@ F = {
         --      escape 1;   -- "set" block (outer)
         --  end
         --]]
-        to.__adj_blk = set
+        to.__ast_blk = set
 
 -- TODO: remove
         to.ret = true
@@ -270,45 +272,46 @@ F = {
         -- both sides, the message will point to "..." which appears after in
         -- the code
         --]]
-        local evt, blk = unpack(me)
+        local e, blk = unpack(me)
 
-        local awt
-        local ref = node('Ref', me.ln, evt) -- "evt" must be parsed before "awt"
-        if evt.tag=='WCLOCKK' or evt.tag=='WCLOCKE' then
-            awt = node('AwaitT', me.ln, ref, false)
-        elseif evt.tag=='Ext' then
-            awt = node('AwaitExt', me.ln, ref, false)
-        else  -- maybe an org
-            awt = node('AwaitInt', me.ln, ref, false)
-            awt.isWatching = true
-                -- converts "await org" to "await org._ok" in env.lua
+        local tag
+        if e.tag=='WCLOCKK' or e.tag=='WCLOCKE' then
+            tag = 'AwaitExt'
+        elseif e.tag == 'Ext' then
+            tag = 'AwaitExt'
+        else
+            tag = 'AwaitInt'
         end
+        local awt = node(tag, me.ln, e, false, false)
+
+        -- converts "await org" to "await org._ok" in env.lua
+        awt.isWatching = true
 
         local ret = node('ParOr', me.ln,
                         blk,
                         node('Block', me.ln,
                             node('Stmts', me.ln,
-                                evt,  -- parses here, than uses "Ref" in "awt"
+                                e,  -- "e" needs to be parsed before "awt"
                                 node('If', me.ln,
-                                    -- changes to "true" if normal event in env.lua
+                                    -- HACK_6: changes to "true" if normal event in env.lua
                                     node('Op2_.', me.ln, '.',
                                         node('Op1_*', me.ln, '*',
                                             -- this cast confuses acc.lua (see Op1_* there)
                                             -- TODO: HACK_3
                                             node('Op1_cast', me.ln,
                                                 node('Type', me.ln, '_tceu_org', 1, false, false),
-                                                AST.copy(evt))),
+                                                AST.copy(e))),
                                         'isAlive'),
                                     node('Block',me.ln,node('Stmts',me.ln,awt)),
                                     node('Block',me.ln,node('Stmts',me.ln,node('Nothing', me.ln)))))))
-        ret.isWatching = evt
+        ret.isWatching = e
         return ret
     end,
 
 -- Every --------------------------------------------------
 
     _Every_pre = function (me)
-        local to, ext, blk = unpack(me)
+        local to, e, blk = unpack(me)
 
         --[[
         --      every a=EXT do ... end
@@ -317,15 +320,15 @@ F = {
         --]]
 
         local tag
-        if ext.tag == 'Ext' then
+        if e.tag=='WCLOCKK' or e.tag=='WCLOCKE' then
             tag = 'AwaitExt'
-        elseif ext.tag=='WCLOCKK' or ext.tag=='WCLOCKE' then
-            tag = 'AwaitT'
+        elseif e.tag == 'Ext' then
+            tag = 'AwaitExt'
         else
             tag = 'AwaitInt'
         end
-        local awt = node(tag, me.ln, ext, false)
-            awt.isEvery = true  -- refuses other "awaits"
+        local awt = node(tag, me.ln, e, false, false)
+        awt.isEvery = true  -- refuses other "awaits"
 
         local set
         if to then
@@ -335,7 +338,7 @@ F = {
         end
 
         local ret = node('Loop', me.ln, node('Stmts', me.ln, set, blk))
-            ret.isEvery = true  -- refuses other "awaits"
+        ret.isEvery = true  -- refuses other "awaits"
 -- TODO: remove
         ret.blk = blk
         return ret
@@ -599,8 +602,9 @@ F = {
         local awt = node('AwaitInt', me.ln,
                         node('Op2_.', me.ln, '.',
                             node('Var', me.ln, '_org_'..me.n),
-                                'ok'),
-                            false)
+                            'ok'),
+                        false,
+                        false)
         if to then
             awt = node('_Set', me.ln, to, '=', '__SetAwait', awt, false, false)
         end
@@ -815,6 +819,7 @@ F = {
                                             '=', '__SetAwait',
                                             node('AwaitExt', me.ln,
                                                 node('Ext', me.ln, id_evt..'_CANCEL'),
+                                                false,
                                                 node('Op2_==', me.ln, '==',
                                                     node('Var', me.ln, 'id_req'),
                                                     node('Op2_.', me.ln, '.',
@@ -1001,7 +1006,18 @@ F = {
     end,
 
     AwaitExt_pre = function (me)
-        local exp, cnd = unpack(me)
+        local e, cnd = unpack(me)
+        assert(e.tag ~= 'Ref', 'bug found')
+
+        if e.tag=='WCLOCKK' or e.tag=='WCLOCKE' then
+            -- wclock event, change "e" and insert "dt"
+            me[1] = node('Ext', me.ln, '_WCLOCK')
+            table.insert(me, 2, e)
+        else
+            -- normal event, no "dt" parameter
+            table.insert(me, 2, false)
+        end
+
         if not cnd then
             return me
         end
@@ -1020,18 +1036,9 @@ F = {
                         node('Nothing', me.ln))))
     end,
     AwaitInt_pre = 'AwaitExt_pre',
-    AwaitT_pre   = 'AwaitExt_pre',
 
     _Set_pre = function (me)
         local to, op, tag, p1, p2, p3 = unpack(me)
-
---[[
--- remove! now "request" generates EmitExt that returns tuple
-        if to.tag == 'VarList' then
-            ASR(tag=='__SetAwait', me.ln,
-                'invalid attribution (`await´ expected)')
-        end
-]]
 
         if tag == 'SetExp' then
             return node(tag, me.ln, op, p1, to)

@@ -247,7 +247,7 @@ F = {
 
         -- between Await and Until
 
-        local awt, cnd = unpack(me)
+        local awt, dt, cnd = unpack(me)
 
         local t
         if me.ana.pre[false] then
@@ -259,8 +259,8 @@ F = {
             elseif me.tag == 'AwaitInt' then
                 -- use "var" as identifier (why "evt" doesn't work?)
                 t = { [{awt.var}]=true }
-            else    -- 'AwaitT'
-                t = { [{awt.evt or 'WCLOCK'}]=true }
+            else
+                error 'bug found'
             end
         end
         me.ana.pos = COPY(t)
@@ -271,7 +271,6 @@ F = {
         end
     end,
     AwaitInt_aft = 'AwaitExt_aft',
-    AwaitT_aft   = 'AwaitExt_aft',
 
     AwaitN = function (me)
         me.ana.pos = { [false]=true }

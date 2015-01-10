@@ -60,9 +60,9 @@
     #define CEU_IN__ORG_PSED    253
     #define CEU_IN__INIT        252
     #define CEU_IN__CLEAR       251
-    #define CEU_IN__WCLOCK      250
-    #define CEU_IN__ASYNC       249
-    #define CEU_IN__THREAD      248
+    #define CEU_IN__ASYNC       250
+    #define CEU_IN__THREAD      249
+    #define CEU_IN__WCLOCK      248
     #define CEU_IN_OS_START     247
     #define CEU_IN_OS_STOP      246
     #define CEU_IN_OS_DT        245

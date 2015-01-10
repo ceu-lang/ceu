@@ -145,12 +145,13 @@ F = {
     AwaitS = function (me)
         me.lbl = new{'Awake_MANY'}
     end,
-    AwaitT = function (me)
-        me.lbl = new{'Awake_DT'}
-    end,
     AwaitExt = function (me)
-        local e = unpack(me)
-        me.lbl = new{'Awake_'..(e.evt or e.var.evt).id}
+        local e, dt = unpack(me)
+        if dt then
+            me.lbl = new{'Awake_DT'}
+        else
+            me.lbl = new{'Awake_'..(e.evt or e.var.evt).id}
+        end
     end,
     AwaitInt = 'AwaitExt',
 

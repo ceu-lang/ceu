@@ -196,10 +196,8 @@ F = {
         CHG(me.lst.acc, 'no')
     end,
 
-    ['Op2_.'] = function (me)
-        if me.org then
-            me.lst.acc.org = me.org.lst
-        end
+    Field = function (me)
+        me.lst.acc.org = me.org.lst
     end,
 
     Global = function (me)
@@ -313,7 +311,6 @@ F = {
             err = ERR(me, 'awake'),
         }
     end,
-    AwaitT = 'AwaitExt',
     --AwaitInt = <see above>,
 }
 

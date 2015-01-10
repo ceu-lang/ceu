@@ -272,7 +272,6 @@ F = {
         end
     end,
     AwaitExt = 'AwaitInt',
-    AwaitT   = 'AwaitInt',
     AwaitN   = 'AwaitInt',
     AwaitS   = 'AwaitInt',
 

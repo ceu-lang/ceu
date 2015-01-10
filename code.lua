@@ -960,31 +960,6 @@ case ]]..me.lbl_cnt.id..[[:;
         HALT(me)
     end,
 
-    AwaitT = function (me)
-        local exp = unpack(me)
-        local no = '_CEU_NO_'..me.n..'_'
-        local suf = (exp.tm and '_') or ''
-
-        LINE(me, [[
-ceu_out_wclock]]..suf..[[(_ceu_app, (s32)]]..V(exp)..[[, &]]..me.val_wclk..[[, NULL);
-]]..no..[[:
-    _STK.trl->evt = CEU_IN__WCLOCK]]..suf..[[;
-    _STK.trl->lbl = ]]..me.lbl.id..[[;
-]])
-        HALT(me)
-
-        LINE(me, [[
-case ]]..me.lbl.id..[[:;
-]])
-
-        AWAIT_PAUSE(me, no)
-        LINE(me, [[
-    if (!ceu_out_wclock]]..suf..[[(_ceu_app, _STK.evtp.dt, NULL, &]]..me.val_wclk..[[) )
-        goto ]]..no..[[;
-]])
-        DEBUG_TRAILS(me)
-    end,
-
     AwaitInt = function (me)
         local int = unpack(me)
         local org = (int.org and int.org.val) or '_STK_ORG'
@@ -1018,12 +993,19 @@ case ]]..me.lbl.id..[[:;
     end,
 
     AwaitExt = function (me)
-        local e = unpack(me)
-        local no = AST.iter'Pause'() and '_CEU_NO_'..me.n..'_:'
-                    or ''
+        local e, dt = unpack(me)
+        local no = (dt or AST.iter'Pause'()) and '_CEU_NO_'..me.n..'_'
+        local suf = (e.tm and '_') or ''  -- timemachine "WCLOCK_"
+
+        if dt then
+            LINE(me, [[
+ceu_out_wclock]]..suf..[[(_ceu_app, (s32)]]..V(dt)..[[, &]]..me.val_wclk..[[, NULL);
+]])
+        end
+
         LINE(me, [[
-]]..no..[[
-    _STK.trl->evt = CEU_IN_]]..e.evt.id..[[;
+]]..(no and no..':' or '')..[[
+    _STK.trl->evt = CEU_IN_]]..e.evt.id..suf..[[;
     _STK.trl->lbl = ]]..me.lbl.id..[[;
 ]])
         HALT(me)
@@ -1031,7 +1013,15 @@ case ]]..me.lbl.id..[[:;
         LINE(me, [[
 case ]]..me.lbl.id..[[:;
 ]])
-        AWAIT_PAUSE(me, string.sub(no,1,-2))  -- remove `:´
+        AWAIT_PAUSE(me, no)
+
+        if dt then
+            LINE(me, [[
+    if (!ceu_out_wclock]]..suf..[[(_ceu_app, _STK.evtp.dt, NULL, &]]..me.val_wclk..[[) )
+        goto ]]..no..[[;
+]])
+        end
+
         DEBUG_TRAILS(me)
     end,
 

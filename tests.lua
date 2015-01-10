@@ -882,6 +882,26 @@ end
     run = 1,
 }
 
+-- XXX-UNTIL
+Test { [[
+input int A;
+var int v = 0;
+par do
+    await 10s until v;
+    escape 10;
+with
+    await 10min;
+    v = 1;
+end
+]],
+    _ana = {
+        acc = 1,
+    },
+    run = {
+        ['~>10min10s'] = 10,
+    },
+}
+
 -- PROCURAR XXX e recolocar tudo ate o OK la
 
 Test { [[
@@ -33820,6 +33840,20 @@ class T with
     event void e;
 do
     await this.e;
+    watching this.e do
+        nothing;
+    end
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+    event void e;
+do
+    await this.e;
     par/or do
         nothing;
     with
@@ -35670,24 +35704,7 @@ escape x;
     },
 }
 
-Test { [[
-input int A;
-var int v = 0;
-par do
-    await 10s until v;
-    escape 10;
-with
-    await 10min;
-    v = 1;
-end
-]],
-    _ana = {
-        acc = 1,
-    },
-    run = {
-        ['~>10min10s'] = 10,
-    },
-}
+-- XXX-UNTIL
 
 Test { [[
 input void OS_START;
@@ -38817,7 +38834,7 @@ escape app.v;
 ]],
     timemachine = true,
     _ana = {
-        acc = 41,
+        acc = 2,
     },
     run = 1,
 }

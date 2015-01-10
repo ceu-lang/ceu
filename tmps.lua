@@ -142,17 +142,16 @@ F = {
         local awaits = false
         AST.visit(
             {
-                AwaitT = function (me)
+                AwaitExt = function (me)
                     awaits = true
                 end,
-                AwaitInt = 'AwaitT',
-                AwaitExt = 'AwaitT',
-                AwaitN   = 'AwaitT',
-                AwaitS   = 'AwaitT',
-                EmitInt  = 'AwaitT',
-                Async    = 'AwaitT',
-                Thread   = 'AwaitT',
-                Spawn    = 'AwaitT',
+                AwaitInt = 'AwaitExt',
+                AwaitN   = 'AwaitExt',
+                AwaitS   = 'AwaitExt',
+                EmitInt  = 'AwaitExt',
+                Async    = 'AwaitExt',
+                Thread   = 'AwaitExt',
+                Spawn    = 'AwaitExt',
             },
             me)
 

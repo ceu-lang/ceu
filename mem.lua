@@ -226,9 +226,12 @@ CEU_POOL_DCL(]]..var.id_..',CEU_'..var.tp.id..','..var.tp.arr.sval..[[)
         end
     end,
 
-    AwaitT = function (me)
-        local cls = CLS()
-        cls.struct = cls.struct..SPC()..'s32 __wclk_'..me.n..';\n'
+    AwaitExt = function (me)
+        local _, dt = unpack(me)
+        if dt then
+            local cls = CLS()
+            cls.struct = cls.struct..SPC()..'s32 __wclk_'..me.n..';\n'
+        end
     end,
 
 --[[

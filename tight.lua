@@ -117,7 +117,6 @@ F = {
         me.tl_blocks = true
     end,
     AwaitInt = 'AwaitExt',
-    AwaitT   = 'AwaitExt',
     AwaitN   = 'AwaitExt',
     AwaitS   = 'AwaitExt',
 
