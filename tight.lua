@@ -112,13 +112,11 @@ F = {
         me.tl_blocks = true
     end,
 
-    AwaitExt = function (me)
+    Await = function (me)
         me.tl_awaits = true
         me.tl_blocks = true
     end,
-    AwaitInt = 'AwaitExt',
-    AwaitN   = 'AwaitExt',
-    AwaitS   = 'AwaitExt',
+    AwaitN = 'Await',
 
     Op2_call = function (me)
         local op, f, _ = unpack(me)

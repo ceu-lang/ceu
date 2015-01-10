@@ -80,11 +80,16 @@ F = {
         local op = AST.iter'Op1_&'()
         local isRef = op and (op.base == me)
 
-        if AST.iter'Finally'() or      -- finally executes through "call"
-           AST.iter'AwaitInt'() or     -- await ptr:a (ptr is tested on awake)
-           isRef or                     -- reference may escape
-           var.tp.arr                   -- array may escape: TODO conservative
-                                        -- (arrays as parameters)
+        local AwaitInt = function ()
+            local n = AST.iter'Await'()
+            return n and n[1].tag~='Ext'
+        end
+
+        if AST.iter'Finally'() or   -- finally executes through "call"
+           AwaitInt() or            -- await ptr:a (ptr is tested on awake)
+           isRef or                 -- reference may escape
+           var.tp.arr               -- array may escape: TODO conservative
+                                    -- (arrays as parameters)
         then
             var.isTmp = false
             VARS[var] = nil
@@ -142,16 +147,14 @@ F = {
         local awaits = false
         AST.visit(
             {
-                AwaitExt = function (me)
+                Await = function (me)
                     awaits = true
                 end,
-                AwaitInt = 'AwaitExt',
-                AwaitN   = 'AwaitExt',
-                AwaitS   = 'AwaitExt',
-                EmitInt  = 'AwaitExt',
-                Async    = 'AwaitExt',
-                Thread   = 'AwaitExt',
-                Spawn    = 'AwaitExt',
+                AwaitN   = 'Await',
+                EmitInt  = 'Await',
+                Async    = 'Await',
+                Thread   = 'Await',
+                Spawn    = 'Await',
             },
             me)
 

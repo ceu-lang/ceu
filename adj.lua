@@ -45,7 +45,7 @@ function REQUEST (me)
         end
     end
 
-    local awt = node('AwaitExt', me.ln,
+    local awt = node('Await', me.ln,
                     node('Ext', me.ln, id_evt..'_RETURN'),
                     false,
                     node('Op2_==', me.ln, '==',
@@ -102,7 +102,7 @@ F = {
                         node('Block', me.ln, ret),
                         node('Block', me.ln,
                             node('Stmts', me.ln,
-                                node('AwaitExt', me.ln,
+                                node('Await', me.ln,
                                     node('Ext',me.ln,'OS_STOP'),
                                     false,
                                     false),
@@ -272,32 +272,17 @@ F = {
         -- both sides, the message will point to "..." which appears after in
         -- the code
         --]]
-        local e, blk = unpack(me)
+        local e, dt, blk = unpack(me)
+        local var = e or dt     -- TODO: hacky
 
-        local tag, v1, v2
-        if e.tag=='WCLOCKK' or e.tag=='WCLOCKE' then
-            tag = 'AwaitExt'
-            v1 = false
-            v2 = e
-        elseif e.tag == 'Ext' then
-            tag = 'AwaitExt'
-            v1 = e
-            v2 = false
-        else
-            tag = 'AwaitInt'
-            v1 = e
-            v2 = false
-        end
-        local awt = node(tag, me.ln, v1, v2, false)
-
-        -- converts "await org" to "await org._ok" in env.lua
-        awt.isWatching = true
+        local awt = node('Await', me.ln, e, dt, false)
+        awt.isWatching = true -- converts "await org" to "await org._ok" in env.lua
 
         local ret = node('ParOr', me.ln,
                         blk,
                         node('Block', me.ln,
                             node('Stmts', me.ln,
-                                e,  -- "e" needs to be parsed before "awt"
+                                var,  -- "var" needs to be parsed before "awt"
                                 node('If', me.ln,
                                     -- HACK_6: changes to "true" if normal event in env.lua
                                     node('Op2_.', me.ln, '.',
@@ -306,18 +291,18 @@ F = {
                                             -- TODO: HACK_3
                                             node('Op1_cast', me.ln,
                                                 node('Type', me.ln, '_tceu_org', 1, false, false),
-                                                AST.copy(e))),
+                                                AST.copy(var))),
                                         'isAlive'),
                                     node('Block',me.ln,node('Stmts',me.ln,awt)),
                                     node('Block',me.ln,node('Stmts',me.ln,node('Nothing', me.ln)))))))
-        ret.isWatching = e
+        ret.isWatching = var
         return ret
     end,
 
 -- Every --------------------------------------------------
 
     _Every_pre = function (me)
-        local to, e, blk = unpack(me)
+        local to, e, dt, blk = unpack(me)
 
         --[[
         --      every a=EXT do ... end
@@ -325,21 +310,7 @@ F = {
         --      loop do a=await EXT; ... end
         --]]
 
-        local tag, v1, v2
-        if e.tag=='WCLOCKK' or e.tag=='WCLOCKE' then
-            tag = 'AwaitExt'
-            v1 = false
-            v2 = e
-        elseif e.tag == 'Ext' then
-            tag = 'AwaitExt'
-            v1 = e
-            v2 = false
-        else
-            tag = 'AwaitInt'
-            v1 = e
-            v2 = false
-        end
-        local awt = node(tag, me.ln, v1, v2, false)
+        local awt = node('Await', me.ln, e, dt, false)
         awt.isEvery = true  -- refuses other "awaits"
 
         local set
@@ -611,7 +582,7 @@ F = {
         --]]
         local id_cls, constr = unpack(me);
 
-        local awt = node('AwaitInt', me.ln,
+        local awt = node('Await', me.ln,
                         node('Op2_.', me.ln, '.',
                             node('Var', me.ln, '_org_'..me.n),
                             'ok'),
@@ -829,7 +800,7 @@ F = {
                                         node('_Set', me.ln,
                                             node('Var', me.ln, 'id_req'),
                                             '=', '__SetAwait',
-                                            node('AwaitExt', me.ln,
+                                            node('Await', me.ln,
                                                 node('Ext', me.ln, id_evt..'_CANCEL'),
                                                 false,
                                                 node('Op2_==', me.ln, '==',
@@ -897,6 +868,7 @@ F = {
                             node('Stmts', me.ln, unpack(dcls)),
                             node('_Every', me.ln, vars,
                                 node('Ext', me.ln, id_evt..'_REQUEST'),
+                                false,
                                 node('Block', me.ln,
                                     node('Stmts', me.ln,
                                         node('Dcl_var', me.ln, 'var',
@@ -1017,7 +989,7 @@ F = {
         me.tag = 'TupleType'
     end,
 
-    AwaitExt_pre = function (me)
+    Await_pre = function (me)
         local e, dt, cnd = unpack(me)
 
         -- wclock event, change "e" and insert "dt"
@@ -1044,7 +1016,6 @@ F = {
                         node('Break', me.ln),
                         node('Nothing', me.ln))))
     end,
-    AwaitInt_pre = 'AwaitExt_pre',
 
     _Set_pre = function (me)
         local to, op, tag, p1, p2, p3 = unpack(me)
@@ -1091,8 +1062,8 @@ F = {
             end
 
             if to.tag == 'VarList' then
-                local v1, v2 = unpack(awt) -- find out 'TP' before traversing tup
-                local var = v1 or v2       -- either Ext or dt
+                local e, dt = unpack(awt) -- find out 'TP' before traversing tup
+                local var = e or dt       -- TODO: hacky
 
                 table.insert(T, 1, AST.copy(var))
                 table.insert(T, 2,
@@ -1293,8 +1264,9 @@ F = {
             return      -- normal finalize
         end
 
-        ASR(me[1][1].tag == 'AwaitInt', me,
-            'invalid finalize (multiple scopes)')
+        ASR(me[1][1].tag=='Await' and me[1][1][1].tag~='Ext',
+                                        -- internal event
+            me, 'invalid finalize (multiple scopes)')
 
         -- invert fin <=> await
         local ret = me[1]   -- return stmts
@@ -1333,7 +1305,7 @@ F = {
                                 node('_Set', me.ln,
                                     node('Var', me.ln, cur_id),
                                     '=', '__SetAwait',
-                                    node('AwaitInt', me.ln, evt, false),
+                                    node('Await', me.ln, evt, false),
                                     false, false),
                                 node('If', me.ln,
                                     node('Var', me.ln, cur_id),

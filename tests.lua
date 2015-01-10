@@ -33865,6 +33865,16 @@ escape ret;
 }
 
 Test { [[
+watching (10)ms do
+end
+escape 1;
+]],
+    run = {
+        ['~>1s'] = 1,
+    }
+}
+
+Test { [[
 input int I;
 var int ret = -5;
 var int dt = await I;

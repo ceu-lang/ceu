@@ -170,7 +170,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     , Nothing = KEY'nothing'
 
-    , __StmtS = V'AwaitExt'  + V'AwaitInt'
+    , __StmtS = V'Await'
              + V'EmitT'    + V'EmitExt'   + V'EmitInt'
              + V'_Dcl_nat' + V'_Dcl_ext0'
              + V'_Dcl_int' + V'_Dcl_var' + V'_Dcl_pool'
@@ -207,7 +207,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , _Set  = (V'__Exp' + V'VarList') * V'__Sets'
     , __Sets = (CK'='+CK':=') * (
                                     -- p1=awt,
-                Cc'__SetAwait'   * (V'AwaitExt'+V'AwaitInt') * Cc(false)
+                Cc'__SetAwait'   * V'Await' * Cc(false)
                                                                          -- constr
               + Cc'__SetThread'  * V'_Thread' * Cc(false)
                                                 -- constr
@@ -351,18 +351,10 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     , AwaitN   = KEY'await' * KEY'FOREVER'
 
-    , __until  = KEY'until' * EV'__Exp'
-    , AwaitExt = KEY'await' * (
-                    (EV'Ext' * Cc(false)) +
-                    Cc(false) * (V'WCLOCKK'+V'WCLOCKE')
-                 ) * (V'__until' + Cc(false))
-    , AwaitInt = KEY'await' * EV'__Exp' * Cc(false)
-                                     * (V'__until' + Cc(false))
-
-    , __awaits = (V'WCLOCKK' + V'WCLOCKE' + V'Ext' + EV'__Exp')
-    --, ___awaits = K'(' * V'__awaits' * EK')'
-    --, AwaitS   = KEY'await' * V'___awaits' * (EKEY'or' * V'___awaits')^1
-                                     --* (V'__until' + Cc(false))
+    , __awaits = Cc(false) * (V'WCLOCKK'+V'WCLOCKE')  -- false,   wclock
+               + (EV'Ext'+EV'__Exp') * Cc(false)      -- ext/int, false
+    , Await    = KEY'await' * V'__awaits'
+                    * (KEY'until'*EV'__Exp' + Cc(false))
 
     , EmitT    = KEY'emit' * (V'WCLOCKK'+V'WCLOCKE')
 

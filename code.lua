@@ -89,7 +89,8 @@ function AWAIT_PAUSE (me, no)
         LINE(me, [[
 if (]]..V(pse.dcl.var)..[[) {
 ]])
-        if me.tag == 'AwaitInt' then
+        if me[1].tag ~= 'Ext' then
+            -- internal event
             LINE(me, [[
     _STK.trl->seqno = _ceu_app->seqno-1;   /* awake again */
 ]])
@@ -960,17 +961,17 @@ case ]]..me.lbl_cnt.id..[[:;
         HALT(me)
     end,
 
-    AwaitInt = function (me)
-        local int = unpack(me)
-        local org = (int.org and int.org.val) or '_STK_ORG'
+    __AwaitInt = function (me)
+        local e = unpack(me)
+        local org = (e.org and e.org.val) or '_STK_ORG'
         local no = '_CEU_NO_'..me.n..'_'
 
         LINE(me, [[
 ]]..no..[[:
-    _STK.trl->evt = ]]..(int.ifc_idx or int.var.evt.idx)..[[;
+    _STK.trl->evt = ]]..(e.ifc_idx or e.var.evt.idx)..[[;
     _STK.trl->lbl = ]]..me.lbl.id..[[;
 ]])
-        if int.var.evt.id == '_ok' then
+        if e.var.evt.id == '_ok' then
             LINE(me, [[
     _STK.trl->seqno = _ceu_app->seqno-1;   /* always ready to awake */
 ]])
@@ -992,7 +993,7 @@ case ]]..me.lbl.id..[[:;
         DEBUG_TRAILS(me)
     end,
 
-    AwaitExt = function (me)
+    __AwaitExt = function (me)
         local e, dt = unpack(me)
         local no = (dt or AST.iter'Pause'()) and '_CEU_NO_'..me.n..'_'
         local suf = (e.tm and '_') or ''  -- timemachine "WCLOCK_"
@@ -1025,71 +1026,14 @@ case ]]..me.lbl.id..[[:;
         DEBUG_TRAILS(me)
     end,
 
---[=[
-    AwaitS = function (me)
-        local LBL_OUT = '__CEU_'..me.n..'_AWAITS'
-        local set = AST.iter'SetAwait'()
-
-        for _, awt in ipairs(me) do
-            if awt.tag=='WCLOCKK' or awt.tag=='WCLOCKE' then
-                LINE(me, [[
-ceu_trails_set_wclock(_ceu_app, PTR_cur(u32*,]]..awt.off..'),(s32)'..V(awt)..[[);
-]])
-            end
-        end
-
-        local no = '_CEU_NO_'..me.n..'_'
-        LINE(me, [[
-]]..no..[[:
-    _STK.trl->evt = CEU_IN__ANY;
-    _STK.trl->lbl = ]]..me.lbl.id..[[;
-]])
-        HALT(me)
-
-        LINE(me, [[
-case ]]..me.lbl.id..[[:;
-]])
-
-        AWAIT_PAUSE(me, no)
-        if set then
-            LINE(me, '{ int __ceu_'..me.n..'_AwaitS;')
-        end
-        for i, awt in ipairs(me) do
-            if awt.tag == 'Ext' then
-                LINE(me, [[
-                    if (_STK.evt == CEU_IN_]]..awt.evt.id..[[) {
-                ]])
-            elseif awt.__ast_isexp then
-                local org = (awt.org and awt.org.val) or '_STK_ORG'
-                LINE(me, [[
-                    if ( (_STK.evt == ]]..(awt.off or awt.evt.off)..[[)
-                    #ifdef CEU_ORGS
-                        && (]]..org..[[ != _STK.evtp.org)
-                    #endif
-                    ) {
-                ]])
-            else -- WCLOCK
-                LINE(me, [[
-                    if ( (_STK.evt == CEU_IN__WCLOCK)
-                    &&   (!ceu_wclocks_not(PTR_cur(s32*,]]..awt.off..
-                            [[), _STK.evtp.dt)) ) {
-                ]])
-            end
-            if set then
-                LINE(me, V(me)..' = '..(i-1)..';')
-            end
-            LINE(me, 'goto '..LBL_OUT..';}')    -- close my if
-        end
-
-        HALT(me)
-        LINE(me, LBL_OUT..':;')
-        DEBUG_TRAILS(me)
-        F._SetAwait(me)
-        if set then
-            LINE(me, '}')
+    Await = function (me)
+        local e = unpack(me)
+        if e.tag == 'Ext' then
+            F.__AwaitExt(me)
+        else
+            F.__AwaitInt(me)
         end
     end,
-]=]
 
     Async = function (me)
         local vars,blk = unpack(me)

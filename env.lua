@@ -641,21 +641,6 @@ F = {
         ENV.pures[me[1]] = true
     end,
 
-    AwaitS = function (me)
-        local wclock
-        for _, awt in ipairs(me) do
-            if awt.__ast_isexp then
-                F.AwaitInt(me, awt)
-            elseif awt.tag~='Ext' then
-                ASR(not wclock, me,
-                    'invalid await: multiple timers')
-                wclock = true
-            end
-        end
-        error'me.fst'
-        --me.fst = ?
-    end,
-
     ParOr = function (me)
         -- HACK_6: detects if "isWatching" a real event (not an org)
         --  to remove the "isAlive" test
@@ -670,9 +655,9 @@ F = {
         end
     end,
 
-    AwaitInt_pre = function (me)
+    Await_pre = function (me)
         local int = unpack(me)
-        if me.isWatching then
+        if int.tag~='Ext' and me.isWatching then
             -- ORG: "await org" => "await org._ok"
             if int.tp.ptr==1 and ENV.clss[int.tp.id] then
                 me[1] = AST.node('Op2_.', me.ln, '.',
@@ -685,23 +670,24 @@ F = {
             end
         end
     end,
-    AwaitInt = function (me)
-        local int = unpack(me)
-        ASR(int.var and int.var.pre=='event', me,
-            'event "'..(int.var and int.var.id or '?')..'" is not declared')
-        if int.var.evt.ins.tup then
-            me.tp = TP.fromstr('_'..TP.toc(int.var.evt.ins)..'*') -- convert to pointer
-        else
-            me.tp = int.var.evt.ins
-        end
-    end,
 
-    AwaitExt = function (me)
+    Await = function (me)
         local e = unpack(me)
-        if e.evt.ins.tup then
-            me.tp = TP.fromstr('_'..TP.toc(e.evt.ins)..'*') -- convert to pointer
+        if e.tag == 'Ext' then
+            if e.evt.ins.tup then
+                me.tp = TP.fromstr('_'..TP.toc(e.evt.ins)..'*') -- convert to pointer
+            else
+                me.tp = e.evt.ins
+            end
         else
-            me.tp = e.evt.ins
+            local int = unpack(me)
+            ASR(int.var and int.var.pre=='event', me,
+                'event "'..(int.var and int.var.id or '?')..'" is not declared')
+            if int.var.evt.ins.tup then
+                me.tp = TP.fromstr('_'..TP.toc(int.var.evt.ins)..'*') -- convert to pointer
+            else
+                me.tp = int.var.evt.ins
+            end
         end
     end,
 

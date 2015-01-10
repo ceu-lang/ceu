@@ -142,10 +142,7 @@ F = {
         end
     end,
 
-    AwaitS = function (me)
-        me.lbl = new{'Awake_MANY'}
-    end,
-    AwaitExt = function (me)
+    Await = function (me)
         local e, dt = unpack(me)
         if dt then
             me.lbl = new{'Awake_DT'}
@@ -153,7 +150,6 @@ F = {
             me.lbl = new{'Awake_'..(e.evt or e.var.evt).id}
         end
     end,
-    AwaitInt = 'AwaitExt',
 
     ParOr_pos = function (me)
         if me.needs_clr then

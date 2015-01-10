@@ -224,44 +224,21 @@ F = {
         end
     end,
 
---[[
--- TODO: remove
--- not needed after SetAwait => AwaitX;SetExp
-    SetAwait = function (me)
-        local _, awt, set = unpack(me)
-        set.ana.pre = COPY(awt.ana.pos)
-        set.ana.pos = COPY(awt.ana.pos)
-        me.ana.pre = COPY(awt.ana.pre)
-        me.ana.pos = COPY(set.ana.pos)
-    end,
-]]
-
-    AwaitS = function (me)
-        DBG'TODO - ana.lua - AwaitS'
-    end,
-
-    AwaitExt_aft = function (me, sub, i)
+    Await_aft = function (me, sub, i)
         if i > 1 then
             return
         end
 
         -- between Await and Until
 
-        local awt, dt, cnd = unpack(me)
+        local e, dt, cnd = unpack(me)
 
         local t
         if me.ana.pre[false] then
             t = { [false]=true }
         else
             -- enclose with a table to differentiate each instance
-            if me.tag == 'AwaitExt' then
-                t = { [{awt.evt}]=true }
-            elseif me.tag == 'AwaitInt' then
-                -- use "var" as identifier (why "evt" doesn't work?)
-                t = { [{awt.var}]=true }
-            else
-                error 'bug found'
-            end
+            t = { [{e.evt or e.var}]=true }
         end
         me.ana.pos = COPY(t)
         if cnd then
@@ -270,7 +247,6 @@ F = {
             }
         end
     end,
-    AwaitInt_aft = 'AwaitExt_aft',
 
     AwaitN = function (me)
         me.ana.pos = { [false]=true }

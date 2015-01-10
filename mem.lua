@@ -226,25 +226,13 @@ CEU_POOL_DCL(]]..var.id_..',CEU_'..var.tp.id..','..var.tp.arr.sval..[[)
         end
     end,
 
-    AwaitExt = function (me)
+    Await = function (me)
         local _, dt = unpack(me)
         if dt then
             local cls = CLS()
             cls.struct = cls.struct..SPC()..'s32 __wclk_'..me.n..';\n'
         end
     end,
-
---[[
-    AwaitS = function (me)
-        for _, awt in ipairs(me) do
-            if awt.__ast_isexp then
-            elseif awt.tag=='Ext' then
-            else
-                awt.off = alloc(CLS().mem, 4)
-            end
-        end
-    end,
-]]
 
     Thread_pre = 'ParOr_pre',
     Thread = function (me)

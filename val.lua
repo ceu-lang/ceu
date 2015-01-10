@@ -267,8 +267,7 @@ F =
 ]]
     end,
 
-    AwaitInt = 'AwaitExt',
-    AwaitExt = function (me)
+    Await = function (me)
         local e, dt = unpack(me)
 
         if dt then
@@ -293,11 +292,6 @@ F =
             --me.val = '*(('..TP.toc(e.evt.ins)..'*)_STK.evtp.ptr)'
         end
     end,
---[[
-    AwaitS = function (me)
-        me.val = '__ceu_'..me.n..'_AwaitS'
-    end,
-]]
 
     Op2_call = function (me)
         local _, f, exps = unpack(me)

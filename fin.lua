@@ -174,7 +174,7 @@ F = {
                  fr.org.tp.id=='Global')   or
                 (ENV.clss[to.tp.id] and       -- organisms must use "watching"
                  fr.tag~='Op1_&')          or -- (but avoid &org)
-                string.sub(fr.tag,1,5) == 'Await' or -- pointer from outside
+                fr.tag == 'Await'          or -- pointer from outside
                 (   -- same class and scope of "to" <= "fr"
                     (AST.par(to_blk,'Dcl_cls') == AST.par(fr_blk,'Dcl_cls')) and
                         (   to_blk.__depth >= fr_blk.__depth            -- to <= fr
@@ -262,7 +262,7 @@ F = {
         ASR(false, me, 1107, 'pointer access across `await´')
     end,
 
-    AwaitInt = function (me)
+    Await = function (me)
         if me.tl_awaits then
             for var, _ in pairs(TRACK) do
                 if TRACK[var]==true then
@@ -271,23 +271,21 @@ F = {
             end
         end
     end,
-    AwaitExt = 'AwaitInt',
-    AwaitN   = 'AwaitInt',
-    AwaitS   = 'AwaitInt',
+    AwaitN   = 'Await',
 
-    --Block    = 'AwaitInt',
-    Async    = 'AwaitInt',
-    Thread   = 'AwaitInt',
-    ParOr    = 'AwaitInt',
-    ParAnd   = 'AwaitInt',
-    Par      = 'AwaitInt',
+    --Block    = 'Await',
+    Async    = 'Await',
+    Thread   = 'Await',
+    ParOr    = 'Await',
+    ParAnd   = 'Await',
+    Par      = 'Await',
 
-    --Loop     = 'AwaitInt',
+    --Loop     = 'Await',
     Loop = function (me)
         if me.isAwaitUntil then
             return
         else
-            F.AwaitInt(me)
+            F.Await(me)
         end
     end,
 

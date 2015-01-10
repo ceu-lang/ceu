@@ -166,10 +166,6 @@ F = {
             -- *((u32*)0x100) = v  (no acc)
         end
     end,
-    AwaitInt = function (me)
-        CHG(me[1].lst.acc, 'aw')
-        F.AwaitExt(me)  -- flow
-    end,
 
     ['Op2_idx'] = function (me)
         if not (me.lst.var and me.lst.var.tp.arr) then
@@ -303,7 +299,11 @@ F = {
         end
     end,
 
-    AwaitExt = function (me)
+    Await = function (me)
+        local e = unpack(me)
+        if e.tag ~= 'Ext' then
+            CHG(me[1].lst.acc, 'aw')
+        end
         INS {
             path = me.ana.pos,
             id  = me,--AST.iter(TAG)(),
@@ -311,7 +311,6 @@ F = {
             err = ERR(me, 'awake'),
         }
     end,
-    --AwaitInt = <see above>,
 }
 
 AST.visit(F)
