@@ -3,8 +3,6 @@ VALGRIND = true
 --[===[
 --]===]
 
---do return end
-
 -- OK: well tested
 
 Test { [[escape(1);]],
@@ -956,7 +954,48 @@ escape _strlen1("123");
     run=3
 }
 
--- LUA
+Test { [[
+input void OS_START;
+native @nohold _ceu_out_log();
+
+output (void)=>int* LUA_NEW;
+output (int* l, int v)=>void LUA_PUSHNUMBER;
+output (int* l, int index)=>int LUA_TONUMBER;
+
+await OS_START;
+
+var int* l = (call LUA_NEW);
+
+call LUA_PUSHNUMBER => (l, 10);
+var int v = (call LUA_TONUMBER => (l, -1));
+escape v;
+]],
+----
+[[
+input void OS_START;
+native @nohold _ceu_out_log();
+var int v;
+input (void)=>int* NEW do
+    return &v;
+end
+
+input (int* l, int v)=>void PUSHNUMBER do
+    *l = v;
+end
+
+input (int* l, int idx)=>int TONUMBER do
+    return *l;
+end
+await OS_START;
+escape v;
+]],
+    lnks = {
+        { 1, 1, 2, 243 },
+        { 1, 2, 2, 242 },
+        { 1, 3, 2, 241 },
+	},
+    run = 20,
+}
 
 Test { [[
 native/pre do

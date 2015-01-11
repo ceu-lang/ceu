@@ -230,20 +230,9 @@ static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org, t
         if blk then
             if me.var.fun.isExt then
                 local ps = {}
-                local tup = ins.tup
-                if tup and #tup > 1 then
-                    for i, _ in ipairs(ins) do
-                        ps[#ps+1] = '(('..TP.toc(ins)..'*)((void*)param))->_'..i
-                    end
-                elseif #ins == 1 then
-                    local _,tp,_ = unpack(ins[1])
-                    if TP.isNumeric(tp) then
-                        ps[#ps+1] = '*((int*)param)'
-                    else
-                        ps[#ps+1] = '(void*)param'
-                    end
-                else
-                    -- no parameters
+                assert(ins.tup, 'bug found')
+                for i, _ in ipairs(ins) do
+                    ps[#ps+1] = '(('..TP.toc(ins)..'*)((void*)param))->_'..i
                 end
                 ps = (#ps>0 and ',' or '')..table.concat(ps, ',')
 
@@ -256,11 +245,7 @@ static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org, t
                     ret_value = '('
                     ret_void  = 'return NULL;'
                 else
-                    if out.ptr>0 then
-                        ret_value = 'return ((void*)'
-                    else
-                        ret_value = 'return ('
-                    end
+                    ret_value = 'return ((tceu_evtp)'
                     ret_void  = ''
                 end
 
@@ -268,7 +253,7 @@ static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org, t
 case CEU_IN_]]..id..[[:
 #line ]]..me.ln[2]..' "'..me.ln[1]..[["
     ]]..ret_value..me.id..'(_ceu_app, _ceu_app->data '..ps..[[));
-]]..ret_void
+]]..ret_void..'\n'
             end
             CODE.functions = CODE.functions ..
                 me.proto..'{'..blk.code..'}'..'\n'

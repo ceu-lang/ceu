@@ -230,6 +230,20 @@ F =
         t2 = table.concat(t2, ', ')
         t1 = table.concat(t1, ', ')
 
+        local ret_cast = ''
+        if OPTS.os and op=='call' then
+            -- when the call crosses the process,
+            -- the return val must be casted back
+            -- TODO: only works for plain values
+            if me.__ast_set then
+                if TP.toc(e.evt.out) == 'int' then
+                    ret_cast = '(int)'
+                else
+                    ret_cast = '(void*)'
+                end
+            end
+        end
+
         local op = (op=='emit' and 'emit') or 'call'
 
         me.val = '\n'..[[
@@ -237,7 +251,7 @@ F =
     ceu_]]..dir..'_'..op..'_'..e.evt.id..'('..t1..[[)
 
 #elif defined(ceu_]]..dir..'_'..op..[[)
-    ceu_]]..dir..'_'..op..'('..t2..[[)
+    (]]..ret_cast..[[ceu_]]..dir..'_'..op..'('..t2..[[))
 
 #else
     #error ceu_]]..dir..'_'..op..[[_* is not defined

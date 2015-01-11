@@ -58,7 +58,7 @@ void ceu_sys_assert (int v) {
 #endif
 }
 
-void ceu_sys_log (int mode, const void* s) {
+void ceu_sys_log (int mode, void* s) {
     if (mode == 0) {
         fprintf(stderr, "%s", (char*)s);
     } else {
@@ -263,7 +263,7 @@ int ceu_sys_wclock_ (tceu_app* app, s32 dt, s32* set, s32* get)
 int ceu_lua_atpanic_f (lua_State* lua) {
 #ifdef CEU_DEBUG
     ceu_out_log(0, "LUA_ATPANIC: ");
-    ceu_out_log(0, lua_tostring(lua,-1));
+    ceu_out_log(0, (void*)lua_tostring(lua,-1));
     ceu_out_log(0, "\n");
 /*
 */
