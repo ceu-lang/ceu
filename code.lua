@@ -234,17 +234,17 @@ static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org, t
                 local tup = ins.tup
                 if tup and #tup > 1 then
                     for i, _ in ipairs(ins) do
-                        ps_call[#ps_call+1] = '(('..TP.toc(ins)..'*)CEU_EVTP(param).ptr)->_'..i
+                        ps_call[#ps_call+1] = '(('..TP.toc(ins)..'*)((void*)param))->_'..i
                         ps_stub[#ps_stub+1] = ps_call[#ps_call]
                     end
                 elseif #ins == 1 then
                     local _,tp,_ = unpack(ins[1])
                     if TP.isNumeric(tp) then
                         -- difference here: "param" is of type tceu_evtp
-                        ps_call[#ps_call+1] = 'CEU_EVTP((int)param).v'
+                        ps_call[#ps_call+1] = '*((int*)param)'
                         ps_stub[#ps_stub+1] = 'param.v'
                     else
-                        ps_call[#ps_call+1] = 'CEU_EVTP((void*)param).ptr'
+                        ps_call[#ps_call+1] = '(void*)param'
                         ps_stub[#ps_stub+1] = 'param.ptr'
                     end
                 else
@@ -260,12 +260,12 @@ static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org, t
                 local ret_value, ret_void
                 if TP.toc(out) == 'void' then
                     ret_value = '('
-                    ret_void  = 'return CEU_EVTP((void*)NULL);'
+                    ret_void  = 'return NULL;'
                 else
                     if out.ptr>0 then
-                        ret_value = 'return CEU_EVTP((void*)'
+                        ret_value = 'return ((void*)'
                     else
-                        ret_value = 'return CEU_EVTP('
+                        ret_value = 'return ('
                     end
                     ret_void  = ''
                 end
@@ -878,17 +878,7 @@ _STK.trl->stk = _ceu_go->stki;
 #endif
 ]])
         if exp then
-            local field
-            if exp.tp.ptr>0 then
-                field = 'ptr'
-            elseif TP.isFloat(exp.tp) then
-                field = 'f'
-            else
-                field = 'v'
-            end
-            LINE(me, [[
-             stk.evtp.]]..field..' = '..V(exp)..[[;
-]])
+            LINE(me, 'stk.evtp = '..V(exp)..';')
         end
         LINE(me, [[
 #ifdef CEU_ORGS
@@ -968,7 +958,7 @@ case ]]..me.lbl.id..[[:;
 
         if dt then
             LINE(me, [[
-    if (!ceu_out_wclock]]..suf..[[(_ceu_app, _STK.evtp.dt, NULL, &]]..me.val_wclk..[[) )
+    if (!ceu_out_wclock]]..suf..[[(_ceu_app, *((s32*)_STK.evtp), NULL, &]]..me.val_wclk..[[) )
         goto ]]..no..[[;
 ]])
         end
@@ -1072,7 +1062,7 @@ case ]]..me.lbl.id..[[:;
         -- continue
         LINE(me, [[
 case ]]..me.lbl.id..[[:;
-        if (_STK.evtp.thread != ]]..me.thread_id..[[) {
+        if (*((CEU_THREADS_T*)_STK.evtp) != ]]..me.thread_id..[[) {
             goto ]]..no..[[; /* another thread is terminating: await again */
         }
     }
@@ -1116,8 +1106,8 @@ static void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
 
     /* terminate thread */
     {
-        tceu_evtp evtp;
-        evtp.thread = CEU_THREADS_SELF();
+        CEU_THREADS_T __ceu_thread = CEU_THREADS_SELF();
+        tceu_evtp evtp = &__ceu_thread;
         /*pthread_testcancel();*/
         CEU_THREADS_MUTEX_LOCK(&_ceu_app->threads_mutex);
     /* only if sync is not active */

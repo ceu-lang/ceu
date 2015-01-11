@@ -329,16 +329,16 @@ void ceu_sys_go (tceu_app* app, int evt, tceu_evtp evtp)
 #endif
 #ifdef CEU_WCLOCKS
         case CEU_IN__WCLOCK:
-            if (app->wclk_min <= evtp.dt) {
-                app->wclk_late = evtp.dt - app->wclk_min;
+            if (app->wclk_min <= *((s32*)evtp)) {
+                app->wclk_late = *((s32*)evtp) - app->wclk_min;
             }
             app->wclk_min_tmp = app->wclk_min;
             app->wclk_min     = CEU_WCLOCK_INACTIVE;
             break;
 #ifdef CEU_TIMEMACHINE
         case CEU_IN__WCLOCK_:
-            if (app->wclk_min_ <= evtp.dt) {
-                app->wclk_late_ = evtp.dt - app->wclk_min_;
+            if (app->wclk_min_ <= *((s32*)evtp)) {
+                app->wclk_late_ = *((s32*)evtp) - app->wclk_min_;
             }
             app->wclk_min_tmp_ = app->wclk_min_;
             app->wclk_min_     = CEU_WCLOCK_INACTIVE;
@@ -708,7 +708,7 @@ int ceu_go_all (tceu_app* app)
     if (app->isAlive)
 #endif
     {
-        ceu_sys_go(app, CEU_IN_OS_START, CEU_EVTP((void*)NULL));
+        ceu_sys_go(app, CEU_IN_OS_START, NULL);
     }
 #endif
 
@@ -724,7 +724,7 @@ int ceu_go_all (tceu_app* app)
                 app->pendingAsyncs
             ) )
     {
-        ceu_sys_go(app, CEU_IN__ASYNC, CEU_EVTP((void*)NULL));
+        ceu_sys_go(app, CEU_IN__ASYNC, NULL);
 #ifdef CEU_THREADS
         CEU_THREADS_MUTEX_UNLOCK(&app->threads_mutex);
         /* allow threads to also execute */
@@ -904,7 +904,7 @@ tceu_evtp ceu_sys_call (tceu_app* app, tceu_nevt evt, tceu_evtp param) {
         return ret;
     }
 /* TODO: error? */
-    return CEU_EVTP((void*)NULL);
+    return NULL;
 }
 
 static void _ceu_sys_unlink (tceu_lnk* lnk) {
@@ -1051,7 +1051,7 @@ int ceu_os_scheduler (int(*dt)())
         {
             tceu_app* app = CEU_APPS;
             while (app) {
-                ceu_sys_go(app, CEU_IN_OS_DT, CEU_EVTP(_dt));
+                ceu_sys_go(app, CEU_IN_OS_DT, &dt);
                 app = app->nxt;
             }
         }
@@ -1065,7 +1065,7 @@ int ceu_os_scheduler (int(*dt)())
 /*
 #error TODO: CEU_IN__WCLOCK_
 */
-                ceu_sys_go(app, CEU_IN__WCLOCK, CEU_EVTP(_dt));
+                ceu_sys_go(app, CEU_IN__WCLOCK, &dt);
                 app = app->nxt;
             }
         }
@@ -1076,7 +1076,7 @@ int ceu_os_scheduler (int(*dt)())
         {
             tceu_app* app = CEU_APPS;
             while (app) {
-                ceu_sys_go(app, CEU_IN__ASYNC, CEU_EVTP((void*)NULL));
+                ceu_sys_go(app, CEU_IN__ASYNC, NULL);
                 app = app->nxt;
             }
         }
@@ -1219,7 +1219,7 @@ printf("<<< %d %d\n", app->isAlive, app->ret);
     /* OS_START */
 
 #ifdef CEU_IN_OS_START
-    ceu_sys_emit(NULL, CEU_IN_OS_START, CEU_EVTP((void*)NULL), 0, NULL);
+    ceu_sys_emit(NULL, CEU_IN_OS_START, NULL, 0, NULL);
 #endif
 }
 

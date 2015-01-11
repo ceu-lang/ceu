@@ -19,12 +19,6 @@
 #define CEU_ISR_OFF()
 #endif
 
-#ifdef __cplusplus
-#define CEU_EVTP(v) (tceu_evtp(v))
-#else
-#define CEU_EVTP(v) ((tceu_evtp)v)
-#endif
-
 #if defined(CEU_OS_KERNEL) || defined(CEU_OS_APP)
 #define CEU_OS
 #endif
@@ -172,8 +166,8 @@
             ceu_sys_go(app,evt,evtp)
 #endif
 
-#define ceu_in_emit_val(app,id,param) \
-    ceu_out_go(app,id,param)
+#define ceu_in_emit(app,id,n,buf) \
+    ceu_out_go(app,id,buf)
 
 #ifdef CEU_THREADS
 /* TODO: app */
@@ -341,24 +335,8 @@ typedef union tceu_trl {
 #endif
 } tceu_trl;
 
-/* TCEU_EVTP */
-
-typedef union tceu_evtp {
-    int   v;
-    float f;
-    void* ptr;
-    s32   dt;
-#ifdef CEU_THREADS
-    CEU_THREADS_T thread;
-#endif
-#ifdef __cplusplus
-    tceu_evtp () {}
-    tceu_evtp (float vv) : float(vv) {}
-    tceu_evtp (void* vv) : ptr(vv)   {}
-    tceu_evtp (s32   vv) : dt(vv)    {}
-    /*tceu_evtp (int   vv) : v(vv)   {}*/
-#endif
-} tceu_evtp;
+/* TODO: remove */
+#define tceu_evtp void*
 
 /* TCEU_STK */
 

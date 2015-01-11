@@ -37,6 +37,12 @@ function CHG (acc, md)
     if AST.iter'Thread'() then
         return
     end
+    if acc.md == 'no' then
+        if acc.id.id and string.sub(acc.id.id,1,5) == '_tup_' then
+            return  -- _tup
+        end
+        -- TODO: should this apply to all "no"?
+    end
     acc.md = md
 end
 
@@ -245,7 +251,7 @@ F = {
             any = false,
             err = ERR(me, 'variable/event `'..me.var.id..'´'),
         }
-        if string.sub(me.var.id,1,4) == '_tup' then
+        if string.sub(me.var.id,1,5) == '_tup_' then
             -- TODO: ignore tuple assignments for now "(a,b)=await A"
             me.acc.md = 'no'
         end

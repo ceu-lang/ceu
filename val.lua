@@ -172,13 +172,14 @@ F =
             me.val = [[
 #ifdef CEU_WCLOCKS
 {
-    ceu_out_go(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, CEU_EVTP((s32)(]]..V(param)..[[)));
+    ceu_out_go(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, ]]..V(param)..[[);
     while (
 #if defined(CEU_RET) || defined(CEU_OS)
             _ceu_app->isAlive &&
 #endif
             _ceu_app->wclk_min]]..suf..[[<=0) {
-        ceu_out_go(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, CEU_EVTP((s32)0));
+        s32 __ceu_dt = 0;
+        ceu_out_go(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, &__ceu_dt);
     }
 }
 #endif
@@ -186,7 +187,7 @@ F =
             return
         end
 
-        local DIR, dir, ptr, mode
+        local DIR, dir, ptr
 
         if e.evt.pre == 'input' then
             DIR = 'IN'
@@ -202,14 +203,6 @@ F =
             ptr = '_ceu_app'
         end
 
-        local tup = e.evt.ins.tup
-        if op=='call' or dir=='in' or
-                (not tup) or (#tup == 1) then
-            mode = 'val'
-        else
-            mode = 'buf'
-        end
-
         local t1 = { }
         if e.evt.pre=='input' and op=='call' then
             t1[#t1+1] = '_ceu_app'  -- to access `app´
@@ -219,42 +212,16 @@ F =
         local t2 = { ptr, 'CEU_'..DIR..'_'..e.evt.id }
 
         if param then
-            local isPtr = e.evt.ins.ptr>0
-            local val
-            if isPtr then
-                val = '(void*)'..V(param)
-            else
-                val = V(param)
-            end
+            local val = V(param)
             t1[#t1+1] = val
-
-            if tup and #tup>1 then
-                if mode == 'val' then
-                    t2[#t2+1] = 'CEU_EVTP((void*)'..val..')'
-                else
-                    t2[#t2+1] = 'sizeof('..TP.toc(e.evt.ins)..')'
-                    t2[#t2+1] = '(byte*)'..val
-                end
-            else
-                assert(mode == 'val')
-                if isPtr then
-                    t2[#t2+1] = 'CEU_EVTP((void*)'..val..')'
-                elseif TP.isFloat(e.evt.ins) then
-                    t2[#t2+1] = 'CEU_EVTP((float)'..val..')'
-                else
-                    t2[#t2+1] = 'CEU_EVTP((int)'..val..')'
-                end
-            end
+            t2[#t2+1] = 'sizeof('..TP.toc(e.evt.ins)..')'
+            t2[#t2+1] = '(void*)'..val
         else
-            if mode == 'val' then
-                t2[#t2+1] = 'CEU_EVTP((void*)NULL)'
-            else
-                t2[#t2+1] = '0'
-                t2[#t2+1] = '(byte*)NULL'
-            end
             if dir=='in' then
-                t1[#t1+1] = 'CEU_EVTP((void*)NULL)'
+                t1[#t1+1] = 'NULL'
             end
+            t2[#t2+1] = '0'
+            t2[#t2+1] = 'NULL'
         end
         t2 = table.concat(t2, ', ')
         t1 = table.concat(t1, ', ')
@@ -278,8 +245,8 @@ F =
 #if defined(ceu_]]..dir..'_'..op..'_'..e.evt.id..[[)
     ceu_]]..dir..'_'..op..'_'..e.evt.id..'('..t1..[[)
 
-#elif defined(ceu_]]..dir..'_'..op..'_'..mode..[[)
-    ceu_]]..dir..'_'..op..'_'..mode..'('..t2..')'..ret..[[
+#elif defined(ceu_]]..dir..'_'..op..[[)
+    ceu_]]..dir..'_'..op..'('..t2..')'..ret..[[
 
 #else
     #error ceu_]]..dir..'_'..op..[[_* is not defined
@@ -292,24 +259,10 @@ F =
 
         if dt then
             local suf = (e.tm and '_') or ''
-            me.val      = '_ceu_app->wclk_late'..suf
+            me.val      = '(tceu__s32*) &_ceu_app->wclk_late'..suf
             me.val_wclk = CUR(me, '__wclk_'..me.n)
-            return
-        end
-
-        local tp = (e.evt or e.var.evt).ins
-        if tp.ptr>0 then
-            me.val = '(('..TP.toc(me.tp)..')_STK.evtp.ptr)'
-        elseif tp.ref then
-            me.val = '(*(('..TP.toc(me.tp)..')_STK.evtp.ptr))'
-                    -- byRef from awake SetExp removes the `*´
-        elseif tp.tup then
-            me.val = '(('..TP.toc(me.tp)..'*)_STK.evtp.ptr)'
-        elseif TP.isFloat(tp) then
-            me.val = '(_STK.evtp.f)'
         else
-            me.val = '(_STK.evtp.v)'
-            --me.val = '*(('..TP.toc(e.evt.ins)..'*)_STK.evtp.ptr)'
+            me.val = '_STK.evtp'
         end
     end,
 
