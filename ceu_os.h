@@ -147,10 +147,6 @@
     #define ceu_out_org_spawn(go, lbl_cnt, org, lbl_org) \
             ceu_sys_org_spawn(go, lbl_cnt, org, lbl_org)
 #endif
-/*#ifdef ceu_out_emit_val*/
-    #define ceu_out_emit_buf(app,id,sz,buf) \
-            ceu_out_emit_val(app,id,CEU_EVTP((void*)buf))
-/*#endif*/
 #ifdef CEU_WCLOCKS
     #define ceu_out_wclock(app,dt,set,get) \
             ceu_sys_wclock(app,dt,set,get)
