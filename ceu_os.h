@@ -186,7 +186,8 @@
     }
 
     #define ceu_luaL_openlibs(l) { \
-        ceu_out_call(_ceu_app, CEU_OUT_LUAL_OPENLIBS, l); \
+        lua_State* p = l;          \
+        ceu_out_call(_ceu_app, CEU_OUT_LUAL_OPENLIBS, &p); \
     }
 
     #define ceu_lua_atpanic(l, f) {     \
@@ -263,7 +264,8 @@
     }
 
     #define ceu_lua_error(l) {  \
-        ceu_out_call(_ceu_app, CEU_OUT_LUA_ERROR, l); \
+        lua_State** p = &l;        \
+        ceu_out_call(_ceu_app, CEU_OUT_LUA_ERROR, &p); \
     }
 #else
     #define ceu_luaL_newstate(set)               set = luaL_newstate()
