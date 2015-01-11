@@ -107,13 +107,10 @@
     #define ceu_out_link(app1,evt1 , app2,evt2) \
         ((__typeof__(ceu_sys_link)*)((_ceu_app)->sys_vec[CEU_SYS_LINK]))(app1,evt1,app2,evt2)
 
-    #define ceu_out_emit_buf(app,id,sz,buf) \
-        ((__typeof__(ceu_sys_emit)*)((app)->sys_vec[CEU_SYS_EMIT]))(app,id,CEU_EVTP((void*)NULL),sz,buf)
+    #define ceu_out_emit(app,id,sz,buf) \
+        ((__typeof__(ceu_sys_emit)*)((app)->sys_vec[CEU_SYS_EMIT]))(app,id,sz,buf)
 
-    #define ceu_out_emit_val(app,id,param) \
-        ((__typeof__(ceu_sys_emit)*)((app)->sys_vec[CEU_SYS_EMIT]))(app,id,param,0,NULL)
-
-    #define ceu_out_call_val(app,id,param) \
+    #define ceu_out_call(app,id,param) \
         ((__typeof__(ceu_sys_call)*)((app)->sys_vec[CEU_SYS_CALL]))(app,id,param)
 
 #ifdef CEU_WCLOCKS
@@ -597,7 +594,6 @@ typedef struct tceu_lnk {
 typedef struct {
     tceu_app* app;
     tceu_nevt evt;
-    tceu_evtp param;
 #if CEU_QUEUE_MAX == 256
     s8        sz;
 #else
@@ -631,7 +627,7 @@ int       ceu_sys_org_spawn (tceu_go* _ceu_go, tceu_nlbl lbl_cnt, tceu_org* org,
 void      ceu_sys_start     (tceu_app* app);
 int       ceu_sys_link      (tceu_app* src_app, tceu_nevt src_evt, tceu_app* dst_app, tceu_nevt dst_evt);
 int       ceu_sys_unlink    (tceu_app* src_app, tceu_nevt src_evt, tceu_app* dst_app, tceu_nevt dst_evt);
-int       ceu_sys_emit      (tceu_app* app, tceu_nevt evt, tceu_evtp param, int sz, byte* buf);
+int       ceu_sys_emit      (tceu_app* app, tceu_nevt evt, int sz, tceu_evtp param);
 tceu_evtp ceu_sys_call      (tceu_app* app, tceu_nevt evt, tceu_evtp param);
 
 enum {

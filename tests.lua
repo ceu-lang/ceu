@@ -18648,7 +18648,7 @@ escape 1;
 
 Test { [[
 native do
-    ##define ceu_out_call(a,b,c,d) F((int*)d)
+    ##define ceu_out_call(a,b,c) F((int*)c)
     int F (int* v) {
         return *v+1;
     }
@@ -18740,7 +18740,7 @@ escape ret;
 
 Test { [[
 native do
-    ##define ceu_out_call(a,b,c,d) F(a,b,d)
+    ##define ceu_out_call(a,b,c) F(a,b,c)
     int F (tceu_app* app, tceu_nevt evt, int* p) {
         return (evt == CEU_OUT_F) + *p;
     }
@@ -18803,7 +18803,7 @@ escape 1;
 
 Test { [[
 native do
-    ##define ceu_out_call(a,b,c,d) F(a,b,d)
+    ##define ceu_out_call(a,b,c) F(a,b,c)
     int F (tceu_app* app, tceu_nevt evt, int* p) {
         return (evt == CEU_OUT_F) + *p;
     }

@@ -141,7 +141,7 @@ static tceu_evtp ceu_app_calls (tceu_app* _ceu_app, tceu_nevt evt, tceu_evtp par
         ceu_out_log(0, "invalid call\n");
 #endif
     }
-    return CEU_EVTP((void*)NULL);
+    return NULL;
 }
 #endif
 

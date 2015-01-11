@@ -818,8 +818,7 @@ tceu_queue* ceu_sys_queue_get (void) {
     return ret;
 }
 
-int ceu_sys_queue_put (tceu_app* app, tceu_nevt evt, tceu_evtp param,
-                       int sz, byte* buf) {
+int ceu_sys_queue_put (tceu_app* app, tceu_nevt evt, int sz, byte* buf) {
     CEU_ISR_OFF();
 
     int n = sizeof(tceu_queue) + sz;
@@ -845,15 +844,7 @@ int ceu_sys_queue_put (tceu_app* app, tceu_nevt evt, tceu_evtp param,
         qu->app = app;
         qu->evt = evt;
         qu->sz  = sz;
-
-        if (sz == 0) {
-            /* "param" is self-contained */
-            qu->param = param;
-        } else {
-            /* "param" points to "buf" */
-            qu->param.ptr = qu->buf;
-            memcpy(qu->buf, buf, sz);
-        }
+        memcpy(qu->buf, buf, sz);
     }
     QUEUE_put += n;
     QUEUE_tot += n;
@@ -881,9 +872,8 @@ static tceu_lnk* CEU_LNKS = NULL;
 #endif
 
 /* TODO: remove this */
-int ceu_sys_emit (tceu_app* app, tceu_nevt evt, tceu_evtp param,
-                  int sz, byte* buf) {
-    return ceu_sys_queue_put(app, evt, param, sz, buf);
+int ceu_sys_emit (tceu_app* app, tceu_nevt evt, int sz, tceu_evtp param) {
+    return ceu_sys_queue_put(app, evt, sz, param);
 }
 
 tceu_evtp ceu_sys_call (tceu_app* app, tceu_nevt evt, tceu_evtp param) {
@@ -1065,7 +1055,7 @@ int ceu_os_scheduler (int(*dt)())
 /*
 #error TODO: CEU_IN__WCLOCK_
 */
-                ceu_sys_go(app, CEU_IN__WCLOCK, &dt);
+                ceu_sys_go(app, CEU_IN__WCLOCK, &_dt);
                 app = app->nxt;
             }
         }
@@ -1100,7 +1090,7 @@ int ceu_os_scheduler (int(*dt)())
                 } else if (qu->app == NULL) {
                     tceu_app* app = CEU_APPS;
                     while (app) {
-                        ceu_sys_go(app, qu->evt, qu->param);
+                        ceu_sys_go(app, qu->evt, qu->buf);
                         app = app->nxt;
                     }
 
@@ -1111,7 +1101,7 @@ int ceu_os_scheduler (int(*dt)())
                         if ( qu->app==lnk->src_app
                         &&   qu->evt==lnk->src_evt
                         &&   lnk->dst_app->isAlive ) {
-                            ceu_sys_go(lnk->dst_app, lnk->dst_evt, qu->param);
+                            ceu_sys_go(lnk->dst_app, lnk->dst_evt, qu->buf);
                         }
                         lnk = lnk->nxt;
                     }
@@ -1219,7 +1209,7 @@ printf("<<< %d %d\n", app->isAlive, app->ret);
     /* OS_START */
 
 #ifdef CEU_IN_OS_START
-    ceu_sys_emit(NULL, CEU_IN_OS_START, NULL, 0, NULL);
+    ceu_sys_emit(NULL, CEU_IN_OS_START, 0, NULL);
 #endif
 }
 

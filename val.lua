@@ -214,30 +214,21 @@ F =
         if param then
             local val = V(param)
             t1[#t1+1] = val
-            t2[#t2+1] = 'sizeof('..TP.toc(e.evt.ins)..')'
+            if op ~= 'call' then
+                t2[#t2+1] = 'sizeof('..TP.toc(e.evt.ins)..')'
+            end
             t2[#t2+1] = '(void*)'..val
         else
             if dir=='in' then
                 t1[#t1+1] = 'NULL'
             end
-            t2[#t2+1] = '0'
+            if op ~= 'call' then
+                t2[#t2+1] = '0'
+            end
             t2[#t2+1] = 'NULL'
         end
         t2 = table.concat(t2, ', ')
         t1 = table.concat(t1, ', ')
-
-        local ret = ''
-        if OPTS.os and op=='call' then
-            -- when the call crosses the process,
-            -- the return val must be unpacked from tceu_evtp
-            if me.__ast_set then
-                if TP.toc(e.evt.out) == 'int' then
-                    ret = '.v'
-                else
-                    ret = '.ptr'
-                end
-            end
-        end
 
         local op = (op=='emit' and 'emit') or 'call'
 
@@ -246,7 +237,7 @@ F =
     ceu_]]..dir..'_'..op..'_'..e.evt.id..'('..t1..[[)
 
 #elif defined(ceu_]]..dir..'_'..op..[[)
-    ceu_]]..dir..'_'..op..'('..t2..')'..ret..[[
+    ceu_]]..dir..'_'..op..'('..t2..[[)
 
 #else
     #error ceu_]]..dir..'_'..op..[[_* is not defined

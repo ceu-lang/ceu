@@ -310,7 +310,6 @@ F = {
         t[#t+1] = { '_WCLOCK', 's32' }
 
         if OPTS.os then
-            t[#t+1] = { '_WCLOCK',      's32'  }
             t[#t+1] = { 'OS_START',     'void' }
             t[#t+1] = { 'OS_STOP',      'void' }
             t[#t+1] = { 'OS_DT',        'int'  }

@@ -11,20 +11,6 @@ Test { [[escape(1);]],
 	run = 1,
 }
 
-Test { [[
-native/pre do
-    typedef int lua_State;
-    void lua_pushnil (lua_State* l) {}
-end
-
-input (_lua_State* l)=>void PUSHNIL do
-    _lua_pushnil(l);
-end
-escape 1;
-]],
-    run = 1,
-}
-
 Test {
 	[[escape(2);]],
 	[[escape(3);]],
@@ -598,7 +584,7 @@ loop i in 10000 do
     emit O => (a,b);
     ret = ret + 1;
 end
-await 30ms;     // queue is full, <emit F> would fail
+await 30s;     // queue is full, <emit F> would fail
 emit F=>0;
 escape ret;
 ]],
@@ -618,7 +604,7 @@ with
 end
 escape ret;
 ]],
-    run = 11927,
+    run = 13640,
     lnks = {
         { 1,1, 2,243 },
         { 1,2, 2,242 },
@@ -657,7 +643,7 @@ with
 end
 escape ret;
 ]],
-    run = 11927,
+    run = 13640,
     lnks = {
         { 1,1, 2,243 },
         { 1,2, 2,242 },
@@ -741,7 +727,7 @@ with
 end
 escape ret;
 ]],
-    run = 17927,
+    run = 19640,
     lnks = {
         { 1,1, 2,243 },
         { 1,2, 2,242 },
@@ -969,6 +955,23 @@ escape _strlen1("123");
 ]],
     run=3
 }
+
+-- LUA
+
+Test { [[
+native/pre do
+    typedef int lua_State;
+    void lua_pushnil (lua_State* l) {}
+end
+
+input (_lua_State* l)=>void PUSHNIL do
+    _lua_pushnil(l);
+end
+escape 1;
+]],
+    run = 1,
+}
+
 --[=[
 Test { [[
 native @pure _strlen();
