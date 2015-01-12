@@ -31522,6 +31522,34 @@ escape 10;
 -- FUNCTIONS
 
 Test { [[
+function (int v)=>int f do
+    return v+1;
+end
+escape f();
+]],
+    env = 'line 4 : invalid arity',
+}
+
+Test { [[
+function (int v)=>int f do
+    return v+1;
+end
+var int* ptr;
+escape f(ptr);
+]],
+    env = 'line 5 : invalid call parameter #1 (int* vs int)',
+}
+
+Test { [[
+function (int v)=>int f do
+    return v+1;
+end
+escape f(1);
+]],
+    run = 2,
+}
+
+Test { [[
 function (void) f;
 escape 1;
 ]],
@@ -31705,6 +31733,20 @@ end
 escape f(1,2);
 ]],
     run = 3,
+}
+
+Test { [[
+output (int*,char*)=>void LUA_GETGLOBAL;
+function @rec (int* l)=>void load do
+    loop i do
+    end
+end
+call/rec load(null);
+
+escape 1;
+]],
+    tight = 'tight loop',
+    --run = 1,
 }
 
 Test { [[

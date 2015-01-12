@@ -831,9 +831,23 @@ F = {
     end,
 
     --------------------------------------------------------------------------
+        --assert( (not ins) or (ins.tup and #params==#ins.tup), 'bug found')
+
+    __check_params = function (me, ins, params)
+        assert(ins and ins.tag=='TupleType' and ins.tup, 'bug found')
+        ASR(#params==#ins, me, 'invalid arity');
+        for i, p in ipairs(params) do
+            p = p.tp
+            local f = ins.tup[i]
+            assert(p.tag=='Type' and f.tag=='Type', 'bug found')
+            ASR(TP.contains(f,p), me, 'invalid call parameter #'..i..
+                ' ('..TP.tostr(p)..' vs '..TP.tostr(f)..')')
+        end
+        return req
+    end,
 
     Op2_call = function (me)
-        local _, f, p, _ = unpack(me)
+        local _, f, params, _ = unpack(me)
         me.tp  = f.var and f.var.fun and f.var.fun.out or TP.fromstr'@'
         local id
         if f.tag == 'Nat' then
@@ -853,6 +867,11 @@ F = {
 
         ASR((not OPTS.c_calls) or OPTS.c_calls[id], me,
                 'native calls are disabled')
+
+        local ins = f.var and f.var.fun and f.var.fun.ins
+        if ins then
+            F.__check_params(me, ins, params)
+        end
 
         if not me.c then
             me.c = { tag='func', id=id, mod=nil }
