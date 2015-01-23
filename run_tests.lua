@@ -334,15 +334,15 @@ sys	1m33.932s
 -- TODO: descobrir pq ficou mais lento
 
 STATS = {
-    count   = 2055,
+    count   = 2059,
     mem     = 0,
-    trails  = 4021,
-    bytes   = 21042199,
+    trails  = 4022,
+    bytes   = 21059852,
 }
 
 
-real	8m46.367s
-user	8m8.231s
-sys	1m42.138s
+real	9m18.309s
+user	8m50.202s
+sys	1m33.063s
 
 ]]

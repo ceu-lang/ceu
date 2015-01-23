@@ -188,11 +188,11 @@ void ceu_sys_org (tceu_org* org, int n, int lbl, int seqno,
 
 #ifdef CEU_WCLOCKS
 
-/* TODO: wclk_min_tmp to be global among all apps */
+/* TODO: wclk_min_cmp to be global among all apps */
 
 int ceu_sys_wclock (tceu_app* app, s32 dt, s32* set, s32* get)
 {
-    s32 t;          /* track expiring time to calculate */
+    s32 t;          /* expiring time of track to calculate */
     int ret = 0;    /* if track expired (only for "get") */
 
     /* SET */
@@ -203,7 +203,7 @@ int ceu_sys_wclock (tceu_app* app, s32 dt, s32* set, s32* get)
     /* CHECK */
     } else {
         t = *get;
-        if (t>app->wclk_min_tmp || t>dt) {
+        if ((t > app->wclk_min_cmp) || (t > dt)) {
             *get -= dt;    /* don't expire yet */
             t = *get;
         } else {
@@ -211,8 +211,9 @@ int ceu_sys_wclock (tceu_app* app, s32 dt, s32* set, s32* get)
         }
     }
 
-    if (app->wclk_min > t) {
-        app->wclk_min = t;
+    /* didn't awake, but can be the smallest wclk */
+    if ( (!ret) && (app->wclk_min_set > t) ) {
+        app->wclk_min_set = t;
 #ifdef ceu_out_wclock_set
         ceu_out_wclock_set(t);
 #endif
@@ -225,18 +226,18 @@ int ceu_sys_wclock (tceu_app* app, s32 dt, s32* set, s32* get)
 /* TODO: unify with above */
 int ceu_sys_wclock_ (tceu_app* app, s32 dt, s32* set, s32* get)
 {
-    s32 t;          /* track expiring time to calculate */
+    s32 t;          /* expiring time of track to calculate */
     int ret = 0;    /* if track expired (only for "get") */
 
     /* SET */
     if (set != NULL) {
-        t = dt - app->wclk_late_;
+        t = dt - app->wclk_late;
         *set = t;
 
     /* CHECK */
     } else {
         t = *get;
-        if (t>app->wclk_min_tmp_ || t>dt) {
+        if ((t > app->wclk_min_cmp_) || (t > dt)) {
             *get -= dt;    /* don't expire yet */
             t = *get;
         } else {
@@ -244,10 +245,11 @@ int ceu_sys_wclock_ (tceu_app* app, s32 dt, s32* set, s32* get)
         }
     }
 
-    if (app->wclk_min_ > t) {
-        app->wclk_min_ = t;
-#ifdef ceu_out_wclock_set_
-        ceu_out_wclock_set_(t);
+    /* didn't awake, but can be the smallest wclk */
+    if ( (!ret) && (app->wclk_min_set_ > t) ) {
+        app->wclk_min_set_ = t;
+#ifdef ceu_out_wclock_set
+        ceu_out_wclock_set(t);
 #endif
     }
 
@@ -329,19 +331,19 @@ void ceu_sys_go (tceu_app* app, int evt, tceu_evtp evtp)
 #endif
 #ifdef CEU_WCLOCKS
         case CEU_IN__WCLOCK:
-            if (app->wclk_min <= *((s32*)evtp)) {
-                app->wclk_late = *((s32*)evtp) - app->wclk_min;
+            app->wclk_min_cmp = app->wclk_min_set;      /* swap "cmp" to last "set" */
+            app->wclk_min_set = CEU_WCLOCK_INACTIVE;    /* new "set" resets to inactive */
+            if (app->wclk_min_cmp <= *((s32*)evtp)) {
+                app->wclk_late = *((s32*)evtp) - app->wclk_min_cmp;
             }
-            app->wclk_min_tmp = app->wclk_min;
-            app->wclk_min     = CEU_WCLOCK_INACTIVE;
             break;
 #ifdef CEU_TIMEMACHINE
         case CEU_IN__WCLOCK_:
-            if (app->wclk_min_ <= *((s32*)evtp)) {
-                app->wclk_late_ = *((s32*)evtp) - app->wclk_min_;
+            app->wclk_min_cmp_ = app->wclk_min_set_;
+            app->wclk_min_set_ = CEU_WCLOCK_INACTIVE;
+            if (app->wclk_min_cmp_ <= *((s32*)evtp)) {
+                app->wclk_late_ = *((s32*)evtp) - app->wclk_min_cmp_;
             }
-            app->wclk_min_tmp_ = app->wclk_min_;
-            app->wclk_min_     = CEU_WCLOCK_INACTIVE;
             break;
 #endif
 #endif
@@ -649,26 +651,21 @@ _CEU_GO_QUIT_:;
 
 #ifdef CEU_WCLOCKS
     if (evt==CEU_IN__WCLOCK) {
-/*
 #ifdef ceu_out_wclock_set
-        if (app->wclk_min != CEU_WCLOCK_INACTIVE) {
-            ceu_out_wclock_set(app->wclk_min);   // only signal after all
-            ;
+        /* no new sets, signal inactive */
+        if (app->wclk_min_set == CEU_WCLOCK_INACTIVE) {
+            ceu_out_wclock_set(CEU_WCLOCK_INACTIVE);
         }
 #endif
-*/
         app->wclk_late = 0;
     }
 #ifdef CEU_TIMEMACHINE
     if (evt==CEU_IN__WCLOCK_) {
-/*
 #ifdef ceu_out_wclock_set
-        if (app->wclk_min_ != CEU_WCLOCK_INACTIVE) {
-            ceu_out_wclock_set(app->wclk_min_);   // only signal after all
-            ;
+        if (app->wclk_min_set_ == CEU_WCLOCK_INACTIVE) {
+            ceu_out_wclock_set(CEU_WCLOCK_INACTIVE);
         }
 #endif
-*/
         app->wclk_late_ = 0;
     }
 #endif

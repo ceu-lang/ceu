@@ -482,12 +482,13 @@ typedef struct tceu_app {
 
 #ifdef CEU_WCLOCKS
     s32         wclk_late;
-    s32         wclk_min;
-    s32         wclk_min_tmp;
+    s32         wclk_min_set;   /* used to set */
+    s32         wclk_min_cmp;   /* used to compare */
+                                /* cmp<-set every reaction */
 #ifdef CEU_TIMEMACHINE
     s32         wclk_late_;
-    s32         wclk_min_;
-    s32         wclk_min_tmp_;
+    s32         wclk_min_set_;
+    s32         wclk_min_cmp_;
 #endif
 #endif
 

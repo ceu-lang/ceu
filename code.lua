@@ -937,6 +937,7 @@ case ]]..me.lbl.id..[[:;
 
         if dt then
             LINE(me, [[
+    /* subtract time and check if I have to awake */
     if (!ceu_out_wclock]]..suf..[[(_ceu_app, *((s32*)_STK.evtp), NULL, &]]..me.val_wclk..[[) )
         goto ]]..no..[[;
 ]])

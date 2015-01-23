@@ -197,12 +197,12 @@ ceu_app_init (tceu_app* _ceu_app)
 #endif
 #ifdef CEU_WCLOCKS
     _ceu_app->wclk_late = 0;
-    _ceu_app->wclk_min = CEU_WCLOCK_INACTIVE;
-    _ceu_app->wclk_min_tmp = CEU_WCLOCK_INACTIVE;
+    _ceu_app->wclk_min_set = CEU_WCLOCK_INACTIVE;
+    _ceu_app->wclk_min_cmp = CEU_WCLOCK_INACTIVE;
 #ifdef CEU_TIMEMACHINE
     _ceu_app->wclk_late_ = 0;
-    _ceu_app->wclk_min_ = CEU_WCLOCK_INACTIVE;
-    _ceu_app->wclk_min_tmp_ = CEU_WCLOCK_INACTIVE;
+    _ceu_app->wclk_min_set_ = CEU_WCLOCK_INACTIVE;
+    _ceu_app->wclk_min_cmp_ = CEU_WCLOCK_INACTIVE;
 #endif
 #endif
 #ifdef CEU_THREADS

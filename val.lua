@@ -177,7 +177,7 @@ F =
 #if defined(CEU_RET) || defined(CEU_OS)
             _ceu_app->isAlive &&
 #endif
-            _ceu_app->wclk_min]]..suf..[[<=0) {
+            _ceu_app->wclk_min_set]]..suf..[[<=0) {
         s32 __ceu_dt = 0;
         ceu_out_go(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, &__ceu_dt);
     }
