@@ -1,9 +1,6 @@
 -- async dentro de pause
 -- async thread spawn falhou, e ai?
 
---VALGRIND = true
-OS = false   -- false, true, nil(random)
-
 local function INCLUDE (fname, src)
     local f = assert(io.open(fname,'w'))
     f:write(src)
