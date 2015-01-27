@@ -1382,7 +1382,6 @@ do return end
 
 -------------------------------------------------------------------------------
 -- OK: well tested
-]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -39222,69 +39221,394 @@ escape app.v;
 }
 
 
--- ALGEBRAIC DATATYPES
+]===]
+-- ALGEBRAIC DATATYPES (ADTs)
+
+    -- STATIC ADTs
+
+-- anonymous fields
 Test { [[
-/*
-data Tree with
-    tag null;
-with
-    tag NODE with
-        var int   v     = 0;
-        var Tree* left  = null;
-        var Tree* right = null;
-    end
-end
-*/
-
-data Tree with
-    var int   v     = 0;
-    var Tree* left  = null;
-    var Tree* right = null;
-end
-
-var Tree* t1 = null;
-var Tree* t2 = NODE { 1,null,null };
-var Tree* t3 = NODE { v=1, left=null, right=null };
-
-data Name1 with
-    var data with
-        var int     a;
-        var float   b;
-        var char    c;
-    end var;
-    var int d;
-end
-
-data Symtab with
-    var int   flags;
-    var char* name;
-    var int   utype;
-    data u with
-        tag INT with
-            var int   val;
-        end
-        tag FLOAT with
-            var float val;
-        end
-        tag STRING with
-            var char* val;
-        end
-    end
-end
-var Symtab[NSYM];
-
-function (Tree* t)=>int count do
-    if t == null then
-        *pt = xxx; // error
-        t   = xxx; // error
-        return 0;
-    else
-        *pt = xxx; // error
-        t   = xxx; // error
-        return 1 + count(t->left) + count(t->right);
-    end
-end
-
+data Pair = (int, int);
+data Opt  = nil(void) | ptr(void*);
+data List = nil  (void)
+           | cons (int, List&);
+escape 1;
 ]],
     run = 1,
 }
+
+-- named fields
+Test { [[
+data Pair = (int x, int y);
+data Opt  = nil(void) | ptr(void* ptr);
+data List = nil  (void)
+          | cons (int head, List& tail);
+escape 1;
+]],
+    run = 1,
+}
+
+-- named fields w/ initializers
+Test { [[
+data Pair = (int x=0, int y=0);      // TODO
+data List = nil  (void)              // TODO
+          | cons (int head=0, List& tail);
+escape 1;
+]],
+    todo = true,
+}
+
+-- anonymous constructors
+Test { [[
+data Pair = (int, int);
+data Opt  = nil(void) | ptr(void*);
+data List = nil  (void)
+          | cons (int, List&);
+
+var Pair p1 = Pair(1,2);
+var Opt  o1 = Opt.nil();
+var Opt  o2 = Opt.ptr(&p1);
+var List l1 = List.nil();
+var List l2 = List.cons(1, l1);
+var List l3 = List.cons(1, List.cons(2, List.nil()));
+
+escape 1;
+]],
+    run = 1,
+}
+
+-- named constructors
+Test { [[
+data Pair = (int x, int y);
+data Opt  = nil(void) | ptr(void* ptr);
+data List = nil  (void)
+          | cons (int head, List& tail);
+
+var Pair p1 = Pair(x=1,x=2);
+var Opt  o1 = Opt.nil();
+var Opt  o2 = Opt.ptr(ptr=&p1);
+var List l1 = List.nil();
+var List l2 = List.cons(head=1, tail=l1);
+var List l3 = List.cons(head=1, tail=List.cons(head=2, tail=List.nil()));
+
+escape 1;
+]],
+    run = 1,
+}
+
+-- anonymous destructors / pattern matching
+Test { [[
+data Pair = (int, int);
+data Opt  = nil(void) | ptr(void*);
+data List = nil  (void)
+          | cons (int, List&);
+
+var Pair p1 = Pair(1,2);
+var Opt  o1 = Opt.nil();
+var Opt  o2 = Opt.ptr(&p1);
+var List l1 = List.nil();
+var List l2 = List.cons(1, l1);
+var List l3 = List.cons(1, List.cons(2, List.nil()));
+
+var int ret = 0;
+
+var int x, y;
+(x,y) = p;
+_assert(x+y == 3);
+ret = ret + 3;              // 3
+
+switch o1 with
+    case Opt.nil() do
+        ret = ret + 1;      // 4
+        _assert(1);
+    end
+    case Opt.ptr(void* ptr) do
+        _assert(0);
+    end
+end
+
+switch o2 with
+    case Opt.nil() do
+        _assert(0);
+    end
+    case Opt.ptr(void* ptr) do
+        ret = ret + 1;      // 5
+        _assert(ptr==&p1);
+    end
+end
+
+switch l1 with
+    case List.nil() do
+        ret = ret + 1;      // 6
+        _assert(1);
+    end
+    case List.cons(int head, List& tail) do
+        _assert(0);
+    end
+end
+
+switch l2 with
+    case List.nil() do
+        _assert(0);
+    end
+    case List.cons(int head1, List& tail1) do
+        _assert(head1 == 1);
+        ret = ret + 1;      // 7
+        switch *tail1 with
+            case List.nil() do
+                ret = ret + 1;      // 8
+                _assert(1);
+            end
+            case List.cons(int head2, List& tail2) do
+                _assert(0);
+            end
+        end
+        ret = ret + 1;      // 9
+        _assert(1);
+    end
+end
+
+switch l3 with
+    case List.nil() do
+        _assert(0);
+    end
+    case List.cons(int head1, List& tail1) do
+        _assert(head1 == 1);
+        ret = ret + 1;      // 10
+        switch *tail1 with
+            case List.nil() do
+                _assert(0);
+            end
+            case List.cons(int head2, List& tail2) do
+                _assert(head2 == 2);
+                ret = ret + 2;      // 12
+                switch *tail2 with
+                    case List.nil() do
+                        _assert(1);
+                        ret = ret + 1;      // 13
+                    end
+                    case List.cons(int head3, List& tail3) do
+                        _assert(0);
+                    end
+                end
+                _assert(1);
+                ret = ret + 1;      // 14
+            end
+        end
+        _assert(1);
+        ret = ret + 1;      // 15
+    end
+end
+
+escape ret;
+]],
+    run = 15,
+}
+
+-- named destructors / dot notation
+Test { [[
+data Pair = (int x, int y);
+data Opt  = nil(void) | ptr(void* ptr);
+data List = nil  (void)
+          | cons (int head, List& tail);
+
+var Pair p1 = Pair(x=1,x=2);
+var Opt  o1 = Opt.nil();
+var Opt  o2 = Opt.ptr(ptr=&p1);
+var List l1 = List.nil();
+var List l2 = List.cons(head=1, tail=l1);
+var List l3 = List.cons(head=1, tail=List.cons(head=2, tail=List.nil()));
+
+var int ret = 0;
+
+ret = ret + p1.x + p1.y;        // 3
+ret = ret + (o1==Opt.nil());    // 4
+ret = ret + o2.ptr.ptr==&p1;    // 5
+ret = ret + (l1==List.nil());   // 6
+ret = ret + l2.cons.head + (l2.tail==List.nil());   // 8
+ret = ret + l3.cons.head + l3.tail.head + (l3.tail.tail==List.nil());   // 12
+
+escape ret;
+]],
+    run = 12,
+}
+
+-- access across await
+Test { [[
+data List = nil  (void)
+          | cons (int head, List& tail);
+
+var List* l = List.cons(head=1, tail=l1);
+await 1s;
+escape l:head;
+]],
+    fin = 'XXX',
+}
+
+-- tag mismatch (runtime assertion)
+Test { [[
+data List = nil  (void)
+          | cons (int head, List& tail);
+
+var List l = List.nil();
+
+escape l.cons.head;
+]],
+    run = 'error',
+}
+
+-- no reassign (adts are refs &)
+Test { [[
+data List = nil  (void)
+          | cons (int head, List& tail);
+
+var List l1 = List.nil();
+var List l2 = List.cons(head=1, tail=l1);
+l1 = l2;
+
+escape 1;
+]],
+    run = 'error',
+}
+
+-- no reassign (adts are refs &)
+Test { [[
+data List = nil  (void)
+          | cons (int head, List& tail);
+
+var List l1 = List.nil();
+var List l2 = List.cons(head=1, tail=l1);
+l1 = l2.tail;
+
+escape 1;
+]],
+    run = 'error',
+}
+
+-- no reassign (adts are refs &)
+Test { [[
+data List = nil  (void)
+          | cons (int head, List& tail);
+
+var List l1 = List.nil();
+var List l2 = List.cons(head=1, tail=l1);
+l1 = List.cons(1, l2);
+
+escape 1;
+]],
+    run = 'error',
+}
+
+-- ok mutation, part of adt <- part/all of another adt
+Test { [[
+data List = nil  (void)
+          | cons (int head, List& tail);
+
+var List l1 = List.nil();
+var List l2 = List.cons(head=1, tail=List.nil());
+var List l3 = List.cons(head=1, tail=List.cons(head=2, tail=List.nil()));
+l3.tail = l2;
+
+escape l3.head + l3.tail.head;
+]],
+    run = 2,
+}
+
+-- ok mutation, part of adt <- part/all of another adt
+-- ok cycle
+Test { [[
+data List = nil  (void)
+          | cons (int head, List& tail);
+
+var List l1 = List.cons(head=1, tail=List.nil());
+var List l2 = List.cons(head=2, tail=List.nil());
+l1.tail = l2;
+l2.tail = l1;
+
+escape l1.head + l1.tail.head + l2.head + l2.tail.head;
+]],
+    run = 6,
+}
+
+    -- DYNAMIC ADTs
+
+Test { [[
+data List = nil  (void)
+          | cons (int head, List& tail);
+
+var int ret = 0;
+
+// initialization must be base case
+pool List[10] l = List.nil();
+
+// TODO: avoid cycles/side-shares
+
+// change head [2]
+l = new List.cons(2, l);
+ret = ret + l.head;                 // 2
+_assert(ret == 2);
+
+// change head [1, 2]
+l = new List.cons(1, l);
+ret = ret + l.head;                 // 3
+ret = ret + l.head + l.tail.head;   // 6
+_assert(ret == 6);
+
+// change tail [1, 2, 4]
+l.cons.cons.tail = new List.cons(4, List.nil());    // 10
+
+// change middle [1, 2, 3, 4]
+var List l3 = new List.cons(3, l.cons.cons.tail);
+l.cons.cons.tail = l3;
+_assert(l.cons.cons.head == 3);
+_assert(l.cons.cons.cons.head == 4);
+ret = ret + l.cons.cons.head + l.cons.cons.cons.head;   // 17
+
+// drop middle [1, 3, 4]
+l.cons.tail = l.cons.cons.tail;
+    // TODO: check if (2) has been freed
+
+// reclaim algo:
+    // removed node will be freed
+    // assigned node will be kept
+    // starting from freed, traverse/free everything until/if reaches assigned
+
+escape ret;
+]],
+    run = -1,
+}
+
+-- graph -> dag -> tree -> rooted tree
+-- In a rooted tree, the parent of a vertex is the vertex connected to it on
+-- the path to the root; every vertex except the root has a unique parent.
+-- A child of a vertex v is a vertex of which v is the parent.
+-- TODO: detect tight loops == detect deletes in the DAG
+-- TODO: change middle w/ l3 w/ deeper scope
+-- TODO: List& l = ...  // for temporary parts (tests w/ no reassign)
+
+// extend (req)
+l = new List.cons(...) in l;         // ok: allocates
+l.cons.tail = new List.cons(...) in l;   // ok: allocates
+
+// shrink (req)
+l.cons.tail = new List.nil() in l; // ok: deallocates previous tail and everything below
+
+// no: mixing static/dynamic
+var List l2 = ...
+l.cons.tail = &l2;  // no: l2 is static, l is dyn
+
+var List* l2 = l.cons.tail;
+l.cons.tail = new List.nil();   // only deallocates in the end of reaction
+l.cons.tail = l2; // no: possible cycle/sharing, don't know scope
+await 1s;
+l2.*  // no: pointer across reaction
+// CLEAR UPWARDS
+l = l.cons.tail;   // clear old l upto l.cons.tail
+// useful for iterators:
+loop do
+    l = l.cons.tail;
+    ...
+    await 1s;
+end
+
+
