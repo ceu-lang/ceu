@@ -75,6 +75,7 @@ local _V2NAME = {
     _Dcl_pool = 'declaration',
     __Dcl_nat  = 'declaration',
     _Dcl_nat   = 'declaration',
+    __dcl_data_tag = 'declaration',
     _TupleType_1 = 'type list',
     _TupleType_2 = 'param list',
 }
@@ -178,6 +179,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
              --+ V'Call'
              + V'_Set'
              + V'Spawn'    --+ V'Free'
+             + V'New'
              + V'DoOrg'
              + V'Nothing'
              + V'RawStmt'
@@ -193,6 +195,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
              + V'If'    + V'_Loop'   + V'_Every'  + V'_Iter'
              + V'_Pause'
              + V'_Dcl_ifc' + V'Dcl_cls'
+             + V'Dcl_data'
              + V'Finalize'
              + V'_Dcl_fun1' + V'_Dcl_ext1'
              + V'_LuaStmt'
@@ -216,6 +219,8 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                                     -- p1=emt, p2=false, p3=false
               + Cc'__SetSpawn'   * V'Spawn'
                                     -- p1=Spawn[max,cls,constr]
+              + Cc'__SetNew'     * V'New'
+                                    -- p1=New[?]
               + Cc'__SetDoOrg'   * V'DoOrg'
               + Cc'SetBlock'     * V'__SetBlock' * Cc(false)
                                                    -- constr
@@ -233,6 +238,8 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , Free  = KEY'free'  * V'__Exp'
     , Spawn = KEY'spawn' * EV'__ID_cls' * (KEY'in'*EV'__Exp' + Cc(false))
             * (EKEY'with'*V'Dcl_constr'* EKEY'end' + Cc(false))
+
+    , New   = KEY'new' *V'__Exp' * (KEY'in'*EV'__Exp' + Cc(false))
 
     , DoOrg = KEY'do' * EV'__ID_cls'
             * (EKEY'with'*V'Dcl_constr'* EKEY'end' + Cc(false))
@@ -318,8 +325,11 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
               + V'NULL'    + V'NUMBER' + V'STRING'
               + V'Global'  + V'This'   + V'Outer'
               + V'RawExp'
+              + V'Data'
               + CKEY'call'     * EV'__Exp'
               + CKEY'call/rec' * EV'__Exp'
+
+    , Data = V'__ID_data' * (K'.'*V'__ID_tag' + Cc(false))
 
     , ExpList = ( V'__Exp'*(K','*EV'__Exp')^0 )^-1
 
@@ -432,6 +442,19 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , Dcl_cls  = KEY'class'     * Cc(false)
                * EV'__ID_cls'
                * EKEY'with' * V'BlockI' * V'__Do'
+    -------
+
+    , __dcl_data_struct = (V'_Dcl_var' * (EK';'*K';'^0))^1
+    , __dcl_data_enum   = V'__dcl_data_tag' * (EKEY'with' * EV'__dcl_data_tag')^0
+    , __dcl_data_tag    = KEY'tag' * EV'__ID_tag' * EKEY'with'
+                        *   (V'_Dcl_var' * (EK';'*K';'^0))^0
+                        * EKEY'end'
+                        + KEY'tag' * EV'__ID_tag' * (EK';'*K';'^0)
+
+    , Dcl_data = KEY'data' * EV'__ID_data' * EKEY'with'
+               *    (V'__dcl_data_struct' + V'__dcl_data_enum')
+               * EKEY'end'
+    -------
 
     , Global  = KEY'global'
     , This    = KEY'this' * Cc(false)
@@ -447,6 +470,9 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                     / function(id) return (string.gsub(id,'%?','_')) end
     , __ID_nat  = CK(  P'_' *Alphanum^1)
     , __ID_type = CK(TYPES) + V'__ID_nat' + V'__ID_cls'
+
+    , __ID_data = -KEYS * CK(m.R'AZ'*Alphanum^0)
+    , __ID_tag  = -KEYS * CK(m.R'AZ'*ALPHANUM^0)
 
     , Type = V'__ID_type'
            * (P'*'^0 / function (s)

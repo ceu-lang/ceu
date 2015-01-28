@@ -69,6 +69,7 @@ Test = function (t)
     end
 
     if not check('parser')   then return end
+do return end
     if not check('ast')      then return end
     --DBG'======= AST'
     --AST.dump(AST.root)
