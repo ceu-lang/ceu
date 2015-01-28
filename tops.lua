@@ -12,6 +12,16 @@ F = {
         local ifc, id, blk = unpack(me)
         me.is_ifc = ifc
         me.id     = id
+        ASR(not TOPS[id], me, 'top-level identifier "'..id..'" already taken')
+        TOPS[#TOPS+1] = me
+        TOPS[id] = me
+        me.tops_i = #TOPS
+        return node('Nothing', me.ln)
+    end,
+
+    Dcl_adt_pos = function (me)
+        local id = unpack(me)
+        ASR(not TOPS[id], me, 'top-level identifier "'..id..'" already taken')
         TOPS[#TOPS+1] = me
         TOPS[id] = me
         me.tops_i = #TOPS

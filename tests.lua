@@ -39266,6 +39266,40 @@ escape 1;
     parser = 'line 7 : after `N´ : expected `with´',
 }
 
+Test { [[
+data T with
+    var int x;
+end
+interface T with
+end
+escape 1;
+]],
+    tops = 'top-level identifier "T" already taken',
+}
+
+Test { [[
+data T with
+    var int x;
+end
+data T with
+    var int y;
+end
+escape 1;
+]],
+    tops = 'top-level identifier "T" already taken',
+}
+
+Test { [[
+class T with
+do
+end
+interface T with
+end
+escape 1;
+]],
+    tops = 'top-level identifier "T" already taken',
+}
+
 DATA = [[
 data Pair with
     var int x;
@@ -39463,9 +39497,9 @@ escape ret;
 
 -- named destructors
 Test { DATA..[[
-var Pair p1 = Pair(1,2);
+var Pair p  = Pair(1,2);
 var Opt  o1 = Opt.NIL();
-var Opt  o2 = Opt.PTR(&p1);
+var Opt  o2 = Opt.PTR(&p);
 var List l1 = List.NIL();
 var List l2 = List.CONS(1, l1);
 var List l3 = List.CONS(1, List.CONS(2, List.NIL()));
@@ -39488,7 +39522,7 @@ if o2.NIL then
     _assert(0);
 else/if o2.PTR then
     ret = ret + 1;      // 5
-    _assert(o2.PTR.v==&p1);
+    _assert(o2.PTR.v==&p);
 end
 
 if l1.NIL then
@@ -39503,10 +39537,10 @@ if l2.NIL then
 else/if l2.CONS then
     _assert(l2.CONS.head == 1);
     ret = ret + 1;      // 7
-    if l2.CONS.tail:NIL then
+    if l2.CONS.tail.NIL then
         ret = ret + 1;      // 8
         _assert(1);
-    else/if l2.CONS.tail:CONS then
+    else/if l2.CONS.tail.CONS then
         _assert(0);
     end
     ret = ret + 1;      // 9
@@ -39518,15 +39552,15 @@ if l3.NIL then
 else/if l3.CONS then
     _assert(l3.CONS.head == 1);
     ret = ret + 1;      // 10
-    if l3.CONS.tail:NIL then
+    if l3.CONS.tail.NIL then
         _assert(0);
-    else/if l3.CONS.tail:CONS then
-        _assert(l3.CONS.tail:CONS.head == 2);
+    else/if l3.CONS.tail.CONS then
+        _assert(l3.CONS.tail.CONS.head == 2);
         ret = ret + 2;      // 12
-        if l3.CONS.tail:CONS.tail:NIL then
+        if l3.CONS.tail.CONS.tail.NIL then
             _assert(1);
             ret = ret + 1;      // 13
-        else/if l3.CONS.tail:CONS.tail:CONS then
+        else/if l3.CONS.tail.CONS.tail.CONS then
             _assert(0);
         end
         _assert(1);
@@ -39554,10 +39588,10 @@ var int ret = 0;
 
 ret = ret + p1.x + p1.y;        // 3
 ret = ret + (o1==Opt.NIL());    // 4
-ret = ret + o2.PTR.v==&p1;    // 5
+ret = ret + (o2.PTR.v==&p1);    // 5
 ret = ret + (l1==List.NIL());   // 6
-ret = ret + l2.CONS.head + (l2.tail==List.NIL());   // 8
-ret = ret + l3.CONS.head + l3.tail.head + (l3.tail.tail==List.NIL());   // 12
+ret = ret + l2.CONS.head + (l2.CONS.tail==List.NIL());   // 8
+ret = ret + l3.CONS.head + l3.CONS.tail.CONS.head + (l3.CONS.tail.CONS.tail==List.NIL());   // 12
 
 escape ret;
 ]],
@@ -39566,9 +39600,9 @@ escape ret;
 
 -- access across await
 Test { DATA..[[
-var List* l = List.CONS(1, l1);
+var List* l = List.CONS(1, List.NIL());
 await 1s;
-escape l:head;
+escape l:CONS.head;
 ]],
     fin = 'XXX',
 }
@@ -39596,11 +39630,19 @@ escape 1;
 Test { DATA..[[
 var List l1 = List.NIL();
 var List l2 = List.CONS(1, l1);
-l1 = l2.tail;
+l1 = l2.CONS.tail;
 
 escape 1;
 ]],
     run = 'error',
+}
+
+-- NIL has no fields
+Test { DATA..[[
+var List l;
+escape l.NIL.v;
+]],
+    env = 'line 23 : field "v" is not declared',
 }
 
 -- no reassign (adts are refs &)
@@ -39619,9 +39661,9 @@ Test { DATA..[[
 var List l1 = List.NIL();
 var List l2 = List.CONS(1, List.NIL());
 var List l3 = List.CONS(1, List.CONS(2, List.NIL()));
-l3.tail = l2;
+l3.CONS.tail = l2;
 
-escape l3.head + l3.tail.head;
+escape l3.CONS.head + l3.CONS.tail.CONS.head;
 ]],
     run = 2,
 }
@@ -39631,10 +39673,10 @@ escape l3.head + l3.tail.head;
 Test { DATA..[[
 var List l1 = List.CONS(1, List.NIL());
 var List l2 = List.CONS(2, List.NIL());
-l1.tail = l2;
-l2.tail = l1;
+l1.CONS.tail = l2;
+l2.CONS.tail = l1;
 
-escape l1.head + l1.tail.head + l2.head + l2.tail.head;
+escape l1.CONS.head + l1.CONS.tail.CONS.head + l2.CONS.head + l2.CONS.tail.CONS.head;
 ]],
     run = 6,
 }

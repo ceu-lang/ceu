@@ -75,7 +75,7 @@ local _V2NAME = {
     _Dcl_pool = 'declaration',
     __Dcl_nat  = 'declaration',
     _Dcl_nat   = 'declaration',
-    __dcl_data_tag = 'declaration',
+    Dcl_adt_tag = 'declaration',
     _TupleType_1 = 'type list',
     _TupleType_2 = 'param list',
 }
@@ -195,7 +195,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
              + V'If'    + V'_Loop'   + V'_Every'  + V'_Iter'
              + V'_Pause'
              + V'_Dcl_ifc' + V'Dcl_cls'
-             + V'Dcl_data'
+             + V'Dcl_adt'
              + V'Finalize'
              + V'_Dcl_fun1' + V'_Dcl_ext1'
              + V'_LuaStmt'
@@ -325,11 +325,11 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
               + V'NULL'    + V'NUMBER' + V'STRING'
               + V'Global'  + V'This'   + V'Outer'
               + V'RawExp'
-              + V'Data'
+              + V'Adt'
               + CKEY'call'     * EV'__Exp'
               + CKEY'call/rec' * EV'__Exp'
 
-    , Data = V'__ID_data' * (K'.'*V'__ID_tag' + Cc(false))
+    , Adt = V'__ID_adt' * (K'.'*V'__ID_tag' + Cc(false))
 
     , ExpList = ( V'__Exp'*(K','*EV'__Exp')^0 )^-1
 
@@ -444,15 +444,15 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                * EKEY'with' * V'BlockI' * V'__Do'
     -------
 
-    , __dcl_data_struct = (V'_Dcl_var' * (EK';'*K';'^0))^1
-    , __dcl_data_enum   = V'__dcl_data_tag' * (EKEY'with' * EV'__dcl_data_tag')^0
-    , __dcl_data_tag    = KEY'tag' * EV'__ID_tag' * EKEY'with'
-                        *   (V'_Dcl_var' * (EK';'*K';'^0))^0
-                        * EKEY'end'
-                        + KEY'tag' * EV'__ID_tag' * (EK';'*K';'^0)
+    , __Dcl_adt_struct = Cc'struct' * (V'_Dcl_var' * (EK';'*K';'^0))^1
+    , __Dcl_adt_enum   = Cc'enum'   * V'Dcl_adt_tag' * (EKEY'with' * EV'Dcl_adt_tag')^0
+    , Dcl_adt_tag    = KEY'tag' * EV'__ID_tag' * EKEY'with'
+                      *   (V'_Dcl_var' * (EK';'*K';'^0))^0
+                      * EKEY'end'
+                      + KEY'tag' * EV'__ID_tag' * (EK';'*K';'^0)
 
-    , Dcl_data = KEY'data' * EV'__ID_data' * EKEY'with'
-               *    (V'__dcl_data_struct' + V'__dcl_data_enum')
+    , Dcl_adt = KEY'data' * EV'__ID_adt' * EKEY'with'
+               *    (V'__Dcl_adt_struct' + V'__Dcl_adt_enum')
                * EKEY'end'
     -------
 
@@ -471,8 +471,8 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , __ID_nat  = CK(  P'_' *Alphanum^1)
     , __ID_type = CK(TYPES) + V'__ID_nat' + V'__ID_cls'
 
-    , __ID_data = -KEYS * CK(m.R'AZ'*Alphanum^0)
-    , __ID_tag  = -KEYS * CK(m.R'AZ'*ALPHANUM^0)
+    , __ID_adt = -KEYS * CK(m.R'AZ'*Alphanum^0)
+    , __ID_tag = -KEYS * CK(m.R'AZ'*ALPHANUM^0)
 
     , Type = V'__ID_type'
            * (P'*'^0 / function (s)

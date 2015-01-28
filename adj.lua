@@ -174,7 +174,7 @@ F = {
         end
     end,
 
--- Dcl_cls/_ifc --------------------------------------------------
+-- Dcl_cls/_ifc/_adt --------------------------------------------------
 
     _Dcl_ifc_pos = 'Dcl_cls_pos',
     Dcl_cls_pos = function (me)
@@ -212,6 +212,35 @@ F = {
                 node('Dcl_pool', me.ln, 'pool',
                     node('Type', me.ln, '_TOP_POOL', 0, true, false),
                     '_top_pool'))
+        end
+    end,
+
+    Dcl_adt_pos = function (me)
+        -- id, op, ...
+        local _, op = unpack(me)
+
+        if op == 'struct' then
+            local n = #me
+
+            -- variable declarations require a block
+            me[3] = node('Block', me.ln,
+                        node('Stmts', me.ln, select(3,unpack(me))))
+
+            for i=4, n do
+                me[i] = nil -- all already inside block
+            end
+
+        else
+            assert(op == 'enum')
+            for i=3, #me do
+                assert(me[i].tag == 'Dcl_adt_tag')
+                local n = #me[i]
+                -- variable declarations require a block
+                me[i][2] = node('Block', me.ln, select(2,unpack(me[i])))
+                for j=3, n do
+                    me[i][j] = nil  -- all already inside block
+                end
+            end
         end
     end,
 
@@ -1167,7 +1196,7 @@ F = {
                                     to)))
             end
 
-        elseif tag=='__SetSpawn' then
+        elseif tag=='__SetSpawn' or tag=='__SetNew' then
             p1[#p1+1] = node('SetExp', me.ln, op,
                             node('Ref', me.ln, p1),
                             to)

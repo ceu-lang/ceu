@@ -1,7 +1,9 @@
 ENV = {
-    clss  = {},     -- { [1]=cls, ... [cls]=0 }
+    clss     = {},  -- { [1]=cls, ... [cls]=0 }
     clss_ifc = {},
     clss_cls = {},
+
+    adts = {},      -- { [1]=adt, ... [adt]=0 }
 
     calls = {},     -- { _printf=true, _myf=true, ... }
 
@@ -110,7 +112,7 @@ local _N = 0
 local _E = 1    -- 0=NONE
 
 function newvar (me, blk, pre, tp, id, isImp)
-    local ME = CLS()
+    local ME = CLS() or me  -- (me can be a "data" declaration)
     for stmt in AST.iter() do
         if stmt.tag=='Async' or stmt.tag=='Thread' then
             break   -- search until Async boundary
@@ -135,9 +137,9 @@ function newvar (me, blk, pre, tp, id, isImp)
     ASR(ENV.c[tp.id] or TOPS[tp.id],
         me, 'undeclared type `'..(tp.id or '?')..'´')
 
-    local cls = (tp.ptr==0 and (not tp.ref) and TOPS[tp.id])
-    if cls then
-        ASR(cls.tops_i < ME.tops_i,
+    local top = (tp.ptr==0 and (not tp.ref) and TOPS[tp.id])
+    if top then
+        ASR(top.tops_i < ME.tops_i,
             me, 'undeclared type `'..(tp.id or '?')..'´')
     end
 
@@ -153,7 +155,7 @@ function newvar (me, blk, pre, tp, id, isImp)
     -- Class definitions take priority over interface definitions:
     --      * consts
     --      * rec => norec methods
-    if  blk.vars[id] and (blk==ME.blk_ifc) then
+    if blk.vars[id] and (blk==ME.blk_ifc) then
         return true, blk.vars[id]
     end
 
@@ -162,7 +164,7 @@ function newvar (me, blk, pre, tp, id, isImp)
         id    = id,
         blk   = blk,
         tp    = tp,
-        cls   = cls or (pre=='pool'),   -- (case of _TOP_POOL & ifaces)
+        cls   = (top and top.tag=='Dcl_cls') or (pre=='pool'),   -- (case of _TOP_POOL & ifaces)
         pre   = pre,
         inTop = (blk==ME.blk_ifc) or (blk==ME.blk_body),
                 -- (never "tmp")
@@ -398,8 +400,6 @@ F = {
         local ifc, id, blk = unpack(me)
         me.c = {}      -- holds all "native _f()"
         me.tp = TP.fromstr(id)
-        ASR(not ENV.clss[id], me,
-                'interface/class "'..id..'" is already declared')
 
         -- restart variables/events counting
         _N = 0
@@ -440,6 +440,29 @@ F = {
                         ENV.ifcs.funs[var.ifc_id] = #ENV.ifcs.funs
                         ENV.ifcs.funs[#ENV.ifcs.funs+1] = var.ifc_id
                     end
+                end
+            end
+        end
+    end,
+
+    Dcl_adt_pre = function (me)
+        local id, op = unpack(me)
+        me.tp = TP.fromstr(id)
+
+        _N = 0 -- restart vars counting
+
+        ENV.adts[id] = me
+        ENV.adts[#ENV.adts+1] = me
+
+        -- map tag=>fields
+        if op == 'enum' then
+            me.tags = {}
+            for i=3, #me do
+                assert(me[i].tag == 'Dcl_adt_tag')
+                local id, blk = unpack(me[i])
+                me.tags[id] = blk
+                if blk then
+                    assert(blk.tag == 'Block')
                 end
             end
         end
@@ -957,7 +980,8 @@ F = {
         if e1.tp.ptr > 0 then
             me.tp.ptr = me.tp.ptr - 1
         end
-        ASR(e1.tp.ptr>0 or (me.tp.ext and (not me.tp.plain) and (not TP.get(me.tp.id).plain)),
+        ASR(e1.tp.ptr>0 or (me.tp.ext and (not me.tp.plain) and (not 
+            TP.get(me.tp.id).plain)),
             me, 'invalid operand to unary "*"')
     end,
 
@@ -971,7 +995,8 @@ F = {
 
     ['Op2_.'] = function (me)
         local op, e1, id = unpack(me)
-        local cls = e1.tp.ptr==0 and ENV.clss[e1.tp.id]
+        local cls = (e1.tp.ptr==0 and ENV.clss[e1.tp.id])
+        local adt = (e1.tp.ptr==0 and ENV.adts[e1.tp.id])
         me.id = id
         if cls then
             me.org = e1
@@ -1004,8 +1029,40 @@ F = {
             me.tp   = var.tp
             me.lval = not (var.pre~='var' or var.cls or var.tp.arr)
                         and var
+
+        elseif adt then
+            local _, op, blk = unpack(adt)
+            if op == 'struct' then
+                local var = ASR(blk.vars[id], me,
+                            'field "'..id..'" is not declared')
+                me.tp = var.tp
+                me.lval = var
+            else
+                assert(op == 'enum')
+                local blk = ASR(adt.tags[id], me,
+                                'tag "'..id..'" is not declared')
+
+                -- [enum.TAG]
+                local tag = (me.__par.tag ~= 'Op2_.')
+                if tag then
+                    me.tp = TP.fromstr'bool'
+
+                -- [enum.TAG].field
+                else
+                    me.enum_tag_blk = blk
+                    me.tp = blk
+                end
+            end
+
+                -- [enum.TAG.field]
+        elseif e1.enum_tag_blk then
+            local var = ASR(e1.enum_tag_blk.vars[id], me,
+                        'field "'..id..'" is not declared')
+            me.tp = var.tp
+            me.lval = var
+
         else
-            assert(not e1.tp.tup)   -- TODO: remove
+            assert(not e1.tp.tup)
             ASR(me.__ast_chk or e1.tp.ext, me, 'not a struct')
             if me.__ast_chk then
                 -- check Emit/Await-Ext/Int param
