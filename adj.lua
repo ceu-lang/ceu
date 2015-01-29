@@ -250,21 +250,49 @@ F = {
         end
     end,
 
---[[
-    Adt = function (me)
-        ASR(me.__par.tag == 'Op2_call', me, 'invalid expression')
-        me.__par.tag = 'Adt_constr'
+    Adt_constr_root_pos = function (me)
+        local dyn, constr = unpack(me)
+        -- root must set SetExp variable
+        local n = me.__par[2]   -- me == me.__par[1]
+        assert(n.tag=='SetExp', 'bug found')
+        n[2] = AST.copy(constr.__adj_var)
+        return constr -- substitute by 1st constr
     end,
-    Adt_constr = function (me)
-        if not AST.par(me,'New') then
-            if AST.par(me,'Adt_constr') then
-                -- static constructor inside other
-                -- declare an auxiliary var for it
-                ;
+    Adt_constr_pos = function (me)
+        local adt, params = unpack(me)
+        local id = unpack(adt)
+
+        -- Declare an auxiliary var for the static constructor:
+        --      Data.TAG(...)
+        -- becomes (static)
+        --      var Data __ceu_adt_N;
+        --      __ceu_adt_N = { ... }
+        -- becomes (dynamic)
+        --      var Data* __ceu_adt_N;
+        --      __ceu_adt_N = new { ... }
+
+        local dyn = unpack(AST.par(me,'Adt_constr_root'))
+
+        -- nested constructors
+        local nested = AST.node('Stmts', me.ln)
+        for i, p in ipairs(params) do
+            if p.tag == 'Stmts' then
+                nested[#nested+1] = p       -- subst nested stmts
+                params[i] = p.__adj_var     -- for Var:__ceu_adt_n
             end
         end
+
+        local var = node('Var', me.ln, '__ceu_adt_'..me.n)
+        local ret =
+            node('Stmts', me.ln,
+                nested,
+                node('Dcl_var', me.ln, 'var',
+                    node('Type', me.ln, id, (dyn and 1) or 0, false, false),
+                    '__ceu_adt_'..me.n),
+                node('Adt_constr', me.ln, adt, params, var))
+        ret.__adj_var = var   -- Var: __ceu_adt_n
+        return ret
     end,
-]]
 
 -- Escape --------------------------------------------------
 
@@ -1224,10 +1252,10 @@ F = {
                             to)
             return p1
 
-        elseif tag=='__SetAdtConstr' or tag=='__SetAdtNew' then
+        elseif tag=='__SetAdtConstr' then
 -- TODO: do the same for SetSpawn?
             local set = node('SetExp', me.ln, op,
-                            node('Ref', me.ln, p1),
+                            false,  -- Adt_constr will set to its var
                             to)
             return node('Stmts', me.ln, p1, set)
 

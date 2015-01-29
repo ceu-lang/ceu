@@ -182,7 +182,6 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
              --+ V'Call'
              + V'_Set'
              + V'Spawn'    --+ V'Free'
-             + V'Adt_new'
              + V'DoOrg'
              + V'Nothing'
              + V'RawStmt'
@@ -223,8 +222,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
               + Cc'__SetSpawn'   * V'Spawn'
                                     -- p1=Spawn[max,cls,constr]
 
-              + Cc'__SetAdtConstr' * V'Adt_constr'
-              + Cc'__SetAdtNew'    * V'Adt_new'
+              + Cc'__SetAdtConstr' * V'Adt_constr_root'
                                     -- p1=New[?]
 
               + Cc'__SetDoOrg'   * V'DoOrg'
@@ -332,7 +330,9 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
               + CKEY'call'     * EV'__Exp'
               + CKEY'call/rec' * EV'__Exp'
 
-    , Adt_new     = KEY'new' * EV'Adt_constr' * (KEY'in'*EV'__Exp' + Cc(false))
+    , Adt_constr_root = CKEY'new' * EV'Adt_constr' * (KEY'in'*EV'__Exp' + 
+                  Cc(false))
+                  + Cc(false) * V'Adt_constr'
     , Adt_constr  = V'Adt' * EK'(' * EV'Adt_explist' * EK')'
     , Adt         = V'__ID_adt' * (K'.'*V'__ID_tag' + Cc(false))
 

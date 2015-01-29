@@ -1382,7 +1382,6 @@ do return end
 
 -------------------------------------------------------------------------------
 -- OK: well tested
-]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -39244,6 +39243,7 @@ escape app.v;
 }
 
 -- ALGEBRAIC DATATYPES (ADTs)
+]===]
 
     -- STATIC ADTs
 
@@ -39397,6 +39397,8 @@ escape 1;
     run = 1,
 }
 
+-- TODO: if p/ construtores p/ dar erro de bloco
+
 -- invalid constructors
 Test { DATA..[[
 var Pair p1 = Pair();
@@ -39420,13 +39422,15 @@ Test { DATA..[[
 var Pair p1 = Pair_(1,2);
 escape 1;
 ]],
-    env = 'line 22 : data "Pair_" is not declared',
+    env = 'line 22 : undeclared type `Pair_´',
+    --env = 'line 22 : data "Pair_" is not declared',
 }
 Test { DATA..[[
 var Opt  o1 = List_.NIL();
 escape 1;
 ]],
-    env = 'line 22 : data "List_" is not declared',
+    env = 'line 22 : undeclared type `List_´',
+    --env = 'line 22 : data "List_" is not declared',
 }
 Test { DATA..[[
 var Opt  o1 = List.NIL_();

@@ -959,7 +959,7 @@ F = {
     end,
 
     Adt_constr = function (me)
-        local adt, params = unpack(me)
+        local adt, params, var = unpack(me)
         local id, tag = unpack(adt)
         me.tp = TP.fromstr(id)
         local tup

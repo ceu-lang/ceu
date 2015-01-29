@@ -39,6 +39,9 @@ F =
 {
     Block_pre = function (me)
         local cls = CLS()
+        if not cls then
+            return  -- ADTs
+        end
         for _, var in ipairs(me.vars) do
             if var.pre == 'var' then
                 if var.isTmp then
