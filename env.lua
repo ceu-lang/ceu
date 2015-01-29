@@ -167,7 +167,7 @@ function newvar (me, blk, pre, tp, id, isImp)
         cls   = (top and top.tag=='Dcl_cls' and top) or (pre=='pool'),   -- (case of _TOP_POOL & ifaces)
         adt   = (top and top.tag=='Dcl_adt' and top),
         pre   = pre,
-        inTop = (blk==ME.blk_ifc) or (blk==ME.blk_body),
+        inTop = (blk==ME.blk_ifc) or (blk==ME.blk_body) or AST.par(me,'Dcl_adt'),
                 -- (never "tmp")
         isTmp = false,
         --arr   = arr,
@@ -883,15 +883,6 @@ F = {
     IterIni = 'RawExp',
     IterNxt = 'RawExp',
 
-    New = function (me)
-        -- new -> Op2_call
-        -- new List.CONS(...)
-        -- pointer to List.CONS(...)
-        local tp = AST.copy(me[1].tp)
-        tp[2] = 1
-        me.tp = TP.new(tp)
-    end,
-
     Dcl_constr_pre = function (me)
         local spw = AST.iter'Spawn'()
         local dcl = AST.iter'Dcl_var'()
@@ -968,7 +959,7 @@ F = {
     end,
 
     Adt_constr = function (me)
-        local _, adt, params = unpack(me)
+        local adt, params = unpack(me)
         local id, tag = unpack(adt)
         me.tp = TP.fromstr(id)
         local tup
@@ -983,6 +974,15 @@ F = {
 
         F.__check_params(me, tup, params)
     end,
+    Adt_new = function (me)
+        -- new -> Op2_call
+        -- new List.CONS(...)
+        -- pointer to List.CONS(...)
+        local tp = AST.copy(me[1].tp)
+        tp[2] = 1
+        me.tp = TP.new(tp)
+    end,
+
 
     Op2_idx = function (me)
         local _, arr, idx = unpack(me)

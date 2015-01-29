@@ -79,6 +79,9 @@ local _V2NAME = {
     _TupleType_1 = 'type list',
     _TupleType_2 = 'param list',
 }
+for i=1, 13 do
+    _V2NAME['__'..i] = 'expression'
+end
 local EV = function (rule)
     return V(rule) + m.Cmt(P'',
         function (_,i)
@@ -179,7 +182,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
              --+ V'Call'
              + V'_Set'
              + V'Spawn'    --+ V'Free'
-             + V'New'
+             + V'Adt_new'
              + V'DoOrg'
              + V'Nothing'
              + V'RawStmt'
@@ -219,8 +222,11 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                                     -- p1=emt, p2=false, p3=false
               + Cc'__SetSpawn'   * V'Spawn'
                                     -- p1=Spawn[max,cls,constr]
-              + Cc'__SetNew'     * V'New'
+
+              + Cc'__SetAdtConstr' * V'Adt_constr'
+              + Cc'__SetAdtNew'    * V'Adt_new'
                                     -- p1=New[?]
+
               + Cc'__SetDoOrg'   * V'DoOrg'
               + Cc'SetBlock'     * V'__SetBlock' * Cc(false)
                                                    -- constr
@@ -238,8 +244,6 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , Free  = KEY'free'  * V'__Exp'
     , Spawn = KEY'spawn' * EV'__ID_cls' * (KEY'in'*EV'__Exp' + Cc(false))
             * (EKEY'with'*V'Dcl_constr'* EKEY'end' + Cc(false))
-
-    , New   = KEY'new' *V'__Exp' * (KEY'in'*EV'__Exp' + Cc(false))
 
     , DoOrg = KEY'do' * EV'__ID_cls'
             * (EKEY'with'*V'Dcl_constr'* EKEY'end' + Cc(false))
@@ -298,25 +302,25 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
               * V'__Do'
 
     , __Exp    = V'__1'
-    , __1      = V'__2'  * (CKEY'or'  * V'__2')^0
-    , __2      = V'__3'  * (CKEY'and' * V'__3')^0
-    , __3      = V'__4'  * ((CK'|'-'||') * V'__4')^0
-    , __4      = V'__5'  * (CK'^' * V'__5')^0
-    , __5      = V'__6'  * (CK'&' * V'__6')^0
-    , __6      = V'__7'  * ((CK'!='+CK'==') * V'__7')^0
-    , __7      = V'__8'  * ((CK'<='+CK'>='+(CK'<'-'<<')+(CK'>'-'>>')) * V'__8')^0
-    , __8      = V'__9'  * ((CK'>>'+CK'<<') * V'__9')^0
-    , __9      = V'__10' * ((CK'+'+CK'-') * V'__10')^0
-    , __10     = V'__11' * ((CK'*'+(CK'/'-'//'-'/*')+CK'%') * V'__11')^0
+    , __1      = V'__2'  * (CKEY'or'  * EV'__2')^0
+    , __2      = V'__3'  * (CKEY'and' * EV'__3')^0
+    , __3      = V'__4'  * ((CK'|'-'||') * EV'__4')^0
+    , __4      = V'__5'  * (CK'^' * EV'__5')^0
+    , __5      = V'__6'  * (CK'&' * EV'__6')^0
+    , __6      = V'__7'  * ((CK'!='+CK'==') * EV'__7')^0
+    , __7      = V'__8'  * ((CK'<='+CK'>='+(CK'<'-'<<')+(CK'>'-'>>')) * EV'__8')^0
+    , __8      = V'__9'  * ((CK'>>'+CK'<<') * EV'__9')^0
+    , __9      = V'__10' * ((CK'+'+CK'-') * EV'__10')^0
+    , __10     = V'__11' * ((CK'*'+(CK'/'-'//'-'/*')+CK'%') * EV'__11')^0
     , __11     = ( Cc(false) * (CKEY'not'+CK'&'+CK'-'+CK'+'+ CK'~'+CK'*'
                              + Cc'cast'*(K'('*V'Type'*K')') )
                 )^0 * V'__12'
     , __12     = V'__13' *
                     (
-                        K'(' * Cc'call' * V'ExpList' * EK')' *
+                        K'(' * Cc'call' * EV'ExpList' * EK')' *
                             ( KEY'finalize' * EKEY'with' * V'Finally' * EKEY'end'
                               + Cc(false)) +
-                        K'[' * Cc'idx'  * V'__Exp'    * EK']' +
+                        K'[' * Cc'idx'  * EV'__Exp'    * EK']' +
                         (CK':' + CK'.') * EV'__ID_field'
                     )^0
     , __13     = V'__Prim'
@@ -325,11 +329,15 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
               + V'NULL'    + V'NUMBER' + V'STRING'
               + V'Global'  + V'This'   + V'Outer'
               + V'RawExp'
-              + V'Adt'
               + CKEY'call'     * EV'__Exp'
               + CKEY'call/rec' * EV'__Exp'
 
-    , Adt = V'__ID_adt' * (K'.'*V'__ID_tag' + Cc(false))
+    , Adt_new     = KEY'new' * EV'Adt_constr' * (KEY'in'*EV'__Exp' + Cc(false))
+    , Adt_constr  = V'Adt' * EK'(' * EV'Adt_explist' * EK')'
+    , Adt         = V'__ID_adt' * (K'.'*V'__ID_tag' + Cc(false))
+
+    , __adt_expitem = (V'Adt_constr' + V'__Exp')
+    , Adt_explist = ( V'__adt_expitem'*(K','*EV'__adt_expitem')^0 )^-1
 
     , ExpList = ( V'__Exp'*(K','*EV'__Exp')^0 )^-1
 

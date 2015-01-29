@@ -250,10 +250,21 @@ F = {
         end
     end,
 
+--[[
     Adt = function (me)
         ASR(me.__par.tag == 'Op2_call', me, 'invalid expression')
         me.__par.tag = 'Adt_constr'
     end,
+    Adt_constr = function (me)
+        if not AST.par(me,'New') then
+            if AST.par(me,'Adt_constr') then
+                -- static constructor inside other
+                -- declare an auxiliary var for it
+                ;
+            end
+        end
+    end,
+]]
 
 -- Escape --------------------------------------------------
 
@@ -1213,7 +1224,7 @@ F = {
                             to)
             return p1
 
-        elseif tag == '__SetNew' then
+        elseif tag=='__SetAdtConstr' or tag=='__SetAdtNew' then
 -- TODO: do the same for SetSpawn?
             local set = node('SetExp', me.ln, op,
                             node('Ref', me.ln, p1),

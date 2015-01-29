@@ -1382,6 +1382,7 @@ do return end
 
 -------------------------------------------------------------------------------
 -- OK: well tested
+]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -2013,8 +2014,9 @@ input int A;
 A=1;
 escape 1;
 ]],
-    adj = 'line 2 : invalid expression',
+    --adj = 'line 2 : invalid expression',
     --parser = 'line 1 : after `;´ : expected statement',
+    parser = 'line 1 : after `;´ : expected statement (usually a missing `var´ or C prefix `_´)',
 }
 
 Test { [[input  int A;]],
@@ -2119,8 +2121,8 @@ with
 end;
 escape A;
 ]],
-    --parser = "line 9 : after `escape´ : expected expression",
-    adj = 'line 9 : invalid expression',
+    parser = "line 9 : after `escape´ : expected expression",
+    --adj = 'line 9 : invalid expression',
 }
 
 Test { [[
@@ -18595,8 +18597,8 @@ Test { [[
 output (int)=>int F;
 escape call F=>1;
 ]],
-    --parser = 'line 2 : after `call´ : expected expression',
-    parser = 'line 2 : after `F´ : expected `;´',
+    parser = 'line 2 : after `call´ : expected expression',
+    --parser = 'line 2 : after `F´ : expected `;´',
 }
 
 Test { [[
@@ -19592,8 +19594,9 @@ Test { [[var u8[2] v; escape &v;]],
 Test { [[
 N;
 ]],
-    adj = 'line 1 : invalid expression',
+    --adj = 'line 1 : invalid expression',
     --parser = 'line 1 : after `<BOF>´ : expected statement',
+    parser = 'line 1 : after `<BOF>´ : expected statement (usually a missing `var´ or C prefix `_´)',
 }
 
 Test { [[
@@ -19908,8 +19911,9 @@ end
 A = 1;
 escape 1;
 ]],
-    adj = 'line 4 : invalid expression',
+    --adj = 'line 4 : invalid expression',
     --parser = 'line 3 : after `end´ : expected statement'
+    parser = 'line 3 : after `end´ : expected statement (usually a missing `var´ or C prefix `_´)',
 }
 
 Test { [[
@@ -21224,7 +21228,7 @@ Test { [[escape()]],
 }
 
 Test { [[escape 1+;]],
-    parser = "line 1 : before `+´ : expected `;´",
+    parser = "line 1 : after `+´ : expected expression",
 }
 
 Test { [[if then]],
@@ -21246,7 +21250,7 @@ escape 1
 
 ;
 ]],
-    parser = "line 5 : before `+´ : expected `;´"
+    parser = "line 5 : after `+´ : expected expression"
 }
 
 Test { [[
@@ -21724,8 +21728,8 @@ pause/if A do
 end
 escape 0;
 ]],
-    adj = 'line 2 : invalid expression',
-    --parser = 'line 2 : after `pause/if´ : expected expression',
+    --adj = 'line 2 : invalid expression',
+    parser = 'line 2 : after `pause/if´ : expected expression',
 }
 
 Test { [[
@@ -39240,7 +39244,6 @@ escape app.v;
 }
 
 -- ALGEBRAIC DATATYPES (ADTs)
-]===]
 
     -- STATIC ADTs
 
@@ -39447,6 +39450,20 @@ escape 1;
     run = 1,
 }
 
+-- constructors are not expressions
+Test { DATA..[[
+escape Opt.NIL();
+]],
+    parser = 'line 22 : after `escape´ : expected expression',
+}
+Test { DATA..[[
+var List l;
+var int v = (l==Opt.NIL());
+escape v;
+]],
+    parser = 'line 23 : after `==´ : expected expression',
+}
+
 -- anonymous destructors / pattern matching
 Test { DATA..[[
 var Pair p1 = Pair(1,2);
@@ -39644,11 +39661,11 @@ var List l3 = List.CONS(1, List.CONS(2, List.NIL()));
 var int ret = 0;
 
 ret = ret + p1.x + p1.y;        // 3
-ret = ret + (o1==Opt.NIL());    // 4
+ret = ret + o1.NIL;    // 4
 ret = ret + (o2.PTR.v==&p1);    // 5
-ret = ret + (l1==List.NIL());   // 6
-ret = ret + l2.CONS.head + (l2.CONS.tail==List.NIL());   // 8
-ret = ret + l3.CONS.head + l3.CONS.tail.CONS.head + (l3.CONS.tail.CONS.tail==List.NIL());   // 12
+ret = ret + l1.NIL;   // 6
+ret = ret + l2.CONS.head + l2.CONS.tail.NIL;   // 8
+ret = ret + l3.CONS.head + l3.CONS.tail.CONS.head + l3.CONS.tail.CONS.tail.NIL;   // 12
 
 escape ret;
 ]],
@@ -39657,11 +39674,12 @@ escape ret;
 
 -- access across await
 Test { DATA..[[
-var List* l = &List.CONS(1, List.NIL());
+var List l = List.CONS(1, List.NIL());
+var List* p = &l;
 await 1s;
-escape l:CONS.head;
+escape p:CONS.head;
 ]],
-    fin = 'line 24 : pointer access across `await´',
+    fin = 'line 25 : pointer access across `await´',
 }
 
 -- tag mismatch (runtime assertion)
@@ -39778,9 +39796,10 @@ with
     end
 end
 pool List[] l;
-escape l==List.NIL();
+var List l2 = List.NIL();
+escape l==l2;
 ]],
-    env = 'line 10 : invalid operands to binary "=="',
+    env = 'line 11 : invalid operands to binary "=="',
     --run = 1,
 }
 
@@ -39834,7 +39853,7 @@ escape l.NIL;
 Test { DATA..[[
 pool List[1] l;
 l = new List.CONS(2, List.CONS(1, List.NIL())) in l;
-_assert(l.CONS.tail == List.NIL());
+_assert(l.CONS.tail.NIL);
 escape l.CONS.head;
 ]],
     run = 2,
@@ -39843,9 +39862,9 @@ escape l.CONS.head;
 Test { DATA..[[
 pool List[2] l;
 l = new List.CONS(1, List.CONS(2, List.CONS(3, List.NIL()))) in l;
-_assert(l.CONS.tail.CONS.tail == List.NIL());
+_assert(l.CONS.tail.CONS.tail.NIL);
 l.CONS.tail = List.CONS(4, List.NIL());
-escape l.CONS.head + l.CONS.tail.CONS.head + (l.CONS.tail.CONS.tail==List.NIL());
+escape l.CONS.head + l.CONS.tail.CONS.head + (l.CONS.tail.CONS.tail.NIL);
 ]],
     run = 5,
 }
@@ -39853,10 +39872,10 @@ escape l.CONS.head + l.CONS.tail.CONS.head + (l.CONS.tail.CONS.tail==List.NIL())
 Test { DATA..[[
 pool List[2] l;
 l = new List.CONS(1, List.CONS(2, List.CONS(3, List.NIL()))) in l;
-_assert(l.CONS.tail.CONS.tail == List.NIL());
+_assert(l.CONS.tail.CONS.tail.NIL);
 l = new List.CONS(4, List.CONS(5, List.CONS(6, List.NIL()))) in l;
-_assert(l.CONS.tail.CONS.tail == List.NIL());
-escape l.CONS.head + l.CONS.tail.CONS.head + (l.CONS.tail.CONS.tail==List.NIL());
+_assert(l.CONS.tail.CONS.tail.NIL);
+escape l.CONS.head + l.CONS.tail.CONS.head + (l.CONS.tail.CONS.tail.NIL);
 ]],
     run = 9,
 }
