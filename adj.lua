@@ -245,7 +245,7 @@ F = {
     end,
 
     Adt = function (me)
-        assert(me.__par.tag == 'Op2_call')
+        ASR(me.__par.tag == 'Op2_call', me, 'invalid expression')
         me.__par.tag = 'Adt_constr'
     end,
 
@@ -1201,11 +1201,18 @@ F = {
                                     to)))
             end
 
-        elseif tag=='__SetSpawn' or tag=='__SetNew' then
+        elseif tag=='__SetSpawn' then
             p1[#p1+1] = node('SetExp', me.ln, op,
                             node('Ref', me.ln, p1),
                             to)
             return p1
+
+        elseif tag == '__SetNew' then
+-- TODO: do the same for SetSpawn?
+            local set = node('SetExp', me.ln, op,
+                            node('Ref', me.ln, p1),
+                            to)
+            return node('Stmts', me.ln, p1, set)
 
         elseif tag == '__SetDoOrg' then
             return F.DoOrg_pre(p1, to)

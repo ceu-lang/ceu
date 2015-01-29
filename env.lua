@@ -164,7 +164,7 @@ function newvar (me, blk, pre, tp, id, isImp)
         id    = id,
         blk   = blk,
         tp    = tp,
-        cls   = (top and top.tag=='Dcl_cls') or (pre=='pool'),   -- (case of _TOP_POOL & ifaces)
+        cls   = (top and top.tag=='Dcl_cls' and top) or (pre=='pool'),   -- (case of _TOP_POOL & ifaces)
         pre   = pre,
         inTop = (blk==ME.blk_ifc) or (blk==ME.blk_body),
                 -- (never "tmp")
@@ -601,6 +601,27 @@ F = {
         end
     end,
 
+    __Dcl_pool_pre = function (me)
+        local pre, tp, id, constr = unpack(me)
+
+        -- differentiate my own var type from my pool type
+        me.tp_pool = TP.new(tp)
+
+        if ENV.adts[tp[1]] then
+            -- ADT has the type of the pool values
+            me[2] = AST.copy(tp)
+            me[2][3] = false
+        else
+            -- CLS has no type
+            me[2] = TP.fromstr'void'
+
+            local tp = me.tp_pool
+            local top = (tp.ptr==0 and (not tp.ref) and TOPS[tp.id])
+            ASR(tp.id=='_TOP_POOL' or (top and top.tops_i<CLS().tops_i),
+                me, 'undeclared type `'..(tp.id or '?')..'´')
+        end
+    end,
+
     Dcl_pool = function (me)
         local pre, tp, id, constr = unpack(me)
         ASR(tp.arr, me, 'missing `pool´ dimension')
@@ -859,10 +880,13 @@ F = {
     IterIni = 'RawExp',
     IterNxt = 'RawExp',
 
-    New_pre = function (me)
+    New = function (me)
         -- new -> Op2_call
         -- new List.CONS(...)
-        me.tp = me[1].tp
+        -- pointer to List.CONS(...)
+        local tp = AST.copy(me[1].tp)
+        tp[2] = 1
+        me.tp = TP.new(tp)
     end,
 
     Dcl_constr_pre = function (me)
@@ -1038,7 +1062,8 @@ F = {
 
     ['Op1_&'] = function (me)
         local op, e1 = unpack(me)
-        ASR(ENV.clss[e1.tp.id] or e1.lval, me, 'invalid operand to unary "&"')
+        ASR(e1.lval or ENV.clss[e1.tp.id] or ENV.adts[e1.tp.id], me,
+            'invalid operand to unary "&"')
         me.lval = false
         me.tp   = TP.copy(e1.tp)
         me.tp.ptr = me.tp.ptr + 1

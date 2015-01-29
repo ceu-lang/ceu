@@ -214,8 +214,16 @@ function TP.contains (tp1, tp2)
         return true
     end
 
-    -- tp[] vs tp*
+    -- tp[] = tp*
+    -- tp*  = tp[]
     if tp1.id==tp2.id and ((tp1.ptr==1 and tp2.arr) or (tp2.ptr==1 and tp1.arr)) then
+        return true
+    end
+
+    -- TODO: get ADTs working
+    -- tp& <- tp[]
+    -- tp& <- tp*
+    if tp1.id==tp2.id and tp1.ref and (tp2.arr or tp2.ptr==1) then
         return true
     end
 

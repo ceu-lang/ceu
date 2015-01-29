@@ -1382,6 +1382,7 @@ do return end
 
 -------------------------------------------------------------------------------
 -- OK: well tested
+]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -2013,7 +2014,8 @@ input int A;
 A=1;
 escape 1;
 ]],
-    parser = 'line 1 : after `;´ : expected statement',
+    adj = 'line 2 : invalid expression',
+    --parser = 'line 1 : after `;´ : expected statement',
 }
 
 Test { [[input  int A;]],
@@ -2118,7 +2120,8 @@ with
 end;
 escape A;
 ]],
-    parser = "line 9 : after `escape´ : expected expression",
+    --parser = "line 9 : after `escape´ : expected expression",
+    adj = 'line 9 : invalid expression',
 }
 
 Test { [[
@@ -18593,7 +18596,8 @@ Test { [[
 output (int)=>int F;
 escape call F=>1;
 ]],
-    parser = 'line 2 : after `call´ : expected expression',
+    --parser = 'line 2 : after `call´ : expected expression',
+    parser = 'line 2 : after `F´ : expected `;´',
 }
 
 Test { [[
@@ -19589,7 +19593,8 @@ Test { [[var u8[2] v; escape &v;]],
 Test { [[
 N;
 ]],
-    parser = 'line 1 : after `<BOF>´ : expected statement',
+    adj = 'line 1 : invalid expression',
+    --parser = 'line 1 : after `<BOF>´ : expected statement',
 }
 
 Test { [[
@@ -19904,7 +19909,8 @@ end
 A = 1;
 escape 1;
 ]],
-    parser = 'line 3 : after `end´ : expected statement'
+    adj = 'line 4 : invalid expression',
+    --parser = 'line 3 : after `end´ : expected statement'
 }
 
 Test { [[
@@ -21719,7 +21725,8 @@ pause/if A do
 end
 escape 0;
 ]],
-    parser = 'line 2 : after `pause/if´ : expected expression',
+    adj = 'line 2 : invalid expression',
+    --parser = 'line 2 : after `pause/if´ : expected expression',
 }
 
 Test { [[
@@ -26431,6 +26438,16 @@ escape 1;
 ]],
     env = 'line 4 : missing `pool´ dimension',
     --parser = 'line 4 : after `T´ : expected `[´',
+}
+
+Test { [[
+class T with do end
+pool T[] ts;
+var T t;
+ts = t;
+escape 1;
+]],
+    env = 'line 4 : invalid attribution',
 }
 
 Test { [[
@@ -36832,7 +36849,8 @@ end
 var int i = 10;
 escape i;
 ]],
-    env = 'tests.lua : line 4 : interface/class "T" is already declared',
+    tops = 'line 4 : top-level identifier "T" already taken',
+    --env = 'tests.lua : line 4 : interface/class "T" is already declared',
 }
 
 INCLUDE('/tmp/_ceu_MOD1.ceu', [[
@@ -36851,7 +36869,8 @@ end
 var int i = 10;
 escape i;
 ]],
-    env = '/tmp/_ceu_MOD1.ceu : line 1 : interface/class "T" is already declared',
+    tops = 'line 1 : top-level identifier "T" already taken',
+    --env = '/tmp/_ceu_MOD1.ceu : line 1 : interface/class "T" is already declared',
 }
 
 INCLUDE('/tmp/_ceu_MOD1.ceu', [[
@@ -36868,7 +36887,8 @@ end
 var int i = 10;
 escape i;
 ]],
-    env = 'line 2 : interface/class "Global" is already declared',
+    tops = 'line 2 : top-level identifier "Global" already taken',
+    --env = 'line 2 : interface/class "Global" is already declared',
 }
 
 INCLUDE('/tmp/_ceu_MOD1.ceu', [[
@@ -39220,8 +39240,6 @@ escape app.v;
     run = 1,
 }
 
-
-]===]
 -- ALGEBRAIC DATATYPES (ADTs)
 
     -- STATIC ADTs
@@ -39638,7 +39656,7 @@ escape ret;
 
 -- access across await
 Test { DATA..[[
-var List* l = List.CONS(1, List.NIL());
+var List* l = &List.CONS(1, List.NIL());
 await 1s;
 escape l:CONS.head;
 ]],
@@ -39761,6 +39779,22 @@ end
 pool List[] l;
 escape l==List.NIL();
 ]],
+    env = 'line 10 : invalid operands to binary "=="',
+    --run = 1,
+}
+
+Test { [[
+data List with
+    tag NIL;
+with
+    tag CONS with
+        var int   head;
+        var List& tail;
+    end
+end
+pool List[] l;
+escape l.NIL;
+]],
     run = 1,
 }
 
@@ -39777,7 +39811,7 @@ pool List[] l;
 l = List.CONS(2, List.NIL());
 escape l.CONS.head;
 ]],
-    run = 'error',
+    env = 'line 23 : invalid attribution (List[] vs List)',
 }
 
 Test { DATA..[[
@@ -39790,40 +39824,47 @@ escape l.CONS.head;
 
 Test { DATA..[[
 pool List[0] l;
-l = List.CONS(2, List.NIL());
-escape l==List.NIL();
+l = new List.CONS(2, List.NIL()) in l;
+escape l.NIL;
 ]],
     run = 1,
 }
 
 Test { DATA..[[
 pool List[1] l;
-l = List.CONS(2, List.CONS(1, List.NIL()));
+l = new List.CONS(2, List.CONS(1, List.NIL())) in l;
 _assert(l.CONS.tail == List.NIL());
-escape l.head;
+escape l.CONS.head;
 ]],
     run = 2,
 }
 
 Test { DATA..[[
 pool List[2] l;
-l = List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));
-_assert(l.CONS.CONS.tail == List.NIL());
+l = new List.CONS(1, List.CONS(2, List.CONS(3, List.NIL()))) in l;
+_assert(l.CONS.tail.CONS.tail == List.NIL());
 l.CONS.tail = List.CONS(4, List.NIL());
-escape l.CONS.head + l.CONS.CONS.head + (l.CONS.CONS.tail==List.NIL());
+escape l.CONS.head + l.CONS.tail.CONS.head + (l.CONS.tail.CONS.tail==List.NIL());
 ]],
     run = 5,
 }
 
 Test { DATA..[[
 pool List[2] l;
-l = List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));
-_assert(l.CONS.CONS.tail == List.NIL());
-l = List.CONS(4, List.CONS(5, List.CONS(6, List.NIL())));
-_assert(l.CONS.CONS.tail == List.NIL());
-escape l.CONS.head + l.CONS.CONS.head + (l.CONS.CONS.tail==List.NIL());
+l = new List.CONS(1, List.CONS(2, List.CONS(3, List.NIL()))) in l;
+_assert(l.CONS.tail.CONS.tail == List.NIL());
+l = new List.CONS(4, List.CONS(5, List.CONS(6, List.NIL()))) in l;
+_assert(l.CONS.tail.CONS.tail == List.NIL());
+escape l.CONS.head + l.CONS.tail.CONS.head + (l.CONS.tail.CONS.tail==List.NIL());
 ]],
     run = 9,
+}
+
+Test { DATA..[[
+var List l = new List.NIL();
+escape 1;
+]],
+    env = 'line 22 : invalid attribution (List vs List*)',
 }
 
 Test { DATA..[[
@@ -39835,27 +39876,27 @@ pool List[10] l;
 
 // change head [2]
 l = new List.CONS(2, l);
-ret = ret + l.head;                 // 2
+ret = ret + l.CONS.head;                 // 2
 _assert(ret == 2);
 
 // change head [1, 2]
 l = new List.CONS(1, l);
-ret = ret + l.head;                 // 3
-ret = ret + l.head + l.tail.head;   // 6
+ret = ret + l.CONS.head;                 // 3
+ret = ret + l.CONS.head + l.CONS.tail.CONS.head;   // 6
 _assert(ret == 6);
 
 // change tail [1, 2, 4]
-l.CONS.CONS.tail = new List.CONS(4, List.NIL());    // 10
+l.CONS.tail.CONS.tail = new List.CONS(4, List.NIL());    // 10
 
 // change middle [1, 2, 3, 4]
-var List l3 = new List.CONS(3, l.CONS.CONS.tail);
-l.CONS.CONS.tail = l3;
-_assert(l.CONS.CONS.head == 3);
-_assert(l.CONS.CONS.CONS.head == 4);
-ret = ret + l.CONS.CONS.head + l.CONS.CONS.CONS.head;   // 17
+var List l3 = List.CONS(3, l.CONS.tail.CONS.tail);
+l.CONS.tail.CONS.tail = l3;
+_assert(l.CONS.tail.CONS.head == 3);
+_assert(l.CONS.tail.CONS.tail.CONS.head == 4);
+ret = ret + l.CONS.tail.CONS.head + l.CONS.tail.CONS.tail.CONS.head;   // 17
 
 // drop middle [1, 3, 4]
-l.CONS.tail = l.CONS.CONS.tail;
+l.CONS.tail = l.CONS.tail.CONS.tail;
     // TODO: check if (2) has been freed
 
 // reclaim algo:
