@@ -39375,6 +39375,44 @@ escape 1;
     run = 1,
 }
 
+-- invalid constructors
+Test { DATA..[[
+var Pair p1 = Pair();
+escape 1;
+]],
+    env = 'line 22 : invalid arity',
+}
+Test { DATA..[[
+var Pair p1 = Pair(1,null);
+escape 1;
+]],
+    env = 'line 22 : invalid call parameter #2 (null* vs int)',
+}
+Test { DATA..[[
+var Opt  o1 = Opt.NIL(1);
+escape 1;
+]],
+    env = 'line 22 : invalid arity',
+}
+Test { DATA..[[
+var Pair p1 = Pair_(1,2);
+escape 1;
+]],
+    env = 'line 22 : data "Pair_" is not declared',
+}
+Test { DATA..[[
+var Opt  o1 = List_.NIL();
+escape 1;
+]],
+    env = 'line 22 : data "List_" is not declared',
+}
+Test { DATA..[[
+var Opt  o1 = List.NIL_();
+escape 1;
+]],
+    env = 'line 22 : tag "NIL_" is not declared',
+}
+
 -- named CONStructors
 Test { DATA..[[
 var Pair p1 = Pair(x=1,x=2);
@@ -39726,19 +39764,26 @@ escape l==List.NIL();
     run = 1,
 }
 
--- initialize pool
 Test { DATA..[[
 pool List[] l = new List.CONS(2, List.NIL()) in l;
-escape l.head;
+escape l.CONS.head;
 ]],
-    run = 2,
-    todo = 'implement?',
+    parser = 'line 22 : after `l´ : expected `;´',
+}
+
+-- not "new"
+Test { DATA..[[
+pool List[] l;
+l = List.CONS(2, List.NIL());
+escape l.CONS.head;
+]],
+    run = 'error',
 }
 
 Test { DATA..[[
 pool List[] l;
 l = new List.CONS(2, List.NIL()) in l;
-escape l.head;
+escape l.CONS.head;
 ]],
     run = 2,
 }

@@ -244,6 +244,11 @@ F = {
         end
     end,
 
+    Adt = function (me)
+        assert(me.__par.tag == 'Op2_call')
+        me.__par.tag = 'Adt_constr'
+    end,
+
 -- Escape --------------------------------------------------
 
     _Escape_pos = function (me)

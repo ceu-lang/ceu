@@ -453,17 +453,43 @@ F = {
 
         ENV.adts[id] = me
         ENV.adts[#ENV.adts+1] = me
+    end,
+    Dcl_adt = function (me)
+        local id, op = unpack(me)
 
-        -- map tag=>fields
-        if op == 'enum' then
-            me.tags = {}
+        if op == 'struct' then
+            -- convert vars=>tuple (to check constructors)
+            me.tup = AST.node('TupleType', me.ln)
+
+            -- Dcl_adt[3]->Block[1]->Stmts[*]->Stmts
+            for _, stmts in ipairs(me[3][1]) do
+                local dclvar = unpack(stmts)
+                assert(stmts.tag=='Stmts' and dclvar.tag=='Dcl_var', 'bug found')
+                me.tup[#me.tup+1] = AST.node('TupleTypeItem', me.ln,
+                                        false,dclvar[2],false)
+            end
+
+            TP.new(me.tup)
+
+        else
+            assert(op == 'enum')
+            me.tags = {} -- map tag=>{blk,tup}
             for i=3, #me do
-                assert(me[i].tag == 'Dcl_adt_tag')
+                assert(me[i].tag == 'Dcl_adt_tag', 'bug found')
                 local id, blk = unpack(me[i])
-                me.tags[id] = blk
-                if blk then
-                    assert(blk.tag == 'Block')
+                local tup = AST.node('TupleType',me.ln)
+                me.tags[id] = { blk=blk, tup=tup }
+
+                if blk then -- skip void enums
+                    for _, stmts in ipairs(blk) do
+                        local dclvar = unpack(stmts)
+                        assert(stmts.tag=='Stmts' and dclvar.tag=='Dcl_var', 'bug found')
+                        tup[#tup+1] = AST.node('TupleTypeItem', me.ln,
+                                        false,dclvar[2],false)
+                    end
                 end
+
+                TP.new(tup)
             end
         end
     end,
@@ -650,6 +676,8 @@ F = {
         me.tp   = var.tp
         me.lval = not (var.pre~='var' or var.cls or var.tp.arr)
                     and var
+        me.lval = me.lval or (var.pre=='pool' and ENV.adts[var.tp.id])
+                    and var
     end,
 
     Dcl_nat = function (me)
@@ -819,7 +847,7 @@ F = {
                         'class "'..id..'" is not declared')
     end,
 
-    -- _pre: give error before "set" inside it
+    -- _pre: gives error before "set" inside it
     Spawn_pre = function (me)
         local id, pool, constr = unpack(me)
         me.cls = ENV.clss[id]
@@ -830,6 +858,12 @@ F = {
     end,
     IterIni = 'RawExp',
     IterNxt = 'RawExp',
+
+    New_pre = function (me)
+        -- new -> Op2_call
+        -- new List.CONS(...)
+        me.tp = me[1].tp
+    end,
 
     Dcl_constr_pre = function (me)
         local spw = AST.iter'Spawn'()
@@ -874,10 +908,10 @@ F = {
         me.tp  = f.var and f.var.fun and f.var.fun.out or TP.fromstr'@'
         local id
         if f.tag == 'Nat' then
-            id   = f[1]
+            id = f[1]
             me.c = ENV.c[id]
         elseif f.tag == 'Op2_.' then
-            id   = f.id
+            id = f.id
             if f.org then   -- t._f()
                 me.c = assert(ENV.clss[f.org.tp.id]).c[f.id]
             else            -- _x._f()
@@ -904,6 +938,23 @@ F = {
             --'native function "'..id..'" is not declared')
 
         ENV.calls[id] = true
+    end,
+
+    Adt_constr = function (me)
+        local _, adt, params = unpack(me)
+        local id, tag = unpack(adt)
+        me.tp = TP.fromstr(id)
+        local tup
+
+        local tadt = ASR(ENV.adts[id], me, 'data "'..id..'" is not declared')
+        if tag then
+            local ttag = ASR(tadt.tags[tag], me, 'tag "'..tag..'" is not declared')
+            tup = ttag.tup
+        else
+            tup = tadt.tup
+        end
+
+        F.__check_params(me, tup, params)
     end,
 
     Op2_idx = function (me)
@@ -1039,7 +1090,7 @@ F = {
                 me.lval = var
             else
                 assert(op == 'enum')
-                local blk = ASR(adt.tags[id], me,
+                local blk = ASR(adt.tags[id] and adt.tags[id].blk, me,
                                 'tag "'..id..'" is not declared')
 
                 -- [enum.TAG]
