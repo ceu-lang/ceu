@@ -231,7 +231,7 @@ F = {
             end
 
         else
-            assert(op == 'enum')
+            assert(op == 'union')
             for i=3, #me do
                 assert(me[i].tag == 'Dcl_adt_tag')
                 local n = #me[i]

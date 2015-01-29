@@ -92,8 +92,8 @@ Test = function (t)
     if not check('trails')   then return end
     if not check('labels')   then return end
     if not check('tmps')     then return end
-do return end
     if not check('mem')      then return end
+do return end
     if not check('val')      then return end
     --DBG'======= VAL'
     --AST.dump(AST.root)

@@ -165,6 +165,7 @@ function newvar (me, blk, pre, tp, id, isImp)
         blk   = blk,
         tp    = tp,
         cls   = (top and top.tag=='Dcl_cls' and top) or (pre=='pool'),   -- (case of _TOP_POOL & ifaces)
+        adt   = (top and top.tag=='Dcl_adt' and top),
         pre   = pre,
         inTop = (blk==ME.blk_ifc) or (blk==ME.blk_body),
                 -- (never "tmp")
@@ -472,7 +473,7 @@ F = {
             TP.new(me.tup)
 
         else
-            assert(op == 'enum')
+            assert(op == 'union')
             me.tags = {} -- map tag=>{blk,tup}
             for i=3, #me do
                 assert(me[i].tag == 'Dcl_adt_tag', 'bug found')
@@ -1116,25 +1117,25 @@ F = {
                 me.tp = var.tp
                 me.lval = var
             else
-                assert(op == 'enum')
+                assert(op == 'union')
                 local blk = ASR(adt.tags[id] and adt.tags[id].blk, me,
                                 'tag "'..id..'" is not declared')
 
-                -- [enum.TAG]
+                -- [union.TAG]
                 local tag = (me.__par.tag ~= 'Op2_.')
                 if tag then
                     me.tp = TP.fromstr'bool'
 
-                -- [enum.TAG].field
+                -- [union.TAG].field
                 else
-                    me.enum_tag_blk = blk
+                    me.union_tag_blk = blk
                     me.tp = blk
                 end
             end
 
-                -- [enum.TAG.field]
-        elseif e1.enum_tag_blk then
-            local var = ASR(e1.enum_tag_blk.vars[id], me,
+                -- [union.TAG.field]
+        elseif e1.union_tag_blk then
+            local var = ASR(e1.union_tag_blk.vars[id], me,
                         'field "'..id..'" is not declared')
             me.tp = var.tp
             me.lval = var

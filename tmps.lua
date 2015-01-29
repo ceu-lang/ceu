@@ -19,6 +19,10 @@ F = {
 
         VARS[var] = true
         var.isTmp = true
+
+        if AST.par(me,'Dcl_adt') then
+            var.isTmp = false
+        end
     end,
 
     Var = function (me)

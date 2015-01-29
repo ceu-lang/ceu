@@ -23,6 +23,36 @@ F = {
 ]] .. src
     end,
 
+    Dcl_adt_pre = function (me)
+        local id, op = unpack(me)
+        me.struct = 'typedef '
+        if op == 'union' then
+            me.struct = me.struct..[[
+struct {
+    u8 tag;
+    union {
+]]
+            me.enum = {}
+        end
+    end,
+    Dcl_adt = function (me)
+        local id, op = unpack(me)
+        if op == 'union' then
+            me.struct = me.struct .. [[
+    }
+}
+]]
+            me.enum = 'enum {\n'..table.concat(me.enum,',\n')..'\n}\n'
+        else
+            me.struct = string.sub(me.struct, 1, -3)    -- remove leading ';'
+        end
+        me.struct = me.struct..' CEU_'..id..';'
+    end,
+    Dcl_adt_tag_pre = function (me)
+        local top = AST.par(me, 'Dcl_adt')
+        top.enum[#top.enum+1] = 'CEU_'..string.upper(top[1])..'_'..me[1]
+    end,
+
     Dcl_cls_pre = function (me)
         me.struct = [[
 typedef struct CEU_]]..me.id..[[ {
@@ -94,25 +124,29 @@ typedef union CEU_]]..me.id..[[_delayed {
 
     Stmts_pre = function (me)
         local cls = CLS()
-        cls.struct = cls.struct..SPC()..'union {\n'
+        if cls then
+            cls.struct = cls.struct..SPC()..'union {\n'
+        end
     end,
     Stmts_pos = function (me)
         local cls = CLS()
-        cls.struct = cls.struct..SPC()..'};\n'
+        if cls then
+            cls.struct = cls.struct..SPC()..'};\n'
+        end
     end,
 
     Block_pos = function (me)
-        local cls = CLS()
-        cls.struct = cls.struct..SPC()..'};\n'
+        local top = AST.par(me,'Dcl_adt') or CLS()
+        top.struct = top.struct..SPC()..'};\n'
     end,
     Block_pre = function (me)
-        local cls = CLS()
+        local top = AST.par(me,'Dcl_adt') or CLS()
 
-        cls.struct = cls.struct..SPC()..'struct { /* BLOCK ln='..me.ln[2]..' */\n'
+        top.struct = top.struct..SPC()..'struct { /* BLOCK ln='..me.ln[2]..' */\n'
 
         if me.fins then
             for i=1, #me.fins do
-            cls.struct = cls.struct .. SPC()
+            top.struct = top.struct .. SPC()
                             ..'u8 __fin_'..me.n..'_'..i..': 1;\n'
             end
         end
@@ -126,7 +160,7 @@ typedef union CEU_]]..me.id..[[_delayed {
                 len = 1   --
             elseif var.pre=='pool' and (type(var.tp.arr)=='table') then
                 len = 10    -- TODO: it should be big
-            elseif var.cls then
+            elseif var.cls or var.adt then
                 len = 10    -- TODO: it should be big
                 --len = (var.tp.arr or 1) * ?
             elseif var.tp.arr then
@@ -148,7 +182,7 @@ typedef union CEU_]]..me.id..[[_delayed {
         -- sort offsets in descending order to optimize alignment
         -- TODO: previous org metadata
         local sorted = { unpack(me.vars) }
-        if me ~= CLS().blk_ifc then
+        if me~=top.blk_ifc and top.tag~='Dcl_adt' then
             table.sort(sorted, pred_sort)   -- TCEU_X should respect lexical order
         end
 
@@ -163,7 +197,7 @@ typedef union CEU_]]..me.id..[[_delayed {
                     -- otherwise use counter to avoid clash inside struct/union
             end
 
-            if CLS().id == var.tp.id then
+            if top.id == var.tp.id then
                 tp = 'struct '..tp  -- for types w/ pointers for themselves
             end
 
@@ -178,19 +212,19 @@ typedef union CEU_]]..me.id..[[_delayed {
                 else
                     dcl = dcl .. tp..' '..var.id_
                 end
-                cls.struct = cls.struct..SPC()..'  '..dcl..';\n'
+                top.struct = top.struct..SPC()..'  '..dcl..';\n'
             elseif var.pre=='pool' and (type(var.tp.arr)=='table') then
-                local pool_cls = ENV.clss[var.tp.id]
+                local pool_cls = ENV.clss[var.tp.id] or ENV.adts[var.tp.id]
                 if pool_cls.is_ifc then
                     -- TODO: HACK_4: delayed declaration until use
                     MEM.clss = MEM.clss .. pool_cls.struct_delayed .. '\n'
                     pool_cls.struct_delayed = ''
-                    cls.struct = cls.struct .. [[
+                    top.struct = top.struct .. [[
 CEU_POOL_DCL(]]..var.id_..',CEU_'..var.tp.id..'_delayed,'..var.tp.arr.sval..[[)
 ]]
                            -- TODO: bad (explicit CEU_)
                 else
-                    cls.struct = cls.struct .. [[
+                    top.struct = top.struct .. [[
 CEU_POOL_DCL(]]..var.id_..',CEU_'..var.tp.id..','..var.tp.arr.sval..[[)
 ]]
                            -- TODO: bad (explicit CEU_)
@@ -199,7 +233,7 @@ CEU_POOL_DCL(]]..var.id_..',CEU_'..var.tp.id..','..var.tp.arr.sval..[[)
 
             -- pointers ini/end to list of orgs
             if var.cls then
-                cls.struct = cls.struct .. SPC() ..
+                top.struct = top.struct .. SPC() ..
                    'tceu_org_lnk __lnks_'..me.n..'_'..var.trl_orgs[1]..'[2];\n'
                     -- see val.lua for the (complex) naming
             end
