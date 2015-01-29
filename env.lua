@@ -482,10 +482,12 @@ F = {
 
                 if blk then -- skip void enums
                     for _, stmts in ipairs(blk) do
+                        assert(stmts.tag=='Stmts', 'bug found')
                         local dclvar = unpack(stmts)
-                        assert(stmts.tag=='Stmts' and dclvar.tag=='Dcl_var', 'bug found')
-                        tup[#tup+1] = AST.node('TupleTypeItem', me.ln,
-                                        false,dclvar[2],false)
+                        if dclvar then
+                            tup[#tup+1] = AST.node('TupleTypeItem', me.ln,
+                                            false,dclvar[2],false)
+                        end
                     end
                 end
 

@@ -1382,7 +1382,6 @@ do return end
 
 -------------------------------------------------------------------------------
 -- OK: well tested
-]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -39241,6 +39240,7 @@ escape app.v;
 }
 
 -- ALGEBRAIC DATATYPES (ADTs)
+]===]
 
     -- STATIC ADTs
 
@@ -39344,6 +39344,7 @@ end
 
 -- named fields
 Test { DATA..[[
+escape 1;
 ]],
     run = 1,
 }
@@ -39660,7 +39661,7 @@ var List* l = &List.CONS(1, List.NIL());
 await 1s;
 escape l:CONS.head;
 ]],
-    fin = 'XXX',
+    fin = 'line 24 : pointer access across `await´',
 }
 
 -- tag mismatch (runtime assertion)

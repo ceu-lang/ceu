@@ -236,7 +236,13 @@ F = {
                 assert(me[i].tag == 'Dcl_adt_tag')
                 local n = #me[i]
                 -- variable declarations require a block
-                me[i][2] = node('Block', me.ln, select(2,unpack(me[i])))
+                if n == 1 then
+                    -- void enum: include empty Stmts (Block requires them)
+                    me[i][2] = node('Block', me.ln, node('Stmts',me.ln))
+                else
+                    -- non-void enum
+                    me[i][2] = node('Block', me.ln, select(2,unpack(me[i])))
+                end
                 for j=3, n do
                     me[i][j] = nil  -- all already inside block
                 end
