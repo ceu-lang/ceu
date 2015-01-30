@@ -5,9 +5,9 @@ PROPS = {
     has_asyncs  = false,
     has_threads = false,
     has_orgs    = false,
-    has_news    = false,
-    has_news_pool   = false,
-    has_news_malloc = false,
+    has_orgs_news    = false,
+    has_orgs_news_pool   = false,
+    has_orgs_news_malloc = false,
     has_ifcs    = false,
     has_clear   = false,
     has_pses    = false,
@@ -146,11 +146,12 @@ F = {
                 PROPS.has_clear = true
             end
             if var.pre=='pool' then
-                PROPS.has_news = true
+                local s = 'orgs'
+                PROPS['has_'..s..'_news'] = true
                 if var.tp.arr==true then
-                    PROPS.has_news_malloc = true       -- pool T[]  ts
+                    PROPS['has_'..s..'_news_malloc'] = true  -- pool T[] ts
                 else
-                    PROPS.has_news_pool = true         -- pool T[N] ts
+                    PROPS['has_'..s..'_news_pool'] = true    -- pool T[N] ts
                 end
             end
         end
@@ -160,17 +161,17 @@ F = {
         end
     end,
     Free = function (me)
-        PROPS.has_news = true
+        PROPS.has_orgs_news = true
         PROPS.has_clear = true
     end,
     Spawn = function (me)
         local _,pool,_ = unpack(me)
 
-        --PROPS.has_news = true    (pool does this)
+        --PROPS.has_orgs_news = true    (pool does this)
         if pool and pool.lst.var.tp.arr==true then
-            PROPS.has_news_malloc = true       -- pool T[]  ts
+            PROPS.has_orgs_news_malloc = true       -- pool T[]  ts
         else
-            PROPS.has_news_pool = true         -- pool T[N] ts
+            PROPS.has_orgs_news_pool = true         -- pool T[N] ts
         end
 
         --PROPS.has_clear = true   (var.cls does this)

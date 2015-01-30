@@ -144,7 +144,7 @@ int ceu_sys_org_spawn (tceu_go* _ceu_go, tceu_nlbl lbl_cnt, tceu_org* neworg, tc
 #endif
 
 void ceu_sys_org (tceu_org* org, int n, int lbl, int seqno,
-#ifdef CEU_NEWS
+#ifdef CEU_ORGS_NEWS
                   int isDyn,
 #endif
                   tceu_org* par_org, int par_trl)
@@ -156,7 +156,7 @@ void ceu_sys_org (tceu_org* org, int n, int lbl, int seqno,
     org->n = n;
     org->isAlive = 1;
 #endif
-#ifdef CEU_NEWS
+#ifdef CEU_ORGS_NEWS
     org->isDyn = isDyn;
 #endif
 
@@ -364,7 +364,7 @@ void ceu_sys_go (tceu_app* app, int evt, tceu_evtp evtp)
         stack_push(go, stk);
     }
 
-#ifdef CEU_NEWS
+#ifdef CEU_ORGS_NEWS
     tceu_org* lst_free = NULL;  /* "to free" list (only on reaction end) */
 #endif
 
@@ -428,7 +428,7 @@ fprintf(stderr, "STACK[%d]: evt=%d : seqno=%d : ntrls=%d\n",
                      * TODO(speed): skip LST
                      */
                     if (CUR.evt==CEU_IN__CLEAR && CUR_ORG->n!=0) {
-#ifdef CEU_NEWS
+#ifdef CEU_ORGS_NEWS
                         if (CUR_ORG->isDyn) {
                             /* 1: re-link PRV <-> NXT */
                             CUR_ORG->prv->nxt = CUR_ORG->nxt;
@@ -448,9 +448,9 @@ fprintf(stderr, "STACK[%d]: evt=%d : seqno=%d : ntrls=%d\n",
                              * TODO: what if both happens at the same time?
                              *      (i.e., body and pool terminate)
                              */
-#ifdef CEU_NEWS_POOL
+#ifdef CEU_ORGS_NEWS_POOL
                             if (!CUR_ORG->isAlive
-#ifdef CEU_NEWS_MALLOC
+#ifdef CEU_ORGS_NEWS_MALLOC
                                 || CUR_ORG->pool == NULL
 #endif
                                 )
@@ -470,7 +470,7 @@ fprintf(stderr, "STACK[%d]: evt=%d : seqno=%d : ntrls=%d\n",
                                 }
                             }
                         }
-#endif  /* CEU_NEWS */
+#endif  /* CEU_ORGS_NEWS */
 
                         /* 3: mark as dead (must be after (2) because isAlive is used there */
                         CUR_ORG->isAlive = 0;
@@ -485,7 +485,7 @@ fprintf(stderr, "STACK[%d]: evt=%d : seqno=%d : ntrls=%d\n",
                                      stk.org  = app->data;
                                      stk.trl  = &app->data->trls[0];
                                      stk.stop = NULL;
-#ifdef CEU_NEWS
+#ifdef CEU_ORGS_NEWS
                             if (CUR.stop == CUR_ORG) {
 #ifdef CEU_DEBUG
                                 ceu_sys_assert(CUR_ORG->isDyn);
@@ -511,7 +511,7 @@ fprintf(stderr, "STACK[%d]: evt=%d : seqno=%d : ntrls=%d\n",
 #endif
                         /* 5: terminate traversal if only-for-this-org
                          * explicit free(me) or end of spawned block */
-#ifdef CEU_NEWS
+#ifdef CEU_ORGS_NEWS
                         if (CUR.stop == CUR_ORG) {
 #ifdef CEU_DEBUG
                             ceu_sys_assert(CUR_ORG->isDyn);
@@ -672,19 +672,19 @@ _CEU_GO_QUIT_:;
 #endif
 
     /* free all orgs on "lst_free" on reaction termination */
-#ifdef CEU_NEWS
+#ifdef CEU_ORGS_NEWS
     while (lst_free != NULL) {
         tceu_org* org = lst_free;
         lst_free = org->nxt_free;
-#if    defined(CEU_NEWS_POOL) && !defined(CEU_NEWS_MALLOC)
+#if    defined(CEU_ORGS_NEWS_POOL) && !defined(CEU_ORGS_NEWS_MALLOC)
         ceu_pool_free((tceu_pool*)org->pool, (byte*)org);
-#elif  defined(CEU_NEWS_POOL) &&  defined(CEU_NEWS_MALLOC)
+#elif  defined(CEU_ORGS_NEWS_POOL) &&  defined(CEU_ORGS_NEWS_MALLOC)
         if (org->pool == NULL) {
             ceu_sys_realloc(org, 0);
         } else {
             ceu_pool_free((tceu_pool*)org->pool, (byte*)org);
         }
-#elif !defined(CEU_NEWS_POOL) &&  defined(CEU_NEWS_MALLOC)
+#elif !defined(CEU_ORGS_NEWS_POOL) &&  defined(CEU_ORGS_NEWS_MALLOC)
         ceu_sys_realloc(org, 0);
 #endif
     }

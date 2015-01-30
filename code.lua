@@ -305,7 +305,7 @@ _STK_ORG->cls = ]]..me.n..[[;
         -- because all trails are already clean at this point.
         -- (but remeber that the "free" should be delayed)
         LINE(me, [[
-#ifdef CEU_NEWS
+#ifdef CEU_ORGS_NEWS
 if (_STK_ORG->isDyn) {
     _STK_ORG->isAlive = 0;
     {
@@ -367,7 +367,7 @@ for (]]..V(t.i)..[[=0; ]]..V(t.i)..'<'..t.arr.sval..';'..V(t.i)..[[++)
     /* resets org memory and starts org.trail[0]=Class_XXX */
     ceu_out_org(_ceu_app, ]]..org..','..t.cls.trails_n..','..t.cls.lbl.id..[[,
             _ceu_go->stki+1,    /* run now */
-#ifdef CEU_NEWS
+#ifdef CEU_ORGS_NEWS
                 ]]..t.isDyn..[[,
 #endif
 ]]
@@ -465,7 +465,7 @@ case ]]..me.lbls_cnt.id..[[:;
 ]])
         if pool and (type(pool.var.tp.arr)=='table') then
             LINE(me, '__ceu_new->pool = '..V(pool)..';')
-        elseif PROPS.has_news_pool or OPTS.os then
+        elseif PROPS.has_orgs_news_pool or OPTS.os then
             LINE(me, '__ceu_new->pool = NULL;')
         end
 

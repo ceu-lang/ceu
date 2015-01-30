@@ -23,6 +23,14 @@
 #define CEU_OS
 #endif
 
+#if defined(CEU_ORGS_NEWS)
+#define CEU_NEWS
+#endif
+
+#if defined(CEU_ORGS_NEWS_POOL)
+#define CEU_NEWS_POOL
+#endif
+
 #ifdef CEU_OS
     /* TODO: all should be configurable */
     #define CEU_EXTS
@@ -35,9 +43,9 @@
     #define CEU_INTS
     #define CEU_ORGS
     /*#define CEU_PSES*/ /* TODO: never tried */
-    #define CEU_NEWS
-    #define CEU_NEWS_MALLOC
-    #define CEU_NEWS_POOL
+    #define CEU_ORGS_NEWS
+    #define CEU_ORGS_NEWS_MALLOC
+    #define CEU_ORGS_NEWS_POOL
 /*
     #define CEU_THREADS
 */
@@ -134,7 +142,7 @@
             ceu_sys_realloc(ptr,size)
     #define ceu_out_req() \
             ceu_sys_req()
-#ifdef CEU_NEWS
+#ifdef CEU_ORGS_NEWS
     #define ceu_out_org(app,org,n,lbl,seqno,isDyn,par_org,par_trl) \
             ceu_sys_org(org,n,lbl,seqno,isDyn,par_org,par_trl)
 #else
@@ -390,13 +398,13 @@ typedef struct tceu_org
                              * - required by "watching o" to avoid awaiting a
                              *      dead org
                              */
-#ifdef CEU_NEWS
+#ifdef CEU_ORGS_NEWS
     u8 isDyn: 1;            /* created w/ new or spawn? */
     struct tceu_org* nxt_free;  /* "to free" list (only on reaction end) */
 #endif
 #endif  /* CEU_ORGS */
 
-#ifdef CEU_NEWS_POOL
+#ifdef CEU_ORGS_NEWS_POOL
     void*  pool;            /* TODO(ram): opt, traverse lst of cls pools */
 #endif
 
@@ -410,7 +418,7 @@ typedef struct tceu_org
 typedef struct tceu_go {
 #if defined(CEU_ORGS) || defined(CEU_OS)
     #define CEU_MAX_STACK   128
-    /* TODO: CEU_ORGS is calculable // CEU_NEWS isn't (255?) */
+    /* TODO: CEU_ORGS is calculable // CEU_ORGS_NEWS isn't (255?) */
 #else
     #define CEU_MAX_STACK   (CEU_NTRAILS+1) /* current +1 for each trail */
 #endif

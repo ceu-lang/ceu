@@ -245,7 +245,7 @@ ceu_app_init (tceu_app* _ceu_app)
 #endif
 
     ceu_out_org(_ceu_app, _ceu_app->data, CEU_NTRAILS, Class_Main, 0,
-#ifdef CEU_NEWS
+#ifdef CEU_ORGS_NEWS
                 0,
 #endif
                 NULL, 0);

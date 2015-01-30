@@ -202,9 +202,9 @@ do
             has_asyncs  = 'CEU_ASYNCS',
             has_threads = 'CEU_THREADS',
             has_orgs    = 'CEU_ORGS',
-            has_news    = 'CEU_NEWS',
-            has_news_pool   = 'CEU_NEWS_POOL',
-            has_news_malloc = 'CEU_NEWS_MALLOC',
+            has_orgs_news        = 'CEU_ORGS_NEWS',
+            has_orgs_news_pool   = 'CEU_ORGS_NEWS_POOL',
+            has_orgs_news_malloc = 'CEU_ORGS_NEWS_MALLOC',
             has_ifcs    = 'CEU_IFCS',
             has_clear   = 'CEU_CLEAR',
             has_pses    = 'CEU_PSES',
@@ -482,16 +482,16 @@ if OPTS.verbose then
         evts = ENV.max_evt+#ENV.exts,
         lbls = #LBLS.list,
 
-        trls    = AST.root.trails_n,
+        trls = AST.root.trails_n,
 
-        exts    = PROPS.has_exts,
-        wclocks = PROPS.has_wclocks,
-        ints    = PROPS.has_ints,
-        asyncs  = PROPS.has_asyncs,
-        orgs    = PROPS.has_orgs,
-        news    = PROPS.has_news,
-        ifcs    = PROPS.has_ifcs,
-        ret     = PROPS.has_ret,
+        exts      = PROPS.has_exts,
+        wclocks   = PROPS.has_wclocks,
+        ints      = PROPS.has_ints,
+        asyncs    = PROPS.has_asyncs,
+        orgs      = PROPS.has_orgs,
+        orgs_news = PROPS.has_orgs_news,
+        ifcs      = PROPS.has_ifcs,
+        ret       = PROPS.has_ret,
     }
     local t = {}
     for k, v in pairs(T) do
