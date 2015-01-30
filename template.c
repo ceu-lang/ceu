@@ -34,6 +34,9 @@
 /* native code from the Main class */
 === NATIVE ===
 
+/* adts definitions */
+=== ADTS_DEFS ===
+
 /* class definitions */
 /* may use types defined above in "NATIVE" */
 /* each class may define new native code that appear after its struct declaration */

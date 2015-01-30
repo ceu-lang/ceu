@@ -1,5 +1,6 @@
 MEM = {
-    clss  = '',
+    adts = '',
+    clss = '',
     native_pre = '',
 }
 
@@ -28,29 +29,43 @@ F = {
         me.struct = 'typedef '
         if op == 'union' then
             me.struct = me.struct..[[
-struct {
+struct CEU_]]..id..[[ {
     u8 tag;
     union {
 ]]
             me.enum = {}
+            me.asrs = {}
         end
     end,
     Dcl_adt = function (me)
         local id, op = unpack(me)
         if op == 'union' then
             me.struct = me.struct .. [[
-    }
+    };
 }
 ]]
-            me.enum = 'enum {\n'..table.concat(me.enum,',\n')..'\n}\n'
+            me.enum = 'enum {\n'..table.concat(me.enum,',\n')..'\n};\n'
+            me.asrs = table.concat(me.asrs,'\n')..'\n'
         else
             me.struct = string.sub(me.struct, 1, -3)    -- remove leading ';'
         end
         me.struct = me.struct..' CEU_'..id..';'
+        MEM.adts = MEM.adts..'\n'..(me.enum or '')..'\n'..
+                                   me.struct..'\n'..
+                                   (me.asrs or '')..'\n'
     end,
     Dcl_adt_tag_pre = function (me)
         local top = AST.par(me, 'Dcl_adt')
-        top.enum[#top.enum+1] = 'CEU_'..string.upper(top[1])..'_'..me[1]
+        local id = unpack(top)
+        local tag = unpack(me)
+        local enum = 'CEU_'..string.upper(id)..'_'..tag
+        top.enum[#top.enum+1] = enum
+        top.asrs[#top.asrs+1] = [[
+CEU_]]..id..' '..enum..'_assert (CEU_'..id..[[ me) {
+    ceu_out_assert(me.tag == ]]..enum..[[);
+    return me;
+}
+]]
     end,
 
     Dcl_cls_pre = function (me)
@@ -137,7 +152,14 @@ typedef union CEU_]]..me.id..[[_delayed {
 
     Block_pos = function (me)
         local top = AST.par(me,'Dcl_adt') or CLS()
-        top.struct = top.struct..SPC()..'};\n'
+        local tag = ''
+        if top.tag == 'Dcl_adt' then
+            local n = AST.par(me, 'Dcl_adt_tag')
+            if n then
+                tag = unpack(n)
+            end
+        end
+        top.struct = top.struct..SPC()..'} '..tag..';\n'
     end,
     Block_pre = function (me)
         local top = AST.par(me,'Dcl_adt') or CLS()

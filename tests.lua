@@ -39574,6 +39574,15 @@ escape ret;
 }
 
 -- named destructors
+
+-- checked at runtime
+Test { DATA..[[
+var List l;
+escape l.CONS.head;
+]],
+    run = 1,
+}
+
 Test { DATA..[[
 var Pair p  = Pair(1,2);
 var Opt  o1 = Opt.NIL();
@@ -39691,29 +39700,25 @@ Test { DATA..[[
 var List l = List.NIL();
 escape l.CONS.head;
 ]],
-    run = 'error',
+    asr = true,
 }
 
--- no reassign (adts are refs &)
 Test { DATA..[[
 var List l1 = List.NIL();
 var List l2 = List.CONS(1, l1);
 l1 = l2;
-
-escape 1;
+escape l1.CONS + (l1.CONS.head==1);
 ]],
-    run = 'error',
+    run = 2,
 }
 
--- no reassign (adts are refs &)
 Test { DATA..[[
 var List l1 = List.NIL();
 var List l2 = List.CONS(1, l1);
 l1 = l2.CONS.tail;
-
-escape 1;
+escape l1.NIL;
 ]],
-    run = 'error',
+    run = 1,
 }
 
 -- NIL has no fields
@@ -39724,15 +39729,13 @@ escape l.NIL.v;
     env = 'line 23 : field "v" is not declared',
 }
 
--- no reassign (adts are refs &)
 Test { DATA..[[
 var List l1 = List.NIL();
 var List l2 = List.CONS(1, l1);
 l1 = List.CONS(1, l2);
-
-escape 1;
+escape l1.CONS.head==1;
 ]],
-    run = 'error',
+    run = 1,
 }
 
 -- ok mutation, part of adt <- part/all of another adt
@@ -39759,8 +39762,6 @@ escape l1.CONS.head + l1.CONS.tail.CONS.head + l2.CONS.head + l2.CONS.tail.CONS.
 ]],
     run = 6,
 }
-
-    -- DYNAMIC ADTs
 
 -- recursive w/o base case
 Test { [[
@@ -39789,6 +39790,8 @@ escape 1;
 ]],
     run = 'error',
 }
+
+    -- DYNAMIC ADTs
 
 Test { [[
 data List with

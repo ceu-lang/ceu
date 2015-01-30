@@ -250,13 +250,17 @@ F = {
         end
     end,
 
-    Adt_constr_root_pos = function (me)
+    _Adt_constr_root_pos = function (me)
         local dyn, constr = unpack(me)
         -- root must set SetExp variable
         local n = me.__par[2]   -- me == me.__par[1]
         assert(n.tag=='SetExp', 'bug found')
         n[2] = AST.copy(constr.__adj_var)
+        n[2].byRef = true
         return constr -- substitute by 1st constr
+    end,
+    _Adt_explist_pos = function (me)
+        me.tag = 'ExpList'
     end,
     Adt_constr_pos = function (me)
         local adt, params = unpack(me)
@@ -271,14 +275,16 @@ F = {
         --      var Data* __ceu_adt_N;
         --      __ceu_adt_N = new { ... }
 
-        local dyn = unpack(AST.par(me,'Adt_constr_root'))
+        local dyn = unpack(AST.par(me,'_Adt_constr_root'))
 
         -- nested constructors
         local nested = AST.node('Stmts', me.ln)
         for i, p in ipairs(params) do
             if p.tag == 'Stmts' then
-                nested[#nested+1] = p       -- subst nested stmts
-                params[i] = p.__adj_var     -- for Var:__ceu_adt_n
+                -- subst nested stmts
+                -- for Var:__ceu_adt_n
+                nested[#nested+1] = p
+                params[i] = AST.copy(p.__adj_var)
             end
         end
 

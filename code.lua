@@ -418,6 +418,27 @@ case ]]..me.lbls_cnt.id..[[:;
         })
     end,
 
+    Adt_constr = function (me)
+        local adt, params, var = unpack(me)
+        local id, tag = unpack(adt)
+        local blk,_
+        if tag then
+            LINE(me, V(var)..'.tag = CEU_'..string.upper(id)..'_'..tag..';')
+            blk = ENV.adts[id].tags[tag].blk
+            tag = '.'..tag
+        else
+            _,_,blk = unpack(ENV.adts[id])
+            tag = ''
+        end
+        for i, p in ipairs(params) do
+            local field = blk.vars[i]
+            if blk.vars[i].tp.ref then
+                p.byRef = true
+            end
+            LINE(me, V(var)..tag..'.'..field.id..' = '..V(p)..';')
+        end
+    end,
+
     Spawn = function (me)
         local id, pool, constr, set = unpack(me)
 
@@ -472,7 +493,7 @@ case ]]..me.lbls_cnt.id..[[:;
 
     Block_pre = function (me)
         local cls = CLS()
-        if cls.is_ifc then
+        if (not cls) or cls.is_ifc then
             return
         end
 
@@ -535,7 +556,8 @@ ceu_out_org_trail(_STK_ORG, ]]..var.trl_orgs[1]..[[, (tceu_org_lnk*) &]]..var.tr
 
     Block_pos = function (me)
         local stmts = unpack(me)
-        if CLS().is_ifc then
+        local cls = CLS()
+        if (not cls) or cls.is_ifc then
             return
         end
 

@@ -318,7 +318,7 @@ do
     do
         local str = ''
         for _,T in pairs(TP.types) do
-            if T.tup and #T.tup>0 then
+            if T.tup and #T.tup>0 and (not T.__dont_gen_c) then
                 str = str .. 'typedef struct {\n'
                 for i, t in ipairs(T.tup) do
                     local tmp = TP.toc(t)
@@ -345,6 +345,7 @@ do
 
     CC = SUB(CC, '=== LABELS_ENUM ===', LBLS.code_enum)
 
+    CC = SUB(CC, '=== ADTS_DEFS ===',  MEM.adts)   -- TODO: move to HH
     CC = SUB(CC, '=== CLSS_DEFS ===',  MEM.clss)   -- TODO: move to HH
 
     CC = SUB(CC, '=== CONSTRS_C ===',   CODE.constrs)

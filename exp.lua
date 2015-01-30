@@ -14,7 +14,7 @@ F = {
         -- var int& i = 1;
         -- var int& i = *p;
         if to.byRef and (not fr.tp.ref) then
-            ASR(fr.lval or (fr.lst and (fr.lst.tag=='Outer' or
+            ASR(fr.tag=='Op1_&' or fr.lval or (fr.lst and (fr.lst.tag=='Outer' or
                                         fr.lst.var and fr.lst.var.cls)),
                                            -- orgs are not lval
                 me, 'invalid attribution (not a reference)')

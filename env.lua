@@ -141,6 +141,16 @@ function newvar (me, blk, pre, tp, id, isImp)
     if top then
         ASR(top.tops_i < ME.tops_i,
             me, 'undeclared type `'..(tp.id or '?')..'´')
+
+        -- ADTs are always pointers:
+        --  - they can be recursive
+        --  - constructors hold the actual memory
+        if top.tag == 'Dcl_adt' then
+            -- ignore constructors
+            if not (string.sub(id,1,10)=='__ceu_adt_') then
+                tp.ref = true
+            end
+        end
     end
 
     ASR(tp.ptr>0 or TP.get(tp.id).len~=0 or (tp.id=='void' and pre=='event'),
@@ -457,6 +467,7 @@ F = {
     end,
     Dcl_adt = function (me)
         local id, op = unpack(me)
+        me.id = id
 
         if op == 'struct' then
             -- convert vars=>tuple (to check constructors)
@@ -493,6 +504,7 @@ F = {
                 end
 
                 TP.new(tup)
+                tup.__dont_gen_c = true -- TODO: avoids generating C tuples
             end
         end
     end,
@@ -1125,9 +1137,11 @@ F = {
                 local tag = (me.__par.tag ~= 'Op2_.')
                 if tag then
                     me.tp = TP.fromstr'bool'
+                    me.__env_tag = 'test'
 
                 -- [union.TAG].field
                 else
+                    me.__env_tag = 'assert'
                     me.union_tag_blk = blk
                     me.tp = blk
                 end
@@ -1137,6 +1151,7 @@ F = {
         elseif e1.union_tag_blk then
             local var = ASR(e1.union_tag_blk.vars[id], me,
                         'field "'..id..'" is not declared')
+            me.__env_tag = 'field'
             me.tp = var.tp
             me.lval = var
 

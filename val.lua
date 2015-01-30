@@ -426,7 +426,22 @@ F =
 
     ['Op2_.'] = function (me)
         local op, e1, id = unpack(me)
-        me.val  = '('..V(e1)..ceu2c(op)..id..')'
+        if me.__env_tag then
+            local tag = e1.tp.id and ('CEU_'..string.upper(e1.tp.id)..'_'..id)
+            if me.__env_tag == 'test' then
+                me.val  = '('..V(e1)..ceu2c(op)..'tag == '..tag..')'
+            elseif me.__env_tag == 'assert' then
+                me.val  = '('..tag..'_assert('..V(e1)..')'..ceu2c(op)..id..')'
+            elseif me.__env_tag == 'field' then
+                if e1.union_tag_blk.vars[id].tp.ref then
+                    me.val  = '('..'*('..V(e1)..')'..ceu2c(op)..id..')'
+                else
+                    me.val  = '('..V(e1)..ceu2c(op)..id..')'
+                end
+            end
+        else
+            me.val  = '('..V(e1)..ceu2c(op)..id..')'
+        end
     end,
 
     Op1_cast = function (me)
