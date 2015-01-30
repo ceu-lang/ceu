@@ -1263,6 +1263,7 @@ F = {
             local set = node('SetExp', me.ln, op,
                             false,  -- Adt_constr will set to its var
                             to)
+            to.byRef = true
             return node('Stmts', me.ln, p1, set)
 
         elseif tag == '__SetDoOrg' then

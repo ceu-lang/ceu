@@ -14,6 +14,7 @@ PROPS = {
     has_ret     = false,
     has_lua     = false,
     has_orgs_watching = false,
+    has_enums   = false,
 }
 
 local NO_atomic = {
@@ -330,6 +331,42 @@ F = {
 
         if to.tag=='Var' and to.var.id=='_ret' then
             PROPS.has_ret = true
+        end
+    end,
+
+    Dcl_adt = function (me)
+        local id, op = unpack(me)
+
+        -- For recursive ADTs, ensure valid base case:
+        --  - it is the first in the enum
+        --  - it has no parameters
+        if op == 'union' then
+            local base = me[3]
+            assert(base.tag == 'Dcl_adt_tag')
+            local is_rec = false
+            for i=3, #me do
+                local enum = me[i]
+                assert(enum.tag       == 'Dcl_adt_tag')
+                assert(enum[2].tag    == 'Block')
+                for _, vars in ipairs(enum[2]) do
+                    assert(vars.tag == 'Stmts')
+                    local field = vars[1]
+                    if field then
+                        assert(field.tag == 'Dcl_var')
+                        if TP.tostr(field.var.tp) == id..'&' then
+                            is_rec = true
+                            break
+                        end
+                    end
+                end
+            end
+            if is_rec then
+                assert(base.tag       == 'Dcl_adt_tag')
+                assert(base[2].tag    == 'Block')
+                assert(base[2][1].tag == 'Stmts')
+                ASR(#base[2][1] == 0, base,
+                    'base case must have no parameters (recursive data)')
+            end
         end
     end,
 

@@ -39773,7 +39773,7 @@ data List with
 end
 escape 1;
 ]],
-    run = 'error',
+    props = 'line 2 : base case must have no parameters (recursive data)',
 }
 
 -- recursive w/ base case last
@@ -39788,7 +39788,7 @@ with
 end
 escape 1;
 ]],
-    run = 'error',
+    props = 'line 2 : base case must have no parameters (recursive data)',
 }
 
     -- DYNAMIC ADTs
