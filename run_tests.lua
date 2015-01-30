@@ -303,46 +303,16 @@ os.execute('rm -f /tmp/_ceu_*')
 
 --[[
 
--- BEFORE REFACTORING
-
 STATS = {
-    count   = 2023,
-    mem     = 0,
-    trails  = 3971,
-    bytes   = 18645683,
-}
-
-
-real	8m27.078s
-user	8m5.424s
-sys	1m30.731s
-
--- AFTER REFACTORING
-
-STATS = {
-    count   = 2025,
-    mem     = 0,
-    trails  = 3979,
-    bytes   = 20621407,
-}
-
-
-real	8m40.844s
-user	8m20.696s
-sys	1m33.932s
-
--- TODO: descobrir pq ficou mais lento
-
-STATS = {
-    count   = 2059,
+    count   = 2060,
     mem     = 0,
     trails  = 4022,
     bytes   = 21059852,
 }
 
 
-real	9m18.309s
-user	8m50.202s
-sys	1m33.063s
+real	8m57.677s
+user	8m25.173s
+sys	1m38.072s
 
 ]]

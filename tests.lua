@@ -1382,6 +1382,7 @@ do return end
 
 -------------------------------------------------------------------------------
 -- OK: well tested
+]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -39243,7 +39244,6 @@ escape app.v;
 }
 
 -- ALGEBRAIC DATATYPES (ADTs)
-]===]
 
     -- STATIC ADTs
 
