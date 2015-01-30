@@ -526,46 +526,49 @@ _STK_ORG->trls[ ]]..me.trl_fins[1]..[[ ].seqno = _ceu_app->seqno-1; /* awake now
                     LINE(me, ' = '..var.id)
                 end
                 LINE(me, ';')
-            elseif var.pre=='pool' and (type(var.tp.arr)=='table') then
-                local dcl = var.val_dcl
-                if ENV.clss[var.tp.id].is_ifc then
-                    LINE(me, [[
-ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'_delayed),'
-                                                    -- TODO: bad (explicit CEU_)
-    ..'(byte**)'..dcl..'_queue, (byte*)'..dcl..[[_mem);
-]])
-                else
-                    LINE(me, [[
-ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'),'
-                                                    -- TODO: bad (explicit CEU_)
-    ..'(byte**)'..dcl..'_queue, (byte*)'..dcl..[[_mem);
-]])
-                end
-            end
-
-            -- create base case NIL and assign to "*l"
-            local adt = ENV.adts[var.tp.id]
-            if adt and adt.is_rec then
-                local tag = adt[3][1]
-                local tp = 'CEU_'..var.tp.id
-                LINE(me, [[
-{
-    ]]..tp..[[* __ceu_new;
-]])
+            elseif var.pre=='pool' then
                 if (type(var.tp.arr)=='table') then
-                    LINE(me, [[
-    __ceu_new = (]]..tp..[[*) ceu_pool_alloc((tceu_pool*)]]..V(var)..[[);
+                    local dcl = var.val_dcl
+                    if ENV.clss[var.tp.id].is_ifc then
+                        LINE(me, [[
+ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'_delayed),'
+                                                        -- TODO: bad (explicit CEU_)
+    ..'(byte**)'..dcl..'_queue, (byte*)'..dcl..[[_mem);
 ]])
-                else
-                    LINE(me, [[
-    __ceu_new = (]]..tp..[[*) ceu_out_realloc(NULL, sizeof(]]..tp..[[));
+                    else
+                        LINE(me, [[
+ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'),'
+                                                        -- TODO: bad (explicit CEU_)
+    ..'(byte**)'..dcl..'_queue, (byte*)'..dcl..[[_mem);
 ]])
+                    end
                 end
-                LINE(me, [[
-    __ceu_new->tag = CEU_]]..string.upper(var.tp.id..'_'..tag)..[[;
-    *]]..V(var)..[[ = __ceu_new;
+
+                -- create base case NIL and assign to "*l"
+                local adt = ENV.adts[var.tp.id]
+                if adt then
+                    assert(adt.is_rec, 'not implemented')
+                    local tag = adt[3][1]
+                    local tp = 'CEU_'..var.tp.id
+                    LINE(me, [[
+{
+    ]]..tp..[[* __ceu_adt;
+]])
+                    if (type(var.tp.arr)=='table') then
+                        LINE(me, [[
+    __ceu_adt = (]]..tp..[[*) ceu_pool_alloc((tceu_pool*)]]..V(var)..[[);
+]])
+                    else
+                        LINE(me, [[
+    __ceu_adt = (]]..tp..[[*) ceu_out_realloc(NULL, sizeof(]]..tp..[[));
+]])
+                    end
+                    LINE(me, [[
+    __ceu_adt->tag = CEU_]]..string.upper(var.tp.id..'_'..tag)..[[;
+    *]]..V(var)..[[ = __ceu_adt;
 }
 ]])
+                end
             end
 
             -- initialize trails for ORG_STATS_I & ORG_POOL_I
@@ -613,13 +616,15 @@ if (]]..fin.val..[[) {
         CLEAR(me)
         LINE(me, '}')       -- open in Block_pre
 
--- TODO: remove!
-        if not (ANA and me.ana.pos[false]) then
-            LINE(me, [[
-/* switch to 1st trail */
-/* TODO: only if not joining with outer prio */
-/*_STK.trl = &_STK_ORG->trls[ ]]..me.trails[1]..[[ ]; */
+        -- release ADT pool items
+        for _, var in ipairs(me.vars) do
+            local adt = ENV.adts[var.tp.id]
+            if adt and var.pre=='pool' then
+                local id, op = unpack(adt)
+                LINE(me, [[
+CEU_]]..id..[[_free(*]]..V(var)..[[);
 ]])
+            end
         end
     end,
 

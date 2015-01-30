@@ -476,9 +476,12 @@ F = {
             -- Dcl_adt[3]->Block[1]->Stmts[*]->Stmts
             for _, stmts in ipairs(me[3][1]) do
                 local dclvar = unpack(stmts)
+                local _, var_tp, var_id = unpack(dclvar)
                 assert(stmts.tag=='Stmts' and dclvar.tag=='Dcl_var', 'bug found')
-                me.tup[#me.tup+1] = AST.node('TupleTypeItem', me.ln,
-                                        false,dclvar[2],false)
+                local item = AST.node('TupleTypeItem', me.ln,
+                                false,var_tp,false)
+                me.tup[#me.tup+1] = item
+                item.var_id = var_id
             end
 
             TP.new(me.tup)
@@ -491,14 +494,18 @@ F = {
                 local id, blk = unpack(me[i])
                 local tup = AST.node('TupleType',me.ln)
                 me.tags[id] = { blk=blk, tup=tup }
+                me.tags[#me.tags+1] = id
 
                 if blk then -- skip void enums
                     for _, stmts in ipairs(blk) do
                         assert(stmts.tag=='Stmts', 'bug found')
                         local dclvar = unpack(stmts)
                         if dclvar then
-                            tup[#tup+1] = AST.node('TupleTypeItem', me.ln,
-                                            false,dclvar[2],false)
+                            local _, var_tp, var_id = unpack(dclvar)
+                            local item = AST.node('TupleTypeItem', me.ln,
+                                            false,var_tp,false)
+                            tup[#tup+1] = item
+                            item.var_id = var_id
                         end
                     end
                 end

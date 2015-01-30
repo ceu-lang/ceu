@@ -39273,6 +39273,9 @@ end
     -- STATIC ADTs
 
 --[==[
+]==]
+
+
 -- anonymous fields
 Test { [[
 data Pair = (int, int);
@@ -39775,7 +39778,7 @@ data List with
 end
 escape 1;
 ]],
-    props = 'line 2 : base case must have no parameters (recursive data)',
+    props = 'line 1 : base case must have no parameters (recursive data)',
 }
 
 -- recursive w/ base case last
@@ -39790,7 +39793,7 @@ with
 end
 escape 1;
 ]],
-    props = 'line 2 : base case must have no parameters (recursive data)',
+    props = 'line 1 : base case must have no parameters (recursive data)',
 }
 
     -- DYNAMIC ADTs
@@ -39812,11 +39815,27 @@ escape l==l2;
     --run = 1,
 }
 
-]==]
-
 -- l vs *l:
 -- l represents the memory pool
 -- *l accesses the head
+Test { [[
+data List with
+    tag NIL;
+with
+    tag CONS with
+        var int   head;
+        var List& tail;
+    end
+end
+var int ret = 0;
+do
+    pool List[] l;
+    ret = l:NIL;
+end
+escape ret;
+]],
+    run = 1,
+}
 Test { [[
 data List with
     tag NIL;
@@ -39845,6 +39864,7 @@ escape l:CONS;
 ]],
     asr = true,
 }
+do return end
 
 Test { DATA..[[
 pool List[] l = new List.CONS(2, List.NIL()) in l;

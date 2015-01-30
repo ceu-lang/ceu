@@ -154,6 +154,7 @@ F = {
                 if ENV.clss[var.tp.id] or var.tp.id=='_TOP_POOL' then
                     s = 'orgs'
                 else
+                    me.needs_clr = true
                     s = 'adts'
                 end
                 PROPS['has_'..s..'_news'] = true
@@ -351,30 +352,22 @@ F = {
         --  - it is the first in the enum
         --  - it has no parameters
         if op == 'union' then
-            local base = me[3]
-            assert(base.tag == 'Dcl_adt_tag')
+            local base = me.tags[me.tags[1]].tup
             me.is_rec = false
-            for i=3, #me do
-                local enum = me[i]
-                assert(enum.tag       == 'Dcl_adt_tag')
-                assert(enum[2].tag    == 'Block')
-                for _, vars in ipairs(enum[2]) do
-                    assert(vars.tag == 'Stmts')
-                    local field = vars[1]
-                    if field then
-                        assert(field.tag == 'Dcl_var')
-                        if TP.tostr(field.var.tp) == id..'&' then
-                            me.is_rec = true
-                            break
-                        end
+            for _, tag in ipairs(me.tags) do
+                local tup = me.tags[tag].tup
+                assert(tup.tag == 'TupleType')
+                for _, item in ipairs(tup) do
+                    assert(item.tag == 'TupleTypeItem')
+                    local _, tp, _ = unpack(item)
+                    if TP.tostr(tp) == id..'&' then
+                        me.is_rec = true
+                        break
                     end
                 end
             end
             if me.is_rec then
-                assert(base.tag       == 'Dcl_adt_tag')
-                assert(base[2].tag    == 'Block')
-                assert(base[2][1].tag == 'Stmts')
-                ASR(#base[2][1] == 0, base,
+                ASR(#base == 0, base,
                     'base case must have no parameters (recursive data)')
             end
         end

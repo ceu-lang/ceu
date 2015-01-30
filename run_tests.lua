@@ -96,6 +96,7 @@ Test = function (t)
     if not check('val')      then return end
     --DBG'======= VAL'
     --AST.dump(AST.root)
+--do return end
     if not check('code')     then return end
 
     if (not t.wrn) and (not t._ana) then

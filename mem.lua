@@ -27,6 +27,7 @@ F = {
     Dcl_adt_pre = function (me)
         local id, op = unpack(me)
         me.struct = 'typedef '
+        me.auxs   = {}
         if op == 'union' then
             me.struct = me.struct..[[
 struct CEU_]]..id..[[ {
@@ -34,8 +35,13 @@ struct CEU_]]..id..[[ {
     union {
 ]]
             me.enum = {}
-            me.asrs = {}
         end
+
+        me.auxs[#me.auxs+1] = [[
+#ifdef CEU_ADTS_NEWS
+void CEU_]]..id..'_free (CEU_'..id..[[* me);
+#endif
+]]
     end,
     Dcl_adt = function (me)
         local id, op = unpack(me)
@@ -45,14 +51,45 @@ struct CEU_]]..id..[[ {
 }
 ]]
             me.enum = 'enum {\n'..table.concat(me.enum,',\n')..'\n};\n'
-            me.asrs = table.concat(me.asrs,'\n')..'\n'
         else
             me.struct = string.sub(me.struct, 1, -3)    -- remove leading ';'
         end
+
+        local free = [[
+#ifdef CEU_ADTS_NEWS
+void CEU_]]..id..'_free (CEU_'..id..[[* me) {
+]]
+        if op == 'struct' then
+            free = free .. [[
+    ceu_out_realloc(me, 0);
+]]
+        else
+            assert(op == 'union')
+            free = free .. [[
+    switch (me->tag) {
+]]
+            for _, tag in ipairs(me.tags) do
+                local id_tag = string.upper(id..'_'..tag)
+                free = free .. [[
+        case CEU_]]..id_tag..[[:
+            CEU_]]..id_tag..[[_free(me);
+]]
+            end
+            free = free .. [[
+    }
+]]
+        end
+        free = free .. [[
+}
+#endif
+]]
+
+        me.auxs[#me.auxs+1] = free
+        me.auxs   = table.concat(me.auxs,'\n')..'\n'
         me.struct = me.struct..' CEU_'..id..';'
         MEM.adts = MEM.adts..'\n'..(me.enum or '')..'\n'..
                                    me.struct..'\n'..
-                                   (me.asrs or '')..'\n'
+                                   me.auxs..'\n'
     end,
     Dcl_adt_tag_pre = function (me)
         local top = AST.par(me, 'Dcl_adt')
@@ -60,12 +97,35 @@ struct CEU_]]..id..[[ {
         local tag = unpack(me)
         local enum = 'CEU_'..string.upper(id)..'_'..tag
         top.enum[#top.enum+1] = enum
-        top.asrs[#top.asrs+1] = [[
+        top.auxs[#top.auxs+1] = [[
 CEU_]]..id..' '..enum..'_assert (CEU_'..id..[[ me) {
     ceu_out_assert(me.tag == ]]..enum..[[);
     return me;
 }
 ]]
+
+        local free = [[
+#ifdef CEU_ADTS_NEWS
+void ]]..enum..'_free (CEU_'..id..[[* me) {
+]]
+
+        -- free all my recursive fields
+        for _,item in ipairs(top.tags[tag].tup) do
+            local _, tp, _ = unpack(item)
+            if TP.tostr(tp) == id..'&' then
+                free = free .. [[
+    CEU_]]..id..[[_free(me->]]..tag..'.'..item.var_id..[[);
+]]
+            end
+        end
+
+        -- free myself
+        free = free .. [[
+    ceu_out_realloc(me, 0);
+}
+#endif
+]]
+        top.auxs[#top.auxs+1] = free
     end,
 
     Dcl_cls_pre = function (me)
@@ -251,13 +311,13 @@ typedef union CEU_]]..me.id..[[_delayed {
                         MEM.clss = MEM.clss .. T.struct_delayed .. '\n'
                         T.struct_delayed = ''
                         top.struct = top.struct .. [[
-    CEU_POOL_DCL(]]..var.id_..',CEU_'..var.tp.id..'_delayed,'..var.tp.arr.sval..[[)
-    ]]
+CEU_POOL_DCL(]]..var.id_..',CEU_'..var.tp.id..'_delayed,'..var.tp.arr.sval..[[)
+]]
                                -- TODO: bad (explicit CEU_)
                     else
                         top.struct = top.struct .. [[
-    CEU_POOL_DCL(]]..var.id_..',CEU_'..var.tp.id..','..var.tp.arr.sval..[[)
-    ]]
+CEU_POOL_DCL(]]..var.id_..',CEU_'..var.tp.id..','..var.tp.arr.sval..[[)
+]]
                                -- TODO: bad (explicit CEU_)
                     end
                 end
