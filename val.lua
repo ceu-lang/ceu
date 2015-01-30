@@ -337,8 +337,13 @@ F =
     ['Op1_*'] = function (me)
         local op, e1 = unpack(me)
         local cls = e1.tp.ptr==1 and ENV.clss[e1.tp.id]
+
+        local is_adt_pool = ENV.adts[e1.tp.id] and e1.var and e1.var.pre=='pool'
+
         if cls then
             me.val = V(e1) -- class accesses should remain normalized to references
+        elseif is_adt_pool then
+            me.val = '(*('..ceu2c(op)..V(e1)..'))'
         else
             me.val = '('..ceu2c(op)..V(e1)..')'
         end

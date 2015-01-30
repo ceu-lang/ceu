@@ -1070,8 +1070,11 @@ F = {
         if e1.tp.ptr > 0 then
             me.tp.ptr = me.tp.ptr - 1
         end
-        ASR(e1.tp.ptr>0 or (me.tp.ext and (not me.tp.plain) and (not 
-            TP.get(me.tp.id).plain)),
+
+        local is_adt_pool = ENV.adts[e1.tp.id] and e1.var and e1.var.pre=='pool'
+
+        ASR(is_adt_pool or e1.tp.ptr>0 or
+            (me.tp.ext and (not me.tp.plain) and (not TP.get(me.tp.id).plain)),
             me, 'invalid operand to unary "*"')
     end,
 

@@ -1382,7 +1382,6 @@ do return end
 
 -------------------------------------------------------------------------------
 -- OK: well tested
-]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -39244,9 +39243,36 @@ escape app.v;
 }
 
 -- ALGEBRAIC DATATYPES (ADTs)
+]===]
+
+-- ADTs used in most examples below
+DATA = [[
+data Pair with
+    var int x;
+    var int y;
+end
+
+data Opt with
+    tag NIL;
+with
+    tag PTR with
+        var void* v;
+    end
+end
+
+data List with
+    tag NIL;
+with
+    tag CONS with
+        var int   head;
+        var List& tail;
+    end
+end
+]]
 
     -- STATIC ADTs
 
+--[==[
 -- anonymous fields
 Test { [[
 data Pair = (int, int);
@@ -39320,30 +39346,6 @@ escape 1;
 ]],
     tops = 'top-level identifier "T" already taken',
 }
-
-DATA = [[
-data Pair with
-    var int x;
-    var int y;
-end
-
-data Opt with
-    tag NIL;
-with
-    tag PTR with
-        var void* v;
-    end
-end
-
-data List with
-    tag NIL;
-with
-    tag CONS with
-        var int   head;
-        var List& tail;
-    end
-end
-]]
 
 -- named fields
 Test { DATA..[[
@@ -39810,6 +39812,11 @@ escape l==l2;
     --run = 1,
 }
 
+]==]
+
+-- l vs *l:
+-- l represents the memory pool
+-- *l accesses the head
 Test { [[
 data List with
     tag NIL;
@@ -39820,9 +39827,23 @@ with
     end
 end
 pool List[] l;
-escape l.NIL;
+escape l:NIL;
 ]],
     run = 1,
+}
+Test { [[
+data List with
+    tag NIL;
+with
+    tag CONS with
+        var int   head;
+        var List& tail;
+    end
+end
+pool List[] l;
+escape l:CONS;
+]],
+    asr = true,
 }
 
 Test { DATA..[[

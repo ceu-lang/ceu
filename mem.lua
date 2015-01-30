@@ -235,21 +235,31 @@ typedef union CEU_]]..me.id..[[_delayed {
                     dcl = dcl .. tp..' '..var.id_
                 end
                 top.struct = top.struct..SPC()..'  '..dcl..';\n'
-            elseif var.pre=='pool' and (type(var.tp.arr)=='table') then
-                local pool_cls = ENV.clss[var.tp.id] or ENV.adts[var.tp.id]
-                if pool_cls.is_ifc then
-                    -- TODO: HACK_4: delayed declaration until use
-                    MEM.clss = MEM.clss .. pool_cls.struct_delayed .. '\n'
-                    pool_cls.struct_delayed = ''
-                    top.struct = top.struct .. [[
-CEU_POOL_DCL(]]..var.id_..',CEU_'..var.tp.id..'_delayed,'..var.tp.arr.sval..[[)
-]]
-                           -- TODO: bad (explicit CEU_)
-                else
-                    top.struct = top.struct .. [[
-CEU_POOL_DCL(]]..var.id_..',CEU_'..var.tp.id..','..var.tp.arr.sval..[[)
-]]
-                           -- TODO: bad (explicit CEU_)
+            elseif var.pre=='pool' then
+                local T = ENV.clss[var.tp.id] or ENV.adts[var.tp.id]
+
+                if T.tag == 'Dcl_adt' then
+                    local tp = string.sub(tp,1,-2) -- TODO: removing extra '*'
+                    top.struct = top.struct..SPC()..tp..' '..var.id_..';\n'
+                end
+
+                -- static pool: "var T[N] ts"
+                if type(var.tp.arr) == 'table' then
+                    local T = ENV.clss[var.tp.id] or ENV.adts[var.tp.id]
+                    if T.is_ifc then
+                        -- TODO: HACK_4: delayed declaration until use
+                        MEM.clss = MEM.clss .. T.struct_delayed .. '\n'
+                        T.struct_delayed = ''
+                        top.struct = top.struct .. [[
+    CEU_POOL_DCL(]]..var.id_..',CEU_'..var.tp.id..'_delayed,'..var.tp.arr.sval..[[)
+    ]]
+                               -- TODO: bad (explicit CEU_)
+                    else
+                        top.struct = top.struct .. [[
+    CEU_POOL_DCL(]]..var.id_..',CEU_'..var.tp.id..','..var.tp.arr.sval..[[)
+    ]]
+                               -- TODO: bad (explicit CEU_)
+                    end
                 end
             end
 

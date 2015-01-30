@@ -5,9 +5,6 @@ PROPS = {
     has_asyncs  = false,
     has_threads = false,
     has_orgs    = false,
-    has_orgs_news    = false,
-    has_orgs_news_pool   = false,
-    has_orgs_news_malloc = false,
     has_ifcs    = false,
     has_clear   = false,
     has_pses    = false,
@@ -15,6 +12,13 @@ PROPS = {
     has_lua     = false,
     has_orgs_watching = false,
     has_enums   = false,
+
+    has_orgs_news        = false,
+    has_orgs_news_pool   = false,
+    has_orgs_news_malloc = false,
+    has_adts_news        = false,
+    has_adts_news_pool   = false,
+    has_adts_news_malloc = false,
 }
 
 local NO_atomic = {
@@ -146,7 +150,12 @@ F = {
                 PROPS.has_clear = true
             end
             if var.pre=='pool' then
-                local s = 'orgs'
+                local s
+                if ENV.clss[var.tp.id] or var.tp.id=='_TOP_POOL' then
+                    s = 'orgs'
+                else
+                    s = 'adts'
+                end
                 PROPS['has_'..s..'_news'] = true
                 if var.tp.arr==true then
                     PROPS['has_'..s..'_news_malloc'] = true  -- pool T[] ts
@@ -344,7 +353,7 @@ F = {
         if op == 'union' then
             local base = me[3]
             assert(base.tag == 'Dcl_adt_tag')
-            local is_rec = false
+            me.is_rec = false
             for i=3, #me do
                 local enum = me[i]
                 assert(enum.tag       == 'Dcl_adt_tag')
@@ -355,13 +364,13 @@ F = {
                     if field then
                         assert(field.tag == 'Dcl_var')
                         if TP.tostr(field.var.tp) == id..'&' then
-                            is_rec = true
+                            me.is_rec = true
                             break
                         end
                     end
                 end
             end
-            if is_rec then
+            if me.is_rec then
                 assert(base.tag       == 'Dcl_adt_tag')
                 assert(base[2].tag    == 'Block')
                 assert(base[2][1].tag == 'Stmts')

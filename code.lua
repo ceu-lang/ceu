@@ -543,12 +543,39 @@ ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'),'
                 end
             end
 
+            -- create base case NIL and assign to "*l"
+            local adt = ENV.adts[var.tp.id]
+            if adt and adt.is_rec then
+                local tag = adt[3][1]
+                local tp = 'CEU_'..var.tp.id
+                LINE(me, [[
+{
+    ]]..tp..[[* __ceu_new;
+]])
+                if (type(var.tp.arr)=='table') then
+                    LINE(me, [[
+    __ceu_new = (]]..tp..[[*) ceu_pool_alloc((tceu_pool*)]]..V(var)..[[);
+]])
+                else
+                    LINE(me, [[
+    __ceu_new = (]]..tp..[[*) ceu_out_realloc(NULL, sizeof(]]..tp..[[));
+]])
+                end
+                LINE(me, [[
+    __ceu_new->tag = CEU_]]..string.upper(var.tp.id..'_'..tag)..[[;
+    *]]..V(var)..[[ = __ceu_new;
+}
+]])
+            end
+
             -- initialize trails for ORG_STATS_I & ORG_POOL_I
             -- "first" avoids repetition for STATS in sequence
 -- TODO: join w/ ceu_out_org (removing start from the latter?)
             if var.trl_orgs and var.trl_orgs_first then
                 LINE(me, [[
+#ifdef CEU_ORGS_NEWS
 ceu_out_org_trail(_STK_ORG, ]]..var.trl_orgs[1]..[[, (tceu_org_lnk*) &]]..var.trl_orgs.val..[[);
+#endif
 ]])
             end
         end

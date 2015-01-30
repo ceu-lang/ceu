@@ -23,11 +23,10 @@
 #define CEU_OS
 #endif
 
-#if defined(CEU_ORGS_NEWS)
+#if defined(CEU_ORGS_NEWS) || defined(CEU_ADTS_NEWS)
 #define CEU_NEWS
 #endif
-
-#if defined(CEU_ORGS_NEWS_POOL)
+#if defined(CEU_ORGS_NEWS_POOL) || defined(CEU_ADTS_NEWS_POOL)
 #define CEU_NEWS_POOL
 #endif
 
@@ -43,9 +42,14 @@
     #define CEU_INTS
     #define CEU_ORGS
     /*#define CEU_PSES*/ /* TODO: never tried */
+    #define CEU_NEWS
+    #define CEU_NEWS_POOL
     #define CEU_ORGS_NEWS
     #define CEU_ORGS_NEWS_MALLOC
     #define CEU_ORGS_NEWS_POOL
+    #define CEU_ADTS_NEWS
+    #define CEU_ADTS_NEWS_MALLOC
+    #define CEU_ADTS_NEWS_POOL
 /*
     #define CEU_THREADS
 */
