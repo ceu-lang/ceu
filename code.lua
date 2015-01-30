@@ -576,7 +576,7 @@ ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'),'
 -- TODO: join w/ ceu_out_org (removing start from the latter?)
             if var.trl_orgs and var.trl_orgs_first then
                 LINE(me, [[
-#ifdef CEU_ORGS_NEWS
+#ifdef CEU_ORGS
 ceu_out_org_trail(_STK_ORG, ]]..var.trl_orgs[1]..[[, (tceu_org_lnk*) &]]..var.trl_orgs.val..[[);
 #endif
 ]])
