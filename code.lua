@@ -610,22 +610,22 @@ if (]]..fin.val..[[) {
 }
 ]])
             end
+
+            -- release ADT pool items
+            for _, var in ipairs(me.vars) do
+                local adt = ENV.adts[var.tp.id]
+                if adt and var.pre=='pool' then
+                    local id, op = unpack(adt)
+                    LINE(me, [[
+    CEU_]]..id..[[_free(*]]..V(var)..[[);
+    ]])
+                end
+            end
             HALT(me)
             CASE(me, me.lbl_fin_cnt)
         end
         CLEAR(me)
         LINE(me, '}')       -- open in Block_pre
-
-        -- release ADT pool items
-        for _, var in ipairs(me.vars) do
-            local adt = ENV.adts[var.tp.id]
-            if adt and var.pre=='pool' then
-                local id, op = unpack(adt)
-                LINE(me, [[
-CEU_]]..id..[[_free(*]]..V(var)..[[);
-]])
-            end
-        end
     end,
 
     Pause = CONC_ALL,

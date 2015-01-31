@@ -37,11 +37,6 @@ F = {
     Block = function (me)
         MAX_all(me)
 
-        if me.fins then
-            -- implicit await in parallel
-            me.trails_n = me.trails_n + 1
-        end
-
         -- [ CLR | ORG_STATS_I | ORG_POOL_I | ... | STMTS | FIN ]
         -- clear trail
         -- pointer to contiguous static orgs
@@ -57,6 +52,11 @@ F = {
         me.has_orgs = false
         for i=1, #me.vars do
             local var = me.vars[i]
+
+            if var.pre=='pool' and var.adt then
+                me.fins = me.fins or {}     -- release adts
+            end
+
             if var.cls then
                 me.has_orgs = true
                 me.trails_n = me.trails_n + 1   -- ORG_POOL_I/ORG_STATS_I
@@ -77,6 +77,11 @@ F = {
         end
         if me.has_orgs then
             me.trails_n = me.trails_n + 1           -- CLR
+        end
+
+        if me.fins then
+            -- implicit await in parallel
+            me.trails_n = me.trails_n + 1
         end
     end,
 
@@ -132,6 +137,7 @@ G = {
         end
         for i=1, #me.vars do
             local var = me.vars[i]
+
             if var.cls then
                 var.trl_orgs = { t0, t0 }   -- ORG_POOL_I/ORG_STATS_I
                 t0 = t0 + 1

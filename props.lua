@@ -155,6 +155,7 @@ F = {
                     s = 'orgs'
                 else
                     me.needs_clr = true
+                    PROPS.has_clear = true
                     s = 'adts'
                 end
                 PROPS['has_'..s..'_news'] = true

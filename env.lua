@@ -174,7 +174,7 @@ function newvar (me, blk, pre, tp, id, isImp)
         id    = id,
         blk   = blk,
         tp    = tp,
-        cls   = (top and top.tag=='Dcl_cls' and top) or (pre=='pool'),   -- (case of _TOP_POOL & ifaces)
+        cls   = (top and top.tag=='Dcl_cls' and top) or (id=='_top_pool'),
         adt   = (top and top.tag=='Dcl_adt' and top),
         pre   = pre,
         inTop = (blk==ME.blk_ifc) or (blk==ME.blk_body) or AST.par(me,'Dcl_adt'),
