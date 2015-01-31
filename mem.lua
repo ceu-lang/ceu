@@ -298,7 +298,8 @@ typedef union CEU_]]..me.id..[[_delayed {
             elseif var.pre=='pool' then
                 local T = ENV.clss[var.tp.id] or ENV.adts[var.tp.id]
 
-                if T.tag == 'Dcl_adt' then
+                -- might be _TOP_POOL
+                if T and T.tag == 'Dcl_adt' then
                     local tp = string.sub(tp,1,-2) -- TODO: removing extra '*'
                     top.struct = top.struct..SPC()..tp..' '..var.id_..';\n'
                 end
