@@ -1382,7 +1382,6 @@ do return end
 
 -------------------------------------------------------------------------------
 -- OK: well tested
-]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -39147,6 +39146,7 @@ escape ptr2==&a;
 
 
 -- ALGEBRAIC DATATYPES (ADTs)
+]===]
 
 -- ADTs used in most examples below
 DATA = [[
@@ -39176,7 +39176,6 @@ end
     -- STATIC ADTs
 
 --[==[
-]==]
 
 -- anonymous fields
 Test { [[
@@ -39766,7 +39765,6 @@ escape l:CONS;
 ]],
     asr = true,
 }
-do return end
 
 Test { DATA..[[
 pool List[] l = new List.CONS(2, List.NIL()) in l;
@@ -39781,7 +39779,40 @@ pool List[] l;
 l = List.CONS(2, List.NIL());
 escape l.CONS.head;
 ]],
-    env = 'line 23 : invalid attribution (List[] vs List)',
+    env = 'line 23 : invalid attribution (List[]& vs List)',
+}
+
+Test { DATA..[[
+pool List[] l;
+*l = new List.NIL() in l;
+escape l:NIL;
+]],
+    run = 2,
+}
+
+]==]
+Test { DATA..[[
+pool List[] l;
+*l = new List.NIL() in l;
+escape l:CONS;
+]],
+    asr = true,
+}
+
+Test { DATA..[[
+pool List[] l;
+l = new List.NIL() in l;
+escape l:NIL;
+]],
+    env = 'line 23 : invalid attribution (List[]& vs List&)',
+}
+
+Test { DATA..[[
+pool List[] l;
+*l = new List.NIL() in l;
+escape l.NIL;
+]],
+    env = 'line 24 : invalid access (List[]& vs List)',
 }
 
 Test { DATA..[[
@@ -39789,13 +39820,31 @@ pool List[] l;
 l = new List.CONS(2, List.NIL()) in l;
 escape l.CONS.head;
 ]],
-    run = 2,
+    env = 'line 23 : invalid attribution (List[]& vs List&)',
 }
 
 Test { DATA..[[
 pool List[0] l;
 l = new List.CONS(2, List.NIL()) in l;
 escape l.NIL;
+]],
+    env = 'line 23 : invalid attribution (List[]& vs List&)',
+    --run = 1,
+}
+
+Test { DATA..[[
+pool List[0] l;
+*l = new List.CONS(2, List.NIL()) in l;
+escape l.NIL;
+]],
+    env = 'line 24 : invalid access (List[]& vs List)',
+    --run = 1,
+}
+
+Test { DATA..[[
+pool List[0] l;
+*l = new List.CONS(2, List.NIL()) in l;
+escape l:NIL;
 ]],
     run = 1,
 }

@@ -73,6 +73,7 @@ void CEU_]]..id..'_free (CEU_'..id..[[* me) {
                 free = free .. [[
         case CEU_]]..id_tag..[[:
             CEU_]]..id_tag..[[_free(me);
+            break;
 ]]
             end
             free = free .. [[

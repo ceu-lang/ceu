@@ -147,7 +147,8 @@ function newvar (me, blk, pre, tp, id, isImp)
         --  - constructors hold the actual memory
         if top.tag == 'Dcl_adt' then
             -- ignore constructors
-            if not (string.sub(id,1,10)=='__ceu_adt_') then
+            local constr = (string.sub(id,1,10)=='__ceu_adt_')
+            if not constr then
                 tp.ref = true
             end
         end
@@ -993,15 +994,6 @@ F = {
 
         F.__check_params(me, tup, params)
     end,
-    Adt_new = function (me)
-        -- new -> Op2_call
-        -- new List.CONS(...)
-        -- pointer to List.CONS(...)
-        local tp = AST.copy(me[1].tp)
-        tp[2] = 1
-        me.tp = TP.new(tp)
-    end,
-
 
     Op2_idx = function (me)
         local _, arr, idx = unpack(me)
@@ -1074,8 +1066,13 @@ F = {
         local op, e1 = unpack(me)
         me.lval = e1.lval and e1
         me.tp   = TP.copy(e1.tp)
+
         if e1.tp.ptr > 0 then
             me.tp.ptr = me.tp.ptr - 1
+        end
+
+        if e1.tp.arr then
+            me.tp.arr = false
         end
 
         local is_adt_pool = ENV.adts[e1.tp.id] and e1.var and e1.var.pre=='pool'
@@ -1132,7 +1129,7 @@ F = {
                         and var
 
         elseif adt then
-            local _, op, blk = unpack(adt)
+            local ID, op, blk = unpack(adt)
             if op == 'struct' then
                 local var = ASR(blk.vars[id], me,
                             'field "'..id..'" is not declared')
@@ -1148,6 +1145,8 @@ F = {
                 if tag then
                     me.tp = TP.fromstr'bool'
                     me.__env_tag = 'test'
+                    ASR(TP.contains(e1.tp,TP.fromstr(ID)), me,
+                        'invalid access ('..TP.tostr(e1.tp)..' vs '..ID..')')
 
                 -- [union.TAG].field
                 else

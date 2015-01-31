@@ -251,12 +251,14 @@ F = {
     end,
 
     _Adt_constr_root_pos = function (me)
-        local dyn, constr = unpack(me)
+        local dyn, constr, pool = unpack(me)
         -- root must set SetExp variable
         local n = me.__par[2]   -- me == me.__par[1]
         assert(n.tag=='SetExp', 'bug found')
         n[2] = AST.copy(constr.__adj_var)
-        n[2].byRef = true
+        if not dyn then
+            n[2].byRef = true
+        end
         return constr -- substitute by 1st constr
     end,
     _Adt_explist_pos = function (me)
@@ -272,10 +274,10 @@ F = {
         --      var Data __ceu_adt_N;
         --      __ceu_adt_N = { ... }
         -- becomes (dynamic)
-        --      var Data* __ceu_adt_N;
+        --      var Data& __ceu_adt_N;
         --      __ceu_adt_N = new { ... }
 
-        local dyn = unpack(AST.par(me,'_Adt_constr_root'))
+        local dyn,_,pool = unpack(AST.par(me,'_Adt_constr_root'))
 
         -- nested constructors
         local nested = AST.node('Stmts', me.ln)
@@ -293,9 +295,9 @@ F = {
             node('Stmts', me.ln,
                 nested,
                 node('Dcl_var', me.ln, 'var',
-                    node('Type', me.ln, id, (dyn and 1) or 0, false, false),
+                    node('Type', me.ln, id, 0, false, dyn),
                     '__ceu_adt_'..me.n),
-                node('Adt_constr', me.ln, adt, params, var))
+                node('Adt_constr', me.ln, adt, params, var, dyn, pool))
         ret.__adj_var = var   -- Var: __ceu_adt_n
         return ret
     end,

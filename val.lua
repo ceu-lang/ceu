@@ -62,6 +62,10 @@ F =
                         if ENV.clss[var.tp.id] then
                             -- orgs vars byRef, do nothing
                             -- (normalized to pointer)
+                        elseif string.sub(var.id,1,10) == '__ceu_adt_' then
+                            -- from dynamic constructor:
+                            -- List* __ceu_adt_n = malloc(...)
+                            -- access by pointer
                         else
                             -- normal vars byRef
                             var.val = '(*('..var.val..'))'
@@ -338,7 +342,8 @@ F =
         local op, e1 = unpack(me)
         local cls = e1.tp.ptr==1 and ENV.clss[e1.tp.id]
 
-        local is_adt_pool = ENV.adts[e1.tp.id] and e1.var and e1.var.pre=='pool'
+        local is_adt_pool = ENV.adts[e1.tp.id] and
+                            e1.var and e1.var.pre=='pool'
 
         if cls then
             me.val = V(e1) -- class accesses should remain normalized to references

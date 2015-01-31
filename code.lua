@@ -419,11 +419,29 @@ case ]]..me.lbls_cnt.id..[[:;
     end,
 
     Adt_constr = function (me)
-        local adt, params, var = unpack(me)
+        local adt, params, var, dyn, pool = unpack(me)
         local id, tag = unpack(adt)
         local blk,_
+        local op = (dyn and '*') or ''
+
+        local LVAR = V(var)
+        local RVAR = '('..op..V(var)..')'
+
+        if dyn then
+            local tp = 'CEU_'..var.tp.id
+            if (type(var.tp.arr)=='table') then
+                LINE(me,
+LVAR..[[ = (]]..tp..[[*) ceu_pool_alloc((tceu_pool*)]]..V(pool)..[[);
+]])
+            else
+                LINE(me,
+LVAR..[[ = (]]..tp..[[*) ceu_out_realloc(NULL, sizeof(]]..tp..[[));
+]])
+            end
+        end
+
         if tag then
-            LINE(me, V(var)..'.tag = CEU_'..string.upper(id)..'_'..tag..';')
+            LINE(me, RVAR..'.tag = CEU_'..string.upper(id)..'_'..tag..';')
             blk = ENV.adts[id].tags[tag].blk
             tag = '.'..tag
         else
@@ -435,7 +453,7 @@ case ]]..me.lbls_cnt.id..[[:;
             if blk.vars[i].tp.ref then
                 p.byRef = true
             end
-            LINE(me, V(var)..tag..'.'..field.id..' = '..V(p)..';')
+            LINE(me, RVAR..tag..'.'..field.id..' = '..V(p)..';')
         end
     end,
 
@@ -529,6 +547,7 @@ _STK_ORG->trls[ ]]..me.trl_fins[1]..[[ ].seqno = _ceu_app->seqno-1; /* awake now
             elseif var.pre=='pool' then
                 if (type(var.tp.arr)=='table') then
                     local dcl = var.val_dcl
+assert(ENV.clss[var.tp.id], 'not implemented')
                     if ENV.clss[var.tp.id].is_ifc then
                         LINE(me, [[
 ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'_delayed),'
