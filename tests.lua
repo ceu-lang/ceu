@@ -1382,6 +1382,7 @@ do return end
 
 -------------------------------------------------------------------------------
 -- OK: well tested
+]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -39146,7 +39147,6 @@ escape ptr2==&a;
 
 
 -- ALGEBRAIC DATATYPES (ADTs)
-]===]
 
 -- ADTs used in most examples below
 DATA = [[
