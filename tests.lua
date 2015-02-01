@@ -39205,6 +39205,7 @@ end
 -- STATIC ADTs
 
 --[==[
+]==]
 
 -- data type identifiers must start with an uppercase
 Test { [[
@@ -39800,25 +39801,24 @@ escape ret;
 
 -- Dynamic constructors:
 --  - must use "new"
---  - must specify the pool where the instance will live
---      - TODO: could it be detected?
+--  - the pool is inferred from the l-value
 Test { DATA..[[
 pool List_[] l;
-l = new List_.NIL() in l;
+l = new List_.NIL();
 escape l:NIL;
 ]],
     run = 1,
 }
 Test { DATA..[[
 pool List_[] l;
-l = new List_.CONS(2, List_.NIL()) in l;
+l = new List_.CONS(2, List_.NIL());
 escape l:CONS.head;
 ]],
     run = 2,
 }
 Test { DATA..[[
 pool List_[] l;
-l = new List_.CONS(1, List_.CONS(2, List_.NIL())) in l;
+l = new List_.CONS(1, List_.CONS(2, List_.NIL()));
 escape l:CONS.head + l:CONS.tail:CONS.head + l:CONS.tail:CONS.tail:NIL;
 ]],
     run = 4,
@@ -39826,18 +39826,10 @@ escape l:CONS.head + l:CONS.tail:CONS.head + l:CONS.tail:CONS.tail:NIL;
 -- wrong tag
 Test { DATA..[[
 pool List_[] l;
-l = new List_.NIL() in l;
+l = new List_.NIL();
 escape l:CONS;
 ]],
     asr = true,
-}
--- no pool
-Test { DATA..[[
-pool List_[] l;
-l = new List_.CONS(2, List_.NIL());
-escape l:CONS.head;
-]],
-    code = 'not implemented'
 }
 -- no "new"
 Test { DATA..[[
@@ -39849,7 +39841,7 @@ escape l:CONS.head;
 }
 -- cannot assign "l" directly (in the pool declaration)
 Test { DATA..[[
-pool List_[] l = new List_.CONS(2, List_.NIL()) in l;
+pool List_[] l = new List_.CONS(2, List_.NIL());
 escape l.CONS.head;
 ]],
     parser = 'line 51 : after `l´ : expected `;´',
@@ -39857,7 +39849,7 @@ escape l.CONS.head;
 -- no dereference
 Test { DATA..[[
 pool List_[] l;
-l = new List_.NIL() in l;
+l = new List_.NIL();
 escape l.NIL;
 ]],
     env = 'line 53 : not a struct',
@@ -39865,30 +39857,35 @@ escape l.NIL;
 
 Test { DATA..[[
 pool List_[] l;
-l = new List_.CONS(2, List_.NIL()) in l;
+l = new List_.CONS(2, List_.NIL());
 escape l.CONS.head;
 ]],
     env = 'line 53 : not a struct',
 }
 
--- static vs head pools
+--error 'static pools not implemented yet'
+
+-- static vs heap pools
 --      pool List[] l;      // instances go to the heap
 -- vs
 --      pool List[10] l;    // 10 instances at most
 -- (same as for organisms)
 
 -- allocation fails (0 space)
-]==]
+-- fallback to base case (which is statically allocated in the initialization)
+-- (this is also why the base case cannot have fields and
+--  must appear first in the ADT declaration)
+-- (
 Test { DATA..[[
 pool List_[0] l;
-l = new List_.CONS(2, List_.NIL()) in l;
+l = new List_.CONS(2, List_.NIL());
 escape l:NIL;
 ]],
     run = 1,
 }
 Test { DATA..[[
 pool List_[0] l;
-l = new List_.CONS(2, List_.NIL()) in l;
+l = new List_.CONS(2, List_.NIL());
 escape l:CONS.head;     // runtime error
 ]],
     asr = true,
@@ -39896,20 +39893,18 @@ escape l:CONS.head;     // runtime error
 -- 2nd allocation fails (1 space)
 Test { DATA..[[
 pool List_[1] l;
-l = new List_.CONS(2, List_.CONS(1, List_.NIL())) in l;
+l = new List_.CONS(2, List_.CONS(1, List_.NIL()));
 _assert(l:CONS.tail:NIL);
 escape l:CONS.head;
 ]],
     run = 2,
 }
 -- 3rd allocation fails (2 space)
-
 Test { DATA..[[
 pool List_[2] l;
-l = new List_.CONS(1, List_.CONS(2, List_.CONS(3, List_.NIL()))) in l;
-escape l:CONS;
-//_assert(l:CONS.tail:CONS.tail:NIL);
-//escape l:CONS.head + l:CONS.tail:CONS.head + l:CONS.tail:CONS.tail:NIL;
+l = new List_.CONS(1, List_.CONS(2, List_.CONS(3, List_.NIL())));
+_assert(l:CONS.tail:CONS.tail:NIL);
+escape l:CONS.head + l:CONS.tail:CONS.head + l:CONS.tail:CONS.tail:NIL;
 ]],
     run = 4,
 }
@@ -39918,7 +39913,7 @@ escape l:CONS;
 -- (nothing new here)
 Test { DATA..[[
 pool List_[0] l;
-l = new List_.CONS(2, List_.NIL()) in l;
+l = new List_.CONS(2, List_.NIL());
 escape l.NIL;
 ]],
     env = 'line 53 : not a struct',
@@ -39939,8 +39934,8 @@ escape l.NIL;
 -- 1-NIL can be safely reclaimed
 Test { DATA..[[
 pool List_[1] l;
-l = new List_.CONS(1, List_.NIL()) in l;
-l = new List_.CONS(2, List_.NIL()) in l;    // no allocation fail
+l = new List_.CONS(1, List_.NIL());
+l = new List_.CONS(2, List_.NIL());    // no allocation fail
 escape l:CONS.head;
 ]],
     run = 2,
@@ -39973,9 +39968,9 @@ escape l==l2;
 
 Test { DATA..[[
 pool List_[2] l;
-l = new List_.CONS(1, List_.CONS(2, List_.CONS(3, List_.NIL()))) in l;
+l = new List_.CONS(1, List_.CONS(2, List_.CONS(3, List_.NIL())));
 _assert(l.CONS.tail.CONS.tail.NIL);
-l = new List_.CONS(4, List_.CONS(5, List_.CONS(6, List_.NIL()))) in l;
+l = new List_.CONS(4, List_.CONS(5, List_.CONS(6, List_.NIL())));
 _assert(l.CONS.tail.CONS.tail.NIL);
 escape l.CONS.head + l.CONS.tail.CONS.head + (l.CONS.tail.CONS.tail.NIL);
 ]],

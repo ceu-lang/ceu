@@ -652,9 +652,10 @@ F = {
 
         -- TODO: check if adt is recursive
         if me.var.adt then
-            -- pointer to the head of the pool (prefix "_")
-            local _, acc = newvar(me, me.var.blk, 'var', TP.fromstr(tp.id..'*'), '_'..id, false)
-            me.var.__env_acc = acc
+            -- pointer to the root of the pool (prefix "_")
+            local _, acc = newvar(me, me.var.blk, 'var',
+                                  TP.fromstr'_tceu_adt_root', '_'..id, false)
+            me.var.__env_adt_root = acc
         end
     end,
 
@@ -716,24 +717,29 @@ F = {
                     'event "'..id..'" is not declared')
     end,
 
-    Var = function (me)
+    Var_pre = function (me)
         local id = unpack(me)
-
         local blk = me.__ast_blk and assert(AST.par(me.__ast_blk,'Block'))
                         or AST.iter('Block')()
         local var = me.var or ENV.getvar(id, blk)
 
         -- ADT pools: substitute from pool->access variable
-        -- except for <... = new ... in pool_var;>
-        if var.adt and var.pre=='pool' then
+        if var and var.adt and var.pre=='pool' then
             local constr = AST.par(me, 'Adt_constr')
             local pool = constr and constr[5]
-            if not (pool and AST.isParent(me,pool)) then
-                var = me.var or ENV.getvar('_'..id, blk)
-            end
+            return AST.node('Op1_cast', me.ln,
+                    TP.fromstr(var.tp.id..'*'),
+                    AST.node('Op2_.', me.ln, '.',
+                        AST.node('Var', me.ln, '_'..id),
+                        'root'))
         end
+    end,
 
-
+    Var = function (me)
+        local id = unpack(me)
+        local blk = me.__ast_blk and assert(AST.par(me.__ast_blk,'Block'))
+                        or AST.iter('Block')()
+        local var = me.var or ENV.getvar(id, blk)
         ASR(var, me, 'variable/event "'..id..'" is not declared')
         me.var  = var
         me.tp   = var.tp
@@ -1155,6 +1161,15 @@ F = {
         elseif adt then
             local ID, op, blk = unpack(adt)
 
+            -- attributions/constructors need access to the pool
+            -- the pool is the first "e1" that matches adt type:
+            -- l = new List.CONS(...)
+            -- ^-- first
+            -- l:CONS.tail = new List.CONS(...)
+            -- ^      ^-- matches, but not first
+            -- ^-- first
+            me.__env_adt_first = e1.__env_adt_first or e1
+
             if op == 'struct' then
                 local var = ASR(blk.vars[id], me,
                             'field "'..id..'" is not declared')
@@ -1219,7 +1234,7 @@ F = {
         me.tp   = tp
         me.lval = exp.lval
         if tp.ptr > 0 then
-            me.lval = true      -- *((u32*)0x100)=v
+            me.lval = exp      -- *((u32*)0x100)=v
         end
     end,
 

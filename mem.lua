@@ -105,7 +105,7 @@ void CEU_]]..id..'_free_static (CEU_'..id..[[* me, void* pool) {
 ]]
         if op == 'struct' then
             free = free .. [[
-    ceu_pool_free(pool, me);
+    ceu_pool_free(pool, (void*)me);
 ]]
         else
             assert(op == 'union')
@@ -196,7 +196,7 @@ void ]]..enum..'_free_dynamic (CEU_'..id..[[* me) {
 }
 #endif
 #ifdef CEU_ADTS_NEWS_POOL
-void ]]..enum..'_free_pool (CEU_'..id..[[* me, void* pool) {
+void ]]..enum..'_free_static (CEU_'..id..[[* me, void* pool) {
 ]]
 
         -- free all my recursive fields
@@ -204,14 +204,14 @@ void ]]..enum..'_free_pool (CEU_'..id..[[* me, void* pool) {
             local _, tp, _ = unpack(item)
             if TP.tostr(tp) == id..'*' then
                 free = free .. [[
-    CEU_]]..id..[[_free_pool(me->]]..tag..'.'..item.var_id..[[, pool);
+    CEU_]]..id..[[_free_static(me->]]..tag..'.'..item.var_id..[[, pool);
 ]]
             end
         end
 
         -- free myself
         free = free .. [[
-    ceu_pool_free(pool, me);
+    ceu_pool_free(pool, (void*)me);
 }
 #endif
 #endif

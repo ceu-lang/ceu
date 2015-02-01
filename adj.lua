@@ -251,13 +251,13 @@ F = {
     end,
 
     _Adt_constr_root_pre = function (me)
-        local dyn, constr, pool = unpack(me)
+        local dyn, constr = unpack(me)
         local adt = unpack(constr)
         local id  = unpack(adt)
         me.__adj_adt_id = id
     end,
     _Adt_constr_root_pos = function (me)
-        local dyn, constr, pool = unpack(me)
+        local dyn, constr = unpack(me)
         local me_, set = unpack(me.__par)
         assert(me_ == me)
 
@@ -291,7 +291,7 @@ F = {
         --          data1->rec = data2;
         --      data0->rec = data1;
 
-        local dyn,_,pool = unpack(AST.par(me,'_Adt_constr_root'))
+        local dyn,_ = unpack(AST.par(me,'_Adt_constr_root'))
 
         -- nested constructors
         local nested = AST.node('Stmts', me.ln)
@@ -314,7 +314,7 @@ F = {
                     '__ceu_adt_'..me.n),
                 node('Adt_constr', me.ln, adt, params,
                     node('Var', me.ln, '__ceu_adt_'..par.n),
-                    dyn, pool, nested))
+                    dyn, nested))
     end,
 
 -- Escape --------------------------------------------------

@@ -178,6 +178,28 @@ case ]]..me.lbl_clr.id..[[:;
 ]])
 end
 
+local function FIND_ADT_POOL (me)
+    local ret = (me.__env_adt_first or me)
+    if ret.tag == 'Op1_cast' then
+        ret = ret[2]    -- cast is not an lvalue in C
+    end
+    return ret
+end
+
+local function FIND_ADT_POOL_CONSTR (me)
+    local par = me.__par.__par.__par
+    if par.tag == 'Adt_constr' then
+        return FIND_ADT_POOL_CONSTR(par)
+    else
+        local stmts = me.__par.__par.__par
+        assert(stmts.tag == 'Stmts', 'bug found')
+        local set = stmts[2]
+        assert(set.tag == 'SetExp', 'bug found')
+        local to = set[3]
+        return FIND_ADT_POOL(to)
+    end
+end
+
 F = {
     Node_pre = function (me)
         me.code = '/* NODE: '..me.tag..' '..me.n..' */\n'
@@ -419,7 +441,7 @@ case ]]..me.lbls_cnt.id..[[:;
     end,
 
     Adt_constr = function (me)
-        local adt, params, var, dyn, pool, nested = unpack(me)
+        local adt, params, var, dyn, nested = unpack(me)
         local id, tag = unpack(adt)
         adt = assert(ENV.adts[id])
         local blk,_
@@ -427,6 +449,13 @@ case ]]..me.lbls_cnt.id..[[:;
 
         local LVAR = V(var)
         local RVAR = '('..op..V(var)..')'
+
+        --      to.root
+        -- becomes
+        --      (((tceu_adt_root*)to.root)->pool)
+        local pool = FIND_ADT_POOL_CONSTR(me)
+        pool = '(((tceu_adt_root*)(&('..V(pool)..')))->pool)'
+
 
         if dyn then
             -- base case
@@ -438,17 +467,20 @@ LVAR..[[ = &CEU_]]..string.upper(var.tp.id)..[[_BASE;
             -- other cases
             else
                 local tp = 'CEU_'..var.tp.id
-ASR(pool, me, 'not implemented')
-                local static = (type(pool.tp.arr)=='table')
-                if static then
-                    LINE(me,
-LVAR..[[ = (]]..tp..[[*) ceu_pool_alloc((tceu_pool*)]]..V(pool)..[[);
+                LINE(me, [[
+#if defined(CEU_ADTS_NEWS_MALLOC) && defined(CEU_ADTS_NEWS_POOL)
+if (]]..pool..[[ == NULL) {
+    ]]..LVAR..[[ = (]]..tp..[[*) ceu_out_realloc(NULL, sizeof(]]..tp..[[));
+} else {
+    ]]..LVAR..[[ = (]]..tp..[[*) ceu_pool_alloc((tceu_pool*)]]..pool..[[);
+}
+#elif defined(CEU_ADTS_NEWS_MALLOC)
+    ]]..LVAR..[[ = (]]..tp..[[*) ceu_out_realloc(NULL, sizeof(]]..tp..[[));
+#elif defined(CEU_ADTS_NEWS_POOL)
+    ]]..LVAR..[[ = (]]..tp..[[*) ceu_pool_alloc((tceu_pool*)]]..pool..[[);
+#endif
 ]])
-                else
-                    LINE(me,
-LVAR..[[ = (]]..tp..[[*) ceu_out_realloc(NULL, sizeof(]]..tp..[[));
-]])
-                end
+
                 -- fallback to base case if fails
                 LINE(me, [[
 if (]]..LVAR..[[ == NULL) {
@@ -627,10 +659,21 @@ ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'),'
     __ceu_adt->tag = CEU_]]..string.upper(var.tp.id..'_'..tag)..[[;
     ]])
                     end
+                    if static then
+                        LINE(me, [[
+    ]]..V(var.__env_adt_root)..[[.pool = ]]..V(var)..[[;
+]])
+                    else
+                        LINE(me, [[
+#ifdef CEU_ADTS_NEWS_POOL
+    ]]..V(var.__env_adt_root)..[[.pool = NULL;
+#endif
+]])
+                    end
                     LINE(me, [[
-    ]]..V(var.__env_acc)..[[ = __ceu_adt;
+    ]]..V(var.__env_adt_root)..[[.root = __ceu_adt;
 }
-    ]])
+]])
                 end
             end
 
@@ -679,9 +722,16 @@ if (]]..fin.val..[[) {
                 local adt = ENV.adts[var.tp.id]
                 if adt and var.pre=='pool' then
                     local id, op = unpack(adt)
-                    LINE(me, [[
-    CEU_]]..id..[[_free_dynamic(]]..V(var.__env_acc)..[[);
-    ]])
+                    local static = (type(var.tp.arr)=='table')
+                    if static then
+                        LINE(me, [[
+    CEU_]]..id..[[_free_static(]]..V(var.__env_adt_root)..'.root,'..V(var)..[[);
+]])
+                    else
+                        LINE(me, [[
+    CEU_]]..id..[[_free_dynamic(]]..V(var.__env_adt_root)..[[.root);
+]])
+                    end
                 end
             end
             HALT(me)
@@ -724,11 +774,32 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
         local _, fr, to, fin = unpack(me)
         COMM(me, 'SET: '..tostring(to[1]))    -- Var or C
 
+        --      to.root
+        -- becomes
+        --      (((tceu_adt_root*)to.root)->pool)
+        local pool = FIND_ADT_POOL(to)
+        pool = '(((tceu_adt_root*)(&('..V(pool)..')))->pool)'
+
         -- ADT: free current tree
         if me.__ast_adt_free then
             LINE(me, [[
-CEU_]]..me.__ast_adt_free..[[_free_dynamic(]]..V(to)..[[);
+#if defined(CEU_ADTS_NEWS_MALLOC) && defined(CEU_ADTS_NEWS_POOL)
+    if (]]..pool..[[ == NULL) {
+        CEU_]]..me.__ast_adt_free..[[_free_dynamic(]]..V(to)..[[);
+    } else {
+        CEU_]]..me.__ast_adt_free..[[_free_static(]]..V(to)..[[, ]]..pool..[[);
+    }
+#elif defined(CEU_ADTS_NEWS_MALLOC)
+    CEU_]]..me.__ast_adt_free..[[_free_dynamic(]]..V(to)..[[);
+#elif defined(CEU_ADTS_NEWS_POOL)
+    CEU_]]..me.__ast_adt_free..[[_free_static(]]..V(to)..[[, ]]..pool..[[);
+#endif
 ]])
+        end
+
+        -- cast is not an lvalue in C
+        if to.tag == 'Op1_cast' then
+            to = to[2]
         end
 
         ATTR(me, to, fr)

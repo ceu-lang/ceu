@@ -561,6 +561,17 @@ typedef struct {
 } tceu_threads_p;
 #endif
 
+/* TCEU_ADT */
+
+#ifdef CEU_ADTS_NEWS
+typedef struct {
+    void* root;
+#ifdef CEU_ADTS_NEWS_POOL
+    void* pool;
+#endif
+} tceu_adt_root;
+#endif
+
 /* RET_* */
 
 enum {
