@@ -419,8 +419,9 @@ case ]]..me.lbls_cnt.id..[[:;
     end,
 
     Adt_constr = function (me)
-        local adt, params, var, dyn, pool = unpack(me)
+        local adt, params, var, dyn, pool, nested = unpack(me)
         local id, tag = unpack(adt)
+        adt = assert(ENV.adts[id])
         local blk,_
         local op = (dyn and '*') or ''
 
@@ -428,20 +429,43 @@ case ]]..me.lbls_cnt.id..[[:;
         local RVAR = '('..op..V(var)..')'
 
         if dyn then
-            local tp = 'CEU_'..var.tp.id
-            if (type(var.tp.arr)=='table') then
+            -- base case
+            if adt.is_rec and tag==adt.tags[1] then
                 LINE(me,
+LVAR..[[ = &CEU_]]..string.upper(var.tp.id)..[[_BASE;
+]])
+
+            -- other cases
+            else
+                local tp = 'CEU_'..var.tp.id
+ASR(pool, me, 'not implemented')
+                local static = (type(pool.tp.arr)=='table')
+                if static then
+                    LINE(me,
 LVAR..[[ = (]]..tp..[[*) ceu_pool_alloc((tceu_pool*)]]..V(pool)..[[);
 ]])
-            else
-                LINE(me,
+                else
+                    LINE(me,
 LVAR..[[ = (]]..tp..[[*) ceu_out_realloc(NULL, sizeof(]]..tp..[[));
+]])
+                end
+                -- fallback to base case if fails
+                LINE(me, [[
+if (]]..LVAR..[[ == NULL) {
+    ]]..LVAR..[[ = &CEU_]]..string.upper(var.tp.id)..[[_BASE;
+} else
 ]])
             end
         end
 
+        LINE(me, '{\n')
+        CONC(me, nested)
+
         if tag then
-            LINE(me, RVAR..'.tag = CEU_'..string.upper(id)..'_'..tag..';')
+            if not (adt.is_rec and tag==adt.tags[1]) then
+                -- not required for base case
+                LINE(me, RVAR..'.tag = CEU_'..string.upper(id)..'_'..tag..';')
+            end
             blk = ENV.adts[id].tags[tag].blk
             tag = '.'..tag
         else
@@ -454,7 +478,11 @@ LVAR..[[ = (]]..tp..[[*) ceu_out_realloc(NULL, sizeof(]]..tp..[[));
                 p.byRef = true
             end
             LINE(me, RVAR..tag..'.'..field.id..' = '..V(p)..';')
+            --local op = (dyn and '*') or ''
+            --LINE(me, RVAR..tag..'.'..field.id..' = '..op..V(p)..';')
         end
+
+        LINE(me, '}\n')
     end,
 
     Spawn = function (me)
@@ -545,27 +573,31 @@ _STK_ORG->trls[ ]]..me.trl_fins[1]..[[ ].seqno = _ceu_app->seqno-1; /* awake now
                 end
                 LINE(me, ';')
             elseif var.pre=='pool' then
-                if (type(var.tp.arr)=='table') then
-                    local dcl = var.val_dcl
-assert(ENV.clss[var.tp.id], 'not implemented')
-                    if ENV.clss[var.tp.id].is_ifc then
-                        LINE(me, [[
+                local cls = ENV.clss[var.tp.id]
+                local adt = ENV.adts[var.tp.id]
+                local static = (type(var.tp.arr)=='table')
+
+                local top = cls or adt
+                if top then
+                    if static then
+                        local dcl = var.val_dcl
+                        if top.is_ifc then
+                            LINE(me, [[
 ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'_delayed),'
-                                                        -- TODO: bad (explicit CEU_)
     ..'(byte**)'..dcl..'_queue, (byte*)'..dcl..[[_mem);
 ]])
-                    else
-                        LINE(me, [[
+                        else
+                            LINE(me, [[
 ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'),'
-                                                        -- TODO: bad (explicit CEU_)
     ..'(byte**)'..dcl..'_queue, (byte*)'..dcl..[[_mem);
 ]])
+                        end
                     end
                 end
 
-                -- create base case NIL and assign to "*l"
-                local adt = ENV.adts[var.tp.id]
                 if adt then
+                    -- create base case NIL and assign to "*l"
+                    assert(adt)
                     assert(adt.is_rec, 'not implemented')
                     local tag = adt[3][1]
                     local tp = 'CEU_'..var.tp.id
@@ -573,20 +605,32 @@ ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'),'
 {
     ]]..tp..[[* __ceu_adt;
 ]])
-                    if (type(var.tp.arr)=='table') then
+                    -- base case: use preallocated static variable
+                    if adt.is_rec and tag==adt.tags[1] then
                         LINE(me, [[
+    __ceu_adt = &CEU_]]..string.upper(var.tp.id)..[[_BASE;
+]])
+
+                    -- other cases: must allocate
+                    else
+                        if static then
+                            LINE(me, [[
     __ceu_adt = (]]..tp..[[*) ceu_pool_alloc((tceu_pool*)]]..V(var)..[[);
 ]])
-                    else
-                        LINE(me, [[
+                        else
+                            LINE(me, [[
     __ceu_adt = (]]..tp..[[*) ceu_out_realloc(NULL, sizeof(]]..tp..[[));
 ]])
+                        end
+                        LINE(me, [[
+    ceu_out_assert(__ceu_adt != NULL);
+    __ceu_adt->tag = CEU_]]..string.upper(var.tp.id..'_'..tag)..[[;
+    ]])
                     end
                     LINE(me, [[
-    __ceu_adt->tag = CEU_]]..string.upper(var.tp.id..'_'..tag)..[[;
-    *]]..V(var)..[[ = __ceu_adt;
+    ]]..V(var.__env_acc)..[[ = __ceu_adt;
 }
-]])
+    ]])
                 end
             end
 
@@ -636,7 +680,7 @@ if (]]..fin.val..[[) {
                 if adt and var.pre=='pool' then
                     local id, op = unpack(adt)
                     LINE(me, [[
-    CEU_]]..id..[[_free(*]]..V(var)..[[);
+    CEU_]]..id..[[_free_dynamic(]]..V(var.__env_acc)..[[);
     ]])
                 end
             end
@@ -679,6 +723,14 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
     SetExp = function (me)
         local _, fr, to, fin = unpack(me)
         COMM(me, 'SET: '..tostring(to[1]))    -- Var or C
+
+        -- ADT: free current tree
+        if me.__ast_adt_free then
+            LINE(me, [[
+CEU_]]..me.__ast_adt_free..[[_free_dynamic(]]..V(to)..[[);
+]])
+        end
+
         ATTR(me, to, fr)
         if to.tag=='Var' and to.var.id=='_ret' then
             LINE(me, [[

@@ -25,6 +25,13 @@ F = {
         end
     end,
 
+    Var_pos = function (me)
+        -- force __ceu_adt_* to be tmp
+        -- (even if in top level block)
+        if string.sub(me.var.id,1,10) == '__ceu_adt_' then
+            me.var.isTmp = true
+        end
+    end,
     Var = function (me)
         local var = me.var
 

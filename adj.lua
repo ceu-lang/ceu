@@ -250,16 +250,28 @@ F = {
         end
     end,
 
+    _Adt_constr_root_pre = function (me)
+        local dyn, constr, pool = unpack(me)
+        local adt = unpack(constr)
+        local id  = unpack(adt)
+        me.__adj_adt_id = id
+    end,
     _Adt_constr_root_pos = function (me)
         local dyn, constr, pool = unpack(me)
+        local me_, set = unpack(me.__par)
+        assert(me_ == me)
+
         -- root must set SetExp variable
-        local n = me.__par[2]   -- me == me.__par[1]
-        assert(n.tag=='SetExp', 'bug found')
-        n[2] = AST.copy(constr.__adj_var)
+        assert(set.tag=='SetExp', 'bug found')
+        set[2] = node('Var', me.ln, '__ceu_adt_'..me.n)
         if not dyn then
-            n[2].byRef = true
+            set[2].byRef = true
         end
-        return constr -- substitute by 1st constr
+        return node('Stmts', me.ln,
+                node('Dcl_var', me.ln, 'var',
+                    node('Type', me.ln, me.__adj_adt_id, (dyn and 1) or 0, false, false),
+                    '__ceu_adt_'..me.n),
+                constr) -- substitute by 1st constr
     end,
     _Adt_explist_pos = function (me)
         me.tag = 'ExpList'
@@ -268,14 +280,16 @@ F = {
         local adt, params = unpack(me)
         local id = unpack(adt)
 
-        -- Declare an auxiliary var for the static constructor:
-        --      Data.TAG(...)
+        -- Nested constructors:
+        --      Data.TAG1(v, Data.TAG2(...))
         -- becomes (static)
-        --      var Data __ceu_adt_N;
-        --      __ceu_adt_N = { ... }
-        -- becomes (dynamic)
-        --      var Data& __ceu_adt_N;
-        --      __ceu_adt_N = new { ... }
+        --      var Data* data0;            // root
+        --          var Data* data1;        // TAG1
+        --          data0 = new(...);
+        --              var Data* data2;    // TAG2
+        --              data1 = new(...);
+        --          data1->rec = data2;
+        --      data0->rec = data1;
 
         local dyn,_,pool = unpack(AST.par(me,'_Adt_constr_root'))
 
@@ -286,20 +300,21 @@ F = {
                 -- subst nested stmts
                 -- for Var:__ceu_adt_n
                 nested[#nested+1] = p
-                params[i] = AST.copy(p.__adj_var)
+                params[i] = node('Var', me.ln, '__ceu_adt_'..me.n)
             end
         end
 
-        local var = node('Var', me.ln, '__ceu_adt_'..me.n)
-        local ret =
-            node('Stmts', me.ln,
-                nested,
+        -- parent constructor
+        local par = (me.__par.tag=='_Adt_constr_root' and me.__par)
+                        or me.__par.__par
+
+        return node('Stmts', me.ln,
                 node('Dcl_var', me.ln, 'var',
-                    node('Type', me.ln, id, 0, false, dyn),
+                    node('Type', me.ln, id, (dyn and 1) or 0, false, false),
                     '__ceu_adt_'..me.n),
-                node('Adt_constr', me.ln, adt, params, var, dyn, pool))
-        ret.__adj_var = var   -- Var: __ceu_adt_n
-        return ret
+                node('Adt_constr', me.ln, adt, params,
+                    node('Var', me.ln, '__ceu_adt_'..par.n),
+                    dyn, pool, nested))
     end,
 
 -- Escape --------------------------------------------------
@@ -1265,7 +1280,12 @@ F = {
             local set = node('SetExp', me.ln, op,
                             false,  -- Adt_constr will set to its var
                             to)
-            to.byRef = true
+            if p1[1] then   -- new?
+                assert(p1[2][1].tag == 'Adt', 'bug found')
+                set.__ast_adt_free = p1[2][1][1]
+            else
+                to.byRef = true
+            end
             return node('Stmts', me.ln, p1, set)
 
         elseif tag == '__SetDoOrg' then

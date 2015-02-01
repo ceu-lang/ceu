@@ -19,7 +19,7 @@ function V (me)
         (not (ENV.clss[me.tp.id] or ref and ENV.clss[ref]))
     then
                     -- already by ref
-        local ret = '&'..me.val
+        local ret = '(&'..me.val..')'
         return string.gsub(ret, '%&([^)])%*', '%1')
                 -- &((*(...))) => (((...)))
     else
@@ -62,10 +62,6 @@ F =
                         if ENV.clss[var.tp.id] then
                             -- orgs vars byRef, do nothing
                             -- (normalized to pointer)
-                        elseif string.sub(var.id,1,10) == '__ceu_adt_' then
-                            -- from dynamic constructor:
-                            -- List* __ceu_adt_n = malloc(...)
-                            -- access by pointer
                         else
                             -- normal vars byRef
                             var.val = '(*('..var.val..'))'

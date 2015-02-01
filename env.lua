@@ -144,7 +144,7 @@ function newvar (me, blk, pre, tp, id, isImp)
 
         -- ADTs are always pointers:
         --  - they can be recursive
-        --  - constructors hold the actual memory
+        --  - except constructors, which hold the actual memory
         if top.tag == 'Dcl_adt' then
             -- ignore constructors
             local constr = (string.sub(id,1,10)=='__ceu_adt_')
@@ -649,6 +649,13 @@ F = {
         local pre, tp, id, constr = unpack(me)
         ASR(tp.arr, me, 'missing `pool´ dimension')
         F.Dcl_var(me)
+
+        -- TODO: check if adt is recursive
+        if me.var.adt then
+            -- pointer to the head of the pool (prefix "_")
+            local _, acc = newvar(me, me.var.blk, 'var', TP.fromstr(tp.id..'*'), '_'..id, false)
+            me.var.__env_acc = acc
+        end
     end,
 
     Dcl_int = function (me)
@@ -715,6 +722,18 @@ F = {
         local blk = me.__ast_blk and assert(AST.par(me.__ast_blk,'Block'))
                         or AST.iter('Block')()
         local var = me.var or ENV.getvar(id, blk)
+
+        -- ADT pools: substitute from pool->access variable
+        -- except for <... = new ... in pool_var;>
+        if var.adt and var.pre=='pool' then
+            local constr = AST.par(me, 'Adt_constr')
+            local pool = constr and constr[5]
+            if not (pool and AST.isParent(me,pool)) then
+                var = me.var or ENV.getvar('_'..id, blk)
+            end
+        end
+
+
         ASR(var, me, 'variable/event "'..id..'" is not declared')
         me.var  = var
         me.tp   = var.tp
@@ -935,6 +954,7 @@ F = {
             p = p.tp
             local f = ins.tup[i]
             assert(p.tag=='Type' and f.tag=='Type', 'bug found')
+-- TODO: invert/better message
             ASR(TP.contains(f,p), me, 'invalid call parameter #'..i..
                 ' ('..TP.tostr(p)..' vs '..TP.tostr(f)..')')
         end
@@ -1071,9 +1091,13 @@ F = {
             me.tp.ptr = me.tp.ptr - 1
         end
 
+--[[
+-- TODO: no use cases for this?
+-- otherwise, remove
         if e1.tp.arr then
             me.tp.arr = false
         end
+]]
 
         local is_adt_pool = ENV.adts[e1.tp.id] and e1.var and e1.var.pre=='pool'
 
@@ -1130,6 +1154,7 @@ F = {
 
         elseif adt then
             local ID, op, blk = unpack(adt)
+
             if op == 'struct' then
                 local var = ASR(blk.vars[id], me,
                             'field "'..id..'" is not declared')
@@ -1140,13 +1165,14 @@ F = {
                 local blk = ASR(adt.tags[id] and adt.tags[id].blk, me,
                                 'tag "'..id..'" is not declared')
 
+                ASR(TP.contains(e1.tp,TP.fromstr(ID)), me,
+                    'invalid access ('..TP.tostr(e1.tp)..' vs '..ID..')')
+
                 -- [union.TAG]
                 local tag = (me.__par.tag ~= 'Op2_.')
                 if tag then
                     me.tp = TP.fromstr'bool'
                     me.__env_tag = 'test'
-                    ASR(TP.contains(e1.tp,TP.fromstr(ID)), me,
-                        'invalid access ('..TP.tostr(e1.tp)..' vs '..ID..')')
 
                 -- [union.TAG].field
                 else

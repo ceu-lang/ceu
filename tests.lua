@@ -39150,11 +39150,13 @@ escape ptr2==&a;
 
 -- ADTs used in most examples below
 DATA = [[
+// C-like struct
 data Pair with
     var int x;
     var int y;
 end
 
+// "Nullable pointer"
 data Opt with
     tag NIL;
 with
@@ -39163,6 +39165,7 @@ with
     end
 end
 
+// List (recursive type)
 data List with
     tag NIL;
 with
@@ -39171,52 +39174,58 @@ with
         var List& tail;
     end
 end
-]]
 
-    -- STATIC ADTs
+// DYNAMIC VERSIONS OF THE SAME TYPES
+// (sufix "_")
 
---[==[
-
--- anonymous fields
-Test { [[
-data Pair = (int, int);
-data Opt  = NIL(void) | PTR(void*);
-data List = NIL  (void)
-           | CONS (int, List&);
-escape 1;
-]],
-    todo = 'implement? trying only w/ named fields for now',
-}
-
--- no: tag must be all upper
-Test { [[
-data Pair with
+data Pair_ with
     var int x;
     var int y;
 end
 
-data Opt with
-    tag Nil;
+data Opt_ with
+    tag NIL;
 with
-    tag Ptr with
+    tag PTR with
         var void* v;
     end
 end
 
-data List with
-    tag Nil;
+data List_ with
+    tag NIL;
 with
-    tag Cons with
+    tag CONS with
         var int   head;
-        var List& tail;
+        var List_* tail;
     end
 end
+// 50 lines
+]]
 
+-- STATIC ADTs
+
+--[==[
+
+-- data type identifiers must start with an uppercase
+Test { [[
+data t with
+    var int x;
+end
 escape 1;
 ]],
-    parser = 'line 7 : after `N´ : expected `with´',
+    -- TODO: better error message
+    parser = 'line 1 : after `data´ : expected `;´'
+}
+Test { [[
+data T with
+    var int x;
+end
+escape 1;
+]],
+    run = 1,
 }
 
+-- data type identifiers cannot clash with interface/classe identifiers
 Test { [[
 data T with
     var int x;
@@ -39225,9 +39234,18 @@ interface T with
 end
 escape 1;
 ]],
-    tops = 'top-level identifier "T" already taken',
+    tops = 'line 4 : top-level identifier "T" already taken',
 }
-
+Test { [[
+interface T with
+end
+data T with
+    var int x;
+end
+escape 1;
+]],
+    tops = 'line 3 : top-level identifier "T" already taken',
+}
 Test { [[
 data T with
     var int x;
@@ -39239,7 +39257,6 @@ escape 1;
 ]],
     tops = 'top-level identifier "T" already taken',
 }
-
 Test { [[
 class T with
 do
@@ -39251,11 +39268,805 @@ escape 1;
     tops = 'top-level identifier "T" already taken',
 }
 
--- named fields
+-- tags inside union data types must be all uppercase
+Test { [[
+data Opt with
+    tag Nil;
+with
+    tag Ptr with
+        var void* v;
+    end
+end
+escape 1;
+]],
+    -- TODO: better error message
+    parser = 'line 2 : after `N´ : expected `with´',
+}
+Test { [[
+data Opt with
+    tag NIL;
+with
+    tag PTR with
+        var void* v;
+    end
+end
+escape 1;
+]],
+    run = 1,
+}
+
+-- recursive ADTs must have a base case
+Test { [[
+data List with
+    tag CONS with
+        var int   head;
+        var List& tail;
+    end
+end
+escape 1;
+]],
+    props = 'line 1 : base case must have no parameters (recursive data)',
+}
+-- the base case must appear first
+Test { [[
+data List with
+    tag CONS with
+        var int   head;
+        var List& tail;
+    end
+with
+    tag NIL;
+end
+escape 1;
+]],
+    props = 'line 1 : base case must have no parameters (recursive data)',
+}
+-- the base must not have fields
+Test { [[
+data List with
+    tag NIL with
+        var int x;
+    end
+with
+    tag CONS with
+        var int   head;
+        var List& tail;
+    end
+end
+escape 1;
+]],
+    props = 'line 1 : base case must have no parameters (recursive data)',
+}
+
+-- USE DATATYPES DEFINED ABOVE ("DATA")
+
+-- simple test
 Test { DATA..[[
 escape 1;
 ]],
     run = 1,
+}
+
+-- constructors
+Test { DATA..[[
+var Pair p1 = Pair(1,2);        /* struct, no tags */
+var Opt  o1 = Opt.NIL();        /* unions, explicit tag */
+var Opt  o2 = Opt.PTR(&p1);
+var List l1 = List.NIL();       /* recursive union */
+var List l2 = List.CONS(1, l1);
+var List l3 = List.CONS(1, List.CONS(2, List.NIL()));
+escape 1;
+]],
+    run = 1,
+}
+
+-- constructors must specify the ADT identifier
+Test { DATA..[[
+var Pair p1 = (1,2);    /* vs Pair(1,2) */
+escape 1;
+]],
+    -- TODO: better error message
+    parser = 'line 51 : after `1´ : expected `)´',
+    --run = 1,
+}
+Test { DATA..[[
+var List l1 = NIL();    /* vs List.NIL() */
+escape 1;
+]],
+    env = 'line 51 : undeclared type `NIL´',
+    --run = 1,
+}
+
+-- ADT/constructor has to be defined
+Test { DATA..[[
+var Pair p1 = Unknown(1,2);
+escape 1;
+]],
+    env = 'line 51 : undeclared type `Unknown´',
+}
+Test { DATA..[[
+var Opt  o1 = Unknown.NIL();
+escape 1;
+]],
+    env = 'line 51 : undeclared type `Unknown´',
+}
+
+-- tag has to be defined
+Test { DATA..[[
+var Opt  o1 = List.UNKNOWN();
+escape 1;
+]],
+    env = 'line 51 : tag "UNKNOWN" is not declared',
+}
+
+-- constructors have call syntax
+Test { DATA..[[
+var List l1 = List.NIL; /* vs List.NIL() */
+escape 1;
+]],
+    parser = 'line 51 : after `NIL´ : expected `(´',
+    --run = 1,
+}
+
+-- constructors must respect parameters
+Test { DATA..[[
+var Pair p1 = Pair();           /* expected (x,y) */
+escape 1;
+]],
+    env = 'line 51 : invalid arity',
+}
+Test { DATA..[[
+var Pair p1 = Pair(1,null);     /* expected (int,int) */
+escape 1;
+]],
+    env = 'line 51 : invalid call parameter #2 (null* vs int)',
+}
+Test { DATA..[[
+var Opt o1 = Opt.NIL(1);       /* expected (void) */
+escape 1;
+]],
+    env = 'line 51 : invalid arity',
+}
+
+-- constructors are not expressions...
+Test { DATA..[[
+escape Opt.NIL();
+]],
+    parser = 'line 51 : after `escape´ : expected expression',
+}
+Test { DATA..[[
+var List l;
+var int v = (l==Opt.NIL());
+escape v;
+]],
+    parser = 'line 52 : after `==´ : expected expression',
+}
+
+-- ...but have to be assigned directly
+Test { DATA..[[
+var Opt o;
+o = Opt.NIL();
+escape 1;
+]],
+    run = 1,
+}
+Test { DATA..[[
+var List l;
+l = List.NIL();
+escape 1;
+]],
+    run = 1,
+}
+
+-- TODO: uninitialized variables?
+-- (default values)
+-- structs: undefined
+-- enums: undefined
+-- recursive enums: base case
+
+-- Destructors:
+--  - like C
+--      - use field names ("dot" notation)
+--      - no support for pattern matching
+--      - but type safe
+--          - tags are checked
+
+-- distinction "constructor" vs "tag check"
+Test { DATA..[[
+var List l = List.NIL();   /* call syntax: constructor */
+var bool nil? = l.NIL;     /* no-call syntax: check tag */
+escape nil?;
+]],
+    run = 1,
+}
+Test { DATA..[[
+var List l = List.NIL();   /* call syntax: constructor */
+var bool nil? = l.CONS;    /* no-call syntax: check tag */
+escape nil?;
+]],
+    run = 0,
+}
+
+-- destructor == field access
+Test { DATA..[[
+var Pair p1 = Pair(1,2);
+escape p1.x + p1.y;
+]],
+    run = 3,
+}
+-- tag NIL has no fields
+Test { DATA..[[
+var List l;
+escape l.NIL.v;
+]],
+    env = 'line 52 : field "v" is not declared',
+}
+-- tag Opt.PTR has no field "x"
+Test { DATA..[[
+var Opt o;
+escape o.PTR.x;
+]],
+    env = 'line 52 : field "x" is not declared',
+}
+
+-- mixes Pair/Opt/List and also construcor/tag-check/destructor
+Test { DATA..[[
+var Pair p1 = Pair(1,2);
+var Opt  o1 = Opt.NIL();
+var Opt  o2 = Opt.PTR(&p1);
+var List l1 = List.NIL();
+var List l2 = List.CONS(1, l1);
+var List l3 = List.CONS(1, List.CONS(2, List.NIL()));
+
+var int ret = 0;                                // 0
+
+ret = ret + p1.x + p1.y;                        // 3
+ret = ret + o1.NIL;                             // 4
+ret = ret + (o2.PTR.v==&p1);                    // 5
+ret = ret + l1.NIL;                             // 6
+ret = ret + l2.CONS.head + l2.CONS.tail.NIL;    // 8
+ret = ret + l3.CONS.head + l3.CONS.tail.CONS.head + l3.CONS.tail.CONS.tail.NIL;   // 12
+
+escape ret;
+]],
+    run = 12,
+}
+
+-- destructors are checked at runtime
+--      v = l.CONS.head
+-- becomes
+--      assert(l.CONS)
+--      v = l.CONS.head
+Test { DATA..[[
+var List l = List.NIL();
+escape l.CONS.head;         // runtime error
+]],
+    asr = true,
+    --run = 1,
+}
+Test { DATA..[[
+var List l = List.CONS(2, List.NIL());
+escape l.CONS.head;         // runtime error
+]],
+    run = 2,
+}
+
+-- mixes everything:
+Test { DATA..[[
+var Pair p  = Pair(1,2);
+var Opt  o1 = Opt.NIL();
+var Opt  o2 = Opt.PTR(&p);
+var List l1 = List.NIL();
+var List l2 = List.CONS(1, l1);
+var List l3 = List.CONS(1, List.CONS(2, List.NIL()));
+
+var int ret = 0;            // 0
+
+var int x = p.x;
+var int y = p.y;
+_assert(x+y == 3);
+ret = ret + 3;              // 3
+
+if o1.NIL then
+    ret = ret + 1;          // 4
+else/if o1.PTR then
+    _assert(0);             // never reachable
+end
+
+if o2.NIL then
+    _assert(0);             // never reachable
+else/if o2.PTR then
+    ret = ret + 1;          // 5
+    _assert(o2.PTR.v==&p);
+end
+
+if l1.NIL then
+    ret = ret + 1;          // 6
+else/if l1.CONS then
+    _assert(0);             // never reachable
+end
+
+if l2.NIL then
+    _assert(0);             // never reachable
+else/if l2.CONS then
+    _assert(l2.CONS.head == 1);
+    ret = ret + 1;          // 7
+    if l2.CONS.tail.NIL then
+        ret = ret + 1;      // 8
+    else/if l2.CONS.tail.CONS then
+        _assert(0);         // never reachable
+    end
+    ret = ret + 1;          // 9
+end
+
+if l3.NIL then
+    _assert(0);             // never reachable
+else/if l3.CONS then
+    _assert(l3.CONS.head == 1);
+    ret = ret + 1;          // 10
+    if l3.CONS.tail.NIL then
+        _assert(0);         // never reachable
+    else/if l3.CONS.tail.CONS then
+        _assert(l3.CONS.tail.CONS.head == 2);
+        ret = ret + 2;      // 12
+        if l3.CONS.tail.CONS.tail.NIL then
+            ret = ret + 1;  // 13
+        else/if l3.CONS.tail.CONS.tail.CONS then
+            _assert(0);     // never reachable
+        end
+        ret = ret + 1;      // 14
+    end
+    ret = ret + 1;          // 15
+end
+
+escape ret;
+]],
+    run = 15,
+}
+
+-- POINTERS
+-- TODO: more discussion
+
+-- cannot cross await statements
+Test { DATA..[[
+var List l = List.CONS(1, List.NIL());
+var List* p = &l;
+await 1s;
+escape p:CONS.head;
+]],
+    fin = 'line 54 : pointer access across `await´',
+}
+
+-- COPY / MUTATION
+--  - intentional feature
+--  - ADTs are substitutes for enum/struct/union
+--  - must be "as efficient" and with similar semantics
+-- TODO: more discussion
+
+-- linking a list: 2-1-NIL
+Test { DATA..[[
+var List l1 = List.NIL();
+var List l2 = List.CONS(1, l1);
+var List l3 = List.CONS(2, l2);
+escape l3.CONS.head + l3.CONS.tail.CONS.head + l3.CONS.tail.CONS.tail.NIL;
+]],
+    run = 4,
+}
+-- breaking a list: 2-1-NIL => 2-NIL
+Test { DATA..[[
+var List l1 = List.NIL();
+var List l2 = List.CONS(1, l1);
+var List l3 = List.CONS(2, l2);
+l3.CONS.tail = l1;
+escape l3.CONS.head + l3.CONS.tail.NIL;
+]],
+    run = 3,
+}
+
+-- circular list: 1-1-1-...
+Test { DATA..[[
+var List l1 = List.NIL();
+var List l2 = List.CONS(1, l1);
+l1 = l2;
+escape l1.CONS + (l1.CONS.head==1);
+]],
+    run = 2,
+}
+Test { DATA..[[
+var List l1 = List.NIL();
+var List l2 = List.CONS(1, l1);
+l1 = l2;
+escape l1.CONS + (l1.CONS.head==1) + (l1.CONS.tail.CONS.tail.CONS.head==1);
+]],
+    run = 3,
+}
+
+-- circular list: 1-2-1-2-...
+Test { DATA..[[
+var List l1 = List.CONS(1, List.NIL());
+var List l2 = List.CONS(2, l1);
+l1.CONS.tail = l2;
+escape (l1.CONS.head==1) + (l1.CONS.tail.CONS.head==2) +
+       (l2.CONS.head==2) + (l2.CONS.tail.CONS.head==1) +
+       (l1.CONS.tail.CONS.tail.CONS.tail.CONS.head==2);
+]],
+    run = 5,
+}
+
+-- another circular list
+Test { DATA..[[
+var List l1 = List.CONS(1, List.NIL());
+var List l2 = List.CONS(2, List.NIL());
+l1.CONS.tail = l2;
+l2.CONS.tail = l1;
+
+escape l1.CONS.head + l1.CONS.tail.CONS.head + l2.CONS.head + l2.CONS.tail.CONS.head;
+]],
+    run = 6,
+}
+
+-- not circular
+Test { DATA..[[
+var List l1 = List.NIL();
+var List l2 = List.CONS(1, l1);
+l1 = l2.CONS.tail;
+escape l1.NIL;
+]],
+    run = 1,
+}
+
+-- DYNAMIC ADTs:
+--  - can only describe directed-rooted-tree
+--      - no double linked lists, no circular ADTs
+--  - different types for static/dynamic ADTs
+--  - they can never be mixed
+--  - TODO:
+--      - now explicit (List vs List_)
+--      - in the future distinguish/create automatically/implicitly
+--          - declare only List
+--              - implicitly expand to List/List_
+
+-- TODO: non-recursive dynamic ADTs
+--  - does it even make sense?
+
+-- dynamic ADTs require a pool
+Test { DATA..[[
+pool List_[] l;     // all instances reside here
+escape 1;
+]],
+    run = 1,
+}
+
+-- the pool variable is overloaded:
+--  - represents the pool
+--  - represents the root of the tree
+Test { DATA..[[
+pool List_[] l;     // l is the pool
+escape l:NIL;       // l is a pointer to the root
+]],
+    run = 1,
+}
+Test { DATA..[[
+pool List_[] l;     // l is the pool
+escape (*l).NIL;    // equivalent to above
+]],
+    run = 1,
+}
+-- the pointer must be dereferenced
+Test { DATA..[[
+pool List_[] l;     // l is the pool
+escape l.NIL;       // "l" is not a struct
+]],
+    env = 'line 52 : not a struct',
+}
+Test { DATA..[[
+pool List_[] l;     // l is the pool
+escape l.CONS.head; // "l" is not a struct
+]],
+    env = 'line 52 : not a struct',
+}
+Test { DATA..[[
+pool List_[] l;             // l is the pool
+escape l:CONS.tail.CONS;    // "l:CONS.tail" is not a struct
+]],
+    env = 'line 52 : not a struct',
+}
+
+-- the pool is initialized to the base case of the ADT
+-- (this is why the base case cannot have fields and
+--  must appear first in the ADT declaration)
+Test { DATA..[[
+pool List_[] l;
+escape l:CONS;      // runtime error
+]],
+    asr = true,
+}
+
+-- dynamic ADTs have automatic memory management
+--  - similar to organisms
+Test { DATA..[[
+var int ret = 0;
+do
+    pool List_[] l;
+    ret = l:NIL;
+end
+// all instances in "l" have been collected
+escape ret;
+]],
+    run = 1,
+}
+
+-- TODO: escape analysis for instances going to outer scopes
+
+-- Dynamic constructors:
+--  - must use "new"
+--  - must specify the pool where the instance will live
+--      - TODO: could it be detected?
+Test { DATA..[[
+pool List_[] l;
+l = new List_.NIL() in l;
+escape l:NIL;
+]],
+    run = 1,
+}
+Test { DATA..[[
+pool List_[] l;
+l = new List_.CONS(2, List_.NIL()) in l;
+escape l:CONS.head;
+]],
+    run = 2,
+}
+Test { DATA..[[
+pool List_[] l;
+l = new List_.CONS(1, List_.CONS(2, List_.NIL())) in l;
+escape l:CONS.head + l:CONS.tail:CONS.head + l:CONS.tail:CONS.tail:NIL;
+]],
+    run = 4,
+}
+-- wrong tag
+Test { DATA..[[
+pool List_[] l;
+l = new List_.NIL() in l;
+escape l:CONS;
+]],
+    asr = true,
+}
+-- no pool
+Test { DATA..[[
+pool List_[] l;
+l = new List_.CONS(2, List_.NIL());
+escape l:CONS.head;
+]],
+    code = 'not implemented'
+}
+-- no "new"
+Test { DATA..[[
+pool List_[] l;
+l = List_.CONS(2, List_.NIL());
+escape l:CONS.head;
+]],
+    env = 'line 52 : invalid call parameter #2 (List_ vs List_*)',
+}
+-- cannot assign "l" directly (in the pool declaration)
+Test { DATA..[[
+pool List_[] l = new List_.CONS(2, List_.NIL()) in l;
+escape l.CONS.head;
+]],
+    parser = 'line 51 : after `l´ : expected `;´',
+}
+-- no dereference
+Test { DATA..[[
+pool List_[] l;
+l = new List_.NIL() in l;
+escape l.NIL;
+]],
+    env = 'line 53 : not a struct',
+}
+
+Test { DATA..[[
+pool List_[] l;
+l = new List_.CONS(2, List_.NIL()) in l;
+escape l.CONS.head;
+]],
+    env = 'line 53 : not a struct',
+}
+
+-- static vs head pools
+--      pool List[] l;      // instances go to the heap
+-- vs
+--      pool List[10] l;    // 10 instances at most
+-- (same as for organisms)
+
+-- allocation fails (0 space)
+]==]
+Test { DATA..[[
+pool List_[0] l;
+l = new List_.CONS(2, List_.NIL()) in l;
+escape l:NIL;
+]],
+    run = 1,
+}
+Test { DATA..[[
+pool List_[0] l;
+l = new List_.CONS(2, List_.NIL()) in l;
+escape l:CONS.head;     // runtime error
+]],
+    asr = true,
+}
+-- 2nd allocation fails (1 space)
+Test { DATA..[[
+pool List_[1] l;
+l = new List_.CONS(2, List_.CONS(1, List_.NIL())) in l;
+_assert(l:CONS.tail:NIL);
+escape l:CONS.head;
+]],
+    run = 2,
+}
+-- 3rd allocation fails (2 space)
+
+Test { DATA..[[
+pool List_[2] l;
+l = new List_.CONS(1, List_.CONS(2, List_.CONS(3, List_.NIL()))) in l;
+escape l:CONS;
+//_assert(l:CONS.tail:CONS.tail:NIL);
+//escape l:CONS.head + l:CONS.tail:CONS.head + l:CONS.tail:CONS.tail:NIL;
+]],
+    run = 4,
+}
+
+-- dereference test for static pools
+-- (nothing new here)
+Test { DATA..[[
+pool List_[0] l;
+l = new List_.CONS(2, List_.NIL()) in l;
+escape l.NIL;
+]],
+    env = 'line 53 : not a struct',
+    --run = 1,
+}
+
+-- Mutation in dynamic ADTs:
+--  - "lost" subtrees are automatically reclaimed:
+--      l = new ...
+-- becomes
+--      tmp = new ...
+--      free(l)
+--      l = tmp
+--
+--  (this is why dynamic ADTs have to be a directed rooted trees)
+
+-- 1-NIL => 2-NIL
+-- 1-NIL can be safely reclaimed
+Test { DATA..[[
+pool List_[1] l;
+l = new List_.CONS(1, List_.NIL()) in l;
+l = new List_.CONS(2, List_.NIL()) in l;    // no allocation fail
+escape l:CONS.head;
+]],
+    run = 2,
+}
+
+
+do return end
+
+-- TODO: if p/ construtores p/ dar erro de bloco
+
+-- TODO: gcc error
+Test { DATA..[[
+var List l = List.CONS(1, List.NIL());
+l.CONS.tail = List.NIL();
+escape 1;
+]],
+    run = 1,
+}
+-- TODO: does it make sense?
+Test { DATA..[[
+pool List_[] l;
+var List l2 = List.NIL();
+escape l==l2;
+]],
+    env = 'line 53 : invalid operands to binary "=="',
+    --run = 1,
+}
+
+-- XXX
+
+Test { DATA..[[
+pool List_[2] l;
+l = new List_.CONS(1, List_.CONS(2, List_.CONS(3, List_.NIL()))) in l;
+_assert(l.CONS.tail.CONS.tail.NIL);
+l = new List_.CONS(4, List_.CONS(5, List_.CONS(6, List_.NIL()))) in l;
+_assert(l.CONS.tail.CONS.tail.NIL);
+escape l.CONS.head + l.CONS.tail.CONS.head + (l.CONS.tail.CONS.tail.NIL);
+]],
+    run = 9,
+}
+
+Test { DATA..[[
+var List_ l = new List_.NIL();
+escape 1;
+]],
+    env = 'line 30 : invalid attribution (List_ vs List_*)',
+}
+
+Test { DATA..[[
+var int ret = 0;
+
+pool List_[10] l;
+
+// TODO: avoid cycles/side-shares
+
+// change head [2]
+l = new List_.CONS(2, l);
+ret = ret + l.CONS.head;                 // 2
+_assert(ret == 2);
+
+// change head [1, 2]
+l = new List_.CONS(1, l);
+ret = ret + l.CONS.head;                 // 3
+ret = ret + l.CONS.head + l.CONS.tail.CONS.head;   // 6
+_assert(ret == 6);
+
+// change tail [1, 2, 4]
+l.CONS.tail.CONS.tail = new List_.CONS(4, List_.NIL());    // 10
+
+// change middle [1, 2, 3, 4]
+var List_ l3 = List_.CONS(3, l.CONS.tail.CONS.tail);
+l.CONS.tail.CONS.tail = l3;
+_assert(l.CONS.tail.CONS.head == 3);
+_assert(l.CONS.tail.CONS.tail.CONS.head == 4);
+ret = ret + l.CONS.tail.CONS.head + l.CONS.tail.CONS.tail.CONS.head;   // 17
+
+// drop middle [1, 3, 4]
+l.CONS.tail = l.CONS.tail.CONS.tail;
+    // TODO: check if (2) has been freed
+
+// reclaim algo:
+    // removed node will be freed
+    // assigned node will be kept
+    // starting from freed, traverse/free everything until/if reaches assigned
+
+escape ret;
+]],
+    run = -1,
+}
+
+error 'TODO: data that uses data'
+error 'TODO: data that uses data that uses 1st data again (cycle)'
+error 'TODO: detect tight loops == detect deletes in the DAG'
+error 'TODO: change middle w/ l3 w/ deeper scope'
+error 'TODO: List& l = ...  // for temporary parts (tests w/ no reassign)'
+
+Test { DATA..[[
+// no: mixing static/dynamic
+var List l2 = ...
+l.CONS.tail = &l2;  // no: l2 is static, l is dyn
+
+var List* l2 = l.CONS.tail;
+l.CONS.tail = new List.NIL();   // only deallocates in the end of reaction
+l.CONS.tail = l2; // no: possible cycle/sharing, don't know scope
+await 1s;
+l2.*  // no: pointer across reaction
+// CLEAR UPWARDS
+l = l.CONS.tail;   // clear old l upto l.CONS.tail
+// useful for iterators:
+loop do
+    l = l.CONS.tail;
+    ...
+    await 1s;
+end
+]],
+}
+
+-- anonymous fields
+Test { [[
+data Pair = (int, int);
+data Opt  = NIL(void) | PTR(void*);
+data List = NIL  (void)
+           | CONS (int, List&);
+escape 1;
+]],
+    todo = 'implement? trying only w/ named fields for now',
 }
 
 -- named fields w/ initializers
@@ -39289,63 +40100,7 @@ escape 1;
     todo = 'implement?',
 }
 
--- anonymous CONStructors
-Test { DATA..[[
-var Pair p1 = Pair(1,2);
-var Opt  o1 = Opt.NIL();
-var Opt  o2 = Opt.PTR(&p1);
-var List l1 = List.NIL();
-var List l2 = List.CONS(1, l1);
-var List l3 = List.CONS(1, List.CONS(2, List.NIL()));
-
-escape 1;
-]],
-    run = 1,
-}
-
--- TODO: if p/ construtores p/ dar erro de bloco
-
--- invalid constructors
-Test { DATA..[[
-var Pair p1 = Pair();
-escape 1;
-]],
-    env = 'line 22 : invalid arity',
-}
-Test { DATA..[[
-var Pair p1 = Pair(1,null);
-escape 1;
-]],
-    env = 'line 22 : invalid call parameter #2 (null* vs int)',
-}
-Test { DATA..[[
-var Opt  o1 = Opt.NIL(1);
-escape 1;
-]],
-    env = 'line 22 : invalid arity',
-}
-Test { DATA..[[
-var Pair p1 = Pair_(1,2);
-escape 1;
-]],
-    env = 'line 22 : undeclared type `Pair_´',
-    --env = 'line 22 : data "Pair_" is not declared',
-}
-Test { DATA..[[
-var Opt  o1 = List_.NIL();
-escape 1;
-]],
-    env = 'line 22 : undeclared type `List_´',
-    --env = 'line 22 : data "List_" is not declared',
-}
-Test { DATA..[[
-var Opt  o1 = List.NIL_();
-escape 1;
-]],
-    env = 'line 22 : tag "NIL_" is not declared',
-}
-
--- named CONStructors
+-- constructors may specifies the field names
 Test { DATA..[[
 var Pair p1 = Pair(x=1,x=2);
 var Opt  o1 = Opt.NIL();
@@ -39358,20 +40113,6 @@ escape 1;
 ]],
     todo = 'implement?',
     run = 1,
-}
-
--- constructors are not expressions
-Test { DATA..[[
-escape Opt.NIL();
-]],
-    parser = 'line 22 : after `escape´ : expected expression',
-}
-Test { DATA..[[
-var List l;
-var int v = (l==Opt.NIL());
-escape v;
-]],
-    parser = 'line 23 : after `==´ : expected expression',
 }
 
 -- anonymous destructors / pattern matching
@@ -39477,482 +40218,6 @@ escape ret;
 ]],
     run = 15,
     todo = 'implement? trying only w/ named fields for now',
-}
-
--- named destructors
-
--- checked at runtime
-Test { DATA..[[
-var List l;
-escape l.CONS.head;
-]],
-    run = 1,
-}
-
-Test { DATA..[[
-var Pair p  = Pair(1,2);
-var Opt  o1 = Opt.NIL();
-var Opt  o2 = Opt.PTR(&p);
-var List l1 = List.NIL();
-var List l2 = List.CONS(1, l1);
-var List l3 = List.CONS(1, List.CONS(2, List.NIL()));
-
-var int ret = 0;
-
-var int x = p.x;
-var int y = p.y;
-_assert(x+y == 3);
-ret = ret + 3;              // 3
-
-if o1.NIL then
-    ret = ret + 1;      // 4
-    _assert(1);
-else/if o1.PTR then
-    _assert(0);
-end
-
-if o2.NIL then
-    _assert(0);
-else/if o2.PTR then
-    ret = ret + 1;      // 5
-    _assert(o2.PTR.v==&p);
-end
-
-if l1.NIL then
-    ret = ret + 1;      // 6
-    _assert(1);
-else/if l1.CONS then
-    _assert(0);
-end
-
-if l2.NIL then
-    _assert(0);
-else/if l2.CONS then
-    _assert(l2.CONS.head == 1);
-    ret = ret + 1;      // 7
-    if l2.CONS.tail.NIL then
-        ret = ret + 1;      // 8
-        _assert(1);
-    else/if l2.CONS.tail.CONS then
-        _assert(0);
-    end
-    ret = ret + 1;      // 9
-    _assert(1);
-end
-
-if l3.NIL then
-    _assert(0);
-else/if l3.CONS then
-    _assert(l3.CONS.head == 1);
-    ret = ret + 1;      // 10
-    if l3.CONS.tail.NIL then
-        _assert(0);
-    else/if l3.CONS.tail.CONS then
-        _assert(l3.CONS.tail.CONS.head == 2);
-        ret = ret + 2;      // 12
-        if l3.CONS.tail.CONS.tail.NIL then
-            _assert(1);
-            ret = ret + 1;      // 13
-        else/if l3.CONS.tail.CONS.tail.CONS then
-            _assert(0);
-        end
-        _assert(1);
-        ret = ret + 1;      // 14
-    end
-    _assert(1);
-    ret = ret + 1;      // 15
-end
-
-escape ret;
-]],
-    run = 15,
-}
-
--- named destructors / dot notation
-Test { DATA..[[
-var Pair p1 = Pair(1,2);
-var Opt  o1 = Opt.NIL();
-var Opt  o2 = Opt.PTR(&p1);
-var List l1 = List.NIL();
-var List l2 = List.CONS(1, l1);
-var List l3 = List.CONS(1, List.CONS(2, List.NIL()));
-
-var int ret = 0;
-
-ret = ret + p1.x + p1.y;        // 3
-ret = ret + o1.NIL;    // 4
-ret = ret + (o2.PTR.v==&p1);    // 5
-ret = ret + l1.NIL;   // 6
-ret = ret + l2.CONS.head + l2.CONS.tail.NIL;   // 8
-ret = ret + l3.CONS.head + l3.CONS.tail.CONS.head + l3.CONS.tail.CONS.tail.NIL;   // 12
-
-escape ret;
-]],
-    run = 12,
-}
-
--- access across await
-Test { DATA..[[
-var List l = List.CONS(1, List.NIL());
-var List* p = &l;
-await 1s;
-escape p:CONS.head;
-]],
-    fin = 'line 25 : pointer access across `await´',
-}
-
--- tag mismatch (runtime assertion)
-Test { DATA..[[
-var List l = List.NIL();
-escape l.CONS.head;
-]],
-    asr = true,
-}
-
-Test { DATA..[[
-var List l1 = List.NIL();
-var List l2 = List.CONS(1, l1);
-l1 = l2;
-escape l1.CONS + (l1.CONS.head==1);
-]],
-    run = 2,
-}
-
-Test { DATA..[[
-var List l1 = List.NIL();
-var List l2 = List.CONS(1, l1);
-l1 = l2.CONS.tail;
-escape l1.NIL;
-]],
-    run = 1,
-}
-
--- NIL has no fields
-Test { DATA..[[
-var List l;
-escape l.NIL.v;
-]],
-    env = 'line 23 : field "v" is not declared',
-}
-
-Test { DATA..[[
-var List l1 = List.NIL();
-var List l2 = List.CONS(1, l1);
-l1 = List.CONS(1, l2);
-escape l1.CONS.head==1;
-]],
-    run = 1,
-}
-
--- ok mutation, part of adt <- part/all of another adt
-Test { DATA..[[
-var List l1 = List.NIL();
-var List l2 = List.CONS(1, List.NIL());
-var List l3 = List.CONS(1, List.CONS(2, List.NIL()));
-l3.CONS.tail = l2;
-
-escape l3.CONS.head + l3.CONS.tail.CONS.head;
-]],
-    run = 2,
-}
-
--- ok mutation, part of adt <- part/all of another adt
--- ok cycle
-Test { DATA..[[
-var List l1 = List.CONS(1, List.NIL());
-var List l2 = List.CONS(2, List.NIL());
-l1.CONS.tail = l2;
-l2.CONS.tail = l1;
-
-escape l1.CONS.head + l1.CONS.tail.CONS.head + l2.CONS.head + l2.CONS.tail.CONS.head;
-]],
-    run = 6,
-}
-
--- recursive w/o base case
-Test { [[
-data List with
-    tag CONS with
-        var int   head;
-        var List& tail;
-    end
-end
-escape 1;
-]],
-    props = 'line 1 : base case must have no parameters (recursive data)',
-}
-
--- recursive w/ base case last
-Test { [[
-data List with
-    tag CONS with
-        var int   head;
-        var List& tail;
-    end
-with
-    tag NIL;
-end
-escape 1;
-]],
-    props = 'line 1 : base case must have no parameters (recursive data)',
-}
-
-    -- DYNAMIC ADTs
-
-Test { [[
-data List with
-    tag NIL;
-with
-    tag CONS with
-        var int   head;
-        var List& tail;
-    end
-end
-pool List[] l;
-var List l2 = List.NIL();
-escape l==l2;
-]],
-    env = 'line 11 : invalid operands to binary "=="',
-    --run = 1,
-}
-
--- l vs *l:
--- l represents the memory pool
--- *l accesses the head
-Test { [[
-data List with
-    tag NIL;
-with
-    tag CONS with
-        var int   head;
-        var List& tail;
-    end
-end
-var int ret = 0;
-do
-    pool List[] l;
-    ret = l:NIL;
-end
-escape ret;
-]],
-    run = 1,
-}
-Test { [[
-data List with
-    tag NIL;
-with
-    tag CONS with
-        var int   head;
-        var List& tail;
-    end
-end
-pool List[] l;
-escape l:NIL;
-]],
-    run = 1,
-}
-Test { [[
-data List with
-    tag NIL;
-with
-    tag CONS with
-        var int   head;
-        var List& tail;
-    end
-end
-pool List[] l;
-escape l:CONS;
-]],
-    asr = true,
-}
-
-Test { DATA..[[
-pool List[] l = new List.CONS(2, List.NIL()) in l;
-escape l.CONS.head;
-]],
-    parser = 'line 22 : after `l´ : expected `;´',
-}
-
--- not "new"
-Test { DATA..[[
-pool List[] l;
-l = List.CONS(2, List.NIL());
-escape l.CONS.head;
-]],
-    env = 'line 23 : invalid attribution (List[]& vs List)',
-}
-
-Test { DATA..[[
-pool List[] l;
-*l = new List.NIL() in l;
-escape l:NIL;
-]],
-    run = 2,
-}
-
-]==]
-Test { DATA..[[
-pool List[] l;
-*l = new List.NIL() in l;
-escape l:CONS;
-]],
-    asr = true,
-}
-
-Test { DATA..[[
-pool List[] l;
-l = new List.NIL() in l;
-escape l:NIL;
-]],
-    env = 'line 23 : invalid attribution (List[]& vs List&)',
-}
-
-Test { DATA..[[
-pool List[] l;
-*l = new List.NIL() in l;
-escape l.NIL;
-]],
-    env = 'line 24 : invalid access (List[]& vs List)',
-}
-
-Test { DATA..[[
-pool List[] l;
-l = new List.CONS(2, List.NIL()) in l;
-escape l.CONS.head;
-]],
-    env = 'line 23 : invalid attribution (List[]& vs List&)',
-}
-
-Test { DATA..[[
-pool List[0] l;
-l = new List.CONS(2, List.NIL()) in l;
-escape l.NIL;
-]],
-    env = 'line 23 : invalid attribution (List[]& vs List&)',
-    --run = 1,
-}
-
-Test { DATA..[[
-pool List[0] l;
-*l = new List.CONS(2, List.NIL()) in l;
-escape l.NIL;
-]],
-    env = 'line 24 : invalid access (List[]& vs List)',
-    --run = 1,
-}
-
-Test { DATA..[[
-pool List[0] l;
-*l = new List.CONS(2, List.NIL()) in l;
-escape l:NIL;
-]],
-    run = 1,
-}
-
-Test { DATA..[[
-pool List[1] l;
-l = new List.CONS(2, List.CONS(1, List.NIL())) in l;
-_assert(l.CONS.tail.NIL);
-escape l.CONS.head;
-]],
-    run = 2,
-}
-
-Test { DATA..[[
-pool List[2] l;
-l = new List.CONS(1, List.CONS(2, List.CONS(3, List.NIL()))) in l;
-_assert(l.CONS.tail.CONS.tail.NIL);
-l.CONS.tail = List.CONS(4, List.NIL());
-escape l.CONS.head + l.CONS.tail.CONS.head + (l.CONS.tail.CONS.tail.NIL);
-]],
-    run = 5,
-}
-
-Test { DATA..[[
-pool List[2] l;
-l = new List.CONS(1, List.CONS(2, List.CONS(3, List.NIL()))) in l;
-_assert(l.CONS.tail.CONS.tail.NIL);
-l = new List.CONS(4, List.CONS(5, List.CONS(6, List.NIL()))) in l;
-_assert(l.CONS.tail.CONS.tail.NIL);
-escape l.CONS.head + l.CONS.tail.CONS.head + (l.CONS.tail.CONS.tail.NIL);
-]],
-    run = 9,
-}
-
-Test { DATA..[[
-var List l = new List.NIL();
-escape 1;
-]],
-    env = 'line 22 : invalid attribution (List vs List*)',
-}
-
-Test { DATA..[[
-var int ret = 0;
-
-pool List[10] l;
-
-// TODO: avoid cycles/side-shares
-
-// change head [2]
-l = new List.CONS(2, l);
-ret = ret + l.CONS.head;                 // 2
-_assert(ret == 2);
-
-// change head [1, 2]
-l = new List.CONS(1, l);
-ret = ret + l.CONS.head;                 // 3
-ret = ret + l.CONS.head + l.CONS.tail.CONS.head;   // 6
-_assert(ret == 6);
-
-// change tail [1, 2, 4]
-l.CONS.tail.CONS.tail = new List.CONS(4, List.NIL());    // 10
-
-// change middle [1, 2, 3, 4]
-var List l3 = List.CONS(3, l.CONS.tail.CONS.tail);
-l.CONS.tail.CONS.tail = l3;
-_assert(l.CONS.tail.CONS.head == 3);
-_assert(l.CONS.tail.CONS.tail.CONS.head == 4);
-ret = ret + l.CONS.tail.CONS.head + l.CONS.tail.CONS.tail.CONS.head;   // 17
-
-// drop middle [1, 3, 4]
-l.CONS.tail = l.CONS.tail.CONS.tail;
-    // TODO: check if (2) has been freed
-
-// reclaim algo:
-    // removed node will be freed
-    // assigned node will be kept
-    // starting from freed, traverse/free everything until/if reaches assigned
-
-escape ret;
-]],
-    run = -1,
-}
-
-error 'TODO: data that uses data'
-error 'TODO: data that uses data that uses 1st data again (cycle)'
-error 'TODO: detect tight loops == detect deletes in the DAG'
-error 'TODO: change middle w/ l3 w/ deeper scope'
-error 'TODO: List& l = ...  // for temporary parts (tests w/ no reassign)'
-
-Test { DATA..[[
-// no: mixing static/dynamic
-var List l2 = ...
-l.CONS.tail = &l2;  // no: l2 is static, l is dyn
-
-var List* l2 = l.CONS.tail;
-l.CONS.tail = new List.NIL();   // only deallocates in the end of reaction
-l.CONS.tail = l2; // no: possible cycle/sharing, don't know scope
-await 1s;
-l2.*  // no: pointer across reaction
-// CLEAR UPWARDS
-l = l.CONS.tail;   // clear old l upto l.CONS.tail
-// useful for iterators:
-loop do
-    l = l.CONS.tail;
-    ...
-    await 1s;
-end
-]],
 }
 
 do return end

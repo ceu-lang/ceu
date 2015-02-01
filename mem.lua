@@ -1,5 +1,6 @@
 MEM = {
     adts = '',
+    adts_init = '',
     clss = '',
     native_pre = '',
 }
@@ -39,7 +40,12 @@ struct CEU_]]..id..[[ {
 
         me.auxs[#me.auxs+1] = [[
 #ifdef CEU_ADTS_NEWS
-void CEU_]]..id..'_free (CEU_'..id..[[* me);
+#ifdef CEU_ADTS_NEWS_MALLOC
+void CEU_]]..id..'_free_dynamic (CEU_'..id..[[* me);
+#endif
+#ifdef CEU_ADTS_NEWS_POOL
+void CEU_]]..id..'_free_static (CEU_'..id..[[* me, void* pool);
+#endif
 #endif
 ]]
     end,
@@ -57,7 +63,8 @@ void CEU_]]..id..'_free (CEU_'..id..[[* me);
 
         local free = [[
 #ifdef CEU_ADTS_NEWS
-void CEU_]]..id..'_free (CEU_'..id..[[* me) {
+#ifdef CEU_ADTS_NEWS_MALLOC
+void CEU_]]..id..'_free_dynamic (CEU_'..id..[[* me) {
 ]]
         if op == 'struct' then
             free = free .. [[
@@ -72,7 +79,17 @@ void CEU_]]..id..'_free (CEU_'..id..[[* me) {
                 local id_tag = string.upper(id..'_'..tag)
                 free = free .. [[
         case CEU_]]..id_tag..[[:
-            CEU_]]..id_tag..[[_free(me);
+]]
+                if me.is_rec and tag==me.tags[1] then
+                    free = free .. [[
+            /* base case */
+]]
+                else
+                    free = free .. [[
+            CEU_]]..id_tag..[[_free_dynamic(me);
+]]
+                end
+                free = free .. [[
             break;
 ]]
             end
@@ -83,6 +100,44 @@ void CEU_]]..id..'_free (CEU_'..id..[[* me) {
         free = free .. [[
 }
 #endif
+#ifdef CEU_ADTS_NEWS_POOL
+void CEU_]]..id..'_free_static (CEU_'..id..[[* me, void* pool) {
+]]
+        if op == 'struct' then
+            free = free .. [[
+    ceu_pool_free(pool, me);
+]]
+        else
+            assert(op == 'union')
+            free = free .. [[
+    switch (me->tag) {
+]]
+            for _, tag in ipairs(me.tags) do
+                local id_tag = string.upper(id..'_'..tag)
+                free = free .. [[
+        case CEU_]]..id_tag..[[:
+]]
+                if me.is_rec and tag==me.tags[1] then
+                    free = free .. [[
+            /* base case */
+]]
+                else
+                    free = free .. [[
+            CEU_]]..id_tag..[[_free_static(me, pool);
+]]
+                end
+                free = free .. [[
+            break;
+]]
+            end
+            free = free .. [[
+    }
+]]
+        end
+        free = free .. [[
+}
+#endif
+#endif
 ]]
 
         me.auxs[#me.auxs+1] = free
@@ -91,6 +146,16 @@ void CEU_]]..id..'_free (CEU_'..id..[[* me) {
         MEM.adts = MEM.adts..'\n'..(me.enum or '')..'\n'..
                                    me.struct..'\n'..
                                    me.auxs..'\n'
+
+        -- declare a static BASE instance
+        if me.is_rec then
+            MEM.adts = MEM.adts..[[
+static CEU_]]..id..[[ CEU_]]..string.upper(id)..[[_BASE;
+]]
+            MEM.adts_init = MEM.adts_init .. [[
+CEU_]]..string.upper(id)..[[_BASE.tag = CEU_]]..string.upper(id..'_'..me.tags[1])..[[;
+]]
+        end
     end,
     Dcl_adt_tag_pre = function (me)
         local top = AST.par(me, 'Dcl_adt')
@@ -105,17 +170,22 @@ CEU_]]..id..' '..enum..'_assert (CEU_'..id..[[ me) {
 }
 ]]
 
+        if top.is_rec and top.tags[1]==tag then
+            return  -- base case, no free
+        end
+
         local free = [[
 #ifdef CEU_ADTS_NEWS
-void ]]..enum..'_free (CEU_'..id..[[* me) {
+#ifdef CEU_ADTS_NEWS_MALLOC
+void ]]..enum..'_free_dynamic (CEU_'..id..[[* me) {
 ]]
 
         -- free all my recursive fields
         for _,item in ipairs(top.tags[tag].tup) do
             local _, tp, _ = unpack(item)
-            if TP.tostr(tp) == id..'&' then
+            if TP.tostr(tp) == id..'*' then
                 free = free .. [[
-    CEU_]]..id..[[_free(me->]]..tag..'.'..item.var_id..[[);
+    CEU_]]..id..[[_free_dynamic(me->]]..tag..'.'..item.var_id..[[);
 ]]
             end
         end
@@ -124,6 +194,26 @@ void ]]..enum..'_free (CEU_'..id..[[* me) {
         free = free .. [[
     ceu_out_realloc(me, 0);
 }
+#endif
+#ifdef CEU_ADTS_NEWS_POOL
+void ]]..enum..'_free_pool (CEU_'..id..[[* me, void* pool) {
+]]
+
+        -- free all my recursive fields
+        for _,item in ipairs(top.tags[tag].tup) do
+            local _, tp, _ = unpack(item)
+            if TP.tostr(tp) == id..'*' then
+                free = free .. [[
+    CEU_]]..id..[[_free_pool(me->]]..tag..'.'..item.var_id..[[, pool);
+]]
+            end
+        end
+
+        -- free myself
+        free = free .. [[
+    ceu_pool_free(pool, me);
+}
+#endif
 #endif
 ]]
         top.auxs[#top.auxs+1] = free
@@ -297,13 +387,7 @@ typedef union CEU_]]..me.id..[[_delayed {
                 end
                 top.struct = top.struct..SPC()..'  '..dcl..';\n'
             elseif var.pre=='pool' then
-                local T = ENV.clss[var.tp.id] or ENV.adts[var.tp.id]
-
-                -- might be _TOP_POOL
-                if T and T.tag == 'Dcl_adt' then
-                    local tp = string.sub(tp,1,-2) -- TODO: removing extra '*'
-                    top.struct = top.struct..SPC()..tp..' '..var.id_..';\n'
-                end
+                local T = var.cls or var.adt
 
                 -- static pool: "var T[N] ts"
                 if type(var.tp.arr) == 'table' then

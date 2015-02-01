@@ -221,6 +221,8 @@ ceu_app_init (tceu_app* _ceu_app)
     CEU_THREADS_MUTEX_LOCK(&_ceu_app->threads_mutex);
 #endif
 
+    === ADTS_INIT ===
+
 #ifdef CEU_OS_APP
 
 #ifdef __AVR

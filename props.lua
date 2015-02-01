@@ -361,7 +361,7 @@ F = {
                 for _, item in ipairs(tup) do
                     assert(item.tag == 'TupleTypeItem')
                     local _, tp, _ = unpack(item)
-                    if TP.tostr(tp) == id..'&' then
+                    if TP.tostr(tp)==id..'&' or TP.tostr(tp)==id..'*' then
                         me.is_rec = true
                         break
                     end

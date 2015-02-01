@@ -331,7 +331,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
               + CKEY'call/rec' * EV'__Exp'
 
     , _Adt_constr_root = CKEY'new' * EV'Adt_constr' * (KEY'in'*EV'__Exp' + Cc(false))
-                  + Cc(false) * V'Adt_constr'
+                  + Cc(false) * V'Adt_constr' * Cc(false)
     , Adt_constr  = V'Adt' * EK'(' * EV'_Adt_explist' * EK')'
     , Adt         = V'__ID_adt' * (K'.'*V'__ID_tag' + Cc(false))
 
