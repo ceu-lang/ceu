@@ -1161,15 +1161,6 @@ F = {
         elseif adt then
             local ID, op, blk = unpack(adt)
 
-            -- attributions/constructors need access to the pool
-            -- the pool is the first "e1" that matches adt type:
-            -- l = new List.CONS(...)
-            -- ^-- first
-            -- l:CONS.tail = new List.CONS(...)
-            -- ^      ^-- matches, but not first
-            -- ^-- first
-            me.__env_adt_first = e1.__env_adt_first or e1
-
             if op == 'struct' then
                 local var = ASR(blk.vars[id], me,
                             'field "'..id..'" is not declared')

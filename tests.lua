@@ -39972,12 +39972,22 @@ escape l:CONS.head + l:CONS.tail:CONS.head + (l:CONS.tail:CONS.tail:NIL);
     run = 10,
 }
 
--- Mutation:
+-- Mutation in subtrees:
 --  - OK: child attributed to parent
 --      - parent subtree is dropped, child substitutes it
 --  - NO: parent attributed to child
 --      - creates a cycle / makes child orphan
 --      - TODO (could "swap" ?)
+
+-- OK: child is constructor (with no previous parent)
+Test { DATA..[[
+pool List_[2] l;
+l = new List_.CONS(1, List_.NIL());
+l:CONS.tail = new List_.CONS(2, List_.NIL());
+escape l:CONS.head + l:CONS.tail:CONS.head;
+]],
+    run = 3,
+}
 
 Test { DATA..[[
 pool List_[2] l;
@@ -39986,6 +39996,16 @@ l = l:CONS.tail;
 escape l:CONS.head;
 ]],
     run = 2,
+}
+
+Test { DATA..[[
+pool List_[2] l;
+l = new List_.CONS(1, List_.CONS(2, List_.NIL()));
+l = l:CONS.tail;
+l:CONS.tail = new List_.CONS(3, List_.CONS(4, List_.NIL()));    // 4 fails
+escape l:CONS.head + l:CONS.tail:CONS.head + l:CONS.tail:CONS.tail:NIL;
+]],
+    run = 6,
 }
 
 do return end

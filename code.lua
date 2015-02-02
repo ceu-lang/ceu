@@ -178,15 +178,25 @@ case ]]..me.lbl_clr.id..[[:;
 ]])
 end
 
-local function FIND_ADT_POOL (me)
-    local ret = (me.__env_adt_first or me)
-    if ret.tag == 'Op1_cast' then
-        ret = ret[2]    -- cast is not an lvalue in C
+-- attributions/constructors need access to the pool
+-- the pool is the first "e1" that matches adt type:
+-- l = new List.CONS(...)
+-- ^-- first
+-- l:CONS.tail = new List.CONS(...)
+-- ^      ^-- matches, but not first
+-- ^-- first
+local function FIND_ADT_POOL (fst)
+    local adt = ENV.adts[fst.tp.id]
+    if adt and fst.tp.ptr==1 then
+        return fst
+    else
+        assert(fst.__par, 'bug found')
+        return FIND_ADT_POOL(fst.__par)
     end
-    return ret
 end
 
 local function FIND_ADT_POOL_CONSTR (me)
+    -- find lval from set inside the constructor
     local par = me.__par.__par.__par
     if par.tag == 'Adt_constr' then
         return FIND_ADT_POOL_CONSTR(par)
@@ -196,7 +206,7 @@ local function FIND_ADT_POOL_CONSTR (me)
         local set = stmts[2]
         assert(set.tag == 'SetExp', 'bug found')
         local to = set[3]
-        return FIND_ADT_POOL(to)
+        return FIND_ADT_POOL(to.fst)
     end
 end
 
@@ -465,6 +475,9 @@ LVAR..[[ = &CEU_]]..string.upper(var.tp.id)..[[_BASE;
                 -- becomes
                 --      (((tceu_adt_root*)to.root)->pool)
                 local pool = FIND_ADT_POOL_CONSTR(me)
+                if pool.tag == 'Op1_cast' then    -- cast is not an lvalue in C
+                    pool = pool[2]
+                end
                 pool = '(((tceu_adt_root*)(&('..V(pool)..')))->pool)'
 
                 LINE(me, [[
@@ -784,7 +797,10 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
             --      to.root
             -- becomes
             --      (((tceu_adt_root*)to.root)->pool)
-            local pool = FIND_ADT_POOL(to)
+            local pool = FIND_ADT_POOL(to.fst)
+            if pool.tag == 'Op1_cast' then    -- cast is not an lvalue in C
+                pool = pool[2]
+            end
             pool = '(((tceu_adt_root*)(&('..V(pool)..')))->pool)'
 
             LINE(me, [[
