@@ -344,6 +344,22 @@ F = {
         if to.tag=='Var' and to.var.id=='_ret' then
             PROPS.has_ret = true
         end
+
+        -- check (or):
+        --  - "to" is prefix of "fr"
+        --  - "fr" is constructor
+        --
+        --  l = l:CONS.tail     // OK
+        --  l = new (...)       // OK
+        --  l:CONS.tail = l     // NO
+        local adt = ENV.adts[fr.tp.id]
+        if adt and fr.tp.ptr==1 then
+            local constr = (fr.tag=='Var')
+            assert(to.fst.tag=='Var' and fr.fst.tag=='Var', 'not implemented')
+            local prefix = (to.var == fr.var) and
+                            (to.fst.__depth-to.__depth <= fr.fst.__depth-fr.__depth)
+            ASR(constr or prefix, me, 'cannot assign parent to child')
+        end
     end,
 
     Dcl_adt = function (me)

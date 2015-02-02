@@ -156,7 +156,7 @@ error 'testar spawn/spawn que se mata'
 
 --do escape end
 
--- OK: under tests but supposed to work
+-- ok: under tests but supposed to work
 
 --ERROR: #ps
 Test { [[
@@ -879,7 +879,7 @@ end
     run = 1,
 }
 
--- PROCURAR XXX e recolocar tudo ate o OK la
+-- PROCURAR XXX e recolocar tudo ate o ok la
 
 Test { [[
 input (int a)=>int F do
@@ -39144,9 +39144,8 @@ escape ptr2==&a;
     run = 1,
 }
 
-
--- ALGEBRAIC DATATYPES (ADTs)
 ]===]
+-- ALGEBRAIC DATATYPES (ADTs)
 
 -- ADTs used in most examples below
 DATA = [[
@@ -39629,9 +39628,9 @@ escape ret;
 -- POINTERS
 -- TODO: more discussion
 --  - not an lvalue if rvalue not a constructor:
---      ptr:CONS.tail = new ...             // OK
---      ptr:CONS.tail = l:...               // NO
---      ptr:CONS.tail = ptr:CONS.tail:...   // OK
+--      ptr:CONS.tail = new ...             // ok
+--      ptr:CONS.tail = l:...               // no
+--      ptr:CONS.tail = ptr:CONS.tail:...   // ok
 --          same prefix
 
 -- cannot cross await statements
@@ -39973,13 +39972,15 @@ escape l:CONS.head + l:CONS.tail:CONS.head + (l:CONS.tail:CONS.tail:NIL);
 }
 
 -- Mutation in subtrees:
---  - OK: child attributed to parent
+--  - ok: child attributed to parent
 --      - parent subtree is dropped, child substitutes it
---  - NO: parent attributed to child
+--  - no: parent attributed to child
 --      - creates a cycle / makes child orphan
 --      - TODO (could "swap" ?)
+--  - RULE: either r-val is constructor or
+--                 l-val is prefix of r-val
 
--- OK: child is constructor (with no previous parent)
+-- ok: child is constructor (with no previous parent)
 Test { DATA..[[
 pool List_[2] l;
 l = new List_.CONS(1, List_.NIL());
@@ -39988,27 +39989,47 @@ escape l:CONS.head + l:CONS.tail:CONS.head;
 ]],
     run = 3,
 }
-
+-- ok: tail is child of l
 Test { DATA..[[
 pool List_[2] l;
 l = new List_.CONS(1, List_.CONS(2, List_.NIL()));
-l = l:CONS.tail;
+l = l:CONS.tail;    // parent=child
 escape l:CONS.head;
 ]],
     run = 2,
 }
-
 Test { DATA..[[
 pool List_[2] l;
 l = new List_.CONS(1, List_.CONS(2, List_.NIL()));
-l = l:CONS.tail;
+l = l:CONS.tail;    // parent=child
+l:CONS.tail = new List_.CONS(3, List_.CONS(4, List_.NIL()));    // 4 fails
+escape l:CONS.head + l:CONS.tail:CONS.head + l:CONS.tail:CONS.tail:NIL;
+]],
+    run = 6,
+}
+Test { DATA..[[
+pool List_[2] l;
+l = new List_.CONS(1, List_.CONS(2, List_.NIL()));
+l = l:CONS.tail;    // parent=child
 l:CONS.tail = new List_.CONS(3, List_.CONS(4, List_.NIL()));    // 4 fails
 escape l:CONS.head + l:CONS.tail:CONS.head + l:CONS.tail:CONS.tail:NIL;
 ]],
     run = 6,
 }
 
+-- no: l is parent of tail
+Test { DATA..[[
+pool List_[2] l;
+l = new List_.CONS(1, List_.CONS(2, List_.NIL()));
+l:CONS.tail = l;    // child=parent
+escape 1;
+]],
+    props = 'line 53 : cannot assign parent to child',
+}
+
 do return end
+
+-- TODO: IGNORE EVERYTHING STARTING FROM HERE
 
 -- TODO: if p/ construtores p/ dar erro de bloco
 
