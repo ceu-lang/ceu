@@ -450,13 +450,6 @@ case ]]..me.lbls_cnt.id..[[:;
         local LVAR = V(var)
         local RVAR = '('..op..V(var)..')'
 
-        --      to.root
-        -- becomes
-        --      (((tceu_adt_root*)to.root)->pool)
-        local pool = FIND_ADT_POOL_CONSTR(me)
-        pool = '(((tceu_adt_root*)(&('..V(pool)..')))->pool)'
-
-
         if dyn then
             -- base case
             if adt.is_rec and tag==adt.tags[1] then
@@ -467,6 +460,13 @@ LVAR..[[ = &CEU_]]..string.upper(var.tp.id)..[[_BASE;
             -- other cases
             else
                 local tp = 'CEU_'..var.tp.id
+
+                --      to.root
+                -- becomes
+                --      (((tceu_adt_root*)to.root)->pool)
+                local pool = FIND_ADT_POOL_CONSTR(me)
+                pool = '(((tceu_adt_root*)(&('..V(pool)..')))->pool)'
+
                 LINE(me, [[
 #if defined(CEU_ADTS_NEWS_MALLOC) && defined(CEU_ADTS_NEWS_POOL)
 if (]]..pool..[[ == NULL) {
@@ -494,7 +494,7 @@ if (]]..LVAR..[[ == NULL) {
         CONC(me, nested)
 
         if tag then
-            if not (adt.is_rec and tag==adt.tags[1]) then
+            if not (dyn and adt.is_rec and tag==adt.tags[1]) then
                 -- not required for base case
                 LINE(me, RVAR..'.tag = CEU_'..string.upper(id)..'_'..tag..';')
             end
@@ -773,28 +773,36 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
     SetExp = function (me)
         local _, fr, to, fin = unpack(me)
         COMM(me, 'SET: '..tostring(to[1]))    -- Var or C
+        LINE(me, '{')   -- __ceu_tmp below
 
-        --      to.root
-        -- becomes
-        --      (((tceu_adt_root*)to.root)->pool)
-        local pool = FIND_ADT_POOL(to)
-        pool = '(((tceu_adt_root*)(&('..V(pool)..')))->pool)'
+        -- ADT relink:
+        --  - remove "fr" from tree (set parent link to NIL)
+        --  - free all "to" subtree ("fr" is not there anymore)
+        --  - put "fr" back in "to"
+        local adt = ENV.adts[fr.tp.id]
+        if adt and fr.tp.ptr==1 then
+            --      to.root
+            -- becomes
+            --      (((tceu_adt_root*)to.root)->pool)
+            local pool = FIND_ADT_POOL(to)
+            pool = '(((tceu_adt_root*)(&('..V(pool)..')))->pool)'
 
-        -- ADT: free current tree
-        if me.__ast_adt_free then
             LINE(me, [[
+    void* __ceu_tmp = ]]..V(fr)..[[;
+    ]]..V(fr)..[[ = &CEU_]]..string.upper(fr.tp.id)..[[_BASE;
 #if defined(CEU_ADTS_NEWS_MALLOC) && defined(CEU_ADTS_NEWS_POOL)
     if (]]..pool..[[ == NULL) {
-        CEU_]]..me.__ast_adt_free..[[_free_dynamic(]]..V(to)..[[);
+        CEU_]]..fr.tp.id..[[_free_dynamic(]]..V(to)..[[);
     } else {
-        CEU_]]..me.__ast_adt_free..[[_free_static(]]..V(to)..[[, ]]..pool..[[);
+        CEU_]]..fr.tp.id..[[_free_static(]]..V(to)..[[, ]]..pool..[[);
     }
 #elif defined(CEU_ADTS_NEWS_MALLOC)
-    CEU_]]..me.__ast_adt_free..[[_free_dynamic(]]..V(to)..[[);
+    CEU_]]..fr.tp.id..[[_free_dynamic(]]..V(to)..[[);
 #elif defined(CEU_ADTS_NEWS_POOL)
-    CEU_]]..me.__ast_adt_free..[[_free_static(]]..V(to)..[[, ]]..pool..[[);
+    CEU_]]..fr.tp.id..[[_free_static(]]..V(to)..[[, ]]..pool..[[);
 #endif
 ]])
+            fr = { val='__ceu_tmp' }
         end
 
         -- cast is not an lvalue in C
@@ -815,6 +823,7 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
         if fin and fin.active then
             LINE(me, fin.val..' = 1;')
         end
+        LINE(me, '}')   -- __ceu_tmp above
     end,
 
     SetBlock_pos = function (me)

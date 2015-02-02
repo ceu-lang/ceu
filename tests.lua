@@ -1382,7 +1382,6 @@ do return end
 
 -------------------------------------------------------------------------------
 -- OK: well tested
-]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -39147,6 +39146,7 @@ escape ptr2==&a;
 
 
 -- ALGEBRAIC DATATYPES (ADTs)
+]===]
 
 -- ADTs used in most examples below
 DATA = [[
@@ -39205,6 +39205,7 @@ end
 -- STATIC ADTs
 
 --[==[
+-- HERE
 ]==]
 
 -- data type identifiers must start with an uppercase
@@ -39627,6 +39628,11 @@ escape ret;
 
 -- POINTERS
 -- TODO: more discussion
+--  - not an lvalue if rvalue not a constructor:
+--      ptr:CONS.tail = new ...             // OK
+--      ptr:CONS.tail = l:...               // NO
+--      ptr:CONS.tail = ptr:CONS.tail:...   // OK
+--          same prefix
 
 -- cannot cross await statements
 Test { DATA..[[
@@ -39798,6 +39804,7 @@ escape ret;
 }
 
 -- TODO: escape analysis for instances going to outer scopes
+-- TODO: mixing static/static, dynamic/dynamic, static/dynamic
 
 -- Dynamic constructors:
 --  - must use "new"
@@ -39854,7 +39861,6 @@ escape l.NIL;
 ]],
     env = 'line 53 : not a struct',
 }
-
 Test { DATA..[[
 pool List_[] l;
 l = new List_.CONS(2, List_.NIL());
@@ -39862,8 +39868,6 @@ escape l.CONS.head;
 ]],
     env = 'line 53 : not a struct',
 }
-
---error 'static pools not implemented yet'
 
 -- static vs heap pools
 --      pool List[] l;      // instances go to the heap
@@ -39921,13 +39925,12 @@ escape l.NIL;
 }
 
 -- Mutation in dynamic ADTs:
---  - "lost" subtrees are automatically reclaimed:
+--  - "dropped" subtrees are automatically reclaimed:
 --      l = new ...
 -- becomes
 --      tmp = new ...
 --      free(l)
 --      l = tmp
---
 --  (this is why dynamic ADTs have to be a directed rooted trees)
 
 -- 1-NIL => 2-NIL
@@ -39941,6 +39944,49 @@ escape l:CONS.head;
     run = 2,
 }
 
+-- 1-2-3-NIL => 1-2-NIL (3 fails)
+-- 4-5-6-NIL => NIL     (all fail)
+Test { DATA..[[
+pool List_[2] l;
+l = new List_.CONS(1, List_.CONS(2, List_.CONS(3, List_.NIL())));   // 3 fails
+_assert(l:CONS.tail:CONS.tail:NIL);
+l = new List_.CONS(4, List_.CONS(5, List_.CONS(6, List_.NIL())));   // all fail
+_assert(l:NIL);
+escape l:NIL;
+]],
+    run = 1,
+}
+
+-- 1-2-3-NIL => 1-2-NIL (3 fails)
+-- (clear all)
+-- 4-5-6-NIL => 4-5-NIL (6 fails)
+Test { DATA..[[
+pool List_[2] l;
+l = new List_.CONS(1, List_.CONS(2, List_.CONS(3, List_.NIL())));   // 3 fails
+_assert(l:CONS.tail:CONS.tail:NIL);
+l = new List_.NIL();                                                // clear all
+l = new List_.CONS(4, List_.CONS(5, List_.CONS(6, List_.NIL())));   // 6 fails
+_assert(l:CONS.tail:CONS.tail:NIL);
+escape l:CONS.head + l:CONS.tail:CONS.head + (l:CONS.tail:CONS.tail:NIL);
+]],
+    run = 10,
+}
+
+-- Mutation:
+--  - OK: child attributed to parent
+--      - parent subtree is dropped, child substitutes it
+--  - NO: parent attributed to child
+--      - creates a cycle / makes child orphan
+--      - TODO (could "swap" ?)
+
+Test { DATA..[[
+pool List_[2] l;
+l = new List_.CONS(1, List_.CONS(2, List_.NIL()));
+l = l:CONS.tail;
+escape l:CONS.head;
+]],
+    run = 2,
+}
 
 do return end
 
@@ -39964,62 +40010,48 @@ escape l==l2;
     --run = 1,
 }
 
+-- TODO: avoid cycles/side-shares
+
 -- XXX
 
+-- mutation
 Test { DATA..[[
-pool List_[2] l;
-l = new List_.CONS(1, List_.CONS(2, List_.CONS(3, List_.NIL())));
-_assert(l.CONS.tail.CONS.tail.NIL);
-l = new List_.CONS(4, List_.CONS(5, List_.CONS(6, List_.NIL())));
-_assert(l.CONS.tail.CONS.tail.NIL);
-escape l.CONS.head + l.CONS.tail.CONS.head + (l.CONS.tail.CONS.tail.NIL);
-]],
-    run = 9,
-}
+var int ret = 0;                // 0
 
-Test { DATA..[[
-var List_ l = new List_.NIL();
-escape 1;
-]],
-    env = 'line 30 : invalid attribution (List_ vs List_*)',
-}
-
-Test { DATA..[[
-var int ret = 0;
-
-pool List_[10] l;
-
-// TODO: avoid cycles/side-shares
+pool List_[5] l;
 
 // change head [2]
 l = new List_.CONS(2, l);
-ret = ret + l.CONS.head;                 // 2
+ret = ret + l:CONS.head;        // 2
 _assert(ret == 2);
 
 // change head [1, 2]
 l = new List_.CONS(1, l);
-ret = ret + l.CONS.head;                 // 3
-ret = ret + l.CONS.head + l.CONS.tail.CONS.head;   // 6
+ret = ret + l:CONS.head;        // 3
+ret = ret + l:CONS.head + l:CONS.tail:CONS.head;
+                                // 6
 _assert(ret == 6);
 
 // change tail [1, 2, 4]
-l.CONS.tail.CONS.tail = new List_.CONS(4, List_.NIL());    // 10
+l:CONS.tail:CONS.tail = new List_.CONS(4, List_.NIL());
+                                // 10
 
 // change middle [1, 2, 3, 4]
-var List_ l3 = List_.CONS(3, l.CONS.tail.CONS.tail);
-l.CONS.tail.CONS.tail = l3;
-_assert(l.CONS.tail.CONS.head == 3);
-_assert(l.CONS.tail.CONS.tail.CONS.head == 4);
-ret = ret + l.CONS.tail.CONS.head + l.CONS.tail.CONS.tail.CONS.head;   // 17
+var List_ l3 = List_.CONS(3, l:CONS.tail:CONS.tail);
+l:CONS.tail:CONS.tail = l3;
+_assert(l:CONS.tail.CONS:head == 3);
+_assert(l:CONS.tail.CONS:tail.CONS.head == 4);
+ret = ret + l:CONS.tail:CONS.head + l:CONS.tail:CONS.tail:CONS.head;
+                                // 17
 
 // drop middle [1, 3, 4]
-l.CONS.tail = l.CONS.tail.CONS.tail;
-    // TODO: check if (2) has been freed
+l:CONS.tail = l:CONS.tail:CONS.tail;
+ret = ret + l:CONS.tail:CONS.head;
+                                // 20
 
-// reclaim algo:
-    // removed node will be freed
-    // assigned node will be kept
-    // starting from freed, traverse/free everything until/if reaches assigned
+// fill the list [1, 3, 4, 5, 6] (7 fails)
+l:CONS.tail:CONS.tail:CONS.tail =
+    new List_.CONS(5, List_.CONS(6, List_.CONS(7, List_.NIL())));
 
 escape ret;
 ]],

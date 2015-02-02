@@ -164,8 +164,8 @@ CEU_]]..string.upper(id)..[[_BASE.tag = CEU_]]..string.upper(id..'_'..me.tags[1]
         local enum = 'CEU_'..string.upper(id)..'_'..tag
         top.enum[#top.enum+1] = enum
         top.auxs[#top.auxs+1] = [[
-CEU_]]..id..' '..enum..'_assert (CEU_'..id..[[ me) {
-    ceu_out_assert(me.tag == ]]..enum..[[);
+CEU_]]..id..'* '..enum..'_assert (CEU_'..id..[[* me) {
+    ceu_out_assert(me->tag == ]]..enum..[[);
     return me;
 }
 ]]

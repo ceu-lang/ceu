@@ -435,18 +435,19 @@ F =
         if me.__env_tag then
             local tag = e1.tp.id and ('CEU_'..string.upper(e1.tp.id)..'_'..id)
             if me.__env_tag == 'test' then
-                me.val  = '('..V(e1)..ceu2c(op)..'tag == '..tag..')'
+                me.val  = '('..V(e1)..'.'..'tag == '..tag..')'
             elseif me.__env_tag == 'assert' then
-                me.val  = '('..tag..'_assert('..V(e1)..')'..ceu2c(op)..id..')'
+                me.val  = '('..tag..'_assert(&'..V(e1)..')'..'->'..id..')'
+                --me.val  = '('..tag..'_assert('..V(e1)..')'..ceu2c(op)..id..')'
             elseif me.__env_tag == 'field' then
                 if e1.union_tag_blk.vars[id].tp.ref then
-                    me.val  = '('..'*('..V(e1)..')'..ceu2c(op)..id..')'
+                    me.val  = '('..'*('..V(e1)..')'..'.'..id..')'
                 else
-                    me.val  = '('..V(e1)..ceu2c(op)..id..')'
+                    me.val  = '('..V(e1)..'.'..id..')'
                 end
             end
         else
-            me.val  = '('..V(e1)..ceu2c(op)..id..')'
+            me.val  = '('..V(e1)..'.'..id..')'
         end
     end,
 

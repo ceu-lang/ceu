@@ -1282,7 +1282,6 @@ F = {
                             to)
             if p1[1] then   -- new?
                 assert(p1[2][1].tag == 'Adt', 'bug found')
-                set.__ast_adt_free = p1[2][1][1]
             else
                 to.byRef = true
             end
