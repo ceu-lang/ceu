@@ -239,7 +239,7 @@ F = {
     end,
 
     Var = function (me)
-        local tag = me.__par.tag=='RefVarList' and me.__par.__par.tag
+        local tag = me.__par.tag=='VarList' and me.__par.__par.tag
         if tag=='Async' or tag=='Thread' then
             return  -- <async (v)> is not an access
         end
@@ -248,7 +248,7 @@ F = {
             id  = me.var,
             md  = 'rd',
             tp  = me.var.tp,
-            any = false,
+            any = me.var.tp.ref,
             err = ERR(me, 'variable/event `'..me.var.id..'´'),
         }
         if string.sub(me.var.id,1,5) == '_tup_' then

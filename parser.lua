@@ -254,11 +254,8 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     , Atomic  = KEY'atomic' * V'__Do'
     , Sync    = KEY'sync'   * V'__Do'
-    , _Thread = KEY'async' * KEY'thread'    * (V'RefVarList'+Cc(false)) * V'__Do'
-    , Async   = KEY'async' * (-P'thread') * (V'RefVarList'+Cc(false)) * V'__Do'
-
-    , __var      = (CK'&'+Cc(false)) * EV'Var'
-    , RefVarList = ( K'(' * EV'__var' * (EK',' * EV'__var')^0 * EK')' )
+    , _Thread = KEY'async/thread'          * (V'VarList'+Cc(false)) * V'__Do'
+    , Async   = KEY'async' * (-P'/thread') * (V'VarList'+Cc(false)) * V'__Do'
 
     , _Escape = KEY'escape' * EV'__Exp'
 

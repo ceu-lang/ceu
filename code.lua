@@ -29,7 +29,6 @@ function CONC (me, sub, tab)
 end
 
 function ATTR (me, to, fr)
---COMM(me, tostring(to.byRef)..' '..tostring(fr.byRef))
     LINE(me, V(to)..' = '..V(fr)..';')
 end
 
@@ -519,9 +518,6 @@ if (]]..LVAR..[[ == NULL) {
         end
         for i, p in ipairs(params) do
             local field = blk.vars[i]
-            if blk.vars[i].tp.ref then
-                p.byRef = true
-            end
             LINE(me, RVAR..tag..'.'..field.id..' = '..V(p)..';')
             --local op = (dyn and '*') or ''
             --LINE(me, RVAR..tag..'.'..field.id..' = '..op..V(p)..';')
@@ -1179,15 +1175,6 @@ case ]]..me.lbl.id..[[:;
     Async = function (me)
         local vars,blk = unpack(me)
         local no = '_CEU_NO_'..me.n..'_'
-
-        if vars then
-            for i=1, #vars, 2 do
-                local isRef, n = vars[i], vars[i+1]
-                if not isRef then
-                    ATTR(me, n.new, n.var)      -- copy async parameters
-                end
-            end
-        end
 
         LINE(me, [[
 ]]..no..[[:

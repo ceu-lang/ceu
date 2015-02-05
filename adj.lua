@@ -265,6 +265,7 @@ F = {
         assert(set.tag=='SetExp', 'bug found')
         set[2] = node('Var', me.ln, '__ceu_adt_'..me.n)
         if not dyn then
+error'try w/o'
             set[2].byRef = true
         end
         return node('Stmts', me.ln,
@@ -1090,14 +1091,13 @@ F = {
         for i=1, #t, 5 do
             ret[#ret+1] = node('Dcl_var', me.ln, pre, tp, t[i])
             if t[i+1] then
+                ret[#ret].__adj_set = true  -- var int x = <something>
                 ret[#ret+1] = node('_Set', me.ln,
                                 node('Var', me.ln, t[i]),  -- var
                                 t[i+1],                 -- op
                                 t[i+2],                 -- tag
                                 t[i+3],                 -- exp    (p1)
                                 t[i+4] )                -- constr (p2)
-                ret[#ret][1].byRef = true  -- first assignment
-                ret[#ret][4].byRef = true  -- first assignment
             end
         end
         return node('Stmts', me.ln, unpack(ret))
@@ -1283,6 +1283,7 @@ F = {
             if p1[1] then   -- new?
                 assert(p1[2][1].tag == 'Adt', 'bug found')
             else
+error'try w/o'
                 to.byRef = true
             end
             return node('Stmts', me.ln, p1, set)
@@ -1495,25 +1496,14 @@ F = {
                 fld)
     end,
 
--- This ------------------------------------------------------------
+-- VarList ------------------------------------------------------------
 
-    -- constructor assignments are first assignments "byRef"
-    This = function (me)
-        local set = AST.par(me,'SetExp')
-        if AST.par(me,'Dcl_constr') and set then
-            set[2].byRef = true     -- first assignment
-            set[3].byRef = true     -- first assignment
-        end
-    end,
-
--- RefVarList ------------------------------------------------------------
-
-    RefVarList = function (me)
-        -- { &1, var2, &2, var2, ... }
-        for i=1, #me, 2 do
-            local isRef, var = me[i], me[i+1]
+-- TODO: remove
+    VarList = function (me)
+        -- { var1, var2, ... }
+        for _,var in ipairs(me) do
             local id = unpack(var)
-            me[id] = { isRef, var }
+            me[id] = true           -- for async boundary check
         end
     end,
 

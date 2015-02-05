@@ -1382,6 +1382,7 @@ do return end
 
 -------------------------------------------------------------------------------
 -- OK: well tested
+]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -1796,45 +1797,6 @@ Test { [[
 end
 ]],
     env = 'line 2 : variable/event "check" is not declared',
-}
-
-Test { [[
-native do
-    int V = 10;
-end
-var int& v;
-v = &_V;
-escape v;
-]],
-    env = 'line 5 : invalid attribution (int& vs _*)',
-    run = 10;
-}
-
-Test { [[
-native do
-    int V = 10;
-end
-var int[] v;
-v = &_V;
-escape *v;
-]],
-    run = 10;
-}
-
-Test { [[
-native do
-    int V = 10;
-end
-var int vv = 10;
-var int[] v;
-v = &vv;
-await 1s;
-do
-    var int vvv = 1;
-end
-escape *v;
-]],
-    run = { ['~>1s']=10 };
 }
 
     -- IF
@@ -2465,10 +2427,10 @@ escape a + 1;
 
 Test { [[
 var int a;
-var int* pa = &a;
+var int& pa = a;
 async (pa) do
     emit 1min;
-    *pa = 10;
+    pa = 10;
 end;
 escape a + 1;
 ]],
@@ -13579,9 +13541,9 @@ escape v;
 Test { [[
 var int v=2;
 var int x=v;
-var int* px = &x;
+var int& px = x;
 async (px, v) do
-    *px = v + 1;
+    px = v + 1;
 end;
 escape x + v;
 ]],
@@ -13590,7 +13552,7 @@ escape x + v;
 
 Test { [[
 var int a = 0;
-async (&a) do
+async (a) do
     a = 1;
     do
     end
@@ -13609,17 +13571,16 @@ async (a) do
 end
 escape a;
 ]],
-    run = 0,
+    run = 1,
 }
 
 Test { [[
 input void F;
 var int v=2;
-var int ret;
-var int* pret = &ret;
+var int ret = 0;
 par/or do
-    async (pret,v) do        // nd
-        *pret = v + 1;
+    async (ret,v) do        // nd
+        ret = v + 1;
     end;
 with
     v = 3;                  // nd
@@ -13630,6 +13591,7 @@ escape ret + v;
     _ana = {
         acc = 1,
     },
+    run = 7,
 }
 
 Test { [[
@@ -15307,6 +15269,141 @@ escape ret;
     run = 5,
 }
 
+-- REFERENCES / REFS / &
+
+Test { [[
+var int a = 1;
+var int& b = a;
+a = 2;
+escape b;
+]],
+    run = 2,
+}
+Test { [[
+native do
+    int V = 10;
+end
+var int& v = _V;
+escape v;
+]],
+    run = 10;
+}
+
+Test { [[
+var int a = 1;
+var int& b = &a;
+a = 2;
+escape b;
+]],
+    env = 'line 2 : invalid attribution (int& vs int*)',
+    --run = 2,
+}
+Test { [[
+native do
+    int V = 10;
+end
+var int& v;
+v = &_V;
+escape v;
+]],
+    env = 'line 5 : invalid attribution (int& vs _*)',
+    --run = 10;
+}
+
+Test { [[
+var int a = 1;
+var int& b;
+escape b;
+]],
+    exp = 'line 3 : reference must be bounded before use',
+    run = 2,
+}
+Test { [[
+var int a = 1;
+var int& b;
+b = a;
+a = 2;
+escape b;
+]],
+    run = 2,
+}
+Test { [[
+native do
+    int V = 10;
+end
+var int& v;
+v = _V;
+escape v;
+]],
+    run = 10;
+}
+
+Test { [[
+var int& a;
+var int* b = null;
+a = b;
+await 1s;
+var int* c = a;
+escape 1;
+]],
+    env = 'line 3 : invalid attribution (int& vs int*)',
+    --run = { ['~>1s']=1 },
+}
+Test { [[
+native do
+    int V = 10;
+end
+var int vv = 10;
+var int& v;
+v = &vv;
+await 1s;
+do
+    var int vvv = 1;
+end
+escape *v;
+]],
+    env = 'line 6 : invalid attribution (int& vs int*)'
+}
+Test { [[
+native do
+    int V = 10;
+end
+var int vv = 10;
+var int& v;
+v = vv;
+await 1s;
+do
+    var int vvv = 1;
+end
+escape *v;
+]],
+    env = 'line 11 : invalid operand to unary "*"',
+    --run = { ['~>1s']=10 };
+}
+Test { [[
+native do
+    int V = 10;
+end
+var int vv = 10;
+var int& v;
+v = vv;
+await 1s;
+do
+    var int vvv = 1;
+end
+escape v;
+]],
+    run = { ['~>1s']=10 };
+}
+
+Test { [[
+var int[] v;
+escape 1;
+]],
+    --run = 1,
+    mem = 'line 1 : invalid array dimension',
+}
+
 -- FINALLY / FINALIZE
 
 Test { [[
@@ -15356,7 +15453,7 @@ escape 0;
 Test { [[
 var int* ptr = _malloc();
 ]],
-    fin = 'line 1 : destination pointer must be declared with the `[]´ buffer modifier',
+    fin = 'line 1 : must assign to a strong reference (declared with `&´)',
 }
 
 Test { [[
@@ -15370,13 +15467,13 @@ do
     end
 end
 ]],
-    fin = 'line 5 : destination pointer must be declared with the `[]´ buffer modifier',
+    fin = 'line 5 : must assign to a strong reference (declared with `&´)',
 }
 
 Test { [[
 native _f();
 do
-    var int[] a;
+    var int& a;
     finalize
         a = _f();
     with
@@ -15390,7 +15487,7 @@ end
 Test { [[
 native _f();
 do
-    var int[] a;
+    var int& a;
     finalize
         a = _f();
     with
@@ -15405,7 +15502,7 @@ end
 Test { [[
 native _f();
 do
-    var int[] a;
+    var int& a;
     finalize
         a = _f();
     with
@@ -15460,16 +15557,6 @@ var int* c = a;
 escape 1;
 ]],
     fin = 'line 5 : pointer access across `await´',
-}
-Test { [[
-var int[] a;
-var int* b = null;
-a = b;
-await 1s;
-var int* c = a;
-escape 1;
-]],
-    run = { ['~>1s']=1 },
 }
 
 Test { [[
@@ -15532,7 +15619,7 @@ Test { [[
 native _f();
 var int r = 0;
 do
-    var int[] a;
+    var int& a;
     finalize
         a = _f();
     with
@@ -17299,10 +17386,10 @@ escape 1;
 Test { [[
 input void A;
 var int ret;
-var int* pret = &ret;
+var int& pret = ret;
 par/or do
    async(pret) do
-      *pret=10;
+      pret=10;
     end;
 with
    await A;
@@ -17316,10 +17403,10 @@ escape ret;
 Test { [[
 input void A;
 var int ret;
-var int* pret = &ret;
+var int& pret = ret;
 par/or do
    async(pret) do
-      *pret=10;
+      pret=10;
     end;
 with
    await A;
@@ -17349,7 +17436,7 @@ var int a = async do
 end;
 escape a;
 ]],
-    parser = 'line 1 : before `async´ : expected expression',
+    parser = 'line 1 : after `=´ : expected expression',
 }
 
 Test { [[
@@ -17447,8 +17534,8 @@ end;
 
 Test { [[
 var int a = 1;
-var int* pa = &a;
-async (pa) do
+var int& pa = a;
+async (a) do
     var int a = do
         escape 1;
     end;
@@ -17706,10 +17793,9 @@ escape _a+_b+_c;
 
 Test { [[
 var int r;
-var int* pr = &r;
-async(pr) do
+async(r) do
     var int i = 100;
-    *pr = i;
+    r = i;
 end;
 escape r;
 ]],
@@ -17718,12 +17804,11 @@ escape r;
 
 Test { [[
 var int ret;
-var int* pret = &ret;
-async (pret) do
+async (ret) do
     var int i = 100;
     var int sum = 10;
     sum = sum + i;
-    *pret = sum;
+    ret = sum;
 end;
 escape ret;
 ]],
@@ -17765,9 +17850,8 @@ Test { [[
 input int F;
 var int ret = 0;
 var int f;
-var int* pret=&ret;
 par/and do
-    async(pret) do
+    async(ret) do
         var int sum = 0;
         var int i = 0;
         loop do
@@ -17778,7 +17862,7 @@ par/and do
                 i = i + 1;
             end
         end
-        *pret = sum;
+        ret = sum;
     end;
 with
     f = await F;
@@ -17792,9 +17876,8 @@ Test { [[
 input int F;
 var int ret = 0;
 var int f;
-var int* pret=&ret;
 par/and do
-    async(pret) do
+    async(ret) do
         var int sum = 0;
         var int i = 0;
         loop do
@@ -17805,7 +17888,7 @@ par/and do
                 i = i + 1;
             end
         end
-        *pret = sum;
+        ret = sum;
     end;
 with
     f = await F;
@@ -17814,18 +17897,14 @@ escape ret+f;
 ]],
     run = { ['10~>F']=5060 },
     safety = 2,
-    _ana = {
-        acc = 1,
-    },
 }
 
 Test { [[
 input int F;
 var int ret = 0;
 var int f;
-var int* pret = &ret;
 par/or do
-    async(pret) do
+    async(ret) do
         var int sum = 0;
         var int i = 0;
         loop do
@@ -17836,7 +17915,7 @@ par/or do
                 i = i + 1;
             end
         end
-        *pret =  sum;
+        ret =  sum;
     end;
 with
     f = await F;
@@ -17883,11 +17962,10 @@ escape 0;
 
 Test { [[
 var int ret;
-var int* pret = &ret;
-async (pret) do
+async (ret) do
     var int i = 100;
     i = i - 1;
-    *pret = i;
+    ret = i;
 end;
 escape ret;
 ]],
@@ -17896,13 +17974,12 @@ escape ret;
 
 Test { [[
 var int ret;
-var int* pret = &ret;
-async(pret) do
+async(ret) do
     var int i = 100;
     loop do
         break;
     end;
-    *pret = i;
+    ret = i;
 end;
 escape ret;
 ]],
@@ -17914,15 +17991,14 @@ escape ret;
 
 Test { [[
 var int ret;
-var int* pret = &ret;
-async(pret) do
+async(ret) do
     var int i = 0;
     if i then
         i = 1;
     else
         i = 2;
     end
-    *pret = i;
+    ret = i;
 end;
 escape ret;
 ]],
@@ -17931,13 +18007,13 @@ escape ret;
 
 Test { [[
 var int i;
-var int* pi=&i;
+var int& pi=i;
 async (pi) do
     var int i = 10;
     loop do
         i = i - 1;
         if not i then
-            *pi = i;
+            pi = i;
             break;
         end;
     end;
@@ -17950,13 +18026,13 @@ escape i;
 
 Test { [[
 var int i;
-var int* pi = &i;
+var int& pi = i;
 async (pi) do
     var int i = 10;
     loop do
         i = i - 1;
         if not i then
-            *pi = i;
+            pi = i;
             break;
         end;
     end;
@@ -17988,12 +18064,12 @@ escape i;
 
 Test { [[
 var int i = 10;
-var int* pi = &i;
+var int& pi = i;
 async (pi) do
     loop do
         i = i - 1;
         if not i then
-            *pi = i;
+            pi = i;
             break;
         end;
     end;
@@ -18005,7 +18081,7 @@ escape i;
 
 Test { [[
 var int sum;
-var int* p = &sum;
+var int& p = sum;
 async (p) do
     var int i = 10;
     var int sum = 0;
@@ -18013,7 +18089,7 @@ async (p) do
         sum = sum + i;
         i = i - 1;
         if not i then
-            *p = sum;
+            p = sum;
             break;
         end;
     end;
@@ -19410,8 +19486,8 @@ native do
         escape &a;
     }
 end
-var int[] p = _f();
-escape *p;
+var int& p = _f();
+escape p;
 ]],
     fin = 'line 8 : attribution requires `finalize´',
 }
@@ -19425,13 +19501,13 @@ native do
         return &a;
     }
 end
-var int[] p;
+var int& p;
 finalize
     p = _f();
 with
     nothing;
 end
-escape *p;
+escape p;
 ]],
     run = 10,
 }
@@ -19444,13 +19520,13 @@ native do
         return &a;
     }
 end
-var int[] p;
+var int& p;
 finalize
     p = _f();
 with
     nothing;
 end
-escape *p;
+escape p;
 ]],
     run = 10,
 }
@@ -19479,11 +19555,11 @@ native do
 end
 var int a;
 do
-    var int[] p;
+    var int& p;
     finalize
         p = _f();
     with
-        a = *p;
+        a = p;
 end
 end
 escape a;
@@ -19501,12 +19577,12 @@ native do
 end
 var int a = 10;
 do
-    var int[] p;
+    var int& p;
     do
         finalize
             p = _f();
         with
-            a = a + *p;
+            a = a + p;
 end
     end
     a = 0;
@@ -19561,13 +19637,13 @@ escape 1;
 Test { [[
 input void OS_START;
 var int h = 10;
-var int[] p = &h;
+var int& p = h;
 do
     var int x = 0;
     await OS_START;
     var int z = 0;
 end
-escape *p;
+escape p;
 ]],
     run = 10;
 }
@@ -19814,7 +19890,7 @@ escape _V;
 }
 
 Test { [[
-var void[] p;
+var void& p;
 finalize
     p = { NULL };
 with
@@ -19822,13 +19898,15 @@ with
 end
 escape p==null;
 ]],
-    run = 1,
+    env = 'line 7 : invalid operands to binary "=="',
+    --run = 1,
 }
 
 Test { [[
-var void[] p;
+var void& p;
 p := { NULL };
-escape p==null;
+escape 1;
+//escape p==null;
 ]],
     fin = 'line 2 : attribution requires `finalize´',
 }
@@ -22992,7 +23070,7 @@ escape (p==&t and pp==&p and *pp==&t);
 }
 
 Test { [[
-var int[] v;
+var int* v;
 do
     var int i = 1;
     v = &i;
@@ -23002,14 +23080,24 @@ escape *v;
     --fin = 'line 4 : attribution requires `finalize´',
     fin = 'line 4 : attribution to pointer with greater scope',
 }
+Test { [[
+var int& v;
+do
+    var int i = 1;
+    v = i;
+end
+escape v;
+]],
+    run = 1,
+}
 
 Test { [[
 var int i = 1;
-var int[] v = &i;
+var int& v = i;
 
 class T with
-    var int*  p = null;
-    var int[] v = null;
+    var int* p = null;
+    var int& v = null;
 do
 end
 
@@ -23020,28 +23108,48 @@ end;
 
 escape *(t.p) + *(t.v);
 ]],
+    env = 'line 6 : invalid attribution (int& vs null*)',
+}
+
+Test { [[
+var int i = 1;
+var int& v = i;
+
+class T with
+    var int* p = null;
+    var int& v;
+do
+end
+
+var T t with
+    this.p = &v;
+    this.v = v;
+end;
+
+escape *(t.p) + (t.v);
+]],
     run = 2,
 }
 
 Test { [[
 var int i = 1;
-var int[] v = &i;
+var int& v = i;
 
 class T with
-    var int*  p = null;
-    var int[] v = null;
+    var int* p = null;
+    var int& v;
 do
     await 1s;
-    *v = 1;
+    v = 1;
     *p = 1;
 end
 
 var T t with
-    this.p := v;
+    this.p := &v;
     this.v = v;
 end;
 
-escape *(t.p) + *(t.v);
+escape *(t.p) + (t.v);
 ]],
     fin = 'line 10 : pointer access across `await´',
 }
@@ -27785,7 +27893,7 @@ end
 
 class V with
 do
-    var int[] v;
+    var int& v;
     finalize
         v = _f();
     with
@@ -27823,7 +27931,7 @@ end
 
 class V with
 do
-    var int[] v;
+    var int& v;
     finalize
         v = _f();
     with
@@ -27942,7 +28050,7 @@ end
 
 class V with
 do
-    var int[] v;
+    var int& v;
     finalize
         v = _f();
     with
@@ -27984,7 +28092,7 @@ end
 
 class V with
 do
-    var int[] v;
+    var int& v;
     finalize
         v = _f();
     with
@@ -28065,7 +28173,7 @@ end
 
 class V with
 do
-    var int[] v;
+    var int& v;
     finalize
         v = _f();
     with
@@ -28108,7 +28216,7 @@ end
 
 class V with
 do
-    var int[] v;
+    var int& v;
     finalize
         v = _f();
     with
@@ -28154,7 +28262,7 @@ end
 
 class V with
 do
-    var int[] v;
+    var int& v;
     finalize
         v = _f();
     with
@@ -28199,7 +28307,7 @@ end
 
 class V with
 do
-    var int[] v;
+    var int& v;
     finalize
         v = _f();
     with
@@ -28246,7 +28354,7 @@ end
 
 class V with
 do
-    var int[] v;
+    var int& v;
     finalize
         v = _f();
     with
@@ -28294,7 +28402,7 @@ end
 
 class V with
 do
-    var int[] v;
+    var int& v;
     finalize
         v = _f();
     with
@@ -28343,7 +28451,7 @@ end
 
 class V with
 do
-    var int[] v;
+    var int& v;
     finalize
         v = _f();
     with
@@ -30724,7 +30832,7 @@ Test { [[
 class T with
 do
 end
-var T*[] t;
+var T*& t;
 finalize
     t = _malloc(10 * sizeof(T**));
 with
@@ -30862,7 +30970,7 @@ native do
     void* v;
 end
 class T with
-    var _void[] ptr;
+    var _void& ptr;
 do
 end
 var T t with
@@ -30875,7 +30983,7 @@ escape 1;
 
 Test { [[
 class T with
-    var char [] str;
+    var char * str;
 do
     str = "oioi";
     this.str = "oioi";
@@ -30889,8 +30997,8 @@ Test { [[
 class T with
 do
 end
-var int*[] v;
-var T*[] t;
+var int*& v;
+var T*& t;
 escape 1;
 ]],
     run = 1;
@@ -30900,11 +31008,11 @@ Test { [[
 class T with
 do
 end
-var int[]* v;
-var T[]* t;
+var int&* v;
+var T&* t;
 escape 1;
 ]],
-    parser = 'line 4 : after `]´ : expected identifier',
+    parser = 'line 4 : after `&´ : expected identifier',
 }
 
 Test { [[
@@ -36949,17 +37057,17 @@ end
 
 Test { [[
 var int  a=10, b=5;
-var int[] p = &b;
-async thread do
+var int& p = b;
+async/thread do
 end
-escape a + b + *p;
+escape a + b + p;
 ]],
     run = 20,
 }
 
 Test { [[
 var int ret =
-    async thread do
+    async/thread do
     end;
 escape (ret == 1);
 ]],
@@ -36968,31 +37076,31 @@ escape (ret == 1);
 
 Test { [[
 var int  a=10, b=5;
-var int[] p = &b;
-async thread (a, p) do
-    a = a + *p;
+var int& p = b;
+async/thread (a, p) do
+    a = a + p;
     sync do
-        *p = a;
+        p = a;
     end
 end
-escape a + b + *p;
+escape a + b + p;
 ]],
-    run = 40,
+    run = 45,
 }
 
 Test { [[
 var int  a=10, b=5;
-var int[] p = &b;
+var int& p = b;
 var int ret =
-    async thread (a, p) do
-        a = a + *p;
+    async/thread (a, p) do
+        a = a + p;
         sync do
-            *p = a;
+            p = a;
         end
     end;
-escape (ret==1) + a + b + *p;
+escape (ret==1) + a + b + p;
 ]],
-    run = 41,
+    run = 46,
 }
 
 Test { [[
@@ -37019,16 +37127,16 @@ var int x = 0;
 par/and do
     x = 1;
 with
-    var int* p = &x;
-    *p = 2;
-    async thread (p) do
-        *p = 2;
+    var int& p = x;
+    p = 2;
+    async/thread (p) do
+        p = 2;
     end
 end
 escape x;
 ]],
     _ana = {
-        acc = 2,
+        acc = 4,
     },
     run = 2,
 }
@@ -37038,65 +37146,76 @@ var int x = 0;
 par/and do
     x = 1;
 with
-    var int* p = &x;
-    *p = 2;
-    async thread (p) do
+    var int& p = x;
+    p = 2;
+    async/thread (p) do
         sync do
-            *p = 2;
+            p = 2;
         end
     end
 end
 escape x;
 ]],
     _ana = {
-        acc = 2,
+        acc = 4,
     },
     run = 2,
 }
 
 Test { [[
 var int  a=10, b=5;
-var int[] p = &b;
-async thread (a, p) do
-    a = a + *p;
-    *p = a;
+var int& p = b;
+async/thread (a, p) do
+    a = a + p;
+    p = a;
 end
-escape a + b + *p;
+escape a + b + p;
 ]],
-    run = 40,
+    run = 45,
 }
 
 Test { [[
 var int  a=10, b=5;
-var int[] p = &b;
+var int* p = &b;
+async/thread (p) do
+    *p = 1;
+end
+escape 1;
+]],
+    fin = 'line 3 : pointer access across `await´',
+}
+
+Test { [[
+var int  a=10, b=5;
+var int& p = b;
 par/and do
-    async thread (a, p) do
-        a = a + *p;
-        *p = a;
+    async/thread (a, p) do
+        a = a + p;
+        p = a;
     end
 with
-    *p = 2;
+    p = 2;
 end
-escape a + b + *p;
+escape a + b + p;
 ]],
     _ana = {
         acc = 5,
     },
-    run = 34,
+    run = 36,
 }
 
 Test { [[
 var int  a=10, b=5;
-var int[] p = &b;
-async thread (a, p) do
+var int& p = b;
+async/thread (a, p) do
     sync do
-        a = a + *p;
-        *p = a;
+        a = a + p;
+        p = a;
     end
 end
-escape a + b + *p;
+escape a + b + p;
 ]],
-    run = 40,
+    run = 45,
 }
 
 for i=1, 50 do
@@ -37105,11 +37224,11 @@ native do
     ##include <unistd.h>
 end
 var int ret = 1;
-var int[] p = &ret;
+var int& p = ret;
 par/or do
-    async thread (p) do
+    async/thread (p) do
         sync do
-            *p = 2;
+            p = 2;
         end
     end
 with
@@ -37131,12 +37250,12 @@ native do
     ##include <unistd.h>
 end
 var int ret = 0;
-var int[] p = &ret;
+var int& p = ret;
 par/or do
-    async thread (p) do
+    async/thread (p) do
         _usleep(]]..i..[[);
         sync do
-            *p = 2;
+            p = 2;
         end
     end
 with
@@ -37156,19 +37275,19 @@ end
 
 Test { [[
 var int  v1=10, v2=5;
-var int[] p1 = &v1;
-var int[] p2 = &v2;
+var int& p1 = v1;
+var int& p2 = v2;
 
 par/and do
-    async thread (v1, p1) do
+    async/thread (v1, p1) do
         sync do
-            *p1 = v1 + v1;
+            p1 = v1 + v1;
         end
     end
 with
-    async thread (v2, p2) do
+    async/thread (v2, p2) do
         sync do
-            *p2 = v2 + v2;
+            p2 = v2 + v2;
         end
     end
 end
@@ -37179,8 +37298,8 @@ escape v1+v2;
 
 Test { [[
 var int  v1, v2;
-var int[] p1 = &v1;
-var int[] p2 = &v2;
+var int& p1 = v1;
+var int& p2 = v2;
 
 native do
     int calc ()
@@ -37198,17 +37317,17 @@ native do
 end
 
 par/and do
-    async thread (p1) do
+    async/thread (p1) do
         var int ret = _calc();
         sync do
-            *p1 = ret;
+            p1 = ret;
         end
     end
 with
-    async thread (p2) do
+    async/thread (p2) do
         var int ret = _calc();
         sync do
-            *p2 = ret;
+            p2 = ret;
         end
     end
 end
@@ -37221,11 +37340,11 @@ escape v1;
 
 Test { [[
 var int  v1, v2;
-var int[] p1 = &v1;
-var int[] p2 = &v2;
+var int& p1 = v1;
+var int& p2 = v2;
 
 par/and do
-    async thread (p1) do
+    async/thread (p1) do
         var int ret = 0;
         loop i in 10 do
             loop j in 10 do
@@ -37234,11 +37353,11 @@ par/and do
         end
         _printf("ret = %d\n", ret);
         sync do
-            *p1 = ret;
+            p1 = ret;
         end
     end
 with
-    async thread (p2) do
+    async/thread (p2) do
         var int ret = 0;
         loop i in 10 do
             loop j in 10 do
@@ -37247,7 +37366,7 @@ with
         end
         _printf("ret = %d\n", ret);
         sync do
-            *p2 = ret;
+            p2 = ret;
         end
     end
 end
@@ -37260,8 +37379,8 @@ escape v1;
 
 Test { [[
 var int  v1, v2;
-var int[] p1 = &v1;
-var int[] p2 = &v2;
+var int& p1 = v1;
+var int& p2 = v2;
 
 native do
     int calc ()
@@ -37279,17 +37398,17 @@ native do
 end
 
 par/and do
-    async thread (p1) do
+    async/thread (p1) do
         var int ret = _calc();
         sync do
-            *p1 = ret;
+            p1 = ret;
         end
     end
 with
-    async thread (p2) do
+    async/thread (p2) do
         var int ret = _calc();
         sync do
-            *p2 = ret;
+            p2 = ret;
         end
     end
 end
@@ -37303,11 +37422,11 @@ escape v1;
 
 Test { [[
 var int  v1, v2;
-var int[] p1 = &v1;
-var int[] p2 = &v2;
+var int& p1 = v1;
+var int& p2 = v2;
 
 par/and do
-    async thread (p1) do
+    async/thread (p1) do
         var int ret = 0;
         loop i in 50000 do
             loop j in 50000 do
@@ -37316,11 +37435,11 @@ par/and do
         end
         _printf("ret = %d\n", ret);
         sync do
-            *p1 = ret;
+            p1 = ret;
         end
     end
 with
-    async thread (p2) do
+    async/thread (p2) do
         var int ret = 0;
         loop i in 50000 do
             loop j in 50000 do
@@ -37329,7 +37448,7 @@ with
         end
         _printf("ret = %d\n", ret);
         sync do
-            *p2 = ret;
+            p2 = ret;
         end
     end
 end
@@ -37352,8 +37471,8 @@ class T with
     event int ok;
 do
     var int v;
-    var int[] p = &v;
-    async thread (p) do
+    var int& p = v;
+    async/thread (p) do
         var int ret = 0;
         loop i in 50000 do
             loop j in 50000 do
@@ -37362,7 +37481,7 @@ do
         end
         _printf("ret = %d\n", ret);
         sync do
-            *p = ret;
+            p = ret;
         end
     end
     emit ok => v;
@@ -37398,7 +37517,7 @@ input int A;
 par/or do
     await A;
 with
-    async thread do
+    async/thread do
         emit A=>10;
     end
 end;
@@ -37430,10 +37549,10 @@ escape 10;
 
 Test { [[
 var int a;
-var int* pa = &a;
-async thread (pa) do
+var int& pa = a;
+async/thread (pa) do
     emit 1min;
-    *pa = 10;
+    pa = 10;
 end;
 escape a + 1;
 ]],
@@ -37442,10 +37561,10 @@ escape a + 1;
 }
 Test { [[
 var int a;
-var int* pa = &a;
+var int& pa = a;
 async (pa) do
     emit 1min;
-    *pa = 10;
+    pa = 10;
 end;
 escape a + 1;
 ]],
@@ -37464,7 +37583,7 @@ par do
     end
     escape v1 + v2;
 with
-    async thread do
+    async/thread do
         emit 5ms;
         emit(5000)ms;
     end
@@ -37509,7 +37628,7 @@ end
 Test { [[
 input int A;
 par do
-    async thread do end
+    async/thread do end
 with
     await A;
     escape 1;
@@ -37543,7 +37662,7 @@ with
         end
     end
 with
-    async thread do
+    async/thread do
         emit 12ms;
         emit T;
         emit 12ms;
@@ -37652,7 +37771,7 @@ par do
         end;
     end;
 with
-    async thread do
+    async/thread do
         emit P2 => 0;
         emit P2 => 0;
         emit P2 => 0;
@@ -37712,7 +37831,7 @@ with
     end
     ret = ret + 1;
 with
-    async thread do
+    async/thread do
         sync do
         end
     end
@@ -37786,7 +37905,7 @@ escape x;
 
 Test { [[
 var int x = 0;
-async thread do
+async/thread do
     x = 2;
 end
 escape x;
@@ -37805,7 +37924,8 @@ with
 end
 escape x;
 ]],
-    run = 1,
+    _ana = { acc=1 },
+    run = 2,
 }
 
 Test { [[
@@ -37813,13 +37933,14 @@ var int x = 0;
 par/and do
     x = 1;
 with
-    async thread (x) do
+    async/thread (x) do
         x = 2;
     end
 end
 escape x;
 ]],
-    run = 1,
+    _ana = { acc=1 },
+    run = 2,
 }
 
 Test { [[
@@ -37827,7 +37948,7 @@ var int x = 0;
 par/and do
     x = 1;
 with
-    async thread (&x) do
+    async/thread (x) do
         x = 2;
     end
 end
@@ -37846,7 +37967,7 @@ par/and do
     x = 1;
 with
     var int y = x;
-    async thread (&y) do
+    async/thread (y) do
         y = 2;
     end
     x = x + y;
@@ -37863,7 +37984,7 @@ par/and do
     x = 1;
 with
     var int y = x;
-    async thread (&y) do
+    async/thread (y) do
         y = 2;
     end
     x = x + y;
@@ -37884,7 +38005,7 @@ par/and do
     *p = 1;
 with
     var int y = x;
-    async thread (&y) do
+    async/thread (y) do
         y = 2;
     end
     x = x + y;
@@ -37899,19 +38020,19 @@ escape x;
 
 Test { [[
 var int[10] x;
-async thread (x) do
+async/thread (x) do
     x[0] = 2;
 end
 escape x[0];
 ]],
     run = 2,
-    gcc = 'error: lvalue required as left operand of assignment',
+    --gcc = 'error: lvalue required as left operand of assignment',
 }
 
 Test { [[
 var int[10] x;
 par/and do
-    async thread (x) do
+    async/thread (x) do
         x[0] = x[1] + 2;
     end
 with
@@ -37921,14 +38042,14 @@ escape x[0];
 ]],
     run = 7,
     _ana = {
-        --acc = 2,
+        acc = 2,
     },
-    gcc = 'error: lvalue required as left operand of assignment',
+    --gcc = 'error: lvalue required as left operand of assignment',
 }
 
 Test { [[
 var int v = 1;
-async (&v) do
+async (v) do
     finalize with
         v = 2;
     end
@@ -37939,7 +38060,7 @@ escape v;
 }
 Test { [[
 var int v = 1;
-async thread (&v) do
+async/thread (v) do
     finalize with
         v = 2;
     end
@@ -38159,15 +38280,6 @@ emit m:go_xy => (1,1);
 escape 1;
 ]],
     run = 1,
-}
-
-Test { [[
-var int a = 1;
-var int& b = a;
-a = 2;
-escape b;
-]],
-    run = 2,
 }
 
 Test { [[
@@ -39144,8 +39256,8 @@ escape ptr2==&a;
     run = 1,
 }
 
-]===]
 -- ALGEBRAIC DATATYPES (ADTs)
+do return end
 
 -- ADTs used in most examples below
 DATA = [[
@@ -39205,7 +39317,6 @@ end
 
 --[==[
 -- HERE
-]==]
 
 -- data type identifiers must start with an uppercase
 Test { [[
@@ -40027,6 +40138,29 @@ escape 1;
     props = 'line 53 : cannot assign parent to child',
 }
 
+]==]
+
+-- TREES
+
+Test { [[
+data Tree with
+    tag NIL;
+with
+    tag NODE with
+        var int   v;
+        var Tree& left;
+        var Tree& right;
+    end
+end
+
+var Tree t1 = Tree.NIL();
+var Tree t2 = Tree.NODE(1, Tree.NIL(), Tree.NIL());
+
+escape t1.NIL + t2.NODE.v + t2.NODE.left.NIL + t2.NODE.right.NIL;
+]],
+    run = 4,
+}
+
 do return end
 
 -- TODO: IGNORE EVERYTHING STARTING FROM HERE
@@ -40359,7 +40493,7 @@ _printf("v = %d\n", app.v);
     _assert(app.v == 1);
 with
     input int DT;
-    async (&tm) do
+    async (tm) do
         loop do
             if not _CEU_TIMEMACHINE_ON then
                 emit 50ms;

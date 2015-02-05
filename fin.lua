@@ -33,18 +33,14 @@ F = {
     -- NON-POINTER ATTRIBUTIONS (always safe)
     --
 
-        local noptr =  (to.tp.ptr==0 and (not to.tp.arr) and
+        local noptr =  (to.tp.ptr==0 and (not to.tp.arr) and (not to.tp.ref) and
                         ((not to.tp.ext) or TP.get(to.tp.id).plain or to.tp.plain))
-                    or (fr.tp.ptr==0 and (not fr.tp.arr) and
-                        ((not fr.tp.ext) or TP.get(fr.tp.id).plain or fr.tp.plain))
                                             -- either native dcl or derived
                                             -- from s.field
-
-        -- byRef behaves like pointers
-        noptr = noptr and (not to.byRef)
-
-        -- var int[] a; do var int[] b=a; end
-        noptr = noptr or (to.tp.buffer and fr.tp.buffer)
+        -- _r.x = (int) ...;
+        noptr = noptr or
+                       (fr.tp.ptr==0 and (not fr.tp.arr) and (not fr.tp.ref) and
+                        ((not fr.tp.ext) or TP.get(fr.tp.id).plain or fr.tp.plain))
 
         if noptr then
             ASR(op == '=', me, 1101, 'wrong operator')
@@ -63,7 +59,8 @@ F = {
 
         -- an attribution restarts tracking accesses to "to"
         -- variables or native symbols
-        if to.var or to.id then
+        if (to.var and (not to.var.tp.ref)) or to.id then
+                        -- do not track references
             TRACK[to.var or to.id] = true
         end
 
@@ -113,6 +110,7 @@ F = {
             end
         end
 
+-- TODO: move to exp/ref.lua
         if func_impure or input_call or fr.tag=='RawExp' then
             -- We assume that a impure function that returns a global pointer
             -- creates memory (e.g. malloc, fopen):
@@ -124,8 +122,8 @@ F = {
             -- the local goes out of scope, hence, we require finalization.
             -- The "to" pointers must be `[]´.
 
-            ASR(to.tp.buffer or to.tp.ext, me, 1105,
-                    'destination pointer must be declared with the `[]´ buffer modifier')
+            ASR(to.tp.ref or to.tp.ext, me, 1105,
+                    'must assign to a strong reference (declared with `&´)')
                 -- var void* ptr = _malloc(1);  // no
                 -- _ptr = _malloc(1);           // ok
 
@@ -237,7 +235,7 @@ F = {
         if TRACK[me.var]==true then
             return  -- no await happened yet
         end
-        if me.var.tp.buffer or me.var.tp.arr then
+        if me.var.tp.arr then
             return  -- ignore tracked vars with []
         end
         if string.sub(me.var.id,1,5)=='_tup_' then
@@ -277,8 +275,8 @@ F = {
     AwaitN   = 'Await',
 
     --Block    = 'Await',
-    Async    = 'Await',
-    Thread   = 'Await',
+    Async_pre  = 'Await',
+    Thread_pre = 'Await',
     ParOr    = 'Await',
     ParAnd   = 'Await',
     Par      = 'Await',

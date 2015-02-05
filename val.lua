@@ -16,7 +16,7 @@ function V (me)
 
     local ref = me.tp and me.tp.ref and me.tp.id
     if me.byRef and
-        (not (ENV.clss[me.tp.id] or ref and ENV.clss[ref]))
+        (not (ENV.clss[me.tp.id] or ref and ENV.clss[ref] or me.tag=='Op2_call'))
     then
                     -- already by ref
         local ret = '(&'..me.val..')'
@@ -410,6 +410,10 @@ F =
                     -- normalize all arrays acesses to pointers to arr[0]
                     -- (because of interface accesses that must be done through a pointer)
                     me.val = '(&'..me.val..'[0])'
+                elseif me.var.tp.ref then
+                    if not ENV.clss[me.var.tp.id] then
+                        me.val  = '(*'..me.val..')'
+                    end
                 elseif me.var.cls then
                     -- normalize all org acesses to pointers to it
                     -- (because of interface accesses that must be done through a pointer)

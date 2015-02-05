@@ -154,7 +154,7 @@ function newvar (me, blk, pre, tp, id, isImp)
         end
     end
 
-    ASR(tp.ptr>0 or TP.get(tp.id).len~=0 or (tp.id=='void' and pre=='event'),
+    ASR(tp.ptr>0 or tp.ref or TP.get(tp.id).len~=0 or (tp.id=='void' and pre=='event'),
         me, 'cannot instantiate type "'..tp.id..'"')
     --ASR((not arr) or arr>0, me, 'invalid array dimension')
 
@@ -251,7 +251,7 @@ function ENV.getvar (id, blk)
     while blk do
         if blk.tag=='Async' or blk.tag=='Thread' then
             local vars = unpack(blk)    -- VarList
-            if not (vars and vars[id] and vars[id][1]) then
+            if not (vars and vars[id]) then
                 return nil  -- async boundary: stop unless declared with `&´
             end
         elseif blk.tag == 'Block' then
@@ -373,23 +373,6 @@ F = {
 
     Block_pre = function (me)
         me.vars = {}
-        if me.__par.tag=='Async' or me.__par.tag=='Thread' then
-            local vars, blk = unpack(me.__par)
-            if vars then
-                -- { &1, var2, &2, var2, ... }
--- TODO: make on adj.lua ?
-                for i=1, #vars, 2 do -- create new variables for params
-                    local isRef, n = vars[i], vars[i+1]
-                    local var = n.var
-                    --ASR(not var.arr, vars, 'invalid argument')
-
-                    if not isRef then
-                        local _
-                        _,n.new = newvar(vars, blk, 'var', var.tp, var.id, false)
-                    end
-                end
-            end
-        end
 
         -- include arguments into function block
         local fun = AST.iter()()
@@ -854,12 +837,6 @@ F = {
         local _, fr, to = unpack(me)
         to = to or AST.iter'SetBlock'()[1]
 
-        -- remove byRef flag if normal assignment
-        if to.tp and (not to.tp.ref) then
-            to.byRef = false
-            fr.byRef = false
-        end
-
         if to.tag=='Var' and string.sub(to.var.id,1,5)=='_tup_' then
             -- SetAwait:
             -- (a,b) = await E;
@@ -905,7 +882,6 @@ F = {
     Lua = function (me)
         if me.ret then
             ASR(not me.ret.tp.ref, me, 'invalid attribution')
-            me.ret.byRef = false
         end
     end,
 

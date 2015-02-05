@@ -390,18 +390,6 @@ F = {
         end
     end,
 
---[[
-    Var = function (me)
-        local thr = AST.par(me, 'Thread')
-        if thr then
-            ASR(AST.iter'RefVarList'() or        -- param list
-                me.ret or                         -- var assigned on return
-                thr.__depth < me.var.blk.__depth, -- var is declared inside
-                    me, 'invalid access from `thread´')
-        end
-    end,
-]]
-
     Op1_cast = function (me)
         local tp, _ = unpack(me)
         if tp.ptr>0 and ENV.clss[tp.id] then

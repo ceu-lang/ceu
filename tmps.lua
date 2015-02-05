@@ -35,9 +35,15 @@ F = {
     Var = function (me)
         local var = me.var
 
-        -- all threads vars are "tmp"
-        if AST.iter'Thread'() then
-            return
+        -- uses inside threads
+        local thr = AST.iter'Thread'()
+        if thr then
+            if me.var.blk.__depth < thr.__depth then
+                var.isTmp = false
+                return              -- defined outside: isTmp=false
+            else
+                return              -- defined inside: isTmp=true
+            end
         end
 
         -- all function vars are "tmp"

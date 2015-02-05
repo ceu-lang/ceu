@@ -9,18 +9,6 @@ F = {
             ASR( AST.isParent(CLS(),to.lst.var.blk), me,
                     'invalid attribution (no scope)' )
         end
-
-        -- refuses:
-        -- var int& i = 1;
-        -- var int& i = *p;
-        if to.byRef and (not fr.tp.ref) then
-            ASR(fr.tag=='Op1_&' or fr.lval or (fr.lst and (fr.lst.tag=='Outer' or
-                                        fr.lst.var and fr.lst.var.cls)),
-                                           -- orgs are not lval
-                me, 'invalid attribution (not a reference)')
-            ASR(not AST.child(fr,'Op1_*'), me, 'invalid attribution')
-        end
-
     end,
 
     Spawn = function (me)
@@ -81,4 +69,62 @@ F = {
     NULL   = 'NUMBER',
 }
 
+G = {
+    SetExp_pre = function (me)
+        local _, fr, to = unpack(me)
+        if not to.tp.ref then
+            return
+        end
+        assert(to.lst.var, 'bug found')
+
+        -- Detect first assignment/binding:
+        --  - case1: assignment to normal variable not bounded yet
+        --  - case2: assignment from constructor to interface variable
+
+        local constr = AST.par(me, 'Dcl_constr')
+        local case2 = constr and ENV.clss[constr.cls.id].blk_ifc.vars[to.lst.var.id]
+
+        local inifc = (CLS().id~='Main' and CLS().blk_ifc.vars[to.lst.var.id])
+        local case1 = not (case1 or to.lst.var.__exp_bounded or inifc)
+
+        if case1 or case2 then
+            to.byRef = true                     -- assign by ref
+            fr.byRef = true                     -- assign by ref
+            if case1 then
+                to.lst.var.__exp_bounded = true     -- marks &ref as bounded
+            end
+
+            -- refuses:
+            -- var int& i = 1;
+            -- var int& i = *p;
+            if (not fr.tp.ref) then
+                ASR(fr.lval or fr.tag=='Op1_&' or fr.tag=='Op2_call' or
+                        (fr.lst and (fr.lst.tag=='Outer' or
+                                     fr.lst.var and fr.lst.var.cls)),
+                                               -- orgs are not lval
+                    me, 'invalid attribution (not a reference)')
+                ASR(not AST.child(fr,'Op1_*'), me, 'invalid attribution')
+            end
+        end
+
+        -- constructor assignment is always first assignment
+        -- this.v = ...
+        if to.fst.tag == 'This' then
+            to.byRef = true                     -- assign by ref
+            fr.byRef = true                     -- assign by ref
+        end
+    end,
+
+    -- ensures that &ref var is bound before use
+    Var = function (me)
+        if me.var.tp.ref then
+            -- already bounded or interface variable (bounded in constructor)
+            local inifc = (CLS().id~='Main' and CLS().blk_ifc.vars[me.var.id])
+            ASR(me.var.__exp_bounded or inifc,
+                me, 'reference must be bounded before use')
+        end
+    end,
+}
+
 AST.visit(F)
+AST.visit(G)

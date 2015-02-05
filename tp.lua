@@ -18,15 +18,6 @@ function TP.new (me)
         me.ext = (string.sub(id,1,1) == '_') or (id=='@')
         me.hold = true      -- holds by default
 
-        -- var _tp[] v (pointer to _tp holding its own memory)
-        -- (for pools `[]´ has another meaning)
-        if (not (AST and AST.par(me,'Dcl_pool'))) and me.arr==true then
-            me.arr = false
-            me.buffer = true
-            --ASR(me.ptr==0, me, 'invalid type')
-            me.ptr = me.ptr + 1
-        end
-
         -- set from outside (see "types" above and Dcl_nat in env.lua)
         me.prim  = false     -- if primitive
         me.num   = false     -- if numeric
