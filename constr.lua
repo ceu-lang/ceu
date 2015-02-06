@@ -4,7 +4,7 @@ F = {
         if cls then
             me.__set_fields = me.__set_fields or {}
             for _, var in ipairs(cls.blk_ifc.vars) do
-                if var.tp.ref then
+                if var.tp.ref and (not var.__set_default) then
                     ASR(me.__set_fields[var], me,
                         'field "'..var.id..'" must be assigned')
                 end
@@ -26,6 +26,14 @@ F = {
                 dcl.__set_fields = dcl.__set_fields or {}
                 dcl.__set_fields[var.var] = true
             end
+        end
+
+        -- assignment inside interface (default vaules)?
+        local ifc = AST.par(me,'BlockI')
+        if ifc then
+            assert(to.var, 'bug found')
+            -- var has a default value
+            to.var.__set_default = true
         end
     end,
 

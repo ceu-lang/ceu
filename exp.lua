@@ -80,6 +80,7 @@ G = {
         -- Detect first assignment/binding:
         --  - case1: assignment to normal variable not bounded yet
         --  - case2: assignment from constructor to interface variable
+        --  - case3: assignment from interface (default value)
 
         local constr = AST.par(me, 'Dcl_constr')
         local case2 = constr and constr.cls.blk_ifc.vars[to.lst.var.id]
@@ -87,7 +88,9 @@ G = {
         local inifc = (CLS().id~='Main' and CLS().blk_ifc.vars[to.lst.var.id])
         local case1 = not (case1 or to.lst.var.__exp_bounded or inifc)
 
-        if case1 or case2 then
+        local case3 = AST.par(me, 'BlockI')
+
+        if case1 or case2 or case3 then
             to.byRef = true                     -- assign by ref
             fr.byRef = true                     -- assign by ref
             if case1 then
@@ -103,7 +106,11 @@ G = {
                                      fr.lst.var and fr.lst.var.cls)),
                                                -- orgs are not lval
                     me, 'invalid attribution (not a reference)')
-                ASR(not AST.child(fr,'Op1_*'), me, 'invalid attribution')
+
+                -- TODO: temporary hack (null references)
+                if not AST.child(fr,'NULL') then
+                    ASR(not AST.child(fr,'Op1_*'), me, 'invalid attribution')
+                end
             end
         end
 

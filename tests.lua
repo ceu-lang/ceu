@@ -1378,6 +1378,26 @@ end
     --todo = 'finalize is lost!',
 }
 
+Test { [[
+var int[10] vec1;
+
+class T with
+    var int*& vec2;
+do
+    this.vec2[0] = 10;
+end
+
+vec1[0] = 0;
+
+var T t with
+    this.vec2 = outer.vec1;
+end;
+
+escape vec1[0];
+]],
+    run = 10,
+}
+
 do return end
 
 -------------------------------------------------------------------------------
@@ -23203,6 +23223,39 @@ end;
 escape i;
 ]],
     run = 10,
+}
+
+Test { [[
+var int i = 1;
+class T with
+    var int& i = *(int*)null;
+do
+    if &i != null then
+        i = 10;
+    end
+end
+
+var int ret = 0;
+
+var T t1;
+ret = ret + i;  // 1
+spawn T;
+ret = ret + i;  // 2
+
+var T t2 with
+    this.i = outer.i;
+end;
+ret = ret + i;  // 12
+
+i = 0;
+spawn T with
+    this.i = i;
+end;
+ret = ret + i;  // 22
+
+escape ret;
+]],
+    run = 22,
 }
 
 Test { [[
