@@ -784,12 +784,13 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
         COMM(me, 'SET: '..tostring(to[1]))    -- Var or C
         LINE(me, '{')   -- __ceu_tmp below
 
-        -- ADT relink:
+        -- For dynamic ADTs (to.fst.tp.ptr==1):
+        -- Relink:
         --  - remove "fr" from tree (set parent link to NIL)
         --  - free all "to" subtree ("fr" is not there anymore)
         --  - put "fr" back in "to"
-        local adt = ENV.adts[fr.tp.id]
-        if adt and fr.tp.ptr==1 then
+        local adt = ENV.adts[to.fst.tp.id]
+        if adt and to.fst.tp.ptr==1 then
             --      to.root
             -- becomes
             --      (((tceu_adt_root*)to.root)->pool)

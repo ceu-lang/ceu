@@ -141,17 +141,6 @@ function newvar (me, blk, pre, tp, id, isImp)
     if top then
         ASR(top.tops_i < ME.tops_i,
             me, 'undeclared type `'..(tp.id or '?')..'´')
-
-        -- ADTs are always pointers:
-        --  - they can be recursive
-        --  - except constructors, which hold the actual memory
-        if top.tag == 'Dcl_adt' then
-            -- ignore constructors
-            local constr = (string.sub(id,1,10)=='__ceu_adt_')
-            if not constr then
-                tp.ref = true
-            end
-        end
     end
 
     ASR(tp.ptr>0 or tp.ref or TP.get(tp.id).len~=0 or (tp.id=='void' and pre=='event'),
@@ -937,7 +926,8 @@ F = {
             local f = ins.tup[i]
             assert(p.tag=='Type' and f.tag=='Type', 'bug found')
 -- TODO: invert/better message
-            ASR(TP.contains(f,p), me, 'invalid call parameter #'..i..
+            local call = (me.tag=='Op2_call' and 'call') or 'constructor'
+            ASR(TP.contains(f,p), me, 'invalid '..call..' parameter #'..i..
                 ' ('..TP.tostr(p)..' vs '..TP.tostr(f)..')')
         end
         return req

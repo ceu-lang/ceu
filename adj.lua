@@ -264,10 +264,6 @@ F = {
         -- root must set SetExp variable
         assert(set.tag=='SetExp', 'bug found')
         set[2] = node('Var', me.ln, '__ceu_adt_'..me.n)
-        if not dyn then
-error'try w/o'
-            set[2].byRef = true
-        end
         return node('Stmts', me.ln,
                 node('Dcl_var', me.ln, 'var',
                     node('Type', me.ln, me.__adj_adt_id, (dyn and 1) or 0, false, false),
@@ -301,7 +297,8 @@ error'try w/o'
                 -- subst nested stmts
                 -- for Var:__ceu_adt_n
                 nested[#nested+1] = p
-                params[i] = node('Var', me.ln, '__ceu_adt_'..me.n)
+                params[i] = node('Op1_&', me.ln, '&',
+                                node('Var', me.ln, '__ceu_adt_'..me.n))
             end
         end
 
@@ -1282,9 +1279,6 @@ error'try w/o'
                             to)
             if p1[1] then   -- new?
                 assert(p1[2][1].tag == 'Adt', 'bug found')
-            else
-error'try w/o'
-                to.byRef = true
             end
             return node('Stmts', me.ln, p1, set)
 

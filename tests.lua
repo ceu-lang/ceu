@@ -1382,7 +1382,6 @@ do return end
 
 -------------------------------------------------------------------------------
 -- OK: well tested
-]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -39258,6 +39257,7 @@ escape ptr2==&a;
 
 -- ALGEBRAIC DATATYPES (ADTs)
 do return end
+]===]
 
 -- ADTs used in most examples below
 DATA = [[
@@ -39282,7 +39282,7 @@ data List with
 with
     tag CONS with
         var int   head;
-        var List& tail;
+        var List* tail;
     end
 end
 
@@ -39317,6 +39317,7 @@ end
 
 --[==[
 -- HERE
+]==]
 
 -- data type identifiers must start with an uppercase
 Test { [[
@@ -39465,11 +39466,20 @@ var Pair p1 = Pair(1,2);        /* struct, no tags */
 var Opt  o1 = Opt.NIL();        /* unions, explicit tag */
 var Opt  o2 = Opt.PTR(&p1);
 var List l1 = List.NIL();       /* recursive union */
-var List l2 = List.CONS(1, l1);
+var List l2 = List.CONS(1, &l1);
 var List l3 = List.CONS(1, List.CONS(2, List.NIL()));
 escape 1;
 ]],
     run = 1,
+}
+
+-- recursive fields are pointers
+Test { DATA..[[
+var List l1 = List.NIL();
+var List l2 = List.CONS(1, l1);     /* should be &l1 */
+escape 1;
+]],
+    env = 'line 52 : invalid constructor parameter #2 (List vs List*)',
 }
 
 -- constructors must specify the ADT identifier
@@ -39531,7 +39541,7 @@ Test { DATA..[[
 var Pair p1 = Pair(1,null);     /* expected (int,int) */
 escape 1;
 ]],
-    env = 'line 51 : invalid call parameter #2 (null* vs int)',
+    env = 'line 51 : invalid constructor parameter #2 (null* vs int)',
 }
 Test { DATA..[[
 var Opt o1 = Opt.NIL(1);       /* expected (void) */
@@ -39627,7 +39637,7 @@ var Pair p1 = Pair(1,2);
 var Opt  o1 = Opt.NIL();
 var Opt  o2 = Opt.PTR(&p1);
 var List l1 = List.NIL();
-var List l2 = List.CONS(1, l1);
+var List l2 = List.CONS(1, &l1);
 var List l3 = List.CONS(1, List.CONS(2, List.NIL()));
 
 var int ret = 0;                                // 0
@@ -39636,8 +39646,8 @@ ret = ret + p1.x + p1.y;                        // 3
 ret = ret + o1.NIL;                             // 4
 ret = ret + (o2.PTR.v==&p1);                    // 5
 ret = ret + l1.NIL;                             // 6
-ret = ret + l2.CONS.head + l2.CONS.tail.NIL;    // 8
-ret = ret + l3.CONS.head + l3.CONS.tail.CONS.head + l3.CONS.tail.CONS.tail.NIL;   // 12
+ret = ret + l2.CONS.head + l2.CONS.tail:NIL;    // 8
+ret = ret + l3.CONS.head + l3.CONS.tail:CONS.head + l3.CONS.tail:CONS.tail:NIL;   // 12
 
 escape ret;
 ]],
@@ -39669,7 +39679,7 @@ var Pair p  = Pair(1,2);
 var Opt  o1 = Opt.NIL();
 var Opt  o2 = Opt.PTR(&p);
 var List l1 = List.NIL();
-var List l2 = List.CONS(1, l1);
+var List l2 = List.CONS(1, &l1);
 var List l3 = List.CONS(1, List.CONS(2, List.NIL()));
 
 var int ret = 0;            // 0
@@ -39703,9 +39713,9 @@ if l2.NIL then
 else/if l2.CONS then
     _assert(l2.CONS.head == 1);
     ret = ret + 1;          // 7
-    if l2.CONS.tail.NIL then
+    if l2.CONS.tail:NIL then
         ret = ret + 1;      // 8
-    else/if l2.CONS.tail.CONS then
+    else/if l2.CONS.tail:CONS then
         _assert(0);         // never reachable
     end
     ret = ret + 1;          // 9
@@ -39716,14 +39726,14 @@ if l3.NIL then
 else/if l3.CONS then
     _assert(l3.CONS.head == 1);
     ret = ret + 1;          // 10
-    if l3.CONS.tail.NIL then
+    if l3.CONS.tail:NIL then
         _assert(0);         // never reachable
-    else/if l3.CONS.tail.CONS then
-        _assert(l3.CONS.tail.CONS.head == 2);
+    else/if l3.CONS.tail:CONS then
+        _assert(l3.CONS.tail:CONS.head == 2);
         ret = ret + 2;      // 12
-        if l3.CONS.tail.CONS.tail.NIL then
+        if l3.CONS.tail:CONS.tail:NIL then
             ret = ret + 1;  // 13
-        else/if l3.CONS.tail.CONS.tail.CONS then
+        else/if l3.CONS.tail:CONS.tail:CONS then
             _assert(0);     // never reachable
         end
         ret = ret + 1;      // 14
@@ -39763,19 +39773,19 @@ escape p:CONS.head;
 -- linking a list: 2-1-NIL
 Test { DATA..[[
 var List l1 = List.NIL();
-var List l2 = List.CONS(1, l1);
-var List l3 = List.CONS(2, l2);
-escape l3.CONS.head + l3.CONS.tail.CONS.head + l3.CONS.tail.CONS.tail.NIL;
+var List l2 = List.CONS(1, &l1);
+var List l3 = List.CONS(2, &l2);
+escape l3.CONS.head + l3.CONS.tail:CONS.head + l3.CONS.tail:CONS.tail:NIL;
 ]],
     run = 4,
 }
 -- breaking a list: 2-1-NIL => 2-NIL
 Test { DATA..[[
 var List l1 = List.NIL();
-var List l2 = List.CONS(1, l1);
-var List l3 = List.CONS(2, l2);
-l3.CONS.tail = l1;
-escape l3.CONS.head + l3.CONS.tail.NIL;
+var List l2 = List.CONS(1, &l1);
+var List l3 = List.CONS(2, &l2);
+l3.CONS.tail = &l1;
+escape l3.CONS.head + l3.CONS.tail:NIL;
 ]],
     run = 3,
 }
@@ -39783,7 +39793,7 @@ escape l3.CONS.head + l3.CONS.tail.NIL;
 -- circular list: 1-1-1-...
 Test { DATA..[[
 var List l1 = List.NIL();
-var List l2 = List.CONS(1, l1);
+var List l2 = List.CONS(1, &l1);
 l1 = l2;
 escape l1.CONS + (l1.CONS.head==1);
 ]],
@@ -39791,9 +39801,9 @@ escape l1.CONS + (l1.CONS.head==1);
 }
 Test { DATA..[[
 var List l1 = List.NIL();
-var List l2 = List.CONS(1, l1);
+var List l2 = List.CONS(1, &l1);
 l1 = l2;
-escape l1.CONS + (l1.CONS.head==1) + (l1.CONS.tail.CONS.tail.CONS.head==1);
+escape l1.CONS + (l1.CONS.head==1) + (l1.CONS.tail:CONS.tail:CONS.head==1);
 ]],
     run = 3,
 }
@@ -39801,11 +39811,11 @@ escape l1.CONS + (l1.CONS.head==1) + (l1.CONS.tail.CONS.tail.CONS.head==1);
 -- circular list: 1-2-1-2-...
 Test { DATA..[[
 var List l1 = List.CONS(1, List.NIL());
-var List l2 = List.CONS(2, l1);
-l1.CONS.tail = l2;
-escape (l1.CONS.head==1) + (l1.CONS.tail.CONS.head==2) +
-       (l2.CONS.head==2) + (l2.CONS.tail.CONS.head==1) +
-       (l1.CONS.tail.CONS.tail.CONS.tail.CONS.head==2);
+var List l2 = List.CONS(2, &l1);
+l1.CONS.tail = &l2;
+escape (l1.CONS.head==1) + (l1.CONS.tail:CONS.head==2) +
+       (l2.CONS.head==2) + (l2.CONS.tail:CONS.head==1) +
+       (l1.CONS.tail:CONS.tail:CONS.tail:CONS.head==2);
 ]],
     run = 5,
 }
@@ -39814,10 +39824,10 @@ escape (l1.CONS.head==1) + (l1.CONS.tail.CONS.head==2) +
 Test { DATA..[[
 var List l1 = List.CONS(1, List.NIL());
 var List l2 = List.CONS(2, List.NIL());
-l1.CONS.tail = l2;
-l2.CONS.tail = l1;
+l1.CONS.tail = &l2;
+l2.CONS.tail = &l1;
 
-escape l1.CONS.head + l1.CONS.tail.CONS.head + l2.CONS.head + l2.CONS.tail.CONS.head;
+escape l1.CONS.head + l1.CONS.tail:CONS.head + l2.CONS.head + l2.CONS.tail:CONS.head;
 ]],
     run = 6,
 }
@@ -39825,8 +39835,8 @@ escape l1.CONS.head + l1.CONS.tail.CONS.head + l2.CONS.head + l2.CONS.tail.CONS.
 -- not circular
 Test { DATA..[[
 var List l1 = List.NIL();
-var List l2 = List.CONS(1, l1);
-l1 = l2.CONS.tail;
+var List l2 = List.CONS(1, &l1);
+l1 = *l2.CONS.tail;
 escape l1.NIL;
 ]],
     run = 1,
@@ -40137,8 +40147,6 @@ escape 1;
 ]],
     props = 'line 53 : cannot assign parent to child',
 }
-
-]==]
 
 -- TREES
 

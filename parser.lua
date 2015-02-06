@@ -78,6 +78,7 @@ local _V2NAME = {
     Dcl_adt_tag = 'declaration',
     _TupleType_1 = 'type list',
     _TupleType_2 = 'param list',
+    __adt_expitem = 'parameter',
 }
 for i=1, 13 do
     _V2NAME['__'..i] = 'expression'

@@ -345,6 +345,7 @@ F = {
             PROPS.has_ret = true
         end
 
+        -- For dynamic ADTs (to.fst.tp.ptr==1):
         -- check (or):
         --  - "to" is prefix of "fr"
         --  - "fr" is constructor
@@ -352,8 +353,8 @@ F = {
         --  l = l:CONS.tail     // OK
         --  l = new (...)       // OK
         --  l:CONS.tail = l     // NO
-        local adt = ENV.adts[fr.tp.id]
-        if adt and fr.tp.ptr==1 then
+        local adt = ENV.adts[to.fst.tp.id]
+        if adt and to.fst.tp.ptr==1 then
             local constr = (fr.tag=='Var')
             assert(to.fst.tag=='Var' and fr.fst.tag=='Var', 'not implemented')
             local prefix = (to.var == fr.var) and
