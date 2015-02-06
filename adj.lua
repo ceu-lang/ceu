@@ -297,8 +297,12 @@ F = {
                 -- subst nested stmts
                 -- for Var:__ceu_adt_n
                 nested[#nested+1] = p
-                params[i] = node('Op1_&', me.ln, '&',
-                                node('Var', me.ln, '__ceu_adt_'..me.n))
+                if dyn then
+                    params[i] = node('Var', me.ln, '__ceu_adt_'..me.n)
+                else
+                    params[i] = node('Op1_&', me.ln, '&',
+                                    node('Var', me.ln, '__ceu_adt_'..me.n))
+                end
             end
         end
 

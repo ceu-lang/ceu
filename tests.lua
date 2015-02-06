@@ -1382,6 +1382,7 @@ do return end
 
 -------------------------------------------------------------------------------
 -- OK: well tested
+]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -39256,8 +39257,7 @@ escape ptr2==&a;
 }
 
 -- ALGEBRAIC DATATYPES (ADTs)
-do return end
-]===]
+--do return end
 
 -- ADTs used in most examples below
 DATA = [[
@@ -39964,7 +39964,8 @@ pool List_[] l;
 l = List_.CONS(2, List_.NIL());
 escape l:CONS.head;
 ]],
-    env = 'line 52 : invalid call parameter #2 (List_ vs List_*)',
+    env = 'line 52 : invalid attribution (List_* vs List_)',
+    --env = 'line 52 : invalid call parameter #2 (List_ vs List_*)',
 }
 -- cannot assign "l" directly (in the pool declaration)
 Test { DATA..[[
@@ -40086,6 +40087,7 @@ l = new List_.CONS(1, List_.CONS(2, List_.CONS(3, List_.NIL())));   // 3 fails
 _assert(l:CONS.tail:CONS.tail:NIL);
 l = new List_.NIL();                                                // clear all
 l = new List_.CONS(4, List_.CONS(5, List_.CONS(6, List_.NIL())));   // 6 fails
+_printf("oioi\n");
 _assert(l:CONS.tail:CONS.tail:NIL);
 escape l:CONS.head + l:CONS.tail:CONS.head + (l:CONS.tail:CONS.tail:NIL);
 ]],
@@ -40156,15 +40158,15 @@ data Tree with
 with
     tag NODE with
         var int   v;
-        var Tree& left;
-        var Tree& right;
+        var Tree* left;
+        var Tree* right;
     end
 end
 
 var Tree t1 = Tree.NIL();
 var Tree t2 = Tree.NODE(1, Tree.NIL(), Tree.NIL());
 
-escape t1.NIL + t2.NODE.v + t2.NODE.left.NIL + t2.NODE.right.NIL;
+escape t1.NIL + t2.NODE.v + t2.NODE.left:NIL + t2.NODE.right:NIL;
 ]],
     run = 4,
 }
