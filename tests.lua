@@ -17379,6 +17379,65 @@ escape 1;
 ]],
     run = 1,
 }
+
+Test { [[
+native do
+    struct T;
+    typedef struct T t;
+    int V = 1;
+    t* alloc (int ok) {
+        if (ok) {
+            V++;
+            return (t*) &V;
+        } else {
+            return NULL;
+        }
+    }
+    void dealloc (t* ptr) {
+        if (ptr != NULL) {
+            V *= 2;
+        }
+    }
+end
+native @nohold _dealloc();
+
+var int ret = _V;           // v=1, ret=1
+
+do
+    var _t& tex;
+    finalize
+        tex = _alloc(1);    // v=2
+    with
+        _dealloc(&tex);
+    end
+    ret = ret + _V;         // ret=3
+    if &tex == null then
+        ret = 0;
+    end
+end                         // v=4
+
+ret = ret + _V;             // ret=7
+
+do
+    var _t& tex;
+    finalize
+        tex = _alloc(0);    // v=4
+    with
+        _dealloc(&tex);
+    end
+    ret = ret + _V;         // ret=11
+    if &tex == null then
+        ret = ret + 1;      // ret=12
+    end
+end                         // v=4
+
+ret = ret + _V;             // ret=16
+
+escape ret;
+]],
+    run = 16,
+}
+
 -- TODO: bounded loop on finally
 
     -- ASYNCHRONOUS
@@ -23145,7 +23204,6 @@ escape i;
 ]],
     run = 10,
 }
-do return end
 
 Test { [[
 var int i = 1;

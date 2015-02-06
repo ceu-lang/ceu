@@ -14,17 +14,19 @@ end
 function V (me)
     ASR(me.val, me, 'invalid expression')
 
+    local ret = me.val
+
     local ref = me.tp and me.tp.ref and me.tp.id
     if me.byRef and
         (not (ENV.clss[me.tp.id] or ref and ENV.clss[ref] or me.tag=='Op2_call'))
     then
                     -- already by ref
-        local ret = '(&'..me.val..')'
-        return string.gsub(ret, '%&([^)])%*', '%1')
-                -- &((*(...))) => (((...)))
-    else
-        return me.val
+        ret = '(&'..ret..')'
     end
+
+    return string.gsub(ret, '([^&])%&([(]*)%*', '%1%2')
+            -- &((*(...))) => (((...)))
+            -- unless &&((*(...)))
 end
 
 function CUR (me, id)
