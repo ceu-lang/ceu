@@ -1104,6 +1104,19 @@ F = {
         return node('Stmts', me.ln, unpack(ret))
     end,
 
+    -- Sufix recursive ADT with "*"
+    Dcl_var = function (me)
+        local pre, tp, id = unpack(me)
+        local adt = AST.par(me, 'Dcl_adt')
+        if adt then
+            local adt_id = unpack(adt)
+            local id, ptr, arr, ref = unpack(tp)
+            if (adt_id==id) and (ptr==0) and (not arr) and (not ref) then
+                me[2][2] = 1
+            end
+        end
+    end,
+
 -- Tuples ---------------------
 
     _TupleTypeItem_2 = '_TupleItem_1',

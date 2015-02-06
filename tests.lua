@@ -1382,7 +1382,6 @@ do return end
 
 -------------------------------------------------------------------------------
 -- OK: well tested
-]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -39258,6 +39257,7 @@ escape ptr2==&a;
 
 -- ALGEBRAIC DATATYPES (ADTs)
 --do return end
+]===]
 
 -- ADTs used in most examples below
 DATA = [[
@@ -39281,35 +39281,35 @@ data List with
     tag NIL;
 with
     tag CONS with
-        var int   head;
-        var List* tail;
+        var int  head;
+        var List tail;
     end
 end
 
-// DYNAMIC VERSIONS OF THE SAME TYPES
-// (sufix "_")
 
-data Pair_ with
-    var int x;
-    var int y;
-end
 
-data Opt_ with
-    tag NIL;
-with
-    tag PTR with
-        var void* v;
-    end
-end
 
-data List_ with
-    tag NIL;
-with
-    tag CONS with
-        var int   head;
-        var List_* tail;
-    end
-end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // 50 lines
 ]]
 
@@ -39848,17 +39848,17 @@ escape l1.NIL;
 --  - different types for static/dynamic ADTs
 --  - they can never be mixed
 --  - TODO:
---      - now explicit (List vs List_)
+--      - now explicit (List vs List)
 --      - in the future distinguish/create automatically/implicitly
 --          - declare only List
---              - implicitly expand to List/List_
+--              - implicitly expand to List/List
 
 -- TODO: non-recursive dynamic ADTs
 --  - does it even make sense?
 
 -- dynamic ADTs require a pool
 Test { DATA..[[
-pool List_[] l;     // all instances reside here
+pool List[] l;     // all instances reside here
 escape 1;
 ]],
     run = 1,
@@ -39868,32 +39868,32 @@ escape 1;
 --  - represents the pool
 --  - represents the root of the tree
 Test { DATA..[[
-pool List_[] l;     // l is the pool
+pool List[] l;     // l is the pool
 escape l:NIL;       // l is a pointer to the root
 ]],
     run = 1,
 }
 Test { DATA..[[
-pool List_[] l;     // l is the pool
+pool List[] l;     // l is the pool
 escape (*l).NIL;    // equivalent to above
 ]],
     run = 1,
 }
 -- the pointer must be dereferenced
 Test { DATA..[[
-pool List_[] l;     // l is the pool
+pool List[] l;     // l is the pool
 escape l.NIL;       // "l" is not a struct
 ]],
     env = 'line 52 : not a struct',
 }
 Test { DATA..[[
-pool List_[] l;     // l is the pool
+pool List[] l;     // l is the pool
 escape l.CONS.head; // "l" is not a struct
 ]],
     env = 'line 52 : not a struct',
 }
 Test { DATA..[[
-pool List_[] l;             // l is the pool
+pool List[] l;             // l is the pool
 escape l:CONS.tail.CONS;    // "l:CONS.tail" is not a struct
 ]],
     env = 'line 52 : not a struct',
@@ -39903,7 +39903,7 @@ escape l:CONS.tail.CONS;    // "l:CONS.tail" is not a struct
 -- (this is why the base case cannot have fields and
 --  must appear first in the ADT declaration)
 Test { DATA..[[
-pool List_[] l;
+pool List[] l;
 escape l:CONS;      // runtime error
 ]],
     asr = true,
@@ -39914,7 +39914,7 @@ escape l:CONS;      // runtime error
 Test { DATA..[[
 var int ret = 0;
 do
-    pool List_[] l;
+    pool List[] l;
     ret = l:NIL;
 end
 // all instances in "l" have been collected
@@ -39930,61 +39930,61 @@ escape ret;
 --  - must use "new"
 --  - the pool is inferred from the l-value
 Test { DATA..[[
-pool List_[] l;
-l = new List_.NIL();
+pool List[] l;
+l = new List.NIL();
 escape l:NIL;
 ]],
     run = 1,
 }
 Test { DATA..[[
-pool List_[] l;
-l = new List_.CONS(2, List_.NIL());
+pool List[] l;
+l = new List.CONS(2, List.NIL());
 escape l:CONS.head;
 ]],
     run = 2,
 }
 Test { DATA..[[
-pool List_[] l;
-l = new List_.CONS(1, List_.CONS(2, List_.NIL()));
+pool List[] l;
+l = new List.CONS(1, List.CONS(2, List.NIL()));
 escape l:CONS.head + l:CONS.tail:CONS.head + l:CONS.tail:CONS.tail:NIL;
 ]],
     run = 4,
 }
 -- wrong tag
 Test { DATA..[[
-pool List_[] l;
-l = new List_.NIL();
+pool List[] l;
+l = new List.NIL();
 escape l:CONS;
 ]],
     asr = true,
 }
 -- no "new"
 Test { DATA..[[
-pool List_[] l;
-l = List_.CONS(2, List_.NIL());
+pool List[] l;
+l = List.CONS(2, List.NIL());
 escape l:CONS.head;
 ]],
-    env = 'line 52 : invalid attribution (List_* vs List_)',
-    --env = 'line 52 : invalid call parameter #2 (List_ vs List_*)',
+    env = 'line 52 : invalid attribution (List* vs List)',
+    --env = 'line 52 : invalid call parameter #2 (List vs List*)',
 }
 -- cannot assign "l" directly (in the pool declaration)
 Test { DATA..[[
-pool List_[] l = new List_.CONS(2, List_.NIL());
+pool List[] l = new List.CONS(2, List.NIL());
 escape l.CONS.head;
 ]],
     parser = 'line 51 : after `l´ : expected `;´',
 }
 -- no dereference
 Test { DATA..[[
-pool List_[] l;
-l = new List_.NIL();
+pool List[] l;
+l = new List.NIL();
 escape l.NIL;
 ]],
     env = 'line 53 : not a struct',
 }
 Test { DATA..[[
-pool List_[] l;
-l = new List_.CONS(2, List_.NIL());
+pool List[] l;
+l = new List.CONS(2, List.NIL());
 escape l.CONS.head;
 ]],
     env = 'line 53 : not a struct',
@@ -40002,23 +40002,23 @@ escape l.CONS.head;
 --  must appear first in the ADT declaration)
 -- (
 Test { DATA..[[
-pool List_[0] l;
-l = new List_.CONS(2, List_.NIL());
+pool List[0] l;
+l = new List.CONS(2, List.NIL());
 escape l:NIL;
 ]],
     run = 1,
 }
 Test { DATA..[[
-pool List_[0] l;
-l = new List_.CONS(2, List_.NIL());
+pool List[0] l;
+l = new List.CONS(2, List.NIL());
 escape l:CONS.head;     // runtime error
 ]],
     asr = true,
 }
 -- 2nd allocation fails (1 space)
 Test { DATA..[[
-pool List_[1] l;
-l = new List_.CONS(2, List_.CONS(1, List_.NIL()));
+pool List[1] l;
+l = new List.CONS(2, List.CONS(1, List.NIL()));
 _assert(l:CONS.tail:NIL);
 escape l:CONS.head;
 ]],
@@ -40026,8 +40026,8 @@ escape l:CONS.head;
 }
 -- 3rd allocation fails (2 space)
 Test { DATA..[[
-pool List_[2] l;
-l = new List_.CONS(1, List_.CONS(2, List_.CONS(3, List_.NIL())));
+pool List[2] l;
+l = new List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));
 _assert(l:CONS.tail:CONS.tail:NIL);
 escape l:CONS.head + l:CONS.tail:CONS.head + l:CONS.tail:CONS.tail:NIL;
 ]],
@@ -40037,8 +40037,8 @@ escape l:CONS.head + l:CONS.tail:CONS.head + l:CONS.tail:CONS.tail:NIL;
 -- dereference test for static pools
 -- (nothing new here)
 Test { DATA..[[
-pool List_[0] l;
-l = new List_.CONS(2, List_.NIL());
+pool List[0] l;
+l = new List.CONS(2, List.NIL());
 escape l.NIL;
 ]],
     env = 'line 53 : not a struct',
@@ -40057,9 +40057,9 @@ escape l.NIL;
 -- 1-NIL => 2-NIL
 -- 1-NIL can be safely reclaimed
 Test { DATA..[[
-pool List_[1] l;
-l = new List_.CONS(1, List_.NIL());
-l = new List_.CONS(2, List_.NIL());    // no allocation fail
+pool List[1] l;
+l = new List.CONS(1, List.NIL());
+l = new List.CONS(2, List.NIL());    // no allocation fail
 escape l:CONS.head;
 ]],
     run = 2,
@@ -40068,10 +40068,10 @@ escape l:CONS.head;
 -- 1-2-3-NIL => 1-2-NIL (3 fails)
 -- 4-5-6-NIL => NIL     (all fail)
 Test { DATA..[[
-pool List_[2] l;
-l = new List_.CONS(1, List_.CONS(2, List_.CONS(3, List_.NIL())));   // 3 fails
+pool List[2] l;
+l = new List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));   // 3 fails
 _assert(l:CONS.tail:CONS.tail:NIL);
-l = new List_.CONS(4, List_.CONS(5, List_.CONS(6, List_.NIL())));   // all fail
+l = new List.CONS(4, List.CONS(5, List.CONS(6, List.NIL())));   // all fail
 _assert(l:NIL);
 escape l:NIL;
 ]],
@@ -40082,11 +40082,11 @@ escape l:NIL;
 -- (clear all)
 -- 4-5-6-NIL => 4-5-NIL (6 fails)
 Test { DATA..[[
-pool List_[2] l;
-l = new List_.CONS(1, List_.CONS(2, List_.CONS(3, List_.NIL())));   // 3 fails
+pool List[2] l;
+l = new List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));   // 3 fails
 _assert(l:CONS.tail:CONS.tail:NIL);
-l = new List_.NIL();                                                // clear all
-l = new List_.CONS(4, List_.CONS(5, List_.CONS(6, List_.NIL())));   // 6 fails
+l = new List.NIL();                                                // clear all
+l = new List.CONS(4, List.CONS(5, List.CONS(6, List.NIL())));   // 6 fails
 _printf("oioi\n");
 _assert(l:CONS.tail:CONS.tail:NIL);
 escape l:CONS.head + l:CONS.tail:CONS.head + (l:CONS.tail:CONS.tail:NIL);
@@ -40105,36 +40105,36 @@ escape l:CONS.head + l:CONS.tail:CONS.head + (l:CONS.tail:CONS.tail:NIL);
 
 -- ok: child is constructor (with no previous parent)
 Test { DATA..[[
-pool List_[2] l;
-l = new List_.CONS(1, List_.NIL());
-l:CONS.tail = new List_.CONS(2, List_.NIL());
+pool List[2] l;
+l = new List.CONS(1, List.NIL());
+l:CONS.tail = new List.CONS(2, List.NIL());
 escape l:CONS.head + l:CONS.tail:CONS.head;
 ]],
     run = 3,
 }
 -- ok: tail is child of l
 Test { DATA..[[
-pool List_[2] l;
-l = new List_.CONS(1, List_.CONS(2, List_.NIL()));
+pool List[2] l;
+l = new List.CONS(1, List.CONS(2, List.NIL()));
 l = l:CONS.tail;    // parent=child
 escape l:CONS.head;
 ]],
     run = 2,
 }
 Test { DATA..[[
-pool List_[2] l;
-l = new List_.CONS(1, List_.CONS(2, List_.NIL()));
+pool List[2] l;
+l = new List.CONS(1, List.CONS(2, List.NIL()));
 l = l:CONS.tail;    // parent=child
-l:CONS.tail = new List_.CONS(3, List_.CONS(4, List_.NIL()));    // 4 fails
+l:CONS.tail = new List.CONS(3, List.CONS(4, List.NIL()));    // 4 fails
 escape l:CONS.head + l:CONS.tail:CONS.head + l:CONS.tail:CONS.tail:NIL;
 ]],
     run = 6,
 }
 Test { DATA..[[
-pool List_[2] l;
-l = new List_.CONS(1, List_.CONS(2, List_.NIL()));
+pool List[2] l;
+l = new List.CONS(1, List.CONS(2, List.NIL()));
 l = l:CONS.tail;    // parent=child
-l:CONS.tail = new List_.CONS(3, List_.CONS(4, List_.NIL()));    // 4 fails
+l:CONS.tail = new List.CONS(3, List.CONS(4, List.NIL()));    // 4 fails
 escape l:CONS.head + l:CONS.tail:CONS.head + l:CONS.tail:CONS.tail:NIL;
 ]],
     run = 6,
@@ -40142,8 +40142,8 @@ escape l:CONS.head + l:CONS.tail:CONS.head + l:CONS.tail:CONS.tail:NIL;
 
 -- no: l is parent of tail
 Test { DATA..[[
-pool List_[2] l;
-l = new List_.CONS(1, List_.CONS(2, List_.NIL()));
+pool List[2] l;
+l = new List.CONS(1, List.CONS(2, List.NIL()));
 l:CONS.tail = l;    // child=parent
 escape 1;
 ]],
@@ -40187,7 +40187,7 @@ escape 1;
 }
 -- TODO: does it make sense?
 Test { DATA..[[
-pool List_[] l;
+pool List[] l;
 var List l2 = List.NIL();
 escape l==l2;
 ]],
@@ -40203,26 +40203,26 @@ escape l==l2;
 Test { DATA..[[
 var int ret = 0;                // 0
 
-pool List_[5] l;
+pool List[5] l;
 
 // change head [2]
-l = new List_.CONS(2, l);
+l = new List.CONS(2, l);
 ret = ret + l:CONS.head;        // 2
 _assert(ret == 2);
 
 // change head [1, 2]
-l = new List_.CONS(1, l);
+l = new List.CONS(1, l);
 ret = ret + l:CONS.head;        // 3
 ret = ret + l:CONS.head + l:CONS.tail:CONS.head;
                                 // 6
 _assert(ret == 6);
 
 // change tail [1, 2, 4]
-l:CONS.tail:CONS.tail = new List_.CONS(4, List_.NIL());
+l:CONS.tail:CONS.tail = new List.CONS(4, List.NIL());
                                 // 10
 
 // change middle [1, 2, 3, 4]
-var List_ l3 = List_.CONS(3, l:CONS.tail:CONS.tail);
+var List l3 = List.CONS(3, l:CONS.tail:CONS.tail);
 l:CONS.tail:CONS.tail = l3;
 _assert(l:CONS.tail.CONS:head == 3);
 _assert(l:CONS.tail.CONS:tail.CONS.head == 4);
@@ -40236,7 +40236,7 @@ ret = ret + l:CONS.tail:CONS.head;
 
 // fill the list [1, 3, 4, 5, 6] (7 fails)
 l:CONS.tail:CONS.tail:CONS.tail =
-    new List_.CONS(5, List_.CONS(6, List_.CONS(7, List_.NIL())));
+    new List.CONS(5, List.CONS(6, List.CONS(7, List.NIL())));
 
 escape ret;
 ]],
