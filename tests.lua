@@ -1382,6 +1382,7 @@ do return end
 
 -------------------------------------------------------------------------------
 -- OK: well tested
+]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -23091,6 +23092,62 @@ escape v;
 }
 
 Test { [[
+var int i = 0;
+class T with
+    var int& i;
+do
+    i = 10;
+end
+var T t;
+escape i;
+]],
+    constr = 'line 7 : field "i" must be assigned',
+    --run = 1,
+}
+Test { [[
+var int i = 0;
+class T with
+    var int& i;
+do
+    i = 10;
+end
+spawn T;
+escape i;
+]],
+    constr = 'line 7 : field "i" must be assigned',
+    --run = 1,
+}
+Test { [[
+var int i = 0;
+class T with
+    var int& i;
+do
+    i = 10;
+end
+var T t with
+    this.i = outer.i;
+end;
+escape i;
+]],
+    run = 10,
+}
+Test { [[
+var int i = 0;
+class T with
+    var int& i;
+do
+    i = 10;
+end
+spawn T with
+    this.i = outer.i;
+end;
+escape i;
+]],
+    run = 10,
+}
+do return end
+
+Test { [[
 var int i = 1;
 var int& v = i;
 
@@ -26027,7 +26084,7 @@ escape outer;
 Test { [[
 _f(outer);
 ]],
-    props = 'line 1 : `outer´ can only be unsed inside constructors',
+    constr = 'line 1 : `outer´ can only be unsed inside constructors',
 }
 
 Test { [[
@@ -39257,7 +39314,6 @@ escape ptr2==&a;
 
 -- ALGEBRAIC DATATYPES (ADTs)
 --do return end
-]===]
 
 -- ADTs used in most examples below
 DATA = [[

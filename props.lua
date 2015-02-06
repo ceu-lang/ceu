@@ -245,11 +245,6 @@ F = {
                 'not permitted outside a function')
     end,
 
-    Outer = function (me)
-        ASR(AST.par(me,'Dcl_constr'), me,
-            '`outer´ can only be unsed inside constructors')
-    end,
-
     Dcl_cls = function (me)
         if me.id ~= 'Main' then
             PROPS.has_orgs = true

@@ -82,7 +82,7 @@ G = {
         --  - case2: assignment from constructor to interface variable
 
         local constr = AST.par(me, 'Dcl_constr')
-        local case2 = constr and ENV.clss[constr.cls.id].blk_ifc.vars[to.lst.var.id]
+        local case2 = constr and constr.cls.blk_ifc.vars[to.lst.var.id]
 
         local inifc = (CLS().id~='Main' and CLS().blk_ifc.vars[to.lst.var.id])
         local case1 = not (case1 or to.lst.var.__exp_bounded or inifc)
