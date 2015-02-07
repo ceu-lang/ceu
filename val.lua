@@ -363,9 +363,8 @@ F =
     end,
 
     Field = function (me)
-        local cls = me.org.tp.ptr==0 and ENV.clss[me.org.tp.id]
         local gen = '((tceu_org*)'..me.org.val..')'
-        if cls and cls.is_ifc then
+        if me.org.cls and me.org.cls.is_ifc then
             if me.var.pre == 'var'
             or me.var.pre == 'pool' then
                 if me.var.tp.arr then

@@ -1,50 +1,8 @@
+-- TODO:
+--  - remove interface binding?
+--      - only used for null hack?
 F = {
-    -- static/dynamic constructor: check if class.&field has been assigned
-    Dcl_var = function (me)
-        local cls = me.cls or me.var.cls
-        if cls then
-            me.__set_fields = me.__set_fields or {}
-            for _, var in ipairs(cls.blk_ifc.vars) do
-                if var.tp.ref and (not var.__set_default) then
-                    ASR(me.__set_fields[var], me,
-                        'field "'..var.id..'" must be assigned')
-                end
-            end
-        end
-    end,
-    Spawn = 'Dcl_var',
-
-    SetExp = function (me)
-        local _, fr, to = unpack(me)
-
-        -- Set inside constructor:
-        --  mark all class.&field being assigned
-
-        -- assignment inside constructor?
-        local dcl = AST.par(me,'Spawn') or AST.par(me,'Dcl_var')
-        if dcl then
-            -- assignment to a this.field?
-            local op, e1, var = unpack(to)
-            if to.tag=='Field' and e1.tag=='This' and var.var then
-                -- var has been assigned here
-                dcl.__set_fields = dcl.__set_fields or {}
-                dcl.__set_fields[var.var] = true
-            end
-        end
-
-        -- Set inside interface:
-        --  mark all class.&field being assigned
-
-        -- assignment inside interface (default vaules)?
-        local ifc = AST.par(me,'BlockI')
-        if ifc then
-            assert(to.var, 'bug found')
-            -- var has a default value
-            to.var.__set_default = true
-        end
-    end,
-
---
+    -- before Var
     SetExp_pre = function (me)
         local _, fr, to = unpack(me)
         if not to.tp.ref then
@@ -52,27 +10,54 @@ F = {
         end
         assert(to.lst.var, 'bug found')
 
-        -- Detect first assignment/binding:
-        --  - case1: assignment to normal variable not bounded yet
-        --  - case2: assignment from constructor to interface variable
-        --  - case3: assignment from interface (default value)
+        -- Detect source of assignment/binding:
+        --  - internal:  assignment from body to normal variable (v, this.v)
+        --  - constr:    assignment from constructor to interface variable (this.v)
+        --  - interface: assignment from interface (var int v = <default value>)
+        --  - outer:     assignment from outer body (t.v)
 
-        local inifc = (CLS().id~='Main' and CLS().blk_ifc.vars[to.lst.var.id])
-        local case1 = not (to.lst.var.first_bounded or inifc)
+        local constr    = AST.par(me, 'Dcl_constr')
+              constr    = constr and (constr.cls.blk_ifc.vars[to.lst.var.id]==to.lst.var) and constr
+        local outer     = (not constr) and to.tag=='Field' and to.org.cls~=CLS()
+        local interface = AST.par(me, 'BlockI')
+        local internal  = not (constr or outer or interface)
 
-        local constr = AST.par(me, 'Dcl_constr')
-        local case2 = constr and (constr.cls.blk_ifc.vars[to.lst.var.id]==to.lst.var)
+        -- ALREADY HAS INTERNAL BINDING
 
-        local case3 = AST.par(me, 'BlockI')
+        if to.lst.var.bind=='internal' then
+            -- Bounded inside the class body, refuse external assignments:
+            --  - constructor
+            --      var T t with
+            --          this.v = ...;   // v was bounded in T
+            --      end;
+            --  - outer body
+            --      var T t;
+            --      t.v = ...;          // v was bounded in T
+            ASR(internal or interface, me,
+                'cannot assign to reference bounded inside the class')
 
-        if case1 or case2 or case3 then
+        -- NO INTERNAL BINDING
+        --  first assignment
 
-            -- only first assignment is byRef
+        else
+            -- set source of binding
+            if internal then
+                to.lst.var.bind = 'internal'
+            elseif constr then
+                if not to.lst.var.bind then
+                    to.lst.var.bind = 'constr'
+                end
+                -- mark this field assigned inside this constructor
+                -- later (Dcl_constr), we check if all unbounded fields have being assigned
+                constr.__bounded = constr.__bounded or {}
+                constr.__bounded[to.lst.var] = true
+            elseif interface then
+                to.lst.var.bind = 'interface'
+            end
+
+            -- first assignment (and only first assignment) is byRef
             to.byRef = true
             fr.byRef = true
-            if case1 then
-                to.lst.var.first_bounded = true     -- marks &ref as bounded
-            end
 
             -- refuses first assignment from constants and dereferences:
             -- var int& i = 1;
@@ -92,14 +77,29 @@ F = {
         end
     end,
 
-    -- ensures that &ref var is bound before use
+    -- Constructors (static/dynamic):
+    -- If a ref field (class.field&) is not bounded internally,
+    --  it must be bounded in all constructors.
+    -- Checks if all class.field& are bounded or assigned here.
+    Dcl_constr = function (me)
+        me.__bounded = me.__bounded or {}
+        for _, var in ipairs(me.cls.blk_ifc.vars) do
+            if var.tp.ref and (var.bind == 'constr') then
+                ASR(me.__bounded[var], me,
+                    'field "'..var.id..'" must be assigned')
+            end
+        end
+    end,
+
+    -- Ensures that &ref var is bound before use.
     Var = function (me)
         if me.var.tp.ref then
-            -- already bounded or interface variable (bounded in constructor)
-            local inifc = (CLS().id~='Main' and CLS().blk_ifc.vars[me.var.id])
-            if not AST.par(me, 'Field') then
-                ASR(me.var.first_bounded or inifc,
-                    me, 'reference must be bounded before use')
+            -- ignore interface variables outside Main
+            -- (they are guaranteed to be bounded)
+            local inifc = (me.var.blk == CLS().blk_ifc)
+            inifc = inifc and CLS().id~='Main'
+            if not inifc then
+                ASR(me.var.bind, me, 'reference must be bounded before use')
             end
         end
     end,

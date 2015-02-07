@@ -169,7 +169,7 @@ F = {
                  fr[2].fst.tag=='Nat')     or
                 AST.iter'Dcl_constr'()     or -- org bodies can't hold
                 (fr.org and                   -- "global:*" is global
-                 fr.org.tp.id=='Global')   or
+                 fr.org.cls.id=='Global')  or
                 (ENV.clss[to.tp.id] and       -- organisms must use "watching"
                  fr.tag~='Op1_&')          or -- (but avoid &org)
                 me.__ast_tuple             or -- tuple attribution ok

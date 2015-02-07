@@ -1094,6 +1094,7 @@ F = {
         me.id = id
         if cls then
             me.org = e1
+            me.org.cls = cls
 
             local var
             if e1.tag == 'This' then
@@ -1118,7 +1119,6 @@ F = {
 
             -- Op2_. => Field
             me.tag = 'Field'
-            me.org  = e1
             me.var  = var
             me.tp   = var.tp
             me.lval = not (var.pre~='var' or var.cls or var.tp.arr)

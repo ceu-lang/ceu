@@ -1504,6 +1504,9 @@ escape v;
     run = 10,
 }
 
+-- TODO: test two constructors, one that assigns, one that doesn't
+--       test external assignment if internally assigned
+--       test (await X; assign(v) // use(v))
 do return end
 
 -------------------------------------------------------------------------------
@@ -23314,8 +23317,39 @@ end
 var T t;
 escape i;
 ]],
-    ref = 'line 7 : field "i" must be assigned',
+    --ref = 'line 7 : field "i" must be assigned',
+    ref = 'line 5 : invalid attribution (not a reference)',
     --run = 1,
+}
+Test { [[
+var int i = 1;
+class T with
+    var int& i;
+do
+    var int v = 10;
+    i = v;
+end
+var T t;
+escape i;
+]],
+    --ref = 'line 7 : field "i" must be assigned',
+    --ref = 'line 5 : invalid attribution (not a reference)',
+    run = 1,
+}
+Test { [[
+var int i = 1;
+class T with
+    var int& i;
+do
+    var int v = 10;
+    i = v;
+end
+var T t;
+escape t.i;
+]],
+    --ref = 'line 7 : field "i" must be assigned',
+    --ref = 'line 5 : invalid attribution (not a reference)',
+    run = 10,
 }
 Test { [[
 var int i = 0;
@@ -23327,7 +23361,8 @@ end
 spawn T;
 escape i;
 ]],
-    ref = 'line 7 : field "i" must be assigned',
+    ref = 'line 5 : invalid attribution (not a reference)',
+    --ref = 'line 7 : field "i" must be assigned',
     --run = 1,
 }
 Test { [[
@@ -23335,13 +23370,13 @@ var int i = 0;
 class T with
     var int& i;
 do
-    i = 10;
+    var int v = 10;
+    i = v;
 end
-var T t with
-    this.i = outer.i;
-end;
-escape i;
+var T* p = spawn T;
+escape p:i;
 ]],
+    --ref = 'line 7 : field "i" must be assigned',
     run = 10,
 }
 Test { [[
@@ -23349,14 +23384,68 @@ var int i = 0;
 class T with
     var int& i;
 do
-    i = 10;
+    var int v = 10;
+    i = v;
+end
+var T t with
+    this.i = outer.i;
+end;
+escape i;
+]],
+    ref = 'line 9 : cannot assign to reference bounded inside the class',
+    --run = 10,
+}
+Test { [[
+var int i = 1;
+class T with
+    var int& i;
+    var int v = 10;
+do
+    v = i;
+end
+var T t with
+    this.i = outer.i;
+end;
+escape i;
+]],
+    --ref = 'line 9 : cannot assign to reference bounded inside the class',
+    run = 1,
+}
+Test { [[
+input void OS_START;
+var int i = 1;
+class T with
+    var int& i;
+    var int v = 10;
+do
+    await OS_START;
+    v = i;
+end
+var T t with
+    this.i = outer.i;
+end;
+i = 10;
+await OS_START;
+escape t.v;
+]],
+    --ref = 'line 9 : cannot assign to reference bounded inside the class',
+    run = 10,
+}
+Test { [[
+var int i = 0;
+class T with
+    var int& i;
+do
+    var int v = 10;
+    i = v;
 end
 spawn T with
     this.i = outer.i;
 end;
 escape i;
 ]],
-    run = 10,
+    ref = 'line 9 : cannot assign to reference bounded inside the class',
+    --run = 10,
 }
 
 Test { [[
@@ -23364,8 +23453,9 @@ var int i = 1;
 class T with
     var int& i = *(int*)null;
 do
+    var int v = 10;
     if &i != null then
-        i = 10;
+        i = v;
     end
 end
 
@@ -23386,6 +23476,55 @@ spawn T with
     this.i = i;
 end;
 ret = ret + i;  // 22
+
+escape ret;
+]],
+    ref = 'line 19 : cannot assign to reference bounded inside the class',
+    --run = 22,
+}
+Test { [[
+var int i = 1;
+class T with
+    var int& i = *(int*)null;
+do
+    if &i != null then
+    end
+end
+var T t with
+    this.i = outer.i;
+end;
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+var int i = 1;
+class T with
+    var int& i = *(int*)null;
+    var int  v = 0;
+do
+    if &i != null then
+        v = 10;
+    end
+end
+
+var int ret = 0;
+
+var T t1;
+ret = ret + i;  // 1
+spawn T;
+ret = ret + i;  // 2
+
+var T t2 with
+    this.i = outer.i;
+end;
+ret = ret + t2.v;  // 12
+
+i = 0;
+spawn T with
+    this.i = i;
+end;
+ret = ret + t2.v;  // 22
 
 escape ret;
 ]],
@@ -23441,7 +23580,7 @@ class T with
     var int& v;
 do
     await 1s;
-    v = 1;
+    //v = 1;
     *p = 1;
 end
 
