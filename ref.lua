@@ -57,22 +57,24 @@ F = {
         --  - case2: assignment from constructor to interface variable
         --  - case3: assignment from interface (default value)
 
-        local constr = AST.par(me, 'Dcl_constr')
-        local case2 = constr and constr.cls.blk_ifc.vars[to.lst.var.id]
-
         local inifc = (CLS().id~='Main' and CLS().blk_ifc.vars[to.lst.var.id])
-        local case1 = not (case1 or to.lst.var.__exp_bounded or inifc)
+        local case1 = not (to.lst.var.first_bounded or inifc)
+
+        local constr = AST.par(me, 'Dcl_constr')
+        local case2 = constr and (constr.cls.blk_ifc.vars[to.lst.var.id]==to.lst.var)
 
         local case3 = AST.par(me, 'BlockI')
 
         if case1 or case2 or case3 then
-            to.byRef = true                     -- assign by ref
-            fr.byRef = true                     -- assign by ref
+
+            -- only first assignment is byRef
+            to.byRef = true
+            fr.byRef = true
             if case1 then
-                to.lst.var.__exp_bounded = true     -- marks &ref as bounded
+                to.lst.var.first_bounded = true     -- marks &ref as bounded
             end
 
-            -- refuses:
+            -- refuses first assignment from constants and dereferences:
             -- var int& i = 1;
             -- var int& i = *p;
             if (not fr.tp.ref) then
@@ -88,13 +90,6 @@ F = {
                 end
             end
         end
-
-        -- constructor assignment is always first assignment
-        -- this.v = ...
-        if to.fst.tag == 'This' then
-            to.byRef = true                     -- assign by ref
-            fr.byRef = true                     -- assign by ref
-        end
     end,
 
     -- ensures that &ref var is bound before use
@@ -103,7 +98,7 @@ F = {
             -- already bounded or interface variable (bounded in constructor)
             local inifc = (CLS().id~='Main' and CLS().blk_ifc.vars[me.var.id])
             if not AST.par(me, 'Field') then
-                ASR(me.var.__exp_bounded or inifc,
+                ASR(me.var.first_bounded or inifc,
                     me, 'reference must be bounded before use')
             end
         end
