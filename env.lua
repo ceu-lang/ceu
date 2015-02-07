@@ -1201,12 +1201,12 @@ F = {
         ASR(c.tag~='type', me,
             'native variable/function "'..id..'" is not declared')
         me.id   = id
-        me.tp   = TP.fromstr'_'
+        me.tp   = TP.fromstr'@'
         me.lval = me
         me.c    = c
     end,
     RawExp = function (me)
-        me.tp   = TP.fromstr'_'
+        me.tp   = TP.fromstr'@'
         me.lval = me
     end,
 

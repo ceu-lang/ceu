@@ -18,7 +18,9 @@ function V (me)
 
     local ref = me.tp and me.tp.ref and me.tp.id
     if me.byRef and
-        (not (ENV.clss[me.tp.id] or ref and ENV.clss[ref] or me.tag=='Op2_call'))
+        (not (ENV.clss[me.tp.id] or
+              (ref and ENV.clss[ref]) or
+              me.tp.id=='@'))
     then
                     -- already by ref
         ret = '(&'..ret..')'

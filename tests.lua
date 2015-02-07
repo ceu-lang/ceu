@@ -15320,7 +15320,8 @@ end
 var int& v = _V;
 escape v;
 ]],
-    run = 10;
+    gcc = 'error: assignment makes pointer from integer without a cast',
+    --run = 10;
 }
 
 Test { [[
@@ -15340,8 +15341,8 @@ var int& v;
 v = &_V;
 escape v;
 ]],
-    env = 'line 5 : invalid attribution (int& vs _*)',
-    --run = 10;
+    --env = 'line 5 : invalid attribution (int& vs _*)',
+    run = 10;
 }
 
 Test { [[
@@ -15366,7 +15367,7 @@ native do
     int V = 10;
 end
 var int& v;
-v = _V;
+v = &_V;
 escape v;
 ]],
     run = 10;
@@ -20997,7 +20998,7 @@ with
 end
 ]],
     _ana = {
-        acc = 12,        -- TODO: nao conferi
+        acc = 48,        -- TODO: nao conferi
         isForever = true,
     },
     --fin = 'line 4 : call requires `finalize´',
@@ -21030,7 +21031,7 @@ with
 end
 ]],
     _ana = {
-        acc = 12,
+        acc = 48,
         isForever = true,
     },
 }
