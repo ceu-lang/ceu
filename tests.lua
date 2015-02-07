@@ -1398,6 +1398,112 @@ escape vec1[0];
     run = 10,
 }
 
+-- no binding
+Test { [[
+class T with
+    var int& i;
+do
+    var int v = 10;
+    i = v;
+end
+var T t;
+escape t.i;
+]],
+    ref = 'line 7 : field "i" must be assigned',
+}
+-- constr binding
+Test { [[
+class T with
+    var int& i;
+do
+    var int v = 10;
+    i = v;
+end
+var int v = 0;
+var T t with
+    this.i = v;
+end;
+escape v;
+]],
+    run = 10,
+}
+-- internal binding
+Test { [[
+class T with
+    var int& i;
+do
+    var int v = 10;
+    i = v;
+end
+var T t;
+escape t.i;
+]],
+    run = 10,
+}
+-- internal binding w/ default
+Test { [[
+class T with
+    var int& i = *(int*)null;
+do
+    var int v = 10;
+    i = v;
+end
+var T t;
+escape t.i;
+]],
+    run = 10,
+}
+
+Test { [[
+class T with
+    var int& i = *(int*)null;
+do
+    _assert(&i == null);
+    var int v = 10;
+    i = v;
+end
+var T t;
+escape t.i;
+]],
+    run = 10,
+}
+
+Test { [[
+class T with
+    var int& i = *(int*)null;
+do
+    _assert(&i == null);
+    var int v = 10;
+    i = v;
+end
+var int v = 0;
+var T t with
+    this.i = v;
+end;
+escape t.i;
+]],
+    run = 10,
+}
+
+
+Test { [[
+class T with
+    var int& i = *(int*)null;
+do
+    _assert(&i == null);
+    var int v = 10;
+    i = v;
+end
+
+var int v = 0;
+var T t with
+    this.i = v;
+end;
+escape v;
+]],
+    run = 10,
+}
+
 do return end
 
 -------------------------------------------------------------------------------
@@ -15350,7 +15456,7 @@ var int a = 1;
 var int& b;
 escape b;
 ]],
-    exp = 'line 3 : reference must be bounded before use',
+    ref = 'line 3 : reference must be bounded before use',
     run = 2,
 }
 Test { [[
@@ -23208,7 +23314,7 @@ end
 var T t;
 escape i;
 ]],
-    constr = 'line 7 : field "i" must be assigned',
+    ref = 'line 7 : field "i" must be assigned',
     --run = 1,
 }
 Test { [[
@@ -23221,7 +23327,7 @@ end
 spawn T;
 escape i;
 ]],
-    constr = 'line 7 : field "i" must be assigned',
+    ref = 'line 7 : field "i" must be assigned',
     --run = 1,
 }
 Test { [[
@@ -26223,7 +26329,7 @@ escape outer;
 Test { [[
 _f(outer);
 ]],
-    constr = 'line 1 : `outer´ can only be unsed inside constructors',
+    props = 'line 1 : `outer´ can only be unsed inside constructors',
 }
 
 Test { [[
@@ -38325,7 +38431,7 @@ Test { [[
 var int& i = 1;
 escape 1;
 ]],
-    exp = 'line 1 : invalid attribution',
+    ref = 'line 1 : invalid attribution',
 }
 
 Test { [[
@@ -38333,7 +38439,7 @@ var int* p;
 var int& i = *p;
 escape 1;
 ]],
-    exp = 'line 2 : invalid attribution',
+    ref = 'line 2 : invalid attribution',
 }
 
 Test { [[
@@ -38341,7 +38447,7 @@ event int e;
 var int& i = await e;
 escape 1;
 ]],
-    exp = 'line 2 : invalid attribution',
+    ref = 'line 2 : invalid attribution',
 }
 
 Test { [[

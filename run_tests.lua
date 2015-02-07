@@ -80,7 +80,7 @@ Test = function (t)
     --AST.dump(AST.root)
     if not check('env')      then return end
     if not check('exp')      then return end
-    if not check('constr')   then return end
+    if not check('ref')      then return end
     if not check('sval')     then return end
     if not check('isr')      then return end
     if not check('tight')    then return end
@@ -304,22 +304,20 @@ end
 os.execute('rm -f /tmp/_ceu_*')
 
 --[[
-STATS = {
-    count   = 2144,
-    mem     = 0,
-    trails  = 4083,
-    bytes   = 21486578,
-}
-
-
-real	9m7.772s
-user	8m34.595s
-sys	1m42.910s
-}
-
-
 real	9m9.981s
 user	8m30.871s
 sys	1m44.163s
+
+STATS = {
+    count   = 2152,
+    mem     = 0,
+    trails  = 4099,
+    bytes   = 21512393,
+}
+
+
+real	9m13.232s
+user	8m41.398s
+sys	1m43.395s
 
 ]]
