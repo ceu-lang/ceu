@@ -3586,7 +3586,21 @@ loop/10 do
 end
 escape 1;
 ]],
-    adj = 'line 1 : invalid loop',
+    -- TODO
+    adj = 'line 1 : not implemented',
+    --run = 1,
+}
+
+Test { [[
+var int ret = 0;
+loop/3 do
+    ret = ret + 1;
+end
+escape ret;
+]],
+    -- TODO
+    adj = 'not implemented',
+    --run = 3,
 }
 
 Test { [[
@@ -15577,6 +15591,19 @@ var int* c = a;
 escape 1;
 ]],
     fin = 'line 5 : pointer access across `await´',
+}
+
+Test { [[
+input void E;
+var int& n;
+finalize
+    this.n = _f();
+with
+end
+await E;
+escape this.n;
+]],
+    gcc = 'error: implicit declaration of function ‘f’',
 }
 
 Test { [[

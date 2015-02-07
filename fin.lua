@@ -59,7 +59,7 @@ F = {
 
         -- an attribution restarts tracking accesses to "to"
         -- variables or native symbols
-        if (to.var and (not to.var.tp.ref)) or to.id then
+        if (to.var and (not to.var.tp.ref)) or to.c then
                         -- do not track references
             TRACK[to.var or to.id] = true
         end

@@ -499,7 +499,7 @@ F = {
                                 -- must be limited to "max" (must have sval)
 
         if not _i then
-            ASR(not max, me, 'invalid loop')
+            ASR(not max, me, 'not implemented')
             local n = node('Loop', me.ln, blk)
             n.blk = blk     -- continue
             return n
