@@ -81,14 +81,24 @@ F = {
     -- If a ref field (class.field&) is not bounded internally,
     --  it must be bounded in all constructors.
     -- Checks if all class.field& are bounded or assigned here.
-    Dcl_constr = function (me)
-        me.__bounded = me.__bounded or {}
-        for _, var in ipairs(me.cls.blk_ifc.vars) do
-            if var.tp.ref and (var.bind == 'constr') then
-                ASR(me.__bounded[var], me,
+    __constr = function (me, cls, constr)
+        constr.__bounded = constr.__bounded or {}
+        for _, var in ipairs(cls.blk_ifc.vars) do
+            if var.tp.ref and (var.bind=='constr' or (not var.bind)) then
+                ASR(constr.__bounded[var], me,
                     'field "'..var.id..'" must be assigned')
             end
         end
+    end,
+    Dcl_var = function (me)
+        if me.var.cls then
+            local _,_,_,constr = unpack(me)
+            F.__constr(me, me.var.cls, constr or {})
+        end
+    end,
+    Spawn = function (me)
+        local _,_,constr = unpack(me)
+        F.__constr(me, me.cls, constr or {})
     end,
 
     -- Ensures that &ref var is bound before use.

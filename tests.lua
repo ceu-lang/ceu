@@ -151,6 +151,21 @@ escape ret;
     run = { ['~>3s;~>F'] = 11 },
 }
 
+-- BUG: should be: field must be assigned
+Test { [[
+var int v = 10;
+var int& i;
+
+par do
+    await 1s;
+    i = v;
+with
+    escape i;
+end
+]],
+    run = 99,
+}
+
 error 'testar pause/if org.e'
 error 'testar spawn/spawn que se mata'
 
@@ -1398,115 +1413,6 @@ escape vec1[0];
     run = 10,
 }
 
--- no binding
-Test { [[
-class T with
-    var int& i;
-do
-    var int v = 10;
-    i = v;
-end
-var T t;
-escape t.i;
-]],
-    ref = 'line 7 : field "i" must be assigned',
-}
--- constr binding
-Test { [[
-class T with
-    var int& i;
-do
-    var int v = 10;
-    i = v;
-end
-var int v = 0;
-var T t with
-    this.i = v;
-end;
-escape v;
-]],
-    run = 10,
-}
--- internal binding
-Test { [[
-class T with
-    var int& i;
-do
-    var int v = 10;
-    i = v;
-end
-var T t;
-escape t.i;
-]],
-    run = 10,
-}
--- internal binding w/ default
-Test { [[
-class T with
-    var int& i = *(int*)null;
-do
-    var int v = 10;
-    i = v;
-end
-var T t;
-escape t.i;
-]],
-    run = 10,
-}
-
-Test { [[
-class T with
-    var int& i = *(int*)null;
-do
-    _assert(&i == null);
-    var int v = 10;
-    i = v;
-end
-var T t;
-escape t.i;
-]],
-    run = 10,
-}
-
-Test { [[
-class T with
-    var int& i = *(int*)null;
-do
-    _assert(&i == null);
-    var int v = 10;
-    i = v;
-end
-var int v = 0;
-var T t with
-    this.i = v;
-end;
-escape t.i;
-]],
-    run = 10,
-}
-
-
-Test { [[
-class T with
-    var int& i = *(int*)null;
-do
-    _assert(&i == null);
-    var int v = 10;
-    i = v;
-end
-
-var int v = 0;
-var T t with
-    this.i = v;
-end;
-escape v;
-]],
-    run = 10,
-}
-
--- TODO: test two constructors, one that assigns, one that doesn't
---       test external assignment if internally assigned
---       test (await X; assign(v) // use(v))
 do return end
 
 -------------------------------------------------------------------------------
@@ -15546,6 +15452,169 @@ escape 1;
 ]],
     --run = 1,
     mem = 'line 1 : invalid array dimension',
+}
+
+-- internal binding binding
+Test { [[
+class T with
+    var int& i;
+do
+    var int v = 10;
+    i = v;
+end
+var T t;
+escape t.i;
+]],
+    run = 10,
+}
+
+-- internal/constr binding
+Test { [[
+class T with
+    var int& i;
+do
+    var int v = 10;
+    i = v;
+end
+var int v = 0;
+var T t with
+    this.i = v;
+end;
+escape v;
+]],
+    ref = 'line 9 : cannot assign to reference bounded inside the class',
+}
+-- internal binding
+Test { [[
+class T with
+    var int& i;
+do
+    var int v = 10;
+    i = v;
+end
+var T t;
+escape t.i;
+]],
+    run = 10,
+}
+-- internal binding w/ default
+Test { [[
+class T with
+    var int& i = *(int*)null;
+do
+    var int v = 10;
+    i = v;
+end
+var T t;
+escape t.i;
+]],
+    run = 10,
+}
+-- internal binding w/ default
+Test { [[
+class T with
+    var int& i = *(int*)null;
+do
+    _assert(&i == null);
+    var int v = 10;
+    i = v;
+end
+var T t;
+escape t.i;
+]],
+    run = 10,
+}
+-- external binding w/ default
+Test { [[
+class T with
+    var int& i = *(int*)null;
+do
+    _assert(&i != null);
+end
+var int i = 10;
+var T t with
+    this.i = outer.i;
+end;
+escape t.i;
+]],
+    run = 10,
+}
+Test { [[
+class T with
+    var int& i = *(int*)null;
+do
+    _assert(&i == null);
+end
+var int i = 10;
+var T t;
+escape &t.i==null;
+]],
+    run = 1,
+}
+
+-- no binding
+Test { [[
+class T with
+    var int& i;
+do
+end
+var T t;
+escape 1;
+]],
+    ref = 'line 5 : field "i" must be assigned',
+}
+
+Test { [[
+class T with
+    var int& i;
+do
+end
+
+var int i = 1;
+
+var T t1;
+
+var T t2 with
+    this.i = outer.i;
+end;
+
+escape t1.i;
+]],
+    ref = 'line 8 : field "i" must be assigned',
+}
+
+Test { [[
+class T with
+    var int& i;
+do
+end
+
+var int i = 1;
+
+var T t2 with
+    this.i = outer.i;
+end;
+
+var T t1;
+
+escape t1.i;
+]],
+    ref = 'line 12 : field "i" must be assigned',
+}
+
+Test { [[
+class T with
+    var int& i;
+do
+    var int v = 10;
+    i = v;
+end
+var T t;
+var int v = 0;
+t.i = v;
+escape 1;
+]],
+    ref = 'line 9 : cannot assign to reference bounded inside the class',
 }
 
 -- FINALLY / FINALIZE
