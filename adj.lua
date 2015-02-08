@@ -1481,7 +1481,7 @@ G = {
                                     node('Stmts', me.ln,
                                         node('Dcl_var', me.ln, 'var', me, 'v'))))
 
-        return node('Type', me.ln, '_Option_'..n, 0, false, false, true)
+        return node('Type', me.ln, '_Option_'..n, 0, false, false, me)
                                                                    -- opt
     end,
 }

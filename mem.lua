@@ -344,7 +344,7 @@ typedef union CEU_]]..me.id..[[_delayed {
                              or (ENV.c[_tp] and ENV.c[_tp].len
                                  or TP.types.word.len)) -- defaults to word
 ]]
-            elseif var.tp.ptr>0 or var.tp.ref then
+            elseif var.tp.ptr>0 or REF(var.tp) then
                 len = TP.types.pointer.len
             else
                 len = ENV.c[var.tp.id].len

@@ -211,6 +211,11 @@ function TP.contains (tp1, tp2)
         return true
     end
 
+    -- tp? vs tp
+    if tp1.opt or tp2.opt then
+        return TP.contains(tp1.opt or tp1, tp2.opt or tp2)
+    end
+
     -- var tp& v = &/*/<any-ext-value>
     if tp1.ref and tp2.id=='@' then
         return true

@@ -1,11 +1,16 @@
 -- TODO:
 --  - remove interface binding?
 --      - only used for null hack?
+
+function REF (tp)
+    return tp.ref or (tp.opt and tp.opt.ref)
+end
+
 F = {
     -- before Var
     SetExp_pre = function (me)
         local _, fr, to = unpack(me)
-        if not to.tp.ref then
+        if not REF(to.tp) then
             return
         end
         assert(to.lst.var, 'bug found')
@@ -62,7 +67,7 @@ F = {
             -- refuses first assignment from constants and dereferences:
             -- var int& i = 1;
             -- var int& i = *p;
-            if (not fr.tp.ref) then
+            if (not REF(fr.tp)) then
                 ASR(fr.lval or fr.tag=='Op1_&' or fr.tag=='Op2_call' or
                         (fr.lst and (fr.lst.tag=='Outer' or
                                      fr.lst.var and fr.lst.var.cls)),
@@ -84,7 +89,7 @@ F = {
     __constr = function (me, cls, constr)
         constr.__bounded = constr.__bounded or {}
         for _, var in ipairs(cls.blk_ifc.vars) do
-            if var.tp.ref and (var.bind=='constr' or (not var.bind)) then
+            if REF(var.tp) and (var.bind=='constr' or (not var.bind)) then
                 ASR(constr.__bounded[var], me,
                     'field "'..var.id..'" must be assigned')
             end

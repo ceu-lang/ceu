@@ -16,13 +16,13 @@ function V (me)
 
     local ret = me.val
 
-    local ref = me.tp and me.tp.ref and me.tp.id
+    local ref = me.tp and REF(me.tp) and me.tp.id
     if me.byRef and
         (not (ENV.clss[me.tp.id] or
               (ref and ENV.clss[ref]) or
               me.tp.id=='@'))
+             -- already by ref
     then
-                    -- already by ref
         ret = '(&'..ret..')'
     end
 
@@ -62,7 +62,7 @@ F =
                     -- (because of interface accesses that must be done through a pointer)
                     var.val = '(&'..var.val..')'
                 else
-                    if var.tp.ref then
+                    if var.tp.ref then -- exception: should not be REF(var.tp)
                         if ENV.clss[var.tp.id] then
                             -- orgs vars byRef, do nothing
                             -- (normalized to pointer)
@@ -129,7 +129,34 @@ F =
     end,
 
     Var = function (me)
-        me.val = me.var.val
+        -- variable with optional type (var tp? id)
+        if me.tp.opt then
+            local id = string.upper(me.tp.id)
+            local op = (me.tp.opt.ref and '*') or ''
+
+            -- xxx.me = v
+            local set = AST.par(me, 'SetExp')
+            local to  = set and set[3]
+            if to and to.lst==me then
+                me.val = '('..op..'('..me.var.val..'.SOME.v))'
+            else
+                -- xxx.me == nil
+                local eq = AST.par(me, 'Op2_==')
+                eq = eq and ((eq[2].tag=='NIL') or (eq[3].tag=='NIL'))
+                if eq then
+                    me.val = '('..me.var.val..'.tag)'
+                        -- TODO: optimization: "tp&?" => 'NULL'
+
+                -- ... xxx.me ...
+                else
+                    me.val = '('..op..'(CEU_'..id..'_SOME_assert(&'..me.var.val..')->SOME.v))'
+                end
+            end
+
+        -- normal variable
+        else
+            me.val = me.var.val
+        end
     end,
 
     SetExp = function (me)
@@ -308,14 +335,6 @@ F =
 
     Op2_any = function (me)
         local op, e1, e2 = unpack(me)
-
-        if e2.tag == 'NIL' then
-            assert(op == '==')
-            e1.val = '('..e1.val..'.tag)'
-            e2.val = 'CEU_'..string.upper(e1.tp.id)..'_NIL'
-            -- TODO: optimization: "tp&?" => 'NULL'
-        end
-
         me.val = '('..V(e1)..ceu2c(op)..V(e2)..')'
     end,
     ['Op2_-']   = 'Op2_any',
@@ -529,9 +548,21 @@ F =
     NULL = function (me)
         me.val = 'NULL'
     end,
+
     NIL = function (me)
-        me.val = '&CEU_<TP>_BASE'
-                 -- depends on the other operand
+        local eq = AST.par(me, 'Op2_==')
+        if eq then
+            local _, e1, e2 = unpack(eq)
+            assert(e1==me or e2==me, 'bug found')
+            local tp = (e1==me and e2.tp) or e1.tp
+
+            local id = string.upper(tp.id)
+            me.val = 'CEU_'..id..'_NIL'
+                -- TODO: optimization: "tp&?" => 'NULL'
+        else
+            -- handled from ATTR
+            me.val = 'CEU_<tp>_NIL'
+        end
     end,
 }
 

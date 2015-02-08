@@ -1442,6 +1442,68 @@ escape i==nil;
     run = 1,
 }
 
+Test { [[
+var int v = 10;
+var int&? i;
+escape i==nil;
+]],
+    run = 1,
+}
+
+Test { [[
+var int v = 10;
+var int&? i;
+escape nil==i;
+]],
+    run = 1,
+}
+
+Test { [[
+var int v = 10;
+var int&? i = v;
+escape i;
+]],
+    run = 10,
+}
+
+Test { [[
+var int v1 = 0;
+var int v2 = 1;
+var int&? i = v1;
+i = v2;
+escape v1;
+]],
+    run = 1,
+}
+
+Test { [[
+var int v = 10;
+var int& i = v;
+escape v + i;
+]],
+    run = 20,
+}
+
+Test { [[
+var int v = 10;
+var int&? i = v;
+escape v + i;
+]],
+    run = 20,
+}
+
+Test { [[
+var int v1 = 10;
+var int v2 =  1;
+var int&? i = v1;
+i = v2;
+i = 10;
+var int ret = i;
+escape v1 + v2 + ret;
+]],
+    run = 21,
+}
+
 do return end
 
 -------------------------------------------------------------------------------

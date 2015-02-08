@@ -37,12 +37,9 @@ function ATTR (me, to, fr)
             tag = 'NIL'
         else
             tag = 'SOME'
-            LINE(me, V(to)..'.SOME.v = '..V(fr)..';')
+            LINE(me, V(to)..' = '..V(fr)..';')
         end
-        LINE(me, V(to)..'.tag = CEU_'..id..'_'..tag..';')
-    elseif fr.tp.opt then
-        local id = string.upper(fr.tp.id)
-        LINE(me, V(to)..' = CEU_'..id..'_SOME_assert(&'..V(fr)..')->SOME.v;')
+        LINE(me, to.var.val..'.tag = CEU_'..id..'_'..tag..';')
 
     -- normal types
     else
