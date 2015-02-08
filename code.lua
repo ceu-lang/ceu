@@ -611,12 +611,15 @@ _STK_ORG->trls[ ]]..me.trl_fins[1]..[[ ].seqno = _ceu_app->seqno-1; /* awake now
             end
         end
 
-        -- declare tmps & initialize pools
+        -- declare tmps
+        -- initialize pools
+        -- initialize ADTs base cases
+        -- initialize Optional types to NIL
         LINE(me, '{')       -- close in Block_pos
         for _, var in ipairs(me.vars) do
             if var.isTmp then
                 if var.tp.arr then
-            local tp = TP.toc(var.tp)
+                    local tp = TP.toc(var.tp)
                     local tp = string.sub(TP.toc(var.tp),1,-2)  -- remove leading `*´
                     LINE(me, tp..' '..var.id_..'['..var.tp.arr.cval..']')
                 else
@@ -699,6 +702,13 @@ ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'),'
 }
 ]])
                 end
+
+            -- initialize optional types to nil
+            elseif var.tp.opt then
+                local id = string.upper(var.tp.id)
+                LINE(me, [[
+]]..V(var)..[[.tag = CEU_]]..id..[[_NIL;
+]])
             end
 
             -- initialize trails for ORG_STATS_I & ORG_POOL_I
