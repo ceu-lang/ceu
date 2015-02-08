@@ -35,7 +35,7 @@ struct CEU_]]..id..[[ {
     u8 tag;
     union {
 ]]
-            me.enum = { 'NONE' }    -- reserves 0 to catch more bugs
+            me.enum = { 'CEU_NONE'..me.n }    -- reserves 0 to catch more bugs
         end
 
         me.auxs[#me.auxs+1] = [[

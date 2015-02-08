@@ -68,7 +68,7 @@ F = {
             -- var int& i = 1;
             -- var int& i = *p;
             if (not REF(fr.tp)) then
-                ASR(fr.lval or fr.tag=='Op1_&' or fr.tag=='Op2_call' or
+                ASR(fr.lval or fr.tag=='Op1_&' or fr.tag=='Op2_call' or fr.tag=='NIL' or
                         (fr.lst and (fr.lst.tag=='Outer' or
                                      fr.lst.var and fr.lst.var.cls)),
                                                -- orgs are not lval
@@ -108,7 +108,7 @@ F = {
 
     -- Ensures that &ref var is bound before use.
     Var = function (me)
-        if me.var.tp.ref then
+        if REF(me.var.tp) then
             -- ignore interface variables outside Main
             -- (they are guaranteed to be bounded)
             local inifc = (me.var.blk == CLS().blk_ifc)

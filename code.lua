@@ -39,7 +39,7 @@ function ATTR (me, to, fr)
             tag = 'SOME'
             LINE(me, V(to)..' = '..V(fr)..';')
         end
-        LINE(me, to.var.val..'.tag = CEU_'..id..'_'..tag..';')
+        LINE(me, to.val_raw..'.tag = CEU_'..id..'_'..tag..';')
 
     -- normal types
     else
@@ -704,10 +704,11 @@ ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'),'
                 end
 
             -- initialize optional types to nil
-            elseif var.tp.opt then
+            -- ignore refs (they must be initialized)
+            elseif var.tp.opt and (not var.tp.opt.ref) then
                 local id = string.upper(var.tp.id)
                 LINE(me, [[
-]]..V(var)..[[.tag = CEU_]]..id..[[_NIL;
+]]..var.val_raw..[[.tag = CEU_]]..id..[[_NIL;
 ]])
             end
 

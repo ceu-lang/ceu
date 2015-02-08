@@ -1413,101 +1413,12 @@ escape vec1[0];
     run = 10,
 }
 
-]===]
-Test { [[
-var int? i;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-var int? i = 1;
-escape i;
-]],
-    run = 1,
-}
-
-Test { [[
-var int? i = nil;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-var int? i;
-escape i==nil;
-]],
-    run = 1,
-}
-
-Test { [[
-var int v = 10;
-var int&? i;
-escape i==nil;
-]],
-    run = 1,
-}
-
-Test { [[
-var int v = 10;
-var int&? i;
-escape nil==i;
-]],
-    run = 1,
-}
-
-Test { [[
-var int v = 10;
-var int&? i = v;
-escape i;
-]],
-    run = 10,
-}
-
-Test { [[
-var int v1 = 0;
-var int v2 = 1;
-var int&? i = v1;
-i = v2;
-escape v1;
-]],
-    run = 1,
-}
-
-Test { [[
-var int v = 10;
-var int& i = v;
-escape v + i;
-]],
-    run = 20,
-}
-
-Test { [[
-var int v = 10;
-var int&? i = v;
-escape v + i;
-]],
-    run = 20,
-}
-
-Test { [[
-var int v1 = 10;
-var int v2 =  1;
-var int&? i = v1;
-i = v2;
-i = 10;
-var int ret = i;
-escape v1 + v2 + ret;
-]],
-    run = 21,
-}
-
+-------------------------------------------------------------------------------
 do return end
 
 -------------------------------------------------------------------------------
 -- OK: well tested
+]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -40195,15 +40106,15 @@ escape 1;
 -- distinction "constructor" vs "tag check"
 Test { DATA..[[
 var List l = List.NIL();   /* call syntax: constructor */
-var bool nil? = l.NIL;     /* no-call syntax: check tag */
-escape nil?;
+var bool no? = l.NIL;     /* no-call syntax: check tag */
+escape no?;
 ]],
     run = 1,
 }
 Test { DATA..[[
 var List l = List.NIL();   /* call syntax: constructor */
-var bool nil? = l.CONS;    /* no-call syntax: check tag */
-escape nil?;
+var bool no? = l.CONS;    /* no-call syntax: check tag */
+escape no?;
 ]],
     run = 0,
 }
@@ -40771,9 +40682,7 @@ escape t1.NIL + t2.NODE.v + t2.NODE.left:NIL + t2.NODE.right:NIL;
     run = 4,
 }
 
-do return end
-
--- OPTION
+-- OPTION TYPES
 
 Test { [[
 data OptionInt with
@@ -40815,6 +40724,152 @@ escape ret;
 }
 
 Test { [[
+var int? i;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+var int? i = 1;
+escape i;
+]],
+    run = 1,
+}
+
+Test { [[
+var int? i = nil;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+var int? i;
+escape i==nil;
+]],
+    run = 1,
+}
+
+Test { [[
+var int? i = nil;
+escape i==nil;
+]],
+    run = 1,
+}
+
+Test { [[
+var int v = 10;
+var int&? i;
+escape i==nil;
+]],
+    ref = 'line 3 : reference must be bounded before use',
+}
+
+Test { [[
+var int v = 10;
+var int&? i = nil;
+escape i==nil;
+]],
+    run = 1,
+}
+
+Test { [[
+var int v = 10;
+var int&? i = nil;
+escape nil==i;
+]],
+    run = 1,
+}
+
+Test { [[
+var int v = 10;
+var int&? i = v;
+escape i;
+]],
+    run = 10,
+}
+
+Test { [[
+var int v1 = 0;
+var int v2 = 1;
+var int&? i = v1;
+i = v2;
+escape v1;
+]],
+    run = 1,
+}
+
+Test { [[
+var int v = 10;
+var int& i = v;
+escape v + i;
+]],
+    run = 20,
+}
+
+Test { [[
+var int v = 10;
+var int&? i = v;
+escape v + i;
+]],
+    run = 20,
+}
+
+Test { [[
+var int v1 = 10;
+var int v2 =  1;
+var int&? i = v1;
+i = v2;
+i = 10;
+var int ret = i;
+escape v1 + v2 + ret;
+]],
+    run = 21,
+}
+
+Test { [[
+class T with
+    var int&? i;
+do
+    var int v = 10;
+    this.i = v;
+end
+var T t;
+escape t.i;
+]],
+    run = 10,
+}
+Test { [[
+class T with
+    var int&? i;
+do
+    var int v = 10;
+end
+var T t;
+escape t.i;
+]],
+    ref = 'line 6 : field "i" must be assigned',
+}
+Test { [[
+class T with
+    var int&? i;
+do
+    var int v = 10;
+end
+var int v = 1;
+var T t with
+    this.i = v;
+end;
+v = 11;
+escape t.i;
+]],
+    run = 11,
+}
+
+do return end
+
+Test { [[
 data OptionInt with
     tag NIL;
 with
@@ -40834,7 +40889,7 @@ end
 var int ret = 0;    // 0
 
 var int?  i;
-var int&? p;
+var int&? p = nil;
 ret = ret + (i==nil) + (p==nil);  // 2
 
 i = 3;
@@ -40847,7 +40902,7 @@ _assert(ret == 7);
 
 // second
 var int v = 10;
-p = v               // 10
+p = v;              // 10
 p = p + 1;          // 11
 
 ret = ret + v;      // 21

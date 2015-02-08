@@ -47,49 +47,7 @@ F =
             return  -- ADTs
         end
         for _, var in ipairs(me.vars) do
-            if var.pre == 'var' then
-                if var.isTmp then
-                    var.val = '__ceu_'..var.id..'_'..var.n
-                else
-                    var.val = CUR(me, var.id_)
-                end
-                if var.tp.arr then
-                    -- normalize all arrays acesses to pointers to arr[0]
-                    -- (because of interface accesses that must be done through a pointer)
-                    var.val = '(&'..var.val..'[0])'
-                elseif var.cls then
-                    -- normalize all org acesses to pointers to it
-                    -- (because of interface accesses that must be done through a pointer)
-                    var.val = '(&'..var.val..')'
-                else
-                    if var.tp.ref then -- exception: should not be REF(var.tp)
-                        if ENV.clss[var.tp.id] then
-                            -- orgs vars byRef, do nothing
-                            -- (normalized to pointer)
-                        else
-                            -- normal vars byRef
-                            var.val = '(*('..var.val..'))'
-                        end
-                    end
-                end
-            elseif var.pre == 'pool' then
-                -- normalize all pool acesses to pointers to it
-                -- (because of interface accesses that must be done through a pointer)
-                var.val_dcl = '&'..CUR(me, var.id_)
-                var.val = '(&'..CUR(me, var.id_)..')'
-            elseif var.pre == 'function' then
-                var.val = 'CEU_'..cls.id..'_'..var.id
-            elseif var.pre == 'isr' then
-                var.val = 'CEU_'..cls.id..'_'..var.id
-            elseif var.pre == 'event' then
-                var.val = nil
-            elseif var.pre == 'output' then
-                var.val = nil
-            elseif var.pre == 'input' then
-                var.val = nil
-            else
-                error 'not implemented'
-            end
+            F.Var(var)
             if var.trl_orgs then
                 -- ORG_STATS (shared for sequential), ORG_POOL (unique for each)
                 var.trl_orgs.val = CUR(me, '__lnks_'..me.n..'_'..var.trl_orgs[1])
@@ -128,34 +86,146 @@ F =
         end
     end,
 
-    Var = function (me)
-        -- variable with optional type (var tp? id)
-        if me.tp.opt then
-            local id = string.upper(me.tp.id)
-            local op = (me.tp.opt.ref and '*') or ''
-
-            -- xxx.me = v
-            local set = AST.par(me, 'SetExp')
-            local to  = set and set[3]
-            if to and to.lst==me then
-                me.val = '('..op..'('..me.var.val..'.SOME.v))'
+    -- called by Var, Field, Dcl_var
+    __var = function (me)
+        assert(me.val, 'bug found')
+        local cls = (me.org and me.org.cls) or CLS()
+        local var = me.var or me
+        if var.pre == 'var' then
+            if var.tp.arr then
+                -- normalize all arrays acesses to pointers to arr[0]
+                -- (because of interface accesses that must be done through a pointer)
+                me.val = '(&'..me.val..'[0])'
+            elseif var.cls then
+                -- normalize all org acesses to pointers to it
+                -- (because of interface accesses that must be done through a pointer)
+                me.val = '(&'..me.val..')'
             else
-                -- xxx.me == nil
-                local eq = AST.par(me, 'Op2_==')
-                eq = eq and ((eq[2].tag=='NIL') or (eq[3].tag=='NIL'))
-                if eq then
-                    me.val = '('..me.var.val..'.tag)'
-                        -- TODO: optimization: "tp&?" => 'NULL'
-
-                -- ... xxx.me ...
-                else
-                    me.val = '('..op..'(CEU_'..id..'_SOME_assert(&'..me.var.val..')->SOME.v))'
+                if var.tp.ref then -- exception: should not be REF(var.tp)
+                    if ENV.clss[var.tp.id] then
+                        -- orgs vars byRef, do nothing
+                        -- (normalized to pointer)
+                    else
+                        -- normal vars byRef
+                        me.val = '(*('..me.val..'))'
+                    end
                 end
             end
 
-        -- normal variable
+            -- variable with option type (var tp? id)
+            if var.tp.opt then
+                local id = string.upper(me.tp.id)
+                local op = (me.tp.opt.ref and '*') or ''
+
+                me.val_raw = me.val
+
+                -- xxx.me = v
+                local set = AST.par(me, 'SetExp')
+                local to  = set and set[3]
+                if to and to.lst.var==me.var then
+                    me.val = '('..op..'('..me.val..'.SOME.v))'
+                else
+                    -- xxx.me == nil
+                    local eq = AST.par(me, 'Op2_==')
+                    eq = eq and ((eq[2].tag=='NIL') or (eq[3].tag=='NIL'))
+                    if eq then
+                        me.val = '('..me.val..'.tag)'
+                            -- TODO: optimization: "tp&?" => 'NULL'
+
+                    -- ... xxx.me ...
+                    else
+                        me.val = '('..op..'(CEU_'..id..'_SOME_assert(&'..me.val..')->SOME.v))'
+                    end
+                end
+            end
+        elseif var.pre == 'pool' then
+            -- normalize all pool acesses to pointers to it
+            -- (because of interface accesses that must be done through a pointer)
+            me.val = '(&'..me.val..')'
+            var.val_dcl = var.val_dcl or '&'..CUR(me, var.id_)
+                                         -- TODO: first assignment
+        elseif var.pre == 'function' then
+            me.val = 'CEU_'..cls.id..'_'..var.id
+        elseif var.pre == 'isr' then
+            me.val = 'CEU_'..cls.id..'_'..var.id
+        elseif var.pre == 'event' then
+            me.val = nil
+        elseif var.pre == 'output' then
+            me.val = nil
+        elseif var.pre == 'input' then
+            me.val = nil
         else
-            me.val = me.var.val
+            error 'not implemented'
+        end
+    end,
+
+    Var = function (me)
+        local var = me.var or me
+        if var.isTmp then
+            me.val = '__ceu_'..var.id..'_'..var.n
+        else
+            me.val = CUR(me, var.id_)
+        end
+
+        local field = AST.par(me, 'Field')
+        if not (field and field[3]==me) then
+            F.__var(me)
+        end
+    end,
+
+    Field = function (me)
+        local gen = '((tceu_org*)'..me.org.val..')'
+        if me.org.cls and me.org.cls.is_ifc then
+            if me.var.tp.opt then
+                error 'not implemented'
+            end
+            if me.var.pre == 'var'
+            or me.var.pre == 'pool' then
+                if me.var.tp.arr then
+                    me.val = [[(
+(]]..TP.toc(me.var.tp)..[[) (
+    ((byte*)]]..me.org.val..[[) + _CEU_APP.ifcs_flds[]]..gen..[[->cls][
+        ]]..ENV.ifcs.flds[me.var.ifc_id]..[[
+    ]
+))]]
+                else
+                    me.val = [[(*(
+(]]..TP.toc(me.var.tp)..[[*) (
+    ((byte*)]]..me.org.val..[[) + _CEU_APP.ifcs_flds[]]..gen..[[->cls][
+        ]]..ENV.ifcs.flds[me.var.ifc_id]..[[
+    ]
+        )
+))]]
+                end
+                if me.var.pre == 'pool' then
+                    me.ifc_idx = '(_CEU_APP.ifcs_trls['..gen..'->cls]['
+                                    ..ENV.ifcs.trls[me.var.ifc_id]
+                               ..'])'
+                end
+            elseif me.var.pre == 'function' then
+                me.val = [[(*(
+(]]..TP.toc(me.var.tp)..[[*) (
+    _CEU_APP.ifcs_funs[]]..gen..[[->cls][
+        ]]..ENV.ifcs.funs[me.var.ifc_id]..[[
+    ]
+        )
+))]]
+            elseif me.var.pre == 'event' then
+                me.val = nil    -- cannot be used as variable
+                me.ifc_idx = '(_CEU_APP.ifcs_evts['..gen..'->cls]['
+                                ..ENV.ifcs.evts[me.var.ifc_id]
+                           ..'])'
+            else
+                error 'not implemented'
+            end
+        else
+            if me.c then
+                me.val = me.c.id_
+            else
+                assert(me.var, 'bug found')
+                me.val = me.org.val..'->'..me.var.id_
+                F.__var(me)
+            end
         end
     end,
 
@@ -386,81 +456,6 @@ F =
             me.val = V(e1) -- class accesses are already normalized to references
         else
             me.val = '('..ceu2c(op)..V(e1)..')'
-        end
-    end,
-
-    Field = function (me)
-        local gen = '((tceu_org*)'..me.org.val..')'
-        if me.org.cls and me.org.cls.is_ifc then
-            if me.var.pre == 'var'
-            or me.var.pre == 'pool' then
-                if me.var.tp.arr then
-                    me.val = [[(
-(]]..TP.toc(me.var.tp)..[[) (
-    ((byte*)]]..me.org.val..[[) + _CEU_APP.ifcs_flds[]]..gen..[[->cls][
-        ]]..ENV.ifcs.flds[me.var.ifc_id]..[[
-    ]
-))]]
-                else
-                    me.val = [[(*(
-(]]..TP.toc(me.var.tp)..[[*) (
-    ((byte*)]]..me.org.val..[[) + _CEU_APP.ifcs_flds[]]..gen..[[->cls][
-        ]]..ENV.ifcs.flds[me.var.ifc_id]..[[
-    ]
-        )
-))]]
-                end
-                if me.var.pre == 'pool' then
-                    me.ifc_idx = '(_CEU_APP.ifcs_trls['..gen..'->cls]['
-                                    ..ENV.ifcs.trls[me.var.ifc_id]
-                               ..'])'
-                end
-            elseif me.var.pre == 'function' then
-                me.val = [[(*(
-(]]..TP.toc(me.var.tp)..[[*) (
-    _CEU_APP.ifcs_funs[]]..gen..[[->cls][
-        ]]..ENV.ifcs.funs[me.var.ifc_id]..[[
-    ]
-        )
-))]]
-            elseif me.var.pre == 'event' then
-                me.val = nil    -- cannot be used as variable
-                me.ifc_idx = '(_CEU_APP.ifcs_evts['..gen..'->cls]['
-                                ..ENV.ifcs.evts[me.var.ifc_id]
-                           ..'])'
-            else
-                error 'not implemented'
-            end
-        else
-            if me.c then
-                me.val = me.c.id_
-            elseif me.var.pre == 'var' then
-                me.val = me.org.val..'->'..me.var.id_
-                if me.var.tp.arr then
-                    -- normalize all arrays acesses to pointers to arr[0]
-                    -- (because of interface accesses that must be done through a pointer)
-                    me.val = '(&'..me.val..'[0])'
-                elseif me.var.tp.ref then
-                    if not ENV.clss[me.var.tp.id] then
-                        me.val  = '(*'..me.val..')'
-                    end
-                elseif me.var.cls then
-                    -- normalize all org acesses to pointers to it
-                    -- (because of interface accesses that must be done through a pointer)
-                    me.val = '(&'..me.val..')'
-                end
-            elseif me.var.pre == 'pool' then
-                -- normalize all pool acesses to pointers to it
-                -- (because of interface accesses that must be done through a pointer)
-                me.val = '(&'..me.org.val..'->'..me.var.id_..')'
-            elseif me.var.pre == 'event' then
-                me.val = nil    -- cannot be used as variable
-                --me.org.val = '(&'..me.org.val..')' -- always via reference
-            elseif me.var.pre == 'function' then
-                me.val = me.var.val
-            else
-                error 'not implemented'
-            end
         end
     end,
 
