@@ -174,7 +174,7 @@ F = {
         end
     end,
 
--- Dcl_cls/_ifc/_adt --------------------------------------------------
+-- Dcl_cls/_ifc --------------------------------------------------
 
     _Dcl_ifc_pos = 'Dcl_cls_pos',
     Dcl_cls_pos = function (me)
@@ -213,110 +213,6 @@ F = {
                     node('Type', me.ln, '_TOP_POOL', 0, true, false),
                     '_top_pool'))
         end
-    end,
-
-    Dcl_adt_pos = function (me)
-        -- id, op, ...
-        local _, op = unpack(me)
-
-        if op == 'struct' then
-            local n = #me
-
-            -- variable declarations require a block
-            me[3] = node('Block', me.ln,
-                        node('Stmts', me.ln, select(3,unpack(me))))
-
-            for i=4, n do
-                me[i] = nil -- all already inside block
-            end
-
-        else
-            assert(op == 'union')
-            for i=3, #me do
-                assert(me[i].tag == 'Dcl_adt_tag')
-                local n = #me[i]
-                -- variable declarations require a block
-                if n == 1 then
-                    -- void enum: include empty Stmts (Block requires them)
-                    me[i][2] = node('Block', me.ln, node('Stmts',me.ln))
-                else
-                    -- non-void enum
-                    me[i][2] = node('Block', me.ln, select(2,unpack(me[i])))
-                end
-                for j=3, n do
-                    me[i][j] = nil  -- all already inside block
-                end
-            end
-        end
-    end,
-
-    _Adt_constr_root_pre = function (me)
-        local dyn, constr = unpack(me)
-        local adt = unpack(constr)
-        local id  = unpack(adt)
-        me.__adj_adt_id = id
-    end,
-    _Adt_constr_root_pos = function (me)
-        local dyn, constr = unpack(me)
-        local me_, set = unpack(me.__par)
-        assert(me_ == me)
-
-        -- root must set SetExp variable
-        assert(set.tag=='SetExp', 'bug found')
-        set[2] = node('Var', me.ln, '__ceu_adt_'..me.n)
-        return node('Stmts', me.ln,
-                node('Dcl_var', me.ln, 'var',
-                    node('Type', me.ln, me.__adj_adt_id, (dyn and 1) or 0, false, false),
-                    '__ceu_adt_'..me.n),
-                constr) -- substitute by 1st constr
-    end,
-    _Adt_explist_pos = function (me)
-        me.tag = 'ExpList'
-    end,
-    Adt_constr_pos = function (me)
-        local adt, params = unpack(me)
-        local id = unpack(adt)
-
-        -- Nested constructors:
-        --      Data.TAG1(v, Data.TAG2(...))
-        -- becomes (static)
-        --      var Data* data0;            // root
-        --          var Data* data1;        // TAG1
-        --          data0 = new(...);
-        --              var Data* data2;    // TAG2
-        --              data1 = new(...);
-        --          data1->rec = data2;
-        --      data0->rec = data1;
-
-        local dyn,_ = unpack(AST.par(me,'_Adt_constr_root'))
-
-        -- nested constructors
-        local nested = AST.node('Stmts', me.ln)
-        for i, p in ipairs(params) do
-            if p.tag == 'Stmts' then
-                -- subst nested stmts
-                -- for Var:__ceu_adt_n
-                nested[#nested+1] = p
-                if dyn then
-                    params[i] = node('Var', me.ln, '__ceu_adt_'..me.n)
-                else
-                    params[i] = node('Op1_&', me.ln, '&',
-                                    node('Var', me.ln, '__ceu_adt_'..me.n))
-                end
-            end
-        end
-
-        -- parent constructor
-        local par = (me.__par.tag=='_Adt_constr_root' and me.__par)
-                        or me.__par.__par
-
-        return node('Stmts', me.ln,
-                node('Dcl_var', me.ln, 'var',
-                    node('Type', me.ln, id, (dyn and 1) or 0, false, false),
-                    '__ceu_adt_'..me.n),
-                node('Adt_constr', me.ln, adt, params,
-                    node('Var', me.ln, '__ceu_adt_'..par.n),
-                    dyn, nested))
     end,
 
 -- Escape --------------------------------------------------
@@ -1104,19 +1000,6 @@ F = {
         return node('Stmts', me.ln, unpack(ret))
     end,
 
-    -- Sufix recursive ADT with "*"
-    Dcl_var = function (me)
-        local pre, tp, id = unpack(me)
-        local adt = AST.par(me, 'Dcl_adt')
-        if adt then
-            local adt_id = unpack(adt)
-            local id, ptr, arr, ref = unpack(tp)
-            if (adt_id==id) and (ptr==0) and (not arr) and (not ref) then
-                me[2][2] = 1
-            end
-        end
-    end,
-
 -- Tuples ---------------------
 
     _TupleTypeItem_2 = '_TupleItem_1',
@@ -1576,3 +1459,156 @@ do return end
 }
 
 AST.visit(F)
+
+-- ADTs ----------------------------------------------------------------------
+-- separate visit because of "?" types
+
+local ADTS = {}
+
+G = {
+    Type_pos = function (me)
+        local id, ptr, arr, ref, opt = unpack(me)
+        if not opt then
+            return
+        end
+        me[5] = nil
+
+        local n = #ADTS + 1
+        ADTS[#ADTS+1] = node('Dcl_adt', me.ln, '_Option_'..n,
+                            'union',
+                                node('Dcl_adt_tag', me.ln, 'NIL'),
+                                node('Dcl_adt_tag', me.ln, 'SOME',
+                                    node('Stmts', me.ln,
+                                        node('Dcl_var', me.ln, 'var', me, 'v'))))
+
+        return node('Type', me.ln, '_Option_'..n, 0, false, false, true)
+                                                                   -- opt
+    end,
+}
+H = {
+    -- insert all ? types in the beginning
+    ['Root_pre'] = function (me)
+        for i, adt in ipairs(ADTS) do
+            table.insert(MAIN.blk_body[1], i, adt)
+        end
+    end,
+
+    Dcl_adt_pos = function (me)
+        -- id, op, ...
+        local _, op = unpack(me)
+
+        if op == 'struct' then
+            local n = #me
+
+            -- variable declarations require a block
+            me[3] = node('Block', me.ln,
+                        node('Stmts', me.ln, select(3,unpack(me))))
+
+            for i=4, n do
+                me[i] = nil -- all already inside block
+            end
+
+        else
+            assert(op == 'union')
+            for i=3, #me do
+                assert(me[i].tag == 'Dcl_adt_tag')
+                local n = #me[i]
+                -- variable declarations require a block
+                if n == 1 then
+                    -- void enum: include empty Stmts (Block requires them)
+                    me[i][2] = node('Block', me.ln, node('Stmts',me.ln))
+                else
+                    -- non-void enum
+                    me[i][2] = node('Block', me.ln, select(2,unpack(me[i])))
+                end
+                for j=3, n do
+                    me[i][j] = nil  -- all already inside block
+                end
+            end
+        end
+    end,
+
+    _Adt_constr_root_pre = function (me)
+        local dyn, constr = unpack(me)
+        local adt = unpack(constr)
+        local id  = unpack(adt)
+        me.__adj_adt_id = id
+    end,
+    _Adt_constr_root_pos = function (me)
+        local dyn, constr = unpack(me)
+        local me_, set = unpack(me.__par)
+        assert(me_ == me)
+
+        -- root must set SetExp variable
+        assert(set.tag=='SetExp', 'bug found')
+        set[2] = node('Var', me.ln, '__ceu_adt_'..me.n)
+        return node('Stmts', me.ln,
+                node('Dcl_var', me.ln, 'var',
+                    node('Type', me.ln, me.__adj_adt_id, (dyn and 1) or 0, false, false),
+                    '__ceu_adt_'..me.n),
+                constr) -- substitute by 1st constr
+    end,
+    _Adt_explist_pos = function (me)
+        me.tag = 'ExpList'
+    end,
+    Adt_constr_pos = function (me)
+        local adt, params = unpack(me)
+        local id = unpack(adt)
+
+        -- Nested constructors:
+        --      Data.TAG1(v, Data.TAG2(...))
+        -- becomes (static)
+        --      var Data* data0;            // root
+        --          var Data* data1;        // TAG1
+        --          data0 = new(...);
+        --              var Data* data2;    // TAG2
+        --              data1 = new(...);
+        --          data1->rec = data2;
+        --      data0->rec = data1;
+
+        local dyn,_ = unpack(AST.par(me,'_Adt_constr_root'))
+
+        -- nested constructors
+        local nested = AST.node('Stmts', me.ln)
+        for i, p in ipairs(params) do
+            if p.tag == 'Stmts' then
+                -- subst nested stmts
+                -- for Var:__ceu_adt_n
+                nested[#nested+1] = p
+                if dyn then
+                    params[i] = node('Var', me.ln, '__ceu_adt_'..me.n)
+                else
+                    params[i] = node('Op1_&', me.ln, '&',
+                                    node('Var', me.ln, '__ceu_adt_'..me.n))
+                end
+            end
+        end
+
+        -- parent constructor
+        local par = (me.__par.tag=='_Adt_constr_root' and me.__par)
+                        or me.__par.__par
+
+        return node('Stmts', me.ln,
+                node('Dcl_var', me.ln, 'var',
+                    node('Type', me.ln, id, (dyn and 1) or 0, false, false),
+                    '__ceu_adt_'..me.n),
+                node('Adt_constr', me.ln, adt, params,
+                    node('Var', me.ln, '__ceu_adt_'..par.n),
+                    dyn, nested))
+    end,
+
+    -- Sufix recursive ADT with "*"
+    Dcl_var = function (me)
+        local pre, tp, id = unpack(me)
+        local adt = AST.par(me, 'Dcl_adt')
+        if adt then
+            local adt_id = unpack(adt)
+            local id, ptr, arr, ref = unpack(tp)
+            if (adt_id==id) and (ptr==0) and (not arr) and (not ref) then
+                me[2][2] = 1
+            end
+        end
+    end,
+}
+AST.visit(G)
+AST.visit(H)

@@ -9,12 +9,13 @@ end
 
 function TP.new (me)
     if me.tag == 'Type' then
-        local id, ptr, arr, ref = unpack(me)
+        local id, ptr, arr, ref, opt = unpack(me)
 
         me.id  = id
         me.ptr = ptr
         me.arr = arr
         me.ref = ref
+        me.opt = opt
         me.ext = (string.sub(id,1,1) == '_') or (id=='@')
         me.hold = true      -- holds by default
 
@@ -202,6 +203,11 @@ function TP.contains (tp1, tp2)
     -- same type
     if tp1.id==tp2.id and tp1.ptr==tp2.ptr and tp1.arr==tp2.arr then
                                               -- i.e. false
+        return true
+    end
+
+    -- var tp? v = nil
+    if tp1.opt and tp2.id=='nil' then
         return true
     end
 

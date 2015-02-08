@@ -148,6 +148,8 @@ KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'native' + 'native/pr
      + P'@' * (
          P'const' + 'hold' + 'nohold' + 'plain' + 'pure' + 'rec' + 'safe'
        )
+--
+     + 'nil'
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
@@ -322,7 +324,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , __13     = V'__Prim'
     , __Prim   = V'__Parens' + V'SIZEOF'
               + V'Var'     + V'Nat'
-              + V'NULL'    + V'NUMBER' + V'STRING'
+              + V'NULL'    + V'NUMBER' + V'STRING' + V'NIL'
               + V'Global'  + V'This'   + V'Outer'
               + V'RawExp'
               + CKEY'call'     * EV'__Exp'
@@ -347,7 +349,8 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
             + KEY'false' / function() return 0 end
             + KEY'true'  / function() return 1 end
 
-    , NULL = CKEY'null'
+    , NULL = CKEY'null'     -- TODO: the idea is to get rid of this
+    , NIL  = CKEY'nil'
 
     , WCLOCKK = #NUM *
                 (NUM * K'h'   + Cc(0)) *
@@ -484,6 +487,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                        end) *S
            * (K'['*(V'__Exp'+Cc(true))*K']' + Cc(false))
            * (CK'&' + Cc(false))
+           * (CK'?' + Cc(false))
             -- id, *, [], &
 
     , __ID_field = (CK(Alpha * (Alphanum+'?')^0) /

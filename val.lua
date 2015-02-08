@@ -308,6 +308,14 @@ F =
 
     Op2_any = function (me)
         local op, e1, e2 = unpack(me)
+
+        if e2.tag == 'NIL' then
+            assert(op == '==')
+            e1.val = '('..e1.val..'.tag)'
+            e2.val = 'CEU_'..string.upper(e1.tp.id)..'_NIL'
+            -- TODO: optimization: "tp&?" => 'NULL'
+        end
+
         me.val = '('..V(e1)..ceu2c(op)..V(e2)..')'
     end,
     ['Op2_-']   = 'Op2_any',
@@ -520,6 +528,10 @@ F =
     end,
     NULL = function (me)
         me.val = 'NULL'
+    end,
+    NIL = function (me)
+        me.val = '&CEU_<TP>_BASE'
+                 -- depends on the other operand
     end,
 }
 

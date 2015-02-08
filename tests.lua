@@ -1413,11 +1413,39 @@ escape vec1[0];
     run = 10,
 }
 
+]===]
+Test { [[
+var int? i;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+var int? i = 1;
+escape i;
+]],
+    run = 1,
+}
+
+Test { [[
+var int? i = nil;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+var int? i;
+escape i==nil;
+]],
+    run = 1,
+}
+
 do return end
 
 -------------------------------------------------------------------------------
 -- OK: well tested
-]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -40660,6 +40688,7 @@ escape 1;
 }
 
 -- TREES
+-- TODO: much more examples
 
 Test { [[
 data Tree with
@@ -40681,6 +40710,112 @@ escape t1.NIL + t2.NODE.v + t2.NODE.left:NIL + t2.NODE.right:NIL;
 }
 
 do return end
+
+-- OPTION
+
+Test { [[
+data OptionInt with
+    tag NIL;
+with
+    tag SOME with
+        var int v;
+    end
+end
+
+data OptionPtr with
+    tag NIL;
+with
+    tag SOME with
+        var int* v;
+    end
+end
+
+var int ret = 0;            // 0
+
+var OptionInt i = OptionInt.NIL();
+var OptionPtr p = OptionPtr.NIL();
+ret = ret + i.NIL + p.NIL;  // 2
+
+i = OptionInt.SOME(3);
+ret = ret + i.SOME.v;       // 5
+
+p = OptionPtr.SOME(&ret);
+*p.SOME.v = *p.SOME.v + 2;    // 7
+
+var int v = 10;
+p = OptionPtr.SOME(&v);
+*p.SOME.v = *p.SOME.v + 1;
+
+ret = ret + v;              // 18
+escape ret;
+]],
+    run = 18,
+}
+
+Test { [[
+data OptionInt with
+    tag NIL;
+with
+    tag SOME with
+        var int v;
+    end
+end
+
+data OptionPtr with
+    tag NIL;
+with
+    tag SOME with
+        var int* v;
+    end
+end
+
+var int ret = 0;    // 0
+
+var int?  i;
+var int&? p;
+ret = ret + (i==nil) + (p==nil);  // 2
+
+i = 3;
+ret = ret + i;      // 5
+
+// first
+p = ret;
+p = p + 2;          // 7
+_assert(ret == 7);
+
+// second
+var int v = 10;
+p = v               // 10
+p = p + 1;          // 11
+
+ret = ret + v;      // 21
+escape ret;
+]],
+    run = 21,
+}
+
+Test { [[
+var int&? i;
+finalize
+    i = _alloc(1);
+with
+    _free(i);
+end
+escape i;       // ok
+]],
+    run = 1,
+}
+Test { [[
+var int&? i;
+finalize
+    i = _alloc(0);
+with
+    _free(i);
+end
+escape i;       // error
+]],
+    run = 1,
+}
 
 -- TODO: IGNORE EVERYTHING STARTING FROM HERE
 

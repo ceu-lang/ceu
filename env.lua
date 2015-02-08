@@ -1243,6 +1243,11 @@ F = {
         me.lval = false
         me.const = true
     end,
+    NIL = function (me)
+        me.tp   = TP.fromstr'nil'
+        me.lval = false
+        me.const = true
+    end,
 }
 
 AST.visit(F)
