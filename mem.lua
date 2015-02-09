@@ -143,9 +143,11 @@ void CEU_]]..id..'_free_static (CEU_'..id..[[* me, void* pool) {
         local pack = ''
         if me.tp.opt and REF(me.tp) then
             local ID = string.upper(me.tp.id)
+            local tp = 'CEU_'..me.tp.id
+            local some = TP.toc(me[4][2][1][1][2])
             pack = [[
-CEU_]]..me.tp.id..[[ CEU_]]..ID..[[_pack (void* ptr) {
-    CEU_]]..me.tp.id..[[ ret;
+]]..tp..[[ CEU_]]..ID..[[_pack (void* ptr) {
+    ]]..tp..[[ ret;
     if (ptr == NULL) {
         ret.tag = CEU_]]..ID..[[_NIL;
     } else {
@@ -153,6 +155,13 @@ CEU_]]..me.tp.id..[[ CEU_]]..ID..[[_pack (void* ptr) {
         ret.SOME.v = ptr;
     }
     return ret;
+}
+]]..some..[[ CEU_]]..ID..[[_unpack (]]..tp..[[ me) {
+    if (me.tag == CEU_]]..ID..[[_NIL) {
+        return NULL;
+    } else {
+        return me.SOME.v;
+    }
 }
 ]]
         end

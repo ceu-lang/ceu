@@ -1441,7 +1441,6 @@ do return end
 
 -------------------------------------------------------------------------------
 -- OK: well tested
-]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -17630,6 +17629,80 @@ escape 1;
     run = 1,
 }
 
+]===]
+Test { [[
+native do
+    int V;
+    int* alloc (int ok) {
+        return &V;
+    }
+    void dealloc (int* ptr) {
+    }
+end
+native @nohold _dealloc();
+
+var int&? tex;
+finalize
+    tex = _alloc(1);    // v=2
+with
+    _dealloc(&tex);
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native do
+    int* alloc (int ok) {
+        return NULL;
+    }
+    void dealloc (int* ptr) {
+    }
+end
+native @nohold _dealloc();
+
+var int&? tex;
+finalize
+    tex = _alloc(1);    // v=2
+with
+    _dealloc(&tex);
+end
+
+escape 1;
+]],
+    asr = true,
+}
+
+Test { [[
+native do
+    int* alloc (int ok) {
+        return NULL;
+    }
+    int V = 0;
+    void dealloc (int* ptr) {
+        if (ptr == NULL) {
+            V = 1;
+        }
+    }
+end
+native @nohold _dealloc();
+
+do
+    var int&? tex;
+    finalize
+        tex = _alloc(1);
+    with
+        _dealloc(tex);
+    end
+end
+
+escape _V;
+]],
+    run = 1,
+}
+
 Test { [[
 native do
     struct T;
@@ -17658,10 +17731,10 @@ do
     finalize
         tex = _alloc(1);    // v=2
     with
-        _dealloc(&tex);
+        _dealloc(tex);
     end
     ret = ret + _V;         // ret=3
-    if &tex == null then
+    if tex == nil then
         ret = 0;
     end
 end                         // v=4
@@ -17674,7 +17747,7 @@ do
         tex = _alloc(0);    // v=4
     with
         if tex != nil then
-            _dealloc(&tex);
+            _dealloc(tex);
         end
     end
     ret = ret + _V;         // ret=11
@@ -17768,7 +17841,7 @@ do
         ptr = _f();
     with
         if ptr != nil then
-            _g(&ptr);
+            _g(ptr);
         else
             ret = ret + 1;
         end
@@ -17853,7 +17926,7 @@ do
     finalize
         tex = _alloc(1);    // v=2
     with
-        _dealloc(&tex);
+        _dealloc(tex);
     end
     ret = ret + _V;         // ret=3
     if tex == nil then
@@ -17869,7 +17942,7 @@ do
         tex = _alloc(0);    // v=4
     with
         if tex != nil then
-            _dealloc(&tex);
+            _dealloc(tex);
         end
     end
     ret = ret + _V;         // ret=11
@@ -17894,7 +17967,7 @@ var _SDL_Window& win;
         win = _SDL_CreateWindow("UI - Texture",
                             500, 1300, 800, 480, _SDL_WINDOW_SHOWN);
     with
-        _SDL_DestroyWindow(&win);
+        _SDL_DestroyWindow(win);
     end
 escape 0;
 ]],

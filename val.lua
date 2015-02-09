@@ -114,16 +114,35 @@ F =
 
             -- variable with option type (var tp? id)
             if var.tp.opt then
-                local id = string.upper(me.tp.id)
+                local ID = string.upper(me.tp.id)
                 local op = (me.tp.opt.ref and '*') or ''
 
                 me.val_raw = me.val
 
+                -- set
                 local set = AST.par(me, 'SetExp')
                 local _, to, fr
                 if set then
                     _, fr, to = unpack(set)
                 end
+
+                -- call
+                local call = AST.par(me, 'Op2_call')
+                call = call and call.tp.id=='@' and call
+                if call then
+                    local _,_,params = unpack(call)
+                    call = false
+                    for _, p in ipairs(params) do
+                        if TP.contains(p.tp,me.tp) and (p.fst==me) then
+                            call = true
+                            break
+                        end
+                    end
+                end
+
+                -- cmp
+                local cmp = AST.par(me,'Op2_==') or AST.par(me,'Op2_!=')
+                cmp = cmp and ((cmp[2].tag=='NIL') or (cmp[3].tag=='NIL'))
 
                 -- SET
                 if to and to.lst.var==me.var then
@@ -135,19 +154,26 @@ F =
                         me.val = '('..op..'('..me.val..'.SOME.v))'
                     end
 
-                -- NOT SET
-                else
-                    -- xxx.me == nil
-                    local cmp = AST.par(me,'Op2_==') or AST.par(me,'Op2_!=')
-                    cmp = cmp and ((cmp[2].tag=='NIL') or (cmp[3].tag=='NIL'))
-                    if cmp then
-                        me.val = '('..me.val..'.tag)'
-                            -- TODO: optimization: "tp&?" => 'NULL'
+                -- CALL
+                -- _f(xxx.me)
+                elseif call then
+                    -- reference option type -> pointer
+                    -- var tp&? v;
+                    -- _f(v);
+                    --      - NULL,   if v==nil
+                    --      - SOME.v, if v!=nil
+                    me.val = '(CEU_'..ID..'_unpack('..me.val..'))'
 
+                -- CMP
+                -- xxx.me == nil
+                elseif cmp then
+                    me.val = '('..me.val..'.tag)'
+                        -- TODO: optimization: "tp&?" => 'NULL'
+
+                -- NONE
+                else
                     -- ... xxx.me ...
-                    else
-                        me.val = '('..op..'(CEU_'..id..'_SOME_assert(&'..me.val..')->SOME.v))'
-                    end
+                    me.val = '('..op..'(CEU_'..ID..'_SOME_assert(&'..me.val..')->SOME.v))'
                 end
             end
         elseif var.pre == 'pool' then

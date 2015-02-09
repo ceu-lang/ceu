@@ -16,7 +16,8 @@ function TP.new (me)
         me.arr = arr
         me.ref = ref
         me.opt = opt
-        me.ext = (string.sub(id,1,1) == '_') or (id=='@')
+        me.ext = (id=='@') or
+                 (string.sub(id,1,1)=='_' and string.sub(id,1,8)~='_Option_')
         me.hold = true      -- holds by default
 
         -- set from outside (see "types" above and Dcl_nat in env.lua)
@@ -179,6 +180,7 @@ end
 
 function TP.isNumeric (tp)
     return TP.get(tp.id).num and tp.ptr==0 and (not tp.arr)
+            or (tp.opt and TP.isNumeric(tp.opt))
             or (tp.ext and tp.ptr==0)
             or tp.id=='@'
 end
@@ -212,7 +214,7 @@ function TP.contains (tp1, tp2)
     end
 
     -- tp? vs tp
-    if tp1.opt or tp2.opt then
+    if (tp1.opt or tp2.opt) and (tp1.ptr==tp2.ptr) then
         return TP.contains(tp1.opt or tp1, tp2.opt or tp2)
     end
 
