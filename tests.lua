@@ -17654,7 +17654,7 @@ native @nohold _dealloc();
 var int ret = _V;           // v=1, ret=1
 
 do
-    var _t& tex;
+    var _t&? tex;
     finalize
         tex = _alloc(1);    // v=2
     with
@@ -17669,14 +17669,16 @@ end                         // v=4
 ret = ret + _V;             // ret=7
 
 do
-    var _t& tex;
+    var _t&? tex;
     finalize
         tex = _alloc(0);    // v=4
     with
-        _dealloc(&tex);
+        if tex != nil then
+            _dealloc(&tex);
+        end
     end
     ret = ret + _V;         // ret=11
-    if &tex == null then
+    if tex == nil then
         ret = ret + 1;      // ret=12
     end
 end                         // v=4
@@ -17882,6 +17884,23 @@ escape ret;
 ]],
     run = 16,
 }
+
+Test { [[
+native @nohold _SDL_DestroyWindow();
+var int win_w;
+var int win_h;
+var _SDL_Window& win;
+    finalize
+        win = _SDL_CreateWindow("UI - Texture",
+                            500, 1300, 800, 480, _SDL_WINDOW_SHOWN);
+    with
+        _SDL_DestroyWindow(&win);
+    end
+escape 0;
+]],
+    fin = 'line 6 : must assign to a option reference (declared with `&?´)',
+}
+
 -- TODO: bounded loop on finally
 
     -- ASYNCHRONOUS

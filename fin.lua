@@ -124,13 +124,12 @@ F = {
 
             if to.tp.opt and REF(to.tp) then
                 T.__fin_opt_tp = to.tp  -- return value must be packed in the "&?" type
-            end
-
--- TODO: remove ext?
-            ASR((to.tp.opt and REF(to.tp)) or to.tp.ext, me, 1105,
+            else
+                ASR(to.tp.id == '@', me, 1105,
                     'must assign to a option reference (declared with `&?´)')
                 -- var void* ptr = _malloc(1);  // no
                 -- _ptr = _malloc(1);           // ok
+            end
 
 -- TODO: error code
             ASR(me.fin, me, 'attribution requires `finalize´')
