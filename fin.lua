@@ -33,13 +33,13 @@ F = {
     -- NON-POINTER ATTRIBUTIONS (always safe)
     --
 
-        local noptr =  (to.tp.ptr==0 and (not to.tp.arr) and (not to.tp.ref) and
+        local noptr =  (to.tp.ptr==0 and (not to.tp.arr) and (not REF(to.tp)) and
                         ((not to.tp.ext) or TP.get(to.tp.id).plain or to.tp.plain))
                                             -- either native dcl or derived
                                             -- from s.field
         -- _r.x = (int) ...;
         noptr = noptr or
-                       (fr.tp.ptr==0 and (not fr.tp.arr) and (not fr.tp.ref) and
+                       (fr.tp.ptr==0 and (not fr.tp.arr) and (not REF(fr.tp)) and
                         ((not fr.tp.ext) or TP.get(fr.tp.id).plain or fr.tp.plain))
 
         if noptr then
@@ -59,7 +59,7 @@ F = {
 
         -- an attribution restarts tracking accesses to "to"
         -- variables or native symbols
-        if (to.var and (not to.var.tp.ref)) or to.c then
+        if (to.var and (not REF(to.var.tp))) or to.c then
                         -- do not track references
             TRACK[to.var or to.id] = true
         end
@@ -122,7 +122,9 @@ F = {
             -- the local goes out of scope, hence, we require finalization.
             -- The "to" pointers must be option types `&?´.
 
-            T.__fin_opt_tp = to.tp  -- return value must be packed in the "&?" type
+            if to.tp.opt and REF(to.tp) then
+                T.__fin_opt_tp = to.tp  -- return value must be packed in the "&?" type
+            end
 
 -- TODO: remove ext?
             ASR((to.tp.opt and REF(to.tp)) or to.tp.ext, me, 1105,

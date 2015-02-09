@@ -248,7 +248,7 @@ F = {
             id  = me.var,
             md  = 'rd',
             tp  = me.var.tp,
-            any = me.var.tp.ref,
+            any = REF(me.var.tp),
             err = ERR(me, 'variable/event `'..me.var.id..'´'),
         }
         if string.sub(me.var.id,1,5) == '_tup_' then

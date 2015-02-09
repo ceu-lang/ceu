@@ -9,6 +9,28 @@ end
 
 --[===[
 
+-- BUGS
+
+-- XXX: T-vs-Opt
+Test { [[
+class T with
+do
+end
+var T*&? t;
+finalize
+    t = _malloc(10 * sizeof(T**));
+with
+    nothing;
+end
+native @nohold _free();
+finalize with
+    _free(t);
+end
+escape 10;
+]],
+    run = 10;
+}
+
 Test { [[
 input void A, B, Z;
 event void a;
@@ -1414,164 +1436,12 @@ escape vec1[0];
 }
 
 -------------------------------------------------------------------------------
-]===]
 
-Test { [[
-native do
-    void* f () {
-        return NULL;
-    }
-end
-
-var void&? ptr;
-finalize
-    ptr = _f();
-with
-    nothing;
-end
-
-escape &ptr == &ptr;  // ptr.SOME fails
-]],
-    asr = true,
-}
-
-Test { [[
-native do
-    void* f () {
-        return NULL;
-    }
-end
-
-var void&? ptr;
-finalize
-    ptr = _f();
-with
-    nothing;
-end
-
-escape ptr == nil;
-]],
-    run = 1,
-}
-
-Test { [[
-native do
-    void* f () {
-        return NULL;
-    }
-    void g (void* g) {
-    }
-end
-native @nohold _g();
-
-var void&? ptr;
-finalize
-    ptr = _f();
-with
-    _g(&ptr);    // error (ptr is NIL)
-end
-
-escape ptr == nil;
-]],
-    asr = true
-}
-
-Test { [[
-native do
-    void* f () {
-        return NULL;
-    }
-    void g (void* g) {
-    }
-end
-native @nohold _g();
-
-var int ret = 0;
-
-do
-    var void&? ptr;
-    finalize
-        ptr = _f();
-    with
-        if ptr != nil then
-            _g(&ptr);
-        else
-            ret = ret + 1;
-        end
-    end
-    ret = ret + (ptr == nil);
-end
-
-escape ret;
-]],
-    run = 2,
-}
-
-Test { [[
-native do
-    struct T;
-    typedef struct T t;
-    int V = 1;
-    t* alloc (int ok) {
-        if (ok) {
-            V++;
-            return (t*) &V;
-        } else {
-            return NULL;
-        }
-    }
-    void dealloc (t* ptr) {
-printf("oi %p\n", ptr);
-        if (ptr != NULL) {
-            V *= 2;
-        }
-    }
-end
-native @nohold _dealloc();
-
-var int ret = _V;           // v=1, ret=1
-
-do
-    var _t&? tex;
-    finalize
-        tex = _alloc(1);    // v=2
-    with
-        _dealloc(&tex);
-    end
-    ret = ret + _V;         // ret=3
-    if tex == nil then
-        ret = 0;
-    end
-end                         // v=4
-
-ret = ret + _V;             // ret=7
-
-do
-    var _t&? tex;
-    finalize
-        tex = _alloc(0);    // v=4
-    with
-        if tex != nil then
-            _dealloc(&tex);
-        end
-    end
-    ret = ret + _V;         // ret=11
-    if tex == nil then
-_printf("NIL\n");
-        ret = ret + 1;      // ret=12
-    end
-end                         // v=4
-
-ret = ret + _V;             // ret=16
-
-escape ret;
-]],
-    run = 16,
-}
 do return end
 
 -------------------------------------------------------------------------------
 -- OK: well tested
+]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -15820,7 +15690,7 @@ escape 0;
 Test { [[
 var int* ptr = _malloc();
 ]],
-    fin = 'line 1 : must assign to a strong reference (declared with `&´)',
+    fin = 'line 1 : must assign to a option reference (declared with `&?´)',
 }
 
 Test { [[
@@ -15834,13 +15704,13 @@ do
     end
 end
 ]],
-    fin = 'line 5 : must assign to a strong reference (declared with `&´)',
+    fin = 'line 5 : must assign to a option reference (declared with `&?´)',
 }
 
 Test { [[
 native _f();
 do
-    var int& a;
+    var int&? a;
     finalize
         a = _f();
     with
@@ -15854,7 +15724,7 @@ end
 Test { [[
 native _f();
 do
-    var int& a;
+    var int&? a;
     finalize
         a = _f();
     with
@@ -15869,7 +15739,7 @@ end
 Test { [[
 native _f();
 do
-    var int& a;
+    var int&? a;
     finalize
         a = _f();
     with
@@ -15928,7 +15798,7 @@ escape 1;
 
 Test { [[
 input void E;
-var int& n;
+var int&? n;
 finalize
     this.n = _f();
 with
@@ -15999,7 +15869,7 @@ Test { [[
 native _f();
 var int r = 0;
 do
-    var int& a;
+    var int&? a;
     finalize
         a = _f();
     with
@@ -17818,6 +17688,200 @@ escape ret;
     run = 16,
 }
 
+Test { [[
+native do
+    void* f () {
+        return NULL;
+    }
+end
+
+var void&? ptr;
+finalize
+    ptr = _f();
+with
+    nothing;
+end
+
+escape &ptr == &ptr;  // ptr.SOME fails
+]],
+    asr = true,
+}
+
+Test { [[
+native do
+    void* f () {
+        return NULL;
+    }
+end
+
+var void&? ptr;
+finalize
+    ptr = _f();
+with
+    nothing;
+end
+
+escape ptr == nil;
+]],
+    run = 1,
+}
+
+Test { [[
+native do
+    void* f () {
+        return NULL;
+    }
+    void g (void* g) {
+    }
+end
+native @nohold _g();
+
+var void&? ptr;
+finalize
+    ptr = _f();
+with
+    _g(&ptr);    // error (ptr is NIL)
+end
+
+escape ptr == nil;
+]],
+    asr = true
+}
+
+Test { [[
+native do
+    void* f () {
+        return NULL;
+    }
+    void g (void* g) {
+    }
+end
+native @nohold _g();
+
+var int ret = 0;
+
+do
+    var void&? ptr;
+    finalize
+        ptr = _f();
+    with
+        if ptr != nil then
+            _g(&ptr);
+        else
+            ret = ret + 1;
+        end
+    end
+    ret = ret + (ptr == nil);
+end
+
+escape ret;
+]],
+    run = 2,
+}
+
+Test { [[
+native do
+    int V = 1;
+    int* alloc () {
+        return &V;
+    }
+end
+
+var int&? tex1;
+finalize
+    tex1 = _alloc(1);
+with
+    nothing;
+end
+
+var int& tex2 = tex1;
+
+escape &tex2==&_V;
+]],
+    run = 1,
+}
+
+Test { [[
+native do
+    int V = 1;
+    int* alloc () {
+        return NULL;
+    }
+end
+
+var int&? tex1;
+finalize
+    tex1 = _alloc(1);
+with
+    nothing;
+end
+
+var int& tex2 = tex1;
+
+escape &tex2==&_V;
+]],
+    asr = true,
+}
+
+Test { [[
+native do
+    struct T;
+    typedef struct T t;
+    int V = 1;
+    t* alloc (int ok) {
+        if (ok) {
+            V++;
+            return (t*) &V;
+        } else {
+            return NULL;
+        }
+    }
+    void dealloc (t* ptr) {
+        if (ptr != NULL) {
+            V *= 2;
+        }
+    }
+end
+native @nohold _dealloc();
+
+var int ret = _V;           // v=1, ret=1
+
+do
+    var _t&? tex;
+    finalize
+        tex = _alloc(1);    // v=2
+    with
+        _dealloc(&tex);
+    end
+    ret = ret + _V;         // ret=3
+    if tex == nil then
+        ret = 0;
+    end
+end                         // v=4
+
+ret = ret + _V;             // ret=7
+
+do
+    var _t&? tex;
+    finalize
+        tex = _alloc(0);    // v=4
+    with
+        if tex != nil then
+            _dealloc(&tex);
+        end
+    end
+    ret = ret + _V;         // ret=11
+    if tex == nil then
+        ret = ret + 1;      // ret=12
+    end
+end                         // v=4
+
+ret = ret + _V;             // ret=16
+
+escape ret;
+]],
+    run = 16,
+}
 -- TODO: bounded loop on finally
 
     -- ASYNCHRONOUS
@@ -19925,7 +19989,7 @@ native do
         escape &a;
     }
 end
-var int& p = _f();
+var int&? p = _f();
 escape p;
 ]],
     fin = 'line 8 : attribution requires `finalize´',
@@ -19940,7 +20004,7 @@ native do
         return &a;
     }
 end
-var int& p;
+var int&? p;
 finalize
     p = _f();
 with
@@ -19959,7 +20023,7 @@ native do
         return &a;
     }
 end
-var int& p;
+var int&? p;
 finalize
     p = _f();
 with
@@ -19994,7 +20058,7 @@ native do
 end
 var int a;
 do
-    var int& p;
+    var int&? p;
     finalize
         p = _f();
     with
@@ -20016,7 +20080,7 @@ native do
 end
 var int a = 10;
 do
-    var int& p;
+    var int&? p;
     do
         finalize
             p = _f();
@@ -20329,7 +20393,7 @@ escape _V;
 }
 
 Test { [[
-var void& p;
+var void&? p;
 finalize
     p = { NULL };
 with
@@ -20342,7 +20406,7 @@ escape p==null;
 }
 
 Test { [[
-var void& p;
+var void&? p;
 p := { NULL };
 escape 1;
 //escape p==null;
@@ -20744,6 +20808,21 @@ var _SDL_Rect r = rect;
 escape 1;
 ]],
     gcc = 'error: unknown type name ‘SDL_Point’',
+}
+
+Test { [[
+native do
+    int f () {
+        return 1;
+    }
+end
+var int[2] v;
+v[0] = 0;
+v[1] = 1;
+v[_f()] = 2;
+escape v[1];
+]],
+    run = 2,
 }
 
 -- NATIVE/PRE
@@ -26903,7 +26982,6 @@ var int v1, v2;
 (v1,v2) = do T with
     this.v = 10;
 end;
-_printf("%d %d\n", v1, v2);
 escape v1+v2;
 ]],
     run = 30,
@@ -28556,7 +28634,7 @@ end
 
 class V with
 do
-    var int& v;
+    var int&? v;
     finalize
         v = _f();
     with
@@ -28594,7 +28672,7 @@ end
 
 class V with
 do
-    var int& v;
+    var int&? v;
     finalize
         v = _f();
     with
@@ -28713,7 +28791,7 @@ end
 
 class V with
 do
-    var int& v;
+    var int&? v;
     finalize
         v = _f();
     with
@@ -28755,7 +28833,7 @@ end
 
 class V with
 do
-    var int& v;
+    var int&? v;
     finalize
         v = _f();
     with
@@ -28836,7 +28914,7 @@ end
 
 class V with
 do
-    var int& v;
+    var int&? v;
     finalize
         v = _f();
     with
@@ -28879,7 +28957,7 @@ end
 
 class V with
 do
-    var int& v;
+    var int&? v;
     finalize
         v = _f();
     with
@@ -28925,7 +29003,7 @@ end
 
 class V with
 do
-    var int& v;
+    var int&? v;
     finalize
         v = _f();
     with
@@ -28970,7 +29048,7 @@ end
 
 class V with
 do
-    var int& v;
+    var int&? v;
     finalize
         v = _f();
     with
@@ -29017,7 +29095,7 @@ end
 
 class V with
 do
-    var int& v;
+    var int&? v;
     finalize
         v = _f();
     with
@@ -29065,7 +29143,7 @@ end
 
 class V with
 do
-    var int& v;
+    var int&? v;
     finalize
         v = _f();
     with
@@ -29114,7 +29192,7 @@ end
 
 class V with
 do
-    var int& v;
+    var int&? v;
     finalize
         v = _f();
     with
@@ -31491,24 +31569,7 @@ escape i:c == 1;
     run = 1,
 }
 
-Test { [[
-class T with
-do
-end
-var T*& t;
-finalize
-    t = _malloc(10 * sizeof(T**));
-with
-    nothing;
-end
-native @nohold _free();
-finalize with
-    _free(t);
-end
-escape 10;
-]],
-    run = 10;
-}
+-- XXX: T-vs-Opt
 
 Test { [[
 input _vldoor_t* T_VERTICAL_DOOR;
@@ -34679,7 +34740,6 @@ Test { [[
       var Queue& queue;
       var int val, maxval;
     do
-      _printf("%d popped, pushing %d+1\n", val, val);
       if val < maxval then
         spawn QueueForever in queue.val with
           this.queue = outer.queue;
@@ -35026,7 +35086,6 @@ loop i in 10000 do
         t0 = t;
     end
     tF = t;
-_printf("%d\n", tF:id);
 end
 _assert(t0!=null and tF!=null);
 
@@ -35867,7 +35926,6 @@ watching ptr do
         await ptr:f;
         ret = ret + 1;      // 31
     end
-    _printf("ret = %d\n", ret + ptr:v + a.v);
     _V = ret + ptr:v + a.v;
     escape ret + ptr:v + a.v;
         // this escape the outer block, which kills ptr,
@@ -38014,7 +38072,6 @@ par/and do
                 ret = ret + i + j;
             end
         end
-        _printf("ret = %d\n", ret);
         sync do
             p1 = ret;
         end
@@ -38027,7 +38084,6 @@ with
                 ret = ret + i + j;
             end
         end
-        _printf("ret = %d\n", ret);
         sync do
             p2 = ret;
         end
@@ -38096,7 +38152,6 @@ par/and do
                 ret = ret + i + j;
             end
         end
-        _printf("ret = %d\n", ret);
         sync do
             p1 = ret;
         end
@@ -38109,7 +38164,6 @@ with
                 ret = ret + i + j;
             end
         end
-        _printf("ret = %d\n", ret);
         sync do
             p2 = ret;
         end
@@ -38142,7 +38196,6 @@ do
                 ret = ret + i + j;
             end
         end
-        _printf("ret = %d\n", ret);
         sync do
             p = ret;
         end
@@ -38754,7 +38807,6 @@ with
    var T& t = await e;
    t.x = 1;
    await 1s;
-   _printf("x = %d\n", t.x);
 end
 escape 1;
 ]],
@@ -38781,7 +38833,6 @@ with
    (t,i) = await e;
    t.x = 1;
    await 1s;
-   _printf("x = %d\n", t.x);
 end
 escape 1;
 ]],
@@ -39912,8 +39963,6 @@ var int a;
 var void* ptr1 = &a;
 [[ ptr = @ptr1 ]];
 var void* ptr2 = [[ ptr ]];
-native @pure _printf;
-_printf("%p %p %p\n", ptr1, ptr2, &a);
 escape ptr2==&a;
 ]=],
     run = 1,
@@ -40750,7 +40799,6 @@ l = new List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));   // 3 fails
 _assert(l:CONS.tail:CONS.tail:NIL);
 l = new List.NIL();                                                // clear all
 l = new List.CONS(4, List.CONS(5, List.CONS(6, List.NIL())));   // 6 fails
-_printf("oioi\n");
 _assert(l:CONS.tail:CONS.tail:NIL);
 escape l:CONS.head + l:CONS.tail:CONS.head + (l:CONS.tail:CONS.tail:NIL);
 ]],
@@ -41400,7 +41448,6 @@ par/or do
 
     await 1s_;
     emit tm.go_forward => 2;
-_printf("v = %d\n", app.v);
     _assert(app.v == 0);
 
     await 1s500ms_;

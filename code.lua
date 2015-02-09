@@ -709,7 +709,7 @@ ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'),'
 
             -- initialize optional types to nil
             -- ignore refs (they must be initialized)
-            elseif var.tp.opt and (not var.tp.opt.ref) then
+            elseif var.tp.opt and (not REF(var.tp.opt)) then
                 local id = string.upper(var.tp.id)
                 LINE(me, [[
 ]]..var.val_raw..[[.tag = CEU_]]..id..[[_NIL;

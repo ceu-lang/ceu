@@ -49,6 +49,10 @@ ENV = {
     max_evt = 0,    -- max # of internal events (exts+1 start from it)
 }
 
+function REF (tp)
+    return tp.ref or (tp.opt and tp.opt.ref)
+end
+
 for k, v in pairs(ENV.c) do
     if v == true then
         ENV.c[k] = { tag='type', id=k, len=nil }
@@ -137,17 +141,17 @@ function newvar (me, blk, pre, tp, id, isImp)
     ASR(ENV.c[tp.id] or TOPS[tp.id],
         me, 'undeclared type `'..(tp.id or '?')..'´')
 
-    local top = (tp.ptr==0 and (not tp.ref) and TOPS[tp.id])
+    local top = (tp.ptr==0 and (not REF(tp)) and TOPS[tp.id])
     if top then
         ASR(top.tops_i < ME.tops_i,
             me, 'undeclared type `'..(tp.id or '?')..'´')
     end
 
-    ASR(tp.ptr>0 or tp.ref or TP.get(tp.id).len~=0 or (tp.id=='void' and pre=='event'),
+    ASR(tp.ptr>0 or REF(tp) or TP.get(tp.id).len~=0 or (tp.id=='void' and pre=='event'),
         me, 'cannot instantiate type "'..tp.id..'"')
     --ASR((not arr) or arr>0, me, 'invalid array dimension')
 
-    if TOPS[tp.id] and TOPS[tp.id].is_ifc and tp.ptr==0 and (not tp.ref) then
+    if TOPS[tp.id] and TOPS[tp.id].is_ifc and tp.ptr==0 and (not REF(tp)) then
         ASR(pre == 'pool', me,
             'cannot instantiate an interface')
     end
@@ -613,7 +617,7 @@ F = {
             me[2] = TP.fromstr'void'
 
             local tp = me.tp_pool
-            local top = (tp.ptr==0 and (not tp.ref) and TOPS[tp.id])
+            local top = (tp.ptr==0 and (not REF(tp)) and TOPS[tp.id])
             ASR(tp.id=='_TOP_POOL' or (top and top.tops_i<CLS().tops_i),
                 me, 'undeclared type `'..(tp.id or '?')..'´')
         end
@@ -641,10 +645,10 @@ F = {
         ASR(tp.id=='void' or TP.isNumeric(tp) or
             tp.ptr>0      or tp.tup,
                 me, 'invalid event type')
-        ASR(not tp.ref, me, 'invalid event type')
+        ASR(not REF(tp), me, 'invalid event type')
         if tp.tup then
             for _, t in ipairs(tp.tup) do
-                ASR((TP.isNumeric(t) or t.ptr>0) and (not t.ref),
+                ASR((TP.isNumeric(t) or t.ptr>0) and (not REF(t)),
                     me, 'invalid event type')
             end
         end
@@ -872,7 +876,7 @@ F = {
 
     Lua = function (me)
         if me.ret then
-            ASR(not me.ret.tp.ref, me, 'invalid attribution')
+            ASR(not REF(me.ret.tp), me, 'invalid attribution')
         end
     end,
 

@@ -2,10 +2,6 @@
 --  - remove interface binding?
 --      - only used for null hack?
 
-function REF (tp)
-    return tp.ref or (tp.opt and tp.opt.ref)
-end
-
 F = {
     -- before Var
     SetExp_pre = function (me)
