@@ -119,16 +119,28 @@ F =
 
                 me.val_raw = me.val
 
-                -- xxx.me = v
                 local set = AST.par(me, 'SetExp')
-                local to  = set and set[3]
+                local _, to, fr
+                if set then
+                    _, fr, to = unpack(set)
+                end
+
+                -- SET
                 if to and to.lst.var==me.var then
-                    me.val = '('..op..'('..me.val..'.SOME.v))'
+                    if fr.fst.tag=='Op2_call' and fr.fst.__fin_opt_tp then
+                        -- xxx.me = f()     // external acquire
+                        me.val = '('..op..'('..me.val..'))'
+                    else
+                        -- xxx.me = v
+                        me.val = '('..op..'('..me.val..'.SOME.v))'
+                    end
+
+                -- NOT SET
                 else
                     -- xxx.me == nil
-                    local eq = AST.par(me, 'Op2_==')
-                    eq = eq and ((eq[2].tag=='NIL') or (eq[3].tag=='NIL'))
-                    if eq then
+                    local cmp = AST.par(me,'Op2_==') or AST.par(me,'Op2_!=')
+                    cmp = cmp and ((cmp[2].tag=='NIL') or (cmp[3].tag=='NIL'))
+                    if cmp then
                         me.val = '('..me.val..'.tag)'
                             -- TODO: optimization: "tp&?" => 'NULL'
 
@@ -392,6 +404,10 @@ F =
             ps[#ps+1] = V(exp)
         end
         me.val = V(f)..'('..table.concat(ps,',')..')'
+
+        if me.__fin_opt_tp then
+            me.val = '(CEU_'..string.upper(me.__fin_opt_tp.id)..'_pack('..me.val..'))'
+        end
     end,
 
     Op2_idx = function (me)
@@ -545,9 +561,9 @@ F =
     end,
 
     NIL = function (me)
-        local eq = AST.par(me, 'Op2_==')
-        if eq then
-            local _, e1, e2 = unpack(eq)
+        local cmp = AST.par(me,'Op2_==') or AST.par(me,'Op2_!=')
+        if cmp then
+            local _, e1, e2 = unpack(cmp)
             assert(e1==me or e2==me, 'bug found')
             local tp = (e1==me and e2.tp) or e1.tp
 

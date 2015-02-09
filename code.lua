@@ -33,13 +33,17 @@ function ATTR (me, to, fr)
     if to.tp.opt then
         local tag
         local id = string.upper(to.tp.id)
-        if fr.tag == 'NIL' then
-            tag = 'NIL'
-        else
-            tag = 'SOME'
+        if fr.fst.tag=='Op2_call' and fr.fst.__fin_opt_tp then
             LINE(me, V(to)..' = '..V(fr)..';')
+        else
+            if fr.tag == 'NIL' then
+                tag = 'NIL'
+            else
+                tag = 'SOME'
+                LINE(me, V(to)..' = '..V(fr)..';')
+            end
+            LINE(me, to.val_raw..'.tag = CEU_'..id..'_'..tag..';')
         end
-        LINE(me, to.val_raw..'.tag = CEU_'..id..'_'..tag..';')
 
     -- normal types
     else

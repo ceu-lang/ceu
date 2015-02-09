@@ -431,7 +431,9 @@ F = {
 
     Dcl_adt_pre = function (me)
         local id, op = unpack(me)
-        me.tp = TP.fromstr(id)
+        me.tp = TP.fromstr(id, me.__adj_opt)
+        me.tp.opt = me.__adj_opt
+                    -- recover this information from implicitly created ADTs
 
         _N = 0 -- restart vars counting
 

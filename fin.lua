@@ -114,22 +114,25 @@ F = {
         if func_impure or input_call or fr.tag=='RawExp' then
             -- We assume that a impure function that returns a global pointer
             -- creates memory (e.g. malloc, fopen):
-            --      var int[] pa = _fopen();
+            --      var void&? pa = _fopen();
             -- We assume that a RawExp that returns a global pointer
             -- creates memory (e.g. { new T }):
-            --      var int[] pa = { new T() };
+            --      var void&? pa = { new T() };
             -- In these cases, the return memory would persist when
             -- the local goes out of scope, hence, we require finalization.
-            -- The "to" pointers must be `[]´.
+            -- The "to" pointers must be option types `&?´.
 
-            ASR(to.tp.ref or to.tp.ext, me, 1105,
-                    'must assign to a strong reference (declared with `&´)')
+            T.__fin_opt_tp = to.tp  -- return value must be packed in the "&?" type
+
+-- TODO: remove ext?
+            ASR((to.tp.opt and REF(to.tp)) or to.tp.ext, me, 1105,
+                    'must assign to a option reference (declared with `&?´)')
                 -- var void* ptr = _malloc(1);  // no
                 -- _ptr = _malloc(1);           // ok
 
 -- TODO: error code
             ASR(me.fin, me, 'attribution requires `finalize´')
-                -- var void[] ptr = _malloc(1);
+                -- var void&? ptr = _malloc(1);
             if me.fin then
                 to_blk.fins = to_blk.fins or {}
                 table.insert(to_blk.fins, 1, me.fin)

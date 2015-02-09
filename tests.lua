@@ -1414,11 +1414,164 @@ escape vec1[0];
 }
 
 -------------------------------------------------------------------------------
+]===]
+
+Test { [[
+native do
+    void* f () {
+        return NULL;
+    }
+end
+
+var void&? ptr;
+finalize
+    ptr = _f();
+with
+    nothing;
+end
+
+escape &ptr == &ptr;  // ptr.SOME fails
+]],
+    asr = true,
+}
+
+Test { [[
+native do
+    void* f () {
+        return NULL;
+    }
+end
+
+var void&? ptr;
+finalize
+    ptr = _f();
+with
+    nothing;
+end
+
+escape ptr == nil;
+]],
+    run = 1,
+}
+
+Test { [[
+native do
+    void* f () {
+        return NULL;
+    }
+    void g (void* g) {
+    }
+end
+native @nohold _g();
+
+var void&? ptr;
+finalize
+    ptr = _f();
+with
+    _g(&ptr);    // error (ptr is NIL)
+end
+
+escape ptr == nil;
+]],
+    asr = true
+}
+
+Test { [[
+native do
+    void* f () {
+        return NULL;
+    }
+    void g (void* g) {
+    }
+end
+native @nohold _g();
+
+var int ret = 0;
+
+do
+    var void&? ptr;
+    finalize
+        ptr = _f();
+    with
+        if ptr != nil then
+            _g(&ptr);
+        else
+            ret = ret + 1;
+        end
+    end
+    ret = ret + (ptr == nil);
+end
+
+escape ret;
+]],
+    run = 2,
+}
+
+Test { [[
+native do
+    struct T;
+    typedef struct T t;
+    int V = 1;
+    t* alloc (int ok) {
+        if (ok) {
+            V++;
+            return (t*) &V;
+        } else {
+            return NULL;
+        }
+    }
+    void dealloc (t* ptr) {
+printf("oi %p\n", ptr);
+        if (ptr != NULL) {
+            V *= 2;
+        }
+    }
+end
+native @nohold _dealloc();
+
+var int ret = _V;           // v=1, ret=1
+
+do
+    var _t&? tex;
+    finalize
+        tex = _alloc(1);    // v=2
+    with
+        _dealloc(&tex);
+    end
+    ret = ret + _V;         // ret=3
+    if tex == nil then
+        ret = 0;
+    end
+end                         // v=4
+
+ret = ret + _V;             // ret=7
+
+do
+    var _t&? tex;
+    finalize
+        tex = _alloc(0);    // v=4
+    with
+        if tex != nil then
+            _dealloc(&tex);
+        end
+    end
+    ret = ret + _V;         // ret=11
+    if tex == nil then
+_printf("NIL\n");
+        ret = ret + 1;      // ret=12
+    end
+end                         // v=4
+
+ret = ret + _V;             // ret=16
+
+escape ret;
+]],
+    run = 16,
+}
 do return end
 
 -------------------------------------------------------------------------------
 -- OK: well tested
-]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }

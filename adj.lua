@@ -1463,6 +1463,8 @@ AST.visit(F)
 -- ADTs ----------------------------------------------------------------------
 -- separate visit because of "?" types
 
+-- ADTs created implicitly by "?" option type declarations
+--  - must be included in the head of the root
 local ADTS = {}
 
 G = {
@@ -1480,6 +1482,7 @@ G = {
                                 node('Dcl_adt_tag', me.ln, 'SOME',
                                     node('Stmts', me.ln,
                                         node('Dcl_var', me.ln, 'var', me, 'v'))))
+        ADTS[#ADTS].__adj_opt = me
 
         return node('Type', me.ln, '_Option_'..n, 0, false, false, me)
                                                                    -- opt

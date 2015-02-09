@@ -140,7 +140,25 @@ void CEU_]]..id..'_free_static (CEU_'..id..[[* me, void* pool) {
 #endif
 ]]
 
+        local pack = ''
+        if me.tp.opt and REF(me.tp) then
+            local ID = string.upper(me.tp.id)
+            pack = [[
+CEU_]]..me.tp.id..[[ CEU_]]..ID..[[_pack (void* ptr) {
+    CEU_]]..me.tp.id..[[ ret;
+    if (ptr == NULL) {
+        ret.tag = CEU_]]..ID..[[_NIL;
+    } else {
+        ret.tag = CEU_]]..ID..[[_SOME;
+        ret.SOME.v = ptr;
+    }
+    return ret;
+}
+]]
+        end
+
         me.auxs[#me.auxs+1] = free
+        me.auxs[#me.auxs+1] = pack
         me.auxs   = table.concat(me.auxs,'\n')..'\n'
         me.struct = me.struct..' CEU_'..id..';'
         MEM.adts = MEM.adts..'\n'..(me.enum or '')..'\n'..
