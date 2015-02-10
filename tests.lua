@@ -1441,6 +1441,7 @@ do return end
 
 -------------------------------------------------------------------------------
 -- OK: well tested
+]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -17629,7 +17630,6 @@ escape 1;
     run = 1,
 }
 
-]===]
 Test { [[
 native do
     int V;

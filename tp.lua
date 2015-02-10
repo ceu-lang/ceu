@@ -180,7 +180,7 @@ end
 
 function TP.isNumeric (tp)
     return TP.get(tp.id).num and tp.ptr==0 and (not tp.arr)
-            or (tp.opt and TP.isNumeric(tp.opt))
+            or (tp.ptr==0 and tp.opt and TP.isNumeric(tp.opt))
             or (tp.ext and tp.ptr==0)
             or tp.id=='@'
 end
