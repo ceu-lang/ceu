@@ -1095,17 +1095,19 @@ F = {
 
     ['Op2_.'] = function (me)
         local op, e1, id = unpack(me)
-        local cls = (e1.tp.ptr==0 and ENV.clss[e1.tp.id])
-        local adt = (e1.tp.ptr==0 and ENV.adts[e1.tp.id])
+        local e1_tp = e1.tp.opt or e1.tp
+        local cls = (e1_tp.ptr==0 and ENV.clss[e1_tp.id])
+        local adt = (e1_tp.ptr==0 and ENV.adts[e1_tp.id])
+        local BLK, VAR
         me.id = id
         if cls then
             me.org = e1
             me.org.cls = cls
 
-            local var
             if e1.tag == 'This' then
                 -- accept private "body" vars
-                var = cls.blk_body.vars[id]
+                BLK = cls.blk_body
+                VAR = BLK.vars[id]
                     --[[
                     -- class T with
                     -- do
@@ -1114,21 +1116,18 @@ F = {
                     -- end
                     --]]
             end
-            local blk = cls.blk_ifc
-            var = var or ASR(blk.vars[id], me,
+            if not VAR then
+                BLK = cls.blk_ifc
+                VAR = ASR(BLK.vars[id], me,
                         'variable/event "'..id..'" is not declared')
-            local node = AST.node('Var', me.ln, '$'..id)
-            node.var = var
-            node.tp  = var.tp
-            node.__ast_blk = blk[1]
-            me[3] = node
+            end
 
             -- Op2_. => Field
             me.tag = 'Field'
-            me.var  = var
-            me.tp   = var.tp
-            me.lval = not (var.pre~='var' or var.cls or var.tp.arr)
-                        and var
+            me.var  = VAR
+            me.tp   = VAR.tp
+            me.lval = not (VAR.pre~='var' or VAR.cls or VAR.tp.arr)
+                        and VAR
 
         elseif adt then
             local ID, op, blk = unpack(adt)
@@ -1138,13 +1137,15 @@ F = {
                             'field "'..id..'" is not declared')
                 me.tp = var.tp
                 me.lval = var
+                --BLK, VAR = blk, var
+                -- TODO
             else
                 assert(op == 'union')
                 local blk = ASR(adt.tags[id] and adt.tags[id].blk, me,
                                 'tag "'..id..'" is not declared')
 
-                ASR(TP.contains(e1.tp,TP.fromstr(ID)), me,
-                    'invalid access ('..TP.tostr(e1.tp)..' vs '..ID..')')
+                ASR(TP.contains(e1_tp,TP.fromstr(ID)), me,
+                    'invalid access ('..TP.tostr(e1_tp)..' vs '..ID..')')
 
                 -- [union.TAG]
                 local tag = (me.__par.tag ~= 'Op2_.')
@@ -1167,10 +1168,12 @@ F = {
             me.__env_tag = 'field'
             me.tp = var.tp
             me.lval = var
+            --BLK, VAR = e1.union_tag_blk, var
+            -- TODO
 
         else
-            assert(not e1.tp.tup)
-            ASR(me.__ast_chk or e1.tp.ext, me, 'not a struct')
+            assert(not e1_tp.tup)
+            ASR(me.__ast_chk or e1_tp.ext, me, 'not a struct')
             if me.__ast_chk then
                 -- check Emit/Await-Ext/Int param
                 local T, i = unpack(me.__ast_chk)
@@ -1182,13 +1185,21 @@ F = {
             else
                 -- rect.x = 1 (_SDL_Rect)
                 me.tp = TP.fromstr'@'
-                local tp = TP.get(e1.tp.id)
-                if tp.plain and e1.tp.ptr==0 then
+                local tp = TP.get(e1_tp.id)
+                if tp.plain and e1_tp.ptr==0 then
                     me.tp.plain = true
                     me.tp.ptr   = 0
                 end
             end
             me.lval = e1.lval
+        end
+
+        if VAR then
+            local node = AST.node('Var', me.ln, '$'..id)
+            node.var = VAR
+            node.tp  = VAR.tp
+            node.__ast_blk = BLK[1]
+            me[3] = node
         end
     end,
 

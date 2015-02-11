@@ -133,7 +133,8 @@ F =
                     local _,_,params = unpack(call)
                     call = false
                     for _, p in ipairs(params) do
-                        if TP.contains(p.tp,me.tp) and (p.fst==me) then
+                        --if TP.contains(p.tp,me.tp) and (p.lst==me) then
+                        if TP.contains(p.tp,me.tp) and (p==me) then
                             call = true
                             break
                         end

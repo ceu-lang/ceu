@@ -305,15 +305,14 @@ os.execute('rm -f /tmp/_ceu_*')
 
 --[[
 STATS = {
-    count   = 2194,
+    count   = 2199,
     mem     = 0,
-    trails  = 4161,
-    bytes   = 22063985,
+    trails  = 4168,
+    bytes   = 22120451,
 }
 
 
-real	9m35.679s
-user	9m5.193s
-sys	1m41.270s
-
+real	9m27.996s
+user	8m49.911s
+sys	1m41.082s
 ]]

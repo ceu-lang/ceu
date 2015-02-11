@@ -1439,6 +1439,105 @@ escape vec1[0];
 
 do return end
 
+-- TODO: BUG: type of bg_clr changes
+--          should yield error
+--          because it stops implementing UI
+Test { [[
+interface UI with
+    var   int&?   bg_clr;
+end
+class UIGridItem with
+   var UI* ui;
+do
+    watching ui do
+        await FOREVER;
+    end
+end
+class UIGrid with
+    interface UI;
+    var   int&?    bg_clr = nil;
+    pool UIGridItem[] uis;
+do
+end
+
+var UIGrid g1;
+var UIGrid g2;
+spawn UIGridItem in g1.uis with
+    this.ui = &g2;
+end;
+
+escape 1;
+]],
+    run = 1,
+}
+do return end
+Test { [[
+interface UI with
+end
+class UIGridItem with
+   var UI* ui;
+do
+    watching ui do
+        await FOREVER;
+    end
+end
+class UIGrid with
+    interface UI;
+    pool UIGridItem[] uis;
+do
+end
+
+do
+    var UIGrid g1;
+    var UIGrid g2;
+    spawn UIGridItem in g1.uis with
+        this.ui = &g2;
+    end;
+end
+
+escape 1;
+]],
+    run = 1,
+}
+do return end
+
+Test { [[
+native do
+    typedef struct {
+        int v;
+    } tp;
+end
+class T with
+    var _tp&? i = nil;
+do
+end
+var T t;
+escape t.i==nil;
+]],
+    run = 1,
+}
+
+Test { [[
+native do
+    typedef struct {
+        int v;
+    } tp;
+    tp V = { 10 };
+end
+class T with
+    var _tp&? i = nil;
+do
+end
+var T t with
+    this.i = &_V;
+end;
+escape t.i.v;
+]],
+    run = 10,
+}
+
+do return end
+
 -------------------------------------------------------------------------------
 -- OK: well tested
 ]===]
@@ -41160,6 +41259,29 @@ escape t.i;
     run = 11,
 }
 
+Test { [[
+native do
+    typedef struct {
+        int x;
+    } t;
+    int id (int v) {
+        return v;
+    }
+end
+native @pure _id();
+
+var _t t;
+    t.x = 11;
+
+var _t&? t? = t;
+
+var int ret = t?.x;
+t?.x = 100;
+
+escape ret + _id(t?.x) + t.x;
+]],
+    run = 211,
+}
 do return end
 
 Test { [[

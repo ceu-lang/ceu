@@ -52,7 +52,12 @@ F = {
     ['Op2_.'] = function (me)
         local op, e1, id = unpack(me)
         me.fst = e1.fst
-        me.lst = e1.lst -- s.x => s
+--[[
+        me.lst = (AST.isNode(id) and id) or e1.lst
+                    -- org.field            _struct.field
+                                        -- TODO: should be nil
+]]
+        me.lst = e1.lst
     end,
 
     Op1_cast = function (me)
