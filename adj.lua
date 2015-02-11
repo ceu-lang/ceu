@@ -1475,14 +1475,20 @@ G = {
         end
         me[5] = nil
 
-        local n = #ADTS + 1
-        ADTS[#ADTS+1] = node('Dcl_adt', me.ln, '_Option_'..n,
-                            'union',
-                                node('Dcl_adt_tag', me.ln, 'NIL'),
-                                node('Dcl_adt_tag', me.ln, 'SOME',
-                                    node('Stmts', me.ln,
-                                        node('Dcl_var', me.ln, 'var', me, 'v'))))
-        ADTS[#ADTS].__adj_opt = me
+        local tp = id..'__'..ptr..'__'..tostring(arr)..'__'..tostring(ref)
+        local n = ADTS[tp]
+
+        if not n then
+            n = #ADTS + 1
+            ADTS[tp] = n
+            ADTS[#ADTS+1] = node('Dcl_adt', me.ln, '_Option_'..n,
+                                'union',
+                                    node('Dcl_adt_tag', me.ln, 'NIL'),
+                                    node('Dcl_adt_tag', me.ln, 'SOME',
+                                        node('Stmts', me.ln,
+                                            node('Dcl_var', me.ln, 'var', me, 'v'))))
+            ADTS[#ADTS].__adj_opt = me
+        end
 
         return node('Type', me.ln, '_Option_'..n, 0, false, false, me)
                                                                    -- opt
