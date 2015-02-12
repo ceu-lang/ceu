@@ -143,6 +143,12 @@ F = {
             e1.fst.var.isTmp = false    -- assigned to a pointer
         end
     end,
+    SetExp = function (me)
+        local _, fr, _ = unpack(me)
+        if fr.byRef and fr.fst.var then
+            fr.fst.var.isTmp = false    -- assigned to a pointer
+        end
+    end,
 
     EmitNoTmp = 'EmitInt',
     EmitInt = function (me)
