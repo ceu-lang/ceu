@@ -488,7 +488,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
            * (K'['*(V'__Exp'+Cc(true))*K']' + Cc(false))
            * (CK'&' + Cc(false))
            * (CK'?' + Cc(false))
-            -- id, *, [], &
+            -- id, *^0, [k], &, ?
 
     , __ID_field = (CK(Alpha * (Alphanum+'?')^0) /
                     function (id)

@@ -986,7 +986,7 @@ F = {
 
         -- id, op, tag, exp, constr
         for i=1, #t, 5 do
-            ret[#ret+1] = node('Dcl_var', me.ln, pre, tp, t[i])
+            ret[#ret+1] = node('Dcl_var', me.ln, pre, AST.copy(tp), t[i])
             if t[i+1] then
                 ret[#ret].__adj_set = true  -- var int x = <something>
                 ret[#ret+1] = node('_Set', me.ln,

@@ -1536,11 +1536,24 @@ escape t.i.v;
     run = 10,
 }
 
+]===]
+Test { [[
+native @nohold _g();
+var _SDL_Texture&? t_enemy_0, t_enemy_1;
+finalize
+    t_enemy_1 = _f();
+with
+    _g(&t_enemy_1);
+end
+escape 1;
+]],
+    gcc = 'error: unknown type name ‘SDL_Texture’',
+}
+
 do return end
 
 -------------------------------------------------------------------------------
 -- OK: well tested
-]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
