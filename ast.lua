@@ -270,6 +270,8 @@ local function f (ln, v1, op, v2, v3, ...)
         -- Op2_*
         if op == 'call' then
             ret = f(ln, AST.node('Op2_'..op,ln,op,v1,v2,v3), ...)
+        elseif op == '?' then
+            ret = f(ln, AST.node('Op1_'..op,ln,op,v1) ,v2, v3, ...)
         else
             ret = f(ln, AST.node('Op2_'..op,ln,op,v1,v2), v3, ...)
         end

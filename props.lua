@@ -270,6 +270,9 @@ F = {
             ASR(not AST.iter'BlockI'(), me,
                     'not permitted inside an interface')
         end
+        if AST.iter'BlockI'() and me.var.tp.opt then
+            CLS().has_pre = true   -- code for pre (before constr)
+        end
     end,
 
     Async = function (me)

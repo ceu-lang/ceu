@@ -148,8 +148,6 @@ KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'native' + 'native/pr
      + P'@' * (
          P'const' + 'hold' + 'nohold' + 'plain' + 'pure' + 'rec' + 'safe'
        )
---
-     + 'nil'
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
@@ -319,12 +317,13 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                             ( KEY'finalize' * EKEY'with' * V'Finally' * EKEY'end'
                               + Cc(false)) +
                         K'[' * Cc'idx'  * EV'__Exp'    * EK']' +
-                        (CK':' + CK'.') * EV'__ID_field'
+                        (CK':' + CK'.') * EV'__ID_field' +
+                        CK'?'
                     )^0
     , __13     = V'__Prim'
     , __Prim   = V'__Parens' + V'SIZEOF'
               + V'Var'     + V'Nat'
-              + V'NULL'    + V'NUMBER' + V'STRING' + V'NIL'
+              + V'NULL'    + V'NUMBER' + V'STRING'
               + V'Global'  + V'This'   + V'Outer'
               + V'RawExp'
               + CKEY'call'     * EV'__Exp'
@@ -350,7 +349,6 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
             + KEY'true'  / function() return 1 end
 
     , NULL = CKEY'null'     -- TODO: the idea is to get rid of this
-    , NIL  = CKEY'nil'
 
     , WCLOCKK = #NUM *
                 (NUM * K'h'   + Cc(0)) *
@@ -473,7 +471,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     , __ID_cls  = -KEYS * CK(m.R'AZ'*Alphanum^0)
     , __ID_ext  = -KEYS * CK(m.R'AZ'*ALPHANUM^0)
-    , __ID_var  = (-KEYS * CK(m.R'az'*(Alphanum+'?')^0) + CK('_'*-Alphanum))
+    , __ID_var  = (-KEYS * CK(m.R'az'*Alphanum^0) + CK('_'*-Alphanum))
                     / function(id) return (string.gsub(id,'%?','_')) end
     , __ID_nat  = CK(  P'_' *Alphanum^1)
     , __ID_type = CK(TYPES) + V'__ID_nat' + V'__ID_cls'

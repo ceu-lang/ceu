@@ -141,9 +141,8 @@ F =
                     end
                 end
 
-                -- cmp
-                local cmp = AST.par(me,'Op2_==') or AST.par(me,'Op2_!=')
-                cmp = cmp and ((cmp[2].tag=='NIL') or (cmp[3].tag=='NIL'))
+                -- check
+                local check = AST.par(me,'Op1_?')
 
                 -- SET
                 if to and to.lst.var==me.var then
@@ -165,9 +164,9 @@ F =
                     --      - SOME.v, if v!=nil
                     me.val = '(CEU_'..ID..'_unpack('..me.val..'))'
 
-                -- CMP
-                -- xxx.me == nil
-                elseif cmp then
+                -- CHECK
+                -- ? xxx.me
+                elseif check then
                     me.val = '('..me.val..'.tag)'
                         -- TODO: optimization: "tp&?" => 'NULL'
 
@@ -501,6 +500,10 @@ F =
             me.val = '('..ceu2c(op)..V(e1)..')'
         end
     end,
+    ['Op1_?'] = function (me)
+        local op, e1 = unpack(me)
+        me.val = '('..e1.val..' != CEU_'..string.upper(e1.tp.id)..'_NIL)'
+    end,
 
     ['Op2_.'] = function (me)
         local op, e1, id = unpack(me)
@@ -585,22 +588,6 @@ F =
     end,
     NULL = function (me)
         me.val = 'NULL'
-    end,
-
-    NIL = function (me)
-        local cmp = AST.par(me,'Op2_==') or AST.par(me,'Op2_!=')
-        if cmp then
-            local _, e1, e2 = unpack(cmp)
-            assert(e1==me or e2==me, 'bug found')
-            local tp = (e1==me and e2.tp) or e1.tp
-
-            local id = string.upper(tp.id)
-            me.val = 'CEU_'..id..'_NIL'
-                -- TODO: optimization: "tp&?" => 'NULL'
-        else
-            -- handled from ATTR
-            me.val = 'CEU_<tp>_NIL'
-        end
     end,
 }
 

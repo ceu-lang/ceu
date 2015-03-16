@@ -1758,16 +1758,26 @@ loopdo await250ms;_printf("Hello World!\n");end
 Test { [[
 input void A;
 var bool a? = 1;
-a_ = 2;
+a? = 2;
 escape a?;
+]],
+    parser = 'line 2 : after `a´ : expected `with´',
+    --run = 2,
+}
+
+Test { [[
+input void A;
+var bool a = 1;
+a = 2;
+escape a;
 ]],
     run = 2,
 }
 
 Test { [[
-var bool v? = true;
-v? = false;
-if v? then
+var bool v = true;
+v = false;
+if v then
     escape 1;
 else
     escape 2;
@@ -1777,9 +1787,9 @@ end
 }
 
 Test { [[
-var bool v? = false;
-v? = true;
-if v? then
+var bool v = false;
+v = true;
+if v then
     escape 1;
 else
     escape 2;
@@ -1876,9 +1886,9 @@ var _abc a;
 
 Test { [[
 input void A;
-var int a? = 1;
-a_ = 2;
-escape a?;
+var int a = 1;
+a = 2;
+escape a;
 ]],
     run = 2,
 }
@@ -17833,7 +17843,7 @@ do
         _dealloc(tex);
     end
     ret = ret + _V;         // ret=3
-    if tex == nil then
+    if not tex? then
         ret = 0;
     end
 end                         // v=4
@@ -17845,12 +17855,12 @@ do
     finalize
         tex = _alloc(0);    // v=4
     with
-        if tex != nil then
+        if tex? then
             _dealloc(tex);
         end
     end
     ret = ret + _V;         // ret=11
-    if tex == nil then
+    if not tex? then
         ret = ret + 1;      // ret=12
     end
 end                         // v=4
@@ -17895,7 +17905,7 @@ with
     nothing;
 end
 
-escape ptr == nil;
+escape not ptr?;
 ]],
     run = 1,
 }
@@ -17917,7 +17927,7 @@ with
     _g(&ptr);    // error (ptr is NIL)
 end
 
-escape ptr == nil;
+escape not ptr?;
 ]],
     asr = true
 }
@@ -17939,13 +17949,13 @@ do
     finalize
         ptr = _f();
     with
-        if ptr != nil then
+        if ptr? then
             _g(ptr);
         else
             ret = ret + 1;
         end
     end
-    ret = ret + (ptr == nil);
+    ret = ret + (not ptr?);
 end
 
 escape ret;
@@ -18028,7 +18038,7 @@ do
         _dealloc(tex);
     end
     ret = ret + _V;         // ret=3
-    if tex == nil then
+    if not tex? then
         ret = 0;
     end
 end                         // v=4
@@ -18040,12 +18050,12 @@ do
     finalize
         tex = _alloc(0);    // v=4
     with
-        if tex != nil then
+        if tex? then
             _dealloc(tex);
         end
     end
     ret = ret + _V;         // ret=11
-    if tex == nil then
+    if not tex? then
         ret = ret + 1;      // ret=12
     end
 end                         // v=4
@@ -19734,17 +19744,16 @@ escape ret;
 --end -- OS (INPUT/OUTPUT)
 
 Test { [[
-input (int tilex, int tiley, bool vertical?, int lock, int door, word* 
-      position)
-      DOOR_SPAWN;
+
+input (int tilex, int tiley, bool vertical, int lock, int door, word* position) DOOR_SPAWN;
 
     var int tilex;
     var int tiley;
-    var bool vertical?;
+    var bool vertical;
     var int lock;
     var int door;
     var word* position;
-    every (tilex,tiley,vertical?,lock,door,position) in DOOR_SPAWN do
+    every (tilex,tiley,vertical,lock,door,position) in DOOR_SPAWN do
     end
 ]],
     parser = 'line 2 : before `)´ : expected `,´',
@@ -27255,12 +27264,12 @@ end
 Test { [[
 class T with do end
 var T* ok;
-var bool ok?;
+var bool ok_;
 do
     ok = spawn T;
-    ok? = (ok != null);
+    ok_ = (ok != null);
 end
-escape ok?;
+escape ok_;
 ]],
     run = 1,
 }
@@ -27298,15 +27307,15 @@ class T with do
     await FOREVER;
 end
 var T* ok;
-var bool ok?;
+var bool ok_;
 native _assert();
 do
     loop i in 5 do
         ok = spawn T;
-        ok? = (ok != null);
+        ok_ = (ok != null);
     end
 end
-escape ok?;
+escape ok_;
 ]],
     --loop = 1,
     run = 1,
@@ -27317,16 +27326,16 @@ class T with do
     await FOREVER;
 end
 var T* ok;
-var bool ok?;
+var bool ok_;
 native _assert();
 do
     loop i in 100 do
         ok = spawn T;
     end
     var T* ok1 = spawn T;
-    ok? = (ok1 != null);
+    ok_ = (ok1 != null);
 end
-escape ok?+1;
+escape ok_+1;
 ]],
     --loop = 1,
     run = 1,
@@ -27797,7 +27806,7 @@ do
     this.a = 1;
 end
 var T* a, b;
-var bool b?;
+var bool b_;
 do
     do
         var T* aa = spawn T in ts;
@@ -27805,12 +27814,12 @@ do
     end
     var T* bb = spawn T in ts;  // fails
         b = bb;
-    b? = (b != null);
+    b_ = (b != null);
 end
 var T* c = spawn T in ts;       // fails
 //native @nohold _fprintf(), _stderr;
         //_fprintf(_stderr, "%p %p\n",a, b);
-escape b?==false and c==null;
+escape b_==false and c==null;
 ]],
     run = 1,
 }
@@ -30789,12 +30798,12 @@ with
     end
 with
     var T t;
-    var int pse? = 0;
+    var int pse_ = 0;
     loop do
         await 1s;
-        pse? = not pse?;
-        emit a => pse?;
-        emit t.a => pse?;
+        pse_ = not pse_;
+        emit a => pse_;
+        emit t.a => pse_;
     end
 with
     await A;
@@ -31016,25 +31025,25 @@ var I[10] a;
 Test { [[
 input void OS_START;
 interface Global with
-    event int a?;
+    event int a_;
 end
-event int a?;
+event int a_;
 class U with
-    event int a?;
+    event int a_;
 do
 end
 class T with
-    event int a?;
+    event int a_;
     var Global* g;
 do
     await OS_START;
-    emit g:a?  =>  10;
+    emit g:a_  =>  10;
 end
 var U u;
 var Global* g = &u;
 var T t;
 t.g = &u;
-var int v = await g:a?;
+var int v = await g:a_;
 escape v;
 ]],
     todo = 'watching',
@@ -40499,15 +40508,15 @@ escape 1;
 -- distinction "constructor" vs "tag check"
 Test { DATA..[[
 var List l = List.NIL();   /* call syntax: constructor */
-var bool no? = l.NIL;     /* no-call syntax: check tag */
-escape no?;
+var bool no_ = l.NIL;     /* no-call syntax: check tag */
+escape no_;
 ]],
     run = 1,
 }
 Test { DATA..[[
 var List l = List.NIL();   /* call syntax: constructor */
-var bool no? = l.CONS;    /* no-call syntax: check tag */
-escape no?;
+var bool no_ = l.CONS;    /* no-call syntax: check tag */
+escape no_;
 ]],
     run = 0,
 }
@@ -41130,7 +41139,7 @@ escape i;
 }
 
 Test { [[
-var int? i = nil;
+var int? i;
 escape 1;
 ]],
     run = 1,
@@ -41138,14 +41147,14 @@ escape 1;
 
 Test { [[
 var int? i;
-escape i==nil;
+escape not i?;
 ]],
     run = 1,
 }
 
 Test { [[
-var int? i = nil;
-escape i==nil;
+var int? i;
+escape not i?;
 ]],
     run = 1,
 }
@@ -41153,23 +41162,24 @@ escape i==nil;
 Test { [[
 var int v = 10;
 var int&? i;
-escape i==nil;
+escape not i?;
 ]],
-    ref = 'line 3 : reference must be bounded before use',
+    --ref = 'line 3 : reference must be bounded before use',
+    run = 1,
 }
 
 Test { [[
 var int v = 10;
-var int&? i = nil;
-escape i==nil;
+var int&? i;
+escape not i?;
 ]],
     run = 1,
 }
 
 Test { [[
 var int v = 10;
-var int&? i = nil;
-escape nil==i;
+var int&? i;
+escape not i?;
 ]],
     run = 1,
 }
@@ -41286,12 +41296,12 @@ native @pure _id();
 var _t t;
     t.x = 11;
 
-var _t&? t? = t;
+var _t&? t_ = t;
 
-var int ret = t?.x;
-t?.x = 100;
+var int ret = t_.x;
+t_.x = 100;
 
-escape ret + _id(t?.x) + t.x;
+escape ret + _id(t_.x) + t.x;
 ]],
     run = 211,
 }
@@ -41316,9 +41326,9 @@ end
 
 var int ret = 0;    // 0
 
-var int?  i;
-var int&? p = nil;
-ret = ret + (i==nil) + (p==nil);  // 2
+var int_  i;
+var int&? p;
+ret = ret + (not i?) + (not p?);  // 2
 
 i = 3;
 ret = ret + i;      // 5

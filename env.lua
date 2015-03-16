@@ -1036,9 +1036,15 @@ F = {
         ASR(TP.isNumeric(e1.tp), me,
                 'invalid operand to unary "'..op..'"')
     end,
-    ['Op1_~']  = 'Op1_int',
-    ['Op1_-']  = 'Op1_int',
-    ['Op1_+']  = 'Op1_int',
+    ['Op1_~'] = 'Op1_int',
+    ['Op1_-'] = 'Op1_int',
+    ['Op1_+'] = 'Op1_int',
+
+    ['Op1_?'] = function (me)
+        local op, e1 = unpack(me)
+        me.tp  = TP.fromstr'bool'
+        ASR(e1.tp.opt, me, 'not an option type')
+    end,
 
     Op2_same = function (me)
         local op, e1, e2 = unpack(me)
@@ -1257,11 +1263,6 @@ F = {
     end,
     NULL = function (me)
         me.tp   = TP.fromstr'null*'
-        me.lval = false
-        me.const = true
-    end,
-    NIL = function (me)
-        me.tp   = TP.fromstr'nil'
         me.lval = false
         me.const = true
     end,

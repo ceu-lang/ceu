@@ -451,21 +451,25 @@ case ]]..me.lbls_cnt.id..[[:;
     Dcl_var = function (me)
         local _,_,_,constr = unpack(me)
         local var = me.var
-        if not var.cls then
-            return
+        if var.cls then
+            F._ORG(me, {
+                id      = var.id,
+                isDyn   = 0,
+                cls     = var.cls,
+                val     = var.val,
+                constr  = constr,
+                arr     = var.tp.arr,
+                i       = var.constructor_iterator,
+                par_org = '_STK_ORG',
+                par_trl_idx = var.trl_orgs[1],
+            })
+        elseif var.tp.opt then
+            -- initialize optional types to nil
+            local id = string.upper(var.tp.id)
+            LINE(me, [[
+]]..var.val_raw..[[.tag = CEU_]]..id..[[_NIL;
+]])
         end
-
-        F._ORG(me, {
-            id      = var.id,
-            isDyn   = 0,
-            cls     = var.cls,
-            val     = var.val,
-            constr  = constr,
-            arr     = var.tp.arr,
-            i       = var.constructor_iterator,
-            par_org = '_STK_ORG',
-            par_trl_idx = var.trl_orgs[1],
-        })
     end,
 
     Adt_constr = function (me)
@@ -706,14 +710,6 @@ ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'),'
 }
 ]])
                 end
-
-            -- initialize optional types to nil
-            -- ignore refs (they must be initialized)
-            elseif var.tp.opt and (not REF(var.tp.opt)) then
-                local id = string.upper(var.tp.id)
-                LINE(me, [[
-]]..var.val_raw..[[.tag = CEU_]]..id..[[_NIL;
-]])
             end
 
             -- initialize trails for ORG_STATS_I & ORG_POOL_I
