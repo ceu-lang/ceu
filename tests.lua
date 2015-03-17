@@ -15499,7 +15499,7 @@ var int& b;
 escape b;
 ]],
     ref = 'line 3 : reference must be bounded before use',
-    run = 2,
+    --run = 2,
 }
 Test { [[
 var int a = 1;
@@ -15748,6 +15748,68 @@ t.i = v;
 escape 1;
 ]],
     ref = 'line 9 : cannot assign to reference bounded inside the class',
+}
+
+Test { [[
+var int a=1, b=2;
+var int& v;
+if true then
+else
+    v = b;
+end
+v = 5;
+escape a + b + v;
+]],
+    ref = 'line 5 : reference must be bounded in the other if-else branch',
+}
+Test { [[
+var int a=1, b=2;
+var int& v;
+if true then
+    v = a;
+else
+end
+v = 5;
+escape a + b + v;
+]],
+    ref = 'line 4 : reference must be bounded in the other if-else branch',
+}
+Test { [[
+var int a=1, b=2;
+var int& v;
+if true then
+    v = a;
+else
+    v = b;
+end
+var int& x;
+if false then
+    x = a;
+else
+    x = b;
+end
+v = 5;
+x = 1;
+escape a + b + x + v;
+]],
+    run = 12,
+}
+
+Test { [[
+native do
+    int V1 = 10;
+    int V2 = 5;
+end
+var int& v;
+if true then
+    v = &_V1;
+else
+    v = &_V2;
+end
+v = 1;
+escape _V1+_V2;
+]],
+    run = 6,
 }
 
 -- FINALLY / FINALIZE
@@ -18892,6 +18954,38 @@ escape ret;
         --unreachs = 1,       -- TODO: async
     },
     run = 23,
+}
+
+Test { [[
+input void* E;
+event _tceu_queue* go;
+var _tceu_queue* qu_;
+every qu_ in go do
+    var _tceu_queue qu = * qu_;
+    async(qu) do
+        emit E => qu.param.ptr;
+    end
+end
+]],
+    fin = 'line 6 : pointer access across `await´',
+    run = 1,
+}
+
+Test { [[
+input void* E;
+native @plain _tceu_queue;
+event _tceu_queue* go;
+var _tceu_queue* qu_;
+every qu_ in go do
+    var _tceu_queue qu = * qu_;
+    async(qu) do
+        emit E => qu.param.ptr;
+    end
+end
+]],
+    _ana = {
+        isForever = true,
+    },
 }
 
 -- HIDDEN

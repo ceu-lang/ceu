@@ -41,8 +41,20 @@ F = {
         --  first assignment
 
         else
+            local if_ = AST.par(me,'If')
+            if if_ and (if_.__depth > to.lst.var.blk.__depth) and
+               ((not constr) or if_.__depth > constr.__depth) and
+               ((not to.lst.var.bind) or to.lst.var.bind=='partial')
+            then else
+                if_ = false
+            end
+            if if_ and AST.isParent(if_[2],me) then
+                -- do not bind yet if inside a true branch of an if,
+                -- force the else part to also set byRef
+                to.lst.var.bind = 'partial'
+
             -- set source of binding
-            if internal then
+            elseif internal then
                 to.lst.var.bind = 'internal'
             elseif constr then
                 if not to.lst.var.bind then
@@ -54,6 +66,15 @@ F = {
                 constr.__bounded[to.lst.var] = true
             elseif interface then
                 to.lst.var.bind = 'interface'
+            end
+
+            -- save binds from if/else, check after
+            if if_ then
+                local T = if_.__ref_bounded or {}
+                if_.__ref_bounded = T
+                local t = T[to.lst.var] or {}
+                T[to.lst.var] = t
+                t[#t+1] = me
             end
 
             -- first assignment (and only first assignment) is byRef
@@ -75,6 +96,13 @@ F = {
                     ASR(not AST.child(fr,'Op1_*'), me, 'invalid attribution')
                 end
             end
+        end
+    end,
+
+    If = function (me)
+        local T = me.__ref_bounded or {}
+        for var,t in pairs(T) do
+            ASR(#t==2, t[1], 'reference must be bounded in the other if-else branch')
         end
     end,
 
