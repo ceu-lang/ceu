@@ -1538,9 +1538,9 @@ escape t.i.v;
 
 do return end
 
-]===]
 -------------------------------------------------------------------------------
 -- OK: well tested
+]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -42229,4 +42229,138 @@ escape app.v;
         acc = true,
     },
     run = 1,
+}
+
+Test { [[
+native do
+    int CEU_TIMEMACHINE_ON = 0;
+end
+
+input int* KEY;
+class App with
+    var int v = 0;
+do
+    par do
+        every 1s do
+            this.v = this.v + 1;
+        end
+    with
+        var int* key;
+        every key in KEY do
+            this.v = this.v * 2;
+            this.v = this.v + *key;
+        end
+    end
+end
+var App app;
+
+input int  DT;
+
+#define TM_INPUT_DT DT
+#define TM_QUEUE_MAX 1000000
+#define TM_SNAP
+#define TM_SNAP_MS 2000
+#define TM_SNAP_N  1000
+
+#include "timemachine.ceu"
+
+class IOTimeMachine with
+    interface IIOTimeMachine;
+do
+    par do
+        loop do
+            // starts off
+            watching this.go_on do
+                var int* key;
+                every key in KEY do
+                    _queue_put(_CEU_IN_KEY,
+                               sizeof(int), (byte*)key)
+                        finalize with
+                            nothing;
+                        end;
+                end
+            end
+            await this.go_off;
+        end
+    with
+        var _tceu_queue* qu;
+        every qu in this.go_queue do
+            var int v = *((int*)qu:buf);
+            if qu:evt == _CEU_IN_KEY then
+                async(v) do
+                    emit KEY => &v;
+                end
+            else
+                _assert(0);
+            end
+        end
+    end
+end
+var IOTimeMachine io;
+
+var TimeMachine tm with
+    this.app = app;
+    this.io  = io;
+end;
+
+par/or do
+    async do
+        loop i in 300 do
+            emit 10ms;
+            emit DT => 10;
+        end
+        var int v = 1;
+        emit KEY => &v;
+        loop i in 300 do
+            emit 10ms;
+            emit DT => 10;
+        end
+        v = 2;
+        emit KEY => &v;
+        loop i in 300 do
+            emit 10ms;
+            emit DT => 10;
+        end
+    end
+    _assert(app.v == 25);
+
+    emit tm.go_on;
+    await 1s_;
+
+    emit tm.go_seek => 0;
+    TM_AWAIT_SEEK(tm);
+
+    emit tm.go_forward => 1;
+    await 3s1ms_;
+    _assert(app.v == 7);
+    await 2s_;
+    _assert(app.v == 9);
+    await 1s_;
+    _assert(app.v == 22);
+    await 3s_;
+    _assert(app.v == 25);
+with
+    input int DT;
+    async (tm) do
+        loop do
+            // TODO: forces this async to be slower
+            input void SLOW;
+            loop do
+                if not tm.locked then
+                    break;
+                end
+                emit SLOW;
+            end
+            emit 10ms_;
+        end
+    end
+end
+
+escape app.v;
+]],
+    timemachine = true,
+    _ana = {
+        acc = true,
+    },
+    run = 25,
 }
