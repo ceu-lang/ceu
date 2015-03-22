@@ -1158,7 +1158,7 @@ case ]]..me.lbl.id..[[:;
     __AwaitExt = function (me)
         local e, dt = unpack(me)
         local no = (dt or AST.iter'Pause'()) and '_CEU_NO_'..me.n..'_'
-        local suf = (e.tm and '_') or ''  -- timemachine "WCLOCK_"
+        local suf = (dt and dt.tm and '_') or ''  -- timemachine "WCLOCK_"
 
         if dt then
             LINE(me, [[

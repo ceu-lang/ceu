@@ -1538,9 +1538,9 @@ escape t.i.v;
 
 do return end
 
+]===]
 -------------------------------------------------------------------------------
 -- OK: well tested
-]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -41399,6 +41399,10 @@ escape ret + _id(t_.x) + t.x;
 ]],
     run = 211,
 }
+
+--[====[
+-- TODO: continue ADT implementation
+
 do return end
 
 Test { [[
@@ -41724,11 +41728,415 @@ escape ret;
     run = 15,
     todo = 'implement? trying only w/ named fields for now',
 }
-
-do return end
+--]====]
 
 -- TIMEMACHINE
--- TODO: fix/understand timemachine
+
+-- FORWARD
+Test { [[
+native do
+    int CEU_TIMEMACHINE_ON = 0;
+end
+
+class App with
+    var int v = 0;
+do
+    every 1s do
+        this.v = this.v + 1;
+    end
+end
+var App app;
+
+input int DT;
+
+#define TM_INPUT_DT DT
+#define TM_QUEUE_MAX 1000000
+#define TM_SNAP
+#define TM_SNAP_MS 2000
+#define TM_SNAP_N  1000
+
+#include "timemachine.ceu"
+
+class IOTimeMachine with
+    interface IIOTimeMachine;
+do
+end
+var IOTimeMachine io;
+
+var TimeMachine tm with
+    this.app = app;
+    this.io  = io;
+end;
+
+par/or do
+    await 3s_;
+    emit tm.go_on;
+    await 1s_;
+
+    ///////////////////////////////
+
+    emit tm.go_seek => tm.time_total;
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 3);
+
+    ///////////////////////////////
+
+    emit tm.go_seek => 0;
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 0);
+
+    emit tm.go_forward => 1;
+    _assert(app.v == 0);
+
+    await 1ms_;
+    await 1000ms_;
+    _assert(app.v == 1);
+    await 1000ms_;
+    _assert(app.v == 2);
+    await 1000ms_;
+    _assert(app.v == 3);
+
+    ///////////////////////////////
+
+    emit tm.go_seek => 0;
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 0);
+
+    emit tm.go_forward => 1;
+    _assert(app.v == 0);
+
+    await 1ms_;
+    loop i in 20 do
+        await 50ms_;
+    end
+    _assert(app.v == 1);
+    loop i in 20 do
+        await 50ms_;
+    end
+    _assert(app.v == 2);
+    loop i in 20 do
+        await 50ms_;
+    end
+    _assert(app.v == 3);
+
+    ///////////////////////////////
+
+    emit tm.go_seek => 0;
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 0);
+
+    emit tm.go_forward => 2;
+    _assert(app.v == 0);
+
+    await 1ms_;
+    loop i in 10 do
+        await 50ms_;
+    end
+    _assert(app.v == 1);
+    loop i in 10 do
+        await 50ms_;
+    end
+    _assert(app.v == 2);
+    loop i in 10 do
+        await 50ms_;
+    end
+    _assert(app.v == 3);
+
+    ///////////////////////////////
+
+    emit tm.go_seek => 0;
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 0);
+
+    emit tm.go_forward => 5;
+    _assert(app.v == 0);
+
+    await 1ms_;
+    await 200ms_;
+    _assert(app.v == 1);
+    await 200ms_;
+    _assert(app.v == 2);
+    await 200ms_;
+    _assert(app.v == 3);
+
+    ///////////////////////////////
+
+    emit tm.go_seek => 0;
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 0);
+
+    emit tm.go_forward => -2;
+    _assert(app.v == 0);
+
+    await 1ms_;
+    await 2000ms_;
+    _assert(app.v == 1);
+    await 2000ms_;
+    _assert(app.v == 2);
+    await 2000ms_;
+    _assert(app.v == 3);
+
+    ///////////////////////////////
+
+    emit tm.go_seek => 0;
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 0);
+
+    emit tm.go_forward => -5;
+    _assert(app.v == 0);
+
+    await 1ms_;
+    loop i in 100 do
+        await 50ms_;
+    end
+    _assert(app.v == 1);
+    loop i in 100 do
+        await 50ms_;
+    end
+    _assert(app.v == 2);
+    loop i in 100 do
+        await 50ms_;
+    end
+    _assert(app.v == 3);
+
+with
+    input int DT;
+    async (tm) do
+        loop do
+            if not _CEU_TIMEMACHINE_ON then
+                emit 50ms;
+                emit DT => 50;
+            end
+
+            // TODO: forces this async to be slower
+            input void SLOW;
+            loop do
+                if not tm.locked then
+                    break;
+                end
+                emit SLOW;
+            end
+            emit 50ms_;
+        end
+    end
+end
+
+escape app.v;
+]],
+    timemachine = true,
+    _ana = {
+        acc = true,
+    },
+    run = 3,
+}
+
+-- BACKWARD
+Test { [[
+native do
+    int CEU_TIMEMACHINE_ON = 0;
+end
+
+class App with
+    var int v = 0;
+do
+    every 1s do
+        this.v = this.v + 1;
+    end
+end
+var App app;
+
+input int DT;
+
+#define TM_INPUT_DT         DT
+#define TM_QUEUE_MAX        1000000
+//#define TM_SNAP
+#define TM_SNAP_MS          2000
+#define TM_SNAP_N           1000
+#define TM_BACKWARD_TICK    30
+
+#include "timemachine.ceu"
+
+class IOTimeMachine with
+    interface IIOTimeMachine;
+do
+end
+var IOTimeMachine io;
+
+var TimeMachine tm with
+    this.app = app;
+    this.io  = io;
+end;
+
+par/or do
+    await 3s_;
+    emit tm.go_on;
+    await 1s_;
+
+    ///////////////////////////////
+
+    emit tm.go_seek => tm.time_total;
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 3);
+
+    emit tm.go_backward => 1;
+    _assert(app.v == 3);
+
+    await 1000ms_;
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 2);
+    await 1000ms_;
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 1);
+    await 1000ms_;
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 0);
+
+    ///////////////////////////////
+
+    emit tm.go_seek => tm.time_total;
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 3);
+
+    emit tm.go_backward => 1;
+    _assert(app.v == 3);
+
+    loop i in 20 do
+        await 50ms_;
+    end
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 2);
+    loop i in 20 do
+        await 50ms_;
+    end
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 1);
+    loop i in 20 do
+        await 50ms_;
+    end
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 0);
+
+    ///////////////////////////////
+
+    emit tm.go_seek => tm.time_total;
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 3);
+
+    emit tm.go_backward => 2;
+    _assert(app.v == 3);
+
+    loop i in 10 do
+        await 50ms_;
+    end
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 2);
+    loop i in 10 do
+        await 50ms_;
+    end
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 1);
+    loop i in 10 do
+        await 50ms_;
+    end
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 0);
+
+    ///////////////////////////////
+
+    emit tm.go_seek => tm.time_total;
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 3);
+
+    emit tm.go_backward => 5;
+    _assert(app.v == 3);
+
+    await 200ms_;
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 2);
+    await 200ms_;
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 1);
+    await 200ms_;
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 0);
+
+    ///////////////////////////////
+
+    emit tm.go_seek => tm.time_total;
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 3);
+
+    emit tm.go_backward => -2;
+    _assert(app.v == 3);
+
+    await 2000ms_;
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 2);
+    await 2000ms_;
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 1);
+    await 2000ms_;
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 0);
+
+    ///////////////////////////////
+
+    emit tm.go_seek => tm.time_total;
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 3);
+
+    emit tm.go_backward => -5;
+    _assert(app.v == 3);
+
+    loop i in 100 do
+        await 50ms_;
+    end
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 2);
+    loop i in 100 do
+        await 50ms_;
+    end
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 1);
+    loop i in 100 do
+        await 50ms_;
+    end
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 0);
+
+    app.v = app.v + 1;
+with
+    input int DT;
+    async (tm) do
+        loop do
+            if not _CEU_TIMEMACHINE_ON then
+                emit 10ms;
+                emit DT => 10;
+            end
+
+            // TODO: forces this async to be slower
+            input void SLOW;
+            loop do
+                if not tm.locked then
+                    break;
+                end
+                emit SLOW;
+            end
+            emit 10ms_;
+        end
+    end
+end
+
+escape app.v;
+]],
+    timemachine = true,
+    _ana = {
+        acc = true,
+    },
+    run = 1,
+}
+
+-- FORWARD / BACKWARD
 
 Test { [[
 native do
@@ -41745,10 +42153,8 @@ end
 var App app;
 
 input int DT;
-input void REDRAW;
 
 #define TM_INPUT_DT DT
-#define TM_INPUT_REDRAW REDRAW
 #define TM_QUEUE_MAX 1000000
 #define TM_SNAP
 #define TM_SNAP_MS 2000
@@ -41792,23 +42198,26 @@ par/or do
     _assert(app.v == 3);
 
     await 1s1ms_;
+    TM_AWAIT_SEEK(tm);
     _assert(app.v == 1);
 with
     input int DT;
     async (tm) do
         loop do
             if not _CEU_TIMEMACHINE_ON then
-                emit 50ms;
-                emit DT => 50;
+                emit 10ms;
+                emit DT => 10;
             end
-            emit 50ms_;
 
             // TODO: forces this async to be slower
             input void SLOW;
-            emit SLOW;
-            emit SLOW;
-            emit SLOW;
-            emit SLOW;
+            loop do
+                if not tm.locked then
+                    break;
+                end
+                emit SLOW;
+            end
+            emit 10ms_;
         end
     end
 end
@@ -41817,7 +42226,7 @@ escape app.v;
 ]],
     timemachine = true,
     _ana = {
-        acc = 3,
+        acc = true,
     },
     run = 1,
 }

@@ -1241,6 +1241,7 @@ F = {
         -- wclock event, set "e"
         if e == false then
             me[2] = node('Ext', me.ln, '_WCLOCK')
+            me.__adj_orig_ps = ps
         end
 
         -- adjust to ExpList

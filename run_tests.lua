@@ -131,10 +131,12 @@ Test = function (t)
 if k ~= 'excpt' then
 if k ~= 'abrt' then
 if k ~= 'unreachs' then
+if not (k=='acc' and T._ana and T._ana.acc==true) then  -- ignore acc=true
             assert( v==_defs[k] and (T._ana==nil or T._ana[k]==nil)
                     or (T._ana and T._ana[k]==v),
                     --or (T._ana and T._ana.acc==ANALYSIS.acc),
                             k..' = '..tostring(v))
+end
 end
 end
 end
@@ -144,8 +146,10 @@ end
 if k ~= 'excpt' then
 if k ~= 'abrt' then
 if k ~= 'unreachs' then
+if not (k=='acc' and T._ana and T._ana.acc==true) then  -- ignore acc=true
                 assert( v == ANA.ana[k],
                             k..' = '..tostring(ANA.ana[k]))
+end
 end
 end
 end
@@ -315,4 +319,17 @@ STATS = {
 real	9m31.195s
 user	8m47.733s
 sys	1m48.085s
+
+STATS = {
+    count   = 2210,
+    mem     = 0,
+    trails  = 4219,
+    bytes   = 22386380,
+}
+
+
+real	10m19.234s
+user	9m42.152s
+sys	1m46.019s
+
 ]]

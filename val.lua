@@ -306,11 +306,11 @@ F =
     end,
 
     EmitExt = function (me)
-        local op, e, param = unpack(me)
+        local op, e, param, x = unpack(me)
 
         -- TODO: join w/ the code below
         if e[1] == '_WCLOCK' then
-            local suf = (e.tm and '_') or ''
+            local suf = (me.__adj_orig_ps.tm and '_') or ''
             me.val = [[
 #ifdef CEU_WCLOCKS
 {
@@ -405,7 +405,7 @@ F =
         local e, dt = unpack(me)
 
         if dt then
-            local suf = (e.tm and '_') or ''
+            local suf = (dt.tm and '_') or ''
             me.val      = '(tceu__s32*) &_ceu_app->wclk_late'..suf
             me.val_wclk = CUR(me, '__wclk_'..me.n)
         else

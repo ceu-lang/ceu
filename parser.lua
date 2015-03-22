@@ -371,6 +371,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , Await    = KEY'await' * V'__awaits'
                     * (KEY'until'*EV'__Exp' + Cc(false))
 
+-- TODO: emit/await, false=>_WCLOCK
     , EmitExt  = (CKEY'call/rec'+CKEY'call'+CKEY'emit'+CKEY'request')
                * ( Cc(false) * (V'WCLOCKK'+V'WCLOCKE')
                  + EV'Ext' * V'__emit_ps' )
