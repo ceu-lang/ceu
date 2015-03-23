@@ -234,7 +234,7 @@ F =
     ]
         )
 ))]]
-                    if REF(me.var.tp) then
+                    if REF(me.var.tp) and (not ENV.clss[me.var.tp.id]) then
                         me.val = '(*'..me.val..')'
                     end
                 end

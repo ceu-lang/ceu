@@ -15894,6 +15894,25 @@ escape 1;
     run = 1,
 }
 
+Test { [[
+class T with
+    var int v = 10;
+do
+end
+
+interface Global with
+    var T& t;
+end
+
+var T t_;
+var T& t = t_;
+global:t = t;
+
+escape global:t.v;
+]],
+    run = 10,
+}
+
 -- FINALLY / FINALIZE
 
 Test { [[
