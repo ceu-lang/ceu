@@ -234,6 +234,9 @@ F =
     ]
         )
 ))]]
+                    if REF(me.var.tp) then
+                        me.val = '(*'..me.val..')'
+                    end
                 end
                 if me.var.pre == 'pool' then
                     me.ifc_idx = '(_CEU_APP.ifcs_trls['..gen..'->cls]['

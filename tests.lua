@@ -11,6 +11,26 @@ end
 
 -- BUGS
 
+-- use of global before its initialization
+Test { [[
+interface Global with
+    var int& v;
+end
+
+class T with
+    var int v;
+do
+    this.v = global:v;
+end
+var T t;
+
+var int  um = 111;
+var int& v = um;
+escape t.v;
+]],
+    run = 111,
+}
+
 -- XXX: T-vs-Opt
 Test { [[
 class T with
@@ -1536,11 +1556,12 @@ escape t.i.v;
     run = 10,
 }
 
+
 do return end
+]===]
 
 -------------------------------------------------------------------------------
 -- OK: well tested
-]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -15810,6 +15831,67 @@ v = 1;
 escape _V1+_V2;
 ]],
     run = 6,
+}
+
+Test { [[
+interface Global with
+    var int& v;
+end
+var int  um = 1;
+var int& v;// = um;
+escape 1;//global:v;
+]],
+    ref = 'line 5 : global references must be bounded on declaration',
+}
+
+Test { [[
+interface Global with
+    var int& v;
+end
+var int  um = 1;
+var int& v = um;
+escape 1;//global:v;
+]],
+    run = 1,
+}
+
+Test { [[
+interface Global with
+    var int& v;
+end
+var int  um = 1;
+var int& v = um;
+escape global:v;
+]],
+    run = 1,
+}
+
+Test { [[
+interface Global with
+    var int& v;
+end
+
+class T with
+    var int v;
+do
+    this.v = global:v;
+end
+
+var int  um = 111;
+var int& v = um;
+var T t;
+escape t.v;
+]],
+    run = 111,
+}
+
+Test { [[
+interface Global with
+end
+var int&? win;
+escape 1;
+]],
+    run = 1,
 }
 
 -- FINALLY / FINALIZE

@@ -511,7 +511,7 @@ F = {
     Global = function (me)
         ASR(ENV.clss.Global and ENV.clss.Global.is_ifc, me,
             'interface "Global" is not defined')
-        me.tp   =TP.fromstr'Global*'
+        me.tp   = TP.fromstr'Global*'
         me.lval = false
         me.blk  = AST.root
     end,

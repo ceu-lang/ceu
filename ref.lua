@@ -19,7 +19,8 @@ F = {
 
         local constr    = AST.par(me, 'Dcl_constr')
               constr    = constr and (constr.cls.blk_ifc.vars[to.lst.var.id]==to.lst.var) and constr
-        local outer     = (not constr) and to.tag=='Field' and to.org.cls~=CLS()
+        local global    = to.tag=='Field' and to.org.cls.id=='Global' and CLS().id=='Main'
+        local outer     = (not constr) and to.tag=='Field' and to.org.cls~=CLS() and (not global)
         local interface = AST.par(me, 'BlockI')
         local internal  = not (constr or outer or interface)
 
@@ -124,6 +125,19 @@ F = {
             local _,_,_,constr = unpack(me)
             F.__constr(me, me.var.cls, constr or {})
         end
+
+        -- ensures that global "ref" vars are initialized
+        local glb = ENV.clss.Global
+        local cls = CLS()   -- might be an ADT declaration
+        if REF(me.var.tp) and glb and cls and cls.id=='Main' then
+            local var = glb.blk_ifc.vars[me.var.id]
+            if var then
+                local set = me.__par and me.__par[1]==me and
+                            me.__par[2] and me.__par[2].tag=='SetExp'
+                ASR(set, me,
+                    'global references must be bounded on declaration')
+            end
+        end
     end,
     Spawn = function (me)
         local _,_,constr = unpack(me)
@@ -132,12 +146,30 @@ F = {
 
     -- Ensures that &ref var is bound before use.
     Var = function (me)
+        local cls = CLS()
         if REF(me.var.tp) and (not me.var.tp.opt) then
             -- ignore interface variables outside Main
             -- (they are guaranteed to be bounded)
-            local inifc = (me.var.blk == CLS().blk_ifc)
-            inifc = inifc and CLS().id~='Main'
-            if not inifc then
+            local inifc = (me.var.blk == cls.blk_ifc)
+            inifc = inifc and cls.id~='Main'
+
+            -- ignore global variables
+            -- (they are guaranteed to be bounded)
+            local glb = ENV.clss.Global
+            if glb then
+                if cls.id == 'Main' then
+                    -- id = <...>   // id is a global accessed in Main
+                    glb = glb.blk_ifc.vars[me.var.id]
+                else
+                    local fld = me.__par
+                    if fld and fld.tag=='Field' and fld.org then
+                        -- global:id = <...>
+                        glb = fld.org.cls==glb
+                    end
+                end
+            end
+
+            if (not inifc) and (not glb) then
                 ASR(me.var.bind, me, 'reference must be bounded before use')
             end
         end
