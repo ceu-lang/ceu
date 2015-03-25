@@ -1556,7 +1556,6 @@ escape t.i.v;
     run = 10,
 }
 
-
 do return end
 ]===]
 
@@ -21840,6 +21839,38 @@ end
         acc = 48,
         isForever = true,
     },
+}
+
+    -- RAW
+
+Test { [[
+native do
+    int V = 0;
+    int fff (int a, int b) {
+        V = V + a + b;
+        return V;
+    }
+end
+{fff}(1,2);
+var int i = {fff}(3,4);
+escape i;
+]],
+    parser = 'line 8 : before `)´ : expected `;´',
+}
+
+Test { [[
+native do
+    int V = 0;
+    int fff (int a, int b) {
+        V = V + a + b;
+        return V;
+    }
+end
+call {fff}(1,2);
+var int i = {fff}(3,4);
+escape i;
+]],
+    run = 10,
 }
 
     -- STRINGS

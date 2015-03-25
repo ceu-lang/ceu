@@ -257,6 +257,7 @@ F = {
         end
     end,
 
+    RawExp = 'Nat',
     Nat = function (me)
         me.acc = INS {
             path = me.ana.pre,
