@@ -30,6 +30,24 @@ interface IIOTimeMachine with
     event _tceu_queue* go_queue;
 end
 
+class Fps with
+    event int go;
+do
+    var int fps = 0;                // previous FPS
+    loop do
+        var int c = 0;              // reset the current counter
+        var int t;
+        watching 10s_ do
+            every t in this.go do
+                c = c + 1;
+            end
+        end
+        fps = c;
+        //_printf("[FPS=%d (%ds)]\n", fps, t/10);
+        _printf("%d %d\n", t/10, fps);
+    end
+end
+
 class TimeMachine with
     var App& app;
     var IIOTimeMachine& io;
@@ -106,6 +124,8 @@ TODO
             var int time_req = _TM_REQ_PAUSE;
             time_now = this.time_total; // start in the end (the current state)
             _queue_toend();
+
+            var Fps fps;
 
             par do
                 loop do
@@ -207,6 +227,7 @@ _QUEUE_get = get;
 #ifdef TM_INPUT_REDRAW
                             if speed != 0 then
                                 this.locked = true;
+                                emit fps.go => time_now;
                                 async do
                                     emit TM_INPUT_REDRAW;
                                 end
@@ -221,6 +242,7 @@ _QUEUE_get = get;
 
                         // this async is forced to ensure at least one sync 
                         // break (even if there's no REDRAW event)
+                        emit fps.go => time_now;
                         async do
 #ifdef TM_INPUT_REDRAW
                             emit TM_INPUT_REDRAW;
