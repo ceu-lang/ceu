@@ -25,7 +25,7 @@ end
 #define QUEUE_WCLOCK_REUSE
 
 interface IIOTimeMachine with
-    event bool         go_on;
+    event void         go_on;
     event void         go_off;
     event _tceu_queue* go_queue;
 end
@@ -33,8 +33,7 @@ end
 class TimeMachine with
     var App& app;
     var IIOTimeMachine& io;
-    event bool go_on;
-    event void go_off;
+    event void go_on, go_off;
     //event void ok_restart;
 
     event int  go_seek;
@@ -66,10 +65,7 @@ do
 #endif
 
     loop do
-        var bool keep;
-        par/or do
-            keep = await this.go_on;
-        with
+        watching this.go_on do
             var int dt;
             every dt in TM_INPUT_DT do
                 this.time_total = this.time_total + dt;
@@ -88,12 +84,13 @@ TODO
             end
         end
 
-        _CEU_TIMEMACHINE_ON = _CEU_TIMEMACHINE_ON + 1;
-        emit this.io.go_on => keep;
+        _assert(_CEU_TIMEMACHINE_ON == 0);
+        _CEU_TIMEMACHINE_ON = 1;
+        emit this.io.go_on;
 
         par/or do
             finalize with
-                _CEU_TIMEMACHINE_ON = _CEU_TIMEMACHINE_ON - 1;
+                _CEU_TIMEMACHINE_ON = 0;
                 this.time_total = time_now;     // drop future
                 _queue_drop();
 #ifdef TM_SNAP
