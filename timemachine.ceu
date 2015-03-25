@@ -22,6 +22,8 @@ end
 #endif
 #endif
 
+#define QUEUE_WCLOCK_REUSE
+
 interface IIOTimeMachine with
     event void         go_on;
     event void         go_off;
@@ -55,8 +57,6 @@ class TimeMachine with
     var int time_total = 0;
     var int time_now;
 do
-    _QUEUE_get = 0;
-
     _SNAP_data := (char*) &this.app;
     _SNAP_put = 0;
     _snap_put(_QUEUE_put, this.time_total);     // 0, 0
@@ -77,6 +77,7 @@ do
 #ifdef TM_SNAP
                 if this.time_total >= next_snap then
                     next_snap = next_snap + TM_SNAP_MS;
+TODO
                     _snap_put(_QUEUE_put, this.time_total);
                 end
 #endif
@@ -90,8 +91,7 @@ do
             finalize with
                 _CEU_TIMEMACHINE_ON = _CEU_TIMEMACHINE_ON - 1;
                 this.time_total = time_now;     // drop future
-                _QUEUE_put = _QUEUE_get;
-                _QUEUE_tot = _QUEUE_get;
+                _queue_drop();
 #ifdef TM_SNAP
                 next_snap = _snap_set(time_now);
 #endif
@@ -104,22 +104,19 @@ do
             event int e_backward;
             var int time_req = _TM_REQ_PAUSE;
             time_now = this.time_total; // start in the end (the current state)
-            _QUEUE_get = _QUEUE_put;
+            _queue_toend();
 
             par do
                 loop do
-                    var int aaa = 0;
-                    var int bbb = 0;
                     par/or do
                         var int tmp = await this.go_seek;
                                     // avoid conflict w/ ongoing time_req
                         TM_AWAIT_SEEK(this);
                         time_req = tmp;
-                        this.time_now = _snap_get(time_req);
+                        this.time_now = _snap_get(time_req);    // resets queue
                         speed = 0;
                         this.seeking = true;
                         //emit this.ok_restart;
-                        //_queue_reset();
                     with
                         await this.go_pause;
                         TM_AWAIT_SEEK(this);
@@ -144,7 +141,6 @@ do
                             if time_req == _TM_REQ_PAUSE then
                                 break;  // already there
                             end
-                            var int get = _QUEUE_get;
                             var _tceu_queue&? qu;
                             finalize
                                 qu = _queue_get();
@@ -157,10 +153,14 @@ do
                             this.ticking = true;
                             //_assert(qu != null);
                             if qu.evt == _CEU_IN__WCLOCK then
+#ifdef QUEUE_WCLOCK_REUSE
+                                var int dt = (1000/_CEU_FPS);
+#else
                                 var int dt = ((_tceu_queue_dt*)&qu):dt;
+#endif
                                 _assert(dt >= 0);
                                 if time_now+dt > time_req then
-                                    _QUEUE_get = get;   // undo get
+                                    _queue_unget();  // undo get
 /*
 _QUEUE_get = prv;
 _printf("seek: now=%d get=%d x=%d\n",
@@ -194,8 +194,6 @@ _QUEUE_get = get;
 #endif
                                 end
 
-                                aaa = aaa + 1;
-                                bbb = bbb + dt;
                                 this.locked = true;
                                 async(dt) do
                                     emit (dt)ms;
@@ -308,7 +306,11 @@ _QUEUE_get = get;
     native/pre do
         typedef struct {
             tceu_nevt evt;
+#ifdef QUEUE_WCLOCK_REUSE
+            u8        n;
+#else
             u8        dt;
+#endif
         } tceu_queue_dt;
         typedef struct {
             tceu_nevt evt;
@@ -318,9 +320,14 @@ _QUEUE_get = get;
     end
     native do
         byte QUEUE[TM_QUEUE_MAX];
-        u32  QUEUE_tot = 0;
-        u32  QUEUE_get = 0;
-        u32  QUEUE_put = 0;
+        u32  QUEUE_tot     = 0;
+        u32  QUEUE_get     = 0;
+        u32  QUEUE_unget   = 0;
+        u32  QUEUE_put     = 0;
+#ifdef QUEUE_WCLOCK_REUSE
+        u32  QUEUE_put_old = 0;
+        u32  QUEUE_get_n   = 0;
+#endif
 
         int queue_put (tceu_nevt evt, int sz, void* buf) {
             int n = (evt==CEU_IN__WCLOCK) ?  sizeof(tceu_queue_dt) :
@@ -329,9 +336,22 @@ _QUEUE_get = get;
             assert(sz > 0);
 
             if (evt == CEU_IN__WCLOCK) {
+#ifdef QUEUE_WCLOCK_REUSE
+                assert(*((s32*)buf) == (1000/CEU_FPS));
+                tceu_queue_dt* qu = (tceu_queue_dt*) &QUEUE[QUEUE_put_old];
+                if (QUEUE_put!=QUEUE_put_old && qu->evt==CEU_IN__WCLOCK && qu->n<255) {
+                    QUEUE_put = QUEUE_put_old;
+                    qu->n++;
+                } else {
+                    tceu_queue_dt* qu = (tceu_queue_dt*) &QUEUE[QUEUE_put];
+                    qu->evt = CEU_IN__WCLOCK;
+                    qu->n   = 1;
+                }
+#else
                 tceu_queue_dt* qu = (tceu_queue_dt*) &QUEUE[QUEUE_put];
                 qu->evt = evt;
                 qu->dt  = *((s32*)buf);
+#endif
             } else {
                 tceu_queue* qu = (tceu_queue*) &QUEUE[QUEUE_put];
                 qu->evt = evt;
@@ -339,6 +359,9 @@ _QUEUE_get = get;
                 memcpy(qu->buf, buf, sz);
             }
 
+#ifdef QUEUE_WCLOCK_REUSE
+            QUEUE_put_old = QUEUE_put;
+#endif
             QUEUE_put += n;
             QUEUE_tot += n;
 
@@ -352,23 +375,87 @@ _QUEUE_get = get;
                 assert(QUEUE_tot > 0);
                 tceu_queue* qu = (tceu_queue*) &QUEUE[QUEUE_get];
                 if (qu->evt == CEU_IN__WCLOCK) {
+#ifdef QUEUE_WCLOCK_REUSE
+                    if (QUEUE_get_n == 0) {         // not yet tracking current
+                        tceu_queue_dt* qu = (tceu_queue_dt*) &QUEUE[QUEUE_get];
+                        QUEUE_get_n = qu->n;
+                    } else {
+                        QUEUE_get_n--;
+                        if (QUEUE_get_n == 0) {     // reached last DT
+                            QUEUE_get += sizeof(tceu_queue_dt);
+                            if (QUEUE_get == QUEUE_put) {
+                                return NULL;
+                            } else {
+                                return (tceu_queue*) &QUEUE[QUEUE_get];
+                            }
+                        }
+                    }
+#else
                     QUEUE_get += sizeof(tceu_queue_dt);
+#endif
                 } else {
+#ifdef QUEUE_WCLOCK_REUSE
+                    QUEUE_get_n = 0;
+#endif
                     QUEUE_get += sizeof(tceu_queue) + qu->sz;
                 }
+//printf("GET: get=%d, evt=%d, getn=%d\n", QUEUE_get, qu->evt, QUEUE_get_n);
                 return qu;
             }
         }
 
-/*
+        void queue_unget (void) {
+#ifdef QUEUE_WCLOCK_REUSE
+            if (QUEUE_get_n > 0) {
+                tceu_queue_dt* qu = (tceu_queue_dt*) &QUEUE[QUEUE_get];
+                if (QUEUE_get_n == qu->n) {
+                    QUEUE_get   = QUEUE_unget;
+                    QUEUE_get_n = 0;
+                } else {
+                    QUEUE_get_n++;
+                }
+            } else {
+                QUEUE_get = QUEUE_unget;
+                tceu_queue_dt* qu = (tceu_queue_dt*) &QUEUE[QUEUE_get];
+                if (qu->evt == CEU_IN__WCLOCK) {
+                    QUEUE_get_n = qu->n;
+                }
+            }
+#else
+            QUEUE_get = QUEUE_unget;
+#endif
+        }
+
+        void queue_drop (void) {
+#ifdef QUEUE_WCLOCK_REUSE
+            if (QUEUE_get_n > 0) {
+                tceu_queue_dt* qu = (tceu_queue_dt*) &QUEUE[QUEUE_get];
+                qu->n = QUEUE_get_n;
+            }
+            QUEUE_get_n = 0;
+#endif
+            QUEUE_put
+#ifdef QUEUE_WCLOCK_REUSE
+                = QUEUE_put_old
+#endif
+                    = QUEUE_tot
+                        = QUEUE_unget
+                            = QUEUE_get;
+        }
+
+        void queue_toend (void) {
+            QUEUE_get = QUEUE_unget = QUEUE_put;
+        }
+
         void queue_dump (void) {
             int i;
             int DT = 0;
-            for (i=0; i<=QUEUE_get;) {
+            printf("DUMP: %d\n", QUEUE_tot);
+            for (i=0; i<=QUEUE_tot;) {
                 tceu_queue* qu = (tceu_queue*) &QUEUE[i];
                 if (qu->evt == CEU_IN__WCLOCK) {
-                    printf("[%d:%d] ", i, ((tceu_queue_dt*)qu)->dt);
-                    DT += ((tceu_queue_dt*)qu)->dt;
+                    printf("[%d:%d] ", i, ((tceu_queue_dt*)qu)->n);
+                    DT += 1;//((tceu_queue_dt*)qu)->dt;
                     i += sizeof(tceu_queue_dt);
                 } else {
                     printf("[%d:%d] ", i, -1);
@@ -377,7 +464,6 @@ _QUEUE_get = get;
             }
             printf("\n==>%d\n", DT);
         }
-*/
 
         /**********************************************************************/
 
@@ -403,6 +489,7 @@ _QUEUE_get = get;
             SNAP_put++;
         }
 
+#ifdef TM_SNAP
         u32 snap_set (u32 time) {
             int i;
             for (i=0; i<SNAP_put; i++) {
@@ -411,12 +498,9 @@ _QUEUE_get = get;
                     return SNAP[i].time;
                 }
             }
-#ifdef TM_SNAP
             return SNAP[SNAP_put-1].time + TM_SNAP_MS;
-#else
-            return 0;
-#endif
         }
+#endif
 
         u32 snap_get (u32 time) {
             int i;  /* SNAP[0] is guaranteed to succeed */
@@ -424,6 +508,11 @@ _QUEUE_get = get;
                 if (SNAP[i].time <= time) {
                     *((CEU_App*)SNAP_data) = SNAP[i].data;
                     QUEUE_get = SNAP[i].queue;
+// TODO
+QUEUE_unget = 0;
+#ifdef QUEUE_WCLOCK_REUSE
+QUEUE_get_n = 0;
+#endif
                     return SNAP[i].time;
                 }
             }
