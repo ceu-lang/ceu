@@ -59,11 +59,13 @@ void ceu_sys_assert (int v) {
 }
 
 void ceu_sys_log (int mode, void* s) {
+#ifdef __posix
     if (mode == 0) {
         fprintf(stderr, "%s", (char*)s);
     } else {
         fprintf(stderr, "%lX", (long)s);
     }
+#endif
 }
 
 #ifdef CEU_NEWS
@@ -582,6 +584,7 @@ if (STK.trl->evt==CEU_IN__ORG) {
                         /* same event and (clear||starting before) */
                  )
             ) {
+                int _ret;
                 STK.trl->evt   = CEU_IN__NONE;  /* clear trail */
                 STK.trl->seqno = app->seqno;    /* don't awake again */
 
@@ -589,7 +592,7 @@ if (STK.trl->evt==CEU_IN__ORG) {
                 CEU_APP_ADDR = app->addr;
 #endif
                 /*** CODE ***/
-                int _ret = app->code(app, &go);
+                _ret = app->code(app, &go);
 #if defined(CEU_OS_KERNEL) && defined(__AVR)
                 CEU_APP_ADDR = 0;
 #endif
