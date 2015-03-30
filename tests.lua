@@ -1557,10 +1557,10 @@ escape t.i.v;
 }
 
 do return end
-]===]
 
 -------------------------------------------------------------------------------
 -- OK: well tested
+]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -41864,6 +41864,15 @@ escape ret;
 
 -- TIMEMACHINE
 
+for i=1, 4 do
+    local defs = ''
+    if i==2 or i==4 then
+        defs = defs .. '#define TM_SNAP\n'
+    end
+    if i==3 or i==4 then
+        defs = defs .. '#define TM_QUEUE_WCLOCK_REUSE\n'
+    end
+
 -- FORWARD
 Test { [[
 native do
@@ -41881,11 +41890,18 @@ var App app;
 
 input int DT;
 
+]]..defs..[[
+
 #define TM_INPUT_DT DT
 #define TM_QUEUE_MAX 1000000
-#define TM_SNAP
+/*#define TM_SNAP*/
 #define TM_SNAP_MS 2000
 #define TM_SNAP_N  1000
+
+/*#define TM_QUEUE_WCLOCK_REUSE*/
+native do
+    ##define CEU_FPS 100
+end
 
 #include "timemachine.ceu"
 
@@ -42079,12 +42095,19 @@ var App app;
 
 input int DT;
 
+]]..defs..[[
+
 #define TM_INPUT_DT         DT
 #define TM_QUEUE_MAX        1000000
-//#define TM_SNAP
+/*#define TM_SNAP*/
 #define TM_SNAP_MS          2000
 #define TM_SNAP_N           1000
 #define TM_BACKWARD_TICK    30
+
+/*#define TM_QUEUE_WCLOCK_REUSE*/
+native do
+    ##define CEU_FPS 100
+end
 
 #include "timemachine.ceu"
 
@@ -42286,11 +42309,18 @@ var App app;
 
 input int DT;
 
+]]..defs..[[
+
 #define TM_INPUT_DT DT
 #define TM_QUEUE_MAX 1000000
-#define TM_SNAP
+/*#define TM_SNAP*/
 #define TM_SNAP_MS 2000
 #define TM_SNAP_N  1000
+
+/*#define TM_QUEUE_WCLOCK_REUSE*/
+native do
+    ##define CEU_FPS 100
+end
 
 #include "timemachine.ceu"
 
@@ -42388,11 +42418,18 @@ var App app;
 
 input int  DT;
 
+]]..defs..[[
+
 #define TM_INPUT_DT DT
 #define TM_QUEUE_MAX 1000000
-#define TM_SNAP
+/*#define TM_SNAP*/
 #define TM_SNAP_MS 2000
 #define TM_SNAP_N  1000
+
+/*#define TM_QUEUE_WCLOCK_REUSE*/
+native do
+    ##define CEU_FPS 100
+end
 
 #include "timemachine.ceu"
 
@@ -42496,3 +42533,5 @@ escape app.v;
     },
     run = 25,
 }
+
+end
