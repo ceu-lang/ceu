@@ -72,9 +72,11 @@ class TimeMachine with
     var int time_total = 0;
     var int time_now;
 do
-    _SNAP_data := (char*) &this.app;
-    _SNAP_put = 0;
-    _snap_put(this.time_total);     // 0, 0
+    _snap_init((char*) &this.app)
+        finalize with
+            nothing;    // app is supposed to live longer than TM
+        end;
+
 #ifdef TM_SNAP
     var int next_snap = TM_SNAP_MS;
 #endif
@@ -552,6 +554,12 @@ do
             }
             assert(0);
             return 0;
+        }
+
+        void snap_init (char* data) {
+            SNAP_data = data;
+            SNAP_put  = 0;
+            snap_put(0);
         }
     end
 end
