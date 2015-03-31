@@ -113,7 +113,7 @@ do
                 this.time_total = time_now;     // drop future
                 _queue_drop();
 #ifdef TM_SNAP
-                next_snap = _snap_set(time_now);
+                next_snap = _snap_drop(time_now);
 #endif
             end
             await this.go_off;
@@ -136,7 +136,7 @@ do
                                     // avoid conflict w/ ongoing time_req
                         TM_AWAIT_SEEK(this);
                         time_req = tmp;
-                        this.time_now = _snap_get(time_req);    // resets queue
+                        this.time_now = _snap_set(time_req);    // resets queue
                         speed = 0;
                         this.seeking = true;
                         //emit this.ok_restart;
@@ -542,7 +542,7 @@ do
         }
 
 #ifdef TM_SNAP
-        u32 snap_set (u32 time) {
+        u32 snap_drop (u32 time) {
             int i;
             for (i=0; i<SNAP_put; i++) {
                 if (SNAP[i].time > time) {
@@ -554,7 +554,7 @@ do
         }
 #endif
 
-        u32 snap_get (u32 time) {
+        u32 snap_set (u32 time) {
             int i;  /* SNAP[0] is guaranteed to succeed */
             for (i=SNAP_put-1; i>=0; i--) {
                 if (SNAP[i].time <= time) {
