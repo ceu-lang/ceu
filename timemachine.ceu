@@ -88,20 +88,18 @@ do
                 this.time_total = this.time_total + dt;
                 _assert(dt >= 0);
 #ifdef TM_SNAP
-                var bool next = (this.time_total >= next_snap);
-                _queue_put(_CEU_IN__WCLOCK, next, &dt)  // force break if next
+                var u32 brk_time = 0;
+                if this.time_total >= next_snap then
+                    brk_time = this.time_total;
+                    next_snap = next_snap + TM_SNAP_MS;
+                end
+                _queue_put(_CEU_IN__WCLOCK, 0, &dt, brk_time)
 #else
                 _queue_put(_CEU_IN__WCLOCK, 0, &dt)
 #endif
                     finalize with
                         nothing;
                     end;
-#ifdef TM_SNAP
-                if next then
-                    next_snap = next_snap + TM_SNAP_MS;
-                    _snap_put(this.time_total);
-                end
-#endif
             end
         end
 
@@ -362,18 +360,34 @@ do
 #endif
         };
 
-        int queue_put (tceu_nevt evt, int sz, void* buf) {
+        void snap_put (u32 time);
+        int queue_put (tceu_nevt evt, int sz, void* buf
+#ifdef TM_SNAP
+                        , u32 brk_time
+#endif
+                      )
+        {
             int n = (evt==CEU_IN__WCLOCK) ?  sizeof(tceu_queue_dt) :
                                              sizeof(tceu_queue) + sz;
             assert(QUEUE.tot+n <= TM_QUEUE_MAX);
+
+#ifdef TM_SNAP
+            if (brk_time > 0) {
+                snap_put(brk_time);
+            }
+#endif
 
             if (evt == CEU_IN__WCLOCK) {
 #ifdef TM_QUEUE_WCLOCK_REUSE
                 assert(*((s32*)buf) == (1000/CEU_FPS));
                 tceu_queue_dt* qo = (tceu_queue_dt*) &QUEUE.buf[QUEUE.put_old];
-                if (qo->evt==CEU_IN__WCLOCK && QUEUE.put!=QUEUE.put_old && qo->n<255 && sz==0) {
-                    /* sz==1 means "break now" when reaching a SNAP boundary */
-                    /* QUEUE.put==QUEUE.put_old means "break now" (either before init or after drop */
+                if (qo->evt==CEU_IN__WCLOCK && QUEUE.put!=QUEUE.put_old && qo->n<255
+#ifdef TM_SNAP
+                     && brk_time>0
+#endif
+                   )
+                {
+                    /* QUEUE.put==QUEUE.put_old means "break now" (either * before init or after drop */
                     QUEUE.put = QUEUE.put_old;
                     qo->n++;
                     QUEUE.tot -= n;     /* cancel "+=" below */

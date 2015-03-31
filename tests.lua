@@ -1560,7 +1560,6 @@ do return end
 
 -------------------------------------------------------------------------------
 -- OK: well tested
-]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -41863,6 +41862,7 @@ escape ret;
 --]====]
 
 -- TIMEMACHINE
+]===]
 
 for i=1, 4 do
     local defs = ''
@@ -42443,7 +42443,11 @@ do
                 var int* key;
                 every key in KEY do
                     _queue_put(_CEU_IN_KEY,
-                               sizeof(int), (byte*)key)
+                               sizeof(int), (byte*)key
+#ifdef TM_SNAP
+                                ,0
+#endif
+                              )
                         finalize with
                             nothing;
                         end;
