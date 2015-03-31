@@ -330,6 +330,7 @@ do
             u8        dt;
 #endif
         } tceu_queue_dt;
+
         typedef struct {
             tceu_nevt evt;
             s32       sz;
@@ -529,41 +530,45 @@ do
             u32     queue;
         } tceu_snap;
 
-        tceu_snap SNAP[TM_SNAP_N];
-        int SNAP_put = 0;
-        char* SNAP_data;
+        typedef struct {
+            tceu_snap buf[TM_SNAP_N];
+            int       put;
+            char*     data;
+        } tceu_snap_state;
+
+        tceu_snap_state SNAP = { {}, 0, NULL };
 
         void snap_put (u32 time) {
-            assert(SNAP_put < TM_SNAP_N);
-            SNAP[SNAP_put].data  = *((CEU_App*)SNAP_data);
-            SNAP[SNAP_put].queue = QUEUE.put_old;
-            SNAP[SNAP_put].time  = time;
-            SNAP_put++;
+            assert(SNAP.put < TM_SNAP_N);
+            SNAP.buf[SNAP.put].data  = *((CEU_App*)SNAP.data);
+            SNAP.buf[SNAP.put].queue = QUEUE.put_old;
+            SNAP.buf[SNAP.put].time  = time;
+            SNAP.put++;
         }
 
 #ifdef TM_SNAP
         u32 snap_drop (u32 time) {
             int i;
-            for (i=0; i<SNAP_put; i++) {
-                if (SNAP[i].time > time) {
-                    SNAP_put = i;
-                    return SNAP[i].time;
+            for (i=0; i<SNAP.put; i++) {
+                if (SNAP.buf[i].time > time) {
+                    SNAP.put = i;
+                    return SNAP.buf[i].time;
                 }
             }
-            return SNAP[SNAP_put-1].time + TM_SNAP_MS;
+            return SNAP.buf[SNAP.put-1].time + TM_SNAP_MS;
         }
 #endif
 
         u32 snap_set (u32 time) {
             int i;  /* SNAP[0] is guaranteed to succeed */
-            for (i=SNAP_put-1; i>=0; i--) {
-                if (SNAP[i].time <= time) {
-                    *((CEU_App*)SNAP_data) = SNAP[i].data;
-                    QUEUE.get = SNAP[i].queue;
+            for (i=SNAP.put-1; i>=0; i--) {
+                if (SNAP.buf[i].time <= time) {
+                    *((CEU_App*)SNAP.data) = SNAP.buf[i].data;
+                    QUEUE.get = SNAP.buf[i].queue;
 #ifdef TM_QUEUE_WCLOCK_REUSE
                     QUEUE.get_n = 0;
 #endif
-                    return SNAP[i].time;
+                    return SNAP.buf[i].time;
                 }
             }
             assert(0);
@@ -571,8 +576,8 @@ do
         }
 
         void snap_init (char* data) {
-            SNAP_data = data;
-            SNAP_put  = 0;
+            SNAP.data = data;
+            SNAP.put  = 0;
             snap_put(0);
         }
     end
