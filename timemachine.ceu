@@ -19,11 +19,13 @@ end
 #endif
 #endif
 
+#ifndef TM_SNAP_ONLY
 interface IIOTimeMachine with
     event void         go_on;
     event void         go_off;
     event _tceu_queue* go_queue;
 end
+#endif
 
 class Fps with
     event int go;
@@ -47,7 +49,9 @@ end
 
 class TimeMachine with
     var App& app;
+#ifndef TM_SNAP_ONLY
     var IIOTimeMachine& io;
+#endif
     event void go_on, go_off;
     //event void ok_restart;
 
@@ -87,6 +91,10 @@ do
             every dt in TM_INPUT_DT do
                 this.time_total = this.time_total + dt;
                 _assert(dt >= 0);
+#ifdef TM_SNAP_ONLY
+                _snap_put(this.time_total);
+#else
+
 #ifdef TM_SNAP
                 var u32 brk_time = 0;
                 if this.time_total >= next_snap then
@@ -96,36 +104,52 @@ do
                 _queue_put(_CEU_IN__WCLOCK, 0, &dt, brk_time)
 #else
                 _queue_put(_CEU_IN__WCLOCK, 0, &dt)
-#endif
+#endif // TM_SNAP
                     finalize with
                         nothing;
                     end;
+
+#endif // TM_SNAP_ONLY
             end
         end
 
         _assert(_CEU_TIMEMACHINE_ON == 0);
         _CEU_TIMEMACHINE_ON = 1;
+
+#ifndef TM_SNAP_ONLY
         emit this.io.go_on;
+#endif
 
         par/or do
             finalize with
                 _CEU_TIMEMACHINE_ON = 0;
                 this.time_total = time_now;     // drop future
+#ifdef TM_SNAP_ONLY
+                _snap_drop(time_now);
+#else
                 _queue_drop();
 #ifdef TM_SNAP
                 next_snap = _snap_drop(time_now);
 #endif
+#endif
             end
             await this.go_off;
             TM_AWAIT_SEEK(this);
+#ifndef TM_SNAP_ONLY
             emit this.io.go_off;
+#endif
         with
             var int speed = 0;
                 // initialization avoids valgrind "uninitalized access" below
             event int e_backward;
             var int time_req = _TM_REQ_PAUSE;
             time_now = this.time_total; // start in the end (the current state)
+
+#ifdef TM_SNAP_ONLY
+            _snap_toend();
+#else
             _queue_toend();
+#endif
 
             var Fps fps;
 
@@ -164,6 +188,21 @@ do
                             if time_req == _TM_REQ_PAUSE then
                                 break;  // already there
                             end
+                            var int dt = 0;
+
+#ifdef TM_SNAP_ONLY
+                            var u32 time = _snap_get();
+                            if time == 0 then
+                                break;
+                            else/if time > time_req then
+                                _snap_unget();
+                                break;
+                            end
+                            dt = time - time_now;
+                            time_now = time;
+
+#else   // TM_SNAP_ONLY
+
                             var _tceu_queue&? qu;
                             finalize
                                 qu = _queue_get();
@@ -174,12 +213,12 @@ do
                                 break;
                             end
                             this.ticking = true;
-                            //_assert(qu != null);
+
                             if qu.evt == _CEU_IN__WCLOCK then
 #ifdef TM_QUEUE_WCLOCK_REUSE
-                                var int dt = (1000/_CEU_FPS);
+                                dt = (1000/_CEU_FPS);
 #else
-                                var int dt = ((_tceu_queue_dt*)&qu):dt;
+                                dt = ((_tceu_queue_dt*)&qu):dt;
 #endif
                                 _assert(dt >= 0);
                                 if time_now+dt > time_req then
@@ -188,8 +227,19 @@ do
                                     break;  // stop before this emission
                                 end
                                 time_now = time_now + dt;
+                                this.locked = true;
+                                async(dt) do
+                                    emit (dt)ms;
+                                    emit TM_INPUT_DT => dt;
+                                end
+                                this.locked = false;
+                            else
+                                emit io.go_queue => &qu;
+                            end
+#endif  // TM_SNAP_ONLY
 
-                                if speed != 0 then
+                            if speed != 0 then
+                                if dt > 0 then
                                     var int awt;
                                     if speed > 0 then
                                         awt = dt/speed;
@@ -210,25 +260,16 @@ do
 #endif
                                 end
 
-                                this.locked = true;
-                                async(dt) do
-                                    emit (dt)ms;
-                                    emit TM_INPUT_DT => dt;
-                                end
-                                this.locked = false;
-                            else
-                                emit io.go_queue => &qu;
-                            end
 #ifdef TM_INPUT_REDRAW
-                            if speed != 0 then
                                 this.locked = true;
                                 emit fps.go => time_now;
                                 async do
                                     emit TM_INPUT_REDRAW;
                                 end
                                 this.locked = false;
-                            end
 #endif
+                            end
+
                             this.ticking = false;
                             emit this.ok_tick;
                             //prv=get;
@@ -320,6 +361,8 @@ do
         end
     end
 
+#ifndef TM_SNAP_ONLY
+
     native @plain _tceu_queue;
     native/pre do
         typedef struct {
@@ -348,6 +391,7 @@ do
 #endif
         } tceu_queue_state;
     end
+
     native do
         tceu_queue_state QUEUE = {
             {}
@@ -517,8 +561,13 @@ do
             }
             printf("\n==>%d\n", DT);
         }
+    end
 
-        /**********************************************************************/
+#endif  // TM_SNAP_ONLY
+
+        /* ***************************************************************** */
+
+    native do
 
 #ifndef TM_SNAP
         #define TM_SNAP_N  1
@@ -527,21 +576,28 @@ do
         typedef struct {
             CEU_App data;
             u32     time;
+#ifndef TM_SNAP_ONLY
             u32     queue;
+#endif
         } tceu_snap;
 
         typedef struct {
             tceu_snap buf[TM_SNAP_N];
             int       put;
             char*     data;
+#ifdef TM_SNAP_ONLY
+            int       get;
+#endif
         } tceu_snap_state;
 
-        tceu_snap_state SNAP = { {}, 0, NULL };
+        tceu_snap_state SNAP;
 
         void snap_put (u32 time) {
             assert(SNAP.put < TM_SNAP_N);
             SNAP.buf[SNAP.put].data  = *((CEU_App*)SNAP.data);
+#ifndef TM_SNAP_ONLY
             SNAP.buf[SNAP.put].queue = QUEUE.put_old;
+#endif
             SNAP.buf[SNAP.put].time  = time;
             SNAP.put++;
         }
@@ -564,9 +620,13 @@ do
             for (i=SNAP.put-1; i>=0; i--) {
                 if (SNAP.buf[i].time <= time) {
                     *((CEU_App*)SNAP.data) = SNAP.buf[i].data;
+#ifdef TM_SNAP_ONLY
+                    SNAP.get = i+1;
+#else
                     QUEUE.get = SNAP.buf[i].queue;
 #ifdef TM_QUEUE_WCLOCK_REUSE
                     QUEUE.get_n = 0;
+#endif
 #endif
                     return SNAP.buf[i].time;
                 }
@@ -575,9 +635,31 @@ do
             return 0;
         }
 
+#ifdef TM_SNAP_ONLY
+        u32 snap_get (void) {
+            if (SNAP.get == SNAP.put) {
+                return 0;
+            } else {
+                tceu_snap* s = &SNAP.buf[SNAP.get];
+                *((CEU_App*)SNAP.data) = s->data;
+                SNAP.get++;
+                return s->time;
+            }
+        }
+        void snap_unget (void) {
+            SNAP.get--;
+        }
+        void snap_toend (void) {
+            SNAP.get = SNAP.put;
+        }
+#endif
+
         void snap_init (char* data) {
             SNAP.data = data;
             SNAP.put  = 0;
+#ifdef TM_SNAP_ONLY
+            SNAP.get  = 0;
+#endif
             snap_put(0);
         }
     end
