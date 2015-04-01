@@ -47,8 +47,13 @@ end
 #   endif
 #endif
 
-#if defined(TM_SNAP) && defined(TM_DIFF)
-#   error "TM_SNAP and TM_DIFF are incompatible"
+#ifdef TM_DIFF
+#   ifdef TM_SNAP
+#       error "TM_SNAP and TM_DIFF are incompatible"
+#   endif
+#   ifdef TM_QUEUE
+#       error "TM_SNAP and TM_QUEUE are incompatible"
+#   endif
 #endif
 
 #ifdef TM_QUEUE
@@ -121,7 +126,14 @@ do
         CEU_App CEU_APP_0;      /* saves application state-0 */
     end
     _CEU_APP_0 = *((CEU_App*)&this.app);
+#ifdef TM_QUEUE
     _queue_set(0);
+#else
+    _diff_init((u8*)&this.app)
+        finalize with
+            nothing;    // app is supposed to live longer than TM
+        end;
+#endif
 #endif
 
     loop do
@@ -135,7 +147,7 @@ do
 */
                 this.time_total = this.time_total + dt;
                 _assert(dt >= 0);
-#ifdef TM_QUEUE
+#if   defined TM_QUEUE
 
 #ifdef TM_SNAP
                 var u32 brk_time = 0;
@@ -151,7 +163,7 @@ do
                         nothing;
                     end;
 
-#else   // TM_QUEUE
+#elif defined TM_SNAP
 
                 _snap_put(this.time_total);
 /*
@@ -165,7 +177,10 @@ do
                 end
 */
 
-#endif // TM_QUEUE
+#else   // TM_DIFF
+                _diff_put(this.time_total);
+
+#endif
             end
         end
 
@@ -180,13 +195,15 @@ do
             finalize with
                 _CEU_TIMEMACHINE_ON = 0;
                 this.time_total = time_now;     // drop future
-#ifdef TM_QUEUE
+#if   defined TM_QUEUE
                 _queue_drop();
 #ifdef TM_SNAP
                 next_snap = _snap_drop(time_now);
 #endif
-#else
+#elif defined TM_SNAP
                 _snap_drop(time_now);
+#else   // TM_DIFF
+                _diff_drop();
 #endif
             end
             await this.go_off;
@@ -201,10 +218,12 @@ do
             var int time_req = _TM_REQ_PAUSE;
             time_now = this.time_total; // start in the end (the current state)
 
-#ifdef TM_QUEUE
+#if   defined TM_QUEUE
             _queue_toend();
-#else
+#elif defined TM_SNAP
             _snap_toend();
+#else   // TM_DIFF
+            _diff_toend();
 #endif
 
             var Fps fps;
@@ -216,12 +235,14 @@ do
                                     // avoid conflict w/ ongoing time_req
                         TM_AWAIT_SEEK(this);
                         time_req = tmp;
-#ifdef TM_SNAP
+#if   defined TM_SNAP
                         this.time_now = _snap_set(time_req); // calls queue_set
-#else
+#elif defined TM_QUEUE
                         *((_CEU_App*)&app) = _CEU_APP_0;
                         _queue_set(0);
                         this.time_now = 0;
+#else
+                        this.time_now = _diff_set(time_req);
 #endif
                         speed = 0;
                         this.seeking = true;
@@ -251,7 +272,7 @@ do
                             end
                             var int dt = 0;
 
-#ifdef TM_QUEUE
+#if   defined TM_QUEUE
 
                             var _tceu_queue&? qu;
                             finalize
@@ -287,7 +308,7 @@ do
                                 emit io.go_queue => &qu;
                             end
 
-#else   // TM_QUEUE
+#elif defined TM_SNAP
 
                             var u32 time = _snap_get();
                             if time == 0 then
@@ -299,7 +320,19 @@ do
                             dt = time - time_now;
                             time_now = time;
 
-#endif  // TM_QUEUE
+#else   // TM_DIFF
+
+                            var u32 time = _diff_get();
+                            if time == 0 then
+                                break;
+                            else/if time > time_req then
+                                _diff_unget();
+                                break;
+                            end
+                            dt = time - time_now;
+                            time_now = time;
+
+#endif  // TM_QUEUE/TM_SNAP/TM_DIFF
 
                             if speed != 0 then
                                 if dt > 0 then
@@ -657,16 +690,14 @@ do
 #endif
         } tceu_snap_state;
 
-    #define TM_BUF(v) v
-
         tceu_snap_state SNAP;
 
         void snap_put (u32 time) {
             assert(SNAP.put < TM_SNAP_N);
-            TM_BUF(SNAP.buf[SNAP.put]).time = time;
-            TM_BUF(SNAP.buf[SNAP.put]).data = *((CEU_App*)SNAP.data);
+            SNAP.buf[SNAP.put].time = time;
+            SNAP.buf[SNAP.put].data = *((CEU_App*)SNAP.data);
 #ifdef TM_QUEUE
-            TM_BUF(SNAP.buf[SNAP.put]).queue = QUEUE.put_old;
+            SNAP.buf[SNAP.put].queue = QUEUE.put_old;
 #endif
             SNAP.put++;
         }
@@ -674,13 +705,13 @@ do
         u32 snap_drop (u32 time) {
             u32 i;
             for (i=0; i<SNAP.put; i++) {
-                if (TM_BUF(SNAP.buf[i]).time > time) {
+                if (SNAP.buf[i].time > time) {
                     SNAP.put = i;
-                    return TM_BUF(SNAP.buf[i]).time;
+                    return SNAP.buf[i].time;
                 }
             }
 #ifdef TM_QUEUE
-            return TM_BUF(SNAP.buf[SNAP.put-1]).time + TM_SNAP_MS;
+            return SNAP.buf[SNAP.put-1].time + TM_SNAP_MS;
 #else
             return 0;   /* return value is ignored anyways */
 #endif
@@ -692,15 +723,15 @@ do
                 assert(i > 0);  /* first put happens on init */
                                 /* i==0 must be found below */
                 i--;
-                if (TM_BUF(SNAP.buf[i]).time <= time) {
-                    *((CEU_App*)SNAP.data) = TM_BUF(SNAP.buf[i]).data;
-#ifndef TM_QUEUE
+                if (SNAP.buf[i].time <= time) {
+                    *((CEU_App*)SNAP.data) = SNAP.buf[i].data;
+#ifdef TM_QUEUE
+                    queue_set(SNAP.buf[i].queue);
+#else
                     SNAP.get = i+1;
                         /* TODO: estou desconfiado que deveria ser get=i */
-#else
-                    queue_set(TM_BUF(SNAP.buf[i]).queue);
 #endif
-                    return TM_BUF(SNAP.buf[i]).time;
+                    return SNAP.buf[i].time;
                 }
             }
         }
@@ -710,7 +741,7 @@ do
             if (SNAP.get == SNAP.put) {
                 return 0;
             } else {
-                tceu_snap* s = &TM_BUF(SNAP.buf[SNAP.get]);
+                tceu_snap* s = &SNAP.buf[SNAP.get];
                 *((CEU_App*)SNAP.data) = s->data;
                 SNAP.get++;
                 return s->time;
@@ -764,8 +795,8 @@ do
             u8        buf[TM_DIFF_N];
         } tceu_diff_state;
 
-        #define TM_BUF(v)    (*((tceu_diffs*)&(v)))
-        #define TM_BUF_SZ(n) (sizeof(tceu_diffs) + (n)*sizeof(tceu_diff))
+        #define TM_DIFF_BUF(i)  (*((tceu_diffs*)&(DIFF.buf[i])))
+        #define TM_BUF_SZ(n)    (sizeof(tceu_diffs) + (n)*sizeof(tceu_diff))
 
         tceu_diff_state DIFF;
 
@@ -776,14 +807,14 @@ printf(">>> DUMP\n");
             while (i < DIFF.put) {
                 int n;
 printf("====== %d\n", i);
-                for (n=0; n<TM_BUF(DIFF.buf[i]).n; n++) {
-                    u32 off = TM_BUF(DIFF.buf[i]).vec[n].offset;
-                    u8  old = TM_BUF(DIFF.buf[i]).vec[n].from;
-                    u8  to  = TM_BUF(DIFF.buf[i]).vec[n].to;
+                for (n=0; n<TM_DIFF_BUF(i).n; n++) {
+                    u32 off = TM_DIFF_BUF(i).vec[n].offset;
+                    u8  old = TM_DIFF_BUF(i).vec[n].from;
+                    u8  to  = TM_DIFF_BUF(i).vec[n].to;
                     printf("|[%d]%d:%d", off,old,to);
                 }
 printf("\n");
-                i += TM_BUF_SZ(TM_BUF(DIFF.buf[i]).n);
+                i += TM_BUF_SZ(TM_DIFF_BUF(i).n);
             }
 printf("<<< DUMP\n");
         }
@@ -791,9 +822,8 @@ printf("<<< DUMP\n");
 
         void diff_put (u32 time) {
             assert(DIFF.put < TM_DIFF_N);
-            TM_BUF(DIFF.buf[DIFF.put]).time = time;
-
             DIFF.cur = DIFF.put;
+            TM_DIFF_BUF(DIFF.put).time = time;
 
             u32 i;
             u32 n = 0;
@@ -801,79 +831,81 @@ printf("<<< DUMP\n");
                 u8 old = ((u8*)&DIFF.data_old)[i];
                 u8 new = DIFF.data[i];
                 if (old != new) {
-                    assert(DIFF.put+TM_BUF_SZ(n) < TM_SNAP_N);
-                    TM_BUF(DIFF.buf[DIFF.put]).vec[n].offset = i;
-                    TM_BUF(DIFF.buf[DIFF.put]).vec[n].from   = old;
-                    TM_BUF(DIFF.buf[DIFF.put]).vec[n].to     = new;
+                    assert(DIFF.put+TM_BUF_SZ(n) < TM_DIFF_N);
+                    TM_DIFF_BUF(DIFF.put).vec[n].offset = i;
+                    TM_DIFF_BUF(DIFF.put).vec[n].from   = old;
+                    TM_DIFF_BUF(DIFF.put).vec[n].to     = new;
                     n++;
                     assert(n < 65536);
                 }
             }
             DIFF.data_old = *((CEU_App*)DIFF.data);
 
-            TM_BUF(DIFF.buf[DIFF.put]).n = n;
+            TM_DIFF_BUF(DIFF.put).n = n;
             DIFF.put += TM_BUF_SZ(n);
-            if (DIFF.put < TM_SNAP_N) {
-                TM_BUF(DIFF.buf[DIFF.put]).prv = TM_BUF_SZ(n);
+            if (DIFF.put < TM_DIFF_N) {
+                TM_DIFF_BUF(DIFF.put).prv = TM_BUF_SZ(n);
                     /* set backlink for the next put */
             } else {
                 /* otherwise next put will fail anyways */
             }
         }
 
-        u32 diff_drop (u32 time) {
-            u32 i;
-            for (i=0; i<DIFF.put; i++) {
-                if (TM_BUF(DIFF.buf[i]).time > time) {
-                    DIFF.put = i;
-                    return TM_BUF(DIFF.buf[i]).time;
-                }
-            }
-            return TM_BUF(DIFF.buf[DIFF.put-1]).time + TM_SNAP_MS;
+        void diff_drop (void) {
+            DIFF.put = DIFF.cur + TM_BUF_SZ(TM_DIFF_BUF(DIFF.cur).n);
         }
 
         u32 diff_set (u32 time) {
+            /* time=0 is outside DIFF.buf */
+            if (time == 0) {
+                DIFF.cur = 0;
+                DIFF.get = 0;
+                *((CEU_App*)DIFF.data) = CEU_APP_0;
+                return 0;
+            }
+
             u32 i = DIFF.cur;
             *((CEU_App*)DIFF.data) = DIFF.data_old;
-                /* TODO: drop non-dt events between two dts? */
-            u32 now = TM_BUF(DIFF.buf[i]).time;
+                /* TODO: droping non-dt events between two dts? */
+            u32 now = TM_DIFF_BUF(i).time;
             if (now < time) {
                 while (1) {
-                    i += TM_BUF_SZ(TM_BUF(DIFF.buf[i]).n);
-                    assert(i < TM_SNAP_N);
+                    i += TM_BUF_SZ(TM_DIFF_BUF(i).n);
+                    assert(i < TM_DIFF_N);
                     {
                         int n = 0;
-                        for (n=0; n<TM_BUF(DIFF.buf[i]).n; n++) {
-                            u32 off = TM_BUF(DIFF.buf[i]).vec[n].offset;
-                            u8  new = TM_BUF(DIFF.buf[i]).vec[n].to;
+                        for (n=0; n<TM_DIFF_BUF(i).n; n++) {
+                            u32 off = TM_DIFF_BUF(i).vec[n].offset;
+                            u8  new = TM_DIFF_BUF(i).vec[n].to;
                             DIFF.data[off] = new;
                         }
                     }
                     DIFF.cur = i;
                     DIFF.get = i;
-                    if (TM_BUF(DIFF.buf[i]).time == time) {
+                    if (TM_DIFF_BUF(i).time == time) {
                         break;
                     }
-                    assert(TM_BUF(DIFF.buf[i]).time < time);
+                    assert(TM_DIFF_BUF(i).time < time);
                 }
             } else if (now > time) {
                 while (1) {
                     {
                         int n = 0;
-                        for (n=0; n<TM_BUF(DIFF.buf[i]).n; n++) {
-                            u32 off = TM_BUF(DIFF.buf[i]).vec[n].offset;
-                            u8  old = TM_BUF(DIFF.buf[i]).vec[n].from;
+                        for (n=0; n<TM_DIFF_BUF(i).n; n++) {
+                            u32 off = TM_DIFF_BUF(i).vec[n].offset;
+                            u8  old = TM_DIFF_BUF(i).vec[n].from;
                             DIFF.data[off] = old;
                         }
                     }
-                    i -= TM_BUF(DIFF.buf[i]).prv;
-                    assert(i >= 0);
+                    assert(TM_DIFF_BUF(i).prv > 0);
+                    assert(i >= TM_DIFF_BUF(i).prv);
+                    i -= TM_DIFF_BUF(i).prv;
                     DIFF.cur = i;
                     DIFF.get = i;
-                    if (TM_BUF(DIFF.buf[i]).time == time) {
+                    if (TM_DIFF_BUF(i).time == time) {
                         break;
                     }
-                    assert(TM_BUF(DIFF.buf[i]).time > time);
+                    assert(TM_DIFF_BUF(i).time > time);
                 }
             }
             return time;
@@ -883,27 +915,21 @@ printf("<<< DUMP\n");
             if (DIFF.get == DIFF.put) {
                 return 0;
             } else {
-                tceu_diffs* s = &TM_BUF(DIFF.buf[DIFF.get]);
-                if (DIFF.get > 0) {
-                    int n = 0;
-                    for (n=0; n<TM_BUF(DIFF.buf[DIFF.get]).n; n++) {
-                        u32 off = TM_BUF(DIFF.buf[DIFF.get]).vec[n].offset;
-                        u8  new = TM_BUF(DIFF.buf[DIFF.get]).vec[n].to;
-                        DIFF.data[off] = new;
-                    }
-                    DIFF.cur = DIFF.get;
-                    DIFF.get += TM_BUF_SZ(n);
-                } else {
-                    *((CEU_App*)DIFF.data) = s->data;
-                    DIFF.cur = DIFF.get;
-                    DIFF.get += sizeof(CEU_App);
+                tceu_diffs* s = &TM_DIFF_BUF(DIFF.get);
+                int n = 0;
+                for (n=0; n<TM_DIFF_BUF(DIFF.get).n; n++) {
+                    u32 off = TM_DIFF_BUF(DIFF.get).vec[n].offset;
+                    u8  new = TM_DIFF_BUF(DIFF.get).vec[n].to;
+                    DIFF.data[off] = new;
                 }
+                DIFF.cur = DIFF.get;
+                DIFF.get += TM_BUF_SZ(n);
                 return s->time;
             }
         }
 
         void diff_unget (void) {
-            DIFF.get -= TM_BUF(DIFF.buf[DIFF.get]).prv;
+            DIFF.get -= TM_DIFF_BUF(DIFF.get).prv;
         }
 
         void diff_toend (void) {
@@ -914,7 +940,7 @@ printf("<<< DUMP\n");
             DIFF.data = data;
             DIFF.put  = 0;
             DIFF.get  = 0;
-            diff_put(0);
+            DIFF.data_old = CEU_APP_0;
         }
     end
 
