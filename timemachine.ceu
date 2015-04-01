@@ -127,7 +127,7 @@ do
     end
     _CEU_APP_0 = *((CEU_App*)&this.app);
 #ifdef TM_QUEUE
-    _queue_set(0);
+    _queue_seek(0);
 #else
     _diff_init((u8*)&this.app)
         finalize with
@@ -236,13 +236,13 @@ do
                         TM_AWAIT_SEEK(this);
                         time_req = tmp;
 #if   defined TM_SNAP
-                        this.time_now = _snap_set(time_req); // calls queue_set
+                        this.time_now = _snap_seek(time_req); // calls queue_seek
 #elif defined TM_QUEUE
                         *((_CEU_App*)&app) = _CEU_APP_0;
-                        _queue_set(0);
+                        _queue_seek(0);
                         this.time_now = 0;
 #else
-                        this.time_now = _diff_set(time_req);
+                        this.time_now = _diff_seek(time_req);
 #endif
                         speed = 0;
                         this.seeking = true;
@@ -606,7 +606,7 @@ do
 #endif
         }
 
-        void queue_set (u32 nxt) {
+        void queue_seek (u32 nxt) {
             QUEUE.nxt = nxt;
 #ifdef TM_QUEUE_WCLOCK_REUSE
             QUEUE.nxt_n = 0;
@@ -688,7 +688,7 @@ do
 #endif
         }
 
-        u32 snap_set (u32 time) {
+        u32 snap_seek (u32 time) {
             u32 i = SNAP.put;
             while (1) {
                 assert(i > 0);  /* first put happens on init */
@@ -697,7 +697,7 @@ do
                 if (SNAP.buf[i].time <= time) {
                     *((CEU_App*)SNAP.data) = SNAP.buf[i].data;
 #ifdef TM_QUEUE
-                    queue_set(SNAP.buf[i].queue);
+                    queue_seek(SNAP.buf[i].queue);
 #else
                     SNAP.nxt = i+1;
                         /* TODO: estou desconfiado que deveria ser nxt=i */
@@ -826,7 +826,7 @@ printf("<<< DUMP\n");
             DIFF.put = DIFF.cur + TM_BUF_SZ(TM_DIFF_BUF(DIFF.cur).n);
         }
 
-        u32 diff_set (u32 time) {
+        u32 diff_seek (u32 time) {
             /* time=0 is outside DIFF.buf */
             if (time == 0) {
                 DIFF.cur = 0;
