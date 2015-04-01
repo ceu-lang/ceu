@@ -276,7 +276,7 @@ do
 
                             var _tceu_queue&? qu;
                             finalize
-                                qu = _queue_get();
+                                qu = _queue_get(time_now, time_req);
                             with
                                 nothing;
                             end
@@ -292,11 +292,6 @@ do
                                 dt = ((_tceu_queue_dt*)&qu):dt;
 #endif
                                 _assert(dt >= 0);
-                                if time_now+dt > time_req then
-                                    _queue_unget();  // undo get
-                                    this.ticking = false;  // (no wait since =true)
-                                    break;  // stop before this emission
-                                end
                                 time_now = time_now + dt;
                                 this.locked = true;
                                 async(dt) do
@@ -310,11 +305,8 @@ do
 
 #elif defined TM_SNAP
 
-                            var u32 time = _snap_get();
+                            var u32 time = _snap_get(time_now, time_req);
                             if time == 0 then
-                                break;
-                            else/if time > time_req then
-                                _snap_unget();
                                 break;
                             end
                             dt = time - time_now;
@@ -322,11 +314,8 @@ do
 
 #else   // TM_DIFF
 
-                            var u32 time = _diff_get();
+                            var u32 time = _diff_get(time_now, time_req);
                             if time == 0 then
-                                break;
-                            else/if time > time_req then
-                                _diff_unget();
                                 break;
                             end
                             dt = time - time_now;
@@ -478,7 +467,6 @@ do
             byte buf[TM_QUEUE_N];
             u32  tot;
             u32  get;
-            u32  unget;
             u32  put;
             u32  put_old;
 #ifdef TM_QUEUE_WCLOCK_REUSE
@@ -492,7 +480,6 @@ do
             {}
             , 0 /*u32  QUEUE_tot     = 0;*/
             , 0 /*u32  QUEUE_get     = 0;*/
-            , 0 /*u32  QUEUE_unget   = 0;*/
             , 0 /*u32  QUEUE_put     = 0;*/
 #ifdef TM_QUEUE_WCLOCK_REUSE
             , 0 /*u32  QUEUE_put_old = 0;*/
@@ -557,22 +544,27 @@ do
             return 1;
         }
 
-        tceu_queue* queue_get (void) {
+        tceu_queue* queue_get (u32 now, u32 upto) {
             if (QUEUE.get == QUEUE.put) {
                 return NULL;
             } else {
                 assert(QUEUE.tot > 0);
-                QUEUE.unget = QUEUE.get;
                 tceu_queue* qu = (tceu_queue*) &QUEUE.buf[QUEUE.get];
                 if (qu->evt == CEU_IN__WCLOCK) {
-#ifdef TM_QUEUE_WCLOCK_REUSE
                     tceu_queue_dt* qu = (tceu_queue_dt*) &QUEUE.buf[QUEUE.get];
+#ifdef TM_QUEUE_WCLOCK_REUSE
+                    if (now+(1000/CEU_FPS) > upto) {
+                        return NULL;    /* do not advance */
+                    }
                     QUEUE.get_n++;
                     if (QUEUE.get_n == qu->n) {     /* reached last DT */
                         QUEUE.get_n = 0;
                         QUEUE.get += sizeof(tceu_queue_dt);
                     }
 #else
+                    if (now+qu->dt > upto) {
+                        return NULL;    /* do not advance */
+                    }
                     QUEUE.get += sizeof(tceu_queue_dt);
 #endif
                 } else {
@@ -583,26 +575,6 @@ do
                 }
                 return qu;
             }
-        }
-
-        void queue_unget (void) {
-#ifdef TM_QUEUE_WCLOCK_REUSE
-            if (QUEUE.get_n > 0) {
-                tceu_queue_dt* qu = (tceu_queue_dt*) &QUEUE.buf[QUEUE.get];
-                assert(qu->evt == CEU_IN__WCLOCK);
-                QUEUE.get_n--;                  /* unget */
-            } else {
-                QUEUE.get = QUEUE.unget;
-
-                /* jump to last DT in a WCLOCK slot */
-                tceu_queue_dt* qu = (tceu_queue_dt*) &QUEUE.buf[QUEUE.get];
-                if (qu->evt == CEU_IN__WCLOCK) {
-                    QUEUE.get_n = qu->n - 1;
-                }
-            }
-#else
-            QUEUE.get = QUEUE.unget;
-#endif
         }
 
         void queue_drop (void) {
@@ -623,12 +595,11 @@ do
                 = QUEUE.put_old
 #endif
                     = QUEUE.tot
-                        = QUEUE.unget
                             = QUEUE.get;
         }
 
         void queue_toend (void) {
-            QUEUE.get = QUEUE.unget = QUEUE.put;
+            QUEUE.get = QUEUE.put;
 #ifdef TM_QUEUE_WCLOCK_REUSE
             QUEUE.put_old = QUEUE.put;
             QUEUE.get_n = 0;
@@ -737,18 +708,18 @@ do
         }
 
 #ifndef TM_QUEUE
-        u32 snap_get (void) {
+        u32 snap_get (u32 now, u32 upto) {
             if (SNAP.get == SNAP.put) {
                 return 0;
             } else {
                 tceu_snap* s = &SNAP.buf[SNAP.get];
+                if (s->time > upto) {
+                    return 0;   /* do not advance */
+                }
                 *((CEU_App*)SNAP.data) = s->data;
                 SNAP.get++;
                 return s->time;
             }
-        }
-        void snap_unget (void) {
-            SNAP.get--;
         }
         void snap_toend (void) {
             SNAP.get = SNAP.put;
@@ -911,11 +882,14 @@ printf("<<< DUMP\n");
             return time;
         }
 
-        u32 diff_get (void) {
+        u32 diff_get (u32 now, u32 upto) {
             if (DIFF.get == DIFF.put) {
                 return 0;
             } else {
                 tceu_diffs* s = &TM_DIFF_BUF(DIFF.get);
+                if (s->time > upto) {
+                    return 0;   /* do not advance */
+                }
                 int n = 0;
                 for (n=0; n<TM_DIFF_BUF(DIFF.get).n; n++) {
                     u32 off = TM_DIFF_BUF(DIFF.get).vec[n].offset;
@@ -926,10 +900,6 @@ printf("<<< DUMP\n");
                 DIFF.get += TM_BUF_SZ(n);
                 return s->time;
             }
-        }
-
-        void diff_unget (void) {
-            DIFF.get -= TM_DIFF_BUF(DIFF.get).prv;
         }
 
         void diff_toend (void) {
