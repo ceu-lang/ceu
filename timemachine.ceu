@@ -700,7 +700,6 @@ do
                     queue_seek(SNAP.buf[i].queue);
 #else
                     SNAP.nxt = i+1;
-                        /* TODO: estou desconfiado que deveria ser nxt=i */
 #endif
                     return SNAP.buf[i].time;
                 }
@@ -758,7 +757,6 @@ do
             u32       put;
             u8*       data;
             CEU_App   data_old;
-            u32       cur;
             u32       nxt;
             u8        buf[TM_DIFF_N];
         } tceu_diff_state;
@@ -789,10 +787,7 @@ printf("<<< DUMP\n");
 */
 
         void diff_put (u32 time) {
-            assert(DIFF.put < TM_DIFF_N);
-            DIFF.cur = DIFF.put;
-            TM_DIFF_BUF(DIFF.put).time = time;
-
+            /* fill "put" */
             u32 i;
             u32 n = 0;
             for (i=0; i<sizeof(CEU_App); i++) {
@@ -807,84 +802,95 @@ printf("<<< DUMP\n");
                     assert(n < 65536);
                 }
             }
+            TM_DIFF_BUF(DIFF.put).time = time;
+            TM_DIFF_BUF(DIFF.put).n = n;
+
+            /* replace with new current */
             DIFF.data_old = *((CEU_App*)DIFF.data);
 
-            TM_DIFF_BUF(DIFF.put).n = n;
+            /* update "put" */
             DIFF.put += TM_BUF_SZ(n);
-            if (DIFF.put < TM_DIFF_N) {
-                TM_DIFF_BUF(DIFF.put).prv = TM_BUF_SZ(n);
-                    /* set backlink for the next put */
-            } else {
-                /* otherwise next put will fail anyways */
-            }
+
+            /* "data_old" holds the data previous to "nxt" */
+            DIFF.nxt = DIFF.put;
+
+            /* set backlink for the next put */
+            assert(DIFF.put+TM_BUF_SZ(0) < TM_DIFF_N);
+            TM_DIFF_BUF(DIFF.put).prv = TM_BUF_SZ(n);
         }
 
         void diff_drop (void) {
-            DIFF.put = DIFF.cur + TM_BUF_SZ(TM_DIFF_BUF(DIFF.cur).n);
+            DIFF.put = DIFF.nxt;
         }
 
         u32 diff_seek (u32 time) {
             /* time=0 is outside DIFF.buf */
             if (time == 0) {
-                DIFF.cur = 0;
-                DIFF.nxt = 0;
                 *((CEU_App*)DIFF.data) = CEU_APP_0;
+                DIFF.nxt               = 0;
                 DIFF.data_old          = CEU_APP_0;
                 return 0;
             }
 
-            u32 i = DIFF.cur;
-            *((CEU_App*)DIFF.data) = DIFF.data_old;
+            /* "data_old" holds the data previous to "nxt" */
+
+            u32 cur = DIFF.nxt - TM_DIFF_BUF(DIFF.nxt).prv;
                 /* TODO: droping non-dt events between two dts? */
-            u32 now = TM_DIFF_BUF(i).time;
-            if (now < time) {
-printf("MENOR %d\n", i);
+                /* (using data_old below) */
+
+            u32 now = TM_DIFF_BUF(cur).time;
+            if (now < time) {           /* lower --> higher */
+printf("MENOR %d\n", cur);
                 while (1) {
-                    i += TM_BUF_SZ(TM_DIFF_BUF(i).n);
-                    assert(i < TM_DIFF_N);
-                    if (TM_DIFF_BUF(i).time > time) {
+                    assert(cur < TM_DIFF_N);
+printf("REQ=%d  CUR=%d\n", time, TM_DIFF_BUF(cur).time);
+                    if (TM_DIFF_BUF(cur).time > time) {
                         break;  /* do not go over "time" */
                     }
                     {
                         int n = 0;
-                        for (n=0; n<TM_DIFF_BUF(i).n; n++) {
-                            u32 off = TM_DIFF_BUF(i).vec[n].offset;
-                            u8  new = TM_DIFF_BUF(i).vec[n].to;
-                            DIFF.data[off] = new;
+                        for (n=0; n<TM_DIFF_BUF(cur).n; n++) {
+                            u32 off = TM_DIFF_BUF(cur).vec[n].offset;
+                            u8  old = TM_DIFF_BUF(cur).vec[n].from;
+                            u8  new = TM_DIFF_BUF(cur).vec[n].to;
+                            assert(((u8*)&DIFF.data_old)[off] == old);
+                            ((u8*)&DIFF.data_old)[off] = new;
                         }
                     }
-                    DIFF.cur = i;
-                    DIFF.nxt = i;
-                    if (TM_DIFF_BUF(i).time == time) {
+                    cur += TM_BUF_SZ(TM_DIFF_BUF(cur).n);
+                    DIFF.nxt = cur;
+printf("req=%d  cur=%d\n", time, TM_DIFF_BUF(cur).time);
+                    if (TM_DIFF_BUF(cur).time == time) {
                         break;
                     }
-                    assert(TM_DIFF_BUF(i).time < time);
                 }
-            } else if (now > time) {
+            } else if (now > time) {    /* lower <--- higher */
                 while (1) {
-                    u32 prv = i - TM_DIFF_BUF(i).prv;
+                    u32 prv = cur - TM_DIFF_BUF(cur).prv;
                     if (TM_DIFF_BUF(prv).time < time) {
                         break;  /* do not go under "time" */
                     }
                     {
                         int n = 0;
-                        for (n=0; n<TM_DIFF_BUF(i).n; n++) {
-                            u32 off = TM_DIFF_BUF(i).vec[n].offset;
-                            u8  old = TM_DIFF_BUF(i).vec[n].from;
-                            DIFF.data[off] = old;
+                        for (n=0; n<TM_DIFF_BUF(cur).n; n++) {
+                            u32 off = TM_DIFF_BUF(cur).vec[n].offset;
+                            u8  old = TM_DIFF_BUF(cur).vec[n].from;
+                            u8  new = TM_DIFF_BUF(cur).vec[n].to;
+                            assert(((u8*)&DIFF.data_old)[off] == new);
+                            ((u8*)&DIFF.data_old)[off] = old;
                         }
                     }
-                    assert(TM_DIFF_BUF(i).prv > 0);
-                    assert(i >= TM_DIFF_BUF(i).prv);
-                    i = prv;
-                    DIFF.cur = i;
-                    DIFF.nxt = i;
-                    if (TM_DIFF_BUF(i).time == time) {
+                    assert(TM_DIFF_BUF(cur).prv > 0);
+                    assert(cur >= TM_DIFF_BUF(cur).prv);
+                    cur = prv;
+                    DIFF.nxt = cur;
+                    if (TM_DIFF_BUF(cur).time == time) {
                         break;
                     }
-                    assert(TM_DIFF_BUF(i).time > time);
+                    assert(TM_DIFF_BUF(cur).time > time);
                 }
             }
+            *((CEU_App*)DIFF.data) = DIFF.data_old;
             return time;
         }
 
@@ -902,7 +908,6 @@ printf("MENOR %d\n", i);
                     u8  new = TM_DIFF_BUF(DIFF.nxt).vec[n].to;
                     DIFF.data[off] = new;
                 }
-                DIFF.cur = DIFF.nxt;
                 DIFF.nxt += TM_BUF_SZ(n);
                 return s->time;
             }
