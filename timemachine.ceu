@@ -466,11 +466,11 @@ do
         typedef struct {
             byte buf[TM_QUEUE_N];
             u32  tot;
-            u32  get;
+            u32  nxt;
             u32  put;
             u32  put_old;
 #ifdef TM_QUEUE_WCLOCK_REUSE
-            u8   get_n;
+            u8   nxt_n;
 #endif
         } tceu_queue_state;
     end
@@ -479,11 +479,11 @@ do
         tceu_queue_state QUEUE = {
             {}
             , 0 /*u32  QUEUE_tot     = 0;*/
-            , 0 /*u32  QUEUE_get     = 0;*/
+            , 0 /*u32  QUEUE_nxt     = 0;*/
             , 0 /*u32  QUEUE_put     = 0;*/
 #ifdef TM_QUEUE_WCLOCK_REUSE
             , 0 /*u32  QUEUE_put_old = 0;*/
-            , 0 /*u8   QUEUE_get_n   = 0;*/
+            , 0 /*u8   QUEUE_nxt_n   = 0;*/
 #endif
         };
 
@@ -545,33 +545,33 @@ do
         }
 
         tceu_queue* queue_nxt (u32 now, u32 upto) {
-            if (QUEUE.get == QUEUE.put) {
+            if (QUEUE.nxt == QUEUE.put) {
                 return NULL;
             } else {
                 assert(QUEUE.tot > 0);
-                tceu_queue* qu = (tceu_queue*) &QUEUE.buf[QUEUE.get];
+                tceu_queue* qu = (tceu_queue*) &QUEUE.buf[QUEUE.nxt];
                 if (qu->evt == CEU_IN__WCLOCK) {
-                    tceu_queue_dt* qu = (tceu_queue_dt*) &QUEUE.buf[QUEUE.get];
+                    tceu_queue_dt* qu = (tceu_queue_dt*) &QUEUE.buf[QUEUE.nxt];
 #ifdef TM_QUEUE_WCLOCK_REUSE
                     if (now+(1000/CEU_FPS) > upto) {
                         return NULL;    /* do not advance */
                     }
-                    QUEUE.get_n++;
-                    if (QUEUE.get_n == qu->n) {     /* reached last DT */
-                        QUEUE.get_n = 0;
-                        QUEUE.get += sizeof(tceu_queue_dt);
+                    QUEUE.nxt_n++;
+                    if (QUEUE.nxt_n == qu->n) {     /* reached last DT */
+                        QUEUE.nxt_n = 0;
+                        QUEUE.nxt += sizeof(tceu_queue_dt);
                     }
 #else
                     if (now+qu->dt > upto) {
                         return NULL;    /* do not advance */
                     }
-                    QUEUE.get += sizeof(tceu_queue_dt);
+                    QUEUE.nxt += sizeof(tceu_queue_dt);
 #endif
                 } else {
 #ifdef TM_QUEUE_WCLOCK_REUSE
-                    QUEUE.get_n = 0;
+                    QUEUE.nxt_n = 0;
 #endif
-                    QUEUE.get += sizeof(tceu_queue) + qu->sz;
+                    QUEUE.nxt += sizeof(tceu_queue) + qu->sz;
                 }
                 return qu;
             }
@@ -579,37 +579,37 @@ do
 
         void queue_drop (void) {
 #ifdef TM_QUEUE_WCLOCK_REUSE
-            tceu_queue_dt* qu = (tceu_queue_dt*) &QUEUE.buf[QUEUE.get];
+            tceu_queue_dt* qu = (tceu_queue_dt*) &QUEUE.buf[QUEUE.nxt];
             if (qu->evt == CEU_IN__WCLOCK) {
-                if (QUEUE.get_n == 0) {
+                if (QUEUE.nxt_n == 0) {
                                                         /* drop current slot */
                 } else {
-                    qu->n = QUEUE.get_n;                /* replace with new max */
-                    QUEUE.get += sizeof(tceu_queue_dt); /* keep current slot */
+                    qu->n = QUEUE.nxt_n;                /* replace with new max */
+                    QUEUE.nxt += sizeof(tceu_queue_dt); /* keep current slot */
                 }
             }
-            QUEUE.get_n = 0;
+            QUEUE.nxt_n = 0;
 #endif
             QUEUE.put
 #ifdef TM_QUEUE_WCLOCK_REUSE
                 = QUEUE.put_old
 #endif
                     = QUEUE.tot
-                            = QUEUE.get;
+                            = QUEUE.nxt;
         }
 
         void queue_toend (void) {
-            QUEUE.get = QUEUE.put;
+            QUEUE.nxt = QUEUE.put;
 #ifdef TM_QUEUE_WCLOCK_REUSE
             QUEUE.put_old = QUEUE.put;
-            QUEUE.get_n = 0;
+            QUEUE.nxt_n = 0;
 #endif
         }
 
-        void queue_set (u32 get) {
-            QUEUE.get = get;
+        void queue_set (u32 nxt) {
+            QUEUE.nxt = nxt;
 #ifdef TM_QUEUE_WCLOCK_REUSE
-            QUEUE.get_n = 0;
+            QUEUE.nxt_n = 0;
 #endif
         }
 
@@ -657,7 +657,7 @@ do
             u8*       data;
             tceu_snap buf[TM_SNAP_N];
 #ifndef TM_QUEUE
-            u32       get;
+            u32       nxt;
 #endif
         } tceu_snap_state;
 
@@ -699,8 +699,8 @@ do
 #ifdef TM_QUEUE
                     queue_set(SNAP.buf[i].queue);
 #else
-                    SNAP.get = i+1;
-                        /* TODO: estou desconfiado que deveria ser get=i */
+                    SNAP.nxt = i+1;
+                        /* TODO: estou desconfiado que deveria ser nxt=i */
 #endif
                     return SNAP.buf[i].time;
                 }
@@ -709,20 +709,20 @@ do
 
 #ifndef TM_QUEUE
         u32 snap_nxt (u32 now, u32 upto) {
-            if (SNAP.get == SNAP.put) {
+            if (SNAP.nxt == SNAP.put) {
                 return 0;
             } else {
-                tceu_snap* s = &SNAP.buf[SNAP.get];
+                tceu_snap* s = &SNAP.buf[SNAP.nxt];
                 if (s->time > upto) {
                     return 0;   /* do not advance */
                 }
                 *((CEU_App*)SNAP.data) = s->data;
-                SNAP.get++;
+                SNAP.nxt++;
                 return s->time;
             }
         }
         void snap_toend (void) {
-            SNAP.get = SNAP.put;
+            SNAP.nxt = SNAP.put;
         }
 #endif
 
@@ -730,7 +730,7 @@ do
             SNAP.data = data;
             SNAP.put  = 0;
 #ifndef TM_QUEUE
-            SNAP.get  = 0;
+            SNAP.nxt  = 0;
 #endif
             snap_put(0);
         }
@@ -762,7 +762,7 @@ do
             u8*       data;
             CEU_App   data_old;
             u32       cur;
-            u32       get;
+            u32       nxt;
             u8        buf[TM_DIFF_N];
         } tceu_diff_state;
 
@@ -830,8 +830,9 @@ printf("<<< DUMP\n");
             /* time=0 is outside DIFF.buf */
             if (time == 0) {
                 DIFF.cur = 0;
-                DIFF.get = 0;
+                DIFF.nxt = 0;
                 *((CEU_App*)DIFF.data) = CEU_APP_0;
+                DIFF.data_old          = CEU_APP_0;
                 return 0;
             }
 
@@ -840,6 +841,7 @@ printf("<<< DUMP\n");
                 /* TODO: droping non-dt events between two dts? */
             u32 now = TM_DIFF_BUF(i).time;
             if (now < time) {
+printf("MENOR %d\n", i);
                 while (1) {
                     i += TM_BUF_SZ(TM_DIFF_BUF(i).n);
                     assert(i < TM_DIFF_N);
@@ -855,7 +857,7 @@ printf("<<< DUMP\n");
                         }
                     }
                     DIFF.cur = i;
-                    DIFF.get = i;
+                    DIFF.nxt = i;
                     if (TM_DIFF_BUF(i).time == time) {
                         break;
                     }
@@ -879,7 +881,7 @@ printf("<<< DUMP\n");
                     assert(i >= TM_DIFF_BUF(i).prv);
                     i = prv;
                     DIFF.cur = i;
-                    DIFF.get = i;
+                    DIFF.nxt = i;
                     if (TM_DIFF_BUF(i).time == time) {
                         break;
                     }
@@ -890,33 +892,33 @@ printf("<<< DUMP\n");
         }
 
         u32 diff_nxt (u32 now, u32 upto) {
-            if (DIFF.get == DIFF.put) {
+            if (DIFF.nxt == DIFF.put) {
                 return 0;
             } else {
-                tceu_diffs* s = &TM_DIFF_BUF(DIFF.get);
+                tceu_diffs* s = &TM_DIFF_BUF(DIFF.nxt);
                 if (s->time > upto) {
                     return 0;   /* do not advance */
                 }
                 int n = 0;
-                for (n=0; n<TM_DIFF_BUF(DIFF.get).n; n++) {
-                    u32 off = TM_DIFF_BUF(DIFF.get).vec[n].offset;
-                    u8  new = TM_DIFF_BUF(DIFF.get).vec[n].to;
+                for (n=0; n<TM_DIFF_BUF(DIFF.nxt).n; n++) {
+                    u32 off = TM_DIFF_BUF(DIFF.nxt).vec[n].offset;
+                    u8  new = TM_DIFF_BUF(DIFF.nxt).vec[n].to;
                     DIFF.data[off] = new;
                 }
-                DIFF.cur = DIFF.get;
-                DIFF.get += TM_BUF_SZ(n);
+                DIFF.cur = DIFF.nxt;
+                DIFF.nxt += TM_BUF_SZ(n);
                 return s->time;
             }
         }
 
         void diff_toend (void) {
-            DIFF.get = DIFF.put;
+            DIFF.nxt = DIFF.put;
         }
 
         void diff_init (u8* data) {
             DIFF.data = data;
             DIFF.put  = 0;
-            DIFF.get  = 0;
+            DIFF.nxt  = 0;
             DIFF.data_old = CEU_APP_0;
         }
     end
