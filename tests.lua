@@ -41892,11 +41892,12 @@ input int DT;
 
 ]]..defs..[[
 
-#define TM_INPUT_DT DT
-#define TM_QUEUE_MAX 1000000
+#define TM_INPUT_DT     DT
+#define TM_QUEUE
+#define TM_QUEUE_N      1000000
 /*#define TM_SNAP*/
-#define TM_SNAP_MS 2000
-#define TM_SNAP_N  1000
+#define TM_SNAP_MS      2000
+#define TM_SNAP_N       1000
 
 /*#define TM_QUEUE_WCLOCK_REUSE*/
 native do
@@ -42098,7 +42099,8 @@ input int DT;
 ]]..defs..[[
 
 #define TM_INPUT_DT         DT
-#define TM_QUEUE_MAX        1000000
+#define TM_QUEUE
+#define TM_QUEUE_N          1000000
 /*#define TM_SNAP*/
 #define TM_SNAP_MS          2000
 #define TM_SNAP_N           1000
@@ -42311,11 +42313,12 @@ input int DT;
 
 ]]..defs..[[
 
-#define TM_INPUT_DT DT
-#define TM_QUEUE_MAX 1000000
+#define TM_INPUT_DT     DT
+#define TM_QUEUE
+#define TM_QUEUE_N      1000000
 /*#define TM_SNAP*/
-#define TM_SNAP_MS 2000
-#define TM_SNAP_N  1000
+#define TM_SNAP_MS      2000
+#define TM_SNAP_N       1000
 
 /*#define TM_QUEUE_WCLOCK_REUSE*/
 native do
@@ -42420,11 +42423,12 @@ input int  DT;
 
 ]]..defs..[[
 
-#define TM_INPUT_DT DT
-#define TM_QUEUE_MAX 1000000
+#define TM_INPUT_DT     DT
+#define TM_QUEUE
+#define TM_QUEUE_N      1000000
 /*#define TM_SNAP*/
-#define TM_SNAP_MS 2000
-#define TM_SNAP_N  1000
+#define TM_SNAP_MS      2000
+#define TM_SNAP_N       1000
 
 /*#define TM_QUEUE_WCLOCK_REUSE*/
 native do
