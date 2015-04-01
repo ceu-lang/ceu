@@ -276,7 +276,7 @@ do
 
                             var _tceu_queue&? qu;
                             finalize
-                                qu = _queue_get(time_now, time_req);
+                                qu = _queue_nxt(time_now, time_req);
                             with
                                 nothing;
                             end
@@ -305,7 +305,7 @@ do
 
 #elif defined TM_SNAP
 
-                            var u32 time = _snap_get(time_now, time_req);
+                            var u32 time = _snap_nxt(time_now, time_req);
                             if time == 0 then
                                 break;
                             end
@@ -314,7 +314,7 @@ do
 
 #else   // TM_DIFF
 
-                            var u32 time = _diff_get(time_now, time_req);
+                            var u32 time = _diff_nxt(time_now, time_req);
                             if time == 0 then
                                 break;
                             end
@@ -544,7 +544,7 @@ do
             return 1;
         }
 
-        tceu_queue* queue_get (u32 now, u32 upto) {
+        tceu_queue* queue_nxt (u32 now, u32 upto) {
             if (QUEUE.get == QUEUE.put) {
                 return NULL;
             } else {
@@ -708,7 +708,7 @@ do
         }
 
 #ifndef TM_QUEUE
-        u32 snap_get (u32 now, u32 upto) {
+        u32 snap_nxt (u32 now, u32 upto) {
             if (SNAP.get == SNAP.put) {
                 return 0;
             } else {
@@ -843,6 +843,9 @@ printf("<<< DUMP\n");
                 while (1) {
                     i += TM_BUF_SZ(TM_DIFF_BUF(i).n);
                     assert(i < TM_DIFF_N);
+                    if (TM_DIFF_BUF(i).time > time) {
+                        break;  /* do not go over "time" */
+                    }
                     {
                         int n = 0;
                         for (n=0; n<TM_DIFF_BUF(i).n; n++) {
@@ -860,6 +863,10 @@ printf("<<< DUMP\n");
                 }
             } else if (now > time) {
                 while (1) {
+                    u32 prv = i - TM_DIFF_BUF(i).prv;
+                    if (TM_DIFF_BUF(prv).time < time) {
+                        break;  /* do not go under "time" */
+                    }
                     {
                         int n = 0;
                         for (n=0; n<TM_DIFF_BUF(i).n; n++) {
@@ -870,7 +877,7 @@ printf("<<< DUMP\n");
                     }
                     assert(TM_DIFF_BUF(i).prv > 0);
                     assert(i >= TM_DIFF_BUF(i).prv);
-                    i -= TM_DIFF_BUF(i).prv;
+                    i = prv;
                     DIFF.cur = i;
                     DIFF.get = i;
                     if (TM_DIFF_BUF(i).time == time) {
@@ -882,7 +889,7 @@ printf("<<< DUMP\n");
             return time;
         }
 
-        u32 diff_get (u32 now, u32 upto) {
+        u32 diff_nxt (u32 now, u32 upto) {
             if (DIFF.get == DIFF.put) {
                 return 0;
             } else {
