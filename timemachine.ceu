@@ -732,7 +732,7 @@ printf("<<< DUMP\n");
         }
 
         u32 snap_drop (u32 time) {
-            int i;
+            u32 i;
             for (i=0; i<SNAP.put; i++) {
                 if (TM_BUF(SNAP.buf[i]).time > time) {
                     SNAP.put = i;
@@ -792,7 +792,8 @@ printf("<<< DUMP\n");
 #else
         u32 snap_set (u32 time) {
             u32 i;  /* SNAP[0] is guaranteed to succeed */
-            for (i=SNAP.put-1; i>=0; i--) {
+            assert(SNAP.put>0);
+            for (i=SNAP.put-1; ; i--) {
                 if (TM_BUF(SNAP.buf[i]).time <= time) {
                     *((CEU_App*)SNAP.data) = TM_BUF(SNAP.buf[i]).data;
 #ifdef TM_SNAP_ONLY
