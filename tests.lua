@@ -41903,7 +41903,6 @@ class App with
 do
     every 1s do
         this.v = this.v + 1;
-_printf("%p %p\n", &this, &this.v) finalize with end;
     end
 end
 var App app;
@@ -41983,6 +41982,26 @@ par/or do
     emit tm.go_seek => 2500;
     TM_AWAIT_SEEK(tm);
     _assert(app.v == 2);
+
+    emit tm.go_seek => 2000;
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 2);
+
+    emit tm.go_seek => 1500;
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 1);
+
+    emit tm.go_seek => 1000;
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 1);
+
+    emit tm.go_seek => 500;
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 0);
+
+    emit tm.go_seek => 0;
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 0);
 
     escape 1;
 

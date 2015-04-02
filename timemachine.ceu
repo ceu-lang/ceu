@@ -238,6 +238,7 @@ do
                                     // avoid conflict w/ ongoing time_req
                         TM_AWAIT_SEEK(this);
                         time_req = tmp;
+                        _assert(time_req <= this.time_total);
 #if   defined TM_SNAP
                         this.time_now = _snap_seek(time_req); // calls queue_seek
 #elif defined TM_QUEUE
@@ -787,7 +788,6 @@ printf("\n");
             }
 printf("<<< DUMP\n");
         }
-*/
 
         void diff_sum (u32 cur) {
             u32 sum1 = 0;
@@ -807,7 +807,9 @@ printf("<<< DUMP\n");
                     sum2 += DIFF.data_old[n];
                 }
             }
+printf("CUR[%d] = %d/%d\n", cur, sum1, sum2);
         }
+*/
 
         void diff_put (u32 time) {
             /* fill "put" */
@@ -850,7 +852,7 @@ printf("<<< DUMP\n");
                     u8  new = TM_DIFF_BUF(cur).vec[n].to;
                     assert(DIFF.data_old[off] == new);
                 }
-diff_sum(cur);
+                /*diff_sum(cur);*/
             }
         }
 
@@ -864,7 +866,7 @@ diff_sum(cur);
                 DIFF.nxt = 0;
                 memcpy(DIFF.data,     &CEU_APP_0, sizeof(CEU_App));
                 memcpy(DIFF.data_old, &CEU_APP_0, sizeof(CEU_App));
-diff_sum(0);
+                /*diff_sum(0);*/
                 return 0;
             }
 
@@ -874,7 +876,7 @@ diff_sum(0);
                 /* TODO: droping non-dt events between two dts? */
                 /* (using data_old below) */
 
-            u32 now = TM_DIFF_BUF(cur).time;
+            u32 now = ((DIFF.nxt==0) ? 0 : TM_DIFF_BUF(cur).time);
             if (now < time) {           /* lower --> higher */
                 cur = DIFF.nxt;
                 while (1) {
@@ -892,20 +894,25 @@ diff_sum(0);
                             DIFF.data_old[off] = new;
                         }
                     }
-diff_sum(cur);
+                    /*diff_sum(cur);*/
                     cur += TM_BUF_SZ(TM_DIFF_BUF(cur).n);
                     DIFF.nxt = cur;
+                    assert(DIFF.nxt < DIFF.put); /* requested time in the future */
                     if (TM_DIFF_BUF(cur).time == time) {
                         break;
                     }
                 }
             } else if (now > time) {    /* lower <--- higher */
                 while (1) {
+                    if (DIFF.nxt == 0) {
+                        break;  /* requested time is >0 for sure */
+                    }
+
                     u32 prv = cur - TM_DIFF_BUF(cur).prv;
                     if (TM_DIFF_BUF(prv).time < time) {
                         break;  /* do not go under "time" */
                     }
-diff_sum(cur);
+                    /*diff_sum(cur);*/
                     {
                         int n = 0;
                         for (n=0; n<TM_DIFF_BUF(cur).n; n++) {
@@ -916,10 +923,12 @@ diff_sum(cur);
                             DIFF.data_old[off] = old;
                         }
                     }
-                    assert(TM_DIFF_BUF(cur).prv > 0);
-                    assert(cur >= TM_DIFF_BUF(cur).prv);
-                    cur = prv;
                     DIFF.nxt = cur;
+                    if (cur > 0) {
+                        assert(TM_DIFF_BUF(cur).prv > 0);
+                        assert(cur >= TM_DIFF_BUF(cur).prv);
+                        cur = prv;
+                    }
                     if (TM_DIFF_BUF(cur).time == time) {
                         break;
                     }
@@ -929,13 +938,6 @@ diff_sum(cur);
             memcpy(DIFF.data, DIFF.data_old, sizeof(CEU_App));
             return time;
         }
-/*printf("MENOR -> MAIOR %d\n", cur);*/
-/*printf("REQ=%d  CUR=%d\n", time, TM_DIFF_BUF(cur).time);*/
-/*printf("req=%d  cur=%d\n", time, TM_DIFF_BUF(cur).time);*/
-/*printf("MENOR -> MAIOR %d>%d (%d)\n", now, time, cur);*/
-/*printf("\tv = %d\n", ((u8*)&DIFF.data_old)[0x38]);*/
-/*printf("\tprv = %d (%d)\n", TM_DIFF_BUF(prv).time, prv);*/
-/*printf("\t[%X] %d -> %d\n", off, old, new);*/
 
         u32 diff_nxt (u32 now, u32 upto) {
             if (DIFF.nxt == DIFF.put) {
@@ -952,7 +954,7 @@ diff_sum(cur);
                     DIFF.data[off] = new;
                     DIFF.data_old[off] = new;
                 }
-diff_sum(DIFF.nxt);
+                /*diff_sum(DIFF.nxt);*/
                 DIFF.nxt += TM_BUF_SZ(n);
                 return s->time;
             }
