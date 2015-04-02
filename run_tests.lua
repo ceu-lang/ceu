@@ -245,7 +245,7 @@ end
             assert(not string.find(ret, '==%d+=='), 'valgrind error')
             local v = tonumber( string.match(ret, 'END: (.-)\n') )
 
-            if v then
+            if type(exp)=='number' then
                 assert(v==exp, ret..' vs '..exp..' expected')
             else
                 assert( string.find(ret, exp, nil, true), ret )

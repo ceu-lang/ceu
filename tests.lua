@@ -22569,7 +22569,7 @@ Test { [[
 escape 1;
 ]],
     valgrind = false,
-    run = 1,
+    asr = true,
 }
 -- ASYNC
 
@@ -41891,6 +41891,9 @@ local t = {
 
 for i=1, #t do
     local defs = t[i]
+print('======',i)
+print('======',i)
+print('======',i)
 print('======',i)
 
 -- FORWARD
