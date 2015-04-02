@@ -41864,14 +41864,34 @@ escape ret;
 -- TIMEMACHINE
 ]===]
 
-for i=1, 4 do
-    local defs = ''
-    if i==2 or i==4 then
-        defs = defs .. '#define TM_SNAP\n'
-    end
-    if i==3 or i==4 then
-        defs = defs .. '#define TM_QUEUE_WCLOCK_REUSE\n'
-    end
+local t = {
+    [1] = [[
+#define TM_QUEUE
+]],
+    [2] = [[
+#define TM_QUEUE
+#define TM_QUEUE_WCLOCK_REUSE
+]],
+    [3] = [[
+#define TM_SNAP
+]],
+    [4] = [[
+#define TM_SNAP
+#define TM_QUEUE
+]],
+    [5] = [[
+#define TM_SNAP
+#define TM_QUEUE
+#define TM_QUEUE_WCLOCK_REUSE
+]],
+    [6] = [[
+#define TM_DIFF
+]],
+}
+
+for i=1, #t do
+    local defs = t[i]
+print('======',i)
 
 -- FORWARD
 Test { [[
@@ -41893,28 +41913,32 @@ input int DT;
 ]]..defs..[[
 
 #define TM_INPUT_DT     DT
-#define TM_QUEUE
 #define TM_QUEUE_N      1000000
-/*#define TM_SNAP*/
+#ifdef TM_QUEUE
 #define TM_SNAP_MS      2000
+#endif
 #define TM_SNAP_N       1000
+#define TM_DIFF_N       1000000
 
-/*#define TM_QUEUE_WCLOCK_REUSE*/
 native do
     ##define CEU_FPS 100
 end
 
 #include "timemachine.ceu"
 
+#ifdef TM_QUEUE
 class IOTimeMachine with
     interface IIOTimeMachine;
 do
 end
 var IOTimeMachine io;
+#endif
 
 var TimeMachine tm with
     this.app = app;
+#ifdef TM_QUEUE
     this.io  = io;
+#endif
 end;
 
 par/or do
@@ -42099,29 +42123,33 @@ input int DT;
 ]]..defs..[[
 
 #define TM_INPUT_DT         DT
-#define TM_QUEUE
 #define TM_QUEUE_N          1000000
-/*#define TM_SNAP*/
+#ifdef TM_QUEUE
 #define TM_SNAP_MS          2000
+#endif
 #define TM_SNAP_N           1000
+#define TM_DIFF_N           1000000
 #define TM_BACKWARD_TICK    30
 
-/*#define TM_QUEUE_WCLOCK_REUSE*/
 native do
     ##define CEU_FPS 100
 end
 
 #include "timemachine.ceu"
 
+#ifdef TM_QUEUE
 class IOTimeMachine with
     interface IIOTimeMachine;
 do
 end
 var IOTimeMachine io;
+#endif
 
 var TimeMachine tm with
     this.app = app;
+#ifdef TM_QUEUE
     this.io  = io;
+#endif
 end;
 
 par/or do
@@ -42314,28 +42342,32 @@ input int DT;
 ]]..defs..[[
 
 #define TM_INPUT_DT     DT
-#define TM_QUEUE
 #define TM_QUEUE_N      1000000
-/*#define TM_SNAP*/
+#ifdef TM_QUEUE
 #define TM_SNAP_MS      2000
+#endif
 #define TM_SNAP_N       1000
+#define TM_DIFF_N       1000000
 
-/*#define TM_QUEUE_WCLOCK_REUSE*/
 native do
     ##define CEU_FPS 100
 end
 
 #include "timemachine.ceu"
 
+#ifdef TM_QUEUE
 class IOTimeMachine with
     interface IIOTimeMachine;
 do
 end
 var IOTimeMachine io;
+#endif
 
 var TimeMachine tm with
     this.app = app;
+#ifdef TM_QUEUE
     this.io  = io;
+#endif
 end;
 
 par/or do
@@ -42424,19 +42456,20 @@ input int  DT;
 ]]..defs..[[
 
 #define TM_INPUT_DT     DT
-#define TM_QUEUE
 #define TM_QUEUE_N      1000000
-/*#define TM_SNAP*/
+#ifdef TM_QUEUE
 #define TM_SNAP_MS      2000
+#endif
 #define TM_SNAP_N       1000
+#define TM_DIFF_N       1000000
 
-/*#define TM_QUEUE_WCLOCK_REUSE*/
 native do
     ##define CEU_FPS 100
 end
 
 #include "timemachine.ceu"
 
+#ifdef TM_QUEUE
 class IOTimeMachine with
     interface IIOTimeMachine;
 do
@@ -42474,10 +42507,13 @@ do
     end
 end
 var IOTimeMachine io;
+#endif
 
 var TimeMachine tm with
     this.app = app;
+#ifdef TM_QUEUE
     this.io  = io;
+#endif
 end;
 
 par/or do
