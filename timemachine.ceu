@@ -13,6 +13,9 @@ end
     _printf("\tQUEUE_N      %d\n", TM_QUEUE_N);
     _printf("\tT_QUEUE_DT   %ld\n", sizeof(_tceu_queue_dt));
     _printf("\tT_QUEUE      %ld\n", sizeof(_tceu_queue));
+#   ifdef TM_QUEUE_WCLOCK_REUSE
+        _printf("\tWCLOCK_REUSE\n");
+#   endif
 #   ifndef TM_QUEUE_N
 #       error "Missing TM_QUEUE_N"
 #   endif
@@ -756,7 +759,7 @@ do
         typedef struct {
             u32       put;
             u8*       data;
-            CEU_App   data_old;
+            u8        data_old[sizeof(CEU_App)];
             u32       nxt;
             u8        buf[TM_DIFF_N];
         } tceu_diff_state;
@@ -786,12 +789,32 @@ printf("<<< DUMP\n");
         }
 */
 
+        void diff_sum (u32 cur) {
+            u32 sum1 = 0;
+            {
+                int n = 0;
+                for (n=0; n<TM_DIFF_BUF(cur).n; n++) {
+                    u32 off = TM_DIFF_BUF(cur).vec[n].offset;
+                    u8  old = TM_DIFF_BUF(cur).vec[n].from;
+                    u8  new = TM_DIFF_BUF(cur).vec[n].to;
+                    sum1 += new;
+                }
+            }
+            u32 sum2 = 0;
+            {
+                u32 n = 0;
+                for (n=0; n<sizeof(CEU_App); n++) {
+                    sum2 += DIFF.data_old[n];
+                }
+            }
+        }
+
         void diff_put (u32 time) {
             /* fill "put" */
             u32 i;
             u32 n = 0;
             for (i=0; i<sizeof(CEU_App); i++) {
-                u8 old = ((u8*)&DIFF.data_old)[i];
+                u8 old = DIFF.data_old[i];
                 u8 new = DIFF.data[i];
                 if (old != new) {
                     assert(DIFF.put+TM_BUF_SZ(n) < TM_DIFF_N);
@@ -806,7 +829,7 @@ printf("<<< DUMP\n");
             TM_DIFF_BUF(DIFF.put).n = n;
 
             /* replace with new current */
-            DIFF.data_old = *((CEU_App*)DIFF.data);
+            memcpy(DIFF.data_old, DIFF.data, sizeof(CEU_App));
 
             /* update "put" */
             DIFF.put += TM_BUF_SZ(n);
@@ -817,6 +840,18 @@ printf("<<< DUMP\n");
             /* set backlink for the next put */
             assert(DIFF.put+TM_BUF_SZ(0) < TM_DIFF_N);
             TM_DIFF_BUF(DIFF.put).prv = TM_BUF_SZ(n);
+
+            {
+                u32 cur = DIFF.nxt - TM_DIFF_BUF(DIFF.nxt).prv;
+                int n = 0;
+                for (n=0; n<TM_DIFF_BUF(cur).n; n++) {
+                    u32 off = TM_DIFF_BUF(cur).vec[n].offset;
+                    u8  old = TM_DIFF_BUF(cur).vec[n].from;
+                    u8  new = TM_DIFF_BUF(cur).vec[n].to;
+                    assert(DIFF.data_old[off] == new);
+                }
+diff_sum(cur);
+            }
         }
 
         void diff_drop (void) {
@@ -826,9 +861,10 @@ printf("<<< DUMP\n");
         u32 diff_seek (u32 time) {
             /* time=0 is outside DIFF.buf */
             if (time == 0) {
-                *((CEU_App*)DIFF.data) = CEU_APP_0;
-                DIFF.nxt               = 0;
-                DIFF.data_old          = CEU_APP_0;
+                DIFF.nxt = 0;
+                memcpy(DIFF.data,     &CEU_APP_0, sizeof(CEU_App));
+                memcpy(DIFF.data_old, &CEU_APP_0, sizeof(CEU_App));
+diff_sum(0);
                 return 0;
             }
 
@@ -840,10 +876,9 @@ printf("<<< DUMP\n");
 
             u32 now = TM_DIFF_BUF(cur).time;
             if (now < time) {           /* lower --> higher */
-printf("MENOR %d\n", cur);
+                cur = DIFF.nxt;
                 while (1) {
-                    assert(cur < TM_DIFF_N);
-printf("REQ=%d  CUR=%d\n", time, TM_DIFF_BUF(cur).time);
+                    assert(cur+TM_BUF_SZ(TM_DIFF_BUF(cur).n) < TM_DIFF_N);
                     if (TM_DIFF_BUF(cur).time > time) {
                         break;  /* do not go over "time" */
                     }
@@ -853,13 +888,13 @@ printf("REQ=%d  CUR=%d\n", time, TM_DIFF_BUF(cur).time);
                             u32 off = TM_DIFF_BUF(cur).vec[n].offset;
                             u8  old = TM_DIFF_BUF(cur).vec[n].from;
                             u8  new = TM_DIFF_BUF(cur).vec[n].to;
-                            assert(((u8*)&DIFF.data_old)[off] == old);
-                            ((u8*)&DIFF.data_old)[off] = new;
+                            assert(DIFF.data_old[off] == old);
+                            DIFF.data_old[off] = new;
                         }
                     }
+diff_sum(cur);
                     cur += TM_BUF_SZ(TM_DIFF_BUF(cur).n);
                     DIFF.nxt = cur;
-printf("req=%d  cur=%d\n", time, TM_DIFF_BUF(cur).time);
                     if (TM_DIFF_BUF(cur).time == time) {
                         break;
                     }
@@ -870,14 +905,15 @@ printf("req=%d  cur=%d\n", time, TM_DIFF_BUF(cur).time);
                     if (TM_DIFF_BUF(prv).time < time) {
                         break;  /* do not go under "time" */
                     }
+diff_sum(cur);
                     {
                         int n = 0;
                         for (n=0; n<TM_DIFF_BUF(cur).n; n++) {
                             u32 off = TM_DIFF_BUF(cur).vec[n].offset;
                             u8  old = TM_DIFF_BUF(cur).vec[n].from;
                             u8  new = TM_DIFF_BUF(cur).vec[n].to;
-                            assert(((u8*)&DIFF.data_old)[off] == new);
-                            ((u8*)&DIFF.data_old)[off] = old;
+                            assert(DIFF.data_old[off] == new);
+                            DIFF.data_old[off] = old;
                         }
                     }
                     assert(TM_DIFF_BUF(cur).prv > 0);
@@ -890,9 +926,16 @@ printf("req=%d  cur=%d\n", time, TM_DIFF_BUF(cur).time);
                     assert(TM_DIFF_BUF(cur).time > time);
                 }
             }
-            *((CEU_App*)DIFF.data) = DIFF.data_old;
+            memcpy(DIFF.data, DIFF.data_old, sizeof(CEU_App));
             return time;
         }
+/*printf("MENOR -> MAIOR %d\n", cur);*/
+/*printf("REQ=%d  CUR=%d\n", time, TM_DIFF_BUF(cur).time);*/
+/*printf("req=%d  cur=%d\n", time, TM_DIFF_BUF(cur).time);*/
+/*printf("MENOR -> MAIOR %d>%d (%d)\n", now, time, cur);*/
+/*printf("\tv = %d\n", ((u8*)&DIFF.data_old)[0x38]);*/
+/*printf("\tprv = %d (%d)\n", TM_DIFF_BUF(prv).time, prv);*/
+/*printf("\t[%X] %d -> %d\n", off, old, new);*/
 
         u32 diff_nxt (u32 now, u32 upto) {
             if (DIFF.nxt == DIFF.put) {
@@ -907,7 +950,9 @@ printf("req=%d  cur=%d\n", time, TM_DIFF_BUF(cur).time);
                     u32 off = TM_DIFF_BUF(DIFF.nxt).vec[n].offset;
                     u8  new = TM_DIFF_BUF(DIFF.nxt).vec[n].to;
                     DIFF.data[off] = new;
+                    DIFF.data_old[off] = new;
                 }
+diff_sum(DIFF.nxt);
                 DIFF.nxt += TM_BUF_SZ(n);
                 return s->time;
             }
@@ -921,7 +966,7 @@ printf("req=%d  cur=%d\n", time, TM_DIFF_BUF(cur).time);
             DIFF.data = data;
             DIFF.put  = 0;
             DIFF.nxt  = 0;
-            DIFF.data_old = CEU_APP_0;
+            memcpy(DIFF.data_old, &CEU_APP_0, sizeof(CEU_App));
         }
     end
 

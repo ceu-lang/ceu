@@ -41891,10 +41891,131 @@ local t = {
 
 for i=1, #t do
     local defs = t[i]
-print('======',i)
-print('======',i)
-print('======',i)
-print('======',i)
+
+-- SEEK
+Test { [[
+native do
+    int CEU_TIMEMACHINE_ON = 0;
+end
+
+class App with
+    var int v = 0;
+do
+    every 1s do
+        this.v = this.v + 1;
+_printf("%p %p\n", &this, &this.v) finalize with end;
+    end
+end
+var App app;
+
+input int DT;
+
+]]..defs..[[
+
+#define TM_INPUT_DT     DT
+#define TM_QUEUE_N      1000000
+#ifdef TM_QUEUE
+#define TM_SNAP_MS      2000
+#endif
+#define TM_SNAP_N       1000
+#define TM_DIFF_N       1000000
+
+native do
+    ##define CEU_FPS 20
+end
+
+#include "timemachine.ceu"
+
+#ifdef TM_QUEUE
+class IOTimeMachine with
+    interface IIOTimeMachine;
+do
+end
+var IOTimeMachine io;
+#endif
+
+var TimeMachine tm with
+    this.app = app;
+#ifdef TM_QUEUE
+    this.io  = io;
+#endif
+end;
+
+par/or do
+    await 3s_;
+    emit tm.go_on;
+    await 1s_;
+
+    ///////////////////////////////
+
+    emit tm.go_seek => tm.time_total;
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 3);
+
+    emit tm.go_seek => 0;
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 0);
+
+    emit tm.go_seek => 500;
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 0);
+
+    emit tm.go_seek => 1000;
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 1);
+
+    emit tm.go_seek => 1500;
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 1);
+
+    emit tm.go_seek => 2000;
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 2);
+
+    emit tm.go_seek => 2500;
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 2);
+
+    emit tm.go_seek => 3000;
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 3);
+
+    emit tm.go_seek => 2500;
+    TM_AWAIT_SEEK(tm);
+    _assert(app.v == 2);
+
+    escape 1;
+
+with
+    input int DT;
+    async (tm) do
+        loop do
+            if not _CEU_TIMEMACHINE_ON then
+                emit 50ms;
+                emit DT => 50;
+            end
+
+            // TODO: forces this async to be slower
+            input void SLOW;
+            loop do
+                if not tm.locked then
+                    break;
+                end
+                emit SLOW;
+            end
+            emit 50ms_;
+        end
+    end
+end
+
+escape app.v;
+]],
+    timemachine = true,
+    _ana = {
+        acc = true,
+    },
+    run = 1,
+}
 
 -- FORWARD
 Test { [[
@@ -41924,7 +42045,7 @@ input int DT;
 #define TM_DIFF_N       1000000
 
 native do
-    ##define CEU_FPS 100
+    ##define CEU_FPS 20
 end
 
 #include "timemachine.ceu"
@@ -42325,7 +42446,6 @@ escape app.v;
 }
 
 -- FORWARD / BACKWARD
-
 Test { [[
 native do
     int CEU_TIMEMACHINE_ON = 0;
@@ -42387,7 +42507,7 @@ par/or do
     emit tm.go_forward => 2;
     _assert(app.v == 0);
 
-    await 1s500ms_;
+    await 1s400ms_;
     _assert(app.v == 2);
 
     emit tm.go_seek => tm.time_total;
