@@ -1560,6 +1560,7 @@ do return end
 
 -------------------------------------------------------------------------------
 -- OK: well tested
+]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -18244,6 +18245,38 @@ escape 0;
     fin = 'line 6 : must assign to a option reference (declared with `&?´)',
 }
 
+Test { [[
+native do
+    int V = 0;
+    void* my_alloc (void) {
+        V += 1;
+        return NULL;
+    }
+    void my_free () {
+        V *= 2;
+    }
+end
+
+input void SDL_REDRAW;
+
+par/or do
+    await 1s;
+    _V = _V + 100;
+with
+    every SDL_REDRAW do
+        var void&? srf;
+        finalize
+            srf = _my_alloc();
+        with
+            _my_free();
+        end
+    end
+end
+escape _V;
+]],
+    run = { ['~>SDL_REDRAW;~>SDL_REDRAW;~>SDL_REDRAW;~>1s']=114 },
+}
+
 -- TODO: bounded loop on finally
 
     -- ASYNCHRONOUS
@@ -28451,6 +28484,7 @@ escape ok==null;
     --fin = 'line 11 : pointer access across `await´',
     run = 1,
 }
+
 Test { [[
 class T with do
     await FOREVER;
@@ -28485,7 +28519,53 @@ end
 escape 1;
 ]],
     --loop = 1,
-    run = 1,
+    --run = 1,
+    asr = true,
+}
+
+Test { [[
+class T with do
+    await FOREVER;
+end
+native do ##include <assert.h> end
+native _assert();
+do
+    pool T[] ts;
+    loop i in 100 do
+        var T* ok;
+        ok = spawn T in ts;
+        _assert(ok != null);
+    end
+    var T* ok1 = spawn T;
+    _assert(ok1 == null);
+    var T* ok2 = spawn T;
+    _assert(ok2 == null);
+end
+do
+    pool T[] ts;
+    loop i in 100 do
+        var T* ok;
+        ok = spawn T in ts;
+        _assert(ok != null);
+    end
+end
+do
+    pool T[] ts;
+    loop i in 101 do
+        var T* ok;
+        ok = spawn T in ts;
+        if i < 100 then
+            _assert(ok!=null);
+        else
+            _assert(ok==null);
+        end
+    end
+end
+escape 1;
+]],
+    --loop = 1,
+    --run = 1,
+    asr = true,
 }
 
 Test { [[
@@ -29803,13 +29883,44 @@ do
     var T* a;
     a = spawn T;
     //free a;
-    _assert(_V == 9);
+    _assert(_V == 10);
     await 1s;
+    _assert(_V == 8);
 end
 
 escape _V;
 ]],
-    run = { ['~>1s']=9 },
+    run = { ['~>1s']=8 },
+}
+
+Test { [[
+native do ##include <assert.h> end
+native _assert();
+native _V;
+native do
+    int V = 10;
+end
+class T with
+do
+    finalize with
+        _V = _V - 1;
+    end
+    await 500ms;
+    _V = _V - 1;
+end
+
+do
+    pool T[] ts;
+    var T* a;
+    a = spawn T in ts;
+    //free a;
+    _assert(_V == 10);
+end
+_assert(_V == 9);
+
+escape _V;
+]],
+    run = 9,
 }
 
 Test { [[
@@ -29838,7 +29949,45 @@ do
         end
         ptr = spawn T;
     end
-    _assert(_X == 100 and _Y == 99);
+    _assert(_X == 100 and _Y == 0);
+end
+
+_assert(_X == 100 and _Y == 0);
+escape 10;
+]],
+    --loop = true,
+    --fin = 'line 24 : invalid block for awoken pointer "ptr"',
+    run = 10,
+}
+
+Test { [[
+native do ##include <assert.h> end
+native _assert();
+native _X, _Y;
+native do
+    int X = 0;
+    int Y = 0;
+end
+
+class T with
+do
+    finalize with
+        _Y = _Y + 1;
+    end
+    _X = _X + 1;
+    await FOREVER;
+end
+
+do
+    pool T[] ts;
+    var T* ptr = null;
+    loop i in 100 do
+        if ptr != null then
+            //free ptr;
+        end
+        ptr = spawn T in ts;
+    end
+    _assert(_X == 100 and _Y == 0);
 end
 
 _assert(_X == 100 and _Y == 100);
@@ -30079,12 +30228,13 @@ do
     await FOREVER;
 end
 do
+    pool T[] ts;
     var T* p;
-    p = spawn T;
+    p = spawn T in ts;
     p:v = 1;
-    p = spawn T;
+    p = spawn T in ts;
     p:v = 2;
-    p = spawn T;
+    p = spawn T in ts;
     p:v = 3;
     input void OS_START;
     await OS_START;
@@ -36137,6 +36287,7 @@ do
     watching u do
         await FOREVER;
     end
+    _V = _V + 1;
 end
 
 native do
@@ -36151,7 +36302,7 @@ do
     await 1s;
 end
 _assert(_V == 1);
-escape 1;
+escape _V;
 ]],
     run = { ['~>1s'] = 1 },
     --fin = 'line 17 : attribution to pointer with greater scope',
@@ -40394,7 +40545,7 @@ escape ptr2==&a;
 }
 
 -- ALGEBRAIC DATATYPES (ADTs)
---do return end
+do return end
 
 -- ADTs used in most examples below
 DATA = [[
@@ -41862,7 +42013,6 @@ escape ret;
 --]====]
 
 -- TIMEMACHINE
-]===]
 
 local t = {
     [1] = [[
