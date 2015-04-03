@@ -41887,6 +41887,10 @@ local t = {
     [6] = [[
 #define TM_DIFF
 ]],
+    [7] = [[
+#define TM_SNAP
+#define TM_DIFF
+]],
 }
 
 for i=1, #t do
@@ -41913,7 +41917,7 @@ input int DT;
 
 #define TM_INPUT_DT     DT
 #define TM_QUEUE_N      1000000
-#ifdef TM_QUEUE
+#if defined(TM_QUEUE) || defined(TM_DIFF)
 #define TM_SNAP_MS      2000
 #endif
 #define TM_SNAP_N       1000
@@ -42057,7 +42061,7 @@ input int DT;
 
 #define TM_INPUT_DT     DT
 #define TM_QUEUE_N      1000000
-#ifdef TM_QUEUE
+#if defined(TM_QUEUE) || defined(TM_DIFF)
 #define TM_SNAP_MS      2000
 #endif
 #define TM_SNAP_N       1000
@@ -42267,7 +42271,7 @@ input int DT;
 
 #define TM_INPUT_DT         DT
 #define TM_QUEUE_N          1000000
-#ifdef TM_QUEUE
+#if defined(TM_QUEUE) || defined(TM_DIFF)
 #define TM_SNAP_MS          2000
 #endif
 #define TM_SNAP_N           1000
@@ -42485,7 +42489,7 @@ input int DT;
 
 #define TM_INPUT_DT     DT
 #define TM_QUEUE_N      1000000
-#ifdef TM_QUEUE
+#if defined(TM_QUEUE) || defined(TM_DIFF)
 #define TM_SNAP_MS      2000
 #endif
 #define TM_SNAP_N       1000
@@ -42599,7 +42603,7 @@ input int  DT;
 
 #define TM_INPUT_DT     DT
 #define TM_QUEUE_N      1000000
-#ifdef TM_QUEUE
+#if defined(TM_QUEUE) || defined(TM_DIFF)
 #define TM_SNAP_MS      2000
 #endif
 #define TM_SNAP_N       1000
