@@ -59,7 +59,7 @@ void ceu_sys_assert (int v) {
 }
 
 void ceu_sys_log (int mode, long s) {
-#ifndef __AVR
+#ifdef _POSIX_VERSION
     switch (mode) {
         case 0:
             fprintf(stderr, "%s", (char*)s);
