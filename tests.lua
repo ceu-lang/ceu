@@ -1558,9 +1558,9 @@ escape t.i.v;
 
 do return end
 
--------------------------------------------------------------------------------
+----------------------------------------------------------------------------
 -- OK: well tested
-]===]
+---]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -18275,6 +18275,59 @@ end
 escape _V;
 ]],
     run = { ['~>SDL_REDRAW;~>SDL_REDRAW;~>SDL_REDRAW;~>1s']=114 },
+}
+
+Test { [[
+native do
+    void* PTR;
+    void* myalloc (void) {
+        return NULL;
+    }
+    void myfree (void* ptr) {
+    }
+end
+native @nohold _myfree();
+
+class T with
+    var int x = 10;
+do
+    finalize
+        _PTR = _myalloc();
+    with
+        _myfree(_PTR);
+    end
+end
+var T t;
+escape t.x;
+]],
+    fin = 'line 15 : cannot finalize a variable defined in another class',
+}
+
+Test { [[
+native do
+    int V;
+    void* myalloc (void) {
+        return &V;
+    }
+    void myfree (void* ptr) {
+    }
+end
+native @nohold _myfree();
+
+class T with
+    var int x = 10;
+do
+    var void&? ptr;
+    finalize
+        ptr = _myalloc();
+    with
+        _myfree(&ptr);
+    end
+end
+var T t;
+escape t.x;
+]],
+    run = 10,
 }
 
 -- TODO: bounded loop on finally

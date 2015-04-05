@@ -97,6 +97,8 @@ F = {
             to_blk = node2blk(to)
         end
 
+        local fr_blk = node2blk(fr)
+
     -- CHECK IF "FINALIZE" IS REQUIRED
 
         local func_impure, input_call = false, false
@@ -109,6 +111,17 @@ F = {
                 input_call = op=='call' and ext.evt.pre=='input'
             end
         end
+
+        ASR( AST.isParent(cls, to_blk), me,
+            'cannot finalize a variable defined in another class' )
+            --  class T with
+            --  do
+            --      finalize
+            --          _GLB = <...>
+            --      with
+            --          <...>
+            --      end
+            --  end
 
 -- TODO: move to exp/ref.lua
         if func_impure or input_call or fr.tag=='RawExp' then
@@ -143,6 +156,7 @@ F = {
 -- TODO: error code
         ASR(not me.fin, me, 'attribution does not require `finalize´')
 
+
     -- REFUSE THE FOLLOWING POINTER ATTRIBUTIONS:
         -- to pointers inside organisms (e.g., org.x=y)
         -- to pointers with greater scope than source
@@ -165,7 +179,6 @@ F = {
             -- OK: "fr" `&´ reference has bigger scope than "to"
             -- int a; int* pa; pa=&a;
             -- int a; do int* pa; pa=&a; end
-            local fr_blk = node2blk(fr)
             if not (
                 fr.const                   or -- constants are globals
                 fr.fst.tag == 'Nat'        or -- natives are globals
