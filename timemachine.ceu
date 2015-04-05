@@ -662,7 +662,7 @@ do
         typedef struct {
             u32     offset;
             u8      from;
-            u8      to;
+            u8      to;         /* TODO: u8=>u16/u32? */
         } tceu_diff;
 
         typedef struct {

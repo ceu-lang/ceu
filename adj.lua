@@ -183,6 +183,7 @@ F = {
     end,
     _GlobalDo_pos = function (me)
         local cls = AST.iter'Dcl_cls'()
+        assert(me[1][1].tag == 'Stmts')
         if cls == MAIN then
             return me[1][1]
                     -- remove "global do ... end" and Block
@@ -193,14 +194,14 @@ F = {
         end
     end,
     Dcl_cls_pos = function (me)
-        local cls = AST.iter'Dcl_cls'()
-        assert(me ~= cls)
-        if cls then
-            if cls == MAIN then
+        local par = AST.iter'Dcl_cls'()
+        assert(me ~= par)
+        if par then
+            if par == MAIN then
                 return node('Stmts', me.ln, me, unpack(me.__globaldos))
             else
                 for _, v in ipairs(me.__globaldos) do
-                    cls.__globaldos[#cls.__globaldos+1] = v
+                    par.__globaldos[#par.__globaldos+1] = v
                 end
             end
         end
