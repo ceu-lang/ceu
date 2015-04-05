@@ -1595,7 +1595,7 @@ end
 
 escape tot;
 ]],
-    env = 'line 15 : variable/event "tot2" is not declared',
+    run = 26,
 }
 
 Test { [[

@@ -184,9 +184,11 @@ F = {
     _GlobalDo_pos = function (me)
         local cls = AST.iter'Dcl_cls'()
         if cls == MAIN then
-            return me[1]    -- just remove "global do ... end"
+            return me[1][1]
+                    -- remove "global do ... end" and Block
         else
-            cls.__globaldos[#cls.__globaldos+1] = me[1]
+            cls.__globaldos[#cls.__globaldos+1] = me[1][1]
+                    -- remove "global do ... end" and Block
             return AST.node('Nothing', me.ln)
         end
     end,
