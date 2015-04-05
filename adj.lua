@@ -176,8 +176,38 @@ F = {
 
 -- Dcl_cls/_ifc --------------------------------------------------
 
-    _Dcl_ifc_pos = 'Dcl_cls_pos',
+    -- global do end
+
+    Dcl_cls_pre = function (me)
+        me.__globaldos = {}
+    end,
+    _GlobalDo_pos = function (me)
+        local cls = AST.iter'Dcl_cls'()
+        if cls == MAIN then
+            return me[1]    -- just remove "global do ... end"
+        else
+            cls.__globaldos[#cls.__globaldos+1] = me[1]
+            return AST.node('Nothing', me.ln)
+        end
+    end,
     Dcl_cls_pos = function (me)
+        local cls = AST.iter'Dcl_cls'()
+        assert(me ~= cls)
+        if cls then
+            if cls == MAIN then
+                return node('Stmts', me.ln, me, unpack(me.__globaldos))
+            else
+                for _, v in ipairs(me.__globaldos) do
+                    cls.__globaldos[#cls.__globaldos+1] = v
+                end
+            end
+        end
+    end,
+
+    -- class declaration
+
+    _Dcl_ifc = 'Dcl_cls',
+    Dcl_cls = function (me)
         local is_ifc, id, blk_ifc, blk_body = unpack(me)
         local blk = node('Block', me.ln,
                          node('Stmts',me.ln,blk_ifc,blk_body))

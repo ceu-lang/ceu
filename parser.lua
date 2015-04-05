@@ -173,6 +173,8 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , Do     = V'__Do'
     , __Do    = KEY'do' * V'Block' * KEY'end'
 
+    , _GlobalDo = KEY'global' * V'__Do'
+
     , Nothing = KEY'nothing'
 
     , __StmtS = V'Await'
@@ -192,7 +194,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
              --+ EM'statement'-- (missing `_´?)'
              + EM'statement (usually a missing `var´ or C prefix `_´)'
 
-    , __StmtB = V'Do'    + V'Host'
+    , __StmtB = V'Do'   + V'Host'    + V'_GlobalDo'
              + V'Async' + V'_Thread' + V'Sync' + V'Atomic'
              + V'ParOr' + V'ParAnd'  + V'_Watching'
              + V'If'    + V'_Loop'   + V'_Every'  + V'_Iter'

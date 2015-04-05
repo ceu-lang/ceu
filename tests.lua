@@ -1556,11 +1556,125 @@ escape t.i.v;
     run = 10,
 }
 
+---]===]
+
+Test { [[
+var int tot = 1;                // 1
+
+global do
+    tot = tot + 2;              // 3
+end
+
+tot = tot * 2;                  // 6
+
+escape tot;
+]],
+    run = 6
+}
+
+Test { [[
+var int tot = 1;                // 1
+
+global do
+    tot = tot + 2;              // 3
+end
+
+class T with
+do
+    global do
+        tot = tot * 2;          // 6
+        var int tot2 = 10;
+    end
+end
+
+tot = tot + tot2;               // 16
+
+global do
+    tot = tot + tot2;           // 26
+end
+
+escape tot;
+]],
+    env = 'line 15 : variable/event "tot2" is not declared',
+}
+
+Test { [[
+var int tot = 1;                // 1
+var int tot2;
+
+global do
+    tot = tot + 2;              // 3
+end
+
+class T with
+do
+    global do
+        tot = tot * 2;          // 6
+        tot2 = 10;
+    end
+end
+
+tot = tot + tot2;               // 16
+
+global do
+    tot = tot + tot2;           // 26
+end
+
+escape tot;
+]],
+    run = 26
+}
+
+Test { [[
+var int tot = 1;                // 1
+var int tot2 = 1;                       // 1
+
+global do
+    tot = tot + 2;              // 3
+end
+
+class T with
+do
+    class U with
+    do
+        global do
+            tot = tot + 1;      // 4
+            tot = tot + tot2;   // 5
+        end
+    end
+
+    global do
+        tot = tot * 2;          // 10
+        tot2 = tot2+9;                  // 10
+    end
+
+    class V with
+    do
+        global do
+            tot = tot + 5;      // 15
+        end
+    end
+end
+
+tot = tot + tot2;               // 25
+
+global do
+    tot = tot + tot2;           // 35
+    tot2 = tot2 / 2;                    // 5
+end
+
+tot2 = tot2 - 4;                        // 1
+
+escape tot + tot2;              // 36
+]],
+    run = 36
+}
+
+
 do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
----]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
