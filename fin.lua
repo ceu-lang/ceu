@@ -112,8 +112,9 @@ F = {
             end
         end
 
-        ASR( AST.isParent(cls, to_blk), me,
-            'cannot finalize a variable defined in another class' )
+        if me.fin then
+            ASR( AST.isParent(cls, to_blk), me,
+                'cannot finalize a variable defined in another class' )
             --  class T with
             --  do
             --      finalize
@@ -122,6 +123,7 @@ F = {
             --          <...>
             --      end
             --  end
+        end
 
 -- TODO: move to exp/ref.lua
         if func_impure or input_call or fr.tag=='RawExp' then
