@@ -40762,7 +40762,6 @@ escape ptr2==&a;
 }
 
 -- ALGEBRAIC DATATYPES (ADTs)
-do return end
 
 -- ADTs used in most examples below
 DATA = [[
@@ -41554,8 +41553,8 @@ escape l.NIL;
 --  - "dropped" subtrees are automatically reclaimed:
 --      l = new ...
 -- becomes
---      tmp = new ...
---      free(l)
+--      tmp = new ...   // "new" happens before!
+--      free(l)         // "free" happens after!
 --      l = tmp
 --  (this is why dynamic ADTs have to be a directed rooted trees)
 
@@ -41563,6 +41562,17 @@ escape l.NIL;
 -- 1-NIL can be safely reclaimed
 Test { DATA..[[
 pool List[1] l;
+l = new List.CONS(1, List.NIL());
+l = new List.CONS(2, List.NIL());    // this fails (new before free)!
+escape l:CONS.head;
+]],
+    asr = true,
+}
+
+-- 1-NIL => 2-NIL
+-- 1-NIL can be safely reclaimed
+Test { DATA..[[
+pool List[2] l;
 l = new List.CONS(1, List.NIL());
 l = new List.CONS(2, List.NIL());    // no allocation fail
 escape l:CONS.head;
@@ -41836,6 +41846,32 @@ escape t.i;
     run = 10,
 }
 Test { [[
+var int v = 10;
+class T with
+    var int&? i;
+do
+    var int v = 10;
+end
+var T t with
+    this.i = v;
+end;
+v = v / 2;
+escape t.i? + t.i + 1;
+]],
+    run = 7,
+}
+Test { [[
+class T with
+    var int&? i;
+do
+    var int v = 10;
+end
+var T t;
+escape t.i? + 1;
+]],
+    run = 1,
+}
+Test { [[
 class T with
     var int&? i;
 do
@@ -41844,7 +41880,7 @@ end
 var T t;
 escape t.i;
 ]],
-    ref = 'line 6 : field "i" must be assigned',
+    asr = true,
 }
 Test { [[
 class T with

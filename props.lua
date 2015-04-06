@@ -171,24 +171,33 @@ F = {
             HAS_FINS()  -- TODO (-ROM): could avoid ors w/o fins
         end
     end,
-    Free = function (me)
-        PROPS.has_orgs_news = true
-        PROPS.has_clear = true
-    end,
     Spawn = function (me)
         local _,pool,_ = unpack(me)
-
-        --PROPS.has_orgs_news = true    (pool does this)
-        if pool and pool.lst.var.tp.arr==true then
-            PROPS.has_orgs_news_malloc = true       -- pool T[]  ts
-        else
-            PROPS.has_orgs_news_pool = true         -- pool T[N] ts
-        end
-
         --PROPS.has_clear = true   (var.cls does this)
         --me.blk.needs_clr = true   (var.cls does this)
         ASR(not AST.iter'BlockI'(), me,
                 'not permitted inside an interface')
+    end,
+
+    Dcl_pool = function (me)
+        local pre, tp, id, constr = unpack(me)
+        local tid = tp[1]
+        local is_unbounded = (tp[3]==true)
+        if ENV.clss[tid] then
+            PROPS.has_orgs_news = true
+            if is_unbounded then
+                PROPS.has_orgs_news_malloc = true       -- pool T[]  ts
+            else
+                PROPS.has_orgs_news_pool = true         -- pool T[N] ts
+            end
+        elseif ENV.adts[tid] then
+            PROPS.has_adts_news = true
+            if is_unbounded then
+                PROPS.has_adts_news_malloc = true       -- pool T[]  ts
+            else
+                PROPS.has_adts_news_pool = true         -- pool T[N] ts
+            end
+        end
     end,
 
     ParOr = function (me)
