@@ -41068,7 +41068,7 @@ escape v;
     parser = 'line 52 : after `==´ : expected expression',
 }
 
--- ...but have to be assigned directly
+-- ...but have to be assigned to a variable
 Test { DATA..[[
 var Opt o;
 o = Opt.NIL();
@@ -41172,7 +41172,7 @@ escape l.CONS.head;         // runtime error
 }
 Test { DATA..[[
 var List l = List.CONS(2, List.NIL());
-escape l.CONS.head;         // runtime error
+escape l.CONS.head;
 ]],
     run = 2,
 }
@@ -41569,6 +41569,26 @@ escape l:CONS.head;
     asr = true,
 }
 
+Test { DATA..[[
+pool List[1] l;
+l = new List.CONS(1, List.NIL());
+l:CONS.tail = new List.CONS(2, List.NIL()); // fails
+escape l:CONS.tail:NIL;
+]],
+    run = 1,
+    --asr = true,
+}
+
+-- 1-2-NIL
+Test { DATA..[[
+pool List[2] l;
+l = new List.CONS(1, List.NIL());
+l:CONS.tail = new List.CONS(2, List.NIL()); // fails
+escape l:CONS.tail:CONS.head;
+]],
+    run = 2,
+}
+
 -- 1-NIL => 2-NIL
 -- 1-NIL can be safely reclaimed
 Test { DATA..[[
@@ -41618,6 +41638,9 @@ escape l:CONS.head + l:CONS.tail:CONS.head + (l:CONS.tail:CONS.tail:NIL);
 --                 l-val is prefix of r-val
 
 -- ok: child is constructor (with no previous parent)
+-- NIL
+-- 1-NIL
+-- 1-2-NIL
 Test { DATA..[[
 pool List[2] l;
 l = new List.CONS(1, List.NIL());
@@ -41627,6 +41650,9 @@ escape l:CONS.head + l:CONS.tail:CONS.head;
     run = 3,
 }
 -- ok: tail is child of l
+-- NIL
+-- 1-2-NIL
+-- 1-NIL
 Test { DATA..[[
 pool List[2] l;
 l = new List.CONS(1, List.CONS(2, List.NIL()));
@@ -41655,6 +41681,9 @@ escape l:CONS.head + l:CONS.tail:CONS.head + l:CONS.tail:CONS.tail:NIL;
 }
 
 -- no: l is parent of tail
+-- NIL
+-- 1-2-NIL
+-- 1-2-^1   (no)
 Test { DATA..[[
 pool List[2] l;
 l = new List.CONS(1, List.CONS(2, List.NIL()));
@@ -41950,6 +41979,26 @@ escape 1;
 -- TODO: continue ADT implementation
 
 do return end
+
+-- 1-2-3-NIL
+Test { DATA..[[
+pool List[2] l;
+l = new List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));
+
+loop i in l do
+    if i:NIL then
+        _printf("NIL\n");
+    else
+        recurse l:CONS.tail;
+        _printf("%d-", l:CONS.head);
+    end
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
 
 Test { [[
 data OptionInt with
