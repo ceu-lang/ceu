@@ -1066,11 +1066,11 @@ _STK.trl->lbl = ]]..me.lbl_cnt.id..[[;
 
         LINE(me, V(me)..[[;
 #if defined(CEU_RET) || defined(CEU_OS)
-if (! _ceu_app->isAlive)
+if (! _ceu_app->isAlive) {
     return RET_QUIT;
+}
 #endif
 ]])
-
         if AST.iter'Async'() then
             HALT(me, 'RET_ASYNC')
             LINE(me, [[

@@ -38565,9 +38565,7 @@ escape 1;
 
 -- ASYNCS // THREADS
 
-if VALGRIND then
-    return
-end
+if not VALGRIND then
 
 Test { [[
 var int  a=10, b=5;
@@ -39578,6 +39576,8 @@ escape v;
 ]],
     props = 'line 3 : not permitted inside `thread´',
 }
+
+end -- VALGRIND
 -- END: THREADS / EMITS
 
 -- REFS / &

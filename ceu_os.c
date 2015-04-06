@@ -615,6 +615,9 @@ if (STK.trl->evt==CEU_IN__ORG) {
                         app->isAlive = 0;
                         CEU_GC = 1;
 #endif
+#ifdef CEU_LUA
+                        lua_close(app->lua);
+#endif
                         goto _CEU_GO_QUIT_;
 #endif
                     default:

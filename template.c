@@ -254,7 +254,6 @@ ceu_app_init (tceu_app* _ceu_app)
 
 #ifdef CEU_LUA
     ceu_luaL_newstate(_ceu_app->lua);
-    /* TODO: lua_close(CEU_L); */
     ceu_out_assert(_ceu_app->lua != NULL);
     ceu_luaL_openlibs(_ceu_app->lua);
     ceu_lua_atpanic(_ceu_app->lua, ceu_lua_atpanic_f);    /* TODO: CEU_OS */
