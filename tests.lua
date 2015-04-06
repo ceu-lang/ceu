@@ -1556,125 +1556,12 @@ escape t.i.v;
     run = 10,
 }
 
----]===]
-
-Test { [[
-var int tot = 1;                // 1
-
-global do
-    tot = tot + 2;              // 3
-end
-
-tot = tot * 2;                  // 6
-
-escape tot;
-]],
-    run = 6
-}
-
-Test { [[
-var int tot = 1;                // 1
-
-global do
-    tot = tot + 2;              // 3
-end
-
-class T with
-do
-    global do
-        tot = tot * 2;          // 6
-        var int tot2 = 10;
-    end
-end
-
-tot = tot + tot2;               // 16
-
-global do
-    tot = tot + tot2;           // 26
-end
-
-escape tot;
-]],
-    run = 26,
-}
-
-Test { [[
-var int tot = 1;                // 1
-var int tot2;
-
-global do
-    tot = tot + 2;              // 3
-end
-
-class T with
-do
-    global do
-        tot = tot * 2;          // 6
-        tot2 = 10;
-    end
-end
-
-tot = tot + tot2;               // 16
-
-global do
-    tot = tot + tot2;           // 26
-end
-
-escape tot;
-]],
-    run = 26
-}
-
-Test { [[
-var int tot = 1;                // 1
-var int tot2 = 1;                       // 1
-
-global do
-    tot = tot + 2;              // 3
-end
-
-class T with
-do
-    class U with
-    do
-        global do
-            tot = tot + 1;      // 4
-            tot = tot + tot2;   // 5
-        end
-    end
-
-    global do
-        tot = tot * 2;          // 10
-        tot2 = tot2+9;                  // 10
-    end
-
-    class V with
-    do
-        global do
-            tot = tot + 5;      // 15
-        end
-    end
-end
-
-tot = tot + tot2;               // 25
-
-global do
-    tot = tot + tot2;           // 35
-    tot2 = tot2 / 2;                    // 5
-end
-
-tot2 = tot2 - 4;                        // 1
-
-escape tot + tot2;              // 36
-]],
-    run = 36
-}
-
 
 do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
+---]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -16026,6 +15913,54 @@ escape global:t.v;
     run = 10,
 }
 
+Test { [[
+var int a=1, b=2, c=3;
+var int& v;
+if true then
+    v = a;
+else
+    v = b;
+end
+var int& x;
+if false then
+    x = a;
+else/if true then
+    x = b;
+else
+    x = c;
+end
+v = 5;
+x = 1;
+escape a + b + x + v;
+]],
+    run = 12,
+}
+
+Test { [[
+var int a=1, b=2, c=3;
+var int& v;
+if true then
+    v = a;
+else
+    v = b;
+end
+var int& x;
+if false then
+    x = a;
+else
+    if true then
+        x = b;
+    else
+        x = c;
+    end
+end
+v = 5;
+x = 1;
+escape a + b + x + v;
+]],
+    run = 12,
+}
+
 -- FINALLY / FINALIZE
 
 Test { [[
@@ -18445,6 +18380,121 @@ escape t.x;
 }
 
 -- TODO: bounded loop on finally
+
+    -- GLOBAL-DO-END
+
+Test { [[
+var int tot = 1;                // 1
+
+global do
+    tot = tot + 2;              // 3
+end
+
+tot = tot * 2;                  // 6
+
+escape tot;
+]],
+    run = 6
+}
+
+Test { [[
+var int tot = 1;                // 1
+
+global do
+    tot = tot + 2;              // 3
+end
+
+class T with
+do
+    global do
+        tot = tot * 2;          // 6
+        var int tot2 = 10;
+    end
+end
+
+tot = tot + tot2;               // 16
+
+global do
+    tot = tot + tot2;           // 26
+end
+
+escape tot;
+]],
+    run = 26,
+}
+
+Test { [[
+var int tot = 1;                // 1
+var int tot2;
+
+global do
+    tot = tot + 2;              // 3
+end
+
+class T with
+do
+    global do
+        tot = tot * 2;          // 6
+        tot2 = 10;
+    end
+end
+
+tot = tot + tot2;               // 16
+
+global do
+    tot = tot + tot2;           // 26
+end
+
+escape tot;
+]],
+    run = 26
+}
+
+Test { [[
+var int tot = 1;                // 1
+var int tot2 = 1;                       // 1
+
+global do
+    tot = tot + 2;              // 3
+end
+
+class T with
+do
+    class U with
+    do
+        global do
+            tot = tot + 1;      // 4
+            tot = tot + tot2;   // 5
+        end
+    end
+
+    global do
+        tot = tot * 2;          // 10
+        tot2 = tot2+9;                  // 10
+    end
+
+    class V with
+    do
+        global do
+            tot = tot + 5;      // 15
+        end
+    end
+end
+
+tot = tot + tot2;               // 25
+
+global do
+    tot = tot + tot2;           // 35
+    tot2 = tot2 / 2;                    // 5
+end
+
+tot2 = tot2 - 4;                        // 1
+
+escape tot + tot2;              // 36
+]],
+    run = 36
+}
+
 
     -- ASYNCHRONOUS
 
@@ -41847,6 +41897,17 @@ t_.x = 100;
 escape ret + _id(t_.x) + t.x;
 ]],
     run = 211,
+}
+
+Test { [[
+class T with
+    var int&? v;
+do
+end
+var T t;
+escape 1;
+]],
+    run = 1,
 }
 
 --[====[

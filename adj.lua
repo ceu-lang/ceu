@@ -561,7 +561,7 @@ F = {
         local ret = me[#me] or node('Nothing', me.ln)
         for i=#me-1, 1, -2 do
             local c, b = me[i-1], me[i]
-            ret = node('If', me.ln, c, b, ret)
+            ret = node('If', c.ln, c, b, ret)
         end
         return ret
     end,

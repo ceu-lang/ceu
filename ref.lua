@@ -101,9 +101,22 @@ F = {
     end,
 
     If = function (me)
-        local T = me.__ref_bounded or {}
-        for var,t in pairs(T) do
+        -- prepare to pass to parent
+        local if_ = AST.par(me,'If')
+        local T2
+        if if_ then
+            T2 = if_.__ref_bounded or {}
+            if_.__ref_bounded = T2
+        end
+
+        local T1 = me.__ref_bounded or {}
+        for var,t in pairs(T1) do
             ASR(#t==2, t[1], 'reference must be bounded in the other if-else branch')
+
+            -- pass to parent
+            if if_ then
+                T2[var] = t
+            end
         end
     end,
 
@@ -114,7 +127,9 @@ F = {
     __constr = function (me, cls, constr)
         constr.__bounded = constr.__bounded or {}
         for _, var in ipairs(cls.blk_ifc.vars) do
-            if REF(var.tp) and (var.bind=='constr' or (not var.bind)) then
+            if REF(var.tp) and (not var.tp.opt)
+                           and (var.bind=='constr' or (not var.bind))
+            then
                 ASR(constr.__bounded[var], me,
                     'field "'..var.id..'" must be assigned')
             end
