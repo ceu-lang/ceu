@@ -3,8 +3,8 @@
 #include "ceu_os.h"
 
 #ifdef __AVR
-#error Understand this again!
 #ifdef CEU_OS
+#error Understand this again!
 #include <avr/pgmspace.h>
 void* CEU_APP_ADDR = NULL;
 #endif

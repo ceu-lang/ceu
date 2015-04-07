@@ -513,12 +513,12 @@ do
     native do
         tceu_queue_state QUEUE = {
             {}
-            ,  0 /*u32  QUEUE_tot     = 0;*/
-            , -1 /*u32  QUEUE_nxt     = undef;*/
-            ,  0 /*u32  QUEUE_put     = 0;*/
+            , 0     /*u32  QUEUE_tot     = 0;*/
+            , 0xaa  /*u32  QUEUE_nxt     = undef;*/
+            , 0     /*u32  QUEUE_put     = 0;*/
 #ifdef TM_QUEUE_WCLOCK_REUSE
-            ,  0 /*u32  QUEUE_put_old = 0;*/
-            ,  0 /*u8   QUEUE_nxt_n   = 0;*/
+            , 0     /*u32  QUEUE_put_old = 0;*/
+            , 0     /*u8   QUEUE_nxt_n   = 0;*/
 #endif
         };
 
