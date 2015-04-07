@@ -1,3 +1,19 @@
+* v0.9 (apr'15)
+    (+) option types (`?´ suffix for types)
+    (+) `native/pre´ blocks
+    (+) native blocks per class
+    (+) `global´ blocks
+    (+) experimental: compile option `--safety <LEVEL>´
+    (+) experimental: static-only algebraic data types
+    (+) experimental: time machine
+    (^) interfacing with C and finalization systems rewritten
+    (^) bounded pools also for interfaces
+    (^) `ceu_sys_go´: events are now always pointers (`CEU_EVTP´ removed)
+    (^) `async thread´ renamed to `async/thread´
+    (-) `?´ in identifiers (due to option types)
+    (-) `[]´ buffer pointers (in favor of references and option types)
+    (-) `new´ and `free´ primitives (in favor of `spawn´ with automatic management)
+
 * v0.8 (jun'14)
     (+) manual
     (+) `pool´ for organisms

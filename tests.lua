@@ -1556,12 +1556,11 @@ escape t.i.v;
     run = 10,
 }
 
-
 do return end
+---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
----]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -41970,6 +41969,52 @@ class T with
 do
 end
 var T t;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native do
+    void* myalloc (void) {
+        return NULL;
+    }
+    void myfree (void* v) {
+    }
+end
+native @nohold _myfree();
+
+var void&? v;
+finalize
+    v = _myalloc();
+with
+    _myfree(&v);
+end
+
+escape 1;
+]],
+    asr = true,
+}
+
+Test { [[
+native do
+    void* myalloc (void) {
+        return NULL;
+    }
+    void myfree (void* v) {
+    }
+end
+native @nohold _myfree();
+
+var void&? v;
+finalize
+    v = _myalloc();
+with
+    if v? then
+        _myfree(&v);
+    end
+end
+
 escape 1;
 ]],
     run = 1,
