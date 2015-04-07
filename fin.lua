@@ -279,7 +279,11 @@ F = {
         end
 
         -- invalid access!
-        ASR(false, me, 1107, 'pointer access across `await´')
+        if OPTS['I_promess_I_will_not_release_code_with_this_option'] then
+            WRN(false, me, 1107, 'pointer access across `await´')
+        else
+            ASR(false, me, 1107, 'pointer access across `await´')
+        end
     end,
 
     Await = function (me)
