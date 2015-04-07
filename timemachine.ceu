@@ -1,3 +1,5 @@
+input bool OS_RESUME, OS_PAUSE;
+
 native do
     enum {
         TM_REQ_PAUSE = -1,
@@ -183,6 +185,10 @@ do
         _assert(_CEU_TIMEMACHINE_ON == 0);
         _CEU_TIMEMACHINE_ON = 1;
 
+        async do
+            emit OS_PAUSE => true;
+        end
+
 #ifdef TM_QUEUE
         emit this.io.go_on;
 #endif
@@ -207,6 +213,11 @@ do
             end
             await this.go_off;
             TM_AWAIT_SEEK(this);
+
+            async do
+                emit OS_RESUME => true;
+            end
+
 #ifdef TM_QUEUE
             emit this.io.go_off;
 #endif
@@ -369,7 +380,9 @@ do
                                 this.locked = true;
                                 emit fps.go => time_now;
                                 async do
+                                    emit OS_RESUME => false;
                                     emit TM_INPUT_REDRAW;
+                                    emit OS_PAUSE => false;
                                 end
                                 this.locked = false;
 #endif
@@ -384,9 +397,11 @@ do
                         // break (even if there's no REDRAW event)
                         emit fps.go => time_now;
                         async do
+                            emit OS_RESUME => false;
 #ifdef TM_INPUT_REDRAW
                             emit TM_INPUT_REDRAW;
 #endif
+                            emit OS_PAUSE => false;
                         end
                         this.locked = false;
                         if this.seeking then

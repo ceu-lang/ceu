@@ -42359,6 +42359,8 @@ local t = {
 for i=1, #t do
     local defs = t[i]
 
+-- TODO: test OS_PAUSE/OS_RESUME
+
 -- SEEK
 Test { [[
 native do
