@@ -42020,6 +42020,58 @@ escape 1;
     run = 1,
 }
 
+Test { [[
+native do
+    ##define UNSAFE_POINTER_TO_REFERENCE(ptr) ptr
+end
+native @nohold _UNSAFE_POINTER_TO_REFERENCE();
+
+native do
+    int v2 = 10;
+    int* V1 = NULL;
+    int* V2 = &v2;
+    int* fff (int i) {
+        if (i == 1) {
+            return NULL;
+        } else {
+            return V2;
+        }
+    }
+end
+
+var int&? v1;
+    finalize
+        v1 = _fff(1);
+    with
+        nothing;
+    end
+
+var int&? v2;
+    finalize
+        v2 = _fff(2);
+    with
+        nothing;
+    end
+
+var int&? v3;
+    finalize
+        v3 = _UNSAFE_POINTER_TO_REFERENCE(_V1);
+    with
+        nothing;
+    end
+
+var int&? v4;
+    finalize
+        v4 = _UNSAFE_POINTER_TO_REFERENCE(_V2);
+    with
+        nothing;
+    end
+
+escape (not v1?) + (not v3?) + v2? + v4? + (&v2==_V2) + (&v4==_V2) + v2 + v4;
+]],
+    run = 26,
+}
+
 --[====[
 -- TODO: continue ADT implementation
 

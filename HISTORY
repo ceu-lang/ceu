@@ -8,7 +8,7 @@
     (+) experimental: time machine
     (^) interfacing with C and finalization systems rewritten
     (^) bounded pools also for interfaces
-    (^) `ceu_sys_go´: events are now always pointers (`CEU_EVTP´ removed)
+    (^) `ceu_sys_go´: the event parameter is now a pointer to its type
     (^) `async thread´ renamed to `async/thread´
     (-) `?´ in identifiers (due to option types)
     (-) `[]´ buffer pointers (in favor of references and option types)

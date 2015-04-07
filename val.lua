@@ -412,7 +412,7 @@ F =
             me.val      = '(tceu__s32*) &_ceu_app->wclk_late'..suf
             me.val_wclk = CUR(me, '__wclk_'..me.n)
         else
-            me.val = '_STK.evtp'
+            me.val = '(('..TP.toc(me.tp)..')_STK.evtp)'
         end
     end,
 

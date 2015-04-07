@@ -80,7 +80,7 @@ do
 end
 
 if OPTS.version then
-    print 'ceu 0.8'
+    print 'ceu 0.9'
     os.exit(0)
 end
 

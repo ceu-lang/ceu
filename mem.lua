@@ -146,7 +146,7 @@ void CEU_]]..id..'_free_static (CEU_'..id..[[* me, void* pool) {
             local tp = 'CEU_'..me.tp.id
             local some = TP.toc(me[4][2][1][1][2])
             pack = [[
-]]..tp..[[ CEU_]]..ID..[[_pack (void* ptr) {
+]]..tp..[[ CEU_]]..ID..[[_pack (]]..some..[[ ptr) {
     ]]..tp..[[ ret;
     if (ptr == NULL) {
         ret.tag = CEU_]]..ID..[[_NIL;
