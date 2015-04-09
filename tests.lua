@@ -15960,6 +15960,93 @@ escape a + b + x + v;
     run = 12,
 }
 
+Test { [[
+class T with
+    event void e;
+do
+end
+var T t;
+
+class U with
+    var T& t;
+do
+    emit t.e;
+end
+
+var U u with
+    this.t = t;
+end;
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+    var int x;
+do
+end
+var T t;
+
+class U with
+    var T& t;
+do
+    t.x = 1;
+end
+
+class V with
+    var U& u;
+do
+    u.t.x = 2;
+end
+
+var U u with
+    this.t = t;
+end;
+
+var V v with
+    this.u = u;
+end;
+
+escape t.x + u.t.x + v.u.t.x;
+]],
+    run = 6,
+}
+
+Test { [[
+class T with
+    var int x;
+do
+end
+var T t;
+
+class U with
+    var T& t;
+do
+    t.x = 1;
+end
+
+class V with
+    var U& u;
+do
+    var U* p = &u;
+    p:t.x = 2;
+end
+
+var U u with
+    this.t = t;
+end;
+
+var V v with
+    this.u = u;
+end;
+
+escape t.x + u.t.x + v.u.t.x;
+]],
+    run = 6,
+}
+
 -- FINALLY / FINALIZE
 
 Test { [[

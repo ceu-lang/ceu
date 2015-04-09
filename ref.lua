@@ -184,7 +184,12 @@ F = {
                 end
             end
 
-            if (not inifc) and (not glb) then
+            -- ignore field accesses:
+            --      x.ref.v
+            -- (they are guaranteed to be bounded)
+            local fld = (me.__par.tag=='Field' and me.__par[3]==me)
+
+            if not (inifc or glb or fld) then
                 ASR(me.var.bind, me, 'reference must be bounded before use')
             end
         end
