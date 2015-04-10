@@ -11,6 +11,20 @@ F = {
         end
         assert(to.lst.var, 'bug found')
 
+        -- refuse first assignment inside loop with declaration outside it:
+        --      var t& v;
+        --      loop do
+        --          v = <...>;      // rebindings are forbidden
+        --          <...>
+        --      end
+        if not to.lst.var.bind then
+            local loop = AST.par(me, 'Loop')
+            if loop then
+                ASR(AST.isParent(loop, to.lst.var.blk), me,
+                    'reference declaration and first binding cannot be separated by loops')
+            end
+        end
+
         -- Detect source of assignment/binding:
         --  - internal:  assignment from body to normal variable (v, this.v)
         --  - constr:    assignment from constructor to interface variable (this.v)

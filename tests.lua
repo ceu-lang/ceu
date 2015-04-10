@@ -16047,6 +16047,75 @@ escape t.x + u.t.x + v.u.t.x;
     run = 6,
 }
 
+Test { [[
+var int v = 10;
+loop do
+    var int& i = v;
+    i = i + 1;
+    break;
+end
+escape v;
+]],
+    wrn = true,
+    run = 11,
+}
+
+Test { [[
+var int v = 10;
+var int& i;
+loop do
+    i = v;
+    i = i + 1;
+    break;
+end
+escape v;
+]],
+    wrn = true,
+    ref = 'reference declaration and first binding cannot be separated by loops',
+}
+
+Test { [[
+var int v = 10;
+loop do
+    var int&? i = v;
+    i = i + 1;
+    break;
+end
+escape v;
+]],
+    wrn = true,
+    run = 11,
+}
+
+Test { [[
+var int v = 10;
+var int&? i;
+loop do
+    i = v;
+    i = i + 1;
+    break;
+end
+escape v;
+]],
+    wrn = true,
+    --run = 11,
+    ref = 'reference declaration and first binding cannot be separated by loops',
+}
+
+Test { [[
+var _SDL_Surface&? sfc;
+every 1s do
+    finalize
+        sfc = _TTF_RenderText_Blended();
+    with
+        _SDL_FreeSurface(&sfc);
+    end
+end
+escape 1;
+]],
+    ref = 'line 4 : reference declaration and first binding cannot be separated by loops',
+}
+
 -- FINALLY / FINALIZE
 
 Test { [[
