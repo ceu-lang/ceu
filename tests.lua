@@ -1562,6 +1562,8 @@ escape 1;
 ]],
     asr = true,
 }
+
+
 do return end
 
 ----------------------------------------------------------------------------
@@ -16120,6 +16122,24 @@ end
 escape 1;
 ]],
     ref = 'line 4 : reference declaration and first binding cannot be separated by loops',
+}
+
+Test { [[
+class Ship with
+    var int& v;
+do
+end
+
+loop do
+    var int x = 10;
+    var Ship ship1 with
+        this.v = x;
+    end;
+    escape 1;
+end
+]],
+    wrn = true,
+    run = 1,
 }
 
 -- FINALLY / FINALIZE

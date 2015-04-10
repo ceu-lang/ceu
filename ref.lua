@@ -17,12 +17,16 @@ F = {
         --          v = <...>;      // rebindings are forbidden
         --          <...>
         --      end
-        if not to.lst.var.bind then
-            local loop = AST.par(me, 'Loop')
-            if loop then
-                ASR(AST.isParent(loop, to.lst.var.blk), me,
-                    'reference declaration and first binding cannot be separated by loops')
-            end
+        -- accept if inside a constructor:
+        --      loop do
+        --          var T with
+        --              this.v = <...>;
+        --          end;
+        --      end
+        local loop = AST.par(me, 'Loop')
+        if (not to.lst.var.bind) and loop and (not AST.par(me,'Dcl_constr')) then
+            ASR(AST.isParent(loop, to.lst.var.blk), me,
+                'reference declaration and first binding cannot be separated by loops')
         end
 
         -- Detect source of assignment/binding:
