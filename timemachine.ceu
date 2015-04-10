@@ -707,9 +707,9 @@ do
                 int n = 0;
                 for (n=0; n<TM_DIFF_BUF(cur).n; n++) {
                     u32 off = TM_DIFF_BUF(cur).vec[n].offset;
-                    u8  old = TM_DIFF_BUF(cur).vec[n].from;
-                    u8  new = TM_DIFF_BUF(cur).vec[n].to;
-                    sum1 += new;
+                    u8  fr  = TM_DIFF_BUF(cur).vec[n].from;
+                    u8  to  = TM_DIFF_BUF(cur).vec[n].to;
+                    sum1 += to;
                 }
             }
             u32 sum2 = 0;
@@ -731,9 +731,9 @@ printf("====== %d (%dms)\n", i, TM_DIFF_BUF(i).time);
 diff_sum(i);
                 for (n=0; n<TM_DIFF_BUF(i).n; n++) {
                     u32 off = TM_DIFF_BUF(i).vec[n].offset;
-                    u8  old = TM_DIFF_BUF(i).vec[n].from;
+                    u8  fr  = TM_DIFF_BUF(i).vec[n].from;
                     u8  to  = TM_DIFF_BUF(i).vec[n].to;
-                    printf("|[%d]%d:%d", off,old,to);
+                    printf("|[%d]%d:%d", off,fr,to);
                 }
 printf("\n");
                 i += TM_BUF_SZ(TM_DIFF_BUF(i).n);
@@ -747,13 +747,13 @@ printf("<<< DUMP\n");
             u32 i;
             u32 n = 0;
             for (i=0; i<sizeof(CEU_App); i++) {
-                u8 old = DIFF.data_old[i];
-                u8 new = DIFF.data[i];
-                if (old != new) {
+                u8 fr = DIFF.data_old[i];
+                u8 to = DIFF.data[i];
+                if (fr != to) {
                     assert(DIFF.put+TM_BUF_SZ(n) < TM_DIFF_N);
                     TM_DIFF_BUF(DIFF.put).vec[n].offset = i;
-                    TM_DIFF_BUF(DIFF.put).vec[n].from   = old;
-                    TM_DIFF_BUF(DIFF.put).vec[n].to     = new;
+                    TM_DIFF_BUF(DIFF.put).vec[n].from   = fr;
+                    TM_DIFF_BUF(DIFF.put).vec[n].to     = to;
                     n++;
                     assert(n < 65536);
                 }
@@ -779,9 +779,9 @@ printf("<<< DUMP\n");
                 int n = 0;
                 for (n=0; n<TM_DIFF_BUF(cur).n; n++) {
                     u32 off = TM_DIFF_BUF(cur).vec[n].offset;
-                    u8  old = TM_DIFF_BUF(cur).vec[n].from;
-                    u8  new = TM_DIFF_BUF(cur).vec[n].to;
-                    assert(DIFF.data_old[off] == new);
+                    u8  fr  = TM_DIFF_BUF(cur).vec[n].from;
+                    u8  to  = TM_DIFF_BUF(cur).vec[n].to;
+                    assert(DIFF.data_old[off] == to);
                 }
                 /*diff_sum(cur);*/
             }
@@ -821,10 +821,10 @@ printf("<<< DUMP\n");
                         int n = 0;
                         for (n=0; n<TM_DIFF_BUF(cur).n; n++) {
                             u32 off = TM_DIFF_BUF(cur).vec[n].offset;
-                            u8  old = TM_DIFF_BUF(cur).vec[n].from;
-                            u8  new = TM_DIFF_BUF(cur).vec[n].to;
-                            assert(DIFF.data_old[off] == old);
-                            DIFF.data_old[off] = new;
+                            u8  fr  = TM_DIFF_BUF(cur).vec[n].from;
+                            u8  to  = TM_DIFF_BUF(cur).vec[n].to;
+                            assert(DIFF.data_old[off] == fr);
+                            DIFF.data_old[off] = to;
                         }
                     }
                     /*diff_sum(cur);*/
@@ -850,10 +850,10 @@ printf("<<< DUMP\n");
                         int n = 0;
                         for (n=0; n<TM_DIFF_BUF(cur).n; n++) {
                             u32 off = TM_DIFF_BUF(cur).vec[n].offset;
-                            u8  old = TM_DIFF_BUF(cur).vec[n].from;
-                            u8  new = TM_DIFF_BUF(cur).vec[n].to;
-                            assert(DIFF.data_old[off] == new);
-                            DIFF.data_old[off] = old;
+                            u8  fr  = TM_DIFF_BUF(cur).vec[n].from;
+                            u8  to  = TM_DIFF_BUF(cur).vec[n].to;
+                            assert(DIFF.data_old[off] == to);
+                            DIFF.data_old[off] = fr;
                         }
                     }
                     DIFF.nxt = cur;
@@ -883,9 +883,9 @@ printf("<<< DUMP\n");
                 int n = 0;
                 for (n=0; n<TM_DIFF_BUF(DIFF.nxt).n; n++) {
                     u32 off = TM_DIFF_BUF(DIFF.nxt).vec[n].offset;
-                    u8  new = TM_DIFF_BUF(DIFF.nxt).vec[n].to;
-                    DIFF.data[off] = new;
-                    DIFF.data_old[off] = new;
+                    u8  to = TM_DIFF_BUF(DIFF.nxt).vec[n].to;
+                    DIFF.data[off] = to;
+                    DIFF.data_old[off] = to;
                 }
                 /*diff_sum(DIFF.nxt);*/
                 DIFF.nxt += TM_BUF_SZ(n);
