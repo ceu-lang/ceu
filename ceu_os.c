@@ -59,7 +59,7 @@ void ceu_sys_assert (int v) {
 }
 
 void ceu_sys_log (int mode, void* s) {
-#ifdef __posix
+#ifndef __AVR
     if (mode == 0) {
         fprintf(stderr, "%s", (char*)s);
     } else {
