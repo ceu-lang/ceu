@@ -1556,11 +1556,17 @@ escape t.i.v;
     run = 10,
 }
 
+Test { [[
+_assert(0);
+escape 1;
+]],
+    asr = true,
+}
 do return end
----]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
+---]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }

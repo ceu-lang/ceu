@@ -690,7 +690,7 @@ ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'),'
 ]])
                         end
                         LINE(me, [[
-    ceu_out_assert(__ceu_adt != NULL);
+    ceu_out_assert(__ceu_adt != NULL, "out of memory");
     __ceu_adt->tag = CEU_]]..string.upper(var.tp.id..'_'..tag)..[[;
     ]])
                     end
@@ -1246,8 +1246,9 @@ case ]]..me.lbl.id..[[:;
         CEU_THREADS_CREATE(&]]..me.thread_id..[[, _ceu_thread_]]..me.n..[[, &p);
     if (ret == 0)
     {
+        int v = CEU_THREADS_DETACH(]]..me.thread_id..[[);
+        ceu_out_assert(v == 0, "bug found");
         _ceu_app->threads_n++;
-        ceu_out_assert( CEU_THREADS_DETACH(]]..me.thread_id..[[) == 0 );
 
         /* wait for "p" to be copied inside the thread */
         CEU_THREADS_MUTEX_UNLOCK(&_ceu_app->threads_mutex);
@@ -1356,7 +1357,7 @@ static void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
             me[1] = [[
 if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
     *]]..me.thread.thread_st..[[ = 3;
-    /*ceu_out_assert( pthread_cancel(]]..me.thread.thread_id..[[) == 0 );*/
+    /*ceu_out_assert( TODO:take-ret-then-assert * pthread_cancel(]]..me.thread.thread_id..[[) == 0 , "bug found");*/
 } else {
     ceu_out_realloc(]]..me.thread.thread_st..[[, 0); /* thr finished, I free */
     _ceu_app->threads_n--;

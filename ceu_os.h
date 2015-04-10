@@ -83,11 +83,22 @@
     typedef s8 tceu_nlbl;   /* TODO: to small!! */
 
 #ifdef CEU_OS_APP
-    #define ceu_out_assert(v) \
-        ((__typeof__(ceu_sys_assert)*)((_ceu_app)->sys_vec[CEU_SYS_ASSERT]))(v)
-
     #define ceu_out_log(mode,str) \
         ((__typeof__(ceu_sys_log)*)((_ceu_app)->sys_vec[CEU_SYS_LOG]))(mode,str)
+
+    #define ceu_out_assert_ex(v,msg,file,line)          \
+        if ((!(v)) && ((msg)!=NULL)) {                  \
+            ceu_out_log(0, (long)"[");                  \
+            ceu_out_log(0, (long)(file));               \
+            ceu_out_log(0, (long)":");                  \
+            ceu_out_log(2, (line));                     \
+            ceu_out_log(0, (long)"] ");                 \
+            ceu_out_log(0, (long)"runtime error: ");    \
+            ceu_out_log(0, (long)(msg));                \
+            ceu_out_log(0, (long)"\n");                 \
+        }                                               \
+        ((__typeof__(ceu_sys_assert)*)((_ceu_app)->sys_vec[CEU_SYS_ASSERT]))(v)
+    #define ceu_out_assert(v,msg) ceu_out_assert_ex((v),(msg),__FILE__,__LINE__)
 
     #define ceu_out_realloc(ptr, size) \
         ((__typeof__(ceu_sys_realloc)*)((_ceu_app)->sys_vec[CEU_SYS_REALLOC]))(ptr,size)
@@ -138,10 +149,23 @@
 #endif
 
 #else /* ! CEU_OS */
-    #define ceu_out_assert(v) \
-            ceu_sys_assert(v)
     #define ceu_out_log(mode,str) \
             ceu_sys_log(mode,str)
+
+    #define ceu_out_assert_ex(v,msg,file,line)          \
+        if ((!(v)) && ((msg)!=NULL)) {                  \
+            ceu_out_log(0, (long)"[");                  \
+            ceu_out_log(0, (long)(file));               \
+            ceu_out_log(0, (long)":");                  \
+            ceu_out_log(2, line);                       \
+            ceu_out_log(0, (long)"] ");                 \
+            ceu_out_log(0, (long)"runtime error: ");    \
+            ceu_out_log(0, (long)(msg));                \
+            ceu_out_log(0, (long)"\n");                 \
+        }                                               \
+        ceu_sys_assert(v);
+    #define ceu_out_assert(v,msg) ceu_out_assert_ex((v),(msg),__FILE__,__LINE__)
+
     #define ceu_out_realloc(ptr,size) \
             ceu_sys_realloc(ptr,size)
     #define ceu_out_req() \
@@ -436,11 +460,11 @@ typedef struct tceu_go {
     go.stki--
 
 #if defined(CEU_DEBUG) && !defined(CEU_OS)
-#define stack_push(go,elem)             \
-    ceu_out_assert((go).stki+1 < CEU_MAX_STACK);  \
+#define stack_push(go,elem)                                         \
+    ceu_out_assert((go).stki+1 < CEU_MAX_STACK, "stack overflow");  \
     (go).stk[++((go).stki)] = elem
 #else
-#define stack_push(go,elem)             \
+#define stack_push(go,elem)                                         \
     (go).stk[++((go).stki)] = elem
 #endif
 

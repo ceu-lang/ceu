@@ -173,7 +173,7 @@ F =
                 -- NONE
                 else
                     -- ... xxx.me ...
-                    me.val = '('..op..'(CEU_'..ID..'_SOME_assert(&'..me.val..')->SOME.v))'
+                    me.val = '('..op..'(CEU_'..ID..'_SOME_assert(&'..me.val..',__FILE__,__LINE__)->SOME.v))'
                 end
             end
         elseif var.pre == 'pool' then
@@ -515,7 +515,7 @@ F =
             if me.__env_tag == 'test' then
                 me.val  = '('..V(e1)..'.'..'tag == '..tag..')'
             elseif me.__env_tag == 'assert' then
-                me.val  = '('..tag..'_assert(&'..V(e1)..')'..'->'..id..')'
+                me.val  = '('..tag..'_assert(&'..V(e1)..', __FILE__, __LINE__)'..'->'..id..')'
                 --me.val  = '('..tag..'_assert('..V(e1)..')'..ceu2c(op)..id..')'
             elseif me.__env_tag == 'field' then
                 if REF(e1.union_tag_blk.vars[id].tp) then

@@ -141,7 +141,7 @@ static tceu_evtp ceu_app_calls (tceu_app* _ceu_app, tceu_nevt evt, tceu_evtp par
         */
         default:;
 #ifdef CEU_DEBUG
-        ceu_out_log(0, "invalid call\n");
+        ceu_out_log(0, (long)"invalid call\n");
 #endif
     }
     return NULL;
@@ -177,7 +177,7 @@ fprintf(stderr, "OK : lbl=%d : org=%p\n", _CEU_LBL, _STK_ORG);
         === CODE ===
     }
 #ifdef CEU_DEBUG
-    ceu_out_assert(0);
+    ceu_out_assert(0, NULL);
 #endif
     return RET_HALT;    /* TODO: should never be reached anyways */
 }
@@ -254,7 +254,7 @@ ceu_app_init (tceu_app* _ceu_app)
 
 #ifdef CEU_LUA
     ceu_luaL_newstate(_ceu_app->lua);
-    ceu_out_assert(_ceu_app->lua != NULL);
+    ceu_out_assert(_ceu_app->lua != NULL, NULL);
     ceu_luaL_openlibs(_ceu_app->lua);
     ceu_lua_atpanic(_ceu_app->lua, ceu_lua_atpanic_f);    /* TODO: CEU_OS */
 #endif
