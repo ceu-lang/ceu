@@ -1522,6 +1522,25 @@ G = {
                                         node('Stmts', me.ln,
                                             node('Dcl_var', me.ln, 'var', me, 'v'))))
             ADTS[#ADTS].__adj_opt = me
+
+            -- insert in the parent Stmts just before the use of the type
+            local stmts = AST.par(me, 'Stmts')
+            if stmts[1].tag == 'BlockI' then
+                -- TODO: go up one more level if inside a class interface
+                -- (avoid changing the position of a BlockI)
+                stmts = AST.par(stmts, 'Stmts')
+            end
+
+            local ok = false
+            assert(stmts, 'bug found')
+            for i, stmt in ipairs(stmts) do
+                if AST.isParent(stmt, me) then
+                    ADTS[#ADTS].__toinsert = { stmts, i }
+                    ok = true
+                    break;
+                end
+            end
+            assert(ok, 'bug found')
         end
 
         return node('Type', me.ln, '_Option_'..n, 0, false, false, me)
@@ -1531,8 +1550,11 @@ G = {
 H = {
     -- insert all ? types in the beginning
     ['Root_pre'] = function (me)
-        for i, adt in ipairs(ADTS) do
-            table.insert(MAIN.blk_body[1], i, adt)
+        -- traverse in reverse order to avoid problems with insert(j)
+        for i=#ADTS, 1, -1 do
+            local adt = ADTS[i]
+            local stmts, j = unpack(adt.__toinsert)
+            table.insert(stmts, j, adt)
         end
     end,
 

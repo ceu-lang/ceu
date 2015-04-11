@@ -54,7 +54,7 @@ AST.visit(F)
 for _, cls in ipairs(TOPS) do
     if cls.tag=='Dcl_cls' and cls[2]~='Main' then   -- "Main" has no Dcl_imp's
         local dcls1 = cls.blk_ifc[1][1]
-        assert(dcls1.tag == 'BlockI')
+        assert(dcls1.tag == 'BlockI', 'bug found')
         local i = 1
         while i <= #dcls1 do
             local imp = dcls1[i]
