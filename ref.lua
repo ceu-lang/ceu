@@ -109,12 +109,12 @@ F = {
                                      fr.lst.var and fr.lst.var.cls)),
                                                -- orgs are not lval
                     me, 'invalid attribution (not a reference)')
-
-                -- TODO: temporary hack (null references)
-                if not AST.child(fr,'NULL') then
-                    ASR(not AST.child(fr,'Op1_*'), me, 'invalid attribution')
-                end
+                ASR(fr.tag ~= 'Op1_*', me, 'invalid attribution')
             end
+
+            -- refuses first assignment from awaits:
+            -- var int& i = await <...>;
+            ASR(not me.__ast_tuple, me, 'invalid attribution')
         end
     end,
 

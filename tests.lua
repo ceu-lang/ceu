@@ -1563,7 +1563,6 @@ escape 1;
     asr = true,
 }
 
-
 do return end
 
 ----------------------------------------------------------------------------
@@ -15661,7 +15660,7 @@ escape t.i;
 -- internal binding w/ default
 Test { [[
 class T with
-    var int& i = *(int*)null;
+    var int&? i;
 do
     var int v = 10;
     i = v;
@@ -15674,9 +15673,9 @@ escape t.i;
 -- internal binding w/ default
 Test { [[
 class T with
-    var int& i = *(int*)null;
+    var int&? i;
 do
-    _assert(&i == null);
+    _assert(not i?);
     var int v = 10;
     i = v;
 end
@@ -15688,9 +15687,9 @@ escape t.i;
 -- external binding w/ default
 Test { [[
 class T with
-    var int& i = *(int*)null;
+    var int&? i;
 do
-    _assert(&i != null);
+    _assert(i?);
 end
 var int i = 10;
 var T t with
@@ -15702,13 +15701,13 @@ escape t.i;
 }
 Test { [[
 class T with
-    var int& i = *(int*)null;
+    var int&? i;
 do
-    _assert(&i == null);
+    _assert(not i?);
 end
 var int i = 10;
 var T t;
-escape &t.i==null;
+escape not t.i?;
 ]],
     run = 1,
 }
@@ -16140,6 +16139,27 @@ end
 ]],
     wrn = true,
     run = 1,
+}
+
+Test { [[
+native do
+    int V = 10;
+    int* fff (int v) {
+        V += v;
+        return &V;
+    }
+end
+var int   v = 1;
+var int*  p = &v;
+var int&? r;
+finalize
+    r = _fff(*p);
+with
+    nothing;
+end
+escape r;
+]],
+    run = 11,
 }
 
 -- FINALLY / FINALIZE
@@ -24609,12 +24629,10 @@ escape i;
 Test { [[
 var int i = 1;
 class T with
-    var int& i = *(int*)null;
+    var int&? i;
 do
     var int v = 10;
-    if &i != null then
-        i = v;
-    end
+    i = v;
 end
 
 var int ret = 0;
@@ -24637,15 +24655,15 @@ ret = ret + i;  // 22
 
 escape ret;
 ]],
-    ref = 'line 19 : cannot assign to reference bounded inside the class',
+    ref = 'line 17 : cannot assign to reference bounded inside the class',
     --run = 22,
 }
 Test { [[
 var int i = 1;
 class T with
-    var int& i = *(int*)null;
+    var int&? i;
 do
-    if &i != null then
+    if i? then
     end
 end
 var T t with
@@ -24658,10 +24676,10 @@ escape 1;
 Test { [[
 var int i = 1;
 class T with
-    var int& i = *(int*)null;
+    var int&? i;
     var int  v = 0;
 do
-    if &i != null then
+    if i? then
         v = 10;
     end
 end
@@ -40942,7 +40960,7 @@ escape ptr2==&a;
     run = 1,
 }
 
--- ALGEBRAIC DATATYPES (ADTs)
+-- ALGEBRAIC DATATYPES (ADTS)
 
 -- ADTs used in most examples below
 DATA = [[
