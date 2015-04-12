@@ -208,11 +208,6 @@ function TP.contains (tp1, tp2)
         return true
     end
 
-    -- var tp? v = nil
-    if tp1.opt and tp2.id=='nil' then
-        return true
-    end
-
     -- tp? vs tp
     if (tp1.opt or tp2.opt) and (tp1.ptr==tp2.ptr) then
         return TP.contains(tp1.opt or tp1, tp2.opt or tp2)

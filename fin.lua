@@ -8,12 +8,6 @@ local TRACK = {
 
 -- TODO: TRACK por classe?
 
-local function node2blk (n)
-    return n.fst and n.fst.blk or
-           n.fst and n.fst.var and n.fst.var.blk or
-           MAIN.blk_ifc
-end
-
 F = {
     Dcl_cls_pre = function (me)
         TRACK = {}  -- restart tracking for each class
@@ -94,10 +88,10 @@ F = {
             end
         else
             -- block where variable is defined
-            to_blk = node2blk(to)
+            to_blk = NODE2BLK(to)
         end
 
-        local fr_blk = node2blk(fr)
+        local fr_blk = NODE2BLK(fr)
 
     -- CHECK IF "FINALIZE" IS REQUIRED
 
@@ -181,6 +175,7 @@ F = {
             -- OK: "fr" `&´ reference has bigger scope than "to"
             -- int a; int* pa; pa=&a;
             -- int a; do int* pa; pa=&a; end
+-- TODO: this code is duplicated with "ref.lua"
             if not (
                 fr.const                   or -- constants are globals
                 fr.fst.tag == 'Nat'        or -- natives are globals

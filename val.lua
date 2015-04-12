@@ -156,7 +156,7 @@ F =
 
                 -- CALL
                 -- _f(xxx.me)
-                elseif call then
+                elseif call and REF(me.tp) then
                     -- reference option type -> pointer
                     -- var tp&? v;
                     -- _f(v);

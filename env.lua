@@ -64,6 +64,9 @@ end
 function CLS ()
     return AST.iter'Dcl_cls'()
 end
+function ADT ()
+    return AST.iter'Dcl_adt'()
+end
 
 function var2ifc (var)
     local tp
@@ -116,7 +119,7 @@ local _N = 0
 local _E = 1    -- 0=NONE
 
 function newvar (me, blk, pre, tp, id, isImp)
-    local ME = CLS() or me  -- (me can be a "data" declaration)
+    local ME = CLS() or ADT()  -- (me can be a "data" declaration)
     for stmt in AST.iter() do
         if stmt.tag=='Async' or stmt.tag=='Thread' then
             break   -- search until Async boundary

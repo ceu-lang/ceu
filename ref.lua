@@ -2,6 +2,12 @@
 --  - remove interface binding?
 --      - only used for null hack?
 
+function NODE2BLK (n)
+    return n.fst and n.fst.blk or
+           n.fst and n.fst.var and n.fst.var.blk or
+           MAIN.blk_ifc
+end
+
 F = {
     -- before Var
     SetExp_pre = function (me)
@@ -115,6 +121,51 @@ F = {
             -- refuses first assignment from awaits:
             -- var int& i = await <...>;
             ASR(not me.__ast_tuple, me, 'invalid attribution')
+
+            -- check scopes
+-- TODO: this code is duplicated with "fin.lua"
+            local cls = CLS()
+            local fr_blk = NODE2BLK(fr)
+            local to_blk = NODE2BLK(to)
+            local org_blk
+            if to.tag=='Field' and to[2].tag=='This' then
+                local constr = AST.par(me, 'Dcl_constr')
+                if constr then
+                    local dcl = AST.par(constr, 'Dcl_var')
+                    if dcl then
+                        org_blk = dcl.var.blk
+                    else
+                        local spw = AST.par(constr, 'Spawn')
+                        org_blk = spw[2].blk or MAIN.blk_body    -- pool.blk
+                    end
+                end
+            end
+            if not (
+                fr.fst.tag == 'Nat'        or -- natives are globals
+                (fr.tag=='Op2_call' and       -- native calls are globals
+                 fr[2].fst.tag=='Nat')     or
+                (fr.org and                   -- "global:*" is global
+                 fr.org.cls.id=='Global')  or
+                fr_blk == MAIN.blk_body    or
+                (org_blk and
+                 org_blk.__depth>=fr_blk.__depth) or
+                --me.__ast_tuple             or -- tuple attribution ok
+                (   -- same class and scope of "to" <= "fr"
+                    (AST.par(to_blk,'Dcl_cls') == AST.par(fr_blk,'Dcl_cls')) and
+                        (   to_blk.__depth >= fr_blk.__depth            -- to <= fr
+                        or (to_blk.__depth==cls.blk_ifc.__depth and     --    or
+                            fr_blk.__depth==cls.blk_body.__depth)       -- ifc/bdy
+                        )
+                )
+            ) then
+                ASR(false, me, 'attribution to reference with greater scope')
+                    -- NO:
+                    -- var int& r;
+                    -- do
+                    --     var int v;
+                    --     r = v;
+                    -- end
+            end
         end
     end,
 

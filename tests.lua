@@ -1563,6 +1563,7 @@ escape 1;
     asr = true,
 }
 
+
 do return end
 
 ----------------------------------------------------------------------------
@@ -16162,6 +16163,108 @@ escape r;
     run = 11,
 }
 
+Test { [[
+var int& v;
+do
+    var int x;
+    v = x;
+end
+escape 1;
+]],
+    ref = 'line 4 : attribution to reference with greater scope',
+}
+
+Test { [[
+data V with
+    var int v;
+end
+
+var V& v1 = V(1);
+var V& v2, v3;
+do
+    v2 = V(2);
+end
+do
+    v3 = V(3);
+end
+escape v1.v+v2.v+v3.v;
+]],
+    ref = 'line 8 : attribution to reference with greater scope',
+    --run = 6,
+}
+
+Test { [[
+class T with
+    var int& v;
+do
+end
+var T t with
+    var int x;
+    this.v = x;
+end;
+escape 1;
+]],
+    ref = 'line 7 : attribution to reference with greater scope',
+}
+
+Test { [[
+class T with
+    var int& v;
+do
+end
+var int x = 10;
+var T t with
+    this.v = x;
+end;
+x = 11;
+escape t.v;
+]],
+    run = 11;
+}
+
+Test { [[
+data V with
+    var int v;
+end
+
+class T with
+    var V& v;
+do
+end
+
+var T t1 with
+    this.v = V(1);
+end;
+var T t2 with
+    this.v = V(2);
+end;
+var T t3 with
+    this.v = V(3);
+end;
+
+escape t1.v.v + t2.v.v + t3.v.v;
+]],
+    ref = 'line 11 : attribution to reference with greater scope',
+    --run = 6,
+}
+
+Test { [[
+class T with
+    var int& v;
+do
+end
+var int x = 10;
+var T t with
+    this.v = x;
+end;
+var int y = 15;
+t.v = y;
+y = 100;
+escape t.v;
+]],
+    run = 100,
+}
+
 -- FINALLY / FINALIZE
 
 Test { [[
@@ -24482,7 +24585,8 @@ do
 end
 escape v;
 ]],
-    run = 1,
+    ref = 'line 4 : attribution to reference with greater scope',
+    --run = 1,
 }
 
 Test { [[
@@ -30487,7 +30591,8 @@ end
 escape 1;
 ]],
     --fin = 'line 10 : attribution requires `finalize´',
-    run = 1,
+    --run = 1,
+    ref = 'line 10 : attribution to reference with greater scope',
 }
 
 Test { [[
@@ -42270,6 +42375,53 @@ var int&? v4;
 escape (not v1?) + (not v3?) + v2? + v4? + (&v2==_V2) + (&v4==_V2) + v2 + v4;
 ]],
     run = 26,
+}
+
+Test { [[
+data SDL_Color with
+    var int v;
+end
+interface UI with
+    var SDL_Color? bg_clr;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+data SDL_Color with
+    var int v;
+end
+class UI with
+    var SDL_Color? bg_clr;
+do
+end
+var UI ui with
+    this.bg_clr = SDL_Color(10);
+end;
+escape ui.bg_clr.v;
+]],
+    run = 10,
+}
+
+Test { [[
+native do
+    ##define fff(id) id
+end
+data SDL_Color with
+    var int v;
+end
+class UI with
+    var SDL_Color? bg_clr;
+do
+end
+var UI ui with
+    this.bg_clr = SDL_Color(10);
+end;
+escape _fff(ui.bg_clr).v;
+]],
+    run = 10,
 }
 
 --[====[
