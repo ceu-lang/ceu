@@ -427,8 +427,7 @@ F = {
 
     _Loop_pre = function (me)
         local max, to, iter, body = unpack(me)
-        to = to or 'i'
-        to = '_'..to..'_'..me.n
+        to = to or '__ceu_i'..'_'..me.n
         return node('Block', me.ln,
                 node('Stmts', me.ln,
                     node('Stmts', me.ln),   -- to insert all pre-declarations
@@ -524,26 +523,29 @@ F = {
 -- Continue --------------------------------------------------
 
     _Continue_pos = function (me)
-        local _if  = AST.iter('If')()
-        local loop = AST.iter('Loop')()
+        local _if  = AST.par(me, 'If')
+        local loop = AST.par(me, 'Loop')
         ASR(_if and loop, me, 'invalid `continue´')
-        local _,_,_else = unpack(_if)
+
+        local _,_,_,body = unpack(loop)
+        local _,_,_else  = unpack(_if)
 
         loop.hasContinue = true
         _if.hasContinue = true
         ASR( _else.tag=='Nothing'          and   -- no else
             me.__depth  == _if.__depth+3   and   -- If->Block->Stmts->Continue
-             _if.__depth == loop.blk.__depth+2 , -- Block->Stmts->If
+             _if.__depth == body.__depth+2 , -- Block->Stmts->If
             me, 'invalid `continue´')
         return AST.node('Nothing', me.ln)
     end,
 
     Loop_pos = function (me)
+        local _,_,_,body = unpack(me)
         if not me.hasContinue then
             return
         end
         -- start from last to first continue
-        local stmts = unpack(me.blk)
+        local stmts = unpack(body)
         local N = #stmts
         local has = true
         while has do

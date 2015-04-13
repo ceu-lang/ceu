@@ -924,7 +924,11 @@ F = {
         me.tp = TP.fromstr'int'       -- 0/1
     end,
 
-    Loop = function (me)
+    Loop_bef = function (me, sub, i)
+        if i < 4 then
+            return      -- handle just before "body"
+        end
+
         local max, iter, to, _ = unpack(me)
 
         if max or (iter and TP.isNumeric(iter.tp)) then
