@@ -356,50 +356,6 @@ F = {
         if to.tag=='Var' and to.var.id=='_ret' then
             PROPS.has_ret = true
         end
-
-        -- For dynamic ADTs (to=tceu_adt_root):
-        -- check (or):
-        --  - "to" is prefix of "fr"
-        --  - "fr" is constructor
-        --
-        --  l = l:CONS.tail     // OK
-        --  l = new (...)       // OK
-        --  l:CONS.tail = l     // NO
-        if to.fst.tp.id == '_tceu_adt_root' then
-            local constr = (fr.tag=='Var')
-            assert(to.fst.tag=='Var' and fr.fst.tag=='Var', 'not implemented')
-            local prefix = (to.var == fr.var) and
-                            (to.fst.__depth-to.__depth <= fr.fst.__depth-fr.__depth)
-            ASR(constr or prefix, me, 'cannot assign parent to child')
-        end
-    end,
-
-    Dcl_adt = function (me)
-        local id, op = unpack(me)
-
-        -- For recursive ADTs, ensure valid base case:
-        --  - it is the first in the enum
-        --  - it has no parameters
-        if op == 'union' then
-            local base = me.tags[me.tags[1]].tup
-            me.is_rec = false
-            for _, tag in ipairs(me.tags) do
-                local tup = me.tags[tag].tup
-                assert(tup.tag == 'TupleType')
-                for _, item in ipairs(tup) do
-                    assert(item.tag == 'TupleTypeItem')
-                    local _, tp, _ = unpack(item)
-                    if TP.tostr(tp)==id..'&' or TP.tostr(tp)==id..'*' then
-                        me.is_rec = true
-                        break
-                    end
-                end
-            end
-            if me.is_rec then
-                ASR(#base == 0, base,
-                    'base case must have no parameters (recursive data)')
-            end
-        end
     end,
 
     Op1_cast = function (me)

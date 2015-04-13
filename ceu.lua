@@ -150,6 +150,7 @@ do
     dofile 'tops.lua'
     dofile 'env.lua'
     dofile 'exp.lua'
+    dofile 'adt.lua'
     dofile 'ref.lua'
     dofile 'sval.lua'
     dofile 'isr.lua'

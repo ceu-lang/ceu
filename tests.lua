@@ -41226,7 +41226,7 @@ data List with
 end
 escape 1;
 ]],
-    props = 'line 1 : base case must have no parameters (recursive data)',
+    adt = 'line 1 : base case must have no parameters (recursive data)',
 }
 -- the base case must appear first
 Test { [[
@@ -41240,7 +41240,7 @@ with
 end
 escape 1;
 ]],
-    props = 'line 1 : base case must have no parameters (recursive data)',
+    adt = 'line 1 : base case must have no parameters (recursive data)',
 }
 -- the base must not have fields
 Test { [[
@@ -41256,7 +41256,7 @@ with
 end
 escape 1;
 ]],
-    props = 'line 1 : base case must have no parameters (recursive data)',
+    adt = 'line 1 : base case must have no parameters (recursive data)',
 }
 
 -- USE DATATYPES DEFINED ABOVE ("DATA")
@@ -41569,7 +41569,8 @@ var List* p = &l;
 await 1s;
 escape p:CONS.head;
 ]],
-    fin = 'line 54 : pointer access across `await´',
+    adt = 'line 52 : cannot mix recursive data sources',
+    --fin = 'line 54 : pointer access across `await´',
 }
 
 -- COPY / MUTATION
@@ -41595,6 +41596,7 @@ var List l3 = List.CONS(2, &l2);
 l3.CONS.tail = &l1;
 escape l3.CONS.head + l3.CONS.tail:NIL;
 ]],
+    adt = 'line 54 : cannot mix recursive data sources',
     run = 3,
 }
 
@@ -41605,6 +41607,7 @@ var List l2 = List.CONS(1, &l1);
 l1 = l2;
 escape l1.CONS + (l1.CONS.head==1);
 ]],
+    adt = 'line 53 : cannot mix recursive data sources',
     run = 2,
 }
 Test { DATA..[[
@@ -41613,6 +41616,7 @@ var List l2 = List.CONS(1, &l1);
 l1 = l2;
 escape l1.CONS + (l1.CONS.head==1) + (l1.CONS.tail:CONS.tail:CONS.head==1);
 ]],
+    adt = 'line 53 : cannot mix recursive data sources',
     run = 3,
 }
 
@@ -41625,6 +41629,7 @@ escape (l1.CONS.head==1) + (l1.CONS.tail:CONS.head==2) +
        (l2.CONS.head==2) + (l2.CONS.tail:CONS.head==1) +
        (l1.CONS.tail:CONS.tail:CONS.tail:CONS.head==2);
 ]],
+    adt = 'line 53 : cannot mix recursive data sources',
     run = 5,
 }
 
@@ -41637,6 +41642,7 @@ l2.CONS.tail = &l1;
 
 escape l1.CONS.head + l1.CONS.tail:CONS.head + l2.CONS.head + l2.CONS.tail:CONS.head;
 ]],
+    adt = 'line 53 : cannot mix recursive data sources',
     run = 6,
 }
 
@@ -41647,6 +41653,7 @@ var List l2 = List.CONS(1, &l1);
 l1 = *l2.CONS.tail;
 escape l1.NIL;
 ]],
+    adt = 'line 53 : cannot mix recursive data sources',
     run = 1,
 }
 
@@ -41994,7 +42001,7 @@ l = new List.CONS(1, List.CONS(2, List.NIL()));
 l:CONS.tail = l;    // child=parent
 escape 1;
 ]],
-    props = 'line 53 : cannot assign parent to child',
+    adt = 'line 53 : cannot assign parent to child',
 }
 
 -- TREES
@@ -42424,31 +42431,6 @@ escape _fff(ui.bg_clr).v;
     run = 10,
 }
 
---[====[
--- TODO: continue ADT implementation
-
-do return end
-
--- 1-2-3-NIL
-Test { DATA..[[
-pool List[2] l;
-l = new List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));
-
-loop i in l do
-    if i:NIL then
-        _printf("NIL\n");
-    else
-        recurse l:CONS.tail;
-        _printf("%d-", l:CONS.head);
-    end
-end
-
-escape 1;
-]],
-    run = 1,
-}
-
-
 Test { [[
 data OptionInt with
     tag NIL;
@@ -42468,7 +42450,7 @@ end
 
 var int ret = 0;    // 0
 
-var int_  i;
+var int?  i;
 var int&? p;
 ret = ret + (not i?) + (not p?);  // 2
 
@@ -42491,56 +42473,64 @@ escape ret;
     run = 21,
 }
 
-Test { [[
-var int&? i;
-finalize
-    i = _alloc(1);
-with
-    _free(i);
-end
-escape i;       // ok
-]],
-    run = 1,
-}
-Test { [[
-var int&? i;
-finalize
-    i = _alloc(0);
-with
-    _free(i);
-end
-escape i;       // error
-]],
-    run = 1,
-}
-
--- TODO: IGNORE EVERYTHING STARTING FROM HERE
-
--- TODO: if p/ construtores p/ dar erro de bloco
-
--- TODO: gcc error
+-- cannot compare ADTs
 Test { DATA..[[
-var List l = List.CONS(1, List.NIL());
-l.CONS.tail = List.NIL();
-escape 1;
+var Pair p1 = Pair(1,2);
+var Pair p2 = Pair(1,2);
+escape p1==p2;
 ]],
-    run = 1,
+    env = 'line 53 : invalid operation for data',
+    --run = 1,
 }
--- TODO: does it make sense?
 Test { DATA..[[
-pool List[] l;
+pool List[] l1;
 var List l2 = List.NIL();
-escape l==l2;
+escape l1==l2;
 ]],
     env = 'line 53 : invalid operands to binary "=="',
     --run = 1,
 }
 
--- TODO: avoid cycles/side-shares
+-- cannot mix recursive ADTs
+Test { DATA..[[
+var List l1 = List.CONS(1, List.NIL());
+var List l2 = List.CONS(2, List.NIL());
+l1.CONS.tail = &l2;
+escape l1.CONS.tail:CONS.head;
+]],
+    adt = 'line 53 : cannot mix recursive data sources',
+}
+Test { DATA..[[
+var List l1 = List.CONS(1, List.NIL());
+do
+    var List l2 = List.CONS(2, List.NIL());
+    l1.CONS.tail = &l2;
+end
+escape l1.CONS.tail:CONS.head;
+]],
+    adt = 'line 54 : cannot mix recursive data sources',
+    --fin = 'line 54 : attribution to pointer with greater scope',
+}
+Test { DATA..[[
+var List l1 = List.CONS(1, List.NIL());
+pool List[2] l2;
+l2 = new List.CONS(2, List.NIL());
+l1.CONS.tail = l2;
+escape l1.CONS.tail:CONS.head;
+]],
+    adt = 'line 54 : cannot mix recursive data sources',
+}
+Test { DATA..[[
+pool List[2] l1;
+pool List[2] l2;
+l1 = new List.CONS(1, List.NIL());
+l2 = new List.CONS(2, List.NIL());
+l1:CONS.tail = l2;
+escape l1:CONS.tail:CONS.head;
+]],
+    adt = 'line 55 : cannot mix recursive data sources',
+}
 
--- XXX
-
--- mutation
 Test { DATA..[[
 var int ret = 0;                // 0
 
@@ -42564,9 +42554,9 @@ l:CONS.tail:CONS.tail = new List.CONS(4, List.NIL());
 
 // change middle [1, 2, 3, 4]
 var List l3 = List.CONS(3, l:CONS.tail:CONS.tail);
-l:CONS.tail:CONS.tail = l3;
-_assert(l:CONS.tail.CONS:head == 3);
-_assert(l:CONS.tail.CONS:tail.CONS.head == 4);
+l:CONS.tail:CONS.tail = &l3;
+_assert(l:CONS.tail:CONS.head == 3);
+_assert(l:CONS.tail:CONS.tail:CONS.head == 4);
 ret = ret + l:CONS.tail:CONS.head + l:CONS.tail:CONS.tail:CONS.head;
                                 // 17
 
@@ -42581,36 +42571,40 @@ l:CONS.tail:CONS.tail:CONS.tail =
 
 escape ret;
 ]],
+    adt = 'line 73 : cannot mix recursive data sources',
     run = -1,
 }
 
+-- TODO: continue ADT implementation
+do return end
+--[=[
+
+Test { DATA..[[
+var List l = List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));
+
+var int sum = 0;
+
+loop i in l do
+    if i:CONS then
+        sum = sum + l:CONS.head;
+        recurse l:CONS.tail;
+    end
+end
+
+escape sum;
+]],
+    run = 6,
+}
+
+-- XXX
+-- TODO: avoid cycles/side-shares
 error 'TODO: data that uses data'
 error 'TODO: data that uses data that uses 1st data again (cycle)'
 error 'TODO: detect tight loops == detect deletes in the DAG'
 error 'TODO: change middle w/ l3 w/ deeper scope'
 error 'TODO: List& l = ...  // for temporary parts (tests w/ no reassign)'
 
-Test { DATA..[[
-// no: mixing static/dynamic
-var List l2 = ...
-l.CONS.tail = &l2;  // no: l2 is static, l is dyn
-
-var List* l2 = l.CONS.tail;
-l.CONS.tail = new List.NIL();   // only deallocates in the end of reaction
-l.CONS.tail = l2; // no: possible cycle/sharing, don't know scope
-await 1s;
-l2.*  // no: pointer across reaction
-// CLEAR UPWARDS
-l = l.CONS.tail;   // clear old l upto l.CONS.tail
-// useful for iterators:
-loop do
-    l = l.CONS.tail;
-    ...
-    await 1s;
-end
-]],
-}
-
+-- NONE of below is implemented (or will ever be?)
 -- anonymous fields
 Test { [[
 data Pair = (int, int);
@@ -42653,7 +42647,7 @@ escape 1;
     todo = 'implement?',
 }
 
--- constructors may specifies the field names
+-- constructors may specify the field names
 Test { DATA..[[
 var Pair p1 = Pair(x=1,x=2);
 var Opt  o1 = Opt.NIL();
@@ -42772,7 +42766,7 @@ escape ret;
     run = 15,
     todo = 'implement? trying only w/ named fields for now',
 }
---]====]
+--]=]
 
 -- TIMEMACHINE
 

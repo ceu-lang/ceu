@@ -1054,6 +1054,8 @@ F = {
         me.tp  = TP.fromstr'int'
         ASR(TP.max(e1.tp,e2.tp), me,
             'invalid operands to binary "'..op..'"')
+        ASR(not ENV.adts[TP.tostr(e1.tp)], me, 'invalid operation for data')
+        ASR(not ENV.adts[TP.tostr(e2.tp)], me, 'invalid operation for data')
     end,
     ['Op2_=='] = 'Op2_same',
     ['Op2_!='] = 'Op2_same',
@@ -1063,7 +1065,8 @@ F = {
     ['Op2_<']  = 'Op2_same',
 
     Op2_any = function (me)
-        me.tp  = TP.fromstr'int'
+        me.tp = TP.fromstr'int'
+        ASR(not ENV.adts[TP.tostr(me.tp)], me, 'invalid operation for data')
     end,
     ['Op2_or']  = 'Op2_any',
     ['Op2_and'] = 'Op2_any',

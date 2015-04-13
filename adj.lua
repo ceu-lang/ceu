@@ -1607,6 +1607,7 @@ H = {
         -- root must set SetExp variable
         assert(set.tag=='SetExp', 'bug found')
         set[2] = node('Var', me.ln, '__ceu_adt_'..me.n)
+        set[2].__adj_is_constr = true
         return node('Stmts', me.ln,
                 node('Dcl_var', me.ln, 'var',
                     node('Type', me.ln, me.__adj_adt_id, (dyn and 1) or 0, false, false),
