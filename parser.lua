@@ -197,7 +197,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , __StmtB = V'Do'   + V'Host'    + V'_GlobalDo'
              + V'Async' + V'_Thread' + V'Sync' + V'Atomic'
              + V'ParOr' + V'ParAnd'  + V'_Watching'
-             + V'If'    + V'_Loop'   + V'_Every'  + V'_Iter'
+             + V'If'    + V'_Loop'   + V'_Every'
              + V'_Pause'
              + V'_Dcl_ifc' + V'Dcl_cls'
              + V'Dcl_adt'
@@ -282,17 +282,31 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                     V'Block' + Cc(false)) *
                 EKEY'end'-- - V'_Continue'
 
-    , Break    = KEY'break'
+    , Break   = KEY'break'
     , _Continue = KEY'continue'
 
-    , _Loop    = KEY'loop' * ('/'*EV'__Exp' + Cc(false)) *
-                    (V'__ID_var' * (EKEY'in'*EV'__Exp' + Cc(false)) +
-                        Cc(false)*Cc(false)) *
+    , _Loop   = KEY'loop' * ('/'*EV'__Exp' + Cc(false)) *
+                    (V'__ID_var' * (EKEY'in'*EV'__Exp' + Cc(false))
+                    + Cc(false)*Cc(false)) *
                 V'__Do'
 
+--[[
+loop/N i in <e-num> do
+    ...
+end
+loop (T*)i in <e-pool-org> do
+    ...
+end
+loop i in <e-rec-data> do
+    ...
+end
+loop (a,b,c) in <e-evt> do
+    ...
+end
     , _Iter   = KEY'loop' * K'('*EV'Type'*EK')'
               *     V'__ID_var' * KEY'in' * EV'__Exp'
               * V'__Do'
+]]
 
     , _Every  = KEY'every' * ( (EV'__Exp'+V'VarList') * EKEY'in'
                             + Cc(false) )

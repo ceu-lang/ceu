@@ -203,12 +203,14 @@ F = {
     Break    = 'Escape',
 
     Loop = function (me)
-        if me.bound then
-            me.ana.pos = COPY(me[1].ana.pos)
+        local max,iter,_,body = unpack(me)
+        local is_bounded = max or (iter and iter.cval)
+        if is_bounded then
+            me.ana.pos = COPY(body.ana.pos)
             return      -- guaranteed to terminate
         end
 
-        if me[1].ana.pos[false] then
+        if body.ana.pos[false] then
             --ANA.ana.unreachs = ANA.ana.unreachs + 1
             WRN( INC(me, 'unreachs'),
                  me, '`loop´ iteration is not reachable')

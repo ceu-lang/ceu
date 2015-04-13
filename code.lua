@@ -986,13 +986,43 @@ if (]]..V(c)..[[) {
     end,
 
     Loop_pos = function (me)
-        local body = unpack(me)
+        local max,iter,to,body = unpack(me)
         local no = '_CEU_NO_'..me.n..'_'
 
+        local ini, nxt = {}, {}
+        local cnd = ''
+
+        if me.i_var then
+            ini[#ini+1] = V(me.i_var)..' = 0'
+            nxt[#nxt+1] = V(me.i_var)..'++'
+        end
+
+        if iter then
+            if TP.isNumeric(iter.tp) then
+                cnd = V(me.i_var)..' < '..V(iter)
+            else
+                error'not implemented'
+            end
+        end
+
+        ini = table.concat(ini, ', ')
+        nxt = table.concat(nxt, ', ')
+
+        -- ensures that cval is constant
+        if max then
+            LINE(me, 'int __'..me.n..'['..max.cval..'] = {};')
+        end
+
         LINE(me, [[
-for (;;) {
+for (]]..ini..';'..cnd..';'..nxt..[[) {
 ]])
-        CONC(me)
+        if max then
+            LINE(me, [[
+    ceu_out_assert_ex(]]..V(me.i_var)..' < '..V(max)..[[, "loop overflow", __FILE__, __LINE__);
+]])
+        end
+
+        CONC(me,body)
         local async = AST.iter'Async'()
         if async then
             LINE(me, [[

@@ -924,6 +924,31 @@ F = {
         me.tp = TP.fromstr'int'       -- 0/1
     end,
 
+    Loop = function (me)
+        local max, iter, to, _ = unpack(me)
+
+        if max or (iter and TP.isNumeric(iter.tp)) then
+            me.i_dcl = AST.node('Dcl_var', me.ln, 'var',
+                        AST.node('Type', me.ln, 'int', 0, false, false),
+                        to)
+            me.i_var = AST.node('Var', me.ln, to)
+            AST.visit(F, me.i_dcl)
+            AST.visit(F, me.i_var)
+            local stmts = me.__par[1]
+            stmts[#stmts+1] = me.i_dcl
+            stmts[#stmts+1] = me.i_var
+        end
+
+        if not iter then
+            return
+        end
+
+        -- other cases
+        if not TP.isNumeric(iter.tp) then
+            error'not implemented'
+        end
+    end,
+
     --------------------------------------------------------------------------
         --assert( (not ins) or (ins.tup and #params==#ins.tup), 'bug found')
 

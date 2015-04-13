@@ -353,7 +353,8 @@ F = {
             set = awt
         end
 
-        local ret = node('Loop', me.ln, node('Stmts', me.ln, set, blk))
+        local ret = node('Loop', me.ln, false, false, false,
+                        node('Stmts', me.ln, set, blk))
         ret.isEvery = true  -- refuses other "awaits"
 -- TODO: remove
         ret.blk = blk
@@ -362,6 +363,7 @@ F = {
 
 -- Iter --------------------------------------------------
 
+--[=[
     _Iter_pre = function (me)
         local to_tp, to_id, fr_exp, blk = unpack(me)
 
@@ -419,10 +421,20 @@ F = {
                                                          fr_ini,to_ini,
                                                          loop))
     end,
+]=]
 
 -- Loop --------------------------------------------------
 
-    _Loop_pre  = function (me)
+    _Loop_pre = function (me)
+        local max, to, iter, body = unpack(me)
+        to = to or 'i'
+        to = '_'..to..'_'..me.n
+        return node('Block', me.ln,
+                node('Stmts', me.ln,
+                    node('Stmts', me.ln),   -- to insert all pre-declarations
+                    node('Loop', me.ln, max, iter, to, body)))
+    end,
+--[=[
         local max, _i, _j, blk = unpack(me)
         local bound = max and { true, max }
                                 -- must be limited to "max" (must have sval)
@@ -507,6 +519,7 @@ F = {
                     dcl_j, set_j,
                     loop))
     end,
+]=]
 
 -- Continue --------------------------------------------------
 

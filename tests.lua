@@ -1568,7 +1568,6 @@ do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
----]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -3413,6 +3412,7 @@ escape b;
 }
 
     -- LOOP
+---]===]
 
 Test { [[
 var int ret = 0;
@@ -3699,8 +3699,9 @@ escape 1;
 Test { [[
 loop i in 0 do
 end
+escape 1;
 ]],
-    adj = 'line 1 : constant should not be `0´',
+    run = 1,
 }
 
 Test { [[
@@ -3736,7 +3737,8 @@ loop do
 end
 escape 1;
 ]],
-    ana = 'line 4 : statement is not reachable',    -- TODO: should be line 7
+    ana = 'line 4 : `loop´ iteration is not reachable',
+    --ana = 'line 4 : statement is not reachable',    -- TODO: should be line 7
     run = 2,
 }
 
@@ -3758,12 +3760,21 @@ escape 1;
 -- LOOP / BOUNDED
 
 Test { [[
+native do
+    int V;
+end
+loop/_V do
+end
+escape 1;
+]],
+    gcc = ':4:5: error: variable-sized object may not be initialized',
+}
+Test { [[
 loop/10 do
 end
 escape 1;
 ]],
-    -- TODO
-    adj = 'line 1 : not implemented',
+    asr = 'runtime error: loop overflow',
     --run = 1,
 }
 
@@ -3774,9 +3785,7 @@ loop/3 do
 end
 escape ret;
 ]],
-    -- TODO
-    adj = 'not implemented',
-    --run = 3,
+    asr = 'runtime error: loop overflow',
 }
 
 Test { [[
@@ -41125,7 +41134,6 @@ end
 
 --[==[
 -- HERE
-]==]
 
 -- data type identifiers must start with an uppercase
 Test { [[
@@ -42575,9 +42583,9 @@ escape ret;
     run = -1,
 }
 
--- TODO: continue ADT implementation
 do return end
---[=[
+]==]
+-- TODO: continue ADT implementation
 
 Test { DATA..[[
 var List l = List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));
@@ -42586,8 +42594,8 @@ var int sum = 0;
 
 loop i in l do
     if i:CONS then
-        sum = sum + l:CONS.head;
-        recurse l:CONS.tail;
+        sum = sum + i:CONS.head;
+        recurse i:CONS.tail;
     end
 end
 
@@ -42605,6 +42613,7 @@ error 'TODO: change middle w/ l3 w/ deeper scope'
 error 'TODO: List& l = ...  // for temporary parts (tests w/ no reassign)'
 
 -- NONE of below is implemented (or will ever be?)
+--[=[
 -- anonymous fields
 Test { [[
 data Pair = (int, int);

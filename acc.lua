@@ -596,9 +596,10 @@ G = {
 -- TODO: workaround
     -- Loop can only be repeated after nested PARs evaluate CHK_*
     Loop = function (me)
+        local _,_,_,body = unpack(me)
         -- pre = pre U pos
-        if not me[1].ana.pos[false] then
-            ANA.union(me[1], next(me.ana.pre), me[1].ana.pos)
+        if not body.ana.pos[false] then
+            ANA.union(body, next(me.ana.pre), body.ana.pos)
         end
     end,
 }
