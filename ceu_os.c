@@ -58,22 +58,6 @@ void ceu_sys_assert (int v) {
 #endif
 }
 
-void ceu_sys_log (int mode, long s) {
-#ifdef _POSIX_VERSION
-    switch (mode) {
-        case 0:
-            fprintf(stderr, "%s", (char*)s);
-            break;
-        case 1:
-            fprintf(stderr, "%lX", s);
-            break;
-        case 2:
-            fprintf(stderr, "%ld", s);
-            break;
-    }
-#endif
-}
-
 #ifdef CEU_NEWS
 #ifdef CEU_RUNTESTS
 #define CEU_MAX_DYNS 100
@@ -438,6 +422,7 @@ fprintf(stderr, "STACK[%d]: evt=%d : seqno=%d : ntrls=%d\n",
                      * TODO(speed): skip LST
                      */
                     if (CUR.evt==CEU_IN__CLEAR && CUR_ORG->n!=0) {
+                        stack_rem(go,CUR_ORG);
 #ifdef CEU_ORGS_NEWS
                         if (CUR_ORG->isDyn) {
                             /* 1: re-link PRV <-> NXT */
@@ -655,10 +640,20 @@ if (STK.trl->evt==CEU_IN__ORG) {
             STK.trl++;
         }
 
+#ifdef CEU_ORGS
+_CEU_GO_POP_:
+#endif
+
         if (go.stki == 0) {
             break;      /* reaction has terminated */
         }
         stack_pop(go);
+
+#ifdef CEU_ORGS
+        if (STK_ORG==NULL) {
+            goto _CEU_GO_POP_;  /* skip aborted orgs */
+        }
+#endif
     }
 
 _CEU_GO_QUIT_:;

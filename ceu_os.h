@@ -456,6 +456,18 @@ typedef struct tceu_go {
 
 #define stack_init(go) (go).stki = -1
 #define stack_get(go) ((go).stk[(go).stki])
+
+#ifdef CEU_ORGS
+#define stack_rem(go,o) {               \
+    int i;                              \
+    for (i=0; i<(go).stki-1; i++) {     \
+        if ((go).stk[i].org == (o)) {   \
+            (go).stk[i].org = NULL;     \
+        }                               \
+    }                                   \
+}
+#endif
+
 #define stack_pop(go) \
     go.stki--
 
