@@ -924,31 +924,42 @@ F = {
         me.tp = TP.fromstr'int'       -- 0/1
     end,
 
-    Loop_bef = function (me, sub, i)
-        if i < 4 then
-            return      -- handle just before "body"
+    Loop_aft = function (me, sub, i)
+        if i ~= 2 then
+            return      -- declarations after "iter"
         end
 
         local max, iter, to, _ = unpack(me)
+        local is_num = (iter and (not me.isEvery) and TP.isNumeric(iter.tp))
 
-        if max or (iter and TP.isNumeric(iter.tp)) then
+        if max or is_num then
             me.i_dcl = AST.node('Dcl_var', me.ln, 'var',
                         AST.node('Type', me.ln, 'int', 0, false, false),
-                        to)
-            me.i_var = AST.node('Var', me.ln, to)
+                        to[1])
+            me.i_var = to
             AST.visit(F, me.i_dcl)
-            AST.visit(F, me.i_var)
             local stmts = me.__par[1]
             stmts[#stmts+1] = me.i_dcl
-            stmts[#stmts+1] = me.i_var
         end
 
-        if not iter then
+        if not (iter and to) then
             return
         end
 
-        -- other cases
-        if not TP.isNumeric(iter.tp) then
+        if me.isEvery then
+            local evt = (iter.var or iter).evt
+            local tup = (evt and evt.ins.tup) or { iter.tp }
+            for i, tp in ipairs(tup) do
+                DBG(_, tp, tp.tag, tp.id, to)
+                local dcl = AST.node('Dcl_var', me.ln, 'var', AST.copy(tp), to[i][1])
+                AST.visit(F, dcl)
+                local stmts = me.__par[1]
+                stmts[#stmts+1] = dcl
+            end
+
+        elseif is_num then
+            -- done above
+        else
             error'not implemented'
         end
     end,

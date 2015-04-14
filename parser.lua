@@ -286,7 +286,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , _Continue = KEY'continue'
 
     , _Loop   = KEY'loop' * ('/'*EV'__Exp' + Cc(false)) *
-                    (V'__ID_var' * (EKEY'in'*EV'__Exp' + Cc(false))
+                    (V'Var' * (EKEY'in'*EV'__Exp' + Cc(false))
                     + Cc(false)*Cc(false)) *
                 V'__Do'
 
@@ -308,7 +308,7 @@ end
               * V'__Do'
 ]]
 
-    , _Every  = KEY'every' * ( (EV'__Exp'+V'VarList') * EKEY'in'
+    , _Every  = KEY'every' * ( (EV'Var'+V'VarList') * EKEY'in'
                             + Cc(false) )
               * V'__awaits'
               * V'__Do'

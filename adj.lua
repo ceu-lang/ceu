@@ -335,7 +335,7 @@ F = {
 -- Every --------------------------------------------------
 
     _Every_pre = function (me)
-        local to, e, dt, blk = unpack(me)
+        local to, e, dt, body = unpack(me)
 
         --[[
         --      every a=EXT do ... end
@@ -353,11 +353,11 @@ F = {
             set = awt
         end
 
-        local ret = node('Loop', me.ln, false, false, false,
-                        node('Stmts', me.ln, set, blk))
+        local ret = node('_Loop', me.ln, false, to, AST.copy(e or dt), body)
+        assert(body[1].tag == 'Stmts')
+        table.insert(body[1], set)
         ret.isEvery = true  -- refuses other "awaits"
--- TODO: remove
-        ret.blk = blk
+
         return ret
     end,
 
@@ -427,11 +427,13 @@ F = {
 
     _Loop_pre = function (me)
         local max, to, iter, body = unpack(me)
-        to = to or '__ceu_i'..'_'..me.n
+        to = to or (max and node('Var', me.ln, '__ceu_i'..'_'..me.n))
+        local loop = node('Loop', me.ln, max, iter, to, body)
+        loop.isEvery = me.isEvery
         return node('Block', me.ln,
                 node('Stmts', me.ln,
                     node('Stmts', me.ln),   -- to insert all pre-declarations
-                    node('Loop', me.ln, max, iter, to, body)))
+                    loop))
     end,
 --[=[
         local max, _i, _j, blk = unpack(me)

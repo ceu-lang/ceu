@@ -1568,6 +1568,7 @@ do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
+---]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -3412,7 +3413,6 @@ escape b;
 }
 
     -- LOOP
----]===]
 
 Test { [[
 var int ret = 0;
@@ -3889,6 +3889,18 @@ every dt in 1s do
     end
 end
 ]],
+    env = 'line 3 : declaration of "dt" hides the one at line 2',
+}
+
+Test { [[
+var int ret = 0;
+every dt in 1s do
+    ret = ret + dt;
+    if ret == 10000000 then
+        escape ret;
+    end
+end
+]],
     run = { ['~>5s']=10000000 }
 }
 
@@ -3992,7 +4004,21 @@ with
     end
 end
 ]],
-    ana = 'line 4 : `loop´ iteration is not reachable',
+    env = 'line 4 : declaration of "a" hides the one at line 3',
+}
+Test { [[
+input (int,int) A;
+par do
+    every (a,b) in A do
+        escape a+b;
+    end
+with
+    async do
+        emit A => (1,3);
+    end
+end
+]],
+    ana = 'line 3 : `loop´ iteration is not reachable',
 }
 Test { [[
 input (int,int) A;

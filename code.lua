@@ -998,7 +998,9 @@ if (]]..V(c)..[[) {
         end
 
         if iter then
-            if TP.isNumeric(iter.tp) then
+            if me.isEvery then
+                -- nothing to do
+            elseif TP.isNumeric(iter.tp) then
                 cnd = V(me.i_var)..' < '..V(iter)
             else
                 error'not implemented'

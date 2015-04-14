@@ -205,11 +205,11 @@ local function visit_aux (me, F)
     STACK[#STACK+1] = me
 
     for i, sub in ipairs(me) do
+        if bef then assert(bef(me, sub, i)==nil) end
         if AST.isNode(sub) and sub.tag~='Ref' then
-            if bef then assert(bef(me, sub, i)==nil) end
             me[i] = visit_aux(sub, F)
-            if aft then assert(aft(me, sub, i)==nil) end
         end
+        if aft then assert(aft(me, sub, i)==nil) end
     end
 
     if mid then
