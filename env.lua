@@ -931,11 +931,13 @@ F = {
 
         local max, iter, to, _ = unpack(me)
         local is_num = (iter and (not me.isEvery) and TP.isNumeric(iter.tp))
+                        or (to and (not iter))
 
         if max or is_num then
             me.i_dcl = AST.node('Dcl_var', me.ln, 'var',
                         AST.node('Type', me.ln, 'int', 0, false, false),
                         to[1])
+            me.i_dcl.read_only = true
             me.i_var = to
             AST.visit(F, me.i_dcl)
             local stmts = me.__par[1]

@@ -1081,7 +1081,7 @@ F = {
 
         -- <await until> => loop
 
-        return node('Loop', me.ln,
+        return node('_Loop', me.ln, false, false, false,
                 node('Stmts', me.ln,
                     me,
                     node('If', me.ln, cnd,
@@ -1109,7 +1109,7 @@ F = {
             local cnd = awt[#awt]
             awt[#awt] = false   -- remove "cnd" from "Await"
             if cnd then
-                ret = node('Loop', me.ln,
+                ret = node('_Loop', me.ln, false, false, false,
                             node('Stmts', me.ln,
                                 T,
                                 node('If', me.ln, cnd,
@@ -1401,7 +1401,7 @@ F = {
                         node('NUMBER', me.ln, 0),
                         node('Var', me.ln, cur_id)),
                     node('ParOr', me.ln,
-                        node('Loop', me.ln,
+                        node('_Loop', me.ln, false, false, false,
                             node('Stmts', me.ln,
                                 node('_Set', me.ln,
                                     node('Var', me.ln, cur_id),

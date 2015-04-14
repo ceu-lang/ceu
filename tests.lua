@@ -4700,7 +4700,6 @@ escape v;
 ]],
     run = {['~>A;~>A;~>A;~>A;~>A;~>A;~>A;~>A;~>A;~>A;']=4},
 }
----]===]
 Test { [[
 var int sum = 4;
 loop i in 0 do
@@ -19647,7 +19646,6 @@ escape ret;
 Test { [[
 input void* E;
 event _tceu_queue* go;
-var _tceu_queue* qu_;
 every qu_ in go do
     var _tceu_queue qu = * qu_;
     async(qu) do
@@ -19655,7 +19653,7 @@ every qu_ in go do
     end
 end
 ]],
-    fin = 'line 6 : pointer access across `await´',
+    fin = 'line 5 : pointer access across `await´',
     run = 1,
 }
 
@@ -19663,7 +19661,6 @@ Test { [[
 input void* E;
 native @plain _tceu_queue;
 event _tceu_queue* go;
-var _tceu_queue* qu_;
 every qu_ in go do
     var _tceu_queue qu = * qu_;
     async(qu) do
@@ -23030,7 +23027,6 @@ escape 1;
 
 Test { [[
 input _SDL_KeyboardEvent* SDL_KEYUP;
-var _SDL_KeyboardEvent* key;
 every key in SDL_KEYUP do
     if key:keysym.sym == 1 then
     else/if key:keysym.sym == 1 then
@@ -28346,6 +28342,7 @@ escape (ok1!=null) + (ok2!=null);
     run = 1,
 }
 
+---]===]
 Test { [[
 class T with
     var int v = 0;
@@ -33009,7 +33006,6 @@ native @nohold _memcpy();
 
 input _pkt_t* RECEIVE;
 
-var _pkt_t* inc;
 every inc in RECEIVE do
     spawn Forwarder with
         _memcpy(&this.out, inc, inc:len);
