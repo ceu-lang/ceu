@@ -58,22 +58,6 @@ void ceu_sys_assert (int v) {
 #endif
 }
 
-void ceu_sys_log (int mode, long s) {
-#ifdef _POSIX_VERSION
-    switch (mode) {
-        case 0:
-            fprintf(stderr, "%s", (char*)s);
-            break;
-        case 1:
-            fprintf(stderr, "%lX", s);
-            break;
-        case 2:
-            fprintf(stderr, "%ld", s);
-            break;
-    }
-#endif
-}
-
 #ifdef CEU_NEWS
 #ifdef CEU_RUNTESTS
 #define CEU_MAX_DYNS 100
