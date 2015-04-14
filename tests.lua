@@ -1568,6 +1568,7 @@ do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
+---]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -28342,7 +28343,6 @@ escape (ok1!=null) + (ok2!=null);
     run = 1,
 }
 
----]===]
 Test { [[
 class T with
     var int v = 0;

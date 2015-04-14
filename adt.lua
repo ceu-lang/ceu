@@ -49,6 +49,8 @@ F = {
         end
     end,
 
+    Loop = function (me)
+    end,
 }
 
 AST.visit(F)
