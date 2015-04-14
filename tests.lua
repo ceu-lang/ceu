@@ -1563,7 +1563,6 @@ escape 1;
     asr = true,
 }
 
-
 do return end
 
 ----------------------------------------------------------------------------
@@ -27963,6 +27962,44 @@ end;
 escape v1+v2;
 ]],
     run = 30,
+}
+
+Test { [[
+input void MOVE_DONE;
+
+class Mix with
+  var int cup_top;
+  event void ok;
+do
+  await MOVE_DONE;
+  emit ok;
+end
+
+class ShuckTip with
+  event void ok;
+do
+end
+
+par/or do
+  do
+    var int dilu_start = 0;
+    do
+      var Mix m with
+        this.cup_top = dilu_start;
+      end;
+      await m.ok;
+    end
+  end
+  do ShuckTip;
+with
+  async do
+    emit MOVE_DONE;
+  end
+end
+
+escape 1;
+]],
+    run = 1,
 }
 
 -- SPAWN
