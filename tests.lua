@@ -1568,7 +1568,6 @@ do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
----]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -4701,6 +4700,7 @@ escape v;
 ]],
     run = {['~>A;~>A;~>A;~>A;~>A;~>A;~>A;~>A;~>A;~>A;']=4},
 }
+---]===]
 Test { [[
 var int sum = 4;
 loop i in 0 do
@@ -4709,7 +4709,7 @@ end
 escape sum;
 ]],
     --loop = true,
-    adj = 'line 2 : constant should not be `0´',
+    --adj = 'line 2 : constant should not be `0´',
     run = 4,
 }
 Test { [[

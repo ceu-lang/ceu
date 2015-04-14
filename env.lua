@@ -949,6 +949,7 @@ F = {
         if me.isEvery then
             local evt = (iter.var or iter).evt
             local tup = (evt and evt.ins.tup) or { iter.tp }
+            to = (to.tag=='VarList' and to) or { to }
             for i, tp in ipairs(tup) do
                 DBG(_, tp, tp.tag, tp.id, to)
                 local dcl = AST.node('Dcl_var', me.ln, 'var', AST.copy(tp), to[i][1])

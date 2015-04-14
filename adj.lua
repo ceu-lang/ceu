@@ -355,7 +355,7 @@ F = {
 
         local ret = node('_Loop', me.ln, false, to, AST.copy(e or dt), body)
         assert(body[1].tag == 'Stmts')
-        table.insert(body[1], set)
+        table.insert(body[1], 1, set)
         ret.isEvery = true  -- refuses other "awaits"
 
         return ret
