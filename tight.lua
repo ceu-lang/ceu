@@ -67,14 +67,16 @@ F = {
             ASR(max.cval, me, '`loop´ bound must be constant')
         end
 
-        local is_bounded = max or (iter and iter.cval)
+        me.is_bounded = max or (iter and (iter.cval or
+                                          iter.tp and ENV.clss[iter.tp.id]))
+
         SAME(me, body)
         local isTight = (not AST.iter(AST.pred_async)())
                             and (not body.tl_blocks)
-                            and (not is_bounded)
+                            and (not me.is_bounded)
         WRN(not isTight, me, 'tight loop')
         TIGHT = TIGHT or isTight
-        me.tl_blocks = is_bounded or (body.tl_awaits or body.tl_escapes)
+        me.tl_blocks = me.is_bounded or (body.tl_awaits or body.tl_escapes)
 
         local dcl = AST.iter'Dcl_fun'()
         if dcl and isTight then

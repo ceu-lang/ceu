@@ -204,8 +204,7 @@ F = {
 
     Loop = function (me)
         local max,iter,_,body = unpack(me)
-        local is_bounded = max or (iter and iter.cval)
-        if is_bounded then
+        if me.is_bounded then
             me.ana.pos = COPY(body.ana.pos)
             return      -- guaranteed to terminate
         end

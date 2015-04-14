@@ -519,7 +519,7 @@ spawn T in is with
     this.v = 3;
 end;
 
-loop (I*)i in is do
+loop i in is do
     ret = ret + i:v;
 end
 
@@ -561,7 +561,7 @@ do
         this.v = 3;
     end;
 
-    loop (I*)i in is do
+    loop i in is do
         ret = ret + i:v;
     end
 end
@@ -672,7 +672,7 @@ par/or do
     spawn T in ts with
     end;
 with
-    loop (I*)i in ts do
+    loop i in ts do
     end
 end
 
@@ -880,7 +880,7 @@ do return end
 Test { [[
 class T with do end;
 pool T[] ts;
-loop (T*)t in ts do
+loop t in ts do
     await 1s;
 end
 escape 1;
@@ -896,7 +896,7 @@ class T with
 do end
 do
     pool T[] ts;
-    loop (I*)i in ts do
+    loop i in ts do
         await 1s;
     end
 end
@@ -28385,6 +28385,20 @@ class T with
     var int v = 0;
 do
 end
+var T ts;
+loop t in ts do
+end
+escape 1;
+]],
+    --fin = 'line 14 : pointer access across `await´',
+    exp = 'line 6 : invalid pool',
+    --run = 1,
+}
+Test { [[
+class T with
+    var int v = 0;
+do
+end
 pool T[1] ts;
 var T*  ok1 = spawn T in ts with
                 this.v = 10;
@@ -28392,6 +28406,26 @@ var T*  ok1 = spawn T in ts with
 var int ok2 = 0;// spawn T in ts;
 var int ret = 0;
 loop (T*)t in ts do
+    ret = ret + t:v;
+end
+escape (ok1!=null) + ok2 + ret;
+]],
+    parser = 'line 11 : before `loop´ : expected statement (usually a missing `var´ or C prefix `_´)',
+    --fin = 'line 14 : pointer access across `await´',
+    --run = 1,
+}
+Test { [[
+class T with
+    var int v = 0;
+do
+end
+pool T[1] ts;
+var T*  ok1 = spawn T in ts with
+                this.v = 10;
+              end;
+var int ok2 = 0;// spawn T in ts;
+var int ret = 0;
+loop t in ts do
     ret = ret + t:v;
 end
 escape (ok1!=null) + ok2 + ret;
@@ -28449,7 +28483,7 @@ spawn T with
     _V = _V + 20;
 end;
 var int ret = 0;
-loop (T*)t in ts do
+loop t in ts do
     ret = ret + t:v;
 end
 escape ret + _V;
@@ -28476,7 +28510,7 @@ spawn T in ts with
     _V = _V + 20;
 end;
 var int ret = 0;
-loop (T*)t in ts do
+loop t in ts do
     ret = ret + t:v;
 end
 escape ret + _V;
@@ -28503,7 +28537,7 @@ spawn T in ts with
     _V = _V + 20;
 end;
 var int ret = 0;
-loop (T*)t in ts do
+loop t in ts do
     ret = ret + t:v;
 end
 escape ret + _V;
@@ -31344,7 +31378,7 @@ escape 2;
 Test { [[
 class T with do end;
 pool T[] ts;
-loop (T*)t in ts do
+loop t in ts do
 end
 escape 1;
 ]],
@@ -31810,7 +31844,7 @@ do
         this.v = 10;
     end;
     async do end;
-    loop (I*)t in ts do
+    loop t in ts do
         emit t:e;
         ret = ret + t:v;
     end
@@ -31864,7 +31898,7 @@ class T with
 do end
 do
     pool T[] ts;
-    loop (I*)i in ts do
+    loop i in ts do
     end
 end
 escape 1;
@@ -33084,7 +33118,7 @@ interface I with end
 class T with do end
 pool T[] ts;
 do
-    loop (I*)i in ts do
+    loop i in ts do
         _f(i);
     end
 end
@@ -33098,7 +33132,7 @@ class T with do end
 pool T[] ts;
 var I* p;
 do
-    loop (I*)i in ts do
+    loop i in ts do
         p = i;
     end
 end
@@ -33112,7 +33146,7 @@ Test { [[
 interface Unit with end
 class CUnit with do end
 pool CUnit[] us;
-loop (Unit*)u in us do
+loop u in us do
 end
 escape 1;
 ]],
@@ -33124,7 +33158,7 @@ class Unit with do end
 pool Unit[] us;
 var int ret = 1;
 do
-    loop (Unit*)u in us do
+    loop u in us do
         ret = ret + 1;
     end
 end
@@ -33138,7 +33172,7 @@ class Unit with do end
 pool Unit[] us;
 var Unit* p;
 do
-    loop (Unit*)i in us do
+    loop i in us do
         p = i;
     end
 end
@@ -33156,7 +33190,7 @@ native do
     }
 end
 do
-    loop (I*)i in is do
+    loop i in is do
         _f(i);
     end
 end
@@ -33174,7 +33208,7 @@ native do
     }
 end
 do
-    loop (I*)i in is do
+    loop i in is do
         _f(i) finalize with nothing; end;
     end
 end
@@ -33208,7 +33242,7 @@ do
         this.v = 3;
     end;
 
-    loop (I*)i in ts do
+    loop i in ts do
         ret = ret + i:v;
     end
 end
@@ -33292,7 +33326,7 @@ do
         this.v = 3;
     end;
 
-    loop (I*)i in ts do
+    loop i in ts do
         ret = ret + i:v;
     end
 end
@@ -33324,7 +33358,7 @@ spawn T in is with
     this.v = 3;
 end;
 
-loop (I*)i in is do
+loop i in is do
     ret = ret + i:v;
 end
 
@@ -33365,7 +33399,7 @@ do
         this.v = 3;
     end;
 
-    loop (I*)i in is do
+    loop i in is do
         ret = ret + i:v;
     end
 end
@@ -33388,7 +33422,7 @@ pool T[] ts;
 
 var int ret = 1;
 do
-    loop (I*)i in ts do
+    loop i in ts do
         ret = ret + i:v;
     end
 end
@@ -33421,7 +33455,7 @@ do
         this.v = 3;
     end;
 
-    loop (I*)i in ts do
+    loop i in ts do
         ret = ret + i:v;
     end
 end
@@ -33458,7 +33492,7 @@ do
         this.v = 3;
     end;
 
-    loop (I*)i in ts do
+    loop i in ts do
         emit i:inc;
         ret = ret + i:v;
     end
@@ -33500,7 +33534,7 @@ do
         end
     with
         every 1s do
-            loop (I*)i in ts do
+            loop i in ts do
                 emit i:inc;
                 ret = ret + i:v;
             end
@@ -33520,7 +33554,7 @@ end
 pool T[] ts;
 
 do
-    loop (T*)t in ts do
+    loop t in ts do
         t:a = 1;
     end
 end
@@ -35483,7 +35517,7 @@ spawn T in ts with
 end;
 
 var int ret = 0;
-loop (T*)t in ts do
+loop t in ts do
     ret = ret + t:v;
 end
 
@@ -35510,7 +35544,7 @@ spawn T in ts with
 end;
 
 var int ret = 0;
-loop (T*)t in ts do
+loop t in ts do
     ret = ret + t:v;
 end
 
@@ -35537,7 +35571,7 @@ spawn T in global:ts with
 end;
 
 var int ret = 0;
-loop (T*)t in global:ts do
+loop t in global:ts do
     ret = ret + t:v;
 end
 
@@ -35564,7 +35598,7 @@ spawn T in global:ts with
 end;
 
 var int ret = 0;
-loop (T*)t in global:ts do
+loop t in global:ts do
     ret = ret + t:v;
 end
 
@@ -35619,7 +35653,7 @@ do
         this.v = 20;
     end;
 
-    loop (T*)t in global:ts do
+    loop t in global:ts do
         this.v = this.v + 10;
     end
 end
@@ -35631,7 +35665,7 @@ do
     ret = ret + u.v;
 end
 
-loop (T*)t in global:ts do
+loop t in global:ts do
     ret = ret + t:v;
 end
 
@@ -35663,7 +35697,7 @@ do
         this.v = 20;
     end;
 
-    loop (T*)t in global:ts do
+    loop t in global:ts do
         this.v = this.v + 10;
     end
 end
@@ -35675,7 +35709,7 @@ do
     ret = ret + u.v;
 end
 
-loop (T*)t in global:ts do
+loop t in global:ts do
     ret = ret + t:v;
 end
 
@@ -35716,7 +35750,7 @@ do
         this.v = 20;
     end;
 
-    loop (T*)t in u.ts do
+    loop t in u.ts do
         ret = ret + t:v;
     end
 end
@@ -35760,7 +35794,7 @@ do
         this.v = 20;
     end;
 
-    loop (T*)t in u.ts do
+    loop t in u.ts do
         ret = ret + t:v;
     end
 end
@@ -35815,7 +35849,7 @@ class Unit with
     interface U;
     var int rect;
 do
-    loop (U*)oth in global:units do
+    loop oth in global:units do
         if oth!=&this then
             spawn V in global:units;
         end
@@ -36085,11 +36119,11 @@ end;
 
 var int ret = 0;
 
-loop (U*)u in t.us2 do
+loop u in t.us2 do
     ret = ret + u:v;
 end
 
-loop (U*)u in i:us2 do
+loop u in i:us2 do
     ret = ret + u:v;
 end
 
@@ -37173,7 +37207,7 @@ var T*  ok1 = spawn T in ts with
 watching ok1 do
     var int ok2 = 0;// spawn T in ts;
     var int ret = 0;
-    loop (T*)t in ts do
+    loop t in ts do
         ret = ret + t:v;
     end
     escape (ok1!=null) + ok2 + ret;
@@ -37202,7 +37236,7 @@ var T* ok1 = spawn T in ts with
 watching ok1 do
     var int ok2 = 0;// spawn T in ts;
     var int ret = 0;
-    loop (T*)t in ts do
+    loop t in ts do
         ret = ret + t:v;
     end
     _V = (ok1!=null) + ok2 + ret;

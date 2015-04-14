@@ -282,26 +282,6 @@ F =
                                         -- defined by _Spawn (code.lua)
     end,
 
-    IterIni = function (me)
-        local fr_exp = unpack(me)
-        ASR(fr_exp.lst.var, me, 'not a pool')
-        local var = fr_exp.lst.var
-        assert(var.trl_orgs)
-        local idx = fr_exp.ifc_idx or var.trl_orgs[1]
-                    -- converted to interface access or original
-        local org = fr_exp.org and V(fr_exp.org) or '_STK_ORG'
-        org = '((tceu_org*)'..org..')'
-        me.val = [[
-( (]]..org..[[->trls[ ]]..idx..[[ ].lnks[0].nxt->n == 0) ?
-    NULL :    /* marks end of linked list */
-    ]]..org..[[->trls[ ]]..idx..[[ ].lnks[0].nxt )
-]]
-    end,
-    IterNxt = function (me)
-        local fr_var = unpack(me)
-        me.val = '(('..V(fr_var)..'->nxt->n==0) ? NULL : '..V(fr_var)..'->nxt)'
-    end,
-
     Thread = function (me)
         me.thread_id = CUR(me, '__thread_id_'..me.n)
         me.thread_st = CUR(me, '__thread_st_'..me.n)

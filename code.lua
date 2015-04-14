@@ -998,10 +998,40 @@ if (]]..V(c)..[[) {
         end
 
         if iter then
+            local cls = iter.tp and ENV.clss[iter.tp.id]
+
             if me.isEvery then
                 -- nothing to do
+
             elseif TP.isNumeric(iter.tp) then
                 cnd = V(me.i_var)..' < '..V(iter)
+
+            elseif cls then
+                local _, iter, _, _ = unpack(me)
+
+                -- INI
+                local var = iter.lst.var
+                assert(var.trl_orgs)
+                local idx = iter.ifc_idx or var.trl_orgs[1]
+                            -- converted to interface access or original
+                local org = (iter.org and V(iter.org)) or '_STK_ORG'
+                org = '((tceu_org*)'..org..')'
+                ini[#ini+1] = V(to)..[[ = (]]..TP.toc(iter.tp)..[[)(
+    (]]..org..[[->trls[ ]]..idx..[[ ].lnks[0].nxt->n == 0) ?
+        NULL :    /* marks end of linked list */
+        ]]..org..[[->trls[ ]]..idx..[[ ].lnks[0].nxt
+)
+]]
+
+                -- CND
+                cnd = '('..V(to)..' != NULL)'
+
+                -- NXT
+                local org = '((tceu_org*)'..V(to)..')'
+                nxt[#nxt+1] = '('..V(to)..' = ('..TP.toc(iter.tp)..')'..
+                                '(('..org..'->nxt->n==0) ? '..
+                                    'NULL : '..org..'->nxt))'
+
             else
                 error'not implemented'
             end

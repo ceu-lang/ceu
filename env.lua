@@ -609,7 +609,7 @@ F = {
         local pre, tp, id, constr = unpack(me)
 
         -- differentiate my own var type from my pool type
-        me.tp_pool = TP.new(tp)
+        local tp_pool = TP.new(tp)
 
         if ENV.adts[tp[1]] then
             -- ADT has the type of the pool values
@@ -899,8 +899,6 @@ F = {
         ASR(not me.cls.is_ifc, me, 'cannot instantiate an interface')
         me.tp = TP.fromstr(id..'*')  -- class id
     end,
-    IterIni = 'RawExp',
-    IterNxt = 'RawExp',
 
     Dcl_constr_pre = function (me)
         local spw = AST.iter'Spawn'()
@@ -948,6 +946,8 @@ F = {
             return
         end
 
+        local cls = iter.tp and ENV.clss[iter.tp.id]
+
         if me.isEvery then
             local evt = (iter.var or iter).evt
             local tup = (evt and evt.ins.tup) or { iter.tp }
@@ -962,6 +962,16 @@ F = {
 
         elseif is_num then
             -- done above
+
+        elseif cls then
+            local dcl = AST.node('Dcl_var', me.ln, 'var',
+                            AST.node('Type', me.ln, cls.id, 1, false, false),
+                            to[1])
+            dcl.read_only = true
+            AST.visit(F, dcl)
+            local stmts = me.__par[1]
+            stmts[#stmts+1] = dcl
+
         else
             error'not implemented'
         end

@@ -429,7 +429,8 @@ F = {
         local max, to, iter, body = unpack(me)
         to = to or (max and node('Var', me.ln, '__ceu_i'..'_'..me.n))
         local loop = node('Loop', me.ln, max, iter, to, body)
-        loop.isEvery = me.isEvery
+        loop.isEvery      = me.isEvery
+        loop.isAwaitUntil = me.isAwaitUntil
         return node('Block', me.ln,
                 node('Stmts', me.ln,
                     node('Stmts', me.ln),   -- to insert all pre-declarations
@@ -898,7 +899,7 @@ F = {
             ]]
 
             local dcls = {
-                node('Dcl_var', me.ln, 'var', tp_req, id_req)
+                --node('Dcl_var', me.ln, 'var', tp_req, id_req)
             }
             local vars = node('VarList', me.ln, node('Var',me.ln,id_req))
             local sets = {
@@ -912,7 +913,7 @@ F = {
                 ASR(tp.id=='void' and tp.ptr==0 or id, me,
                     'missing parameter identifier')
                 local _id = '_'..id..'_'..me.n
-                dcls[#dcls+1] = node('Dcl_var', me.ln, 'var', tp, _id)
+                --dcls[#dcls+1] = node('Dcl_var', me.ln, 'var', tp, _id)
                 vars[#vars+1] = node('Var', me.ln, _id)
                 sets[#sets+1] = node('_Set', me.ln,
                                     node('Op2_.', me.ln, '.',

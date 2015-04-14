@@ -13,8 +13,16 @@ F = {
 
     Spawn = function (me)
         local _,pool,_ = unpack(me)
-        ASR(pool and pool.lst and pool.lst.var and pool.lst.var.tp.arr, me,
-            'invalid pool')
+        ASR(pool and pool.lst and pool.lst.var and pool.lst.var.pre=='pool',
+            me, 'invalid pool')
+    end,
+    Loop = function (me)
+        local _, iter, _, _ = unpack(me)
+        local cls = iter and iter.tp and ENV.clss[iter.tp.id]
+        if cls then
+            ASR(iter.lst and iter.lst.var and iter.lst.var.pre=='pool',
+            me, 'invalid pool')
+        end
     end,
 
 -- EXPS --
