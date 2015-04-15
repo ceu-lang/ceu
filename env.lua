@@ -929,14 +929,19 @@ F = {
                         or (to and (not iter))
 
         if max or is_num then
+            local id = (is_num and to[1]) or '_i_'..me.n
             me.i_dcl = AST.node('Dcl_var', me.ln, 'var',
                         AST.node('Type', me.ln, 'int', 0, false, false),
-                        to[1])
+                        id)
             me.i_dcl.read_only = true
-            me.i_var = to
+            me.i_var = (is_num and to) or AST.node('Var',me.ln,id)
             AST.visit(F, me.i_dcl)
             local stmts = me.__par[1]
             stmts[#stmts+1] = me.i_dcl
+            if not is_num then
+                AST.visit(F, me.i_var)
+                stmts[#stmts+1] = me.i_var
+            end
         end
 
         if not (iter and to) then
@@ -946,6 +951,7 @@ F = {
         local cls = iter.tp and ENV.clss[iter.tp.id]
 
         if me.isEvery then
+            me.iter_tp = 'event'
             local evt = (iter.var or iter).evt
             local tup = (evt and evt.ins.tup) or { iter.tp }
             to = (to.tag=='VarList' and to) or { to }
@@ -958,11 +964,23 @@ F = {
             end
 
         elseif is_num then
+            me.iter_tp = 'number'
             -- done above
 
         elseif cls then
+            me.tp = 'org'
             local dcl = AST.node('Dcl_var', me.ln, 'var',
                             AST.node('Type', me.ln, cls.id, 1, false, false),
+                            to[1])
+            dcl.read_only = true
+            AST.visit(F, dcl)
+            local stmts = me.__par[1]
+            stmts[#stmts+1] = dcl
+
+        elseif iter.tp.ptr > 0 then
+            me.iter_tp = 'data'
+            local dcl = AST.node('Dcl_var', me.ln, 'var',
+                            AST.copy(iter.tp),
                             to[1])
             dcl.read_only = true
             AST.visit(F, dcl)

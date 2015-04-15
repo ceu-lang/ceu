@@ -23,6 +23,16 @@ F = {
         if AST.par(me,'Dcl_adt') then
             var.isTmp = false
         end
+
+        -- inside a recursive loop
+        -- TODO: check if tmp is crossed by "recurse" (otherwise could be tmp)
+        for loop in AST.iter'Loop' do
+            if loop.iter_tp == 'data' then
+error'not implemented (locals inside iter)'
+                var.isTmp = false
+                break;
+            end
+        end
     end,
 
     Var_pos = function (me)

@@ -1563,11 +1563,364 @@ escape 1;
     asr = true,
 }
 
+---]===]
+-- RECURSE
+
+Test { [[
+loop v in _VS do
+    recurse v:nxt;
+end
+]],
+    parser = 'line 2 : after `v´ : expected `;´',
+    --run = 1,
+}
+
+Test { [[
+native do
+    typedef struct tp {
+        int v;
+        struct tp* nxt;
+    } tp;
+    tp V1 = { 1, NULL };
+    tp V2 = { 2, &V1  };
+    tp VS = { 3, &V2  };
+end
+
+var int ret = 0;
+loop/1 v in _VS do      // think its numeric
+    if v == null then
+        break;
+    else
+        ret = ret + v:v;
+        recurse nxt;
+    end
+end
+
+escape 1;
+]],
+    env = 'line 13 : invalid operands to binary "=="',
+    --run = 1,
+}
+
+Test { [[
+native do
+    typedef struct tp {
+        int v;
+        struct tp* nxt;
+    } tp;
+    tp V1 = { 1, NULL };
+    tp V2 = { 2, &V1  };
+    tp VS = { 3, &V2  };
+end
+
+var int ret = 0;
+
+loop/1 v in &_VS do
+    if v == null then
+        break;
+    else
+        ret = ret + v:v;
+        recurse nxt;
+    end
+end
+
+escape ret;
+]],
+    todo = '&_VS cannot be numeric, but it think it is',
+    run = 1,
+}
+
+Test { [[
+native do
+    typedef struct tp {
+        int v;
+        struct tp* nxt;
+    } tp;
+    tp V1 = { 1, NULL };
+    tp V2 = { 2, &V1  };
+    tp VS = { 3, &V2  };
+end
+
+var int ret = 0;
+
+var _tp* vs = &_VS;
+loop/3 v in vs do
+    if v == null then
+        break;
+    else
+        ret = ret + v:v;
+        recurse nxt;
+    end
+end
+
+escape ret;
+]],
+    run = 6,
+}
+
+Test { [[
+native do
+    typedef struct tp {
+        int v;
+        struct tp* nxt;
+    } tp;
+    tp V1 = { 1, NULL };
+    tp V2 = { 2, &V1  };
+    tp VS = { 3, &V2  };
+end
+
+var int ret = 0;
+
+var _tp* vs = &_VS;
+loop/3 v in vs do
+    if v == null then
+        continue;
+    end
+    ret = ret + v:v;
+    recurse nxt;
+end
+
+escape ret;
+]],
+    run = 6,
+}
+
+Test { [[
+native do
+    typedef struct tp {
+        int v;
+        struct tp* nxt;
+    } tp;
+    tp V1 = { 1, NULL };
+    tp V2 = { 2, &V1  };
+    tp VS = { 3, &V2  };
+end
+
+var int ret = 0;
+
+var _tp* vs = &_VS;
+loop/3 v in vs do
+    if v == null then
+    else
+        ret = ret + v:v;
+        recurse nxt;
+    end
+end
+
+escape ret;
+]],
+    run = 6,
+}
+
+Test { [[
+native do
+    typedef struct tp {
+        int v;
+        struct tp* nxt;
+    } tp;
+    tp V1 = { 1, NULL };
+    tp V2 = { 2, &V1  };
+    tp VS = { 3, &V2  };
+end
+
+var int ret = 0;
+
+var _tp* vs = &_VS;
+loop/3 v in vs do
+    if v == null then
+        break;
+    else
+        recurse nxt;
+        ret = ret + v:v;
+    end
+end
+
+escape ret;
+]],
+    run = 0,
+}
+
+Test { [[
+native do
+    typedef struct tp {
+        int v;
+        struct tp* nxt;
+    } tp;
+    tp V1 = { 1, NULL };
+    tp V2 = { 2, &V1  };
+    tp VS = { 3, &V2  };
+end
+
+var int ret = 0;
+
+var _tp* vs = &_VS;
+loop/3 v in vs do
+    if v == null then
+        continue;
+    end
+    recurse nxt;
+    ret = ret + v:v;
+end
+
+escape ret;
+]],
+    run = 6,
+}
+
+Test { [[
+native do
+    typedef struct tp {
+        int v;
+        struct tp* nxt;
+    } tp;
+    tp V1 = { 1, NULL };
+    tp V2 = { 2, &V1  };
+    tp VS = { 3, &V2  };
+end
+
+var int ret = 0;
+
+var _tp* vs = &_VS;
+loop/3 v in vs do
+    if v == null then
+    else
+        recurse nxt;
+        ret = ret + v:v;
+    end
+end
+
+escape ret;
+]],
+    run = 6,
+}
+
+Test { [[
+native do
+    typedef struct tp {
+        int v;
+        struct tp* nxt;
+    } tp;
+    tp V1 = { 1, NULL };
+    tp V2 = { 2, &V1  };
+    tp VS = { 3, &V2  };
+end
+
+var int ret = 0;
+
+var _tp* vs = &_VS;
+loop/1 v in vs do
+    if v == null then
+        break;
+    else
+        ret = ret + v:v;
+        recurse nxt;
+    end
+end
+
+escape ret;
+]],
+    asr = 'runtime error: loop overflow',
+}
+
+Test { [[
+recurse a;
+]],
+    props = 'line 1 : `recurse´ without loop',
+}
+
+-- TODO: locals inside iter
+Test { [[
+native do
+    typedef struct tp {
+        int v;
+        struct tp* nxt;
+    } tp;
+    tp V1 = { 1, NULL };
+    tp V2 = { 2, &V1  };
+    tp VS = { 3, &V2  };
+end
+
+var int ret = 0;
+var int ii  = 0;
+
+var _tp* vs = &_VS;
+loop/3 v in vs do
+    if v != null then
+        var int i = ii;
+        ii = ii + 1;
+        recurse nxt;
+        ret = ret + v:v + i;
+    end
+end
+
+escape ret;
+]],
+    run = 9,
+}
+-- TODO: locals inside iter
+Test { [[
+native do
+    typedef struct tp {
+        int v;
+        struct tp* nxt;
+    } tp;
+    tp V1 = { 1, NULL };
+    tp V2 = { 2, &V1  };
+    tp VS = { 3, &V2  };
+end
+
+var int ret = 0;
+var int ii  = 0;
+
+var _tp* vs = &_VS;
+loop/3 v in vs do
+    var int i = ii;
+    ii = ii + 1;
+    if v != null then
+        recurse nxt;
+        ret = ret + v:v + i;
+    end
+end
+
+escape ret;
+]],
+    run = 9,
+}
+
+-- TODO: unbounded iter
+Test { [[
+native do
+    typedef struct tp {
+        int v;
+        struct tp* nxt;
+    } tp;
+    tp V1 = { 1, NULL };
+    tp V2 = { 2, &V1  };
+    tp VS = { 3, &V2  };
+end
+
+var int ret = 0;
+
+var _tp* vs = &_VS;
+loop v in vs do
+    if v == null then
+        break;
+    else
+        ret = ret + v:v;
+        recurse nxt;
+    end
+end
+
+escape ret;
+]],
+    wrn = true,
+    run = 1,
+}
+
 do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
----]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -3437,7 +3790,7 @@ escape ret;
 Test { [[
 break;
 ]],
-    props = 'line 1 : break without loop',
+    props = 'line 1 : `break´ without loop',
 }
 
 Test { [[

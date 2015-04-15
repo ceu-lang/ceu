@@ -126,7 +126,6 @@ KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'native' + 'native/pr
      + 'free'     + 'this' + 'outer'
      + 'spawn'
 --
-     --+ 'import'  --+ 'as'
 -- export / version
      + 'thread'   + 'sync'
 -- functions
@@ -144,6 +143,8 @@ KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'native' + 'native/pr
 -- pool
      + 'pool'
      + 'watching'
+-- recurse
+     + 'recurse'
 --
      + P'@' * (
          P'const' + 'hold' + 'nohold' + 'plain' + 'pure' + 'rec' + 'safe'
@@ -188,7 +189,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
              + V'DoOrg'
              + V'Nothing'
              + V'RawStmt'
-             --+ V'Import'
+             + V'Recurse'
              + V'_Dcl_fun0'
              + V'CallStmt' -- last
              --+ EM'statement'-- (missing `_´?)'
@@ -282,8 +283,9 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                     V'Block' + Cc(false)) *
                 EKEY'end'-- - V'_Continue'
 
-    , Break   = KEY'break'
+    , Break     = KEY'break'
     , _Continue = KEY'continue'
+    , Recurse   = KEY'recurse' * EV'__ID_field'
 
     , _Loop   = KEY'loop' * ('/'*EV'__Exp' + Cc(false)) *
                     (V'Var' * (EKEY'in'*EV'__Exp' + Cc(false))

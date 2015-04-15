@@ -337,6 +337,9 @@ typedef union CEU_]]..me.id..[[_delayed {
                 tag = unpack(n)
             end
         end
+        if me.__loop then
+            top.struct = top.struct..SPC()..me.__loop..'\n'
+        end
         top.struct = top.struct..SPC()..'} '..tag..';\n'
     end,
     Block_pre = function (me)
@@ -464,6 +467,28 @@ CEU_POOL_DCL(]]..var.id_..',CEU_'..var.tp.id..','..var.tp.arr.sval..[[)
         for i=1, #me do
             cls.struct = cls.struct..SPC()..'u8 __and_'..me.n..'_'..i..': 1;\n'
         end
+    end,
+
+    Loop = function (me)
+        if not me.__recs then
+            return
+        end
+
+        -- `recurse´ stack
+        -- TODO: no cls space if no awaits inside the loop (use local C var)
+        local max,_,_,_ = unpack(me)
+        assert(max, 'not implemented')
+        me.iter_max = max.cval * me.__recs
+        AST.par(me, 'Block').__loop = [[
+int          __recurse_nxt_]]..me.n..[[;    /* TODO: int (minimum type) */
+tceu_recurse __recurse_vec_]]..me.n..'['..me.iter_max..']'..[[;
+]]
+            -- TODO: reason about the maximum space (it's less than the above!)
+    end,
+    Recurse = function (me)
+        local loop = AST.par(me,'Loop')
+        loop.__recs = (loop.__recs or 0) + 1
+                      -- stack is a multiple of inner recurses
     end,
 
     Await = function (me)

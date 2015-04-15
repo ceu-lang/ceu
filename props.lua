@@ -217,8 +217,8 @@ F = {
         me.brks = {}
     end,
     Break = function (me)
-        local loop = AST.iter'Loop'()
-        ASR(loop, me, 'break without loop')
+        local loop = AST.par(me,'Loop')
+        ASR(loop, me, '`break´ without loop')
         loop.brks[me] = true
         loop.has_break = true
 
@@ -234,6 +234,10 @@ F = {
             local loop = AST.iter'Loop'()
             ASR(loop.__depth>async.__depth, me, '`break´ without loop')
         end
+    end,
+    Recurse = function (me)
+        local loop = AST.par(me,'Loop')
+        ASR(loop, me, '`recurse´ without loop')
     end,
 
     SetBlock_pre = function (me)

@@ -369,6 +369,13 @@ typedef union tceu_trl {
 /* TODO: remove */
 #define tceu_evtp void*
 
+/* TCEU_RECURSE */
+
+typedef struct {
+    tceu_nlbl lbl;      /* TODO(ram): not required if only one `recurse´ */
+    void*     data;
+} tceu_recurse;
+
 /* TCEU_STK */
 
 /* TODO(speed): hold nxt trl to run */

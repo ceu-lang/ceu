@@ -92,7 +92,7 @@ end
 function GOTO (me, lbl)
     CODE.has_goto = true
     LINE(me, [[
-_CEU_LBL = ]]..lbl.id..[[;
+_CEU_LBL = ]]..lbl..[[;
 goto _CEU_GOTO_;
 ]])
 end
@@ -742,7 +742,7 @@ _STK.trl = &_STK_ORG->trls[ ]]..stmts.trails[1]..[[ ];
         CONC(me, stmts)
 
         if me.fins then
-            GOTO(me, me.lbl_fin_cnt)
+            GOTO(me, me.lbl_fin_cnt.id)
             CASE(me, me.lbl_fin)
             for i, fin in ipairs(me.fins) do
                 LINE(me, [[
@@ -879,7 +879,7 @@ _STK.trl = &_STK_ORG->trls[ ]] ..me.trails[1]..[[ ];
         end
     end,
     Escape = function (me)
-        GOTO(me, AST.iter'SetBlock'().lbl_out)
+        GOTO(me, AST.iter'SetBlock'().lbl_out.id)
     end,
 
     _Par = function (me)
@@ -925,7 +925,7 @@ _STK.trl = &_STK_ORG->trls[ ]] ..me.trails[1]..[[ ];
 
             if not (ANA and sub.ana.pos[false]) then
                 COMM(me, 'PAROR JOIN')
-                GOTO(me, me.lbl_out)
+                GOTO(me, me.lbl_out.id)
             end
         end
 
@@ -956,7 +956,7 @@ _STK.trl = &_STK_ORG->trls[ ]]..me.trails[1]..[[ ];
             end
             CONC(me, sub)
             LINE(me, V(me)..'_'..i..' = 1;')
-            GOTO(me, me.lbl_tst)
+            GOTO(me, me.lbl_tst.id)
         end
 
         -- AFTER code :: test gates
@@ -985,6 +985,32 @@ if (]]..V(c)..[[) {
 ]])
     end,
 
+    Recurse = function (me)
+        local id = unpack(me)
+        local loop = AST.par(me, 'Loop')
+        local _,_,to,_ = unpack(loop)
+
+        -- vec[top].lbl  = <lbl-continuation>
+        -- vec[top].data = <cur-to>
+        -- top++;
+        local nxt = CUR(me,'__recurse_nxt_'..loop.n)
+        local vec = CUR(me,'__recurse_vec_'..loop.n)..'['..nxt..']'
+        LINE(me, [[
+ceu_out_assert_ex(]]..nxt..' < '..loop.iter_max..[[,
+    "loop overflow", __FILE__, __LINE__);
+]]..vec..'.lbl  = '..me.lbl.id..[[;
+]]..vec..'.data = '..V(to)..[[;
+]]..nxt..[[++;
+]])
+
+        -- <cur-to> = <cur-to>->id
+        -- next;
+        LINE(me, V(to)..' = '..V(to)..'->'..id..';')
+        GOTO(me, loop.lbl_rec.id)
+
+        CASE(me, me.lbl)
+    end,
+
     Loop_pos = function (me)
         local max,iter,to,body = unpack(me)
         local no = '_CEU_NO_'..me.n..'_'
@@ -998,17 +1024,13 @@ if (]]..V(c)..[[) {
         end
 
         if iter then
-            local cls = iter.tp and ENV.clss[iter.tp.id]
-
-            if me.isEvery then
+            if me.iter_tp == 'event' then
                 -- nothing to do
 
-            elseif TP.isNumeric(iter.tp) then
+            elseif me.iter_tp == 'number' then
                 cnd = V(me.i_var)..' < '..V(iter)
 
-            elseif cls then
-                local _, iter, _, _ = unpack(me)
-
+            elseif me.iter_tp == 'org' then
                 -- INI
                 local var = iter.lst.var
                 assert(var.trl_orgs)
@@ -1022,7 +1044,6 @@ if (]]..V(c)..[[) {
         ]]..org..[[->trls[ ]]..idx..[[ ].lnks[0].nxt
 )
 ]]
-
                 -- CND
                 cnd = '('..V(to)..' != NULL)'
 
@@ -1031,6 +1052,14 @@ if (]]..V(c)..[[) {
                 nxt[#nxt+1] = '('..V(to)..' = ('..TP.toc(iter.tp)..')'..
                                 '(('..org..'->nxt->n==0) ? '..
                                     'NULL : '..org..'->nxt))'
+
+            elseif me.iter_tp == 'data' then
+                local nxt = CUR(me,'__recurse_nxt_'..me.n)
+                local vec = CUR(me,'__recurse_vec_'..me.n)..'['..nxt..']'
+                ini[#ini+1] = V(to)..' = '..V(iter)     -- initial pointer
+                ini[#ini+1] = nxt..' = 0'               -- reset stack
+                ini[#ini+1] = vec..'.lbl = 0'           -- initial dummy element
+                ini[#ini+1] = nxt..'++'                 -- not empty
 
             else
                 error'not implemented'
@@ -1048,9 +1077,31 @@ if (]]..V(c)..[[) {
         LINE(me, [[
 for (]]..ini..';'..cnd..';'..nxt..[[) {
 ]])
+        if me.iter_tp == 'data' then
+            local nxt = CUR(me,'__recurse_nxt_'..me.n)
+            local vec = CUR(me,'__recurse_vec_'..me.n)..'['..nxt..']'
+            LINE(me, [[
+if (]]..nxt..[[ > 0) {
+    ]]..nxt..[[--;
+    if (]]..vec..[[.lbl == 0) {
+        /* initial dummy element, do nothing */
+    } else {
+        ]]..V(to)..[[ = ]]..vec..[[.data;
+]])
+        GOTO(me, vec..'.lbl')
+            LINE(me, [[
+    }
+} else {
+    break;
+}
+]])
+            CASE(me, me.lbl_rec)
+        end
+
         if max then
             LINE(me, [[
-    ceu_out_assert_ex(]]..V(me.i_var)..' < '..V(max)..[[, "loop overflow", __FILE__, __LINE__);
+    ceu_out_assert_ex(]]..V(me.i_var)..' < '..V(max)..[[,
+        "loop overflow", __FILE__, __LINE__);
 ]])
         end
 
