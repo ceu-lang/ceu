@@ -214,17 +214,13 @@ local function FIND_ADT_POOL (fst)
 end
 
 local function FIND_ADT_POOL_CONSTR (me)
-    -- find lval from set inside the constructor
-    local par = me.__par.__par.__par
-    if par.tag == 'Adt_constr' then
-        return FIND_ADT_POOL_CONSTR(par)
-    else
-        local stmts = me.__par.__par.__par
-        assert(stmts.tag == 'Stmts', 'bug found')
-        local set = stmts[2]
-        assert(set.tag == 'SetExp', 'bug found')
+    local par = assert(me.__par)
+    local set = par[2]
+    if set and set.tag=='SetExp' then
         local to = set[3]
         return FIND_ADT_POOL(to.fst)
+    else
+        return FIND_ADT_POOL_CONSTR(par)
     end
 end
 
@@ -986,7 +982,7 @@ if (]]..V(c)..[[) {
     end,
 
     Recurse = function (me)
-        local id = unpack(me)
+        local exp = unpack(me)
         local loop = AST.par(me, 'Loop')
         local _,_,to,_ = unpack(loop)
 
@@ -1003,9 +999,9 @@ ceu_out_assert_ex(]]..nxt..' < '..loop.iter_max..[[,
 ]]..nxt..[[++;
 ]])
 
-        -- <cur-to> = <cur-to>->id
+        -- <cur-to> = <exp>
         -- next;
-        LINE(me, V(to)..' = '..V(to)..'->'..id..';')
+        LINE(me, V(to)..' = '..V(exp)..';')
         GOTO(me, loop.lbl_rec.id)
 
         CASE(me, me.lbl)

@@ -1563,270 +1563,9 @@ escape 1;
     asr = true,
 }
 
----]===]
--- RECURSE
+---------------------
 
-Test { [[
-loop v in _VS do
-    recurse v:nxt;
-end
-]],
-    parser = 'line 2 : after `v´ : expected `;´',
-    --run = 1,
-}
-
-Test { [[
-native do
-    typedef struct tp {
-        int v;
-        struct tp* nxt;
-    } tp;
-    tp V1 = { 1, NULL };
-    tp V2 = { 2, &V1  };
-    tp VS = { 3, &V2  };
-end
-
-var int ret = 0;
-loop/1 v in _VS do      // think its numeric
-    if v == null then
-        break;
-    else
-        ret = ret + v:v;
-        recurse nxt;
-    end
-end
-
-escape 1;
-]],
-    env = 'line 13 : invalid operands to binary "=="',
-    --run = 1,
-}
-
-Test { [[
-native do
-    typedef struct tp {
-        int v;
-        struct tp* nxt;
-    } tp;
-    tp V1 = { 1, NULL };
-    tp V2 = { 2, &V1  };
-    tp VS = { 3, &V2  };
-end
-
-var int ret = 0;
-
-loop/1 v in &_VS do
-    if v == null then
-        break;
-    else
-        ret = ret + v:v;
-        recurse nxt;
-    end
-end
-
-escape ret;
-]],
-    todo = '&_VS cannot be numeric, but it think it is',
-    run = 1,
-}
-
-Test { [[
-native do
-    typedef struct tp {
-        int v;
-        struct tp* nxt;
-    } tp;
-    tp V1 = { 1, NULL };
-    tp V2 = { 2, &V1  };
-    tp VS = { 3, &V2  };
-end
-
-var int ret = 0;
-
-var _tp* vs = &_VS;
-loop/3 v in vs do
-    if v == null then
-        break;
-    else
-        ret = ret + v:v;
-        recurse nxt;
-    end
-end
-
-escape ret;
-]],
-    run = 6,
-}
-
-Test { [[
-native do
-    typedef struct tp {
-        int v;
-        struct tp* nxt;
-    } tp;
-    tp V1 = { 1, NULL };
-    tp V2 = { 2, &V1  };
-    tp VS = { 3, &V2  };
-end
-
-var int ret = 0;
-
-var _tp* vs = &_VS;
-loop/3 v in vs do
-    if v == null then
-        continue;
-    end
-    ret = ret + v:v;
-    recurse nxt;
-end
-
-escape ret;
-]],
-    run = 6,
-}
-
-Test { [[
-native do
-    typedef struct tp {
-        int v;
-        struct tp* nxt;
-    } tp;
-    tp V1 = { 1, NULL };
-    tp V2 = { 2, &V1  };
-    tp VS = { 3, &V2  };
-end
-
-var int ret = 0;
-
-var _tp* vs = &_VS;
-loop/3 v in vs do
-    if v == null then
-    else
-        ret = ret + v:v;
-        recurse nxt;
-    end
-end
-
-escape ret;
-]],
-    run = 6,
-}
-
-Test { [[
-native do
-    typedef struct tp {
-        int v;
-        struct tp* nxt;
-    } tp;
-    tp V1 = { 1, NULL };
-    tp V2 = { 2, &V1  };
-    tp VS = { 3, &V2  };
-end
-
-var int ret = 0;
-
-var _tp* vs = &_VS;
-loop/3 v in vs do
-    if v == null then
-        break;
-    else
-        recurse nxt;
-        ret = ret + v:v;
-    end
-end
-
-escape ret;
-]],
-    run = 0,
-}
-
-Test { [[
-native do
-    typedef struct tp {
-        int v;
-        struct tp* nxt;
-    } tp;
-    tp V1 = { 1, NULL };
-    tp V2 = { 2, &V1  };
-    tp VS = { 3, &V2  };
-end
-
-var int ret = 0;
-
-var _tp* vs = &_VS;
-loop/3 v in vs do
-    if v == null then
-        continue;
-    end
-    recurse nxt;
-    ret = ret + v:v;
-end
-
-escape ret;
-]],
-    run = 6,
-}
-
-Test { [[
-native do
-    typedef struct tp {
-        int v;
-        struct tp* nxt;
-    } tp;
-    tp V1 = { 1, NULL };
-    tp V2 = { 2, &V1  };
-    tp VS = { 3, &V2  };
-end
-
-var int ret = 0;
-
-var _tp* vs = &_VS;
-loop/3 v in vs do
-    if v == null then
-    else
-        recurse nxt;
-        ret = ret + v:v;
-    end
-end
-
-escape ret;
-]],
-    run = 6,
-}
-
-Test { [[
-native do
-    typedef struct tp {
-        int v;
-        struct tp* nxt;
-    } tp;
-    tp V1 = { 1, NULL };
-    tp V2 = { 2, &V1  };
-    tp VS = { 3, &V2  };
-end
-
-var int ret = 0;
-
-var _tp* vs = &_VS;
-loop/1 v in vs do
-    if v == null then
-        break;
-    else
-        ret = ret + v:v;
-        recurse nxt;
-    end
-end
-
-escape ret;
-]],
-    asr = 'runtime error: loop overflow',
-}
-
-Test { [[
-recurse a;
-]],
-    props = 'line 1 : `recurse´ without loop',
-}
+-- TODO: RECURSE
 
 -- TODO: locals inside iter
 Test { [[
@@ -1848,7 +1587,7 @@ loop/3 v in vs do
     if v != null then
         var int i = ii;
         ii = ii + 1;
-        recurse nxt;
+        recurse v:nxt;
         ret = ret + v:v + i;
     end
 end
@@ -1877,7 +1616,7 @@ loop/3 v in vs do
     var int i = ii;
     ii = ii + 1;
     if v != null then
-        recurse nxt;
+        recurse v:nxt;
         ret = ret + v:v + i;
     end
 end
@@ -1907,7 +1646,7 @@ loop v in vs do
         break;
     else
         ret = ret + v:v;
-        recurse nxt;
+        recurse v:nxt;
     end
 end
 
@@ -1918,6 +1657,7 @@ escape ret;
 }
 
 do return end
+---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -5262,6 +5002,279 @@ end;
 escape a+f;
 ]],
     run = { ['1~>A;5~>A;1~>F'] = 2 },
+}
+
+-- LOOP/RECURSE
+
+Test { [[
+loop v in 10 do
+    recurse 1;
+end
+]],
+    props = 'line 2 : invalid `recurse´',
+}
+
+Test { [[
+var int* vs;
+loop/10 v in vs do
+    recurse 1;
+end
+escape 1;
+]],
+    env = 'line 3 : invalid `recurse´',
+}
+
+Test { [[
+native do
+    typedef struct tp {
+        int v;
+        struct tp* nxt;
+    } tp;
+    tp V1 = { 1, NULL };
+    tp V2 = { 2, &V1  };
+    tp VS = { 3, &V2  };
+end
+
+var int ret = 0;
+loop/1 v in _VS do      // think its numeric
+    if v == null then
+        break;
+    else
+        ret = ret + v:v;
+        recurse v:nxt;
+    end
+end
+
+escape 1;
+]],
+    env = 'line 13 : invalid operands to binary "=="',
+    --run = 1,
+}
+
+Test { [[
+native do
+    typedef struct tp {
+        int v;
+        struct tp* nxt;
+    } tp;
+    tp V1 = { 1, NULL };
+    tp V2 = { 2, &V1  };
+    tp VS = { 3, &V2  };
+end
+
+var int ret = 0;
+
+loop/1 v in &_VS do
+    if v == null then
+        break;
+    else
+        ret = ret + v:v;
+        recurse v:nxt;
+    end
+end
+
+escape ret;
+]],
+    todo = '&_VS cannot be numeric, but it think it is',
+    run = 1,
+}
+
+Test { [[
+native do
+    typedef struct tp {
+        int v;
+        struct tp* nxt;
+    } tp;
+    tp V1 = { 1, NULL };
+    tp V2 = { 2, &V1  };
+    tp VS = { 3, &V2  };
+end
+
+var int ret = 0;
+
+var _tp* vs = &_VS;
+loop/3 v in vs do
+    if v == null then
+        break;
+    else
+        ret = ret + v:v;
+        recurse v:nxt;
+    end
+end
+
+escape ret;
+]],
+    run = 6,
+}
+
+Test { [[
+native do
+    typedef struct tp {
+        int v;
+        struct tp* nxt;
+    } tp;
+    tp V1 = { 1, NULL };
+    tp V2 = { 2, &V1  };
+    tp VS = { 3, &V2  };
+end
+
+var int ret = 0;
+
+var _tp* vs = &_VS;
+loop/3 v in vs do
+    if v == null then
+        continue;
+    end
+    ret = ret + v:v;
+    recurse v:nxt;
+end
+
+escape ret;
+]],
+    run = 6,
+}
+
+Test { [[
+native do
+    typedef struct tp {
+        int v;
+        struct tp* nxt;
+    } tp;
+    tp V1 = { 1, NULL };
+    tp V2 = { 2, &V1  };
+    tp VS = { 3, &V2  };
+end
+
+var int ret = 0;
+
+var _tp* vs = &_VS;
+loop/3 v in vs do
+    if v == null then
+    else
+        ret = ret + v:v;
+        recurse v:nxt;
+    end
+end
+
+escape ret;
+]],
+    run = 6,
+}
+
+Test { [[
+native do
+    typedef struct tp {
+        int v;
+        struct tp* nxt;
+    } tp;
+    tp V1 = { 1, NULL };
+    tp V2 = { 2, &V1  };
+    tp VS = { 3, &V2  };
+end
+
+var int ret = 0;
+
+var _tp* vs = &_VS;
+loop/3 v in vs do
+    if v == null then
+        break;
+    else
+        recurse v:nxt;
+        ret = ret + v:v;
+    end
+end
+
+escape ret;
+]],
+    run = 0,
+}
+
+Test { [[
+native do
+    typedef struct tp {
+        int v;
+        struct tp* nxt;
+    } tp;
+    tp V1 = { 1, NULL };
+    tp V2 = { 2, &V1  };
+    tp VS = { 3, &V2  };
+end
+
+var int ret = 0;
+
+var _tp* vs = &_VS;
+loop/3 v in vs do
+    if v == null then
+        continue;
+    end
+    recurse v:nxt;
+    ret = ret + v:v;
+end
+
+escape ret;
+]],
+    run = 6,
+}
+
+Test { [[
+native do
+    typedef struct tp {
+        int v;
+        struct tp* nxt;
+    } tp;
+    tp V1 = { 1, NULL };
+    tp V2 = { 2, &V1  };
+    tp VS = { 3, &V2  };
+end
+
+var int ret = 0;
+
+var _tp* vs = &_VS;
+loop/3 v in vs do
+    if v == null then
+    else
+        recurse v:nxt;
+        ret = ret + v:v;
+    end
+end
+
+escape ret;
+]],
+    run = 6,
+}
+
+Test { [[
+native do
+    typedef struct tp {
+        int v;
+        struct tp* nxt;
+    } tp;
+    tp V1 = { 1, NULL };
+    tp V2 = { 2, &V1  };
+    tp VS = { 3, &V2  };
+end
+
+var int ret = 0;
+
+var _tp* vs = &_VS;
+loop/1 v in vs do
+    if v == null then
+        break;
+    else
+        ret = ret + v:v;
+        recurse v:nxt;
+    end
+end
+
+escape ret;
+]],
+    asr = 'runtime error: loop overflow',
+}
+
+Test { [[
+recurse 1;
+]],
+    props = 'line 1 : `recurse´ without loop',
 }
 
 -- INTERNAL EVENTS
@@ -42450,28 +42463,6 @@ escape 1;
     adt = 'line 53 : cannot assign parent to child',
 }
 
--- TREES
--- TODO: much more examples
-
-Test { [[
-data Tree with
-    tag NIL;
-with
-    tag NODE with
-        var int   v;
-        var Tree* left;
-        var Tree* right;
-    end
-end
-
-var Tree t1 = Tree.NIL();
-var Tree t2 = Tree.NODE(1, Tree.NIL(), Tree.NIL());
-
-escape t1.NIL + t2.NODE.v + t2.NODE.left:NIL + t2.NODE.right:NIL;
-]],
-    run = 4,
-}
-
 -- OPTION TYPES
 
 Test { [[
@@ -43021,15 +43012,22 @@ escape ret;
     run = -1,
 }
 
--- TODO: continue ADT implementation
+-- ADTS / RECURSE
 
---[=[
-Test { DATA..[[
+Test { [[
+data List with
+    tag NIL;
+with
+    tag CONS with
+        var int  head;
+        var List tail;
+    end
+end
 var List l = List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));
 
 var int sum = 0;
 
-loop i in l do
+loop/3 i in &l do
     if i:CONS then
         sum = sum + i:CONS.head;
         recurse i:CONS.tail;
@@ -43041,6 +43039,100 @@ escape sum;
     run = 6,
 }
 
+Test { [[
+data Tree with
+    tag NIL;
+with
+    tag NODE with
+        var int   v;
+        var Tree* left;
+        var Tree* right;
+    end
+end
+
+var Tree t =
+    Tree.NODE(1,
+        Tree.NODE(2, Tree.NIL(), Tree.NIL()),
+        Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+
+var int sum = 0;
+
+    finalize with end;
+
+loop/5 i in &t do
+    if i:NODE then
+        recurse i:NODE.left;
+        sum = sum + i:NODE.v;
+        recurse i:NODE.right;
+    end
+end
+
+escape sum;
+]],
+    run = 6,
+}
+
+Test { [[
+data List with
+    tag NIL;
+with
+    tag CONS with
+        var int  head;
+        var List tail;
+    end
+end
+
+pool List[3] l;
+l = new List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));
+
+var int sum = 0;
+
+loop/3 i in l do
+    if i:CONS then
+        sum = sum + i:CONS.head;
+        recurse i:CONS.tail;
+    end
+end
+
+escape sum;
+]],
+    run = 6,
+}
+
+Test { [[
+data Tree with
+    tag NIL;
+with
+    tag NODE with
+        var int   v;
+        var Tree* left;
+        var Tree* right;
+    end
+end
+
+pool Tree[3] t;
+t = new Tree.NODE(1,
+            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
+            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+
+var int sum = 0;
+
+loop/5 i in t do
+    if i:NODE then
+        recurse i:NODE.left;
+        sum = sum + i:NODE.v;
+        recurse i:NODE.right;
+    end
+end
+
+escape sum;
+]],
+    run = 6,
+}
+
+-- TODO: continue ADT implementation
+
+--[=[
 -- XXX
 -- TODO: avoid cycles/side-shares
 error 'TODO: data that uses data'

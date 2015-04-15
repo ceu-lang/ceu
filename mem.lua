@@ -477,7 +477,7 @@ CEU_POOL_DCL(]]..var.id_..',CEU_'..var.tp.id..','..var.tp.arr.sval..[[)
         -- `recurse´ stack
         -- TODO: no cls space if no awaits inside the loop (use local C var)
         local max,_,_,_ = unpack(me)
-        assert(max, 'not implemented')
+        assert(max, 'not implemented: unbounded iter')
         me.iter_max = max.cval * me.__recs
         AST.par(me, 'Block').__loop = [[
 int          __recurse_nxt_]]..me.n..[[;    /* TODO: int (minimum type) */

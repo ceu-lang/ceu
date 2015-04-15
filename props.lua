@@ -238,6 +238,7 @@ F = {
     Recurse = function (me)
         local loop = AST.par(me,'Loop')
         ASR(loop, me, '`recurse´ without loop')
+        ASR(loop.iter_tp=='data', me, 'invalid `recurse´')
     end,
 
     SetBlock_pre = function (me)

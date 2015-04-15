@@ -944,51 +944,57 @@ F = {
             end
         end
 
-        if not (iter and to) then
-            return
-        end
+        local cls = iter and iter.tp and ENV.clss[iter.tp.id]
 
-        local cls = iter.tp and ENV.clss[iter.tp.id]
+        if is_num then
+            me.iter_tp = 'number'
+            -- done above
 
-        if me.isEvery then
+        elseif me.isEvery then
             me.iter_tp = 'event'
-            local evt = (iter.var or iter).evt
-            local tup = (evt and evt.ins.tup) or { iter.tp }
-            to = (to.tag=='VarList' and to) or { to }
-            for i, tp in ipairs(tup) do
-                DBG(_, tp, tp.tag, tp.id, to)
-                local dcl = AST.node('Dcl_var', me.ln, 'var', AST.copy(tp), to[i][1])
+            if to then
+                local evt = (iter.var or iter).evt
+                local tup = (evt and evt.ins.tup) or { iter.tp }
+                to = (to.tag=='VarList' and to) or { to }
+                for i, tp in ipairs(tup) do
+                    local dcl = AST.node('Dcl_var', me.ln, 'var', AST.copy(tp), to[i][1])
+                    AST.visit(F, dcl)
+                    local stmts = me.__par[1]
+                    stmts[#stmts+1] = dcl
+                end
+            end
+
+        elseif cls then
+            me.iter_tp = 'org'
+            if to then
+                local dcl = AST.node('Dcl_var', me.ln, 'var',
+                                AST.node('Type', me.ln, cls.id, 1, false, false),
+                                to[1])
+                dcl.read_only = true
                 AST.visit(F, dcl)
                 local stmts = me.__par[1]
                 stmts[#stmts+1] = dcl
             end
 
-        elseif is_num then
-            me.iter_tp = 'number'
-            -- done above
-
-        elseif cls then
-            me.tp = 'org'
-            local dcl = AST.node('Dcl_var', me.ln, 'var',
-                            AST.node('Type', me.ln, cls.id, 1, false, false),
-                            to[1])
-            dcl.read_only = true
-            AST.visit(F, dcl)
-            local stmts = me.__par[1]
-            stmts[#stmts+1] = dcl
-
-        elseif iter.tp.ptr > 0 then
+        elseif iter and iter.tp.ptr>0 then
             me.iter_tp = 'data'
-            local dcl = AST.node('Dcl_var', me.ln, 'var',
-                            AST.copy(iter.tp),
-                            to[1])
-            dcl.read_only = true
-            AST.visit(F, dcl)
-            local stmts = me.__par[1]
-            stmts[#stmts+1] = dcl
-
-        else
-            error'not implemented'
+            if to then
+                local dcl = AST.node('Dcl_var', me.ln, 'var',
+                                AST.copy(iter.tp),
+                                to[1])
+                dcl.read_only = true
+                AST.visit(F, dcl)
+                local stmts = me.__par[1]
+                stmts[#stmts+1] = dcl
+            end
+        end
+    end,
+    Recurse = function (me)
+        local exp = unpack(me)
+        local loop = AST.par(me, 'Loop')
+        if loop then
+            local _,iter = unpack(loop)
+            ASR(TP.contains(iter.tp,exp.tp), me, 'invalid `recurse´')
         end
     end,
 
@@ -1171,6 +1177,7 @@ F = {
         me.lval = false
         me.tp   = TP.copy(e1.tp)
         me.tp.ptr = me.tp.ptr + 1
+        me.tp[2] = me.tp.ptr
     end,
 
     ['Op2_.'] = function (me)

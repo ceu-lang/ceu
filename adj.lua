@@ -1624,61 +1624,74 @@ H = {
 
         -- root must set SetExp variable
         assert(set.tag=='SetExp', 'bug found')
-        set[2] = node('Var', me.ln, '__ceu_adt_'..me.n)
+
+        local dcls, cons = unpack(constr)
+        assert(dcls[1].tag == 'Dcl_var')
+        local id = dcls[1][3]
+
+        set[2] = node('Var', me.ln, id)
         set[2].__adj_is_constr = true
         return node('Stmts', me.ln,
-                node('Dcl_var', me.ln, 'var',
-                    node('Type', me.ln, me.__adj_adt_id, (dyn and 1) or 0, false, false),
-                    '__ceu_adt_'..me.n),
-                constr) -- substitute by 1st constr
+                node('Stmts', me.ln, unpack(dcls)),
+                cons)
     end,
     _Adt_explist_pos = function (me)
         me.tag = 'ExpList'
     end,
-    Adt_constr_pos = function (me)
+    _Adt_constr_pos = function (me)
         local adt, params = unpack(me)
         local id = unpack(adt)
 
-        -- Nested constructors:
-        --      Data.TAG1(v, Data.TAG2(...))
-        -- becomes (static)
-        --      var Data* data0;            // root
-        --          var Data* data1;        // TAG1
-        --          data0 = new(...);
-        --              var Data* data2;    // TAG2
-        --              data1 = new(...);
-        --          data1->rec = data2;
-        --      data0->rec = data1;
-
         local dyn,_ = unpack(AST.par(me,'_Adt_constr_root'))
 
+        --      Adt ( ExpList )
+        -- becomes
+        --      var TP adt;
+        --      <stmts-exp-list>
+        --      adt = <var-for-stmts-exp-list>
+
+        local CONS, DCLS = {}, {}
+
         -- nested constructors
-        local nested = AST.node('Stmts', me.ln)
         for i, p in ipairs(params) do
-            if p.tag == 'Stmts' then
-                -- subst nested stmts
-                -- for Var:__ceu_adt_n
-                nested[#nested+1] = p
+            if p.__adt then
+                local dcls, cons = unpack(p)
+
+                -- concat: CONS+=cons, DCLS++=dcls
+                CONS[#CONS+1] = cons
+                for _, v in ipairs(dcls) do
+                    DCLS[#DCLS+1] = v
+                end
+
+                -- last id is at 1st position
+                assert(dcls[1].tag == 'Dcl_var')
+                local id = dcls[1][3]
+
                 if dyn then
-                    params[i] = node('Var', me.ln, '__ceu_adt_'..me.n)
+                    params[i] = node('Var', me.ln, id)
                 else
                     params[i] = node('Op1_&', me.ln, '&',
-                                    node('Var', me.ln, '__ceu_adt_'..me.n))
+                                    node('Var', me.ln, id))
                 end
+            else
+                -- keep current p
             end
         end
 
-        -- parent constructor
-        local par = (me.__par.tag=='_Adt_constr_root' and me.__par)
-                        or me.__par.__par
+        table.insert(DCLS, 1,
+            node('Dcl_var', me.ln, 'var',
+                node('Type', me.ln, id, (dyn and 1) or 0, false, false),
+                '__ceu_adt_'..me.n))
 
-        return node('Stmts', me.ln,
-                node('Dcl_var', me.ln, 'var',
-                    node('Type', me.ln, id, (dyn and 1) or 0, false, false),
-                    '__ceu_adt_'..me.n),
-                node('Adt_constr', me.ln, adt, params,
-                    node('Var', me.ln, '__ceu_adt_'..par.n),
-                    dyn, nested))
+        return { __adt=true,
+                    DCLS,
+                    node('Adt_constr', me.ln, adt, params,
+                        node('Var', me.ln, '__ceu_adt_'..me.n),
+                        dyn,
+                -- all nested must be generated after ("new" should fail later)
+                        node('Stmts', me.ln,
+                            unpack(CONS)))
+               }
     end,
 
     -- Sufix recursive ADT with "*"
