@@ -166,7 +166,7 @@ F = {
 
     SetExp = function (me)
         local _,_,to = unpack(me)
-        if to.lst.acc then
+        if to.lst.acc and to.lst.acc.md~='no' then
             CHG(to.lst.acc, 'wr')
         else
             -- *((u32*)0x100) = v  (no acc)
@@ -240,9 +240,11 @@ F = {
 
     Var = function (me)
         local tag = me.__par.tag=='VarList' and me.__par.__par.tag
+
         if tag=='Async' or tag=='Thread' then
             return  -- <async (v)> is not an access
         end
+
         me.acc = INS {
             path = me.ana.pre,
             id  = me.var,
@@ -251,6 +253,12 @@ F = {
             any = REF(me.var.tp),
             err = ERR(me, 'variable/event `'..me.var.id..'´'),
         }
+
+        if me.__par.tag=='Field' and me.__par[2].tag=='This' and AST.par(me,'Dcl_constr') then
+            -- variable being allocated cannot be in parallel with anyone
+            me.acc.md = 'no'
+        end
+
         if string.sub(me.var.id,1,5) == '_tup_' then
             -- TODO: ignore tuple assignments for now "(a,b)=await A"
             me.acc.md = 'no'

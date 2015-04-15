@@ -608,9 +608,6 @@ F = {
     __Dcl_pool_pre = function (me)
         local pre, tp, id, constr = unpack(me)
 
-        -- differentiate my own var type from my pool type
-        local tp_pool = TP.new(tp)
-
         if ENV.adts[tp[1]] then
             -- ADT has the type of the pool values
             me[2] = AST.copy(tp)
@@ -619,10 +616,10 @@ F = {
             -- CLS has no type
             me[2] = TP.fromstr'void'
 
-            local tp = me.tp_pool
-            local top = (tp.ptr==0 and (not REF(tp)) and TOPS[tp.id])
-            ASR(tp.id=='_TOP_POOL' or (top and top.tops_i<CLS().tops_i),
-                me, 'undeclared type `'..(tp.id or '?')..'´')
+            local tp_ = TP.new(tp)
+            local top = (tp_.ptr==0 and (not REF(tp_)) and TOPS[tp_.id])
+            ASR(tp_.id=='_TOP_POOL' or (top and top.tops_i<CLS().tops_i),
+                me, 'undeclared type `'..(tp_.id or '?')..'´')
         end
     end,
 

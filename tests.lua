@@ -36181,9 +36181,6 @@ escape ret;
 ]],
     run = 10,
     safety = 2,
-    _ana = {
-        acc = 1,
-    },
 }
 
 Test { [[
@@ -36559,9 +36556,6 @@ escape ret;
 ]],
     run = { ['~>5s']=-1 },
     safety = 2,
-    _ana = {
-        acc = 1,
-    },
 }
 
 Test { [[
@@ -37214,9 +37208,6 @@ watching ok1 do
 end
 escape 1;
 ]],
-    _ana = {
-        acc = 6,
-    },
     run = 1,
 }
 
@@ -37245,7 +37236,7 @@ end
 escape _V + 1;
 ]],
     _ana = {
-        acc = 8,
+        acc = 2,
     },
     run = 11,
 }
@@ -41227,6 +41218,7 @@ end
 
 --[==[
 -- HERE
+]==]
 
 -- data type identifiers must start with an uppercase
 Test { [[
@@ -42676,10 +42668,9 @@ escape ret;
     run = -1,
 }
 
-do return end
-]==]
 -- TODO: continue ADT implementation
 
+--[=[
 Test { DATA..[[
 var List l = List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));
 
@@ -42706,7 +42697,6 @@ error 'TODO: change middle w/ l3 w/ deeper scope'
 error 'TODO: List& l = ...  // for temporary parts (tests w/ no reassign)'
 
 -- NONE of below is implemented (or will ever be?)
---[=[
 -- anonymous fields
 Test { [[
 data Pair = (int, int);
