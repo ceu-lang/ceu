@@ -642,19 +642,22 @@ _STK_ORG->trls[ ]]..me.trl_fins[1]..[[ ].seqno = _ceu_app->seqno-1; /* awake now
                 local top = cls or adt
                 if top or var.tp.id=='_TOP_POOL' then
                     local dcl = var.val_dcl
+                    local trl = (var.trl_orgs and var.trl_orgs[1]) or 0
+                                --          cls           vs          adt
+                                -- TODO: "trl" field is unused for adt
                     if static then
                         if top.is_ifc then
                             LINE(me, [[
-ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'_delayed),'..var.trl_orgs[1]..','
+ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'_delayed),'..trl..','
     ..'(byte**)'..dcl..'_queue, (byte*)'..dcl..[[_mem);
 ]])
                         else
                             LINE(me, [[
-ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'),'..var.trl_orgs[1]..','
+ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'),'..trl..','
     ..'(byte**)'..dcl..'_queue, (byte*)'..dcl..[[_mem);
 ]])
                         end
-                    else
+                    elseif cls then
                         LINE(me, [[
 (]]..dcl..[[)->trl = ]]..var.trl_orgs[1]..[[;
 ]])

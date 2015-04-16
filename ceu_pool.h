@@ -6,7 +6,10 @@
 /* TODO: all "int" here, should evaluate the correct unsigned type */
 
 typedef struct {
-    int     trl;        /* trl at 0-offset to share same struct with dynamic */
+    int     trl;    /* trl at 0-offset to share same struct with dynamic */
+                    /* TODO: "trl" field is unused for adt */
+                    /* TODO: "trl" field makes no sense for non-Ceu pools */
+                    /* TODO: move it to an enclosing struct */
     int     size;
     int     free;
     int     index;
