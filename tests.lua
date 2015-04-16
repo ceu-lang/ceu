@@ -1715,6 +1715,38 @@ Test { [[
 native do
     int V = 0;
 end
+class T with
+do
+    _V = _V + 1;
+    if _V < 10 then
+        spawn T;
+    end
+end
+var T t;
+escape _V;
+]],
+    run = 10,
+}
+Test { [[
+native do
+    int V = 0;
+end
+class T with
+do
+    _V = _V + 1;
+    spawn T;
+end
+var T t;
+escape _V;
+]],
+    run = 1,
+}
+do return end
+
+Test { [[
+native do
+    int V = 0;
+end
 var int i;
 var int& r = i;
 
@@ -1857,13 +1889,10 @@ escape sum;
     run = 6,
 }
 
-exemplo com spawn recursivo
-
 do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
----]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -25247,6 +25276,7 @@ escape i;
     --ref = 'line 7 : field "i" must be assigned',
     --run = 1,
 }
+---]===]
 Test { [[
 var int i = 0;
 class T with
