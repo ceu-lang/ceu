@@ -27,6 +27,11 @@ void *realloc(void *ptr, size_t size);
 #ifdef CEU_NEWS_POOL
 #include "ceu_pool.h"
 #endif
+#ifdef CEU_NEWS
+typedef struct {
+    int trl;
+} tceu_pool_;
+#endif
 
 /*
  * pthread_t thread;

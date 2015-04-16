@@ -203,9 +203,14 @@ function TP.contains (tp1, tp2)
     end
 
     -- same type
-    if tp1.id==tp2.id and tp1.ptr==tp2.ptr and tp1.arr==tp2.arr then
-                                              -- i.e. false
-        return true
+    if tp1.id==tp2.id and tp1.ptr==tp2.ptr then
+        if (tp1.arr==false) and (tp2.arr==false) then
+            return true
+        elseif REF(tp1) and tp1.arr==true and tp2.arr then
+            -- pool int[10] arr
+            -- pool int[]&  ref = arr;
+            return true
+        end
     end
 
     -- tp? vs tp

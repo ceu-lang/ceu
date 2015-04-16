@@ -26,9 +26,8 @@ function V (me)
         ret = '(&'..ret..')'
     end
 
-    return string.gsub(ret, '([^&])%&([(]*)%*', '%1%2')
-            -- &((*(...))) => (((...)))
-            -- unless &&((*(...)))
+    return string.gsub(ret, '^%(%&%(%*(.-)%)%)$', '(%1)')
+            -- (&(*(...))) => (((...)))
 end
 
 function CUR (me, id)
@@ -219,7 +218,7 @@ F =
             end
             if me.var.pre == 'var'
             or me.var.pre == 'pool' then
-                if me.var.tp.arr then
+                if me.var.tp.arr or me.var.pre=='pool' then
                     me.val = [[(
 (]]..TP.toc(me.var.tp)..[[) (
     ((byte*)]]..me.org.val..[[) + _CEU_APP.ifcs_flds[]]..gen..[[->cls][
@@ -237,11 +236,6 @@ F =
                     if REF(me.var.tp) and (not ENV.clss[me.var.tp.id]) then
                         me.val = '(*'..me.val..')'
                     end
-                end
-                if me.var.pre == 'pool' then
-                    me.ifc_idx = '(_CEU_APP.ifcs_trls['..gen..'->cls]['
-                                    ..ENV.ifcs.trls[me.var.ifc_id]
-                               ..'])'
                 end
             elseif me.var.pre == 'function' then
                 me.val = [[(*(

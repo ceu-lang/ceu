@@ -384,9 +384,6 @@ do
             for i=1, #ENV.ifcs.funs do
                 funs[i] = 'NULL'
             end
-            for i=1, #ENV.ifcs.trls do
-                trls[i] = 0
-            end
             for _, var in ipairs(cls.blk_ifc.vars) do
                 if var.pre == 'event' then
                     local i = ENV.ifcs.evts[var.ifc_id]
@@ -394,18 +391,9 @@ do
                         evts[i+1] = var.evt.idx
                     end
                 elseif var.pre=='var' or var.pre=='pool' then
-                    if var.pre=='var' or (type(var.tp.arr)=='table') then
-                                        -- malloc pools are not vars
-                        local i = ENV.ifcs.flds[var.ifc_id]
-                        if i then
-                            flds[i+1] = 'offsetof(CEU_'..cls.id..','..(var.id_ or var.id)..')'
-                        end
-                    end
-                    if var.pre == 'pool' then
-                        local i = ENV.ifcs.trls[var.ifc_id]
-                        if i then
-                            trls[i+1] = var.trl_orgs[1]
-                        end
+                    local i = ENV.ifcs.flds[var.ifc_id]
+                    if i then
+                        flds[i+1] = 'offsetof(CEU_'..cls.id..','..(var.id_ or var.id)..')'
                     end
                 elseif var.pre == 'function' then
                     local i = ENV.ifcs.funs[var.ifc_id]
@@ -433,7 +421,6 @@ do
         CC = SUB(CC, '=== IFCS_NFLDS ===',   #ENV.ifcs.flds)
         CC = SUB(CC, '=== IFCS_NEVTS ===',   #ENV.ifcs.evts)
         CC = SUB(CC, '=== IFCS_NFUNS ===',   #ENV.ifcs.funs)
-        CC = SUB(CC, '=== IFCS_NTRLS ===',   #ENV.ifcs.trls)
         CC = SUB(CC, '=== IFCS_CLSS ===',    table.concat(CLSS,',\n'))
         CC = SUB(CC, '=== IFCS_FLDS ===',    table.concat(FLDS,',\n'))
         CC = SUB(CC, '=== IFCS_EVTS ===',    table.concat(EVTS,',\n'))

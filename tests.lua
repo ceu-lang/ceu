@@ -1656,11 +1656,210 @@ escape ret;
     run = 1,
 }
 
+-- TODO: precisa do watching
+Test { [[
+data Tree with
+    tag NIL;
+with
+    tag NODE with
+        var int   v;
+        var Tree* left;
+        var Tree* right;
+    end
+end
+
+pool Tree[3] t;
+t = new Tree.NODE(1,
+            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
+            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+
+var int sum = 0;
+
+par/or do
+    loop i in t do
+        if i:NODE then
+            recurse i:NODE.left;
+            await 1s;
+            sum = sum + i:NODE.v;
+            recurse i:NODE.right;
+            await 1s;
+        end
+    end
+with
+    // 1->2->l
+    _assert(sum == 0);
+    await 1s;
+    _assert(sum == 2);
+    // 1->*->d
+    await 1s;
+    await 1s;
+    _assert(sum == 3);
+    // *->3->l
+    await 1s;
+    _assert(sum == 6);
+    // *->*->r
+    await 1s;
+    await 1s;
+    sum = 0;
+end
+
+escape sum;
+]],
+    _ana = { acc=true },
+    run = { ['~>10s']=6 },
+}
+
 ---------------
 
---do return end
+Test { [[
+native do
+    int V = 0;
+end
+var int i;
+var int& r = i;
 
-TODO: await em tree traveral
+class T with
+do
+    _V = _V + 1;
+end;
+
+pool T[2] ts;
+
+class U with
+    pool T[]& ts;
+do
+    spawn T in ts;
+    spawn T in ts;
+    spawn T in ts;
+    _V = _V + 10;
+end
+
+spawn T in ts;
+var U u with
+    this.ts = outer.ts;
+end;
+
+escape _V;
+]],
+    run = 12,
+}
+-- TODO: testar T[menor], T[maior]
+
+Test { [[
+class Body with
+    pool  Body[]& bodies;
+    var   int&    sum;
+    event int     ok;
+do
+    var Body* nested =
+        spawn Body in bodies with
+            this.bodies = bodies;
+            this.sum    = sum;
+        end;
+    watching nested do
+        await nested:ok;
+    end
+    sum = sum + 1;
+    emit this.ok;
+end
+
+class Outer with
+    var  int     sum = 0;
+    pool Body[1] bodies;
+do
+end
+
+var Outer out;
+
+pool Body[1] bodies;
+do Body with
+    this.out = out;
+end;
+
+escape sum;
+]],
+    run = 6,
+}
+
+Test { [[
+data Tree with
+    tag NIL;
+with
+    tag NODE with
+        var int   v;
+        var Tree* left;
+        var Tree* right;
+    end
+end
+
+pool Tree[3] tree;
+tree = new Tree.NODE(1,
+            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
+            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+
+class Body with
+    var   Tree*   n;
+    var   _OUTER& out;
+    event int     ok;
+do
+    //watching n do
+        var int i = out.sum;
+        if n:NODE then
+            var Body* left =
+                spawn Body in out.bodies with
+                    this.n = n:NODE.left;
+                end;
+            //watching left do
+                await left:ok;
+            //end
+
+            out.sum = i + n:NODE.v;
+
+            var Body* right =
+                spawn Body in out.bodies with
+                    this.n = n:NODE.left;
+                end;
+            //watching right do
+                await right:ok;
+            //end
+
+            //do/spawn Body in out.bodies with
+                //this.n = n:NODE.left;
+            //end;
+        end
+    //end
+    emit this.ok;
+end
+
+var int sum = 0;
+
+pool Body[7] bodies;
+do Body with
+    this.n   = tree;
+    this.out = outer;
+end;
+
+escape sum;
+
+/*
+var int sum = 0;
+loop n in tree do
+    var int i = sum;
+    if n:NODE then
+        recurse n:NODE.left;
+        sum = i + n:NODE.v;
+        recurse n:NODE.right;
+    end
+end
+escape sum;
+*/
+]],
+    run = 6,
+}
+
+exemplo com spawn recursivo
+
+do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -35927,6 +36126,25 @@ Test { [[
 class T with
     var int v = 0;
 do
+end
+
+interface Global with
+    pool T[] ts;
+end
+
+pool T[] ts;
+
+spawn T in global:ts;
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
     async do end;
 end
 
@@ -36187,7 +36405,8 @@ end
 pool Unit[] units;
 escape 1;
 ]],
-    env = 'line 3 : undeclared type `Unit´',
+    env = 'line 3 : interface "Global" is not defined',
+    --env = 'line 3 : undeclared type `Unit´',
 }
 Test { [[
 interface Global with
@@ -36295,7 +36514,8 @@ Test { [[
     end
     escape 1;
 ]],
-    env = 'line 4 : undeclared type `QueueForever´',
+    run = 1,
+    --env = 'line 4 : undeclared type `QueueForever´',
 }
 Test { [[
     class Queue with

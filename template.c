@@ -61,7 +61,6 @@ typedef struct {
     u16       ifcs_flds[CEU_NCLS][=== IFCS_NFLDS ===];
     u16       ifcs_evts[CEU_NCLS][=== IFCS_NEVTS ===];
     void*     ifcs_funs[CEU_NCLS][=== IFCS_NFUNS ===];
-    tceu_ntrl ifcs_trls[CEU_NCLS][=== IFCS_NTRLS ===];
 #endif
 } _tceu_app;
 
@@ -82,9 +81,6 @@ static _tceu_app _CEU_APP = {
     },
     {
 === IFCS_FUNS ===
-    },
-    {
-=== IFCS_TRLS ===
     }
 #endif
 };

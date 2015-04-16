@@ -181,6 +181,14 @@ function newvar (me, blk, pre, tp, id, isImp)
         n     = _N,
     }
 
+    if pre=='var' and (not tp.arr) then
+        var.lval = var
+    elseif pre=='pool' and (ENV.adts[tp.id] or REF(tp)) then
+        var.lval = var
+    else
+        var.lval = false
+    end
+
     _N = _N + 1
     blk.vars[#blk.vars+1] = var
     blk.vars[id] = var -- TODO: last/first/error?
@@ -420,10 +428,6 @@ F = {
                     if var.pre=='var' or var.pre=='pool' then
                         ENV.ifcs.flds[var.ifc_id] = #ENV.ifcs.flds
                         ENV.ifcs.flds[#ENV.ifcs.flds+1] = var.ifc_id
-                        if var.pre == 'pool' then
-                            ENV.ifcs.trls[var.ifc_id] = #ENV.ifcs.trls
-                            ENV.ifcs.trls[#ENV.ifcs.trls+1] = var.ifc_id
-                        end
                     elseif var.pre == 'event' then
                         ENV.ifcs.evts[var.ifc_id] = #ENV.ifcs.evts
                         ENV.ifcs.evts[#ENV.ifcs.evts+1] = var.ifc_id
@@ -721,10 +725,7 @@ F = {
         ASR(var, me, 'variable/event "'..id..'" is not declared')
         me.var  = var
         me.tp   = var.tp
-        me.lval = not (var.pre~='var' or var.cls or var.tp.arr)
-                    and var
-        me.lval = me.lval or (var.pre=='pool' and ENV.adts[var.tp.id])
-                    and var
+        me.lval = var.lval
     end,
 
     Dcl_nat = function (me)
@@ -892,7 +893,7 @@ F = {
         local id, pool, constr = unpack(me)
         me.cls = ENV.clss[id]
         ASR(me.cls, me, 'undeclared type `'..id..'´')
-        ASR(me.cls.tops_i < CLS().tops_i, me, 'undeclared type `'..id..'´')
+        --ASR(me.cls.tops_i < CLS().tops_i, me, 'undeclared type `'..id..'´')
         ASR(not me.cls.is_ifc, me, 'cannot instantiate an interface')
         me.tp = TP.fromstr(id..'*')  -- class id
     end,
@@ -1213,8 +1214,7 @@ F = {
             me.tag = 'Field'
             me.var  = VAR
             me.tp   = VAR.tp
-            me.lval = not (VAR.pre~='var' or VAR.cls or VAR.tp.arr)
-                        and VAR
+            me.lval = VAR.lval
 
         elseif adt then
             local ID, op, blk = unpack(adt)

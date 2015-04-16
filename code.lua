@@ -588,8 +588,7 @@ if (]]..LVAR..[[ == NULL) {
             constr  = constr,
             arr     = false,
             par_org = org,
-            par_trl_idx = pool.ifc_idx or pool.lst.var.trl_orgs[1],
-                            -- converted to interface access or original
+            par_trl_idx = '(((tceu_pool_*)'..V(pool)..')->trl)'
         })
         LINE(me, [[
     }
@@ -641,20 +640,24 @@ _STK_ORG->trls[ ]]..me.trl_fins[1]..[[ ].seqno = _ceu_app->seqno-1; /* awake now
                 local static = (type(var.tp.arr)=='table')
 
                 local top = cls or adt
-                if top then
+                if top or var.tp.id=='_TOP_POOL' then
+                    local dcl = var.val_dcl
                     if static then
-                        local dcl = var.val_dcl
                         if top.is_ifc then
                             LINE(me, [[
-ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'_delayed),'
+ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'_delayed),'..var.trl_orgs[1]..','
     ..'(byte**)'..dcl..'_queue, (byte*)'..dcl..[[_mem);
 ]])
                         else
                             LINE(me, [[
-ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'),'
+ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'),'..var.trl_orgs[1]..','
     ..'(byte**)'..dcl..'_queue, (byte*)'..dcl..[[_mem);
 ]])
                         end
+                    else
+                        LINE(me, [[
+(]]..dcl..[[)->trl = ]]..var.trl_orgs[1]..[[;
+]])
                     end
                 end
 
@@ -1029,9 +1032,7 @@ ceu_out_assert_ex(]]..nxt..' < '..loop.iter_max..[[,
             elseif me.iter_tp == 'org' then
                 -- INI
                 local var = iter.lst.var
-                assert(var.trl_orgs)
-                local idx = iter.ifc_idx or var.trl_orgs[1]
-                            -- converted to interface access or original
+                local idx = '((tceu_pool_*)'..V(iter)..')->trl'
                 local org = (iter.org and V(iter.org)) or '_STK_ORG'
                 org = '((tceu_org*)'..org..')'
                 ini[#ini+1] = V(to)..[[ = (]]..TP.toc(iter.tp)..[[)(

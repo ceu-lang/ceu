@@ -437,6 +437,10 @@ CEU_POOL_DCL(]]..var.id_..',CEU_'..var.tp.id..','..var.tp.arr.sval..[[)
 ]]
                                -- TODO: bad (explicit CEU_)
                     end
+                else
+                    top.struct = top.struct .. [[
+tceu_pool_ ]]..var.id_..[[;    /* fake tceu_pool w/ "trl" field */
+]]
                 end
             end
 
