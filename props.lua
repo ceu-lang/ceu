@@ -235,11 +235,6 @@ F = {
             ASR(loop.__depth>async.__depth, me, '`break´ without loop')
         end
     end,
-    Recurse = function (me)
-        local loop = AST.par(me,'Loop')
-        ASR(loop, me, '`recurse´ without loop')
-        ASR(loop.iter_tp=='data', me, 'invalid `recurse´')
-    end,
 
     SetBlock_pre = function (me)
         me.rets = {}

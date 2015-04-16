@@ -480,7 +480,7 @@ case ]]..me.lbls_cnt.id..[[:;
 
         if dyn then
             -- base case
-            if adt.is_rec and tag==adt.tags[1] then
+            if adt.n_recs>0 and tag==adt.tags[1] then
                 LINE(me,
 LVAR..[[ = &CEU_]]..string.upper(var.tp.id)..[[_BASE;
 ]])
@@ -525,7 +525,7 @@ if (]]..LVAR..[[ == NULL) {
         CONC(me, nested)
 
         if tag then
-            if not (dyn and adt.is_rec and tag==adt.tags[1]) then
+            if not (dyn and adt.n_recs>0 and tag==adt.tags[1]) then
                 -- not required for base case
                 LINE(me, RVAR..'.tag = CEU_'..string.upper(id)..'_'..tag..';')
             end
@@ -661,7 +661,7 @@ ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'),'
                 if adt then
                     -- create base case NIL and assign to "*l"
                     assert(adt)
-                    assert(adt.is_rec, 'not implemented')
+                    assert(adt.n_recs>0, 'not implemented')
                     local tag = adt[3][1]
                     local tp = 'CEU_'..var.tp.id
                     LINE(me, [[
@@ -669,7 +669,7 @@ ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'),'
     ]]..tp..[[* __ceu_adt;
 ]])
                     -- base case: use preallocated static variable
-                    if adt.is_rec and tag==adt.tags[1] then
+                    if adt.n_recs>0 and tag==adt.tags[1] then
                         LINE(me, [[
     __ceu_adt = &CEU_]]..string.upper(var.tp.id)..[[_BASE;
 ]])

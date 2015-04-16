@@ -80,7 +80,7 @@ void CEU_]]..id..'_free_dynamic (CEU_'..id..[[* me) {
                 free = free .. [[
         case CEU_]]..id_tag..[[:
 ]]
-                if me.is_rec and tag==me.tags[1] then
+                if me.n_recs>0 and tag==me.tags[1] then
                     free = free .. [[
             /* base case */
 ]]
@@ -117,7 +117,7 @@ void CEU_]]..id..'_free_static (CEU_'..id..[[* me, void* pool) {
                 free = free .. [[
         case CEU_]]..id_tag..[[:
 ]]
-                if me.is_rec and tag==me.tags[1] then
+                if me.n_recs>0 and tag==me.tags[1] then
                     free = free .. [[
             /* base case */
 ]]
@@ -175,7 +175,7 @@ void CEU_]]..id..'_free_static (CEU_'..id..[[* me, void* pool) {
                                    me.auxs..'\n'
 
         -- declare a static BASE instance
-        if me.is_rec then
+        if me.n_recs>0 then
             MEM.adts = MEM.adts..[[
 static CEU_]]..id..[[ CEU_]]..string.upper(id)..[[_BASE;
 ]]
@@ -197,7 +197,7 @@ CEU_]]..id..'* '..enum..'_assert (CEU_'..id..[[* me, char* file, int line) {
 }
 ]]
 
-        if top.is_rec and top.tags[1]==tag then
+        if top.n_recs>0 and top.tags[1]==tag then
             return  -- base case, no free
         end
 
@@ -476,9 +476,28 @@ CEU_POOL_DCL(]]..var.id_..',CEU_'..var.tp.id..','..var.tp.arr.sval..[[)
 
         -- `recurse´ stack
         -- TODO: no cls space if no awaits inside the loop (use local C var)
-        local max,_,_,_ = unpack(me)
-        assert(max, 'not implemented: unbounded iter')
-        me.iter_max = max.cval * me.__recs
+        local max,iter,_,_ = unpack(me)
+
+        if max then
+            me.iter_max = max.cval
+        else
+            local adt = ENV.adts[iter.tp.id]
+            if adt then
+                local tp  = iter.lst.var.tp
+                local arr = tp.arr
+                if (not tp.arr) and (not tp.ref) then
+                    me.iter_max = iter.lst.var.n_cons * adt.n_recs
+                elseif type(arr)=='table' then
+                    me.iter_max = arr.cval * adt.n_recs
+                else
+                    error'not implemented: unbounded iter'
+                end
+            else
+                error'not implemented: unbounded iter'
+            end
+        end
+
+        me.iter_max = me.iter_max * me.__recs
         AST.par(me, 'Block').__loop = [[
 int          __recurse_nxt_]]..me.n..[[;    /* TODO: int (minimum type) */
 tceu_recurse __recurse_vec_]]..me.n..'['..me.iter_max..']'..[[;

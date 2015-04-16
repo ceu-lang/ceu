@@ -21,7 +21,7 @@ F = {
         local cls = iter and iter.tp and ENV.clss[iter.tp.id]
         if cls then
             ASR(iter.lst and iter.lst.var and iter.lst.var.pre=='pool',
-            me, 'invalid pool')
+                me, 'invalid pool')
         end
     end,
 

@@ -68,7 +68,9 @@ F = {
         end
 
         me.is_bounded = max or (iter and (iter.cval or
-                                          iter.tp and ENV.clss[iter.tp.id]))
+                                          iter.tp and (
+                                            ENV.clss[iter.tp.id] or
+                                            ENV.adts[iter.tp.id])))
 
         SAME(me, body)
         local isTight = (not AST.iter(AST.pred_async)())

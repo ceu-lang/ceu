@@ -1656,11 +1656,15 @@ escape ret;
     run = 1,
 }
 
-do return end
----]===]
+---------------
+
+--do return end
+
+TODO: await em tree traveral
 
 ----------------------------------------------------------------------------
 -- OK: well tested
+---]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -5011,7 +5015,7 @@ loop v in 10 do
     recurse 1;
 end
 ]],
-    props = 'line 2 : invalid `recurse´',
+    adt = 'line 2 : invalid `recurse´: no data',
 }
 
 Test { [[
@@ -5274,7 +5278,7 @@ escape ret;
 Test { [[
 recurse 1;
 ]],
-    props = 'line 1 : `recurse´ without loop',
+    adt = 'line 1 : `recurse´ without loop',
 }
 
 -- INTERNAL EVENTS
@@ -43027,7 +43031,57 @@ var List l = List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));
 
 var int sum = 0;
 
+loop/1 i in &l do
+    if i:CONS then
+        sum = sum + i:CONS.head;
+        recurse i:CONS.tail;
+    end
+end
+
+escape sum;
+]],
+    asr = 'runtime error: loop overflow',
+}
+
+Test { [[
+data List with
+    tag NIL;
+with
+    tag CONS with
+        var int  head;
+        var List tail;
+    end
+end
+var List l = List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));
+
+var int sum = 0;
+
 loop/3 i in &l do
+    if i:CONS then
+        sum = sum + i:CONS.head;
+        recurse i:CONS.tail;
+    end
+end
+
+escape sum;
+]],
+    run = 6,
+}
+
+Test { [[
+data List with
+    tag NIL;
+with
+    tag CONS with
+        var int  head;
+        var List tail;
+    end
+end
+var List l = List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));
+
+var int sum = 0;
+
+loop i in &l do
     if i:CONS then
         sum = sum + i:CONS.head;
         recurse i:CONS.tail;
@@ -43059,7 +43113,7 @@ var int sum = 0;
 
     finalize with end;
 
-loop/5 i in &t do
+loop i in &t do
     if i:NODE then
         recurse i:NODE.left;
         sum = sum + i:NODE.v;
@@ -43087,7 +43141,7 @@ l = new List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));
 
 var int sum = 0;
 
-loop/3 i in l do
+loop i in l do
     if i:CONS then
         sum = sum + i:CONS.head;
         recurse i:CONS.tail;
@@ -43117,7 +43171,7 @@ t = new Tree.NODE(1,
 
 var int sum = 0;
 
-loop/5 i in t do
+loop i in t do
     if i:NODE then
         recurse i:NODE.left;
         sum = sum + i:NODE.v;
