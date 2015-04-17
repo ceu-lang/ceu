@@ -409,6 +409,13 @@ typedef struct tceu_org_lnk {
     tceu_ntrl n;            /* use for ands/fins                 */
 } tceu_org_lnk;
 
+#ifdef CEU_NEWS
+typedef struct {
+    tceu_org_lnk** lnks;
+    byte**         queue;
+} tceu_pool_;
+#endif
+
 /* TCEU_ORG */
 
 typedef struct tceu_org
@@ -440,7 +447,7 @@ typedef struct tceu_org
 #endif  /* CEU_ORGS */
 
 #ifdef CEU_ORGS_NEWS_POOL
-    void*  pool;            /* TODO(ram): opt, traverse lst of cls pools */
+    tceu_pool_*  pool;      /* TODO(ram): opt, traverse lst of cls pools */
 #endif
 
     tceu_trl trls[0];       /* first trail */

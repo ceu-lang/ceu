@@ -178,7 +178,9 @@ F =
         elseif var.pre == 'pool' then
             -- normalize all pool acesses to pointers to it
             -- (because of interface accesses that must be done through a pointer)
-            me.val = '(&'..me.val..')'
+            if not (var.tp.ptr>0 or REF(var.tp)) then
+                me.val = '(&'..me.val..')'
+            end
             var.val_dcl = var.val_dcl or '&'..CUR(me, var.id_)
                                          -- TODO: first assignment
         elseif var.pre == 'function' then

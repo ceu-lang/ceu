@@ -27,11 +27,6 @@ void *realloc(void *ptr, size_t size);
 #ifdef CEU_NEWS_POOL
 #include "ceu_pool.h"
 #endif
-#ifdef CEU_NEWS
-typedef struct {
-    tceu_org_lnk** lnks;
-} tceu_pool_;
-#endif
 
 /*
  * pthread_t thread;
@@ -451,7 +446,7 @@ fprintf(stderr, "STACK[%d]: evt=%d : seqno=%d : ntrls=%d\n",
 #ifdef CEU_ORGS_NEWS_POOL
                             if (!CUR_ORG->isAlive
 #ifdef CEU_ORGS_NEWS_MALLOC
-                                || CUR_ORG->pool == NULL
+                                || CUR_ORG->pool->queue == NULL
 #endif
                                 )
 #else
@@ -693,7 +688,7 @@ _CEU_GO_QUIT_:;
 #if    defined(CEU_ORGS_NEWS_POOL) && !defined(CEU_ORGS_NEWS_MALLOC)
         ceu_pool_free((tceu_pool*)org->pool, (byte*)org);
 #elif  defined(CEU_ORGS_NEWS_POOL) &&  defined(CEU_ORGS_NEWS_MALLOC)
-        if (org->pool == NULL) {
+        if (org->pool->queue == NULL) {
             ceu_sys_realloc(org, 0);
         } else {
             ceu_pool_free((tceu_pool*)org->pool, (byte*)org);

@@ -437,6 +437,11 @@ CEU_POOL_DCL(]]..var.id_..',CEU_'..var.tp.id..','..var.tp.arr.sval..[[)
 ]]
                                -- TODO: bad (explicit CEU_)
                     end
+                elseif var.tp.ptr>0 or REF(var.tp) then
+                    local ptr = string.rep('*', (REF(var.tp) and 1) + var.tp.ptr)
+                    top.struct = top.struct .. [[
+tceu_pool]]..ptr..' '..var.id_..[[;
+]]
                 else
                     top.struct = top.struct .. [[
 tceu_pool_ ]]..var.id_..[[;

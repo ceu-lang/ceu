@@ -11,11 +11,13 @@ typedef struct {
                     /* TODO: "lnks" field is unused for adt */
                     /* TODO: "lnks" field makes no sense for non-Ceu pools */
                     /* TODO: move it to an enclosing struct */
+    byte**  queue;
+                    /* queue is in the next offset to distinguish dynamic(NULL)
+                       from static pools(any-address) */
     int     size;
     int     free;
     int     index;
     int     unit;
-    byte**  queue;
     byte*   mem;
 } tceu_pool;
 

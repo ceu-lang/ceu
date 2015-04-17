@@ -551,10 +551,27 @@ if (]]..LVAR..[[ == NULL) {
     tceu_org* __ceu_new;
 ]])
         if pool and (type(pool.var.tp.arr)=='table') then
+            -- static
             LINE(me, [[
     __ceu_new = (tceu_org*) ceu_pool_alloc((tceu_pool*)]]..V(pool)..[[);
 ]])
+        elseif pool.var.tp.ptr>0 or REF(pool.var.tp) then
+            -- pointer don't know if is dynamic or static
+            LINE(me, [[
+#if !defined(CEU_ORGS_NEWS_MALLOC)
+    __ceu_new = (tceu_org*) ceu_pool_alloc((tceu_pool*)]]..V(pool)..[[);
+#elif !defined(CEU_ORGS_NEWS_POOL)
+    __ceu_new = (tceu_org*) ceu_out_realloc(NULL, sizeof(CEU_]]..id..[[));
+#else
+    if (]]..V(pool)..[[->queue == NULL) {
+        __ceu_new = (tceu_org*) ceu_out_realloc(NULL, sizeof(CEU_]]..id..[[));
+    } else {
+        __ceu_new = (tceu_org*) ceu_pool_alloc((tceu_pool*)]]..V(pool)..[[);
+    }
+#endif
+]])
         else
+            -- dynamic
             LINE(me, [[
     __ceu_new = (tceu_org*) ceu_out_realloc(NULL, sizeof(CEU_]]..id..[[));
 ]])
@@ -567,10 +584,12 @@ if (]]..LVAR..[[ == NULL) {
         LINE(me, [[
     if (__ceu_new != NULL) {
 ]])
-        if pool and (type(pool.var.tp.arr)=='table') then
-            LINE(me, '__ceu_new->pool = '..V(pool)..';')
-        elseif PROPS.has_orgs_news_pool or OPTS.os then
-            LINE(me, '__ceu_new->pool = NULL;')
+
+        if pool and (type(pool.var.tp.arr)=='table') or
+           PROPS.has_orgs_news_pool or OPTS.os then
+            LINE(me, [[
+        __ceu_new->pool = (tceu_pool_*)]]..V(pool)..[[;
+]])
         end
 
         local org = '_STK_ORG'
@@ -659,7 +678,8 @@ ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'),'..ln
                         end
                     elseif cls or var.tp.id=='_TOP_POOL' then
                         LINE(me, [[
-(]]..dcl..[[)->lnks = ]]..lnks..[[;
+(]]..dcl..[[)->lnks  = ]]..lnks..[[;
+(]]..dcl..[[)->queue = NULL;            /* dynamic pool */
 ]])
                     end
                 end

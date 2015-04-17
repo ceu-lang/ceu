@@ -1712,40 +1712,6 @@ escape sum;
 ---------------
 
 Test { [[
-native do
-    int V = 0;
-end
-var int i;
-var int& r = i;
-
-class T with
-do
-    _V = _V + 1;
-end;
-
-pool T[2] ts;
-
-class U with
-    pool T[]& ts;
-do
-    spawn T in ts;
-    spawn T in ts;
-    spawn T in ts;
-    _V = _V + 10;
-end
-
-spawn T in ts;
-var U u with
-    this.ts = outer.ts;
-end;
-
-escape _V;
-]],
-    run = 12,
-}
--- TODO: testar T[menor], T[maior]
-
-Test { [[
 class Body with
     pool  Body[]& bodies;
     var   int&    sum;
@@ -1860,8 +1826,8 @@ escape sum;
 do return end
 
 ----------------------------------------------------------------------------
----]===]
 -- OK: well tested
+---]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -29687,6 +29653,41 @@ var T t;
 escape 1;
 ]],
     env = 'line 3 : undeclared type `U´',
+}
+
+Test { [[
+native do
+    int V = 0;
+end
+var int i;
+var int& r = i;
+
+class T with
+do
+    _V = _V + 1;
+    await FOREVER;
+end;
+
+pool T[2] ts;
+
+class U with
+    pool T[]& xxx;  // TODO: test also T[K<2], T[K>2]
+                    //       should <= be allowed?
+do
+    spawn T in xxx;
+    spawn T in xxx;
+    spawn T in xxx;
+    _V = _V + 10;
+end
+
+spawn T in ts;
+var U u with
+    this.xxx = outer.ts;
+end;
+
+escape _V;
+]],
+    run = 12,
 }
 
 -- DO T
