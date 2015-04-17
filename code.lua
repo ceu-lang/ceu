@@ -417,8 +417,7 @@ for (]]..V(t.i)..[[=0; ]]..V(t.i)..'<'..t.arr.sval..';'..V(t.i)..[[++)
                 ]]..t.isDyn..[[,
 #endif
 ]]
-                ..t.par_org..', '
-                ..t.par_trl_idx..[[);
+                ..t.lnks..[[);
 /* TODO: currently idx is always "1" for all interfaces access because pools 
  * are all together there. When we have separate trls for pools, we'll have to 
  * indirectly access the offset in the interface. */
@@ -449,15 +448,14 @@ case ]]..me.lbls_cnt.id..[[:;
         local var = me.var
         if var.cls then
             F._ORG(me, {
-                id      = var.id,
-                isDyn   = 0,
-                cls     = var.cls,
-                val     = var.val,
-                constr  = constr,
-                arr     = var.tp.arr,
-                i       = var.constructor_iterator,
-                par_org = '_STK_ORG',
-                par_trl_idx = var.trl_orgs[1],
+                id     = var.id,
+                isDyn  = 0,
+                cls    = var.cls,
+                val    = var.val,
+                constr = constr,
+                arr    = var.tp.arr,
+                i      = var.constructor_iterator,
+                lnks   = '&_STK_ORG->trls['..var.trl_orgs[1]..'].lnks'
             })
         elseif var.tp.opt then
             -- initialize optional types to nil
@@ -581,14 +579,13 @@ if (]]..LVAR..[[ == NULL) {
         end
 
         F._ORG(me, {
-            id      = 'dyn',
-            isDyn   = 1,
-            cls     = me.cls,
-            val     = '__ceu_new',
-            constr  = constr,
-            arr     = false,
-            par_org = org,
-            par_trl_idx = '(((tceu_pool_*)'..V(pool)..')->trl)'
+            id     = 'dyn',
+            isDyn  = 1,
+            cls    = me.cls,
+            val    = '__ceu_new',
+            constr = constr,
+            arr    = false,
+            lnks   = '(((tceu_pool_*)'..V(pool)..')->lnks)',
         })
         LINE(me, [[
     }
@@ -642,24 +639,27 @@ _STK_ORG->trls[ ]]..me.trl_fins[1]..[[ ].seqno = _ceu_app->seqno-1; /* awake now
                 local top = cls or adt
                 if top or var.tp.id=='_TOP_POOL' then
                     local dcl = var.val_dcl
-                    local trl = (var.trl_orgs and var.trl_orgs[1]) or 0
-                                --          cls           vs          adt
-                                -- TODO: "trl" field is unused for adt
+
+                    local lnks = (var.trl_orgs and var.trl_orgs[1]) or 'NULL'
+                    if lnks ~= 'NULL' then
+                        lnks = '&_STK_ORG->trls['..lnks..'].lnks'
+                    end
+
                     if static then
                         if top.is_ifc then
                             LINE(me, [[
-ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'_delayed),'..trl..','
+ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'_delayed),'..lnks..','
     ..'(byte**)'..dcl..'_queue, (byte*)'..dcl..[[_mem);
 ]])
                         else
                             LINE(me, [[
-ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'),'..trl..','
+ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'),'..lnks..','
     ..'(byte**)'..dcl..'_queue, (byte*)'..dcl..[[_mem);
 ]])
                         end
                     elseif cls or var.tp.id=='_TOP_POOL' then
                         LINE(me, [[
-(]]..dcl..[[)->trl = ]]..var.trl_orgs[1]..[[;
+(]]..dcl..[[)->lnks = ]]..lnks..[[;
 ]])
                     end
                 end
@@ -1035,13 +1035,11 @@ ceu_out_assert_ex(]]..nxt..' < '..loop.iter_max..[[,
             elseif me.iter_tp == 'org' then
                 -- INI
                 local var = iter.lst.var
-                local idx = '((tceu_pool_*)'..V(iter)..')->trl'
-                local org = (iter.org and V(iter.org)) or '_STK_ORG'
-                org = '((tceu_org*)'..org..')'
+                local lnks = '(((tceu_pool_*)'..V(iter)..')->lnks)'
                 ini[#ini+1] = V(to)..[[ = (]]..TP.toc(iter.tp)..[[)(
-    (]]..org..[[->trls[ ]]..idx..[[ ].lnks[0].nxt->n == 0) ?
+    ((*]]..lnks..[[)[0].nxt->n == 0) ?
         NULL :    /* marks end of linked list */
-        ]]..org..[[->trls[ ]]..idx..[[ ].lnks[0].nxt
+        (*]]..lnks..[[)[0].nxt
 )
 ]]
                 -- CND

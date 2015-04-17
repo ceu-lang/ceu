@@ -29,7 +29,7 @@ void *realloc(void *ptr, size_t size);
 #endif
 #ifdef CEU_NEWS
 typedef struct {
-    int trl;
+    tceu_org_lnk** lnks;
 } tceu_pool_;
 #endif
 
@@ -102,14 +102,14 @@ int ceu_sys_req (void) {
 
 #ifdef CEU_ORGS
 
-void ceu_sys_org_trail (tceu_org* org, int idx, tceu_org_lnk* lnk) {
+void ceu_sys_org_trail (tceu_org* org, int idx, tceu_org_lnk* lnks) {
     org->trls[idx].evt  = CEU_IN__ORG;
-    org->trls[idx].lnks = lnk;
-    lnk[0].nxt = (tceu_org*) &lnk[1];
-    lnk[1].prv = (tceu_org*) &lnk[0];
-    lnk[1].nxt =  org;
-    lnk[1].n   =  0;    /* marks end of linked list */
-    lnk[1].lnk =  idx+1;
+    org->trls[idx].lnks = lnks;
+    lnks[0].nxt = (tceu_org*) &lnks[1];
+    lnks[1].prv = (tceu_org*) &lnks[0];
+    lnks[1].nxt = org;
+    lnks[1].n   = 0;    /* marks end of linked list */
+    lnks[1].lnk = idx+1;
 }
 
 int ceu_sys_org_spawn (tceu_go* _ceu_go, tceu_nlbl lbl_cnt, tceu_org* neworg, tceu_nlbl neworg_lbl) {
@@ -144,7 +144,7 @@ void ceu_sys_org (tceu_org* org, int n, int lbl, int seqno,
 #ifdef CEU_ORGS_NEWS
                   int isDyn,
 #endif
-                  tceu_org* par_org, int par_trl)
+                  tceu_org_lnk** lnks)
 {
     /* { evt=0, seqno=0, lbl=0 } for all trails */
     memset(&org->trls, 0, n*sizeof(tceu_trl));
@@ -163,13 +163,13 @@ void ceu_sys_org (tceu_org* org, int n, int lbl, int seqno,
     org->trls[0].seqno = seqno;
 
 #ifdef CEU_ORGS
-    if (par_org == NULL) {
+    if (lnks == NULL) {
         return;             /* main class */
     }
 
     /* re-link */
     {
-        tceu_org_lnk* lst = &par_org->trls[par_trl].lnks[1];
+        tceu_org_lnk* lst = &(*lnks)[1];
         lst->prv->nxt = org;
         org->prv = lst->prv;
         org->nxt = (tceu_org*)lst;
@@ -178,7 +178,7 @@ void ceu_sys_org (tceu_org* org, int n, int lbl, int seqno,
 #endif  /* CEU_ORGS */
 }
 #ifndef CEU_ORGS
-#define ceu_sys_org(a,b,c,d,e,f) ceu_sys_org(a,b,c,d,NULL,0)
+#define ceu_sys_org(a,b,c,d,e) ceu_sys_org(a,b,c,d,NULL)
 #endif
 
 /**********************************************************************/
