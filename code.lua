@@ -634,7 +634,7 @@ _STK_ORG->trls[ ]]..me.trl_fins[1]..[[ ].seqno = _ceu_app->seqno-1; /* awake now
                     LINE(me, ' = '..var.id)
                 end
                 LINE(me, ';')
-            elseif var.pre=='pool' then
+            elseif var.pre=='pool' and var.tp.ptr==0 and (not REF(var.tp)) then
                 local cls = ENV.clss[var.tp.id]
                 local adt = ENV.adts[var.tp.id]
                 local static = (type(var.tp.arr)=='table')

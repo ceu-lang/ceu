@@ -216,6 +216,15 @@ F = {
         end
     end,
 
+    -- warn if recursive spawn w/o await path
+    Spawn = function (me)
+        local id, pool, _,_ = unpack(me)
+        local cls = CLS()
+        if id == cls.id then
+            WRN(me.ana.pre[id]~=true, me, 'unbounded recursive spawn')
+        end
+    end,
+
     Thread = 'Async',
     Async = function (me)
         if me.ana.pre[false] then

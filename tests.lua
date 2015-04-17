@@ -1715,38 +1715,6 @@ Test { [[
 native do
     int V = 0;
 end
-class T with
-do
-    _V = _V + 1;
-    if _V < 10 then
-        spawn T;
-    end
-end
-var T t;
-escape _V;
-]],
-    run = 10,
-}
-Test { [[
-native do
-    int V = 0;
-end
-class T with
-do
-    _V = _V + 1;
-    spawn T;
-end
-var T t;
-escape _V;
-]],
-    run = 1,
-}
-do return end
-
-Test { [[
-native do
-    int V = 0;
-end
 var int i;
 var int& r = i;
 
@@ -1892,8 +1860,8 @@ escape sum;
 do return end
 
 ----------------------------------------------------------------------------
--- OK: well tested
 ---]===]
+-- OK: well tested
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -29673,6 +29641,54 @@ escape 0;
     env = 'line 3 : invalid `free´',
 }
 
+Test { [[
+native do
+    int V = 0;
+end
+class T with
+do
+    _V = _V + 1;
+    if _V < 10 then
+        spawn T;
+    end
+end
+var T t;
+escape _V;
+]],
+    wrn = 'line 8 : unbounded recursive spawn',
+    run = 10,
+}
+
+Test { [[
+native do
+    int V = 0;
+end
+class T with
+do
+    _V = _V + 1;
+    spawn T;
+end
+var T t;
+escape _V;
+]],
+    wrn = 'line 7 : unbounded recursive spawn',
+    run = 101,  -- tests force 100 allocations at most
+}
+Test { [[
+class T with
+do
+    spawn U;
+end
+class U with
+do
+    spawn T;
+end
+var T t;
+escape 1;
+]],
+    env = 'line 3 : undeclared type `U´',
+}
+
 -- DO T
 
 Test { [[
@@ -36554,6 +36570,7 @@ Test { [[
     end
     escape 1;
 ]],
+    wrn = 'line 4 : unbounded recursive spawn',
     run = 1,
     --env = 'line 4 : undeclared type `QueueForever´',
 }
