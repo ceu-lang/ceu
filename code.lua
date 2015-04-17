@@ -657,7 +657,7 @@ ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'),'..tr
     ..'(byte**)'..dcl..'_queue, (byte*)'..dcl..[[_mem);
 ]])
                         end
-                    elseif cls then
+                    elseif cls or var.tp.id=='_TOP_POOL' then
                         LINE(me, [[
 (]]..dcl..[[)->trl = ]]..var.trl_orgs[1]..[[;
 ]])

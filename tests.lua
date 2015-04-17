@@ -1893,6 +1893,7 @@ do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
+---]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -25276,7 +25277,16 @@ escape i;
     --ref = 'line 7 : field "i" must be assigned',
     --run = 1,
 }
----]===]
+Test { [[
+class T with
+do
+end
+spawn T;
+escape 10;
+]],
+    --ref = 'line 7 : field "i" must be assigned',
+    run = 10,
+}
 Test { [[
 var int i = 0;
 class T with
