@@ -258,12 +258,13 @@ typedef struct CEU_]]..me.id..[[ {
     Dcl_cls_pos = function (me)
         if me.is_ifc then
             me.struct = 'typedef void '..TP.toc(me.tp)..';\n'
-            -- interface full declarations must be delayed to after its impls.  
+            -- interface full declarations must be delayed to after their impls
             local struct = [[
 typedef union CEU_]]..me.id..[[_delayed {
 ]]
             for k, v in pairs(me.matches) do
-                if v then
+                if v and (not k.is_ifc) then
+                    -- ifcs have no size
                     struct = struct..'\t'..TP.toc(k.tp)..' '..k.id..';\n'
                 end
             end

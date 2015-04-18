@@ -241,7 +241,7 @@ function TP.contains (tp1, tp2)
     if cls1 and cls2 then
         if tp1.ref or tp2.ref or (tp1.ptr>0 and tp2.ptr>0) then
             if tp1.ptr == tp2.ptr then
-                return cls1.is_ifc and ENV.ifc_vs_cls(cls1,cls2)
+                return cls1.is_ifc and ENV.ifc_vs_cls_or_ifc(cls1,cls2)
             end
         end
         return false
