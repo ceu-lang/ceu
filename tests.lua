@@ -1563,6 +1563,133 @@ escape 1;
     asr = true,
 }
 
+- BUG: do T quando ok acontece na mesma reacao
+Test { [[
+class Body with
+    pool  Body[]& bodies;
+    var   int&    sum;
+    event int     ok;
+do
+_printf("spawn\n");
+_printf("IN %p\n", bodies)
+    finalize with end;
+
+    var Body* nested =
+        spawn Body in bodies with
+            this.bodies = bodies;
+            this.sum    = sum;
+        end;
+    if nested != null then
+        watching nested do
+            await nested:ok;
+        end
+        sum = sum + 1;
+    end
+    emit this.ok => 1;
+end
+
+pool Body[2] bodies;
+var  int     sum = 0;
+
+_printf("OUT %p\n", bodies)
+    finalize with end;
+
+do Body with
+    this.bodies = bodies;
+    this.sum    = sum;
+end;
+
+escape sum;
+]],
+    wrn = 'line 7 : unbounded recursive spawn',
+    run = 6,
+}
+
+- BUG: do T quando ok acontece na mesma reacao
+Test { [[
+data Tree with
+    tag NIL;
+with
+    tag NODE with
+        var int   v;
+        var Tree* left;
+        var Tree* right;
+    end
+end
+
+pool Tree[3] tree;
+tree = new Tree.NODE(1,
+            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
+            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+
+class Body with
+    pool  Body[]& bodies;
+    var   Tree*   n;
+    var   int&    sum;
+    event int     ok;
+do
+    //watching n do
+        var int i = this.sum;
+        if n:NODE then
+            var Body* left =
+                spawn Body in this.bodies with
+                    this.bodies = bodies;
+                    this.n      = n:NODE.left;
+                    this.sum    = sum;
+                end;
+            //watching left do
+                await left:ok;
+            //end
+
+            this.sum = this.sum + i + n:NODE.v;
+_printf("v=%d => %d\n", n:NODE.v, this.sum);
+
+            var Body* right =
+                spawn Body in this.bodies with
+                    this.bodies = bodies;
+                    this.n      = n:NODE.right;
+                    this.sum    = sum;
+                end;
+            //watching right do
+                await right:ok;
+            //end
+
+            //do/spawn Body in this.bodies with
+                //this.n = n:NODE.left;
+            //end;
+        end
+    //end
+    emit this.ok => 1;
+end
+
+var int sum = 0;
+
+pool Body[7] bodies;
+do Body with
+    this.bodies = bodies;
+    this.n      = tree;
+    this.sum    = sum;
+end;
+
+escape sum;
+
+/*
+var int sum = 0;
+loop n in tree do
+    var int i = sum;
+    if n:NODE then
+        recurse n:NODE.left;
+        sum = i + n:NODE.v;
+        recurse n:NODE.right;
+    end
+end
+escape sum;
+*/
+]],
+    wrn = 'line 26 : unbounded recursive spawn',
+    run = 999,
+}
+
 ---------------------
 
 -- TODO: RECURSE
@@ -1711,8 +1838,8 @@ escape sum;
 
 ---------------
 
-deveria ser Body*?
-fazer com await
+- retorno de spawn é *?
+- fazer a conversao da consutrucao recurse para isso
 
 Test { [[
 class Body with
@@ -1720,8 +1847,6 @@ class Body with
     var   int&    sum;
     event int     ok;
 do
-_printf("spawn\n");
-_printf("IN %p\n", bodies)
     finalize with end;
 
     var Body* nested =
@@ -1729,18 +1854,18 @@ _printf("IN %p\n", bodies)
             this.bodies = bodies;
             this.sum    = sum;
         end;
-    watching nested do
-        await nested:ok;
+    if nested != null then
+        watching nested do
+            await nested:ok;
+        end
     end
+    await 1s;
     sum = sum + 1;
     emit this.ok => 1;
 end
 
-pool Body[1] bodies;
+pool Body[2] bodies;
 var  int     sum = 0;
-
-_printf("OUT %p\n", bodies)
-    finalize with end;
 
 do Body with
     this.bodies = bodies;
@@ -1750,7 +1875,7 @@ end;
 escape sum;
 ]],
     wrn = 'line 7 : unbounded recursive spawn',
-    run = 6,
+    run = { ['~>10s'] = 3 },
 }
 
 Test { [[
@@ -1770,45 +1895,52 @@ tree = new Tree.NODE(1,
             Tree.NODE(3, Tree.NIL(), Tree.NIL()));
 
 class Body with
+    pool  Body[]& bodies;
     var   Tree*   n;
-    var   _OUTER& out;
+    var   int&    sum;
     event int     ok;
 do
     //watching n do
-        var int i = out.sum;
+        var int i = this.sum;
         if n:NODE then
             var Body* left =
-                spawn Body in out.bodies with
-                    this.n = n:NODE.left;
+                spawn Body in this.bodies with
+                    this.bodies = bodies;
+                    this.n      = n:NODE.left;
+                    this.sum    = sum;
                 end;
             //watching left do
                 await left:ok;
             //end
 
-            out.sum = i + n:NODE.v;
+            this.sum = this.sum + i + n:NODE.v;
 
             var Body* right =
-                spawn Body in out.bodies with
-                    this.n = n:NODE.left;
+                spawn Body in this.bodies with
+                    this.bodies = bodies;
+                    this.n      = n:NODE.right;
+                    this.sum    = sum;
                 end;
             //watching right do
                 await right:ok;
             //end
 
-            //do/spawn Body in out.bodies with
+            //do/spawn Body in this.bodies with
                 //this.n = n:NODE.left;
             //end;
         end
     //end
-    emit this.ok;
+    await 1s;
+    emit this.ok => 1;
 end
 
 var int sum = 0;
 
 pool Body[7] bodies;
 do Body with
-    this.n   = tree;
-    this.out = outer;
+    this.bodies = bodies;
+    this.n      = tree;
+    this.sum    = sum;
 end;
 
 escape sum;
@@ -1826,14 +1958,14 @@ end
 escape sum;
 */
 ]],
-    run = 6,
+    wrn = 'line 26 : unbounded recursive spawn',
+    run = { ['~>10s'] = 9 },
 }
 
 do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
----]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -28625,6 +28757,7 @@ escape 1;
 }
 
 -- SPAWN
+---]===]
 
 Test { [[
 class T with do end
