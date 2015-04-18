@@ -1,7 +1,3 @@
--- TODO:
---  - remove interface binding?
---      - only used for null hack?
-
 function NODE2BLK (n)
     return n.fst and n.fst.blk or
            n.fst and n.fst.var and n.fst.var.blk or
@@ -16,6 +12,7 @@ F = {
             return
         end
         assert(to.lst.var, 'bug found')
+        local cls = CLS()
 
         -- refuse first assignment inside loop with declaration outside it:
         --      var t& v;
@@ -43,24 +40,15 @@ F = {
 
         local constr    = AST.par(me, 'Dcl_constr')
               constr    = constr and (constr.cls.blk_ifc.vars[to.lst.var.id]==to.lst.var) and constr
-        local global    = to.tag=='Field' and to.org.cls.id=='Global' and CLS().id=='Main'
-        local outer     = (not constr) and to.tag=='Field' and to.org.cls~=CLS() and (not global)
+        local global    = to.tag=='Field' and to.org.cls.id=='Global' and cls.id=='Main'
+        local outer     = (not constr) and to.tag=='Field' and to.org.cls~=cls and (not global)
         local interface = AST.par(me, 'BlockI')
         local internal  = not (constr or outer or interface)
 
         -- ALREADY HAS INTERNAL BINDING
 
         if to.lst.var.bind=='internal' then
-            -- Bounded inside the class body, refuse external assignments:
-            --  - constructor
-            --      var T t with
-            --          this.v = ...;   // v was bounded in T
-            --      end;
-            --  - outer body
-            --      var T t;
-            --      t.v = ...;          // v was bounded in T
-            ASR(internal or interface, me,
-                'cannot assign to reference bounded inside the class')
+            assert(cls.id=='Main' or (to.blk ~= cls.blk_ifc))
 
         -- NO INTERNAL BINDING
         --  first assignment
@@ -71,7 +59,7 @@ F = {
             --  do
             --      this.ref = <...>;   // this is not a first assignment
             --  end
-            if (not constr) and to.lst.var.blk==CLS().blk_ifc and (CLS().id~='Main') then
+            if (not constr) and to.lst.var.blk==cls.blk_ifc and (cls.id~='Main') then
                 return
             end
 
@@ -90,6 +78,7 @@ F = {
             -- set source of binding
             elseif internal then
                 to.lst.var.bind = 'internal'
+                assert(cls.id=='Main' or (to.blk ~= cls.blk_ifc))
             elseif constr then
                 if not to.lst.var.bind then
                     to.lst.var.bind = 'constr'
@@ -133,7 +122,6 @@ F = {
 
             -- check scopes
 -- TODO: this code is duplicated with "fin.lua"
-            local cls = CLS()
             local fr_blk = NODE2BLK(fr)
             local to_blk = NODE2BLK(to)
             local org_blk
