@@ -33,8 +33,14 @@ function ATTR (me, to, fr)
     if to.tp.opt then
         local tag
         local id = string.upper(to.tp.id)
-        if fr.fst.tag=='Op2_call' and fr.fst.__fin_opt_tp then
+        if fr.tp.opt then
             LINE(me, V(to)..' = '..V(fr)..';')
+        elseif (fr.fst.tag=='Op2_call' and fr.fst.__fin_opt_tp)
+        or (fr.tag=='Ref' and fr[1].tag=='Spawn')
+        then
+            -- var _t&? = _f(...);
+            -- var T*? = spawn <...>;
+            LINE(me, V(to)..' = '..V(fr)..';')  -- uses pack
         else
             if fr.tag == 'NIL' then
                 tag = 'NIL'

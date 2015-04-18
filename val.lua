@@ -120,9 +120,12 @@ F =
 
                 -- set
                 local set = AST.par(me, 'SetExp')
-                local _, to, fr
+                local _, to, fr, is_to, are_both_opt
                 if set then
                     _, fr, to = unpack(set)
+                    is_to = (to.lst.var == me.var)
+                    is_fr = (fr.lst.var == me.var)
+                    are_both_opt = (to.tp.opt and fr.tp.opt)
                 end
 
                 -- call
@@ -144,9 +147,14 @@ F =
                 local check = AST.par(me,'Op1_?')
 
                 -- SET
-                if to and to.lst.var==me.var then
-                    if fr.fst.tag=='Op2_call' and fr.fst.__fin_opt_tp then
-                        -- xxx.me = f()     // external acquire
+                if are_both_opt then
+                    -- do nothing, both are opt
+                elseif is_to then
+                    if (fr.fst.tag=='Op2_call' and fr.fst.__fin_opt_tp)
+                    or (fr.tag=='Ref' and fr[1].tag=='Spawn')
+                    then
+                        -- var _t&? = _f(...);
+                        -- var T*? = spawn <...>;
                         me.val = '('..op..'('..me.val..'))'
                     else
                         -- xxx.me = v
@@ -278,9 +286,13 @@ F =
 
     -- SetExp is inside and requires .val
     Spawn_pre = function (me)
-        local id,_,_ = unpack(me)
-        me.val = '((CEU_'..id..'*)__ceu_new)'
-                                        -- defined by _Spawn (code.lua)
+        local id,_,_,set = unpack(me)
+        me.val = '((CEU_'..id..'*)__ceu_new)' -- defined by _Spawn (code.lua)
+
+        if set then
+            local to = set[3]
+            me.val = '('..string.upper(TP.toc(to.tp))..'_pack('..me.val..'))'
+        end
     end,
 
     Thread = function (me)
@@ -463,12 +475,12 @@ F =
 
     ['Op1_*'] = function (me)
         local op, e1 = unpack(me)
-        local cls = e1.tp.ptr==1 and ENV.clss[e1.tp.id]
 
-        local is_adt_pool = ENV.adts[e1.tp.id] and
+        local is_adt_pool = ENV.adts[me.tp.id] and
                             e1.var and e1.var.pre=='pool'
 
-        if cls then
+-- TODO: OPT
+        if ENV.clss[me.tp.id] and (e1.tp.opt or e1.tp).ptr==1 then
             me.val = V(e1) -- class accesses should remain normalized to references
         elseif is_adt_pool then
             me.val = '(*('..ceu2c(op)..V(e1)..'))'

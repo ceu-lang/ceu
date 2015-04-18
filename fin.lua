@@ -27,7 +27,8 @@ F = {
     -- NON-POINTER ATTRIBUTIONS (always safe)
     --
 
-        local noptr =  (to.tp.ptr==0 and (not to.tp.arr) and (not REF(to.tp)) and
+-- TODO: OPT
+        local noptr =  (OPT(to.tp,'ptr')==0 and (not to.tp.arr) and (not REF(to.tp)) and
                         ((not to.tp.ext) or TP.get(to.tp.id).plain or to.tp.plain))
                                             -- either native dcl or derived
                                             -- from s.field
@@ -262,7 +263,9 @@ F = {
 
         -- possible dangling pointer "me.var" is accessed across await
 
-        if me.tp.ptr>0 and ENV.clss[me.tp.id] then
+-- TODO: OPT
+        local is_ptr = (me.tp.opt or me.tp).ptr > 0
+        if is_ptr and ENV.clss[(me.tp.opt or me.tp).id] then
             -- pointer to org: check if it is enclosed by "watching me.var"
             -- since before the first await
             for n in AST.iter('ParOr') do

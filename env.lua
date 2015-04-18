@@ -49,8 +49,14 @@ ENV = {
     max_evt = 0,    -- max # of internal events (exts+1 start from it)
 }
 
+-- TODO: fazer tudo ao contrario para "opts":
+-- me.tp fica sendo o tipo que o usuario escreveu
+-- me.tp.opt fica sendo o tipo implícito
+function OPT (tp, fld)
+    return (tp.opt or tp)[fld]
+end
 function REF (tp)
-    return tp.ref or (tp.opt and tp.opt.ref)
+    return OPT(tp, 'ref')   -- TODO: remove all REF()
 end
 
 for k, v in pairs(ENV.c) do
@@ -754,7 +760,8 @@ F = {
         --  to remove the "isAlive" test
         if me.isWatching then
             local tp = me.isWatching.tp
-            if not (tp and tp.ptr==1 and ENV.clss[tp.id]) then
+-- TODO: OPT
+            if not (tp and (tp.opt or tp).ptr==1 and ENV.clss[(tp.opt or tp).id]) then
                 local if_ = me[2][1][2]
                 assert(if_ and if_.tag == 'If', 'bug found')
                 me[2][1][2] = if_[2]    -- changes "if" for the "await" (true branch)
@@ -767,7 +774,8 @@ F = {
         local int = unpack(me)
         if int.tag~='Ext' and me.isWatching then
             -- ORG: "await org" => "await org._ok"
-            if int.tp.ptr==1 and ENV.clss[int.tp.id] then
+-- TODO: OPT
+            if (int.tp.opt or int.tp).ptr==1 and ENV.clss[(int.tp.opt or int.tp).id] then
                 me[1] = AST.node('Op2_.', me.ln, '.',
                             AST.node('Op1_*', me.ln, '*', int),
                             '_ok')
@@ -869,6 +877,11 @@ F = {
         ASR(me.read_only or (not to.lval.read_only), me,
             'read-only variable')
         ASR(not CLS().is_ifc, me, 'invalid attribution')
+
+        -- var T*? = spawn T;
+        if fr.tag=='Ref' and fr[1].tag=='Spawn' then
+            ASR(to.tp.opt, me, 'must assign to option pointer')
+        end
 
         -- lua type
 --[[
@@ -1134,8 +1147,13 @@ F = {
         me.tp  = TP.fromstr'int'
         ASR(TP.max(e1.tp,e2.tp), me,
             'invalid operands to binary "'..op..'"')
-        ASR(not ENV.adts[TP.tostr(e1.tp)], me, 'invalid operation for data')
-        ASR(not ENV.adts[TP.tostr(e2.tp)], me, 'invalid operation for data')
+
+        if not (e1.tp.opt and e1.tp.opt.ptr>0) then
+            ASR(not ENV.adts[TP.tostr(e1.tp)], me, 'invalid operation for data')
+        end
+        if not (e2.tp.opt and e2.tp.opt.ptr>0) then
+            ASR(not ENV.adts[TP.tostr(e2.tp)], me, 'invalid operation for data')
+        end
     end,
     ['Op2_=='] = 'Op2_same',
     ['Op2_!='] = 'Op2_same',
@@ -1155,24 +1173,24 @@ F = {
     ['Op1_*'] = function (me)
         local op, e1 = unpack(me)
         me.lval = e1.lval and e1
-        me.tp   = TP.copy(e1.tp)
 
-        if e1.tp.ptr > 0 then
+        if e1.tp.opt then
+            me.tp = TP.copy(e1.tp.opt)
+        else
+            me.tp = TP.copy(e1.tp)
+        end
+
+        if me.tp.ptr > 0 then
             me.tp.ptr = me.tp.ptr - 1
+            return  -- ok
         end
 
---[[
--- TODO: no use cases for this?
--- otherwise, remove
-        if e1.tp.arr then
-            me.tp.arr = false
+        local is_adt_pool = ENV.adts[me.tp.id] and e1.var and e1.var.pre=='pool'
+        if is_adt_pool then
+            return  -- ok
         end
-]]
 
-        local is_adt_pool = ENV.adts[e1.tp.id] and e1.var and e1.var.pre=='pool'
-
-        ASR(is_adt_pool or e1.tp.ptr>0 or
-            (me.tp.ext and (not me.tp.plain) and (not TP.get(me.tp.id).plain)),
+        ASR((me.tp.ext and (not me.tp.plain) and (not TP.get(me.tp.id).plain)),
             me, 'invalid operand to unary "*"')
     end,
 

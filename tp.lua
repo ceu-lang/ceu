@@ -214,7 +214,7 @@ function TP.contains (tp1, tp2)
     end
 
     -- tp? vs tp
-    if (tp1.opt or tp2.opt) and (tp1.ptr==tp2.ptr) then
+    if tp1.opt or tp2.opt then
         return TP.contains(tp1.opt or tp1, tp2.opt or tp2)
     end
 

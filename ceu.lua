@@ -350,9 +350,8 @@ do
 
     CC = SUB(CC, '=== LABELS_ENUM ===', LBLS.code_enum)
 
-    CC = SUB(CC, '=== ADTS_DEFS ===',  MEM.adts)   -- TODO: move to HH
-    CC = SUB(CC, '=== ADTS_INIT ===',  MEM.adts_init)
-    CC = SUB(CC, '=== CLSS_DEFS ===',  MEM.clss)   -- TODO: move to HH
+    CC = SUB(CC, '=== TOPS_DEFS ===',  MEM.tops)   -- TODO: move to HH
+    CC = SUB(CC, '=== TOPS_INIT ===',  MEM.tops_init)
 
     CC = SUB(CC, '=== CONSTRS_C ===',   CODE.constrs)
     CC = SUB(CC, '=== PRES_C ===',      CODE.pres)

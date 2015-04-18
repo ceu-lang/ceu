@@ -34,13 +34,10 @@
 /* native code from the Main class */
 === NATIVE ===
 
-/* adts definitions */
-=== ADTS_DEFS ===
-
-/* class definitions */
+/* class/adts definitions */
 /* may use types defined above in "NATIVE" */
 /* each class may define new native code that appear after its struct declaration */
-=== CLSS_DEFS ===
+=== TOPS_DEFS ===
 
 /* goto labels */
 enum {
@@ -217,7 +214,7 @@ ceu_app_init (tceu_app* _ceu_app)
     CEU_THREADS_MUTEX_LOCK(&_ceu_app->threads_mutex);
 #endif
 
-    === ADTS_INIT ===
+    === TOPS_INIT ===
 
 #ifdef CEU_OS_APP
 

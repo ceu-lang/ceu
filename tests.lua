@@ -1966,6 +1966,7 @@ do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
+---]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -25373,7 +25374,7 @@ do
     var int v = 10;
     i = v;
 end
-var T* p = spawn T;
+var T*? p = spawn T;
 escape p:i;
 ]],
     ref = 'line 8 : field "i" must be assigned',
@@ -28757,7 +28758,6 @@ escape 1;
 }
 
 -- SPAWN
----]===]
 
 Test { [[
 class T with do end
@@ -28833,23 +28833,64 @@ end
 
 Test { [[
 class T with do end
-var T* ok;
+var T* ok = spawn T;
+escape ok != null;
+]],
+    env = 'line 2 : must assign to option pointer',
+    --run = 1,
+}
+
+Test { [[
+class U with do end
+class T with do end
+var U*? ok = spawn T;
+escape ok != null;
+]],
+    env = 'line 3 : invalid attribution (_Option_1 vs T*)',
+    --run = 1,
+}
+
+Test { [[
+class T with do end
+pool T[0] ts;
+var T*? ok = spawn T in ts;
+if ok? then
+    escape 0;
+else
+    escape 1;
+end
+]],
+    run = 1,
+}
+
+Test { [[
+class T with do end
+var T*? ok = spawn T;
+escape &ok != null;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with do end
+var T*? ok;
 var bool ok_;
 do
     ok = spawn T;
-    ok_ = (ok != null);
+    ok_ = (ok?);
 end
 escape ok_;
 ]],
     run = 1,
 }
+
 Test { [[
 class T with do end
-var T* ok;
+var T*? ok;
 do
     ok = spawn T;
 end
-escape ok!=null;
+escape ok?;
 ]],
     --fin = 'line 6 : pointer access across `await´',
     run = 1,
@@ -28859,14 +28900,14 @@ Test { [[
 class T with do
     await FOREVER;
 end
-var T* ok;
+var T*? ok;
 native _assert();
 do
     loop i in 5 do
         ok = spawn T;
     end
 end
-escape ok!=null;
+escape ok?;
 ]],
     --loop = 1,
     --fin = 'line 11 : pointer access across `await´',
@@ -28876,13 +28917,13 @@ Test { [[
 class T with do
     await FOREVER;
 end
-var T* ok;
+var T*? ok;
 var bool ok_;
 native _assert();
 do
     loop i in 5 do
         ok = spawn T;
-        ok_ = (ok != null);
+        ok_ = (ok?);
     end
 end
 escape ok_;
@@ -28895,15 +28936,15 @@ Test { [[
 class T with do
     await FOREVER;
 end
-var T* ok;
+var T*? ok;
 var bool ok_;
 native _assert();
 do
     loop i in 100 do
         ok = spawn T;
     end
-    var T* ok1 = spawn T;
-    ok_ = (ok1 != null);
+    var T*? ok1 = spawn T;
+    ok_ = (ok1?);
 end
 escape ok_+1;
 ]],
@@ -28914,7 +28955,7 @@ Test { [[
 class T with do
     await FOREVER;
 end
-var T* ok;
+var T*? ok;
 native _assert();
 do
     loop i in 100 do
@@ -28922,7 +28963,7 @@ do
     end
     ok = spawn T;
 end
-escape (ok!=null)+1;
+escape (ok?)+1;
 ]],
     --loop = 1,
     --fin = 'line 10 : pointer access across `await´',
@@ -28935,7 +28976,7 @@ class T with
 do
     this.a = 1;
 end
-var T* t = spawn T;
+var T*? t = spawn T;
 escape t:a;
 ]],
     run = 1,
@@ -28948,7 +28989,7 @@ class T with
 do
     this.a = 1;
 end
-var T* t = spawn T;
+var T*? t = spawn T;
 await OS_START;
 escape t:a;
 ]],
@@ -28958,7 +28999,7 @@ escape t:a;
 Test { [[
 class T with do end
 do
-    var T* t;
+    var T*? t;
     t = spawn T;
 end
 escape 10;
@@ -28968,7 +29009,7 @@ escape 10;
 
 Test { [[
 class T with do end
-var T* t;
+var T*? t;
 t = spawn T;
 escape 10;
 ]],
@@ -28986,7 +29027,7 @@ do
         await 10s;
     end
 end
-var T* t;
+var T*? t;
     t = spawn T;
     t = spawn T;
     t = spawn T;
@@ -29006,7 +29047,7 @@ do
         await 10s;
     end
 end
-var T* t;
+var T*? t;
 do
     t = spawn T;
     t = spawn T;
@@ -29031,7 +29072,7 @@ _f(spawn T);
 
 Test { [[
 class T with do end
-var T* a;
+var T*? a;
 a = spawn U;
 ]],
     env = 'line 3 : undeclared type `U´',
@@ -29040,7 +29081,7 @@ a = spawn U;
 Test { [[
 class T with do end
 do
-    var T* t;
+    var T*? t;
     t = spawn T;
 end
 escape 10;
@@ -29096,9 +29137,9 @@ class T with
 do
 end
 pool T[1] t;
-var T* ok1 = spawn T in t with end;
-var T* ok2 = spawn T in t;
-escape (ok1!=null) + (ok2!=null);
+var T*? ok1 = spawn T in t with end;
+var T*? ok2 = spawn T in t;
+escape (ok1?) + (ok2?);
 ]],
     run = 1,
 }
@@ -29123,7 +29164,7 @@ class T with
 do
 end
 pool T[1] ts;
-var T*  ok1 = spawn T in ts with
+var T*?  ok1 = spawn T in ts with
                 this.v = 10;
               end;
 var int ok2 = 0;// spawn T in ts;
@@ -29131,7 +29172,7 @@ var int ret = 0;
 loop (T*)t in ts do
     ret = ret + t:v;
 end
-escape (ok1!=null) + ok2 + ret;
+escape (ok1?) + ok2 + ret;
 ]],
     parser = 'line 11 : before `loop´ : expected statement (usually a missing `var´ or C prefix `_´)',
     --fin = 'line 14 : pointer access across `await´',
@@ -29143,7 +29184,7 @@ class T with
 do
 end
 pool T[1] ts;
-var T*  ok1 = spawn T in ts with
+var T*?  ok1 = spawn T in ts with
                 this.v = 10;
               end;
 var int ok2 = 0;// spawn T in ts;
@@ -29151,7 +29192,7 @@ var int ret = 0;
 loop t in ts do
     ret = ret + t:v;
 end
-escape (ok1!=null) + ok2 + ret;
+escape (ok1?) + ok2 + ret;
 ]],
     --fin = 'line 14 : pointer access across `await´',
     run = 1,
@@ -29275,8 +29316,8 @@ class T with
 do
     this.a = 1;
 end
-var T* t = spawn T in ts;
-escape t == null;
+var T*? t = spawn T in ts;
+escape not t?;
 ]],
     run = 1,
 }
@@ -29288,9 +29329,9 @@ class T with
 do
     this.a = 1;
 end
-var T* a = spawn T in ts;
-var T* b = spawn T in ts;
-escape a!=null and b==null;
+var T*? a = spawn T in ts;
+var T*? b = spawn T in ts;
+escape a? and (not b?);
 ]],
     run = 1,
 }
@@ -29303,8 +29344,8 @@ do
 end
 do
 pool T[0] ts;
-var T* t = spawn T in ts;
-escape t == null;
+var T*? t = spawn T in ts;
+escape not t?;
 end
 ]],
     run = 1,
@@ -29318,9 +29359,9 @@ do
 end
 pool T[1] as;
 pool T[0] bs;
-var T* a = spawn T in as;
-var T* b = spawn T in bs;
-escape a!=null and b==null;
+var T*? a = spawn T in as;
+var T*? b = spawn T in bs;
+escape a? and (not b?);
 ]],
     run = 1,
 }
@@ -29332,10 +29373,10 @@ class T with
 do
     this.a = 1;
 end
-var T* a = spawn T in ts;
+var T*? a = spawn T in ts;
 //free(a);
-var T* b = spawn T in ts;   // fails (a is freed on end)
-escape a!=null and b==null;
+var T*? b = spawn T in ts;   // fails (a is freed on end)
+escape a? and (not b?);
 ]],
     run = 1,
 }
@@ -29349,13 +29390,54 @@ do
 end
 var T* a;
 do
-    var T* aa = spawn T in ts;
+    var T*? aa = spawn T in ts;
         a = aa;
 end
-var T* b = spawn T in ts;   // fails (a is free on end)
+var T*? b = spawn T in ts;   // fails (a is free on end)
 //native @nohold _fprintf(), _stderr;
         //_fprintf(_stderr, "%p %p\n",a, b);
-escape a!=null and b==null and a!=b;
+escape a!=null and (not b?) and a!=b;
+]],
+    --fin = 'line 15 : pointer access across `await´',
+    asr = ':15] runtime error: invalid tag',
+    --run = 1,
+}
+Test { [[
+pool T[2] ts;
+class T with
+    var int a;
+do
+    this.a = 1;
+end
+var T* a;
+do
+    var T*? aa = spawn T in ts;
+        a = aa;
+end
+var T*? b = spawn T in ts;   // fails (a is free on end)
+//native @nohold _fprintf(), _stderr;
+        //_fprintf(_stderr, "%p %p\n",a, b);
+escape a!=null and (b?) and a!=b;
+]],
+    --fin = 'line 15 : pointer access across `await´',
+    run = 1,
+}
+Test { [[
+pool T[1] ts;
+class T with
+    var int a;
+do
+    this.a = 1;
+end
+var T*? a;
+do
+    var T*? aa = spawn T in ts;
+        a = aa;
+end
+var T*? b = spawn T in ts;   // fails (a is free on end)
+//native @nohold _fprintf(), _stderr;
+        //_fprintf(_stderr, "%p %p\n",a, b);
+escape a? and (not b?);// and a!=b;
 ]],
     --fin = 'line 15 : pointer access across `await´',
     run = 1,
@@ -29369,11 +29451,11 @@ do
 end
 var T* a;
 do
-    var T* aa = spawn T in ts;
+    var T*? aa = spawn T in ts;
         a = aa;
 end
-var T* b = spawn T in ts;   // fails (a is free on end)
-escape b==null;
+var T*? b = spawn T in ts;   // fails (a is free on end)
+escape (not b?);
 ]],
     run = 1,
 }
@@ -29388,16 +29470,41 @@ end
 var T* a, b;
 do
     do
-        var T* aa = spawn T in ts;
+        var T*? aa = spawn T in ts;
             a = aa;
     end
-    var T* bb = spawn T in ts;  // fails
+    var T*? bb = spawn T in ts;  // fails
         b = bb;
 end
-var T* c = spawn T in ts;       // fails
+var T*? c = spawn T in ts;       // fails
 //native @nohold _fprintf(), _stderr;
         //_fprintf(_stderr, "%p %p\n",a, b);
-escape a!=null and b==null and c==null and a!=b and b==c;
+escape (a!=null) and (b==null) and (not c?);// and a!=b and b==c;
+]],
+    asr = ':14] runtime error: invalid tag',
+    --fin = 'line 19 : pointer access across `await´',
+    --run = 1,
+}
+Test { [[
+pool T[1] ts;
+class T with
+    var int a;
+do
+    this.a = 1;
+end
+var T*? a, b;
+do
+    do
+        var T*? aa = spawn T in ts;
+            a = aa;
+    end
+    var T*? bb = spawn T in ts;  // fails
+        b = bb;
+end
+var T*? c = spawn T in ts;       // fails
+//native @nohold _fprintf(), _stderr;
+        //_fprintf(_stderr, "%p %p\n",a, b);
+escape a? and (not b?) and (not c?);// and a!=b and b==c;
 ]],
     --fin = 'line 19 : pointer access across `await´',
     run = 1,
@@ -29409,21 +29516,21 @@ class T with
 do
     this.a = 1;
 end
-var T* a, b;
+var T*? a, b;
 var bool b_;
 do
     do
-        var T* aa = spawn T in ts;
+        var T*? aa = spawn T in ts;
             a = aa;
     end
-    var T* bb = spawn T in ts;  // fails
+    var T*? bb = spawn T in ts;  // fails
         b = bb;
-    b_ = (b != null);
+    b_ = (b?);
 end
-var T* c = spawn T in ts;       // fails
+var T*? c = spawn T in ts;       // fails
 //native @nohold _fprintf(), _stderr;
         //_fprintf(_stderr, "%p %p\n",a, b);
-escape b_==false and c==null;
+escape b_==false and (not c?);
 ]],
     run = 1,
 }
@@ -29435,13 +29542,13 @@ class T with
 do
     this.a = 1;
 end
-var T* a;
+var T*? a;
 do
-    var T* aa = spawn T in ts;
+    var T*? aa = spawn T in ts;
         a = aa;
 end
-var T* b = spawn T in ts;   // fails
-escape a!=null and b==null;
+var T*? b = spawn T in ts;   // fails
+escape a? and (not b?);
 ]],
     --fin = 'line 13 : pointer access across `await´',
     run = 1,
@@ -29455,11 +29562,11 @@ do
 end
 var T* a;
 do
-    var T* aa = spawn T in ts;
+    var T*? aa = spawn T in ts;
         a = aa;
 end
-var T* b = spawn T in ts;   // fails
-escape b==null;
+var T*? b = spawn T in ts;   // fails
+escape (not b?);
 ]],
     run = 1,
 }
@@ -29523,8 +29630,8 @@ end
 do
     pool T[1] ts;
     loop i in 1000 do
-        var T* ok = spawn T in ts;  // 999 fails
-        if ok==null then
+        var T*? ok = spawn T in ts;  // 999 fails
+        if (not ok?) then
             escape 0;
         end
     end
@@ -29571,8 +29678,8 @@ end
 pool T[1] ts;
 do
     loop i in 1000 do
-        var T* ok = spawn T in ts;
-        if ok==null then
+        var T*? ok = spawn T in ts;
+        if not ok? then
             escape 10;
         end
     end
@@ -29647,7 +29754,7 @@ do
     b = a * 2;
 end
 
-var T* t =
+var T*? t =
     spawn T with
         this.a = 10;
     end;
@@ -29672,8 +29779,8 @@ do
     await OS_START;
     _V = _V + 1;
 end
-var T* t1 = spawn T;
-var T* t2 = spawn T;
+var T*? t1 = spawn T;
+var T*? t2 = spawn T;
 await OS_START;
 escape _V;
 ]],
@@ -29694,7 +29801,7 @@ escape 10;
 
 Test { [[
 class T with do end
-var T* a = spawn T;
+var T*? a = spawn T;
 //free a;
 escape 10;
 ]],
@@ -29703,9 +29810,9 @@ escape 10;
 
 Test { [[
 class T with do end
-var T* a = spawn T;
+var T*? a = spawn T;
 //free a;
-var T* b = spawn T;
+var T*? b = spawn T;
 //free b;
 escape 10;
 ]],
@@ -29714,8 +29821,8 @@ escape 10;
 
 Test { [[
 class T with do end
-var T* a = spawn T;
-var T* b = spawn T;
+var T*? a = spawn T;
+var T*? b = spawn T;
 //free a;
 //free b;
 escape 10;
@@ -29725,8 +29832,8 @@ escape 10;
 
 Test { [[
 class T with do end
-var T* a = spawn T;
-var T* b = spawn T;
+var T*? a = spawn T;
+var T*? b = spawn T;
 //free b;
 //free a;
 escape 10;
@@ -29746,7 +29853,7 @@ do
     end
 end
 
-var T* a = spawn T;
+var T*? a = spawn T;
 //free a;
 escape _V;
 ]],
@@ -29765,8 +29872,8 @@ do
     end
 end
 
-var T* a = spawn T;
-var T* b = spawn T;
+var T*? a = spawn T;
+var T*? b = spawn T;
 //free b;
 //free a;
 escape _V;
@@ -29896,7 +30003,7 @@ class Body with
     var   int&    sum;
     event int     ok;
 do
-    var X* nested =
+    var X*? nested =
         spawn X in bodies with
         end;
     sum = sum + 1;
@@ -29921,12 +30028,12 @@ class Body with
     var   int&    sum;
     event int     ok;
 do
-    var Body* nested =
+    var Body*? nested =
         spawn Body in bodies with
             this.bodies = bodies;
             this.sum    = sum;
         end;
-    if nested then
+    if nested? then
         watching nested do
             await nested:ok;
         end
@@ -29962,31 +30069,31 @@ Test { [[
 class T with do
     await FOREVER;
 end
-var T* ok;
+var T*? ok;
 native do ##include <assert.h> end
 native _assert();
 do
     loop i in 100 do
         ok = spawn T;
     end
-    _assert(ok != null);
+    _assert(ok?);
     ok = spawn T;
     ok = spawn T;
-    _assert(ok == null);
+    _assert(not ok?);
 end
 do
     loop i in 100 do
         ok = spawn T;
     end
-    _assert(ok == null);
+    _assert(not ok?);
 end
 do
     loop i in 101 do
         ok = spawn T;
     end
-    _assert(ok == null);
+    _assert(not ok?);
 end
-escape ok==null;
+escape (not ok?);
 ]],
     --loop = 1,
     --fin = 'line 11 : pointer access across `await´',
@@ -30001,27 +30108,27 @@ native do ##include <assert.h> end
 native _assert();
 do
     loop i in 100 do
-        var T* ok;
+        var T*? ok;
         ok = spawn T;
-        _assert(ok != null);
+        _assert(ok?);
     end
-    var T* ok1 = spawn T;
-    _assert(ok1 == null);
-    var T* ok2 = spawn T;
-    _assert(ok2 == null);
+    var T*? ok1 = spawn T;
+    _assert(not ok1?);
+    var T*? ok2 = spawn T;
+    _assert(not ok2?);
 end
 do
     loop i in 100 do
-        var T* ok;
+        var T*? ok;
         ok = spawn T;
-        _assert(ok != null);
+        _assert(ok?);
     end
 end
 do
     loop i in 101 do
-        var T* ok;
+        var T*? ok;
         ok = spawn T;
-        _assert(i<100 or ok==null);
+        _assert(i<100 or (not ok?));
     end
 end
 escape 1;
@@ -30040,32 +30147,32 @@ native _assert();
 do
     pool T[] ts;
     loop i in 100 do
-        var T* ok;
+        var T*? ok;
         ok = spawn T in ts;
-        _assert(ok != null);
+        _assert(not ok?);
     end
-    var T* ok1 = spawn T;
-    _assert(ok1 == null);
-    var T* ok2 = spawn T;
-    _assert(ok2 == null);
+    var T*? ok1 = spawn T;
+    _assert(not ok1?);
+    var T*? ok2 = spawn T;
+    _assert(not ok2?);
 end
 do
     pool T[] ts;
     loop i in 100 do
-        var T* ok;
+        var T*? ok;
         ok = spawn T in ts;
-        _assert(ok != null);
+        _assert(ok?);
     end
 end
 do
     pool T[] ts;
     loop i in 101 do
-        var T* ok;
+        var T*? ok;
         ok = spawn T in ts;
         if i < 100 then
-            _assert(ok!=null);
+            _assert(ok?);
         else
-            _assert(ok==null);
+            _assert(not ok?);
         end
     end
 end
@@ -30094,11 +30201,11 @@ var int v = 0;
 do
     pool T[] ts;
     loop i in 200 do
-        var T* ok =
+        var T*? ok =
             spawn T in ts with
                 this.inc = 1;
             end;
-        if ok==null then
+        if (not ok?) then
             v = v + 1;
         end
     end
@@ -30206,7 +30313,7 @@ escape 1;
 
 Test { [[
 class T with do end;
-var T* a = spawn T;
+var T*? a = spawn T;
 var T* b;
 b = a;
 escape 10;
@@ -30222,7 +30329,7 @@ end
 
 var T* a;
 do
-    var T* b = spawn T;
+    var T*? b = spawn T;
     b:v = 10;
     a = b;
 end
@@ -30240,7 +30347,7 @@ end
 
 var T* a;
 do
-    var T* b = spawn T;
+    var T*? b = spawn T;
     b:v = 10;
     a = b;
     escape a:v;
@@ -30258,7 +30365,7 @@ end
 
 var T* a;
 do
-    var T* b = spawn T;
+    var T*? b = spawn T;
     b:v = 10;
     a = b;
 end
@@ -30277,7 +30384,7 @@ end
 var T* a;
 var T aa;
 do
-    var T* b = spawn T;
+    var T*? b = spawn T;
     b:v = 10;
     finalize
         a = b;
@@ -30312,7 +30419,7 @@ var T* a;
 var T aa;
 do
     pool T[] ts;
-    var T* b = spawn T in ts;
+    var T*? b = spawn T in ts;
     b:v = 10;
         a = b;
 end
@@ -30340,7 +30447,7 @@ var T* a;
 var T aa;
 do
     pool T[] ts;
-    var T* b = spawn T in ts;
+    var T*? b = spawn T in ts;
     b:v = 10;
         a = b;
     await OS_START;
@@ -30367,7 +30474,7 @@ end
 var T* a;
 do
     pool T[] ts;
-    var T* b = spawn T in ts;
+    var T*? b = spawn T in ts;
     b:v = 10;
         a = b;
 end
@@ -30393,7 +30500,7 @@ end
 var T* a;
 do
     pool T[] ts;
-    var T* b = spawn T in ts;
+    var T*? b = spawn T in ts;
     b:v = 10;
         a = b;
     await OS_START;
@@ -30451,7 +30558,7 @@ escape 10;
 
 Test { [[
 class T with do end
-var T* t;
+var T*? t;
 do
     t = spawn T;
 end
@@ -30463,7 +30570,7 @@ escape 10;
 
 Test { [[
 class T with do end
-var T* a = spawn T;
+var T*? a = spawn T;
 escape 10;
 ]],
     run = 10,
@@ -30472,7 +30579,7 @@ escape 10;
 Test { [[
 class T with do end
 class U with do end
-var T* a;
+var T*? a;
 a = spawn U;
 ]],
     env = 'line 4 : invalid attribution',
@@ -30497,7 +30604,7 @@ end
 var int ret = 0;
 
 do
-    var T* o;
+    var T*? o;
     o = spawn T;
     await OS_START;
     ret = o:a;
@@ -30530,7 +30637,7 @@ var int ret = 0;
 
 par/or do
     pool T[] ts;
-    var T* o;
+    var T*? o;
     o = spawn T in ts;
     //await OS_START;
     ret = o:a;
@@ -30563,7 +30670,7 @@ end
 var int ret = 0;
 
 par/or do
-    var T* o;
+    var T*? o;
     o = spawn T;
     //await OS_START;
     ret = o:a;
@@ -30581,7 +30688,7 @@ class V with
 do
 end
 
-var V* v;
+var V*? v;
 v = spawn V;
 await 1s;
 
@@ -30599,7 +30706,7 @@ end
 class U with
     var V* v;
 do
-    var V* vv = spawn V;
+    var V*? vv = spawn V;
 end
 
 class T with
@@ -30622,7 +30729,7 @@ end
 class U with
     var V* v;
 do
-    var V* vv = spawn V;
+    var V*? vv = spawn V;
 end
 
 class T with
@@ -30659,7 +30766,7 @@ end
 class U with
     var V* v;
 do
-    var V* vv = spawn V;
+    var V*? vv = spawn V;
     await FOREVER;
 end
 
@@ -30667,7 +30774,7 @@ class T with
     var U u;
 do
     //u.v = spawn V;
-    var V* v = spawn V;
+    var V*? v = spawn V;
     await FOREVER;
 end
 
@@ -30697,7 +30804,7 @@ end
 class U with
     var V* v;
 do
-    var V* vv = spawn V;
+    var V*? vv = spawn V;
     await FOREVER;
 end
 
@@ -30707,7 +30814,7 @@ do
     var U uu;
     u = &uu;
     //u.v = spawn V;
-    var V* v = spawn V;
+    var V*? v = spawn V;
     await FOREVER;
 end
 
@@ -30735,7 +30842,7 @@ end
 class U with
     var V v;
 do
-    var V* vv = spawn V;
+    var V*? vv = spawn V;
     await FOREVER;
 end
 
@@ -30773,7 +30880,7 @@ class U with
 do
     var V vv1;
     v = &vv1;
-    var V* vv = spawn V;
+    var V*? vv = spawn V;
     await FOREVER;
 end
 
@@ -30816,7 +30923,7 @@ end
 class U with
     var V* v;
 do
-    var V* vv = spawn V;
+    var V*? vv = spawn V;
     await FOREVER;
 end
 
@@ -30824,7 +30931,7 @@ class T with
     var U u;
 do
     //u.v = spawn V;
-    var V* v = spawn V;
+    var V*? v = spawn V;
     await FOREVER;
 end
 
@@ -30858,7 +30965,7 @@ end
 class U with
     var V* v;
 do
-    var V* vv = spawn V;
+    var V*? vv = spawn V;
     await FOREVER;
 end
 
@@ -30868,7 +30975,7 @@ do
     var U uu;
     u = &uu;
     //u.v = spawn V;
-    var V* v = spawn V;
+    var V*? v = spawn V;
     await FOREVER;
 end
 
@@ -30887,7 +30994,7 @@ do
 end
 class U with
 do
-    var V* vv = spawn V;
+    var V*? vv = spawn V;
 end
 var U u;
 escape 2;
@@ -30904,7 +31011,7 @@ end
 
 class U with
 do
-    var V* vv = spawn V;
+    var V*? vv = spawn V;
 end
 
 
@@ -30939,7 +31046,7 @@ end
 class U with
     var V* v;
 do
-    var V* vv = spawn V;
+    var V*? vv = spawn V;
     await FOREVER;
 end
 
@@ -30947,7 +31054,7 @@ class T with
     var U u;
 do
     //u.v = spawn V;
-    var V* v = spawn V;
+    var V*? v = spawn V;
     await FOREVER;
 end
 
@@ -30982,7 +31089,7 @@ end
 class U with
     var V* v;
 do
-    var V* vv = spawn V;
+    var V*? vv = spawn V;
     await FOREVER;
 end
 
@@ -30992,7 +31099,7 @@ do
     var U uu;
     u = &uu;
     //u.v = spawn V;
-    var V* v = spawn V;
+    var V*? v = spawn V;
     await FOREVER;
 end
 
@@ -31028,7 +31135,7 @@ end
 class U with
     var V* x;
 do
-    var V* vv = spawn V;
+    var V*? vv = spawn V;
     await FOREVER;
 end
 
@@ -31036,7 +31143,7 @@ class T with
     var U u;
 do
     //u.v = spawn V;
-    var V* v = spawn V;
+    var V*? v = spawn V;
     await FOREVER;
 end
 
@@ -31073,7 +31180,7 @@ end
 class U with
     var V* v;
 do
-    var V* vv = spawn V;
+    var V*? vv = spawn V;
     await FOREVER;
 end
 
@@ -31083,7 +31190,7 @@ do
     var U uu;
     u = &uu;
     //u.v = spawn V;
-    var V* v = spawn V;
+    var V*? v = spawn V;
     await FOREVER;
 end
 
@@ -31120,7 +31227,7 @@ end
 class U with
     var V* v;
 do
-    var V* vv = spawn V;
+    var V*? vv = spawn V;
     await FOREVER;
 end
 
@@ -31128,7 +31235,7 @@ class T with
     var U u;
 do
     //u.v = spawn V;
-    var V* v = spawn V;
+    var V*? v = spawn V;
     await FOREVER;
 end
 
@@ -31168,7 +31275,7 @@ end
 class U with
     var V* v;
 do
-    var V* vv = spawn V;
+    var V*? vv = spawn V;
     await FOREVER;
 end
 
@@ -31176,7 +31283,7 @@ class T with
     var U u;
 do
     //u.v = spawn V;
-    var V* v = spawn V;
+    var V*? v = spawn V;
     await FOREVER;
 end
 
@@ -31217,7 +31324,7 @@ end
 class U with
     var V* v;
 do
-    var V* vv = spawn V;
+    var V*? vv = spawn V;
     await FOREVER;
 end
 
@@ -31227,7 +31334,7 @@ do
     var U uu;
     u = &uu;
     //u.v = spawn V;
-    var V* v = spawn V;
+    var V*? v = spawn V;
     await FOREVER;
 end
 
@@ -31253,7 +31360,7 @@ do
 end
 
 class T with
-    var V* v;
+    var V*? v;
 do
     await 1s;
     v = spawn V;
@@ -31276,7 +31383,7 @@ end
 
 input void OS_START;
 class U with
-    var V* v;
+    var V*? v;
 do
 end
 
@@ -31306,7 +31413,7 @@ end
 
 input void A, OS_START;
 class U with
-    var V* v;
+    var V*? v;
 do
     await A;
 end
@@ -31344,7 +31451,7 @@ do
 end
 
 class U with
-    var V* v;
+    var V*? v;
 do
 end
 
@@ -31388,7 +31495,7 @@ do
 end
 
 do
-    var T* a;
+    var T*? a;
     a = spawn T;
     //free a;
     _assert(_V == 10);
@@ -31419,7 +31526,7 @@ end
 
 do
     pool T[] ts;
-    var T* a;
+    var T*? a;
     a = spawn T in ts;
     //free a;
     _assert(_V == 10);
@@ -31450,9 +31557,9 @@ do
 end
 
 do
-    var T* ptr = null;
+    var T*? ptr;
     loop i in 100 do
-        if ptr != null then
+        if ptr? then
             //free ptr;
         end
         ptr = spawn T;
@@ -31488,9 +31595,9 @@ end
 
 do
     pool T[] ts;
-    var T* ptr = null;
+    var T*? ptr;
     loop i in 100 do
-        if ptr != null then
+        if ptr? then
             //free ptr;
         end
         ptr = spawn T in ts;
@@ -31525,9 +31632,9 @@ do
 end
 
 do
-    var T* ptr = null;
+    var T*? ptr;
     loop i in 100 do
-        if ptr != null then
+        if ptr? then
             //free ptr;
         end
         ptr = spawn T;
@@ -31738,7 +31845,7 @@ do
 end
 do
     pool T[] ts;
-    var T* p;
+    var T*? p;
     p = spawn T in ts;
     p:v = 1;
     p = spawn T in ts;
@@ -31759,7 +31866,7 @@ Test { [[
 class T with
 do
 end
-var T* t;
+var T*? t;
 t = spawn T;
 escape t.v;
 ]],
@@ -31773,7 +31880,7 @@ do
 end
 
 var T*[10] ts;
-var T* t;
+var T*? t;
 t = spawn T;
 t:v = 10;
 ts[0] = t;
@@ -31824,7 +31931,7 @@ do
 end
 do
     var int* p = null;
-    var T* ui = spawn T with
+    var T*? ui = spawn T with
         this.ptr = p;   // ptr > p
     end;
 end
@@ -31843,7 +31950,7 @@ end
 do
     pool T[] ts;
     var void* p = null;
-    var T* ui;
+    var T*? ui;
     ui = spawn T in ts with
         this.ptr = p;
     end;
@@ -31867,7 +31974,7 @@ end
 
 do
     var _s* p = null;
-    var T* ui = spawn T with
+    var T*? ui = spawn T with
         this.ptr = p;
     end;
 end
@@ -31890,7 +31997,7 @@ class T with
 do
 end
 
-var T* ui;
+var T*? ui;
 do
     var _s* p = null;
     do
@@ -32094,7 +32201,7 @@ native do
     int V=0;
 end
 
-var T* ui;
+var T*? ui;
 do
     var _s* p = null;
     loop i in 10 do
@@ -32129,7 +32236,7 @@ native do
     int V=0;
 end
 
-var T* ui;
+var T*? ui;
 do
     var _s* p = null;
     loop i in 10 do
@@ -32173,7 +32280,7 @@ end
 do
     loop i in 10 do
         var _s* p = null;
-        var T* ui = spawn T with
+        var T*? ui = spawn T with
             finalize
                 this.ptr = p;   // p == ptr
             with
@@ -32248,7 +32355,7 @@ class Unit with
     event int move;
 do
 end
-var Unit* u;
+var Unit*? u;
 do
     pool Unit[] units;
     u = spawn Unit in units;  // deveria falhar aqui!
@@ -32703,7 +32810,7 @@ class T with
     var int v;
 do
 end
-var T* t = spawn T with
+var T*? t = spawn T with
              this.v = 10;
            end;
 //free(t);
@@ -32744,6 +32851,37 @@ escape ret;
 
 -- INTERFACES / IFACES / IFCES
 
+Test { [[
+interface A with
+    var int a1,a2;
+end
+interface B with
+    var int b1,b2;
+end
+interface C with
+    var int c1,c2;
+end
+interface I with
+    interface A;
+    interface B,C;
+end
+class T with
+    interface I;
+do
+end
+var T t with
+    this.a1 = 1;
+    this.a2 = 2;
+    this.b1 = 3;
+    this.b2 = 4;
+    this.c1 = 5;
+    this.c2 = 6;
+end;
+var I*? i = &t;
+escape i:a1+i:a2+i:b1+i:b2+i:c1+i:c2;
+]],
+    run = 21,
+}
 Test { [[
 interface A with
     var int a1,a2;
@@ -33254,7 +33392,7 @@ Test { [[
 interface I with
     event int a;
 end
-var I* t;
+var I*? t;
 t = spawn I;
 escape 10;
 ]],
@@ -37174,7 +37312,7 @@ class T with
 do
 end
 
-var I* p = spawn T with
+var I*? p = spawn T with
     this.v = 10;
 end;
 escape p:v;
@@ -37199,7 +37337,7 @@ pool T[10000] ts;
 var T* t0 = null;
 var T* tF = null;
 loop i in 10000 do
-    var T* t = spawn T in ts with
+    var T*? t = spawn T in ts with
         this.id = 10000-i;
     end;
     if t0 == null then
@@ -37237,7 +37375,7 @@ class T with
 do
 end
 
-var I* p = spawn T with
+var I*? p = spawn T with
     p:v = 10;
 end;
 async do end;
@@ -37252,7 +37390,7 @@ class Unit with
     event int move;
 do
 end
-var Unit* u;
+var Unit*? u;
 do
     pool Unit[] units;
     u = spawn Unit in units;
@@ -37269,7 +37407,7 @@ class Unit with
     event int move;
 do
 end
-var Unit* u;
+var Unit*? u;
 do
     pool Unit[] units;
     u = spawn Unit in units;
@@ -37598,7 +37736,7 @@ var int ret = 0;
 par/and do
     async do end;
     pool T[] ts;
-    var T* t = spawn T in ts with
+    var T*? t = spawn T in ts with
         this.v = 10;
     end;
     emit e => t;
@@ -37633,7 +37771,7 @@ var int ret = 0;
 par/and do
     async do end;
     pool T[] ts;
-    var T* t = spawn T in ts with
+    var T*? t = spawn T in ts with
         this.v = 10;
     end;
     emit e => t;
@@ -37668,7 +37806,7 @@ var int ret = 0;
 par/and do
     async do end;
     pool T[] ts;
-    var T* t = spawn T in ts with
+    var T*? t = spawn T in ts with
         this.v = 10;
     end;
     emit e => t;
@@ -37704,7 +37842,7 @@ var int ret = 0;
 par/and do
     async do end;
     pool T[] ts;
-    var T* t = spawn T in ts with
+    var T*? t = spawn T in ts with
         this.v = 10;
     end;
     emit e => t;
@@ -37740,7 +37878,7 @@ var int ret = 0;
 par/and do
     async do end;
     pool T[] ts;
-    var T* t = spawn T in ts with
+    var T*? t = spawn T in ts with
         this.v = 10;
     end;
     emit e => t;
@@ -37930,7 +38068,7 @@ class Unit with
     event int move;
 do
 end
-var Unit* u;
+var Unit*? u;
 pool Unit[] units;
 u = spawn Unit in units;
 await 2s;
@@ -37946,7 +38084,7 @@ class Unit with
     event int move;
 do
 end
-var Unit* u;
+var Unit*? u;
 pool Unit[] units;
 u = spawn Unit in units;
 watching u do
@@ -38120,7 +38258,7 @@ class T with
 do
 end
 pool T[1] ts;
-var T*  ok1 = spawn T in ts with
+var T*?  ok1 = spawn T in ts with
                 this.v = 10;
               end;
 watching ok1 do
@@ -38129,7 +38267,7 @@ watching ok1 do
     loop t in ts do
         ret = ret + t:v;
     end
-    escape (ok1!=null) + ok2 + ret;
+    escape (ok1?) + ok2 + ret;
 end
 escape 1;
 ]],
@@ -38146,7 +38284,7 @@ do
     async do end;
 end
 pool T[1] ts;
-var T* ok1 = spawn T in ts with
+var T*? ok1 = spawn T in ts with
                 this.v = 10;
               end;
 watching ok1 do
@@ -38155,8 +38293,8 @@ watching ok1 do
     loop t in ts do
         ret = ret + t:v;
     end
-    _V = (ok1!=null) + ok2 + ret;
-    escape (ok1!=null) + ok2 + ret;
+    _V = (ok1?) + ok2 + ret;
+    escape (ok1?) + ok2 + ret;
 end
 escape _V + 1;
 ]],
@@ -38193,7 +38331,7 @@ end
 
 input void OS_START;
 class U with
-    var V* v;
+    var V*? v;
     event void x;
 do
     loop do
@@ -38677,7 +38815,7 @@ do
 end
 
 var int ret = 0;
-var T* t = spawn T;
+var T*? t = spawn T;
 watching t do
     finalize with
         ret = t:v;
@@ -38697,7 +38835,7 @@ do
     this.v = 10;
 end
 
-var T* t = spawn T;
+var T*? t = spawn T;
 watching t do
     await FOREVER;
 end
@@ -38714,7 +38852,7 @@ do
     this.v = 10;
 end
 
-var T* t = spawn T;
+var T*? t = spawn T;
 watching t do
     await FOREVER;
 end
@@ -38737,7 +38875,7 @@ end
 pool T[9999] ts;
 var T* t0 = null;
 loop i in 9999 do
-    var T* t = spawn T with
+    var T*? t = spawn T with
         this.id = 9999-i;
     end;
     if t0 == null then

@@ -1,7 +1,6 @@
 MEM = {
-    adts = '',
-    adts_init = '',
-    clss = '',
+    tops = '',
+    tops_init = '',
     native_pre = '',
 }
 
@@ -141,10 +140,16 @@ void CEU_]]..id..'_free_static (CEU_'..id..[[* me, void* pool) {
 ]]
 
         local pack = ''
-        if me.tp.opt and REF(me.tp) then
+-- TODO: OPT
+        if me.tp.opt and (me.tp.opt.ptr>0 or REF(me.tp)) then
             local ID = string.upper(me.tp.id)
             local tp = 'CEU_'..me.tp.id
             local some = TP.toc(me[4][2][1][1][2])
+-- TODO: OPT
+            local cls = ENV.clss[string.sub(some,5,-2)]
+            if cls and (not cls.is_ifc) then
+                some = 'struct '..some      -- due to recursive spawn
+            end
             pack = [[
 ]]..tp..[[ CEU_]]..ID..[[_pack (]]..some..[[ ptr) {
     ]]..tp..[[ ret;
@@ -170,16 +175,16 @@ void CEU_]]..id..'_free_static (CEU_'..id..[[* me, void* pool) {
         me.auxs[#me.auxs+1] = pack
         me.auxs   = table.concat(me.auxs,'\n')..'\n'
         me.struct = me.struct..' CEU_'..id..';'
-        MEM.adts = MEM.adts..'\n'..(me.enum or '')..'\n'..
+        MEM.tops = MEM.tops..'\n'..(me.enum or '')..'\n'..
                                    me.struct..'\n'..
                                    me.auxs..'\n'
 
         -- declare a static BASE instance
         if me.n_recs>0 then
-            MEM.adts = MEM.adts..[[
+            MEM.tops = MEM.tops..[[
 static CEU_]]..id..[[ CEU_]]..string.upper(id)..[[_BASE;
 ]]
-            MEM.adts_init = MEM.adts_init .. [[
+            MEM.tops_init = MEM.tops_init .. [[
 CEU_]]..string.upper(id)..[[_BASE.tag = CEU_]]..string.upper(id..'_'..me.tags[1])..[[;
 ]]
         end
@@ -282,11 +287,11 @@ typedef union CEU_]]..me.id..[[_delayed {
 
         if me.id ~= 'Main' then
             -- native goes after class declaration
-            MEM.clss = MEM.clss .. me.native[false] .. '\n'
+            MEM.tops = MEM.tops .. me.native[false] .. '\n'
         end
-        MEM.clss = MEM.clss .. me.struct .. '\n'
+        MEM.tops = MEM.tops .. me.struct .. '\n'
 
-        MEM.clss = MEM.clss .. me.funs .. '\n'
+        MEM.tops = MEM.tops .. me.funs .. '\n'
 --DBG('===', me.id, me.trails_n)
 --DBG(me.struct)
 --DBG('======================')
@@ -409,6 +414,11 @@ typedef union CEU_]]..me.id..[[_delayed {
                 local dcl = [[
 #line ]]..var.ln[2]..' "'..var.ln[1]..[["
 ]]
+                local cls = ENV.clss[var.tp.id]
+-- TODO: OPT
+                if cls and (not cls.is_ifc) and (top.id ~= var.tp.id) then
+                    dcl = dcl..'struct ' -- due to recursive spawn
+                end
                 if var.tp.arr then
                     local tp = string.sub(tp,1,-2)  -- remove leading `*´
                     ASR(type(var.tp.arr)=='table' and var.tp.arr.cval,
@@ -426,7 +436,7 @@ typedef union CEU_]]..me.id..[[_delayed {
                     local T = ENV.clss[var.tp.id] or ENV.adts[var.tp.id]
                     if T.is_ifc then
                         -- TODO: HACK_4: delayed declaration until use
-                        MEM.clss = MEM.clss .. T.struct_delayed .. '\n'
+                        MEM.tops = MEM.tops .. T.struct_delayed .. '\n'
                         T.struct_delayed = ''
                         top.struct = top.struct .. [[
 CEU_POOL_DCL(]]..var.id_..',CEU_'..var.tp.id..'_delayed,'..var.tp.arr.sval..[[)
