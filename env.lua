@@ -88,10 +88,9 @@ function var2ifc (var)
     }, '$')
 end
 
-function ENV.ifc_vs_cls (ifc, cls)
+function ENV.ifc_vs_cls_or_ifc (ifc, cls)
+    assert(ifc.is_ifc)
     -- check if they have been checked
-    ifc.matches = ifc.matches or {}
-    cls.matches = cls.matches or {}
     if ifc.matches[cls] ~= nil then
         return ifc.matches[cls]
     end
@@ -110,7 +109,9 @@ function ENV.ifc_vs_cls (ifc, cls)
 
     -- yes, they match
     ifc.matches[cls] = true
-    cls.matches[ifc] = true
+    if not cls.is_ifc then
+        cls.matches[ifc] = true
+    end
     return true
 end
 
@@ -365,7 +366,10 @@ F = {
         -- matches all ifc vs cls
         for _, ifc in ipairs(ENV.clss_ifc) do
             for _, cls in ipairs(ENV.clss_cls) do
-                ENV.ifc_vs_cls(ifc, cls)
+                ENV.ifc_vs_cls_or_ifc(ifc, cls)
+            end
+            for _, ifc2 in ipairs(ENV.clss_ifc) do
+                ENV.ifc_vs_cls_or_ifc(ifc, ifc2)
             end
         end
         local glb = ENV.clss.Global
@@ -399,6 +403,7 @@ F = {
         local ifc, id, blk = unpack(me)
         me.c = {}      -- holds all "native _f()"
         me.tp = TP.fromstr(id)
+        me.matches = {}
 
         -- restart variables/events counting
         _N = 0
