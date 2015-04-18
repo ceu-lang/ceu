@@ -1711,12 +1711,19 @@ escape sum;
 
 ---------------
 
+deveria ser Body*?
+fazer com await
+
 Test { [[
 class Body with
     pool  Body[]& bodies;
     var   int&    sum;
     event int     ok;
 do
+_printf("spawn\n");
+_printf("IN %p\n", bodies)
+    finalize with end;
+
     var Body* nested =
         spawn Body in bodies with
             this.bodies = bodies;
@@ -1726,24 +1733,23 @@ do
         await nested:ok;
     end
     sum = sum + 1;
-    emit this.ok;
+    emit this.ok => 1;
 end
-
-class Outer with
-    var  int     sum = 0;
-    pool Body[1] bodies;
-do
-end
-
-var Outer out;
 
 pool Body[1] bodies;
+var  int     sum = 0;
+
+_printf("OUT %p\n", bodies)
+    finalize with end;
+
 do Body with
-    this.out = out;
+    this.bodies = bodies;
+    this.sum    = sum;
 end;
 
 escape sum;
 ]],
+    wrn = 'line 7 : unbounded recursive spawn',
     run = 6,
 }
 
@@ -16193,7 +16199,8 @@ end
 var T t;
 escape t.i;
 ]],
-    run = 10,
+    ref = 'line 7 : field "i" must be assigned',
+    --run = 10,
 }
 
 -- internal/constr binding
@@ -16210,7 +16217,8 @@ var T t with
 end;
 escape v;
 ]],
-    ref = 'line 9 : cannot assign to reference bounded inside the class',
+    --ref = 'line 9 : cannot assign to reference bounded inside the class',
+    run = 10;
 }
 -- internal binding
 Test { [[
@@ -16223,7 +16231,8 @@ end
 var T t;
 escape t.i;
 ]],
-    run = 10,
+    ref = 'line 7 : field "i" must be assigned',
+    --run = 10,
 }
 -- internal binding w/ default
 Test { [[
@@ -16236,7 +16245,8 @@ end
 var T t;
 escape t.i;
 ]],
-    run = 10,
+    asr = '5] runtime error: invalid tag',
+    --run = 10,
 }
 -- internal binding w/ default
 Test { [[
@@ -16250,7 +16260,8 @@ end
 var T t;
 escape t.i;
 ]],
-    run = 10,
+    asr = '6] runtime error: invalid tag',
+    --run = 10,
 }
 -- external binding w/ default
 Test { [[
@@ -16342,7 +16353,8 @@ var int v = 0;
 t.i = v;
 escape 1;
 ]],
-    ref = 'line 9 : cannot assign to reference bounded inside the class',
+    ref = 'line 7 : field "i" must be assigned',
+    --ref = 'line 9 : cannot assign to reference bounded inside the class',
 }
 
 Test { [[
@@ -25163,8 +25175,8 @@ end
 var T t;
 escape i;
 ]],
-    --ref = 'line 7 : field "i" must be assigned',
-    ref = 'line 5 : invalid attribution (not a reference)',
+    ref = 'line 7 : field "i" must be assigned',
+    --ref = 'line 5 : invalid attribution (not a reference)',
     --run = 1,
 }
 Test { [[
@@ -25178,9 +25190,9 @@ end
 var T t;
 escape i;
 ]],
-    --ref = 'line 7 : field "i" must be assigned',
+    ref = 'line 8 : field "i" must be assigned',
     --ref = 'line 5 : invalid attribution (not a reference)',
-    run = 1,
+    --run = 1,
 }
 Test { [[
 var int i = 1;
@@ -25193,9 +25205,9 @@ end
 var T t;
 escape t.i;
 ]],
-    --ref = 'line 7 : field "i" must be assigned',
+    ref = 'line 8 : field "i" must be assigned',
     --ref = 'line 5 : invalid attribution (not a reference)',
-    run = 10,
+    --run = 10,
 }
 Test { [[
 var int i = 0;
@@ -25207,8 +25219,8 @@ end
 spawn T;
 escape i;
 ]],
-    ref = 'line 5 : invalid attribution (not a reference)',
-    --ref = 'line 7 : field "i" must be assigned',
+    --ref = 'line 5 : invalid attribution (not a reference)',
+    ref = 'line 7 : field "i" must be assigned',
     --run = 1,
 }
 Test { [[
@@ -25232,8 +25244,8 @@ end
 var T* p = spawn T;
 escape p:i;
 ]],
-    --ref = 'line 7 : field "i" must be assigned',
-    run = 10,
+    ref = 'line 8 : field "i" must be assigned',
+    --run = 10,
 }
 Test { [[
 var int i = 0;
@@ -25248,8 +25260,8 @@ var T t with
 end;
 escape i;
 ]],
-    ref = 'line 9 : cannot assign to reference bounded inside the class',
-    --run = 10,
+    --ref = 'line 9 : cannot assign to reference bounded inside the class',
+    run = 10,
 }
 Test { [[
 var int i = 1;
@@ -25300,8 +25312,8 @@ spawn T with
 end;
 escape i;
 ]],
-    ref = 'line 9 : cannot assign to reference bounded inside the class',
-    --run = 10,
+    --ref = 'line 9 : cannot assign to reference bounded inside the class',
+    run = 10,
 }
 
 Test { [[
@@ -25333,8 +25345,43 @@ ret = ret + i;  // 22
 
 escape ret;
 ]],
-    ref = 'line 17 : cannot assign to reference bounded inside the class',
+    --ref = 'line 17 : cannot assign to reference bounded inside the class',
     --run = 22,
+    asr = ':6] runtime error: invalid tag',
+}
+Test { [[
+var int i = 1;
+class T with
+    var int&? i;
+do
+    var int v = 10;
+    if i? then
+        i = i + v;
+    end
+end
+
+var int ret = 0;
+
+var T t1;
+ret = ret + i;  // 1    1
+spawn T;
+ret = ret + i;  // 1    2
+
+var T t2 with
+    this.i = outer.i;
+end;
+ret = ret + i;  // 11   13
+
+i = 0;
+spawn T with
+    this.i = i;
+end;
+ret = ret + i;  // 10   23
+
+escape ret;
+]],
+    --ref = 'line 17 : cannot assign to reference bounded inside the class',
+    run = 23,
 }
 Test { [[
 var int i = 1;
@@ -29690,6 +29737,85 @@ escape _V;
     run = 12,
 }
 
+Test { [[
+class Body with
+    var int& sum;
+do
+    sum = sum + 1;
+end
+
+var int sum = 0;
+var Body b with
+    this.sum = sum;
+end;
+sum = 10;
+
+escape b.sum;
+]],
+    run = 10,
+}
+
+Test { [[
+class X with do end;
+
+class Body with
+    pool  X[]& bodies;
+    var   int&    sum;
+    event int     ok;
+do
+    var X* nested =
+        spawn X in bodies with
+        end;
+    sum = sum + 1;
+    emit this.ok => 1;
+end
+
+pool X[1] bodies;
+var  int     sum = 1;
+
+var Body b with
+    this.bodies = bodies;
+    this.sum    = sum;
+end;
+
+escape sum;
+]],
+    run = 2,
+}
+Test { [[
+class Body with
+    pool  Body[]& bodies;
+    var   int&    sum;
+    event int     ok;
+do
+    var Body* nested =
+        spawn Body in bodies with
+            this.bodies = bodies;
+            this.sum    = sum;
+        end;
+    if nested then
+        watching nested do
+            await nested:ok;
+        end
+    end
+    sum = sum + 1;
+    emit this.ok => 1;
+end
+
+pool Body[4] bodies;
+var  int     sum = 0;
+
+var Body b with
+    this.bodies = bodies;
+    this.sum    = sum;
+end;
+
+escape sum;
+]],
+    wrn = 'line 7 : unbounded recursive spawn',
+    run = 5,
+}
+
 -- DO T
 
 Test { [[
@@ -32644,6 +32770,24 @@ var I[10] a;
 ]],
     env = 'line 3 : cannot instantiate an interface',
 }
+
+Test { [[
+interface I with
+    var int i;
+end
+
+interface J with
+    interface I;
+end
+
+var I* i;
+var J* j = i;
+
+escape 1;
+]],
+    run = 1,
+}
+
 
 -- GLOBAL
 
@@ -42902,6 +43046,23 @@ end
 var T t;
 escape t.i;
 ]],
+    asr = ':5] runtime error: invalid tag',
+    --run = 10,
+}
+Test { [[
+class T with
+    var int&? i;
+do
+    var int v = 10;
+    this.i = v;
+end
+var int i = 0;
+var T t with
+    this.i = i;
+end;
+escape t.i;
+]],
+    --asr = ':5] runtime error: invalid tag',
     run = 10,
 }
 Test { [[

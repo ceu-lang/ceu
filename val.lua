@@ -150,7 +150,12 @@ F =
                         me.val = '('..op..'('..me.val..'))'
                     else
                         -- xxx.me = v
-                        me.val = '('..op..'('..me.val..'.SOME.v))'
+                        if to.byRef or (not REF(me.tp)) then
+                            me.val = '('..op..'('..me.val..'.SOME.v))'
+                        else
+                            me.val =
+                                '('..op..'(CEU_'..ID..'_SOME_assert(&'..me.val..',__FILE__,__LINE__)->SOME.v))'
+                        end
                     end
 
                 -- CALL

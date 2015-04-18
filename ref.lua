@@ -66,6 +66,15 @@ F = {
         --  first assignment
 
         else
+            --  class T with
+            --      var int& ref;
+            --  do
+            --      this.ref = <...>;   // this is not a first assignment
+            --  end
+            if (not constr) and to.lst.var.blk==CLS().blk_ifc and (CLS().id~='Main') then
+                return
+            end
+
             local if_ = AST.par(me,'If')
             if if_ and (if_.__depth > to.lst.var.blk.__depth) and
                ((not constr) or if_.__depth > constr.__depth) and
