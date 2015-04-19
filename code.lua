@@ -643,12 +643,14 @@ _STK_ORG->trls[ ]]..me.trl_fins[1]..[[ ].seqno = _ceu_app->seqno-1; /* awake now
         LINE(me, '{')       -- close in Block_pos
         for _, var in ipairs(me.vars) do
             if var.isTmp then
-                if var.tp.arr then
-                    local tp = TP.toc(var.tp)
-                    local tp = string.sub(TP.toc(var.tp),1,-2)  -- remove leading `*´
-                    LINE(me, tp..' '..var.id_..'['..var.tp.arr.cval..']')
+                -- TODO: join with code in "mem.lua" for non-tmp vars
+                local tp = var.tp.opt or var.tp -- int? becomes CEU_Opt_...
+                if tp.arr then
+                    local tp_ = TP.toc(tp)
+                    local tp_ = string.sub(TP.toc(tp),1,-2)  -- remove leading `*´
+                    LINE(me, tp_..' '..var.id_..'['..tp.arr.cval..']')
                 else
-                    LINE(me, TP.toc(var.tp)..' __ceu_'..var.id..'_'..var.n)
+                    LINE(me, TP.toc(tp)..' __ceu_'..var.id..'_'..var.n)
                 end
                 if var.isFun then
                     -- function parameter

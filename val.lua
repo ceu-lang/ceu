@@ -290,7 +290,7 @@ F =
 
         if set then
             local to = set[3]
-            me.val = '('..string.upper(TP.toc(to.opt.tp))..'_pack('..me.val..'))'
+            me.val = '('..string.upper(TP.toc(to.tp.opt))..'_pack('..me.val..'))'
         end
     end,
 
@@ -478,8 +478,7 @@ F =
         local is_adt_pool = ENV.adts[me.tp.id] and
                             e1.var and e1.var.pre=='pool'
 
--- TODO: OPT
-        if ENV.clss[me.tp.id] and (e1.tp.opt or e1.tp).ptr==1 then
+        if ENV.clss[me.tp.id] and e1.tp.ptr==1 then
             me.val = V(e1) -- class accesses should remain normalized to references
         elseif is_adt_pool then
             me.val = '(*('..ceu2c(op)..V(e1)..'))'
