@@ -28846,7 +28846,7 @@ class T with do end
 var U*? ok = spawn T;
 escape ok != null;
 ]],
-    env = 'line 3 : invalid attribution (_Option_1 vs T*)',
+    env = 'line 3 : invalid attribution (U* vs T*)',
     --run = 1,
 }
 

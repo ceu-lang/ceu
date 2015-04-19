@@ -140,8 +140,7 @@ void CEU_]]..id..'_free_static (CEU_'..id..[[* me, void* pool) {
 ]]
 
         local pack = ''
--- TODO: OPT
-        if me.tp.opt and (me.tp.opt.ptr>0 or REF(me.tp)) then
+        if me.tp.opt and (me.tp.opt.ptr>0 or me.tp.opt.ref) then
             local ID = string.upper(me.tp.id)
             local tp = 'CEU_'..me.tp.id
             local some = TP.toc(me[4][2][1][1][2])
@@ -380,7 +379,7 @@ typedef union CEU_]]..me.id..[[_delayed {
                              or (ENV.c[_tp] and ENV.c[_tp].len
                                  or TP.types.word.len)) -- defaults to word
 ]]
-            elseif var.tp.ptr>0 or REF(var.tp) then
+            elseif var.tp.ptr>0 or var.tp.ref then
                 len = TP.types.pointer.len
             else
                 len = ENV.c[var.tp.id].len
@@ -396,7 +395,12 @@ typedef union CEU_]]..me.id..[[_delayed {
         end
 
         for _, var in ipairs(sorted) do
-            local tp = TP.toc(var.tp)
+            local tp
+            if var.tp.opt then
+                tp = TP.toc(var.tp.opt)     -- int? becomes CEU_Opt_...
+            else
+                tp = TP.toc(var.tp)
+            end
 
             if var.inTop then
                 var.id_ = var.id
@@ -448,8 +452,8 @@ CEU_POOL_DCL(]]..var.id_..',CEU_'..var.tp.id..','..var.tp.arr.sval..[[)
 ]]
                                -- TODO: bad (explicit CEU_)
                     end
-                elseif var.tp.ptr>0 or REF(var.tp) then
-                    local ptr = string.rep('*', (REF(var.tp) and 1) + var.tp.ptr)
+                elseif var.tp.ptr>0 or var.tp.ref then
+                    local ptr = string.rep('*', (var.tp.ref and 1) + var.tp.ptr)
                     top.struct = top.struct .. [[
 tceu_pool]]..ptr..' '..var.id_..[[;
 ]]

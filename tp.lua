@@ -180,7 +180,6 @@ end
 
 function TP.isNumeric (tp)
     return TP.get(tp.id).num and tp.ptr==0 and (not tp.arr)
-            or (tp.ptr==0 and tp.opt and TP.isNumeric(tp.opt))
             or (tp.ext and tp.ptr==0)
             or tp.id=='@'
 end
@@ -206,16 +205,11 @@ function TP.contains (tp1, tp2)
     if tp1.id==tp2.id and tp1.ptr==tp2.ptr then
         if (tp1.arr==false) and (tp2.arr==false) then
             return true
-        elseif REF(tp1) and tp1.arr==true and tp2.arr then
+        elseif tp1.ref and tp1.arr==true and tp2.arr then
             -- pool int[10] arr
             -- pool int[]&  ref = arr;
             return true
         end
-    end
-
-    -- tp? vs tp
-    if tp1.opt or tp2.opt then
-        return TP.contains(tp1.opt or tp1, tp2.opt or tp2)
     end
 
     -- var tp& v = &/*/<any-ext-value>

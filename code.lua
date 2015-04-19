@@ -32,7 +32,7 @@ function ATTR (me, to, fr)
     -- optional types
     if to.tp.opt then
         local tag
-        local id = string.upper(to.tp.id)
+        local ID = string.upper(to.tp.opt.id)
         if fr.tp.opt then
             LINE(me, V(to)..' = '..V(fr)..';')
         elseif (fr.fst.tag=='Op2_call' and fr.fst.__fin_opt_tp)
@@ -48,7 +48,7 @@ function ATTR (me, to, fr)
                 tag = 'SOME'
                 LINE(me, V(to)..' = '..V(fr)..';')
             end
-            LINE(me, to.val_raw..'.tag = CEU_'..id..'_'..tag..';')
+            LINE(me, to.val_raw..'.tag = CEU_'..ID..'_'..tag..';')
         end
 
     -- normal types
@@ -465,9 +465,9 @@ case ]]..me.lbls_cnt.id..[[:;
             })
         elseif var.tp.opt then
             -- initialize optional types to nil
-            local id = string.upper(var.tp.id)
+            local ID = string.upper(var.tp.opt.id)
             LINE(me, [[
-]]..var.val_raw..[[.tag = CEU_]]..id..[[_NIL;
+]]..var.val_raw..[[.tag = CEU_]]..ID..[[_NIL;
 ]])
         end
     end,
@@ -561,7 +561,7 @@ if (]]..LVAR..[[ == NULL) {
             LINE(me, [[
     __ceu_new = (tceu_org*) ceu_pool_alloc((tceu_pool*)]]..V(pool)..[[);
 ]])
-        elseif pool.var.tp.ptr>0 or REF(pool.var.tp) then
+        elseif pool.var.tp.ptr>0 or pool.var.tp.ref then
             -- pointer don't know if is dynamic or static
             LINE(me, [[
 #if !defined(CEU_ORGS_NEWS_MALLOC)
@@ -656,7 +656,7 @@ _STK_ORG->trls[ ]]..me.trl_fins[1]..[[ ].seqno = _ceu_app->seqno-1; /* awake now
                     LINE(me, ' = '..var.id)
                 end
                 LINE(me, ';')
-            elseif var.pre=='pool' and var.tp.ptr==0 and (not REF(var.tp)) then
+            elseif var.pre=='pool' and var.tp.ptr==0 and (not var.tp.ref) then
                 local cls = ENV.clss[var.tp.id]
                 local adt = ENV.adts[var.tp.id]
                 local static = (type(var.tp.arr)=='table')

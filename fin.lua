@@ -27,14 +27,13 @@ F = {
     -- NON-POINTER ATTRIBUTIONS (always safe)
     --
 
--- TODO: OPT
-        local noptr =  (OPT(to.tp,'ptr')==0 and (not to.tp.arr) and (not REF(to.tp)) and
+        local noptr =  (to.tp.ptr==0 and (not to.tp.arr) and (not to.tp.ref) and
                         ((not to.tp.ext) or TP.get(to.tp.id).plain or to.tp.plain))
                                             -- either native dcl or derived
                                             -- from s.field
         -- _r.x = (int) ...;
         noptr = noptr or
-                       (fr.tp.ptr==0 and (not fr.tp.arr) and (not REF(fr.tp)) and
+                       (fr.tp.ptr==0 and (not fr.tp.arr) and (not fr.tp.ref) and
                         ((not fr.tp.ext) or TP.get(fr.tp.id).plain or fr.tp.plain))
 
         if noptr then
@@ -54,7 +53,7 @@ F = {
 
         -- an attribution restarts tracking accesses to "to"
         -- variables or native symbols
-        if (to.var and (not REF(to.var.tp))) or to.c then
+        if (to.var and (not to.var.tp.ref)) or to.c then
                         -- do not track references
             TRACK[to.var or to.id] = true
         end
@@ -132,7 +131,7 @@ F = {
             -- the local goes out of scope, hence, we require finalization.
             -- The "to" pointers must be option types `&?´.
 
-            if to.tp.opt and to.tp.opt.ref then
+            if to.tp.ref and to.tp.opt then
                 T.__fin_opt_tp = to.tp  -- return value must be packed in the "&?" type
             else
                 ASR(to.tp.id == '@', me, 1105,
@@ -263,9 +262,7 @@ F = {
 
         -- possible dangling pointer "me.var" is accessed across await
 
--- TODO: OPT
-        local is_ptr = (me.tp.opt or me.tp).ptr > 0
-        if is_ptr and ENV.clss[(me.tp.opt or me.tp).id] then
+        if me.tp.ptr>0 and ENV.clss[me.tp.id] then
             -- pointer to org: check if it is enclosed by "watching me.var"
             -- since before the first await
             for n in AST.iter('ParOr') do

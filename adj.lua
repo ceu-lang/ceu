@@ -1524,7 +1524,9 @@ G = {
         if not opt then
             return
         end
+
         me[5] = nil
+        local cpy = AST.copy(me)    -- w/o opt
 
         local tp = id..'__'..ptr..'__'..tostring(arr)..'__'..tostring(ref)
         local n = ADTS[tp]
@@ -1537,7 +1539,7 @@ G = {
                                     node('Dcl_adt_tag', me.ln, 'NIL'),
                                     node('Dcl_adt_tag', me.ln, 'SOME',
                                         node('Stmts', me.ln,
-                                            node('Dcl_var', me.ln, 'var', me, 'v'))))
+                                            node('Dcl_var', me.ln, 'var', cpy, 'v'))))
             ADTS[#ADTS].__adj_opt = me
 
             -- insert in the parent Stmts just before the use of the type
@@ -1560,8 +1562,7 @@ G = {
             assert(ok, 'bug found')
         end
 
-        return node('Type', me.ln, '_Option_'..n, 0, false, false, me)
-                                                                   -- opt
+        me[5] = node('Type', me.ln, '_Option_'..n, 0, false, false, false)
     end,
 }
 H = {

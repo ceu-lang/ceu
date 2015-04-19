@@ -16,7 +16,7 @@ function V (me)
 
     local ret = me.val
 
-    local ref = me.tp and REF(me.tp) and me.tp.id
+    local ref = me.tp and me.tp.ref and me.tp.id
     if me.byRef and
         (not (ENV.clss[me.tp.id] or
               (ref and ENV.clss[ref]) or
@@ -99,22 +99,21 @@ F =
                 -- normalize all org acesses to pointers to it
                 -- (because of interface accesses that must be done through a pointer)
                 me.val = '(&'..me.val..')'
-            else
-                if var.tp.ref then -- exception: should not be REF(var.tp)
-                    if ENV.clss[var.tp.id] then
-                        -- orgs vars byRef, do nothing
-                        -- (normalized to pointer)
-                    else
-                        -- normal vars byRef
-                        me.val = '(*('..me.val..'))'
-                    end
+            elseif var.tp.opt then
+            elseif var.tp.ref then
+                if ENV.clss[var.tp.id] then
+                    -- orgs vars byRef, do nothing
+                    -- (normalized to pointer)
+                else
+                    -- normal vars byRef
+                    me.val = '(*('..me.val..'))'
                 end
             end
 
             -- variable with option type (var tp? id)
             if var.tp.opt then
-                local ID = string.upper(me.tp.id)
-                local op = (me.tp.opt.ref and '*') or ''
+                local ID = string.upper(me.tp.opt.id)
+                local op = (me.tp.ref and '*') or ''
 
                 me.val_raw = me.val
 
@@ -158,7 +157,7 @@ F =
                         me.val = '('..op..'('..me.val..'))'
                     else
                         -- xxx.me = v
-                        if to.byRef or (not REF(me.tp)) then
+                        if to.byRef or (not me.tp.ref) then
                             me.val = '('..op..'('..me.val..'.SOME.v))'
                         else
                             me.val =
@@ -168,7 +167,7 @@ F =
 
                 -- CALL
                 -- _f(xxx.me)
-                elseif call and REF(me.tp) then
+                elseif call and me.tp.ref then
                     -- reference option type -> pointer
                     -- var tp&? v;
                     -- _f(v);
@@ -191,7 +190,7 @@ F =
         elseif var.pre == 'pool' then
             -- normalize all pool acesses to pointers to it
             -- (because of interface accesses that must be done through a pointer)
-            if not (var.tp.ptr>0 or REF(var.tp)) then
+            if not (var.tp.ptr>0 or var.tp.ref) then
                 me.val = '(&'..me.val..')'
             end
             var.val_dcl = var.val_dcl or '&'..CUR(me, var.id_)
@@ -248,7 +247,7 @@ F =
     ]
         )
 ))]]
-                    if REF(me.var.tp) and (not ENV.clss[me.var.tp.id]) then
+                    if me.var.tp.ref and (not ENV.clss[me.var.tp.id]) then
                         me.val = '(*'..me.val..')'
                     end
                 end
@@ -291,7 +290,7 @@ F =
 
         if set then
             local to = set[3]
-            me.val = '('..string.upper(TP.toc(to.tp))..'_pack('..me.val..'))'
+            me.val = '('..string.upper(TP.toc(to.opt.tp))..'_pack('..me.val..'))'
         end
     end,
 
@@ -428,7 +427,7 @@ F =
         me.val = V(f)..'('..table.concat(ps,',')..')'
 
         if me.__fin_opt_tp then
-            me.val = '(CEU_'..string.upper(me.__fin_opt_tp.id)..'_pack('..me.val..'))'
+            me.val = '(CEU_'..string.upper(me.__fin_opt_tp.opt.id)..'_pack('..me.val..'))'
         end
     end,
 
@@ -498,7 +497,7 @@ F =
     end,
     ['Op1_?'] = function (me)
         local op, e1 = unpack(me)
-        me.val = '('..e1.val..' != CEU_'..string.upper(e1.tp.id)..'_NIL)'
+        me.val = '('..e1.val..' != CEU_'..string.upper(e1.tp.opt.id)..'_NIL)'
     end,
 
     ['Op2_.'] = function (me)
@@ -511,7 +510,7 @@ F =
                 me.val  = '('..tag..'_assert(&'..V(e1)..', __FILE__, __LINE__)'..'->'..id..')'
                 --me.val  = '('..tag..'_assert('..V(e1)..')'..ceu2c(op)..id..')'
             elseif me.__env_tag == 'field' then
-                if REF(e1.union_tag_blk.vars[id].tp) then
+                if e1.union_tag_blk.vars[id].tp.ref then
                     me.val  = '('..'*('..V(e1)..')'..'.'..id..')'
                 else
                     me.val  = '('..V(e1)..'.'..id..')'

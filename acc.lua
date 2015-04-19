@@ -250,7 +250,7 @@ F = {
             id  = me.var,
             md  = 'rd',
             tp  = me.var.tp,
-            any = REF(me.var.tp),
+            any = me.var.tp.ref,
             err = ERR(me, 'variable/event `'..me.var.id..'´'),
         }
 

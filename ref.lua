@@ -8,7 +8,7 @@ F = {
     -- before Var
     SetExp_pre = function (me)
         local _, fr, to = unpack(me)
-        if not REF(to.tp) then
+        if not to.tp.ref then
             return
         end
         assert(to.lst.var, 'bug found')
@@ -107,7 +107,7 @@ F = {
             -- refuses first assignment from constants and dereferences:
             -- var int& i = 1;
             -- var int& i = *p;
-            if (not REF(fr.tp)) then
+            if (not fr.tp.ref) then
                 ASR(fr.lval or fr.tag=='Op1_&' or fr.tag=='Op2_call' or
                         (fr.lst and (fr.lst.tag=='Outer' or
                                      fr.lst.var and fr.lst.var.cls)),
@@ -193,8 +193,8 @@ F = {
     __constr = function (me, cls, constr)
         constr.__bounded = constr.__bounded or {}
         for _, var in ipairs(cls.blk_ifc.vars) do
-            if REF(var.tp) and (not var.tp.opt)
-                           and (var.bind=='constr' or (not var.bind))
+            if var.tp.ref and (not var.tp.opt)
+                          and (var.bind=='constr' or (not var.bind))
             then
                 ASR(constr.__bounded[var], me,
                     'field "'..var.id..'" must be assigned')
@@ -210,7 +210,7 @@ F = {
         -- ensures that global "ref" vars are initialized
         local glb = ENV.clss.Global
         local cls = CLS()   -- might be an ADT declaration
-        if REF(me.var.tp) and glb and cls and cls.id=='Main' then
+        if me.var.tp.ref and glb and cls and cls.id=='Main' then
             local var = glb.blk_ifc.vars[me.var.id]
             if var then
                 local set = me.__par and me.__par[1]==me and
@@ -228,7 +228,7 @@ F = {
     -- Ensures that &ref var is bound before use.
     Var = function (me)
         local cls = CLS()
-        if REF(me.var.tp) and (not me.var.tp.opt) then
+        if me.var.tp.ref and (not me.var.tp.opt) then
             -- ignore interface variables outside Main
             -- (they are guaranteed to be bounded)
             local inifc = (me.var.blk == cls.blk_ifc)

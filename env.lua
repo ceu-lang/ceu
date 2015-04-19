@@ -49,16 +49,6 @@ ENV = {
     max_evt = 0,    -- max # of internal events (exts+1 start from it)
 }
 
--- TODO: fazer tudo ao contrario para "opts":
--- me.tp fica sendo o tipo que o usuario escreveu
--- me.tp.opt fica sendo o tipo implícito
-function OPT (tp, fld)
-    return (tp.opt or tp)[fld]
-end
-function REF (tp)
-    return OPT(tp, 'ref')   -- TODO: remove all REF()
-end
-
 for k, v in pairs(ENV.c) do
     if v == true then
         ENV.c[k] = { tag='type', id=k, len=nil }
@@ -151,17 +141,17 @@ function newvar (me, blk, pre, tp, id, isImp)
     ASR(ENV.c[tp.id] or TOPS[tp.id],
         me, 'undeclared type `'..(tp.id or '?')..'´')
 
-    local top = (tp.ptr==0 and (not REF(tp)) and TOPS[tp.id])
+    local top = (tp.ptr==0 and (not tp.ref) and TOPS[tp.id])
     if top then
         ASR(top.tops_i < ME.tops_i,
             me, 'undeclared type `'..(tp.id or '?')..'´')
     end
 
-    ASR(tp.ptr>0 or REF(tp) or TP.get(tp.id).len~=0 or (tp.id=='void' and pre=='event'),
+    ASR(tp.ptr>0 or tp.ref or TP.get(tp.id).len~=0 or (tp.id=='void' and pre=='event'),
         me, 'cannot instantiate type "'..tp.id..'"')
     --ASR((not arr) or arr>0, me, 'invalid array dimension')
 
-    if TOPS[tp.id] and TOPS[tp.id].is_ifc and tp.ptr==0 and (not REF(tp)) then
+    if TOPS[tp.id] and TOPS[tp.id].is_ifc and tp.ptr==0 and (not tp.ref) then
         ASR(pre == 'pool', me,
             'cannot instantiate an interface')
     end
@@ -190,7 +180,7 @@ function newvar (me, blk, pre, tp, id, isImp)
 
     if pre=='var' and (not tp.arr) then
         var.lval = var
-    elseif pre=='pool' and (ENV.adts[tp.id] or REF(tp)) then
+    elseif pre=='pool' and (ENV.adts[tp.id] or tp.ref) then
         var.lval = var
     else
         var.lval = false
@@ -453,6 +443,7 @@ F = {
 
     Dcl_adt_pre = function (me)
         local id, op = unpack(me)
+-- TODO: is it possible to remove __adj_opt?
         me.tp = TP.fromstr(id, me.__adj_opt)
         me.tp.opt = me.__adj_opt
                     -- recover this information from implicitly created ADTs
@@ -632,7 +623,7 @@ F = {
             me[2] = TP.fromstr'void'
 
             local tp_ = TP.new(tp)
-            local top = (tp_.ptr==0 and (not REF(tp_)) and TOPS[tp_.id])
+            local top = (tp_.ptr==0 and (not tp_.ref) and TOPS[tp_.id])
             ASR(tp_.id=='_TOP_POOL' or (top and top.tops_i<CLS().tops_i),
                 me, 'undeclared type `'..(tp_.id or '?')..'´')
         end
@@ -660,10 +651,10 @@ F = {
         ASR(tp.id=='void' or TP.isNumeric(tp) or
             tp.ptr>0      or tp.tup,
                 me, 'invalid event type')
-        ASR(not REF(tp), me, 'invalid event type')
+        ASR(not tp.ref, me, 'invalid event type')
         if tp.tup then
             for _, t in ipairs(tp.tup) do
-                ASR((TP.isNumeric(t) or t.ptr>0) and (not REF(t)),
+                ASR((TP.isNumeric(t) or t.ptr>0) and (not t.ref),
                     me, 'invalid event type')
             end
         end
@@ -760,8 +751,7 @@ F = {
         --  to remove the "isAlive" test
         if me.isWatching then
             local tp = me.isWatching.tp
--- TODO: OPT
-            if not (tp and (tp.opt or tp).ptr==1 and ENV.clss[(tp.opt or tp).id]) then
+            if not (tp and tp.ptr==1 and ENV.clss[tp.id]) then
                 local if_ = me[2][1][2]
                 assert(if_ and if_.tag == 'If', 'bug found')
                 me[2][1][2] = if_[2]    -- changes "if" for the "await" (true branch)
@@ -774,8 +764,7 @@ F = {
         local int = unpack(me)
         if int.tag~='Ext' and me.isWatching then
             -- ORG: "await org" => "await org._ok"
--- TODO: OPT
-            if (int.tp.opt or int.tp).ptr==1 and ENV.clss[(int.tp.opt or int.tp).id] then
+            if int.tp.ptr==1 and ENV.clss[int.tp.id] then
                 me[1] = AST.node('Op2_.', me.ln, '.',
                             AST.node('Op1_*', me.ln, '*', int),
                             '_ok')
@@ -895,7 +884,7 @@ F = {
 
     Lua = function (me)
         if me.ret then
-            ASR(not REF(me.ret.tp), me, 'invalid attribution')
+            ASR(not me.ret.tp.ref, me, 'invalid attribution')
         end
     end,
 
@@ -1148,10 +1137,10 @@ F = {
         ASR(TP.max(e1.tp,e2.tp), me,
             'invalid operands to binary "'..op..'"')
 
-        if not (e1.tp.opt and e1.tp.opt.ptr>0) then
+        if not (e1.tp.opt and e1.tp.ptr>0) then
             ASR(not ENV.adts[TP.tostr(e1.tp)], me, 'invalid operation for data')
         end
-        if not (e2.tp.opt and e2.tp.opt.ptr>0) then
+        if not (e2.tp.opt and e2.tp.ptr>0) then
             ASR(not ENV.adts[TP.tostr(e2.tp)], me, 'invalid operation for data')
         end
     end,
@@ -1173,12 +1162,7 @@ F = {
     ['Op1_*'] = function (me)
         local op, e1 = unpack(me)
         me.lval = e1.lval and e1
-
-        if e1.tp.opt then
-            me.tp = TP.copy(e1.tp.opt)
-        else
-            me.tp = TP.copy(e1.tp)
-        end
+        me.tp = TP.copy(e1.tp)
 
         if me.tp.ptr > 0 then
             me.tp.ptr = me.tp.ptr - 1
@@ -1206,9 +1190,8 @@ F = {
 
     ['Op2_.'] = function (me)
         local op, e1, id = unpack(me)
-        local e1_tp = e1.tp.opt or e1.tp
-        local cls = (e1_tp.ptr==0 and ENV.clss[e1_tp.id])
-        local adt = (e1_tp.ptr==0 and ENV.adts[e1_tp.id])
+        local cls = (e1.tp.ptr==0 and ENV.clss[e1.tp.id])
+        local adt = (e1.tp.ptr==0 and ENV.adts[e1.tp.id])
         local BLK, VAR
         me.id = id
         if cls then
@@ -1254,8 +1237,8 @@ F = {
                 local blk = ASR(adt.tags[id] and adt.tags[id].blk, me,
                                 'tag "'..id..'" is not declared')
 
-                ASR(TP.contains(e1_tp,TP.fromstr(ID)), me,
-                    'invalid access ('..TP.tostr(e1_tp)..' vs '..ID..')')
+                ASR(TP.contains(e1.tp,TP.fromstr(ID)), me,
+                    'invalid access ('..TP.tostr(e1.tp)..' vs '..ID..')')
 
                 -- [union.TAG]
                 local tag = (me.__par.tag ~= 'Op2_.')
@@ -1282,8 +1265,8 @@ F = {
             -- TODO
 
         else
-            assert(not e1_tp.tup)
-            ASR(me.__ast_chk or e1_tp.ext, me, 'not a struct')
+            assert(not e1.tp.tup)
+            ASR(me.__ast_chk or e1.tp.ext, me, 'not a struct')
             if me.__ast_chk then
                 -- check Emit/Await-Ext/Int param
                 local T, i = unpack(me.__ast_chk)
@@ -1295,8 +1278,8 @@ F = {
             else
                 -- rect.x = 1 (_SDL_Rect)
                 me.tp = TP.fromstr'@'
-                local tp = TP.get(e1_tp.id)
-                if tp.plain and e1_tp.ptr==0 then
+                local tp = TP.get(e1.tp.id)
+                if tp.plain and e1.tp.ptr==0 then
                     me.tp.plain = true
                     me.tp.ptr   = 0
                 end
