@@ -204,9 +204,9 @@ F = {
         me.needs_clr = true
         PROPS.has_clear = true
 
-        -- detects if "isWatching" an org
-        if me.isWatching then
-            local tp = me.isWatching.tp
+        -- detects if "watching" an org
+        if me.__adj_watching then
+            local tp = me.__adj_watching.tp
             if (tp and tp.ptr==1 and ENV.clss[tp.id]) then
                 PROPS.has_orgs_watching = true
             end

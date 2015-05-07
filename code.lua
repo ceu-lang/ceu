@@ -1272,11 +1272,6 @@ case ]]..me.lbl_cnt.id..[[:;
     _STK.trl->evt = ]]..(e.ifc_idx or e.var.evt.idx)..[[;
     _STK.trl->lbl = ]]..me.lbl.id..[[;
 ]])
-        if e.var.evt.id == '_ok' then
-            LINE(me, [[
-    _STK.trl->seqno = _ceu_app->seqno-1;   /* always ready to awake */
-]])
-        end
         HALT(me)
 
         LINE(me, [[
@@ -1310,6 +1305,11 @@ ceu_out_wclock]]..suf..[[(_ceu_app, (s32)]]..V(dt)..[[, &]]..me.val_wclk..[[, NU
     _STK.trl->evt = CEU_IN_]]..e.evt.id..suf..[[;
     _STK.trl->lbl = ]]..me.lbl.id..[[;
 ]])
+        if e.evt.id == '_ok_killed' then
+            LINE(me, [[
+    _STK.trl->seqno = _ceu_app->seqno-1;   /* always ready to awake */
+]])
+        end
         HALT(me)
 
         LINE(me, [[

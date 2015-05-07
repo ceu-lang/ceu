@@ -322,22 +322,26 @@ F = {
         -- common by all apps
 
         local t = {}
-        t[#t+1] = { '_WCLOCK', 's32' }
+        t[#t+1] = { '_WCLOCK', 's32', 0 }
+
+        -- INTERNAL EVENT _ok_killed
+        -- TODO: mixing ints/exts?
+        t[#t+1] = { '_ok_killed', '_tceu_org', 1 }
 
         if OPTS.os then
-            t[#t+1] = { 'OS_START',     'void' }
-            t[#t+1] = { 'OS_STOP',      'void' }
-            t[#t+1] = { 'OS_DT',        'int'  }
-            t[#t+1] = { 'OS_INTERRUPT', 'int'  }
+            t[#t+1] = { 'OS_START',     'void', 0 }
+            t[#t+1] = { 'OS_STOP',      'void', 0 }
+            t[#t+1] = { 'OS_DT',        'int',  0 }
+            t[#t+1] = { 'OS_INTERRUPT', 'int',  0 }
         end
 
         if OPTS.timemachine then
-            t[#t+1] = { '_WCLOCK_', 's32' }
+            t[#t+1] = { '_WCLOCK_', 's32', 0 }
         end
 
         for _, v in ipairs(t) do
-            local id, tp = unpack(v)
-            local _tp = AST.node('Type', me.ln, tp, 0, false, false)
+            local id, tp, ptr = unpack(v)
+            local _tp = AST.node('Type', me.ln, tp, ptr, false, false)
             local evt = {
                 ln  = me.ln,
                 id  = id,
@@ -746,32 +750,17 @@ F = {
         ENV.pures[me[1]] = true
     end,
 
-    ParOr = function (me)
-        -- HACK_6: detects if "isWatching" a real event (not an org)
-        --  to remove the "isAlive" test
-        if me.isWatching then
-            local tp = me.isWatching.tp
-            if not (tp and tp.ptr==1 and ENV.clss[tp.id]) then
-                local if_ = me[2][1][2]
-                assert(if_ and if_.tag == 'If', 'bug found')
-                me[2][1][2] = if_[2]    -- changes "if" for the "await" (true branch)
-                --if_[1] = AST.node('NUMBER', me.ln, 1)
-            end
-        end
-    end,
+    Stmts = function (me)
+        -- HACK_6 [watching]: detects if OPT-1 (event) or OPT-2 (org)
+        if me.__adj_watching then
+            local stmts = me.__par
+            assert(stmts and stmts.tag == 'Stmts', 'bug found')
 
-    Await_pre = function (me)
-        local int = unpack(me)
-        if int.tag~='Ext' and me.isWatching then
-            -- ORG: "await org" => "await org._ok"
-            if int.tp.ptr==1 and ENV.clss[int.tp.id] then
-                me[1] = AST.node('Op2_.', me.ln, '.',
-                            AST.node('Op1_*', me.ln, '*', int),
-                            '_ok')
-
-            -- EVT:
+            local tp = me[1].tp  -- type of Var
+            if tp and tp.ptr==1 and ENV.clss[tp.id] then
+                stmts[2] = AST.node('Nothing', me.ln)      -- remove OPT-1
             else
---error'oi'
+                stmts[3] = AST.node('Nothing', me.ln)      -- remove OPT-2
             end
         end
     end,

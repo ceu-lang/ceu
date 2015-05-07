@@ -227,21 +227,9 @@ F = {
                me.blk_ifc[1]    and me.blk_ifc[1].tag   =='Stmts' and
                me.blk_ifc[1][1] and me.blk_ifc[1][1].tag=='BlockI')
 
-        -- All orgs have an implicit event emitted automatically on
-        -- their termination:
-        -- event void _ok;
-        -- The idx must be constant as the runtime uses it blindly.
-        -- (generated in env.ceu)
-        --if not is_ifc then
-            table.insert(me.blk_ifc[1][1], 1,
-                node('Dcl_int', me.ln, 'event',
-                    node('Type', me.ln, 'void', 0, false, false),
-                    '_ok'))
-        --end
-
         -- insert class pool for orphan spawn
         if me.__ast_has_malloc then
-            table.insert(me.blk_ifc[1][1], 2,
+            table.insert(me.blk_ifc[1][1], 1,
                 node('Dcl_pool', me.ln, 'pool',
                     node('Type', me.ln, '_TOP_POOL', 0, true, false),
                     '_top_pool'))
@@ -296,8 +284,10 @@ F = {
         --          ...     // has the chance to execute/finalize even if
         --                  // the org terminated just after the spawn
         --      with
-        --          if <ORG>->isAlive
-        --              await <EVT>|<ORG>.ok;
+        --          await <EVT>;        // OPT-1
+        --        <or>
+        --          if <ORG>->isAlive   // OPT-2
+        --              var Org* me = _ok_killed until me==<ORG>;
         --          end
         --      end
         --
@@ -307,28 +297,50 @@ F = {
         --]]
         local e, dt, blk = unpack(me)
         local var = e or dt     -- TODO: hacky
+        local tst = node('Stmts', me.ln, var)
+        tst.__adj_watching = true
 
-        local awt = node('Await', me.ln, e, dt, false)
-        awt.isWatching = true -- converts "await org" to "await org._ok" in env.lua
+        local ret =
+            node('ParOr', me.ln,
+                blk,
+                node('Block', me.ln,
+                    node('Stmts', me.ln,
+                        -- HACK_6: figure out if OPT-1 or OPT-2
+                        tst,  -- "var" needs to be parsed before OPT-[12]
 
-        local ret = node('ParOr', me.ln,
-                        blk,
-                        node('Block', me.ln,
-                            node('Stmts', me.ln,
-                                var,  -- "var" needs to be parsed before "awt"
-                                node('If', me.ln,
-                                    -- HACK_6: changes to "true" if normal event in env.lua
-                                    node('Op2_.', me.ln, '.',
-                                        node('Op1_*', me.ln, '*',
-                                            -- this cast confuses acc.lua (see Op1_* there)
-                                            -- TODO: HACK_3
-                                            node('Op1_cast', me.ln,
-                                                node('Type', me.ln, '_tceu_org', 1, false, false),
-                                                AST.copy(var))),
-                                        'isAlive'),
-                                    node('Block',me.ln,node('Stmts',me.ln,awt)),
-                                    node('Block',me.ln,node('Stmts',me.ln,node('Nothing', me.ln)))))))
-        ret.isWatching = var
+                        -- OPT-1
+                        node('Await', me.ln, e, dt, false),
+
+                        -- OPT-2
+                        node('If', me.ln,
+                            node('Op2_.', me.ln, '.',
+                                node('Op1_*', me.ln, '*',
+                                    -- this cast confuses acc.lua (see Op1_* there)
+                                    -- TODO: HACK_3
+                                    node('Op1_cast', me.ln,
+                                        node('Type', me.ln, '_tceu_org', 1, false, false),
+                                        AST.copy(var))),
+                                'isAlive'),
+                            node('Block', me.ln,
+                                node('Stmts', me.ln,
+                                    node('Dcl_var', me.ln, 'var',
+                                        node('Type', me.ln, '_tceu_org', 1, false, false),
+                                        '__org_'..me.n),
+                                    node('_Set', me.ln,
+                                        node('Var', me.ln, '__org_'..me.n),
+                                        '=', '__SetAwait',
+                                        node('Await', me.ln,
+                                            node('Ext', me.ln, '_ok_killed'),
+                                            false,
+                                            node('Op2_==', me.ln, '==',
+                                                node('Var', me.ln, '__org_'..me.n),
+                                                node('Op1_cast', me.ln,
+                                                    node('Type', me.ln, '_tceu_org', 1, false, false),
+                                                    AST.copy(var))))))),
+                            node('Block', me.ln,
+                                node('Stmts', me.ln,
+                                    node('Nothing', me.ln)))))))
+        ret.__adj_watching = var
         return ret
     end,
 

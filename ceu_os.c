@@ -475,7 +475,8 @@ fprintf(stderr, "STACK[%d]: evt=%d : seqno=%d : ntrls=%d\n",
                         /* TODO(speed): only if was ever watched! */
                         {
                             tceu_stk stk;
-                                     stk.evt  = 1;  /* TODO: 1==_ok */
+                                     stk.evt  = CEU_IN__ok_killed;
+                                     stk.evtp = &stk.evto;
                                      stk.evto = CUR_ORG;
                                      stk.org  = app->data;
                                      stk.trl  = &app->data->trls[0];

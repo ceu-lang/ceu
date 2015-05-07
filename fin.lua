@@ -266,7 +266,8 @@ F = {
             -- pointer to org: check if it is enclosed by "watching me.var"
             -- since before the first await
             for n in AST.iter('ParOr') do
-                local var = n.isWatching and n.isWatching.lst and n.isWatching.lst.var
+                local var = n.__adj_watching and n.__adj_watching.lst
+                                             and n.__adj_watching.lst.var
                 if var==me.var and AST.isParent(n,TRACK[me.var]) then
                     return      -- ok, I'm safely watching "me.var"
                 end

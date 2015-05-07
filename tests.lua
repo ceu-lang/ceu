@@ -1838,8 +1838,37 @@ escape sum;
 
 ---------------
 
-- retorno de spawn é *?
+- watching de ADTs
+    - _ok virar evento "global" (indice unico para todas as classes/adts)
+        - teste virar <ref = await _ok until ref==me>
 - fazer a conversao da consutrucao recurse para isso
+Test { [[
+data T with
+    tag NIL;
+with
+    tag NXT with
+        var int v;
+        var T*  nxt;
+    end
+end
+
+var T* t = new T.NXT(10, T.NXT(10, T.NIL()));
+par/or do
+    watching t do
+        await FOREVER;
+    end
+with
+    watching t:NXT.nxt do
+        await FOREVER;
+    end
+with
+    t:NXT.nxt = T.NIL();
+end
+
+escape 10;
+]],
+    run = 10,
+}
 
 Test { [[
 class Body with
@@ -1849,12 +1878,12 @@ class Body with
 do
     finalize with end;
 
-    var Body* nested =
+    var Body*? nested =
         spawn Body in bodies with
             this.bodies = bodies;
             this.sum    = sum;
         end;
-    if nested != null then
+    if nested? then
         watching nested do
             await nested:ok;
         end
@@ -1900,36 +1929,40 @@ class Body with
     var   int&    sum;
     event int     ok;
 do
-    //watching n do
+    watching n do
         var int i = this.sum;
         if n:NODE then
-            var Body* left =
+            var Body*? left =
                 spawn Body in this.bodies with
                     this.bodies = bodies;
                     this.n      = n:NODE.left;
                     this.sum    = sum;
                 end;
-            //watching left do
-                await left:ok;
-            //end
+            if left? then
+                watching left do
+                    await left:ok;
+                end
+            end
 
             this.sum = this.sum + i + n:NODE.v;
 
-            var Body* right =
+            var Body*? right =
                 spawn Body in this.bodies with
                     this.bodies = bodies;
                     this.n      = n:NODE.right;
                     this.sum    = sum;
                 end;
-            //watching right do
-                await right:ok;
-            //end
+            if right? then
+                watching right do
+                    await right:ok;
+                end
+            end
 
             //do/spawn Body in this.bodies with
                 //this.n = n:NODE.left;
             //end;
         end
-    //end
+    end
     await 1s;
     emit this.ok => 1;
 end
@@ -38299,7 +38332,7 @@ end
 escape _V + 1;
 ]],
     _ana = {
-        acc = 2,
+        acc = true,
     },
     run = 11,
 }
