@@ -24326,10 +24326,9 @@ pause/if in_tm do
         end
     end
 end
+escape 1;
 ]],
-    _ana = {
-        isForever = true,
-    }
+    run = 1,
 }
 
 -- TIGHT LOOPS
