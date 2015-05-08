@@ -16524,6 +16524,20 @@ escape 1;
 }
 
 Test { [[
+class Integral with
+    var   int& v;
+    event int  e;
+do
+    every dv in e do
+        v = v + dv;
+    end
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
 var int a=1, b=2;
 var int& v;
 if true then

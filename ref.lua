@@ -14,6 +14,16 @@ F = {
         assert(to.lst.var, 'bug found')
         local cls = CLS()
 
+        -- IGNORE NON-FIRST ASSIGNMENTS
+        --  class T with
+        --      var int& ref;
+        --  do
+        --      this.ref = <...>;   // this is not a first assignment
+        --  end
+        if (not constr) and to.lst.var.blk==cls.blk_ifc and (cls.id~='Main') then
+            return
+        end
+
         -- refuse first assignment inside loop with declaration outside it:
         --      var t& v;
         --      loop do
@@ -27,9 +37,11 @@ F = {
         --          end;
         --      end
         local loop = AST.par(me, 'Loop')
-        if (not to.lst.var.bind) and loop and (not AST.par(me,'Dcl_constr')) then
-            ASR(AST.isParent(loop, to.lst.var.blk), me,
-                'reference declaration and first binding cannot be separated by loops')
+        if loop then
+            if (not to.lst.var.bind) and (not AST.par(me,'Dcl_constr')) then
+                ASR(AST.isParent(loop, to.lst.var.blk), me,
+                    'reference declaration and first binding cannot be separated by loops')
+            end
         end
 
         -- Detect source of assignment/binding:
@@ -54,15 +66,6 @@ F = {
         --  first assignment
 
         else
-            --  class T with
-            --      var int& ref;
-            --  do
-            --      this.ref = <...>;   // this is not a first assignment
-            --  end
-            if (not constr) and to.lst.var.blk==cls.blk_ifc and (cls.id~='Main') then
-                return
-            end
-
             local if_ = AST.par(me,'If')
             if if_ and (if_.__depth > to.lst.var.blk.__depth) and
                ((not constr) or if_.__depth > constr.__depth) and
