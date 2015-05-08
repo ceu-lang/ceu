@@ -113,12 +113,16 @@ function AWAIT_PAUSE (me, no)
         LINE(me, [[
 if (]]..V(pse.dcl.var)..[[) {
 ]])
+--[=[
+-- TODO: remove?
+-- if not, why only internal should be allowed to awake?
         if me[1].tag ~= 'Ext' then
             -- internal event
             LINE(me, [[
     _STK.trl->seqno = _ceu_app->seqno-1;   /* awake again */
 ]])
         end
+]=]
         LINE(me, [[
     goto ]]..no..[[;
 }

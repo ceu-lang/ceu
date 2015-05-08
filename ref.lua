@@ -14,6 +14,19 @@ F = {
         assert(to.lst.var, 'bug found')
         local cls = CLS()
 
+        -- Detect source of assignment/binding:
+        --  - internal:  assignment from body to normal variable (v, this.v)
+        --  - constr:    assignment from constructor to interface variable (this.v)
+        --  - interface: assignment from interface (var int v = <default value>)
+        --  - outer:     assignment from outer body (t.v)
+
+        local constr    = AST.par(me, 'Dcl_constr')
+              constr    = constr and (constr.cls.blk_ifc.vars[to.lst.var.id]==to.lst.var) and constr
+        local global    = to.tag=='Field' and to.org.cls.id=='Global' and cls.id=='Main'
+        local outer     = (not constr) and to.tag=='Field' and to.org.cls~=cls and (not global)
+        local interface = AST.par(me, 'BlockI')
+        local internal  = not (constr or outer or interface)
+
         -- IGNORE NON-FIRST ASSIGNMENTS
         --  class T with
         --      var int& ref;
@@ -43,19 +56,6 @@ F = {
                     'reference declaration and first binding cannot be separated by loops')
             end
         end
-
-        -- Detect source of assignment/binding:
-        --  - internal:  assignment from body to normal variable (v, this.v)
-        --  - constr:    assignment from constructor to interface variable (this.v)
-        --  - interface: assignment from interface (var int v = <default value>)
-        --  - outer:     assignment from outer body (t.v)
-
-        local constr    = AST.par(me, 'Dcl_constr')
-              constr    = constr and (constr.cls.blk_ifc.vars[to.lst.var.id]==to.lst.var) and constr
-        local global    = to.tag=='Field' and to.org.cls.id=='Global' and cls.id=='Main'
-        local outer     = (not constr) and to.tag=='Field' and to.org.cls~=cls and (not global)
-        local interface = AST.par(me, 'BlockI')
-        local internal  = not (constr or outer or interface)
 
         -- ALREADY HAS INTERNAL BINDING
 

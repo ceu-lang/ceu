@@ -1996,10 +1996,10 @@ escape sum;
 }
 
 do return end
+---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
----]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -24316,6 +24316,20 @@ escape ret;
         --['~>1us;1~>A;~>1s;0~>A;~>19us'] = 11,
         --['~>1us;1~>A;~>5us;0~>A;~>5us;1~>A;~>5us;0~>A;~>9us'] = 6,
     },
+}
+
+Test { [[
+event bool in_tm;
+pause/if in_tm do
+    async do
+        loop i in 5 do
+        end
+    end
+end
+]],
+    _ana = {
+        isForever = true,
+    }
 }
 
 -- TIGHT LOOPS
