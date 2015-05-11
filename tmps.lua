@@ -41,6 +41,17 @@ error'not implemented (locals inside iter)'
         if string.sub(me.var.id,1,10) == '__ceu_adt_' then
             me.var.isTmp = true
         end
+
+        -- force __ceu_adt_root_* not to be tmp
+        --[[
+        -- TODO (-RAM)
+        -- Could be tmp if we kill/free the "to" branch before
+        -- allocating the new subtree.
+        -- This would also allow more allocation (i.e., free->alloc).
+        --]]
+        if string.sub(me.var.id,1,15) == '__ceu_adt_root_' then
+            me.var.isTmp = false
+        end
     end,
     Var = function (me)
         local var = me.var

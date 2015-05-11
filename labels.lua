@@ -88,6 +88,15 @@ F = {
         me.lbl_out = new{'Set_out',  prio=me.__depth}
     end,
 
+    SetExp = function (me)
+        local _, _, to, _ = unpack(me)
+        if to.fst.tp.id == '_tceu_adt_root' then
+            if PROPS.has_adts_watching[to.tp.id] then
+                me.lbl_cnt = new{'Set_adt'}
+            end
+        end
+    end,
+
     _Par_pre = function (me)
         me.lbls_in = {}
         for i, sub in ipairs(me) do

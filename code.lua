@@ -859,6 +859,21 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
             end
             pool = '(((tceu_adt_root*)(&('..V(pool)..')))->pool)'
 
+            if PROPS.has_adts_watching[to.tp.id] then
+                LINE(me, [[
+/* save the continuation to run after the kills */
+_STK.trl->evt = CEU_IN__STK;
+_STK.trl->lbl = ]]..me.lbl_cnt.id..[[;
+_STK.trl->stk = _ceu_go->stki;
+   /* awake in the same level as we are now (-1 vs the emit push below) */
+
+CEU_]]..fr.tp.id..[[_kill(_ceu_app, _ceu_go, ]]..V(to)..[[);
+return RET_RESTART;
+
+case ]]..me.lbl_cnt.id..[[:;
+]])
+            end
+
             LINE(me, [[
     void* __ceu_tmp = ]]..V(fr)..[[;
     ]]..V(fr)..[[ = &CEU_]]..string.upper(fr.tp.id)..[[_BASE;

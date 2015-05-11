@@ -286,7 +286,11 @@ F = {
         --      with
         --          await <EVT>;        // OPT-1
         --        <or>
-        --          if <ORG>->isAlive   // OPT-2
+        --          if not <ADT>:NIL then
+        --              var Adt* me = _ok_killed until me==<ADT>;
+        --          end
+        --        <or>
+        --          if <ORG>:isAlive   // OPT-3
         --              var Org* me = _ok_killed until me==<ORG>;
         --          end
         --      end
@@ -305,13 +309,39 @@ F = {
                 blk,
                 node('Block', me.ln,
                     node('Stmts', me.ln,
-                        -- HACK_6: figure out if OPT-1 or OPT-2
-                        tst,  -- "var" needs to be parsed before OPT-[12]
+                        -- HACK_6: figure out if OPT-1 or OPT-2 or OPT-3
+                        tst,  -- "var" needs to be parsed before OPT-[123]
 
                         -- OPT-1
                         node('Await', me.ln, e, dt, false),
 
                         -- OPT-2
+                        node('If', me.ln,
+                            node('Op2_.', me.ln, '.',
+                                node('Op1_*', me.ln, '*',
+                                    AST.copy(var)),
+                                    'HACK_6-NIL'),
+                            node('Block', me.ln,
+                                node('Stmts', me.ln,
+                                    node('Nothing', me.ln))),
+                            node('Block', me.ln,
+                                node('Stmts', me.ln,
+                                    node('Dcl_var', me.ln, 'var',
+                                        node('Type', me.ln, 'void', 1, false, false),
+                                        '__adt_'..me.n),
+                                    node('_Set', me.ln,
+                                        node('Var', me.ln, '__adt_'..me.n),
+                                        '=', '__SetAwait',
+                                        node('Await', me.ln,
+                                            node('Ext', me.ln, '_ok_killed'),
+                                            false,
+                                            node('Op2_==', me.ln, '==',
+                                                node('Var', me.ln, '__adt_'..me.n),
+                                                node('Op1_cast', me.ln,
+                                                    node('Type', me.ln, 'void', 1, false, false),
+                                                    AST.copy(var)))))))),
+
+                        -- OPT-3
                         node('If', me.ln,
                             node('Op2_.', me.ln, '.',
                                 node('Op1_*', me.ln, '*',
@@ -1690,15 +1720,17 @@ H = {
             end
         end
 
+        local root = (AST.par(me,'Adt_constr') and '' or 'root_')
+
         table.insert(DCLS, 1,
             node('Dcl_var', me.ln, 'var',
                 node('Type', me.ln, id, (dyn and 1) or 0, false, false),
-                '__ceu_adt_'..me.n))
+                '__ceu_adt_'..root..me.n))
 
         return { __adt=true,
                     DCLS,
                     node('Adt_constr', me.ln, adt, params,
-                        node('Var', me.ln, '__ceu_adt_'..me.n),
+                        node('Var', me.ln, '__ceu_adt_'..root..me.n),
                         dyn,
                 -- all nested must be generated after ("new" should fail later)
                         node('Stmts', me.ln,

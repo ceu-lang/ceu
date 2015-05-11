@@ -38,6 +38,10 @@ struct CEU_]]..id..[[ {
         end
 
         me.auxs[#me.auxs+1] = [[
+#ifdef CEU_ADTS_WATCHING_]]..id..[[
+
+void CEU_]]..id..'_kill (tceu_app* app, tceu_go* go, CEU_'..id..[[* me);
+#endif
 #ifdef CEU_ADTS_NEWS
 #ifdef CEU_ADTS_NEWS_MALLOC
 void CEU_]]..id..'_free_dynamic (CEU_'..id..[[* me);
@@ -59,6 +63,42 @@ void CEU_]]..id..'_free_static (CEU_'..id..[[* me, void* pool);
         else
             me.struct = string.sub(me.struct, 1, -3)    -- remove leading ';'
         end
+
+        local kill = [[
+#ifdef CEU_ADTS_WATCHING_]]..id..[[
+
+void CEU_]]..id..'_kill (tceu_app* app, tceu_go* go, CEU_'..id..[[* me) {
+]]
+        if op == 'union' then
+            kill = kill .. [[
+    switch (me->tag) {
+]]
+            for _, tag in ipairs(me.tags) do
+                local id_tag = string.upper(id..'_'..tag)
+                kill = kill .. [[
+        case CEU_]]..id_tag..[[:
+]]
+                if me.n_recs>0 and tag==me.tags[1] then
+                    kill = kill .. [[
+            /* base case */
+]]
+                else
+                    kill = kill .. [[
+            CEU_]]..id_tag..[[_kill(app, go, me);
+]]
+                end
+                kill = kill .. [[
+            break;
+]]
+            end
+            kill = kill .. [[
+    }
+]]
+        end
+        kill = kill .. [[
+}
+#endif
+]]
 
         local free = [[
 #ifdef CEU_ADTS_NEWS
@@ -170,6 +210,7 @@ void CEU_]]..id..'_free_static (CEU_'..id..[[* me, void* pool) {
 ]]
         end
 
+        me.auxs[#me.auxs+1] = kill
         me.auxs[#me.auxs+1] = free
         me.auxs[#me.auxs+1] = pack
         me.auxs   = table.concat(me.auxs,'\n')..'\n'
@@ -204,6 +245,36 @@ CEU_]]..id..'* '..enum..'_assert (CEU_'..id..[[* me, char* file, int line) {
         if top.n_recs>0 and top.tags[1]==tag then
             return  -- base case, no free
         end
+
+        local kill = [[
+#ifdef CEU_ADTS_WATCHING_]]..id..[[
+
+void ]]..enum..'_kill (tceu_app* app, tceu_go* go, CEU_'..id..[[* me) {
+    tceu_stk stk;
+             stk.evt  = CEU_IN__ok_killed;
+             stk.evto = me; /* what to kill */
+#ifdef CEU_ORGS
+             stk.org  = app->data;
+#endif
+             stk.trl  = &app->data->trls[0];
+             stk.stop = NULL;
+    stack_push(*go, stk);
+    stack_get(*go).evtp = &(stack_get(*go).evto);
+        /* param is pointer to what to kill */
+]]
+        -- kill all my recursive fields
+        for _,item in ipairs(top.tags[tag].tup) do
+            local _, tp, _ = unpack(item)
+            if TP.tostr(tp) == id..'*' then
+                kill = kill .. [[
+    CEU_]]..id..[[_kill(app, go, me->]]..tag..'.'..item.var_id..[[);
+]]
+            end
+        end
+        kill = kill .. [[
+}
+#endif
+]]
 
         local free = [[
 #ifdef CEU_ADTS_NEWS
@@ -247,6 +318,8 @@ void ]]..enum..'_free_static (CEU_'..id..[[* me, void* pool) {
 #endif
 #endif
 ]]
+
+        top.auxs[#top.auxs+1] = kill
         top.auxs[#top.auxs+1] = free
     end,
 

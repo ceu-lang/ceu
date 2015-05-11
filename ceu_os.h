@@ -382,10 +382,10 @@ typedef struct {
 typedef struct tceu_stk {
     tceu_nevt evt;  /* TODO: small in the end of struct? */
     tceu_evtp evtp;
-#ifdef CEU_INTS
-#ifdef CEU_ORGS
-    void* evto;
-#endif
+#if defined(CEU_ORGS) && defined(CEU_INTS) || \
+    defined(CEU_ADTS_WATCHING)             || \
+    defined(CEU_ORGS_WATCHING)
+    void* evto; /* emitting org or adt/org being killed */
 #endif
 
     tceu_trl* trl;  /* trail being traversed */

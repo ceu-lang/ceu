@@ -751,16 +751,25 @@ F = {
     end,
 
     Stmts = function (me)
-        -- HACK_6 [watching]: detects if OPT-1 (event) or OPT-2 (org)
+        -- HACK_6 [watching]: detects if OPT-1 (evt) or OPT-2 (adt) or OPT-3 (org)
         if me.__adj_watching then
             local stmts = me.__par
             assert(stmts and stmts.tag == 'Stmts', 'bug found')
 
             local tp = me[1].tp  -- type of Var
-            if tp and tp.ptr==1 and ENV.clss[tp.id] then
+            if tp and tp.ptr==1 and (ENV.clss[tp.id] or ENV.adts[tp.id]) then
                 stmts[2] = AST.node('Nothing', me.ln)      -- remove OPT-1
+                if ENV.clss[tp.id] then
+                    stmts[3] = AST.node('Nothing', me.ln)  -- remove OPT-2
+                else
+                    local adt = ENV.adts[tp.id]
+                    assert(adt and stmts[3][1][3]=='HACK_6-NIL')
+                    stmts[3][1][3] = adt.tags[1]
+                    stmts[4] = AST.node('Nothing', me.ln)  -- remove OPT-3
+                end
             else
                 stmts[3] = AST.node('Nothing', me.ln)      -- remove OPT-2
+                stmts[4] = AST.node('Nothing', me.ln)      -- remove OPT-3
             end
         end
     end,

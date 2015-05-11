@@ -476,8 +476,7 @@ fprintf(stderr, "STACK[%d]: evt=%d : seqno=%d : ntrls=%d\n",
                         {
                             tceu_stk stk;
                                      stk.evt  = CEU_IN__ok_killed;
-                                     stk.evtp = &stk.evto;
-                                     stk.evto = CUR_ORG;
+                                     stk.evto = CUR_ORG; /* what to kill */
                                      stk.org  = app->data;
                                      stk.trl  = &app->data->trls[0];
                                      stk.stop = NULL;
@@ -502,6 +501,8 @@ fprintf(stderr, "STACK[%d]: evt=%d : seqno=%d : ntrls=%d\n",
                             {
                                 stack_push(go, stk);    /* continue after it */
                             }
+                            stack_get(go).evtp = &(stack_get(go).evto);
+                                /* param is pointer to what to kill */
                             continue;                   /* restart */
                         }
 #endif

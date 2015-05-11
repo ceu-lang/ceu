@@ -186,6 +186,8 @@ F = {
                  fr.org.cls.id=='Global')  or
                 (ENV.clss[to.tp.id] and       -- organisms must use "watching"
                  fr.tag~='Op1_&')          or -- (but avoid &org)
+                (ENV.adts[to.tp.id] and       -- adts must use "watching"
+                 fr.tag~='Op1_&')          or -- (but avoid &adt)
                 me.__ast_tuple             or -- tuple attribution ok
                 (   -- same class and scope of "to" <= "fr"
                     (AST.par(to_blk,'Dcl_cls') == AST.par(fr_blk,'Dcl_cls')) and

@@ -1838,9 +1838,9 @@ escape sum;
 
 ---------------
 
+- testar pool dinamico indo fora de escopo (valgrind)
+- testar tb watching c/ adt estatico
 - watching de ADTs
-    - _ok virar evento "global" (indice unico para todas as classes/adts)
-        - teste virar <ref = await _ok until ref==me>
 - fazer a conversao da consutrucao recurse para isso
 Test { [[
 data T with
@@ -1852,22 +1852,36 @@ with
     end
 end
 
-var T* t = new T.NXT(10, T.NXT(10, T.NIL()));
-par/or do
-    watching t do
+pool T[] ts;
+
+ts = new T.NXT(10, T.NXT(9, T.NIL()));
+native @nohold _printf();
+
+var int ret = 10;
+
+par/and do
+    watching ts do
         await FOREVER;
     end
+    ret = ret + 1;
 with
-    watching t:NXT.nxt do
+    watching ts:NXT.nxt do
         await FOREVER;
     end
+    ret = ret * 2;
 with
-    t:NXT.nxt = T.NIL();
+    watching ts:NXT.nxt:NXT.nxt do
+        await FOREVER;
+    end
+    ret = ret - 1;
+with
+    ts = new T.NIL();
 end
 
-escape 10;
+escape ret;
 ]],
-    run = 10,
+    _ana = { acc=true },
+    run = 19,
 }
 
 Test { [[
@@ -1996,10 +2010,10 @@ escape sum;
 }
 
 do return end
----]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
+---]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -37393,6 +37407,34 @@ do
     _V = _V + 1;
 end
 
+pool T[1] ts;
+var T*? t = spawn T in ts with
+    this.id = 10;
+end;
+
+var int ret = 0;
+watching t do
+    ret = t:id;
+    await FOREVER;
+end
+
+escape ret;
+]],
+    run = 10,
+}
+
+Test { [[
+native do
+    int V = 0;
+end
+input void OS_START;
+class T with
+    var int id = 0;
+do
+    await OS_START;
+    _V = _V + 1;
+end
+
 pool T[10000] ts;
 var T* t0 = null;
 var T* tF = null;
@@ -43074,6 +43116,24 @@ escape l.NIL;
 ]],
     env = 'line 53 : not a struct',
     --run = 1,
+}
+
+Test { [[
+data T with
+    tag NIL;
+with
+    tag NXT with
+        var int v;
+        var T*  nxt;
+    end
+end
+pool T[] ts;
+do
+    ts = new T.NIL();
+end
+escape ts:NIL;
+]],
+    run = 1,
 }
 
 -- Mutation in dynamic ADTs:

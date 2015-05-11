@@ -225,6 +225,13 @@ do
             end
         end
 
+        if next(PROPS.has_adts_watching) then
+            str = str .. '#define CEU_ADTS_WATCHING\n'
+        end
+        for id in pairs(PROPS.has_adts_watching) do
+            str = str .. '#define CEU_ADTS_WATCHING_' .. id .. '\n'
+        end
+
         -- TODO: goto OPTS
         --str = str .. '#define CEU_DEBUG_TRAILS\n'
         --str = str .. '#define CEU_NOLINES\n'
