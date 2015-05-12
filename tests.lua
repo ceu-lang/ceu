@@ -2253,7 +2253,7 @@ end end end end end end end end end end end end end end end end end end end end
 end end end end end end end end end end end end end end end end end end end end
 escape 1;
 ]],
-    adj = 'line 5 : max depth of 0xFF',
+    ast = 'line 5 : max depth of 0xFF',
 }
 
 Test { [[escape 0;]], run=0 }
