@@ -311,6 +311,88 @@ void ceu_pause (tceu_trl* trl, tceu_trl* trlF, int psed) {
 
 /**********************************************************************/
 
+#ifdef CEU_ORGS
+void ceu_sys_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_org* org)
+{
+    /* CLEAR events for orgs:
+     *   0: clear continuations from the stack
+     *   1: remove from the linked list (*isDyn only*)
+     *   2: mark to free (*isDyn only*)
+     *   3: mark as dead (must be after (2))
+     *   4: "emit _ok_killed" for watched orgs
+     * TODO(speed): skip LST
+     */
+
+    /* 0: clear continuations from the stack */
+    stack_rem(*_ceu_go,org);
+
+#ifdef CEU_ORGS_NEWS
+    if (org->isDyn) {
+        /* 1: re-link PRV <-> NXT */
+        org->prv->nxt = org->nxt;
+        org->nxt->prv = org->prv;
+
+        /* 2: mark to free
+         * Should be freed if (pool-still-on-scope) or
+         *                    (malloc-ed):
+         * - pool-on-scope: only this org needs to be removed from 
+         * memory (in comparison to *all* the pool, which would not 
+         * require to free this individually)
+         * - malloc-ed: uses external memory, so free it regardless 
+         * of individual or pool termination
+         * Tests:
+         * - pool-on-scope: (!org->isAlive) (individual termination)
+         * - malloc-ed: (org->pool==NULL)
+         * TODO: what if both happens at the same time?
+         *      (i.e., body and pool terminate)
+         */
+#ifdef CEU_ORGS_NEWS_POOL
+        if (!org->isAlive
+#ifdef CEU_ORGS_NEWS_MALLOC
+            || org->pool->queue == NULL
+#endif
+            )
+#else
+            /* malloc'ed for sure, no if required */
+#endif
+        {
+            tceu_org* nxt = _ceu_go->lst_free;
+            org->nxt_free = NULL;    /* no next element */
+            if (_ceu_go->lst_free == NULL) {
+                _ceu_go->lst_free = org;      /* new first element */
+            } else {
+                while (nxt->nxt_free != NULL) {
+                    nxt = nxt->nxt_free; /* find last element */
+                }
+                nxt->nxt_free = org;  /* put after that */
+            }
+        }
+    }
+#endif  /* CEU_ORGS_NEWS */
+
+    /* 3: mark as dead (must be after (2) because isAlive is used there */
+    org->isAlive = 0;
+
+    /* 4: emit this.ok; */
+#ifdef CEU_ORGS_WATCHING
+    /* TODO(speed): only if was ever watched! */
+    {
+        tceu_stk stk;
+                 stk.evt  = CEU_IN__ok_killed;
+                 stk.evto = org; /* what to kill */
+                 stk.org  = _ceu_app->data;
+                 stk.trl  = &_ceu_app->data->trls[0];
+                 stk.stop = NULL;
+        stack_push(*_ceu_go, stk);    /* continue after it */
+        stack_get(*_ceu_go).evtp = &(stack_get(*_ceu_go).evto);
+            /* param is pointer to what to kill */
+    }
+#endif
+}
+#endif
+
+/**********************************************************************/
+
 u8 CEU_GC = 0;  /* execute __ceu_os_gc() when "true" */
 
 void ceu_sys_go (tceu_app* app, int evt, tceu_evtp evtp)
@@ -359,7 +441,7 @@ void ceu_sys_go (tceu_app* app, int evt, tceu_evtp evtp)
     }
 
 #ifdef CEU_ORGS_NEWS
-    tceu_org* lst_free = NULL;  /* "to free" list (only on reaction end) */
+    go.lst_free = NULL;
 #endif
 
     app->seqno++;
@@ -402,7 +484,7 @@ fprintf(stderr, "STACK[%d]: evt=%d : seqno=%d : ntrls=%d\n",
                 }
 
 #ifdef CEU_ORGS
-                {
+                else {
                     /* save current org before setting the next traversal */
                     tceu_stk CUR = STK;     /* TODO(speed): unecessary copy? */
                     #define CUR_ORG ((tceu_org*)(CUR.org))
@@ -413,120 +495,10 @@ fprintf(stderr, "STACK[%d]: evt=%d : seqno=%d : ntrls=%d\n",
                                 (CUR_ORG->n == 0) ?
                                 ((tceu_org_lnk*)CUR_ORG)->lnk : 0
                               ];
-                    /* CLEAR events for orgs:
-                     *   1: remove from the linked list (*isDyn only*)
-                     *   2: mark to free (*isDyn only*)
-                     *   3: mark as dead (must be after (2))
-                     *   4: "emit this.ok" for watched orgs
-                     *   5: terminate traversal if only for this org (*isDyn only*)
-                     * TODO(speed): skip LST
-                     */
+
                     if (CUR.evt==CEU_IN__CLEAR && CUR_ORG->n!=0) {
-                        stack_rem(go,CUR_ORG);
-#ifdef CEU_ORGS_NEWS
-                        if (CUR_ORG->isDyn) {
-                            /* 1: re-link PRV <-> NXT */
-                            CUR_ORG->prv->nxt = CUR_ORG->nxt;
-                            CUR_ORG->nxt->prv = CUR_ORG->prv;
-
-                            /* 2: mark to free
-                             * Should be freed if (pool-still-on-scope) or
-                             *                    (malloc-ed):
-                             * - pool-on-scope: only this org needs to be removed from 
-                             * memory (in comparison to *all* the pool, which would not 
-                             * require to free this individually)
-                             * - malloc-ed: uses external memory, so free it regardless 
-                             * of individual or pool termination
-                             * Tests:
-                             * - pool-on-scope: (!org->isAlive) (individual termination)
-                             * - malloc-ed: (org->pool==NULL)
-                             * TODO: what if both happens at the same time?
-                             *      (i.e., body and pool terminate)
-                             */
-#ifdef CEU_ORGS_NEWS_POOL
-                            if (!CUR_ORG->isAlive
-#ifdef CEU_ORGS_NEWS_MALLOC
-                                || CUR_ORG->pool->queue == NULL
-#endif
-                                )
-#else
-                                /* malloc'ed for sure, no if required */
-#endif
-                            {
-                                tceu_org* nxt = lst_free;
-                                CUR_ORG->nxt_free = NULL;    /* no next element */
-                                if (lst_free == NULL) {
-                                    lst_free = CUR_ORG;      /* new first element */
-                                } else {
-                                    while (nxt->nxt_free != NULL) {
-                                        nxt = nxt->nxt_free; /* find last element */
-                                    }
-                                    nxt->nxt_free = CUR_ORG;  /* put after that */
-                                }
-                            }
-                        }
-#endif  /* CEU_ORGS_NEWS */
-
-                        /* 3: mark as dead (must be after (2) because isAlive is used there */
-                        CUR_ORG->isAlive = 0;
-
-                        /* 4: emit this.ok; */
-#ifdef CEU_ORGS_WATCHING
-                        /* TODO(speed): only if was ever watched! */
-                        {
-                            tceu_stk stk;
-                                     stk.evt  = CEU_IN__ok_killed;
-                                     stk.evto = CUR_ORG; /* what to kill */
-                                     stk.org  = app->data;
-                                     stk.trl  = &app->data->trls[0];
-                                     stk.stop = NULL;
-#ifdef CEU_ORGS_NEWS
-                            if (CUR.stop == CUR_ORG) {
-#ifdef CEU_DEBUG
-                                ceu_sys_assert(CUR_ORG->isDyn);
-#endif
-                                STK = stk;              /* that's it */
-                            } else
-#else
-/*
-#ifdef CEU_CLEAR
-#ifdef CEU_DEBUG
-                            // TODO: problem when trl[n]==1st-org
-                            // assert fails because CUR_ORG==CUR.stop(trl[n])
-                            ceu_sys_assert(CUR.stop != CUR_ORG);
-#endif
-#endif
-*/
-#endif
-                            {
-                                stack_push(go, stk);    /* continue after it */
-                            }
-                            stack_get(go).evtp = &(stack_get(go).evto);
-                                /* param is pointer to what to kill */
-                            continue;                   /* restart */
-                        }
-#endif
-                        /* 5: terminate traversal if only-for-this-org
-                         * explicit free(me) or end of spawned block */
-#ifdef CEU_ORGS_NEWS
-                        if (CUR.stop == CUR_ORG) {
-#ifdef CEU_DEBUG
-                            ceu_sys_assert(CUR_ORG->isDyn);
-#endif
-                            break;  /* pop stack */
-                        }
-#else
-/*
-#ifdef CEU_CLEAR
-#ifdef CEU_DEBUG
-                        // TODO: problem when trl[n]==1st-org
-                        // assert fails because CUR_ORG==CUR.stop(trl[n])
-                        ceu_sys_assert(CUR.stop != CUR_ORG);
-#endif
-#endif
-*/
-#endif
-                    } /* CLEAR dyn orgs */
+                        ceu_sys_kill(app, &go, CUR_ORG);
+                    }
 
                     /* next org */
                     continue; /* restart */
@@ -684,9 +656,9 @@ _CEU_GO_QUIT_:;
 
     /* free all orgs on "lst_free" on reaction termination */
 #ifdef CEU_ORGS_NEWS
-    while (lst_free != NULL) {
-        tceu_org* org = lst_free;
-        lst_free = org->nxt_free;
+    while (go.lst_free != NULL) {
+        tceu_org* org = go.lst_free;
+        go.lst_free = org->nxt_free;
 #if    defined(CEU_ORGS_NEWS_POOL) && !defined(CEU_ORGS_NEWS_MALLOC)
         ceu_pool_free((tceu_pool*)org->pool, (byte*)org);
 #elif  defined(CEU_ORGS_NEWS_POOL) &&  defined(CEU_ORGS_NEWS_MALLOC)

@@ -468,6 +468,9 @@ typedef struct tceu_go {
 #endif
     tceu_stk stk[CEU_MAX_STACK];
     int stki;
+#ifdef CEU_ORGS_NEWS
+    tceu_org* lst_free;  /* "to free" list (only on reaction end) */
+#endif
 } tceu_go;
 
 #define stack_init(go) (go).stki = -1

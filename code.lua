@@ -364,19 +364,7 @@ _STK_ORG->cls = ]]..me.n..[[;
 #ifdef CEU_ORGS_NEWS
 if (_STK_ORG->isDyn) {
     _STK_ORG->isAlive = 0;
-    {
-        /* clear from all org */
-        tceu_stk stk;
-                 stk.evt = CEU_IN__CLEAR,
-#ifdef CEU_ORGS
-                 stk.org  = _STK_ORG;
-#endif
-                 stk.trl  = &_STK_ORG->trls[0];
-#ifdef CEU_CLEAR
-                 stk.stop = _STK_ORG;
-#endif
-        stack_push(*_ceu_go, stk);
-    }
+    ceu_sys_kill(_ceu_app, _ceu_go, _STK_ORG);
 }
 #endif
 ]])

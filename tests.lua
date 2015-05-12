@@ -37645,6 +37645,57 @@ escape ret;
 }
 
 Test { [[
+input void OS_START;
+class T with
+    var int id = 0;
+do
+    await OS_START;
+end
+
+pool T[1] ts;
+var T*? t = spawn T in ts with
+    this.id = 10000;
+end;
+
+var int ret = 0;
+
+watching t do
+    ret = t:id;
+    await FOREVER;
+end
+
+escape ret;
+]],
+    run = 10000,
+}
+Test { [[
+input void OS_START;
+class T with
+    var int id = 0;
+do
+    await OS_START;
+end
+
+pool T[2] ts;
+var T*? t1 = spawn T in ts with
+    this.id = 10000;
+end;
+var T*? t = spawn T in ts with
+    this.id = 10000;
+end;
+
+var int ret = 0;
+
+watching t do
+    ret = t:id;
+    await FOREVER;
+end
+
+escape ret;
+]],
+    run = 10000,
+}
+Test { [[
 native do
     int V = 0;
 end
@@ -37671,17 +37722,13 @@ end
 _assert(t0!=null and tF!=null);
 
 var int ret1=0, ret2=0;
-//par/and do
-    //watching t0 do
-        //ret1 = t0:id;
-        //await FOREVER;
-    //end
-//with
-    watching tF do          // TODO: par/and (wrongly) recognizes this as "across await"
-        ret2 = tF:id;
-        await FOREVER;
-    end
-//end
+
+_printf("ANTES\n");
+watching tF do
+    ret2 = tF:id;
+    await FOREVER;
+end
+_printf("DEPOIS\n");
 
 escape ret1+ret2+_V;
 ]],
