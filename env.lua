@@ -284,6 +284,17 @@ F = {
     end,
     TupleType_pos = 'Type',
 
+--[[
+    Node_pre = function (me)
+        -- HACK_8: set types for recurse
+        local t = me.__adj_recurse
+        if t then
+            local stmts, tp = unpack(t)
+            tp[1] = stmts[1].tp.id
+        end
+    end,
+]]
+
     Root_pre = function (me)
         -- TODO: NONE=0
         -- TODO: if PROPS.* then ... end
@@ -995,6 +1006,7 @@ F = {
             end
         end
     end,
+--[[
     Recurse = function (me)
         local exp = unpack(me)
         local loop = AST.par(me, 'Loop')
@@ -1003,6 +1015,7 @@ F = {
             ASR(TP.contains(iter.tp,exp.tp), me, 'invalid `recurse´')
         end
     end,
+]]
 
     --------------------------------------------------------------------------
         --assert( (not ins) or (ins.tup and #params==#ins.tup), 'bug found')

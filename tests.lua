@@ -1917,7 +1917,7 @@ end;
 
 escape sum;
 ]],
-    wrn = 'line 7 : unbounded recursive spawn',
+    wrn = 'line 9 : unbounded recursive spawn',
     run = { ['~>10s'] = 3 },
 }
 
@@ -2004,6 +2004,187 @@ loop n in tree do
 end
 escape sum;
 */
+]],
+    wrn = 'line 26 : unbounded recursive spawn',
+    run = { ['~>10s'] = 9 },
+}
+
+Test { [[
+data List with
+    tag NIL;
+with
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[3] list;
+list = new List.CONS(1,
+            List.CONS(2,
+                List.CONS(3, List.NIL())));
+
+native do
+    int V = 0;
+end
+
+loop n in list do
+    _V = _V + 1;
+    if n:CONS then
+        _V = _V + n:CONS.head;
+        recurse n:CONS.tail;
+    end
+end
+
+escape _V;
+]],
+    wrn = 'line 26 : unbounded recursive spawn',
+    run = 10,
+}
+
+Test { [[
+data List with
+    tag NIL;
+with
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[3] list;
+list = new List.CONS(1,
+            List.CONS(2,
+                List.CONS(3, List.NIL())));
+
+native do
+    int V = 0;
+end
+
+loop n in list do
+    _V = _V + 1;
+    watching n do
+        await 1s;
+        if n:CONS then
+            _V = _V + n:CONS.head;
+            recurse n:CONS.tail;
+        end
+    end
+end
+
+escape _V;
+]],
+    wrn = 'line 26 : unbounded recursive spawn',
+    _ana = { acc=true },
+    run = { ['~>10s'] = 10 },
+}
+
+Test { [[
+data Tree with
+    tag NIL;
+with
+    tag NODE with
+        var int   v;
+        var Tree* left;
+        var Tree* right;
+    end
+end
+
+pool Tree[3] tree;
+tree = new Tree.NODE(1,
+            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
+            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+
+native do
+    int V = 0;
+end
+
+loop n in tree do
+    _V = _V + 1;
+    watching n do
+        if n:NODE then
+            recurse n:NODE.left;
+            _V = _V + n:NODE.v;
+            recurse n:NODE.right;
+        end
+    end
+end
+
+escape _V;
+]],
+    wrn = 'line 26 : unbounded recursive spawn',
+    _ana = { acc=true },
+    run = 13,
+}
+
+Test { [[
+data Tree with
+    tag NIL;
+with
+    tag NODE with
+        var int   v;
+        var Tree* left;
+        var Tree* right;
+    end
+end
+
+pool Tree[3] tree;
+tree = new Tree.NODE(1,
+            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
+            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+
+native do
+    int V = 0;
+end
+
+loop n in tree do
+    _V = _V + 1;
+    watching n do
+        if n:NODE then
+            await 1s;
+            recurse n:NODE.left;
+            _V = _V + n:NODE.v;
+            recurse n:NODE.right;
+        end
+    end
+end
+
+escape _V;
+]],
+    wrn = 'line 26 : unbounded recursive spawn',
+    _ana = { acc=true },
+    run = { ['~>10s'] = 13 },
+}
+
+Test { [[
+data Tree with
+    tag NIL;
+with
+    tag NODE with
+        var int   v;
+        var Tree* left;
+        var Tree* right;
+    end
+end
+
+pool Tree[3] tree;
+tree = new Tree.NODE(1,
+            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
+            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+
+var int sum = 0;
+
+loop n in tree do
+    _V = _V + 1;
+    var int i = sum;
+    if n:NODE then
+        recurse n:NODE.left;
+        sum = i + n:NODE.v;
+        recurse n:NODE.right;
+    end
+end
+
+escape sum;
 ]],
     wrn = 'line 26 : unbounded recursive spawn',
     run = { ['~>10s'] = 9 },
@@ -5358,6 +5539,7 @@ escape a+f;
 }
 
 -- LOOP/RECURSE
+--[=[
 
 Test { [[
 loop v in 10 do
@@ -5629,6 +5811,7 @@ recurse 1;
 ]],
     adt = 'line 1 : `recurse´ without loop',
 }
+]=]
 
 -- INTERNAL EVENTS
 
@@ -28662,6 +28845,7 @@ with
 end
 escape 1;
 ]],
+    tight = 'line 7 : tight loop',
     run = 1,
 }
 
@@ -28779,6 +28963,24 @@ Test { [[
 input void OS_START;
 class T with
     var int v;
+    event int ok;
+do
+    await OS_START;
+    emit ok => v;
+end
+var int v;
+v = do T with
+    this.v = 10;
+end;
+escape v;
+]],
+    run = 10,
+}
+
+Test { [[
+input void OS_START;
+class T with
+    var int v;
     event (int,int) ok;
 do
     await OS_START;
@@ -28790,7 +28992,8 @@ var int v1, v2;
 end;
 escape v1+v2;
 ]],
-    run = 30,
+    env = 'line 10 : invalid attribution',
+    --run = 30,
 }
 
 Test { [[
@@ -30016,6 +30219,24 @@ escape 1;
     env = 'line 3 : undeclared type `U´',
 }
 
+Test { [[
+class T with do end;
+class U with
+    pool T[]& ts;
+do
+end
+pool T[] ts1;
+pool T[2] ts2;
+var U _ with
+    this.ts = ts1;
+end;
+var U _ with
+    this.ts = ts2;
+end;
+escape 1;
+]],
+    run = 1,
+}
 Test { [[
 native do
     int V = 0;
@@ -43847,6 +44068,7 @@ escape ret;
 }
 
 -- ADTS / RECURSE
+--[=[
 
 Test { [[
 data List with
@@ -44013,6 +44235,7 @@ escape sum;
 ]],
     run = 6,
 }
+]=]
 
 -- TODO: continue ADT implementation
 

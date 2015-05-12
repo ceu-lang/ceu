@@ -189,7 +189,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
              + V'DoOrg'
              + V'Nothing'
              + V'RawStmt'
-             + V'Recurse'
+             + V'_Recurse'
              + V'_Dcl_fun0'
              + V'CallStmt' -- last
              --+ EM'statement'-- (missing `_´?)'
@@ -285,7 +285,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     , Break     = KEY'break'
     , _Continue = KEY'continue'
-    , Recurse   = KEY'recurse' * EV'__Exp'
+    , _Recurse   = KEY'recurse' * EV'__Exp'
 
     , _Loop   = KEY'loop' * ('/'*EV'__Exp' + Cc(false)) *
                     (V'Var' * (EKEY'in'*EV'__Exp' + Cc(false))

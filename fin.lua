@@ -264,7 +264,7 @@ F = {
 
         -- possible dangling pointer "me.var" is accessed across await
 
-        if me.tp.ptr>0 and ENV.clss[me.tp.id] then
+        if me.tp.ptr>0 and (ENV.clss[me.tp.id] or ENV.adts[me.tp.id]) then
             -- pointer to org: check if it is enclosed by "watching me.var"
             -- since before the first await
             for n in AST.iter('ParOr') do

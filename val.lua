@@ -191,7 +191,7 @@ F =
             -- normalize all pool acesses to pointers to it
             -- (because of interface accesses that must be done through a pointer)
             if not (var.tp.ptr>0 or var.tp.ref) then
-                me.val = '(&'..me.val..')'
+                me.val = '((tceu_pool_*)(&'..me.val..'))'
             end
             var.val_dcl = var.val_dcl or '&'..CUR(me, var.id_)
                                          -- TODO: first assignment

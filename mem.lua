@@ -528,7 +528,7 @@ CEU_POOL_DCL(]]..var.id_..',CEU_'..var.tp.id..','..var.tp.arr.sval..[[)
                 elseif var.tp.ptr>0 or var.tp.ref then
                     local ptr = string.rep('*', (var.tp.ref and 1) + var.tp.ptr)
                     top.struct = top.struct .. [[
-tceu_pool]]..ptr..' '..var.id_..[[;
+tceu_pool_]]..ptr..' '..var.id_..[[;
 ]]
                 else
                     top.struct = top.struct .. [[
@@ -601,11 +601,13 @@ tceu_recurse __recurse_vec_]]..me.n..'['..me.iter_max..']'..[[;
 ]]
             -- TODO: reason about the maximum space (it's less than the above!)
     end,
+--[[
     Recurse = function (me)
         local loop = AST.par(me,'Loop')
         loop.__recs = (loop.__recs or 0) + 1
                       -- stack is a multiple of inner recurses
     end,
+]]
 
     Await = function (me)
         local _, dt = unpack(me)

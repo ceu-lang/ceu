@@ -68,6 +68,7 @@ F = {
         end
     end,
 
+--[[
     Loop = function (me)
         local _,iter = unpack(me)
         if me.iter_tp == 'data' then
@@ -82,6 +83,7 @@ F = {
         ASR(loop, me, '`recurse´ without loop')
         ASR(loop.iter_tp=='data', me, 'invalid `recurse´: no data')
     end,
+]]
 }
 
 AST.visit(F)

@@ -94,8 +94,9 @@ function AST.child (me, pred)
     end
     for i, sub in ipairs(me) do
         if AST.isNode(sub) and sub.tag~='Ref' then
-            if AST.child(sub,pred) then
-                return sub
+            local child = AST.child(sub,pred)
+            if child then
+                return child
             end
         end
     end
@@ -294,4 +295,4 @@ for i=1, 12 do
 end
 
 AST.root = m.P(GG):match(OPTS.source)
---DBG('oi',AST.root)
+--AST.visit({})

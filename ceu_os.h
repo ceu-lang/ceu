@@ -434,11 +434,13 @@ typedef struct tceu_org
 #ifdef CEU_IFCS
     tceu_ncls cls;          /* class id */
 #endif
-    u8 isAlive: 1;          /* Two purposes:
+    u8 isAlive: 1;          /* Three purposes:
                              * - =0 if terminate normally or =1 if from scope
                              *      checked to see if should call free on pool
                              * - required by "watching o" to avoid awaiting a
                              *      dead org
+                             * - required by "Do T" to avoid awaiting a dead 
+                             *      org
                              */
 #ifdef CEU_ORGS_NEWS
     u8 isDyn: 1;            /* created w/ new or spawn? */

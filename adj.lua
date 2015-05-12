@@ -467,12 +467,114 @@ F = {
 
 -- Loop --------------------------------------------------
 
+    _Loop_adt_pre = function (me)
+        local max, to, iter, body = unpack(me)
+
+        local tp = node('Type', me.ln, 'Tree', 1, false, false)
+        local cls = node('Dcl_cls', me.ln, false, '_Loop_'..me.n,
+                        node('BlockI', me.ln,
+                            node('Dcl_pool', me.ln, 'pool',
+                                node('Type', me.ln, '_Loop_'..me.n, 0, true, true),
+                                '_pool'),
+                            node('Dcl_var', me.ln, 'var',
+                                tp,
+                                to[1]),
+                            node('_Dcl_int', me.ln, 'event',
+                                node('Type', me.ln, 'int', 0, false, false),
+                                'ok')),
+                        body)
+        local stmts = body[1]
+        stmts[#stmts+1] = node('EmitInt', me.ln, 'emit',
+                            node('Var', me.ln, 'ok'),
+                            node('NUMBER', me.ln, 1))
+
+        local pool = node('Dcl_pool', me.ln, 'pool',
+                        node('Type', me.ln, '_Loop_'..me.n, 0, true, false),
+                        '_pool_'..me.n)
+        local doorg = node('DoOrg', me.ln, '_Loop_'..me.n,
+                        node('Dcl_constr', me.ln,
+                            node('_Set', me.ln,
+                                node('Op2_.', me.ln, '.',
+                                    node('This', me.ln),
+                                    '_pool'),
+                                '=', 'SetExp',
+                                node('Var', me.ln, '_pool_'..me.n)),
+                            node('_Set', me.ln,
+                                node('Op2_.', me.ln, '.',
+                                    node('This', me.ln),
+                                    to[1]),
+                                '=', 'SetExp',
+                                iter)))
+
+        -- HACK_8: set types for recurse
+        local stmts = node('Stmts', me.ln, AST.copy(iter), cls, pool, doorg)
+        cls.__adj_recurse = { stmts, tp }
+        return stmts
+    end,
+    _Recurse_pre = function (me)
+        local exp = unpack(me)
+        local cls = AST.par(me, 'Dcl_cls')
+        local cls_id = cls[2]
+        local to_id  = cls[3][2][3]
+
+        local dcl = node('Dcl_var', me.ln, 'var',
+                        node('Type', me.ln, cls_id, 1, false, false, true),
+                        '_var_'..me.n)
+        local set = node('_Set', me.ln,
+                        node('Var', me.ln, '_var_'..me.n),
+                        '=', '__SetSpawn',
+                        node('Spawn', me.ln, cls_id,
+                            node('Var', me.ln, '_pool'),
+                            node('Dcl_constr', me.ln,
+                                node('_Set', me.ln,
+                                    node('Op2_.', me.ln, '.',
+                                        node('This', me.ln),
+                                        '_pool'),
+                                    '=', 'SetExp',
+                                    node('Op2_.', me.ln, '.',
+                                        node('Outer', me.ln),
+                                        '_pool')),
+                            node('_Set', me.ln,
+                                node('Op2_.', me.ln, '.',
+                                    node('This', me.ln),
+                                    to_id),
+                                '=', 'SetExp',
+                                exp))))
+        local if_ = node('If', me.ln,
+                        node('Op1_?', me.ln, '?',
+                            node('Var', me.ln, '_var_'..me.n)),
+                        node('_Watching', me.ln,
+                            node('Var', me.ln, '_var_'..me.n),
+                            false,
+                            node('Block', me.ln,
+                                node('Stmts', me.ln,
+                                    node('Await', me.ln,
+                                        node('Op2_.', me.ln, '.',
+                                            node('Op1_*', me.ln, '*',
+                                                node('Var', me.ln, '_var_'..me.n)),
+                                            'ok'))))),
+                        node('Nothing', me.ln))
+
+        return node('Stmts', me.ln, dcl, set, if_)
+    end,
+
     _Loop_pre = function (me)
+        -- HACK_8: detect adt iterator
+        -- should use loop/adt ?
+        local rec = AST.child(me, '_Recurse')
+        if rec then
+            local loop = AST.par(rec, '_Loop')
+            if loop == me then
+                return F._Loop_adt_pre(me)
+            end
+        end
+
         local max, to, iter, body = unpack(me)
         to = to or (max and node('Var', me.ln, '__ceu_i'..'_'..me.n))
         local loop = node('Loop', me.ln, max, iter, to, body)
         loop.isEvery      = me.isEvery
         loop.isAwaitUntil = me.isAwaitUntil
+
         return node('Block', me.ln,
                 node('Stmts', me.ln,
                     node('Stmts', me.ln),   -- to insert all pre-declarations
@@ -681,8 +783,13 @@ F = {
                             'ok'),
                         false,
                         false)
+        local noawt = node('Nothing', me.ln)
+
         if to then
-            awt = node('_Set', me.ln, to, '=', '__SetAwait', awt, false, false)
+            awt   = node('_Set', me.ln, to, '=', '__SetAwait',
+                        awt, false, false)
+            noawt = node('_Set', me.ln, to, '=', 'SetExp',
+                        node('NUMBER',me.ln,0), false, false)
         end
 
         return node('Do', me.ln,
@@ -692,7 +799,16 @@ F = {
                             node('Type', me.ln, id_cls, 0, false, false),
                             '_org_'..me.n,
                             constr),
-                        awt)))
+                        node('If', me.ln,
+                            node('Op2_.', me.ln, '.',
+                                node('Op1_*', me.ln, '*',
+                                    node('Op1_cast', me.ln,
+                                        node('Type', me.ln, '_tceu_org', 1, false, false),
+                                        node('Op1_&', me.ln, '&',
+                                            node('Var', me.ln, '_org_'..me.n)))),
+                                'isAlive'),
+                            awt,
+                            noawt))))
     end,
 
 -- BlockI ------------------------------------------------------------

@@ -1034,6 +1034,7 @@ if (]]..V(c)..[[) {
 ]])
     end,
 
+--[=[
     Recurse = function (me)
         local exp = unpack(me)
         local loop = AST.par(me, 'Loop')
@@ -1059,6 +1060,7 @@ ceu_out_assert_ex(]]..nxt..' < '..loop.iter_max..[[,
 
         CASE(me, me.lbl)
     end,
+]=]
 
     Loop_pos = function (me)
         local max,iter,to,body = unpack(me)
