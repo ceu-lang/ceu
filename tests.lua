@@ -41888,7 +41888,8 @@ var u8 err, ret;
 (err, ret) = request LINE => 10;
 escape 1;
 ]],
-    env = 'line 3 : invalid attribution (u8 vs char*)',
+    env = 'line 3 : invalid parameter #3 (char* vs u8)',
+    --env = 'line 3 : invalid attribution (u8 vs char*)',
 }
 
 Test { [[
