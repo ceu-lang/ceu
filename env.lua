@@ -747,9 +747,14 @@ F = {
     end,
 
     VarList = function (me)
--- TODO
         me.tp   = me
         me.lval = me
+        me.tp.tup = TP.t2tup(me)
+    end,
+    ExpList = function (me)
+        me.tp   = me
+        me.lval = false
+        me.tp.tup = TP.t2tup(me)
     end,
 
     Dcl_nat = function (me)
@@ -853,7 +858,8 @@ F = {
 
         if set == 'await' then
             local e = unpack(fr)
-            F.__check_params(me, (e.var or e).evt.ins, to)
+            F.__check_params(me, (e.var or e).evt.ins, to.tp.tup, true)
+                                                           -- TODO:remove
             return
 
         elseif set == 'thread' then
@@ -970,6 +976,8 @@ F = {
             -- done above
 
         elseif me.isEvery then
+-- TODO
+me[3] = false
             me.iter_tp = 'event'
             if to then
                 local evt = (iter.var or iter).evt
@@ -1022,17 +1030,26 @@ F = {
     --------------------------------------------------------------------------
         --assert( (not ins) or (ins.tup and #params==#ins.tup), 'bug found')
 
-    __check_params = function (me, ins, params)
+-- TODO: ins=>tup
+-- TODO: ins=>to, param=>fr
+    __check_params = function (me, ins, params
+-- TODO
+,inv)
         assert(ins and ins.tag=='TupleType' and ins.tup, 'bug found')
         ASR(#params==#ins, me, 'invalid arity');
         for i, p in ipairs(params) do
-            p = p.tp
+            --p = p.tp
             local f = ins.tup[i]
-            assert(p.tag=='Type' and f.tag=='Type', 'bug found')
+            --assert(p.tag=='Type' and f.tag=='Type', 'bug found')
 -- TODO: invert/better message
             local call = (me.tag=='Op2_call' and 'call') or 'constructor'
+if inv then
+            ASR(TP.contains(p,f), me, 'invalid parameter #'..i..
+                ' ('..TP.tostr(f)..' vs '..TP.tostr(p)..')')
+else
             ASR(TP.contains(f,p), me, 'invalid '..call..' parameter #'..i..
                 ' ('..TP.tostr(p)..' vs '..TP.tostr(f)..')')
+end
         end
         return req
     end,
@@ -1061,7 +1078,7 @@ F = {
 
         local ins = f.var and f.var.fun and f.var.fun.ins
         if ins then
-            F.__check_params(me, ins, params)
+            F.__check_params(me, ins, TP.t2tup(params).tup)
         end
 
         if not me.c then
@@ -1088,7 +1105,7 @@ F = {
             tup = tadt.tup
         end
 
-        F.__check_params(me, tup, params)
+        F.__check_params(me, tup, params.tp.tup)
     end,
 
     Op2_idx = function (me)

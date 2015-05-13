@@ -184,6 +184,15 @@ function TP.isNumeric (tp)
             or tp.id=='@'
 end
 
+function TP.t2tup (t)
+    local tup = {}
+    for _, v in ipairs(t) do
+        tup[#tup+1] = v.tp
+        assert(v.tp)
+    end
+    return tup
+end
+
 function TP.contains (tp1, tp2)
     if tp1.tup or tp2.tup then
         if tp1.tup and tp2.tup then

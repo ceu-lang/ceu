@@ -32,6 +32,7 @@ function AST.node (tag, ln, ...)
         me = setmetatable({ ... }, MT)
     end
     me.n = _N
+    --me.xxx = debug.traceback()
     _N = _N + 1
     me.ln  = ln
     --me.ln[2] = me.n
@@ -161,6 +162,9 @@ end
                            ' d='..(me.__depth or 0)..
                            ' p='..(me.__par and me.__par.n or '')..
                            ') '..ks)
+--DBG'---'
+--DBG(me.xxx)
+--DBG'---'
     for i, sub in ipairs(me) do
         if me.tag~='Ref' and AST.isNode(sub) then
             AST.dump(sub, spc+2)   -- 'Ref' create cycles

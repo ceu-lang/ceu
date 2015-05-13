@@ -873,7 +873,9 @@ case ]]..me.lbl_cnt.id..[[:;
             end
 
         elseif set == 'thread' then
-            LINE(me, V(to)..' = (*('..me.thread_st..') > 0)')
+            local thr = AST.child(me, 'Thread')
+                        -- TODO: do better than child
+            LINE(me, V(to)..' = (*('..thr.thread_st..') > 0);')
 
         else
             -- optional types

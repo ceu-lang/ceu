@@ -19,6 +19,7 @@ F = {
 
 -- TODO
 if set == 'await' then
+    ASR(op == '=', me, 1103, 'wrong operator')
     return
 end
 

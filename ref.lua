@@ -7,7 +7,7 @@ end
 F = {
     -- before Var
     SetExp_pre = function (me)
-        local _, fr, to = unpack(me)
+        local _, fr, to, set = unpack(me)
         if not to.tp.ref then
             return
         end
@@ -121,7 +121,7 @@ F = {
 
             -- refuses first assignment from awaits:
             -- var int& i = await <...>;
-            ASR(not me.__ast_tuple, me, 'invalid attribution')
+            ASR(set~='await', me, 'invalid attribution')
 
             -- check scopes
 -- TODO: this code is duplicated with "fin.lua"

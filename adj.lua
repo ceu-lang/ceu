@@ -1228,23 +1228,25 @@ F = {
         end
         me[3] = nil   -- remove "cnd" from "Await"
 
+-- TODO: remove
         assert(me[1].tag ~= 'Ref', 'bug found')
 
-        if not cnd then
-            return me
+        --  await <E> until <CND>
+        --      -- becomes --
+        --  loop do
+        --      await <E>;
+        --      if <CND> then
+        --          break;
+        --      end
+        --  end
+        if cnd then
+            return node('_Loop', me.ln, false, false, false,
+                    node('Stmts', me.ln,
+                        me,
+                        node('If', me.ln, cnd,
+                            node('Break', me.ln),
+                            node('Nothing', me.ln))))
         end
-        if AST.par(me, '_Set_pre') then
-            return me   -- TODO: join code below with _Set_pre
-        end
-
-        -- <await until> => loop
-
-        return node('_Loop', me.ln, false, false, false,
-                node('Stmts', me.ln,
-                    me,
-                    node('If', me.ln, cnd,
-                        node('Break', me.ln),
-                        node('Nothing', me.ln))))
     end,
 
     _Set_pre = function (me)
@@ -1254,6 +1256,7 @@ F = {
             return node(tag, me.ln, op, p1, to, 'set')
 
         elseif tag == '__SetAwait' then
+            local ret   -- SetExp or Loop (await-until)
 
             --local ret
             --local awt = p1
@@ -1262,8 +1265,30 @@ F = {
             if to.tag ~= 'VarList' then
                 to = node('VarList', me.ln, to)
             end
-            return node('SetExp', me.ln, op, p1, to, 'await')
+            ret = node('SetExp', me.ln, op, p1, to, 'await')
 
+
+            --  <v> = await <E> until <CND>
+            --      -- becomes --
+            --  loop do
+            --      <v> = await <E>;
+            --      if <CND> then
+            --          break;
+            --      end
+            --  end
+            local _, _, cnd = unpack(p1)
+            if cnd then
+                p1[3] = nil
+                ret = node('_Loop', me.ln, false, false, false,
+                        node('Stmts', me.ln,
+                            ret,
+                            node('If', me.ln, cnd,
+                                node('Break', me.ln),
+                                node('Nothing', me.ln))))
+                ret.isAwaitUntil = true -- see tmps/fins
+            end
+
+            return ret
 --[==[
 -- TODO: remove
             -- <await until> => loop
@@ -1532,8 +1557,11 @@ F = {
 -- Finalize ------------------------------------------------------
 
     Finalize_pos = function (me)
-        ASR( (not me[1]) or (me[1].tag=='SetExp'),
-            me, 'invalid `finalize´')
+        local sub = unpack(me)
+        if sub then
+            local _,fr,to,set = unpack(sub)
+            ASR(set=='set', me, 'invalid `finalize´')
+        end
     end,
 
 -- Pause ---------------------------------------------------------

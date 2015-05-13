@@ -2194,6 +2194,7 @@ do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
+---]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -18900,7 +18901,6 @@ escape v;
     --run = 10,
 }
 
----]===]
 Test { [[
 var int* p;
 var int ret;
@@ -20575,8 +20575,9 @@ every qu_ in go do
     end
 end
 ]],
-    fin = 'line 5 : pointer access across `await´',
-    run = 1,
+    --fin = 'line 5 : pointer access across `await´',
+    _ana = { isForever=true },
+    --run = 1,
 }
 
 Test { [[
@@ -24266,8 +24267,8 @@ escape 0;
 ]],
     --env = 'line 2 : event type must be numeric',
     --env = 'line 2 : invalid attribution',
-    --env = 'line 2 : invalid arity',
-    env = 'line 2 : invalid attribution (int vs void)',
+    env = 'line 2 : invalid arity',
+    --env = 'line 2 : invalid attribution (int vs void)',
 }
 
 Test { [[
@@ -24277,9 +24278,9 @@ end
 escape 0;
 ]],
     --env = 'line 2 : event type must be numeric',
-    --env = 'line 2 : invalid arity',
+    env = 'line 2 : invalid arity',
     --env = 'line 2 : invalid attribution',
-    env = 'line 2 : invalid attribution (bool vs void)',
+    --env = 'line 2 : invalid attribution (bool vs void)',
 }
 
 Test { [[
@@ -28956,7 +28957,8 @@ var int v = do T with
 end;
 escape v;
 ]],
-    env = 'line 9 : invalid attribution (int vs void)',
+    env = 'line 9 : invalid arity',
+    --env = 'line 9 : invalid attribution (int vs void)',
 }
 
 Test { [[
@@ -40010,7 +40012,8 @@ with
 end
 escape 1;
 ]],
-    env = 'line 4 : invalid attribution',
+    env = 'line 4 : invalid parameter #1 (int vs void)',
+    --env = 'line 4 : invalid attribution',
 }
 
 Test { [[
@@ -40026,7 +40029,7 @@ with
 end
 escape 1;
 ]],
-    env = 'line 4 : invalid attribution',
+    env = 'line 4 : invalid parameter #2 (int* vs int)',
 }
 
 Test { [[
@@ -40043,7 +40046,7 @@ with
 end
 escape 1;
 ]],
-    env = 'line 4 : invalid attribution',
+    env = 'line 4 : invalid parameter #2 (int* vs int)',
 }
 
 Test { [[
@@ -41540,7 +41543,8 @@ await 1s;
 _assert(t.i == null);
 escape 1;
 ]],
-    run = { ['~>1s'] = 1 },
+    fin = 'line 10 : pointer access across `await´',
+    --run = { ['~>1s'] = 1 },
 }
 
 Test { [[
