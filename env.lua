@@ -1078,7 +1078,7 @@ end
 
         local ins = f.var and f.var.fun and f.var.fun.ins
         if ins then
-            F.__check_params(me, ins, TP.t2tup(params).tup)
+            F.__check_params(me, ins, params.tup)
         end
 
         if not me.c then

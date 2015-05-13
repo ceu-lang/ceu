@@ -20575,8 +20575,8 @@ every qu_ in go do
     end
 end
 ]],
-    --fin = 'line 5 : pointer access across `await´',
-    _ana = { isForever=true },
+    fin = 'line 5 : pointer access across `await´',
+    --_ana = { isForever=true },
     --run = 1,
 }
 
