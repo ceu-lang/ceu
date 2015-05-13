@@ -1251,18 +1251,21 @@ F = {
         local to, op, tag, p1, p2, p3 = unpack(me)
 
         if tag == 'SetExp' then
-            return node(tag, me.ln, op, p1, to)
+            return node(tag, me.ln, op, p1, to, 'set')
 
         elseif tag == '__SetAwait' then
 
-            local ret
-            local awt = p1
-            local T = node('Stmts', me.ln)
+            --local ret
+            --local awt = p1
+            --local T = node('Stmts', me.ln)
 
             if to.tag ~= 'VarList' then
                 to = node('VarList', me.ln, to)
             end
+            return node('SetExp', me.ln, op, p1, to, 'await')
 
+--[==[
+-- TODO: remove
             -- <await until> => loop
             local cnd = awt[#awt]
             awt[#awt] = false   -- remove "cnd" from "Await"
@@ -1312,7 +1315,9 @@ F = {
             --T[#T+1] = awt
             T[#T+1] = node('SetExp', me.ln, '=',
                             awt,--node('Ref', me.ln, awt),
-                            node('Var', me.ln, tup_id))
+                            to,
+                            --node('Var', me.ln, tup_id),
+                            'await')
                             -- assignment to struct must be '='
             T[#T].__ast_tuple = true
 
@@ -1336,12 +1341,13 @@ F = {
             end
 
             return ret
+]==]
 
         elseif tag == 'SetBlock' then
             return node(tag, me.ln, p1, to)
 
         elseif tag == '__SetThread' then
-            return node('SetExp', me.ln, op, p1, to, 'Thread')
+            return node('SetExp', me.ln, op, p1, to, 'thread')
 
         elseif tag == '__SetEmitExt' then
             assert(p1.tag == 'EmitExt')

@@ -2194,7 +2194,6 @@ do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
----]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -7878,8 +7877,8 @@ var int a, b;
 (a,b) = await 1s;
 escape 1;
 ]],
-    gcc = 'error: ‘tceu__s32’ has no member named ‘_2’',
-    -- TODO: better error message
+    env = 'line 2 : invalid arity',
+    --gcc = 'error: ‘tceu__s32’ has no member named ‘_2’',
     --run = 1,
 }
 
@@ -18901,6 +18900,7 @@ escape v;
     --run = 10,
 }
 
+---]===]
 Test { [[
 var int* p;
 var int ret;

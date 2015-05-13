@@ -587,6 +587,7 @@ F = {
         ENV.exts[id] = me.evt
     end,
 
+-- TODO: remove
     Dcl_var_pre = function (me)
         -- HACK_5: substitute with type of "to" (adj.lua)
         local _, tp = unpack(me)
@@ -745,6 +746,12 @@ F = {
         me.lval = var.lval
     end,
 
+    VarList = function (me)
+-- TODO
+        me.tp   = me
+        me.lval = me
+    end,
+
     Dcl_nat = function (me)
         local mod, tag, id, len = unpack(me)
         if tag=='type' or mod=='@plain' then
@@ -844,18 +851,13 @@ F = {
         local _, fr, to, set = unpack(me)
         to = to or AST.iter'SetBlock'()[1]
 
-        if set == 'Thread' then
-            fr.tp = TP.fromstr'int'       -- 0/1
-        end
-
-        if to.tag=='Var' and string.sub(to.var.id,1,5)=='_tup_' then
-            -- SetAwait:
-            -- (a,b) = await E;
-            -- Individual assignments will be checked:
-            -- tup = await E;
-            -- a = tup->_1;
-            -- b = tup->_2;
+        if set == 'await' then
+            local e = unpack(fr)
+            F.__check_params(me, (e.var or e).evt.ins, to)
             return
+
+        elseif set == 'thread' then
+            fr.tp = TP.fromstr'int'       -- 0/1
         end
 
         local fr_tp = fr.tp
@@ -934,11 +936,6 @@ F = {
     CallStmt = function (me)
         local call = unpack(me)
         ASR(call.tag == 'Op2_call', me, 'invalid statement')
-    end,
-
-    Thread = function (me)
--- TODO: remove
-        me.tp = TP.fromstr'int'       -- 0/1
     end,
 
     Loop_aft = function (me, sub, i)

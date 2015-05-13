@@ -799,7 +799,8 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
     end,
 
     SetExp = function (me)
-        local _, fr, to, fin = unpack(me)
+-- TODO: fin??
+        local _, fr, to, set, fin = unpack(me)
         COMM(me, 'SET: '..tostring(to[1]))    -- Var or C
         LINE(me, '{')   -- __ceu_tmp below
 
@@ -856,60 +857,68 @@ case ]]..me.lbl_cnt.id..[[:;
             to = to[2]
         end
 
-        local VAR = '__ceu_set_'..me.n
-        LINE(me, [[
-{
-    __typeof__(]]..V(to)..') '..VAR..[[;
-]])
         CONC(me, fr)
 
-        -- optional types
--- TODO: sumir com "todo"
-        local todo = {}
-        local tag
-        local ID
-        if to.tp.opt then
-            ID = string.upper(to.tp.opt.id)
-            if fr.tp.opt then
-                -- NORMAL
-                todo.normal = true
-            elseif (fr.fst.tag=='Op2_call' and fr.fst.__fin_opt_tp)
-            or (fr.tag=='Ref' and fr[1].tag=='Spawn')
-            then
-                -- var _t&? = _f(...);
-                -- var T*? = spawn <...>;
-                -- NORMAL  -- uses pack
-                todo.normal = true
-            else
-                if fr.tag == 'NIL' then
-                    tag = 'NIL'
+        if set == 'await' then
+            local e, dt = unpack(fr)
+            for i, v in ipairs(to) do
+                local val
+                if dt then
+                    local suf = (dt.tm and '_') or ''
+                    val = '_ceu_app->wclk_late'..suf
                 else
-                    tag = 'SOME'
-                    todo.normal = true
+                    val = '(('..TP.toc(fr.tp)..')_STK.evtp)->_'..i
                 end
-                todo.tag = true
-                --LINE(me, to.val_raw..'.tag = CEU_'..ID..'_'..tag..';')
+                LINE(me, V(v)..' = '..val..';')
             end
 
-        -- normal types
+        elseif set == 'thread' then
+            LINE(me, V(to)..' = (*('..me.thread_st..') > 0)')
+
         else
-            -- NORMAL
-            todo.normal = true
+            -- optional types
+    -- TODO: sumir com "todo"
+            local todo = {}
+            local tag
+            local ID
+            if to.tp.opt then
+                ID = string.upper(to.tp.opt.id)
+                if fr.tp.opt then
+                    -- NORMAL
+                    todo.normal = true
+                elseif (fr.fst.tag=='Op2_call' and fr.fst.__fin_opt_tp)
+                or (fr.tag=='Ref' and fr[1].tag=='Spawn')
+                then
+                    -- var _t&? = _f(...);
+                    -- var T*? = spawn <...>;
+                    -- NORMAL  -- uses pack
+                    todo.normal = true
+                else
+                    if fr.tag == 'NIL' then
+                        tag = 'NIL'
+                    else
+                        tag = 'SOME'
+                        todo.normal = true
+                    end
+                    todo.tag = true
+                    --LINE(me, to.val_raw..'.tag = CEU_'..ID..'_'..tag..';')
+                end
+
+            -- normal types
+            else
+                -- NORMAL
+                todo.normal = true
+            end
+
+            if todo.normal then
+                LINE(me, V(to)..' = '..V(fr)..';')
+            end
+
+            if todo.tag then
+                LINE(me, to.val_raw..'.tag = CEU_'..ID..'_'..tag..';')
+            end
         end
 
-        if todo.normal then
-            LINE(me, [[
-    ]]..VAR..' = '..V(fr)..[[;
-    ]]..V(to)..' = '..VAR..[[;
-}
-]])
-        end
-
-        if todo.tag then
-            LINE(me, to.val_raw..'.tag = CEU_'..ID..'_'..tag..';')
-        end
-
-        --ATTR(me, to, fr)
         if to.tag=='Var' and to.var.id=='_ret' then
             LINE(me, [[
 #ifdef CEU_RET

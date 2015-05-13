@@ -12,6 +12,11 @@ local function ceu2c (op)
 end
 
 function V (me)
+-- TODO
+    if not me.val then
+        return
+    end
+
     ASR(me.val, me, 'invalid expression')
 
     local ret = me.val
@@ -294,14 +299,10 @@ F =
         end
     end,
 
+-- TODO: remove
     Thread = function (me)
         me.thread_id = CUR(me, '__thread_id_'..me.n)
         me.thread_st = CUR(me, '__thread_st_'..me.n)
--- TODO: same call for all SET(me, val)
-        local set = AST.par(me, 'SetExp')
-        if set then
-            set[2].val = '(*('..me.thread_st..') > 0)'
-        end
     end,
 
     EmitExt = function (me)
@@ -400,6 +401,7 @@ F =
 ]]
     end,
 
+-- TODO: remove
     Await = function (me)
         local e, dt = unpack(me)
 

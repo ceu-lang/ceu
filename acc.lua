@@ -166,10 +166,13 @@ F = {
 
     SetExp = function (me)
         local _,_,to = unpack(me)
-        if to.lst.acc and to.lst.acc.md~='no' then
-            CHG(to.lst.acc, 'wr')
-        else
-            -- *((u32*)0x100) = v  (no acc)
+        to = (to.tag=='VarList' and to) or {to}
+        for _, v in ipairs(to) do
+            if v.lst.acc and v.lst.acc.md~='no' then
+                CHG(v.lst.acc, 'wr')
+            else
+                -- *((u32*)0x100) = v  (no acc)
+            end
         end
     end,
 

@@ -14,8 +14,13 @@ F = {
     end,
 
     SetExp = function (me)
-        local op, fr, to = unpack(me)
+        local op, fr, to, set = unpack(me)
         to = to or AST.iter'SetBlock'()[1]
+
+-- TODO
+if set == 'await' then
+    return
+end
 
         if fr.tag == 'Ref' then
             fr = fr[1]  -- Spawn, Thread, EmitExt
@@ -55,7 +60,7 @@ F = {
         -- variables or native symbols
         if (to.var and (not to.var.tp.ref)) or to.c then
                         -- do not track references
-            TRACK[to.var or to.id] = true
+            TRACK[to.var or to.id] = 'accessed'
         end
 
         -- constants are safe
@@ -234,21 +239,15 @@ F = {
         end
     end,
 
-    Dcl_var = function (me)
-        if me.var.tp.ptr > 0 then
-            TRACK[me.var] = true
-        end
-    end,
-
     Var = function (me)
         local set = AST.iter'SetExp'()
         if set and set[3] == me then
             return  -- re-setting variable
         end
-        if not TRACK[me.var] then
-            return  -- not tracking this var (not a pointer)
-        end
-        if TRACK[me.var]==true then
+        if type(TRACK[me.var]) ~= 'table' then
+            if me.var.tp.ptr > 0 then
+                TRACK[me.var] = 'accessed'
+            end
             return  -- no await happened yet
         end
         if me.var.tp.arr then
@@ -282,8 +281,8 @@ F = {
 
     Await = function (me)
         if me.tl_awaits then
-            for var, _ in pairs(TRACK) do
-                if TRACK[var]==true then
+            for var, v in pairs(TRACK) do
+                if v == 'accessed' then
                     TRACK[var] = me   -- tracks the *first* await
                 end
             end
