@@ -28,35 +28,6 @@ function CONC (me, sub, tab)
     me.code = me.code .. string.gsub(sub.code, '(.-)\n', tab..'%1\n')
 end
 
-function ATTR (me, to, fr)
-    -- optional types
-    if to.tp.opt then
-        local tag
-        local ID = string.upper(to.tp.opt.id)
-        if fr.tp.opt then
-            LINE(me, V(to)..' = '..V(fr)..';')
-        elseif (fr.fst.tag=='Op2_call' and fr.fst.__fin_opt_tp)
-        or (fr.tag=='Ref' and fr[1].tag=='Spawn')
-        then
-            -- var _t&? = _f(...);
-            -- var T*? = spawn <...>;
-            LINE(me, V(to)..' = '..V(fr)..';')  -- uses pack
-        else
-            if fr.tag == 'NIL' then
-                tag = 'NIL'
-            else
-                tag = 'SOME'
-                LINE(me, V(to)..' = '..V(fr)..';')
-            end
-            LINE(me, to.val_raw..'.tag = CEU_'..ID..'_'..tag..';')
-        end
-
-    -- normal types
-    else
-        LINE(me, V(to)..' = '..V(fr)..';')
-    end
-end
-
 function CASE (me, lbl)
     LINE(me, 'case '..lbl.id..':;', 0)
 end
@@ -877,7 +848,7 @@ case ]]..me.lbl_cnt.id..[[:;
     CEU_]]..fr.tp.id..[[_free_static(]]..V(to)..[[, ]]..pool..[[);
 #endif
 ]])
-            fr = { val='__ceu_tmp' }
+            fr = { val='__ceu_tmp', code='' }
         end
 
         -- cast is not an lvalue in C
@@ -885,7 +856,60 @@ case ]]..me.lbl_cnt.id..[[:;
             to = to[2]
         end
 
-        ATTR(me, to, fr)
+        local VAR = '__ceu_set_'..me.n
+        LINE(me, [[
+{
+    __typeof__(]]..V(to)..') '..VAR..[[;
+]])
+        CONC(me, fr)
+
+        -- optional types
+-- TODO: sumir com "todo"
+        local todo = {}
+        local tag
+        local ID
+        if to.tp.opt then
+            ID = string.upper(to.tp.opt.id)
+            if fr.tp.opt then
+                -- NORMAL
+                todo.normal = true
+            elseif (fr.fst.tag=='Op2_call' and fr.fst.__fin_opt_tp)
+            or (fr.tag=='Ref' and fr[1].tag=='Spawn')
+            then
+                -- var _t&? = _f(...);
+                -- var T*? = spawn <...>;
+                -- NORMAL  -- uses pack
+                todo.normal = true
+            else
+                if fr.tag == 'NIL' then
+                    tag = 'NIL'
+                else
+                    tag = 'SOME'
+                    todo.normal = true
+                end
+                todo.tag = true
+                --LINE(me, to.val_raw..'.tag = CEU_'..ID..'_'..tag..';')
+            end
+
+        -- normal types
+        else
+            -- NORMAL
+            todo.normal = true
+        end
+
+        if todo.normal then
+            LINE(me, [[
+    ]]..VAR..' = '..V(fr)..[[;
+    ]]..V(to)..' = '..VAR..[[;
+}
+]])
+        end
+
+        if todo.tag then
+            LINE(me, to.val_raw..'.tag = CEU_'..ID..'_'..tag..';')
+        end
+
+        --ATTR(me, to, fr)
         if to.tag=='Var' and to.var.id=='_ret' then
             LINE(me, [[
 #ifdef CEU_RET
@@ -1378,7 +1402,8 @@ case ]]..me.lbl.id..[[:;
             for i=1, #vars, 2 do
                 local isRef, n = vars[i], vars[i+1]
                 if not isRef then
-                    ATTR(me, n.new, n.var)      -- copy async parameters
+                    LINE(me, V(n.new)..' = '..V(n.var)..';')
+                        -- copy async parameters
                 end
             end
         end

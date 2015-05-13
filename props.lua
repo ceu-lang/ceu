@@ -356,7 +356,8 @@ F = {
             CLS().has_pre = true   -- code for pre (before constr)
 
             -- new, spawn, async, await
-            ASR(fr.tag ~= 'Ref',
+-- TODO: remove 'Ref'
+            ASR(fr.tag~='Ref' and fr.tag~='Await',
                 me, 'not permitted inside an interface')
         end
 

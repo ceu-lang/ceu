@@ -7,6 +7,25 @@ ANA = {
     },
 }
 
+function ANA.dbg_one (p)
+    for e in pairs(p) do
+        if e == true then
+            DBG('', '$$$')
+        else
+            for _,t in pairs(e) do
+                DBG('', _, t.id)
+            end
+        end
+    end
+end
+function ANA.dbg (me)
+    DBG('== '..me.tag, me)
+    DBG('-- PRE')
+    ANA.dbg_one(me.ana.pre)
+    DBG('-- POS')
+    ANA.dbg_one(me.ana.pos)
+end
+
 -- avoids counting twice (due to loops)
 -- TODO: remove
 local __inc = {}
@@ -60,7 +79,7 @@ end
 
 local LST = {
     Do=true, Stmts=true, Block=true, Root=true, Dcl_cls=true,
-    Pause=true,
+    Pause=true, SetExp=true,
 }
 
 F = {
@@ -82,8 +101,15 @@ F = {
         if me.ana.pos then
             return
         end
-        if LST[me.tag] and me[#me] then
-            me.ana.pos = COPY(me[#me].ana.pos)  -- copy lst child pos
+        local lst
+        for i=#me, 1, -1 do
+            if AST.isNode(me[i]) then
+                lst = me[i]
+                break
+            end
+        end
+        if LST[me.tag] and lst then
+            me.ana.pos = COPY(lst.ana.pos)  -- copy lst child pos
         else
             me.ana.pos = COPY(me.ana.pre)       -- or copy own pre
         end
@@ -254,6 +280,16 @@ F = {
         if cnd then
             cnd.ana = {
                 pre = COPY(t),
+            }
+        end
+    end,
+
+    -- TODO: behaves similarly to Stmts
+    --  join code
+    SetExp_aft = function (me, sub, i)
+        if sub.tag == 'Await' then
+            me[i+1].ana = {
+                pre = COPY(sub.ana.pos)
             }
         end
     end,

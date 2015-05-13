@@ -841,8 +841,12 @@ F = {
     --------------------------------------------------------------------------
 
     SetExp = function (me)
-        local _, fr, to = unpack(me)
+        local _, fr, to, set = unpack(me)
         to = to or AST.iter'SetBlock'()[1]
+
+        if set == 'Thread' then
+            fr.tp = TP.fromstr'int'       -- 0/1
+        end
 
         if to.tag=='Var' and string.sub(to.var.id,1,5)=='_tup_' then
             -- SetAwait:
@@ -933,6 +937,7 @@ F = {
     end,
 
     Thread = function (me)
+-- TODO: remove
         me.tp = TP.fromstr'int'       -- 0/1
     end,
 

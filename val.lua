@@ -297,7 +297,11 @@ F =
     Thread = function (me)
         me.thread_id = CUR(me, '__thread_id_'..me.n)
         me.thread_st = CUR(me, '__thread_st_'..me.n)
-        me.val = '(*('..me.thread_st..') > 0)'
+-- TODO: same call for all SET(me, val)
+        local set = AST.par(me, 'SetExp')
+        if set then
+            set[2].val = '(*('..me.thread_st..') > 0)'
+        end
     end,
 
     EmitExt = function (me)

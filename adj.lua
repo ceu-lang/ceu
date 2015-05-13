@@ -1309,9 +1309,9 @@ F = {
             -- tup_id = await e;
             --      <becomes>
             -- await e; tup_id=<e>;
-            T[#T+1] = awt
+            --T[#T+1] = awt
             T[#T+1] = node('SetExp', me.ln, '=',
-                            node('Ref', me.ln, awt),
+                            awt,--node('Ref', me.ln, awt),
                             node('Var', me.ln, tup_id))
                             -- assignment to struct must be '='
             T[#T].__ast_tuple = true
@@ -1341,11 +1341,7 @@ F = {
             return node(tag, me.ln, p1, to)
 
         elseif tag == '__SetThread' then
-            return node('Stmts', me.ln,
-                        p1,
-                        node('SetExp', me.ln, op,
-                            node('Ref', me.ln, p1),
-                            to))
+            return node('SetExp', me.ln, op, p1, to, 'Thread')
 
         elseif tag == '__SetEmitExt' then
             assert(p1.tag == 'EmitExt')
