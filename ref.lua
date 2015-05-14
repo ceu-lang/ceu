@@ -157,7 +157,6 @@ F = {
                 fr_blk == MAIN.blk_body    or
                 (org_blk and
                  org_blk.__depth>=fr_blk.__depth) or
-                --me.__ast_tuple             or -- tuple attribution ok
                 (   -- same class and scope of "to" <= "fr"
                     (AST.par(to_blk,'Dcl_cls') == AST.par(fr_blk,'Dcl_cls')) and
                         (   to_blk.__depth >= fr_blk.__depth            -- to <= fr
