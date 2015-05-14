@@ -588,6 +588,7 @@ F = {
     end,
 
 -- TODO: remove
+--[[
     Dcl_var_pre = function (me)
         -- HACK_5: substitute with type of "to" (adj.lua)
         local _, tp = unpack(me)
@@ -605,6 +606,7 @@ F = {
                         -- actual type of Dcl_var
         end
     end,
+]]
 
     Dcl_var = function (me)
         local pre, tp, id, constr = unpack(me)
@@ -816,6 +818,7 @@ F = {
         end
     end,
 
+-- TODO: join w/ __check_params
     __arity = function (me, ins, ps)
         assert(ins.tag=='TupleType', 'bug found')
         assert(ps.tag=='ExpList', 'bug found')
@@ -830,18 +833,18 @@ F = {
     end,
 
     EmitInt = function (me)
-        local _, int, _ = unpack(me)
+        local _, int, ps = unpack(me)
         local var = int.var
         ASR(var and var.pre=='event', me,
             'event "'..(var and var.id or '?')..'" is not declared')
-        F.__arity(me, var.evt.ins, me.__ast_original_params)
+        F.__arity(me, var.evt.ins, ps)
     end,
 
     EmitExt = function (me)
-        local op, e, _ = unpack(me)
+        local op, e, ps = unpack(me)
 
         ASR(e.evt.op == op, me, 'invalid `'..op..'´')
-        F.__arity(me, e.evt.ins, me.__ast_original_params)
+        F.__arity(me, e.evt.ins, ps)
 
         if op == 'call' then
             me.tp = e.evt.out       -- return value

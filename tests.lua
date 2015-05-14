@@ -2194,7 +2194,6 @@ do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
----]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -10432,6 +10431,7 @@ end;
     loop = 'line 3 : tight loop',
 }
 
+---]===]
 Test { [[
 input int A;
 event int a, d, e, i, j;

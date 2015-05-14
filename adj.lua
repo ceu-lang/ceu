@@ -1279,12 +1279,12 @@ F = {
         end
         me[3] = ps
 
-        if op ~= 'request' then
-            return
+        if op == 'request' then
+            return REQUEST(me)
         end
-        return REQUEST(me)
     end,
 
+--[[
     EmitInt_pos = 'EmitExt_pos',
     EmitExt_pos = function (me)
         local op, e, ps = unpack(me)
@@ -1339,6 +1339,7 @@ F = {
 
         return T
     end,
+]]
 
 -- Finalize ------------------------------------------------------
 

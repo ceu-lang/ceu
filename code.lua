@@ -1264,7 +1264,19 @@ case ]]..me.lbl_cnt.id..[[:;
     end,
 
     EmitInt = function (me)
-        local _, int, exp = unpack(me)
+        local _, int, ps = unpack(me)
+
+-- TODO: same as Ext
+        local VAL = '__ceu_ps_'..me.n
+        if ps and #ps>0 then
+            local PS = {}
+            for _, p in ipairs(ps) do
+                PS[#PS+1] = V(p)
+            end
+            LINE(me, TP.toc(int.var.evt.ins)..' '..VAL..
+                        ' = { '..table.concat(PS,',')..' };')
+            VAL = '(&'..VAL..')'
+        end
 
         -- [ ... | me=stk | ... | oth=stk ]
         LINE(me, [[
@@ -1282,8 +1294,8 @@ _STK.trl->stk = _ceu_go->stki;
              stk.evto  = (tceu_org*) ]]..((int.org and int.org.val) or '_STK_ORG')..[[;
 #endif
 ]])
-        if exp then
-            LINE(me, 'stk.evtp = '..V(exp)..';')
+        if ps and #ps>0 then
+            LINE(me, 'stk.evtp = '..VAL..';')
         end
         LINE(me, [[
 #ifdef CEU_ORGS

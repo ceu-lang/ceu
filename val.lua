@@ -306,7 +306,7 @@ F =
     end,
 
     EmitExt = function (me)
-        local op, e, param, x = unpack(me)
+        local op, e, ps = unpack(me)
 
         -- TODO: join w/ the code below
         if e[1] == '_WCLOCK' then
@@ -314,7 +314,8 @@ F =
             me.val = [[
 #ifdef CEU_WCLOCKS
 {
-    ceu_out_go(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, ]]..V(param)..[[);
+    u32 __ceu_tmp_]]..me.n..' = '..V(ps[1])..[[;
+    ceu_out_go(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, &__ceu_tmp_]]..me.n..[[);
     while (
 #if defined(CEU_RET) || defined(CEU_OS)
             _ceu_app->isAlive &&
@@ -352,14 +353,23 @@ F =
         end
 
         local t2 = { ptr, 'CEU_'..DIR..'_'..e.evt.id }
+        local DCL = ''
 
-        if param then
-            local val = V(param)
-            t1[#t1+1] = val
+        if ps and #ps>0 then
+            local VAL = '__ceu_ps_'..me.n
+
+            local PS = {}
+            for _, p in ipairs(ps) do
+                PS[#PS+1] = V(p)
+            end
+            DCL = TP.toc(e.evt.ins)..' '..VAL..' = { '..table.concat(PS,',')..' };'
+            VAL = '(&'..VAL..')'
+
+            t1[#t1+1] = VAL
             if op ~= 'call' then
                 t2[#t2+1] = 'sizeof('..TP.toc(e.evt.ins)..')'
             end
-            t2[#t2+1] = '(void*)'..val
+            t2[#t2+1] = '(void*)'..VAL
         else
             if dir=='in' then
                 t1[#t1+1] = 'NULL'
@@ -388,7 +398,7 @@ F =
 
         local op = (op=='emit' and 'emit') or 'call'
 
-        me.val = '\n'..[[
+        me.val = '\n'..DCL..'\n'..[[
 #if defined(ceu_]]..dir..'_'..op..'_'..e.evt.id..[[)
     ceu_]]..dir..'_'..op..'_'..e.evt.id..'('..t1..[[)
 
