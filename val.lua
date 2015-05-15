@@ -398,7 +398,9 @@ F =
 
         local op = (op=='emit' and 'emit') or 'call'
 
-        me.val = '\n'..DCL..'\n'..[[
+-- TODO
+me.dcl = DCL
+        me.val = '\n'..[[
 #if defined(ceu_]]..dir..'_'..op..'_'..e.evt.id..[[)
     ceu_]]..dir..'_'..op..'_'..e.evt.id..'('..t1..[[)
 

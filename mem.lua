@@ -252,14 +252,13 @@ CEU_]]..id..'* '..enum..'_assert (CEU_'..id..[[* me, char* file, int line) {
 void ]]..enum..'_kill (tceu_app* app, tceu_go* go, CEU_'..id..[[* me) {
     tceu_stk stk;
              stk.evt  = CEU_IN__ok_killed;
-             stk.evto = me; /* what to kill */
 #ifdef CEU_ORGS
              stk.org  = app->data;
 #endif
              stk.trl  = &app->data->trls[0];
              stk.stop = NULL;
-    stack_push(*go, stk);
-    stack_get(*go).evtp = &(stack_get(*go).evto);
+             stk.evt_sz = sizeof(me);
+    stack_push(*go, stk, &me);
         /* param is pointer to what to kill */
 ]]
         -- kill all my recursive fields

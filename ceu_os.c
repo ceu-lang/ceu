@@ -95,6 +95,24 @@ int ceu_sys_req (void) {
 
 /**********************************************************************/
 
+void ceu_stack_push_f (tceu_go* go, tceu_stk* elem, void* ptr) {
+    printf(">> STKI %d\n", go->stki);
+    if (go->stki == -1) {
+        go->stki = 0;
+    } else {
+        int old = go->stki;
+        go->stki = stack_nxti(*go);
+        elem->stk_prv = go->stki - old;
+    }
+    printf("<< STKI %d [%ld+%d]\n", go->stki, sizeof(tceu_stk), elem->evt_sz);
+    stack_top(*go) = *elem;
+    if (ptr != NULL) {
+        memcpy(&stack_top(*go).evt_buf, ptr, elem->evt_sz);
+    }
+}
+
+/**********************************************************************/
+
 #ifdef CEU_ORGS
 
 void ceu_sys_org_trail (tceu_org* org, int idx, tceu_org_lnk* lnks) {
@@ -117,7 +135,7 @@ int ceu_sys_org_spawn (tceu_go* _ceu_go, tceu_nlbl lbl_cnt, tceu_org* neworg, tc
     /* prepare the new org to start */
     neworg->trls[0].evt = CEU_IN__STK;
     neworg->trls[0].lbl = neworg_lbl;
-    neworg->trls[0].stk = _ceu_go->stki+1;
+    neworg->trls[0].stk = stack_nxti(*_ceu_go);
 
     {
         /* switch to ORG */
@@ -128,7 +146,8 @@ int ceu_sys_org_spawn (tceu_go* _ceu_go, tceu_nlbl lbl_cnt, tceu_org* neworg, tc
 #ifdef CEU_CLEAR
                  stk.stop = &neworg->trls[neworg->n]; /* don't follow the up link */
 #endif
-        stack_push(*_ceu_go, stk);
+                 stk.evt_sz = 0;
+        stack_push(*_ceu_go, stk, NULL);
     }
     return RET_RESTART;
 }
@@ -379,13 +398,12 @@ void ceu_sys_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_org* org)
     {
         tceu_stk stk;
                  stk.evt  = CEU_IN__ok_killed;
-                 stk.evto = org; /* what to kill */
                  stk.org  = _ceu_app->data;
                  stk.trl  = &_ceu_app->data->trls[0];
                  stk.stop = NULL;
-        stack_push(*_ceu_go, stk);    /* continue after it */
-        stack_get(*_ceu_go).evtp = &(stack_get(*_ceu_go).evto);
-            /* param is pointer to what to kill */
+                 stk.evt_sz = sizeof(org);
+        stack_push(*_ceu_go, stk, &org);    /* continue after it */
+            /* param "org" is pointer to what to kill */
     }
 #endif
 }
@@ -429,7 +447,6 @@ void ceu_sys_go (tceu_app* app, int evt, tceu_evtp evtp)
     {
         tceu_stk stk;
                  stk.evt  = evt;
-                 stk.evtp = evtp;
 #ifdef CEU_ORGS
                  stk.org  = app->data;
 #endif
@@ -437,7 +454,8 @@ void ceu_sys_go (tceu_app* app, int evt, tceu_evtp evtp)
 #ifdef CEU_CLEAR
                  stk.stop = NULL;  /* traverse all (don't stop) */
 #endif
-        stack_push(go, stk);
+                 stk.evt_sz = sizeof(evtp);
+        stack_push(go, stk, &evtp);
     }
 
 #ifdef CEU_ORGS_NEWS
@@ -618,7 +636,7 @@ if (STK.trl->evt==CEU_IN__ORG) {
 _CEU_GO_POP_:
 #endif
 
-        if (go.stki == 0) {
+        if (stack_empty(go)) {
             break;      /* reaction has terminated */
         }
         stack_pop(go);

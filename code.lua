@@ -163,13 +163,14 @@ function CLEAR (me)
 {
     /* clear from start->stop */
     tceu_stk stk;
-             stk.evt = CEU_IN__CLEAR,
+             stk.evt  = CEU_IN__CLEAR;
 #ifdef CEU_ORGS
              stk.org  = _STK_ORG;
 #endif
              stk.trl  = &_STK_ORG->trls[ ]]..(me.trails[1]+1)..[[ ];
              stk.stop = &_STK_ORG->trls[ ]]..(me.trails[2]+1)..[[ ];
-    stack_push(*_ceu_go, stk);
+             stk.evt_sz = 0;
+    stack_push(*_ceu_go, stk, NULL);
 }
 return RET_RESTART;
 
@@ -866,8 +867,15 @@ case ]]..me.lbl_cnt.id..[[:;
                 if dt then
                     local suf = (dt.tm and '_') or ''
                     val = '_ceu_app->wclk_late'..suf
+                elseif e.tag=='Ext' then
+-- TODO
+if e[1] == '_ok_killed' then
+    val = '(*((tceu_org**)&_STK.evt_buf))'
+else
+                    val = '(*(('..TP.toc(fr.tp)..'*)_STK.evt_buf))->_'..i
+end
                 else
-                    val = '(('..TP.toc(fr.tp)..')_STK.evtp)->_'..i
+                    val = '(('..TP.toc(fr.tp)..')_STK.evt_buf)->_'..i
                 end
                 LINE(me, V(v)..' = '..val..';')
             end
@@ -1224,6 +1232,8 @@ _STK.trl = &_STK_ORG->trls[ ]]..me.trails[1]..[[ ];
         local evt = e.evt
         local no = '_CEU_NO_'..me.n..'_'
 
+-- TODO
+LINE(me, me.dcl or '')
         if evt.pre~='input' or op~='emit' then
             if not me.__ast_set then
                 LINE(me, V(me)..';')    -- already on <v = emit E>
@@ -1289,15 +1299,10 @@ _STK.trl->stk = _ceu_go->stki;
 /* trigger the event */
 {
     tceu_stk stk;
-             stk.evt   = ]]..(int.ifc_idx or int.var.evt.idx)..[[;
+             stk.evt  = ]]..(int.ifc_idx or int.var.evt.idx)..[[;
 #ifdef CEU_ORGS
-             stk.evto  = (tceu_org*) ]]..((int.org and int.org.val) or '_STK_ORG')..[[;
+             stk.evto = (tceu_org*) ]]..((int.org and int.org.val) or '_STK_ORG')..[[;
 #endif
-]])
-        if ps and #ps>0 then
-            LINE(me, 'stk.evtp = '..VAL..';')
-        end
-        LINE(me, [[
 #ifdef CEU_ORGS
              stk.org  = _ceu_app->data;   /* TODO(speed): check if is_ifc */
 #endif
@@ -1305,7 +1310,19 @@ _STK.trl->stk = _ceu_go->stki;
 #ifdef CEU_CLEAR
              stk.stop = NULL;
 #endif
-    stack_push(*_ceu_go, stk);
+]])
+        if ps and #ps>0 then
+            LINE(me, [[
+            stk.evt_sz = sizeof(*]]..VAL..[[);
+            stack_push(*_ceu_go, stk, ]]..VAL..[[);
+]])
+        else
+            LINE(me, [[
+            stk.evt_sz = 0;
+            stack_push(*_ceu_go, stk, NULL);
+]])
+        end
+        LINE(me, [[
 }
 
 return RET_RESTART;
@@ -1376,7 +1393,7 @@ case ]]..me.lbl.id..[[:;
         if dt then
             LINE(me, [[
     /* subtract time and check if I have to awake */
-    if (!ceu_out_wclock]]..suf..[[(_ceu_app, *((s32*)_STK.evtp), NULL, &]]..me.val_wclk..[[) )
+    if (!ceu_out_wclock]]..suf..[[(_ceu_app, *(*((s32**)_STK.evt_buf)), NULL, &]]..me.val_wclk..[[) )
         goto ]]..no..[[;
 ]])
         end
@@ -1473,7 +1490,7 @@ case ]]..me.lbl.id..[[:;
         -- continue
         LINE(me, [[
 case ]]..me.lbl.id..[[:;
-        if (*((CEU_THREADS_T*)_STK.evtp) != ]]..me.thread_id..[[) {
+        if (*(*((CEU_THREADS_T**)_STK.evt_buf)) != ]]..me.thread_id..[[) {
             goto ]]..no..[[; /* another thread is terminating: await again */
         }
     }

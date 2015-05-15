@@ -11,6 +11,35 @@ end
 
 -- BUGS
 
+-- should disallow passing pointers through internal events
+Test { [[
+input void OS_START;
+event int* e;
+var int ret = 0;
+par/or do
+    do
+        var int x = 2;
+        par/or do
+            await OS_START;
+            emit e => &x;
+        with
+            await e;
+        end
+    end
+    do
+        var int x = 1;
+        await 1s;
+        ret = x;
+    end
+with
+    var int* v = await e;
+    ret = *v;
+end
+escape ret;
+]],
+    run = 2,
+}
+
 -- use of global before its initialization
 Test { [[
 interface Global with
@@ -2191,6 +2220,7 @@ escape sum;
 }
 
 do return end
+---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -6594,6 +6624,34 @@ escape _V;
     run = { ['~>2s']=10 },
 }
 Test { [[
+input void OS_START;
+event int e;
+var int ret = 0;
+par/or do
+    do
+        var int x = 2;
+        par/or do
+            await OS_START;
+            emit e => x;
+        with
+            await e;
+        end
+    end
+    do
+        var int x = 1;
+        await 1s;
+        ret = x;
+    end
+with
+    var int v = await e;
+    ret = v;
+end
+escape ret;
+]],
+    run = 2,
+}
+
+Test { [[
 input int A;
 var int a, b;
 par/and do
@@ -10431,7 +10489,6 @@ end;
     loop = 'line 3 : tight loop',
 }
 
----]===]
 Test { [[
 input int A;
 event int a, d, e, i, j;
@@ -37643,6 +37700,7 @@ end
 
 escape ret;
 ]],
+    _ana = { acc=true },
     run = 10,
 }
 
@@ -37725,12 +37783,10 @@ _assert(t0!=null and tF!=null);
 
 var int ret1=0, ret2=0;
 
-_printf("ANTES\n");
 watching tF do
     ret2 = tF:id;
     await FOREVER;
 end
-_printf("DEPOIS\n");
 
 escape ret1+ret2+_V;
 ]],

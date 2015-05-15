@@ -381,10 +381,9 @@ typedef struct {
 /* TODO(speed): hold nxt trl to run */
 typedef struct tceu_stk {
     tceu_nevt evt;  /* TODO: small in the end of struct? */
-    tceu_evtp evtp;
-#if defined(CEU_ORGS) && defined(CEU_INTS) || \
-    defined(CEU_ADTS_WATCHING)             || \
-    defined(CEU_ORGS_WATCHING)
+    u8        evt_sz;
+    u8        stk_prv;
+#if defined(CEU_ORGS) && defined(CEU_INTS)
     void* evto; /* emitting org or adt/org being killed */
 #endif
 
@@ -396,8 +395,11 @@ typedef struct tceu_stk {
     void* stop;     /* stop at this trl/org */
         /* traversals may be bounded to org/trl
          * default (NULL) is to traverse everything */
+        /* TODO: could be shared w/ evto */
 #endif
+    byte  evt_buf[0];
 } tceu_stk;
+/* TODO: see if fields can be reused in union */
 
 /* TCEU_LNK */
 
@@ -460,47 +462,51 @@ typedef struct tceu_org
 
 /* TODO: tceu_go => tceu_stk? */
 typedef struct tceu_go {
-#if defined(CEU_ORGS) || defined(CEU_OS)
-    #define CEU_MAX_STACK   128
-    /* TODO: CEU_ORGS is calculable // CEU_ORGS_NEWS isn't (255?) */
-#else
-    #define CEU_MAX_STACK   (CEU_NTRAILS+1) /* current +1 for each trail */
-#endif
-    tceu_stk stk[CEU_MAX_STACK];
+    #define CEU_STACK_MAX   128*sizeof(tceu_stk)
+        /* TODO: possible to calculate (not is CEU_ORGS_NEWS)
+        #define CEU_STACK_MAX   (CEU_NTRAILS+1) // current +1 for each trail
+        */
+    byte stk[CEU_STACK_MAX];
     int stki;
 #ifdef CEU_ORGS_NEWS
     tceu_org* lst_free;  /* "to free" list (only on reaction end) */
 #endif
 } tceu_go;
 
-#define stack_init(go) (go).stki = -1
-#define stack_get(go) ((go).stk[(go).stki])
+#define stack_init(go)   (go).stki = -1
+#define stack_empty(go)  ((go).stki == 0)
+#define stack_geti(go,i) (*(tceu_stk*)&((go).stk[i]))
+#define stack_szi(go,i)  ((int)(sizeof(tceu_stk)+stack_geti(go,i).evt_sz))
+#define stack_top(go)    stack_geti((go),(go).stki)
+#define stack_nxti(go)   ((go).stki + stack_szi((go),(go).stki))
 
 #ifdef CEU_ORGS
-#define stack_rem(go,o) {               \
-    int i;                              \
-    for (i=0; i<(go).stki-1; i++) {     \
-        if ((go).stk[i].org == (o)) {   \
-            (go).stk[i].org = NULL;     \
-        }                               \
-    }                                   \
+#define stack_rem(go,o) {                   \
+    int i;                                  \
+    for (i = 0;                             \
+         i < (go).stki-stack_szi((go),(go).stki); \
+              /* keep last unchanged */     \
+         i += stack_szi(go,i))              \
+    {                                       \
+        if (stack_geti(go,i).org == (o)) {  \
+            stack_geti(go,i).org = NULL;    \
+        }                                   \
+    }                                       \
 }
 #endif
 
-#define stack_pop(go) \
-    go.stki--
+#define stack_pop(go)                                   \
+    ceu_out_assert((go).stki>=0, "stack underflow");    \
+    printf(">> stki %d\n", go.stki);                    \
+    go.stki -= stack_top(go).stk_prv;                   \
+    printf("<< stki %d\n", go.stki)
 
-#if defined(CEU_DEBUG) && !defined(CEU_OS)
-#define stack_push(go,elem)                                         \
-    ceu_out_assert((go).stki+1 < CEU_MAX_STACK, "stack overflow");  \
-    (go).stk[++((go).stki)] = elem
-#else
-#define stack_push(go,elem)                                         \
-    (go).stk[++((go).stki)] = elem
-#endif
+#define stack_push(go,elem,ptr)                             \
+    ceu_out_assert((go).stki+sizeof(tceu_stk)+elem.evt_sz < CEU_STACK_MAX, "stack overflow");  \
+    ceu_stack_push_f(&(go),&elem,ptr)
 
-#define STK  stack_get(go)
-#define _STK stack_get(*_ceu_go)
+#define STK  stack_top(go)
+#define _STK stack_top(*_ceu_go)
 #ifdef CEU_ORGS
 #define STK_ORG_ATTR  (STK.org)
 #define _STK_ORG_ATTR (_STK.org)
