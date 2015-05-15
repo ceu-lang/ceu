@@ -1,9 +1,9 @@
 F = {
     SetExp = function (me)
-        local _, fr, to = unpack(me)
-        if fr.tag=='Ref' and fr[1].tag=='Spawn' then
+        local _, fr, to, set = unpack(me)
+        if set == 'spawn' then
             -- a = spawn T
-            fr[1].blk = to.lst.var.blk   -- to = me.__par[3]
+            fr.blk = to.lst.var.blk   -- to = me.__par[3]
 
             -- refuses (x.ptr = spawn T;)
             ASR( AST.isParent(CLS(),to.lst.var.blk), me,

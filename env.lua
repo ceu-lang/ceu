@@ -892,7 +892,7 @@ F = {
         ASR(not CLS().is_ifc, me, 'invalid attribution')
 
         -- var T*? = spawn T;
-        if fr.tag=='Ref' and fr[1].tag=='Spawn' then
+        if set == 'spawn' then
             ASR(to.tp.opt, me, 'must assign to option pointer')
         end
 

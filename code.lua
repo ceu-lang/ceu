@@ -514,51 +514,56 @@ if (]]..LVAR..[[ == NULL) {
     end,
 
     Spawn = function (me)
-        local id, pool, constr, set = unpack(me)
+        local id, pool, constr = unpack(me)
+        local ID = '__ceu_new_'..me.n
+
+-- TODO
+local set = (me.__par.tag == 'SetExp')
 
         LINE(me, [[
-{
-    tceu_org* __ceu_new;
+/*{*/
+    tceu_org* ]]..ID..[[;
 ]])
         if pool and (type(pool.var.tp.arr)=='table') then
             -- static
             LINE(me, [[
-    __ceu_new = (tceu_org*) ceu_pool_alloc((tceu_pool*)]]..V(pool)..[[);
+    ]]..ID..[[ = (tceu_org*) ceu_pool_alloc((tceu_pool*)]]..V(pool)..[[);
 ]])
         elseif pool.var.tp.ptr>0 or pool.var.tp.ref then
             -- pointer don't know if is dynamic or static
             LINE(me, [[
 #if !defined(CEU_ORGS_NEWS_MALLOC)
-    __ceu_new = (tceu_org*) ceu_pool_alloc((tceu_pool*)]]..V(pool)..[[);
+    ]]..ID..[[ = (tceu_org*) ceu_pool_alloc((tceu_pool*)]]..V(pool)..[[);
 #elif !defined(CEU_ORGS_NEWS_POOL)
-    __ceu_new = (tceu_org*) ceu_out_realloc(NULL, sizeof(CEU_]]..id..[[));
+    ]]..ID..[[ = (tceu_org*) ceu_out_realloc(NULL, sizeof(CEU_]]..id..[[));
 #else
     if (]]..V(pool)..[[->queue == NULL) {
-        __ceu_new = (tceu_org*) ceu_out_realloc(NULL, sizeof(CEU_]]..id..[[));
+        ]]..ID..[[ = (tceu_org*) ceu_out_realloc(NULL, sizeof(CEU_]]..id..[[));
     } else {
-        __ceu_new = (tceu_org*) ceu_pool_alloc((tceu_pool*)]]..V(pool)..[[);
+        ]]..ID..[[ = (tceu_org*) ceu_pool_alloc((tceu_pool*)]]..V(pool)..[[);
     }
 #endif
 ]])
         else
             -- dynamic
             LINE(me, [[
-    __ceu_new = (tceu_org*) ceu_out_realloc(NULL, sizeof(CEU_]]..id..[[));
+    ]]..ID..[[ = (tceu_org*) ceu_out_realloc(NULL, sizeof(CEU_]]..id..[[));
 ]])
         end
 
         if set then
-            CONC(me, set)   -- <ptr=Spawn T>
+            LINE(me, 'TODO-SET-SPAWN')
+            --CONC(me, set)   -- <ptr=Spawn T>
         end
 
         LINE(me, [[
-    if (__ceu_new != NULL) {
+    if (]]..ID..[[ != NULL) {
 ]])
 
         if pool and (type(pool.var.tp.arr)=='table') or
            PROPS.has_orgs_news_pool or OPTS.os then
             LINE(me, [[
-        __ceu_new->pool = (tceu_pool_*)]]..V(pool)..[[;
+        ]]..ID..[[->pool = (tceu_pool_*)]]..V(pool)..[[;
 ]])
         end
 
@@ -571,14 +576,14 @@ if (]]..LVAR..[[ == NULL) {
             id     = 'dyn',
             isDyn  = 1,
             cls    = me.cls,
-            val    = '__ceu_new',
+            val    = ID,
             constr = constr,
             arr    = false,
             lnks   = '(((tceu_pool_*)'..V(pool)..')->lnks)',
         })
         LINE(me, [[
     }
-}
+/*}*/
 ]])
     end,
 
@@ -886,6 +891,13 @@ end
             LINE(me, V(to)..' = (*('..thr.thread_st..') > 0);')
 
         else
+
+if set == 'spawn' then
+    local id,_,_,set = unpack(fr)
+    fr.val = '((CEU_'..id..'*)__ceu_new_'..fr.n..')' -- defined by _Spawn (code.lua)
+    fr.val = '('..string.upper(TP.toc(to.tp.opt))..'_pack('..fr.val..'))'
+end
+
             -- optional types
     -- TODO: sumir com "todo"
             local todo = {}
@@ -897,7 +909,7 @@ end
                     -- NORMAL
                     todo.normal = true
                 elseif (fr.fst.tag=='Op2_call' and fr.fst.__fin_opt_tp)
-                or (fr.tag=='Ref' and fr[1].tag=='Spawn')
+                or (set == 'spawn')
                 then
                     -- var _t&? = _f(...);
                     -- var T*? = spawn <...>;
@@ -921,7 +933,13 @@ end
             end
 
             if todo.normal then
+-- TODO
+if set == 'spawn' then
+    local SET = V(to)..' = '..V(fr)..';'
+    me.code = string.gsub(me.code, 'TODO%-SET%-SPAWN', SET)
+else
                 LINE(me, V(to)..' = '..V(fr)..';')
+end
             end
 
             if todo.tag then

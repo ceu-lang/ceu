@@ -1171,10 +1171,7 @@ F = {
             end
 
         elseif tag=='__SetSpawn' then
-            p1[#p1+1] = node('SetExp', me.ln, op,
-                            node('Ref', me.ln, p1),
-                            to)
-            return p1
+            return node('SetExp', me.ln, op, p1, to, 'spawn')
 
         elseif tag=='__SetAdtConstr' then
 -- TODO: do the same for SetSpawn?

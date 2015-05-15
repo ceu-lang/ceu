@@ -155,7 +155,7 @@ F =
                     -- do nothing, both are opt
                 elseif is_to then
                     if (fr.fst.tag=='Op2_call' and fr.fst.__fin_opt_tp)
-                    or (fr.tag=='Ref' and fr[1].tag=='Spawn')
+                    or (fr.tag=='Spawn')
                     then
                         -- var _t&? = _f(...);
                         -- var T*? = spawn <...>;
@@ -286,17 +286,6 @@ F =
     SetExp = function (me)
         local _, fr, to = unpack(me)
         V(fr)     -- error on reads of internal events
-    end,
-
-    -- SetExp is inside and requires .val
-    Spawn_pre = function (me)
-        local id,_,_,set = unpack(me)
-        me.val = '((CEU_'..id..'*)__ceu_new)' -- defined by _Spawn (code.lua)
-
-        if set then
-            local to = set[3]
-            me.val = '('..string.upper(TP.toc(to.tp.opt))..'_pack('..me.val..'))'
-        end
     end,
 
 -- TODO: remove
