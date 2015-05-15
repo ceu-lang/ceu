@@ -937,6 +937,8 @@ end
 if set == 'spawn' then
     local SET = V(to)..' = '..V(fr)..';'
     me.code = string.gsub(me.code, 'TODO%-SET%-SPAWN', SET)
+elseif set == 'lua' then
+    -- nothing
 else
                 LINE(me, V(to)..' = '..V(fr)..';')
 end
@@ -1690,7 +1692,17 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
 
     Lua = function (me)
         local nargs = #me.params
-        local nrets = (me.ret and 1) or 0
+
+        local set_to
+        local nrets
+        local set = AST.par(me, 'SetExp')
+        if set then
+            set_to = set[3]
+            nrets = 1
+        else
+            nrets = 0
+        end
+
         local lua = string.format('%q', me.lua)
         lua = string.gsub(lua, '\n', 'n') -- undo format for \n
         LINE(me, [[
@@ -1723,8 +1735,8 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
         ceu_lua_pcall(err, _ceu_app->lua, ]]..nargs..','..nrets..[[, 0);
         if (! err) {
 ]])
-        if me.ret then
-            if TP.isNumeric(me.ret.tp) or me.ret.tp=='bool' then
+        if set then
+            if TP.isNumeric(set_to.tp) or set_to.tp=='bool' then
                 LINE(me, [[
             int is;
             int ret;
@@ -1740,10 +1752,10 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
                     err = 1;
                 }
             }
-            ]]..V(me.ret)..[[ = ret;
+            ]]..V(set_to)..[[ = ret;
             ceu_lua_pop(_ceu_app->lua, 1);
 ]])
-            elseif TP.toc(me.ret.tp) == 'char*' then
+            elseif TP.toc(set_to.tp) == 'char*' then
                 --ASR(me.ret.var and me.ret.var.tp.arr, me,
                     --'invalid attribution (requires a buffer)')
                 LINE(me, [[
@@ -1753,12 +1765,13 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
                 const char* ret;
                 ceu_lua_tostring(ret, _ceu_app->lua,-1);
 ]])
-                local sval = me.ret.var and me.ret.var.tp.arr and me.ret.var.tp.arr.sval
+                local sval = set_to.var and set_to.var.tp.arr and 
+                set_to.var.tp.arr.sval
                 if sval then
-                    LINE(me, 'strncpy('..V(me.ret)..', ret, '..(sval-1)..');')
-                    LINE(me, V(me.ret)..'['..(sval-1).."] = '\\0';")
+                    LINE(me, 'strncpy('..V(set_to)..', ret, '..(sval-1)..');')
+                    LINE(me, V(set_to)..'['..(sval-1).."] = '\\0';")
                 else
-                    LINE(me, 'strcpy('..V(me.ret)..', ret);')
+                    LINE(me, 'strcpy('..V(set_to)..', ret);')
                 end
                 LINE(me, [[
             } else {
@@ -1767,7 +1780,7 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
             }
             ceu_lua_pop(_ceu_app->lua, 1);
 ]])
-            elseif me.ret.tp.ptr > 0 then
+            elseif set_to.tp.ptr > 0 then
                 LINE(me, [[
             void* ret;
             int is;
@@ -1778,7 +1791,7 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
                 ceu_lua_pushstring(_ceu_app->lua, "not implemented [3]");
                 err = 1;
             }
-            ]]..V(me.ret)..[[ = ret;
+            ]]..V(set_to)..[[ = ret;
             ceu_lua_pop(_ceu_app->lua, 1);
 ]])
             else

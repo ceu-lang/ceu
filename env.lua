@@ -884,31 +884,34 @@ F = {
             assert(fr_tp.tag == 'Type')
         end
 
-        ASR(to and to.lval, me, 'invalid attribution')
-        ASR(TP.contains(to.tp,fr_tp), me,
-            'invalid attribution ('..TP.tostr(to.tp)..' vs '..TP.tostr(fr_tp)..')')
-        ASR(me.read_only or (not to.lval.read_only), me,
-            'read-only variable')
+        local lua_str = false
+        if set == 'lua' then
+            ASR(not to.tp.ref, me, 'invalid attribution')
+
+            lua_str = (to.tp.id=='char' and to.tp.arr)
+            if not lua_str then
+                ASR(to and to.lval, me, 'invalid attribution')
+            end
+
+            ASR(TP.isNumeric(to.tp) or TP.tostr(to.tp)=='bool' or to.tp.ptr==1 or lua_str,
+                me, 'invalid attribution')
+            fr.tp = to.tp -- return type is not known at compile time
+        else
+            ASR(TP.contains(to.tp,fr_tp), me,
+                'invalid attribution ('..TP.tostr(to.tp)..' vs '..TP.tostr(fr_tp)..')')
+        end
+
+        if not lua_str then
+            ASR(to and to.lval, me, 'invalid attribution')
+            ASR(me.read_only or (not to.lval.read_only), me,
+                'read-only variable')
+        end
+
         ASR(not CLS().is_ifc, me, 'invalid attribution')
 
         -- var T*? = spawn T;
         if set == 'spawn' then
             ASR(to.tp.opt, me, 'must assign to option pointer')
-        end
-
-        -- lua type
---[[
-        if fr.tp == '@' then
-            fr.tp = to.tp
-            ASR(TP.isNumeric(fr.tp) or fr.tp=='bool' or fr.tp=='char*', me,
-                'invalid attribution')
-        end
-]]
-    end,
-
-    Lua = function (me)
-        if me.ret then
-            ASR(not me.ret.tp.ref, me, 'invalid attribution')
         end
     end,
 

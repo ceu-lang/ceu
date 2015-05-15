@@ -1105,7 +1105,7 @@ F = {
         local to, op, tag, p1, p2, p3 = unpack(me)
 
         if tag == 'SetExp' then
-            return node(tag, me.ln, op, p1, to, 'set')
+            return node(tag, me.ln, op, p1, to, 'exp')
 
         elseif tag == '__SetAwait' then
             local ret   -- SetExp or Loop (await-until)
@@ -1141,18 +1141,6 @@ F = {
             end
 
             return ret
---[==[
--- TODO: remove
-                -- HACK_7: tup_id->i looses type information (see env.lua)
-                T[#T].__ast_original_fr = {PAR=awt, I=(e and 1 or 2), i=i};
-                --local op2_dot = T[#T][2]
-                --op2_dot.__ast_pending = v   -- same type of
--- TODO: entender esse __ast
-                T[#T][2].__ast_fr = p1    -- p1 is an AwaitX
-            end
-
-            return ret
-]==]
 
         elseif tag == 'SetBlock' then
             return node(tag, me.ln, p1, to)
@@ -1187,8 +1175,7 @@ F = {
             return F.DoOrg_pre(p1, to)
 
         elseif tag == '__SetLua' then
-            p1.ret = to     -- node Lua will assign to "to"
-            return node('Stmts', me.ln, to, p1)
+            return node('SetExp', me.ln, op, p1, to, 'lua')
 
         else
             error 'not implemented'
@@ -1327,7 +1314,7 @@ F = {
         local sub = unpack(me)
         if sub then
             local _,fr,to,set = unpack(sub)
-            ASR(set=='set', me, 'invalid `finalize´')
+            ASR(set=='exp', me, 'invalid `finalize´')
         end
     end,
 
