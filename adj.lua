@@ -1167,24 +1167,9 @@ F = {
                 return REQUEST(me)
 
             else
-                --[[
-                --      v = call A(1,2);
-                -- becomes
-                --      do
-                --          var _tup t;
-                --          t._1 = 1;
-                --          t._2 = 2;
-                --          emit E => &t;
-                --          v = <ret>
-                --      end
-                --]]
-                p1.__ast_set = true
-                return node('Block', me.ln,
-                            node('Stmts', me.ln,
-                                p1,  -- Dcl_var, Sets, EmitExt
-                                node('SetExp', me.ln, op,
-                                    node('Ref', me.ln, p1),
-                                    to)))
+-- TODO: remove
+p1.__ast_set = true
+                return node('SetExp', me.ln, op, p1, to, 'emit-ext')
             end
 
         elseif tag=='__SetSpawn' then

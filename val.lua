@@ -416,13 +416,8 @@ me.dcl = DCL
 -- TODO: remove
     Await = function (me)
         local e, dt = unpack(me)
-
         if dt then
-            local suf = (dt.tm and '_') or ''
-            me.val      = '(tceu__s32*) &_ceu_app->wclk_late'..suf
             me.val_wclk = CUR(me, '__wclk_'..me.n)
-        else
-            me.val = '(('..TP.toc(me.tp)..')_STK.evtp)'
         end
     end,
 
