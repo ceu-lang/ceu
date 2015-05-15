@@ -1167,8 +1167,6 @@ F = {
                 return REQUEST(me)
 
             else
--- TODO: remove
-p1.__ast_set = true
                 return node('SetExp', me.ln, op, p1, to, 'emit-ext')
             end
 

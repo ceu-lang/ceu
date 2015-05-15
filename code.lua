@@ -1227,66 +1227,155 @@ _STK.trl = &_STK_ORG->trls[ ]]..me.trails[1]..[[ ];
         LINE(me, V(call)..';')
     end,
 
+    __emit_ps = function (me)
+        local _, e, ps = unpack(me)
+        local val = '__ceu_ps_'..me.n
+        if ps and #ps>0 then
+            local PS = {}
+            for _, p in ipairs(ps) do
+                PS[#PS+1] = V(p)
+            end
+            LINE(me, TP.toc((e.var or e).evt.ins)..' '..val..
+                        ' = { '..table.concat(PS,',')..' };')
+            val = '(&'..val..')'
+        end
+        return val
+    end,
+
     EmitExt = function (me)
-        local op, e, param = unpack(me)
-        local evt = e.evt
+        local op, e, ps = unpack(me)
         local no = '_CEU_NO_'..me.n..'_'
 
--- TODO
-LINE(me, me.dcl or '')
-        if evt.pre~='input' or op~='emit' then
-            if not me.__ast_set then
-                LINE(me, V(me)..';')    -- already on <v = emit E>
+        local DIR, dir, ptr
+        if e.evt.pre == 'input' then
+            DIR = 'IN'
+            dir = 'in'
+            if op == 'call' then
+                ptr = '_ceu_app->data'
+            else
+                ptr = '_ceu_app'
+            end
+        else
+            assert(e.evt.pre == 'output')
+            DIR = 'OUT'
+            dir = 'out'
+            ptr = '_ceu_app'
+        end
+
+        local t1 = { }
+        if e.evt.pre=='input' and op=='call' then
+            t1[#t1+1] = '_ceu_app'  -- to access `app´
+            t1[#t1+1] = ptr         -- to access `this´
+        end
+
+        local t2 = { ptr, 'CEU_'..DIR..'_'..e.evt.id }
+
+        if ps and #ps>0 then
+            local val = F.__emit_ps(me)
+            t1[#t1+1] = val
+            if op ~= 'call' then
+                t2[#t2+1] = 'sizeof('..TP.toc(e.evt.ins)..')'
+            end
+            t2[#t2+1] = '(void*)'..val
+        else
+            if dir=='in' then
+                t1[#t1+1] = 'NULL'
+            end
+            if op ~= 'call' then
+                t2[#t2+1] = '0'
+            end
+            t2[#t2+1] = 'NULL'
+        end
+        t2 = table.concat(t2, ', ')
+        t1 = table.concat(t1, ', ')
+
+        local ret_cast = ''
+        if OPTS.os and op=='call' then
+            -- when the call crosses the process,
+            -- the return val must be casted back
+            -- TODO: only works for plain values
+            if AST.par(me, 'SetExp') then
+                if TP.toc(e.evt.out) == 'int' then
+                    ret_cast = '(int)'
+                else
+                    ret_cast = '(void*)'
+                end
+            end
+        end
+
+        local op = (op=='emit' and 'emit') or 'call'
+
+        local VAL = '\n'..[[
+#if defined(ceu_]]..dir..'_'..op..'_'..e.evt.id..[[)
+    ceu_]]..dir..'_'..op..'_'..e.evt.id..'('..t1..[[)
+
+#elif defined(ceu_]]..dir..'_'..op..[[)
+    (]]..ret_cast..[[ceu_]]..dir..'_'..op..'('..t2..[[))
+
+#else
+    #error ceu_]]..dir..'_'..op..[[_* is not defined
+#endif
+]]
+
+        if not (op=='emit' and e.evt.pre=='input') then
+            if AST.par(me, 'SetExp') then
+                me.val = VAL    -- <v = emit E>
+            else
+                LINE(me, VAL..';')
             end
             return
         end
 
+        -------------------------------------------------------------------------------
         -- emit INPUT
+        -------------------------------------------------------------------------------
 
-        -- only async's need to split in two (to avoid stack growth)
-        if AST.iter'Async'() then
-            LINE(me, [[
+        LINE(me, [[
 ]]..no..[[:
 _STK.trl->evt = CEU_IN__ASYNC;
 _STK.trl->lbl = ]]..me.lbl_cnt.id..[[;
 ]])
+
+        -- TODO: join w/ the code below
+        if e[1] == '_WCLOCK' then
+            local suf = (me.__adj_orig_ps.tm and '_') or ''
+            LINE(me, [[
+#ifdef CEU_WCLOCKS
+{
+    u32 __ceu_tmp_]]..me.n..' = '..V(ps[1])..[[;
+    ceu_out_go(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, &__ceu_tmp_]]..me.n..[[);
+    while (
+#if defined(CEU_RET) || defined(CEU_OS)
+            _ceu_app->isAlive &&
+#endif
+            _ceu_app->wclk_min_set]]..suf..[[<=0) {
+        s32 __ceu_dt = 0;
+        ceu_out_go(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, &__ceu_dt);
+    }
+}
+#endif
+]])
+        else
+            LINE(me, VAL..';')
         end
 
-        if AST.iter'Thread'() then
-            -- HACK_2: never terminates
-            error'not supported'
-        end
-
-        LINE(me, V(me)..[[;
+        LINE(me, [[
 #if defined(CEU_RET) || defined(CEU_OS)
 if (! _ceu_app->isAlive) {
     return RET_QUIT;
 }
 #endif
 ]])
-        if AST.iter'Async'() then
-            HALT(me, 'RET_ASYNC')
-            LINE(me, [[
+        HALT(me, 'RET_ASYNC')
+        LINE(me, [[
 case ]]..me.lbl_cnt.id..[[:;
 ]])
-            AWAIT_PAUSE(me, no)
-        end
+        AWAIT_PAUSE(me, no)
     end,
 
     EmitInt = function (me)
         local _, int, ps = unpack(me)
-
--- TODO: same as Ext
-        local VAL = '__ceu_ps_'..me.n
-        if ps and #ps>0 then
-            local PS = {}
-            for _, p in ipairs(ps) do
-                PS[#PS+1] = V(p)
-            end
-            LINE(me, TP.toc(int.var.evt.ins)..' '..VAL..
-                        ' = { '..table.concat(PS,',')..' };')
-            VAL = '(&'..VAL..')'
-        end
+        local val = F.__emit_ps(me)
 
         -- [ ... | me=stk | ... | oth=stk ]
         LINE(me, [[
@@ -1313,8 +1402,8 @@ _STK.trl->stk = _ceu_go->stki;
 ]])
         if ps and #ps>0 then
             LINE(me, [[
-            stk.evt_sz = sizeof(*]]..VAL..[[);
-            stack_push(*_ceu_go, stk, ]]..VAL..[[);
+            stk.evt_sz = sizeof(*]]..val..[[);
+            stack_push(*_ceu_go, stk, ]]..val..[[);
 ]])
         else
             LINE(me, [[
