@@ -60,7 +60,7 @@ function REQUEST (me)
         end
         table.insert(to, 1, node('Var',me.ln,id_req2))
 
-        awt = node('_Set', me.ln, to, op, '__SetAwait', awt, false, false)
+        awt = node('_Set', me.ln, to, op, '__SetAwait', awt)
     end
 
     return node('Stmts', me.ln,
@@ -390,7 +390,7 @@ F = {
 
         local set
         if to then
-            set = node('_Set', me.ln, to, '=', '__SetAwait', awt, false)
+            set = node('_Set', me.ln, to, '=', '__SetAwait', awt)
         else
             set = awt
         end
@@ -638,10 +638,9 @@ F = {
         local noawt = node('Nothing', me.ln)
 
         if to then
-            awt   = node('_Set', me.ln, to, '=', '__SetAwait',
-                        awt, false, false)
+            awt   = node('_Set', me.ln, to, '=', '__SetAwait', awt)
             noawt = node('_Set', me.ln, to, '=', 'SetExp',
-                        node('NUMBER',me.ln,0), false, false)
+                        node('NUMBER',me.ln,0))
         end
 
         return node('Do', me.ln,
@@ -1044,8 +1043,8 @@ F = {
             return
         end
 
-        -- id, op, tag, exp, constr
-        for i=1, #t, 5 do
+        -- id, op, tag, exp
+        for i=1, #t, 4 do
             ret[#ret+1] = node('Dcl_var', me.ln, pre, AST.copy(tp), t[i])
             if t[i+1] then
                 ret[#ret].__adj_set = true  -- var int x = <something>
@@ -1053,8 +1052,7 @@ F = {
                                 node('Var', me.ln, t[i]),  -- var
                                 t[i+1],                 -- op
                                 t[i+2],                 -- tag
-                                t[i+3],                 -- exp    (p1)
-                                t[i+4] )                -- constr (p2)
+                                t[i+3] )                -- exp    (fr)
             end
         end
         return node('Stmts', me.ln, unpack(ret))
@@ -1102,22 +1100,22 @@ F = {
     end,
 
     _Set_pre = function (me)
-        local to, op, tag, p1, p2, p3 = unpack(me)
+        local to, op, tag, fr = unpack(me)
 
         if tag == 'SetExp' then
-            return node(tag, me.ln, op, p1, to, 'exp')
+            return node(tag, me.ln, op, fr, to, 'exp')
 
         elseif tag == '__SetAwait' then
             local ret   -- SetExp or Loop (await-until)
 
             --local ret
-            --local awt = p1
+            --local awt = fr
             --local T = node('Stmts', me.ln)
 
             if to.tag ~= 'VarList' then
                 to = node('VarList', me.ln, to)
             end
-            ret = node('SetExp', me.ln, op, p1, to, 'await')
+            ret = node('SetExp', me.ln, op, fr, to, 'await')
 
 
             --  <v> = await <E> until <CND>
@@ -1128,9 +1126,9 @@ F = {
             --          break;
             --      end
             --  end
-            local _, _, cnd = unpack(p1)
+            local _, _, cnd = unpack(fr)
             if cnd then
-                p1[3] = nil
+                fr[3] = nil
                 ret = node('_Loop', me.ln, false, false, false,
                         node('Stmts', me.ln,
                             ret,
@@ -1143,39 +1141,39 @@ F = {
             return ret
 
         elseif tag == 'SetBlock' then
-            return node(tag, me.ln, p1, to)
+            return node(tag, me.ln, fr, to)
 
         elseif tag == '__SetThread' then
-            return node('SetExp', me.ln, op, p1, to, 'thread')
+            return node('SetExp', me.ln, op, fr, to, 'thread')
 
         elseif tag == '__SetEmitExt' then
-            assert(p1.tag == 'EmitExt')
-            local op_emt, e, ps = unpack(p1)
+            assert(fr.tag == 'EmitExt')
+            local op_emt, e, ps = unpack(fr)
             if op_emt == 'request' then
                 return REQUEST(me)
 
             else
-                return node('SetExp', me.ln, op, p1, to, 'emit-ext')
+                return node('SetExp', me.ln, op, fr, to, 'emit-ext')
             end
 
         elseif tag=='__SetSpawn' then
-            return node('SetExp', me.ln, op, p1, to, 'spawn')
+            return node('SetExp', me.ln, op, fr, to, 'spawn')
 
         elseif tag=='__SetAdtConstr' then
 -- TODO: do the same for SetSpawn?
             local set = node('SetExp', me.ln, op,
                             false,  -- Adt_constr will set to its var
                             to)
-            if p1[1] then   -- new?
-                assert(p1[2][1].tag == 'Adt', 'bug found')
+            if fr[1] then   -- new?
+                assert(fr[2][1].tag == 'Adt', 'bug found')
             end
-            return node('Stmts', me.ln, p1, set)
+            return node('Stmts', me.ln, fr, set)
 
         elseif tag == '__SetDoOrg' then
-            return F.DoOrg_pre(p1, to)
+            return F.DoOrg_pre(fr, to)
 
         elseif tag == '__SetLua' then
-            return node('SetExp', me.ln, op, p1, to, 'lua')
+            return node('SetExp', me.ln, op, fr, to, 'lua')
 
         else
             error 'not implemented'
@@ -1348,8 +1346,7 @@ F = {
                                 node('_Set', me.ln,
                                     node('Var', me.ln, cur_id),
                                     '=', '__SetAwait',
-                                    node('Await', me.ln, evt, false),
-                                    false, false),
+                                    node('Await', me.ln, evt, false)),
                                 node('If', me.ln,
                                     node('Var', me.ln, cur_id),
                                     on,

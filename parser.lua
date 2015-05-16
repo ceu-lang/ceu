@@ -215,27 +215,15 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     , _Set  = (V'__Exp' + V'VarList') * V'__Sets'
     , __Sets = (CK'='+CK':=') * (
-                                    -- p1=awt,
-                Cc'__SetAwait'   * V'Await' * Cc(false)
-                                                                         -- constr
-              + Cc'__SetThread'  * V'_Thread' * Cc(false)
-                                                -- constr
-              + Cc'__SetEmitExt' * ( V'EmitExt'
-                                   + K'(' * V'EmitExt' * EK')' )
-                                    -- p1=emt, p2=false, p3=false
-              + Cc'__SetSpawn'   * V'Spawn'
-                                    -- p1=Spawn[max,cls,constr]
-
+                Cc'__SetAwait'     * V'Await'
+              + Cc'__SetThread'    * V'_Thread'
+              + Cc'__SetEmitExt'   * (V'EmitExt' + K'('*V'EmitExt'*EK')')
+              + Cc'__SetSpawn'     * V'Spawn'
               + Cc'__SetAdtConstr' * V'_Adt_constr_root'
-                                    -- p1=New[?]
-
-              + Cc'__SetDoOrg'   * V'DoOrg'
-              + Cc'SetBlock'     * V'__SetBlock' * Cc(false)
-                                                   -- constr
-              + Cc'SetExp'       * V'__Exp' * Cc(false)
-                                              -- constr
-              + Cc'__SetLua'     * V'_LuaExp' * Cc(false)
-                                                -- constr
+              + Cc'__SetDoOrg'     * V'DoOrg'
+              + Cc'SetBlock'       * V'__SetBlock'
+              + Cc'SetExp'         * V'__Exp'
+              + Cc'__SetLua'       * V'_LuaExp'
               + EM'expression'
               )
 
@@ -444,7 +432,7 @@ end
     , Dcl_constr = V'Block'
 
     , __dcl_var = EV'__ID_var' * (V'__Sets' +
-                                Cc(false)*Cc(false)*Cc(false)*Cc(false))
+                                Cc(false)*Cc(false)*Cc(false))
     -------
 
     , _Dcl_imp = KEY'interface' * EV'__ID_cls' * (K',' * EV'__ID_cls')^0
