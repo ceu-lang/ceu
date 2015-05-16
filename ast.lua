@@ -2,13 +2,7 @@ AST = {
     root = nil,
 }
 
-local MT = {
-    __index = function (t,k)
-        if t.tag == 'Ref' then
-            return t[1][k]
-        end
-    end,
-}
+local MT = {}
 
 local STACK = {}
 
@@ -48,12 +42,8 @@ function AST.copy (node, ln)
         if k == '__par' then
             ret[k] = v
         elseif AST.isNode(v) then
-            if v.tag == 'Ref' then
-                ret[k] = v
-            else
-                ret[k] = AST.copy(v, ln)
-                ret[k].ln = ln or ret[k].ln
-            end
+            ret[k] = AST.copy(v, ln)
+            ret[k].ln = ln or ret[k].ln
         else
             ret[k] = v
         end
@@ -94,7 +84,7 @@ function AST.child (me, pred)
         return me
     end
     for i, sub in ipairs(me) do
-        if AST.isNode(sub) and sub.tag~='Ref' then
+        if AST.isNode(sub) then
             local child = AST.child(sub,pred)
             if child then
                 return child
@@ -166,8 +156,8 @@ end
 --DBG(me.xxx)
 --DBG'---'
     for i, sub in ipairs(me) do
-        if me.tag~='Ref' and AST.isNode(sub) then
-            AST.dump(sub, spc+2)   -- 'Ref' create cycles
+        if AST.isNode(sub) then
+            AST.dump(sub, spc+2)
         else
             DBG(string.rep(' ',spc+2) .. '['..tostring(sub)..']')
         end
@@ -211,7 +201,7 @@ local function visit_aux (me, F)
 
     for i, sub in ipairs(me) do
         if bef then assert(bef(me, sub, i)==nil) end
-        if AST.isNode(sub) and sub.tag~='Ref' then
+        if AST.isNode(sub) then
             me[i] = visit_aux(sub, F)
         end
         if aft then assert(aft(me, sub, i)==nil) end

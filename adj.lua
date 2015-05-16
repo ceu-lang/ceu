@@ -1078,9 +1078,6 @@ F = {
         end
         me[3] = nil   -- remove "cnd" from "Await"
 
--- TODO: remove
-        assert(me[1].tag ~= 'Ref', 'bug found')
-
         --  await <E> until <CND>
         --      -- becomes --
         --  loop do

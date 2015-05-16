@@ -345,7 +345,7 @@ F = {
     end,
 
     Set = function (me)
-        local _, _, fr, to = unpack(me)
+        local _, set, fr, to = unpack(me)
         local thr = AST.par(me, 'Thread')
         if thr and (not to) then
             ASR( thr.__depth <= AST.iter'SetBlock'().__depth+1, me,
@@ -354,10 +354,7 @@ F = {
 
         if AST.iter'BlockI'() then
             CLS().has_pre = true   -- code for pre (before constr)
-
-            -- new, spawn, async, await
--- TODO: remove 'Ref'
-            ASR(fr.tag~='Ref' and fr.tag~='Await',
+            ASR(set == 'exp',
                 me, 'not permitted inside an interface')
         end
 

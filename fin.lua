@@ -23,10 +23,6 @@ if set == 'await' then
     return
 end
 
-        if fr.tag == 'Ref' then
-            fr = fr[1]  -- Spawn, Thread, EmitExt
-        end
-
         local cls = CLS()
 
     --
