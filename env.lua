@@ -284,17 +284,6 @@ F = {
     end,
     TupleType_pos = 'Type',
 
---[[
-    Node_pre = function (me)
-        -- HACK_8: set types for recurse
-        local t = me.__adj_recurse
-        if t then
-            local stmts, tp = unpack(t)
-            tp[1] = stmts[1].tp.id
-        end
-    end,
-]]
-
     Root_pre = function (me)
         -- TODO: NONE=0
         -- TODO: if PROPS.* then ... end
@@ -587,27 +576,6 @@ F = {
         ENV.exts[id] = me.evt
     end,
 
--- TODO: remove
---[[
-    Dcl_var_pre = function (me)
-        -- HACK_5: substitute with type of "to" (adj.lua)
-        local _, tp = unpack(me)
-        if tp.__ast_pending then
-            local e = tp.PAR[tp.I]
-            --assert(e.tag=='Ext' or e.tag=='Var'
-                --or e.tag=='WCLOCKK', 'TODO: org.evt tambem')
-            local evt = (e.var or e).evt
-            ASR(evt, me, 'event "'
-                .. ((e.var or e).id or '?')
-                .. '" is not declared')
-            assert(evt.ins and evt.ins.tag=='TupleType', 'bug found')
-            me[2] = AST.node('Type', me.ln,
-                        '_'..TP.toc(evt.ins), tp.ptr, false, false)
-                        -- actual type of Dcl_var
-        end
-    end,
-]]
-
     Dcl_var = function (me)
         local pre, tp, id, constr = unpack(me)
         if id == '_' then
@@ -847,19 +815,19 @@ F = {
         local _, set, fr, to = unpack(me)
         to = to or AST.iter'SetBlock'()[1]
 
+        local fr_tp = fr.tp
+
         if set == 'await' then
             local e = unpack(fr)
-            local ok, msg = TP.contains(to.tp, (e.var or e).evt.ins)
--- TODO with below
--- tp.lua returns the mismatch
-            ASR(ok, me, msg)
-            return
+            fr_tp = (e.var or e).evt.ins
 
         elseif set == 'thread' then
-            fr.tp = TP.fromstr'int'       -- 0/1
-        end
+            fr_tp = TP.fromstr'int'       -- 0/1
 
-        local fr_tp = fr.tp
+        elseif set == 'spawn' then
+            -- var T*? = spawn T;
+            ASR(to.tp.opt, me, 'must assign to option pointer')
+        end
 
         -- HACK_7: tup_id->i looses type information (see adj.lua)
         local t = me.__ast_original_fr
@@ -887,10 +855,8 @@ F = {
                 me, 'invalid attribution')
             fr.tp = to.tp -- return type is not known at compile time
         else
--- TODO with above
--- tp.lua returns the mismatch
-            ASR(TP.contains(to.tp,fr_tp), me,
-                'invalid attribution ('..TP.tostr(to.tp)..' vs '..TP.tostr(fr_tp)..')')
+            local ok, msg = TP.contains(to.tp,fr_tp)
+            ASR(ok, me, msg)
         end
 
         if not lua_str then
@@ -900,11 +866,6 @@ F = {
         end
 
         ASR(not CLS().is_ifc, me, 'invalid attribution')
-
-        -- var T*? = spawn T;
-        if set == 'spawn' then
-            ASR(to.tp.opt, me, 'must assign to option pointer')
-        end
     end,
 
     Free = function (me)
@@ -1026,7 +987,6 @@ me[3] = false
 ]]
 
     --------------------------------------------------------------------------
-        --assert( (not ins) or (ins.tup and #params==#ins.tup), 'bug found')
 
     Op2_call = function (me)
         local _, f, params, _ = unpack(me)

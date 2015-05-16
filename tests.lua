@@ -2991,7 +2991,7 @@ event int a;
 emit a => 1;
 escape a;
 ]],
-    env = 'line 3 : invalid attribution (int vs void)',
+    env = 'line 3 : types mismatch (`int´ <= `void´)',
     --run = 1,
     --trig_wo = 1,
 }
@@ -3743,7 +3743,7 @@ with
 end;
 escape 0;
 ]],
-    env = 'line 4 : invalid attribution',
+    env = 'line 4 : types mismatch (`void´ <= `int´)',
 }
 
 Test { [[
@@ -5972,7 +5972,7 @@ emit c => 10;
 emit c => 10;
 escape c;
 ]],
-    env = 'line 4 : invalid attribution (int vs void)',
+    env = 'line 4 : types mismatch (`int´ <= `void´)',
     --trig_wo = 2,
 }
 
@@ -6103,7 +6103,7 @@ emit a;
 escape ret;
 ]],
     --env = 'line 10 : missing parameters on `emit´',
-    env = 'line 10 : invalid arity',
+    env = 'line 10 : arity mismatch',
 }
 
 Test { [[
@@ -7836,7 +7836,7 @@ async do
 end
 escape 1;
 ]],
-    env = 'line 3 : invalid arity',
+    env = 'line 3 : arity mismatch',
     --env = 'line 3 : missing parameters on `emit´',
 }
 
@@ -7935,7 +7935,7 @@ var int a, b;
 (a,b) = await 1s;
 escape 1;
 ]],
-    env = 'line 2 : invalid arity',
+    env = 'line 2 : arity mismatch',
     --gcc = 'error: ‘tceu__s32’ has no member named ‘_2’',
     --run = 1,
 }
@@ -15950,7 +15950,7 @@ escape x;
         unreachs = 2,
     },
     run = 1,
-    env = 'line 6 : invalid arity',
+    env = 'line 6 : arity mismatch',
     --env = 'line 6 : non-matching types on `emit´ (void vs int)',
 }
 
@@ -16499,7 +16499,7 @@ var int& b = &a;
 a = 2;
 escape b;
 ]],
-    env = 'line 2 : invalid attribution (int& vs int*)',
+    env = 'line 2 : types mismatch (`int&´ <= `int*´)',
     --run = 2,
 }
 Test { [[
@@ -16550,7 +16550,7 @@ await 1s;
 var int* c = a;
 escape 1;
 ]],
-    env = 'line 3 : invalid attribution (int& vs int*)',
+    env = 'line 3 : types mismatch (`int&´ <= `int*´)',
     --run = { ['~>1s']=1 },
 }
 Test { [[
@@ -16566,7 +16566,7 @@ do
 end
 escape *v;
 ]],
-    env = 'line 6 : invalid attribution (int& vs int*)'
+    env = 'line 6 : types mismatch (`int&´ <= `int*´)'
 }
 Test { [[
 native do
@@ -18953,7 +18953,7 @@ with
 end
 escape v;
 ]],
-    env = 'line 12 : invalid argument #1',
+    env = 'line 12 : wrong argument #1',
     --wrn = true,
     --run = 10,
 }
@@ -20743,7 +20743,7 @@ output _t* A;
 emit A => 1;
 escape(1);
 ]],
-    env = 'line 2 : invalid argument #1',
+    env = 'line 2 : wrong argument #1',
 }
 Test { [[
 output int A;
@@ -20777,7 +20777,7 @@ var int a;
 emit A => &a;
 escape(1);
 ]],
-    env = 'line 3 : invalid argument #1',
+    env = 'line 3 : wrong argument #1',
 }
 Test { [[
 output int A;
@@ -20889,7 +20889,7 @@ end
 var _cahr v = emit A => 1;
 escape 0;
 ]],
-    env = 'line 6 : invalid arity',
+    env = 'line 6 : arity mismatch',
     --env = 'line 6 : non-matching types on `emit´',
     --parser = 'line 6 : after `=´ : expected expression',
     --env = 'line 6 : undeclared type `_cahr´',
@@ -20915,7 +20915,7 @@ escape 0;
 ]],
     --parser = 'line 6 : after `=´ : expected expression',
     --env = 'line 6 : non-matching types on `emit´',
-    env = 'line 6 : invalid arity',
+    env = 'line 6 : arity mismatch',
 }
 
 Test { [[
@@ -21210,7 +21210,7 @@ output (int)=>int F;
 var int ret = call F=>(1,2);
 escape ret;
 ]],
-    env = 'line 8 : invalid arity',
+    env = 'line 8 : arity mismatch',
     --env = 'line 8 : invalid attribution (void vs int)',
     --env = 'line 8 : invalid type',
 }
@@ -21220,7 +21220,7 @@ output int E;
 emit E=>(1,2);
 escape 1;
 ]],
-    env = 'line 2 : invalid arity',
+    env = 'line 2 : arity mismatch',
 }
 
 Test { [[
@@ -21228,7 +21228,7 @@ event (int) e;
 emit e=>(1,2);
 escape 1;
 ]],
-    env = 'line 2 : invalid arity',
+    env = 'line 2 : arity mismatch',
 }
 
 Test { [[
@@ -21236,7 +21236,7 @@ event (int) e;
 emit e;
 escape 1;
 ]],
-    env = 'line 2 : invalid arity',
+    env = 'line 2 : arity mismatch',
 }
 
 Test { [[
@@ -21244,7 +21244,7 @@ output int E;
 emit E;
 escape 1;
 ]],
-    env = 'line 2 : invalid arity',
+    env = 'line 2 : arity mismatch',
 }
 
 Test { [[
@@ -21252,7 +21252,7 @@ output (int,int) E;
 emit E=>1;
 escape 1;
 ]],
-    env = 'line 2 : invalid arity',
+    env = 'line 2 : arity mismatch',
 }
 
 Test { [[
@@ -21260,7 +21260,7 @@ event (int,int) e;
 emit e=>(1);
 escape 1;
 ]],
-    env = 'line 2 : invalid arity',
+    env = 'line 2 : arity mismatch',
 }
 
 Test { [[
@@ -21561,8 +21561,8 @@ escape 1;
     gcc = 'error: ‘V’ undeclared (first use in this function)',
 }
 
-Test { [[var int  a;  var int* pa=a; escape a;]], env='invalid attribution' }
-Test { [[var int* pa; var int a=pa;  escape a;]], env='invalid attribution' }
+Test { [[var int  a;  var int* pa=a; escape a;]], env='types mismatch' }
+Test { [[var int* pa; var int a=pa;  escape a;]], env='types mismatch' }
 Test { [[
 var int a;
 var int* pa = do
@@ -21570,7 +21570,7 @@ var int* pa = do
 end;
 escape a;
 ]],
-    env='invalid attribution'
+    env='types mismatch'
 }
 Test { [[
 var int* pa;
@@ -21579,7 +21579,7 @@ var int a = do
 end;
 escape a;
 ]],
-    env='invalid attribution'
+    env='types mismatch'
 }
 
 Test { [[
@@ -21669,7 +21669,7 @@ ptr1 = ptr2;
 ptr2 = ptr1;
 escape 1;
 ]],
-    env = 'line 4 : invalid attribution (int* vs void*)',
+    env = 'line 4 : types mismatch (`int*´ <= `void*´)',
     run = 1,
 }
 
@@ -21681,7 +21681,7 @@ ptr1 = ptr2;
 ptr2 = ptr1;
 escape (int)ptr2;
 ]],
-    env = 'line 3 : invalid attribution (int* vs void*)',
+    env = 'line 3 : types mismatch (`int*´ <= `void*´)',
     --env = 'line 4 : invalid attribution',
     --run = 255,
     gcc = 'error: assignment from incompatible pointer type'
@@ -21694,7 +21694,7 @@ ptr1 = (_char*)ptr2;
 ptr2 = (int*) ptr1;
 escape (int)ptr2;
 ]],
-    env = 'line 3 : invalid attribution (int* vs void*)',
+    env = 'line 3 : types mismatch (`int*´ <= `void*´)',
     --env = 'line 4 : invalid attribution',
     --run = 255,
     gcc = 'error: cast from pointer to integer of different size',
@@ -22122,7 +22122,7 @@ Test { [[var int[0] v; escape 0;]],
     --env='invalid array dimension'
 }
 Test { [[var int[2] v; escape v;]],
-    env = 'invalid attribution'
+    env = 'types mismatch'
 }
 Test { [[var u8[2] v; escape &v;]],
     env = 'invalid operand to unary "&"',
@@ -22228,7 +22228,7 @@ Test { [[var int[2] v; await v[0];  escape 0;]],
         env='line 1 : event "?" is not declared'}
 Test { [[var int[2] v; emit v[0]; escape 0;]],
         env='event "?" is not declared' }
-Test { [[var int[2] v; v=v; escape 0;]], env='invalid attribution' }
+Test { [[var int[2] v; v=v; escape 0;]], env='types mismatch' }
 Test { [[var int v; escape v[1];]], env='cannot index a non array' }
 Test { [[var int[2] v; escape v[v];]], env='invalid array index' }
 
@@ -23461,7 +23461,7 @@ var int a;
 a = "oioioi";
 escape 1;
 ]],
-    env = 'line 2 : invalid attribution (int vs char*)',
+    env = 'line 2 : types mismatch (`int´ <= `char*´)',
 }
 
 Test { [[
@@ -24324,7 +24324,7 @@ escape 0;
 ]],
     --env = 'line 2 : event type must be numeric',
     --env = 'line 2 : invalid attribution',
-    env = 'line 2 : invalid arity',
+    env = 'line 2 : arity mismatch',
     --env = 'line 2 : invalid attribution (int vs void)',
 }
 
@@ -24335,7 +24335,7 @@ end
 escape 0;
 ]],
     --env = 'line 2 : event type must be numeric',
-    env = 'line 2 : invalid arity',
+    env = 'line 2 : arity mismatch',
     --env = 'line 2 : invalid attribution',
     --env = 'line 2 : invalid attribution (bool vs void)',
 }
@@ -24991,7 +24991,7 @@ end
 var T a = 1;
 escape 0;
 ]],
-    env = 'line 4 : invalid attribution',
+    env = 'line 4 : types mismatch',
 }
 
 Test { [[
@@ -25897,7 +25897,7 @@ end;
 
 escape *(t.p) + *(t.v);
 ]],
-    env = 'line 6 : invalid attribution (int& vs null*)',
+    env = 'line 6 : types mismatch (`int&´ <= `null*´)',
 }
 
 Test { [[
@@ -27252,7 +27252,7 @@ class T with do end
 var T a;
 var T* p = a;
 ]],
-    env = 'line 3 : invalid attribution',
+    env = 'line 3 : types mismatch',
 }
 
 Test { [[
@@ -28811,7 +28811,7 @@ escape t[0].b + t[1].b;
 Test { [[
 escape outer;
 ]],
-    env = 'line 1 : invalid attribution (int vs Main)',
+    env = 'line 1 : types mismatch (`int´ <= `Main´)',
 }
 
 Test { [[
@@ -29014,7 +29014,7 @@ var int v = do T with
 end;
 escape v;
 ]],
-    env = 'line 9 : invalid arity',
+    env = 'line 9 : arity mismatch',
     --env = 'line 9 : invalid attribution (int vs void)',
 }
 
@@ -29051,7 +29051,7 @@ var int v1, v2;
 end;
 escape v1+v2;
 ]],
-    env = 'line 10 : invalid attribution',
+    env = 'line 10 : arity mismatch',
     --run = 30,
 }
 
@@ -29161,10 +29161,10 @@ escape _V;
 Test { [[
 class T with do end
 do
-    var u8* x = spawn T;
+    var u8? x = spawn T;
 end
 ]],
-    env = 'line 3 : invalid attribution',
+    env = 'line 3 : types mismatch',
 }
 
 Test { [[
@@ -29182,7 +29182,7 @@ class T with do end
 var U*? ok = spawn T;
 escape ok != null;
 ]],
-    env = 'line 3 : invalid attribution (U* vs T*)',
+    env = 'line 3 : types mismatch (`U*´ <= `T*´)',
     --run = 1,
 }
 
@@ -29445,7 +29445,7 @@ var T t;
 ts = t;
 escape 1;
 ]],
-    env = 'line 4 : invalid attribution',
+    env = 'line 4 : types mismatch',
 }
 
 Test { [[
@@ -30936,7 +30936,7 @@ class U with do end
 var T*? a;
 a = spawn U;
 ]],
-    env = 'line 4 : invalid attribution',
+    env = 'line 4 : types mismatch',
 }
 
 Test { [[
@@ -33767,7 +33767,7 @@ var T t;
 i = &t;
 escape 10;
 ]],
-    env = 'line 11 : invalid attribution',
+    env = 'line 11 : types mismatch',
 }
 
 Test { [[
@@ -33785,7 +33785,7 @@ var T t;
 i = &t;
 escape 10;
 ]],
-    env = 'line 12 : invalid attribution',
+    env = 'line 12 : types mismatch',
 }
 
 Test { [[
@@ -33803,7 +33803,7 @@ var T t;
 i = t;
 escape 10;
 ]],
-    env = 'line 12 : invalid attribution',
+    env = 'line 12 : types mismatch',
 }
 
 Test { [[
@@ -33865,7 +33865,7 @@ i = &t;
 var J* j = i;
 escape 10;
 ]],
-    env = 'line 16 : invalid attribution',
+    env = 'line 16 : types mismatch',
 }
 
 Test { [[
@@ -33891,7 +33891,7 @@ i = &t;
 var J* j = i;
 escape 0;
 ]],
-    env = 'line 6 : invalid attribution',
+    env = 'line 6 : types mismatch',
 }
 
 Test { [[
@@ -34967,7 +34967,7 @@ function (int v)=>int f do
 end
 escape f();
 ]],
-    env = 'line 4 : invalid arity',
+    env = 'line 4 : arity mismatch',
 }
 
 Test { [[
@@ -34977,7 +34977,7 @@ end
 var int* ptr;
 escape f(ptr);
 ]],
-    env = 'line 5 : invalid argument #1',
+    env = 'line 5 : wrong argument #1',
 }
 
 Test { [[
@@ -35095,7 +35095,7 @@ event int a;
 a = 1;
 escape 1;
 ]],
-    env = 'invalid attribution',
+    env = 'types mismatch',
 }
 
 Test { [[
@@ -35900,7 +35900,7 @@ var I* i = &t;
 escape i:_ins() + t._ins();;
 ]],
     --env = 'line 14 : native function "CEU_T__ins" is not declared',
-    env = 'line 13 : invalid attribution (I* vs T*)',
+    env = 'line 13 : types mismatch (`I*´ <= `T*´)',
 }
 
 Test { [[
@@ -39480,7 +39480,7 @@ i = &c;
 escape 1;
 ]],
     wrn = true,
-    env = 'line 12 : invalid attribution (Controller* vs KeyController*)',
+    env = 'line 12 : types mismatch (`Controller*´ <= `KeyController*´)',
 }
 
 Test { [[
@@ -40011,7 +40011,7 @@ var int a, b;
 (a,b) = 1;
 escape 1;
 ]],
-    env = 'line 2 : invalid attribution',
+    env = 'line 2 : arity mismatch',
     --run = 1,
 }
 
@@ -40068,7 +40068,7 @@ with
 end
 escape 1;
 ]],
-    env = 'line 4 : invalid argument #1',
+    env = 'line 4 : wrong argument #1',
     --env = 'line 4 : invalid attribution',
 }
 
@@ -40085,7 +40085,7 @@ with
 end
 escape 1;
 ]],
-    env = 'line 4 : invalid argument #2',
+    env = 'line 4 : wrong argument #2',
 }
 
 Test { [[
@@ -40102,7 +40102,7 @@ with
 end
 escape 1;
 ]],
-    env = 'line 4 : invalid argument #2',
+    env = 'line 4 : wrong argument #2',
 }
 
 Test { [[
@@ -40159,7 +40159,7 @@ event (int,int) e;
 emit e => (1,2,3);
 escape 1;
 ]],
-    env = 'invalid arity',
+    env = 'arity mismatch',
     --env = 'line 2 : invalid attribution (void vs int)',
 }
 
@@ -41817,7 +41817,7 @@ input/output [10] (int max)=>char* LINE;
 request LINE;
 escape 1;
 ]],
-    env = 'line 2 : invalid arity',
+    env = 'line 2 : arity mismatch',
     --env = 'line 2 : missing parameters on `emit´',
 }
 
@@ -41826,7 +41826,7 @@ input/output [10] (int max)=>char* LINE;
 request LINE => "oi";
 escape 1;
 ]],
-    env = 'line 2 : invalid argument #2',
+    env = 'line 2 : wrong argument #2',
 }
 
 Test { [[
@@ -41904,7 +41904,7 @@ input/output [10] (int max)=>char* LINE;
 request LINE;
 escape 1;
 ]],
-    env = 'line 2 : invalid arity',
+    env = 'line 2 : arity mismatch',
     --env = 'line 2 : missing parameters on `emit´',
 }
 
@@ -41913,7 +41913,7 @@ input/output [10] (int max)=>char* LINE;
 request LINE => "oi";
 escape 1;
 ]],
-    env = 'line 2 : invalid argument #2',
+    env = 'line 2 : wrong argument #2',
 }
 
 Test { [[
@@ -41944,7 +41944,7 @@ var u8 err, ret;
 (err, ret) = request LINE => 10;
 escape 1;
 ]],
-    env = 'line 3 : invalid argument #3',
+    env = 'line 3 : wrong argument #3',
     --env = 'line 3 : invalid attribution (u8 vs char*)',
 }
 
@@ -42874,7 +42874,7 @@ var List l1 = List.NIL();
 var List l2 = List.CONS(1, l1);     /* should be &l1 */
 escape 1;
 ]],
-    env = 'line 52 : invalid argument #2',
+    env = 'line 52 : wrong argument #2',
 }
 
 -- constructors must specify the ADT identifier
@@ -42930,19 +42930,19 @@ Test { DATA..[[
 var Pair p1 = Pair();           /* expected (x,y) */
 escape 1;
 ]],
-    env = 'line 51 : invalid arity',
+    env = 'line 51 : arity mismatch',
 }
 Test { DATA..[[
 var Pair p1 = Pair(1,null);     /* expected (int,int) */
 escape 1;
 ]],
-    env = 'line 51 : invalid argument #2',
+    env = 'line 51 : wrong argument #2',
 }
 Test { DATA..[[
 var Opt o1 = Opt.NIL(1);       /* expected (void) */
 escape 1;
 ]],
-    env = 'line 51 : invalid arity',
+    env = 'line 51 : arity mismatch',
 }
 
 -- constructors are not expressions...
@@ -43366,7 +43366,7 @@ pool List[] l;
 l = List.CONS(2, List.NIL());
 escape l:CONS.head;
 ]],
-    env = 'line 52 : invalid attribution (List* vs List)',
+    env = 'line 52 : types mismatch (`List*´ <= `List´)',
     --env = 'line 52 : invalid call parameter #2 (List vs List*)',
 }
 -- cannot assign "l" directly (in the pool declaration)

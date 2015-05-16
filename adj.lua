@@ -1047,7 +1047,6 @@ F = {
         for i=1, #t, 4 do
             ret[#ret+1] = node('Dcl_var', me.ln, pre, AST.copy(tp), t[i])
             if t[i+1] then
-                ret[#ret].__adj_set = true  -- var int x = <something>
                 ret[#ret+1] = node('_Set', me.ln,
                                 node('Var', me.ln, t[i]),  -- var
                                 t[i+1],                 -- op
