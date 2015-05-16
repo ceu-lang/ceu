@@ -12,11 +12,6 @@ local function ceu2c (op)
 end
 
 function V (me)
--- TODO
-    if not me.val then
-        return
-    end
-
     ASR(me.val, me, 'invalid expression')
 
     local ret = me.val
@@ -70,20 +65,16 @@ F =
 
     Outer = function (me)
             me.val = '_STK_ORG'
-            --me.val = '(*(('..TP.toc(me.tp)..'*)'..me.val..'))'
             me.val = '(('..TP.toc(me.tp)..'*)'..me.val..')'
     end,
 
     This = function (me)
         if AST.iter'Dcl_constr'() then
             me.val = '__ceu_org'    -- set when calling constr
-            --me.val = '(*(('..TP.toc(me.tp)..'*)'..me.val..'))'
-            me.val = '(('..TP.toc(me.tp)..'*)'..me.val..')'
         else
             me.val = '_STK_ORG'
-            --me.val = '(*(('..TP.toc(me.tp)..'*)'..me.val..'))'
-            me.val = '(('..TP.toc(me.tp)..'*)'..me.val..')'
         end
+        me.val = '(('..TP.toc(me.tp)..'*)'..me.val..')'
     end,
 
     -- called by Var, Field, Dcl_var
@@ -277,12 +268,6 @@ F =
                 F.__var(me)
             end
         end
-    end,
-
--- TODO: remove
-    Set = function (me)
-        local _, _, fr, to = unpack(me)
-        V(fr)     -- error on reads of internal events
     end,
 
     Op2_call = function (me)
