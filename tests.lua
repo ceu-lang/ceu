@@ -18953,7 +18953,7 @@ with
 end
 escape v;
 ]],
-    env = 'line 12 : non-matching types on `emit´ (int* vs void*)',
+    env = 'line 12 : invalid argument #1',
     --wrn = true,
     --run = 10,
 }
@@ -20743,7 +20743,7 @@ output _t* A;
 emit A => 1;
 escape(1);
 ]],
-    env = 'line 2 : non-matching types on `emit´',
+    env = 'line 2 : invalid argument #1',
 }
 Test { [[
 output int A;
@@ -20777,7 +20777,7 @@ var int a;
 emit A => &a;
 escape(1);
 ]],
-    env = 'line 3 : non-matching types on `emit´',
+    env = 'line 3 : invalid argument #1',
 }
 Test { [[
 output int A;
@@ -41826,7 +41826,7 @@ input/output [10] (int max)=>char* LINE;
 request LINE => "oi";
 escape 1;
 ]],
-    env = 'line 2 : non-matching types on `emit´ parameter #2 (int vs char*)',
+    env = 'line 2 : invalid argument #2',
 }
 
 Test { [[
@@ -41913,7 +41913,7 @@ input/output [10] (int max)=>char* LINE;
 request LINE => "oi";
 escape 1;
 ]],
-    env = 'line 2 : non-matching types on `emit´ parameter #2 (int vs char*)',
+    env = 'line 2 : invalid argument #2',
 }
 
 Test { [[

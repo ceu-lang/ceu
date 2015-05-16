@@ -818,33 +818,21 @@ F = {
         end
     end,
 
--- TODO: join w/ __check_params
-    __arity = function (me, ins, ps)
-        assert(ins.tag=='TupleType', 'bug found')
-        assert(ps.tag=='ExpList', 'bug found')
-        ASR(#ins==#ps, me, 'invalid arity')
-        for i=1, #ins do
-            local _, tp, _ = unpack(ins[i])
-            local msg = (#ins==1 and '') or (' parameter #'..i)
-            ASR(TP.contains(tp,ps[i].tp), me,
-                'non-matching types on `emit´'..msg..' ('..
-                    TP.tostr(tp)..' vs '..TP.tostr(ps[i].tp)..')')
-        end
-    end,
-
     EmitInt = function (me)
         local _, int, ps = unpack(me)
         local var = int.var
         ASR(var and var.pre=='event', me,
             'event "'..(var and var.id or '?')..'" is not declared')
-        F.__arity(me, var.evt.ins, ps)
+        local ok, msg = TP.contains(var.evt.ins, ps)
+        ASR(ok, me, msg)
     end,
 
     EmitExt = function (me)
         local op, e, ps = unpack(me)
 
         ASR(e.evt.op == op, me, 'invalid `'..op..'´')
-        F.__arity(me, e.evt.ins, ps)
+        local ok, msg = TP.contains(e.evt.ins, ps)
+        ASR(ok, me, msg)
 
         if op == 'call' then
             me.tp = e.evt.out       -- return value
@@ -862,6 +850,8 @@ F = {
         if set == 'await' then
             local e = unpack(fr)
             local ok, msg = TP.contains(to.tp, (e.var or e).evt.ins)
+-- TODO with below
+-- tp.lua returns the mismatch
             ASR(ok, me, msg)
             return
 
@@ -897,6 +887,8 @@ F = {
                 me, 'invalid attribution')
             fr.tp = to.tp -- return type is not known at compile time
         else
+-- TODO with above
+-- tp.lua returns the mismatch
             ASR(TP.contains(to.tp,fr_tp), me,
                 'invalid attribution ('..TP.tostr(to.tp)..' vs '..TP.tostr(fr_tp)..')')
         end
