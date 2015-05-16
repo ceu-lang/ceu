@@ -1044,8 +1044,10 @@ _STK.trl = &_STK_ORG->trls[ ]]..me.trails[1]..[[ ];
         -- close AND gates
         COMM(me, 'close ParAnd gates')
 
+        local val = CUR(me, '__and_'..me.n)
+
         for i=1, #me do
-            LINE(me, V(me)..'_'..i..' = 0;')
+            LINE(me, val..'_'..i..' = 0;')
         end
 
         F._Par(me)
@@ -1055,14 +1057,14 @@ _STK.trl = &_STK_ORG->trls[ ]]..me.trails[1]..[[ ];
                 CASE(me, me.lbls_in[i])
             end
             CONC(me, sub)
-            LINE(me, V(me)..'_'..i..' = 1;')
+            LINE(me, val..'_'..i..' = 1;')
             GOTO(me, me.lbl_tst.id)
         end
 
         -- AFTER code :: test gates
         CASE(me, me.lbl_tst)
         for i, sub in ipairs(me) do
-            HALT(me, nil, '!'..V(me)..'_'..i)
+            HALT(me, nil, '!'..val..'_'..i)
         end
 
         LINE(me, [[
@@ -1476,9 +1478,11 @@ case ]]..me.lbl.id..[[:;
         local no = (dt or AST.iter'Pause'()) and '_CEU_NO_'..me.n..'_'
         local suf = (dt and dt.tm and '_') or ''  -- timemachine "WCLOCK_"
 
+        local val = CUR(me, '__wclk_'..me.n)
+
         if dt then
             LINE(me, [[
-ceu_out_wclock]]..suf..[[(_ceu_app, (s32)]]..V(dt)..[[, &]]..me.val_wclk..[[, NULL);
+ceu_out_wclock]]..suf..[[(_ceu_app, (s32)]]..V(dt)..[[, &]]..val..[[, NULL);
 ]])
         end
 
@@ -1502,7 +1506,7 @@ case ]]..me.lbl.id..[[:;
         if dt then
             LINE(me, [[
     /* subtract time and check if I have to awake */
-    if (!ceu_out_wclock]]..suf..[[(_ceu_app, *(*((s32**)_STK.evt_buf)), NULL, &]]..me.val_wclk..[[) )
+    if (!ceu_out_wclock]]..suf..[[(_ceu_app, *(*((s32**)_STK.evt_buf)), NULL, &]]..val..[[) )
         goto ]]..no..[[;
 ]])
         end
@@ -1676,6 +1680,10 @@ static void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
 
     RawStmt = function (me)
         if me.thread then
+            me.thread.thread_st = CUR(me, '__thread_st_'..me.thread.n)
+            me.thread.thread_id = CUR(me, '__thread_id_'..me.thread.n)
+                -- TODO: ugly, should move to "Thread" node
+
             me[1] = [[
 if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
     *]]..me.thread.thread_st..[[ = 3;

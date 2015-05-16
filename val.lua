@@ -64,10 +64,6 @@ F =
         end
     end,
 
-    ParAnd = function (me)
-        me.val = CUR(me, '__and_'..me.n)
-    end,
-
     Global = function (me)
         me.val = '(_ceu_app->data)'
     end,
@@ -283,23 +279,10 @@ F =
         end
     end,
 
+-- TODO: remove
     Set = function (me)
         local _, _, fr, to = unpack(me)
         V(fr)     -- error on reads of internal events
-    end,
-
--- TODO: remove
-    Thread = function (me)
-        me.thread_id = CUR(me, '__thread_id_'..me.n)
-        me.thread_st = CUR(me, '__thread_st_'..me.n)
-    end,
-
--- TODO: remove
-    Await = function (me)
-        local e, dt = unpack(me)
-        if dt then
-            me.val_wclk = CUR(me, '__wclk_'..me.n)
-        end
     end,
 
     Op2_call = function (me)
