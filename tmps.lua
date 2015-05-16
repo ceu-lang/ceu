@@ -164,7 +164,7 @@ error'not implemented (locals inside iter)'
             e1.fst.var.isTmp = false    -- assigned to a pointer
         end
     end,
-    SetExp = function (me)
+    Set = function (me)
         local _, _, fr = unpack(me)
         if fr.byRef and fr.fst.var then
             fr.fst.var.isTmp = false    -- assigned to a pointer

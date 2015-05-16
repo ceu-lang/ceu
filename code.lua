@@ -198,7 +198,7 @@ end
 local function FIND_ADT_POOL_CONSTR (me)
     local par = assert(me.__par)
     local set = par[2]
-    if set and set.tag=='SetExp' then
+    if set and set.tag=='Set' then
         local to = set[4]
         return FIND_ADT_POOL(to.fst)
     else
@@ -518,7 +518,7 @@ if (]]..LVAR..[[ == NULL) {
         local ID = '__ceu_new_'..me.n
 
 -- TODO
-local set = (me.__par.tag == 'SetExp')
+local set = (me.__par.tag == 'Set')
 
         LINE(me, [[
 /*{*/
@@ -804,7 +804,7 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
         end
     end,
 
-    SetExp = function (me)
+    Set = function (me)
 -- TODO: fin??
         local _, set, fr, to, fin = unpack(me)
         COMM(me, 'SET: '..tostring(to[1]))    -- Var or C
@@ -1314,7 +1314,7 @@ _STK.trl = &_STK_ORG->trls[ ]]..me.trails[1]..[[ ];
             -- when the call crosses the process,
             -- the return val must be casted back
             -- TODO: only works for plain values
-            if AST.par(me, 'SetExp') then
+            if AST.par(me, 'Set') then
                 if TP.toc(e.evt.out) == 'int' then
                     ret_cast = '(int)'
                 else
@@ -1338,7 +1338,7 @@ _STK.trl = &_STK_ORG->trls[ ]]..me.trails[1]..[[ ];
 ]]
 
         if not (op=='emit' and e.evt.pre=='input') then
-            if AST.par(me, 'SetExp') then
+            if AST.par(me, 'Set') then
                 me.val = VAL    -- <v = emit E>
             else
                 LINE(me, VAL..';')
@@ -1546,7 +1546,7 @@ case ]]..me.lbl.id..[[:;
     Thread = function (me)
         local vars,blk = unpack(me)
 
--- TODO: transform to SetExp
+-- TODO: transform to Set
         if vars then
             for i=1, #vars, 2 do
                 local isRef, n = vars[i], vars[i+1]
@@ -1695,7 +1695,7 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
 
         local set_to
         local nrets
-        local set = AST.par(me, 'SetExp')
+        local set = AST.par(me, 'Set')
         if set then
             set_to = set[4]
             nrets = 1

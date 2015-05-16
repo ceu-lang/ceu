@@ -855,7 +855,7 @@ F = {
 
     --------------------------------------------------------------------------
 
-    SetExp = function (me)
+    Set = function (me)
         local _, set, fr, to = unpack(me)
         to = to or AST.iter'SetBlock'()[1]
 

@@ -123,7 +123,7 @@ F =
                 me.val_raw = me.val
 
                 -- set
-                local set = AST.par(me, 'SetExp')
+                local set = AST.par(me, 'Set')
                 local _, to, fr, is_to, are_both_opt
                 if set then
                     _, _, fr, to = unpack(set)
@@ -283,7 +283,7 @@ F =
         end
     end,
 
-    SetExp = function (me)
+    Set = function (me)
         local _, _, fr, to = unpack(me)
         V(fr)     -- error on reads of internal events
     end,

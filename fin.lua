@@ -13,7 +13,7 @@ F = {
         TRACK = {}  -- restart tracking for each class
     end,
 
-    SetExp = function (me)
+    Set = function (me)
         local op, set, fr, to = unpack(me)
         to = to or AST.iter'SetBlock'()[1]
 
@@ -240,7 +240,7 @@ end
     end,
 
     Var = function (me)
-        local set = AST.iter'SetExp'()
+        local set = AST.iter'Set'()
         if set and set[4] == me then
             return  -- re-setting variable
         end
@@ -324,7 +324,7 @@ end
         if set then
             -- EmitExt changes the AST
             if set.tag=='Block' then
-                set = set[1][2] -- Block->Stmt->SetExp
+                set = set[1][2] -- Block->Stmt->Set
             end
             set.fin = fin                   -- let call/set handle
         elseif fin.active then

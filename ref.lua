@@ -6,14 +6,14 @@ end
 
 F = {
     -- before Var
-    SetExp_pre = function (me)
+    Set_pre = function (me)
         local _, _, _, to = unpack(me)
         local TO = (to.tag=='VarList' and to) or {to}
         for _, to in ipairs(TO) do
-            F.__SetExp_pre(me, to)
+            F.__Set_pre(me, to)
         end
     end,
-    __SetExp_pre = function (me, TO)
+    __Set_pre = function (me, TO)
         local _, set, fr, _ = unpack(me)
         to = TO
         if not to.tp.ref then
@@ -224,7 +224,7 @@ F = {
             local var = glb.blk_ifc.vars[me.var.id]
             if var then
                 local set = me.__par and me.__par[1]==me and
-                            me.__par[2] and me.__par[2].tag=='SetExp'
+                            me.__par[2] and me.__par[2].tag=='Set'
                 ASR(set, me,
                     'global references must be bounded on declaration')
             end

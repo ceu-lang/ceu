@@ -1,5 +1,5 @@
 F = {
-    SetExp = function (me)
+    Set = function (me)
         local _, set, fr, to = unpack(me)
         if set == 'spawn' then
             -- a = spawn T

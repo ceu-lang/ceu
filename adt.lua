@@ -1,5 +1,5 @@
 F = {
-    SetExp = function (me)
+    Set = function (me)
         local _, _, fr, to = unpack(me)
         local adt = ENV.adts[to.tp.id]
         if not (adt and adt.n_recs>0) then
@@ -60,7 +60,7 @@ F = {
         me.n_cons = (me.n_cons or 0) + 1
 
         local set = par[2]
-        if set and set.tag=='SetExp' then
+        if set and set.tag=='Set' then
             set[3].lst.var.n_cons = me.n_cons
         else
             assert(par.tag == 'Adt_constr')

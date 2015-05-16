@@ -164,7 +164,7 @@ F = {
         me.emtChk = false
     end,
 
-    SetExp = function (me)
+    Set = function (me)
         local _,_,_,to = unpack(me)
         to = (to.tag=='VarList' and to) or {to}
         for _, v in ipairs(to) do

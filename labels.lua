@@ -88,7 +88,7 @@ F = {
         me.lbl_out = new{'Set_out',  prio=me.__depth}
     end,
 
-    SetExp = function (me)
+    Set = function (me)
         local _, _, _, to = unpack(me)
         if to.fst.tp.id == '_tceu_adt_root' then
             if PROPS.has_adts_watching[to.tp.id] then

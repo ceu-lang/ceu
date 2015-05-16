@@ -66,7 +66,7 @@ function REQUEST (me)
     return node('Stmts', me.ln,
             node('Dcl_var', me.ln, 'var', tp_req, id_req),
             node('Dcl_var', me.ln, 'var', tp_req, id_req2),
-            node('SetExp', me.ln, '=', 'exp',
+            node('Set', me.ln, '=', 'exp',
                 node('RawExp', me.ln, 'ceu_out_req()'),
                 node('Var', me.ln, id_req)),
             node('EmitExt', me.ln, 'emit',
@@ -268,7 +268,7 @@ F = {
         --]]
 
         return node('Stmts', me.ln,
-                    node('SetExp', me.ln, '=', 'exp', exp, to, fr),
+                    node('Set', me.ln, '=', 'exp', exp, to, fr),
                     node('Escape', me.ln))
     end,
 
@@ -1103,10 +1103,10 @@ F = {
         local to, op, tag, fr = unpack(me)
 
         if tag == 'exp' then
-            return node('SetExp', me.ln, op, tag, fr, to)
+            return node('Set', me.ln, op, tag, fr, to)
 
         elseif tag == 'await' then
-            local ret   -- SetExp or Loop (await-until)
+            local ret   -- Set or Loop (await-until)
 
             --local ret
             --local awt = fr
@@ -1115,7 +1115,7 @@ F = {
             if to.tag ~= 'VarList' then
                 to = node('VarList', me.ln, to)
             end
-            ret = node('SetExp', me.ln, op, tag, fr, to)
+            ret = node('Set', me.ln, op, tag, fr, to)
 
 
             --  <v> = await <E> until <CND>
@@ -1144,7 +1144,7 @@ F = {
             return node('SetBlock', me.ln, fr, to)
 
         elseif tag == 'thread' then
-            return node('SetExp', me.ln, op, tag, fr, to)
+            return node('Set', me.ln, op, tag, fr, to)
 
         elseif tag == 'emit-ext' then
             assert(fr.tag == 'EmitExt')
@@ -1153,15 +1153,15 @@ F = {
                 return REQUEST(me)
 
             else
-                return node('SetExp', me.ln, op, tag, fr, to)
+                return node('Set', me.ln, op, tag, fr, to)
             end
 
         elseif tag=='spawn' then
-            return node('SetExp', me.ln, op, tag, fr, to)
+            return node('Set', me.ln, op, tag, fr, to)
 
         elseif tag=='adt' then
 -- TODO: do the same for SetSpawn?
-            local set = node('SetExp', me.ln, op, 'exp',
+            local set = node('Set', me.ln, op, 'exp',
                             false,  -- Adt_constr will set to its var
                             to)
             if fr[1] then   -- new?
@@ -1173,7 +1173,7 @@ F = {
             return F.DoOrg_pre(fr, to)
 
         elseif tag == 'lua' then
-            return node('SetExp', me.ln, op, tag, fr, to)
+            return node('Set', me.ln, op, tag, fr, to)
 
         else
             error 'not implemented'
@@ -1290,7 +1290,7 @@ F = {
         end
 
         for i, p in ipairs(ps) do
-            T[#T+1] = node('SetExp', me.ln, '=', 'exp',
+            T[#T+1] = node('Set', me.ln, '=', 'exp',
                         p,
                         node('Op2_.', me.ln, '.', node('Var',me.ln,tup_id),
                             '_'..i))
@@ -1337,7 +1337,7 @@ F = {
             node('Block', me.ln,
                 node('Stmts', me.ln,
                     cur_dcl,    -- Dcl_var(cur_id)
-                    node('SetExp', me.ln, '=', 'exp',
+                    node('Set', me.ln, '=', 'exp',
                         node('NUMBER', me.ln, 0),
                         node('Var', me.ln, cur_id)),
                     node('ParOr', me.ln,
@@ -1413,7 +1413,7 @@ do return end
 
         for i=1, len do
             -- str[(i-1)] = str[i]  (lua => C)
-            t[#t+1] = node('SetExp', me.ln, '=', 'exp',
+            t[#t+1] = node('Set', me.ln, '=', 'exp',
                         node('NUMBER', me.ln, string.byte(str,i)),
                         node('Op2_idx', me.ln, 'idx',
                             node('Var',me.ln,id),
@@ -1421,7 +1421,7 @@ do return end
         end
 
         -- str[len] = '\0'
-        t[#t+1] = node('SetExp', me.ln, '=', 'exp',
+        t[#t+1] = node('Set', me.ln, '=', 'exp',
                     node('NUMBER', me.ln, 0),
                     node('Op2_idx', me.ln, 'idx',
                         node('Var',me.ln,id),
@@ -1561,8 +1561,8 @@ H = {
         local me_, set = unpack(me.__par)
         assert(me_ == me)
 
-        -- root must set SetExp variable
-        assert(set.tag=='SetExp', 'bug found')
+        -- root must set Set variable
+        assert(set.tag=='Set', 'bug found')
 
         local dcls, cons = unpack(constr)
         assert(dcls[1].tag == 'Dcl_var')

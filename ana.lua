@@ -79,7 +79,7 @@ end
 
 local LST = {
     Do=true, Stmts=true, Block=true, Root=true, Dcl_cls=true,
-    Pause=true, SetExp=true,
+    Pause=true, Set=true,
 }
 
 F = {
@@ -286,7 +286,7 @@ F = {
 
     -- TODO: behaves similarly to Stmts
     --  join code
-    SetExp_aft = function (me, sub, i)
+    Set_aft = function (me, sub, i)
         if sub.tag == 'Await' then
             me[i+1].ana = {
                 pre = COPY(sub.ana.pos)
