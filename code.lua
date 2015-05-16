@@ -805,8 +805,7 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
     end,
 
     Set = function (me)
--- TODO: fin??
-        local _, set, fr, to, fin = unpack(me)
+        local _, set, fr, to = unpack(me)
         COMM(me, 'SET: '..tostring(to[1]))    -- Var or C
         LINE(me, '{')   -- __ceu_tmp below
 
@@ -873,12 +872,11 @@ case ]]..me.lbl_cnt.id..[[:;
                     local suf = (dt.tm and '_') or ''
                     val = '_ceu_app->wclk_late'..suf
                 elseif e.tag=='Ext' then
--- TODO
-if e[1] == '_ok_killed' then
-    val = '(*((tceu_org**)&_STK.evt_buf))'
-else
-                    val = '(*(('..TP.toc(fr.tp)..'*)_STK.evt_buf))->_'..i
-end
+                    if e[1] == '_ok_killed' then
+                        val = '(*((tceu_org**)&_STK.evt_buf))'
+                    else
+                        val = '(*(('..TP.toc(fr.tp)..'*)_STK.evt_buf))->_'..i
+                    end
                 else
                     val = '(('..TP.toc(fr.tp)..')_STK.evt_buf)->_'..i
                 end
@@ -892,6 +890,7 @@ end
 
         else
 
+-- TODO
 if set == 'spawn' then
     local id,_,_,set = unpack(fr)
     fr.val = '((CEU_'..id..'*)__ceu_new_'..fr.n..')' -- defined by _Spawn (code.lua)
@@ -955,11 +954,6 @@ end
     _ceu_app->ret = ]]..V(to)..[[;
 #endif
 ]])
-        end
-
-        -- enable finalize
-        if fin and fin.active then
-            LINE(me, fin.val..' = 1;')
         end
         LINE(me, '}')   -- __ceu_tmp above
     end,
