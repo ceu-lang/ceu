@@ -34977,7 +34977,7 @@ end
 var int* ptr;
 escape f(ptr);
 ]],
-    env = 'line 5 : invalid call parameter #1 (int* vs int)',
+    env = 'line 5 : invalid argument #1',
 }
 
 Test { [[
@@ -40068,7 +40068,7 @@ with
 end
 escape 1;
 ]],
-    env = 'line 4 : invalid parameter #1 (int vs void)',
+    env = 'line 4 : invalid argument #1',
     --env = 'line 4 : invalid attribution',
 }
 
@@ -40085,7 +40085,7 @@ with
 end
 escape 1;
 ]],
-    env = 'line 4 : invalid parameter #2 (int* vs int)',
+    env = 'line 4 : invalid argument #2',
 }
 
 Test { [[
@@ -40102,7 +40102,7 @@ with
 end
 escape 1;
 ]],
-    env = 'line 4 : invalid parameter #2 (int* vs int)',
+    env = 'line 4 : invalid argument #2',
 }
 
 Test { [[
@@ -41944,7 +41944,7 @@ var u8 err, ret;
 (err, ret) = request LINE => 10;
 escape 1;
 ]],
-    env = 'line 3 : invalid parameter #3 (char* vs u8)',
+    env = 'line 3 : invalid argument #3',
     --env = 'line 3 : invalid attribution (u8 vs char*)',
 }
 
@@ -42874,7 +42874,7 @@ var List l1 = List.NIL();
 var List l2 = List.CONS(1, l1);     /* should be &l1 */
 escape 1;
 ]],
-    env = 'line 52 : invalid constructor parameter #2 (List vs List*)',
+    env = 'line 52 : invalid argument #2',
 }
 
 -- constructors must specify the ADT identifier
@@ -42936,7 +42936,7 @@ Test { DATA..[[
 var Pair p1 = Pair(1,null);     /* expected (int,int) */
 escape 1;
 ]],
-    env = 'line 51 : invalid constructor parameter #2 (null* vs int)',
+    env = 'line 51 : invalid argument #2',
 }
 Test { DATA..[[
 var Opt o1 = Opt.NIL(1);       /* expected (void) */

@@ -861,8 +861,8 @@ F = {
 
         if set == 'await' then
             local e = unpack(fr)
-            F.__check_params(me, (e.var or e).evt.ins, to.tp.tup, true)
-                                                           -- TODO:remove
+            local ok, msg = TP.contains(to.tp, (e.var or e).evt.ins)
+            ASR(ok, me, msg)
             return
 
         elseif set == 'thread' then
@@ -1036,30 +1036,6 @@ me[3] = false
     --------------------------------------------------------------------------
         --assert( (not ins) or (ins.tup and #params==#ins.tup), 'bug found')
 
--- TODO: ins=>tup
--- TODO: ins=>to, param=>fr
-    __check_params = function (me, ins, params
--- TODO
-,inv)
-        assert(ins and ins.tag=='TupleType' and ins.tup, 'bug found')
-        ASR(#params==#ins, me, 'invalid arity');
-        for i, p in ipairs(params) do
-            --p = p.tp
-            local f = ins.tup[i]
-            --assert(p.tag=='Type' and f.tag=='Type', 'bug found')
--- TODO: invert/better message
-            local call = (me.tag=='Op2_call' and 'call') or 'constructor'
-if inv then
-            ASR(TP.contains(p,f), me, 'invalid parameter #'..i..
-                ' ('..TP.tostr(f)..' vs '..TP.tostr(p)..')')
-else
-            ASR(TP.contains(f,p), me, 'invalid '..call..' parameter #'..i..
-                ' ('..TP.tostr(p)..' vs '..TP.tostr(f)..')')
-end
-        end
-        return req
-    end,
-
     Op2_call = function (me)
         local _, f, params, _ = unpack(me)
         me.tp  = f.var and f.var.fun and f.var.fun.out or TP.fromstr'@'
@@ -1084,7 +1060,8 @@ end
 
         local ins = f.var and f.var.fun and f.var.fun.ins
         if ins then
-            F.__check_params(me, ins, params.tup)
+            local ok, msg = TP.contains(ins, params)
+            ASR(ok, me, msg)
         end
 
         if not me.c then
@@ -1111,7 +1088,8 @@ end
             tup = tadt.tup
         end
 
-        F.__check_params(me, tup, params.tp.tup)
+        local ok, msg = TP.contains(tup, params.tp)
+        ASR(ok, me, msg)
     end,
 
     Op2_idx = function (me)

@@ -201,13 +201,13 @@ function TP.contains (tp1, tp2)
                     local t1 = tp1.tup[i]
                     local t2 = tp2.tup[i]
                     if not TP.contains(t1,t2) then
-                        return false
+                        return false, 'invalid argument #'..i
                     end
                 end
                 return true
             end
         end
-        return false
+        return false, 'invalid arity'
     end
 
     -- same type
@@ -252,7 +252,7 @@ function TP.contains (tp1, tp2)
                 return cls1.is_ifc and ENV.ifc_vs_cls_or_ifc(cls1,cls2)
             end
         end
-        return false
+        return false, 'error'
     end
 
     -- both are pointers
@@ -267,14 +267,14 @@ function TP.contains (tp1, tp2)
         if tp2.id == 'null' then
             return true     -- any pointer can be assigned "null"
         end
-        return false
+        return false, 'error'
     elseif tp1.ptr>0 or ptr2>0 then
         if tp1.ptr>0 and tp2.ext then
             return true
         elseif ptr2>0 and tp1.ext then
             return true
         else
-            return false
+            return false, 'error'
         end
     end
 
@@ -283,7 +283,7 @@ function TP.contains (tp1, tp2)
         return true
     end
 
-    return false
+    return false, 'error'
 end
 
 function TP.max (tp1, tp2)
