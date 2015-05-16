@@ -1354,7 +1354,7 @@ _STK.trl->lbl = ]]..me.lbl_cnt.id..[[;
 
         -- TODO: join w/ the code below
         if e[1] == '_WCLOCK' then
-            local suf = (me.__adj_orig_ps.tm and '_') or ''
+            local suf = (ps[1].tm and '_') or ''
             LINE(me, [[
 #ifdef CEU_WCLOCKS
 {

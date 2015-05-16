@@ -829,19 +829,6 @@ F = {
             ASR(to.tp.opt, me, 'must assign to option pointer')
         end
 
-        -- HACK_7: tup_id->i looses type information (see adj.lua)
-        local t = me.__ast_original_fr
-        if t then
-            local e, i = t.PAR[t.I], t.i
-            local evt = (e.var or e).evt  -- Ext or Int
-            if evt then
-                fr_tp = assert(assert(evt.ins).tup)[i] or TP.types.void
-            else
-                fr_tp = e.tp                -- WCLOCK
-            end
-            assert(fr_tp.tag == 'Type')
-        end
-
         local lua_str = false
         if set == 'lua' then
             ASR(not to.tp.ref, me, 'invalid attribution')
@@ -1232,23 +1219,13 @@ me[3] = false
 
         else
             assert(not e1.tp.tup)
-            ASR(me.__ast_chk or e1.tp.ext, me, 'not a struct')
-            if me.__ast_chk then
-                -- check Emit/Await-Ext/Int param
-                local T, i = unpack(me.__ast_chk)
-                local t, j = unpack(T)
-                local chk = t[j]
-                local evt = chk.evt or chk.var.evt  -- EmitExt or EmitInt
-                assert(evt.ins and evt.ins.tup)
-                me.tp = ASR(evt.ins.tup[i], me, 'invalid arity')
-            else
-                -- rect.x = 1 (_SDL_Rect)
-                me.tp = TP.fromstr'@'
-                local tp = TP.get(e1.tp.id)
-                if tp.plain and e1.tp.ptr==0 then
-                    me.tp.plain = true
-                    me.tp.ptr   = 0
-                end
+            ASR(e1.tp.ext, me, 'not a struct')
+            -- rect.x = 1 (_SDL_Rect)
+            me.tp = TP.fromstr'@'
+            local tp = TP.get(e1.tp.id)
+            if tp.plain and e1.tp.ptr==0 then
+                me.tp.plain = true
+                me.tp.ptr   = 0
             end
             me.lval = e1.lval
         end

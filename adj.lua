@@ -444,10 +444,7 @@ F = {
                                 '=', 'exp',
                                 iter)))
 
-        -- HACK_8: set types for recurse
-        local stmts = node('Stmts', me.ln, AST.copy(iter), cls, pool, doorg)
-        cls.__adj_recurse = { stmts, tp }
-        return stmts
+        return node('Stmts', me.ln, AST.copy(iter), cls, pool, doorg)
     end,
     _Recurse_pre = function (me)
         local exp = unpack(me)
@@ -1223,7 +1220,6 @@ F = {
         -- wclock event, set "e"
         if e == false then
             me[2] = node('Ext', me.ln, '_WCLOCK')
-            me.__adj_orig_ps = ps
         end
 
         -- adjust to ExpList
@@ -1244,63 +1240,6 @@ F = {
             return REQUEST(me)
         end
     end,
-
---[[
-    EmitInt_pos = 'EmitExt_pos',
-    EmitExt_pos = function (me)
-        local op, e, ps = unpack(me)
-        me.__ast_original_params = ps  -- save for arity check
-        assert(ps.tag == 'ExpList', ps.tag)
-
-        if #ps == 0 then
-            me[3] = false   -- nothing to pass
-            return
-        end
-
-        -- statements to assign the parameters
-        local T = node('Stmts', me.ln)
-
-        -- emit e => (v1,v2);
-        --      <becomes>
-        -- <e>;                 // required by tup_tp
-        -- var _tup_tp tup_id;  // requires type of "e"
-        -- tup_id._1 = v1;
-        -- tup_id._2 = v2;
-        -- emit e => &tup_id;
-
-        -- <e>;
-        T[#T+1] = AST.copy(e) -- determines type before traversing tup
-        --assert(e.tag=='Ext' or e.tag=='Var', 'TODO: org.evt tambem')
-
-        -- var _tup_tp* tup_id;
-        local tup_id = '_tup_'..me.n
-        local tup_tp = {__ast_pending=true, PAR=T, I=#T, ptr=0} -- plain var to emit
-                            -- HACK_5: substitute with type of "var" (env.lua)
-        T[#T+1] = node('Dcl_var', me.ln, 'var', tup_tp, tup_id)
-        T[#T].__ast_tmp = true
-
--- TODO: understand this again
-        -- avoid emitting tmps (see tmps.lua)
-        if me.tag == 'EmitInt' then
-            T[#T+1] = node('EmitNoTmp', me.ln)
-        end
-
-        for i, p in ipairs(ps) do
-            T[#T+1] = node('Set', me.ln, '=', 'exp',
-                        p,
-                        node('Op2_.', me.ln, '.', node('Var',me.ln,tup_id),
-                            '_'..i))
--- TODO: understand this again
-            --T[#T][3].__ast_chk = { {T,I}, i }
-        end
-
-        me[3] = node('Op1_&', me.ln, '&',
-                    node('Var', me.ln, tup_id))
-            T[#T+1] = me
-
-        return T
-    end,
-]]
 
 -- Finalize ------------------------------------------------------
 
@@ -1546,12 +1485,6 @@ H = {
         end
     end,
 
-    _Adt_constr_root_pre = function (me)
-        local dyn, constr = unpack(me)
-        local adt = unpack(constr)
-        local id  = unpack(adt)
-        me.__adj_adt_id = id
-    end,
     _Adt_constr_root_pos = function (me)
         local dyn, constr = unpack(me)
         local me_, set = unpack(me.__par)

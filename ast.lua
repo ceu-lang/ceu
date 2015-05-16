@@ -279,7 +279,6 @@ local function f (ln, v1, op, v2, v3, ...)
             ret = AST.node('Op1_'..op, ln, op, f(ln,v2,v3,...))
         end
     end
-    ret.__ast_isexp = true
     return ret
 end
 

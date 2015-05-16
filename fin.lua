@@ -48,11 +48,6 @@ end
     -- POINTER ATTRIBUTIONS
     --
 
-        -- attribution in pool iterators
-        if me.__ast_iter then
-            return
-        end
-
         -- an attribution restarts tracking accesses to "to"
         -- variables or native symbols
         if (to.var and (not to.var.tp.ref)) or to.c then
