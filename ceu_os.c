@@ -96,7 +96,6 @@ int ceu_sys_req (void) {
 /**********************************************************************/
 
 void ceu_stack_push_f (tceu_go* go, tceu_stk* elem, void* ptr) {
-    printf(">> STKI %d\n", go->stki);
     if (go->stki == -1) {
         go->stki = 0;
     } else {
@@ -104,7 +103,6 @@ void ceu_stack_push_f (tceu_go* go, tceu_stk* elem, void* ptr) {
         go->stki = stack_nxti(*go);
         elem->stk_prv = go->stki - old;
     }
-    printf("<< STKI %d [%ld+%d]\n", go->stki, sizeof(tceu_stk), elem->evt_sz);
     stack_top(*go) = *elem;
     if (ptr != NULL) {
         memcpy(&stack_top(*go).evt_buf, ptr, elem->evt_sz);

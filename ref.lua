@@ -7,14 +7,14 @@ end
 F = {
     -- before Var
     SetExp_pre = function (me)
-        local _, _, to, _ = unpack(me)
+        local _, _, _, to = unpack(me)
         local TO = (to.tag=='VarList' and to) or {to}
         for _, to in ipairs(TO) do
             F.__SetExp_pre(me, to)
         end
     end,
     __SetExp_pre = function (me, TO)
-        local _, fr, _, set = unpack(me)
+        local _, set, fr, _ = unpack(me)
         to = TO
         if not to.tp.ref then
             return

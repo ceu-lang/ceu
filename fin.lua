@@ -14,7 +14,7 @@ F = {
     end,
 
     SetExp = function (me)
-        local op, fr, to, set = unpack(me)
+        local op, set, fr, to = unpack(me)
         to = to or AST.iter'SetBlock'()[1]
 
 -- TODO
@@ -241,7 +241,7 @@ end
 
     Var = function (me)
         local set = AST.iter'SetExp'()
-        if set and set[3] == me then
+        if set and set[4] == me then
             return  -- re-setting variable
         end
         if type(TRACK[me.var]) ~= 'table' then

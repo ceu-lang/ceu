@@ -165,7 +165,7 @@ F = {
     end,
 
     SetExp = function (me)
-        local _,_,to = unpack(me)
+        local _,_,_,to = unpack(me)
         to = (to.tag=='VarList' and to) or {to}
         for _, v in ipairs(to) do
             if v.lst.acc and v.lst.acc.md~='no' then

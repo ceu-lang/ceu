@@ -215,15 +215,15 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     , _Set  = (V'__Exp' + V'VarList') * V'__Sets'
     , __Sets = (CK'='+CK':=') * (
-                Cc'__SetAwait'     * V'Await'
-              + Cc'__SetThread'    * V'_Thread'
-              + Cc'__SetEmitExt'   * (V'EmitExt' + K'('*V'EmitExt'*EK')')
-              + Cc'__SetSpawn'     * V'Spawn'
-              + Cc'__SetAdtConstr' * V'_Adt_constr_root'
-              + Cc'__SetDoOrg'     * V'DoOrg'
-              + Cc'SetBlock'       * V'__SetBlock'
-              + Cc'SetExp'         * V'__Exp'
-              + Cc'__SetLua'       * V'_LuaExp'
+                Cc'await'    * V'Await'
+              + Cc'thread'   * V'_Thread'
+              + Cc'emit-ext' * (V'EmitExt' + K'('*V'EmitExt'*EK')')
+              + Cc'spawn'    * V'Spawn'
+              + Cc'adt'      * V'_Adt_constr_root'
+              + Cc'do-org'   * V'DoOrg'
+              + Cc'block'    * V'__SetBlock'
+              + Cc'exp'      * V'__Exp'
+              + Cc'lua'      * V'_LuaExp'
               + EM'expression'
               )
 

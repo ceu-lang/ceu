@@ -1,6 +1,6 @@
 F = {
     SetExp = function (me)
-        local _, fr, to, set = unpack(me)
+        local _, set, fr, to = unpack(me)
         if set == 'spawn' then
             -- a = spawn T
             fr.blk = to.lst.var.blk   -- to = me.__par[3]

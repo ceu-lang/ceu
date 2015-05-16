@@ -89,7 +89,7 @@ F = {
     end,
 
     SetExp = function (me)
-        local _, _, to, _ = unpack(me)
+        local _, _, _, to = unpack(me)
         if to.fst.tp.id == '_tceu_adt_root' then
             if PROPS.has_adts_watching[to.tp.id] then
                 me.lbl_cnt = new{'Set_adt'}

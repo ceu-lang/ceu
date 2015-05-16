@@ -856,7 +856,7 @@ F = {
     --------------------------------------------------------------------------
 
     SetExp = function (me)
-        local _, fr, to, set = unpack(me)
+        local _, set, fr, to = unpack(me)
         to = to or AST.iter'SetBlock'()[1]
 
         if set == 'await' then

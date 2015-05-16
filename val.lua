@@ -126,7 +126,7 @@ F =
                 local set = AST.par(me, 'SetExp')
                 local _, to, fr, is_to, are_both_opt
                 if set then
-                    _, fr, to = unpack(set)
+                    _, _, fr, to = unpack(set)
                     is_to = (to.lst.var == me.var)
                     is_fr = (fr.lst.var == me.var)
                     are_both_opt = (to.tp.opt and fr.tp.opt)
@@ -284,7 +284,7 @@ F =
     end,
 
     SetExp = function (me)
-        local _, fr, to = unpack(me)
+        local _, _, fr, to = unpack(me)
         V(fr)     -- error on reads of internal events
     end,
 

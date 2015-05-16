@@ -1,6 +1,6 @@
 F = {
     SetExp = function (me)
-        local _, fr, to = unpack(me)
+        local _, _, fr, to = unpack(me)
         local adt = ENV.adts[to.tp.id]
         if not (adt and adt.n_recs>0) then
             return  -- ignore non-adt or non-recursive-adt

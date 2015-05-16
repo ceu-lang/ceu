@@ -345,7 +345,7 @@ F = {
     end,
 
     SetExp = function (me)
-        local _, fr, to = unpack(me)
+        local _, _, fr, to = unpack(me)
         local thr = AST.par(me, 'Thread')
         if thr and (not to) then
             ASR( thr.__depth <= AST.iter'SetBlock'().__depth+1, me,

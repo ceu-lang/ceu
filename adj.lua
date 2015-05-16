@@ -60,13 +60,13 @@ function REQUEST (me)
         end
         table.insert(to, 1, node('Var',me.ln,id_req2))
 
-        awt = node('_Set', me.ln, to, op, '__SetAwait', awt)
+        awt = node('_Set', me.ln, to, op, 'await', awt)
     end
 
     return node('Stmts', me.ln,
             node('Dcl_var', me.ln, 'var', tp_req, id_req),
             node('Dcl_var', me.ln, 'var', tp_req, id_req2),
-            node('SetExp', me.ln, '=',
+            node('SetExp', me.ln, '=', 'exp',
                 node('RawExp', me.ln, 'ceu_out_req()'),
                 node('Var', me.ln, id_req)),
             node('EmitExt', me.ln, 'emit',
@@ -268,7 +268,7 @@ F = {
         --]]
 
         return node('Stmts', me.ln,
-                    node('SetExp', me.ln, '=', exp, to, fr),
+                    node('SetExp', me.ln, '=', 'exp', exp, to, fr),
                     node('Escape', me.ln))
     end,
 
@@ -331,7 +331,7 @@ F = {
                                         '__adt_'..me.n),
                                     node('_Set', me.ln,
                                         node('Var', me.ln, '__adt_'..me.n),
-                                        '=', '__SetAwait',
+                                        '=', 'await',
                                         node('Await', me.ln,
                                             node('Ext', me.ln, '_ok_killed'),
                                             false,
@@ -358,7 +358,7 @@ F = {
                                         '__org_'..me.n),
                                     node('_Set', me.ln,
                                         node('Var', me.ln, '__org_'..me.n),
-                                        '=', '__SetAwait',
+                                        '=', 'await',
                                         node('Await', me.ln,
                                             node('Ext', me.ln, '_ok_killed'),
                                             false,
@@ -390,7 +390,7 @@ F = {
 
         local set
         if to then
-            set = node('_Set', me.ln, to, '=', '__SetAwait', awt)
+            set = node('_Set', me.ln, to, '=', 'await', awt)
         else
             set = awt
         end
@@ -435,13 +435,13 @@ F = {
                                 node('Op2_.', me.ln, '.',
                                     node('This', me.ln),
                                     '_pool'),
-                                '=', 'SetExp',
+                                '=', 'exp',
                                 node('Var', me.ln, '_pool_'..me.n)),
                             node('_Set', me.ln,
                                 node('Op2_.', me.ln, '.',
                                     node('This', me.ln),
                                     to[1]),
-                                '=', 'SetExp',
+                                '=', 'exp',
                                 iter)))
 
         -- HACK_8: set types for recurse
@@ -460,7 +460,7 @@ F = {
                         '_var_'..me.n)
         local set = node('_Set', me.ln,
                         node('Var', me.ln, '_var_'..me.n),
-                        '=', '__SetSpawn',
+                        '=', 'spawn',
                         node('Spawn', me.ln, cls_id,
                             node('Var', me.ln, '_pool'),
                             node('Dcl_constr', me.ln,
@@ -468,7 +468,7 @@ F = {
                                     node('Op2_.', me.ln, '.',
                                         node('This', me.ln),
                                         '_pool'),
-                                    '=', 'SetExp',
+                                    '=', 'exp',
                                     node('Op2_.', me.ln, '.',
                                         node('Outer', me.ln),
                                         '_pool')),
@@ -476,7 +476,7 @@ F = {
                                 node('Op2_.', me.ln, '.',
                                     node('This', me.ln),
                                     to_id),
-                                '=', 'SetExp',
+                                '=', 'exp',
                                 exp))))
         local if_ = node('If', me.ln,
                         node('Op1_?', me.ln, '?',
@@ -638,8 +638,8 @@ F = {
         local noawt = node('Nothing', me.ln)
 
         if to then
-            awt   = node('_Set', me.ln, to, '=', '__SetAwait', awt)
-            noawt = node('_Set', me.ln, to, '=', 'SetExp',
+            awt   = node('_Set', me.ln, to, '=', 'await', awt)
+            noawt = node('_Set', me.ln, to, '=', 'exp',
                         node('NUMBER',me.ln,0))
         end
 
@@ -874,7 +874,7 @@ F = {
                                         node('Dcl_var', me.ln, 'var', tp_req, 'id_req'),
                                         node('_Set', me.ln,
                                             node('Var', me.ln, 'id_req'),
-                                            '=', '__SetAwait',
+                                            '=', 'await',
                                             node('Await', me.ln,
                                                 node('Ext', me.ln, id_evt..'_CANCEL'),
                                                 false,
@@ -914,7 +914,7 @@ F = {
             local sets = {
                 node('_Set', me.ln,
                     node('Op2_.', me.ln, '.', node('This',me.ln), id_req),
-                    '=', 'SetExp',
+                    '=', 'exp',
                     node('Var', me.ln, id_req))
             }
             for _, t in ipairs(ins) do
@@ -928,7 +928,7 @@ F = {
                                     node('Op2_.', me.ln, '.',
                                         node('This',me.ln),
                                         id),
-                                    '=', 'SetExp',
+                                    '=', 'exp',
                                     node('Var', me.ln, _id))
             end
 
@@ -951,7 +951,7 @@ F = {
                                             'ok_'),
                                         node('_Set', me.ln,
                                             node('Var', me.ln, 'ok_'),
-                                            '=', '__SetSpawn',
+                                            '=', 'spawn',
                                             node('Spawn', me.ln, id_cls,
                                                 node('Var', me.ln, '_'..id_cls..'s'),
                                                 node('Dcl_constr', me.ln, unpack(sets)))),
@@ -1102,10 +1102,10 @@ F = {
     _Set_pre = function (me)
         local to, op, tag, fr = unpack(me)
 
-        if tag == 'SetExp' then
-            return node(tag, me.ln, op, fr, to, 'exp')
+        if tag == 'exp' then
+            return node('SetExp', me.ln, op, tag, fr, to)
 
-        elseif tag == '__SetAwait' then
+        elseif tag == 'await' then
             local ret   -- SetExp or Loop (await-until)
 
             --local ret
@@ -1115,7 +1115,7 @@ F = {
             if to.tag ~= 'VarList' then
                 to = node('VarList', me.ln, to)
             end
-            ret = node('SetExp', me.ln, op, fr, to, 'await')
+            ret = node('SetExp', me.ln, op, tag, fr, to)
 
 
             --  <v> = await <E> until <CND>
@@ -1140,28 +1140,28 @@ F = {
 
             return ret
 
-        elseif tag == 'SetBlock' then
-            return node(tag, me.ln, fr, to)
+        elseif tag == 'block' then
+            return node('SetBlock', me.ln, fr, to)
 
-        elseif tag == '__SetThread' then
-            return node('SetExp', me.ln, op, fr, to, 'thread')
+        elseif tag == 'thread' then
+            return node('SetExp', me.ln, op, tag, fr, to)
 
-        elseif tag == '__SetEmitExt' then
+        elseif tag == 'emit-ext' then
             assert(fr.tag == 'EmitExt')
             local op_emt, e, ps = unpack(fr)
             if op_emt == 'request' then
                 return REQUEST(me)
 
             else
-                return node('SetExp', me.ln, op, fr, to, 'emit-ext')
+                return node('SetExp', me.ln, op, tag, fr, to)
             end
 
-        elseif tag=='__SetSpawn' then
-            return node('SetExp', me.ln, op, fr, to, 'spawn')
+        elseif tag=='spawn' then
+            return node('SetExp', me.ln, op, tag, fr, to)
 
-        elseif tag=='__SetAdtConstr' then
+        elseif tag=='adt' then
 -- TODO: do the same for SetSpawn?
-            local set = node('SetExp', me.ln, op,
+            local set = node('SetExp', me.ln, op, 'exp',
                             false,  -- Adt_constr will set to its var
                             to)
             if fr[1] then   -- new?
@@ -1169,11 +1169,11 @@ F = {
             end
             return node('Stmts', me.ln, fr, set)
 
-        elseif tag == '__SetDoOrg' then
+        elseif tag == 'do-org' then
             return F.DoOrg_pre(fr, to)
 
-        elseif tag == '__SetLua' then
-            return node('SetExp', me.ln, op, fr, to, 'lua')
+        elseif tag == 'lua' then
+            return node('SetExp', me.ln, op, tag, fr, to)
 
         else
             error 'not implemented'
@@ -1290,7 +1290,7 @@ F = {
         end
 
         for i, p in ipairs(ps) do
-            T[#T+1] = node('SetExp', me.ln, '=',
+            T[#T+1] = node('SetExp', me.ln, '=', 'exp',
                         p,
                         node('Op2_.', me.ln, '.', node('Var',me.ln,tup_id),
                             '_'..i))
@@ -1311,7 +1311,7 @@ F = {
     Finalize_pos = function (me)
         local sub = unpack(me)
         if sub then
-            local _,fr,to,set = unpack(sub)
+            local _,set,fr,to = unpack(sub)
             ASR(set=='exp', me, 'invalid `finalize´')
         end
     end,
@@ -1337,7 +1337,7 @@ F = {
             node('Block', me.ln,
                 node('Stmts', me.ln,
                     cur_dcl,    -- Dcl_var(cur_id)
-                    node('SetExp', me.ln, '=',
+                    node('SetExp', me.ln, '=', 'exp',
                         node('NUMBER', me.ln, 0),
                         node('Var', me.ln, cur_id)),
                     node('ParOr', me.ln,
@@ -1345,7 +1345,7 @@ F = {
                             node('Stmts', me.ln,
                                 node('_Set', me.ln,
                                     node('Var', me.ln, cur_id),
-                                    '=', '__SetAwait',
+                                    '=', 'await',
                                     node('Await', me.ln, evt, false)),
                                 node('If', me.ln,
                                     node('Var', me.ln, cur_id),
@@ -1413,7 +1413,7 @@ do return end
 
         for i=1, len do
             -- str[(i-1)] = str[i]  (lua => C)
-            t[#t+1] = node('SetExp', me.ln, '=',
+            t[#t+1] = node('SetExp', me.ln, '=', 'exp',
                         node('NUMBER', me.ln, string.byte(str,i)),
                         node('Op2_idx', me.ln, 'idx',
                             node('Var',me.ln,id),
@@ -1421,7 +1421,7 @@ do return end
         end
 
         -- str[len] = '\0'
-        t[#t+1] = node('SetExp', me.ln, '=',
+        t[#t+1] = node('SetExp', me.ln, '=', 'exp',
                     node('NUMBER', me.ln, 0),
                     node('Op2_idx', me.ln, 'idx',
                         node('Var',me.ln,id),
@@ -1568,8 +1568,8 @@ H = {
         assert(dcls[1].tag == 'Dcl_var')
         local id = dcls[1][3]
 
-        set[2] = node('Var', me.ln, id)
-        set[2].__adj_is_constr = true
+        set[3] = node('Var', me.ln, id)
+        set[3].__adj_is_constr = true
         return node('Stmts', me.ln,
                 node('Stmts', me.ln, unpack(dcls)),
                 cons)

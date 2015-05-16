@@ -199,7 +199,7 @@ local function FIND_ADT_POOL_CONSTR (me)
     local par = assert(me.__par)
     local set = par[2]
     if set and set.tag=='SetExp' then
-        local to = set[3]
+        local to = set[4]
         return FIND_ADT_POOL(to.fst)
     else
         return FIND_ADT_POOL_CONSTR(par)
@@ -806,7 +806,7 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
 
     SetExp = function (me)
 -- TODO: fin??
-        local _, fr, to, set, fin = unpack(me)
+        local _, set, fr, to, fin = unpack(me)
         COMM(me, 'SET: '..tostring(to[1]))    -- Var or C
         LINE(me, '{')   -- __ceu_tmp below
 
@@ -1697,7 +1697,7 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
         local nrets
         local set = AST.par(me, 'SetExp')
         if set then
-            set_to = set[3]
+            set_to = set[4]
             nrets = 1
         else
             nrets = 0
