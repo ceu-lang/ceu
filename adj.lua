@@ -183,7 +183,7 @@ F = {
     end,
     _GlobalDo_pos = function (me)
         local cls = AST.iter'Dcl_cls'()
-        assert(me[1][1].tag == 'Stmts')
+        AST.asr(me,'', 1,'Block', 1,'Stmts')
         if cls == MAIN then
             return me[1][1]
                     -- remove "global do ... end" and Block
@@ -223,9 +223,7 @@ F = {
         me[3]  = blk        -- both blocks 'ifc' and 'body'
         me[4]  = nil        -- remove 'body'
 
-        assert(me.blk_ifc.tag == 'Block' and
-               me.blk_ifc[1]    and me.blk_ifc[1].tag   =='Stmts' and
-               me.blk_ifc[1][1] and me.blk_ifc[1][1].tag=='BlockI')
+        AST.asr_(me.blk_ifc,'Block', 1,'Stmts', 1,'BlockI')
 
         -- insert class pool for orphan spawn
         if me.__ast_has_malloc then
@@ -396,10 +394,10 @@ F = {
         end
 
         local ret = node('_Loop', me.ln, false, to, AST.copy(e or dt), body)
-        assert(body[1].tag == 'Stmts')
+        AST.asr(body[1], 'Stmts')
         table.insert(body[1], 1, set)
         ret.isEvery = true  -- refuses other "awaits"
-
+                            -- auto declares "to"
         return ret
     end,
 
@@ -1140,7 +1138,7 @@ F = {
             return node('Set', me.ln, op, tag, fr, to)
 
         elseif tag == 'emit-ext' then
-            assert(fr.tag == 'EmitExt')
+            AST.asr(fr, 'EmitExt')
             local op_emt, e, ps = unpack(fr)
             if op_emt == 'request' then
                 return REQUEST(me)
@@ -1158,7 +1156,7 @@ F = {
                             false,  -- Adt_constr will set to its var
                             to)
             if fr[1] then   -- new?
-                assert(fr[2][1].tag == 'Adt', 'bug found')
+                AST.asr(fr[2][1], 'Adt')
             end
             return node('Stmts', me.ln, fr, set)
 
@@ -1468,7 +1466,7 @@ H = {
         else
             assert(op == 'union')
             for i=3, #me do
-                assert(me[i].tag == 'Dcl_adt_tag')
+                AST.asr(me[i], 'Dcl_adt_tag')
                 local n = #me[i]
                 -- variable declarations require a block
                 if n == 1 then
@@ -1491,10 +1489,10 @@ H = {
         assert(me_ == me)
 
         -- root must set Set variable
-        assert(set.tag=='Set', 'bug found')
+        AST.asr(set, 'Set')
 
         local dcls, cons = unpack(constr)
-        assert(dcls[1].tag == 'Dcl_var')
+        AST.asr(dcls[1], 'Dcl_var')
         local id = dcls[1][3]
 
         set[3] = node('Var', me.ln, id)
@@ -1532,7 +1530,7 @@ H = {
                 end
 
                 -- last id is at 1st position
-                assert(dcls[1].tag == 'Dcl_var')
+                AST.asr(dcls[1], 'Dcl_var')
                 local id = dcls[1][3]
 
                 if dyn then

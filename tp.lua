@@ -32,7 +32,7 @@ function TP.new (me)
         end
 
     else
-        assert(me.tag == 'TupleType')
+        AST.asr(me, 'TupleType')
         me.id  = nil
         me.ptr = (#me==1 and 0) or 1
         me.arr = false

@@ -51,6 +51,23 @@ function AST.copy (node, ln)
     return ret
 end
 
+function AST.asr (me, tag)
+    local t = (AST.isNode(me) and me.tag) or 'none'
+    assert(AST.isNode(me) and (me.tag==tag or tag==''),
+        'bug found ('..t..' vs '..tag..')')
+    return me
+end
+function AST.asr_ (me, tag, ...)
+    local idx, tag2 = ...
+
+    AST.asr(me, tag)
+    if idx then
+        return AST.asr_(me[idx], tag2, select(3,...))
+    else
+        return me
+    end
+end
+
 function AST.pred_async (me)
     local tag = me.tag
     return tag=='Async' or tag=='Thread'

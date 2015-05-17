@@ -35,9 +35,9 @@ F = {
             local base = me.tags[me.tags[1]].tup
             for _, tag in ipairs(me.tags) do
                 local tup = me.tags[tag].tup
-                assert(tup.tag == 'TupleType')
+                AST.asr(tup, 'TupleType')
                 for _, item in ipairs(tup) do
-                    assert(item.tag == 'TupleTypeItem')
+                    AST.asr(item, 'TupleTypeItem')
                     local _, tp, _ = unpack(item)
                     if TP.tostr(tp)==id..'&' or TP.tostr(tp)==id..'*' then
                         me.n_recs = me.n_recs + 1
@@ -63,7 +63,7 @@ F = {
         if set and set.tag=='Set' then
             set[3].lst.var.n_cons = me.n_cons
         else
-            assert(par.tag == 'Adt_constr')
+            AST.asr(par, 'Adt_constr')
             par.n_cons = (par.n_cons or 0) + me.n_cons
         end
     end,

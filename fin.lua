@@ -78,7 +78,7 @@ end
             if dcl then
                 to_blk = dcl.var.blk
             else
-                assert(constr.__par.tag=='Spawn')
+                AST.asr(constr.__par, 'Spawn')
                 local _,pool,_ = unpack(constr.__par)
                 assert(assert(pool.lst).var)
                 to_blk = pool.lst.var.blk
@@ -301,11 +301,9 @@ end
         if not fin then
             set, fin = unpack(me)
         end
-        assert(fin[1].tag == 'Block')
-        assert(fin[1][1].tag == 'Stmts')
-        fin.active = fin[1] and fin[1][1] and
-                        (#fin[1][1]>1 or
-                         fin[1][1][1] and fin[1][1][1].tag~='Nothing')
+        AST.asr_(fin[1],'Block', 1,'Stmts')
+        fin.active = (#fin[1][1]>1 or
+                      fin[1][1][1] and fin[1][1][1].tag~='Nothing')
 
         if AST.iter'Dcl_constr'() then
             ASR(not fin.active, me, 1108,

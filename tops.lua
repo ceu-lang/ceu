@@ -54,7 +54,7 @@ AST.visit(F)
 for _, cls in ipairs(TOPS) do
     if cls.tag=='Dcl_cls' and cls[2]~='Main' then   -- "Main" has no Dcl_imp's
         local dcls1 = cls.blk_ifc[1][1]
-        assert(dcls1.tag == 'BlockI', 'bug found')
+        AST.asr(dcls1, 'BlockI')
         local i = 1
         while i <= #dcls1 do
             local imp = dcls1[i]
@@ -65,7 +65,7 @@ for _, cls in ipairs(TOPS) do
                     ASR(ifc and ifc[1]==true,
                         imp, 'interface "'..dcl..'" is not declared')
                     local dcls2 = ifc.blk_ifc[1][1]
-                    assert(dcls2.tag == 'BlockI')
+                    AST.asr(dcls2, 'BlockI')
                     for _, dcl2 in ipairs(dcls2) do
                         assert(dcl2.tag ~= 'Dcl_imp')   -- impossible because I'm going in order
                         local new = AST.copy(dcl2)

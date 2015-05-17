@@ -467,9 +467,9 @@ F = {
 
             -- Dcl_adt[3]->Block[1]->Stmts[*]->Stmts
             for _, stmts in ipairs(me[3][1]) do
-                local dclvar = unpack(stmts)
+                AST.asr(stmts, 'Stmts')
+                local dclvar = AST.asr(stmts[1],'Dcl_var')
                 local _, var_tp, var_id = unpack(dclvar)
-                assert(stmts.tag=='Stmts' and dclvar.tag=='Dcl_var', 'bug found')
                 local item = AST.node('TupleTypeItem', me.ln,
                                 false,var_tp,false)
                 me.tup[#me.tup+1] = item
@@ -482,7 +482,7 @@ F = {
             assert(op == 'union')
             me.tags = {} -- map tag=>{blk,tup}
             for i=3, #me do
-                assert(me[i].tag == 'Dcl_adt_tag', 'bug found')
+                AST.asr(me[i], 'Dcl_adt_tag')
                 local id, blk = unpack(me[i])
                 local tup = AST.node('TupleType',me.ln)
                 me.tags[id] = { blk=blk, tup=tup }
@@ -490,7 +490,7 @@ F = {
 
                 if blk then -- skip void enums
                     for _, stmts in ipairs(blk) do
-                        assert(stmts.tag=='Stmts', 'bug found')
+                        AST.asr(stmts, 'Stmts')
                         local dclvar = unpack(stmts)
                         if dclvar then
                             local _, var_tp, var_id = unpack(dclvar)
@@ -747,7 +747,7 @@ F = {
         -- HACK_6 [watching]: detects if OPT-1 (evt) or OPT-2 (adt) or OPT-3 (org)
         if me.__adj_watching then
             local stmts = me.__par
-            assert(stmts and stmts.tag == 'Stmts', 'bug found')
+            AST.asr(stmts, 'Stmts')
 
             local tp = me[1].tp  -- type of Var
             if tp and tp.ptr==1 and (ENV.clss[tp.id] or ENV.adts[tp.id]) then
@@ -922,8 +922,7 @@ F = {
             -- done above
 
         elseif me.isEvery then
--- TODO
-me[3] = false
+            me[3] = false   -- "to" is set on the "await"
             me.iter_tp = 'event'
             if to then
                 local evt = (iter.var or iter).evt
@@ -932,7 +931,7 @@ me[3] = false
                 for i, tp in ipairs(tup) do
                     local dcl = AST.node('Dcl_var', me.ln, 'var', AST.copy(tp), to[i][1])
                     AST.visit(F, dcl)
-                    local stmts = me.__par[1]
+                    local stmts = AST.asr(me.__par[1],'Stmts')
                     stmts[#stmts+1] = dcl
                 end
             end
