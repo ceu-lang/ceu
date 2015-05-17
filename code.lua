@@ -1535,12 +1535,6 @@ case ]]..me.lbl.id..[[:;
         CONC(me, blk)
     end,
 
-    SetThread = CONC,
-
-    Thread_pre = function (me)
-        me.lbl_out = '_CEU_THREAD_OUT_'..me.n
-    end,
-
     Thread = function (me)
         local vars,blk = unpack(me)
 
@@ -1637,7 +1631,7 @@ static void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
     ]]..blk.code..[[
 
     /* goto from "sync" and already terminated */
-    ]]..me.lbl_out..[[:
+    ]]..me.lbl_out.id..[[:
 
     /* terminate thread */
     {
@@ -1822,7 +1816,7 @@ _CEU_LUA_OK_]]..me.n..[[:;
 CEU_THREADS_MUTEX_LOCK(&_ceu_app->threads_mutex);
 if (*(_ceu_p.st) == 3) {        /* 3=end */
     CEU_THREADS_MUTEX_UNLOCK(&_ceu_app->threads_mutex);
-    goto ]]..thr.lbl_out..[[;   /* exit if ended from "sync" */
+    goto ]]..thr.lbl_out.id..[[;   /* exit if ended from "sync" */
 } else {                        /* othrewise, execute block */
 ]])
         CONC(me)
