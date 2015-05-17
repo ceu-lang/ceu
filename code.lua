@@ -516,9 +516,7 @@ if (]]..LVAR..[[ == NULL) {
     Spawn = function (me)
         local id, pool, constr = unpack(me)
         local ID = '__ceu_new_'..me.n
-
--- TODO
-local set = (me.__par.tag == 'Set')
+        local set = AST.par(me, 'Set')
 
         LINE(me, [[
 /*{*/
@@ -552,8 +550,10 @@ local set = (me.__par.tag == 'Set')
         end
 
         if set then
-            LINE(me, 'TODO-SET-SPAWN')
-            --CONC(me, set)   -- <ptr=Spawn T>
+            local set_to = set[4]
+            LINE(me, V(set_to)..' = '..
+                '('..string.upper(TP.toc(set_to.tp.opt))..'_pack('..
+                    '((CEU_'..id..'*)__ceu_new_'..me.n..')));')
         end
 
         LINE(me, [[
@@ -807,14 +807,21 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
     Set = function (me)
         local _, set, fr, to = unpack(me)
         COMM(me, 'SET: '..tostring(to[1]))    -- Var or C
+        if set ~= 'exp' and set~='adt' then
+            CONC(me, fr)
+            return
+        end
+
         LINE(me, '{')   -- __ceu_tmp below
 
-        -- For dynamic ADTs (to=tceu_adt_root):
-        -- Relink:
-        --  - remove "fr" from tree (set parent link to NIL)
-        --  - free all "to" subtree ("fr" is not there anymore)
-        --  - put "fr" back in "to"
+        -- dynamic ADTs (to=tceu_adt_root):
         if to.fst.tp.id == '_tceu_adt_root' then
+            -- For dynamic ADTs (to=tceu_adt_root):
+            -- Relink:
+            --  - remove "fr" from tree (set parent link to NIL)
+            --  - free all "to" subtree ("fr" is not there anymore)
+            --  - put "fr" back in "to"
+
             --      to.root
             -- becomes
             --      (((tceu_adt_root*)to.root)->pool)
@@ -830,7 +837,7 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
 _STK.trl->evt = CEU_IN__STK;
 _STK.trl->lbl = ]]..me.lbl_cnt.id..[[;
 _STK.trl->stk = _ceu_go->stki;
-   /* awake in the same level as we are now (-1 vs the emit push below) */
+/* awake in the same level as we are now (-1 vs the emit push below) */
 
 CEU_]]..fr.tp.id..[[_kill(_ceu_app, _ceu_go, ]]..V(to)..[[);
 return RET_RESTART;
@@ -840,112 +847,55 @@ case ]]..me.lbl_cnt.id..[[:;
             end
 
             LINE(me, [[
-    void* __ceu_tmp = ]]..V(fr)..[[;
-    ]]..V(fr)..[[ = &CEU_]]..string.upper(fr.tp.id)..[[_BASE;
+void* __ceu_tmp = ]]..V(fr)..[[;
+]]..V(fr)..[[ = &CEU_]]..string.upper(fr.tp.id)..[[_BASE;
 #if defined(CEU_ADTS_NEWS_MALLOC) && defined(CEU_ADTS_NEWS_POOL)
-    if (]]..pool..[[ == NULL) {
-        CEU_]]..fr.tp.id..[[_free_dynamic(]]..V(to)..[[);
-    } else {
-        CEU_]]..fr.tp.id..[[_free_static(]]..V(to)..[[, ]]..pool..[[);
-    }
-#elif defined(CEU_ADTS_NEWS_MALLOC)
+if (]]..pool..[[ == NULL) {
     CEU_]]..fr.tp.id..[[_free_dynamic(]]..V(to)..[[);
-#elif defined(CEU_ADTS_NEWS_POOL)
+} else {
     CEU_]]..fr.tp.id..[[_free_static(]]..V(to)..[[, ]]..pool..[[);
+}
+#elif defined(CEU_ADTS_NEWS_MALLOC)
+CEU_]]..fr.tp.id..[[_free_dynamic(]]..V(to)..[[);
+#elif defined(CEU_ADTS_NEWS_POOL)
+CEU_]]..fr.tp.id..[[_free_static(]]..V(to)..[[, ]]..pool..[[);
 #endif
 ]])
             fr = { val='__ceu_tmp', code='' }
         end
+
+        CONC(me, fr)
 
         -- cast is not an lvalue in C
         if to.tag == 'Op1_cast' then
             to = to[2]
         end
 
-        CONC(me, fr)
-
-        if set == 'await' then
-            local e, dt = unpack(fr)
-            for i, v in ipairs(to) do
-                local val
-                if dt then
-                    local suf = (dt.tm and '_') or ''
-                    val = '_ceu_app->wclk_late'..suf
-                elseif e.tag=='Ext' then
-                    if e[1] == '_ok_killed' then
-                        val = '(*((tceu_org**)&_STK.evt_buf))'
-                    else
-                        val = '(*(('..TP.toc(fr.tp)..'*)_STK.evt_buf))->_'..i
-                    end
-                else
-                    val = '(('..TP.toc(fr.tp)..')_STK.evt_buf)->_'..i
-                end
-                LINE(me, V(v)..' = '..val..';')
-            end
-
-        elseif set == 'thread' then
-            local thr = AST.child(me, 'Thread')
-                        -- TODO: do better than child
-            LINE(me, V(to)..' = (*('..thr.thread_st..') > 0);')
-
-        else
-
--- TODO
-if set == 'spawn' then
-    local id,_,_,set = unpack(fr)
-    fr.val = '((CEU_'..id..'*)__ceu_new_'..fr.n..')' -- defined by _Spawn (code.lua)
-    fr.val = '('..string.upper(TP.toc(to.tp.opt))..'_pack('..fr.val..'))'
-end
-
-            -- optional types
-    -- TODO: sumir com "todo"
-            local todo = {}
-            local tag
-            local ID
-            if to.tp.opt then
-                ID = string.upper(to.tp.opt.id)
-                if fr.tp.opt then
-                    -- NORMAL
-                    todo.normal = true
-                elseif (fr.fst.tag=='Op2_call' and fr.fst.__fin_opt_tp)
-                or (set == 'spawn')
-                then
-                    -- var _t&? = _f(...);
-                    -- var T*? = spawn <...>;
-                    -- NORMAL  -- uses pack
-                    todo.normal = true
-                else
-                    if fr.tag == 'NIL' then
-                        tag = 'NIL'
-                    else
-                        tag = 'SOME'
-                        todo.normal = true
-                    end
-                    todo.tag = true
-                    --LINE(me, to.val_raw..'.tag = CEU_'..ID..'_'..tag..';')
-                end
-
-            -- normal types
-            else
-                -- NORMAL
-                todo.normal = true
-            end
-
-            if todo.normal then
--- TODO
-if set == 'spawn' then
-    local SET = V(to)..' = '..V(fr)..';'
-    me.code = string.gsub(me.code, 'TODO%-SET%-SPAWN', SET)
-elseif set == 'lua' then
-    -- nothing
-else
+        -- optional types
+        if to.tp.opt then
+            local ID = string.upper(to.tp.opt.id)
+            if fr.tp.opt then
                 LINE(me, V(to)..' = '..V(fr)..';')
-end
-            end
-
-            if todo.tag then
+            elseif (fr.fst.tag=='Op2_call' and fr.fst.__fin_opt_tp)
+            or (set == 'spawn')
+            then
+                -- var _t&? = _f(...);
+                -- var T*? = spawn <...>;
+                LINE(me, V(to)..' = '..V(fr)..';')
+            else
+                local tag
+                if fr.tag == 'NIL' then
+                    tag = 'NIL'
+                else
+                    tag = 'SOME'
+                    LINE(me, V(to)..' = '..V(fr)..';')
+                end
                 LINE(me, to.val_raw..'.tag = CEU_'..ID..'_'..tag..';')
             end
+
+        -- normal types
+        else
+            LINE(me, V(to)..' = '..V(fr)..';')
         end
 
         if to.tag=='Var' and to.var.id=='_ret' then
@@ -1334,8 +1284,10 @@ _STK.trl = &_STK_ORG->trls[ ]]..me.trails[1]..[[ ];
 ]]
 
         if not (op=='emit' and e.evt.pre=='input') then
-            if AST.par(me, 'Set') then
-                me.val = VAL    -- <v = emit E>
+            local set = AST.par(me, 'Set')
+            if set then
+                local set_to = set[4]
+                LINE(me, V(set_to)..' = '..VAL..';')
             else
                 LINE(me, VAL..';')
             end
@@ -1509,11 +1461,32 @@ case ]]..me.lbl.id..[[:;
     end,
 
     Await = function (me)
-        local e = unpack(me)
+        local e, dt = unpack(me)
         if e.tag == 'Ext' then
             F.__AwaitExt(me)
         else
             F.__AwaitInt(me)
+        end
+
+        local set = AST.par(me, 'Set')
+        if set then
+            local set_to = set[4]
+            for i, v in ipairs(set_to) do
+                local val
+                if dt then
+                    local suf = (dt.tm and '_') or ''
+                    val = '_ceu_app->wclk_late'..suf
+                elseif e.tag=='Ext' then
+                    if e[1] == '_ok_killed' then
+                        val = '(*((tceu_org**)&_STK.evt_buf))'
+                    else
+                        val = '(*(('..TP.toc(me.tp)..'*)_STK.evt_buf))->_'..i
+                    end
+                else
+                    val = '(('..TP.toc(me.tp)..')_STK.evt_buf)->_'..i
+                end
+                LINE(me, V(v)..' = '..val..';')
+            end
         end
     end,
 
@@ -1598,6 +1571,12 @@ case ]]..me.lbl.id..[[:;
 }
 ]])
         DEBUG_TRAILS(me)
+
+        local set = AST.par(me, 'Set')
+        if set then
+            local set_to = set[4]
+            LINE(me, V(set_to)..' = (*('..me.thread_st..') > 0);')
+        end
 
         -- thread function
         CODE.threads = CODE.threads .. [[
