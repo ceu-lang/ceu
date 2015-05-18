@@ -138,23 +138,23 @@ function newvar (me, blk, pre, tp, id, isImp)
         end
     end
 
-    ASR(ENV.c[tp.id] or TOPS[tp.id],
-        me, 'undeclared type `'..(tp.id or '?')..'´')
+    local top = ASR(ENV.c[tp.id] or ENV.clss[tp.id] or ENV.adts[tp.id],
+                    me, 'undeclared type `'..(tp.id or '?')..'´')
 
-    local top = (tp.ptr==0 and (not tp.ref) and TOPS[tp.id])
-    if top then
-        ASR(top.tops_i < ME.tops_i,
-            me, 'undeclared type `'..(tp.id or '?')..'´')
+    if tp.ptr==0 and (not tp.ref) then
+        ASR(not AST.isParent(top,me), me,
+            'undeclared type `'..(tp.id or '?')..'´')
+        if top.is_ifc then
+            ASR(pre == 'pool', me,
+                'cannot instantiate an interface')
+        end
+    else
+        top = nil
     end
 
     ASR(tp.ptr>0 or tp.ref or TP.get(tp.id).len~=0 or (tp.id=='void' and pre=='event'),
         me, 'cannot instantiate type "'..tp.id..'"')
     --ASR((not arr) or arr>0, me, 'invalid array dimension')
-
-    if TOPS[tp.id] and TOPS[tp.id].is_ifc and tp.ptr==0 and (not tp.ref) then
-        ASR(pre == 'pool', me,
-            'cannot instantiate an interface')
-    end
 
     -- Class definitions take priority over interface definitions:
     --      * consts

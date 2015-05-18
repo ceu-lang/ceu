@@ -445,15 +445,15 @@ end
     , _Dcl_fun1 = V'_Dcl_fun0' * V'__Do'
     , Return  = KEY'return' * EV'__Exp'^-1
 
-    , BlockI = ( (EV'_Dcl_var'+V'_Dcl_int'+V'_Dcl_pool'+V'_Dcl_fun0'+V'_Dcl_imp')
+    , _BlockI = ( (EV'_Dcl_var'+V'_Dcl_int'+V'_Dcl_pool'+V'_Dcl_fun0'+V'_Dcl_imp')
                   * (EK';'*K';'^0)
                )^0
     , _Dcl_ifc = KEY'interface' * Cc(true)
                * EV'__ID_cls'
-               * EKEY'with' * V'BlockI' * EKEY'end'
+               * EKEY'with' * V'_BlockI' * EKEY'end'
     , Dcl_cls  = KEY'class'     * Cc(false)
                * EV'__ID_cls'
-               * EKEY'with' * V'BlockI' * V'__Do'
+               * EKEY'with' * V'_BlockI' * V'__Do'
     -------
 
     , __Dcl_adt_struct = Cc'struct' * (V'_Dcl_var' * (EK';'*K';'^0))^1

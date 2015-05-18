@@ -92,7 +92,8 @@ F = {
         local spc, stmts = unpack(me)
         local blk_ifc_body = node('Block', me.ln,       -- same structure of
                                 node('Stmts', me.ln,    -- other classes
-                                    node('BlockI', me.ln),
+                                    node('BlockI', me.ln,
+                                        node('Stmts', me.ln)),
                                     stmts))
         local ret = blk_ifc_body
 
@@ -216,18 +217,18 @@ F = {
                          node('Stmts',me.ln,blk_ifc,blk_body))
 
         if not me.blk_ifc then  -- Main already set
-            me.blk_ifc  = blk   -- top-most block for `this´
+            me.blk_ifc = blk    -- top-most block for `this´
         end
         me.blk_body = me.blk_body or blk_body
         me.tag = 'Dcl_cls'  -- Dcl_ifc => Dcl_cls
         me[3]  = blk        -- both blocks 'ifc' and 'body'
         me[4]  = nil        -- remove 'body'
 
-        AST.asr_(me.blk_ifc,'Block', 1,'Stmts', 1,'BlockI')
+        AST.asr_(me.blk_ifc,'Block', 1,'Stmts', 1,'BlockI', 1,'Stmts')
 
         -- insert class pool for orphan spawn
         if me.__ast_has_malloc then
-            table.insert(me.blk_ifc[1][1], 1,
+            table.insert(me.blk_ifc[1][1][1], 1,
                 node('Dcl_pool', me.ln, 'pool',
                     node('Type', me.ln, '_TOP_POOL', 0, true, false),
                     '_top_pool'))
@@ -406,15 +407,16 @@ F = {
         local tp = node('Type', me.ln, 'Tree', 1, false, false)
         local cls = node('Dcl_cls', me.ln, false, '_Loop_'..me.n,
                         node('BlockI', me.ln,
-                            node('Dcl_pool', me.ln, 'pool',
-                                node('Type', me.ln, '_Loop_'..me.n, 0, true, true),
-                                '_pool'),
-                            node('Dcl_var', me.ln, 'var',
-                                tp,
-                                to[1]),
-                            node('_Dcl_int', me.ln, 'event',
-                                node('Type', me.ln, 'int', 0, false, false),
-                                'ok')),
+                            node('Stmts', me.ln,
+                                node('Dcl_pool', me.ln, 'pool',
+                                    node('Type', me.ln, '_Loop_'..me.n, 0, true, true),
+                                    '_pool'),
+                                node('Dcl_var', me.ln, 'var',
+                                    tp,
+                                    to[1]),
+                                node('_Dcl_int', me.ln, 'event',
+                                    node('Type', me.ln, 'int', 0, false, false),
+                                    'ok'))),
                         body)
         local stmts = body[1]
         stmts[#stmts+1] = node('EmitInt', me.ln, 'emit',
@@ -656,10 +658,17 @@ F = {
 
 -- BlockI ------------------------------------------------------------
 
+    _BlockI_pre = function (me)
+        return node('BlockI', me.ln,
+                node('Stmts', me.ln,
+                    unpack(me)))
+    end,
+
     -- expand collapsed declarations inside Stmts
     BlockI_pos = function (me)
+        local stmts = unpack(me)
         local new = {}
-        for _, dcl in ipairs(me) do
+        for _, dcl in ipairs(stmts) do
             if dcl.tag == 'Stmts' then
                 for _, v in ipairs(dcl) do
                     new[#new+1] = v
@@ -676,7 +685,7 @@ F = {
         end
 ]]
         -- changes the node reference
-        return node('BlockI', me.ln, unpack(new))
+        me[1] = node('Stmts', me.ln, unpack(new))
     end,
 
 -- Dcl_fun, Dcl_ext --------------------------------------------------------
@@ -843,7 +852,9 @@ F = {
 
             local cls =
                 node('Dcl_cls', me.ln, false, id_cls,
-                    node('BlockI', me.ln, unpack(ifc)),
+                    node('BlockI', me.ln,
+                        node('Stmts', me.ln,
+                            unpack(ifc))),
                     node('Block', me.ln,
                         node('Stmts', me.ln,
                             node('Finalize', me.ln,
@@ -1317,11 +1328,19 @@ AST.visit(F)
 -- separate visit because of "?" types
 
 -- ADTs created implicitly by "?" option type declarations
---  - must be included in the head of the root
 local ADTS = {}
 
 G = {
-    Type_pos = function (me)
+    Stmts_pos = function (me)
+        if me.__add then
+            for i=#me.__add, 1, -1 do
+                table.insert(me, 1, me.__add[i])
+            end
+            me.__add = nil
+        end
+    end,
+
+    Type_pre = function (me)
         local id, ptr, arr, ref, opt = unpack(me)
         if not opt then
             return
@@ -1332,52 +1351,27 @@ G = {
 
         local tp = id..'__'..ptr..'__'..tostring(arr)..'__'..tostring(ref)
         local n = ADTS[tp]
-
         if not n then
             n = #ADTS + 1
             ADTS[tp] = n
-            ADTS[#ADTS+1] = node('Dcl_adt', me.ln, '_Option_'..n,
-                                'union',
-                                    node('Dcl_adt_tag', me.ln, 'NIL'),
-                                    node('Dcl_adt_tag', me.ln, 'SOME',
-                                        node('Stmts', me.ln,
-                                            node('Dcl_var', me.ln, 'var', cpy, 'v'))))
-            ADTS[#ADTS].__adj_opt = me
+            local adt = node('Dcl_adt', me.ln, '_Option_'..n,
+                            'union',
+                            node('Dcl_adt_tag', me.ln, 'NIL'),
+                            node('Dcl_adt_tag', me.ln, 'SOME',
+                                node('Stmts', me.ln,
+                                    node('Dcl_var', me.ln, 'var', cpy, 'v'))))
+            ADTS[n] = adt
+            adt.__adj_opt = me
 
-            -- insert in the parent Stmts just before the use of the type
-            local stmts = AST.par(me, 'Stmts')
-            if stmts[1].tag == 'BlockI' then
-                -- TODO: go up one more level if inside a class interface
-                -- (avoid changing the position of a BlockI)
-                stmts = AST.par(stmts, 'Stmts')
-            end
-
-            local ok = false
-            assert(stmts, 'bug found')
-            for i, stmt in ipairs(stmts) do
-                if AST.isParent(stmt, me) then
-                    ADTS[#ADTS].__toinsert = { stmts, i }
-                    ok = true
-                    break;
-                end
-            end
-            assert(ok, 'bug found')
+            -- add declarations on enclosing "Stmts"
+            local stmts = assert(AST.par(me,'Stmts'))
+            stmts.__add = stmts.__add or {}
+            stmts.__add[#stmts.__add+1] = adt
         end
-
         me[5] = node('Type', me.ln, '_Option_'..n, 0, false, false, false)
     end,
 }
 H = {
-    -- insert all ? types in the beginning
-    ['Root_pre'] = function (me)
-        -- traverse in reverse order to avoid problems with insert(j)
-        for i=#ADTS, 1, -1 do
-            local adt = ADTS[i]
-            local stmts, j = unpack(adt.__toinsert)
-            table.insert(stmts, j, adt)
-        end
-    end,
-
     Dcl_adt_pos = function (me)
         -- id, op, ...
         local _, op = unpack(me)

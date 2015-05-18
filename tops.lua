@@ -53,8 +53,7 @@ AST.visit(F)
 -- substitute all Dcl_imp for the referred fields (simplifies later phases)
 for _, cls in ipairs(TOPS) do
     if cls.tag=='Dcl_cls' and cls[2]~='Main' then   -- "Main" has no Dcl_imp's
-        local dcls1 = cls.blk_ifc[1][1]
-        AST.asr(dcls1, 'BlockI')
+        local dcls1 = AST.asr(cls.blk_ifc[1][1],'BlockI')[1]
         local i = 1
         while i <= #dcls1 do
             local imp = dcls1[i]
@@ -64,8 +63,7 @@ for _, cls in ipairs(TOPS) do
                     local ifc = id2ifc(dcl)  -- interface must exist
                     ASR(ifc and ifc[1]==true,
                         imp, 'interface "'..dcl..'" is not declared')
-                    local dcls2 = ifc.blk_ifc[1][1]
-                    AST.asr(dcls2, 'BlockI')
+                    local dcls2 = AST.asr(ifc.blk_ifc[1][1],'BlockI')[1]
                     for _, dcl2 in ipairs(dcls2) do
                         assert(dcl2.tag ~= 'Dcl_imp')   -- impossible because I'm going in order
                         local new = AST.copy(dcl2)

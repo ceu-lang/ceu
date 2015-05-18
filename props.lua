@@ -176,7 +176,7 @@ F = {
         local _,pool,_ = unpack(me)
         --PROPS.has_clear = true   (var.cls does this)
         --me.blk.needs_clr = true   (var.cls does this)
-        ASR(not AST.iter'BlockI'(), me,
+        ASR(not AST.par(me,'BlockI'), me,
                 'not permitted inside an interface')
     end,
 
@@ -245,7 +245,7 @@ F = {
 
     SetBlock_pre = function (me)
         me.rets = {}
-        ASR(not AST.iter'BlockI'(), me,
+        ASR(not AST.par(me,'BlockI'), me,
                 'not permitted inside an interface')
     end,
     Escape = function (me)
@@ -283,10 +283,10 @@ F = {
     Dcl_var = function (me)
         if me.var.cls then
             -- <class T with var U u; end>
-            ASR(not AST.iter'BlockI'(), me,
+            ASR(not AST.par(me,'BlockI'), me,
                     'not permitted inside an interface')
         end
-        if AST.iter'BlockI'() and me.var.tp.opt then
+        if AST.par(me,'BlockI') and me.var.tp.opt then
             CLS().has_pre = true   -- code for pre (before constr)
         end
     end,
@@ -352,7 +352,7 @@ F = {
                     'invalid access from `thread´')
         end
 
-        if AST.iter'BlockI'() then
+        if AST.par(me,'BlockI') then
             CLS().has_pre = true   -- code for pre (before constr)
             ASR(set == 'exp',
                 me, 'not permitted inside an interface')

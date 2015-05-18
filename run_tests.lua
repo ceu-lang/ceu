@@ -318,9 +318,9 @@ STATS = {
 }
 
 
-real	11m34.248s
-user	10m45.874s
-sys	1m51.898s
+real	11m11.721s
+user	10m16.460s
+sys	1m57.144s
 
 -- no ADTs
 STATS = {
