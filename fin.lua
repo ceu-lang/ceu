@@ -116,7 +116,7 @@ end
             --  end
         end
 
--- TODO: move to exp/ref.lua
+        -- TODO: move to exp/ref.lua
         if func_impure or input_call or fr.tag=='RawExp' then
             -- We assume that a impure function that returns a global pointer
             -- creates memory (e.g. malloc, fopen):
@@ -137,7 +137,6 @@ end
                 -- _ptr = _malloc(1);           // ok
             end
 
--- TODO: error code
             ASR(me.fin, me, 'attribution requires `finalize´')
                 -- var void&? ptr = _malloc(1);
             if me.fin then
@@ -146,7 +145,6 @@ end
             end
             return
         end
--- TODO: error code
         ASR(not me.fin, me, 'attribution does not require `finalize´')
 
 
@@ -160,7 +158,6 @@ end
         -- other assignments are spread in multiple bodies
 --[[
         if to.org and to.fst.tag~='This' then
--- TODO: error code
             ASR(op==':=', me,
                 'organism pointer attribution only inside constructors')
                 -- var T t;
@@ -201,7 +198,6 @@ end
                     --     p = &i;
                     -- end
             else
--- TODO: error code
                 ASR(op=='=', me, 'wrong operator')
             end
         --end
@@ -348,7 +344,6 @@ end
                 r = r and param.fst and param.fst.blk or
                     r and param.fst and param.fst.var and param.fst.var.blk
                             -- need to hold block
--- TODO: ERR 10xx
                 WRN( (not r) or (not req) or (r==req),
                         me, 'invalid call (multiple scopes)')
                 req = req or r
@@ -369,7 +364,7 @@ end
                     params)
         end
 
--- TODO: should yield error if requires finalize and is inside Thread?
+        -- TODO: should yield error if requires finalize and is inside Thread?
         if AST.iter'Thread'() then
             req = false     -- impossible to run finalizers on threads
         end

@@ -219,7 +219,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
               + Cc'thread'   * V'_Thread'
               + Cc'emit-ext' * (V'EmitExt' + K'('*V'EmitExt'*EK')')
               + Cc'spawn'    * V'Spawn'
-              + Cc'adt'      * V'_Adt_constr_root'
+              + Cc'__adt'    * V'_Adt_constr_root'
               + Cc'do-org'   * V'DoOrg'
               + Cc'block'    * V'__SetBlock'
               + Cc'exp'      * V'__Exp'
@@ -377,7 +377,7 @@ end
     , Await    = KEY'await' * V'__awaits'
                     * (KEY'until'*EV'__Exp' + Cc(false))
 
--- TODO: emit/await, false=>_WCLOCK
+    -- TODO: emit/await, move from "false"=>"_WCLOCK"
     , EmitExt  = (CKEY'call/rec'+CKEY'call'+CKEY'emit'+CKEY'request')
                * ( Cc(false) * (V'WCLOCKK'+V'WCLOCKE')
                  + EV'Ext' * V'__emit_ps' )

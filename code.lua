@@ -86,7 +86,7 @@ if (]]..V(pse.dcl.var)..[[) {
 ]])
 --[=[
 -- TODO: remove?
--- if not, why only internal should be allowed to awake?
+-- if not, why only internal should be allowed to re-awake?
         if me[1].tag ~= 'Ext' then
             -- internal event
             LINE(me, [[
@@ -134,8 +134,8 @@ function CLEAR (me)
         return
     end
 
--- TODO: put it back!
 --[[
+    -- TODO: put it back!
     -- check if top will clear during same reaction
     if (not me.needs_clr_fin) and ANA then   -- fin must execute before any stmt
         local top = AST.iter(_iter)()
@@ -713,7 +713,7 @@ ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'),'..ln
 
             -- initialize trails for ORG_STATS_I & ORG_POOL_I
             -- "first" avoids repetition for STATS in sequence
--- TODO: join w/ ceu_out_org (removing start from the latter?)
+            -- TODO: join w/ ceu_out_org (removing start from the latter?)
             if var.trl_orgs and var.trl_orgs_first then
                 LINE(me, [[
 #ifdef CEU_ORGS
@@ -731,7 +731,7 @@ ceu_out_org_trail(_STK_ORG, ]]..var.trl_orgs[1]..[[, (tceu_org_lnk*) &]]..var.tr
             return
         end
 
--- TODO: try to remove this need
+        -- TODO: try to remove this requirement
         if me.trails[1] ~= stmts.trails[1] then
             LINE(me, [[
 /* switch to blk trail */
@@ -776,7 +776,7 @@ if (]]..fin.val..[[) {
     end,
 
     Pause = CONC_ALL,
--- TODO: meaningful name
+    -- TODO: meaningful name
     PauseX = function (me)
         local psed = unpack(me)
         LINE(me, [[
@@ -1304,7 +1304,6 @@ _STK.trl->evt = CEU_IN__ASYNC;
 _STK.trl->lbl = ]]..me.lbl_cnt.id..[[;
 ]])
 
-        -- TODO: join w/ the code below
         if e[1] == '_WCLOCK' then
             local suf = (ps[1].tm and '_') or ''
             LINE(me, [[
@@ -1511,7 +1510,7 @@ case ]]..me.lbl.id..[[:;
     Thread = function (me)
         local vars,blk = unpack(me)
 
--- TODO: transform to Set
+        -- TODO: transform to Set in the AST?
         if vars then
             for i=1, #vars, 2 do
                 local isRef, n = vars[i], vars[i+1]

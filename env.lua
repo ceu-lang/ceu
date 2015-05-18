@@ -247,12 +247,25 @@ function newfun (me, blk, pre, rec, ins, out, id, isImp)
     return false, var
 end
 
+local function __vars_check (vars, id)
+    if vars.__cache then
+        return vars.__cache[id]
+    else
+        vars.__cache = {}
+        for _,var in ipairs(vars) do
+            local id = unpack(var)
+            vars.__cache[id] = true
+        end
+        return __vars_check(vars,id)
+    end
+end
+
 function ENV.getvar (id, blk)
     local blk = blk or AST.iter('Block')()
     while blk do
         if blk.tag=='Async' or blk.tag=='Thread' then
             local vars = unpack(blk)    -- VarList
-            if not (vars and vars[id]) then
+            if not (vars and __vars_check(vars,id)) then
                 return nil  -- async boundary: stop unless declared with `&´
             end
         elseif blk.tag == 'Block' then
