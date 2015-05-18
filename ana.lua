@@ -115,6 +115,13 @@ F = {
         end
     end,
 
+    Dcl_cls_pos = function (me)
+        local _,id = unpack(me)
+        if id ~= 'Main' then
+            me.ana.pos = COPY(me.ana.pre) -- no effect on enclosing class
+-- TODO: evaluate class termination as well
+        end
+    end,
     Dcl_cls_pre = function (me)
         if me ~= MAIN then
             me.ana.pre = { [me.id]=true }

@@ -334,21 +334,26 @@ typedef struct CEU_]]..me.id..[[ {
     Dcl_cls_pos = function (me)
         if me.is_ifc then
             me.struct = 'typedef void '..TP.toc(me.tp)..';\n'
+
             -- interface full declarations must be delayed to after their impls
+            -- TODO: HACK_4: delayed declaration until use
+
             local struct = [[
 typedef union CEU_]]..me.id..[[_delayed {
 ]]
-            for k, v in pairs(me.matches) do
-                if v and (not k.is_ifc) then
+            for v_cls, v_matches in pairs(me.matches) do
+                if v_matches and (not v_cls.is_ifc) then
                     -- ifcs have no size
-                    struct = struct..'\t'..TP.toc(k.tp)..' '..k.id..';\n'
+                    if v_cls.id ~= 'Main' then  -- TODO: doesn't seem enough
+                        struct = struct..'\t'..TP.toc(v_cls.tp)..' '..v_cls.id..';\n'
+                    end
                 end
             end
             struct = struct .. [[
 } CEU_]]..me.id..[[_delayed;
 ]]
-            -- TODO: HACK_4: delayed declaration until use
-            me.struct_delayed = struct .. '\n'
+            me.__env_last_match.__delayed =
+                (me.__env_last_match.__delayed or '') .. struct .. '\n'
         else
             me.struct  = me.struct..'\n} '..TP.toc(me.tp)..';\n'
         end
@@ -361,6 +366,9 @@ typedef union CEU_]]..me.id..[[_delayed {
             MEM.tops = MEM.tops .. me.native[false] .. '\n'
         end
         MEM.tops = MEM.tops .. me.struct .. '\n'
+
+        -- TODO: HACK_4: delayed declaration until use
+        MEM.tops = MEM.tops .. (me.__delayed or '') .. '\n'
 
         MEM.tops = MEM.tops .. me.funs .. '\n'
 --DBG('===', me.id, me.trails_n)
@@ -511,9 +519,6 @@ typedef union CEU_]]..me.id..[[_delayed {
                 if type(var.tp.arr) == 'table' then
                     local T = ENV.clss[var.tp.id] or ENV.adts[var.tp.id]
                     if T.is_ifc then
-                        -- TODO: HACK_4: delayed declaration until use
-                        MEM.tops = MEM.tops .. T.struct_delayed .. '\n'
-                        T.struct_delayed = ''
                         top.struct = top.struct .. [[
 CEU_POOL_DCL(]]..var.id_..',CEU_'..var.tp.id..'_delayed,'..var.tp.arr.sval..[[)
 ]]

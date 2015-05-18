@@ -10,7 +10,10 @@ local TRACK = {
 
 F = {
     Dcl_cls_pre = function (me)
-        TRACK = {}  -- restart tracking for each class
+        TRACK[#TRACK+1] = {}  -- restart tracking for each class
+    end,
+    Dcl_cls_pos = function (me)
+        TRACK[#TRACK]   = nil
     end,
 
     Set = function (me)
@@ -52,7 +55,7 @@ end
         -- variables or native symbols
         if (to.var and (not to.var.tp.ref)) or to.c then
                         -- do not track references
-            TRACK[to.var or to.id] = 'accessed'
+            TRACK[#TRACK][to.var or to.id] = 'accessed'
         end
 
         -- constants are safe
@@ -231,9 +234,9 @@ end
         if set and set[4] == me then
             return  -- re-setting variable
         end
-        if type(TRACK[me.var]) ~= 'table' then
+        if type(TRACK[#TRACK][me.var]) ~= 'table' then
             if me.var.tp.ptr > 0 then
-                TRACK[me.var] = 'accessed'
+                TRACK[#TRACK][me.var] = 'accessed'
             end
             return  -- no await happened yet
         end
@@ -256,7 +259,7 @@ end
             for n in AST.iter('ParOr') do
                 local var = n.__adj_watching and n.__adj_watching.lst
                                              and n.__adj_watching.lst.var
-                if var==me.var and AST.isParent(n,TRACK[me.var]) then
+                if var==me.var and AST.isParent(n,TRACK[#TRACK][me.var]) then
                     return      -- ok, I'm safely watching "me.var"
                 end
             end
@@ -268,9 +271,9 @@ end
 
     Await = function (me)
         if me.tl_awaits then
-            for var, v in pairs(TRACK) do
+            for var, v in pairs(TRACK[#TRACK]) do
                 if v == 'accessed' then
-                    TRACK[var] = me   -- tracks the *first* await
+                    TRACK[#TRACK][var] = me   -- tracks the *first* await
                 end
             end
         end

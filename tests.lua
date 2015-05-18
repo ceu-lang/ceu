@@ -16608,189 +16608,6 @@ escape 1;
     mem = 'line 1 : invalid array dimension',
 }
 
--- internal binding binding
-Test { [[
-class T with
-    var int& i;
-do
-    var int v = 10;
-    i = v;
-end
-var T t;
-escape t.i;
-]],
-    ref = 'line 7 : field "i" must be assigned',
-    --run = 10,
-}
-
--- internal/constr binding
-Test { [[
-class T with
-    var int& i;
-do
-    var int v = 10;
-    i = v;
-end
-var int v = 0;
-var T t with
-    this.i = v;
-end;
-escape v;
-]],
-    --ref = 'line 9 : cannot assign to reference bounded inside the class',
-    run = 10;
-}
--- internal binding
-Test { [[
-class T with
-    var int& i;
-do
-    var int v = 10;
-    i = v;
-end
-var T t;
-escape t.i;
-]],
-    ref = 'line 7 : field "i" must be assigned',
-    --run = 10,
-}
--- internal binding w/ default
-Test { [[
-class T with
-    var int&? i;
-do
-    var int v = 10;
-    i = v;
-end
-var T t;
-escape t.i;
-]],
-    asr = '5] runtime error: invalid tag',
-    --run = 10,
-}
--- internal binding w/ default
-Test { [[
-class T with
-    var int&? i;
-do
-    _assert(not i?);
-    var int v = 10;
-    i = v;
-end
-var T t;
-escape t.i;
-]],
-    asr = '6] runtime error: invalid tag',
-    --run = 10,
-}
--- external binding w/ default
-Test { [[
-class T with
-    var int&? i;
-do
-    _assert(i?);
-end
-var int i = 10;
-var T t with
-    this.i = outer.i;
-end;
-escape t.i;
-]],
-    run = 10,
-}
-Test { [[
-class T with
-    var int&? i;
-do
-    _assert(not i?);
-end
-var int i = 10;
-var T t;
-escape not t.i?;
-]],
-    run = 1,
-}
-
--- no binding
-Test { [[
-class T with
-    var int& i;
-do
-end
-var T t;
-escape 1;
-]],
-    ref = 'line 5 : field "i" must be assigned',
-}
-
-Test { [[
-class T with
-    var int& i;
-do
-end
-
-var int i = 1;
-
-var T t1;
-
-var T t2 with
-    this.i = outer.i;
-end;
-
-escape t1.i;
-]],
-    ref = 'line 8 : field "i" must be assigned',
-}
-
-Test { [[
-class T with
-    var int& i;
-do
-end
-
-var int i = 1;
-
-var T t2 with
-    this.i = outer.i;
-end;
-
-var T t1;
-
-escape t1.i;
-]],
-    ref = 'line 12 : field "i" must be assigned',
-}
-
-Test { [[
-class T with
-    var int& i;
-do
-    var int v = 10;
-    i = v;
-end
-var T t;
-var int v = 0;
-t.i = v;
-escape 1;
-]],
-    ref = 'line 7 : field "i" must be assigned',
-    --ref = 'line 9 : cannot assign to reference bounded inside the class',
-}
-
-Test { [[
-class Integral with
-    var   int& v;
-    event int  e;
-do
-    every dv in e do
-        v = v + dv;
-    end
-end
-escape 1;
-]],
-    run = 1,
-}
-
 Test { [[
 var int a=1, b=2;
 var int& v;
@@ -16854,86 +16671,6 @@ escape _V1+_V2;
 }
 
 Test { [[
-interface Global with
-    var int& v;
-end
-var int  um = 1;
-var int& v;// = um;
-escape 1;//global:v;
-]],
-    ref = 'line 5 : global references must be bounded on declaration',
-}
-
-Test { [[
-interface Global with
-    var int& v;
-end
-var int  um = 1;
-var int& v = um;
-escape 1;//global:v;
-]],
-    run = 1,
-}
-
-Test { [[
-interface Global with
-    var int& v;
-end
-var int  um = 1;
-var int& v = um;
-escape global:v;
-]],
-    run = 1,
-}
-
-Test { [[
-interface Global with
-    var int& v;
-end
-
-class T with
-    var int v;
-do
-    this.v = global:v;
-end
-
-var int  um = 111;
-var int& v = um;
-var T t;
-escape t.v;
-]],
-    run = 111,
-}
-
-Test { [[
-interface Global with
-end
-var int&? win;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-class T with
-    var int v = 10;
-do
-end
-
-interface Global with
-    var T& t;
-end
-
-var T t_;
-var T& t = t_;
-global:t = t;
-
-escape global:t.v;
-]],
-    run = 10,
-}
-
-Test { [[
 var int a=1, b=2, c=3;
 var int& v;
 if true then
@@ -16979,93 +16716,6 @@ x = 1;
 escape a + b + x + v;
 ]],
     run = 12,
-}
-
-Test { [[
-class T with
-    event void e;
-do
-end
-var T t;
-
-class U with
-    var T& t;
-do
-    emit t.e;
-end
-
-var U u with
-    this.t = t;
-end;
-
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-class T with
-    var int x;
-do
-end
-var T t;
-
-class U with
-    var T& t;
-do
-    t.x = 1;
-end
-
-class V with
-    var U& u;
-do
-    u.t.x = 2;
-end
-
-var U u with
-    this.t = t;
-end;
-
-var V v with
-    this.u = u;
-end;
-
-escape t.x + u.t.x + v.u.t.x;
-]],
-    run = 6,
-}
-
-Test { [[
-class T with
-    var int x;
-do
-end
-var T t;
-
-class U with
-    var T& t;
-do
-    t.x = 1;
-end
-
-class V with
-    var U& u;
-do
-    var U* p = &u;
-    p:t.x = 2;
-end
-
-var U u with
-    this.t = t;
-end;
-
-var V v with
-    this.u = u;
-end;
-
-escape t.x + u.t.x + v.u.t.x;
-]],
-    run = 6,
 }
 
 Test { [[
@@ -17138,24 +16788,6 @@ escape 1;
 }
 
 Test { [[
-class Ship with
-    var int& v;
-do
-end
-
-loop do
-    var int x = 10;
-    var Ship ship1 with
-        this.v = x;
-    end;
-    escape 1;
-end
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
 native do
     int V = 10;
     int* fff (int v) {
@@ -17204,78 +16836,6 @@ escape v1.v+v2.v+v3.v;
 ]],
     ref = 'line 8 : attribution to reference with greater scope',
     --run = 6,
-}
-
-Test { [[
-class T with
-    var int& v;
-do
-end
-var T t with
-    var int x;
-    this.v = x;
-end;
-escape 1;
-]],
-    ref = 'line 7 : attribution to reference with greater scope',
-}
-
-Test { [[
-class T with
-    var int& v;
-do
-end
-var int x = 10;
-var T t with
-    this.v = x;
-end;
-x = 11;
-escape t.v;
-]],
-    run = 11;
-}
-
-Test { [[
-data V with
-    var int v;
-end
-
-class T with
-    var V& v;
-do
-end
-
-var T t1 with
-    this.v = V(1);
-end;
-var T t2 with
-    this.v = V(2);
-end;
-var T t3 with
-    this.v = V(3);
-end;
-
-escape t1.v.v + t2.v.v + t3.v.v;
-]],
-    ref = 'line 11 : attribution to reference with greater scope',
-    --run = 6,
-}
-
-Test { [[
-class T with
-    var int& v;
-do
-end
-var int x = 10;
-var T t with
-    this.v = x;
-end;
-var int y = 15;
-t.v = y;
-y = 100;
-escape t.v;
-]],
-    run = 100,
 }
 
 -- FINALLY / FINALIZE
@@ -19642,176 +19202,6 @@ escape _V;
 ]],
     run = { ['~>SDL_REDRAW;~>SDL_REDRAW;~>SDL_REDRAW;~>1s']=114 },
 }
-
-Test { [[
-native do
-    void* PTR;
-    void* myalloc (void) {
-        return NULL;
-    }
-    void myfree (void* ptr) {
-    }
-end
-native @nohold _myfree();
-
-class T with
-    var int x = 10;
-do
-    finalize
-        _PTR = _myalloc();
-    with
-        _myfree(_PTR);
-    end
-end
-var T t;
-escape t.x;
-]],
-    fin = 'line 15 : cannot finalize a variable defined in another class',
-}
-
-Test { [[
-native do
-    int V;
-    void* myalloc (void) {
-        return &V;
-    }
-    void myfree (void* ptr) {
-    }
-end
-native @nohold _myfree();
-
-class T with
-    var int x = 10;
-do
-    var void&? ptr;
-    finalize
-        ptr = _myalloc();
-    with
-        _myfree(&ptr);
-    end
-end
-var T t;
-escape t.x;
-]],
-    run = 10,
-}
-
--- TODO: bounded loop on finally
-
-    -- GLOBAL-DO-END
-
-Test { [[
-var int tot = 1;                // 1
-
-global do
-    tot = tot + 2;              // 3
-end
-
-tot = tot * 2;                  // 6
-
-escape tot;
-]],
-    run = 6
-}
-
-Test { [[
-var int tot = 1;                // 1
-
-global do
-    tot = tot + 2;              // 3
-end
-
-class T with
-do
-    global do
-        tot = tot * 2;          // 6
-        var int tot2 = 10;
-    end
-end
-
-tot = tot + tot2;               // 16
-
-global do
-    tot = tot + tot2;           // 26
-end
-
-escape tot;
-]],
-    run = 26,
-}
-
-Test { [[
-var int tot = 1;                // 1
-var int tot2;
-
-global do
-    tot = tot + 2;              // 3
-end
-
-class T with
-do
-    global do
-        tot = tot * 2;          // 6
-        tot2 = 10;
-    end
-end
-
-tot = tot + tot2;               // 16
-
-global do
-    tot = tot + tot2;           // 26
-end
-
-escape tot;
-]],
-    run = 26
-}
-
-Test { [[
-var int tot = 1;                // 1
-var int tot2 = 1;                       // 1
-
-global do
-    tot = tot + 2;              // 3
-end
-
-class T with
-do
-    class U with
-    do
-        global do
-            tot = tot + 1;      // 4
-            tot = tot + tot2;   // 5
-        end
-    end
-
-    global do
-        tot = tot * 2;          // 10
-        tot2 = tot2+9;                  // 10
-    end
-
-    class V with
-    do
-        global do
-            tot = tot + 5;      // 15
-        end
-    end
-end
-
-tot = tot + tot2;               // 25
-
-global do
-    tot = tot + tot2;           // 35
-    tot2 = tot2 / 2;                    // 5
-end
-
-tot2 = tot2 - 4;                        // 1
-
-escape tot + tot2;              // 36
-]],
-    run = 36
-}
-
 
     -- ASYNCHRONOUS
 
@@ -26129,7 +25519,6 @@ do
             a = 1;
         end
         var T v;
-        emit v.go;
     end
     ret = a;
 end
@@ -28326,6 +27715,446 @@ escape _V;
 }
 -- XXXX
 
+-- internal binding binding
+Test { [[
+class T with
+    var int& i;
+do
+    var int v = 10;
+    i = v;
+end
+var T t;
+escape t.i;
+]],
+    ref = 'line 7 : field "i" must be assigned',
+    --run = 10,
+}
+
+-- internal/constr binding
+Test { [[
+class T with
+    var int& i;
+do
+    var int v = 10;
+    i = v;
+end
+var int v = 0;
+var T t with
+    this.i = v;
+end;
+escape v;
+]],
+    --ref = 'line 9 : cannot assign to reference bounded inside the class',
+    run = 10;
+}
+-- internal binding
+Test { [[
+class T with
+    var int& i;
+do
+    var int v = 10;
+    i = v;
+end
+var T t;
+escape t.i;
+]],
+    ref = 'line 7 : field "i" must be assigned',
+    --run = 10,
+}
+-- internal binding w/ default
+Test { [[
+class T with
+    var int&? i;
+do
+    var int v = 10;
+    i = v;
+end
+var T t;
+escape t.i;
+]],
+    asr = '5] runtime error: invalid tag',
+    --run = 10,
+}
+-- internal binding w/ default
+Test { [[
+class T with
+    var int&? i;
+do
+    _assert(not i?);
+    var int v = 10;
+    i = v;
+end
+var T t;
+escape t.i;
+]],
+    asr = '6] runtime error: invalid tag',
+    --run = 10,
+}
+-- external binding w/ default
+Test { [[
+class T with
+    var int&? i;
+do
+    _assert(i?);
+end
+var int i = 10;
+var T t with
+    this.i = outer.i;
+end;
+escape t.i;
+]],
+    run = 10,
+}
+Test { [[
+class T with
+    var int&? i;
+do
+    _assert(not i?);
+end
+var int i = 10;
+var T t;
+escape not t.i?;
+]],
+    run = 1,
+}
+
+-- no binding
+Test { [[
+class T with
+    var int& i;
+do
+end
+var T t;
+escape 1;
+]],
+    ref = 'line 5 : field "i" must be assigned',
+}
+
+Test { [[
+class T with
+    var int& i;
+do
+end
+
+var int i = 1;
+
+var T t1;
+
+var T t2 with
+    this.i = outer.i;
+end;
+
+escape t1.i;
+]],
+    ref = 'line 8 : field "i" must be assigned',
+}
+
+Test { [[
+class T with
+    var int& i;
+do
+end
+
+var int i = 1;
+
+var T t2 with
+    this.i = outer.i;
+end;
+
+var T t1;
+
+escape t1.i;
+]],
+    ref = 'line 12 : field "i" must be assigned',
+}
+
+Test { [[
+class T with
+    var int& i;
+do
+    var int v = 10;
+    i = v;
+end
+var T t;
+var int v = 0;
+t.i = v;
+escape 1;
+]],
+    ref = 'line 7 : field "i" must be assigned',
+    --ref = 'line 9 : cannot assign to reference bounded inside the class',
+}
+
+Test { [[
+class Integral with
+    var   int& v;
+    event int  e;
+do
+    every dv in e do
+        v = v + dv;
+    end
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+interface Global with
+    var int& v;
+end
+var int  um = 1;
+var int& v;// = um;
+escape 1;//global:v;
+]],
+    ref = 'line 5 : global references must be bounded on declaration',
+}
+
+Test { [[
+interface Global with
+    var int& v;
+end
+var int  um = 1;
+var int& v = um;
+escape 1;//global:v;
+]],
+    run = 1,
+}
+
+Test { [[
+interface Global with
+    var int& v;
+end
+var int  um = 1;
+var int& v = um;
+escape global:v;
+]],
+    run = 1,
+}
+
+Test { [[
+interface Global with
+    var int& v;
+end
+
+class T with
+    var int v;
+do
+    this.v = global:v;
+end
+
+var int  um = 111;
+var int& v = um;
+var T t;
+escape t.v;
+]],
+    run = 111,
+}
+
+Test { [[
+interface Global with
+end
+var int&? win;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+    var int v = 10;
+do
+end
+
+interface Global with
+    var T& t;
+end
+
+var T t_;
+var T& t = t_;
+global:t = t;
+
+escape global:t.v;
+]],
+    run = 10,
+}
+
+Test { [[
+class T with
+    event void e;
+do
+end
+var T t;
+
+class U with
+    var T& t;
+do
+    emit t.e;
+end
+
+var U u with
+    this.t = t;
+end;
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+    var int x;
+do
+end
+var T t;
+
+class U with
+    var T& t;
+do
+    t.x = 1;
+end
+
+class V with
+    var U& u;
+do
+    u.t.x = 2;
+end
+
+var U u with
+    this.t = t;
+end;
+
+var V v with
+    this.u = u;
+end;
+
+escape t.x + u.t.x + v.u.t.x;
+]],
+    run = 6,
+}
+
+Test { [[
+class T with
+    var int x;
+do
+end
+var T t;
+
+class U with
+    var T& t;
+do
+    t.x = 1;
+end
+
+class V with
+    var U& u;
+do
+    var U* p = &u;
+    p:t.x = 2;
+end
+
+var U u with
+    this.t = t;
+end;
+
+var V v with
+    this.u = u;
+end;
+
+escape t.x + u.t.x + v.u.t.x;
+]],
+    run = 6,
+}
+
+Test { [[
+class Ship with
+    var int& v;
+do
+end
+
+loop do
+    var int x = 10;
+    var Ship ship1 with
+        this.v = x;
+    end;
+    escape 1;
+end
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+class T with
+    var int& v;
+do
+end
+var T t with
+    var int x;
+    this.v = x;
+end;
+escape 1;
+]],
+    ref = 'line 7 : attribution to reference with greater scope',
+}
+
+Test { [[
+class T with
+    var int& v;
+do
+end
+var int x = 10;
+var T t with
+    this.v = x;
+end;
+x = 11;
+escape t.v;
+]],
+    run = 11;
+}
+
+Test { [[
+data V with
+    var int v;
+end
+
+class T with
+    var V& v;
+do
+end
+
+var T t1 with
+    this.v = V(1);
+end;
+var T t2 with
+    this.v = V(2);
+end;
+var T t3 with
+    this.v = V(3);
+end;
+
+escape t1.v.v + t2.v.v + t3.v.v;
+]],
+    ref = 'line 11 : attribution to reference with greater scope',
+    --run = 6,
+}
+
+Test { [[
+class T with
+    var int& v;
+do
+end
+var int x = 10;
+var T t with
+    this.v = x;
+end;
+var int y = 15;
+t.v = y;
+y = 100;
+escape t.v;
+]],
+    run = 100,
+}
+
 -- KILL THEMSELVES
 
 Test { [[
@@ -29093,6 +28922,176 @@ escape 1;
     run = 1,
 }
 
+Test { [[
+native do
+    void* PTR;
+    void* myalloc (void) {
+        return NULL;
+    }
+    void myfree (void* ptr) {
+    }
+end
+native @nohold _myfree();
+
+class T with
+    var int x = 10;
+do
+    finalize
+        _PTR = _myalloc();
+    with
+        _myfree(_PTR);
+    end
+end
+var T t;
+escape t.x;
+]],
+    fin = 'line 15 : cannot finalize a variable defined in another class',
+}
+
+Test { [[
+native do
+    int V;
+    void* myalloc (void) {
+        return &V;
+    }
+    void myfree (void* ptr) {
+    }
+end
+native @nohold _myfree();
+
+class T with
+    var int x = 10;
+do
+    var void&? ptr;
+    finalize
+        ptr = _myalloc();
+    with
+        _myfree(&ptr);
+    end
+end
+var T t;
+escape t.x;
+]],
+    run = 10,
+}
+
+-- TODO: bounded loop on finally
+
+    -- GLOBAL-DO-END
+
+Test { [[
+var int tot = 1;                // 1
+
+global do
+    tot = tot + 2;              // 3
+end
+
+tot = tot * 2;                  // 6
+
+escape tot;
+]],
+    run = 6
+}
+
+Test { [[
+var int tot = 1;                // 1
+
+global do
+    tot = tot + 2;              // 3
+end
+
+class T with
+do
+    global do
+        tot = tot * 2;          // 6
+        var int tot2 = 10;
+    end
+end
+
+tot = tot + tot2;               // 16
+
+global do
+    tot = tot + tot2;           // 26
+end
+
+escape tot;
+]],
+    run = 26,
+}
+
+Test { [[
+var int tot = 1;                // 1
+var int tot2;
+
+global do
+    tot = tot + 2;              // 3
+end
+
+class T with
+do
+    global do
+        tot = tot * 2;          // 6
+        tot2 = 10;
+    end
+end
+
+tot = tot + tot2;               // 16
+
+global do
+    tot = tot + tot2;           // 26
+end
+
+escape tot;
+]],
+    run = 26
+}
+
+Test { [[
+var int tot = 1;                // 1
+var int tot2 = 1;                       // 1
+
+global do
+    tot = tot + 2;              // 3
+end
+
+class T with
+do
+    class U with
+    do
+        global do
+            tot = tot + 1;      // 4
+            tot = tot + tot2;   // 5
+        end
+    end
+
+    global do
+        tot = tot * 2;          // 10
+        tot2 = tot2+9;                  // 10
+    end
+
+    class V with
+    do
+        global do
+            tot = tot + 5;      // 15
+        end
+    end
+end
+
+tot = tot + tot2;               // 25
+
+global do
+    tot = tot + tot2;           // 35
+    tot2 = tot2 / 2;                    // 5
+end
+
+tot2 = tot2 - 4;                        // 1
+
+escape tot + tot2;              // 36
+]],
+    run = 36
+}
+
+
 -- SPAWN
 
 Test { [[
@@ -29655,16 +29654,29 @@ end
 var T*? t = spawn T in ts;
 escape not t?;
 ]],
-    run = 1,
+    env = 'line 1 : undeclared type `T´',
 }
 
 Test { [[
-pool T[1] ts;
 class T with
     var int a;
 do
     this.a = 1;
 end
+pool T[0] ts;
+var T*? t = spawn T in ts;
+escape not t?;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+    var int a;
+do
+    this.a = 1;
+end
+pool T[1] ts;
 var T*? a = spawn T in ts;
 var T*? b = spawn T in ts;
 escape a? and (not b?);
@@ -29703,12 +29715,12 @@ escape a? and (not b?);
 }
 
 Test { [[
-pool T[1] ts;
 class T with
     var int a;
 do
     this.a = 1;
 end
+pool T[1] ts;
 var T*? a = spawn T in ts;
 //free(a);
 var T*? b = spawn T in ts;   // fails (a is freed on end)
@@ -29718,12 +29730,12 @@ escape a? and (not b?);
 }
 
 Test { [[
-pool T[1] ts;
 class T with
     var int a;
 do
     this.a = 1;
 end
+pool T[1] ts;
 var T* a;
 do
     var T*? aa = spawn T in ts;
@@ -29739,12 +29751,12 @@ escape a!=null and (not b?) and a!=b;
     --run = 1,
 }
 Test { [[
-pool T[2] ts;
 class T with
     var int a;
 do
     this.a = 1;
 end
+pool T[2] ts;
 var T* a;
 do
     var T*? aa = spawn T in ts;
@@ -29759,12 +29771,12 @@ escape a!=null and (b?) and a!=b;
     run = 1,
 }
 Test { [[
-pool T[1] ts;
 class T with
     var int a;
 do
     this.a = 1;
 end
+pool T[1] ts;
 var T*? a;
 do
     var T*? aa = spawn T in ts;
@@ -29779,12 +29791,12 @@ escape a? and (not b?);// and a!=b;
     run = 1,
 }
 Test { [[
-pool T[1] ts;
 class T with
     var int a;
 do
     this.a = 1;
 end
+pool T[1] ts;
 var T* a;
 do
     var T*? aa = spawn T in ts;
@@ -29797,12 +29809,12 @@ escape (not b?);
 }
 
 Test { [[
-pool T[1] ts;
 class T with
     var int a;
 do
     this.a = 1;
 end
+pool T[1] ts;
 var T* a, b;
 do
     do
@@ -29822,12 +29834,12 @@ escape (a!=null) and (b==null) and (not c?);// and a!=b and b==c;
     --run = 1,
 }
 Test { [[
-pool T[1] ts;
 class T with
     var int a;
 do
     this.a = 1;
 end
+pool T[1] ts;
 var T*? a, b;
 do
     do
@@ -29846,12 +29858,12 @@ escape a? and (not b?) and (not c?);// and a!=b and b==c;
     run = 1,
 }
 Test { [[
-pool T[1] ts;
 class T with
     var int a;
 do
     this.a = 1;
 end
+pool T[1] ts;
 var T*? a, b;
 var bool b_;
 do
@@ -29872,12 +29884,12 @@ escape b_==false and (not c?);
 }
 
 Test { [[
-pool T[1] ts;
 class T with
     var int a;
 do
     this.a = 1;
 end
+pool T[1] ts;
 var T*? a;
 do
     var T*? aa = spawn T in ts;
@@ -29890,12 +29902,12 @@ escape a? and (not b?);
     run = 1,
 }
 Test { [[
-pool T[1] ts;
 class T with
     var int a;
 do
     this.a = 1;
 end
+pool T[1] ts;
 var T* a;
 do
     var T*? aa = spawn T in ts;
@@ -29911,13 +29923,13 @@ Test { [[
 native do
     int V = 0;
 end
-pool T[1] ts;
 class T with
     var int a;
 do
     _V = _V + 1;
     await FOREVER;
 end
+pool T[1] ts;
 do
     loop i in 2 do
         spawn T in ts;
@@ -29934,13 +29946,13 @@ Test { [[
 native do
     int V = 0;
 end
-pool T[1] ts;
 class T with
     var int a;
 do
     _V = _V + 1;
     await FOREVER;
 end
+pool T[1] ts;
 do
     loop i in 2 do
         spawn T in ts;
@@ -33178,12 +33190,12 @@ interface I with
     var int v;
     event void e;
 end
-pool T[] ts;
 class T with
     interface I;
 do
     await e;
 end
+pool T[] ts;
 var int ret = 0;
 do
     spawn T in ts with
@@ -34042,7 +34054,7 @@ end
 var T t;
 escape t.a;
 ]],
-    tops = 'line 5 : interface "J" is not declared',
+    adj = 'line 5 : interface "J" is not declared',
 }
 
 Test { [[
@@ -34121,7 +34133,7 @@ do
 end
 escape 0;
 ]],
-    tops = 'line 3 : interface "T" is not declared',
+    adj = 'line 3 : interface "T" is not declared',
 }
 
 Test { [[
@@ -37297,14 +37309,24 @@ Test { [[
     end
     escape 1;
 ]],
-    env = 'line 4 : undeclared type `Queue´',
+    env = 'line 1 : undeclared type `Queue´',
 }
 Test { [[
+    class Queue with
+    do
+        var Queue q;
+    end
     var Queue q;
+    escape 1;
+]],
+    env = 'line 3 : undeclared type `Queue´',
+}
+Test { [[
     class Queue with
     do
         var Queue* q;
     end
+    var Queue q;
     escape 1;
 ]],
     run = 1,
@@ -38150,6 +38172,19 @@ end
 escape ret;
 ]],
     run = { ['~>10s']=10 },
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
+end
+
+event T* e;
+emit e => null;
+escape 1;
+]],
+    run = 1;
 }
 
 Test { [[
@@ -40362,7 +40397,7 @@ end
 var int i = 10;
 escape i;
 ]],
-    tops = 'line 4 : top-level identifier "T" already taken',
+    env = 'line 4 : top-level identifier "T" already taken',
     --env = 'tests.lua : line 4 : interface/class "T" is already declared',
 }
 
@@ -40382,7 +40417,7 @@ end
 var int i = 10;
 escape i;
 ]],
-    tops = 'line 1 : top-level identifier "T" already taken',
+    env = 'line 1 : top-level identifier "T" already taken',
     --env = '/tmp/_ceu_MOD1.ceu : line 1 : interface/class "T" is already declared',
 }
 
@@ -40400,7 +40435,7 @@ end
 var int i = 10;
 escape i;
 ]],
-    tops = 'line 2 : top-level identifier "Global" already taken',
+    env = 'line 2 : top-level identifier "Global" already taken',
     --env = 'line 2 : interface/class "Global" is already declared',
 }
 
@@ -42742,7 +42777,7 @@ interface T with
 end
 escape 1;
 ]],
-    tops = 'line 4 : top-level identifier "T" already taken',
+    env = 'line 4 : top-level identifier "T" already taken',
 }
 Test { [[
 interface T with
@@ -42752,7 +42787,7 @@ data T with
 end
 escape 1;
 ]],
-    tops = 'line 3 : top-level identifier "T" already taken',
+    env = 'line 3 : top-level identifier "T" already taken',
 }
 Test { [[
 data T with
@@ -42763,7 +42798,7 @@ data T with
 end
 escape 1;
 ]],
-    tops = 'top-level identifier "T" already taken',
+    env = 'top-level identifier "T" already taken',
 }
 Test { [[
 class T with
@@ -42773,7 +42808,7 @@ interface T with
 end
 escape 1;
 ]],
-    tops = 'top-level identifier "T" already taken',
+    env = 'top-level identifier "T" already taken',
 }
 
 -- tags inside union data types must be all uppercase

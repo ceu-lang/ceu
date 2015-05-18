@@ -75,9 +75,6 @@ Test = function (t)
     if not check('adj')      then return end
     --DBG'======= ADJ'
     --AST.dump(AST.root)
-    if not check('tops')     then return end
-    --DBG'======= TOPS'
-    --AST.dump(AST.root)
     if not check('env')      then return end
     if not check('exp')      then return end
     if not check('adt')      then return end

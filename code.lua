@@ -231,7 +231,7 @@ static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org, t
 
     Root = function (me)
         for _, cls in ipairs(ENV.clss_cls) do
-            CONC(me, cls)
+            me.code = me.code .. cls.code_cls
         end
 
         -- functions and threads receive __ceu_org as parameter
@@ -298,6 +298,10 @@ case CEU_IN_]]..id..[[:
         LINE(me, 'return '..(exp and V(exp) or '')..';')
     end,
 
+    Dcl_cls_pos = function (me)
+        me.code_cls = me.code
+        me.code     = ''        -- do not inline in enclosing class
+    end,
     Dcl_cls = function (me)
         if me.is_ifc then
             CONC_ALL(me)

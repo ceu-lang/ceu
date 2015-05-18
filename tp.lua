@@ -7,7 +7,7 @@ function TP.get (id)
     return TP.types[id] or __empty
 end
 
-function TP.new (me)
+function TP.new (me, dont_generate)
     if me.tag == 'Type' then
         local id, ptr, arr, ref, opt = unpack(me)
 
@@ -53,7 +53,7 @@ function TP.new (me)
             me.tup[#me.tup+1] = tp
         end
 
-        if not AST.par(me,'Dcl_fun') then
+        if not (dont_generate or AST.par(me,'Dcl_fun')) then
             TP.types[TP.toc(me)] = me     -- dump typedefs
         end
     end
@@ -135,7 +135,7 @@ function TP.toc (tp)
 
     local ret = tp.id
 
-    if TOPS[tp.id] then
+    if ENV.clss[tp.id] or ENV.adts[tp.id] then
         ret = 'CEU_'..ret
     end
 

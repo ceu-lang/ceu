@@ -1371,7 +1371,58 @@ G = {
         me[5] = node('Type', me.ln, '_Option_'..n, 0, false, false, false)
     end,
 }
+
+local CLSS = {}  -- holds all clss
+local function id2ifc (id)
+    for _, cls in ipairs(CLSS) do
+        local _,id2 = unpack(cls)
+        if id2 == id then
+            return cls
+        end
+    end
+    return nil
+end
+
 H = {
+    -----------------------------------------------------------------------
+    -- substitutes all Dcl_imp for the referred fields
+    -----------------------------------------------------------------------
+    Dcl_cls_pos = function (me)
+        CLSS[#CLSS+1] = me
+    end,
+    Root = function (me)
+        for _, cls in ipairs(CLSS) do
+            if cls.tag=='Dcl_cls' and cls[2]~='Main' then   -- "Main" has no Dcl_imp's
+                local dcls1 = AST.asr(cls.blk_ifc[1][1],'BlockI')[1]
+                local i = 1
+                while i <= #dcls1 do
+                    local imp = dcls1[i]
+                    if imp.tag == '_Dcl_imp' then
+                        -- interface A,B,...
+                        for _,dcl in ipairs(imp) do
+                            local ifc = id2ifc(dcl)  -- interface must exist
+                            ASR(ifc and ifc[1]==true,
+                                imp, 'interface "'..dcl..'" is not declared')
+                            local dcls2 = AST.asr(ifc.blk_ifc[1][1],'BlockI')[1]
+                            for _, dcl2 in ipairs(dcls2) do
+                                assert(dcl2.tag ~= 'Dcl_imp')   -- impossible because I'm going in order
+                                local new = AST.copy(dcl2)
+                                dcls1[#dcls1+1] = new -- fields from interface should go to the end
+                                new.isImp = true      -- to avoid redeclaration warnings indeed
+                            end
+                        end
+                        table.remove(dcls1, i) -- remove _Dcl_imp
+                        i = i - 1                    -- repeat
+                    else
+                    end
+                    i = i + 1
+                end
+            end
+        end
+    end,
+
+    -----------------------------------------------------------------------
+
     Dcl_adt_pos = function (me)
         -- id, op, ...
         local _, op = unpack(me)

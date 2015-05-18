@@ -147,7 +147,6 @@ do
     dofile 'parser.lua'
     dofile 'ast.lua'
     dofile 'adj.lua'
-    dofile 'tops.lua'
     dofile 'env.lua'
     dofile 'exp.lua'
     dofile 'adt.lua'
@@ -330,7 +329,7 @@ do
     do
         local str = ''
         for _,T in pairs(TP.types) do
-            if T.tup and #T.tup>0 and (not T.__dont_gen_c) then
+            if T.tup and #T.tup>0 then
                 str = str .. 'typedef struct {\n'
                 for i, t in ipairs(T.tup) do
                     local tmp = TP.toc(t)

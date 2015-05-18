@@ -118,8 +118,10 @@ local _E = 1    -- 0=NONE
 function newvar (me, blk, pre, tp, id, isImp)
     local ME = CLS() or ADT()  -- (me can be a "data" declaration)
     for stmt in AST.iter() do
-        if stmt.tag=='Async' or stmt.tag=='Thread' then
-            break   -- search until Async boundary
+        if stmt.tag=='Dcl_cls' or stmt.tag=='Dcl_adt' or
+           stmt.tag=='Async' or stmt.tag=='Thread'
+        then
+            break   -- search boundaries
         elseif stmt.tag == 'Block' then
             for _, var in ipairs(stmt.vars) do
                 --ASR(var.id~=id or var.blk~=blk, me,
@@ -263,7 +265,9 @@ end
 function ENV.getvar (id, blk)
     local blk = blk or AST.iter('Block')()
     while blk do
-        if blk.tag=='Async' or blk.tag=='Thread' then
+        if blk.tag=='Dcl_cls' or blk.tag=='Dcl_adt' then
+            return nil      -- class/adt boundary
+        elseif blk.tag=='Async' or blk.tag=='Thread' then
             local vars = unpack(blk)    -- VarList
             if not (vars and __vars_check(vars,id)) then
                 return nil  -- async boundary: stop unless declared with `&´
@@ -376,13 +380,15 @@ F = {
         ASR(ENV.max_evt+#ENV.exts < 255, me, 'too many events')
                                     -- 0 = NONE
 
-        -- matches all ifc vs cls
+        -- matches all ifc vs cls/ifc
         for _, ifc in ipairs(ENV.clss_ifc) do
-            for _, cls in ipairs(ENV.clss_cls) do
-                ENV.ifc_vs_cls_or_ifc(ifc, cls)
-            end
-            for _, ifc2 in ipairs(ENV.clss_ifc) do
-                ENV.ifc_vs_cls_or_ifc(ifc, ifc2)
+            for _, cls in ipairs(ENV.clss) do
+                local matches = ENV.ifc_vs_cls_or_ifc(ifc, cls)
+                -- TODO: HACK_4: delayed declaration until use
+                if matches then
+                    ifc.__env_last_match = cls
+                        -- interface must be declared only after last class
+                end
             end
         end
         local glb = ENV.clss.Global
@@ -414,14 +420,18 @@ F = {
 
     Dcl_cls_pre = function (me)
         local ifc, id, blk = unpack(me)
-        me.c = {}      -- holds all "native _f()"
-        me.tp = TP.fromstr(id)
+        me.c       = {}      -- holds all "native _f()"
+        me.is_ifc  = ifc
+        me.id      = id
+        me.tp      = TP.fromstr(id)
         me.matches = {}
 
         -- restart variables/events counting
         _N = 0
         _E = 1  -- 0=NONE
 
+        ASR(not (ENV.clss[id] or ENV.adts[id]), me,
+            'top-level identifier "'..id..'" already taken')
         ENV.clss[id] = me
         ENV.clss[#ENV.clss+1] = me
 
@@ -467,6 +477,8 @@ F = {
 
         _N = 0 -- restart vars counting
 
+        ASR(not (ENV.adts[id] or ENV.clss[id]), me,
+            'top-level identifier "'..id..'" already taken')
         ENV.adts[id] = me
         ENV.adts[#ENV.adts+1] = me
     end,
@@ -515,8 +527,7 @@ F = {
                     end
                 end
 
-                TP.new(tup)
-                tup.__dont_gen_c = true -- TODO: avoids generating C tuples
+                TP.new(tup, true)
             end
         end
     end,
@@ -623,7 +634,7 @@ F = {
 
             local tp_ = TP.new(tp)
             local top = (tp_.ptr==0 and (not tp_.ref) and TOPS[tp_.id])
-            ASR(tp_.id=='_TOP_POOL' or (top and top.tops_i<CLS().tops_i),
+            ASR(tp_.id=='_TOP_POOL' or top,
                 me, 'undeclared type `'..(tp_.id or '?')..'´')
         end
     end,
@@ -880,7 +891,6 @@ F = {
         local id, pool, constr = unpack(me)
         me.cls = ENV.clss[id]
         ASR(me.cls, me, 'undeclared type `'..id..'´')
-        --ASR(me.cls.tops_i < CLS().tops_i, me, 'undeclared type `'..id..'´')
         ASR(not me.cls.is_ifc, me, 'cannot instantiate an interface')
         me.tp = TP.fromstr(id..'*')  -- class id
     end,
