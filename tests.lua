@@ -37425,6 +37425,20 @@ escape 1;
 
 Test { [[
 class T with
+    event int e;
+do
+    await this.e;
+    watching v in this.e do
+        nothing;
+    end
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
     event void e;
 do
     await this.e;
@@ -37456,6 +37470,22 @@ escape ret;
 ]],
     run = {
         ['100~>I; ~>1s'] = -5,
+        ['~>1s; 100~>I'] = 5,
+    }
+}
+
+Test { [[
+input int I;
+var int ret = -5;
+var int v=0;
+watching v in I do
+    await 1s;
+    ret = 5;
+end
+escape ret+v;
+]],
+    run = {
+        ['100~>I; ~>1s'] = 95,
         ['~>1s; 100~>I'] = 5,
     }
 }

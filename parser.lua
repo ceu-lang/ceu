@@ -251,7 +251,11 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     , _Escape = KEY'escape' * EV'__Exp'
 
-    , _Watching = KEY'watching' * EV'__awaits' * EKEY'do' * V'Block' * EKEY'end'
+    , _Watching = KEY'watching' * ( (EV'Var'+V'VarList') * EKEY'in'
+                                  + Cc(false) )
+                * V'__awaits'
+                * V'__Do'
+
     , ParOr     = KEY'par/or' * EKEY'do' *
                       V'Block' * (EKEY'with' * V'Block')^1 *
                   EKEY'end'

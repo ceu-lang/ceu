@@ -290,12 +290,21 @@ F = {
         -- both sides, the message will point to "..." which appears after in
         -- the code
         --]]
-        local e, dt, blk = unpack(me)
+        local to, e, dt, blk = unpack(me)
+
+        local awt = node('Await', me.ln, e, dt, false)
+        local set
+        if to then
+            set = node('_Set', me.ln, to, '=', 'await', awt)
+        else
+            set = awt
+        end
+
         local ret = node('ParOr', me.ln,
                         blk,
                         node('Block', me.ln,
                             node('Stmts', me.ln,
-                                node('Await', me.ln, e, dt, false))))
+                                set)))
         ret.__adj_watching = (e or dt)
         return ret
     end,
