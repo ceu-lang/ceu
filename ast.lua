@@ -51,21 +51,17 @@ function AST.copy (node, ln)
     return ret
 end
 
-function AST.asr (me, tag)
+function AST.asr (me, tag, ...)
+    local idx, tag2 = ...
+
     local t = (AST.isNode(me) and me.tag) or 'none'
     if not (AST.isNode(me) and (me.tag==tag or tag=='')) then
         DBG(debug.traceback())
         error('bug (found: '..t..' vs expected: '..tag..')')
     end
-    return me
-end
--- TODO: remove
-function AST.asr_ (me, tag, ...)
-    local idx, tag2 = ...
 
-    AST.asr(me, tag)
     if idx then
-        return AST.asr_(me[idx], tag2, select(3,...))
+        return AST.asr(me[idx], tag2, select(3,...))
     else
         return me
     end

@@ -137,7 +137,7 @@ F = {
             ADJ_REQS = {
                 me   = RET,
                 orig = ORIG,
-                reqs = AST.asr_(RET,'Stmts', 1,'ParEver', 2,'Block', 1,'Stmts', 1,'XXX')
+                reqs = AST.asr(RET,'Stmts', 1,'ParEver', 2,'Block', 1,'Stmts', 1,'XXX')
             }
                 --[[
                 -- Use "ADJ_REQS" to hold the "par/or", which can be
@@ -193,7 +193,7 @@ F = {
 
     Dcl_cls_pre = function (me)
         local is_ifc, id, blk_ifc, blk_body = unpack(me)
-    -- TODO
+-- TODO
 me.blk_body = me.blk_body or blk_body
 
         me.__globaldos = {}
@@ -236,19 +236,19 @@ me.blk_body = me.blk_body or blk_body
         me[3]  = blk        -- both blocks 'ifc' and 'body'
         me[4]  = nil        -- remove 'body'
 
-    -- TODO
+-- TODO
         if is_ifc then
             return
         end
 
         -- remove SetBlock if no escapes
         if id~='Main' and (not me.has_escape) then
-            local setblock = AST.asr_(blk_body,'Block', 1,'Stmts', 2,'SetBlock')
+            local setblock = AST.asr(blk_body,'Block', 1,'Stmts', 2,'SetBlock')
             blk_body[1] = node('Stmts', me.ln, setblock[1])
         end
 
         -- insert class pool for orphan spawn
-        local stmts = AST.asr_(blk_ifc,'BlockI', 1,'Stmts')
+        local stmts = AST.asr(blk_ifc,'BlockI', 1,'Stmts')
         if me.__ast_has_malloc then
             table.insert(stmts, 1,
                 node('Dcl_pool', me.ln, 'pool',
@@ -1057,7 +1057,7 @@ me.blk_body = me.blk_body or blk_body
 
         local SET = node('Nothing', me.ln)
         if stmt.tag == 'Set' then
-            local to = AST.asr_(stmt,'Set', 4,'VarList', 1,'Var')
+            local to = AST.asr(stmt,'Set', 4,'VarList', 1,'Var')
             SET = node('Set', me.ln, '=', 'exp',
                     node('Op1_cast', me.ln,
                         node('Type', me.ln, 'int', 0, false, false),

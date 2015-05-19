@@ -300,7 +300,7 @@ end
         if not fin then
             set, fin = unpack(me)
         end
-        AST.asr_(fin[1],'Block', 1,'Stmts')
+        AST.asr(fin[1],'Block', 1,'Stmts')
         fin.active = (#fin[1][1]>1 or
                       fin[1][1][1] and fin[1][1][1].tag~='Nothing')
 
