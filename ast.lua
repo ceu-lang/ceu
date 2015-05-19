@@ -55,7 +55,7 @@ function AST.get (me, tag, ...)
     local idx, tag2 = ...
 
     if not (AST.isNode(me) and (me.tag==tag or tag=='')) then
-        return nil, ((AST.isNode(me) and me.tag) or 'none')
+        return nil, tag, ((AST.isNode(me) and me.tag) or 'none')
     end
 
     if idx then
@@ -66,10 +66,10 @@ function AST.get (me, tag, ...)
 end
 
 function AST.asr (me, tag, ...)
-    local ret, tag2 = AST.get(me, tag, ...)
+    local ret, tag1, tag2 = AST.get(me, tag, ...)
     if not ret then
         DBG(debug.traceback())
-        error('bug (found: '..tag2..' vs expected: '..tag..')')
+        error('bug (expected: '..tag1..' | found: '..tag2..')')
     end
     return ret
 end

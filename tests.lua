@@ -2039,7 +2039,6 @@ escape sum;
     run = { ['~>10s'] = 9 },
 }
 
----]===]
 Test { [[
 class Body with do end;
 var Body*? tail = spawn Body;
@@ -2170,6 +2169,7 @@ end;
 
 escape _V;
 ]],
+    _ana = { acc=true },
     wrn = 'line 26 : unbounded recursive spawn',
     run = 10,
 }
@@ -2202,6 +2202,43 @@ loop n in list do
             recurse n:CONS.tail;
         end
     end
+end
+
+escape _V;
+]],
+    wrn = 'line 26 : unbounded recursive spawn',
+    _ana = { acc=true },
+    run = { ['~>10s'] = 10 },
+}
+
+Test { [[
+data List with
+    tag NIL;
+with
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[3] list;
+list = new List.CONS(1,
+            List.CONS(2,
+                List.CONS(3, List.NIL())));
+
+native do
+    int V = 0;
+end
+
+loop n in list do
+    _V = _V + 1;
+    //watching n do
+        await 1s;
+        if n:CONS then
+            _V = _V + n:CONS.head;
+            recurse n:CONS.tail;
+        end
+    //end
 end
 
 escape _V;
@@ -2288,6 +2325,7 @@ escape _V;
     run = { ['~>10s'] = 13 },
 }
 
+---]===]
 Test { [[
 data Tree with
     tag NIL;

@@ -748,7 +748,7 @@ int ceu_go_all (tceu_app* app)
 
 #ifdef CEU_NEWS
 #ifdef CEU_RUNTESTS
-    ceu_sys_assert(_ceu_dyns_ == 0);
+    ceu_out_assert(_ceu_dyns_ == 0, "memory leak");
 #endif
 #endif
 

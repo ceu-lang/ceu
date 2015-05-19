@@ -767,7 +767,17 @@ F = {
         ENV.pures[me[1]] = true
     end,
 
-    _TODO_AWAIT = function (me)
+    _TMP_ITER = function (me)
+        -- HACK_5: figure out iter type
+        local tp = me[1].tp  -- type of Var
+        local TP = AST.asr(me.__par,'Stmts', 2,'Stmts',   1,'Dcl_cls',
+                                   3,'Block', 1,'Stmts',   1,'BlockI',
+                                   1,'Stmts', 2,'Dcl_var', 2,'Type')
+        TP[1] = tp.id
+        me.tag = 'Nothing'
+    end,
+
+    _TMP_AWAIT = function (me)
         -- HACK_6 [await]: detects if OPT-1 (evt) or OPT-2 (adt) or OPT-3 (org)
         local stmts = AST.asr(me.__par, 'Stmts')
         local tp = me[1].tp  -- type of Var
@@ -786,7 +796,7 @@ F = {
             stmts[3] = AST.node('Nothing', me.ln)       -- remove OPT-2
             stmts[4] = AST.node('Nothing', me.ln)       -- remove OPT-3
         end
-        me.tag = 'Stmts'
+        me.tag = 'Nothing'
     end,
 
     Await = function (me)

@@ -361,36 +361,60 @@ me.blk_body = me.blk_body or blk_body
 -- Loop --------------------------------------------------
 
     _Loop_adt_pre = function (me)
+        --[[
+        --  loop <n> in <adt> do
+        --      <body>
+        --          recurse <exp>;
+        --  end
+        --      ... becomes ...
+        --  class Loop with
+        --      pool Loop[]& loops;
+        --      var  <adt_t>* <n>;
+        --  do
+        --      <body>
+        --          recurse <exp>;
+        --  end
+        --  pool Loop[] loops;
+        --  do Loop with
+        --      this.loops = loops;
+        --      this.<n>   = <n>;
+        --  end;
+        --]]
+
         local max, to, iter, body = unpack(me)
 
-        local tp = node('Type', me.ln, 'Tree', 1, false, false)
-        local cls = node('Dcl_cls', me.ln, false, '_Loop_'..me.n,
+        local tp = node('Type', me.ln, 'TODO-ADT-TYPE', 1, false, false)
+        local cls = node('Dcl_cls', me.ln, false, 'Loop_'..me.n,
                         node('BlockI', me.ln,
                             node('Stmts', me.ln,
                                 node('Dcl_pool', me.ln, 'pool',
-                                    node('Type', me.ln, '_Loop_'..me.n, 0, true, true),
-                                    '_pool'),
+                                    node('Type', me.ln, 'Loop_'..me.n, 0, true, true),
+                                    '_loops'),
                                 node('Dcl_var', me.ln, 'var',
                                     tp,
-                                    to[1]),
-                                node('_Dcl_int', me.ln, 'event',
-                                    node('Type', me.ln, 'int', 0, false, false),
-                                    'ok'))),
-                        body)
-        local stmts = body[1]
-        stmts[#stmts+1] = node('EmitInt', me.ln, 'emit',
-                            node('Var', me.ln, 'ok'),
-                            node('NUMBER', me.ln, 1))
+                                    to[1]))),
+                        node('Block', me.ln,
+                            node('Stmts', me.ln,
+                                body)))
+--[[
+                                node('_Watching', me.ln,
+                                    false,
+                                    node('Op2_.', me.ln, '.',
+                                        node('This', me.ln),
+                                        to[1]),
+                                    false,
+                                    body))))
+]]
 
         local pool = node('Dcl_pool', me.ln, 'pool',
-                        node('Type', me.ln, '_Loop_'..me.n, 0, true, false),
+                        node('Type', me.ln, 'Loop_'..me.n, 0, true, false),
                         '_pool_'..me.n)
-        local doorg = node('DoOrg', me.ln, '_Loop_'..me.n,
+        local doorg = node('DoOrg', me.ln, 'Loop_'..me.n,
                         node('Dcl_constr', me.ln,
                             node('_Set', me.ln,
                                 node('Op2_.', me.ln, '.',
                                     node('This', me.ln),
-                                    '_pool'),
+                                    '_loops'),
                                 '=', 'exp',
                                 node('Var', me.ln, '_pool_'..me.n)),
                             node('_Set', me.ln,
@@ -400,13 +424,27 @@ me.blk_body = me.blk_body or blk_body
                                 '=', 'exp',
                                 iter)))
 
-        return node('Stmts', me.ln, AST.copy(iter), cls, pool, doorg)
+        -- HACK_5: figure out iter type
+        local iter = node('_TMP_ITER', me.ln, AST.copy(iter))
+        return node('Stmts', me.ln, iter, cls, pool, doorg)
     end,
+
+    --[[
+    --  recurse <exp>
+    --      ... becomes ...
+    --  var Loop*? _var;
+    --  _var = spawn Loop in _loops with
+    --      this._loops = outer._loops;
+    --      this.<n>    = <exp>;
+    --  if _var? then
+    --      await *_var;
+    --  end
+    --]]
     _Recurse_pre = function (me)
         local exp = unpack(me)
-        local cls = AST.par(me, 'Dcl_cls')
+        local cls = assert(AST.par(me, 'Dcl_cls'))
+        local to_id  = AST.asr(cls,'Dcl_cls', 3,'BlockI', 1,'Stmts', 2,'Dcl_var')[3]
         local cls_id = cls[2]
-        local to_id  = AST.asr(cls,'Dcl_cls', 3,'BlockI', 1,'Stmts', 3,'Dcl_int')
 
         local dcl = node('Dcl_var', me.ln, 'var',
                         node('Type', me.ln, cls_id, 1, false, false, true),
@@ -415,16 +453,16 @@ me.blk_body = me.blk_body or blk_body
                         node('Var', me.ln, '_var_'..me.n),
                         '=', 'spawn',
                         node('Spawn', me.ln, cls_id,
-                            node('Var', me.ln, '_pool'),
+                            node('Var', me.ln, '_loops'),
                             node('Dcl_constr', me.ln,
                                 node('_Set', me.ln,
                                     node('Op2_.', me.ln, '.',
                                         node('This', me.ln),
-                                        '_pool'),
+                                        '_loops'),
                                     '=', 'exp',
                                     node('Op2_.', me.ln, '.',
                                         node('Outer', me.ln),
-                                        '_pool')),
+                                        '_loops')),
                             node('_Set', me.ln,
                                 node('Op2_.', me.ln, '.',
                                     node('This', me.ln),
@@ -434,17 +472,12 @@ me.blk_body = me.blk_body or blk_body
         local if_ = node('If', me.ln,
                         node('Op1_?', me.ln, '?',
                             node('Var', me.ln, '_var_'..me.n)),
-                        node('_Watching', me.ln,
+                        --node('Nothing', me.ln),
+                        node('Await', me.ln,
+                            node('Op1_*', me.ln, '*',
+                                node('Var', me.ln, '_var_'..me.n)),
                             false,
-                            node('Var', me.ln, '_var_'..me.n),
-                            false,
-                            node('Block', me.ln,
-                                node('Stmts', me.ln,
-                                    node('Await', me.ln,
-                                        node('Op2_.', me.ln, '.',
-                                            node('Op1_*', me.ln, '*',
-                                                node('Var', me.ln, '_var_'..me.n)),
-                                            'ok'))))),
+                            false),
                         node('Nothing', me.ln))
 
         return node('Stmts', me.ln, dcl, set, if_)
@@ -1053,7 +1086,7 @@ me.blk_body = me.blk_body or blk_body
         --      await <ADT>
         --      await <ORG>
         local var = e or dt     -- TODO: hacky
-        local tst = node('_TODO_AWAIT', me.ln, var)
+        local tst = node('_TMP_AWAIT', me.ln, var)
 
         local SET = node('Nothing', me.ln)
         if stmt.tag == 'Set' then
