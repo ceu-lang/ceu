@@ -230,25 +230,26 @@ end
     end,
 
     Var = function (me)
-        local set = AST.iter'Set'()
+        local set = AST.par(me,'Set')
         if set and set[4] == me then
             return  -- re-setting variable
         end
+        if AST.par(me,'Dcl_constr') and me.__par.fst.tag=='This' then
+            return  -- constructor access
+        end
+
+        local loop = AST.par(me, 'Loop')
+        local ext  = AST.get(loop,'Loop', 4,'Stmts', 1,'Set', 3,'Await', 1,'Ext')
+        if loop and loop.isAwaitUntil and ext and ext[1]=='_ok_killed' then
+-- TODO: bug: what if the "o" expression contains other pointers?
+            return  -- o'=await o until o==o'
+        end
+
         if type(TRACK[#TRACK][me.var]) ~= 'table' then
             if me.var.tp.ptr > 0 then
                 TRACK[#TRACK][me.var] = 'accessed'
             end
             return  -- no await happened yet
-        end
-        if me.var.tp.arr then
-            return  -- ignore tracked vars with []
-        end
-        if string.sub(me.var.id,1,5)=='_tup_' then
-            return  -- ignore tuple acesses
-        end
-
-        if AST.iter'Dcl_constr'() and me.__par.fst.tag=='This' then
-            return  -- constructor access
         end
 
         -- possible dangling pointer "me.var" is accessed across await

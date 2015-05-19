@@ -406,7 +406,7 @@ me.blk_body = me.blk_body or blk_body
         local exp = unpack(me)
         local cls = AST.par(me, 'Dcl_cls')
         local cls_id = cls[2]
-        local to_id  = cls[3][2][3]
+        local to_id  = AST.asr(cls,'Dcl_cls', 3,'BlockI', 1,'Stmts', 3,'Dcl_int')
 
         local dcl = node('Dcl_var', me.ln, 'var',
                         node('Type', me.ln, cls_id, 1, false, false, true),
@@ -1084,7 +1084,7 @@ me.blk_body = me.blk_body or blk_body
                     node('Op2_.', me.ln, '.',
                         node('Op1_*', me.ln, '*',
                             AST.copy(var)),
-                            'HACK_6-NIL'),
+                        'HACK_6-NIL'),
                     node('Block', me.ln,
                         node('Stmts', me.ln,
                             node('Nothing', me.ln))),

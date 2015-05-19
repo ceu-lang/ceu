@@ -1867,6 +1867,7 @@ escape sum;
 
 ---------------
 
+- colocar de volta recurse que ja estao nos testes (comentados)
 - testar pool dinamico indo fora de escopo (valgrind)
 - testar tb watching c/ adt estatico
 - watching de ADTs
@@ -1927,7 +1928,7 @@ do
             this.sum    = sum;
         end;
     if nested? then
-        watching nested do
+        watching *nested do
             await nested:ok;
         end
     end
@@ -1982,7 +1983,7 @@ do
                     this.sum    = sum;
                 end;
             if left? then
-                watching left do
+                watching *left do
                     await left:ok;
                 end
             end
@@ -1996,7 +1997,7 @@ do
                     this.sum    = sum;
                 end;
             if right? then
-                watching right do
+                watching *right do
                     await right:ok;
                 end
             end
@@ -2038,6 +2039,79 @@ escape sum;
     run = { ['~>10s'] = 9 },
 }
 
+---]===]
+Test { [[
+class Body with do end;
+var Body*? tail = spawn Body;
+await *tail;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+data List with
+    tag NIL;
+with
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[3] list;
+list = new List.CONS(1,
+            List.CONS(2,
+                List.CONS(3, List.NIL())));
+
+native do
+    int V = 0;
+end
+
+/*
+loop n in list do
+    _V = _V + 1;
+    if n:CONS then
+        _V = _V + n:CONS.head;
+        recurse n:CONS.tail;
+    end
+end
+*/
+
+class Body with
+    pool  Body[]& bodies;
+    var   List*   n;
+do
+    watching n do
+        _V = _V + 1;
+        if n:CONS then
+            _V = _V + n:CONS.head;
+
+            var Body*? tail =
+                spawn Body in this.bodies with
+                    this.bodies = bodies;
+                    this.n      = n:CONS.tail;
+                end;
+            if tail? then
+                await *tail;
+            end
+        end
+    end
+end
+
+pool Body[3] bodies;
+do Body with
+    this.bodies = bodies;
+    this.n      = list;
+end;
+
+escape _V;
+]],
+    wrn = 'line 26 : unbounded recursive spawn',
+    _ana = { acc=true },
+    run = 10,
+}
+
 Test { [[
 data List with
     tag NIL;
@@ -2064,6 +2138,35 @@ loop n in list do
         recurse n:CONS.tail;
     end
 end
+
+/*
+class Body with
+    pool  Body[]& bodies;
+    var   List*   n;
+do
+    watching n do
+        _V = _V + 1;
+        if n:CONS then
+            _V = _V + n:CONS.head;
+
+            var Body*? tail =
+                spawn Body in this.bodies with
+                    this.bodies = bodies;
+                    this.n      = n:CONS.tail;
+                end;
+            if tail? then
+                await *tail;
+            end
+        end
+    end
+end
+
+pool Body[3] bodies;
+do Body with
+    this.bodies = bodies;
+    this.n      = list;
+end;
+*/
 
 escape _V;
 ]],
@@ -2223,7 +2326,6 @@ do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
----]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }

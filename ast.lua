@@ -51,20 +51,27 @@ function AST.copy (node, ln)
     return ret
 end
 
-function AST.asr (me, tag, ...)
+function AST.get (me, tag, ...)
     local idx, tag2 = ...
 
-    local t = (AST.isNode(me) and me.tag) or 'none'
     if not (AST.isNode(me) and (me.tag==tag or tag=='')) then
-        DBG(debug.traceback())
-        error('bug (found: '..t..' vs expected: '..tag..')')
+        return nil, ((AST.isNode(me) and me.tag) or 'none')
     end
 
     if idx then
-        return AST.asr(me[idx], tag2, select(3,...))
+        return AST.get(me[idx], tag2, select(3,...))
     else
         return me
     end
+end
+
+function AST.asr (me, tag, ...)
+    local ret, tag2 = AST.get(me, tag, ...)
+    if not ret then
+        DBG(debug.traceback())
+        error('bug (found: '..tag2..' vs expected: '..tag..')')
+    end
+    return ret
 end
 
 function AST.pred_async (me)
@@ -164,13 +171,13 @@ end
 --
     --ks = me.ns.trails..' / '..tostring(me.needs_clr)
     DBG(string.rep(' ',spc)..me.tag..
-        '')
 --[[
-        ' (ln='..me.ln[2]..' n='..me.n..
-                           ' d='..(me.__depth or 0)..
-                           ' p='..(me.__par and me.__par.n or '')..
-                           ') '..ks)
+        '')
 ]]
+        ' (ln='..me.ln[2]..' n='..me.n..
+                           --' d='..(me.__depth or 0)..
+                           --' p='..(me.__par and me.__par.n or '')..
+                           ') '..ks)
 --DBG'---'
 --DBG(me.xxx)
 --DBG'---'
@@ -178,7 +185,7 @@ end
         if AST.isNode(sub) then
             AST.dump(sub, spc+2)
         else
-            --DBG(string.rep(' ',spc+2) .. '['..tostring(sub)..']')
+            DBG(string.rep(' ',spc+2) .. '['..tostring(sub)..']')
         end
     end
 end

@@ -9,13 +9,13 @@ F = {
             --  [OK]: l = new (...)
             return  -- ignore constructors (they are correct)
         end
-        assert(to.fst.tag=='Var' and fr.fst.tag=='Var', 'not implemented')
+        --assert(to.fst.tag=='Var' and fr.fst.tag=='Var', 'not implemented')
 
         -- [NO]: l1.* = l2.*
-        --if to.tp.ptr == 0 then
+        if to.tp.ptr == 0 then
             ASR(to.fst.var == fr.fst.var, me,
                 'cannot mix recursive data sources')
-        --end
+        end
 
         --  [OK]: "to" is prefix of "fr" (changing parent to a child)
         --      l = l:CONS.tail     // OK
