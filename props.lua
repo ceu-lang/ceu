@@ -208,14 +208,10 @@ F = {
         -- detects if "watching" an org
         if me.__adj_watching then
             local tp = me.__adj_watching.tp
-            if tp and tp.ptr==1 then
-                local cls = ENV.clss[tp.id]
-                local adt = ENV.adts[tp.id]
-                if cls then
-                    PROPS.has_orgs_watching = true
-                elseif adt then
-                    PROPS.has_adts_watching[tp.id] = true
-                end
+            if tp and tp.ptr==0 and ENV.clss[tp.id] then
+                PROPS.has_orgs_watching = true
+            elseif tp and tp.ptr==1 and ENV.adts[tp.id] then
+                PROPS.has_adts_watching[tp.id] = true
             end
         end
     end,

@@ -415,6 +415,7 @@ F = {
                         node('Op1_?', me.ln, '?',
                             node('Var', me.ln, '_var_'..me.n)),
                         node('_Watching', me.ln,
+                            false,
                             node('Var', me.ln, '_var_'..me.n),
                             false,
                             node('Block', me.ln,

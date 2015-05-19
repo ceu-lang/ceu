@@ -771,19 +771,17 @@ F = {
         -- HACK_6 [await]: detects if OPT-1 (evt) or OPT-2 (adt) or OPT-3 (org)
         local stmts = AST.asr(me.__par, 'Stmts')
         local tp = me[1].tp  -- type of Var
-        if tp and tp.ptr==1 and (ENV.clss[tp.id] or ENV.adts[tp.id]) then
-            stmts[2] = AST.node('Nothing', me.ln)      -- remove OPT-1
-            if ENV.clss[tp.id] then
-                stmts[3] = AST.node('Nothing', me.ln)  -- remove OPT-2
-            else
-                local adt = assert(ENV.adts[tp.id])
-                AST.asr(stmts,'', 3,'If', 1,'Op2_.', 3,'HACK_6-NIL')
-                stmts[3][1][3] = adt.tags[1]
-                stmts[4] = AST.node('Nothing', me.ln)  -- remove OPT-3
-            end
+        if tp and tp.ptr==0 and ENV.clss[tp.id] then
+            stmts[2] = AST.node('Nothing', me.ln)       -- remove OPT-1
+            stmts[3] = AST.node('Nothing', me.ln)       -- remove OPT-2
+        elseif tp and tp.ptr==1 and ENV.adts[tp.id] then
+            AST.asr(stmts,'', 3,'If', 1,'Op2_.', 3,'HACK_6-NIL')
+            stmts[3][1][3] = ENV.adts[tp.id].tags[1]
+            stmts[2] = AST.node('Nothing', me.ln)       -- remove OPT-1
+            stmts[4] = AST.node('Nothing', me.ln)       -- remove OPT-3
         else
-            stmts[3] = AST.node('Nothing', me.ln)      -- remove OPT-2
-            stmts[4] = AST.node('Nothing', me.ln)      -- remove OPT-3
+            stmts[3] = AST.node('Nothing', me.ln)       -- remove OPT-2
+            stmts[4] = AST.node('Nothing', me.ln)       -- remove OPT-3
         end
         me.tag = 'Stmts'
     end,

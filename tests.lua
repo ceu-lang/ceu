@@ -2219,6 +2219,49 @@ escape sum;
     run = { ['~>10s'] = 9 },
 }
 
+Test { [[
+class T with
+    var int a;
+do
+    this.a = 1;
+end
+var T a;
+var int ret = 0;
+par/and do
+    var int v = await a;
+    ret = ret + v;
+with
+    kill a => 1;
+with
+    var int v = await a;
+    ret = ret + v;
+end
+escape ret;
+]],
+    run = 2,
+}
+
+Test { [[
+class T with
+    var int a;
+do
+    this.a = 1;
+end
+var T a;
+var int ret = 0;
+par/and do
+    var int v;
+    watching v in a do
+        await FOREVER;
+        ret = v;
+    end
+with
+    kill a => 1;
+end
+escape ret;
+]],
+    run = 1,
+}
 do return end
 
 ----------------------------------------------------------------------------
@@ -37428,6 +37471,7 @@ class T with
     event int e;
 do
     await this.e;
+    var int v;
     watching v in this.e do
         nothing;
     end
@@ -37745,7 +37789,7 @@ var T*? t = spawn T in ts with
 end;
 
 var int ret = 0;
-watching t do
+watching *t do
     ret = t:id;
     await FOREVER;
 end
@@ -37771,7 +37815,7 @@ end;
 
 var int ret = 0;
 
-watching t do
+watching *t do
     ret = t:id;
     await FOREVER;
 end
@@ -37798,7 +37842,7 @@ end;
 
 var int ret = 0;
 
-watching t do
+watching *t do
     ret = t:id;
     await FOREVER;
 end
@@ -37835,7 +37879,7 @@ _assert(t0!=null and tF!=null);
 
 var int ret1=0, ret2=0;
 
-watching tF do
+watching *tF do
     ret2 = tF:id;
     await FOREVER;
 end
@@ -37875,7 +37919,7 @@ do
     pool Unit[] units;
     u = spawn Unit in units;
 end
-watching u do
+watching *u do
     emit u:move => 0;
 end
 escape 2;
@@ -37893,7 +37937,7 @@ do
     u = spawn Unit in units;
     await 1min;
 end
-watching u do
+watching *u do
     emit u:move => 0;
 end
 escape 2;
@@ -37909,7 +37953,7 @@ end
 class T with
     var I* i = null;
 do
-    watching i do
+    watching *i do
         var int v = i:v;
     end
 end
@@ -37928,7 +37972,7 @@ class T with
     var I* i = null;
 do
     await 1s;
-    watching i do
+    watching *i do
         var int v = i:v;
     end
 end
@@ -37946,7 +37990,7 @@ end
 class T with
     var I* i = null;
 do
-    watching i do
+    watching *i do
         await 1s;
         var int v = i:v;
     end
@@ -37969,7 +38013,7 @@ await 1s;
 
 await i:e;
 
-watching i do
+watching *i do
     await 1s;
     var int v = i:v;
 end
@@ -37988,7 +38032,7 @@ var I* i=null;
 
 await 1s;
 
-watching i do
+watching *i do
     await 1s;
     var int v = i:v;
 end
@@ -38006,7 +38050,7 @@ end
 var I* i=null;
 
 par/or do
-    watching i do
+    watching *i do
         await 1s;
         var int v = i:v;
     end
@@ -38025,7 +38069,7 @@ class T with
 do
 end
 var T t;
-watching &t do
+watching t do
 end
 escape 100;
 ]],
@@ -38050,7 +38094,7 @@ par/and do
     await 1s;
 with
     var T* p = await e;
-    watching p do
+    watching *p do
         finalize with
             if ret == 0 then
                 ret = -1;
@@ -38084,7 +38128,7 @@ par/and do
     await 1s;
 with
     var T* p = await e;
-    watching p do
+    watching *p do
         finalize with
             if ret == 0 then
                 ret = -1;
@@ -38118,7 +38162,7 @@ par/and do
     emit e => &t;
 with
     var T* p = await e;
-    watching p do
+    watching *p do
         finalize with
             if ret == 0 then
                 ret = -1;
@@ -38153,7 +38197,7 @@ par/and do
     await 6s;
 with
     var T* p = await e;
-    watching p do
+    watching *p do
         finalize with
             if ret == 0 then
                 ret = -1;
@@ -38188,7 +38232,7 @@ par/and do
     await 6s;
 with
     var T* p = await e;
-    watching p do
+    watching *p do
         finalize with
             if ret == 0 then
                 ret = -1;
@@ -38236,7 +38280,7 @@ par/and do
     await 1s;
 with
     var T* p = await e;
-    watching p do
+    watching *p do
         finalize with
             if ret == 0 then
                 ret = -1;
@@ -38270,7 +38314,7 @@ par/and do
     emit e => t;
 with
     var T* p = await e;
-    watching p do
+    watching *p do
         finalize with
             if ret == 0 then
                 ret = -1;
@@ -38306,7 +38350,7 @@ par/and do
     await 6s;
 with
     var T* p = await e;
-    watching p do
+    watching *p do
         finalize with
             if ret == 0 then
                 ret = -1;
@@ -38342,7 +38386,7 @@ par/and do
     await 6s;
 with
     var T* p = await e;
-    watching p do
+    watching *p do
         finalize with
             if ret == 0 then
                 ret = -1;
@@ -38377,7 +38421,7 @@ par/and do
     emit e => t;
 with
     var T* p = await e;
-    watching p do
+    watching *p do
         finalize with
             if ret == 0 then
                 ret = -1;
@@ -38403,7 +38447,7 @@ end
 class Item with
     var U* u;
 do
-    watching u do
+    watching *u do
         await FOREVER;
     end
     _V = 1;
@@ -38432,7 +38476,7 @@ end
 class Item with
     var U* u;
 do
-    watching u do
+    watching *u do
         await FOREVER;
     end
     _V = 1;
@@ -38457,7 +38501,7 @@ class U with do end;
 class T with
     var U* u;
 do
-    watching u do
+    watching *u do
         await FOREVER;
     end
     _V = _V + 1;
@@ -38488,7 +38532,7 @@ class U with do end;
 class T with
     var U* u;
 do
-    watching u do
+    watching *u do
         await FOREVER;
     end
     _V = 1;
@@ -38511,7 +38555,7 @@ class U with do end;
 class T with
     var U* u;
 do
-    watching u do
+    watching *u do
         await FOREVER;
     end
 end
@@ -38532,7 +38576,7 @@ class U with do end;
 class T with
     var U* u;
 do
-    watching u do
+    watching *u do
         await FOREVER;
     end
 end
@@ -38565,7 +38609,7 @@ var Unit*? u;
 pool Unit[] units;
 u = spawn Unit in units;
 await 2s;
-watching u do
+watching *u do
     emit u:move => 0;
 end
 escape 2;
@@ -38580,7 +38624,7 @@ end
 var Unit*? u;
 pool Unit[] units;
 u = spawn Unit in units;
-watching u do
+watching *u do
     emit u:move => 0;
 end
 escape 2;
@@ -38615,7 +38659,7 @@ class T with
 do
     var Unit* u = await org;
     var int pos = 0;
-    watching u do
+    watching *u do
         pos = u:pos;
     end
     await 1s;
@@ -38657,7 +38701,7 @@ end
 var T a;
 var T* ptr;
 ptr = &a;
-watching ptr do
+watching *ptr do
     var int ret = 0;
     par/and do
         par/and do
@@ -38727,7 +38771,7 @@ end
 var T a;
 var T* ptr;
 ptr = &a;
-watching ptr do
+watching *ptr do
     par/or do
         await OS_START;
         emit a.go;
@@ -38754,7 +38798,7 @@ pool T[1] ts;
 var T*?  ok1 = spawn T in ts with
                 this.v = 10;
               end;
-watching ok1 do
+watching *ok1 do
     var int ok2 = 0;// spawn T in ts;
     var int ret = 0;
     loop t in ts do
@@ -38780,7 +38824,7 @@ pool T[1] ts;
 var T*? ok1 = spawn T in ts with
                 this.v = 10;
               end;
-watching ok1 do
+watching *ok1 do
     var int ok2 = 0;// spawn T in ts;
     var int ret = 0;
     loop t in ts do
@@ -38807,7 +38851,7 @@ end
 var T t;
 var T* i = &t;
 var int a,b;
-watching i do
+watching *i do
     (a,b) = await i:ok_game;
     emit i:ok_game => (a,b);
 end
@@ -38837,7 +38881,7 @@ end
 class T with
     var U* u;
 do
-    watching u do
+    watching *u do
         await OS_START;
         //u:v = spawn V;
         emit u:x;
@@ -38871,7 +38915,7 @@ end
 class UIGridItem with
     var UI* ui;
 do
-    watching ui do
+    watching *ui do
         await FOREVER;
     end
 end
@@ -38916,7 +38960,7 @@ end
 class UIGridItem with
     var UI* ui;
 do
-    watching ui do
+    watching *ui do
         await FOREVER;
     end
 end
@@ -38959,7 +39003,7 @@ end
 class UIGridItem with
     var UI* ui;
 do
-    watching ui do
+    watching *ui do
         await FOREVER;
     end
 end
@@ -39010,7 +39054,7 @@ end
 
 var T t;
 var I* i = &t;
-watching i do
+watching *i do
     await OS_START;
     _V = i:e;
     escape i:e;
@@ -39043,7 +39087,7 @@ end
 var T t;
 var I* i = &t;
 
-watching i do
+watching *i do
     await OS_START;
     emit i:e;
     _V = i:ee;
@@ -39078,7 +39122,7 @@ end
 var T t1;
 var I* i1 = &t1;
 
-watching i1 do
+watching *i1 do
     var int ret = 0;
     par/and do
         await OS_START;
@@ -39118,9 +39162,9 @@ end
 var T t1, t2;
 var I* i1 = &t1;
 
-watching i1 do
+watching *i1 do
     var I* i2 = &t2;
-    watching i2 do
+    watching *i2 do
         var int ret = 0;
         par/and do
             await OS_START;
@@ -39142,7 +39186,7 @@ end
 escape _V + 1;
 ]],
     _ana = {
-        acc = 2,    -- TODO: not verified
+        acc = true,
     },
     run = 166,
 }
@@ -39172,7 +39216,7 @@ end
 var T t;
 var I* i = &t;
 input void OS_START;
-watching i do
+watching *i do
     await OS_START;
     i:f(100);
     _V = i:v;
@@ -39208,7 +39252,7 @@ end
 var T t;
 var I* i = &t;
 input void OS_START;
-watching i do
+watching *i do
     await OS_START;
     i:f(100);
     _V = i:v;
@@ -39284,7 +39328,7 @@ var T t;
 var U u;
 var I* i = &t;
 input void OS_START;
-watching i do
+watching *i do
     await OS_START;
     i:f(100);
     var int ret = i:v;
@@ -39309,7 +39353,7 @@ end
 
 var int ret = 0;
 var T*? t = spawn T;
-watching t do
+watching *t do
     finalize with
         ret = t:v;
     end
@@ -39329,7 +39373,7 @@ do
 end
 
 var T*? t = spawn T;
-watching t do
+watching *t do
     await FOREVER;
 end
 
@@ -39346,7 +39390,7 @@ do
 end
 
 var T*? t = spawn T;
-watching t do
+watching *t do
     await FOREVER;
 end
 
@@ -39376,7 +39420,7 @@ loop i in 9999 do
     end
 end
 
-watching t0 do
+watching *t0 do
     await FOREVER;
 end
 var int ret = t0:id;
