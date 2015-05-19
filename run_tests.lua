@@ -70,12 +70,9 @@ Test = function (t)
 
     if not check('parser')   then return end
     if not check('ast')      then return end
-    --DBG'======= AST'
-    --AST.dump(AST.root)
     if not check('adj')      then return end
-    --DBG'======= ADJ'
-    --AST.dump(AST.root)
     if not check('env')      then return end
+    --AST.dump(AST.root)
     if not check('exp')      then return end
     if not check('adt')      then return end
     if not check('ref')      then return end
@@ -83,7 +80,6 @@ Test = function (t)
     if not check('isr')      then return end
     if not check('tight')    then return end
     if not check('fin')      then return end
-    --dofile 'awaits.lua'
     if not check('props')    then return end
     if not check('ana')      then return end
     dofile 'acc.lua'
@@ -93,9 +89,6 @@ Test = function (t)
     if not check('tmps')     then return end
     if not check('mem')      then return end
     if not check('val')      then return end
-    --DBG'======= VAL'
-    --AST.dump(AST.root)
---do return end
     if not check('code')     then return end
 
     if (not t.wrn) and (not t._ana) then
@@ -308,16 +301,16 @@ os.execute('rm -f /tmp/_ceu_*')
 --[[
 -- FULL
 STATS = {
-    count   = 2332,
+    count   = 2335,
     mem     = 0,
-    trails  = 4859,
-    bytes   = 46539307,
+    trails  = 5362,
+    bytes   = 46483505,
 }
 
 
-real	11m11.721s
-user	10m16.460s
-sys	1m57.144s
+real	11m16.290s
+user	10m20.000s
+sys	1m56.550s
 
 -- no ADTs
 STATS = {

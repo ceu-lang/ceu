@@ -767,28 +767,25 @@ F = {
         ENV.pures[me[1]] = true
     end,
 
-    Stmts = function (me)
-        -- HACK_6 [watching]: detects if OPT-1 (evt) or OPT-2 (adt) or OPT-3 (org)
-        if me.__adj_watching then
-            local stmts = me.__par
-            AST.asr(stmts, 'Stmts')
-
-            local tp = me[1].tp  -- type of Var
-            if tp and tp.ptr==1 and (ENV.clss[tp.id] or ENV.adts[tp.id]) then
-                stmts[2] = AST.node('Nothing', me.ln)      -- remove OPT-1
-                if ENV.clss[tp.id] then
-                    stmts[3] = AST.node('Nothing', me.ln)  -- remove OPT-2
-                else
-                    local adt = ENV.adts[tp.id]
-                    assert(adt and stmts[3][1][3]=='HACK_6-NIL')
-                    stmts[3][1][3] = adt.tags[1]
-                    stmts[4] = AST.node('Nothing', me.ln)  -- remove OPT-3
-                end
+    _TODO_AWAIT = function (me)
+        -- HACK_6 [await]: detects if OPT-1 (evt) or OPT-2 (adt) or OPT-3 (org)
+        local stmts = AST.asr(me.__par, 'Stmts')
+        local tp = me[1].tp  -- type of Var
+        if tp and tp.ptr==1 and (ENV.clss[tp.id] or ENV.adts[tp.id]) then
+            stmts[2] = AST.node('Nothing', me.ln)      -- remove OPT-1
+            if ENV.clss[tp.id] then
+                stmts[3] = AST.node('Nothing', me.ln)  -- remove OPT-2
             else
-                stmts[3] = AST.node('Nothing', me.ln)      -- remove OPT-2
-                stmts[4] = AST.node('Nothing', me.ln)      -- remove OPT-3
+                local adt = assert(ENV.adts[tp.id])
+                AST.asr(stmts,'', 3,'If', 1,'Op2_.', 3,'HACK_6-NIL')
+                stmts[3][1][3] = adt.tags[1]
+                stmts[4] = AST.node('Nothing', me.ln)  -- remove OPT-3
             end
+        else
+            stmts[3] = AST.node('Nothing', me.ln)      -- remove OPT-2
+            stmts[4] = AST.node('Nothing', me.ln)      -- remove OPT-3
         end
+        me.tag = 'Stmts'
     end,
 
     Await = function (me)
@@ -799,6 +796,11 @@ F = {
             else
                 me.tp = e.evt.ins
             end
+        elseif e.tp and ENV.adts[TP.tostr(e.tp)] then
+        elseif e.tp and ENV.clss[TP.tostr(e.tp)] then
+error'oi'
+-- TODO: integer return
+            me.tp = TP.fromstr('int')
         else
             ASR(e.var and e.var.pre=='event', me,
                 'event "'..(e.var and e.var.id or '?')..'" is not declared')

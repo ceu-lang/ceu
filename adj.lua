@@ -61,6 +61,9 @@ function REQUEST (me)
         table.insert(to, 1, node('Var',me.ln,id_req2))
 
         awt = node('_Set', me.ln, to, op, 'await', awt)
+    else
+-- TODO: bug (removing session check)
+        awt[3] = false
     end
 
     return node('Stmts', me.ln,
@@ -272,7 +275,7 @@ F = {
 
     _Watching_pre = function (me)
         --[[
-        --      watching <EVT>|<ORG> do
+        --      watching <v> in <EVT> do
         --          ...
         --      end
         -- becomes
@@ -280,15 +283,7 @@ F = {
         --          ...     // has the chance to execute/finalize even if
         --                  // the org terminated just after the spawn
         --      with
-        --          await <EVT>;        // OPT-1
-        --        <or>
-        --          if not <ADT>:NIL then
-        --              var Adt* me = _ok_killed until me==<ADT>;
-        --          end
-        --        <or>
-        --          if <ORG>:isAlive   // OPT-3
-        --              var Org* me = _ok_killed until me==<ORG>;
-        --          end
+        --          <v> = await <EVT>;
         --      end
         --
         -- TODO: because the order is inverted, if the same error occurs in
@@ -296,77 +291,12 @@ F = {
         -- the code
         --]]
         local e, dt, blk = unpack(me)
-        local var = e or dt     -- TODO: hacky
-        local tst = node('Stmts', me.ln, var)
-        tst.__adj_watching = true
-
-        local ret =
-            node('ParOr', me.ln,
-                blk,
-                node('Block', me.ln,
-                    node('Stmts', me.ln,
-                        -- HACK_6: figure out if OPT-1 or OPT-2 or OPT-3
-                        tst,  -- "var" needs to be parsed before OPT-[123]
-
-                        -- OPT-1
-                        node('Await', me.ln, e, dt, false),
-
-                        -- OPT-2
-                        node('If', me.ln,
-                            node('Op2_.', me.ln, '.',
-                                node('Op1_*', me.ln, '*',
-                                    AST.copy(var)),
-                                    'HACK_6-NIL'),
-                            node('Block', me.ln,
-                                node('Stmts', me.ln,
-                                    node('Nothing', me.ln))),
-                            node('Block', me.ln,
-                                node('Stmts', me.ln,
-                                    node('Dcl_var', me.ln, 'var',
-                                        node('Type', me.ln, 'void', 1, false, false),
-                                        '__adt_'..me.n),
-                                    node('_Set', me.ln,
-                                        node('Var', me.ln, '__adt_'..me.n),
-                                        '=', 'await',
-                                        node('Await', me.ln,
-                                            node('Ext', me.ln, '_ok_killed'),
-                                            false,
-                                            node('Op2_==', me.ln, '==',
-                                                node('Var', me.ln, '__adt_'..me.n),
-                                                node('Op1_cast', me.ln,
-                                                    node('Type', me.ln, 'void', 1, false, false),
-                                                    AST.copy(var)))))))),
-
-                        -- OPT-3
-                        node('If', me.ln,
-                            node('Op2_.', me.ln, '.',
-                                node('Op1_*', me.ln, '*',
-                                    -- this cast confuses acc.lua (see Op1_* there)
-                                    -- TODO: HACK_3
-                                    node('Op1_cast', me.ln,
-                                        node('Type', me.ln, '_tceu_org', 1, false, false),
-                                        AST.copy(var))),
-                                'isAlive'),
-                            node('Block', me.ln,
-                                node('Stmts', me.ln,
-                                    node('Dcl_var', me.ln, 'var',
-                                        node('Type', me.ln, '_tceu_org', 1, false, false),
-                                        '__org_'..me.n),
-                                    node('_Set', me.ln,
-                                        node('Var', me.ln, '__org_'..me.n),
-                                        '=', 'await',
-                                        node('Await', me.ln,
-                                            node('Ext', me.ln, '_ok_killed'),
-                                            false,
-                                            node('Op2_==', me.ln, '==',
-                                                node('Var', me.ln, '__org_'..me.n),
-                                                node('Op1_cast', me.ln,
-                                                    node('Type', me.ln, '_tceu_org', 1, false, false),
-                                                    AST.copy(var))))))),
-                            node('Block', me.ln,
-                                node('Stmts', me.ln,
-                                    node('Nothing', me.ln)))))))
-        ret.__adj_watching = var
+        local ret = node('ParOr', me.ln,
+                        blk,
+                        node('Block', me.ln,
+                            node('Stmts', me.ln,
+                                node('Await', me.ln, e, dt, false))))
+        ret.__adj_watching = (e or dt)
         return ret
     end,
 
@@ -1071,6 +1001,110 @@ F = {
         me.tag = 'TupleType'
     end,
 
+    --  <v> = await <E> until <CND>
+    --      -- becomes --
+    --  loop do
+    --      <v> = await <E>;
+    --      if <CND> then
+    --          break;
+    --      end
+    --  end
+    __await_until = function (me, stmt)
+        local _, _, cnd = unpack(me)
+        if cnd then
+            me[3] = nil
+            local ret = node('_Loop', me.ln, false, false, false,
+                            node('Stmts', me.ln,
+                                stmt,
+                                node('If', me.ln, cnd,
+                                    node('Break', me.ln),
+                                    node('Nothing', me.ln))))
+            ret.isAwaitUntil = true -- see tmps/fins
+            return ret
+        else
+            return nil
+        end
+    end,
+
+    __await_opts = function (me, stmt)
+        local e, dt, cnd, ok = unpack(me)
+
+        -- TODO: ugly hack
+        if ok then return end
+        me[4] = true
+
+        -- HACK_6: figure out if OPT-1 or OPT-2 or OPT-3:
+        --      await <EVT>
+        --      await <ADT>
+        --      await <ORG>
+        local var = e or dt     -- TODO: hacky
+        local tst = node('_TODO_AWAIT', me.ln, var)
+
+        return
+            node('Stmts', me.ln,
+                -- HACK_6: figure out if OPT-1 or OPT-2 or OPT-3
+                tst,  -- "var" needs to be parsed before OPT-[123]
+
+                -- OPT-1
+                stmt,
+
+                -- OPT-2
+                node('If', me.ln,
+                    node('Op2_.', me.ln, '.',
+                        node('Op1_*', me.ln, '*',
+                            AST.copy(var)),
+                            'HACK_6-NIL'),
+                    node('Block', me.ln,
+                        node('Stmts', me.ln,
+                            node('Nothing', me.ln))),
+                    node('Block', me.ln,
+                        node('Stmts', me.ln,
+                            node('Dcl_var', me.ln, 'var',
+                                node('Type', me.ln, 'void', 1, false, false),
+                                '__adt_'..me.n),
+                            node('_Set', me.ln,
+                                node('Var', me.ln, '__adt_'..me.n),
+                                '=', 'await',
+                                node('Await', me.ln,
+                                    node('Ext', me.ln, '_ok_killed'),
+                                    false,
+                                    node('Op2_==', me.ln, '==',
+                                        node('Var', me.ln, '__adt_'..me.n),
+                                        node('Op1_cast', me.ln,
+                                            node('Type', me.ln, 'void', 1, false, false),
+                                            AST.copy(var))),true))))),
+
+                -- OPT-3
+                node('If', me.ln,
+                    node('Op2_.', me.ln, '.',
+                        node('Op1_*', me.ln, '*',
+                            -- this cast confuses acc.lua (see Op1_* there)
+                            -- TODO: HACK_3
+                            node('Op1_cast', me.ln,
+                                node('Type', me.ln, '_tceu_org', 1, false, false),
+                                AST.copy(var))),
+                        'isAlive'),
+                    node('Block', me.ln,
+                        node('Stmts', me.ln,
+                            node('Dcl_var', me.ln, 'var',
+                                node('Type', me.ln, '_tceu_org', 1, false, false),
+                                '__org_'..me.n),
+                            node('_Set', me.ln,
+                                node('Var', me.ln, '__org_'..me.n),
+                                '=', 'await',
+                                node('Await', me.ln,
+                                    node('Ext', me.ln, '_ok_killed'),
+                                    false,
+                                    node('Op2_==', me.ln, '==',
+                                        node('Var', me.ln, '__org_'..me.n),
+                                        node('Op1_cast', me.ln,
+                                            node('Type', me.ln, '_tceu_org', 1, false, false),
+                                            AST.copy(var))),true)))),
+                    node('Block', me.ln,
+                        node('Stmts', me.ln,
+                            node('Nothing', me.ln)))))
+    end,
+
     Await_pre = function (me)
         local e, dt, cnd = unpack(me)
 
@@ -1078,7 +1112,6 @@ F = {
         if dt then
             me[1] = node('Ext', me.ln, '_WCLOCK')
         end
-        me[3] = nil   -- remove "cnd" from "Await"
 
         --  await <E> until <CND>
         --      -- becomes --
@@ -1088,14 +1121,12 @@ F = {
         --          break;
         --      end
         --  end
-        if cnd then
-            return node('_Loop', me.ln, false, false, false,
-                    node('Stmts', me.ln,
-                        me,
-                        node('If', me.ln, cnd,
-                            node('Break', me.ln),
-                            node('Nothing', me.ln))))
+        local ret = F.__await_until(me,me)
+        if ret then
+            return ret
         end
+
+        return F.__await_opts(me, me)
     end,
 
     _Set_pre = function (me)
@@ -1116,26 +1147,8 @@ F = {
             end
             ret = node('Set', me.ln, op, tag, fr, to)
 
-
-            --  <v> = await <E> until <CND>
-            --      -- becomes --
-            --  loop do
-            --      <v> = await <E>;
-            --      if <CND> then
-            --          break;
-            --      end
-            --  end
-            local _, _, cnd = unpack(fr)
-            if cnd then
-                fr[3] = nil
-                ret = node('_Loop', me.ln, false, false, false,
-                        node('Stmts', me.ln,
-                            ret,
-                            node('If', me.ln, cnd,
-                                node('Break', me.ln),
-                                node('Nothing', me.ln))))
-                ret.isAwaitUntil = true -- see tmps/fins
-            end
+            ret = F.__await_until(fr,ret) or ret
+            ret = F.__await_opts(fr,ret)  or ret
 
             return ret
 

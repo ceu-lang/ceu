@@ -497,9 +497,7 @@ typedef struct tceu_go {
 
 #define stack_pop(go)                                   \
     ceu_out_assert((go).stki>=0, "stack underflow");    \
-    printf(">> stki %d\n", go.stki);                    \
-    go.stki -= stack_top(go).stk_prv;                   \
-    printf("<< stki %d\n", go.stki)
+    go.stki -= stack_top(go).stk_prv;
 
 #define stack_push(go,elem,ptr)                             \
     ceu_out_assert((go).stki+sizeof(tceu_stk)+elem.evt_sz < CEU_STACK_MAX, "stack overflow");  \
