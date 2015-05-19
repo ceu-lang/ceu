@@ -301,16 +301,16 @@ os.execute('rm -f /tmp/_ceu_*')
 --[[
 -- FULL
 STATS = {
-    count   = 2335,
+    count   = 2347,
     mem     = 0,
-    trails  = 5362,
-    bytes   = 46483505,
+    trails  = 5429,
+    bytes   = 46749025,
 }
 
 
-real	11m16.290s
-user	10m20.000s
-sys	1m56.550s
+real	11m59.956s
+user	11m5.941s
+sys	2m2.436s
 
 -- no ADTs
 STATS = {

@@ -433,9 +433,12 @@ typedef struct tceu_org
     /* prv/nxt/lnk/n must be in the same order as "tceu_org_lnk" */
 
 #ifdef CEU_ORGS
+
 #ifdef CEU_IFCS
     tceu_ncls cls;          /* class id */
 #endif
+
+#if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_WATCHING)
     u8 isAlive: 1;          /* Three purposes:
                              * - =0 if terminate normally or =1 if from scope
                              *      checked to see if should call free on pool
@@ -444,15 +447,22 @@ typedef struct tceu_org
                              * - required by "Do T" to avoid awaiting a dead 
                              *      org
                              */
+#endif
+
 #ifdef CEU_ORGS_NEWS
     u8 isDyn: 1;            /* created w/ new or spawn? */
     struct tceu_org* nxt_free;  /* "to free" list (only on reaction end) */
 #endif
-#endif  /* CEU_ORGS */
 
 #ifdef CEU_ORGS_NEWS_POOL
     tceu_pool_*  pool;      /* TODO(ram): opt, traverse lst of cls pools */
 #endif
+
+#ifdef CEU_ORGS_WATCHING
+    int ret;
+#endif
+
+#endif  /* CEU_ORGS */
 
     tceu_trl trls[0];       /* first trail */
 

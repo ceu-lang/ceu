@@ -774,11 +774,13 @@ F = {
         if tp and tp.ptr==0 and ENV.clss[tp.id] then
             stmts[2] = AST.node('Nothing', me.ln)       -- remove OPT-1
             stmts[3] = AST.node('Nothing', me.ln)       -- remove OPT-2
+            me.__env_watching = true    -- see props.lua
         elseif tp and tp.ptr==1 and ENV.adts[tp.id] then
             AST.asr(stmts,'', 3,'If', 1,'Op2_.', 3,'HACK_6-NIL')
             stmts[3][1][3] = ENV.adts[tp.id].tags[1]
             stmts[2] = AST.node('Nothing', me.ln)       -- remove OPT-1
             stmts[4] = AST.node('Nothing', me.ln)       -- remove OPT-3
+            me.__env_watching = tp.id   -- see props.lua
         else
             stmts[3] = AST.node('Nothing', me.ln)       -- remove OPT-2
             stmts[4] = AST.node('Nothing', me.ln)       -- remove OPT-3

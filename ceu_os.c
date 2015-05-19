@@ -163,7 +163,12 @@ void ceu_sys_org (tceu_org* org, int n, int lbl, int seqno,
 
 #if defined(CEU_ORGS) || defined(CEU_OS_KERNEL)
     org->n = n;
+#endif
+#if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_WATCHING) || defined(CEU_OS_KERNEL)
     org->isAlive = 1;
+#endif
+#ifdef CEU_ORGS_WATCHING
+    org->ret = 0;
 #endif
 #ifdef CEU_ORGS_NEWS
     org->isDyn = isDyn;
@@ -387,8 +392,10 @@ void ceu_sys_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_org* org)
     }
 #endif  /* CEU_ORGS_NEWS */
 
+#if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_WATCHING)
     /* 3: mark as dead (must be after (2) because isAlive is used there */
     org->isAlive = 0;
+#endif
 
     /* 4: emit this.ok; */
 #ifdef CEU_ORGS_WATCHING
@@ -513,7 +520,12 @@ fprintf(stderr, "STACK[%d]: evt=%d : seqno=%d : ntrls=%d\n",
                               ];
 
                     if (CUR.evt==CEU_IN__CLEAR && CUR_ORG->n!=0) {
-                        ceu_sys_kill(app, &go, CUR_ORG);
+#if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_WATCHING)
+                        if (CUR_ORG->isAlive)
+#endif
+                        {
+                            ceu_sys_kill(app, &go, CUR_ORG);
+                        }
                     }
 
                     /* next org */
@@ -641,7 +653,8 @@ _CEU_GO_POP_:
 
 #ifdef CEU_ORGS
         if (STK_ORG==NULL) {
-            goto _CEU_GO_POP_;  /* skip aborted orgs */
+            STK.org = app->data;    /* aborted org: restart */
+            STK.trl = &app->data->trls[0];
         }
 #endif
     }

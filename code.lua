@@ -337,11 +337,11 @@ _STK_ORG->cls = ]]..me.n..[[;
         -- because all trails are already clean at this point.
         -- (but remeber that the "free" should be delayed)
         LINE(me, [[
-#ifdef CEU_ORGS_NEWS
-if (_STK_ORG->isDyn) {
-    _STK_ORG->isAlive = 0;
-    ceu_sys_kill(_ceu_app, _ceu_go, _STK_ORG);
-}
+#if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_WATCHING)
+_STK_ORG->isAlive = 0; /* TODO: remove? */
+#endif
+#ifdef CEU_ORGS
+ceu_sys_kill(_ceu_app, _ceu_go, _STK_ORG);
 #endif
 ]])
 
@@ -515,6 +515,18 @@ if (]]..LVAR..[[ == NULL) {
         end
 
         LINE(me, '}\n')
+    end,
+
+    Kill = function (me)
+        local org, exp = unpack(me)
+        if exp then
+            LINE(me, [[
+((tceu_org*)]]..V(org)..')->ret = '..V(exp)..[[;
+]])
+        end
+        LINE(me, [[
+ceu_sys_kill(_ceu_app, _ceu_go, (tceu_org*)]]..V(org)..[[);
+]])
     end,
 
     Spawn = function (me)
@@ -903,11 +915,19 @@ CEU_]]..fr.tp.id..[[_free_static(]]..V(to)..[[, ]]..pool..[[);
         end
 
         if to.tag=='Var' and to.var.id=='_ret' then
-            LINE(me, [[
+            if CLS().id == 'Main' then
+                LINE(me, [[
 #ifdef CEU_RET
     _ceu_app->ret = ]]..V(to)..[[;
 #endif
 ]])
+            else
+                LINE(me, [[
+#ifdef CEU_ORGS_WATCHING
+    _STK_ORG->ret = ]]..V(to)..[[;
+#endif
+]])
+            end
         end
         LINE(me, '}')   -- __ceu_tmp above
     end,

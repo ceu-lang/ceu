@@ -93,17 +93,14 @@ F = {
 
     ['1_pre'] = function (me)
         local spc, stmts = unpack(me)
-        local blk_ifc_body = node('Block', me.ln,       -- same structure of
-                                node('Stmts', me.ln,    -- other classes
-                                    node('BlockI', me.ln,
-                                        node('Stmts', me.ln)),
-                                    stmts))
-        local ret = blk_ifc_body
+
+        local BLK_IFC = node('Block', me.ln, stmts)
+        local RET = BLK_IFC
 
         -- for OS: <par/or do [blk_ifc_body] with await OS_STOP; escape 1; end>
         if OPTS.os then
-            ret = node('ParOr', me.ln,
-                        node('Block', me.ln, ret),
+            RET = node('ParOr', me.ln,
+                        AST.asr(RET, 'Block'),
                         node('Block', me.ln,
                             node('Stmts', me.ln,
                                 node('Await', me.ln,
@@ -114,22 +111,10 @@ F = {
                                     node('NUMBER',me.ln,1)))))
         end
 
-        -- enclose the main block with <ret = do ... end>
-        local blk = node('Block', me.ln,
-                        node('Stmts', me.ln,
-                            node('Dcl_var', me.ln, 'var',
-                                node('Type', me.ln, 'int', 0, false, false),
-                                '_ret'),
-                            node('SetBlock', me.ln,
-                                ret,
-                                node('Var', me.ln,'_ret'))))
-
         --[[
-        -- Prepare request loops to run in "par/or" with the Block->Stmts
-        -- above:
-        --
+        -- Prepare request loops to run in "par/or" with the STMT above:
         -- par/or do
-        --      <ret>
+        --      <RET>
         -- with
         --      par do
         --          every REQ1 do ... end
@@ -139,13 +124,21 @@ F = {
         -- end
         --]]
         do
-            local stmts = blk[1]
-            local paror = node('ParOr', me.ln,
-                            node('Block', me.ln, stmts),
-                            node('Block', me.ln, node('Stmts',me.ln,node('XXX',me.ln))))
-                                                -- XXX = Par or Stmts
-            blk[1] = paror
-            ADJ_REQS = { blk=blk, orig=stmts, reqs=paror[2][1][1] }
+            local ORIG = RET
+            RET = node('Stmts', me.ln,
+                    node('ParEver', me.ln,
+                        node('Block', me.ln,
+                            node('Stmts', me.ln,
+                                RET)),
+                        node('Block', me.ln,
+                            node('Stmts', me.ln,
+                                node('XXX',me.ln)))))
+                                -- XXX = ParEver or Stmts
+            ADJ_REQS = {
+                me   = RET,
+                orig = ORIG,
+                reqs = AST.asr_(RET,'Stmts', 1,'ParEver', 2,'Block', 1,'Stmts', 1,'XXX')
+            }
                 --[[
                 -- Use "ADJ_REQS" to hold the "par/or", which can be
                 -- substituted by the original "stmts" if there are no requests
@@ -156,11 +149,14 @@ F = {
 
         -- enclose the program with the "Main" class
         MAIN = node('Dcl_cls', me.ln, false,
-                      'Main',
-                      node('Nothing', me.ln),
-                      blk)
-        MAIN.blk_ifc  = blk_ifc_body   -- Main has no ifc:
-        MAIN.blk_body = blk_ifc_body   -- ifc/body are the same
+                    'Main',
+                    node('BlockI', me.ln,
+                        node('Stmts', me.ln)),
+                    node('Block', me.ln,        -- same structure of
+                        node('Stmts', me.ln,    -- other classes
+                            RET)))
+        MAIN.blk_ifc  = BLK_IFC
+        MAIN.blk_body = BLK_IFC
 
         -- [1] => ['Root']
         AST.root = node('Root', me.ln, MAIN)
@@ -170,11 +166,11 @@ F = {
     Root = function (me)
         if #ADJ_REQS.reqs == 0 then
             -- no requests, substitute the "par/or" by the original "stmts"
-            ADJ_REQS.blk[1] = ADJ_REQS.orig
+            ADJ_REQS.me[1] = ADJ_REQS.orig
         elseif #ADJ_REQS.reqs == 1 then
             ADJ_REQS.reqs.tag = 'Stmts'
         else
-            ADJ_REQS.reqs.tag = 'Par'
+            ADJ_REQS.reqs.tag = 'ParEver'
         end
     end,
 
@@ -182,9 +178,6 @@ F = {
 
     -- global do end
 
-    Dcl_cls_pre = function (me)
-        me.__globaldos = {}
-    end,
     _GlobalDo_pos = function (me)
         local cls = AST.iter'Dcl_cls'()
         AST.asr(me,'', 1,'Block', 1,'Stmts')
@@ -197,6 +190,27 @@ F = {
             return AST.node('Nothing', me.ln)
         end
     end,
+
+    Dcl_cls_pre = function (me)
+        local is_ifc, id, blk_ifc, blk_body = unpack(me)
+    -- TODO
+me.blk_body = me.blk_body or blk_body
+
+        me.__globaldos = {}
+
+        -- enclose the main block with <ret = do ... end>
+        blk_body = node('Block', me.ln,
+                    node('Stmts', me.ln,
+                        node('Dcl_var', me.ln, 'var',
+                            node('Type', me.ln, 'int', 0, false, false),
+                            '_ret'),
+                        node('SetBlock', me.ln,
+                            blk_body,
+                            node('Var', me.ln,'_ret'),
+                            true))) -- true=cls-block
+        me[4] = blk_body
+    end,
+
     Dcl_cls_pos = function (me)
         local par = AST.iter'Dcl_cls'()
         assert(me ~= par)
@@ -211,27 +225,32 @@ F = {
         end
     end,
 
-    -- class declaration
-
     _Dcl_ifc = 'Dcl_cls',
     Dcl_cls = function (me)
         local is_ifc, id, blk_ifc, blk_body = unpack(me)
         local blk = node('Block', me.ln,
                          node('Stmts',me.ln,blk_ifc,blk_body))
-
-        if not me.blk_ifc then  -- Main already set
-            me.blk_ifc = blk    -- top-most block for `this´
-        end
+        me.blk_ifc  = me.blk_ifc  or blk
         me.blk_body = me.blk_body or blk_body
         me.tag = 'Dcl_cls'  -- Dcl_ifc => Dcl_cls
         me[3]  = blk        -- both blocks 'ifc' and 'body'
         me[4]  = nil        -- remove 'body'
 
-        AST.asr_(me.blk_ifc,'Block', 1,'Stmts', 1,'BlockI', 1,'Stmts')
+    -- TODO
+        if is_ifc then
+            return
+        end
+
+        -- remove SetBlock if no escapes
+        if id~='Main' and (not me.has_escape) then
+            local setblock = AST.asr_(blk_body,'Block', 1,'Stmts', 2,'SetBlock')
+            blk_body[1] = node('Stmts', me.ln, setblock[1])
+        end
 
         -- insert class pool for orphan spawn
+        local stmts = AST.asr_(blk_ifc,'BlockI', 1,'Stmts')
         if me.__ast_has_malloc then
-            table.insert(me.blk_ifc[1][1][1], 1,
+            table.insert(stmts, 1,
                 node('Dcl_pool', me.ln, 'pool',
                     node('Type', me.ln, '_TOP_POOL', 0, true, false),
                     '_top_pool'))
@@ -245,6 +264,7 @@ F = {
 
         local cls = AST.par(me, 'Dcl_cls')
         local set = AST.par(me, 'SetBlock')
+        cls.has_escape = (set[3] == true);
         ASR(set and set.__depth>cls.__depth,
             me, 'invalid `escape´')
 
@@ -558,23 +578,17 @@ F = {
         --
         --  do
         --      var T t with ... end;
-        --      await t.ok;
+        --      x = await t;
         --  end
         --]]
         local id_cls, constr = unpack(me);
 
         local awt = node('Await', me.ln,
-                        node('Op2_.', me.ln, '.',
-                            node('Var', me.ln, '_org_'..me.n),
-                            'ok'),
+                        node('Var', me.ln, '_org_'..me.n),
                         false,
                         false)
-        local noawt = node('Nothing', me.ln)
-
         if to then
-            awt   = node('_Set', me.ln, to, '=', 'await', awt)
-            noawt = node('_Set', me.ln, to, '=', 'exp',
-                        node('NUMBER',me.ln,0))
+            awt = node('_Set', me.ln, to, '=', 'await', awt)
         end
 
         return node('Do', me.ln,
@@ -584,16 +598,7 @@ F = {
                             node('Type', me.ln, id_cls, 0, false, false),
                             '_org_'..me.n,
                             constr),
-                        node('If', me.ln,
-                            node('Op2_.', me.ln, '.',
-                                node('Op1_*', me.ln, '*',
-                                    node('Op1_cast', me.ln,
-                                        node('Type', me.ln, '_tceu_org', 1, false, false),
-                                        node('Op1_&', me.ln, '&',
-                                            node('Var', me.ln, '_org_'..me.n)))),
-                                'isAlive'),
-                            awt,
-                            noawt))))
+                        awt)))
     end,
 
 -- BlockI ------------------------------------------------------------
@@ -1050,6 +1055,22 @@ F = {
         local var = e or dt     -- TODO: hacky
         local tst = node('_TODO_AWAIT', me.ln, var)
 
+        local SET = node('Nothing', me.ln)
+        if stmt.tag == 'Set' then
+            local to = AST.asr_(stmt,'Set', 4,'VarList', 1,'Var')
+            SET = node('Set', me.ln, '=', 'exp',
+                    node('Op1_cast', me.ln,
+                        node('Type', me.ln, 'int', 0, false, false),
+                        node('Op2_.', me.ln, '.',
+                            node('Op1_*', me.ln, '*',
+                                node('Op1_cast', me.ln,
+                                    node('Type', me.ln, '_tceu_org', 1, false, false),
+                                    node('Op1_&', me.ln, '&',
+                                        AST.copy(var)))),
+                            'ret')),
+                    AST.copy(to))
+        end
+
         return
             node('Stmts', me.ln,
                 -- HACK_6: figure out if OPT-1 or OPT-2 or OPT-3
@@ -1085,34 +1106,37 @@ F = {
                                             AST.copy(var))),true))))),
 
                 -- OPT-3
-                node('If', me.ln,
-                    node('Op2_.', me.ln, '.',
-                        node('Op1_*', me.ln, '*',
-                            -- this cast confuses acc.lua (see Op1_* there)
-                            -- TODO: HACK_3
-                            node('Op1_cast', me.ln,
-                                node('Type', me.ln, '_tceu_org', 1, false, false),
-                                AST.copy(var))),
-                        'isAlive'),
-                    node('Block', me.ln,
-                        node('Stmts', me.ln,
-                            node('Dcl_var', me.ln, 'var',
-                                node('Type', me.ln, '_tceu_org', 1, false, false),
-                                '__org_'..me.n),
-                            node('_Set', me.ln,
-                                node('Var', me.ln, '__org_'..me.n),
-                                '=', 'await',
-                                node('Await', me.ln,
-                                    node('Ext', me.ln, '_ok_killed'),
-                                    false,
-                                    node('Op2_==', me.ln, '==',
-                                        node('Var', me.ln, '__org_'..me.n),
-                                        node('Op1_cast', me.ln,
-                                            node('Type', me.ln, '_tceu_org', 1, false, false),
-                                            AST.copy(var))),true)))),
-                    node('Block', me.ln,
-                        node('Stmts', me.ln,
-                            node('Nothing', me.ln)))))
+                node('Stmts', me.ln,
+                    node('If', me.ln,
+                        node('Op2_.', me.ln, '.',
+                            node('Op1_*', me.ln, '*',
+                                -- this cast confuses acc.lua (see Op1_* there)
+                                -- TODO: HACK_3
+                                node('Op1_cast', me.ln,
+                                    node('Type', me.ln, '_tceu_org', 1, false, false),
+                                    AST.copy(var))),
+                            'isAlive'),
+                        node('Block', me.ln,
+                            node('Stmts', me.ln,
+                                node('Dcl_var', me.ln, 'var',
+                                    node('Type', me.ln, '_tceu_org', 1, false, false),
+                                    '__org_'..me.n),
+                                node('_Set', me.ln,
+                                    node('Var', me.ln, '__org_'..me.n),
+                                    '=', 'await',
+                                    node('Await', me.ln,
+                                        node('Ext', me.ln, '_ok_killed'),
+                                        false,
+                                        node('Op2_==', me.ln, '==',
+                                            node('Var', me.ln, '__org_'..me.n),
+                                            node('Op1_cast', me.ln,
+                                                node('Type', me.ln, '_tceu_org', 1, false, false),
+                                                AST.copy(var))),
+                                        true)))),
+                        node('Block', me.ln,
+                            node('Stmts', me.ln,
+                                node('Nothing', me.ln)))),
+                    SET))
     end,
 
     Await_pre = function (me)

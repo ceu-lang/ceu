@@ -17,6 +17,10 @@ F =
                 ASR(me.var.tp.arr.sval, me, 'invalid static expression')
             end
         end
+        if me.var.pre=='var' and me.var.tp.arr then
+            ASR(type(me.var.tp.arr)=='table' and me.var.tp.arr.cval,
+                me, 'invalid array dimension')
+        end
     end,
 
     Op2_call = function (me)

@@ -505,8 +505,6 @@ typedef union CEU_]]..me.id..[[_delayed {
                 end
                 if var.tp.arr then
                     local tp = string.sub(tp,1,-2)  -- remove leading `*´
-                    ASR(type(var.tp.arr)=='table' and var.tp.arr.cval,
-                        me, 'invalid array dimension')
                     dcl = dcl .. tp..' '..var.id_..'['..var.tp.arr.cval..']'
                 else
                     dcl = dcl .. tp..' '..var.id_

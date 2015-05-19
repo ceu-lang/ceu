@@ -285,7 +285,7 @@ end
     Thread_pre = 'Await',
     ParOr    = 'Await',
     ParAnd   = 'Await',
-    Par      = 'Await',
+    ParEver  = 'Await',
 
     --Loop     = 'Await',
     Loop = function (me)

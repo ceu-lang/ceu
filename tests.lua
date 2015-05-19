@@ -2219,49 +2219,6 @@ escape sum;
     run = { ['~>10s'] = 9 },
 }
 
-Test { [[
-class T with
-    var int a;
-do
-    this.a = 1;
-end
-var T a;
-var int ret = 0;
-par/and do
-    var int v = await a;
-    ret = ret + v;
-with
-    kill a => 1;
-with
-    var int v = await a;
-    ret = ret + v;
-end
-escape ret;
-]],
-    run = 2,
-}
-
-Test { [[
-class T with
-    var int a;
-do
-    this.a = 1;
-end
-var T a;
-var int ret = 0;
-par/and do
-    var int v;
-    watching v in a do
-        await FOREVER;
-        ret = v;
-    end
-with
-    kill a => 1;
-end
-escape ret;
-]],
-    run = 1,
-}
 do return end
 
 ----------------------------------------------------------------------------
@@ -16648,7 +16605,7 @@ var int[] v;
 escape 1;
 ]],
     --run = 1,
-    mem = 'line 1 : invalid array dimension',
+    sval = 'line 1 : invalid array dimension',
 }
 
 Test { [[
@@ -24182,8 +24139,8 @@ do
 end
 escape 1;
 ]],
-    adj = 'line 3 : invalid `escape´',
-    --run = 1,
+    --adj = 'line 3 : invalid `escape´',
+    run = 1,
 }
 
 Test { [[
@@ -28753,213 +28710,11 @@ escape t.b;
 
 Test { [[
 class T with
-do
-end
-do T;
-escape 0;
-]],
-    env = 'line 4 : variable/event "ok" is not declared',
-}
-
-Test { [[
-class T with
-    event void ok;
-do
-    emit ok;
-end
-par/or do
-    loop do
-        do T;
-    end
-with
-end
-escape 1;
-]],
-    tight = 'line 7 : tight loop',
-    run = 1,
-}
-
-Test { [[
-class T with
     var int v;
 do end;
 var T _ with
     this.v = 1;
 end;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-input void OS_START;
-class T with
-    event void ok;
-do
-    emit ok;
-end
-par do
-    do T;
-    escape 1;
-with
-    await OS_START;
-    escape 2;
-end
-]],
-    run = 2,
-}
-
-Test { [[
-input void OS_START;
-class T with
-    event void ok;
-do
-    await OS_START;
-    emit ok;
-end
-do T;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-input void OS_START;
-class T with
-    event int ok;
-do
-    await OS_START;
-    emit ok => 1;
-end
-do T;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-input void OS_START;
-class T with
-    var int v;
-    event int ok;
-do
-    await OS_START;
-    emit ok => v;
-end
-var int v = do T with
-    this.v = 10;
-end;
-escape v;
-]],
-    run = 10,
-}
-
-Test { [[
-input void OS_START;
-class T with
-    var int v;
-    event int ok;
-do
-    await OS_START;
-    emit ok => v;
-end
-var int v;
-v = do T with
-    this.v = 10;
-end;
-escape v;
-]],
-    run = 10,
-}
-
-Test { [[
-input void OS_START;
-class T with
-    var int v;
-    event void ok;
-do
-    await OS_START;
-    emit ok;
-end
-var int v = do T with
-    this.v = 10;
-end;
-escape v;
-]],
-    env = 'line 9 : arity mismatch',
-    --env = 'line 9 : invalid attribution (int vs void)',
-}
-
-Test { [[
-input void OS_START;
-class T with
-    var int v;
-    event int ok;
-do
-    await OS_START;
-    emit ok => v;
-end
-var int v;
-v = do T with
-    this.v = 10;
-end;
-escape v;
-]],
-    run = 10,
-}
-
-Test { [[
-input void OS_START;
-class T with
-    var int v;
-    event (int,int) ok;
-do
-    await OS_START;
-    emit ok => (v,v*2);
-end
-var int v1, v2;
-(v1,v2) = do T with
-    this.v = 10;
-end;
-escape v1+v2;
-]],
-    env = 'line 10 : arity mismatch',
-    --run = 30,
-}
-
-Test { [[
-input void MOVE_DONE;
-
-class Mix with
-  var int cup_top;
-  event void ok;
-do
-  await MOVE_DONE;
-  emit ok;
-end
-
-class ShuckTip with
-  event void ok;
-do
-end
-
-par/or do
-  do
-    var int dilu_start = 0;
-    do
-      var Mix m with
-        this.cup_top = dilu_start;
-      end;
-      await m.ok;
-    end
-  end
-  do ShuckTip;
-with
-  async do
-    emit MOVE_DONE;
-  end
-end
-
 escape 1;
 ]],
     run = 1,
@@ -30443,7 +30198,7 @@ do
             this.sum    = sum;
         end;
     if nested? then
-        watching nested do
+        watching *nested do
             await nested:ok;
         end
     end
@@ -30465,6 +30220,165 @@ escape sum;
     run = 5,
 }
 
+    -- AWAIT/KILL ORG
+
+Test { [[
+class T with
+    var int a;
+do
+    this.a = 1;
+end
+var T a;
+var int ret = 0;
+par/and do
+    await a;
+    ret = ret + 1;
+with
+    kill a;
+with
+    await a;
+    ret = ret * 2;
+end
+escape ret;
+]],
+    _ana = { acc=3 },
+    run = 2,
+}
+
+Test { [[
+class T with
+    var int a;
+do
+    this.a = 1;
+end
+var T a;
+var int ret = 0;
+par/and do
+    watching a do
+        await FOREVER;
+    end
+    ret = 10;
+with
+    kill a;
+end
+escape ret;
+]],
+    run = 10,
+}
+
+Test { [[
+input void OS_START;
+
+class T with
+    var int a;
+do
+end
+
+event T* e;
+
+par/or do
+    await OS_START;
+    var T a;
+    emit e => &a;
+    await FOREVER;
+with
+    var T* pa = await e;
+    watching *pa do
+        await FOREVER;
+    end
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+
+class T with
+    var int a;
+do
+    await FOREVER;
+end
+
+event T* e;
+
+par/and do
+    await OS_START;
+    do
+        var T a;
+        emit e => &a;
+    end
+with
+    var T* pa = await e;
+    watching *pa do
+        await FOREVER;
+    end
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+do
+end
+var T a;
+var int* v = await a;
+escape 1;
+]],
+    env = 'line 5 : types mismatch (`int*´ <= `int´)',
+}
+
+Test { [[
+class T with
+    var int a;
+do
+    this.a = 1;
+    await FOREVER;
+end
+var T a;
+var int ret = 0;
+par/and do
+    var int v = await a;
+    ret = ret + v;
+with
+    kill a => 10;
+with
+    var int v = await a;
+    ret = ret + v;
+end
+escape ret;
+]],
+    _ana = { acc=3 },
+    run = 20,
+}
+
+Test { [[
+class T with
+    var int a;
+do
+    this.a = 1;
+    await FOREVER;
+end
+var T a;
+var int ret = 10;
+par/and do
+    var int v;
+    watching v in a do
+        await FOREVER;
+    end
+    ret = v;
+with
+    kill a => 1;
+end
+escape ret;
+]],
+    run = 1,
+}
 -- DO T
 
 Test { [[
@@ -30472,6 +30386,204 @@ do T;
 escape 0;
 ]],
     env = 'line 1 : undeclared type `T´',
+}
+
+Test { [[
+class T with
+do
+end
+do T;
+escape 0;
+]],
+    run = 0,
+    --env = 'line 4 : variable/event "ok" is not declared',
+}
+
+Test { [[
+class T with
+    event void ok;
+do
+    emit ok;
+end
+par/or do
+    loop do
+        do T;
+    end
+with
+end
+escape 1;
+]],
+    tight = 'line 7 : tight loop',
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+class T with
+    event void ok;
+do
+    emit ok;
+end
+par do
+    do T;
+    escape 1;
+with
+    await OS_START;
+    escape 2;
+end
+]],
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+class T with
+    event void ok;
+do
+    await OS_START;
+    emit ok;
+end
+do T;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+class T with
+    event int ok;
+do
+    await OS_START;
+    emit ok => 1;
+end
+do T;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+class T with
+    var int v;
+do
+    await OS_START;
+    escape v;
+end
+var int v = do T with
+    this.v = 10;
+end;
+escape v;
+]],
+    run = 10,
+}
+
+Test { [[
+input void OS_START;
+class T with
+    var int v;
+do
+    await OS_START;
+    escape v;
+end
+var int v;
+v = do T with
+    this.v = 10;
+end;
+escape v;
+]],
+    run = 10,
+}
+
+Test { [[
+input void OS_START;
+class T with
+    var int v;
+do
+    await OS_START;
+    escape 10;
+end
+var int* v = do T with
+    this.v = 10;
+end;
+escape *v;
+]],
+    env = 'line 8 : types mismatch (`int*´ <= `int´)',
+}
+
+Test { [[
+input void OS_START;
+class T with
+    var int v;
+do
+    await OS_START;
+    escape v;
+end
+var int v;
+v = do T with
+    this.v = 10;
+end;
+escape v;
+]],
+    run = 10,
+}
+
+Test { [[
+input void OS_START;
+class T with
+    var int v;
+do
+    await OS_START;
+    escape (v,v*2);
+end
+var int v1, v2;
+(v1,v2) = do T with
+    this.v = 10;
+end;
+escape v1+v2;
+]],
+    parser = 'line 6 : after `v´ : expected `)´',
+    --env = 'line 10 : arity mismatch',
+    --run = 30,
+}
+
+Test { [[
+input void MOVE_DONE;
+
+class Mix with
+  var int cup_top;
+  event void ok;
+do
+  await MOVE_DONE;
+  emit ok;
+end
+
+class ShuckTip with
+  event void ok;
+do
+end
+
+par/or do
+  do
+    var int dilu_start = 0;
+    do
+      var Mix m with
+        this.cup_top = dilu_start;
+      end;
+      await m.ok;
+    end
+  end
+  do ShuckTip;
+with
+  async do
+    emit MOVE_DONE;
+  end
+end
+
+escape 1;
+]],
+    run = 1,
 }
 
 Test { [[
@@ -38182,6 +38294,41 @@ Test { [[
 class T with
     var int v = 0;
 do
+    await 5s;
+end
+
+event T* e;
+var int ret = 0;
+
+par/and do
+    async do end;
+    var T t with
+        this.v = 10;
+    end;
+    emit e => &t;
+    await 6s;
+with
+    var T* p = await e;
+    watching *p do
+        finalize with
+            if ret == 0 then
+                ret = -1;
+            end
+        end
+        await 4s;
+        ret = p:v;
+    end
+end
+
+escape ret;
+]],
+    run = { ['~>10s']=10 },
+}
+
+Test { [[
+class T with
+    var int v = 0;
+do
     await 4s;
 end
 
@@ -38210,7 +38357,7 @@ end
 
 escape ret;
 ]],
-    run = { ['~>10s']=10 },
+    run = { ['~>10s']=-1 },
 }
 
 Test { [[
@@ -38697,6 +38844,7 @@ do
     emit f;
     v = 100;
     emit ok;
+    await FOREVER;
 end
 var T a;
 var T* ptr;
@@ -38862,6 +39010,61 @@ escape a+b;
 
 
 Test { [[
+input void OS_START;
+
+class T with
+do
+    event void x;
+    par/or do
+        await x;
+    with
+        await OS_START;
+        emit x;
+    end
+end
+
+do
+    var T t;
+    await OS_START;
+end
+
+escape 10;
+]],
+    run = 10,
+}
+Test { [[
+input void OS_START;
+
+class U with
+    event void x;
+do
+    await x;
+end
+
+class T with
+    var U* u;
+do
+    watching *u do
+        await OS_START;
+        emit u:x;
+    end
+end
+
+do
+    var U u;
+    var T t with
+        this.u = &u;
+    end;
+    await OS_START;
+end
+
+escape 10;
+]],
+    wrn = true,
+    run = 10,
+}
+
+Test { [[
 class V with
 do
 end
@@ -38876,6 +39079,7 @@ do
         v = spawn V;
         break;
     end
+    _printf("-U\n");
 end
 
 class T with
@@ -38883,9 +39087,11 @@ class T with
 do
     watching *u do
         await OS_START;
-        //u:v = spawn V;
         emit u:x;
+        _printf("noooooooo\n");
+        _assert(0);
     end
+    _printf("-T\n");
 end
 
 do
@@ -38893,7 +39099,9 @@ do
     var T t with
         this.u = &u;
     end;
+_printf("ANTES\n");
     await OS_START;
+_printf("DEPOIS\n");
 end
 
 escape 10;
@@ -39050,6 +39258,7 @@ class T with
     var int e;
 do
     e = 100;
+    await FOREVER;
 end
 
 var T t;
@@ -39082,6 +39291,7 @@ class T with
 do
     await e;
     ee = 100;
+    await FOREVER;
 end
 
 var T t;
@@ -39117,6 +39327,7 @@ do
     var int v = await e;
     vv = v;
     emit f => v;
+    await FOREVER;
 end
 
 var T t1;
@@ -39157,6 +39368,7 @@ class T with
 do
     var int v = await e;
     emit f => v;
+    await FOREVER;
 end
 
 var T t1, t2;
@@ -39211,6 +39423,7 @@ do
     function (int v)=>void f do
         this.v = this.v + v;
     end
+    await FOREVER;
 end
 
 var T t;
@@ -39247,6 +39460,7 @@ do
     function (int a)=>void f do
         v = v + a;
     end
+    await FOREVER;
 end
 
 var T t;
@@ -39280,6 +39494,7 @@ do
     function (int v)=>void set do
         this.v= v;
     end
+    await FOREVER;
 end
 
 var T t;
@@ -39311,6 +39526,7 @@ do
     function (int v)=>void f do
         this.v = this.v + v;
     end
+    await FOREVER;
 end
 
 class U with
@@ -39322,6 +39538,7 @@ do
     function (int v)=>void f do
         this.v = this.v + 2*v;
     end
+    await FOREVER;
 end
 
 var T t;

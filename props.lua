@@ -204,16 +204,6 @@ F = {
     ParOr = function (me)
         me.needs_clr = true
         PROPS.has_clear = true
-
-        -- detects if "watching" an org
-        if me.__adj_watching then
-            local tp = me.__adj_watching.tp
-            if tp and tp.ptr==0 and ENV.clss[tp.id] then
-                PROPS.has_orgs_watching = true
-            elseif tp and tp.ptr==1 and ENV.adts[tp.id] then
-                PROPS.has_adts_watching[tp.id] = true
-            end
-        end
     end,
 
     Loop_pre = function (me)
@@ -310,6 +300,18 @@ F = {
         end
     end,
 
+    Stmts = function (me)
+        -- detects if "watching" an org/adt
+        local watch = me.__env_watching
+        if watch then
+            if watch == true then
+                PROPS.has_orgs_watching = true
+            else
+                PROPS.has_adts_watching[watch] = true
+            end
+        end
+    end,
+
     Await = function (me)
         local e, dt = unpack(me)
         if e.tag ~= 'Ext' then
@@ -317,6 +319,7 @@ F = {
         elseif dt then
             PROPS.has_wclocks = true
         end
+
         F._loop1(me)
     end,
     AwaitN = function (me)

@@ -123,7 +123,7 @@ KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'native' + 'native/pr
      + TYPES
 -- ceu-orgs only
      + 'class'    + 'global'   + 'interface'
-     + 'free'     + 'this' + 'outer'
+     + 'kill'     + 'this' + 'outer'
      + 'spawn'
 --
 -- export / version
@@ -185,7 +185,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
              + V'Dcl_det'
              --+ V'Call'
              + V'_Set'
-             + V'Spawn'    --+ V'Free'
+             + V'Spawn'    + V'Kill'
              + V'DoOrg'
              + V'Nothing'
              + V'RawStmt'
@@ -231,7 +231,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                * EKEY'with' * EV'Finally' * EKEY'end'
     , Finally  = V'Block'
 
-    , Free  = KEY'free'  * V'__Exp'
+    , Kill  = KEY'kill' * EV'__Exp' * (EK'=>'*EV'__Exp' + Cc(false))
     , Spawn = KEY'spawn' * EV'__ID_cls' * (KEY'in'*EV'__Exp' + Cc(false))
             * (EKEY'with'*V'Dcl_constr'* EKEY'end' + Cc(false))
 

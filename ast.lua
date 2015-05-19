@@ -53,10 +53,13 @@ end
 
 function AST.asr (me, tag)
     local t = (AST.isNode(me) and me.tag) or 'none'
-    assert(AST.isNode(me) and (me.tag==tag or tag==''),
-        'bug found ('..t..' vs '..tag..')')
+    if not (AST.isNode(me) and (me.tag==tag or tag=='')) then
+        DBG(debug.traceback())
+        error('bug (found: '..t..' vs expected: '..tag..')')
+    end
     return me
 end
+-- TODO: remove
 function AST.asr_ (me, tag, ...)
     local idx, tag2 = ...
 
@@ -165,10 +168,13 @@ end
 --
     --ks = me.ns.trails..' / '..tostring(me.needs_clr)
     DBG(string.rep(' ',spc)..me.tag..
+        '')
+--[[
         ' (ln='..me.ln[2]..' n='..me.n..
                            ' d='..(me.__depth or 0)..
                            ' p='..(me.__par and me.__par.n or '')..
                            ') '..ks)
+]]
 --DBG'---'
 --DBG(me.xxx)
 --DBG'---'
@@ -176,7 +182,7 @@ end
         if AST.isNode(sub) then
             AST.dump(sub, spc+2)
         else
-            DBG(string.rep(' ',spc+2) .. '['..tostring(sub)..']')
+            --DBG(string.rep(' ',spc+2) .. '['..tostring(sub)..']')
         end
     end
 end
