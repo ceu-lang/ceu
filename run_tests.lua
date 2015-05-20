@@ -304,13 +304,13 @@ STATS = {
     count   = 2347,
     mem     = 0,
     trails  = 5429,
-    bytes   = 46749025,
+    bytes   = 46769505,
 }
 
 
-real	11m59.956s
-user	11m5.941s
-sys	2m2.436s
+real	12m3.568s
+user	11m1.459s
+sys	2m1.686s
 
 -- no ADTs
 STATS = {

@@ -461,7 +461,7 @@ end
     -------
 
     , __Dcl_adt_struct = Cc'struct' * (V'_Dcl_var' * (EK';'*K';'^0))^1
-    , __Dcl_adt_union  = Cc'union'  * V'Dcl_adt_tag' * (EKEY'with' * EV'Dcl_adt_tag')^0
+    , __Dcl_adt_union  = Cc'union'  * V'Dcl_adt_tag' * (EKEY'or' * EV'Dcl_adt_tag')^0
     , Dcl_adt_tag    = KEY'tag' * EV'__ID_tag' * EKEY'with'
                       *   (V'_Dcl_var' * (EK';'*K';'^0))^0
                       * EKEY'end'

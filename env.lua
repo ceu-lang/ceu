@@ -1225,7 +1225,7 @@ error'oi'
             if not VAR then
                 BLK = me.blk_out or cls.blk_ifc
                       -- HACK_7
-                VAR = ASR(BLK.vars[id], me,
+                VAR = ASR(ENV.getvar(id,BLK), me,
                         'variable/event "'..id..'" is not declared')
             end
 

@@ -1889,80 +1889,10 @@ escape sum;
 - loop dentro de loop
 - bounded iters
 
----]===]
 Test { [[
 data T with
     tag NIL;
-with
-    tag NXT with
-        var int v;
-        var T*  nxt;
-    end
-end
-
-pool T[1] ts;
-
-var void* p1 = (void*)this;
-
-loop t in ts do
-    _assert(p1 == (void*)this);
-    if t:NXT then
-        recurse t:NXT.nxt;
-    end
-end
-
-escape 1;
-]],
-    wrn = 'line 17 : unbounded recursive spawn',
-    run = 1,
-}
-
-Test { [[
-data T with
-    tag NIL;
-with
-    tag NXT with
-        var int v;
-        var T*  nxt;
-    end
-end
-
-pool T[1] ts;
-
-var void* p1 = (void*)this;
-
-var int v2 = 2;
-var int v3 = 3;
-
-class X with
-    var int v1, v2, v3;
-do end
-
-loop t in ts do
-    _assert(p1 == (void*)this);
-    var int v1 = 1;
-    var int v3 = 0;
-    var X x with
-        this.v1 = v1;
-        this.v2 = v2;
-        this.v3 = outer.v3;
-    end;
-    _assert(x.v1 + x.v2 + x.v3 == 6);
-    if t:NXT then
-        recurse t:NXT.nxt;
-    end
-end
-
-escape 1;
-]],
-    wrn = 'line 17 : unbounded recursive spawn',
-    run = 1,
-}
-
-Test { [[
-data T with
-    tag NIL;
-with
+or
     tag NXT with
         var int v;
         var T*  nxt;
@@ -2041,7 +1971,7 @@ escape sum;
 Test { [[
 data Tree with
     tag NIL;
-with
+or
     tag NODE with
         var int   v;
         var Tree* left;
@@ -2138,7 +2068,7 @@ escape 1;
 Test { [[
 data List with
     tag NIL;
-with
+or
     tag CONS with
         var int   head;
         var List* tail;
@@ -2201,7 +2131,7 @@ escape _V;
 Test { [[
 data List with
     tag NIL;
-with
+or
     tag CONS with
         var int   head;
         var List* tail;
@@ -2264,7 +2194,7 @@ escape _V;
 Test { [[
 data List with
     tag NIL;
-with
+or
     tag CONS with
         var int   head;
         var List* tail;
@@ -2301,7 +2231,7 @@ escape _V;
 Test { [[
 data List with
     tag NIL;
-with
+or
     tag CONS with
         var int   head;
         var List* tail;
@@ -2338,7 +2268,7 @@ escape _V;
 Test { [[
 data Tree with
     tag NIL;
-with
+or
     tag NODE with
         var int   v;
         var Tree* left;
@@ -2376,7 +2306,7 @@ escape _V;
 Test { [[
 data Tree with
     tag NIL;
-with
+or
     tag NODE with
         var int   v;
         var Tree* left;
@@ -2415,7 +2345,7 @@ escape _V;
 Test { [[
 data Tree with
     tag NIL;
-with
+or
     tag NODE with
         var int   v;
         var Tree* left;
@@ -2447,10 +2377,200 @@ escape sum;
     run = { ['~>10s'] = 18 },
 }
 
-do return end
+Test { [[
+data T with
+    tag NIL;
+or
+    tag NXT with
+        var int v;
+        var T*  nxt;
+    end
+end
+
+pool T[1] ts;
+
+var void* p1 = (void*)this;
+
+loop t in ts do
+    _assert(p1 == (void*)this);
+    if t:NXT then
+        recurse t:NXT.nxt;
+    end
+end
+
+escape 1;
+]],
+    wrn = 'line 17 : unbounded recursive spawn',
+    run = 1,
+}
+
+Test { [[
+data T with
+    tag NIL;
+or
+    tag NXT with
+        var int v;
+        var T*  nxt;
+    end
+end
+
+pool T[1] ts;
+
+var void* p1 = (void*)this;
+
+var int v2 = 2;
+var int v3 = 3;
+
+class X with
+    var int v1, v2, v3;
+do end
+
+loop t in ts do
+    _assert(p1 == (void*)this);
+    var int v1 = 1;
+    var int v3 = 0;
+    var X x with
+        this.v1 = v1;
+        this.v2 = v2;
+        this.v3 = outer.v3;
+    end;
+    _assert(x.v1 + x.v2 + x.v3 == 6);
+    if t:NXT then
+        recurse t:NXT.nxt;
+    end
+end
+
+escape 1;
+]],
+    wrn = 'line 17 : unbounded recursive spawn',
+    run = 1,
+}
+
+Test { [[
+data Tree with
+    tag NIL;
+or
+    tag NODE with
+        var int   v;
+        var Tree* left;
+        var Tree* right;
+    end
+end
+
+pool Tree[3] tree;
+tree = new Tree.NODE(1,
+            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
+            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+
+var int sum = 1;
+
+loop n in tree do
+    await 1s;
+    watching n do
+        if n:NODE then
+            recurse n:NODE.left;
+            sum = sum * n:NODE.v + n:NODE.v;
+            recurse n:NODE.right;
+        end
+    end
+end
+
+escape sum;
+]],
+    wrn = 'line 26 : unbounded recursive spawn',
+    run = { ['~>10s'] = 18 },
+}
+
+Test { [[
+data Tree with
+    tag NIL;
+or
+    tag NODE with
+        var int   v;
+        var Tree* left;
+        var Tree* right;
+    end
+end
+
+pool Tree[3] tree;
+tree = new Tree.NODE(1,
+            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
+            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+
+var int sum = 1;
+
+do
+    loop n in tree do
+        await 1s;
+        watching n do
+            if n:NODE then
+                recurse n:NODE.left;
+                sum = sum * n:NODE.v + n:NODE.v;
+                recurse n:NODE.right;
+            end
+        end
+    end
+end
+
+escape sum;
+]],
+    wrn = 'line 26 : unbounded recursive spawn',
+    run = { ['~>10s'] = 18 },
+}
+
+Test { [[
+data Tree with
+    tag NIL;
+or
+    tag NODE with
+        var int   v;
+        var Tree* left;
+        var Tree* right;
+    end
+end
+
+pool Tree[3] tree;
+tree = new Tree.NODE(1,
+            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
+            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+
+var int sum = 1;
+
+par/and do
+    loop n in tree do
+        watching n do
+            if n:NODE then
+                await 1s;
+                recurse n:NODE.left;
+                sum = sum * n:NODE.v + n:NODE.v;
+                recurse n:NODE.right;
+                await 1s;
+            end
+        end
+    end
+    sum = sum - 1;
+with
+    await 1s;
+    _assert(sum == 1);
+    await 1s;
+    _assert(sum == 4);
+    await 1s;
+    _assert(sum == 5);
+    tree = new Tree.NIL();
+    _assert(sum == 4);
+end
+
+escape sum;
+]],
+    wrn = 'line 26 : unbounded recursive spawn',
+    run = { ['~>20s'] = 4 },
+}
+
+--do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
+---]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -43218,7 +43338,7 @@ end
 // "Nullable pointer"
 data Opt with
     tag NIL;
-with
+or
     tag PTR with
         var void* v;
     end
@@ -43227,7 +43347,7 @@ end
 // List (recursive type)
 data List with
     tag NIL;
-with
+or
     tag CONS with
         var int  head;
         var List tail;
@@ -43333,7 +43453,7 @@ escape 1;
 Test { [[
 data Opt with
     tag Nil;
-with
+or
     tag Ptr with
         var void* v;
     end
@@ -43346,7 +43466,7 @@ escape 1;
 Test { [[
 data Opt with
     tag NIL;
-with
+or
     tag PTR with
         var void* v;
     end
@@ -43375,7 +43495,7 @@ data List with
         var int   head;
         var List& tail;
     end
-with
+or
     tag NIL;
 end
 escape 1;
@@ -43388,7 +43508,7 @@ data List with
     tag NIL with
         var int x;
     end
-with
+or
     tag CONS with
         var int   head;
         var List& tail;
@@ -43709,8 +43829,8 @@ var List* p = &l;
 await 1s;
 escape p:CONS.head;
 ]],
-    adt = 'line 52 : cannot mix recursive data sources',
-    --fin = 'line 54 : pointer access across `await´',
+    --adt = 'line 52 : cannot mix recursive data sources',
+    fin = 'line 54 : pointer access across `await´',
 }
 
 -- COPY / MUTATION
@@ -44003,7 +44123,7 @@ escape l.NIL;
 Test { [[
 data T with
     tag NIL;
-with
+or
     tag NXT with
         var int v;
         var T*  nxt;
@@ -44167,7 +44287,7 @@ escape 1;
 Test { [[
 data OptionInt with
     tag NIL;
-with
+or
     tag SOME with
         var int v;
     end
@@ -44175,7 +44295,7 @@ end
 
 data OptionPtr with
     tag NIL;
-with
+or
     tag SOME with
         var int* v;
     end
@@ -44587,7 +44707,7 @@ escape _fff(ui.bg_clr).v;
 Test { [[
 data OptionInt with
     tag NIL;
-with
+or
     tag SOME with
         var int v;
     end
@@ -44595,7 +44715,7 @@ end
 
 data OptionPtr with
     tag NIL;
-with
+or
     tag SOME with
         var int* v;
     end
