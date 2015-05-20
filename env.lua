@@ -295,6 +295,8 @@ function det2id (v)
     end
 end
 
+local STACK_N_E = { }
+
 F = {
     Type = function (me)
         TP.new(me)
@@ -418,6 +420,10 @@ F = {
         end
     end,
 
+    Dcl_cls_pos = function (me)
+        _N, _E = unpack(STACK_N_E[#STACK_N_E])
+        STACK_N_E[#STACK_N_E] = nil
+    end,
     Dcl_cls_pre = function (me)
         local ifc, id, blk = unpack(me)
         me.c       = {}      -- holds all "native _f()"
@@ -427,8 +433,7 @@ F = {
         me.matches = {}
 
         -- restart variables/events counting
-        _N = 0
-        _E = 1  -- 0=NONE
+        STACK_N_E[#STACK_N_E+1] = { _N, _E }
 
         ASR(not (ENV.clss[id] or ENV.adts[id]), me,
             'top-level identifier "'..id..'" already taken')
