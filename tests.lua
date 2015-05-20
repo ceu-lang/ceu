@@ -1886,9 +1886,13 @@ escape sum;
 - testar pool dinamico indo fora de escopo (valgrind)
 - testar tb watching c/ adt estatico
 - escape dentro de loop/adt
-- loop dentro de loop
 - bounded iters
+- ADT loop w/o recurse (how to recognize the transformation to do?)
+- loop dentro de loop
+    - loop/nrm, loop/adt p/ outro dado mas mesmo tipo
+- para o par/or vai precisar de um watching do loop de fora no loop de dentro
 
+---]===]
 Test { [[
 data T with
     tag NIL;
@@ -2566,11 +2570,46 @@ escape sum;
     run = { ['~>20s'] = 4 },
 }
 
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[3] list;
+list = new List.CONS(1,
+            List.CONS(2,
+                List.CONS(3, List.NIL())));
+
+native do
+    int V = 0;
+end
+
+loop n in list do
+    _V = _V + 1;
+    if n:CONS then
+        _V = _V + n:CONS.head;
+        loop i in 1 do
+            recurse/1 n:CONS.tail;
+        end
+    end
+end
+
+escape _V;
+]],
+    _ana = { acc=true },
+    wrn = 'line 26 : unbounded recursive spawn',
+    run = 10,
+}
+
 --do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
----]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }

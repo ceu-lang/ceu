@@ -488,7 +488,7 @@ me.blk_body = me.blk_body or blk_body
     --  end
     --]]
     _Recurse_pre = function (me)
-        local exp = unpack(me)
+        local _,exp = unpack(me)
         local cls = assert(AST.par(me, 'Dcl_cls'))
         local to_id  = AST.asr(cls,'Dcl_cls', 3,'BlockI', 1,'Stmts', 2,'Dcl_var')[3]
         local cls_id = cls[2]
@@ -545,7 +545,11 @@ me.blk_body = me.blk_body or blk_body
         -- should use loop/adt ?
         local rec = AST.child(me, '_Recurse')
         if rec then
+            local n = (rec[1]==false and 0) or (AST.asr(rec,'', 1,'NUMBER')[1])
             local loop = AST.par(rec, '_Loop')
+            for i=1, n do
+                loop = AST.par(loop, '_Loop')
+            end
             if loop == me then
                 return F._Loop_adt_pre(me)
             end

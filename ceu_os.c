@@ -642,10 +642,6 @@ if (STK.trl->evt==CEU_IN__ORG) {
             STK.trl++;
         }
 
-#ifdef CEU_ORGS
-_CEU_GO_POP_:
-#endif
-
         if (stack_empty(go)) {
             break;      /* reaction has terminated */
         }

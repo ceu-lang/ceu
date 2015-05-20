@@ -354,7 +354,7 @@ typedef union tceu_trl {
     struct {                    /* TODO(ram): bitfields */
         tceu_nevt evt2;
         tceu_nlbl lbl2;
-        u8        stk;
+        u16       stk;          /* TODO: search for #STK (sizes must match) */
     };
 
     /* IN__ORG */
@@ -477,7 +477,7 @@ typedef struct tceu_go {
         #define CEU_STACK_MAX   (CEU_NTRAILS+1) // current +1 for each trail
         */
     byte stk[CEU_STACK_MAX];
-    int stki;
+    int stki;                   /* TODO: search for #STK (sizes must match) */
 #ifdef CEU_ORGS_NEWS
     tceu_org* lst_free;  /* "to free" list (only on reaction end) */
 #endif

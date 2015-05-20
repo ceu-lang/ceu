@@ -18,9 +18,9 @@ syn keyword cType       const nohold safe plain pure hold recursive
 syn keyword	cStatement  async await break native continue data do else emit end
 syn keyword cStatement  event every finalize FOREVER global if input loop nothing
 syn keyword cStatement  output pre par pause return then until var with class
-syn keyword cStatement  include interface free spawn thread sync function
+syn keyword cStatement  include interface kill spawn thread sync function
 syn keyword cStatement  escape call rec recursive isr atomic request in pool
-syn keyword cStatement  watching
+syn keyword cStatement  watching tag new recurse
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 " A bunch of useful C keywords

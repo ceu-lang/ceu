@@ -277,7 +277,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     , Break     = KEY'break'
     , _Continue = KEY'continue'
-    , _Recurse   = KEY'recurse' * EV'__Exp'
+    , _Recurse   = KEY'recurse' * ('/'*V'NUMBER'+Cc(false)) * EV'__Exp'
 
     , _Loop   = KEY'loop' * ('/'*EV'__Exp' + Cc(false)) *
                     (V'Var' * (EKEY'in'*EV'__Exp' + Cc(false))
