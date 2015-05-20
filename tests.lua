@@ -1,6 +1,3 @@
--- async dentro de pause
--- async thread spawn falhou, e ai?
-
 local function INCLUDE (fname, src)
     local f = assert(io.open(fname,'w'))
     f:write(src)
@@ -9,8 +6,26 @@ end
 
 --[===[
 
--- BUGS
+-- async dentro de pause
+-- async thread spawn falhou, e ai?
 
+-- BUGS & INCOMPLETNESS
+
+-- TODO: bug: what if the "o" expression contains other pointers?
+-- (below: pi)
+Test { [[
+class T with
+do
+end
+
+var T[10] ts;
+var int   i = 0;
+var int* pi = &i;
+await ts[*pi];
+escape 1;
+]],
+    fin = 'line 8 : pointer access across `await´',
+}
 -- should disallow passing pointers through internal events
 Test { [[
 input void OS_START;
@@ -1870,12 +1885,80 @@ escape sum;
 - colocar de volta recurse que ja estao nos testes (comentados)
 - testar pool dinamico indo fora de escopo (valgrind)
 - testar tb watching c/ adt estatico
-- watching de ADTs
-- fazer a conversao da consutrucao recurse para isso
-- teste de ponteiro errado
-- teste de this/outer em recurse
+- escape dentro de loop/adt
+- loop dentro de loop
+- bounded iters
 
 ---]===]
+Test { [[
+data T with
+    tag NIL;
+with
+    tag NXT with
+        var int v;
+        var T*  nxt;
+    end
+end
+
+pool T[1] ts;
+
+var void* p1 = (void*)this;
+
+loop t in ts do
+    _assert(p1 == (void*)this);
+    if t:NXT then
+        recurse t:NXT.nxt;
+    end
+end
+
+escape 1;
+]],
+    wrn = 'line 17 : unbounded recursive spawn',
+    run = 1,
+}
+
+Test { [[
+data T with
+    tag NIL;
+with
+    tag NXT with
+        var int v;
+        var T*  nxt;
+    end
+end
+
+pool T[1] ts;
+
+var void* p1 = (void*)this;
+
+var int v2 = 2;
+var int v3 = 3;
+
+class X with
+    var int v1, v2, v3;
+do end
+
+loop t in ts do
+    _assert(p1 == (void*)this);
+    var int v1 = 1;
+    var int v3 = 0;
+    var X x with
+        this.v1 = v1;
+        this.v2 = v2;
+        this.v3 = outer.v3;
+    end;
+    _assert(x.v1 + x.v2 + x.v3 == 6);
+    if t:NXT then
+        recurse t:NXT.nxt;
+    end
+end
+
+escape 1;
+]],
+    wrn = 'line 17 : unbounded recursive spawn',
+    run = 1,
+}
+
 Test { [[
 data T with
     tag NIL;

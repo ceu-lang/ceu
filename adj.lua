@@ -360,6 +360,36 @@ me.blk_body = me.blk_body or blk_body
 
 -- Loop --------------------------------------------------
 
+    This_pre = function (me)
+        local in_rec = unpack(me)
+        if AST.par(me,'Dcl_constr') or in_rec then
+            return  -- inside constructor or already recognized as in_rec
+        end
+
+        -- "this" inside "loop/adt" should refer to outer class
+        local cls = AST.par(me, 'Dcl_cls')
+        local out = cls.out
+        if cls.out then
+            return node('Op2_.', me.ln, '.',
+                    node('This', me.ln, true),
+                    '_out_'..cls.N)
+        end
+    end,
+
+    Outer_pre = function (me)
+        local in_rec = unpack(me)
+        if in_rec then
+            return  -- already recognized as in_rec
+        end
+
+        -- "outer" inside "loop/adt" should refer to outer class
+        local cls = AST.par(me, 'Dcl_cls')
+        local out = cls.out
+        if cls.out then
+            return node('Var', me.ln, '_out_'..cls.N)
+        end
+    end,
+
     _Loop_adt_pre = function (me)
         --[[
         --  loop <n> in <adt> do
@@ -407,7 +437,7 @@ me.blk_body = me.blk_body or blk_body
                                 node('_Watching', me.ln,
                                     false,
                                     node('Op2_.', me.ln, '.',
-                                        node('This', me.ln),
+                                        node('This', me.ln, true),
                                         to[1]),
                                     false,
                                     body))))
@@ -422,22 +452,22 @@ me.blk_body = me.blk_body or blk_body
                                 node('Stmts', me.ln,
                                     node('_Set', me.ln,
                                         node('Op2_.', me.ln, '.',
-                                            node('This', me.ln),
+                                            node('This', me.ln, true),
                                             '_loops_'..me.n),
                                         '=', 'exp',
                                         node('Var', me.ln, '_pool_'..me.n)),
                                     node('_Set', me.ln,
                                         node('Op2_.', me.ln, '.',
-                                            node('This', me.ln),
+                                            node('This', me.ln, true),
                                             to[1]),
                                         '=', 'exp',
                                         iter),
                                     node('_Set', me.ln,
                                         node('Op2_.', me.ln, '.',
-                                            node('This', me.ln),
+                                            node('This', me.ln, true),
                                             '_out_'..me.n),
                                         '=', 'exp',
-                                        node('Outer', me.ln))))))
+                                        node('Outer', me.ln, true))))))
 
         -- HACK_5: figure out iter type
         local iter = node('_TMP_ITER', me.ln, AST.copy(iter))
@@ -476,25 +506,25 @@ me.blk_body = me.blk_body or blk_body
                                     node('Stmts', me.ln,
                                         node('_Set', me.ln,
                                             node('Op2_.', me.ln, '.',
-                                                node('This', me.ln),
+                                                node('This', me.ln, true),
                                                 '_loops_'..cls.N),
                                             '=', 'exp',
                                             node('Op2_.', me.ln, '.',
-                                                node('Outer', me.ln),
+                                                node('Outer', me.ln, true),
                                                 '_loops_'..cls.N)),
                                         node('_Set', me.ln,
                                             node('Op2_.', me.ln, '.',
-                                                node('This', me.ln),
+                                                node('This', me.ln, true),
                                                 to_id),
                                             '=', 'exp',
                                             exp),
                                         node('_Set', me.ln,
                                             node('Op2_.', me.ln, '.',
-                                                node('This', me.ln),
+                                                node('This', me.ln, true),
                                                 '_out_'..cls.N),
                                             '=', 'exp',
                                             node('Op2_.', me.ln, '.',
-                                                node('Outer', me.ln),
+                                                node('Outer', me.ln, true),
                                                 '_out_'..cls.N)))))))
         local if_ = node('If', me.ln,
                         node('Op1_?', me.ln, '?',

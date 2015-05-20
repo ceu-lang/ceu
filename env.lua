@@ -742,11 +742,9 @@ F = {
                 var = ENV.getvar(id, out)
                 if var then
                     local ret = AST.node('Op2_.', me.ln, '.',
-                                    AST.node('Op2_.', me.ln, '.',
-                                        AST.node('This', me.ln),
-                                        '_out_'..cls.N),
+                                    AST.node('Var', me.ln, '_out_'..cls.N),
                                     id)
-                    ret.blk = out   -- HACK_7
+                    ret.blk_out = out   -- HACK_7
                     return ret
                 end
             end
@@ -1225,7 +1223,7 @@ error'oi'
                     --]]
             end
             if not VAR then
-                BLK = me.blk or cls.blk_ifc
+                BLK = me.blk_out or cls.blk_ifc
                       -- HACK_7
                 VAR = ASR(BLK.vars[id], me,
                         'variable/event "'..id..'" is not declared')

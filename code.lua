@@ -1122,6 +1122,7 @@ ceu_out_assert_ex(]]..nxt..' < '..loop.iter_max..[[,
                                     'NULL : '..org..'->nxt))'
 
             elseif me.iter_tp == 'data' then
+error'bug found'
                 local nxt = CUR(me,'__recurse_nxt_'..me.n)
                 local vec = CUR(me,'__recurse_vec_'..me.n)..'['..nxt..']'
                 ini[#ini+1] = V(to)..' = '..V(iter)     -- initial pointer
