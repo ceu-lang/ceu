@@ -368,8 +368,9 @@ me.blk_body = me.blk_body or blk_body
         --  end
         --      ... becomes ...
         --  class Loop with
-        --      pool Loop[]& loops;
+        --      pool Loop[]&  loops;
         --      var  <adt_t>* <n>;
+        --      var  Outer&   out;
         --  do
         --      <body>
         --          recurse <exp>;
@@ -382,6 +383,7 @@ me.blk_body = me.blk_body or blk_body
         --]]
 
         local max, to, iter, body = unpack(me)
+        local out = AST.par(me, 'Dcl_cls')
 
         local tp = node('Type', me.ln, 'TODO-ADT-TYPE', 1, false, false)
         local cls = node('Dcl_cls', me.ln, false, 'Loop_'..me.n,
@@ -389,13 +391,18 @@ me.blk_body = me.blk_body or blk_body
                             node('Stmts', me.ln,
                                 node('Dcl_pool', me.ln, 'pool',
                                     node('Type', me.ln, 'Loop_'..me.n, 0, true, true),
-                                    '_loops'),
+                                    '_loops_'..me.n),
                                 node('Dcl_var', me.ln, 'var',
                                     tp,
-                                    to[1]))),
+                                    to[1])),
+                                node('Dcl_var', me.ln, 'var',
+                                    node('Type', me.ln, out[2], 0, false, true),
+                                    '_out_'..me.n)),
                         node('Block', me.ln,
                             node('Stmts', me.ln,
                                 body)))
+        cls.out = AST.par(me, 'Block')
+        cls.N   = me.n     -- save my "n" for further uses
 --[[
                                 node('_Watching', me.ln,
                                     false,
@@ -411,22 +418,32 @@ me.blk_body = me.blk_body or blk_body
                         '_pool_'..me.n)
         local doorg = node('DoOrg', me.ln, 'Loop_'..me.n,
                         node('Dcl_constr', me.ln,
-                            node('_Set', me.ln,
-                                node('Op2_.', me.ln, '.',
-                                    node('This', me.ln),
-                                    '_loops'),
-                                '=', 'exp',
-                                node('Var', me.ln, '_pool_'..me.n)),
-                            node('_Set', me.ln,
-                                node('Op2_.', me.ln, '.',
-                                    node('This', me.ln),
-                                    to[1]),
-                                '=', 'exp',
-                                iter)))
+                            node('Block', me.ln,
+                                node('Stmts', me.ln,
+                                    node('_Set', me.ln,
+                                        node('Op2_.', me.ln, '.',
+                                            node('This', me.ln),
+                                            '_loops_'..me.n),
+                                        '=', 'exp',
+                                        node('Var', me.ln, '_pool_'..me.n)),
+                                    node('_Set', me.ln,
+                                        node('Op2_.', me.ln, '.',
+                                            node('This', me.ln),
+                                            to[1]),
+                                        '=', 'exp',
+                                        iter),
+                                    node('_Set', me.ln,
+                                        node('Op2_.', me.ln, '.',
+                                            node('This', me.ln),
+                                            '_out_'..me.n),
+                                        '=', 'exp',
+                                        node('Outer', me.ln))))))
 
         -- HACK_5: figure out iter type
         local iter = node('_TMP_ITER', me.ln, AST.copy(iter))
-        return node('Stmts', me.ln, iter, cls, pool, doorg)
+        local ret = node('Stmts', me.ln, iter, cls, pool, doorg)
+        ret.__adj_recurse_loop = true
+        return ret
     end,
 
     --[[
@@ -453,22 +470,32 @@ me.blk_body = me.blk_body or blk_body
                         node('Var', me.ln, '_var_'..me.n),
                         '=', 'spawn',
                         node('Spawn', me.ln, cls_id,
-                            node('Var', me.ln, '_loops'),
+                            node('Var', me.ln, '_loops_'..cls.N),
                             node('Dcl_constr', me.ln,
-                                node('_Set', me.ln,
-                                    node('Op2_.', me.ln, '.',
-                                        node('This', me.ln),
-                                        '_loops'),
-                                    '=', 'exp',
-                                    node('Op2_.', me.ln, '.',
-                                        node('Outer', me.ln),
-                                        '_loops')),
-                            node('_Set', me.ln,
-                                node('Op2_.', me.ln, '.',
-                                    node('This', me.ln),
-                                    to_id),
-                                '=', 'exp',
-                                exp))))
+                                node('Block', me.ln,
+                                    node('Stmts', me.ln,
+                                        node('_Set', me.ln,
+                                            node('Op2_.', me.ln, '.',
+                                                node('This', me.ln),
+                                                '_loops_'..cls.N),
+                                            '=', 'exp',
+                                            node('Op2_.', me.ln, '.',
+                                                node('Outer', me.ln),
+                                                '_loops_'..cls.N)),
+                                        node('_Set', me.ln,
+                                            node('Op2_.', me.ln, '.',
+                                                node('This', me.ln),
+                                                to_id),
+                                            '=', 'exp',
+                                            exp),
+                                        node('_Set', me.ln,
+                                            node('Op2_.', me.ln, '.',
+                                                node('This', me.ln),
+                                                '_out_'..cls.N),
+                                            '=', 'exp',
+                                            node('Op2_.', me.ln, '.',
+                                                node('Outer', me.ln),
+                                                '_out_'..cls.N)))))))
         local if_ = node('If', me.ln,
                         node('Op1_?', me.ln, '?',
                             node('Var', me.ln, '_var_'..me.n)),

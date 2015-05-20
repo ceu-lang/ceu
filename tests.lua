@@ -1872,6 +1872,10 @@ escape sum;
 - testar tb watching c/ adt estatico
 - watching de ADTs
 - fazer a conversao da consutrucao recurse para isso
+- teste de ponteiro errado
+- teste de this/outer em recurse
+
+---]===]
 Test { [[
 data T with
     tag NIL;
@@ -2325,7 +2329,6 @@ escape _V;
     run = { ['~>10s'] = 13 },
 }
 
----]===]
 Test { [[
 data Tree with
     tag NIL;
@@ -2342,22 +2345,23 @@ tree = new Tree.NODE(1,
             Tree.NODE(2, Tree.NIL(), Tree.NIL()),
             Tree.NODE(3, Tree.NIL(), Tree.NIL()));
 
-var int sum = 0;
+var int sum = 1;
 
 loop n in tree do
-    _V = _V + 1;
-    var int i = sum;
-    if n:NODE then
-        recurse n:NODE.left;
-        sum = i + n:NODE.v;
-        recurse n:NODE.right;
+    watching n do
+        if n:NODE then
+            recurse n:NODE.left;
+            sum = sum * n:NODE.v + n:NODE.v;
+            recurse n:NODE.right;
+        end
     end
 end
 
 escape sum;
 ]],
     wrn = 'line 26 : unbounded recursive spawn',
-    run = { ['~>10s'] = 9 },
+    _ana = { acc=true },
+    run = { ['~>10s'] = 18 },
 }
 
 do return end

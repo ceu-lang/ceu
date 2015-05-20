@@ -727,6 +727,31 @@ F = {
                         AST.node('Var', me.ln, '_'..id),
                         'root'))
         end
+
+        -- OUT access in recurse loops
+        --  var int x;
+        --  loop v in <adt> do
+        --      x = 1;
+        --  end
+        --      ... becomes ...
+        --      this.out.x
+        if not var then
+            local cls = CLS()
+            local out = cls.out
+            if out then
+                var = ENV.getvar(id, out)
+                if var then
+                    local ret = AST.node('Op2_.', me.ln, '.',
+                                    AST.node('Op2_.', me.ln, '.',
+                                        AST.node('This', me.ln),
+                                        '_out_'..cls.N),
+                                    id)
+                    ret.blk = out   -- HACK_7
+                    return ret
+                end
+            end
+        end
+
     end,
 
     Var = function (me)
@@ -734,6 +759,7 @@ F = {
         local blk = me.__ast_blk and assert(AST.par(me.__ast_blk,'Block'))
                         or AST.iter('Block')()
         local var = me.var or ENV.getvar(id, blk)
+
         ASR(var, me, 'variable/event "'..id..'" is not declared')
         me.var  = var
         me.tp   = var.tp
@@ -1199,7 +1225,8 @@ error'oi'
                     --]]
             end
             if not VAR then
-                BLK = cls.blk_ifc
+                BLK = me.blk or cls.blk_ifc
+                      -- HACK_7
                 VAR = ASR(BLK.vars[id], me,
                         'variable/event "'..id..'" is not declared')
             end
