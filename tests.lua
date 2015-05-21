@@ -1891,8 +1891,8 @@ escape sum;
 - loop dentro de loop
     - loop/nrm, loop/adt p/ outro dado mas mesmo tipo
 - para o par/or vai precisar de um watching do loop de fora no loop de dentro
+--]===]
 
----]===]
 Test { [[
 data T with
     tag NIL;
@@ -2045,7 +2045,7 @@ escape sum;
 
 /*
 var int sum = 0;
-loop n in tree do
+loop/rec n in tree do
     var int i = sum;
     if n:NODE then
         recurse n:NODE.left;
@@ -2089,7 +2089,7 @@ native do
 end
 
 /*
-loop n in list do
+loop/rec n in list do
     _V = _V + 1;
     if n:CONS then
         _V = _V + n:CONS.head;
@@ -2151,7 +2151,7 @@ native do
     int V = 0;
 end
 
-loop n in list do
+loop/rec n in list do
     _V = _V + 1;
     if n:CONS then
         _V = _V + n:CONS.head;
@@ -2214,7 +2214,7 @@ native do
     int V = 0;
 end
 
-loop n in list do
+loop/rec n in list do
     _V = _V + 1;
     watching n do
         await 1s;
@@ -2251,7 +2251,7 @@ native do
     int V = 0;
 end
 
-loop n in list do
+loop/rec n in list do
     _V = _V + 1;
     //watching n do
         await 1s;
@@ -2289,7 +2289,7 @@ native do
     int V = 0;
 end
 
-loop n in tree do
+loop/rec n in tree do
     _V = _V + 1;
     watching n do
         if n:NODE then
@@ -2327,7 +2327,7 @@ native do
     int V = 0;
 end
 
-loop n in tree do
+loop/rec n in tree do
     _V = _V + 1;
     watching n do
         if n:NODE then
@@ -2364,7 +2364,7 @@ tree = new Tree.NODE(1,
 
 var int sum = 1;
 
-loop n in tree do
+loop/rec n in tree do
     watching n do
         if n:NODE then
             recurse n:NODE.left;
@@ -2395,7 +2395,7 @@ pool T[1] ts;
 
 var void* p1 = (void*)this;
 
-loop t in ts do
+loop/rec t in ts do
     _assert(p1 == (void*)this);
     if t:NXT then
         recurse t:NXT.nxt;
@@ -2429,7 +2429,7 @@ class X with
     var int v1, v2, v3;
 do end
 
-loop t in ts do
+loop/rec t in ts do
     _assert(p1 == (void*)this);
     var int v1 = 1;
     var int v3 = 0;
@@ -2468,7 +2468,7 @@ tree = new Tree.NODE(1,
 
 var int sum = 1;
 
-loop n in tree do
+loop/rec n in tree do
     await 1s;
     watching n do
         if n:NODE then
@@ -2504,7 +2504,7 @@ tree = new Tree.NODE(1,
 var int sum = 1;
 
 do
-    loop n in tree do
+    loop/rec n in tree do
         await 1s;
         watching n do
             if n:NODE then
@@ -2541,7 +2541,7 @@ tree = new Tree.NODE(1,
 var int sum = 1;
 
 par/and do
-    loop n in tree do
+    loop/rec n in tree do
         watching n do
             if n:NODE then
                 await 1s;
@@ -2589,12 +2589,12 @@ native do
     int V = 0;
 end
 
-loop n in list do
+loop/rec n in list do
     _V = _V + 1;
     if n:CONS then
         _V = _V + n:CONS.head;
         loop i in 1 do
-            recurse/1 n:CONS.tail;
+            recurse n:CONS.tail;
         end
     end
 end
@@ -2606,7 +2606,160 @@ escape _V;
     run = 10,
 }
 
---do return end
+Test { [[
+loop do
+    recurse null;
+end
+escape 1;
+]],
+    adj = 'line 2 : `recurse´ without `loop/rec´',
+}
+
+Test { [[
+loop/rec t in ts do
+    loop do
+        recurse/1 null;
+    end
+end
+escape 1;
+]],
+    adj = 'line 3 : `recurse´ without `loop/rec´',
+}
+
+Test { [[
+data Widget with
+    tag EMPTY;
+or
+    tag SEQ with
+        var Widget* w1;
+        var Widget* w2;
+    end
+end
+
+pool Widget[] widgets;
+widgets = new Widget.SEQ(
+            Widget.EMPTY(),
+            Widget.EMPTY());
+
+native @nohold _printf();
+
+var int ret = 0;
+
+loop/rec widget in widgets with
+    var int param = 1;
+do
+    ret = ret + param;
+
+    watching widget do
+        if widget:EMPTY then
+            nothing;
+
+        else/if widget:SEQ then
+            recurse widget:SEQ.w1 with
+                this.param = param + 1;
+            end;
+            recurse widget:SEQ.w2 with
+                this.param = param + 1;
+            end;
+
+        else
+            _ceu_out_assert(0, "not implemented");
+        end
+    end
+end
+
+escape ret;
+]],
+    _ana = { acc=true },
+    wrn = 'line 57 : unbounded recursive spawn',
+    run = 5,
+}
+
+Test { [[
+interface IWidget with
+    function (int x, int y, int w, int h)=>void redim;
+end
+
+class Rectangle with
+    interface IWidget;
+do
+    function (int x, int y, int w, int h)=>void redim do
+        _printf("REDIM (%d,%d) (%d,%d)\n", x, y, w, h);
+    end
+end
+
+data Widget with
+    tag EMPTY;
+or
+    tag SIMPLE with
+        //var IWidget& w;
+        var Rectangle& w;
+    end
+or
+    tag COL with
+        var Widget* w1;
+        var Widget* w2;
+    end
+end
+
+
+var Rectangle r1;
+var Rectangle r2;
+
+pool Widget[] widgets;
+widgets = new Widget.COL(
+            Widget.SIMPLE(r1),
+            Widget.SIMPLE(r2));
+
+native @nohold _printf();
+
+loop/rec widget in widgets with
+    var int x = 0;
+    var int y = 0;
+    var int w = 400;
+    var int h = 400;
+do
+    var int x;
+    _printf("START [%p] (%d,%d) (%d,%d)\n", widget, x,y, w,h);
+
+    watching widget do
+        if widget:EMPTY then
+            await FOREVER;
+
+        else/if widget:SIMPLE then
+            widget:SIMPLE.w.redim(x,y,w,h);
+            //emit widget:SIMPLE.w.redim => (x,y,10,10);
+            await FOREVER;
+
+        else/if widget:COL then
+            var int y = y;
+            var int w = w;
+            var int h = h;
+            loop do
+                par/or do
+                    recurse/1 widget:COL.w1;
+                with
+                    var int x = x + 40;
+                    recurse/1 widget:COL.w2 with
+                        this.x = x;
+                    end;
+                end
+            end
+
+        else
+            _ceu_out_assert(0, "not implemented");
+        end
+    end
+end
+
+escape 1;
+]],
+    _ana = { acc=true },
+    wrn = 'line 57 : unbounded recursive spawn',
+    run = 1,
+}
+
+do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested

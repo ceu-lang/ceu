@@ -390,9 +390,11 @@ me.blk_body = me.blk_body or blk_body
         end
     end,
 
-    _Loop_adt_pre = function (me)
+    _LoopRec_pre = function (me)
         --[[
-        --  loop <n> in <adt> do
+        --  loop/rec <n> in <adt> with
+        --      <interface>
+        --  do
         --      <body>
         --          recurse <exp>;
         --  end
@@ -401,6 +403,7 @@ me.blk_body = me.blk_body or blk_body
         --      pool Loop[]&  loops;
         --      var  <adt_t>* <n>;
         --      var  Outer&   out;
+        --      <interface>
         --  do
         --      <body>
         --          recurse <exp>;
@@ -412,8 +415,11 @@ me.blk_body = me.blk_body or blk_body
         --  end;
         --]]
 
-        local max, to, iter, body = unpack(me)
+        local to, root, ifc, body = unpack(me)
         local out = AST.par(me, 'Dcl_cls')
+
+        ifc = ifc and AST.asr(ifc,'BlockI', 1,'Stmts')
+                or node('Stmts',me.ln)
 
         local tp = node('Type', me.ln, 'TODO-ADT-TYPE', 1, false, false)
         local cls = node('Dcl_cls', me.ln, false, 'Loop_'..me.n,
@@ -424,10 +430,11 @@ me.blk_body = me.blk_body or blk_body
                                     '_loops_'..me.n),
                                 node('Dcl_var', me.ln, 'var',
                                     tp,
-                                    to[1])),
+                                    to[1]),
                                 node('Dcl_var', me.ln, 'var',
                                     node('Type', me.ln, out[2], 0, false, true),
-                                    '_out_'..me.n)),
+                                    '_out_'..me.n),
+                                unpack(ifc))),
                         node('Block', me.ln,
                             node('Stmts', me.ln,
                                 body)))
@@ -461,7 +468,7 @@ me.blk_body = me.blk_body or blk_body
                                             node('This', me.ln, true),
                                             to[1]),
                                         '=', 'exp',
-                                        iter),
+                                        root),
                                     node('_Set', me.ln,
                                         node('Op2_.', me.ln, '.',
                                             node('This', me.ln, true),
@@ -469,9 +476,9 @@ me.blk_body = me.blk_body or blk_body
                                         '=', 'exp',
                                         node('Outer', me.ln, true))))))
 
-        -- HACK_5: figure out iter type
-        local iter = node('_TMP_ITER', me.ln, AST.copy(iter))
-        local ret = node('Stmts', me.ln, iter, cls, pool, doorg)
+        -- HACK_5: figure out root type
+        local root = node('_TMP_ITER', me.ln, AST.copy(root))
+        local ret = node('Stmts', me.ln, root, cls, pool, doorg)
         ret.__adj_recurse_loop = true
         return ret
     end,
@@ -488,8 +495,23 @@ me.blk_body = me.blk_body or blk_body
     --  end
     --]]
     _Recurse_pre = function (me)
-        local _,exp = unpack(me)
-        local cls = assert(AST.par(me, 'Dcl_cls'))
+        local n, exp = unpack(me)
+
+        -- take n-th loop/rec above
+        n = (n==false and 0) or (AST.asr(n,'NUMBER')[1])
+        local it = AST.iter(
+                    function (me)
+                        return me.tag=='Dcl_cls' and me.N and me.out
+                    end)
+        local cls
+        for i=0, n do
+            cls = it()
+            if not cls then
+                break
+            end
+        end
+        ASR(cls, me, '`recurse´ without `loop/rec´')
+
         local to_id  = AST.asr(cls,'Dcl_cls', 3,'BlockI', 1,'Stmts', 2,'Dcl_var')[3]
         local cls_id = cls[2]
 
@@ -541,20 +563,6 @@ me.blk_body = me.blk_body or blk_body
     end,
 
     _Loop_pre = function (me)
-        -- HACK_8: detect adt iterator
-        -- should use loop/adt ?
-        local rec = AST.child(me, '_Recurse')
-        if rec then
-            local n = (rec[1]==false and 0) or (AST.asr(rec,'', 1,'NUMBER')[1])
-            local loop = AST.par(rec, '_Loop')
-            for i=1, n do
-                loop = AST.par(loop, '_Loop')
-            end
-            if loop == me then
-                return F._Loop_adt_pre(me)
-            end
-        end
-
         local max, to, iter, body = unpack(me)
         to = to or (max and node('Var', me.ln, '__ceu_i'..'_'..me.n))
         local loop = node('Loop', me.ln, max, iter, to, body)
