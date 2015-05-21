@@ -2724,7 +2724,7 @@ escape ret;
     run = 5,
 }
 
-do return end
+--do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested

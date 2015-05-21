@@ -371,7 +371,7 @@ F =
                 me.val  = '('..tag..'_assert(&'..V(e1)..', __FILE__, __LINE__)'..'->'..id..')'
                 --me.val  = '('..tag..'_assert('..V(e1)..')'..ceu2c(op)..id..')'
             elseif me.__env_tag == 'field' then
-                if e1.union_tag_blk.vars[id].tp.ref then
+                if e1.union_tag_blk.vars[id].tp.ref and (me.tp.ref==false) then
                     me.val  = '('..'*('..V(e1)..')'..'.'..id..')'
                 else
                     me.val  = '('..V(e1)..'.'..id..')'
