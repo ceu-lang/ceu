@@ -418,8 +418,8 @@ me.blk_body = me.blk_body or blk_body
         local to, root, ifc, body = unpack(me)
         local out = AST.par(me, 'Dcl_cls')
 
-        ifc = ifc and AST.asr(ifc,'BlockI', 1,'Stmts')
-                or node('Stmts',me.ln)
+        -- unpacked below
+        ifc = ifc or node('Stmts',me.ln)
 
         local tp = node('Type', me.ln, 'TODO-ADT-TYPE', 1, false, false)
         local cls = node('Dcl_cls', me.ln, false, 'Loop_'..me.n,
@@ -484,18 +484,26 @@ me.blk_body = me.blk_body or blk_body
     end,
 
     --[[
-    --  recurse <exp>
+    --  recurse <exp> with
+    --      <constr>
+    --  end;
     --      ... becomes ...
     --  var Loop*? _var;
     --  _var = spawn Loop in _loops with
     --      this._loops = outer._loops;
     --      this.<n>    = <exp>;
+    --      <constr>
     --  if _var? then
     --      await *_var;
     --  end
     --]]
     _Recurse_pre = function (me)
-        local n, exp = unpack(me)
+        local n, exp, constr = unpack(me)
+
+        -- unpacked below
+        constr = constr or node('Block', me.ln,
+                            node('Stmts', me.ln))
+        constr = AST.asr(constr,'Block', 1,'Stmts')
 
         -- take n-th loop/rec above
         n = (n==false and 0) or (AST.asr(n,'NUMBER')[1])
@@ -547,7 +555,8 @@ me.blk_body = me.blk_body or blk_body
                                             '=', 'exp',
                                             node('Op2_.', me.ln, '.',
                                                 node('Outer', me.ln, true),
-                                                '_out_'..cls.N)))))))
+                                                '_out_'..cls.N)),
+                                        unpack(constr))))))
         local if_ = node('If', me.ln,
                         node('Op1_?', me.ln, '?',
                             node('Var', me.ln, '_var_'..me.n)),

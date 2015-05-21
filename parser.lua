@@ -288,6 +288,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                * (KEY'with'*V'_BlockI' + Cc(false))
                * V'__Do'
     , _Recurse = KEY'recurse' * ('/'*V'NUMBER'+Cc(false)) * EV'__Exp'
+               * (KEY'with'*V'Block'*EKEY'end' + Cc(false))
 
 --[[
 loop/N i in <e-num> do

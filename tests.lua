@@ -1891,8 +1891,8 @@ escape sum;
 - loop dentro de loop
     - loop/nrm, loop/adt p/ outro dado mas mesmo tipo
 - para o par/or vai precisar de um watching do loop de fora no loop de dentro
---]===]
 
+--]===]
 Test { [[
 data T with
     tag NIL;
@@ -2676,75 +2676,40 @@ escape ret;
 }
 
 Test { [[
-interface IWidget with
-    function (int x, int y, int w, int h)=>void redim;
-end
-
-class Rectangle with
-    interface IWidget;
-do
-    function (int x, int y, int w, int h)=>void redim do
-        _printf("REDIM (%d,%d) (%d,%d)\n", x, y, w, h);
-    end
-end
-
 data Widget with
     tag EMPTY;
 or
-    tag SIMPLE with
-        //var IWidget& w;
-        var Rectangle& w;
-    end
-or
-    tag COL with
+    tag SEQ with
         var Widget* w1;
         var Widget* w2;
     end
 end
 
-
-var Rectangle r1;
-var Rectangle r2;
-
 pool Widget[] widgets;
-widgets = new Widget.COL(
-            Widget.SIMPLE(r1),
-            Widget.SIMPLE(r2));
+widgets = new Widget.SEQ(
+            Widget.EMPTY(),
+            Widget.EMPTY());
 
 native @nohold _printf();
 
+var int ret = 0;
+
 loop/rec widget in widgets with
-    var int x = 0;
-    var int y = 0;
-    var int w = 400;
-    var int h = 400;
+    var int param = 1;
 do
-    var int x;
-    _printf("START [%p] (%d,%d) (%d,%d)\n", widget, x,y, w,h);
+    ret = ret + param;
 
     watching widget do
         if widget:EMPTY then
-            await FOREVER;
+            nothing;
 
-        else/if widget:SIMPLE then
-            widget:SIMPLE.w.redim(x,y,w,h);
-            //emit widget:SIMPLE.w.redim => (x,y,10,10);
-            await FOREVER;
-
-        else/if widget:COL then
-            var int y = y;
-            var int w = w;
-            var int h = h;
-            loop do
-                par/or do
-                    recurse/1 widget:COL.w1;
-                with
-                    var int x = x + 40;
-                    recurse/1 widget:COL.w2 with
-                        this.x = x;
-                    end;
-                end
-            end
+        else/if widget:SEQ then
+            recurse widget:SEQ.w1 with
+                this.param = param + 1;
+            end;
+            recurse widget:SEQ.w2 with
+                this.param = param + 1;
+            end;
 
         else
             _ceu_out_assert(0, "not implemented");
@@ -2752,11 +2717,11 @@ do
     end
 end
 
-escape 1;
+escape ret;
 ]],
     _ana = { acc=true },
     wrn = 'line 57 : unbounded recursive spawn',
-    run = 1,
+    run = 5,
 }
 
 do return end
