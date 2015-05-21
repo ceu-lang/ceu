@@ -1892,7 +1892,6 @@ escape sum;
     - loop/nrm, loop/adt p/ outro dado mas mesmo tipo
 - para o par/or vai precisar de um watching do loop de fora no loop de dentro
 
---]===]
 Test { [[
 data T with
     tag NIL;
@@ -2724,10 +2723,87 @@ escape ret;
     run = 5,
 }
 
---do return end
+Test { [[
+native do
+    int V = 0;
+end
+class T with
+do
+    finalize with
+_printf("oioi\n");
+        _V = 10;
+    end
+    await FOREVER;
+end
+do
+    var T t;
+end
+escape _V;
+]],
+    run = 10,
+}
+Test { [[
+native do
+    int V = 0;
+end
+class T with
+do
+    finalize with
+        _V = 10;
+    end
+    await FOREVER;
+end
+do
+    pool T[] ts;
+    var T*? t = spawn T;
+end
+escape _V;
+]],
+    run = 10,
+}
+do return end
+
+Test { [[
+native do
+    int V = 0;
+end
+class T with
+do
+    finalize with
+        _V = 10;
+    end
+    await FOREVER;
+end
+var T*? t = spawn T;
+kill *t;
+escape _V;
+]],
+    run = 10,
+}
+
+Test { [[
+native do
+    int V = 0;
+end
+class T with
+do
+    finalize with
+        _V = 10;
+    end
+    await FOREVER;
+end
+var T t;
+kill t;
+escape _V;
+]],
+    run = 10,
+}
+
+do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
+--]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }

@@ -124,6 +124,8 @@ local _iter = function (n)
     end
 end
 
+-- TODO: check if all calls are needed
+--          (e.g., cls outermost block should not!)
 function CLEAR (me)
     COMM(me, 'CLEAR: '..me.tag..' ('..me.ln[2]..')')
 
@@ -337,9 +339,6 @@ _STK_ORG->cls = ]]..me.n..[[;
         -- because all trails are already clean at this point.
         -- (but remeber that the "free" should be delayed)
         LINE(me, [[
-#if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_WATCHING)
-_STK_ORG->isAlive = 0; /* TODO: remove? */
-#endif
 #ifdef CEU_ORGS
 ceu_sys_kill(_ceu_app, _ceu_go, _STK_ORG);
 #endif

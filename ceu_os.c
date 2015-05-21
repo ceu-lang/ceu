@@ -336,17 +336,42 @@ void ceu_pause (tceu_trl* trl, tceu_trl* trlF, int psed) {
 #ifdef CEU_ORGS
 void ceu_sys_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_org* org)
 {
-    /* CLEAR events for orgs:
-     *   0: clear continuations from the stack
-     *   1: remove from the linked list (*isDyn only*)
-     *   2: mark to free (*isDyn only*)
-     *   3: mark as dead (must be after (2))
-     *   4: "emit _ok_killed" for watched orgs
-     * TODO(speed): skip LST
-     */
+#if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_WATCHING)
+    if (!org->isAlive)
+        return;
+    org->isAlive = 0;
+#endif
 
-    /* 0: clear continuations from the stack */
+    /* clear continuations from the stack */
     stack_rem(*_ceu_go,org);
+
+#ifdef CEU_CLEAR
+    /* clear org trails */
+    {
+        tceu_stk stk;
+                 stk.evt    = CEU_IN__CLEAR;
+                 stk.org    = org;
+                 stk.trl    = &org->trls[0];
+                 stk.stop   = &org->trls[org->n];
+                 stk.evt_sz = 0;
+        stack_push(*_ceu_go, stk, NULL);    /* continue after it */
+    }
+#endif
+
+    /* awake listeners */
+#ifdef CEU_ORGS_WATCHING
+    /* TODO(speed): only if was ever watched! */
+    {
+        tceu_stk stk;
+                 stk.evt  = CEU_IN__ok_killed;
+                 stk.org  = _ceu_app->data;
+                 stk.trl  = &_ceu_app->data->trls[0];
+                 stk.stop = NULL;
+                 stk.evt_sz = sizeof(org);
+        stack_push(*_ceu_go, stk, &org);    /* continue after it */
+            /* param "org" is pointer to what to kill */
+    }
+#endif
 
 #ifdef CEU_ORGS_NEWS
     if (org->isDyn) {
@@ -362,21 +387,8 @@ void ceu_sys_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_org* org)
          * require to free this individually)
          * - malloc-ed: uses external memory, so free it regardless 
          * of individual or pool termination
-         * Tests:
-         * - pool-on-scope: (!org->isAlive) (individual termination)
-         * - malloc-ed: (org->pool==NULL)
-         * TODO: what if both happens at the same time?
-         *      (i.e., body and pool terminate)
+         * TODO: not required if org in a pool that is currently going out of scope
          */
-#ifdef CEU_ORGS_NEWS_POOL
-        if (!org->isAlive
-#ifdef CEU_ORGS_NEWS_MALLOC
-            || org->pool->queue == NULL
-#endif
-            )
-#else
-            /* malloc'ed for sure, no if required */
-#endif
         {
             tceu_org* nxt = _ceu_go->lst_free;
             org->nxt_free = NULL;    /* no next element */
@@ -391,26 +403,6 @@ void ceu_sys_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_org* org)
         }
     }
 #endif  /* CEU_ORGS_NEWS */
-
-#if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_WATCHING)
-    /* 3: mark as dead (must be after (2) because isAlive is used there */
-    org->isAlive = 0;
-#endif
-
-    /* 4: emit this.ok; */
-#ifdef CEU_ORGS_WATCHING
-    /* TODO(speed): only if was ever watched! */
-    {
-        tceu_stk stk;
-                 stk.evt  = CEU_IN__ok_killed;
-                 stk.org  = _ceu_app->data;
-                 stk.trl  = &_ceu_app->data->trls[0];
-                 stk.stop = NULL;
-                 stk.evt_sz = sizeof(org);
-        stack_push(*_ceu_go, stk, &org);    /* continue after it */
-            /* param "org" is pointer to what to kill */
-    }
-#endif
 }
 #endif
 
@@ -520,12 +512,7 @@ fprintf(stderr, "STACK[%d]: evt=%d : seqno=%d : ntrls=%d\n",
                               ];
 
                     if (CUR.evt==CEU_IN__CLEAR && CUR_ORG->n!=0) {
-#if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_WATCHING)
-                        if (CUR_ORG->isAlive)
-#endif
-                        {
-                            ceu_sys_kill(app, &go, CUR_ORG);
-                        }
+                        ceu_sys_kill(app, &go, CUR_ORG);
                     }
 
                     /* next org */
