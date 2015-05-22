@@ -92,6 +92,10 @@ void CEU_]]..id..'_kill (tceu_app* app, tceu_go* go, CEU_'..id..[[* me) {
 ]]
             end
             kill = kill .. [[
+#ifdef CEU_DEBUG
+        default:
+            ceu_out_assert(0, "invalid tag");
+#endif
     }
 ]]
         end
@@ -133,6 +137,10 @@ void CEU_]]..id..'_free_dynamic (CEU_'..id..[[* me) {
 ]]
             end
             free = free .. [[
+#ifdef CEU_DEBUG
+        default:
+            ceu_out_assert(0, "invalid tag");
+#endif
     }
 ]]
         end

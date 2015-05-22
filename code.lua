@@ -822,7 +822,7 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
     Set = function (me)
         local _, set, fr, to = unpack(me)
         COMM(me, 'SET: '..tostring(to[1]))    -- Var or C
-        if set ~= 'exp' and set~='adt' then
+        if set ~= 'exp' then
             CONC(me, fr)
             return
         end
@@ -833,9 +833,9 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
         if to.fst.tp.id == '_tceu_adt_root' then
             -- For dynamic ADTs (to=tceu_adt_root):
             -- Relink:
-            --  - remove "fr" from tree (set parent link to NIL)
-            --  - free all "to" subtree ("fr" is not there anymore)
-            --  - put "fr" back in "to"
+            --  1- remove "fr" from tree (set parent link to NIL)
+            --  2- free all "to" subtree ("fr" is not there anymore)
+            --  3- put "fr" back in "to"
 
             --      to.root
             -- becomes
@@ -862,9 +862,9 @@ case ]]..me.lbl_cnt.id..[[:;
             end
 
             LINE(me, [[
-void* __ceu_tmp = ]]..V(fr)..[[;
-]]..V(fr)..[[ = &CEU_]]..string.upper(fr.tp.id)..[[_BASE;
-#if defined(CEU_ADTS_NEWS_MALLOC) && defined(CEU_ADTS_NEWS_POOL)
+void* __ceu_tmp = ]]..V(fr)..[[;                                    /* 1 */
+]]..V(fr)..[[ = &CEU_]]..string.upper(fr.tp.id)..[[_BASE;           /* 1 */
+#if defined(CEU_ADTS_NEWS_MALLOC) && defined(CEU_ADTS_NEWS_POOL)    /* 2 */
 if (]]..pool..[[ == NULL) {
     CEU_]]..fr.tp.id..[[_free_dynamic(]]..V(to)..[[);
 } else {
@@ -874,7 +874,7 @@ if (]]..pool..[[ == NULL) {
 CEU_]]..fr.tp.id..[[_free_dynamic(]]..V(to)..[[);
 #elif defined(CEU_ADTS_NEWS_POOL)
 CEU_]]..fr.tp.id..[[_free_static(]]..V(to)..[[, ]]..pool..[[);
-#endif
+#endif                                                              /* 2 */
 ]])
             fr = { val='__ceu_tmp', code='' }
         end
