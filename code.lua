@@ -524,7 +524,19 @@ if (]]..LVAR..[[ == NULL) {
 ]])
         end
         LINE(me, [[
+#if defined(CEU_CLEAR) || defined(CEU_ORGS_WATCHING)
+/* save the continuation to run after the kill */
+_STK.trl->evt = CEU_IN__STK;
+_STK.trl->lbl = ]]..me.lbl.id..[[;
+_STK.trl->stk = _ceu_go->stki;
+#endif
+
 ceu_sys_kill(_ceu_app, _ceu_go, (tceu_org*)]]..V(org)..[[);
+
+#if defined(CEU_CLEAR) || defined(CEU_ORGS_WATCHING)
+return RET_RESTART;
+case ]]..me.lbl.id..[[:;
+#endif
 ]])
     end,
 

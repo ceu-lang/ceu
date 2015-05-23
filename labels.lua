@@ -80,8 +80,8 @@ F = {
     Spawn = function (me)
         me.lbls_cnt = new{me.tag..'_cont'}
     end,
-    Free  = function (me)
-        me.lbl_clr = new{'Free_clr'}
+    Kill = function (me)
+        me.lbl = new{'Kill'}
     end,
 
     SetBlock_pre = function (me)

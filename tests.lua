@@ -1892,6 +1892,7 @@ escape sum;
     - loop/nrm, loop/adt p/ outro dado mas mesmo tipo
 - para o par/or vai precisar de um watching do loop de fora no loop de dentro
 
+--]===]
 Test { [[
 data T with
     tag NIL;
@@ -1905,7 +1906,6 @@ end
 pool T[] ts;
 
 ts = new T.NXT(10, T.NXT(9, T.NIL()));
-native @nohold _printf();
 
 var int ret = 10;
 
@@ -2640,8 +2640,6 @@ widgets = new Widget.SEQ(
             Widget.EMPTY(),
             Widget.EMPTY());
 
-native @nohold _printf();
-
 var int ret = 0;
 
 loop/rec widget in widgets with
@@ -2689,8 +2687,6 @@ widgets = new Widget.SEQ(
             Widget.EMPTY(),
             Widget.EMPTY());
 
-native @nohold _printf();
-
 var int ret = 0;
 
 loop/rec widget in widgets with
@@ -2730,7 +2726,6 @@ end
 class T with
 do
     finalize with
-_printf("oioi\n");
         _V = 10;
     end
     await FOREVER;
@@ -2755,13 +2750,12 @@ do
 end
 do
     pool T[] ts;
-    var T*? t = spawn T;
+    var T*? t = spawn T in ts;
 end
 escape _V;
 ]],
     run = 10,
 }
-do return end
 
 Test { [[
 native do
@@ -2799,11 +2793,33 @@ escape _V;
     run = 10,
 }
 
+Test { [[
+native do
+    int V = 0;
+end
+class T with
+do
+    finalize with
+        _V = 10;
+    end
+    await FOREVER;
+end
+var T t;
+par/and do
+    kill t;
+with
+    await t;
+    _V = _V * 2;
+end
+escape _V;
+]],
+    run = 20,
+}
+
 do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
---]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }

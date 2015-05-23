@@ -345,20 +345,7 @@ void ceu_sys_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_org* org)
     /* clear continuations from the stack */
     stack_rem(*_ceu_go,org);
 
-#ifdef CEU_CLEAR
-    /* clear org trails */
-    {
-        tceu_stk stk;
-                 stk.evt    = CEU_IN__CLEAR;
-                 stk.org    = org;
-                 stk.trl    = &org->trls[0];
-                 stk.stop   = &org->trls[org->n];
-                 stk.evt_sz = 0;
-        stack_push(*_ceu_go, stk, NULL);    /* continue after it */
-    }
-#endif
-
-    /* awake listeners */
+    /* awake listeners after clear (this is a stack!) */
 #ifdef CEU_ORGS_WATCHING
     /* TODO(speed): only if was ever watched! */
     {
@@ -370,6 +357,19 @@ void ceu_sys_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_org* org)
                  stk.evt_sz = sizeof(org);
         stack_push(*_ceu_go, stk, &org);    /* continue after it */
             /* param "org" is pointer to what to kill */
+    }
+#endif
+
+    /* clear org trails before the listeners (this is a stack!) */
+#ifdef CEU_CLEAR
+    {
+        tceu_stk stk;
+                 stk.evt    = CEU_IN__CLEAR;
+                 stk.org    = org;
+                 stk.trl    = &org->trls[0];
+                 stk.stop   = &org->trls[org->n];
+                 stk.evt_sz = 0;
+        stack_push(*_ceu_go, stk, NULL);    /* continue after it */
     }
 #endif
 
