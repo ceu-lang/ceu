@@ -61,8 +61,16 @@ F = {
         local blk = unpack(me)
 
         if me.fins then
-            me.lbl_fin     = new{'Block__fin', __depth=me.__depth}
-            me.lbl_fin_cnt = new{'Block_fin_cnt'}
+            me.lbl_fin = new{'Block__fin', __depth=me.__depth}
+        end
+
+        for _, var in ipairs(me.vars) do
+            if var.adt and var.pre=='pool' then
+                if PROPS.has_adts_watching[var.adt.id] then
+                    var.lbl_fin_kill = new{'adt_fin_kill'}
+                end
+                var.lbl_fin_free = new{'adt_fin_free'}
+            end
         end
     end,
 

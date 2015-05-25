@@ -37,8 +37,9 @@ F = {
     Block = function (me)
         MAX_all(me)
 
-        -- [ CLR | ORG_STATS_I | ORG_POOL_I | ... | STMTS | FIN ]
+        -- [ CLR | ADT_I | ORG_STATS_I | ORG_POOL_I | ... | STMTS | FIN ]
         -- clear trail
+        -- adt finalization
         -- pointer to contiguous static orgs
         -- pointers to each of the pools
         -- statements
@@ -53,11 +54,13 @@ F = {
         for i=1, #me.vars do
             local var = me.vars[i]
 
-            if var.pre=='pool' and var.adt then
+            if var.pre=='pool' then
                 me.fins = me.fins or {}     -- release adts
             end
 
-            if var.cls then
+            if var.adt and var.pre=='pool' then
+                me.trails_n = me.trails_n + 1
+            elseif var.cls then
                 me.has_orgs = true
                 me.trails_n = me.trails_n + 1   -- ORG_POOL_I/ORG_STATS_I
                 var.trl_orgs_first = true       -- avoids repetition in initialization of STATS
@@ -138,7 +141,11 @@ G = {
         for i=1, #me.vars do
             local var = me.vars[i]
 
-            if var.cls then
+            if var.adt and var.pre=='pool' then
+                var.trl_adt = { t0, t0 }
+                t0 = t0 + 1
+
+            elseif var.cls then
                 var.trl_orgs = { t0, t0 }   -- ORG_POOL_I/ORG_STATS_I
                 t0 = t0 + 1
 

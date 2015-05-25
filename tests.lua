@@ -1686,7 +1686,6 @@ do
             //end
 
             this.sum = this.sum + i + n:NODE.v;
-_printf("v=%d => %d\n", n:NODE.v, this.sum);
 
             var Body* right =
                 spawn Body in this.bodies with
@@ -1892,7 +1891,6 @@ escape sum;
     - loop/nrm, loop/adt p/ outro dado mas mesmo tipo
 - para o par/or vai precisar de um watching do loop de fora no loop de dentro
 
---]===]
 Test { [[
 data T with
     tag NIL;
@@ -2720,103 +2718,225 @@ escape ret;
 }
 
 Test { [[
-native do
-    int V = 0;
-end
-class T with
-do
-    finalize with
-        _V = 10;
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
     end
-    await FOREVER;
 end
-do
-    var T t;
-end
-escape _V;
-]],
-    run = 10,
-}
-Test { [[
-native do
-    int V = 0;
-end
-class T with
-do
-    finalize with
-        _V = 10;
-    end
-    await FOREVER;
-end
-do
-    pool T[] ts;
-    var T*? t = spawn T in ts;
-end
-escape _V;
-]],
-    run = 10,
-}
 
-Test { [[
-native do
-    int V = 0;
-end
-class T with
-do
-    finalize with
-        _V = 10;
-    end
-    await FOREVER;
-end
-var T*? t = spawn T;
-kill *t;
-escape _V;
-]],
-    run = 10,
-}
+pool List[] l;
+l = new List.CONS(1,
+            List.CONS(2,
+                List.CONS(3,
+                    List.CONS(4,
+                        List.CONS(5,
+                            List.NIL())))));
 
-Test { [[
-native do
-    int V = 0;
-end
-class T with
-do
-    finalize with
-        _V = 10;
-    end
-    await FOREVER;
-end
-var T t;
-kill t;
-escape _V;
-]],
-    run = 10,
-}
+var int ret = 0;
 
-Test { [[
-native do
-    int V = 0;
-end
-class T with
-do
-    finalize with
-        _V = 10;
-    end
+par/or do
+    await l:CONS.tail:CONS.tail;
+    ret = ret + l:CONS.tail:CONS.tail:CONS.head;    // 0+4
+    _ceu_out_assert(ret == 4, "1");
+    l:CONS.tail:CONS.tail = l:CONS.tail:CONS.tail:CONS.tail;
+    ret = ret + l:CONS.tail:CONS.tail:CONS.head;    // 0+4+5
+    _ceu_out_assert(ret == 9, "2");
+
+    await l:CONS.tail:CONS.tail;
+    ret = ret + l:CONS.tail:CONS.tail:NIL;          // 0+4+5+5+1
+    _ceu_out_assert(ret == 15, "4");
     await FOREVER;
-end
-var T t;
-par/and do
-    kill t;
 with
-    await t;
-    _V = _V * 2;
+    await l:CONS.tail:CONS.tail;
+    _ceu_out_assert(ret == 9, "3");
+    ret = ret + l:CONS.tail:CONS.tail:CONS.head;    // 0+4+5+5
+    l:CONS.tail:CONS.tail = new List.NIL();
+
+    _ceu_out_assert(ret == 15, "5");
+    await l:CONS.tail:CONS.tail;
+    // never reached
+    _ceu_out_assert(ret == 15, "6");
+    await FOREVER;
+with
+    await l:CONS.tail:CONS.tail;
+    ret = ret + l:CONS.tail:CONS.tail:NIL;          // 0+4+5+5+1+1
+
+    await l:CONS.tail:CONS.tail;
+    _ceu_out_assert(ret == 16, "7");
+    await FOREVER;
+with
+    l:CONS.tail:CONS.tail = l:CONS.tail:CONS.tail:CONS.tail;
+    ret = ret * 2;  // (0+4+5+5+1+1) * 2
+    l:CONS.tail:CONS.tail = new List.CONS(10, List.NIL());
 end
-escape _V;
+
+escape ret;
 ]],
-    run = 20,
+    _ana = {acc=true},
+    run = 32,
+}
+
+error 'no returns yet from recurse'
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[] l;
+l = new List.CONS(1,
+            List.CONS(2,
+                List.CONS(3,
+                    List.CONS(4,
+                        List.CONS(5,
+                            List.NIL())))));
+
+var int ret = 0;
+
+par/or do
+    await l:CONS.tail:CONS.tail;
+    ret = ret + l:CONS.tail:CONS.tail:CONS.head;    // 0+4
+    l:CONS.tail:CONS.tail = l:CONS.tail:CONS.tail:CONS.tail;
+
+    await l:CONS.tail:CONS.tail;
+    // never reached
+    _ceu_out_assert(0, "1");
+    escape 1;
+with
+    await l:CONS.tail:CONS.tail;
+    ret = ret + l:CONS.tail:CONS.tail:CONS.head;    // 4+5
+    l:CONS.tail:CONS.tail = new List.NIL();
+
+    await l:CONS.tail:CONS.tail;
+    // never reached
+    _ceu_out_assert(0, "2");
+    escape 1;
+with
+    var List* old = await l:CONS.tail:CONS.tail;
+    _ceu_out_assert(old:CONS.head == 3);
+    ret = ret + l:CONS.tail:CONS.tail:NIL;          // 4+5+1
+    ret = ret + old:CONS.head;                      // 4+5+1+3
+
+    await l:CONS.tail:CONS.tail;
+    // never reached
+    _ceu_out_assert(0, "3");
+    escape 1;
+with
+    l:CONS.tail:CONS.tail = l:CONS.tail:CONS.tail:CONS.tail;
+    ret = ret * 2;  // 13*2
+end
+
+escape ret;
+]],
+    _ana = {acc=true},
+    run = 26,
+}
+
+Test { [[
+input void OS_START;
+
+data Widget with
+    tag NIL;
+or
+    tag EMPTY;
+or
+    tag ROW with
+        var Widget* w1;
+        var Widget* w2;
+    end
+end
+
+par/or do
+    await OS_START;
+with
+    pool Widget[] widgets;
+    widgets = new Widget.ROW(
+                    Widget.EMPTY(),
+                    Widget.EMPTY());
+
+    loop/rec widget in widgets do
+        watching widget do
+            if widget:NIL then
+                await FOREVER;
+            else/if widget:EMPTY then
+                await FOREVER;
+
+            else/if widget:ROW then
+                loop do
+                    par/or do
+                        recurse widget:ROW.w1;
+                    with
+                        recurse widget:ROW.w2;
+                    end
+                end
+
+            else
+                _ceu_out_assert(0, "not implemented");
+            end
+        end
+    end
+end
+
+escape 1;
+]],
+    _ana = {acc=true},
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+
+data List with
+    tag NIL;
+or
+    tag EMPTY;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[] l;
+l = new List.CONS(1, List.EMPTY());
+
+par/or do
+    loop/rec e in l do
+        watching e do
+            if e:EMPTY then
+                await FOREVER;
+
+            else/if e:CONS then
+                loop do
+                    recurse e:CONS.tail;
+                end
+            else
+                _ceu_out_assert(0, "1");
+            end
+        end
+    end
+with
+    await OS_START;
+_printf("quit\n");
+end
+
+escape 1;
+]],
+    _ana = {acc=true},
+    wrn = true,
+    run = 1,
 }
 
 do return end
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -30975,6 +31095,104 @@ escape ret;
 ]],
     run = 1,
 }
+
+Test { [[
+native do
+    int V = 0;
+end
+class T with
+do
+    finalize with
+        _V = 10;
+    end
+    await FOREVER;
+end
+do
+    var T t;
+end
+escape _V;
+]],
+    run = 10,
+}
+Test { [[
+native do
+    int V = 0;
+end
+class T with
+do
+    finalize with
+        _V = 10;
+    end
+    await FOREVER;
+end
+do
+    pool T[] ts;
+    var T*? t = spawn T in ts;
+end
+escape _V;
+]],
+    run = 10,
+}
+
+Test { [[
+native do
+    int V = 0;
+end
+class T with
+do
+    finalize with
+        _V = 10;
+    end
+    await FOREVER;
+end
+var T*? t = spawn T;
+kill *t;
+escape _V;
+]],
+    run = 10,
+}
+
+Test { [[
+native do
+    int V = 0;
+end
+class T with
+do
+    finalize with
+        _V = 10;
+    end
+    await FOREVER;
+end
+var T t;
+kill t;
+escape _V;
+]],
+    run = 10,
+}
+
+Test { [[
+native do
+    int V = 0;
+end
+class T with
+do
+    finalize with
+        _V = 10;
+    end
+    await FOREVER;
+end
+var T t;
+par/and do
+    kill t;
+with
+    await t;
+    _V = _V * 2;
+end
+escape _V;
+]],
+    run = 20,
+}
+
 -- DO T
 
 Test { [[

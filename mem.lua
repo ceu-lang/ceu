@@ -224,8 +224,7 @@ void CEU_]]..id..'_free_static (CEU_'..id..[[* me, void* pool) {
         me.auxs   = table.concat(me.auxs,'\n')..'\n'
         me.struct = me.struct..' CEU_'..id..';'
         MEM.tops = MEM.tops..'\n'..(me.enum or '')..'\n'..
-                                   me.struct..'\n'..
-                                   me.auxs..'\n'
+                                   me.struct..'\n'
 
         -- declare a static BASE instance
         if me.n_recs>0 then
@@ -236,6 +235,8 @@ static CEU_]]..id..[[ CEU_]]..string.upper(id)..[[_BASE;
 CEU_]]..string.upper(id)..[[_BASE.tag = CEU_]]..string.upper(id..'_'..me.tags[1])..[[;
 ]]
         end
+
+        MEM.tops = MEM.tops..me.auxs..'\n'
     end,
     Dcl_adt_tag_pre = function (me)
         local top = AST.par(me, 'Dcl_adt')
@@ -275,6 +276,9 @@ void ]]..enum..'_kill (tceu_app* app, tceu_go* go, CEU_'..id..[[* me) {
             if TP.tostr(tp) == id..'*' then
                 kill = kill .. [[
     CEU_]]..id..[[_kill(app, go, me->]]..tag..'.'..item.var_id..[[);
+/*
+    me->]]..tag..'.'..item.var_id..[[ = &CEU_]]..string.upper(id)..[[_BASE;
+*/
 ]]
             end
         end
@@ -618,6 +622,16 @@ tceu_recurse __recurse_vec_]]..me.n..'['..me.iter_max..']'..[[;
                       -- stack is a multiple of inner recurses
     end,
 ]]
+
+    Set = function (me)
+        local _, _, _, to = unpack(me)
+        if to.fst.tp.id == '_tceu_adt_root' then
+            if PROPS.has_adts_watching[to.tp.id] then
+                local cls = CLS()
+                cls.struct = cls.struct..SPC()..'void* __adt_old_'..me.n..';\n'
+            end
+        end
+    end,
 
     Await = function (me)
         local _, dt = unpack(me)

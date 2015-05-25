@@ -126,7 +126,7 @@ end
 
 -- TODO: check if all calls are needed
 --          (e.g., cls outermost block should not!)
-function CLEAR (me)
+function CLEAR_BEF (me)
     COMM(me, 'CLEAR: '..me.tag..' ('..me.ln[2]..')')
 
     if ANA and me.ana.pos[false] then
@@ -175,10 +175,20 @@ function CLEAR (me)
     stack_push(*_ceu_go, stk, NULL);
 }
 return RET_RESTART;
-
+]])
+end
+function CLEAR_AFT (me)
+    if ANA and me.ana.pos[false] then
+        return
+    end
+    if not me.needs_clr then
+        return
+    end
+    LINE(me, [[
 case ]]..me.lbl_clr.id..[[:;
 ]])
 end
+
 
 -- attributions/constructors need access to the pool
 -- the pool is the first "e1" that matches adt type:
@@ -734,6 +744,12 @@ ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'),'..ln
                     LINE(me, [[
     ]]..V(var.__env_adt_root)..[[.root = __ceu_adt;
 }
+
+/*  FINALIZE ADT */
+_STK_ORG->trls[ ]]..var.trl_adt[1]..[[ ].evt   = CEU_IN__CLEAR;
+_STK_ORG->trls[ ]]..var.trl_adt[1]..[[ ].lbl   = ]]..(var.lbl_fin_kill or var.lbl_fin_free).id..[[;
+_STK_ORG->trls[ ]]..var.trl_adt[1]..[[ ].seqno = _ceu_app->seqno-1; /* awake now 
+*/
 ]])
                 end
             end
@@ -766,39 +782,67 @@ _STK.trl = &_STK_ORG->trls[ ]]..stmts.trails[1]..[[ ];
 ]])
         end
         CONC(me, stmts)
+        CLEAR_BEF(me)
 
         if me.fins then
-            GOTO(me, me.lbl_fin_cnt.id)
+            LINE(me, [[
+{
+    int __ceu_from_fin = 0;         /* skip HALT */
+    if (0) {
+]])
             CASE(me, me.lbl_fin)
+            LINE(me, [[
+        __ceu_from_fin = 1;         /* stop on HALT */
+    }
+]])
             for i, fin in ipairs(me.fins) do
                 LINE(me, [[
-if (]]..fin.val..[[) {
-]] .. fin.code .. [[
+    if (]]..fin.val..[[) {
+        ]] .. fin.code .. [[
+    }
+]])
+            end
+            LINE(me, [[
+    if (__ceu_from_fin) {
+        return RET_HALT;
+    }
 }
 ]])
-            end
-
-            -- release ADT pool items
-            for _, var in ipairs(me.vars) do
-                local adt = ENV.adts[var.tp.id]
-                if adt and var.pre=='pool' then
-                    local id, op = unpack(adt)
-                    local static = (type(var.tp.arr)=='table')
-                    if static then
-                        LINE(me, [[
-    CEU_]]..id..[[_free_static(]]..V(var.__env_adt_root)..'.root,'..V(var)..[[);
-]])
-                    else
-                        LINE(me, [[
-    CEU_]]..id..[[_free_dynamic(]]..V(var.__env_adt_root)..[[.root);
-]])
-                    end
-                end
-            end
-            HALT(me)
-            CASE(me, me.lbl_fin_cnt)
         end
-        CLEAR(me)
+
+        -- release ADT pool items
+        for _, var in ipairs(me.vars) do
+            if var.adt and var.pre=='pool' then
+                local id, op = unpack(var.adt)
+                local static = (type(var.tp.arr)=='table')
+                if PROPS.has_adts_watching[var.adt.id] then
+                    CASE(me, var.lbl_fin_kill)
+                    LINE(me, [[
+/*  FINALIZE ADT */
+_STK.trl->evt = CEU_IN__STK;
+_STK.trl->lbl = ]]..var.lbl_fin_free.id..[[;
+_STK.trl->stk = _ceu_go->stki;
+
+CEU_]]..id..[[_kill(_ceu_app, _ceu_go, ]]..V(var.__env_adt_root)..[[.root);
+return RET_RESTART;
+]])
+
+CASE(me, var.lbl_fin_free)
+                end
+                if static then
+                    LINE(me, [[
+CEU_]]..id..[[_free_static(]]..V(var.__env_adt_root)..'.root,'..V(var)..[[);
+]])
+                else
+                    LINE(me, [[
+CEU_]]..id..[[_free_dynamic(]]..V(var.__env_adt_root)..[[.root);
+]])
+                end
+                HALT(me)
+            end
+        end
+
+        CLEAR_AFT(me)
         LINE(me, '}')       -- open in Block_pre
     end,
 
@@ -839,64 +883,73 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
             return
         end
 
-        LINE(me, '{')   -- __ceu_tmp below
+        -- cast is not an lvalue in C
+        if to.tag == 'Op1_cast' then
+            to = to[2]
+        end
 
         -- dynamic ADTs (to=tceu_adt_root):
         if to.fst.tp.id == '_tceu_adt_root' then
-            -- For dynamic ADTs (to=tceu_adt_root):
-            -- Relink:
-            --  1- remove "fr" from tree (set parent link to NIL)
-            --  2- free all "to" subtree ("fr" is not there anymore)
-            --  3- put "fr" back in "to"
-
-            --      to.root
-            -- becomes
-            --      (((tceu_adt_root*)to.root)->pool)
             local pool = FIND_ADT_POOL(to.fst)
             if pool.tag == 'Op1_cast' then    -- cast is not an lvalue in C
                 pool = pool[2]
             end
             pool = '(((tceu_adt_root*)(&('..V(pool)..')))->pool)'
+                --  to.root
+                --      ... becomes ...
+                --  (((tceu_adt_root*)to.root)->pool)
+
+            LINE(me, [[
+{
+    /* save the old ADT for later free */
+    void* __ceu_old = ]]..V(to)..[[;
+
+    /* remove "fr" from tree (set parent link to NIL) */
+    /* (maybe "fr" is already in the subtree) */
+    void* __ceu_new = ]]..V(fr)..[[;
+    ]]..V(fr)..[[ = &CEU_]]..string.upper(fr.tp.id)..[[_BASE;
+    ]]..V(to)..[[ = __ceu_new;
+]])
 
             if PROPS.has_adts_watching[to.tp.id] then
                 LINE(me, [[
-/* save the continuation to run after the kills */
-_STK.trl->evt = CEU_IN__STK;
-_STK.trl->lbl = ]]..me.lbl_cnt.id..[[;
-_STK.trl->stk = _ceu_go->stki;
-/* awake in the same level as we are now (-1 vs the emit push below) */
+    ]]..CUR(me,'__adt_old_'..me.n)..[[ = __ceu_old;
 
-CEU_]]..fr.tp.id..[[_kill(_ceu_app, _ceu_go, ]]..V(to)..[[);
-return RET_RESTART;
+    /* save the continuation to run after the kills */
+    _STK.trl->evt = CEU_IN__STK;
+    _STK.trl->lbl = ]]..me.lbl_cnt.id..[[;
+    _STK.trl->stk = _ceu_go->stki;
+
+    CEU_]]..fr.tp.id..[[_kill(_ceu_app, _ceu_go, __ceu_old);
+    return RET_RESTART;
 
 case ]]..me.lbl_cnt.id..[[:;
+    __ceu_old = ]]..CUR(me,'__adt_old_'..me.n)..[[;
 ]])
             end
 
             LINE(me, [[
-void* __ceu_tmp = ]]..V(fr)..[[;                                    /* 1 */
-]]..V(fr)..[[ = &CEU_]]..string.upper(fr.tp.id)..[[_BASE;           /* 1 */
-#if defined(CEU_ADTS_NEWS_MALLOC) && defined(CEU_ADTS_NEWS_POOL)    /* 2 */
-if (]]..pool..[[ == NULL) {
-    CEU_]]..fr.tp.id..[[_free_dynamic(]]..V(to)..[[);
-} else {
-    CEU_]]..fr.tp.id..[[_free_static(]]..V(to)..[[, ]]..pool..[[);
-}
+                    /* TODO: parameter restored here */
+#if defined(CEU_ADTS_NEWS_MALLOC) && defined(CEU_ADTS_NEWS_POOL)
+    if (]]..pool..[[ == NULL) {
+        CEU_]]..fr.tp.id..[[_free_dynamic(__ceu_old);
+    } else {
+        CEU_]]..fr.tp.id..[[_free_static(__ceu_old, ]]..pool..[[);
+    }
 #elif defined(CEU_ADTS_NEWS_MALLOC)
-CEU_]]..fr.tp.id..[[_free_dynamic(]]..V(to)..[[);
+    CEU_]]..fr.tp.id..[[_free_dynamic(__ceu_old);
 #elif defined(CEU_ADTS_NEWS_POOL)
-CEU_]]..fr.tp.id..[[_free_static(]]..V(to)..[[, ]]..pool..[[);
-#endif                                                              /* 2 */
+    CEU_]]..fr.tp.id..[[_free_static(__ceu_old, ]]..pool..[[);
+#endif
 ]])
-            fr = { val='__ceu_tmp', code='' }
+
+            LINE(me,[[
+}
+]])
+            return
         end
 
         CONC(me, fr)
-
-        -- cast is not an lvalue in C
-        if to.tag == 'Op1_cast' then
-            to = to[2]
-        end
 
         -- optional types
         if to.tp.opt then
@@ -940,7 +993,6 @@ CEU_]]..fr.tp.id..[[_free_static(]]..V(to)..[[, ]]..pool..[[);
 ]])
             end
         end
-        LINE(me, '}')   -- __ceu_tmp above
     end,
 
     SetBlock_pos = function (me)
@@ -949,7 +1001,8 @@ CEU_]]..fr.tp.id..[[_free_static(]]..V(to)..[[, ]]..pool..[[);
         HALT(me)        -- must escape with `escape´
         CASE(me, me.lbl_out)
         if me.has_escape then
-            CLEAR(me)
+            CLEAR_BEF(me)
+            CLEAR_AFT(me)
             LINE(me, [[
 /* switch to 1st trail */
 /* TODO: only if not joining with outer prio */
@@ -1010,7 +1063,8 @@ _STK.trl = &_STK_ORG->trls[ ]] ..me.trails[1]..[[ ];
 
         if not (ANA and me.ana.pos[false]) then
             CASE(me, me.lbl_out)
-            CLEAR(me)
+            CLEAR_BEF(me)
+            CLEAR_AFT(me)
             LINE(me, [[
 /* switch to 1st trail */
 /* TODO: only if not joining with outer prio */
@@ -1211,7 +1265,8 @@ if (]]..nxt..[[ > 0) {
         if me.has_break and ( not (AST.iter(AST.pred_async)()
                                 or AST.iter'Dcl_fun'()) )
         then
-            CLEAR(me)
+            CLEAR_BEF(me)
+            CLEAR_AFT(me)
             LINE(me, [[
 /* switch to 1st trail */
 /* TODO: only if not joining with outer prio */
