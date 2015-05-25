@@ -1891,7 +1891,73 @@ escape sum;
     - loop/nrm, loop/adt p/ outro dado mas mesmo tipo
 - para o par/or vai precisar de um watching do loop de fora no loop de dentro
 
+-- crashes with org->ret
+Test { [[
+class T with
+do
+    await FOREVER;
+end
+
+event T* e;
+
+input void OS_START;
+
+par do
+    do
+        par/or do
+            await OS_START;
+            pool T[1] ts;
+            var T*? ptr = spawn T in ts;
+            emit e => ptr;
+        with
+            var T* t = await e;
+        end
+    end
+    do
+        var int[100] is;
+        loop i in 100 do
+            is[i] = i;
+        end
+    end
+    await FOREVER;
+with
+    var T* t = await e;
+    var int ret = await *t;     // crash!
+    escape ret;
+end
+]],
+    run = 1,
+}
 --]===]
+
+-- leaks memory because of lost "free" in IN__STK
+Test { [[
+data T with
+    tag NIL;
+or
+    tag NXT with
+        var int v;
+        var T*  nxt;
+    end
+end
+
+pool T[] ts;
+
+ts = new T.NXT(10, T.NXT(9, T.NIL()));
+
+par/or do
+    await ts;           // 2. but continuation is aborted
+with
+    ts = new T.NIL();   // 1. free is on continuation
+end
+
+escape 1;
+]],
+    _ana = { acc=true },
+    run = 1,
+}
+--do return end
+
 Test { [[
 data T with
     tag NIL;
@@ -1908,29 +1974,31 @@ ts = new T.NXT(10, T.NXT(9, T.NIL()));
 
 var int ret = 10;
 
-par/and do
+par/or do
     watching ts do
-        await FOREVER;
-    end
-    ret = ret + 1;
-with
-    watching ts:NXT.nxt do
         await FOREVER;
     end
     ret = ret * 2;
 with
+    watching ts:NXT.nxt do
+        await FOREVER;
+    end
+    ret = 0;
+with
     watching ts:NXT.nxt:NXT.nxt do
         await FOREVER;
     end
-    ret = ret - 1;
+    ret = ret - 1;  // awakes first from NIL
+    await FOREVER;
 with
     ts = new T.NIL();
+    ret = 0;
 end
 
 escape ret;
 ]],
     _ana = { acc=true },
-    run = 19,
+    run = 18,
 }
 
 Test { [[
@@ -2479,6 +2547,7 @@ end
 
 escape sum;
 ]],
+    _ana = {acc=true},
     wrn = 'line 26 : unbounded recursive spawn',
     run = { ['~>10s'] = 18 },
 }
@@ -2516,6 +2585,7 @@ end
 
 escape sum;
 ]],
+    _ana = {acc=true},
     wrn = 'line 26 : unbounded recursive spawn',
     run = { ['~>10s'] = 18 },
 }
@@ -2564,6 +2634,7 @@ end
 
 escape sum;
 ]],
+    _ana = {acc=true},
     wrn = 'line 26 : unbounded recursive spawn',
     run = { ['~>20s'] = 4 },
 }
@@ -2910,19 +2981,15 @@ end
 
 pool List[] l;
 l = new List.CONS(1, List.EMPTY());
-native @nohold _printf();
-_printf("l = %p %p\n", l, l:CONS.tail);
 
 par/or do
     loop/rec e in l do
         watching e do
             if e:EMPTY then
-_printf("this-empty = %p\n", __STK_ORG);
                 await FOREVER;
 
             else/if e:CONS then
                 loop do
-_printf("this-cons = %p\n", __STK_ORG);
                     recurse e:CONS.tail;
                 end
             else
@@ -2998,7 +3065,6 @@ end
     end
 with
     await OS_START;
-    _printf("ret = %d\n", ret);
 end
 
 escape ret;
@@ -3067,74 +3133,13 @@ end
     end
 with
     await OS_START;
-    _printf("ret = %d\n", ret);
 end
 
 escape ret;
 ]],
     _ana = { acc=true },
     wrn = 'line 57 : unbounded recursive spawn',
-    run = 5,
-}
-
-error'TODO'
-Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int   head;
-        var List* tail;
-    end
-end
-
-pool List[] l;
-l = new List.CONS(1,
-            List.CONS(2,
-                List.CONS(3,
-                    List.CONS(4,
-                        List.CONS(5,
-                            List.NIL())))));
-
-var int ret = 0;
-
-par/or do
-    await l:CONS.tail:CONS.tail;
-    ret = ret + l:CONS.tail:CONS.tail:CONS.head;    // 0+4
-    l:CONS.tail:CONS.tail = l:CONS.tail:CONS.tail:CONS.tail;
-
-    await l:CONS.tail:CONS.tail;
-    // never reached
-    _ceu_out_assert(0, "1");
-    escape 1;
-with
-    await l:CONS.tail:CONS.tail;
-    ret = ret + l:CONS.tail:CONS.tail:CONS.head;    // 4+5
-    l:CONS.tail:CONS.tail = new List.NIL();
-
-    await l:CONS.tail:CONS.tail;
-    // never reached
-    _ceu_out_assert(0, "2");
-    escape 1;
-with
-    var List* old = await l:CONS.tail:CONS.tail;
-    _ceu_out_assert(old:CONS.head == 3, "x");
-    ret = ret + l:CONS.tail:CONS.tail:NIL;          // 4+5+1
-    ret = ret + old:CONS.head;                      // 4+5+1+3
-
-    await l:CONS.tail:CONS.tail;
-    // never reached
-    _ceu_out_assert(0, "3");
-    escape 1;
-with
-    l:CONS.tail:CONS.tail = l:CONS.tail:CONS.tail:CONS.tail;
-    ret = ret * 2;  // 13*2
-end
-
-escape ret;
-]],
-    _ana = {acc=true},
-    run = 26,
+    run = 9,
 }
 
 do return end

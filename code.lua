@@ -747,7 +747,7 @@ ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'),'..ln
 
 /*  FINALIZE ADT */
 _STK_ORG->trls[ ]]..var.trl_adt[1]..[[ ].evt   = CEU_IN__CLEAR;
-_STK_ORG->trls[ ]]..var.trl_adt[1]..[[ ].lbl   = ]]..(var.lbl_fin_kill or var.lbl_fin_free).id..[[;
+_STK_ORG->trls[ ]]..var.trl_adt[1]..[[ ].lbl   = ]]..(var.lbl_fin_kill_free).id..[[;
 _STK_ORG->trls[ ]]..var.trl_adt[1]..[[ ].seqno = _ceu_app->seqno-1; /* awake now */
 ]])
                 end
@@ -814,20 +814,12 @@ _STK.trl = &_STK_ORG->trls[ ]]..stmts.trails[1]..[[ ];
             if var.adt and var.pre=='pool' then
                 local id, op = unpack(var.adt)
                 local static = (type(var.tp.arr)=='table')
+                CASE(me, var.lbl_fin_kill_free)
                 if PROPS.has_adts_watching[var.adt.id] then
-                    CASE(me, var.lbl_fin_kill)
                     LINE(me, [[
-/*  FINALIZE ADT */
-_STK.trl->evt = CEU_IN__CLEAR;
-_STK.trl->lbl = ]]..var.lbl_fin_free.id..[[;
-_STK.trl->stk = _ceu_go->stki;
-
 CEU_]]..id..[[_kill(_ceu_app, _ceu_go, ]]..V(var.__env_adt_root)..[[.root);
-return RET_RESTART;
 ]])
-
                 end
-                CASE(me, var.lbl_fin_free)
                 if static then
                     LINE(me, [[
 CEU_]]..id..[[_free_static(]]..V(var.__env_adt_root)..'.root,'..V(var)..[[);
@@ -912,18 +904,12 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
 
             if PROPS.has_adts_watching[fr.tp.id] then
                 LINE(me, [[
-    ]]..CUR(me,'__adt_old_'..me.n)..[[ = __ceu_old;
-
     /* save the continuation to run after the kills */
     _STK.trl->evt = CEU_IN__STK;
     _STK.trl->lbl = ]]..me.lbl_cnt.id..[[;
     _STK.trl->stk = _ceu_go->stki;
 
     CEU_]]..fr.tp.id..[[_kill(_ceu_app, _ceu_go, __ceu_old);
-    return RET_RESTART;
-
-case ]]..me.lbl_cnt.id..[[:;
-    __ceu_old = ]]..CUR(me,'__adt_old_'..me.n)..[[;
 ]])
             end
 
@@ -940,11 +926,15 @@ case ]]..me.lbl_cnt.id..[[:;
 #elif defined(CEU_ADTS_NEWS_POOL)
     CEU_]]..fr.tp.id..[[_free_static(__ceu_old, ]]..pool..[[);
 #endif
-]])
-
-            LINE(me,[[
 }
 ]])
+
+            if PROPS.has_adts_watching[fr.tp.id] then
+                LINE(me, [[
+return RET_RESTART;
+case ]]..me.lbl_cnt.id..[[:;
+]])
+            end
             return
         end
 

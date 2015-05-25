@@ -66,10 +66,7 @@ F = {
 
         for _, var in ipairs(me.vars) do
             if var.adt and var.pre=='pool' then
-                if PROPS.has_adts_watching[var.adt.id] then
-                    var.lbl_fin_kill = new{'adt_fin_kill'}
-                end
-                var.lbl_fin_free = new{'adt_fin_free'}
+                var.lbl_fin_kill_free = new{'adt_fin_kill_free'}
             end
         end
     end,

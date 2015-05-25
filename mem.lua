@@ -271,6 +271,7 @@ void ]]..enum..'_kill (tceu_app* app, tceu_go* go, CEU_'..id..[[* me) {
         /* param is pointer to what to kill */
 ]]
         -- kill all my recursive fields
+--[=[
         for _,item in ipairs(top.tags[tag].tup) do
             local _, tp, _ = unpack(item)
             if TP.tostr(tp) == id..'*' then
@@ -282,6 +283,7 @@ void ]]..enum..'_kill (tceu_app* app, tceu_go* go, CEU_'..id..[[* me) {
 ]]
             end
         end
+--]=]
         kill = kill .. [[
 }
 #endif
@@ -622,16 +624,6 @@ tceu_recurse __recurse_vec_]]..me.n..'['..me.iter_max..']'..[[;
                       -- stack is a multiple of inner recurses
     end,
 ]]
-
-    Set = function (me)
-        local _, _, _, to = unpack(me)
-        if to.fst.tp.id == '_tceu_adt_root' then
-            if PROPS.has_adts_watching[to.tp.id] then
-                local cls = CLS()
-                cls.struct = cls.struct..SPC()..'void* __adt_old_'..me.n..';\n'
-            end
-        end
-    end,
 
     Await = function (me)
         local _, dt = unpack(me)

@@ -497,6 +497,9 @@ me.blk_body = me.blk_body or blk_body
     --      this.<n>    = <exp>;
     --      <constr>
     --  if _var? then
+    --      finalize with
+    --          kill *_var;
+    --      end
     --      ret = await *_var;
     --  end
     --]]
@@ -573,8 +576,28 @@ me.blk_body = me.blk_body or blk_body
                         node('Op1_?', me.ln, '?',
                             node('Var', me.ln, '_var_'..me.n)),
                         --node('Nothing', me.ln),
-                        SET_AWAIT,
-                        node('Nothing', me.ln))
+                        node('Block', me.ln,
+                            node('Stmts', me.ln,
+                                node('Finalize', me.ln,
+                                    false,
+                                    node('Finally', me.ln,
+                                        node('Block', me.ln,
+                                            node('Stmts', me.ln,
+                                            node('_Dcl_nat', me.ln, '@nohold', 'func', '_ceu_sys_kill', false),
+                                            node('CallStmt', me.ln,
+                                                    node('Op2_call', me.ln, 
+                                                        'call',
+                                                        node('Nat', me.ln, '_ceu_sys_kill'),
+                                                        node('ExpList', me.ln,
+                                                            node('Nat', me.ln, '__ceu_app'),
+                                                            node('Nat', me.ln, '__ceu_go'),
+                                                            node('Op1_cast', 
+                                                                me.ln,
+                                                                node('Type', me.ln, '_tceu_org', 1, false, false),
+                                                                    node('Var', me.ln, '_var_'..me.n))))))))), SET_AWAIT)),
+                        node('Block', me.ln,
+                            node('Stmts', me.ln,
+                                node('Nothing', me.ln))))
 
         return node('Stmts', me.ln, dcl, set, if_)
     end,
