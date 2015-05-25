@@ -748,8 +748,7 @@ ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'),'..ln
 /*  FINALIZE ADT */
 _STK_ORG->trls[ ]]..var.trl_adt[1]..[[ ].evt   = CEU_IN__CLEAR;
 _STK_ORG->trls[ ]]..var.trl_adt[1]..[[ ].lbl   = ]]..(var.lbl_fin_kill or var.lbl_fin_free).id..[[;
-_STK_ORG->trls[ ]]..var.trl_adt[1]..[[ ].seqno = _ceu_app->seqno-1; /* awake now 
-*/
+_STK_ORG->trls[ ]]..var.trl_adt[1]..[[ ].seqno = _ceu_app->seqno-1; /* awake now */
 ]])
                 end
             end
@@ -827,8 +826,8 @@ CEU_]]..id..[[_kill(_ceu_app, _ceu_go, ]]..V(var.__env_adt_root)..[[.root);
 return RET_RESTART;
 ]])
 
-CASE(me, var.lbl_fin_free)
                 end
+                CASE(me, var.lbl_fin_free)
                 if static then
                     LINE(me, [[
 CEU_]]..id..[[_free_static(]]..V(var.__env_adt_root)..'.root,'..V(var)..[[);
@@ -911,7 +910,7 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
     ]]..V(to)..[[ = __ceu_new;
 ]])
 
-            if PROPS.has_adts_watching[to.tp.id] then
+            if PROPS.has_adts_watching[fr.tp.id] then
                 LINE(me, [[
     ]]..CUR(me,'__adt_old_'..me.n)..[[ = __ceu_old;
 

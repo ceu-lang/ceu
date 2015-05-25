@@ -1891,6 +1891,7 @@ escape sum;
     - loop/nrm, loop/adt p/ outro dado mas mesmo tipo
 - para o par/or vai precisar de um watching do loop de fora no loop de dentro
 
+--]===]
 Test { [[
 data T with
     tag NIL;
@@ -2925,7 +2926,6 @@ par/or do
     end
 with
     await OS_START;
-_printf("quit\n");
 end
 
 escape 1;
@@ -2936,7 +2936,6 @@ escape 1;
 }
 
 do return end
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested

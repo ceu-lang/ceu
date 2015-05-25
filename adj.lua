@@ -1198,7 +1198,7 @@ me.blk_body = me.blk_body or blk_body
                         'HACK_6-NIL'),
                     node('Block', me.ln,
                         node('Stmts', me.ln,
-                            node('AwaitN', me.ln))),
+                            node('Nothing', me.ln))),
                     node('Block', me.ln,
                         node('Stmts', me.ln,
                             node('Dcl_var', me.ln, 'var',

@@ -170,7 +170,7 @@ fprintf(stderr, "OK : lbl=%d : org=%p\n", _CEU_LBL, _STK_ORG);
         === CODE ===
     }
 #ifdef CEU_DEBUG
-    ceu_out_assert(0, NULL);
+    ceu_out_assert(0, "no return");
 #endif
     return RET_HALT;    /* TODO: should never be reached anyways */
 }

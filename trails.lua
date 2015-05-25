@@ -50,7 +50,7 @@ F = {
         -- var  T b;
         -- First execute a, then all ts, then b.
 
-        me.has_orgs = false
+        me.needs_clear_trail = false
         for i=1, #me.vars do
             local var = me.vars[i]
 
@@ -60,8 +60,9 @@ F = {
 
             if var.adt and var.pre=='pool' then
                 me.trails_n = me.trails_n + 1
+                me.needs_clear_trail = true
             elseif var.cls then
-                me.has_orgs = true
+                me.needs_clear_trail = true
                 me.trails_n = me.trails_n + 1   -- ORG_POOL_I/ORG_STATS_I
                 var.trl_orgs_first = true       -- avoids repetition in initialization of STATS
 
@@ -78,7 +79,7 @@ F = {
                 end
             end
         end
-        if me.has_orgs then
+        if me.needs_clear_trail then
             me.trails_n = me.trails_n + 1           -- CLR
         end
 
@@ -135,7 +136,7 @@ G = {
         -- statements
         -- finalization
 
-        if me.has_orgs then
+        if me.needs_clear_trail then
             t0 = t0 + 1                             -- CLR
                 -- TODO: remove the "clear trail"
                 -- required to have any trail *before* the orgs

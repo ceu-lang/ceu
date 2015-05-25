@@ -285,7 +285,7 @@ int ceu_lua_atpanic_f (lua_State* lua) {
 /*
 */
 #else
-    ceu_out_assert(0, NULL);
+    ceu_out_assert(0, "bug found");
 #endif
     return 0;
 }
