@@ -153,7 +153,7 @@ function CLEAR_BEF (me)
     LINE(me, [[
 {
     /* save the continuation to run after the clear */
-    /* trails[1] points to ORG blk */
+    /* trails[1] points to ORG blk ("clear trail") */
     tceu_trl* trl = &_STK_ORG->trls[ ]]..me.trails[1]..[[ ];
     _STK.trl = trl;  /* after the clear stk level pops, retry from here */
                      /* TODO(speed): retry from trails[2] because all will be 0 */

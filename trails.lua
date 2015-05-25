@@ -137,6 +137,12 @@ G = {
 
         if me.has_orgs then
             t0 = t0 + 1                             -- CLR
+                -- TODO: remove the "clear trail"
+                -- required to have any trail *before* the orgs
+                -- so that we can clear the whole block and continue
+                -- from this trail
+                -- if we use a trail in the middle of the block, it will
+                -- also be cleared and hence not continue execution
         end
         for i=1, #me.vars do
             local var = me.vars[i]
