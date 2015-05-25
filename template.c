@@ -5,7 +5,7 @@
 
 #include <stdlib.h>
 #ifdef CEU_DEBUG
-#include <stdio.h>      /* fprintf */
+#include <stdio.h>      /* printf */
 #include <signal.h>     /* signal */
 #endif
 #ifdef CEU_RUNTESTS
@@ -89,9 +89,9 @@ static _tceu_app _CEU_APP = {
 tceu_app* CEU_APP_SIG = NULL;
 static void ceu_segfault (int sig_num) {
 #ifdef CEU_ORGS
-    fprintf(stderr, "SEGFAULT on %p : %d\n", CEU_APP_SIG->lst.org, CEU_APP_SIG->lst.lbl);
+    printf("SEGFAULT on %p : %d\n", CEU_APP_SIG->lst.org, CEU_APP_SIG->lst.lbl);
 #else
-    fprintf(stderr, "SEGFAULT on %d\n", CEU_APP_SIG->lst.lbl);
+    printf("SEGFAULT on %d\n", CEU_APP_SIG->lst.lbl);
 #endif
     exit(0);
 }
@@ -157,7 +157,7 @@ _CEU_GOTO_:
 #endif
 #ifdef CEU_DEBUG_TRAILS
 #ifndef CEU_OS_APP
-fprintf(stderr, "OK : lbl=%d : org=%p\n", _CEU_LBL, _STK_ORG);
+printf("OK : lbl=%d : org=%p\n", _CEU_LBL, _STK_ORG);
 #endif
 #endif
 #endif

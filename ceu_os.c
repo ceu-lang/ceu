@@ -13,7 +13,7 @@ void* CEU_APP_ADDR = NULL;
 #include <string.h>
 
 #ifdef CEU_DEBUG
-#include <stdio.h>      /* fprintf */
+#include <stdio.h>      /* printf */
 #ifndef CEU_NOSTDLIB
 #include <assert.h>     /* sys_assert */
 #endif
@@ -467,12 +467,12 @@ void ceu_sys_go (tceu_app* app, int evt, tceu_evtp evtp)
         {        /* (e.g. events that do not escape an org) */
 #ifdef CEU_DEBUG_TRAILS
 #if defined(CEU_ORGS) || defined(CEU_OS_KERNEL)
-fprintf(stderr, "STACK[%d]: evt=%d : seqno=%d : org=%p/%d : [%d/%p]\n",
-                go.stki, STK.evt, app->seqno,
-                STK_ORG, STK_ORG==app->data, STK_ORG->n, STK_ORG->trls);
+printf("STACK[%d]: evt=%d : seqno=%d : org=%p/%d : [%d/%p]\n",
+        go.stki, STK.evt, app->seqno,
+        STK_ORG, STK_ORG==app->data, STK_ORG->n, STK_ORG->trls);
 #else
-fprintf(stderr, "STACK[%d]: evt=%d : seqno=%d : ntrls=%d\n",
-                go.stki, STK.evt, app->seqno, CEU_NTRAILS);
+printf("STACK[%d]: evt=%d : seqno=%d : ntrls=%d\n",
+        go.stki, STK.evt, app->seqno, CEU_NTRAILS);
 #endif
 #endif
 
@@ -526,14 +526,14 @@ fprintf(stderr, "STACK[%d]: evt=%d : seqno=%d : ntrls=%d\n",
 #ifdef CEU_DEBUG_TRAILS
 #ifdef CEU_ORGS
 if (STK.trl->evt==CEU_IN__ORG) {
-    fprintf(stderr, "\tTRY[%p] : evt=%d : seqno=%d : stk=%d : lbl=%d : org=%p->%p\n",
-                    STK.trl, STK.trl->evt, STK.trl->stk, STK.trl->seqno, STK_LBL,
-                    &STK.trl->lnks[0], &STK.trl->lnks[1]);
+    printf("\tTRY[%p] : evt=%d : seqno=%d : stk=%d : lbl=%d : org=%p->%p\n",
+        STK.trl, STK.trl->evt, STK.trl->stk, STK.trl->seqno, STK_LBL,
+        &STK.trl->lnks[0], &STK.trl->lnks[1]);
 } else
 #endif
 {
-    fprintf(stderr, "\tTRY[%p] : evt=%d : seqno=%d : stk=%d : lbl=%d\n",
-                    STK.trl, STK.trl->evt, STK.trl->stk, STK.trl->seqno, STK_LBL);
+    printf("\tTRY[%p] : evt=%d : seqno=%d : stk=%d : lbl=%d\n",
+        STK.trl, STK.trl->evt, STK.trl->stk, STK.trl->seqno, STK_LBL);
 }
 #endif
 
