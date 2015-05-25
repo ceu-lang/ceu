@@ -392,12 +392,12 @@ me.blk_body = me.blk_body or blk_body
 
     _LoopRec_pre = function (me)
         --[[
-        --  loop/rec <n> in <adt> with
+        --  ret = loop/rec <n> in <adt> with
         --      <interface>
         --  do
         --      <body>
         --          recurse <exp>;
-        --  end
+        --  end;
         --      ... becomes ...
         --  class Loop with
         --      pool Loop[]&  loops;
@@ -409,13 +409,13 @@ me.blk_body = me.blk_body or blk_body
         --          recurse <exp>;
         --  end
         --  pool Loop[] loops;
-        --  do Loop with
+        --  ret = do Loop with
         --      this.loops = loops;
         --      this.<n>   = <n>;
         --  end;
         --]]
 
-        local to, root, ifc, body = unpack(me)
+        local to, root, ifc, body, ret = unpack(me)
         local out = AST.par(me, 'Dcl_cls')
 
         -- unpacked below
@@ -475,6 +475,9 @@ me.blk_body = me.blk_body or blk_body
                                             '_out_'..me.n),
                                         '=', 'exp',
                                         node('Outer', me.ln, true))))))
+        if ret then
+            doorg = node('_Set', me.ln, ret, '=', 'do-org', doorg)
+        end
 
         -- HACK_5: figure out root type
         local root = node('_TMP_ITER', me.ln, AST.copy(root))
@@ -484,7 +487,7 @@ me.blk_body = me.blk_body or blk_body
     end,
 
     --[[
-    --  recurse <exp> with
+    --  ret = recurse <exp> with
     --      <constr>
     --  end;
     --      ... becomes ...
@@ -494,11 +497,11 @@ me.blk_body = me.blk_body or blk_body
     --      this.<n>    = <exp>;
     --      <constr>
     --  if _var? then
-    --      await *_var;
+    --      ret = await *_var;
     --  end
     --]]
     _Recurse_pre = function (me)
-        local n, exp, constr = unpack(me)
+        local n, exp, constr, ret = unpack(me)
 
         -- unpacked below
         constr = constr or node('Block', me.ln,
@@ -519,6 +522,15 @@ me.blk_body = me.blk_body or blk_body
             end
         end
         ASR(cls, me, '`recurse´ without `loop/rec´')
+
+        local SET_AWAIT = node('Await', me.ln,
+                        node('Op1_*', me.ln, '*',
+                            node('Var', me.ln, '_var_'..me.n)),
+                        false,
+                        false)
+        if ret then
+            SET_AWAIT = node('_Set', me.ln, ret, '=', 'await', SET_AWAIT)
+        end
 
         local to_id  = AST.asr(cls,'Dcl_cls', 3,'BlockI', 1,'Stmts', 2,'Dcl_var')[3]
         local cls_id = cls[2]
@@ -561,11 +573,7 @@ me.blk_body = me.blk_body or blk_body
                         node('Op1_?', me.ln, '?',
                             node('Var', me.ln, '_var_'..me.n)),
                         --node('Nothing', me.ln),
-                        node('Await', me.ln,
-                            node('Op1_*', me.ln, '*',
-                                node('Var', me.ln, '_var_'..me.n)),
-                            false,
-                            false),
+                        SET_AWAIT,
                         node('Nothing', me.ln))
 
         return node('Stmts', me.ln, dcl, set, if_)
@@ -1339,6 +1347,18 @@ me.blk_body = me.blk_body or blk_body
 
         elseif tag == 'lua' then
             return node('Set', me.ln, op, tag, fr, to)
+
+        elseif tag == '__recurse' then
+            local rec = AST.asr(me,'_Set', 4,'_Recurse')
+            assert(op == '=', 'bug found')
+            rec[#rec+1] = to;
+            return rec
+
+        elseif tag == '__loop-rec' then
+            local rec = AST.asr(me,'_Set', 4,'_LoopRec')
+            assert(op == '=', 'bug found')
+            rec[#rec+1] = to;
+            return rec
 
         else
             error 'not implemented'

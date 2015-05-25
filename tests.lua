@@ -2780,7 +2780,304 @@ escape ret;
     run = 32,
 }
 
-error 'no returns yet from recurse'
+Test { [[
+input void OS_START;
+
+data Widget with
+    tag NIL;
+or
+    tag V with
+        var int v;
+    end
+or
+    tag ROW with
+        var Widget* w1;
+        var Widget* w2;
+    end
+end
+
+par/or do
+    await 21s;
+with
+    pool Widget[] widgets;
+    widgets = new Widget.ROW(
+                    Widget.V(10),
+                    Widget.V(20));
+
+    var int ret =
+        loop/rec widget in widgets do
+            watching widget do
+                if widget:V then
+                    await (widget:V.v)s;
+                    escape widget:V.v;
+
+                else/if widget:ROW then
+                    var int v1, v2;
+                    par/and do
+                        v1 = recurse widget:ROW.w1;
+                    with
+                        v2 = recurse widget:ROW.w2;
+                    end
+                    escape v1 + v2;
+
+                else
+                    _ceu_out_assert(0, "not implemented");
+                end
+            end
+            escape 0;
+        end;
+    escape ret;
+end
+
+escape 0;
+]],
+    _ana = {acc=true},
+    wrn = true,
+    run = {['~>21s;'] = 30},
+}
+
+Test { [[
+input void OS_START;
+
+data Widget with
+    tag NIL;
+or
+    tag EMPTY;
+or
+    tag ROW with
+        var Widget* w1;
+        var Widget* w2;
+    end
+end
+
+par/or do
+    await OS_START;
+with
+    pool Widget[] widgets;
+    widgets = new Widget.ROW(
+                    Widget.EMPTY(),
+                    Widget.EMPTY());
+
+    loop/rec widget in widgets do
+        watching widget do
+            if widget:NIL then
+                await FOREVER;
+            else/if widget:EMPTY then
+                await FOREVER;
+
+            else/if widget:ROW then
+                loop do
+                    par/or do
+                        var int ret = recurse widget:ROW.w1;
+                        if ret == 0 then
+                            await FOREVER;
+                        end
+                    with
+                        var int ret = recurse widget:ROW.w2;
+                        if ret == 0 then
+                            await FOREVER;
+                        end
+                    end
+                end
+
+            else
+                _ceu_out_assert(0, "not implemented");
+            end
+        end
+    end
+end
+
+escape 1;
+]],
+    _ana = {acc=true},
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+
+data List with
+    tag NIL;
+or
+    tag EMPTY;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[] l;
+l = new List.CONS(1, List.EMPTY());
+native @nohold _printf();
+_printf("l = %p %p\n", l, l:CONS.tail);
+
+par/or do
+    loop/rec e in l do
+        watching e do
+            if e:EMPTY then
+_printf("this-empty = %p\n", __STK_ORG);
+                await FOREVER;
+
+            else/if e:CONS then
+                loop do
+_printf("this-cons = %p\n", __STK_ORG);
+                    recurse e:CONS.tail;
+                end
+            else
+                _ceu_out_assert(0, "1");
+            end
+        end
+    end
+with
+    await OS_START;
+end
+
+escape 1;
+]],
+    _ana = {acc=true},
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+
+data Widget with
+    tag NIL;
+or
+    tag EMPTY;
+or
+    tag SEQ with
+        var Widget* w1;
+        var Widget* w2;
+    end
+end
+
+var int ret = 0;
+
+par/or do
+    pool Widget[] widgets;
+    widgets = new Widget.SEQ(
+                Widget.EMPTY(),
+                Widget.EMPTY());
+
+    loop/rec widget in widgets with
+        var int param = 1;
+    do
+        ret = ret + param;
+
+        watching widget do
+            if widget:EMPTY then
+                await FOREVER;
+
+            else/if widget:SEQ then
+                loop do
+                    par/or do
+                        recurse widget:SEQ.w1 with
+                            this.param = param + 1;
+                        end;
+if widget:SEQ.w1:NIL then
+    await FOREVER;
+end
+                    with
+                        recurse widget:SEQ.w2 with
+                            this.param = param + 1;
+                        end;
+if widget:SEQ.w2:NIL then
+    await FOREVER;
+end
+                    end
+                end
+
+            else
+                _ceu_out_assert(0, "not implemented");
+            end
+        end
+    end
+with
+    await OS_START;
+    _printf("ret = %d\n", ret);
+end
+
+escape ret;
+]],
+    _ana = { acc=true },
+    wrn = 'line 57 : unbounded recursive spawn',
+    run = 5,
+}
+
+Test { [[
+input void OS_START;
+
+data Widget with
+    tag NIL;
+or
+    tag EMPTY;
+or
+    tag SEQ with
+        var Widget* w1;
+        var Widget* w2;
+    end
+end
+
+pool Widget[] widgets;
+widgets = new Widget.SEQ(
+            Widget.EMPTY(),
+            Widget.EMPTY());
+
+var int ret = 0;
+
+par/or do
+    loop/rec widget in widgets with
+        var int param = 1;
+    do
+        ret = ret + param;
+
+        watching widget do
+            if widget:EMPTY then
+                await FOREVER;
+
+            else/if widget:SEQ then
+                loop do
+                    par/or do
+                        recurse widget:SEQ.w1 with
+                            this.param = param + 1;
+                        end;
+if widget:SEQ.w1:NIL then
+_ceu_out_assert(0, "ok\n");
+    await FOREVER;
+end
+                    with
+                        recurse widget:SEQ.w2 with
+                            this.param = param + 1;
+                        end;
+if widget:SEQ.w2:NIL then
+_ceu_out_assert(0, "ok\n");
+    await FOREVER;
+end
+                    end
+                end
+
+            else
+                _ceu_out_assert(0, "not implemented");
+            end
+        end
+    end
+with
+    await OS_START;
+    _printf("ret = %d\n", ret);
+end
+
+escape ret;
+]],
+    _ana = { acc=true },
+    wrn = 'line 57 : unbounded recursive spawn',
+    run = 5,
+}
+
+error'TODO'
 Test { [[
 data List with
     tag NIL;
@@ -2821,7 +3118,7 @@ with
     escape 1;
 with
     var List* old = await l:CONS.tail:CONS.tail;
-    _ceu_out_assert(old:CONS.head == 3);
+    _ceu_out_assert(old:CONS.head == 3, "x");
     ret = ret + l:CONS.tail:CONS.tail:NIL;          // 4+5+1
     ret = ret + old:CONS.head;                      // 4+5+1+3
 
@@ -2838,101 +3135,6 @@ escape ret;
 ]],
     _ana = {acc=true},
     run = 26,
-}
-
-Test { [[
-input void OS_START;
-
-data Widget with
-    tag NIL;
-or
-    tag EMPTY;
-or
-    tag ROW with
-        var Widget* w1;
-        var Widget* w2;
-    end
-end
-
-par/or do
-    await OS_START;
-with
-    pool Widget[] widgets;
-    widgets = new Widget.ROW(
-                    Widget.EMPTY(),
-                    Widget.EMPTY());
-
-    loop/rec widget in widgets do
-        watching widget do
-            if widget:NIL then
-                await FOREVER;
-            else/if widget:EMPTY then
-                await FOREVER;
-
-            else/if widget:ROW then
-                loop do
-                    par/or do
-                        recurse widget:ROW.w1;
-                    with
-                        recurse widget:ROW.w2;
-                    end
-                end
-
-            else
-                _ceu_out_assert(0, "not implemented");
-            end
-        end
-    end
-end
-
-escape 1;
-]],
-    _ana = {acc=true},
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-input void OS_START;
-
-data List with
-    tag NIL;
-or
-    tag EMPTY;
-or
-    tag CONS with
-        var int   head;
-        var List* tail;
-    end
-end
-
-pool List[] l;
-l = new List.CONS(1, List.EMPTY());
-
-par/or do
-    loop/rec e in l do
-        watching e do
-            if e:EMPTY then
-                await FOREVER;
-
-            else/if e:CONS then
-                loop do
-                    recurse e:CONS.tail;
-                end
-            else
-                _ceu_out_assert(0, "1");
-            end
-        end
-    end
-with
-    await OS_START;
-end
-
-escape 1;
-]],
-    _ana = {acc=true},
-    wrn = true,
-    run = 1,
 }
 
 do return end

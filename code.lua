@@ -818,7 +818,7 @@ _STK.trl = &_STK_ORG->trls[ ]]..stmts.trails[1]..[[ ];
                     CASE(me, var.lbl_fin_kill)
                     LINE(me, [[
 /*  FINALIZE ADT */
-_STK.trl->evt = CEU_IN__STK;
+_STK.trl->evt = CEU_IN__CLEAR;
 _STK.trl->lbl = ]]..var.lbl_fin_free.id..[[;
 _STK.trl->stk = _ceu_go->stki;
 
