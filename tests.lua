@@ -3210,6 +3210,49 @@ escape ret;
     run = 9,
 }
 
+Test { [[
+class T with
+do
+end
+
+var T*? t = spawn T;
+if not t? then
+    escape 10;
+end
+
+escape 1;
+]],
+    run = 10,
+}
+
+Test { [[
+class T with
+do
+    await FOREVER;
+end
+
+var T*? t = spawn T;
+if not t? then
+    escape 10;
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+do
+end
+
+var T*? t = spawn T;
+await *t;
+escape 1;
+]],
+    asr = 'runtime error: invalid tag',
+}
+
 do return end
 
 ----------------------------------------------------------------------------

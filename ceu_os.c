@@ -199,18 +199,29 @@ void ceu_sys_org (tceu_org* org, int n, int lbl, int seqno,
 #endif
 
 #ifdef CEU_ORGS
-void ceu_sys_org_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_org* org)
+void ceu_sys_org_kill_free (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_org* org)
 {
 #if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_WATCHING)
-    if (!org->isAlive)
-        return;
     org->isAlive = 0;
 #endif
 
-    /* clear continuations from the stack */
-/*
-    stack_rem(*_ceu_go,org);
-*/
+#if 0
+#ifdef CEU_ORGS_NEWS
+    /* HACK_9:
+     * IN__STK on top: possibly "org" has just been spawned and is now being 
+     * killed before the continuation.
+     * In this case, we save it in "evto" (TODO: this is just a spare field in 
+     * IN__STK) to allow the continuation to know that it has being killed.
+     */
+    if (org->isDyn) {
+        if (stack_top(*_ceu_go).evt == CEU_IN__STK) {
+            stack_top(*_ceu_go).evto = org;
+        } else {
+            stack_top(*_ceu_go).evto = NULL;
+        }
+    }
+#endif
+#endif
 
     /* awake listeners after clear (this is a stack!) */
 #ifdef CEU_ORGS_WATCHING
@@ -222,25 +233,28 @@ void ceu_sys_org_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_org* org)
                  stk.trl  = &_ceu_app->data->trls[0];
                  stk.stop = NULL;
                  stk.evt_sz = sizeof(org);
-        stack_push(*_ceu_go, stk, &org);    /* continue after it */
+        stack_push(*_ceu_go, stk, &org);
             /* param "org" is pointer to what to kill */
     }
 #endif
 
-    /* clear org trails before the listeners (this is a stack!) */
-#ifdef CEU_CLEAR
-    {
-        tceu_stk stk;
-                 stk.evt    = CEU_IN__CLEAR;
-                 stk.org    = org;
-                 stk.trl    = &org->trls[0];
-                 stk.stop   = &org->trls[org->n];
-                 stk.evt_sz = 0;
-        stack_push(*_ceu_go, stk, NULL);    /* continue after it */
-    }
-#endif
-
+    /* free org */
 #ifdef CEU_ORGS_NEWS
+#if 0
+    if (org->isDyn) {
+#if    defined(CEU_ORGS_NEWS_POOL) && !defined(CEU_ORGS_NEWS_MALLOC)
+        ceu_pool_free((tceu_pool*)org->pool, (byte*)org);
+#elif  defined(CEU_ORGS_NEWS_POOL) &&  defined(CEU_ORGS_NEWS_MALLOC)
+        if (org->pool->queue == NULL) {
+            ceu_sys_realloc(org, 0);
+        } else {
+            ceu_pool_free((tceu_pool*)org->pool, (byte*)org);
+        }
+#elif !defined(CEU_ORGS_NEWS_POOL) &&  defined(CEU_ORGS_NEWS_MALLOC)
+        ceu_sys_realloc(org, 0);
+#endif
+    }
+#else
     if (org->isDyn) {
         /* 1: re-link PRV <-> NXT */
         org->prv->nxt = org->nxt;
@@ -269,7 +283,8 @@ void ceu_sys_org_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_org* org)
             }
         }
     }
-#endif  /* CEU_ORGS_NEWS */
+#endif /* 0/1 */
+#endif /* CEU_ORGS_NEWS */
 }
 #endif
 
@@ -511,8 +526,16 @@ printf("STACK[%d]: evt=%d : seqno=%d : ntrls=%d\n",
                                 ((tceu_org_lnk*)CUR_ORG)->lnk : 0
                               ];
 
-                    if (CUR.evt==CEU_IN__CLEAR && CUR_ORG->n!=0) {
-                        ceu_sys_org_kill(app, &go, CUR_ORG);
+                    if (CUR.evt==CEU_IN__CLEAR && CUR_ORG->n!=0)
+                    {
+                        /* should not come back to this level as it was a
+                         * bounded CLEAR on the given ORG */
+#ifdef CEU_CLEAR
+                        if (STK.stop == (void*)CUR_ORG) {
+                            stack_pop(go);
+                        }
+#endif
+                        ceu_sys_org_kill_free(app, &go, CUR_ORG);
                     }
 
                     /* next org */
@@ -637,15 +660,6 @@ if (STK.trl->evt==CEU_IN__ORG) {
             break;      /* reaction has terminated */
         }
         stack_pop(go);
-
-#if 0
-#ifdef CEU_ORGS
-        if (STK_ORG==NULL) {
-            STK.org = app->data;    /* aborted org: restart */
-            STK.trl = &app->data->trls[0];
-        }
-#endif
-#endif
     }
 
 _CEU_GO_QUIT_:;

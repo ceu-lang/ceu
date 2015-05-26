@@ -160,7 +160,7 @@ function CLEAR_BEF (me)
     /* trails[1] points to ORG blk ("clear trail") */
     _STK.trl->evt = CEU_IN__STK;
     _STK.trl->stk = _ceu_go->stki;  /* level of the push above */
-                    /* HACK_8: not remover by the IN__CLEAR below */
+                    /* HACK_8: not removed by the IN__CLEAR below */
     _STK.trl->lbl = ]]..me.lbl_clr.id..[[;
 }
 {
@@ -349,9 +349,20 @@ _STK_ORG->cls = ]]..me.n..[[;
         -- inside the scheduler. However, we could call the "free" from here
         -- because all trails are already clean at this point.
         -- (but remeber that the "free" should be delayed)
+
         LINE(me, [[
 #ifdef CEU_ORGS
-ceu_sys_org_kill(_ceu_app, _ceu_go, _STK_ORG);
+#ifdef CEU_CLEAR
+{
+    tceu_stk stk;
+             stk.evt    = CEU_IN__CLEAR;
+             stk.org    = _STK_ORG;
+             stk.trl    = &_STK_ORG->trls[0];
+             stk.stop   = _STK_ORG;
+             stk.evt_sz = 0;
+    stack_push(*_ceu_go, stk, NULL);    /* continue after it */
+}
+#endif
 #endif
 ]])
 
@@ -359,7 +370,7 @@ ceu_sys_org_kill(_ceu_app, _ceu_go, _STK_ORG);
         if me == MAIN then
             HALT(me, 'RET_QUIT')
         else
-            HALT(me)
+            HALT(me, 'RET_RESTART')
         end
     end,
 
@@ -542,7 +553,16 @@ _STK.trl->lbl = ]]..me.lbl.id..[[;
 _STK.trl->stk = _ceu_go->stki;
 #endif
 
-ceu_sys_org_kill(_ceu_app, _ceu_go, (tceu_org*)]]..V(org)..[[);
+{
+    tceu_org* __ceu_org = (tceu_org*)]]..V(org)..[[;
+    tceu_stk stk;
+             stk.evt    = CEU_IN__CLEAR;
+             stk.org    = __ceu_org;
+             stk.trl    = &__ceu_org->trls[0];
+             stk.stop   = __ceu_org;
+             stk.evt_sz = 0;
+    stack_push(*_ceu_go, stk, NULL);    /* continue after it */
+}
 
 #if defined(CEU_CLEAR) || defined(CEU_ORGS_WATCHING)
 return RET_RESTART;
@@ -623,6 +643,22 @@ case ]]..me.lbl.id..[[:;
     }
 /*}*/
 ]])
+        if set then
+            local set_to = set[4]
+            LINE(me, [[
+#if 0
+/* HACK_9: see ceu_os.c */
+if (]]..V(set_to)..[[.tag != ]]..string.upper(TP.toc(set_to.tp.opt))..[[_NIL) {
+    tceu_stk* stk = &stack_geti(*_ceu_go, stack_nxti(*_ceu_go));
+    if (stk->evt==CEU_IN__STK && stk->evto==]]..V(set_to)..[[.SOME.v) {
+        ]]..V(set_to)..' = '..              
+            string.upper(TP.toc(set_to.tp.opt))..[[_pack(NULL);
+    }
+}
+#endif
+]])
+        end
+
     end,
 
     Block_pre = function (me)
