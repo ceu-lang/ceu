@@ -505,6 +505,8 @@ typedef struct tceu_go {
 }
 #endif
 
+#define stack_prv(go)                                   \
+    ((go).stki - stack_top(go).stk_prv)
 #define stack_pop(go)                                   \
     ceu_out_assert((go).stki>=0, "stack underflow");    \
     (go).stki -= stack_top(go).stk_prv;

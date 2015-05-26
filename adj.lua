@@ -527,10 +527,10 @@ me.blk_body = me.blk_body or blk_body
         ASR(cls, me, '`recurse´ without `loop/rec´')
 
         local SET_AWAIT = node('Await', me.ln,
-                        node('Op1_*', me.ln, '*',
-                            node('Var', me.ln, '_var_'..me.n)),
-                        false,
-                        false)
+                            node('Op1_*', me.ln, '*',
+                                node('Var', me.ln, '_var_'..me.n)),
+                            false,
+                            false)
         if ret then
             SET_AWAIT = node('_Set', me.ln, ret, '=', 'await', SET_AWAIT)
         end
@@ -594,7 +594,8 @@ me.blk_body = me.blk_body or blk_body
                                                             node('Op1_cast', 
                                                                 me.ln,
                                                                 node('Type', me.ln, '_tceu_org', 1, false, false),
-                                                                    node('Var', me.ln, '_var_'..me.n))))))))), SET_AWAIT)),
+                                                                    node('Var', me.ln, '_var_'..me.n))))))))),
+                                SET_AWAIT)),
                         node('Block', me.ln,
                             node('Stmts', me.ln,
                                 node('Nothing', me.ln))))
@@ -1197,20 +1198,20 @@ me.blk_body = me.blk_body or blk_body
         local var = e or dt     -- TODO: hacky
         local tst = node('_TMP_AWAIT', me.ln, var)
 
-        local SET = node('Nothing', me.ln)
+        local SET_ORG = node('Nothing', me.ln)
         if stmt.tag == 'Set' then
             local to = AST.asr(stmt,'Set', 4,'VarList', 1,'Var')
-            SET = node('Set', me.ln, '=', 'exp',
-                    node('Op1_cast', me.ln,
-                        node('Type', me.ln, 'int', 0, false, false),
-                        node('Op2_.', me.ln, '.',
-                            node('Op1_*', me.ln, '*',
-                                node('Op1_cast', me.ln,
-                                    node('Type', me.ln, '_tceu_org', 1, false, false),
-                                    node('Op1_&', me.ln, '&',
-                                        AST.copy(var)))),
-                            'ret')),
-                    AST.copy(to))
+            SET_ORG = node('Set', me.ln, '=', 'exp',
+                        node('Op1_cast', me.ln,
+                            node('Type', me.ln, 'int', 0, false, false),
+                            node('Op2_.', me.ln, '.',
+                                node('Op1_*', me.ln, '*',
+                                    node('Op1_cast', me.ln,
+                                        node('Type', me.ln, '_tceu_org', 1, false, false),
+                                        node('Op1_&', me.ln, '&',
+                                            AST.copy(var)))),
+                                'ret')),
+                        AST.copy(to))
         end
 
         return
@@ -1286,7 +1287,7 @@ me.blk_body = me.blk_body or blk_body
                         node('Block', me.ln,
                             node('Stmts', me.ln,
                                 node('Nothing', me.ln)))),
-                    SET))
+                    SET_ORG))
     end,
 
     Await_pre = function (me)

@@ -1614,8 +1614,6 @@ class Body with
     var   int&    sum;
     event int     ok;
 do
-_printf("spawn\n");
-_printf("IN %p\n", bodies)
     finalize with end;
 
     var Body* nested =
@@ -1635,7 +1633,6 @@ end
 pool Body[2] bodies;
 var  int     sum = 0;
 
-_printf("OUT %p\n", bodies)
     finalize with end;
 
 do Body with
@@ -1884,7 +1881,6 @@ escape sum;
 - colocar de volta recurse que ja estao nos testes (comentados)
 - testar pool dinamico indo fora de escopo (valgrind)
 - testar tb watching c/ adt estatico
-- escape dentro de loop/adt
 - bounded iters
 - ADT loop w/o recurse (how to recognize the transformation to do?)
 - loop dentro de loop
@@ -1928,7 +1924,33 @@ end
 ]],
     run = 1,
 }
---]===]
+
+Test { [[
+data Widget with
+    tag NIL;
+or
+    tag ROW with
+        var Widget* w1;
+    end
+end
+
+pool Widget[] widgets;
+loop/rec widget in widgets do
+    watching widget do
+        var int v1 = recurse widget:ROW.w1;
+    end
+end
+
+escape 0;
+]],
+    _ana = {acc=true},
+    wrn = true,
+    run = {['~>21s;'] = 30},
+}
+
+do return end
+
+-- ALL BELOW IS OK
 
 -- leaks memory because of lost "free" in IN__STK
 Test { [[
@@ -3146,6 +3168,7 @@ do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
+--]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -11759,9 +11782,21 @@ Test { [[
 input int A,B;
 var int ret;
 par/or do
-    par/or do await A; with await B; end;
-    par/or do await A; with await B; end;
-    par/or do ret=await A; with ret=await B; end;
+    par/or do
+        await A;
+    with
+        await B;
+    end;
+    par/or do
+        await A;
+    with
+        await B;
+    end;
+    par/or do
+        ret=await A;
+    with
+        ret=await B;
+    end;
 with
     await B;
     await B;
@@ -40099,7 +40134,6 @@ do
         v = spawn V;
         break;
     end
-    _printf("-U\n");
 end
 
 class T with
@@ -40108,10 +40142,8 @@ do
     watching *u do
         await OS_START;
         emit u:x;
-        _printf("noooooooo\n");
         _assert(0);
     end
-    _printf("-T\n");
 end
 
 do
@@ -40119,9 +40151,7 @@ do
     var T t with
         this.u = &u;
     end;
-_printf("ANTES\n");
     await OS_START;
-_printf("DEPOIS\n");
 end
 
 escape 10;
@@ -45867,6 +45897,7 @@ escape ret;
 --]=]
 
 -- TIMEMACHINE
+do return end
 
 local t = {
     [1] = [[

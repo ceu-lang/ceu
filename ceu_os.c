@@ -616,7 +616,11 @@ if (STK.trl->evt==CEU_IN__ORG) {
             /* DON'T EXECUTE THIS TRAIL */
             else
             {
-                if (STK.evt == CEU_IN__CLEAR) {
+                if (STK.evt==CEU_IN__CLEAR &&
+                    !(STK.trl->evt==CEU_IN__STK && STK.trl->stk==stack_prv(go))
+                        /* HACK_8: do not clear the clear continuation */
+                   )
+                {
                     STK.trl->evt = CEU_IN__NONE;    /* trail cleared */
                 }
             }

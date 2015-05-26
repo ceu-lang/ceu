@@ -147,20 +147,21 @@ function CLEAR_BEF (me)
     end
 ]]
 
-    --LINE(me, 'ceu_trails_clr('..me.trails[1]..','..me.trails[2]..
-                                --', _STK_ORG);')
-
     LINE(me, [[
 {
+    /* dummy event to restore the current trail after the clear */
+    /* after the push, only this trail will be at that level */
+    tceu_stk stk        = _STK;
+             stk.evt    = CEU_IN__STK;
+             stk.evt_sz = 0;
+    stack_push(*_ceu_go, stk, NULL);
+
     /* save the continuation to run after the clear */
     /* trails[1] points to ORG blk ("clear trail") */
-    tceu_trl* trl = &_STK_ORG->trls[ ]]..me.trails[1]..[[ ];
-    _STK.trl = trl;  /* after the clear stk level pops, retry from here */
-                     /* TODO(speed): retry from trails[2] because all will be 0 */
-    trl->evt = CEU_IN__STK;
-    trl->stk = _ceu_go->stki;
-       /* awake in the same level as we are now (-1 vs the clear push below) */
-    trl->lbl = ]]..me.lbl_clr.id..[[;
+    _STK.trl->evt = CEU_IN__STK;
+    _STK.trl->stk = _ceu_go->stki;  /* level of the push above */
+                    /* HACK_8: not remover by the IN__CLEAR below */
+    _STK.trl->lbl = ]]..me.lbl_clr.id..[[;
 }
 {
     /* clear from start->stop */
@@ -169,7 +170,7 @@ function CLEAR_BEF (me)
 #ifdef CEU_ORGS
              stk.org  = _STK_ORG;
 #endif
-             stk.trl  = &_STK_ORG->trls[ ]]..(me.trails[1]+1)..[[ ];
+             stk.trl  = &_STK_ORG->trls[ ]]..(me.trails[1])..[[ ];
              stk.stop = &_STK_ORG->trls[ ]]..(me.trails[2]+1)..[[ ];
              stk.evt_sz = 0;
     stack_push(*_ceu_go, stk, NULL);
@@ -1259,7 +1260,9 @@ if (]]..nxt..[[ > 0) {
             LINE(me, [[
 /* switch to 1st trail */
 /* TODO: only if not joining with outer prio */
+/*
 _STK.trl = &_STK_ORG->trls[ ]]..me.trails[1]..[[ ];
+*/
 ]])
         end
     end,
@@ -1477,9 +1480,10 @@ case ]]..me.lbl_cnt.id..[[:;
         local no = '_CEU_NO_'..me.n..'_'
 
         LINE(me, [[
+    _STK.trl->seqno = _ceu_app->seqno;  /* not reset with retry */
 ]]..no..[[:
-    _STK.trl->evt = ]]..(e.ifc_idx or e.var.evt.idx)..[[;
-    _STK.trl->lbl = ]]..me.lbl.id..[[;
+    _STK.trl->evt   = ]]..(e.ifc_idx or e.var.evt.idx)..[[;
+    _STK.trl->lbl   = ]]..me.lbl.id..[[;
 ]])
         HALT(me)
 
@@ -1513,12 +1517,17 @@ ceu_out_wclock]]..suf..[[(_ceu_app, (s32)]]..V(dt)..[[, &]]..val..[[, NULL);
 
         LINE(me, [[
 ]]..(no and no..':' or '')..[[
-    _STK.trl->evt = CEU_IN_]]..e.evt.id..suf..[[;
-    _STK.trl->lbl = ]]..me.lbl.id..[[;
+    _STK.trl->evt   = CEU_IN_]]..e.evt.id..suf..[[;
+    _STK.trl->lbl   = ]]..me.lbl.id..[[;
+    _STK.trl->seqno =
 ]])
         if e.evt.id == '_ok_killed' then
             LINE(me, [[
-    _STK.trl->seqno = _ceu_app->seqno-1;   /* always ready to awake */
+        _ceu_app->seqno-1;   /* always ready to awake */
+]])
+        else
+            LINE(me, [[
+        _ceu_app->seqno;
 ]])
         end
         HALT(me)

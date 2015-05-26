@@ -825,7 +825,11 @@ F = {
             stmts[3] = AST.node('Nothing', me.ln)       -- remove OPT-2
             stmts[4] = AST.node('Nothing', me.ln)       -- remove OPT-3
         end
+
+        --AST.asr(stmts,'', 1,'_TMP_AWAIT')
+        --stmts[1] = AST.node('Nothing', me.ln)   -- remove myself
         me.tag = 'Nothing'
+        --me[1] = nil
     end,
 
     Await = function (me)

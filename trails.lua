@@ -50,7 +50,6 @@ F = {
         -- var  T b;
         -- First execute a, then all ts, then b.
 
-        me.needs_clear_trail = false
         for i=1, #me.vars do
             local var = me.vars[i]
 
@@ -60,9 +59,7 @@ F = {
 
             if var.adt and var.pre=='pool' then
                 me.trails_n = me.trails_n + 1
-                me.needs_clear_trail = true
             elseif var.cls then
-                me.needs_clear_trail = true
                 me.trails_n = me.trails_n + 1   -- ORG_POOL_I/ORG_STATS_I
                 var.trl_orgs_first = true       -- avoids repetition in initialization of STATS
 
@@ -78,9 +75,6 @@ F = {
                     end
                 end
             end
-        end
-        if me.needs_clear_trail then
-            me.trails_n = me.trails_n + 1           -- CLR
         end
 
         if me.fins then
@@ -129,22 +123,12 @@ G = {
 
         local t0 = me.trails[1]
 
-        -- [ CLR | ORG_STATS | ORG_POOL_I | STMTS | FIN ]
-        -- clear trail
+        -- [ ORG_STATS | ORG_POOL_I | STMTS | FIN ]
         -- pointer to all static orgs
         -- pointers to each of the pools
         -- statements
         -- finalization
 
-        if me.needs_clear_trail then
-            t0 = t0 + 1                             -- CLR
-                -- TODO: remove the "clear trail"
-                -- required to have any trail *before* the orgs
-                -- so that we can clear the whole block and continue
-                -- from this trail
-                -- if we use a trail in the middle of the block, it will
-                -- also be cleared and hence not continue execution
-        end
         for i=1, #me.vars do
             local var = me.vars[i]
 
