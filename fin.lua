@@ -268,10 +268,11 @@ end
 
         -- invalid access!
         ASR(false, me, 1107, 'pointer access across `await´')
+-- TODO: across emit/await
     end,
 
     Await = function (me)
-        if me.tl_awaits then
+        if me.tl_awaits or me.tag=='EmitInt' then
             for var, v in pairs(TRACK[#TRACK]) do
                 if v == 'accessed' then
                     TRACK[#TRACK][var] = me   -- tracks the *first* await
@@ -280,6 +281,7 @@ end
         end
     end,
     AwaitN   = 'Await',
+    EmitInt  = 'Await',
 
     --Block    = 'Await',
     Async_pre  = 'Await',

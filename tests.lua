@@ -1876,6 +1876,52 @@ escape sum;
     run = { ['~>10s']=6 },
 }
 
+-- BUG: cannot contain await nao se aplica a par/or com caminho sem await
+Test { [[
+input void A,F;
+
+interface I with
+    var int v;
+    event void inc;
+end
+
+class T with
+    interface I;
+do
+    await inc;
+    this.v = v + 1;
+    await FOREVER;
+end
+pool T[] ts;
+
+var int ret = 0;
+do
+    par/or do
+        await F;
+    with
+        var int i=1;
+        every 1s do
+            spawn T in ts with
+                this.v = i;
+                i = i + 1;
+            end;
+        end
+    with
+        every 1s do
+            loop i in ts do
+                watching *i do
+                    emit i:inc;
+                    ret = ret + i:v;
+                end
+            end
+        end
+    end
+end
+escape ret;
+]],
+    run = { ['~>3s;~>F'] = 13 },
+}
+
 ---------------
 
 - colocar de volta recurse que ja estao nos testes (comentados)
@@ -1888,6 +1934,27 @@ escape sum;
 - para o par/or vai precisar de um watching do loop de fora no loop de dentro
 
 Test { [[
+event void e;
+
+par/or do
+    await OS_START;
+    emit e;
+with
+    par/or do
+        await e;
+        emit e;
+        emit f;
+    with
+        await f;
+    end
+with
+    await e;
+    escape 1;
+end
+
+
+-- "emit e" on the stack has to die
+Test { [[
 input void OS_START;
 
 event int* e;
@@ -1897,10 +1964,10 @@ par/or do
         var int i = 10;
         par/or do
             await OS_START;
-            emit e => &i;
+            emit e => &i;           // stacked
         with
             var int* pi = await e;
-        end
+        end                         // has to remove from stack
     end
     do
         var int i = 20;
@@ -1908,14 +1975,13 @@ par/or do
         i = i + 1;
     end
 with
-    var int* i = await e;
+    var int* i = await e;           // to avoid awaking here
     escape *i;
 end
 escape 1;
 ]],
     run = 10,
 }
-do return end
 
 -- crashes with org->ret
 Test { [[
@@ -31464,6 +31530,119 @@ escape _V;
     run = 20,
 }
 
+Test { [[
+class T with
+    var int v = 10;
+do
+    await 1s;
+end
+
+input void OS_START;
+event T* e;
+
+var int ret = 1;
+
+par/and do
+    await OS_START;
+    var T*? t = spawn T;
+    emit e => t;
+    ret = ret + t:v;
+with
+    var T* t1 = await e;
+    ret = ret * 2;
+end
+
+escape ret;
+]],
+    --run = { ['~>1s'] = 13 },
+    fin = 'line 16 : pointer access across `await´',
+}
+
+Test { [[
+class T with
+    var int v = 10;
+do
+    await 1s;
+end
+
+input void OS_START;
+event T* e;
+
+var int ret = 1;
+
+par/and do
+    await OS_START;
+    var T*? t = spawn T;
+    watching *t do
+        emit e => t;
+        ret = ret + t:v;
+        await *t;
+        ret = ret + 1;
+    end
+with
+    var T* t1 = await e;
+    ret = ret * 2;
+end
+
+escape ret;
+]],
+    run = { ['~>1s'] = 12 },
+}
+
+Test { [[
+class T with
+    var int v = 10;
+do
+    await FOREVER;
+end
+
+var T*? t = spawn T;
+finalize with
+    kill *t;
+end
+
+escape 10;
+]],
+    props = 'line 9 : not permitted inside `finalize´',
+}
+
+Test { [[
+class T with
+    var int v = 10;
+do
+    await FOREVER;
+end
+
+input void OS_START;
+event T* e;
+
+var int ret = 1;
+
+native @pure _printf();
+
+par/and do
+    await OS_START;
+    var T*? t = spawn T;
+    ret = ret * 2;
+    watching *t do
+        emit e => t;
+        ret = ret + t:v;
+        await *t;
+        ret = -1;
+    end
+    ret = ret * 2;
+with
+    var T* t1 = await e;
+    ret = ret + t1:v;
+    kill *t1;
+    ret = ret + 1;
+end
+
+escape ret;
+]],
+    run = 25,
+}
+
 -- DO T
 
 Test { [[
@@ -34443,8 +34622,11 @@ do
     end;
     async do end;
     loop t in ts do
-        emit t:e;
-        ret = ret + t:v;
+        watching *t do
+            ret = ret + t:v;
+            emit t:e;
+            ret = ret + t:v;
+        end
     end
 end
 escape ret;
@@ -36140,13 +36322,16 @@ do
     end;
 
     loop i in ts do
-        emit i:inc;
         ret = ret + i:v;
+        watching *i do
+            emit i:inc;
+            ret = ret + i:v;
+        end
     end
 end
 escape ret;
 ]],
-    run = 7,
+    run = 13,
     --run = 10,
 }
 
@@ -36180,10 +36365,13 @@ do
             end;
         end
     with
-        every 1s do
+        loop do
+            await 1s;
             loop i in ts do
-                emit i:inc;
-                ret = ret + i:v;
+                watching *i do
+                    emit i:inc;
+                    ret = ret + i:v;
+                end
             end
         end
     end
@@ -38753,7 +38941,7 @@ escape ret;
 ]],
     run = {
         ['100~>I; ~>1s'] = -5,
-        ['1000~>I; ~>1s'] = 5,
+        ['1000~>I; ~>1s'] = -5,
         ['1001~>I; ~>1s'] = 5,
     }
 }
@@ -39139,7 +39327,7 @@ watching *u do
 end
 escape 2;
 ]],
-    fin = 'line 12 : pointer access across `await´',
+    fin = 'line 11 : pointer access across `await´',
 }
 
 Test { [[
@@ -39176,7 +39364,7 @@ end
 
 escape 1;
 ]],
-    fin = 'line 10 : pointer access across `await´',
+    fin = 'line 9 : pointer access across `await´',
 }
 
 Test { [[
@@ -39236,7 +39424,7 @@ end
 
 escape 1;
 ]],
-    fin = 'line 12 : pointer access across `await´',
+    fin = 'line 10 : pointer access across `await´',
 }
 
 Test { [[
@@ -39280,7 +39468,7 @@ do
 end
 
 event T* e;
-var int ret = 0;
+var int ret = 1;
 
 par/and do
     async do end;
@@ -39293,7 +39481,7 @@ with
     var T* p = await e;
     watching *p do
         finalize with
-            if ret == 0 then
+            if ret == 1 then
                 ret = -1;
             end
         end
@@ -39304,7 +39492,7 @@ end
 
 escape ret;
 ]],
-    run = { ['~>5s']=-1 },
+    run = { ['~>5s']=1 },
 }
 
 Test { [[
@@ -39314,7 +39502,7 @@ do
 end
 
 event T* e;
-var int ret = 0;
+var int ret = 1;
 
 par/and do
     async do end;
@@ -39327,7 +39515,7 @@ with
     var T* p = await e;
     watching *p do
         finalize with
-            if ret == 0 then
+            if ret == 1 then
                 ret = -1;
             end
         end
@@ -39338,7 +39526,7 @@ end
 
 escape ret;
 ]],
-    run = { ['~>5s']=-1 },
+    run = { ['~>5s']=1 },
     safety = 2,
 }
 
@@ -39349,7 +39537,7 @@ do
 end
 
 event T* e;
-var int ret = 0;
+var int ret = 1;
 
 par/and do
     async do end;
@@ -39361,7 +39549,7 @@ with
     var T* p = await e;
     watching *p do
         finalize with
-            if ret == 0 then
+            if ret == 1 then
                 ret = -1;
             end
         end
@@ -39372,7 +39560,7 @@ end
 
 escape ret;
 ]],
-    run = { ['~>5s']=-1 },
+    run = { ['~>5s']=1 },
 }
 
 Test { [[
@@ -39500,7 +39688,7 @@ do
 end
 
 event T* e;
-var int ret = 0;
+var int ret = 1;
 
 par/and do
     async do end;
@@ -39514,7 +39702,7 @@ with
     var T* p = await e;
     watching *p do
         finalize with
-            if ret == 0 then
+            if ret == 1 then
                 ret = -1;
             end
         end
@@ -39525,7 +39713,7 @@ end
 
 escape ret;
 ]],
-    run = { ['~>1s;~>1s;~>1s;~>1s;~>1s']=-1 },
+    run = { ['~>1s;~>1s;~>1s;~>1s;~>1s']=1 },
 }
 
 Test { [[
@@ -39535,7 +39723,7 @@ do
 end
 
 event T* e;
-var int ret = 0;
+var int ret = 1;
 
 par/and do
     async do end;
@@ -39549,7 +39737,7 @@ with
     watching *p do
         finalize with
             if ret == 0 then
-                ret = -1;
+                ret = 1;
             end
         end
         await 5s;
@@ -39559,7 +39747,7 @@ end
 
 escape ret;
 ]],
-    run = { ['~>1s;~>1s;~>1s;~>1s;~>1s']=-1 },
+    run = { ['~>1s;~>1s;~>1s;~>1s;~>1s']=1 },
 }
 
 Test { [[
@@ -39846,7 +40034,7 @@ watching *u do
 end
 escape 2;
 ]],
-    fin = 'line 10 : pointer access across `await´',
+    fin = 'line 9 : pointer access across `await´',
 }
 Test { [[
 class Unit with
@@ -39890,7 +40078,7 @@ class T with
     event int   ok;
 do
     var Unit* u = await org;
-    var int pos = 0;
+    var int pos = 1;
     watching *u do
         pos = u:pos;
     end
@@ -39911,7 +40099,7 @@ end
 var int v = await t.ok;
 escape v;
 ]],
-    run = { ['~>2s']=10 },
+    run = { ['~>2s']=1 },
 }
 
 Test { [[
@@ -40066,12 +40254,12 @@ watching *ok1 do
     _V = (ok1?) + ok2 + ret;
     escape (ok1?) + ok2 + ret;
 end
-escape _V + 1;
+escape _V + 1;  // this one executes because of strong abortion in the watching
 ]],
     _ana = {
         acc = true,
     },
-    run = 11,
+    run = 12,
 }
 
 Test { [[
@@ -40648,7 +40836,7 @@ do
     this.v = 10;
 end
 
-var int ret = 0;
+var int ret = 1;
 var T*? t = spawn T;
 watching *t do
     finalize with
@@ -40659,7 +40847,7 @@ end
 
 escape ret;
 ]],
-    run = 10,
+    run = 1,
 }
 
 Test { [[

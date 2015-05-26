@@ -300,10 +300,9 @@ me.blk_body = me.blk_body or blk_body
         --      end
         -- becomes
         --      par/or do
-        --          ...     // has the chance to execute/finalize even if
-        --                  // the org terminated just after the spawn
+        --          <v> = await <EVT>;  // strong abortion
         --      with
-        --          <v> = await <EVT>;
+        --          ...                 // no chance to execute on <EVT>
         --      end
         --
         -- TODO: because the order is inverted, if the same error occurs in
@@ -321,10 +320,10 @@ me.blk_body = me.blk_body or blk_body
         end
 
         local ret = node('ParOr', me.ln,
-                        blk,
                         node('Block', me.ln,
                             node('Stmts', me.ln,
-                                set)))
+                                set)),
+                        blk)
         ret.__adj_watching = (e or dt)
         return ret
     end,

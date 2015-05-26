@@ -50,6 +50,7 @@ local NO_fin = {
     Await=true, AwaitN=true,
     EmitInt=true,
     Pause=true,
+    Kill=true,
 }
 
 local NO_async = {
