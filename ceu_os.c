@@ -198,6 +198,81 @@ void ceu_sys_org (tceu_org* org, int n, int lbl, int seqno,
 #define ceu_sys_org(a,b,c,d,e) ceu_sys_org(a,b,c,d,NULL)
 #endif
 
+#ifdef CEU_ORGS
+void ceu_sys_org_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_org* org)
+{
+#if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_WATCHING)
+    if (!org->isAlive)
+        return;
+    org->isAlive = 0;
+#endif
+
+    /* clear continuations from the stack */
+/*
+    stack_rem(*_ceu_go,org);
+*/
+
+    /* awake listeners after clear (this is a stack!) */
+#ifdef CEU_ORGS_WATCHING
+    /* TODO(speed): only if was ever watched! */
+    {
+        tceu_stk stk;
+                 stk.evt  = CEU_IN__ok_killed;
+                 stk.org  = _ceu_app->data;
+                 stk.trl  = &_ceu_app->data->trls[0];
+                 stk.stop = NULL;
+                 stk.evt_sz = sizeof(org);
+        stack_push(*_ceu_go, stk, &org);    /* continue after it */
+            /* param "org" is pointer to what to kill */
+    }
+#endif
+
+    /* clear org trails before the listeners (this is a stack!) */
+#ifdef CEU_CLEAR
+    {
+        tceu_stk stk;
+                 stk.evt    = CEU_IN__CLEAR;
+                 stk.org    = org;
+                 stk.trl    = &org->trls[0];
+                 stk.stop   = &org->trls[org->n];
+                 stk.evt_sz = 0;
+        stack_push(*_ceu_go, stk, NULL);    /* continue after it */
+    }
+#endif
+
+#ifdef CEU_ORGS_NEWS
+    if (org->isDyn) {
+        /* 1: re-link PRV <-> NXT */
+        org->prv->nxt = org->nxt;
+        org->nxt->prv = org->prv;
+
+        /* 2: mark to free
+         * Should be freed if (pool-still-on-scope) or
+         *                    (malloc-ed):
+         * - pool-on-scope: only this org needs to be removed from 
+         * memory (in comparison to *all* the pool, which would not 
+         * require to free this individually)
+         * - malloc-ed: uses external memory, so free it regardless 
+         * of individual or pool termination
+         * TODO: not required if org in a pool that is currently going out of scope
+         */
+        {
+            tceu_org* nxt = _ceu_go->lst_free;
+            org->nxt_free = NULL;    /* no next element */
+            if (_ceu_go->lst_free == NULL) {
+                _ceu_go->lst_free = org;      /* new first element */
+            } else {
+                while (nxt->nxt_free != NULL) {
+                    nxt = nxt->nxt_free; /* find last element */
+                }
+                nxt->nxt_free = org;  /* put after that */
+            }
+        }
+    }
+#endif  /* CEU_ORGS_NEWS */
+}
+#endif
+
 /**********************************************************************/
 
 #ifdef CEU_WCLOCKS
@@ -333,83 +408,6 @@ void ceu_pause (tceu_trl* trl, tceu_trl* trlF, int psed) {
 
 /**********************************************************************/
 
-#ifdef CEU_ORGS
-void ceu_sys_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_org* org)
-{
-#if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_WATCHING)
-    if (!org->isAlive)
-        return;
-    org->isAlive = 0;
-#endif
-
-    /* clear continuations from the stack */
-/*
-    stack_rem(*_ceu_go,org);
-*/
-
-    /* awake listeners after clear (this is a stack!) */
-#ifdef CEU_ORGS_WATCHING
-    /* TODO(speed): only if was ever watched! */
-    {
-        tceu_stk stk;
-                 stk.evt  = CEU_IN__ok_killed;
-                 stk.org  = _ceu_app->data;
-                 stk.trl  = &_ceu_app->data->trls[0];
-                 stk.stop = NULL;
-                 stk.evt_sz = sizeof(org);
-        stack_push(*_ceu_go, stk, &org);    /* continue after it */
-            /* param "org" is pointer to what to kill */
-    }
-#endif
-
-    /* clear org trails before the listeners (this is a stack!) */
-#ifdef CEU_CLEAR
-    {
-        tceu_stk stk;
-                 stk.evt    = CEU_IN__CLEAR;
-                 stk.org    = org;
-                 stk.trl    = &org->trls[0];
-                 stk.stop   = &org->trls[org->n];
-                 stk.evt_sz = 0;
-        stack_push(*_ceu_go, stk, NULL);    /* continue after it */
-    }
-#endif
-
-#ifdef CEU_ORGS_NEWS
-    if (org->isDyn) {
-        /* 1: re-link PRV <-> NXT */
-        org->prv->nxt = org->nxt;
-        org->nxt->prv = org->prv;
-
-        /* 2: mark to free
-         * Should be freed if (pool-still-on-scope) or
-         *                    (malloc-ed):
-         * - pool-on-scope: only this org needs to be removed from 
-         * memory (in comparison to *all* the pool, which would not 
-         * require to free this individually)
-         * - malloc-ed: uses external memory, so free it regardless 
-         * of individual or pool termination
-         * TODO: not required if org in a pool that is currently going out of scope
-         */
-        {
-            tceu_org* nxt = _ceu_go->lst_free;
-            org->nxt_free = NULL;    /* no next element */
-            if (_ceu_go->lst_free == NULL) {
-                _ceu_go->lst_free = org;      /* new first element */
-            } else {
-                while (nxt->nxt_free != NULL) {
-                    nxt = nxt->nxt_free; /* find last element */
-                }
-                nxt->nxt_free = org;  /* put after that */
-            }
-        }
-    }
-#endif  /* CEU_ORGS_NEWS */
-}
-#endif
-
-/**********************************************************************/
-
 u8 CEU_GC = 0;  /* execute __ceu_os_gc() when "true" */
 
 void ceu_sys_go (tceu_app* app, int evt, tceu_evtp evtp)
@@ -514,7 +512,7 @@ printf("STACK[%d]: evt=%d : seqno=%d : ntrls=%d\n",
                               ];
 
                     if (CUR.evt==CEU_IN__CLEAR && CUR_ORG->n!=0) {
-                        ceu_sys_kill(app, &go, CUR_ORG);
+                        ceu_sys_org_kill(app, &go, CUR_ORG);
                     }
 
                     /* next org */

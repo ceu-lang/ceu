@@ -351,7 +351,7 @@ _STK_ORG->cls = ]]..me.n..[[;
         -- (but remeber that the "free" should be delayed)
         LINE(me, [[
 #ifdef CEU_ORGS
-ceu_sys_kill(_ceu_app, _ceu_go, _STK_ORG);
+ceu_sys_org_kill(_ceu_app, _ceu_go, _STK_ORG);
 #endif
 ]])
 
@@ -542,7 +542,7 @@ _STK.trl->lbl = ]]..me.lbl.id..[[;
 _STK.trl->stk = _ceu_go->stki;
 #endif
 
-ceu_sys_kill(_ceu_app, _ceu_go, (tceu_org*)]]..V(org)..[[);
+ceu_sys_org_kill(_ceu_app, _ceu_go, (tceu_org*)]]..V(org)..[[);
 
 #if defined(CEU_CLEAR) || defined(CEU_ORGS_WATCHING)
 return RET_RESTART;
