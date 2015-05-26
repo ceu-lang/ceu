@@ -331,6 +331,9 @@ typedef u8 tceu_nevt;   /* max number of events */
 typedef u8 tceu_ntrl;   /* max number of trails per class */
                         /* TODO: should "u8" be fixed? */
 
+typedef u16 tceu_nstk;  /* max size of internal stack in bytes */
+                        /* TODO: should "u16" be fixed? */
+
 #ifdef __cplusplus
 #define CEU_WCLOCK_INACTIVE 0x7fffffffL     /* TODO */
 #else
@@ -354,7 +357,7 @@ typedef union tceu_trl {
     struct {                    /* TODO(ram): bitfields */
         tceu_nevt evt2;
         tceu_nlbl lbl2;
-        u16       stk;          /* TODO: search for #STK (sizes must match) */
+        tceu_nstk stk;
     };
 
     /* IN__ORG */
@@ -384,7 +387,7 @@ typedef struct tceu_stk {
     u8        evt_sz;
     u8        stk_prv;
 #if defined(CEU_ORGS) && defined(CEU_INTS)
-    void* evto; /* emitting org or adt/org being killed */
+    void* evto; /* emitting org */
 #endif
 
     tceu_trl* trl;  /* trail being traversed */
@@ -477,7 +480,7 @@ typedef struct tceu_go {
         #define CEU_STACK_MAX   (CEU_NTRAILS+1) // current +1 for each trail
         */
     byte stk[CEU_STACK_MAX];
-    int stki;                   /* TODO: search for #STK (sizes must match) */
+    int stki;                   /* TODO: search for tceu_nstk */
 #ifdef CEU_ORGS_NEWS
     tceu_org* lst_free;  /* "to free" list (only on reaction end) */
 #endif
@@ -490,19 +493,22 @@ typedef struct tceu_go {
 #define stack_top(go)    stack_geti((go),(go).stki)
 #define stack_nxti(go)   ((go).stki + stack_szi((go),(go).stki))
 
+#if 0
 #ifdef CEU_ORGS
-#define stack_rem(go,o) {                   \
+#define stack_rem(go,o,e) {                 \
     int i;                                  \
     for (i = 0;                             \
          i < (go).stki-stack_szi((go),(go).stki); \
               /* keep last unchanged */     \
          i += stack_szi(go,i))              \
     {                                       \
-        if (stack_geti(go,i).org == (o)) {  \
+        if (stack_geti(go,i).evto==(o) &&   \
+            stack_geti(go,i).evt ==(e)) {   \
             stack_geti(go,i).org = NULL;    \
         }                                   \
     }                                       \
 }
+#endif
 #endif
 
 #define stack_prv(go)                                   \

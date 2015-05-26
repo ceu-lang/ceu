@@ -586,10 +586,10 @@ me.blk_body = me.blk_body or blk_body
                                             node('CallStmt', me.ln,
                                                     node('Op2_call', me.ln, 
                                                         'call',
-                                                        node('Nat', me.ln, '_ceu_sys_kill'),
+                                                        node('Nat', me.ln, '_ceu_sys_kill', true),
                                                         node('ExpList', me.ln,
-                                                            node('Nat', me.ln, '__ceu_app'),
-                                                            node('Nat', me.ln, '__ceu_go'),
+                                                            node('Nat', me.ln, '__ceu_app', true),
+                                                            node('Nat', me.ln, '__ceu_go', true),
                                                             node('Op1_cast', 
                                                                 me.ln,
                                                                 node('Type', me.ln, '_tceu_org', 1, false, false),
@@ -1428,7 +1428,6 @@ me.blk_body = me.blk_body or blk_body
 
 -- EmitExt --------------------------------------------------------
 
-    EmitInt_pre = 'EmitExt_pre',
     EmitExt_pre = function (me)
         local op, e, ps = unpack(me)
 
@@ -1454,6 +1453,39 @@ me.blk_body = me.blk_body or blk_body
         if op == 'request' then
             return REQUEST(me)
         end
+    end,
+    _EmitInt_pre = function (me)
+        me.tag = 'EmitInt'
+        me = F.EmitExt_pre(me) or me
+        return
+            node('Block', me.ln,
+                node('Stmts', me.ln,
+                    node('_Dcl_nat', me.ln, '@plain', 'unk', '_tceu_nstk', false),
+                    node('Dcl_var', me.ln, 'var',
+                        node('Type', me.ln, '_tceu_nstk', 0, false, false),
+                        '_emit_fin_'..me.n),
+                    node('_Set', me.ln,
+                        node('Var', me.ln, '_emit_fin_'..me.n),
+                        '=', 'exp',
+                        node('RawExp', me.ln, 'stack_nxti(*_ceu_go)', true)),
+                    node('Finalize', me.ln,
+                        false,
+                        node('Finally', me.ln,
+                            node('Block', me.ln,
+                                node('Stmts', me.ln,
+                                    node('_Dcl_nat', me.ln, '@nohold', 'func', '_stack_geti', false),
+                                    node('_Set', me.ln,
+                                        node('Op2_.', me.ln, '.',
+                                            node('Op2_call', me.ln,
+                                                'call',
+                                                node('Nat', me.ln, '_stack_geti', true),
+                                                node('ExpList', me.ln,
+                                                    node('RawExp', me.ln, '*_ceu_go', true),
+                                                    node('Var', me.ln, '_emit_fin_'..me.n))),
+                                            'evt'),
+                                        '=', 'exp',
+                                        node('Nat', me.ln, '_CEU_IN__NONE', true)))))),
+                    me))
     end,
 
 -- Finalize ------------------------------------------------------

@@ -1933,56 +1933,6 @@ escape ret;
     - loop/nrm, loop/adt p/ outro dado mas mesmo tipo
 - para o par/or vai precisar de um watching do loop de fora no loop de dentro
 
-Test { [[
-event void e;
-
-par/or do
-    await OS_START;
-    emit e;
-with
-    par/or do
-        await e;
-        emit e;
-        emit f;
-    with
-        await f;
-    end
-with
-    await e;
-    escape 1;
-end
-
-
--- "emit e" on the stack has to die
-Test { [[
-input void OS_START;
-
-event int* e;
-
-par/or do
-    do
-        var int i = 10;
-        par/or do
-            await OS_START;
-            emit e => &i;           // stacked
-        with
-            var int* pi = await e;
-        end                         // has to remove from stack
-    end
-    do
-        var int i = 20;
-        await 1s;
-        i = i + 1;
-    end
-with
-    var int* i = await e;           // to avoid awaking here
-    escape *i;
-end
-escape 1;
-]],
-    run = 10,
-}
-
 -- crashes with org->ret
 Test { [[
 class T with
@@ -7068,6 +7018,73 @@ escape ret>1.0 and ret<1.2;
     run = 1,
 }
 
+-- the inner "emit e" is aborted and the outer "emit e"
+-- awakes the last "await e"
+Test { [[
+input void OS_START;
+
+event int e;
+
+var int ret = 0;
+
+par/or do
+    await OS_START;
+    emit e => 2;
+    escape -1;
+with
+    par/or do
+        await e;
+        emit e => 3;
+        escape -1;
+    with
+        var int v = await e;
+        ret = ret + v;          // 0+3
+    end
+    await FOREVER;
+with
+    var int v = await e;
+    ret = ret * v;              // 3*2
+end
+
+escape ret;
+]],
+    --_ana = {acc=3},
+    _ana = {acc=true},
+    run = 6,
+}
+
+-- "emit e" on the stack has to die
+Test { [[
+input void OS_START;
+
+event int* e;
+var int ret = 0;
+
+par/or do
+    do
+        var int i = 10;
+        par/or do
+            await OS_START;
+            emit e => &i;           // stacked
+        with
+            var int* pi = await e;
+            ret = *pi;
+        end                         // has to remove from stack
+    end
+    do
+        var int i = 20;
+        await 1s;
+        i = i + 1;
+    end
+with
+    var int* i = await e;           // to avoid awaking here
+    escape *i;
+end
+escape ret;
+]],
+    run = { ['~>1s']=10 },
+}
+
 -- ParOr
 
 Test { [[
@@ -7667,7 +7684,7 @@ escape _V;
 Test { [[
 input void OS_START;
 event int e;
-var int ret = 0;
+var int ret = 1;
 par/or do
     do
         var int x = 2;
@@ -7679,7 +7696,7 @@ par/or do
         end
     end
     do
-        var int x = 1;
+        var int x = 10;
         await 1s;
         ret = x;
     end
@@ -7689,7 +7706,7 @@ with
 end
 escape ret;
 ]],
-    run = 2,
+    run = { ['~>2s']=10 },
 }
 
 Test { [[

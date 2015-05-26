@@ -640,11 +640,13 @@ if (STK.trl->evt==CEU_IN__ORG) {
         }
         stack_pop(go);
 
+#if 0
 #ifdef CEU_ORGS
         if (STK_ORG==NULL) {
             STK.org = app->data;    /* aborted org: restart */
             STK.trl = &app->data->trls[0];
         }
+#endif
 #endif
     }
 

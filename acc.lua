@@ -37,13 +37,11 @@ function CHG (acc, md)
     if AST.iter'Thread'() then
         return
     end
-    if acc.md == 'no' then
-        if acc.id.id and string.sub(acc.id.id,1,5) == '_tup_' then
-            return  -- _tup
-        end
-        -- TODO: should this apply to all "no"?
+    if acc.md == 'nv' then
+        return
+    else
+        acc.md = md
     end
-    acc.md = md
 end
 
 F = {
@@ -168,7 +166,7 @@ F = {
         local _,_,_,to = unpack(me)
         to = (to.tag=='VarList' and to) or {to}
         for _, v in ipairs(to) do
-            if v.lst.acc and v.lst.acc.md~='no' then
+            if v.lst.acc and v.lst.acc.md~='no' and v.lst.acc.md~='nv' then
                 CHG(v.lst.acc, 'wr')
             else
                 -- *((u32*)0x100) = v  (no acc)
@@ -248,10 +246,12 @@ F = {
             return  -- <async (v)> is not an access
         end
 
+        local generated = (string.sub(me.var.id,1,1) == '_') and (me.var.id~='_ret')
+
         me.acc = INS {
             path = me.ana.pre,
             id  = me.var,
-            md  = 'rd',
+            md  = (generated and 'nv') or 'rd',
             tp  = me.var.tp,
             any = me.var.tp.ref,
             err = ERR(me, 'variable/event `'..me.var.id..'´'),
@@ -261,19 +261,15 @@ F = {
             -- variable being allocated cannot be in parallel with anyone
             me.acc.md = 'no'
         end
-
-        if string.sub(me.var.id,1,5) == '_tup_' then
-            -- TODO: ignore tuple assignments for now "(a,b)=await A"
-            me.acc.md = 'no'
-        end
     end,
 
     RawExp = 'Nat',
     Nat = function (me)
+        local _, generated = unpack(me);
         me.acc = INS {
             path = me.ana.pre,
             id  = me[1],
-            md  = 'rd',
+            md  = (generated and 'nv') or 'rd',
             tp  = TP.fromstr'@',
             any = false,
             err = ERR(me, 'symbol `'..me[1]..'´'),
@@ -343,9 +339,10 @@ local ND = {
         rd  = { cl=2, tr=false, wr=2,     rd=false, aw=false },
         aw  = { cl=2, tr=1,     wr=false, rd=false, aw=false },
         no  = {},   -- never ND ('ref')
+        nv  = {},   -- never ND ('ref')
     },
 
-    flw = { cl={},tr={},wr={},rd={},aw={},no={},
+    flw = { cl={},tr={},wr={},rd={},aw={},no={},nv={},
         par = { par=false, awk=false, esc=1 },
         awk = { par=false, awk=false, esc=1 },
         esc = { par=1,     awk=1,     esc=1 },

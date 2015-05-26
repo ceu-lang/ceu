@@ -1296,7 +1296,7 @@ error'oi'
                 me.tp.plain = true
                 me.tp.ptr   = 0
             end
-            me.lval = e1.lval
+            me.lval = me--e1.lval
         end
 
         if VAR then
