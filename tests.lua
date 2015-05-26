@@ -1887,6 +1887,36 @@ escape sum;
     - loop/nrm, loop/adt p/ outro dado mas mesmo tipo
 - para o par/or vai precisar de um watching do loop de fora no loop de dentro
 
+Test { [[
+input void OS_START;
+
+event int* e;
+
+par/or do
+    do
+        var int i = 10;
+        par/or do
+            await OS_START;
+            emit e => &i;
+        with
+            var int* pi = await e;
+        end
+    end
+    do
+        var int i = 20;
+        await 1s;
+        i = i + 1;
+    end
+with
+    var int* i = await e;
+    escape *i;
+end
+escape 1;
+]],
+    run = 10,
+}
+do return end
+
 -- crashes with org->ret
 Test { [[
 class T with
@@ -45896,8 +45926,8 @@ escape ret;
 }
 --]=]
 
--- TIMEMACHINE
 do return end
+-- TIMEMACHINE
 
 local t = {
     [1] = [[

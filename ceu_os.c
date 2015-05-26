@@ -343,7 +343,9 @@ void ceu_sys_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_org* org)
 #endif
 
     /* clear continuations from the stack */
+/*
     stack_rem(*_ceu_go,org);
+*/
 
     /* awake listeners after clear (this is a stack!) */
 #ifdef CEU_ORGS_WATCHING

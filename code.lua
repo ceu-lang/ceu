@@ -1563,15 +1563,15 @@ case ]]..me.lbl.id..[[:;
                 local val
                 if dt then
                     local suf = (dt.tm and '_') or ''
-                    val = '_ceu_app->wclk_late'..suf
+                    val = '(_ceu_app->wclk_late'..suf..')'
                 elseif e.tag=='Ext' then
                     if e[1] == '_ok_killed' then
-                        val = '(*((tceu_org**)&_STK.evt_buf))'
+                        val = '(*((tceu_org**)_STK.evt_buf))'
                     else
-                        val = '(*(('..TP.toc(me.tp)..'*)_STK.evt_buf))->_'..i
+                        val = '((*(('..TP.toc(me.tp)..'*)_STK.evt_buf))->_'..i..')'
                     end
                 else
-                    val = '(('..TP.toc(me.tp)..')_STK.evt_buf)->_'..i
+                    val = '((('..TP.toc(me.tp)..')_STK.evt_buf)->_'..i..')'
                 end
                 LINE(me, V(v)..' = '..val..';')
             end
