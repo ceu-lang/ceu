@@ -360,8 +360,32 @@ _STK_ORG->cls = ]]..me.n..[[;
              stk.trl    = &_STK_ORG->trls[0];
              stk.stop   = _STK_ORG;
              stk.evt_sz = 0;
-    stack_push(*_ceu_go, stk, NULL);    /* continue after it */
+
+#ifdef CEU_ORGS_NEWS
+/* HACK_9:
+ * If the stack top is the initial spawn state of the organism, it means that 
+ * the organism terminated on start and the spawn must return NULL.
+ * In this case, we mark it with "CEU_IN__NONE" to be recognized in the spawn 
+ * continuation below.
+ */
+if (_STK.evt==CEU_IN__STK && _STK.org==_STK_ORG
+    && _STK.trl==&_STK_ORG->trls[0]
+#ifdef CEU_CLEAR
+    && _STK.stop==&_STK_ORG->trls[_STK_ORG->n]
+#endif
+    ) {
+    _STK.evt = CEU_IN__NONE;
+    stack_clr_less(*_ceu_go, _STK_ORG); /* TODO: remove org continuations from the stack 
+*/
+} else {
+    stack_clr_more(*_ceu_go, _STK_ORG); /* TODO: remove org continuations from the stack 
+*/
 }
+#endif
+
+    stack_push(*_ceu_go, stk, NULL);
+}
+
 #endif
 #endif
 ]])
@@ -646,16 +670,14 @@ case ]]..me.lbl.id..[[:;
         if set then
             local set_to = set[4]
             LINE(me, [[
-#if 0
-/* HACK_9: see ceu_os.c */
+/* HACK_9: see above */
 if (]]..V(set_to)..[[.tag != ]]..string.upper(TP.toc(set_to.tp.opt))..[[_NIL) {
     tceu_stk* stk = &stack_geti(*_ceu_go, stack_nxti(*_ceu_go));
-    if (stk->evt==CEU_IN__STK && stk->evto==]]..V(set_to)..[[.SOME.v) {
+    if (stk->evt == CEU_IN__NONE) {
         ]]..V(set_to)..' = '..              
             string.upper(TP.toc(set_to.tp.opt))..[[_pack(NULL);
     }
 }
-#endif
 ]])
         end
 

@@ -205,24 +205,6 @@ void ceu_sys_org_kill_free (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_org* org)
     org->isAlive = 0;
 #endif
 
-#if 0
-#ifdef CEU_ORGS_NEWS
-    /* HACK_9:
-     * IN__STK on top: possibly "org" has just been spawned and is now being 
-     * killed before the continuation.
-     * In this case, we save it in "evto" (TODO: this is just a spare field in 
-     * IN__STK) to allow the continuation to know that it has being killed.
-     */
-    if (org->isDyn) {
-        if (stack_top(*_ceu_go).evt == CEU_IN__STK) {
-            stack_top(*_ceu_go).evto = org;
-        } else {
-            stack_top(*_ceu_go).evto = NULL;
-        }
-    }
-#endif
-#endif
-
     /* awake listeners after clear (this is a stack!) */
 #ifdef CEU_ORGS_WATCHING
     /* TODO(speed): only if was ever watched! */
@@ -240,8 +222,12 @@ void ceu_sys_org_kill_free (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_org* org)
 
     /* free org */
 #ifdef CEU_ORGS_NEWS
-#if 0
     if (org->isDyn) {
+        /* re-link PRV <-> NXT */
+        org->prv->nxt = org->nxt;
+        org->nxt->prv = org->prv;
+
+        /* free */
 #if    defined(CEU_ORGS_NEWS_POOL) && !defined(CEU_ORGS_NEWS_MALLOC)
         ceu_pool_free((tceu_pool*)org->pool, (byte*)org);
 #elif  defined(CEU_ORGS_NEWS_POOL) &&  defined(CEU_ORGS_NEWS_MALLOC)
@@ -254,36 +240,6 @@ void ceu_sys_org_kill_free (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_org* org)
         ceu_sys_realloc(org, 0);
 #endif
     }
-#else
-    if (org->isDyn) {
-        /* 1: re-link PRV <-> NXT */
-        org->prv->nxt = org->nxt;
-        org->nxt->prv = org->prv;
-
-        /* 2: mark to free
-         * Should be freed if (pool-still-on-scope) or
-         *                    (malloc-ed):
-         * - pool-on-scope: only this org needs to be removed from 
-         * memory (in comparison to *all* the pool, which would not 
-         * require to free this individually)
-         * - malloc-ed: uses external memory, so free it regardless 
-         * of individual or pool termination
-         * TODO: not required if org in a pool that is currently going out of scope
-         */
-        {
-            tceu_org* nxt = _ceu_go->lst_free;
-            org->nxt_free = NULL;    /* no next element */
-            if (_ceu_go->lst_free == NULL) {
-                _ceu_go->lst_free = org;      /* new first element */
-            } else {
-                while (nxt->nxt_free != NULL) {
-                    nxt = nxt->nxt_free; /* find last element */
-                }
-                nxt->nxt_free = org;  /* put after that */
-            }
-        }
-    }
-#endif /* 0/1 */
 #endif /* CEU_ORGS_NEWS */
 }
 #endif
@@ -480,14 +436,16 @@ void ceu_sys_go (tceu_app* app, int evt, tceu_evtp evtp)
     {
         for (;;) /* TRL // TODO(speed): only range of trails that apply */
         {        /* (e.g. events that do not escape an org) */
+            if (STK.evt == CEU_IN__NONE) {
+                break;  /* invalidated emit or freed organism */
+            }
+
 #ifdef CEU_DEBUG_TRAILS
+printf("STACK[%d]: evt=%d : seqno=%d\n", go.stki, STK.evt, app->seqno);
 #if defined(CEU_ORGS) || defined(CEU_OS_KERNEL)
-printf("STACK[%d]: evt=%d : seqno=%d : org=%p/%d : [%d/%p]\n",
-        go.stki, STK.evt, app->seqno,
-        STK_ORG, STK_ORG==app->data, STK_ORG->n, STK_ORG->trls);
+printf("\torg=%p/%d : [%d/%p]\n", STK_ORG, STK_ORG==app->data, STK_ORG->n, STK_ORG->trls);
 #else
-printf("STACK[%d]: evt=%d : seqno=%d : ntrls=%d\n",
-        go.stki, STK.evt, app->seqno, CEU_NTRAILS);
+printf("\tntrls=%d\n", CEU_NTRAILS);
 #endif
 #endif
 
@@ -515,6 +473,7 @@ printf("STACK[%d]: evt=%d : seqno=%d : ntrls=%d\n",
 
 #ifdef CEU_ORGS
                 else {
+                    /* TODO: RW */
                     /* save current org before setting the next traversal */
                     tceu_stk CUR = STK;     /* TODO(speed): unecessary copy? */
                     #define CUR_ORG ((tceu_org*)(CUR.org))
@@ -528,11 +487,14 @@ printf("STACK[%d]: evt=%d : seqno=%d : ntrls=%d\n",
 
                     if (CUR.evt==CEU_IN__CLEAR && CUR_ORG->n!=0)
                     {
-                        /* should not come back to this level as it was a
+                        /* should pop this level as it was a
                          * bounded CLEAR on the given ORG */
 #ifdef CEU_CLEAR
                         if (STK.stop == (void*)CUR_ORG) {
+                            STK_ORG_ATTR = CUR_ORG;
                             stack_pop(go);
+                            ceu_sys_org_kill_free(app, &go, CUR_ORG);
+                            continue;
                         }
 #endif
                         ceu_sys_org_kill_free(app, &go, CUR_ORG);
@@ -641,7 +603,7 @@ if (STK.trl->evt==CEU_IN__ORG) {
             {
                 if (STK.evt==CEU_IN__CLEAR &&
                     !(STK.trl->evt==CEU_IN__STK && STK.trl->stk==stack_prv(go))
-                        /* HACK_8: do not clear the clear continuation */
+                        /* HACK_8: do not remove the clear continuation */
                    )
                 {
                     STK.trl->evt = CEU_IN__NONE;    /* trail cleared */

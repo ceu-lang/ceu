@@ -1457,12 +1457,23 @@ me.blk_body = me.blk_body or blk_body
     _EmitInt_pre = function (me)
         me.tag = 'EmitInt'
         me = F.EmitExt_pre(me) or me
+        --  emit x;
+        --      ... becomes ...
+        --  do
+        --      var int fin = stack_nxti(); /* TODO: search for tceu_nstk */
+        --      finalize with
+        --          if (fin != -1) then
+        --              stack_geti(fin)->evt = IN_NONE;
+        --          end
+        --      end
+        --      emit x;
+        --      fin = -1;
+        --  end
         return
             node('Block', me.ln,
                 node('Stmts', me.ln,
-                    node('_Dcl_nat', me.ln, '@plain', 'unk', '_tceu_nstk', false),
                     node('Dcl_var', me.ln, 'var',
-                        node('Type', me.ln, '_tceu_nstk', 0, false, false),
+                        node('Type', me.ln, 'int', 0, false, false),
                         '_emit_fin_'..me.n),
                     node('_Set', me.ln,
                         node('Var', me.ln, '_emit_fin_'..me.n),
@@ -1474,18 +1485,33 @@ me.blk_body = me.blk_body or blk_body
                             node('Block', me.ln,
                                 node('Stmts', me.ln,
                                     node('_Dcl_nat', me.ln, '@nohold', 'func', '_stack_geti', false),
-                                    node('_Set', me.ln,
-                                        node('Op2_.', me.ln, '.',
-                                            node('Op2_call', me.ln,
-                                                'call',
-                                                node('Nat', me.ln, '_stack_geti', true),
-                                                node('ExpList', me.ln,
-                                                    node('RawExp', me.ln, '*_ceu_go', true),
-                                                    node('Var', me.ln, '_emit_fin_'..me.n))),
-                                            'evt'),
-                                        '=', 'exp',
-                                        node('Nat', me.ln, '_CEU_IN__NONE', true)))))),
-                    me))
+                                    node('If', me.ln,
+                                        node('Op2_==', me.ln, '==',
+                                            node('Var', me.ln, '_emit_fin_'..me.n),
+                                            node('Op1_-', me.ln, '-',
+                                                node('NUMBER', me.ln, '1'))),
+                                        node('Block', me.ln,
+                                            node('Stmts', me.ln,
+                                                node('Nothing', me.ln))),
+                                        node('Block', me.ln,
+                                            node('Stmts', me.ln,
+                                                node('_Set', me.ln,
+                                                    node('Op2_.', me.ln, '.',
+                                                        node('Op2_call', me.ln,
+                                                            'call',
+                                                            node('Nat', me.ln, '_stack_geti', true),
+                                                            node('ExpList', me.ln,
+                                                                node('RawExp', me.ln, '*_ceu_go', true),
+                                                                node('Var', me.ln, '_emit_fin_'..me.n))),
+                                                        'evt'),
+                                                    '=', 'exp',
+                                                    node('Nat', me.ln, '_CEU_IN__NONE', true))))))))),
+                    me,
+                    node('_Set', me.ln,
+                        node('Var', me.ln, '_emit_fin_'..me.n),
+                        '=', 'exp',
+                        node('Op1_-', me.ln, '-',
+                            node('NUMBER', me.ln, '1')))))
     end,
 
 -- Finalize ------------------------------------------------------

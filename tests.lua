@@ -3210,54 +3210,68 @@ escape ret;
     run = 9,
 }
 
+-- XXXX-KILL-ORG
+-- kill org inside iterator
 Test { [[
 class T with
+    event void e;
 do
+    await e;
 end
 
-var T*? t = spawn T;
-if not t? then
-    escape 10;
+pool T[] ts;
+
+var int ret = 0;
+
+spawn T in ts;
+async do end;
+
+loop t in ts do
+    watching *t do
+        emit t:e;
+    end
 end
 
-escape 1;
+escape ret;
 ]],
     run = 10,
 }
 
 Test { [[
+interface I with
+    var int v;
+    event void e;
+end
 class T with
+    interface I;
 do
-    await FOREVER;
+    await e;
 end
-
-var T*? t = spawn T;
-if not t? then
-    escape 10;
-end
-
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-class T with
+pool T[] ts;
+var int ret = 0;
 do
+    spawn T in ts with
+        this.v = 10;
+    end;
+    async do end;
+    loop t in ts do
+        watching *t do
+            ret = ret + t:v;
+            emit t:e;
+            ret = ret + t:v;
+        end
+    end
 end
-
-var T*? t = spawn T;
-await *t;
-escape 1;
+escape ret;
 ]],
-    asr = 'runtime error: invalid tag',
+    run = 10,
 }
 
 do return end
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
---]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -30114,7 +30128,8 @@ class T with do end
 var T*? ok = spawn T;
 escape &ok != null;
 ]],
-    run = 1,
+    asr = '3] runtime error: invalid tag',
+    --run = 1,
 }
 
 Test { [[
@@ -30125,7 +30140,7 @@ do
     ok = spawn T;
     ok_ = (ok?);
 end
-escape ok_;
+escape ok_+1;
 ]],
     run = 1,
 }
@@ -30136,7 +30151,7 @@ var T*? ok;
 do
     ok = spawn T;
 end
-escape ok?;
+escape ok?+1;
 ]],
     --fin = 'line 6 : pointer access across `await´',
     run = 1,
@@ -30153,11 +30168,11 @@ do
         ok = spawn T;
     end
 end
-escape ok?;
+escape ok?+1;
 ]],
     --loop = 1,
     --fin = 'line 11 : pointer access across `await´',
-    run = 1,
+    run = 2,
 }
 Test { [[
 class T with do
@@ -30172,10 +30187,10 @@ do
         ok_ = (ok?);
     end
 end
-escape ok_;
+escape ok_+1;
 ]],
     --loop = 1,
-    run = 1,
+    run = 2,
 }
 
 Test { [[
@@ -30225,7 +30240,8 @@ end
 var T*? t = spawn T;
 escape t:a;
 ]],
-    run = 1,
+    asr = '7] runtime error: invalid tag',
+    --run = 1,
 }
 
 Test { [[
@@ -30335,6 +30351,49 @@ escape 10;
     run = 10,
 }
 
+Test { [[
+class T with
+do
+end
+
+var T*? t = spawn T;
+if not t? then
+    escape 10;
+end
+
+escape 1;
+]],
+    run = 10,
+}
+
+Test { [[
+class T with
+do
+    await FOREVER;
+end
+
+var T*? t = spawn T;
+if not t? then
+    escape 10;
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+do
+end
+
+var T*? t = spawn T;
+await *t;
+escape 1;
+]],
+    asr = 'runtime error: invalid tag',
+}
+
 -- MEM/MEMORY POOL
 
 Test { [[
@@ -30385,7 +30444,7 @@ end
 pool T[1] t;
 var T*? ok1 = spawn T in t with end;
 var T*? ok2 = spawn T in t;
-escape (ok1?) + (ok2?);
+escape (ok1?) + (ok2?) + 1;
 ]],
     run = 1,
 }
@@ -30438,7 +30497,7 @@ var int ret = 0;
 loop t in ts do
     ret = ret + t:v;
 end
-escape (ok1?) + ok2 + ret;
+escape (ok1?) + ok2 + ret + 1;
 ]],
     --fin = 'line 14 : pointer access across `await´',
     run = 1,
@@ -30586,6 +30645,7 @@ class T with
     var int a;
 do
     this.a = 1;
+    await FOREVER;
 end
 pool T[1] ts;
 var T*? a = spawn T in ts;
@@ -30600,6 +30660,7 @@ class T with
     var int a;
 do
     this.a = 1;
+    await FOREVER;
 end
 do
 pool T[0] ts;
@@ -30615,6 +30676,7 @@ class T with
     var int a;
 do
     this.a = 1;
+    await FOREVER;
 end
 pool T[1] as;
 pool T[0] bs;
@@ -30630,6 +30692,7 @@ class T with
     var int a;
 do
     this.a = 1;
+    await FOREVER;
 end
 pool T[1] ts;
 var T*? a = spawn T in ts;
@@ -30645,6 +30708,7 @@ class T with
     var int a;
 do
     this.a = 1;
+    await FOREVER;
 end
 pool T[1] ts;
 var T* a;
@@ -30666,6 +30730,7 @@ class T with
     var int a;
 do
     this.a = 1;
+    await FOREVER;
 end
 pool T[2] ts;
 var T* a;
@@ -30686,6 +30751,7 @@ class T with
     var int a;
 do
     this.a = 1;
+    await FOREVER;
 end
 pool T[1] ts;
 var T*? a;
@@ -30706,6 +30772,7 @@ class T with
     var int a;
 do
     this.a = 1;
+    await FOREVER;
 end
 pool T[1] ts;
 var T* a;
@@ -30724,6 +30791,7 @@ class T with
     var int a;
 do
     this.a = 1;
+    await FOREVER;
 end
 pool T[1] ts;
 var T* a, b;
@@ -30749,6 +30817,7 @@ class T with
     var int a;
 do
     this.a = 1;
+    await FOREVER;
 end
 pool T[1] ts;
 var T*? a, b;
@@ -30773,6 +30842,7 @@ class T with
     var int a;
 do
     this.a = 1;
+    await FOREVER;
 end
 pool T[1] ts;
 var T*? a, b;
@@ -30799,6 +30869,7 @@ class T with
     var int a;
 do
     this.a = 1;
+    await FOREVER;
 end
 pool T[1] ts;
 var T*? a;
@@ -30817,6 +30888,7 @@ class T with
     var int a;
 do
     this.a = 1;
+    await FOREVER;
 end
 pool T[1] ts;
 var T* a;
@@ -31011,6 +31083,7 @@ class T with
     var int b;
 do
     b = a * 2;
+    await FOREVER;
 end
 
 var T*? t =
@@ -31021,6 +31094,32 @@ var T*? t =
 escape t:b;
 ]],
     run = 20,
+}
+
+Test { [[
+class T with
+do
+    par/or do
+    with
+    end
+end
+spawn T;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+class T with
+do
+    await OS_START;
+end
+spawn T;
+await OS_START;
+escape 1;
+]],
+    run = 1,
 }
 
 Test { [[
@@ -31179,6 +31278,23 @@ class T with
 do
     _V = _V + 1;
     spawn T;
+end
+var T t;
+escape _V;
+]],
+    wrn = 'line 7 : unbounded recursive spawn',
+    --run = 101,  -- tests force 100 allocations at most
+    asr = 'runtime error: stack overflow',
+}
+Test { [[
+native do
+    int V = 0;
+end
+class T with
+do
+    _V = _V + 1;
+    spawn T;
+    await FOREVER;
 end
 var T t;
 escape _V;
@@ -31412,7 +31528,7 @@ input void OS_START;
 class T with
     var int a;
 do
-    await FOREVER;
+    await 1s;
 end
 
 event T* e;
@@ -31432,7 +31548,7 @@ end
 
 escape 1;
 ]],
-    run = 1,
+    run = { ['~>1s']=1 },
 }
 
 Test { [[
@@ -31677,8 +31793,6 @@ input void OS_START;
 event T* e;
 
 var int ret = 1;
-
-native @pure _printf();
 
 par/and do
     await OS_START;
@@ -32157,7 +32271,9 @@ escape 1;
 }
 
 Test { [[
-class T with do end;
+class T with do
+    await FOREVER;
+end;
 var T*? a = spawn T;
 var T* b;
 b = a;
@@ -32167,9 +32283,20 @@ escape 10;
 }
 
 Test { [[
+class T with do end;
+var T*? a = spawn T;
+var T* b;
+b = a;
+escape 10;
+]],
+    asr = '4] runtime error: invalid tag',
+}
+
+Test { [[
 class T with
     var int v;
 do
+    await FOREVER;
 end
 
 var T* a;
@@ -32188,6 +32315,7 @@ Test { [[
 class T with
     var int v;
 do
+    await FOREVER;
 end
 
 var T* a;
@@ -32224,6 +32352,7 @@ Test { [[
 class T with
     var int v;
 do
+    await FOREVER;
 end
 
 var T* a;
@@ -33722,6 +33851,7 @@ Test { [[
 class T with
     var int v;
 do
+    await FOREVER;
 end
 
 var T*[10] ts;
@@ -34654,6 +34784,7 @@ Test { [[
 class T with
     var int v;
 do
+    await FOREVER;
 end
 var T*? t = spawn T with
              this.v = 10;
@@ -34664,36 +34795,7 @@ escape t:v;
     run = 10,
 }
 
-Test { [[
-interface I with
-    var int v;
-    event void e;
-end
-class T with
-    interface I;
-do
-    await e;
-end
-pool T[] ts;
-var int ret = 0;
-do
-    spawn T in ts with
-        this.v = 10;
-    end;
-    async do end;
-    loop t in ts do
-        watching *t do
-            ret = ret + t:v;
-            emit t:e;
-            ret = ret + t:v;
-        end
-    end
-end
-escape ret;
-]],
-    run = 10,
-}
-
+-- XXXX-KILL-ORG
 -- TODO pause hierarquico dentro de um org
 -- SDL/samples/sdl4.ceu
 
@@ -39205,6 +39307,7 @@ end
 class T with
     var int v = 0;
 do
+    await FOREVER;
 end
 
 var I*? p = spawn T with
@@ -39364,8 +39467,10 @@ do
     pool Unit[] units;
     u = spawn Unit in units;
 end
-watching *u do
-    emit u:move => 0;
+if u? then
+    watching *u do
+        emit u:move => 0;
+    end
 end
 escape 2;
 ]],
@@ -39745,6 +39850,7 @@ Test { [[
 class T with
     var int v = 0;
 do
+    async do end
 end
 
 event T* e;
@@ -39773,13 +39879,14 @@ end
 
 escape ret;
 ]],
-    run = { ['~>1s;~>1s;~>1s;~>1s;~>1s']=1 },
+    run = { ['~>1s;~>1s;~>1s;~>1s;~>1s']=-1 },
 }
 
 Test { [[
 class T with
     var int v = 0;
 do
+    async do end
 end
 
 event T* e;
@@ -40100,6 +40207,7 @@ Test { [[
 class Unit with
     event int move;
 do
+    await FOREVER;
 end
 var Unit*? u;
 pool Unit[] units;
@@ -40274,6 +40382,7 @@ Test { [[
 class T with
     var int v = 0;
 do
+    await FOREVER;
 end
 pool T[1] ts;
 var T*?  ok1 = spawn T in ts with
@@ -40898,11 +41007,13 @@ end
 
 var int ret = 1;
 var T*? t = spawn T;
-watching *t do
-    finalize with
-        ret = t:v;
+if t? then
+    watching *t do
+        finalize with
+            ret = t:v;
+        end
+        await FOREVER;
     end
-    await FOREVER;
 end
 
 escape ret;
