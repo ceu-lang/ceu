@@ -149,7 +149,6 @@ F = {
         for _, var in ipairs(me.vars) do
             if var.cls then
                 me.needs_clr = true
-                PROPS.has_clear = true
             end
             if var.pre=='pool' then
                 local s
@@ -175,7 +174,6 @@ F = {
     end,
     Spawn = function (me)
         local _,pool,_ = unpack(me)
-        --PROPS.has_clear = true   (var.cls does this)
         --me.blk.needs_clr = true   (var.cls does this)
         ASR(not AST.par(me,'BlockI'), me,
                 'not permitted inside an interface')
@@ -255,8 +253,8 @@ F = {
 
     Dcl_cls = function (me)
         if me.id ~= 'Main' then
-            PROPS.has_orgs = true
-            PROPS.has_ints = true      -- all have "emit _ok"
+            PROPS.has_orgs  = true
+            PROPS.has_clear = true
         end
         if me.is_ifc then
             PROPS.has_ifcs = true

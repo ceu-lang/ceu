@@ -141,9 +141,7 @@ int ceu_sys_org_spawn (tceu_go* _ceu_go, tceu_nlbl lbl_cnt, tceu_org* neworg, tc
                  stk.evt  = CEU_IN__STK;
                  stk.org  = neworg;
                  stk.trl  = &neworg->trls[0];
-#ifdef CEU_CLEAR
                  stk.stop = &neworg->trls[neworg->n]; /* don't follow the up link */
-#endif
                  stk.evt_sz = 0;
         stack_push(*_ceu_go, stk, NULL);
     }
@@ -473,35 +471,28 @@ printf("\tntrls=%d\n", CEU_NTRAILS);
 
 #ifdef CEU_ORGS
                 else {
-                    /* TODO: RW */
                     /* save current org before setting the next traversal */
-                    tceu_stk CUR = STK;     /* TODO(speed): unecessary copy? */
-                    #define CUR_ORG ((tceu_org*)(CUR.org))
+                    tceu_org* old = STK_ORG;
+                    int tokill = (STK.evt==CEU_IN__CLEAR && old->n!=0);
 
-                    /* traverse next org */
-                    STK_ORG_ATTR = CUR_ORG->nxt;
-                    STK.trl = &((tceu_org*)CUR_ORG->nxt)->trls [
-                                (CUR_ORG->n == 0) ?
-                                ((tceu_org_lnk*)CUR_ORG)->lnk : 0
-                              ];
-
-                    if (CUR.evt==CEU_IN__CLEAR && CUR_ORG->n!=0)
-                    {
-                        /* should pop this level as it was a
-                         * bounded CLEAR on the given ORG */
-#ifdef CEU_CLEAR
-                        if (STK.stop == (void*)CUR_ORG) {
-                            STK_ORG_ATTR = CUR_ORG;
-                            stack_pop(go);
-                            ceu_sys_org_kill_free(app, &go, CUR_ORG);
-                            continue;
-                        }
-#endif
-                        ceu_sys_org_kill_free(app, &go, CUR_ORG);
+                    /* should pop this level as it was a
+                     * bounded CLEAR on the given ORG */
+                    if (tokill && STK.stop==(void*)old) {
+                        stack_pop(go);
+                        ceu_sys_org_kill_free(app, &go, old);
+                        continue;
                     }
 
-                    /* next org */
-                    continue; /* restart */
+                    /* traverse next org */
+                    STK_ORG_ATTR = old->nxt;
+                    STK.trl = &((tceu_org*)old->nxt)->trls [
+                                (old->n == 0) ?
+                                ((tceu_org_lnk*)old)->lnk : 0
+                              ];
+                    if (tokill) {
+                        ceu_sys_org_kill_free(app, &go, old);
+                    }
+                    continue;
                 }
 #endif  /* CEU_ORGS */
             }

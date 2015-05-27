@@ -352,7 +352,6 @@ _STK_ORG->cls = ]]..me.n..[[;
 
         LINE(me, [[
 #ifdef CEU_ORGS
-#ifdef CEU_CLEAR
 {
     tceu_stk stk;
              stk.evt    = CEU_IN__CLEAR;
@@ -370,9 +369,7 @@ _STK_ORG->cls = ]]..me.n..[[;
  */
 if (_STK.evt==CEU_IN__STK && _STK.org==_STK_ORG
     && _STK.trl==&_STK_ORG->trls[0]
-#ifdef CEU_CLEAR
     && _STK.stop==&_STK_ORG->trls[_STK_ORG->n]
-#endif
     ) {
     _STK.evt = CEU_IN__NONE;
     stack_clr_less(*_ceu_go, _STK_ORG); /* TODO: remove org continuations from the stack 
@@ -385,8 +382,6 @@ if (_STK.evt==CEU_IN__STK && _STK.org==_STK_ORG
 
     stack_push(*_ceu_go, stk, NULL);
 }
-
-#endif
 #endif
 ]])
 
@@ -570,12 +565,10 @@ if (]]..LVAR..[[ == NULL) {
 ]])
         end
         LINE(me, [[
-#if defined(CEU_CLEAR) || defined(CEU_ORGS_WATCHING)
 /* save the continuation to run after the kill */
 _STK.trl->evt = CEU_IN__STK;
 _STK.trl->lbl = ]]..me.lbl.id..[[;
 _STK.trl->stk = _ceu_go->stki;
-#endif
 
 {
     tceu_org* __ceu_org = (tceu_org*)]]..V(org)..[[;
@@ -588,10 +581,8 @@ _STK.trl->stk = _ceu_go->stki;
     stack_push(*_ceu_go, stk, NULL);    /* continue after it */
 }
 
-#if defined(CEU_CLEAR) || defined(CEU_ORGS_WATCHING)
 return RET_RESTART;
 case ]]..me.lbl.id..[[:;
-#endif
 ]])
     end,
 
