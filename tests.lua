@@ -1924,7 +1924,7 @@ escape ret;
 
 ---------------
 
-- colocar de volta recurse que ja estao nos testes (comentados)
+- colocar de volta recurse/C que ja estao nos testes (comentados)
 - testar pool dinamico indo fora de escopo (valgrind)
 - testar tb watching c/ adt estatico
 - bounded iters
@@ -1932,6 +1932,23 @@ escape ret;
 - loop dentro de loop
     - loop/nrm, loop/adt p/ outro dado mas mesmo tipo
 - para o par/or vai precisar de um watching do loop de fora no loop de dentro
+
+--]===]
+-- TODO: como capturar o retorno de um org que termina de imediato?
+Test { [[
+class T with
+do
+    escape 1;
+end
+var T*? t = spawn T;
+var int ret = -1;
+if t? then
+    ret = await *t;
+end
+escape ret;
+]],
+    run = 1,
+}
 
 -- crashes with org->ret
 Test { [[
@@ -1993,8 +2010,6 @@ escape 0;
     wrn = true,
     run = {['~>21s;'] = 30},
 }
-
-do return end
 
 -- ALL BELOW IS OK
 
@@ -2195,15 +2210,6 @@ escape sum;
 }
 
 Test { [[
-class Body with do end;
-var Body*? tail = spawn Body;
-await *tail;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
 data List with
     tag NIL;
 or
@@ -2236,6 +2242,9 @@ class Body with
     pool  Body[]& bodies;
     var   List*   n;
 do
+    if n:NIL then
+        _V = _V * 2;
+    end
     watching n do
         _V = _V + 1;
         if n:CONS then
@@ -2263,7 +2272,7 @@ escape _V;
 ]],
     wrn = 'line 26 : unbounded recursive spawn',
     _ana = { acc=true },
-    run = 10,
+    run = 18,
 }
 
 Test { [[
@@ -3221,20 +3230,58 @@ end
 
 pool T[] ts;
 
-var int ret = 0;
+var int ret = 1;
 
 spawn T in ts;
 async do end;
 
 loop t in ts do
     watching *t do
+        ret = ret + 1;
         emit t:e;
+        ret = ret + 1;
     end
 end
 
 escape ret;
 ]],
-    run = 10,
+    run = 2,
+}
+
+Test { [[
+class T with
+    var T* t;
+    event void e;
+do
+    watching *t do
+        await e;
+    end
+end
+
+pool T[] ts;
+
+var int ret = 1;
+
+var T*? t1 = spawn T in ts with
+                this.t = &this;
+            end;
+var T*? t2 = spawn T in ts with
+                this.t = t1;
+            end;
+
+async do end;
+
+loop t in ts do
+    watching *t do
+        ret = ret + 1;
+        emit t:e;
+        ret = ret + 1;
+    end
+end
+
+escape ret;
+]],
+    run = 2,
 }
 
 Test { [[
@@ -3267,11 +3314,342 @@ escape ret;
     run = 10,
 }
 
+Test { [[
+data Command with
+    tag NOTHING;
+or
+    tag FORWARD with
+        var int pixels;
+    end
+or
+    tag SEQUENCE with
+        var Command* one;
+        var Command* two;
+    end
+end
+
+pool Command[] cmds;
+
+cmds = new Command.SEQUENCE(
+            Command.FORWARD(100),
+            Command.FORWARD(500));
+
+par/or do
+    loop/rec cmd in cmds do
+        watching cmd do
+            if cmd:FORWARD then
+                await FOREVER;
+
+            else/if cmd:SEQUENCE then
+                recurse cmd:SEQUENCE.one;
+
+            else
+            end
+        end
+    end
+with
+    await 100s;
+end
+
+escape 10;
+]],
+    --tight = 'tight loop',
+    _ana = { acc=true },
+    wrn = true,
+    run = { ['~>100s']=10 },
+}
+
+Test { [[
+input int SDL_DT;
+
+data Command with
+    tag NOTHING;
+or
+    tag FORWARD with
+        var int pixels;
+    end
+or
+    tag SEQUENCE with
+        var Command* one;
+        var Command* two;
+    end
+end
+
+// TODO: aceitar estatico
+pool Command[] cmds;
+
+cmds = new Command.SEQUENCE(
+            Command.FORWARD(100),
+            Command.FORWARD(500));
+
+par/or do
+    await 100s;
+with
+    loop/rec cmd in cmds do
+        watching cmd do
+            if cmd:NOTHING then
+                nothing;
+
+            else/if cmd:FORWARD then
+                await FOREVER;
+
+            else/if cmd:SEQUENCE then
+                recurse cmd:SEQUENCE.one;
+                _ceu_out_assert(0, "bug found"); // cmds has to die entirely before children
+                recurse cmd:SEQUENCE.two;
+            end
+        end
+    end
+end
+
+escape 10;
+]],
+    --tight = 'tight loop',
+    _ana = { acc=true },
+    wrn = true,
+    run = { ['~>100s']=10 },
+}
+Test { [[
+input int SDL_DT;
+
+data Command with
+    tag NOTHING;
+or
+    tag FORWARD with
+        var int pixels;
+    end
+or
+    tag SEQUENCE with
+        var Command* one;
+        var Command* two;
+    end
+end
+
+// TODO: aceitar estatico
+pool Command[] cmds;
+
+cmds = new Command.SEQUENCE(
+            Command.FORWARD(100),
+            Command.FORWARD(500));
+
+par/or do
+    await 100s;
+with
+    loop/rec cmd in cmds do
+        watching cmd do
+            if cmd:NOTHING then
+                nothing;
+
+            else/if cmd:FORWARD then
+                await FOREVER;
+
+            else/if cmd:SEQUENCE then
+                recurse cmd:SEQUENCE.one;
+                recurse cmd:SEQUENCE.two;
+            end
+        end
+    end
+end
+
+escape 10;
+]],
+    --tight = 'tight loop',
+    _ana = { acc=true },
+    wrn = true,
+    run = { ['~>100s']=10 },
+}
+
+Test { [[
+input int SDL_DT;
+
+data Command with
+    tag NOTHING;
+or
+    tag AWAIT with
+        var int ms;
+    end
+or
+    tag RIGHT with
+        var int angle;
+    end
+or
+    tag LEFT with
+        var int angle;
+    end
+or
+    tag FORWARD with
+        var int pixels;
+    end
+or
+    tag BACKWARD with
+        var int pixels;
+    end
+or
+    tag SEQUENCE with
+        var Command* one;
+        var Command* two;
+    end
+or
+    tag REPEAT with
+        var int      times;
+        var Command* command;
+    end
+end
+
+// TODO: aceitar estatico
+pool Command[] cmds;
+
+cmds = new Command.REPEAT(2,
+            Command.SEQUENCE(
+                Command.AWAIT(500),
+                Command.SEQUENCE(
+                    Command.RIGHT(45),
+                    Command.SEQUENCE(
+                        Command.FORWARD(100),
+                        Command.SEQUENCE(
+                            Command.LEFT(90),
+                            Command.SEQUENCE(
+                                Command.FORWARD(100),
+                                Command.SEQUENCE(
+                                    Command.RIGHT(45),
+                                    Command.SEQUENCE(
+                                        Command.BACKWARD(100),
+                                        Command.AWAIT(500)))))))));
+
+class Turtle with
+    var int angle;
+    var int pos_x, pos_y;
+do
+    await FOREVER;
+end
+
+class TurtleTurn with
+    var Turtle& turtle;
+    var int     angle;
+    var int     isRight;
+do
+    var int inc;
+    if isRight then
+        if this.angle < 0 then
+            angle = -angle;
+            inc = 1;
+        else
+            inc = -1;
+        end
+    else
+        if this.angle < 0 then
+            angle = -angle;
+            inc = -1;
+        else
+            inc = 1;
+        end
+    end
+    loop i in angle do
+        await 10ms;
+        turtle.angle = turtle.angle + inc;
+    end
+end
+
+class TurtleMove with
+    var Turtle& turtle;
+    var int     pixels;
+    var int     isForward;
+do
+    var int inc;
+    if isForward then
+        inc =  1;
+    else
+        inc = -1;
+    end
+    _ceu_out_assert(this.pixels > 0, "pixels");
+
+    var float sum = 0;
+    var float x = turtle.pos_x;
+    var float y = turtle.pos_y;
+    every 10ms do
+        var int dt = 10;
+        if sum >= this.pixels then
+            break;
+        end
+        var float mul = 80 * dt * 0.001 * this.inc;
+        var float dx  = mul * (turtle.angle/(180.0));
+        var float dy  = mul * (turtle.angle/(180.0));
+        sum = sum + (dx) + (dy);
+        x = x + dx;
+        y = y + dy;
+        turtle.pos_x = x;
+        turtle.pos_y = y;
+    end
+
+end
+
+par/or do
+    await 100s;
+with
+    var Turtle turtle;
+
+    loop/rec cmd in cmds do
+        watching cmd do
+            if cmd:NOTHING then
+                nothing;
+
+            else/if cmd:AWAIT then
+                await (cmd:AWAIT.ms) ms;
+
+            else/if cmd:RIGHT or cmd:LEFT then
+                var int angle;
+                if cmd:RIGHT then
+                    angle = cmd:RIGHT.angle;
+                else
+                    angle = cmd:LEFT.angle;
+                end
+                do TurtleTurn with
+                    this.turtle  = turtle;
+                    this.angle   = angle;
+                    this.isRight = cmd:RIGHT;
+                end;
+
+            else/if cmd:FORWARD or cmd:BACKWARD then
+                var int pixels;
+                if cmd:FORWARD then
+                    pixels = cmd:FORWARD.pixels;
+                else
+                    pixels = cmd:BACKWARD.pixels;
+                end
+                do TurtleMove with
+                    this.turtle    = turtle;
+                    this.pixels    = pixels;
+                    this.isForward = cmd:FORWARD;
+                end;
+
+            else/if cmd:SEQUENCE then
+                recurse cmd:SEQUENCE.one;
+                recurse cmd:SEQUENCE.two;
+
+            else/if cmd:REPEAT then
+                loop i in cmd:REPEAT.times do
+                    recurse cmd:REPEAT.command;
+                end
+
+            else
+                _ceu_out_assert(0, "not implemented");
+            end
+        end
+    end
+end
+
+escape 10;
+]],
+    --tight = 'tight loop',
+    _ana = { acc=true },
+    wrn = true,
+    run = { ['~>100s']=10 },
+}
+
 do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
---]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -30130,6 +30508,16 @@ escape &ok != null;
 ]],
     asr = '3] runtime error: invalid tag',
     --run = 1,
+}
+
+Test { [[
+class Body with do end;
+var Body*? tail = spawn Body;
+await *tail;
+escape 1;
+]],
+    asr = '3] runtime error: invalid tag',
+    run = 1,
 }
 
 Test { [[

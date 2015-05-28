@@ -121,7 +121,11 @@ void ceu_stack_dump (tceu_go* go) {
 #endif
 
 #ifdef CEU_ORGS
-void stack_clear_org(tceu_go* go, tceu_org* org, int lim) {
+#if 1
+void ceu_stack_clear_org (tceu_org* main, tceu_go* go, tceu_org* org, int lim) {
+#else
+void ceu_stack_clear_org (tceu_go* go, tceu_org* org, int lim) {
+#endif
     int i;
     for (i=0; i<lim; i+=stack_sz((go),i)) {
         tceu_stk* stk = stack_get((go),i);
@@ -131,11 +135,16 @@ void stack_clear_org(tceu_go* go, tceu_org* org, int lim) {
                 stk->evt = CEU_IN__NONE;
             } else {
                 /* jump to next organism */
+#if 1
+                stk->org = main;
+                stk->trl = &main->trls[0];
+#else
                 stk->org = org->nxt;
                 stk->trl = &((tceu_org*)org->nxt)->trls [
                             (org->n == 0) ?
                             ((tceu_org_lnk*)org)->lnk : 0
                           ];
+#endif
             }
         }
     }
@@ -230,7 +239,7 @@ void ceu_sys_org (tceu_org* org, int n, int lbl, int seqno,
 #endif
 
 #ifdef CEU_ORGS
-void ceu_sys_org_kill_free (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_org* org)
+void ceu_sys_org_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_org* org)
 {
 #if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_WATCHING)
     org->isAlive = 0;
@@ -250,9 +259,12 @@ void ceu_sys_org_kill_free (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_org* org)
             /* param "org" is pointer to what to kill */
     }
 #endif
+}
 
-    /* free org */
 #ifdef CEU_ORGS_NEWS
+void ceu_sys_org_free (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_org* org)
+{
+    /* free org */
     if (org->isDyn) {
         /* re-link PRV <-> NXT */
         org->prv->nxt = org->nxt;
@@ -271,8 +283,9 @@ void ceu_sys_org_kill_free (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_org* org)
         ceu_sys_realloc(org, 0);
 #endif
     }
-#endif /* CEU_ORGS_NEWS */
 }
+#endif /* CEU_ORGS_NEWS */
+
 #endif
 
 /**********************************************************************/
@@ -506,13 +519,16 @@ printf("\tntrls=%d\n", CEU_NTRAILS);
                 else {
                     /* save current org before setting the next traversal */
                     tceu_org* old = STK_ORG;
-                    int tokill = (STK->evt==CEU_IN__CLEAR && old->n!=0);
+                    int to_kill_free = (STK->evt==CEU_IN__CLEAR && old->n!=0);
 
                     /* should pop this level as it was a
                      * bounded CLEAR on the given ORG */
-                    if (tokill && STK->stop==(void*)old) {
+                    if (to_kill_free && STK->stop==(void*)old) {
                         stack_pop(&go);
-                        ceu_sys_org_kill_free(app, &go, old);
+                        ceu_sys_org_kill(app, &go, old);
+#ifdef CEU_ORGS_NEWS
+                        ceu_sys_org_free(app, &go, old);
+#endif
                         continue;
                     }
 
@@ -522,9 +538,11 @@ printf("\tntrls=%d\n", CEU_NTRAILS);
                                 (old->n == 0) ?
                                 ((tceu_org_lnk*)old)->lnk : 0
                               ];
-                    if (tokill) {
-                        ceu_sys_org_kill_free(app, &go, old);
+#ifdef CEU_ORGS_NEWS
+                    if (to_kill_free) {
+                        ceu_sys_org_free(app, &go, old);
                     }
+#endif
                     continue;
                 }
 #endif  /* CEU_ORGS */

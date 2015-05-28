@@ -226,13 +226,10 @@ F = {
     end,
 
     This = function (me)
-        if AST.iter'Dcl_constr'() then
-            return  -- org being created cannot be in parallel
-        end
         me.acc = INS {
             path = me.ana.pre,
             id  = me,
-            md  = 'rd',
+            md  = (AST.par(me,'Dcl_constr') and 'nv') or 'rd',
             tp  = me.tp,
             any = true,
             err = ERR(me, 'variable `this´'),

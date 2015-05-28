@@ -18,7 +18,9 @@ F = {
         end
 
         VARS[var] = true
-        var.isTmp = true
+        if var.isTmp ~= false then  -- already preset as false
+            var.isTmp = true
+        end
 
         if AST.par(me,'Dcl_adt') then
             var.isTmp = false

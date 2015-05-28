@@ -490,16 +490,15 @@ me.blk_body = me.blk_body or blk_body
     --      <constr>
     --  end;
     --      ... becomes ...
-    --  var Loop*? _var;
-    --  _var = spawn Loop in _loops with
+    --  var Loop*? _body_;
+    --  _body_ = spawn Loop in _loops with
     --      this._loops = outer._loops;
     --      this.<n>    = <exp>;
     --      <constr>
-    --  if _var? then
-    --      finalize with
-    --          kill *_var;
-    --      end
-    --      ret = await *_var;
+    --  if _body_? then
+    --      ret = await *_body_;
+    --  else
+    --      ret = 0;    // TODO: how to get "ret" from a dead body?
     --  end
     --]]
     _Recurse_pre = function (me)
@@ -527,11 +526,15 @@ me.blk_body = me.blk_body or blk_body
 
         local SET_AWAIT = node('Await', me.ln,
                             node('Op1_*', me.ln, '*',
-                                node('Var', me.ln, '_var_'..me.n)),
+                                node('Var', me.ln, '_body_'..me.n)),
                             false,
                             false)
+        local SET_DEAD = node('Nothing', me.ln)
         if ret then
-            SET_AWAIT = node('_Set', me.ln, ret, '=', 'await', SET_AWAIT)
+            SET_AWAIT = node('_Set', me.ln, ret, '=', 'await',
+                            SET_AWAIT)
+            SET_DEAD  = node('_Set', me.ln, ret, '=', 'exp',
+                            node('NUMBER', me.ln, '0'))
         end
 
         local to_id  = AST.asr(cls,'Dcl_cls', 3,'BlockI', 1,'Stmts', 2,'Dcl_var')[3]
@@ -539,9 +542,9 @@ me.blk_body = me.blk_body or blk_body
 
         local dcl = node('Dcl_var', me.ln, 'var',
                         node('Type', me.ln, cls_id, 1, false, false, true),
-                        '_var_'..me.n)
+                        '_body_'..me.n)
         local set = node('_Set', me.ln,
-                        node('Var', me.ln, '_var_'..me.n),
+                        node('Var', me.ln, '_body_'..me.n),
                         '=', 'spawn',
                         node('Spawn', me.ln, cls_id,
                             node('Var', me.ln, '_loops_'..cls.N),
@@ -573,31 +576,14 @@ me.blk_body = me.blk_body or blk_body
                                         unpack(constr))))))
         local if_ = node('If', me.ln,
                         node('Op1_?', me.ln, '?',
-                            node('Var', me.ln, '_var_'..me.n)),
+                            node('Var', me.ln, '_body_'..me.n)),
                         --node('Nothing', me.ln),
                         node('Block', me.ln,
                             node('Stmts', me.ln,
-                                node('Finalize', me.ln,
-                                    false,
-                                    node('Finally', me.ln,
-                                        node('Block', me.ln,
-                                            node('Stmts', me.ln,
-                                            node('_Dcl_nat', me.ln, '@nohold', 'func', '_ceu_sys_org_kill', false),
-                                            node('CallStmt', me.ln,
-                                                    node('Op2_call', me.ln, 
-                                                        'call',
-                                                        node('Nat', me.ln, '_ceu_sys_org_kill', true),
-                                                        node('ExpList', me.ln,
-                                                            node('Nat', me.ln, '__ceu_app', true),
-                                                            node('Nat', me.ln, '__ceu_go', true),
-                                                            node('Op1_cast', 
-                                                                me.ln,
-                                                                node('Type', me.ln, '_tceu_org', 1, false, false),
-                                                                    node('Var', me.ln, '_var_'..me.n))))))))),
                                 SET_AWAIT)),
                         node('Block', me.ln,
                             node('Stmts', me.ln,
-                                node('Nothing', me.ln))))
+                                SET_DEAD)))
 
         return node('Stmts', me.ln, dcl, set, if_)
     end,

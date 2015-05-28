@@ -367,10 +367,18 @@ if (_STK->evt==CEU_IN__STK && _STK->org==_STK_ORG
     && _STK->stop==&_STK_ORG->trls[_STK_ORG->n]
     ) {
     _STK->evt = CEU_IN__NONE;
-    stack_clear_org(_ceu_go, _STK_ORG, stack_curi(_ceu_go));
+#if 1
+    ceu_stack_clear_org(_ceu_app->data, _ceu_go, _STK_ORG, stack_curi(_ceu_go));
+#else
+    ceu_stack_clear_org(_ceu_go, _STK_ORG, stack_curi(_ceu_go));
+#endif
         /* remove all but me (HACK_9) */
 } else {
-    stack_clear_org(_ceu_go, _STK_ORG, stack_nxti(_ceu_go));
+#if 1
+    ceu_stack_clear_org(_ceu_app->data, _ceu_go, _STK_ORG, stack_nxti(_ceu_go));
+#else
+    ceu_stack_clear_org(_ceu_go, _STK_ORG, stack_nxti(_ceu_go));
+#endif
         /* remove all */
 }
 #endif
@@ -405,6 +413,8 @@ if (_STK->evt==CEU_IN__STK && _STK->org==_STK_ORG
         -- organism to go in sequence.
         --
         -- Alternatives:
+        --      - TODO: currently not organism in sequence, but restart from Main
+        --          (#if 0/1 above and in ceu_stack_clear_org)
         --      - ?
         --]]
     end,
@@ -883,7 +893,10 @@ _STK->trl = &_STK_ORG->trls[ ]]..stmts.trails[1]..[[ ];
                 CASE(me, var.lbl_fin_kill_free)
                 if PROPS.has_adts_watching[var.adt.id] then
                     LINE(me, [[
+/*
+"kill" only while in scope
 CEU_]]..id..[[_kill(_ceu_app, _ceu_go, ]]..V(var.__env_adt_root)..[[.root);
+*/
 ]])
                 end
                 if static then
