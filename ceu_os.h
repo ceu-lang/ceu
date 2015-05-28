@@ -454,7 +454,6 @@ typedef struct tceu_org
 
 #ifdef CEU_ORGS_NEWS
     u8 isDyn: 1;            /* created w/ new or spawn? */
-    struct tceu_org* nxt_free;  /* "to free" list (only on reaction end) */
 #endif
 
 #ifdef CEU_ORGS_NEWS_POOL

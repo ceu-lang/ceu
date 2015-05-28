@@ -649,25 +649,6 @@ _CEU_GO_QUIT_:;
     }
 #endif
 #endif
-
-    /* free all orgs on "lst_free" on reaction termination */
-#ifdef CEU_ORGS_NEWS
-    while (go.lst_free != NULL) {
-        tceu_org* org = go.lst_free;
-        go.lst_free = org->nxt_free;
-#if    defined(CEU_ORGS_NEWS_POOL) && !defined(CEU_ORGS_NEWS_MALLOC)
-        ceu_pool_free((tceu_pool*)org->pool, (byte*)org);
-#elif  defined(CEU_ORGS_NEWS_POOL) &&  defined(CEU_ORGS_NEWS_MALLOC)
-        if (org->pool->queue == NULL) {
-            ceu_sys_realloc(org, 0);
-        } else {
-            ceu_pool_free((tceu_pool*)org->pool, (byte*)org);
-        }
-#elif !defined(CEU_ORGS_NEWS_POOL) &&  defined(CEU_ORGS_NEWS_MALLOC)
-        ceu_sys_realloc(org, 0);
-#endif
-    }
-#endif
 }
 
 int ceu_go_all (tceu_app* app)
