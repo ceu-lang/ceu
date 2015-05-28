@@ -142,7 +142,7 @@ static tceu_evtp ceu_app_calls (tceu_app* _ceu_app, tceu_nevt evt, tceu_evtp par
 #endif
 
 static int ceu_app_go (tceu_app* _ceu_app , tceu_go* _ceu_go) {
-    int _CEU_LBL = _STK.trl->lbl;
+    int _CEU_LBL = _STK->trl->lbl;
 #ifdef CEU_GOTO
 _CEU_GOTO_:
 #endif
@@ -152,7 +152,7 @@ _CEU_GOTO_:
 #ifdef CEU_ORGS
     _ceu_app->lst.org = _STK_ORG;
 #endif
-    _ceu_app->lst.trl = _STK.trl;
+    _ceu_app->lst.trl = _STK->trl;
     _ceu_app->lst.lbl = _CEU_LBL;
 #endif
 #ifdef CEU_DEBUG_TRAILS

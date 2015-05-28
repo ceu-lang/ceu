@@ -486,66 +486,66 @@ typedef struct tceu_go {
 #endif
 } tceu_go;
 
-#define stack_init(go)   (go).stki = -1
-#define stack_empty(go)  ((go).stki == 0)
-#define stack_geti(go,i) (*(tceu_stk*)&((go).stk[i]))
-#define stack_szi(go,i)  ((int)(sizeof(tceu_stk)+stack_geti(go,i).evt_sz))
-#define stack_top(go)    stack_geti((go),(go).stki)
-#define stack_nxti(go)   ((go).stki==-1 ? 0 : (go).stki + stack_szi((go),(go).stki))
+#define stack_init(go)   (go)->stki = -1
+#define stack_empty(go)  ((go)->stki == 0)
+#define stack_geti(go,i) ((tceu_stk*)&((go)->stk[i]))
+#define stack_szi(go,i)  ((int)(sizeof(tceu_stk)+stack_geti(go,i)->evt_sz))
+#define stack_top(go)    stack_geti((go),(go)->stki)
+#define stack_nxti(go)   ((go)->stki==-1 ? 0 : (go)->stki + stack_szi((go),(go)->stki))
 
 #ifdef CEU_ORGS
 #define stack_clr_less(go,o) {                   \
     int i;                                  \
     for (i = 0;                             \
-         i < (go).stki; \
+         i < (go)->stki; \
               /* keep last unchanged */     \
          i += stack_szi(go,i))              \
     {                                       \
-        if (stack_geti(go,i).org==(o)) {    \
-stack_geti(go,i).org = _ceu_app->data; \
-stack_geti(go,i).trl = &_ceu_app->data->trls[0]; \
-stack_geti(go,i).stop = NULL;\
+        if (stack_geti(go,i)->org==(o)) {    \
+stack_geti(go,i)->org = _ceu_app->data; \
+stack_geti(go,i)->trl = &_ceu_app->data->trls[0]; \
+stack_geti(go,i)->stop = NULL;\
         }                                   \
     }                                       \
 }
 #define stack_clr_more(go,o) {                   \
     int i;                                  \
     for (i = 0;                             \
-         i <= (go).stki; \
+         i <= (go)->stki; \
               /* keep last unchanged */     \
          i += stack_szi(go,i))              \
     {                                       \
-        if (stack_geti(go,i).org==(o)) {    \
-stack_geti(go,i).org = _ceu_app->data; \
-stack_geti(go,i).trl = &_ceu_app->data->trls[0]; \
-stack_geti(go,i).stop = NULL;\
+        if (stack_geti(go,i)->org==(o)) {    \
+stack_geti(go,i)->org = _ceu_app->data; \
+stack_geti(go,i)->trl = &_ceu_app->data->trls[0]; \
+stack_geti(go,i)->stop = NULL;\
         }                                   \
     }                                       \
 }
 #endif
 
 #define stack_prv(go)                                   \
-    ((go).stki - stack_top(go).stk_prv)
+    ((go)->stki - stack_top(go)->stk_prv)
 #define stack_pop(go)                                   \
-    ceu_out_assert((go).stki>=0, "stack underflow");    \
-    (go).stki -= stack_top(go).stk_prv;
+    ceu_out_assert((go)->stki>=0, "stack underflow");    \
+    (go)->stki -= stack_top(go)->stk_prv;
 
-#define stack_push(go,elem,ptr)                         \
-    ceu_out_assert(stack_nxti(go)+sizeof(tceu_stk)+elem.evt_sz < CEU_STACK_MAX, "stack overflow");  \
-    ceu_stack_push_f(&(go),&elem,ptr)
+#define stack_push(go,e,ptr)                         \
+    ceu_out_assert((stack_nxti(go)+sizeof(tceu_stk)+(e)->evt_sz < CEU_STACK_MAX), "stack overflow");  \
+    ceu_stack_push_f((go),(e),ptr)
 
-#define STK  stack_top(go)
-#define _STK stack_top(*_ceu_go)
+#define STK  stack_top(&go)
+#define _STK stack_top(_ceu_go)
 #ifdef CEU_ORGS
-#define STK_ORG_ATTR  (STK.org)
-#define _STK_ORG_ATTR (_STK.org)
+#define STK_ORG_ATTR  (STK->org)
+#define _STK_ORG_ATTR (_STK->org)
 #else
 #define STK_ORG_ATTR  (app->data)
 #define _STK_ORG_ATTR (_ceu_app->data)
 #endif
 #define STK_ORG  ((tceu_org*)STK_ORG_ATTR)    /* not an lvalue */
 #define _STK_ORG ((tceu_org*)_STK_ORG_ATTR)   /* not an lvalue */
-#define STK_LBL (STK.trl->lbl)
+#define STK_LBL (STK->trl->lbl)
 
 /* TCEU_LST */
 
