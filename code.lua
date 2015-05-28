@@ -345,11 +345,6 @@ _STK_ORG->cls = ]]..me.n..[[;
 
         -- might need "free"
 
-        -- TODO: this posts a "CLEAR" that will eventually execute the "free"
-        -- inside the scheduler. However, we could call the "free" from here
-        -- because all trails are already clean at this point.
-        -- (but remeber that the "free" should be delayed)
-
         LINE(me, [[
 #ifdef CEU_ORGS
 {
@@ -663,7 +658,7 @@ case ]]..me.lbl.id..[[:;
             LINE(me, [[
 /* HACK_9: see above */
 if (]]..V(set_to)..[[.tag != ]]..string.upper(TP.toc(set_to.tp.opt))..[[_NIL) {
-    tceu_stk* stk = stack_cur(_ceu_go);
+    tceu_stk* stk = stack_nxt(_ceu_go);
     if (stk->evt == CEU_IN__NONE) {
         ]]..V(set_to)..' = '..              
             string.upper(TP.toc(set_to.tp.opt))..[[_pack(NULL);

@@ -95,19 +95,30 @@ int ceu_sys_req (void) {
 
 /**********************************************************************/
 
+void ceu_stack_pop_f (tceu_go* go) {
+    go->stk_nxti = go->stk_curi;
+    go->stk_curi -= stack_cur(go)->offset;
+}
+
 void ceu_stack_push_f (tceu_go* go, tceu_stk* elem, void* ptr) {
-    if (go->stk_curi == -1) {
-        go->stk_curi = 0;
-    } else {
-        int old = go->stk_curi;
-        go->stk_curi = stack_nxti(go);
-        elem->offset = go->stk_curi - old;
-    }
+    elem->offset = go->stk_nxti - go->stk_curi;
+    go->stk_curi = go->stk_nxti;
+    go->stk_nxti = stack_pushi(go, elem);
     *stack_cur(go) = *elem;
     if (ptr != NULL) {
         memcpy(stack_cur(go)->evt_buf, ptr, elem->evt_sz);
     }
 }
+
+#ifdef CEU_DEBUG
+void ceu_stack_dump (tceu_go* go) {
+    int i;
+    printf("=== STACK-DUMP [%d -> %d]\n", go->stk_curi, go->stk_nxti);
+    for (i=0; i<go->stk_nxti; i+=stack_sz(go,i)) {
+        printf("[%d] evt=%d sz=%d\n", i, stack_get(go,i)->evt, stack_get(go,i)->evt_sz);
+    }
+}
+#endif
 
 /**********************************************************************/
 
@@ -609,10 +620,10 @@ if (STK->trl->evt==CEU_IN__ORG) {
             STK->trl++;
         }
 
+        stack_pop(&go);
         if (stack_empty(&go)) {
             break;      /* reaction has terminated */
         }
-        stack_pop(&go);
     }
 
 _CEU_GO_QUIT_:;

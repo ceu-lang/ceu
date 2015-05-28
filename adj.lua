@@ -1457,23 +1457,52 @@ me.blk_body = me.blk_body or blk_body
     _EmitInt_pre = function (me)
         me.tag = 'EmitInt'
         me = F.EmitExt_pre(me) or me
+        --[[
+        -- TODO-RESEARCH:
+        -- If an "emit" is on the stack and its enclosing block "self-aborts",
+        -- we need to remove the "emit" from the stack because its associated
+        -- payload may have gone out of scope:
+        --  par/or do
+        --      par/or do
+        --          var int x;
+        --          emit e => &x;
+        --      with
+        --          await e;    // aborts "emit" block w/ "x"
+        --      end
+        --  with
+        --      px = await e;
+        --      *px;            // "x" is out of scope
+        --  end
+        --
+        -- To remove, we need to "finalize" the "emit" removing itself from the
+        -- stak:
+
         --  emit x;
         --      ... becomes ...
         --  do
         --      var int fin = stack_nxti(); /* TODO: search for tceu_nstk */
         --      finalize with
-        --          if (fin != -1) then
+        --          if (fin != CEU_STACK_MAX) then
         --              stack_get(fin)->evt = IN_NONE;
         --          end
         --      end
         --      emit x;
-        --      fin = -1;
+        --      fin = CEU_STACK_MAX;
         --  end
+        --
+        -- Alternatives:
+        --      - forbid pointers in payloads: we could then allow an "emit" to
+        --        stay in the stack even if its surrounding block aborts
+        --      - statically detect if an "emit" can be aborted
+        --          - generate a warning ("slow code") and the code above if it
+        --            is the case
+        --]]
         return
             node('Block', me.ln,
                 node('Stmts', me.ln,
+                    node('_Dcl_nat', me.ln, '@plain', 'unk', '_tceu_nstk', false),
                     node('Dcl_var', me.ln, 'var',
-                        node('Type', me.ln, 'int', 0, false, false),
+                        node('Type', me.ln, '_tceu_nstk', 0, false, false),
                         '_emit_fin_'..me.n),
                     node('_Set', me.ln,
                         node('Var', me.ln, '_emit_fin_'..me.n),
@@ -1488,8 +1517,7 @@ me.blk_body = me.blk_body or blk_body
                                     node('If', me.ln,
                                         node('Op2_==', me.ln, '==',
                                             node('Var', me.ln, '_emit_fin_'..me.n),
-                                            node('Op1_-', me.ln, '-',
-                                                node('NUMBER', me.ln, '1'))),
+                                            node('Nat', me.ln, '_CEU_STACK_MAX')),
                                         node('Block', me.ln,
                                             node('Stmts', me.ln,
                                                 node('Nothing', me.ln))),
@@ -1503,7 +1531,7 @@ me.blk_body = me.blk_body or blk_body
                                                                 'call',
                                                                 node('Nat', me.ln, '_stack_get', true),
                                                                 node('ExpList', me.ln,
-                                                                    node('RawExp', me.ln, '_ceu_go', true),
+                                                                    node('Nat', me.ln, '__ceu_go', true),
                                                                     node('Var', me.ln, '_emit_fin_'..me.n)))),
                                                         'evt'),
                                                     '=', 'exp',
@@ -1512,8 +1540,7 @@ me.blk_body = me.blk_body or blk_body
                     node('_Set', me.ln,
                         node('Var', me.ln, '_emit_fin_'..me.n),
                         '=', 'exp',
-                        node('Op1_-', me.ln, '-',
-                            node('NUMBER', me.ln, '1')))))
+                        node('Nat', me.ln, '_CEU_STACK_MAX'))))
     end,
 
 -- Finalize ------------------------------------------------------
