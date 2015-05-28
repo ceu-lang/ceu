@@ -267,7 +267,7 @@ void ]]..enum..'_kill (tceu_app* app, tceu_go* go, CEU_'..id..[[* me) {
              stk.trl  = &app->data->trls[0];
              stk.stop = NULL;
              stk.evt_sz = sizeof(me);
-    stack_push(*go, stk, &me);
+    stack_push(go, &stk, &me);
         /* param is pointer to what to kill */
 ]]
         -- kill all my recursive fields
