@@ -525,7 +525,7 @@ stack_get(go,i)->stop = NULL;\
 }
 #endif
 
-#define stack_prv(go)                                   \
+#define stack_prvi(go)                                   \
     ((go)->stk_curi - stack_cur(go)->offset)
 #define stack_pop(go)                                   \
     ceu_out_assert((go)->stk_curi>=0, "stack underflow");    \

@@ -593,7 +593,7 @@ if (STK->trl->evt==CEU_IN__ORG) {
             else
             {
                 if (STK->evt==CEU_IN__CLEAR &&
-                    !(STK->trl->evt==CEU_IN__STK && STK->trl->stk==stack_prv(&go))
+                    !(STK->trl->evt==CEU_IN__STK && STK->trl->stk==stack_prvi(&go))
                         /* HACK_8: do not remove the clear continuation */
                    )
                 {

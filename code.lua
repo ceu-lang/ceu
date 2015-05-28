@@ -663,7 +663,7 @@ case ]]..me.lbl.id..[[:;
             LINE(me, [[
 /* HACK_9: see above */
 if (]]..V(set_to)..[[.tag != ]]..string.upper(TP.toc(set_to.tp.opt))..[[_NIL) {
-    tceu_stk* stk = stack_get(_ceu_go, stack_nxti(_ceu_go));
+    tceu_stk* stk = stack_cur(_ceu_go);
     if (stk->evt == CEU_IN__NONE) {
         ]]..V(set_to)..' = '..              
             string.upper(TP.toc(set_to.tp.opt))..[[_pack(NULL);
