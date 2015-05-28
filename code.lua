@@ -367,11 +367,11 @@ if (_STK->evt==CEU_IN__STK && _STK->org==_STK_ORG
     && _STK->stop==&_STK_ORG->trls[_STK_ORG->n]
     ) {
     _STK->evt = CEU_IN__NONE;
-    stack_clear_org(_ceu_app->data, _ceu_go, _STK_ORG, 1);
-        /* TODO: remove org continuations from the stack */
+    stack_clear_org(_ceu_go, _STK_ORG, stack_curi(_ceu_go));
+        /* remove all but me (HACK_9) */
 } else {
-    stack_clear_org(_ceu_app->data, _ceu_go, _STK_ORG, 0);
-        /* TODO: remove org continuations from the stack */
+    stack_clear_org(_ceu_go, _STK_ORG, stack_nxti(_ceu_go));
+        /* remove all */
 }
 #endif
 
@@ -386,6 +386,27 @@ if (_STK->evt==CEU_IN__STK && _STK->org==_STK_ORG
         else
             HALT(me, 'RET_RESTART')
         end
+
+        --[[
+        -- TODO-RESEARCH-2:
+        -- When an organism dies naturally, some pending traversals might
+        -- remain in the stack with dangling pointers to the released organism:
+        --
+        --  class T with
+        --  do
+        --      par/or do
+        --          // aborts and terminates the organism
+        --      with
+        --          // continuation is cleared but still has to be traversed
+        --      end
+        --  end
+        --
+        -- The "stack_clear_org" modifies all pending traversals to the
+        -- organism to go in sequence.
+        --
+        -- Alternatives:
+        --      - ?
+        --]]
     end,
 
     -- TODO: C function?

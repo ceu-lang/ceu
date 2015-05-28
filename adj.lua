@@ -1458,10 +1458,11 @@ me.blk_body = me.blk_body or blk_body
         me.tag = 'EmitInt'
         me = F.EmitExt_pre(me) or me
         --[[
-        -- TODO-RESEARCH:
+        -- TODO-RESEARCH-1:
         -- If an "emit" is on the stack and its enclosing block "self-aborts",
         -- we need to remove the "emit" from the stack because its associated
         -- payload may have gone out of scope:
+        --
         --  par/or do
         --      par/or do
         --          var int x;

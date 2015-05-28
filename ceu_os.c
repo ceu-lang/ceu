@@ -121,14 +121,22 @@ void ceu_stack_dump (tceu_go* go) {
 #endif
 
 #ifdef CEU_ORGS
-void stack_clear_org(tceu_org* main, tceu_go* go, tceu_org* org, int less) {
+void stack_clear_org(tceu_go* go, tceu_org* org, int lim) {
     int i;
-    int lim = (less ? go->stk_curi : go->stk_nxti);
-    for (i=0; i<go->stk_curi; i+=stack_sz((go),i)) {
-        if (stack_get(go,i)->org == org) {
-            stack_get((go),i)->org = main;
-            stack_get((go),i)->trl = &main->trls[0];
-            stack_get((go),i)->stop = NULL;
+    for (i=0; i<lim; i+=stack_sz((go),i)) {
+        tceu_stk* stk = stack_get((go),i);
+        if (stk->org==org) {
+            if (stk->stop != NULL) {
+                /* ignore local traversals */
+                stk->evt = CEU_IN__NONE;
+            } else {
+                /* jump to next organism */
+                stk->org = org->nxt;
+                stk->trl = &((tceu_org*)org->nxt)->trls [
+                            (org->n == 0) ?
+                            ((tceu_org_lnk*)org)->lnk : 0
+                          ];
+            }
         }
     }
 }
