@@ -159,7 +159,7 @@ function CLEAR_BEF (me)
     /* save the continuation to run after the clear */
     /* trails[1] points to ORG blk ("clear trail") */
     _STK->trl->evt = CEU_IN__STK;
-    _STK->trl->stk = _ceu_go->stki;  /* level of the push above */
+    _STK->trl->stk = stack_curi(_ceu_go);  /* level of the push above */
                     /* HACK_8: not removed by the IN__CLEAR below */
     _STK->trl->lbl = ]]..me.lbl_clr.id..[[;
 }
@@ -426,7 +426,7 @@ for (]]..V(t.i)..[[=0; ]]..V(t.i)..'<'..t.arr.sval..';'..V(t.i)..[[++)
         LINE(me, [[
     /* resets org memory and starts org.trail[0]=Class_XXX */
     ceu_out_org(_ceu_app, ]]..org..','..t.cls.trails_n..','..t.cls.lbl.id..[[,
-            _ceu_go->stki+1,    /* run now */
+            stack_curi(_ceu_go)+1,    /* run now */
 #ifdef CEU_ORGS_NEWS
                 ]]..t.isDyn..[[,
 #endif
@@ -568,7 +568,7 @@ if (]]..LVAR..[[ == NULL) {
 /* save the continuation to run after the kill */
 _STK->trl->evt = CEU_IN__STK;
 _STK->trl->lbl = ]]..me.lbl.id..[[;
-_STK->trl->stk = _ceu_go->stki;
+_STK->trl->stk = stack_curi(_ceu_go);
 
 {
     tceu_org* __ceu_org = (tceu_org*)]]..V(org)..[[;
@@ -663,7 +663,7 @@ case ]]..me.lbl.id..[[:;
             LINE(me, [[
 /* HACK_9: see above */
 if (]]..V(set_to)..[[.tag != ]]..string.upper(TP.toc(set_to.tp.opt))..[[_NIL) {
-    tceu_stk* stk = stack_geti(_ceu_go, stack_nxti(_ceu_go));
+    tceu_stk* stk = stack_get(_ceu_go, stack_nxti(_ceu_go));
     if (stk->evt == CEU_IN__NONE) {
         ]]..V(set_to)..' = '..              
             string.upper(TP.toc(set_to.tp.opt))..[[_pack(NULL);
@@ -957,7 +957,7 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
     /* save the continuation to run after the kills */
     _STK->trl->evt = CEU_IN__STK;
     _STK->trl->lbl = ]]..me.lbl_cnt.id..[[;
-    _STK->trl->stk = _ceu_go->stki;
+    _STK->trl->stk = stack_curi(_ceu_go);
 
     CEU_]]..fr.tp.id..[[_kill(_ceu_app, _ceu_go, __ceu_old);
 ]])
@@ -1064,7 +1064,7 @@ _STK->trl = &_STK_ORG->trls[ ]] ..me.trails[1]..[[ ];
     tceu_trl* trl = &_STK_ORG->trls[ ]]..sub.trails[1]..[[ ];
     trl->evt = CEU_IN__STK;
     trl->lbl = ]]..me.lbls_in[i].id..[[;
-    trl->stk = _ceu_go->stki;   /* awake in the same level as we are now */
+    trl->stk = stack_curi(_ceu_go);   /* awake in the same level as we are now */
 }
 ]])
             end
@@ -1481,7 +1481,7 @@ case ]]..me.lbl_cnt.id..[[:;
 /* save the continuation to run after the emit */
 _STK->trl->evt = CEU_IN__STK;
 _STK->trl->lbl = ]]..me.lbl_cnt.id..[[;
-_STK->trl->stk = _ceu_go->stki;
+_STK->trl->stk = stack_curi(_ceu_go);
    /* awake in the same level as we are now (-1 vs the emit push below) */
 
 /* trigger the event */

@@ -1,4 +1,4 @@
-/* TODO: #ifdef CEU_INTS: seqno, stki, CEU_STK */
+/* TODO: #ifdef CEU_INTS: seqno, stk_curi, CEU_STK */
 
 #include "ceu_os.h"
 
@@ -96,16 +96,16 @@ int ceu_sys_req (void) {
 /**********************************************************************/
 
 void ceu_stack_push_f (tceu_go* go, tceu_stk* elem, void* ptr) {
-    if (go->stki == -1) {
-        go->stki = 0;
+    if (go->stk_curi == -1) {
+        go->stk_curi = 0;
     } else {
-        int old = go->stki;
-        go->stki = stack_nxti(go);
-        elem->stk_prv = go->stki - old;
+        int old = go->stk_curi;
+        go->stk_curi = stack_nxti(go);
+        elem->offset = go->stk_curi - old;
     }
-    *stack_top(go) = *elem;
+    *stack_cur(go) = *elem;
     if (ptr != NULL) {
-        memcpy(stack_top(go)->evt_buf, ptr, elem->evt_sz);
+        memcpy(stack_cur(go)->evt_buf, ptr, elem->evt_sz);
     }
 }
 
@@ -127,7 +127,7 @@ int ceu_sys_org_spawn (tceu_go* _ceu_go, tceu_nlbl lbl_cnt, tceu_org* neworg, tc
     /* save the continuation to run after the constructor */
     _STK->trl->evt = CEU_IN__STK;
     _STK->trl->lbl = lbl_cnt;
-    _STK->trl->stk = _ceu_go->stki;
+    _STK->trl->stk = stack_curi(_ceu_go);
        /* awake in the same level as we are now (-1 vs the constructor push below) */
 
     /* prepare the new org to start */
@@ -439,7 +439,7 @@ void ceu_sys_go (tceu_app* app, int evt, tceu_evtp evtp)
             }
 
 #ifdef CEU_DEBUG_TRAILS
-printf("STACK[%d]: evt=%d : seqno=%d\n", go.stki, STK->evt, app->seqno);
+printf("STACK[%d]: evt=%d : seqno=%d\n", stack_curi(&go), STK->evt, app->seqno);
 #if defined(CEU_ORGS) || defined(CEU_OS_KERNEL)
 printf("\torg=%p/%d : [%d/%p]\n", STK_ORG, STK_ORG==app->data, STK_ORG->n, STK_ORG->trls);
 #else
@@ -535,7 +535,7 @@ if (STK->trl->evt==CEU_IN__ORG) {
             if ( (STK->trl->evt != CEU_IN__NONE)
                         /* something to execute */
             &&   (
-                   (STK->trl->evt==CEU_IN__STK && STK->trl->stk==go.stki)
+                   (STK->trl->evt==CEU_IN__STK && STK->trl->stk==stack_curi(&go))
                         /* stacked and in this level */
                ||  (STK->trl->evt==STK->evt && (STK->trl->evt==CEU_IN__CLEAR ||
                                               STK->trl->seqno!=app->seqno))

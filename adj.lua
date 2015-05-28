@@ -1463,7 +1463,7 @@ me.blk_body = me.blk_body or blk_body
         --      var int fin = stack_nxti(); /* TODO: search for tceu_nstk */
         --      finalize with
         --          if (fin != -1) then
-        --              stack_geti(fin)->evt = IN_NONE;
+        --              stack_get(fin)->evt = IN_NONE;
         --          end
         --      end
         --      emit x;
@@ -1484,7 +1484,7 @@ me.blk_body = me.blk_body or blk_body
                         node('Finally', me.ln,
                             node('Block', me.ln,
                                 node('Stmts', me.ln,
-                                    node('_Dcl_nat', me.ln, '@nohold', 'func', '_stack_geti', false),
+                                    node('_Dcl_nat', me.ln, '@nohold', 'func', '_stack_get', false),
                                     node('If', me.ln,
                                         node('Op2_==', me.ln, '==',
                                             node('Var', me.ln, '_emit_fin_'..me.n),
@@ -1501,7 +1501,7 @@ me.blk_body = me.blk_body or blk_body
                                                             node('Op2_call', 
                                                                 me.ln,
                                                                 'call',
-                                                                node('Nat', me.ln, '_stack_geti', true),
+                                                                node('Nat', me.ln, '_stack_get', true),
                                                                 node('ExpList', me.ln,
                                                                     node('RawExp', me.ln, '_ceu_go', true),
                                                                     node('Var', me.ln, '_emit_fin_'..me.n)))),
