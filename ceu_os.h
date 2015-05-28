@@ -508,37 +508,6 @@ typedef struct tceu_go {
     ceu_out_assert(!stack_full((go),(elem)), "stack overflow"); \
     ceu_stack_push_f((go),(elem),(ptr));
 
-#ifdef CEU_ORGS
-#define stack_clr_less(go,o) {                      \
-    int i;                                          \
-    for (i = 0;                                     \
-         i < (go)->stk_curi;                        \
-              /* keep last unchanged */             \
-         i += stack_sz((go),i))                     \
-    {                                               \
-        if (stack_get((go),i)->org==(o)) {          \
-stack_get((go),i)->org = _ceu_app->data;            \
-stack_get((go),i)->trl = &_ceu_app->data->trls[0];  \
-stack_get((go),i)->stop = NULL;                     \
-        }                                           \
-    }                                               \
-}
-#define stack_clr_more(go,o) {                      \
-    int i;                                          \
-    for (i = 0;                                     \
-         i < (go)->stk_nxti;                        \
-              /* keep last unchanged */             \
-         i += stack_sz((go),i))                     \
-    {                                               \
-        if (stack_get((go),i)->org==(o)) {          \
-stack_get((go),i)->org = _ceu_app->data;            \
-stack_get((go),i)->trl = &_ceu_app->data->trls[0];  \
-stack_get((go),i)->stop = NULL;                     \
-        }                                           \
-    }                                               \
-}
-#endif
-
 #define STK  stack_cur(&go)
 #define _STK stack_cur(_ceu_go)
 #ifdef CEU_ORGS

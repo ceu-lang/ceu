@@ -120,6 +120,20 @@ void ceu_stack_dump (tceu_go* go) {
 }
 #endif
 
+#ifdef CEU_ORGS
+void stack_clear_org(tceu_org* main, tceu_go* go, tceu_org* org, int less) {
+    int i;
+    int lim = (less ? go->stk_curi : go->stk_nxti);
+    for (i=0; i<go->stk_curi; i+=stack_sz((go),i)) {
+        if (stack_get(go,i)->org == org) {
+            stack_get((go),i)->org = main;
+            stack_get((go),i)->trl = &main->trls[0];
+            stack_get((go),i)->stop = NULL;
+        }
+    }
+}
+#endif
+
 /**********************************************************************/
 
 #ifdef CEU_ORGS

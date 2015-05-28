@@ -350,4 +350,16 @@ real	11m24.700s
 user	10m26.984s
 sys	1m59.287s
 
+STATS = {
+    count   = 2329,
+    mem     = 0,
+    trails  = 4943,
+    bytes   = 28064698,
+}
+
+
+real	11m23.647s
+user	10m36.320s
+sys	1m51.752s
+
 ]]

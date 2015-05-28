@@ -367,11 +367,11 @@ if (_STK->evt==CEU_IN__STK && _STK->org==_STK_ORG
     && _STK->stop==&_STK_ORG->trls[_STK_ORG->n]
     ) {
     _STK->evt = CEU_IN__NONE;
-    stack_clr_less(_ceu_go, _STK_ORG); /* TODO: remove org continuations from the stack 
-*/
+    stack_clear_org(_ceu_app->data, _ceu_go, _STK_ORG, 1);
+        /* TODO: remove org continuations from the stack */
 } else {
-    stack_clr_more(_ceu_go, _STK_ORG); /* TODO: remove org continuations from the stack 
-*/
+    stack_clear_org(_ceu_app->data, _ceu_go, _STK_ORG, 0);
+        /* TODO: remove org continuations from the stack */
 }
 #endif
 
