@@ -1563,11 +1563,183 @@ escape 1;
     asr = true,
 }
 
-do return end
+----------------
+--]===]
+
+Test { [[
+interface IGUI_Component with
+    var _void&? nat;
+end
+
+class EnterLeave with
+    var IGUI_Component& gui;
+do
+    var _void* g = &gui.nat;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+    var int? x;
+do
+end
+
+class U with
+    var T& t;
+do
+end
+
+var T t with
+    this.x = 10;
+end;
+
+var U u with
+    this.t = t;
+end;
+
+escape u.t.x;
+]],
+    run = 10,
+}
+
+Test { [[
+class T with
+    var int? x;
+do
+end
+
+class U with
+    var T& t;
+    var int ret;
+do
+    this.ret = t.x;
+end
+
+var T t with
+    this.x = 10;
+end;
+
+var U u with
+    this.t = t;
+end;
+
+escape u.t.x + u.ret;
+]],
+    run = 20,
+}
+
+Test { [[
+class T with
+    var int&? x;
+do
+end
+
+class U with
+    var T& t;
+    var int ret;
+do
+    this.ret = t.x;
+end
+
+var int z = 10;
+
+var T t with
+    this.x = z;
+end;
+
+var U u with
+    this.t = t;
+end;
+
+escape u.t.x + u.ret;
+]],
+    run = 20,
+}
+
+Test { [[
+interface I with
+    var int? x;
+end
+
+class T with
+    interface I;
+do
+end
+
+class U with
+    var T& t;
+do
+end
+
+var T t with
+    this.x = 10;
+end;
+
+var U u with
+    this.t = t;
+end;
+
+escape u.t.x;
+]],
+    run = 10,
+}
+
+Test { [[
+interface I with
+    var int? v;
+end
+
+class U with
+    interface I;
+do
+end
+
+var U u with
+    this.v = 10;
+end;
+var I* i = &u;
+
+escape i:v;
+]],
+    run = 10,
+}
+
+Test { [[
+class T with
+    var int? x;
+do
+end
+
+interface I with
+    var T& t;
+end
+
+class U with
+    interface I;
+do
+end
+
+var T t with
+    this.x = 10;
+end;
+
+var U u with
+    this.t = t;
+end;
+var I* i = &u;
+
+escape ((*i).t).x;
+]],
+    run = 10,
+}
+
+--do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
----]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }

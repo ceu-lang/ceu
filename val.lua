@@ -26,7 +26,7 @@ function V (me)
         ret = '(&'..ret..')'
     end
 
-    return string.gsub(ret, '([^&])%&([(]*)%*', '%1%2')
+    return string.gsub(ret, '([^&])%&([(]?)%*', '%1%2')
             -- &((*(...))) => (((...)))
             -- unless &&((*(...)))
 end
@@ -173,7 +173,8 @@ F =
                 -- NONE
                 else
                     -- ... xxx.me ...
-                    me.val = '('..op..'(CEU_'..ID..'_SOME_assert(&'..me.val..',__FILE__,__LINE__)->SOME.v))'
+                    me.val = '('..op..'(CEU_'..ID..'_SOME_assert('..'&'
+                                ..me.val..',__FILE__,__LINE__)->SOME.v))'
                 end
             end
         elseif var.pre == 'pool' then
@@ -214,9 +215,6 @@ F =
     Field = function (me)
         local gen = '((tceu_org*)'..me.org.val..')'
         if me.org.cls and me.org.cls.is_ifc then
-            if me.var.tp.opt then
-                error 'not implemented'
-            end
             if me.var.pre == 'var'
             or me.var.pre == 'pool' then
                 if me.var.tp.arr then
@@ -234,7 +232,7 @@ F =
     ]
         )
 ))]]
-                    if REF(me.var.tp) and (not ENV.clss[me.var.tp.id]) then
+                    if REF(me.var.tp) and (not ENV.clss[me.var.tp.id]) and (not me.var.tp.opt) then
                         me.val = '(*'..me.val..')'
                     end
                 end
@@ -259,12 +257,16 @@ F =
             else
                 error 'not implemented'
             end
+
+            if me.var.tp.opt then
+                F.__var(me)
+            end
         else
             if me.c then
                 me.val = me.c.id_
             else
                 assert(me.var, 'bug found')
-                me.val = me.org.val..'->'..me.var.id_
+                me.val = '('..me.org.val..'->'..me.var.id_..')'
                 F.__var(me)
             end
         end
