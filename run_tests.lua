@@ -5,7 +5,7 @@
 RUNTESTS = true
 
 -- Execution option for the tests:
---VALGRIND = true
+VALGRIND = true
 --LUACOV = '-lluacov'
 OS = false   -- false, true, nil(random)
 
@@ -327,39 +327,14 @@ sys	1m42.707s
 
 -- no TM
 STATS = {
-    count   = 2321,
-    mem     = 0,
-    trails  = 4568,
-    bytes   = 25799985,
-}
-
-
-real	10m44.497s
-user	9m50.410s
-sys	1m54.301s
-
-STATS = {
-    count   = 2323,
-    mem     = 0,
-    trails  = 4918,
-    bytes   = 26491243,
-}
-
-
-real	11m24.700s
-user	10m26.984s
-sys	1m59.287s
-
-STATS = {
     count   = 2329,
     mem     = 0,
     trails  = 4943,
-    bytes   = 28064698,
+    bytes   = 28067954,
 }
 
 
-real	11m23.647s
-user	10m36.320s
-sys	1m51.752s
-
+real	11m8.664s
+user	10m10.192s
+sys	1m59.291s
 ]]
