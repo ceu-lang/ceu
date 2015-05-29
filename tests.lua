@@ -30309,7 +30309,6 @@ escape 1;
     run = 1,
 }
 
---]===]
 Test { [[
 input void OS_START;
 native @pure _printf();
@@ -39101,15 +39100,15 @@ watching *ptr do
     _V = ret + ptr:v + a.v;
     escape ret + ptr:v + a.v;
         // this escape the outer block, which kills ptr,
-        // which kills the watching, which escapes again with 0
+        // which kills the watching, which escapes again with +1
 end
 escape _V + 1;
 ]],
     _ana = {
         --acc = 3,
     },
-    --run = { ['~>B']=203, }
-    run = { ['~>B']=204, }
+    run = { ['~>B']=203, }
+    --run = { ['~>B']=204, }
 }
 Test { [[
 class Unit with
@@ -39165,7 +39164,8 @@ watching *ptr do
 end
 escape _V + 1;
 ]],
-    run = 21,
+    --run = 21,
+    run = 20,
 }
 
 Test { [[
@@ -39497,7 +39497,8 @@ watching *i do
 end
 escape _V + 1;
 ]],
-    run = 101,
+    run = 100,
+    --run = 101,
 }
 
 Test { [[
@@ -39532,7 +39533,8 @@ watching *i do
 end
 escape _V + 1;
 ]],
-    run = 101,
+    run = 100,
+    --run = 101,
 }
 
 Test { [[
@@ -39576,7 +39578,8 @@ watching *i1 do
 end
 escape _V+1;
 ]],
-    run = 100,
+    --run = 100,
+    run = 99,
 }
 
 Test { [[
@@ -39627,9 +39630,11 @@ escape _V + 1;
     _ana = {
         acc = true,
     },
-    run = 166,
+    run = 165,
+    --run = 166,
 }
 
+--]===]
 Test { [[
 native do
     int V = 0;
@@ -39665,7 +39670,8 @@ end
 escape _V+1;
 ]],
     wrn = true,
-    run = 161,
+    run = 160,
+    --run = 161,
 }
 
 Test { [[
@@ -39701,7 +39707,8 @@ watching *i do
 end
 escape _V+1;
 ]],
-    run = 161,
+    run = 160,
+    --run = 161,
 }
 
 Test { [[
@@ -39785,7 +39792,8 @@ end
 escape _V+1;
 ]],
     wrn = true,
-    run = 631,
+    run = 630,
+    --run = 631,
 }
 
 Test { [[
