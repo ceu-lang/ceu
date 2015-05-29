@@ -1922,19 +1922,8 @@ escape ret;
     run = { ['~>3s;~>F'] = 13 },
 }
 
----------------
-
-- colocar de volta recurse/C que ja estao nos testes (comentados)
-- testar pool dinamico indo fora de escopo (valgrind)
-- testar tb watching c/ adt estatico
-- bounded iters
-- ADT loop w/o recurse (how to recognize the transformation to do?)
-- loop dentro de loop
-    - loop/nrm, loop/adt p/ outro dado mas mesmo tipo
-- para o par/or vai precisar de um watching do loop de fora no loop de dentro
-
---]===]
 -- TODO: como capturar o retorno de um org que termina de imediato?
+-- R: option type
 Test { [[
 class T with
 do
@@ -1948,1275 +1937,6 @@ end
 escape ret;
 ]],
     run = 1,
-}
-
--- crashes with org->ret
-Test { [[
-class T with
-do
-    await FOREVER;
-end
-
-event T* e;
-
-input void OS_START;
-
-par do
-    do
-        par/or do
-            await OS_START;
-            pool T[1] ts;
-            var T*? ptr = spawn T in ts;
-            emit e => ptr;
-        with
-            var T* t = await e;
-        end
-    end
-    do
-        var int[100] is;
-        loop i in 100 do
-            is[i] = i;
-        end
-    end
-    await FOREVER;
-with
-    var T* t = await e;
-    var int ret = await *t;     // crash!
-    escape ret;
-end
-]],
-    run = 1,
-}
-
-Test { [[
-data Widget with
-    tag NIL;
-or
-    tag ROW with
-        var Widget* w1;
-    end
-end
-
-pool Widget[] widgets;
-loop/rec widget in widgets do
-    watching widget do
-        var int v1 = recurse widget:ROW.w1;
-    end
-end
-
-escape 0;
-]],
-    _ana = {acc=true},
-    wrn = true,
-    run = {['~>21s;'] = 30},
-}
-
--- ALL BELOW IS OK
-
--- leaks memory because of lost "free" in IN__STK
-Test { [[
-data T with
-    tag NIL;
-or
-    tag NXT with
-        var int v;
-        var T*  nxt;
-    end
-end
-
-pool T[] ts;
-
-ts = new T.NXT(10, T.NXT(9, T.NIL()));
-
-par/or do
-    await ts;           // 2. but continuation is aborted
-with
-    ts = new T.NIL();   // 1. free is on continuation
-end
-
-escape 1;
-]],
-    _ana = { acc=true },
-    run = 1,
-}
---do return end
-
-Test { [[
-data T with
-    tag NIL;
-or
-    tag NXT with
-        var int v;
-        var T*  nxt;
-    end
-end
-
-pool T[] ts;
-
-ts = new T.NXT(10, T.NXT(9, T.NIL()));
-
-var int ret = 10;
-
-par/or do
-    watching ts do
-        await FOREVER;
-    end
-    ret = ret * 2;
-with
-    watching ts:NXT.nxt do
-        await FOREVER;
-    end
-    ret = 0;
-with
-    watching ts:NXT.nxt:NXT.nxt do
-        await FOREVER;
-    end
-    ret = ret - 1;  // awakes first from NIL
-    await FOREVER;
-with
-    ts = new T.NIL();
-    ret = 0;
-end
-
-escape ret;
-]],
-    _ana = { acc=true },
-    run = 18,
-}
-
-Test { [[
-class Body with
-    pool  Body[]& bodies;
-    var   int&    sum;
-    event int     ok;
-do
-    finalize with end;
-
-    var Body*? nested =
-        spawn Body in bodies with
-            this.bodies = bodies;
-            this.sum    = sum;
-        end;
-    if nested? then
-        watching *nested do
-            await nested:ok;
-        end
-    end
-    await 1s;
-    sum = sum + 1;
-    emit this.ok => 1;
-end
-
-pool Body[2] bodies;
-var  int     sum = 0;
-
-do Body with
-    this.bodies = bodies;
-    this.sum    = sum;
-end;
-
-escape sum;
-]],
-    wrn = 'line 9 : unbounded recursive spawn',
-    run = { ['~>10s'] = 3 },
-}
-
-Test { [[
-data Tree with
-    tag NIL;
-or
-    tag NODE with
-        var int   v;
-        var Tree* left;
-        var Tree* right;
-    end
-end
-
-pool Tree[3] tree;
-tree = new Tree.NODE(1,
-            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
-            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
-
-class Body with
-    pool  Body[]& bodies;
-    var   Tree*   n;
-    var   int&    sum;
-    event int     ok;
-do
-    watching n do
-        var int i = this.sum;
-        if n:NODE then
-            var Body*? left =
-                spawn Body in this.bodies with
-                    this.bodies = bodies;
-                    this.n      = n:NODE.left;
-                    this.sum    = sum;
-                end;
-            if left? then
-                watching *left do
-                    await left:ok;
-                end
-            end
-
-            this.sum = this.sum + i + n:NODE.v;
-
-            var Body*? right =
-                spawn Body in this.bodies with
-                    this.bodies = bodies;
-                    this.n      = n:NODE.right;
-                    this.sum    = sum;
-                end;
-            if right? then
-                watching *right do
-                    await right:ok;
-                end
-            end
-
-            //do/spawn Body in this.bodies with
-                //this.n = n:NODE.left;
-            //end;
-        end
-    end
-    await 1s;
-    emit this.ok => 1;
-end
-
-var int sum = 0;
-
-pool Body[7] bodies;
-do Body with
-    this.bodies = bodies;
-    this.n      = tree;
-    this.sum    = sum;
-end;
-
-escape sum;
-
-/*
-var int sum = 0;
-loop/rec n in tree do
-    var int i = sum;
-    if n:NODE then
-        recurse n:NODE.left;
-        sum = i + n:NODE.v;
-        recurse n:NODE.right;
-    end
-end
-escape sum;
-*/
-]],
-    wrn = 'line 26 : unbounded recursive spawn',
-    run = { ['~>10s'] = 9 },
-}
-
-Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int   head;
-        var List* tail;
-    end
-end
-
-pool List[3] list;
-list = new List.CONS(1,
-            List.CONS(2,
-                List.CONS(3, List.NIL())));
-
-native do
-    int V = 0;
-end
-
-/*
-loop/rec n in list do
-    _V = _V + 1;
-    if n:CONS then
-        _V = _V + n:CONS.head;
-        recurse n:CONS.tail;
-    end
-end
-*/
-
-class Body with
-    pool  Body[]& bodies;
-    var   List*   n;
-do
-    if n:NIL then
-        _V = _V * 2;
-    end
-    watching n do
-        _V = _V + 1;
-        if n:CONS then
-            _V = _V + n:CONS.head;
-
-            var Body*? tail =
-                spawn Body in this.bodies with
-                    this.bodies = bodies;
-                    this.n      = n:CONS.tail;
-                end;
-            if tail? then
-                await *tail;
-            end
-        end
-    end
-end
-
-pool Body[3] bodies;
-do Body with
-    this.bodies = bodies;
-    this.n      = list;
-end;
-
-escape _V;
-]],
-    wrn = 'line 26 : unbounded recursive spawn',
-    _ana = { acc=true },
-    run = 18,
-}
-
-Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int   head;
-        var List* tail;
-    end
-end
-
-pool List[3] list;
-list = new List.CONS(1,
-            List.CONS(2,
-                List.CONS(3, List.NIL())));
-
-native do
-    int V = 0;
-end
-
-loop/rec n in list do
-    _V = _V + 1;
-    if n:CONS then
-        _V = _V + n:CONS.head;
-        recurse n:CONS.tail;
-    end
-end
-
-/*
-class Body with
-    pool  Body[]& bodies;
-    var   List*   n;
-do
-    watching n do
-        _V = _V + 1;
-        if n:CONS then
-            _V = _V + n:CONS.head;
-
-            var Body*? tail =
-                spawn Body in this.bodies with
-                    this.bodies = bodies;
-                    this.n      = n:CONS.tail;
-                end;
-            if tail? then
-                await *tail;
-            end
-        end
-    end
-end
-
-pool Body[3] bodies;
-do Body with
-    this.bodies = bodies;
-    this.n      = list;
-end;
-*/
-
-escape _V;
-]],
-    _ana = { acc=true },
-    wrn = 'line 26 : unbounded recursive spawn',
-    run = 10,
-}
-
-Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int   head;
-        var List* tail;
-    end
-end
-
-pool List[3] list;
-list = new List.CONS(1,
-            List.CONS(2,
-                List.CONS(3, List.NIL())));
-
-native do
-    int V = 0;
-end
-
-loop/rec n in list do
-    _V = _V + 1;
-    watching n do
-        await 1s;
-        if n:CONS then
-            _V = _V + n:CONS.head;
-            recurse n:CONS.tail;
-        end
-    end
-end
-
-escape _V;
-]],
-    wrn = 'line 26 : unbounded recursive spawn',
-    _ana = { acc=true },
-    run = { ['~>10s'] = 10 },
-}
-
-Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int   head;
-        var List* tail;
-    end
-end
-
-pool List[3] list;
-list = new List.CONS(1,
-            List.CONS(2,
-                List.CONS(3, List.NIL())));
-
-native do
-    int V = 0;
-end
-
-loop/rec n in list do
-    _V = _V + 1;
-    //watching n do
-        await 1s;
-        if n:CONS then
-            _V = _V + n:CONS.head;
-            recurse n:CONS.tail;
-        end
-    //end
-end
-
-escape _V;
-]],
-    wrn = 'line 26 : unbounded recursive spawn',
-    _ana = { acc=true },
-    run = { ['~>10s'] = 10 },
-}
-
-Test { [[
-data Tree with
-    tag NIL;
-or
-    tag NODE with
-        var int   v;
-        var Tree* left;
-        var Tree* right;
-    end
-end
-
-pool Tree[3] tree;
-tree = new Tree.NODE(1,
-            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
-            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
-
-native do
-    int V = 0;
-end
-
-loop/rec n in tree do
-    _V = _V + 1;
-    watching n do
-        if n:NODE then
-            recurse n:NODE.left;
-            _V = _V + n:NODE.v;
-            recurse n:NODE.right;
-        end
-    end
-end
-
-escape _V;
-]],
-    wrn = 'line 26 : unbounded recursive spawn',
-    _ana = { acc=true },
-    run = 13,
-}
-
-Test { [[
-data Tree with
-    tag NIL;
-or
-    tag NODE with
-        var int   v;
-        var Tree* left;
-        var Tree* right;
-    end
-end
-
-pool Tree[3] tree;
-tree = new Tree.NODE(1,
-            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
-            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
-
-native do
-    int V = 0;
-end
-
-loop/rec n in tree do
-    _V = _V + 1;
-    watching n do
-        if n:NODE then
-            await 1s;
-            recurse n:NODE.left;
-            _V = _V + n:NODE.v;
-            recurse n:NODE.right;
-        end
-    end
-end
-
-escape _V;
-]],
-    wrn = 'line 26 : unbounded recursive spawn',
-    _ana = { acc=true },
-    run = { ['~>10s'] = 13 },
-}
-
-Test { [[
-data Tree with
-    tag NIL;
-or
-    tag NODE with
-        var int   v;
-        var Tree* left;
-        var Tree* right;
-    end
-end
-
-pool Tree[3] tree;
-tree = new Tree.NODE(1,
-            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
-            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
-
-var int sum = 1;
-
-loop/rec n in tree do
-    watching n do
-        if n:NODE then
-            recurse n:NODE.left;
-            sum = sum * n:NODE.v + n:NODE.v;
-            recurse n:NODE.right;
-        end
-    end
-end
-
-escape sum;
-]],
-    wrn = 'line 26 : unbounded recursive spawn',
-    _ana = { acc=true },
-    run = { ['~>10s'] = 18 },
-}
-
-Test { [[
-data T with
-    tag NIL;
-or
-    tag NXT with
-        var int v;
-        var T*  nxt;
-    end
-end
-
-pool T[1] ts;
-
-var void* p1 = (void*)this;
-
-loop/rec t in ts do
-    _assert(p1 == (void*)this);
-    if t:NXT then
-        recurse t:NXT.nxt;
-    end
-end
-
-escape 1;
-]],
-    wrn = 'line 17 : unbounded recursive spawn',
-    run = 1,
-}
-
-Test { [[
-data T with
-    tag NIL;
-or
-    tag NXT with
-        var int v;
-        var T*  nxt;
-    end
-end
-
-pool T[1] ts;
-
-var void* p1 = (void*)this;
-
-var int v2 = 2;
-var int v3 = 3;
-
-class X with
-    var int v1, v2, v3;
-do end
-
-loop/rec t in ts do
-    _assert(p1 == (void*)this);
-    var int v1 = 1;
-    var int v3 = 0;
-    var X x with
-        this.v1 = v1;
-        this.v2 = v2;
-        this.v3 = outer.v3;
-    end;
-    _assert(x.v1 + x.v2 + x.v3 == 6);
-    if t:NXT then
-        recurse t:NXT.nxt;
-    end
-end
-
-escape 1;
-]],
-    wrn = 'line 17 : unbounded recursive spawn',
-    run = 1,
-}
-
-Test { [[
-data Tree with
-    tag NIL;
-or
-    tag NODE with
-        var int   v;
-        var Tree* left;
-        var Tree* right;
-    end
-end
-
-pool Tree[3] tree;
-tree = new Tree.NODE(1,
-            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
-            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
-
-var int sum = 1;
-
-loop/rec n in tree do
-    await 1s;
-    watching n do
-        if n:NODE then
-            recurse n:NODE.left;
-            sum = sum * n:NODE.v + n:NODE.v;
-            recurse n:NODE.right;
-        end
-    end
-end
-
-escape sum;
-]],
-    _ana = {acc=true},
-    wrn = 'line 26 : unbounded recursive spawn',
-    run = { ['~>10s'] = 18 },
-}
-
-Test { [[
-data Tree with
-    tag NIL;
-or
-    tag NODE with
-        var int   v;
-        var Tree* left;
-        var Tree* right;
-    end
-end
-
-pool Tree[3] tree;
-tree = new Tree.NODE(1,
-            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
-            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
-
-var int sum = 1;
-
-do
-    loop/rec n in tree do
-        await 1s;
-        watching n do
-            if n:NODE then
-                recurse n:NODE.left;
-                sum = sum * n:NODE.v + n:NODE.v;
-                recurse n:NODE.right;
-            end
-        end
-    end
-end
-
-escape sum;
-]],
-    _ana = {acc=true},
-    wrn = 'line 26 : unbounded recursive spawn',
-    run = { ['~>10s'] = 18 },
-}
-
-Test { [[
-data Tree with
-    tag NIL;
-or
-    tag NODE with
-        var int   v;
-        var Tree* left;
-        var Tree* right;
-    end
-end
-
-pool Tree[3] tree;
-tree = new Tree.NODE(1,
-            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
-            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
-
-var int sum = 1;
-
-par/and do
-    loop/rec n in tree do
-        watching n do
-            if n:NODE then
-                await 1s;
-                recurse n:NODE.left;
-                sum = sum * n:NODE.v + n:NODE.v;
-                recurse n:NODE.right;
-                await 1s;
-            end
-        end
-    end
-    sum = sum - 1;
-with
-    await 1s;
-    _assert(sum == 1);
-    await 1s;
-    _assert(sum == 4);
-    await 1s;
-    _assert(sum == 5);
-    tree = new Tree.NIL();
-    _assert(sum == 4);
-end
-
-escape sum;
-]],
-    _ana = {acc=true},
-    wrn = 'line 26 : unbounded recursive spawn',
-    run = { ['~>20s'] = 4 },
-}
-
-Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int   head;
-        var List* tail;
-    end
-end
-
-pool List[3] list;
-list = new List.CONS(1,
-            List.CONS(2,
-                List.CONS(3, List.NIL())));
-
-native do
-    int V = 0;
-end
-
-loop/rec n in list do
-    _V = _V + 1;
-    if n:CONS then
-        _V = _V + n:CONS.head;
-        loop i in 1 do
-            recurse n:CONS.tail;
-        end
-    end
-end
-
-escape _V;
-]],
-    _ana = { acc=true },
-    wrn = 'line 26 : unbounded recursive spawn',
-    run = 10,
-}
-
-Test { [[
-loop do
-    recurse null;
-end
-escape 1;
-]],
-    adj = 'line 2 : `recurse´ without `loop/rec´',
-}
-
-Test { [[
-loop/rec t in ts do
-    loop do
-        recurse/1 null;
-    end
-end
-escape 1;
-]],
-    adj = 'line 3 : `recurse´ without `loop/rec´',
-}
-
-Test { [[
-data Widget with
-    tag EMPTY;
-or
-    tag SEQ with
-        var Widget* w1;
-        var Widget* w2;
-    end
-end
-
-pool Widget[] widgets;
-widgets = new Widget.SEQ(
-            Widget.EMPTY(),
-            Widget.EMPTY());
-
-var int ret = 0;
-
-loop/rec widget in widgets with
-    var int param = 1;
-do
-    ret = ret + param;
-
-    watching widget do
-        if widget:EMPTY then
-            nothing;
-
-        else/if widget:SEQ then
-            recurse widget:SEQ.w1 with
-                this.param = param + 1;
-            end;
-            recurse widget:SEQ.w2 with
-                this.param = param + 1;
-            end;
-
-        else
-            _ceu_out_assert(0, "not implemented");
-        end
-    end
-end
-
-escape ret;
-]],
-    _ana = { acc=true },
-    wrn = 'line 57 : unbounded recursive spawn',
-    run = 5,
-}
-
-Test { [[
-data Widget with
-    tag EMPTY;
-or
-    tag SEQ with
-        var Widget* w1;
-        var Widget* w2;
-    end
-end
-
-pool Widget[] widgets;
-widgets = new Widget.SEQ(
-            Widget.EMPTY(),
-            Widget.EMPTY());
-
-var int ret = 0;
-
-loop/rec widget in widgets with
-    var int param = 1;
-do
-    ret = ret + param;
-
-    watching widget do
-        if widget:EMPTY then
-            nothing;
-
-        else/if widget:SEQ then
-            recurse widget:SEQ.w1 with
-                this.param = param + 1;
-            end;
-            recurse widget:SEQ.w2 with
-                this.param = param + 1;
-            end;
-
-        else
-            _ceu_out_assert(0, "not implemented");
-        end
-    end
-end
-
-escape ret;
-]],
-    _ana = { acc=true },
-    wrn = 'line 57 : unbounded recursive spawn',
-    run = 5,
-}
-
-Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int   head;
-        var List* tail;
-    end
-end
-
-pool List[] l;
-l = new List.CONS(1,
-            List.CONS(2,
-                List.CONS(3,
-                    List.CONS(4,
-                        List.CONS(5,
-                            List.NIL())))));
-
-var int ret = 0;
-
-par/or do
-    await l:CONS.tail:CONS.tail;
-    ret = ret + l:CONS.tail:CONS.tail:CONS.head;    // 0+4
-    _ceu_out_assert(ret == 4, "1");
-    l:CONS.tail:CONS.tail = l:CONS.tail:CONS.tail:CONS.tail;
-    ret = ret + l:CONS.tail:CONS.tail:CONS.head;    // 0+4+5
-    _ceu_out_assert(ret == 9, "2");
-
-    await l:CONS.tail:CONS.tail;
-    ret = ret + l:CONS.tail:CONS.tail:NIL;          // 0+4+5+5+1
-    _ceu_out_assert(ret == 15, "4");
-    await FOREVER;
-with
-    await l:CONS.tail:CONS.tail;
-    _ceu_out_assert(ret == 9, "3");
-    ret = ret + l:CONS.tail:CONS.tail:CONS.head;    // 0+4+5+5
-    l:CONS.tail:CONS.tail = new List.NIL();
-
-    _ceu_out_assert(ret == 15, "5");
-    await l:CONS.tail:CONS.tail;
-    // never reached
-    _ceu_out_assert(ret == 15, "6");
-    await FOREVER;
-with
-    await l:CONS.tail:CONS.tail;
-    ret = ret + l:CONS.tail:CONS.tail:NIL;          // 0+4+5+5+1+1
-
-    await l:CONS.tail:CONS.tail;
-    _ceu_out_assert(ret == 16, "7");
-    await FOREVER;
-with
-    l:CONS.tail:CONS.tail = l:CONS.tail:CONS.tail:CONS.tail;
-    ret = ret * 2;  // (0+4+5+5+1+1) * 2
-    l:CONS.tail:CONS.tail = new List.CONS(10, List.NIL());
-end
-
-escape ret;
-]],
-    _ana = {acc=true},
-    run = 32,
-}
-
-Test { [[
-input void OS_START;
-
-data Widget with
-    tag NIL;
-or
-    tag V with
-        var int v;
-    end
-or
-    tag ROW with
-        var Widget* w1;
-        var Widget* w2;
-    end
-end
-
-par/or do
-    await 21s;
-with
-    pool Widget[] widgets;
-    widgets = new Widget.ROW(
-                    Widget.V(10),
-                    Widget.V(20));
-
-    var int ret =
-        loop/rec widget in widgets do
-            watching widget do
-                if widget:V then
-                    await (widget:V.v)s;
-                    escape widget:V.v;
-
-                else/if widget:ROW then
-                    var int v1, v2;
-                    par/and do
-                        v1 = recurse widget:ROW.w1;
-                    with
-                        v2 = recurse widget:ROW.w2;
-                    end
-                    escape v1 + v2;
-
-                else
-                    _ceu_out_assert(0, "not implemented");
-                end
-            end
-            escape 0;
-        end;
-    escape ret;
-end
-
-escape 0;
-]],
-    _ana = {acc=true},
-    wrn = true,
-    run = {['~>21s;'] = 30},
-}
-
-Test { [[
-input void OS_START;
-
-data Widget with
-    tag NIL;
-or
-    tag EMPTY;
-or
-    tag ROW with
-        var Widget* w1;
-        var Widget* w2;
-    end
-end
-
-par/or do
-    await OS_START;
-with
-    pool Widget[] widgets;
-    widgets = new Widget.ROW(
-                    Widget.EMPTY(),
-                    Widget.EMPTY());
-
-    loop/rec widget in widgets do
-        watching widget do
-            if widget:NIL then
-                await FOREVER;
-            else/if widget:EMPTY then
-                await FOREVER;
-
-            else/if widget:ROW then
-                loop do
-                    par/or do
-                        var int ret = recurse widget:ROW.w1;
-                        if ret == 0 then
-                            await FOREVER;
-                        end
-                    with
-                        var int ret = recurse widget:ROW.w2;
-                        if ret == 0 then
-                            await FOREVER;
-                        end
-                    end
-                end
-
-            else
-                _ceu_out_assert(0, "not implemented");
-            end
-        end
-    end
-end
-
-escape 1;
-]],
-    _ana = {acc=true},
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-input void OS_START;
-
-data List with
-    tag NIL;
-or
-    tag EMPTY;
-or
-    tag CONS with
-        var int   head;
-        var List* tail;
-    end
-end
-
-pool List[] l;
-l = new List.CONS(1, List.EMPTY());
-
-par/or do
-    loop/rec e in l do
-        watching e do
-            if e:EMPTY then
-                await FOREVER;
-
-            else/if e:CONS then
-                loop do
-                    recurse e:CONS.tail;
-                end
-            else
-                _ceu_out_assert(0, "1");
-            end
-        end
-    end
-with
-    await OS_START;
-end
-
-escape 1;
-]],
-    _ana = {acc=true},
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-input void OS_START;
-
-data Widget with
-    tag NIL;
-or
-    tag EMPTY;
-or
-    tag SEQ with
-        var Widget* w1;
-        var Widget* w2;
-    end
-end
-
-var int ret = 0;
-
-par/or do
-    pool Widget[] widgets;
-    widgets = new Widget.SEQ(
-                Widget.EMPTY(),
-                Widget.EMPTY());
-
-    loop/rec widget in widgets with
-        var int param = 1;
-    do
-        ret = ret + param;
-
-        watching widget do
-            if widget:EMPTY then
-                await FOREVER;
-
-            else/if widget:SEQ then
-                loop do
-                    par/or do
-                        recurse widget:SEQ.w1 with
-                            this.param = param + 1;
-                        end;
-if widget:SEQ.w1:NIL then
-    await FOREVER;
-end
-                    with
-                        recurse widget:SEQ.w2 with
-                            this.param = param + 1;
-                        end;
-if widget:SEQ.w2:NIL then
-    await FOREVER;
-end
-                    end
-                end
-
-            else
-                _ceu_out_assert(0, "not implemented");
-            end
-        end
-    end
-with
-    await OS_START;
-end
-
-escape ret;
-]],
-    _ana = { acc=true },
-    wrn = 'line 57 : unbounded recursive spawn',
-    run = 5,
-}
-
-Test { [[
-input void OS_START;
-
-data Widget with
-    tag NIL;
-or
-    tag EMPTY;
-or
-    tag SEQ with
-        var Widget* w1;
-        var Widget* w2;
-    end
-end
-
-pool Widget[] widgets;
-widgets = new Widget.SEQ(
-            Widget.EMPTY(),
-            Widget.EMPTY());
-
-var int ret = 0;
-
-par/or do
-    loop/rec widget in widgets with
-        var int param = 1;
-    do
-        ret = ret + param;
-
-        watching widget do
-            if widget:EMPTY then
-                await FOREVER;
-
-            else/if widget:SEQ then
-                loop do
-                    par/or do
-                        recurse widget:SEQ.w1 with
-                            this.param = param + 1;
-                        end;
-if widget:SEQ.w1:NIL then
-_ceu_out_assert(0, "ok\n");
-    await FOREVER;
-end
-                    with
-                        recurse widget:SEQ.w2 with
-                            this.param = param + 1;
-                        end;
-if widget:SEQ.w2:NIL then
-_ceu_out_assert(0, "ok\n");
-    await FOREVER;
-end
-                    end
-                end
-
-            else
-                _ceu_out_assert(0, "not implemented");
-            end
-        end
-    end
-with
-    await OS_START;
-end
-
-escape ret;
-]],
-    _ana = { acc=true },
-    wrn = 'line 57 : unbounded recursive spawn',
-    run = 9,
 }
 
 -- XXXX-KILL-ORG
@@ -3314,339 +2034,18 @@ escape ret;
     run = 10,
 }
 
-Test { [[
-data Command with
-    tag NOTHING;
-or
-    tag FORWARD with
-        var int pixels;
-    end
-or
-    tag SEQUENCE with
-        var Command* one;
-        var Command* two;
-    end
-end
+- colocar de volta recurse/C que ja estao nos testes (comentados)
+- testar pool dinamico indo fora de escopo (valgrind)
+- testar tb watching c/ adt estatico
+- bounded iters
+- ADT loop w/o recurse (how to recognize the transformation to do?)
+- loop dentro de loop
+    - loop/nrm, loop/adt p/ outro dado mas mesmo tipo
+- para o par/or vai precisar de um watching do loop de fora no loop de dentro
 
-pool Command[] cmds;
+---------------
 
-cmds = new Command.SEQUENCE(
-            Command.FORWARD(100),
-            Command.FORWARD(500));
-
-par/or do
-    loop/rec cmd in cmds do
-        watching cmd do
-            if cmd:FORWARD then
-                await FOREVER;
-
-            else/if cmd:SEQUENCE then
-                recurse cmd:SEQUENCE.one;
-
-            else
-            end
-        end
-    end
-with
-    await 100s;
-end
-
-escape 10;
-]],
-    --tight = 'tight loop',
-    _ana = { acc=true },
-    wrn = true,
-    run = { ['~>100s']=10 },
-}
-
-Test { [[
-input int SDL_DT;
-
-data Command with
-    tag NOTHING;
-or
-    tag FORWARD with
-        var int pixels;
-    end
-or
-    tag SEQUENCE with
-        var Command* one;
-        var Command* two;
-    end
-end
-
-// TODO: aceitar estatico
-pool Command[] cmds;
-
-cmds = new Command.SEQUENCE(
-            Command.FORWARD(100),
-            Command.FORWARD(500));
-
-par/or do
-    await 100s;
-with
-    loop/rec cmd in cmds do
-        watching cmd do
-            if cmd:NOTHING then
-                nothing;
-
-            else/if cmd:FORWARD then
-                await FOREVER;
-
-            else/if cmd:SEQUENCE then
-                recurse cmd:SEQUENCE.one;
-                _ceu_out_assert(0, "bug found"); // cmds has to die entirely before children
-                recurse cmd:SEQUENCE.two;
-            end
-        end
-    end
-end
-
-escape 10;
-]],
-    --tight = 'tight loop',
-    _ana = { acc=true },
-    wrn = true,
-    run = { ['~>100s']=10 },
-}
-Test { [[
-input int SDL_DT;
-
-data Command with
-    tag NOTHING;
-or
-    tag FORWARD with
-        var int pixels;
-    end
-or
-    tag SEQUENCE with
-        var Command* one;
-        var Command* two;
-    end
-end
-
-// TODO: aceitar estatico
-pool Command[] cmds;
-
-cmds = new Command.SEQUENCE(
-            Command.FORWARD(100),
-            Command.FORWARD(500));
-
-par/or do
-    await 100s;
-with
-    loop/rec cmd in cmds do
-        watching cmd do
-            if cmd:NOTHING then
-                nothing;
-
-            else/if cmd:FORWARD then
-                await FOREVER;
-
-            else/if cmd:SEQUENCE then
-                recurse cmd:SEQUENCE.one;
-                recurse cmd:SEQUENCE.two;
-            end
-        end
-    end
-end
-
-escape 10;
-]],
-    --tight = 'tight loop',
-    _ana = { acc=true },
-    wrn = true,
-    run = { ['~>100s']=10 },
-}
-
-Test { [[
-input int SDL_DT;
-
-data Command with
-    tag NOTHING;
-or
-    tag AWAIT with
-        var int ms;
-    end
-or
-    tag RIGHT with
-        var int angle;
-    end
-or
-    tag LEFT with
-        var int angle;
-    end
-or
-    tag FORWARD with
-        var int pixels;
-    end
-or
-    tag BACKWARD with
-        var int pixels;
-    end
-or
-    tag SEQUENCE with
-        var Command* one;
-        var Command* two;
-    end
-or
-    tag REPEAT with
-        var int      times;
-        var Command* command;
-    end
-end
-
-// TODO: aceitar estatico
-pool Command[] cmds;
-
-cmds = new Command.REPEAT(2,
-            Command.SEQUENCE(
-                Command.AWAIT(500),
-                Command.SEQUENCE(
-                    Command.RIGHT(45),
-                    Command.SEQUENCE(
-                        Command.FORWARD(100),
-                        Command.SEQUENCE(
-                            Command.LEFT(90),
-                            Command.SEQUENCE(
-                                Command.FORWARD(100),
-                                Command.SEQUENCE(
-                                    Command.RIGHT(45),
-                                    Command.SEQUENCE(
-                                        Command.BACKWARD(100),
-                                        Command.AWAIT(500)))))))));
-
-class Turtle with
-    var int angle;
-    var int pos_x, pos_y;
-do
-    await FOREVER;
-end
-
-class TurtleTurn with
-    var Turtle& turtle;
-    var int     angle;
-    var int     isRight;
-do
-    var int inc;
-    if isRight then
-        if this.angle < 0 then
-            angle = -angle;
-            inc = 1;
-        else
-            inc = -1;
-        end
-    else
-        if this.angle < 0 then
-            angle = -angle;
-            inc = -1;
-        else
-            inc = 1;
-        end
-    end
-    loop i in angle do
-        await 10ms;
-        turtle.angle = turtle.angle + inc;
-    end
-end
-
-class TurtleMove with
-    var Turtle& turtle;
-    var int     pixels;
-    var int     isForward;
-do
-    var int inc;
-    if isForward then
-        inc =  1;
-    else
-        inc = -1;
-    end
-    _ceu_out_assert(this.pixels > 0, "pixels");
-
-    var float sum = 0;
-    var float x = turtle.pos_x;
-    var float y = turtle.pos_y;
-    every 10ms do
-        var int dt = 10;
-        if sum >= this.pixels then
-            break;
-        end
-        var float mul = 80 * dt * 0.001 * this.inc;
-        var float dx  = mul * (turtle.angle/(180.0));
-        var float dy  = mul * (turtle.angle/(180.0));
-        sum = sum + (dx) + (dy);
-        x = x + dx;
-        y = y + dy;
-        turtle.pos_x = x;
-        turtle.pos_y = y;
-    end
-
-end
-
-par/or do
-    await 100s;
-with
-    var Turtle turtle;
-
-    loop/rec cmd in cmds do
-        watching cmd do
-            if cmd:NOTHING then
-                nothing;
-
-            else/if cmd:AWAIT then
-                await (cmd:AWAIT.ms) ms;
-
-            else/if cmd:RIGHT or cmd:LEFT then
-                var int angle;
-                if cmd:RIGHT then
-                    angle = cmd:RIGHT.angle;
-                else
-                    angle = cmd:LEFT.angle;
-                end
-                do TurtleTurn with
-                    this.turtle  = turtle;
-                    this.angle   = angle;
-                    this.isRight = cmd:RIGHT;
-                end;
-
-            else/if cmd:FORWARD or cmd:BACKWARD then
-                var int pixels;
-                if cmd:FORWARD then
-                    pixels = cmd:FORWARD.pixels;
-                else
-                    pixels = cmd:BACKWARD.pixels;
-                end
-                do TurtleMove with
-                    this.turtle    = turtle;
-                    this.pixels    = pixels;
-                    this.isForward = cmd:FORWARD;
-                end;
-
-            else/if cmd:SEQUENCE then
-                recurse cmd:SEQUENCE.one;
-                recurse cmd:SEQUENCE.two;
-
-            else/if cmd:REPEAT then
-                loop i in cmd:REPEAT.times do
-                    recurse cmd:REPEAT.command;
-                end
-
-            else
-                _ceu_out_assert(0, "not implemented");
-            end
-        end
-    end
-end
-
-escape 10;
-]],
-    --tight = 'tight loop',
-    _ana = { acc=true },
-    wrn = true,
-    run = { ['~>100s']=10 },
-}
-
-do return end
+--do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -31910,8 +30309,10 @@ escape 1;
     run = 1,
 }
 
+--]===]
 Test { [[
 input void OS_START;
+native @pure _printf();
 
 class T with
     var int a;
@@ -31921,22 +30322,23 @@ end
 
 event T* e;
 
-par/and do
+par do
+    var T* pa = await e;
+    watching *pa do
+        await FOREVER;
+    end
+    escape -1;
+with
     await OS_START;
     do
         var T a;
         emit e => &a;
     end
-with
-    var T* pa = await e;
-    watching *pa do
-        await FOREVER;
-    end
+    await 2s;
+    escape 1;
 end
-
-escape 1;
 ]],
-    run = { ['~>1s']=1 },
+    run = { ['~>2s']=1 },
 }
 
 Test { [[
@@ -46329,6 +44731,1609 @@ escape ret;
 }
 
 -- ADTS / RECURSE
+-- crashes with org->ret
+Test { [[
+class T with
+do
+    await FOREVER;
+end
+
+event T* e;
+
+input void OS_START;
+
+par do
+    do
+        par/or do
+            await OS_START;
+            pool T[1] ts;
+            var T*? ptr = spawn T in ts;
+            emit e => ptr;
+        with
+            var T* t = await e;
+        end
+    end
+    do
+        var int[100] is;
+        loop i in 100 do
+            is[i] = i;
+        end
+    end
+    await 1s;
+    escape 1;
+with
+    var T* t = await e;
+    var int ret = await *t;     // crash!
+    escape ret;
+end
+]],
+    run = { ['~>1s']=1 },
+}
+
+Test { [[
+data Widget with
+    tag NIL;
+or
+    tag ROW with
+        var Widget* w1;
+    end
+end
+
+pool Widget[] widgets;
+loop/rec widget in widgets do
+    watching widget do
+        var int v1 = recurse widget:ROW.w1;
+    end
+end
+
+escape 1;
+]],
+    _ana = {acc=true},
+    wrn = true,
+    run = 1,
+}
+
+-- leaks memory because of lost "free" in IN__STK
+Test { [[
+data T with
+    tag NIL;
+or
+    tag NXT with
+        var int v;
+        var T*  nxt;
+    end
+end
+
+pool T[] ts;
+
+ts = new T.NXT(10, T.NXT(9, T.NIL()));
+
+par/or do
+    await ts;           // 2. but continuation is aborted
+with
+    ts = new T.NIL();   // 1. free is on continuation
+end
+
+escape 1;
+]],
+    _ana = { acc=true },
+    run = 1,
+}
+
+Test { [[
+data T with
+    tag NIL;
+or
+    tag NXT with
+        var int v;
+        var T*  nxt;
+    end
+end
+
+pool T[] ts;
+
+ts = new T.NXT(10, T.NXT(9, T.NIL()));
+
+var int ret = 10;
+
+par/or do
+    watching ts do
+        await FOREVER;
+    end
+    ret = ret * 2;
+with
+    watching ts:NXT.nxt do
+        await FOREVER;
+    end
+    ret = 0;
+with
+    watching ts:NXT.nxt:NXT.nxt do
+        await FOREVER;
+    end
+    ret = ret - 1;  // awakes first from NIL
+    await FOREVER;
+with
+    ts = new T.NIL();
+    ret = 0;
+end
+
+escape ret;
+]],
+    _ana = { acc=true },
+    run = 18,
+}
+
+Test { [[
+class Body with
+    pool  Body[]& bodies;
+    var   int&    sum;
+    event int     ok;
+do
+    finalize with end;
+
+    var Body*? nested =
+        spawn Body in bodies with
+            this.bodies = bodies;
+            this.sum    = sum;
+        end;
+    if nested? then
+        watching *nested do
+            await nested:ok;
+        end
+    end
+    await 1s;
+    sum = sum + 1;
+    emit this.ok => 1;
+end
+
+
+pool Body[2] bodies;
+var  int     sum = 0;
+
+var Body b with
+    this.bodies = bodies;
+    this.sum    = sum;
+end;
+await b;
+
+escape sum;
+]],
+    wrn = 'line 9 : unbounded recursive spawn',
+    run = { ['~>10s'] = 3 },
+}
+
+Test { [[
+data Tree with
+    tag NIL;
+or
+    tag NODE with
+        var int   v;
+        var Tree* left;
+        var Tree* right;
+    end
+end
+
+pool Tree[3] tree;
+tree = new Tree.NODE(1,
+            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
+            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+
+class Body with
+    pool  Body[]& bodies;
+    var   Tree*   n;
+    var   int&    sum;
+    event int     ok;
+do
+    watching n do
+        var int i = this.sum;
+        if n:NODE then
+            var Body*? left =
+                spawn Body in this.bodies with
+                    this.bodies = bodies;
+                    this.n      = n:NODE.left;
+                    this.sum    = sum;
+                end;
+            if left? then
+                watching *left do
+                    await left:ok;
+                end
+            end
+
+            this.sum = this.sum + i + n:NODE.v;
+
+            var Body*? right =
+                spawn Body in this.bodies with
+                    this.bodies = bodies;
+                    this.n      = n:NODE.right;
+                    this.sum    = sum;
+                end;
+            if right? then
+                watching *right do
+                    await right:ok;
+                end
+            end
+
+            //do/spawn Body in this.bodies with
+                //this.n = n:NODE.left;
+            //end;
+        end
+    end
+    await 1s;
+    emit this.ok => 1;
+end
+
+var int sum = 0;
+
+pool Body[7] bodies;
+do Body with
+    this.bodies = bodies;
+    this.n      = tree;
+    this.sum    = sum;
+end;
+
+escape sum;
+
+/*
+var int sum = 0;
+loop/rec n in tree do
+    var int i = sum;
+    if n:NODE then
+        recurse n:NODE.left;
+        sum = i + n:NODE.v;
+        recurse n:NODE.right;
+    end
+end
+escape sum;
+*/
+]],
+    wrn = 'line 26 : unbounded recursive spawn',
+    run = { ['~>10s'] = 9 },
+}
+
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[3] list;
+list = new List.CONS(1,
+            List.CONS(2,
+                List.CONS(3, List.NIL())));
+
+native do
+    int V = 0;
+end
+
+/*
+loop/rec n in list do
+    _V = _V + 1;
+    if n:CONS then
+        _V = _V + n:CONS.head;
+        recurse n:CONS.tail;
+    end
+end
+*/
+
+class Body with
+    pool  Body[]& bodies;
+    var   List*   n;
+do
+    if n:NIL then
+        _V = _V * 2;
+    end
+    watching n do
+        _V = _V + 1;
+        if n:CONS then
+            _V = _V + n:CONS.head;
+
+            var Body*? tail =
+                spawn Body in this.bodies with
+                    this.bodies = bodies;
+                    this.n      = n:CONS.tail;
+                end;
+            if tail? then
+                await *tail;
+            end
+        end
+    end
+end
+
+pool Body[3] bodies;
+do Body with
+    this.bodies = bodies;
+    this.n      = list;
+end;
+
+escape _V;
+]],
+    wrn = 'line 26 : unbounded recursive spawn',
+    _ana = { acc=true },
+    run = 18,
+}
+
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[3] list;
+list = new List.CONS(1,
+            List.CONS(2,
+                List.CONS(3, List.NIL())));
+
+native do
+    int V = 0;
+end
+
+loop/rec n in list do
+    _V = _V + 1;
+    if n:CONS then
+        _V = _V + n:CONS.head;
+        recurse n:CONS.tail;
+    end
+end
+
+/*
+class Body with
+    pool  Body[]& bodies;
+    var   List*   n;
+do
+    watching n do
+        _V = _V + 1;
+        if n:CONS then
+            _V = _V + n:CONS.head;
+
+            var Body*? tail =
+                spawn Body in this.bodies with
+                    this.bodies = bodies;
+                    this.n      = n:CONS.tail;
+                end;
+            if tail? then
+                await *tail;
+            end
+        end
+    end
+end
+
+pool Body[3] bodies;
+do Body with
+    this.bodies = bodies;
+    this.n      = list;
+end;
+*/
+
+escape _V;
+]],
+    _ana = { acc=true },
+    wrn = 'line 26 : unbounded recursive spawn',
+    run = 10,
+}
+
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[3] list;
+list = new List.CONS(1,
+            List.CONS(2,
+                List.CONS(3, List.NIL())));
+
+native do
+    int V = 0;
+end
+
+loop/rec n in list do
+    _V = _V + 1;
+    watching n do
+        await 1s;
+        if n:CONS then
+            _V = _V + n:CONS.head;
+            recurse n:CONS.tail;
+        end
+    end
+end
+
+escape _V;
+]],
+    wrn = 'line 26 : unbounded recursive spawn',
+    _ana = { acc=true },
+    run = { ['~>10s'] = 10 },
+}
+
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[3] list;
+list = new List.CONS(1,
+            List.CONS(2,
+                List.CONS(3, List.NIL())));
+
+native do
+    int V = 0;
+end
+
+loop/rec n in list do
+    _V = _V + 1;
+    //watching n do
+        await 1s;
+        if n:CONS then
+            _V = _V + n:CONS.head;
+            recurse n:CONS.tail;
+        end
+    //end
+end
+
+escape _V;
+]],
+    wrn = 'line 26 : unbounded recursive spawn',
+    _ana = { acc=true },
+    run = { ['~>10s'] = 10 },
+}
+
+Test { [[
+data Tree with
+    tag NIL;
+or
+    tag NODE with
+        var int   v;
+        var Tree* left;
+        var Tree* right;
+    end
+end
+
+pool Tree[3] tree;
+tree = new Tree.NODE(1,
+            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
+            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+
+native do
+    int V = 0;
+end
+
+loop/rec n in tree do
+    _V = _V + 1;
+    watching n do
+        if n:NODE then
+            recurse n:NODE.left;
+            _V = _V + n:NODE.v;
+            recurse n:NODE.right;
+        end
+    end
+end
+
+escape _V;
+]],
+    wrn = 'line 26 : unbounded recursive spawn',
+    _ana = { acc=true },
+    run = 13,
+}
+
+Test { [[
+data Tree with
+    tag NIL;
+or
+    tag NODE with
+        var int   v;
+        var Tree* left;
+        var Tree* right;
+    end
+end
+
+pool Tree[3] tree;
+tree = new Tree.NODE(1,
+            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
+            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+
+native do
+    int V = 0;
+end
+
+loop/rec n in tree do
+    _V = _V + 1;
+    watching n do
+        if n:NODE then
+            await 1s;
+            recurse n:NODE.left;
+            _V = _V + n:NODE.v;
+            recurse n:NODE.right;
+        end
+    end
+end
+
+escape _V;
+]],
+    wrn = 'line 26 : unbounded recursive spawn',
+    _ana = { acc=true },
+    run = { ['~>10s'] = 13 },
+}
+
+Test { [[
+data Tree with
+    tag NIL;
+or
+    tag NODE with
+        var int   v;
+        var Tree* left;
+        var Tree* right;
+    end
+end
+
+pool Tree[3] tree;
+tree = new Tree.NODE(1,
+            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
+            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+
+var int sum = 1;
+
+loop/rec n in tree do
+    watching n do
+        if n:NODE then
+            recurse n:NODE.left;
+            sum = sum * n:NODE.v + n:NODE.v;
+            recurse n:NODE.right;
+        end
+    end
+end
+
+escape sum;
+]],
+    wrn = 'line 26 : unbounded recursive spawn',
+    _ana = { acc=true },
+    run = { ['~>10s'] = 18 },
+}
+
+Test { [[
+data T with
+    tag NIL;
+or
+    tag NXT with
+        var int v;
+        var T*  nxt;
+    end
+end
+
+pool T[1] ts;
+
+var void* p1 = (void*)this;
+
+loop/rec t in ts do
+    _assert(p1 == (void*)this);
+    if t:NXT then
+        recurse t:NXT.nxt;
+    end
+end
+
+escape 1;
+]],
+    wrn = 'line 17 : unbounded recursive spawn',
+    run = 1,
+}
+
+Test { [[
+data T with
+    tag NIL;
+or
+    tag NXT with
+        var int v;
+        var T*  nxt;
+    end
+end
+
+pool T[1] ts;
+
+var void* p1 = (void*)this;
+
+var int v2 = 2;
+var int v3 = 3;
+
+class X with
+    var int v1, v2, v3;
+do end
+
+loop/rec t in ts do
+    _assert(p1 == (void*)this);
+    var int v1 = 1;
+    var int v3 = 0;
+    var X x with
+        this.v1 = v1;
+        this.v2 = v2;
+        this.v3 = outer.v3;
+    end;
+    _assert(x.v1 + x.v2 + x.v3 == 6);
+    if t:NXT then
+        recurse t:NXT.nxt;
+    end
+end
+
+escape 1;
+]],
+    wrn = 'line 17 : unbounded recursive spawn',
+    run = 1,
+}
+
+Test { [[
+data Tree with
+    tag NIL;
+or
+    tag NODE with
+        var int   v;
+        var Tree* left;
+        var Tree* right;
+    end
+end
+
+pool Tree[3] tree;
+tree = new Tree.NODE(1,
+            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
+            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+
+var int sum = 1;
+
+loop/rec n in tree do
+    await 1s;
+    watching n do
+        if n:NODE then
+            recurse n:NODE.left;
+            sum = sum * n:NODE.v + n:NODE.v;
+            recurse n:NODE.right;
+        end
+    end
+end
+
+escape sum;
+]],
+    _ana = {acc=true},
+    wrn = 'line 26 : unbounded recursive spawn',
+    run = { ['~>10s'] = 18 },
+}
+
+Test { [[
+data Tree with
+    tag NIL;
+or
+    tag NODE with
+        var int   v;
+        var Tree* left;
+        var Tree* right;
+    end
+end
+
+pool Tree[3] tree;
+tree = new Tree.NODE(1,
+            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
+            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+
+var int sum = 1;
+
+do
+    loop/rec n in tree do
+        await 1s;
+        watching n do
+            if n:NODE then
+                recurse n:NODE.left;
+                sum = sum * n:NODE.v + n:NODE.v;
+                recurse n:NODE.right;
+            end
+        end
+    end
+end
+
+escape sum;
+]],
+    _ana = {acc=true},
+    wrn = 'line 26 : unbounded recursive spawn',
+    run = { ['~>10s'] = 18 },
+}
+
+Test { [[
+data Tree with
+    tag NIL;
+or
+    tag NODE with
+        var int   v;
+        var Tree* left;
+        var Tree* right;
+    end
+end
+
+pool Tree[3] tree;
+tree = new Tree.NODE(1,
+            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
+            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+
+var int sum = 1;
+
+par/and do
+    loop/rec n in tree do
+        watching n do
+            if n:NODE then
+                await 1s;
+                recurse n:NODE.left;
+                sum = sum * n:NODE.v + n:NODE.v;
+                recurse n:NODE.right;
+                await 1s;
+            end
+        end
+    end
+    sum = sum - 1;
+with
+    await 1s;
+    _ceu_out_assert(sum == 1, "1");
+    await 1s;
+    _ceu_out_assert(sum == 4, "2");
+    await 1s;
+    _ceu_out_assert(sum == 5, "3");
+    tree = new Tree.NIL();
+    _ceu_out_assert(sum == 4, "4");
+end
+
+escape sum;
+]],
+    _ana = {acc=true},
+    wrn = 'line 26 : unbounded recursive spawn',
+    run = { ['~>20s'] = 4 },
+}
+
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[3] list;
+list = new List.CONS(1,
+            List.CONS(2,
+                List.CONS(3, List.NIL())));
+
+native do
+    int V = 0;
+end
+
+loop/rec n in list do
+    _V = _V + 1;
+    if n:CONS then
+        _V = _V + n:CONS.head;
+        loop i in 1 do
+            recurse n:CONS.tail;
+        end
+    end
+end
+
+escape _V;
+]],
+    _ana = { acc=true },
+    wrn = 'line 26 : unbounded recursive spawn',
+    run = 10,
+}
+
+Test { [[
+loop do
+    recurse null;
+end
+escape 1;
+]],
+    adj = 'line 2 : `recurse´ without `loop/rec´',
+}
+
+Test { [[
+loop/rec t in ts do
+    loop do
+        recurse/1 null;
+    end
+end
+escape 1;
+]],
+    adj = 'line 3 : `recurse´ without `loop/rec´',
+}
+
+Test { [[
+data Widget with
+    tag EMPTY;
+or
+    tag SEQ with
+        var Widget* w1;
+        var Widget* w2;
+    end
+end
+
+pool Widget[] widgets;
+widgets = new Widget.SEQ(
+            Widget.EMPTY(),
+            Widget.EMPTY());
+
+var int ret = 0;
+
+loop/rec widget in widgets with
+    var int param = 1;
+do
+    ret = ret + param;
+
+    watching widget do
+        if widget:EMPTY then
+            nothing;
+
+        else/if widget:SEQ then
+            recurse widget:SEQ.w1 with
+                this.param = param + 1;
+            end;
+            recurse widget:SEQ.w2 with
+                this.param = param + 1;
+            end;
+
+        else
+            _ceu_out_assert(0, "not implemented");
+        end
+    end
+end
+
+escape ret;
+]],
+    _ana = { acc=true },
+    wrn = 'line 57 : unbounded recursive spawn',
+    run = 5,
+}
+
+Test { [[
+data Widget with
+    tag EMPTY;
+or
+    tag SEQ with
+        var Widget* w1;
+        var Widget* w2;
+    end
+end
+
+pool Widget[] widgets;
+widgets = new Widget.SEQ(
+            Widget.EMPTY(),
+            Widget.EMPTY());
+
+var int ret = 0;
+
+loop/rec widget in widgets with
+    var int param = 1;
+do
+    ret = ret + param;
+
+    watching widget do
+        if widget:EMPTY then
+            nothing;
+
+        else/if widget:SEQ then
+            recurse widget:SEQ.w1 with
+                this.param = param + 1;
+            end;
+            recurse widget:SEQ.w2 with
+                this.param = param + 1;
+            end;
+
+        else
+            _ceu_out_assert(0, "not implemented");
+        end
+    end
+end
+
+escape ret;
+]],
+    _ana = { acc=true },
+    wrn = 'line 57 : unbounded recursive spawn',
+    run = 5,
+}
+
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[] l;
+l = new List.CONS(1,
+            List.CONS(2,
+                List.CONS(3,
+                    List.CONS(4,
+                        List.CONS(5,
+                            List.NIL())))));
+
+var int ret = 0;
+
+par/or do
+    await l:CONS.tail:CONS.tail;
+    ret = ret + l:CONS.tail:CONS.tail:CONS.head;    // 0+4
+    _ceu_out_assert(ret == 4, "1");
+    l:CONS.tail:CONS.tail = l:CONS.tail:CONS.tail:CONS.tail;
+    ret = ret + l:CONS.tail:CONS.tail:CONS.head;    // 0+4+5
+    _ceu_out_assert(ret == 9, "2");
+
+    await l:CONS.tail:CONS.tail;
+    ret = ret + l:CONS.tail:CONS.tail:NIL;          // 0+4+5+5+1
+    _ceu_out_assert(ret == 15, "4");
+    await FOREVER;
+with
+    await l:CONS.tail:CONS.tail;
+    _ceu_out_assert(ret == 9, "3");
+    ret = ret + l:CONS.tail:CONS.tail:CONS.head;    // 0+4+5+5
+    l:CONS.tail:CONS.tail = new List.NIL();
+
+    _ceu_out_assert(ret == 15, "5");
+    await l:CONS.tail:CONS.tail;
+    // never reached
+    _ceu_out_assert(ret == 15, "6");
+    await FOREVER;
+with
+    await l:CONS.tail:CONS.tail;
+    ret = ret + l:CONS.tail:CONS.tail:NIL;          // 0+4+5+5+1+1
+
+    await l:CONS.tail:CONS.tail;
+    _ceu_out_assert(ret == 16, "7");
+    await FOREVER;
+with
+    l:CONS.tail:CONS.tail = l:CONS.tail:CONS.tail:CONS.tail;
+    ret = ret * 2;  // (0+4+5+5+1+1) * 2
+    l:CONS.tail:CONS.tail = new List.CONS(10, List.NIL());
+end
+
+escape ret;
+]],
+    _ana = {acc=true},
+    run = 32,
+}
+
+Test { [[
+input void OS_START;
+
+data Widget with
+    tag NIL;
+or
+    tag V with
+        var int v;
+    end
+or
+    tag ROW with
+        var Widget* w1;
+        var Widget* w2;
+    end
+end
+
+par/or do
+    await 21s;
+with
+    pool Widget[] widgets;
+    widgets = new Widget.ROW(
+                    Widget.V(10),
+                    Widget.V(20));
+
+    var int ret =
+        loop/rec widget in widgets do
+            watching widget do
+                if widget:V then
+                    await (widget:V.v)s;
+                    escape widget:V.v;
+
+                else/if widget:ROW then
+                    var int v1, v2;
+                    par/and do
+                        v1 = recurse widget:ROW.w1;
+                    with
+                        v2 = recurse widget:ROW.w2;
+                    end
+                    escape v1 + v2;
+
+                else
+                    _ceu_out_assert(0, "not implemented");
+                end
+            end
+            escape 0;
+        end;
+    escape ret;
+end
+
+escape 0;
+]],
+    _ana = {acc=true},
+    wrn = true,
+    run = {['~>21s;'] = 30},
+}
+
+Test { [[
+input void OS_START;
+
+data Widget with
+    tag NIL;
+or
+    tag EMPTY;
+or
+    tag ROW with
+        var Widget* w1;
+        var Widget* w2;
+    end
+end
+
+par/or do
+    await OS_START;
+with
+    pool Widget[] widgets;
+    widgets = new Widget.ROW(
+                    Widget.EMPTY(),
+                    Widget.EMPTY());
+
+    loop/rec widget in widgets do
+        watching widget do
+            if widget:NIL then
+                await FOREVER;
+            else/if widget:EMPTY then
+                await FOREVER;
+
+            else/if widget:ROW then
+                loop do
+                    par/or do
+                        var int ret = recurse widget:ROW.w1;
+                        if ret == 0 then
+                            await FOREVER;
+                        end
+                    with
+                        var int ret = recurse widget:ROW.w2;
+                        if ret == 0 then
+                            await FOREVER;
+                        end
+                    end
+                end
+
+            else
+                _ceu_out_assert(0, "not implemented");
+            end
+        end
+    end
+end
+
+escape 1;
+]],
+    _ana = {acc=true},
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+
+data List with
+    tag NIL;
+or
+    tag EMPTY;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[] l;
+l = new List.CONS(1, List.EMPTY());
+
+par/or do
+    loop/rec e in l do
+        watching e do
+            if e:EMPTY then
+                await FOREVER;
+
+            else/if e:CONS then
+                loop do
+                    recurse e:CONS.tail;
+                end
+            else
+                _ceu_out_assert(0, "1");
+            end
+        end
+    end
+with
+    await OS_START;
+end
+
+escape 1;
+]],
+    _ana = {acc=true},
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+
+data Widget with
+    tag NIL;
+or
+    tag EMPTY;
+or
+    tag SEQ with
+        var Widget* w1;
+        var Widget* w2;
+    end
+end
+
+var int ret = 0;
+
+par/or do
+    pool Widget[] widgets;
+    widgets = new Widget.SEQ(
+                Widget.EMPTY(),
+                Widget.EMPTY());
+
+    loop/rec widget in widgets with
+        var int param = 1;
+    do
+        ret = ret + param;
+
+        watching widget do
+            if widget:EMPTY then
+                await FOREVER;
+
+            else/if widget:SEQ then
+                loop do
+                    par/or do
+                        recurse widget:SEQ.w1 with
+                            this.param = param + 1;
+                        end;
+if widget:SEQ.w1:NIL then
+    await FOREVER;
+end
+                    with
+                        recurse widget:SEQ.w2 with
+                            this.param = param + 1;
+                        end;
+if widget:SEQ.w2:NIL then
+    await FOREVER;
+end
+                    end
+                end
+
+            else
+                _ceu_out_assert(0, "not implemented");
+            end
+        end
+    end
+with
+    await OS_START;
+end
+
+escape ret;
+]],
+    _ana = { acc=true },
+    wrn = 'line 57 : unbounded recursive spawn',
+    run = 5,
+}
+
+Test { [[
+input void OS_START;
+
+data Widget with
+    tag NIL;
+or
+    tag EMPTY;
+or
+    tag SEQ with
+        var Widget* w1;
+        var Widget* w2;
+    end
+end
+
+pool Widget[] widgets;
+widgets = new Widget.SEQ(
+            Widget.EMPTY(),
+            Widget.EMPTY());
+
+var int ret = 0;
+
+par/or do
+    loop/rec widget in widgets with
+        var int param = 1;
+    do
+        ret = ret + param;
+native @pure _printf();
+_printf("[%d] %p = %d/%d->%d\n", widget:EMPTY, widget, ret,param,ret);
+
+        watching widget do
+            if widget:EMPTY then
+                await FOREVER;
+
+            else/if widget:SEQ then
+                loop do
+                    par/or do
+                        recurse widget:SEQ.w1 with
+                            this.param = param + 1;
+                        end;
+if widget:SEQ.w1:NIL then
+_ceu_out_assert(0, "ok\n");
+    await FOREVER;
+end
+                    with
+                        recurse widget:SEQ.w2 with
+                            this.param = param + 1;
+                        end;
+if widget:SEQ.w2:NIL then
+_ceu_out_assert(0, "ok\n");
+    await FOREVER;
+end
+                    end
+                end
+
+            else
+                _ceu_out_assert(0, "not implemented");
+            end
+        end
+    end
+with
+    await OS_START;
+end
+
+escape ret;
+]],
+    _ana = { acc=true },
+    wrn = 'line 57 : unbounded recursive spawn',
+    run = 5,
+}
+
+Test { [[
+data Command with
+    tag NOTHING;
+or
+    tag FORWARD with
+        var int pixels;
+    end
+or
+    tag SEQUENCE with
+        var Command* one;
+        var Command* two;
+    end
+end
+
+pool Command[] cmds;
+
+cmds = new Command.SEQUENCE(
+            Command.FORWARD(100),
+            Command.FORWARD(500));
+
+par/or do
+    loop/rec cmd in cmds do
+        watching cmd do
+            if cmd:FORWARD then
+                await FOREVER;
+
+            else/if cmd:SEQUENCE then
+                recurse cmd:SEQUENCE.one;
+
+            else
+            end
+        end
+    end
+with
+    await 100s;
+end
+
+escape 10;
+]],
+    --tight = 'tight loop',
+    _ana = { acc=true },
+    wrn = true,
+    run = { ['~>100s']=10 },
+}
+
+Test { [[
+input int SDL_DT;
+
+data Command with
+    tag NOTHING;
+or
+    tag FORWARD with
+        var int pixels;
+    end
+or
+    tag SEQUENCE with
+        var Command* one;
+        var Command* two;
+    end
+end
+
+// TODO: aceitar estatico
+pool Command[] cmds;
+
+cmds = new Command.SEQUENCE(
+            Command.FORWARD(100),
+            Command.FORWARD(500));
+
+par/or do
+    await 100s;
+with
+    loop/rec cmd in cmds do
+        watching cmd do
+            if cmd:NOTHING then
+                nothing;
+
+            else/if cmd:FORWARD then
+                await FOREVER;
+
+            else/if cmd:SEQUENCE then
+                recurse cmd:SEQUENCE.one;
+                _ceu_out_assert(0, "bug found"); // cmds has to die entirely before children
+                recurse cmd:SEQUENCE.two;
+            end
+        end
+    end
+end
+
+escape 10;
+]],
+    --tight = 'tight loop',
+    _ana = { acc=true },
+    wrn = true,
+    run = { ['~>100s']=10 },
+}
+Test { [[
+input int SDL_DT;
+
+data Command with
+    tag NOTHING;
+or
+    tag FORWARD with
+        var int pixels;
+    end
+or
+    tag SEQUENCE with
+        var Command* one;
+        var Command* two;
+    end
+end
+
+// TODO: aceitar estatico
+pool Command[] cmds;
+
+cmds = new Command.SEQUENCE(
+            Command.FORWARD(100),
+            Command.FORWARD(500));
+
+par/or do
+    await 100s;
+with
+    loop/rec cmd in cmds do
+        watching cmd do
+            if cmd:NOTHING then
+                nothing;
+
+            else/if cmd:FORWARD then
+                await FOREVER;
+
+            else/if cmd:SEQUENCE then
+                recurse cmd:SEQUENCE.one;
+                recurse cmd:SEQUENCE.two;
+            end
+        end
+    end
+end
+
+escape 10;
+]],
+    --tight = 'tight loop',
+    _ana = { acc=true },
+    wrn = true,
+    run = { ['~>100s']=10 },
+}
+
+Test { [[
+input int SDL_DT;
+
+data Command with
+    tag NOTHING;
+or
+    tag AWAIT with
+        var int ms;
+    end
+or
+    tag RIGHT with
+        var int angle;
+    end
+or
+    tag LEFT with
+        var int angle;
+    end
+or
+    tag FORWARD with
+        var int pixels;
+    end
+or
+    tag BACKWARD with
+        var int pixels;
+    end
+or
+    tag SEQUENCE with
+        var Command* one;
+        var Command* two;
+    end
+or
+    tag REPEAT with
+        var int      times;
+        var Command* command;
+    end
+end
+
+// TODO: aceitar estatico
+pool Command[] cmds;
+
+cmds = new Command.REPEAT(2,
+            Command.SEQUENCE(
+                Command.AWAIT(500),
+                Command.SEQUENCE(
+                    Command.RIGHT(45),
+                    Command.SEQUENCE(
+                        Command.FORWARD(100),
+                        Command.SEQUENCE(
+                            Command.LEFT(90),
+                            Command.SEQUENCE(
+                                Command.FORWARD(100),
+                                Command.SEQUENCE(
+                                    Command.RIGHT(45),
+                                    Command.SEQUENCE(
+                                        Command.BACKWARD(100),
+                                        Command.AWAIT(500)))))))));
+
+class Turtle with
+    var int angle;
+    var int pos_x, pos_y;
+do
+    await FOREVER;
+end
+
+class TurtleTurn with
+    var Turtle& turtle;
+    var int     angle;
+    var int     isRight;
+do
+    var int inc;
+    if isRight then
+        if this.angle < 0 then
+            angle = -angle;
+            inc = 1;
+        else
+            inc = -1;
+        end
+    else
+        if this.angle < 0 then
+            angle = -angle;
+            inc = -1;
+        else
+            inc = 1;
+        end
+    end
+    loop i in angle do
+        await 10ms;
+        turtle.angle = turtle.angle + inc;
+    end
+end
+
+class TurtleMove with
+    var Turtle& turtle;
+    var int     pixels;
+    var int     isForward;
+do
+    var int inc;
+    if isForward then
+        inc =  1;
+    else
+        inc = -1;
+    end
+    _ceu_out_assert(this.pixels > 0, "pixels");
+
+    var float sum = 0;
+    var float x = turtle.pos_x;
+    var float y = turtle.pos_y;
+    every 10ms do
+        var int dt = 10;
+        if sum >= this.pixels then
+            break;
+        end
+        var float mul = 80 * dt * 0.001 * this.inc;
+        var float dx  = mul * (turtle.angle/(180.0));
+        var float dy  = mul * (turtle.angle/(180.0));
+        sum = sum + (dx) + (dy);
+        x = x + dx;
+        y = y + dy;
+        turtle.pos_x = x;
+        turtle.pos_y = y;
+    end
+
+end
+
+par/or do
+    await 100s;
+with
+    var Turtle turtle;
+
+    loop/rec cmd in cmds do
+        watching cmd do
+            if cmd:NOTHING then
+                nothing;
+
+            else/if cmd:AWAIT then
+                await (cmd:AWAIT.ms) ms;
+
+            else/if cmd:RIGHT or cmd:LEFT then
+                var int angle;
+                if cmd:RIGHT then
+                    angle = cmd:RIGHT.angle;
+                else
+                    angle = cmd:LEFT.angle;
+                end
+                do TurtleTurn with
+                    this.turtle  = turtle;
+                    this.angle   = angle;
+                    this.isRight = cmd:RIGHT;
+                end;
+
+            else/if cmd:FORWARD or cmd:BACKWARD then
+                var int pixels;
+                if cmd:FORWARD then
+                    pixels = cmd:FORWARD.pixels;
+                else
+                    pixels = cmd:BACKWARD.pixels;
+                end
+                do TurtleMove with
+                    this.turtle    = turtle;
+                    this.pixels    = pixels;
+                    this.isForward = cmd:FORWARD;
+                end;
+
+            else/if cmd:SEQUENCE then
+                recurse cmd:SEQUENCE.one;
+                recurse cmd:SEQUENCE.two;
+
+            else/if cmd:REPEAT then
+                loop i in cmd:REPEAT.times do
+                    recurse cmd:REPEAT.command;
+                end
+
+            else
+                _ceu_out_assert(0, "not implemented");
+            end
+        end
+    end
+end
+
+escape 10;
+]],
+    --tight = 'tight loop',
+    _ana = { acc=true },
+    wrn = true,
+    run = { ['~>100s']=10 },
+}
+
 --[=[
 
 Test { [[

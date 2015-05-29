@@ -470,6 +470,11 @@ typedef struct tceu_org
 
 } tceu_org;
 
+typedef struct {
+    tceu_org* org;
+    int       ret;
+} tceu_org_kill;
+
 /* TCEU_GO */
 
 /* TODO: tceu_go => tceu_stk? */

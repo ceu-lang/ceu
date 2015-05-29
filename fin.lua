@@ -268,7 +268,7 @@ end
 
         -- invalid access!
         ASR(false, me, 1107, 'pointer access across `await´')
--- TODO: across emit/await
+-- TODO: error message: across emit/await
     end,
 
     Await = function (me)

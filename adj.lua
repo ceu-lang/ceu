@@ -1183,10 +1183,17 @@ me.blk_body = me.blk_body or blk_body
         local var = e or dt     -- TODO: hacky
         local tst = node('_TMP_AWAIT', me.ln, var)
 
-        local SET_ORG = node('Nothing', me.ln)
+        local SET_KILL = node('Nothing', me.ln)
+        local SET_DEAD = node('Nothing', me.ln)
         if stmt.tag == 'Set' then
             local to = AST.asr(stmt,'Set', 4,'VarList', 1,'Var')
-            SET_ORG = node('Set', me.ln, '=', 'exp',
+            SET_KILL = node('Set', me.ln, '=', 'exp',
+                        node('Op2_.', me.ln, '.',
+                            node('Op1_*', me.ln, '*',
+                                node('Var', me.ln, '__orgk_'..me.n)),
+                            'ret'),
+                        AST.copy(to))
+            SET_DEAD = node('Set', me.ln, '=', 'exp',
                         node('Op1_cast', me.ln,
                             node('Type', me.ln, 'int', 0, false, false),
                             node('Op2_.', me.ln, '.',
@@ -1242,37 +1249,43 @@ me.blk_body = me.blk_body or blk_body
                                     true))))),
 
                 -- OPT-3
+-- TODO: workaround bug do IF-then-else com await no then e ptr no else
+-- *not* isAlive para inverter then/else
                 node('Stmts', me.ln,
                     node('If', me.ln,
-                        node('Op2_.', me.ln, '.',
-                            node('Op1_*', me.ln, '*',
-                                -- this cast confuses acc.lua (see Op1_* there)
-                                -- TODO: HACK_3
-                                node('Op1_cast', me.ln,
-                                    node('Type', me.ln, '_tceu_org', 1, false, false),
-                                    AST.copy(var))),
-                            'isAlive'),
+                        node('Op1_not', me.ln, 'not',
+                            node('Op2_.', me.ln, '.',
+                                node('Op1_*', me.ln, '*',
+                                    -- this cast confuses acc.lua (see Op1_* there)
+                                    -- TODO: HACK_3
+                                    node('Op1_cast', me.ln,
+                                        node('Type', me.ln, '_tceu_org', 1, false, false),
+                                        AST.copy(var))),
+                                'isAlive')),
+                        node('Block', me.ln,
+                            node('Stmts', me.ln,
+                                SET_DEAD)),
                         node('Block', me.ln,
                             node('Stmts', me.ln,
                                 node('Dcl_var', me.ln, 'var',
-                                    node('Type', me.ln, '_tceu_org', 1, false, false),
-                                    '__org_'..me.n),
+                                    node('Type', me.ln, '_tceu_org_kill', 1, false, false),
+                                    '__orgk_'..me.n),
                                 node('_Set', me.ln,
-                                    node('Var', me.ln, '__org_'..me.n),
+                                    node('Var', me.ln, '__orgk_'..me.n),
                                     '=', 'await',
                                     node('Await', me.ln,
                                         node('Ext', me.ln, '_ok_killed'),
                                         false,
                                         node('Op2_==', me.ln, '==',
-                                            node('Var', me.ln, '__org_'..me.n),
+                                            node('Op2_.', me.ln, '.',
+                                                node('Op1_*', me.ln, '*',
+                                                    node('Var', me.ln, '__orgk_'..me.n)),
+                                                'org'),
                                             node('Op1_cast', me.ln,
                                                 node('Type', me.ln, '_tceu_org', 1, false, false),
                                                 AST.copy(var))),
-                                        true)))),
-                        node('Block', me.ln,
-                            node('Stmts', me.ln,
-                                node('Nothing', me.ln)))),
-                    SET_ORG))
+                                        true)),
+                                SET_KILL)))))
     end,
 
     Await_pre = function (me)

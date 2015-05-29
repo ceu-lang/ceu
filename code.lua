@@ -1644,7 +1644,13 @@ case ]]..me.lbl.id..[[:;
                     val = '(_ceu_app->wclk_late'..suf..')'
                 elseif e.tag=='Ext' then
                     if e[1] == '_ok_killed' then
-                        val = '(*((tceu_org**)_STK->evt_buf))'
+                        if TP.tostr(set_to.tp)=='(void*)' then
+                            -- ADT
+                            val = '(*((tceu_org**)_STK->evt_buf))'
+                        else
+                            -- ORG
+                            val = '(((tceu_org_kill*)_STK->evt_buf))'
+                        end
                     else
                         val = '((*(('..TP.toc(me.tp)..'*)_STK->evt_buf))->_'..i..')'
                     end

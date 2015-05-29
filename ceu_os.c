@@ -254,8 +254,9 @@ void ceu_sys_org_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_org* org)
                  stk.org  = _ceu_app->data;
                  stk.trl  = &_ceu_app->data->trls[0];
                  stk.stop = NULL;
-                 stk.evt_sz = sizeof(org);
-        stack_push(_ceu_go, &stk, &org);
+                 stk.evt_sz = sizeof(tceu_org_kill);
+        tceu_org_kill ps = { org, org->ret };
+        stack_push(_ceu_go, &stk, &ps);
             /* param "org" is pointer to what to kill */
     }
 #endif
