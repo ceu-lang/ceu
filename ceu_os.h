@@ -386,9 +386,15 @@ typedef struct tceu_stk {
     tceu_nevt evt;  /* TODO: small in the end of struct? */
     u8        evt_sz;
     u8        offset;
-#if defined(CEU_ORGS) && defined(CEU_INTS)
-    void* evto; /* emitting org */
+
+    union {
+#ifdef CEU_CLEAR
+        void* cnt;  /* dont clear the continuation trail */
 #endif
+#if defined(CEU_ORGS) && defined(CEU_INTS)
+        void* evto; /* emitting org */
+#endif
+    };
 
     tceu_trl* trl;  /* trail being traversed */
 #ifdef CEU_ORGS

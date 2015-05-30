@@ -148,36 +148,12 @@ function CLEAR_BEF (me)
 ]]
 
     LINE(me, [[
-{
-    /* dummy event to restore the current trail after the clear */
-    /* after the push, only this trail will be at that level */
-    tceu_stk stk        = *_STK;
-             stk.evt    = CEU_IN__STK;
-             stk.evt_sz = 0;
-    stack_push(_ceu_go, &stk, NULL);
-
-    /* save the continuation to run after the clear */
-    /* trails[1] points to ORG blk ("clear trail") */
-    _STK->trl->evt = CEU_IN__STK;
-    _STK->trl->stk = stack_curi(_ceu_go);  /* level of the push above */
-                    /* HACK_8: not removed by the IN__CLEAR below */
-    _STK->trl->lbl = ]]..me.lbl_clr.id..[[;
-}
-{
-    /* clear from start->stop */
-    tceu_stk stk;
-             stk.evt  = CEU_IN__CLEAR;
-#ifdef CEU_ORGS
-             stk.org  = _STK_ORG;
-#endif
-             stk.trl  = &_STK_ORG->trls[ ]]..(me.trails[1])..[[ ];
-             stk.stop = &_STK_ORG->trls[ ]]..(me.trails[2]+1)..[[ ];
-             stk.evt_sz = 0;
-    stack_push(_ceu_go, &stk, NULL);
-}
-return RET_RESTART;
+return ceu_sys_clear(_ceu_go, ]]..me.lbl_clr.id..[[, _STK_ORG,
+                     &_STK_ORG->trls[ ]]..(me.trails[1])  ..[[ ],
+                     &_STK_ORG->trls[ ]]..(me.trails[2]+1)..[[ ]);
 ]])
 end
+
 function CLEAR_AFT (me)
     if ANA and me.ana.pos[false] then
         return
@@ -350,6 +326,7 @@ _STK_ORG->cls = ]]..me.n..[[;
 {
     tceu_stk stk;
              stk.evt    = CEU_IN__CLEAR;
+             stk.cnt    = NULL;
              stk.org    = _STK_ORG;
              stk.trl    = &_STK_ORG->trls[0];
              stk.stop   = _STK_ORG;
@@ -591,23 +568,13 @@ if (]]..LVAR..[[ == NULL) {
 ]])
         end
         LINE(me, [[
-/* save the continuation to run after the kill */
-_STK->trl->evt = CEU_IN__STK;
-_STK->trl->lbl = ]]..me.lbl.id..[[;
-_STK->trl->stk = stack_curi(_ceu_go);
-
 {
     tceu_org* __ceu_org = (tceu_org*)]]..V(org)..[[;
-    tceu_stk stk;
-             stk.evt    = CEU_IN__CLEAR;
-             stk.org    = __ceu_org;
-             stk.trl    = &__ceu_org->trls[0];
-             stk.stop   = __ceu_org;
-             stk.evt_sz = 0;
-    stack_push(_ceu_go, &stk, NULL);    /* continue after it */
+    return ceu_sys_clear(_ceu_go, ]]..me.lbl.id..[[, __ceu_org,
+                             &__ceu_org->trls[0],
+                             __ceu_org);
 }
 
-return RET_RESTART;
 case ]]..me.lbl.id..[[:;
 ]])
     end,
@@ -893,10 +860,10 @@ _STK->trl = &_STK_ORG->trls[ ]]..stmts.trails[1]..[[ ];
                 CASE(me, var.lbl_fin_kill_free)
                 if PROPS.has_adts_watching[var.adt.id] then
                     LINE(me, [[
-/*
+#if 0
 "kill" only while in scope
 CEU_]]..id..[[_kill(_ceu_app, _ceu_go, ]]..V(var.__env_adt_root)..[[.root);
-*/
+#endif
 ]])
                 end
                 if static then

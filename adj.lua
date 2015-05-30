@@ -1496,6 +1496,8 @@ me.blk_body = me.blk_body or blk_body
         --      - statically detect if an "emit" can be aborted
         --          - generate a warning ("slow code") and the code above if it
         --            is the case
+        --
+        -- TODO: this may have solved the problem with await/awake in the same reaction
         --]]
         return
             node('Block', me.ln,

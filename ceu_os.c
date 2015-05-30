@@ -263,7 +263,7 @@ void ceu_sys_org_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_org* org)
 }
 
 #ifdef CEU_ORGS_NEWS
-void ceu_sys_org_free (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_org* org)
+void ceu_sys_org_free (tceu_org* org)
 {
     /* free org */
     if (org->isDyn) {
@@ -287,6 +287,44 @@ void ceu_sys_org_free (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_org* org)
 }
 #endif /* CEU_ORGS_NEWS */
 
+#endif
+
+/**********************************************************************/
+
+#ifdef CEU_CLEAR
+int ceu_sys_clear (tceu_go* _ceu_go, tceu_nlbl cnt,
+                   tceu_org* org, tceu_trl* from, void* stop)
+{
+    if (_STK->evt < CEU_IN_lower) {
+        /* need this extra level in the case we are in an internal event and
+         * the emit sets the current level to NONE when aborted */
+        tceu_stk stk        = *_STK;
+                 stk.evt    = CEU_IN__STK;
+                 stk.evt_sz = 0;
+        stack_push(_ceu_go, &stk, NULL);
+    }
+
+    /* save the continuation to run after the clear */
+    /* trails[1] points to ORG blk ("clear trail") */
+    _STK->trl->evt = CEU_IN__STK;
+    _STK->trl->stk = stack_curi(_ceu_go);
+    _STK->trl->lbl = cnt;
+
+    {
+        tceu_stk stk;
+                 stk.evt    = CEU_IN__CLEAR;
+                 stk.cnt    = _STK->trl;
+#ifdef CEU_ORGS
+                 stk.org    = org;
+#endif
+                 stk.trl    = from;
+                 stk.stop   = stop;
+                 stk.evt_sz = 0;
+        stack_push(_ceu_go, &stk, NULL);    /* continue after it */
+    }
+
+    return RET_RESTART;
+}
 #endif
 
 /**********************************************************************/
@@ -528,7 +566,7 @@ printf("\tntrls=%d\n", CEU_NTRAILS);
                         stack_pop(&go);
                         ceu_sys_org_kill(app, &go, old);
 #ifdef CEU_ORGS_NEWS
-                        ceu_sys_org_free(app, &go, old);
+                        ceu_sys_org_free(old);
 #endif
                         continue;
                     }
@@ -541,7 +579,18 @@ printf("\tntrls=%d\n", CEU_NTRAILS);
                               ];
 #ifdef CEU_ORGS_NEWS
                     if (to_kill_free) {
-                        ceu_sys_org_free(app, &go, old);
+#if 0
+                        "kill" only while in scope
+#endif
+#ifdef CEU_ORGS_WATCHING
+                        tceu_stk stk = *stack_cur(&go);
+                        stack_pop(&go); /* only if "kill" emit ok_killed */
+#endif
+                        ceu_sys_org_kill(app, &go, old);
+                        ceu_sys_org_free(old);
+#ifdef CEU_ORGS_WATCHING
+                        stack_push(&go, &stk, NULL);
+#endif
                     }
 #endif
                     continue;
@@ -644,11 +693,11 @@ if (STK->trl->evt==CEU_IN__ORG) {
             /* DON'T EXECUTE THIS TRAIL */
             else
             {
-                if (STK->evt==CEU_IN__CLEAR &&
-                    !(STK->trl->evt==CEU_IN__STK && STK->trl->stk==stack_prvi(&go))
-                        /* HACK_8: do not remove the clear continuation */
-                   )
-                {
+                if (STK->evt==CEU_IN__CLEAR
+#ifdef CEU_CLEAR
+                    && STK->cnt!=STK->trl
+#endif
+                    ) {
                     STK->trl->evt = CEU_IN__NONE;    /* trail cleared */
                 }
             }

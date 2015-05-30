@@ -2049,6 +2049,7 @@ escape ret;
 
 ----------------------------------------------------------------------------
 -- OK: well tested
+--]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -39175,7 +39176,7 @@ do
     await FOREVER;
 end
 pool T[1] ts;
-var T*?  ok1 = spawn T in ts with
+var T*? ok1 = spawn T in ts with
                 this.v = 10;
               end;
 watching *ok1 do
@@ -39188,7 +39189,7 @@ watching *ok1 do
 end
 escape 1;
 ]],
-    run = 1,
+    run = 11,
 }
 
 Test { [[
@@ -39218,7 +39219,7 @@ escape _V + 1;  // this one executes because of strong abortion in the watching
     _ana = {
         acc = true,
     },
-    run = 12,
+    run = 11,
 }
 
 Test { [[
@@ -39634,7 +39635,6 @@ escape _V + 1;
     --run = 166,
 }
 
---]===]
 Test { [[
 native do
     int V = 0;
@@ -45857,6 +45857,7 @@ par/or do
             else/if e:CONS then
                 loop do
                     recurse e:CONS.tail;
+                    _ceu_out_assert(0, "0");
                 end
             else
                 _ceu_out_assert(0, "1");
