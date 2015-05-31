@@ -1730,6 +1730,66 @@ escape sum;
     run = 999,
 }
 
+-- BUG: loop between declaration and watching
+Test { [[
+class T with
+    event void e;
+do
+    await FOREVER;
+end
+
+pool T[] ts;
+
+var T*? t = spawn T in ts;
+
+loop do
+    watching *t do
+        kill *t;
+    end
+    await 1s;
+    if false then
+        break;
+    end
+end
+
+escape 1;
+]],
+    run = { ['~>1s']=10 },
+}
+
+Test { [[
+class T with
+    event void e;
+do
+    await e;
+end
+
+pool T[] ts;
+
+var int ret = 1;
+
+spawn T in ts;
+spawn T in ts;
+async do end;
+
+native @pure _printf();
+loop t1 in ts do
+    //watching *t1 do
+        loop t2 in ts do
+            watching *t1 do
+                ret = ret + 1;
+                emit t1:e;
+                ret = ret + 1;
+            end
+        end
+    //end
+end
+
+escape ret;
+]],
+    run = 3,
+}
+
 ---------------------
 
 -- TODO: RECURSE
@@ -1939,101 +1999,6 @@ escape ret;
     run = 1,
 }
 
--- XXXX-KILL-ORG
--- kill org inside iterator
-Test { [[
-class T with
-    event void e;
-do
-    await e;
-end
-
-pool T[] ts;
-
-var int ret = 1;
-
-spawn T in ts;
-async do end;
-
-loop t in ts do
-    watching *t do
-        ret = ret + 1;
-        emit t:e;
-        ret = ret + 1;
-    end
-end
-
-escape ret;
-]],
-    run = 2,
-}
-
-Test { [[
-class T with
-    var T* t;
-    event void e;
-do
-    watching *t do
-        await e;
-    end
-end
-
-pool T[] ts;
-
-var int ret = 1;
-
-var T*? t1 = spawn T in ts with
-                this.t = &this;
-            end;
-var T*? t2 = spawn T in ts with
-                this.t = t1;
-            end;
-
-async do end;
-
-loop t in ts do
-    watching *t do
-        ret = ret + 1;
-        emit t:e;
-        ret = ret + 1;
-    end
-end
-
-escape ret;
-]],
-    run = 2,
-}
-
-Test { [[
-interface I with
-    var int v;
-    event void e;
-end
-class T with
-    interface I;
-do
-    await e;
-end
-pool T[] ts;
-var int ret = 0;
-do
-    spawn T in ts with
-        this.v = 10;
-    end;
-    async do end;
-    loop t in ts do
-        watching *t do
-            ret = ret + t:v;
-            emit t:e;
-            ret = ret + t:v;
-        end
-    end
-end
-escape ret;
-]],
-    run = 10,
-}
-
 - colocar de volta recurse/C que ja estao nos testes (comentados)
 - testar pool dinamico indo fora de escopo (valgrind)
 - testar tb watching c/ adt estatico
@@ -2045,11 +2010,11 @@ escape ret;
 
 ---------------
 
---do return end
+do return end
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
---]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -33585,7 +33550,215 @@ escape t:v;
     run = 10,
 }
 
--- XXXX-KILL-ORG
+-- kill org inside iterator
+Test { [[
+class T with
+    event void e;
+do
+    await e;
+end
+
+pool T[] ts;
+
+var int ret = 1;
+
+spawn T in ts;
+async do end;
+
+loop t in ts do
+    watching *t do
+        ret = ret + 1;
+        emit t:e;
+        ret = ret + 1;
+    end
+end
+
+escape ret;
+]],
+    run = 2,
+}
+
+Test { [[
+class T with
+    var T* t;
+    event void e;
+do
+    watching *t do
+        await e;
+    end
+end
+
+pool T[] ts;
+
+var int ret = 1;
+
+var T*? t1 = spawn T in ts with
+                this.t = &this;
+            end;
+var T*? t2 = spawn T in ts with
+                this.t = t1;
+            end;
+
+async do end;
+
+loop t in ts do
+    watching *t do
+        ret = ret + 1;
+        emit t:e;
+        ret = ret + 1;
+    end
+end
+
+escape ret;
+]],
+    run = 2,
+}
+
+Test { [[
+interface I with
+    var int v;
+    event void e;
+end
+class T with
+    interface I;
+do
+    await e;
+end
+pool T[] ts;
+var int ret = 0;
+do
+    spawn T in ts with
+        this.v = 10;
+    end;
+    async do end;
+    loop t in ts do
+        watching *t do
+            ret = ret + t:v;
+            emit t:e;
+            ret = ret + t:v;
+        end
+    end
+end
+escape ret;
+]],
+    run = 10,
+}
+
+Test { [[
+class T with
+    event void e;
+do
+    await e;
+end
+
+pool T[] ts;
+
+var int ret = 1;
+
+spawn T in ts;
+spawn T in ts;
+async do end;
+
+native @pure _printf();
+loop t1 in ts do
+    loop t2 in ts do
+        ret = ret + 1;
+    end
+end
+
+escape ret;
+]],
+    run = 5,
+}
+Test { [[
+class T with
+    event void e;
+do
+    await e;
+end
+
+pool T[] ts;
+
+var int ret = 1;
+
+spawn T in ts;
+spawn T in ts;
+async do end;
+
+native @pure _printf();
+loop t1 in ts do
+    loop t2 in ts do
+        ret = ret + 1;
+        kill *t2;
+    end
+end
+
+escape ret;
+]],
+    run = 3,
+}
+Test { [[
+class T with
+    event void e;
+do
+    await e;
+end
+
+pool T[] ts;
+
+var int ret = 1;
+
+spawn T in ts;
+spawn T in ts;
+async do end;
+
+native @pure _printf();
+loop t1 in ts do
+    watching *t1 do
+        loop t2 in ts do
+            watching *t2 do
+                ret = ret + 1;
+                kill *t1;
+            end
+        end
+    end
+end
+
+escape ret;
+]],
+    run = 3,
+}
+
+Test { [[
+class T with
+    event void e;
+do
+    await e;
+end
+
+pool T[] ts;
+
+var int ret = 1;
+
+spawn T in ts;
+spawn T in ts;
+async do end;
+
+loop t1 in ts do
+    watching *t1 do
+        loop t2 in ts do
+            ret = ret + 1;
+            emit t1:e;
+            ret = ret + 1;
+        end
+    end
+end
+
+escape ret;
+]],
+    run = 3,
+}
+
 -- TODO pause hierarquico dentro de um org
 -- SDL/samples/sdl4.ceu
 

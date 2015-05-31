@@ -1205,6 +1205,10 @@ ceu_out_assert_ex(]]..nxt..' < '..loop.iter_max..[[,
             elseif me.iter_tp == 'org' then
                 -- INI
                 local var = iter.lst.var
+
+                local org_cur = '((tceu_org*)'..V(to)..')'
+                local org_nxt = '('..V(me.var_nxt)..'.org)'
+
                 local lnks = '(((tceu_pool_*)'..V(iter)..')->lnks)'
                 ini[#ini+1] = V(to)..[[ = (]]..TP.toc(iter.tp)..[[)(
     ((*]]..lnks..[[)[0].nxt->n == 0) ?
@@ -1212,14 +1216,23 @@ ceu_out_assert_ex(]]..nxt..' < '..loop.iter_max..[[,
         (*]]..lnks..[[)[0].nxt
 )
 ]]
+                ini[#ini+1] = org_nxt..' = '..
+                                '('..org_cur..'==NULL || '..
+                                     org_cur..'->nxt->n==0) ?'..
+                                        'NULL : '..
+                                        org_cur..'->nxt'
+                    -- assign to "nxt" before traversing "cur":
+                    --  "cur" may terminate and be freed
+
                 -- CND
                 cnd = '('..V(to)..' != NULL)'
 
                 -- NXT
-                local org = '((tceu_org*)'..V(to)..')'
-                nxt[#nxt+1] = '('..V(to)..' = ('..TP.toc(iter.tp)..')'..
-                                '(('..org..'->nxt->n==0) ? '..
-                                    'NULL : '..org..'->nxt))'
+                nxt[#nxt+1] = V(to)..' = ('..TP.toc(to.tp)..')'..org_nxt
+                nxt[#nxt+1] = org_nxt..' = '..
+                                '('..org_cur..'==NULL || '..org_cur..'->nxt->n==0) ?  '..
+                                    'NULL : '..
+                                    org_cur..'->nxt'
 
             elseif me.iter_tp == 'data' then
 error'bug found'
@@ -1243,10 +1256,17 @@ error'bug found'
             LINE(me, 'int __'..me.n..'['..max.cval..'] = {};')
         end
 
+        if me.iter_tp == 'org' then
+            LINE(me, [[
+ceu_pool_iterator_enter(&]]..V(me.var_nxt)..[[);
+]])
+        end
+
         LINE(me, [[
 for (]]..ini..';'..cnd..';'..nxt..[[) {
 ]])
         if me.iter_tp == 'data' then
+error'not implemented'
             local nxt = CUR(me,'__recurse_nxt_'..me.n)
             local vec = CUR(me,'__recurse_vec_'..me.n)..'['..nxt..']'
             LINE(me, [[
@@ -1279,10 +1299,9 @@ if (]]..nxt..[[ > 0) {
         if async then
             LINE(me, [[
 #ifdef ceu_out_pending
-    if (ceu_out_pending()) {
-#else
-    {
+    if (ceu_out_pending())
 #endif
+    {
 ]]..no..[[:
         _STK->trl->evt = CEU_IN__ASYNC;
         _STK->trl->lbl = ]]..me.lbl_asy.id..[[;
@@ -1297,6 +1316,13 @@ if (]]..nxt..[[ > 0) {
         LINE(me, [[
 }
 ]])
+
+        if me.iter_tp == 'org' then
+            LINE(me, [[
+ceu_pool_iterator_leave(&]]..V(me.var_nxt)..[[);
+]])
+        end
+
         if me.has_break and ( not (AST.iter(AST.pred_async)()
                                 or AST.iter'Dcl_fun'()) )
         then

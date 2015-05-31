@@ -13,6 +13,7 @@ PROPS = {
     has_orgs_watching = false,
     has_adts_watching = {},
     has_enums   = false,
+    has_pool_iterator = false,
 
     has_orgs_news        = false,
     has_orgs_news_pool   = false,
@@ -205,6 +206,12 @@ F = {
         PROPS.has_clear = true
     end,
 
+    Loop = function (me)
+        if me.iter_tp == 'org' then
+            PROPS.has_pool_iterator = true
+        end
+    end,
+
     Loop_pre = function (me)
         me.brks = {}
     end,
@@ -290,15 +297,6 @@ F = {
         PROPS.has_pses = true
     end,
 
-    _loop1 = function (me)
-        for loop in AST.iter'Loop' do
-            if loop.isEvery then
-                ASR(me.isEvery, me,
-                    '`every´ cannot contain `await´')
-            end
-        end
-    end,
-
     Nothing = function (me)
         -- detects if "watching" an org/adt
         local watch = me.__env_watching
@@ -307,6 +305,19 @@ F = {
                 PROPS.has_orgs_watching = true
             else
                 PROPS.has_adts_watching[watch] = true
+            end
+        end
+    end,
+
+    _loop1 = function (me)
+        for loop in AST.iter'Loop' do
+            if loop.isEvery then
+                ASR(me.isEvery, me,
+                    '`every´ cannot contain `await´')
+            elseif loop.iter_tp == 'org' then
+-- TODO
+                ASR(me[1].tag=='Ext' and me[1][1]=='_ok_killed', me,
+                    'pool iterator cannot contain `await´')
             end
         end
     end,

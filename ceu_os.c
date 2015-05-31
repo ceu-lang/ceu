@@ -329,6 +329,34 @@ int ceu_sys_clear (tceu_go* _ceu_go, tceu_nlbl cnt,
 
 /**********************************************************************/
 
+#ifdef CEU_ORGS_POOL_ITERATOR
+static tceu_pool_iterator* CEU_POOL_ITERATORS;
+
+void ceu_pool_iterator_enter (tceu_pool_iterator* me) {
+    if (me != CEU_POOL_ITERATORS) {
+        me->prv = CEU_POOL_ITERATORS;
+        CEU_POOL_ITERATORS = me;
+    }
+}
+
+void ceu_pool_iterator_leave (tceu_pool_iterator* me) {
+    CEU_POOL_ITERATORS = me->prv;
+}
+
+void ceu_pool_iterator_kill (tceu_org* org) {
+    tceu_pool_iterator* it = CEU_POOL_ITERATORS;
+    while (it != NULL) {
+        if (it->org == org) {
+            it->org = (it->org->nxt->n == 0) ? NULL : it->org->nxt;
+                /* change next iteration to point to org in sequence */
+        }
+        it = it->prv;
+    }
+}
+#endif
+
+/**********************************************************************/
+
 #ifdef CEU_WCLOCKS
 
 /* TODO: wclk_min_cmp to be global among all apps */
@@ -468,6 +496,11 @@ void ceu_sys_go (tceu_app* app, int evt, tceu_evtp evtp)
 {
     tceu_go go;
 
+#ifdef CEU_ORGS_POOL_ITERATOR
+    CEU_POOL_ITERATORS = NULL;
+        /* clean/restart stacked pools every reaction */
+#endif
+
     switch (evt) {
 #ifdef CEU_ASYNCS
         case CEU_IN__ASYNC:
@@ -564,6 +597,11 @@ printf("\tntrls=%d\n", CEU_NTRAILS);
                      * bounded CLEAR on the given ORG */
                     if (to_kill_free && STK->stop==(void*)old) {
                         stack_pop(&go);
+#ifdef CEU_ORGS_POOL_ITERATOR
+                        ceu_pool_iterator_kill(old);
+#endif
+                            /* remove myself from all "nxt" iterations from all
+                             * pools (point to the one in sequence) */
                         ceu_sys_org_kill(app, &go, old);
 #ifdef CEU_ORGS_NEWS
                         ceu_sys_org_free(old);
