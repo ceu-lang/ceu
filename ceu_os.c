@@ -122,11 +122,7 @@ void ceu_stack_dump (tceu_go* go) {
 
 /* TODO: move from 1=>0 (change also in code.lua) */
 #ifdef CEU_ORGS
-#if 1
-void ceu_stack_clear_org (tceu_org* main, tceu_go* go, tceu_org* org, int lim) {
-#else
 void ceu_stack_clear_org (tceu_go* go, tceu_org* org, int lim) {
-#endif
     int i;
     for (i=0; i<lim; i+=stack_sz((go),i)) {
         tceu_stk* stk = stack_get((go),i);
@@ -136,16 +132,11 @@ void ceu_stack_clear_org (tceu_go* go, tceu_org* org, int lim) {
                 stk->evt = CEU_IN__NONE;
             } else {
                 /* jump to next organism */
-#if 1
-                stk->org = main;
-                stk->trl = &main->trls[0];
-#else
                 stk->org = org->nxt;
                 stk->trl = &((tceu_org*)org->nxt)->trls [
                             (org->n == 0) ?
                             ((tceu_org_lnk*)org)->lnk : 0
                           ];
-#endif
             }
         }
     }
@@ -193,6 +184,10 @@ int ceu_sys_org_spawn (tceu_go* _ceu_go, tceu_nlbl lbl_cnt, tceu_org* neworg, tc
 
 #endif
 
+#ifdef CEU_ORGS_WATCHING
+static u32 CEU_ORGS_ID = 0;;
+#endif
+
 void ceu_sys_org (tceu_org* org, int n, int lbl, int seqno,
 #ifdef CEU_ORGS_NEWS
                   int isDyn,
@@ -210,6 +205,8 @@ void ceu_sys_org (tceu_org* org, int n, int lbl, int seqno,
 #endif
 #ifdef CEU_ORGS_WATCHING
     org->ret = 0;
+    org->id  = CEU_ORGS_ID++;
+    ceu_out_assert(CEU_ORGS_ID > 0, "orgs overflow");
 #endif
 #ifdef CEU_ORGS_NEWS
     org->isDyn = isDyn;
@@ -256,7 +253,7 @@ void ceu_sys_org_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_org* org)
                  stk.trl  = &_ceu_app->data->trls[0];
                  stk.stop = NULL;
                  stk.evt_sz = sizeof(tceu_org_kill);
-        tceu_org_kill ps = { org, org->ret };
+        tceu_org_kill ps = { org->id, org->ret };
         stack_push(_ceu_go, &stk, &ps);
             /* param "org" is pointer to what to kill */
     }
@@ -501,6 +498,7 @@ void ceu_sys_go (tceu_app* app, int evt, tceu_evtp evtp)
     CEU_POOL_ITERATORS = NULL;
         /* clean/restart stacked pools every reaction */
 #endif
+
 
     switch (evt) {
 #ifdef CEU_ASYNCS

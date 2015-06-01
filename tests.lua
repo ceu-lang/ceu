@@ -2011,6 +2011,7 @@ escape ret;
 ---------------
 
 --]===]
+
 --do return end
 
 ----------------------------------------------------------------------------
@@ -46684,6 +46685,142 @@ escape 10;
     _ana = { acc=true },
     wrn = true,
     run = { ['~>100s']=10 },
+}
+
+-- creates a loop when reusing address of organisms being killed
+Test { [[
+data Command with
+    tag NOTHING;
+or
+    tag AWAIT with
+        var int ms;
+    end
+or
+    tag SEQUENCE with
+        var Command* one;
+        var Command* two;
+    end
+or
+    tag REPEAT with
+        var int      times;
+        var Command* command;
+    end
+end
+
+pool Command[] cmds;
+
+cmds = new Command.REPEAT(2,
+            Command.SEQUENCE(
+                Command.AWAIT(100),
+                Command.SEQUENCE(
+                    Command.AWAIT(100),
+                    Command.AWAIT(500))));
+
+var int ret = 0;
+
+loop/rec cmd in cmds do
+    watching cmd do
+        if cmd:NOTHING then
+            nothing;
+
+        else/if cmd:AWAIT then
+            await (cmd:AWAIT.ms) ms;
+            ret = ret + 1;
+
+        else/if cmd:SEQUENCE then
+            ret = ret + 2;
+            recurse cmd:SEQUENCE.one;
+            recurse cmd:SEQUENCE.two;
+
+        else/if cmd:REPEAT then
+            loop i in cmd:REPEAT.times do
+                ret = ret + 3;
+                recurse cmd:REPEAT.command;
+            end
+
+        else
+            _ceu_out_assert(0, "not implemented");
+        end
+    end
+end
+
+escape ret;
+]],
+    wrn = true,
+    _ana = {acc=true},
+    run = { ['~>100s']=20 },
+}
+
+Test { [[
+native @nohold _free();
+var void&? ptr;
+finalize
+    ptr = _malloc(10000);
+with
+    _free(&ptr);
+end
+
+data Command with
+    tag NOTHING;
+or
+    tag AWAIT with
+        var int ms;
+    end
+or
+    tag SEQUENCE with
+        var Command* one;
+        var Command* two;
+    end
+or
+    tag REPEAT with
+        var int      times;
+        var Command* command;
+    end
+end
+
+// TODO: aceitar estatico
+pool Command[] cmds;
+
+cmds = new Command.REPEAT(2,
+            Command.SEQUENCE(
+                Command.AWAIT(100),
+                Command.SEQUENCE(
+                    Command.AWAIT(300),
+                    Command.AWAIT(500))));
+
+var int ret = 0;
+
+loop/rec cmd in cmds do
+    watching cmd do
+        if cmd:NOTHING then
+            nothing;
+
+        else/if cmd:AWAIT then
+            await (cmd:AWAIT.ms) ms;
+            ret = ret + 1;
+
+        else/if cmd:SEQUENCE then
+            ret = ret + 2;
+            recurse cmd:SEQUENCE.one;
+            recurse cmd:SEQUENCE.two;
+
+        else/if cmd:REPEAT then
+            loop i in cmd:REPEAT.times do
+                ret = ret + 3;
+                recurse cmd:REPEAT.command;
+            end
+
+        else
+            _ceu_out_assert(0, "not implemented");
+        end
+    end
+end
+
+escape ret;
+]],
+    wrn = true,
+    _ana = {acc=true},
+    run = { ['~>100s']=20 },
 }
 
 --[=[

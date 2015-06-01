@@ -344,18 +344,10 @@ if (_STK->evt==CEU_IN__STK && _STK->org==_STK_ORG
     && _STK->stop==&_STK_ORG->trls[_STK_ORG->n]
     ) {
     _STK->evt = CEU_IN__NONE;
-#if 1
-    ceu_stack_clear_org(_ceu_app->data, _ceu_go, _STK_ORG, stack_curi(_ceu_go));
-#else
     ceu_stack_clear_org(_ceu_go, _STK_ORG, stack_curi(_ceu_go));
-#endif
         /* remove all but me (HACK_9) */
 } else {
-#if 1
-    ceu_stack_clear_org(_ceu_app->data, _ceu_go, _STK_ORG, stack_nxti(_ceu_go));
-#else
     ceu_stack_clear_org(_ceu_go, _STK_ORG, stack_nxti(_ceu_go));
-#endif
         /* remove all */
 }
 #endif
