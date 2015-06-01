@@ -499,9 +499,6 @@ typedef struct tceu_go {
     byte stk[CEU_STACK_MAX];
     tceu_nstk stk_nxti;
     tceu_nstk stk_curi;
-#ifdef CEU_ORGS_NEWS
-    tceu_org* lst_free;  /* "to free" list (only on reaction end) */
-#endif
 } tceu_go;
 
 #define stack_init(go)    (go)->stk_curi = (go)->stk_nxti = 0

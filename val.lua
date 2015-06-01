@@ -28,6 +28,8 @@ function V (me)
 
     return string.gsub(ret, '^%(%&%(%*(.-)%)%)$', '(%1)')
             -- (&(*(...))) => (((...)))
+
+    --return string.gsub(ret, '([^&])%&([(]?)%*', '%1%2')
 end
 
 function CUR (me, id)
@@ -152,8 +154,8 @@ F =
                         if to.byRef or (not me.tp.ref) then
                             me.val = '('..op..'('..me.val..'.SOME.v))'
                         else
-                            me.val =
-                                '('..op..'(CEU_'..ID..'_SOME_assert(&'..me.val..',__FILE__,__LINE__)->SOME.v))'
+                            me.val = '('..op..'(CEU_'..ID..'_SOME_assert(&'
+                                        ..me.val..',__FILE__,__LINE__)->SOME.v))'
                         end
                     end
 
@@ -176,7 +178,8 @@ F =
                 -- NONE
                 else
                     -- ... xxx.me ...
-                    me.val = '('..op..'(CEU_'..ID..'_SOME_assert(&'..me.val..',__FILE__,__LINE__)->SOME.v))'
+                    me.val = '('..op..'(CEU_'..ID..'_SOME_assert(&'
+                                ..me.val..',__FILE__,__LINE__)->SOME.v))'
                 end
             end
         elseif var.pre == 'pool' then
@@ -219,9 +222,6 @@ F =
     Field = function (me)
         local gen = '((tceu_org*)'..me.org.val..')'
         if me.org.cls and me.org.cls.is_ifc then
-            if me.var.tp.opt then
-                error 'not implemented'
-            end
             if me.var.pre == 'var'
             or me.var.pre == 'pool' then
                 if me.var.tp.arr or me.var.pre=='pool' then
@@ -233,13 +233,13 @@ F =
 ))]]
                 else
                     me.val = [[(*(
-(]]..TP.toc(me.var.tp)..[[*) (
+(]]..TP.toc(me.var.tp.opt or me.var.tp)..[[*) (
     ((byte*)]]..me.org.val..[[) + _CEU_APP.ifcs_flds[]]..gen..[[->cls][
         ]]..ENV.ifcs.flds[me.var.ifc_id]..[[
     ]
         )
 ))]]
-                    if me.var.tp.ref and (not ENV.clss[me.var.tp.id]) then
+                    if me.var.tp.ref and (not ENV.clss[me.var.tp.id]) and (not me.var.tp.opt) then
                         me.val = '(*'..me.val..')'
                     end
                 end
@@ -259,12 +259,16 @@ F =
             else
                 error 'not implemented'
             end
+
+            if me.var.tp.opt then
+                F.__var(me)
+            end
         else
             if me.c then
                 me.val = me.c.id_
             else
                 assert(me.var, 'bug found')
-                me.val = me.org.val..'->'..me.var.id_
+                me.val = '('..me.org.val..'->'..me.var.id_..')'
                 F.__var(me)
             end
         end

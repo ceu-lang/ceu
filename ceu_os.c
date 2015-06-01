@@ -120,6 +120,7 @@ void ceu_stack_dump (tceu_go* go) {
 }
 #endif
 
+/* TODO: move from 1=>0 (change also in code.lua) */
 #ifdef CEU_ORGS
 #if 1
 void ceu_stack_clear_org (tceu_org* main, tceu_go* go, tceu_org* org, int lim) {
@@ -541,10 +542,6 @@ void ceu_sys_go (tceu_app* app, int evt, tceu_evtp evtp)
                  stk.evt_sz = sizeof(evtp);
         stack_push(&go, &stk, &evtp);
     }
-
-#ifdef CEU_ORGS_NEWS
-    go.lst_free = NULL;
-#endif
 
     app->seqno++;
 

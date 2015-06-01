@@ -36,7 +36,7 @@ end
 
 function AST.copy (node, ln)
     local ret = setmetatable({}, MT)
-    ret.n = _N
+    local N = _N
     _N = _N + 1
     for k, v in pairs(node) do
         if k == '__par' then
@@ -48,6 +48,7 @@ function AST.copy (node, ln)
             ret[k] = v
         end
     end
+    ret.n = N
     return ret
 end
 

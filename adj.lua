@@ -1704,9 +1704,13 @@ H = {
                             local dcls2 = AST.asr(ifc.blk_ifc[1][1],'BlockI')[1]
                             for _, dcl2 in ipairs(dcls2) do
                                 assert(dcl2.tag ~= 'Dcl_imp')   -- impossible because I'm going in order
-                                local new = AST.copy(dcl2)
-                                dcls1[#dcls1+1] = new -- fields from interface should go to the end
-                                new.isImp = true      -- to avoid redeclaration warnings indeed
+                                if dcl2.tag == 'Dcl_adt' then
+                                    -- skip ADT implicit declarations to avoid duplication
+                                else
+                                    local new = AST.copy(dcl2)
+                                    dcls1[#dcls1+1] = new -- fields from interface should go to the end
+                                    new.isImp = true      -- to avoid redeclaration warnings indeed
+                                end
                             end
                         end
                         table.remove(dcls1, i) -- remove _Dcl_imp
