@@ -606,7 +606,7 @@ F = {
     end,
 
     Dcl_var = function (me)
-        local pre, tp, id, constr = unpack(me)
+        local pre, tp, id, constr, isTmp = unpack(me)
         if id == '_' then
             id = id..me.n   -- avoids clash with other '_'
         end
@@ -617,6 +617,10 @@ F = {
         if constr then
             ASR(me.var.cls, me, 'invalid type')
             constr.blk = me.var.blk
+        end
+
+        if isTmp then
+            me.var.isTmp = true
         end
 
         if me.var.cls and me.var.tp.arr then

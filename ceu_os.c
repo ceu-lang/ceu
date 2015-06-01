@@ -193,6 +193,10 @@ int ceu_sys_org_spawn (tceu_go* _ceu_go, tceu_nlbl lbl_cnt, tceu_org* neworg, tc
 
 #endif
 
+#ifdef CEU_ORGS_WATCHING
+static u32 CEU_ORGS_ID = 0;;
+#endif
+
 void ceu_sys_org (tceu_org* org, int n, int lbl, int seqno,
 #ifdef CEU_ORGS_NEWS
                   int isDyn,
@@ -210,6 +214,8 @@ void ceu_sys_org (tceu_org* org, int n, int lbl, int seqno,
 #endif
 #ifdef CEU_ORGS_WATCHING
     org->ret = 0;
+    org->id  = CEU_ORGS_ID++;
+    ceu_out_assert(CEU_ORGS_ID > 0, "orgs overflow");
 #endif
 #ifdef CEU_ORGS_NEWS
     org->isDyn = isDyn;
@@ -256,7 +262,7 @@ void ceu_sys_org_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_org* org)
                  stk.trl  = &_ceu_app->data->trls[0];
                  stk.stop = NULL;
                  stk.evt_sz = sizeof(tceu_org_kill);
-        tceu_org_kill ps = { org, org->ret };
+        tceu_org_kill ps = { org->id, org->ret };
         stack_push(_ceu_go, &stk, &ps);
             /* param "org" is pointer to what to kill */
     }
@@ -501,6 +507,7 @@ void ceu_sys_go (tceu_app* app, int evt, tceu_evtp evtp)
     CEU_POOL_ITERATORS = NULL;
         /* clean/restart stacked pools every reaction */
 #endif
+
 
     switch (evt) {
 #ifdef CEU_ASYNCS

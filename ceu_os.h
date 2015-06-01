@@ -468,6 +468,14 @@ typedef struct tceu_org
 
 #ifdef CEU_ORGS_WATCHING
     int ret;
+    u32 id;
+        /* TODO: couldn't find a way to use the address as an identifier
+         * when killing an organism. The "free" happens before the "kill"
+         * completes and the address can be reused in the meantime.
+         * It could happen that an await on a newly created organism awakes
+         * from the previous "kill".
+         * Couldn't reproduce on "tests.lua", but "turtle.ceu" does.
+         */
 #endif
 
 #endif  /* CEU_ORGS */
@@ -476,10 +484,12 @@ typedef struct tceu_org
 
 } tceu_org;
 
+#ifdef CEU_ORGS_WATCHING
 typedef struct {
-    tceu_org* org;
-    int       ret;
+    u32 org;
+    int ret;
 } tceu_org_kill;
+#endif
 
 #ifdef CEU_ORGS_POOL_ITERATOR
 typedef struct tceu_pool_iterator {
