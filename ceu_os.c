@@ -306,6 +306,7 @@ int ceu_sys_clear (tceu_go* _ceu_go, tceu_nlbl cnt,
         /* need this extra level in the case we are in an internal event and
          * the emit sets the current level to NONE when aborted */
         tceu_stk stk        = *_STK;
+_STK->trl++;
                  stk.evt    = CEU_IN__STK;
                  stk.evt_sz = 0;
         stack_push(_ceu_go, &stk, NULL);
@@ -680,8 +681,12 @@ if (STK->trl->evt==CEU_IN__ORG) {
             &&   (
                    (STK->trl->evt==CEU_IN__STK && STK->trl->stk==stack_curi(&go))
                         /* stacked and in this level */
-               ||  (STK->trl->evt==STK->evt && (STK->trl->evt==CEU_IN__CLEAR ||
-                                              STK->trl->seqno!=app->seqno))
+               ||  ( (STK->trl->evt==STK->evt)
+#if 1
+                     && (STK->trl->evt==CEU_IN__CLEAR || STK->evt<CEU_IN_lower
+                        || STK->trl->seqno!=app->seqno)
+#endif
+                   )
                         /* same event and (clear||starting before) */
                  )
             ) {
@@ -692,8 +697,10 @@ if (STK->trl->evt==CEU_IN__ORG) {
 #if defined(CEU_OS_KERNEL) && defined(__AVR)
                 CEU_APP_ADDR = app->addr;
 #endif
+
                 /*** CODE ***/
                 _ret = app->code(app, &go);
+
 #if defined(CEU_OS_KERNEL) && defined(__AVR)
                 CEU_APP_ADDR = 0;
 #endif

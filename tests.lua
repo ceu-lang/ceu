@@ -6183,6 +6183,28 @@ escape a;
 }
 
 Test { [[
+input void OS_START;
+event void c,d;
+par do
+    await OS_START;
+    emit c;
+    escape 10;       // 35
+with
+    loop do
+        await c;
+        emit d;
+    end
+end
+]],
+    _ana = {
+        acc = true,
+        unreachs = 1,
+        abrt = 1,
+    },
+    run = 10,
+}
+
+Test { [[
 native do
     ##include <assert.h>
 end
@@ -6233,7 +6255,7 @@ with
 end
 ]],
     _ana = {
-        acc = 29,         -- TODO: not checked
+        acc = true,
         unreachs = 1,
         abrt = 1,
     },
@@ -6330,6 +6352,28 @@ escape ret;
     run = { ['~>A']=2 },
 }
 
+-- the second E cannot awake
+Test { [[
+input void E;
+event void e;
+var int ret = 1;
+par do
+    await E;
+    emit e;
+    ret = ret * 2;
+    escape ret;
+with
+    await e;
+    ret = ret + 1;
+    await E;
+    ret = ret + 1;
+    escape 10;
+end
+]],
+    _ana = { acc=true },
+    run = { ['~>E']=4 },
+}
+
 -- TODO: STACK
 Test { [[
 event void a, b;
@@ -6353,7 +6397,7 @@ end
 escape ret;
 ]],
     _ana = { acc=1 },
-    run = 1,
+    run = 2,
 }
 
 -- TODO: STACK
@@ -8034,7 +8078,7 @@ escape 10;
     _ana = {
         acc = 1,
     },
-    run = 0,
+    run = 10,
 }
 
 Test { [[
@@ -8359,7 +8403,7 @@ event int a;
 var int ret=9;
 par/or do
     var int aa = await a;
-    ret = aa + 1;
+    ret = aa + 2;
 with
     par/or do
         emit a => 2;
@@ -8375,7 +8419,7 @@ escape ret;
         acc = 1,
     },
     --run = 3,
-    run = 9,
+    run = 4,
 }
 
 Test { [[
@@ -11782,7 +11826,7 @@ end;
 
 Test { [[
 event int a;
-var int aa;
+var int aa=10;
 par/or do
     await a;
 with
@@ -11797,7 +11841,7 @@ escape aa;
         acc = 1,
         --trig_wo = 1,
     },
-    run = 1,
+    run = 10,
 }
 Test { [[
 event int a;
@@ -12216,6 +12260,7 @@ var int aa=0, bb=0, cc=0;
 par/or do
     par/or do
         await a;
+        aa=10;
     with
         await b;
     with
@@ -14220,7 +14265,7 @@ with
 end;
 escape aa;
 ]],
-    run = { ['1~>A;1~>A']=3 }
+    run = { ['1~>A;1~>A']=4 }
 }
 
 Test { [[
@@ -15143,8 +15188,8 @@ with
 end;
 escape aa;
 ]],
-    --run = 7,
-    run = 2,
+    run = 7,
+    --run = 2,
 }
 
 Test { [[
@@ -15707,8 +15752,8 @@ with
     end
 end
 ]],
-    --run = 2,
-    run = 1,
+    run = 2,
+    --run = 1,
 }
 Test { [[
 input void OS_START;
@@ -15726,8 +15771,8 @@ with
     end
 end
 ]],
-    --run = 2,
-    run = 1,
+    run = 2,
+    --run = 1,
     safety = 2,
     _ana = {
         acc = 1,
@@ -15849,7 +15894,7 @@ escape x;
         acc = 1,
         unreachs = 2,
     },
-    run = 1,
+    run = 2,
 }
 
 Test { [[
@@ -15919,8 +15964,8 @@ escape ret;
         --trig_wo = 2,
         unreachs = 1,
     },
-    --run = 10,
-    run = 1,
+    run = 10,
+    --run = 1,
 }
 
 Test { [[
@@ -16037,8 +16082,8 @@ end;
         --trig_wo = 2,
         unreachs = 2,
     },
-    --run = { ['1~>F']=7 },
-    run = { ['1~>F']=5 },
+    run = { ['1~>F']=7 },
+    --run = { ['1~>F']=5 },
 }
 
     -- SCOPE / BLOCK
@@ -27381,8 +27426,8 @@ emit t.a;
 emit t.a;
 escape _V;
 ]],
-    --run = 4,
-    run = 1,
+    run = 4,
+    --run = 1,
 }
 
 Test { [[
@@ -32773,6 +32818,7 @@ escape 1;
     --fin = 'line 15 : attribution to pointer with greater scope',
     --fin = 'line 15 : attribution requires `finalize´',
 }
+-- TODO: STACK
 Test { [[
 native do
     int V = 0;
@@ -32798,8 +32844,8 @@ emit t.a;
 escape _V;
 ]],
     _ana = { acc=1 },
-    --run = 14,
-    run = 40,
+    run = 14,
+    --run = 40,
 }
 
 Test { [[
@@ -35420,6 +35466,7 @@ escape ret;
     run = 1,
 }
 
+-- TODO: STACK
 Test { [[
 input void A,F;
 
@@ -35458,10 +35505,51 @@ do
 end
 escape ret;
 ]],
-    run = 13,
+    run = 7,
     --run = 10,
 }
+Test { [[
+input void A,F;
 
+interface I with
+    var int v;
+    event void inc;
+end
+
+class T with
+    interface I;
+do
+    await inc;
+    this.v = v + 1;
+    await FOREVER;
+end
+
+pool T[] ts;
+var int ret = 1;
+do
+    spawn T in ts with
+        this.v = 1;
+    end;
+    spawn T in ts with
+        this.v = 2;
+    end;
+    spawn T in ts with
+        this.v = 3;
+    end;
+
+    loop i in ts do
+        ret = ret + i:v;
+        watching *i do
+            emit i:inc;
+            ret = ret + i:v;
+        end
+    end
+end
+escape ret;
+]],
+    --run = 7,
+    run = 16,
+}
 Test { [[
 input void A,F;
 
@@ -35505,7 +35593,7 @@ do
 end
 escape ret;
 ]],
-    run = { ['~>3s;~>F'] = 13 },
+    run = { ['~>3s;~>F'] = 16 },
 }
 
 Test { [[
@@ -41192,8 +41280,6 @@ escape 1;
 
 -- ASYNCS // THREADS
 
-if not VALGRIND then
-
 Test { [[
 var int  a=10, b=5;
 var int& p = b;
@@ -41378,9 +41464,6 @@ escape ret;
         usleep = true,
         run = 1,
     }
-    if VALGRIND then
-        break   -- run only once with valgrind
-    end
 end
 
 for i=1, 50 do
@@ -41407,9 +41490,6 @@ escape ret;
         run = 1,
         _ana = { acc=1 },
     }
-    if VALGRIND then
-        break   -- run only once with valgrind
-    end
 end
 
 Test { [[
@@ -42204,7 +42284,6 @@ escape v;
     props = 'line 3 : not permitted inside `thread´',
 }
 
-end -- VALGRIND
 -- END: THREADS / EMITS
 
 -- REFS / &

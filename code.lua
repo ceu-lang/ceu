@@ -1500,6 +1500,15 @@ case ]]..me.lbl_cnt.id..[[:;
 
         -- [ ... | me=stk | ... | oth=stk ]
         LINE(me, [[
+{
+    tceu_stk stk        = *_STK;
+_STK->trl++;
+    /* create this level to allow incrementing the previous trail traversal */
+             stk.evt    = CEU_IN__STK;
+             stk.evt_sz = 0;
+    stack_push(_ceu_go, &stk, NULL);
+}
+
 /* save the continuation to run after the emit */
 _STK->trl->evt = CEU_IN__STK;
 _STK->trl->lbl = ]]..me.lbl_cnt.id..[[;

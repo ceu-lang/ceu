@@ -227,6 +227,11 @@ end
             return  -- T.run==true, do not run
         end
 
+        -- skip "threads" tests with VALGRIND on
+        if PROPS.has_threads and VALGRIND then
+            return
+        end
+
         if T.asr then
             local exe = os.execute(EXE)
             assert(exe ~= 256)  -- 256 = OK
@@ -328,14 +333,15 @@ sys	1m42.707s
 -- no TM
 
 STATS = {
-    count   = 2379,
+    count   = 2382,
     mem     = 0,
-    trails  = 5254,
-    bytes   = 29191802,
+    trails  = 5266,
+    bytes   = 29414158,
 }
 
 
-real	12m42.827s
-user	12m29.259s
-sys	2m2.267s
+real	12m52.986s
+user	12m9.507s
+sys	2m2.890s
+
 ]]

@@ -1489,12 +1489,13 @@ me.blk_body = me.blk_body or blk_body
         --  end
         --
         -- To remove, we need to "finalize" the "emit" removing itself from the
-        -- stak:
+        -- stack:
 
         --  emit x;
         --      ... becomes ...
         --  do
-        --      var int fin = stack_nxti(); /* TODO: search for tceu_nstk */
+        --      var int fin = stack_nxti() + sizeof(tceu_stk);
+        --                      /* TODO: two levels up */
         --      finalize with
         --          if (fin != CEU_STACK_MAX) then
         --              stack_get(fin)->evt = IN_NONE;
@@ -1523,7 +1524,9 @@ me.blk_body = me.blk_body or blk_body
                     node('_Set', me.ln,
                         node('Var', me.ln, '_emit_fin_'..me.n),
                         '=', 'exp',
-                        node('RawExp', me.ln, 'stack_nxti(_ceu_go)', true)),
+                        node('RawExp', me.ln,
+                            '(stack_nxti(_ceu_go)+sizeof(tceu_stk))',
+                            true)),
                     node('Finalize', me.ln,
                         false,
                         node('Finally', me.ln,
