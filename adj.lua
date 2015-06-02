@@ -415,6 +415,7 @@ me.blk_body = me.blk_body or blk_body
         --          <body>
         --              recurse <exp>;
         --      end
+        --      escape 0;
         --  end
         --  pool Loop[] loops;
         --  ret = do Loop with
@@ -459,15 +460,21 @@ me.blk_body = me.blk_body or blk_body
                                                         node('This', me.ln, true),
                                                         '_parent_'..me.n),
                                                     node('NULL', me.ln)),
-                                                node('Await', me.ln,
-                                                    node('Op1_*', me.ln, '*',
-                                                        node('Var', me.ln, '_parent_'..me.n)),
-                                                    false,
-                                                    false),
-                                                node('AwaitN', me.ln)))),
+                                                node('Block', me.ln,
+                                                    node('Stmts', me.ln,
+                                                        node('Await', me.ln,
+                                                            node('Op1_*', me.ln, '*',
+                                                                node('Var', me.ln, '_parent_'..me.n)),
+                                                            false,
+                                                            false))),
+                                                node('Block', me.ln,
+                                                    node('Stmts', me.ln,
+                                                    node('AwaitN', me.ln)))))),
                                     node('Block', me.ln,
                                         node('Stmts', me.ln,
-                                            body))))))
+                                            body))),
+                                node('_Escape', me.ln,
+                                    node('NUMBER', me.ln, '0')))))
         cls.out = AST.par(me, 'Block')
         cls.N   = me.n     -- save my "n" for further uses
 --[[

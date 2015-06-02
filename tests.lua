@@ -2038,56 +2038,11 @@ escape 1;
     run = { ['~>5s']=4 },
 }
 
---]===]
-Test { [[
-data List with
-    tag NIL;
-or
-    tag HOLD;
-or
-    tag CONS with
-        var int   head;
-        var List* tail;
-    end
-end
-
-pool List[] ls;
-ls = new List.CONS(1,
-            List.CONS(2,
-                List.HOLD()));
-
-var int ret = 0;
-
-native @pure _printf();
-
-loop/rec l in ls do
-    ret = ret + 1;
-    watching l do
-        if l:HOLD then
-            finalize with
-                ret = ret + 1;
-            end
-            await FOREVER;
-        else
-            par/or do
-                recurse l:CONS.tail;
-            with
-                await 1s;
-            end
-        end
-    end
-end
-
-escape ret;
-]],
-    wrn = 'line 23 : unbounded recursive spawn',
-    run = { ['~>5s']=4 },
-}
-
-do return end
+--do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
+--]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -45236,6 +45191,7 @@ escape ((*i).t).x;
 }
 
 -- ADTS / RECURSE
+
 -- crashes with org->ret
 Test { [[
 class T with
@@ -45833,6 +45789,7 @@ end
 
 escape 1;
 ]],
+    _ana = {acc=true},
     wrn = 'line 17 : unbounded recursive spawn',
     run = 1,
 }
@@ -45875,6 +45832,7 @@ end
 
 escape 1;
 ]],
+    _ana = {acc=true},
     wrn = 'line 17 : unbounded recursive spawn',
     run = 1,
 }
@@ -46974,6 +46932,51 @@ escape ret;
     wrn = true,
     _ana = {acc=true},
     run = { ['~>100s']=20 },
+}
+
+Test { [[
+data List with
+    tag NIL;
+or
+    tag HOLD;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[] ls;
+ls = new List.CONS(1,
+            List.CONS(2,
+                List.HOLD()));
+
+var int ret = 0;
+
+native @pure _printf();
+
+loop/rec l in ls do
+    ret = ret + 1;
+    watching l do
+        if l:HOLD then
+            finalize with
+                ret = ret + 1;
+            end
+            await FOREVER;
+        else
+            par/or do
+                recurse l:CONS.tail;
+            with
+                await 1s;
+            end
+        end
+    end
+end
+
+escape ret;
+]],
+    wrn = 'line 23 : unbounded recursive spawn',
+    run = { ['~>5s']=4 },
 }
 
 --[=[
