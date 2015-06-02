@@ -307,46 +307,25 @@ F = {
         -- TODO: NONE=0
         -- TODO: if PROPS.* then ... end
 
-        local evt = {id='_STK', pre='input'}
-        ENV.exts[#ENV.exts+1] = evt
-        ENV.exts[evt.id] = evt
+        local t = {
+        -- runtime
+            { '_STK',       nil,        nil },
+            { '_ORG',       nil,        nil },
+            { '_ORG_PSED',  nil,        nil },
+            { '_CLEAR',     nil,        nil },
+            { '_ok_killed', 'void',     1 },
+        -- input / runtime
+            { '_INIT',      nil,        nil },      -- _INIT = HIGHER EXTERNAL
+            { '_ASYNC',     nil,        nil },
+            { '_THREAD',    nil,        nil },
+            { '_WCLOCK',    's32',      0 },
+        }
 
-        -- TODO: shared with _INIT?
-        local evt = {id='_ORG', pre='input'}
-        ENV.exts[#ENV.exts+1] = evt
-        ENV.exts[evt.id] = evt
+        if OPTS.timemachine then
+            t[#t+1] = { '_WCLOCK_', 's32', 0 }
+        end
 
-        local evt = {id='_ORG_PSED', pre='input'}
-        ENV.exts[#ENV.exts+1] = evt
-        ENV.exts[evt.id] = evt
-
-        local evt = {id='_INIT', pre='input'}
-        ENV.exts[#ENV.exts+1] = evt
-        ENV.exts[evt.id] = evt
-
-        local evt = {id='_CLEAR', pre='input'}
-        ENV.exts[#ENV.exts+1] = evt
-        ENV.exts[evt.id] = evt
-
-        local evt = {id='_ASYNC', pre='input'}
-        ENV.exts[#ENV.exts+1] = evt
-        ENV.exts[evt.id] = evt
-
-        local evt = {id='_THREAD', pre='input'}
-        ENV.exts[#ENV.exts+1] = evt
-        ENV.exts[evt.id] = evt
-
-        -- EVENTS USED DIRECTLY BY THE USER
-        -- need to reserve these events so that they always have the same code
-        -- common by all apps
-
-        local t = {}
-        t[#t+1] = { '_WCLOCK', 's32', 0 }
-
-        -- INTERNAL EVENT _ok_killed
-        -- TODO: mixing ints/exts?
-        t[#t+1] = { '_ok_killed', '_tceu_org', 1 }
-
+        -- input / user
         if OPTS.os then
             t[#t+1] = { 'OS_START',     'void', 0 }
             t[#t+1] = { 'OS_STOP',      'void', 0 }
@@ -354,23 +333,21 @@ F = {
             t[#t+1] = { 'OS_INTERRUPT', 'int',  0 }
         end
 
-        if OPTS.timemachine then
-            t[#t+1] = { '_WCLOCK_', 's32', 0 }
-        end
-
         for _, v in ipairs(t) do
             local id, tp, ptr = unpack(v)
-            local _tp = AST.node('Type', me.ln, tp, ptr, false, false)
+            local _tp = tp and AST.node('Type', me.ln, tp, ptr, false, false)
             local evt = {
                 ln  = me.ln,
                 id  = id,
                 pre = 'input',
-                ins = AST.node('TupleType', me.ln,
-                            AST.node('TupleTypeItem', me.ln, false, _tp, false)),
+                ins = tp and AST.node('TupleType', me.ln,
+                                AST.node('TupleTypeItem', me.ln, false, _tp, false)),
                 mod = { rec=false },
             }
-            TP.new(_tp)
-            TP.new(evt.ins)
+            if tp then
+                TP.new(_tp)
+                TP.new(evt.ins)
+            end
             ENV.exts[#ENV.exts+1] = evt
             ENV.exts[id] = evt
         end

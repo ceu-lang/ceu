@@ -309,6 +309,7 @@ do
             assert(evt.pre=='input' or evt.pre=='output')
             ASR(ins+outs < 255, me, 'too many events')
         end
+        str = str..'#define CEU_IN_higher CEU_IN__INIT\n'   -- _INIT = HIGHER EXTERNAL
         str = str..'#define CEU_IN_lower '..(256-ins)..'\n'
         --str = str..'#define CEU_IN_n  '..ins..'\n'
         str = str..'#define CEU_OUT_n '..outs..'\n'
