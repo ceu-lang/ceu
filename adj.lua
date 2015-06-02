@@ -371,7 +371,7 @@ me.blk_body = me.blk_body or blk_body
         if cls.out then
             return node('Op2_.', me.ln, '.',
                     node('This', me.ln, true),
-                    '_out_'..cls.N)
+                    '_out')
         end
     end,
 
@@ -385,7 +385,7 @@ me.blk_body = me.blk_body or blk_body
         local cls = AST.par(me, 'Dcl_cls')
         local out = cls.out
         if cls.out then
-            return node('Var', me.ln, '_out_'..cls.N)
+            return node('Var', me.ln, '_out')
         end
     end,
 
@@ -437,17 +437,17 @@ me.blk_body = me.blk_body or blk_body
                             node('Stmts', me.ln,
                                 node('Dcl_pool', me.ln, 'pool',
                                     node('Type', me.ln, 'Loop_'..me.n, 0, true, true),
-                                    '_loops_'..me.n),
+                                    '_loops'),
                                 node('Dcl_var', me.ln, 'var',
                                     node('Type', me.ln, 'Loop_'..me.n, 1, false, false),
                                         -- TODO: should be opt type
-                                    '_parent_'..me.n),
+                                    '_parent'),
                                 node('Dcl_var', me.ln, 'var',
                                     tp,
                                     to[1]),
                                 node('Dcl_var', me.ln, 'var',
                                     node('Type', me.ln, out[2], 0, false, true),
-                                    '_out_'..me.n),
+                                    '_out'),
                                 unpack(ifc))),
                         node('Block', me.ln,
                             node('Stmts', me.ln,
@@ -458,13 +458,14 @@ me.blk_body = me.blk_body or blk_body
                                                 node('Op2_!=', me.ln, '!=',
                                                     node('Op2_.', me.ln, '.',
                                                         node('This', me.ln, true),
-                                                        '_parent_'..me.n),
+                                                        '_parent'),
                                                     node('NULL', me.ln)),
                                                 node('Block', me.ln,
                                                     node('Stmts', me.ln,
                                                         node('Await', me.ln,
                                                             node('Op1_*', me.ln, '*',
-                                                                node('Var', me.ln, '_parent_'..me.n)),
+                                                                node('Var', 
+                                                            me.ln, '_parent')),
                                                             false,
                                                             false))),
                                                 node('Block', me.ln,
@@ -477,19 +478,10 @@ me.blk_body = me.blk_body or blk_body
                                     node('NUMBER', me.ln, '0')))))
         cls.out = AST.par(me, 'Block')
         cls.N   = me.n     -- save my "n" for further uses
---[[
-                                node('_Watching', me.ln,
-                                    false,
-                                    node('Op2_.', me.ln, '.',
-                                        node('This', me.ln, true),
-                                        to[1]),
-                                    false,
-                                    body))))
-]]
 
         local pool = node('Dcl_pool', me.ln, 'pool',
                         node('Type', me.ln, 'Loop_'..me.n, 0, true, false),
-                        '_pool_'..me.n)
+                        '_pool')
         local doorg = node('DoOrg', me.ln, 'Loop_'..me.n,
                         node('Dcl_constr', me.ln,
                             node('Block', me.ln,
@@ -497,13 +489,13 @@ me.blk_body = me.blk_body or blk_body
                                     node('_Set', me.ln,
                                         node('Op2_.', me.ln, '.',
                                             node('This', me.ln, true),
-                                            '_loops_'..me.n),
+                                            '_loops'),
                                         '=', 'exp',
-                                        node('Var', me.ln, '_pool_'..me.n)),
+                                        node('Var', me.ln, '_pool')),
                                     node('_Set', me.ln,
                                         node('Op2_.', me.ln, '.',
                                             node('This', me.ln, true),
-                                            '_parent_'..cls.N),
+                                            '_parent'),
                                         '=', 'exp',
                                         node('NULL', me.ln)),
                                     node('_Set', me.ln,
@@ -515,7 +507,7 @@ me.blk_body = me.blk_body or blk_body
                                     node('_Set', me.ln,
                                         node('Op2_.', me.ln, '.',
                                             node('This', me.ln, true),
-                                            '_out_'..me.n),
+                                            '_out'),
                                         '=', 'exp',
                                         node('Outer', me.ln, true))))))
         if ret then
@@ -571,7 +563,7 @@ me.blk_body = me.blk_body or blk_body
 
         local SET_AWAIT = node('Await', me.ln,
                             node('Op1_*', me.ln, '*',
-                                node('Var', me.ln, '_body_'..me.n)),
+                                node('Var', me.ln, '_body')),
                             false,
                             false)
         local SET_DEAD = node('Nothing', me.ln)
@@ -587,27 +579,27 @@ me.blk_body = me.blk_body or blk_body
 
         local dcl = node('Dcl_var', me.ln, 'var',
                         node('Type', me.ln, cls_id, 1, false, false, true),
-                        '_body_'..me.n)
+                        '_body')
         local set = node('_Set', me.ln,
-                        node('Var', me.ln, '_body_'..me.n),
+                        node('Var', me.ln, '_body'),
                         '=', 'spawn',
                         node('Spawn', me.ln, cls_id,
-                            node('Var', me.ln, '_loops_'..cls.N),
+                            node('Var', me.ln, '_loops'),
                             node('Dcl_constr', me.ln,
                                 node('Block', me.ln,
                                     node('Stmts', me.ln,
                                         node('_Set', me.ln,
                                             node('Op2_.', me.ln, '.',
                                                 node('This', me.ln, true),
-                                                '_loops_'..cls.N),
+                                                '_loops'),
                                             '=', 'exp',
                                             node('Op2_.', me.ln, '.',
                                                 node('Outer', me.ln, true),
-                                                '_loops_'..cls.N)),
+                                                '_loops')),
                                         node('_Set', me.ln,
                                             node('Op2_.', me.ln, '.',
                                                 node('This', me.ln, true),
-                                                '_parent_'..cls.N),
+                                                '_parent'),
                                             '=', 'exp',
                                             node('Op1_&', me.ln, '&',
                                                 node('Outer', me.ln, true))),
@@ -620,15 +612,15 @@ me.blk_body = me.blk_body or blk_body
                                         node('_Set', me.ln,
                                             node('Op2_.', me.ln, '.',
                                                 node('This', me.ln, true),
-                                                '_out_'..cls.N),
+                                                '_out'),
                                             '=', 'exp',
                                             node('Op2_.', me.ln, '.',
                                                 node('Outer', me.ln, true),
-                                                '_out_'..cls.N)),
+                                                '_out')),
                                         unpack(constr))))))
         local if_ = node('If', me.ln,
                         node('Op1_?', me.ln, '?',
-                            node('Var', me.ln, '_body_'..me.n)),
+                            node('Var', me.ln, '_body')),
                         --node('Nothing', me.ln),
                         node('Block', me.ln,
                             node('Stmts', me.ln,

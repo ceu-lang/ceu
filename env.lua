@@ -730,7 +730,7 @@ F = {
                 var = ENV.getvar(id, out)
                 if var then
                     local ret = AST.node('Op2_.', me.ln, '.',
-                                    AST.node('Var', me.ln, '_out_'..cls.N),
+                                    AST.node('Var', me.ln, '_out'),
                                     id)
                     ret.blk_out = out   -- HACK_7
                     return ret
