@@ -313,28 +313,28 @@ F = {
             { '_ORG',       nil,        nil },
             { '_ORG_PSED',  nil,        nil },
             { '_CLEAR',     nil,        nil },
-            { '_ok_killed', 'void',     1 },
+            { '_ok_killed', 'void',     1   },
         -- input / runtime
-            { '_INIT',      nil,        nil },      -- _INIT = HIGHER EXTERNAL
-            { '_ASYNC',     nil,        nil },
-            { '_THREAD',    nil,        nil },
-            { '_WCLOCK',    's32',      0 },
+            { '_INIT',      nil,        nil, 'seqno' },      -- _INIT = HIGHER EXTERNAL
+            { '_ASYNC',     nil,        nil, 'seqno' },
+            { '_THREAD',    nil,        nil, 'seqno' },
+            { '_WCLOCK',    's32',      0,   'seqno' },
         }
 
         if OPTS.timemachine then
-            t[#t+1] = { '_WCLOCK_', 's32', 0 }
+            t[#t+1] = { '_WCLOCK_', 's32', 0, 'seqno' }
         end
 
         -- input / user
         if OPTS.os then
-            t[#t+1] = { 'OS_START',     'void', 0 }
-            t[#t+1] = { 'OS_STOP',      'void', 0 }
-            t[#t+1] = { 'OS_DT',        'int',  0 }
-            t[#t+1] = { 'OS_INTERRUPT', 'int',  0 }
+            t[#t+1] = { 'OS_START',     'void', 0, 'seqno' }
+            t[#t+1] = { 'OS_STOP',      'void', 0, 'seqno' }
+            t[#t+1] = { 'OS_DT',        'int',  0, 'seqno' }
+            t[#t+1] = { 'OS_INTERRUPT', 'int',  0, 'seqno' }
         end
 
         for _, v in ipairs(t) do
-            local id, tp, ptr = unpack(v)
+            local id, tp, ptr, seqno = unpack(v)
             local _tp = tp and AST.node('Type', me.ln, tp, ptr, false, false)
             local evt = {
                 ln  = me.ln,
@@ -343,6 +343,7 @@ F = {
                 ins = tp and AST.node('TupleType', me.ln,
                                 AST.node('TupleTypeItem', me.ln, false, _tp, false)),
                 mod = { rec=false },
+                seqno = seqno,
             }
             if tp then
                 TP.new(_tp)
@@ -576,7 +577,8 @@ F = {
             ins = ins,
             out = out or 'int',
             mod = { rec=rec },
-            op  = (out and 'call' or 'emit')
+            op  = (out and 'call' or 'emit'),
+            seqno = true,
         }
         ENV.exts[#ENV.exts+1] = me.evt
         ENV.exts[id] = me.evt
