@@ -83,18 +83,6 @@ function AWAIT_PAUSE (me, no)
         COMM(me, 'PAUSE: '..pse.dcl.var.id)
         LINE(me, [[
 if (]]..V(pse.dcl.var)..[[) {
-]])
---[=[
--- TODO: remove?
--- if not, why only internal should be allowed to re-awake?
-        if me[1].tag ~= 'Ext' then
-            -- internal event
-            LINE(me, [[
-    _STK->trl->seqno = _ceu_app->seqno-1;   /* awake again */
-]])
-        end
-]=]
-        LINE(me, [[
     goto ]]..no..[[;
 }
 ]])
@@ -429,7 +417,6 @@ for (]]..V(t.i)..[[=0; ]]..V(t.i)..'<'..t.arr.sval..';'..V(t.i)..[[++)
         LINE(me, [[
     /* resets org memory and starts org.trail[0]=Class_XXX */
     ceu_out_org(_ceu_app, ]]..org..','..t.cls.trails_n..','..t.cls.lbl.id..[[,
-            stack_curi(_ceu_go)+1,    /* run now */
 #ifdef CEU_ORGS_NEWS
                 ]]..t.isDyn..[[,
 #endif
@@ -678,7 +665,6 @@ if (]]..V(set_to)..[[.tag != ]]..string.upper(TP.toc(set_to.tp.opt))..[[_NIL) {
 /*  FINALIZE */
 _STK_ORG->trls[ ]]..me.trl_fins[1]..[[ ].evt   = CEU_IN__CLEAR;
 _STK_ORG->trls[ ]]..me.trl_fins[1]..[[ ].lbl   = ]]..me.lbl_fin.id..[[;
-_STK_ORG->trls[ ]]..me.trl_fins[1]..[[ ].seqno = _ceu_app->seqno-1; /* awake now */
 ]])
             for _, fin in ipairs(me.fins) do
                 LINE(me, fin.val..' = 0;')
@@ -791,7 +777,6 @@ ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'),'..ln
 /*  FINALIZE ADT */
 _STK_ORG->trls[ ]]..var.trl_adt[1]..[[ ].evt   = CEU_IN__CLEAR;
 _STK_ORG->trls[ ]]..var.trl_adt[1]..[[ ].lbl   = ]]..(var.lbl_fin_kill_free).id..[[;
-_STK_ORG->trls[ ]]..var.trl_adt[1]..[[ ].seqno = _ceu_app->seqno-1; /* awake now */
 ]])
                 end
             end
@@ -1560,7 +1545,6 @@ case ]]..me.lbl_cnt.id..[[:;
         local no = '_CEU_NO_'..me.n..'_'
 
         LINE(me, [[
-    _STK->trl->seqno = _ceu_app->seqno;  /* not reset with retry */
 ]]..no..[[:
     _STK->trl->evt   = ]]..(e.ifc_idx or e.var.evt.idx)..[[;
     _STK->trl->lbl   = ]]..me.lbl.id..[[;
@@ -1569,11 +1553,8 @@ case ]]..me.lbl_cnt.id..[[:;
 
         LINE(me, [[
 case ]]..me.lbl.id..[[:;
-]])
-        LINE(me, [[
 #ifdef CEU_ORGS
     if ((tceu_org*)]]..org..[[ != _STK->evto) {
-        _STK->trl->seqno = _ceu_app->seqno-1;   /* awake again */
         goto ]]..no..[[;
     }
 #endif
@@ -1599,15 +1580,10 @@ ceu_out_wclock]]..suf..[[(_ceu_app, (s32)]]..V(dt)..[[, &]]..val..[[, NULL);
 ]]..(no and no..':' or '')..[[
     _STK->trl->evt   = CEU_IN_]]..e.evt.id..suf..[[;
     _STK->trl->lbl   = ]]..me.lbl.id..[[;
-    _STK->trl->seqno =
 ]])
-        if e.evt.id == '_ok_killed' then
+        if e.evt.seqno then
             LINE(me, [[
-        _ceu_app->seqno-1;   /* always ready to awake */
-]])
-        else
-            LINE(me, [[
-        _ceu_app->seqno;
+    _STK->trl->seqno = _ceu_app->seqno;
 ]])
         end
         HALT(me)

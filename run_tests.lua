@@ -336,12 +336,12 @@ STATS = {
     count   = 2382,
     mem     = 0,
     trails  = 5266,
-    bytes   = 29414158,
+    bytes   = 29303516,
 }
 
 
-real	12m52.986s
-user	12m9.507s
-sys	2m2.890s
+real	12m18.303s
+user	12m48.104s
+sys	2m3.387s
 
 ]]

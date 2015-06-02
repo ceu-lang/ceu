@@ -197,7 +197,7 @@ int ceu_sys_org_spawn (tceu_go* _ceu_go, tceu_nlbl lbl_cnt, tceu_org* neworg, tc
 static u32 CEU_ORGS_ID = 0;;
 #endif
 
-void ceu_sys_org (tceu_org* org, int n, int lbl, int seqno,
+void ceu_sys_org (tceu_org* org, int n, int lbl,
 #ifdef CEU_ORGS_NEWS
                   int isDyn,
 #endif
@@ -222,9 +222,8 @@ void ceu_sys_org (tceu_org* org, int n, int lbl, int seqno,
 #endif
 
     /* org.trls[0] == org.blk.trails[1] */
-    org->trls[0].evt   = CEU_IN__STK;
-    org->trls[0].lbl   = lbl;
-    org->trls[0].seqno = seqno;
+    org->trls[0].evt = CEU_IN__STK;
+    org->trls[0].lbl = lbl;
 
 #ifdef CEU_ORGS
     if (lnks == NULL) {
@@ -242,7 +241,7 @@ void ceu_sys_org (tceu_org* org, int n, int lbl, int seqno,
 #endif  /* CEU_ORGS */
 }
 #ifndef CEU_ORGS
-#define ceu_sys_org(a,b,c,d,e) ceu_sys_org(a,b,c,d,NULL)
+#define ceu_sys_org(a,b,c,d) ceu_sys_org(a,b,c,NULL)
 #endif
 
 #ifdef CEU_ORGS
@@ -681,18 +680,16 @@ if (STK->trl->evt==CEU_IN__ORG) {
             &&   (
                    (STK->trl->evt==CEU_IN__STK && STK->trl->stk==stack_curi(&go))
                         /* stacked and in this level */
-               ||  ( (STK->trl->evt==STK->evt)
-#if 1
-                     && (STK->trl->evt==CEU_IN__CLEAR || STK->evt<CEU_IN_lower
-                        || STK->trl->seqno!=app->seqno)
-#endif
+               ||  ( (STK->trl->evt==STK->evt) &&
+                     (  STK->evt>CEU_IN_higher  /* TODO: move inputs up to */
+                     || STK->evt<CEU_IN_lower   /*       avoid this test?  */
+                     || STK->trl->seqno!=app->seqno )
                    )
                         /* same event and (clear||starting before) */
                  )
             ) {
                 int _ret;
-                STK->trl->evt   = CEU_IN__NONE;  /* clear trail */
-                STK->trl->seqno = app->seqno;    /* don't awake again */
+                STK->trl->evt = CEU_IN__NONE;  /* clear trail */
 
 #if defined(CEU_OS_KERNEL) && defined(__AVR)
                 CEU_APP_ADDR = app->addr;
@@ -752,10 +749,13 @@ if (STK->trl->evt==CEU_IN__ORG) {
             }
 
             /* NEXT TRAIL */
-            /* STK->trl!=CEU_IN__ORG guaranteed here */
-            if (STK->trl->evt!=CEU_IN__STK && STK->trl->seqno!=app->seqno) {
+
+            if (STK->trl->evt<=CEU_IN_higher    /* TODO: move inputs up to */
+            &&  STK->trl->evt>=CEU_IN_lower     /*       avoid this test?  */
+            &&  STK->trl->seqno!=app->seqno ) {
                 STK->trl->seqno = app->seqno-1;   /* keeps the gap tight */
             }
+
             STK->trl++;
         }
 
