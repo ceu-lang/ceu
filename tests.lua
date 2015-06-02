@@ -18376,18 +18376,20 @@ escape 1;
 }
 
 Test { [[
-var int* p;
-par/and do
+var int x = 10;
+var int* p = &x;
+par/or do
     await 1s;
 with
     event int* e;
     p = await e;
 end
-escape *p;
+escape x;
 ]],
-    fin = 'line 8 : pointer access across `await´',
+    --fin = 'line 8 : pointer access across `await´',
     --fin = 'line 6 : invalid block for pointer across `await´',
     --fin = 'line 6 : cannot `await´ again on this block',
+    run = { ['~>1s']=10 },
 }
 
 Test { [[
@@ -18489,8 +18491,8 @@ escape ret + *p;
 }
 
 Test { [[
-var int* p;
 var int ret;
+var int* p = &ret;
 input void OS_START;
 do
     event int* e;
@@ -18723,7 +18725,8 @@ do
         p := p1;
     with
         await OS_START;
-        emit ptr => (1, null);
+        var int v = 10;
+        emit ptr => (1, &v);
     end
     i = *p;
 end
@@ -18731,8 +18734,8 @@ escape i;
 ]],
     --fin = 'line 7 : wrong operator',
     --fin = 'line 7 : attribution does not require `finalize´',
-    fin = 'line 14 : pointer access across `await´',
-    --run = 1,
+    --fin = 'line 14 : pointer access across `await´',
+    run = 10,
 }
 
 Test { [[
@@ -22070,6 +22073,87 @@ await FOREVER;
     _ana = {
         isForever = true,
     },
+}
+
+Test { [[
+var int v = 10;
+var int* x = &v;
+event void e;
+var int ret;
+if 1 then
+    ret = *x;
+    emit e;
+else
+    emit e;
+    escape *x;
+end
+escape ret;
+]],
+    fin = 'line 10 : pointer access across `await´',
+}
+
+Test { [[
+var int v = 10;
+var int* x = &v;
+event void e;
+var int ret;
+if 1 then
+    ret = *x;
+    emit e;
+else
+    escape *x;
+end
+escape ret;
+]],
+    run = 10,
+}
+
+Test { [[
+var int v = 10;
+var int* x = &v;
+event void e;
+var int ret;
+par do
+    ret = *x;
+    emit e;
+with
+    escape *x;
+end
+]],
+    _ana = {acc=2},
+    run = 10,
+}
+
+Test { [[
+var int v = 10;
+var int* x = &v;
+event void e;
+var int ret;
+par do
+    ret = *x;
+    emit e;
+with
+    par/or do
+        ret = *x;
+        emit e;
+    with
+        ret = *x;
+        await e;
+    with
+        par/and do
+            ret = *x;
+            emit e;
+        with
+            ret = *x;
+            await e;
+        end
+    end
+with
+    escape *x;
+end
+]],
+    _ana = {acc=true},
+    run = 10,
 }
 
 Test { [[
@@ -42765,7 +42849,7 @@ await FOREVER;
 Test { [[
 output/input [10] (int max)=>char* LINE;
 var u8 err;
-var char* ret;
+var char* ret = null;
 par/or do
     var char* ret1;
     (err, ret1) = request LINE => 10;

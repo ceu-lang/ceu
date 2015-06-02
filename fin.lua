@@ -6,14 +6,49 @@ local TRACK = {
                       --   now, any access to "var" yields error
 }
 
--- TODO: TRACK por classe?
+local function GET ()
+    return TRACK[#TRACK]
+end
+
+local function JOIN (me)
+    local TOP = GET()
+    for T in pairs(me.__tojoin) do
+        for k,v in pairs(T) do
+            -- awaits have higher priority to catch more errors
+            if type(TOP[k]) ~= 'table' then
+                TOP[k] = v
+            end
+        end
+    end
+end
+
+
+local function PUSH (me)
+    local old = TRACK[#TRACK]
+    local new = setmetatable({}, {__index=old})
+    TRACK[#TRACK+1] = new
+    if me then
+        me.__tojoin[new] = true
+    end
+end
+local function POP ()
+    TRACK[#TRACK] = nil
+end
+
+function NOPTR (tp)
+    return (tp.ptr==0 and
+           ((not tp.ext) or TP.get(tp.id).plain or tp.plain))
+-- TODO
+or tp.id == '_tceu_adt_root'
+                -- either native dcl or derived
+end
 
 F = {
     Dcl_cls_pre = function (me)
-        TRACK[#TRACK+1] = {}  -- restart tracking for each class
+        PUSH()
     end,
     Dcl_cls_pos = function (me)
-        TRACK[#TRACK]   = nil
+        POP()
     end,
 
     Set = function (me)
@@ -32,16 +67,9 @@ end
     -- NON-POINTER ATTRIBUTIONS (always safe)
     --
 
-        local noptr =  (to.tp.ptr==0 and (not to.tp.arr) and (not to.tp.ref) and
-                        ((not to.tp.ext) or TP.get(to.tp.id).plain or to.tp.plain))
-                                            -- either native dcl or derived
-                                            -- from s.field
         -- _r.x = (int) ...;
-        noptr = noptr or
-                       (fr.tp.ptr==0 and (not fr.tp.arr) and (not fr.tp.ref) and
-                        ((not fr.tp.ext) or TP.get(fr.tp.id).plain or fr.tp.plain))
-
-        if noptr then
+        if NOPTR(to.tp) and (not to.tp.ref) and (not to.tp.arr) or
+           NOPTR(fr.tp) and (not fr.tp.ref) and (not fr.tp.arr) then
             ASR(op == '=', me, 1101, 'wrong operator')
             ASR(not me.fin, me, 1102, 'attribution does not require `finalize´')
             return
@@ -55,7 +83,7 @@ end
         -- variables or native symbols
         if (to.var and (not to.var.tp.ref)) or to.c then
                         -- do not track references
-            TRACK[#TRACK][to.var or to.id] = 'accessed'
+            GET()[to.var or to.id] = 'accessed'
         end
 
         -- constants are safe
@@ -230,9 +258,20 @@ end
     end,
 
     Var = function (me)
+        if NOPTR(me.var.tp) then
+            return
+        end
+        if me.var.pre == 'pool' then
+            return
+        end
+
+        -- re-setting variable
         local set = AST.par(me,'Set')
-        if set and set[4] == me then
-            return  -- re-setting variable
+        local to  = set and set[4]
+        if to and (to==me or (to.tag=='VarList' and AST.isParent(to, me))) then
+            GET()[me.var] = 'accessed'
+            -- set[4] is VarList or Var
+            return
         end
         if AST.par(me,'Dcl_constr') and me.__par.fst.tag=='This' then
             return  -- constructor access
@@ -245,22 +284,20 @@ end
             return  -- o'=await o until o==o'
         end
 
-        if type(TRACK[#TRACK][me.var]) ~= 'table' then
-            if me.var.tp.ptr > 0 then
-                TRACK[#TRACK][me.var] = 'accessed'
-            end
+        if type(GET()[me.var]) ~= 'table' then
+            GET()[me.var] = 'accessed'
             return  -- no await happened yet
         end
 
         -- possible dangling pointer "me.var" is accessed across await
 
-        if me.tp.ptr>0 and (ENV.clss[me.tp.id] or ENV.adts[me.tp.id]) then
+        if (ENV.clss[me.tp.id] or ENV.adts[me.tp.id]) then
             -- pointer to org: check if it is enclosed by "watching me.var"
             -- since before the first await
             for n in AST.iter('ParOr') do
                 local var = n.__adj_watching and n.__adj_watching.lst
                                              and n.__adj_watching.lst.var
-                if var==me.var and AST.isParent(n,TRACK[#TRACK][me.var]) then
+                if var==me.var and AST.isParent(n,GET()[me.var]) then
                     return      -- ok, I'm safely watching "me.var"
                 end
             end
@@ -273,9 +310,11 @@ end
 
     Await = function (me)
         if me.tl_awaits or me.tag=='EmitInt' then
-            for var, v in pairs(TRACK[#TRACK]) do
-                if v == 'accessed' then
-                    TRACK[#TRACK][var] = me   -- tracks the *first* await
+            for _, T in ipairs(TRACK) do        -- search in all levels
+                for var, v in pairs(T) do
+                    if v == 'accessed' then
+                        GET()[var] = me   -- tracks the *first* await
+                    end
                 end
             end
         end
@@ -384,6 +423,41 @@ end
             table.insert(req.fins, 1, fin)
         end
     end,
+
+    ParEver_pre = function (me)
+        me.__tojoin = {}
+    end,
+    ParEver_pos = function (me)
+        JOIN(me)
+    end,
+    ParEver_bef = function (me)
+        PUSH(me)
+    end,
+    ParEver_aft = function (me)
+        POP()
+    end,
+    ParAnd_pre = 'ParEver_pre',
+    ParAnd_bef = 'ParEver_bef',
+    ParAnd_aft = 'ParEver_aft',
+    ParAnd_pos = 'ParEver_pos',
+    ParOr_pre  = 'ParEver_pre',
+    ParOr_bef  = 'ParEver_bef',
+    ParOr_aft  = 'ParEver_aft',
+    ParOr_pos  = 'ParEver_pos',
+
+    -- skip condition (i>1)
+    If_bef = function (me, _, i)
+        if i > 1 then
+            PUSH(me)
+        end
+    end,
+    If_aft = function (me, _, i)
+        if i > 1 then
+            POP()
+        end
+    end,
+    If_pre = 'ParEver_pre',
+    If_pos = 'ParEver_pos',
 }
 
 AST.visit(F)

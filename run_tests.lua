@@ -333,15 +333,15 @@ sys	1m42.707s
 -- no TM
 
 STATS = {
-    count   = 2382,
+    count   = 2389,
     mem     = 0,
-    trails  = 5266,
-    bytes   = 29303516,
+    trails  = 5328,
+    bytes   = 29538898,
 }
 
 
-real	12m18.303s
-user	12m48.104s
-sys	2m3.387s
+real	12m34.228s
+user	11m55.455s
+sys	2m7.053s
 
 ]]
