@@ -2038,7 +2038,7 @@ escape 1;
     run = { ['~>5s']=4 },
 }
 
---do return end
+do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -29972,6 +29972,57 @@ escape _V;
 ]],
     --run = 2,  -- blk before org
     run = 4,    -- org before blk
+}
+
+Test { [[
+interface IPingu with
+end
+
+class WalkerAction with
+    var IPingu& pingu;
+do
+end
+
+class Pingu with
+    interface IPingu;
+do
+    every 10s do
+        spawn WalkerAction with
+            this.pingu = outer;
+        end;
+    end
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+interface IPingu with
+end
+
+class WalkerAction with
+    var IPingu& pingu;
+do
+end
+
+class Pingu with
+    interface IPingu;
+do
+    do
+        pool WalkerAction[] was;
+        every 10s do
+            spawn WalkerAction in was with
+                this.pingu = outer;
+            end;
+        end
+    end
+end
+
+escape 1;
+]],
+    run = 1,
 }
 
 -- FREE

@@ -806,7 +806,8 @@ _STK->trl = &_STK_ORG->trls[ ]]..stmts.trails[1]..[[ ];
         if me.fins then
             LINE(me, [[
 {
-    int __ceu_from_fin = 0;         /* skip HALT */
+    int __ceu_from_fin;         /* separate dcl/set because of C++ */
+    __ceu_from_fin = 0;         /* skip HALT */
     if (0) {
 ]])
             CASE(me, me.lbl_fin)
@@ -1332,8 +1333,19 @@ _STK->trl = &_STK_ORG->trls[ ]]..me.trails[1]..[[ ];
             for _, p in ipairs(ps) do
                 PS[#PS+1] = V(p)
             end
-            LINE(me, TP.toc((e.var or e).evt.ins)..' '..val..
-                        ' = { '..table.concat(PS,',')..' };')
+            LINE(me, [[
+]]..TP.toc((e.var or e).evt.ins)..' '..val..[[;
+{
+    ]]..TP.toc((e.var or e).evt.ins)..' '..val..[[_ =
+        { ]]..table.concat(PS,',')..[[ };
+    ]]..val..' = '..val..[[_;
+}
+]])
+                --  tp __ceu_ps_X;
+                --  {
+                --      tp __ceu_ps_X_ = { ... }    // separate dcl/set because of C++
+                --      __ceu_ps_X = __ceu_ps_X_;
+                --  }
             val = '(&'..val..')'
         end
         return val

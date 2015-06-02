@@ -144,7 +144,7 @@ F = {
                         org_blk = dcl.var.blk
                     else
                         local spw = AST.par(constr, 'Spawn')
-                        org_blk = spw[2].blk or MAIN.blk_body    -- pool.blk
+                        org_blk = spw[2].var.blk or MAIN.blk_body    -- pool.blk
                     end
                 end
             end
