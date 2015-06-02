@@ -122,11 +122,7 @@ void ceu_stack_dump (tceu_go* go) {
 
 /* TODO: move from 1=>0 (change also in code.lua) */
 #ifdef CEU_ORGS
-#if 1
-void ceu_stack_clear_org (tceu_org* main, tceu_go* go, tceu_org* org, int lim) {
-#else
 void ceu_stack_clear_org (tceu_go* go, tceu_org* org, int lim) {
-#endif
     int i;
     for (i=0; i<lim; i+=stack_sz((go),i)) {
         tceu_stk* stk = stack_get((go),i);
@@ -136,16 +132,11 @@ void ceu_stack_clear_org (tceu_go* go, tceu_org* org, int lim) {
                 stk->evt = CEU_IN__NONE;
             } else {
                 /* jump to next organism */
-#if 1
-                stk->org = main;
-                stk->trl = &main->trls[0];
-#else
                 stk->org = org->nxt;
                 stk->trl = &((tceu_org*)org->nxt)->trls [
                             (org->n == 0) ?
                             ((tceu_org_lnk*)org)->lnk : 0
                           ];
-#endif
             }
         }
     }
