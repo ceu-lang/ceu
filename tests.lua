@@ -2010,11 +2010,84 @@ escape ret;
 
 ---------------
 
---do return end
+-- BUG in acc.lua
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[] ls;
+ls = new List.CONS(1,
+            List.CONS(2,
+                List.NIL()));
+
+loop/rec l in ls do
+    watching *l do
+        await FOREVER;
+    end
+end
+
+escape 1;
+]],
+    wrn = 'line 23 : unbounded recursive spawn',
+    run = { ['~>5s']=4 },
+}
+
+--]===]
+Test { [[
+data List with
+    tag NIL;
+or
+    tag HOLD;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[] ls;
+ls = new List.CONS(1,
+            List.CONS(2,
+                List.HOLD()));
+
+var int ret = 0;
+
+native @pure _printf();
+
+loop/rec l in ls do
+    ret = ret + 1;
+    watching l do
+        if l:HOLD then
+            finalize with
+                ret = ret + 1;
+            end
+            await FOREVER;
+        else
+            par/or do
+                recurse l:CONS.tail;
+            with
+                await 1s;
+            end
+        end
+    end
+end
+
+escape ret;
+]],
+    wrn = 'line 23 : unbounded recursive spawn',
+    run = { ['~>5s']=4 },
+}
+
+do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
---]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }

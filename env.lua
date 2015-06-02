@@ -784,7 +784,7 @@ F = {
         local tp = me[1].tp  -- type of Var
         local TP = AST.asr(me.__par,'Stmts', 2,'Stmts',   1,'Dcl_cls',
                                   3,'Block', 1,'Stmts',   1,'BlockI',
-                                  1,'Stmts', 2,'Dcl_var', 2,'Type')
+                                  1,'Stmts', 3,'Dcl_var', 2,'Type')
         TP[1] = tp.id
         me.tag = 'Nothing'
     end,

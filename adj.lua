@@ -381,7 +381,7 @@ me.blk_body = me.blk_body or blk_body
             return  -- already recognized as in_rec
         end
 
-        -- "outer" inside "loop/adt" should refer to outer class
+        -- "outer" inside "loop/rec" should refer to outer class
         local cls = AST.par(me, 'Dcl_cls')
         local out = cls.out
         if cls.out then
@@ -400,16 +400,26 @@ me.blk_body = me.blk_body or blk_body
         --      ... becomes ...
         --  class Loop with
         --      pool Loop[]&  loops;
+        --      var  Loop*    parent;       // TODO: should be "Loop*?" (opt)
         --      var  <adt_t>* <n>;
         --      var  Outer&   out;
         --      <interface>
         --  do
-        --      <body>
-        --          recurse <exp>;
+        --      par/or do
+        --          if this.parent != null then     // TODO: != (vs ==)
+        --              await *this._parent;        // workaround across-await
+        --          else                            // IF analysis
+        --              await FOREVER;
+        --          end
+        --      with
+        --          <body>
+        --              recurse <exp>;
+        --      end
         --  end
         --  pool Loop[] loops;
         --  ret = do Loop with
         --      this.loops = loops;
+        --      this.parent = null;
         --      this.<n>   = <n>;
         --  end;
         --]]
@@ -428,6 +438,10 @@ me.blk_body = me.blk_body or blk_body
                                     node('Type', me.ln, 'Loop_'..me.n, 0, true, true),
                                     '_loops_'..me.n),
                                 node('Dcl_var', me.ln, 'var',
+                                    node('Type', me.ln, 'Loop_'..me.n, 1, false, false),
+                                        -- TODO: should be opt type
+                                    '_parent_'..me.n),
+                                node('Dcl_var', me.ln, 'var',
                                     tp,
                                     to[1]),
                                 node('Dcl_var', me.ln, 'var',
@@ -436,7 +450,24 @@ me.blk_body = me.blk_body or blk_body
                                 unpack(ifc))),
                         node('Block', me.ln,
                             node('Stmts', me.ln,
-                                body)))
+                                node('ParOr', me.ln,
+                                    node('Block', me.ln,
+                                        node('Stmts', me.ln,
+                                            node('If', me.ln,
+                                                node('Op2_!=', me.ln, '!=',
+                                                    node('Op2_.', me.ln, '.',
+                                                        node('This', me.ln, true),
+                                                        '_parent_'..me.n),
+                                                    node('NULL', me.ln)),
+                                                node('Await', me.ln,
+                                                    node('Op1_*', me.ln, '*',
+                                                        node('Var', me.ln, '_parent_'..me.n)),
+                                                    false,
+                                                    false),
+                                                node('AwaitN', me.ln)))),
+                                    node('Block', me.ln,
+                                        node('Stmts', me.ln,
+                                            body))))))
         cls.out = AST.par(me, 'Block')
         cls.N   = me.n     -- save my "n" for further uses
 --[[
@@ -462,6 +493,12 @@ me.blk_body = me.blk_body or blk_body
                                             '_loops_'..me.n),
                                         '=', 'exp',
                                         node('Var', me.ln, '_pool_'..me.n)),
+                                    node('_Set', me.ln,
+                                        node('Op2_.', me.ln, '.',
+                                            node('This', me.ln, true),
+                                            '_parent_'..cls.N),
+                                        '=', 'exp',
+                                        node('NULL', me.ln)),
                                     node('_Set', me.ln,
                                         node('Op2_.', me.ln, '.',
                                             node('This', me.ln, true),
@@ -492,7 +529,8 @@ me.blk_body = me.blk_body or blk_body
     --      ... becomes ...
     --  var Loop*? _body_;
     --  _body_ = spawn Loop in _loops with
-    --      this._loops = outer._loops;
+    --      this._loops  = outer._loops;
+    --      this._parent = outer;
     --      this.<n>    = <exp>;
     --      <constr>
     --  if _body_? then
@@ -537,7 +575,7 @@ me.blk_body = me.blk_body or blk_body
                             node('NUMBER', me.ln, '0'))
         end
 
-        local to_id  = AST.asr(cls,'Dcl_cls', 3,'BlockI', 1,'Stmts', 2,'Dcl_var')[3]
+        local to_id  = AST.asr(cls,'Dcl_cls', 3,'BlockI', 1,'Stmts', 3,'Dcl_var')[3]
         local cls_id = cls[2]
 
         local dcl = node('Dcl_var', me.ln, 'var',
@@ -559,6 +597,13 @@ me.blk_body = me.blk_body or blk_body
                                             node('Op2_.', me.ln, '.',
                                                 node('Outer', me.ln, true),
                                                 '_loops_'..cls.N)),
+                                        node('_Set', me.ln,
+                                            node('Op2_.', me.ln, '.',
+                                                node('This', me.ln, true),
+                                                '_parent_'..cls.N),
+                                            '=', 'exp',
+                                            node('Op1_&', me.ln, '&',
+                                                node('Outer', me.ln, true))),
                                         node('_Set', me.ln,
                                             node('Op2_.', me.ln, '.',
                                                 node('This', me.ln, true),
