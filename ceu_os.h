@@ -114,8 +114,8 @@
         ((__typeof__(ceu_sys_isr)*)((_ceu_app)->sys_vec[CEU_SYS_ISR]))(n,f,_ceu_app)
 #endif
 
-    #define ceu_out_org(app,org,n,lbl,isDyn,lnks) \
-        ((__typeof__(ceu_sys_org)*)((app)->sys_vec[CEU_SYS_ORG]))(org,n,lbl,isDyn,lnks)
+    #define ceu_out_org(app,org,n,lbl,isDyn,parent,lnks) \
+        ((__typeof__(ceu_sys_org)*)((app)->sys_vec[CEU_SYS_ORG]))(org,n,lbl,isDyn,parent,lnks)
 
 #ifdef CEU_ORGS
     #define ceu_out_org_trail(org,idx,lnk) \
@@ -171,11 +171,11 @@
     #define ceu_out_req() \
             ceu_sys_req()
 #ifdef CEU_ORGS_NEWS
-    #define ceu_out_org(app,org,n,lbl,isDyn,lnks) \
-            ceu_sys_org(org,n,lbl,isDyn,lnks)
+    #define ceu_out_org(app,org,n,lbl,isDyn,parent,lnks) \
+            ceu_sys_org(org,n,lbl,isDyn,parent,lnks)
 #else
-    #define ceu_out_org(app,org,n,lbl,lnks) \
-            ceu_sys_org(org,n,lbl,lnks)
+    #define ceu_out_org(app,org,n,lbl,parent,lnks) \
+            ceu_sys_org(org,n,lbl,parent,lnks)
 #endif
 #ifdef CEU_ORGS
     #define ceu_out_org_trail(org,idx,lnk) \
@@ -416,6 +416,7 @@ typedef struct tceu_stk {
 typedef struct tceu_org_lnk {
     struct tceu_org* prv;   /* TODO(ram): lnks[0] does not use */
     struct tceu_org* nxt;   /*      prv, n, lnk                  */
+    struct tceu_org* up;
     u8 lnk;
     tceu_ntrl n;            /* use for ands/fins                 */
 } tceu_org_lnk;
@@ -434,6 +435,7 @@ typedef struct tceu_org
 #ifdef CEU_ORGS
     struct tceu_org* prv;   /* linked list for the scheduler */
     struct tceu_org* nxt;
+    struct tceu_org* up;
     u8 lnk;
 #endif
 #if defined(CEU_ORGS) || defined(CEU_OS)
@@ -730,7 +732,7 @@ tceu_app* ceu_sys_load      (void* addr);
 #ifdef CEU_ISR
 int       ceu_sys_isr       (int n, tceu_isr_f f, tceu_app* app);
 #endif
-void      ceu_sys_org       (tceu_org* org, int n, int lbl, int isDyn, tceu_org_lnk* lnks);
+void      ceu_sys_org       (tceu_org* org, int n, int lbl, int isDyn, tceu_org* parent, tceu_org_lnk* lnks);
 #ifdef CEU_ORGS
 void      ceu_sys_org_trail (tceu_org* org, int idx, tceu_org_lnk* lnk);
 int       ceu_sys_org_spawn (tceu_go* _ceu_go, tceu_nlbl lbl_cnt, tceu_org* org, tceu_nlbl lbl_org);

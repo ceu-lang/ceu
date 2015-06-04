@@ -122,21 +122,27 @@ void ceu_stack_dump (tceu_go* go) {
 
 /* TODO: move from 1=>0 (change also in code.lua) */
 #ifdef CEU_ORGS
+/*
+ * All traversals for the "org" being cleared (as well as nested ones) must 
+ * continue with the org in sequence.
+ */
+static int __ceu_isParent (tceu_org* parent, tceu_org* me) {
+    return (parent==me) || (me!=NULL && __ceu_isParent(parent,me->up));
+}
 void ceu_stack_clear_org (tceu_go* go, tceu_org* org, int lim) {
     int i;
     for (i=0; i<lim; i+=stack_sz((go),i)) {
         tceu_stk* stk = stack_get((go),i);
-        if (stk->org==org) {
-            if (stk->stop != NULL) {
-                /* ignore local traversals */
-                stk->evt = CEU_IN__NONE;
-            } else {
+        if (__ceu_isParent(org, stk->org)) {
+            if (stk->stop == NULL) {        /* broadcast traversal */
                 /* jump to next organism */
                 stk->org = org->nxt;
                 stk->trl = &((tceu_org*)org->nxt)->trls [
                             (org->n == 0) ?
                             ((tceu_org_lnk*)org)->lnk : 0
                           ];
+            } else {                        /* ignore local traversals */
+                stk->evt = CEU_IN__NONE;
             }
         }
     }
@@ -155,6 +161,7 @@ void ceu_sys_org_trail (tceu_org* org, int idx, tceu_org_lnk* lnks) {
     lnks[1].nxt = org;
     lnks[1].n   = 0;    /* marks end of linked list */
     lnks[1].lnk = idx+1;
+    lnks[0].up = lnks[1].up = org;
 }
 
 int ceu_sys_org_spawn (tceu_go* _ceu_go, tceu_nlbl lbl_cnt, tceu_org* neworg, tceu_nlbl neworg_lbl) {
@@ -192,13 +199,14 @@ void ceu_sys_org (tceu_org* org, int n, int lbl,
 #ifdef CEU_ORGS_NEWS
                   int isDyn,
 #endif
-                  tceu_org_lnk** lnks)
+                  tceu_org* parent, tceu_org_lnk** lnks)
 {
     /* { evt=0, seqno=0, lbl=0 } for all trails */
     memset(&org->trls, 0, n*sizeof(tceu_trl));
 
 #if defined(CEU_ORGS) || defined(CEU_OS_KERNEL)
-    org->n = n;
+    org->n  = n;
+    org->up = parent;
 #endif
 #if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_WATCHING) || defined(CEU_OS_KERNEL)
     org->isAlive = 1;
@@ -232,7 +240,7 @@ void ceu_sys_org (tceu_org* org, int n, int lbl,
 #endif  /* CEU_ORGS */
 }
 #ifndef CEU_ORGS
-#define ceu_sys_org(a,b,c,d) ceu_sys_org(a,b,c,NULL)
+#define ceu_sys_org(a,b,c,d,e) ceu_sys_org(a,b,c,NULL,NULL)
 #endif
 
 #ifdef CEU_ORGS
@@ -563,6 +571,7 @@ printf("\tntrls=%d\n", CEU_NTRAILS);
 #ifdef CEU_CLEAR
             if (STK->trl == STK->stop) {    /* bounded trail traversal? */
                 STK->stop = NULL;           /* back to default */
+/* TODO: precisa desse NULL? */
                 break;                      /* pop stack */
             }
 #endif

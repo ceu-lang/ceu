@@ -243,7 +243,7 @@ ceu_app_init (tceu_app* _ceu_app)
 #ifdef CEU_ORGS_NEWS
                 0,
 #endif
-                NULL);
+                NULL, NULL);
 
 #ifdef CEU_LUA
     ceu_luaL_newstate(_ceu_app->lua);

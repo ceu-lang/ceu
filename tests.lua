@@ -28621,6 +28621,51 @@ escape _V;
     lines = 'error oi',
 }
 
+Test { [[
+input void OS_START;
+
+class T with
+do
+    await 1us;
+end
+pool T[] ts;
+
+var T*? t1 = spawn T;
+var T*? t2 = spawn T;
+await *t2;
+var T*? t3 = spawn T;
+await *t3;
+
+escape 1;
+]],
+    run = { ['~>2us']=1 },
+}
+
+Test { [[
+input void OS_START;
+
+class U with
+do
+    await 1us;
+end
+
+class T with
+do
+    do U;
+end
+pool T[] ts;
+
+var T*? t1 = spawn T;
+var T*? t2 = spawn T;
+await *t2;
+var T*? t3 = spawn T;
+await *t3;
+
+escape 1;
+]],
+    run = { ['~>2us']=1 },
+}
+
 -- CONSTRUCTOR
 
 Test { [[
@@ -30352,7 +30397,8 @@ escape b.sum;
 }
 
 Test { [[
-class X with do end;
+class X with do
+end;
 
 class Body with
     pool  X[]& bodies;
@@ -30367,7 +30413,7 @@ do
 end
 
 pool X[1] bodies;
-var  int     sum = 1;
+var  int  sum = 1;
 
 var Body b with
     this.bodies = bodies;
@@ -46744,6 +46790,56 @@ escape 10;
     _ana = { acc=true },
     wrn = true,
     run = { ['~>100s']=10 },
+}
+
+Test { [[
+data Command with
+    tag NOTHING;
+or
+    tag LEFT;
+or
+    tag REPEAT with
+        var Command* command;
+    end
+end
+
+pool Command[] cmds;
+
+cmds = new Command.REPEAT(
+            Command.LEFT());
+
+native @pure _printf();
+
+class TurtleTurn with
+do
+    _printf("ME %p\n", &this);
+    await 1us;
+end
+
+loop/rec cmd in cmds do
+    watching cmd do
+        if cmd:NOTHING then
+            nothing;
+
+        else/if cmd:LEFT then
+            do TurtleTurn;
+
+        else/if cmd:REPEAT then
+            recurse cmd:REPEAT.command;
+            recurse cmd:REPEAT.command;
+
+        else
+            _ceu_out_assert(0, "not implemented");
+        end
+    end
+end
+
+escape 10;
+]],
+    --tight = 'tight loop',
+    _ana = { acc=true },
+    wrn = true,
+    run = { ['~>2us']=10 },
 }
 
 Test { [[

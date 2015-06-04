@@ -412,8 +412,7 @@ for (]]..V(t.i)..[[=0; ]]..V(t.i)..'<'..t.arr.sval..';'..V(t.i)..[[++)
 #ifdef CEU_ORGS_NEWS
                 ]]..t.isDyn..[[,
 #endif
-]]
-                ..t.lnks..[[);
+                _STK_ORG, ]] ..t.lnks..[[);
 /* TODO: currently idx is always "1" for all interfaces access because pools 
  * are all together there. When we have separate trls for pools, we'll have to 
  * indirectly access the offset in the interface. */
