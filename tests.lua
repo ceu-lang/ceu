@@ -6425,7 +6425,8 @@ end
 escape ret;
 ]],
     _ana = { acc=1 },
-    run = 2,
+    --run = 2,
+    run = 1,
 }
 
 -- TODO: STACK
@@ -8094,6 +8095,7 @@ escape ret;
     },
     run = 10,
 }
+-- TODO: STACK
 Test { [[
 event int a;
 par/and do
@@ -8106,7 +8108,8 @@ escape 10;
     _ana = {
         acc = 1,
     },
-    run = 10,
+    --run = 10,
+    run = 0,
 }
 
 Test { [[
@@ -8426,6 +8429,7 @@ escape ret;
 }
 
 -- 1st to escape and terminate
+-- TODO: STACK
 Test { [[
 event int a;
 var int ret=9;
@@ -8446,8 +8450,8 @@ escape ret;
         abrt = 4,
         acc = 1,
     },
-    --run = 3,
-    run = 4,
+    run = 9,
+    --run = 4,
 }
 
 Test { [[
@@ -11411,7 +11415,7 @@ escape aa;
 Test { [[
 input int B,Z;
 event int a;
-var int aa;
+var int aa=5;
 par/or do
     await B;
     emit a => 5;
@@ -11852,6 +11856,7 @@ end;
     },
 }
 
+-- TODO: STACK
 Test { [[
 event int a;
 var int aa=10;
@@ -11869,7 +11874,8 @@ escape aa;
         acc = 1,
         --trig_wo = 1,
     },
-    run = 10,
+    run = 1,
+    --run = 10,
 }
 Test { [[
 event int a;
@@ -14293,7 +14299,8 @@ with
 end;
 escape aa;
 ]],
-    run = { ['1~>A;1~>A']=4 }
+    run = { ['1~>A;1~>A']=3 }
+    --run = { ['1~>A;1~>A']=4 }
 }
 
 Test { [[
@@ -15216,8 +15223,8 @@ with
 end;
 escape aa;
 ]],
-    run = 7,
-    --run = 2,
+    --run = 7,
+    run = 2,
 }
 
 Test { [[
@@ -15780,8 +15787,8 @@ with
     end
 end
 ]],
-    run = 2,
-    --run = 1,
+    --run = 2,
+    run = 1,
 }
 Test { [[
 input void OS_START;
@@ -15799,8 +15806,8 @@ with
     end
 end
 ]],
-    run = 2,
-    --run = 1,
+    --run = 2,
+    run = 1,
     safety = 2,
     _ana = {
         acc = 1,
@@ -15897,6 +15904,7 @@ escape x;
     --env = 'line 6 : non-matching types on `emit´ (void vs int)',
 }
 
+-- TODO: STACK
 Test { [[
 input void OS_START;
 event int a;
@@ -15922,7 +15930,8 @@ escape x;
         acc = 1,
         unreachs = 2,
     },
-    run = 2,
+    --run = 2,
+    run = 1,
 }
 
 Test { [[
@@ -15992,8 +16001,8 @@ escape ret;
         --trig_wo = 2,
         unreachs = 1,
     },
-    run = 10,
-    --run = 1,
+    --run = 10,
+    run = 1,
 }
 
 Test { [[
@@ -16110,8 +16119,8 @@ end;
         --trig_wo = 2,
         unreachs = 2,
     },
-    run = { ['1~>F']=7 },
-    --run = { ['1~>F']=5 },
+    --run = { ['1~>F']=7 },
+    run = { ['1~>F']=5 },
 }
 
     -- SCOPE / BLOCK
@@ -24158,6 +24167,182 @@ end
     run = 0,
 }
 --do return end
+Test { [[
+event void e, f;
+par do
+    loop do
+        par/or do
+            await f;        // 8
+        with
+            emit e;         // 11
+            await FOREVER;
+        end
+    end
+with
+    loop do
+        par/or do
+            await f;        // 20
+        with
+            emit f;         // 18
+        end
+        await e;            // 23
+    end
+end
+]],
+    _ana = {
+        isForever = true,
+        acc = 3,
+    },
+    awaits = 0,
+    run = 0,
+}
+
+Test { [[
+event void e, f;
+par do
+    loop do
+        par/or do
+            await f;        // 20
+        with
+            emit f;         // 18
+        end
+        await e;            // 23
+    end
+with
+    loop do
+        par/or do
+            await f;        // 8
+        with
+            emit e;         // 11
+            await FOREVER;
+        end
+    end
+end
+]],
+    _ana = {
+        isForever = true,
+        acc = 3,
+    },
+    awaits = 0,
+    run = 0,
+}
+
+Test { [[
+event void e, f;
+par do
+    loop do
+        await e;        // 17
+        par/or do
+            await f;    // 22
+        with
+            emit f;     // 20
+        end
+    end
+with
+    loop do
+        par/or do
+            await f;
+        with
+            emit e;     // 8
+            await FOREVER;
+        end
+    end
+end
+]],
+    _ana = {
+        isForever = true,
+        acc = 2,
+    },
+    awaits = 0,
+    run = 0
+}
+
+Test { [[
+event void e, k1, k2;
+par do
+    loop do
+        await e;
+        par/or do
+            await k2;
+        with
+            emit k1;
+            await FOREVER;
+        end
+    end
+with
+    loop do
+        par/or do
+            await k1;
+        with
+            emit e;
+            await FOREVER;
+        end
+        emit k2;
+    end
+end
+]],
+    _ana = {
+        isForever = true,
+        acc = 1,
+    },
+    awaits = 1,
+    run = 0,
+}
+Test { [[
+event void e;
+loop do
+    par/or do
+        await e;
+    with
+        emit e;
+        await FOREVER;
+    end
+end
+]],
+    _ana = {
+        isForever = true,
+        acc = true,
+    },
+    awaits = 1,
+    run = 0,
+}
+Test { [[
+event void e;
+loop do
+    par/or do
+        await e;
+        await e;
+    with
+        emit e;
+        emit e;
+        await FOREVER;
+    end
+end
+]],
+    _ana = {
+        isForever = true,
+        acc = true,
+    },
+    awaits = 1,
+    run = 0,
+}
+Test { [[
+event void e;
+loop do
+    watching e do
+        emit e;
+        await FOREVER;
+    end
+end
+]],
+    _ana = {
+        isForever = true,
+        acc = true,
+    },
+    awaits = 1,
+    run = 0,
+}
+--do return end
 
 -- CLASSES, ORGS, ORGANISMS
 
@@ -27538,8 +27723,8 @@ emit t.a;
 emit t.a;
 escape _V;
 ]],
-    run = 4,
-    --run = 1,
+    --run = 4,
+    run = 1,
 }
 
 Test { [[
@@ -33053,8 +33238,8 @@ emit t.a;
 escape _V;
 ]],
     _ana = { acc=1 },
-    run = 14,
-    --run = 40,
+    --run = 14,
+    run = 40,
 }
 
 Test { [[
@@ -35714,8 +35899,8 @@ do
 end
 escape ret;
 ]],
-    run = 7,
-    --run = 10,
+    --run = 7,
+    run = 13,
 }
 Test { [[
 input void A,F;
@@ -35757,7 +35942,7 @@ end
 escape ret;
 ]],
     --run = 7,
-    run = 16,
+    run = 13,
 }
 Test { [[
 input void A,F;
@@ -35802,7 +35987,8 @@ do
 end
 escape ret;
 ]],
-    run = { ['~>3s;~>F'] = 16 },
+    --run = { ['~>3s;~>F'] = 16 },
+    run = { ['~>3s;~>F'] = 13 },
 }
 
 Test { [[

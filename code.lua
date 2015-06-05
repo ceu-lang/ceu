@@ -1548,6 +1548,7 @@ case ]]..me.lbl_cnt.id..[[:;
         local no = '_CEU_NO_'..me.n..'_'
 
         LINE(me, [[
+    _STK->trl->seqno = _ceu_app->seqno;  /* not reset with retry */
 ]]..no..[[:
     _STK->trl->evt   = ]]..(e.ifc_idx or e.var.evt.idx)..[[;
     _STK->trl->lbl   = ]]..me.lbl.id..[[;
@@ -1558,6 +1559,7 @@ case ]]..me.lbl_cnt.id..[[:;
 case ]]..me.lbl.id..[[:;
 #ifdef CEU_ORGS
     if ((tceu_org*)]]..org..[[ != _STK->evto) {
+        _STK->trl->seqno = _ceu_app->seqno-1;   /* awake again */
         goto ]]..no..[[;
     }
 #endif
@@ -1583,10 +1585,15 @@ ceu_out_wclock]]..suf..[[(_ceu_app, (s32)]]..V(dt)..[[, &]]..val..[[, NULL);
 ]]..(no and no..':' or '')..[[
     _STK->trl->evt   = CEU_IN_]]..e.evt.id..suf..[[;
     _STK->trl->lbl   = ]]..me.lbl.id..[[;
+    _STK->trl->seqno =
 ]])
-        if e.evt.seqno then
+        if e.evt.id == '_ok_killed' then
             LINE(me, [[
-    _STK->trl->seqno = _ceu_app->seqno;
+        _ceu_app->seqno-1;   /* always ready to awake */
+]])
+        else
+            LINE(me, [[
+        _ceu_app->seqno;
 ]])
         end
         HALT(me)

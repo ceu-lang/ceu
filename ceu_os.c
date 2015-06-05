@@ -680,12 +680,11 @@ if (STK->trl->evt==CEU_IN__ORG) {
             &&   (
                    (STK->trl->evt==CEU_IN__STK && STK->trl->stk==stack_curi(&go))
                         /* stacked and in this level */
-               ||  ( (STK->trl->evt==STK->evt) &&
-                     (  STK->evt>CEU_IN_higher  /* TODO: move inputs up to */
-                     || STK->evt<CEU_IN_lower   /*       avoid this test?  */
+               ||  (STK->trl->evt==STK->evt &&
+                     (  STK->evt==CEU_IN__CLEAR
                      || STK->trl->seqno!=app->seqno )
                    )
-                        /* same event and (clear||starting before) */
+                        /* same event and (clear||await-before) */
                  )
             ) {
                 int _ret;
@@ -750,9 +749,7 @@ if (STK->trl->evt==CEU_IN__ORG) {
 
             /* NEXT TRAIL */
 
-            if (STK->trl->evt<=CEU_IN_higher    /* TODO: move inputs up to */
-            &&  STK->trl->evt>=CEU_IN_lower     /*       avoid this test?  */
-            &&  STK->trl->seqno!=app->seqno ) {
+            if (STK->trl->evt!=CEU_IN__STK && STK->trl->seqno!=app->seqno) {
                 STK->trl->seqno = app->seqno-1;   /* keeps the gap tight */
             }
 
