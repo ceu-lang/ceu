@@ -37,7 +37,7 @@ end
 
 function NOPTR (tp)
     return (tp.ptr==0 and
-           ((not tp.ext) or TP.get(tp.id).plain or tp.plain))
+           ((not tp.ext) or TP.get(tp.id).plain or tp.plain or tp.ref))
 -- TODO
 or tp.id == '_tceu_adt_root'
                 -- either native dcl or derived

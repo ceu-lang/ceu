@@ -16790,6 +16790,23 @@ escape v1.v+v2.v+v3.v;
     --run = 6,
 }
 
+Test { [[
+native @nohold _g();
+
+var _SDL_Renderer&? ren;
+    finalize
+        ren = _f();
+    with
+    end
+
+await 1s;
+_g(&ren);
+
+escape 1;
+]],
+    gcc = 'error: unknown type name ‘SDL_Renderer’',
+}
+
 -- FINALLY / FINALIZE
 
 Test { [[
