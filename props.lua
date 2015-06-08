@@ -83,6 +83,10 @@ local NO_constr = {
     Pause=true,
 }
 
+local NO_every = {
+    Escape=true, Break=true,
+}
+
 -- Loop, SetBlock may need clear
 -- if break/return are in parallel w/ something
 --                  or inside block that needs_clr
@@ -137,6 +141,12 @@ F = {
         if NO_constr[me.tag] then
             ASR(not AST.par(me,'Dcl_constr'), me,
                     'not permitted inside a constructor')
+        end
+        if NO_every[me.tag] then
+            for loop in AST.iter'Loop' do
+                ASR(not loop.isEvery, me,
+                    'not permitted inside `every´')
+            end
         end
     end,
 

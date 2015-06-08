@@ -818,17 +818,25 @@ F = {
     Await = function (me)
         local e = unpack(me)
         if e.tag == 'Ext' then
+            if e.evt.id == '_ok_killed' then
+                me.awt_tp = 'org/adt'
+            else
+                me.awt_tp = 'evt'
+            end
+
             if e.evt.ins.tup then
                 me.tp = TP.fromstr('_'..TP.toc(e.evt.ins)..'*') -- convert to pointer
             else
                 me.tp = e.evt.ins
             end
         elseif e.tp and ENV.adts[TP.tostr(e.tp)] then
+error'bug found'
         elseif e.tp and ENV.clss[TP.tostr(e.tp)] then
-error'oi'
+error'bug found'
 -- TODO: integer return
             me.tp = TP.fromstr('int')
         else
+            me.awt_tp = 'evt'
             ASR(e.var and e.var.pre=='event', me,
                 'event "'..(e.var and e.var.id or '?')..'" is not declared')
             if e.var.evt.ins.tup then

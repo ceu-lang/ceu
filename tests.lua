@@ -2038,11 +2038,11 @@ escape 1;
     run = { ['~>5s']=4 },
 }
 
-do return end
+--]===]
+--do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
---]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -2826,6 +2826,21 @@ every OS_START do
 end
 escape 10;
 ]],
+    props = 'line 7 : not permitted inside `every´',
+}
+
+Test { [[
+input void OS_START;
+event void e;
+loop do
+    await OS_START;
+    loop i in 10 do
+        emit e;
+    end
+    do break; end
+end
+escape 10;
+]],
     ana = 'line 3 : `loop´ iteration is not reachable',
     run = 10,
 }
@@ -2833,7 +2848,8 @@ escape 10;
 Test { [[
 input void OS_START;
 event void e;
-every OS_START do
+loop do
+    await OS_START;
     loop i in 10 do
         emit e;
     end
@@ -4325,6 +4341,20 @@ every A do
     end
 end
 ]],
+    props = 'line 6 : not permitted inside `every´',
+}
+
+Test { [[
+input void A;
+var int ret = 0;
+loop do
+    await A;
+    ret = ret + 1;
+    if ret == 3 then
+        escape ret;
+    end
+end
+]],
     run = { ['~>A;~>A;~>A']=3 }
 }
 
@@ -4343,7 +4373,8 @@ end
 
 Test { [[
 var int ret = 0;
-every 1s do
+loop do
+    await 1s;
     ret = ret + 1;
     if ret == 10 then
         escape ret;
@@ -4356,19 +4387,21 @@ end
 Test { [[
 var int ret = 0;
 var int dt;
-every dt in 1s do
+loop do
+    var int dt = await 1s;
     ret = ret + dt;
     if ret == 10000000 then
         escape ret;
     end
 end
 ]],
-    env = 'line 3 : declaration of "dt" hides the one at line 2',
+    env = 'line 4 : declaration of "dt" hides the one at line 2',
 }
 
 Test { [[
 var int ret = 0;
-every dt in 1s do
+loop do
+    var int dt = await 1s;
     ret = ret + dt;
     if ret == 10000000 then
         escape ret;
@@ -4492,13 +4525,30 @@ with
     end
 end
 ]],
+    props = 'line 4 : not permitted inside `every´',
+}
+Test { [[
+input (int,int) A;
+par do
+    loop do
+        var int a,b;
+        (a,b) = await A;
+        escape a+b;
+    end
+with
+    async do
+        emit A => (1,3);
+    end
+end
+]],
     ana = 'line 3 : `loop´ iteration is not reachable',
 }
 Test { [[
 input (int,int) A;
 par do
     var int a, b;
-    every (a,b) in A do
+    loop do
+        (a,b) = await A;
         escape a+b;
     end
 with
@@ -24359,6 +24409,29 @@ end
     awaits = 1,
     run = 0,
 }
+Test { [[
+var int ret = 0;
+event void e;
+par/or do
+    loop do
+        await e;
+        ret = ret + 1;
+    end
+with
+    every e do
+        ret = ret + 1;
+    end
+with
+    emit e;
+    emit e;
+    emit e;
+end
+escape ret;
+]],
+    _ana = { acc=true },
+    run = 3;
+}
+
 --do return end
 
 -- CLASSES, ORGS, ORGANISMS
@@ -31028,6 +31101,79 @@ end
 escape ret;
 ]],
     run = 25,
+}
+
+Test { [[
+class T with
+do
+    await FOREVER;
+end
+var int ret = 0;
+loop i do
+    var T t1;
+    par/or do
+        await t1;
+    with
+        kill t1;
+        await FOREVER;
+    end
+
+    var T*? t = spawn T;
+    par/or do
+        await *t;
+    with
+        kill *t;
+        await FOREVER;
+    end
+    if i == 10 then
+        break;
+    else
+        ret = ret + 1;
+    end
+end
+escape ret;
+]],
+    wrn = true,
+    loop = true,
+    --tight = 'line 6 : tight loop',
+    run = 10,
+}
+
+Test { [[
+class T with
+do
+end
+var int ret = 0;
+loop i do
+    var T t1;
+    par/or do
+        await t1;
+    with
+        kill t1;
+        await FOREVER;
+    end
+
+    var T*? t = spawn T;
+    par/or do
+        if t? then
+            await *t;
+        end
+    with
+        kill *t;
+        await FOREVER;
+    end
+    if i == 10 then
+        break;
+    else
+        ret = ret + 1;
+    end
+end
+escape ret;
+]],
+    wrn = true,
+    loop = true,
+    --tight = 'line 6 : tight loop',
+    run = 10,
 }
 
 -- DO T
@@ -47152,7 +47298,8 @@ do
     var float sum = 0;
     var float x = turtle.pos_x;
     var float y = turtle.pos_y;
-    every 10ms do
+    loop do
+        await 10ms;
         var int dt = 10;
         if sum >= this.pixels then
             break;
