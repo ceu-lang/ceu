@@ -474,14 +474,17 @@ F = {
             me.tup = AST.node('TupleType', me.ln)
 
             -- Dcl_adt[3]->Block[1]->Stmts[*]->Stmts
-            for _, stmts in ipairs(me[3][1]) do
+            local STMTS = AST.asr(me,'', 3,'Block', 1,'Stmts')
+            for _, stmts in ipairs(STMTS) do
                 AST.asr(stmts, 'Stmts')
-                local dclvar = AST.asr(stmts[1],'Dcl_var')
-                local _, var_tp, var_id = unpack(dclvar)
-                local item = AST.node('TupleTypeItem', me.ln,
-                                false,var_tp,false)
-                me.tup[#me.tup+1] = item
-                item.var_id = var_id
+                for _, dclvar in ipairs(stmts) do
+                    AST.asr(dclvar, 'Dcl_var')
+                    local _, var_tp, var_id = unpack(dclvar)
+                    local item = AST.node('TupleTypeItem', me.ln,
+                                    false,var_tp,false)
+                    me.tup[#me.tup+1] = item
+                    item.var_id = var_id
+                end
             end
 
             TP.new(me.tup)

@@ -2038,6 +2038,9 @@ escape 1;
     run = { ['~>5s']=4 },
 }
 
+-- BUG: ADT initialization in constructor?
+-- BUG: two similar ADTs
+
 -- BUG: passed as float?
 --[[
 data Ball with
@@ -2052,24 +2055,11 @@ _filledCircleRGBA(ren, (int)ball.x, (int)ball.y, (int)ball.radius,
                        0x00,0x00,0x00,0xFF);
 ]]
 
--- BUG: invalid arity
-Test { [[
-data Ball with
-    var int x, y;
-    var int radius;
-end
-
-var Ball ball = Ball(130,130,8);
-escape ball.x + ball.y + ball.radius;
-]],
-    run = 268,
-}
-
---do return end
+do return end
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
---]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -44259,6 +44249,18 @@ end
 escape 1;
 ]],
     adt = 'line 1 : base case must have no parameters (recursive data)',
+}
+
+Test { [[
+data Ball with
+    var int x, y;
+    var int radius;
+end
+
+var Ball ball = Ball(130,130,8);
+escape ball.x + ball.y + ball.radius;
+]],
+    run = 268,
 }
 
 -- USE DATATYPES DEFINED ABOVE ("DATA")
