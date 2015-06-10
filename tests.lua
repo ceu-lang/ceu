@@ -2038,23 +2038,6 @@ escape 1;
     run = { ['~>5s']=4 },
 }
 
--- BUG: ADT initialization in constructor?
--- BUG: two similar ADTs
-
--- BUG: passed as float?
---[[
-data Ball with
-    var float x;
-    var float y;
-    var float radius;
-end
-
-var Ball ball = Ball(130,130,8);
-
-_filledCircleRGBA(ren, (int)ball.x, (int)ball.y, (int)ball.radius,
-                       0x00,0x00,0x00,0xFF);
-]]
-
 do return end
 --]===]
 
@@ -44251,6 +44234,8 @@ escape 1;
     adt = 'line 1 : base case must have no parameters (recursive data)',
 }
 
+-- MISC
+
 Test { [[
 data Ball with
     var int x, y;
@@ -44261,6 +44246,59 @@ var Ball ball = Ball(130,130,8);
 escape ball.x + ball.y + ball.radius;
 ]],
     run = 268,
+}
+
+Test { [[
+data Ball with
+    var float x;
+    var float y;
+    var float radius;
+end
+
+var Ball ball = Ball(130,130,8);
+
+native do
+    int add (s16 a, s16 b, s16 c) {
+        return a + b + c;
+    }
+end
+
+escape _add(ball.x, ball.y, ball.radius);
+]],
+    run = 268,
+}
+
+Test { [[
+native do
+    int add (int a, int b, int c) {
+        return a + b + c;
+    }
+end
+
+var int sum = 0;
+do
+    data Ball1 with
+        var float x;
+        var float y;
+        var float radius;
+    end
+    var Ball1 ball = Ball1(130,130,8);
+    sum = sum + _add(ball.x, ball.y, ball.radius);
+end
+
+do
+    data Ball2 with
+        var float x;
+        var float y;
+        var float radius;
+    end
+    var Ball2 ball = Ball2(130,130,8);
+    sum = sum + _add(ball.x, ball.y, ball.radius);
+end
+
+escape sum;
+]],
+    run = 536,
 }
 
 -- USE DATATYPES DEFINED ABOVE ("DATA")
