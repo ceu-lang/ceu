@@ -458,8 +458,6 @@ F = {
         me.tp.opt = me.__adj_opt
                     -- recover this information from implicitly created ADTs
 
-        _N = 0 -- restart vars counting
-
         ASR(not (ENV.adts[id] or ENV.clss[id]), me,
             'top-level identifier "'..id..'" already taken')
         ENV.adts[id] = me
