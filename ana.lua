@@ -237,9 +237,18 @@ F = {
 
     Loop = function (me)
         local max,iter,_,body = unpack(me)
-        if me.is_bounded then
-            me.ana.pos = COPY(body.ana.pos)
-            return      -- guaranteed to terminate
+
+        -- if eventually terminates (max or iter) and
+        --   loop iteration is reachable (not body.pos[false]),
+        -- then me.pos=U(me.pre,body.pos)
+        -- ('number','org','data' are bounded, 'event' is not)
+        if (max or iter and me.iter_tp~='event') and
+            (not body.ana.pos[false])
+        then
+            -- union(me.ana.pre, body.ana.pos)
+            me.ana.pos = COPY(me.ana.pre)
+            OR(me, body)
+            return
         end
 
         if body.ana.pos[false] then

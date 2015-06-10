@@ -2038,11 +2038,38 @@ escape 1;
     run = { ['~>5s']=4 },
 }
 
---]===]
+-- BUG: passed as float?
+--[[
+data Ball with
+    var float x;
+    var float y;
+    var float radius;
+end
+
+var Ball ball = Ball(130,130,8);
+
+_filledCircleRGBA(ren, (int)ball.x, (int)ball.y, (int)ball.radius,
+                       0x00,0x00,0x00,0xFF);
+]]
+
+-- BUG: invalid arity
+Test { [[
+data Ball with
+    var int x, y;
+    var int radius;
+end
+
+var Ball ball = Ball(130,130,8);
+escape ball.x + ball.y + ball.radius;
+]],
+    run = 268,
+}
+
 --do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
+--]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -3923,6 +3950,19 @@ escape ret;
     --loop = true,
     wrn = true,
     run = 255,
+}
+
+Test { [[
+var int n = 10;
+var int sum = 0;
+loop i in n do
+    sum = sum + 1;
+end
+escape n;
+]],
+    loop = true,
+    tight = 'tight loop',
+    run = 10,
 }
 
 Test { [[
