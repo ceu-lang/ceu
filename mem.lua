@@ -460,7 +460,7 @@ typedef union CEU_]]..me.id..[[_delayed {
                 len = 0
             elseif var.pre == 'event' then --
                 len = 1   --
-            elseif var.pre=='pool' and (type(var.tp.arr)=='table') then
+            elseif var.pre=='pool' and (not var.tp.ref) and (type(var.tp.arr)=='table') then
                 len = 10    -- TODO: it should be big
             elseif var.cls or var.adt then
                 len = 10    -- TODO: it should be big
@@ -528,7 +528,7 @@ typedef union CEU_]]..me.id..[[_delayed {
                 local T = var.cls or var.adt
 
                 -- static pool: "var T[N] ts"
-                if type(var.tp.arr) == 'table' then
+                if type(var.tp.arr)=='table' and (not var.tp.ref) then
                     local T = ENV.clss[var.tp.id] or ENV.adts[var.tp.id]
                     if T.is_ifc then
                         top.struct = top.struct .. [[

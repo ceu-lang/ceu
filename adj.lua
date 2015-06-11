@@ -221,6 +221,7 @@ me.blk_body = me.blk_body or blk_body
                 for _, v in ipairs(me.__globaldos) do
                     par.__globaldos[#par.__globaldos+1] = v
                 end
+                return node('Stmts', me.ln, me)
             end
         end
     end,
@@ -367,8 +368,7 @@ me.blk_body = me.blk_body or blk_body
 
         -- "this" inside "loop/adt" should refer to outer class
         local cls = AST.par(me, 'Dcl_cls')
-        local out = cls.out
-        if cls.out then
+        if cls.__adj_out then
             return node('Op2_.', me.ln, '.',
                     node('This', me.ln, true),
                     '_out')
@@ -383,8 +383,7 @@ me.blk_body = me.blk_body or blk_body
 
         -- "outer" inside "loop/rec" should refer to outer class
         local cls = AST.par(me, 'Dcl_cls')
-        local out = cls.out
-        if cls.out then
+        if cls.__adj_out then
             return node('Var', me.ln, '_out')
         end
     end,
@@ -399,7 +398,7 @@ me.blk_body = me.blk_body or blk_body
         --  end;
         --      ... becomes ...
         --  class Loop with
-        --      pool Loop[]&  loops;
+        --      pool Loop[?]& loops;
         --      var  Loop*    parent;       // TODO: should be "Loop*?" (opt)
         --      var  <adt_t>* <n>;
         --      var  Outer&   out;
@@ -417,7 +416,7 @@ me.blk_body = me.blk_body or blk_body
         --      end
         --      escape 0;
         --  end
-        --  pool Loop[] loops;
+        --  pool Loop[?] loops;
         --  ret = do Loop with
         --      this.loops = loops;
         --      this.parent = null;
@@ -476,8 +475,7 @@ me.blk_body = me.blk_body or blk_body
                                             body))),
                                 node('_Escape', me.ln,
                                     node('NUMBER', me.ln, '0')))))
-        cls.out = AST.par(me, 'Block')
-        cls.N   = me.n     -- save my "n" for further uses
+        cls.__adj_out = AST.par(me, 'Block')
 
         local pool = node('Dcl_pool', me.ln, 'pool',
                         node('Type', me.ln, 'Loop_'..me.n, 0, true, false),
@@ -514,10 +512,9 @@ me.blk_body = me.blk_body or blk_body
             doorg = node('_Set', me.ln, ret, '=', 'do-org', doorg)
         end
 
-        -- HACK_5: figure out root type
+        -- HACK_5: figure out root type and dimension
         local root = node('_TMP_ITER', me.ln, AST.copy(root))
         local ret = node('Stmts', me.ln, root, cls, pool, doorg)
-        ret.__adj_recurse_loop = true
         return ret
     end,
 
@@ -550,7 +547,7 @@ me.blk_body = me.blk_body or blk_body
         n = (n==false and 0) or (AST.asr(n,'NUMBER')[1])
         local it = AST.iter(
                     function (me)
-                        return me.tag=='Dcl_cls' and me.N and me.out
+                        return me.tag=='Dcl_cls' and me.__adj_out
                     end)
         local cls
         for i=0, n do
@@ -783,7 +780,7 @@ me.blk_body = me.blk_body or blk_body
 
     -- expand collapsed declarations inside Stmts
     BlockI_pos = function (me)
-        local stmts = unpack(me)
+        local stmts = AST.asr(me,'', 1,'Stmts')
         local new = {}
         for _, dcl in ipairs(stmts) do
             if dcl.tag == 'Stmts' then

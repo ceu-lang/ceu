@@ -710,11 +710,13 @@ F = {
         if var and var.adt and var.pre=='pool' then
             local constr = AST.par(me, 'Adt_constr')
             local pool = constr and constr[5]
-            return AST.node('Op1_cast', me.ln,
-                    TP.fromstr(var.tp.id..'*'),
-                    AST.node('Op2_.', me.ln, '.',
-                        AST.node('Var', me.ln, '_'..id),
-                        'root'))
+            local ret = AST.node('Op1_cast', me.ln,
+                            TP.fromstr(var.tp.id..'*'),
+                            AST.node('Op2_.', me.ln, '.',
+                                AST.node('Var', me.ln, '_'..id),
+                                'root'))
+            ret.pool = var
+            return ret
         end
 
         -- OUT access in recurse loops
@@ -726,7 +728,7 @@ F = {
         --      this.out.x
         if not var then
             local cls = CLS()
-            local out = cls.out
+            local out = cls.__adj_out
             if out then
                 var = ENV.getvar(id, out)
                 if var then
@@ -782,11 +784,18 @@ F = {
 
     _TMP_ITER = function (me)
         -- HACK_5: figure out iter type
-        local tp = me[1].tp  -- type of Var
-        local TP = AST.asr(me.__par,'Stmts', 2,'Stmts',   1,'Dcl_cls',
-                                  3,'Block', 1,'Stmts',   1,'BlockI',
-                                  1,'Stmts', 3,'Dcl_var', 2,'Type')
-        TP[1] = tp.id
+        local root = AST.asr(me[1], 'Op1_cast')
+        local blki = AST.asr(me.__par,'Stmts', 2,'Stmts', 1,'Dcl_cls',
+                                    3,'Block', 1,'Stmts', 1,'BlockI')
+
+        local tp = AST.asr(blki,'', 1,'Stmts', 3,'Dcl_var', 2,'Type')
+        tp[1] = root.tp.id
+
+        AST.asr(blki,'', 1,'Stmts', 1,'Dcl_pool', 2,'Type')
+                [3] = AST.copy(root.pool.tp[3])
+        AST.asr(me.__par,'Stmts', 3,'Dcl_pool', 2,'Type')
+                [3] = AST.copy(root.pool.tp[3])
+
         me.tag = 'Nothing'
     end,
 

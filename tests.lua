@@ -7,6 +7,7 @@ end
 ----------------------------------------------------------------------------
 -- NO: testing
 ----------------------------------------------------------------------------
+
 --[===[
 do return end
 --]===]
@@ -44234,6 +44235,90 @@ escape _V;
     wrn = 'line 26 : unbounded recursive spawn',
     _ana = { acc=true },
     run = { ['~>10s'] = 10 },
+}
+
+Test { [[
+native do
+##ifdef CEU_ORGS_NEWS_MALLOC
+##error "malloc found"
+##endif
+end
+
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[3] list;
+list = new List.CONS(1,
+            List.CONS(2,
+                List.CONS(3, List.NIL())));
+
+var int sum = 0;
+loop/rec n in list do
+    sum = sum + 1;
+    watching n do
+        await 1s;
+        if n:CONS then
+            sum = sum + n:CONS.head;
+            recurse n:CONS.tail;
+            sum = sum + n:CONS.head;
+        end
+    end
+end
+
+escape sum;
+]],
+    run = { ['~>10s'] = 16 },
+}
+
+Test { [[
+native do
+##ifdef CEU_ORGS_NEWS_MALLOC
+##error "malloc found"
+##endif
+end
+
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+class T with
+do
+    pool List[3] list;
+    list = new List.CONS(1,
+                List.CONS(2,
+                    List.CONS(3, List.NIL())));
+
+    var int sum = 0;
+    loop/rec n in list do
+        sum = sum + 1;
+        watching n do
+            await 1s;
+            if n:CONS then
+                sum = sum + n:CONS.head;
+                recurse n:CONS.tail;
+                sum = sum + n:CONS.head;
+            end
+        end
+    end
+    escape sum;
+end
+
+var int sum = do T;
+
+escape sum;
+]],
+    run = { ['~>10s'] = 16 },
 }
 
 Test { [[
