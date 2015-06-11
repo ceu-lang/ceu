@@ -4,2045 +4,17 @@ local function INCLUDE (fname, src)
     f:close()
 end
 
+----------------------------------------------------------------------------
+-- NO: testing
+----------------------------------------------------------------------------
 --[===[
-
--- async dentro de pause
--- async thread spawn falhou, e ai?
-
--- BUGS & INCOMPLETNESS
-
--- TODO: bug: what if the "o" expression contains other pointers?
--- (below: pi)
-Test { [[
-class T with
-do
-end
-
-var T[10] ts;
-var int   i = 0;
-var int* pi = &i;
-await ts[*pi];
-escape 1;
-]],
-    fin = 'line 8 : pointer access across `await´',
-}
--- should disallow passing pointers through internal events
-Test { [[
-input void OS_START;
-event int* e;
-var int ret = 0;
-par/or do
-    do
-        var int x = 2;
-        par/or do
-            await OS_START;
-            emit e => &x;
-        with
-            await e;
-        end
-    end
-    do
-        var int x = 1;
-        await 1s;
-        ret = x;
-    end
-with
-    var int* v = await e;
-    ret = *v;
-end
-escape ret;
-]],
-    run = 2,
-}
-
--- use of global before its initialization
-Test { [[
-interface Global with
-    var int& v;
-end
-
-class T with
-    var int v;
-do
-    this.v = global:v;
-end
-var T t;
-
-var int  um = 111;
-var int& v = um;
-escape t.v;
-]],
-    run = 111,
-}
-
--- XXX: T-vs-Opt
-Test { [[
-class T with
-do
-end
-var T*&? t;
-finalize
-    t = _malloc(10 * sizeof(T**));
-with
-    nothing;
-end
-native @nohold _free();
-finalize with
-    _free(t);
-end
-escape 10;
-]],
-    run = 10;
-}
-
-Test { [[
-input void A, B, Z;
-event void a;
-var int ret = 1;
-var _t* a;
-native _f();
-native _t = 0;
-par/or do
-    _f(a)               // 8
-        finalize with
-            ret = 1;    // DET: nested blks
-        end;
-with
-    var _t* b;
-    _f(b)               // 14
-        finalize with
-            ret = 2;    // DET: nested blocks
-        end;
-end
-escape ret;
-]],
-    _ana = {
-        acc = 2,
-    },
-    run = false,
-}
-
-Test { [[
-input void OS_START;
-event int a, x, y;
-var int ret = 0;
-par do
-    par/or do
-        await y;
-        escape 1;   // 12
-    with
-        await x;
-        escape 2;   // 15
-    end;
-with
-    await OS_START;
-    emit x => 1;       // in seq
-    emit y => 1;       // in seq
-end
-]],
-    _ana = {
-        acc = 0,
-    },
-    run = 2;
-}
-
-Test { [[
-input void OS_START;
-native _V;
-native do
-    int V = 1;
-end
-class T with
-do
-    par/or do
-        await OS_START;
-    with
-        await OS_START;    // valgrind error
-    end
-    _V = 10;
-end
-do
-    spawn T;
-    await 1s;
-end
-escape _V;
-]],
-    run = { ['~>1s']=10 },
-}
-
-Test { [[
-input int  A;
-input void Z;
-event int a;
-var int ret = 0;
-par/or do
-    loop do
-        var int v = await A;
-        emit a => v;
-    end
-with
-    pause/if a do
-        ret = await 9us;
-    end
-end
-escape ret;
-]],
-    run = {
-        ['~>1us;0~>A;~>1us;0~>A;~>19us'] = 12,
-        ['~>1us;1~>A;~>1s;0~>A;~>19us'] = 11,
-        --['~>1us;1~>A;~>5us;0~>A;~>5us;1~>A;~>5us;0~>A;~>9us'] = 6,
--- BUG: set_min nao eh chamado apos o pause
-    },
-}
-
-Test { [[
-input void A,F;
-
-interface I with
-    var int v;
-    event void inc;
-end
-
-class T with
-    interface I;
-do
-    await inc;
-    this.v = v + 1;
-end
-
-var int ret = 0;
-do
-    par/or do
-        await F;
-    with
-        var int i=1;
-        every 1s do
-            spawn T with
-                this.v = i;
-                i = i + 1;
-            end;
-        end
-    with
-        every 1s do
-            loop i in I* do
-                emit i:inc;         // mata o org enquanto o percorre iterador
-                ret = ret + i:v;
-            end
-        end
-    end
-end
-escape ret;
-]],
--- BUG: erro de valgrind
-    run = { ['~>3s;~>F'] = 11 },
-}
-
--- BUG: should be: field must be assigned
-Test { [[
-var int v = 10;
-var int& i;
-
-par do
-    await 1s;
-    i = v;
-with
-    escape i;
-end
-]],
-    run = 99,
-}
-
-error 'testar pause/if org.e'
-error 'testar spawn/spawn que se mata'
-
---do escape end
-
--- ok: under tests but supposed to work
-
---ERROR: #ps
-Test { [[
-input (int,int,int) EVT;
-var int a,b;
-(a,b) = await EVT;
-escape 1;
-]],
-    run = 1,
-}
--- ERROR: defs.h before host code
--- makes sense: how an external component would know about a
--- type defined in Ceu?
-Test { [[
-native do
-    typedef int t;
-end
-input (_t,int) EVT;
-escape 1;
-]],
-    run = 1,
-}
-
--- ERROR: parse (typecast)
-Test { [[
-if ( _transaction ) then
-    _coap_send_transaction(_transaction);
-end
-]],
-    run = 1,
-}
-
-Test { [[
-input void OS_START;
-event (int,void*) ptr;
-var int* p;
-var int i;
-par/or do
-    (i,p) = await ptr;
-with
-    do
-        var int b = 1;
-        await OS_START;
-        emit ptr => (1, &b);
-    end
-end
-escape 1;
-]],
-    run = 1,
-    -- e depois outro exemplo com fin apropriado
-    -- BUG: precisa transformar emit x=>1 em p=1;emit x
-}
-
-Test { [[
-native do
-    int V = 0;
-end
-
-class T with
-do
-    _V = 10;
-    finalize with
-        _V = 100;   // TODO: deveria executar qd "var T t" sai de escopo
-    end
-end
-
-var T t;
-_assert(_V == 10);
-escape _V;
-]],
-    run = 100,
-}
-
-Test { [[
-function () => void f;
-escape 1;
-]],
-    run = 1,
-}
-
--- TODO: fails on valgrind, fails on OS
--- put back to XXXX
-Test { [[
-native _V;
-input void A, F, OS_START;
-native do
-    int V = 0;
-end
-class T with
-    event void e, ok;
-    var int v;
-do
-    finalize with
-        _V = _V + 1;        // * writes before
-    end
-    v = 1;
-    await A;
-    v = v + 3;
-    emit e;
-    emit ok;
-end
-await OS_START;
-var int ret;
-do
-    var T t;
-    par/or do
-        do                  // 24
-            finalize with
-                _V = _V*10;
-            end
-            await t.ok;
-        end
-    with
-        await t.e;          // 31
-        t.v = t.v * 3;
-    with
-        await F;
-        t.v = t.v * 5;
-    end
-    ret = t.v;
-end
-escape ret + _V;        // * reads after
-]],
-    _ana = {
-        abrt = 1,        -- false positive
-    },
-    run = {
-        ['~>F'] = 6,
-        ['~>A'] = 13,
-    }
-}
-
--- TODO_TYPECAST (search and replace)
-Test { [[
-class T with
-do
-end
-// TODO: "typecast" esconde "call", finalization nao acha que eh call
-var T** t := (T**)_malloc(10 * sizeof(T**));
-native @nohold _free();
-finalize with
-    _free(t);
-end
-escape 10;
-]],
-    run = 10;
-}
-
--- varlist to iter
-Test { [[
-interface I with
-    var int v;
-end
-class T with
-    interface I;
-do
-end
-pool T[1] ts;
-var T a with
-    a.v = 15;
-end
-var int ret = 0;
-ret = ret + spawn T[ts] with
-                this.v = 10;
-            end;
-ret = ret + spawn T[ts];
-loop i in (I*)(ts in a) do
-    ret = ret + i:v;
-end
-escape 26;
-]],
-    run = 1,
-}
-
-Test { [[
-class T with
-    var void* ptr = null;
-do
-end
-var T* ui;
-do
-    pool T[] ts;
-    var void* p = null;
-    ui = spawn T in ts with // ui > ts (should require fin)
-        this.ptr = p;
-    end;
-end
-escape 10;
-]],
-    run = 1,
-}
-
---[=[
--- POSSIBLE PROBLEMS FOR UNITIALIZED VAR
-
-Test { [[
-var int r;
-var int* pr = &r;
-async(pr) do
-    var int i = 100;
-    *pr = i;
-end;
-escape r;
-]],
-    run=100
-}
-
-Test { [[
-var int a;
-par/or do
-    await 1s;
-    a = 1;
-with
-end
-escape a;
-]],
-    run = 10,
-}
-
-Test { [[
-var int[2] v ;
-_f(v)
-escape v == &v[0] ;
-]],
-    run = 1,
-}
-
-Test { [[
-native @nohold _strncpy(), _printf(), _strlen();
-native _char = 1;
-var _char[10] str;
-_strncpy(str, "123", 4);
-_printf("END: %d %s\n", (int)_strlen(str), str);
-escape 0;
-]],
-    run = '3 123'
-}
-
-Test { [[
-var int a;
-a = do
-    var int b;
-end;
-]],
-
-Test { [[
-class T with
-    var int* a1;
-do
-    var int* a2 = a1;
-end
-escape 10;
-]],
-    run = 10,
-}
-
-}
-
-]=]
-
--------------------------------------------------------------------------------
--- TODO: working soon
-
--- TODO: should require finalization
-Test { [[
-class T with
-    var _int to;
-do
-end
-
-var _int to = 1;
-
-var T move with
-    this.to = to;  // TODO: := ??
-end;
-
-escape move.to;
-]],
-    run = 1,
-}
-
--- TODO: I[100]
-Test { [[
-interface I with
-    var int v;
-end
-
-class T with
-    interface I;
-do
-    await FOREVER;
-end
-
-pool I[100] is;
-
-var int ret = 0;
-
-spawn T with
-    this.v = 1;
-end;
-
-spawn T in is with
-    this.v = 3;
-end;
-
-loop i in is do
-    ret = ret + i:v;
-end
-
-escape ret;
-]],
-    run = 3,
-}
-
--- TODO: spawn wrong type
-Test { [[
-interface I with
-    var int v;
-    event void inc;
-end
-
-class T with
-    interface I;
-do
-    await FOREVER;
-end
-pool I[] is;
-
-class U with
-    var int z;
-    var int v;
-do
-    await FOREVER;
-end
-
-var int ret = 0;
-do
-    spawn T with
-        this.v = 1;
-    end;
-    spawn U in is with
-        this.v = 2;
-    end;
-    spawn T in is with
-        this.v = 3;
-    end;
-
-    loop i in is do
-        ret = ret + i:v;
-    end
-end
-escape ret;
-]],
-    run = 5,
-}
-
--- U[10] vs U[] mismatch
-Test { [[
-class U with do end;
-
-interface I with
-    pool U[10] us;
-end
-
-interface Global with
-    interface I;
-end
-pool U[]  us;
-
-class T with
-    pool U[10] us;
-    interface I;
-do
-    spawn U in global:us;
-end
-
-spawn U in us;
-spawn U in global:us;
-
-pool U[1] us1;
-spawn U in us1;
-
-var T t;
-spawn U in t.us;
-
-var I* i = &t;
-spawn U in i:us;
-
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
--- TODO: invalid pointer access
-Test { [[
-var int* ptr = null;
-loop i in 100 do
-    await 1s;
-    var int* p;
-    if (ptr != null) then
-        p = ptr;
-    end
-    ptr = p;
-end
-escape 10;
-]],
-    --loop = true,
-    fin = 'line 5 : invalid pointer "ptr"',
-}
-
--- TODO: t.v // T.v
-Test { [[
-class T with
-    var int v;
-do
-    v = 1;
-end
-var T t;
-t.v = 10;
-escape t.v;
-]],
-    run = 10,
-}
-
--- global vs assert??
-Test { [[
-interface Global with
-    event void e;
-end
-event void e;
-par/or do
-    emit global:e;
-with
-    _assert(0);
-end
-escape 1;
-]],
-    run = 1,
-}
-
--- this vs _iter??
-Test { [[
-interface I with
-    var int v;
-end
-
-class T with
-    interface I;
-do
-    this.v = 1;
-end
-pool T[] ts;
-
-par/or do
-    spawn T in ts with
-    end;
-with
-    loop i in ts do
-    end
-end
-
-escape 1;
-]],
-    run = 1,
-}
-
--- TODO: spawn vs watching impossible
-Test { [[
-class T with
-do
-end
-
-par/and do
-    pool T[] ts;
-    var T* t = spawn T in ts with
-    end;
-with
-    var T* p;
-    watching p do
-    end
-end
-
-escape 1;
-]],
-    run = 1,
-}
-
--- TODO: explicit interface implementations only
-Test { [[
-interface I with
-    var int v;
-end
-
-class T with
-    var int u,v,x;
-do
-end
-
-class U with
-    var int v;
-do
-end
-
-class V with
-    var int v;
-do
-    pool I[10] is;
-    spawn T in is;
-    spawn U in is;
-end
-
-pool I[10] is;
-
-spawn T in is;
-spawn U in is;
-spawn V in is;
-
-escape sizeof(CEU_T) > sizeof(CEU_U);
-]],
-    run = 1,
-}
-
--- TODO: not "awake once" for await-until
-Test { [[
-input void OS_START;
-event int v;
-par do
-    var int x;
-    x = await v until x == 10;
-    escape 10;
-with
-    await OS_START;
-    emit v => 0;
-    emit v => 1;
-    emit v => 10;
-    await FOREVER;
-end
-]],
-    run = 10;
-}
-
--------------------------------------------------------------------------------
--- ??: working now
-Test { [[
-input void    START,   STOP;
-input _pkt_t* RECEIVE, SENDACK;
-
-native @nohold _memcpy(), _send_dequeue(), _pkt_setRoute(), _pkt_setContents(), 
-_receive();
-
-class Forwarder with
-   var _pkt_t pkt;
-   event void ok;
-do
-   loop do
-      var bool enq;
-      enq = _send_enqueue(&pkt)
-            finalize with
-               _send_dequeue(&pkt);
-            end;
-      if not enq then
-         await (_rand()%100)ms;
-         continue;
-      end
-      var _pkt_t* done;
-      done = await SENDACK
-             until (done == &pkt);
-      break;
-   end
-   emit this.ok;
-end
-
-class Client with
-do
-   loop seq do
-      par/and do
-         await 1min;
-      with
-         do Forwarder with
-            _pkt_setRoute(&this.pkt, seq);
-            _pkt_setContents(&this.pkt, seq);
-         end;
-      end
-   end
-end
-
-loop do
-   await START;
-   par/or do
-      await STOP;
-   with
-      pool Forwarder[10] forwarders;
-      var  Client   [10] clients;
-
-      var _pkt_t* pkt;
-      every pkt in RECEIVE do
-         if pkt:left == 0 then
-            _receive(pkt);
-         else
-            pkt:left = pkt:left - 1;
-            spawn Forwarder with
-               _memcpy(&this.pkt, pkt, pkt:len);
-            end;
-         end
-      end
-   end
-end
-]],
-    run = 0,
-}
-
-Test { [[
-input int* A;
-par/or do
-    var int* snd = await A;
-    *snd = *snd;
-    await FOREVER;
-with
-    var int* snd =
-        await A
-            until *snd == 1;
-    escape *snd;
-with
-    async do
-        var int i = 2;
-        emit A => &i;
-        i = 1;
-        emit A => &i;
-    end
-end
-escape 0;
-]],
-    _ana = {
-        acc = 4,
-    },
-    run = 1;
-}
-do return end
-
-Test { [[
-class Rect with
-do
-    await FOREVER;
-end
-
-if false then
-    interface Bird with end
-    var Bird* ptr = null;
-    watching ptr do end
-else
-    pool Rect[257] rs;
-    loop i in 257 do
-        spawn Rect in rs;
-    end
-end
-
-escape 10;
-]],
-    run = 10,
-}
-do return end
-
-Test { [[
-class T with do end;
-pool T[] ts;
-loop t in ts do
-    await 1s;
-end
-escape 1;
-]],
-    props = 'line 4 : `every´ cannot contain `await´',
-}
-
-Test { [[
-interface I with
-end
-class T with
-    interface I;
-do end
-do
-    pool T[] ts;
-    loop i in ts do
-        await 1s;
-    end
-end
-escape 1;
-]],
-    props = 'line 9 : `every´ cannot contain `await´',
-}
-
-Test { [[
-interface I with
-    var int v;
-end
-
-var I* i=null;
-
-par/or do
-    await 1s;
-with
-    watching i do
-        await 1s;
-        var int v = i:v;
-    end
-end
-
-escape 1;
-]],
-    run = 1,
-}
-
-BUG de "&" para org across await
-
--- TODO: (_XXX) eh um cast => msg melhor!
-Test { [[
-if (_XXX) then
-end
-]],
-    run = 1,
-}
-
--- PROCURAR XXX e recolocar tudo ate o ok la
-
-Test { [[
-input (int a)=>int F do
-    return a + 1;
-end
-var int ret = call F=>1;
-escape ret;
-]],
-    run = 2,
-}
-
-Test { [[
-input (int c)=>int WRITE do
-    return c + 1;
-end
-var byte b = 1;
-var int ret = call WRITE => b;
-escape ret;
-]],
-    run = 2,
-}
-
-Test { [[
-input (int a, int b)=>int F do
-    return a + b;
-end
-var int ret = call F=>(1,2);
-escape ret;
-]],
-    run = 3,
-}
-
-Test { [[
-native/pre do
-    typedef int lua_State;
-    void lua_pushnil (lua_State* l) {}
-end
-
-input (_lua_State* l)=>void PUSHNIL do
-    _lua_pushnil(l);
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-input (char* str, int len, int x, int y)=>int DRAW_STRING do
-    return x + y + len;
-end
-
-var int ret = call DRAW_STRING => ("Welcome to Ceu/OS!\n", 20, 100, 100);
-
-escape ret;
-]],
-    run = 220,
-}
-
-Test { [[
-input (void)=>void* MALLOC;
-var void* ptr = (call MALLOC);
-]],
-    fin = 'line 2 : destination pointer must be declared with the `[]´ buffer modifier',
-}
-
-Test { [[
-input (void)=>void* MALLOC;
-var void[] ptr = (call MALLOC);
-]],
-    fin = 'line 2 : attribution requires `finalize´',
-}
-
-Test { [[
-input (void)=>void* MALLOC;
-var void[] ptr;
-finalize
-    ptr = (call MALLOC);
-with
-end
-escape 1;
-]],
-    code = 'line 1 : missing function body',
-}
-
-Test { [[
-input (int,int)=>void* MALLOC;
-var void[] ptr;
-finalize
-    ptr = (call MALLOC=>(1,1));
-with
-end
-escape 1;
-]],
-    code = 'line 1 : missing function body',
-}
-
-Test { [[
-input (int,int)=>int MALLOC;
-var int v;
-finalize
-    v = (call MALLOC=>(1,1));
-with
-end
-escape 1;
-]],
-    fin = 'line 4 : attribution does not require `finalize´',
-}
-
-Test { [[
-input (int a, int b, void* ptr)=>void* MALLOC do
-    if a+b == 11 then
-        return ptr;
-    else
-        return null;
-    end
-end
-
-var int i;
-var void[] ptr;
-finalize
-    ptr = (call MALLOC=>(10,1, &i));
-with
-end
-escape ptr==&i;
-]],
-    run = 1,
-}
-Test { [[
-input (int a, int b, void* ptr)=>void* MALLOC do
-    if a+b == 11 then
-        return ptr;
-    else
-        return null;
-    end
-end
-
-var int i;
-var void[] ptr;
-finalize
-    ptr = (call MALLOC=>(1,1, &i));
-with
-end
-escape ptr==null;
-]],
-    run = 1,
-}
-
-Test { [[
-input (void)=>void* MALLOC;
-native _f();
-do
-    var void* a;
-    finalize
-        a = (call MALLOC);
-    with
-        do await FOREVER; end;
-    end
-end
-]],
-    fin = 'line 6 : destination pointer must be declared with the `[]´ buffer modifier',
-}
-
-Test { [[
-input (void* v)=>void F do
-    _V = v;
-end
-escape 1;
-]],
-    fin = 'line 2 : attribution to pointer with greater scope',
-}
-
-Test { [[
-input (void* v)=>void F do
-    _V := v;
-end
-escape 1;
-]],
-    fin = 'line 2 : parameter must be `hold´',
-}
-
-Test { [[
-native do
-    void* V;
-end
-input (@hold void* v)=>void F do
-    _V := v;
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-input (char* buf)=>void F do
-end;
-var char* buf;
-call F => (buf);
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-input (char* buf, int i)=>void F do
-end;
-var char* buf;
-call F => (buf, 1);
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-input (void)=>void F do
-end;
-var char* buf;
-call F;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-input (char* buf)=>void F do
-end;
-var char* buf;
-call F => buf;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-input (@hold char* buf)=>void F do
-end;
-var char* buf;
-call F => buf;
-escape 1;
-]],
-    fin = 'line 2 : call requires `finalize´',
-}
-
-Test { [[
-var char[255] buf;
-_enqueue(buf);
-escape 1;
-]],
-    fin = 'line 2 : call requires `finalize´',
-}
-
-Test { [[
-native _f();
-do
-    var int* p1 = null;
-    do
-        var int* p2 = null;
-        _f(p1, p2);
-    end
-end
-escape 1;
-]],
-    wrn = true,
-    fin = 'line 6 : call requires `finalize´',
-    -- multiple scopes
-}
-
-Test { [[
-native _f();
-native _v;
-native do
-    int v = 1;
-    int f (int v) {
-        return v + 1;
-    }
-end
-escape _f(_v);
-]],
-    --fin = 'line 3 : call requires `finalize´',
-    run = 2,
-    --fin = 'line 9 : attribution requires `finalize´',
-}
-Test { [[
-native @pure _f();
-native _v;
-native do
-    int v = 1;
-    int f (int v) {
-        return v + 1;
-    }
-end
-escape _f(_v);
-]],
-    --fin = 'line 3 : call requires `finalize´',
-    run = 2,
-}
-
-
-Test { [[
-native @pure _f();
-native do
-    int* f (int a) {
-        return NULL;
-    }
-end
-var int* v = _f(0);
-escape v == null;
-]],
-    run = 1,
-}
-
-Test { [[
-native @pure _f();
-native do
-    int V = 10;
-    int f (int v) {
-        return v;
-    }
-end
-native @const _V;
-escape _f(_V);
-]],
-    run = 10;
-}
-
-Test { [[
-native _f();
-native do
-    int f (int* v) {
-        return 1;
-    }
-end
-var int v;
-escape _f(&v) == 1;
-]],
-    fin = 'line 8 : call requires `finalize´',
-}
-
-Test { [[
-native @nohold _f();
-native do
-    int f (int* v) {
-        return 1;
-    }
-end
-var int v;
-escape _f(&v) == 1;
-]],
-    run = 1,
-}
-
-Test { [[
-native _V;
-native @nohold _f();
-native do
-    int V=1;
-    int f (int* v) {
-        return 1;
-    }
-end
-var int v;
-escape _f(&v) == _V;
-]],
-    run = 1,
-}
-
-Test { [[
-input (int* p1, int* p2)=>void F;
-do
-    var int* p1 = null;
-    do
-        var int* p2 = null;
-        call F => (p1, p2);
-    end
-end
-escape 1;
-]],
-    fin = 'line 6 : invalid call (multiple scopes)',
-}
-do return end
-
--- TODO: finalize not required
-Test { [[
-native do
-    #define ceu_out_call_VVV(x) x
-end
-
-output (int n)=>int VVV;
-var int v;
-finalize
-    v = (call VVV => 10);
-with
-    nothing;
-end
-escape v;
-]],
-    run = 10,
-}
-
--- TODO: finalize required
-Test { [[
-native do
-    #define ceu_out_call_MALLOC(x) NULL
-end
-
-output (int n)=>void* MALLOC;
-var char* buf;
-buf = (call MALLOC => 10);
-escape 1;
-]],
-    run = 1,
-}
-
--- TODO: finalize required
-Test { [[
-native do
-    #define ceu_out_call_SEND(x) 0
-end
-
-output (char* buf)=>void SEND;
-var char[255] buf;
-call SEND => buf;
-escape 1;
-]],
-    run = 1,
-}
-
--- TODO: finalize required
-Test { [[
-native/pre do
-    typedef struct {
-        int a,b,c;
-    } F;
-end
-native do
-    F* f;
-    #define ceu_out_call_OPEN(x) f
-end
-output (char* path, char* mode)=>_F* OPEN;
-
-// Default device
-var _F[] f;
-    f = (call OPEN => ("/boot/rpi-boot.cfg", "r"));
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-output (char* path, char* mode)=>_F* OPEN;
-output (_F* f)=>int CLOSE;
-output (_F* f)=>int SIZE;
-output (void* ptr, int size, int nmemb, _F* f)=>int READ;
-
-// Default device
-var _F[] f;
-finalize
-    f = (call OPEN => ("/boot/rpi-boot.cfg", "r"));
-with
-    call CLOSE => f;
-end
-
-if f == null then
-    await FOREVER;
-end
-
-var int flen = (call SIZE => f);
-//char *buf = (char *)malloc(flen+1);
-var char[255] buf;
-buf[flen] = 0;
-call READ => (buf, 1, flen, f);
-
-#define GPFSEL1 ((uint*)0x20200004)
-#define GPSET0  ((uint*)0x2020001C)
-#define GPCLR0  ((uint*)0x20200028)
-var uint ra;
-ra = *GPFSEL1;
-ra = ra & ~(7<<18);
-ra = ra | 1<<18;
-*GPFSEL1 = ra;
-
-var char* orig = "multiboot";
-
-loop do
-    loop i in 9 do
-        if buf[i] != orig[i] then
-            await FOREVER;
-        end
-        *GPCLR0 = 1<<16;
-        await 1s;
-        *GPSET0 = 1<<16;
-        await 1s;
-    end
-end
-]],
-    run = 1,
-    --todo = 'finalize is lost!',
-}
-
-Test { [[
-var int[10] vec1;
-
-class T with
-    var int*& vec2;
-do
-    this.vec2[0] = 10;
-end
-
-vec1[0] = 0;
-
-var T t with
-    this.vec2 = outer.vec1;
-end;
-
-escape vec1[0];
-]],
-    run = 10,
-}
-
--------------------------------------------------------------------------------
-
-do return end
-
--- TODO: BUG: type of bg_clr changes
---          should yield error
---          because it stops implementing UI
-Test { [[
-interface UI with
-    var   int&?   bg_clr;
-end
-class UIGridItem with
-   var UI* ui;
-do
-    watching ui do
-        await FOREVER;
-    end
-end
-class UIGrid with
-    interface UI;
-    var   int&?    bg_clr = nil;
-    pool UIGridItem[] uis;
-do
-end
-
-var UIGrid g1;
-var UIGrid g2;
-spawn UIGridItem in g1.uis with
-    this.ui = &g2;
-end;
-
-escape 1;
-]],
-    run = 1,
-}
-do return end
-Test { [[
-interface UI with
-end
-class UIGridItem with
-   var UI* ui;
-do
-    watching ui do
-        await FOREVER;
-    end
-end
-class UIGrid with
-    interface UI;
-    pool UIGridItem[] uis;
-do
-end
-
-do
-    var UIGrid g1;
-    var UIGrid g2;
-    spawn UIGridItem in g1.uis with
-        this.ui = &g2;
-    end;
-end
-
-escape 1;
-]],
-    run = 1,
-}
-do return end
-
-Test { [[
-native do
-    typedef struct {
-        int v;
-    } tp;
-end
-class T with
-    var _tp&? i = nil;
-do
-end
-var T t;
-escape t.i==nil;
-]],
-    run = 1,
-}
-
-Test { [[
-native do
-    typedef struct {
-        int v;
-    } tp;
-    tp V = { 10 };
-end
-class T with
-    var _tp&? i = nil;
-do
-end
-var T t with
-    this.i = &_V;
-end;
-escape t.i.v;
-]],
-    run = 10,
-}
-
-Test { [[
-_assert(0);
-escape 1;
-]],
-    asr = true,
-}
-
-- BUG: do T quando ok acontece na mesma reacao
-Test { [[
-class Body with
-    pool  Body[]& bodies;
-    var   int&    sum;
-    event int     ok;
-do
-    finalize with end;
-
-    var Body* nested =
-        spawn Body in bodies with
-            this.bodies = bodies;
-            this.sum    = sum;
-        end;
-    if nested != null then
-        watching nested do
-            await nested:ok;
-        end
-        sum = sum + 1;
-    end
-    emit this.ok => 1;
-end
-
-pool Body[2] bodies;
-var  int     sum = 0;
-
-    finalize with end;
-
-do Body with
-    this.bodies = bodies;
-    this.sum    = sum;
-end;
-
-escape sum;
-]],
-    wrn = 'line 7 : unbounded recursive spawn',
-    run = 6,
-}
-
-- BUG: do T quando ok acontece na mesma reacao
-Test { [[
-data Tree with
-    tag NIL;
-with
-    tag NODE with
-        var int   v;
-        var Tree* left;
-        var Tree* right;
-    end
-end
-
-pool Tree[3] tree;
-tree = new Tree.NODE(1,
-            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
-            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
-
-class Body with
-    pool  Body[]& bodies;
-    var   Tree*   n;
-    var   int&    sum;
-    event int     ok;
-do
-    //watching n do
-        var int i = this.sum;
-        if n:NODE then
-            var Body* left =
-                spawn Body in this.bodies with
-                    this.bodies = bodies;
-                    this.n      = n:NODE.left;
-                    this.sum    = sum;
-                end;
-            //watching left do
-                await left:ok;
-            //end
-
-            this.sum = this.sum + i + n:NODE.v;
-
-            var Body* right =
-                spawn Body in this.bodies with
-                    this.bodies = bodies;
-                    this.n      = n:NODE.right;
-                    this.sum    = sum;
-                end;
-            //watching right do
-                await right:ok;
-            //end
-
-            //do/spawn Body in this.bodies with
-                //this.n = n:NODE.left;
-            //end;
-        end
-    //end
-    emit this.ok => 1;
-end
-
-var int sum = 0;
-
-pool Body[7] bodies;
-do Body with
-    this.bodies = bodies;
-    this.n      = tree;
-    this.sum    = sum;
-end;
-
-escape sum;
-
-/*
-var int sum = 0;
-loop n in tree do
-    var int i = sum;
-    if n:NODE then
-        recurse n:NODE.left;
-        sum = i + n:NODE.v;
-        recurse n:NODE.right;
-    end
-end
-escape sum;
-*/
-]],
-    wrn = 'line 26 : unbounded recursive spawn',
-    run = 999,
-}
-
--- BUG: loop between declaration and watching
-Test { [[
-class T with
-    event void e;
-do
-    await FOREVER;
-end
-
-pool T[] ts;
-
-var T*? t = spawn T in ts;
-
-loop do
-    watching *t do
-        kill *t;
-    end
-    await 1s;
-    if false then
-        break;
-    end
-end
-
-escape 1;
-]],
-    run = { ['~>1s']=10 },
-}
-
-Test { [[
-class T with
-    event void e;
-do
-    await e;
-end
-
-pool T[] ts;
-
-var int ret = 1;
-
-spawn T in ts;
-spawn T in ts;
-async do end;
-
-native @pure _printf();
-loop t1 in ts do
-    //watching *t1 do
-        loop t2 in ts do
-            watching *t1 do
-                ret = ret + 1;
-                emit t1:e;
-                ret = ret + 1;
-            end
-        end
-    //end
-end
-
-escape ret;
-]],
-    run = 3,
-}
-
----------------------
-
--- TODO: RECURSE
-
--- TODO: locals inside iter
-Test { [[
-native do
-    typedef struct tp {
-        int v;
-        struct tp* nxt;
-    } tp;
-    tp V1 = { 1, NULL };
-    tp V2 = { 2, &V1  };
-    tp VS = { 3, &V2  };
-end
-
-var int ret = 0;
-var int ii  = 0;
-
-var _tp* vs = &_VS;
-loop/3 v in vs do
-    if v != null then
-        var int i = ii;
-        ii = ii + 1;
-        recurse v:nxt;
-        ret = ret + v:v + i;
-    end
-end
-
-escape ret;
-]],
-    run = 9,
-}
--- TODO: locals inside iter
-Test { [[
-native do
-    typedef struct tp {
-        int v;
-        struct tp* nxt;
-    } tp;
-    tp V1 = { 1, NULL };
-    tp V2 = { 2, &V1  };
-    tp VS = { 3, &V2  };
-end
-
-var int ret = 0;
-var int ii  = 0;
-
-var _tp* vs = &_VS;
-loop/3 v in vs do
-    var int i = ii;
-    ii = ii + 1;
-    if v != null then
-        recurse v:nxt;
-        ret = ret + v:v + i;
-    end
-end
-
-escape ret;
-]],
-    run = 9,
-}
-
--- TODO: unbounded iter
-Test { [[
-native do
-    typedef struct tp {
-        int v;
-        struct tp* nxt;
-    } tp;
-    tp V1 = { 1, NULL };
-    tp V2 = { 2, &V1  };
-    tp VS = { 3, &V2  };
-end
-
-var int ret = 0;
-
-var _tp* vs = &_VS;
-loop v in vs do
-    if v == null then
-        break;
-    else
-        ret = ret + v:v;
-        recurse v:nxt;
-    end
-end
-
-escape ret;
-]],
-    wrn = true,
-    run = 1,
-}
-
--- TODO: precisa do watching
-Test { [[
-data Tree with
-    tag NIL;
-with
-    tag NODE with
-        var int   v;
-        var Tree* left;
-        var Tree* right;
-    end
-end
-
-pool Tree[3] t;
-t = new Tree.NODE(1,
-            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
-            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
-
-var int sum = 0;
-
-par/or do
-    loop i in t do
-        if i:NODE then
-            recurse i:NODE.left;
-            await 1s;
-            sum = sum + i:NODE.v;
-            recurse i:NODE.right;
-            await 1s;
-        end
-    end
-with
-    // 1->2->l
-    _assert(sum == 0);
-    await 1s;
-    _assert(sum == 2);
-    // 1->*->d
-    await 1s;
-    await 1s;
-    _assert(sum == 3);
-    // *->3->l
-    await 1s;
-    _assert(sum == 6);
-    // *->*->r
-    await 1s;
-    await 1s;
-    sum = 0;
-end
-
-escape sum;
-]],
-    _ana = { acc=true },
-    run = { ['~>10s']=6 },
-}
-
--- BUG: cannot contain await nao se aplica a par/or com caminho sem await
-Test { [[
-input void A,F;
-
-interface I with
-    var int v;
-    event void inc;
-end
-
-class T with
-    interface I;
-do
-    await inc;
-    this.v = v + 1;
-    await FOREVER;
-end
-pool T[] ts;
-
-var int ret = 0;
-do
-    par/or do
-        await F;
-    with
-        var int i=1;
-        every 1s do
-            spawn T in ts with
-                this.v = i;
-                i = i + 1;
-            end;
-        end
-    with
-        every 1s do
-            loop i in ts do
-                watching *i do
-                    emit i:inc;
-                    ret = ret + i:v;
-                end
-            end
-        end
-    end
-end
-escape ret;
-]],
-    run = { ['~>3s;~>F'] = 13 },
-}
-
--- TODO: como capturar o retorno de um org que termina de imediato?
--- R: option type
-Test { [[
-class T with
-do
-    escape 1;
-end
-var T*? t = spawn T;
-var int ret = -1;
-if t? then
-    ret = await *t;
-end
-escape ret;
-]],
-    run = 1,
-}
-
-- colocar de volta recurse/C que ja estao nos testes (comentados)
-- testar pool dinamico indo fora de escopo (valgrind)
-- testar tb watching c/ adt estatico
-- bounded iters
-- ADT loop w/o recurse (how to recognize the transformation to do?)
-- loop dentro de loop
-    - loop/nrm, loop/adt p/ outro dado mas mesmo tipo
-- para o par/or vai precisar de um watching do loop de fora no loop de dentro
-
----------------
-
--- BUG in acc.lua
-Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int   head;
-        var List* tail;
-    end
-end
-
-pool List[] ls;
-ls = new List.CONS(1,
-            List.CONS(2,
-                List.NIL()));
-
-loop/rec l in ls do
-    watching *l do
-        await FOREVER;
-    end
-end
-
-escape 1;
-]],
-    wrn = 'line 23 : unbounded recursive spawn',
-    run = { ['~>5s']=4 },
-}
-
 do return end
 --]===]
+-------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------
 -- OK: well tested
+----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -48850,3 +46822,1998 @@ escape app.v;
 }
 
 end
+
+do return end
+
+-------------------------------------------------------------------------------
+-- BUGS & INCOMPLETNESS
+-------------------------------------------------------------------------------
+
+-- async dentro de pause
+-- async thread spawn falhou, e ai?
+
+-- TODO: bug: what if the "o" expression contains other pointers?
+-- (below: pi)
+Test { [[
+class T with
+do
+end
+
+var T[10] ts;
+var int   i = 0;
+var int* pi = &i;
+await ts[*pi];
+escape 1;
+]],
+    fin = 'line 8 : pointer access across `await´',
+}
+-- should disallow passing pointers through internal events
+Test { [[
+input void OS_START;
+event int* e;
+var int ret = 0;
+par/or do
+    do
+        var int x = 2;
+        par/or do
+            await OS_START;
+            emit e => &x;
+        with
+            await e;
+        end
+    end
+    do
+        var int x = 1;
+        await 1s;
+        ret = x;
+    end
+with
+    var int* v = await e;
+    ret = *v;
+end
+escape ret;
+]],
+    run = 2,
+}
+
+-- use of global before its initialization
+Test { [[
+interface Global with
+    var int& v;
+end
+
+class T with
+    var int v;
+do
+    this.v = global:v;
+end
+var T t;
+
+var int  um = 111;
+var int& v = um;
+escape t.v;
+]],
+    run = 111,
+}
+
+-- XXX: T-vs-Opt
+Test { [[
+class T with
+do
+end
+var T*&? t;
+finalize
+    t = _malloc(10 * sizeof(T**));
+with
+    nothing;
+end
+native @nohold _free();
+finalize with
+    _free(t);
+end
+escape 10;
+]],
+    run = 10;
+}
+
+Test { [[
+input void A, B, Z;
+event void a;
+var int ret = 1;
+var _t* a;
+native _f();
+native _t = 0;
+par/or do
+    _f(a)               // 8
+        finalize with
+            ret = 1;    // DET: nested blks
+        end;
+with
+    var _t* b;
+    _f(b)               // 14
+        finalize with
+            ret = 2;    // DET: nested blocks
+        end;
+end
+escape ret;
+]],
+    _ana = {
+        acc = 2,
+    },
+    run = false,
+}
+
+Test { [[
+input void OS_START;
+event int a, x, y;
+var int ret = 0;
+par do
+    par/or do
+        await y;
+        escape 1;   // 12
+    with
+        await x;
+        escape 2;   // 15
+    end;
+with
+    await OS_START;
+    emit x => 1;       // in seq
+    emit y => 1;       // in seq
+end
+]],
+    _ana = {
+        acc = 0,
+    },
+    run = 2;
+}
+
+Test { [[
+input void OS_START;
+native _V;
+native do
+    int V = 1;
+end
+class T with
+do
+    par/or do
+        await OS_START;
+    with
+        await OS_START;    // valgrind error
+    end
+    _V = 10;
+end
+do
+    spawn T;
+    await 1s;
+end
+escape _V;
+]],
+    run = { ['~>1s']=10 },
+}
+
+Test { [[
+input int  A;
+input void Z;
+event int a;
+var int ret = 0;
+par/or do
+    loop do
+        var int v = await A;
+        emit a => v;
+    end
+with
+    pause/if a do
+        ret = await 9us;
+    end
+end
+escape ret;
+]],
+    run = {
+        ['~>1us;0~>A;~>1us;0~>A;~>19us'] = 12,
+        ['~>1us;1~>A;~>1s;0~>A;~>19us'] = 11,
+        --['~>1us;1~>A;~>5us;0~>A;~>5us;1~>A;~>5us;0~>A;~>9us'] = 6,
+-- BUG: set_min nao eh chamado apos o pause
+    },
+}
+
+Test { [[
+input void A,F;
+
+interface I with
+    var int v;
+    event void inc;
+end
+
+class T with
+    interface I;
+do
+    await inc;
+    this.v = v + 1;
+end
+
+var int ret = 0;
+do
+    par/or do
+        await F;
+    with
+        var int i=1;
+        every 1s do
+            spawn T with
+                this.v = i;
+                i = i + 1;
+            end;
+        end
+    with
+        every 1s do
+            loop i in I* do
+                emit i:inc;         // mata o org enquanto o percorre iterador
+                ret = ret + i:v;
+            end
+        end
+    end
+end
+escape ret;
+]],
+-- BUG: erro de valgrind
+    run = { ['~>3s;~>F'] = 11 },
+}
+
+-- BUG: should be: field must be assigned
+Test { [[
+var int v = 10;
+var int& i;
+
+par do
+    await 1s;
+    i = v;
+with
+    escape i;
+end
+]],
+    run = 99,
+}
+
+error 'testar pause/if org.e'
+error 'testar spawn/spawn que se mata'
+
+--do escape end
+
+-- ok: under tests but supposed to work
+
+--ERROR: #ps
+Test { [[
+input (int,int,int) EVT;
+var int a,b;
+(a,b) = await EVT;
+escape 1;
+]],
+    run = 1,
+}
+-- ERROR: defs.h before host code
+-- makes sense: how an external component would know about a
+-- type defined in Ceu?
+Test { [[
+native do
+    typedef int t;
+end
+input (_t,int) EVT;
+escape 1;
+]],
+    run = 1,
+}
+
+-- ERROR: parse (typecast)
+Test { [[
+if ( _transaction ) then
+    _coap_send_transaction(_transaction);
+end
+]],
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+event (int,void*) ptr;
+var int* p;
+var int i;
+par/or do
+    (i,p) = await ptr;
+with
+    do
+        var int b = 1;
+        await OS_START;
+        emit ptr => (1, &b);
+    end
+end
+escape 1;
+]],
+    run = 1,
+    -- e depois outro exemplo com fin apropriado
+    -- BUG: precisa transformar emit x=>1 em p=1;emit x
+}
+
+Test { [[
+native do
+    int V = 0;
+end
+
+class T with
+do
+    _V = 10;
+    finalize with
+        _V = 100;   // TODO: deveria executar qd "var T t" sai de escopo
+    end
+end
+
+var T t;
+_assert(_V == 10);
+escape _V;
+]],
+    run = 100,
+}
+
+Test { [[
+function () => void f;
+escape 1;
+]],
+    run = 1,
+}
+
+-- TODO: fails on valgrind, fails on OS
+-- put back to XXXX
+Test { [[
+native _V;
+input void A, F, OS_START;
+native do
+    int V = 0;
+end
+class T with
+    event void e, ok;
+    var int v;
+do
+    finalize with
+        _V = _V + 1;        // * writes before
+    end
+    v = 1;
+    await A;
+    v = v + 3;
+    emit e;
+    emit ok;
+end
+await OS_START;
+var int ret;
+do
+    var T t;
+    par/or do
+        do                  // 24
+            finalize with
+                _V = _V*10;
+            end
+            await t.ok;
+        end
+    with
+        await t.e;          // 31
+        t.v = t.v * 3;
+    with
+        await F;
+        t.v = t.v * 5;
+    end
+    ret = t.v;
+end
+escape ret + _V;        // * reads after
+]],
+    _ana = {
+        abrt = 1,        -- false positive
+    },
+    run = {
+        ['~>F'] = 6,
+        ['~>A'] = 13,
+    }
+}
+
+-- TODO_TYPECAST (search and replace)
+Test { [[
+class T with
+do
+end
+// TODO: "typecast" esconde "call", finalization nao acha que eh call
+var T** t := (T**)_malloc(10 * sizeof(T**));
+native @nohold _free();
+finalize with
+    _free(t);
+end
+escape 10;
+]],
+    run = 10;
+}
+
+-- varlist to iter
+Test { [[
+interface I with
+    var int v;
+end
+class T with
+    interface I;
+do
+end
+pool T[1] ts;
+var T a with
+    a.v = 15;
+end
+var int ret = 0;
+ret = ret + spawn T[ts] with
+                this.v = 10;
+            end;
+ret = ret + spawn T[ts];
+loop i in (I*)(ts in a) do
+    ret = ret + i:v;
+end
+escape 26;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+    var void* ptr = null;
+do
+end
+var T* ui;
+do
+    pool T[] ts;
+    var void* p = null;
+    ui = spawn T in ts with // ui > ts (should require fin)
+        this.ptr = p;
+    end;
+end
+escape 10;
+]],
+    run = 1,
+}
+
+--[=[
+-- POSSIBLE PROBLEMS FOR UNITIALIZED VAR
+
+Test { [[
+var int r;
+var int* pr = &r;
+async(pr) do
+    var int i = 100;
+    *pr = i;
+end;
+escape r;
+]],
+    run=100
+}
+
+Test { [[
+var int a;
+par/or do
+    await 1s;
+    a = 1;
+with
+end
+escape a;
+]],
+    run = 10,
+}
+
+Test { [[
+var int[2] v ;
+_f(v)
+escape v == &v[0] ;
+]],
+    run = 1,
+}
+
+Test { [[
+native @nohold _strncpy(), _printf(), _strlen();
+native _char = 1;
+var _char[10] str;
+_strncpy(str, "123", 4);
+_printf("END: %d %s\n", (int)_strlen(str), str);
+escape 0;
+]],
+    run = '3 123'
+}
+
+Test { [[
+var int a;
+a = do
+    var int b;
+end;
+]],
+
+Test { [[
+class T with
+    var int* a1;
+do
+    var int* a2 = a1;
+end
+escape 10;
+]],
+    run = 10,
+}
+
+}
+
+]=]
+
+-------------------------------------------------------------------------------
+
+-- TODO: should require finalization
+Test { [[
+class T with
+    var _int to;
+do
+end
+
+var _int to = 1;
+
+var T move with
+    this.to = to;  // TODO: := ??
+end;
+
+escape move.to;
+]],
+    run = 1,
+}
+
+-- TODO: I[100]
+Test { [[
+interface I with
+    var int v;
+end
+
+class T with
+    interface I;
+do
+    await FOREVER;
+end
+
+pool I[100] is;
+
+var int ret = 0;
+
+spawn T with
+    this.v = 1;
+end;
+
+spawn T in is with
+    this.v = 3;
+end;
+
+loop i in is do
+    ret = ret + i:v;
+end
+
+escape ret;
+]],
+    run = 3,
+}
+
+-- TODO: spawn wrong type
+Test { [[
+interface I with
+    var int v;
+    event void inc;
+end
+
+class T with
+    interface I;
+do
+    await FOREVER;
+end
+pool I[] is;
+
+class U with
+    var int z;
+    var int v;
+do
+    await FOREVER;
+end
+
+var int ret = 0;
+do
+    spawn T with
+        this.v = 1;
+    end;
+    spawn U in is with
+        this.v = 2;
+    end;
+    spawn T in is with
+        this.v = 3;
+    end;
+
+    loop i in is do
+        ret = ret + i:v;
+    end
+end
+escape ret;
+]],
+    run = 5,
+}
+
+-- U[10] vs U[] mismatch
+Test { [[
+class U with do end;
+
+interface I with
+    pool U[10] us;
+end
+
+interface Global with
+    interface I;
+end
+pool U[]  us;
+
+class T with
+    pool U[10] us;
+    interface I;
+do
+    spawn U in global:us;
+end
+
+spawn U in us;
+spawn U in global:us;
+
+pool U[1] us1;
+spawn U in us1;
+
+var T t;
+spawn U in t.us;
+
+var I* i = &t;
+spawn U in i:us;
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+-- TODO: invalid pointer access
+Test { [[
+var int* ptr = null;
+loop i in 100 do
+    await 1s;
+    var int* p;
+    if (ptr != null) then
+        p = ptr;
+    end
+    ptr = p;
+end
+escape 10;
+]],
+    --loop = true,
+    fin = 'line 5 : invalid pointer "ptr"',
+}
+
+-- TODO: t.v // T.v
+Test { [[
+class T with
+    var int v;
+do
+    v = 1;
+end
+var T t;
+t.v = 10;
+escape t.v;
+]],
+    run = 10,
+}
+
+-- global vs assert??
+Test { [[
+interface Global with
+    event void e;
+end
+event void e;
+par/or do
+    emit global:e;
+with
+    _assert(0);
+end
+escape 1;
+]],
+    run = 1,
+}
+
+-- this vs _iter??
+Test { [[
+interface I with
+    var int v;
+end
+
+class T with
+    interface I;
+do
+    this.v = 1;
+end
+pool T[] ts;
+
+par/or do
+    spawn T in ts with
+    end;
+with
+    loop i in ts do
+    end
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
+-- TODO: spawn vs watching impossible
+Test { [[
+class T with
+do
+end
+
+par/and do
+    pool T[] ts;
+    var T* t = spawn T in ts with
+    end;
+with
+    var T* p;
+    watching p do
+    end
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
+-- TODO: explicit interface implementations only
+Test { [[
+interface I with
+    var int v;
+end
+
+class T with
+    var int u,v,x;
+do
+end
+
+class U with
+    var int v;
+do
+end
+
+class V with
+    var int v;
+do
+    pool I[10] is;
+    spawn T in is;
+    spawn U in is;
+end
+
+pool I[10] is;
+
+spawn T in is;
+spawn U in is;
+spawn V in is;
+
+escape sizeof(CEU_T) > sizeof(CEU_U);
+]],
+    run = 1,
+}
+
+-- TODO: not "awake once" for await-until
+Test { [[
+input void OS_START;
+event int v;
+par do
+    var int x;
+    x = await v until x == 10;
+    escape 10;
+with
+    await OS_START;
+    emit v => 0;
+    emit v => 1;
+    emit v => 10;
+    await FOREVER;
+end
+]],
+    run = 10;
+}
+
+-------------------------------------------------------------------------------
+Test { [[
+input void    START,   STOP;
+input _pkt_t* RECEIVE, SENDACK;
+
+native @nohold _memcpy(), _send_dequeue(), _pkt_setRoute(), _pkt_setContents(), 
+_receive();
+
+class Forwarder with
+   var _pkt_t pkt;
+   event void ok;
+do
+   loop do
+      var bool enq;
+      enq = _send_enqueue(&pkt)
+            finalize with
+               _send_dequeue(&pkt);
+            end;
+      if not enq then
+         await (_rand()%100)ms;
+         continue;
+      end
+      var _pkt_t* done;
+      done = await SENDACK
+             until (done == &pkt);
+      break;
+   end
+   emit this.ok;
+end
+
+class Client with
+do
+   loop seq do
+      par/and do
+         await 1min;
+      with
+         do Forwarder with
+            _pkt_setRoute(&this.pkt, seq);
+            _pkt_setContents(&this.pkt, seq);
+         end;
+      end
+   end
+end
+
+loop do
+   await START;
+   par/or do
+      await STOP;
+   with
+      pool Forwarder[10] forwarders;
+      var  Client   [10] clients;
+
+      var _pkt_t* pkt;
+      every pkt in RECEIVE do
+         if pkt:left == 0 then
+            _receive(pkt);
+         else
+            pkt:left = pkt:left - 1;
+            spawn Forwarder with
+               _memcpy(&this.pkt, pkt, pkt:len);
+            end;
+         end
+      end
+   end
+end
+]],
+    run = 0,
+}
+
+Test { [[
+input int* A;
+par/or do
+    var int* snd = await A;
+    *snd = *snd;
+    await FOREVER;
+with
+    var int* snd =
+        await A
+            until *snd == 1;
+    escape *snd;
+with
+    async do
+        var int i = 2;
+        emit A => &i;
+        i = 1;
+        emit A => &i;
+    end
+end
+escape 0;
+]],
+    _ana = {
+        acc = 4,
+    },
+    run = 1;
+}
+do return end
+
+Test { [[
+class Rect with
+do
+    await FOREVER;
+end
+
+if false then
+    interface Bird with end
+    var Bird* ptr = null;
+    watching ptr do end
+else
+    pool Rect[257] rs;
+    loop i in 257 do
+        spawn Rect in rs;
+    end
+end
+
+escape 10;
+]],
+    run = 10,
+}
+do return end
+
+Test { [[
+class T with do end;
+pool T[] ts;
+loop t in ts do
+    await 1s;
+end
+escape 1;
+]],
+    props = 'line 4 : `every´ cannot contain `await´',
+}
+
+Test { [[
+interface I with
+end
+class T with
+    interface I;
+do end
+do
+    pool T[] ts;
+    loop i in ts do
+        await 1s;
+    end
+end
+escape 1;
+]],
+    props = 'line 9 : `every´ cannot contain `await´',
+}
+
+Test { [[
+interface I with
+    var int v;
+end
+
+var I* i=null;
+
+par/or do
+    await 1s;
+with
+    watching i do
+        await 1s;
+        var int v = i:v;
+    end
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
+--BUG de "&" para org across await
+
+-- TODO: (_XXX) eh um cast => msg melhor!
+Test { [[
+if (_XXX) then
+end
+]],
+    run = 1,
+}
+
+-- PROCURAR XXX e recolocar tudo ate o ok la
+
+Test { [[
+input (int a)=>int F do
+    return a + 1;
+end
+var int ret = call F=>1;
+escape ret;
+]],
+    run = 2,
+}
+
+Test { [[
+input (int c)=>int WRITE do
+    return c + 1;
+end
+var byte b = 1;
+var int ret = call WRITE => b;
+escape ret;
+]],
+    run = 2,
+}
+
+Test { [[
+input (int a, int b)=>int F do
+    return a + b;
+end
+var int ret = call F=>(1,2);
+escape ret;
+]],
+    run = 3,
+}
+
+Test { [[
+native/pre do
+    typedef int lua_State;
+    void lua_pushnil (lua_State* l) {}
+end
+
+input (_lua_State* l)=>void PUSHNIL do
+    _lua_pushnil(l);
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input (char* str, int len, int x, int y)=>int DRAW_STRING do
+    return x + y + len;
+end
+
+var int ret = call DRAW_STRING => ("Welcome to Ceu/OS!\n", 20, 100, 100);
+
+escape ret;
+]],
+    run = 220,
+}
+
+Test { [[
+input (void)=>void* MALLOC;
+var void* ptr = (call MALLOC);
+]],
+    fin = 'line 2 : destination pointer must be declared with the `[]´ buffer modifier',
+}
+
+Test { [[
+input (void)=>void* MALLOC;
+var void[] ptr = (call MALLOC);
+]],
+    fin = 'line 2 : attribution requires `finalize´',
+}
+
+Test { [[
+input (void)=>void* MALLOC;
+var void[] ptr;
+finalize
+    ptr = (call MALLOC);
+with
+end
+escape 1;
+]],
+    code = 'line 1 : missing function body',
+}
+
+Test { [[
+input (int,int)=>void* MALLOC;
+var void[] ptr;
+finalize
+    ptr = (call MALLOC=>(1,1));
+with
+end
+escape 1;
+]],
+    code = 'line 1 : missing function body',
+}
+
+Test { [[
+input (int,int)=>int MALLOC;
+var int v;
+finalize
+    v = (call MALLOC=>(1,1));
+with
+end
+escape 1;
+]],
+    fin = 'line 4 : attribution does not require `finalize´',
+}
+
+Test { [[
+input (int a, int b, void* ptr)=>void* MALLOC do
+    if a+b == 11 then
+        return ptr;
+    else
+        return null;
+    end
+end
+
+var int i;
+var void[] ptr;
+finalize
+    ptr = (call MALLOC=>(10,1, &i));
+with
+end
+escape ptr==&i;
+]],
+    run = 1,
+}
+Test { [[
+input (int a, int b, void* ptr)=>void* MALLOC do
+    if a+b == 11 then
+        return ptr;
+    else
+        return null;
+    end
+end
+
+var int i;
+var void[] ptr;
+finalize
+    ptr = (call MALLOC=>(1,1, &i));
+with
+end
+escape ptr==null;
+]],
+    run = 1,
+}
+
+Test { [[
+input (void)=>void* MALLOC;
+native _f();
+do
+    var void* a;
+    finalize
+        a = (call MALLOC);
+    with
+        do await FOREVER; end;
+    end
+end
+]],
+    fin = 'line 6 : destination pointer must be declared with the `[]´ buffer modifier',
+}
+
+Test { [[
+input (void* v)=>void F do
+    _V = v;
+end
+escape 1;
+]],
+    fin = 'line 2 : attribution to pointer with greater scope',
+}
+
+Test { [[
+input (void* v)=>void F do
+    _V := v;
+end
+escape 1;
+]],
+    fin = 'line 2 : parameter must be `hold´',
+}
+
+Test { [[
+native do
+    void* V;
+end
+input (@hold void* v)=>void F do
+    _V := v;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input (char* buf)=>void F do
+end;
+var char* buf;
+call F => (buf);
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input (char* buf, int i)=>void F do
+end;
+var char* buf;
+call F => (buf, 1);
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input (void)=>void F do
+end;
+var char* buf;
+call F;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input (char* buf)=>void F do
+end;
+var char* buf;
+call F => buf;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input (@hold char* buf)=>void F do
+end;
+var char* buf;
+call F => buf;
+escape 1;
+]],
+    fin = 'line 2 : call requires `finalize´',
+}
+
+Test { [[
+var char[255] buf;
+_enqueue(buf);
+escape 1;
+]],
+    fin = 'line 2 : call requires `finalize´',
+}
+
+Test { [[
+native _f();
+do
+    var int* p1 = null;
+    do
+        var int* p2 = null;
+        _f(p1, p2);
+    end
+end
+escape 1;
+]],
+    wrn = true,
+    fin = 'line 6 : call requires `finalize´',
+    -- multiple scopes
+}
+
+Test { [[
+native _f();
+native _v;
+native do
+    int v = 1;
+    int f (int v) {
+        return v + 1;
+    }
+end
+escape _f(_v);
+]],
+    --fin = 'line 3 : call requires `finalize´',
+    run = 2,
+    --fin = 'line 9 : attribution requires `finalize´',
+}
+Test { [[
+native @pure _f();
+native _v;
+native do
+    int v = 1;
+    int f (int v) {
+        return v + 1;
+    }
+end
+escape _f(_v);
+]],
+    --fin = 'line 3 : call requires `finalize´',
+    run = 2,
+}
+
+
+Test { [[
+native @pure _f();
+native do
+    int* f (int a) {
+        return NULL;
+    }
+end
+var int* v = _f(0);
+escape v == null;
+]],
+    run = 1,
+}
+
+Test { [[
+native @pure _f();
+native do
+    int V = 10;
+    int f (int v) {
+        return v;
+    }
+end
+native @const _V;
+escape _f(_V);
+]],
+    run = 10;
+}
+
+Test { [[
+native _f();
+native do
+    int f (int* v) {
+        return 1;
+    }
+end
+var int v;
+escape _f(&v) == 1;
+]],
+    fin = 'line 8 : call requires `finalize´',
+}
+
+Test { [[
+native @nohold _f();
+native do
+    int f (int* v) {
+        return 1;
+    }
+end
+var int v;
+escape _f(&v) == 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native _V;
+native @nohold _f();
+native do
+    int V=1;
+    int f (int* v) {
+        return 1;
+    }
+end
+var int v;
+escape _f(&v) == _V;
+]],
+    run = 1,
+}
+
+Test { [[
+input (int* p1, int* p2)=>void F;
+do
+    var int* p1 = null;
+    do
+        var int* p2 = null;
+        call F => (p1, p2);
+    end
+end
+escape 1;
+]],
+    fin = 'line 6 : invalid call (multiple scopes)',
+}
+do return end
+
+-- TODO: finalize not required
+Test { [[
+native do
+    #define ceu_out_call_VVV(x) x
+end
+
+output (int n)=>int VVV;
+var int v;
+finalize
+    v = (call VVV => 10);
+with
+    nothing;
+end
+escape v;
+]],
+    run = 10,
+}
+
+-- TODO: finalize required
+Test { [[
+native do
+    #define ceu_out_call_MALLOC(x) NULL
+end
+
+output (int n)=>void* MALLOC;
+var char* buf;
+buf = (call MALLOC => 10);
+escape 1;
+]],
+    run = 1,
+}
+
+-- TODO: finalize required
+Test { [[
+native do
+    #define ceu_out_call_SEND(x) 0
+end
+
+output (char* buf)=>void SEND;
+var char[255] buf;
+call SEND => buf;
+escape 1;
+]],
+    run = 1,
+}
+
+-- TODO: finalize required
+Test { [[
+native/pre do
+    typedef struct {
+        int a,b,c;
+    } F;
+end
+native do
+    F* f;
+    #define ceu_out_call_OPEN(x) f
+end
+output (char* path, char* mode)=>_F* OPEN;
+
+// Default device
+var _F[] f;
+    f = (call OPEN => ("/boot/rpi-boot.cfg", "r"));
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+output (char* path, char* mode)=>_F* OPEN;
+output (_F* f)=>int CLOSE;
+output (_F* f)=>int SIZE;
+output (void* ptr, int size, int nmemb, _F* f)=>int READ;
+
+// Default device
+var _F[] f;
+finalize
+    f = (call OPEN => ("/boot/rpi-boot.cfg", "r"));
+with
+    call CLOSE => f;
+end
+
+if f == null then
+    await FOREVER;
+end
+
+var int flen = (call SIZE => f);
+//char *buf = (char *)malloc(flen+1);
+var char[255] buf;
+buf[flen] = 0;
+call READ => (buf, 1, flen, f);
+
+#define GPFSEL1 ((uint*)0x20200004)
+#define GPSET0  ((uint*)0x2020001C)
+#define GPCLR0  ((uint*)0x20200028)
+var uint ra;
+ra = *GPFSEL1;
+ra = ra & ~(7<<18);
+ra = ra | 1<<18;
+*GPFSEL1 = ra;
+
+var char* orig = "multiboot";
+
+loop do
+    loop i in 9 do
+        if buf[i] != orig[i] then
+            await FOREVER;
+        end
+        *GPCLR0 = 1<<16;
+        await 1s;
+        *GPSET0 = 1<<16;
+        await 1s;
+    end
+end
+]],
+    run = 1,
+    --todo = 'finalize is lost!',
+}
+
+Test { [[
+var int[10] vec1;
+
+class T with
+    var int*& vec2;
+do
+    this.vec2[0] = 10;
+end
+
+vec1[0] = 0;
+
+var T t with
+    this.vec2 = outer.vec1;
+end;
+
+escape vec1[0];
+]],
+    run = 10,
+}
+
+-------------------------------------------------------------------------------
+
+do return end
+
+-- TODO: BUG: type of bg_clr changes
+--          should yield error
+--          because it stops implementing UI
+Test { [[
+interface UI with
+    var   int&?   bg_clr;
+end
+class UIGridItem with
+   var UI* ui;
+do
+    watching ui do
+        await FOREVER;
+    end
+end
+class UIGrid with
+    interface UI;
+    var   int&?    bg_clr = nil;
+    pool UIGridItem[] uis;
+do
+end
+
+var UIGrid g1;
+var UIGrid g2;
+spawn UIGridItem in g1.uis with
+    this.ui = &g2;
+end;
+
+escape 1;
+]],
+    run = 1,
+}
+do return end
+Test { [[
+interface UI with
+end
+class UIGridItem with
+   var UI* ui;
+do
+    watching ui do
+        await FOREVER;
+    end
+end
+class UIGrid with
+    interface UI;
+    pool UIGridItem[] uis;
+do
+end
+
+do
+    var UIGrid g1;
+    var UIGrid g2;
+    spawn UIGridItem in g1.uis with
+        this.ui = &g2;
+    end;
+end
+
+escape 1;
+]],
+    run = 1,
+}
+do return end
+
+Test { [[
+native do
+    typedef struct {
+        int v;
+    } tp;
+end
+class T with
+    var _tp&? i = nil;
+do
+end
+var T t;
+escape t.i==nil;
+]],
+    run = 1,
+}
+
+Test { [[
+native do
+    typedef struct {
+        int v;
+    } tp;
+    tp V = { 10 };
+end
+class T with
+    var _tp&? i = nil;
+do
+end
+var T t with
+    this.i = &_V;
+end;
+escape t.i.v;
+]],
+    run = 10,
+}
+
+Test { [[
+_assert(0);
+escape 1;
+]],
+    asr = true,
+}
+
+-- BUG: do T quando ok acontece na mesma reacao
+Test { [[
+class Body with
+    pool  Body[]& bodies;
+    var   int&    sum;
+    event int     ok;
+do
+    finalize with end;
+
+    var Body* nested =
+        spawn Body in bodies with
+            this.bodies = bodies;
+            this.sum    = sum;
+        end;
+    if nested != null then
+        watching nested do
+            await nested:ok;
+        end
+        sum = sum + 1;
+    end
+    emit this.ok => 1;
+end
+
+pool Body[2] bodies;
+var  int     sum = 0;
+
+    finalize with end;
+
+do Body with
+    this.bodies = bodies;
+    this.sum    = sum;
+end;
+
+escape sum;
+]],
+    wrn = 'line 7 : unbounded recursive spawn',
+    run = 6,
+}
+
+-- BUG: do T quando ok acontece na mesma reacao
+Test { [[
+data Tree with
+    tag NIL;
+with
+    tag NODE with
+        var int   v;
+        var Tree* left;
+        var Tree* right;
+    end
+end
+
+pool Tree[3] tree;
+tree = new Tree.NODE(1,
+            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
+            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+
+class Body with
+    pool  Body[]& bodies;
+    var   Tree*   n;
+    var   int&    sum;
+    event int     ok;
+do
+    //watching n do
+        var int i = this.sum;
+        if n:NODE then
+            var Body* left =
+                spawn Body in this.bodies with
+                    this.bodies = bodies;
+                    this.n      = n:NODE.left;
+                    this.sum    = sum;
+                end;
+            //watching left do
+                await left:ok;
+            //end
+
+            this.sum = this.sum + i + n:NODE.v;
+
+            var Body* right =
+                spawn Body in this.bodies with
+                    this.bodies = bodies;
+                    this.n      = n:NODE.right;
+                    this.sum    = sum;
+                end;
+            //watching right do
+                await right:ok;
+            //end
+
+            //do/spawn Body in this.bodies with
+                //this.n = n:NODE.left;
+            //end;
+        end
+    //end
+    emit this.ok => 1;
+end
+
+var int sum = 0;
+
+pool Body[7] bodies;
+do Body with
+    this.bodies = bodies;
+    this.n      = tree;
+    this.sum    = sum;
+end;
+
+escape sum;
+
+/*
+var int sum = 0;
+loop n in tree do
+    var int i = sum;
+    if n:NODE then
+        recurse n:NODE.left;
+        sum = i + n:NODE.v;
+        recurse n:NODE.right;
+    end
+end
+escape sum;
+*/
+]],
+    wrn = 'line 26 : unbounded recursive spawn',
+    run = 999,
+}
+
+-- BUG: loop between declaration and watching
+Test { [[
+class T with
+    event void e;
+do
+    await FOREVER;
+end
+
+pool T[] ts;
+
+var T*? t = spawn T in ts;
+
+loop do
+    watching *t do
+        kill *t;
+    end
+    await 1s;
+    if false then
+        break;
+    end
+end
+
+escape 1;
+]],
+    run = { ['~>1s']=10 },
+}
+
+Test { [[
+class T with
+    event void e;
+do
+    await e;
+end
+
+pool T[] ts;
+
+var int ret = 1;
+
+spawn T in ts;
+spawn T in ts;
+async do end;
+
+native @pure _printf();
+loop t1 in ts do
+    //watching *t1 do
+        loop t2 in ts do
+            watching *t1 do
+                ret = ret + 1;
+                emit t1:e;
+                ret = ret + 1;
+            end
+        end
+    //end
+end
+
+escape ret;
+]],
+    run = 3,
+}
+
+---------------------
+
+-- TODO: RECURSE
+
+-- TODO: locals inside iter
+Test { [[
+native do
+    typedef struct tp {
+        int v;
+        struct tp* nxt;
+    } tp;
+    tp V1 = { 1, NULL };
+    tp V2 = { 2, &V1  };
+    tp VS = { 3, &V2  };
+end
+
+var int ret = 0;
+var int ii  = 0;
+
+var _tp* vs = &_VS;
+loop/3 v in vs do
+    if v != null then
+        var int i = ii;
+        ii = ii + 1;
+        recurse v:nxt;
+        ret = ret + v:v + i;
+    end
+end
+
+escape ret;
+]],
+    run = 9,
+}
+-- TODO: locals inside iter
+Test { [[
+native do
+    typedef struct tp {
+        int v;
+        struct tp* nxt;
+    } tp;
+    tp V1 = { 1, NULL };
+    tp V2 = { 2, &V1  };
+    tp VS = { 3, &V2  };
+end
+
+var int ret = 0;
+var int ii  = 0;
+
+var _tp* vs = &_VS;
+loop/3 v in vs do
+    var int i = ii;
+    ii = ii + 1;
+    if v != null then
+        recurse v:nxt;
+        ret = ret + v:v + i;
+    end
+end
+
+escape ret;
+]],
+    run = 9,
+}
+
+-- TODO: unbounded iter
+Test { [[
+native do
+    typedef struct tp {
+        int v;
+        struct tp* nxt;
+    } tp;
+    tp V1 = { 1, NULL };
+    tp V2 = { 2, &V1  };
+    tp VS = { 3, &V2  };
+end
+
+var int ret = 0;
+
+var _tp* vs = &_VS;
+loop v in vs do
+    if v == null then
+        break;
+    else
+        ret = ret + v:v;
+        recurse v:nxt;
+    end
+end
+
+escape ret;
+]],
+    wrn = true,
+    run = 1,
+}
+
+-- TODO: precisa do watching
+Test { [[
+data Tree with
+    tag NIL;
+with
+    tag NODE with
+        var int   v;
+        var Tree* left;
+        var Tree* right;
+    end
+end
+
+pool Tree[3] t;
+t = new Tree.NODE(1,
+            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
+            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+
+var int sum = 0;
+
+par/or do
+    loop i in t do
+        if i:NODE then
+            recurse i:NODE.left;
+            await 1s;
+            sum = sum + i:NODE.v;
+            recurse i:NODE.right;
+            await 1s;
+        end
+    end
+with
+    // 1->2->l
+    _assert(sum == 0);
+    await 1s;
+    _assert(sum == 2);
+    // 1->*->d
+    await 1s;
+    await 1s;
+    _assert(sum == 3);
+    // *->3->l
+    await 1s;
+    _assert(sum == 6);
+    // *->*->r
+    await 1s;
+    await 1s;
+    sum = 0;
+end
+
+escape sum;
+]],
+    _ana = { acc=true },
+    run = { ['~>10s']=6 },
+}
+
+-- BUG: cannot contain await nao se aplica a par/or com caminho sem await
+Test { [[
+input void A,F;
+
+interface I with
+    var int v;
+    event void inc;
+end
+
+class T with
+    interface I;
+do
+    await inc;
+    this.v = v + 1;
+    await FOREVER;
+end
+pool T[] ts;
+
+var int ret = 0;
+do
+    par/or do
+        await F;
+    with
+        var int i=1;
+        every 1s do
+            spawn T in ts with
+                this.v = i;
+                i = i + 1;
+            end;
+        end
+    with
+        every 1s do
+            loop i in ts do
+                watching *i do
+                    emit i:inc;
+                    ret = ret + i:v;
+                end
+            end
+        end
+    end
+end
+escape ret;
+]],
+    run = { ['~>3s;~>F'] = 13 },
+}
+
+-- TODO: como capturar o retorno de um org que termina de imediato?
+-- R: option type
+Test { [[
+class T with
+do
+    escape 1;
+end
+var T*? t = spawn T;
+var int ret = -1;
+if t? then
+    ret = await *t;
+end
+escape ret;
+]],
+    run = 1,
+}
