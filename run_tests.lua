@@ -254,7 +254,7 @@ end
         print(source)
         go(source, T.run)
     else
-        local par = (T.awaits and T.awaits>0 and 'par') or 'par/or'
+        local par = 'par'--(T.awaits and T.awaits>0 and 'par') or 'par/or'
         source =
             par .. [[ do
                 ]]..source..[[

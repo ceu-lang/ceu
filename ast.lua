@@ -35,17 +35,22 @@ function AST.node (tag, ln, ...)
 end
 
 function AST.copy (node, ln)
+    if not AST.isNode(node) then
+        return node
+    end
+
     local ret = setmetatable({}, MT)
     local N = _N
     _N = _N + 1
+
     for k, v in pairs(node) do
         if k == '__par' then
             ret[k] = v
-        elseif AST.isNode(v) then
-            ret[k] = AST.copy(v, ln)
-            ret[k].ln = ln or ret[k].ln
         else
-            ret[k] = v
+            ret[k] = AST.copy(v, ln)
+            if AST.isNode(v) then
+                ret[k].ln = ln or ret[k].ln
+            end
         end
     end
     ret.n = N
