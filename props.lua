@@ -46,7 +46,7 @@ local NO_fun = {
 
 local NO_fin = {
     Finalize=true, Finally=true,
-    Host=true, Escape=true, Async=true, Thread=true,
+    Host=true, Async=true, Thread=true,
     ParEver=true, ParOr=true, ParAnd=true,
     Await=true, AwaitN=true,
     EmitInt=true,
@@ -81,10 +81,6 @@ local NO_constr = {
     Await=true, AwaitN=true,
     EmitInt=true,
     Pause=true,
-}
-
-local NO_every = {
-    Escape=true, Break=true,
 }
 
 -- Loop, SetBlock may need clear
@@ -141,12 +137,6 @@ F = {
         if NO_constr[me.tag] then
             ASR(not AST.par(me,'Dcl_constr'), me,
                     'not permitted inside a constructor')
-        end
-        if NO_every[me.tag] then
-            for loop in AST.iter'Loop' do
-                ASR(not loop.isEvery, me,
-                    'not permitted inside `every´')
-            end
         end
     end,
 
@@ -233,10 +223,12 @@ F = {
 
         NEEDS_CLR(loop)
 
-        local fin = AST.iter'Finally'()
-        ASR(not fin or fin.__depth<loop.__depth, me,
+        local fin = AST.par(me, 'Finally')
+        ASR((not fin) or AST.isParent(fin, loop), me,
                 'not permitted inside `finalize´')
-        -- TODO: same for return
+
+        ASR(not loop.isEvery, me,
+                'not permitted inside `every´')
 
         local async = AST.iter(AST.pred_async)()
         if async then
@@ -254,6 +246,14 @@ F = {
         local blk = AST.iter'SetBlock'()
         blk.rets[me] = true
         blk.has_escape = true
+
+        local fin = AST.par(me, 'Finally')
+        ASR((not fin) or AST.isParent(fin, blk), me,
+                'not permitted inside `finalize´')
+
+        local evr = AST.iter(function (me) return me.tag=='Loop' and me.isEvery end)()
+        ASR((not evr) or AST.isParent(evr,blk), me,
+                'not permitted inside `every´')
 
         NEEDS_CLR(blk)
     end,
@@ -325,8 +325,7 @@ F = {
                 ASR(me.isEvery, me,
                     '`every´ cannot contain `await´')
             elseif loop.iter_tp == 'org' then
--- TODO
-                ASR(me[1].tag=='Ext' and me[1][1]=='_ok_killed', me,
+                ASR(false, me,
                     'pool iterator cannot contain `await´')
             end
         end
@@ -340,7 +339,11 @@ F = {
             PROPS.has_wclocks = true
         end
 
-        F._loop1(me)
+        if e.tag=='Ext' and e[1]=='_ok_killed' then
+            return
+        else
+            F._loop1(me)
+        end
     end,
     AwaitN = function (me)
         F._loop1(me)

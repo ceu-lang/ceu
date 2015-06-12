@@ -8,14 +8,14 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
---do return end
 --[===[
+do return end
+--]===]
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------
 -- OK: well tested
 ----------------------------------------------------------------------------
---]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -2560,6 +2560,49 @@ end
 escape ret;
 ]],
     run = { ['~>A;~>A;~>A;~>F;~>A']=3 },
+}
+
+Test { [[
+every 1s do
+    break;
+end
+]],
+    props = 'line 2 : not permitted inside `every´',
+}
+
+Test { [[
+every 1s do
+    escape 1;
+end
+]],
+    props = 'line 2 : not permitted inside `every´',
+}
+
+Test { [[
+every 1s do
+    loop do
+        if 1 then
+            break;
+        end
+    end
+end
+]],
+    tight = 'line 2 : tight loop',
+}
+
+Test { [[
+par do
+    every 1s do
+        var int ok = do
+            escape 1;
+        end;
+    end
+with
+    await 2s;
+    escape 10;
+end
+]],
+    run = { ['~>10s'] = 10 },
 }
 
 -- CONTINUE
@@ -15093,19 +15136,25 @@ escape ret;
 
 Test { [[
 native _f();
+native do
+    int* f (void) {
+        return NULL;
+    }
+end
 var int r = 0;
 do
     var int&? a;
     finalize
         a = _f();
     with
-        var int b = do escape 2; end;       // TODO: why not?
+        var int b = do escape 2; end;
     end
     r = 1;
 end
 escape r;
 ]],
-    props = "line 8 : not permitted inside `finalize´",
+    --props = "line 8 : not permitted inside `finalize´",
+    run = 1,
 }
 
 Test { [[
@@ -17233,6 +17282,51 @@ end
 escape _V;
 ]],
     run = { ['~>SDL_REDRAW;~>SDL_REDRAW;~>SDL_REDRAW;~>1s']=114 },
+}
+
+Test { [[
+loop do
+    finalize with
+        break;
+    end
+end
+escape 1;
+]],
+    props = 'line 3 : not permitted inside `finalize´',
+}
+
+Test { [[
+finalize with
+    escape 1;
+end
+escape 1;
+]],
+    props = 'line 2 : not permitted inside `finalize´',
+}
+
+Test { [[
+finalize with
+    loop do
+        if 1 then
+            break;
+        end
+    end
+end
+escape 1;
+]],
+    tight = 'line 2 : tight loop',
+    run = 1,
+}
+
+Test { [[
+finalize with
+    var int ok = do
+        escape 1;
+    end;
+end
+escape 1;
+]],
+    run = 1,
 }
 
     -- ASYNCHRONOUS
@@ -36644,6 +36738,26 @@ do
         nothing;
     end
 end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+do
+end
+
+var T t;
+
+par/or do
+every 1s do
+    watching t do
+    end
+end
+with
+end
+
 escape 1;
 ]],
     run = 1,
