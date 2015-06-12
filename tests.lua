@@ -43962,7 +43962,7 @@ or
 end
 
 pool Widget[] widgets;
-loop/rec widget in widgets do
+traverse widget in widgets do
     watching widget do
         var int v1 = recurse widget:ROW.w1;
     end
@@ -44157,7 +44157,7 @@ escape sum;
 
 /*
 var int sum = 0;
-loop/rec n in tree do
+traverse n in tree do
     var int i = sum;
     if n:NODE then
         recurse n:NODE.left;
@@ -44192,7 +44192,7 @@ native do
 end
 
 /*
-loop/rec n in list do
+traverse n in list do
     _V = _V + 1;
     if n:CONS then
         _V = _V + n:CONS.head;
@@ -44257,7 +44257,7 @@ native do
     int V = 0;
 end
 
-loop/rec n in list do
+traverse n in list do
     _V = _V + 1;
     if n:CONS then
         _V = _V + n:CONS.head;
@@ -44320,7 +44320,7 @@ native do
     int V = 0;
 end
 
-loop/rec n in list do
+traverse n in list do
     _V = _V + 1;
     watching n do
         await 1s;
@@ -44357,7 +44357,7 @@ native do
     int V = 0;
 end
 
-loop/rec n in list do
+traverse n in list do
     _V = _V + 1;
     //watching n do
         await 1s;
@@ -44397,7 +44397,7 @@ list = new List.CONS(1,
                 List.CONS(3, List.NIL())));
 
 var int sum = 0;
-loop/rec n in list do
+traverse n in list do
     sum = sum + 1;
     watching n do
         await 1s;
@@ -44438,7 +44438,7 @@ do
                     List.CONS(3, List.NIL())));
 
     var int sum = 0;
-    loop/rec n in list do
+    traverse n in list do
         sum = sum + 1;
         watching n do
             await 1s;
@@ -44479,7 +44479,7 @@ native do
     int V = 0;
 end
 
-loop/rec n in tree do
+traverse n in tree do
     _V = _V + 1;
     watching n do
         if n:NODE then
@@ -44517,7 +44517,7 @@ native do
     int V = 0;
 end
 
-loop/rec n in tree do
+traverse n in tree do
     _V = _V + 1;
     watching n do
         if n:NODE then
@@ -44554,7 +44554,7 @@ tree = new Tree.NODE(1,
 
 var int sum = 1;
 
-loop/rec n in tree do
+traverse n in tree do
     watching n do
         if n:NODE then
             recurse n:NODE.left;
@@ -44585,7 +44585,7 @@ pool T[1] ts;
 
 var void* p1 = (void*)this;
 
-loop/rec t in ts do
+traverse t in ts do
     _assert(p1 == (void*)this);
     if t:NXT then
         recurse t:NXT.nxt;
@@ -44620,7 +44620,7 @@ class X with
     var int v1, v2, v3;
 do end
 
-loop/rec t in ts do
+traverse t in ts do
     _assert(p1 == (void*)this);
     var int v1 = 1;
     var int v3 = 0;
@@ -44660,7 +44660,7 @@ tree = new Tree.NODE(1,
 
 var int sum = 1;
 
-loop/rec n in tree do
+traverse n in tree do
     await 1s;
     watching n do
         if n:NODE then
@@ -44697,7 +44697,7 @@ tree = new Tree.NODE(1,
 var int sum = 1;
 
 do
-    loop/rec n in tree do
+    traverse n in tree do
         await 1s;
         watching n do
             if n:NODE then
@@ -44735,7 +44735,7 @@ tree = new Tree.NODE(1,
 var int sum = 1;
 
 par/and do
-    loop/rec n in tree do
+    traverse n in tree do
         watching n do
             if n:NODE then
                 await 1s;
@@ -44784,7 +44784,7 @@ native do
     int V = 0;
 end
 
-loop/rec n in list do
+traverse n in list do
     _V = _V + 1;
     if n:CONS then
         _V = _V + n:CONS.head;
@@ -44807,18 +44807,18 @@ loop do
 end
 escape 1;
 ]],
-    adj = 'line 2 : `recurse´ without `loop/rec´',
+    adj = 'line 2 : `recurse´ without `traverse´',
 }
 
 Test { [[
-loop/rec t in ts do
+traverse t in ts do
     loop do
         recurse/1 null;
     end
 end
 escape 1;
 ]],
-    adj = 'line 3 : `recurse´ without `loop/rec´',
+    adj = 'line 3 : `recurse´ without `traverse´',
 }
 
 Test { [[
@@ -44838,7 +44838,7 @@ widgets = new Widget.SEQ(
 
 var int ret = 0;
 
-loop/rec widget in widgets with
+traverse widget in widgets with
     var int param = 1;
 do
     ret = ret + param;
@@ -44885,7 +44885,7 @@ widgets = new Widget.SEQ(
 
 var int ret = 0;
 
-loop/rec widget in widgets with
+traverse widget in widgets with
     var int param = 1;
 do
     ret = ret + param;
@@ -45002,7 +45002,7 @@ with
                     Widget.V(20));
 
     var int ret =
-        loop/rec widget in widgets do
+        traverse widget in widgets do
             watching widget do
                 if widget:V then
                     await (widget:V.v)s;
@@ -45055,7 +45055,7 @@ with
                     Widget.EMPTY(),
                     Widget.EMPTY());
 
-    loop/rec widget in widgets do
+    traverse widget in widgets do
         watching widget do
             if widget:NIL then
                 await FOREVER;
@@ -45109,7 +45109,7 @@ pool List[] l;
 l = new List.CONS(1, List.EMPTY());
 
 par/or do
-    loop/rec e in l do
+    traverse e in l do
         watching e do
             if e:EMPTY then
                 await FOREVER;
@@ -45157,7 +45157,7 @@ par/or do
                 Widget.EMPTY(),
                 Widget.EMPTY());
 
-    loop/rec widget in widgets with
+    traverse widget in widgets with
         var int param = 1;
     do
         ret = ret + param;
@@ -45223,7 +45223,7 @@ widgets = new Widget.SEQ(
 var int ret = 0;
 
 par/or do
-    loop/rec widget in widgets with
+    traverse widget in widgets with
         var int param = 1;
     do
         ret = ret + param;
@@ -45292,7 +45292,7 @@ cmds = new Command.SEQUENCE(
             Command.FORWARD(500));
 
 par/or do
-    loop/rec cmd in cmds do
+    traverse cmd in cmds do
         watching cmd do
             if cmd:FORWARD then
                 await FOREVER;
@@ -45342,7 +45342,7 @@ cmds = new Command.SEQUENCE(
 par/or do
     await 100s;
 with
-    loop/rec cmd in cmds do
+    traverse cmd in cmds do
         watching cmd do
             if cmd:NOTHING then
                 nothing;
@@ -45392,7 +45392,7 @@ cmds = new Command.SEQUENCE(
 par/or do
     await 100s;
 with
-    loop/rec cmd in cmds do
+    traverse cmd in cmds do
         watching cmd do
             if cmd:NOTHING then
                 nothing;
@@ -45440,7 +45440,7 @@ do
     await 1us;
 end
 
-loop/rec cmd in cmds do
+traverse cmd in cmds do
     watching cmd do
         if cmd:NOTHING then
             nothing;
@@ -45596,7 +45596,7 @@ par/or do
 with
     var Turtle turtle;
 
-    loop/rec cmd in cmds do
+    traverse cmd in cmds do
         watching cmd do
             if cmd:NOTHING then
                 nothing;
@@ -45685,7 +45685,7 @@ cmds = new Command.REPEAT(2,
 
 var int ret = 0;
 
-loop/rec cmd in cmds do
+traverse cmd in cmds do
     watching cmd do
         if cmd:NOTHING then
             nothing;
@@ -45757,7 +45757,7 @@ cmds = new Command.REPEAT(2,
 
 var int ret = 0;
 
-loop/rec cmd in cmds do
+traverse cmd in cmds do
     watching cmd do
         if cmd:NOTHING then
             nothing;
@@ -45811,7 +45811,7 @@ var int ret = 0;
 
 native @pure _printf();
 
-loop/rec l in ls do
+traverse l in ls do
     ret = ret + 1;
     watching l do
         if l:HOLD then

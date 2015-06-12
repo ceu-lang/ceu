@@ -381,16 +381,16 @@ me.blk_body = me.blk_body or blk_body
             return  -- already recognized as in_rec
         end
 
-        -- "outer" inside "loop/rec" should refer to outer class
+        -- "outer" inside "traverse" should refer to outer class
         local cls = AST.par(me, 'Dcl_cls')
         if cls.__adj_out then
             return node('Var', me.ln, '_out')
         end
     end,
 
-    _LoopRec_pre = function (me)
+    _Traverse_pre = function (me)
         --[[
-        --  ret = loop/rec <n> in <adt> with
+        --  ret = traverse <n> in <adt> with
         --      <interface>
         --  do
         --      <body>
@@ -543,7 +543,7 @@ me.blk_body = me.blk_body or blk_body
                             node('Stmts', me.ln))
         constr = AST.asr(constr,'Block', 1,'Stmts')
 
-        -- take n-th loop/rec above
+        -- take n-th traverse above
         n = (n==false and 0) or (AST.asr(n,'NUMBER')[1])
         local it = AST.iter(
                     function (me)
@@ -556,7 +556,7 @@ me.blk_body = me.blk_body or blk_body
                 break
             end
         end
-        ASR(cls, me, '`recurse´ without `loop/rec´')
+        ASR(cls, me, '`recurse´ without `traverse´')
 
         local SET_AWAIT = node('Await', me.ln,
                             node('Op1_*', me.ln, '*',
@@ -1431,8 +1431,8 @@ me.blk_body = me.blk_body or blk_body
             rec[#rec+1] = to;
             return rec
 
-        elseif tag == '__loop-rec' then
-            local rec = AST.asr(me,'_Set', 4,'_LoopRec')
+        elseif tag == '__traverse' then
+            local rec = AST.asr(me,'_Set', 4,'_Traverse')
             assert(op == '=', 'bug found')
             rec[#rec+1] = to;
             return rec

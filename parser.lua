@@ -144,7 +144,7 @@ KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'native' + 'native/pr
      + 'pool'
      + 'watching'
 -- recurse
-     + 'loop/rec' + 'recurse'
+     + 'traverse' + 'recurse'
 --
      + P'@' * (
          P'const' + 'hold' + 'nohold' + 'plain' + 'pure' + 'rec' + 'safe'
@@ -205,7 +205,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
              + V'Finalize'
              + V'_Dcl_fun1' + V'_Dcl_ext1'
              + V'_LuaStmt'
-             + V'_LoopRec'
+             + V'_Traverse'
 
     , __LstStmt  = V'_Escape' + V'Break' + V'_Continue' + V'AwaitN' + V'Return'
     , __LstStmtB = V'ParEver' + V'_Continue'
@@ -226,7 +226,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
               + Cc'exp'        * V'__Exp'
               + Cc'lua'        * V'_LuaExp'
               + Cc'__recurse'  * V'_Recurse'
-              + Cc'__loop-rec' * V'_LoopRec'
+              + Cc'__traverse' * V'_Traverse'
               + EM'expression'
               )
 
@@ -281,16 +281,16 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , Break     = KEY'break'
     , _Continue = KEY'continue'
 
-    , _Loop   = (KEY'loop'-'loop/rec') * ('/'*EV'__Exp' + Cc(false)) *
+    , _Loop   = KEY'loop' * ('/'*EV'__Exp' + Cc(false)) *
                     (V'Var' * (EKEY'in'*EV'__Exp' + Cc(false))
                     + Cc(false)*Cc(false)) *
                 V'__Do'
 
-    , _LoopRec = KEY'loop/rec' * V'Var' * EKEY'in' * EV'__Exp'
-               * (KEY'with'*V'_BlockI' + Cc(false))
-               * V'__Do'
-    , _Recurse = KEY'recurse' * ('/'*V'NUMBER'+Cc(false)) * EV'__Exp'
-               * (KEY'with'*V'Block'*EKEY'end' + Cc(false))
+    , _Traverse = KEY'traverse' * V'Var' * EKEY'in' * EV'__Exp'
+                * (KEY'with'*V'_BlockI' + Cc(false))
+                * V'__Do'
+    , _Recurse  = KEY'recurse' * ('/'*V'NUMBER'+Cc(false)) * EV'__Exp'
+                * (KEY'with'*V'Block'*EKEY'end' + Cc(false))
 
 --[[
 loop/N i in <e-num> do

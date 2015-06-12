@@ -20,7 +20,7 @@ syn keyword cStatement  event every finalize FOREVER global if input loop nothin
 syn keyword cStatement  output pre par pause return then until var with class
 syn keyword cStatement  include interface kill spawn thread sync function
 syn keyword cStatement  escape call rec recursive isr atomic request in pool
-syn keyword cStatement  watching tag new recurse
+syn keyword cStatement  watching tag new recurse traverse
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 " A bunch of useful C keywords
