@@ -680,7 +680,7 @@ if (STK->trl->evt==CEU_IN__ORG) {
             &&   (
                    (STK->trl->evt==CEU_IN__STK && STK->trl->stk==stack_curi(&go))
                         /* stacked and in this level */
-               ||  (STK->trl->evt==STK->evt &&
+               ||  (STK->trl->evt==STK->evt && STK->evt!=CEU_IN__STK &&
                      (  STK->evt==CEU_IN__CLEAR
                      || STK->trl->seqno!=app->seqno )
                    )

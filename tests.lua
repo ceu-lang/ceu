@@ -8,14 +8,14 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
+--do return end
 --[===[
-do return end
---]===]
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------
 -- OK: well tested
 ----------------------------------------------------------------------------
+--]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -3947,6 +3947,30 @@ end
 escape ret;
 ]],
     run = { ['~>1s']=10 },
+}
+
+Test { [[
+event void e;
+input void OS_START;
+
+par do
+    par do
+        par/or do
+            await e;
+        with
+            await FOREVER;
+        end
+    with
+        await OS_START;
+        emit e;
+        escape 2;   // should continue after the awake below
+    end
+with
+    await e;
+    escape 1;       // should escape before the one above
+end
+]],
+    run = 1,
 }
 
 -- ParOr
@@ -46041,7 +46065,6 @@ escape ret;
 }
 --]=]
 
-do return end
 -- TIMEMACHINE
 
 local t = {
