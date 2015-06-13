@@ -261,7 +261,7 @@ end
         if NOPTR(me.var.tp) then
             return
         end
-        if me.var.pre == 'pool' then
+        if me.var.pre=='pool' or me.var.pre=='function' then
             return
         end
 
@@ -304,7 +304,8 @@ end
         end
 
         -- invalid access!
-        ASR(false, me, 1107, 'pointer access across `await´')
+        ASR(false, me, 1107,
+            'pointer access across `await´ : value `'..me.var.id..'´')
 -- TODO: error message: across emit/await
     end,
 

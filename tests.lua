@@ -10,12 +10,12 @@ end
 
 --[===[
 do return end
+--]===]
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------
 -- OK: well tested
 ----------------------------------------------------------------------------
---]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -34492,6 +34492,20 @@ escape f(1,2);
     run = 3,
 }
 
+Test { [[
+function (int x)=>int fff do
+    return x + 1;
+end
+
+var int x = fff(10);
+
+input void OS_START;
+await OS_START;
+
+escape fff(x);
+]],
+    run = 12,
+}
 Test { [[
 output (int*,char*)=>void LUA_GETGLOBAL;
 function @rec (int* l)=>void load do
