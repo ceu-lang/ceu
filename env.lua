@@ -115,7 +115,7 @@ end
 local _N = 0
 local _E = 1    -- 0=NONE
 
-function newvar (me, blk, pre, tp, id, isImp)
+function newvar (me, blk, pre, tp, id, isImp, isEvery)
     local ME = CLS() or ADT()  -- (me can be a "data" declaration)
     for stmt in AST.iter() do
         if stmt.tag=='Dcl_cls' or stmt.tag=='Dcl_adt' or
@@ -130,9 +130,17 @@ function newvar (me, blk, pre, tp, id, isImp)
                 if var.id == id then
                     local fun = pre=='function' and stmt==ME.blk_ifc -- dcl
                                                 and blk==ME.blk_ifc  -- body
-                    WRN(fun or id=='_ok' or isImp, me,
-                        'declaration of "'..id..'" hides the one at line '
-                            ..var.ln[2])
+                    if fun or id=='_ok' or isImp then
+                        -- no problem with hide
+                    elseif isEvery then
+                        ASR(false, me,
+                            'implicit declaration of "'..id..'" hides the one at line '
+                                ..var.ln[2])
+                    else
+                        WRN(false, me,
+                            'declaration of "'..id..'" hides the one at line '
+                                ..var.ln[2])
+                    end
                     --if (blk==ME.blk_ifc or blk==ME.blk_body) then
                         --ASR(false, me, 'cannot hide at top-level block' )
                 end
@@ -591,7 +599,7 @@ F = {
             id = id..me.n   -- avoids clash with other '_'
         end
         local has
-        has, me.var = newvar(me, AST.iter'Block'(), pre, tp, id, me.isImp)
+        has, me.var = newvar(me, AST.iter'Block'(), pre, tp, id, me.isImp, me.isEvery)
         assert(not has or (me.var.read_only==nil))
         me.var.read_only = me.read_only
         if constr then
@@ -1000,6 +1008,7 @@ error'bug found'
                 to = (to.tag=='VarList' and to) or { to }
                 for i, tp in ipairs(tup) do
                     local dcl = AST.node('Dcl_var', me.ln, 'var', AST.copy(tp), to[i][1])
+                    dcl.isEvery = true  -- implicit declaration: cannot hide other variables
                     AST.visit(F, dcl)
                     local stmts = AST.asr(me.__par[1],'Stmts')
                     stmts[#stmts+1] = dcl

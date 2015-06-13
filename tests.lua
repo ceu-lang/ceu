@@ -2331,6 +2331,16 @@ end
 }
 
 Test { [[
+input int E;
+var int x;
+every x in E do
+end
+escape 1;
+]],
+    env = 'line 3 : implicit declaration of "x" hides the one at line 2',
+}
+
+Test { [[
 input void A;
 var int ret = 0;
 loop do
@@ -2497,7 +2507,7 @@ with
     end
 end
 ]],
-    env = 'line 4 : declaration of "a" hides the one at line 3',
+    env = 'line 4 : implicit declaration of "a" hides the one at line 3',
 }
 Test { [[
 input (int,int) A;
@@ -33440,7 +33450,6 @@ class T_VerticalDoor with
 do
 end
 
-var _vldoor_t* door = null;
 do
     every door in T_VERTICAL_DOOR do
         spawn T_VerticalDoor with
@@ -33464,7 +33473,6 @@ class T_VerticalDoor with
 do
 end
 
-var _vldoor_t* door = null;
 do
     every door in T_VERTICAL_DOOR do
         spawn T_VerticalDoor with
@@ -46921,7 +46929,6 @@ do
             this.v = this.v + 1;
         end
     with
-        var int* key;
         every key in KEY do
             this.v = this.v * 2;
             this.v = this.v + *key;
@@ -46956,7 +46963,6 @@ do
         loop do
             // starts off
             watching this.go_on do
-                var int* key;
                 every key in KEY do
                     _queue_put(_CEU_IN_KEY,
                                sizeof(int), (byte*)key
@@ -46972,7 +46978,6 @@ do
             await this.go_off;
         end
     with
-        var _tceu_queue* qu;
         every qu in this.go_queue do
             var int v = *((int*)qu:buf);
             if qu:evt == _CEU_IN_KEY then

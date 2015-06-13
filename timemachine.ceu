@@ -153,7 +153,6 @@ do
 
     loop do
         watching this.go_on do
-            var int dt;
             every dt in TM_INPUT_DT do
 /*
             var int c = 0;
