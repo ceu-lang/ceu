@@ -10,12 +10,12 @@ end
 
 --[===[
 do return end
---]===]
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------
 -- OK: well tested
 ----------------------------------------------------------------------------
+--]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -3470,20 +3470,20 @@ escape a+f;
 
 Test { [[
 loop v in 10 do
-    recurse 1;
+    traverse 1;
 end
 ]],
-    adt = 'line 2 : invalid `recurse´: no data',
+    adt = 'line 2 : invalid `traverse´: no data',
 }
 
 Test { [[
 var int* vs;
 loop/10 v in vs do
-    recurse 1;
+    traverse 1;
 end
 escape 1;
 ]],
-    env = 'line 3 : invalid `recurse´',
+    env = 'line 3 : invalid `traverse´',
 }
 
 Test { [[
@@ -3503,7 +3503,7 @@ loop/1 v in _VS do      // think its numeric
         break;
     else
         ret = ret + v:v;
-        recurse v:nxt;
+        traverse v:nxt;
     end
 end
 
@@ -3531,7 +3531,7 @@ loop/1 v in &_VS do
         break;
     else
         ret = ret + v:v;
-        recurse v:nxt;
+        traverse v:nxt;
     end
 end
 
@@ -3560,7 +3560,7 @@ loop/3 v in vs do
         break;
     else
         ret = ret + v:v;
-        recurse v:nxt;
+        traverse v:nxt;
     end
 end
 
@@ -3588,7 +3588,7 @@ loop/3 v in vs do
         continue;
     end
     ret = ret + v:v;
-    recurse v:nxt;
+    traverse v:nxt;
 end
 
 escape ret;
@@ -3614,7 +3614,7 @@ loop/3 v in vs do
     if v == null then
     else
         ret = ret + v:v;
-        recurse v:nxt;
+        traverse v:nxt;
     end
 end
 
@@ -3641,7 +3641,7 @@ loop/3 v in vs do
     if v == null then
         break;
     else
-        recurse v:nxt;
+        traverse v:nxt;
         ret = ret + v:v;
     end
 end
@@ -3669,7 +3669,7 @@ loop/3 v in vs do
     if v == null then
         continue;
     end
-    recurse v:nxt;
+    traverse v:nxt;
     ret = ret + v:v;
 end
 
@@ -3695,7 +3695,7 @@ var _tp* vs = &_VS;
 loop/3 v in vs do
     if v == null then
     else
-        recurse v:nxt;
+        traverse v:nxt;
         ret = ret + v:v;
     end
 end
@@ -3724,7 +3724,7 @@ loop/1 v in vs do
         break;
     else
         ret = ret + v:v;
-        recurse v:nxt;
+        traverse v:nxt;
     end
 end
 
@@ -3734,9 +3734,9 @@ escape ret;
 }
 
 Test { [[
-recurse 1;
+traverse 1;
 ]],
-    adt = 'line 1 : `recurse´ without loop',
+    adt = 'line 1 : missing enclosing `traverse´ block',
 }
 ]=]
 
@@ -43964,7 +43964,7 @@ end
 pool Widget[] widgets;
 traverse widget in widgets do
     watching widget do
-        var int v1 = recurse widget:ROW.w1;
+        var int v1 = traverse widget:ROW.w1;
     end
 end
 
@@ -44160,9 +44160,9 @@ var int sum = 0;
 traverse n in tree do
     var int i = sum;
     if n:NODE then
-        recurse n:NODE.left;
+        traverse n:NODE.left;
         sum = i + n:NODE.v;
-        recurse n:NODE.right;
+        traverse n:NODE.right;
     end
 end
 escape sum;
@@ -44196,7 +44196,7 @@ traverse n in list do
     _V = _V + 1;
     if n:CONS then
         _V = _V + n:CONS.head;
-        recurse n:CONS.tail;
+        traverse n:CONS.tail;
     end
 end
 */
@@ -44261,7 +44261,7 @@ traverse n in list do
     _V = _V + 1;
     if n:CONS then
         _V = _V + n:CONS.head;
-        recurse n:CONS.tail;
+        traverse n:CONS.tail;
     end
 end
 
@@ -44326,7 +44326,7 @@ traverse n in list do
         await 1s;
         if n:CONS then
             _V = _V + n:CONS.head;
-            recurse n:CONS.tail;
+            traverse n:CONS.tail;
         end
     end
 end
@@ -44363,7 +44363,7 @@ traverse n in list do
         await 1s;
         if n:CONS then
             _V = _V + n:CONS.head;
-            recurse n:CONS.tail;
+            traverse n:CONS.tail;
         end
     //end
 end
@@ -44403,7 +44403,7 @@ traverse n in list do
         await 1s;
         if n:CONS then
             sum = sum + n:CONS.head;
-            recurse n:CONS.tail;
+            traverse n:CONS.tail;
             sum = sum + n:CONS.head;
         end
     end
@@ -44444,7 +44444,7 @@ do
             await 1s;
             if n:CONS then
                 sum = sum + n:CONS.head;
-                recurse n:CONS.tail;
+                traverse n:CONS.tail;
                 sum = sum + n:CONS.head;
             end
         end
@@ -44483,9 +44483,9 @@ traverse n in tree do
     _V = _V + 1;
     watching n do
         if n:NODE then
-            recurse n:NODE.left;
+            traverse n:NODE.left;
             _V = _V + n:NODE.v;
-            recurse n:NODE.right;
+            traverse n:NODE.right;
         end
     end
 end
@@ -44522,9 +44522,9 @@ traverse n in tree do
     watching n do
         if n:NODE then
             await 1s;
-            recurse n:NODE.left;
+            traverse n:NODE.left;
             _V = _V + n:NODE.v;
-            recurse n:NODE.right;
+            traverse n:NODE.right;
         end
     end
 end
@@ -44557,9 +44557,9 @@ var int sum = 1;
 traverse n in tree do
     watching n do
         if n:NODE then
-            recurse n:NODE.left;
+            traverse n:NODE.left;
             sum = sum * n:NODE.v + n:NODE.v;
-            recurse n:NODE.right;
+            traverse n:NODE.right;
         end
     end
 end
@@ -44588,7 +44588,7 @@ var void* p1 = (void*)this;
 traverse t in ts do
     _assert(p1 == (void*)this);
     if t:NXT then
-        recurse t:NXT.nxt;
+        traverse t:NXT.nxt;
     end
 end
 
@@ -44631,7 +44631,7 @@ traverse t in ts do
     end;
     _assert(x.v1 + x.v2 + x.v3 == 6);
     if t:NXT then
-        recurse t:NXT.nxt;
+        traverse t:NXT.nxt;
     end
 end
 
@@ -44664,9 +44664,9 @@ traverse n in tree do
     await 1s;
     watching n do
         if n:NODE then
-            recurse n:NODE.left;
+            traverse n:NODE.left;
             sum = sum * n:NODE.v + n:NODE.v;
-            recurse n:NODE.right;
+            traverse n:NODE.right;
         end
     end
 end
@@ -44701,9 +44701,9 @@ do
         await 1s;
         watching n do
             if n:NODE then
-                recurse n:NODE.left;
+                traverse n:NODE.left;
                 sum = sum * n:NODE.v + n:NODE.v;
-                recurse n:NODE.right;
+                traverse n:NODE.right;
             end
         end
     end
@@ -44739,9 +44739,9 @@ par/and do
         watching n do
             if n:NODE then
                 await 1s;
-                recurse n:NODE.left;
+                traverse n:NODE.left;
                 sum = sum * n:NODE.v + n:NODE.v;
-                recurse n:NODE.right;
+                traverse n:NODE.right;
                 await 1s;
             end
         end
@@ -44789,7 +44789,7 @@ traverse n in list do
     if n:CONS then
         _V = _V + n:CONS.head;
         loop i in 1 do
-            recurse n:CONS.tail;
+            traverse n:CONS.tail;
         end
     end
 end
@@ -44803,22 +44803,22 @@ escape _V;
 
 Test { [[
 loop do
-    recurse null;
+    traverse null;
 end
 escape 1;
 ]],
-    adj = 'line 2 : `recurse´ without `traverse´',
+    adj = 'line 2 : missing enclosing `traverse´ block',
 }
 
 Test { [[
 traverse t in ts do
     loop do
-        recurse/1 null;
+        traverse/1 null;
     end
 end
 escape 1;
 ]],
-    adj = 'line 3 : `recurse´ without `traverse´',
+    adj = 'line 3 : missing enclosing `traverse´ block',
 }
 
 Test { [[
@@ -44848,10 +44848,10 @@ do
             nothing;
 
         else/if widget:SEQ then
-            recurse widget:SEQ.w1 with
+            traverse widget:SEQ.w1 with
                 this.param = param + 1;
             end;
-            recurse widget:SEQ.w2 with
+            traverse widget:SEQ.w2 with
                 this.param = param + 1;
             end;
 
@@ -44895,10 +44895,10 @@ do
             nothing;
 
         else/if widget:SEQ then
-            recurse widget:SEQ.w1 with
+            traverse widget:SEQ.w1 with
                 this.param = param + 1;
             end;
-            recurse widget:SEQ.w2 with
+            traverse widget:SEQ.w2 with
                 this.param = param + 1;
             end;
 
@@ -45011,9 +45011,9 @@ with
                 else/if widget:ROW then
                     var int v1, v2;
                     par/and do
-                        v1 = recurse widget:ROW.w1;
+                        v1 = traverse widget:ROW.w1;
                     with
-                        v2 = recurse widget:ROW.w2;
+                        v2 = traverse widget:ROW.w2;
                     end
                     escape v1 + v2;
 
@@ -45065,12 +45065,12 @@ with
             else/if widget:ROW then
                 loop do
                     par/or do
-                        var int ret = recurse widget:ROW.w1;
+                        var int ret = traverse widget:ROW.w1;
                         if ret == 0 then
                             await FOREVER;
                         end
                     with
-                        var int ret = recurse widget:ROW.w2;
+                        var int ret = traverse widget:ROW.w2;
                         if ret == 0 then
                             await FOREVER;
                         end
@@ -45116,7 +45116,7 @@ par/or do
 
             else/if e:CONS then
                 loop do
-                    recurse e:CONS.tail;
+                    traverse e:CONS.tail;
                     _ceu_out_assert(0, "0");
                 end
             else
@@ -45169,14 +45169,14 @@ par/or do
             else/if widget:SEQ then
                 loop do
                     par/or do
-                        recurse widget:SEQ.w1 with
+                        traverse widget:SEQ.w1 with
                             this.param = param + 1;
                         end;
 if widget:SEQ.w1:NIL then
     await FOREVER;
 end
                     with
-                        recurse widget:SEQ.w2 with
+                        traverse widget:SEQ.w2 with
                             this.param = param + 1;
                         end;
 if widget:SEQ.w2:NIL then
@@ -45237,7 +45237,7 @@ _printf("[%d] %p = %d/%d->%d\n", widget:EMPTY, widget, ret,param,ret);
             else/if widget:SEQ then
                 loop do
                     par/or do
-                        recurse widget:SEQ.w1 with
+                        traverse widget:SEQ.w1 with
                             this.param = param + 1;
                         end;
 if widget:SEQ.w1:NIL then
@@ -45245,7 +45245,7 @@ _ceu_out_assert(0, "ok\n");
     await FOREVER;
 end
                     with
-                        recurse widget:SEQ.w2 with
+                        traverse widget:SEQ.w2 with
                             this.param = param + 1;
                         end;
 if widget:SEQ.w2:NIL then
@@ -45298,7 +45298,7 @@ par/or do
                 await FOREVER;
 
             else/if cmd:SEQUENCE then
-                recurse cmd:SEQUENCE.one;
+                traverse cmd:SEQUENCE.one;
 
             else
             end
@@ -45351,9 +45351,9 @@ with
                 await FOREVER;
 
             else/if cmd:SEQUENCE then
-                recurse cmd:SEQUENCE.one;
+                traverse cmd:SEQUENCE.one;
                 _ceu_out_assert(0, "bug found"); // cmds has to die entirely before children
-                recurse cmd:SEQUENCE.two;
+                traverse cmd:SEQUENCE.two;
             end
         end
     end
@@ -45401,8 +45401,8 @@ with
                 await FOREVER;
 
             else/if cmd:SEQUENCE then
-                recurse cmd:SEQUENCE.one;
-                recurse cmd:SEQUENCE.two;
+                traverse cmd:SEQUENCE.one;
+                traverse cmd:SEQUENCE.two;
             end
         end
     end
@@ -45449,8 +45449,8 @@ traverse cmd in cmds do
             do TurtleTurn;
 
         else/if cmd:REPEAT then
-            recurse cmd:REPEAT.command;
-            recurse cmd:REPEAT.command;
+            traverse cmd:REPEAT.command;
+            traverse cmd:REPEAT.command;
 
         else
             _ceu_out_assert(0, "not implemented");
@@ -45631,12 +45631,12 @@ with
                 end;
 
             else/if cmd:SEQUENCE then
-                recurse cmd:SEQUENCE.one;
-                recurse cmd:SEQUENCE.two;
+                traverse cmd:SEQUENCE.one;
+                traverse cmd:SEQUENCE.two;
 
             else/if cmd:REPEAT then
                 loop i in cmd:REPEAT.times do
-                    recurse cmd:REPEAT.command;
+                    traverse cmd:REPEAT.command;
                 end
 
             else
@@ -45696,13 +45696,13 @@ traverse cmd in cmds do
 
         else/if cmd:SEQUENCE then
             ret = ret + 2;
-            recurse cmd:SEQUENCE.one;
-            recurse cmd:SEQUENCE.two;
+            traverse cmd:SEQUENCE.one;
+            traverse cmd:SEQUENCE.two;
 
         else/if cmd:REPEAT then
             loop i in cmd:REPEAT.times do
                 ret = ret + 3;
-                recurse cmd:REPEAT.command;
+                traverse cmd:REPEAT.command;
             end
 
         else
@@ -45768,13 +45768,13 @@ traverse cmd in cmds do
 
         else/if cmd:SEQUENCE then
             ret = ret + 2;
-            recurse cmd:SEQUENCE.one;
-            recurse cmd:SEQUENCE.two;
+            traverse cmd:SEQUENCE.one;
+            traverse cmd:SEQUENCE.two;
 
         else/if cmd:REPEAT then
             loop i in cmd:REPEAT.times do
                 ret = ret + 3;
-                recurse cmd:REPEAT.command;
+                traverse cmd:REPEAT.command;
             end
 
         else
@@ -45821,7 +45821,7 @@ traverse l in ls do
             await FOREVER;
         else
             par/or do
-                recurse l:CONS.tail;
+                traverse l:CONS.tail;
             with
                 await 1s;
             end
@@ -45853,7 +45853,7 @@ var int sum = 0;
 loop/1 i in &l do
     if i:CONS then
         sum = sum + i:CONS.head;
-        recurse i:CONS.tail;
+        traverse i:CONS.tail;
     end
 end
 
@@ -45878,7 +45878,7 @@ var int sum = 0;
 loop/3 i in &l do
     if i:CONS then
         sum = sum + i:CONS.head;
-        recurse i:CONS.tail;
+        traverse i:CONS.tail;
     end
 end
 
@@ -45903,7 +45903,7 @@ var int sum = 0;
 loop i in &l do
     if i:CONS then
         sum = sum + i:CONS.head;
-        recurse i:CONS.tail;
+        traverse i:CONS.tail;
     end
 end
 
@@ -45934,9 +45934,9 @@ var int sum = 0;
 
 loop i in &t do
     if i:NODE then
-        recurse i:NODE.left;
+        traverse i:NODE.left;
         sum = sum + i:NODE.v;
-        recurse i:NODE.right;
+        traverse i:NODE.right;
     end
 end
 
@@ -45963,7 +45963,7 @@ var int sum = 0;
 loop i in l do
     if i:CONS then
         sum = sum + i:CONS.head;
-        recurse i:CONS.tail;
+        traverse i:CONS.tail;
     end
 end
 
@@ -45992,9 +45992,9 @@ var int sum = 0;
 
 loop i in t do
     if i:NODE then
-        recurse i:NODE.left;
+        traverse i:NODE.left;
         sum = sum + i:NODE.v;
-        recurse i:NODE.right;
+        traverse i:NODE.right;
     end
 end
 
@@ -48759,9 +48759,9 @@ var int sum = 0;
 loop n in tree do
     var int i = sum;
     if n:NODE then
-        recurse n:NODE.left;
+        traverse n:NODE.left;
         sum = i + n:NODE.v;
-        recurse n:NODE.right;
+        traverse n:NODE.right;
     end
 end
 escape sum;
@@ -48855,7 +48855,7 @@ loop/3 v in vs do
     if v != null then
         var int i = ii;
         ii = ii + 1;
-        recurse v:nxt;
+        traverse v:nxt;
         ret = ret + v:v + i;
     end
 end
@@ -48884,7 +48884,7 @@ loop/3 v in vs do
     var int i = ii;
     ii = ii + 1;
     if v != null then
-        recurse v:nxt;
+        traverse v:nxt;
         ret = ret + v:v + i;
     end
 end
@@ -48914,7 +48914,7 @@ loop v in vs do
         break;
     else
         ret = ret + v:v;
-        recurse v:nxt;
+        traverse v:nxt;
     end
 end
 
@@ -48946,10 +48946,10 @@ var int sum = 0;
 par/or do
     loop i in t do
         if i:NODE then
-            recurse i:NODE.left;
+            traverse i:NODE.left;
             await 1s;
             sum = sum + i:NODE.v;
-            recurse i:NODE.right;
+            traverse i:NODE.right;
             await 1s;
         end
     end

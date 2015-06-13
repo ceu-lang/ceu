@@ -388,13 +388,13 @@ me.blk_body = me.blk_body or blk_body
         end
     end,
 
-    _Traverse_pre = function (me)
+    _TraverseLoop_pre = function (me)
         --[[
         --  ret = traverse <n> in <adt> with
         --      <interface>
         --  do
         --      <body>
-        --          recurse <exp>;
+        --          traverse <exp>;
         --  end;
         --      ... becomes ...
         --  class Loop with
@@ -412,7 +412,7 @@ me.blk_body = me.blk_body or blk_body
         --          end
         --      with
         --          <body>
-        --              recurse <exp>;
+        --              traverse <exp>;
         --      end
         --      escape 0;
         --  end
@@ -519,7 +519,7 @@ me.blk_body = me.blk_body or blk_body
     end,
 
     --[[
-    --  ret = recurse <exp> with
+    --  ret = traverse <exp> with
     --      <constr>
     --  end;
     --      ... becomes ...
@@ -535,7 +535,7 @@ me.blk_body = me.blk_body or blk_body
     --      ret = 0;    // TODO: how to get "ret" from a dead body?
     --  end
     --]]
-    _Recurse_pre = function (me)
+    _TraverseRec_pre = function (me)
         local n, exp, constr, ret = unpack(me)
 
         -- unpacked below
@@ -556,7 +556,7 @@ me.blk_body = me.blk_body or blk_body
                 break
             end
         end
-        ASR(cls, me, '`recurse´ without `traverse´')
+        ASR(cls, me, 'missing enclosing `traverse´ block')
 
         local SET_AWAIT = node('Await', me.ln,
                             node('Op1_*', me.ln, '*',
@@ -1425,14 +1425,14 @@ me.blk_body = me.blk_body or blk_body
         elseif tag == 'lua' then
             return node('Set', me.ln, op, tag, fr, to)
 
-        elseif tag == '__recurse' then
-            local rec = AST.asr(me,'_Set', 4,'_Recurse')
+        elseif tag == '__trav_rec' then
+            local rec = AST.asr(me,'_Set', 4,'_TraverseRec')
             assert(op == '=', 'bug found')
             rec[#rec+1] = to;
             return rec
 
-        elseif tag == '__traverse' then
-            local rec = AST.asr(me,'_Set', 4,'_Traverse')
+        elseif tag == '__trav_loop' then
+            local rec = AST.asr(me,'_Set', 4,'_TraverseLoop')
             assert(op == '=', 'bug found')
             rec[#rec+1] = to;
             return rec
