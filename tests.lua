@@ -8,8 +8,8 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
+--do return end
 --[===[
-do return end
 --]===]
 -------------------------------------------------------------------------------
 
@@ -34605,6 +34605,22 @@ do
 end
 var T t;
 escape _V;
+]],
+    run = 10,
+}
+
+Test { [[
+class T with do end;
+
+function (void)=>void fff do
+    var T* ttt = null;
+end
+
+do
+    var int xxx = 10;
+    fff();
+    escape xxx;
+end
 ]],
     run = 10,
 }

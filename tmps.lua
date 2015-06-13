@@ -22,8 +22,14 @@ F = {
             var.isTmp = true
         end
 
-        if AST.par(me,'Dcl_adt') then
+        -- declarations inside ADTs are never temporary (always part of the data)
+        if AST.par(me, 'Dcl_adt') then
             var.isTmp = false
+            assert(not AST.par(me,'Dcl_fun'), 'bug found: mixing adt/fun')
+
+        -- declarations inside functions are always temporary (no awaits inside)
+        elseif AST.par(me, 'Dcl_fun') then
+            var.isTmp = true
         end
 
         -- inside a recursive loop
