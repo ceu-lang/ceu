@@ -8,8 +8,8 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
---do return end
 --[===[
+do return end
 --]===]
 -------------------------------------------------------------------------------
 
@@ -44271,7 +44271,7 @@ end;
 
 escape _V;
 ]],
-    wrn = 'line 26 : unbounded recursive spawn',
+    wrn = 'line 42 : unbounded recursive spawn',
     _ana = { acc=true },
     run = 18,
 }
@@ -44335,7 +44335,7 @@ end;
 escape _V;
 ]],
     _ana = { acc=true },
-    wrn = 'line 26 : unbounded recursive spawn',
+    wrn = 'line 23 : unbounded recursive spawn',
     run = 10,
 }
 
@@ -44354,25 +44354,21 @@ list = new List.CONS(1,
             List.CONS(2,
                 List.CONS(3, List.NIL())));
 
-native do
-    int V = 0;
-end
+var int sum = 0;
 
 traverse n in list do
-    _V = _V + 1;
+    sum = sum + 1;
     watching n do
         await 1s;
         if n:CONS then
-            _V = _V + n:CONS.head;
+            sum = sum + n:CONS.head;
             traverse n:CONS.tail;
         end
     end
 end
 
-escape _V;
+escape sum;
 ]],
-    wrn = 'line 26 : unbounded recursive spawn',
-    _ana = { acc=true },
     run = { ['~>10s'] = 10 },
 }
 
@@ -44391,25 +44387,21 @@ list = new List.CONS(1,
             List.CONS(2,
                 List.CONS(3, List.NIL())));
 
-native do
-    int V = 0;
-end
+var int sum = 0;
 
 traverse n in list do
-    _V = _V + 1;
+    sum = sum + 1;
     //watching n do
         await 1s;
         if n:CONS then
-            _V = _V + n:CONS.head;
+            sum = sum + n:CONS.head;
             traverse n:CONS.tail;
         end
     //end
 end
 
-escape _V;
+escape sum;
 ]],
-    wrn = 'line 26 : unbounded recursive spawn',
-    _ana = { acc=true },
     run = { ['~>10s'] = 10 },
 }
 
@@ -44513,25 +44505,22 @@ tree = new Tree.NODE(1,
             Tree.NODE(2, Tree.NIL(), Tree.NIL()),
             Tree.NODE(3, Tree.NIL(), Tree.NIL()));
 
-native do
-    int V = 0;
-end
+var int sum = 0;
 
 traverse n in tree do
-    _V = _V + 1;
+    sum = sum + 1;
     watching n do
         if n:NODE then
             traverse n:NODE.left;
-            _V = _V + n:NODE.v;
+            sum = sum + n:NODE.v;
             traverse n:NODE.right;
         end
     end
 end
 
-escape _V;
+escape sum;
 ]],
-    wrn = 'line 26 : unbounded recursive spawn',
-    _ana = { acc=true },
+    wrn = 'line 22/24 : unbounded recursive spawn',
     run = 13,
 }
 
@@ -44551,26 +44540,22 @@ tree = new Tree.NODE(1,
             Tree.NODE(2, Tree.NIL(), Tree.NIL()),
             Tree.NODE(3, Tree.NIL(), Tree.NIL()));
 
-native do
-    int V = 0;
-end
+var int sum = 0;
 
 traverse n in tree do
-    _V = _V + 1;
+    sum = sum + 1;
     watching n do
         if n:NODE then
             await 1s;
             traverse n:NODE.left;
-            _V = _V + n:NODE.v;
+            sum = sum + n:NODE.v;
             traverse n:NODE.right;
         end
     end
 end
 
-escape _V;
+escape sum;
 ]],
-    wrn = 'line 26 : unbounded recursive spawn',
-    _ana = { acc=true },
     run = { ['~>10s'] = 13 },
 }
 
@@ -44604,8 +44589,7 @@ end
 
 escape sum;
 ]],
-    wrn = 'line 26 : unbounded recursive spawn',
-    _ana = { acc=true },
+    wrn = 'line 22/24 : unbounded recursive spawn',
     run = { ['~>10s'] = 18 },
 }
 
@@ -44632,7 +44616,7 @@ end
 
 escape 1;
 ]],
-    _ana = {acc=true},
+    _ana = {acc=1},
     wrn = 'line 17 : unbounded recursive spawn',
     run = 1,
 }
@@ -44675,7 +44659,7 @@ end
 
 escape 1;
 ]],
-    _ana = {acc=true},
+    _ana = {acc=2},
     wrn = 'line 17 : unbounded recursive spawn',
     run = 1,
 }
@@ -44711,8 +44695,6 @@ end
 
 escape sum;
 ]],
-    _ana = {acc=true},
-    wrn = 'line 26 : unbounded recursive spawn',
     run = { ['~>10s'] = 18 },
 }
 
@@ -44749,8 +44731,6 @@ end
 
 escape sum;
 ]],
-    _ana = {acc=true},
-    wrn = 'line 26 : unbounded recursive spawn',
     run = { ['~>10s'] = 18 },
 }
 
@@ -44798,8 +44778,6 @@ end
 
 escape sum;
 ]],
-    _ana = {acc=true},
-    wrn = 'line 26 : unbounded recursive spawn',
     run = { ['~>20s'] = 4 },
 }
 
@@ -44818,24 +44796,21 @@ list = new List.CONS(1,
             List.CONS(2,
                 List.CONS(3, List.NIL())));
 
-native do
-    int V = 0;
-end
+var int sum = 0;
 
 traverse n in list do
-    _V = _V + 1;
+    sum = sum + 1;
     if n:CONS then
-        _V = _V + n:CONS.head;
+        sum = sum + n:CONS.head;
         loop i in 1 do
             traverse n:CONS.tail;
         end
     end
 end
 
-escape _V;
+escape sum;
 ]],
-    _ana = { acc=true },
-    wrn = 'line 26 : unbounded recursive spawn',
+    wrn = 'line 24 : unbounded recursive spawn',
     run = 10,
 }
 
@@ -44902,7 +44877,7 @@ end
 escape ret;
 ]],
     _ana = { acc=true },
-    wrn = 'line 57 : unbounded recursive spawn',
+    wrn = 'line 27/30 : unbounded recursive spawn',
     run = 5,
 }
 
@@ -44949,7 +44924,7 @@ end
 escape ret;
 ]],
     _ana = { acc=true },
-    wrn = 'line 57 : unbounded recursive spawn',
+    wrn = 'line 27/30 : unbounded recursive spawn',
     run = 5,
 }
 

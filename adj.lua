@@ -560,7 +560,7 @@ me.blk_body = me.blk_body or blk_body
 
         local SET_AWAIT = node('Await', me.ln,
                             node('Op1_*', me.ln, '*',
-                                node('Var', me.ln, '_body')),
+                                node('Var', me.ln, '_body_'..me.n)),
                             false,
                             false)
         local SET_DEAD = node('Nothing', me.ln)
@@ -576,9 +576,9 @@ me.blk_body = me.blk_body or blk_body
 
         local dcl = node('Dcl_var', me.ln, 'var',
                         node('Type', me.ln, cls_id, 1, false, false, true),
-                        '_body')
+                        '_body_'..me.n)
         local set = node('_Set', me.ln,
-                        node('Var', me.ln, '_body'),
+                        node('Var', me.ln, '_body_'..me.n),
                         '=', 'spawn',
                         node('Spawn', me.ln, cls_id,
                             node('Var', me.ln, '_loops'),
@@ -617,7 +617,7 @@ me.blk_body = me.blk_body or blk_body
                                         unpack(constr))))))
         local if_ = node('If', me.ln,
                         node('Op1_?', me.ln, '?',
-                            node('Var', me.ln, '_body')),
+                            node('Var', me.ln, '_body_'..me.n)),
                         --node('Nothing', me.ln),
                         node('Block', me.ln,
                             node('Stmts', me.ln,
