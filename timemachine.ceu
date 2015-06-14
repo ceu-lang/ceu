@@ -309,7 +309,14 @@ do
 #ifndef TM_DELAY
                         var int late = 0;
 #endif
-                        loop do
+
+#if   defined TM_QUEUE
+                        loop/TM_QUEUE_N do
+#elif defined TM_DIFF
+                        loop/TM_DIFF_N do
+#else      // TM_SNAP
+                        loop/TM_SNAP_N do
+#endif
                             if time_req == _TM_REQ_PAUSE then
                                 break;  // already there
                             end
