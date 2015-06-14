@@ -262,8 +262,16 @@ F = {
     Spawn = function (me)
         local id, pool, _,_ = unpack(me)
         local cls = CLS()
+
+        -- recursive spawn (spawn T inside T)
         if id == cls.id then
-            WRN(me.ana.pre[id]~=true, me, 'unbounded recursive spawn')
+            -- no await from the begin to spawn
+            if me.ana.pre[id] == true then
+                -- pool is unbounded
+                if pool.tp.arr == true then
+                    WRN(false, me, 'unbounded recursive spawn')
+                end
+            end
         end
     end,
 
