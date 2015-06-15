@@ -50,6 +50,11 @@ function TP.new (me, dont_generate)
                 break
             end
 
+            -- TODO: workaround: error when generating nested ADTs
+            if ENV.adts[tp.id] then
+                dont_generate = true
+            end
+
             me.tup[#me.tup+1] = tp
         end
 

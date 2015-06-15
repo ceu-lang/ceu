@@ -1102,11 +1102,52 @@ error'bug found'
         ENV.calls[id] = true
     end,
 
+    Adt_constr_pre = function (me)
+        local adt, params, var = unpack(me)
+        local id, tag = unpack(adt)
+
+        local tup
+        local tadt = ASR(ENV.adts[id], me, 'data "'..id..'" is not declared')
+        if tag then
+            local ttag = ASR(tadt.tags[tag], me, 'tag "'..tag..'" is not declared')
+            tup = ttag.tup
+        else
+            tup = tadt.tup
+        end
+
+        local _,op,_ = unpack(tadt)
+        --[[
+        -- HACK_8: prepend "&" to static constructor assigning to pointer
+        --
+        --  data List with
+        --      tag NIL;
+        --  or
+        --      tag CONS with
+        --          var int   head;
+        --          var List* tail;
+        --      end
+        --  end
+        --  var List l = List.CONS(1,
+        --                  List.CONS(2,
+        --                      List.NIL()));
+        --  escape l.CONS.tail:CONS.head;
+        --]]
+        for i, t in ipairs(tup) do
+            local _,tp,_ = unpack(t)
+            if ENV.adts[tp.id] and tp.ptr==1 then
+                local pi = params[i]
+                if pi and pi.__adj_static_constr then
+                    -- (if pi ...: arity mismatch is checked elsewhere)
+                    params[i] = AST.node('Op1_&', me.ln, '&', pi)
+                end
+            end
+        end
+    end,
+
     Adt_constr = function (me)
         local adt, params, var = unpack(me)
         local id, tag = unpack(adt)
         me.tp = TP.fromstr(id)
-        local tup
 
         local tadt = ASR(ENV.adts[id], me, 'data "'..id..'" is not declared')
         if tag then

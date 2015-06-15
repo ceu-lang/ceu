@@ -1868,12 +1868,9 @@ H = {
                 AST.asr(dcls[1], 'Dcl_var')
                 local id = dcls[1][3]
 
-                if dyn then
-                    params[i] = node('Var', me.ln, id)
-                else
-                    params[i] = node('Op1_&', me.ln, '&',
-                                    node('Var', me.ln, id))
-                end
+                params[i] = node('Var', me.ln, id)
+                params[i].__adj_static_constr = (not dyn)
+                    -- HACK_8: might be static assigning to pointer
             else
                 -- keep current p
             end
@@ -1895,19 +1892,6 @@ H = {
                         node('Stmts', me.ln,
                             unpack(CONS)))
                }
-    end,
-
-    -- Sufix recursive ADT with "*"
-    Dcl_var = function (me)
-        local pre, tp, id = unpack(me)
-        local adt = AST.par(me, 'Dcl_adt')
-        if adt then
-            local adt_id = unpack(adt)
-            local id, ptr, arr, ref = unpack(tp)
-            if (adt_id==id) and (ptr==0) and (not arr) and (not ref) then
-                me[2][2] = 1
-            end
-        end
     end,
 }
 AST.visit(G)

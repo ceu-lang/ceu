@@ -50,6 +50,7 @@ error'not implemented (locals inside iter)'
             me.var.isTmp = true
         end
 
+-- TODO: (search TODO-WASTES-RAM in tests.lua)
         -- force __ceu_adt_root_* not to be tmp
         --[[
         -- TODO (-RAM)

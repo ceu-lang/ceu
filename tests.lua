@@ -42430,8 +42430,8 @@ data List with
     tag NIL;
 or
     tag CONS with
-        var int  head;
-        var List tail;
+        var int   head;
+        var List* tail;
     end
 end
 
@@ -42665,6 +42665,116 @@ end
 escape sum;
 ]],
     run = 536,
+}
+
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int  head;
+        var List tail;
+    end
+end
+escape 1;
+]],
+    env = 'line 6 : undeclared type `List´',
+}
+
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+var List l = List.CONS(1,
+                List.CONS(2,
+                    List.NIL()));
+escape l.CONS.tail:CONS.head;
+]],
+    run = 2,
+}
+
+-- TODO-WASTES-RAM
+Test { [[
+data Split with
+    tag HORIZONTAL;
+or
+    tag VERTICAL;
+end
+
+data Grid with
+    var Split dir;
+end
+
+var Grid g1 = Grid(Split.HORIZONTAL());
+var Grid g2 = Grid(Split.VERTICAL());
+
+escape g1.dir.HORIZONTAL + g2.dir.VERTICAL;
+]],
+    run = 2,
+}
+
+Test { [[
+data Split with
+    tag HORIZONTAL;
+or
+    tag VERTICAL;
+end
+
+data Grid with
+    tag NIL;
+or
+    tag SPLIT with
+        var Split dir;
+        var Grid* g1;
+        var Grid* g2;
+    end
+end
+
+var Grid g = Grid.SPLIT(
+                Split.HORIZONTAL(),
+                Grid.SPLIT(
+                    Split.VERTICAL(),
+                    Grid.NIL(),
+                    Grid.NIL()));
+
+escape 1;
+]],
+    env = 'line 17 : arity mismatch',
+}
+
+Test { [[
+data Split with
+    tag HORIZONTAL;
+or
+    tag VERTICAL;
+end
+
+data Grid with
+    tag NIL;
+or
+    tag SPLIT with
+        var Split dir;
+        var Grid* g1;
+        var Grid* g2;
+    end
+end
+
+var Grid g = Grid.SPLIT(
+                Split.HORIZONTAL(),
+                Grid.SPLIT(
+                    Split.VERTICAL(),
+                    Grid.NIL(),
+                    Grid.NIL()),
+                Grid.NIL());
+
+escape 1;
+]],
+    run = 1,
 }
 
 -- USE DATATYPES DEFINED ABOVE ("DATA")
