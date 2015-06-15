@@ -42777,6 +42777,34 @@ escape 1;
     run = 1,
 }
 
+Test { [[
+data Split with
+    tag HORIZONTAL;
+or
+    tag VERTICAL;
+end
+
+data Grid with
+    tag NIL;
+or
+    tag SPLIT with
+        var Split dir;
+        var Grid* g1;
+        var Grid* g2;
+    end
+end
+
+pool Grid[] g;
+g = new Grid.SPLIT(
+            Split.HORIZONTAL(),
+            Grid.NIL(),
+            Grid.NIL());
+
+escape 1;
+]],
+    run = 1,
+}
+
 -- USE DATATYPES DEFINED ABOVE ("DATA")
 
 -- simple test

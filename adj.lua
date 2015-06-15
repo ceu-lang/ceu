@@ -1843,7 +1843,15 @@ H = {
         local adt, params = unpack(me)
         local id = unpack(adt)
 
-        local dyn,_ = unpack(AST.par(me,'_Adt_constr_root'))
+        local dyn,par = unpack(AST.par(me,'_Adt_constr_root'))
+
+        --  new Grid.SPLIT(
+        --      Split.HORIZONTAL(),     -- this is not recursive or dynamic
+        --      ...)
+        local ID = unpack(AST.asr(par,'_Adt_constr', 1,'Adt'))
+        if ID ~= id then
+            dyn = false
+        end
 
         --      Adt ( ExpList )
         -- becomes
