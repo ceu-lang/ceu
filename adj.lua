@@ -1177,7 +1177,7 @@ me.blk_body = me.blk_body or blk_body
 
 -- Tuples ---------------------
 
-    _TupleTypeItem_2 = '_TupleItem_1',
+    _TupleTypeItem_2 = '_TupleTypeItem_1',
     _TupleTypeItem_1 = function (me)
         me.tag = 'TupleTypeItem'
     end,

@@ -9,7 +9,11 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
+do return end
+-------------------------------------------------------------------------------
+
 --]===]
+--do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -36018,6 +36022,119 @@ escape call/rec f(5);
     run = 120,
 }
 
+Test { [[
+interface IWorld with
+    function (PinguHolder*) => PinguHolder* get_pingus;
+end
+
+class PinguHolder with
+do end
+
+class World with
+    interface IWorld;
+do end
+
+var IWorld*? ptr = spawn World with end;
+
+escape 1;
+]],
+    env = 'line 2 : undeclared type `PinguHolder´',
+}
+
+Test { [[
+interface IWorld with
+    function (void) => PinguHolder* get_pingus;
+end
+
+class PinguHolder with
+do end
+
+class World with
+    interface IWorld;
+do end
+
+var IWorld*? ptr = spawn World with end;
+
+escape 1;
+]],
+    env = 'line 2 : undeclared type `PinguHolder´',
+}
+
+Test { [[
+interface IWorld with
+    function (PinguHolder*) => void get_pingus;
+end
+
+class PinguHolder with
+do end
+
+class World with
+    interface IWorld;
+do end
+
+var IWorld*? ptr = spawn World with end;
+
+escape 1;
+]],
+    env = 'line 2 : undeclared type `PinguHolder´',
+}
+
+Test { [[
+class PinguHolder with
+do end
+
+interface IWorld with
+    function (PinguHolder*) => PinguHolder* get_pingus;
+end
+
+class World with
+    interface IWorld;
+do end
+
+var IWorld*? ptr = spawn World with end;
+
+escape 1;
+]],
+    gcc = '25: error: ‘CEU_World_get_pingus’ used but never defined',
+}
+
+Test { [[
+interface IWorld with
+    var int x;
+end
+
+class World with
+    interface IWorld;
+do
+    await FOREVER;
+end
+
+var IWorld*? ptr = spawn World with
+                    this.x = 10;
+                  end;
+escape ptr:x;     // escapes with "10"
+]],
+    run = 10,
+}
+Test { [[
+interface IWorld with
+    var int x;
+end
+
+class World with
+    interface IWorld;
+do
+    await FOREVER;
+end
+
+var World*? ptr = spawn World with
+                    this.x = 10;
+                  end;
+var IWorld* w = ptr;
+escape w:x;     // escapes with "10"
+]],
+    run = 10,
+}
 -- ISR / ATOMIC
 
 Test { [[

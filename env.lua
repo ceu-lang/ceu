@@ -115,6 +115,39 @@ end
 local _N = 0
 local _E = 1    -- 0=NONE
 
+local function check (me, pre, tp)
+    if tp.tag == 'TupleType' then
+        for _, item in ipairs(tp) do
+            check(me, pre, AST.asr(item,'', 2,'Type'))
+        end
+        return
+    end
+
+    local top = ASR(ENV.c[tp.id] or ENV.clss[tp.id] or ENV.adts[tp.id],
+                    me, 'undeclared type `'..(tp.id or '?')..'´')
+
+    if tp.ptr==0 and (not tp.ref) then
+        ASR(not AST.isParent(top,me), me,
+            'undeclared type `'..(tp.id or '?')..'´')
+        if top.is_ifc then
+            ASR(pre == 'pool', me,
+                'cannot instantiate an interface')
+        end
+    else
+        top = nil
+    end
+
+    local void_ok = (tp.id=='void' and
+                    (pre=='event' or pre=='function' or pre=='input' or
+                     pre=='output' or pre=='isr'))
+
+    ASR(tp.ptr>0 or tp.ref or TP.get(tp.id).len~=0 or void_ok,
+        me, 'cannot instantiate type "'..tp.id..'"')
+    --ASR((not arr) or arr>0, me, 'invalid array dimension')
+
+    return top
+end
+
 function newvar (me, blk, pre, tp, id, isImp, isEvery)
     local ME = CLS() or ADT()  -- (me can be a "data" declaration)
     for stmt in AST.iter() do
@@ -148,23 +181,7 @@ function newvar (me, blk, pre, tp, id, isImp, isEvery)
         end
     end
 
-    local top = ASR(ENV.c[tp.id] or ENV.clss[tp.id] or ENV.adts[tp.id],
-                    me, 'undeclared type `'..(tp.id or '?')..'´')
-
-    if tp.ptr==0 and (not tp.ref) then
-        ASR(not AST.isParent(top,me), me,
-            'undeclared type `'..(tp.id or '?')..'´')
-        if top.is_ifc then
-            ASR(pre == 'pool', me,
-                'cannot instantiate an interface')
-        end
-    else
-        top = nil
-    end
-
-    ASR(tp.ptr>0 or tp.ref or TP.get(tp.id).len~=0 or (tp.id=='void' and pre=='event'),
-        me, 'cannot instantiate type "'..tp.id..'"')
-    --ASR((not arr) or arr>0, me, 'invalid array dimension')
+    local top = check(me, pre, tp)
 
     -- Class definitions take priority over interface definitions:
     --      * consts
@@ -237,6 +254,9 @@ function newfun (me, blk, pre, rec, ins, out, id, isImp)
         -- When calling from an interface, call/rec is still required,
         -- but from class it is not.
     end
+
+    check(me, pre, ins)
+    check(me, pre, out)
 
     local has, var = newvar(me, blk, pre,
                         TP.fromstr('___typeof__(CEU_'..CLS().id..'_'..id..')'),
