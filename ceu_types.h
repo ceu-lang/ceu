@@ -26,18 +26,4 @@ typedef uint8_t   u8;
 typedef float    f32;
 typedef double   f64;
 
-void ceu_sys_log (int mode, long s) {
-    switch (mode) {
-        case 0:
-            fprintf(stderr, "%s", (char*)s);
-            break;
-        case 1:
-            fprintf(stderr, "%lX", s);
-            break;
-        case 2:
-            fprintf(stderr, "%ld", s);
-            break;
-    }
-}
-
 #endif

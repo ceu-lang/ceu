@@ -1,6 +1,7 @@
 #ifndef _CEU_POOL_H
 #define _CEU_POOL_H
 
+#include "ceu_os.h"     /* TODO: pool should not depend on tceu_* */
 #include "ceu_types.h"
 
 /* TODO: all "int" here, should evaluate the correct unsigned type */

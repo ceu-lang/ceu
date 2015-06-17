@@ -136,7 +136,7 @@ function CLEAR_BEF (me)
 ]]
 
     LINE(me, [[
-return ceu_sys_clear(_ceu_go, ]]..me.lbl_clr.id..[[, _STK_ORG,
+return ceu_out_clear(_ceu_go, ]]..me.lbl_clr.id..[[, _STK_ORG,
                      &_STK_ORG->trls[ ]]..(me.trails[1])  ..[[ ],
                      &_STK_ORG->trls[ ]]..(me.trails[2]+1)..[[ ]);
 ]])
@@ -164,7 +164,8 @@ end
 -- ^-- first
 local function FIND_ADT_POOL (fst)
     local adt = ENV.adts[fst.tp.id]
-    if adt and fst.tp.ptr==1 then
+--DBG(fst.tag, fst.var.id, adt, fst.tp)
+    if adt and (fst.tp.ptr==1 or fst.tp.ref) then
         return fst
     else
         assert(fst.__par, 'bug found')
@@ -250,7 +251,7 @@ static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org, t
                     ret_value = '('
                     ret_void  = 'return NULL;'
                 else
-                    ret_value = 'return ((tceu_evtp)'
+                    ret_value = 'return ((void*)'
                     ret_void  = ''
                 end
 
@@ -332,10 +333,10 @@ if (_STK->evt==CEU_IN__STK && _STK->org==_STK_ORG
     && _STK->stop==&_STK_ORG->trls[_STK_ORG->n]
     ) {
     _STK->evt = CEU_IN__NONE;
-    ceu_stack_clear_org(_ceu_go, _STK_ORG, stack_curi(_ceu_go));
+    ceu_out_stack_clear_org(_ceu_go, _STK_ORG, stack_curi(_ceu_go));
         /* remove all but me (HACK_9) */
 } else {
-    ceu_stack_clear_org(_ceu_go, _STK_ORG, stack_nxti(_ceu_go));
+    ceu_out_stack_clear_org(_ceu_go, _STK_ORG, stack_nxti(_ceu_go));
         /* remove all */
 }
 #endif
@@ -548,7 +549,7 @@ if (]]..LVAR..[[ == NULL) {
         LINE(me, [[
 {
     tceu_org* __ceu_org = (tceu_org*)]]..V(org)..[[;
-    return ceu_sys_clear(_ceu_go, ]]..me.lbl.id..[[, __ceu_org,
+    return ceu_out_clear(_ceu_go, ]]..me.lbl.id..[[, __ceu_org,
                              &__ceu_org->trls[0],
                              __ceu_org);
 }
@@ -845,11 +846,11 @@ CEU_]]..id..[[_kill(_ceu_app, _ceu_go, ]]..V(var.__env_adt_root)..[[.root);
                 end
                 if static then
                     LINE(me, [[
-CEU_]]..id..[[_free_static(]]..V(var.__env_adt_root)..'.root,'..V(var)..[[);
+CEU_]]..id..[[_free_static(_ceu_app, ]]..V(var.__env_adt_root)..'.root,'..V(var)..[[);
 ]])
                 else
                     LINE(me, [[
-CEU_]]..id..[[_free_dynamic(]]..V(var.__env_adt_root)..[[.root);
+CEU_]]..id..[[_free_dynamic(_ceu_app, ]]..V(var.__env_adt_root)..[[.root);
 ]])
                 end
                 HALT(me)
@@ -940,14 +941,14 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
                     /* TODO: parameter restored here */
 #if defined(CEU_ADTS_NEWS_MALLOC) && defined(CEU_ADTS_NEWS_POOL)
     if (]]..pool..[[ == NULL) {
-        CEU_]]..fr.tp.id..[[_free_dynamic(__ceu_old);
+        CEU_]]..fr.tp.id..[[_free_dynamic(_ceu_app, __ceu_old);
     } else {
-        CEU_]]..fr.tp.id..[[_free_static(__ceu_old, ]]..pool..[[);
+        CEU_]]..fr.tp.id..[[_free_static(_ceu_app, __ceu_old, ]]..pool..[[);
     }
 #elif defined(CEU_ADTS_NEWS_MALLOC)
-    CEU_]]..fr.tp.id..[[_free_dynamic(__ceu_old);
+    CEU_]]..fr.tp.id..[[_free_dynamic(_ceu_app, __ceu_old);
 #elif defined(CEU_ADTS_NEWS_POOL)
-    CEU_]]..fr.tp.id..[[_free_static(__ceu_old, ]]..pool..[[);
+    CEU_]]..fr.tp.id..[[_free_static(_ceu_app, __ceu_old, ]]..pool..[[);
 #endif
 }
 ]])
@@ -1788,7 +1789,7 @@ static void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
     /* terminate thread */
     {
         CEU_THREADS_T __ceu_thread = CEU_THREADS_SELF();
-        tceu_evtp evtp = &__ceu_thread;
+        void* evtp = &__ceu_thread;
         /*pthread_testcancel();*/
         CEU_THREADS_MUTEX_LOCK(&_ceu_app->threads_mutex);
     /* only if sync is not active */

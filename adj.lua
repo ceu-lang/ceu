@@ -1013,11 +1013,11 @@ me.blk_body = me.blk_body or blk_body
             --     var tp_req id_req_;
             --     var tpN, idN_;
             --     every (id_req,idN) = _LINE_request do
-            --         var Line* new = spawn Line in _Lines with
+            --         var Line*? new = spawn Line in _Lines with
             --             this.id_req = id_req_;
             --             this.idN    = idN_;
             --         end
-            --         if new==null then
+            --         if not new? then
             --             emit _LINE_return => (id_req,err,0);
             --         end
             --     end
@@ -1073,8 +1073,9 @@ me.blk_body = me.blk_body or blk_body
                                                 node('Var', me.ln, '_'..id_cls..'s'),
                                                 node('Dcl_constr', me.ln, unpack(sets)))),
                                         node('If', me.ln,
-                                            node('Op1_?', me.ln, '?',
-                                                node('Var', me.ln, 'ok_')),
+                                            node('Op1_not', me.ln, 'not',
+                                                node('Op1_?', me.ln, '?',
+                                                    node('Var', me.ln, 'ok_'))),
                                             node('Block', me.ln,
                                                 node('EmitExt', me.ln, 'emit',
                                                     node('Ext', me.ln, id_evt..'_RETURN'),

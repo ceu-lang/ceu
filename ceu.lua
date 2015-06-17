@@ -296,7 +296,9 @@ do
                 if OPTS.verbose and i > 9 then
                     DBG('', s)
                 end
-                str = str..s..'\n'
+                if not (evt.os and OPTS.os) then
+                    str = str..s..'\n'
+                end
             else
                 outs = outs + 1
                 evt.n = outs
@@ -304,13 +306,19 @@ do
                 if OPTS.verbose then
                     DBG('', s)
                 end
-                str = str..s..'\n'
+                if not (evt.os and OPTS.os) then
+                    str = str..s..'\n'
+                end
             end
             assert(evt.pre=='input' or evt.pre=='output')
             ASR(ins+outs < 255, me, 'too many events')
         end
-        str = str..'#define CEU_IN_higher CEU_IN__INIT\n'   -- _INIT = HIGHER EXTERNAL
-        str = str..'#define CEU_IN_lower '..(256-ins)..'\n'
+
+        if not OPTS.os then
+            str = str..'#define CEU_IN_higher CEU_IN__INIT\n'   -- _INIT = HIGHER EXTERNAL
+            str = str..'#define CEU_IN_lower '..(256-ins)..'\n'
+        end
+
         --str = str..'#define CEU_IN_n  '..ins..'\n'
         str = str..'#define CEU_OUT_n '..outs..'\n'
 

@@ -58,6 +58,21 @@ void ceu_sys_assert (int v) {
 #endif
 }
 
+#include <stdio.h>
+void ceu_sys_log (int mode, long s) {
+    switch (mode) {
+        case 0:
+            printf("%s", (char*)s);
+            break;
+        case 1:
+            printf("%lX", s);
+            break;
+        case 2:
+            printf("%ld", s);
+            break;
+    }
+}
+
 #ifdef CEU_NEWS
 #ifdef CEU_RUNTESTS
 #define CEU_MAX_DYNS 100
@@ -100,7 +115,7 @@ void ceu_stack_pop_f (tceu_go* go) {
     go->stk_curi -= stack_cur(go)->offset;
 }
 
-void ceu_stack_push_f (tceu_go* go, tceu_stk* elem, void* ptr) {
+void ceu_sys_stack_push (tceu_go* go, tceu_stk* elem, void* ptr) {
     elem->offset = go->stk_nxti - go->stk_curi;
     go->stk_curi = go->stk_nxti;
     go->stk_nxti = stack_pushi(go, elem);
@@ -129,7 +144,7 @@ void ceu_stack_dump (tceu_go* go) {
 static int __ceu_isParent (tceu_org* parent, tceu_org* me) {
     return (parent==me) || (me!=NULL && __ceu_isParent(parent,me->up));
 }
-void ceu_stack_clear_org (tceu_go* go, tceu_org* org, int lim) {
+void ceu_sys_stack_clear_org (tceu_go* go, tceu_org* org, int lim) {
     int i;
     for (i=0; i<lim; i+=stack_sz((go),i)) {
         tceu_stk* stk = stack_get((go),i);
@@ -498,7 +513,7 @@ void ceu_pause (tceu_trl* trl, tceu_trl* trlF, int psed) {
 
 u8 CEU_GC = 0;  /* execute __ceu_os_gc() when "true" */
 
-void ceu_sys_go (tceu_app* app, int evt, tceu_evtp evtp)
+void ceu_sys_go (tceu_app* app, int evt, void* evtp)
 {
     tceu_go go;
 
@@ -861,6 +876,13 @@ void* CEU_SYS_VEC[CEU_SYS_MAX] __attribute__((used)) = {
 #ifdef CEU_ISR
     (void*) &ceu_sys_isr,
 #endif
+#ifdef CEU_CLEAR
+    (void*) &ceu_sys_clear,
+#endif
+    (void*) &ceu_sys_stack_push,
+#ifdef CEU_ORGS
+    (void*) &ceu_sys_stack_clear_org,
+#endif
     (void*) &ceu_sys_org,
 #ifdef CEU_ORGS
     (void*) &ceu_sys_org_trail,
@@ -964,12 +986,12 @@ static tceu_lnk* CEU_LNKS = NULL;
     int ret = 0;
 #endif
 
-/* TODO: remove this */
-int ceu_sys_emit (tceu_app* app, tceu_nevt evt, int sz, tceu_evtp param) {
+/* TODO: remove this indirection */
+int ceu_sys_emit (tceu_app* app, tceu_nevt evt, int sz, void* param) {
     return ceu_sys_queue_put(app, evt, sz, param);
 }
 
-tceu_evtp ceu_sys_call (tceu_app* app, tceu_nevt evt, tceu_evtp param) {
+void* ceu_sys_call (tceu_app* app, tceu_nevt evt, void* param) {
     tceu_lnk* lnk = CEU_LNKS;
     for (; lnk; lnk=lnk->nxt)
     {
@@ -980,7 +1002,7 @@ tceu_evtp ceu_sys_call (tceu_app* app, tceu_nevt evt, tceu_evtp param) {
         void* __old = CEU_APP_ADDR; /* must remember to resume after call */
         CEU_APP_ADDR = lnk->dst_app->addr;
 #endif
-        tceu_evtp ret = lnk->dst_app->calls(lnk->dst_app, lnk->dst_evt, param);
+        void* ret = lnk->dst_app->calls(lnk->dst_app, lnk->dst_evt, param);
 #if defined(CEU_OS_KERNEL) && defined(__AVR)
         CEU_APP_ADDR = __old;
 #endif

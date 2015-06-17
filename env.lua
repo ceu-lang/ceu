@@ -352,6 +352,7 @@ F = {
                                 AST.node('TupleTypeItem', me.ln, false, _tp, false)),
                 mod = { rec=false },
                 seqno = seqno,
+                os  = true,     -- do not generate #define with OPTS.os==true
             }
             if tp then
                 TP.new(_tp)
@@ -793,6 +794,16 @@ F = {
     _TMP_ITER = function (me)
         -- HACK_5: figure out iter type
         local root = AST.asr(me[1], 'Op1_cast')
+--[[
+        local root
+        if me[1].tag == 'Op1_cast' then
+            root = me[1].pool   -- plain ADT (xs/_xs)
+        else
+            root = me[1]
+        end
+        assert(ENV.adts[root.tp.id], 'bug found')
+]]
+
         local blki = AST.asr(me.__par,'Stmts', 2,'Stmts', 1,'Dcl_cls',
                                     3,'Block', 1,'Stmts', 1,'BlockI')
 
@@ -801,8 +812,10 @@ F = {
 
         AST.asr(blki,'', 1,'Stmts', 1,'Dcl_pool', 2,'Type')
                 [3] = AST.copy(root.pool.tp[3])
+                --[3] = AST.copy(root.tp[3])
         AST.asr(me.__par,'Stmts', 3,'Dcl_pool', 2,'Type')
                 [3] = AST.copy(root.pool.tp[3])
+                --[3] = AST.copy(root.tp[3])
 
         me.tag = 'Nothing'
     end,

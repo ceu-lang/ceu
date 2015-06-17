@@ -40,14 +40,14 @@ struct CEU_]]..id..[[ {
         me.auxs[#me.auxs+1] = [[
 #ifdef CEU_ADTS_WATCHING_]]..id..[[
 
-void CEU_]]..id..'_kill (tceu_app* app, tceu_go* go, CEU_'..id..[[* me);
+void CEU_]]..id..'_kill (tceu_app* _ceu_app, tceu_go* go, CEU_'..id..[[* me);
 #endif
 #ifdef CEU_ADTS_NEWS
 #ifdef CEU_ADTS_NEWS_MALLOC
-void CEU_]]..id..'_free_dynamic (CEU_'..id..[[* me);
+void CEU_]]..id..'_free_dynamic (tceu_app* _ceu_app, CEU_'..id..[[* me);
 #endif
 #ifdef CEU_ADTS_NEWS_POOL
-void CEU_]]..id..'_free_static (CEU_'..id..[[* me, void* pool);
+void CEU_]]..id..'_free_static (tceu_app* _ceu_app, CEU_'..id..[[* me, void* pool);
 #endif
 #endif
 ]]
@@ -67,7 +67,7 @@ void CEU_]]..id..'_free_static (CEU_'..id..[[* me, void* pool);
         local kill = [[
 #ifdef CEU_ADTS_WATCHING_]]..id..[[
 
-void CEU_]]..id..'_kill (tceu_app* app, tceu_go* go, CEU_'..id..[[* me) {
+void CEU_]]..id..'_kill (tceu_app* _ceu_app, tceu_go* go, CEU_'..id..[[* me) {
 ]]
         if op == 'union' then
             kill = kill .. [[
@@ -84,7 +84,7 @@ void CEU_]]..id..'_kill (tceu_app* app, tceu_go* go, CEU_'..id..[[* me) {
 ]]
                 else
                     kill = kill .. [[
-            CEU_]]..id_tag..[[_kill(app, go, me);
+            CEU_]]..id_tag..[[_kill(_ceu_app, go, me);
 ]]
                 end
                 kill = kill .. [[
@@ -107,7 +107,7 @@ void CEU_]]..id..'_kill (tceu_app* app, tceu_go* go, CEU_'..id..[[* me) {
         local free = [[
 #ifdef CEU_ADTS_NEWS
 #ifdef CEU_ADTS_NEWS_MALLOC
-void CEU_]]..id..'_free_dynamic (CEU_'..id..[[* me) {
+void CEU_]]..id..'_free_dynamic (tceu_app* _ceu_app, CEU_'..id..[[* me) {
 ]]
         if op == 'struct' then
             free = free .. [[
@@ -129,7 +129,7 @@ void CEU_]]..id..'_free_dynamic (CEU_'..id..[[* me) {
 ]]
                 else
                     free = free .. [[
-            CEU_]]..id_tag..[[_free_dynamic(me);
+            CEU_]]..id_tag..[[_free_dynamic(_ceu_app, me);
 ]]
                 end
                 free = free .. [[
@@ -148,7 +148,7 @@ void CEU_]]..id..'_free_dynamic (CEU_'..id..[[* me) {
 }
 #endif
 #ifdef CEU_ADTS_NEWS_POOL
-void CEU_]]..id..'_free_static (CEU_'..id..[[* me, void* pool) {
+void CEU_]]..id..'_free_static (tceu_app* _ceu_app, CEU_'..id..[[* me, void* pool) {
 ]]
         if op == 'struct' then
             free = free .. [[
@@ -170,7 +170,7 @@ void CEU_]]..id..'_free_static (CEU_'..id..[[* me, void* pool) {
 ]]
                 else
                     free = free .. [[
-            CEU_]]..id_tag..[[_free_static(me, pool);
+            CEU_]]..id_tag..[[_free_static(_ceu_app, me, pool);
 ]]
                 end
                 free = free .. [[
@@ -244,8 +244,9 @@ CEU_]]..string.upper(id)..[[_BASE.tag = CEU_]]..string.upper(id..'_'..me.tags[1]
         local tag = unpack(me)
         local enum = 'CEU_'..string.upper(id)..'_'..tag
         top.enum[#top.enum+1] = enum
+        -- _ceu_app is required because of OS/assert
         top.auxs[#top.auxs+1] = [[
-CEU_]]..id..'* '..enum..'_assert (CEU_'..id..[[* me, char* file, int line) {
+CEU_]]..id..'* '..enum..'_assert (tceu_app* _ceu_app, CEU_'..id..[[* me, char* file, int line) {
     ceu_out_assert_ex(me->tag == ]]..enum..[[, "invalid tag", file, line);
     return me;
 }
@@ -258,13 +259,13 @@ CEU_]]..id..'* '..enum..'_assert (CEU_'..id..[[* me, char* file, int line) {
         local kill = [[
 #ifdef CEU_ADTS_WATCHING_]]..id..[[
 
-void ]]..enum..'_kill (tceu_app* app, tceu_go* go, CEU_'..id..[[* me) {
+void ]]..enum..'_kill (tceu_app* _ceu_app, tceu_go* go, CEU_'..id..[[* me) {
     tceu_stk stk;
              stk.evt  = CEU_IN__ok_killed;
 #ifdef CEU_ORGS
-             stk.org  = app->data;
+             stk.org  = _ceu_app->data;
 #endif
-             stk.trl  = &app->data->trls[0];
+             stk.trl  = &_ceu_app->data->trls[0];
              stk.stop = NULL;
              stk.evt_sz = sizeof(me);
     stack_push(go, &stk, &me);
@@ -276,7 +277,7 @@ void ]]..enum..'_kill (tceu_app* app, tceu_go* go, CEU_'..id..[[* me) {
             local _, tp, _ = unpack(item)
             if TP.tostr(tp) == id..'*' then
                 kill = kill .. [[
-    CEU_]]..id..[[_kill(app, go, me->]]..tag..'.'..item.var_id..[[);
+    CEU_]]..id..[[_kill(_ceu_app, go, me->]]..tag..'.'..item.var_id..[[);
 /*
     me->]]..tag..'.'..item.var_id..[[ = &CEU_]]..string.upper(id)..[[_BASE;
 */
@@ -292,7 +293,7 @@ void ]]..enum..'_kill (tceu_app* app, tceu_go* go, CEU_'..id..[[* me) {
         local free = [[
 #ifdef CEU_ADTS_NEWS
 #ifdef CEU_ADTS_NEWS_MALLOC
-void ]]..enum..'_free_dynamic (CEU_'..id..[[* me) {
+void ]]..enum..'_free_dynamic (tceu_app* _ceu_app, CEU_'..id..[[* me) {
 ]]
 
         -- free all my recursive fields
@@ -300,7 +301,7 @@ void ]]..enum..'_free_dynamic (CEU_'..id..[[* me) {
             local _, tp, _ = unpack(item)
             if TP.tostr(tp) == id..'*' then
                 free = free .. [[
-    CEU_]]..id..[[_free_dynamic(me->]]..tag..'.'..item.var_id..[[);
+    CEU_]]..id..[[_free_dynamic(_ceu_app, me->]]..tag..'.'..item.var_id..[[);
 ]]
             end
         end
@@ -311,7 +312,7 @@ void ]]..enum..'_free_dynamic (CEU_'..id..[[* me) {
 }
 #endif
 #ifdef CEU_ADTS_NEWS_POOL
-void ]]..enum..'_free_static (CEU_'..id..[[* me, void* pool) {
+void ]]..enum..'_free_static (tceu_app* _ceu_app, CEU_'..id..[[* me, void* pool) {
 ]]
 
         -- free all my recursive fields
@@ -319,7 +320,7 @@ void ]]..enum..'_free_static (CEU_'..id..[[* me, void* pool) {
             local _, tp, _ = unpack(item)
             if TP.tostr(tp) == id..'*' then
                 free = free .. [[
-    CEU_]]..id..[[_free_static(me->]]..tag..'.'..item.var_id..[[, pool);
+    CEU_]]..id..[[_free_static(_ceu_app, me->]]..tag..'.'..item.var_id..[[, pool);
 ]]
             end
         end

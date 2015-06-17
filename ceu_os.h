@@ -31,6 +31,7 @@
 #endif
 
 #ifdef CEU_OS
+
     /* TODO: all should be configurable */
     #define CEU_EXTS
     #define CEU_WCLOCKS
@@ -64,25 +65,32 @@
     #define CEU_IN__STK         255
     #define CEU_IN__ORG         254
     #define CEU_IN__ORG_PSED    253
-    #define CEU_IN__INIT        252
-    #define CEU_IN__CLEAR       251
-    #define CEU_IN__ASYNC       250
-    #define CEU_IN__THREAD      249
-    #define CEU_IN__WCLOCK      248
-    #define CEU_IN_OS_START     247
-    #define CEU_IN_OS_STOP      246
-    #define CEU_IN_OS_DT        245
-    #define CEU_IN_OS_INTERRUPT 244
+    #define CEU_IN__CLEAR       252
+    #define CEU_IN__ok_killed   251
+    #define CEU_IN__INIT        250     /* HIGHER EXTERNAL */
+    #define CEU_IN__ASYNC       249
+    #define CEU_IN__THREAD      248
+    #define CEU_IN__WCLOCK      247
+    #define CEU_IN_OS_START     246
+    #define CEU_IN_OS_STOP      245
+    #define CEU_IN_OS_DT        244
+    #define CEU_IN_OS_INTERRUPT 243
 #ifdef CEU_TIMEMACHINE
-    #define CEU_IN__WCLOCK_     243
-    #define CEU_IN              243
+    #define CEU_IN__WCLOCK_     242
+    #define CEU_IN              242
 #else
-    #define CEU_IN              244
+    #define CEU_IN              243
 #endif
+
+    #define CEU_IN_higher       CEU_IN__INIT  /* _INIT = HIGHER EXTERNAL */
+    #define CEU_IN_lower        128     /* TODO: not checked from up and down */
 
     typedef s8 tceu_nlbl;   /* TODO: to small!! */
 
+#endif /* CEU_OS */
+
 #ifdef CEU_OS_APP
+
     #define ceu_out_log(mode,str) \
         ((__typeof__(ceu_sys_log)*)((_ceu_app)->sys_vec[CEU_SYS_LOG]))(mode,str)
 
@@ -112,6 +120,17 @@
 #ifdef CEU_ISR
     #define ceu_out_isr(n,f) \
         ((__typeof__(ceu_sys_isr)*)((_ceu_app)->sys_vec[CEU_SYS_ISR]))(n,f,_ceu_app)
+#endif
+
+#ifdef CEU_CLEAR
+    #define ceu_out_clear(go,cnt,org,from,stop) \
+        ((__typeof__(ceu_sys_clear)*)((_ceu_app)->sys_vec[CEU_SYS_CLEAR]))(go,cnt,org,from,stop)
+#endif
+    #define ceu_out_stack_push(go,elem,ptr) \
+        ((__typeof__(ceu_sys_stack_push)*)((_ceu_app)->sys_vec[CEU_SYS_STACK_PUSH]))(go,elem,ptr)
+#ifdef CEU_ORGS
+    #define ceu_out_stack_clear_org(go,org,lim) \
+        ((__typeof__(ceu_sys_stack_clear_org)*)((_ceu_app)->sys_vec[CEU_SYS_STACK_CLEAR_ORG]))(go,org,lim)
 #endif
 
     #define ceu_out_org(app,org,n,lbl,isDyn,parent,lnks) \
@@ -146,9 +165,9 @@
 
     #define ceu_out_go(app,evt,evtp) \
         ((__typeof__(ceu_sys_go)*)((app)->sys_vec[CEU_SYS_GO]))(app,evt,evtp)
-#endif
 
-#else /* ! CEU_OS */
+#else /* ! CEU_OS_APP (!CEU_OS||CEU_OS_KERNEL) */
+
     #define ceu_out_log(mode,str) \
             ceu_sys_log(mode,str)
 
@@ -170,6 +189,18 @@
             ceu_sys_realloc(ptr,size)
     #define ceu_out_req() \
             ceu_sys_req()
+
+#ifdef CEU_CLEAR
+    #define ceu_out_clear(go,cnt,org,from,stop) \
+            ceu_sys_clear(go,cnt,org,from,stop)
+#endif
+    #define ceu_out_stack_push(go,elem,ptr) \
+            ceu_sys_stack_push(go,elem,ptr)
+#ifdef CEU_ORGS
+    #define ceu_out_stack_clear_org(go,org,lim) \
+            ceu_sys_stack_clear_org(go,org,lim)
+#endif
+
 #ifdef CEU_ORGS_NEWS
     #define ceu_out_org(app,org,n,lbl,isDyn,parent,lnks) \
             ceu_sys_org(org,n,lbl,isDyn,parent,lnks)
@@ -193,7 +224,8 @@
 #endif
     #define ceu_out_go(app,evt,evtp) \
             ceu_sys_go(app,evt,evtp)
-#endif
+
+#endif /* ! CEU_OS_APP (!CEU_OS||CEU_OS_KERNEL) */
 
 #define ceu_in_emit(app,id,n,buf) \
     ceu_out_go(app,id,buf)
@@ -369,9 +401,6 @@ typedef union tceu_trl {
 #endif
 } tceu_trl;
 
-/* TODO: remove */
-#define tceu_evtp void*
-
 /* TCEU_RECURSE */
 
 typedef struct {
@@ -533,7 +562,7 @@ typedef struct tceu_go {
 
 #define stack_push(go,elem,ptr)                                 \
     ceu_out_assert(!stack_full((go),(elem)), "stack overflow"); \
-    ceu_stack_push_f((go),(elem),(ptr));
+    ceu_out_stack_push((go),(elem),(ptr));
 
 #define STK  stack_cur(&go)
 #define _STK stack_cur(_ceu_go)
@@ -618,7 +647,7 @@ typedef struct tceu_app {
     int         (*code)  (struct tceu_app*,tceu_go*);
     void        (*init)  (struct tceu_app*);
 #ifdef CEU_OS
-    tceu_evtp   (*calls) (struct tceu_app*,tceu_nevt,tceu_evtp);
+    void*       (*calls) (struct tceu_app*,tceu_nevt,void*);
     void**      sys_vec;
     void*       addr;
 #ifdef CEU_OS_LUAIFC
@@ -688,7 +717,7 @@ int  ceu_go_all    (tceu_app* app);
 #ifdef CEU_WCLOCKS
 int       ceu_sys_wclock (tceu_app* app, s32 dt, s32* set, s32* get);
 #endif
-void      ceu_sys_go     (tceu_app* app, int evt, tceu_evtp evtp);
+void      ceu_sys_go     (tceu_app* app, int evt, void* evtp);
 
 #ifdef CEU_OS
 
@@ -725,14 +754,22 @@ tceu_queue* ceu_sys_queue_nxt (void);
 void        ceu_sys_queue_rem (void);
 
 void      ceu_sys_assert    (int v);
-void      ceu_sys_log       (int mode, void* str);
+void      ceu_sys_log       (int mode, long str);
 void*     ceu_sys_realloc   (void* ptr, size_t size);
 int       ceu_sys_req       (void);
 tceu_app* ceu_sys_load      (void* addr);
 #ifdef CEU_ISR
 int       ceu_sys_isr       (int n, tceu_isr_f f, tceu_app* app);
 #endif
-void      ceu_sys_org       (tceu_org* org, int n, int lbl, int isDyn, tceu_org* parent, tceu_org_lnk* lnks);
+#ifdef CEU_CLEAR
+int       ceu_sys_clear     (tceu_go* _ceu_go, tceu_nlbl cnt, tceu_org* org, tceu_trl* from, void* stop);
+#endif
+void      ceu_sys_stack_push (tceu_go* go, tceu_stk* elem, void* ptr);
+#ifdef CEU_ORGS
+void      ceu_sys_stack_clear_org (tceu_go* go, tceu_org* org, int lim);
+#endif
+
+void      ceu_sys_org       (tceu_org* org, int n, int lbl, int isDyn, tceu_org* parent, tceu_org_lnk** lnks);
 #ifdef CEU_ORGS
 void      ceu_sys_org_trail (tceu_org* org, int idx, tceu_org_lnk* lnk);
 int       ceu_sys_org_spawn (tceu_go* _ceu_go, tceu_nlbl lbl_cnt, tceu_org* org, tceu_nlbl lbl_org);
@@ -740,8 +777,8 @@ int       ceu_sys_org_spawn (tceu_go* _ceu_go, tceu_nlbl lbl_cnt, tceu_org* org,
 void      ceu_sys_start     (tceu_app* app);
 int       ceu_sys_link      (tceu_app* src_app, tceu_nevt src_evt, tceu_app* dst_app, tceu_nevt dst_evt);
 int       ceu_sys_unlink    (tceu_app* src_app, tceu_nevt src_evt, tceu_app* dst_app, tceu_nevt dst_evt);
-int       ceu_sys_emit      (tceu_app* app, tceu_nevt evt, int sz, tceu_evtp param);
-tceu_evtp ceu_sys_call      (tceu_app* app, tceu_nevt evt, tceu_evtp param);
+int       ceu_sys_emit      (tceu_app* app, tceu_nevt evt, int sz, void* param);
+void*     ceu_sys_call      (tceu_app* app, tceu_nevt evt, void* param);
 
 enum {
     CEU_SYS_ASSERT = 0,
@@ -751,6 +788,13 @@ enum {
     CEU_SYS_LOAD,
 #ifdef CEU_ISR
     CEU_SYS_ISR,
+#endif
+#ifdef CEU_CLEAR
+    CEU_SYS_CLEAR,
+#endif
+    CEU_SYS_STACK_PUSH,
+#ifdef CEU_ORGS
+    CEU_SYS_STACK_CLEAR_ORG,
 #endif
     CEU_SYS_ORG,
 #ifdef CEU_ORGS

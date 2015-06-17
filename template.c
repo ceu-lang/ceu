@@ -124,7 +124,7 @@ static void ceu_stack_clr () {
 === FUNCTIONS_C ===
 
 #ifdef CEU_OS_APP
-static tceu_evtp ceu_app_calls (tceu_app* _ceu_app, tceu_nevt evt, tceu_evtp param) {
+static void* ceu_app_calls (tceu_app* _ceu_app, tceu_nevt evt, void* param) {
     switch (evt) {
         /* STUBS */
         === STUBS ===
