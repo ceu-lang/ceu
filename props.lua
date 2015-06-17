@@ -42,6 +42,7 @@ local NO_fun = {
     Await=true, AwaitN=true,
     EmitInt=true, --EmitExt=true,
     Pause=true,
+    Spawn=true,
 }
 
 local NO_fin = {

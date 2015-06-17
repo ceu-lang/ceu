@@ -27435,6 +27435,16 @@ escape ok != null;
 }
 
 Test { [[
+class T with do end
+function (void)=>void fff do
+    spawn T;
+end
+escape 1;
+]],
+    props = 'line 3 : not permitted inside `function´',
+}
+
+Test { [[
 class U with do end
 class T with do end
 var U*? ok = spawn T;
