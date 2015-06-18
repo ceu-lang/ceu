@@ -120,10 +120,11 @@ function TP.copy (t)
 end
 
 function TP.fromstr (str)
-    local id, ptr = string.match(str, '^(.-)(%**)$')
-    assert(id and ptr)
+    local id, ptr, ref = string.match(str, '^(.-)(%**)(%&?)$')
+    assert(id and ptr and ref)
     ptr = (id=='@' and 1) or string.len(ptr);
-    return TP.new{ tag='Type', id, ptr, false, false }
+    ref = (ref=='&')
+    return TP.new{ tag='Type', id, ptr, false, ref }
 end
 
 function TP.toc (tp)

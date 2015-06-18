@@ -44,7 +44,7 @@ function AST.copy (node, ln)
     _N = _N + 1
 
     for k, v in pairs(node) do
-        if k == '__par' then
+        if type(k) ~= 'number' then
             ret[k] = v
         else
             ret[k] = AST.copy(v, ln)
@@ -234,7 +234,8 @@ local function visit_aux (me, F)
     for i, sub in ipairs(me) do
         if bef then assert(bef(me, sub, i)==nil) end
         if AST.isNode(sub) then
-            me[i] = visit_aux(sub, F)
+            sub = visit_aux(sub, F)
+            me[i] = sub
         end
         if aft then assert(aft(me, sub, i)==nil) end
     end

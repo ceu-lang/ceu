@@ -84,6 +84,10 @@ if OPTS.version then
     os.exit(0)
 end
 
+if OPTS.safety then
+    OPTS.safety = assert(tonumber(OPTS.safety), '`--safety´ must be a number')
+end
+
 if OPTS.os_luaifc then
     assert(OPTS.os, '`--os-luaifc´ requires `--os´')
 end
