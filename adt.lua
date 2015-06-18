@@ -11,18 +11,22 @@ F = {
         end
         --assert(to.fst.tag=='Var' and fr.fst.tag=='Var', 'not implemented')
 
-        -- [OK]: ptr  = l2.*
-        -- [OK]: l1.* = l1.*
-        -- [NO]: l1.* = l2.*
-        ASR((to.tp.ptr==1 and to.lst.var==to.var) or
-             to.fst.var==fr.fst.var, me,
-            'cannot mix recursive data sources')
+        if to.adt_par and fr.adt_par then
+            -- [OK]: ref = val
+        else
+            -- [OK]: ptr  = l2.*
+            -- [OK]: l1.* = l1.*
+            -- [NO]: l1.* = l2.*
+            ASR((to.tp.ptr==1 and to.lst.var==to.var) or
+                 to.fst.var==fr.fst.var, me,
+                'cannot mix recursive data sources')
 
-        --  [OK]: "to" is prefix of "fr" (changing parent to a child)
-        --      l = l:CONS.tail     // OK
-        --      l:CONS.tail = l     // NO
-        local prefix = (to.fst.__depth-to.__depth <= fr.fst.__depth-fr.__depth)
-        ASR(prefix, me, 'cannot assign parent to child')
+            --  [OK]: "to" is prefix of "fr" (changing parent to a child)
+            --      l = l:CONS.tail     // OK
+            --      l:CONS.tail = l     // NO
+            local prefix = (to.fst.__depth-to.__depth <= fr.fst.__depth-fr.__depth)
+            ASR(prefix, me, 'cannot assign parent to child')
+        end
     end,
 
     Dcl_adt = function (me)

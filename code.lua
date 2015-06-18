@@ -686,6 +686,8 @@ _STK_ORG->trls[ ]]..me.trl_fins[1]..[[ ].lbl   = ]]..me.lbl_fin.id..[[;
                 end
                 LINE(me, ';')
             elseif var.pre=='pool' and var.tp.ptr==0 and (not var.tp.ref) then
+-- TODO
+--elseif var.adt or var.cls then
                 local cls = ENV.clss[var.tp.id]
                 local adt = ENV.adts[var.tp.id]
                 local static = (type(var.tp.arr)=='table')
@@ -719,12 +721,14 @@ ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'),'..ln
                     end
                 end
 
-                if adt then
+                if var.adt_par and var==var.adt_par.adt_pool then
                     -- create base case NIL and assign to "*l"
                     assert(adt)
                     assert(adt.n_recs>0, 'not implemented')
+                    local var_pool = var
+                    local var_root = var.adt_par.adt_root
                     local tag = adt[3][1]
-                    local tp = 'CEU_'..var.tp.id
+                    local tp = 'CEU_'..var_pool.tp.id
                     LINE(me, [[
 {
     ]]..tp..[[* __ceu_adt;
@@ -732,14 +736,14 @@ ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'),'..ln
                     -- base case: use preallocated static variable
                     if adt.n_recs>0 and tag==adt.tags[1] then
                         LINE(me, [[
-    __ceu_adt = &CEU_]]..string.upper(var.tp.id)..[[_BASE;
+    __ceu_adt = &CEU_]]..string.upper(var_pool.tp.id)..[[_BASE;
 ]])
 
                     -- other cases: must allocate
                     else
                         if static then
                             LINE(me, [[
-    __ceu_adt = (]]..tp..[[*) ceu_pool_alloc((tceu_pool*)]]..V(var)..[[);
+    __ceu_adt = (]]..tp..[[*) ceu_pool_alloc((tceu_pool*)]]..V(var_pool)..[[);
 ]])
                         else
                             LINE(me, [[
@@ -748,24 +752,23 @@ ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'),'..ln
                         end
                         LINE(me, [[
     ceu_out_assert(__ceu_adt != NULL, "out of memory");
-    __ceu_adt->tag = CEU_]]..string.upper(var.tp.id..'_'..tag)..[[;
-    ]])
+    __ceu_adt->tag = CEU_]]..string.upper(var_pool.tp.id..'_'..tag)..[[;
+]])
                     end
                     if static then
                         LINE(me, [[
-    ]]..V(var.__env_adt_root)..[[.pool = ]]..V(var)..[[;
+    ]]..V(var_root)..[[.pool = ]]..V(var_pool)..[[;
 ]])
                     else
                         LINE(me, [[
 #ifdef CEU_ADTS_NEWS_POOL
-    ]]..V(var.__env_adt_root)..[[.pool = NULL;
+    ]]..V(var_root)..[[.pool = NULL;
 #endif
 ]])
                     end
                     LINE(me, [[
-    ]]..V(var.__env_adt_root)..[[.root = __ceu_adt;
+    ]]..V(var_root)..[[.root = __ceu_adt;
 }
-
 /*  FINALIZE ADT */
 _STK_ORG->trls[ ]]..var.trl_adt[1]..[[ ].evt   = CEU_IN__CLEAR;
 _STK_ORG->trls[ ]]..var.trl_adt[1]..[[ ].lbl   = ]]..(var.lbl_fin_kill_free).id..[[;
@@ -832,25 +835,27 @@ _STK->trl = &_STK_ORG->trls[ ]]..stmts.trails[1]..[[ ];
 
         -- release ADT pool items
         for _, var in ipairs(me.vars) do
-            if var.adt and var.pre=='pool' then
+            if var.adt_par and var==var.adt_par.adt_pool then
                 local id, op = unpack(var.adt)
                 local static = (type(var.tp.arr)=='table')
+                local var_pool = var
+                local var_root = var.adt_par.adt_root
                 CASE(me, var.lbl_fin_kill_free)
                 if PROPS.has_adts_watching[var.adt.id] then
                     LINE(me, [[
 #if 0
 "kill" only while in scope
-CEU_]]..id..[[_kill(_ceu_app, _ceu_go, ]]..V(var.__env_adt_root)..[[.root);
+CEU_]]..id..[[_kill(_ceu_app, _ceu_go, ]]..V(var_root)..[[.root);
 #endif
 ]])
                 end
                 if static then
                     LINE(me, [[
-CEU_]]..id..[[_free_static(_ceu_app, ]]..V(var.__env_adt_root)..'.root,'..V(var)..[[);
+CEU_]]..id..[[_free_static(_ceu_app, ]]..V(var_root)..'.root,'..V(var_pool)..[[);
 ]])
                 else
                     LINE(me, [[
-CEU_]]..id..[[_free_dynamic(_ceu_app, ]]..V(var.__env_adt_root)..[[.root);
+CEU_]]..id..[[_free_dynamic(_ceu_app, ]]..V(var_root)..[[.root);
 ]])
                 end
                 HALT(me)
@@ -898,13 +903,16 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
             return
         end
 
+        local x = to.adt_Var
+
         -- cast is not an lvalue in C
         if to.tag == 'Op1_cast' then
             to = to[2]
         end
 
         -- dynamic ADTs (to=tceu_adt_root):
-        if to.fst.tp.id == '_tceu_adt_root' then
+        --if to.fst.adt_Var then
+        if x then
             local pool = FIND_ADT_POOL(to.fst)
             if pool.tag == 'Op1_cast' then    -- cast is not an lvalue in C
                 pool = pool[2]

@@ -479,7 +479,7 @@ me.blk_body = me.blk_body or blk_body
 
         local pool = node('Dcl_pool', me.ln, 'pool',
                         node('Type', me.ln, 'Loop_'..me.n, 0, true, false),
-                        '_pool')
+                        '_pool_'..me.n)
         local doorg = node('DoOrg', me.ln, 'Loop_'..me.n,
                         node('Dcl_constr', me.ln,
                             node('Block', me.ln,
@@ -489,7 +489,7 @@ me.blk_body = me.blk_body or blk_body
                                             node('This', me.ln, true),
                                             '_loops'),
                                         '=', 'exp',
-                                        node('Var', me.ln, '_pool')),
+                                        node('Var', me.ln, '_pool_'..me.n)),
                                     node('_Set', me.ln,
                                         node('Op2_.', me.ln, '.',
                                             node('This', me.ln, true),

@@ -119,10 +119,12 @@ F = {
             -- var int& i = 1;
             -- var int& i = *p;
             if (not fr.tp.ref) then
+                local adt_pool = fr.lst.var and fr.lst.var.adt_par and
+                                 (fr.lst.var == fr.lst.var.adt_par.adt_pool)
                 ASR(fr.lval or fr.tag=='Op1_&' or fr.tag=='Op2_call' or
                         (fr.lst and (fr.lst.tag=='Outer' or
-                                     fr.lst.var and fr.lst.var.cls)),
-                                               -- orgs are not lval
+                                     fr.lst.var and (fr.lst.var.cls or adt_pool))),
+                                               -- orgs/adts are not lval
                     me, 'invalid attribution (not a reference)')
                 ASR(fr.tag ~= 'Op1_*', me, 'invalid attribution')
             end

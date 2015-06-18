@@ -148,6 +148,16 @@ local function check (me, pre, tp)
     return top
 end
 
+function ENV.v_or_ref (tp, cls_or_adt)
+    if cls_or_adt == 'cls' then
+        return (tp.ptr==0) and ENV.clss[tp.id]
+    elseif cls_or_adt == 'adt' then
+        return (tp.ptr==0) and ENV.adts[tp.id]
+    else
+        return (tp.ptr==0) and (ENV.clss[tp.id] or ENV.adts[tp.id])
+    end
+end
+
 function newvar (me, blk, pre, tp, id, isImp, isEvery)
     local ME = CLS() or ADT()  -- (me can be a "data" declaration)
     for stmt in AST.iter() do
@@ -620,7 +630,7 @@ F = {
             id = id..me.n   -- avoids clash with other '_'
         end
         local has
-        has, me.var = newvar(me, AST.iter'Block'(), pre, tp, id, me.isImp, me.isEvery)
+        has, me.var = newvar(me, AST.par(me,'Block'), pre, tp, id, me.isImp, me.isEvery)
         assert(not has or (me.var.read_only==nil))
         me.var.read_only = me.read_only
         if constr then
@@ -635,7 +645,7 @@ F = {
         if me.var.cls and me.var.tp.arr then
             -- var T[10] ts;  // needs _i_ to iterate for the constructor
             _, me.var.constructor_iterator =
-                newvar(me, AST.iter'Block'(), 'var', TP.fromstr'int', '_i_'..id, false)
+                newvar(me, AST.par(me,'Block'), 'var', TP.fromstr'int', '_i_'..id, false)
         end
     end,
 
@@ -651,7 +661,7 @@ F = {
             me[2] = TP.fromstr'void'
 
             local tp_ = TP.new(tp)
-            local top = (tp_.ptr==0 and (not tp_.ref) and TOPS[tp_.id])
+            local top = (tp_.ptr==0 and (not tp_.ref))
             ASR(tp_.id=='_TOP_POOL' or top,
                 me, 'undeclared type `'..(tp_.id or '?')..'´')
         end
@@ -660,14 +670,39 @@ F = {
     Dcl_pool = function (me)
         local pre, tp, id, constr = unpack(me)
         ASR(tp.arr, me, 'missing `pool´ dimension')
-        F.Dcl_var(me)
 
-        -- TODO: check if adt is recursive
-        if me.var.adt then
-            -- pointer to the root of the pool (prefix "_")
-            local _, acc = newvar(me, me.var.blk, 'var',
-                                  TP.fromstr'_tceu_adt_root', '_'..id, false)
-            me.var.__env_adt_root = acc
+        -- ADT pool declaration (TODO: check if adt is recursive)
+        local adt = ENV.v_or_ref(tp, 'adt')
+        if adt then
+            ASR(tp.ptr == 0, me, 'not implemented : pointer to pool ADT')
+
+            -- for a real "pool", create '_'..id
+            me.adt_tp = tp            -- saves original type
+            if not tp.ref then
+                me[3] = '_'..id
+                F.Dcl_var(me)               -- creates me.var
+                me.var.isTmp = false
+                me.var.adt_par = me
+                me.adt_pool = me.var
+
+                -- TODO: including "tp" in "me[5]" to keep traversing it
+                me[4] = constr or false
+                me[5] = tp
+            end
+
+            -- creates "root" variable that represents the pool
+            local ptr = (tp.ref and '&') or ''
+            me[1] = 'var'
+            me[2] = TP.fromstr('_tceu_adt_root'..ptr)
+            me[3] = id
+            F.Dcl_var(me)
+            me.var.isTmp = false
+            me.var.adt_par = me
+            me.adt_root = me.var
+
+        -- other pools
+        else
+            F.Dcl_var(me)
         end
     end,
 
@@ -735,17 +770,20 @@ F = {
                         or AST.iter('Block')()
         local var = me.var or ENV.getvar(id, blk)
 
-        -- ADT pools: substitute from pool->access variable
-        if var and var.adt and var.pre=='pool' then
-            local constr = AST.par(me, 'Adt_constr')
-            local pool = constr and constr[5]
-            local ret = AST.node('Op1_cast', me.ln,
-                            TP.fromstr(var.tp.id..'*'),
-                            AST.node('Op2_.', me.ln, '.',
-                                AST.node('Var', me.ln, '_'..id),
-                                'root'))
-            ret.pool = var
-            return ret
+        -- ADT pools:
+        --  tceu_pool_     _x;  // 'pool'
+        --  tceu_adt_root  x;   // 'root'       (me)
+        --  x.root              // 'root_root'  (return this)
+        if var and var.adt_par and (not me.__env_set) then
+            me.__env_set = true     -- avoid infinite recursion
+            local root_root = AST.node('Op1_cast', me.ln,
+                                TP.fromstr(var.adt_par.adt_tp.id..'*'),
+                                AST.node('Op2_.', me.ln, '.',
+                                    me,
+                                    'root'))
+            root_root.adt_par = var.adt_par
+            root_root.adt_Var = me
+            return root_root
         end
 
         -- OUT access in recurse loops
@@ -813,29 +851,21 @@ F = {
 
     _TMP_ITER = function (me)
         -- HACK_5: figure out iter type
-        local root = AST.asr(me[1], 'Op1_cast')
---[[
-        local root
-        if me[1].tag == 'Op1_cast' then
-            root = me[1].pool   -- plain ADT (xs/_xs)
-        else
-            root = me[1]
-        end
-        assert(ENV.adts[root.tp.id], 'bug found')
-]]
+        local root_root = AST.asr(me[1], 'Op1_cast')
+        local pool_tp = root_root.adt_par.adt_tp
 
         local blki = AST.asr(me.__par,'Stmts', 2,'Stmts', 1,'Dcl_cls',
                                     3,'Block', 1,'Stmts', 1,'BlockI')
 
         local tp = AST.asr(blki,'', 1,'Stmts', 3,'Dcl_var', 2,'Type')
-        tp[1] = root.tp.id
+        tp[1] = root_root.tp.id
 
         AST.asr(blki,'', 1,'Stmts', 1,'Dcl_pool', 2,'Type')
-                [3] = AST.copy(root.pool.tp[3])
-                --[3] = AST.copy(root.tp[3])
+                [3] = AST.copy(pool_tp[3]) -- array
+                --[3] = AST.copy(root_root.tp[3])
         AST.asr(me.__par,'Stmts', 3,'Dcl_pool', 2,'Type')
-                [3] = AST.copy(root.pool.tp[3])
-                --[3] = AST.copy(root.tp[3])
+                [3] = AST.copy(pool_tp[3]) -- array
+                --[3] = AST.copy(root_root.tp[3])
 
         me.tag = 'Nothing'
     end,
@@ -844,7 +874,7 @@ F = {
         -- HACK_6 [await]: detects if OPT-1 (evt) or OPT-2 (adt) or OPT-3 (org)
         local stmts = AST.asr(me.__par, 'Stmts')
         local tp = me[1].tp  -- type of Var
-        if tp and tp.ptr==0 and ENV.clss[tp.id] then
+        if tp and ENV.v_or_ref(tp) then
             stmts[2] = AST.node('Nothing', me.ln)       -- remove OPT-1
             stmts[3] = AST.node('Nothing', me.ln)       -- remove OPT-2
             me.__env_watching = true    -- see props.lua
@@ -939,6 +969,15 @@ error'bug found'
         elseif set == 'spawn' then
             -- var T*? = spawn T;
             ASR(to.tp.opt, me, 'must assign to option pointer')
+
+        elseif fr.adt_Var and to.adt_Var then
+            -- HACK_10: ADT aliasing:
+            --  pool Command[] cmds1;
+            --  pool Command[]& cmds2;
+            --  cmds2 = cmds1;
+            me[3] = fr.adt_Var
+            me[4] = to.adt_Var
+            return F.Set(me)    -- retry with new values
         end
 
         local lua_str = false
@@ -1207,7 +1246,7 @@ error'bug found'
                 me.tp.ptr = me.tp.ptr - 1
             end
 
-        if me.tp.ptr==0 and ENV.clss[me.tp.id] then
+        if ENV.v_or_ref(me.tp) then
             me.lval = false
         else
             me.lval = arr
@@ -1304,10 +1343,40 @@ error'bug found'
         me.tp[2] = me.tp.ptr
     end,
 
+    ['Op2_._pos'] = function (me)
+        local op, e1, id = unpack(me)
+        local top = ENV.v_or_ref(e1.tp)
+        local cls = top and (top.tag=='Dcl_cls') and top
+        if cls and me.var then
+            -- mimic process in "Var_pre" for ADT pools
+            local adt = ENV.v_or_ref(me.var.tp, 'adt')
+            if adt and me.var.pre=='pool' then
+                --me.var.__env_adt_part = 'pool'
+
+                local root = AST.copy(me)
+                root.tag = 'Op2_.'              -- Op2 changed to Field
+                root[3] = '_'..me.var.id;
+                --root.__env_adt_part = 'root'
+                AST.visit(F, root)
+
+                local root_root = AST.node('Op1_cast', me.ln,
+                                    TP.fromstr(me.var.tp.id..'*'),
+                                    AST.node('Op2_.', me.ln, '.',
+                                        root,
+                                        'root'))
+                root_root.pool = me.var
+                root_root.root = root
+                --root_root.__env_adt_part = 'root_root'
+                return root_root
+            end
+        end
+    end,
+
     ['Op2_.'] = function (me)
         local op, e1, id = unpack(me)
-        local cls = (e1.tp.ptr==0 and ENV.clss[e1.tp.id])
-        local adt = (e1.tp.ptr==0 and ENV.adts[e1.tp.id])
+
+        local cls = ENV.v_or_ref(e1.tp, 'cls')
+        local adt = ENV.v_or_ref(e1.tp, 'adt')
         local BLK, VAR
         me.id = id
         if cls then
