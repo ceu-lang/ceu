@@ -782,7 +782,7 @@ F = {
                                     me,
                                     'root'))
             root_root.adt_par = var.adt_par
-            root_root.adt_Var = me
+            root_root.adt_rr_to_root = me
             return root_root
         end
 
@@ -970,14 +970,16 @@ error'bug found'
             -- var T*? = spawn T;
             ASR(to.tp.opt, me, 'must assign to option pointer')
 
-        elseif fr.adt_Var and to.adt_Var then
+        elseif fr.adt_rr_to_root and to.adt_rr_to_root then
             -- HACK_10: ADT aliasing:
             --  pool Command[] cmds1;
             --  pool Command[]& cmds2;
             --  cmds2 = cmds1;
-            me[3] = fr.adt_Var
-            me[4] = to.adt_Var
-            return F.Set(me)    -- retry with new values
+            me[3] = fr.adt_rr_to_root
+            me[4] = to.adt_rr_to_root
+            F.Set(me)    -- retry with new values
+            me.__env_adt_aliasing = true
+            return
         end
 
         local lua_str = false
@@ -1349,24 +1351,15 @@ error'bug found'
         local cls = top and (top.tag=='Dcl_cls') and top
         if cls and me.var then
             -- mimic process in "Var_pre" for ADT pools
-            local adt = ENV.v_or_ref(me.var.tp, 'adt')
-            if adt and me.var.pre=='pool' then
-                --me.var.__env_adt_part = 'pool'
-
-                local root = AST.copy(me)
-                root.tag = 'Op2_.'              -- Op2 changed to Field
-                root[3] = '_'..me.var.id;
-                --root.__env_adt_part = 'root'
-                AST.visit(F, root)
-
+            if me.var.adt_par then
+                assert(me.tag == 'Field')
                 local root_root = AST.node('Op1_cast', me.ln,
-                                    TP.fromstr(me.var.tp.id..'*'),
+                                    TP.fromstr(me.var.adt_par.adt_tp.id..'*'),
                                     AST.node('Op2_.', me.ln, '.',
-                                        root,
+                                        me,
                                         'root'))
-                root_root.pool = me.var
-                root_root.root = root
-                --root_root.__env_adt_part = 'root_root'
+                root_root.adt_par = me.var.adt_par
+                root_root.adt_rr_to_root = me
                 return root_root
             end
         end

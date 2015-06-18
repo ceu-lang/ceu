@@ -903,16 +903,13 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
             return
         end
 
-        local x = to.adt_Var
-
         -- cast is not an lvalue in C
         if to.tag == 'Op1_cast' then
             to = to[2]
         end
 
         -- dynamic ADTs (to=tceu_adt_root):
-        --if to.fst.adt_Var then
-        if x then
+        if to.fst.tp.id=='_tceu_adt_root' and (not me.__env_adt_aliasing) then
             local pool = FIND_ADT_POOL(to.fst)
             if pool.tag == 'Op1_cast' then    -- cast is not an lvalue in C
                 pool = pool[2]

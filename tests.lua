@@ -9,321 +9,8 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
-Test { [[
-data List with
-    tag NIL;
-or
-    tag OK with
-        var List* nxt;
-    end
-end
-pool List[] lll;     // l is the pool
-escape lll:NIL;       // l is a pointer to the root
-]],
-    run = 1,
-}
---do return end
-
-Test { [[
-data Command with
-    tag NOTHING;
-or
-    tag NEXT with
-        var Command* nxt;
-    end
-end
-
-pool Command[] cmds1;
-pool Command[]& cmds2;
-escape 1;
-]],
-    run = 1,
-}
-Test { [[
-data Command with
-    tag NOTHING;
-or
-    tag NEXT with
-        var Command* nxt;
-    end
-end
-
-pool Command[] cmds1;
-pool Command[]& cmds2;
-cmds2 = cmds1;
-escape 1;
-]],
-    run = 1,
-}
-Test { [[
-data Command with
-    tag NOTHING;
-or
-    tag NEXT with
-        var Command* nxt;
-    end
-end
-
-pool Command[] cmds1;
-cmds1 = new Command.NEXT(
-            Command.NEXT(
-                Command.NOTHING()));
-
-pool Command[]& cmds2;
-cmds2 = cmds1;
-
-escape cmds2:NEXT.nxt:NEXT.nxt:NOTHING;
-]],
-    run = 1,
-}
-Test { [[
-data Command with
-    tag NOTHING;
-or
-    tag NEXT with
-        var Command* nxt;
-    end
-end
-
-pool Command[]& cmds2;
-cmds2 = new Command.NEXT(
-            Command.NEXT(
-                Command.NOTHING()));
-
-escape 1;
-]],
-    ref = 'line 10 : reference must be bounded before use',
-}
-
-Test { [[
-data Command with
-    tag NOTHING;
-or
-    tag NEXT with
-        var Command* nxt;
-    end
-end
-
-pool Command[2] cmds1;
-pool Command[2]& cmds2;
-cmds2 = cmds1;
-
-cmds1 = new Command.NEXT(
-            Command.NEXT(
-                Command.NOTHING()));
-cmds2 = new Command.NEXT(
-            Command.NEXT(
-                Command.NOTHING()));
-escape cmds1:NOTHING;
-]],
-    run = 1,
-}
-Test { [[
-data Command with
-    tag NOTHING;
-or
-    tag NEXT with
-        var Command* nxt;
-    end
-end
-
-pool Command[3] cmds1;
-pool Command[3]& cmds2;
-cmds2 = cmds1;
-
-cmds1 = new Command.NEXT(
-            Command.NEXT(
-                Command.NOTHING()));
-cmds2:NEXT.nxt:NEXT.nxt = new Command.NEXT(
-                            Command.NEXT(
-                                Command.NOTHING()));
-escape cmds1:NEXT.nxt:NEXT.nxt:NEXT.nxt:NOTHING;
-]],
-    run = 1,
-}
-Test { [[
-data Command with
-    tag NOTHING;
-or
-    tag NEXT with
-        var Command* nxt;
-    end
-end
-
-pool Command[10] cmds1;
-
-pool Command[10]& cmds2;
-cmds2 = cmds1;
-
-cmds1 = new Command.NEXT(
-            Command.NEXT(
-                Command.NOTHING()));
-cmds2 = new Command.NEXT(
-            Command.NEXT(
-                Command.NOTHING()));
-
-escape cmds1:NEXT.nxt:NEXT.nxt:NOTHING;
-]],
-    run = 1,
-}
-Test { [[
-data Command with
-    tag NOTHING;
-or
-    tag NEXT with
-        var Command* nxt;
-    end
-end
-
-pool Command[] cmds1;
-
-pool Command[]& cmds2;
-cmds2 = cmds1;
-
-cmds1 = new Command.NEXT(
-            Command.NEXT(
-                Command.NOTHING()));
-cmds2 = new Command.NEXT(
-            Command.NEXT(
-                Command.NOTHING()));
-
-escape cmds1:NEXT.nxt:NEXT.nxt:NOTHING;
-]],
-    run = 1,
-}
-
-Test { [[
-data Command with
-    tag NOTHING;
-or
-    tag NEXT with
-        var Command* nxt;
-    end
-end
-
-pool Command[] cmds1;
-
-pool Command[]& cmds2;
-cmds2 = cmds1;
-
-cmds1 = new Command.NEXT(
-            Command.NEXT(
-                Command.NOTHING()));
-cmds2 = new Command.NEXT(
-            Command.NEXT(
-                Command.NOTHING()));
-
-var int sum = 0;
-
-traverse cmd in cmds1 do
-    if cmd:NEXT then
-        sum = sum + 1;
-        traverse cmd:NEXT.nxt;
-    end
-end
-traverse cmd in cmds2 do
-    if cmd:NEXT then
-        sum = sum + 1;
-        traverse cmd:NEXT.nxt;
-    end
-end
-
-escape sum;
-]],
-    wrn = true,
-    run = 4,
-}
-
---]===]
-Test { [[
-data Command with
-    tag NOTHING;
-or
-    tag NEXT with
-        var Command* nxt;
-    end
-end
-
-class Run with
-    pool Command[]& cmds1;
-do
-    cmds1 = new Command.NEXT(
-                Command.NEXT(
-                    Command.NOTHING()));
-    traverse cmd111 in cmds1 do
-        if cmd111:NEXT then
-            traverse cmd111:NEXT.nxt;
-        end
-    end
-end
-
-pool Command[] cmds;
-
-traverse cmd222 in cmds do
-end
-
-var int ret = do Run with
-    this.cmds1 = cmds;
-end;
-
-escape ret;
-]],
-    wrn = true,
-    run = 2,
-}
-
-Test { [[
-data Command with
-    tag NOTHING;
-or
-    tag NEXT with
-        var Command* nxt;
-    end
-end
-
-    pool Command[] cmds;
-    traverse cmd in cmds do
-    end
-
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-data Command with
-    tag NOTHING;
-or
-    tag NEXT with
-        var Command* nxt;
-    end
-end
-
-class Run with
-    pool Command[]& cmds;
-do
-    traverse cmd in cmds do
-        if cmd:NEXT then
-            traverse cmd:NEXT.nxt;
-        end
-    end
-end
-
-pool Command[] cmds;
-cmds = new Command.NEXT(
-            Command.NEXT(
-                Command.NOTHING()));
-
-var int ret = do Run with
-    this.cmds = cmds;
-end;
-
-escape ret;
-]],
-    run = 2,
-}
-
 do return end
+--]===]
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------
@@ -46242,6 +45929,40 @@ var int ret = 0;
 
 par/or do
     await l:CONS.tail:CONS.tail;
+    ret = 100;
+with
+    l:CONS.tail:CONS.tail = new List.NIL();
+    ret = 10;
+end
+
+escape ret;
+]],
+    _ana = {acc=true},
+    run = 100,
+}
+
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[] l;
+l = new List.CONS(1,
+            List.CONS(2,
+                List.CONS(3,
+                    List.CONS(4,
+                        List.CONS(5,
+                            List.NIL())))));
+
+var int ret = 0;
+
+par/or do
+    await l:CONS.tail:CONS.tail;
     ret = ret + l:CONS.tail:CONS.tail:CONS.head;    // 0+4
     _ceu_out_assert(ret == 4, "1");
     l:CONS.tail:CONS.tail = l:CONS.tail:CONS.tail:CONS.tail;
@@ -47313,6 +47034,329 @@ end
 escape ret;
 ]],
     run = { ['~>5s']=4 },
+}
+
+-- ADTS ALIASING
+
+Test { [[
+data List with
+    tag NIL;
+or
+    tag X with
+        var List* nxt;
+    end
+end
+pool List[] lll;     // l is the pool
+escape lll:NIL;       // l is a pointer to the root
+]],
+    run = 1,
+}
+--do return end
+
+Test { [[
+data Command with
+    tag NOTHING;
+or
+    tag NEXT with
+        var Command* nxt;
+    end
+end
+
+pool Command[] cmds1;
+pool Command[]& cmds2;
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+data Command with
+    tag NOTHING;
+or
+    tag NEXT with
+        var Command* nxt;
+    end
+end
+
+pool Command[] cmds1;
+pool Command[]& cmds2;
+cmds2 = cmds1;
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+data Command with
+    tag NOTHING;
+or
+    tag NEXT with
+        var Command* nxt;
+    end
+end
+
+pool Command[] cmds1;
+cmds1 = new Command.NEXT(
+            Command.NEXT(
+                Command.NOTHING()));
+
+pool Command[]& cmds2;
+cmds2 = cmds1;
+
+escape cmds2:NEXT.nxt:NEXT.nxt:NOTHING;
+]],
+    run = 1,
+}
+Test { [[
+data Command with
+    tag NOTHING;
+or
+    tag NEXT with
+        var Command* nxt;
+    end
+end
+
+pool Command[]& cmds2;
+cmds2 = new Command.NEXT(
+            Command.NEXT(
+                Command.NOTHING()));
+
+escape 1;
+]],
+    ref = 'line 10 : reference must be bounded before use',
+}
+
+Test { [[
+data Command with
+    tag NOTHING;
+or
+    tag NEXT with
+        var Command* nxt;
+    end
+end
+
+pool Command[2] cmds1;
+pool Command[2]& cmds2;
+cmds2 = cmds1;
+
+cmds1 = new Command.NEXT(
+            Command.NEXT(
+                Command.NOTHING()));
+cmds2 = new Command.NEXT(
+            Command.NEXT(
+                Command.NOTHING()));
+escape cmds1:NOTHING;
+]],
+    run = 1,
+}
+Test { [[
+data Command with
+    tag NOTHING;
+or
+    tag NEXT with
+        var Command* nxt;
+    end
+end
+
+pool Command[3] cmds1;
+pool Command[3]& cmds2;
+cmds2 = cmds1;
+
+cmds1 = new Command.NEXT(
+            Command.NEXT(
+                Command.NOTHING()));
+cmds2:NEXT.nxt:NEXT.nxt = new Command.NEXT(
+                            Command.NEXT(
+                                Command.NOTHING()));
+escape cmds1:NEXT.nxt:NEXT.nxt:NEXT.nxt:NOTHING;
+]],
+    run = 1,
+}
+Test { [[
+data Command with
+    tag NOTHING;
+or
+    tag NEXT with
+        var Command* nxt;
+    end
+end
+
+pool Command[10] cmds1;
+
+pool Command[10]& cmds2;
+cmds2 = cmds1;
+
+cmds1 = new Command.NEXT(
+            Command.NEXT(
+                Command.NOTHING()));
+cmds2 = new Command.NEXT(
+            Command.NEXT(
+                Command.NOTHING()));
+
+escape cmds1:NEXT.nxt:NEXT.nxt:NOTHING;
+]],
+    run = 1,
+}
+Test { [[
+data Command with
+    tag NOTHING;
+or
+    tag NEXT with
+        var Command* nxt;
+    end
+end
+
+pool Command[] cmds1;
+
+pool Command[]& cmds2;
+cmds2 = cmds1;
+
+cmds1 = new Command.NEXT(
+            Command.NEXT(
+                Command.NOTHING()));
+cmds2 = new Command.NEXT(
+            Command.NEXT(
+                Command.NOTHING()));
+
+escape cmds1:NEXT.nxt:NEXT.nxt:NOTHING;
+]],
+    run = 1,
+}
+
+Test { [[
+data Command with
+    tag NOTHING;
+or
+    tag NEXT with
+        var Command* nxt;
+    end
+end
+
+pool Command[] cmds1;
+
+pool Command[]& cmds2;
+cmds2 = cmds1;
+
+cmds1 = new Command.NEXT(
+            Command.NEXT(
+                Command.NOTHING()));
+cmds2 = new Command.NEXT(
+            Command.NEXT(
+                Command.NOTHING()));
+
+var int sum = 0;
+
+traverse cmd in cmds1 do
+    if cmd:NEXT then
+        sum = sum + 1;
+        traverse cmd:NEXT.nxt;
+    end
+end
+traverse cmd in cmds2 do
+    if cmd:NEXT then
+        sum = sum + 1;
+        traverse cmd:NEXT.nxt;
+    end
+end
+
+escape sum;
+]],
+    wrn = true,
+    run = 4,
+}
+
+Test { [[
+data Command with
+    tag NOTHING;
+or
+    tag NEXT with
+        var Command* nxt;
+    end
+end
+
+class Run with
+    pool Command[]& cmds1;
+do
+    cmds1 = new Command.NEXT(
+                Command.NEXT(
+                    Command.NOTHING()));
+    var int sum = 0;
+    traverse cmd111 in cmds1 do
+        if cmd111:NEXT then
+            sum = sum + 1;
+            traverse cmd111:NEXT.nxt;
+        end
+    end
+    escape sum;
+end
+
+pool Command[] cmds;
+
+traverse cmd222 in cmds do
+end
+
+var int ret = do Run with
+    this.cmds1 = cmds;
+end;
+
+escape ret;
+]],
+    wrn = true,
+    run = 2,
+}
+
+Test { [[
+data Command with
+    tag NOTHING;
+or
+    tag NEXT with
+        var Command* nxt;
+    end
+end
+
+    pool Command[] cmds;
+    traverse cmd in cmds do
+    end
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Command with
+    tag NOTHING;
+or
+    tag NEXT with
+        var Command* nxt;
+    end
+end
+
+class Run with
+    pool Command[]& cmds;
+do
+    var int sum = 0;
+    traverse cmd in cmds do
+        if cmd:NEXT then
+            sum = sum + 1;
+            traverse cmd:NEXT.nxt;
+        end
+    end
+    escape sum;
+end
+
+pool Command[] cmds;
+cmds = new Command.NEXT(
+            Command.NEXT(
+                Command.NOTHING()));
+
+var int ret = do Run with
+    this.cmds = cmds;
+end;
+
+escape ret;
+]],
+    wrn = true,
+    run = 2,
 }
 
 --[=[
