@@ -397,9 +397,9 @@ me.blk_body = me.blk_body or blk_body
         --          traverse <exp>;
         --  end;
         --      ... becomes ...
-        --  class Loop with
-        --      pool Loop[?]& loops;
-        --      var  Loop*    parent;       // TODO: should be "Loop*?" (opt)
+        --  class Body with
+        --      pool Body[?]& loops;
+        --      var  Body*    parent;       // TODO: should be "Body*?" (opt)
         --      var  <adt_t>* <n>;
         --      var  Outer&   out;
         --      <interface>
@@ -416,8 +416,8 @@ me.blk_body = me.blk_body or blk_body
         --      end
         --      escape 0;
         --  end
-        --  pool Loop[?] loops;
-        --  ret = do Loop with
+        --  pool Body[?] loops;
+        --  ret = do Body with
         --      this.loops = loops;
         --      this.parent = null;
         --      this.<n>   = <n>;
@@ -431,14 +431,14 @@ me.blk_body = me.blk_body or blk_body
         ifc = ifc or node('Stmts',me.ln)
 
         local tp = node('Type', me.ln, 'TODO-ADT-TYPE', 1, false, false)
-        local cls = node('Dcl_cls', me.ln, false, 'Loop_'..me.n,
+        local cls = node('Dcl_cls', me.ln, false, 'Body_'..me.n,
                         node('BlockI', me.ln,
                             node('Stmts', me.ln,
                                 node('Dcl_pool', me.ln, 'pool',
-                                    node('Type', me.ln, 'Loop_'..me.n, 0, true, true),
-                                    '_loops'),
+                                    node('Type', me.ln, 'Body_'..me.n, 0, true, true),
+                                    '_bodies'),
                                 node('Dcl_var', me.ln, 'var',
-                                    node('Type', me.ln, 'Loop_'..me.n, 1, false, false),
+                                    node('Type', me.ln, 'Body_'..me.n, 1, false, false),
                                         -- TODO: should be opt type
                                     '_parent'),
                                 node('Dcl_var', me.ln, 'var',
@@ -478,16 +478,16 @@ me.blk_body = me.blk_body or blk_body
         cls.__adj_out = AST.par(me, 'Block')
 
         local pool = node('Dcl_pool', me.ln, 'pool',
-                        node('Type', me.ln, 'Loop_'..me.n, 0, true, false),
+                        node('Type', me.ln, 'Body_'..me.n, 0, true, false),
                         '_pool_'..me.n)
-        local doorg = node('DoOrg', me.ln, 'Loop_'..me.n,
+        local doorg = node('DoOrg', me.ln, 'Body_'..me.n,
                         node('Dcl_constr', me.ln,
                             node('Block', me.ln,
                                 node('Stmts', me.ln,
                                     node('_Set', me.ln,
                                         node('Op2_.', me.ln, '.',
                                             node('This', me.ln, true),
-                                            '_loops'),
+                                            '_bodies'),
                                         '=', 'exp',
                                         node('Var', me.ln, '_pool_'..me.n)),
                                     node('_Set', me.ln,
@@ -523,11 +523,11 @@ me.blk_body = me.blk_body or blk_body
     --      <constr>
     --  end;
     --      ... becomes ...
-    --  var Loop*? _body_;
-    --  _body_ = spawn Loop in _loops with
-    --      this._loops  = outer._loops;
+    --  var Body*? _body_;
+    --  _body_ = spawn Body in _bodies with
+    --      this._bodies = outer._bodies;
     --      this._parent = outer;
-    --      this.<n>    = <exp>;
+    --      this.<n>     = <exp>;
     --      <constr>
     --  if _body_? then
     --      ret = await *_body_;
@@ -581,18 +581,18 @@ me.blk_body = me.blk_body or blk_body
                         node('Var', me.ln, '_body_'..me.n),
                         '=', 'spawn',
                         node('Spawn', me.ln, cls_id,
-                            node('Var', me.ln, '_loops'),
+                            node('Var', me.ln, '_bodies'),
                             node('Dcl_constr', me.ln,
                                 node('Block', me.ln,
                                     node('Stmts', me.ln,
                                         node('_Set', me.ln,
                                             node('Op2_.', me.ln, '.',
                                                 node('This', me.ln, true),
-                                                '_loops'),
+                                                '_bodies'),
                                             '=', 'exp',
                                             node('Op2_.', me.ln, '.',
                                                 node('Outer', me.ln, true),
-                                                '_loops')),
+                                                '_bodies')),
                                         node('_Set', me.ln,
                                             node('Op2_.', me.ln, '.',
                                                 node('This', me.ln, true),
