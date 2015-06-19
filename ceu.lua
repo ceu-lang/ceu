@@ -449,16 +449,16 @@ do
     end
 
     if not OPTS.os then
-        FILES.ceu_os_c = SUB(FILES.ceu_os_c,
-                                      '#include "ceu_os.h"',
-                                      FILES.ceu_os_h)
-        CC = SUB(CC, '#include "ceu_types.h"',
-                             FILES.ceu_types_h)
+        FILES.ceu_os_c = SUB(FILES.ceu_os_c, '#include "ceu_os.h"',
+                                             FILES.ceu_os_h)
+        CC = SUB(CC, '#include "ceu_types.h"', FILES.ceu_types_h)
         CC = SUB(CC, '#include "ceu_os.h"',
-                             FILES.ceu_os_h..'\n'..FILES.ceu_os_c)
+                     FILES.ceu_os_h..'\n'..FILES.ceu_os_c)
     end
 
     -- TODO: ceu_pool_* => ceu_sys_pool_*
+    FILES.ceu_pool_h = SUB(FILES.ceu_pool_h, '#include "ceu_os.h"',
+                                             FILES.ceu_os_h)
     FILES.ceu_pool_c = SUB(FILES.ceu_pool_c, '#include "ceu_pool.h"', '')
     CC = SUB(CC, '#include "ceu_pool.h"',
                          FILES.ceu_pool_h..'\n'..FILES.ceu_pool_c)
