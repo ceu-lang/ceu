@@ -47359,6 +47359,48 @@ escape ret;
     run = 2,
 }
 
+Test { [[
+data Command with
+    tag NOTHING;
+or
+    tag AWAIT;
+or
+    tag PAROR with
+        var Command* one;
+    end
+end
+
+pool Command[] cmds;
+
+cmds = new Command.PAROR(
+            Command.PAROR(
+                Command.AWAIT()));
+
+class Run with
+    pool Command[]& cmds;
+do
+    traverse cmd in cmds do
+        if cmd:AWAIT then
+            await 1ms;
+
+        else/if cmd:PAROR then
+            par/or do
+                traverse cmd:PAROR.one;
+            with
+            end
+        end
+    end
+end
+
+var Run r with
+    this.cmds   = cmds;
+end;
+
+escape 1;
+]],
+    wrn = true,
+    run = { ['~>10s']=1 },
+}
 --[=[
 
 Test { [[

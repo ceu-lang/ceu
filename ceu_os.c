@@ -148,6 +148,9 @@ void ceu_sys_stack_clear_org (tceu_go* go, tceu_org* org, int lim) {
     int i;
     for (i=0; i<lim; i+=stack_sz((go),i)) {
         tceu_stk* stk = stack_get((go),i);
+        if (stk->evt == CEU_IN__NONE) {
+            continue;   /* already cleared: avoids accessing dangling pointer */
+        }
         if (__ceu_isParent(org, stk->org)) {
             if (stk->stop == NULL) {        /* broadcast traversal */
                 /* jump to next organism */
