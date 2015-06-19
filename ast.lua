@@ -10,6 +10,20 @@ function AST.isNode (node)
     return (getmetatable(node) == MT) and node.tag
 end
 
+AST.tag2id = {
+    EmitInt = 'emit',
+    Spawn   = 'spawn',
+    Kill    = 'kill',
+    Await   = 'await',
+    AwaitN  = 'await',
+    Async   = 'async',
+    Thread  = 'async/thread',
+    ParOr   = 'par/or',
+    ParAnd  = 'par/and',
+    ParEver = 'par',
+    Loop    = 'loop',
+}
+
 function AST.isParent (n1, n2)
     return n1 == n2
         or n2.__par and AST.isParent(n1, n2.__par)

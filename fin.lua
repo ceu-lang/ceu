@@ -284,7 +284,9 @@ end
             return  -- o'=await o until o==o'
         end
 
-        if type(GET()[me.var]) ~= 'table' then
+        local acc = GET()[me.var]
+
+        if type(acc) ~= 'table' then
             GET()[me.var] = 'accessed'
             return  -- no await happened yet
         end
@@ -297,32 +299,38 @@ end
             for n in AST.iter('ParOr') do
                 local var = n.__adj_watching and n.__adj_watching.lst
                                              and n.__adj_watching.lst.var
-                if var==me.var and AST.isParent(n,GET()[me.var]) then
+                if var==me.var and AST.isParent(n,acc) then
                     return      -- ok, I'm safely watching "me.var"
                 end
             end
         end
 
         -- invalid access!
+        local acc_id = assert(AST.tag2id[acc.tag], 'bug found')
         ASR(false, me, 1107,
-            'pointer access across `await´ : value `'..me.var.id..'´')
--- TODO: error message: across emit/await
+            'unsafe access to pointer "'..me.var.id..'" across `'..
+                acc_id..'´ ('..acc.ln[1]..' : '..acc.ln[2]..')')
     end,
 
-    Await = function (me)
-        if me.tl_awaits or me.tag=='EmitInt' then
-            for _, T in ipairs(TRACK) do        -- search in all levels
-                for var, v in pairs(T) do
-                    if v == 'accessed' then
-                        GET()[var] = me   -- tracks the *first* await
-                    end
+    __await = function (me)
+        for _, T in ipairs(TRACK) do        -- search in all levels
+            for var, v in pairs(T) do
+                if v == 'accessed' then
+                    GET()[var] = me   -- tracks the *first* await
                 end
             end
         end
     end,
-    AwaitN   = 'Await',
-    EmitInt  = 'Await',
+    EmitInt = '__await',
+    Spawn   = '__await',
+    Kill    = '__await',
 
+    Await = function (me)
+        if me.tl_awaits then
+            F.__await(me)
+        end
+    end,
+    AwaitN   = 'Await',
     --Block    = 'Await',
     Async_pre  = 'Await',
     Thread_pre = 'Await',

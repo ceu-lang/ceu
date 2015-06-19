@@ -15050,7 +15050,7 @@ var int* ptr = &v;
 await 1s;
 escape *ptr;
 ]],
-    fin = 'line 4 : pointer access across `await´',
+    fin = 'line 4 : unsafe access to pointer "ptr" across `await´',
 }
 
 Test { [[
@@ -15061,7 +15061,7 @@ await 1s;
 var int* c = a;
 escape 1;
 ]],
-    fin = 'line 5 : pointer access across `await´',
+    fin = 'line 5 : unsafe access to pointer "a" across `await´',
 }
 
 Test { [[
@@ -15072,7 +15072,7 @@ await 1s;
 var int* c = a;
 escape 1;
 ]],
-    fin = 'line 5 : pointer access across `await´',
+    fin = 'line 5 : unsafe access to pointer "a" across `await´',
 }
 
 Test { [[
@@ -15183,7 +15183,7 @@ escape(a);
 ]],
     --env = 'line 8 : native variable/function "_f" is not declared',
     --fin = 'line 8 : attribution to pointer with greater scope',
-    fin = 'line 11 : pointer access across `await´',
+    fin = 'line 11 : unsafe access to pointer "v" across `await´',
     --run = { ['~>1s']=10 },
 }
 
@@ -15203,7 +15203,7 @@ escape(a);
 ]],
     --env = 'line 8 : native variable/function "_f" is not declared',
     --fin = 'line 8 : attribution to pointer with greater scope',
-    fin = 'line 11 : pointer access across `await´',
+    fin = 'line 11 : unsafe access to pointer "v" across `await´',
 }
 Test { [[
 native do
@@ -16458,7 +16458,7 @@ var int* v = await e;
 await e;
 escape *v;
 ]],
-    fin = 'line 4 : pointer access across `await´',
+    fin = 'line 4 : unsafe access to pointer "v" across `await´',
     --fin = 'line 3 : cannot `await´ again on this block',
     --run = 0,
 }
@@ -16651,7 +16651,7 @@ do
 end
 escape ret + *p;
 ]],
-    fin = 'line 14 : pointer access across `await´',
+    fin = 'line 14 : unsafe access to pointer "p" across `par/and´',
     --fin = 'line 8 : invalid block for awoken pointer "p"',
     --fin = 'line 14 : cannot `await´ again on this block',
 }
@@ -18158,7 +18158,7 @@ every qu_ in go do
     end
 end
 ]],
-    fin = 'line 5 : pointer access across `await´',
+    fin = 'line 5 : unsafe access to pointer "qu" across `async´',
     --_ana = { isForever=true },
     --run = 1,
 }
@@ -20246,7 +20246,7 @@ do
 end
 ]],
     --run = 1,
-    fin = 'line 7 : pointer access across `await´',
+    fin = 'line 7 : unsafe access to pointer "p1" across `await´',
 }
 
 Test { [[
@@ -20279,7 +20279,7 @@ else
 end
 escape ret;
 ]],
-    fin = 'line 10 : pointer access across `await´',
+    fin = 'line 10 : unsafe access to pointer "x" across `emit´',
 }
 
 Test { [[
@@ -23748,7 +23748,7 @@ end;
 
 escape *(t.p) + (t.v);
 ]],
-    fin = 'line 10 : pointer access across `await´',
+    fin = 'line 10 : unsafe access to pointer "p" across `await´',
 }
 
 Test { [[
@@ -27611,7 +27611,7 @@ var T*? t = spawn T;
 await OS_START;
 escape t:a;
 ]],
-    fin = 'line 9 : pointer access across `await´',
+    fin = 'line 9 : unsafe access to pointer "t" across `await´',
 }
 
 Test { [[
@@ -27801,6 +27801,24 @@ pool T[1] t;
 var T*? ok1 = spawn T in t with end;
 var T*? ok2 = spawn T in t;
 escape (ok1?) + (ok2?) + 1;
+]],
+    fin = 'line 7 : unsafe access to pointer "ok1" across `spawn´',
+}
+
+Test { [[
+class T with
+do
+end
+pool T[1] t;
+var T*? ok1 = spawn T in t with end;
+var int sum = 1;
+if ok1? then
+    watching *ok1 do
+        var T*? ok2 = spawn T in t;
+        sum = sum + (ok1?) + (ok2?);
+    end
+end
+escape sum;
 ]],
     run = 1,
 }
@@ -28005,8 +28023,12 @@ do
 end
 pool T[1] ts;
 var T*? a = spawn T in ts;
-var T*? b = spawn T in ts;
-escape a? and (not b?);
+var int sum = 0;
+watching *a do
+    var T*? b = spawn T in ts;
+    sum = a? and (not b?);
+end
+escape sum;
 ]],
     run = 1,
 }
@@ -28037,8 +28059,14 @@ end
 pool T[1] as;
 pool T[0] bs;
 var T*? a = spawn T in as;
-var T*? b = spawn T in bs;
-escape a? and (not b?);
+var int sum = 0;
+if a? then
+    watching *a do
+        var T*? b = spawn T in bs;
+        sum = a? and (not b?);
+    end
+end
+escape sum;
 ]],
     run = 1,
 }
@@ -28053,8 +28081,14 @@ end
 pool T[1] ts;
 var T*? a = spawn T in ts;
 //free(a);
-var T*? b = spawn T in ts;   // fails (a is freed on end)
-escape a? and (not b?);
+var int sum = 0;
+if a? then
+    watching *a do
+        var T*? b = spawn T in ts;   // fails (a is freed on end)
+        sum = a? and (not b?);
+    end
+end
+escape sum;
 ]],
     run = 1,
 }
@@ -28067,15 +28101,19 @@ do
     await FOREVER;
 end
 pool T[1] ts;
-var T* a;
+var T* a = null;
 do
     var T*? aa = spawn T in ts;
         a = aa;
 end
-var T*? b = spawn T in ts;   // fails (a is free on end)
-//native @nohold _fprintf(), _stderr;
-        //_fprintf(_stderr, "%p %p\n",a, b);
-escape a!=null and (not b?) and a!=b;
+var int sum = 0;
+if a != null then
+    watching *a do
+        var T*? b = spawn T in ts;   // fails (a is free on end)
+        sum = a!=null and (not b?) and a!=b;
+    end
+end
+escape sum;
 ]],
     --fin = 'line 15 : pointer access across `await´',
     asr = ':15] runtime error: invalid tag',
@@ -28089,15 +28127,19 @@ do
     await FOREVER;
 end
 pool T[2] ts;
-var T* a;
+var T* a = null;
 do
     var T*? aa = spawn T in ts;
         a = aa;
 end
-var T*? b = spawn T in ts;   // fails (a is free on end)
-//native @nohold _fprintf(), _stderr;
-        //_fprintf(_stderr, "%p %p\n",a, b);
-escape a!=null and (b?) and a!=b;
+var int sum = 0;
+if a != null then
+    watching *a do
+        var T*? b = spawn T in ts;   // fails (a is free on end)
+        sum = a!=null and (b?) and a!=b;
+    end
+end
+escape sum;
 ]],
     --fin = 'line 15 : pointer access across `await´',
     run = 1,
@@ -28115,10 +28157,14 @@ do
     var T*? aa = spawn T in ts;
         a = aa;
 end
-var T*? b = spawn T in ts;   // fails (a is free on end)
-//native @nohold _fprintf(), _stderr;
-        //_fprintf(_stderr, "%p %p\n",a, b);
-escape a? and (not b?);// and a!=b;
+var int sum = 0;
+if a? then
+    watching *a do
+        var T*? b = spawn T in ts;   // fails (a is free on end)
+        sum = a? and (not b?);// and a!=b;
+    end
+end
+escape sum;
 ]],
     --fin = 'line 15 : pointer access across `await´',
     run = 1,
@@ -28150,19 +28196,24 @@ do
     await FOREVER;
 end
 pool T[1] ts;
-var T* a, b;
+var T* a=null, b=null;
+var int sum = 0;
 do
     do
         var T*? aa = spawn T in ts;
             a = aa;
     end
+    sum = a!=null;
     var T*? bb = spawn T in ts;  // fails
         b = bb;
 end
-var T*? c = spawn T in ts;       // fails
-//native @nohold _fprintf(), _stderr;
-        //_fprintf(_stderr, "%p %p\n",a, b);
-escape (a!=null) and (b==null) and (not c?);// and a!=b and b==c;
+if b != null then
+    watching *b do
+        var T*? c = spawn T in ts;       // fails
+        sum = (b==null) and (not c?);// and a!=b and b==c;
+    end
+end
+escape sum;
 ]],
     asr = ':14] runtime error: invalid tag',
     --fin = 'line 19 : pointer access across `await´',
@@ -28177,18 +28228,19 @@ do
 end
 pool T[1] ts;
 var T*? a, b;
+var int sum = 0;
 do
     do
         var T*? aa = spawn T in ts;
             a = aa;
     end
+    sum = a?;
     var T*? bb = spawn T in ts;  // fails
         b = bb;
+    sum = sum and (not b?);
 end
 var T*? c = spawn T in ts;       // fails
-//native @nohold _fprintf(), _stderr;
-        //_fprintf(_stderr, "%p %p\n",a, b);
-escape a? and (not b?) and (not c?);// and a!=b and b==c;
+escape sum and (not c?);
 ]],
     --fin = 'line 19 : pointer access across `await´',
     run = 1,
@@ -28229,12 +28281,14 @@ do
 end
 pool T[1] ts;
 var T*? a;
+var int sum = 0;
 do
     var T*? aa = spawn T in ts;
         a = aa;
+    sum = a?;
 end
 var T*? b = spawn T in ts;   // fails
-escape a? and (not b?);
+escape sum and (not b?);
 ]],
     --fin = 'line 13 : pointer access across `await´',
     run = 1,
@@ -29358,7 +29412,7 @@ end
 escape ret;
 ]],
     --run = { ['~>1s'] = 13 },
-    fin = 'line 16 : pointer access across `await´',
+    fin = 'line 16 : unsafe access to pointer "t" across `emit´',
 }
 
 Test { [[
@@ -29515,6 +29569,48 @@ escape ret;
     loop = true,
     --tight = 'line 6 : tight loop',
     run = 10,
+}
+
+Test { [[
+class T with
+do
+    await FOREVER;
+end
+
+pool T[] ts;
+
+loop t1 in ts do
+    loop t2 in ts do
+        kill *t1;
+        kill *t2;
+    end
+end
+
+escape 1;
+]],
+    fin = 'line 11 : unsafe access to pointer "t2" across `kill´',
+}
+
+Test { [[
+class T with
+do
+    await FOREVER;
+end
+
+pool T[] ts;
+
+loop t1 in ts do
+    loop t2 in ts do
+        watching *t2 do
+            kill *t1;
+            kill *t2;
+        end
+    end
+end
+
+escape 1;
+]],
+    run = 1,
 }
 
 -- DO T
@@ -30045,7 +30141,7 @@ end
 await 1s;
 escape a:v;
 ]],
-    fin = 'line 13 : pointer access across `await´'
+    fin = 'line 13 : unsafe access to pointer "a" across `await´',
 }
 
 Test { [[
@@ -30287,7 +30383,7 @@ end
 escape ret + _V;
 ]],
     --run = 11,
-    fin = 'line 22 : pointer access across `await´',
+    fin = 'line 22 : unsafe access to pointer "o" across `await´',
 }
 
 Test { [[
@@ -31454,7 +31550,7 @@ do
 end
 escape 1;
 ]],
-    fin = 'line 7 : pointer access across `await´',
+    fin = 'line 7 : unsafe access to pointer "u" across `await´',
 }
 
 Test { [[
@@ -32040,7 +32136,7 @@ end
 emit u:move => 0;
 escape 2;
 ]],
-    fin = 'line 11 : pointer access across `await´',
+    fin = 'line 11 : unsafe access to pointer "u" across `await´',
 }
 
 Test { [[
@@ -33451,7 +33547,7 @@ var J* j = i;
 await OS_START;
 escape i:aa + j:aa + t.aa;
 ]],
-    fin = 'line 23 : pointer access across `await´',
+    fin = 'line 23 : unsafe access to pointer "i" across `await´',
 }
 
 Test { [[
@@ -33508,7 +33604,7 @@ var J* j = i;
 await OS_START;
 escape i:a + j:a + t.a + i:v + t.v;
 ]],
-    fin = 'line 24 : pointer access across `await´',
+    fin = 'line 24 : unsafe access to pointer "i" across `await´',
     --run = 32,
 }
 
@@ -33864,7 +33960,7 @@ do
 end
 escape 1;
 ]],
-    fin = 'line 6 : pointer access across `await´',
+    fin = 'line 6 : unsafe access to pointer "v" across `await´',
 }
 
 Test { [[
@@ -33914,7 +34010,7 @@ await OS_START;
 p = p;
 escape *p;
 ]],
-    fin = 'line 8 : pointer access across `await´',
+    fin = 'line 8 : unsafe access to pointer "p" across `await´',
 }
 
 Test { [[
@@ -33945,7 +34041,7 @@ await OS_START;
 t.p = &i;
 escape *t.p;
 ]],
-    fin = 'line 11 : pointer access across `await´',
+    fin = 'line 11 : unsafe access to pointer "p" across `await´',
 }
 
 Test { [[
@@ -37302,7 +37398,98 @@ end
 
 escape ret;
 ]],
-    run = 6,
+    fin = 'line 33 : unsafe access to pointer "i" across `spawn´',
+}
+
+Test { [[
+class U with
+    var int v = 0;
+do
+    await FOREVER;
+end;
+
+interface I with
+    pool U[2] us2;
+end
+
+class T with
+    pool U[2] us1;
+    interface I;
+do
+    await FOREVER;
+end
+
+var T t;
+spawn U in t.us2 with
+    this.v = 1;
+end;
+
+var I* i = &t;
+
+var int ret = 1;
+
+watching *i do
+    spawn U in i:us2 with
+        this.v = 2;
+    end;
+
+    loop u in t.us2 do
+        ret = ret + u:v;
+    end
+
+    loop u in i:us2 do
+        ret = ret + u:v;
+    end
+end
+
+escape ret;
+]],
+    run = 7,
+}
+
+Test { [[
+class U with
+    var int v = 0;
+do
+    await FOREVER;
+end;
+
+interface I with
+    pool U[2] us2;
+end
+
+class T with
+    pool U[2] us1;
+    interface I;
+do
+end
+
+var T t;
+spawn U in t.us2 with
+    this.v = 1;
+end;
+
+var I* i = &t;
+
+var int ret = 1;
+
+watching *i do
+    spawn U in i:us2 with
+        this.v = 2;
+    end;
+
+    loop u in t.us2 do
+        ret = ret + u:v;
+    end
+
+    loop u in i:us2 do
+        ret = ret + u:v;
+    end
+end
+
+escape ret;
+]],
+    run = 1,
 }
 
 Test { [[
@@ -37379,7 +37566,7 @@ end
 
 escape ret;
 ]],
-    fin = 'line 18 : pointer access across `await´',
+    fin = 'line 18 : unsafe access to pointer "p" across `async´'
 }
 
 Test { [[
@@ -37409,7 +37596,7 @@ end
 
 escape ret;
 ]],
-    fin = 'line 22 : pointer access across `await´',
+    fin = 'line 22 : unsafe access to pointer "p" across `async´',
 }
 
 Test { [[
@@ -37547,7 +37734,8 @@ end
 
 escape ret1+ret2+_V;
 ]],
-    run = 10001,
+    --run = 10001,
+    fin = 'line 19 : unsafe access to pointer "t0" across `spawn´',
 }
 
 Test { [[
@@ -37567,7 +37755,7 @@ async do end;
 
 escape p:v;
 ]],
-    fin = 'line 15 : pointer access across `await´',
+    fin = 'line 15 : unsafe access to pointer "p" across `async´',
 }
 
 Test { [[
@@ -37605,7 +37793,7 @@ watching *u do
 end
 escape 2;
 ]],
-    fin = 'line 11 : pointer access across `await´',
+    fin = 'line 11 : unsafe access to pointer "u" across `await´',
 }
 
 Test { [[
@@ -37642,7 +37830,7 @@ end
 
 escape 1;
 ]],
-    fin = 'line 9 : pointer access across `await´',
+    fin = 'line 9 : unsafe access to pointer "i" across `await´',
 }
 
 Test { [[
@@ -37683,7 +37871,7 @@ end
 
 escape 1;
 ]],
-    fin = 'line 10 : pointer access across `await´',
+    fin = 'line 10 : unsafe access to pointer "i" across `await´',
 }
 Test { [[
 interface I with
@@ -37702,7 +37890,7 @@ end
 
 escape 1;
 ]],
-    fin = 'line 10 : pointer access across `await´',
+    fin = 'line 10 : unsafe access to pointer "i" across `await´',
 }
 
 Test { [[
@@ -38299,6 +38487,41 @@ escape 1;
     run = 1,
     --fin = 'line 20 : attribution to pointer with greater scope',
 }
+Test { [[
+class Run with
+    var int& cmds;
+do
+end
+
+do
+    var int cmds;
+    spawn Run with
+        this.cmds = cmds;
+    end;
+end
+
+escape 1;
+]],
+    ref = 'line 9 : attribution to reference with greater scope',
+}
+Test { [[
+class Run with
+    var int& cmds;
+do
+end
+
+do
+    pool Run[] rs;
+    var int cmds;
+    spawn Run in rs with
+        this.cmds = cmds;
+    end;
+end
+
+escape 1;
+]],
+    run = 1,
+}
 
 Test { [[
 class Unit with
@@ -38314,7 +38537,7 @@ watching *u do
 end
 escape 2;
 ]],
-    fin = 'line 9 : pointer access across `await´',
+    fin = 'line 9 : unsafe access to pointer "u" across `await´',
 }
 Test { [[
 class Unit with
@@ -39156,7 +39379,7 @@ end
 
 escape t:v;
 ]],
-    fin = 'line 12 : pointer access across `await´',
+    fin = 'line 12 : unsafe access to pointer "t" across `await´',
 }
 
 Test { [[
@@ -39175,7 +39398,7 @@ await 1s;
 
 escape t:v;
 ]],
-    fin = 'line 14 : pointer access across `await´',
+    fin = 'line 14 : unsafe access to pointer "t" across `await´',
 }
 
 Test { [[
@@ -39204,7 +39427,7 @@ var int ret = t0:id;
 
 escape ret;
 ]],
-    fin = 'line 22 : pointer access across `await´',
+    fin = 'line 14 : unsafe access to pointer "t0" across `spawn´',
     --run = 9999,
 }
 
@@ -40467,7 +40690,7 @@ async/thread (p) do
 end
 escape 1;
 ]],
-    fin = 'line 3 : pointer access across `await´',
+    fin = 'line 3 : unsafe access to pointer "p" across `async/thread´',
 }
 
 Test { [[
@@ -41476,7 +41699,7 @@ await 1s;
 _assert(t.i == null);
 escape 1;
 ]],
-    fin = 'line 10 : pointer access across `await´',
+    fin = 'line 10 : unsafe access to pointer "i" across `await´',
     --run = { ['~>1s'] = 1 },
 }
 
@@ -41493,7 +41716,7 @@ await 1s;
 _assert(i == null);
 escape 1;
 ]],
-    fin = 'line 10 : pointer access across `await´',
+    fin = 'line 10 : unsafe access to pointer "i" across `await´',
 }
 
 Test { [[
@@ -41607,7 +41830,7 @@ do
 end
 escape 1;
 ]],
-    fin = 'line 9 : pointer access across `await´',
+    fin = 'line 9 : unsafe access to pointer "obj" across `await´',
 }
 
 Test { [[
@@ -41756,7 +41979,7 @@ with
 end
 escape *ret;
 ]],
-    fin = 'line 11 : pointer access across `await´',
+    fin = 'line 11 : unsafe access to pointer "ret" across `par/or´',
     --fin = 'line 5 : invalid block for awoken pointer "ret"',
 }
 
@@ -42588,7 +42811,7 @@ end
 -- STATIC ADTs
 
 --[==[
--- HERE
+-- HERE:
 ]==]
 
 -- data type identifiers must start with an uppercase
@@ -43239,7 +43462,7 @@ await 1s;
 escape p:CONS.head;
 ]],
     --adt = 'line 52 : cannot mix recursive data sources',
-    fin = 'line 54 : pointer access across `await´',
+    fin = 'line 54 : unsafe access to pointer "p" across `await´',
 }
 
 -- COPY / MUTATION
