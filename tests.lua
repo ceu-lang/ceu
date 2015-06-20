@@ -9,10 +9,141 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[] list;
+
+list = new List.CONS(10, List.NIL());
+var List* l = list;
+
+watching *l do
+    await 1s;
+end
+
+escape 0;
+]],
+    env = 'line 15 : data must be a pointer',
+}
+
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[] list;
+
+list = new List.CONS(10, List.NIL());
+var List* l = list;
+
+l:CONS.tail = new List.CONS(9, List.NIL());
+l = l:CONS.tail;
+
+l:CONS.tail = new List.CONS(8, List.NIL());
+l = l:CONS.tail;
+
+escape l:CONS.head +
+        list:CONS.head +
+        list:CONS.tail:CONS.head +
+        list:CONS.tail:CONS.tail:CONS.head;
+]],
+    run = 35,
+}
+
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[] list;
+
+list = new List.CONS(10, List.NIL());
+var List* l = list;
+
+l:CONS.tail = new List.CONS(9, List.NIL());
+l = l:CONS.tail;
+
+watching l do
+    await 1s;
+
+    l:CONS.tail = new List.CONS(8, List.NIL());
+    l = l:CONS.tail;
+
+    escape l:CONS.head +
+            list:CONS.head +
+            list:CONS.tail:CONS.head +
+            list:CONS.tail:CONS.tail:CONS.head;
+end
+
+escape 0;
+]],
+    run = { ['~>1s'] = 35 },
+}
+
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[] list;
+
+list = new List.CONS(10, List.NIL());
+var List* l = list;
+
+l:CONS.tail = new List.CONS(9, List.NIL());
+l = l:CONS.tail;
+
+par do
+    watching l do
+_printf("1\n");
+        await 1s;
+
+        l:CONS.tail = new List.CONS(8, List.NIL());
+        l = l:CONS.tail;
+
+        escape l:CONS.head +
+                list:CONS.head +
+                list:CONS.tail:CONS.head +
+                list:CONS.tail:CONS.tail:CONS.head;
+    end
+_printf("2\n");
+    escape 1;
+with
+    list = new List.NIL();
+_printf("3\n");
+    await FOREVER;
+end
+]],
+    _ana = {acc=true},
+    run = 1,
+}
+
 do return end
---]===]
 -------------------------------------------------------------------------------
 
+--]===]
 ----------------------------------------------------------------------------
 -- OK: well tested
 ----------------------------------------------------------------------------
@@ -44502,7 +44633,7 @@ l:CONS.tail:CONS.tail:CONS.tail =
 
 escape ret;
 ]],
-    adt = 'line 73 : cannot mix recursive data sources',
+    adt = 'line 72 : cannot mix recursive data sources',
     run = -1,
 }
 

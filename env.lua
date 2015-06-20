@@ -877,11 +877,13 @@ F = {
         -- HACK_6 [await]: detects if OPT-1 (evt) or OPT-2 (adt) or OPT-3 (org)
         local stmts = AST.asr(me.__par, 'Stmts')
         local tp = me[1].tp  -- type of Var
-        if tp and ENV.v_or_ref(tp) then
+        if tp and ENV.clss[tp.id] then
+            ASR(ENV.v_or_ref(tp,'cls'), me, 'organism must not be a pointer')
             stmts[2] = AST.node('Nothing', me.ln)       -- remove OPT-1
             stmts[3] = AST.node('Nothing', me.ln)       -- remove OPT-2
             me.__env_watching = true    -- see props.lua
-        elseif tp and tp.ptr==1 and ENV.adts[tp.id] then
+        elseif tp and ENV.adts[tp.id] then
+            ASR(tp.ptr==1, me, 'data must be a pointer')
             local dot = AST.asr(stmts,'', 3,'If', 1,'Op2_.')
             assert(dot[3] == 'HACK_6-NIL')
             dot[3] = ENV.adts[tp.id].tags[1]
@@ -913,12 +915,6 @@ F = {
             else
                 me.tp = e.evt.ins
             end
-        elseif e.tp and ENV.adts[TP.tostr(e.tp)] then
-error'bug found'
-        elseif e.tp and ENV.clss[TP.tostr(e.tp)] then
-error'bug found'
--- TODO: integer return
-            me.tp = TP.fromstr('int')
         else
             me.awt_tp = 'evt'
             ASR(e.var and e.var.pre=='event', me,
