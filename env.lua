@@ -545,6 +545,7 @@ F = {
                             local item = AST.node('TupleTypeItem', me.ln,
                                             false,var_tp,false)
                             if var_tp.id == id_adt then
+                                me.isRec = true
                                 item.isRec = true
                             end
                             tup[#tup+1] = item
@@ -627,15 +628,19 @@ F = {
         ENV.exts[id] = me.evt
     end,
 
-    Dcl_var = function (me)
+    __dcl_var = function (me)
         local pre, tp, id, constr, isTmp = unpack(me)
+
         if id == '_' then
             id = id..me.n   -- avoids clash with other '_'
         end
+
         local has
         has, me.var = newvar(me, AST.par(me,'Block'), pre, tp, id, me.isImp, me.isEvery)
         assert(not has or (me.var.read_only==nil))
+
         me.var.read_only = me.read_only
+
         if constr then
             ASR(me.var.cls, me, 'invalid type')
             constr.blk = me.var.blk
@@ -644,6 +649,12 @@ F = {
         if isTmp then
             me.var.isTmp = true
         end
+    end,
+
+    Dcl_var = function (me)
+        local _, tp, id, constr, _ = unpack(me)
+
+        F.__dcl_var(me)
 
         if me.var.cls and me.var.tp.arr then
             -- var T[10] ts;  // needs _i_ to iterate for the constructor
@@ -674,16 +685,16 @@ F = {
         local pre, tp, id, constr = unpack(me)
         ASR(tp.arr, me, 'missing `pool´ dimension')
 
-        -- ADT pool declaration (TODO: check if adt is recursive)
+        -- recursive ADT pool declaration
         local adt = ENV.v_or_ref(tp, 'adt')
-        if adt then
+        if adt and adt.isRec then
             ASR(tp.ptr == 0, me, 'not implemented : pointer to pool ADT')
 
             -- for a real "pool", create '_'..id
             me.adt_tp = tp            -- saves original type
             if not tp.ref then
                 me[3] = '_'..id
-                F.Dcl_var(me)               -- creates me.var
+                F.__dcl_var(me)               -- creates me.var
                 me.var.isTmp = false
                 me.var.adt_par = me
                 me.adt_pool = me.var
@@ -698,14 +709,14 @@ F = {
             me[1] = 'var'
             me[2] = TP.fromstr('_tceu_adt_root'..ptr)
             me[3] = id
-            F.Dcl_var(me)
+            F.__dcl_var(me)
             me.var.isTmp = false
             me.var.adt_par = me
             me.adt_root = me.var
 
         -- other pools
         else
-            F.Dcl_var(me)
+            F.__dcl_var(me)
         end
     end,
 
