@@ -260,19 +260,8 @@ CEU_]]..id..'* '..enum..'_assert (tceu_app* _ceu_app, CEU_'..id..[[* me, char* f
 #ifdef CEU_ADTS_WATCHING_]]..id..[[
 
 void ]]..enum..'_kill (tceu_app* _ceu_app, tceu_go* go, CEU_'..id..[[* me) {
-    tceu_stk stk;
-             stk.evt  = CEU_IN__ok_killed;
-#ifdef CEU_ORGS
-             stk.org  = _ceu_app->data;
-#endif
-             stk.trl  = &_ceu_app->data->trls[0];
-             stk.stop = NULL;
-             stk.evt_sz = sizeof(me);
-    stack_push(go, &stk, &me);
-        /* param is pointer to what to kill */
 ]]
-        -- kill all my recursive fields
---[=[
+        -- kill all my recursive fields after myself (push them before)
         for _,item in ipairs(top.tags[tag].tup) do
             local _, tp, _ = unpack(item)
             if TP.tostr(tp) == id..'*' then
@@ -284,8 +273,21 @@ void ]]..enum..'_kill (tceu_app* _ceu_app, tceu_go* go, CEU_'..id..[[* me) {
 ]]
             end
         end
---]=]
+
+        -- kill myself before my recursive fields (push myself after)
         kill = kill .. [[
+    {
+        tceu_stk stk;
+                 stk.evt  = CEU_IN__ok_killed;
+    #ifdef CEU_ORGS
+                 stk.org  = _ceu_app->data;
+    #endif
+                 stk.trl  = &_ceu_app->data->trls[0];
+                 stk.stop = NULL;
+                 stk.evt_sz = sizeof(me);
+        stack_push(go, &stk, &me);
+            /* param is pointer to what to kill */
+    }
 }
 #endif
 ]]
