@@ -43044,6 +43044,24 @@ escape l.CONS.tail:CONS.head;
     run = 2,
 }
 
+Test { [[
+data Stack with
+    tag EMPTY;
+or
+    tag NONEMPTY with
+        var Stack* nxt;
+    end
+end
+
+pool Stack[] xxx;
+xxx = new Stack.NONEMPTY(
+        Stack.NONEMPTY(xxx));
+
+escape 1;
+]],
+    adt = 'line 11 : invalid recursive constructor',
+}
+
 -- TODO-WASTES-RAM
 Test { [[
 data Split with
@@ -43170,7 +43188,9 @@ var List l2 = List.CONS(1, &l1);
 var List l3 = List.CONS(1, List.CONS(2, List.NIL()));
 escape 1;
 ]],
-    run = 1,
+    adt = 'line 55 : invalid recursive constructor',
+    -- TODO-ADT-REC-STATIC-CONSTRS
+    --run = 1,
 }
 
 -- recursive fields are pointers
@@ -43337,7 +43357,7 @@ var Pair p1 = Pair(1,2);
 var Opt  o1 = Opt.NIL();
 var Opt  o2 = Opt.PTR(&p1);
 var List l1 = List.NIL();
-var List l2 = List.CONS(1, &l1);
+var List l2 = List.CONS(1, List.NIL());
 var List l3 = List.CONS(1, List.CONS(2, List.NIL()));
 
 var int ret = 0;                                // 0
@@ -43379,7 +43399,7 @@ var Pair p  = Pair(1,2);
 var Opt  o1 = Opt.NIL();
 var Opt  o2 = Opt.PTR(&p);
 var List l1 = List.NIL();
-var List l2 = List.CONS(1, &l1);
+var List l2 = List.CONS(1, List.NIL());
 var List l3 = List.CONS(1, List.CONS(2, List.NIL()));
 
 var int ret = 0;            // 0
@@ -43478,24 +43498,31 @@ var List l2 = List.CONS(1, &l1);
 var List l3 = List.CONS(2, &l2);
 escape l3.CONS.head + l3.CONS.tail:CONS.head + l3.CONS.tail:CONS.tail:NIL;
 ]],
+    --run = 4,
+    adt = 'line 52 : invalid recursive constructor',
+    -- TODO-ADT-REC-STATIC-CONSTRS
+}
+Test { DATA..[[
+var List l3 = List.CONS(2, List.CONS(1, List.NIL()));
+escape l3.CONS.head + l3.CONS.tail:CONS.head + l3.CONS.tail:CONS.tail:NIL;
+]],
     run = 4,
 }
 -- breaking a list: 2-1-NIL => 2-NIL
 Test { DATA..[[
 var List l1 = List.NIL();
-var List l2 = List.CONS(1, &l1);
-var List l3 = List.CONS(2, &l2);
+var List l3 = List.CONS(2, List.CONS(1, List.NIL()));
 l3.CONS.tail = &l1;
 escape l3.CONS.head + l3.CONS.tail:NIL;
 ]],
-    adt = 'line 54 : cannot mix recursive data sources',
+    adt = 'line 53 : cannot mix recursive data sources',
     run = 3,
 }
 
 -- circular list: 1-1-1-...
 Test { DATA..[[
 var List l1 = List.NIL();
-var List l2 = List.CONS(1, &l1);
+var List l2 = List.CONS(1, List.NIL());
 l1 = l2;
 escape l1.CONS + (l1.CONS.head==1);
 ]],
@@ -43504,7 +43531,7 @@ escape l1.CONS + (l1.CONS.head==1);
 }
 Test { DATA..[[
 var List l1 = List.NIL();
-var List l2 = List.CONS(1, &l1);
+var List l2 = List.CONS(1, List.NIL());
 l1 = l2;
 escape l1.CONS + (l1.CONS.head==1) + (l1.CONS.tail:CONS.tail:CONS.head==1);
 ]],
@@ -43515,7 +43542,7 @@ escape l1.CONS + (l1.CONS.head==1) + (l1.CONS.tail:CONS.tail:CONS.head==1);
 -- circular list: 1-2-1-2-...
 Test { DATA..[[
 var List l1 = List.CONS(1, List.NIL());
-var List l2 = List.CONS(2, &l1);
+var List l2 = List.CONS(2, List.NIL());
 l1.CONS.tail = &l2;
 escape (l1.CONS.head==1) + (l1.CONS.tail:CONS.head==2) +
        (l2.CONS.head==2) + (l2.CONS.tail:CONS.head==1) +
@@ -43541,7 +43568,7 @@ escape l1.CONS.head + l1.CONS.tail:CONS.head + l2.CONS.head + l2.CONS.tail:CONS.
 -- not circular
 Test { DATA..[[
 var List l1 = List.NIL();
-var List l2 = List.CONS(1, &l1);
+var List l2 = List.CONS(1, List.NIL());
 l1 = *l2.CONS.tail;
 escape l1.NIL;
 ]],
@@ -44442,12 +44469,12 @@ var int ret = 0;                // 0
 pool List[5] l;
 
 // change head [2]
-l = new List.CONS(2, l);
+l = new List.CONS(1, List.NIL());
 ret = ret + l:CONS.head;        // 2
-_assert(ret == 2);
+_assert(ret == 1);
 
-// change head [1, 2]
-l = new List.CONS(1, l);
+// add 2 [1, 2]
+l:CONS.tail = new List.CONS(1, List.NIL());
 ret = ret + l:CONS.head;        // 3
 ret = ret + l:CONS.head + l:CONS.tail:CONS.head;
                                 // 6
@@ -44457,8 +44484,7 @@ _assert(ret == 6);
 l:CONS.tail:CONS.tail = new List.CONS(4, List.NIL());
                                 // 10
 
-// change middle [1, 2, 3, 4]
-var List l3 = List.CONS(3, l:CONS.tail:CONS.tail);
+var List l3 = List.CONS(3, List.NIL());
 l:CONS.tail:CONS.tail = &l3;
 _assert(l:CONS.tail:CONS.head == 3);
 _assert(l:CONS.tail:CONS.tail:CONS.head == 4);

@@ -503,8 +503,8 @@ F = {
         ENV.adts[#ENV.adts+1] = me
     end,
     Dcl_adt = function (me)
-        local id, op = unpack(me)
-        me.id = id
+        local id_adt, op = unpack(me)
+        me.id = id_adt
 
         if op == 'struct' then
             -- convert vars=>tuple (to check constructors)
@@ -531,10 +531,10 @@ F = {
             me.tags = {} -- map tag=>{blk,tup}
             for i=3, #me do
                 AST.asr(me[i], 'Dcl_adt_tag')
-                local id, blk = unpack(me[i])
+                local id_tag, blk = unpack(me[i])
                 local tup = AST.node('TupleType',me.ln)
-                me.tags[id] = { blk=blk, tup=tup }
-                me.tags[#me.tags+1] = id
+                me.tags[id_tag] = { blk=blk, tup=tup }
+                me.tags[#me.tags+1] = id_tag
 
                 if blk then -- skip void enums
                     for _, stmts in ipairs(blk) do
@@ -544,6 +544,9 @@ F = {
                             local _, var_tp, var_id = unpack(dclvar)
                             local item = AST.node('TupleTypeItem', me.ln,
                                             false,var_tp,false)
+                            if var_tp.id == id_adt then
+                                item.isRec = true
+                            end
                             tup[#tup+1] = item
                             item.var_id = var_id
                         end
@@ -1180,6 +1183,7 @@ error'bug found'
         local adt, params, var = unpack(me)
         local id, tag = unpack(adt)
 
+-- TODO: duplicated code with below
         local tup
         local tadt = ASR(ENV.adts[id], me, 'data "'..id..'" is not declared')
         if tag then
@@ -1223,6 +1227,7 @@ error'bug found'
         local id, tag = unpack(adt)
         me.tp = TP.fromstr(id)
 
+-- TODO: duplicated code with above
         local tadt = ASR(ENV.adts[id], me, 'data "'..id..'" is not declared')
         if tag then
             local ttag = ASR(tadt.tags[tag], me, 'tag "'..tag..'" is not declared')

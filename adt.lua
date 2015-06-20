@@ -56,9 +56,33 @@ F = {
         end
     end,
 
-    -- total of instances in a constructor
-    -- TODO: add only recursive constructors
     Adt_constr = function (me)
+        local adt, ps = unpack(me)
+
+        local id_adt, field = unpack(adt)
+        local adt = assert(ENV.adts[id_adt], 'bug found')
+        if adt.tags then
+            -- Refuse recursive constructors that are not new data:
+            --  data D with
+            --      <...>
+            --  or
+            --      tag REC with
+            --          var D* rec;
+            --      end
+            --  end
+            --  <...> = new D.REC(ptr)      -- NO!
+            --  <...> = new D.REC(D.xxx)    -- OK!
+            field = assert(adt.tags[field], 'bug found')
+            for i, p in ipairs(ps) do
+                if field.tup[i].isRec then
+                    ASR(p.lst.tag=='Var' and string.find(p.lst[1],'__ceu_adt_root'),
+                        me, 'invalid recursive constructor')
+                end
+            end
+        end
+
+        -- total of instances in a constructor
+        -- TODO: add only recursive constructors
         local par = assert(me.__par)
               par = assert(par.__par)
 
