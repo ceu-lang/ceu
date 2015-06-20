@@ -9,6 +9,7 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
+--]===]
 Test { [[
 data List with
     tag NIL;
@@ -110,29 +111,26 @@ end
 pool List[] list;
 
 list = new List.CONS(10, List.NIL());
-var List* l = list;
+var List* lll = list;
 
-l:CONS.tail = new List.CONS(9, List.NIL());
-l = l:CONS.tail;
+lll:CONS.tail = new List.CONS(9, List.NIL());
+lll = lll:CONS.tail;
 
 par do
-    watching l do
-_printf("1\n");
+    watching lll do
         await 1s;
 
-        l:CONS.tail = new List.CONS(8, List.NIL());
-        l = l:CONS.tail;
+        lll:CONS.tail = new List.CONS(8, List.NIL());
+        lll = lll:CONS.tail;
 
-        escape l:CONS.head +
+        escape lll:CONS.head +
                 list:CONS.head +
                 list:CONS.tail:CONS.head +
                 list:CONS.tail:CONS.tail:CONS.head;
     end
-_printf("2\n");
     escape 1;
 with
     list = new List.NIL();
-_printf("3\n");
     await FOREVER;
 end
 ]],
@@ -140,10 +138,67 @@ end
     run = 1,
 }
 
-do return end
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+var List l;
+escape 1;
+]],
+    env = 'line 10 : invalid recursive data declaration : variable "l" must be a pointer or pool',
+}
+
+--[=[
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[10] list;
+
+list = new List.CONS(10, List.NIL());
+var List* lll = list;
+
+lll:CONS.tail = new List.CONS(9, List.NIL());
+lll = lll:CONS.tail;
+
+par do
+    watching lll do
+        await 1s;
+
+        lll:CONS.tail = new List.CONS(8, List.NIL());
+        lll = lll:CONS.tail;
+
+        escape lll:CONS.head +
+                list:CONS.head +
+                list:CONS.tail:CONS.head +
+                list:CONS.tail:CONS.tail:CONS.head;
+    end
+    escape 1;
+with
+    list = new List.NIL();
+    await FOREVER;
+end
+]],
+    _ana = {acc=true},
+    run = 1,
+}
+]=]
+
+--do return end
 -------------------------------------------------------------------------------
 
---]===]
 ----------------------------------------------------------------------------
 -- OK: well tested
 ----------------------------------------------------------------------------
@@ -43172,6 +43227,76 @@ var List l = List.CONS(1,
                     List.NIL()));
 escape l.CONS.tail:CONS.head;
 ]],
+    env = 'line 9 : invalid recursive data declaration : variable "l" must be a pointer or pool',
+}
+
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+var List* l = List.CONS(1,
+                List.CONS(2,
+                    List.NIL()));
+escape l.CONS.tail:CONS.head;
+]],
+    env = 'line 9 : invalid constructor : recursive data must use `new´',
+}
+
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+var List* l = new List.CONS(1,
+                    List.CONS(2,
+                        List.NIL()));
+escape l:CONS.tail:CONS.head;
+]],
+    adt = 'line 9 : invalid attribution : must assign to recursive field',
+}
+
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+pool List[10] l;
+l = List.CONS(1,
+        List.CONS(2,
+            List.NIL()));
+escape l.CONS.tail:CONS.head;
+]],
+    env = 'line 10 : invalid constructor : recursive data must use `new´',
+}
+
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+pool List[10] l;
+l = new List.CONS(1,
+            List.CONS(2,
+                List.NIL()));
+escape l:CONS.tail:CONS.head;
+]],
     run = 2,
 }
 
@@ -43190,7 +43315,7 @@ xxx = new Stack.NONEMPTY(
 
 escape 1;
 ]],
-    adt = 'line 11 : invalid recursive constructor',
+    adt = 'line 11 : invalid constructor : recursive field "NONEMPTY" must be new data',
 }
 
 -- TODO-WASTES-RAM
@@ -43230,16 +43355,17 @@ or
     end
 end
 
-var Grid g = Grid.SPLIT(
-                Split.HORIZONTAL(),
-                Grid.SPLIT(
-                    Split.VERTICAL(),
-                    Grid.NIL(),
-                    Grid.NIL()));
+pool Grid[5] g;
+g = new Grid.SPLIT(
+            Split.HORIZONTAL(),
+            Grid.SPLIT(
+                Split.VERTICAL(),
+                Grid.NIL(),
+                Grid.NIL()));
 
 escape 1;
 ]],
-    env = 'line 17 : arity mismatch',
+    env = 'line 18 : arity mismatch',
 }
 
 Test { [[
@@ -43259,13 +43385,14 @@ or
     end
 end
 
-var Grid g = Grid.SPLIT(
-                Split.HORIZONTAL(),
-                Grid.SPLIT(
-                    Split.VERTICAL(),
-                    Grid.NIL(),
-                    Grid.NIL()),
-                Grid.NIL());
+pool Grid[5] g;
+g = new Grid.SPLIT(
+            Split.HORIZONTAL(),
+            Grid.SPLIT(
+                Split.VERTICAL(),
+                Grid.NIL(),
+                Grid.NIL()),
+            Grid.NIL());
 
 escape 1;
 ]],
@@ -43314,23 +43441,26 @@ Test { DATA..[[
 var Pair p1 = Pair(1,2);        /* struct, no tags */
 var Opt  o1 = Opt.NIL();        /* unions, explicit tag */
 var Opt  o2 = Opt.PTR(&p1);
-var List l1 = List.NIL();       /* recursive union */
-var List l2 = List.CONS(1, &l1);
-var List l3 = List.CONS(1, List.CONS(2, List.NIL()));
+pool List[] l1;
+l1 = new List.NIL();       /* recursive union */
+pool List[] l2;
+l2 = new List.CONS(1, l1);
 escape 1;
 ]],
-    adt = 'line 55 : invalid recursive constructor',
+    adt = 'line 57 : invalid constructor : recursive field "CONS" must be new data',
     -- TODO-ADT-REC-STATIC-CONSTRS
     --run = 1,
 }
 
 -- recursive fields are pointers
 Test { DATA..[[
-var List l1 = List.NIL();
-var List l2 = List.CONS(1, l1);     /* should be &l1 */
+pool List[] l1;
+l1 = new List.NIL();
+pool List[] l2;
+l2 = new List.CONS(1, l1);     /* should be &l1 */
 escape 1;
 ]],
-    env = 'line 52 : wrong argument #2',
+    adt = 'line 54 : invalid constructor : recursive field "CONS" must be new data',
 }
 
 -- constructors must specify the ADT identifier
@@ -43343,10 +43473,11 @@ escape 1;
     --run = 1,
 }
 Test { DATA..[[
-var List l1 = NIL();    /* vs List.NIL() */
+pool List[] l1;
+l1 = new NIL();    /* vs List.NIL() */
 escape 1;
 ]],
-    env = 'line 51 : undeclared type `NIL´',
+    env = 'line 52 : undeclared type `NIL´',
     --run = 1,
 }
 
@@ -43366,7 +43497,7 @@ escape 1;
 
 -- tag has to be defined
 Test { DATA..[[
-var Opt  o1 = List.UNKNOWN();
+var Opt o1 = Opt.UNKNOWN();
 escape 1;
 ]],
     env = 'line 51 : tag "UNKNOWN" is not declared',
@@ -43424,8 +43555,8 @@ escape 1;
     run = 1,
 }
 Test { DATA..[[
-var List l;
-l = List.NIL();
+pool List[] l;
+l = new List.NIL();
 escape 1;
 ]],
     run = 1,
@@ -43446,15 +43577,17 @@ escape 1;
 
 -- distinction "constructor" vs "tag check"
 Test { DATA..[[
-var List l = List.NIL();   /* call syntax: constructor */
-var bool no_ = l.NIL;     /* no-call syntax: check tag */
+pool List[] l;
+l = new List.NIL();   /* call syntax: constructor */
+var bool no_ = l:NIL;     /* no-call syntax: check tag */
 escape no_;
 ]],
     run = 1,
 }
 Test { DATA..[[
-var List l = List.NIL();   /* call syntax: constructor */
-var bool no_ = l.CONS;    /* no-call syntax: check tag */
+pool List[] l;
+l = new List.NIL();   /* call syntax: constructor */
+var bool no_ = l:CONS;    /* no-call syntax: check tag */
 escape no_;
 ]],
     run = 0,
@@ -43469,8 +43602,8 @@ escape p1.x + p1.y;
 }
 -- tag NIL has no fields
 Test { DATA..[[
-var List l;
-escape l.NIL.v;
+pool List[] l;
+escape l:NIL.v;
 ]],
     env = 'line 52 : field "v" is not declared',
 }
@@ -43487,18 +43620,21 @@ Test { DATA..[[
 var Pair p1 = Pair(1,2);
 var Opt  o1 = Opt.NIL();
 var Opt  o2 = Opt.PTR(&p1);
-var List l1 = List.NIL();
-var List l2 = List.CONS(1, List.NIL());
-var List l3 = List.CONS(1, List.CONS(2, List.NIL()));
+pool List[] l1;
+l1 = new List.NIL();
+pool List[] l2;
+l2 = new List.CONS(1, List.NIL());
+pool List[] l3;
+l3 = new List.CONS(1, List.CONS(2, List.NIL()));
 
 var int ret = 0;                                // 0
 
 ret = ret + p1.x + p1.y;                        // 3
 ret = ret + o1.NIL;                             // 4
 ret = ret + (o2.PTR.v==&p1);                    // 5
-ret = ret + l1.NIL;                             // 6
-ret = ret + l2.CONS.head + l2.CONS.tail:NIL;    // 8
-ret = ret + l3.CONS.head + l3.CONS.tail:CONS.head + l3.CONS.tail:CONS.tail:NIL;   // 12
+ret = ret + l1:NIL;                             // 6
+ret = ret + l2:CONS.head + l2:CONS.tail:NIL;    // 8
+ret = ret + l3:CONS.head + l3:CONS.tail:CONS.head + l3:CONS.tail:CONS.tail:NIL;   // 12
 
 escape ret;
 ]],
@@ -43511,15 +43647,17 @@ escape ret;
 --      assert(l.CONS)
 --      v = l.CONS.head
 Test { DATA..[[
-var List l = List.NIL();
-escape l.CONS.head;         // runtime error
+pool List[] l;
+l = new List.NIL();
+escape l:CONS.head;         // runtime error
 ]],
     asr = true,
     --run = 1,
 }
 Test { DATA..[[
-var List l = List.CONS(2, List.NIL());
-escape l.CONS.head;
+pool List[] l;
+l = new List.CONS(2, List.NIL());
+escape l:CONS.head;
 ]],
     run = 2,
 }
@@ -43529,9 +43667,12 @@ Test { DATA..[[
 var Pair p  = Pair(1,2);
 var Opt  o1 = Opt.NIL();
 var Opt  o2 = Opt.PTR(&p);
-var List l1 = List.NIL();
-var List l2 = List.CONS(1, List.NIL());
-var List l3 = List.CONS(1, List.CONS(2, List.NIL()));
+pool List[] l1;
+l1 = new List.NIL();
+pool List[] l2;
+l2 = new List.CONS(1, List.NIL());
+pool List[] l3;
+l3 = new List.CONS(1, List.CONS(2, List.NIL()));
 
 var int ret = 0;            // 0
 
@@ -43553,38 +43694,38 @@ else/if o2.PTR then
     _assert(o2.PTR.v==&p);
 end
 
-if l1.NIL then
+if l1:NIL then
     ret = ret + 1;          // 6
-else/if l1.CONS then
+else/if l1:CONS then
     _assert(0);             // never reachable
 end
 
-if l2.NIL then
+if l2:NIL then
     _assert(0);             // never reachable
-else/if l2.CONS then
-    _assert(l2.CONS.head == 1);
+else/if l2:CONS then
+    _assert(l2:CONS.head == 1);
     ret = ret + 1;          // 7
-    if l2.CONS.tail:NIL then
+    if l2:CONS.tail:NIL then
         ret = ret + 1;      // 8
-    else/if l2.CONS.tail:CONS then
+    else/if l2:CONS.tail:CONS then
         _assert(0);         // never reachable
     end
     ret = ret + 1;          // 9
 end
 
-if l3.NIL then
+if l3:NIL then
     _assert(0);             // never reachable
-else/if l3.CONS then
-    _assert(l3.CONS.head == 1);
+else/if l3:CONS then
+    _assert(l3:CONS.head == 1);
     ret = ret + 1;          // 10
-    if l3.CONS.tail:NIL then
+    if l3:CONS.tail:NIL then
         _assert(0);         // never reachable
-    else/if l3.CONS.tail:CONS then
-        _assert(l3.CONS.tail:CONS.head == 2);
+    else/if l3:CONS.tail:CONS then
+        _assert(l3:CONS.tail:CONS.head == 2);
         ret = ret + 2;      // 12
-        if l3.CONS.tail:CONS.tail:NIL then
+        if l3:CONS.tail:CONS.tail:NIL then
             ret = ret + 1;  // 13
-        else/if l3.CONS.tail:CONS.tail:CONS then
+        else/if l3:CONS.tail:CONS.tail:CONS then
             _assert(0);     // never reachable
         end
         ret = ret + 1;      // 14
@@ -43607,13 +43748,14 @@ escape ret;
 
 -- cannot cross await statements
 Test { DATA..[[
-var List l = List.CONS(1, List.NIL());
-var List* p = &l;
+pool List[] l;
+l = new List.CONS(1, List.NIL());
+var List* p = l:CONS.tail;
 await 1s;
 escape p:CONS.head;
 ]],
     --adt = 'line 52 : cannot mix recursive data sources',
-    fin = 'line 54 : unsafe access to pointer "p" across `await´',
+    fin = 'line 55 : unsafe access to pointer "p" across `await´',
 }
 
 -- COPY / MUTATION
@@ -43624,86 +43766,98 @@ escape p:CONS.head;
 
 -- linking a list: 2-1-NIL
 Test { DATA..[[
-var List l1 = List.NIL();
-var List l2 = List.CONS(1, &l1);
-var List l3 = List.CONS(2, &l2);
-escape l3.CONS.head + l3.CONS.tail:CONS.head + l3.CONS.tail:CONS.tail:NIL;
+pool List[] l1;
+l1 = new List.NIL();
+pool List[] l2;
+l2 = new List.CONS(1, l1);
+pool List[] l3;
+l3 = new List.CONS(2, l2);
+escape l3:CONS.head + l3:CONS.tail:CONS.head + l3:CONS.tail:CONS.tail:NIL;
 ]],
     --run = 4,
-    adt = 'line 52 : invalid recursive constructor',
+    adt = 'line 54 : invalid constructor : recursive field "CONS" must be new data',
     -- TODO-ADT-REC-STATIC-CONSTRS
 }
 Test { DATA..[[
-var List l3 = List.CONS(2, List.CONS(1, List.NIL()));
-escape l3.CONS.head + l3.CONS.tail:CONS.head + l3.CONS.tail:CONS.tail:NIL;
+pool List[] l3;
+l3 = new List.CONS(2, List.CONS(1, List.NIL()));
+escape l3:CONS.head + l3:CONS.tail:CONS.head + l3:CONS.tail:CONS.tail:NIL;
 ]],
     run = 4,
 }
 -- breaking a list: 2-1-NIL => 2-NIL
 Test { DATA..[[
-var List l1 = List.NIL();
-var List l3 = List.CONS(2, List.CONS(1, List.NIL()));
-l3.CONS.tail = &l1;
-escape l3.CONS.head + l3.CONS.tail:NIL;
+pool List[] l1;
+pool List[] l3;
+l1 = new List.NIL();
+l3 = new List.CONS(2, List.CONS(1, List.NIL()));
+l3:CONS.tail = l1;
+escape l3:CONS.head + l3:CONS.tail:NIL;
 ]],
-    adt = 'line 53 : cannot mix recursive data sources',
+    adt = 'line 55 : cannot mix recursive data sources',
     run = 3,
 }
 
 -- circular list: 1-1-1-...
 Test { DATA..[[
-var List l1 = List.NIL();
-var List l2 = List.CONS(1, List.NIL());
+pool List[] l1;
+pool List[] l2;
+l1 = new List.NIL();
+l2 = new List.CONS(1, List.NIL());
 l1 = l2;
-escape l1.CONS + (l1.CONS.head==1);
+escape l1:CONS + (l1:CONS.head==1);
 ]],
-    adt = 'line 53 : cannot mix recursive data sources',
+    adt = 'line 55 : cannot mix recursive data sources',
     run = 2,
 }
 Test { DATA..[[
-var List l1 = List.NIL();
-var List l2 = List.CONS(1, List.NIL());
+pool List[] l1, l2;
+l1 = new List.NIL();
+l2 = new List.CONS(1, List.NIL());
 l1 = l2;
-escape l1.CONS + (l1.CONS.head==1) + (l1.CONS.tail:CONS.tail:CONS.head==1);
+escape l1:CONS + (l1:CONS.head==1) + (l1:CONS.tail:CONS.tail:CONS.head==1);
 ]],
-    adt = 'line 53 : cannot mix recursive data sources',
+    adt = 'line 54 : cannot mix recursive data sources',
     run = 3,
 }
 
 -- circular list: 1-2-1-2-...
 Test { DATA..[[
-var List l1 = List.CONS(1, List.NIL());
-var List l2 = List.CONS(2, List.NIL());
-l1.CONS.tail = &l2;
-escape (l1.CONS.head==1) + (l1.CONS.tail:CONS.head==2) +
-       (l2.CONS.head==2) + (l2.CONS.tail:CONS.head==1) +
-       (l1.CONS.tail:CONS.tail:CONS.tail:CONS.head==2);
+pool List[] l1, l2;
+l1 = new List.CONS(1, List.NIL());
+l2 = new List.CONS(2, List.NIL());
+l1:CONS.tail = l2;
+escape (l1:CONS.head==1) + (l1:CONS.tail:CONS.head==2) +
+       (l2:CONS.head==2) + (l2:CONS.tail:CONS.head==1) +
+       (l1:CONS.tail:CONS.tail:CONS.tail:CONS.head==2);
 ]],
-    adt = 'line 53 : cannot mix recursive data sources',
+    adt = 'line 54 : cannot mix recursive data sources',
     run = 5,
 }
 
 -- another circular list
 Test { DATA..[[
-var List l1 = List.CONS(1, List.NIL());
-var List l2 = List.CONS(2, List.NIL());
-l1.CONS.tail = &l2;
-l2.CONS.tail = &l1;
+pool List[] l1, l2;
+l1 = new List.CONS(1, List.NIL());
+l2 = new List.CONS(2, List.NIL());
+l1:CONS.tail = l2;
+l2:CONS.tail = l1;
 
-escape l1.CONS.head + l1.CONS.tail:CONS.head + l2.CONS.head + l2.CONS.tail:CONS.head;
+escape l1:CONS.head + l1:CONS.tail:CONS.head + l2:CONS.head + l2:CONS.tail:CONS.head;
 ]],
-    adt = 'line 53 : cannot mix recursive data sources',
+    adt = 'line 54 : cannot mix recursive data sources',
     run = 6,
 }
 
 -- not circular
 Test { DATA..[[
-var List l1 = List.NIL();
-var List l2 = List.CONS(1, List.NIL());
-l1 = *l2.CONS.tail;
-escape l1.NIL;
+pool List[] l1, l2;
+l1 = new List.NIL();
+l2 = new List.CONS(1, List.NIL());
+l1 = l2:CONS.tail;
+escape l1:NIL;
 ]],
-    adt = 'line 53 : cannot mix recursive data sources',
+    adt = 'line 54 : cannot mix recursive data sources',
     run = 1,
 }
 
@@ -43829,7 +43983,7 @@ pool List[] l;
 l = List.CONS(2, List.NIL());
 escape l:CONS.head;
 ]],
-    env = 'line 52 : types mismatch (`List*´ <= `List´)',
+    env = 'line 52 : invalid constructor : recursive data must use `new´',
     --env = 'line 52 : invalid call parameter #2 (List vs List*)',
 }
 -- cannot assign "l" directly (in the pool declaration)
@@ -44546,42 +44700,46 @@ escape p1==p2;
     --run = 1,
 }
 Test { DATA..[[
-pool List[] l1;
-var List l2 = List.NIL();
+pool List[] l1, l2;
+l2 = new List.NIL();
 escape l1==l2;
 ]],
-    env = 'line 53 : invalid operands to binary "=="',
-    --run = 1,
+    --env = 'line 53 : invalid operands to binary "=="',
+    run = 1,
 }
 
 -- cannot mix recursive ADTs
 Test { DATA..[[
-var List l1 = List.CONS(1, List.NIL());
-var List l2 = List.CONS(2, List.NIL());
-l1.CONS.tail = &l2;
-escape l1.CONS.tail:CONS.head;
-]],
-    adt = 'line 53 : cannot mix recursive data sources',
-}
-Test { DATA..[[
-var List l1 = List.CONS(1, List.NIL());
-do
-    var List l2 = List.CONS(2, List.NIL());
-    l1.CONS.tail = &l2;
-end
-escape l1.CONS.tail:CONS.head;
+pool List[] l1, l2;
+l1 = new List.CONS(1, List.NIL());
+l2 = new List.CONS(2, List.NIL());
+l1:CONS.tail = l2;
+escape l1:CONS.tail:CONS.head;
 ]],
     adt = 'line 54 : cannot mix recursive data sources',
+}
+Test { DATA..[[
+pool List[] l1;
+l1 = new List.CONS(1, List.NIL());
+do
+    pool List[] l2;
+    l2 = new List.CONS(2, List.NIL());
+    l1:CONS.tail = l2;
+end
+escape l1:CONS.tail:CONS.head;
+]],
+    adt = 'line 56 : cannot mix recursive data sources',
     --fin = 'line 54 : attribution to pointer with greater scope',
 }
 Test { DATA..[[
-var List l1 = List.CONS(1, List.NIL());
+pool List[] l1;
+l1 = new List.CONS(1, List.NIL());
 pool List[2] l2;
 l2 = new List.CONS(2, List.NIL());
-l1.CONS.tail = l2;
-escape l1.CONS.tail:CONS.head;
+l1:CONS.tail = l2;
+escape l1:CONS.tail:CONS.head;
 ]],
-    adt = 'line 54 : cannot mix recursive data sources',
+    adt = 'line 55 : cannot mix recursive data sources',
 }
 Test { DATA..[[
 pool List[2] l1;
@@ -44615,8 +44773,9 @@ _assert(ret == 6);
 l:CONS.tail:CONS.tail = new List.CONS(4, List.NIL());
                                 // 10
 
-var List l3 = List.CONS(3, List.NIL());
-l:CONS.tail:CONS.tail = &l3;
+pool List[] l3;
+l3 = new List.CONS(3, List.NIL());
+l:CONS.tail:CONS.tail = l3;
 _assert(l:CONS.tail:CONS.head == 3);
 _assert(l:CONS.tail:CONS.tail:CONS.head == 4);
 ret = ret + l:CONS.tail:CONS.head + l:CONS.tail:CONS.tail:CONS.head;
@@ -44633,7 +44792,7 @@ l:CONS.tail:CONS.tail:CONS.tail =
 
 escape ret;
 ]],
-    adt = 'line 72 : cannot mix recursive data sources',
+    adt = 'line 73 : cannot mix recursive data sources',
     run = -1,
 }
 

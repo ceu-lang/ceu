@@ -654,6 +654,40 @@ F = {
     Dcl_var = function (me)
         local _, tp, id, constr, _ = unpack(me)
 
+        local adt = ENV.adts[tp.id]
+        if adt and adt.isRec then
+            if me.__adj_adt_constr then
+                -- Automatic declaration to hold data from constructor:
+                --      new List.*
+                --  became
+                --      var CEU_List* v = alloc(...)
+                ASR(tp.ptr==1, me,
+                    'invalid constructor : recursive data must use `new´')
+            else
+                -- Pointer to recursive ADT pool declaration:
+                --      var List* l;
+                --  becomes
+                --      var tceu_adt_root l = {pool=x, root=y}
+                ASR(tp.ptr==1, me,
+                    'invalid recursive data declaration : variable "'..id..'" must be a pointer or pool')
+
+--[[
+                me.adt_tp = tp -- saves original type
+
+                -- creates "root" variable that represents the pool
+                me[1] = 'var'
+                me[2] = TP.fromstr('_tceu_adt_root')
+                me[3] = id
+                F.__dcl_var(me)
+                --me.var.isTmp = false
+                me.var.adt_par = me
+                me.adt_root = me.var
+                return
+]]
+            end
+        end
+
+        -- other declarations
         F.__dcl_var(me)
 
         if me.var.cls and me.var.tp.arr then
@@ -980,7 +1014,9 @@ F = {
             -- var T*? = spawn T;
             ASR(to.tp.opt, me, 'must assign to option pointer')
 
-        elseif fr.adt_rr_to_root and to.adt_rr_to_root then
+        elseif fr.adt_rr_to_root and to.adt_rr_to_root and
+               to.adt_rr_to_root.var.tp.ref
+        then
             -- HACK_10: ADT aliasing:
             --  pool Command[] cmds1;
             --  pool Command[]& cmds2;
@@ -1186,55 +1222,11 @@ F = {
         ENV.calls[id] = true
     end,
 
-    Adt_constr_pre = function (me)
-        local adt, params, var = unpack(me)
-        local id, tag = unpack(adt)
-
--- TODO: duplicated code with below
-        local tup
-        local tadt = ASR(ENV.adts[id], me, 'data "'..id..'" is not declared')
-        if tag then
-            local ttag = ASR(tadt.tags[tag], me, 'tag "'..tag..'" is not declared')
-            tup = ttag.tup
-        else
-            tup = tadt.tup
-        end
-
-        local _,op,_ = unpack(tadt)
-        --[[
-        -- HACK_8: prepend "&" to static constructor assigning to pointer
-        --
-        --  data List with
-        --      tag NIL;
-        --  or
-        --      tag CONS with
-        --          var int   head;
-        --          var List* tail;
-        --      end
-        --  end
-        --  var List l = List.CONS(1,
-        --                  List.CONS(2,
-        --                      List.NIL()));
-        --  escape l.CONS.tail:CONS.head;
-        --]]
-        for i, t in ipairs(tup) do
-            local _,tp,_ = unpack(t)
-            if ENV.adts[tp.id] and tp.ptr==1 then
-                local pi = params[i]
-                if pi and pi.__adj_static_constr then
-                    -- (if pi ...: arity mismatch is checked elsewhere)
-                    params[i] = AST.node('Op1_&', me.ln, '&', pi)
-                end
-            end
-        end
-    end,
-
     Adt_constr = function (me)
         local adt, params, var = unpack(me)
         local id, tag = unpack(adt)
         me.tp = TP.fromstr(id)
 
--- TODO: duplicated code with above
         local tadt = ASR(ENV.adts[id], me, 'data "'..id..'" is not declared')
         if tag then
             local ttag = ASR(tadt.tags[tag], me, 'tag "'..tag..'" is not declared')

@@ -2,31 +2,41 @@ F = {
     Set = function (me)
         local _, _, fr, to = unpack(me)
         local adt = ENV.adts[to.tp.id]
-        if not (adt and adt.n_recs>0) then
+        if not (adt and adt.isRec) then
             return  -- ignore non-adt or non-recursive-adt
         end
+
         if fr.__adj_is_constr then
-            --  [OK]: l = new (...)
-            return  -- ignore constructors (they are correct)
+            if to.fst.var.pre == 'pool' then
+                -- [OK]
+                -- var pool[] L l;
+                -- l = new (...)
+                return
+            elseif to.fst ~= to then
+                -- [OK]
+                -- var L* l = <...>;
+                -- l:X.x = new (...)
+                return
+            else
+                -- [NO]
+                -- var L* l = <...>;
+                -- l = new (...)
+                ASR(false, me, 'invalid attribution : must assign to recursive field')
+            end
         end
-        --assert(to.fst.tag=='Var' and fr.fst.tag=='Var', 'not implemented')
 
-        if to.adt_par and fr.adt_par then
-            -- [OK]: ref = val
-        else
-            -- [OK]: ptr  = l2.*
-            -- [OK]: l1.* = l1.*
-            -- [NO]: l1.* = l2.*
-            ASR((to.tp.ptr==1 and to.lst.var==to.var) or
-                 to.fst.var==fr.fst.var, me,
-                'cannot mix recursive data sources')
+        -- [OK]: ptr  = l2.*
+        -- [OK]: l1.* = l1.*
+        -- [NO]: l1.* = l2.*
+        ASR((to.tp.ptr==1 and to.lst.var==to.var) or
+             to.fst.var==fr.fst.var, me,
+            'cannot mix recursive data sources')
 
-            --  [OK]: "to" is prefix of "fr" (changing parent to a child)
-            --      l = l:CONS.tail     // OK
-            --      l:CONS.tail = l     // NO
-            local prefix = (to.fst.__depth-to.__depth <= fr.fst.__depth-fr.__depth)
-            ASR(prefix, me, 'cannot assign parent to child')
-        end
+        --  [OK]: "to" is prefix of "fr" (changing parent to a child)
+        --      l = l:CONS.tail     // OK
+        --      l:CONS.tail = l     // NO
+        local prefix = (to.fst.__depth-to.__depth <= fr.fst.__depth-fr.__depth)
+        ASR(prefix, me, 'cannot assign parent to child')
     end,
 
     Dcl_adt = function (me)
@@ -59,7 +69,7 @@ F = {
     Adt_constr = function (me)
         local adt, ps = unpack(me)
 
-        local id_adt, field = unpack(adt)
+        local id_adt, id_field = unpack(adt)
         local adt = assert(ENV.adts[id_adt], 'bug found')
         if adt.tags then
             -- Refuse recursive constructors that are not new data:
@@ -72,11 +82,11 @@ F = {
             --  end
             --  <...> = new D.REC(ptr)      -- NO!
             --  <...> = new D.REC(D.xxx)    -- OK!
-            field = assert(adt.tags[field], 'bug found')
+            field = assert(adt.tags[id_field], 'bug found')
             for i, p in ipairs(ps) do
                 if field.tup[i].isRec then
                     ASR(p.lst.tag=='Var' and string.find(p.lst[1],'__ceu_adt_root'),
-                        me, 'invalid recursive constructor')
+                        me, 'invalid constructor : recursive field "'..id_field..'" must be new data')
                 end
             end
         end

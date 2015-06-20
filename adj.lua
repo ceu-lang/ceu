@@ -1878,8 +1878,6 @@ H = {
                 local id = dcls[1][3]
 
                 params[i] = node('Var', me.ln, id)
-                params[i].__adj_static_constr = (not dyn)
-                    -- HACK_8: might be static assigning to pointer
             else
                 -- keep current p
             end
@@ -1887,10 +1885,11 @@ H = {
 
         local root = (AST.par(me,'Adt_constr') and '' or 'root_')
 
-        table.insert(DCLS, 1,
-            node('Dcl_var', me.ln, 'var',
-                node('Type', me.ln, id, (dyn and 1) or 0, false, false),
-                '__ceu_adt_'..root..me.n))
+        local dcl = node('Dcl_var', me.ln, 'var',
+                        node('Type', me.ln, id, (dyn and 1) or 0, false, false),
+                        '__ceu_adt_'..root..me.n)
+        dcl.__adj_adt_constr = true
+        table.insert(DCLS, 1, dcl)
 
         return { __adt=true,
                     DCLS,
