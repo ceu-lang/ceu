@@ -9,152 +9,6 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
---]===]
-Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int   head;
-        var List* tail;
-    end
-end
-
-pool List[] list;
-
-list = new List.CONS(10, List.NIL());
-var List* l = list;
-
-watching *l do
-    await 1s;
-end
-
-escape 0;
-]],
-    env = 'line 15 : data must be a pointer',
-}
-
-Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int   head;
-        var List* tail;
-    end
-end
-
-pool List[] list;
-
-list = new List.CONS(10, List.NIL());
-var List* l = list;
-
-l:CONS.tail = new List.CONS(9, List.NIL());
-l = l:CONS.tail;
-
-l:CONS.tail = new List.CONS(8, List.NIL());
-l = l:CONS.tail;
-
-escape l:CONS.head +
-        list:CONS.head +
-        list:CONS.tail:CONS.head +
-        list:CONS.tail:CONS.tail:CONS.head;
-]],
-    run = 35,
-}
-
-Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int   head;
-        var List* tail;
-    end
-end
-
-pool List[] list;
-
-list = new List.CONS(10, List.NIL());
-var List* l = list;
-
-l:CONS.tail = new List.CONS(9, List.NIL());
-l = l:CONS.tail;
-
-watching l do
-    await 1s;
-
-    l:CONS.tail = new List.CONS(8, List.NIL());
-    l = l:CONS.tail;
-
-    escape l:CONS.head +
-            list:CONS.head +
-            list:CONS.tail:CONS.head +
-            list:CONS.tail:CONS.tail:CONS.head;
-end
-
-escape 0;
-]],
-    run = { ['~>1s'] = 35 },
-}
-
-Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int   head;
-        var List* tail;
-    end
-end
-
-pool List[] list;
-
-list = new List.CONS(10, List.NIL());
-var List* lll = list;
-
-lll:CONS.tail = new List.CONS(9, List.NIL());
-lll = lll:CONS.tail;
-
-par do
-    watching lll do
-        await 1s;
-
-        lll:CONS.tail = new List.CONS(8, List.NIL());
-        lll = lll:CONS.tail;
-
-        escape lll:CONS.head +
-                list:CONS.head +
-                list:CONS.tail:CONS.head +
-                list:CONS.tail:CONS.tail:CONS.head;
-    end
-    escape 1;
-with
-    list = new List.NIL();
-    await FOREVER;
-end
-]],
-    _ana = {acc=true},
-    run = 1,
-}
-
-Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int   head;
-        var List* tail;
-    end
-end
-
-var List l;
-escape 1;
-]],
-    env = 'line 10 : invalid recursive data declaration : variable "l" must be a pointer or pool',
-}
-
---[=[
 Test { [[
 data List with
     tag NIL;
@@ -194,9 +48,9 @@ end
     _ana = {acc=true},
     run = 1,
 }
-]=]
 
---do return end
+do return end
+--]===]
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------
@@ -44964,6 +44818,150 @@ var I* i = &u;
 escape ((*i).t).x;
 ]],
     run = 10,
+}
+
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[] list;
+
+list = new List.CONS(10, List.NIL());
+var List* l = list;
+
+watching *l do
+    await 1s;
+end
+
+escape 0;
+]],
+    env = 'line 15 : data must be a pointer',
+}
+
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[] list;
+
+list = new List.CONS(10, List.NIL());
+var List* l = list;
+
+l:CONS.tail = new List.CONS(9, List.NIL());
+l = l:CONS.tail;
+
+l:CONS.tail = new List.CONS(8, List.NIL());
+l = l:CONS.tail;
+
+escape l:CONS.head +
+        list:CONS.head +
+        list:CONS.tail:CONS.head +
+        list:CONS.tail:CONS.tail:CONS.head;
+]],
+    run = 35,
+}
+
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[] list;
+
+list = new List.CONS(10, List.NIL());
+var List* l = list;
+
+l:CONS.tail = new List.CONS(9, List.NIL());
+l = l:CONS.tail;
+
+watching l do
+    await 1s;
+
+    l:CONS.tail = new List.CONS(8, List.NIL());
+    l = l:CONS.tail;
+
+    escape l:CONS.head +
+            list:CONS.head +
+            list:CONS.tail:CONS.head +
+            list:CONS.tail:CONS.tail:CONS.head;
+end
+
+escape 0;
+]],
+    run = { ['~>1s'] = 35 },
+}
+
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[] list;
+
+list = new List.CONS(10, List.NIL());
+var List* lll = list;
+
+lll:CONS.tail = new List.CONS(9, List.NIL());
+lll = lll:CONS.tail;
+
+par do
+    watching lll do
+        await 1s;
+
+        lll:CONS.tail = new List.CONS(8, List.NIL());
+        lll = lll:CONS.tail;
+
+        escape lll:CONS.head +
+                list:CONS.head +
+                list:CONS.tail:CONS.head +
+                list:CONS.tail:CONS.tail:CONS.head;
+    end
+    escape 1;
+with
+    list = new List.NIL();
+    await FOREVER;
+end
+]],
+    _ana = {acc=true},
+    run = 1,
+}
+
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+var List l;
+escape 1;
+]],
+    env = 'line 10 : invalid recursive data declaration : variable "l" must be a pointer or pool',
 }
 
 -- ADTS / RECURSE
