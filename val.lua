@@ -11,14 +11,10 @@ local function ceu2c (op)
     return _ceu2c[op] or op
 end
 
-function VV (me, lval, ...)
-    return (me.fval and me.fval(me,lval,...)) or me.val
-end
-
 function V (me, lval, ...)
     ASR(me.fval or me.val, me, 'invalid expression : no value')
 
-    local ret = VV(me, lval, ...)
+    local ret = (me.fval and me.fval(me,lval,...)) or me.val
 
     local ref = me.tp and me.tp.ref and me.tp.id
     if me.byRef and
@@ -256,6 +252,10 @@ F =
     end,
 
     Field = function (me)
+        me.fval = F.__ffield
+        me.val  = F.__ffield(me)    -- TODO: remove
+    end,
+    __ffield = function (me, lval, ...)
         local gen = '((tceu_org*)'..me.org.val..')'
         if me.org.cls and me.org.cls.is_ifc then
             if me.var.pre == 'var'
@@ -297,7 +297,7 @@ F =
             end
 
             if me.var.tp.opt then
-                F_var(me)
+                F_var(me, lval, ...)
             end
         else
             if me.c then
@@ -305,9 +305,10 @@ F =
             else
                 assert(me.var, 'bug found')
                 me.val = '('..me.org.val..'->'..me.var.id_..')'
-                F_var(me)
+                F_var(me, lval, ...)
             end
         end
+        return me.val
     end,
 
     Op2_call = function (me)
