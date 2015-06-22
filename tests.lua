@@ -44577,6 +44577,26 @@ Test { [[
 data SDL_Color with
     var int v;
 end
+var SDL_Color clr = SDL_Color(10);
+var SDL_Color? bg_clr = clr;
+escape bg_clr.v;
+]],
+    run = 10,
+}
+Test { [[
+data SDL_Color with
+    var int v;
+end
+var SDL_Color? bg_clr = SDL_Color(10);
+escape bg_clr.v;
+]],
+    run = 10,
+}
+
+Test { [[
+data SDL_Color with
+    var int v;
+end
 class UI with
     var SDL_Color? bg_clr;
 do
@@ -44664,8 +44684,8 @@ pool List[] l1, l2;
 l2 = new List.NIL();
 escape l1==l2;
 ]],
-    --env = 'line 53 : invalid operands to binary "=="',
-    run = 1,
+    env = 'line 53 : invalid operands to binary "=="',
+    --run = 1,
 }
 
 -- cannot mix recursive ADTs

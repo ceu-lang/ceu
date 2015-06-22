@@ -461,9 +461,7 @@ case ]]..me.lbls_cnt.id..[[:;
         CONC(me, one)
 
         if not dyn then
-            LINE(me, [[
-]]..V(to)..' = '..V(one)..[[;
-]])
+            F.__set(me, one, to)
         else
             local set = assert(AST.par(me,'Set'), 'bug found')
             F.__set_adt_mut(me, set, one)
@@ -983,26 +981,7 @@ case ]]..me.lbl_cnt.id..[[:;
         end
     end,
 
-    Set = function (me)
-        local _, set, fr, to = unpack(me)
-        COMM(me, 'SET: '..tostring(to[1]))    -- Var or C
-        if set ~= 'exp' then
-            if set == 'adt-mut' then
-                F.__set_adt_mut(me, me, fr)
-            end
-            CONC(me, fr)
-            return
-        end
-
-        -- cast is not an lvalue in C
-        if to.tag == 'Op1_cast' then
-error'remove this if it never fails'
--- TODO: document where does it come from (with asserts)
-            to = to[2]
-        end
-
-        CONC(me, fr)
-
+    __set = function (me, fr, to)
         -- optional types
         if to.tp.opt then
             local ID = string.upper(to.tp.opt.id)
@@ -1042,6 +1021,28 @@ error'remove this if it never fails'
 #endif
 ]])
             end
+        end
+    end,
+
+    Set = function (me)
+        local _, set, fr, to = unpack(me)
+        COMM(me, 'SET: '..tostring(to[1]))    -- Var or C
+
+        if set == 'exp' then
+            -- cast is not an lvalue in C
+            if to.tag == 'Op1_cast' then
+error'remove this if it never fails'
+-- TODO: document where does it come from (with asserts)
+                to = to[2]
+            end
+            CONC(me, fr)
+            F.__set(me, fr, to)
+        else
+            if set == 'adt-mut' then
+                F.__set_adt_mut(me, me, fr)
+            end
+            CONC(me, fr)
+            return
         end
     end,
 

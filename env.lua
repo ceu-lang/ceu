@@ -1021,7 +1021,8 @@ error'oi'
         elseif set == 'adt-constr' then
             return  -- checked in adt.lua
 
-        elseif (fr.tp and ENV.adts[fr.tp.id]) or ENV.adts[to.tp.id] then
+        elseif ENV.adts[to.tp.id] and (not to.tp.opt) then
+-- TODO: should only fall here for recursive ADTS?
             me[2] = 'adt-mut'
             return  -- checked in adt.lua
         end
