@@ -653,41 +653,6 @@ F = {
 
     Dcl_var = function (me)
         local _, tp, id, constr, _ = unpack(me)
-
---[[
-        local adt = ENV.adts[tp.id]
-        if adt and adt.isRec then
-            if me.__adj_adt_constr then
-                -- Automatic declaration to hold data from constructor:
-                --      new List.*
-                --  became
-                --      var CEU_List* v = alloc(...)
-                ASR(tp.ptr==1, me,
-                    'invalid constructor : recursive data must use `new´')
-            else
-                -- Pointer to recursive ADT pool declaration:
-                --      var List* l;
-                --  becomes
-                --      var tceu_adt_root l = {pool=x, root=y}
-                ASR(tp.ptr==1, me,
-                    'invalid recursive data declaration : variable "'..id..'" must be a pointer or pool')
-
-                me.adt_tp = tp -- saves original type
-
-                -- creates "root" variable that represents the pool
-                me[1] = 'var'
-                me[2] = TP.fromstr('_tceu_adt_root')
-                me[3] = id
-                F.__dcl_var(me)
-                --me.var.isTmp = false
-                me.var.adt_par = me
-                me.adt_root = me.var
-                return
-            end
-        end
-]]
-
-        -- other declarations
         F.__dcl_var(me)
 
         if me.var.cls and me.var.tp.arr then
@@ -718,42 +683,6 @@ F = {
     Dcl_pool = function (me)
         local pre, tp, id, constr = unpack(me)
         ASR(tp.arr, me, 'missing `pool´ dimension')
-
---[=[
-        -- recursive ADT pool declaration
-        local adt = ENV.v_or_ref(tp, 'adt')
-        if adt and adt.isRec then
-            ASR(tp.ptr == 0, me, 'not implemented : pointer to pool ADT')
-
-            -- for a real "pool", create '_'..id
-            me.adt_tp = tp            -- saves original type
-            if not tp.ref then
-                me[3] = '_'..id
-                F.__dcl_var(me)               -- creates me.var
-                me.var.isTmp = false
-                me.var.adt_par = me
-                me.adt_pool = me.var
-
-                -- TODO: including "tp" in "me[5]" to keep traversing it
-                me[4] = constr or false
-                me[5] = tp
-            end
-
-            -- creates "root" variable that represents the pool
-            local ptr = (tp.ref and '&') or ''
-            me[1] = 'var'
-            me[2] = TP.fromstr('_tceu_adt_root'..ptr)
-            me[3] = id
-            F.__dcl_var(me)
-            me.var.isTmp = false
-            me.var.adt_par = me
-            me.adt_root = me.var
-
-        -- other pools
-        else
-            F.__dcl_var(me)
-        end
-]=]
         F.__dcl_var(me)
     end,
 
@@ -903,21 +832,18 @@ error'oi'
 
     _TMP_ITER = function (me)
         -- HACK_5: figure out iter type
-        local root_root = AST.asr(me[1], 'Op1_cast')
-        local pool_tp = root_root.adt_par.adt_tp
+        local pool = AST.asr(me[1], 'Var')
 
         local blki = AST.asr(me.__par,'Stmts', 2,'Stmts', 1,'Dcl_cls',
                                     3,'Block', 1,'Stmts', 1,'BlockI')
 
         local tp = AST.asr(blki,'', 1,'Stmts', 3,'Dcl_var', 2,'Type')
-        tp[1] = root_root.tp.id
+        tp[1] = pool.tp.id
 
         AST.asr(blki,'', 1,'Stmts', 1,'Dcl_pool', 2,'Type')
-                [3] = AST.copy(pool_tp[3]) -- array
-                --[3] = AST.copy(root_root.tp[3])
+                [3] = AST.copy(pool.tp[3]) -- array
         AST.asr(me.__par,'Stmts', 3,'Dcl_pool', 2,'Type')
-                [3] = AST.copy(pool_tp[3]) -- array
-                --[3] = AST.copy(root_root.tp[3])
+                [3] = AST.copy(pool.tp[3]) -- array
 
         me.tag = 'Nothing'
     end,
@@ -1023,7 +949,11 @@ error'oi'
 
         elseif ENV.adts[to.tp.id] and (not to.tp.opt) then
 -- TODO: should only fall here for recursive ADTS?
-            me[2] = 'adt-mut'
+            if to.var and (to.var.tp.ref or to.var.tp.ptr>0) then
+                me[2] = 'adt-alias'
+            else
+                me[2] = 'adt-mut'
+            end
             return  -- checked in adt.lua
         end
 
@@ -1350,19 +1280,23 @@ error'oi'
         me.lval = e1.lval and e1
         me.tp = TP.copy(e1.tp)
 
+        local ok = false
+
         if me.tp.ptr > 0 then
             me.tp.ptr = me.tp.ptr - 1
-            return  -- ok
+            ok = true
         end
 
         local is_adt_pool = ENV.adts[me.tp.id] and e1.var and e1.var.pre=='pool'
         if is_adt_pool then
             me.tp.arr = false
-            return  -- ok
+            ok = true
         end
 
-        ASR((me.tp.ext and (not me.tp.plain) and (not TP.get(me.tp.id).plain)),
-            me, 'invalid operand to unary "*"')
+        if not ok then
+            ASR((me.tp.ext and (not me.tp.plain) and (not TP.get(me.tp.id).plain)),
+                me, 'invalid operand to unary "*"')
+        end
     end,
 
     ['Op1_&'] = function (me)

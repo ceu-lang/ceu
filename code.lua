@@ -510,7 +510,7 @@ me.val..' = &CEU_'..string.upper(id)..[[_BASE;
                 -- extract pool from set
                 --      to.x.y = new z;
                 -- i.e.,
-                --      (((tceu_adt_root*)to.root)->pool)
+                --      to.root.pool
                 local set = assert( AST.par(me,'Set'), 'bug found' )
                 local _,_,_,to = unpack(set)
                 local pool = FIND_ADT_POOL(to.fst)
@@ -950,7 +950,7 @@ error'remove this if it never fails'
             LINE(me, [[
 /* save the continuation to run after the kills */
 _STK->trl->evt = CEU_IN__STK;
-_STK->trl->lbl = ]]..me.lbl_cnt.id..[[;
+_STK->trl->lbl = ]]..set.lbl_cnt.id..[[;
 _STK->trl->stk = stack_curi(_ceu_go);
 
 CEU_]]..to.tp.id..[[_kill(_ceu_app, _ceu_go, __ceu_old);
@@ -976,7 +976,7 @@ CEU_]]..to.tp.id..[[_free_static(_ceu_app, __ceu_old, ]]..pool..[[);
         if PROPS.has_adts_watching[to.tp.id] then
             LINE(me, [[
 return RET_RESTART;
-case ]]..me.lbl_cnt.id..[[:;
+case ]]..set.lbl_cnt.id..[[:;
 ]])
         end
     end,
@@ -1004,7 +1004,7 @@ case ]]..me.lbl_cnt.id..[[:;
 
         -- normal types
         else
-            LINE(me, V(to)..' = '..V(fr)..';')
+            LINE(me, V(to,true)..' = '..V(fr,false)..';')
         end
 
         if to.tag=='Var' and to.var.id=='_ret' then
@@ -1035,14 +1035,30 @@ error'remove this if it never fails'
 -- TODO: document where does it come from (with asserts)
                 to = to[2]
             end
-            CONC(me, fr)
+            CONC(me, fr)                -- TODO: remove?
             F.__set(me, fr, to)
-        else
-            if set == 'adt-mut' then
-                F.__set_adt_mut(me, me, fr)
-            end
+
+        elseif set == 'adt-alias' then
+            CONC(me, fr)                -- TODO: remove?
+
+            --      l = list:TAG.field;
+            -- becomes
+            --      l.pool = list.pool
+            --      l.root = list:TAG.field
+            local pool = FIND_ADT_POOL(fr.fst)
+            LINE(me, [[
+#ifdef CEU_ADTS_NEWS_POOL
+]]..V(to,true,'root')..'.pool = '..V(pool,false,'root')..[[.pool;
+#endif
+]]..V(to,true,'root')..'.root = '..V(fr)..[[;
+]])
+
+        elseif set == 'adt-mut' then
+            F.__set_adt_mut(me, me, fr)
             CONC(me, fr)
-            return
+
+        else
+            CONC(me, fr)
         end
     end,
 

@@ -44983,20 +44983,34 @@ end
 pool List[] list;
 
 list = new List.CONS(10, List.NIL());
-var List* l = list;
 
-l:CONS.tail = new List.CONS(9, List.NIL());
-l = l:CONS.tail;
+pool List[]& lll;
+lll = list;
 
-l:CONS.tail = new List.CONS(8, List.NIL());
-l = l:CONS.tail;
-
-escape l:CONS.head +
-        list:CONS.head +
-        list:CONS.tail:CONS.head +
-        list:CONS.tail:CONS.tail:CONS.head;
+escape lll:CONS.head;
 ]],
-    run = 35,
+    run = 10,
+}
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[] list;
+
+list = new List.CONS(10, List.NIL());
+
+pool List*[] lll;
+lll = list;
+
+escape lll:CONS.head;
+]],
+    run = 10,
 }
 
 Test { [[
@@ -45012,7 +45026,38 @@ end
 pool List[] list;
 
 list = new List.CONS(10, List.NIL());
-var List* l = list;
+pool List*[] l ;
+l = list;
+
+l:CONS.tail = new List.CONS(9, List.NIL());
+l = l:CONS.tail;
+
+l:CONS.tail = new List.CONS(8, List.NIL());
+l = l:CONS.tail;
+
+escape l:CONS +
+        list:CONS.head +
+        list:CONS.tail:CONS.head +
+        list:CONS.tail:CONS.tail:CONS.head;
+]],
+    run = 28,
+}
+
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[] list;
+
+list = new List.CONS(10, List.NIL());
+pool List*[] l;
+l = list;
 
 l:CONS.tail = new List.CONS(9, List.NIL());
 l = l:CONS.tail;
@@ -45047,7 +45092,8 @@ end
 pool List[] list;
 
 list = new List.CONS(10, List.NIL());
-var List* lll = list;
+pool List*[] lll;
+lll = list;
 
 lll:CONS.tail = new List.CONS(9, List.NIL());
 lll = lll:CONS.tail;
@@ -45087,7 +45133,7 @@ end
 var List l;
 escape 1;
 ]],
-    env = 'line 10 : invalid recursive data declaration : variable "l" must be a pointer or pool',
+    adt = 'line 10 : invalid recursive data declaration : variable "l" must be a pointer or pool',
 }
 
 -- ADTS / RECURSE

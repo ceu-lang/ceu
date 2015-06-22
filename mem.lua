@@ -528,17 +528,17 @@ typedef union CEU_]]..me.id..[[_delayed {
                 end
                 DCL.struct = DCL.struct..SPC()..'  '..dcl..';\n'
             elseif var.pre=='pool' then
-                local top = ENV.v_or_ref(var.tp)
-                local adt = ENV.v_or_ref(var.tp, 'adt')
-                local cls = ENV.v_or_ref(var.tp, 'cls')
+                local adt = ENV.adts[var.tp.id]
+                local cls = ENV.clss[var.tp.id]
+                local top = adt or cls
 
                 -- ADT:
                 -- tceu_adt_root id = { root=?, pool=_id };
                 -- CEU_POOL_DCL(_id);
                 if adt then
-                    local ptr = (var.tp.ref and '*') or ''
+                    assert(var.tp.ptr <= 1, 'bug found')
                     DCL.struct = DCL.struct .. [[
-tceu_adt_root]]..ptr..' '..var.id_..[[;
+tceu_adt_root ]]..var.id_..[[;
 ]]
                 end
 
@@ -560,7 +560,7 @@ CEU_POOL_DCL(]]..ID..',CEU_'..var.tp.id..','..var.tp.arr.sval..[[)
                     -- ADT doesn't require this NULL pool field
                     --  (already has root->pool=NULL)
                     if var.tp.ptr>0 or var.tp.ref then
-                        local ptr = string.rep('*', (var.tp.ref and 1) + var.tp.ptr)
+                        local ptr = string.rep('*', (var.tp.ref and 1 or 0) + var.tp.ptr)
                         DCL.struct = DCL.struct .. [[
 tceu_pool_]]..ptr..' '..var.id_..[[;
 ]]

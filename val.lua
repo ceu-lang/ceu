@@ -22,8 +22,8 @@ function V (me, lval, ...)
 
     local ref = me.tp and me.tp.ref and me.tp.id
     if me.byRef and
-        (not (ENV.clss[me.tp.id] or
-              (ref and ENV.clss[ref]) or
+        (not (ENV.clss[me.tp.id] or (ref and ENV.clss[ref]) or
+              ENV.adts[me.tp.id] or (ref and ENV.adts[ref]) or
               me.tp.id=='@'))
              -- already by ref
     then
@@ -156,21 +156,20 @@ local function F_var (me, lval, ...)
     elseif var.pre == 'pool' then
         -- normalize all pool acesses to pointers to it
         -- (because of interface accesses that must be done through a pointer)
-        if not (var.tp.ptr>0 or var.tp.ref) then
-            if ENV.adts[var.tp.id] then
-                local ctx = ...
-                if ctx == 'pool' then
-                    me.val = '((tceu_pool_*)&'..me.val..')'
-                elseif ctx == 'root' then
-                    me.val = me.val
-                else
-                    local cast = ((lval and '') or '(CEU_'..var.tp.id..'*)')
-                    me.val = '('..cast..me.val..'.root)'
-                end
+        local op = (var.tp.ptr>0 or var.tp.ref) and '' or '&'
+        if ENV.adts[var.tp.id] then
+            local ctx = ...
+            if ctx == 'pool' then
+                me.val = '((tceu_pool_*)'..op..me.val..')'
+            elseif ctx == 'root' then
+                me.val = '('..me.val..')'
             else
-                me.val = '(&'..me.val..')'
-                me.val = '((tceu_pool_*)'..me.val..')'
+                local cast = ((lval and '') or '(CEU_'..var.tp.id..'*)')
+                me.val = '('..cast..'('..me.val..').root)'
             end
+        elseif op == '&' then
+            me.val = '(&'..me.val..')'
+            me.val = '((tceu_pool_*)'..me.val..')'
         end
     elseif var.pre == 'function' then
         me.val = 'CEU_'..cls.id..'_'..var.id

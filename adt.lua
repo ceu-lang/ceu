@@ -75,6 +75,8 @@ F = {
                 ASR(false, me, 'invalid attribution : must assign to recursive field')
             end
 
+        elseif set == 'adt-alias' then
+
         else -- set == 'adt-mut'
             -- [OK]: ptr  = l2.*
             -- [OK]: l1.* = l1.*
