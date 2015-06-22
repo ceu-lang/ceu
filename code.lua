@@ -465,55 +465,13 @@ case ]]..me.lbls_cnt.id..[[:;
 ]]..V(to)..' = '..V(one)..[[;
 ]])
         else
-            local pool = FIND_ADT_POOL(to.fst)
-            if pool.tag == 'Op1_cast' then    -- cast is not an lvalue in C
-                pool = pool[2]
-            end
-            pool = V(pool, false, 'pool')
-
-            LINE(me, [[
-{
-    void* __ceu_old = ]]..V(to)..[[;    /* will kill/free old */
-    ]]..V(to,true)..' = '..V(one)..[[;
-]])
-
-            if PROPS.has_adts_watching[to.tp.id] then
-                LINE(me, [[
-    /* save the continuation to run after the kills */
-    _STK->trl->evt = CEU_IN__STK;
-    _STK->trl->lbl = ]]..me.lbl_cnt.id..[[;
-    _STK->trl->stk = stack_curi(_ceu_go);
-
-    CEU_]]..to.tp.id..[[_kill(_ceu_app, _ceu_go, __ceu_old);
-]])
-            end
-
-            LINE(me, [[
-                    /* TODO: parameter restored here */
-#if defined(CEU_ADTS_NEWS_MALLOC) && defined(CEU_ADTS_NEWS_POOL)
-    if (]]..pool..[[ == NULL) {
-        CEU_]]..to.tp.id..[[_free_dynamic(_ceu_app, __ceu_old);
-    } else {
-        CEU_]]..to.tp.id..[[_free_static(_ceu_app, __ceu_old, ]]..pool..[[);
-    }
-#elif defined(CEU_ADTS_NEWS_MALLOC)
-    CEU_]]..to.tp.id..[[_free_dynamic(_ceu_app, __ceu_old);
-#elif defined(CEU_ADTS_NEWS_POOL)
-    CEU_]]..to.tp.id..[[_free_static(_ceu_app, __ceu_old, ]]..pool..[[);
-#endif
-}
-]])
-
-            if PROPS.has_adts_watching[to.tp.id] then
-                LINE(me, [[
-return RET_RESTART;
-case ]]..me.lbl_cnt.id..[[:;
-]])
-            end
+            local set = assert(AST.par(me,'Set'), 'bug found')
+            F.__set_adt_mut(me, set, one)
         end
 
         LINE(me, '}')
     end,
+
     ExpList = CONC_ALL,
     Adt_constr_one = function (me)
         local adt, params = unpack(me)
@@ -560,6 +518,7 @@ me.val..' = &CEU_'..string.upper(id)..[[_BASE;
                 local pool = FIND_ADT_POOL(to.fst)
 
                 if pool.tag == 'Op1_cast' then    -- cast is not an lvalue in C
+error'remove this if it never fails'
                     pool = pool[2]
                 end
                 pool = V(pool, false, 'pool')
@@ -967,16 +926,77 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
         end
     end,
 
+    __set_adt_mut = function (me, set, fr)
+        local _,_,_,to = unpack(set)
+
+        local pool = FIND_ADT_POOL(to.fst)
+        if pool.tag == 'Op1_cast' then    -- cast is not an lvalue in C
+error'remove this if it never fails'
+            pool = pool[2]
+        end
+        pool = V(pool, false, 'pool')
+
+        LINE(me, [[
+{
+    void* __ceu_old = ]]..V(to)..[[;    /* will kill/free old */
+
+    /* remove "fr" from tree (set parent link to NIL) */
+    /* (maybe "fr" is already in the subtree) */
+    void* __ceu_new = ]]..V(fr)..[[;
+    ]]..V(fr)..[[ = &CEU_]]..string.upper(fr.tp.id)..[[_BASE;
+
+    ]]..V(to,true)..[[ = __ceu_new;
+]])
+
+        if PROPS.has_adts_watching[to.tp.id] then
+            LINE(me, [[
+/* save the continuation to run after the kills */
+_STK->trl->evt = CEU_IN__STK;
+_STK->trl->lbl = ]]..me.lbl_cnt.id..[[;
+_STK->trl->stk = stack_curi(_ceu_go);
+
+CEU_]]..to.tp.id..[[_kill(_ceu_app, _ceu_go, __ceu_old);
+]])
+        end
+
+        LINE(me, [[
+                /* TODO: parameter restored here */
+#if defined(CEU_ADTS_NEWS_MALLOC) && defined(CEU_ADTS_NEWS_POOL)
+if (]]..pool..[[ == NULL) {
+    CEU_]]..to.tp.id..[[_free_dynamic(_ceu_app, __ceu_old);
+} else {
+    CEU_]]..to.tp.id..[[_free_static(_ceu_app, __ceu_old, ]]..pool..[[);
+}
+#elif defined(CEU_ADTS_NEWS_MALLOC)
+CEU_]]..to.tp.id..[[_free_dynamic(_ceu_app, __ceu_old);
+#elif defined(CEU_ADTS_NEWS_POOL)
+CEU_]]..to.tp.id..[[_free_static(_ceu_app, __ceu_old, ]]..pool..[[);
+#endif
+}
+]])
+
+        if PROPS.has_adts_watching[to.tp.id] then
+            LINE(me, [[
+return RET_RESTART;
+case ]]..me.lbl_cnt.id..[[:;
+]])
+        end
+    end,
+
     Set = function (me)
         local _, set, fr, to = unpack(me)
         COMM(me, 'SET: '..tostring(to[1]))    -- Var or C
         if set ~= 'exp' then
+            if set == 'adt-mut' then
+                F.__set_adt_mut(me, me, fr)
+            end
             CONC(me, fr)
             return
         end
 
         -- cast is not an lvalue in C
         if to.tag == 'Op1_cast' then
+error'remove this if it never fails'
 -- TODO: document where does it come from (with asserts)
             to = to[2]
         end

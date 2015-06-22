@@ -1018,23 +1018,12 @@ error'oi'
             -- var T*? = spawn T;
             ASR(to.tp.opt, me, 'must assign to option pointer')
 
-        elseif set == 'adt' then
+        elseif set == 'adt-constr' then
             return  -- checked in adt.lua
 
---[[
-        elseif fr.adt_rr_to_root and to.adt_rr_to_root and
-               to.adt_rr_to_root.var.tp.ref
-        then
-            -- HACK_10: ADT aliasing:
-            --  pool Command[] cmds1;
-            --  pool Command[]& cmds2;
-            --  cmds2 = cmds1;
-            me[3] = fr.adt_rr_to_root
-            me[4] = to.adt_rr_to_root
-            F.Set(me)    -- retry with new values
-            me.__env_adt_aliasing = true
-            return
-]]
+        elseif (fr.tp and ENV.adts[fr.tp.id]) or ENV.adts[to.tp.id] then
+            me[2] = 'adt-mut'
+            return  -- checked in adt.lua
         end
 
         local lua_str = false

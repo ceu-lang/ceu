@@ -43854,13 +43854,13 @@ Test { DATA..[[
 pool List[] l;     // l is the pool
 escape l.NIL;       // "l" is not a struct
 ]],
-    env = 'line 52 : not a struct',
+    env = 'line 52 : invalid access (List[] vs List)',
 }
 Test { DATA..[[
 pool List[] l;     // l is the pool
 escape l.CONS.head; // "l" is not a struct
 ]],
-    env = 'line 52 : not a struct',
+    env = 'line 52 : invalid access (List[] vs List)',
 }
 Test { DATA..[[
 pool List[] l;             // l is the pool
@@ -43934,7 +43934,7 @@ pool List[] l;
 l = List.CONS(2, List.NIL());
 escape l:CONS.head;
 ]],
-    env = 'line 52 : invalid constructor : recursive data must use `new´',
+    adt = 'line 52 : invalid constructor : recursive data must use `new´',
     --env = 'line 52 : invalid call parameter #2 (List vs List*)',
 }
 -- cannot assign "l" directly (in the pool declaration)
@@ -43950,14 +43950,14 @@ pool List[] l;
 l = new List.NIL();
 escape l.NIL;
 ]],
-    env = 'line 53 : not a struct',
+    env = 'line 53 : invalid access (List[] vs List)',
 }
 Test { DATA..[[
 pool List[] l;
 l = new List.CONS(2, List.NIL());
 escape l.CONS.head;
 ]],
-    env = 'line 53 : not a struct',
+    env = 'line 53 : invalid access (List[] vs List)',
 }
 
 -- static vs heap pools
@@ -44011,7 +44011,7 @@ pool List[0] l;
 l = new List.CONS(2, List.NIL());
 escape l.NIL;
 ]],
-    env = 'line 53 : not a struct',
+    env = 'line 53 : invalid access (List[] vs List)',
     --run = 1,
 }
 
@@ -44138,19 +44138,28 @@ escape l:CONS.head + l:CONS.tail:CONS.head;
 -- 1-2-NIL
 -- 1-NIL
 Test { DATA..[[
-pool List[2] l;
-l = new List.CONS(1, List.CONS(2, List.NIL()));
-l = l:CONS.tail;    // parent=child
-escape l:CONS.head;
+pool List[2] lll;
+lll = new List.CONS(1, List.CONS(2, List.NIL()));
+lll = lll:CONS.tail;    // parent=child
+escape lll:CONS.head;
 ]],
     run = 2,
 }
 Test { DATA..[[
-pool List[2] l;
-l = new List.CONS(1, List.CONS(2, List.NIL()));
-l = l:CONS.tail;    // parent=child
-l:CONS.tail = new List.CONS(3, List.CONS(4, List.NIL()));    // 4 fails
-escape l:CONS.head + l:CONS.tail:CONS.head + l:CONS.tail:CONS.tail:NIL;
+pool List[2] lll;
+lll = new List.CONS(1, List.CONS(2, List.NIL()));
+lll = lll:CONS.tail;
+lll:CONS.tail = new List.CONS(3, List.NIL());
+escape 1;
+]],
+    run = 1,
+}
+Test { DATA..[[
+pool List[2] lll;
+lll = new List.CONS(1, List.CONS(2, List.NIL()));
+lll = lll:CONS.tail;    // parent=child
+lll:CONS.tail = new List.CONS(3, List.CONS(4, List.NIL()));    // 4 fails
+escape lll:CONS.head + lll:CONS.tail:CONS.head + lll:CONS.tail:CONS.tail:NIL;
 ]],
     run = 6,
 }

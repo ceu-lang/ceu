@@ -94,8 +94,8 @@ F = {
     end,
 
     Set = function (me)
-        local _, _, _, to = unpack(me)
-        if to.fst.tp.id == '_tceu_adt_root' then
+        local _, set, _, _ = unpack(me)
+        if set == 'adt-mut' then
             if PROPS.has_adts_watching[to.tp.id] then
                 me.lbl_cnt = new{'Set_adt'}
             end

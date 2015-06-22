@@ -220,7 +220,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
               + Cc'thread'     * V'_Thread'
               + Cc'emit-ext'   * (V'EmitExt' + K'('*V'EmitExt'*EK')')
               + Cc'spawn'      * V'Spawn'
-              + Cc'adt'        * V'Adt_constr_root'
+              + Cc'adt-constr' * V'Adt_constr_root'
               + Cc'do-org'     * V'DoOrg'
               + Cc'block'      * V'__SetBlock'
               + Cc'exp'        * V'__Exp'

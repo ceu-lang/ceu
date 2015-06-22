@@ -1410,7 +1410,7 @@ me.blk_body = me.blk_body or blk_body
         elseif tag=='spawn' then
             return node('Set', me.ln, op, tag, fr, to)
 
-        elseif tag=='adt' then
+        elseif tag=='adt-constr' then
             return node('Set', me.ln, op, tag, fr, to)
 
         elseif tag == 'do-org' then

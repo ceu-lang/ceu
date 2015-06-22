@@ -48,7 +48,7 @@ F = {
     Set = function (me)
         local _, set, fr, to = unpack(me)
     
-        if set ~= 'adt' then
+        if not (set=='adt-constr' or set=='adt-mut') then
             return      -- handled in env.lua
         end
 
@@ -57,7 +57,7 @@ F = {
             return  -- ignore non-adt or non-recursive-adt
         end
 
-        if set == 'adt' then
+        if set == 'adt-constr' then
             if to.fst.var.pre == 'pool' then
                 -- [OK]
                 -- var pool[] L l;
@@ -74,20 +74,21 @@ F = {
                 -- l = new (...)
                 ASR(false, me, 'invalid attribution : must assign to recursive field')
             end
+
+        else -- set == 'adt-mut'
+            -- [OK]: ptr  = l2.*
+            -- [OK]: l1.* = l1.*
+            -- [NO]: l1.* = l2.*
+            ASR((to.tp.ptr==1 and to.lst.var==to.var) or
+                 to.fst.var==fr.fst.var, me,
+                'cannot mix recursive data sources')
+
+            --  [OK]: "to" is prefix of "fr" (changing parent to a child)
+            --      l = l:CONS.tail     // OK
+            --      l:CONS.tail = l     // NO
+            local prefix = (to.fst.__depth-to.__depth <= fr.fst.__depth-fr.__depth)
+            ASR(prefix, me, 'cannot assign parent to child')
         end
-
-        -- [OK]: ptr  = l2.*
-        -- [OK]: l1.* = l1.*
-        -- [NO]: l1.* = l2.*
-        ASR((to.tp.ptr==1 and to.lst.var==to.var) or
-             to.fst.var==fr.fst.var, me,
-            'cannot mix recursive data sources')
-
-        --  [OK]: "to" is prefix of "fr" (changing parent to a child)
-        --      l = l:CONS.tail     // OK
-        --      l:CONS.tail = l     // NO
-        local prefix = (to.fst.__depth-to.__depth <= fr.fst.__depth-fr.__depth)
-        ASR(prefix, me, 'cannot assign parent to child')
     end,
 }
 
