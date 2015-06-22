@@ -125,6 +125,7 @@ F = {
                                      fr.lst.var and (fr.lst.var.cls or fr.lst.var.adt))),
                                                -- orgs/adts are not lval
                     me, 'invalid attribution (not a reference)')
+-- TODO: err msg, separate with : inteado of (
                 ASR(fr.tag ~= 'Op1_*', me, 'invalid attribution')
             end
 

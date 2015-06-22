@@ -22409,7 +22409,6 @@ end
     awaits = 1,
     run = 0,
 }
---do return end
 Test { [[
 event void e, f;
 par do
@@ -22607,8 +22606,6 @@ escape ret;
     _ana = { acc=true },
     run = 3;
 }
-
---do return end
 
 -- CLASSES, ORGS, ORGANISMS
 
@@ -38447,7 +38444,6 @@ escape 1;
     run = { ['~>1s'] = 1 },
     --fin = 'line 19 : attribution to pointer with greater scope',
 }
---do return end
 
 Test { [[
 class U with do end;
@@ -44089,12 +44085,12 @@ escape l:CONS.head;
 Test { DATA..[[
 pool List[2] l;
 l = new List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));   // 3 fails
-_assert(l:CONS.tail:CONS.tail:NIL);
-l = new List.CONS(4, List.CONS(5, List.CONS(6, List.NIL())));   // all fail
-_assert(l:NIL);
-escape l:NIL;
+_ceu_out_assert(l:CONS.tail:CONS.tail:NIL, "1");
+l = new List.CONS(4, List.CONS(5, List.CONS(6, List.NIL())));   // 6 fails
+_ceu_out_assert(l:CONS.tail:CONS.tail:NIL, "2");
+escape l:CONS.tail:CONS.head;
 ]],
-    run = 1,
+    run = 5,
 }
 
 -- 1-2-3-NIL => 1-2-NIL (3 fails)
@@ -44967,7 +44963,8 @@ end
 
 escape 0;
 ]],
-    env = 'line 15 : data must be a pointer',
+    env = 'line 15 : invalid operand to unary "*"',
+    --env = 'line 15 : data must be a pointer',
 }
 
 Test { [[
@@ -47760,7 +47757,6 @@ escape lll:NIL;       // l is a pointer to the root
 ]],
     run = 1,
 }
---do return end
 
 Test { [[
 data Command with
@@ -47830,7 +47826,8 @@ cmds2 = new Command.NEXT(
 
 escape 1;
 ]],
-    ref = 'line 10 : reference must be bounded before use',
+    ref = 'line 10 : invalid attribution (not a reference)',
+    --ref = 'line 10 : reference must be bounded before use',
 }
 
 Test { [[
@@ -47852,7 +47849,120 @@ cmds1 = new Command.NEXT(
 cmds2 = new Command.NEXT(
             Command.NEXT(
                 Command.NOTHING()));
-escape cmds1:NOTHING;
+escape cmds1:NEXT;
+]],
+    run = 1,
+}
+Test { [[
+data Command with
+    tag NOTHING;
+or
+    tag NEXT with
+        var Command* nxt;
+    end
+end
+
+pool Command[2] cmds1;
+
+cmds1 = new Command.NEXT(
+                Command.NEXT(
+                    Command.NEXT(
+                        Command.NOTHING())));
+escape cmds1:NEXT.nxt:NEXT.nxt:NOTHING;
+]],
+    run = 1,
+}
+Test { [[
+data Command with
+    tag NOTHING;
+or
+    tag NEXT with
+        var Command* nxt;
+    end
+end
+
+pool Command[2] cmds1;
+
+cmds1 = new Command.NEXT(Command.NOTHING());
+cmds1:NEXT.nxt = new Command.NEXT(Command.NOTHING());
+cmds1:NEXT.nxt:NEXT.nxt = new Command.NEXT(Command.NOTHING());
+escape cmds1:NEXT.nxt:NEXT.nxt:NOTHING;
+]],
+    run = 1,
+}
+Test { [[
+data Command with
+    tag NOTHING;
+or
+    tag NEXT with
+        var Command* nxt;
+    end
+end
+
+pool Command[1] cmds1;
+
+cmds1 = new Command.NEXT(Command.NOTHING());
+cmds1 = new Command.NEXT(Command.NOTHING());
+escape cmds1:NEXT.nxt:NOTHING;
+]],
+    run = 1,
+}
+Test { [[
+data Command with
+    tag NOTHING;
+or
+    tag NEXT with
+        var Command* nxt;
+    end
+end
+
+pool Command[2] cmds1;
+
+cmds1 = new Command.NEXT(Command.NOTHING());
+cmds1 = new Command.NEXT(
+                Command.NEXT(
+                    Command.NOTHING()));
+escape cmds1:NEXT.nxt:NEXT.nxt:NOTHING;
+]],
+    run = 1,
+}
+Test { [[
+data Command with
+    tag NOTHING;
+or
+    tag NEXT with
+        var Command* nxt;
+    end
+end
+
+pool Command[2] cmds1;
+pool Command[2]& cmds2;
+cmds2 = cmds1;
+
+cmds1 = new Command.NEXT(Command.NOTHING());
+cmds2:NEXT.nxt = new Command.NEXT(Command.NOTHING());
+escape cmds1:NEXT.nxt:NEXT.nxt:NOTHING;
+]],
+    run = 1,
+}
+Test { [[
+data Command with
+    tag NOTHING;
+or
+    tag NEXT with
+        var Command* nxt;
+    end
+end
+
+pool Command[2] cmds1;
+pool Command[2]& cmds2;
+cmds2 = cmds1;
+
+cmds1 = new Command.NEXT(Command.NOTHING());
+cmds2:NEXT.nxt = new Command.NEXT(
+                        Command.NEXT(
+                            Command.NOTHING()));
+escape cmds1:NEXT.nxt:NEXT.nxt:NOTHING;
 ]],
     run = 1,
 }

@@ -858,7 +858,7 @@ error'oi'
             stmts[3] = AST.node('Nothing', me.ln)       -- remove OPT-2
             me.__env_watching = true    -- see props.lua
         elseif tp and ENV.adts[tp.id] then
-            ASR(tp.ptr==1, me, 'data must be a pointer')
+            --ASR(tp.ptr==1, me, 'data must be a pointer')
             local dot = AST.asr(stmts,'', 3,'If', 1,'Op2_.')
             assert(dot[3] == 'HACK_6-NIL')
             dot[3] = ENV.adts[tp.id].tags[1]

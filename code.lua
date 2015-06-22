@@ -458,13 +458,12 @@ case ]]..me.lbls_cnt.id..[[:;
         local set = assert(AST.par(me,'Set'), 'bug found')
         local _,_,_,to = unpack(set)
 
-        CONC(me, one)
-
         if not dyn then
+            CONC(me, one)
             F.__set(me, one, to)
         else
             local set = assert(AST.par(me,'Set'), 'bug found')
-            F.__set_adt_mut(me, set, one)
+            F.__set_adt_mut_conc_fr(me, set, one)
         end
 
         LINE(me, '}')
@@ -514,12 +513,7 @@ me.val..' = &CEU_'..string.upper(id)..[[_BASE;
                 local set = assert( AST.par(me,'Set'), 'bug found' )
                 local _,_,_,to = unpack(set)
                 local pool = FIND_ADT_POOL(to.fst)
-
-                if pool.tag == 'Op1_cast' then    -- cast is not an lvalue in C
-error'remove this if it never fails'
-                    pool = pool[2]
-                end
-                pool = V(pool, false, 'pool')
+                pool = '('..V(pool, false, 'root')..'->pool)'
 
                 LINE(me, [[
 #if defined(CEU_ADTS_NEWS_MALLOC) && defined(CEU_ADTS_NEWS_POOL)
@@ -788,17 +782,17 @@ error'oi'
                     end
                     if static then
                         LINE(me, [[
-    ]]..V(var,false,'root')..[[.pool = ]]..V(var,false,'pool')..[[;
+    ]]..V(var,false,'root')..[[->pool = ]]..V(var,false,'pool')..[[;
 ]])
                     else
                         LINE(me, [[
 #ifdef CEU_ADTS_NEWS_POOL
-    ]]..V(var,false,'root')..[[.pool = NULL;
+    ]]..V(var,false,'root')..[[->pool = NULL;
 #endif
 ]])
                     end
                     LINE(me, [[
-    ]]..V(var,false,'root')..[[.root = __ceu_adt;
+    ]]..V(var,false,'root')..[[->root = __ceu_adt;
 }
 /*  FINALIZE ADT */
 _STK_ORG->trls[ ]]..var.trl_adt[1]..[[ ].evt   = CEU_IN__CLEAR;
@@ -879,8 +873,9 @@ CEU_]]..id..[[_kill(_ceu_app, _ceu_go, ]]..V(var)..[[);
 ]])
                 end
                 if static then
+                    local pool = '('..V(var,false,'root')..'->pool)'
                     LINE(me, [[
-CEU_]]..id..[[_free_static(_ceu_app, ]]..V(var)..','..V(var,false,'pool')..[[);
+CEU_]]..id..[[_free_static(_ceu_app, ]]..V(var)..','..pool..[[);
 ]])
                 else
                     LINE(me, [[
@@ -924,33 +919,31 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
         end
     end,
 
-    __set_adt_mut = function (me, set, fr)
-        local _,_,_,to = unpack(set)
+    __set_adt_mut_conc_fr = function (me, SET, fr)
+        local _,set,_,to = unpack(SET)
 
         local pool = FIND_ADT_POOL(to.fst)
-        if pool.tag == 'Op1_cast' then    -- cast is not an lvalue in C
-error'remove this if it never fails'
-            pool = pool[2]
-        end
-        pool = V(pool, false, 'pool')
+        pool = '('..V(pool,false,'root')..'->pool)'
 
         LINE(me, [[
 {
     void* __ceu_old = ]]..V(to)..[[;    /* will kill/free old */
+]])
 
-    /* remove "fr" from tree (set parent link to NIL) */
-    /* (maybe "fr" is already in the subtree) */
+        if set ~= 'adt-constr' then
+            -- remove "fr" from tree (set parent link to NIL)
+            LINE(me, [[
     void* __ceu_new = ]]..V(fr)..[[;
     ]]..V(fr)..[[ = &CEU_]]..string.upper(fr.tp.id)..[[_BASE;
-
     ]]..V(to,true)..[[ = __ceu_new;
 ]])
+        end
 
         if PROPS.has_adts_watching[to.tp.id] then
             LINE(me, [[
 /* save the continuation to run after the kills */
 _STK->trl->evt = CEU_IN__STK;
-_STK->trl->lbl = ]]..set.lbl_cnt.id..[[;
+_STK->trl->lbl = ]]..SET.lbl_cnt.id..[[;
 _STK->trl->stk = stack_curi(_ceu_go);
 
 CEU_]]..to.tp.id..[[_kill(_ceu_app, _ceu_go, __ceu_old);
@@ -973,10 +966,18 @@ CEU_]]..to.tp.id..[[_free_static(_ceu_app, __ceu_old, ]]..pool..[[);
 }
 ]])
 
+        -- must allocate after the free
+        CONC(me, fr)
+        if set == 'adt-constr' then
+            LINE(me, [[
+]]..V(to,true)..' = '..V(fr)..[[;
+]])
+        end
+
         if PROPS.has_adts_watching[to.tp.id] then
             LINE(me, [[
 return RET_RESTART;
-case ]]..set.lbl_cnt.id..[[:;
+case ]]..SET.lbl_cnt.id..[[:;
 ]])
         end
     end,
@@ -1029,33 +1030,48 @@ case ]]..set.lbl_cnt.id..[[:;
         COMM(me, 'SET: '..tostring(to[1]))    -- Var or C
 
         if set == 'exp' then
-            -- cast is not an lvalue in C
-            if to.tag == 'Op1_cast' then
-error'remove this if it never fails'
--- TODO: document where does it come from (with asserts)
-                to = to[2]
-            end
             CONC(me, fr)                -- TODO: remove?
             F.__set(me, fr, to)
 
         elseif set == 'adt-alias' then
             CONC(me, fr)                -- TODO: remove?
 
+            --[[
+            -- PTR:
             --      l = list:TAG.field;
             -- becomes
             --      l.pool = list.pool
             --      l.root = list:TAG.field
+            -- REF:
+            --      l = list;
+            -- becomes
+            --      l = &list
+            --]]
+
             local pool = FIND_ADT_POOL(fr.fst)
-            LINE(me, [[
-#ifdef CEU_ADTS_NEWS_POOL
-]]..V(to,true,'root')..'.pool = '..V(pool,false,'root')..[[.pool;
-#endif
-]]..V(to,true,'root')..'.root = '..V(fr)..[[;
+            if to.var.pre == 'pool' then
+                if to.var.tp.ref then
+                    LINE(me, [[
+]]..V(to,true,'root')..' = '..V(fr,false,'root')..[[;
 ]])
+                else
+                    LINE(me, [[
+#ifdef CEU_ADTS_NEWS_POOL
+]]..V(to,true,'root')..'->pool = '..V(pool,false,'root')..[[->pool;
+#endif
+]]..V(to,true,'root')..'->root = '..V(fr)..[[;
+]])
+                end
+
+            else
+                -- normal pointer (not pool)
+                LINE(me, [[
+]]..V(to,true)..' = '..V(fr)..[[;
+]])
+            end
 
         elseif set == 'adt-mut' then
-            F.__set_adt_mut(me, me, fr)
-            CONC(me, fr)
+            F.__set_adt_mut_conc_fr(me, me, fr)
 
         else
             CONC(me, fr)

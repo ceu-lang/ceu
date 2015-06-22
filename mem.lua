@@ -537,8 +537,15 @@ typedef union CEU_]]..me.id..[[_delayed {
                 -- CEU_POOL_DCL(_id);
                 if adt then
                     assert(var.tp.ptr <= 1, 'bug found')
+                    local ptr = (var.tp.ref and '*') or ''
                     DCL.struct = DCL.struct .. [[
-tceu_adt_root ]]..var.id_..[[;
+/*
+ * REF:
+ * tceu_adt_root* x;  // root/pool always the same as the parent
+ * PTR:
+ * tceu_adt_root x;   // pool: the same // root: may point to the middle
+ */
+tceu_adt_root]]..ptr..' '..var.id_..[[;
 ]]
                 end
 

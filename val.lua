@@ -156,18 +156,25 @@ local function F_var (me, lval, ...)
     elseif var.pre == 'pool' then
         -- normalize all pool acesses to pointers to it
         -- (because of interface accesses that must be done through a pointer)
-        local op = (var.tp.ptr>0 or var.tp.ref) and '' or '&'
         if ENV.adts[var.tp.id] then
             local ctx = ...
             if ctx == 'pool' then
-                me.val = '((tceu_pool_*)'..op..me.val..')'
+                me.val = '((tceu_pool_*)&'..me.val..')'
             elseif ctx == 'root' then
-                me.val = '('..me.val..')'
+                if var.tp.ref then
+                    me.val = '('..me.val..')'
+                else
+                    me.val = '(&'..me.val..')'
+                end
             else
                 local cast = ((lval and '') or '(CEU_'..var.tp.id..'*)')
-                me.val = '('..cast..'('..me.val..').root)'
+                if var.tp.ref then
+                    me.val = '('..cast..'('..me.val..')->root)'
+                else
+                    me.val = '('..cast..'('..me.val..').root)'
+                end
             end
-        elseif op == '&' then
+        elseif not (var.tp.ptr>0 or var.tp.ref) then
             me.val = '(&'..me.val..')'
             me.val = '((tceu_pool_*)'..me.val..')'
         end
