@@ -43178,8 +43178,6 @@ escape l:CONS.tail:CONS.head;
     adt = 'line 10 : invalid constructor : recursive data must use `new´',
 }
 
---adt_root
---__adj_adt
 Test { [[
 data List with
     tag NIL;
@@ -43192,7 +43190,7 @@ end
 pool List[10] lll;
 escape lll:NIL;
 ]],
-    run = 2,
+    run = 1,
 }
 
 Test { [[
@@ -43244,10 +43242,34 @@ xxx = new Stack.NONEMPTY(
 
 escape 1;
 ]],
-    adt = 'line 11 : invalid constructor : recursive field "NONEMPTY" must be new data',
+    env = 'line 11 : invalid constructor : recursive field "NONEMPTY" must be new data',
 }
 
--- TODO-WASTES-RAM
+Test { [[
+data Split with
+    tag HORIZONTAL;
+or
+    tag VERTICAL;
+end
+
+data Grid with
+    tag EMPTY;
+or
+    tag SPLIT with
+        var Split dir;
+        var Grid* one;
+        var Grid* two;
+    end
+end
+
+pool Grid[] g;
+g = new Grid.SPLIT(Split.HORIZONTAL(), Grid.EMPTY(), Grid.EMPTY());
+
+escape g:SPLIT.one:EMPTY + g:SPLIT.two:EMPTY + g:SPLIT.dir.HORIZONTAL;
+]],
+    run = 3,
+}
+
 Test { [[
 data Split with
     tag HORIZONTAL;
@@ -43376,7 +43398,7 @@ pool List[] l2;
 l2 = new List.CONS(1, l1);
 escape 1;
 ]],
-    adt = 'line 57 : invalid constructor : recursive field "CONS" must be new data',
+    env = 'line 57 : invalid constructor : recursive field "CONS" must be new data',
     -- TODO-ADT-REC-STATIC-CONSTRS
     --run = 1,
 }
@@ -43389,7 +43411,7 @@ pool List[] l2;
 l2 = new List.CONS(1, l1);     /* should be &l1 */
 escape 1;
 ]],
-    adt = 'line 54 : invalid constructor : recursive field "CONS" must be new data',
+    env = 'line 54 : invalid constructor : recursive field "CONS" must be new data',
 }
 
 -- constructors must specify the ADT identifier
@@ -43406,7 +43428,7 @@ pool List[] l1;
 l1 = new NIL();    /* vs List.NIL() */
 escape 1;
 ]],
-    env = 'line 52 : undeclared type `NIL´',
+    env = 'line 52 : data "NIL" is not declared',
     --run = 1,
 }
 
@@ -43415,13 +43437,13 @@ Test { DATA..[[
 var Pair p1 = Unknown(1,2);
 escape 1;
 ]],
-    env = 'line 51 : undeclared type `Unknown´',
+    env = 'line 51 : data "Unknown" is not declared',
 }
 Test { DATA..[[
 var Opt  o1 = Unknown.NIL();
 escape 1;
 ]],
-    env = 'line 51 : undeclared type `Unknown´',
+    env = 'line 51 : data "Unknown" is not declared',
 }
 
 -- tag has to be defined
@@ -43704,7 +43726,7 @@ l3 = new List.CONS(2, l2);
 escape l3:CONS.head + l3:CONS.tail:CONS.head + l3:CONS.tail:CONS.tail:NIL;
 ]],
     --run = 4,
-    adt = 'line 54 : invalid constructor : recursive field "CONS" must be new data',
+    env = 'line 54 : invalid constructor : recursive field "CONS" must be new data',
     -- TODO-ADT-REC-STATIC-CONSTRS
 }
 Test { DATA..[[

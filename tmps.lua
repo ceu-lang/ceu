@@ -43,25 +43,6 @@ error'not implemented (locals inside iter)'
         end
     end,
 
-    Var_pos = function (me)
-        -- force __ceu_adt_* to be tmp
-        -- (even if in top level block)
-        if string.sub(me.var.id,1,10) == '__ceu_adt_' then
-            me.var.isTmp = true
-        end
-
--- TODO: (search TODO-WASTES-RAM in tests.lua)
-        -- force __ceu_adt_root_* not to be tmp
-        --[[
-        -- TODO (-RAM)
-        -- Could be tmp if we kill/free the "to" branch before
-        -- allocating the new subtree.
-        -- This would also allow more allocation (i.e., free->alloc).
-        --]]
-        if string.sub(me.var.id,1,15) == '__ceu_adt_root_' then
-            me.var.isTmp = false
-        end
-    end,
     Var = function (me)
         local var = me.var
 

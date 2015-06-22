@@ -543,7 +543,7 @@ tceu_adt_root]]..ptr..' '..var.id_..[[;
                 end
 
                 -- static pool: "var T[N] ts"
-                if type(var.tp.arr)=='table' and (not var.tp.ref) then
+                if (var.adt or var.cls) and type(var.tp.arr)=='table' then
                     local ID = (adt and '_' or '') .. var.id_  -- _id for ADT pools
                     if top.is_ifc then
                         DCL.struct = DCL.struct .. [[
@@ -556,15 +556,19 @@ CEU_POOL_DCL(]]..ID..',CEU_'..var.tp.id..','..var.tp.arr.sval..[[)
 ]]
                                -- TODO: bad (explicit CEU_)
                     end
-                elseif var.tp.ptr>0 or var.tp.ref then
-                    local ptr = string.rep('*', (var.tp.ref and 1) + var.tp.ptr)
-                    DCL.struct = DCL.struct .. [[
+                elseif (not adt) then   -- (top_pool or cls)
+                    -- ADT doesn't require this NULL pool field
+                    --  (already has root->pool=NULL)
+                    if var.tp.ptr>0 or var.tp.ref then
+                        local ptr = string.rep('*', (var.tp.ref and 1) + var.tp.ptr)
+                        DCL.struct = DCL.struct .. [[
 tceu_pool_]]..ptr..' '..var.id_..[[;
 ]]
-                else
-                    DCL.struct = DCL.struct .. [[
+                    else
+                        DCL.struct = DCL.struct .. [[
 tceu_pool_ ]]..var.id_..[[;
 ]]
+                    end
                 end
             end
 

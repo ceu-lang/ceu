@@ -1221,7 +1221,7 @@ error'oi'
             --  <...> = new D.REC(ptr)      -- NO!
             --  <...> = new D.REC(D.xxx)    -- OK!
             for i, p in ipairs(params) do
-                if ttag.tup[i].isRec then
+                if ttag.tup[i] and ttag.tup[i].isRec then
                     ASR(p.tag == 'Adt_constr_one', me,
                         'invalid constructor : recursive field "'..id_tag..'" must be new data')
                     p.tp.ptr = 1

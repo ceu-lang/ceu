@@ -462,22 +462,19 @@ case ]]..me.lbls_cnt.id..[[:;
 
         if not dyn then
             LINE(me, [[
-]]..V(to)..' = *'..V(one)..[[;
+]]..V(to)..' = '..V(one)..[[;
 ]])
         else
             local pool = FIND_ADT_POOL(to.fst)
             if pool.tag == 'Op1_cast' then    -- cast is not an lvalue in C
                 pool = pool[2]
             end
-            pool = V(pool, 'pool')
-                --  to.root
-                --      ... becomes ...
-                --  (((tceu_adt_root*)to.root)->pool)
+            pool = V(pool, false, 'pool')
 
             LINE(me, [[
 {
     void* __ceu_old = ]]..V(to)..[[;    /* will kill/free old */
-    ]]..V(to)..' = '..V(one)..[[;
+    ]]..V(to,true)..' = '..V(one)..[[;
 ]])
 
             if PROPS.has_adts_watching[to.tp.id] then
@@ -524,8 +521,6 @@ case ]]..me.lbl_cnt.id..[[:;
         adt = assert(ENV.adts[id])
 
         local root = AST.par(me, 'Adt_constr_root')
-        local dyn = unpack(root)
-        local op = (dyn and '*') or ''
 
         -- CODE-1: declaration, allocation
         -- CODE-2: all children
@@ -535,19 +530,17 @@ case ]]..me.lbl_cnt.id..[[:;
         me.val = '__ceu_adt_'..me.n
 
         -- CODE-1
-        -- CEU_T* t;        // declaration
-        LINE(me, [[
+        if not adt.isRec then
+            -- CEU_T t;
+            LINE(me, [[
+CEU_]]..id..' '..me.val..[[;
+]])
+        else
+            -- CEU_T* t;
+            LINE(me, [[
 CEU_]]..id..'* '..me.val..[[;
 ]])
 
-        if not dyn then
-            -- CEU_T _t;    // static allocation
-            -- t = &_t;     // binding allocation/declaration
-            LINE(me, [[
-    CEU_]]..id..' _'..me.val..[[;
-    ]]..me.val..' = &_'..me.val..[[;
-]])
-        else
             -- base case
             if adt.isRec and tag==adt.tags[1] then
                 LINE(me,
@@ -569,7 +562,7 @@ me.val..' = &CEU_'..string.upper(id)..[[_BASE;
                 if pool.tag == 'Op1_cast' then    -- cast is not an lvalue in C
                     pool = pool[2]
                 end
-                pool = V(pool, 'pool')
+                pool = V(pool, false, 'pool')
 
                 LINE(me, [[
 #if defined(CEU_ADTS_NEWS_MALLOC) && defined(CEU_ADTS_NEWS_POOL)
@@ -600,12 +593,13 @@ if (]]..me.val..[[ == NULL) {
         CONC(me, params)
 
         -- CODE-3
+        local op = (adt.isRec and '->' or '.')
         local blk,_
         if tag then
             -- t->tag = TAG;
-            if not (dyn and adt.isRec and tag==adt.tags[1]) then
+            if not (adt.isRec and tag==adt.tags[1]) then
                 -- not required for base case
-                LINE(me, me.val..'->tag = CEU_'..string.upper(id)..'_'..tag..';')
+                LINE(me, me.val..op..'tag = CEU_'..string.upper(id)..'_'..tag..';')
             end
             blk = ENV.adts[id].tags[tag].blk
             tag = tag..'.'
@@ -615,7 +609,7 @@ if (]]..me.val..[[ == NULL) {
         end
         for i, p in ipairs(params) do
             local field = blk.vars[i]
-            LINE(me, me.val..'->'..tag..field.id..' = '..V(p)..';')
+            LINE(me, me.val..op..tag..field.id..' = '..V(p)..';')
         end
 
         LINE(me, '}')   -- will ignore if allocation fails
@@ -823,7 +817,7 @@ ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'),'..ln
 error'oi'
                         if static then
                             LINE(me, [[
-    __ceu_adt = (]]..tp..[[*) ceu_pool_alloc((tceu_pool*)]]..V(var,'pool')..[[);
+    __ceu_adt = (]]..tp..[[*) ceu_pool_alloc((tceu_pool*)]]..V(var,false,'pool')..[[);
 ]])
                         else
                             LINE(me, [[
@@ -837,17 +831,17 @@ error'oi'
                     end
                     if static then
                         LINE(me, [[
-    ]]..V(var,'root')..[[.pool = ]]..V(var,'pool')..[[;
+    ]]..V(var,false,'root')..[[.pool = ]]..V(var,false,'pool')..[[;
 ]])
                     else
                         LINE(me, [[
 #ifdef CEU_ADTS_NEWS_POOL
-    ]]..V(var,'root')..[[.pool = NULL;
+    ]]..V(var,false,'root')..[[.pool = NULL;
 #endif
 ]])
                     end
                     LINE(me, [[
-    ]]..V(var,'root')..[[.root = __ceu_adt;
+    ]]..V(var,false,'root')..[[.root = __ceu_adt;
 }
 /*  FINALIZE ADT */
 _STK_ORG->trls[ ]]..var.trl_adt[1]..[[ ].evt   = CEU_IN__CLEAR;
@@ -915,7 +909,7 @@ _STK->trl = &_STK_ORG->trls[ ]]..stmts.trails[1]..[[ ];
 
         -- release ADT pool items
         for _, var in ipairs(me.vars) do
-            if var.adt then
+            if var.adt and var.adt.isRec then
                 local id, op = unpack(var.adt)
                 local static = (type(var.tp.arr)=='table')
                 CASE(me, var.lbl_fin_kill_free)
@@ -929,7 +923,7 @@ CEU_]]..id..[[_kill(_ceu_app, _ceu_go, ]]..V(var)..[[);
                 end
                 if static then
                     LINE(me, [[
-CEU_]]..id..[[_free_static(_ceu_app, ]]..V(var)..','..V(var,'pool')..[[);
+CEU_]]..id..[[_free_static(_ceu_app, ]]..V(var)..','..V(var,false,'pool')..[[);
 ]])
                 else
                     LINE(me, [[

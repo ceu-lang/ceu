@@ -11,14 +11,14 @@ local function ceu2c (op)
     return _ceu2c[op] or op
 end
 
-function VV (me, ...)
-    return me.fval and me.fval(me,...) or me.val
+function VV (me, lval, ...)
+    return (me.fval and me.fval(me,lval,...)) or me.val
 end
 
-function V (me, ...)
+function V (me, lval, ...)
     ASR(me.fval or me.val, me, 'invalid expression : no value')
 
-    local ret = VV(me, ...)
+    local ret = VV(me, lval, ...)
 
     local ref = me.tp and me.tp.ref and me.tp.id
     if me.byRef and
@@ -47,6 +47,143 @@ function CUR (me, id)
         return '(('..TP.toc(CLS().tp)..'*)_STK_ORG)->'..id
     else
         return '(('..TP.toc(CLS().tp)..'*)_STK_ORG)'
+    end
+end
+
+-- called by Var, Field, Dcl_var
+local function F_var (me, lval, ...)
+    assert(me.val, 'bug found')
+    local cls = (me.org and me.org.cls) or CLS()
+    local var = me.var or me
+    if var.pre == 'var' then
+        if var.tp.arr then
+            -- normalize all arrays acesses to pointers to arr[0]
+            -- (because of interface accesses that must be done through a pointer)
+            me.val = '(&'..me.val..'[0])'
+        elseif var.cls then
+            -- normalize all org acesses to pointers to it
+            -- (because of interface accesses that must be done through a pointer)
+            me.val = '(&'..me.val..')'
+        elseif var.tp.opt then
+        elseif var.tp.ref then
+            if ENV.clss[var.tp.id] then
+                -- orgs vars byRef, do nothing
+                -- (normalized to pointer)
+            else
+                -- normal vars byRef
+                me.val = '(*('..me.val..'))'
+            end
+        end
+
+        -- variable with option type (var tp? id)
+        if var.tp.opt then
+            local ID = string.upper(me.tp.opt.id)
+            local op = (me.tp.ref and '*') or ''
+
+            me.val_raw = me.val
+
+            -- set
+            local set = AST.par(me, 'Set')
+            local _, to, fr, is_to, are_both_opt
+            if set then
+                _, _, fr, to = unpack(set)
+                is_to = (to.lst.var == me.var)
+                is_fr = (fr.lst.var == me.var)
+                are_both_opt = (to.tp.opt and fr.tp.opt)
+            end
+
+            -- call
+            local call = AST.par(me, 'Op2_call')
+            call = call and call.tp.id=='@' and call
+            if call then
+                local _,_,params = unpack(call)
+                call = false
+                for _, p in ipairs(params) do
+                    --if TP.contains(p.tp,me.tp) and (p.lst==me) then
+                    if TP.contains(p.tp,me.tp) and (p==me) then
+                        call = true
+                        break
+                    end
+                end
+            end
+
+            -- check
+            local check = AST.par(me,'Op1_?')
+
+            -- SET
+            if are_both_opt then
+                -- do nothing, both are opt
+            elseif is_to then
+                if (fr.fst.tag=='Op2_call' and fr.fst.__fin_opt_tp)
+                or (fr.tag=='Spawn')
+                then
+                    -- var _t&? = _f(...);
+                    -- var T*? = spawn <...>;
+                    me.val = '('..op..'('..me.val..'))'
+                else
+                    -- xxx.me = v
+                    if to.byRef or (not me.tp.ref) then
+                        me.val = '('..op..'('..me.val..'.SOME.v))'
+                    else
+                        me.val = '('..op..'(CEU_'..ID..'_SOME_assert(_ceu_app, &'
+                                    ..me.val..',__FILE__,__LINE__)->SOME.v))'
+                    end
+                end
+
+            -- CALL
+            -- _f(xxx.me)
+            elseif call and me.tp.ref then
+                -- reference option type -> pointer
+                -- var tp&? v;
+                -- _f(v);
+                --      - NULL,   if v==nil
+                --      - SOME.v, if v!=nil
+                me.val = '(CEU_'..ID..'_unpack('..me.val..'))'
+
+            -- CHECK
+            -- ? xxx.me
+            elseif check then
+                me.val = '('..me.val..'.tag)'
+                    -- TODO: optimization: "tp&?" => 'NULL'
+
+            -- NONE
+            else
+                -- ... xxx.me ...
+                me.val = '('..op..'(CEU_'..ID..'_SOME_assert(_ceu_app, &'
+                            ..me.val..',__FILE__,__LINE__)->SOME.v))'
+            end
+        end
+    elseif var.pre == 'pool' then
+        -- normalize all pool acesses to pointers to it
+        -- (because of interface accesses that must be done through a pointer)
+        if not (var.tp.ptr>0 or var.tp.ref) then
+            if ENV.adts[var.tp.id] then
+                local ctx = ...
+                if ctx == 'pool' then
+                    me.val = '((tceu_pool_*)&'..me.val..')'
+                elseif ctx == 'root' then
+                    me.val = me.val
+                else
+                    local cast = ((lval and '') or '(CEU_'..var.tp.id..'*)')
+                    me.val = '('..cast..me.val..'.root)'
+                end
+            else
+                me.val = '(&'..me.val..')'
+                me.val = '((tceu_pool_*)'..me.val..')'
+            end
+        end
+    elseif var.pre == 'function' then
+        me.val = 'CEU_'..cls.id..'_'..var.id
+    elseif var.pre == 'isr' then
+        me.val = 'CEU_'..cls.id..'_'..var.id
+    elseif var.pre == 'event' then
+        me.val = nil
+    elseif var.pre == 'output' then
+        me.val = nil
+    elseif var.pre == 'input' then
+        me.val = nil
+    else
+        error 'not implemented'
     end
 end
 
@@ -89,158 +226,12 @@ F =
         me.val = '(('..TP.toc(me.tp)..'*)'..me.val..')'
     end,
 
-    -- called by Var, Field, Dcl_var
-    __var = function (me)
-        assert(me.val, 'bug found')
-        local cls = (me.org and me.org.cls) or CLS()
+    __fvar = function (me, lval, ctx)
         local var = me.var or me
-        if var.pre == 'var' then
-            if var.tp.arr then
-                -- normalize all arrays acesses to pointers to arr[0]
-                -- (because of interface accesses that must be done through a pointer)
-                me.val = '(&'..me.val..'[0])'
-            elseif var.cls then
-                -- normalize all org acesses to pointers to it
-                -- (because of interface accesses that must be done through a pointer)
-                me.val = '(&'..me.val..')'
-            elseif var.tp.opt then
-            elseif var.tp.ref then
-                if ENV.clss[var.tp.id] then
-                    -- orgs vars byRef, do nothing
-                    -- (normalized to pointer)
-                else
-                    -- normal vars byRef
-                    me.val = '(*('..me.val..'))'
-                end
-            end
 
-            -- variable with option type (var tp? id)
-            if var.tp.opt then
-                local ID = string.upper(me.tp.opt.id)
-                local op = (me.tp.ref and '*') or ''
-
-                me.val_raw = me.val
-
-                -- set
-                local set = AST.par(me, 'Set')
-                local _, to, fr, is_to, are_both_opt
-                if set then
-                    _, _, fr, to = unpack(set)
-                    is_to = (to.lst.var == me.var)
-                    is_fr = (fr.lst.var == me.var)
-                    are_both_opt = (to.tp.opt and fr.tp.opt)
-                end
-
-                -- call
-                local call = AST.par(me, 'Op2_call')
-                call = call and call.tp.id=='@' and call
-                if call then
-                    local _,_,params = unpack(call)
-                    call = false
-                    for _, p in ipairs(params) do
-                        --if TP.contains(p.tp,me.tp) and (p.lst==me) then
-                        if TP.contains(p.tp,me.tp) and (p==me) then
-                            call = true
-                            break
-                        end
-                    end
-                end
-
-                -- check
-                local check = AST.par(me,'Op1_?')
-
-                -- SET
-                if are_both_opt then
-                    -- do nothing, both are opt
-                elseif is_to then
-                    if (fr.fst.tag=='Op2_call' and fr.fst.__fin_opt_tp)
-                    or (fr.tag=='Spawn')
-                    then
-                        -- var _t&? = _f(...);
-                        -- var T*? = spawn <...>;
-                        me.val = '('..op..'('..me.val..'))'
-                    else
-                        -- xxx.me = v
-                        if to.byRef or (not me.tp.ref) then
-                            me.val = '('..op..'('..me.val..'.SOME.v))'
-                        else
-                            me.val = '('..op..'(CEU_'..ID..'_SOME_assert(_ceu_app, &'
-                                        ..me.val..',__FILE__,__LINE__)->SOME.v))'
-                        end
-                    end
-
-                -- CALL
-                -- _f(xxx.me)
-                elseif call and me.tp.ref then
-                    -- reference option type -> pointer
-                    -- var tp&? v;
-                    -- _f(v);
-                    --      - NULL,   if v==nil
-                    --      - SOME.v, if v!=nil
-                    me.val = '(CEU_'..ID..'_unpack('..me.val..'))'
-
-                -- CHECK
-                -- ? xxx.me
-                elseif check then
-                    me.val = '('..me.val..'.tag)'
-                        -- TODO: optimization: "tp&?" => 'NULL'
-
-                -- NONE
-                else
-                    -- ... xxx.me ...
-                    me.val = '('..op..'(CEU_'..ID..'_SOME_assert(_ceu_app, &'
-                                ..me.val..',__FILE__,__LINE__)->SOME.v))'
-                end
-            end
-        elseif var.pre == 'pool' then
-            -- normalize all pool acesses to pointers to it
-            -- (because of interface accesses that must be done through a pointer)
-            if not (var.tp.ptr>0 or var.tp.ref) then
-                if ENV.adts[var.tp.id] then
-                    local fval = me.fval
-                    local val  = me.val
-                    me.val = nil
-                    me.fval = function (me, ctx)
-                        local val = fval and fval(me, ctx) or val
-                        if ctx == 'pool' then
-                            return '((tceu_pool_*)&'..val..')'
-                        elseif ctx == 'root' then
-                            return val
-                        else
-                            return '((CEU_'..var.tp.id..'*)&'..val..'.root)'
-                        end
-                    end
-                else
-                    me.val = '(&'..me.val..')'
-                    me.val = '((tceu_pool_*)'..me.val..')'
-                end
-            end
-        elseif var.pre == 'function' then
-            me.val = 'CEU_'..cls.id..'_'..var.id
-        elseif var.pre == 'isr' then
-            me.val = 'CEU_'..cls.id..'_'..var.id
-        elseif var.pre == 'event' then
-            me.val = nil
-        elseif var.pre == 'output' then
-            me.val = nil
-        elseif var.pre == 'input' then
-            me.val = nil
-        else
-            error 'not implemented'
-        end
-    end,
-
-    __fvar = function (me, ctx)
-        if me.var.isTmp then
-            return '__ceu_'..var.id..'_'..var.n
-        elseif me.var.adt then
-        else
-            return CUR(me, var.id_)
-        end
-    end,
-    Var = function (me)
-        local var = me.var or me
-        if var.isTmp then
+        if ctx == 'pool' then
+            me.val = CUR(me, '_'..var.id_)
+        elseif var.isTmp then
             me.val = '__ceu_'..var.id..'_'..var.n
         else
             me.val = CUR(me, var.id_)
@@ -248,8 +239,14 @@ F =
 
         local field = AST.par(me, 'Field')
         if not (field and field[3]==me) then
-            F.__var(me)
+            F_var(me, lval, ctx)
         end
+
+        return me.val
+    end,
+    Var = function (me)
+        me.fval = F.__fvar
+        me.val  = F.__fvar(me)    -- TODO: remove
     end,
 
     Field = function (me)
@@ -294,7 +291,7 @@ F =
             end
 
             if me.var.tp.opt then
-                F.__var(me)
+                F_var(me)
             end
         else
             if me.c then
@@ -302,7 +299,7 @@ F =
             else
                 assert(me.var, 'bug found')
                 me.val = '('..me.org.val..'->'..me.var.id_..')'
-                F.__var(me)
+                F_var(me)
             end
         end
     end,
