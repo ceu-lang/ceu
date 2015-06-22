@@ -11,10 +11,14 @@ local function ceu2c (op)
     return _ceu2c[op] or op
 end
 
-function V (me)
-    ASR(me.val, me, 'invalid expression')
+function VV (me, ...)
+    return me.fval and me.fval(me,...) or me.val
+end
 
-    local ret = me.val
+function V (me, ...)
+    ASR(me.fval or me.val, me, 'invalid expression : no value')
+
+    local ret = VV(me, ...)
 
     local ref = me.tp and me.tp.ref and me.tp.id
     if me.byRef and
@@ -25,6 +29,12 @@ function V (me)
     then
         ret = '(&'..ret..')'
     end
+
+--[[
+    if me.tag=='Var' and me.var.pre=='pool' and ENV.adts[me.var.tp.id] then
+        ret = '((CEU_'..me.var.tp.id..'*)('..ret..'->root))'
+    end
+]]
 
     return string.gsub(ret, '^%(%&%(%*(.-)%)%)$', '(%1)')
             -- (&(*(...))) => (((...)))
@@ -186,10 +196,25 @@ F =
             -- normalize all pool acesses to pointers to it
             -- (because of interface accesses that must be done through a pointer)
             if not (var.tp.ptr>0 or var.tp.ref) then
-                me.val = '((tceu_pool_*)(&'..me.val..'))'
+                if ENV.adts[var.tp.id] then
+                    local fval = me.fval
+                    local val  = me.val
+                    me.val = nil
+                    me.fval = function (me, ctx)
+                        local val = fval and fval(me, ctx) or val
+                        if ctx == 'pool' then
+                            return '((tceu_pool_*)&'..val..')'
+                        elseif ctx == 'root' then
+                            return val
+                        else
+                            return '((CEU_'..var.tp.id..'*)&'..val..'.root)'
+                        end
+                    end
+                else
+                    me.val = '(&'..me.val..')'
+                    me.val = '((tceu_pool_*)'..me.val..')'
+                end
             end
-            var.val_dcl = var.val_dcl or '&'..CUR(me, var.id_)
-                                         -- TODO: first assignment
         elseif var.pre == 'function' then
             me.val = 'CEU_'..cls.id..'_'..var.id
         elseif var.pre == 'isr' then
@@ -205,6 +230,14 @@ F =
         end
     end,
 
+    __fvar = function (me, ctx)
+        if me.var.isTmp then
+            return '__ceu_'..var.id..'_'..var.n
+        elseif me.var.adt then
+        else
+            return CUR(me, var.id_)
+        end
+    end,
     Var = function (me)
         local var = me.var or me
         if var.isTmp then
@@ -341,13 +374,14 @@ F =
     ['Op1_*'] = function (me)
         local op, e1 = unpack(me)
 
+-- TODO: remove
         local is_adt_pool = ENV.adts[me.tp.id] and
                             e1.var and e1.var.pre=='pool'
 
         if ENV.clss[me.tp.id] and e1.tp.ptr==1 then
             me.val = V(e1) -- class accesses should remain normalized to references
-        elseif is_adt_pool then
-            me.val = '(*('..ceu2c(op)..V(e1)..'))'
+        --elseif is_adt_pool then
+            --me.val = '(('..ceu2c(op)..V(e1)..'))'
         else
             me.val = '('..ceu2c(op)..V(e1)..')'
         end

@@ -1410,15 +1410,8 @@ me.blk_body = me.blk_body or blk_body
         elseif tag=='spawn' then
             return node('Set', me.ln, op, tag, fr, to)
 
-        elseif tag=='__adt' then
-            -- TODO: improve this code
-            local set = node('Set', me.ln, op, 'exp',
-                            false,  -- Adt_constr will set to its var
-                            to)
-            if fr[1] then   -- new?
-                AST.asr(fr[2][1], 'Adt')
-            end
-            return node('Stmts', me.ln, fr, set)
+        elseif tag=='adt' then
+            return node('Set', me.ln, op, tag, fr, to)
 
         elseif tag == 'do-org' then
             return F.DoOrg_pre(fr, to)
@@ -1819,87 +1812,8 @@ H = {
         end
     end,
 
-    _Adt_constr_root_pos = function (me)
-        local dyn, constr = unpack(me)
-        local me_, set = unpack(me.__par)
-        assert(me_ == me)
-
-        -- root must set Set variable
-        AST.asr(set, 'Set')
-
-        local dcls, cons = unpack(constr)
-        AST.asr(dcls[1], 'Dcl_var')
-        local id = dcls[1][3]
-
-        set[3] = node('Var', me.ln, id)
-        set[3].__adj_is_constr = true
-        return node('Stmts', me.ln,
-                node('Stmts', me.ln, unpack(dcls)),
-                cons)
-    end,
     _Adt_explist_pos = function (me)
         me.tag = 'ExpList'
-    end,
-    _Adt_constr_pos = function (me)
-        local adt, params = unpack(me)
-        local id = unpack(adt)
-
-        local dyn,par = unpack(AST.par(me,'_Adt_constr_root'))
-
-        --  new Grid.SPLIT(
-        --      Split.HORIZONTAL(),     -- this is not recursive or dynamic
-        --      ...)
-        local ID = unpack(AST.asr(par,'_Adt_constr', 1,'Adt'))
-        if ID ~= id then
-            dyn = false
-        end
-
-        --      Adt ( ExpList )
-        -- becomes
-        --      var TP adt;
-        --      <stmts-exp-list>
-        --      adt = <var-for-stmts-exp-list>
-
-        local CONS, DCLS = {}, {}
-
-        -- nested constructors
-        for i, p in ipairs(params) do
-            if p.__adt then
-                local dcls, cons = unpack(p)
-
-                -- concat: CONS+=cons, DCLS++=dcls
-                CONS[#CONS+1] = cons
-                for _, v in ipairs(dcls) do
-                    DCLS[#DCLS+1] = v
-                end
-
-                -- last id is at 1st position
-                AST.asr(dcls[1], 'Dcl_var')
-                local id = dcls[1][3]
-
-                params[i] = node('Var', me.ln, id)
-            else
-                -- keep current p
-            end
-        end
-
-        local root = (AST.par(me,'Adt_constr') and '' or 'root_')
-
-        local dcl = node('Dcl_var', me.ln, 'var',
-                        node('Type', me.ln, id, (dyn and 1) or 0, false, false),
-                        '__ceu_adt_'..root..me.n)
-        dcl.__adj_adt_constr = true
-        table.insert(DCLS, 1, dcl)
-
-        return { __adt=true,
-                    DCLS,
-                    node('Adt_constr', me.ln, adt, params,
-                        node('Var', me.ln, '__ceu_adt_'..root..me.n),
-                        dyn,
-                -- all nested must be generated after ("new" should fail later)
-                        node('Stmts', me.ln,
-                            unpack(CONS)))
-               }
     end,
 }
 AST.visit(G)

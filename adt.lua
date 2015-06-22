@@ -1,12 +1,63 @@
 F = {
+    Dcl_adt = function (me)
+        local id, op = unpack(me)
+
+        -- For recursive ADTs, ensure valid base case:
+        --  - it is the first in the enum
+        --  - it has no parameters
+        if op == 'union' then
+            local base = me.tags[me.tags[1]].tup
+            for _, tag in ipairs(me.tags) do
+                local tup = me.tags[tag].tup
+                AST.asr(tup, 'TupleType')
+                for _, item in ipairs(tup) do
+                    AST.asr(item, 'TupleTypeItem')
+                end
+            end
+            if me.isRec then
+                ASR(#base == 0, base,
+                    'invalid recursive base case : no parameters allowed')
+            end
+        end
+    end,
+
+    Dcl_var = function (me)
+        local adt = ENV.adts[me.var.tp.id]
+        if adt and adt.isRec then
+            if me.var.pre == 'var' then
+                -- Pointer to recursive ADT pool declaration:
+                --      var List* l;
+                --  becomes
+                --      var tceu_adt_root l = {pool=x, root=y}
+                ASR(me.var.tp.ptr==1, me,
+                    'invalid recursive data declaration : variable "'..me.var.id..'" must be a pointer or pool')
+            end
+        end
+    end,
+
+    Adt_constr_root = function (me)
+        local dyn, one  = unpack(me)
+        local adt, _    = unpack(one)
+        local id_adt, _ = unpack(adt)
+        if ENV.adts[id_adt].isRec then
+            ASR(dyn, me,
+                'invalid constructor : recursive data must use `new´')
+        end
+    end,
+
     Set = function (me)
-        local _, _, fr, to = unpack(me)
+        local _, set, fr, to = unpack(me)
+    
+        if set ~= 'adt' then
+            return      -- handled in env.lua
+        end
+
         local adt = ENV.adts[to.tp.id]
         if not (adt and adt.isRec) then
             return  -- ignore non-adt or non-recursive-adt
         end
 
-        if fr.__adj_is_constr then
+        if set == 'adt' then
             if to.fst.var.pre == 'pool' then
                 -- [OK]
                 -- var pool[] L l;
@@ -38,91 +89,6 @@ F = {
         local prefix = (to.fst.__depth-to.__depth <= fr.fst.__depth-fr.__depth)
         ASR(prefix, me, 'cannot assign parent to child')
     end,
-
-    Dcl_adt = function (me)
-        local id, op = unpack(me)
-        me.n_recs = 0
-
-        -- For recursive ADTs, ensure valid base case:
-        --  - it is the first in the enum
-        --  - it has no parameters
-        if op == 'union' then
-            local base = me.tags[me.tags[1]].tup
-            for _, tag in ipairs(me.tags) do
-                local tup = me.tags[tag].tup
-                AST.asr(tup, 'TupleType')
-                for _, item in ipairs(tup) do
-                    AST.asr(item, 'TupleTypeItem')
-                    local _, tp, _ = unpack(item)
-                    if TP.tostr(tp)==id..'&' or TP.tostr(tp)==id..'*' then
-                        me.n_recs = me.n_recs + 1
-                    end
-                end
-            end
-            if me.n_recs>0 then
-                ASR(#base == 0, base,
-                    'base case must have no parameters (recursive data)')
-            end
-        end
-    end,
-
-    Adt_constr = function (me)
-        local adt, ps = unpack(me)
-
-        local id_adt, id_field = unpack(adt)
-        local adt = assert(ENV.adts[id_adt], 'bug found')
-        if adt.tags then
-            -- Refuse recursive constructors that are not new data:
-            --  data D with
-            --      <...>
-            --  or
-            --      tag REC with
-            --          var D* rec;
-            --      end
-            --  end
-            --  <...> = new D.REC(ptr)      -- NO!
-            --  <...> = new D.REC(D.xxx)    -- OK!
-            field = assert(adt.tags[id_field], 'bug found')
-            for i, p in ipairs(ps) do
-                if field.tup[i].isRec then
-                    ASR(p.lst.tag=='Var' and string.find(p.lst[1],'__ceu_adt_root'),
-                        me, 'invalid constructor : recursive field "'..id_field..'" must be new data')
-                end
-            end
-        end
-
-        -- total of instances in a constructor
-        -- TODO: add only recursive constructors
-        local par = assert(me.__par)
-              par = assert(par.__par)
-
-        me.n_cons = (me.n_cons or 0) + 1
-
-        local set = par[2]
-        if set and set.tag=='Set' then
-            set[3].lst.var.n_cons = me.n_cons
-        else
-            AST.asr(par, 'Adt_constr')
-            par.n_cons = (par.n_cons or 0) + me.n_cons
-        end
-    end,
-
---[[
-    Loop = function (me)
-        local _,iter = unpack(me)
-        if me.iter_tp == 'data' then
-            local adt = ENV.adts[iter.tp.id]
-            if adt then
-                ASR(adt.n_recs>0, me, 'invalid data: not recursive')
-            end
-        end
-    end,
-    Recurse = function (me)
-        local loop = AST.par(me,'Loop')
-        ASR(loop, me, '`recurse´ without loop')
-        ASR(loop.iter_tp=='data', me, 'invalid `recurse´: no data')
-    end,
-]]
 }
 
 AST.visit(F)

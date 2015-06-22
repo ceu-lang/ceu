@@ -35,11 +35,14 @@ local function POP ()
     TRACK[#TRACK] = nil
 end
 
-function NOPTR (tp)
+function NOPTR (node_or_var)
+    if node_or_var.tag == 'Adt_constr_root' then
+        return false
+    end
+
+    local tp = node_or_var.tp
     return (tp.ptr==0 and
            ((not tp.ext) or TP.get(tp.id).plain or tp.plain or tp.ref))
--- TODO
-or tp.id == '_tceu_adt_root'
                 -- either native dcl or derived
 end
 
@@ -68,8 +71,8 @@ end
     --
 
         -- _r.x = (int) ...;
-        if NOPTR(to.tp) and (not to.tp.ref) and (not to.tp.arr) or
-           NOPTR(fr.tp) and (not fr.tp.ref) and (not fr.tp.arr) then
+        if NOPTR(to) and (not to.tp.ref) and (not to.tp.arr) or
+           NOPTR(fr) and (not fr.tp.ref) and (not fr.tp.arr) then
             ASR(op == '=', me, 1101, 'wrong operator')
             ASR(not me.fin, me, 1102, 'attribution does not require `finalize´')
             return
@@ -258,7 +261,7 @@ end
     end,
 
     Var = function (me)
-        if NOPTR(me.var.tp) then
+        if NOPTR(me.var) then
             return
         end
         if me.var.pre=='pool' or me.var.pre=='function' then

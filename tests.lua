@@ -50,8 +50,8 @@ end
 }
 
 do return end
---]===]
 -------------------------------------------------------------------------------
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -14939,7 +14939,29 @@ do
 end
 escape v1.v+v2.v+v3.v;
 ]],
-    ref = 'line 8 : attribution to reference with greater scope',
+    ref = 'line 5 : invalid attribution (not a reference)',
+    --run = 6,
+}
+
+Test { [[
+data V with
+    var int v;
+end
+
+var V v1_ = V(1);
+var V& v1 = v1_;
+var V& v2, v3;
+do
+    var V v2_ = V(2);
+    v2 = v2_;
+end
+do
+    var V v3_ = V(3);
+    v3 = v3_;
+end
+escape v1.v+v2.v+v3.v;
+]],
+    ref = 'line 10 : attribution to reference with greater scope',
     --run = 6,
 }
 
@@ -26581,18 +26603,21 @@ do
 end
 
 var T t1 with
-    this.v = V(1);
+    var V v_ = V(1);
+    this.v = v_;
 end;
 var T t2 with
-    this.v = V(2);
+    var V v_ = V(2);
+    this.v = v_;
 end;
 var T t3 with
-    this.v = V(3);
+    var V v_ = V(3);
+    this.v = v_;
 end;
 
 escape t1.v.v + t2.v.v + t3.v.v;
 ]],
-    ref = 'line 11 : attribution to reference with greater scope',
+    ref = 'line 12 : attribution to reference with greater scope',
     --run = 6,
 }
 
@@ -42948,26 +42973,26 @@ Test { [[
 data List with
     tag CONS with
         var int   head;
-        var List& tail;
+        var List* tail;
     end
 end
 escape 1;
 ]],
-    adt = 'line 1 : base case must have no parameters (recursive data)',
+    adt = 'line 1 : invalid recursive base case : no parameters allowed',
 }
 -- the base case must appear first
 Test { [[
 data List with
     tag CONS with
         var int   head;
-        var List& tail;
+        var List* tail;
     end
 or
     tag NIL;
 end
 escape 1;
 ]],
-    adt = 'line 1 : base case must have no parameters (recursive data)',
+    adt = 'line 1 : invalid recursive base case : no parameters allowed',
 }
 -- the base must not have fields
 Test { [[
@@ -42978,12 +43003,12 @@ data List with
 or
     tag CONS with
         var int   head;
-        var List& tail;
+        var List* tail;
     end
 end
 escape 1;
 ]],
-    adt = 'line 1 : base case must have no parameters (recursive data)',
+    adt = 'line 1 : invalid recursive base case : no parameters allowed',
 }
 
 -- MISC
@@ -43076,12 +43101,29 @@ or
         var List* tail;
     end
 end
-var List l = List.CONS(1,
+var List* l = List.CONS(1,
+                List.CONS(2,
+                    List.NIL()));
+escape l:CONS.tail:CONS.head;
+]],
+    adt = 'line 9 : invalid constructor : recursive data must use `new´',
+}
+
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+var List l = new List.CONS(1,
                 List.CONS(2,
                     List.NIL()));
 escape l.CONS.tail:CONS.head;
 ]],
-    env = 'line 9 : invalid recursive data declaration : variable "l" must be a pointer or pool',
+    adt = 'line 9 : invalid recursive data declaration : variable "l" must be a pointer or pool',
 }
 
 Test { [[
@@ -43096,9 +43138,9 @@ end
 var List* l = List.CONS(1,
                 List.CONS(2,
                     List.NIL()));
-escape l.CONS.tail:CONS.head;
+escape l:CONS.tail:CONS.head;
 ]],
-    env = 'line 9 : invalid constructor : recursive data must use `new´',
+    adt = 'line 9 : invalid constructor : recursive data must use `new´',
 }
 
 Test { [[
@@ -43131,9 +43173,26 @@ pool List[10] l;
 l = List.CONS(1,
         List.CONS(2,
             List.NIL()));
-escape l.CONS.tail:CONS.head;
+escape l:CONS.tail:CONS.head;
 ]],
-    env = 'line 10 : invalid constructor : recursive data must use `new´',
+    adt = 'line 10 : invalid constructor : recursive data must use `new´',
+}
+
+--adt_root
+--__adj_adt
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+pool List[10] lll;
+escape lll:NIL;
+]],
+    run = 2,
 }
 
 Test { [[
@@ -43145,11 +43204,27 @@ or
         var List* tail;
     end
 end
-pool List[10] l;
-l = new List.CONS(1,
+pool List[10] lll;
+lll = new List.CONS(1, List.NIL());
+escape lll:CONS.head;
+]],
+    run = 1,
+}
+
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+pool List[10] lll;
+lll = new List.CONS(1,
             List.CONS(2,
                 List.NIL()));
-escape l:CONS.tail:CONS.head;
+escape lll:CONS.tail:CONS.head;
 ]],
     run = 2,
 }

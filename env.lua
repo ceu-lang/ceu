@@ -654,6 +654,7 @@ F = {
     Dcl_var = function (me)
         local _, tp, id, constr, _ = unpack(me)
 
+--[[
         local adt = ENV.adts[tp.id]
         if adt and adt.isRec then
             if me.__adj_adt_constr then
@@ -671,7 +672,6 @@ F = {
                 ASR(tp.ptr==1, me,
                     'invalid recursive data declaration : variable "'..id..'" must be a pointer or pool')
 
---[[
                 me.adt_tp = tp -- saves original type
 
                 -- creates "root" variable that represents the pool
@@ -683,9 +683,9 @@ F = {
                 me.var.adt_par = me
                 me.adt_root = me.var
                 return
-]]
             end
         end
+]]
 
         -- other declarations
         F.__dcl_var(me)
@@ -719,6 +719,7 @@ F = {
         local pre, tp, id, constr = unpack(me)
         ASR(tp.arr, me, 'missing `pool´ dimension')
 
+--[=[
         -- recursive ADT pool declaration
         local adt = ENV.v_or_ref(tp, 'adt')
         if adt and adt.isRec then
@@ -752,6 +753,8 @@ F = {
         else
             F.__dcl_var(me)
         end
+]=]
+        F.__dcl_var(me)
     end,
 
     Dcl_int = function (me)
@@ -823,6 +826,7 @@ F = {
         --  tceu_adt_root  x;   // 'root'       (me)
         --  x.root              // 'root_root'  (return this)
         if var and var.adt_par and (not me.__env_set) then
+error'oi'
             me.__env_set = true     -- avoid infinite recursion
             local root_root = AST.node('Op1_cast', me.ln,
                                 TP.fromstr(var.adt_par.adt_tp.id..'*'),
@@ -1014,6 +1018,10 @@ F = {
             -- var T*? = spawn T;
             ASR(to.tp.opt, me, 'must assign to option pointer')
 
+        elseif set == 'adt' then
+            return  -- checked in adt.lua
+
+--[[
         elseif fr.adt_rr_to_root and to.adt_rr_to_root and
                to.adt_rr_to_root.var.tp.ref
         then
@@ -1026,6 +1034,7 @@ F = {
             F.Set(me)    -- retry with new values
             me.__env_adt_aliasing = true
             return
+]]
         end
 
         local lua_str = false
@@ -1184,6 +1193,49 @@ F = {
 
     --------------------------------------------------------------------------
 
+    Adt_constr_root = function (me)
+        local _, one = unpack(me)
+        me.tp   = one.tp
+        me.lval = false
+    end,
+    Adt_constr_one = function (me)
+        local adt, params = unpack(me)
+        local id_adt, id_tag = unpack(adt)
+        me.tp = TP.fromstr(id_adt)
+
+        local tup
+        local tadt = ASR(ENV.adts[id_adt], me,
+                        'data "'..id_adt..'" is not declared')
+        if id_tag then
+            local ttag = ASR(tadt.tags[id_tag], me,
+                            'tag "'..id_tag..'" is not declared')
+
+            -- Refuse recursive constructors that are not new data:
+            --  data D with
+            --      <...>
+            --  or
+            --      tag REC with
+            --          var D* rec;
+            --      end
+            --  end
+            --  <...> = new D.REC(ptr)      -- NO!
+            --  <...> = new D.REC(D.xxx)    -- OK!
+            for i, p in ipairs(params) do
+                if ttag.tup[i].isRec then
+                    ASR(p.tag == 'Adt_constr_one', me,
+                        'invalid constructor : recursive field "'..id_tag..'" must be new data')
+                    p.tp.ptr = 1
+                end
+            end
+            tup = ttag.tup
+        else
+            tup = tadt.tup
+        end
+
+        local ok, msg = TP.contains(tup, params.tp)
+        ASR(ok, me, msg)
+    end,
+
     Op2_call = function (me)
         local _, f, params, _ = unpack(me)
         me.tp  = f.var and f.var.fun and f.var.fun.out or TP.fromstr'@'
@@ -1220,23 +1272,6 @@ F = {
             --'native function "'..id..'" is not declared')
 
         ENV.calls[id] = true
-    end,
-
-    Adt_constr = function (me)
-        local adt, params, var = unpack(me)
-        local id, tag = unpack(adt)
-        me.tp = TP.fromstr(id)
-
-        local tadt = ASR(ENV.adts[id], me, 'data "'..id..'" is not declared')
-        if tag then
-            local ttag = ASR(tadt.tags[tag], me, 'tag "'..tag..'" is not declared')
-            tup = ttag.tup
-        else
-            tup = tadt.tup
-        end
-
-        local ok, msg = TP.contains(tup, params.tp)
-        ASR(ok, me, msg)
     end,
 
     Op2_idx = function (me)
@@ -1332,6 +1367,7 @@ F = {
 
         local is_adt_pool = ENV.adts[me.tp.id] and e1.var and e1.var.pre=='pool'
         if is_adt_pool then
+            me.tp.arr = false
             return  -- ok
         end
 
@@ -1356,6 +1392,7 @@ F = {
         if cls and me.var then
             -- mimic process in "Var_pre" for ADT pools
             if me.var.adt_par then
+error'oi'
                 assert(me.tag == 'Field')
                 local root_root = AST.node('Op1_cast', me.ln,
                                     TP.fromstr(me.var.adt_par.adt_tp.id..'*'),

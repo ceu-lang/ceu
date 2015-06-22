@@ -220,7 +220,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
               + Cc'thread'     * V'_Thread'
               + Cc'emit-ext'   * (V'EmitExt' + K'('*V'EmitExt'*EK')')
               + Cc'spawn'      * V'Spawn'
-              + Cc'__adt'      * V'_Adt_constr_root'
+              + Cc'adt'        * V'Adt_constr_root'
               + Cc'do-org'     * V'DoOrg'
               + Cc'block'      * V'__SetBlock'
               + Cc'exp'        * V'__Exp'
@@ -347,11 +347,11 @@ end
               + CKEY'call'     * EV'__Exp'
               + CKEY'call/rec' * EV'__Exp'
 
-    , _Adt_constr_root = (CKEY'new'+Cc(false)) * V'_Adt_constr'
-    , _Adt_constr  = V'Adt' * EK'(' * EV'_Adt_explist' * EK')'
+    , Adt_constr_root = (CKEY'new'+Cc(false)) * V'Adt_constr_one'
+    , Adt_constr_one = V'Adt' * EK'(' * EV'_Adt_explist' * EK')'
     , Adt         = V'__ID_adt' * (K'.'*V'__ID_tag' + Cc(false))
 
-    , __adt_expitem = (V'_Adt_constr' + V'__Exp')
+    , __adt_expitem = (V'Adt_constr_one' + V'__Exp')
     , _Adt_explist = ( V'__adt_expitem'*(K','*EV'__adt_expitem')^0 )^-1
 
     , ExpList = ( V'__Exp'*(K','*EV'__Exp')^0 )^-1

@@ -78,7 +78,7 @@ void CEU_]]..id..'_kill (tceu_app* _ceu_app, tceu_go* go, CEU_'..id..[[* me) {
                 kill = kill .. [[
         case CEU_]]..id_tag..[[:
 ]]
-                if me.n_recs>0 and tag==me.tags[1] then
+                if me.isRec and tag==me.tags[1] then
                     kill = kill .. [[
             /* base case */
 ]]
@@ -123,7 +123,7 @@ void CEU_]]..id..'_free_dynamic (tceu_app* _ceu_app, CEU_'..id..[[* me) {
                 free = free .. [[
         case CEU_]]..id_tag..[[:
 ]]
-                if me.n_recs>0 and tag==me.tags[1] then
+                if me.isRec and tag==me.tags[1] then
                     free = free .. [[
             /* base case */
 ]]
@@ -164,7 +164,7 @@ void CEU_]]..id..'_free_static (tceu_app* _ceu_app, CEU_'..id..[[* me, void* poo
                 free = free .. [[
         case CEU_]]..id_tag..[[:
 ]]
-                if me.n_recs>0 and tag==me.tags[1] then
+                if me.isRec and tag==me.tags[1] then
                     free = free .. [[
             /* base case */
 ]]
@@ -227,7 +227,7 @@ void CEU_]]..id..'_free_static (tceu_app* _ceu_app, CEU_'..id..[[* me, void* poo
                                    me.struct..'\n'
 
         -- declare a static BASE instance
-        if me.n_recs>0 then
+        if me.isRec then
             MEM.tops = MEM.tops..[[
 static CEU_]]..id..[[ CEU_]]..string.upper(id)..[[_BASE;
 ]]
@@ -252,7 +252,7 @@ CEU_]]..id..'* '..enum..'_assert (tceu_app* _ceu_app, CEU_'..id..[[* me, char* f
 }
 ]]
 
-        if top.n_recs>0 and top.tags[1]==tag then
+        if top.isRec and top.tags[1]==tag then
             return  -- base case, no free
         end
 
@@ -445,13 +445,13 @@ typedef union CEU_]]..me.id..[[_delayed {
         top.struct = top.struct..SPC()..'} '..tag..';\n'
     end,
     Block_pre = function (me)
-        local top = AST.par(me,'Dcl_adt') or CLS()
+        local DCL = AST.par(me,'Dcl_adt') or CLS()
 
-        top.struct = top.struct..SPC()..'struct { /* BLOCK ln='..me.ln[2]..' */\n'
+        DCL.struct = DCL.struct..SPC()..'struct { /* BLOCK ln='..me.ln[2]..' */\n'
 
         if me.fins then
             for i=1, #me.fins do
-            top.struct = top.struct .. SPC()
+            DCL.struct = DCL.struct .. SPC()
                             ..'u8 __fin_'..me.n..'_'..i..': 1;\n'
             end
         end
@@ -487,7 +487,7 @@ typedef union CEU_]]..me.id..[[_delayed {
         -- sort offsets in descending order to optimize alignment
         -- TODO: previous org metadata
         local sorted = { unpack(me.vars) }
-        if me~=top.blk_ifc and top.tag~='Dcl_adt' then
+        if me~=DCL.blk_ifc and DCL.tag~='Dcl_adt' then
             table.sort(sorted, pred_sort)   -- TCEU_X should respect lexical order
         end
 
@@ -507,7 +507,7 @@ typedef union CEU_]]..me.id..[[_delayed {
                     -- otherwise use counter to avoid clash inside struct/union
             end
 
-            if top.id == var.tp.id then
+            if DCL.id == var.tp.id then
                 tp = 'struct '..tp  -- for types w/ pointers for themselves
             end
 
@@ -517,7 +517,7 @@ typedef union CEU_]]..me.id..[[_delayed {
 ]]
                 local cls = ENV.clss[var.tp.id]
 -- TODO: OPT
-                if cls and (not cls.is_ifc) and (top.id ~= var.tp.id) then
+                if cls and (not cls.is_ifc) and (DCL.id ~= var.tp.id) then
                     dcl = dcl..'struct ' -- due to recursive spawn
                 end
                 if var.tp.arr then
@@ -526,31 +526,43 @@ typedef union CEU_]]..me.id..[[_delayed {
                 else
                     dcl = dcl .. tp..' '..var.id_
                 end
-                top.struct = top.struct..SPC()..'  '..dcl..';\n'
+                DCL.struct = DCL.struct..SPC()..'  '..dcl..';\n'
             elseif var.pre=='pool' then
-                local T = var.cls or var.adt
+                local top = ENV.v_or_ref(var.tp)
+                local adt = ENV.v_or_ref(var.tp, 'adt')
+                local cls = ENV.v_or_ref(var.tp, 'cls')
+
+                -- ADT:
+                -- tceu_adt_root id = { root=?, pool=_id };
+                -- CEU_POOL_DCL(_id);
+                if adt then
+                    local ptr = (var.tp.ref and '*') or ''
+                    DCL.struct = DCL.struct .. [[
+tceu_adt_root]]..ptr..' '..var.id_..[[;
+]]
+                end
 
                 -- static pool: "var T[N] ts"
                 if type(var.tp.arr)=='table' and (not var.tp.ref) then
-                    local T = ENV.clss[var.tp.id] or ENV.adts[var.tp.id]
-                    if T.is_ifc then
-                        top.struct = top.struct .. [[
-CEU_POOL_DCL(]]..var.id_..',CEU_'..var.tp.id..'_delayed,'..var.tp.arr.sval..[[)
+                    local ID = (adt and '_' or '') .. var.id_  -- _id for ADT pools
+                    if top.is_ifc then
+                        DCL.struct = DCL.struct .. [[
+CEU_POOL_DCL(]]..ID..',CEU_'..var.tp.id..'_delayed,'..var.tp.arr.sval..[[)
 ]]
                                -- TODO: bad (explicit CEU_)
                     else
-                        top.struct = top.struct .. [[
-CEU_POOL_DCL(]]..var.id_..',CEU_'..var.tp.id..','..var.tp.arr.sval..[[)
+                        DCL.struct = DCL.struct .. [[
+CEU_POOL_DCL(]]..ID..',CEU_'..var.tp.id..','..var.tp.arr.sval..[[)
 ]]
                                -- TODO: bad (explicit CEU_)
                     end
                 elseif var.tp.ptr>0 or var.tp.ref then
                     local ptr = string.rep('*', (var.tp.ref and 1) + var.tp.ptr)
-                    top.struct = top.struct .. [[
+                    DCL.struct = DCL.struct .. [[
 tceu_pool_]]..ptr..' '..var.id_..[[;
 ]]
                 else
-                    top.struct = top.struct .. [[
+                    DCL.struct = DCL.struct .. [[
 tceu_pool_ ]]..var.id_..[[;
 ]]
                 end
@@ -558,7 +570,7 @@ tceu_pool_ ]]..var.id_..[[;
 
             -- pointers ini/end to list of orgs
             if var.cls then
-                top.struct = top.struct .. SPC() ..
+                DCL.struct = DCL.struct .. SPC() ..
                    'tceu_org_lnk __lnks_'..me.n..'_'..var.trl_orgs[1]..'[2];\n'
                     -- see val.lua for the (complex) naming
             end
@@ -589,6 +601,7 @@ tceu_pool_ ]]..var.id_..[[;
         if not me.__recs then
             return
         end
+error'not implemented'
 
         -- `recurse´ stack
         -- TODO: no cls space if no awaits inside the loop (use local C var)
