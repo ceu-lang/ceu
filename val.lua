@@ -22,16 +22,6 @@ function V (me, ...)
 
     local VAL = f(me, CTX)
 
-    local ref = me.tp and me.tp.ref and me.tp.id
-    if CTX.byref and (not CTX.opt_raw) and
-        (not (ENV.clss[me.tp.id] or (ref and ENV.clss[ref]) or
-              ENV.adts[me.tp.id] or (ref and ENV.adts[ref]) or
-              me.tp.id=='@'))
-             -- already by ref
-    then
-        VAL = '(&'..VAL..')'
-    end
-
     return string.gsub(VAL, '^%(%&%(%*(.-)%)%)$', '(%1)')
             -- (&(*(...))) => (((...)))
 end
@@ -179,6 +169,16 @@ F =
             VAL = nil
         else
             error 'not implemented'
+        end
+
+        local ref = me.tp and me.tp.ref and me.tp.id
+        if CTX.byref and (not CTX.opt_raw) and
+            (not (ENV.clss[me.tp.id] or (ref and ENV.clss[ref]) or
+                  ENV.adts[me.tp.id] or (ref and ENV.adts[ref]) or
+                  me.tp.id=='@'))
+                 -- already by ref
+        then
+            VAL = '(&'..VAL..')'
         end
 
         return VAL
