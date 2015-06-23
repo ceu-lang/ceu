@@ -111,9 +111,8 @@ F = {
                 t[#t+1] = me
             end
 
-            -- first assignment (and only first assignment) is byRef
-            to.byRef = true
-            fr.byRef = true
+            -- first assignment (and only first assignment) is "by ref"
+            me.__ref_byref = true
 
             -- refuses first assignment from constants and dereferences:
             -- var int& i = 1;      // constant

@@ -23,7 +23,7 @@ function V (me, ...)
     local VAL = f(me, CTX)
 
     local ref = me.tp and me.tp.ref and me.tp.id
-    if me.byRef and (not CTX.opt_raw) and
+    if CTX.byref and (not CTX.opt_raw) and
         (not (ENV.clss[me.tp.id] or (ref and ENV.clss[ref]) or
               ENV.adts[me.tp.id] or (ref and ENV.adts[ref]) or
               me.tp.id=='@'))
@@ -111,7 +111,7 @@ F =
                         VAL = '('..op..'('..VAL..'))'
                     else
                         -- xxx.me = v
-                        if to.byRef or (not me.tp.ref) then
+                        if CTX.byref or (not me.tp.ref) then
                             VAL = '('..op..'('..VAL..'.SOME.v))'
                         else
                             VAL = '('..op..'(CEU_'..ID..'_SOME_assert(_ceu_app, &'

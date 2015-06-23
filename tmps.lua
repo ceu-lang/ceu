@@ -156,7 +156,7 @@ error'not implemented (locals inside iter)'
     end,
     Set = function (me)
         local _, _, fr = unpack(me)
-        if fr.byRef and fr.fst.var then
+        if me.__ref_byref and fr.fst.var then
             fr.fst.var.isTmp = false    -- assigned to a pointer
         end
     end,

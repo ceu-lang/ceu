@@ -976,32 +976,35 @@ case ]]..SET.lbl_cnt.id..[[:;
     end,
 
     __set = function (me, fr, to)
+        local byref = (me.__ref_byref and 'byref') or ''
+
         -- optional types
         if to.tp.opt then
             local ID = string.upper(to.tp.opt.id)
             if fr.tp.opt then
-                LINE(me, V(to)..' = '..V(fr)..';')
+                LINE(me, V(to,byref)..' = '..V(fr,byref)..';')
             elseif (fr.fst.tag=='Op2_call' and fr.fst.__fin_opt_tp) then
                 -- var _t&? = _f(...);
                 -- var T*? = spawn <...>;
-                LINE(me, V(to)..' = '..V(fr)..';')
+                LINE(me, V(to,byref)..' = '..V(fr)..';')
             else
                 local tag
                 if fr.tag == 'NIL' then
                     tag = 'NIL'
                 else
                     tag = 'SOME'
-                    LINE(me, V(to)..' = '..V(fr)..';')
+                    LINE(me, V(to,byref)..' = '..V(fr,byref)..';')
                 end
                 LINE(me, V(to,'opt_raw')..'.tag = CEU_'..ID..'_'..tag..';')
             end
 
         -- normal types
         else
-            LINE(me, V(to,'lval')..' = '..V(fr)..';')
+            LINE(me, V(to,'lval',byref)..' = '..V(fr,byref)..';')
         end
 
         if to.tag=='Var' and to.var.id=='_ret' then
+            assert(byref == '', 'bug found')
             if CLS().id == 'Main' then
                 LINE(me, [[
 #ifdef CEU_RET
