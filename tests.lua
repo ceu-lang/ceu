@@ -9,49 +9,9 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
-Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int   head;
-        var List* tail;
-    end
-end
-
-pool List[10] list;
-
-list = new List.CONS(10, List.NIL());
-var List* lll = list;
-
-lll:CONS.tail = new List.CONS(9, List.NIL());
-lll = lll:CONS.tail;
-
-par do
-    watching lll do
-        await 1s;
-
-        lll:CONS.tail = new List.CONS(8, List.NIL());
-        lll = lll:CONS.tail;
-
-        escape lll:CONS.head +
-                list:CONS.head +
-                list:CONS.tail:CONS.head +
-                list:CONS.tail:CONS.tail:CONS.head;
-    end
-    escape 1;
-with
-    list = new List.NIL();
-    await FOREVER;
-end
-]],
-    _ana = {acc=true},
-    run = 1,
-}
-
 do return end
--------------------------------------------------------------------------------
 --]===]
+-------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -45074,6 +45034,47 @@ end
 escape 0;
 ]],
     run = { ['~>1s'] = 35 },
+}
+
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[10] list;
+
+list = new List.CONS(10, List.NIL());
+pool List*[] lll;
+lll = list;
+
+lll:CONS.tail = new List.CONS(9, List.NIL());
+lll = lll:CONS.tail;
+
+par do
+    watching lll do
+        await 1s;
+
+        lll:CONS.tail = new List.CONS(8, List.NIL());
+        lll = lll:CONS.tail;
+
+        escape lll:CONS.head +
+                list:CONS.head +
+                list:CONS.tail:CONS.head +
+                list:CONS.tail:CONS.tail:CONS.head;
+    end
+    escape 1;
+with
+    list = new List.NIL();
+    await FOREVER;
+end
+]],
+    _ana = {acc=true},
+    run = 1,
 }
 
 Test { [[
