@@ -9,6 +9,16 @@ end
 -- cval: C value
 --]]
 
+SVAL = {
+    t2n = {
+         us = 10^0,
+         ms = 10^3,
+          s = 10^6,
+        min = 60*10^6,
+          h = 60*60*10^6,
+    },
+}
+
 F =
 {
     Dcl_var = function (me)
@@ -92,6 +102,19 @@ F =
 
     RawExp = function (me)
         me.cval = unpack(me)
+    end,
+
+    WCLOCKK = function (me)
+        local h,min,s,ms,us, tm = unpack(me)
+        me.us = us*SVAL.t2n.us + ms*SVAL.t2n.ms   + s*SVAL.t2n.s
+                               + min*SVAL.t2n.min + h*SVAL.t2n.h
+        me.tm = tm
+        ASR(me.us>0 and me.us<=2000000000, me, 'constant is out of range')
+    end,
+    WCLOCKE = function (me)
+        local exp, unit, tm = unpack(me)
+        me.us = nil
+        me.tm = tm
     end,
 
     Nat = function (me)

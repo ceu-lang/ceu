@@ -418,7 +418,7 @@ do
                 elseif var.pre == 'function' then
                     local i = ENV.ifcs.funs[var.ifc_id]
                     if i then
-                        funs[i+1] = '(void*)'..var.val
+                        funs[i+1] = '(void*)CEU_'..cls.id..'_'..var.id
                     end
                 else
                     error 'not implemented'

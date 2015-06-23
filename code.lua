@@ -82,7 +82,7 @@ function AWAIT_PAUSE (me, no)
     for pse in AST.iter'Pause' do
         COMM(me, 'PAUSE: '..pse.dcl.var.id)
         LINE(me, [[
-if (]]..V(pse.dcl.var)..[[) {
+if (]]..V(pse.dcl)..[[) {
     goto ]]..no..[[;
 }
 ]])
@@ -387,12 +387,12 @@ end;
 ]]
 
         -- ceu_out_org, _ceu_constr_
-        local org = t.arr and '((tceu_org*) &'..t.val..'['..V(t.i)..']'..')'
+        local org = t.arr and '((tceu_org*) &'..t.val..'['..t.val_i..']'..')'
                            or '((tceu_org*) '..t.val..')'
         -- each org has its own trail on enclosing block
         if t.arr then
             LINE(me, [[
-for (]]..V(t.i)..[[=0; ]]..V(t.i)..'<'..t.arr.sval..';'..V(t.i)..[[++)
+for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
 {
 ]])     end
         LINE(me, [[
@@ -435,17 +435,17 @@ case ]]..me.lbls_cnt.id..[[:;
                 id     = var.id,
                 isDyn  = 0,
                 cls    = var.cls,
-                val    = var.val,
+                val    = V(me),
                 constr = constr,
                 arr    = var.tp.arr,
-                i      = var.constructor_iterator,
+                val_i  = var.tp.arr and V({tag='Var',var=var.constructor_iterator}),
                 lnks   = '&_STK_ORG->trls['..var.trl_orgs[1]..'].lnks'
             })
         elseif var.tp.opt then
             -- initialize optional types to nil
             local ID = string.upper(var.tp.opt.id)
             LINE(me, [[
-]]..var.val_raw..[[.tag = CEU_]]..ID..[[_NIL;
+]]..V(me,'opt_raw')..[[.tag = CEU_]]..ID..[[_NIL;
 ]])
         end
     end,
@@ -513,7 +513,7 @@ me.val..' = &CEU_'..string.upper(id)..[[_BASE;
                 local set = assert( AST.par(me,'Set'), 'bug found' )
                 local _,_,_,to = unpack(set)
                 local pool = FIND_ADT_POOL(to.fst)
-                pool = '('..V(pool, false, 'root')..'->pool)'
+                pool = '('..V(pool,'adt_root')..'->pool)'
 
                 LINE(me, [[
 #if defined(CEU_ADTS_NEWS_MALLOC) && defined(CEU_ADTS_NEWS_POOL)
@@ -765,34 +765,24 @@ ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'),'..ln
 
                     -- other cases: must allocate
                     else
-error'oi'
-                        if static then
-                            LINE(me, [[
-    __ceu_adt = (]]..tp..[[*) ceu_pool_alloc((tceu_pool*)]]..V(var,false,'pool')..[[);
-]])
-                        else
-                            LINE(me, [[
-    __ceu_adt = (]]..tp..[[*) ceu_out_realloc(NULL, sizeof(]]..tp..[[));
-]])
-                        end
-                        LINE(me, [[
-    ceu_out_assert(__ceu_adt != NULL, "out of memory");
-    __ceu_adt->tag = CEU_]]..string.upper(adt.id..'_'..tag)..[[;
-]])
+                        error'bug found'
                     end
+
+                    local VAL_root = V({tag='Var',var=var}, 'adt_root')
+                    local VAL_pool = V({tag='Var',var=var}, 'adt_pool')
                     if static then
                         LINE(me, [[
-    ]]..V(var,false,'root')..[[->pool = ]]..V(var,false,'pool')..[[;
+    ]]..VAL_root..[[->pool = ]]..VAL_pool..[[;
 ]])
                     else
                         LINE(me, [[
 #ifdef CEU_ADTS_NEWS_POOL
-    ]]..V(var,false,'root')..[[->pool = NULL;
+    ]]..VAL_root..[[->pool = NULL;
 #endif
 ]])
                     end
                     LINE(me, [[
-    ]]..V(var,false,'root')..[[->root = __ceu_adt;
+    ]]..VAL_root..[[->root = __ceu_adt;
 }
 /*  FINALIZE ADT */
 _STK_ORG->trls[ ]]..var.trl_adt[1]..[[ ].evt   = CEU_IN__CLEAR;
@@ -864,22 +854,25 @@ _STK->trl = &_STK_ORG->trls[ ]]..stmts.trails[1]..[[ ];
                 local id, op = unpack(var.adt)
                 local static = (type(var.tp.arr)=='table')
                 CASE(me, var.lbl_fin_kill_free)
+
+                local VAL      = V({tag='Var',var=var})
+                local VAL_root = V({tag='Var',var=var}, 'adt_root')
                 if PROPS.has_adts_watching[var.adt.id] then
                     LINE(me, [[
 #if 0
 "kill" only while in scope
-CEU_]]..id..[[_kill(_ceu_app, _ceu_go, ]]..V(var)..[[);
+CEU_]]..id..[[_kill(_ceu_app, _ceu_go, ]]..VAL..[[);
 #endif
 ]])
                 end
                 if static then
-                    local pool = '('..V(var,false,'root')..'->pool)'
+                    local pool = '('..VAL_root..'->pool)'
                     LINE(me, [[
-CEU_]]..id..[[_free_static(_ceu_app, ]]..V(var)..','..pool..[[);
+CEU_]]..id..[[_free_static(_ceu_app, ]]..VAL..','..pool..[[);
 ]])
                 else
                     LINE(me, [[
-CEU_]]..id..[[_free_dynamic(_ceu_app, ]]..V(var)..[[);
+CEU_]]..id..[[_free_dynamic(_ceu_app, ]]..VAL..[[);
 ]])
                 end
                 HALT(me)
@@ -923,7 +916,7 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
         local _,set,_,to = unpack(SET)
 
         local pool = FIND_ADT_POOL(to.fst)
-        pool = '('..V(pool,false,'root')..'->pool)'
+        pool = '('..V(pool,'adt_root')..'->pool)'
 
         LINE(me, [[
 {
@@ -935,7 +928,7 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
             LINE(me, [[
     void* __ceu_new = ]]..V(fr)..[[;
     ]]..V(fr)..[[ = &CEU_]]..string.upper(fr.tp.id)..[[_BASE;
-    ]]..V(to,true)..[[ = __ceu_new;
+    ]]..V(to,'lval')..[[ = __ceu_new;
 ]])
         end
 
@@ -970,7 +963,7 @@ CEU_]]..to.tp.id..[[_free_static(_ceu_app, __ceu_old, ]]..pool..[[);
         CONC(me, fr)
         if set == 'adt-constr' then
             LINE(me, [[
-]]..V(to,true)..' = '..V(fr)..[[;
+]]..V(to,'lval')..' = '..V(fr)..[[;
 ]])
         end
 
@@ -1000,12 +993,12 @@ case ]]..SET.lbl_cnt.id..[[:;
                     tag = 'SOME'
                     LINE(me, V(to)..' = '..V(fr)..';')
                 end
-                LINE(me, to.val_raw..'.tag = CEU_'..ID..'_'..tag..';')
+                LINE(me, V(to,'opt_raw')..'.tag = CEU_'..ID..'_'..tag..';')
             end
 
         -- normal types
         else
-            LINE(me, V(to,true)..' = '..V(fr,false)..';')
+            LINE(me, V(to,'lval')..' = '..V(fr)..';')
         end
 
         if to.tag=='Var' and to.var.id=='_ret' then
@@ -1052,21 +1045,21 @@ case ]]..SET.lbl_cnt.id..[[:;
             if to.var.pre == 'pool' then
                 if to.var.tp.ref then
                     LINE(me, [[
-]]..V(to,true,'root')..' = '..V(fr,false,'root')..[[;
+]]..V(to,'lval','adt_root')..' = '..V(fr,'adt_root')..[[;
 ]])
                 else
                     LINE(me, [[
 #ifdef CEU_ADTS_NEWS_POOL
-]]..V(to,true,'root')..'->pool = '..V(pool,false,'root')..[[->pool;
+]]..V(to,'lval','adt_root')..'->pool = '..V(pool,'adt_root')..[[->pool;
 #endif
-]]..V(to,true,'root')..'->root = '..V(fr)..[[;
+]]..V(to,'lval','adt_root')..'->root = '..V(fr)..[[;
 ]])
                 end
 
             else
                 -- normal pointer (not pool)
                 LINE(me, [[
-]]..V(to,true)..' = '..V(fr)..[[;
+]]..V(to,'lval')..' = '..V(fr)..[[;
 ]])
             end
 
@@ -1577,9 +1570,9 @@ _STK->trl->stk = stack_curi(_ceu_go);
 /* trigger the event */
 {
     tceu_stk stk;
-             stk.evt  = ]]..(int.ifc_idx or int.var.evt.idx)..[[;
+             stk.evt  = ]]..V(int,'ifc_idx')..[[;
 #ifdef CEU_ORGS
-             stk.evto = (tceu_org*) ]]..((int.org and int.org.val) or '_STK_ORG')..[[;
+             stk.evto = (tceu_org*) ]]..((int.org and V(int.org)) or '_STK_ORG')..[[;
 #endif
 #ifdef CEU_ORGS
              stk.org  = _ceu_app->data;   /* TODO(speed): check if is_ifc */
@@ -1615,7 +1608,7 @@ case ]]..me.lbl_cnt.id..[[:;
 
     __AwaitInt = function (me)
         local e = unpack(me)
-        local org = (e.org and e.org.val) or '_STK_ORG'
+        local org = (e.org and V(e.org)) or '_STK_ORG'
         local no = '_CEU_NO_'..me.n..'_'
 
         LINE(me, [[
@@ -1634,7 +1627,7 @@ case ]]..me.lbl_cnt.id..[[:;
 
         LINE(me, [[
 ]]..no..[[:
-    _STK->trl->evt   = ]]..(e.ifc_idx or e.var.evt.idx)..[[;
+    _STK->trl->evt   = ]]..V(e,'ifc_idx')..[[;
     _STK->trl->lbl   = ]]..me.lbl.id..[[;
 ]])
         HALT(me)

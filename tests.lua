@@ -1042,7 +1042,7 @@ end
     -- WALL-CLOCK TIME / WCLOCK
 
 Test { [[await 0ms; escape 0;]],
-    val = 'line 1 : constant is out of range',
+    sval = 'line 1 : constant is out of range',
 }
 Test { [[
 input void A;
@@ -5774,7 +5774,7 @@ Test { [[
 await 35min;
 escape 0;
 ]],
-    val = 'line 1 : constant is out of range',
+    sval = 'line 1 : constant is out of range',
 }
 Test { [[
 var int a = 2;

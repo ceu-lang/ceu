@@ -12,6 +12,14 @@ function pred_sort (v1, v2)
     return (v1.len or TP.types.word.len) > (v2.len or TP.types.word.len)
 end
 
+function CUR (me, id)
+    if id then
+        return '(('..TP.toc(CLS().tp)..'*)_STK_ORG)->'..id
+    else
+        return '(('..TP.toc(CLS().tp)..'*)_STK_ORG)'
+    end
+end
+
 F = {
     Host = function (me)
         local pre, code = unpack(me)
@@ -449,10 +457,19 @@ typedef union CEU_]]..me.id..[[_delayed {
 
         DCL.struct = DCL.struct..SPC()..'struct { /* BLOCK ln='..me.ln[2]..' */\n'
 
-        if me.fins then
-            for i=1, #me.fins do
-            DCL.struct = DCL.struct .. SPC()
-                            ..'u8 __fin_'..me.n..'_'..i..': 1;\n'
+        if DCL.tag == 'Dcl_cls' then
+            for _, var in ipairs(me.vars) do
+                if var.trl_orgs then
+                    -- ORG_STATS (shared for sequential), ORG_POOL (unique for each)
+                    var.trl_orgs.val = CUR(me, '__lnks_'..me.n..'_'..var.trl_orgs[1])
+                end
+            end
+            if me.fins then
+                for i, fin in ipairs(me.fins) do
+                    fin.val = CUR(me, '__fin_'..me.n..'_'..i)
+                    DCL.struct = DCL.struct .. SPC()
+                                ..'u8 __fin_'..me.n..'_'..i..': 1;\n'
+                end
             end
         end
 
