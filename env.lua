@@ -837,7 +837,7 @@ error'oi'
         local blki = AST.asr(me.__par,'Stmts', 2,'Stmts', 1,'Dcl_cls',
                                     3,'Block', 1,'Stmts', 1,'BlockI')
 
-        local tp = AST.asr(blki,'', 1,'Stmts', 3,'Dcl_var', 2,'Type')
+        local tp = AST.asr(blki,'', 1,'Stmts', 3,'Dcl_pool', 2,'Type')
         tp[1] = pool.tp.id
 
         AST.asr(blki,'', 1,'Stmts', 1,'Dcl_pool', 2,'Type')

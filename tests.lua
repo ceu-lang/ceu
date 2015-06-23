@@ -45148,7 +45148,7 @@ escape 1;
     adt = 'line 10 : invalid recursive data declaration : variable "l" must be a pointer or pool',
 }
 
--- ADTS / RECURSE
+-- ADTS / RECURSE / TRAVERSE
 
 -- crashes with org->ret
 Test { [[
@@ -47755,6 +47755,46 @@ end
 escape ret;
 ]],
     run = { ['~>5s']=4 },
+}
+
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[10] list;
+
+loop i in 10 do
+    traverse l in list do
+        if l:NIL then
+            list = new List.CONS(i, List.NIL());
+        else/if l:CONS then
+            if l:CONS.tail:NIL then
+                l:CONS.tail = new List.CONS(i, List.NIL());
+            else
+                traverse l:CONS.tail;
+            end
+        end
+    end
+end
+
+var int sum = 0;
+
+traverse l in list do
+    if l:CONS then
+        sum = sum + l:CONS.head;
+        traverse l:CONS.tail;
+    end
+end
+
+escape sum;
+]],
+    run = 45,
 }
 
 -- ADTS ALIASING

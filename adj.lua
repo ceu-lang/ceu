@@ -398,10 +398,10 @@ me.blk_body = me.blk_body or blk_body
         --  end;
         --      ... becomes ...
         --  class Body with
-        --      pool Body[?]& loops;
-        --      var  Body*    parent;       // TODO: should be "Body*?" (opt)
-        --      var  <adt_t>* <n>;
-        --      var  Outer&   out;
+        --      pool Body[?]&   loops;
+        --      var  Body*      parent;       // TODO: should be "Body*?" (opt)
+        --      var  <adt_t>*[] <n>;
+        --      var  Outer&     out;
         --      <interface>
         --  do
         --      par/or do
@@ -430,7 +430,7 @@ me.blk_body = me.blk_body or blk_body
         -- unpacked below
         ifc = ifc or node('Stmts',me.ln)
 
-        local tp = node('Type', me.ln, 'TODO-ADT-TYPE', 1, false, false)
+        local tp = node('Type', me.ln, 'TODO-ADT-TYPE', 1, true, false)
         local cls = node('Dcl_cls', me.ln, false, 'Body_'..me.n,
                         node('BlockI', me.ln,
                             node('Stmts', me.ln,
@@ -441,7 +441,7 @@ me.blk_body = me.blk_body or blk_body
                                     node('Type', me.ln, 'Body_'..me.n, 1, false, false),
                                         -- TODO: should be opt type
                                     '_parent'),
-                                node('Dcl_var', me.ln, 'var',
+                                node('_Dcl_pool', me.ln, 'pool',
                                     tp,
                                     to[1]),
                                 node('Dcl_var', me.ln, 'var',
@@ -571,7 +571,7 @@ me.blk_body = me.blk_body or blk_body
                             node('NUMBER', me.ln, '0'))
         end
 
-        local to_id  = AST.asr(cls,'Dcl_cls', 3,'BlockI', 1,'Stmts', 3,'Dcl_var')[3]
+        local to_id  = AST.asr(cls,'Dcl_cls', 3,'BlockI', 1,'Stmts', 3,'Dcl_pool')[3]
         local cls_id = cls[2]
 
         local dcl = node('Dcl_var', me.ln, 'var',
