@@ -377,7 +377,7 @@ F = {
 
         if AST.par(me,'BlockI') then
             CLS().has_pre = true   -- code for pre (before constr)
-            ASR(set == 'exp',
+            ASR(set=='exp' or set=='adt-constr',
                 me, 'not permitted inside an interface')
         end
 

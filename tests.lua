@@ -42897,6 +42897,20 @@ escape 1;
     env = 'top-level identifier "T" already taken',
 }
 
+Test { [[
+data D with
+    var int x;
+end
+class C with
+    var D d = D(200);
+do
+end
+var C c;
+escape c.d.x;
+]],
+    run = 200,
+}
+
 -- tags inside union data types must be all uppercase
 Test { [[
 data Opt with

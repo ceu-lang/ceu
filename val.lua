@@ -28,6 +28,7 @@ end
 
 F =
 {
+    -- TODO: rewrite it all
     -- called by Var, Field, Dcl_var
     __var = function (me, VAL, CTX)
         local cls = (me.org and me.org.cls) or CLS()
@@ -189,6 +190,7 @@ F =
         local var = me.var
         local VAL
 
+        -- TODO: move to __var
         if CTX.adt_pool then
             VAL = CUR(me, '_'..var.id_)
         elseif var.isTmp then
