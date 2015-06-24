@@ -41851,7 +41851,7 @@ end
 
 escape 1;
 ]],
-    run = 1,
+    fin = 'line 17 : unsafe access to pointer "p" across `await´',
 }
 
 Test { [[
