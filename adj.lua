@@ -404,13 +404,7 @@ me.blk_body = me.blk_body or blk_body
         --      var  Outer&     out;
         --      <interface>
         --  do
-        --      par/or do
-        --          if this.parent != null then     // TODO: != (vs ==)
-        --              await *this._parent;        // workaround across-await
-        --          else                            // IF analysis
-        --              await FOREVER;
-        --          end
-        --      with
+        --      watching *this.parent do
         --          <body>
         --              traverse <exp>;
         --      end
@@ -418,9 +412,9 @@ me.blk_body = me.blk_body or blk_body
         --  end
         --  pool Body[?] loops;
         --  ret = do Body with
-        --      this.loops = loops;
-        --      this.parent = null;
-        --      this.<n>   = <n>;
+        --      this.loops  = loops;
+        --      this.parent = &this;    // watch myself
+        --      this.<n>    = <n>;
         --  end;
         --]]
 
@@ -450,26 +444,11 @@ me.blk_body = me.blk_body or blk_body
                                 unpack(ifc))),
                         node('Block', me.ln,
                             node('Stmts', me.ln,
-                                node('ParOr', me.ln,
-                                    node('Block', me.ln,
-                                        node('Stmts', me.ln,
-                                            node('If', me.ln,
-                                                node('Op2_!=', me.ln, '!=',
-                                                    node('Op2_.', me.ln, '.',
-                                                        node('This', me.ln, true),
-                                                        '_parent'),
-                                                    node('NULL', me.ln)),
-                                                node('Block', me.ln,
-                                                    node('Stmts', me.ln,
-                                                        node('Await', me.ln,
-                                                            node('Op1_*', me.ln, '*',
-                                                                node('Var', 
-                                                            me.ln, '_parent')),
-                                                            false,
-                                                            false))),
-                                                node('Block', me.ln,
-                                                    node('Stmts', me.ln,
-                                                    node('AwaitN', me.ln)))))),
+                                node('_Watching', me.ln,
+                                    false,
+                                    node('Op1_*', me.ln, '*',
+                                        node('Var', me.ln, '_parent')),
+                                    false,
                                     node('Block', me.ln,
                                         node('Stmts', me.ln,
                                             body))),
@@ -495,7 +474,8 @@ me.blk_body = me.blk_body or blk_body
                                             node('This', me.ln, true),
                                             '_parent'),
                                         '=', 'exp',
-                                        node('NULL', me.ln)),
+                                        node('Op1_&', me.ln, '&',
+                                            node('This', me.ln, true))),
                                     node('_Set', me.ln,
                                         node('Op2_.', me.ln, '.',
                                             node('This', me.ln, true),

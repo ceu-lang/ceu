@@ -865,6 +865,7 @@ error'oi'
             stmts[2] = AST.node('Nothing', me.ln)       -- remove OPT-1
             stmts[4] = AST.node('Nothing', me.ln)       -- remove OPT-3
             me.__env_watching = tp.id   -- see props.lua
+            dot.__env_watching = true   -- see adt.lua
         else
             stmts[3] = AST.node('Nothing', me.ln)       -- remove OPT-2
             stmts[4] = AST.node('Nothing', me.ln)       -- remove OPT-3
@@ -997,6 +998,13 @@ error'oi'
         ASR(me.cls, me, 'undeclared type `'..id..'´')
         ASR(not me.cls.is_ifc, me, 'cannot instantiate an interface')
         me.tp = TP.fromstr(id..'*')  -- class id
+
+        if me.cls == CLS() then
+            -- Recursive class:
+            --  Implies an "await" in the beginning for "across await" checks
+            --  (see fin.lua).
+            me.cls.is_rec = true
+        end
     end,
 
     Dcl_constr_pre = function (me)

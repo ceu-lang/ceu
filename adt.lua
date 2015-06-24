@@ -92,6 +92,39 @@ F = {
             ASR(prefix, me, 'cannot assign parent to child')
         end
     end,
+
+    ['Op2_.'] = function (me)
+        local op, e1, id = unpack(me)
+
+        local adt = ENV.v_or_ref(e1.tp, 'adt')
+        if adt then
+            local ID, op, _ = unpack(adt)
+
+            if op == 'union' then
+                -- [union.TAG]
+                local tag = (me.__par.tag ~= 'Op2_.')
+                if tag then
+                    if id==adt.tags[1] and (not me.__env_watching) then
+                        DBG(me.ln[2], ID, id, adt.tags[1], e1.tag)
+                        for paror in AST.iter('ParOr') do
+                            local var = paror.__adj_watching and
+                                        paror.__adj_watching.lst and
+                                        paror.__adj_watching.lst.var
+                            if var and var==e1.lst.var then
+                                local dot = e1.lst.__par.__par
+                                if dot.tag=='Op2_.' and dot[3]==id then
+                                    ASR(false, me,
+                                        'ineffective use of tag "'..id..
+                                        '" due to enclosing `watching´ ('..
+                                        paror.ln[1]..' : '..paror.ln[2]..')')
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end,
 }
 
 AST.visit(F)

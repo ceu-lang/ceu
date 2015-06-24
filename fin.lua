@@ -49,6 +49,10 @@ end
 F = {
     Dcl_cls_pre = function (me)
         PUSH()
+        if me.is_rec then
+            me.GET = GET()
+            setmetatable(GET(), {__index=function() return me end})
+        end
     end,
     Dcl_cls_pos = function (me)
         POP()
@@ -292,6 +296,25 @@ end
         if type(acc) ~= 'table' then
             GET()[me.var] = 'accessed'
             return  -- no await happened yet
+        end
+
+        -- access in the beginning of recursive class
+        -- check if enclosing par/or is a "watching me.var"
+        -- if so, this access is safe
+        if acc.tag == 'Dcl_cls' then
+            local paror = AST.par(me, 'ParOr')
+            if paror and AST.isParent(paror[1],me) then
+                local var = paror.__adj_watching and paror.__adj_watching.lst
+                                                 and paror.__adj_watching.lst.var
+                if var and var==me.var then
+                    -- sets all accesses to "me.var" in the recursive class
+                    -- table (acc.GET) to point to the "watching"
+                    acc.GET[me.var] = paror
+
+                    -- make this access safe
+                    acc = paror
+                end
+            end
         end
 
         -- possible dangling pointer "me.var" is accessed across await

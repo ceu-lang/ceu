@@ -22,6 +22,7 @@ AST.tag2id = {
     ParAnd  = 'par/and',
     ParEver = 'par',
     Loop    = 'loop',
+    Dcl_cls = 'class',
 }
 
 function AST.isParent (n1, n2)

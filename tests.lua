@@ -29150,6 +29150,94 @@ escape sum;
     tight = 'line 6 : tight loop',
 }
 
+Test { [[
+class Sum with
+    var int* v;
+do
+    await FOREVER;
+end
+
+class Body with
+    pool  Body[]& bodies;
+    var   Sum&    sum;
+do
+    *this.sum.v = *this.sum.v + 1;
+    spawn Body in this.bodies with
+        this.bodies = bodies;
+        this.sum    = sum;
+    end;
+end
+
+var int v = 0;
+var Sum sum with
+    this.v = &v;
+end;
+
+pool Body[7] bodies;
+do Body with
+    this.bodies = bodies;
+    this.sum    = sum;
+end;
+
+escape v;
+]],
+    fin = 'line 11 : unsafe access to pointer "v" across `class´ (tests.lua : 7)',
+}
+Test { [[
+data Tree with
+    tag NIL;
+or
+    tag NODE with
+        var int   v;
+        var Tree* left;
+        var Tree* right;
+    end
+end
+
+pool Tree[3] tree;
+tree = new Tree.NODE(1,
+            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
+            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+
+class Sum with
+    var int* v;
+do
+    await FOREVER;
+end
+
+class Body with
+    pool  Body[]& bodies;
+    var   Tree*   n;
+    var   Sum&    sum;
+do
+    watching n do
+        if n:NODE then
+            *this.sum.v = *this.sum.v + n:NODE.v;
+            spawn Body in this.bodies with
+                this.bodies = bodies;
+                this.n      = n:NODE.left;
+                this.sum    = sum;
+            end;
+        end
+    end
+end
+
+var int v = 0;
+var Sum sum with
+    this.v = &v;
+end;
+
+pool Body[7] bodies;
+do Body with
+    this.bodies = bodies;
+    this.n      = tree;
+    this.sum    = sum;
+end;
+
+escape v;
+]],
+    fin = 'line 29 : unsafe access to pointer "v" across `class´ (tests.lua : 22)',
+}
     -- AWAIT/KILL ORG
 
 Test { [[
@@ -45547,40 +45635,18 @@ list = new List.CONS(1,
             List.CONS(2,
                 List.CONS(3, List.NIL())));
 
-native do
-    int V = 0;
-end
-
-/*
-traverse n in list do
-    _V = _V + 1;
-    if n:CONS then
-        _V = _V + n:CONS.head;
-        traverse n:CONS.tail;
-    end
-end
-*/
-
 class Body with
     pool  Body[]& bodies;
     var   List*   n;
 do
     if n:NIL then
-        _V = _V * 2;
     end
     watching n do
-        _V = _V + 1;
         if n:CONS then
-            _V = _V + n:CONS.head;
-
-            var Body*? tail =
-                spawn Body in this.bodies with
-                    this.bodies = bodies;
-                    this.n      = n:CONS.tail;
-                end;
-            if tail? then
-                await *tail;
-            end
+            spawn Body in this.bodies with
+                this.bodies = bodies;
+                this.n      = n:CONS.tail;
+            end;
         end
     end
 end
@@ -45591,12 +45657,80 @@ do Body with
     this.n      = list;
 end;
 
-escape _V;
+escape 1;
+]],
+    fin = 'line 19 : unsafe access to pointer "n" across `class´ (tests.lua : 15)',
+}
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[3] list;
+list = new List.CONS(1,
+            List.CONS(2,
+                List.CONS(3, List.NIL())));
+
+var int sum = 0;
+
+traverse n in list do
+    if n:NIL then
+        sum = sum * 2;
+    end
+    watching n do
+        if n:CONS then
+            sum = sum + n:CONS.head;
+            traverse n:CONS.tail;
+        end
+    end
+end
+
+escape sum;
 ]],
     wrn = 'line 42 : unbounded recursive spawn',
     _ana = { acc=true },
-    run = 18,
+    run = 12,
 }
+
+
+
+Test { [[
+data Tree with
+    tag NIL;
+or
+    tag NODE with
+        var int   v;
+        var Tree* left;
+        var Tree* right;
+    end
+end
+
+pool Tree[3] tree;
+tree = new Tree.NODE(1,
+            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
+            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+
+var int  v = 0;
+var int* ptr = &v;
+
+traverse t in tree do
+    *ptr = *ptr + 1;
+    if t:NODE then
+        traverse t:NODE.left;
+        traverse t:NODE.right;
+    end
+end
+
+escape v;
+]],
+    fin = 'line 20 : unsafe access to pointer "ptr" across `class´',
+}
+
 Test { [[
 data List with
     tag NIL;
@@ -45651,6 +45785,71 @@ do
 end
 
 pool Body[3] bodies;
+do Body with
+    this.bodies = bodies;
+    this.n      = list;
+end;
+
+escape _V;
+]],
+    fin = 'line 33 : unsafe access to pointer "n" across `class´',
+}
+
+Test { [[
+data List with
+    tag NIL_;
+or
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[4] list;
+list = new List.CONS(1,
+            List.CONS(2,
+                List.CONS(3, List.NIL())));
+
+native do
+    int V = 0;
+end
+
+/*
+traverse n in list do
+    _V = _V + 1;
+    if n:CONS then
+        _V = _V + n:CONS.head;
+        traverse n:CONS.tail;
+    end
+end
+*/
+
+class Body with
+    pool  Body[4]& bodies;
+    var   List*    n;
+do
+    watching n do
+        if n:NIL then
+            _V = _V * 2;
+        else/if n:CONS then
+            _V = _V + 1;
+            _V = _V + n:CONS.head;
+
+            var Body*? tail =
+                spawn Body in this.bodies with
+                    this.bodies = bodies;
+                    this.n      = n:CONS.tail;
+                end;
+            if tail? then
+                await *tail;
+            end
+        end
+    end
+end
+
+pool Body[4] bodies;
 do Body with
     this.bodies = bodies;
     this.n      = list;
@@ -46127,7 +46326,39 @@ end
 
 escape 1;
 ]],
-    _ana = {acc=1},
+    fin = 'line 15 : unsafe access to pointer "p1" across `class´ (tests.lua : 14)',
+}
+Test { [[
+data T with
+    tag NIL;
+or
+    tag NXT with
+        var int v;
+        var T*  nxt;
+    end
+end
+
+pool T[] ts;
+
+native do
+    ##define PTR2REF(x) x
+end
+var void&? p1;
+finalize
+    p1 = _PTR2REF(this);
+with
+    nothing;
+end
+
+traverse t in ts do
+    _assert(&p1 == (void*)this);
+    if t:NXT then
+        traverse t:NXT.nxt;
+    end
+end
+
+escape 1;
+]],
     wrn = 'line 17 : unbounded recursive spawn',
     run = 1,
 }
@@ -46143,10 +46374,18 @@ end
 
 pool T[1] ts;
 
-var void* p1 = (void*)this;
+native do
+    ##define PTR2REF(x) x
+end
+var void&? p1;
+finalize
+    p1 = _PTR2REF(this);
+with
+    nothing;
+end
 
 traverse t in ts do
-    _assert(p1 == (void*)this);
+    _assert(&p1 == (void*)this);
     if t:NXT then
         traverse t:NXT.nxt;
     end
@@ -46154,7 +46393,6 @@ end
 
 escape 1;
 ]],
-    _ana = {acc=1},
     run = 1,
 }
 
@@ -46170,7 +46408,15 @@ end
 
 pool T[] ts;
 
-var void* p1 = (void*)this;
+native do
+    ##define PTR2REF(x) x
+end
+var void&? p1;
+finalize
+    p1 = _PTR2REF(this);
+with
+    nothing;
+end
 
 var int v2 = 2;
 var int v3 = 3;
@@ -46180,7 +46426,7 @@ class X with
 do end
 
 traverse t in ts do
-    _assert(p1 == (void*)this);
+    _assert(&p1 == (void*)this);
     var int v1 = 1;
     var int v3 = 0;
     var X x with
@@ -46196,7 +46442,6 @@ end
 
 escape 1;
 ]],
-    _ana = {acc=2},
     wrn = 'line 17 : unbounded recursive spawn',
     run = 1,
 }
@@ -46212,7 +46457,15 @@ end
 
 pool T[1] ts;
 
-var void* p1 = (void*)this;
+native do
+    ##define PTR2REF(x) x
+end
+var void&? p1;
+finalize
+    p1 = _PTR2REF(this);
+with
+    nothing;
+end
 
 var int v2 = 2;
 var int v3 = 3;
@@ -46222,7 +46475,7 @@ class X with
 do end
 
 traverse t in ts do
-    _assert(p1 == (void*)this);
+    _assert(&p1 == (void*)this);
     var int v1 = 1;
     var int v3 = 0;
     var X x with
@@ -46238,7 +46491,6 @@ end
 
 escape 1;
 ]],
-    _ana = {acc=2},
     run = 1,
 }
 
@@ -46485,6 +46737,47 @@ end
 
 escape ret;
 ]],
+    adt = 'line 23 : ineffective use of tag "EMPTY" due to enclosing `watching´',
+}
+Test { [[
+data Widget with
+    tag EMPTY;
+or
+    tag SEQ with
+        var Widget* w1;
+        var Widget* w2;
+    end
+end
+
+pool Widget[] widgets;
+widgets = new Widget.SEQ(
+            Widget.EMPTY(),
+            Widget.EMPTY());
+
+var int ret = 0;
+
+traverse widget in widgets with
+    var int param = 1;
+do
+    ret = ret + param;
+
+    watching widget do
+        if widget:SEQ then
+            traverse widget:SEQ.w1 with
+                this.param = param + 1;
+            end;
+            traverse widget:SEQ.w2 with
+                this.param = param + 1;
+            end;
+
+        else
+            _ceu_out_assert(0, "not implemented");
+        end
+    end
+end
+
+escape ret;
+]],
     _ana = { acc=true },
     wrn = 'line 27/30 : unbounded recursive spawn',
     run = 5,
@@ -46512,10 +46805,7 @@ do
     ret = ret + param;
 
     watching widget do
-        if widget:EMPTY then
-            nothing;
-
-        else/if widget:SEQ then
+        if widget:SEQ then
             traverse widget:SEQ.w1 with
                 this.param = param + 1;
             end;
@@ -46559,10 +46849,7 @@ do
     ret = ret + param;
 
     watching widget do
-        if widget:EMPTY then
-            nothing;
-
-        else/if widget:SEQ then
+        if widget:SEQ then
             traverse widget:SEQ.w1 with
                 this.param = param + 1;
             end;
@@ -46605,10 +46892,7 @@ do
     ret = ret + param;
 
     watching widget do
-        if widget:EMPTY then
-            nothing;
-
-        else/if widget:SEQ then
+        if widget:SEQ then
             traverse widget:SEQ.w1 with
                 this.param = param + 1;
             end;
@@ -46784,6 +47068,8 @@ Test { [[
 input void OS_START;
 
 data Widget with
+    tag NIL_;
+or
     tag NIL;
 or
     tag EMPTY;
@@ -47223,10 +47509,7 @@ par/or do
 with
     traverse cmd in cmds do
         watching cmd do
-            if cmd:NOTHING then
-                nothing;
-
-            else/if cmd:FORWARD then
+            if cmd:FORWARD then
                 await FOREVER;
 
             else/if cmd:SEQUENCE then
@@ -47273,10 +47556,7 @@ par/or do
 with
     traverse cmd in cmds do
         watching cmd do
-            if cmd:NOTHING then
-                nothing;
-
-            else/if cmd:FORWARD then
+            if cmd:FORWARD then
                 await FOREVER;
 
             else/if cmd:SEQUENCE then
@@ -47321,10 +47601,7 @@ end
 
 traverse cmd in cmds do
     watching cmd do
-        if cmd:NOTHING then
-            nothing;
-
-        else/if cmd:LEFT then
+        if cmd:LEFT then
             do TurtleTurn;
 
         else/if cmd:REPEAT then
@@ -47477,10 +47754,7 @@ with
 
     traverse cmd in cmds do
         watching cmd do
-            if cmd:NOTHING then
-                nothing;
-
-            else/if cmd:AWAIT then
+            if cmd:AWAIT then
                 await (cmd:AWAIT.ms) ms;
 
             else/if cmd:RIGHT or cmd:LEFT then
@@ -47566,10 +47840,7 @@ var int ret = 0;
 
 traverse cmd in cmds do
     watching cmd do
-        if cmd:NOTHING then
-            nothing;
-
-        else/if cmd:AWAIT then
+        if cmd:AWAIT then
             await (cmd:AWAIT.ms) ms;
             ret = ret + 1;
 
@@ -47638,10 +47909,7 @@ var int ret = 0;
 
 traverse cmd in cmds do
     watching cmd do
-        if cmd:NOTHING then
-            nothing;
-
-        else/if cmd:AWAIT then
+        if cmd:AWAIT then
             await (cmd:AWAIT.ms) ms;
             ret = ret + 1;
 
@@ -47797,6 +48065,193 @@ escape sum;
     run = 45,
 }
 
+-- innefective NIL inside watching
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[3] list;
+list = new List.CONS(1,
+            List.CONS(2,
+                List.CONS(3, List.NIL())));
+
+native do
+    int V = 0;
+end
+
+class Body with
+    pool  Body[]& bodies;
+    var   List*   n;
+do
+    watching n do
+        if n:NIL then
+            _V = _V * 2;
+        else/if n:CONS then
+            _V = _V + 1;
+            _V = _V + n:CONS.head;
+
+            var Body*? tail =
+                spawn Body in this.bodies with
+                    this.bodies = bodies;
+                    this.n      = n:CONS.tail;
+                end;
+            if tail? then
+                await *tail;
+            end
+        end
+    end
+end
+
+pool Body[3] bodies;
+do Body with
+    this.bodies = bodies;
+    this.n      = list;
+end;
+
+escape _V;
+]],
+    adt = 'line 24 : ineffective use of tag "NIL" due to enclosing `watching´',
+}
+Test { [[
+data List with
+    tag NIL_;
+or
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[4] list;
+list = new List.CONS(1,
+            List.CONS(2,
+                List.CONS(3, List.NIL())));
+
+native do
+    int V = 0;
+end
+
+class Body with
+    pool  Body[]& bodies;
+    var   List*   n;
+do
+    watching n do
+        if n:NIL then
+            _V = _V * 2;
+        else/if n:CONS then
+            _V = _V + 1;
+            _V = _V + n:CONS.head;
+
+            var Body*? tail =
+                spawn Body in this.bodies with
+                    this.bodies = bodies;
+                    this.n      = n:CONS.tail;
+                end;
+            if tail? then
+                await *tail;
+            end
+        end
+    end
+end
+
+pool Body[4] bodies;
+do Body with
+    this.bodies = bodies;
+    this.n      = list;
+end;
+
+escape _V;
+]],
+    wrn = 'line 42 : unbounded recursive spawn',
+    _ana = { acc=true },
+    run = 18,
+}
+-- innefective NIL inside watching
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[3] list;
+list = new List.CONS(1,
+            List.CONS(2,
+                List.CONS(3, List.NIL())));
+
+native do
+    int V = 0;
+end
+
+traverse n in list do
+    _V = _V + 1;
+    watching n do
+        if n:NIL then
+            _V = _V * 2;
+        else/if n:CONS then
+            _V = _V + n:CONS.head;
+            traverse n:CONS.tail;
+        end
+    end
+    await 1s;
+end
+
+escape _V;
+]],
+    adt = 'line 22 : ineffective use of tag "NIL" due to enclosing `watching´',
+}
+
+Test { [[
+data List with
+    tag NIL_;
+or
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[4] list;
+list = new List.CONS(1,
+            List.CONS(2,
+                List.CONS(3, List.NIL())));
+
+native do
+    int V = 0;
+end
+
+traverse n in list do
+    _V = _V + 1;
+    watching n do
+        if n:NIL then
+            _V = _V * 2;
+        else/if n:CONS then
+            _V = _V + n:CONS.head;
+            traverse n:CONS.tail;
+        end
+    end
+    await 1s;
+end
+
+escape _V;
+]],
+    wrn = 'line 42 : unbounded recursive spawn',
+    _ana = { acc=true },
+    run = { ['~>10s']=20 },
+}
 -- ADTS ALIASING
 
 Test { [[
@@ -48442,6 +48897,7 @@ escape sum;
 ]],
     run = 6,
 }
+
 ]=]
 
 -- TODO: continue ADT implementation
