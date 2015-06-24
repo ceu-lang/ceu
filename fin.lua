@@ -51,7 +51,7 @@ F = {
         PUSH()
         if me.is_rec then
             me.GET = GET()
-            setmetatable(GET(), {__index=function() return me end})
+            setmetatable(me.GET, {__index=function() return me end})
         end
     end,
     Dcl_cls_pos = function (me)
@@ -291,7 +291,33 @@ end
             return  -- o'=await o until o==o'
         end
 
+        local cls = CLS()
         local acc = GET()[me.var]
+
+        if acc and acc.tag=='Dcl_cls' and
+            (not AST.isParent(cls.blk_body,me.var.blk))
+        then
+            -- Or access to pointer in recursive class:
+            --      var t* ptr;
+            --      class Rec with
+            --          var t* ptr;
+            --      do
+            --          ptr = x;
+            --      end
+            acc = acc
+
+        elseif not AST.isParent(CLS(),me.var.blk) then
+            -- Access to pointer defined in an outer organism:
+            --      this.out.ptr = x;
+            acc = GET()['_']
+                -- check any await, even with no previous access to "ptr"
+
+        else
+            -- Across-await access to pointer defined in any lexical scope above:
+            --      await E;
+            --      ptr = x;
+            acc = acc
+        end
 
         if type(acc) ~= 'table' then
             GET()[me.var] = 'accessed'
@@ -302,17 +328,20 @@ end
         -- check if enclosing par/or is a "watching me.var"
         -- if so, this access is safe
         if acc.tag == 'Dcl_cls' then
-            local paror = AST.par(me, 'ParOr')
-            if paror and AST.isParent(paror[1],me) then
-                local var = paror.__adj_watching and paror.__adj_watching.lst
-                                                 and paror.__adj_watching.lst.var
-                if var and var==me.var then
-                    -- sets all accesses to "me.var" in the recursive class
-                    -- table (acc.GET) to point to the "watching"
-                    acc.GET[me.var] = paror
+            for paror in AST.iter('ParOr') do
+                if paror and AST.isParent(paror[1],me) then
+                    local var = paror.__adj_watching and 
+                                                     paror.__adj_watching.lst
+                                                     and paror.__adj_watching.lst.var
+                    if var and var==me.var then
+                        -- sets all accesses to "me.var" in the recursive class
+                        -- table (acc.GET) to point to the "watching"
+                        -- (so that they become child of it)
+                        acc.GET[me.var] = paror
 
-                    -- make this access safe
-                    acc = paror
+                        -- make this access safe
+                        acc = paror
+                    end
                 end
             end
         end
@@ -322,10 +351,10 @@ end
         if (ENV.clss[me.tp.id] or ENV.adts[me.tp.id]) then
             -- pointer to org: check if it is enclosed by "watching me.var"
             -- since before the first await
-            for n in AST.iter('ParOr') do
-                local var = n.__adj_watching and n.__adj_watching.lst
-                                             and n.__adj_watching.lst.var
-                if var==me.var and AST.isParent(n,acc) then
+            for paror in AST.iter('ParOr') do
+                local var = paror.__adj_watching and paror.__adj_watching.lst
+                                                 and paror.__adj_watching.lst.var
+                if var==me.var and AST.isParent(paror,acc) then
                     return      -- ok, I'm safely watching "me.var"
                 end
             end
@@ -346,6 +375,7 @@ end
                 end
             end
         end
+        GET()['_'] = me
     end,
     EmitInt = '__await',
     Spawn   = '__await',

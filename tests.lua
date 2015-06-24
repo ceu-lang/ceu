@@ -48252,6 +48252,72 @@ escape _V;
     _ana = { acc=true },
     run = { ['~>10s']=20 },
 }
+
+Test { [[
+data L with
+    tag NIL;
+or
+    tag VAL with
+        var L* l;
+    end
+end
+
+pool L[] ls;
+
+var int v = 10;
+var int* p = &v;
+
+traverse l in ls do
+    *p = 1;
+    if l:VAL then
+        traverse l:VAL.l;
+    end
+end
+
+escape v;
+]],
+    fin = 'line 15 : unsafe access to pointer "p" across `class´',
+}
+
+Test { [[
+class A with
+    var int v = 10;
+    var int* p;
+do
+    this.p = &v;
+end
+
+class B with
+    var A& a;
+do
+    escape *(a.p);
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class A with
+    var int v = 10;
+    var int* p;
+do
+    this.p = &v;
+end
+
+class B with
+    var A& a;
+do
+    await 1s;
+    escape *(a.p);
+end
+
+escape 1;
+]],
+    fin = 'line 12 : unsafe access to pointer "p" across `await´',
+}
+
 -- ADTS ALIASING
 
 Test { [[
