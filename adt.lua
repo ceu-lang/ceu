@@ -105,7 +105,6 @@ F = {
                 local tag = (me.__par.tag ~= 'Op2_.')
                 if tag then
                     if id==adt.tags[1] and (not me.__env_watching) then
-                        DBG(me.ln[2], ID, id, adt.tags[1], e1.tag)
                         for paror in AST.iter('ParOr') do
                             local var = paror.__adj_watching and
                                         paror.__adj_watching.lst and
