@@ -459,7 +459,7 @@ me.blk_body = me.blk_body or blk_body
         local pool = node('Dcl_pool', me.ln, 'pool',
                         node('Type', me.ln, 'Body_'..me.n, 0, true, false),
                         '_pool_'..me.n)
-        local doorg = node('DoOrg', me.ln, 'Body_'..me.n,
+        local doorg = node('_DoOrg', me.ln, 'Body_'..me.n,
                         node('Dcl_constr', me.ln,
                             node('Block', me.ln,
                                 node('Stmts', me.ln,
@@ -717,7 +717,7 @@ me.blk_body = me.blk_body or blk_body
 
 -- DoOrg ------------------------------------------------------------
 
-    DoOrg_pre = function (me, to)
+    _DoOrg_pre = function (me, to)
         --[[
         --  x = do T ... (handled on _Set_pre)
         --
@@ -1394,7 +1394,7 @@ me.blk_body = me.blk_body or blk_body
             return node('Set', me.ln, op, tag, fr, to)
 
         elseif tag == 'do-org' then
-            return F.DoOrg_pre(fr, to)
+            return F._DoOrg_pre(fr, to)
 
         elseif tag == 'lua' then
             return node('Set', me.ln, op, tag, fr, to)

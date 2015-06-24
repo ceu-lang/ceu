@@ -186,7 +186,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
              --+ V'Call'
              + V'_Set'
              + V'Spawn'    + V'Kill'
-             + V'DoOrg'
+             + V'_DoOrg'
              + V'Nothing'
              + V'RawStmt'
              + V'_TraverseRec'
@@ -221,7 +221,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
               + Cc'emit-ext'   * (V'EmitExt' + K'('*V'EmitExt'*EK')')
               + Cc'spawn'      * V'Spawn'
               + Cc'adt-constr' * V'Adt_constr_root'
-              + Cc'do-org'     * V'DoOrg'
+              + Cc'do-org'     * V'_DoOrg'
               + Cc'block'      * V'__SetBlock'
               + Cc'exp'        * V'__Exp'
               + Cc'lua'        * V'_LuaExp'
@@ -238,8 +238,8 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , Spawn = KEY'spawn' * EV'__ID_cls' * (KEY'in'*EV'__Exp' + Cc(false))
             * (EKEY'with'*V'Dcl_constr'* EKEY'end' + Cc(false))
 
-    , DoOrg = KEY'do' * EV'__ID_cls'
-            * (EKEY'with'*V'Dcl_constr'* EKEY'end' + Cc(false))
+    , _DoOrg = KEY'do' * EV'__ID_cls'
+             * (EKEY'with'*V'Dcl_constr'* EKEY'end' + Cc(false))
 
 
     , CallStmt = m.Cmt(V'__Exp',
@@ -497,6 +497,7 @@ end
     , __ID_adt = -KEYS * CK(m.R'AZ'*Alphanum^0)
     , __ID_tag = -KEYS * CK(m.R'AZ'*ALPHANUM^0)
 
+-- TODO: ([*,[],&,?])^0
     , Type = V'__ID_type'
            * (P'*'^0 / function (s)
                         return string.len(s)
