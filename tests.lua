@@ -43303,8 +43303,7 @@ or
         var List* tail;
     end
 end
-pool List[10] lll;
-lll = new List.CONS(1, List.NIL());
+pool List[10] lll = new List.CONS(1, List.NIL());
 escape lll:CONS.head;
 ]],
     run = 1,
@@ -43337,13 +43336,12 @@ or
     end
 end
 
-pool Stack[] xxx;
-xxx = new Stack.NONEMPTY(
-        Stack.NONEMPTY(xxx));
+pool Stack[] xxx = new Stack.NONEMPTY(
+                    Stack.NONEMPTY(xxx));
 
 escape 1;
 ]],
-    env = 'line 11 : invalid constructor : recursive field "NONEMPTY" must be new data',
+    env = 'line 10 : invalid constructor : recursive field "NONEMPTY" must be new data',
 }
 
 Test { [[
@@ -43407,17 +43405,16 @@ or
     end
 end
 
-pool Grid[5] g;
-g = new Grid.SPLIT(
-            Split.HORIZONTAL(),
-            Grid.SPLIT(
-                Split.VERTICAL(),
-                Grid.NIL(),
-                Grid.NIL()));
+pool Grid[5] g = new Grid.SPLIT(
+                    Split.HORIZONTAL(),
+                    Grid.SPLIT(
+                        Split.VERTICAL(),
+                        Grid.NIL(),
+                        Grid.NIL()));
 
 escape 1;
 ]],
-    env = 'line 18 : arity mismatch',
+    env = 'line 17 : arity mismatch',
 }
 
 Test { [[
@@ -43468,11 +43465,10 @@ or
     end
 end
 
-pool Grid[] g;
-g = new Grid.SPLIT(
-            Split.HORIZONTAL(),
-            Grid.NIL(),
-            Grid.NIL());
+pool Grid[] g = new Grid.SPLIT(
+                    Split.HORIZONTAL(),
+                    Grid.NIL(),
+                    Grid.NIL());
 
 escape 1;
 ]],
@@ -43495,24 +43491,22 @@ var Opt  o1 = Opt.NIL();        /* unions, explicit tag */
 var Opt  o2 = Opt.PTR(&p1);
 pool List[] l1;
 l1 = new List.NIL();       /* recursive union */
-pool List[] l2;
-l2 = new List.CONS(1, l1);
+pool List[] l2 = new List.CONS(1, l1);
 escape 1;
 ]],
-    env = 'line 57 : invalid constructor : recursive field "CONS" must be new data',
+    env = 'line 56 : invalid constructor : recursive field "CONS" must be new data',
     -- TODO-ADT-REC-STATIC-CONSTRS
     --run = 1,
 }
 
 -- recursive fields are pointers
 Test { DATA..[[
-pool List[] l1;
-l1 = new List.NIL();
+pool List[] l1 = new List.NIL();
 pool List[] l2;
 l2 = new List.CONS(1, l1);     /* should be &l1 */
 escape 1;
 ]],
-    env = 'line 54 : invalid constructor : recursive field "CONS" must be new data',
+    env = 'line 53 : invalid constructor : recursive field "CONS" must be new data',
 }
 
 -- constructors must specify the ADT identifier
@@ -43525,11 +43519,10 @@ escape 1;
     --run = 1,
 }
 Test { DATA..[[
-pool List[] l1;
-l1 = new NIL();    /* vs List.NIL() */
+pool List[] l1 = new NIL();    /* vs List.NIL() */
 escape 1;
 ]],
-    env = 'line 52 : data "NIL" is not declared',
+    env = 'line 51 : data "NIL" is not declared',
     --run = 1,
 }
 
@@ -43629,8 +43622,7 @@ escape 1;
 
 -- distinction "constructor" vs "tag check"
 Test { DATA..[[
-pool List[] l;
-l = new List.NIL();   /* call syntax: constructor */
+pool List[] l = new List.NIL();   /* call syntax: constructor */
 var bool no_ = l:NIL;     /* no-call syntax: check tag */
 escape no_;
 ]],
@@ -43672,12 +43664,10 @@ Test { DATA..[[
 var Pair p1 = Pair(1,2);
 var Opt  o1 = Opt.NIL();
 var Opt  o2 = Opt.PTR(&p1);
-pool List[] l1;
-l1 = new List.NIL();
+pool List[] l1 = new List.NIL();
 pool List[] l2;
 l2 = new List.CONS(1, List.NIL());
-pool List[] l3;
-l3 = new List.CONS(1, List.CONS(2, List.NIL()));
+pool List[] l3 = new List.CONS(1, List.CONS(2, List.NIL()));
 
 var int ret = 0;                                // 0
 
@@ -43707,8 +43697,7 @@ escape l:CONS.head;         // runtime error
     --run = 1,
 }
 Test { DATA..[[
-pool List[] l;
-l = new List.CONS(2, List.NIL());
+pool List[] l = new List.CONS(2, List.NIL());
 escape l:CONS.head;
 ]],
     run = 2,
@@ -43721,8 +43710,7 @@ var Opt  o1 = Opt.NIL();
 var Opt  o2 = Opt.PTR(&p);
 pool List[] l1;
 l1 = new List.NIL();
-pool List[] l2;
-l2 = new List.CONS(1, List.NIL());
+pool List[] l2 = new List.CONS(1, List.NIL());
 pool List[] l3;
 l3 = new List.CONS(1, List.CONS(2, List.NIL()));
 
@@ -43800,14 +43788,13 @@ escape ret;
 
 -- cannot cross await statements
 Test { DATA..[[
-pool List[] l;
-l = new List.CONS(1, List.NIL());
+pool List[] l = new List.CONS(1, List.NIL());
 var List* p = l:CONS.tail;
 await 1s;
 escape p:CONS.head;
 ]],
     --adt = 'line 52 : cannot mix recursive data sources',
-    fin = 'line 55 : unsafe access to pointer "p" across `await´',
+    fin = 'line 54 : unsafe access to pointer "p" across `await´',
 }
 
 -- COPY / MUTATION
@@ -43820,19 +43807,17 @@ escape p:CONS.head;
 Test { DATA..[[
 pool List[] l1;
 l1 = new List.NIL();
-pool List[] l2;
-l2 = new List.CONS(1, l1);
+pool List[] l2 = new List.CONS(1, l1);
 pool List[] l3;
 l3 = new List.CONS(2, l2);
 escape l3:CONS.head + l3:CONS.tail:CONS.head + l3:CONS.tail:CONS.tail:NIL;
 ]],
     --run = 4,
-    env = 'line 54 : invalid constructor : recursive field "CONS" must be new data',
+    env = 'line 53 : invalid constructor : recursive field "CONS" must be new data',
     -- TODO-ADT-REC-STATIC-CONSTRS
 }
 Test { DATA..[[
-pool List[] l3;
-l3 = new List.CONS(2, List.CONS(1, List.NIL()));
+pool List[] l3 = new List.CONS(2, List.CONS(1, List.NIL()));
 escape l3:CONS.head + l3:CONS.tail:CONS.head + l3:CONS.tail:CONS.tail:NIL;
 ]],
     run = 4,
@@ -43840,13 +43825,12 @@ escape l3:CONS.head + l3:CONS.tail:CONS.head + l3:CONS.tail:CONS.tail:NIL;
 -- breaking a list: 2-1-NIL => 2-NIL
 Test { DATA..[[
 pool List[] l1;
-pool List[] l3;
 l1 = new List.NIL();
-l3 = new List.CONS(2, List.CONS(1, List.NIL()));
+pool List[] l3 = new List.CONS(2, List.CONS(1, List.NIL()));
 l3:CONS.tail = l1;
 escape l3:CONS.head + l3:CONS.tail:NIL;
 ]],
-    adt = 'line 55 : cannot mix recursive data sources',
+    adt = 'line 54 : cannot mix recursive data sources',
     run = 3,
 }
 
@@ -43863,27 +43847,25 @@ escape l1:CONS + (l1:CONS.head==1);
     run = 2,
 }
 Test { DATA..[[
-pool List[] l1, l2;
-l1 = new List.NIL();
-l2 = new List.CONS(1, List.NIL());
+pool List[] l1 = new List.NIL(),
+            l2 = new List.CONS(1, List.NIL());
 l1 = l2;
 escape l1:CONS + (l1:CONS.head==1) + (l1:CONS.tail:CONS.tail:CONS.head==1);
 ]],
-    adt = 'line 54 : cannot mix recursive data sources',
+    adt = 'line 53 : cannot mix recursive data sources',
     run = 3,
 }
 
 -- circular list: 1-2-1-2-...
 Test { DATA..[[
-pool List[] l1, l2;
-l1 = new List.CONS(1, List.NIL());
-l2 = new List.CONS(2, List.NIL());
+pool List[] l1 = new List.CONS(1, List.NIL()),
+            l2 = new List.CONS(2, List.NIL());
 l1:CONS.tail = l2;
 escape (l1:CONS.head==1) + (l1:CONS.tail:CONS.head==2) +
        (l2:CONS.head==2) + (l2:CONS.tail:CONS.head==1) +
        (l1:CONS.tail:CONS.tail:CONS.tail:CONS.head==2);
 ]],
-    adt = 'line 54 : cannot mix recursive data sources',
+    adt = 'line 53 : cannot mix recursive data sources',
     run = 5,
 }
 
@@ -44008,15 +43990,13 @@ escape l:NIL;
     run = 1,
 }
 Test { DATA..[[
-pool List[] l;
-l = new List.CONS(2, List.NIL());
+pool List[] l = new List.CONS(2, List.NIL());
 escape l:CONS.head;
 ]],
     run = 2,
 }
 Test { DATA..[[
-pool List[] l;
-l = new List.CONS(1, List.CONS(2, List.NIL()));
+pool List[] l = new List.CONS(1, List.CONS(2, List.NIL()));
 escape l:CONS.head + l:CONS.tail:CONS.head + l:CONS.tail:CONS.tail:NIL;
 ]],
     run = 4,
@@ -44041,9 +44021,9 @@ escape l:CONS.head;
 -- cannot assign "l" directly (in the pool declaration)
 Test { DATA..[[
 pool List[] l = new List.CONS(2, List.NIL());
-escape l.CONS.head;
+escape l:CONS.head;
 ]],
-    parser = 'line 51 : after `l´ : expected `;´',
+    run = 2,
 }
 -- no dereference
 Test { DATA..[[
@@ -44073,8 +44053,7 @@ escape l.CONS.head;
 --  must appear first in the ADT declaration)
 -- (
 Test { DATA..[[
-pool List[0] l;
-l = new List.CONS(2, List.NIL());
+pool List[0] l = new List.CONS(2, List.NIL());
 escape l:NIL;
 ]],
     run = 1,
@@ -44088,8 +44067,7 @@ escape l:CONS.head;     // runtime error
 }
 -- 2nd allocation fails (1 space)
 Test { DATA..[[
-pool List[1] l;
-l = new List.CONS(2, List.CONS(1, List.NIL()));
+pool List[1] l = new List.CONS(2, List.CONS(1, List.NIL()));
 _assert(l:CONS.tail:NIL);
 escape l:CONS.head;
 ]],
@@ -44097,8 +44075,7 @@ escape l:CONS.head;
 }
 -- 3rd allocation fails (2 space)
 Test { DATA..[[
-pool List[2] l;
-l = new List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));
+pool List[2] l = new List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));
 _assert(l:CONS.tail:CONS.tail:NIL);
 escape l:CONS.head + l:CONS.tail:CONS.head + l:CONS.tail:CONS.tail:NIL;
 ]],
@@ -44146,8 +44123,7 @@ escape ts:NIL;
 -- 1-NIL => 2-NIL
 -- 1-NIL can be safely reclaimed
 Test { DATA..[[
-pool List[1] l;
-l = new List.CONS(1, List.NIL());
+pool List[1] l = new List.CONS(1, List.NIL());
 l = new List.CONS(2, List.NIL());    // this fails (new before free)!
 escape l:CONS.head;
 ]],
@@ -44166,8 +44142,7 @@ escape l:CONS.tail:NIL;
 
 -- 1-2-NIL
 Test { DATA..[[
-pool List[2] l;
-l = new List.CONS(1, List.NIL());
+pool List[2] l = new List.CONS(1, List.NIL());
 l:CONS.tail = new List.CONS(2, List.NIL()); // fails
 escape l:CONS.tail:CONS.head;
 ]],
@@ -44188,8 +44163,7 @@ escape l:CONS.head;
 -- 1-2-3-NIL => 1-2-NIL (3 fails)
 -- 4-5-6-NIL => NIL     (all fail)
 Test { DATA..[[
-pool List[2] l;
-l = new List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));   // 3 fails
+pool List[2] l = new List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));   // 3 fails
 _ceu_out_assert(l:CONS.tail:CONS.tail:NIL, "1");
 l = new List.CONS(4, List.CONS(5, List.CONS(6, List.NIL())));   // 6 fails
 _ceu_out_assert(l:CONS.tail:CONS.tail:NIL, "2");
@@ -44227,8 +44201,7 @@ escape l:CONS.head + l:CONS.tail:CONS.head + (l:CONS.tail:CONS.tail:NIL);
 -- 1-NIL
 -- 1-2-NIL
 Test { DATA..[[
-pool List[2] l;
-l = new List.CONS(1, List.NIL());
+pool List[2] l = new List.CONS(1, List.NIL());
 l:CONS.tail = new List.CONS(2, List.NIL());
 escape l:CONS.head + l:CONS.tail:CONS.head;
 ]],
@@ -44247,8 +44220,7 @@ escape lll:CONS.head;
     run = 2,
 }
 Test { DATA..[[
-pool List[2] lll;
-lll = new List.CONS(1, List.CONS(2, List.NIL()));
+pool List[2] lll = new List.CONS(1, List.CONS(2, List.NIL()));
 lll = lll:CONS.tail;
 lll:CONS.tail = new List.CONS(3, List.NIL());
 escape 1;
@@ -44265,8 +44237,7 @@ escape lll:CONS.head + lll:CONS.tail:CONS.head + lll:CONS.tail:CONS.tail:NIL;
     run = 6,
 }
 Test { DATA..[[
-pool List[2] l;
-l = new List.CONS(1, List.CONS(2, List.NIL()));
+pool List[2] l = new List.CONS(1, List.CONS(2, List.NIL()));
 l = l:CONS.tail;    // parent=child
 l:CONS.tail = new List.CONS(3, List.CONS(4, List.NIL()));    // 4 fails
 escape l:CONS.head + l:CONS.tail:CONS.head + l:CONS.tail:CONS.tail:NIL;
@@ -44800,8 +44771,7 @@ escape l1:CONS.tail:CONS.head;
     adt = 'line 54 : cannot mix recursive data sources',
 }
 Test { DATA..[[
-pool List[] l1;
-l1 = new List.CONS(1, List.NIL());
+pool List[] l1 = new List.CONS(1, List.NIL());
 do
     pool List[] l2;
     l2 = new List.CONS(2, List.NIL());
@@ -44809,18 +44779,17 @@ do
 end
 escape l1:CONS.tail:CONS.head;
 ]],
-    adt = 'line 56 : cannot mix recursive data sources',
+    adt = 'line 55 : cannot mix recursive data sources',
     --fin = 'line 54 : attribution to pointer with greater scope',
 }
 Test { DATA..[[
 pool List[] l1;
 l1 = new List.CONS(1, List.NIL());
-pool List[2] l2;
-l2 = new List.CONS(2, List.NIL());
+pool List[2] l2 = new List.CONS(2, List.NIL());
 l1:CONS.tail = l2;
 escape l1:CONS.tail:CONS.head;
 ]],
-    adt = 'line 55 : cannot mix recursive data sources',
+    adt = 'line 54 : cannot mix recursive data sources',
 }
 Test { DATA..[[
 pool List[2] l1;
@@ -44854,8 +44823,7 @@ _assert(ret == 6);
 l:CONS.tail:CONS.tail = new List.CONS(4, List.NIL());
                                 // 10
 
-pool List[] l3;
-l3 = new List.CONS(3, List.NIL());
+pool List[] l3 = new List.CONS(3, List.NIL());
 l:CONS.tail:CONS.tail = l3;
 _assert(l:CONS.tail:CONS.head == 3);
 _assert(l:CONS.tail:CONS.tail:CONS.head == 4);
@@ -44873,7 +44841,7 @@ l:CONS.tail:CONS.tail:CONS.tail =
 
 escape ret;
 ]],
-    adt = 'line 73 : cannot mix recursive data sources',
+    adt = 'line 72 : cannot mix recursive data sources',
     run = -1,
 }
 
@@ -45057,9 +45025,9 @@ or
     end
 end
 
-pool List[] list;
+pool List[] list
 
-list = new List.CONS(10, List.NIL());
+= new List.CONS(10, List.NIL());
 var List* l = list;
 
 watching *l do
@@ -45086,8 +45054,7 @@ pool List[] list;
 
 list = new List.CONS(10, List.NIL());
 
-pool List[]& lll;
-lll = list;
+pool List[]& lll = list;
 
 escape lll:CONS.head;
 ]],
@@ -45107,8 +45074,7 @@ pool List[] list;
 
 list = new List.CONS(10, List.NIL());
 
-pool List*[] lll;
-lll = list;
+pool List*[] lll = list;
 
 escape lll:CONS.head;
 ]],
@@ -45128,8 +45094,7 @@ end
 pool List[] list;
 
 list = new List.CONS(10, List.NIL());
-pool List*[] l ;
-l = list;
+pool List*[] l = list;
 
 l:CONS.tail = new List.CONS(9, List.NIL());
 l = l:CONS.tail;
@@ -45158,8 +45123,7 @@ end
 pool List[] list;
 
 list = new List.CONS(10, List.NIL());
-pool List*[] l;
-l = list;
+pool List*[] l = list;
 
 l:CONS.tail = new List.CONS(9, List.NIL());
 l = l:CONS.tail;
@@ -45194,8 +45158,7 @@ end
 pool List[10] list;
 
 list = new List.CONS(10, List.NIL());
-pool List*[] lll;
-lll = list;
+pool List*[] lll = list;
 
 lll:CONS.tail = new List.CONS(9, List.NIL());
 lll = lll:CONS.tail;
@@ -45232,11 +45195,8 @@ or
     end
 end
 
-pool List[] list;
-
-list = new List.CONS(10, List.NIL());
-pool List*[] lll;
-lll = list;
+pool List[] list = new List.CONS(10, List.NIL());
+pool List*[] lll = list;
 
 lll:CONS.tail = new List.CONS(9, List.NIL());
 lll = lll:CONS.tail;
@@ -45354,9 +45314,7 @@ or
     end
 end
 
-pool T[] ts;
-
-ts = new T.NXT(10, T.NXT(9, T.NIL()));
+pool T[] ts = new T.NXT(10, T.NXT(9, T.NIL()));
 
 par/or do
     await ts;           // 2. but continuation is aborted
@@ -45587,8 +45545,7 @@ or
     end
 end
 
-pool Tree[3] tree;
-tree = new Tree.NODE(1,
+pool Tree[3] tree = new Tree.NODE(1,
             Tree.NODE(2, Tree.NIL(), Tree.NIL()),
             Tree.NODE(3, Tree.NIL(), Tree.NIL()));
 
@@ -45673,8 +45630,8 @@ or
     end
 end
 
-pool List[3] list;
-list = new List.CONS(1,
+pool List[3] list
+    = new List.CONS(1,
             List.CONS(2,
                 List.CONS(3, List.NIL())));
 
@@ -45714,8 +45671,8 @@ or
     end
 end
 
-pool List[3] list;
-list = new List.CONS(1,
+pool List[3] list
+    = new List.CONS(1,
             List.CONS(2,
                 List.CONS(3, List.NIL())));
 
@@ -45753,8 +45710,8 @@ or
     end
 end
 
-pool Tree[3] tree;
-tree = new Tree.NODE(1,
+pool Tree[3] tree =
+    new Tree.NODE(1,
             Tree.NODE(2, Tree.NIL(), Tree.NIL()),
             Tree.NODE(3, Tree.NIL(), Tree.NIL()));
 
@@ -45850,8 +45807,7 @@ or
     end
 end
 
-pool List[4] list;
-list = new List.CONS(1,
+pool List[4] list = new List.CONS(1,
             List.CONS(2,
                 List.CONS(3, List.NIL())));
 
@@ -45976,8 +45932,7 @@ or
     end
 end
 
-pool List[3] list;
-list = new List.CONS(1,
+pool List[3] list = new List.CONS(1,
             List.CONS(2,
                 List.CONS(3, List.NIL())));
 
@@ -46038,8 +45993,7 @@ or
     end
 end
 
-pool List[3] list;
-list = new List.CONS(1,
+pool List[3] list = new List.CONS(1,
             List.CONS(2,
                 List.CONS(3, List.NIL())));
 
@@ -46110,8 +46064,7 @@ or
     end
 end
 
-pool List[3] list;
-list = new List.CONS(1,
+pool List[3] list = new List.CONS(1,
             List.CONS(2,
                 List.CONS(3, List.NIL())));
 
@@ -46222,8 +46175,7 @@ or
     end
 end
 
-pool Tree[3] tree;
-tree = new Tree.NODE(1,
+pool Tree[3] tree = new Tree.NODE(1,
             Tree.NODE(2, Tree.NIL(), Tree.NIL()),
             Tree.NODE(3, Tree.NIL(), Tree.NIL()));
 
@@ -46256,8 +46208,7 @@ or
     end
 end
 
-pool Tree[3] tree;
-tree = new Tree.NODE(1,
+pool Tree[3] tree = new Tree.NODE(1,
             Tree.NODE(2, Tree.NIL(), Tree.NIL()),
             Tree.NODE(3, Tree.NIL(), Tree.NIL()));
 
@@ -46548,8 +46499,7 @@ or
     end
 end
 
-pool Tree[3] tree;
-tree = new Tree.NODE(1,
+pool Tree[3] tree = new Tree.NODE(1,
             Tree.NODE(2, Tree.NIL(), Tree.NIL()),
             Tree.NODE(3, Tree.NIL(), Tree.NIL()));
 
@@ -46618,8 +46568,7 @@ or
     end
 end
 
-pool Tree[3] tree;
-tree = new Tree.NODE(1,
+pool Tree[3] tree = new Tree.NODE(1,
             Tree.NODE(2, Tree.NIL(), Tree.NIL()),
             Tree.NODE(3, Tree.NIL(), Tree.NIL()));
 
@@ -46696,8 +46645,8 @@ or
     end
 end
 
-pool List[3] list;
-list = new List.CONS(1,
+pool List[3] list
+    = new List.CONS(1,
             List.CONS(2,
                 List.CONS(3, List.NIL())));
 
@@ -46879,8 +46828,8 @@ or
     end
 end
 
-pool Widget[] widgets;
-widgets = new Widget.SEQ(
+pool Widget[] widgets
+    = new Widget.SEQ(
             Widget.EMPTY(),
             Widget.EMPTY());
 
@@ -46922,8 +46871,7 @@ or
     end
 end
 
-pool Widget[10] widgets;
-widgets = new Widget.SEQ(
+pool Widget[10] widgets = new Widget.SEQ(
             Widget.EMPTY(),
             Widget.EMPTY());
 
@@ -46965,8 +46913,7 @@ or
     end
 end
 
-pool List[] l;
-l = new List.CONS(1,
+pool List[] l = new List.CONS(1,
             List.CONS(2,
                 List.CONS(3,
                     List.CONS(4,
@@ -47070,8 +47017,7 @@ end
 par/or do
     await 21s;
 with
-    pool Widget[] widgets;
-    widgets = new Widget.ROW(
+    pool Widget[] widgets = new Widget.ROW(
                     Widget.V(10),
                     Widget.V(20));
 
@@ -47181,8 +47127,7 @@ or
     end
 end
 
-pool List[] l;
-l = new List.CONS(1, List.EMPTY());
+pool List[] l = new List.CONS(1, List.EMPTY());
 
 par/or do
     traverse e in l do
@@ -47293,8 +47238,7 @@ end
 var int ret = 0;
 
 par/or do
-    pool Widget[10] widgets;
-    widgets = new Widget.SEQ(
+    pool Widget[10] widgets = new Widget.SEQ(
                 Widget.EMPTY(),
                 Widget.EMPTY());
 
@@ -47424,8 +47368,7 @@ or
     end
 end
 
-pool Widget[10] widgets;
-widgets = new Widget.SEQ(
+pool Widget[10] widgets = new Widget.SEQ(
             Widget.EMPTY(),
             Widget.EMPTY());
 
@@ -47541,9 +47484,7 @@ or
 end
 
 // TODO: aceitar estatico
-pool Command[] cmds;
-
-cmds = new Command.SEQUENCE(
+pool Command[] cmds = new Command.SEQUENCE(
             Command.FORWARD(100),
             Command.FORWARD(500));
 
@@ -47629,9 +47570,7 @@ or
     end
 end
 
-pool Command[] cmds;
-
-cmds = new Command.REPEAT(
+pool Command[] cmds = new Command.REPEAT(
             Command.LEFT());
 
 native @pure _printf();
@@ -47939,9 +47878,7 @@ or
 end
 
 // TODO: aceitar estatico
-pool Command[] cmds;
-
-cmds = new Command.REPEAT(2,
+pool Command[] cmds = new Command.REPEAT(2,
             Command.SEQUENCE(
                 Command.AWAIT(100),
                 Command.SEQUENCE(
@@ -48036,8 +47973,7 @@ or
     end
 end
 
-pool List[10] ls;
-ls = new List.CONS(1,
+pool List[10] ls = new List.CONS(1,
             List.CONS(2,
                 List.HOLD()));
 
@@ -48422,8 +48358,7 @@ cmds1 = new Command.NEXT(
             Command.NEXT(
                 Command.NOTHING()));
 
-pool Command[]& cmds2;
-cmds2 = cmds1;
+pool Command[]& cmds2 = cmds1;
 
 escape cmds2:NEXT.nxt:NEXT.nxt:NOTHING;
 ]],
@@ -48438,14 +48373,14 @@ or
     end
 end
 
-pool Command[]& cmds2;
-cmds2 = new Command.NEXT(
+pool Command[]& cmds2
+    = new Command.NEXT(
             Command.NEXT(
                 Command.NOTHING()));
 
 escape 1;
 ]],
-    ref = 'line 10 : invalid attribution (not a reference)',
+    ref = 'line 9 : invalid attribution (not a reference)',
     --ref = 'line 10 : reference must be bounded before use',
 }
 
@@ -48459,8 +48394,8 @@ or
 end
 
 pool Command[2] cmds1;
-pool Command[2]& cmds2;
-cmds2 = cmds1;
+pool Command[2]& cmds2
+        = cmds1;
 
 cmds1 = new Command.NEXT(
             Command.NEXT(
@@ -48535,9 +48470,7 @@ or
     end
 end
 
-pool Command[2] cmds1;
-
-cmds1 = new Command.NEXT(Command.NOTHING());
+pool Command[2] cmds1 = new Command.NEXT(Command.NOTHING());
 cmds1 = new Command.NEXT(
                 Command.NEXT(
                     Command.NOTHING()));
@@ -48555,8 +48488,7 @@ or
 end
 
 pool Command[2] cmds1;
-pool Command[2]& cmds2;
-cmds2 = cmds1;
+pool Command[2]& cmds2 = cmds1;
 
 cmds1 = new Command.NEXT(Command.NOTHING());
 cmds2:NEXT.nxt = new Command.NEXT(Command.NOTHING());
@@ -48574,8 +48506,7 @@ or
 end
 
 pool Command[2] cmds1;
-pool Command[2]& cmds2;
-cmds2 = cmds1;
+pool Command[2]& cmds2 = cmds1;
 
 cmds1 = new Command.NEXT(Command.NOTHING());
 cmds2:NEXT.nxt = new Command.NEXT(
@@ -48644,8 +48575,7 @@ end
 
 pool Command[] cmds1;
 
-pool Command[]& cmds2;
-cmds2 = cmds1;
+pool Command[]& cmds2 = cmds1;
 
 cmds1 = new Command.NEXT(
             Command.NEXT(
@@ -48782,8 +48712,7 @@ do
     escape sum;
 end
 
-pool Command[] cmds;
-cmds = new Command.NEXT(
+pool Command[] cmds = new Command.NEXT(
             Command.NEXT(
                 Command.NOTHING()));
 

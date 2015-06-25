@@ -430,11 +430,10 @@ end
     , _Dcl_int  = CKEY'event' * (V'_TupleType_1'+EV'Type') *
                     EV'__ID_var' * (K','*EV'__ID_var')^0
 
-    , _Dcl_pool = CKEY'pool' * EV'Type' * EV'__ID_var' * (K','*EV'__ID_var')^0
-
     -------
 
-    , _Dcl_var = CKEY'var' * EV'Type' *
+    , _Dcl_pool = CKEY'pool' * EV'Type' * V'__dcl_var' * (K','*EV'__dcl_var')^0
+    , _Dcl_var  = CKEY'var'  * EV'Type' *
                  (
                     Cc(true)  * EV'__ID_var' * EKEY'with' * V'Dcl_constr' * EKEY'end'
                  +

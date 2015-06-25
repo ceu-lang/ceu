@@ -1123,8 +1123,17 @@ me.blk_body = me.blk_body or blk_body
         local pre, tp = unpack(me)
         local ret = {}
         local t = { unpack(me,3) }  -- skip "pre","tp"
-        for i=1, #t do
-            ret[#ret+1] = node('Dcl_pool', me.ln, pre, tp, t[i])
+
+        -- id, op, tag, exp
+        for i=1, #t, 4 do
+            ret[#ret+1] = node('Dcl_pool', me.ln, pre, AST.copy(tp), t[i])
+            if t[i+1] then
+                ret[#ret+1] = node('_Set', me.ln,
+                                node('Var', me.ln, t[i]),  -- var
+                                t[i+1],                 -- op
+                                t[i+2],                 -- tag
+                                t[i+3] )                -- exp    (fr)
+            end
         end
         return node('Stmts', me.ln, unpack(ret))
     end,
