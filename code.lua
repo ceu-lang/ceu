@@ -485,7 +485,7 @@ case ]]..me.lbls_cnt.id..[[:;
         me.val = '__ceu_adt_'..me.n
 
         -- CODE-1
-        if not adt.isRec then
+        if not adt.is_rec then
             -- CEU_T t;
             LINE(me, [[
 CEU_]]..id..' '..me.val..[[;
@@ -497,7 +497,7 @@ CEU_]]..id..'* '..me.val..[[;
 ]])
 
             -- base case
-            if adt.isRec and tag==adt.tags[1] then
+            if adt.is_rec and tag==adt.tags[1] then
                 LINE(me,
 me.val..' = &CEU_'..string.upper(id)..[[_BASE;
 ]])
@@ -544,11 +544,11 @@ if (]]..me.val..[[ == NULL) {
         CONC(me, params)
 
         -- CODE-3
-        local op = (adt.isRec and '->' or '.')
+        local op = (adt.is_rec and '->' or '.')
         local blk,_
         if tag then
             -- t->tag = TAG;
-            if not (adt.isRec and tag==adt.tags[1]) then
+            if not (adt.is_rec and tag==adt.tags[1]) then
                 -- not required for base case
                 LINE(me, me.val..op..'tag = CEU_'..string.upper(id)..'_'..tag..';')
             end
@@ -749,7 +749,7 @@ ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'),'..ln
                 end
 
                 -- real pool
-                if adt and adt.isRec then
+                if adt and adt.is_rec then
                     -- create base case NIL and assign to "*l"
                     local tag = unpack( AST.asr(adt,'Dcl_adt', 3,'Dcl_adt_tag') )
                     local tp = 'CEU_'..adt.id
@@ -758,7 +758,7 @@ ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'),'..ln
     ]]..tp..[[* __ceu_adt;
 ]])
                     -- base case: use preallocated static variable
-                    if adt.isRec and tag==adt.tags[1] then
+                    if adt.is_rec and tag==adt.tags[1] then
                         LINE(me, [[
     __ceu_adt = &CEU_]]..string.upper(adt.id)..[[_BASE;
 ]])
@@ -850,7 +850,7 @@ _STK->trl = &_STK_ORG->trls[ ]]..stmts.trails[1]..[[ ];
 
         -- release ADT pool items
         for _, var in ipairs(me.vars) do
-            if var.adt and var.adt.isRec then
+            if var.adt and var.adt.is_rec then
                 local id, op = unpack(var.adt)
                 local static = (type(var.tp.arr)=='table')
                 CASE(me, var.lbl_fin_kill_free)

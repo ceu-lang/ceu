@@ -14,7 +14,7 @@ F = {
                     AST.asr(item, 'TupleTypeItem')
                 end
             end
-            if me.isRec then
+            if me.is_rec then
                 ASR(#base == 0, base,
                     'invalid recursive base case : no parameters allowed')
             end
@@ -23,7 +23,7 @@ F = {
 
     Dcl_var = function (me)
         local adt = ENV.adts[me.var.tp.id]
-        if adt and adt.isRec then
+        if adt and adt.is_rec then
             if me.var.pre == 'var' then
                 -- Pointer to recursive ADT pool declaration:
                 --      var List* l;
@@ -39,7 +39,7 @@ F = {
         local dyn, one  = unpack(me)
         local adt, _    = unpack(one)
         local id_adt, _ = unpack(adt)
-        if ENV.adts[id_adt].isRec then
+        if ENV.adts[id_adt].is_rec then
             ASR(dyn, me,
                 'invalid constructor : recursive data must use `new´')
         end
@@ -53,7 +53,7 @@ F = {
         end
 
         local adt = ENV.adts[to.tp.id]
-        if not (adt and adt.isRec) then
+        if not (adt and adt.is_rec) then
             return  -- ignore non-adt or non-recursive-adt
         end
 

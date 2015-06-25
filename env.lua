@@ -545,8 +545,8 @@ F = {
                             local item = AST.node('TupleTypeItem', me.ln,
                                             false,var_tp,false)
                             if var_tp.id == id_adt then
-                                me.isRec = true
-                                item.isRec = true
+                                me.is_rec = true
+                                item.is_rec = true
                             end
                             tup[#tup+1] = item
                             item.var_id = var_id
@@ -949,13 +949,17 @@ error'oi'
             return  -- checked in adt.lua
 
         elseif ENV.adts[to.tp.id] and (not to.tp.opt) then
--- TODO: should only fall here for recursive ADTS?
-            if to.var and (to.var.tp.ref or to.var.tp.ptr>0) then
-                me[2] = 'adt-alias'
+            if ENV.adts[to.tp.id].is_rec then
+                if to.var and (to.var.tp.ref or to.var.tp.ptr>0) then
+                    me[2] = 'adt-alias'
+                else
+                    me[2] = 'adt-mut'
+                end
+                return  -- checked in adt.lua
             else
-                me[2] = 'adt-mut'
+                -- non-recursive ADT: fallback to normal 'exp' attribution
+                me[2] = 'exp'
             end
-            return  -- checked in adt.lua
         end
 
         local lua_str = false
@@ -1149,7 +1153,7 @@ error'oi'
             --  <...> = new D.REC(ptr)      -- NO!
             --  <...> = new D.REC(D.xxx)    -- OK!
             for i, p in ipairs(params) do
-                if ttag.tup[i] and ttag.tup[i].isRec then
+                if ttag.tup[i] and ttag.tup[i].is_rec then
                     ASR(p.tag == 'Adt_constr_one', me,
                         'invalid constructor : recursive field "'..id_tag..'" must be new data')
                     p.tp.ptr = 1

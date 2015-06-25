@@ -86,7 +86,7 @@ void CEU_]]..id..'_kill (tceu_app* _ceu_app, tceu_go* go, CEU_'..id..[[* me) {
                 kill = kill .. [[
         case CEU_]]..id_tag..[[:
 ]]
-                if me.isRec and tag==me.tags[1] then
+                if me.is_rec and tag==me.tags[1] then
                     kill = kill .. [[
             /* base case */
 ]]
@@ -131,7 +131,7 @@ void CEU_]]..id..'_free_dynamic (tceu_app* _ceu_app, CEU_'..id..[[* me) {
                 free = free .. [[
         case CEU_]]..id_tag..[[:
 ]]
-                if me.isRec and tag==me.tags[1] then
+                if me.is_rec and tag==me.tags[1] then
                     free = free .. [[
             /* base case */
 ]]
@@ -172,7 +172,7 @@ void CEU_]]..id..'_free_static (tceu_app* _ceu_app, CEU_'..id..[[* me, void* poo
                 free = free .. [[
         case CEU_]]..id_tag..[[:
 ]]
-                if me.isRec and tag==me.tags[1] then
+                if me.is_rec and tag==me.tags[1] then
                     free = free .. [[
             /* base case */
 ]]
@@ -235,7 +235,7 @@ void CEU_]]..id..'_free_static (tceu_app* _ceu_app, CEU_'..id..[[* me, void* poo
                                    me.struct..'\n'
 
         -- declare a static BASE instance
-        if me.isRec then
+        if me.is_rec then
             MEM.tops = MEM.tops..[[
 static CEU_]]..id..[[ CEU_]]..string.upper(id)..[[_BASE;
 ]]
@@ -260,7 +260,7 @@ CEU_]]..id..'* '..enum..'_assert (tceu_app* _ceu_app, CEU_'..id..[[* me, char* f
 }
 ]]
 
-        if top.isRec and top.tags[1]==tag then
+        if top.is_rec and top.tags[1]==tag then
             return  -- base case, no free
         end
 

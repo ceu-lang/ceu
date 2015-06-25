@@ -43072,6 +43072,18 @@ escape 1;
 -- MISC
 
 Test { [[
+data SDL_Rect with
+    var int x,y,w,h;
+end
+
+var SDL_Rect rect = SDL_Rect(1,2,3,4);
+var SDL_Rect r = rect;
+
+escape r.x+r.y+r.w+r.h;
+]],
+    run = 10,
+}
+Test { [[
 data Ball with
     var int x, y;
     var int radius;
