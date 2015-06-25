@@ -23880,6 +23880,37 @@ end
 }
 
 Test { [[
+var int sum = 0;
+class C with
+do
+end
+
+par/or do
+    loop do
+        do
+            par/or do
+                await FOREVER;
+            with
+                sum = sum + 1;
+                await 1s;
+            end
+        end
+        do
+            var C c;
+            await 1s;
+        end
+        // go back to do-end first trail
+    end
+with
+    await 2s;
+end
+escape sum;
+]],
+    _ana = {acc=true},
+    run = { ['~>10s']=2 },
+}
+
+Test { [[
 input void OS_START;
 class T with
     event void go;

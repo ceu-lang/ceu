@@ -151,6 +151,10 @@ function CLEAR_AFT (me)
     end
     LINE(me, [[
 case ]]..me.lbl_clr.id..[[:;
+
+/* switch to 1st trail */
+/* TODO: only if not joining with outer prio */
+_STK->trl = &_STK_ORG->trls[ ]] ..me.trails[1]..[[ ];
 ]])
 end
 
@@ -1082,11 +1086,6 @@ case ]]..SET.lbl_cnt.id..[[:;
         if me.has_escape then
             CLEAR_BEF(me)
             CLEAR_AFT(me)
-            LINE(me, [[
-/* switch to 1st trail */
-/* TODO: only if not joining with outer prio */
-_STK->trl = &_STK_ORG->trls[ ]] ..me.trails[1]..[[ ];
-]])
         end
     end,
     Escape = function (me)
@@ -1100,11 +1099,14 @@ _STK->trl = &_STK_ORG->trls[ ]] ..me.trails[1]..[[ ];
             if i > 1 then
                 LINE(me, [[
 {
-    /* mark all trails to start (1st run immediatelly) */
+    /* mark all trails to start (1st runs immediatelly) */
     tceu_trl* trl = &_STK_ORG->trls[ ]]..sub.trails[1]..[[ ];
     trl->evt = CEU_IN__STK;
     trl->lbl = ]]..me.lbls_in[i].id..[[;
     trl->stk = stack_curi(_ceu_go);   /* awake in the same level as we are now */
+#ifdef CEU_DEBUG
+    ceu_out_assert(trl > _STK->trl, "bug found");
+#endif
 }
 ]])
             end
@@ -1144,11 +1146,6 @@ _STK->trl = &_STK_ORG->trls[ ]] ..me.trails[1]..[[ ];
             CASE(me, me.lbl_out)
             CLEAR_BEF(me)
             CLEAR_AFT(me)
-            LINE(me, [[
-/* switch to 1st trail */
-/* TODO: only if not joining with outer prio */
-_STK->trl = &_STK_ORG->trls[ ]]..me.trails[1]..[[ ];
-]])
         end
     end,
 
@@ -1372,13 +1369,6 @@ ceu_pool_iterator_leave(&]]..V(me.var_nxt)..[[);
         then
             CLEAR_BEF(me)
             CLEAR_AFT(me)
-            LINE(me, [[
-/* switch to 1st trail */
-/* TODO: only if not joining with outer prio */
-/*
-_STK->trl = &_STK_ORG->trls[ ]]..me.trails[1]..[[ ];
-*/
-]])
         end
     end,
 
