@@ -43475,6 +43475,48 @@ escape 1;
     run = 1,
 }
 
+Test { [[
+class T with
+    var float& v;
+do
+    await FOREVER;
+end
+
+data D with
+    var float v;
+end
+
+var D d;
+var T _ with
+    this.v = d.v;   // 13
+end;
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+    var float& v;
+do
+    await FOREVER;
+end
+
+data D with
+    var float v;
+end
+
+var T _ with
+    var D d;
+    this.v = d.v;
+end;
+
+escape 1;
+]],
+    ref = 'line 13 : attribution to reference with greater scope',
+}
+
 -- USE DATATYPES DEFINED ABOVE ("DATA")
 
 -- simple test

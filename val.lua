@@ -378,7 +378,7 @@ F =
         return '('..V(e1)..' != CEU_'..string.upper(e1.tp.opt.id)..'_NIL)'
     end,
 
-    ['Op2_.'] = function (me)
+    ['Op2_.'] = function (me, CTX)
         local op, e1, id = unpack(me)
         local VAL
         if me.__env_tag then
@@ -397,6 +397,9 @@ F =
             end
         else
             VAL  = '('..V(e1)..'.'..id..')'
+            if CTX.byref then
+                VAL = '(&'..VAL..')'
+            end
         end
         return VAL
     end,
