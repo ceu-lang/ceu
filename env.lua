@@ -1267,12 +1267,19 @@ error'oi'
             'cannot index a non array')
         ASR(TP.isNumeric(idx.tp), me, 'invalid array index')
 
-        me.tp = TP.copy(arr.tp)
-            if arr.tp.arr then
-                me.tp.arr = false
-            elseif arr.tp.ptr>0 then
-                me.tp.ptr = me.tp.ptr - 1
-            end
+        -- TODO: recurse-type
+        local ok
+        local tt = TT.copy(arr.tp.tt)
+        tt = TT.pop(tt, '&')
+
+        -- remove [] or *
+        tt, ok = TT.pop(tt, '[]')
+        if not ok then
+            tt, ok = TT.pop(tt, '*')
+        end
+
+        me.tp = AST.node('Type', me.ln[2], unpack(tt))
+        F.Type(me.tp)
 
         if ENV.v_or_ref(me.tp) then
             me.lval = false
@@ -1345,25 +1352,33 @@ error'oi'
     ['Op1_*'] = function (me)
         local op, e1 = unpack(me)
         me.lval = e1.lval and e1
-        me.tp = TP.copy(e1.tp)
 
         local ok = false
 
-        if me.tp.ptr > 0 then
-            me.tp.ptr = me.tp.ptr - 1
-            ok = true
-        end
+        -- TODO: recurse-type
+        local tt = TT.copy(e1.tp.tt)
+        local id = unpack(tt)
 
-        local is_adt_pool = ENV.adts[me.tp.id] and e1.var and e1.var.pre=='pool'
+        tt = TT.pop(tt, '&')            -- TODO: only here?
+        tt = TT.pop(tt, '?')            -- TODO: must use !
+        tt, ok = TT.pop(tt, '*')
+
+        -- pool L[]* l;
+        -- pool L[]  l;     // also valid
+        local is_adt_pool = ENV.adts[id] and e1.var and e1.var.pre=='pool'
         if is_adt_pool then
-            me.tp.arr = false
+            tt = TT.pop(tt, '[]')
             ok = true
         end
 
         if not ok then
-            ASR((me.tp.ext and (not me.tp.plain) and (not TP.get(me.tp.id).plain)),
+            ASR((e1.tp.ext and (not e1.tp.plain) and (not 
+                TP.get(e1.tp.id).plain)),
                 me, 'invalid operand to unary "*"')
         end
+
+        me.tp = AST.node('Type', me.ln[2], unpack(tt))
+        F.Type(me.tp)
     end,
 
     ['Op1_&'] = function (me)
@@ -1371,9 +1386,11 @@ error'oi'
         ASR(e1.lval or ENV.clss[e1.tp.id] or ENV.adts[e1.tp.id], me,
             'invalid operand to unary "&"')
         me.lval = false
-        me.tp   = TP.copy(e1.tp)
-        me.tp.ptr = me.tp.ptr + 1
-        me.tp[2] = me.tp.ptr
+
+        -- TODO: recurse-type
+        me.tp = AST.node('Type', me.ln[2], unpack(e1.tp.tt))
+        me.tp[#me.tp+1] = '*'
+        F.Type(me.tp)
     end,
 
     ['Op2_._pos'] = function (me)

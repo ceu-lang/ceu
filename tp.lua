@@ -5,8 +5,8 @@ TP = {
 TT = {
 }
 
-function TT.get (tt, s, e)
-    s = s or #tt
+function TT.copy (tt, s, e)
+    s = s or 1
     e = e or #tt
     if s < 0 then
         s = #tt-s+1
@@ -15,11 +15,11 @@ function TT.get (tt, s, e)
         e = #tt-e+1
     end
 
-    local t = { select(s,unpack(tt)) }
-    for i=1, #me-e do
-        t[#t] = nil
+    local ret = { select(s,unpack(tt)) }
+    for i=1, #tt-e do
+        ret[#ret] = nil
     end
-    return t
+    return ret
 end
 function TT.norefs (tt)
     local ret = {}
@@ -37,6 +37,15 @@ function TT.find (tt, ...)
                 return i
             end
         end
+    end
+end
+function TT.pop (tt, v)
+    tt = TT.copy(tt)
+    if tt[#tt] == v then
+        tt[#tt] = nil
+        return tt, true
+    else
+        return tt, false
     end
 end
 
@@ -243,6 +252,7 @@ function TP.isNumeric (tp)
     end
 
     local tt = TT.norefs(tp.tt)
+    tt = TT.pop(tt, '?')            -- TODO: must use !
     local id = unpack(tt)
     return #tt==1 and (TP.get(id).num or tp.ext)
             or id=='@'

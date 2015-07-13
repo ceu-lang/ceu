@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end
+--]===]
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------
@@ -14557,7 +14558,6 @@ escape v;
     --run = 10;
 }
 
---]===]
 Test { [[
 var int a = 1;
 var int& b = &a;
@@ -45116,7 +45116,7 @@ pool List[] list;
 
 list = new List.CONS(10, List.NIL());
 
-pool List*[] lll = list;
+pool List[]* lll = list;
 
 escape lll:CONS.head;
 ]],
@@ -45136,7 +45136,7 @@ end
 pool List[] list;
 
 list = new List.CONS(10, List.NIL());
-pool List*[] l = list;
+pool List[]* l = list;
 
 l:CONS.tail = new List.CONS(9, List.NIL());
 l = l:CONS.tail;
@@ -45165,7 +45165,7 @@ end
 pool List[] list;
 
 list = new List.CONS(10, List.NIL());
-pool List*[] l = list;
+pool List[]* l = list;
 
 l:CONS.tail = new List.CONS(9, List.NIL());
 l = l:CONS.tail;
@@ -45200,7 +45200,7 @@ end
 pool List[10] list;
 
 list = new List.CONS(10, List.NIL());
-pool List*[] lll = list;
+pool List[]* lll = list;
 
 lll:CONS.tail = new List.CONS(9, List.NIL());
 lll = lll:CONS.tail;
@@ -45238,7 +45238,7 @@ or
 end
 
 pool List[] list = new List.CONS(10, List.NIL());
-pool List*[] lll = list;
+pool List[]* lll = list;
 
 lll:CONS.tail = new List.CONS(9, List.NIL());
 lll = lll:CONS.tail;
