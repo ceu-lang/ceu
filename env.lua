@@ -337,6 +337,38 @@ local STACK_N_E = { }
 
 F = {
     Type = function (me)
+
+-- TODO: recurse-type
+if me.tag=='Type' and type(me[2])~='number' then
+-- ** [], &, ?
+    local ptr = 0
+    local arr = false
+    local ref = false
+    local opt = false
+    for i=2, #me do
+        local p = me[i]
+        if p == '*' then
+            ptr = ptr + 1
+        elseif p == '[]' then
+            arr = true
+        elseif type(p)=='table' then
+            if p.tag == 'Type' then
+                opt = p
+            else
+                arr = p
+            end
+        elseif p == '&' then
+            ref = true
+        elseif p == '?' then
+            opt = true
+        end
+    end
+    me[2] = ptr
+    me[3] = arr
+    me[4] = ref
+    me[5] = opt
+end
+
         TP.new(me)
     end,
     TupleType_pos = 'Type',
@@ -373,6 +405,7 @@ F = {
 
         for _, v in ipairs(t) do
             local id, tp, ptr, seqno = unpack(v)
+-- TODO: recurse-type
             local _tp = tp and AST.node('Type', me.ln, tp, ptr, false, false)
             local evt = {
                 ln  = me.ln,
@@ -840,10 +873,11 @@ error'oi'
         local tp = AST.asr(blki,'', 1,'Stmts', 3,'Dcl_pool', 2,'Type')
         tp[1] = pool.tp.id
 
+-- TODO: recurse-type
         AST.asr(blki,'', 1,'Stmts', 1,'Dcl_pool', 2,'Type')
-                [3] = AST.copy(pool.tp[3]) -- array
+                [2] = (pool.tp[3]==true and '[]') or AST.copy(pool.tp[3]) -- array
         AST.asr(me.__par,'Stmts', 3,'Dcl_pool', 2,'Type')
-                [3] = AST.copy(pool.tp[3]) -- array
+                [2] = (pool.tp[3]==true and '[]') or AST.copy(pool.tp[3]) -- array
 
         me.tag = 'Nothing'
     end,
@@ -1041,7 +1075,7 @@ error'oi'
         if max or is_num then
             local id = (is_num and to[1]) or '_i_'..me.n
             me.i_dcl = AST.node('Dcl_var', me.ln, 'var',
-                        AST.node('Type', me.ln, 'int', 0, false, false),
+                        AST.node('Type', me.ln, 'int'),
                         id)
             me.i_dcl.read_only = true
             me.i_var = (is_num and to) or AST.node('Var',me.ln,id)
@@ -1082,14 +1116,14 @@ error'oi'
                 local stmts = me.__par[1]
 
                 local dcl_cur = AST.node('Dcl_var', me.ln, 'var',
-                                    AST.node('Type', me.ln, cls.id, 1, false, false),
+                                    AST.node('Type', me.ln, cls.id, '*'),
                                     to[1])
                 dcl_cur.read_only = true
                 AST.visit(F, dcl_cur)
                 stmts[#stmts+1] = dcl_cur
 
                 local dcl_nxt = AST.node('Dcl_var', me.ln, 'var',
-                                    AST.node('Type', me.ln, '_tceu_pool_iterator', 0, false, false),
+                                    AST.node('Type', me.ln, '_tceu_pool_iterator'),
                                     '__it_'..me.n)
                 local var_nxt = AST.node('Var', me.ln, '__it_'..me.n)
                 AST.visit(F, dcl_nxt)

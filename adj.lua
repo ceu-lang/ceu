@@ -32,7 +32,7 @@ function REQUEST (me)
     local id_req  = '_reqid_'..me.n
     local id_req2 = '_reqid2_'..me.n
 
-    local tp_req = node('Type', me.ln, 'int', 0, false, false)
+    local tp_req = node('Type', me.ln, 'int')
 
     if ps then
         -- insert "id" into "emit REQUEST => (id,...)"
@@ -202,7 +202,7 @@ me.blk_body = me.blk_body or blk_body
         blk_body = node('Block', me.ln,
                     node('Stmts', me.ln,
                         node('Dcl_var', me.ln, 'var',
-                            node('Type', me.ln, 'int', 0, false, false),
+                            node('Type', me.ln, 'int'),
                             '_ret'),
                         node('SetBlock', me.ln,
                             blk_body,
@@ -253,7 +253,7 @@ me.blk_body = me.blk_body or blk_body
         if me.__ast_has_malloc then
             table.insert(stmts, 1,
                 node('Dcl_pool', me.ln, 'pool',
-                    node('Type', me.ln, '_TOP_POOL', 0, true, false),
+                    node('Type', me.ln, '_TOP_POOL', '[]'),
                     '_top_pool'))
         end
     end,
@@ -424,22 +424,22 @@ me.blk_body = me.blk_body or blk_body
         -- unpacked below
         ifc = ifc or node('Stmts',me.ln)
 
-        local tp = node('Type', me.ln, 'TODO-ADT-TYPE', 1, true, false)
+        local tp = node('Type', me.ln, 'TODO-ADT-TYPE', '[]','*')
         local cls = node('Dcl_cls', me.ln, false, 'Body_'..me.n,
                         node('BlockI', me.ln,
                             node('Stmts', me.ln,
                                 node('Dcl_pool', me.ln, 'pool',
-                                    node('Type', me.ln, 'Body_'..me.n, 0, true, true),
+                                    node('Type', me.ln, 'Body_'..me.n, '[]','&'),
                                     '_bodies'),
                                 node('Dcl_var', me.ln, 'var',
-                                    node('Type', me.ln, 'Body_'..me.n, 1, false, false),
+                                    node('Type', me.ln, 'Body_'..me.n, '*'),
                                         -- TODO: should be opt type
                                     '_parent'),
                                 node('_Dcl_pool', me.ln, 'pool',
                                     tp,
                                     to[1]),
                                 node('Dcl_var', me.ln, 'var',
-                                    node('Type', me.ln, out[2], 0, false, true),
+                                    node('Type', me.ln, out[2], '&'),
                                     '_out'),
                                 unpack(ifc))),
                         node('Block', me.ln,
@@ -457,7 +457,7 @@ me.blk_body = me.blk_body or blk_body
         cls.__adj_out = AST.par(me, 'Block')
 
         local pool = node('Dcl_pool', me.ln, 'pool',
-                        node('Type', me.ln, 'Body_'..me.n, 0, true, false),
+                        node('Type', me.ln, 'Body_'..me.n, '[]'),
                         '_pool_'..me.n)
         local doorg = node('_DoOrg', me.ln, 'Body_'..me.n,
                         node('Dcl_constr', me.ln,
@@ -555,7 +555,7 @@ me.blk_body = me.blk_body or blk_body
         local cls_id = cls[2]
 
         local dcl = node('Dcl_var', me.ln, 'var',
-                        node('Type', me.ln, cls_id, 1, false, false, true),
+                        node('Type', me.ln, cls_id, '*','?'),
                         '_body_'..me.n)
         local set = node('_Set', me.ln,
                         node('Var', me.ln, '_body_'..me.n),
@@ -744,7 +744,7 @@ me.blk_body = me.blk_body or blk_body
                 node('Block', me.ln,
                     node('Stmts', me.ln,
                         node('Dcl_var', me.ln, 'var',
-                            node('Type', me.ln, id_cls, 0, false, false),
+                            node('Type', me.ln, id_cls),
                             '_org_'..me.n,
                             constr),
                         awt)))
@@ -803,9 +803,9 @@ me.blk_body = me.blk_body or blk_body
                 me[2] = rec
                 me[3] = node('TupleType', me.ln,
                             node('TupleTypeItem', me.ln, false,
-                                node('Type', me.ln, 'void', 0, false, false),
+                                node('Type', me.ln, 'void'),
                                 false))
-                me[4] = node('Type', me.ln, 'void', 0, false, false)
+                me[4] = node('Type', me.ln, 'void')
                 me[5] = n
                 me[6] = blk
 
@@ -843,8 +843,8 @@ me.blk_body = me.blk_body or blk_body
 
         -- Type => TupleType
         if ins.tag == 'Type' then
-            local id, ptr, arr, ref = unpack(ins)
-            if id=='void' and ptr=='' and arr==false and ref==false then
+            local id, any = unpack(ins)
+            if id=='void' and (not any) then
                 ins = node('TupleType', ins.ln)
             else
                 ins = node('TupleType', ins.ln,
@@ -878,7 +878,7 @@ me.blk_body = me.blk_body or blk_body
                 local d1, d2 = string.match(dir, '([^/]*)/(.*)')
                 assert(out)
                 assert(rec == false)
-                local tp_req = node('Type', me.ln, 'int', 0, false, false)
+                local tp_req = node('Type', me.ln, 'int')
 
                 local ins_req = node('TupleType', me.ln,
                                     node('TupleTypeItem', me.ln,
@@ -891,7 +891,7 @@ me.blk_body = me.blk_body or blk_body
                                     node('TupleTypeItem', me.ln,
                                         false,AST.copy(tp_req),false),
                                     node('TupleTypeItem', me.ln,
-                                        false,node('Type',me.ln,'u8',0,false,false),false),
+                                        false,node('Type',me.ln,'u8'),false),
                                     node('TupleTypeItem', me.ln,
                                         false, out, false))
 
@@ -931,7 +931,7 @@ me.blk_body = me.blk_body or blk_body
             -- end
             --]]
             local id_cls = string.sub(id_evt,1,1)..string.lower(string.sub(id_evt,2,-1))
-            local tp_req = node('Type', me.ln, 'int', 0, false, false)
+            local tp_req = node('Type', me.ln, 'int')
             local id_req = '_req_'..me.n
 
             local ifc = {
@@ -1035,7 +1035,7 @@ me.blk_body = me.blk_body or blk_body
                     node('Block', me.ln,
                         node('Stmts', me.ln,
                             node('Dcl_pool', me.ln, 'pool',
-                                node('Type', me.ln, id_cls, 0, (spw or true), false),
+                                node('Type', me.ln, id_cls, (spw or '[]')),
                                 '_'..id_cls..'s'),
                             node('Stmts', me.ln, unpack(dcls)),
                             node('_Every', me.ln, vars,
@@ -1044,7 +1044,7 @@ me.blk_body = me.blk_body or blk_body
                                 node('Block', me.ln,
                                     node('Stmts', me.ln,
                                         node('Dcl_var', me.ln, 'var',
-                                            node('Type', me.ln, 'void', 1, false, false, true),
+                                            node('Type', me.ln, 'void', '*','?'),
                                             'ok_'),
                                         node('_Set', me.ln,
                                             node('Var', me.ln, 'ok_'),
@@ -1226,11 +1226,11 @@ me.blk_body = me.blk_body or blk_body
                         AST.copy(to))
             SET_DEAD = node('Set', me.ln, '=', 'exp',
                         node('Op1_cast', me.ln,
-                            node('Type', me.ln, 'int', 0, false, false),
+                            node('Type', me.ln, 'int'),
                             node('Op2_.', me.ln, '.',
                                 node('Op1_*', me.ln, '*',
                                     node('Op1_cast', me.ln,
-                                        node('Type', me.ln, '_tceu_org', 1, false, false),
+                                        node('Type', me.ln, '_tceu_org', '*'),
                                         node('Op1_&', me.ln, '&',
                                             AST.copy(var)))),
                                 'ret')),
@@ -1257,15 +1257,15 @@ me.blk_body = me.blk_body or blk_body
                     node('Block', me.ln,
                         node('Stmts', me.ln,
                             node('Dcl_var', me.ln, 'var',
-                                node('Type', me.ln, 'void', 1, false, false),
+                                node('Type', me.ln, 'void', '*'),
                                 '__old_adt_'..me.n),
                             node('Set', me.ln, '=', 'exp',
                                 node('Op1_cast', me.ln,
-                                    node('Type', me.ln, 'void', 1, false, false),
+                                    node('Type', me.ln, 'void', '*'),
                                     AST.copy(var)),
                                 node('Var', me.ln, '__old_adt_'..me.n)),
                             node('Dcl_var', me.ln, 'var',
-                                node('Type', me.ln, 'void', 1, false, false),
+                                node('Type', me.ln, 'void', '*'),
                                 '__awk_adt_'..me.n,
                                 false,
                                 true), -- isTmp
@@ -1292,7 +1292,7 @@ me.blk_body = me.blk_body or blk_body
                                     -- this cast confuses acc.lua (see Op1_* there)
                                     -- TODO: HACK_3
                                     node('Op1_cast', me.ln,
-                                        node('Type', me.ln, '_tceu_org', 1, false, false),
+                                        node('Type', me.ln, '_tceu_org', '*'),
                                         AST.copy(var))),
                                 'isAlive')),
                         node('Block', me.ln,
@@ -1301,7 +1301,7 @@ me.blk_body = me.blk_body or blk_body
                         node('Block', me.ln,
                             node('Stmts', me.ln,
                                 node('Dcl_var', me.ln, 'var',
-                                    node('Type', me.ln, 'u32', 0, false, false),
+                                    node('Type', me.ln, 'u32'),
                                     '__org_id_'..me.n),
                                 node('_Set', me.ln,
                                     node('Var', me.ln, '__org_id_'..me.n),
@@ -1309,11 +1309,11 @@ me.blk_body = me.blk_body or blk_body
                                     node('Op2_.', me.ln, '.',
                                         node('Op1_*', me.ln, '*',
                                             node('Op1_cast', me.ln,
-                                                node('Type', me.ln, '_tceu_org', 1, false, false),
+                                                node('Type', me.ln, '_tceu_org', '*'),
                                                 AST.copy(var))),
                                         'id')),
                                 node('Dcl_var', me.ln, 'var',
-                                    node('Type', me.ln, '_tceu_org_kill', 1, false, false),
+                                    node('Type', me.ln, '_tceu_org_kill', '*'),
                                     '__awk_org_'..me.n,
                                     false,
                                     true),  -- isTmp
@@ -1543,7 +1543,7 @@ me.blk_body = me.blk_body or blk_body
                 node('Stmts', me.ln,
                     node('_Dcl_nat', me.ln, '@plain', 'unk', '_tceu_nstk', false),
                     node('Dcl_var', me.ln, 'var',
-                        node('Type', me.ln, '_tceu_nstk', 0, false, false),
+                        node('Type', me.ln, '_tceu_nstk'),
                         '_emit_fin_'..me.n),
                     node('_Set', me.ln,
                         node('Var', me.ln, '_emit_fin_'..me.n),
@@ -1602,7 +1602,7 @@ me.blk_body = me.blk_body or blk_body
         local evt, blk = unpack(me)
         local cur_id  = '_cur_'..blk.n
         local cur_dcl = node('Dcl_var', me.ln, 'var',
-                            node('Type', me.ln, 'bool', 0, false, false),
+                            node('Type', me.ln, 'bool'),
                             cur_id)
 
         local PSE = node('Pause', me.ln, blk)
@@ -1680,19 +1680,30 @@ G = {
     end,
 
     Type_pre = function (me)
-        local id, ptr, arr, ref, opt = unpack(me)
+        local id = unpack(me)
+        local TP = id
+
+        local opt = false
+        for i=2, #me do
+            local p = me[i]
+            if p == '?' then
+                ASR(i==#me, me, 'not implemented')
+                opt = true
+            else
+                TP = TP..'__'..tostring(p)
+            end
+        end
         if not opt then
             return
         end
 
-        me[5] = nil
+        me[#me] = nil
         local cpy = AST.copy(me)    -- w/o opt
 
-        local tp = id..'__'..ptr..'__'..tostring(arr)..'__'..tostring(ref)
-        local n = ADTS[tp]
+        local n = ADTS[TP]
         if not n then
             n = #ADTS + 1
-            ADTS[tp] = n
+            ADTS[TP] = n
             local adt = node('Dcl_adt', me.ln, '_Option_'..n,
                             'union',
                             node('Dcl_adt_tag', me.ln, 'NIL'),
@@ -1707,7 +1718,7 @@ G = {
             stmts.__add = stmts.__add or {}
             stmts.__add[#stmts.__add+1] = adt
         end
-        me[5] = node('Type', me.ln, '_Option_'..n, 0, false, false, false)
+        me[#me+1] = node('Type', me.ln, '_Option_'..n)
     end,
 }
 

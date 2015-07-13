@@ -34070,7 +34070,7 @@ var int&* v;
 var T&* t;
 escape 1;
 ]],
-    parser = 'line 4 : after `&´ : expected identifier',
+    run = 1,    -- TODO: should be an error?
 }
 
 Test { [[

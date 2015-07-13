@@ -496,15 +496,10 @@ end
     , __ID_adt = -KEYS * CK(m.R'AZ'*Alphanum^0)
     , __ID_tag = -KEYS * CK(m.R'AZ'*ALPHANUM^0)
 
--- TODO: ([*,[],&,?])^0
-    , Type = V'__ID_type'
-           * (P'*'^0 / function (s)
-                        return string.len(s)
-                       end) *S
-           * (K'['*(V'__Exp'+Cc(true))*K']' + Cc(false))
-           * (CK'&' + Cc(false))
-           * (CK'?' + Cc(false))
-            -- id, *^0, [k], &, ?
+    , Type = V'__ID_type'               -- id (* + [k] + & + ?)^0
+           * ( CK'*' + CK'&' + CK'?'
+             + K'['*(V'__Exp'+Cc('[]'))*K']'
+             )^0
 
     , __ID_field = CK(Alpha * (Alphanum)^0)
 
