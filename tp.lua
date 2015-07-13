@@ -2,6 +2,44 @@ TP = {
     types = {}
 }
 
+TT = {
+}
+
+function TT.get (tt, s, e)
+    s = s or #tt
+    e = e or #tt
+    if s < 0 then
+        s = #tt-s+1
+    end
+    if e < 0 then
+        e = #tt-e+1
+    end
+
+    local t = { select(s,unpack(tt)) }
+    for i=1, #me-e do
+        t[#t] = nil
+    end
+    return t
+end
+function TT.norefs (tt)
+    local ret = {}
+    for _, v in ipairs(tt) do
+        if v ~= '&' then
+            ret[#ret + 1] = v
+        end
+    end
+    return ret
+end
+function TT.find (tt, ...)
+    for i, t in ipairs(tt) do
+        for _, v in ipairs{...} do
+            if t == v then
+                return i
+            end
+        end
+    end
+end
+
 local __empty = {}
 function TP.get (id)
     return TP.types[id] or __empty
@@ -9,6 +47,8 @@ end
 
 function TP.new (me, dont_generate)
     if me.tag == 'Type' then
+--print(debug.traceback())
+        assert(me.tt)   -- TODO: recurse-type
         local id, ptr, arr, ref, opt = unpack(me)
 
         me.id  = id
@@ -94,7 +134,7 @@ local types = {
     tceu_nlbl = { false, false, true }, -- len set in "labels.lua"
 }
 for id, t in pairs(types) do
-    TP.types[id] = TP.new{ tag='Type', id, 0, false, false }
+    TP.types[id] = TP.new{ tag='Type', id, 0, false, false, tt={id} }
     TP.types[id].prim = t[1]
     TP.types[id].num  = t[2]
     TP.types[id].len  = t[3]
@@ -119,12 +159,23 @@ function TP.copy (t)
     return ret
 end
 
+-- TODO: remove recurse-type
 function TP.fromstr (str)
     local id, ptr, ref = string.match(str, '^(.-)(%**)(%&?)$')
     assert(id and ptr and ref)
+
+    local tt = { id }
+    if ptr ~= '' then
+        assert(ptr == '*', 'bug found')
+        tt[#tt+1] = '*'
+    end
+    if ref == '&' then
+        tt[#tt+1] = '&'
+    end
+
     ptr = (id=='@' and 1) or string.len(ptr);
     ref = (ref=='&')
-    return TP.new{ tag='Type', id, ptr, false, ref }
+    return TP.new{ tag='Type', id, ptr, false, ref, tt=tt }
 end
 
 function TP.toc (tp)
@@ -180,14 +231,21 @@ function TP.tostr (tp)
 end
 
 function TP.isFloat (tp)
-    return (tp.id=='float' or tp.id=='f32' or tp.id=='f64')
-            and tp.ptr==0 and (not tp.arr)
+    local tt = TT.norefs(tp.tt)
+    local id = unpack(tt)
+    return #tt==1 and (id=='float' or id=='f32' or id=='f64')
 end
 
 function TP.isNumeric (tp)
-    return TP.get(tp.id).num and tp.ptr==0 and (not tp.arr)
-            or (tp.ext and tp.ptr==0)
-            or tp.id=='@'
+    -- TODO: recurse-type
+    if not tp.tt then
+        return false
+    end
+
+    local tt = TT.norefs(tp.tt)
+    local id = unpack(tt)
+    return #tt==1 and (TP.get(id).num or tp.ext)
+            or id=='@'
 end
 
 function TP.t2tup (t)

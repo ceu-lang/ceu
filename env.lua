@@ -340,13 +340,15 @@ F = {
 
 -- TODO: recurse-type
 if me.tag=='Type' and type(me[2])~='number' then
--- ** [], &, ?
+    local tt = { me[1] } -- id, (*, [], &, ?)^0
+-- TODO: recurse-type
     local ptr = 0
     local arr = false
     local ref = false
     local opt = false
     for i=2, #me do
         local p = me[i]
+        tt[#tt+1] = p
         if p == '*' then
             ptr = ptr + 1
         elseif p == '[]' then
@@ -354,8 +356,10 @@ if me.tag=='Type' and type(me[2])~='number' then
         elseif type(p)=='table' then
             if p.tag == 'Type' then
                 opt = p
+                tt[#tt] = '?'
             else
                 arr = p
+                tt[#tt] = '[]'
             end
         elseif p == '&' then
             ref = true
@@ -367,6 +371,7 @@ if me.tag=='Type' and type(me[2])~='number' then
     me[3] = arr
     me[4] = ref
     me[5] = opt
+    me.tt = tt
 end
 
         TP.new(me)
@@ -418,6 +423,13 @@ end
                 os  = true,     -- do not generate #define with OPTS.os==true
             }
             if tp then
+-- TODO: recurse-type
+                _tp.tt = { tp }
+                if ptr > 0 then
+                    assert(ptr==1, 'bug found')
+                    _tp.tt[#_tp.tt+1] = '*'
+                end
+
                 TP.new(_tp)
                 TP.new(evt.ins)
             end
@@ -634,7 +646,16 @@ end
 
     Free = function (me)
         local exp = unpack(me)
-        ASR(exp.tp.ptr==1 and ENV.clss[exp.tp.id], me, 'invalid `free´')
+
+        local tt = exp.tp.tt            -- T&*&
+        tt = TT.norefs(tt)              -- T*
+        if #tt == 2 then
+            local id, ptr = unpack(tt)
+            if ptr=='*' and ENV.clss[tt[1]] then
+                return                  -- T*
+            end
+        end
+        ASR(false, me, 'invalid `free´')
     end,
 
     Dcl_ext = function (me)
