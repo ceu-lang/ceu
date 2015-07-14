@@ -1684,18 +1684,24 @@ G = {
         local id = unpack(me)
         local TP = id
 
+        --
+        -- Check if has '?' inside:
+        --  - create implicit _Option_*
+        --
+
+        -- TODO: multiple '?' inside
         local opt = false
         for i=2, #me do
             local p = me[i]
             if p == '?' then
-                ASR(i==#me, me, 'not implemented')
+                ASR(i==#me, me, 'not implemented : `?´ must be last modifier')
                 opt = true
             else
                 TP = TP..'__'..tostring(p)
             end
         end
         if not opt then
-            return
+            return  -- return if no '?'
         end
 
         me[#me] = nil

@@ -9,8 +9,67 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
-do return end
 --]===]
+Test { [[
+var int[1][1] v;
+escape 1;
+]],
+    env = 'line 1 : invalid type modifier : `[][]´',
+}
+Test { [[
+var int[1]? v;
+escape 1;
+]],
+    env = 'line 1 : invalid type modifier : `[]?´',
+}
+Test { [[
+var int&* v;
+escape 1;
+]],
+    env = 'line 1 : invalid type modifier : `&*´',
+}
+Test { [[
+var int&[] v;
+escape 1;
+]],
+    env = 'line 1 : invalid type modifier : `&[]´',
+}
+Test { [[
+var int&& v;
+escape 1;
+]],
+    env = 'line 1 : invalid type modifier : `&&´',
+}
+Test { [[
+var int?* v;
+escape 1;
+]],
+    --env = 'line 1 : invalid type modifier : `?*´',
+    adj = 'line 1 : not implemented : `?´ must be last modifier',
+}
+Test { [[
+var int?[1] v;
+escape 1;
+]],
+    --env = 'line 1 : invalid type modifier : `?[]´',
+    adj = 'line 1 : not implemented : `?´ must be last modifier',
+}
+Test { [[
+var int?& v;
+escape 1;
+]],
+    --env = 'line 1 : invalid type modifier : `?&´',
+    adj = 'line 1 : not implemented : `?´ must be last modifier',
+}
+Test { [[
+var int?? v;
+escape 1;
+]],
+    --env = 'line 1 : invalid type modifier : `??´',
+    adj = 'line 1 : not implemented : `?´ must be last modifier',
+}
+
+do return end
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------
@@ -14851,7 +14910,7 @@ every 1s do
     finalize
         sfc = _TTF_RenderText_Blended();
     with
-        _SDL_FreeSurface(&sfc);
+        _SDL_FreeSurface(&(sfc!));
     end
 end
 escape 1;
@@ -34077,7 +34136,7 @@ var int&* v;
 var T&* t;
 escape 1;
 ]],
-    run = 1,    -- TODO: should be an error?
+    env = 'line 4 : invalid type modifier : `&*´',
 }
 
 Test { [[

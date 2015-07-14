@@ -336,6 +336,12 @@ end
 local STACK_N_E = { }
 
 F = {
+    __tmod = {
+        ['*']  = { ['*']=true,  ['[]']=true,  ['&']=true,  ['?']=true  },
+        ['[]'] = { ['*']=true,  ['[]']=false, ['&']=true,  ['?']=false },
+        ['&']  = { ['*']=false, ['[]']=false, ['&']=false, ['?']=true  },
+        ['?']  = { ['*']=false, ['[]']=false, ['&']=false, ['?']=false },
+    },
     Type = function (me)
 
 -- TODO: recurse-type
@@ -372,6 +378,19 @@ if me.tag=='Type' and type(me[2])~='number' then
     me[4] = ref
     me[5] = opt
     me.tt = tt
+
+    -- validate type modifiers
+    if AST.par(me, 'Dcl_var') then
+        local last = tt[2]
+        if last then
+            for i=3, #tt do
+                local cur = tt[i]
+                ASR(F.__tmod[last][cur], me,
+                    'invalid type modifier : `'..last..cur..'´')
+                last = cur
+            end
+        end
+    end
 end
 
         TP.new(me)
@@ -989,6 +1008,8 @@ error'oi'
 
         local fr_tp = fr.tp
 
+        local to_is_opt = to.tp.tt and (to.tp.tt[#to.tp.tt] == '?')
+
         if set == 'await' then
             local e = unpack(fr)
             fr_tp = (e.var or e).evt.ins
@@ -998,12 +1019,12 @@ error'oi'
 
         elseif set == 'spawn' then
             -- var T*? = spawn T;
-            ASR(to.tp.opt, me, 'must assign to option pointer')
+            ASR(to_is_opt, me, 'must assign to option pointer')
 
         elseif set == 'adt-constr' then
             return  -- checked in adt.lua
 
-        elseif ENV.adts[to.tp.id] and (not to.tp.opt) then
+        elseif ENV.adts[to.tp.id] and (not to_is_opt) then
             if ENV.adts[to.tp.id].is_rec then
                 if to.var and (to.var.tp.ref or to.var.tp.ptr>0) then
                     me[2] = 'adt-alias'
@@ -1399,7 +1420,7 @@ error'oi'
         me.lval = false
 
         -- TODO: recurse-type
-        me.tp = AST.node('Type', me.ln[2], unpack(e1.tp.tt))
+        me.tp = AST.node('Type', me.ln, unpack(e1.tp.tt))
         me.tp[#me.tp+1] = '*'
         F.Type(me.tp)
     end,
