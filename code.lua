@@ -168,7 +168,8 @@ end
 -- ^-- first
 local function FIND_ADT_POOL (fst)
     local adt = ENV.adts[fst.tp.id]
-    if adt and (fst.tp.arr or fst.tp.ptr==1 or fst.tp.ref) then
+    local tt = fst.tp.tt
+    if adt and (TT.check(tt,'[]') or TT.check(tt,'*') or TT.check(tt,'&')) then
         return fst
     else
         assert(fst.__par, 'bug found')
@@ -442,7 +443,7 @@ case ]]..me.lbls_cnt.id..[[:;
                 val    = V(me),
                 constr = constr,
                 arr    = var.tp.arr,
-                val_i  = var.tp.arr and V({tag='Var',var=var.constructor_iterator}),
+                val_i  = TT.check(var.tp.tt,'[]') and V({tag='Var',var=var.constructor_iterator}),
                 lnks   = '&_STK_ORG->trls['..var.trl_orgs[1]..'].lnks'
             })
         elseif TT.check(var.tp.tt,'?') then

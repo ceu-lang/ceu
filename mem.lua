@@ -486,7 +486,7 @@ typedef union CEU_]]..me.id..[[_delayed {
             elseif var.cls or var.adt then
                 len = 10    -- TODO: it should be big
                 --len = (var.tp.arr or 1) * ?
-            elseif var.tp.arr then
+            elseif TT.check(var.tp.tt,'[]') then
                 len = 10    -- TODO: it should be big
 --[[
                 local _tp = TP.deptr(var.tp)
@@ -533,7 +533,7 @@ typedef union CEU_]]..me.id..[[_delayed {
                 if cls and (not cls.is_ifc) and (DCL.id ~= var.tp.id) then
                     dcl = dcl..'struct ' -- due to recursive spawn
                 end
-                if var.tp.arr then
+                if TT.check(var.tp.tt,'[]') then
                     local tp = string.sub(tp,1,-2)  -- remove leading `*´
                     dcl = dcl .. tp..' '..var.id_..'['..var.tp.arr.cval..']'
                 else

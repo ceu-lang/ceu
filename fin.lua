@@ -56,7 +56,7 @@ function ISPTR (node_or_var)
     -- restore original tt
 
     -- either native dcl or derived
-    -- _SDL_Renderer&?: "_ext &?" is handled in Ceu
+    -- _SDL_Renderer&?: "_ext &?" should not be considered a pointer
     if tp.ext and (not (TP.get(tp.id).plain or tp.plain or TT.check(tt,'&','?'))) then
         return true
     end
@@ -93,8 +93,8 @@ end
     --
 
         -- _r.x = (int) ...;
-        if (not ISPTR(to)) and (not to.tp.ref) and (not to.tp.arr) or
-           (not ISPTR(fr)) and (not fr.tp.ref) and (not fr.tp.arr) then
+        if not (ISPTR(to) or TT.check(to.tp.tt,'&','?')) or
+           not (ISPTR(fr) or TT.check(TT.pop(fr.tp.tt,'&'),'[]')) then
             ASR(op == '=', me, 1101, 'wrong operator')
             ASR(not me.fin, me, 1102, 'attribution does not require `finalize´')
             return
@@ -464,7 +464,7 @@ end
             if hold then
                 -- int* pa; _f(pa);
                 --  (`pa´ termination must consider `_f´)
-                local r = (param.tp.ptr>0 or param.tp.ext or param.tp.arr) and
+                local r = (ISPTR(param) or TT.check(TT.pop(param.tp.tt,'&'),'[]')) and
                           (not param.isConst) and
                           (not param.c or param.c.mod~='const')
                                 -- except constants
