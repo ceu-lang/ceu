@@ -48,6 +48,9 @@ function TT.pop (tt, v)
         return tt, false
     end
 end
+function TT.check (tt, v)
+    return tt[#tt] == v
+end
 
 local __empty = {}
 function TP.get (id)

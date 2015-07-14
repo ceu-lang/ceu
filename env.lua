@@ -1008,7 +1008,7 @@ error'oi'
 
         local fr_tp = fr.tp
 
-        local to_is_opt = to.tp.tt and (to.tp.tt[#to.tp.tt] == '?')
+        local to_is_opt = to.tp.tt and (TT.check(to.tp.tt,'?'))
 
         if set == 'await' then
             local e = unpack(fr)
@@ -1339,7 +1339,7 @@ error'oi'
     ['Op1_?'] = function (me)
         local op, e1 = unpack(me)
         me.tp  = TP.fromstr'bool'
-        ASR(e1.tp.opt, me, 'not an option type')
+        ASR(TT.check(e1.tp.tt,'?'), me, 'not an option type')
     end,
     ['Op1_!'] = function (me)
         local op, e1 = unpack(me)
@@ -1360,12 +1360,14 @@ error'oi'
         ASR(TP.max(e1.tp,e2.tp), me,
             'invalid operands to binary "'..op..'"')
 
-        if not (e1.tp.opt and e1.tp.ptr>0) then
+        -- TODO: recurse-type
+        -- TODO: remove these comments if nothing breaks after testing rocks/stl/on
+        --if not (TT.check(e1.tp.tt,'?') and e1.tp.ptr>0) then
             ASR(not ENV.adts[TP.tostr(e1.tp)], me, 'invalid operation for data')
-        end
-        if not (e2.tp.opt and e2.tp.ptr>0) then
+        --end
+        --if not (TT.check(e2.tp.tt,'?') and e2.tp.ptr>0) then
             ASR(not ENV.adts[TP.tostr(e2.tp)], me, 'invalid operation for data')
-        end
+        --end
     end,
     ['Op2_=='] = 'Op2_same',
     ['Op2_!='] = 'Op2_same',

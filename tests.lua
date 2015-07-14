@@ -9,67 +9,8 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
---]===]
-Test { [[
-var int[1][1] v;
-escape 1;
-]],
-    env = 'line 1 : invalid type modifier : `[][]´',
-}
-Test { [[
-var int[1]? v;
-escape 1;
-]],
-    env = 'line 1 : invalid type modifier : `[]?´',
-}
-Test { [[
-var int&* v;
-escape 1;
-]],
-    env = 'line 1 : invalid type modifier : `&*´',
-}
-Test { [[
-var int&[] v;
-escape 1;
-]],
-    env = 'line 1 : invalid type modifier : `&[]´',
-}
-Test { [[
-var int&& v;
-escape 1;
-]],
-    env = 'line 1 : invalid type modifier : `&&´',
-}
-Test { [[
-var int?* v;
-escape 1;
-]],
-    --env = 'line 1 : invalid type modifier : `?*´',
-    adj = 'line 1 : not implemented : `?´ must be last modifier',
-}
-Test { [[
-var int?[1] v;
-escape 1;
-]],
-    --env = 'line 1 : invalid type modifier : `?[]´',
-    adj = 'line 1 : not implemented : `?´ must be last modifier',
-}
-Test { [[
-var int?& v;
-escape 1;
-]],
-    --env = 'line 1 : invalid type modifier : `?&´',
-    adj = 'line 1 : not implemented : `?´ must be last modifier',
-}
-Test { [[
-var int?? v;
-escape 1;
-]],
-    --env = 'line 1 : invalid type modifier : `??´',
-    adj = 'line 1 : not implemented : `?´ must be last modifier',
-}
-
 do return end
+--]===]
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------
@@ -499,6 +440,67 @@ Test { [[
 end
 ]],
     env = 'line 2 : variable/event "check" is not declared',
+}
+
+    -- INVALID TYPE MODIFIERS
+
+Test { [[
+var int[1][1] v;
+escape 1;
+]],
+    env = 'line 1 : invalid type modifier : `[][]´',
+}
+Test { [[
+var int[1]? v;
+escape 1;
+]],
+    env = 'line 1 : invalid type modifier : `[]?´',
+}
+Test { [[
+var int&* v;
+escape 1;
+]],
+    env = 'line 1 : invalid type modifier : `&*´',
+}
+Test { [[
+var int&[] v;
+escape 1;
+]],
+    env = 'line 1 : invalid type modifier : `&[]´',
+}
+Test { [[
+var int&& v;
+escape 1;
+]],
+    env = 'line 1 : invalid type modifier : `&&´',
+}
+Test { [[
+var int?* v;
+escape 1;
+]],
+    --env = 'line 1 : invalid type modifier : `?*´',
+    adj = 'line 1 : not implemented : `?´ must be last modifier',
+}
+Test { [[
+var int?[1] v;
+escape 1;
+]],
+    --env = 'line 1 : invalid type modifier : `?[]´',
+    adj = 'line 1 : not implemented : `?´ must be last modifier',
+}
+Test { [[
+var int?& v;
+escape 1;
+]],
+    --env = 'line 1 : invalid type modifier : `?&´',
+    adj = 'line 1 : not implemented : `?´ must be last modifier',
+}
+Test { [[
+var int?? v;
+escape 1;
+]],
+    --env = 'line 1 : invalid type modifier : `??´',
+    adj = 'line 1 : not implemented : `?´ must be last modifier',
 }
 
     -- IF
