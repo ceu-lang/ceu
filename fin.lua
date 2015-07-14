@@ -166,7 +166,7 @@ end
             -- the local goes out of scope, hence, we require finalization.
             -- The "to" pointers must be option types `&?´.
 
-            if to.tp.ref and to.tp.opt then
+            if TT.check(to.tp.tt,'&','?') then
                 T.__fin_opt_tp = to.tp  -- return value must be packed in the "&?" type
             else
                 ASR(to.tp.id == '@', me, 1105,

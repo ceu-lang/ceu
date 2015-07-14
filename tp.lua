@@ -48,8 +48,14 @@ function TT.pop (tt, v)
         return tt, false
     end
 end
-function TT.check (tt, v)
-    return tt[#tt] == v
+function TT.check (tt, ...)
+    local t = { ... }
+    for i=0, #t-1 do
+        if tt[#tt-i] ~= t[#t-i] then
+            return false
+        end
+    end
+    return true
 end
 
 local __empty = {}

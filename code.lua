@@ -445,7 +445,7 @@ case ]]..me.lbls_cnt.id..[[:;
                 val_i  = var.tp.arr and V({tag='Var',var=var.constructor_iterator}),
                 lnks   = '&_STK_ORG->trls['..var.trl_orgs[1]..'].lnks'
             })
-        elseif var.tp.opt then
+        elseif TT.check(var.tp.tt,'?') then
             -- initialize optional types to nil
             local ID = string.upper(var.tp.opt.id)
             LINE(me, [[
@@ -983,9 +983,9 @@ case ]]..SET.lbl_cnt.id..[[:;
         local byref = (me.__ref_byref and 'byref') or ''
 
         -- optional types
-        if to.tp.opt then
+        if TT.check(to.tp.tt,'?') then
             local ID = string.upper(to.tp.opt.id)
-            if fr.tp.opt then
+            if TT.check(fr.tp.tt,'?') then
                 LINE(me, V(to,byref)..' = '..V(fr,byref)..';')
             elseif (fr.fst.tag=='Op2_call' and fr.fst.__fin_opt_tp) then
                 -- var _t&? = _f(...);

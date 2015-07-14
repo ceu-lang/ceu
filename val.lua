@@ -227,7 +227,7 @@ F =
     ]
         )
 ))]]
-                    if me.var.tp.ref and (not ENV.clss[me.var.tp.id]) and (not me.var.tp.opt) then
+                    if TT.check(me.var.tp.tt,'&') and (not ENV.clss[me.var.tp.id]) then
                         VAL = '(*'..VAL..')'
                     end
                 end

@@ -289,7 +289,7 @@ F = {
             ASR(not AST.par(me,'BlockI'), me,
                     'not permitted inside an interface')
         end
-        if AST.par(me,'BlockI') and me.var.tp.opt then
+        if AST.par(me,'BlockI') and TT.check(me.var.tp.tt,'?') then
             CLS().has_pre = true   -- code for pre (before constr)
         end
     end,

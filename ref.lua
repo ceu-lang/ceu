@@ -204,11 +204,13 @@ F = {
     __constr = function (me, cls, constr)
         constr.__bounded = constr.__bounded or {}
         for _, var in ipairs(cls.blk_ifc.vars) do
-            if var.tp.ref and (not var.tp.opt)
-                          and (var.bind=='constr' or (not var.bind))
-            then
-                ASR(constr.__bounded[var], me,
-                    'field "'..var.id..'" must be assigned')
+            if var.pre == 'var' then
+                if TT.check(var.tp.tt,'&') and
+                   (var.bind=='constr' or (not var.bind))
+                then
+                    ASR(constr.__bounded[var], me,
+                        'field "'..var.id..'" must be assigned')
+                end
             end
         end
     end,
@@ -238,8 +240,11 @@ F = {
 
     -- Ensures that &ref var is bound before use.
     Var = function (me)
+        if me.var.pre ~= 'var' then
+            return
+        end
         local cls = CLS()
-        if me.var.tp.ref and (not me.var.tp.opt) then
+        if TT.check(me.var.tp.tt,'&') then
             -- ignore interface variables outside Main
             -- (they are guaranteed to be bounded)
             local inifc = (me.var.blk == cls.blk_ifc)

@@ -510,7 +510,7 @@ typedef union CEU_]]..me.id..[[_delayed {
 
         for _, var in ipairs(sorted) do
             local tp
-            if var.tp.opt then
+            if var.pre=='var' and TT.check(var.tp.tt,'?') then
                 tp = TP.toc(var.tp.opt)     -- int? becomes CEU_Opt_...
             else
                 tp = TP.toc(var.tp)
