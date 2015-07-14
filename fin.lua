@@ -35,15 +35,33 @@ local function POP ()
     TRACK[#TRACK] = nil
 end
 
-function NOPTR (node_or_var)
+function ISPTR (node_or_var)
     if node_or_var.tag == 'Adt_constr_root' then
         return false
     end
 
     local tp = node_or_var.tp
-    return (tp.ptr==0 and
-           ((not tp.ext) or TP.get(tp.id).plain or tp.plain or tp.ref))
-                -- either native dcl or derived
+    local tt = node_or_var.tp.tt
+    if not tt then
+        return false    -- TODO: recurse-type
+    end
+
+    do
+        local tt = TT.pop(tt, '?')
+        tt = TT.pop(tt, '&')
+        if TT.check(tt,'*') then
+            return true
+        end
+    end
+    -- restore original tt
+
+    -- either native dcl or derived
+    -- _SDL_Renderer&?: "_ext &?" is handled in Ceu
+    if tp.ext and (not (TP.get(tp.id).plain or tp.plain or TT.check(tt,'&','?'))) then
+        return true
+    end
+
+    return false
 end
 
 F = {
@@ -75,8 +93,8 @@ end
     --
 
         -- _r.x = (int) ...;
-        if NOPTR(to) and (not to.tp.ref) and (not to.tp.arr) or
-           NOPTR(fr) and (not fr.tp.ref) and (not fr.tp.arr) then
+        if (not ISPTR(to)) and (not to.tp.ref) and (not to.tp.arr) or
+           (not ISPTR(fr)) and (not fr.tp.ref) and (not fr.tp.arr) then
             ASR(op == '=', me, 1101, 'wrong operator')
             ASR(not me.fin, me, 1102, 'attribution does not require `finalize´')
             return
@@ -265,7 +283,7 @@ end
     end,
 
     Var = function (me)
-        if NOPTR(me.var) then
+        if not ISPTR(me.var) then
             return
         end
         if me.var.pre=='pool' or me.var.pre=='function' then

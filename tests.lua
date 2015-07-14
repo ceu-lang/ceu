@@ -15003,7 +15003,7 @@ var _SDL_Renderer&? ren;
     end
 
 await 1s;
-_g(&ren);
+_g(&(ren!));
 
 escape 1;
 ]],
