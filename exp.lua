@@ -38,6 +38,12 @@ F = {
         me.lst = arr.lst
     end,
 
+    ['Op1_!'] = function (me)
+        local op, e1 = unpack(me)
+        me.fst = e1.fst
+        me.lst = e1.lst
+    end,
+
     ['Op1_*'] = function (me)
         local op, e1 = unpack(me)
         me.fst = e1.fst

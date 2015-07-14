@@ -1320,10 +1320,22 @@ error'oi'
         me.tp  = TP.fromstr'bool'
         ASR(e1.tp.opt, me, 'not an option type')
     end,
+    ['Op1_!'] = function (me)
+        local op, e1 = unpack(me)
+        me.lval = e1.lval and e1
+
+        -- TODO: recurse-type
+        local ok
+        local tt = TT.copy(e1.tp.tt)
+        tt,ok = TT.pop(tt, '?')
+        ASR(ok, me, 'not an option type')
+        me.tp = AST.node('Type', me.ln[2], unpack(tt))
+        F.Type(me.tp)
+    end,
 
     Op2_same = function (me)
         local op, e1, e2 = unpack(me)
-        me.tp  = TP.fromstr'int'
+        me.tp = TP.fromstr'int'
         ASR(TP.max(e1.tp,e2.tp), me,
             'invalid operands to binary "'..op..'"')
 
@@ -1360,7 +1372,6 @@ error'oi'
         local id = unpack(tt)
 
         tt = TT.pop(tt, '&')            -- TODO: only here?
-        tt = TT.pop(tt, '?')            -- TODO: must use !
         tt, ok = TT.pop(tt, '*')
 
         -- pool L[]* l;

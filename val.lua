@@ -378,6 +378,12 @@ F =
         return '('..V(e1)..' != CEU_'..string.upper(e1.tp.opt.id)..'_NIL)'
     end,
 
+    -- TODO: recurse-type
+    ['Op1_!'] = function (me)
+        local op, e1 = unpack(me)
+        return V(e1)
+    end,
+
     ['Op2_.'] = function (me, CTX)
         local op, e1, id = unpack(me)
         local VAL

@@ -510,7 +510,7 @@ me.blk_body = me.blk_body or blk_body
     --      this.<n>     = <exp>;
     --      <constr>
     --  if _body_? then
-    --      ret = await *_body_;
+    --      ret = await *_body_!;
     --  else
     --      ret = 0;    // TODO: how to get "ret" from a dead body?
     --  end
@@ -540,7 +540,8 @@ me.blk_body = me.blk_body or blk_body
 
         local SET_AWAIT = node('Await', me.ln,
                             node('Op1_*', me.ln, '*',
-                                node('Var', me.ln, '_body_'..me.n)),
+                                node('Op1_!', me.ln, '!',
+                                    node('Var', me.ln, '_body_'..me.n))),
                             false,
                             false)
         local SET_DEAD = node('Nothing', me.ln)

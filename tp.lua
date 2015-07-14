@@ -43,7 +43,7 @@ function TT.pop (tt, v)
     tt = TT.copy(tt)
     if tt[#tt] == v then
         tt[#tt] = nil
-        return tt, true
+        return tt, v
     else
         return tt, false
     end
@@ -252,7 +252,6 @@ function TP.isNumeric (tp)
     end
 
     local tt = TT.norefs(tp.tt)
-    tt = TT.pop(tt, '?')            -- TODO: must use !
     local id = unpack(tt)
     return #tt==1 and (TP.get(id).num or tp.ext)
             or id=='@'

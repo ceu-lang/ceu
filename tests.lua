@@ -14820,15 +14820,22 @@ end
 escape v;
 ]],
     wrn = true,
-    run = 11,
+    env = 'line 4 : invalid operands to binary "+"',
+}
+
+Test { [[
+var int v = 10;
+escape v!;
+]],
+    env = 'line 2 : not an option type',
 }
 
 Test { [[
 var int v = 10;
 var int&? i;
 loop do
-    i = v;
-    i = i + 1;
+    i! = v;
+    i! = i! + 1;
     break;
 end
 escape v;
@@ -19592,7 +19599,7 @@ do
         finalize
             p = _f();
         with
-            a = a + p;
+            a = a + p!;
 end
     end
     a = 0;
@@ -19906,7 +19913,7 @@ finalize
 with
     nothing;
 end
-escape p==null;
+escape p! ==null;
 ]],
     env = 'line 7 : invalid operands to binary "=="',
     --run = 1,
@@ -23517,7 +23524,7 @@ do
     i = v;
 end
 var T*? p = spawn T;
-escape p:i;
+escape p!:i;
 ]],
     ref = 'line 8 : field "i" must be assigned',
     --run = 10,
@@ -23597,7 +23604,7 @@ class T with
     var int&? i;
 do
     var int v = 10;
-    i = v;
+    i! = v;
 end
 
 var int ret = 0;
@@ -23631,7 +23638,7 @@ class T with
 do
     var int v = 10;
     if i? then
-        i = i + v;
+        i! = i! + v;
     end
 end
 
@@ -26235,10 +26242,10 @@ class T with
     var int&? i;
 do
     var int v = 10;
-    i = v;
+    i! = v;
 end
 var T t;
-escape t.i;
+escape t.i!;
 ]],
     asr = '5] runtime error: invalid tag',
     --run = 10,
@@ -27074,9 +27081,9 @@ pool T[] ts;
 
 var T*? t1 = spawn T;
 var T*? t2 = spawn T;
-await *t2;
+await *(t2!);
 var T*? t3 = spawn T;
-await *t3;
+await *(t3!);
 
 escape 1;
 ]],
@@ -27099,9 +27106,9 @@ pool T[] ts;
 
 var T*? t1 = spawn T;
 var T*? t2 = spawn T;
-await *t2;
+await *t2!;
 var T*? t3 = spawn T;
-await *t3;
+await *t3!;
 
 escape 1;
 ]],
@@ -27534,7 +27541,7 @@ escape &ok != null;
 Test { [[
 class Body with do end;
 var Body*? tail = spawn Body;
-await *tail;
+await *(tail!);
 escape 1;
 ]],
     asr = '3] runtime error: invalid tag',
@@ -27647,7 +27654,7 @@ do
     this.a = 1;
 end
 var T*? t = spawn T;
-escape t:a;
+escape t!:a;
 ]],
     asr = '7] runtime error: invalid tag',
     --run = 1,
@@ -27662,7 +27669,7 @@ do
 end
 var T*? t = spawn T;
 await OS_START;
-escape t:a;
+escape t!:a;
 ]],
     fin = 'line 9 : unsafe access to pointer "t" across `await´',
 }
@@ -27797,7 +27804,7 @@ do
 end
 
 var T*? t = spawn T;
-await *t;
+await *(t!);
 escape 1;
 ]],
     asr = 'runtime error: invalid tag',
@@ -27866,7 +27873,7 @@ pool T[1] t;
 var T*? ok1 = spawn T in t with end;
 var int sum = 1;
 if ok1? then
-    watching *ok1 do
+    watching *(ok1!) do
         var T*? ok2 = spawn T in t;
         sum = sum + (ok1?) + (ok2?);
     end
@@ -28077,7 +28084,7 @@ end
 pool T[1] ts;
 var T*? a = spawn T in ts;
 var int sum = 0;
-watching *a do
+watching *(a!) do
     var T*? b = spawn T in ts;
     sum = a? and (not b?);
 end
@@ -28114,7 +28121,7 @@ pool T[0] bs;
 var T*? a = spawn T in as;
 var int sum = 0;
 if a? then
-    watching *a do
+    watching *a! do
         var T*? b = spawn T in bs;
         sum = a? and (not b?);
     end
@@ -28136,7 +28143,7 @@ var T*? a = spawn T in ts;
 //free(a);
 var int sum = 0;
 if a? then
-    watching *a do
+    watching *a! do
         var T*? b = spawn T in ts;   // fails (a is freed on end)
         sum = a? and (not b?);
     end
@@ -28212,9 +28219,9 @@ do
 end
 var int sum = 0;
 if a? then
-    watching *a do
+    watching *a! do
         var T*? b = spawn T in ts;   // fails (a is free on end)
-        sum = a? and (not b?);// and a!=b;
+        sum = a? and (not b?);// and a! !=b;
     end
 end
 escape sum;
@@ -28554,7 +28561,7 @@ var T*? t =
         this.a = 10;
     end;
 
-escape t:b;
+escape t!:b;
 ]],
     run = 20,
 }
@@ -28945,8 +28952,8 @@ do
             this.sum    = sum;
         end;
     if nested? then
-        watching *nested do
-            await nested:ok;
+        watching *nested! do
+            await nested!:ok;
         end
     end
     sum = sum + 1;
@@ -28978,7 +28985,7 @@ do
             this.sum    = sum;
         end;
     if nested? then
-        await *nested;
+        await *nested!;
     end
     sum = sum + 1;
 end
@@ -29026,7 +29033,7 @@ do
             this.sum    = sum;
         end;
     if nested? then
-        await *nested;
+        await *nested!;
     end
     sum = sum + 1;
 end
@@ -29162,7 +29169,7 @@ do
             this.bodies = bodies;
             this.sum    = sum;
         end;
-        watching *t do
+        watching *t! do
             await FOREVER;
         end
     end
@@ -29481,7 +29488,7 @@ do
     await FOREVER;
 end
 var T*? t = spawn T;
-kill *t;
+kill *t!;
 escape _V;
 ]],
     run = 10,
@@ -29543,8 +29550,8 @@ var int ret = 1;
 par/and do
     await OS_START;
     var T*? t = spawn T;
-    emit e => t;
-    ret = ret + t:v;
+    emit e => t!;
+    ret = ret + t!:v;
 with
     var T* t1 = await e;
     ret = ret * 2;
@@ -29571,10 +29578,10 @@ var int ret = 1;
 par/and do
     await OS_START;
     var T*? t = spawn T;
-    watching *t do
-        emit e => t;
-        ret = ret + t:v;
-        await *t;
+    watching *t! do
+        emit e => t!;
+        ret = ret + t!:v;
+        await *t!;
         ret = ret + 1;
     end
 with
@@ -29596,7 +29603,7 @@ end
 
 var T*? t = spawn T;
 finalize with
-    kill *t;
+    kill *t!;
 end
 
 escape 10;
@@ -29620,10 +29627,10 @@ par/and do
     await OS_START;
     var T*? t = spawn T;
     ret = ret * 2;
-    watching *t do
-        emit e => t;
-        ret = ret + t:v;
-        await *t;
+    watching *t! do
+        emit e => t!;
+        ret = ret + t!:v;
+        await *t!;
         ret = -1;
     end
     ret = ret * 2;
@@ -29656,9 +29663,9 @@ loop i do
 
     var T*? t = spawn T;
     par/or do
-        await *t;
+        await *t!;
     with
-        kill *t;
+        kill *t!;
         await FOREVER;
     end
     if i == 10 then
@@ -29692,10 +29699,10 @@ loop i do
     var T*? t = spawn T;
     par/or do
         if t? then
-            await *t;
+            await *t!;
         end
     with
-        kill *t;
+        kill *t!;
         await FOREVER;
     end
     if i == 10 then
@@ -30239,8 +30246,8 @@ end
 var T* a;
 do
     var T*? b = spawn T;
-    b:v = 10;
-    a = b;
+    b!:v = 10;
+    a = b!;
 end
 escape a:v;
 ]],
@@ -30258,8 +30265,8 @@ end
 var T* a;
 do
     var T*? b = spawn T;
-    b:v = 10;
-    a = b;
+    b!:v = 10;
+    a = b!;
     escape a:v;
 end
 ]],
@@ -30276,8 +30283,8 @@ end
 var T* a;
 do
     var T*? b = spawn T;
-    b:v = 10;
-    a = b;
+    b!:v = 10;
+    a = b!;
 end
 await 1s;
 escape a:v;
@@ -30296,12 +30303,12 @@ var T* a;
 var T aa;
 do
     var T*? b = spawn T;
-    b:v = 10;
+    b!:v = 10;
     finalize
-        a = b;
+        a = b!;
     with
         do
-            aa.v = b:v;
+            aa.v = b!:v;
             a = &aa;
         end
     end
@@ -30331,8 +30338,8 @@ var T aa;
 do
     pool T[] ts;
     var T*? b = spawn T in ts;
-    b:v = 10;
-        a = b;
+    b!:v = 10;
+        a = b!;
 end
 escape _V;
 ]],
@@ -30359,8 +30366,8 @@ var T aa;
 do
     pool T[] ts;
     var T*? b = spawn T in ts;
-    b:v = 10;
-        a = b;
+    b!:v = 10;
+        a = b!;
     await OS_START;
 end
 escape _V;
@@ -30386,8 +30393,8 @@ var T* a;
 do
     pool T[] ts;
     var T*? b = spawn T in ts;
-    b:v = 10;
-        a = b;
+    b!:v = 10;
+        a = b!;
 end
 escape _V;
 ]],
@@ -30412,8 +30419,8 @@ var T* a;
 do
     pool T[] ts;
     var T*? b = spawn T in ts;
-    b:v = 10;
-        a = b;
+    b!:v = 10;
+        a = b!;
     await OS_START;
 end
 escape _V;
@@ -30518,7 +30525,7 @@ do
     var T*? o;
     o = spawn T;
     await OS_START;
-    ret = o:a;
+    ret = o!:a;
 end
 
 escape ret + _V;
@@ -30551,7 +30558,7 @@ par/or do
     var T*? o;
     o = spawn T in ts;
     //await OS_START;
-    ret = o:a;
+    ret = o!:a;
 with
     await F;
 end
@@ -30584,7 +30591,7 @@ par/or do
     var T*? o;
     o = spawn T;
     //await OS_START;
-    ret = o:a;
+    ret = o!:a;
 with
     await F;
 end
@@ -31758,11 +31765,11 @@ do
     pool T[] ts;
     var T*? p;
     p = spawn T in ts;
-    p:v = 1;
+    p!:v = 1;
     p = spawn T in ts;
-    p:v = 2;
+    p!:v = 2;
     p = spawn T in ts;
-    p:v = 3;
+    p!:v = 3;
     input void OS_START;
     await OS_START;
 end
@@ -31779,7 +31786,7 @@ do
 end
 var T*? t;
 t = spawn T;
-escape t.v;
+escape t!.v;
 ]],
     env = 'line 6 : not a struct',
 }
@@ -31794,9 +31801,9 @@ end
 var T*[10] ts;
 var T*? t;
 t = spawn T;
-t:v = 10;
-ts[0] = t;
-escape t:v + ts[0]:v;
+t!:v = 10;
+ts[0] = t!;
+escape t!:v + ts[0]:v;
 ]],
     run = 20,
 }
@@ -32274,7 +32281,7 @@ do
     u = spawn Unit in units;  // deveria falhar aqui!
     await 1min;
 end
-emit u:move => 0;
+emit u!:move => 0;
 escape 2;
 ]],
     fin = 'line 11 : unsafe access to pointer "u" across `await´',
@@ -32728,7 +32735,7 @@ var T*? t = spawn T with
              this.v = 10;
            end;
 //free(t);
-escape t:v;
+escape t!:v;
 ]],
     run = 10,
 }
@@ -32974,7 +32981,7 @@ var T t with
     this.c2 = 6;
 end;
 var I*? i = &t;
-escape i:a1+i:a2+i:b1+i:b2+i:c1+i:c2;
+escape i!:a1+i!:a2+i!:b1+i!:b2+i!:c1+i!:c2;
 ]],
     run = 21,
 }
@@ -36347,7 +36354,7 @@ end
 var IWorld*? ptr = spawn World with
                     this.x = 10;
                   end;
-escape ptr:x;     // escapes with "10"
+escape ptr!:x;     // escapes with "10"
 ]],
     run = 10,
 }
@@ -36365,7 +36372,7 @@ end
 var World*? ptr = spawn World with
                     this.x = 10;
                   end;
-var IWorld* w = ptr;
+var IWorld* w = ptr!;
 escape w:x;     // escapes with "10"
 ]],
     run = 10,
@@ -37754,7 +37761,7 @@ end
 var I*? p = spawn T with
     this.v = 10;
 end;
-escape p:v;
+escape p!:v;
 ]],
     run = 10,
     --fin = 'line 22 : invalid access to awoken pointer "p"',
@@ -37778,8 +37785,8 @@ var T*? t = spawn T in ts with
 end;
 
 var int ret = 0;
-watching *t do
-    ret = t:id;
+watching *t! do
+    ret = t!:id;
     await FOREVER;
 end
 
@@ -37804,8 +37811,8 @@ end;
 
 var int ret = 0;
 
-watching *t do
-    ret = t:id;
+watching *t! do
+    ret = t!:id;
     await FOREVER;
 end
 
@@ -37831,8 +37838,8 @@ end;
 
 var int ret = 0;
 
-watching *t do
-    ret = t:id;
+watching *t! do
+    ret = t!:id;
     await FOREVER;
 end
 
@@ -37860,9 +37867,9 @@ loop i in 10000 do
         this.id = 10000-i;
     end;
     if t0 == null then
-        t0 = t;
+        t0 = t!;
     end
-    tF = t;
+    tF = t!;
 end
 _assert(t0!=null and tF!=null);
 
@@ -37890,11 +37897,11 @@ do
 end
 
 var I*? p = spawn T with
-    p:v = 10;
+    p!:v = 10;
 end;
 async do end;
 
-escape p:v;
+escape p!:v;
 ]],
     fin = 'line 15 : unsafe access to pointer "p" across `async´',
 }
@@ -37910,8 +37917,8 @@ do
     u = spawn Unit in units;
 end
 if u? then
-    watching *u do
-        emit u:move => 0;
+    watching *u! do
+        emit u!:move => 0;
     end
 end
 escape 2;
@@ -37929,8 +37936,8 @@ do
     u = spawn Unit in units;
     await 1min;
 end
-watching *u do
-    emit u:move => 0;
+watching *u! do
+    emit u!:move => 0;
 end
 escape 2;
 ]],
@@ -38672,8 +38679,8 @@ var Unit*? u;
 pool Unit[] units;
 u = spawn Unit in units;
 await 2s;
-watching *u do
-    emit u:move => 0;
+watching *u! do
+    emit u!:move => 0;
 end
 escape 2;
 ]],
@@ -38688,8 +38695,8 @@ end
 var Unit*? u;
 pool Unit[] units;
 u = spawn Unit in units;
-watching *u do
-    emit u:move => 0;
+watching *u! do
+    emit u!:move => 0;
 end
 escape 2;
 ]],
@@ -38865,7 +38872,7 @@ pool T[1] ts;
 var T*? ok1 = spawn T in ts with
                 this.v = 10;
               end;
-watching *ok1 do
+watching *ok1! do
     var int ok2 = 0;// spawn T in ts;
     var int ret = 0;
     loop t in ts do
@@ -38891,7 +38898,7 @@ pool T[1] ts;
 var T*? ok1 = spawn T in ts with
                 this.v = 10;
               end;
-watching *ok1 do
+watching *ok1! do
     var int ok2 = 0;// spawn T in ts;
     var int ret = 0;
     loop t in ts do
@@ -39492,9 +39499,9 @@ end
 var int ret = 1;
 var T*? t = spawn T;
 if t? then
-    watching *t do
+    watching *t! do
         finalize with
-            ret = t:v;
+            ret = t!:v;
         end
         await FOREVER;
     end
@@ -39513,11 +39520,11 @@ do
 end
 
 var T*? t = spawn T;
-watching *t do
+watching *t! do
     await FOREVER;
 end
 
-escape t:v;
+escape t!:v;
 ]],
     fin = 'line 12 : unsafe access to pointer "t" across `await´',
 }
@@ -39530,13 +39537,13 @@ do
 end
 
 var T*? t = spawn T;
-watching *t do
+watching *t! do
     await FOREVER;
 end
 
 await 1s;
 
-escape t:v;
+escape t!:v;
 ]],
     fin = 'line 14 : unsafe access to pointer "t" across `await´',
 }
@@ -39556,7 +39563,7 @@ loop i in 9999 do
         this.id = 9999-i;
     end;
     if t0 == null then
-        t0 = t;
+        t0 = t!;
     end
 end
 
@@ -44350,7 +44357,7 @@ escape 1;
 
 Test { [[
 var int? i = 1;
-escape i;
+escape i!;
 ]],
     run = 1,
 }
@@ -44404,7 +44411,7 @@ escape not i?;
 Test { [[
 var int v = 10;
 var int&? i = v;
-escape i;
+escape i!;
 ]],
     run = 10,
 }
@@ -44413,7 +44420,7 @@ Test { [[
 var int v1 = 0;
 var int v2 = 1;
 var int&? i = v1;
-i = v2;
+i! = v2;
 escape v1;
 ]],
     run = 1,
@@ -44430,7 +44437,7 @@ escape v + i;
 Test { [[
 var int v = 10;
 var int&? i = v;
-escape v + i;
+escape v + i!;
 ]],
     run = 20,
 }
@@ -44439,9 +44446,9 @@ Test { [[
 var int v1 = 10;
 var int v2 =  1;
 var int&? i = v1;
-i = v2;
-i = 10;
-var int ret = i;
+i! = v2;
+i! = 10;
+var int ret = i!;
 escape v1 + v2 + ret;
 ]],
     run = 21,
@@ -44455,7 +44462,7 @@ do
     this.i = v;
 end
 var T t;
-escape t.i;
+escape t.i!;
 ]],
     asr = ':5] runtime error: invalid tag',
     --run = 10,
@@ -44465,13 +44472,13 @@ class T with
     var int&? i;
 do
     var int v = 10;
-    this.i = v;
+    this.i! = v;
 end
 var int i = 0;
 var T t with
     this.i = i;
 end;
-escape t.i;
+escape t.i!;
 ]],
     --asr = ':5] runtime error: invalid tag',
     run = 10,
@@ -44487,7 +44494,7 @@ var T t with
     this.i = v;
 end;
 v = v / 2;
-escape t.i? + t.i + 1;
+escape t.i? + t.i! + 1;
 ]],
     run = 7,
 }
@@ -44524,7 +44531,7 @@ var T t with
     this.i = v;
 end;
 v = 11;
-escape t.i;
+escape t.i!;
 ]],
     run = 11,
 }
@@ -44535,7 +44542,7 @@ var _SDL_Texture&? t_enemy_0, t_enemy_1;
 finalize
     t_enemy_1 = _f();
 with
-    _g(&t_enemy_1);
+    _g(&t_enemy_1!);
 end
 escape 1;
 ]],
@@ -44558,10 +44565,10 @@ var _t t;
 
 var _t&? t_ = t;
 
-var int ret = t_.x;
+var int ret = t_!.x;
 t_.x = 100;
 
-escape ret + _id(t_.x) + t.x;
+escape ret + _id(t_!.x) + t.x;
 ]],
     run = 211,
 }
@@ -44591,7 +44598,7 @@ var void&? v;
 finalize
     v = _myalloc();
 with
-    _myfree(&v);
+    _myfree(&v!);
 end
 
 escape 1;
@@ -44614,7 +44621,7 @@ finalize
     v = _myalloc();
 with
     if v? then
-        _myfree(&v);
+        _myfree(&v!);
     end
 end
 
@@ -44670,7 +44677,8 @@ var int&? v4;
         nothing;
     end
 
-escape (not v1?) + (not v3?) + v2? + v4? + (&v2==_V2) + (&v4==_V2) + v2 + v4;
+escape (not v1?) + (not v3?) + v2? + v4? + (&v2! ==_V2) + (&v4! ==_V2) + v2! + 
+v4!;
 ]],
     run = 26,
 }
@@ -44702,7 +44710,7 @@ data SDL_Color with
     var int v;
 end
 var SDL_Color? bg_clr = SDL_Color(10);
-escape bg_clr.v;
+escape bg_clr!.v;
 ]],
     run = 10,
 }
@@ -44718,7 +44726,7 @@ end
 var UI ui with
     this.bg_clr = SDL_Color(10);
 end;
-escape ui.bg_clr.v;
+escape ui.bg_clr!.v;
 ]],
     run = 10,
 }
@@ -44737,7 +44745,7 @@ end
 var UI ui with
     this.bg_clr = SDL_Color(10);
 end;
-escape _fff(ui.bg_clr).v;
+escape _fff(ui.bg_clr!).v;
 ]],
     run = 10,
 }
@@ -44766,17 +44774,17 @@ var int&? p;
 ret = ret + (not i?) + (not p?);  // 2
 
 i = 3;
-ret = ret + i;      // 5
+ret = ret + i!;      // 5
 
 // first
 p = ret;
-p = p + 2;          // 7
+p! = p! + 2;          // 7
 _assert(ret == 7);
 
 // second
 var int v = 10;
-p = v;              // 10
-p = p + 1;          // 11
+p! = v;              // 10
+p! = p! + 1;          // 11
 
 ret = ret + v;      // 21
 escape ret;
@@ -44895,7 +44903,7 @@ end
 class EnterLeave with
     var IGUI_Component& gui;
 do
-    var _void* g = &gui.nat;
+    var _void* g = &gui.nat!;
 end
 escape 1;
 ]],
@@ -44921,7 +44929,7 @@ var U u with
     this.t = t;
 end;
 
-escape u.t.x;
+escape u.t.x!;
 ]],
     run = 10,
 }
@@ -44936,7 +44944,7 @@ class U with
     var T& t;
     var int ret;
 do
-    this.ret = t.x;
+    this.ret = t.x!;
 end
 
 var T t with
@@ -44947,7 +44955,7 @@ var U u with
     this.t = t;
 end;
 
-escape u.t.x + u.ret;
+escape u.t.x! + u.ret;
 ]],
     run = 20,
 }
@@ -44962,7 +44970,7 @@ class U with
     var T& t;
     var int ret;
 do
-    this.ret = t.x;
+    this.ret = t.x!;
 end
 
 var int z = 10;
@@ -44975,7 +44983,7 @@ var U u with
     this.t = t;
 end;
 
-escape u.t.x + u.ret;
+escape u.t.x! + u.ret;
 ]],
     run = 20,
 }
@@ -45003,7 +45011,7 @@ var U u with
     this.t = t;
 end;
 
-escape u.t.x;
+escape u.t.x!;
 ]],
     run = 10,
 }
@@ -45023,7 +45031,7 @@ var U u with
 end;
 var I* i = &u;
 
-escape i:v;
+escape i:v!;
 ]],
     run = 10,
 }
@@ -45052,7 +45060,7 @@ var U u with
 end;
 var I* i = &u;
 
-escape ((*i).t).x;
+escape ((*i).t).x!;
 ]],
     run = 10,
 }
@@ -45300,7 +45308,7 @@ par do
             await OS_START;
             pool T[1] ts;
             var T*? ptr = spawn T in ts;
-            emit e => ptr;
+            emit e => ptr!;
         with
             var T* t = await e;
         end
@@ -45427,8 +45435,8 @@ do
             this.sum    = sum;
         end;
     if nested? then
-        watching *nested do
-            await nested:ok;
+        watching *nested! do
+            await nested!:ok;
         end
     end
     await 1s;
@@ -45465,8 +45473,8 @@ do
             this.sum    = sum;
         end;
     if nested? then
-        watching *nested do
-            await nested:ok;
+        watching *nested! do
+            await nested!:ok;
         end
     end
     await 1s;
@@ -45521,8 +45529,8 @@ do
                     this.sum    = sum;
                 end;
             if left? then
-                watching *left do
-                    await left:ok;
+                watching *left! do
+                    await left!:ok;
                 end
             end
 
@@ -45535,8 +45543,8 @@ do
                     this.sum    = sum;
                 end;
             if right? then
-                watching *right do
-                    await right:ok;
+                watching *right! do
+                    await right!:ok;
                 end
             end
 
@@ -45607,8 +45615,8 @@ do
                     this.sum    = sum;
                 end;
             if left? then
-                watching *left do
-                    await left:ok;
+                watching *left! do
+                    await left!:ok;
                 end
             end
 
@@ -45621,8 +45629,8 @@ do
                     this.sum    = sum;
                 end;
             if right? then
-                watching *right do
-                    await right:ok;
+                watching *right! do
+                    await right!:ok;
                 end
             end
 
@@ -45820,7 +45828,7 @@ do
                     this.n      = n:CONS.tail;
                 end;
             if tail? then
-                await *tail;
+                await *tail!;
             end
         end
     end
@@ -45884,7 +45892,7 @@ do
                     this.n      = n:CONS.tail;
                 end;
             if tail? then
-                await *tail;
+                await *tail!;
             end
         end
     end
@@ -45945,7 +45953,7 @@ do
                     this.n      = n:CONS.tail;
                 end;
             if tail? then
-                await *tail;
+                await *tail!;
             end
         end
     end
@@ -46006,7 +46014,7 @@ do
                     this.n      = n:CONS.tail;
                 end;
             if tail? then
-                await *tail;
+                await *tail!;
             end
         end
     end
@@ -46387,7 +46395,7 @@ with
 end
 
 traverse t in ts do
-    _assert(&p1 == (void*)this);
+    _assert(&p1! == (void*)this);
     if t:NXT then
         traverse t:NXT.nxt;
     end
@@ -46421,7 +46429,7 @@ with
 end
 
 traverse t in ts do
-    _assert(&p1 == (void*)this);
+    _assert(&p1! == (void*)this);
     if t:NXT then
         traverse t:NXT.nxt;
     end
@@ -46462,7 +46470,7 @@ class X with
 do end
 
 traverse t in ts do
-    _assert(&p1 == (void*)this);
+    _assert(&p1! == (void*)this);
     var int v1 = 1;
     var int v3 = 0;
     var X x with
@@ -46511,7 +46519,7 @@ class X with
 do end
 
 traverse t in ts do
-    _assert(&p1 == (void*)this);
+    _assert(&p1! == (void*)this);
     var int v1 = 1;
     var int v3 = 0;
     var X x with
@@ -47898,7 +47906,7 @@ var void&? ptr;
 finalize
     ptr = _malloc(10000);
 with
-    _free(&ptr);
+    _free(&ptr!);
 end
 
 data Command with
@@ -48123,7 +48131,7 @@ do
                     this.n      = n:CONS.tail;
                 end;
             if tail? then
-                await *tail;
+                await *tail!;
             end
         end
     end
@@ -48177,7 +48185,7 @@ do
                     this.n      = n:CONS.tail;
                 end;
             if tail? then
-                await *tail;
+                await *tail!;
             end
         end
     end
@@ -50104,7 +50112,7 @@ with
 end
 native @nohold _free();
 finalize with
-    _free(t);
+    _free(t!);
 end
 escape 10;
 ]],
@@ -51590,7 +51598,7 @@ class T with
 do
 end
 var T t;
-escape t.i==nil;
+escape t.i!==nil;
 ]],
     run = 1,
 }
@@ -51609,7 +51617,7 @@ end
 var T t with
     this.i = &_V;
 end;
-escape t.i.v;
+escape t.i!.v;
 ]],
     run = 10,
 }
@@ -51757,8 +51765,8 @@ pool T[] ts;
 var T*? t = spawn T in ts;
 
 loop do
-    watching *t do
-        kill *t;
+    watching *t! do
+        kill *t!;
     end
     await 1s;
     if false then
@@ -52006,7 +52014,7 @@ end
 var T*? t = spawn T;
 var int ret = -1;
 if t? then
-    ret = await *t;
+    ret = await *t!;
 end
 escape ret;
 ]],
