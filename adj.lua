@@ -1681,9 +1681,6 @@ G = {
     end,
 
     Type_pre = function (me)
-        local id = unpack(me)
-        local TP = id
-
         --
         -- Check if has '?' inside:
         --  - create implicit _Option_*
@@ -1696,8 +1693,6 @@ G = {
             if p == '?' then
                 ASR(i==#me, me, 'not implemented : `?´ must be last modifier')
                 opt = true
-            else
-                TP = TP..'__'..tostring(p)
             end
         end
         if not opt then
@@ -1706,18 +1701,17 @@ G = {
 
         me[#me] = nil
         local cpy = AST.copy(me)    -- w/o opt
+        me[#me+1] = '?'
 
-        local n = ADTS[TP]
-        if not n then
-            n = #ADTS + 1
-            ADTS[TP] = n
-            local adt = node('Dcl_adt', me.ln, '_Option_'..n,
+        local id_adt = TT.opt_adt(me)
+        if not ADTS[id_adt] then
+            local adt = node('Dcl_adt', me.ln, id_adt,
                             'union',
                             node('Dcl_adt_tag', me.ln, 'NIL'),
                             node('Dcl_adt_tag', me.ln, 'SOME',
                                 node('Stmts', me.ln,
                                     node('Dcl_var', me.ln, 'var', cpy, 'v'))))
-            ADTS[n] = adt
+            ADTS[id_adt] = adt
             adt.__adj_opt = me
 
             -- add declarations on enclosing "Stmts"
@@ -1725,7 +1719,7 @@ G = {
             stmts.__add = stmts.__add or {}
             stmts.__add[#stmts.__add+1] = adt
         end
-        me[#me+1] = node('Type', me.ln, '_Option_'..n)
+        --me[#me+1] = node('Type', me.ln, '_Option_'..n)
     end,
 }
 

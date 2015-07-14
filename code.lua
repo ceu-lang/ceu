@@ -447,7 +447,7 @@ case ]]..me.lbls_cnt.id..[[:;
             })
         elseif TT.check(var.tp.tt,'?') then
             -- initialize optional types to nil
-            local ID = string.upper(var.tp.opt.id)
+            local ID = string.upper(TT.opt_adt(var.tp.tt))
             LINE(me, [[
 ]]..V(me,'opt_raw')..[[.tag = CEU_]]..ID..[[_NIL;
 ]])
@@ -628,7 +628,7 @@ case ]]..me.lbl.id..[[:;
         if set then
             local set_to = set[4]
             LINE(me, V(set_to)..' = '..
-                '('..string.upper(TP.toc(set_to.tp.opt))..'_pack('..
+                '('..string.upper(TP.toc(set_to.tp))..'_pack('..
                     '((CEU_'..id..'*)__ceu_new_'..me.n..')));')
         end
 
@@ -665,11 +665,11 @@ case ]]..me.lbl.id..[[:;
             local set_to = set[4]
             LINE(me, [[
 /* HACK_9: see above */
-if (]]..V(set_to)..[[.tag != ]]..string.upper(TP.toc(set_to.tp.opt))..[[_NIL) {
+if (]]..V(set_to)..[[.tag != ]]..string.upper(TP.toc(set_to.tp))..[[_NIL) {
     tceu_stk* stk = stack_nxt(_ceu_go);
     if (stk->evt == CEU_IN__NONE) {
         ]]..V(set_to)..' = '..              
-            string.upper(TP.toc(set_to.tp.opt))..[[_pack(NULL);
+            string.upper(TP.toc(set_to.tp))..[[_pack(NULL);
     }
 }
 ]])
@@ -702,6 +702,7 @@ _STK_ORG->trls[ ]]..me.trl_fins[1]..[[ ].lbl   = ]]..me.lbl_fin.id..[[;
         for _, var in ipairs(me.vars) do
             if var.isTmp then
                 -- TODO: join with code in "mem.lua" for non-tmp vars
+--error'oi'
                 local tp = var.tp.opt or var.tp -- int? becomes CEU_Opt_...
                 if tp.arr then
                     local tp_ = TP.toc(tp)
@@ -984,7 +985,7 @@ case ]]..SET.lbl_cnt.id..[[:;
 
         -- optional types
         if TT.check(to.tp.tt,'?') then
-            local ID = string.upper(to.tp.opt.id)
+            local ID = string.upper(TT.opt_adt(to.tp.tt))
             if TT.check(fr.tp.tt,'?') then
                 LINE(me, V(to,byref)..' = '..V(fr,byref)..';')
             elseif (fr.fst.tag=='Op2_call' and fr.fst.__fin_opt_tp) then

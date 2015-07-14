@@ -58,6 +58,20 @@ function TT.check (tt, ...)
     return true
 end
 
+local __toc = { ['*']='ptr', ['[]']='arr', ['&']='ref', ['?']='opt' }
+function TT.opt_adt (tt)
+    assert(TT.check(tt,'?'), 'bug found')
+    local ret = '_Option__'..tt[1]
+    for i=2, #tt-1 do
+        local p = tt[i]
+        if type(p)=='table' then
+            p = '[]'
+        end
+        ret = ret .. '__' .. __toc[p]
+    end
+    return ret
+end
+
 local __empty = {}
 function TP.get (id)
     return TP.types[id] or __empty
@@ -210,9 +224,19 @@ function TP.toc (tp)
 
     local ret = tp.id
 
-    if ENV.clss[tp.id] or ENV.adts[tp.id] then
+-- TODO: recurse-type
+if tp.tt and TT.check(tp.tt,'?') then
+    ret = TT.opt_adt(tp.tt)
+end
+
+    if ENV.clss[ret] or ENV.adts[ret] then
         ret = 'CEU_'..ret
     end
+
+-- TODO: recurse-type
+if tp.tt and TT.check(tp.tt,'?') then
+    return ret
+end
 
     ret = ret .. string.rep('*',tp.ptr)
 

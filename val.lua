@@ -55,7 +55,7 @@ F =
 
             -- variable with option type (var tp? id)
             if var.tp.opt then
-                local ID = string.upper(var.tp.opt.id)
+                local ID = string.upper(TT.opt_adt(var.tp.tt))
                 local op = (var.tp.ref and '*') or ''
 
                 if CTX.opt_raw then
@@ -221,7 +221,7 @@ F =
 ))]]
                 else
                     VAL = [[(*(
-(]]..TP.toc(me.var.tp.opt or me.var.tp)..[[*) (
+(]]..TP.toc(me.var.tp)..[[*) (
     ((byte*)]]..V(me.org)..[[) + _CEU_APP.ifcs_flds[]]..gen..[[->cls][
         ]]..ENV.ifcs.flds[me.var.ifc_id]..[[
     ]
@@ -310,7 +310,8 @@ F =
         VAL = V(f)..'('..table.concat(ps,',')..')'
 
         if me.__fin_opt_tp then
-            VAL = '(CEU_'..string.upper(me.__fin_opt_tp.opt.id)..'_pack('..VAL..'))'
+            local ID = string.upper(TT.opt_adt(me.__fin_opt_tp.tt))
+            VAL = '(CEU_'..ID..'_pack('..VAL..'))'
         end
         return VAL
     end,
@@ -375,7 +376,8 @@ F =
     end,
     ['Op1_?'] = function (me)
         local op, e1 = unpack(me)
-        return '('..V(e1)..' != CEU_'..string.upper(e1.tp.opt.id)..'_NIL)'
+        local ID = string.upper(TT.opt_adt(e1.tp.tt))
+        return '('..V(e1)..' != CEU_'..ID..'_NIL)'
     end,
 
     -- TODO: recurse-type
