@@ -162,10 +162,14 @@ F = {
                     s = 'adts'
                 end
                 PROPS['has_'..s..'_news'] = true
-                if var.tp.arr==true then
-                    PROPS['has_'..s..'_news_malloc'] = true  -- pool T[] ts
-                else
-                    PROPS['has_'..s..'_news_pool'] = true    -- pool T[N] ts
+                if TT.check(var.tp.tt,'[]') then
+-- TODO: recurse-type
+                    --if var.tp[#var.tp.tt]==true then
+                    if var.tp.arr==true then
+                        PROPS['has_'..s..'_news_malloc'] = true  -- pool T[] ts
+                    else
+                        PROPS['has_'..s..'_news_pool'] = true    -- pool T[N] ts
+                    end
                 end
             end
         end

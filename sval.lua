@@ -23,13 +23,22 @@ F =
 {
     Dcl_var = function (me)
         if me.var.cls then
-            if me.var.tp.arr then
-                ASR(me.var.tp.arr.sval, me, 'invalid static expression')
+            if TT.check(me.var.tp.tt,'[]') then
+-- TODO: recurse-type
+                --ASR(me.var.tp[#me.var.tp.tt].sval, me,
+                ASR(me.var.tp.arr.sval, me,
+                    'invalid static expression')
             end
-        end
-        if me.var.pre=='var' and me.var.tp.arr then
-            ASR(type(me.var.tp.arr)=='table' and me.var.tp.arr.cval,
-                me, 'invalid array dimension')
+        elseif me.var.pre=='var' then
+            local tt = TT.pop(me.var.tp.tt, '&')
+            local is_arr = TT.check(tt,'[]')
+            if is_arr then
+-- TODO: recurse-type
+                --local arr = me.var.tp[#tt]
+                local arr = me.var.tp.arr
+                ASR(type(arr)=='table' and arr.cval,
+                    me, 'invalid array dimension')
+            end
         end
     end,
 

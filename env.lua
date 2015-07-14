@@ -214,7 +214,14 @@ function newvar (me, blk, pre, tp, id, isImp, isEvery)
         n     = _N,
     }
 
-    if pre=='var' and (not tp.arr) then
+-- TODO: recurse-type
+    local is_arr = false
+    if tp.tt then
+        local tt = TT.pop(tp.tt, '&')   -- only *,& after []
+        is_arr = TT.check(tt, '[]')
+    end
+
+    if pre=='var' and (not is_arr) then
         var.lval = var
     elseif pre=='pool' and (ENV.adts[tp.id] or tp.ref) then
         var.lval = var
