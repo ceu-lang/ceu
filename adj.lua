@@ -1703,7 +1703,7 @@ G = {
         local cpy = AST.copy(me)    -- w/o opt
         me[#me+1] = '?'
 
-        local id_adt = TT.opt_adt(me)
+        local id_adt = TT.opt2adt(me)
         if not ADTS[id_adt] then
             local adt = node('Dcl_adt', me.ln, id_adt,
                             'union',
@@ -1711,8 +1711,8 @@ G = {
                             node('Dcl_adt_tag', me.ln, 'SOME',
                                 node('Stmts', me.ln,
                                     node('Dcl_var', me.ln, 'var', cpy, 'v'))))
+            adt.__adj_from_opt = me
             ADTS[id_adt] = adt
-            adt.__adj_opt = me
 
             -- add declarations on enclosing "Stmts"
             local stmts = assert(AST.par(me,'Stmts'))

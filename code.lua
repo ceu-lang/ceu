@@ -447,7 +447,7 @@ case ]]..me.lbls_cnt.id..[[:;
             })
         elseif TT.check(var.tp.tt,'?') then
             -- initialize optional types to nil
-            local ID = string.upper(TT.opt_adt(var.tp.tt))
+            local ID = string.upper(TT.opt2adt(var.tp.tt))
             LINE(me, [[
 ]]..V(me,'opt_raw')..[[.tag = CEU_]]..ID..[[_NIL;
 ]])
@@ -702,14 +702,13 @@ _STK_ORG->trls[ ]]..me.trl_fins[1]..[[ ].lbl   = ]]..me.lbl_fin.id..[[;
         for _, var in ipairs(me.vars) do
             if var.isTmp then
                 -- TODO: join with code in "mem.lua" for non-tmp vars
---error'oi'
-                local tp = var.tp.opt or var.tp -- int? becomes CEU_Opt_...
-                if tp.arr then
-                    local tp_ = TP.toc(tp)
-                    local tp_ = string.sub(TP.toc(tp),1,-2)  -- remove leading `*´
-                    LINE(me, tp_..' '..var.id_..'['..tp.arr.cval..']')
+                local tt = TT.pop(var.tp.tt,'?')
+                if TT.check(tt,'[]') then
+                    local tp_ = TP.toc(var.tp)
+                    local tp_ = string.sub(tp_,1,-2)  -- remove leading `*´
+                    LINE(me, tp_..' '..var.id_..'['..var.tp.arr.cval..']')
                 else
-                    LINE(me, TP.toc(tp)..' __ceu_'..var.id..'_'..var.n)
+                    LINE(me, TP.toc(var.tp)..' __ceu_'..var.id..'_'..var.n)
                 end
                 if var.isFun then
                     -- function parameter
@@ -985,7 +984,7 @@ case ]]..SET.lbl_cnt.id..[[:;
 
         -- optional types
         if TT.check(to.tp.tt,'?') then
-            local ID = string.upper(TT.opt_adt(to.tp.tt))
+            local ID = string.upper(TT.opt2adt(to.tp.tt))
             if TT.check(fr.tp.tt,'?') then
                 LINE(me, V(to,byref)..' = '..V(fr,byref)..';')
             elseif (fr.fst.tag=='Op2_call' and fr.fst.__fin_opt_tp) then

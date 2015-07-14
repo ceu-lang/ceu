@@ -55,7 +55,7 @@ F =
 
             -- variable with option type (var tp? id)
             if var.tp.opt then
-                local ID = string.upper(TT.opt_adt(var.tp.tt))
+                local ID = string.upper(TT.opt2adt(var.tp.tt))
                 local op = (var.tp.ref and '*') or ''
 
                 if CTX.opt_raw then
@@ -310,7 +310,7 @@ F =
         VAL = V(f)..'('..table.concat(ps,',')..')'
 
         if me.__fin_opt_tp then
-            local ID = string.upper(TT.opt_adt(me.__fin_opt_tp.tt))
+            local ID = string.upper(TT.opt2adt(me.__fin_opt_tp.tt))
             VAL = '(CEU_'..ID..'_pack('..VAL..'))'
         end
         return VAL
@@ -376,7 +376,7 @@ F =
     end,
     ['Op1_?'] = function (me)
         local op, e1 = unpack(me)
-        local ID = string.upper(TT.opt_adt(e1.tp.tt))
+        local ID = string.upper(TT.opt2adt(e1.tp.tt))
         return '('..V(e1)..' != CEU_'..ID..'_NIL)'
     end,
 

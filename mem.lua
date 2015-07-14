@@ -196,9 +196,10 @@ void CEU_]]..id..'_free_static (tceu_app* _ceu_app, CEU_'..id..[[* me, void* poo
 ]]
 
         local pack = ''
-        if me.tp.opt and (me.tp.opt.ptr>0 or me.tp.opt.ref) then
-            local ID = string.upper(me.tp.id)
-            local tp = 'CEU_'..me.tp.id
+        local xx = me.__adj_from_opt
+        if xx and (TT.check(xx.tt,'*','?') or TT.check(xx.tt,'&','?')) then
+            local ID = string.upper(TT.opt2adt(xx.tt))
+            local tp = 'CEU_'..TT.opt2adt(xx.tt)
             local some = TP.toc(me[4][2][1][1][2])
 -- TODO: OPT
             local cls = ENV.clss[string.sub(some,5,-2)]

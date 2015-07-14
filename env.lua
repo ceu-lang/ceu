@@ -556,10 +556,6 @@ end
 
     Dcl_adt_pre = function (me)
         local id, op = unpack(me)
--- TODO: is it possible to remove __adj_opt?
-        me.tp = TP.fromstr(id, me.__adj_opt)
-        me.tp.opt = me.__adj_opt
-                    -- recover this information from implicitly created ADTs
 
         ASR(not (ENV.adts[id] or ENV.clss[id]), me,
             'top-level identifier "'..id..'" already taken')

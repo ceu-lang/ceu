@@ -59,7 +59,7 @@ function TT.check (tt, ...)
 end
 
 local __toc = { ['*']='ptr', ['[]']='arr', ['&']='ref', ['?']='opt' }
-function TT.opt_adt (tt)
+function TT.opt2adt (tt)
     assert(TT.check(tt,'?'), 'bug found')
     local ret = '_Option__'..tt[1]
     for i=2, #tt-1 do
@@ -226,7 +226,7 @@ function TP.toc (tp)
 
 -- TODO: recurse-type
 if tp.tt and TT.check(tp.tt,'?') then
-    ret = TT.opt_adt(tp.tt)
+    ret = TT.opt2adt(tp.tt)
 end
 
     if ENV.clss[ret] or ENV.adts[ret] then
