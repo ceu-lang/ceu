@@ -268,7 +268,9 @@ F = {
             -- no await from the begin to spawn
             if me.ana.pre[id] == true then
                 -- pool is unbounded
-                if pool.tp.arr == true then
+                local tt = TT.pop(pool.tp.tt,'&')
+                assert(TT.check(tt,'[]'))
+                if pool.tp[#tt] == true then
                     WRN(false, me, 'unbounded recursive spawn')
                 end
             end

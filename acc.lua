@@ -175,7 +175,8 @@ F = {
     end,
 
     ['Op2_idx'] = function (me)
-        if not (me.lst.var and me.lst.var.tp.arr) then
+        local tt = me.lst.var and TT.pop(me.lst.var.tp.tt,'&')
+        if not (tt and TT.check(tt,'[]')) then
             me.lst.acc.any = true
         end
         me.lst.acc.tp = me.tp  -- deptr'd

@@ -80,7 +80,6 @@ function var2ifc (var)
         var.id,
         tp,
         tostring(var.pre),
-        var.tp.arr and '[]' or '',
     }, '$')
 end
 
@@ -724,7 +723,7 @@ end
         local _, tp, id, constr, _ = unpack(me)
         F.__dcl_var(me)
 
-        if me.var.cls and me.var.tp.arr then
+        if me.var.cls and TT.check(me.var.tp.tt,'[]') then
             -- var T[10] ts;  // needs _i_ to iterate for the constructor
             _, me.var.constructor_iterator =
                 newvar(me, AST.par(me,'Block'), 'var', TP.fromstr'int', '_i_'..id, false)
@@ -751,7 +750,9 @@ end
 
     Dcl_pool = function (me)
         local pre, tp, id, constr = unpack(me)
-        ASR(tp.arr, me, 'missing `pool´ dimension')
+        local tt = TT.pop(tp.tt, '&')
+        tt = TT.pop(tt, '*')
+        ASR(TT.check(tt,'[]'), me, 'missing `pool´ dimension')
         F.__dcl_var(me)
     end,
 
@@ -1038,7 +1039,7 @@ error'oi'
         if set == 'lua' then
             ASR(not to.tp.ref, me, 'invalid attribution')
 
-            lua_str = (to.tp.id=='char' and to.tp.arr)
+            lua_str = (to.tp.id=='char' and TT.check(to.tp.tt,'[]'))
             if not lua_str then
                 ASR(to and to.lval, me, 'invalid attribution')
             end
@@ -1280,20 +1281,18 @@ error'oi'
 
     Op2_idx = function (me)
         local _, arr, idx = unpack(me)
-        ASR(arr.tp.arr or arr.tp.ptr>0 or arr.tp.ext, me,
-            'cannot index a non array')
-        ASR(TP.isNumeric(idx.tp), me, 'invalid array index')
-
-        -- TODO: recurse-type
-        local ok
-        local tt = TT.copy(arr.tp.tt)
-        tt = TT.pop(tt, '&')
 
         -- remove [] or *
+        local tt = TT.pop(arr.tp.tt,'&')
+        local ok
         tt, ok = TT.pop(tt, '[]')
         if not ok then
             tt, ok = TT.pop(tt, '*')
         end
+
+        ASR(ok or arr.tp.ext, me,
+            'cannot index a non array')
+        ASR(TP.isNumeric(idx.tp), me, 'invalid array index')
 
         me.tp = AST.node('Type', me.ln[2], unpack(tt))
         F.Type(me.tp)

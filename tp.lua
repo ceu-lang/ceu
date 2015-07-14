@@ -87,7 +87,6 @@ function TP.new (me, dont_generate)
         me.ptr = ptr
         me.arr = arr
         me.ref = ref
-        me.opt = opt
         me.ext = (id=='@') or
                  (string.sub(id,1,1)=='_' and string.sub(id,1,8)~='_Option_')
         me.hold = true      -- holds by default

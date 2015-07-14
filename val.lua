@@ -42,7 +42,7 @@ F =
                 -- normalize all org acesses to pointers to it
                 -- (because of interface accesses that must be done through a pointer)
                 VAL = '(&'..VAL..')'
-            elseif var.tp.opt then
+            elseif TT.check(var.tp.tt,'?') then
             elseif var.tp.ref then
                 if ENV.clss[var.tp.id] then
                     -- orgs vars byRef, do nothing
@@ -54,7 +54,7 @@ F =
             end
 
             -- variable with option type (var tp? id)
-            if var.tp.opt then
+            if TT.check(var.tp.tt,'?') then
                 local ID = string.upper(TT.opt2adt(var.tp.tt))
                 local op = (var.tp.ref and '*') or ''
 
@@ -69,7 +69,7 @@ F =
                     _, _, fr, to = unpack(set)
                     is_to = (to.lst.var == var)
                     is_fr = (fr.lst.var == var)
-                    are_both_opt = (to.tp.opt and fr.tp.opt)
+                    are_both_opt = (TT.check(to.tp.tt,'?') and TT.check(fr.tp.tt,'?'))
                 end
 
                 -- call
@@ -248,7 +248,7 @@ F =
                 error 'not implemented'
             end
 
-            if me.var.tp.opt then
+            if TT.check(me.var.tp.tt,'?') then
                 VAL = F.__var(me, VAL, CTX)
             end
         else
