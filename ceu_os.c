@@ -151,7 +151,7 @@ void ceu_sys_stack_clear_org (tceu_go* go, tceu_org* org, int lim) {
         if (stk->evt == CEU_IN__NONE) {
             continue;   /* already cleared: avoids accessing dangling pointer */
         }
-        if (__ceu_isParent(org, stk->org)) {
+        if (__ceu_isParent(org, (tceu_org*)stk->org)) {
             if (stk->stop == NULL) {        /* broadcast traversal */
                 /* jump to next organism */
                 stk->org = org->nxt;

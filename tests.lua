@@ -4087,6 +4087,101 @@ end
     run = 1,
 }
 
+Test { [[
+event void e;
+loop i in 1000 do
+    emit e;
+end
+escape 1;
+]],
+    run = 1, -- had stack overflow
+}
+Test { [[
+event void e;
+var int ret = 0;
+par/or do
+    every e do
+        ret = ret + 1;
+    end
+with
+    loop i in 1000 do
+        emit e;
+    end
+end
+escape ret;
+]],
+    _ana = {acc=1},
+    run = 1000, -- had stack overflow
+}
+Test { [[
+event void x,e,f,g;
+var int ret = 0;
+class T with do end;
+par/or do
+    every x do
+        loop i in 1000 do
+            emit e;
+        end
+    end
+with
+    every e do
+        emit f;
+    end
+with
+    every f do
+        emit g;
+    end
+with
+    every g do
+        ret = ret + 1;
+        spawn T;
+    end
+with
+    emit x;
+end
+escape ret;
+]],
+    _ana = {acc=1},
+    run = 1000, -- had stack overflow
+}
+
+Test { [[
+class Groundpiece with
+do
+end
+
+event void x;
+event void a;
+event void b;
+event void c;
+var int ret = 0;
+
+par/or do
+    every x do
+        emit b;
+        ret = 10;
+    end
+with
+    every b do
+        emit a;
+    end
+with
+    every c do
+        spawn Groundpiece;
+    end
+with
+    emit x;
+end
+
+input void OS_START;
+await OS_START;
+escape ret;
+]],
+    _ana = {acc=true},
+    run = 10,
+}
+
+
 -- ParOr
 
 Test { [[

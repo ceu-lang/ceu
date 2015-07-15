@@ -1593,6 +1593,10 @@ _STK->trl->stk = stack_curi(_ceu_go);
 return RET_RESTART;
 
 case ]]..me.lbl_cnt.id..[[:;
+    /* Above push can only awake myself, so I can pop.
+     * Have to trl-- to reexecute myself. */
+    stack_pop(_ceu_go);
+    _STK->trl--;
 ]])
     end,
 
