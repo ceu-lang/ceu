@@ -1927,11 +1927,13 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
                 LINE(me, [[
         ceu_lua_pushnumber(_ceu_app->lua,]]..V(p)..[[);
 ]])
-            elseif TP.toc(p.tp)=='char*' then
+            elseif TT.check(p.tp.tt,'char','*','-&') or
+                   TT.check(p.tp.tt,'char','[]','-&')
+            then
                 LINE(me, [[
         ceu_lua_pushstring(_ceu_app->lua,]]..V(p)..[[);
 ]])
-            elseif p.tp.ptr>0 then
+            elseif TT.check(p.tp.tt,'*','-&') then
                 LINE(me, [[
         ceu_lua_pushlightuserdata(_ceu_app->lua,]]..V(p)..[[);
 ]])
@@ -1964,7 +1966,9 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
             ]]..V(set_to)..[[ = ret;
             ceu_lua_pop(_ceu_app->lua, 1);
 ]])
-            elseif TP.toc(set_to.tp) == 'char*' then
+            elseif TT.check(set_to.tp.tt,'char','[]','-&') or
+                   TT.check(set_to.tp.tt,'char','*','-&')
+            then
                 --ASR(me.ret.var and me.ret.var.tp.arr, me,
                     --'invalid attribution (requires a buffer)')
                 LINE(me, [[
@@ -1989,7 +1993,7 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
             }
             ceu_lua_pop(_ceu_app->lua, 1);
 ]])
-            elseif set_to.tp.ptr > 0 then
+            elseif TT.check(set_to.tp.tt,'*','-&') then
                 LINE(me, [[
             void* ret;
             int is;
