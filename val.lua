@@ -416,7 +416,7 @@ F =
         local tp, exp = unpack(me)
         local VAL = V(exp)
 
-        local cls = (ENV.clss[tp.id] and TT.check(tp.tt,'*','-&'))
+        local cls = (TT.check(tp.tt,'*','-&') and ENV.clss[tp.id])
         if cls then
             if cls.is_ifc then
                 -- TODO: out of bounds acc
