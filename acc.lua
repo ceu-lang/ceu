@@ -130,13 +130,15 @@ F = {
         CHG(f.lst.acc, 'cl')
         me.acc = f.lst.acc
         for _, exp in ipairs(exps) do
-            if exp.tp.ptr>0 then
+            if TT.check(exp.tp.tt,'*') then
                 local v = exp.lst
                 if v and v.acc then   -- ignore constants
 --DBG(exp.tag, exp.lst)
                     v.acc.any = exp.lval    -- f(&x) // a[N] f(a) // not "any"
                     CHG(v.acc, (me.c and me.c.mod=='@pure' and 'rd') or 'wr')
                     v.acc.tp = TP.copy(exp.tp)
+                    v.acc.tp.tt = TT.pop(v.acc.tp.tt,'*')
+-- TODO: recurse-type: remove
                     v.acc.tp.ptr = v.acc.tp.ptr - 1     -- f may deref exp
                 end
             end

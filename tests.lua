@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end
---]===]
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------
@@ -21160,7 +21159,7 @@ with
 end
 ]],
     _ana = {
-        acc = 48,        -- TODO: nao conferi
+        acc = true,
         isForever = true,
     },
     --fin = 'line 4 : call requires `finalize´',
@@ -21193,7 +21192,7 @@ with
 end
 ]],
     _ana = {
-        acc = 48,
+        acc = true,
         isForever = true,
     },
 }
@@ -33218,6 +33217,7 @@ escape 10;
     run = 10,
 }
 
+--]===]
 Test { [[
 native _ptr;
 native do

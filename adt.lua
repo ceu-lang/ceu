@@ -29,7 +29,7 @@ F = {
                 --      var List* l;
                 --  becomes
                 --      var tceu_adt_root l = {pool=x, root=y}
-                ASR(me.var.tp.ptr==1, me,
+                ASR(TT.check(me.var.tp.tt,me.var.tp.id,'*'), me,
                     'invalid recursive data declaration : variable "'..me.var.id..'" must be a pointer or pool')
             end
         end
@@ -81,7 +81,7 @@ F = {
             -- [OK]: ptr  = l2.*
             -- [OK]: l1.* = l1.*
             -- [NO]: l1.* = l2.*
-            ASR((to.tp.ptr==1 and to.lst.var==to.var) or
+            ASR((TT.check(to.tp.tt,'*','-&') and to.lst.var==to.var) or
                  to.fst.var==fr.fst.var, me,
                 'cannot mix recursive data sources')
 

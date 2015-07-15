@@ -153,7 +153,7 @@ F =
                         VAL = '('..cast..'('..VAL..').root)'
                     end
                 end
-            elseif not (var.tp.ptr>0 or var.tp.ref) then
+            elseif not (TT.check(var.tp.tt,'*') or TT.check(var.tp.tt,'&')) then
                 VAL = '(&'..VAL..')'
                 VAL = '((tceu_pool_*)'..VAL..')'
             end
@@ -319,7 +319,7 @@ F =
     Op2_idx = function (me)
         local _, arr, idx = unpack(me)
         local VAL = V(arr)..'['..V(idx)..']'
-        if me.tp.ptr==0 and ENV.clss[me.tp.id] then
+        if ENV.clss[me.tp.id] and (not TT.check(me.tp.tt,'*')) then
             VAL = '(&'..VAL..')'
                 -- class accesses must be normalized to references
         end
@@ -360,7 +360,7 @@ F =
 
     ['Op1_*'] = function (me)
         local op, e1 = unpack(me)
-        if ENV.clss[me.tp.id] and e1.tp.ptr==1 then
+        if ENV.clss[me.tp.id] and TT.check(e1.tp.tt, e1.tp.id,'*','-&') then
             return V(e1) -- class accesses should remain normalized to references
         else
             return '('..ceu2c(op)..V(e1)..')'
@@ -368,7 +368,7 @@ F =
     end,
     ['Op1_&'] = function (me)
         local op, e1 = unpack(me)
-        if ENV.clss[e1.tp.id] and e1.tp.ptr==0 then
+        if ENV.clss[e1.tp.id] and (not TT.check(e1.tp.tt,'*','-&')) then
             return V(e1) -- class accesses are already normalized to references
         else
             return '('..ceu2c(op)..V(e1)..')'
@@ -416,7 +416,7 @@ F =
         local tp, exp = unpack(me)
         local VAL = V(exp)
 
-        local cls = tp.ptr==1 and ENV.clss[tp.id]
+        local cls = (ENV.clss[tp.id] and TT.check(tp.tt,'*','-&'))
         if cls then
             if cls.is_ifc then
                 -- TODO: out of bounds acc

@@ -215,7 +215,7 @@ F = {
         end
     end,
     Dcl_var = function (me)
-        if me.var.cls and me.var.tp.ptr==0 then
+        if me.var.cls then
             local _,_,_,constr = unpack(me)
             F.__constr(me, me.var.cls, constr or {})
         end
