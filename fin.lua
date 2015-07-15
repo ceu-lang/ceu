@@ -47,9 +47,7 @@ function ISPTR (node_or_var)
     end
 
     do
-        local tt = TT.pop(tt, '?')
-        tt = TT.pop(tt, '&')
-        if TT.check(tt,'*') then
+        if TT.check(tt,'*','-&','-?') then
             return true
         end
     end

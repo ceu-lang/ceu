@@ -703,8 +703,7 @@ _STK_ORG->trls[ ]]..me.trl_fins[1]..[[ ].lbl   = ]]..me.lbl_fin.id..[[;
         for _, var in ipairs(me.vars) do
             if var.isTmp then
                 -- TODO: join with code in "mem.lua" for non-tmp vars
-                local tt = TT.pop(var.tp.tt,'?')
-                if TT.check(tt,'[]') then
+                if TT.check(var.tp.tt,'[]','-?') then
                     local tp_ = TP.toc(var.tp)
                     local tp_ = string.sub(tp_,1,-2)  -- remove leading `*´
                     LINE(me, tp_..' '..var.id_..'['..var.tp.arr.cval..']')

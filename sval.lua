@@ -30,8 +30,7 @@ F =
                     'invalid static expression')
             end
         elseif me.var.pre=='var' then
-            local tt = TT.pop(me.var.tp.tt, '&')
-            local is_arr = TT.check(tt,'[]')
+            local is_arr = TT.check(me.var.tp.tt,'[]','-&')
             if is_arr then
 -- TODO: recurse-type
                 --local arr = me.var.tp[#tt]

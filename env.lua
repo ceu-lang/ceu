@@ -151,12 +151,13 @@ local function check (me, pre, tp)
 end
 
 function ENV.v_or_ref (tp, cls_or_adt)
+    local ok = TT.check(tp.tt,tp.id,'-[]','-&','-?')
     if cls_or_adt == 'cls' then
-        return (tp.ptr==0) and ENV.clss[tp.id]
+        return ok and ENV.clss[tp.id]
     elseif cls_or_adt == 'adt' then
-        return (tp.ptr==0) and ENV.adts[tp.id]
+        return ok and ENV.adts[tp.id]
     else
-        return (tp.ptr==0) and (ENV.clss[tp.id] or ENV.adts[tp.id])
+        return ok and (ENV.clss[tp.id] or ENV.adts[tp.id])
     end
 end
 
@@ -673,8 +674,7 @@ end
     Free = function (me)
         local exp = unpack(me)
 
-        local tt = exp.tp.tt            -- T&*&
-        tt = TT.norefs(tt)              -- T*
+        local tt = TT.pop(exp.tp.tt,'&')
         if #tt == 2 then
             local id, ptr = unpack(tt)
             if ptr=='*' and ENV.clss[tt[1]] then
@@ -762,9 +762,7 @@ end
 
     Dcl_pool = function (me)
         local pre, tp, id, constr = unpack(me)
-        local tt = TT.pop(tp.tt, '&')
-        tt = TT.pop(tt, '*')
-        ASR(TT.check(tt,'[]'), me, 'missing `pool´ dimension')
+        ASR(TT.check(tp.tt,'[]','-*','-&'), me, 'missing `pool´ dimension')
         F.__dcl_var(me)
     end,
 
@@ -1053,7 +1051,10 @@ error'oi'
                 ASR(to and to.lval, me, 'invalid attribution')
             end
 
-            ASR(TP.isNumeric(to.tp) or TP.tostr(to.tp)=='bool' or to.tp.ptr==1 or lua_str,
+            local tt = TT.pop(to.tp.tt, '&')
+            ASR(TP.isNumeric(to.tp,'&') or TT.check(to.tp.tt,'bool','-&') or
+                TT.check(to.tp.tt, to.tp.id, '*', '-&') or
+                lua_str,
                 me, 'invalid attribution')
             fr.tp = to.tp -- return type is not known at compile time
         else
@@ -1072,7 +1073,8 @@ error'oi'
 
     Free = function (me)
         local exp = unpack(me)
-        local id = ASR(exp.tp.ptr>0, me, 'invalid `free´')
+        local tt = TP.pop(exp.tp.tt, '&')
+        local id = ASR(#tt==2 and tt[#tt]=='*', me, 'invalid `free´')
         me.cls = ASR( ENV.clss[id], me,
                         'class "'..id..'" is not declared')
     end,
@@ -1181,7 +1183,7 @@ error'oi'
                 me.var_nxt = var_nxt
             end
 
-        elseif iter and iter.tp.ptr>0 then
+        elseif iter and TT.check(iter.tp.tt,'*') then
             me.iter_tp = 'data'
             if to then
                 local dcl = AST.node('Dcl_var', me.ln, 'var',
@@ -1238,6 +1240,8 @@ error'oi'
                 if ttag.tup[i] and ttag.tup[i].is_rec then
                     ASR(p.tag == 'Adt_constr_one', me,
                         'invalid constructor : recursive field "'..id_tag..'" must be new data')
+                    p.tp.tt[#p.tp.tt+1] = '*'
+-- TODO: recurse-type: remove
                     p.tp.ptr = 1
                 end
             end
@@ -1316,7 +1320,7 @@ error'oi'
     Op2_int_int = function (me)
         local op, e1, e2 = unpack(me)
         me.tp  = TP.fromstr'int'
-        ASR(TP.isNumeric(e1.tp) and TP.isNumeric(e2.tp), me,
+        ASR(TP.isNumeric(e1.tp,'&') and TP.isNumeric(e2.tp,'&'), me,
                 'invalid operands to binary "'..op..'"')
     end,
     ['Op2_-']  = 'Op2_int_int',
@@ -1536,8 +1540,10 @@ error'oi'
             -- rect.x = 1 (_SDL_Rect)
             me.tp = TP.fromstr'@'
             local tp = TP.get(e1.tp.id)
-            if tp.plain and e1.tp.ptr==0 then
+            if tp.plain and (not TT.check(e1.tp.tt,'*')) then
                 me.tp.plain = true
+                me.tp.tt = TT.pop(me.tp.tt, '*')
+-- TODO: recurse-type: remove
                 me.tp.ptr   = 0
             end
             me.lval = me--e1.lval
@@ -1556,7 +1562,7 @@ error'oi'
         local tp, exp = unpack(me)
         me.tp   = tp
         me.lval = exp.lval
-        if tp.ptr > 0 then
+        if TT.check(tp.tt,'*','-&') then
             me.lval = exp      -- *((u32*)0x100)=v
         end
     end,

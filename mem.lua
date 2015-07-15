@@ -486,6 +486,8 @@ typedef union CEU_]]..me.id..[[_delayed {
             elseif var.cls or var.adt then
                 len = 10    -- TODO: it should be big
                 --len = (var.tp.arr or 1) * ?
+            elseif TT.check(var.tp.tt,'?') then
+                len = 10
             elseif TT.check(var.tp.tt,'[]') then
                 len = 10    -- TODO: it should be big
 --[[
@@ -494,7 +496,8 @@ typedef union CEU_]]..me.id..[[_delayed {
                              or (ENV.c[_tp] and ENV.c[_tp].len
                                  or TP.types.word.len)) -- defaults to word
 ]]
-            elseif var.tp.ptr>0 or var.tp.ref then
+            elseif var.tp.tt and (TT.check(var.tp.tt,'*') or TT.check(var.tp.tt,'&')) then
+-- TODO: recurse-type: tt test
                 len = TP.types.pointer.len
             else
                 len = ENV.c[var.tp.id].len
@@ -549,7 +552,7 @@ typedef union CEU_]]..me.id..[[_delayed {
                 -- tceu_adt_root id = { root=?, pool=_id };
                 -- CEU_POOL_DCL(_id);
                 if adt then
-                    assert(var.tp.ptr <= 1, 'bug found')
+                    assert(not TT.check(var.tp.tt,'*','*'), 'bug found')
                     local ptr = (var.tp.ref and '*') or ''
                     DCL.struct = DCL.struct .. [[
 /*
@@ -579,8 +582,16 @@ CEU_POOL_DCL(]]..ID..',CEU_'..var.tp.id..','..var.tp.arr.sval..[[)
                 elseif (not adt) then   -- (top_pool or cls)
                     -- ADT doesn't require this NULL pool field
                     --  (already has root->pool=NULL)
-                    if var.tp.ptr>0 or var.tp.ref then
-                        local ptr = string.rep('*', (var.tp.ref and 1 or 0) + var.tp.ptr)
+                    if TT.check(var.tp.tt,'*') or TT.check(var.tp.tt,'&') then
+                        local ptr = ''
+                        for i=#var.tp.tt, 1, -1 do
+                            local v = var.tp.tt[i]
+                            if v=='*' or v=='&' then
+                                ptr = ptr..'*'
+                            else
+                                break
+                            end
+                        end
                         DCL.struct = DCL.struct .. [[
 tceu_pool_]]..ptr..' '..var.id_..[[;
 ]]

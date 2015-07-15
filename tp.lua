@@ -21,15 +21,6 @@ function TT.copy (tt, s, e)
     end
     return ret
 end
-function TT.norefs (tt)
-    local ret = {}
-    for _, v in ipairs(tt) do
-        if v ~= '&' then
-            ret[#ret + 1] = v
-        end
-    end
-    return ret
-end
 function TT.find (tt, ...)
     for i, t in ipairs(tt) do
         for _, v in ipairs{...} do
@@ -59,11 +50,25 @@ function TT.check (tt, ...)
     end
 -- TODO: recurse-type: remove after all is ported
 
-    local t = { ... }
-    for i=0, #t-1 do
-        if tt[#tt-i] ~= t[#t-i] then
-            return false
+    local E = { ... }
+    local j = 0
+    for i=0, #E-1 do
+        local v = tt[#tt-j]
+        local e = E[#E-i]
+        local opt = false
+        if string.sub(e,1,1) == '-' then
+            e   = string.sub(e,2)
+            opt = true
         end
+
+        if v ~= e then
+            if opt then
+                j = j - 1
+            else
+                return false
+            end
+        end
+        j = j + 1
     end
     return true
 end
@@ -281,20 +286,19 @@ function TP.tostr (tp)
     return ret
 end
 
-function TP.isFloat (tp)
-    local tt = TT.norefs(tp.tt)
+function TP.isFloat (tp, pop)
+    local tt = (pop and TT.pop(tp.tt, pop)) or tp.tt
     local id = unpack(tt)
     return #tt==1 and (id=='float' or id=='f32' or id=='f64')
 end
 
-function TP.isNumeric (tp)
+function TP.isNumeric (tp, pop)
     -- TODO: recurse-type
     if not tp.tt then
         return false
     end
 
--- TODO: recurse-type: remove TT.norefs
-    local tt = TT.norefs(tp.tt)
+    local tt = (pop and TT.pop(tp.tt, pop)) or tp.tt
     local id = unpack(tt)
     return #tt==1 and (TP.get(id).num or tp.ext)
             or id=='@'
