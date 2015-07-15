@@ -604,7 +604,7 @@ case ]]..me.lbl.id..[[:;
             LINE(me, [[
     ]]..ID..[[ = (tceu_org*) ceu_pool_alloc((tceu_pool*)]]..V(pool)..[[);
 ]])
-        elseif pool.var.tp.ptr>0 or pool.var.tp.ref then
+        elseif TT.check(pool.var.tp.tt,'*') or TT.check(pool.var.tp.tt,'&') then
             -- pointer don't know if is dynamic or static
             LINE(me, [[
 #if !defined(CEU_ORGS_NEWS_MALLOC)
@@ -1051,7 +1051,7 @@ case ]]..SET.lbl_cnt.id..[[:;
 
             local pool = FIND_ADT_POOL(fr.fst)
             if to.var.pre == 'pool' then
-                if to.var.tp.ref then
+                if TT.check(to.var.tp.tt,'&') then
                     LINE(me, [[
 ]]..V(to,'lval','adt_root')..' = '..V(fr,'adt_root')..[[;
 ]])

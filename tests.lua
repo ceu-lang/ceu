@@ -50096,6 +50096,15 @@ do return end
 -- async dentro de pause
 -- async thread spawn falhou, e ai?
 
+Test { [[
+var void& v;
+escape 1;
+]],
+    run = 1,
+    -- TODO: should fail as below
+    --env = 'line 1 : cannot instantiate type "void"',
+}
+
 -- TODO: bug: what if the "o" expression contains other pointers?
 -- (below: pi)
 Test { [[

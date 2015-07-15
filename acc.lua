@@ -251,7 +251,7 @@ F = {
             id  = me.var,
             md  = (generated and 'nv') or 'rd',
             tp  = me.var.tp,
-            any = me.var.tp.ref,
+            any = TT.check(me.var.tp.tt,'&'),
             err = ERR(me, 'variable/event `'..me.var.id..'´'),
         }
 

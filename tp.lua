@@ -40,6 +40,11 @@ function TT.find (tt, ...)
     end
 end
 function TT.pop (tt, v)
+    if not tt then
+        return tt,false
+    end
+-- TODO: recurse-type: remove after all is ported
+
     tt = TT.copy(tt)
     if tt[#tt] == v then
         tt[#tt] = nil
@@ -49,6 +54,11 @@ function TT.pop (tt, v)
     end
 end
 function TT.check (tt, ...)
+    if not tt then
+        return false
+    end
+-- TODO: recurse-type: remove after all is ported
+
     local t = { ... }
     for i=0, #t-1 do
         if tt[#tt-i] ~= t[#t-i] then
@@ -283,6 +293,7 @@ function TP.isNumeric (tp)
         return false
     end
 
+-- TODO: recurse-type: remove TT.norefs
     local tt = TT.norefs(tp.tt)
     local id = unpack(tt)
     return #tt==1 and (TP.get(id).num or tp.ext)

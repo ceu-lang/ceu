@@ -125,7 +125,9 @@ local function check (me, pre, tp)
     local top = ASR(ENV.c[tp.id] or ENV.clss[tp.id] or ENV.adts[tp.id],
                     me, 'undeclared type `'..(tp.id or '?')..'´')
 
-    if tp.ptr==0 and (not tp.ref) then
+    local tt = TT.pop(tp.tt,'?')
+
+    if tt and (#tt==1 or (#tt==2 and tt[#tt]=='[]')) then
         ASR(not AST.isParent(top,me), me,
             'undeclared type `'..(tp.id or '?')..'´')
         if top.is_ifc then
@@ -138,9 +140,10 @@ local function check (me, pre, tp)
 
     local void_ok = (tp.id=='void' and
                     (pre=='event' or pre=='function' or pre=='input' or
-                     pre=='output' or pre=='isr'))
+                     pre=='output' or pre=='isr' or
+                     tt[2]=='*'))
 
-    ASR(tp.ptr>0 or tp.ref or TP.get(tp.id).len~=0 or void_ok,
+    ASR(TP.get(tp.id).len~=0 or TT.check(tt,'*') or TT.check(tt,'&') or void_ok,
         me, 'cannot instantiate type "'..tp.id..'"')
     --ASR((not arr) or arr>0, me, 'invalid array dimension')
 
@@ -216,14 +219,16 @@ function newvar (me, blk, pre, tp, id, isImp, isEvery)
 
 -- TODO: recurse-type
     local is_arr = false
+    local is_ref = false
     if tp.tt then
-        local tt = TT.pop(tp.tt, '&')   -- only *,& after []
+        local tt
+        tt, is_ref = TT.pop(tp.tt, '&')   -- only *,& after []
         is_arr = TT.check(tt, '[]')
     end
 
     if pre=='var' and (not is_arr) then
         var.lval = var
-    elseif pre=='pool' and (ENV.adts[tp.id] or tp.ref) then
+    elseif pre=='pool' and (ENV.adts[tp.id] or is_ref) then
         var.lval = var
     else
         var.lval = false
@@ -749,7 +754,7 @@ end
             me[2] = TP.fromstr'void'
 
             local tp_ = TP.new(tp)
-            local top = (tp_.ptr==0 and (not tp_.ref))
+            local top = not (TT.check(tp_.tt,'*') or TT.check(tp_.tt,'&'))
             ASR(tp_.id=='_TOP_POOL' or top,
                 me, 'undeclared type `'..(tp_.id or '?')..'´')
         end
@@ -768,15 +773,12 @@ end
         if id == '_' then
             id = id..me.n   -- avoids clash with other '_'
         end
-        ASR(tp.id=='void' or TP.isNumeric(tp) or
-            tp.ptr>0      or tp.tup,
+        assert(tp.tup, 'bug found')
+        for _, t in ipairs(tp.tup) do
+            ASR((TP.isNumeric(t) or TT.check(t.tt,'*')),
                 me, 'invalid event type')
-        ASR(not tp.ref, me, 'invalid event type')
-        if tp.tup then
-            for _, t in ipairs(tp.tup) do
-                ASR((TP.isNumeric(t) or t.ptr>0) and (not t.ref),
-                    me, 'invalid event type')
-            end
+-- TODO: recurse-type: remove when numeric not &
+            ASR(not TT.check(t.tt,'&'), me, 'invalid event type')
         end
         local _
         _, me.var = newint(me, AST.iter'Block'(), pre, tp, id, me.isImp)
@@ -1030,7 +1032,7 @@ error'oi'
 
         elseif ENV.adts[to.tp.id] and (not to_is_opt) then
             if ENV.adts[to.tp.id].is_rec then
-                if to.var and (to.var.tp.ref or to.var.tp.ptr>0) then
+                if to.var and (TT.check(to.var.tp.tt,'&') or TT.check(to.var.tp.tt,'*')) then
                     me[2] = 'adt-alias'
                 else
                     me[2] = 'adt-mut'
