@@ -96,7 +96,7 @@ F = {
     Set = function (me)
         local _, set, _, to = unpack(me)
         if set=='adt-mut' or set=='adt-constr' then
-            if PROPS.has_adts_watching[to.tp.id] then
+            if PROPS.has_adts_watching[TT.id(to.tp)] then
                 me.lbl_cnt = new{'Set_adt'}
             end
         end

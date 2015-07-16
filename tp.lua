@@ -5,6 +5,10 @@ TP = {
 TT = {
 }
 
+function TT.id (tp)
+    return tp.tt[1]
+end
+
 function TT.copy (tt, s, e)
     s = s or 1
     e = e or #tt
@@ -130,14 +134,14 @@ function TP.new (me, dont_generate)
             local hold, tp, _ = unpack(t)
             tp.hold = hold
 
-            if tp.id=='void' and tp.ptr==0 then
+            if TT.id(tp)=='void' and tp.ptr==0 then
                 ASR(#me==1, me, 'invalid type')
                 me[1] = nil     -- empty tuple
                 break
             end
 
             -- TODO: workaround: error when generating nested ADTs
-            if ENV.adts[tp.id] then
+            if ENV.adts[TT.id(tp)] then
                 dont_generate = true
             end
 
@@ -236,21 +240,21 @@ function TP.toc (tp)
         return string.gsub(table.concat(t,'__'),'%*','_')
     end
 
-    local ret = tp.id
+    local ret
 
--- TODO: recurse-type
-if tp.tt and TT.check(tp.tt,'?') then
-    ret = TT.opt2adt(tp.tt)
-end
+    if TT.check(tp.tt,'?') then
+        ret = TT.opt2adt(tp.tt)
+    else
+        ret = unpack(tp.tt)
+    end
 
     if ENV.clss[ret] or ENV.adts[ret] then
         ret = 'CEU_'..ret
     end
 
--- TODO: recurse-type
-if tp.tt and TT.check(tp.tt,'?') then
-    return ret
-end
+    if TT.check(tp.tt,'?') then
+        return ret
+    end
 
     ret = ret .. string.rep('*',tp.ptr)
 
@@ -276,7 +280,7 @@ function TP.tostr (tp)
         return '('..table.concat(ret,',')..')'
     end
 
-    local ret = tp.id
+    local ret = unpack(tp.tt)
     ret = ret .. string.rep('*',tp.ptr)
     if tp.arr then
         ret = ret .. '[]'

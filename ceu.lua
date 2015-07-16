@@ -348,7 +348,8 @@ do
                 str = str .. 'typedef struct {\n'
                 for i, t in ipairs(T.tup) do
                     local tmp = TP.toc(t)
-                    if ENV.clss[t.id] then
+                    local tp_id = unpack(t.tt)
+                    if ENV.clss[tp_id] then
                         -- T* => void*
                         -- T** => void**
                         tmp = 'void'..string.match(tmp,'(%*+)')

@@ -22,14 +22,15 @@ F = {
     end,
 
     Dcl_var = function (me)
-        local adt = ENV.adts[me.var.tp.id]
+        local tp_id = unpack(me.var.tp.tt)
+        local adt = ENV.adts[tp_id]
         if adt and adt.is_rec then
             if me.var.pre == 'var' then
                 -- Pointer to recursive ADT pool declaration:
                 --      var List* l;
                 --  becomes
                 --      var tceu_adt_root l = {pool=x, root=y}
-                ASR(TT.check(me.var.tp.tt,me.var.tp.id,'*'), me,
+                ASR(TT.check(me.var.tp.tt,tp_id,'*'), me,
                     'invalid recursive data declaration : variable "'..me.var.id..'" must be a pointer or pool')
             end
         end
@@ -52,7 +53,7 @@ F = {
             return      -- handled in env.lua
         end
 
-        local adt = ENV.adts[to.tp.id]
+        local adt = ENV.adts[TT.id(to.tp)]
         if not (adt and adt.is_rec) then
             return  -- ignore non-adt or non-recursive-adt
         end

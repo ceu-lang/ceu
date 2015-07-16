@@ -154,7 +154,8 @@ F = {
             end
             if var.pre=='pool' then
                 local s
-                if ENV.clss[var.tp.id] or var.tp.id=='_TOP_POOL' then
+                local tp_id = TT.id(var.tp)
+                if ENV.clss[tp_id] or tp_id=='_TOP_POOL' then
                     s = 'orgs'
                 else
                     me.needs_clr = true
@@ -392,7 +393,7 @@ F = {
 
     Op1_cast = function (me)
         local tp, _ = unpack(me)
-        if ENV.clss[tp.id] and TT.check(tp.tt,'*') then
+        if ENV.clss[TT.id(tp)] and TT.check(tp.tt,'*') then
             PROPS.has_ifcs = true      -- cast must check org->cls_id
         end
     end,

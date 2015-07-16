@@ -167,7 +167,7 @@ end
 -- ^      ^-- matches, but not first
 -- ^-- first
 local function FIND_ADT_POOL (fst)
-    local adt = ENV.adts[fst.tp.id]
+    local adt = ENV.adts[TT.id(fst.tp)]
     local tt = fst.tp.tt
     if adt and (TT.check(tt,'[]') or TT.check(tt,'*') or TT.check(tt,'&')) then
         return fst
@@ -723,7 +723,8 @@ _STK_ORG->trls[ ]]..me.trl_fins[1]..[[ ].lbl   = ]]..me.lbl_fin.id..[[;
                 local top = cls or adt
                 local static = (type(var.tp.arr)=='table')
 
-                if top or var.tp.id=='_TOP_POOL' then
+                local tp_id = unpack(var.tp.tt)
+                if top or tp_id=='_TOP_POOL' then
                     local id = (adt and '_' or '') .. var.id_
                     local dcl = '&'..CUR(me, id)
 
@@ -735,16 +736,16 @@ _STK_ORG->trls[ ]]..me.trl_fins[1]..[[ ].lbl   = ]]..me.lbl_fin.id..[[;
                     if static then
                         if top.is_ifc then
                             LINE(me, [[
-ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'_delayed),'..lnks..','
+ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..tp_id..'_delayed),'..lnks..','
     ..'(byte**)'..dcl..'_queue, (byte*)'..dcl..[[_mem);
 ]])
                         else
                             LINE(me, [[
-ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..var.tp.id..'),'..lnks..','
+ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..tp_id..'),'..lnks..','
     ..'(byte**)'..dcl..'_queue, (byte*)'..dcl..[[_mem);
 ]])
                         end
-                    elseif cls or var.tp.id=='_TOP_POOL' then
+                    elseif cls or tp_id=='_TOP_POOL' then
                         LINE(me, [[
 (]]..dcl..[[)->lnks  = ]]..lnks..[[;
 (]]..dcl..[[)->queue = NULL;            /* dynamic pool */
@@ -927,23 +928,25 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
     void* __ceu_old = ]]..V(to)..[[;    /* will kill/free old */
 ]])
 
+        local to_tp_id = unpack(to.tp.tt)
+
         if set ~= 'adt-constr' then
             -- remove "fr" from tree (set parent link to NIL)
             LINE(me, [[
     void* __ceu_new = ]]..V(fr)..[[;
-    ]]..V(fr)..[[ = &CEU_]]..string.upper(fr.tp.id)..[[_BASE;
+    ]]..V(fr)..[[ = &CEU_]]..string.upper(TT.id(fr.tp))..[[_BASE;
     ]]..V(to,'lval')..[[ = __ceu_new;
 ]])
         end
 
-        if PROPS.has_adts_watching[to.tp.id] then
+        if PROPS.has_adts_watching[to_tp_id] then
             LINE(me, [[
 /* save the continuation to run after the kills */
 _STK->trl->evt = CEU_IN__STK;
 _STK->trl->lbl = ]]..SET.lbl_cnt.id..[[;
 _STK->trl->stk = stack_curi(_ceu_go);
 
-CEU_]]..to.tp.id..[[_kill(_ceu_app, _ceu_go, __ceu_old);
+CEU_]]..to_tp_id..[[_kill(_ceu_app, _ceu_go, __ceu_old);
 ]])
         end
 
@@ -951,14 +954,14 @@ CEU_]]..to.tp.id..[[_kill(_ceu_app, _ceu_go, __ceu_old);
                 /* TODO: parameter restored here */
 #if defined(CEU_ADTS_NEWS_MALLOC) && defined(CEU_ADTS_NEWS_POOL)
 if (]]..pool..[[ == NULL) {
-    CEU_]]..to.tp.id..[[_free_dynamic(_ceu_app, __ceu_old);
+    CEU_]]..to_tp_id..[[_free_dynamic(_ceu_app, __ceu_old);
 } else {
-    CEU_]]..to.tp.id..[[_free_static(_ceu_app, __ceu_old, ]]..pool..[[);
+    CEU_]]..to_tp_id..[[_free_static(_ceu_app, __ceu_old, ]]..pool..[[);
 }
 #elif defined(CEU_ADTS_NEWS_MALLOC)
-CEU_]]..to.tp.id..[[_free_dynamic(_ceu_app, __ceu_old);
+CEU_]]..to_tp_id..[[_free_dynamic(_ceu_app, __ceu_old);
 #elif defined(CEU_ADTS_NEWS_POOL)
-CEU_]]..to.tp.id..[[_free_static(_ceu_app, __ceu_old, ]]..pool..[[);
+CEU_]]..to_tp_id..[[_free_static(_ceu_app, __ceu_old, ]]..pool..[[);
 #endif
 }
 ]])
@@ -971,7 +974,7 @@ CEU_]]..to.tp.id..[[_free_static(_ceu_app, __ceu_old, ]]..pool..[[);
 ]])
         end
 
-        if PROPS.has_adts_watching[to.tp.id] then
+        if PROPS.has_adts_watching[to_tp_id] then
             LINE(me, [[
 return RET_RESTART;
 case ]]..SET.lbl_cnt.id..[[:;
@@ -1922,7 +1925,7 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
 ]])
 
         for _, p in ipairs(me.params) do
-            ASR(p.tp.id~='@', me, 'unknown type')
+            ASR(TT.id(p.tp)~='@', me, 'unknown type')
             if TP.isNumeric(p.tp) then
                 LINE(me, [[
         ceu_lua_pushnumber(_ceu_app->lua,]]..V(p)..[[);

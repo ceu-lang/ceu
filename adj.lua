@@ -940,7 +940,8 @@ me.blk_body = me.blk_body or blk_body
             }
             for _, t in ipairs(ins) do
                 local mod, tp, id = unpack(t)
-                ASR(tp.id=='void' or id, me, 'missing parameter identifier')
+                local tp_id = unpack(tp)
+                ASR(tp_id=='void' or id, me, 'missing parameter identifier')
                 --id = '_'..id..'_'..me.n
                 ifc[#ifc+1] = node('Dcl_var', me.ln, 'var', tp, id)
             end

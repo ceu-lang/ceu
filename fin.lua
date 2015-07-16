@@ -42,20 +42,14 @@ function ISPTR (node_or_var)
 
     local tp = node_or_var.tp
     local tt = node_or_var.tp.tt
-    if not tt then
-        return false    -- TODO: recurse-type
-    end
 
-    do
-        if TT.check(tt,'*','-&','-?') then
-            return true
-        end
+    if TT.check(tt,'*','-&','-?') then
+        return true
     end
-    -- restore original tt
 
     -- either native dcl or derived
     -- _SDL_Renderer&?: "_ext &?" should not be considered a pointer
-    if tp.ext and (not (TP.get(tp.id).plain or tp.plain or TT.check(tt,'&','?'))) then
+    if tp.ext and (not (TP.get(TT.id(tp)).plain or tp.plain or TT.check(tt,'&','?'))) then
         return true
     end
 
@@ -185,7 +179,7 @@ end
             if TT.check(to.tp.tt,'&','?') then
                 T.__fin_opt_tp = to.tp  -- return value must be packed in the "&?" type
             else
-                ASR(to.tp.id == '@', me, 1105,
+                ASR(TT.id(to.tp)=='@', me, 1105,
                     'must assign to a option reference (declared with `&?´)')
                 -- var void* ptr = _malloc(1);  // no
                 -- _ptr = _malloc(1);           // ok
@@ -224,6 +218,7 @@ end
             -- int a; int* pa; pa=&a;
             -- int a; do int* pa; pa=&a; end
 -- TODO: this code is duplicated with "ref.lua"
+            local to_tp_id = unpack(to.tp.tt)
             if not (
                 fr.const                   or -- constants are globals
                 fr.fst.tag == 'Nat'        or -- natives are globals
@@ -232,9 +227,9 @@ end
                 AST.iter'Dcl_constr'()     or -- org bodies can't hold
                 (fr.org and                   -- "global:*" is global
                  fr.org.cls.id=='Global')  or
-                (ENV.clss[to.tp.id] and       -- organisms must use "watching"
+                (ENV.clss[to_tp_id] and       -- organisms must use "watching"
                  fr.tag~='Op1_&')          or -- (but avoid &org)
-                (ENV.adts[to.tp.id] and       -- adts must use "watching"
+                (ENV.adts[to_tp_id] and       -- adts must use "watching"
                  fr.tag~='Op1_&')          or -- (but avoid &adt)
                 (   -- same class and scope of "to" <= "fr"
                     (AST.par(to_blk,'Dcl_cls') == AST.par(fr_blk,'Dcl_cls')) and
@@ -364,7 +359,8 @@ end
 
         -- possible dangling pointer "me.var" is accessed across await
 
-        if (ENV.clss[me.tp.id] or ENV.adts[me.tp.id]) then
+        local tp_id = unpack(me.tp.tt)
+        if (ENV.clss[tp_id] or ENV.adts[tp_id]) then
             -- pointer to org: check if it is enclosed by "watching me.var"
             -- since before the first await
             for paror in AST.iter('ParOr') do

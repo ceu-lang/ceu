@@ -500,7 +500,7 @@ typedef union CEU_]]..me.id..[[_delayed {
 -- TODO: recurse-type: tt test
                 len = TP.types.pointer.len
             else
-                len = ENV.c[var.tp.id].len
+                len = ENV.c[TT.id(var.tp)].len
             end
             var.len = len
         end
@@ -514,6 +514,7 @@ typedef union CEU_]]..me.id..[[_delayed {
 
         for _, var in ipairs(sorted) do
             local tp = TP.toc(var.tp)
+            local tp_id = unpack(var.tp.tt)
 
             if var.inTop then
                 var.id_ = var.id
@@ -523,7 +524,7 @@ typedef union CEU_]]..me.id..[[_delayed {
                     -- otherwise use counter to avoid clash inside struct/union
             end
 
-            if DCL.id == var.tp.id then
+            if DCL.id == tp_id then
                 tp = 'struct '..tp  -- for types w/ pointers for themselves
             end
 
@@ -531,9 +532,9 @@ typedef union CEU_]]..me.id..[[_delayed {
                 local dcl = [[
 #line ]]..var.ln[2]..' "'..var.ln[1]..[["
 ]]
-                local cls = ENV.clss[var.tp.id]
+                local cls = ENV.clss[tp_id]
 -- TODO: OPT
-                if cls and (not cls.is_ifc) and (DCL.id ~= var.tp.id) then
+                if cls and (not cls.is_ifc) and (DCL.id ~= tp_id) then
                     dcl = dcl..'struct ' -- due to recursive spawn
                 end
                 if TT.check(var.tp.tt,'[]') then
@@ -544,8 +545,8 @@ typedef union CEU_]]..me.id..[[_delayed {
                 end
                 DCL.struct = DCL.struct..SPC()..'  '..dcl..';\n'
             elseif var.pre=='pool' then
-                local adt = ENV.adts[var.tp.id]
-                local cls = ENV.clss[var.tp.id]
+                local adt = ENV.adts[tp_id]
+                local cls = ENV.clss[tp_id]
                 local top = adt or cls
 
                 -- ADT:
@@ -570,12 +571,12 @@ tceu_adt_root]]..ptr..' '..var.id_..[[;
                     local ID = (adt and '_' or '') .. var.id_  -- _id for ADT pools
                     if top.is_ifc then
                         DCL.struct = DCL.struct .. [[
-CEU_POOL_DCL(]]..ID..',CEU_'..var.tp.id..'_delayed,'..var.tp.arr.sval..[[)
+CEU_POOL_DCL(]]..ID..',CEU_'..tp_id..'_delayed,'..var.tp.arr.sval..[[)
 ]]
                                -- TODO: bad (explicit CEU_)
                     else
                         DCL.struct = DCL.struct .. [[
-CEU_POOL_DCL(]]..ID..',CEU_'..var.tp.id..','..var.tp.arr.sval..[[)
+CEU_POOL_DCL(]]..ID..',CEU_'..tp_id..','..var.tp.arr.sval..[[)
 ]]
                                -- TODO: bad (explicit CEU_)
                     end
@@ -645,7 +646,7 @@ error'not implemented'
         if max then
             me.iter_max = max.cval
         else
-            local adt = ENV.adts[iter.tp.id]
+            local adt = ENV.adts[TT.id(iter.tp)]
             if adt then
                 local tp  = iter.lst.var.tp
                 local arr = tp.arr

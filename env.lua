@@ -122,14 +122,16 @@ local function check (me, pre, tp)
         return
     end
 
-    local top = ASR(ENV.c[tp.id] or ENV.clss[tp.id] or ENV.adts[tp.id],
-                    me, 'undeclared type `'..(tp.id or '?')..'´')
+    local tp_id = unpack(tp.tt)
+
+    local top = ASR(ENV.c[tp_id] or ENV.clss[tp_id] or ENV.adts[tp_id],
+                    me, 'undeclared type `'..(tp_id or '?')..'´')
 
     local tt = TT.pop(tp.tt,'?')
 
     if tt and (#tt==1 or (#tt==2 and tt[#tt]=='[]')) then
         ASR(not AST.isParent(top,me), me,
-            'undeclared type `'..(tp.id or '?')..'´')
+            'undeclared type `'..(tp_id or '?')..'´')
         if top.is_ifc then
             ASR(pre == 'pool', me,
                 'cannot instantiate an interface')
@@ -138,26 +140,32 @@ local function check (me, pre, tp)
         top = nil
     end
 
-    local void_ok = (tp.id=='void' and
+    local void_ok = (tp_id=='void' and
                     (pre=='event' or pre=='function' or pre=='input' or
                      pre=='output' or pre=='isr' or
                      tt[2]=='*'))
 
-    ASR(TP.get(tp.id).len~=0 or TT.check(tt,'*') or TT.check(tt,'&') or void_ok,
-        me, 'cannot instantiate type "'..tp.id..'"')
+    ASR(TP.get(tp_id).len~=0 or TT.check(tt,'*') or TT.check(tt,'&') or void_ok,
+        me, 'cannot instantiate type "'..tp_id..'"')
     --ASR((not arr) or arr>0, me, 'invalid array dimension')
 
     return top
 end
 
 function ENV.v_or_ref (tp, cls_or_adt)
-    local ok = TT.check(tp.tt,tp.id,'-[]','-&','-?')
+    -- TODO: data.TAG
+    if not tp.tt then
+        return false
+    end
+
+    local tp_id = unpack(tp.tt)
+    local ok = TT.check(tp.tt,tp_id,'-[]','-&','-?')
     if cls_or_adt == 'cls' then
-        return ok and ENV.clss[tp.id]
+        return ok and ENV.clss[tp_id]
     elseif cls_or_adt == 'adt' then
-        return ok and ENV.adts[tp.id]
+        return ok and ENV.adts[tp_id]
     else
-        return ok and (ENV.clss[tp.id] or ENV.adts[tp.id])
+        return ok and (ENV.clss[tp_id] or ENV.adts[tp_id])
     end
 end
 
@@ -218,18 +226,12 @@ function newvar (me, blk, pre, tp, id, isImp, isEvery)
         n     = _N,
     }
 
--- TODO: recurse-type
-    local is_arr = false
-    local is_ref = false
-    if tp.tt then
-        local tt
-        tt, is_ref = TT.pop(tp.tt, '&')   -- only *,& after []
-        is_arr = TT.check(tt, '[]')
-    end
+    local tt, is_ref = TT.pop(tp.tt, '&')   -- only *,& after []
+    local is_arr = TT.check(tt, '[]')
 
     if pre=='var' and (not is_arr) then
         var.lval = var
-    elseif pre=='pool' and (ENV.adts[tp.id] or is_ref) then
+    elseif pre=='pool' and (ENV.adts[TT.id(tp)] or is_ref) then
         var.lval = var
     else
         var.lval = false
@@ -244,9 +246,10 @@ function newvar (me, blk, pre, tp, id, isImp, isEvery)
 end
 
 function newint (me, blk, pre, tp, id, isImp)
-    local has, var = newvar(me, blk, pre,
-                        {id='void',ptr=0,arr=false,ref=false,ext=false},
-                        id, isImp)
+    local T = AST.node('Type', me.ln, 'void')
+    F.Type(T)
+
+    local has, var = newvar(me, blk, pre, T, id, isImp)
     if has then
         return true, var
     end
@@ -616,7 +619,7 @@ end
                             local _, var_tp, var_id = unpack(dclvar)
                             local item = AST.node('TupleTypeItem', me.ln,
                                             false,var_tp,false)
-                            if var_tp.id == id_adt then
+                            if TT.id(var_tp) == id_adt then
                                 me.is_rec = true
                                 item.is_rec = true
                             end
@@ -754,9 +757,10 @@ end
             me[2] = TP.fromstr'void'
 
             local tp_ = TP.new(tp)
+            local tp_id = unpack(tp_.tt)
             local top = not (TT.check(tp_.tt,'*') or TT.check(tp_.tt,'&'))
-            ASR(tp_.id=='_TOP_POOL' or top,
-                me, 'undeclared type `'..(tp_.id or '?')..'´')
+            ASR(tp_id=='_TOP_POOL' or top,
+                me, 'undeclared type `'..(tp_id or '?')..'´')
         end
     end,
 
@@ -826,23 +830,6 @@ end
         local blk = me.__ast_blk and assert(AST.par(me.__ast_blk,'Block'))
                         or AST.iter('Block')()
         local var = me.var or ENV.getvar(id, blk)
-
-        -- ADT pools:
-        --  tceu_pool_     _x;  // 'pool'
-        --  tceu_adt_root  x;   // 'root'       (me)
-        --  x.root              // 'root_root'  (return this)
-        if var and var.adt_par and (not me.__env_set) then
-error'oi'
-            me.__env_set = true     -- avoid infinite recursion
-            local root_root = AST.node('Op1_cast', me.ln,
-                                TP.fromstr(var.adt_par.adt_tp.id..'*'),
-                                AST.node('Op2_.', me.ln, '.',
-                                    me,
-                                    'root'))
-            root_root.adt_par = var.adt_par
-            root_root.adt_rr_to_root = me
-            return root_root
-        end
 
         -- OUT access in recurse loops
         --  var int x;
@@ -915,7 +902,9 @@ error'oi'
                                     3,'Block', 1,'Stmts', 1,'BlockI')
 
         local tp = AST.asr(blki,'', 1,'Stmts', 3,'Dcl_pool', 2,'Type')
-        tp[1] = pool.tp.id
+
+        -- tp id
+        tp[1] = pool.tp.tt[1]
 
 -- TODO: recurse-type
         AST.asr(blki,'', 1,'Stmts', 1,'Dcl_pool', 2,'Type')
@@ -929,20 +918,23 @@ error'oi'
     _TMP_AWAIT = function (me)
         -- HACK_6 [await]: detects if OPT-1 (evt) or OPT-2 (adt) or OPT-3 (org)
         local stmts = AST.asr(me.__par, 'Stmts')
-        local tp = me[1].tp  -- type of Var
-        if tp and ENV.clss[tp.id] then
+
+        local tp    = me[1].tp  -- type of Var
+        local tp_id = tp and unpack(tp.tt)
+
+        if tp and ENV.clss[tp_id] then
             ASR(ENV.v_or_ref(tp,'cls'), me, 'organism must not be a pointer')
             stmts[2] = AST.node('Nothing', me.ln)       -- remove OPT-1
             stmts[3] = AST.node('Nothing', me.ln)       -- remove OPT-2
             me.__env_watching = true    -- see props.lua
-        elseif tp and ENV.adts[tp.id] then
+        elseif tp and ENV.adts[tp_id] then
             --ASR(tp.ptr==1, me, 'data must be a pointer')
             local dot = AST.asr(stmts,'', 3,'If', 1,'Op2_.')
             assert(dot[3] == 'HACK_6-NIL')
-            dot[3] = ENV.adts[tp.id].tags[1]
+            dot[3] = ENV.adts[tp_id].tags[1]
             stmts[2] = AST.node('Nothing', me.ln)       -- remove OPT-1
             stmts[4] = AST.node('Nothing', me.ln)       -- remove OPT-3
-            me.__env_watching = tp.id   -- see props.lua
+            me.__env_watching = tp_id   -- see props.lua
             dot.__env_watching = true   -- see adt.lua
         else
             stmts[3] = AST.node('Nothing', me.ln)       -- remove OPT-2
@@ -1012,7 +1004,11 @@ error'oi'
 
         local fr_tp = fr.tp
 
-        local to_is_opt = to.tp.tt and (TT.check(to.tp.tt,'?'))
+        local to_tp_id, to_is_opt
+        if set~='await' and (not to.tp.tup) then
+            to_tp_id  = unpack(to.tp.tt)
+            to_is_opt = TT.check(to.tp.tt,'?')
+        end
 
         if set == 'await' then
             local e = unpack(fr)
@@ -1028,8 +1024,8 @@ error'oi'
         elseif set == 'adt-constr' then
             return  -- checked in adt.lua
 
-        elseif ENV.adts[to.tp.id] and (not to_is_opt) then
-            if ENV.adts[to.tp.id].is_rec then
+        elseif ENV.adts[to_tp_id] and (not to_is_opt) then
+            if ENV.adts[to_tp_id].is_rec then
                 if to.var and (TT.check(to.var.tp.tt,'&') or TT.check(to.var.tp.tt,'*')) then
                     me[2] = 'adt-alias'
                 else
@@ -1046,14 +1042,14 @@ error'oi'
         if set == 'lua' then
             ASR(not TT.check(to.tp.tt,'&'), me, 'invalid attribution')
 
-            lua_str = (to.tp.id=='char' and TT.check(to.tp.tt,'[]'))
+            lua_str = (to_tp_id=='char' and TT.check(to.tp.tt,'[]'))
             if not lua_str then
                 ASR(to and to.lval, me, 'invalid attribution')
             end
 
             local tt = TT.pop(to.tp.tt, '&')
             ASR(TP.isNumeric(to.tp,'&') or TT.check(to.tp.tt,'bool','-&') or
-                TT.check(to.tp.tt, to.tp.id, '*', '-&') or
+                TT.check(to.tp.tt, to_tp_id, '*', '-&') or
                 lua_str,
                 me, 'invalid attribution')
             fr.tp = to.tp -- return type is not known at compile time
@@ -1138,7 +1134,7 @@ error'oi'
             end
         end
 
-        local cls = iter and iter.tp and ENV.clss[iter.tp.id]
+        local cls = iter and iter.tp and ENV.clss[TT.id(iter.tp)]
 
         if is_num then
             me.iter_tp = 'number'
@@ -1264,7 +1260,7 @@ error'oi'
         elseif f.tag == 'Op2_.' then
             id = f.id
             if f.org then   -- t._f()
-                me.c = assert(ENV.clss[f.org.tp.id]).c[f.id]
+                me.c = assert(ENV.clss[TT.id(f.org.tp)]).c[f.id]
             else            -- _x._f()
                 me.c = f.c
             end
@@ -1414,8 +1410,7 @@ error'oi'
         end
 
         if not ok then
-            ASR((e1.tp.ext and (not e1.tp.plain) and (not 
-                TP.get(e1.tp.id).plain)),
+            ASR((e1.tp.ext and (not e1.tp.plain) and (not TP.get(TT.id(e1.tp)).plain)),
                 me, 'invalid operand to unary "*"')
         end
 
@@ -1425,7 +1420,8 @@ error'oi'
 
     ['Op1_&'] = function (me)
         local op, e1 = unpack(me)
-        ASR(e1.lval or ENV.clss[e1.tp.id] or ENV.adts[e1.tp.id], me,
+        local e1_tp_id = unpack(e1.tp.tt)
+        ASR(e1.lval or ENV.clss[e1_tp_id] or ENV.adts[e1_tp_id], me,
             'invalid operand to unary "&"')
         me.lval = false
 
@@ -1433,27 +1429,6 @@ error'oi'
         me.tp = AST.node('Type', me.ln, unpack(e1.tp.tt))
         me.tp[#me.tp+1] = '*'
         F.Type(me.tp)
-    end,
-
-    ['Op2_._pos'] = function (me)
-        local op, e1, id = unpack(me)
-        local top = ENV.v_or_ref(e1.tp)
-        local cls = top and (top.tag=='Dcl_cls') and top
-        if cls and me.var then
-            -- mimic process in "Var_pre" for ADT pools
-            if me.var.adt_par then
-error'oi'
-                assert(me.tag == 'Field')
-                local root_root = AST.node('Op1_cast', me.ln,
-                                    TP.fromstr(me.var.adt_par.adt_tp.id..'*'),
-                                    AST.node('Op2_.', me.ln, '.',
-                                        me,
-                                        'root'))
-                root_root.adt_par = me.var.adt_par
-                root_root.adt_rr_to_root = me
-                return root_root
-            end
-        end
     end,
 
     ['Op2_.'] = function (me)
@@ -1539,7 +1514,7 @@ error'oi'
             ASR(e1.tp.ext, me, 'not a struct')
             -- rect.x = 1 (_SDL_Rect)
             me.tp = TP.fromstr'@'
-            local tp = TP.get(e1.tp.id)
+            local tp = TP.get(TT.id(e1.tp))
             if tp.plain and (not TT.check(e1.tp.tt,'*')) then
                 me.tp.plain = true
                 me.tp.tt = TT.pop(me.tp.tt, '*')

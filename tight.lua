@@ -67,10 +67,11 @@ F = {
             ASR(max.cval, me, '`loop´ bound must be constant')
         end
 
+        local tp_id = iter and iter.tp and TT.id(iter.tp)
         me.is_bounded = max or (iter and (iter.cval or
                                           iter.tp and (
-                                            ENV.clss[iter.tp.id] or
-                                            ENV.adts[iter.tp.id])))
+                                            ENV.clss[tp_id] or
+                                            ENV.adts[tp_id])))
 
         SAME(me, body)
         local isTight = (not AST.iter(AST.pred_async)())
