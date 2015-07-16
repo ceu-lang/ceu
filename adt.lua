@@ -53,7 +53,7 @@ F = {
             return      -- handled in env.lua
         end
 
-        local adt = ENV.adts[TT.id(to.tp)]
+        local adt = ENV.adts[TP.id(to.tp)]
         if not (adt and adt.is_rec) then
             return  -- ignore non-adt or non-recursive-adt
         end

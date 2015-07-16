@@ -8,26 +8,17 @@ TP = {
 TT = {
 }
 
-function TT.id (tp)
+function TP.id (tp)
     return tp.tt[1]
 end
 function TT.is_ (tp)
-    return string.sub(TT.id(tp),1,1) == '_'
+    return string.sub(TP.id(tp),1,1) == '_'
 end
 
-function TT.copy (tt, s, e)
-    s = s or 1
-    e = e or #tt
-    if s < 0 then
-        s = #tt-s+1
-    end
-    if e < 0 then
-        e = #tt-e+1
-    end
-
-    local ret = { select(s,unpack(tt)) }
-    for i=1, #tt-e do
-        ret[#ret] = nil
+function TT.copy (tt)
+    local ret = {}
+    for i=1, #tt do
+        ret[i] = tt[i]
     end
     return ret
 end
@@ -140,14 +131,14 @@ function TP.new (me, dont_generate)
             local hold, tp, _ = unpack(t)
             tp.hold = hold
 
-            if TT.id(tp)=='void' and tp.ptr==0 then
+            if TP.id(tp)=='void' and tp.ptr==0 then
                 ASR(#me==1, me, 'invalid type')
                 me[1] = nil     -- empty tuple
                 break
             end
 
             -- TODO: workaround: error when generating nested ADTs
-            if ENV.adts[TT.id(tp)] then
+            if ENV.adts[TP.id(tp)] then
                 dont_generate = true
             end
 
@@ -254,7 +245,7 @@ function TP.toc (tp)
     ret = string.gsub(ret, '%[]', '*')
     ret = string.gsub(ret, '%&', '*')
 
-    local id = TT.id(tp)
+    local id = TP.id(tp)
     if ENV.clss[id] or ENV.adts[id] then
         ret = 'CEU_'..ret
     end

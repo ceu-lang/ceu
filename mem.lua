@@ -500,7 +500,7 @@ typedef union CEU_]]..me.id..[[_delayed {
 -- TODO: recurse-type: tt test
                 len = TP.types.pointer.len
             else
-                len = ENV.c[TT.id(var.tp)].len
+                len = ENV.c[TP.id(var.tp)].len
             end
             var.len = len
         end
@@ -646,7 +646,7 @@ error'not implemented'
         if max then
             me.iter_max = max.cval
         else
-            local adt = ENV.adts[TT.id(iter.tp)]
+            local adt = ENV.adts[TP.id(iter.tp)]
             if adt then
                 local tp  = iter.lst.var.tp
                 local arr = tp.arr

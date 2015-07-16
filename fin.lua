@@ -49,7 +49,7 @@ function ISPTR (node_or_var)
 
     -- either native dcl or derived
     -- _SDL_Renderer&?: "_ext &?" should not be considered a pointer
-    if tp.ext and (not (TP.get(TT.id(tp)).plain or tp.plain or TT.check(tt,'&','?'))) then
+    if tp.ext and (not (TP.get(TP.id(tp)).plain or tp.plain or TT.check(tt,'&','?'))) then
         return true
     end
 
@@ -179,7 +179,7 @@ end
             if TT.check(to.tp.tt,'&','?') then
                 T.__fin_opt_tp = to.tp  -- return value must be packed in the "&?" type
             else
-                ASR(TT.id(to.tp)=='@', me, 1105,
+                ASR(TP.id(to.tp)=='@', me, 1105,
                     'must assign to a option reference (declared with `&?´)')
                 -- var void* ptr = _malloc(1);  // no
                 -- _ptr = _malloc(1);           // ok

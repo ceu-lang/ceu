@@ -167,7 +167,7 @@ end
 -- ^      ^-- matches, but not first
 -- ^-- first
 local function FIND_ADT_POOL (fst)
-    local adt = ENV.adts[TT.id(fst.tp)]
+    local adt = ENV.adts[TP.id(fst.tp)]
     local tt = fst.tp.tt
     if adt and (TT.check(tt,'[]') or TT.check(tt,'*') or TT.check(tt,'&')) then
         return fst
@@ -934,7 +934,7 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
             -- remove "fr" from tree (set parent link to NIL)
             LINE(me, [[
     void* __ceu_new = ]]..V(fr)..[[;
-    ]]..V(fr)..[[ = &CEU_]]..string.upper(TT.id(fr.tp))..[[_BASE;
+    ]]..V(fr)..[[ = &CEU_]]..string.upper(TP.id(fr.tp))..[[_BASE;
     ]]..V(to,'lval')..[[ = __ceu_new;
 ]])
         end
@@ -1925,7 +1925,7 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
 ]])
 
         for _, p in ipairs(me.params) do
-            ASR(TT.id(p.tp)~='@', me, 'unknown type')
+            ASR(TP.id(p.tp)~='@', me, 'unknown type')
             if TP.isNumeric(p.tp) then
                 LINE(me, [[
         ceu_lua_pushnumber(_ceu_app->lua,]]..V(p)..[[);

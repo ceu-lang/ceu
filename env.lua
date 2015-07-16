@@ -231,7 +231,7 @@ function newvar (me, blk, pre, tp, id, isImp, isEvery)
 
     if pre=='var' and (not is_arr) then
         var.lval = var
-    elseif pre=='pool' and (ENV.adts[TT.id(tp)] or is_ref) then
+    elseif pre=='pool' and (ENV.adts[TP.id(tp)] or is_ref) then
         var.lval = var
     else
         var.lval = false
@@ -619,7 +619,7 @@ end
                             local _, var_tp, var_id = unpack(dclvar)
                             local item = AST.node('TupleTypeItem', me.ln,
                                             false,var_tp,false)
-                            if TT.id(var_tp) == id_adt then
+                            if TP.id(var_tp) == id_adt then
                                 me.is_rec = true
                                 item.is_rec = true
                             end
@@ -1134,7 +1134,7 @@ end
             end
         end
 
-        local cls = iter and iter.tp and ENV.clss[TT.id(iter.tp)]
+        local cls = iter and iter.tp and ENV.clss[TP.id(iter.tp)]
 
         if is_num then
             me.iter_tp = 'number'
@@ -1258,7 +1258,7 @@ end
         elseif f.tag == 'Op2_.' then
             id = f.id
             if f.org then   -- t._f()
-                me.c = assert(ENV.clss[TT.id(f.org.tp)]).c[f.id]
+                me.c = assert(ENV.clss[TP.id(f.org.tp)]).c[f.id]
             else            -- _x._f()
                 me.c = f.c
             end
@@ -1408,7 +1408,7 @@ end
         end
 
         if not ok then
-            ASR((e1.tp.ext and (not e1.tp.plain) and (not TP.get(TT.id(e1.tp)).plain)),
+            ASR((e1.tp.ext and (not e1.tp.plain) and (not TP.get(TP.id(e1.tp)).plain)),
                 me, 'invalid operand to unary "*"')
         end
 
@@ -1512,7 +1512,7 @@ end
             ASR(e1.tp.ext, me, 'not a struct')
             -- rect.x = 1 (_SDL_Rect)
             me.tp = TP.fromstr'@'
-            local tp = TP.get(TT.id(e1.tp))
+            local tp = TP.get(TP.id(e1.tp))
             if tp.plain and (not TT.check(e1.tp.tt,'*')) then
                 me.tp.plain = true
                 me.tp.tt = TT.pop(me.tp.tt, '*')

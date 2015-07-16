@@ -44,7 +44,7 @@ F =
                 VAL = '(&'..VAL..')'
             elseif TT.check(var.tp.tt,'?') then
             elseif TT.check(var.tp.tt,'&') then
-                if ENV.clss[TT.id(var.tp)] then
+                if ENV.clss[TP.id(var.tp)] then
                     -- orgs vars byRef, do nothing
                     -- (normalized to pointer)
                 else
@@ -74,7 +74,7 @@ F =
 
                 -- call
                 local call = AST.par(me, 'Op2_call')
-                if call and TT.id(call.tp)=='@' then
+                if call and TP.id(call.tp)=='@' then
                     local _,_,params = unpack(call)
                     call = false
                     for _, p in ipairs(params) do
@@ -135,7 +135,7 @@ F =
         elseif var.pre == 'pool' then
             -- normalize all pool acesses to pointers to it
             -- (because of interface accesses that must be done through a pointer)
-            if ENV.adts[TT.id(var.tp)] then
+            if ENV.adts[TP.id(var.tp)] then
                 if CTX.adt_pool then
                     VAL = '((tceu_pool_*)&'..VAL..')'
                 elseif CTX.adt_root then
@@ -145,7 +145,7 @@ F =
                         VAL = '(&'..VAL..')'
                     end
                 else
-                    local cast = ((CTX.lval and '') or '(CEU_'..TT.id(var.tp)..'*)')
+                    local cast = ((CTX.lval and '') or '(CEU_'..TP.id(var.tp)..'*)')
                     if TT.check(var.tp.tt,'&') then
                         VAL = '('..cast..'('..VAL..')->root)'
                     else
@@ -171,7 +171,7 @@ F =
             error 'not implemented'
         end
 
-        local tp_id = me.tp and TT.id(me.tp)
+        local tp_id = me.tp and TP.id(me.tp)
         local ref = me.tp and TT.check(me.tp.tt,'&') and tp_id
         if CTX.byref and (not CTX.opt_raw) and
             (not (ENV.clss[tp_id] or (ref and ENV.clss[ref]) or
@@ -227,7 +227,7 @@ F =
     ]
         )
 ))]]
-                    if TT.check(me.var.tp.tt,'&') and (not ENV.clss[TT.id(me.var.tp)]) then
+                    if TT.check(me.var.tp.tt,'&') and (not ENV.clss[TP.id(me.var.tp)]) then
                         VAL = '(*'..VAL..')'
                     end
                 end
@@ -319,7 +319,7 @@ F =
     Op2_idx = function (me)
         local _, arr, idx = unpack(me)
         local VAL = V(arr)..'['..V(idx)..']'
-        if ENV.clss[TT.id(me.tp)] and (not TT.check(me.tp.tt,'*')) then
+        if ENV.clss[TP.id(me.tp)] and (not TT.check(me.tp.tt,'*')) then
             VAL = '(&'..VAL..')'
                 -- class accesses must be normalized to references
         end
@@ -360,7 +360,7 @@ F =
 
     ['Op1_*'] = function (me)
         local op, e1 = unpack(me)
-        if ENV.clss[TT.id(me.tp)] and TT.check(e1.tp.tt, TT.id(e1.tp),'*','-&') then
+        if ENV.clss[TP.id(me.tp)] and TT.check(e1.tp.tt, TP.id(e1.tp),'*','-&') then
             return V(e1) -- class accesses should remain normalized to references
         else
             return '('..ceu2c(op)..V(e1)..')'
@@ -368,7 +368,7 @@ F =
     end,
     ['Op1_&'] = function (me)
         local op, e1 = unpack(me)
-        if ENV.clss[TT.id(e1.tp)] and (not TT.check(e1.tp.tt,'*','-&')) then
+        if ENV.clss[TP.id(e1.tp)] and (not TT.check(e1.tp.tt,'*','-&')) then
             return V(e1) -- class accesses are already normalized to references
         else
             return '('..ceu2c(op)..V(e1)..')'
@@ -390,7 +390,7 @@ F =
         local op, e1, id = unpack(me)
         local VAL
         if me.__env_tag then
-            local tag = e1.tp.tt and ('CEU_'..string.upper(TT.id(e1.tp))..'_'..id)
+            local tag = e1.tp.tt and ('CEU_'..string.upper(TP.id(e1.tp))..'_'..id)
             if me.__env_tag == 'test' then
                 VAL  = '('..V(e1)..'.'..'tag == '..tag..')'
             elseif me.__env_tag == 'assert' then
@@ -417,7 +417,7 @@ F =
         local tp, exp = unpack(me)
         local VAL = V(exp)
 
-        local cls = (TT.check(tp.tt,'*','-&') and ENV.clss[TT.id(tp)])
+        local cls = (TT.check(tp.tt,'*','-&') and ENV.clss[TP.id(tp)])
         if cls then
             if cls.is_ifc then
                 -- TODO: out of bounds acc

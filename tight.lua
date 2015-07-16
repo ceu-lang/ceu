@@ -67,7 +67,7 @@ F = {
             ASR(max.cval, me, '`loop´ bound must be constant')
         end
 
-        local tp_id = iter and iter.tp and TT.id(iter.tp)
+        local tp_id = iter and iter.tp and TP.id(iter.tp)
         me.is_bounded = max or (iter and (iter.cval or
                                           iter.tp and (
                                             ENV.clss[tp_id] or
