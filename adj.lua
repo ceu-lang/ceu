@@ -1687,12 +1687,18 @@ G = {
         --
 
         -- TODO: multiple '?' inside
+        -- TODO: multiple '[]' inside
         local opt = false
+        local arr = false
         for i=2, #me do
             local p = me[i]
             if p == '?' then
                 ASR(i==#me, me, 'not implemented : `?´ must be last modifier')
                 opt = true
+            elseif p=='[]' or type(p)=='table' then
+                ASR(not arr, me, 'not implemented : multiple `[]´')
+                    -- me[1] will contain the only []
+                arr = true
             end
         end
         if not opt then

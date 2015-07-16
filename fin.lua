@@ -104,7 +104,7 @@ end
 
         -- an attribution restarts tracking accesses to "to"
         -- variables or native symbols
-        if (to.var and (not to.var.tp.ref)) or to.c then
+        if (to.var and (not TT.check(to.var.tp.tt,'&'))) or to.c then
                         -- do not track references
             GET()[to.var or to.id] = 'accessed'
         end

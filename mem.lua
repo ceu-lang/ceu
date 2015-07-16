@@ -481,7 +481,7 @@ typedef union CEU_]]..me.id..[[_delayed {
                 len = 0
             elseif var.pre == 'event' then --
                 len = 1   --
-            elseif var.pre=='pool' and (not var.tp.ref) and (type(var.tp.arr)=='table') then
+            elseif var.pre=='pool' and (not TT.check(var.tp.tt,'&')) and (type(var.tp.arr)=='table') then
                 len = 10    -- TODO: it should be big
             elseif var.cls or var.adt then
                 len = 10    -- TODO: it should be big
@@ -553,7 +553,7 @@ typedef union CEU_]]..me.id..[[_delayed {
                 -- CEU_POOL_DCL(_id);
                 if adt then
                     assert(not TT.check(var.tp.tt,'*','*'), 'bug found')
-                    local ptr = (var.tp.ref and '*') or ''
+                    local ptr = (TT.check(var.tp.tt,'&') and '*') or ''
                     DCL.struct = DCL.struct .. [[
 /*
  * REF:
@@ -649,7 +649,7 @@ error'not implemented'
             if adt then
                 local tp  = iter.lst.var.tp
                 local arr = tp.arr
-                if (not tp.arr) and (not tp.ref) then
+                if (not arr) and (not TT.check(tp.tt,'&')) then
                     me.iter_max = iter.lst.var.n_cons * adt.n_recs
                 elseif type(arr)=='table' then
                     me.iter_max = arr.cval * adt.n_recs

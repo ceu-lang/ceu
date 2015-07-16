@@ -1044,7 +1044,7 @@ error'oi'
 
         local lua_str = false
         if set == 'lua' then
-            ASR(not to.tp.ref, me, 'invalid attribution')
+            ASR(not TT.check(to.tp.tt,'&'), me, 'invalid attribution')
 
             lua_str = (to.tp.id=='char' and TT.check(to.tp.tt,'[]'))
             if not lua_str then

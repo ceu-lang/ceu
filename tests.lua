@@ -448,7 +448,8 @@ Test { [[
 var int[1][1] v;
 escape 1;
 ]],
-    env = 'line 1 : invalid type modifier : `[][]´',
+    adj = 'line 1 : not implemented : multiple `[]´',
+    --env = 'line 1 : invalid type modifier : `[][]´',
 }
 Test { [[
 var int[1]? v;

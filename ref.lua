@@ -16,7 +16,7 @@ F = {
     __Set_pre = function (me, TO)
         local _, set, fr, _ = unpack(me)
         to = TO
-        if not to.tp.ref then
+        if not TT.check(to.tp.tt,'&','-?') then
             return
         end
         assert(to.lst.var, 'bug found')
@@ -118,7 +118,7 @@ F = {
             -- var int& i = 1;      // constant
             -- var int& i = *p;     // dereference
             -- var D& d = D(...);   // adt-constr
-            if (not fr.tp.ref) then
+            if (not TT.check(fr.tp.tt,'&')) then
                 ASR(fr.lval or fr.tag=='Op1_&' or fr.tag=='Op2_call' or
                         (fr.lst and (fr.lst.tag=='Outer' or
                                      fr.lst.var and (fr.lst.var.cls or fr.lst.var.adt))),
@@ -223,7 +223,7 @@ F = {
         -- ensures that global "ref" vars are initialized
         local glb = ENV.clss.Global
         local cls = CLS()   -- might be an ADT declaration
-        if me.var.tp.ref and glb and cls and cls.id=='Main' then
+        if TT.check(me.var.tp.tt,'&') and glb and cls and cls.id=='Main' then
             local var = glb.blk_ifc.vars[me.var.id]
             if var then
                 local set = me.__par and me.__par[1]==me and

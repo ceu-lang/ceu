@@ -43,7 +43,7 @@ F =
                 -- (because of interface accesses that must be done through a pointer)
                 VAL = '(&'..VAL..')'
             elseif TT.check(var.tp.tt,'?') then
-            elseif var.tp.ref then
+            elseif TT.check(var.tp.tt,'&') then
                 if ENV.clss[var.tp.id] then
                     -- orgs vars byRef, do nothing
                     -- (normalized to pointer)
@@ -56,7 +56,7 @@ F =
             -- variable with option type (var tp? id)
             if TT.check(var.tp.tt,'?') then
                 local ID = string.upper(TT.opt2adt(var.tp.tt))
-                local op = (var.tp.ref and '*') or ''
+                local op = (TT.check(var.tp.tt,'&','?') and '*') or ''
 
                 if CTX.opt_raw then
                     return VAL
@@ -102,7 +102,7 @@ F =
                         VAL = '('..op..'('..VAL..'))'
                     else
                         -- xxx.me = v
-                        if CTX.byref or (not me.tp.ref) then
+                        if CTX.byref or (not TT.check(me.tp.tt,'&','?')) then
                             VAL = '('..op..'('..VAL..'.SOME.v))'
                         else
                             VAL = '('..op..'(CEU_'..ID..'_SOME_assert(_ceu_app, &'
@@ -112,7 +112,7 @@ F =
 
                 -- CALL
                 -- _f(xxx.me)
-                elseif call and me.tp.ref then
+                elseif call and TT.check(me.tp.tt,'&','?') then
                     -- reference option type -> pointer
                     -- var tp&? v;
                     -- _f(v);
@@ -140,14 +140,14 @@ F =
                 if CTX.adt_pool then
                     VAL = '((tceu_pool_*)&'..VAL..')'
                 elseif CTX.adt_root then
-                    if var.tp.ref then
+                    if TT.check(var.tp.tt,'&') then
                         VAL = '('..VAL..')'
                     else
                         VAL = '(&'..VAL..')'
                     end
                 else
                     local cast = ((CTX.lval and '') or '(CEU_'..var.tp.id..'*)')
-                    if var.tp.ref then
+                    if TT.check(var.tp.tt,'&') then
                         VAL = '('..cast..'('..VAL..')->root)'
                     else
                         VAL = '('..cast..'('..VAL..').root)'
@@ -172,7 +172,7 @@ F =
             error 'not implemented'
         end
 
-        local ref = me.tp and me.tp.ref and me.tp.id
+        local ref = me.tp and TT.check(me.tp.tt,'&') and me.tp.id
         if CTX.byref and (not CTX.opt_raw) and
             (not (ENV.clss[me.tp.id] or (ref and ENV.clss[ref]) or
                   ENV.adts[me.tp.id] or (ref and ENV.adts[ref]) or
@@ -397,7 +397,8 @@ F =
                 VAL  = '('..tag..'_assert(_ceu_app, &'..V(e1)..', __FILE__, __LINE__)'..'->'..id..')'
                 --VAL  = '('..tag..'_assert('..V(e1)..')'..ceu2c(op)..id..')'
             elseif me.__env_tag == 'field' then
-                if e1.union_tag_blk.vars[id].tp.ref and (me.tp.ref==false) then
+                if TT.check(e1.union_tag_blk.vars[id].tp.tt,'&') and
+                   (not TT.check(me.tp.tt,'&')) then
                     VAL  = '('..'*('..V(e1)..')'..'.'..id..')'
                 else
                     VAL  = '('..V(e1)..'.'..id..')'

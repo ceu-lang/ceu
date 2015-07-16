@@ -259,7 +259,8 @@ end
         ret = ret .. '*'
     end
 
-    if tp.ref then
+-- TODO: recurse-type
+    if tp.tt and TT.check(tp.tt,'&') then
         ret = ret .. '*'
     end
 
@@ -280,7 +281,8 @@ function TP.tostr (tp)
     if tp.arr then
         ret = ret .. '[]'
     end
-    if tp.ref then
+-- TODO: recurse-type
+    if tp.tt and TT.check(tp.tt,'&') then
         ret = ret .. '&'
     end
     return ret
@@ -334,11 +336,19 @@ function TP.contains (tp1, tp2)
         return false, 'arity mismatch'
     end
 
+-- TODO: recurse-type
+    if not (tp1.tt and tp2.tt) then
+        return false, __err(tp1,tp2)
+    end
+
+    local id1, id2 = tp1.tt[1], tp2.tt[1]
+    local ref1, ref2 = TT.check(tp1.tt,'&'), TT.check(tp2.tt,'&')
+
     -- same type
-    if tp1.id==tp2.id and tp1.ptr==tp2.ptr then
+    if id1==id2 and tp1.ptr==tp2.ptr then
         if (tp1.arr==false) and (tp2.arr==false) then
             return true
-        elseif tp1.ref then
+        elseif ref1 then
             if tp1.arr==true and tp2.arr then
                 -- pool int[10] arr
                 -- pool int[]&  ref = arr;
@@ -355,19 +365,19 @@ function TP.contains (tp1, tp2)
     end
 
     -- var tp& v = &/*/<any-ext-value>
-    if tp1.ref and tp2.id=='@' then
+    if ref1 and id2=='@' then
         return true
     end
 
     -- tp[] = tp*
     -- tp*  = tp[]
-    if tp1.id==tp2.id and ((tp1.ptr==1 and tp2.arr) or (tp2.ptr==1 and tp1.arr))
-                      and tp1.ref==tp2.ref then
+    if id1==id2 and ((tp1.ptr==1 and tp2.arr) or (tp2.ptr==1 and tp1.arr))
+                      and ref1==ref2 then
         return true
     end
 
     -- any type (calls, Lua scripts)
-    if tp1.id=='@' or tp2.id=='@' then
+    if id1=='@' or id2=='@' then
         return true
     end
 
@@ -377,10 +387,10 @@ function TP.contains (tp1, tp2)
     end
 
     -- compatible classes (same classes is handled above)
-    local cls1 = ENV.clss[tp1.id]
-    local cls2 = ENV.clss[tp2.id]
+    local cls1 = ENV.clss[id1]
+    local cls2 = ENV.clss[id2]
     if cls1 and cls2 then
-        if tp1.ref or tp2.ref or (tp1.ptr>0 and tp2.ptr>0) then
+        if ref1 or ref2 or (tp1.ptr>0 and tp2.ptr>0) then
             if tp1.ptr == tp2.ptr then
                 local ok = cls1.is_ifc and ENV.ifc_vs_cls_or_ifc(cls1,cls2)
                 return ok, (ok or __err(tp1,tp2))
@@ -392,13 +402,13 @@ function TP.contains (tp1, tp2)
     -- both are pointers
     local ptr2 = (tp2.ptr>0 and tp2.ptr) or (tp2.arr and tp2.ptr+1) or 0
     if tp1.ptr>0 and ptr2>0 then
-        if tp1.id=='char' and tp1.ptr==1 -- cast to char*
-        or tp1.id=='void' and tp1.ptr==1 -- cast to void*
+        if id1=='char' and tp1.ptr==1 -- cast to char*
+        or id1=='void' and tp1.ptr==1 -- cast to void*
         or tp1.ext or tp2.ext then       -- let gcc handle
             return true
             -- TODO: void* too???
         end
-        if tp2.id == 'null' then
+        if id2 == 'null' then
             return true     -- any pointer can be assigned "null"
         end
         return false, __err(tp1,tp2)
