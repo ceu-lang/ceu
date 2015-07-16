@@ -1,5 +1,7 @@
 -- TODO: recurse-type: use tt everywhere: eases manipulation w/o creating Type
 -- or pass {tt=tt} and remove all refs to .tt outside tp.lua
+--      - remove ext
+--      - remove .*
 
 TP = {
     types = {}
@@ -11,7 +13,7 @@ TT = {
 function TP.id (tp)
     return tp.tt[1]
 end
-function TT.is_ (tp)
+function TP.is_ (tp)
     return string.sub(TP.id(tp),1,1) == '_'
 end
 
@@ -401,8 +403,8 @@ function TP.contains (tp1, tp2)
         return true
 
     -- external non-pointers: let "gcc" handle it
-    elseif TT.is_(tp1) and TT.check(tp1.tt,id1) or
-           TT.is_(tp2) and TT.check(tp2.tt,id2)
+    elseif TP.is_(tp1) and TT.check(tp1.tt,id1) or
+           TP.is_(tp2) and TT.check(tp2.tt,id2)
     then
         return true
 
@@ -441,7 +443,7 @@ function TP.contains (tp1, tp2)
             return TP.contains(tp1, {tt=tt2})
 
         -- both are external types: let "gcc" handle it
-        elseif TT.is_(tp1) or TT.is_(tp2) then
+        elseif TP.is_(tp1) or TP.is_(tp2) then
             return true
 
         else
