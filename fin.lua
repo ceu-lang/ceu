@@ -219,7 +219,7 @@ end
             -- int a; int* pa; pa=&a;
             -- int a; do int* pa; pa=&a; end
 -- TODO: this code is duplicated with "ref.lua"
-            local to_tp_id = unpack(to.tp.tt)
+            local to_tp_id = TP.id(to.tp)
             if not (
                 fr.const                   or -- constants are globals
                 fr.fst.tag == 'Nat'        or -- natives are globals
@@ -360,7 +360,7 @@ end
 
         -- possible dangling pointer "me.var" is accessed across await
 
-        local tp_id = unpack(me.tp.tt)
+        local tp_id = TP.id(me.tp)
         if (ENV.clss[tp_id] or ENV.adts[tp_id]) then
             -- pointer to org: check if it is enclosed by "watching me.var"
             -- since before the first await

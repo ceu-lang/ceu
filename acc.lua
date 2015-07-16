@@ -108,7 +108,7 @@ F = {
             path = me.ana.pre,
             id  = e1.evt.id,    -- like functions (not table events)
             md  = 'cl',
-            tp  = TP.fromstr'@',
+            tp  = TP.new{'@'},
             any = false,
             err = ERR(me, 'event `'..e1.evt.id..'´')
         }
@@ -147,7 +147,7 @@ F = {
             path = me.ana.pre,
             id  = f,
             md  = 'cl',
-            tp  = TP.fromstr'@',
+            tp  = TP.new{'@'},
             any = true,
             err = 'call to `'..f.id..'´ (line '..me.ln[2]..')',
         }
@@ -267,7 +267,7 @@ F = {
             path = me.ana.pre,
             id  = me[1],
             md  = (generated and 'nv') or 'rd',
-            tp  = TP.fromstr'@',
+            tp  = TP.new{'@'},
             any = false,
             err = ERR(me, 'symbol `'..me[1]..'´'),
         }

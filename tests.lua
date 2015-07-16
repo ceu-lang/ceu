@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end
+--]===]
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------
@@ -447,8 +448,8 @@ Test { [[
 var int[1][1] v;
 escape 1;
 ]],
-    adj = 'line 1 : not implemented : multiple `[]´',
-    --env = 'line 1 : invalid type modifier : `[][]´',
+    --adj = 'line 1 : not implemented : multiple `[]´',
+    env = 'line 1 : invalid type modifier : `[][]´',
 }
 Test { [[
 var int[1]? v;
@@ -478,29 +479,29 @@ Test { [[
 var int?* v;
 escape 1;
 ]],
-    --env = 'line 1 : invalid type modifier : `?*´',
-    adj = 'line 1 : not implemented : `?´ must be last modifier',
+    env = 'line 1 : invalid type modifier : `?*´',
+    --adj = 'line 1 : not implemented : `?´ must be last modifier',
 }
 Test { [[
 var int?[1] v;
 escape 1;
 ]],
-    --env = 'line 1 : invalid type modifier : `?[]´',
-    adj = 'line 1 : not implemented : `?´ must be last modifier',
+    env = 'line 1 : invalid type modifier : `?[]´',
+    --adj = 'line 1 : not implemented : `?´ must be last modifier',
 }
 Test { [[
 var int?& v;
 escape 1;
 ]],
-    --env = 'line 1 : invalid type modifier : `?&´',
-    adj = 'line 1 : not implemented : `?´ must be last modifier',
+    env = 'line 1 : invalid type modifier : `?&´',
+    --adj = 'line 1 : not implemented : `?´ must be last modifier',
 }
 Test { [[
 var int?? v;
 escape 1;
 ]],
-    --env = 'line 1 : invalid type modifier : `??´',
-    adj = 'line 1 : not implemented : `?´ must be last modifier',
+    env = 'line 1 : invalid type modifier : `??´',
+    --adj = 'line 1 : not implemented : `?´ must be last modifier',
 }
 
     -- IF
@@ -24013,7 +24014,6 @@ escape *v;
     env = 'line 6 : invalid operand to unary "*"',
 }
 
---]===]
 Test { [[
 native @plain _rect;
 native do

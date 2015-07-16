@@ -1684,26 +1684,11 @@ G = {
     Type_pre = function (me)
         --
         -- Check if has '?' inside:
+        --  - currently only supported in last position #me
         --  - create implicit _Option_*
         --
-
-        -- TODO: multiple '?' inside
-        -- TODO: multiple '[]' inside
-        local opt = false
-        local arr = false
-        for i=2, #me do
-            local p = me[i]
-            if p == '?' then
-                ASR(i==#me, me, 'not implemented : `?´ must be last modifier')
-                opt = true
-            elseif p=='[]' or type(p)=='table' then
-                ASR(not arr, me, 'not implemented : multiple `[]´')
-                    -- me[1] will contain the only []
-                arr = true
-            end
-        end
-        if not opt then
-            return  -- return if no '?'
+        if me[#me] ~= '?' then
+            return
         end
 
         me[#me] = nil

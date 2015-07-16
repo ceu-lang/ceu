@@ -723,7 +723,7 @@ _STK_ORG->trls[ ]]..me.trl_fins[1]..[[ ].lbl   = ]]..me.lbl_fin.id..[[;
                 local top = cls or adt
                 local static = (type(var.tp.arr)=='table')
 
-                local tp_id = unpack(var.tp.tt)
+                local tp_id = TP.id(var.tp)
                 if top or tp_id=='_TOP_POOL' then
                     local id = (adt and '_' or '') .. var.id_
                     local dcl = '&'..CUR(me, id)
@@ -928,7 +928,7 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
     void* __ceu_old = ]]..V(to)..[[;    /* will kill/free old */
 ]])
 
-        local to_tp_id = unpack(to.tp.tt)
+        local to_tp_id = TP.id(to.tp)
 
         if set ~= 'adt-constr' then
             -- remove "fr" from tree (set parent link to NIL)

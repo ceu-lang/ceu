@@ -496,8 +496,7 @@ typedef union CEU_]]..me.id..[[_delayed {
                              or (ENV.c[_tp] and ENV.c[_tp].len
                                  or TP.types.word.len)) -- defaults to word
 ]]
-            elseif var.tp.tt and (TP.check(var.tp,'*') or TP.check(var.tp,'&')) then
--- TODO: recurse-type: tt test
+            elseif (TP.check(var.tp,'*') or TP.check(var.tp,'&')) then
                 len = TP.types.pointer.len
             else
                 len = ENV.c[TP.id(var.tp)].len
@@ -514,7 +513,7 @@ typedef union CEU_]]..me.id..[[_delayed {
 
         for _, var in ipairs(sorted) do
             local tp = TP.toc(var.tp)
-            local tp_id = unpack(var.tp.tt)
+            local tp_id = TP.id(var.tp)
 
             if var.inTop then
                 var.id_ = var.id

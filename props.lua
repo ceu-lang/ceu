@@ -166,7 +166,7 @@ F = {
                 if TP.check(var.tp,'[]') then
 -- TODO: recurse-type
                     --if var.tp[#var.tp.tt]==true then
-                    if var.tp.arr==true then
+                    if var.tp.arr=='[]' then
                         PROPS['has_'..s..'_news_malloc'] = true  -- pool T[] ts
                     else
                         PROPS['has_'..s..'_news_pool'] = true    -- pool T[N] ts

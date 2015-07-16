@@ -22,7 +22,7 @@ F = {
     end,
 
     Dcl_var = function (me)
-        local tp_id = unpack(me.var.tp.tt)
+        local tp_id = TP.id(me.var.tp)
         local adt = ENV.adts[tp_id]
         if adt and adt.is_rec then
             if me.var.pre == 'var' then

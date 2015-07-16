@@ -270,7 +270,7 @@ F = {
                 -- pool is unbounded
                 local tp = TP.pop(pool.tp,'&')
                 assert(TP.check(tp,'[]'))
-                if pool.tp.arr == true then
+                if pool.tp.arr == '[]' then
                     WRN(false, me, 'unbounded recursive spawn')
                 end
             end

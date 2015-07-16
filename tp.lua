@@ -1,15 +1,5 @@
--- TODO: recurse-type: use tt everywhere: eases manipulation w/o creating Type
--- or pass {tt=tt} and remove all refs to .tt outside tp.lua
---      - remove ext
---      - remove .*
---      - remove all TP.new/AST.node('Type')
---      - remove TT.copy (be local only)
-
 TP = {
     types = {}
-}
-
-TT = {
 }
 
 function TP.id (tp)
@@ -27,7 +17,7 @@ function TP.is_ext (tp, v1, v2)
     return _tp or at
 end
 
-function TT.copy (tt)
+local function TT_copy (tt)
     local ret = {}
     for i=1, #tt do
         ret[i] = tt[i]
@@ -35,13 +25,18 @@ function TT.copy (tt)
     return ret
 end
 function TP.pop (tp, v)
-    local tt = TT.copy(tp.tt)
+    local tt = TT_copy(tp.tt)
     if tt[#tt] == v then
         tt[#tt] = nil
         return {tt=tt}, v
     else
         return {tt=tt}, false
     end
+end
+function TP.push (tp, v)
+    local tt = TT_copy(tp.tt)
+    tt[#tt+1] = v
+    return {tt=tt}
 end
 function TP.check (tp, ...)
     local tt = tp.tt
@@ -89,24 +84,70 @@ function TP.get (id)
     return TP.types[id] or __empty
 end
 
-function TP.new (me, dont_generate)
-    if me.tag == 'Type' then
---print(debug.traceback())
-        assert(me.tt)   -- TODO: recurse-type
-        local id, ptr, arr, ref, opt = unpack(me)
+local __tmod = {
+    ['*']  = { ['*']=true,  ['[]']=true,  ['&']=true,  ['?']=true  },
+    ['[]'] = { ['*']=true,  ['[]']=false, ['&']=true,  ['?']=false },
+    ['&']  = { ['*']=false, ['[]']=false, ['&']=false, ['?']=true  },
+    ['?']  = { ['*']=false, ['[]']=false, ['&']=false, ['?']=false },
+}
 
-        me.arr = arr
-        me.hold = true      -- holds by default
+function TP.new (me, dont_generate)
+    if me.tag ~= 'TupleType' then
+        -- Save actual type in "tt", because of
+        -- array [N] which has to be in me[i] to be tracked.
+        -- id, (*, [], &, ?)^0
+        if not me.tt then
+            me.tt = { unpack(me) }
+        end
+
+        -- me.arr = []|table
+        -- me[i] = '[]'
+        for i=2, #me.tt do
+            local v = me.tt[i]
+            if v=='[]' or type(v)=='table' then
+                me.tt[i] = '[]'
+                me.arr = v
+            end
+        end
+
+        -- validate type modifiers
+        if AST and AST.par(me, 'Dcl_var') then
+            local last = me.tt[2]
+            if last then
+                for i=3, #me.tt do
+                    local cur = me.tt[i]
+                    ASR(__tmod[last][cur], me,
+                        'invalid type modifier : `'..last..cur..'´')
+                    last = cur
+                end
+            end
+        end
+
+        -- TODO: refusing multiple '?' inside
+        -- TODO: refusing multiple '[]' inside
+        local arr = false
+        for i=2, #me do
+            local v = me[i]
+            if v == '?' then
+                ASR(i==#me, me, 'not implemented : `?´ must be last modifier')
+            elseif v=='[]' or type(v)=='table' then
+                ASR(not arr, me, 'not implemented : multiple `[]´')
+                    -- me[1] will contain the only []
+                arr = true
+            end
+        end
 
         -- set from outside (see "types" above and Dcl_nat in env.lua)
         me.prim  = false     -- if primitive
         me.num   = false     -- if numeric
         me.len   = nil       -- sizeof type
         me.plain = false     -- if plain type (no pointers inside it)
+        me.hold  = true      -- holds by default
 
 -- TODO: remove?
-        if ENV and TP.is_ext(me,'_','@') and (not ENV.c[id]) then
-            ENV.c[id] = { tag='type', id=id, len=nil, mod=nil }
+        local tp_id = TP.id(me)
+        if ENV and TP.is_ext(me,'_','@') and (not ENV.c[tp_id]) then
+            ENV.c[tp_id] = { tag='type', id=tp_id, len=nil, mod=nil }
         end
 
     else
@@ -168,7 +209,7 @@ local types = {
     tceu_nlbl = { false, false, true }, -- len set in "labels.lua"
 }
 for id, t in pairs(types) do
-    TP.types[id] = TP.new{ tag='Type', id, 0, false, false, tt={id} }
+    TP.types[id] = TP.new{ id }
     TP.types[id].prim = t[1]
     TP.types[id].num  = t[2]
     TP.types[id].len  = t[3]
@@ -185,31 +226,16 @@ function TP.n2bytes (n)
     error'out of bounds'
 end
 
-function TP.copy (t)
+function TP.copy (tp)
     local ret = {}
-    for k,v in pairs(t) do
-        ret[k] = v
+    for k, v in pairs(tp) do
+        if k == 'tt' then
+            ret.tt = TT_copy(tp.tt)
+        else
+            ret[k] = v
+        end
     end
     return ret
-end
-
--- TODO: remove recurse-type
-function TP.fromstr (str)
-    local id, ptr, ref = string.match(str, '^(.-)(%**)(%&?)$')
-    assert(id and ptr and ref)
-
-    local tt = { id }
-    if ptr ~= '' then
-        assert(ptr == '*', 'bug found')
-        tt[#tt+1] = '*'
-    end
-    if ref == '&' then
-        tt[#tt+1] = '&'
-    end
-
-    ptr = (id=='@' and 1) or string.len(ptr);
-    ref = (ref=='&')
-    return TP.new{ tag='Type', id, ptr, false, ref, tt=tt }
 end
 
 function TP.toc (tp)
@@ -279,7 +305,7 @@ local function __err (tp1, tp2)
     return 'types mismatch (`'..TP.tostr(tp1)..'´ <= `'..TP.tostr(tp2)..'´)'
 end
 local function __norefs (tt)
-    tt = TT.copy(tt)
+    tt = TT_copy(tt)
     for i=#tt, 1, -1 do
         if tt[i] == '&' then
             table.remove(tt, i)
@@ -308,7 +334,7 @@ function TP.contains (tp1, tp2)
     -- original types (for error msgs)
     local TP1, TP2 = tp1, tp2
     local tp1  = TP.pop(tp1, '?')
-    local tp2  = {tt=TT.copy(tp2.tt)}
+    local tp2  = TP.copy(tp2)
 
     local id1  = TP.id(tp1)
     local id2  = TP.id(tp2)
@@ -338,7 +364,7 @@ function TP.contains (tp1, tp2)
             -- pointers
             if TP.check(tp1,'*') and TP.check(tp2,'*') then
                 -- compatible pointers, check arity, "char" renaming trick
-                local tt1, tt2 = TT.copy(tp1.tt), TT.copy(tp2.tt)
+                local tt1, tt2 = TT_copy(tp1.tt), TT_copy(tp2.tt)
                 tt1[1], tt2[1] = 'char', 'char'
                 return TP.contains({tt=tt1}, {tt=tt2})
             -- non-pointers
@@ -356,7 +382,7 @@ function TP.contains (tp1, tp2)
         if TP.check(tp1,'[]') or TP.check(tp2,'[]') then
             assert(TP.check(tp1,'[]'), 'bug found')
             if TP.check(TP1,'&') then
-                if TP1.arr == true then
+                if TP1.arr == '[]' then
                     -- var X[]& = ...
                     return true
                 elseif type(TP1.arr)=='table' and type(TP2.arr)=='table' then
@@ -414,11 +440,11 @@ function TP.contains (tp1, tp2)
         --       is it correct?
         --       (I think "void*" should fail)
         if id1 == 'char' then
-            local tt2 = TT.copy(tp2.tt)
+            local tt2 = TT_copy(tp2.tt)
             tt2[1] = 'char'
             return TP.contains(tp1, {tt=tt2})
         elseif id1 == 'void' then
-            local tt2 = TT.copy(tp2.tt)
+            local tt2 = TT_copy(tp2.tt)
             tt2[1] = 'void'
             return TP.contains(tp1, {tt=tt2})
 

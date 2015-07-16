@@ -390,7 +390,7 @@ F =
         local op, e1, id = unpack(me)
         local VAL
         if me.__env_tag then
-            local tag = e1.tp.tt and ('CEU_'..string.upper(TP.id(e1.tp))..'_'..id)
+            local tag = (e1.tp.tag~='Block') and ('CEU_'..string.upper(TP.id(e1.tp))..'_'..id)
                         -- can be a Block
             if me.__env_tag == 'test' then
                 VAL  = '('..V(e1)..'.'..'tag == '..tag..')'

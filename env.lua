@@ -153,8 +153,8 @@ local function check (me, pre, tp)
 end
 
 function ENV.v_or_ref (tp, cls_or_adt)
-    -- TODO: data.TAG
-    if not tp.tt then
+    if tp.tag == 'Block' then
+        -- TODO: data.TAG
         return false
     end
 
@@ -246,8 +246,7 @@ function newvar (me, blk, pre, tp, id, isImp, isEvery)
 end
 
 function newint (me, blk, pre, tp, id, isImp)
-    local T = AST.node('Type', me.ln, 'void')
-    F.Type(T)
+    local T = TP.new{'void'}
 
     local has, var = newvar(me, blk, pre, T, id, isImp)
     if has then
@@ -284,7 +283,7 @@ function newfun (me, blk, pre, rec, ins, out, id, isImp)
     check(me, pre, out)
 
     local has, var = newvar(me, blk, pre,
-                        TP.fromstr('___typeof__(CEU_'..CLS().id..'_'..id..')'),
+                        TP.new{'___typeof__(CEU_'..CLS().id..'_'..id..')'},
                         -- TODO: TP.toc eats one '_'
                         id, isImp)
     if has then
@@ -351,66 +350,8 @@ end
 local STACK_N_E = { }
 
 F = {
-    __tmod = {
-        ['*']  = { ['*']=true,  ['[]']=true,  ['&']=true,  ['?']=true  },
-        ['[]'] = { ['*']=true,  ['[]']=false, ['&']=true,  ['?']=false },
-        ['&']  = { ['*']=false, ['[]']=false, ['&']=false, ['?']=true  },
-        ['?']  = { ['*']=false, ['[]']=false, ['&']=false, ['?']=false },
-    },
-    Type = function (me)
-
--- TODO: recurse-type
-if me.tag=='Type' and type(me[2])~='number' then
-    local tt = { me[1] } -- id, (*, [], &, ?)^0
--- TODO: recurse-type
-    local ptr = 0
-    local arr = false
-    local ref = false
-    local opt = false
-    for i=2, #me do
-        local p = me[i]
-        tt[#tt+1] = p
-        if p == '*' then
-            ptr = ptr + 1
-        elseif p == '[]' then
-            arr = true
-        elseif type(p)=='table' then
-            if p.tag == 'Type' then
-                opt = p
-                tt[#tt] = '?'
-            else
-                arr = p
-                tt[#tt] = '[]'
-            end
-        elseif p == '&' then
-            ref = true
-        elseif p == '?' then
-            opt = true
-        end
-    end
-    me[2] = ptr
-    me[3] = arr
-    me[4] = ref
-    me[5] = opt
-    me.tt = tt
-
-    -- validate type modifiers
-    if AST.par(me, 'Dcl_var') then
-        local last = tt[2]
-        if last then
-            for i=3, #tt do
-                local cur = tt[i]
-                ASR(F.__tmod[last][cur], me,
-                    'invalid type modifier : `'..last..cur..'´')
-                last = cur
-            end
-        end
-    end
-end
-
-        TP.new(me)
-    end,
-    TupleType_pos = 'Type',
+    Type_pos      = TP.new,
+    TupleType_pos = TP.new,
 
     Root_pre = function (me)
         -- TODO: NONE=0
@@ -418,53 +359,44 @@ end
 
         local t = {
         -- runtime
-            { '_STK',       nil,        nil },
-            { '_ORG',       nil,        nil },
-            { '_ORG_PSED',  nil,        nil },
-            { '_CLEAR',     nil,        nil },
-            { '_ok_killed', 'void',     1   },
+            { '_STK',       nil          },
+            { '_ORG',       nil          },
+            { '_ORG_PSED',  nil          },
+            { '_CLEAR',     nil          },
+            { '_ok_killed', {'void','*'} },
         -- input / runtime
-            { '_INIT',      nil,        nil, 'seqno' },      -- _INIT = HIGHER EXTERNAL
-            { '_ASYNC',     nil,        nil, 'seqno' },
-            { '_THREAD',    nil,        nil, 'seqno' },
-            { '_WCLOCK',    's32',      0,   'seqno' },
+            { '_INIT',      nil,     'seqno' }, -- _INIT = HIGHER EXTERNAL
+            { '_ASYNC',     nil,     'seqno' },
+            { '_THREAD',    nil,     'seqno' },
+            { '_WCLOCK',    {'s32'}, 'seqno' },
         }
 
         if OPTS.timemachine then
-            t[#t+1] = { '_WCLOCK_', 's32', 0, 'seqno' }
+            t[#t+1] = { '_WCLOCK_', {'s32'}, 'seqno' }
         end
 
         -- input / user
         if OPTS.os then
-            t[#t+1] = { 'OS_START',     'void', 0, 'seqno' }
-            t[#t+1] = { 'OS_STOP',      'void', 0, 'seqno' }
-            t[#t+1] = { 'OS_DT',        'int',  0, 'seqno' }
-            t[#t+1] = { 'OS_INTERRUPT', 'int',  0, 'seqno' }
+            t[#t+1] = { 'OS_START',     {'void'}, 'seqno' }
+            t[#t+1] = { 'OS_STOP',      {'void'}, 'seqno' }
+            t[#t+1] = { 'OS_DT',        {'int'},  'seqno' }
+            t[#t+1] = { 'OS_INTERRUPT', {'int'},  'seqno' }
         end
 
         for _, v in ipairs(t) do
-            local id, tp, ptr, seqno = unpack(v)
--- TODO: recurse-type
-            local _tp = tp and AST.node('Type', me.ln, tp, ptr, false, false)
+            local id, tt, seqno = unpack(v)
+            local tp = tt and TP.new(tt)
             local evt = {
                 ln  = me.ln,
                 id  = id,
                 pre = 'input',
                 ins = tp and AST.node('TupleType', me.ln,
-                                AST.node('TupleTypeItem', me.ln, false, _tp, false)),
+                                AST.node('TupleTypeItem', me.ln, false, tp, false)),
                 mod = { rec=false },
                 seqno = seqno,
                 os  = true,     -- do not generate #define with OPTS.os==true
             }
             if tp then
--- TODO: recurse-type
-                _tp.tt = { tp }
-                if ptr > 0 then
-                    assert(ptr==1, 'bug found')
-                    _tp.tt[#_tp.tt+1] = '*'
-                end
-
-                TP.new(_tp)
                 TP.new(evt.ins)
             end
             ENV.exts[#ENV.exts+1] = evt
@@ -525,7 +457,7 @@ end
         me.c       = {}      -- holds all "native _f()"
         me.is_ifc  = ifc
         me.id      = id
-        me.tp      = TP.fromstr(id)
+        me.tp      = TP.new{id}
         me.matches = {}
 
         -- restart variables/events counting
@@ -650,7 +582,7 @@ end
     Global = function (me)
         ASR(ENV.clss.Global and ENV.clss.Global.is_ifc, me,
             'interface "Global" is not defined')
-        me.tp   = TP.fromstr'Global*'
+        me.tp   = TP.new{'Global','*'}
         me.lval = false
         me.blk  = AST.root
     end,
@@ -728,7 +660,7 @@ end
         if me.var.cls and TP.check(me.var.tp,'[]') then
             -- var T[10] ts;  // needs _i_ to iterate for the constructor
             _, me.var.constructor_iterator =
-                newvar(me, AST.par(me,'Block'), 'var', TP.fromstr'int', '_i_'..id, false)
+                newvar(me, AST.par(me,'Block'), 'var', TP.new{'int'}, '_i_'..id, false)
         end
     end,
 
@@ -741,10 +673,10 @@ end
             me[2][3] = false
         else
             -- CLS has no type
-            me[2] = TP.fromstr'void'
+            me[2] = TP.new{'void'}
 
             local tp_ = TP.new(tp)
-            local tp_id = unpack(tp_.tt)
+            local tp_id = TP.id(tp_)
             local top = not (TP.check(tp_,'*') or TP.check(tp_,'&'))
             ASR(tp_id=='_TOP_POOL' or top,
                 me, 'undeclared type `'..(tp_id or '?')..'´')
@@ -766,8 +698,6 @@ end
         for _, t in ipairs(tp.tup) do
             ASR((TP.isNumeric(t) or TP.check(t,'*')),
                 me, 'invalid event type')
--- TODO: recurse-type: remove when numeric not &
-            ASR(not TP.check(t,'&'), me, 'invalid event type')
         end
         local _
         _, me.var = newint(me, AST.iter'Block'(), pre, tp, id, me.isImp)
@@ -868,7 +798,7 @@ end
     Dcl_nat = function (me)
         local mod, tag, id, len = unpack(me)
         if tag=='type' or mod=='@plain' then
-            local tp = TP.fromstr(id)
+            local tp = TP.new{id}
             tp.len   = len
             tp.plain = (mod=='@plain')
             TP.types[id] = tp
@@ -891,13 +821,12 @@ end
         local tp = AST.asr(blki,'', 1,'Stmts', 3,'Dcl_pool', 2,'Type')
 
         -- tp id
-        tp[1] = pool.tp.tt[1]
+        tp[1] = TP.id(pool.tp)
 
--- TODO: recurse-type
         AST.asr(blki,'', 1,'Stmts', 1,'Dcl_pool', 2,'Type')
-                [2] = (pool.tp[3]==true and '[]') or AST.copy(pool.tp[3]) -- array
+                [2] = (pool.tp[2]=='[]' and '[]') or AST.copy(pool.tp[2]) -- array
         AST.asr(me.__par,'Stmts', 3,'Dcl_pool', 2,'Type')
-                [2] = (pool.tp[3]==true and '[]') or AST.copy(pool.tp[3]) -- array
+                [2] = (pool.tp[2]=='[]' and '[]') or AST.copy(pool.tp[2]) -- array
 
         me.tag = 'Nothing'
     end,
@@ -907,7 +836,7 @@ end
         local stmts = AST.asr(me.__par, 'Stmts')
 
         local tp    = me[1].tp  -- type of Var
-        local tp_id = tp and unpack(tp.tt)
+        local tp_id = tp and TP.id(tp)
 
         if tp and ENV.clss[tp_id] then
             ASR(ENV.v_or_ref(tp,'cls'), me, 'organism must not be a pointer')
@@ -944,7 +873,7 @@ end
             end
 
             if e.evt.ins.tup then
-                me.tp = TP.fromstr('_'..TP.toc(e.evt.ins)..'*') -- convert to pointer
+                me.tp = TP.new{'_'..TP.toc(e.evt.ins),'*'} -- convert to pointer
             else
                 me.tp = e.evt.ins
             end
@@ -953,7 +882,7 @@ end
             ASR(e.var and e.var.pre=='event', me,
                 'event "'..(e.var and e.var.id or '?')..'" is not declared')
             if e.var.evt.ins.tup then
-                me.tp = TP.fromstr('_'..TP.toc(e.var.evt.ins)..'*') -- convert to pointer
+                me.tp = TP.new{'_'..TP.toc(e.var.evt.ins),'*'} -- convert to pointer
             else
                 me.tp = e.var.evt.ins
             end
@@ -979,7 +908,7 @@ end
         if op == 'call' then
             me.tp = e.evt.out       -- return value
         else
-            me.tp = TP.fromstr'int' -- [0,1] enqueued? (or 'int' return val)
+            me.tp = TP.new{'int'} -- [0,1] enqueued? (or 'int' return val)
         end
     end,
 
@@ -1002,7 +931,7 @@ end
             fr_tp = (e.var or e).evt.ins
 
         elseif set == 'thread' then
-            fr_tp = TP.fromstr'int'       -- 0/1
+            fr_tp = TP.new{'int'}       -- 0/1
 
         elseif set == 'spawn' then
             -- var T*? = spawn T;
@@ -1068,7 +997,7 @@ end
         me.cls = ENV.clss[id]
         ASR(me.cls, me, 'undeclared type `'..id..'´')
         ASR(not me.cls.is_ifc, me, 'cannot instantiate an interface')
-        me.tp = TP.fromstr(id..'*')  -- class id
+        me.tp = TP.new{id,'*'}  -- class id
 
         if me.cls == CLS() then
             -- Recursive class:
@@ -1200,7 +1129,7 @@ end
     Adt_constr_one = function (me)
         local adt, params = unpack(me)
         local id_adt, id_tag = unpack(adt)
-        me.tp = TP.fromstr(id_adt)
+        me.tp = TP.new{id_adt}
 
         local tup
         local tadt = ASR(ENV.adts[id_adt], me,
@@ -1224,6 +1153,9 @@ end
                     ASR(p.tag == 'Adt_constr_one', me,
                         'invalid constructor : recursive field "'..id_tag..'" must be new data')
                     p.tp.tt[#p.tp.tt+1] = '*'
+                    --params[i].tp = TP.new(TP.push(p.tp,'*'))
+--DBG(TP.tostr(params[i].tp))
+--error'oi'
                 end
             end
             tup = ttag.tup
@@ -1237,7 +1169,7 @@ end
 
     Op2_call = function (me)
         local _, f, params, _ = unpack(me)
-        me.tp  = f.var and f.var.fun and f.var.fun.out or TP.fromstr'@'
+        me.tp  = f.var and f.var.fun and f.var.fun.out or TP.new{'@'}
         local id
         if f.tag == 'Nat' then
             id = f[1]
@@ -1291,20 +1223,17 @@ end
             tp = TP.pop(tp, '*')
         end
 
--- TODO: recurse-type: remove AST.node
-        me.tp = AST.node('Type', me.ln[2], unpack(tp.tt))
-        F.Type(me.tp)
-
-        if ENV.v_or_ref(me.tp) then
+        if ENV.v_or_ref(tp) then
             me.lval = false
         else
             me.lval = arr
         end
+        me.tp = TP.new(tp)
     end,
 
     Op2_int_int = function (me)
         local op, e1, e2 = unpack(me)
-        me.tp  = TP.fromstr'int'
+        me.tp  = TP.new{'int'}
         ASR(TP.isNumeric(e1.tp,'&') and TP.isNumeric(e2.tp,'&'), me,
                 'invalid operands to binary "'..op..'"')
     end,
@@ -1321,7 +1250,7 @@ end
 
     Op1_int = function (me)
         local op, e1 = unpack(me)
-        me.tp  = TP.fromstr'int'
+        me.tp = TP.new{'int'}
         ASR(TP.isNumeric(e1.tp), me,
                 'invalid operand to unary "'..op..'"')
     end,
@@ -1331,7 +1260,7 @@ end
 
     ['Op1_?'] = function (me)
         local op, e1 = unpack(me)
-        me.tp  = TP.fromstr'bool'
+        me.tp = TP.new{'bool'}
         ASR(TP.check(e1.tp,'?'), me, 'not an option type')
     end,
     ['Op1_!'] = function (me)
@@ -1340,14 +1269,12 @@ end
 
         local tp,ok = TP.pop(e1.tp, '?')
         ASR(ok, me, 'not an option type')
--- TODO: recurse-type: remove AST.node
-        me.tp = AST.node('Type', me.ln[2], unpack(tp.tt))
-        F.Type(me.tp)
+        me.tp = TP.new(tp)
     end,
 
     Op2_same = function (me)
         local op, e1, e2 = unpack(me)
-        me.tp = TP.fromstr'int'
+        me.tp = TP.new{'int'}
         ASR(TP.max(e1.tp,e2.tp), me,
             'invalid operands to binary "'..op..'"')
 
@@ -1368,7 +1295,7 @@ end
     ['Op2_<']  = 'Op2_same',
 
     Op2_any = function (me)
-        me.tp = TP.fromstr'int'
+        me.tp = TP.new{'int'}
         ASR(not ENV.adts[TP.tostr(me.tp)], me, 'invalid operation for data')
     end,
     ['Op2_or']  = 'Op2_any',
@@ -1400,22 +1327,16 @@ end
                 me, 'invalid operand to unary "*"')
         end
 
--- TODO: recurse-type: remove AST.node
-        me.tp = AST.node('Type', me.ln[2], unpack(tp.tt))
-        F.Type(me.tp)
+        me.tp = TP.new(tp)
     end,
 
     ['Op1_&'] = function (me)
         local op, e1 = unpack(me)
-        local e1_tp_id = unpack(e1.tp.tt)
+        local e1_tp_id = TP.id(e1.tp)
         ASR(e1.lval or ENV.clss[e1_tp_id] or ENV.adts[e1_tp_id], me,
             'invalid operand to unary "&"')
         me.lval = false
-
-        -- TODO: recurse-type
-        me.tp = AST.node('Type', me.ln, unpack(e1.tp.tt))
-        me.tp[#me.tp+1] = '*'
-        F.Type(me.tp)
+        me.tp = TP.new(TP.push(e1.tp,'*'))
     end,
 
     ['Op2_.'] = function (me)
@@ -1469,13 +1390,13 @@ end
                 local blk = ASR(adt.tags[id] and adt.tags[id].blk, me,
                                 'tag "'..id..'" is not declared')
 
-                ASR(TP.contains(e1.tp,TP.fromstr(ID)), me,
+                ASR(TP.contains(e1.tp,TP.new{ID}), me,
                     'invalid access ('..TP.tostr(e1.tp)..' vs '..ID..')')
 
                 -- [union.TAG]
                 local tag = (me.__par.tag ~= 'Op2_.')
                 if tag then
-                    me.tp = TP.fromstr'bool'
+                    me.tp = TP.new{'bool'}
                     me.__env_tag = 'test'
 
                 -- [union.TAG].field
@@ -1500,10 +1421,10 @@ end
             assert(not e1.tp.tup)
             ASR(TP.is_ext(e1.tp,'_','@'), me, 'not a struct')
             -- rect.x = 1 (_SDL_Rect)
-            me.tp = TP.fromstr'@'
+            me.tp = TP.new{'@'}
             local tp = TP.get(TP.id(e1.tp))
             if tp.plain and (not TP.check(e1.tp,'*')) then
-                me.tp = TP.pop(me.tp, '*')
+                me.tp = TP.new(TP.pop(me.tp,'*'))
                 me.tp.plain = true
             end
             me.lval = me--e1.lval
@@ -1533,29 +1454,29 @@ end
         ASR(c.tag~='type', me,
             'native variable/function "'..id..'" is not declared')
         me.id   = id
-        me.tp   = TP.fromstr'@'
+        me.tp   = TP.new{'@'}
         me.lval = me
         me.c    = c
     end,
     RawExp = function (me)
-        me.tp   = TP.fromstr'@'
+        me.tp   = TP.new{'@'}
         me.lval = me
     end,
 
     WCLOCKK = function (me)
-        me.tp   = TP.fromstr'int'
+        me.tp   = TP.new{'int'}
         me.lval = false
     end,
     WCLOCKE = 'WCLOCKK',
 
     SIZEOF = function (me)
-        me.tp   = TP.fromstr'int'
+        me.tp   = TP.new{'int'}
         me.lval = false
         me.const = true
     end,
 
     STRING = function (me)
-        me.tp   = TP.fromstr'char*'
+        me.tp   = TP.new{'char','*'}
         me.lval = false
         me.const = true
     end,
@@ -1563,15 +1484,15 @@ end
         local v = unpack(me)
         ASR(string.sub(v,1,1)=="'" or tonumber(v), me, 'malformed number')
         if string.find(v,'%.') or string.find(v,'e') or string.find(v,'E') then
-            me.tp = TP.fromstr'float'
+            me.tp = TP.new{'float'}
         else
-            me.tp = TP.fromstr'int'
+            me.tp = TP.new{'int'}
         end
         me.lval = false
         me.const = true
     end,
     NULL = function (me)
-        me.tp   = TP.fromstr'null*'
+        me.tp   = TP.new{'null','*'}
         me.lval = false
         me.const = true
     end,
