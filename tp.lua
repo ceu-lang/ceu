@@ -15,8 +15,15 @@ TT = {
 function TP.id (tp)
     return tp.tt[1]
 end
-function TP.is_ (tp)
-    return string.sub(TP.id(tp),1,1) == '_'
+function TP.is_ext (tp, v1, v2)
+    local _tp, at
+    if v1=='@' or v2=='@' then
+        at = TP.id(tp)=='@'
+    end
+    if v1=='_' or v2=='_' then
+        _tp = string.sub(TP.id(tp),1,1) == '_'
+    end
+    return _tp or at
 end
 
 function TT.copy (tt)
@@ -87,12 +94,7 @@ function TP.new (me, dont_generate)
         assert(me.tt)   -- TODO: recurse-type
         local id, ptr, arr, ref, opt = unpack(me)
 
-        me.id  = id
-        me.ptr = ptr
         me.arr = arr
-        me.ref = ref
-        me.ext = (id=='@') or
-                 (string.sub(id,1,1)=='_' and string.sub(id,1,8)~='_Option_')
         me.hold = true      -- holds by default
 
         -- set from outside (see "types" above and Dcl_nat in env.lua)
@@ -102,24 +104,20 @@ function TP.new (me, dont_generate)
         me.plain = false     -- if plain type (no pointers inside it)
 
 -- TODO: remove?
-        if ENV and me.ext and (not ENV.c[me.id]) then
-            ENV.c[me.id] = { tag='type', id=me.id, len=nil, mod=nil }
+        if ENV and TP.is_ext(me,'_','@') and (not ENV.c[id]) then
+            ENV.c[id] = { tag='type', id=id, len=nil, mod=nil }
         end
 
     else
         AST.asr(me, 'TupleType')
-        me.id  = nil
-        me.ptr = (#me==1 and 0) or 1
         me.arr = false
-        me.ref = false
-        me.ext = false
 
         me.tup = {}
         for i, t in ipairs(me) do
             local hold, tp, _ = unpack(t)
             tp.hold = hold
 
-            if TP.id(tp)=='void' and tp.ptr==0 then
+            if TP.check(tp,'void','-&') then
                 ASR(#me==1, me, 'invalid type')
                 me[1] = nil     -- empty tuple
                 break
@@ -263,8 +261,8 @@ end
 function TP.isNumeric (tp, pop)
     tp = (pop and TP.pop(tp, pop)) or tp
     local id = TP.id(tp)
-    return TP.check(tp,id) and (TP.get(id).num or tp.ext)
-            or id=='@'
+    return TP.check(tp,id) and (TP.get(id).num or TP.is_ext(tp,'_'))
+            or TP.is_ext(tp,'@')
 end
 
 function TP.t2tup (t)
@@ -384,13 +382,13 @@ function TP.contains (tp1, tp2)
         return true
 
     -- external non-pointers: let "gcc" handle it
-    elseif TP.is_(tp1) and TP.check(tp1,id1) or
-           TP.is_(tp2) and TP.check(tp2,id2)
+    elseif TP.is_ext(tp1,'_') and TP.check(tp1,id1) or
+           TP.is_ext(tp2,'_') and TP.check(tp2,id2)
     then
         return true
 
     -- "any" type (calls, Lua scripts)
-    elseif id1=='@' or id2=='@' then
+    elseif TP.is_ext(tp1,'@') or TP.is_ext(tp2,'@') then
         return true
 
     -- array <=> single-pointer conversions
@@ -424,7 +422,7 @@ function TP.contains (tp1, tp2)
             return TP.contains(tp1, {tt=tt2})
 
         -- both are external types: let "gcc" handle it
-        elseif TP.is_(tp1) or TP.is_(tp2) then
+        elseif TP.is_ext(tp1,'_') or TP.is_ext(tp2,'_') then
             return true
 
         else

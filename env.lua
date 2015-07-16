@@ -1086,7 +1086,7 @@ end
         if spw then
             me.cls = ENV.clss[ spw[1] ]   -- checked on Spawn
         elseif dcl then
-            me.cls = ENV.clss[ dcl[2].id ]   -- checked on Dcl_var
+            me.cls = ENV.clss[ TP.id(dcl[2]) ]   -- checked on Dcl_var
         end
         --assert(me.cls)
     end,
@@ -1279,7 +1279,7 @@ end
 
         local ok = TP.check(arr.tp, '*', '-&') or
                    TP.check(arr.tp, '[]', '-&')
-        ASR(ok or arr.tp.ext, me,
+        ASR(ok or TP.is_ext(arr.tp,'_','@'), me,
             'cannot index a non array')
         ASR(TP.isNumeric(idx.tp), me, 'invalid array index')
 
@@ -1395,7 +1395,8 @@ end
         end
 
         if not ok then
-            ASR((e1.tp.ext and (not e1.tp.plain) and (not TP.get(tp_id).plain)),
+            ASR((TP.is_ext(e1.tp,'_','@') and (not e1.tp.plain)
+                                          and (not TP.get(tp_id).plain)),
                 me, 'invalid operand to unary "*"')
         end
 
@@ -1497,7 +1498,7 @@ end
 
         else
             assert(not e1.tp.tup)
-            ASR(TP.is_(e1.tp) or TP.id(e1.tp)=='@', me, 'not a struct')
+            ASR(TP.is_ext(e1.tp,'_','@'), me, 'not a struct')
             -- rect.x = 1 (_SDL_Rect)
             me.tp = TP.fromstr'@'
             local tp = TP.get(TP.id(e1.tp))

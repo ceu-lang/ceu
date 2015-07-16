@@ -48,7 +48,9 @@ function ISPTR (node_or_var)
 
     -- either native dcl or derived
     -- _SDL_Renderer&?: "_ext &?" should not be considered a pointer
-    if tp.ext and (not (TP.get(TP.id(tp)).plain or tp.plain or TP.check(tp,'&','?'))) then
+    if TP.is_ext(tp,'_','@') and
+       (not (TP.get(TP.id(tp)).plain or tp.plain or TP.check(tp,'&','?')))
+    then
         return true
     end
 
