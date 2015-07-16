@@ -15034,6 +15034,27 @@ with
 end
 escape r;
 ]],
+    env = 'line 16 : types mismatch (`int´ <= `int&?´)',
+}
+
+Test { [[
+native do
+    int V = 10;
+    int* fff (int v) {
+        V += v;
+        return &V;
+    }
+end
+var int   v = 1;
+var int*  p = &v;
+var int&? r;
+finalize
+    r = _fff(*p);
+with
+    nothing;
+end
+escape r!;
+]],
     run = 11,
 }
 
@@ -15269,7 +15290,7 @@ finalize
 with
 end
 await E;
-escape this.n;
+escape this.n!;
 ]],
     gcc = 'error: implicit declaration of function ‘f’',
 }
@@ -17347,7 +17368,8 @@ var int& tex2 = tex1;
 
 escape &tex2==&_V;
 ]],
-    run = 1,
+    env = 'line 15 : types mismatch (`int&´ <= `int&?´)',
+    --run = 1,
 }
 
 Test { [[
@@ -17369,7 +17391,8 @@ var int& tex2 = tex1;
 
 escape &tex2==&_V;
 ]],
-    asr = true,
+    env = 'line 15 : types mismatch (`int&´ <= `int&?´)',
+    --asr = true,
 }
 
 Test { [[
@@ -19663,6 +19686,20 @@ end
 var int&? p = _f();
 escape p;
 ]],
+    env = 'line 9 : types mismatch (`int´ <= `int&?´)',
+}
+
+Test { [[
+native _f();
+native do
+    int* f () {
+        int a = 10;
+        escape &a;
+    }
+end
+var int&? p = _f();
+escape p!;
+]],
     fin = 'line 8 : attribution requires `finalize´',
 }
 
@@ -19681,7 +19718,7 @@ finalize
 with
     nothing;
 end
-escape p;
+escape p!;
 ]],
     run = 10,
 }
@@ -19700,7 +19737,7 @@ finalize
 with
     nothing;
 end
-escape p;
+escape p!;
 ]],
     run = 10,
 }
@@ -19733,7 +19770,7 @@ do
     finalize
         p = _f();
     with
-        a = p;
+        a = p!;
 end
 end
 escape a;
@@ -26417,7 +26454,7 @@ do
     i = v;
 end
 var T t;
-escape t.i;
+escape t.i!;
 ]],
     asr = '6] runtime error: invalid tag',
     --run = 10,
@@ -26433,7 +26470,7 @@ var int i = 10;
 var T t with
     this.i = outer.i;
 end;
-escape t.i;
+escape t.i!;
 ]],
     run = 10,
 }
@@ -27689,7 +27726,7 @@ end
 Test { [[
 class T with do end
 var T*? ok = spawn T;
-escape &ok != null;
+escape &(ok!) != null;
 ]],
     asr = '3] runtime error: invalid tag',
     --run = 1,
@@ -28321,7 +28358,7 @@ pool T[1] ts;
 var T* a = null;
 do
     var T*? aa = spawn T in ts;
-        a = aa;
+        a = aa!;
 end
 var int sum = 0;
 if a != null then
@@ -28347,7 +28384,7 @@ pool T[2] ts;
 var T* a = null;
 do
     var T*? aa = spawn T in ts;
-        a = aa;
+        a = aa!;
 end
 var int sum = 0;
 if a != null then
@@ -28397,7 +28434,7 @@ pool T[1] ts;
 var T* a;
 do
     var T*? aa = spawn T in ts;
-        a = aa;
+        a = aa!;
 end
 var T*? b = spawn T in ts;   // fails (a is free on end)
 escape (not b?);
@@ -28418,11 +28455,11 @@ var int sum = 0;
 do
     do
         var T*? aa = spawn T in ts;
-            a = aa;
+            a = aa!;
     end
     sum = a!=null;
     var T*? bb = spawn T in ts;  // fails
-        b = bb;
+        b = bb!;
 end
 if b != null then
     watching *b do
@@ -28449,7 +28486,7 @@ var int sum = 0;
 do
     do
         var T*? aa = spawn T in ts;
-            a = aa;
+            a = aa!;
     end
     sum = a?;
     var T*? bb = spawn T in ts;  // fails
@@ -28475,11 +28512,10 @@ var bool b_;
 do
     do
         var T*? aa = spawn T in ts;
-            a = aa;
+            a = aa!;
     end
     var T*? bb = spawn T in ts;  // fails
-        b = bb;
-    b_ = (b?);
+    b_ = (bb?);
 end
 var T*? c = spawn T in ts;       // fails
 //native @nohold _fprintf(), _stderr;
@@ -28501,7 +28537,7 @@ var T*? a;
 var int sum = 0;
 do
     var T*? aa = spawn T in ts;
-        a = aa;
+        a = aa!;
     sum = a?;
 end
 var T*? b = spawn T in ts;   // fails
@@ -28521,7 +28557,7 @@ pool T[1] ts;
 var T* a;
 do
     var T*? aa = spawn T in ts;
-        a = aa;
+        a = aa!;
 end
 var T*? b = spawn T in ts;   // fails
 escape (not b?);
@@ -30377,7 +30413,7 @@ class T with do
 end;
 var T*? a = spawn T;
 var T* b;
-b = a;
+b = a!;
 escape 10;
 ]],
     run = 10;
@@ -30387,7 +30423,7 @@ Test { [[
 class T with do end;
 var T*? a = spawn T;
 var T* b;
-b = a;
+b = a!;
 escape 10;
 ]],
     asr = '4] runtime error: invalid tag',
@@ -32943,7 +32979,7 @@ var T*? t1 = spawn T in ts with
                 this.t = &this;
             end;
 var T*? t2 = spawn T in ts with
-                this.t = t1;
+                this.t = t1!;
             end;
 
 async do end;
@@ -38468,7 +38504,7 @@ par/and do
     var T*? t = spawn T in ts with
         this.v = 10;
     end;
-    emit e => t;
+    emit e => t!;
     await 1s;
 with
     var T* p = await e;
@@ -38504,7 +38540,7 @@ par/and do
     var T*? t = spawn T in ts with
         this.v = 10;
     end;
-    emit e => t;
+    emit e => t!;
 with
     var T* p = await e;
     watching *p do
@@ -38539,7 +38575,7 @@ par/and do
     var T*? t = spawn T in ts with
         this.v = 10;
     end;
-    emit e => t;
+    emit e => t!;
     await 6s;
 with
     var T* p = await e;
@@ -38575,7 +38611,7 @@ par/and do
     var T*? t = spawn T in ts with
         this.v = 10;
     end;
-    emit e => t;
+    emit e => t!;
     await 6s;
 with
     var T* p = await e;
@@ -38611,7 +38647,7 @@ par/and do
     var T*? t = spawn T in ts with
         this.v = 10;
     end;
-    emit e => t;
+    emit e => t!;
 with
     var T* p = await e;
     watching *p do
@@ -44673,7 +44709,7 @@ do
     var int v = 10;
 end
 var T t;
-escape t.i;
+escape t.i!;
 ]],
     asr = true,
 }

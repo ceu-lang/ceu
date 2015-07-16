@@ -1,3 +1,6 @@
+-- TODO: recurse-type: use tt everywhere: eases manipulation w/o creating Type
+-- or pass {tt=tt} and remove all refs to .tt outside tp.lua
+
 TP = {
     types = {}
 }
@@ -7,6 +10,9 @@ TT = {
 
 function TT.id (tp)
     return tp.tt[1]
+end
+function TT.is_ (tp)
+    return string.sub(TT.id(tp),1,1) == '_'
 end
 
 function TT.copy (tt, s, e)
@@ -240,56 +246,33 @@ function TP.toc (tp)
         return string.gsub(table.concat(t,'__'),'%*','_')
     end
 
-    local ret
-
     if TT.check(tp.tt,'?') then
-        ret = TT.opt2adt(tp.tt)
-    else
-        ret = unpack(tp.tt)
+        return 'CEU_'..TT.opt2adt(tp.tt)
     end
 
-    if ENV.clss[ret] or ENV.adts[ret] then
+    local ret = table.concat(tp.tt)
+    ret = string.gsub(ret, '%[]', '*')
+    ret = string.gsub(ret, '%&', '*')
+
+    local id = TT.id(tp)
+    if ENV.clss[id] or ENV.adts[id] then
         ret = 'CEU_'..ret
     end
 
-    if TT.check(tp.tt,'?') then
-        return ret
-    end
-
-    ret = ret .. string.rep('*',tp.ptr)
-
-    if tp.arr then
-        --error'not implemented'
-        ret = ret .. '*'
-    end
-
--- TODO: recurse-type
-    if tp.tt and TT.check(tp.tt,'&') then
-        ret = ret .. '*'
-    end
-
-    return (string.gsub(ret,'^_', ''))
+    ret = string.gsub(ret,'^_', '')
+    return ret
 end
 
 function TP.tostr (tp)
     if tp.tup then
-        local ret = {}
-        for _, t in ipairs(tp.tup) do
-            ret[#ret+1] = TP.tostr(t)
+        local t = {}
+        for _, v in ipairs(tp.tup) do
+            t[#t+1] = TP.tostr(v)
         end
-        return '('..table.concat(ret,',')..')'
+        return '('..table.concat(t,',')..')'
     end
 
-    local ret = unpack(tp.tt)
-    ret = ret .. string.rep('*',tp.ptr)
-    if tp.arr then
-        ret = ret .. '[]'
-    end
--- TODO: recurse-type
-    if tp.tt and TT.check(tp.tt,'&') then
-        ret = ret .. '&'
-    end
-    return ret
+    return table.concat(tp.tt)
 end
 
 function TP.isFloat (tp, pop)
@@ -322,6 +305,15 @@ end
 local function __err (tp1, tp2)
     return 'types mismatch (`'..TP.tostr(tp1)..'´ <= `'..TP.tostr(tp2)..'´)'
 end
+local function __norefs (tt)
+    tt = TT.copy(tt)
+    for i=#tt, 1, -1 do
+        if tt[i] == '&' then
+            table.remove(tt, i)
+        end
+    end
+    return tt
+end
 function TP.contains (tp1, tp2)
     if tp1.tup or tp2.tup then
         if tp1.tup and tp2.tup then
@@ -340,98 +332,135 @@ function TP.contains (tp1, tp2)
         return false, 'arity mismatch'
     end
 
--- TODO: recurse-type
-    if not (tp1.tt and tp2.tt) then
-        return false, __err(tp1,tp2)
-    end
+    -- original types (for error msgs)
+    local TP1, TP2 = tp1, tp2
+    local tp1  = { tt=TT.pop(tp1.tt, '?') }
+    local tp2  = { tt=TT.copy(tp2.tt)     }
 
-    local id1, id2 = tp1.tt[1], tp2.tt[1]
-    local ref1, ref2 = TT.check(tp1.tt,'&'), TT.check(tp2.tt,'&')
-
-    -- same type
-    if id1==id2 and tp1.ptr==tp2.ptr then
-        if (tp1.arr==false) and (tp2.arr==false) then
-            return true
-        elseif ref1 then
-            if tp1.arr==true and tp2.arr then
-                -- pool int[10] arr
-                -- pool int[]&  ref = arr;
-                return true
-            elseif type(tp1.arr)=='table' and type(tp2.arr)=='table' then
-                -- pool int[10]  arr
-                -- pool int[10]& ref = arr;
-                if tp1.arr[1] == tp2.arr[2] then
-                    return true
-                end
-            end
-            return true
-        end
-    end
-
-    -- var tp& v = &/*/<any-ext-value>
-    if ref1 and id2=='@' then
-        return true
-    end
-
-    -- tp[] = tp*
-    -- tp*  = tp[]
-    if id1==id2 and ((tp1.ptr==1 and tp2.arr) or (tp2.ptr==1 and tp1.arr))
-                      and ref1==ref2 then
-        return true
-    end
-
-    -- any type (calls, Lua scripts)
-    if id1=='@' or id2=='@' then
-        return true
-    end
-
-    -- both are numeric
-    if TP.isNumeric(tp1) and TP.isNumeric(tp2) then
-        return true
-    end
-
-    -- compatible classes (same classes is handled above)
+    local id1  = tp1.tt[1]
+    local id2  = tp2.tt[1]
     local cls1 = ENV.clss[id1]
     local cls2 = ENV.clss[id2]
-    if cls1 and cls2 then
-        if ref1 or ref2 or (tp1.ptr>0 and tp2.ptr>0) then
-            if tp1.ptr == tp2.ptr then
-                local ok = cls1.is_ifc and ENV.ifc_vs_cls_or_ifc(cls1,cls2)
-                return ok, (ok or __err(tp1,tp2))
-            end
-        end
-        return false, __err(tp1, tp2)
+
+    -- TODO: required for external calls
+    --       remove it!
+    if TT.check(TP1.tt,'?') and TT.check(TP2.tt,'?') then
+        -- overwrides tp2 above
+        tp2 = { tt=TT.pop(TP2.tt, '?') }
     end
 
-    -- both are pointers
-    local ptr2 = (tp2.ptr>0 and tp2.ptr) or (tp2.arr and tp2.ptr+1) or 0
-    if tp1.ptr>0 and ptr2>0 then
-        if id1=='char' and tp1.ptr==1 -- cast to char*
-        or id1=='void' and tp1.ptr==1 -- cast to void*
-        or tp1.ext or tp2.ext then       -- let gcc handle
-            return true
-            -- TODO: void* too???
+    tp1 = { tt=__norefs(tp1.tt) }
+    tp2 = { tt=__norefs(tp2.tt) }
+
+    -- BIG SWITCH --
+
+    -- compatible classes
+    if cls1 and cls2 and
+        (not ((TT.check(tp1.tt,'[]') or TT.check(tp2.tt,'[]'))))
+            -- arrays/pools are handled below
+    then
+        local ok = (id1==id2) or
+                   (cls1.is_ifc and ENV.ifc_vs_cls_or_ifc(cls1,cls2))
+        if ok then
+            -- pointers
+            if TT.check(tp1.tt,'*') and TT.check(tp2.tt,'*') then
+                -- compatible pointers, check arity, "char" renaming trick
+                local tt1, tt2 = TT.copy(tp1.tt), TT.copy(tp2.tt)
+                tt1[1], tt2[1] = 'char', 'char'
+                return TP.contains({tt=tt1}, {tt=tt2})
+            -- non-pointers
+            elseif TT.check(TP1.tt,id1,'&') then
+                return true
+            else
+                return false, __err(TP1, TP2)
+            end
+        else
+            return false, __err(TP1, TP2)
         end
-        if id2 == 'null' then
-            return true     -- any pointer can be assigned "null"
+
+    -- same type
+    elseif TP.tostr(tp1) == TP.tostr(tp2) then
+        if TT.check(tp1.tt,'[]') or TT.check(tp2.tt,'[]') then
+            assert(TT.check(tp1.tt,'[]'), 'bug found')
+            if TT.check(TP1.tt,'&') then
+                if TP1.arr == true then
+                    -- var X[]& = ...
+                    return true
+                elseif type(TP1.arr)=='table' and type(TP2.arr)=='table' then
+                    assert(type(TP1.arr)=='table', 'bug found')
+                    -- pool X[10]  arr
+                    -- pool X[10]& ref = arr;
+                    if TP1.arr[1] == TP2.arr[1] then
+                        return true
+                    else
+                        return false, __err(TP1, TP2)
+                    end
+                else
+                    return false, __err(TP1, TP2)
+                end
+            else
+                return false, __err(TP1, TP2)   -- refuse x[]=y[]
+            end
+        else
+            return true
         end
-        return false, __err(tp1,tp2)
-    elseif tp1.ptr>0 or ptr2>0 then
-        if tp1.ptr>0 and tp2.ext then
+
+    -- numerical type
+    elseif TP.isNumeric(tp1) and TP.isNumeric(tp2) then
+        return true
+
+    -- external non-pointers: let "gcc" handle it
+    elseif TT.is_(tp1) and TT.check(tp1.tt,id1) or
+           TT.is_(tp2) and TT.check(tp2.tt,id2)
+    then
+        return true
+
+    -- "any" type (calls, Lua scripts)
+    elseif id1=='@' or id2=='@' then
+        return true
+
+    -- array <=> single-pointer conversions
+    -- tp[] = tp*
+    -- tp*  = tp[]
+    elseif id1 == id2 and (
+                (TT.check(tp1.tt,id1,'*') and TT.check(tp2.tt,id2,'[]')) or
+                (TT.check(tp2.tt,id2,'*') and TT.check(tp1.tt,id1,'[]'))
+           )
+    then
+        return true
+
+    -- any pointer can be used with "null"
+    elseif TT.check(tp1.tt,'*') and TT.check(tp2.tt,'null','*') or
+           TT.check(tp2.tt,'*') and TT.check(tp1.tt,'null','*')
+    then
+        return true
+
+    -- single-pointer casts
+    elseif TT.check(tp1.tt,id1,'*') and TT.check(tp2.tt,id2,'*') then
+        -- TODO: allows any cast to char* and void*
+        --       is it correct?
+        --       (I think "void*" should fail)
+        if id1 == 'char' then
+            local tt2 = TT.copy(tp2.tt)
+            tt2[1] = 'char'
+            return TP.contains(tp1, {tt=tt2})
+        elseif id1 == 'void' then
+            local tt2 = TT.copy(tp2.tt)
+            tt2[1] = 'void'
+            return TP.contains(tp1, {tt=tt2})
+
+        -- both are external types: let "gcc" handle it
+        elseif TT.is_(tp1) or TT.is_(tp2) then
             return true
-        elseif ptr2>0 and tp1.ext then
-            return true
+
         else
             return false, __err(tp1, tp2)
         end
-    end
 
-    -- let external types be handled by gcc
-    if tp1.ext or tp2.ext then
-        return true
+    -- error
+    else
+        return false, __err(TP1, TP2)
     end
-
-    return false, __err(tp1, tp2)
 end
 
 function TP.max (tp1, tp2)

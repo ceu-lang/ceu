@@ -350,7 +350,7 @@ do
                                 end
                                 this.locked = false;
                             else
-                                emit io.go_queue => &qu;
+                                emit io.go_queue => &(qu!);
                             end
 
 #elif defined TM_DIFF

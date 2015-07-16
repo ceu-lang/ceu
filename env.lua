@@ -1237,8 +1237,6 @@ end
                     ASR(p.tag == 'Adt_constr_one', me,
                         'invalid constructor : recursive field "'..id_tag..'" must be new data')
                     p.tp.tt[#p.tp.tt+1] = '*'
--- TODO: recurse-type: remove
-                    p.tp.ptr = 1
                 end
             end
             tup = ttag.tup
@@ -1518,8 +1516,6 @@ end
             if tp.plain and (not TT.check(e1.tp.tt,'*')) then
                 me.tp.plain = true
                 me.tp.tt = TT.pop(me.tp.tt, '*')
--- TODO: recurse-type: remove
-                me.tp.ptr   = 0
             end
             me.lval = me--e1.lval
         end

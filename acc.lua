@@ -138,8 +138,6 @@ F = {
                     CHG(v.acc, (me.c and me.c.mod=='@pure' and 'rd') or 'wr')
                     v.acc.tp = TP.copy(exp.tp)
                     v.acc.tp.tt = TT.pop(v.acc.tp.tt,'*')
--- TODO: recurse-type: remove
-                    v.acc.tp.ptr = v.acc.tp.ptr - 1     -- f may deref exp
                 end
             end
         end
