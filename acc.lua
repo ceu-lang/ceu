@@ -137,7 +137,7 @@ F = {
                     v.acc.any = exp.lval    -- f(&x) // a[N] f(a) // not "any"
                     CHG(v.acc, (me.c and me.c.mod=='@pure' and 'rd') or 'wr')
                     v.acc.tp = TP.copy(exp.tp)
-                    v.acc.tp.tt = TT.pop(v.acc.tp.tt,'*')
+                    v.acc.tp.tt = TP.pop(v.acc.tp.tt,'*')
                 end
             end
         end

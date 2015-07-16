@@ -24,16 +24,7 @@ function TT.copy (tt)
     end
     return ret
 end
-function TT.find (tt, ...)
-    for i, t in ipairs(tt) do
-        for _, v in ipairs{...} do
-            if t == v then
-                return i
-            end
-        end
-    end
-end
-function TT.pop (tt, v)
+function TP.pop (tt, v)
     if not tt then
         return tt,false
     end
@@ -269,7 +260,7 @@ function TP.tostr (tp)
 end
 
 function TP.isFloat (tp, pop)
-    local tt = (pop and TT.pop(tp.tt, pop)) or tp.tt
+    local tt = (pop and TP.pop(tp.tt, pop)) or tp.tt
     local id = unpack(tt)
     return #tt==1 and (id=='float' or id=='f32' or id=='f64')
 end
@@ -280,7 +271,7 @@ function TP.isNumeric (tp, pop)
         return false
     end
 
-    local tt = (pop and TT.pop(tp.tt, pop)) or tp.tt
+    local tt = (pop and TP.pop(tp.tt, pop)) or tp.tt
     local id = unpack(tt)
     return #tt==1 and (TP.get(id).num or tp.ext)
             or id=='@'
@@ -327,7 +318,7 @@ function TP.contains (tp1, tp2)
 
     -- original types (for error msgs)
     local TP1, TP2 = tp1, tp2
-    local tp1  = { tt=TT.pop(tp1.tt, '?') }
+    local tp1  = { tt=TP.pop(tp1.tt, '?') }
     local tp2  = { tt=TT.copy(tp2.tt)     }
 
     local id1  = tp1.tt[1]
@@ -339,7 +330,7 @@ function TP.contains (tp1, tp2)
     --       remove it!
     if TT.check(TP1.tt,'?') and TT.check(TP2.tt,'?') then
         -- overwrides tp2 above
-        tp2 = { tt=TT.pop(TP2.tt, '?') }
+        tp2 = { tt=TP.pop(TP2.tt, '?') }
     end
 
     tp1 = { tt=__norefs(tp1.tt) }

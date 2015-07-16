@@ -86,7 +86,7 @@ end
 
         -- _r.x = (int) ...;
         if not (ISPTR(to) or TT.check(to.tp.tt,'&','?')) or
-           not (ISPTR(fr) or TT.check(TT.pop(fr.tp.tt,'&'),'[]')) then
+           not (ISPTR(fr) or TT.check(TP.pop(fr.tp.tt,'&'),'[]')) then
             ASR(op == '=', me, 1101, 'wrong operator')
             ASR(not me.fin, me, 1102, 'attribution does not require `finalize´')
             return
@@ -458,7 +458,7 @@ end
             if hold then
                 -- int* pa; _f(pa);
                 --  (`pa´ termination must consider `_f´)
-                local r = (ISPTR(param) or TT.check(TT.pop(param.tp.tt,'&'),'[]')) and
+                local r = (ISPTR(param) or TT.check(TP.pop(param.tp.tt,'&'),'[]')) and
                           (not param.isConst) and
                           (not param.c or param.c.mod~='const')
                                 -- except constants

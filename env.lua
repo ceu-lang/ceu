@@ -127,7 +127,7 @@ local function check (me, pre, tp)
     local top = ASR(ENV.c[tp_id] or ENV.clss[tp_id] or ENV.adts[tp_id],
                     me, 'undeclared type `'..(tp_id or '?')..'´')
 
-    local tt = TT.pop(tp.tt,'?')
+    local tt = TP.pop(tp.tt,'?')
 
     if tt and (#tt==1 or (#tt==2 and tt[#tt]=='[]')) then
         ASR(not AST.isParent(top,me), me,
@@ -226,7 +226,7 @@ function newvar (me, blk, pre, tp, id, isImp, isEvery)
         n     = _N,
     }
 
-    local tt, is_ref = TT.pop(tp.tt, '&')   -- only *,& after []
+    local tt, is_ref = TP.pop(tp.tt, '&')   -- only *,& after []
     local is_arr = TT.check(tt, '[]')
 
     if pre=='var' and (not is_arr) then
@@ -677,7 +677,7 @@ end
     Free = function (me)
         local exp = unpack(me)
 
-        local tt = TT.pop(exp.tp.tt,'&')
+        local tt = TP.pop(exp.tp.tt,'&')
         if #tt == 2 then
             local id, ptr = unpack(tt)
             if ptr=='*' and ENV.clss[tt[1]] then
@@ -1047,7 +1047,7 @@ end
                 ASR(to and to.lval, me, 'invalid attribution')
             end
 
-            local tt = TT.pop(to.tp.tt, '&')
+            local tt = TP.pop(to.tp.tt, '&')
             ASR(TP.isNumeric(to.tp,'&') or TT.check(to.tp.tt,'bool','-&') or
                 TT.check(to.tp.tt, to_tp_id, '*', '-&') or
                 lua_str,
@@ -1290,11 +1290,11 @@ end
         local _, arr, idx = unpack(me)
 
         -- remove [] or *
-        local tt = TT.pop(arr.tp.tt,'&')
+        local tt = TP.pop(arr.tp.tt,'&')
         local ok
-        tt, ok = TT.pop(tt, '[]')
+        tt, ok = TP.pop(tt, '[]')
         if not ok then
-            tt, ok = TT.pop(tt, '*')
+            tt, ok = TP.pop(tt, '*')
         end
 
         ASR(ok or arr.tp.ext, me,
@@ -1350,7 +1350,7 @@ end
         -- TODO: recurse-type
         local ok
         local tt = TT.copy(e1.tp.tt)
-        tt,ok = TT.pop(tt, '?')
+        tt,ok = TP.pop(tt, '?')
         ASR(ok, me, 'not an option type')
         me.tp = AST.node('Type', me.ln[2], unpack(tt))
         F.Type(me.tp)
@@ -1396,14 +1396,14 @@ end
         local tt = TT.copy(e1.tp.tt)
         local id = unpack(tt)
 
-        tt = TT.pop(tt, '&')            -- TODO: only here?
-        tt, ok = TT.pop(tt, '*')
+        tt = TP.pop(tt, '&')            -- TODO: only here?
+        tt, ok = TP.pop(tt, '*')
 
         -- pool L[]* l;
         -- pool L[]  l;     // also valid
         local is_adt_pool = ENV.adts[id] and e1.var and e1.var.pre=='pool'
         if is_adt_pool then
-            tt = TT.pop(tt, '[]')
+            tt = TP.pop(tt, '[]')
             ok = true
         end
 
@@ -1515,7 +1515,7 @@ end
             local tp = TP.get(TP.id(e1.tp))
             if tp.plain and (not TT.check(e1.tp.tt,'*')) then
                 me.tp.plain = true
-                me.tp.tt = TT.pop(me.tp.tt, '*')
+                me.tp.tt = TP.pop(me.tp.tt, '*')
             end
             me.lval = me--e1.lval
         end
