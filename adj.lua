@@ -400,7 +400,7 @@ me.blk_body = me.blk_body or blk_body
         --  class Body with
         --      pool Body[?]&   loops;
         --      var  Body*      parent;       // TODO: should be "Body*?" (opt)
-        --      var  <adt_t>*[] <n>;
+        --      var  <adt_t>[]* <n>;
         --      var  Outer&     out;
         --      <interface>
         --  do
@@ -1018,7 +1018,7 @@ me.blk_body = me.blk_body or blk_body
             }
             for _, t in ipairs(ins) do
                 local mod, tp, id = unpack(t)
-                ASR(TP.check(tp.tt,'void') or id, me,
+                ASR(TP.check({tt=tp},'void') or id, me,
                     'missing parameter identifier')
                 local _id = '_'..id..'_'..me.n
                 --dcls[#dcls+1] = node('Dcl_var', me.ln, 'var', tp, _id)
@@ -1710,7 +1710,7 @@ G = {
         local cpy = AST.copy(me)    -- w/o opt
         me[#me+1] = '?'
 
-        local id_adt = TT.opt2adt({tt=me})
+        local id_adt = TP.opt2adt({tt=me})
         if not ADTS[id_adt] then
             local adt = node('Dcl_adt', me.ln, id_adt,
                             'union',

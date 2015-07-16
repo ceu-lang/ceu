@@ -163,7 +163,7 @@ F = {
                     s = 'adts'
                 end
                 PROPS['has_'..s..'_news'] = true
-                if TP.check(var.tp.tt,'[]') then
+                if TP.check(var.tp,'[]') then
 -- TODO: recurse-type
                     --if var.tp[#var.tp.tt]==true then
                     if var.tp.arr==true then
@@ -294,7 +294,7 @@ F = {
             ASR(not AST.par(me,'BlockI'), me,
                     'not permitted inside an interface')
         end
-        if AST.par(me,'BlockI') and TP.check(me.var.tp.tt,'?') then
+        if AST.par(me,'BlockI') and TP.check(me.var.tp,'?') then
             CLS().has_pre = true   -- code for pre (before constr)
         end
     end,
@@ -393,7 +393,7 @@ F = {
 
     Op1_cast = function (me)
         local tp, _ = unpack(me)
-        if ENV.clss[TP.id(tp)] and TP.check(tp.tt,'*') then
+        if ENV.clss[TP.id(tp)] and TP.check(tp,'*') then
             PROPS.has_ifcs = true      -- cast must check org->cls_id
         end
     end,

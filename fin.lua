@@ -41,15 +41,14 @@ function ISPTR (node_or_var)
     end
 
     local tp = node_or_var.tp
-    local tt = node_or_var.tp.tt
 
-    if TP.check(tt,'*','-&','-?') then
+    if TP.check(tp,'*','-&','-?') then
         return true
     end
 
     -- either native dcl or derived
     -- _SDL_Renderer&?: "_ext &?" should not be considered a pointer
-    if tp.ext and (not (TP.get(TP.id(tp)).plain or tp.plain or TP.check(tt,'&','?'))) then
+    if tp.ext and (not (TP.get(TP.id(tp)).plain or tp.plain or TP.check(tp,'&','?'))) then
         return true
     end
 
@@ -85,8 +84,8 @@ end
     --
 
         -- _r.x = (int) ...;
-        if not (ISPTR(to) or TP.check(to.tp.tt,'&','?')) or
-           not (ISPTR(fr) or TP.check(TP.pop(fr.tp.tt,'&'),'[]')) then
+        if not (ISPTR(to) or TP.check(to.tp,'&','?')) or
+           not (ISPTR(fr) or TP.check(TP.pop(fr.tp,'&'),'[]')) then
             ASR(op == '=', me, 1101, 'wrong operator')
             ASR(not me.fin, me, 1102, 'attribution does not require `finalize´')
             return
@@ -98,7 +97,7 @@ end
 
         -- an attribution restarts tracking accesses to "to"
         -- variables or native symbols
-        if (to.var and (not TP.check(to.var.tp.tt,'&'))) or to.c then
+        if (to.var and (not TP.check(to.var.tp,'&'))) or to.c then
                         -- do not track references
             GET()[to.var or to.id] = 'accessed'
         end
@@ -176,7 +175,7 @@ end
             -- the local goes out of scope, hence, we require finalization.
             -- The "to" pointers must be option types `&?´.
 
-            if TP.check(to.tp.tt,'&','?') then
+            if TP.check(to.tp,'&','?') then
                 T.__fin_opt_tp = to.tp  -- return value must be packed in the "&?" type
             else
                 ASR(TP.id(to.tp)=='@', me, 1105,
@@ -458,7 +457,7 @@ end
             if hold then
                 -- int* pa; _f(pa);
                 --  (`pa´ termination must consider `_f´)
-                local r = (ISPTR(param) or TP.check(TP.pop(param.tp.tt,'&'),'[]')) and
+                local r = (ISPTR(param) or TP.check(TP.pop(param.tp,'&'),'[]')) and
                           (not param.isConst) and
                           (not param.c or param.c.mod~='const')
                                 -- except constants

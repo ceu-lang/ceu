@@ -122,14 +122,14 @@ local function check (me, pre, tp)
         return
     end
 
-    local tp_id = unpack(tp.tt)
+    local tp_id = TP.id(tp)
 
     local top = ASR(ENV.c[tp_id] or ENV.clss[tp_id] or ENV.adts[tp_id],
                     me, 'undeclared type `'..(tp_id or '?')..'´')
 
-    local tt = TP.pop(tp.tt,'?')
+    tp = TP.pop(tp,'?')
 
-    if tt and (#tt==1 or (#tt==2 and tt[#tt]=='[]')) then
+    if TP.check(tp,tp_id, '-[]') then
         ASR(not AST.isParent(top,me), me,
             'undeclared type `'..(tp_id or '?')..'´')
         if top.is_ifc then
@@ -143,9 +143,9 @@ local function check (me, pre, tp)
     local void_ok = (tp_id=='void' and
                     (pre=='event' or pre=='function' or pre=='input' or
                      pre=='output' or pre=='isr' or
-                     tt[2]=='*'))
+                     tp.tt[2]=='*'))
 
-    ASR(TP.get(tp_id).len~=0 or TP.check(tt,'*') or TP.check(tt,'&') or void_ok,
+    ASR(TP.get(tp_id).len~=0 or TP.check(tp,'*') or TP.check(tp,'&') or void_ok,
         me, 'cannot instantiate type "'..tp_id..'"')
     --ASR((not arr) or arr>0, me, 'invalid array dimension')
 
@@ -158,8 +158,8 @@ function ENV.v_or_ref (tp, cls_or_adt)
         return false
     end
 
-    local tp_id = unpack(tp.tt)
-    local ok = TP.check(tp.tt,tp_id,'-[]','-&','-?')
+    local tp_id = TP.id(tp)
+    local ok = TP.check(tp,tp_id,'-[]','-&','-?')
     if cls_or_adt == 'cls' then
         return ok and ENV.clss[tp_id]
     elseif cls_or_adt == 'adt' then
@@ -226,8 +226,8 @@ function newvar (me, blk, pre, tp, id, isImp, isEvery)
         n     = _N,
     }
 
-    local tt, is_ref = TP.pop(tp.tt, '&')   -- only *,& after []
-    local is_arr = TP.check(tt, '[]')
+    local tp, is_ref = TP.pop(tp, '&')   -- only *,& after []
+    local is_arr = TP.check(tp, '[]')
 
     if pre=='var' and (not is_arr) then
         var.lval = var
@@ -674,19 +674,6 @@ end
         me.blk  = cls.blk_ifc
     end,
 
-    Free = function (me)
-        local exp = unpack(me)
-
-        local tt = TP.pop(exp.tp.tt,'&')
-        if #tt == 2 then
-            local id, ptr = unpack(tt)
-            if ptr=='*' and ENV.clss[tt[1]] then
-                return                  -- T*
-            end
-        end
-        ASR(false, me, 'invalid `free´')
-    end,
-
     Dcl_ext = function (me)
         local dir, rec, ins, out, id = unpack(me)
         local ext = ENV.exts[id]
@@ -738,7 +725,7 @@ end
         local _, tp, id, constr, _ = unpack(me)
         F.__dcl_var(me)
 
-        if me.var.cls and TP.check(me.var.tp.tt,'[]') then
+        if me.var.cls and TP.check(me.var.tp,'[]') then
             -- var T[10] ts;  // needs _i_ to iterate for the constructor
             _, me.var.constructor_iterator =
                 newvar(me, AST.par(me,'Block'), 'var', TP.fromstr'int', '_i_'..id, false)
@@ -758,7 +745,7 @@ end
 
             local tp_ = TP.new(tp)
             local tp_id = unpack(tp_.tt)
-            local top = not (TP.check(tp_.tt,'*') or TP.check(tp_.tt,'&'))
+            local top = not (TP.check(tp_,'*') or TP.check(tp_,'&'))
             ASR(tp_id=='_TOP_POOL' or top,
                 me, 'undeclared type `'..(tp_id or '?')..'´')
         end
@@ -766,7 +753,7 @@ end
 
     Dcl_pool = function (me)
         local pre, tp, id, constr = unpack(me)
-        ASR(TP.check(tp.tt,'[]','-*','-&'), me, 'missing `pool´ dimension')
+        ASR(TP.check(tp,'[]','-*','-&'), me, 'missing `pool´ dimension')
         F.__dcl_var(me)
     end,
 
@@ -777,10 +764,10 @@ end
         end
         assert(tp.tup, 'bug found')
         for _, t in ipairs(tp.tup) do
-            ASR((TP.isNumeric(t) or TP.check(t.tt,'*')),
+            ASR((TP.isNumeric(t) or TP.check(t,'*')),
                 me, 'invalid event type')
 -- TODO: recurse-type: remove when numeric not &
-            ASR(not TP.check(t.tt,'&'), me, 'invalid event type')
+            ASR(not TP.check(t,'&'), me, 'invalid event type')
         end
         local _
         _, me.var = newint(me, AST.iter'Block'(), pre, tp, id, me.isImp)
@@ -1006,8 +993,8 @@ end
 
         local to_tp_id, to_is_opt
         if set~='await' and (not to.tp.tup) then
-            to_tp_id  = unpack(to.tp.tt)
-            to_is_opt = TP.check(to.tp.tt,'?')
+            to_tp_id  = TP.id(to.tp)
+            to_is_opt = TP.check(to.tp,'?')
         end
 
         if set == 'await' then
@@ -1026,7 +1013,7 @@ end
 
         elseif ENV.adts[to_tp_id] and (not to_is_opt) then
             if ENV.adts[to_tp_id].is_rec then
-                if to.var and (TP.check(to.var.tp.tt,'&') or TP.check(to.var.tp.tt,'*')) then
+                if to.var and (TP.check(to.var.tp,'&') or TP.check(to.var.tp,'*')) then
                     me[2] = 'adt-alias'
                 else
                     me[2] = 'adt-mut'
@@ -1040,16 +1027,15 @@ end
 
         local lua_str = false
         if set == 'lua' then
-            ASR(not TP.check(to.tp.tt,'&'), me, 'invalid attribution')
+            ASR(not TP.check(to.tp,'&'), me, 'invalid attribution')
 
-            lua_str = (to_tp_id=='char' and TP.check(to.tp.tt,'[]'))
+            lua_str = (to_tp_id=='char' and TP.check(to.tp,'[]'))
             if not lua_str then
                 ASR(to and to.lval, me, 'invalid attribution')
             end
 
-            local tt = TP.pop(to.tp.tt, '&')
-            ASR(TP.isNumeric(to.tp,'&') or TP.check(to.tp.tt,'bool','-&') or
-                TP.check(to.tp.tt, to_tp_id, '*', '-&') or
+            ASR(TP.isNumeric(to.tp,'&') or TP.check(to.tp,'bool','-&') or
+                TP.check(to.tp, to_tp_id, '*', '-&') or
                 lua_str,
                 me, 'invalid attribution')
             fr.tp = to.tp -- return type is not known at compile time
@@ -1069,9 +1055,10 @@ end
 
     Free = function (me)
         local exp = unpack(me)
-        local tt = TP.pop(exp.tp.tt, '&')
-        local id = ASR(#tt==2 and tt[#tt]=='*', me, 'invalid `free´')
-        me.cls = ASR( ENV.clss[id], me,
+        local tp_id = TP.id(exp.tp)
+        ASR(TT.check(exp.tp,id,'*','-&'), me,
+            'invalid `free´')
+        me.cls = ASR(ENV.clss[tp_id], me,
                         'class "'..id..'" is not declared')
     end,
 
@@ -1179,7 +1166,7 @@ end
                 me.var_nxt = var_nxt
             end
 
-        elseif iter and TP.check(iter.tp.tt,'*') then
+        elseif iter and TP.check(iter.tp,'*') then
             me.iter_tp = 'data'
             if to then
                 local dcl = AST.node('Dcl_var', me.ln, 'var',
@@ -1288,20 +1275,24 @@ end
 
     Op2_idx = function (me)
         local _, arr, idx = unpack(me)
+        local tp_id = TP.id(arr.tp)
 
-        -- remove [] or *
-        local tt = TP.pop(arr.tp.tt,'&')
-        local ok
-        tt, ok = TP.pop(tt, '[]')
-        if not ok then
-            tt, ok = TP.pop(tt, '*')
-        end
-
+        local ok = TP.check(arr.tp, '*', '-&') or
+                   TP.check(arr.tp, '[]', '-&')
         ASR(ok or arr.tp.ext, me,
             'cannot index a non array')
         ASR(TP.isNumeric(idx.tp), me, 'invalid array index')
 
-        me.tp = AST.node('Type', me.ln[2], unpack(tt))
+        -- remove [] or *
+        local tp = TP.pop(arr.tp,'&')
+        if TP.check(tp,'[]') then
+            tp = TP.pop(tp, '[]')
+        else
+            tp = TP.pop(tp, '*')
+        end
+
+-- TODO: recurse-type: remove AST.node
+        me.tp = AST.node('Type', me.ln[2], unpack(tp.tt))
         F.Type(me.tp)
 
         if ENV.v_or_ref(me.tp) then
@@ -1341,18 +1332,16 @@ end
     ['Op1_?'] = function (me)
         local op, e1 = unpack(me)
         me.tp  = TP.fromstr'bool'
-        ASR(TP.check(e1.tp.tt,'?'), me, 'not an option type')
+        ASR(TP.check(e1.tp,'?'), me, 'not an option type')
     end,
     ['Op1_!'] = function (me)
         local op, e1 = unpack(me)
         me.lval = e1.lval and e1
 
-        -- TODO: recurse-type
-        local ok
-        local tt = TT.copy(e1.tp.tt)
-        tt,ok = TP.pop(tt, '?')
+        local tp,ok = TP.pop(e1.tp, '?')
         ASR(ok, me, 'not an option type')
-        me.tp = AST.node('Type', me.ln[2], unpack(tt))
+-- TODO: recurse-type: remove AST.node
+        me.tp = AST.node('Type', me.ln[2], unpack(tp.tt))
         F.Type(me.tp)
     end,
 
@@ -1364,10 +1353,10 @@ end
 
         -- TODO: recurse-type
         -- TODO: remove these comments if nothing breaks after testing rocks/stl/on
-        --if not (TP.check(e1.tp.tt,'?') and e1.tp.ptr>0) then
+        --if not (TP.check(e1.tp,'?') and e1.tp.ptr>0) then
             ASR(not ENV.adts[TP.tostr(e1.tp)], me, 'invalid operation for data')
         --end
-        --if not (TP.check(e2.tp.tt,'?') and e2.tp.ptr>0) then
+        --if not (TP.check(e2.tp,'?') and e2.tp.ptr>0) then
             ASR(not ENV.adts[TP.tostr(e2.tp)], me, 'invalid operation for data')
         --end
     end,
@@ -1389,30 +1378,29 @@ end
     ['Op1_*'] = function (me)
         local op, e1 = unpack(me)
         me.lval = e1.lval and e1
+        local tp_id = TP.id(e1.tp)
 
         local ok = false
 
-        -- TODO: recurse-type
-        local tt = TT.copy(e1.tp.tt)
-        local id = unpack(tt)
-
-        tt = TP.pop(tt, '&')            -- TODO: only here?
-        tt, ok = TP.pop(tt, '*')
+        -- remove *
+        local tp = TP.pop(e1.tp,'&')
+        tp,ok = TP.pop(tp, '*')
 
         -- pool L[]* l;
         -- pool L[]  l;     // also valid
-        local is_adt_pool = ENV.adts[id] and e1.var and e1.var.pre=='pool'
+        local is_adt_pool = ENV.adts[tp_id] and e1.var and e1.var.pre=='pool'
         if is_adt_pool then
-            tt = TP.pop(tt, '[]')
+            tp = TP.pop(tp, '[]')
             ok = true
         end
 
         if not ok then
-            ASR((e1.tp.ext and (not e1.tp.plain) and (not TP.get(TP.id(e1.tp)).plain)),
+            ASR((e1.tp.ext and (not e1.tp.plain) and (not TP.get(tp_id).plain)),
                 me, 'invalid operand to unary "*"')
         end
 
-        me.tp = AST.node('Type', me.ln[2], unpack(tt))
+-- TODO: recurse-type: remove AST.node
+        me.tp = AST.node('Type', me.ln[2], unpack(tp.tt))
         F.Type(me.tp)
     end,
 
@@ -1509,13 +1497,13 @@ end
 
         else
             assert(not e1.tp.tup)
-            ASR(e1.tp.ext, me, 'not a struct')
+            ASR(TP.is_(e1.tp) or TP.id(e1.tp)=='@', me, 'not a struct')
             -- rect.x = 1 (_SDL_Rect)
             me.tp = TP.fromstr'@'
             local tp = TP.get(TP.id(e1.tp))
-            if tp.plain and (not TP.check(e1.tp.tt,'*')) then
+            if tp.plain and (not TP.check(e1.tp,'*')) then
                 me.tp.plain = true
-                me.tp.tt = TP.pop(me.tp.tt, '*')
+                me.tp = TP.pop(me.tp, '*')
             end
             me.lval = me--e1.lval
         end
@@ -1533,7 +1521,7 @@ end
         local tp, exp = unpack(me)
         me.tp   = tp
         me.lval = exp.lval
-        if TP.check(tp.tt,'*','-&') then
+        if TP.check(tp,'*','-&') then
             me.lval = exp      -- *((u32*)0x100)=v
         end
     end,

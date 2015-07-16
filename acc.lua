@@ -130,14 +130,13 @@ F = {
         CHG(f.lst.acc, 'cl')
         me.acc = f.lst.acc
         for _, exp in ipairs(exps) do
-            if TP.check(exp.tp.tt,'*') then
+            if TP.check(exp.tp,'*') then
                 local v = exp.lst
                 if v and v.acc then   -- ignore constants
 --DBG(exp.tag, exp.lst)
                     v.acc.any = exp.lval    -- f(&x) // a[N] f(a) // not "any"
                     CHG(v.acc, (me.c and me.c.mod=='@pure' and 'rd') or 'wr')
-                    v.acc.tp = TP.copy(exp.tp)
-                    v.acc.tp.tt = TP.pop(v.acc.tp.tt,'*')
+                    v.acc.tp = TP.pop(exp.tp,'*')
                 end
             end
         end
@@ -175,8 +174,8 @@ F = {
     end,
 
     ['Op2_idx'] = function (me)
-        local tt = me.lst.var and me.lst.var.tp.tt
-        if not (tt and TP.check(tt,'[]','-&')) then
+        local tp = me.lst.var and me.lst.var.tp
+        if not (tp and TP.check(tp,'[]','-&')) then
             me.lst.acc.any = true
         end
         me.lst.acc.tp = me.tp  -- deptr'd
@@ -251,7 +250,7 @@ F = {
             id  = me.var,
             md  = (generated and 'nv') or 'rd',
             tp  = me.var.tp,
-            any = TP.check(me.var.tp.tt,'&'),
+            any = TP.check(me.var.tp,'&'),
             err = ERR(me, 'variable/event `'..me.var.id..'´'),
         }
 

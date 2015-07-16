@@ -16,7 +16,7 @@ F = {
     __Set_pre = function (me, TO)
         local _, set, fr, _ = unpack(me)
         to = TO
-        if not TP.check(to.tp.tt,'&','-?') then
+        if not TP.check(to.tp,'&','-?') then
             return
         end
         assert(to.lst.var, 'bug found')
@@ -118,7 +118,7 @@ F = {
             -- var int& i = 1;      // constant
             -- var int& i = *p;     // dereference
             -- var D& d = D(...);   // adt-constr
-            if (not TP.check(fr.tp.tt,'&')) then
+            if (not TP.check(fr.tp,'&')) then
                 ASR(fr.lval or fr.tag=='Op1_&' or fr.tag=='Op2_call' or
                         (fr.lst and (fr.lst.tag=='Outer' or
                                      fr.lst.var and (fr.lst.var.cls or fr.lst.var.adt))),
@@ -205,7 +205,7 @@ F = {
         constr.__bounded = constr.__bounded or {}
         for _, var in ipairs(cls.blk_ifc.vars) do
             if var.pre == 'var' then
-                if TP.check(var.tp.tt,'&') and
+                if TP.check(var.tp,'&') and
                    (var.bind=='constr' or (not var.bind))
                 then
                     ASR(constr.__bounded[var], me,
@@ -223,7 +223,7 @@ F = {
         -- ensures that global "ref" vars are initialized
         local glb = ENV.clss.Global
         local cls = CLS()   -- might be an ADT declaration
-        if TP.check(me.var.tp.tt,'&') and glb and cls and cls.id=='Main' then
+        if TP.check(me.var.tp,'&') and glb and cls and cls.id=='Main' then
             local var = glb.blk_ifc.vars[me.var.id]
             if var then
                 local set = me.__par and me.__par[1]==me and
@@ -244,7 +244,7 @@ F = {
             return
         end
         local cls = CLS()
-        if TP.check(me.var.tp.tt,'&') then
+        if TP.check(me.var.tp,'&') then
             -- ignore interface variables outside Main
             -- (they are guaranteed to be bounded)
             local inifc = (me.var.blk == cls.blk_ifc)

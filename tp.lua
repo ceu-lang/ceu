@@ -2,6 +2,8 @@
 -- or pass {tt=tt} and remove all refs to .tt outside tp.lua
 --      - remove ext
 --      - remove .*
+--      - remove all TP.new/AST.node('Type')
+--      - remove TT.copy (be local only)
 
 TP = {
     types = {}
@@ -24,25 +26,17 @@ function TT.copy (tt)
     end
     return ret
 end
-function TP.pop (tt, v)
-    if not tt then
-        return tt,false
-    end
--- TODO: recurse-type: remove after all is ported
-
-    tt = TT.copy(tt)
+function TP.pop (tp, v)
+    local tt = TT.copy(tp.tt)
     if tt[#tt] == v then
         tt[#tt] = nil
-        return tt, v
+        return {tt=tt}, v
     else
-        return tt, false
+        return {tt=tt}, false
     end
 end
-function TP.check (tt, ...)
-    if not tt then
-        return false
-    end
--- TODO: recurse-type: remove after all is ported
+function TP.check (tp, ...)
+    local tt = tp.tt
 
     local E = { ... }
     local j = 0
@@ -69,10 +63,11 @@ end
 
 local __toc = { ['*']='ptr', ['[]']='arr', ['&']='ref', ['?']='opt' }
 function TP.opt2adt (tp)
-    assert(TP.check(tp.tt,'?'), 'bug found')
-    local ret = '_Option__'..tp.tt[1]
-    for i=2, #tp.tt-1 do
-        local p = tp.tt[i]
+    local tt = tp.tt
+    assert(TP.check(tp,'?'), 'bug found')
+    local ret = '_Option__'..tt[1]
+    for i=2, #tt-1 do
+        local p = tt[i]
         if type(p)=='table' then
             p = '[]'
         end
@@ -230,7 +225,7 @@ function TP.toc (tp)
         return string.gsub(table.concat(t,'__'),'%*','_')
     end
 
-    if TP.check(tp.tt,'?') then
+    if TP.check(tp,'?') then
         return 'CEU_'..TP.opt2adt(tp)
     end
 
@@ -260,20 +255,15 @@ function TP.tostr (tp)
 end
 
 function TP.isFloat (tp, pop)
-    local tt = (pop and TP.pop(tp.tt, pop)) or tp.tt
+    local tt = (pop and TP.pop(tp, pop)) or tp.tt
     local id = unpack(tt)
     return #tt==1 and (id=='float' or id=='f32' or id=='f64')
 end
 
 function TP.isNumeric (tp, pop)
-    -- TODO: recurse-type
-    if not tp.tt then
-        return false
-    end
-
-    local tt = (pop and TP.pop(tp.tt, pop)) or tp.tt
-    local id = unpack(tt)
-    return #tt==1 and (TP.get(id).num or tp.ext)
+    tp = (pop and TP.pop(tp, pop)) or tp
+    local id = TP.id(tp)
+    return TP.check(tp,id) and (TP.get(id).num or tp.ext)
             or id=='@'
 end
 
@@ -318,19 +308,19 @@ function TP.contains (tp1, tp2)
 
     -- original types (for error msgs)
     local TP1, TP2 = tp1, tp2
-    local tp1  = { tt=TP.pop(tp1.tt, '?') }
-    local tp2  = { tt=TT.copy(tp2.tt)     }
+    local tp1  = TP.pop(tp1, '?')
+    local tp2  = {tt=TT.copy(tp2.tt)}
 
-    local id1  = tp1.tt[1]
-    local id2  = tp2.tt[1]
+    local id1  = TP.id(tp1)
+    local id2  = TP.id(tp2)
     local cls1 = ENV.clss[id1]
     local cls2 = ENV.clss[id2]
 
     -- TODO: required for external calls
     --       remove it!
-    if TP.check(TP1.tt,'?') and TP.check(TP2.tt,'?') then
+    if TP.check(TP1,'?') and TP.check(TP2,'?') then
         -- overwrides tp2 above
-        tp2 = { tt=TP.pop(TP2.tt, '?') }
+        tp2 = TP.pop(TP2, '?')
     end
 
     tp1 = { tt=__norefs(tp1.tt) }
@@ -340,20 +330,20 @@ function TP.contains (tp1, tp2)
 
     -- compatible classes
     if cls1 and cls2 and
-        (not ((TP.check(tp1.tt,'[]') or TP.check(tp2.tt,'[]'))))
+        (not ((TP.check(tp1,'[]') or TP.check(tp2,'[]'))))
             -- arrays/pools are handled below
     then
         local ok = (id1==id2) or
                    (cls1.is_ifc and ENV.ifc_vs_cls_or_ifc(cls1,cls2))
         if ok then
             -- pointers
-            if TP.check(tp1.tt,'*') and TP.check(tp2.tt,'*') then
+            if TP.check(tp1,'*') and TP.check(tp2,'*') then
                 -- compatible pointers, check arity, "char" renaming trick
                 local tt1, tt2 = TT.copy(tp1.tt), TT.copy(tp2.tt)
                 tt1[1], tt2[1] = 'char', 'char'
                 return TP.contains({tt=tt1}, {tt=tt2})
             -- non-pointers
-            elseif TP.check(TP1.tt,id1,'&') then
+            elseif TP.check(TP1,id1,'&') then
                 return true
             else
                 return false, __err(TP1, TP2)
@@ -364,9 +354,9 @@ function TP.contains (tp1, tp2)
 
     -- same type
     elseif TP.tostr(tp1) == TP.tostr(tp2) then
-        if TP.check(tp1.tt,'[]') or TP.check(tp2.tt,'[]') then
-            assert(TP.check(tp1.tt,'[]'), 'bug found')
-            if TP.check(TP1.tt,'&') then
+        if TP.check(tp1,'[]') or TP.check(tp2,'[]') then
+            assert(TP.check(tp1,'[]'), 'bug found')
+            if TP.check(TP1,'&') then
                 if TP1.arr == true then
                     -- var X[]& = ...
                     return true
@@ -394,8 +384,8 @@ function TP.contains (tp1, tp2)
         return true
 
     -- external non-pointers: let "gcc" handle it
-    elseif TP.is_(tp1) and TP.check(tp1.tt,id1) or
-           TP.is_(tp2) and TP.check(tp2.tt,id2)
+    elseif TP.is_(tp1) and TP.check(tp1,id1) or
+           TP.is_(tp2) and TP.check(tp2,id2)
     then
         return true
 
@@ -407,20 +397,20 @@ function TP.contains (tp1, tp2)
     -- tp[] = tp*
     -- tp*  = tp[]
     elseif id1 == id2 and (
-                (TP.check(tp1.tt,id1,'*') and TP.check(tp2.tt,id2,'[]')) or
-                (TP.check(tp2.tt,id2,'*') and TP.check(tp1.tt,id1,'[]'))
+                (TP.check(tp1,id1,'*') and TP.check(tp2,id2,'[]')) or
+                (TP.check(tp2,id2,'*') and TP.check(tp1,id1,'[]'))
            )
     then
         return true
 
     -- any pointer can be used with "null"
-    elseif TP.check(tp1.tt,'*') and TP.check(tp2.tt,'null','*') or
-           TP.check(tp2.tt,'*') and TP.check(tp1.tt,'null','*')
+    elseif TP.check(tp1,'*') and TP.check(tp2,'null','*') or
+           TP.check(tp2,'*') and TP.check(tp1,'null','*')
     then
         return true
 
     -- single-pointer casts
-    elseif TP.check(tp1.tt,id1,'*') and TP.check(tp2.tt,id2,'*') then
+    elseif TP.check(tp1,id1,'*') and TP.check(tp2,id2,'*') then
         -- TODO: allows any cast to char* and void*
         --       is it correct?
         --       (I think "void*" should fail)

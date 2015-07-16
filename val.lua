@@ -42,8 +42,8 @@ F =
                 -- normalize all org acesses to pointers to it
                 -- (because of interface accesses that must be done through a pointer)
                 VAL = '(&'..VAL..')'
-            elseif TP.check(var.tp.tt,'?') then
-            elseif TP.check(var.tp.tt,'&') then
+            elseif TP.check(var.tp,'?') then
+            elseif TP.check(var.tp,'&') then
                 if ENV.clss[TP.id(var.tp)] then
                     -- orgs vars byRef, do nothing
                     -- (normalized to pointer)
@@ -54,9 +54,9 @@ F =
             end
 
             -- variable with option type (var tp? id)
-            if TP.check(var.tp.tt,'?') then
+            if TP.check(var.tp,'?') then
                 local ID = string.upper(TP.opt2adt(var.tp))
-                local op = (TP.check(var.tp.tt,'&','?') and '*') or ''
+                local op = (TP.check(var.tp,'&','?') and '*') or ''
 
                 if CTX.opt_raw then
                     return VAL
@@ -69,7 +69,7 @@ F =
                     _, _, fr, to = unpack(set)
                     is_to = (to.lst.var == var)
                     is_fr = (fr.lst.var == var)
-                    are_both_opt = (TP.check(to.tp.tt,'?') and TP.check(fr.tp.tt,'?'))
+                    are_both_opt = (TP.check(to.tp,'?') and TP.check(fr.tp,'?'))
                 end
 
                 -- call
@@ -101,7 +101,7 @@ F =
                         VAL = '('..op..'('..VAL..'))'
                     else
                         -- xxx.me = v
-                        if CTX.byref or (not TP.check(me.tp.tt,'&','?')) then
+                        if CTX.byref or (not TP.check(me.tp,'&','?')) then
                             VAL = '('..op..'('..VAL..'.SOME.v))'
                         else
                             VAL = '('..op..'(CEU_'..ID..'_SOME_assert(_ceu_app, &'
@@ -111,7 +111,7 @@ F =
 
                 -- CALL
                 -- _f(xxx.me)
-                elseif call and TP.check(me.tp.tt,'&','?') then
+                elseif call and TP.check(me.tp,'&','?') then
                     -- reference option type -> pointer
                     -- var tp&? v;
                     -- _f(v);
@@ -139,20 +139,20 @@ F =
                 if CTX.adt_pool then
                     VAL = '((tceu_pool_*)&'..VAL..')'
                 elseif CTX.adt_root then
-                    if TP.check(var.tp.tt,'&') then
+                    if TP.check(var.tp,'&') then
                         VAL = '('..VAL..')'
                     else
                         VAL = '(&'..VAL..')'
                     end
                 else
                     local cast = ((CTX.lval and '') or '(CEU_'..TP.id(var.tp)..'*)')
-                    if TP.check(var.tp.tt,'&') then
+                    if TP.check(var.tp,'&') then
                         VAL = '('..cast..'('..VAL..')->root)'
                     else
                         VAL = '('..cast..'('..VAL..').root)'
                     end
                 end
-            elseif not (TP.check(var.tp.tt,'*') or TP.check(var.tp.tt,'&')) then
+            elseif not (TP.check(var.tp,'*') or TP.check(var.tp,'&')) then
                 VAL = '(&'..VAL..')'
                 VAL = '((tceu_pool_*)'..VAL..')'
             end
@@ -172,7 +172,7 @@ F =
         end
 
         local tp_id = me.tp and TP.id(me.tp)
-        local ref = me.tp and TP.check(me.tp.tt,'&') and tp_id
+        local ref = me.tp and TP.check(me.tp,'&') and tp_id
         if CTX.byref and (not CTX.opt_raw) and
             (not (ENV.clss[tp_id] or (ref and ENV.clss[ref]) or
                   ENV.adts[tp_id] or (ref and ENV.adts[ref]) or
@@ -227,7 +227,7 @@ F =
     ]
         )
 ))]]
-                    if TP.check(me.var.tp.tt,'&') and (not ENV.clss[TP.id(me.var.tp)]) then
+                    if TP.check(me.var.tp,'&') and (not ENV.clss[TP.id(me.var.tp)]) then
                         VAL = '(*'..VAL..')'
                     end
                 end
@@ -248,7 +248,7 @@ F =
                 error 'not implemented'
             end
 
-            if TP.check(me.var.tp.tt,'?') then
+            if TP.check(me.var.tp,'?') then
                 VAL = F.__var(me, VAL, CTX)
             end
         else
@@ -319,7 +319,7 @@ F =
     Op2_idx = function (me)
         local _, arr, idx = unpack(me)
         local VAL = V(arr)..'['..V(idx)..']'
-        if ENV.clss[TP.id(me.tp)] and (not TP.check(me.tp.tt,'*')) then
+        if ENV.clss[TP.id(me.tp)] and (not TP.check(me.tp,'*')) then
             VAL = '(&'..VAL..')'
                 -- class accesses must be normalized to references
         end
@@ -360,7 +360,7 @@ F =
 
     ['Op1_*'] = function (me)
         local op, e1 = unpack(me)
-        if ENV.clss[TP.id(me.tp)] and TP.check(e1.tp.tt, TP.id(e1.tp),'*','-&') then
+        if ENV.clss[TP.id(me.tp)] and TP.check(e1.tp, TP.id(e1.tp),'*','-&') then
             return V(e1) -- class accesses should remain normalized to references
         else
             return '('..ceu2c(op)..V(e1)..')'
@@ -368,7 +368,7 @@ F =
     end,
     ['Op1_&'] = function (me)
         local op, e1 = unpack(me)
-        if ENV.clss[TP.id(e1.tp)] and (not TP.check(e1.tp.tt,'*','-&')) then
+        if ENV.clss[TP.id(e1.tp)] and (not TP.check(e1.tp,'*','-&')) then
             return V(e1) -- class accesses are already normalized to references
         else
             return '('..ceu2c(op)..V(e1)..')'
@@ -391,14 +391,15 @@ F =
         local VAL
         if me.__env_tag then
             local tag = e1.tp.tt and ('CEU_'..string.upper(TP.id(e1.tp))..'_'..id)
+                        -- can be a Block
             if me.__env_tag == 'test' then
                 VAL  = '('..V(e1)..'.'..'tag == '..tag..')'
             elseif me.__env_tag == 'assert' then
                 VAL  = '('..tag..'_assert(_ceu_app, &'..V(e1)..', __FILE__, __LINE__)'..'->'..id..')'
                 --VAL  = '('..tag..'_assert('..V(e1)..')'..ceu2c(op)..id..')'
             elseif me.__env_tag == 'field' then
-                if TP.check(e1.union_tag_blk.vars[id].tp.tt,'&') and
-                   (not TP.check(me.tp.tt,'&')) then
+                if TP.check(e1.union_tag_blk.vars[id].tp,'&') and
+                   (not TP.check(me.tp,'&')) then
                     VAL  = '('..'*('..V(e1)..')'..'.'..id..')'
                 else
                     VAL  = '('..V(e1)..'.'..id..')'
@@ -417,7 +418,7 @@ F =
         local tp, exp = unpack(me)
         local VAL = V(exp)
 
-        local cls = (TP.check(tp.tt,'*','-&') and ENV.clss[TP.id(tp)])
+        local cls = (TP.check(tp,'*','-&') and ENV.clss[TP.id(tp)])
         if cls then
             if cls.is_ifc then
                 -- TODO: out of bounds acc
