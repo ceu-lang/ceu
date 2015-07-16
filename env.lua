@@ -1503,8 +1503,8 @@ end
             me.tp = TP.fromstr'@'
             local tp = TP.get(TP.id(e1.tp))
             if tp.plain and (not TP.check(e1.tp,'*')) then
-                me.tp.plain = true
                 me.tp = TP.pop(me.tp, '*')
+                me.tp.plain = true
             end
             me.lval = me--e1.lval
         end

@@ -16,6 +16,7 @@ function TP.id (tp)
     return tp.tt[1]
 end
 function TP.is_ext (tp, v1, v2)
+    assert(v1, 'bug found')
     local _tp, at
     if v1=='@' or v2=='@' then
         at = TP.id(tp)=='@'
