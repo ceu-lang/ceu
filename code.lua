@@ -169,7 +169,7 @@ end
 local function FIND_ADT_POOL (fst)
     local adt = ENV.adts[TP.id(fst.tp)]
     local tt = fst.tp.tt
-    if adt and (TT.check(tt,'[]') or TT.check(tt,'*') or TT.check(tt,'&')) then
+    if adt and (TP.check(tt,'[]') or TP.check(tt,'*') or TP.check(tt,'&')) then
         return fst
     else
         assert(fst.__par, 'bug found')
@@ -443,10 +443,10 @@ case ]]..me.lbls_cnt.id..[[:;
                 val    = V(me),
                 constr = constr,
                 arr    = var.tp.arr,
-                val_i  = TT.check(var.tp.tt,'[]') and V({tag='Var',var=var.constructor_iterator}),
+                val_i  = TP.check(var.tp.tt,'[]') and V({tag='Var',var=var.constructor_iterator}),
                 lnks   = '&_STK_ORG->trls['..var.trl_orgs[1]..'].lnks'
             })
-        elseif TT.check(var.tp.tt,'?') then
+        elseif TP.check(var.tp.tt,'?') then
             -- initialize optional types to nil
             local ID = string.upper(TT.opt2adt(var.tp.tt))
             LINE(me, [[
@@ -604,7 +604,7 @@ case ]]..me.lbl.id..[[:;
             LINE(me, [[
     ]]..ID..[[ = (tceu_org*) ceu_pool_alloc((tceu_pool*)]]..V(pool)..[[);
 ]])
-        elseif TT.check(pool.var.tp.tt,'*') or TT.check(pool.var.tp.tt,'&') then
+        elseif TP.check(pool.var.tp.tt,'*') or TP.check(pool.var.tp.tt,'&') then
             -- pointer don't know if is dynamic or static
             LINE(me, [[
 #if !defined(CEU_ORGS_NEWS_MALLOC)
@@ -703,7 +703,7 @@ _STK_ORG->trls[ ]]..me.trl_fins[1]..[[ ].lbl   = ]]..me.lbl_fin.id..[[;
         for _, var in ipairs(me.vars) do
             if var.isTmp then
                 -- TODO: join with code in "mem.lua" for non-tmp vars
-                if TT.check(var.tp.tt,'[]','-?') then
+                if TP.check(var.tp.tt,'[]','-?') then
                     local tp_ = TP.toc(var.tp)
                     local tp_ = string.sub(tp_,1,-2)  -- remove leading `*´
                     LINE(me, tp_..' '..var.id_..'['..var.tp.arr.cval..']')
@@ -986,9 +986,9 @@ case ]]..SET.lbl_cnt.id..[[:;
         local byref = (me.__ref_byref and 'byref') or ''
 
         -- optional types
-        if TT.check(to.tp.tt,'?') then
+        if TP.check(to.tp.tt,'?') then
             local ID = string.upper(TT.opt2adt(to.tp.tt))
-            if TT.check(fr.tp.tt,'?') then
+            if TP.check(fr.tp.tt,'?') then
                 LINE(me, V(to,byref)..' = '..V(fr,byref)..';')
             elseif (fr.fst.tag=='Op2_call' and fr.fst.__fin_opt_tp) then
                 -- var _t&? = _f(...);
@@ -1053,7 +1053,7 @@ case ]]..SET.lbl_cnt.id..[[:;
 
             local pool = FIND_ADT_POOL(fr.fst)
             if to.var.pre == 'pool' then
-                if TT.check(to.var.tp.tt,'&') then
+                if TP.check(to.var.tp.tt,'&') then
                     LINE(me, [[
 ]]..V(to,'lval','adt_root')..' = '..V(fr,'adt_root')..[[;
 ]])
@@ -1930,13 +1930,13 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
                 LINE(me, [[
         ceu_lua_pushnumber(_ceu_app->lua,]]..V(p)..[[);
 ]])
-            elseif TT.check(p.tp.tt,'char','*','-&') or
-                   TT.check(p.tp.tt,'char','[]','-&')
+            elseif TP.check(p.tp.tt,'char','*','-&') or
+                   TP.check(p.tp.tt,'char','[]','-&')
             then
                 LINE(me, [[
         ceu_lua_pushstring(_ceu_app->lua,]]..V(p)..[[);
 ]])
-            elseif TT.check(p.tp.tt,'*','-&') then
+            elseif TP.check(p.tp.tt,'*','-&') then
                 LINE(me, [[
         ceu_lua_pushlightuserdata(_ceu_app->lua,]]..V(p)..[[);
 ]])
@@ -1969,8 +1969,8 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
             ]]..V(set_to)..[[ = ret;
             ceu_lua_pop(_ceu_app->lua, 1);
 ]])
-            elseif TT.check(set_to.tp.tt,'char','[]','-&') or
-                   TT.check(set_to.tp.tt,'char','*','-&')
+            elseif TP.check(set_to.tp.tt,'char','[]','-&') or
+                   TP.check(set_to.tp.tt,'char','*','-&')
             then
                 --ASR(me.ret.var and me.ret.var.tp.arr, me,
                     --'invalid attribution (requires a buffer)')
@@ -1996,7 +1996,7 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
             }
             ceu_lua_pop(_ceu_app->lua, 1);
 ]])
-            elseif TT.check(set_to.tp.tt,'*','-&') then
+            elseif TP.check(set_to.tp.tt,'*','-&') then
                 LINE(me, [[
             void* ret;
             int is;

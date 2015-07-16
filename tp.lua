@@ -38,7 +38,7 @@ function TP.pop (tt, v)
         return tt, false
     end
 end
-function TT.check (tt, ...)
+function TP.check (tt, ...)
     if not tt then
         return false
     end
@@ -69,7 +69,7 @@ end
 
 local __toc = { ['*']='ptr', ['[]']='arr', ['&']='ref', ['?']='opt' }
 function TT.opt2adt (tt)
-    assert(TT.check(tt,'?'), 'bug found')
+    assert(TP.check(tt,'?'), 'bug found')
     local ret = '_Option__'..tt[1]
     for i=2, #tt-1 do
         local p = tt[i]
@@ -230,7 +230,7 @@ function TP.toc (tp)
         return string.gsub(table.concat(t,'__'),'%*','_')
     end
 
-    if TT.check(tp.tt,'?') then
+    if TP.check(tp.tt,'?') then
         return 'CEU_'..TT.opt2adt(tp.tt)
     end
 
@@ -328,7 +328,7 @@ function TP.contains (tp1, tp2)
 
     -- TODO: required for external calls
     --       remove it!
-    if TT.check(TP1.tt,'?') and TT.check(TP2.tt,'?') then
+    if TP.check(TP1.tt,'?') and TP.check(TP2.tt,'?') then
         -- overwrides tp2 above
         tp2 = { tt=TP.pop(TP2.tt, '?') }
     end
@@ -340,20 +340,20 @@ function TP.contains (tp1, tp2)
 
     -- compatible classes
     if cls1 and cls2 and
-        (not ((TT.check(tp1.tt,'[]') or TT.check(tp2.tt,'[]'))))
+        (not ((TP.check(tp1.tt,'[]') or TP.check(tp2.tt,'[]'))))
             -- arrays/pools are handled below
     then
         local ok = (id1==id2) or
                    (cls1.is_ifc and ENV.ifc_vs_cls_or_ifc(cls1,cls2))
         if ok then
             -- pointers
-            if TT.check(tp1.tt,'*') and TT.check(tp2.tt,'*') then
+            if TP.check(tp1.tt,'*') and TP.check(tp2.tt,'*') then
                 -- compatible pointers, check arity, "char" renaming trick
                 local tt1, tt2 = TT.copy(tp1.tt), TT.copy(tp2.tt)
                 tt1[1], tt2[1] = 'char', 'char'
                 return TP.contains({tt=tt1}, {tt=tt2})
             -- non-pointers
-            elseif TT.check(TP1.tt,id1,'&') then
+            elseif TP.check(TP1.tt,id1,'&') then
                 return true
             else
                 return false, __err(TP1, TP2)
@@ -364,9 +364,9 @@ function TP.contains (tp1, tp2)
 
     -- same type
     elseif TP.tostr(tp1) == TP.tostr(tp2) then
-        if TT.check(tp1.tt,'[]') or TT.check(tp2.tt,'[]') then
-            assert(TT.check(tp1.tt,'[]'), 'bug found')
-            if TT.check(TP1.tt,'&') then
+        if TP.check(tp1.tt,'[]') or TP.check(tp2.tt,'[]') then
+            assert(TP.check(tp1.tt,'[]'), 'bug found')
+            if TP.check(TP1.tt,'&') then
                 if TP1.arr == true then
                     -- var X[]& = ...
                     return true
@@ -394,8 +394,8 @@ function TP.contains (tp1, tp2)
         return true
 
     -- external non-pointers: let "gcc" handle it
-    elseif TP.is_(tp1) and TT.check(tp1.tt,id1) or
-           TP.is_(tp2) and TT.check(tp2.tt,id2)
+    elseif TP.is_(tp1) and TP.check(tp1.tt,id1) or
+           TP.is_(tp2) and TP.check(tp2.tt,id2)
     then
         return true
 
@@ -407,20 +407,20 @@ function TP.contains (tp1, tp2)
     -- tp[] = tp*
     -- tp*  = tp[]
     elseif id1 == id2 and (
-                (TT.check(tp1.tt,id1,'*') and TT.check(tp2.tt,id2,'[]')) or
-                (TT.check(tp2.tt,id2,'*') and TT.check(tp1.tt,id1,'[]'))
+                (TP.check(tp1.tt,id1,'*') and TP.check(tp2.tt,id2,'[]')) or
+                (TP.check(tp2.tt,id2,'*') and TP.check(tp1.tt,id1,'[]'))
            )
     then
         return true
 
     -- any pointer can be used with "null"
-    elseif TT.check(tp1.tt,'*') and TT.check(tp2.tt,'null','*') or
-           TT.check(tp2.tt,'*') and TT.check(tp1.tt,'null','*')
+    elseif TP.check(tp1.tt,'*') and TP.check(tp2.tt,'null','*') or
+           TP.check(tp2.tt,'*') and TP.check(tp1.tt,'null','*')
     then
         return true
 
     -- single-pointer casts
-    elseif TT.check(tp1.tt,id1,'*') and TT.check(tp2.tt,id2,'*') then
+    elseif TP.check(tp1.tt,id1,'*') and TP.check(tp2.tt,id2,'*') then
         -- TODO: allows any cast to char* and void*
         --       is it correct?
         --       (I think "void*" should fail)

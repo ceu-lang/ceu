@@ -27706,7 +27706,7 @@ class T with do end
 var U*? ok = spawn T;
 escape ok != null;
 ]],
-    env = 'line 3 : types mismatch (`U*´ <= `T*´)',
+    env = 'line 3 : types mismatch (`U*?´ <= `T*´)',
     --run = 1,
 }
 

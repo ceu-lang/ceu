@@ -130,7 +130,7 @@ F = {
         CHG(f.lst.acc, 'cl')
         me.acc = f.lst.acc
         for _, exp in ipairs(exps) do
-            if TT.check(exp.tp.tt,'*') then
+            if TP.check(exp.tp.tt,'*') then
                 local v = exp.lst
                 if v and v.acc then   -- ignore constants
 --DBG(exp.tag, exp.lst)
@@ -176,7 +176,7 @@ F = {
 
     ['Op2_idx'] = function (me)
         local tt = me.lst.var and me.lst.var.tp.tt
-        if not (tt and TT.check(tt,'[]','-&')) then
+        if not (tt and TP.check(tt,'[]','-&')) then
             me.lst.acc.any = true
         end
         me.lst.acc.tp = me.tp  -- deptr'd
@@ -251,7 +251,7 @@ F = {
             id  = me.var,
             md  = (generated and 'nv') or 'rd',
             tp  = me.var.tp,
-            any = TT.check(me.var.tp.tt,'&'),
+            any = TP.check(me.var.tp.tt,'&'),
             err = ERR(me, 'variable/event `'..me.var.id..'´'),
         }
 

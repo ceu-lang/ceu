@@ -197,7 +197,7 @@ void CEU_]]..id..'_free_static (tceu_app* _ceu_app, CEU_'..id..[[* me, void* poo
 
         local pack = ''
         local xx = me.__adj_from_opt
-        if xx and (TT.check(xx.tt,'*','?') or TT.check(xx.tt,'&','?')) then
+        if xx and (TP.check(xx.tt,'*','?') or TP.check(xx.tt,'&','?')) then
             local ID = string.upper(TT.opt2adt(xx.tt))
             local tp = 'CEU_'..TT.opt2adt(xx.tt)
             local some = TP.toc(me[4][2][1][1][2])
@@ -481,14 +481,14 @@ typedef union CEU_]]..me.id..[[_delayed {
                 len = 0
             elseif var.pre == 'event' then --
                 len = 1   --
-            elseif var.pre=='pool' and (not TT.check(var.tp.tt,'&')) and (type(var.tp.arr)=='table') then
+            elseif var.pre=='pool' and (not TP.check(var.tp.tt,'&')) and (type(var.tp.arr)=='table') then
                 len = 10    -- TODO: it should be big
             elseif var.cls or var.adt then
                 len = 10    -- TODO: it should be big
                 --len = (var.tp.arr or 1) * ?
-            elseif TT.check(var.tp.tt,'?') then
+            elseif TP.check(var.tp.tt,'?') then
                 len = 10
-            elseif TT.check(var.tp.tt,'[]') then
+            elseif TP.check(var.tp.tt,'[]') then
                 len = 10    -- TODO: it should be big
 --[[
                 local _tp = TP.deptr(var.tp)
@@ -496,7 +496,7 @@ typedef union CEU_]]..me.id..[[_delayed {
                              or (ENV.c[_tp] and ENV.c[_tp].len
                                  or TP.types.word.len)) -- defaults to word
 ]]
-            elseif var.tp.tt and (TT.check(var.tp.tt,'*') or TT.check(var.tp.tt,'&')) then
+            elseif var.tp.tt and (TP.check(var.tp.tt,'*') or TP.check(var.tp.tt,'&')) then
 -- TODO: recurse-type: tt test
                 len = TP.types.pointer.len
             else
@@ -537,7 +537,7 @@ typedef union CEU_]]..me.id..[[_delayed {
                 if cls and (not cls.is_ifc) and (DCL.id ~= tp_id) then
                     dcl = dcl..'struct ' -- due to recursive spawn
                 end
-                if TT.check(var.tp.tt,'[]') then
+                if TP.check(var.tp.tt,'[]') then
                     local tp = string.sub(tp,1,-2)  -- remove leading `*´
                     dcl = dcl .. tp..' '..var.id_..'['..var.tp.arr.cval..']'
                 else
@@ -553,8 +553,8 @@ typedef union CEU_]]..me.id..[[_delayed {
                 -- tceu_adt_root id = { root=?, pool=_id };
                 -- CEU_POOL_DCL(_id);
                 if adt then
-                    assert(not TT.check(var.tp.tt,'*','*'), 'bug found')
-                    local ptr = (TT.check(var.tp.tt,'&') and '*') or ''
+                    assert(not TP.check(var.tp.tt,'*','*'), 'bug found')
+                    local ptr = (TP.check(var.tp.tt,'&') and '*') or ''
                     DCL.struct = DCL.struct .. [[
 /*
  * REF:
@@ -583,7 +583,7 @@ CEU_POOL_DCL(]]..ID..',CEU_'..tp_id..','..var.tp.arr.sval..[[)
                 elseif (not adt) then   -- (top_pool or cls)
                     -- ADT doesn't require this NULL pool field
                     --  (already has root->pool=NULL)
-                    if TT.check(var.tp.tt,'*') or TT.check(var.tp.tt,'&') then
+                    if TP.check(var.tp.tt,'*') or TP.check(var.tp.tt,'&') then
                         local ptr = ''
                         for i=#var.tp.tt, 1, -1 do
                             local v = var.tp.tt[i]
@@ -650,7 +650,7 @@ error'not implemented'
             if adt then
                 local tp  = iter.lst.var.tp
                 local arr = tp.arr
-                if (not arr) and (not TT.check(tp.tt,'&')) then
+                if (not arr) and (not TP.check(tp.tt,'&')) then
                     me.iter_max = iter.lst.var.n_cons * adt.n_recs
                 elseif type(arr)=='table' then
                     me.iter_max = arr.cval * adt.n_recs

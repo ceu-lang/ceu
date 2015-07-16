@@ -145,7 +145,7 @@ local function check (me, pre, tp)
                      pre=='output' or pre=='isr' or
                      tt[2]=='*'))
 
-    ASR(TP.get(tp_id).len~=0 or TT.check(tt,'*') or TT.check(tt,'&') or void_ok,
+    ASR(TP.get(tp_id).len~=0 or TP.check(tt,'*') or TP.check(tt,'&') or void_ok,
         me, 'cannot instantiate type "'..tp_id..'"')
     --ASR((not arr) or arr>0, me, 'invalid array dimension')
 
@@ -159,7 +159,7 @@ function ENV.v_or_ref (tp, cls_or_adt)
     end
 
     local tp_id = unpack(tp.tt)
-    local ok = TT.check(tp.tt,tp_id,'-[]','-&','-?')
+    local ok = TP.check(tp.tt,tp_id,'-[]','-&','-?')
     if cls_or_adt == 'cls' then
         return ok and ENV.clss[tp_id]
     elseif cls_or_adt == 'adt' then
@@ -227,7 +227,7 @@ function newvar (me, blk, pre, tp, id, isImp, isEvery)
     }
 
     local tt, is_ref = TP.pop(tp.tt, '&')   -- only *,& after []
-    local is_arr = TT.check(tt, '[]')
+    local is_arr = TP.check(tt, '[]')
 
     if pre=='var' and (not is_arr) then
         var.lval = var
@@ -738,7 +738,7 @@ end
         local _, tp, id, constr, _ = unpack(me)
         F.__dcl_var(me)
 
-        if me.var.cls and TT.check(me.var.tp.tt,'[]') then
+        if me.var.cls and TP.check(me.var.tp.tt,'[]') then
             -- var T[10] ts;  // needs _i_ to iterate for the constructor
             _, me.var.constructor_iterator =
                 newvar(me, AST.par(me,'Block'), 'var', TP.fromstr'int', '_i_'..id, false)
@@ -758,7 +758,7 @@ end
 
             local tp_ = TP.new(tp)
             local tp_id = unpack(tp_.tt)
-            local top = not (TT.check(tp_.tt,'*') or TT.check(tp_.tt,'&'))
+            local top = not (TP.check(tp_.tt,'*') or TP.check(tp_.tt,'&'))
             ASR(tp_id=='_TOP_POOL' or top,
                 me, 'undeclared type `'..(tp_id or '?')..'´')
         end
@@ -766,7 +766,7 @@ end
 
     Dcl_pool = function (me)
         local pre, tp, id, constr = unpack(me)
-        ASR(TT.check(tp.tt,'[]','-*','-&'), me, 'missing `pool´ dimension')
+        ASR(TP.check(tp.tt,'[]','-*','-&'), me, 'missing `pool´ dimension')
         F.__dcl_var(me)
     end,
 
@@ -777,10 +777,10 @@ end
         end
         assert(tp.tup, 'bug found')
         for _, t in ipairs(tp.tup) do
-            ASR((TP.isNumeric(t) or TT.check(t.tt,'*')),
+            ASR((TP.isNumeric(t) or TP.check(t.tt,'*')),
                 me, 'invalid event type')
 -- TODO: recurse-type: remove when numeric not &
-            ASR(not TT.check(t.tt,'&'), me, 'invalid event type')
+            ASR(not TP.check(t.tt,'&'), me, 'invalid event type')
         end
         local _
         _, me.var = newint(me, AST.iter'Block'(), pre, tp, id, me.isImp)
@@ -1007,7 +1007,7 @@ end
         local to_tp_id, to_is_opt
         if set~='await' and (not to.tp.tup) then
             to_tp_id  = unpack(to.tp.tt)
-            to_is_opt = TT.check(to.tp.tt,'?')
+            to_is_opt = TP.check(to.tp.tt,'?')
         end
 
         if set == 'await' then
@@ -1026,7 +1026,7 @@ end
 
         elseif ENV.adts[to_tp_id] and (not to_is_opt) then
             if ENV.adts[to_tp_id].is_rec then
-                if to.var and (TT.check(to.var.tp.tt,'&') or TT.check(to.var.tp.tt,'*')) then
+                if to.var and (TP.check(to.var.tp.tt,'&') or TP.check(to.var.tp.tt,'*')) then
                     me[2] = 'adt-alias'
                 else
                     me[2] = 'adt-mut'
@@ -1040,16 +1040,16 @@ end
 
         local lua_str = false
         if set == 'lua' then
-            ASR(not TT.check(to.tp.tt,'&'), me, 'invalid attribution')
+            ASR(not TP.check(to.tp.tt,'&'), me, 'invalid attribution')
 
-            lua_str = (to_tp_id=='char' and TT.check(to.tp.tt,'[]'))
+            lua_str = (to_tp_id=='char' and TP.check(to.tp.tt,'[]'))
             if not lua_str then
                 ASR(to and to.lval, me, 'invalid attribution')
             end
 
             local tt = TP.pop(to.tp.tt, '&')
-            ASR(TP.isNumeric(to.tp,'&') or TT.check(to.tp.tt,'bool','-&') or
-                TT.check(to.tp.tt, to_tp_id, '*', '-&') or
+            ASR(TP.isNumeric(to.tp,'&') or TP.check(to.tp.tt,'bool','-&') or
+                TP.check(to.tp.tt, to_tp_id, '*', '-&') or
                 lua_str,
                 me, 'invalid attribution')
             fr.tp = to.tp -- return type is not known at compile time
@@ -1179,7 +1179,7 @@ end
                 me.var_nxt = var_nxt
             end
 
-        elseif iter and TT.check(iter.tp.tt,'*') then
+        elseif iter and TP.check(iter.tp.tt,'*') then
             me.iter_tp = 'data'
             if to then
                 local dcl = AST.node('Dcl_var', me.ln, 'var',
@@ -1341,7 +1341,7 @@ end
     ['Op1_?'] = function (me)
         local op, e1 = unpack(me)
         me.tp  = TP.fromstr'bool'
-        ASR(TT.check(e1.tp.tt,'?'), me, 'not an option type')
+        ASR(TP.check(e1.tp.tt,'?'), me, 'not an option type')
     end,
     ['Op1_!'] = function (me)
         local op, e1 = unpack(me)
@@ -1364,10 +1364,10 @@ end
 
         -- TODO: recurse-type
         -- TODO: remove these comments if nothing breaks after testing rocks/stl/on
-        --if not (TT.check(e1.tp.tt,'?') and e1.tp.ptr>0) then
+        --if not (TP.check(e1.tp.tt,'?') and e1.tp.ptr>0) then
             ASR(not ENV.adts[TP.tostr(e1.tp)], me, 'invalid operation for data')
         --end
-        --if not (TT.check(e2.tp.tt,'?') and e2.tp.ptr>0) then
+        --if not (TP.check(e2.tp.tt,'?') and e2.tp.ptr>0) then
             ASR(not ENV.adts[TP.tostr(e2.tp)], me, 'invalid operation for data')
         --end
     end,
@@ -1513,7 +1513,7 @@ end
             -- rect.x = 1 (_SDL_Rect)
             me.tp = TP.fromstr'@'
             local tp = TP.get(TP.id(e1.tp))
-            if tp.plain and (not TT.check(e1.tp.tt,'*')) then
+            if tp.plain and (not TP.check(e1.tp.tt,'*')) then
                 me.tp.plain = true
                 me.tp.tt = TP.pop(me.tp.tt, '*')
             end
@@ -1533,7 +1533,7 @@ end
         local tp, exp = unpack(me)
         me.tp   = tp
         me.lval = exp.lval
-        if TT.check(tp.tt,'*','-&') then
+        if TP.check(tp.tt,'*','-&') then
             me.lval = exp      -- *((u32*)0x100)=v
         end
     end,
