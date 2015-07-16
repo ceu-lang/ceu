@@ -1710,7 +1710,7 @@ G = {
         local cpy = AST.copy(me)    -- w/o opt
         me[#me+1] = '?'
 
-        local id_adt = TT.opt2adt(me)
+        local id_adt = TT.opt2adt({tt=me})
         if not ADTS[id_adt] then
             local adt = node('Dcl_adt', me.ln, id_adt,
                             'union',

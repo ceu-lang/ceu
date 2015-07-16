@@ -448,7 +448,7 @@ case ]]..me.lbls_cnt.id..[[:;
             })
         elseif TP.check(var.tp.tt,'?') then
             -- initialize optional types to nil
-            local ID = string.upper(TT.opt2adt(var.tp.tt))
+            local ID = string.upper(TP.opt2adt(var.tp))
             LINE(me, [[
 ]]..V(me,'opt_raw')..[[.tag = CEU_]]..ID..[[_NIL;
 ]])
@@ -987,7 +987,7 @@ case ]]..SET.lbl_cnt.id..[[:;
 
         -- optional types
         if TP.check(to.tp.tt,'?') then
-            local ID = string.upper(TT.opt2adt(to.tp.tt))
+            local ID = string.upper(TP.opt2adt(to.tp))
             if TP.check(fr.tp.tt,'?') then
                 LINE(me, V(to,byref)..' = '..V(fr,byref)..';')
             elseif (fr.fst.tag=='Op2_call' and fr.fst.__fin_opt_tp) then

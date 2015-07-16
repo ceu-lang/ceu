@@ -68,11 +68,11 @@ function TP.check (tt, ...)
 end
 
 local __toc = { ['*']='ptr', ['[]']='arr', ['&']='ref', ['?']='opt' }
-function TT.opt2adt (tt)
-    assert(TP.check(tt,'?'), 'bug found')
-    local ret = '_Option__'..tt[1]
-    for i=2, #tt-1 do
-        local p = tt[i]
+function TP.opt2adt (tp)
+    assert(TP.check(tp.tt,'?'), 'bug found')
+    local ret = '_Option__'..tp.tt[1]
+    for i=2, #tp.tt-1 do
+        local p = tp.tt[i]
         if type(p)=='table' then
             p = '[]'
         end
@@ -231,7 +231,7 @@ function TP.toc (tp)
     end
 
     if TP.check(tp.tt,'?') then
-        return 'CEU_'..TT.opt2adt(tp.tt)
+        return 'CEU_'..TP.opt2adt(tp)
     end
 
     local ret = table.concat(tp.tt)
