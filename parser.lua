@@ -242,10 +242,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
              * (EKEY'with'*V'Dcl_constr'* EKEY'end' + Cc(false))
 
 
-    , CallStmt = m.Cmt(V'__Exp',
-                    function (s,i,...)
-                        return (string.find(s, '%(.*%)')) and i, ...
-                    end)
+    , CallStmt = V'__Exp'
 
     , Atomic  = KEY'atomic' * V'__Do'
     , Sync    = KEY'sync'   * V'__Do'
