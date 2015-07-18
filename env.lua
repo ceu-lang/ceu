@@ -129,6 +129,10 @@ local function check (me, pre, tp)
 
     tp = TP.pop(tp,'?')
 
+    if pre=='pool' and top.tag=='Dcl_adt' then
+        ASR(top.is_rec, me, 'invalid pool : non-recursive data')
+    end
+
     if TP.check(tp,tp_id, '-[]') then
         ASR(not AST.isParent(top,me), me,
             'undeclared type `'..(tp_id or '?')..'´')
@@ -350,6 +354,11 @@ end
 local STACK_N_E = { }
 
 F = {
+    Node = function (me)
+        me.fst = me.fst or me
+        me.lst = me.lst or me
+    end,
+
     Type_pos      = TP.new,
     TupleType_pos = TP.new,
 
@@ -813,7 +822,10 @@ F = {
 
     _TMP_ITER = function (me)
         -- HACK_5: figure out iter type
-        local pool = AST.asr(me[1], 'Var')
+        local pool = unpack(me)
+        pool = pool.lst
+        ASR(pool.var and TP.check(pool.tp,TP.id(pool.tp),'[]','-&'), me,
+            'invalid pool')
 
         local blki = AST.asr(me.__par,'Stmts', 2,'Stmts', 1,'Dcl_cls',
                                     3,'Block', 1,'Stmts', 1,'BlockI')
@@ -937,6 +949,12 @@ F = {
             -- var T*? = spawn T;
             ASR(to_is_opt, me, 'must assign to option pointer')
 
+            -- a = spawn T
+            fr.blk = to.lst.var.blk   -- to = me.__par[3]
+            -- refuses (x.ptr = spawn T;)
+            ASR( AST.isParent(CLS(),to.lst.var.blk), me,
+                    'invalid attribution (no scope)' )
+
         elseif set == 'adt-constr' then
             return  -- checked in adt.lua
 
@@ -1005,6 +1023,11 @@ F = {
             --  (see fin.lua).
             me.cls.is_rec = true
         end
+    end,
+    Spawn = function (me)
+        local _, pool, _ = unpack(me)
+        ASR(pool and pool.lst and pool.lst.var and pool.lst.var.pre=='pool',
+            me, 'invalid pool')
     end,
 
     Dcl_constr_pre = function (me)
@@ -1095,6 +1118,9 @@ F = {
                 me.var_nxt = var_nxt
             end
 
+            ASR(iter.lst and iter.lst.var and iter.lst.var.pre=='pool',
+                me, 'invalid pool')
+
         elseif iter and TP.check(iter.tp,'*') then
             me.iter_tp = 'data'
             if to then
@@ -1108,6 +1134,7 @@ F = {
             end
         end
     end,
+
 --[[
     Recurse = function (me)
         local exp = unpack(me)
@@ -1154,12 +1181,11 @@ F = {
                         'invalid constructor : recursive field "'..id_tag..'" must be new data')
                     p.tp.tt[#p.tp.tt+1] = '*'
                     --params[i].tp = TP.new(TP.push(p.tp,'*'))
---DBG(TP.tostr(params[i].tp))
---error'oi'
                 end
             end
             tup = ttag.tup
         else
+            ASR(not tadt.tags, me, 'union data constructor requires a tag')
             tup = tadt.tup
         end
 
@@ -1229,6 +1255,9 @@ F = {
             me.lval = arr
         end
         me.tp = TP.new(tp)
+
+        me.fst = arr.fst
+        me.lst = arr.lst
     end,
 
     Op2_int_int = function (me)
@@ -1270,6 +1299,9 @@ F = {
         local tp,ok = TP.pop(e1.tp, '?')
         ASR(ok, me, 'not an option type')
         me.tp = TP.new(tp)
+
+        me.fst = e1.fst
+        me.lst = e1.lst
     end,
 
     Op2_same = function (me)
@@ -1327,7 +1359,9 @@ F = {
                 me, 'invalid operand to unary "*"')
         end
 
-        me.tp = TP.new(tp)
+        me.tp  = TP.new(tp)
+        me.fst = e1.fst
+        me.lst = e1.lst
     end,
 
     ['Op1_&'] = function (me)
@@ -1337,6 +1371,9 @@ F = {
             'invalid operand to unary "&"')
         me.lval = false
         me.tp = TP.new(TP.push(e1.tp,'*'))
+        me.fst = e1.fst
+        me.lst = e1.lst
+        me.lst.amp = true
     end,
 
     ['Op2_.'] = function (me)
@@ -1437,6 +1474,16 @@ F = {
             node.__ast_blk = BLK[1]
             me[3] = node
         end
+
+        if me.tag == 'Field' then
+            local op, e1, var = unpack(me)
+            me.fst = e1.fst
+            me.lst = var    -- org.var => var
+        else
+            local op, e1, id = unpack(me)
+            me.fst = e1.fst
+            me.lst = e1.lst
+        end
     end,
 
     Op1_cast = function (me)
@@ -1446,6 +1493,10 @@ F = {
         if TP.check(tp,'*','-&') then
             me.lval = exp      -- *((u32*)0x100)=v
         end
+
+        me.fst = exp.fst
+        me.lst = exp.lst
+        me.isConst = exp.isConst
     end,
 
     Nat = function (me)
@@ -1472,13 +1523,13 @@ F = {
     SIZEOF = function (me)
         me.tp   = TP.new{'int'}
         me.lval = false
-        me.const = true
+        me.isConst = true
     end,
 
     STRING = function (me)
         me.tp   = TP.new{'char','*'}
         me.lval = false
-        me.const = true
+        me.isConst = true
     end,
     NUMBER = function (me)
         local v = unpack(me)
@@ -1489,12 +1540,12 @@ F = {
             me.tp = TP.new{'int'}
         end
         me.lval = false
-        me.const = true
+        me.isConst = true
     end,
     NULL = function (me)
         me.tp   = TP.new{'null','*'}
         me.lval = false
-        me.const = true
+        me.isConst = true
     end,
 }
 

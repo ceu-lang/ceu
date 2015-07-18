@@ -221,7 +221,7 @@ end
 -- TODO: this code is duplicated with "ref.lua"
             local to_tp_id = TP.id(to.tp)
             if not (
-                fr.const                   or -- constants are globals
+                fr.isConst                 or -- constants are globals
                 fr.fst.tag == 'Nat'        or -- natives are globals
                 (fr.tag=='Op2_call' and       -- native calls are globals
                  fr[2].fst.tag=='Nat')     or

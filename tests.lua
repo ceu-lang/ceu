@@ -9,8 +9,195 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
-do return end
 --]===]
+Test { [[
+data E with
+    tag NOTHING;
+or
+    tag X with
+        var int x;
+    end
+end
+
+var E e = E(1);
+
+escape 1;
+]],
+    env = 'line 9 : union data constructor requires a tag',
+}
+
+Test { [[
+data D with
+    var int x;
+end
+
+data E with
+    tag NOTHING;
+or
+    tag X with
+        var D& d;
+    end
+end
+
+var D d = D(10);
+var E e = E.X(d);
+
+escape e.X.d.x;
+]],
+    run = 10,
+}
+
+Test { [[
+data D with
+    var int x;
+end
+
+data E with
+    tag NOTHING;
+or
+    tag X with
+        var D& d;
+    end
+end
+
+var E e;
+do
+    var D d = D(1);
+    e.X.d = d;
+end
+
+escape e.X.d.x;
+]],
+    ref = 'line 16 : attribution to reference with greater scope',
+}
+Test { [[
+data D with
+    var int x;
+end
+
+data E with
+    tag NOTHING;
+or
+    tag X with
+        var D* d;
+    end
+end
+
+var E e = E.X(null);
+    var D d = D(10);
+    e.X.d = &d;
+
+escape e.X.d:x;
+]],
+    run = 10,
+}
+
+Test { [[
+data D with
+    var int x;
+end
+
+data E with
+    tag NOTHING;
+or
+    tag X with
+        var D* d;
+    end
+end
+
+var E e;
+do
+    var D d = D(1);
+    e.X.d = &d;
+end
+
+escape 1;
+]],
+    fin = 'line 16 : attribution to pointer with greater scope',
+}
+
+Test { [[
+data T with
+    tag NIL;
+or
+    tag NEXT with
+        var T* next;
+    end
+end
+
+class C with
+    var int v;
+do
+    pool T[] ts; // = new T.NEXT(T.NIL());
+    var int ret =
+        traverse t in ts do
+            escape this.v;
+        end;
+    escape ret;
+end
+
+var int v =
+    do C with
+        this.v = 10;
+    end;
+
+escape v;
+]],
+    run = 10,
+}
+
+Test { [[
+data NoRec with
+    tag NIL;
+or
+    tag SEQ with
+    end
+end
+
+pool NoRec[]& norec;
+
+traverse t in this.norec do
+end
+
+escape 1;
+]],
+    env = 'line 8 : invalid pool : non-recursive data',
+}
+
+Test { [[
+data BTree with
+    tag NIL;
+or
+    tag SEQ with
+        var BTree* nxt;
+    end
+end
+
+pool BTree[3] bs = new BTree.SEQ(BTree.SEQ(BTree.NIL()));
+
+class BTreeTraverse with
+    pool BTree[3]& btree;
+do
+    var int ret = 0;
+    traverse t in this.btree do
+        if t:SEQ then
+            ret = ret + 1;
+            traverse t:SEQ.nxt;
+        end
+    end
+    escape ret;
+end
+
+var int ret = do BTreeTraverse with
+                    this.btree = bs;
+              end;
+
+escape ret;
+]],
+    run = 2,
+}
+
+--do return end
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------
@@ -28088,7 +28275,7 @@ end
 escape 1;
 ]],
     --fin = 'line 14 : pointer access across `await´',
-    exp = 'line 6 : invalid pool',
+    env = 'line 6 : invalid pool',
     --run = 1,
 }
 Test { [[
@@ -31515,7 +31702,7 @@ end
 escape 10;
 ]],
     --run = 10,
-    exp = 'line 15 : invalid attribution (no scope)',
+    env = 'line 15 : invalid attribution (no scope)',
 }
 Test { [[
 class V with
@@ -31546,7 +31733,7 @@ end
 escape 10;
 ]],
     --run = { ['~>A']=10 },
-    exp = 'line 16 : invalid attribution',
+    env = 'line 16 : invalid attribution',
 }
 
 Test { [[
@@ -31586,7 +31773,7 @@ _assert(_V == 10);
 escape _V;
 ]],
     --run = { ['~>2s']=10, }       -- TODO: stack change
-    exp = 'line 21 : invalid attribution',
+    env = 'line 21 : invalid attribution',
 }
 
 Test { [[

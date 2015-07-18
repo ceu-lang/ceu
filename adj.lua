@@ -421,6 +421,17 @@ me.blk_body = me.blk_body or blk_body
         local to, root, ifc, body, ret = unpack(me)
         local out = AST.par(me, 'Dcl_cls')
 
+        -- This => Outer
+        --  traverse x in this.xs
+        --      becomes
+        --  do T with
+        --      this.xs = outer.xs
+        --  end;
+        local root_constr = AST.copy(root)  -- avoid conflict with TMP_ITER below
+         if root_constr.tag=='Op2_.' and root_constr[2].tag=='This' then
+            root_constr[2].tag = 'Outer'
+        end
+
         -- unpacked below
         ifc = ifc or node('Stmts',me.ln)
 
@@ -481,7 +492,7 @@ me.blk_body = me.blk_body or blk_body
                                             node('This', me.ln, true),
                                             to[1]),
                                         '=', 'exp',
-                                        root),
+                                        root_constr),
                                     node('_Set', me.ln,
                                         node('Op2_.', me.ln, '.',
                                             node('This', me.ln, true),

@@ -565,7 +565,8 @@ if (]]..me.val..[[ == NULL) {
         end
         for i, p in ipairs(params) do
             local field = blk.vars[i]
-            LINE(me, me.val..op..tag..field.id..' = '..V(p)..';')
+            local amp = (TP.check(field.tp,'&') and '&') or ''
+            LINE(me, me.val..op..tag..field.id..' = '..amp..V(p)..';')
         end
 
         LINE(me, '}')   -- will ignore if allocation fails
