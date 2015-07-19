@@ -398,8 +398,7 @@ F =
                 VAL  = '('..tag..'_assert(_ceu_app, &'..V(e1)..', __FILE__, __LINE__)'..'->'..id..')'
                 --VAL  = '('..tag..'_assert('..V(e1)..')'..ceu2c(op)..id..')'
             elseif me.__env_tag == 'field' then
-                if TP.check(e1.union_tag_blk.vars[id].tp,'&') and
-                   (not TP.check(me.tp,'&')) then
+                if TP.check(e1.union_tag_blk.vars[id].tp,'&') then
                     VAL  = '('..'*('..V(e1)..')'..'.'..id..')'
                 else
                     VAL  = '('..V(e1)..'.'..id..')'

@@ -101,7 +101,7 @@ function TP.new (me, dont_generate)
         end
 
         -- me.arr = []|table
-        -- me[i] = '[]'
+        -- me.tt[i] = '[]'
         for i=2, #me.tt do
             local v = me.tt[i]
             if v=='[]' or type(v)=='table' then

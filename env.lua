@@ -835,10 +835,15 @@ F = {
         -- tp id
         tp[1] = TP.id(pool.tp)
 
+        -- +1 for NIL/BASE case
+        local arr = AST.node('Op2_+', me.ln, '+',
+                        AST.copy(pool.tp.arr), -- array
+                        AST.node('NUMBER', me.ln, '1'))
+
         AST.asr(blki,'', 1,'Stmts', 1,'Dcl_pool', 2,'Type')
-                [2] = (pool.tp[2]=='[]' and '[]') or AST.copy(pool.tp[2]) -- array
+                [2] = (pool.tp.arr=='[]' and '[]') or AST.copy(arr)
         AST.asr(me.__par,'Stmts', 3,'Dcl_pool', 2,'Type')
-                [2] = (pool.tp[2]=='[]' and '[]') or AST.copy(pool.tp[2]) -- array
+                [2] = (pool.tp.arr=='[]' and '[]') or AST.copy(arr)
 
         me.tag = 'Nothing'
     end,
@@ -1475,6 +1480,7 @@ F = {
             me[3] = node
         end
 
+        -- TODO: remove/simplify this if
         if me.tag == 'Field' then
             local op, e1, var = unpack(me)
             me.fst = e1.fst

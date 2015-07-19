@@ -398,7 +398,7 @@ me.blk_body = me.blk_body or blk_body
         --  end;
         --      ... becomes ...
         --  class Body with
-        --      pool Body[?]&   loops;
+        --      pool Body[?]&   bodies;
         --      var  Body*      parent;       // TODO: should be "Body*?" (opt)
         --      var  <adt_t>[]* <n>;
         --      var  Outer&     out;
@@ -410,9 +410,9 @@ me.blk_body = me.blk_body or blk_body
         --      end
         --      escape 0;
         --  end
-        --  pool Body[?] loops;
+        --  pool Body[?] bodies;
         --  ret = do Body with
-        --      this.loops  = loops;
+        --      this.bodies = bodies;
         --      this.parent = &this;    // watch myself
         --      this.<n>    = <n>;
         --  end;
@@ -470,38 +470,38 @@ me.blk_body = me.blk_body or blk_body
         local pool = node('Dcl_pool', me.ln, 'pool',
                         node('Type', me.ln, 'Body_'..me.n, '[]'),
                         '_pool_'..me.n)
-        local doorg = node('_DoOrg', me.ln, 'Body_'..me.n,
-                        node('Dcl_constr', me.ln,
-                            node('Block', me.ln,
-                                node('Stmts', me.ln,
-                                    node('_Set', me.ln,
-                                        node('Op2_.', me.ln, '.',
-                                            node('This', me.ln, true),
-                                            '_bodies'),
-                                        '=', 'exp',
-                                        node('Var', me.ln, '_pool_'..me.n)),
-                                    node('_Set', me.ln,
-                                        node('Op2_.', me.ln, '.',
-                                            node('This', me.ln, true),
-                                            '_parent'),
-                                        '=', 'exp',
-                                        node('Op1_&', me.ln, '&',
-                                            node('This', me.ln, true))),
-                                    node('_Set', me.ln,
-                                        node('Op2_.', me.ln, '.',
-                                            node('This', me.ln, true),
-                                            to[1]),
-                                        '=', 'exp',
-                                        root_constr),
-                                    node('_Set', me.ln,
-                                        node('Op2_.', me.ln, '.',
-                                            node('This', me.ln, true),
-                                            '_out'),
-                                        '=', 'exp',
-                                        node('Outer', me.ln, true))))))
-        if ret then
-            doorg = node('_Set', me.ln, ret, '=', 'do-org', doorg)
-        end
+
+        local spawn = node('Spawn', me.ln, 'Body_'..me.n,
+                            node('Var', me.ln, '_pool_'..me.n),
+                            node('Dcl_constr', me.ln,
+                                node('Block', me.ln,
+                                    node('Stmts', me.ln,
+                                        node('_Set', me.ln,
+                                            node('Op2_.', me.ln, '.',
+                                                node('This', me.ln, true),
+                                                '_bodies'),
+                                            '=', 'exp',
+                                            node('Var', me.ln, '_pool_'..me.n)),
+                                        node('_Set', me.ln,
+                                            node('Op2_.', me.ln, '.',
+                                                node('This', me.ln, true),
+                                                '_parent'),
+                                            '=', 'exp',
+                                            node('Op1_&', me.ln, '&',
+                                                node('This', me.ln, true))),
+                                        node('_Set', me.ln,
+                                            node('Op2_.', me.ln, '.',
+                                                node('This', me.ln, true),
+                                                to[1]),
+                                            '=', 'exp',
+                                            root_constr),
+                                        node('_Set', me.ln,
+                                            node('Op2_.', me.ln, '.',
+                                                node('This', me.ln, true),
+                                                '_out'),
+                                            '=', 'exp',
+                                            node('Outer', me.ln, true))))))
+        local doorg = F.__traverse_spawn_await(me, 'Body_'..me.n, spawn, ret)
 
         -- HACK_5: figure out root type and dimension
         local root = node('_TMP_ITER', me.ln, AST.copy(root))
@@ -526,6 +526,44 @@ me.blk_body = me.blk_body or blk_body
     --      ret = 0;    // TODO: how to get "ret" from a dead body?
     --  end
     --]]
+    __traverse_spawn_await = function (me, cls_id, spawn, ret)
+        local dcl = node('Dcl_var', me.ln, 'var',
+                        node('Type', me.ln, cls_id, '*','?'),
+                        '_body_'..me.n)
+
+        local set = node('_Set', me.ln,
+                        node('Var', me.ln, '_body_'..me.n),
+                        '=', 'spawn',
+                        spawn)
+
+        local SET_AWAIT = node('Await', me.ln,
+                            node('Op1_*', me.ln, '*',
+                                node('Op1_!', me.ln, '!',
+                                    node('Var', me.ln, '_body_'..me.n))),
+                            false,
+                            false)
+        local SET_DEAD = node('Nothing', me.ln)
+        if ret then
+            SET_AWAIT = node('_Set', me.ln, ret, '=', 'await',
+                            SET_AWAIT)
+            SET_DEAD  = node('_Set', me.ln, ret, '=', 'exp',
+                            node('NUMBER', me.ln, '0'))
+        end
+
+        local if_ = node('If', me.ln,
+                        node('Op1_?', me.ln, '?',
+                            node('Var', me.ln, '_body_'..me.n)),
+                        --node('Nothing', me.ln),
+                        node('Block', me.ln,
+                            node('Stmts', me.ln,
+                                SET_AWAIT)),
+                        node('Block', me.ln,
+                            node('Stmts', me.ln,
+                                SET_DEAD)))
+
+        return node('Stmts', me.ln, dcl, set, if_)
+    end,
+
     _TraverseRec_pre = function (me)
         local n, exp, constr, ret = unpack(me)
 
@@ -549,30 +587,11 @@ me.blk_body = me.blk_body or blk_body
         end
         ASR(cls, me, 'missing enclosing `traverse´ block')
 
-        local SET_AWAIT = node('Await', me.ln,
-                            node('Op1_*', me.ln, '*',
-                                node('Op1_!', me.ln, '!',
-                                    node('Var', me.ln, '_body_'..me.n))),
-                            false,
-                            false)
-        local SET_DEAD = node('Nothing', me.ln)
-        if ret then
-            SET_AWAIT = node('_Set', me.ln, ret, '=', 'await',
-                            SET_AWAIT)
-            SET_DEAD  = node('_Set', me.ln, ret, '=', 'exp',
-                            node('NUMBER', me.ln, '0'))
-        end
-
-        local to_id  = AST.asr(cls,'Dcl_cls', 3,'BlockI', 1,'Stmts', 3,'Dcl_pool')[3]
+        local to_id  = AST.asr(cls,'Dcl_cls', 3,'BlockI', 1,'Stmts',
+                                              3,'Dcl_pool')[3]
         local cls_id = cls[2]
 
-        local dcl = node('Dcl_var', me.ln, 'var',
-                        node('Type', me.ln, cls_id, '*','?'),
-                        '_body_'..me.n)
-        local set = node('_Set', me.ln,
-                        node('Var', me.ln, '_body_'..me.n),
-                        '=', 'spawn',
-                        node('Spawn', me.ln, cls_id,
+        local spawn = node('Spawn', me.ln, cls_id,
                             node('Var', me.ln, '_bodies'),
                             node('Dcl_constr', me.ln,
                                 node('Block', me.ln,
@@ -606,19 +625,9 @@ me.blk_body = me.blk_body or blk_body
                                             node('Op2_.', me.ln, '.',
                                                 node('Outer', me.ln, true),
                                                 '_out')),
-                                        unpack(constr))))))
-        local if_ = node('If', me.ln,
-                        node('Op1_?', me.ln, '?',
-                            node('Var', me.ln, '_body_'..me.n)),
-                        --node('Nothing', me.ln),
-                        node('Block', me.ln,
-                            node('Stmts', me.ln,
-                                SET_AWAIT)),
-                        node('Block', me.ln,
-                            node('Stmts', me.ln,
-                                SET_DEAD)))
+                                        unpack(constr)))))
 
-        return node('Stmts', me.ln, dcl, set, if_)
+        return F.__traverse_spawn_await(me, cls_id, spawn, ret)
     end,
 
     _Loop_pre = function (me)

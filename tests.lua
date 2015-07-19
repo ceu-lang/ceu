@@ -11,109 +11,44 @@ end
 --[===[
 --]===]
 Test { [[
-data E with
-    tag NOTHING;
+data Dummy with
+  tag NIL;
 or
-    tag X with
-        var int x;
-    end
+  tag REC with
+    var Dummy* rec;
+  end
 end
 
-var E e = E(1);
-
-escape 1;
-]],
-    env = 'line 9 : union data constructor requires a tag',
-}
-
-Test { [[
-data D with
-    var int x;
+native do
+    char vec[3] = {5,5,5};
 end
 
-data E with
-    tag NOTHING;
-or
-    tag X with
-        var D& d;
-    end
-end
+pool Dummy[] ds;
 
-var D d = D(10);
-var E e = E.X(d);
+var int xxx = 0;
 
-escape e.X.d.x;
-]],
-    run = 10,
-}
+input void OS_START;
 
-Test { [[
-data D with
-    var int x;
-end
-
-data E with
-    tag NOTHING;
-or
-    tag X with
-        var D& d;
-    end
-end
-
-var E e;
+traverse d in ds with
+    var int idx = 0;
 do
-    var D d = D(1);
-    e.X.d = d;
-end
-
-escape e.X.d.x;
-]],
-    ref = 'line 16 : attribution to reference with greater scope',
-}
-Test { [[
-data D with
-    var int x;
-end
-
-data E with
-    tag NOTHING;
-or
-    tag X with
-        var D* d;
+    if idx < 3 then
+        par/and do
+            await OS_START;
+            _vec[xxx] = idx;
+            xxx = xxx + 1;
+        with
+            traverse d with
+                this.idx = idx + 1;
+            end;
+        end
     end
 end
 
-var E e = E.X(null);
-    var D d = D(10);
-    e.X.d = &d;
-
-escape e.X.d:x;
+escape (_vec[0]==0) + (_vec[1]==1) + (_vec[2]==2);
 ]],
-    run = 10,
-}
-
-Test { [[
-data D with
-    var int x;
-end
-
-data E with
-    tag NOTHING;
-or
-    tag X with
-        var D* d;
-    end
-end
-
-var E e;
-do
-    var D d = D(1);
-    e.X.d = &d;
-end
-
-escape 1;
-]],
-    fin = 'line 16 : attribution to pointer with greater scope',
+    wrn = true,
+    run = 3,
 }
 
 Test { [[
@@ -29731,7 +29666,6 @@ escape 1;
 
 Test { [[
 input void OS_START;
-native @pure _printf();
 
 class T with
     var int a;
@@ -33229,7 +33163,6 @@ spawn T in ts;
 spawn T in ts;
 async do end;
 
-native @pure _printf();
 loop t1 in ts do
     loop t2 in ts do
         ret = ret + 1;
@@ -33255,7 +33188,6 @@ spawn T in ts;
 spawn T in ts;
 async do end;
 
-native @pure _printf();
 loop t1 in ts do
     loop t2 in ts do
         ret = ret + 1;
@@ -33282,7 +33214,6 @@ spawn T in ts;
 spawn T in ts;
 async do end;
 
-native @pure _printf();
 loop t1 in ts do
     watching *t1 do
         loop t2 in ts do
@@ -43904,6 +43835,112 @@ escape 1;
     ref = 'line 13 : attribution to reference with greater scope',
 }
 
+Test { [[
+data E with
+    tag NOTHING;
+or
+    tag X with
+        var int x;
+    end
+end
+
+var E e = E(1);
+
+escape 1;
+]],
+    env = 'line 9 : union data constructor requires a tag',
+}
+
+Test { [[
+data D with
+    var int x;
+end
+
+data E with
+    tag NOTHING;
+or
+    tag X with
+        var D& d;
+    end
+end
+
+var D d = D(10);
+var E e = E.X(d);
+
+escape e.X.d.x;
+]],
+    run = 10,
+}
+
+Test { [[
+data D with
+    var int x;
+end
+
+data E with
+    tag NOTHING;
+or
+    tag X with
+        var D& d;
+    end
+end
+
+var E e;
+do
+    var D d = D(1);
+    e.X.d = d;
+end
+
+escape e.X.d.x;
+]],
+    ref = 'line 16 : attribution to reference with greater scope',
+}
+Test { [[
+data D with
+    var int x;
+end
+
+data E with
+    tag NOTHING;
+or
+    tag X with
+        var D* d;
+    end
+end
+
+var E e = E.X(null);
+    var D d = D(10);
+    e.X.d = &d;
+
+escape e.X.d:x;
+]],
+    run = 10,
+}
+
+Test { [[
+data D with
+    var int x;
+end
+
+data E with
+    tag NOTHING;
+or
+    tag X with
+        var D* d;
+    end
+end
+
+var E e;
+do
+    var D d = D(1);
+    e.X.d = &d;
+end
+
+escape 1;
+]],
+    fin = 'line 16 : attribution to pointer with greater scope',
+}
+
 -- USE DATATYPES DEFINED ABOVE ("DATA")
 
 -- simple test
@@ -47030,6 +47067,7 @@ end
 
 escape sum;
 ]],
+    _ana = {acc=true},
     run = { ['~>20s'] = 4 },
 }
 
@@ -47741,8 +47779,6 @@ par/or do
         var int param = 1;
     do
         ret = ret + param;
-native @pure _printf();
-_printf("[%d] %p = %d/%d->%d\n", widget:EMPTY, widget, ret,param,ret);
 
         watching widget do
             if widget:EMPTY then
@@ -47809,8 +47845,6 @@ par/or do
         var int param = 1;
     do
         ret = ret + param;
-native @pure _printf();
-_printf("[%d] %p = %d/%d->%d\n", widget:EMPTY, widget, ret,param,ret);
 
         watching widget do
             if widget:EMPTY then
@@ -48003,11 +48037,8 @@ end
 pool Command[] cmds = new Command.REPEAT(
             Command.LEFT());
 
-native @pure _printf();
-
 class TurtleTurn with
 do
-    _printf("ME %p\n", &this);
     await 1us;
 end
 
@@ -48366,8 +48397,6 @@ ls = new List.CONS(1,
 
 var int ret = 0;
 
-native @pure _printf();
-
 traverse l in ls do
     ret = ret + 1;
     watching l do
@@ -48408,8 +48437,6 @@ pool List[10] ls = new List.CONS(1,
                 List.HOLD()));
 
 var int ret = 0;
-
-native @pure _printf();
 
 traverse l in ls do
     ret = ret + 1;
@@ -52183,7 +52210,6 @@ spawn T in ts;
 spawn T in ts;
 async do end;
 
-native @pure _printf();
 loop t1 in ts do
     //watching *t1 do
         loop t2 in ts do
