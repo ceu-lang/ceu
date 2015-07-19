@@ -5,6 +5,12 @@ end
 
 local F
 
+-- TODO:
+--  - change all accesses to byref by default
+--      - only deref on return
+--  - byref check only once (inside V())
+--
+
 function V (me, ...)
     local CTX = ...
     if type(CTX) ~= 'table' then
@@ -175,7 +181,7 @@ F =
         local ref = me.tp and TP.check(me.tp,'&') and tp_id
         if CTX.byref and (not CTX.opt_raw) and
             (not (ENV.clss[tp_id] or (ref and ENV.clss[ref]) or
-                  ENV.adts[tp_id] or (ref and ENV.adts[ref]) or
+                  --ENV.adts[tp_id] or (ref and ENV.adts[ref]) or
                   tp_id=='@'))
                  -- already by ref
         then
@@ -406,9 +412,9 @@ F =
             end
         else
             VAL  = '('..V(e1)..'.'..id..')'
-            if CTX.byref then
-                VAL = '(&'..VAL..')'
-            end
+        end
+        if CTX.byref then
+            VAL = '(&'..VAL..')'
         end
         return VAL
     end,

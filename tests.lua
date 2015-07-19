@@ -10,47 +10,8 @@ end
 
 --[===[
 --]===]
-Test { [[
-data Dummy with
-  tag NIL;
-or
-  tag REC with
-    var Dummy* rec;
-  end
-end
 
-native do
-    char vec[3] = {5,5,5};
-end
-
-pool Dummy[] ds;
-
-var int xxx = 0;
-
-input void OS_START;
-
-traverse d in ds with
-    var int idx = 0;
-do
-    if idx < 3 then
-        par/and do
-            await OS_START;
-            _vec[xxx] = idx;
-            xxx = xxx + 1;
-        with
-            traverse d with
-                this.idx = idx + 1;
-            end;
-        end
-    end
-end
-
-escape (_vec[0]==0) + (_vec[1]==1) + (_vec[2]==2);
-]],
-    wrn = true,
-    run = 3,
-}
-
+-- bug: spawn/return
 Test { [[
 data T with
     tag NIL;
@@ -78,58 +39,8 @@ var int v =
 
 escape v;
 ]],
+    todo = true,
     run = 10,
-}
-
-Test { [[
-data NoRec with
-    tag NIL;
-or
-    tag SEQ with
-    end
-end
-
-pool NoRec[]& norec;
-
-traverse t in this.norec do
-end
-
-escape 1;
-]],
-    env = 'line 8 : invalid pool : non-recursive data',
-}
-
-Test { [[
-data BTree with
-    tag NIL;
-or
-    tag SEQ with
-        var BTree* nxt;
-    end
-end
-
-pool BTree[3] bs = new BTree.SEQ(BTree.SEQ(BTree.NIL()));
-
-class BTreeTraverse with
-    pool BTree[3]& btree;
-do
-    var int ret = 0;
-    traverse t in this.btree do
-        if t:SEQ then
-            ret = ret + 1;
-            traverse t:SEQ.nxt;
-        end
-    end
-    escape ret;
-end
-
-var int ret = do BTreeTraverse with
-                    this.btree = bs;
-              end;
-
-escape ret;
-]],
-    run = 2,
 }
 
 --do return end
@@ -43941,6 +43852,40 @@ escape 1;
     fin = 'line 16 : attribution to pointer with greater scope',
 }
 
+Test { [[
+data Ball with
+    var int x;
+end
+
+data Leaf with
+    tag NOTHING;
+or
+    tag TWEEN with
+        var Ball& ball;
+    end
+end
+
+class LeafHandler with
+    var Leaf& leaf;
+do
+    var Ball& ball = leaf.TWEEN.ball;
+    escape ball.x;
+end
+
+var Ball ball = Ball(10);
+var Leaf leaf = Leaf.TWEEN(ball);
+
+var int x = do LeafHandler with
+                this.leaf = leaf;
+            end;
+
+escape x;
+]],
+    run = 10,
+}
+
+-- << ADT : MISC
+
 -- USE DATATYPES DEFINED ABOVE ("DATA")
 
 -- simple test
@@ -49225,6 +49170,99 @@ escape 1;
     wrn = true,
     run = { ['~>10s']=1 },
 }
+
+Test { [[
+data Dummy with
+  tag NIL;
+or
+  tag REC with
+    var Dummy* rec;
+  end
+end
+
+native do
+    char vec[3] = {5,5,5};
+end
+
+pool Dummy[] ds;
+
+var int xxx = 0;
+
+input void OS_START;
+
+traverse d in ds with
+    var int idx = 0;
+do
+    if idx < 3 then
+        par/and do
+            await OS_START;
+            _vec[xxx] = idx;
+            xxx = xxx + 1;
+        with
+            traverse d with
+                this.idx = idx + 1;
+            end;
+        end
+    end
+end
+
+escape (_vec[0]==0) + (_vec[1]==1) + (_vec[2]==2);
+]],
+    wrn = true,
+    run = 3,
+}
+
+Test { [[
+data NoRec with
+    tag NIL;
+or
+    tag SEQ with
+    end
+end
+
+pool NoRec[]& norec;
+
+traverse t in this.norec do
+end
+
+escape 1;
+]],
+    env = 'line 8 : invalid pool : non-recursive data',
+}
+
+Test { [[
+data BTree with
+    tag NIL;
+or
+    tag SEQ with
+        var BTree* nxt;
+    end
+end
+
+pool BTree[3] bs = new BTree.SEQ(BTree.SEQ(BTree.NIL()));
+
+class BTreeTraverse with
+    pool BTree[3]& btree;
+do
+    var int ret = 0;
+    traverse t in this.btree do
+        if t:SEQ then
+            ret = ret + 1;
+            traverse t:SEQ.nxt;
+        end
+    end
+    escape ret;
+end
+
+var int ret = do BTreeTraverse with
+                    this.btree = bs;
+              end;
+
+escape ret;
+]],
+    run = 2,
+}
+
 --[=[
 
 Test { [[
