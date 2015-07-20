@@ -621,10 +621,17 @@ printf("\tntrls=%d\n", CEU_NTRAILS);
                         stack_pop(&go);
 #ifdef CEU_ORGS_POOL_ITERATOR
                         ceu_pool_iterator_kill(old);
-#endif
                             /* remove myself from all "nxt" iterations from all
                              * pools (point to the one in sequence) */
+#endif
                         ceu_sys_org_kill(app, &go, old);
+#ifdef CEU_ORGS_WATCHING
+                        /* HACK_10: (see adj.lua)
+                         * save return value as global
+                         * (in case spawn terminates immediately)
+                         */
+                        app->ret = old->ret;
+#endif
 #ifdef CEU_ORGS_NEWS
                         ceu_sys_org_free(old);
 #endif
@@ -639,9 +646,6 @@ printf("\tntrls=%d\n", CEU_NTRAILS);
                               ];
 #ifdef CEU_ORGS_NEWS
                     if (to_kill_free) {
-#if 0
-                        "kill" only while in scope
-#endif
 #ifdef CEU_ORGS_WATCHING
                         tceu_stk stk = *stack_cur(&go);
                         stack_pop(&go); /* only if "kill" emit ok_killed */

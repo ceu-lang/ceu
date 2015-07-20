@@ -9,41 +9,8 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
+do return end
 --]===]
-
--- bug: spawn/return
-Test { [[
-data T with
-    tag NIL;
-or
-    tag NEXT with
-        var T* next;
-    end
-end
-
-class C with
-    var int v;
-do
-    pool T[] ts; // = new T.NEXT(T.NIL());
-    var int ret =
-        traverse t in ts do
-            escape this.v;
-        end;
-    escape ret;
-end
-
-var int v =
-    do C with
-        this.v = 10;
-    end;
-
-escape v;
-]],
-    todo = true,
-    run = 10,
-}
-
---do return end
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------
@@ -48697,6 +48664,70 @@ end
 escape 1;
 ]],
     fin = 'line 12 : unsafe access to pointer "p" across `await´',
+}
+
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[3] list = new
+    List.CONS(1,
+        List.CONS(2,
+            List.CONS(3,
+                List.NIL())));
+
+var int s2 = 0;
+var int s1 =
+    traverse l in list do
+        if l:NIL then
+            escape 0;
+        else
+            var int sum_tail = traverse l:CONS.tail;
+            s2 = s2 + l:CONS.head;
+            escape sum_tail + l:CONS.head;
+        end
+    end;
+
+escape s1 + s2;
+]],
+    run = 12,
+}
+
+Test { [[
+data T with
+    tag NIL;
+or
+    tag NEXT with
+        var T* next;
+    end
+end
+
+class C with
+    var int v;
+do
+    pool T[] ts; // = new T.NEXT(T.NIL());
+    var int ret =
+        traverse t in ts do
+            escape this.v;
+        end;
+    escape ret;
+end
+
+var int v =
+    do C with
+        this.v = 10;
+    end;
+
+escape v;
+]],
+    todo = true,
+    run = 10,
 }
 
 -- ADTS ALIASING

@@ -411,11 +411,19 @@ me.blk_body = me.blk_body or blk_body
         --      escape 0;
         --  end
         --  pool Body[?] bodies;
-        --  ret = do Body with
-        --      this.bodies = bodies;
-        --      this.parent = &this;    // watch myself
-        --      this.<n>    = <n>;
+        --  var Body*? _body_;
+        --  _body_ = spawn Body in _bodies with
+        --      this._bodies = bodies;
+        --      this._parent = &this;   // watch myself
+        --      this.<n>     = <n>;
         --  end;
+        --  if _body_? then
+        --      ret = await *_body_!;
+        --  else
+        --      ret = _ceu_app->ret;
+        --              // result of immediate spawn termination
+        --              // TODO: what if spawn did fail? (ret=garbage?)
+        --  end
         --]]
 
         local to, root, ifc, body, ret = unpack(me)
@@ -523,7 +531,9 @@ me.blk_body = me.blk_body or blk_body
     --  if _body_? then
     --      ret = await *_body_!;
     --  else
-    --      ret = 0;    // TODO: how to get "ret" from a dead body?
+    --      ret = _ceu_app->ret;
+    --              // result of immediate spawn termination
+    --              // TODO: what if spawn did fail? (ret=garbage?)
     --  end
     --]]
     __traverse_spawn_await = function (me, cls_id, spawn, ret)
@@ -547,7 +557,10 @@ me.blk_body = me.blk_body or blk_body
             SET_AWAIT = node('_Set', me.ln, ret, '=', 'await',
                             SET_AWAIT)
             SET_DEAD  = node('_Set', me.ln, ret, '=', 'exp',
-                            node('NUMBER', me.ln, '0'))
+                            node('RawExp', me.ln, '_ceu_app->ret'))
+                                -- HACK_10: (see ceu_os.c)
+                                -- restores return value from global
+                                -- (in case spawn terminates immediately)
         end
 
         local if_ = node('If', me.ln,
