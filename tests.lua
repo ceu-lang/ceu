@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end
+--]===]
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------
@@ -29412,6 +29413,42 @@ end;
 escape v;
 ]],
     fin = 'line 11 : unsafe access to pointer "v" across `class´ (tests.lua : 7)',
+    --wrn = true,
+    --run = 8,
+}
+Test { [[
+class Sum with
+    var int* v;
+do
+    await FOREVER;
+end
+
+class Body with
+    pool  Body[]& bodies;
+    var   Sum&    sum;
+do
+    await 1s;
+    *this.sum.v = *this.sum.v + 1;
+    spawn Body in this.bodies with
+        this.bodies = bodies;
+        this.sum    = sum;
+    end;
+end
+
+var int v = 0;
+var Sum sum with
+    this.v = &v;
+end;
+
+pool Body[7] bodies;
+do Body with
+    this.bodies = bodies;
+    this.sum    = sum;
+end;
+
+escape v;
+]],
+    fin = 'line 12 : unsafe access to pointer "v" across `class´ (tests.lua : 7)',
 }
 Test { [[
 data Tree with
@@ -42077,7 +42114,7 @@ end
 
 escape 1;
 ]],
-    fin = 'line 17 : unsafe access to pointer "p" across `await´',
+    fin = 'line 17 : unsafe access to pointer "p" across `class´',
 }
 
 Test { [[
@@ -46017,6 +46054,7 @@ class Body with
     pool  Body[]& bodies;
     var   List*   n;
 do
+    await 1s;
     if n:NIL then
     end
     watching n do
@@ -46037,10 +46075,172 @@ end;
 
 escape 1;
 ]],
-    fin = 'line 19 : unsafe access to pointer "n" across `class´ (tests.lua : 15)',
+    fin = 'line 20 : unsafe access to pointer "n" across `await´ (tests.lua : 19)',
 }
---]===]
-error'fix across-await bug'
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[3] list
+    = new List.CONS(1,
+            List.CONS(2,
+                List.CONS(3, List.NIL())));
+
+class Body with
+    pool  Body[]& bodies;
+    var   List*   n;
+do
+    if n:NIL then
+    end
+    watching n do
+        if n:CONS then
+            spawn Body in this.bodies with
+                this.bodies = bodies;
+                this.n      = n:CONS.tail;
+            end;
+        end
+    end
+end
+
+pool Body[3] bodies;
+do Body with
+    this.bodies = bodies;
+    this.n      = list;
+end;
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+    --fin = 'line 19 : unsafe access to pointer "n" across `class´ (tests.lua : 15)',
+}
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[3] list;
+list = new List.CONS(1,
+            List.CONS(2,
+                List.CONS(3, List.NIL())));
+
+var int sum = 0;
+
+traverse n in list do
+    sum = sum + 1;
+    if n:CONS then
+        sum = sum + n:CONS.head;
+        traverse n:CONS.tail;
+    end
+end
+
+escape sum;
+]],
+    run = 10,
+}
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[3] list;
+list = new List.CONS(1,
+            List.CONS(2,
+                List.CONS(3, List.NIL())));
+
+var int sum = 0;
+
+traverse n in list do
+    sum = sum + 1;
+    if n:CONS then
+        sum = sum + n:CONS.head;
+        await 1s;
+        traverse n:CONS.tail;
+    end
+end
+
+escape sum;
+]],
+    fin = 'line 22 : unsafe access to pointer "n" across `await´ (tests.lua : 21)',
+}
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[3] list;
+list = new List.CONS(1,
+            List.CONS(2,
+                List.CONS(3, List.NIL())));
+
+var int sum = 0;
+
+traverse n in list do
+    sum = sum + 1;
+    await 1s;
+    if n:CONS then
+        sum = sum + n:CONS.head;
+        traverse n:CONS.tail;
+    end
+end
+
+escape sum;
+]],
+    fin = 'line 20 : unsafe access to pointer "n" across `await´ (tests.lua : 19)',
+}
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[3] list;
+list = new List.CONS(1,
+            List.CONS(2,
+                List.CONS(3, List.NIL())));
+
+var int sum = 0;
+
+traverse n in list do
+    sum = sum + 1;
+    if n:CONS then
+        sum = sum + n:CONS.head;
+        watching n do
+            await 1s;
+            traverse n:CONS.tail;
+        end
+    end
+end
+
+escape sum;
+]],
+    run = { ['~>10s'] = 10 },
+}
 Test { [[
 data List with
     tag NIL;
@@ -46103,9 +46303,8 @@ end
 
 escape sum;
 ]],
-    run = { ['~>10s'] = 10 },
+    fin = 'line 21 : unsafe access to pointer "n" across `await´ (tests.lua : 20)',
 }
-do return end
 Test { [[
 data List with
     tag NIL;
@@ -46142,8 +46341,6 @@ escape sum;
     run = 12,
 }
 
-
-
 Test { [[
 data Tree with
     tag NIL;
@@ -46173,7 +46370,8 @@ end
 
 escape v;
 ]],
-    fin = 'line 20 : unsafe access to pointer "ptr" across `class´',
+    --fin = 'line 20 : unsafe access to pointer "ptr" across `class´',
+    run = 7,
 }
 
 Test { [[
@@ -46237,7 +46435,9 @@ end;
 
 escape _V;
 ]],
-    fin = 'line 33 : unsafe access to pointer "n" across `class´',
+    --fin = 'line 33 : unsafe access to pointer "n" across `class´',
+    _ana = {acc=true},
+    run = 18,
 }
 
 Test { [[
@@ -46490,7 +46690,8 @@ end
 
 escape sum;
 ]],
-    run = { ['~>10s'] = 10 },
+    --run = { ['~>10s'] = 10 },
+    fin = 'line 21 : unsafe access to pointer "n" across `await´ (tests.lua : 20)',
 }
 
 Test { [[
@@ -46765,7 +46966,9 @@ end
 
 escape 1;
 ]],
-    fin = 'line 15 : unsafe access to pointer "p1" across `class´ (tests.lua : 14)',
+    --fin = 'line 15 : unsafe access to pointer "p1" across `class´ (tests.lua : 14)',
+    wrn = true,
+    run = 1,
 }
 Test { [[
 data T with
@@ -46951,8 +47154,8 @@ pool Tree[3] tree = new Tree.NODE(1,
 var int sum = 1;
 
 traverse n in tree do
-    await 1s;
     watching n do
+        await 1s;
         if n:NODE then
             traverse n:NODE.left;
             sum = sum * n:NODE.v + n:NODE.v;
@@ -46977,6 +47180,39 @@ or
     end
 end
 
+pool Tree[3] tree = new Tree.NODE(1,
+            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
+            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+
+var int sum = 1;
+
+traverse n in tree do
+    await 1s;
+    watching n do
+        if n:NODE then
+            traverse n:NODE.left;
+            sum = sum * n:NODE.v + n:NODE.v;
+            traverse n:NODE.right;
+        end
+    end
+end
+
+escape sum;
+]],
+    fin = 'line 19 : unsafe access to pointer "n" across `await´ (tests.lua : 18)',
+}
+
+Test { [[
+data Tree with
+    tag NIL;
+or
+    tag NODE with
+        var int   v;
+        var Tree* left;
+        var Tree* right;
+    end
+end
+
 pool Tree[3] tree;
 tree = new Tree.NODE(1,
             Tree.NODE(2, Tree.NIL(), Tree.NIL()),
@@ -46986,8 +47222,8 @@ var int sum = 1;
 
 do
     traverse n in tree do
-        await 1s;
         watching n do
+            await 1s;
             if n:NODE then
                 traverse n:NODE.left;
                 sum = sum * n:NODE.v + n:NODE.v;
@@ -48682,6 +48918,7 @@ var int v = 10;
 var int* p = &v;
 
 traverse l in ls do
+    await 1s;
     *p = 1;
     if l:VAL then
         traverse l:VAL.l;
@@ -48690,7 +48927,7 @@ end
 
 escape v;
 ]],
-    fin = 'line 15 : unsafe access to pointer "p" across `class´',
+    fin = 'line 16 : unsafe access to pointer "p" across `await´',
 }
 
 Test { [[
@@ -48729,7 +48966,7 @@ end
 
 escape 1;
 ]],
-    fin = 'line 12 : unsafe access to pointer "p" across `await´',
+    fin = 'line 12 : unsafe access to pointer "p" across `class´',
 }
 
 Test { [[

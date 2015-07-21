@@ -860,6 +860,11 @@ F = {
             stmts[2] = AST.node('Nothing', me.ln)       -- remove OPT-1
             stmts[3] = AST.node('Nothing', me.ln)       -- remove OPT-2
             me.__env_watching = true    -- see props.lua
+            local awt = AST.asr(stmts,'', 4,'Stmts', 1,'If',    3,'Block',
+                                          1,'Stmts', 4,'Block', 1,'Stmts',
+                                          2,'Loop',  4,'Stmts', 1,'Set',
+                                          3,'Await')
+            awt.__env_org = me[1]   -- see fin.lua
         elseif tp and ENV.adts[tp_id] then
             --ASR(tp.ptr==1, me, 'data must be a pointer')
             local dot = AST.asr(stmts,'', 3,'If', 1,'Op2_.')
@@ -1021,13 +1026,6 @@ F = {
         ASR(me.cls, me, 'undeclared type `'..id..'´')
         ASR(not me.cls.is_ifc, me, 'cannot instantiate an interface')
         me.tp = TP.new{id,'*'}  -- class id
-
-        if me.cls == CLS() then
-            -- Recursive class:
-            --  Implies an "await" in the beginning for "across await" checks
-            --  (see fin.lua).
-            me.cls.is_rec = true
-        end
     end,
     Spawn = function (me)
         local _, pool, _ = unpack(me)
