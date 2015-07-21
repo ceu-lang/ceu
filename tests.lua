@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end
---]===]
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------
@@ -46040,6 +46039,73 @@ escape 1;
 ]],
     fin = 'line 19 : unsafe access to pointer "n" across `class´ (tests.lua : 15)',
 }
+--]===]
+error'fix across-await bug'
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[3] list;
+list = new List.CONS(1,
+            List.CONS(2,
+                List.CONS(3, List.NIL())));
+
+var int sum = 0;
+
+traverse n in list do
+    sum = sum + 1;
+    //watching n do
+        //await 1s;
+        if n:CONS then
+            sum = sum + n:CONS.head;
+            traverse n:CONS.tail;
+        end
+    //end
+end
+
+escape sum;
+]],
+    run = { ['~>10s'] = 10 },
+}
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[3] list;
+list = new List.CONS(1,
+            List.CONS(2,
+                List.CONS(3, List.NIL())));
+
+var int sum = 0;
+
+traverse n in list do
+    sum = sum + 1;
+    //watching n do
+        await 1s;
+        if n:CONS then
+            sum = sum + n:CONS.head;
+            traverse n:CONS.tail;
+        end
+    //end
+end
+
+escape sum;
+]],
+    run = { ['~>10s'] = 10 },
+}
+do return end
 Test { [[
 data List with
     tag NIL;
