@@ -39,6 +39,10 @@ function TP.push (tp, v)
     return {tt=tt}
 end
 function TP.check (tp, ...)
+    if tp.tup then
+        return false
+    end
+
     local tt = tp.tt
 
     local E = { ... }
@@ -327,6 +331,24 @@ function TP.contains (tp1, tp2)
                 end
                 return true
             end
+
+        -- vec = [...]
+        -- (see vec=vec below)
+        elseif TP.check(tp1,'[]','-&') and (not TP.is_ext(tp1,'_','@')) then
+            -- vec = [...]
+            local t1 = TP.pop(TP.pop(tp1,'&'),'[]')
+            for _,tt2 in ipairs(tp2.tup) do
+                if not tt2.tup then
+                    return false, 'arity mismatch'
+                end
+                for i,t2 in ipairs(tt2.tup) do
+                    local ok, msg = TP.contains(t1,t2)
+                    if not ok then
+                        return false, 'wrong argument #'..i..' : '..msg
+                    end
+                end
+            end
+            return true
         end
         return false, 'arity mismatch'
     end
@@ -350,6 +372,7 @@ function TP.contains (tp1, tp2)
 
     tp1 = { tt=__norefs(tp1.tt) }
     tp2 = { tt=__norefs(tp2.tt) }
+
 
     -- BIG SWITCH --
 
@@ -376,6 +399,14 @@ function TP.contains (tp1, tp2)
         else
             return false, __err(TP1, TP2)
         end
+
+    -- vec = vec
+    -- (see vec=[...] above)
+    elseif TP.check(tp1,'[]') and (not TP.is_ext(tp1,'_','@')) and
+           TP.check(tp2,'[]') and (not TP.is_ext(tp2,'_','@'))
+    then
+        return TP.contains( TP.pop(tp1,'[]'),
+                            TP.pop(tp2,'[]') )
 
     -- same type
     elseif TP.tostr(tp1) == TP.tostr(tp2) then

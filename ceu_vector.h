@@ -22,6 +22,9 @@ int   ceu_vector_len  (tceu_vector* vector, int len);
 byte* ceu_vector_geti (tceu_vector* vector, int idx);
 int   ceu_vector_seti (tceu_vector* vector, int idx, byte* v);
 int   ceu_vector_push (tceu_vector* vector, byte* v);
+
+int   ceu_vector_copy (tceu_vector* to, tceu_vector* fr);
+
 #if 0
 byte* ceu_pool_alloc (tceu_pool* pool);
 void ceu_pool_free (tceu_pool* pool, byte* val);

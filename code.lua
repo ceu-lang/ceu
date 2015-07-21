@@ -1048,23 +1048,36 @@ case ]]..SET.lbl_cnt.id..[[:;
             CONC(me, fr)                -- TODO: remove?
 
             -- ARRAY ASSIGNMENTS
+            --  - ignore byref assignments (let normal set deal)
 
-            if TP.check(to.fst.tp,'[]','-&') and (not TP.is_ext(to.fst.tp,'_','@')) then
+            if (not me.__ref_byref) and
+               TP.check(to.fst.tp,'[]','-&') and (not TP.is_ext(to.fst.tp,'_','@'))
+            then
                 local tp_toc = TP.toc(TP.pop(TP.pop(to.tp,'&'),'[]'))
 
                 -- vec = ...
                 if to == to.fst then
-                    local exps = AST.asr(fr,'VectorExp', 1,'ExpList')
-                    LINE(me, [[
+                    -- vec = [...]
+                    if fr.tag == 'VectorExp' then
+                        local exps = AST.asr(fr,'VectorExp', 1,'ExpList')
+                        LINE(me, [[
 ceu_vector_len(]]..V(to)..[[, 0);
 ]])
-                    for i, exp in ipairs(exps) do
-                        LINE(me, [[
+                        for i, exp in ipairs(exps) do
+                            LINE(me, [[
 {
     ]]..tp_toc..' __ceu_p = '..V(exp)..[[;
 #line ]]..me.ln[2]..' "'..me.ln[1]..[["
     ceu_out_assert( ceu_vector_push(]]..V(to)..[[, &__ceu_p), "access out of bounds");
 }
+]])
+                        end
+
+                    -- vec = vec
+                    else
+                        assert(TP.check(fr.tp,'[]','-&'), 'bug found')
+                        LINE(me, [[
+ceu_out_assert( ceu_vector_copy(]]..V(to)..','..V(fr)..[[), "access out of bounds");
 ]])
                     end
 

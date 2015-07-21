@@ -10,6 +10,7 @@ end
 
 --[===[
 --]===]
+
 Test { [[
 var u8 v;
 escape $$v;
@@ -40,7 +41,33 @@ escape $$vec + $vec + 1;
 Test { [[
 escape [1];
 ]],
-    env = 'line 1 : types mismatch (`int´ <= `$vector´)',
+    env = 'line 1 : arity mismatch',
+}
+
+Test { [[
+var u8[10] vec = [ [1,2,3] ];
+escape 1;
+]],
+    env = 'line 1 : wrong argument #1 : arity mismatch',
+}
+Test { [[
+var u8[10] vec = (1,2,3);
+escape 1;
+]],
+    parser = 'line 1 : after `1´ : expected `)´',
+}
+Test { [[
+var u8[10] vec = (1);
+escape 1;
+]],
+    env = 'line 1 : types mismatch (`u8[]´ <= `int´)',
+}
+Test { [[
+var int x;
+var u8[10] vec = [ &x ];
+escape 1;
+]],
+    env = 'line 2 : wrong argument #1 : types mismatch (`u8´ <= `int*´)',
 }
 
 Test { [[
@@ -115,6 +142,42 @@ $vec = 0;
 escape vec[0];
 ]],
     run = '3] runtime error: access out of bounds',
+}
+
+Test { [[
+var u8[10] v1 = [1,2,3];
+var u8[20] v2 = v1;
+escape v2[0] + v2[1] + v2[2];
+]],
+    run = 6,
+}
+Test { [[
+var u8[20] v1 = [1,2,3];
+var u8[10] v2 = v1;
+escape v2[0] + v2[1] + v2[2];
+]],
+    run = 6,
+}
+Test { [[
+var u8[] v1   = [1,2,3];
+var u8[10] v2 = v1;
+escape v2[0] + v2[1] + v2[2];
+]],
+    run = 6,
+}
+Test { [[
+var u8[10] v1 = [1,2,3];
+var u8[]   v2 = v1;
+escape v2[0] + v2[1] + v2[2];
+]],
+    run = 6,
+}
+Test { [[
+var u8[3] v1 = [1,2,3];
+var u8[2] v2 = v1;
+escape v2[0] + v2[1] + v2[2];
+]],
+    run = '2] runtime error: access out of bounds',
 }
 
 Test { [[

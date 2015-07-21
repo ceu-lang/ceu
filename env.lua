@@ -809,7 +809,8 @@ F = {
     end,
 
     VectorExp = function (me)
-        me.tp = TP.new{'$vector'}
+        me.tp = me
+        me.tp.tup = TP.t2tup(me)
     end,
 
     Dcl_nat = function (me)
@@ -1001,14 +1002,8 @@ F = {
             fr.tp = to.tp -- return type is not known at compile time
 
         else    -- set == 'exp'
-            if TP.check(to.tp,'[]','-&') and (not TP.is_ext(to.tp,'_','@')) then
-                -- TODO: move to TP.contains?
-                --  (or it is really a special case for vector assignments only?)
-                ASR(TP.check(fr_tp,'$vector'), me, msg)
-            else
-                local ok, msg = TP.contains(to.tp,fr_tp)
-                ASR(ok, me, msg)
-            end
+            local ok, msg = TP.contains(to.tp,fr_tp)
+            ASR(ok, me, msg)
         end
 
         if not lua_str then

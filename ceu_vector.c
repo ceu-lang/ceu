@@ -79,4 +79,21 @@ printf("GROW\n");
     return 1;
 }
 
+int ceu_vector_copy (tceu_vector* to, tceu_vector* fr) {
+    /* TODO: memcpy */
+    int i;
+    if (! ceu_vector_len(to,0)) {
+        return 0;
+    }
+    for (i=0; i<fr->nxt; i++) {
+        void* v = ceu_vector_geti(fr, i);
+        if (v == NULL) {
+            return 0;
+        } else if (!ceu_vector_push(to,v)) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 #endif
