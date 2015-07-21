@@ -512,7 +512,7 @@ typedef union CEU_]]..me.id..[[_delayed {
         end
 
         for _, var in ipairs(sorted) do
-            local tp = TP.toc(var.tp)
+            local tp_c  = TP.toc(var.tp)
             local tp_id = TP.id(var.tp)
 
             if var.inTop then
@@ -524,7 +524,7 @@ typedef union CEU_]]..me.id..[[_delayed {
             end
 
             if DCL.id == tp_id then
-                tp = 'struct '..tp  -- for types w/ pointers for themselves
+                tp_c = 'struct '..tp_c  -- for types w/ pointers for themselves
             end
 
             if var.pre=='var' and (not var.isTmp) then
@@ -537,17 +537,17 @@ typedef union CEU_]]..me.id..[[_delayed {
                     dcl = dcl..'struct ' -- due to recursive spawn
                 end
                 if TP.check(var.tp,'[]') then
-                    local tp = string.sub(tp,1,-2)  -- remove leading `*´
+                    local tp_c = string.sub(tp_c,1,-2)  -- remove leading `*´
                     if TP.is_ext(var.tp,'_') then
-                        dcl = dcl .. tp..' '..var.id_..'['..var.tp.arr.cval..']'
+                        dcl = dcl .. tp_c..' '..var.id_..'['..var.tp.arr.cval..']'
                     else
                         local max = (var.tp.arr.cval or 0)
                         dcl = dcl .. [[
-CEU_VECTOR_DCL(]]..var.id_..','..tp..','..max..[[)
+CEU_VECTOR_DCL(]]..var.id_..','..tp_c..','..max..[[)
 ]]
                     end
                 else
-                    dcl = dcl .. tp..' '..var.id_
+                    dcl = dcl .. tp_c..' '..var.id_
                 end
                 DCL.struct = DCL.struct..SPC()..'  '..dcl..';\n'
             elseif var.pre=='pool' then
