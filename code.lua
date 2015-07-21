@@ -717,6 +717,17 @@ _STK_ORG->trls[ ]]..me.trl_fins[1]..[[ ].lbl   = ]]..me.lbl_fin.id..[[;
                     LINE(me, ' = '..var.id)
                 end
                 LINE(me, ';')
+            end
+
+            if var.pre == 'var' then
+                if TP.check(var.tp,'[]') and (not TP.is_ext(var.tp,'_')) then
+                    local max = (var.tp.arr.cval or 0)
+                    LINE(me, [[
+ceu_vector_init(]]..'&'..CUR(me,var.id_)..','..max..',sizeof('..TP.id(var.tp)..[[),
+                (byte*)]]..CUR(me,var.id_)..[[_mem);
+]])
+                end
+
             elseif var.pre=='pool' and (var.cls or var.adt) then
                 -- real pool (not reference or pointer)
                 local cls = var.cls
@@ -1035,7 +1046,53 @@ case ]]..SET.lbl_cnt.id..[[:;
 
         if set == 'exp' then
             CONC(me, fr)                -- TODO: remove?
-            F.__set(me, fr, to)
+
+            -- ARRAY ASSIGNMENTS
+
+            if TP.check(to.fst.tp,'[]','-&') and (not TP.is_ext(to.fst.tp,'_','@')) then
+                local tp_toc = TP.toc(TP.pop(TP.pop(to.tp,'&'),'[]'))
+
+                -- vec = ...
+                if to == to.fst then
+                    local exps = AST.asr(fr,'VectorExp', 1,'ExpList')
+                    LINE(me, [[
+ceu_vector_len(]]..V(to)..[[, 0);
+]])
+                    for i, exp in ipairs(exps) do
+                        LINE(me, [[
+{
+    ]]..tp_toc..' __ceu_p = '..V(exp)..[[;
+#line ]]..me.ln[2]..' "'..me.ln[1]..[["
+    ceu_out_assert( ceu_vector_push(]]..V(to)..[[, &__ceu_p), "access out of bounds");
+}
+]])
+                    end
+
+                -- $vec = ...
+                elseif to.tag == 'Op1_$' then
+                    local _,arr = unpack(to)
+                    LINE(me, [[
+ceu_vector_len(]]..V(arr)..','..V(fr)..[[);
+]])
+
+                -- vec[i] = ...
+                else
+                    AST.asr(to, 'Op2_idx')
+                    local _, vec, idx = unpack(to)
+                    LINE(me, [[
+{
+    ]]..tp_toc..' __ceu_p = '..V(fr)..[[;
+#line ]]..me.ln[2]..' "'..me.ln[1]..[["
+    ceu_out_assert( ceu_vector_seti(]]..V(vec)..','..V(idx)..[[, &__ceu_p), "access out of bounds");
+}
+]])
+                end
+
+            -- OTHER ASSIGNMENTS
+
+            else
+                F.__set(me, fr, to)
+            end
 
         elseif set == 'adt-alias' then
             CONC(me, fr)                -- TODO: remove?

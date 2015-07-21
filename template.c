@@ -25,6 +25,10 @@
 #include "ceu_pool.h"
 #endif
 
+#ifdef CEU_VECTOR
+#include "ceu_vector.h"
+#endif
+
 #ifdef CEU_IFCS
 #include <stddef.h>
 /* TODO: === direto? */

@@ -43,7 +43,11 @@ F =
             if var.tp.arr then
                 -- normalize all arrays acesses to pointers to arr[0]
                 -- (because of interface accesses that must be done through a pointer)
-                VAL = '(&'..VAL..'[0])'
+                if TP.is_ext(var.tp,'_') then
+                    VAL = '(&'..VAL..'[0])'
+                else
+                    VAL = '(&'..VAL..')'
+                end
             elseif var.cls then
                 -- normalize all org acesses to pointers to it
                 -- (because of interface accesses that must be done through a pointer)
@@ -324,11 +328,18 @@ F =
 
     Op2_idx = function (me)
         local _, arr, idx = unpack(me)
-        local VAL = V(arr)..'['..V(idx)..']'
-        if ENV.clss[TP.id(me.tp)] and (not TP.check(me.tp,'*')) then
-            VAL = '(&'..VAL..')'
-                -- class accesses must be normalized to references
+        local VAL
+
+        if TP.is_ext(arr.tp,'_','@') then
+            VAL = V(arr)..'['..V(idx)..']'
+            if ENV.clss[TP.id(me.tp)] and (not TP.check(me.tp,'*')) then
+                VAL = '(&'..VAL..')'
+                    -- class accesses must be normalized to references
+            end
+        else
+            VAL = '(*(('..TP.id(me.tp)..'*)ceu_vector_geti_ex('..V(arr)..','..V(idx)..',__FILE__,__LINE__)))'
         end
+
         return VAL
     end,
 
@@ -386,10 +397,18 @@ F =
         return '('..V(e1)..' != CEU_'..ID..'_NIL)'
     end,
 
-    -- TODO: recurse-type
     ['Op1_!'] = function (me)
         local op, e1 = unpack(me)
         return V(e1)
+    end,
+
+    ['Op1_$'] = function (me)
+        local op, e1 = unpack(me)
+        return '(ceu_vector_nxt('..V(e1)..'))'
+    end,
+    ['Op1_$$'] = function (me)
+        local op, e1 = unpack(me)
+        return '(ceu_vector_max('..V(e1)..'))'
     end,
 
     ['Op2_.'] = function (me, CTX)

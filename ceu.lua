@@ -218,6 +218,11 @@ do
             has_lua     = 'CEU_LUA',
             has_orgs_watching = 'CEU_ORGS_WATCHING',
             has_pool_iterator = 'CEU_ORGS_POOL_ITERATOR',
+
+            has_vector        = 'CEU_VECTOR',
+            has_vector_pool   = 'CEU_VECTOR_POOL',
+            has_vector_malloc = 'CEU_VECTOR_MALLOC',
+
             -- code.lua
             has_goto    = 'CEU_GOTO',
         }
@@ -461,6 +466,13 @@ do
     FILES.ceu_pool_c = SUB(FILES.ceu_pool_c, '#include "ceu_pool.h"', '')
     CC = SUB(CC, '#include "ceu_pool.h"',
                          FILES.ceu_pool_h..'\n'..FILES.ceu_pool_c)
+
+    -- TODO: ceu_vector_* => ceu_sys_vector_*
+    FILES.ceu_vector_h = SUB(FILES.ceu_vector_h, '#include "ceu_os.h"',
+                                                 FILES.ceu_os_h)
+    FILES.ceu_vector_c = SUB(FILES.ceu_vector_c, '#include "ceu_vector.h"', '')
+    CC = SUB(CC, '#include "ceu_vector.h"',
+                         FILES.ceu_vector_h..'\n'..FILES.ceu_vector_c)
 
     if OPTS.out_s ~= 'CEU_SIZE' then
         CC = SUB(CC, 'CEU_SIZE', OPTS.out_s)

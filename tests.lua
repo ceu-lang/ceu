@@ -9,8 +9,139 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
-do return end
 --]===]
+Test { [[
+var u8 v;
+escape $$v;
+]],
+    env = 'line 2 : invalid operand to unary "$$" : array expected',
+}
+Test { [[
+var u8 v;
+escape $v;
+]],
+    env = 'line 2 : invalid operand to unary "$" : array expected',
+}
+
+Test { [[
+var u8[10] vec;
+escape $$vec + $vec;
+]],
+    run = 10,
+}
+
+Test { [[
+var u8[] vec;
+escape $$vec + $vec + 1;
+]],
+    run = 1,
+}
+
+Test { [[
+escape [1];
+]],
+    env = 'line 1 : types mismatch (`int´ <= `$vector´)',
+}
+
+Test { [[
+var u8[10] vec = [1,2,3];
+_printf("v[0] = %d\n", vec[0]);
+_printf("v[1] = %d\n", vec[1]);
+escape $$vec + $vec + vec[0] + vec[1] + vec[2];
+]],
+    run = 19,
+}
+
+Test { [[
+var u8[10] vec = [1,2,3];
+vec[0] = 4;
+vec[1] = 5;
+vec[2] = 6;
+escape $$vec + $vec + vec[0] + vec[1] + vec[2];
+]],
+    run = 28,
+}
+
+Test { [[
+var u8[10] vec;
+vec[0] = 1;
+escape 1;
+]],
+    run = '2] runtime error: access out of bounds',
+}
+
+Test { [[
+var u8[10] vec;
+escape vec[0];
+]],
+    run = '2] runtime error: access out of bounds',
+}
+
+Test { [[
+class T with do end
+pool T[10] ts;
+escape $$ts;
+]],
+    -- TODO: err msg
+    env = 'line 3 : types mismatch (`int´ <= `T´)',
+}
+
+Test { [[
+class T with do end
+pool T[10] ts;
+escape $ts;
+]],
+    -- TODO: err msg
+    env = 'line 3 : types mismatch (`int´ <= `T´)',
+}
+
+Test { [[
+var u8[] vec = [1,2,3];
+escape $$vec + $vec + vec[0] + vec[1] + vec[2];
+]],
+    run = 9,
+}
+
+Test { [[
+var u8[10] vec = [1,2,3];
+$$vec = 0;
+escape vec[0];
+]],
+    env = 'line 2 : invalid attribution',
+}
+Test { [[
+var u8[10] vec = [1,2,3];
+$vec = 0;
+escape vec[0];
+]],
+    run = '3] runtime error: access out of bounds',
+}
+
+Test { [[
+var u8[10] vec = [1,2,3];
+var u8[]&  ref = vec;
+escape $$ref + $ref + ref[0] + ref[1] + ref[2];
+]],
+    run = 9,
+}
+
+Test { [[
+var u8[10]  vec = [1,2,3];
+var u8[11]& ref = vec;
+escape $$ref + $ref + ref[0] + ref[1] + ref[2];
+]],
+    run = 9,
+}
+
+Test { [[
+var u8[10] vec = [1,2,3];
+var u8[9]& ref = vec;
+escape $$ref + $ref + ref[0] + ref[1] + ref[2];
+]],
+    run = 9,
+}
+
+do return end
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------

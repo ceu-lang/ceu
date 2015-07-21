@@ -15,6 +15,10 @@ PROPS = {
     has_enums   = false,
     has_pool_iterator = false,
 
+    has_vector        = false,
+    has_vector_pool   = false,
+    has_vector_malloc = false,
+
     has_orgs_news        = false,
     has_orgs_news_pool   = false,
     has_orgs_news_malloc = false,
@@ -152,7 +156,16 @@ F = {
             if var.cls then
                 me.needs_clr = true
             end
-            if var.pre=='pool' then
+            if var.pre == 'var' then
+                if TP.check(var.tp,'[]','-&') and (not TP.is_ext(var.tp,'_')) then
+                    PROPS.has_vector = true
+                    if var.tp.arr.cval then
+                        PROPS.has_vector_pool   = true
+                    else
+                        PROPS.has_vector_malloc = true
+                    end
+                end
+            elseif var.pre == 'pool' then
                 local s
                 local tp_id = TP.id(var.tp)
                 if ENV.clss[tp_id] or tp_id=='_TOP_POOL' then

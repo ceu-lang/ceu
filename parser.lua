@@ -323,7 +323,8 @@ end
     , __8      = V'__9'  * ((CK'>>'+CK'<<') * EV'__9')^0
     , __9      = V'__10' * ((CK'+'+CK'-') * EV'__10')^0
     , __10     = V'__11' * ((CK'*'+(CK'/'-'//'-'/*')+CK'%') * EV'__11')^0
-    , __11     = ( Cc(false) * (CKEY'not'+CK'&'+CK'-'+CK'+'+ CK'~'+CK'*'
+    , __11     = ( Cc(false) * (CKEY'not'+CK'&'+CK'-'+CK'+'+CK'~'+
+                                          CK'*'+CK'$$'+(CK'$'-'$$')
                              + Cc'cast'*(K'('*V'Type'*K')') )
                 )^0 * V'__12'
     , __12     = V'__13' *
@@ -341,6 +342,7 @@ end
               + V'NULL'    + V'NUMBER' + V'STRING'
               + V'Global'  + V'This'   + V'Outer'
               + V'RawExp'
+              + V'VectorExp'
               + CKEY'call'     * EV'__Exp'
               + CKEY'call/rec' * EV'__Exp'
 
@@ -352,6 +354,7 @@ end
     , _Adt_explist = ( V'__adt_expitem'*(K','*EV'__adt_expitem')^0 )^-1
 
     , ExpList = ( V'__Exp'*(K','*EV'__Exp')^0 )^-1
+    , VectorExp = K'[' * V'ExpList' * EK']'
 
     , __Parens  = K'(' * EV'__Exp' * EK')'
 

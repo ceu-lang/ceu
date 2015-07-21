@@ -94,18 +94,21 @@
     #define ceu_out_log(mode,str) \
         ((__typeof__(ceu_sys_log)*)((_ceu_app)->sys_vec[CEU_SYS_LOG]))(mode,str)
 
-    #define ceu_out_assert_ex(v,msg,file,line)          \
-        if ((!(v)) && ((msg)!=NULL)) {                  \
-            ceu_out_log(0, (long)"[");                  \
-            ceu_out_log(0, (long)(file));               \
-            ceu_out_log(0, (long)":");                  \
-            ceu_out_log(2, (line));                     \
-            ceu_out_log(0, (long)"] ");                 \
-            ceu_out_log(0, (long)"runtime error: ");    \
-            ceu_out_log(0, (long)(msg));                \
-            ceu_out_log(0, (long)"\n");                 \
-        }                                               \
-        ((__typeof__(ceu_sys_assert)*)((_ceu_app)->sys_vec[CEU_SYS_ASSERT]))(v)
+    #define ceu_out_assert_ex(v,msg,file,line)           \
+        {                                                \
+            int __ceu_v = v;                             \
+            if ((!(__ceu_v)) && ((msg)!=NULL)) {         \
+                ceu_out_log(0, (long)"[");               \
+                ceu_out_log(0, (long)(file));            \
+                ceu_out_log(0, (long)":");               \
+                ceu_out_log(2, (line));                  \
+                ceu_out_log(0, (long)"] ");              \
+                ceu_out_log(0, (long)"runtime error: "); \
+                ceu_out_log(0, (long)(msg));             \
+                ceu_out_log(0, (long)"\n");              \
+            }                                            \
+            ((__typeof__(ceu_sys_assert)*)((_ceu_app)->sys_vec[CEU_SYS_ASSERT]))(__ceu_v) \
+        }
     #define ceu_out_assert(v,msg) ceu_out_assert_ex((v),(msg),__FILE__,__LINE__)
 
     #define ceu_out_realloc(ptr, size) \
@@ -171,18 +174,21 @@
     #define ceu_out_log(mode,str) \
             ceu_sys_log(mode,str)
 
-    #define ceu_out_assert_ex(v,msg,file,line)          \
-        if ((!(v)) && ((msg)!=NULL)) {                  \
-            ceu_out_log(0, (long)"[");                  \
-            ceu_out_log(0, (long)(file));               \
-            ceu_out_log(0, (long)":");                  \
-            ceu_out_log(2, line);                       \
-            ceu_out_log(0, (long)"] ");                 \
-            ceu_out_log(0, (long)"runtime error: ");    \
-            ceu_out_log(0, (long)(msg));                \
-            ceu_out_log(0, (long)"\n");                 \
-        }                                               \
-        ceu_sys_assert(v);
+    #define ceu_out_assert_ex(v,msg,file,line)              \
+        {                                                   \
+            int __ceu_v = v;                                \
+            if ((!(__ceu_v)) && ((msg)!=NULL)) {            \
+                ceu_out_log(0, (long)"[");                  \
+                ceu_out_log(0, (long)(file));               \
+                ceu_out_log(0, (long)":");                  \
+                ceu_out_log(2, line);                       \
+                ceu_out_log(0, (long)"] ");                 \
+                ceu_out_log(0, (long)"runtime error: ");    \
+                ceu_out_log(0, (long)(msg));                \
+                ceu_out_log(0, (long)"\n");                 \
+            }                                               \
+            ceu_sys_assert(__ceu_v);                        \
+        }
     #define ceu_out_assert(v,msg) ceu_out_assert_ex((v),(msg),__FILE__,__LINE__)
 
     #define ceu_out_realloc(ptr,size) \

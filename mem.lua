@@ -538,7 +538,14 @@ typedef union CEU_]]..me.id..[[_delayed {
                 end
                 if TP.check(var.tp,'[]') then
                     local tp = string.sub(tp,1,-2)  -- remove leading `*´
-                    dcl = dcl .. tp..' '..var.id_..'['..var.tp.arr.cval..']'
+                    if TP.is_ext(var.tp,'_') then
+                        dcl = dcl .. tp..' '..var.id_..'['..var.tp.arr.cval..']'
+                    else
+                        local max = (var.tp.arr.cval or 0)
+                        dcl = dcl .. [[
+CEU_VECTOR_DCL(]]..var.id_..','..tp..','..max..[[)
+]]
+                    end
                 else
                     dcl = dcl .. tp..' '..var.id_
                 end

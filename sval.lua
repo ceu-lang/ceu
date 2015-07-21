@@ -24,16 +24,12 @@ F =
     Dcl_var = function (me)
         if me.var.cls then
             if TP.check(me.var.tp,'[]') then
--- TODO: recurse-type
-                --ASR(me.var.tp[#me.var.tp.tt].sval, me,
                 ASR(me.var.tp.arr.sval, me,
                     'invalid static expression')
             end
         elseif me.var.pre=='var' then
             local is_arr = TP.check(me.var.tp,'[]','-&')
-            if is_arr then
--- TODO: recurse-type
-                --local arr = me.var.tp[#tt]
+            if is_arr and TP.is_ext(me.var.tp,'_') then
                 local arr = me.var.tp.arr
                 ASR(type(arr)=='table' and arr.cval,
                     me, 'invalid array dimension')

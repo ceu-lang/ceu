@@ -233,8 +233,12 @@ function newvar (me, blk, pre, tp, id, isImp, isEvery)
     local tp, is_ref = TP.pop(tp, '&')   -- only *,& after []
     local is_arr = TP.check(tp, '[]')
 
-    if pre=='var' and (not is_arr) then
-        var.lval = var
+    if pre=='var' then
+        if is_arr and TP.is_ext(tp,'_','@') then
+            var.lval = false
+        else
+            var.lval = var
+        end
     elseif pre=='pool' and (ENV.adts[TP.id(tp)] or is_ref) then
         var.lval = var
     else
@@ -804,6 +808,10 @@ F = {
         me.tp.tup = TP.t2tup(me)
     end,
 
+    VectorExp = function (me)
+        me.tp = TP.new{'$vector'}
+    end,
+
     Dcl_nat = function (me)
         local mod, tag, id, len = unpack(me)
         if tag=='type' or mod=='@plain' then
@@ -991,9 +999,16 @@ F = {
                 lua_str,
                 me, 'invalid attribution')
             fr.tp = to.tp -- return type is not known at compile time
-        else
-            local ok, msg = TP.contains(to.tp,fr_tp)
-            ASR(ok, me, msg)
+
+        else    -- set == 'exp'
+            if TP.check(to.tp,'[]','-&') and (not TP.is_ext(to.tp,'_','@')) then
+                -- TODO: move to TP.contains?
+                --  (or it is really a special case for vector assignments only?)
+                ASR(TP.check(fr_tp,'$vector'), me, msg)
+            else
+                local ok, msg = TP.contains(to.tp,fr_tp)
+                ASR(ok, me, msg)
+            end
         end
 
         if not lua_str then
@@ -1308,6 +1323,18 @@ F = {
         me.fst = e1.fst
         me.lst = e1.lst
     end,
+
+    ['Op1_$'] = function (me)
+        local op, e1 = unpack(me)
+        ASR(TP.check(e1.tp,'[]','-&'), me,
+            'invalid operand to unary "'..op..'" : array expected')
+        me.tp = TP.pop(e1.tp,'&')
+        me.tp = TP.pop(me.tp,'[]')
+        me.lval = op=='$' and e1
+        me.fst = e1.fst
+        me.lst = e1.lst
+    end,
+    ['Op1_$$'] = 'Op1_$',
 
     Op2_same = function (me)
         local op, e1, e2 = unpack(me)

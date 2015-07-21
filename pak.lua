@@ -48,6 +48,10 @@ FILES = {
         [====[]]..'\n'..assert(io.open'ceu_pool.h'):read'*a'..[[]====],
     ceu_pool_c =
         [====[]]..'\n'..assert(io.open'ceu_pool.c'):read'*a'..[[]====],
+    ceu_vector_h =
+        [====[]]..'\n'..assert(io.open'ceu_vector.h'):read'*a'..[[]====],
+    ceu_vector_c =
+        [====[]]..'\n'..assert(io.open'ceu_vector.c'):read'*a'..[[]====],
 }
 ]]..fin
 

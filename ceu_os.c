@@ -80,7 +80,7 @@ static int _ceu_dyns_ = 0;  /* check if total of alloc/free match */
 #endif
 #endif
 
-#if defined(CEU_NEWS) || defined(CEU_THREADS) || defined(CEU_OS_KERNEL)
+#if defined(CEU_NEWS) || defined(CEU_THREADS) || defined(CEU_OS_KERNEL) || defined(CEU_VECTOR_MALLOC)
 void* ceu_sys_realloc (void* ptr, size_t size) {
 #ifdef CEU_NEWS
 #ifdef CEU_RUNTESTS
@@ -101,6 +101,15 @@ void* ceu_sys_realloc (void* ptr, size_t size) {
 #endif
 
 #endif /* ifndef CEU_NOSTDLIB */
+
+#ifdef CEU_VECTOR
+#include "ceu_vector.h"
+byte* ceu_vector_geti_ex (tceu_vector* vector, int idx, char* file, int line) {
+    byte* ret = ceu_vector_geti(vector, idx);
+    ceu_out_assert_ex(ret!=NULL, "access out of bounds", file, line);
+    return ret;
+}
+#endif
 
 int CEU_REQS = 0;
 int ceu_sys_req (void) {
