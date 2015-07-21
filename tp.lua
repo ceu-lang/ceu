@@ -373,7 +373,6 @@ function TP.contains (tp1, tp2)
     tp1 = { tt=__norefs(tp1.tt) }
     tp2 = { tt=__norefs(tp2.tt) }
 
-
     -- BIG SWITCH --
 
     -- compatible classes
@@ -403,7 +402,8 @@ function TP.contains (tp1, tp2)
     -- vec = vec
     -- (see vec=[...] above)
     elseif TP.check(tp1,'[]') and (not TP.is_ext(tp1,'_','@')) and
-           TP.check(tp2,'[]') and (not TP.is_ext(tp2,'_','@'))
+           TP.check(tp2,'[]') and (not TP.is_ext(tp2,'_','@')) and
+            (not (cls1 or cls2)) -- TODO: TP.pre()
     then
         return TP.contains( TP.pop(tp1,'[]'),
                             TP.pop(tp2,'[]') )

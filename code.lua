@@ -1050,7 +1050,10 @@ case ]]..SET.lbl_cnt.id..[[:;
             -- ARRAY ASSIGNMENTS
             --  - ignore byref assignments (let normal set deal)
 
+            local cls1 = (not to.tp.tup) and ENV.clss[TP.id(to.tp)]
+            local cls2 = (not fr.tp.tup) and ENV.clss[TP.id(fr.tp)]
             if (not me.__ref_byref) and
+               (not (cls1 or cls2)) and -- TODO: TP.pre()
                TP.check(to.fst.tp,'[]','-&') and (not TP.is_ext(to.fst.tp,'_','@'))
             then
                 local tp_toc = TP.toc(TP.pop(TP.pop(to.tp,'&'),'[]'))

@@ -536,15 +536,24 @@ typedef union CEU_]]..me.id..[[_delayed {
                 if cls and (not cls.is_ifc) and (DCL.id ~= tp_id) then
                     dcl = dcl..'struct ' -- due to recursive spawn
                 end
-                if TP.check(var.tp,'[]') then
-                    local tp_c = string.sub(tp_c,1,-2)  -- remove leading `*´
+                if TP.check(var.tp,'[]','-*','-&') then
                     if TP.is_ext(var.tp,'_') then
-                        dcl = dcl .. tp_c..' '..var.id_..'['..var.tp.arr.cval..']'
+                        if TP.check(var.tp,'*') or TP.check(var.tp,'&') then
+                            dcl = dcl .. tp_c..' '..var.id_
+                        else
+                            local tp_c = string.sub(tp_c,1,-2)  -- remove leading `*´
+                            dcl = dcl .. tp_c..' '..var.id_..'['..var.tp.arr.cval..']'
+                        end
                     else
-                        local max = (var.tp.arr.cval or 0)
-                        dcl = dcl .. [[
+                        if TP.check(var.tp,'*') or TP.check(var.tp,'&') then
+                            dcl = dcl .. 'tceu_vector* '..var.id_
+                        else
+                            local max = (var.tp.arr.cval or 0)
+                            local tp_c = string.sub(tp_c,1,-2)  -- remove leading `*´
+                            dcl = dcl .. [[
 CEU_VECTOR_DCL(]]..var.id_..','..tp_c..','..max..[[)
 ]]
+                        end
                     end
                 else
                     dcl = dcl .. tp_c..' '..var.id_
