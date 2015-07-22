@@ -537,7 +537,9 @@ typedef union CEU_]]..me.id..[[_delayed {
                     dcl = dcl..'struct ' -- due to recursive spawn
                 end
                 if TP.check(var.tp,'[]','-*','-&') then
-                    if TP.is_ext(var.tp,'_') then
+                    local tp_elem = TP.pop( TP.pop(var.tp,'&'), '[]' )
+                    local cls = cls and TP.check(tp_elem,tp_id)
+                    if cls or TP.is_ext(var.tp,'_') then
                         if TP.check(var.tp,'*') or TP.check(var.tp,'&') then
                             dcl = dcl .. tp_c..' '..var.id_
                         else

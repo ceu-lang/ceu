@@ -676,13 +676,6 @@ F = {
                 ASR(me.var.tp.arr.sval, me,
                     'invalid static expression')
             end
-        elseif me.var.pre=='var' then
-            local is_arr = TP.check(me.var.tp,'[]','-&')
-            if is_arr and TP.is_ext(me.var.tp,'_') then
-                local arr = me.var.tp.arr
-                ASR(type(arr)=='table' and arr.cval,
-                    me, 'invalid array dimension')
-            end
         end
 
         if me.var.cls and TP.check(me.var.tp,'[]') then
@@ -1406,8 +1399,20 @@ F = {
 
     ['Op1_&'] = function (me)
         local op, e1 = unpack(me)
+
+        -- invalid: address of vector elements: &vec[i]
+        if e1.tag == 'Op2_idx' then
+            local _, arr, _ = unpack(e1)
+            local cls = ENV.clss[TP.id(arr.tp)]
+            if TP.check(arr.tp,'[]','-&') and (not (cls or TP.is_ext(arr.tp,'_','@'))) then
+                ASR(false, me, 'invalid operand to unary "&"'..
+                               ' : vector elements are not addressable')
+            end
+        end
+
         local e1_tp_id = TP.id(e1.tp)
-        ASR(e1.lval or ENV.clss[e1_tp_id] or ENV.adts[e1_tp_id], me,
+        ASR(e1.lval and (not TP.check(e1.tp,'[]','-&')) or
+            ENV.clss[e1_tp_id] or ENV.adts[e1_tp_id], me,
             'invalid operand to unary "&"')
         me.lval = false
         me.tp = TP.new(TP.push(e1.tp,'*'))

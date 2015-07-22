@@ -461,8 +461,8 @@ function TP.contains (tp1, tp2)
     -- tp[] = tp*
     -- tp*  = tp[]
     elseif id1 == id2 and (
-                (TP.check(tp1,id1,'*') and TP.check(tp2,id2,'[]')) or
-                (TP.check(tp2,id2,'*') and TP.check(tp1,id1,'[]'))
+                (TP.check(tp1,id1,'*') and TP.check(tp2,id2,'[]') and TP.is_ext(tp2,'_','@')) or
+                (TP.check(tp2,id2,'*') and TP.check(tp1,id1,'[]') and TP.is_ext(tp1,'_','@'))
            )
     then
         return true

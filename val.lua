@@ -41,12 +41,21 @@ F =
         local var = me.var or me
         if var.pre == 'var' then
             if var.tp.arr then
-                if not TP.check(var.tp,'&') then
-                    -- normalize all arrays acesses to pointers to arr[0]
-                    -- (because of interface accesses that must be done through a pointer)
-                    if TP.is_ext(var.tp,'_') then
+                -- normalize all arrays acesses to pointers to arr[0]
+                -- (because of interface accesses that must be done through a pointer)
+                local is_ref = TP.check(var.tp,'&')
+                if var.cls or TP.is_ext(var.tp,'_') then
+                    if not is_ref then
                         VAL = '(&'..VAL..'[0])'
-                    else
+                    end
+                else
+                    if CTX.ext then
+                        if is_ref then
+                            VAL = '((void*)'..VAL..'->mem)'
+                        else
+                            VAL = '((void*)'..VAL..'.mem)'
+                        end
+                    elseif not is_ref then
                         VAL = '(&'..VAL..')'
                     end
                 end
@@ -319,7 +328,9 @@ F =
             ps[#ps] = '(tceu_org*)'..ps[#ps]
         end
         for i, exp in ipairs(exps) do
-            ps[#ps+1] = V(exp)
+            ps[#ps+1] = V(exp, (TP.is_ext(f.tp,'_','@') and 'ext'))
+                            -- ext context:
+                            -- vectors become pointers to internal mem
         end
         VAL = V(f)..'('..table.concat(ps,',')..')'
 
@@ -334,9 +345,11 @@ F =
         local _, arr, idx = unpack(me)
         local VAL
 
-        if TP.is_ext(arr.tp,'_','@') then
+        local cls = ENV.clss[TP.id(me.tp)]
+
+        if cls or TP.is_ext(arr.tp,'_','@') then
             VAL = V(arr)..'['..V(idx)..']'
-            if ENV.clss[TP.id(me.tp)] and (not TP.check(me.tp,'*')) then
+            if cls and (not TP.check(me.tp,'*')) then
                 VAL = '(&'..VAL..')'
                     -- class accesses must be normalized to references
             end

@@ -720,10 +720,11 @@ _STK_ORG->trls[ ]]..me.trl_fins[1]..[[ ].lbl   = ]]..me.lbl_fin.id..[[;
             end
 
             if var.pre == 'var' then
-                if TP.check(var.tp,'[]') and (not TP.is_ext(var.tp,'_')) then
+                if TP.check(var.tp,'[]') and (not (var.cls or TP.is_ext(var.tp,'_'))) then
+                    local tp_elem = TP.pop( TP.pop(var.tp,'&'), '[]' )
                     local max = (var.tp.arr.cval or 0)
                     LINE(me, [[
-ceu_vector_init(]]..'&'..CUR(me,var.id_)..','..max..',sizeof('..TP.id(var.tp)..[[),
+ceu_vector_init(]]..'&'..CUR(me,var.id_)..','..max..',sizeof('..TP.toc(tp_elem)..[[),
                 (byte*)]]..CUR(me,var.id_)..[[_mem);
 ]])
                 end
@@ -1050,10 +1051,11 @@ case ]]..SET.lbl_cnt.id..[[:;
             -- ARRAY ASSIGNMENTS
             --  - ignore byref assignments (let normal set deal)
 
-            local cls1 = (not to.tp.tup) and ENV.clss[TP.id(to.tp)]
-            local cls2 = (not fr.tp.tup) and ENV.clss[TP.id(fr.tp)]
-            if (not me.__ref_byref) and
-               (not (cls1 or cls2)) and -- TODO: TP.pre()
+            -- TODO: TP.pre() (only pool?)
+            local cls1 = (not to.fst.tp.tup) and ENV.clss[TP.id(to.fst.tp)]
+            cls1 = cls1 and TP.check(TP.pop(to.fst.tp,'&'),TP.id(to.fst.tp),'[]')
+
+            if (not me.__ref_byref) and (not cls1) and
                TP.check(to.fst.tp,'[]','-&') and (not TP.is_ext(to.fst.tp,'_','@'))
             then
                 local tp_toc = TP.toc(TP.pop(TP.pop(to.tp,'&'),'[]'))
@@ -1071,7 +1073,7 @@ ceu_vector_len(]]..V(to)..[[, 0);
 {
     ]]..tp_toc..' __ceu_p = '..V(exp)..[[;
 #line ]]..me.ln[2]..' "'..me.ln[1]..[["
-    ceu_out_assert( ceu_vector_push(]]..V(to)..[[, &__ceu_p), "access out of bounds");
+    ceu_out_assert( ceu_vector_push(]]..V(to)..[[, (byte*)&__ceu_p), "access out of bounds");
 }
 ]])
                         end
@@ -1099,7 +1101,7 @@ ceu_vector_len(]]..V(arr)..','..V(fr)..[[);
 {
     ]]..tp_toc..' __ceu_p = '..V(fr)..[[;
 #line ]]..me.ln[2]..' "'..me.ln[1]..[["
-    ceu_out_assert( ceu_vector_seti(]]..V(vec)..','..V(idx)..[[, &__ceu_p), "access out of bounds");
+    ceu_out_assert( ceu_vector_seti(]]..V(vec)..','..V(idx)..[[, (byte*)&__ceu_p), "access out of bounds");
 }
 ]])
                 end

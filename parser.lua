@@ -354,7 +354,7 @@ end
     , _Adt_explist = ( V'__adt_expitem'*(K','*EV'__adt_expitem')^0 )^-1
 
     , ExpList = ( V'__Exp'*(K','*EV'__Exp')^0 )^-1
-    , VectorExp = K'[' * V'ExpList' * EK']'
+    , VectorExp = (K'['-('['*P'='^0*'[')) * V'ExpList' * EK']'
 
     , __Parens  = K'(' * EV'__Exp' * EK')'
 

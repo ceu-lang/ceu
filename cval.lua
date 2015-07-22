@@ -9,6 +9,17 @@ end
 
 F =
 {
+    Dcl_var = function (me)
+        if me.var.pre=='var' then
+            local is_arr = TP.check(me.var.tp,'[]','-&')
+            if is_arr and TP.is_ext(me.var.tp,'_') then
+                local arr = me.var.tp.arr
+                ASR(type(arr)=='table' and arr.cval,
+                    me, 'invalid array dimension')
+            end
+        end
+    end,
+
     Op2_call = function (me)
         local _, f, ins = unpack(me)
         if not f.cval then

@@ -9,6 +9,36 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
+
+Test { [[
+interface I with
+    var int[10] vs;
+end
+
+interface Global with
+    interface I;
+end
+var int[10] vs;
+
+class T with
+    interface I;
+do
+    global:vs[0] = 1;
+end
+
+vs[0] = 1;
+global:vs[0] = 1;
+
+var T t;
+t.vs[0] = 1;
+
+var I* i = &t;
+i:vs[0] = 1;
+
+escape 1;
+]],
+    run = 1,
+}
 --]===]
 
 Test { [[
@@ -81,6 +111,16 @@ escape $$vec + $vec + vec[0] + vec[1] + vec[2];
 
 Test { [[
 var u8[10] vec = [1,2,3];
+vec[0] = 4;
+vec[1] = 5;
+vec[2] = 6;
+escape $$vec + $vec + vec[0] + vec[1] + vec[2];
+]],
+    run = 28,
+}
+
+Test { [[
+var int[10] vec = [1,2,3];
 vec[0] = 4;
 vec[1] = 5;
 vec[2] = 6;
@@ -205,7 +245,46 @@ escape $$ref + $ref + ref[0] + ref[1] + ref[2];
     env = 'line 2 : types mismatch (`u8[]&´ <= `u8[]´) : dimension mismatch',
 }
 
+Test { [[
+var int[2] v ;
+escape v == &v[0] ;
+]],
+    env = 'line 2 : invalid operand to unary "&" : vector elements are not addressable',
+}
+
+Test { [[
+native @nohold _f();
+native do
+    void f (int* v) {
+        v[0]++;
+        v[1]++;
+    }
+end
+var int[2] a = [1,2];
+_f(a);
+escape a[0] + a[1];
+]],
+    run = 5,
+}
+
+Test { [[
+native @nohold _f();
+native do
+    void f (int* v) {
+        v[0]++;
+        v[1]++;
+    }
+end
+var int[2] a  = [1,2];
+var int[2]& b = a;
+_f(b);
+escape b[0] + b[1];
+]],
+    run = 5,
+}
+
 --do return end
+
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------
@@ -15018,11 +15097,17 @@ escape v;
 }
 
 Test { [[
-var int[] v;
+var _int[] v;
 escape 1;
 ]],
     --run = 1,
-    env = 'line 1 : invalid array dimension',
+    cval = 'line 1 : invalid array dimension',
+}
+Test { [[
+var int[] v;
+escape 1;
+]],
+    run = 1,
 }
 
 Test { [[
@@ -20068,6 +20153,9 @@ Test { [[var int[0] v; escape 0;]],
 Test { [[var int[2] v; escape v;]],
     env = 'types mismatch'
 }
+Test { [[var _u8[2] v; escape &v;]],
+    env = 'invalid operand to unary "&"',
+}
 Test { [[var u8[2] v; escape &v;]],
     env = 'invalid operand to unary "&"',
 }
@@ -20093,7 +20181,7 @@ var void[10] a;
 }
 
 Test { [[
-var int[2] v;
+var _int[2] v;
 v[0] = 5;
 escape v[0];
 ]],
@@ -20101,7 +20189,7 @@ escape v[0];
 }
 
 Test { [[
-var int[2] v;
+var _int[2] v;
 v[0] = 1;
 v[1] = 1;
 escape v[0] + v[1];
@@ -20110,7 +20198,7 @@ escape v[0] + v[1];
 }
 
 Test { [[
-var int[2] v;
+var _int[2] v;
 var int i;
 v[0] = 0;
 v[1] = 5;
@@ -20172,12 +20260,12 @@ Test { [[var int[2] v; await v[0];  escape 0;]],
         env='line 1 : event "?" is not declared'}
 Test { [[var int[2] v; emit v[0]; escape 0;]],
         env='event "?" is not declared' }
-Test { [[var int[2] v; v=v; escape 0;]], env='types mismatch' }
+Test { [[var _int[2] v; v=v; escape 0;]], env='types mismatch' }
 Test { [[var int v; escape v[1];]], env='cannot index a non array' }
-Test { [[var int[2] v; escape v[v];]], env='invalid array index' }
+Test { [[var _int[2] v; escape v[v];]], env='invalid array index' }
 
 Test { [[
-var int[2] v ;
+var _int[2] v ;
 escape v == &v[0] ;
 ]],
     run = 1,
@@ -20190,7 +20278,7 @@ native do
         *p = 1;
     }
 end
-var int[2] a;
+var _int[2] a;
 var int b;
 par/and do
     b = 2;
@@ -20209,7 +20297,7 @@ native do
         *p = 1;
     }
 end
-var int[2] a;
+var _int[2] a;
 a[0] = 0;
 a[1] = 0;
 var int b;
@@ -20621,7 +20709,7 @@ native do
         return *v1+*v2;
     }
 end
-var u8[2] v;
+var _u8[2] v;
 v[0] = 8;
 v[1] = 5;
 escape _f2(&v[0],&v[1]) + _f1(v) + _f1(&v[0]);
@@ -20800,7 +20888,7 @@ native do
         return 1;
     }
 end
-var int[2] v;
+var _int[2] v;
 v[0] = 0;
 v[1] = 1;
 v[_f()] = 2;
@@ -21466,11 +21554,12 @@ escape i;
     -- STRINGS
 
 Test { [[
-var char[10] a;
+var _char[10] a;
 a = "oioioi";
 escape 1;
 ]],
-    env = 'line 2 : invalid attribution',
+    env = 'line 2 : types mismatch (`_char[]´ <= `char*´)',
+    --env = 'line 2 : invalid attribution',
 }
 
 Test { [[
@@ -21788,7 +21877,7 @@ Test { [[
 
 Test { [[
 native @plain _char=1;
-var u8[10] v1;
+var _u8[10] v1;
 var _char[10] v2;
 
 loop i in 10 do
@@ -21983,23 +22072,34 @@ escape 1;
 }
 
 Test { [[
+var _int* u;
+var _int[1] i;
+await 1s;
+u = i;
+escape 1;
+]],
+    --env = 'line 4 : types mismatch (`int*´ <= `_int[]´)',
+    run = { ['~>1s']=1 },
+}
+Test { [[
 var int* u;
 var int[1] i;
 await 1s;
 u = i;
 escape 1;
 ]],
-    run = { ['~>1s']=1 },
+    env = 'line 4 : types mismatch (`int*´ <= `int[]´)',
+    --run = { ['~>1s']=1 },
 }
 Test { [[
-var int* u;
+var _int* u;
 do
-    var int[1] i;
+    var _int[1] i;
     i[0] = 2;
     u = i;
 end
 do
-    var int[1] i;
+    var _int[1] i;
     i[0] = 5;
 end
 escape *u;
@@ -22095,7 +22195,7 @@ Test { [[
 native do
     #define N 1
 end
-var u8[_N] vec;
+var _u8[_N] vec;
 vec[0] = 10;
 escape vec[_N-1];
 ]],
@@ -22106,7 +22206,7 @@ Test { [[
 native do
     #define N 1
 end
-var u8[N] vec;
+var _u8[N] vec;
 vec[0] = 10;
 escape vec[N-1];
 ]],
@@ -22117,7 +22217,7 @@ Test { [[
 native do
     #define N 1
 end
-var u8[N+1] vec;
+var _u8[N+1] vec;
 vec[1] = 10;
 escape vec[1];
 ]],
@@ -22126,7 +22226,7 @@ escape vec[1];
 
 Test { [[
 #define N 1
-var u8[N+1] vec;
+var _u8[N+1] vec;
 vec[1] = 10;
 escape vec[1];
 ]],
@@ -22137,7 +22237,7 @@ Test { [[
 native do
     #define N 5
 end
-var int[_N] vec;
+var _int[_N] vec;
 loop i in _N do
     vec[i] = i;
 end
@@ -26577,7 +26677,6 @@ escape _V;
 ]],
     run = { ['~>1s']=21 },
 }
--- XXXX
 
 -- internal binding binding
 Test { [[
@@ -32221,12 +32320,12 @@ do
     await FOREVER;
 end
 
-var T*[10] ts;
+var _void*[10] ts;
 var T*? t;
 t = spawn T;
 t!:v = 10;
-ts[0] = t!;
-escape t!:v + ts[0]:v;
+ts[0] = (void*)(t!);
+escape t!:v + ((T*)ts[0]):v;
 ]],
     run = 20,
 }
@@ -36938,7 +37037,7 @@ native do
     void ceu_out_isr (int v, void* f) {
     }
 end
-var int[10] v;
+var _int[10] v;
 atomic do
     v[0] = 2;
 end
@@ -37170,14 +37269,16 @@ escape 1;
 }
 
 Test { [[
+native @plain _int;
+
 interface I with
-    var int[10] vs;
+    var _int[10] vs;
 end
 
 interface Global with
     interface I;
 end
-var int[10]  vs;
+var _int[10]  vs;
 
 class T with
     interface I;
@@ -37238,10 +37339,10 @@ escape 1;
 
 Test { [[
 interface Global with
-    var int[10] vs;
+    var _int[10] vs;
     var int     v;
 end
-var int[10] vs;
+var _int[10] vs;
 var int     v = 0;
 
 loop i in 10 do
@@ -41917,8 +42018,8 @@ escape ret;
 -- ASYNC/NONDET
 
 Test { [[
-var int[2] v;
-var int* p = v;
+var _int[2] v;
+var _int* p = v;
 par/and do
     v[0] = 1;
 with
@@ -41933,11 +42034,11 @@ escape v[0] + v[1];
     run = 3;
 }
 Test { [[
-var int[2] v;
+var _int[2] v;
 par/and do
     v[0] = 1;
 with
-    var int* p = v;
+    var _int* p = v;
     p[1] = 2;
 end
 escape v[0] + v[1];
@@ -41948,8 +42049,8 @@ escape v[0] + v[1];
     run = 3,
 }
 Test { [[
-var int[2] v;
-var int[2] p;
+var int[2] v = [0,0];
+var int[2] p = [0,0];
 par/and do
     v[0] = 1;
 with
@@ -42086,7 +42187,8 @@ escape x;
 }
 
 Test { [[
-var int[10] x;
+native @plain _int;
+var _int[10] x;
 async/thread (x) do
     x[0] = 2;
 end
@@ -42097,7 +42199,18 @@ escape x[0];
 }
 
 Test { [[
-var int[10] x;
+var int[10] x = [0];
+async/thread (x) do
+    x[0] = 2;
+end
+escape x[0];
+]],
+    run = 2,
+    --gcc = 'error: lvalue required as left operand of assignment',
+}
+
+Test { [[
+var int[10] x = [0,1];
 par/and do
     async/thread (x) do
         x[0] = x[1] + 2;
