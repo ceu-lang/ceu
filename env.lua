@@ -668,7 +668,22 @@ F = {
 
     Dcl_var = function (me)
         local _, tp, id, constr, _ = unpack(me)
+
         F.__dcl_var(me)
+
+        if me.var.cls then
+            if TP.check(me.var.tp,'[]') then
+                ASR(me.var.tp.arr.sval, me,
+                    'invalid static expression')
+            end
+        elseif me.var.pre=='var' then
+            local is_arr = TP.check(me.var.tp,'[]','-&')
+            if is_arr and TP.is_ext(me.var.tp,'_') then
+                local arr = me.var.tp.arr
+                ASR(type(arr)=='table' and arr.cval,
+                    me, 'invalid array dimension')
+            end
+        end
 
         if me.var.cls and TP.check(me.var.tp,'[]') then
             -- var T[10] ts;  // needs _i_ to iterate for the constructor

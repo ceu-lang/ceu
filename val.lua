@@ -41,12 +41,14 @@ F =
         local var = me.var or me
         if var.pre == 'var' then
             if var.tp.arr then
-                -- normalize all arrays acesses to pointers to arr[0]
-                -- (because of interface accesses that must be done through a pointer)
-                if TP.is_ext(var.tp,'_') then
-                    VAL = '(&'..VAL..'[0])'
-                else
-                    VAL = '(&'..VAL..')'
+                if not TP.check(var.tp,'&') then
+                    -- normalize all arrays acesses to pointers to arr[0]
+                    -- (because of interface accesses that must be done through a pointer)
+                    if TP.is_ext(var.tp,'_') then
+                        VAL = '(&'..VAL..'[0])'
+                    else
+                        VAL = '(&'..VAL..')'
+                    end
                 end
             elseif var.cls then
                 -- normalize all org acesses to pointers to it
@@ -183,7 +185,9 @@ F =
 
         local tp_id = me.tp and TP.id(me.tp)
         local ref = me.tp and TP.check(me.tp,'&') and tp_id
-        if CTX.byref and (not CTX.opt_raw) and
+        if CTX.byref            and
+            (not CTX.opt_raw)   and
+            (not me.tp.arr)     and
             (not (ENV.clss[tp_id] or (ref and ENV.clss[ref]) or
                   --ENV.adts[tp_id] or (ref and ENV.adts[ref]) or
                   tp_id=='@'))

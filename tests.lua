@@ -185,7 +185,7 @@ var u8[10] vec = [1,2,3];
 var u8[]&  ref = vec;
 escape $$ref + $ref + ref[0] + ref[1] + ref[2];
 ]],
-    run = 9,
+    run = 19,
 }
 
 Test { [[
@@ -193,7 +193,8 @@ var u8[10]  vec = [1,2,3];
 var u8[11]& ref = vec;
 escape $$ref + $ref + ref[0] + ref[1] + ref[2];
 ]],
-    run = 9,
+    run = 1,
+    env = 'line 2 : types mismatch (`u8[]&´ <= `u8[]´) : dimension mismatch',
 }
 
 Test { [[
@@ -201,10 +202,10 @@ var u8[10] vec = [1,2,3];
 var u8[9]& ref = vec;
 escape $$ref + $ref + ref[0] + ref[1] + ref[2];
 ]],
-    run = 9,
+    env = 'line 2 : types mismatch (`u8[]&´ <= `u8[]´) : dimension mismatch',
 }
 
-do return end
+--do return end
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------
@@ -15021,7 +15022,7 @@ var int[] v;
 escape 1;
 ]],
     --run = 1,
-    sval = 'line 1 : invalid array dimension',
+    env = 'line 1 : invalid array dimension',
 }
 
 Test { [[

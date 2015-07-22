@@ -405,6 +405,14 @@ function TP.contains (tp1, tp2)
            TP.check(tp2,'[]') and (not TP.is_ext(tp2,'_','@')) and
             (not (cls1 or cls2)) -- TODO: TP.pre()
     then
+        -- to == fr
+        if TP.check(TP1,'&') then
+            local ok = (TP1.arr=='[]') or
+                       (TP2.arr~='[]' and TP1.arr.sval==TP2.arr.sval)
+            if not ok then
+                return false, __err(TP1,TP2)..' : dimension mismatch'
+            end
+        end
         return TP.contains( TP.pop(tp1,'[]'),
                             TP.pop(tp2,'[]') )
 

@@ -73,7 +73,6 @@ int ceu_vector_push (tceu_vector* vector, byte* v) {
     }
 #endif
 
-printf("GROW\n");
     memcpy(&vector->mem[vector->nxt*vector->unit], v, vector->unit);
     vector->nxt++;
     return 1;

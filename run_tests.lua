@@ -71,12 +71,13 @@ Test = function (t)
     if not check('parser')   then return end
     if not check('ast')      then return end
     if not check('adj')      then return end
+    if not check('sval')     then return end
     if not check('env')      then return end
     --AST.dump(AST.root)
     if not check('exp')      then return end
     if not check('adt')      then return end
     if not check('ref')      then return end
-    if not check('sval')     then return end
+    if not check('cval')     then return end
     if not check('isr')      then return end
     if not check('tight')    then return end
     if not check('fin')      then return end
