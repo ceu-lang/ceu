@@ -1336,6 +1336,14 @@ F = {
         me.lst = e1.lst
     end,
     ['Op1_$$'] = 'Op1_$',
+    ['Op2_..'] = function (me)
+        local op, e1, e2 = unpack(me)
+        ASR(TP.max(e1.tp,e2.tp), me,
+            'invalid operands to binary "'..op..'"')
+        me.tp = e1.tp
+        ASR(me.tp.tup or TP.check(me.tp,'[]','-&'), me,
+            'invalid operands to binary "'..op..'"')
+    end,
 
     Op2_same = function (me)
         local op, e1, e2 = unpack(me)

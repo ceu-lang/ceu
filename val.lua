@@ -430,11 +430,11 @@ F =
 
     ['Op1_$'] = function (me)
         local op, e1 = unpack(me)
-        return '(ceu_vector_nxt('..V(e1)..'))'
+        return '(ceu_vector_getlen('..V(e1)..'))'
     end,
     ['Op1_$$'] = function (me)
         local op, e1 = unpack(me)
-        return '(ceu_vector_max('..V(e1)..'))'
+        return '(ceu_vector_getmax('..V(e1)..'))'
     end,
 
     ['Op2_.'] = function (me, CTX)

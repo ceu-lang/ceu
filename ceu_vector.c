@@ -22,7 +22,7 @@ static void* ceu_vector_grow (tceu_vector* vector) {
 #endif
 
 /* can only decrease vector->nxt */
-int ceu_vector_len (tceu_vector* vector, int nxt) {
+int ceu_vector_setlen (tceu_vector* vector, int nxt) {
     /* TODO: shrink malloc'ed arrays */
     if (nxt > vector->nxt) {
         return 0;
@@ -78,18 +78,19 @@ int ceu_vector_push (tceu_vector* vector, byte* v) {
     return 1;
 }
 
-int ceu_vector_copy (tceu_vector* to, tceu_vector* fr) {
-    /* TODO: memcpy */
-    int i;
-    if (! ceu_vector_len(to,0)) {
+int ceu_vector_concat (tceu_vector* to, tceu_vector* fr) {
+    if (to == fr) {
         return 0;
-    }
-    for (i=0; i<fr->nxt; i++) {
-        void* v = ceu_vector_geti(fr, i);
-        if (v == NULL) {
-            return 0;
-        } else if (!ceu_vector_push(to,v)) {
-            return 0;
+    } else {
+        /* TODO: memcpy */
+        int i;
+        for (i=0; i<fr->nxt; i++) {
+            void* v = ceu_vector_geti(fr, i);
+            if (v == NULL) {
+                return 0;
+            } else if (!ceu_vector_push(to,v)) {
+                return 0;
+            }
         }
     }
     return 1;

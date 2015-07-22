@@ -290,7 +290,83 @@ escape t.vs[0];
     run = 9,
 }
 
---do return end
+Test { [[
+escape 1..2;
+]],
+    env = 'line 1 : malformed number',
+}
+Test { [[
+escape 1 .. 2;
+]],
+    env = 'invalid operands to binary ".."',
+}
+Test { [[
+var int[] x = [1]..2;
+escape 1;
+]],
+    env = 'invalid operands to binary ".."',
+}
+
+Test { [[
+escape [1]..[2];
+]],
+    env = 'line 1 : arity mismatch',
+}
+
+Test { [[
+escape [1]..[&this];
+]],
+    env = 'line 1 : invalid operands to binary ".."',
+}
+
+Test { [[
+var int[] v1;
+var int[] v2;
+v1 = [1] .. v2;
+v1 = v2 .. [1];
+escape v1[0];
+]],
+    run = 1;
+}
+
+Test { [[
+var int[] v1 = [1]..[2]..[3];
+escape v1[0]+v1[1]+v1[2];
+]],
+    run = 6;
+}
+
+Test { [[
+var int[] v1 = [1,2,3];
+var int[] v2 = [7,8,9];
+v1 = v1 .. [4,5,6] .. v2;
+var int ret = 0;
+loop i in 9 do
+_printf("%d=%d\n", i, v1[i]);
+    ret = ret + v1[i];
+end
+escape ret;
+]],
+    run = 45;
+}
+
+Test { [[
+var int[] v = [1,2,3];
+v = v .. v;
+escape 1;
+]],
+    run = '2] runtime error: access out of bounds';
+}
+
+Test { [[
+var int[] v = [1,2,3];
+v = [1] .. v;
+escape 1;
+]],
+    run = '2] runtime error: access out of bounds';
+}
+
+do return end
 
 -------------------------------------------------------------------------------
 

@@ -14,16 +14,15 @@ typedef struct {
     type        name##_mem[max];         \
     tceu_vector name;
 
-#define ceu_vector_nxt(vec) ((vec)->nxt)
-#define ceu_vector_max(vec) ((vec)->max > 0 ? (vec)->max : 0)
+#define ceu_vector_getlen(vec) ((vec)->nxt)
+#define ceu_vector_getmax(vec) ((vec)->max > 0 ? (vec)->max : 0)
 
-void  ceu_vector_init (tceu_vector* vector, int max, int unit, byte* mem);
-int   ceu_vector_len  (tceu_vector* vector, int len);
-byte* ceu_vector_geti (tceu_vector* vector, int idx);
-int   ceu_vector_seti (tceu_vector* vector, int idx, byte* v);
-int   ceu_vector_push (tceu_vector* vector, byte* v);
-
-int   ceu_vector_copy (tceu_vector* to, tceu_vector* fr);
+void  ceu_vector_init   (tceu_vector* vector, int max, int unit, byte* mem);
+int   ceu_vector_setlen (tceu_vector* vector, int len);
+byte* ceu_vector_geti   (tceu_vector* vector, int idx);
+int   ceu_vector_seti   (tceu_vector* vector, int idx, byte* v);
+int   ceu_vector_push   (tceu_vector* vector, byte* v);
+int   ceu_vector_concat (tceu_vector* to, tceu_vector* fr);
 
 #if 0
 byte* ceu_pool_alloc (tceu_pool* pool);
