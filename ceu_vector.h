@@ -11,8 +11,9 @@ typedef struct {
 } tceu_vector;
 
 #define CEU_VECTOR_DCL(name, type, max)  \
-    type        name##_mem[max];         \
+    type        name##_mem[max+1];       \
     tceu_vector name;
+                /* [STRING] max+1: extra space for '\0' */
 
 #define ceu_vector_getlen(vec) ((vec)->nxt)
 #define ceu_vector_getmax(vec) ((vec)->max > 0 ? (vec)->max : 0)

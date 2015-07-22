@@ -9,7 +9,8 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
---]===]
+
+-- VECTORS
 
 Test { [[
 var u8 v;
@@ -366,6 +367,64 @@ escape 1;
     run = '2] runtime error: access out of bounds';
 }
 
+-- STRINGS
+
+Test { [[
+native @nohold _printf(), _strlen();
+var char[] v = ['a','b','c','\0'];
+_printf("v = %s\n", (char*)v);
+escape _strlen((char*)v);
+]],
+    run = 3,
+}
+Test { [[
+native @nohold _printf(), _strlen();
+var char[] v = ['a','b','c','\0'];
+_printf("v = %s\n", v);
+escape _strlen(v);
+]],
+    run = 3,
+}
+
+Test { [[
+native @pure _strlen();
+native @nohold _garbage();
+native do
+    void garbage (char* v) {
+        int i = 0;
+        for (; i<20; i++) {
+            v[i] = i;
+        }
+    }
+end
+
+var char[10] v;
+var char[10] v_;
+_garbage(v);
+v = ['a','b','c'];
+escape _strlen(v);
+]],
+    run = 3,
+}
+
+--]===]
+Test { [[
+native @nohold _printf(), _strlen();
+var char[] v = "abc";
+_printf("v = %s\n", v);
+escape _strlen(v);
+]],
+    run = 3,
+}
+Test { [[
+native @nohold _printf(), _strlen();
+var char[] v = "abc";
+v = v .. "def";
+_printf("v = %s\n", v);
+escape _strlen(v);
+]],
+    run = 6,
+}
 do return end
 
 -------------------------------------------------------------------------------

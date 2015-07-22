@@ -8,6 +8,11 @@ void ceu_vector_init (tceu_vector* vector, int max, int unit, byte* mem) {
     vector->max  = max;
     vector->unit = unit;
     vector->mem  = (max==0) ? NULL : mem;
+
+    /* [STRING] */
+    if (vector->mem != NULL) {
+        vector->mem[0] = '\0';
+    }
 }
 
 #ifdef CEU_VECTOR_MALLOC
@@ -16,7 +21,8 @@ static void* ceu_vector_grow (tceu_vector* vector) {
                         - 10 :
                         - ((-vector->max * 3)/2 + 1);
                             /* Java does the same? */
-    vector->mem = ceu_out_realloc(vector->mem, -vector->max);
+    vector->mem = ceu_out_realloc(vector->mem, (-vector->max)*vector->unit + 1);
+                                                            /* [STRING] +1 */
     return vector->mem;
 }
 #endif
@@ -28,6 +34,11 @@ int ceu_vector_setlen (tceu_vector* vector, int nxt) {
         return 0;
     } else {
         vector->nxt = nxt;
+
+        /* [STRING] */
+        if (vector->mem != NULL) {
+            vector->mem[nxt*vector->unit] = '\0';
+        }
         return 1;
     }
 }
@@ -75,6 +86,7 @@ int ceu_vector_push (tceu_vector* vector, byte* v) {
 
     memcpy(&vector->mem[vector->nxt*vector->unit], v, vector->unit);
     vector->nxt++;
+    vector->mem[vector->nxt*vector->unit] = '\0';    /* [STRING] */
     return 1;
 }
 

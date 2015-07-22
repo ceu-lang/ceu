@@ -50,10 +50,11 @@ F =
                     end
                 else
                     if CTX.ext then
+                        local cast = TP.toc(TP.pop(var.tp,'&'))
                         if is_ref then
-                            VAL = '((void*)'..VAL..'->mem)'
+                            VAL = '(('..cast..')'..VAL..'->mem)'
                         else
-                            VAL = '((void*)'..VAL..'.mem)'
+                            VAL = '(('..cast..')'..VAL..'.mem)'
                         end
                     elseif not is_ref then
                         VAL = '(&'..VAL..')'
@@ -464,9 +465,9 @@ F =
         return VAL
     end,
 
-    Op1_cast = function (me)
+    Op1_cast = function (me, CTX)
         local tp, exp = unpack(me)
-        local VAL = V(exp)
+        local VAL = V(exp, CTX)
 
         local cls = (TP.check(tp,'*','-&') and ENV.clss[TP.id(tp)])
         if cls then
