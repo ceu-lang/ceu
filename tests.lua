@@ -33479,7 +33479,8 @@ end
 var int* a;
 escape 1;
 ]],
-    run = 1,
+    fin = 'line 7 : unsafe access to pointer "a" across `class´ (tests.lua : 4)',
+    --run = 1,
 }
 Test { [[
 interface Global with
@@ -33494,6 +33495,7 @@ var int* a;
 escape 1;
 ]],
     fin = 'line 7 : attribution to pointer with greater scope',
+    --fin = 'line 7 : unsafe access to pointer "a" across `class´ (tests.lua : 4)',
     --fin = 'line 7 : organism pointer attribution only inside constructors',
 }
 
@@ -34414,7 +34416,8 @@ await OS_START;
 t.p = &i;
 escape *t.p;
 ]],
-    fin = 'line 11 : unsafe access to pointer "p" across `await´',
+    run = 1,
+    --fin = 'line 11 : unsafe access to pointer "p" across `await´',
 }
 
 Test { [[
@@ -48946,7 +48949,8 @@ end
 
 escape 1;
 ]],
-    run = 1,
+    fin = 'line 11 : unsafe access to pointer "p" across `class´ (tests.lua : 8)',
+    --run = 1,
 }
 
 Test { [[

@@ -293,10 +293,15 @@ end
         -- re-setting variable
         local set = AST.par(me,'Set')
         local to  = set and set[4]
-        if to and (to==me or (to.tag=='VarList' and AST.isParent(to, me))) then
-            GET()[me.var] = 'accessed'
-            -- set[4] is VarList or Var
-            return
+        if to and AST.isParent(to,me) then
+            local ok = (to==me)
+            ok = ok or (to.tag=='Field' and to.var==me.var)
+            ok = ok or (to.tag=='VarList' and AST.isParent(to, me))
+            if ok then
+                GET()[me.var] = 'accessed'
+                -- set[4] is VarList or Var
+                return
+            end
         end
         if AST.par(me,'Dcl_constr') and me.__par.fst.tag=='This' then
             return  -- constructor access
@@ -312,8 +317,7 @@ end
         -- access to pointer defined in variable outside the class boundary
         local cls = CLS()
         local acc = GET()[me.var]
-        if not AST.isParent(cls,me.var.blk) then
-            assert(not acc, 'bug found')
+        if (not acc) and (not AST.isParent(cls,me.var.blk)) then
             acc = cls
         end
 
