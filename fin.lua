@@ -51,6 +51,9 @@ function ISPTR (node_or_var)
     if TP.is_ext(tp,'_','@') and
        (not (TP.get(TP.id(tp)).plain or tp.plain or TP.check(tp,'&','?')))
     then
+        if node_or_var.id == '_top_pool' then
+            return false    -- TODO: should not be considered "is_ext"
+        end
         return true
     end
 
@@ -59,11 +62,8 @@ end
 
 F = {
     Dcl_cls_pre = function (me)
+        me.__fin_straight = true
         PUSH()
-        if me.is_rec then
-            me.GET = GET()
-            setmetatable(me.GET, {__index=function() return me end})
-        end
     end,
     Dcl_cls_pos = function (me)
         POP()
@@ -276,21 +276,32 @@ end
         end
     end,
 
+    Dcl_pool = 'Dcl_var',
+    Dcl_var = function (me)
+        if AST.par(me,'BlockI') then
+            F.Var(me)
+        end
+    end,
     Var = function (me)
         if not ISPTR(me.var) then
             return
         end
-        if me.var.pre=='pool' or me.var.pre=='function' then
+        if me.var.pre=='function' then
             return
         end
 
         -- re-setting variable
         local set = AST.par(me,'Set')
         local to  = set and set[4]
-        if to and (to==me or (to.tag=='VarList' and AST.isParent(to, me))) then
-            GET()[me.var] = 'accessed'
-            -- set[4] is VarList or Var
-            return
+        if to and AST.isParent(to,me) then
+            local ok = (to==me)
+            ok = ok or (to.tag=='Field' and to.var==me.var)
+            ok = ok or (to.tag=='VarList' and AST.isParent(to, me))
+            if ok then
+                GET()[me.var] = 'accessed'
+                -- set[4] is VarList or Var
+                return
+            end
         end
         if AST.par(me,'Dcl_constr') and me.__par.fst.tag=='This' then
             return  -- constructor access
@@ -303,32 +314,11 @@ end
             return  -- o'=await o until o==o'
         end
 
+        -- access to pointer defined in variable outside the class boundary
         local cls = CLS()
         local acc = GET()[me.var]
-
-        if acc and acc.tag=='Dcl_cls' and
-            (not AST.isParent(cls.blk_body,me.var.blk))
-        then
-            -- Or access to pointer in recursive class:
-            --      var t* ptr;
-            --      class Rec with
-            --          var t* ptr;
-            --      do
-            --          ptr = x;
-            --      end
-            acc = acc
-
-        elseif not AST.isParent(CLS(),me.var.blk) then
-            -- Access to pointer defined in an outer organism:
-            --      this.out.ptr = x;
-            acc = GET()['_']
-                -- check any await, even with no previous access to "ptr"
-
-        else
-            -- Across-await access to pointer defined in any lexical scope above:
-            --      await E;
-            --      ptr = x;
-            acc = acc
+        if (not acc) and (not AST.isParent(cls,me.var.blk)) then
+            acc = cls
         end
 
         if type(acc) ~= 'table' then
@@ -381,6 +371,7 @@ end
     end,
 
     __await = function (me)
+        CLS().__fin_straight = false
         for _, T in ipairs(TRACK) do        -- search in all levels
             for var, v in pairs(T) do
                 if v == 'accessed' then
@@ -391,11 +382,24 @@ end
         GET()['_'] = me
     end,
     EmitInt = '__await',
-    Spawn   = '__await',
     Kill    = '__await',
+
+    Spawn = function (me)
+        if me.cls.is_traverse and me.cls.__fin_straight then
+            return
+        else
+            F.__await(me)
+        end
+    end,
 
     Await = function (me)
         if me.tl_awaits then
+            if me.__env_org then
+                local id = TP.id(me.__env_org.tp)
+                if ENV.clss[id].__fin_straight then
+                    return
+                end
+            end
             F.__await(me)
         end
     end,

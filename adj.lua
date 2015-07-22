@@ -474,6 +474,7 @@ me.blk_body = me.blk_body or blk_body
                                 node('_Escape', me.ln,
                                     node('NUMBER', me.ln, '0')))))
         cls.__adj_out = AST.par(me, 'Block')
+        cls.is_traverse = true
 
         local pool = node('Dcl_pool', me.ln, 'pool',
                         node('Type', me.ln, 'Body_'..me.n, '[]'),
