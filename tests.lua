@@ -9,36 +9,6 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
-
-Test { [[
-interface I with
-    var int[10] vs;
-end
-
-interface Global with
-    interface I;
-end
-var int[10] vs;
-
-class T with
-    interface I;
-do
-    global:vs[0] = 1;
-end
-
-vs[0] = 1;
-global:vs[0] = 1;
-
-var T t;
-t.vs[0] = 1;
-
-var I* i = &t;
-i:vs[0] = 1;
-
-escape 1;
-]],
-    run = 1,
-}
 --]===]
 
 Test { [[
@@ -281,6 +251,43 @@ _f(b);
 escape b[0] + b[1];
 ]],
     run = 5,
+}
+
+Test { [[
+class T with
+    var int[10] vs;
+do
+    this.vs = [1];
+end
+
+var T t;
+t.vs[0] = t.vs[0] + 2;
+
+escape t.vs[0];
+]],
+    run = 3,
+}
+
+Test { [[
+interface I with
+    var int[10] vs;
+end
+
+class T with
+    interface I;
+do
+    this.vs = [1];
+end
+
+var T t;
+t.vs[0] = t.vs[0] + 2;
+
+var I* i = &t;
+i:vs[0] = i:vs[0] * 3;
+
+escape t.vs[0];
+]],
+    run = 9,
 }
 
 --do return end

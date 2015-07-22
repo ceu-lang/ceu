@@ -236,8 +236,17 @@ F =
             if me.var.pre == 'var'
             or me.var.pre == 'pool' then
                 if me.var.tp.arr or me.var.pre=='pool' then
+                    local cast = TP.toc(me.var.tp)
+                    if me.var.tp.arr and (not TP.is_ext(me.var.tp,'_','@')) then
+                        local cls = ENV.clss[TP.id(me.var.tp)] and
+                                    TP.check(TP.pop(me.var.tp,'&'),TP.id(me.var.tp),'[]')
+                        if not cls then
+                            cast = 'tceu_vector*'
+                        end
+                    end
+
                     VAL = [[(
-(]]..TP.toc(me.var.tp)..[[) (
+(]]..cast..[[) (
     ((byte*)]]..V(me.org)..[[) + _CEU_APP.ifcs_flds[]]..gen..[[->cls][
         ]]..ENV.ifcs.flds[me.var.ifc_id]..[[
     ]
