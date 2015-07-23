@@ -9,6 +9,7 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
+--]===]
 
 -- VECTORS
 
@@ -474,19 +475,27 @@ var char[] v = "abc";
 _printf("v = %s\n", v);
 escape _strlen(v);
 ]],
+    env = 'line 2 : types mismatch (`char[]´ <= `char*´)',
+    --run = 3,
+}
+Test { [[
+native @nohold _printf(), _strlen();
+var char[] v = [].."abc";
+_printf("v = %s\n", v);
+escape _strlen(v);
+]],
     run = 3,
 }
 Test { [[
 native @nohold _printf(), _strlen();
-var char[] v = "abc";
+var char[] v = [].."abc";
 v = v .. "def";
 _printf("v = %s\n", v);
 escape _strlen(v);
 ]],
     run = 6,
 }
-do return end
---]===]
+--do return end
 
 -------------------------------------------------------------------------------
 

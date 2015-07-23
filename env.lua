@@ -1006,7 +1006,8 @@ F = {
                     local msg1 = (#fr>0 and 'wrong argument #'..i..' : ') or ''
                     ASR(is_str or is_vec, me, msg1..'source is not a vector')
 
-                    local fr_unit = TP.pop(TP.pop(e.tp,'&'),'[]')
+                    local fr_unit = is_str and TP.new{'char'} or
+                                    TP.pop(TP.pop(e.tp,'&'),'[]')
                     local ok, msg2 = TP.contains(to_unit,fr_unit)
                     ASR(ok, me, msg1..(msg2 or ''))
                 end

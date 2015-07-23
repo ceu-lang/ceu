@@ -1099,26 +1099,35 @@ ceu_out_assert( ceu_vector_push(]]..V(to)..[[, (byte*)&__ceu_p), "access out of 
                         end
                     end
                 else
-                    assert(TP.check(e.tp,'[]','-&'), 'bug found')
-                    if first then
+                    if e.tag == 'STRING' then
+                        if first then
+                            LINE(me, [[
+ceu_vector_setlen(]]..V(to)..[[, 0);
+]])
+                        end
                         LINE(me, [[
+#line ]]..e.ln[2]..' "'..e.ln[1]..[["
+ceu_out_assert( ceu_vector_concat_buffer(]]..V(to)..','..V(e)..[[, strlen(]]..V(e)..[[)), "access out of bounds" );
+]])
+                    else
+                        assert(TP.check(e.tp,'[]','-&'), 'bug found')
+                        if first then
+                            LINE(me, [[
 if (]]..V(to)..' != '..V(e)..[[) {
     ceu_vector_setlen(]]..V(to)..[[, 0);
 ]])
-                    end
-                    if e.tag == 'STRING' then
-                    else
+                        end
                         LINE(me, [[
 #line ]]..e.ln[2]..' "'..e.ln[1]..[["
-ceu_out_assert( ceu_vector_concat(]]..V(to)..','..V(e)..[[), "access out of bounds");
+ceu_out_assert( ceu_vector_concat(]]..V(to)..','..V(e)..[[), "access out of bounds" );
 ]])
-                    end
-                    if first then
-                        LINE(me, [[
+                        if first then
+                            LINE(me, [[
 }
 ]])
-                        first = false
+                        end
                     end
+                    first = false
                 end
             end
 

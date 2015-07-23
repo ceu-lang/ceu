@@ -108,4 +108,15 @@ int ceu_vector_concat (tceu_vector* to, tceu_vector* fr) {
     return 1;
 }
 
+int ceu_vector_concat_buffer (tceu_vector* to, char* fr, int n) {
+    /* TODO: memcpy */
+    int i;
+    for (i=0; i<n; i++) {
+        if (!ceu_vector_push(to,(byte*)&fr[i])) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 #endif
