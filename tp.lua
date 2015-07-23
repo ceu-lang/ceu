@@ -331,24 +331,6 @@ function TP.contains (tp1, tp2)
                 end
                 return true
             end
-
-        -- vec = [...]
-        -- (see vec=vec below)
-        elseif TP.check(tp1,'[]','-&') and (not TP.is_ext(tp1,'_','@')) then
-            -- vec = [...]
-            local t1 = TP.pop(TP.pop(tp1,'&'),'[]')
-            for _,tt2 in ipairs(tp2.tup) do
-                if not tt2.tup then
-                    return false, 'arity mismatch'
-                end
-                for i,t2 in ipairs(tt2.tup) do
-                    local ok, msg = TP.contains(t1,t2)
-                    if not ok then
-                        return false, 'wrong argument #'..i..' : '..msg
-                    end
-                end
-            end
-            return true
         end
         return false, 'arity mismatch'
     end
@@ -399,19 +381,16 @@ function TP.contains (tp1, tp2)
             return false, __err(TP1, TP2)
         end
 
-    -- vec = vec
-    -- (see vec=[...] above)
-    elseif TP.check(tp1,'[]') and (not TP.is_ext(tp1,'_','@')) and
-           TP.check(tp2,'[]') and (not TP.is_ext(tp2,'_','@')) and
+    -- vec& = vec
+    elseif TP.check(TP1,'[]','&') and (not TP.is_ext(tp1,'_','@')) and
+           TP.check(tp2,'[]')     and (not TP.is_ext(tp2,'_','@')) and
             (not (cls1 or cls2)) -- TODO: TP.pre()
     then
         -- to == fr
-        if TP.check(TP1,'&') then
-            local ok = (TP1.arr=='[]') or
-                       (TP2.arr~='[]' and TP1.arr.sval==TP2.arr.sval)
-            if not ok then
-                return false, __err(TP1,TP2)..' : dimension mismatch'
-            end
+        local ok = (TP1.arr=='[]') or
+                   (TP2.arr~='[]' and TP1.arr.sval==TP2.arr.sval)
+        if not ok then
+            return false, __err(TP1,TP2)..' : dimension mismatch'
         end
         return TP.contains( TP.pop(tp1,'[]'),
                             TP.pop(tp2,'[]') )

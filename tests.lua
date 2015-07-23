@@ -42,14 +42,16 @@ escape $$vec + $vec + 1;
 Test { [[
 escape [1];
 ]],
-    env = 'line 1 : arity mismatch',
+    parser = 'after `escape´ : expected expression',
+    --env = 'line 1 : arity mismatch',
 }
 
 Test { [[
 var u8[10] vec = [ [1,2,3] ];
 escape 1;
 ]],
-    env = 'line 1 : wrong argument #1 : arity mismatch',
+    parser = 'line 1 : after `[´ : expected `]´',
+    --env = 'line 1 : wrong argument #1 : arity mismatch',
 }
 Test { [[
 var u8[10] vec = (1,2,3);
@@ -64,11 +66,33 @@ escape 1;
     env = 'line 1 : types mismatch (`u8[]´ <= `int´)',
 }
 Test { [[
+class T with do end
+var T[1] ts = [];
+escape 1;
+]],
+    env = 'line 2 : invalid attribution : destination is not a vector',
+}
+Test { [[
+var _int[1] vec = [];
+escape 1;
+]],
+    env = 'line 1 : invalid attribution : destination is not a vector',
+}
+
+Test { [[
 var int x;
 var u8[10] vec = [ &x ];
 escape 1;
 ]],
     env = 'line 2 : wrong argument #1 : types mismatch (`u8´ <= `int*´)',
+}
+
+Test { [[
+var int*[] v1;
+var int[]  v2 = []..v1;
+escape 1;
+]],
+    env = 'line 2 : wrong argument #2 : types mismatch (`int´ <= `int*´)',
 }
 
 Test { [[
@@ -160,32 +184,39 @@ var u8[10] v1 = [1,2,3];
 var u8[20] v2 = v1;
 escape v2[0] + v2[1] + v2[2];
 ]],
+    env = 'line 2 : types mismatch (`u8[]´ <= `u8[]´)',
+}
+Test { [[
+var u8[10] v1 = [1,2,3];
+var u8[20] v2 = []..v1;
+escape v2[0] + v2[1] + v2[2];
+]],
     run = 6,
 }
 Test { [[
 var u8[20] v1 = [1,2,3];
-var u8[10] v2 = v1;
+var u8[10] v2 = []..v1;
 escape v2[0] + v2[1] + v2[2];
 ]],
     run = 6,
 }
 Test { [[
 var u8[] v1   = [1,2,3];
-var u8[10] v2 = v1;
+var u8[10] v2 = []..v1;
 escape v2[0] + v2[1] + v2[2];
 ]],
     run = 6,
 }
 Test { [[
 var u8[10] v1 = [1,2,3];
-var u8[]   v2 = v1;
+var u8[]   v2 = []..v1;
 escape v2[0] + v2[1] + v2[2];
 ]],
     run = 6,
 }
 Test { [[
 var u8[3] v1 = [1,2,3];
-var u8[2] v2 = v1;
+var u8[2] v2 = []..v1;
 escape v2[0] + v2[1] + v2[2];
 ]],
     run = '2] runtime error: access out of bounds',
@@ -294,30 +325,30 @@ escape t.vs[0];
 Test { [[
 escape 1..2;
 ]],
-    env = 'line 1 : malformed number',
+    parser = 'line 1 : after `1´ : expected `;´',
 }
 Test { [[
 escape 1 .. 2;
 ]],
-    env = 'invalid operands to binary ".."',
+    parser = 'line 1 : after `1´ : expected `;´',
 }
 Test { [[
 var int[] x = [1]..2;
 escape 1;
 ]],
-    env = 'invalid operands to binary ".."',
+    env = 'line 1 : wrong argument #2 : source is not a vector',
 }
 
 Test { [[
 escape [1]..[2];
 ]],
-    env = 'line 1 : arity mismatch',
+    parser = 'line 1 : after `escape´ : expected expression',
 }
 
 Test { [[
 escape [1]..[&this];
 ]],
-    env = 'line 1 : invalid operands to binary ".."',
+    parser = 'line 1 : after `escape´ : expected expression',
 }
 
 Test { [[
@@ -343,7 +374,6 @@ var int[] v2 = [7,8,9];
 v1 = v1 .. [4,5,6] .. v2;
 var int ret = 0;
 loop i in 9 do
-_printf("%d=%d\n", i, v1[i]);
     ret = ret + v1[i];
 end
 escape ret;
@@ -407,7 +437,37 @@ escape _strlen(v);
     run = 3,
 }
 
---]===]
+Test { [[
+_f([1]);
+escape 1;
+]],
+    parser = 'line 1 : after `(´ : expected `)´',
+    --run = 1,
+}
+Test { [[
+_f([1]..[2]);
+escape 1;
+]],
+    parser = 'line 1 : after `(´ : expected `)´',
+    --run = 1,
+}
+Test { [[
+var int[] v;
+_f([1]..v);
+escape 1;
+]],
+    parser = 'line 2 : after `(´ : expected `)´',
+    --run = 1,
+}
+Test { [[
+var int[] v;
+_f(v..[1]);
+escape 1;
+]],
+    parser = 'line 2 : after `v´ : expected `)´',
+    --run = 1,
+}
+
 Test { [[
 native @nohold _printf(), _strlen();
 var char[] v = "abc";
@@ -426,6 +486,7 @@ escape _strlen(v);
     run = 6,
 }
 do return end
+--]===]
 
 -------------------------------------------------------------------------------
 

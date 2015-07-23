@@ -1048,36 +1048,11 @@ case ]]..SET.lbl_cnt.id..[[:;
         if set == 'exp' then
             CONC(me, fr)                -- TODO: remove?
 
-            -- VECTOR ASSIGNMENTS
-            local is_idx = false    -- vec[x] = ...
-            local is_len = false    -- $vec   = ...
-            local is_vec = false    -- vec    = ...
-
-            if to.tag == 'Op2_idx' then
-                local _, arr, _ = unpack(to)
-                is_idx = TP.check(arr.tp,'[]','-&') and (not TP.is_ext(arr.tp,'_','@'))
-            elseif to.tag == 'Op1_$' then
-                is_len = true
-            else
-                -- ignore byref assignments (let normal set deal)
-                if not me.__ref_byref then
-                    -- TODO: TP.pre() (only pool?)
-                    local cls = ENV.clss[TP.id(to.tp)] and
-                                TP.check(TP.pop(to.tp,'&'),TP.id(to.tp),'[]')
-                    if not cls then
-                       is_vec = TP.check(to.tp,'[]','-&') and
-                                (not TP.is_ext(to.tp,'_','@'))
-                    end
-                end
-            end
-
-            -- NORMAL ASSIGNMENTS
-            if not (is_idx or is_len or is_vec) then
-                F.__set(me, fr, to)
-
-            -- VECTOR ASSIGNMENTS
-            elseif is_idx then
-                -- vec[i] = ...
+            -- vec[x] = ...
+            local _, arr, _ = unpack(to)
+            if to.tag=='Op2_idx' and
+               TP.check(arr.tp,'[]','-&') and (not TP.is_ext(arr.tp,'_','@'))
+            then
                 AST.asr(to, 'Op2_idx')
                 local _, vec, idx = unpack(to)
                 LINE(me, [[
@@ -1087,63 +1062,64 @@ case ]]..SET.lbl_cnt.id..[[:;
     ceu_out_assert( ceu_vector_seti(]]..V(vec)..','..V(idx)..[[, (byte*)&__ceu_p), "access out of bounds");
 }
 ]])
-            elseif is_len then
+
+            -- $vec = ...
+            elseif to.tag == 'Op1_$' then
                 -- $vec = ...
                 local _,arr = unpack(to)
                 LINE(me, [[
 ceu_vector_setlen(]]..V(arr)..','..V(fr)..[[);
 ]])
 
-            elseif is_vec then
-                -- vec = vec
-                -- vec = [...]
-                -- vec = a .. b .. c
-                local function cat (fr, first)
-                    -- vec = [...]
-                    if fr.tag == 'VectorExp' then
-                        if first then
-                            LINE(me, [[
+            -- all other
+            else
+                F.__set(me, fr, to)
+            end
+
+        elseif set == 'vector' then
+            local first = true
+            for i, e in ipairs(fr) do
+                if e.tag == 'Vector_tup' then
+                    if #e > 0 then
+                        e = AST.asr(e,'', 1,'ExpList')
+                        for j, ee in ipairs(e) do
+                            if first then
+                                first = false
+                                LINE(me, [[
 ceu_vector_setlen(]]..V(to)..[[, 0);
 ]])
-                        end
-
-                        local exps = AST.asr(fr,'VectorExp', 1,'ExpList')
-                        for i, exp in ipairs(exps) do
+                            end
                             LINE(me, [[
 {
-]]..TP.toc(exp.tp)..' __ceu_p = '..V(exp)..[[;
+]]..TP.toc(ee.tp)..' __ceu_p = '..V(ee)..[[;
 #line ]]..fr.ln[2]..' "'..fr.ln[1]..[["
 ceu_out_assert( ceu_vector_push(]]..V(to)..[[, (byte*)&__ceu_p), "access out of bounds");
 }
 ]])
                         end
-
-                    -- vec = a .. b .. c
-                    elseif fr.tag == 'Op2_..' then
-                        local _, e1, e2 = unpack(fr)
-                        cat(e1, first)
-                        cat(e2, false)
-
-                    -- vec = vec
-                    else
-                        assert(TP.check(fr.tp,'[]','-&'), 'bug found')
-                        if first then
-                            LINE(me, [[
-if (]]..V(to)..' != '..V(fr)..[[) {
+                    end
+                else
+                    assert(TP.check(e.tp,'[]','-&'), 'bug found')
+                    if first then
+                        LINE(me, [[
+if (]]..V(to)..' != '..V(e)..[[) {
     ceu_vector_setlen(]]..V(to)..[[, 0);
-#line ]]..fr.ln[2]..' "'..fr.ln[1]..[["
-    ceu_out_assert( ceu_vector_concat(]]..V(to)..','..V(fr)..[[), "access out of bounds");
+]])
+                    end
+                    if e.tag == 'STRING' then
+                    else
+                        LINE(me, [[
+#line ]]..e.ln[2]..' "'..e.ln[1]..[["
+ceu_out_assert( ceu_vector_concat(]]..V(to)..','..V(e)..[[), "access out of bounds");
+]])
+                    end
+                    if first then
+                        LINE(me, [[
 }
 ]])
-                        else
-                            LINE(me, [[
-#line ]]..fr.ln[2]..' "'..fr.ln[1]..[["
-ceu_out_assert( ceu_vector_concat(]]..V(to)..','..V(fr)..[[), "access out of bounds");
-]])
-                        end
+                        first = false
                     end
                 end
-                cat(fr, true)
             end
 
         elseif set == 'adt-alias' then

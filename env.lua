@@ -816,11 +816,6 @@ F = {
         me.tp.tup = TP.t2tup(me)
     end,
 
-    VectorExp = function (me)
-        me.tp = me
-        me.tp.tup = TP.t2tup(me)
-    end,
-
     Dcl_nat = function (me)
         local mod, tag, id, len = unpack(me)
         if tag=='type' or mod=='@plain' then
@@ -984,6 +979,40 @@ F = {
 
         elseif set == 'adt-constr' then
             return  -- checked in adt.lua
+
+        elseif set == 'vector' then
+            -- TODO: TP.pre() (only pool?)
+            local is_vec = TP.check(to.tp,'[]','-&') and
+                           (not TP.is_ext(to.tp,'_','@'))
+            local is_cls = ENV.clss[TP.id(to.tp)] and
+                           TP.check(TP.pop(to.tp,'&'),TP.id(to.tp),'[]')
+            ASR(is_vec and (not is_cls), me, 'invalid attribution : destination is not a vector')
+
+            local to_unit = TP.pop(TP.pop(to.tp,'&'),'[]')
+            AST.asr(fr, 'Vector_constr')
+            for i, e in ipairs(fr) do
+                if e.tag == 'Vector_tup' then
+                    if #e > 0 then
+                        e = AST.asr(e,'', 1,'ExpList')
+                        for j, ee in ipairs(e) do
+                            local ok, msg = TP.contains(to_unit,ee.tp)
+                            ASR(ok, me, 'wrong argument #'..j..' : '..(msg or ''))
+                        end
+                    end
+                else -- vector
+                    local is_str = (e.tag=='STRING')
+                    local is_vec = TP.check(e.tp,'[]','-&') and
+                                   (not TP.is_ext(e.tp,'_','@'))
+                    local msg1 = (#fr>0 and 'wrong argument #'..i..' : ') or ''
+                    ASR(is_str or is_vec, me, msg1..'source is not a vector')
+
+                    local fr_unit = TP.pop(TP.pop(e.tp,'&'),'[]')
+                    local ok, msg2 = TP.contains(to_unit,fr_unit)
+                    ASR(ok, me, msg1..(msg2 or ''))
+                end
+            end
+
+            return
 
         elseif ENV.adts[to_tp_id] and (not to_is_opt) then
             if ENV.adts[to_tp_id].is_rec then
@@ -1336,14 +1365,6 @@ F = {
         me.lst = e1.lst
     end,
     ['Op1_$$'] = 'Op1_$',
-    ['Op2_..'] = function (me)
-        local op, e1, e2 = unpack(me)
-        ASR(TP.max(e1.tp,e2.tp), me,
-            'invalid operands to binary "'..op..'"')
-        me.tp = e1.tp
-        ASR(me.tp.tup or TP.check(me.tp,'[]','-&'), me,
-            'invalid operands to binary "'..op..'"')
-    end,
 
     Op2_same = function (me)
         local op, e1, e2 = unpack(me)

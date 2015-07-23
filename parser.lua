@@ -223,6 +223,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
               + Cc'adt-constr' * V'Adt_constr_root'
               + Cc'do-org'     * V'_DoOrg'
               + Cc'block'      * V'__SetBlock'
+              + Cc'vector'     * V'Vector_constr'   -- before exp
               + Cc'exp'        * V'__Exp'
               + Cc'lua'        * V'_LuaExp'
               + Cc'__trav_loop' * V'_TraverseLoop'  -- before Rec
@@ -321,7 +322,7 @@ end
     , __6      = V'__7'  * ((CK'!='+CK'=='-'!==') * EV'__7')^0
     , __7      = V'__8'  * ((CK'<='+CK'>='+(CK'<'-'<<')+(CK'>'-'>>')) * EV'__8')^0
     , __8      = V'__9'  * ((CK'>>'+CK'<<') * EV'__9')^0
-    , __9      = V'__10' * ((CK'+'+CK'-'+CK'..') * EV'__10')^0
+    , __9      = V'__10' * ((CK'+'+CK'-') * EV'__10')^0
     , __10     = V'__11' * ((CK'*'+(CK'/'-'//'-'/*')+CK'%') * EV'__11')^0
     , __11     = ( Cc(false) * (CKEY'not'+CK'&'+CK'-'+CK'+'+CK'~'+
                                           CK'*'+CK'$$'+(CK'$'-'$$')
@@ -333,7 +334,7 @@ end
                             ( KEY'finalize' * EKEY'with' * V'Finally' * EKEY'end'
                               + Cc(false)) +
                         K'[' * Cc'idx'  * EV'__Exp'    * EK']' +
-                        (CK':' + CK'.') * EV'__ID_field' +
+                        (CK':' + (CK'.'-'..')) * EV'__ID_field' +
                         CK'?' + (CK'!'-'!=')
                     )^0
     , __13     = V'__Prim'
@@ -342,25 +343,27 @@ end
               + V'NULL'    + V'NUMBER' + V'STRING'
               + V'Global'  + V'This'   + V'Outer'
               + V'RawExp'
-              + V'VectorExp'
               + CKEY'call'     * EV'__Exp'
               + CKEY'call/rec' * EV'__Exp'
 
     , Adt_constr_root = (CKEY'new'+Cc(false)) * V'Adt_constr_one'
     , Adt_constr_one = V'Adt' * EK'(' * EV'_Adt_explist' * EK')'
-    , Adt         = V'__ID_adt' * (K'.'*V'__ID_tag' + Cc(false))
+    , Adt         = V'__ID_adt' * ((K'.'-'..')*V'__ID_tag' + Cc(false))
 
     , __adt_expitem = (V'Adt_constr_one' + V'__Exp')
     , _Adt_explist = ( V'__adt_expitem'*(K','*EV'__adt_expitem')^0 )^-1
 
     , ExpList = ( V'__Exp'*(K','*EV'__Exp')^0 )^-1
-    , VectorExp = (K'['-('['*P'='^0*'[')) * V'ExpList' * EK']'
-
     , __Parens  = K'(' * EV'__Exp' * EK')'
+
+    , Vector_tup = (K'['-('['*P'='^0*'[')) * EV'ExpList' * EK']'
+    , __vector_one = V'Vector_tup' + V'__Exp'
+    , Vector_constr = V'__vector_one'*(K'..'*EV'__vector_one')^1
+                    + V'Vector_tup'
 
     , SIZEOF = KEY'sizeof' * EK'(' * (V'Type' + V'__Exp') * EK')'
 
-    , NUMBER = CK( #m.R'09' * (m.R'09'+m.S'xX'+m.R'AF'+m.R'af'+'.'
+    , NUMBER = CK( #m.R'09' * (m.R'09'+m.S'xX'+m.R'AF'+m.R'af'+(P'.'-'..')
                                       +(m.S'Ee'*'-')+m.S'Ee')^1 )
             + CK( "'" * (P(1)-"'")^0 * "'" )
             + KEY'false' / function() return 0 end
