@@ -7,6 +7,8 @@ end
 ----------------------------------------------------------------------------
 -- NO: testing
 ----------------------------------------------------------------------------
+--[===[
+--]===]
 
 Test { [[
 data Command with
@@ -36,8 +38,6 @@ pool Command[100] cmds = new
         Command.STREAM_END(),
         Command.STREAM_END());
 
-native @nohold _printf();
-_printf("%p\n", cmds);
                 cmds:STREAM_ROOT.nxt = new Command.STREAM_END();
 
     traverse cmd in cmds do
@@ -46,7 +46,6 @@ _printf("%p\n", cmds);
                 await (cmd:AWAIT.ms) ms;
 
             else/if cmd:STREAM_ROOT then
-_printf("%p\n", cmds);
                 cmds:STREAM_ROOT.nxt = new Command.STREAM_END();
             end
         end
@@ -73,9 +72,40 @@ escape 1;
     gcc = '5: error: implicit declaration of function ‘f’',
 }
 
---[===[
-do return end
---]===]
+Test { [[
+data Command with
+    tag NOTHING;
+or
+    tag STREAM_ROOT with
+        var Command* run;
+        var Command* now;
+        var Command* nxt;
+    end
+or
+    tag STREAM_NEXT with
+        var Command* one;
+        var Command* two;
+    end
+or
+    tag STREAM_END;
+end
+
+pool Command[] cmds;
+cmds:STREAM_ROOT.now:STREAM_NEXT.one = cmds:STREAM_ROOT.nxt;
+cmds:STREAM_ROOT.run = cmds:STREAM_ROOT.nxt:STREAM_NEXT.two;
+traverse cmd in cmds do
+    cmd:STREAM_ROOT.now:STREAM_NEXT.one = cmd:STREAM_ROOT.nxt;
+    cmd:STREAM_ROOT.run = cmd:STREAM_ROOT.nxt:STREAM_NEXT.two;
+    cmds:STREAM_ROOT.now:STREAM_NEXT.one = cmds:STREAM_ROOT.nxt;
+    cmds:STREAM_ROOT.run = cmds:STREAM_ROOT.nxt:STREAM_NEXT.two;
+end
+cmds:STREAM_ROOT.now:STREAM_NEXT.one = cmds:STREAM_ROOT.now;
+escape 1;
+]],
+    adt = 'line 27 : cannot assign parent to child',
+}
+
+--do return end
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------

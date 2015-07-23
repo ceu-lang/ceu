@@ -89,8 +89,42 @@ F = {
             --  [OK]: "to" is prefix of "fr" (changing parent to a child)
             --      l = l:CONS.tail     // OK
             --      l:CONS.tail = l     // NO
-            local prefix = (to.fst.__depth-to.__depth <= fr.fst.__depth-fr.__depth)
-            ASR(prefix, me, 'cannot assign parent to child')
+            local ok = false
+            local to = AST.par({__par=to.fst},
+                        function (me)
+                            return TP.check(me.tp,'[]','-*','-&')
+                        end)
+            local fr = AST.par({__par=fr.fst},
+                        function (me)
+                            return TP.check(me.tp,'[]','-*','-&')
+                        end)
+            while true do
+                if fr.__par.tag ~= 'Op1_*' then
+                    -- l:CONS.tail = l
+                    ok = false      -- end of fr
+                    break
+                elseif to.__par.tag ~= 'Op1_*' then
+                    -- l = l:CONS.tail
+                    ok = true       -- end of to
+                    break
+                end
+                to = AST.asr(to.__par.__par,'Op2_.')
+                fr = AST.asr(fr.__par.__par,'Op2_.')
+                if to[3] ~= fr[3] then
+                    -- l:TAG1.x = l:TAG2.y
+                    ok = true       -- different tags
+                    break
+                else
+                    to = AST.asr(to.__par,'Op2_.')
+                    fr = AST.asr(fr.__par,'Op2_.')
+                    if to[3] ~= fr[3] then
+                        -- l:TAG.x = l:TAG.y
+                        ok = true   -- different fields
+                        break
+                    end
+                end
+            end
+            ASR(ok, me, 'cannot assign parent to child')
         end
     end,
 
