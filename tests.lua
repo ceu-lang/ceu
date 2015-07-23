@@ -8,6 +8,71 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
+Test { [[
+data Command with
+    tag NOTHING;
+or
+    tag AWAIT with
+        var int ms;
+    end
+or
+    tag STREAM_ROOT with
+        var Command* run;
+        var Command* now;
+        var Command* nxt;
+    end
+or
+    tag STREAM_NEXT with
+        var Command* one;
+        var Command* two;
+    end
+or
+    tag STREAM_END;
+end
+
+pool Command[100] cmds = new
+    Command.STREAM_ROOT(
+        Command.AWAIT(1000),
+        Command.STREAM_END(),
+        Command.STREAM_END());
+
+native @nohold _printf();
+_printf("%p\n", cmds);
+                cmds:STREAM_ROOT.nxt = new Command.STREAM_END();
+
+    traverse cmd in cmds do
+        watching cmd do
+            if cmd:AWAIT then
+                await (cmd:AWAIT.ms) ms;
+
+            else/if cmd:STREAM_ROOT then
+_printf("%p\n", cmds);
+                cmds:STREAM_ROOT.nxt = new Command.STREAM_END();
+            end
+        end
+    end
+
+escape 1;
+]],
+    _ana = {acc=true},
+    run = 1,
+}
+
+Test { [[
+native @plain _SDL_Renderer;
+native @nohold _f();
+class Turtle with
+    var _SDL_Renderer& ren;
+do
+    every 1s do
+        _f(&ren);
+    end
+end
+escape 1;
+]],
+    gcc = '5: error: implicit declaration of function ‘f’',
+}
+
 --[===[
 do return end
 --]===]
