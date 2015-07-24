@@ -48,6 +48,8 @@ FILES = {
         [====[]]..'\n'..assert(io.open'ceu_pool.h'):read'*a'..[[]====],
     ceu_pool_c =
         [====[]]..'\n'..assert(io.open'ceu_pool.c'):read'*a'..[[]====],
+    ceu_threads_h =
+        [====[]]..'\n'..assert(io.open'ceu_threads.h'):read'*a'..[[]====],
 }
 ]]..fin
 

@@ -186,7 +186,9 @@ local HH, CC
 -- TEMPLATE.H
 do
     HH = FILES.template_h
-    HH = SUB(HH, '#include "ceu_os.h"', FILES.ceu_os_h)
+    HH = SUB(HH, '#include "ceu_os.h"',      FILES.ceu_os_h)
+    HH = SUB(HH, '#include "ceu_threads.h"', FILES.ceu_threads_h)
+
 
     local tps = { [0]='void', [1]='8', [2]='16', [4]='32' }
     HH = SUB(HH, '=== TCEU_NLBL ===',   's'..tps[TP.types.tceu_nlbl.len])
