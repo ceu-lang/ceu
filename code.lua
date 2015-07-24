@@ -932,6 +932,7 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
 
     __set_adt_mut_conc_fr = function (me, SET, fr)
         local _,set,_,to = unpack(SET)
+        local to_tp_id = TP.id(to.tp)
 
         local pool = FIND_ADT_POOL(to.fst)
         pool = '('..V(pool,'adt_root')..'->pool)'
@@ -941,7 +942,12 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
     void* __ceu_old = ]]..V(to)..[[;    /* will kill/free old */
 ]])
 
-        local to_tp_id = TP.id(to.tp)
+        -- HACK: _STK_ORG overwritten by _kill
+        if PROPS.has_adts_watching[to_tp_id] then
+            LINE(me,[[
+    tceu_org* __ceu_stk_org = _STK_ORG;
+]])
+        end
 
         if set ~= 'adt-constr' then
             -- remove "fr" from tree (set parent link to NIL)
@@ -954,29 +960,33 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
 
         if PROPS.has_adts_watching[to_tp_id] then
             LINE(me, [[
-/* save the continuation to run after the kills */
-_STK->trl->evt = CEU_IN__STK;
-_STK->trl->lbl = ]]..SET.lbl_cnt.id..[[;
-_STK->trl->stk = stack_curi(_ceu_go);
+    /* save the continuation to run after the kills */
+    _STK->trl->evt = CEU_IN__STK;
+    _STK->trl->lbl = ]]..SET.lbl_cnt.id..[[;
+    _STK->trl->stk = stack_curi(_ceu_go);
+    CEU_]]..to_tp_id..[[_kill(_ceu_app, _ceu_go, __ceu_old);
+]])
 
-CEU_]]..to_tp_id..[[_kill(_ceu_app, _ceu_go, __ceu_old);
+            -- HACK: _STK_ORG overwritten by _kill
+            LINE(me, [[
+#undef  _STK_ORG
+#define _STK_ORG __ceu_stk_org
 ]])
         end
 
         LINE(me, [[
                 /* TODO: parameter restored here */
 #if defined(CEU_ADTS_NEWS_MALLOC) && defined(CEU_ADTS_NEWS_POOL)
-if (]]..pool..[[ == NULL) {
-    CEU_]]..to_tp_id..[[_free_dynamic(_ceu_app, __ceu_old);
-} else {
-    CEU_]]..to_tp_id..[[_free_static(_ceu_app, __ceu_old, ]]..pool..[[);
-}
+    if (]]..pool..[[ == NULL) {
+        CEU_]]..to_tp_id..[[_free_dynamic(_ceu_app, __ceu_old);
+    } else {
+        CEU_]]..to_tp_id..[[_free_static(_ceu_app, __ceu_old, ]]..pool..[[);
+    }
 #elif defined(CEU_ADTS_NEWS_MALLOC)
-CEU_]]..to_tp_id..[[_free_dynamic(_ceu_app, __ceu_old);
+    CEU_]]..to_tp_id..[[_free_dynamic(_ceu_app, __ceu_old);
 #elif defined(CEU_ADTS_NEWS_POOL)
-CEU_]]..to_tp_id..[[_free_static(_ceu_app, __ceu_old, ]]..pool..[[);
+    CEU_]]..to_tp_id..[[_free_static(_ceu_app, __ceu_old, ]]..pool..[[);
 #endif
-}
 ]])
 
         -- must allocate after the free
@@ -988,11 +998,23 @@ CEU_]]..to_tp_id..[[_free_static(_ceu_app, __ceu_old, ]]..pool..[[);
         end
 
         if PROPS.has_adts_watching[to_tp_id] then
+            -- HACK: _STK_ORG overwritten by _kill
             LINE(me, [[
+#undef  _STK_ORG
+#ifdef CEU_ORGS
+#define _STK_ORG ((tceu_org*)_STK->org)
+#else
+#define _STK_ORG ((tceu_org*)_ceu_app->data)
+#endif
+
 return RET_RESTART;
 case ]]..SET.lbl_cnt.id..[[:;
 ]])
         end
+
+        LINE(me, [[
+}
+]])
     end,
 
     __set = function (me, fr, to)

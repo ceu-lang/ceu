@@ -7,7 +7,6 @@ end
 ----------------------------------------------------------------------------
 -- NO: testing
 ----------------------------------------------------------------------------
-
 --[===[
 --]===]
 
@@ -44410,6 +44409,30 @@ escape x;
     run = 10,
 }
 
+Test { [[
+data D with
+    tag NIL;
+or
+    tag REC with
+        var D* r1;
+        var D* r2;
+    end
+end
+
+pool D[] ds = new D.REC(
+                    D.REC(D.NIL(),D.NIL()),
+                    D.NIL());
+
+par/or do
+    await ds:REC.r1;
+with
+    ds:REC
+
+escape 1;
+]],
+    run = 1,
+}
+
 -- << ADT : MISC
 
 -- USE DATATYPES DEFINED ABOVE ("DATA")
@@ -49556,6 +49579,103 @@ escape v;
     todo = true,
     run = 10,
 }
+
+Test { [[
+data Command with
+    tag NOTHING;
+or
+    tag AWAIT with
+        var int ms;
+    end
+or
+    tag STREAM_ROOT with
+        var Command* run;
+        var Command* now;
+        var Command* nxt;
+    end
+or
+    tag STREAM_NEXT with
+        var Command* one;
+        var Command* two;
+    end
+or
+    tag STREAM_END;
+end
+
+pool Command[100] cmds = new
+    Command.STREAM_ROOT(
+        Command.AWAIT(1000),
+        Command.STREAM_END(),
+        Command.STREAM_END());
+
+                cmds:STREAM_ROOT.nxt = new Command.STREAM_END();
+
+    traverse cmd in cmds do
+        watching cmd do
+            if cmd:AWAIT then
+                await (cmd:AWAIT.ms) ms;
+
+            else/if cmd:STREAM_ROOT then
+                cmds:STREAM_ROOT.nxt = new Command.STREAM_END();
+            end
+        end
+    end
+
+escape 1;
+]],
+    _ana = {acc=true},
+    run = 1,
+}
+
+Test { [[
+native @plain _SDL_Renderer;
+native @nohold _f();
+class Turtle with
+    var _SDL_Renderer& ren;
+do
+    every 1s do
+        _f(&ren);
+    end
+end
+escape 1;
+]],
+    gcc = '5: error: implicit declaration of function ‘f’',
+}
+
+Test { [[
+data Command with
+    tag NOTHING;
+or
+    tag STREAM_ROOT with
+        var Command* run;
+        var Command* now;
+        var Command* nxt;
+    end
+or
+    tag STREAM_NEXT with
+        var Command* one;
+        var Command* two;
+    end
+or
+    tag STREAM_END;
+end
+
+pool Command[] cmds;
+cmds:STREAM_ROOT.now:STREAM_NEXT.one = cmds:STREAM_ROOT.nxt;
+cmds:STREAM_ROOT.run = cmds:STREAM_ROOT.nxt:STREAM_NEXT.two;
+traverse cmd in cmds do
+    cmd:STREAM_ROOT.now:STREAM_NEXT.one = cmd:STREAM_ROOT.nxt;
+    cmd:STREAM_ROOT.run = cmd:STREAM_ROOT.nxt:STREAM_NEXT.two;
+    cmds:STREAM_ROOT.now:STREAM_NEXT.one = cmds:STREAM_ROOT.nxt;
+    cmds:STREAM_ROOT.run = cmds:STREAM_ROOT.nxt:STREAM_NEXT.two;
+end
+cmds:STREAM_ROOT.now:STREAM_NEXT.one = cmds:STREAM_ROOT.now;
+escape 1;
+]],
+    adt = 'line 27 : cannot assign parent to child',
+}
+
+-- << ADTS / RECURSE / TRAVERSE
 
 -- ADTS ALIASING
 
