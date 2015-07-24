@@ -297,12 +297,57 @@ t.vs[0] = t.vs[0] + 2;
 
 escape t.vs[0];
 ]],
+    props = 'line 2 : not permitted inside an interface : vectors',
+}
+
+Test { [[
+class T with
+    var int[10]& vs;
+do
+    this.vs = [1];
+end
+
+var int[10] vs;
+var T t with
+    this.vs = vs;
+end;
+t.vs[0] = t.vs[0] + 2;
+
+escape t.vs[0];
+]],
     run = 3,
 }
 
 Test { [[
 interface I with
-    var int[10] vs;
+    var int& v;
+end
+
+class T with
+    interface I;
+do
+    this.v = 1;
+end
+
+var int v;
+var T t with
+    this.v = v;
+end;
+t.v = t.v + 2;
+
+var I* i = &t;
+i:v = i:v * 3;
+
+native @pure _printf();
+
+escape t.v;
+]],
+    run = 9,
+}
+
+Test { [[
+interface I with
+    var int[10]& vs;
 end
 
 class T with
@@ -311,11 +356,17 @@ do
     this.vs = [1];
 end
 
-var T t;
+var int[10] vs;
+var T t with
+    this.vs = vs;
+end;
 t.vs[0] = t.vs[0] + 2;
 
 var I* i = &t;
 i:vs[0] = i:vs[0] * 3;
+
+native @pure _printf();
+_printf("%p %p\n", t.vs, i:vs);
 
 escape t.vs[0];
 ]],
@@ -395,6 +446,17 @@ v = [1] .. v;
 escape 1;
 ]],
     run = '2] runtime error: access out of bounds';
+}
+
+Test { [[
+class T with
+    var int[]& v1;
+    var int[]  v2;
+do
+end
+escape 1;
+]],
+    props = 'line 3 : not permitted inside an interface',
 }
 
 -- STRINGS
@@ -27327,9 +27389,9 @@ end;
 var int y = 15;
 t.v = y;
 y = 100;
-escape t.v;
+escape t.v + x + y;
 ]],
-    run = 100,
+    run = 130,
 }
 
 -- KILL THEMSELVES

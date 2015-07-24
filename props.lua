@@ -302,13 +302,14 @@ F = {
     end,
 
     Dcl_var = function (me)
-        if me.var.cls then
-            -- <class T with var U u; end>
-            ASR(not AST.par(me,'BlockI'), me,
-                    'not permitted inside an interface')
-        end
-        if AST.par(me,'BlockI') and TP.check(me.var.tp,'?') then
-            CLS().has_pre = true   -- code for pre (before constr)
+        if AST.par(me, 'BlockI') then
+            ASR(not TP.check(me.var.tp,'[]') or TP.is_ext(me.var.tp,'_','@'), me,
+                'not permitted inside an interface : vectors')
+            ASR(not me.var.cls, me,
+                'not permitted inside an interface : organisms')
+            if TP.check(me.var.tp,'?') then
+                CLS().has_pre = true   -- code for pre (before constr)
+            end
         end
     end,
 

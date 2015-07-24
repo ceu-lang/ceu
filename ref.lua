@@ -65,10 +65,11 @@ F = {
             end
         end
 
-        -- ALREADY HAS INTERNAL BINDING
+        -- ALREADY HAS BINDING
 
-        if to.lst.var.bind=='internal' then
+        if to.lst.var.bind == 'internal' then
             assert(cls.id=='Main' or (to.blk ~= cls.blk_ifc))
+        elseif outer then
 
         -- NO INTERNAL BINDING
         --  first assignment
@@ -78,7 +79,9 @@ F = {
             if if_ and (if_.__depth > to.lst.var.blk.__depth) and
                ((not constr) or if_.__depth > constr.__depth) and
                ((not to.lst.var.bind) or to.lst.var.bind=='partial')
-            then else
+            then
+                -- nothing
+            else
                 if_ = false
             end
             if if_ and AST.isParent(if_[2],me) then
