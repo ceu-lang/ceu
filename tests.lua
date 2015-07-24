@@ -97,8 +97,6 @@ escape 1;
 
 Test { [[
 var u8[10] vec = [1,2,3];
-_printf("v[0] = %d\n", vec[0]);
-_printf("v[1] = %d\n", vec[1]);
 escape $$vec + $vec + vec[0] + vec[1] + vec[2];
 ]],
     run = 19,
@@ -338,13 +336,23 @@ t.v = t.v + 2;
 var I* i = &t;
 i:v = i:v * 3;
 
-native @pure _printf();
-
 escape t.v;
 ]],
     run = 9,
 }
 
+Test { [[
+var int[10]& rs;
+var int[10]  vs = [1];
+rs = vs;
+vs[0] = vs[0] + 2;
+
+rs[0] = rs[0] * 3;
+
+escape vs[0];
+]],
+    run = 9,
+}
 Test { [[
 interface I with
     var int[10]& vs;
@@ -363,10 +371,8 @@ end;
 t.vs[0] = t.vs[0] + 2;
 
 var I* i = &t;
-i:vs[0] = i:vs[0] * 3;
 
-native @pure _printf();
-_printf("%p %p\n", t.vs, i:vs);
+i:vs[0] = i:vs[0] * 3;
 
 escape t.vs[0];
 ]],

@@ -243,6 +243,9 @@ F =
                                     TP.check(TP.pop(me.var.tp,'&'),TP.id(me.var.tp),'[]')
                         if not cls then
                             cast = 'tceu_vector*'
+                            if TP.check(me.var.tp,'&') then
+                                cast = cast..'*'
+                            end
                         end
                     end
 
@@ -260,9 +263,9 @@ F =
     ]
         )
 ))]]
-                    if TP.check(me.var.tp,'&') and (not ENV.clss[TP.id(me.var.tp)]) then
-                        VAL = '(*'..VAL..')'
-                    end
+                end
+                if TP.check(me.var.tp,'&') and (not ENV.clss[TP.id(me.var.tp)]) then
+                    VAL = '(*'..VAL..')'
                 end
             elseif me.var.pre == 'function' then
                 VAL = [[(*(
