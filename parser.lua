@@ -284,7 +284,11 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                     + Cc(false)*Cc(false)) *
                 V'__Do'
 
-    , _TraverseLoop = KEY'traverse' * V'Var' * EKEY'in' * EV'__Exp'
+    , _TraverseLoop = KEY'traverse' * V'Var' * EKEY'in' * (
+                        Cc'number' * (K'['*(V'__Exp'+Cc'[]')*EK']')
+                      +
+                        Cc'adt'    * EV'__Exp'
+                    )
                     * (KEY'with'*V'_BlockI' + Cc(false))
                     * V'__Do'
     , _TraverseRec  = KEY'traverse' * ('/'*V'NUMBER'+Cc(false)) * EV'__Exp'

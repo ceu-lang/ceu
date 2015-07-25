@@ -391,6 +391,9 @@ me.blk_body = me.blk_body or blk_body
     _TraverseLoop_pre = function (me)
         --[[
         --  ret = traverse <n> in <adt> with
+        --      or
+        --  ret = traverse <n> in <[N]> with
+        --
         --      <interface>
         --  do
         --      <body>
@@ -400,8 +403,11 @@ me.blk_body = me.blk_body or blk_body
         --  class Body with
         --      pool Body[?]&   bodies;
         --      var  Body*      parent;       // TODO: should be "Body*?" (opt)
-        --      var  <adt_t>[]* <n>;
         --      var  Outer&     out;
+        --
+        --      var  <adt_t>[]* <n>;
+        --        or
+        --      var  int        <n>;
         --      <interface>
         --  do
         --      watching *this.parent do
@@ -426,18 +432,48 @@ me.blk_body = me.blk_body or blk_body
         --  end
         --]]
 
-        local to, root, ifc, body, ret = unpack(me)
+        local to, root_tag, root, ifc, body, ret = unpack(me)
         local out = AST.par(me, 'Dcl_cls')
 
-        -- This => Outer
-        --  traverse x in this.xs
-        --      becomes
-        --  do T with
-        --      this.xs = outer.xs
-        --  end;
-        local root_constr = AST.copy(root)  -- avoid conflict with TMP_ITER below
-         if root_constr.tag=='Op2_.' and root_constr[2].tag=='This' then
-            root_constr[2].tag = 'Outer'
+        local dcl_to        -- dcl of "to" control variable
+        local root_constr   -- initial "to" value
+        local root_pool     -- [] or [N]
+        local dcl_pool      -- pool of Bodies/stack-frames
+
+        if root_tag == 'adt' then
+            dcl_to = node('_Dcl_pool', me.ln, 'pool',
+                        node('Type', me.ln, 'TODO-ADT-TYPE', '[]','*'),
+                                        -- unknown (depends on "root")
+                        to[1])
+
+            -- This => Outer
+            --  traverse x in this.xs
+            --      becomes
+            --  do T with
+            --      this.xs = outer.xs
+            --  end;
+            root_constr = AST.copy(root)  -- avoid conflict with TMP_ITER below
+            if root_constr.tag=='Op2_.' and root_constr[2].tag=='This' then
+                root_constr[2].tag = 'Outer'
+            end
+
+            -- HACK_5: figure out root type and dimension
+            root = node('_TMP_ITER', me.ln, AST.copy(root))
+            root_pool = '[]'
+            dcl_pool = node('Dcl_pool', me.ln, 'pool',
+                        node('Type', me.ln, 'Body_'..me.n, '[]'),
+                        '_pool_'..me.n)
+        else
+            assert(root_tag == 'number', 'bug found')
+            dcl_to = node('Dcl_var', me.ln, 'var',
+                        node('Type', me.ln, 'int'),
+                        to[1])
+            root_constr = AST.node('NUMBER', me.ln, '0')
+            root_pool = root
+            dcl_pool = node('Dcl_pool', me.ln, 'pool',
+                        node('Type', me.ln, 'Body_'..me.n, root),
+                        '_pool_'..me.n)
+            root = node('Nothing', me.ln)
         end
 
         -- unpacked below
@@ -448,15 +484,13 @@ me.blk_body = me.blk_body or blk_body
                         node('BlockI', me.ln,
                             node('Stmts', me.ln,
                                 node('Dcl_pool', me.ln, 'pool',
-                                    node('Type', me.ln, 'Body_'..me.n, '[]','&'),
+                                    node('Type', me.ln, 'Body_'..me.n, root_pool,'&'),
                                     '_bodies'),
                                 node('Dcl_var', me.ln, 'var',
                                     node('Type', me.ln, 'Body_'..me.n, '*'),
                                         -- TODO: should be opt type
                                     '_parent'),
-                                node('_Dcl_pool', me.ln, 'pool',
-                                    tp,
-                                    to[1]),
+                                dcl_to,
                                 node('Dcl_var', me.ln, 'var',
                                     node('Type', me.ln, out[2], '&'),
                                     '_out'),
@@ -475,10 +509,6 @@ me.blk_body = me.blk_body or blk_body
                                     node('NUMBER', me.ln, '0')))))
         cls.__adj_out = AST.par(me, 'Block')
         cls.is_traverse = true
-
-        local pool = node('Dcl_pool', me.ln, 'pool',
-                        node('Type', me.ln, 'Body_'..me.n, '[]'),
-                        '_pool_'..me.n)
 
         local spawn = node('Spawn', me.ln, 'Body_'..me.n,
                             node('Var', me.ln, '_pool_'..me.n),
@@ -512,9 +542,7 @@ me.blk_body = me.blk_body or blk_body
                                             node('Outer', me.ln, true))))))
         local doorg = F.__traverse_spawn_await(me, 'Body_'..me.n, spawn, ret)
 
-        -- HACK_5: figure out root type and dimension
-        local root = node('_TMP_ITER', me.ln, AST.copy(root))
-        local ret = node('Stmts', me.ln, root, cls, pool, doorg)
+        local ret = node('Stmts', me.ln, root, cls, dcl_pool, doorg)
         return ret
     end,
 
@@ -601,8 +629,10 @@ me.blk_body = me.blk_body or blk_body
         end
         ASR(cls, me, 'missing enclosing `traverse´ block')
 
-        local to_id  = AST.asr(cls,'Dcl_cls', 3,'BlockI', 1,'Stmts',
-                                              3,'Dcl_pool')[3]
+        local dcl = AST.asr(cls,'Dcl_cls', 3,'BlockI', 1,'Stmts')[3]
+        assert(dcl.tag=='Dcl_pool' or dcl.tag=='Dcl_var')
+        local _,_, to_id = unpack(dcl)
+
         local cls_id = cls[2]
 
         local spawn = node('Spawn', me.ln, cls_id,
