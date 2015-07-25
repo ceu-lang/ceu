@@ -37,9 +37,10 @@ F = {
     Block = function (me)
         MAX_all(me)
 
-        -- [ CLR | ADT_I | ORG_STATS_I | ORG_POOL_I | ... | STMTS | FIN ]
+        -- [ CLR | ADT_I | VEC_I | ORG_STATS_I | ORG_POOL_I | ... | STMTS | FIN ]
         -- clear trail
         -- adt finalization
+        -- vector finalization
         -- pointer to contiguous static orgs
         -- pointers to each of the pools
         -- statements
@@ -53,11 +54,18 @@ F = {
         for i=1, #me.vars do
             local var = me.vars[i]
 
-            if var.pre=='pool' then
-                me.fins = me.fins or {}     -- release adts
+            local is_arr_dyn = (TP.check(var.tp,'[]')           and
+                               (not TP.is_ext(var.tp,'_','@'))) and 
+                               (var.tp.arr=='[]')               and
+                               (not (var.cls or var.adt))
+
+            if var.pre=='pool' or is_arr_dyn then
+                me.fins = me.fins or {}     -- release adts/vectors
             end
 
             if var.adt and var.pre=='pool' then
+                me.trails_n = me.trails_n + 1
+            elseif is_arr_dyn then
                 me.trails_n = me.trails_n + 1
             elseif var.cls then
                 me.trails_n = me.trails_n + 1   -- ORG_POOL_I/ORG_STATS_I
@@ -132,8 +140,17 @@ G = {
         for i=1, #me.vars do
             local var = me.vars[i]
 
+            local is_arr_dyn = (TP.check(var.tp,'[]')           and
+                               (not TP.is_ext(var.tp,'_','@'))) and 
+                               (var.tp.arr=='[]')               and
+                               (not (var.cls or var.adt))
+
             if var.adt and var.pre=='pool' then
                 var.trl_adt = { t0, t0 }
+                t0 = t0 + 1
+
+            elseif is_arr_dyn then
+                var.trl_vector = { t0, t0 }
                 t0 = t0 + 1
 
             elseif var.cls then

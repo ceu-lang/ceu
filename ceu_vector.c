@@ -16,20 +16,34 @@ void ceu_vector_init (tceu_vector* vector, int max, int unit, byte* mem) {
 }
 
 #ifdef CEU_VECTOR_MALLOC
-static void* ceu_vector_grow (tceu_vector* vector) {
-    vector->max = (vector->max == 0) ?
-                        - 10 :
-                        - ((-vector->max * 3)/2 + 1);
-                            /* Java does the same? */
-    vector->mem = ceu_out_realloc(vector->mem, (-vector->max)*vector->unit + 1);
-                                                            /* [STRING] +1 */
+static void* ceu_vector_resize (tceu_vector* vector, int n) {
+    ceu_out_assert(vector->max <= 0, "bug found");
+
+    if (n == 0) {
+        /* free */
+        if (vector->mem != NULL) {
+            vector->max = 0;
+            ceu_out_realloc(vector->mem, 0);
+            vector->mem = NULL;
+        }
+    } else {
+        /* Java does the same? */
+        n = (n*3/2) + 1;
+        if (n < 10) {
+            n = 10;
+        }
+
+        vector->max = -n;
+        vector->mem = ceu_out_realloc(vector->mem, n*vector->unit + 1);
+                                                        /* [STRING] +1 */
+    }
+
     return vector->mem;
 }
 #endif
 
 /* can only decrease vector->nxt */
 int ceu_vector_setlen (tceu_vector* vector, int nxt) {
-    /* TODO: shrink malloc'ed arrays */
     if (nxt > vector->nxt) {
         return 0;
     } else {
@@ -39,6 +53,16 @@ int ceu_vector_setlen (tceu_vector* vector, int nxt) {
         if (vector->mem != NULL) {
             vector->mem[nxt*vector->unit] = '\0';
         }
+
+#ifdef CEU_VECTOR_MALLOC
+        /* shrink malloc'ed arrays */
+        if (vector->max <= 0) {
+            if (ceu_vector_resize(vector,nxt) == NULL) {
+                return 0;
+            }
+        }
+#endif
+
         return 1;
     }
 }
@@ -65,9 +89,10 @@ int ceu_vector_seti (tceu_vector* vector, int idx, byte* v) {
 /* can only push within nxt < vector->max */
 int ceu_vector_push (tceu_vector* vector, byte* v) {
 #ifdef CEU_VECTOR_MALLOC
+    /* grow malloc'ed arrays */
     if (vector->max <= 0) {
         while (vector->nxt >= -vector->max) {
-            if (ceu_vector_grow(vector) == NULL) {
+            if (ceu_vector_resize(vector,vector->nxt+1) == NULL) {
                 return 0;
             }
         }

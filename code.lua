@@ -727,6 +727,13 @@ _STK_ORG->trls[ ]]..me.trl_fins[1]..[[ ].lbl   = ]]..me.lbl_fin.id..[[;
 ceu_vector_init(]]..'&'..CUR(me,var.id_)..','..max..',sizeof('..TP.toc(tp_elem)..[[),
                 (byte*)]]..CUR(me,var.id_)..[[_mem);
 ]])
+                    if var.tp.arr == '[]' then
+                        LINE(me, [[
+/*  FINALIZE VECTOR */
+_STK_ORG->trls[ ]]..var.trl_vector[1]..[[ ].evt = CEU_IN__CLEAR;
+_STK_ORG->trls[ ]]..var.trl_vector[1]..[[ ].lbl = ]]..(var.lbl_fin_free).id..[[;
+]])
+                    end
                 end
 
             elseif var.pre=='pool' and (var.cls or var.adt) then
@@ -734,7 +741,7 @@ ceu_vector_init(]]..'&'..CUR(me,var.id_)..','..max..',sizeof('..TP.toc(tp_elem).
                 local cls = var.cls
                 local adt = var.adt
                 local top = cls or adt
-                local static = (type(var.tp.arr)=='table')
+                local is_dyn = (var.tp.arr=='[]')
 
                 local tp_id = TP.id(var.tp)
                 if top or tp_id=='_TOP_POOL' then
@@ -746,7 +753,7 @@ ceu_vector_init(]]..'&'..CUR(me,var.id_)..','..max..',sizeof('..TP.toc(tp_elem).
                         lnks = '&_STK_ORG->trls['..lnks..'].lnks'
                     end
 
-                    if static then
+                    if (not is_dyn) then
                         if top.is_ifc then
                             LINE(me, [[
 ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..tp_id..'_delayed),'..lnks..','
@@ -788,7 +795,7 @@ ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..tp_id..'),'..lnks..
 
                     local VAL_root = V({tag='Var',var=var}, 'adt_root')
                     local VAL_pool = V({tag='Var',var=var}, 'adt_pool')
-                    if static then
+                    if (not is_dyn) then
                         LINE(me, [[
     ]]..VAL_root..[[->pool = ]]..VAL_pool..[[;
 ]])
@@ -803,8 +810,8 @@ ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..tp_id..'),'..lnks..
     ]]..VAL_root..[[->root = __ceu_adt;
 }
 /*  FINALIZE ADT */
-_STK_ORG->trls[ ]]..var.trl_adt[1]..[[ ].evt   = CEU_IN__CLEAR;
-_STK_ORG->trls[ ]]..var.trl_adt[1]..[[ ].lbl   = ]]..(var.lbl_fin_kill_free).id..[[;
+_STK_ORG->trls[ ]]..var.trl_adt[1]..[[ ].evt = CEU_IN__CLEAR;
+_STK_ORG->trls[ ]]..var.trl_adt[1]..[[ ].lbl = ]]..var.lbl_fin_kill_free.id..[[;
 ]])
                 end
             end
@@ -868,9 +875,20 @@ _STK->trl = &_STK_ORG->trls[ ]]..stmts.trails[1]..[[ ];
 
         -- release ADT pool items
         for _, var in ipairs(me.vars) do
-            if var.adt and var.adt.is_rec then
+            local is_arr = (TP.check(var.tp,'[]')           and
+                           (not TP.is_ext(var.tp,'_','@'))) and
+                           (not (var.cls or var.adt))
+            local is_dyn = (var.tp.arr=='[]')
+
+            if is_arr and is_dyn then
+                CASE(me, var.lbl_fin_free)
+                LINE(me, [[
+ceu_vector_setlen(]]..V({tag='Var',var=var})..[[, 0);
+]])
+                HALT(me)
+
+            elseif var.adt and var.adt.is_rec then
                 local id, op = unpack(var.adt)
-                local static = (type(var.tp.arr)=='table')
                 CASE(me, var.lbl_fin_kill_free)
 
                 local VAL      = V({tag='Var',var=var})
@@ -883,15 +901,18 @@ CEU_]]..id..[[_kill(_ceu_app, _ceu_go, ]]..VAL..[[);
 #endif
 ]])
                 end
-                if static then
+                if is_dyn then
+                    LINE(me, [[
+CEU_]]..id..[[_free_dynamic(_ceu_app, ]]..VAL..[[);
+]])
+                else
+-- TODO: required???
+--[=[
                     local pool = '('..VAL_root..'->pool)'
                     LINE(me, [[
 CEU_]]..id..[[_free_static(_ceu_app, ]]..VAL..','..pool..[[);
 ]])
-                else
-                    LINE(me, [[
-CEU_]]..id..[[_free_dynamic(_ceu_app, ]]..VAL..[[);
-]])
+]=]
                 end
                 HALT(me)
             end
