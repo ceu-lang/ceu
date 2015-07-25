@@ -7,10 +7,10 @@ end
 ----------------------------------------------------------------------------
 -- NO: testing
 ----------------------------------------------------------------------------
---[===[
---]===]
 
---do return end
+--[===[
+do return end
+--]===]
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------
@@ -3536,281 +3536,6 @@ escape a+f;
 ]],
     run = { ['1~>A;5~>A;1~>F'] = 2 },
 }
-
--- LOOP/RECURSE
---[=[
-
-Test { [[
-loop v in 10 do
-    traverse 1;
-end
-]],
-    adt = 'line 2 : invalid `traverse´: no data',
-}
-
-Test { [[
-var int* vs;
-loop/10 v in vs do
-    traverse 1;
-end
-escape 1;
-]],
-    env = 'line 3 : invalid `traverse´',
-}
-
-Test { [[
-native do
-    typedef struct tp {
-        int v;
-        struct tp* nxt;
-    } tp;
-    tp V1 = { 1, NULL };
-    tp V2 = { 2, &V1  };
-    tp VS = { 3, &V2  };
-end
-
-var int ret = 0;
-loop/1 v in _VS do      // think its numeric
-    if v == null then
-        break;
-    else
-        ret = ret + v:v;
-        traverse v:nxt;
-    end
-end
-
-escape 1;
-]],
-    env = 'line 13 : invalid operands to binary "=="',
-    --run = 1,
-}
-
-Test { [[
-native do
-    typedef struct tp {
-        int v;
-        struct tp* nxt;
-    } tp;
-    tp V1 = { 1, NULL };
-    tp V2 = { 2, &V1  };
-    tp VS = { 3, &V2  };
-end
-
-var int ret = 0;
-
-loop/1 v in &_VS do
-    if v == null then
-        break;
-    else
-        ret = ret + v:v;
-        traverse v:nxt;
-    end
-end
-
-escape ret;
-]],
-    todo = '&_VS cannot be numeric, but it think it is',
-    run = 1,
-}
-
-Test { [[
-native do
-    typedef struct tp {
-        int v;
-        struct tp* nxt;
-    } tp;
-    tp V1 = { 1, NULL };
-    tp V2 = { 2, &V1  };
-    tp VS = { 3, &V2  };
-end
-
-var int ret = 0;
-
-var _tp* vs = &_VS;
-loop/3 v in vs do
-    if v == null then
-        break;
-    else
-        ret = ret + v:v;
-        traverse v:nxt;
-    end
-end
-
-escape ret;
-]],
-    run = 6,
-}
-
-Test { [[
-native do
-    typedef struct tp {
-        int v;
-        struct tp* nxt;
-    } tp;
-    tp V1 = { 1, NULL };
-    tp V2 = { 2, &V1  };
-    tp VS = { 3, &V2  };
-end
-
-var int ret = 0;
-
-var _tp* vs = &_VS;
-loop/3 v in vs do
-    if v == null then
-        continue;
-    end
-    ret = ret + v:v;
-    traverse v:nxt;
-end
-
-escape ret;
-]],
-    run = 6,
-}
-
-Test { [[
-native do
-    typedef struct tp {
-        int v;
-        struct tp* nxt;
-    } tp;
-    tp V1 = { 1, NULL };
-    tp V2 = { 2, &V1  };
-    tp VS = { 3, &V2  };
-end
-
-var int ret = 0;
-
-var _tp* vs = &_VS;
-loop/3 v in vs do
-    if v == null then
-    else
-        ret = ret + v:v;
-        traverse v:nxt;
-    end
-end
-
-escape ret;
-]],
-    run = 6,
-}
-
-Test { [[
-native do
-    typedef struct tp {
-        int v;
-        struct tp* nxt;
-    } tp;
-    tp V1 = { 1, NULL };
-    tp V2 = { 2, &V1  };
-    tp VS = { 3, &V2  };
-end
-
-var int ret = 0;
-
-var _tp* vs = &_VS;
-loop/3 v in vs do
-    if v == null then
-        break;
-    else
-        traverse v:nxt;
-        ret = ret + v:v;
-    end
-end
-
-escape ret;
-]],
-    run = 0,
-}
-
-Test { [[
-native do
-    typedef struct tp {
-        int v;
-        struct tp* nxt;
-    } tp;
-    tp V1 = { 1, NULL };
-    tp V2 = { 2, &V1  };
-    tp VS = { 3, &V2  };
-end
-
-var int ret = 0;
-
-var _tp* vs = &_VS;
-loop/3 v in vs do
-    if v == null then
-        continue;
-    end
-    traverse v:nxt;
-    ret = ret + v:v;
-end
-
-escape ret;
-]],
-    run = 6,
-}
-
-Test { [[
-native do
-    typedef struct tp {
-        int v;
-        struct tp* nxt;
-    } tp;
-    tp V1 = { 1, NULL };
-    tp V2 = { 2, &V1  };
-    tp VS = { 3, &V2  };
-end
-
-var int ret = 0;
-
-var _tp* vs = &_VS;
-loop/3 v in vs do
-    if v == null then
-    else
-        traverse v:nxt;
-        ret = ret + v:v;
-    end
-end
-
-escape ret;
-]],
-    run = 6,
-}
-
-Test { [[
-native do
-    typedef struct tp {
-        int v;
-        struct tp* nxt;
-    } tp;
-    tp V1 = { 1, NULL };
-    tp V2 = { 2, &V1  };
-    tp VS = { 3, &V2  };
-end
-
-var int ret = 0;
-
-var _tp* vs = &_VS;
-loop/1 v in vs do
-    if v == null then
-        break;
-    else
-        ret = ret + v:v;
-        traverse v:nxt;
-    end
-end
-
-escape ret;
-]],
-    asr = 'runtime error: loop overflow',
-}
-
-Test { [[
-traverse 1;
-]],
-    adt = 'line 1 : missing enclosing `traverse´ block',
-}
-]=]
 
 -- INTERNAL EVENTS
 
@@ -43907,10 +43632,12 @@ pool D[] ds = new D.REC(
 par/or do
     await ds:REC.r1;
 with
-    ds:REC
+    ds:REC.r1 = new D.NIL();
+end
 
 escape 1;
 ]],
+    _ana = {acc=true},
     run = 1,
 }
 
@@ -49158,6 +48885,63 @@ escape 1;
 
 -- << ADTS / RECURSE / TRAVERSE
 
+-->> TRAVERSE / NUMERIC
+
+Test { [[
+var int tot = 4;
+var int ret =
+    traverse idx in [] do
+        if idx == tot then
+            escape idx;
+        else
+            var int ret = traverse idx+1;
+            escape idx + ret;
+        end
+    end;
+
+escape ret;
+]],
+    wrn = true,
+    run = 10,
+}
+
+Test { [[
+var int tot = 4;
+var int ret =
+    traverse idx in [3] do
+        if idx == tot then
+            escape idx;
+        else
+            var int ret = traverse idx+1;
+            escape idx + ret;
+        end
+    end;
+
+escape ret;
+]],
+    run = 3,
+}
+
+Test { [[
+loop v in 10 do
+    traverse 1;
+end
+]],
+    adj = 'line 2 : missing enclosing `traverse´ block',
+}
+
+Test { [[
+var int* vs;
+traverse v in [10] do
+    traverse 1;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+--<< TRAVERSE / NUMERIC
+
 -- ADTS ALIASING
 
 Test { [[
@@ -52724,99 +52508,6 @@ escape ret;
     run = 3,
 }
 
----------------------
-
--- TODO: RECURSE
-
--- TODO: locals inside iter
-Test { [[
-native do
-    typedef struct tp {
-        int v;
-        struct tp* nxt;
-    } tp;
-    tp V1 = { 1, NULL };
-    tp V2 = { 2, &V1  };
-    tp VS = { 3, &V2  };
-end
-
-var int ret = 0;
-var int ii  = 0;
-
-var _tp* vs = &_VS;
-loop/3 v in vs do
-    if v != null then
-        var int i = ii;
-        ii = ii + 1;
-        traverse v:nxt;
-        ret = ret + v:v + i;
-    end
-end
-
-escape ret;
-]],
-    run = 9,
-}
--- TODO: locals inside iter
-Test { [[
-native do
-    typedef struct tp {
-        int v;
-        struct tp* nxt;
-    } tp;
-    tp V1 = { 1, NULL };
-    tp V2 = { 2, &V1  };
-    tp VS = { 3, &V2  };
-end
-
-var int ret = 0;
-var int ii  = 0;
-
-var _tp* vs = &_VS;
-loop/3 v in vs do
-    var int i = ii;
-    ii = ii + 1;
-    if v != null then
-        traverse v:nxt;
-        ret = ret + v:v + i;
-    end
-end
-
-escape ret;
-]],
-    run = 9,
-}
-
--- TODO: unbounded iter
-Test { [[
-native do
-    typedef struct tp {
-        int v;
-        struct tp* nxt;
-    } tp;
-    tp V1 = { 1, NULL };
-    tp V2 = { 2, &V1  };
-    tp VS = { 3, &V2  };
-end
-
-var int ret = 0;
-
-var _tp* vs = &_VS;
-loop v in vs do
-    if v == null then
-        break;
-    else
-        ret = ret + v:v;
-        traverse v:nxt;
-    end
-end
-
-escape ret;
-]],
-    wrn = true,
-    run = 1,
-}
-
 -- TODO: precisa do watching
 Test { [[
 data Tree with
@@ -52930,5 +52621,345 @@ if t? then
 end
 escape ret;
 ]],
+    run = 1,
+}
+
+-- TODO: TRAVERSE C POINTERS
+Test { [[
+native do
+    typedef struct tp {
+        int v;
+        struct tp* nxt;
+    } tp;
+    tp V1 = { 1, NULL };
+    tp V2 = { 2, &V1  };
+    tp VS = { 3, &V2  };
+end
+
+var int ret = 0;
+loop/1 v in _VS do      // think its numeric
+    if v == null then
+        break;
+    else
+        ret = ret + v:v;
+        traverse v:nxt;
+    end
+end
+
+escape 1;
+]],
+    env = 'line 13 : invalid operands to binary "=="',
+    --run = 1,
+}
+
+Test { [[
+native do
+    typedef struct tp {
+        int v;
+        struct tp* nxt;
+    } tp;
+    tp V1 = { 1, NULL };
+    tp V2 = { 2, &V1  };
+    tp VS = { 3, &V2  };
+end
+
+var int ret = 0;
+
+loop/1 v in &_VS do
+    if v == null then
+        break;
+    else
+        ret = ret + v:v;
+        traverse v:nxt;
+    end
+end
+
+escape ret;
+]],
+    todo = '&_VS cannot be numeric, but it think it is',
+    run = 1,
+}
+
+Test { [[
+native do
+    typedef struct tp {
+        int v;
+        struct tp* nxt;
+    } tp;
+    tp V1 = { 1, NULL };
+    tp V2 = { 2, &V1  };
+    tp VS = { 3, &V2  };
+end
+
+var int ret = 0;
+
+var _tp* vs = &_VS;
+loop/3 v in vs do
+    if v == null then
+        break;
+    else
+        ret = ret + v:v;
+        traverse v:nxt;
+    end
+end
+
+escape ret;
+]],
+    run = 6,
+}
+
+Test { [[
+native do
+    typedef struct tp {
+        int v;
+        struct tp* nxt;
+    } tp;
+    tp V1 = { 1, NULL };
+    tp V2 = { 2, &V1  };
+    tp VS = { 3, &V2  };
+end
+
+var int ret = 0;
+
+var _tp* vs = &_VS;
+loop/3 v in vs do
+    if v == null then
+        continue;
+    end
+    ret = ret + v:v;
+    traverse v:nxt;
+end
+
+escape ret;
+]],
+    run = 6,
+}
+
+Test { [[
+native do
+    typedef struct tp {
+        int v;
+        struct tp* nxt;
+    } tp;
+    tp V1 = { 1, NULL };
+    tp V2 = { 2, &V1  };
+    tp VS = { 3, &V2  };
+end
+
+var int ret = 0;
+
+var _tp* vs = &_VS;
+loop/3 v in vs do
+    if v == null then
+    else
+        ret = ret + v:v;
+        traverse v:nxt;
+    end
+end
+
+escape ret;
+]],
+    run = 6,
+}
+
+Test { [[
+native do
+    typedef struct tp {
+        int v;
+        struct tp* nxt;
+    } tp;
+    tp V1 = { 1, NULL };
+    tp V2 = { 2, &V1  };
+    tp VS = { 3, &V2  };
+end
+
+var int ret = 0;
+
+var _tp* vs = &_VS;
+loop/3 v in vs do
+    if v == null then
+        break;
+    else
+        traverse v:nxt;
+        ret = ret + v:v;
+    end
+end
+
+escape ret;
+]],
+    run = 0,
+}
+
+Test { [[
+native do
+    typedef struct tp {
+        int v;
+        struct tp* nxt;
+    } tp;
+    tp V1 = { 1, NULL };
+    tp V2 = { 2, &V1  };
+    tp VS = { 3, &V2  };
+end
+
+var int ret = 0;
+
+var _tp* vs = &_VS;
+loop/3 v in vs do
+    if v == null then
+        continue;
+    end
+    traverse v:nxt;
+    ret = ret + v:v;
+end
+
+escape ret;
+]],
+    run = 6,
+}
+
+Test { [[
+native do
+    typedef struct tp {
+        int v;
+        struct tp* nxt;
+    } tp;
+    tp V1 = { 1, NULL };
+    tp V2 = { 2, &V1  };
+    tp VS = { 3, &V2  };
+end
+
+var int ret = 0;
+
+var _tp* vs = &_VS;
+loop/3 v in vs do
+    if v == null then
+    else
+        traverse v:nxt;
+        ret = ret + v:v;
+    end
+end
+
+escape ret;
+]],
+    run = 6,
+}
+
+Test { [[
+native do
+    typedef struct tp {
+        int v;
+        struct tp* nxt;
+    } tp;
+    tp V1 = { 1, NULL };
+    tp V2 = { 2, &V1  };
+    tp VS = { 3, &V2  };
+end
+
+var int ret = 0;
+
+var _tp* vs = &_VS;
+loop/1 v in vs do
+    if v == null then
+        break;
+    else
+        ret = ret + v:v;
+        traverse v:nxt;
+    end
+end
+
+escape ret;
+]],
+    asr = 'runtime error: loop overflow',
+}
+
+Test { [[
+traverse 1;
+]],
+    adt = 'line 1 : missing enclosing `traverse´ block',
+}
+
+Test { [[
+native do
+    typedef struct tp {
+        int v;
+        struct tp* nxt;
+    } tp;
+    tp V1 = { 1, NULL };
+    tp V2 = { 2, &V1  };
+    tp VS = { 3, &V2  };
+end
+
+var int ret = 0;
+var int ii  = 0;
+
+var _tp* vs = &_VS;
+loop/3 v in vs do
+    if v != null then
+        var int i = ii;
+        ii = ii + 1;
+        traverse v:nxt;
+        ret = ret + v:v + i;
+    end
+end
+
+escape ret;
+]],
+    run = 9,
+}
+Test { [[
+native do
+    typedef struct tp {
+        int v;
+        struct tp* nxt;
+    } tp;
+    tp V1 = { 1, NULL };
+    tp V2 = { 2, &V1  };
+    tp VS = { 3, &V2  };
+end
+
+var int ret = 0;
+var int ii  = 0;
+
+var _tp* vs = &_VS;
+loop/3 v in vs do
+    var int i = ii;
+    ii = ii + 1;
+    if v != null then
+        traverse v:nxt;
+        ret = ret + v:v + i;
+    end
+end
+
+escape ret;
+]],
+    run = 9,
+}
+
+Test { [[
+native do
+    typedef struct tp {
+        int v;
+        struct tp* nxt;
+    } tp;
+    tp V1 = { 1, NULL };
+    tp V2 = { 2, &V1  };
+    tp VS = { 3, &V2  };
+end
+
+var int ret = 0;
+
+var _tp* vs = &_VS;
+loop v in vs do
+    if v == null then
+        break;
+    else
+        ret = ret + v:v;
+        traverse v:nxt;
+    end
+end
+
+escape ret;
+]],
+    wrn = true,
     run = 1,
 }
