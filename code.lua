@@ -1111,7 +1111,7 @@ case ]]..SET.lbl_cnt.id..[[:;
                 -- $vec = ...
                 local _,arr = unpack(to)
                 LINE(me, [[
-ceu_vector_setlen(]]..V(arr)..','..V(fr)..[[);
+ceu_out_assert( ceu_vector_setlen(]]..V(arr)..','..V(fr)..[[), "invalid attribution : vector size can only shrink" );
 ]])
 
             -- all other
@@ -2068,9 +2068,11 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
                 LINE(me, [[
         ceu_lua_pushnumber(_ceu_app->lua,]]..V(p)..[[);
 ]])
-            elseif TP.check(p.tp,'char','*','-&') or
-                   TP.check(p.tp,'char','[]','-&')
-            then
+            elseif TP.check(p.tp,'char','[]','-&') then
+                LINE(me, [[
+        ceu_lua_pushstring(_ceu_app->lua,(char*)]]..V(p)..[[->mem);
+]])
+            elseif TP.check(p.tp,'char','*','-&') then
                 LINE(me, [[
         ceu_lua_pushstring(_ceu_app->lua,]]..V(p)..[[);
 ]])
@@ -2107,27 +2109,17 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
             ]]..V(set_to)..[[ = ret;
             ceu_lua_pop(_ceu_app->lua, 1);
 ]])
-            elseif TP.check(set_to.tp,'char','[]','-&') or
-                   TP.check(set_to.tp,'char','*','-&')
-            then
-                --ASR(me.ret.var and me.ret.var.tp.arr, me,
-                    --'invalid attribution (requires a buffer)')
+            elseif TP.check(set_to.tp,'char','[]','-&') then
                 LINE(me, [[
             int is;
             ceu_lua_isstring(is, _ceu_app->lua,-1);
             if (is) {
                 const char* ret;
-                ceu_lua_tostring(ret, _ceu_app->lua,-1);
-]])
-                local sval = set_to.var and set_to.var.tp.arr and 
-                set_to.var.tp.arr.sval
-                if sval then
-                    LINE(me, 'strncpy('..V(set_to)..', ret, '..(sval-1)..');')
-                    LINE(me, V(set_to)..'['..(sval-1).."] = '\\0';")
-                else
-                    LINE(me, 'strcpy('..V(set_to)..', ret);')
-                end
-                LINE(me, [[
+                int len;
+                ceu_lua_objlen(len, _ceu_app->lua, -1);
+                ceu_lua_tostring(ret, _ceu_app->lua, -1);
+#line ]]..me.ln[2]..' "'..me.ln[1]..[["
+                ceu_out_assert( ceu_vector_concat_buffer(]]..V(set_to)..[[, ret, len), "access out of bounds" );
             } else {
                 ceu_lua_pushstring(_ceu_app->lua, "not implemented [2]");
                 err = 1;

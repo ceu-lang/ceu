@@ -10,558 +10,6 @@ end
 --[===[
 --]===]
 
--- VECTORS
-
-Test { [[
-var u8 v;
-escape $$v;
-]],
-    env = 'line 2 : invalid operand to unary "$$" : array expected',
-}
-Test { [[
-var u8 v;
-escape $v;
-]],
-    env = 'line 2 : invalid operand to unary "$" : array expected',
-}
-
-Test { [[
-var u8[10] vec;
-escape $$vec + $vec;
-]],
-    run = 10,
-}
-
-Test { [[
-var u8[] vec;
-escape $$vec + $vec + 1;
-]],
-    run = 1,
-}
-
-Test { [[
-escape [1];
-]],
-    parser = 'after `escape´ : expected expression',
-    --env = 'line 1 : arity mismatch',
-}
-
-Test { [[
-var u8[10] vec = [ [1,2,3] ];
-escape 1;
-]],
-    parser = 'line 1 : after `[´ : expected `]´',
-    --env = 'line 1 : wrong argument #1 : arity mismatch',
-}
-Test { [[
-var u8[10] vec = (1,2,3);
-escape 1;
-]],
-    parser = 'line 1 : after `1´ : expected `)´',
-}
-Test { [[
-var u8[10] vec = (1);
-escape 1;
-]],
-    env = 'line 1 : types mismatch (`u8[]´ <= `int´)',
-}
-Test { [[
-class T with do end
-var T[1] ts = [];
-escape 1;
-]],
-    env = 'line 2 : invalid attribution : destination is not a vector',
-}
-Test { [[
-var _int[1] vec = [];
-escape 1;
-]],
-    env = 'line 1 : invalid attribution : destination is not a vector',
-}
-
-Test { [[
-var int x;
-var u8[10] vec = [ &x ];
-escape 1;
-]],
-    env = 'line 2 : wrong argument #1 : types mismatch (`u8´ <= `int*´)',
-}
-
-Test { [[
-var int*[] v1;
-var int[]  v2 = []..v1;
-escape 1;
-]],
-    env = 'line 2 : wrong argument #2 : types mismatch (`int´ <= `int*´)',
-}
-
-Test { [[
-var u8[10] vec = [1,2,3];
-escape $$vec + $vec + vec[0] + vec[1] + vec[2];
-]],
-    run = 19,
-}
-
-Test { [[
-var u8[10] vec = [1,2,3];
-vec[0] = 4;
-vec[1] = 5;
-vec[2] = 6;
-escape $$vec + $vec + vec[0] + vec[1] + vec[2];
-]],
-    run = 28,
-}
-
-Test { [[
-var int[10] vec = [1,2,3];
-vec[0] = 4;
-vec[1] = 5;
-vec[2] = 6;
-escape $$vec + $vec + vec[0] + vec[1] + vec[2];
-]],
-    run = 28,
-}
-
-Test { [[
-var u8[10] vec;
-vec[0] = 1;
-escape 1;
-]],
-    run = '2] runtime error: access out of bounds',
-}
-
-Test { [[
-var u8[10] vec;
-escape vec[0];
-]],
-    run = '2] runtime error: access out of bounds',
-}
-
-Test { [[
-class T with do end
-pool T[10] ts;
-escape $$ts;
-]],
-    -- TODO: err msg
-    env = 'line 3 : types mismatch (`int´ <= `T´)',
-}
-
-Test { [[
-class T with do end
-pool T[10] ts;
-escape $ts;
-]],
-    -- TODO: err msg
-    env = 'line 3 : types mismatch (`int´ <= `T´)',
-}
-
-Test { [[
-var u8[] vec = [1,2,3];
-escape $$vec + $vec + vec[0] + vec[1] + vec[2];
-]],
-    run = 9,
-}
-
-Test { [[
-var u8[10] vec = [1,2,3];
-$$vec = 0;
-escape vec[0];
-]],
-    env = 'line 2 : invalid attribution',
-}
-Test { [[
-var u8[10] vec = [1,2,3];
-$vec = 0;
-escape vec[0];
-]],
-    run = '3] runtime error: access out of bounds',
-}
-
-Test { [[
-var u8[10] v1 = [1,2,3];
-var u8[20] v2 = v1;
-escape v2[0] + v2[1] + v2[2];
-]],
-    env = 'line 2 : types mismatch (`u8[]´ <= `u8[]´)',
-}
-Test { [[
-var u8[10] v1 = [1,2,3];
-var u8[20] v2 = []..v1;
-escape v2[0] + v2[1] + v2[2];
-]],
-    run = 6,
-}
-Test { [[
-var u8[20] v1 = [1,2,3];
-var u8[10] v2 = []..v1;
-escape v2[0] + v2[1] + v2[2];
-]],
-    run = 6,
-}
-Test { [[
-var u8[] v1   = [1,2,3];
-var u8[10] v2 = []..v1;
-escape v2[0] + v2[1] + v2[2];
-]],
-    run = 6,
-}
-Test { [[
-var u8[10] v1 = [1,2,3];
-var u8[]   v2 = []..v1;
-escape v2[0] + v2[1] + v2[2];
-]],
-    run = 6,
-}
-Test { [[
-var u8[3] v1 = [1,2,3];
-var u8[2] v2 = []..v1;
-escape v2[0] + v2[1] + v2[2];
-]],
-    run = '2] runtime error: access out of bounds',
-}
-
-Test { [[
-var u8[10] vec = [1,2,3];
-var u8[]&  ref = vec;
-escape $$ref + $ref + ref[0] + ref[1] + ref[2];
-]],
-    run = 19,
-}
-
-Test { [[
-var u8[10]  vec = [1,2,3];
-var u8[11]& ref = vec;
-escape $$ref + $ref + ref[0] + ref[1] + ref[2];
-]],
-    run = 1,
-    env = 'line 2 : types mismatch (`u8[]&´ <= `u8[]´) : dimension mismatch',
-}
-
-Test { [[
-var u8[10] vec = [1,2,3];
-var u8[9]& ref = vec;
-escape $$ref + $ref + ref[0] + ref[1] + ref[2];
-]],
-    env = 'line 2 : types mismatch (`u8[]&´ <= `u8[]´) : dimension mismatch',
-}
-
-Test { [[
-var int[2] v ;
-escape v == &v[0] ;
-]],
-    env = 'line 2 : invalid operand to unary "&" : vector elements are not addressable',
-}
-
-Test { [[
-native @nohold _f();
-native do
-    void f (int* v) {
-        v[0]++;
-        v[1]++;
-    }
-end
-var int[2] a = [1,2];
-_f(a);
-escape a[0] + a[1];
-]],
-    run = 5,
-}
-
-Test { [[
-native @nohold _f();
-native do
-    void f (int* v) {
-        v[0]++;
-        v[1]++;
-    }
-end
-var int[2] a  = [1,2];
-var int[2]& b = a;
-_f(b);
-escape b[0] + b[1];
-]],
-    run = 5,
-}
-
-Test { [[
-class T with
-    var int[10] vs;
-do
-    this.vs = [1];
-end
-
-var T t;
-t.vs[0] = t.vs[0] + 2;
-
-escape t.vs[0];
-]],
-    props = 'line 2 : not permitted inside an interface : vectors',
-}
-
-Test { [[
-class T with
-    var int[10]& vs;
-do
-    this.vs = [1];
-end
-
-var int[10] vs;
-var T t with
-    this.vs = vs;
-end;
-t.vs[0] = t.vs[0] + 2;
-
-escape t.vs[0];
-]],
-    run = 3,
-}
-
-Test { [[
-interface I with
-    var int& v;
-end
-
-class T with
-    interface I;
-do
-    this.v = 1;
-end
-
-var int v;
-var T t with
-    this.v = v;
-end;
-t.v = t.v + 2;
-
-var I* i = &t;
-i:v = i:v * 3;
-
-escape t.v;
-]],
-    run = 9,
-}
-
-Test { [[
-var int[10]& rs;
-var int[10]  vs = [1];
-rs = vs;
-vs[0] = vs[0] + 2;
-
-rs[0] = rs[0] * 3;
-
-escape vs[0];
-]],
-    run = 9,
-}
-Test { [[
-interface I with
-    var int[10]& vs;
-end
-
-class T with
-    interface I;
-do
-    this.vs = [1];
-end
-
-var int[10] vs;
-var T t with
-    this.vs = vs;
-end;
-t.vs[0] = t.vs[0] + 2;
-
-var I* i = &t;
-
-i:vs[0] = i:vs[0] * 3;
-
-escape t.vs[0];
-]],
-    run = 9,
-}
-
-Test { [[
-escape 1..2;
-]],
-    parser = 'line 1 : after `1´ : expected `;´',
-}
-Test { [[
-escape 1 .. 2;
-]],
-    parser = 'line 1 : after `1´ : expected `;´',
-}
-Test { [[
-var int[] x = [1]..2;
-escape 1;
-]],
-    env = 'line 1 : wrong argument #2 : source is not a vector',
-}
-
-Test { [[
-escape [1]..[2];
-]],
-    parser = 'line 1 : after `escape´ : expected expression',
-}
-
-Test { [[
-escape [1]..[&this];
-]],
-    parser = 'line 1 : after `escape´ : expected expression',
-}
-
-Test { [[
-var int[] v1;
-var int[] v2;
-v1 = [1] .. v2;
-v1 = v2 .. [1];
-escape v1[0];
-]],
-    run = 1;
-}
-
-Test { [[
-var int[] v1 = [1]..[2]..[3];
-escape v1[0]+v1[1]+v1[2];
-]],
-    run = 6;
-}
-
-Test { [[
-var int[] v1 = [1,2,3];
-var int[] v2 = [7,8,9];
-v1 = v1 .. [4,5,6] .. v2;
-var int ret = 0;
-loop i in 9 do
-    ret = ret + v1[i];
-end
-escape ret;
-]],
-    run = 45;
-}
-
-Test { [[
-var int[] v = [1,2,3];
-v = v .. v;
-escape 1;
-]],
-    run = '2] runtime error: access out of bounds';
-}
-
-Test { [[
-var int[] v = [1,2,3];
-v = [1] .. v;
-escape 1;
-]],
-    run = '2] runtime error: access out of bounds';
-}
-
-Test { [[
-class T with
-    var int[]& v1;
-    var int[]  v2;
-do
-end
-escape 1;
-]],
-    props = 'line 3 : not permitted inside an interface',
-}
-
--- STRINGS
-
-Test { [[
-native @nohold _printf(), _strlen();
-var char[] v = ['a','b','c','\0'];
-_printf("v = %s\n", (char*)v);
-escape _strlen((char*)v);
-]],
-    run = 3,
-}
-Test { [[
-native @nohold _printf(), _strlen();
-var char[] v = ['a','b','c','\0'];
-_printf("v = %s\n", v);
-escape _strlen(v);
-]],
-    run = 3,
-}
-
-Test { [[
-native @pure _strlen();
-native @nohold _garbage();
-native do
-    void garbage (char* v) {
-        int i = 0;
-        for (; i<20; i++) {
-            v[i] = i;
-        }
-    }
-end
-
-var char[10] v;
-var char[10] v_;
-_garbage(v);
-v = ['a','b','c'];
-escape _strlen(v);
-]],
-    run = 3,
-}
-
-Test { [[
-_f([1]);
-escape 1;
-]],
-    parser = 'line 1 : after `(´ : expected `)´',
-    --run = 1,
-}
-Test { [[
-_f([1]..[2]);
-escape 1;
-]],
-    parser = 'line 1 : after `(´ : expected `)´',
-    --run = 1,
-}
-Test { [[
-var int[] v;
-_f([1]..v);
-escape 1;
-]],
-    parser = 'line 2 : after `(´ : expected `)´',
-    --run = 1,
-}
-Test { [[
-var int[] v;
-_f(v..[1]);
-escape 1;
-]],
-    parser = 'line 2 : after `v´ : expected `)´',
-    --run = 1,
-}
-
-Test { [[
-native @nohold _printf(), _strlen();
-var char[] v = "abc";
-_printf("v = %s\n", v);
-escape _strlen(v);
-]],
-    env = 'line 2 : types mismatch (`char[]´ <= `char*´)',
-    --run = 3,
-}
-Test { [[
-native @nohold _printf(), _strlen();
-var char[] v = [].."abc";
-_printf("v = %s\n", v);
-escape _strlen(v);
-]],
-    run = 3,
-}
-Test { [[
-native @nohold _printf(), _strlen();
-var char[] v = [].."abc";
-v = v .. "def";
-_printf("v = %s\n", v);
-escape _strlen(v);
-]],
-    run = 6,
-}
 --do return end
 
 -------------------------------------------------------------------------------
@@ -20619,6 +20067,570 @@ escape a;
 ]],
     run = 1,
 }
+
+-- VECTORS / STRINGS
+
+Test { [[
+var u8 v;
+escape $$v;
+]],
+    env = 'line 2 : invalid operand to unary "$$" : array expected',
+}
+Test { [[
+var u8 v;
+escape $v;
+]],
+    env = 'line 2 : invalid operand to unary "$" : array expected',
+}
+
+Test { [[
+var u8[10] vec;
+escape $$vec + $vec;
+]],
+    run = 10,
+}
+
+Test { [[
+var u8[] vec;
+escape $$vec + $vec + 1;
+]],
+    run = 1,
+}
+
+Test { [[
+escape [1];
+]],
+    parser = 'after `escape´ : expected expression',
+    --env = 'line 1 : arity mismatch',
+}
+
+Test { [[
+var u8[10] vec = [ [1,2,3] ];
+escape 1;
+]],
+    parser = 'line 1 : after `[´ : expected `]´',
+    --env = 'line 1 : wrong argument #1 : arity mismatch',
+}
+Test { [[
+var u8[10] vec = (1,2,3);
+escape 1;
+]],
+    parser = 'line 1 : after `1´ : expected `)´',
+}
+Test { [[
+var u8[10] vec = (1);
+escape 1;
+]],
+    env = 'line 1 : types mismatch (`u8[]´ <= `int´)',
+}
+Test { [[
+class T with do end
+var T[1] ts = [];
+escape 1;
+]],
+    env = 'line 2 : invalid attribution : destination is not a vector',
+}
+Test { [[
+var _int[1] vec = [];
+escape 1;
+]],
+    env = 'line 1 : invalid attribution : destination is not a vector',
+}
+
+Test { [[
+var int x;
+var u8[10] vec = [ &x ];
+escape 1;
+]],
+    env = 'line 2 : wrong argument #1 : types mismatch (`u8´ <= `int*´)',
+}
+
+Test { [[
+var int*[] v1;
+var int[]  v2 = []..v1;
+escape 1;
+]],
+    env = 'line 2 : wrong argument #2 : types mismatch (`int´ <= `int*´)',
+}
+
+Test { [[
+var u8[10] vec = [1,2,3];
+escape $$vec + $vec + vec[0] + vec[1] + vec[2];
+]],
+    run = 19,
+}
+
+Test { [[
+var u8[10] vec = [1,2,3];
+vec[0] = 4;
+vec[1] = 5;
+vec[2] = 6;
+escape $$vec + $vec + vec[0] + vec[1] + vec[2];
+]],
+    run = 28,
+}
+
+Test { [[
+var int[10] vec = [1,2,3];
+vec[0] = 4;
+vec[1] = 5;
+vec[2] = 6;
+escape $$vec + $vec + vec[0] + vec[1] + vec[2];
+]],
+    run = 28,
+}
+
+Test { [[
+var u8[10] vec;
+vec[0] = 1;
+escape 1;
+]],
+    run = '2] runtime error: access out of bounds',
+}
+
+Test { [[
+var u8[10] vec;
+escape vec[0];
+]],
+    run = '2] runtime error: access out of bounds',
+}
+
+Test { [[
+class T with do end
+pool T[10] ts;
+escape $$ts;
+]],
+    -- TODO: err msg
+    env = 'line 3 : types mismatch (`int´ <= `T´)',
+}
+
+Test { [[
+class T with do end
+pool T[10] ts;
+escape $ts;
+]],
+    -- TODO: err msg
+    env = 'line 3 : types mismatch (`int´ <= `T´)',
+}
+
+Test { [[
+var u8[] vec = [1,2,3];
+escape $$vec + $vec + vec[0] + vec[1] + vec[2];
+]],
+    run = 9,
+}
+
+Test { [[
+var u8[10] vec = [1,2,3];
+$$vec = 0;
+escape vec[0];
+]],
+    env = 'line 2 : invalid attribution',
+}
+Test { [[
+var u8[10] vec = [1,2,3];
+$vec = 0;
+escape vec[0];
+]],
+    run = '3] runtime error: access out of bounds',
+}
+
+Test { [[
+var int[2] vec;
+$vec = 1;
+escape 1;
+]],
+    run = '2] runtime error: invalid attribution : vector size can only shrink',
+}
+
+Test { [[
+var u8[10] v1 = [1,2,3];
+var u8[20] v2 = v1;
+escape v2[0] + v2[1] + v2[2];
+]],
+    env = 'line 2 : types mismatch (`u8[]´ <= `u8[]´)',
+}
+Test { [[
+var u8[10] v1 = [1,2,3];
+var u8[20] v2 = []..v1;
+escape v2[0] + v2[1] + v2[2];
+]],
+    run = 6,
+}
+Test { [[
+var u8[20] v1 = [1,2,3];
+var u8[10] v2 = []..v1;
+escape v2[0] + v2[1] + v2[2];
+]],
+    run = 6,
+}
+Test { [[
+var u8[] v1   = [1,2,3];
+var u8[10] v2 = []..v1;
+escape v2[0] + v2[1] + v2[2];
+]],
+    run = 6,
+}
+Test { [[
+var u8[10] v1 = [1,2,3];
+var u8[]   v2 = []..v1;
+escape v2[0] + v2[1] + v2[2];
+]],
+    run = 6,
+}
+Test { [[
+var u8[3] v1 = [1,2,3];
+var u8[2] v2 = []..v1;
+escape v2[0] + v2[1] + v2[2];
+]],
+    run = '2] runtime error: access out of bounds',
+}
+
+Test { [[
+var u8[10] vec = [1,2,3];
+var u8[]&  ref = vec;
+escape $$ref + $ref + ref[0] + ref[1] + ref[2];
+]],
+    run = 19,
+}
+
+Test { [[
+var u8[10]  vec = [1,2,3];
+var u8[11]& ref = vec;
+escape $$ref + $ref + ref[0] + ref[1] + ref[2];
+]],
+    run = 1,
+    env = 'line 2 : types mismatch (`u8[]&´ <= `u8[]´) : dimension mismatch',
+}
+
+Test { [[
+var u8[10] vec = [1,2,3];
+var u8[9]& ref = vec;
+escape $$ref + $ref + ref[0] + ref[1] + ref[2];
+]],
+    env = 'line 2 : types mismatch (`u8[]&´ <= `u8[]´) : dimension mismatch',
+}
+
+Test { [[
+var int[2] v ;
+escape v == &v[0] ;
+]],
+    env = 'line 2 : invalid operand to unary "&" : vector elements are not addressable',
+}
+
+Test { [[
+native @nohold _f();
+native do
+    void f (int* v) {
+        v[0]++;
+        v[1]++;
+    }
+end
+var int[2] a = [1,2];
+_f(a);
+escape a[0] + a[1];
+]],
+    run = 5,
+}
+
+Test { [[
+native @nohold _f();
+native do
+    void f (int* v) {
+        v[0]++;
+        v[1]++;
+    }
+end
+var int[2] a  = [1,2];
+var int[2]& b = a;
+_f(b);
+escape b[0] + b[1];
+]],
+    run = 5,
+}
+
+Test { [[
+class T with
+    var int[10] vs;
+do
+    this.vs = [1];
+end
+
+var T t;
+t.vs[0] = t.vs[0] + 2;
+
+escape t.vs[0];
+]],
+    props = 'line 2 : not permitted inside an interface : vectors',
+}
+
+Test { [[
+class T with
+    var int[10]& vs;
+do
+    this.vs = [1];
+end
+
+var int[10] vs;
+var T t with
+    this.vs = vs;
+end;
+t.vs[0] = t.vs[0] + 2;
+
+escape t.vs[0];
+]],
+    run = 3,
+}
+
+Test { [[
+interface I with
+    var int& v;
+end
+
+class T with
+    interface I;
+do
+    this.v = 1;
+end
+
+var int v;
+var T t with
+    this.v = v;
+end;
+t.v = t.v + 2;
+
+var I* i = &t;
+i:v = i:v * 3;
+
+escape t.v;
+]],
+    run = 9,
+}
+
+Test { [[
+var int[10]& rs;
+var int[10]  vs = [1];
+rs = vs;
+vs[0] = vs[0] + 2;
+
+rs[0] = rs[0] * 3;
+
+escape vs[0];
+]],
+    run = 9,
+}
+Test { [[
+interface I with
+    var int[10]& vs;
+end
+
+class T with
+    interface I;
+do
+    this.vs = [1];
+end
+
+var int[10] vs;
+var T t with
+    this.vs = vs;
+end;
+t.vs[0] = t.vs[0] + 2;
+
+var I* i = &t;
+
+i:vs[0] = i:vs[0] * 3;
+
+escape t.vs[0];
+]],
+    run = 9,
+}
+
+Test { [[
+escape 1..2;
+]],
+    parser = 'line 1 : after `1´ : expected `;´',
+}
+Test { [[
+escape 1 .. 2;
+]],
+    parser = 'line 1 : after `1´ : expected `;´',
+}
+Test { [[
+var int[] x = [1]..2;
+escape 1;
+]],
+    env = 'line 1 : wrong argument #2 : source is not a vector',
+}
+
+Test { [[
+escape [1]..[2];
+]],
+    parser = 'line 1 : after `escape´ : expected expression',
+}
+
+Test { [[
+escape [1]..[&this];
+]],
+    parser = 'line 1 : after `escape´ : expected expression',
+}
+
+Test { [[
+var int[] v1;
+var int[] v2;
+v1 = [1] .. v2;
+v1 = v2 .. [1];
+escape v1[0];
+]],
+    run = 1;
+}
+
+Test { [[
+var int[] v1 = [1]..[2]..[3];
+escape v1[0]+v1[1]+v1[2];
+]],
+    run = 6;
+}
+
+Test { [[
+var int[] v1 = [1,2,3];
+var int[] v2 = [7,8,9];
+v1 = v1 .. [4,5,6] .. v2;
+var int ret = 0;
+loop i in 9 do
+    ret = ret + v1[i];
+end
+escape ret;
+]],
+    run = 45;
+}
+
+Test { [[
+var int[] v = [1,2,3];
+v = v .. v;
+escape 1;
+]],
+    run = '2] runtime error: access out of bounds';
+}
+
+Test { [[
+var int[] v = [1,2,3];
+v = [1] .. v;
+escape 1;
+]],
+    run = '2] runtime error: access out of bounds';
+}
+
+Test { [[
+class T with
+    var int[]& v1;
+    var int[]  v2;
+do
+end
+escape 1;
+]],
+    props = 'line 3 : not permitted inside an interface',
+}
+--<< VECTORS
+
+-- STRINGS
+
+Test { [[
+native @nohold _printf(), _strlen();
+var char[] v = ['a','b','c','\0'];
+_printf("v = %s\n", (char*)v);
+escape _strlen((char*)v);
+]],
+    run = 3,
+}
+Test { [[
+native @nohold _printf(), _strlen();
+var char[] v = ['a','b','c','\0'];
+_printf("v = %s\n", v);
+escape _strlen(v);
+]],
+    run = 3,
+}
+
+Test { [[
+native @pure _strlen();
+native @nohold _garbage();
+native do
+    void garbage (char* v) {
+        int i = 0;
+        for (; i<20; i++) {
+            v[i] = i;
+        }
+    }
+end
+
+var char[10] v;
+var char[10] v_;
+_garbage(v);
+v = ['a','b','c'];
+escape _strlen(v);
+]],
+    run = 3,
+}
+
+Test { [[
+_f([1]);
+escape 1;
+]],
+    parser = 'line 1 : after `(´ : expected `)´',
+    --run = 1,
+}
+Test { [[
+_f([1]..[2]);
+escape 1;
+]],
+    parser = 'line 1 : after `(´ : expected `)´',
+    --run = 1,
+}
+Test { [[
+var int[] v;
+_f([1]..v);
+escape 1;
+]],
+    parser = 'line 2 : after `(´ : expected `)´',
+    --run = 1,
+}
+Test { [[
+var int[] v;
+_f(v..[1]);
+escape 1;
+]],
+    parser = 'line 2 : after `v´ : expected `)´',
+    --run = 1,
+}
+
+Test { [[
+native @nohold _printf(), _strlen();
+var char[] v = "abc";
+_printf("v = %s\n", v);
+escape _strlen(v);
+]],
+    env = 'line 2 : types mismatch (`char[]´ <= `char*´)',
+    --run = 3,
+}
+Test { [[
+native @nohold _printf(), _strlen();
+var char[] v = [].."abc";
+_printf("v = %s\n", v);
+escape _strlen(v);
+]],
+    run = 3,
+}
+Test { [[
+native @nohold _printf(), _strlen();
+var char[] v = [].."abc";
+v = v .. "def";
+_printf("v = %s\n", v);
+escape _strlen(v);
+]],
+    run = 6,
+}
+
+--<< VECTORS / STRINGS
 
     -- NATIVE C FUNCS BLOCK RAW
 
@@ -43637,6 +43649,19 @@ var char* ptr = cpy;
 ptr = [[ str ]];
 escape ret and (not _strcmp(str,cpy));
 ]=],
+    env = 'line 7 : types mismatch (`char*´ <= `char[]´)',
+}
+
+Test { [=[
+native @nohold _strcmp(), _strcpy();
+var char[10] str = [] .. "oioioi";
+[[ str = @str ]]
+var bool ret = [[ str == 'oioioi' ]];
+var char[10] cpy;
+var char[10]& ptr = cpy;
+ptr = [[ str ]];
+escape ret and (not _strcmp(str,cpy));
+]=],
     run = 1,
 }
 
@@ -43644,9 +43669,9 @@ Test { [=[
 native @nohold _strcmp();
 [[ str = '1234567890' ]]
 var char[2] cpy = [[ str ]];
-escape (not _strcmp(cpy,"1"));
+escape (_strcmp(cpy,"1") == 0);
 ]=],
-    run = 1,
+    run = '3] runtime error: access out of bounds',
 }
 
 Test { [=[
@@ -43654,11 +43679,11 @@ native @nohold _strcmp();
 [[ str = '1234567890' ]]
 var char[2] cpy;
 var char[20] cpy_;
-var char* ptr = cpy;
+var char[]& ptr = cpy;
 ptr = [[ str ]];
 escape (not _strcmp(cpy,"1234567890"));
 ]=],
-    run = 1,
+    run = '6] runtime error: access out of bounds',
 }
 
 Test { [=[
@@ -44494,10 +44519,12 @@ pool D[] ds = new D.REC(
 par/or do
     await ds:REC.r1;
 with
-    ds:REC
+    ds:REC.r1 = new D.NIL();
+end
 
 escape 1;
 ]],
+    _ana = {acc=true},
     run = 1,
 }
 
@@ -46293,7 +46320,7 @@ par do
         end
     end
     do
-        var int[100] is;
+        var _int[100] is;
         loop i in 100 do
             is[i] = i;
         end

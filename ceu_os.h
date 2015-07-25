@@ -337,10 +337,16 @@
         set = ceu_out_call(_ceu_app, CEU_OUT_LUA_TOUSERDATA, &p); \
     }
 
-    #define ceu_lua_error(l) {  \
-        lua_State** p = &l;        \
-        ceu_out_call(_ceu_app, CEU_OUT_LUA_ERROR, &p); \
+    #define ceu_lua_error(l) {                          \
+        lua_State** p = &l;                             \
+        ceu_out_call(_ceu_app, CEU_OUT_LUA_ERROR, &p);  \
     }
+
+    #define ceu_lua_objlen(set, l, idx) {                       \
+        tceu__lua_State___int p = { l, idx };                   \
+        set = ceu_out_call(_ceu_app, CEU_OUT_LUA_OBJLEN, &p);   \
+    }
+
 #else
     #define ceu_luaL_newstate(set)               set = luaL_newstate()
     #define ceu_luaL_openlibs(l)                 luaL_openlibs(l)
@@ -360,6 +366,7 @@
     #define ceu_lua_islightuserdata(set,l,idx)   set = lua_islightuserdata(l,idx)
     #define ceu_lua_touserdata(set,l,idx)        set = lua_touserdata(l,idx)
     #define ceu_lua_error(l)                     lua_error(l)
+    #define ceu_lua_objlen(set,l,idx)            set = lua_objlen(l,idx)
 #endif
 #endif
 

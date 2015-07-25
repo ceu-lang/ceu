@@ -848,14 +848,21 @@ F = {
         tp[1] = TP.id(pool.tp)
 
         -- +1 for NIL/BASE case
-        local arr = AST.node('Op2_+', me.ln, '+',
-                        AST.copy(pool.tp.arr), -- array
-                        AST.node('NUMBER', me.ln, '1'))
-
-        AST.asr(blki,'', 1,'Stmts', 1,'Dcl_pool', 2,'Type')
-                [2] = (pool.tp.arr=='[]' and '[]') or AST.copy(arr)
-        AST.asr(me.__par,'Stmts', 3,'Dcl_pool', 2,'Type')
-                [2] = (pool.tp.arr=='[]' and '[]') or AST.copy(arr)
+        if pool.tp.arr == '[]' then
+            AST.asr(blki,'', 1,'Stmts', 1,'Dcl_pool', 2,'Type')
+                    [2] = '[]'
+            AST.asr(me.__par,'Stmts', 3,'Dcl_pool', 2,'Type')
+                    [2] = '[]'
+        else
+            local arr = AST.node('Op2_+', me.ln, '+',
+                            AST.copy(pool.tp.arr), -- array
+                            AST.node('NUMBER', me.ln, '1'))
+            arr.sval = pool.tp.arr.sval+1   -- TODO: sval.lua
+            AST.asr(blki,'', 1,'Stmts', 1,'Dcl_pool', 2,'Type')
+                    [2] = AST.copy(arr)
+            AST.asr(me.__par,'Stmts', 3,'Dcl_pool', 2,'Type')
+                    [2] = AST.copy(arr)
+        end
 
         me.tag = 'Nothing'
     end,
@@ -1031,9 +1038,7 @@ F = {
 
         local lua_str = false
         if set == 'lua' then
-            ASR(not TP.check(to.tp,'&'), me, 'invalid attribution')
-
-            lua_str = (to_tp_id=='char' and TP.check(to.tp,'[]'))
+            lua_str = TP.check(to.tp,'char','[]','-&')
             if not lua_str then
                 ASR(to and to.lval, me, 'invalid attribution')
             end
