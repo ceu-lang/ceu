@@ -52222,6 +52222,31 @@ escape vec1[0];
 
 do return end
 
+-- BUG: new inside constructor (requires stack manipulation?)
+Test { [[
+data Command with
+    tag NOTHING;
+or
+    tag SEQUENCE with
+        var Command* one;
+        var Command* two;
+    end
+end
+
+class TCommand with
+    pool Command[] cs;
+do
+end
+
+var TCommand cmds with
+    this.cs = new Command.NOTHING();
+end;
+
+escape 1;
+]],
+    run = 1,
+}
+
 -- TODO: BUG: type of bg_clr changes
 --          should yield error
 --          because it stops implementing UI
