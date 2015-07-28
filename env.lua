@@ -549,6 +549,9 @@ F = {
                 AST.asr(me[i], 'Dcl_adt_tag')
                 local id_tag, blk = unpack(me[i])
                 local tup = AST.node('TupleType',me.ln)
+                ASR(not me.tags[id_tag], me[i],
+                    'duplicated tag : "'..id_tag..'"')
+
                 me.tags[id_tag] = { blk=blk, tup=tup }
                 me.tags[#me.tags+1] = id_tag
 
@@ -560,7 +563,27 @@ F = {
                             local _, var_tp, var_id = unpack(dclvar)
                             local item = AST.node('TupleTypeItem', me.ln,
                                             false,var_tp,false)
-                            if TP.id(var_tp) == id_adt then
+
+                            --  data Y with ... end
+                            --  data X with
+                            --      tag T with
+                            --          var X* x;   // is_rec=true
+                            --      end
+                            --  or
+                            --      tag U with
+                            --          var Y* y;   // is_rec=true
+                            --      end
+                            --  end
+                            local id_sub = TP.id(var_tp)
+                            local outer = ENV.adts[id_sub]
+                            if (id_sub == id_adt) or
+                               (outer and outer.is_rec)
+                            then
+                                if id_sub ~= id_adt then
+                                    -- outer tag
+                                    me.subs = me.subs or {}
+                                    me.subs[id_sub] = true
+                                end
                                 me.is_rec = true
                                 item.is_rec = true
                             end
@@ -824,8 +847,8 @@ F = {
         -- HACK_5: figure out iter type
         local pool = unpack(me)
         pool = pool.lst
-        ASR(pool.var and TP.check(pool.tp,TP.id(pool.tp),'[]','-&'), me,
-            'invalid pool')
+        ASR(pool.var and TP.check(pool.tp,TP.id(pool.tp),'[]','-*','-&'),
+            me, 'invalid pool')
 
         local blki = AST.asr(me.__par,'Stmts', 2,'Stmts', 1,'Dcl_cls',
                                     3,'Block', 1,'Stmts', 1,'BlockI')
@@ -835,15 +858,18 @@ F = {
         -- tp id
         tp[1] = TP.id(pool.tp)
 
-        -- +1 for NIL/BASE case
-        local arr = AST.node('Op2_+', me.ln, '+',
-                        AST.copy(pool.tp.arr), -- array
-                        AST.node('NUMBER', me.ln, '1'))
+        local arr = '[]'
+        if pool.tp.arr and pool.tp.arr~='[]' then
+            -- +1 for NIL/BASE case
+            arr = AST.node('Op2_+', me.ln, '+',
+                    AST.copy(pool.tp.arr), -- array
+                    AST.node('NUMBER', me.ln, '1'))
+        end
 
         AST.asr(blki,'', 1,'Stmts', 1,'Dcl_pool', 2,'Type')
-                [2] = (pool.tp.arr=='[]' and '[]') or AST.copy(arr)
+                [2] = (arr=='[]' and '[]') or AST.copy(arr)
         AST.asr(me.__par,'Stmts', 3,'Dcl_pool', 2,'Type')
-                [2] = (pool.tp.arr=='[]' and '[]') or AST.copy(arr)
+                [2] = (arr=='[]' and '[]') or AST.copy(arr)
 
         me.tag = 'Nothing'
     end,

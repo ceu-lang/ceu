@@ -9,8 +9,9 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
-do return end
 --]===]
+
+--do return end
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------
@@ -48941,6 +48942,145 @@ escape 1;
 }
 
 --<< TRAVERSE / NUMERIC
+
+-->> TRAVERSE / NESTED-RECURSIVE-ADTS
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List* tail;
+    end
+end
+
+pool List[3] list;
+list = new List.CONS(1,
+            List.CONS(2,
+                List.CONS(3, List.NIL())));
+
+var int sum = 0;
+
+pool List[]* lll = list:CONS.tail;
+
+traverse n in lll do
+    sum = sum + 1;
+    if n:CONS then
+        sum = sum + n:CONS.head;
+        traverse n:CONS.tail;
+    end
+end
+
+escape sum;
+]],
+    wrn = true,
+    run = 8,
+}
+
+Test { [[
+data X with
+    tag NIL;
+or
+    tag NIL;
+end
+
+escape 1;
+]],
+    env = 'line 4 : duplicated tag : "NIL"',
+}
+
+Test { [[
+data Command with
+    tag NOTHING;
+or
+    tag SEQUENCE with
+        var Command* one;
+        var Command* two;
+    end
+end
+
+data CommandQueue with
+    tag NOTHING;
+or
+    tag NXT with
+        var Command*      cmd;
+        var CommandQueue* nxt;
+    end
+end
+
+escape 1;
+]],
+    run = 1,
+    --env = 'line 13 : duplicated tag : "NOTHING"',
+}
+
+Test { [[
+data Command with
+    tag NOTHING;
+or
+    tag SEQUENCE with
+        var Command* one;
+        var Command* two;
+    end
+end
+
+data CommandQueue with
+    tag NIL;
+or
+    tag NXT with
+        var Command*      cmd;
+        var CommandQueue* nxt;
+    end
+end
+
+pool CommandQueue[10] cq1 = new Command.NOTHING();
+pool CommandQueue[10] cq2 = new CommandQueue.NIL();
+
+pool CommandQueue[10] cq3 = new
+    CommandQueue.NXT(
+        Command.SEQUENCE(
+            Command.NOTHING(),
+            Command.NOTHING()),
+        CommandQueue.NIL());
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+data Command with
+    tag NOTHING;
+or
+    tag SEQUENCE with
+        var Command* one;
+        var Command* two;
+    end
+end
+
+data CommandQueue with
+    tag NIL;
+or
+    tag NXT with
+        var Command*      cmd;
+        var CommandQueue* nxt;
+    end
+end
+
+pool CommandQueue[10] cq1 = new CommandQueue.NIL();
+
+pool CommandQueue[10] cq2 = new
+    CommandQueue.NXT(
+        Command.SEQUENCE(
+            Command.NOTHING(),
+            Command.NOTHING()),
+        CommandQueue.NIL());
+
+escape cq1:NIL + cq2:NXT.cmd:SEQUENCE.one:NOTHING;
+]],
+    run = 2,
+}
+--<< TRAVERSE / NESTED-RECURSIVE-ADTS
 
 -- ADTS ALIASING
 

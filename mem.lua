@@ -42,6 +42,21 @@ struct CEU_]]..id..[[ {
     u8 tag;
     union {
 ]]
+            if me.subs then
+                --  data Y with ... end
+                --  data X with
+                --      ...
+                --  or
+                --      tag U with
+                --          var Y* y;   // is_rec=true
+                --      end
+                --  end
+                for id_sub in pairs(me.subs) do
+                    me.struct = me.struct..[[
+        CEU_]]..id_sub..' __'..id_sub..[[;
+]]
+                end
+            end
             me.enum = { 'CEU_NONE'..me.n }    -- reserves 0 to catch more bugs
         end
 
@@ -273,11 +288,21 @@ void ]]..enum..'_kill (tceu_app* _ceu_app, tceu_go* go, CEU_'..id..[[* me) {
         -- kill all my recursive fields after myself (push them before)
         for _,item in ipairs(top.tags[tag].tup) do
             local _, tp, _ = unpack(item)
-            if TP.tostr(tp) == id..'*' then
+            local id_top = id
+            local ok = (TP.tostr(tp) == id..'*')
+            if (not ok) and top.subs then
+                for id_adt in pairs(top.subs) do
+                    if TP.tostr(tp) == id_adt..'*' then
+                        id_top = id_adt
+                        ok = true
+                    end
+                end
+            end
+            if ok then
                 kill = kill .. [[
-    CEU_]]..id..[[_kill(_ceu_app, go, me->]]..tag..'.'..item.var_id..[[);
+    CEU_]]..id_top..[[_kill(_ceu_app, go, me->]]..tag..'.'..item.var_id..[[);
 /*
-    me->]]..tag..'.'..item.var_id..[[ = &CEU_]]..string.upper(id)..[[_BASE;
+    me->]]..tag..'.'..item.var_id..[[ = &CEU_]]..string.upper(id_top)..[[_BASE;
 */
 ]]
             end
@@ -310,9 +335,19 @@ void ]]..enum..'_free_dynamic (tceu_app* _ceu_app, CEU_'..id..[[* me) {
         -- free all my recursive fields
         for _,item in ipairs(top.tags[tag].tup) do
             local _, tp, _ = unpack(item)
-            if TP.tostr(tp) == id..'*' then
+            local id_top = id
+            local ok = (TP.tostr(tp) == id..'*')
+            if (not ok) and top.subs then
+                for id_adt in pairs(top.subs) do
+                    if TP.tostr(tp) == id_adt..'*' then
+                        id_top = id_adt
+                        ok = true
+                    end
+                end
+            end
+            if ok then
                 free = free .. [[
-    CEU_]]..id..[[_free_dynamic(_ceu_app, me->]]..tag..'.'..item.var_id..[[);
+    CEU_]]..id_top..[[_free_dynamic(_ceu_app, me->]]..tag..'.'..item.var_id..[[);
 ]]
             end
         end
@@ -329,9 +364,19 @@ void ]]..enum..'_free_static (tceu_app* _ceu_app, CEU_'..id..[[* me, void* pool)
         -- free all my recursive fields
         for _,item in ipairs(top.tags[tag].tup) do
             local _, tp, _ = unpack(item)
-            if TP.tostr(tp) == id..'*' then
+            local id_top = id
+            local ok = (TP.tostr(tp) == id..'*')
+            if (not ok) and top.subs then
+                for id_adt in pairs(top.subs) do
+                    if TP.tostr(tp) == id_adt..'*' then
+                        id_top = id_adt
+                        ok = true
+                    end
+                end
+            end
+            if ok then
                 free = free .. [[
-    CEU_]]..id..[[_free_static(_ceu_app, me->]]..tag..'.'..item.var_id..[[, pool);
+    CEU_]]..id_top..[[_free_static(_ceu_app, me->]]..tag..'.'..item.var_id..[[, pool);
 ]]
             end
         end
