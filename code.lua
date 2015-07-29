@@ -1075,24 +1075,17 @@ case ]]..SET.lbl_cnt.id..[[:;
             --]]
 
             local pool = FIND_ADT_POOL(fr.fst)
-            if to.var.pre == 'pool' then
-                if TP.check(to.var.tp,'&') then
-                    LINE(me, [[
+            assert(to.var.pre=='pool', 'bug found')
+            if TP.check(to.var.tp,'&') then
+                LINE(me, [[
 ]]..V(to,'lval','adt_root')..' = '..V(fr,'adt_root')..[[;
 ]])
-                else
-                    LINE(me, [[
+            else
+                LINE(me, [[
 #ifdef CEU_ADTS_NEWS_POOL
 ]]..V(to,'lval','adt_root')..'->pool = '..V(pool,'adt_root')..[[->pool;
 #endif
 ]]..V(to,'lval','adt_root')..'->root = '..V(fr)..[[;
-]])
-                end
-
-            else
-                -- normal pointer (not pool)
-                LINE(me, [[
-]]..V(to,'lval')..' = '..V(fr)..[[;
 ]])
             end
 

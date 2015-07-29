@@ -289,10 +289,10 @@ void ]]..enum..'_kill (tceu_app* _ceu_app, tceu_go* go, CEU_'..id..[[* me) {
         for _,item in ipairs(top.tags[tag].tup) do
             local _, tp, _ = unpack(item)
             local id_top = id
-            local ok = (TP.tostr(tp) == id..'*')
+            local ok = (TP.tostr(tp) == id)
             if (not ok) and top.subs then
                 for id_adt in pairs(top.subs) do
-                    if TP.tostr(tp) == id_adt..'*' then
+                    if TP.tostr(tp) == id_adt then
                         id_top = id_adt
                         ok = true
                     end
@@ -336,10 +336,10 @@ void ]]..enum..'_free_dynamic (tceu_app* _ceu_app, CEU_'..id..[[* me) {
         for _,item in ipairs(top.tags[tag].tup) do
             local _, tp, _ = unpack(item)
             local id_top = id
-            local ok = (TP.tostr(tp) == id..'*')
+            local ok = (TP.tostr(tp) == id)
             if (not ok) and top.subs then
                 for id_adt in pairs(top.subs) do
-                    if TP.tostr(tp) == id_adt..'*' then
+                    if TP.tostr(tp) == id_adt then
                         id_top = id_adt
                         ok = true
                     end
@@ -365,10 +365,10 @@ void ]]..enum..'_free_static (tceu_app* _ceu_app, CEU_'..id..[[* me, void* pool)
         for _,item in ipairs(top.tags[tag].tup) do
             local _, tp, _ = unpack(item)
             local id_top = id
-            local ok = (TP.tostr(tp) == id..'*')
+            local ok = (TP.tostr(tp) == id)
             if (not ok) and top.subs then
                 for id_adt in pairs(top.subs) do
-                    if TP.tostr(tp) == id_adt..'*' then
+                    if TP.tostr(tp) == id_adt then
                         id_top = id_adt
                         ok = true
                     end
@@ -543,6 +543,9 @@ typedef union CEU_]]..me.id..[[_delayed {
 ]]
             elseif (TP.check(var.tp,'*') or TP.check(var.tp,'&')) then
                 len = TP.types.pointer.len
+            elseif (not var.adt) and TP.check(TP.id(var.tp)) and ENV.adts[TP.id(var.tp)] then
+                -- var List l
+                len = TP.types.pointer.len
             else
                 len = ENV.c[TP.id(var.tp)].len
             end
@@ -584,10 +587,14 @@ typedef union CEU_]]..me.id..[[_delayed {
                 if TP.check(var.tp,'[]') then
                     local tp = string.sub(tp,1,-2)  -- remove leading `*´
                     dcl = dcl .. tp..' '..var.id_..'['..var.tp.arr.cval..']'
+                elseif (not var.adt) and TP.check(var.tp,TP.id(var.tp)) and ENV.adts[TP.id(var.tp)] then
+                    -- var List list;
+                    dcl = dcl .. tp..'* '..var.id_
                 else
                     dcl = dcl .. tp..' '..var.id_
                 end
                 DCL.struct = DCL.struct..SPC()..'  '..dcl..';\n'
+
             elseif var.pre=='pool' then
                 local adt = ENV.adts[tp_id]
                 local cls = ENV.clss[tp_id]

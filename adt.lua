@@ -21,6 +21,7 @@ F = {
         end
     end,
 
+--[[
     Dcl_var = function (me)
         local tp_id = TP.id(me.var.tp)
         local adt = ENV.adts[tp_id]
@@ -35,6 +36,7 @@ F = {
             end
         end
     end,
+]]
 
     Adt_constr_root = function (me)
         local dyn, one  = unpack(me)
@@ -59,7 +61,7 @@ F = {
         end
 
         if set == 'adt-constr' then
-            if to.fst.var.pre == 'pool' then
+            if to.lst.var.pre == 'pool' then
                 -- [OK]
                 -- var pool[] L l;
                 -- l = new (...)
@@ -68,6 +70,8 @@ F = {
                 -- [OK]
                 -- var L* l = <...>;
                 -- l:X.x = new (...)
+                local ok, msg = TP.contains(to.tp,fr.tp)
+                ASR(ok, me, msg)
                 return
             else
                 -- [NO]
@@ -87,9 +91,8 @@ F = {
                 'cannot mix recursive data sources')
 
             --  [OK]: "to" is prefix of "fr" (changing parent to a child)
-            --      l = l:CONS.tail     // OK
-            --      l:CONS.tail = l     // NO
-            local ok = false
+            --      l = l.CONS.tail     // OK
+            --      l.CONS.tail = l     // NO
             local to = AST.par({__par=to.fst},
                         function (me)
                             return TP.check(me.tp,'[]','-*','-&')
@@ -98,20 +101,31 @@ F = {
                         function (me)
                             return TP.check(me.tp,'[]','-*','-&')
                         end)
-            while true do
-                if fr.__par.tag ~= 'Op1_*' then
-                    -- l:CONS.tail = l
+
+            assert(to.var and fr.var, 'bug found')
+            local ok = (to.var == fr.var)
+            if to.__par.tag == 'Op1_*' then
+                -- l:*
+                assert(fr.__par.tag=='Op1_*', 'bug found')
+                to = to.__par
+                fr = fr.__par
+            end
+
+            -- skip while if already "not ok"
+            while ok do
+                if fr.__par.tag ~= 'Op2_.' then
+                    -- l.CONS.tail = l
                     ok = false      -- end of fr
                     break
-                elseif to.__par.tag ~= 'Op1_*' then
+                elseif to.__par.tag ~= 'Op2_.' then
                     -- l = l:CONS.tail
                     ok = true       -- end of to
                     break
                 end
-                to = AST.asr(to.__par.__par,'Op2_.')
-                fr = AST.asr(fr.__par.__par,'Op2_.')
+                to = AST.asr(to.__par,'Op2_.')
+                fr = AST.asr(fr.__par,'Op2_.')
                 if to[3] ~= fr[3] then
-                    -- l:TAG1.x = l:TAG2.y
+                    -- l:TAG1.* = l:TAG2.*
                     ok = true       -- different tags
                     break
                 else
