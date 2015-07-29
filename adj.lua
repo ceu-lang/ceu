@@ -1314,8 +1314,7 @@ me.blk_body = me.blk_body or blk_body
                 -- OPT-2
                 node('If', me.ln,
                     node('Op2_.', me.ln, '.',
-                        node('Op1_*', me.ln, '*',
-                            AST.copy(var)),
+                        AST.copy(var),
                         'HACK_6-NIL'),
                     node('Block', me.ln,
                         node('Stmts', me.ln,

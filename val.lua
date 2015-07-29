@@ -66,7 +66,7 @@ F =
                 VAL = '(&'..VAL..')'
             elseif TP.check(var.tp,'?') then
             elseif TP.check(var.tp,'&') then
-                if ENV.clss[TP.id(var.tp)] then
+                if ENV.clss[TP.id(var.tp)] or ENV.clss[TP.id(var.tp)] then
                     -- orgs vars byRef, do nothing
                     -- (normalized to pointer)
                 else
@@ -405,18 +405,24 @@ F =
     ['Op1_+']   = 'Op1_any',
     ['Op1_not'] = 'Op1_any',
 
-    ['Op1_*'] = function (me)
+    ['Op1_*'] = function (me, CTX)
         local op, e1 = unpack(me)
-        if ENV.clss[TP.id(me.tp)] and TP.check(e1.tp, TP.id(e1.tp),'*','-&') then
-            return V(e1) -- class accesses should remain normalized to references
+        local tp_id = TP.id(me.tp)
+        if ENV.clss[tp_id] and TP.check(e1.tp,tp_id,'*','-&') then
+            return V(e1,CTX) -- class accesses should remain normalized to references
+        elseif ENV.adts[tp_id] and ENV.adts[tp_id].is_rec then
+            return V(e1,CTX) -- adt pool accesses should remain normalized to references
         else
-            return '('..ceu2c(op)..V(e1)..')'
+            return '('..ceu2c(op)..V(e1,CTX)..')'
         end
     end,
     ['Op1_&'] = function (me)
         local op, e1 = unpack(me)
-        if ENV.clss[TP.id(e1.tp)] and (not TP.check(e1.tp,'*','-&')) then
+        local tp_id = TP.id(e1.tp)
+        if ENV.clss[tp_id] and (not TP.check(e1.tp,'*','-&')) then
             return V(e1) -- class accesses are already normalized to references
+        elseif ENV.adts[tp_id] and ENV.adts[tp_id].is_rec then
+            return V(e1) -- adt pool accesses are already normalized to references
         else
             return '('..ceu2c(op)..V(e1)..')'
         end
@@ -445,18 +451,28 @@ F =
         local op, e1, id = unpack(me)
         local VAL
         if me.__env_tag then
-            local tag = (e1.tp.tag~='Block') and ('CEU_'..string.upper(TP.id(e1.tp))..'_'..id)
-                        -- can be a Block
+            local op_fld = '.'
+            local op_ptr = '&'
+            local tag
+            if e1.tp.tag ~= 'Block' then
+                tag = ('CEU_'..string.upper(TP.id(e1.tp))..'_'..id)
+                local adt = ENV.adts[TP.id(e1.tp)]
+                if adt.is_rec then
+                    op_fld  = '->'
+                    op_ptr  = ''
+                end
+            end
+
             if me.__env_tag == 'test' then
-                VAL  = '('..V(e1)..'.'..'tag == '..tag..')'
+                VAL  = '('..V(e1)..op_fld..'tag == '..tag..')'
             elseif me.__env_tag == 'assert' then
-                VAL  = '('..tag..'_assert(_ceu_app, &'..V(e1)..', __FILE__, __LINE__)'..'->'..id..')'
+                VAL  = '('..tag..'_assert(_ceu_app, '..op_ptr..V(e1)..', __FILE__, __LINE__)->'..id..')'
                 --VAL  = '('..tag..'_assert('..V(e1)..')'..ceu2c(op)..id..')'
             elseif me.__env_tag == 'field' then
                 if TP.check(e1.union_tag_blk.vars[id].tp,'&') then
-                    VAL  = '('..'*('..V(e1)..')'..'.'..id..')'
+                    VAL  = '('..'*('..V(e1)..')'..op_fld..id..')'
                 else
-                    VAL  = '('..V(e1)..'.'..id..')'
+                    VAL  = '('..V(e1)..op_fld..id..')'
                 end
             end
         else

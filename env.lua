@@ -134,8 +134,11 @@ local function check (me, pre, tp)
     end
 
     if TP.check(tp,tp_id, '-[]') then
-        ASR(not AST.isParent(top,me), me,
-            'undeclared type `'..(tp_id or '?')..'´')
+        if AST.isParent(top,me) then
+            -- List with tag CONS with List tail end
+            ASR(top.tag=='Dcl_adt', me,
+                'undeclared type `'..(tp_id or '?')..'´')
+        end
         if top.is_ifc then
             ASR(pre == 'pool', me,
                 'cannot instantiate an interface')
@@ -221,7 +224,7 @@ function newvar (me, blk, pre, tp, id, isImp, isEvery)
         blk   = blk,
         tp    = tp,
         cls   = (top and top.tag=='Dcl_cls' and top) or (id=='_top_pool'),
-        adt   = (top and top.tag=='Dcl_adt' and top),
+        adt   = false, -- see below
         pre   = pre,
         inTop = (blk==ME.blk_ifc) or (blk==ME.blk_body) or AST.par(me,'Dcl_adt'),
                 -- (never "tmp")
@@ -229,6 +232,18 @@ function newvar (me, blk, pre, tp, id, isImp, isEvery)
         --arr   = arr,
         n     = _N,
     }
+
+    if top and top.tag=='Dcl_adt' then
+        if top.is_rec or AST.isParent(top,me) then
+            if pre == 'pool' then
+                -- pool List[] id;
+                var.adt = top
+            end
+        else
+            -- var D id;
+            var.adt = top
+        end
+    end
 
     local tp, is_ref = TP.pop(tp, '&')   -- only *,& after []
     local is_arr = TP.check(tp, '[]')
@@ -553,6 +568,9 @@ F = {
                 AST.asr(me[i], 'Dcl_adt_tag')
                 local id_tag, blk = unpack(me[i])
                 local tup = AST.node('TupleType',me.ln)
+                ASR(not me.tags[id_tag], me[i],
+                    'duplicated tag : "'..id_tag..'"')
+
                 me.tags[id_tag] = { blk=blk, tup=tup }
                 me.tags[#me.tags+1] = id_tag
 
@@ -564,7 +582,27 @@ F = {
                             local _, var_tp, var_id = unpack(dclvar)
                             local item = AST.node('TupleTypeItem', me.ln,
                                             false,var_tp,false)
-                            if TP.id(var_tp) == id_adt then
+
+                            --  data Y with ... end
+                            --  data X with
+                            --      tag T with
+                            --          var X* x;   // is_rec=true
+                            --      end
+                            --  or
+                            --      tag U with
+                            --          var Y* y;   // is_rec=true
+                            --      end
+                            --  end
+                            local id_sub = TP.id(var_tp)
+                            local outer = ENV.adts[id_sub]
+                            if (id_sub == id_adt) or
+                               (outer and outer.is_rec)
+                            then
+                                if id_sub ~= id_adt then
+                                    -- outer tag
+                                    me.subs = me.subs or {}
+                                    me.subs[id_sub] = true
+                                end
                                 me.is_rec = true
                                 item.is_rec = true
                             end
@@ -836,8 +874,8 @@ F = {
         -- HACK_5: figure out iter type
         local pool = unpack(me)
         pool = pool.lst
-        ASR(pool.var and TP.check(pool.tp,TP.id(pool.tp),'[]','-&'), me,
-            'invalid pool')
+        ASR(pool.var and TP.check(pool.tp,TP.id(pool.tp),'[]','-*','-&'),
+            me, 'invalid pool')
 
         local blki = AST.asr(me.__par,'Stmts', 2,'Stmts', 1,'Dcl_cls',
                                     3,'Block', 1,'Stmts', 1,'BlockI')
@@ -847,22 +885,19 @@ F = {
         -- tp id
         tp[1] = TP.id(pool.tp)
 
-        -- +1 for NIL/BASE case
-        if pool.tp.arr == '[]' then
-            AST.asr(blki,'', 1,'Stmts', 1,'Dcl_pool', 2,'Type')
-                    [2] = '[]'
-            AST.asr(me.__par,'Stmts', 3,'Dcl_pool', 2,'Type')
-                    [2] = '[]'
-        else
-            local arr = AST.node('Op2_+', me.ln, '+',
-                            AST.copy(pool.tp.arr), -- array
-                            AST.node('NUMBER', me.ln, '1'))
-            arr.sval = pool.tp.arr.sval+1   -- TODO: sval.lua
-            AST.asr(blki,'', 1,'Stmts', 1,'Dcl_pool', 2,'Type')
-                    [2] = AST.copy(arr)
-            AST.asr(me.__par,'Stmts', 3,'Dcl_pool', 2,'Type')
-                    [2] = AST.copy(arr)
+        local arr = '[]'
+        if pool.tp.arr and pool.tp.arr~='[]' then
+            -- +1 for NIL/BASE case
+            arr = AST.node('Op2_+', me.ln, '+',
+                    AST.copy(pool.tp.arr), -- array
+                    AST.node('NUMBER', me.ln, '1'))
+            arr.sval = pool.tp.arr.sval+1
         end
+
+        AST.asr(blki,'', 1,'Stmts', 1,'Dcl_pool', 2,'Type')
+                [2] = (arr=='[]' and '[]') or AST.copy(arr)
+        AST.asr(me.__par,'Stmts', 3,'Dcl_pool', 2,'Type')
+                [2] = (arr=='[]' and '[]') or AST.copy(arr)
 
         me.tag = 'Nothing'
     end,
@@ -985,7 +1020,10 @@ F = {
                     'invalid attribution (no scope)' )
 
         elseif set == 'adt-constr' then
-            return  -- checked in adt.lua
+            if to.lst.var and to.lst.var.pre == 'pool' then
+                return  -- TODO: not enough
+            end
+            --return  -- checked in adt.lua
 
         elseif set == 'vector' then
             -- TODO: TP.pre() (only pool?)
@@ -1023,16 +1061,29 @@ F = {
             return
 
         elseif ENV.adts[to_tp_id] and (not to_is_opt) then
+-- TODO: rewrite all
             if ENV.adts[to_tp_id].is_rec then
                 if to.var and (TP.check(to.var.tp,'&') or TP.check(to.var.tp,'*')) then
-                    me[2] = 'adt-alias'
+                    if to.var.pre=='pool' then
+                        me[2] = 'adt-alias'
+                        return  -- checked in adt.lua
+                    else
+                        assert(me[2]=='exp')
+                        local fr_tp_id = TP.id(fr_tp)
+                        if to_tp_id == fr_tp_id and (
+                            (TP.check(to.tp,to_tp_id,'*') and TP.check(fr_tp,fr_tp_id,'[]')) or
+                            (TP.check(fr_tp,fr_tp_id,'*') and TP.check(to.tp,to_tp_id,'[]'))
+                        ) then
+                            return  -- checked in adt.lua
+                        end
+                    end
                 else
                     me[2] = 'adt-mut'
+                    return  -- checked in adt.lua
                 end
-                return  -- checked in adt.lua
             else
                 -- non-recursive ADT: fallback to normal 'exp' attribution
-                me[2] = 'exp'
+                assert(me[2]=='exp')
             end
         end
 
@@ -1206,8 +1257,8 @@ F = {
 
     Adt_constr_root = function (me)
         local _, one = unpack(me)
-        me.tp   = one.tp
         me.lval = false
+        me.tp = one.tp
     end,
     Adt_constr_one = function (me)
         local adt, params = unpack(me)
@@ -1226,7 +1277,7 @@ F = {
             --      <...>
             --  or
             --      tag REC with
-            --          var D* rec;
+            --          var D rec;
             --      end
             --  end
             --  <...> = new D.REC(ptr)      -- NO!
@@ -1235,7 +1286,7 @@ F = {
                 if ttag.tup[i] and ttag.tup[i].is_rec then
                     ASR(p.tag == 'Adt_constr_one', me,
                         'invalid constructor : recursive field "'..id_tag..'" must be new data')
-                    p.tp.tt[#p.tp.tt+1] = '*'
+                    --p.tp.tt[#p.tp.tt+1] = '*'
                     --params[i].tp = TP.new(TP.push(p.tp,'*'))
                 end
             end
@@ -1413,6 +1464,7 @@ F = {
         local tp = TP.pop(e1.tp,'&')
         tp,ok = TP.pop(tp, '*')
 
+--[[
         -- pool L[]* l;
         -- pool L[]  l;     // also valid
         local is_adt_pool = ENV.adts[tp_id] and e1.var and e1.var.pre=='pool'
@@ -1420,6 +1472,7 @@ F = {
             tp = TP.pop(tp, '[]')
             ok = true
         end
+]]
 
         if not ok then
             ASR((TP.is_ext(e1.tp,'_','@') and (not e1.tp.plain)
@@ -1504,11 +1557,16 @@ F = {
                 -- TODO
             else
                 assert(op == 'union')
+                local e1_tp = e1.tp
+                if TP.check(e1.tp,TP.id(e1.tp),'[]','-&') then
+                    e1_tp = TP.new{TP.id(e1.tp)}
+                end
+
                 local blk = ASR(adt.tags[id] and adt.tags[id].blk, me,
                                 'tag "'..id..'" is not declared')
 
-                ASR(TP.contains(e1.tp,TP.new{ID}), me,
-                    'invalid access ('..TP.tostr(e1.tp)..' vs '..ID..')')
+                ASR(TP.contains(e1_tp,TP.new{ID}), me,
+                    'invalid access ('..TP.tostr(e1_tp)..' vs '..ID..')')
 
                 -- [union.TAG]
                 local tag = (me.__par.tag ~= 'Op2_.')

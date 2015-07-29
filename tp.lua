@@ -437,11 +437,11 @@ function TP.contains (tp1, tp2)
         return true
 
     -- array <=> single-pointer conversions
-    -- tp[] = tp*
-    -- tp*  = tp[]
+    -- _tp[] = _tp*
+    -- _tp*  = _tp[]
     elseif id1 == id2 and (
-                (TP.check(tp1,id1,'*') and TP.check(tp2,id2,'[]') and TP.is_ext(tp2,'_','@')) or
-                (TP.check(tp2,id2,'*') and TP.check(tp1,id1,'[]') and TP.is_ext(tp1,'_','@'))
+            (TP.check(tp1,id1,'*') and TP.check(tp2,id2,'[]') and TP.is_ext(tp2,'_','@')) or
+            (TP.check(tp2,id2,'*') and TP.check(tp1,id1,'[]') and TP.is_ext(tp1,'_','@'))
            )
     then
         return true
