@@ -434,7 +434,8 @@ F = {
     end,
 
     Root = function (me)
-        TP.types.tceu_ncls.len = TP.n2bytes(#ENV.clss_cls)
+        TP.types.tceu_ncls.len = 2 --TP.n2bytes(#ENV.clss_cls*2)
+                                    -- *2 (signed => unsigned)
         ASR(ENV.max_evt+#ENV.exts < 255, me, 'too many events')
                                     -- 0 = NONE
 
