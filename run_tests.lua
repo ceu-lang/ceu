@@ -7,6 +7,7 @@ RUNTESTS = true
 -- Execution option for the tests:
 --VALGRIND = true
 --LUACOV = '-lluacov'
+--COMPLETE = true
 OS = false   -- false, true, nil(random)
 
 dofile 'pak.lua'
@@ -36,9 +37,21 @@ end
 
 Test = function (t)
     T = t
+
+    --assert(T.todo == nil)
+    if T.todo then
+        return
+    end
+    if T.complete and (not COMPLETE) then
+        return  -- only run "t.complete=true" with the "COMPLETE=true" flag
+    end
+
     local source = T[1]
-    --local source = 'C _fprintf(), _stderr;'..T[1]
-    print('\n=============\n---\n'..source..'\n---\n')
+    if not T.complete then
+        -- do not print large files
+        --local source = 'C _fprintf(), _stderr;'..T[1]
+        print('\n=============\n---\n'..source..'\n---\n')
+    end
 
     OPTS = {
         tp_word = 4,
@@ -52,11 +65,6 @@ Test = function (t)
         input   = 'tests.lua',
         source  = source,
     }
-
-    --assert(T.todo == nil)
-    if T.todo then
-        return
-    end
 
     STATS.count = STATS.count   + 1
 

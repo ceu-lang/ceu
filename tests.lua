@@ -9,9 +9,9 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
+do return end
 --]===]
 
---do return end
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------
@@ -33489,6 +33489,31 @@ escape ret;
 
 -- INTERFACES / IFACES / IFCES
 
+local str = {}
+for i=1, 128 do
+    str[#str+1] = [[
+class Class]]..i..[[ with
+    interface I;
+do
+    x = 10;
+end
+]]
+end
+str = table.concat(str)
+
+Test { [[
+interface I with
+    var int x;
+end
+]]..str..[[
+
+var Class128 instance;
+var I* target = &instance;
+escape target:x;
+]],
+    run = 10,
+}
+
 Test { [[
 interface A with
     var int a1,a2;
@@ -41456,6 +41481,7 @@ end
 _usleep(]]..i..[[+1);
 escape ret;
 ]],
+        complete = (i>1),   -- run i=1 for sure
         usleep = true,
         run = 1,
         _ana = { acc=1 },
@@ -50824,6 +50850,7 @@ end
 escape app.v;
 ]],
     timemachine = true,
+    complete = (i>1),   -- runs i=1 for sure
     _ana = {
         acc = true,
     },
@@ -51034,6 +51061,7 @@ end
 escape app.v;
 ]],
     timemachine = true,
+    complete = (i>1),   -- runs i=1 for sure
     _ana = {
         acc = true,
     },
@@ -51252,6 +51280,7 @@ end
 escape app.v;
 ]],
     timemachine = true,
+    complete = (i>1),   -- runs i=1 for sure
     _ana = {
         acc = true,
     },
@@ -51358,6 +51387,7 @@ end
 escape app.v;
 ]],
     timemachine = true,
+    complete = (i>1),   -- runs i=1 for sure
     _ana = {
         acc = true,
     },
@@ -51505,6 +51535,7 @@ end
 escape app.v;
 ]],
     timemachine = true,
+    complete = (i>1),   -- runs i=1 for sure
     _ana = {
         acc = true,
     },
@@ -53383,6 +53414,34 @@ escape sum;
 ]],
     _ana = { acc=true },
     run = { ['~>10s']=6 },
+}
+
+-- BUG: parser cannot handle 65k lines
+local str = {}
+for i=1, 65536 do
+    str[#str+1] = [[
+class Class]]..i..[[ with
+    interface I;
+do
+    x = 10;
+end
+]]
+end
+str = table.concat(str)
+
+Test { [[
+interface I with
+    var int x;
+end
+]]..str..[[
+
+var Class128 instance;
+var I* target = &instance;
+escape target:x;
+]],
+    todo = 'crashes',
+    complete = true,
+    run = 1,
 }
 
 -- BUG: cannot contain await nao se aplica a par/or com caminho sem await
