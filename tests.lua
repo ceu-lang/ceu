@@ -7,9 +7,33 @@ end
 ----------------------------------------------------------------------------
 -- NO: testing
 ----------------------------------------------------------------------------
+
 --[===[
-do return end
+Test { [[
+class T with
+do
+end
+class U with
+do
+    await FOREVER;
+end
+class V with
+    var int t;
+do
+    await (t)s;
+end
+
+var T[]   ts;
+var T*[]  ts;
+var T*?[] ts;
+
+escape 1;
+]],
+    run = 1,
+}
 --]===]
+
+do return end
 
 -------------------------------------------------------------------------------
 
@@ -49072,6 +49096,37 @@ escape ret;
     run = { ['~>100s']=20 },
 }
 
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var List tail;
+    end
+end
+
+pool List[] ls;
+ls = new List.CONS(List.NIL());
+
+traverse l in ls do
+    if l:NIL then
+        await FOREVER;
+    else
+        watching *l do
+            par/or do
+                traverse &l:CONS.tail;
+            with
+                await 1s;
+            end
+        end
+    end
+end
+
+escape 1;
+]],
+    wrn = 'line 23 : unbounded recursive spawn',
+    run = { ['~>5s']=1 },
+}
 Test { [[
 data List with
     tag NIL;

@@ -176,7 +176,10 @@ void ceu_sys_stack_clear_org (tceu_go* go, tceu_org* old, int lim) {
                     stk->org = ((tceu_org*)stk->org)->nxt;
                 }
 #if 0
-                ceu_out_assert(!__ceu_isParent(old, stk->org), "bug found [001]" );
+/* TODO: BUG: _STK_ORG is not necessarily the parent for pool allocations */
+/* TODO: remove if-0 when solved */
+                ceu_out_assert(!__ceu_isParent(old, stk->org),
+                                "bug found [001]" );
 #endif
             } else {                        /* ignore local traversals */
                 stk->evt = CEU_IN__NONE;

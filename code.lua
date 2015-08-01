@@ -408,6 +408,7 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
 ]])     end
         LINE(me, [[
     /* resets org memory and starts org.trail[0]=Class_XXX */
+    /* TODO: BUG: _STK_ORG is not necessarily the parent for pool allocations */
     ceu_out_org(_ceu_app, ]]..org..','..t.cls.trails_n..','..t.cls.lbl.id..[[,
 #ifdef CEU_ORGS_NEWS
                 ]]..t.isDyn..[[,
