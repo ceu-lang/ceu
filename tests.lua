@@ -9,6 +9,45 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
+--]===]
+-- BUG: across
+-- BUG: unassigned pointer (should be int*?)
+Test { [[
+var int* x;
+await 1s;
+escape *x;
+]],
+    todo = true,
+    run = 1,
+}
+
+Test { [[
+var int v = 1;
+var int* x = &v;
+loop i in 10 do
+    *x = *x + 1;
+    await 1s;
+end
+escape v;
+]],
+    fin = 'line 4 : unsafe access to pointer "x" across `loop´ (tests.lua : 3)',
+}
+
+-- TODO: bug
+Test { [[
+event void e;
+var int v = 1;
+var int* x = &v;
+loop i in 10 do
+    *x = *x + 1;
+    emit e;
+end
+escape v;
+]],
+    todo = 'bug',
+    fin = 'line 4 : unsafe access to pointer "x" across `loop´ (tests.lua : 3)',
+}
+
 Test { [[
 class T with
 do
@@ -23,17 +62,17 @@ do
     await (t)s;
 end
 
-var T[]   ts;
+//var T[]   ts;
 var T*[]  ts;
 var T*?[] ts;
 
 escape 1;
 ]],
+    todo = true,
     run = 1,
 }
---]===]
 
-do return end
+--do return end
 
 -------------------------------------------------------------------------------
 
@@ -19822,13 +19861,13 @@ Test { [[
 var u8 v;
 escape $$v;
 ]],
-    env = 'line 2 : invalid operand to unary "$$" : array expected',
+    env = 'line 2 : invalid operand to unary "$$" : vector expected',
 }
 Test { [[
 var u8 v;
 escape $v;
 ]],
-    env = 'line 2 : invalid operand to unary "$" : array expected',
+    env = 'line 2 : invalid operand to unary "$" : vector expected',
 }
 
 Test { [[
@@ -19948,8 +19987,7 @@ class T with do end
 pool T[10] ts;
 escape $$ts;
 ]],
-    -- TODO: err msg
-    env = 'line 3 : types mismatch (`int´ <= `T´)',
+    env = 'line 3 : invalid operand to unary "$$" : vector expected',
 }
 
 Test { [[
@@ -19957,8 +19995,7 @@ class T with do end
 pool T[10] ts;
 escape $ts;
 ]],
-    -- TODO: err msg
-    env = 'line 3 : types mismatch (`int´ <= `T´)',
+    env = 'line 3 : invalid operand to unary "$" : vector expected',
 }
 
 Test { [[
@@ -20278,6 +20315,91 @@ escape 1;
 ]],
     props = 'line 3 : not permitted inside an interface',
 }
+
+-- VECTORS FOR POINTERS TO ORGS
+
+Test { [[
+class T with
+do
+end
+var T*[]  ts;
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+class T with
+do
+end
+var T*[] ts;
+var int x = $ts;
+escape x+$ts+1;
+]],
+    run = 1,
+}
+Test { [[
+class T with
+do
+end
+var T*[] ts;
+var T t;
+ts = ts .. [t];
+escape $ts+1;
+]],
+    env = 'line 6 : wrong argument #1 : types mismatch (`T*´ <= `T´)',
+}
+Test { [[
+class T with
+do
+end
+var T*[] ts;
+var T t;
+ts = ts .. [&t];
+escape $ts+1;
+]],
+    run = 2,
+}
+
+Test { [[
+class T with
+do
+end
+var T*[] ts;
+var T t;
+ts = ts .. [&t];
+var T* p = ts[0];
+escape p == &t;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+do
+end
+var T*[] ts;
+var T t;
+ts = ts .. [&t];
+var T* p = ts[1];
+escape p == &t;
+]],
+    run = '7] runtime error: access out of bounds',
+}
+
+Test { [[
+class T with
+do
+end
+var T*[] ts;
+var T t;
+ts = ts .. [&t];
+await 1s;
+var T* p = ts[0];
+escape p == &t;
+]],
+    fin = 'line 8 : unsafe access to pointer "ts" across `await´ (tests.lua : 7)',
+}
+
 --<< VECTORS
 
 -- STRINGS
@@ -32675,6 +32797,19 @@ escape _V;
 }
 
 Test { [[
+    var _s* p = null;
+    loop i in 10 do
+        var _s* p1 = p;
+        await 1s;
+    end
+
+escape _V;
+]],
+    run = { ['~>1min']=10 },
+    fin = 'line 3 : unsafe access to pointer "p" across `loop´ (tests.lua : 2)',
+}
+
+Test { [[
 native _s=0;
 native do
     typedef int s;
@@ -32694,8 +32829,8 @@ end
 
 var T*? ui;
 do
-    var _s* p = null;
     loop i in 10 do
+        var _s* p = null;
         ui = spawn T with
             this.ptr = p;
         end;
