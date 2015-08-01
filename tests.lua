@@ -7,7 +7,6 @@ end
 ----------------------------------------------------------------------------
 -- NO: testing
 ----------------------------------------------------------------------------
-
 --[===[
 do return end
 --]===]
@@ -23170,6 +23169,16 @@ escape _V;
 
 Test { [[
 class T with
+do
+end
+var T y;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
     var int a, b;
 do
 end
@@ -33489,30 +33498,34 @@ escape ret;
 
 -- INTERFACES / IFACES / IFCES
 
-local str = {}
-for i=1, 128 do
-    str[#str+1] = [[
-class Class]]..i..[[ with
+if COMPLETE then
+    for i=120, 150 do
+        local str = {}
+        for j=1, i do
+            str[#str+1] = [[
+class Class]]..j..[[ with
     interface I;
 do
     x = 10;
 end
-]]
-end
-str = table.concat(str)
+    ]]
+        end
+        str = table.concat(str)
 
-Test { [[
+        Test { [[
 interface I with
     var int x;
 end
 ]]..str..[[
 
-var Class128 instance;
+var Class]]..i..[[ instance;
 var I* target = &instance;
 escape target:x;
 ]],
-    run = 10,
-}
+            run = 10,
+        }
+    end
+end
 
 Test { [[
 interface A with
@@ -37897,6 +37910,33 @@ Test { [[escape(1);]],
         isForever = false,
     },
     run = 1,
+}
+
+-- test case for bad stack clear
+Test { [[
+class Intro with
+do
+    await 20ms;
+end
+
+do Intro;
+
+class Body with do
+    await 10ms;
+end
+
+class BTreeTraverse with
+do
+    pool Body[0] bodies;
+    do Body;
+    await 10ms;
+end
+
+do BTreeTraverse;
+
+escape 1;
+]],
+    run = {['~>1s']=1},
 }
 
 -- TRACKING / WATCHING

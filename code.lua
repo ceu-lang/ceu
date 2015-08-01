@@ -313,7 +313,10 @@ _STK_ORG->cls = ]]..me.n..[[;
              stk.trl    = &_STK_ORG->trls[0];
              stk.stop   = _STK_ORG;
              stk.evt_sz = 0;
+]])
 
+        if me ~= MAIN then
+            LINE(me, [[
 #ifdef CEU_ORGS_NEWS
 /* HACK_9:
  * If the stack top is the initial spawn state of the organism, it means that 
@@ -333,7 +336,10 @@ if (_STK->evt==CEU_IN__STK && _STK->org==_STK_ORG
         /* remove all */
 }
 #endif
+]])
+        end
 
+        LINE(me, [[
     stack_push(_ceu_go, &stk, NULL);
 }
 #endif
@@ -2022,7 +2028,7 @@ static void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
             me[1] = [[
 if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
     *]]..me.thread.thread_st..[[ = 3;
-    /*ceu_out_assert( TODO:take-ret-then-assert * pthread_cancel(]]..me.thread.thread_id..[[) == 0 , "bug found");*/
+    ceu_out_assert( pthread_cancel(]]..me.thread.thread_id..[[) == 0 , "bug found")
 } else {
     ceu_out_realloc(]]..me.thread.thread_st..[[, 0); /* thr finished, I free */
     _ceu_app->threads_n--;

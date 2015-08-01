@@ -153,21 +153,31 @@ void ceu_stack_dump (tceu_go* go) {
 static int __ceu_isParent (tceu_org* parent, tceu_org* me) {
     return (parent==me) || (me!=NULL && __ceu_isParent(parent,me->up));
 }
-void ceu_sys_stack_clear_org (tceu_go* go, tceu_org* org, int lim) {
+void ceu_sys_stack_clear_org (tceu_go* go, tceu_org* old, int lim) {
     int i;
     for (i=0; i<lim; i+=stack_sz((go),i)) {
         tceu_stk* stk = stack_get((go),i);
         if (stk->evt == CEU_IN__NONE) {
             continue;   /* already cleared: avoids accessing dangling pointer */
         }
-        if (__ceu_isParent(org, (tceu_org*)stk->org)) {
+        if (__ceu_isParent(old, (tceu_org*)stk->org)) {
             if (stk->stop == NULL) {        /* broadcast traversal */
                 /* jump to next organism */
-                stk->org = org->nxt;
-                stk->trl = &((tceu_org*)org->nxt)->trls [
-                            (org->n == 0) ?
-                            ((tceu_org_lnk*)org)->lnk : 0
+                stk->org = old->nxt;
+                stk->trl = &((tceu_org*)old->nxt)->trls [
+                            (old->n == 0) ?
+                            ((tceu_org_lnk*)old)->lnk : 0
                           ];
+                /* skip end-of-org-list organism */
+                if (((tceu_org*)stk->org)->n == 0) {
+                    stk->trl = &(((tceu_org*)stk->org)->nxt->trls [
+                                ((tceu_org_lnk*)stk->org)->lnk
+                               ]);
+                    stk->org = ((tceu_org*)stk->org)->nxt;
+                }
+#if 0
+                ceu_out_assert(!__ceu_isParent(old, stk->org), "bug found [001]" );
+#endif
             } else {                        /* ignore local traversals */
                 stk->evt = CEU_IN__NONE;
             }
@@ -587,9 +597,11 @@ void ceu_sys_go (tceu_app* app, int evt, void* evtp)
             }
 
 #ifdef CEU_DEBUG_TRAILS
-printf("STACK[%d]: evt=%d : seqno=%d\n", stack_curi(&go), STK->evt, app->seqno);
+printf("STACK[%d]: evt=%d : seqno=%d\n",
+        stack_curi(&go), STK->evt, app->seqno);
 #if defined(CEU_ORGS) || defined(CEU_OS_KERNEL)
-printf("\torg=%p/%d : [%d/%p]\n", STK_ORG, STK_ORG==app->data, STK_ORG->n, STK_ORG->trls);
+printf("\torg=%p/%d : [%d/%p]\n",
+        STK_ORG, STK_ORG==app->data, STK_ORG->n, STK_ORG->trls);
 #else
 printf("\tntrls=%d\n", CEU_NTRAILS);
 #endif
