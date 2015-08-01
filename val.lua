@@ -360,14 +360,16 @@ F =
 
         local cls = ENV.clss[TP.id(me.tp)]
 
-        if cls or TP.is_ext(arr.tp,'_','@') then
+        if cls and TP.check(me.tp,TP.id(me.tp))
+        or TP.is_ext(arr.tp,'_','@')
+        then
             VAL = V(arr)..'['..V(idx)..']'
             if cls and (not TP.check(me.tp,'*')) then
                 VAL = '(&'..VAL..')'
                     -- class accesses must be normalized to references
             end
         else
-            VAL = '(*(('..TP.id(me.tp)..'*)ceu_vector_geti_ex('..V(arr)..','..V(idx)..',__FILE__,__LINE__)))'
+            VAL = '(*(('..TP.toc(me.tp)..'*)ceu_vector_geti_ex('..V(arr)..','..V(idx)..',__FILE__,__LINE__)))'
         end
 
         return VAL

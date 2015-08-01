@@ -41,15 +41,19 @@ function ISPTR (node_or_var)
     end
 
     local tp = node_or_var.tp
+    local tp_id = TP.id(tp)
 
-    if TP.check(tp,'*','-&','-?') then
-        return true
+    -- type with '*' anywhere
+    for _, v in ipairs(tp.tt) do
+        if v == '*' then
+            return true
+        end
     end
 
     -- either native dcl or derived
     -- _SDL_Renderer&?: "_ext &?" should not be considered a pointer
     if TP.is_ext(tp,'_','@') and
-       (not (TP.get(TP.id(tp)).plain or tp.plain or TP.check(tp,'&','?')))
+       (not (TP.get(tp_id).plain or tp.plain or TP.check(tp,'&','?')))
     then
         if node_or_var.id == '_top_pool' then
             return false    -- TODO: should not be considered "is_ext"
@@ -73,11 +77,11 @@ F = {
         local op, set, fr, to = unpack(me)
         to = to or AST.iter'SetBlock'()[1]
 
--- TODO
-if set == 'await' then
-    ASR(op == '=', me, 1103, 'wrong operator')
-    return
-end
+        -- TODO
+        if set=='await' or set=='vector' then
+            ASR(op == '=', me, 1103, 'wrong operator')
+            return
+        end
 
         local cls = CLS()
 

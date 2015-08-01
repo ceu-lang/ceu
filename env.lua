@@ -1415,9 +1415,10 @@ F = {
     ['Op1_$'] = function (me)
         local op, e1 = unpack(me)
         ASR(TP.check(e1.tp,'[]','-&'), me,
-            'invalid operand to unary "'..op..'" : array expected')
-        me.tp = TP.pop(e1.tp,'&')
-        me.tp = TP.pop(me.tp,'[]')
+            'invalid operand to unary "'..op..'" : vector expected')
+        ASR(not (e1.var and e1.var.pre=='pool'), me,
+            'invalid operand to unary "'..op..'" : vector expected')
+        me.tp = TP.new{'int'}
         me.lval = op=='$' and e1
         me.fst = e1.fst
         me.lst = e1.lst
