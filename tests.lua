@@ -9,7 +9,7 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
---]===]
+
 -- BUG: across
 -- BUG: unassigned pointer (should be int*?)
 Test { [[
@@ -33,7 +33,6 @@ escape v;
     fin = 'line 4 : unsafe access to pointer "x" across `loop´ (tests.lua : 3)',
 }
 
--- TODO: bug
 Test { [[
 event void e;
 var int v = 1;
@@ -44,8 +43,19 @@ loop i in 10 do
 end
 escape v;
 ]],
-    todo = 'bug',
-    fin = 'line 4 : unsafe access to pointer "x" across `loop´ (tests.lua : 3)',
+    fin = 'line 5 : unsafe access to pointer "x" across `loop´ (tests.lua : 4)',
+}
+
+Test { [[
+event void e;
+var int v = 1;
+var int* x = &v;
+loop i in *x do
+    await 1s;
+end
+escape v;
+]],
+    run = { ['~>1s']=1 },
 }
 
 Test { [[
@@ -16652,7 +16662,8 @@ do
 end
 escape ret + *p;
 ]],
-    fin = 'line 14 : unsafe access to pointer "p" across `par/and´',
+    fin = 'line 14 : unsafe access to pointer "p" across `emit´ (tests.lua : 11)',
+    --fin = 'line 14 : unsafe access to pointer "p" across `par/and´',
     --fin = 'line 8 : invalid block for awoken pointer "p"',
     --fin = 'line 14 : cannot `await´ again on this block',
 }
@@ -30429,7 +30440,8 @@ end
 
 escape 1;
 ]],
-    fin = 'line 11 : unsafe access to pointer "t2" across `kill´',
+    fin = 'line 10 : unsafe access to pointer "t1" across `loop´ (tests.lua : 9)',
+    --fin = 'line 11 : unsafe access to pointer "t2" across `kill´',
 }
 
 Test { [[
@@ -30445,6 +30457,30 @@ loop t1 in ts do
         watching *t2 do
             kill *t1;
             kill *t2;
+        end
+    end
+end
+
+escape 1;
+]],
+    fin = ' line 11 : unsafe access to pointer "t1" across `loop´ (tests.lua : 9)',
+}
+
+Test { [[
+class T with
+do
+    await FOREVER;
+end
+
+pool T[] ts;
+
+loop t1 in ts do
+    watching *t1 do
+        loop t2 in ts do
+            watching *t2 do
+                kill *t1;
+                kill *t2;
+            end
         end
     end
 end
@@ -38647,6 +38683,46 @@ end
 escape ret1+ret2+_V;
 ]],
     --run = 10001,
+    --fin = 'line 19 : unsafe access to pointer "t0" across `spawn´',
+    fin = 'line 19 : unsafe access to pointer "t0" across `loop´',
+}
+
+Test { [[
+native do
+    int V = 0;
+end
+input void OS_START;
+class T with
+    var int id = 0;
+do
+    await OS_START;
+    _V = _V + 1;
+end
+
+pool T[10000] ts;
+var T* tF = null;
+loop i in 10000 do
+var T* t0 = null;
+    var T*? t = spawn T in ts with
+        this.id = 10000-i;
+    end;
+    if t0 == null then
+        t0 = t!;
+    end
+    tF = t!;
+end
+_assert(tF!=null);
+
+var int ret1=0, ret2=0;
+
+watching *tF do
+    ret2 = tF:id;
+    await FOREVER;
+end
+
+escape ret1+ret2+_V;
+]],
+    --run = 10001,
     fin = 'line 19 : unsafe access to pointer "t0" across `spawn´',
 }
 
@@ -40337,6 +40413,31 @@ end
 var int ret = t0:id;
 
 escape ret;
+]],
+    fin = 'line 14 : unsafe access to pointer "t0" across `loop´ (tests.lua : 10)',
+    --run = 9999,
+}
+
+Test { [[
+input void OS_START;
+class T with
+    var int id = 0;
+do
+    await OS_START;
+end
+
+pool T[9999] ts;
+loop i in 9999 do
+    var T* t0 = null;
+    var T*? t = spawn T with
+        this.id = 9999-i;
+    end;
+    if t0 == null then
+        t0 = t!;
+    end
+end
+
+escape 1;
 ]],
     fin = 'line 14 : unsafe access to pointer "t0" across `spawn´',
     --run = 9999,
@@ -42903,7 +43004,7 @@ with
 end
 escape *ret;
 ]],
-    fin = 'line 11 : unsafe access to pointer "ret" across `par/or´',
+    fin = 'line 11 : unsafe access to pointer "ret" across `await´',
     --fin = 'line 5 : invalid block for awoken pointer "ret"',
 }
 
@@ -47924,6 +48025,7 @@ escape sum;
     run = { ['~>20s'] = 4 },
 }
 
+--]===]
 Test { [[
 data List with
     tag NIL;
