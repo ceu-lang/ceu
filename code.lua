@@ -418,6 +418,22 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
  * are all together there. When we have separate trls for pools, we'll have to 
  * indirectly access the offset in the interface. */
 ]])
+
+        --  traverse <...> with
+        --      var int x = y;      // executes in _pre, before the constructor
+        --  do
+        if me.__adj_is_traverse_root then
+            LINE(me, [[
+    ((]]..TP.toc(t.cls.tp)..'*)'..org..[[)->_out = 
+        (__typeof__(((]]..TP.toc(t.cls.tp)..'*)'..org..[[)->_out)) _STK_ORG;
+]])
+        elseif me.__adj_is_traverse_rec then
+            LINE(me, [[
+    ((]]..TP.toc(t.cls.tp)..'*)'..org..[[)->_out =
+        ((]]..TP.toc(t.cls.tp)..[[*)_STK_ORG)->_out;
+]])
+        end
+
         if t.cls.has_pre then
             LINE(me, [[
     _ceu_pre_]]..t.cls.n..[[(_ceu_app, ]]..org..[[);

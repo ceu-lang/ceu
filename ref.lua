@@ -211,8 +211,11 @@ F = {
                 if TP.check(var.tp,'&') and
                    (var.bind=='constr' or (not var.bind))
                 then
-                    ASR(constr.__bounded[var], me,
-                        'field "'..var.id..'" must be assigned')
+                    -- '_out' is set by the compiler, before the constructor
+                    if var.id ~= '_out' then
+                        ASR(constr.__bounded[var], me,
+                            'field "'..var.id..'" must be assigned')
+                    end
                 end
             end
         end

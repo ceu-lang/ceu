@@ -9,7 +9,8 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
--- BUG "out" access
+--]===]
+
 Test { [[
 data Stmt with
     tag NIL;
@@ -21,22 +22,20 @@ end
 
 pool Stmt[] stmts = new Stmt.NIL();
 
-var int v1;
+var int v1 = 10;
 
-traverse stmt in stmts with
-    var int v2 = v1;
-do
-    escape 1;
-end
+var int ret =
+    traverse stmt in stmts with
+        var int v2 = v1;
+    do
+        escape v1+v2;
+    end;
 
-escape 1;
+escape ret;
 ]],
     wrn = true,
-    run = 1,
+    run = 20,
 }
-
-do return end
---]===]
 
 -- BUG: across
 -- BUG: unassigned pointer (should be int*?)

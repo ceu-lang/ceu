@@ -533,13 +533,17 @@ me.blk_body = me.blk_body or blk_body
                                                 node('This', me.ln, true),
                                                 to[1]),
                                             '=', 'exp',
-                                            root_constr),
+                                            root_constr)))))
+--[[
+    -- now set manually before "_pre"
                                         node('_Set', me.ln,
                                             node('Op2_.', me.ln, '.',
                                                 node('This', me.ln, true),
                                                 '_out'),
                                             '=', 'exp',
-                                            node('Outer', me.ln, true))))))
+                                            node('Outer', me.ln, true))
+]]
+        spawn.__adj_is_traverse_root = true -- see code.lua
         local doorg = F.__traverse_spawn_await(me, 'Body_'..me.n, spawn, ret)
 
         local ret = node('Stmts', me.ln, root, cls, dcl_pool, doorg)
@@ -661,6 +665,7 @@ me.blk_body = me.blk_body or blk_body
                                                 to_id),
                                             '=', 'exp',
                                             exp),
+--[[
                                         node('_Set', me.ln,
                                             node('Op2_.', me.ln, '.',
                                                 node('This', me.ln, true),
@@ -669,7 +674,9 @@ me.blk_body = me.blk_body or blk_body
                                             node('Op2_.', me.ln, '.',
                                                 node('Outer', me.ln, true),
                                                 '_out')),
+]]
                                         unpack(constr)))))
+        spawn.__adj_is_traverse_rec = true  -- see code.lua
 
         return F.__traverse_spawn_await(me, cls_id, spawn, ret)
     end,
