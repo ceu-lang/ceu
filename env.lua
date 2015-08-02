@@ -1067,6 +1067,9 @@ F = {
                 if to.var and (TP.check(to.var.tp,'&') or TP.check(to.var.tp,'*')) then
                     if to.var.pre=='pool' then
                         me[2] = 'adt-alias'
+                        local fr_tp_id = TP.id(fr_tp)
+                        ASR(to_tp_id==fr_tp_id, me,
+                            'invalid attribution : `'..to_tp_id..'´ <= `'..fr_tp_id..'´')
                         return  -- checked in adt.lua
                     else
                         assert(me[2]=='exp')

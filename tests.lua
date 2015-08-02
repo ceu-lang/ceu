@@ -9,6 +9,34 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
+-- BUG "out" access
+Test { [[
+data Stmt with
+    tag NIL;
+or
+    tag SEQ with
+        var Stmt s1;
+    end
+end
+
+pool Stmt[] stmts = new Stmt.NIL();
+
+var int v1;
+
+traverse stmt in stmts with
+    var int v2 = v1;
+do
+    escape 1;
+end
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+do return end
+--]===]
 
 -- BUG: across
 -- BUG: unassigned pointer (should be int*?)
@@ -48025,7 +48053,6 @@ escape sum;
     run = { ['~>20s'] = 4 },
 }
 
---]===]
 Test { [[
 data List with
     tag NIL;
@@ -48055,6 +48082,37 @@ end
 
 escape sum;
 ]],
+    fin = 'line 22 : unsafe access to pointer "n" across `loop´ (tests.lua : 21)',
+}
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List  tail;
+    end
+end
+
+pool List[] list;
+list = new List.CONS(1,
+            List.CONS(2,
+                List.CONS(3, List.NIL())));
+
+var int sum = 0;
+
+traverse n in list do
+    sum = sum + 1;
+    if n:CONS then
+        sum = sum + n:CONS.head;
+        //loop i in 1 do
+            traverse &n:CONS.tail;
+        //end
+    end
+end
+
+escape sum;
+]],
     wrn = 'line 24 : unbounded recursive spawn',
     run = 10,
 }
@@ -48079,9 +48137,9 @@ traverse n in list do
     sum = sum + 1;
     if n:CONS then
         sum = sum + n:CONS.head;
-        loop i in 1 do
+        //loop i in 1 do
             traverse &n:CONS.tail;
-        end
+        //end
     end
 end
 
@@ -49899,6 +49957,58 @@ cmds.STREAM_ROOT.now.STREAM_NEXT.one = cmds.STREAM_ROOT.now;
 escape 1;
 ]],
     adt = 'line 27 : cannot assign parent to child',
+}
+
+Test { [[
+data Val with
+    var int v;
+end
+
+data Exp with
+    tag NIL;
+or
+    tag VAL with
+        var Val v;
+    end
+or
+    tag ADD with
+        var Exp e1;
+        var Exp e2;
+    end
+end
+
+data Stmt with
+    tag NIL;
+or
+    tag SEQ with
+        var Stmt s1;
+        var Stmt s2;
+    end
+or
+    tag PRINT with
+        var Exp e;
+    end
+end
+
+pool Stmt[] stmts =
+    new Stmt.SEQ(
+            Stmt.PRINT(
+                Exp.ADD(
+                    Exp.VAL(Val(10)),
+                    Exp.VAL(Val(5)))),
+            Stmt.NIL());
+
+traverse stmt in stmts do
+    if stmt:SEQ then
+        traverse &stmt:SEQ.s1;
+    else/if stmt:PRINT then
+        var int v = traverse stmt:PRINT.e;
+    end
+end
+
+escape 1;
+]],
+    env = 'line 43 : invalid attribution : `Stmt´ <= `Exp´',
 }
 
 -- << ADTS / RECURSE / TRAVERSE
