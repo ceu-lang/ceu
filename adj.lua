@@ -1,4 +1,5 @@
 local node = AST.node
+local TRAVERSE_ALREADY_GENERATED = false
 
 -- TODO: remove
 MAIN = nil
@@ -416,19 +417,23 @@ me.blk_body = me.blk_body or blk_body
         --      end
         --      escape 0;
         --  end
-        --  pool Body[?] bodies;
-        --  var Body*? _body_;
-        --  _body_ = spawn Body in _bodies with
-        --      this._bodies = bodies;
-        --      this._parent = &this;   // watch myself
-        --      this.<n>     = <n>;
-        --  end;
-        --  if _body_? then
-        --      ret = await *_body_!;
-        --  else
-        --      ret = _ceu_app->ret;
+        --
+        --  do
+        --      var Scope s;
+        --      pool Body[?] bodies;
+        --      var Body*? _body_;
+        --      _body_ = spawn Body in _bodies with
+        --          this._bodies = bodies;
+        --          this._scope  = &s;      // watch my enclosing scope
+        --          this.<n>     = <n>;
+        --      end;
+        --      if _body_? then
+        --          ret = await *_body_!;
+        --      else
+        --          ret = _ceu_app->ret;
         --              // result of immediate spawn termination
         --              // TODO: what if spawn did fail? (ret=garbage?)
+        --      end
         --  end
         --]]
 
@@ -487,7 +492,7 @@ me.blk_body = me.blk_body or blk_body
                                     node('Type', me.ln, 'Body_'..me.n, root_pool,'&'),
                                     '_bodies'),
                                 node('Dcl_var', me.ln, 'var',
-                                    node('Type', me.ln, 'Body_'..me.n, '*'),
+                                    node('Type', me.ln, 'Scope', '*'),
                                         -- TODO: should be opt type
                                     '_parent'),
                                 dcl_to,
@@ -527,7 +532,8 @@ me.blk_body = me.blk_body or blk_body
                                                 '_parent'),
                                             '=', 'exp',
                                             node('Op1_&', me.ln, '&',
-                                                node('This', me.ln, true))),
+                                                node('Var', me.ln, '_s'))),
+                                                --node('This', me.ln, true))),
                                         node('_Set', me.ln,
                                             node('Op2_.', me.ln, '.',
                                                 node('This', me.ln, true),
@@ -546,8 +552,19 @@ me.blk_body = me.blk_body or blk_body
         spawn.__adj_is_traverse_root = true -- see code.lua
         local doorg = F.__traverse_spawn_await(me, 'Body_'..me.n, spawn, ret)
 
-        local ret = node('Stmts', me.ln, root, cls, dcl_pool, doorg)
-        return ret
+        local cls_scope = node('Nothing', me.ln)
+        if not TRAVERSE_ALREADY_GENERATED then
+            TRAVERSE_ALREADY_GENERATED = true
+            cls_scope = node('Dcl_cls', me.ln, false,
+                            'Scope',
+                            node('BlockI', me.ln,
+                                node('Stmts', me.ln)),
+                            node('Block', me.ln,        -- same structure of
+                                node('Stmts', me.ln,    -- other classes
+                                    node('AwaitN', me.ln))))
+        end
+
+        return node('Stmts', me.ln, cls_scope, root, cls, dcl_pool, doorg)
     end,
 
     --[[
@@ -555,30 +572,25 @@ me.blk_body = me.blk_body or blk_body
     --      <constr>
     --  end;
     --      ... becomes ...
-    --  var Body*? _body_;
-    --  _body_ = spawn Body in _bodies with
-    --      this._bodies = outer._bodies;
-    --      this._parent = outer;
-    --      this.<n>     = <exp>;
-    --      <constr>
-    --  if _body_? then
-    --      ret = await *_body_!;
-    --  else
-    --      ret = _ceu_app->ret;
+    --  do
+    --      var Scope s;
+    --      var Body*? _body_;
+    --      _body_ = spawn Body in _bodies with
+    --          this._bodies = outer._bodies;
+    --          this._scope  = &s;   // watch my enclosing scope
+    --          this.<n>     = <n>;
+    --          <constr>
+    --      end;
+    --      if _body_? then
+    --          ret = await *_body_!;
+    --      else
+    --          ret = _ceu_app->ret;
     --              // result of immediate spawn termination
     --              // TODO: what if spawn did fail? (ret=garbage?)
+    --      end
     --  end
     --]]
     __traverse_spawn_await = function (me, cls_id, spawn, ret)
-        local dcl = node('Dcl_var', me.ln, 'var',
-                        node('Type', me.ln, cls_id, '*','?'),
-                        '_body_'..me.n)
-
-        local set = node('_Set', me.ln,
-                        node('Var', me.ln, '_body_'..me.n),
-                        '=', 'spawn',
-                        spawn)
-
         local SET_AWAIT = node('Await', me.ln,
                             node('Op1_*', me.ln, '*',
                                 node('Op1_!', me.ln, '!',
@@ -596,7 +608,19 @@ me.blk_body = me.blk_body or blk_body
                                 -- (in case spawn terminates immediately)
         end
 
-        local if_ = node('If', me.ln,
+        return node('Block', me.ln,
+                node('Stmts', me.ln,
+                    node('Dcl_var', me.ln, 'var',
+                        node('Type', me.ln, 'Scope'),
+                        '_s'),
+                    node('Dcl_var', me.ln, 'var',
+                        node('Type', me.ln, cls_id, '*','?'),
+                        '_body_'..me.n),
+                    node('_Set', me.ln,
+                        node('Var', me.ln, '_body_'..me.n),
+                        '=', 'spawn',
+                        spawn),
+                    node('If', me.ln,
                         node('Op1_?', me.ln, '?',
                             node('Var', me.ln, '_body_'..me.n)),
                         --node('Nothing', me.ln),
@@ -605,9 +629,7 @@ me.blk_body = me.blk_body or blk_body
                                 SET_AWAIT)),
                         node('Block', me.ln,
                             node('Stmts', me.ln,
-                                SET_DEAD)))
-
-        return node('Stmts', me.ln, dcl, set, if_)
+                                SET_DEAD)))))
     end,
 
     _TraverseRec_pre = function (me)
@@ -658,7 +680,8 @@ me.blk_body = me.blk_body or blk_body
                                                 '_parent'),
                                             '=', 'exp',
                                             node('Op1_&', me.ln, '&',
-                                                node('Outer', me.ln, true))),
+                                                node('Var', me.ln, '_s'))),
+                                                --node('Outer', me.ln, true))),
                                         node('_Set', me.ln,
                                             node('Op2_.', me.ln, '.',
                                                 node('This', me.ln, true),

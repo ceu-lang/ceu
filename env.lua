@@ -878,7 +878,7 @@ F = {
         ASR(pool.var and TP.check(pool.tp,TP.id(pool.tp),'[]','-*','-&'),
             me, 'invalid pool')
 
-        local blki = AST.asr(me.__par,'Stmts', 2,'Stmts', 1,'Dcl_cls',
+        local blki = AST.asr(me.__par,'Stmts', 3,'Stmts', 1,'Dcl_cls',
                                     3,'Block', 1,'Stmts', 1,'BlockI')
 
         local tp = AST.asr(blki,'', 1,'Stmts', 3,'Dcl_pool', 2,'Type')
@@ -897,7 +897,7 @@ F = {
 
         AST.asr(blki,'', 1,'Stmts', 1,'Dcl_pool', 2,'Type')
                 [2] = (arr=='[]' and '[]') or AST.copy(arr)
-        AST.asr(me.__par,'Stmts', 3,'Dcl_pool', 2,'Type')
+        AST.asr(me.__par,'Stmts', 4,'Dcl_pool', 2,'Type')
                 [2] = (arr=='[]' and '[]') or AST.copy(arr)
 
         me.tag = 'Nothing'

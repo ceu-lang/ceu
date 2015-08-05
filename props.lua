@@ -337,6 +337,9 @@ F = {
                 PROPS.has_orgs_watching = true
             else
                 PROPS.has_adts_watching[watch] = true
+                for id in pairs(ENV.adts[watch].subs or {}) do
+                    PROPS.has_adts_watching[id] = true
+                end
             end
         end
     end,

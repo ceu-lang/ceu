@@ -9,82 +9,8 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
---]===]
 
-Test { [[
-data Stmt with
-    tag NIL;
-or
-    tag SEQ with
-        var Stmt s1;
-    end
-end
-
-pool Stmt[] stmts = new Stmt.NIL();
-
-var int v1 = 10;
-
-var int ret =
-    traverse stmt in stmts with
-        var int v2 = v1;
-    do
-        escape v1+v2;
-    end;
-
-escape ret;
-]],
-    wrn = true,
-    run = 20,
-}
-
--- BUG: across
--- BUG: unassigned pointer (should be int*?)
-Test { [[
-var int* x;
-await 1s;
-escape *x;
-]],
-    todo = true,
-    run = 1,
-}
-
-Test { [[
-var int v = 1;
-var int* x = &v;
-loop i in 10 do
-    *x = *x + 1;
-    await 1s;
-end
-escape v;
-]],
-    fin = 'line 4 : unsafe access to pointer "x" across `loop´ (tests.lua : 3)',
-}
-
-Test { [[
-event void e;
-var int v = 1;
-var int* x = &v;
-loop i in 10 do
-    *x = *x + 1;
-    emit e;
-end
-escape v;
-]],
-    fin = 'line 5 : unsafe access to pointer "x" across `loop´ (tests.lua : 4)',
-}
-
-Test { [[
-event void e;
-var int v = 1;
-var int* x = &v;
-loop i in *x do
-    await 1s;
-end
-escape v;
-]],
-    run = { ['~>1s']=1 },
-}
-
+-- BUG: don't understand T*?[]
 Test { [[
 class T with
 do
@@ -101,15 +27,15 @@ end
 
 //var T[]   ts;
 var T*[]  ts;
-var T*?[] ts;
+var T*?[] ts;   // BUG
 
 escape 1;
 ]],
-    todo = true,
     run = 1,
 }
 
---do return end
+do return end
+--]===]
 
 -------------------------------------------------------------------------------
 
@@ -1820,7 +1746,7 @@ end;
     run = { ['~>A;~>B']=1, },
 }
 
--- testa BUG do ParOr que da clean em ParOr que ja terminou
+-- testa ParOr que da clean em ParOr que ja terminou
 Test { [[
 input int A,B,F;
 var int a;
@@ -1999,7 +1925,7 @@ escape a;
     }
 }
 
--- testa BUG do ParOr que da clean em await vivo
+-- testa ParOr que da clean em await vivo
 Test { [[
 input int A,B,D;
 par/and do
@@ -15111,6 +15037,43 @@ var int* c = a;
 escape 1;
 ]],
     fin = 'line 5 : unsafe access to pointer "a" across `await´',
+}
+
+Test { [[
+var int v = 1;
+var int* x = &v;
+loop i in 10 do
+    *x = *x + 1;
+    await 1s;
+end
+escape v;
+]],
+    fin = 'line 4 : unsafe access to pointer "x" across `loop´ (tests.lua : 3)',
+}
+
+Test { [[
+event void e;
+var int v = 1;
+var int* x = &v;
+loop i in 10 do
+    *x = *x + 1;
+    emit e;
+end
+escape v;
+]],
+    fin = 'line 5 : unsafe access to pointer "x" across `loop´ (tests.lua : 4)',
+}
+
+Test { [[
+event void e;
+var int v = 1;
+var int* x = &v;
+loop i in *x do
+    await 1s;
+end
+escape v;
+]],
+    run = { ['~>1s']=1 },
 }
 
 Test { [[
@@ -47137,6 +47100,41 @@ end
 
 escape v;
 ]],
+    fin = 'line 23 : unsafe access to pointer "t" across `spawn´ (tests.lua : 22)',
+    --run = 7,
+}
+
+Test { [[
+data Tree with
+    tag NIL;
+or
+    tag NODE with
+        var int   v;
+        var Tree  left;
+        var Tree  right;
+    end
+end
+
+pool Tree[3] tree =
+    new Tree.NODE(1,
+            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
+            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+
+var int  v = 0;
+var int* ptr = &v;
+
+traverse t in tree do
+    *ptr = *ptr + 1;
+    if t:NODE then
+        watching *t do
+            traverse &t:NODE.left;
+            traverse &t:NODE.right;
+        end
+    end
+end
+
+escape v;
+]],
     --fin = 'line 20 : unsafe access to pointer "ptr" across `class´',
     run = 7,
 }
@@ -49821,9 +49819,11 @@ var int s1 =
         if l:NIL then
             escape 0;
         else
-            var int sum_tail = traverse &l:CONS.tail;
-            s2 = s2 + l:CONS.head;
-            escape sum_tail + l:CONS.head;
+            watching *l do
+                var int sum_tail = traverse &l:CONS.tail;
+                s2 = s2 + l:CONS.head;
+                escape sum_tail + l:CONS.head;
+            end
         end
     end;
 
@@ -50008,6 +50008,107 @@ end
 escape 1;
 ]],
     env = 'line 43 : invalid attribution : `Stmt´ <= `Exp´',
+}
+
+-- par/or kills (2) which should be aborted
+Test { [[
+data Exp with
+    tag NIL;
+or
+    tag V with
+        var int e;
+    end
+or
+    tag ADD with
+        var Exp e1;
+        var Exp e2;
+    end
+end
+
+var int ret = 0;
+
+pool Exp[] exps = new
+    Exp.ADD(Exp.NIL(), Exp.V(20));
+
+traverse e in exps do
+    watching *e do
+        if e:ADD then
+            ret = ret + 1;
+            par/or do
+                traverse e:ADD.e2;
+            with
+                traverse e:ADD.e1;
+            end
+            await 5s;
+        else/if e:V then
+            every 1s do
+                ret = ret + e:V.e;
+            end
+        end
+    end
+end
+
+escape ret;
+]],
+    _ana = {acc=true},
+    wrn = true,
+    run = { ['~>10s'] = 1 },
+}
+
+Test { [[
+data Exp with
+    tag NIL;
+or
+    tag SUB with
+        var Exp e2;
+    end
+end
+
+data Stmt with
+    tag NIL;
+or
+    tag SEQ with
+        var Stmt s1;
+        var Exp e;
+    end
+end
+
+    pool Stmt[] stmts;
+    traverse stmt in stmts do
+        watching *stmt do
+        end
+    end
+escape 1;
+]],
+    _ana = {acc=true},
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Stmt with
+    tag NIL;
+or
+    tag SEQ with
+        var Stmt s1;
+    end
+end
+
+pool Stmt[] stmts = new Stmt.NIL();
+
+var int v1 = 10;
+
+var int ret =
+    traverse stmt in stmts with
+        var int v2 = v1;
+    do
+        escape v1+v2;
+    end;
+
+escape ret;
+]],
+    wrn = true,
+    run = 20,
 }
 
 -- << ADTS / RECURSE / TRAVERSE
@@ -51993,6 +52094,56 @@ do return end
 
 -- async dentro de pause
 -- async thread spawn falhou, e ai?
+
+-- BUG: same id
+-- BUG: unassigned var (should be int?)
+Test { [[
+var int a = 10;
+do
+    var int a = a;
+    escape a;
+end
+]],
+    wrn = true,
+    run = 10,
+}
+
+Test { [[
+data Stmt with
+    tag NIL;
+or
+    tag SEQ with
+        var Stmt s1;
+    end
+end
+
+pool Stmt[] stmts = new Stmt.NIL();
+
+var int v1 = 10;
+
+var int ret =
+    traverse stmt in stmts with
+        var int v1 = v1+1;
+    do
+        escape v1;
+    end;
+
+escape ret;
+]],
+    wrn = true,
+    run = 11,
+}
+
+-- BUG: across
+-- BUG: unassigned pointer (should be int*?)
+Test { [[
+var int* x;
+await 1s;
+escape *x;
+]],
+    todo = true,
+    run = 1,
+}
 
 Test { [[
 var void& v;
