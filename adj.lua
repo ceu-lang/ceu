@@ -1780,34 +1780,33 @@ G = {
     Type_pre = function (me)
         --
         -- Check if has '?' inside:
-        --  - currently only supported in last position #me
         --  - create implicit _Option_*
         --
-        if me[#me] ~= '?' then
-            return
+        local with, without = {}, {}
+        for _, v in ipairs(me) do
+            with[#with+1] = v
+            if v == '?' then
+                local id_adt = TP.opt2adt({tt={unpack(with)}})
+                if not ADTS[id_adt] then
+                    local adt = node('Dcl_adt', me.ln, id_adt,
+                                    'union',
+                                    node('Dcl_adt_tag', me.ln, 'NIL'),
+                                    node('Dcl_adt_tag', me.ln, 'SOME',
+                                        node('Stmts', me.ln,
+                                            node('Dcl_var', me.ln, 'var',
+                                                node('Type', me.ln,  unpack(without)),
+                                                'v'))))
+                    adt.__adj_from_opt = me
+                    ADTS[id_adt] = adt
+
+                    -- add declarations on enclosing "Stmts"
+                    local stmts = assert(AST.par(me,'Stmts'))
+                    stmts.__add = stmts.__add or {}
+                    stmts.__add[#stmts.__add+1] = adt
+                end
+            end
+            without[#without+1] = v
         end
-
-        me[#me] = nil
-        local cpy = AST.copy(me)    -- w/o opt
-        me[#me+1] = '?'
-
-        local id_adt = TP.opt2adt({tt=me})
-        if not ADTS[id_adt] then
-            local adt = node('Dcl_adt', me.ln, id_adt,
-                            'union',
-                            node('Dcl_adt_tag', me.ln, 'NIL'),
-                            node('Dcl_adt_tag', me.ln, 'SOME',
-                                node('Stmts', me.ln,
-                                    node('Dcl_var', me.ln, 'var', cpy, 'v'))))
-            adt.__adj_from_opt = me
-            ADTS[id_adt] = adt
-
-            -- add declarations on enclosing "Stmts"
-            local stmts = assert(AST.par(me,'Stmts'))
-            stmts.__add = stmts.__add or {}
-            stmts.__add[#stmts.__add+1] = adt
-        end
-        --me[#me+1] = node('Type', me.ln, '_Option_'..n)
     end,
 }
 

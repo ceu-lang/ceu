@@ -29,6 +29,10 @@ function TP.pop (tp, v)
     if tt[#tt] == v then
         tt[#tt] = nil
         return {tt=tt}, v
+    elseif v == nil then
+        v = tt[#tt]
+        tt[#tt] = nil
+        return {tt=tt}, v
     else
         return {tt=tt}, false
     end
@@ -92,7 +96,7 @@ local __tmod = {
     ['*']  = { ['*']=true,  ['[]']=true,  ['&']=true,  ['?']=true  },
     ['[]'] = { ['*']=true,  ['[]']=false, ['&']=true,  ['?']=false },
     ['&']  = { ['*']=false, ['[]']=false, ['&']=false, ['?']=true  },
-    ['?']  = { ['*']=false, ['[]']=false, ['&']=false, ['?']=false },
+    ['?']  = { ['*']=false, ['[]']=true,  ['&']=false, ['?']=false },
 }
 
 function TP.new (me, dont_generate)
@@ -133,7 +137,7 @@ function TP.new (me, dont_generate)
         for i=2, #me do
             local v = me[i]
             if v == '?' then
-                ASR(i==#me, me, 'not implemented : `?´ must be last modifier')
+                --ASR(i==#me, me, 'not implemented : `?´ must be last modifier')
             elseif v=='[]' or type(v)=='table' then
                 ASR(not arr, me, 'not implemented : multiple `[]´')
                     -- me[1] will contain the only []
@@ -254,15 +258,25 @@ function TP.toc (tp)
         return string.gsub(table.concat(t,'__'),'%*','_')
     end
 
-    if TP.check(tp,'?') then
-        return 'CEU_'..TP.opt2adt(tp)
+    local v
+    local ret = ''
+    for i=#tp.tt, 2, -1 do
+        if tp.tt[i] == '?' then
+            return 'CEU_'..TP.opt2adt(tp)..ret
+        end
+
+        tp, v = TP.pop(tp)
+        if v=='[]' or v=='*' or v=='&' then
+            ret = '*'..ret
+        else
+            error 'bug found'
+        end
     end
 
-    local ret = table.concat(tp.tt)
-    ret = string.gsub(ret, '%[]', '*')
-    ret = string.gsub(ret, '%&', '*')
-
     local id = TP.id(tp)
+
+    ret = id..ret
+
     if ENV.clss[id] or ENV.adts[id] then
         ret = 'CEU_'..ret
     end
