@@ -25,6 +25,9 @@ local function TT_copy (tt)
     return ret
 end
 function TP.pop (tp, v)
+    if tp.tup then
+        return tp, false
+    end
     local tt = TT_copy(tp.tt)
     if tt[#tt] == v then
         tt[#tt] = nil
@@ -247,6 +250,7 @@ function TP.copy (tp)
 end
 
 function TP.toc (tp)
+error'oi'
     if tp.tup then
         local t = { 'tceu' }
         for _, v in ipairs(tp.tup) do
@@ -277,6 +281,34 @@ function TP.toc (tp)
 
     ret = id..ret
 
+    if ENV.clss[id] or ENV.adts[id] then
+        ret = 'CEU_'..ret
+    end
+
+    ret = string.gsub(ret,'^_', '')
+    return ret
+end
+function TP.toc (tp)
+    if tp.tup then
+        local t = { 'tceu' }
+        for _, v in ipairs(tp.tup) do
+            t[#t+1] = TP.toc(v)
+            if v.hold then
+                t[#t] = t[#t] .. 'h'
+            end
+        end
+        return string.gsub(table.concat(t,'__'),'%*','_')
+    end
+
+    if TP.check(tp,'?') then
+        return 'CEU_'..TP.opt2adt(tp)
+    end
+
+    local ret = table.concat(tp.tt)
+    ret = string.gsub(ret, '%[]', '*')
+    ret = string.gsub(ret, '%&', '*')
+
+    local id = TP.id(tp)
     if ENV.clss[id] or ENV.adts[id] then
         ret = 'CEU_'..ret
     end
@@ -331,14 +363,14 @@ local function __norefs (tt)
     end
     return tt
 end
-function TP.contains (tp1, tp2, opt_on_left)
+function TP.contains (tp1, tp2)
     if tp1.tup or tp2.tup then
         if tp1.tup and tp2.tup then
             if #tp1.tup == #tp2.tup then
                 for i=1, #tp1.tup do
                     local t1 = tp1.tup[i]
                     local t2 = tp2.tup[i]
-                    local ok, msg = TP.contains(t1,t2, opt_on_left)
+                    local ok, msg = TP.contains(t1,t2)
                     if not ok then
                         return false, 'wrong argument #'..i..' : '..msg
                     end
@@ -351,12 +383,9 @@ function TP.contains (tp1, tp2, opt_on_left)
 
     -- original types (for error msgs)
     local TP1, TP2 = tp1, tp2
-    tp1 = TP.copy(tp1)
-    tp2 = TP.copy(tp2)
-
-    if opt_on_left then
-        tp1 = TP.pop(tp1, '?')
-    end
+    --local tp1  = TP.pop(tp1, '?')
+    local tp1  = TP.copy(tp1)
+    local tp2  = TP.copy(tp2)
 
     local id1  = TP.id(tp1)
     local id2  = TP.id(tp2)
@@ -388,7 +417,7 @@ function TP.contains (tp1, tp2, opt_on_left)
                 -- compatible pointers, check arity, "char" renaming trick
                 local tt1, tt2 = TT_copy(tp1.tt), TT_copy(tp2.tt)
                 tt1[1], tt2[1] = 'char', 'char'
-                return TP.contains({tt=tt1}, {tt=tt2}, opt_on_left)
+                return TP.contains({tt=tt1}, {tt=tt2})
             -- non-pointers
             elseif TP.check(TP1,id1,'&') then
                 return true
@@ -410,8 +439,8 @@ function TP.contains (tp1, tp2, opt_on_left)
         if not ok then
             return false, __err(TP1,TP2)..' : dimension mismatch'
         end
-        return TP.contains( TP.pop(tp1,'[]', opt_on_left),
-                            TP.pop(tp2,'[]', opt_on_left) )
+        return TP.contains( TP.pop(tp1,'[]'),
+                            TP.pop(tp2,'[]') )
 
     -- same type
     elseif TP.tostr(tp1) == TP.tostr(tp2) then
@@ -478,11 +507,11 @@ function TP.contains (tp1, tp2, opt_on_left)
         if id1 == 'char' then
             local tt2 = TT_copy(tp2.tt)
             tt2[1] = 'char'
-            return TP.contains(tp1, {tt=tt2}, opt_on_left)
+            return TP.contains(tp1, {tt=tt2})
         elseif id1 == 'void' then
             local tt2 = TT_copy(tp2.tt)
             tt2[1] = 'void'
-            return TP.contains(tp1, {tt=tt2}, opt_on_left)
+            return TP.contains(tp1, {tt=tt2})
 
         -- both are external types: let "gcc" handle it
         elseif TP.is_ext(tp1,'_') or TP.is_ext(tp2,'_') then
@@ -498,8 +527,8 @@ function TP.contains (tp1, tp2, opt_on_left)
     end
 end
 
-function TP.max (tp1, tp2, opt_on_left)
-    if TP.contains(tp1, tp2, opt_on_left) then
+function TP.max (tp1, tp2)
+    if TP.contains(tp1, tp2) then
         return tp1
     elseif TP.contains(tp2, tp1) then
         return tp2

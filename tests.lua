@@ -8,8 +8,36 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
+Test { [[
+native do
+    int* alloc (int ok) {
+        return NULL;
+    }
+    int V = 0;
+    void dealloc (int* ptr) {
+        if (ptr == NULL) {
+            V = 1;
+        }
+    }
+end
+native @nohold _dealloc();
+
+do
+    var int&? tex;
+    finalize
+        tex = _alloc(1);
+    with
+        _dealloc(tex);
+    end
+end
+
+escape _V;
+]],
+    run = 1,
+}
+do return end
+
 --[===[
---]===]
 
 Test { [[
 class T with
@@ -583,7 +611,8 @@ Test { [[
 var int?[1] v;
 escape 1;
 ]],
-    env = 'line 1 : invalid type modifier : `?[]´',
+    run = 1,
+    --env = 'line 1 : invalid type modifier : `?[]´',
     --adj = 'line 1 : not implemented : `?´ must be last modifier',
 }
 Test { [[
@@ -17036,6 +17065,7 @@ escape 1;
     asr = true,
 }
 
+--]===]
 Test { [[
 native do
     int* alloc (int ok) {
