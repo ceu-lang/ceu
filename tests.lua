@@ -8,35 +8,6 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
-Test { [[
-native do
-    int* alloc (int ok) {
-        return NULL;
-    }
-    int V = 0;
-    void dealloc (int* ptr) {
-        if (ptr == NULL) {
-            V = 1;
-        }
-    }
-end
-native @nohold _dealloc();
-
-do
-    var int&? tex;
-    finalize
-        tex = _alloc(1);
-    with
-        _dealloc(tex);
-    end
-end
-
-escape _V;
-]],
-    run = 1,
-}
-do return end
-
 --[===[
 
 Test { [[
@@ -141,6 +112,7 @@ do return end
 ----------------------------------------------------------------------------
 -- OK: well tested
 ----------------------------------------------------------------------------
+--]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -17040,6 +17012,29 @@ end
 
 escape 1;
 ]],
+    env = 'line 15 : invalid operand to unary "&" : option type',
+}
+
+Test { [[
+native do
+    int V;
+    int* alloc (int ok) {
+        return &V;
+    }
+    void dealloc (int* ptr) {
+    }
+end
+native @nohold _dealloc();
+
+var int&? tex;
+finalize
+    tex = _alloc(1);    // v=2
+with
+    _dealloc(&tex!);
+end
+
+escape 1;
+]],
     run = 1,
 }
 
@@ -17057,7 +17052,7 @@ var int&? tex;
 finalize
     tex = _alloc(1);    // v=2
 with
-    _dealloc(&tex);
+    _dealloc(&tex!);
 end
 
 escape 1;
@@ -17065,7 +17060,6 @@ escape 1;
     asr = true,
 }
 
---]===]
 Test { [[
 native do
     int* alloc (int ok) {
@@ -17168,7 +17162,7 @@ with
     nothing;
 end
 
-escape &ptr == &ptr;  // ptr.SOME fails
+escape &ptr! == &ptr!;  // ptr.SOME fails
 ]],
     asr = true,
 }
@@ -17206,7 +17200,7 @@ var void&? ptr;
 finalize
     ptr = _f();
 with
-    _g(&ptr);    // error (ptr is NIL)
+    _g(&ptr!);    // error (ptr is NIL)
 end
 
 escape not ptr?;
@@ -28054,6 +28048,33 @@ end
 var T t;
 escape t.x;
 ]],
+    env = 'line 18 : invalid operand to unary "&" : option type',
+}
+
+Test { [[
+native do
+    int V;
+    void* myalloc (void) {
+        return &V;
+    }
+    void myfree (void* ptr) {
+    }
+end
+native @nohold _myfree();
+
+class T with
+    var int x = 10;
+do
+    var void&? ptr;
+    finalize
+        ptr = _myalloc();
+    with
+        _myfree(&ptr!);
+    end
+end
+var T t;
+escape t.x;
+]],
     run = 10,
 }
 
@@ -28273,7 +28294,7 @@ class T with do end
 var U*? ok = spawn T;
 escape ok != null;
 ]],
-    env = 'line 3 : types mismatch (`U*?´ <= `T*´)',
+    env = 'line 3 : types mismatch (`U*´ <= `T*´)',
     --run = 1,
 }
 
@@ -28931,7 +28952,7 @@ var int sum = 0;
 if a != null then
     watching *a do
         var T*? b = spawn T in ts;   // fails (a is free on end)
-        sum = a!=null and (not b?) and a!=b;
+        sum = a!=null and (not b?) and a!=b!;
     end
 end
 escape sum;
@@ -28957,7 +28978,7 @@ var int sum = 0;
 if a != null then
     watching *a do
         var T*? b = spawn T in ts;   // fails (a is free on end)
-        sum = a!=null and (b?) and a!=b;
+        sum = a!=null and (b?) and a!=b!;
     end
 end
 escape sum;

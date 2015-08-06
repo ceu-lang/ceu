@@ -101,7 +101,11 @@ F =
                     call = false
                     for _, p in ipairs(params) do
                         --if TP.contains(p.tp,me.tp) and (p.lst==me) then
-                        if TP.contains(var.tp,p.tp) and (p==me) then
+                        if TP.contains(TP.pop(var.tp,'?'),
+                                       TP.pop(p.tp,'?'))
+                            and (p==me)
+                        then
+                        --if TP.contains(var.tp,p.tp) and (p==me) then
                             call = true
                             break
                         end

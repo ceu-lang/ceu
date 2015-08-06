@@ -1035,13 +1035,15 @@ F = {
             ASR(is_vec and (not is_cls), me, 'invalid attribution : destination is not a vector')
 
             local to_unit = TP.pop(TP.pop(to.tp,'&'),'[]')
+            local to_unit_noopt, isopt = TP.pop(to_unit,'?')
             AST.asr(fr, 'Vector_constr')
             for i, e in ipairs(fr) do
                 if e.tag == 'Vector_tup' then
                     if #e > 0 then
                         e = AST.asr(e,'', 1,'ExpList')
                         for j, ee in ipairs(e) do
-                            local ok, msg = TP.contains(TP.pop(to_unit,'?'),ee.tp)
+                            local ok, msg = TP.contains(to_unit_noopt,
+                                                        isopt and TP.pop(ee.tp,'?') or ee.tp)
                             ASR(ok, me, 'wrong argument #'..j..' : '..(msg or ''))
                         end
                     end
@@ -1054,7 +1056,8 @@ F = {
 
                     local fr_unit = is_str and TP.new{'char'} or
                                     TP.pop(TP.pop(e.tp,'&'),'[]')
-                    local ok, msg2 = TP.contains(TP.pop(to_unit,'?'),fr_unit)
+                    local ok, msg2 = TP.contains(to_unit_noopt,
+                                                 isopt and TP.pop(fr_unit,'?') or fr_unit)
                     ASR(ok, me, msg1..(msg2 or ''))
                 end
             end
@@ -1105,7 +1108,9 @@ F = {
             fr.tp = to.tp -- return type is not known at compile time
 
         else    -- set == 'exp'
-            local ok, msg = TP.contains(TP.pop(to.tp,'?'),fr_tp)
+            local to_tp_opt, isopt = TP.pop(to.tp, '?')
+            local ok, msg = TP.contains(to_tp_opt,
+                                        isopt and TP.pop(fr_tp,'?') or fr_tp)
             ASR(ok, me, msg)
         end
 
@@ -1493,6 +1498,10 @@ F = {
     ['Op1_&'] = function (me)
         local op, e1 = unpack(me)
 
+        ASR(not TP.check(e1.tp,'?'), me,
+            'invalid operand to unary "&"'..
+            ' : option type')
+
         -- invalid: address of vector elements: &vec[i]
         if e1.tag == 'Op2_idx' then
             local _, arr, _ = unpack(e1)
@@ -1508,7 +1517,7 @@ F = {
             ENV.clss[e1_tp_id] or ENV.adts[e1_tp_id], me,
             'invalid operand to unary "&"')
         me.lval = false
-        me.tp = TP.new(TP.push(e1.tp,'*'))
+        me.tp = TP.new(TP.push(TP.pop(e1.tp,'&'),'*'))
         me.fst = e1.fst
         me.lst = e1.lst
         me.lst.amp = true

@@ -28,22 +28,25 @@ function TP.pop (tp, v)
     if tp.tup then
         return tp, false
     end
-    local tt = TT_copy(tp.tt)
-    if tt[#tt] == v then
-        tt[#tt] = nil
-        return {tt=tt}, v
-    elseif v == nil then
-        v = tt[#tt]
-        tt[#tt] = nil
-        return {tt=tt}, v
+    if v == nil then
+        v = tp.tt[#tp.tt]
+    end
+
+    tp = TP.copy(tp)
+    if tp.tt[#tp.tt] == v then
+        tp.tt[#tp.tt] = nil
+        if v == '[]' then
+            tp.arr = nil
+        end
+        return tp, v
     else
-        return {tt=tt}, false
+        return tp, false
     end
 end
 function TP.push (tp, v)
-    local tt = TT_copy(tp.tt)
-    tt[#tt+1] = v
-    return {tt=tt}
+    tp = TP.copy(tp)
+    tp.tt[#tp.tt+1] = v
+    return tp
 end
 function TP.check (tp, ...)
     if tp.tup then
@@ -250,7 +253,6 @@ function TP.copy (tp)
 end
 
 function TP.toc (tp)
-error'oi'
     if tp.tup then
         local t = { 'tceu' }
         for _, v in ipairs(tp.tup) do
@@ -281,34 +283,6 @@ error'oi'
 
     ret = id..ret
 
-    if ENV.clss[id] or ENV.adts[id] then
-        ret = 'CEU_'..ret
-    end
-
-    ret = string.gsub(ret,'^_', '')
-    return ret
-end
-function TP.toc (tp)
-    if tp.tup then
-        local t = { 'tceu' }
-        for _, v in ipairs(tp.tup) do
-            t[#t+1] = TP.toc(v)
-            if v.hold then
-                t[#t] = t[#t] .. 'h'
-            end
-        end
-        return string.gsub(table.concat(t,'__'),'%*','_')
-    end
-
-    if TP.check(tp,'?') then
-        return 'CEU_'..TP.opt2adt(tp)
-    end
-
-    local ret = table.concat(tp.tt)
-    ret = string.gsub(ret, '%[]', '*')
-    ret = string.gsub(ret, '%&', '*')
-
-    local id = TP.id(tp)
     if ENV.clss[id] or ENV.adts[id] then
         ret = 'CEU_'..ret
     end
@@ -383,7 +357,7 @@ function TP.contains (tp1, tp2)
 
     -- original types (for error msgs)
     local TP1, TP2 = tp1, tp2
-    --local tp1  = TP.pop(tp1, '?')
+    --local tp1,ok  = TP.pop(tp1, '?')
     local tp1  = TP.copy(tp1)
     local tp2  = TP.copy(tp2)
 
@@ -415,9 +389,9 @@ function TP.contains (tp1, tp2)
             -- pointers
             if TP.check(tp1,'*') and TP.check(tp2,'*') then
                 -- compatible pointers, check arity, "char" renaming trick
-                local tt1, tt2 = TT_copy(tp1.tt), TT_copy(tp2.tt)
-                tt1[1], tt2[1] = 'char', 'char'
-                return TP.contains({tt=tt1}, {tt=tt2})
+                local tp1, tp2 = TP.copy(tp1), TP.copy(tp2)
+                tp1.tt[1], tp2.tt[1] = 'char', 'char'
+                return TP.contains(tp1, tp2)
             -- non-pointers
             elseif TP.check(TP1,id1,'&') then
                 return true
@@ -505,13 +479,13 @@ function TP.contains (tp1, tp2)
         --       is it correct?
         --       (I think "void*" should fail)
         if id1 == 'char' then
-            local tt2 = TT_copy(tp2.tt)
-            tt2[1] = 'char'
-            return TP.contains(tp1, {tt=tt2})
+            local tp2 = TP.copy(tp2)
+            tp2.tt[1] = 'char'
+            return TP.contains(tp1, tp2)
         elseif id1 == 'void' then
-            local tt2 = TT_copy(tp2.tt)
-            tt2[1] = 'void'
-            return TP.contains(tp1, {tt=tt2})
+            local tp2 = TP.copy(tp2)
+            tp2.tt[1] = 'void'
+            return TP.contains(tp1, tp2)
 
         -- both are external types: let "gcc" handle it
         elseif TP.is_ext(tp1,'_') or TP.is_ext(tp2,'_') then

@@ -335,11 +335,11 @@ do
                             end
                             this.ticking = true;
 
-                            if qu.evt == _CEU_IN__WCLOCK then
+                            if qu!.evt == _CEU_IN__WCLOCK then
 #ifdef TM_QUEUE_WCLOCK_REUSE
                                 dt = (1000/_CEU_FPS);
 #else
-                                dt = ((_tceu_queue_dt*)&qu):dt;
+                                dt = ((_tceu_queue_dt*)&qu!):dt;
 #endif
                                 _assert(dt >= 0);
                                 time_now = time_now + dt;
