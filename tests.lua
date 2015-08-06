@@ -9,8 +9,8 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
+--]===]
 
--- BUG: don't understand T*?[]
 Test { [[
 class T with
 do
@@ -26,16 +26,87 @@ do
 end
 
 //var T[]   ts;
-var T*[]  ts;
-var T*?[] ts;   // BUG
+var T*[]  ts1;
+var T*?[] ts2;
 
 escape 1;
 ]],
     run = 1,
 }
 
+Test { [[
+class T with
+do
+end
+class U with
+do
+    await FOREVER;
+end
+class V with
+    var int t;
+do
+    await (t)s;
+end
+
+var T*?[] ts;
+
+var T t;
+ts = [] .. [&t];
+
+escape $ts;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+do
+end
+class U with
+do
+    await FOREVER;
+end
+class V with
+    var int t;
+do
+    await (t)s;
+end
+
+var T*?[] ts;
+
+var T t;
+ts = [] .. [&t];
+
+escape ts[0] == &t;
+]],
+    env = 'line 19 : invalid operands to binary "=="',
+}
+
+Test { [[
+class T with
+do
+end
+class U with
+do
+    await FOREVER;
+end
+class V with
+    var int t;
+do
+    await (t)s;
+end
+
+var T*?[] ts;
+
+var T t;
+ts = [] .. [&t];
+
+escape ts[0]! == &t;
+]],
+    run = 1,
+}
+
 do return end
---]===]
 
 -------------------------------------------------------------------------------
 
@@ -39950,6 +40021,28 @@ escape 1;
     run = 1,
 }
 
+Test { [[
+interface Screen with
+    var _GUIScreen&? me;
+end
+
+interface IWorldmapScreen with
+    interface Screen;
+end
+
+class WorldmapScreen with
+    interface IWorldmapScreen;
+do
+end
+
+var WorldmapScreen*? ws = spawn WorldmapScreen with
+    this.me = _new_GUIScreen();
+end;
+
+escape 1;
+]],
+    fin = 'line 15 : attribution requires `finalize´',
+}
 Test { [[
 interface UI with
 end

@@ -436,6 +436,7 @@ F =
     end,
 
     ['Op1_!'] = function (me)
+-- TODO: remove CTX and access "some" from here
         local op, e1 = unpack(me)
         return V(e1)
     end,

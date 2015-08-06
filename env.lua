@@ -1041,7 +1041,7 @@ F = {
                     if #e > 0 then
                         e = AST.asr(e,'', 1,'ExpList')
                         for j, ee in ipairs(e) do
-                            local ok, msg = TP.contains(to_unit,ee.tp)
+                            local ok, msg = TP.contains(to_unit,ee.tp,true)
                             ASR(ok, me, 'wrong argument #'..j..' : '..(msg or ''))
                         end
                     end
@@ -1054,7 +1054,7 @@ F = {
 
                     local fr_unit = is_str and TP.new{'char'} or
                                     TP.pop(TP.pop(e.tp,'&'),'[]')
-                    local ok, msg2 = TP.contains(to_unit,fr_unit)
+                    local ok, msg2 = TP.contains(to_unit,fr_unit,true)
                     ASR(ok, me, msg1..(msg2 or ''))
                 end
             end
@@ -1105,7 +1105,7 @@ F = {
             fr.tp = to.tp -- return type is not known at compile time
 
         else    -- set == 'exp'
-            local ok, msg = TP.contains(to.tp,fr_tp)
+            local ok, msg = TP.contains(to.tp,fr_tp,true)
             ASR(ok, me, msg)
         end
 
