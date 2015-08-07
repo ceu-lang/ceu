@@ -4,91 +4,6 @@ local TRAVERSE_ALREADY_GENERATED = false
 -- TODO: remove
 MAIN = nil
 
-function REQUEST (me)
-    --[[
-    --      (err, v) = (request LINE=>10);
-    -- becomes
-    --      var _reqid id = _ceu_sys_request();
-    --      var _reqid id';
-    --      emit _LINE_request => (id, 10);
-    --      finalize with
-    --          _ceu_sys_unrequest(id);
-    --          emit _LINE_cancel => id;
-    --      end
-    --      (id', err, v) = await LINE_return
-    --                      until id == id';
-    --]]
-
-    local to, op, _, emit
-    if me.tag == 'EmitExt' then
-        to   = nil
-        emit = me
-    else
-        -- _Set
-        to, op, _, emit = unpack(me)
-    end
-
-    local op_emt, e, ps = unpack(emit)
-    local id_evt = e[1]
-    local id_req  = '_reqid_'..me.n
-    local id_req2 = '_reqid2_'..me.n
-
-    local tp_req = node('Type', me.ln, 'int')
-
-    if ps then
-        -- insert "id" into "emit REQUEST => (id,...)"
-        if ps.tag == 'ExpList' then
-            table.insert(ps, 1, node('Var',me.ln,id_req))
-        else
-            ps = node('ExpList', me.ln,
-                    node('Var', me.ln, id_req),
-                    ps)
-        end
-    end
-
-    local awt = node('Await', me.ln,
-                    node('Ext', me.ln, id_evt..'_RETURN'),
-                    false,
-                    node('Op2_==', me.ln, '==',
-                        node('Var', me.ln, id_req),
-                        node('Var', me.ln, id_req2)))
-    if to then
-        -- v = await RETURN
-
-        -- insert "id" into "v = await RETURN"
-        if to.tag ~= 'VarList' then
-            to = node('VarList', me.ln, to)
-        end
-        table.insert(to, 1, node('Var',me.ln,id_req2))
-
-        awt = node('_Set', me.ln, to, op, 'await', awt)
-    else
--- TODO: bug (removing session check)
-        awt[3] = false
-    end
-
-    return node('Stmts', me.ln,
-            node('Dcl_var', me.ln, 'var', tp_req, id_req),
-            node('Dcl_var', me.ln, 'var', tp_req, id_req2),
-            node('Set', me.ln, '=', 'exp',
-                node('RawExp', me.ln, 'ceu_out_req()'),
-                node('Var', me.ln, id_req)),
-            node('EmitExt', me.ln, 'emit',
-                node('Ext', me.ln, id_evt..'_REQUEST'),
-                ps),
-            node('Finalize', me.ln,
-                false,
-                node('Finally', me.ln,
-                    node('Block', me.ln,
-                        node('Stmts', me.ln,
-                            node('Nothing', me.ln), -- TODO: unrequest
-                            node('EmitExt', me.ln, 'emit',
-                                node('Ext', me.ln, id_evt..'_CANCEL'),
-                                node('Var', me.ln, id_req)))))),
-            awt
-    )
-end
-
 F = {
 -- 1, Root --------------------------------------------------
 
@@ -1485,7 +1400,7 @@ me.blk_body = me.blk_body or blk_body
             AST.asr(fr, 'EmitExt')
             local op_emt, e, ps = unpack(fr)
             if op_emt == 'request' then
-                return REQUEST(me)
+                return F.__REQUEST(me)
 
             else
                 return node('Set', me.ln, op, tag, fr, to)
@@ -1586,7 +1501,7 @@ me.blk_body = me.blk_body or blk_body
         me[3] = ps
 
         if op == 'request' then
-            return REQUEST(me)
+            return F.__REQUEST(me)
         end
     end,
     _EmitInt_pre = function (me)
@@ -1757,6 +1672,94 @@ me.blk_body = me.blk_body or blk_body
                 node('Op1_*', me.ln, '*', ptr),
                 fld)
     end,
+
+-- REQUEST
+
+    __REQUEST = function (me)
+    --[[
+    --      (err, v) = (request LINE=>10);
+    -- becomes
+    --      var _reqid id = _ceu_sys_request();
+    --      var _reqid id';
+    --      emit _LINE_request => (id, 10);
+    --      finalize with
+    --          _ceu_sys_unrequest(id);
+    --          emit _LINE_cancel => id;
+    --      end
+    --      (id', err, v) = await LINE_return
+    --                      until id == id';
+    --]]
+
+    local to, op, _, emit
+    if me.tag == 'EmitExt' then
+        to   = nil
+        emit = me
+    else
+        -- _Set
+        to, op, _, emit = unpack(me)
+    end
+
+    local op_emt, e, ps = unpack(emit)
+    local id_evt = e[1]
+    local id_req  = '_reqid_'..me.n
+    local id_req2 = '_reqid2_'..me.n
+
+    local tp_req = node('Type', me.ln, 'int')
+
+    if ps then
+        -- insert "id" into "emit REQUEST => (id,...)"
+        if ps.tag == 'ExpList' then
+            table.insert(ps, 1, node('Var',me.ln,id_req))
+        else
+            ps = node('ExpList', me.ln,
+                    node('Var', me.ln, id_req),
+                    ps)
+        end
+    end
+
+    local awt = node('Await', me.ln,
+                    node('Ext', me.ln, id_evt..'_RETURN'),
+                    false,
+                    node('Op2_==', me.ln, '==',
+                        node('Var', me.ln, id_req),
+                        node('Var', me.ln, id_req2)))
+    if to then
+        -- v = await RETURN
+
+        -- insert "id" into "v = await RETURN"
+        if to.tag ~= 'VarList' then
+            to = node('VarList', me.ln, to)
+        end
+        table.insert(to, 1, node('Var',me.ln,id_req2))
+
+        awt = node('_Set', me.ln, to, op, 'await', awt)
+    else
+-- TODO: bug (removing session check)
+        awt[3] = false
+    end
+
+    return node('Stmts', me.ln,
+            node('Dcl_var', me.ln, 'var', tp_req, id_req),
+            node('Dcl_var', me.ln, 'var', tp_req, id_req2),
+            node('Set', me.ln, '=', 'exp',
+                node('RawExp', me.ln, 'ceu_out_req()'),
+                node('Var', me.ln, id_req)),
+            node('EmitExt', me.ln, 'emit',
+                node('Ext', me.ln, id_evt..'_REQUEST'),
+                ps),
+            node('Finalize', me.ln,
+                false,
+                node('Finally', me.ln,
+                    node('Block', me.ln,
+                        node('Stmts', me.ln,
+                            node('Nothing', me.ln), -- TODO: unrequest
+                            node('EmitExt', me.ln, 'emit',
+                                node('Ext', me.ln, id_evt..'_CANCEL'),
+                                node('Var', me.ln, id_req)))))),
+            awt
+    )
+end
+
 }
 
 AST.visit(F)

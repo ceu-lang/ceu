@@ -212,6 +212,8 @@ void CEU_]]..id..'_free_static (tceu_app* _ceu_app, CEU_'..id..[[* me, void* poo
 
         local pack = ''
         local xx = me.__adj_from_opt
+        xx =  xx and TP.pop(xx, '[]')
+        --local xx = me.__adj_from_opt
         if xx and (TP.check(xx,'*','?') or TP.check(xx,'&','?')) then
             local ID = string.upper(TP.opt2adt(xx))
             local tp = 'CEU_'..TP.opt2adt(xx)

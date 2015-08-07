@@ -153,10 +153,15 @@ F = {
         end
 
         for _, var in ipairs(me.vars) do
+            local tp_id = TP.id(var.tp)
             if var.cls then
                 me.needs_clr = true
             end
             if var.pre == 'var' then
+                if ENV.clss[tp_id] and TP.check(var.tp,tp_id,'*','?','-[]') then
+                    PROPS.has_orgs_watching = true
+                end
+
                 if TP.check(var.tp,'[]','-&') and (not TP.is_ext(var.tp,'_')) then
                     PROPS.has_vector = true
                     me.needs_clr = true
@@ -169,7 +174,6 @@ F = {
                 end
             elseif var.pre == 'pool' then
                 local s
-                local tp_id = TP.id(var.tp)
                 if ENV.clss[tp_id] or tp_id=='_TOP_POOL' then
                     s = 'orgs'
                 else

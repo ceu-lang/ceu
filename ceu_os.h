@@ -136,8 +136,8 @@
         ((__typeof__(ceu_sys_stack_clear_org)*)((_ceu_app)->sys_vec[CEU_SYS_STACK_CLEAR_ORG]))(go,org,lim)
 #endif
 
-    #define ceu_out_org(app,org,n,lbl,isDyn,parent,lnks) \
-        ((__typeof__(ceu_sys_org)*)((app)->sys_vec[CEU_SYS_ORG]))(org,n,lbl,isDyn,parent,lnks)
+    #define ceu_out_org(app,org,n,lbl,cls,isDyn,parent,lnks) \
+        ((__typeof__(ceu_sys_org)*)((app)->sys_vec[CEU_SYS_ORG]))(org,n,lbl,cls,isDyn,parent,lnks)
 
 #ifdef CEU_ORGS
     #define ceu_out_org_trail(org,idx,lnk) \
@@ -207,13 +207,9 @@
             ceu_sys_stack_clear_org(go,org,lim)
 #endif
 
-#ifdef CEU_ORGS_NEWS
-    #define ceu_out_org(app,org,n,lbl,isDyn,parent,lnks) \
-            ceu_sys_org(org,n,lbl,isDyn,parent,lnks)
-#else
-    #define ceu_out_org(app,org,n,lbl,parent,lnks) \
-            ceu_sys_org(org,n,lbl,parent,lnks)
-#endif
+    #define ceu_out_org(app,org,n,lbl,cls,isDyn,parent,lnks) \
+            ceu_sys_org(org,n,lbl,cls,isDyn,parent,lnks)
+
 #ifdef CEU_ORGS
     #define ceu_out_org_trail(org,idx,lnk) \
             ceu_sys_org_trail(org,idx,lnk)
@@ -782,7 +778,7 @@ void      ceu_sys_stack_push (tceu_go* go, tceu_stk* elem, void* ptr);
 void      ceu_sys_stack_clear_org (tceu_go* go, tceu_org* org, int lim);
 #endif
 
-void      ceu_sys_org       (tceu_org* org, int n, int lbl, int isDyn, tceu_org* parent, tceu_org_lnk** lnks);
+void      ceu_sys_org       (tceu_org* org, int n, int lbl, int cls, int isDyn, tceu_org* parent, tceu_org_lnk** lnks);
 #ifdef CEU_ORGS
 void      ceu_sys_org_trail (tceu_org* org, int idx, tceu_org_lnk* lnk);
 int       ceu_sys_org_spawn (tceu_go* _ceu_go, tceu_nlbl lbl_cnt, tceu_org* org, tceu_nlbl lbl_org);

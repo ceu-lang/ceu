@@ -12,22 +12,109 @@ end
 
 Test { [[
 class T with
+    var int v = 10;
 do
 end
-class U with
+
+var T t;
+var T*? p = &t;
+
+escape t.v + p!:v;
+]],
+    run = '9] runtime error: invalid tag',
+}
+Test { [[
+class T with
+    var int v = 10;
 do
     await FOREVER;
 end
-class V with
-    var int t;
+
+var T t;
+var T*? p = &t;
+
+escape t.v + p!:v;
+]],
+    run = 20,
+}
+Test { [[
+class T with
+    var int v = 10;
 do
-    await (t)s;
+    await 1s;
 end
 
+var T t;
+var T*? p = &t;
+
+await 500ms;
+
+escape t.v + p!:v;
+]],
+    run = { ['~>1s'] = 20 },
+}
+Test { [[
+class T with
+    var int v = 10;
+do
+end
+
+var T t;
+var T*? p = &t;
+
+await 500ms;
+
+escape t.v + p!:v;
+]],
+    run = { ['~>1s'] = '12] runtime error: invalid tag', },
+}
+
+Test { [[
+class T with
+    var int v = 10;
+do
+    await 1s;
+end
+
+var T t;
+var T*? p = &t;
+
+await 1s;
+
+escape t.v + p!:v;
+]],
+    run = { ['~>1s']='13] runtime error: invalid tag' },
+}
+Test { [[
+class U with
+    var int v = 10;
+do
+    await FOREVER;
+end
+class T with
+    var int v = 10;
+do
+    await 1s;
+end
+
+var U u;
+var T t;
+var U*? p = &u;
+
+await 1s;
+
+escape t.v + p!:v;
+]],
+    run = { ['~>1s']=20 },
+}
+
+Test { [[
+class T with
+do
+end
 //var T[]   ts;
 var T*[]  ts1;
 var T*?[] ts2;
-
 escape 1;
 ]],
     run = 1,
@@ -37,21 +124,9 @@ Test { [[
 class T with
 do
 end
-class U with
-do
-    await FOREVER;
-end
-class V with
-    var int t;
-do
-    await (t)s;
-end
-
 var T*?[] ts;
-
 var T t;
 ts = [] .. [&t];
-
 escape $ts;
 ]],
     run = 1,
@@ -61,16 +136,6 @@ Test { [[
 class T with
 do
 end
-class U with
-do
-    await FOREVER;
-end
-class V with
-    var int t;
-do
-    await (t)s;
-end
-
 var T*?[] ts;
 
 var T t;
@@ -78,9 +143,35 @@ ts = [] .. [&t];
 
 escape ts[0] == &t;
 ]],
-    env = 'line 19 : invalid operands to binary "=="',
+    env = 'line 9 : invalid operands to binary "=="',
 }
 
+Test { [[
+class T with
+do
+end
+var T*?[] ts;
+var T t;
+ts = [] .. [&t];
+escape ts[0]! == &t;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+do
+end
+var T*?[] ts;
+var T t1,t2;
+ts = [] .. [&t1];
+ts[0]! = &t2;
+escape ts[0]! == &t2;
+]],
+    run = 1,
+}
+
+--- TODO
 Test { [[
 class T with
 do
@@ -95,13 +186,9 @@ do
     await (t)s;
 end
 
-var T*?[] ts;
-
-var T t;
-ts = [] .. [&t];
-
-escape ts[0]! == &t;
+<...>
 ]],
+    todo = 'all kinds of terminations',
     run = 1,
 }
 
@@ -28453,7 +28540,8 @@ var T*? t = spawn T;
 await OS_START;
 escape t!:a;
 ]],
-    fin = 'line 9 : unsafe access to pointer "t" across `await´',
+    --fin = 'line 9 : unsafe access to pointer "t" across `await´',
+    run = '9] runtime error: invalid tag',
 }
 
 Test { [[
@@ -28644,7 +28732,8 @@ var T*? ok1 = spawn T in t with end;
 var T*? ok2 = spawn T in t;
 escape (ok1?) + (ok2?) + 1;
 ]],
-    fin = 'line 7 : unsafe access to pointer "ok1" across `spawn´',
+    run = 1,
+    --fin = 'line 7 : unsafe access to pointer "ok1" across `spawn´',
 }
 
 Test { [[
@@ -28957,8 +29046,30 @@ if a != null then
 end
 escape sum;
 ]],
+    fin = 'line 14 : unsafe access to pointer "a" across `spawn´ (tests.lua : 10)',
     --fin = 'line 15 : pointer access across `await´',
-    asr = ':15] runtime error: invalid tag',
+    --asr = ':15] runtime error: invalid tag',
+    --run = 1,
+}
+Test { [[
+class T with
+    var int a;
+do
+    this.a = 1;
+    await FOREVER;
+end
+pool T[2] ts;
+var T* a = null;
+do
+    var T*? aa = spawn T in ts;
+        a = aa!;
+end
+watching *a do
+end
+escape 0;
+]],
+    fin = 'line 13 : unsafe access to pointer "a" across `spawn´ (tests.lua : 10)',
+    --fin = 'line 15 : pointer access across `await´',
     --run = 1,
 }
 Test { [[
@@ -28982,6 +29093,22 @@ if a != null then
     end
 end
 escape sum;
+]],
+    fin = 'line 14 : unsafe access to pointer "a" across `spawn´ (tests.lua : 10)',
+    --fin = 'line 15 : pointer access across `await´',
+    --run = 1,
+}
+Test { [[
+class T with
+do
+end
+do
+    var T*? aa = spawn T;
+end
+par/or do
+with
+end
+escape 1;
 ]],
     --fin = 'line 15 : pointer access across `await´',
     run = 1,
@@ -29057,7 +29184,8 @@ if b != null then
 end
 escape sum;
 ]],
-    asr = ':14] runtime error: invalid tag',
+    fin = 'line 15 : unsafe access to pointer "a" across `spawn´ (tests.lua : 12)',
+    --asr = ':14] runtime error: invalid tag',
     --fin = 'line 19 : pointer access across `await´',
     --run = 1,
 }
@@ -30361,7 +30489,7 @@ end
 input void OS_START;
 event T* e;
 
-var int ret = 1;
+var int ret = 2;
 
 par/and do
     await OS_START;
@@ -30375,8 +30503,8 @@ end
 
 escape ret;
 ]],
-    --run = { ['~>1s'] = 13 },
-    fin = 'line 16 : unsafe access to pointer "t" across `emit´',
+    run = { ['~>1s'] = 14 },
+    --fin = 'line 16 : unsafe access to pointer "t" across `emit´',
 }
 
 Test { [[
@@ -31371,8 +31499,9 @@ end
 
 escape ret + _V;
 ]],
+    run = '22] runtime error: invalid tag',
     --run = 11,
-    fin = 'line 22 : unsafe access to pointer "o" across `await´',
+    --fin = 'line 22 : unsafe access to pointer "o" across `await´',
 }
 
 Test { [[
@@ -33138,7 +33267,8 @@ end
 emit u!:move => 0;
 escape 2;
 ]],
-    fin = 'line 11 : unsafe access to pointer "u" across `await´',
+    run = {['~>1min']='12] runtime error: invalid tag'},
+    --fin = 'line 11 : unsafe access to pointer "u" across `await´',
 }
 
 Test { [[
@@ -33851,6 +33981,7 @@ end
 class T with
     interface I;
 do
+    await FOREVER;
 end
 var T t with
     this.a1 = 1;
@@ -38844,6 +38975,23 @@ interface I with
 end
 
 class T with
+    var int v = 10;
+do
+    await FOREVER;
+end
+
+var I*? p = spawn T;
+escape p!:v;
+]],
+    run = 10,
+}
+
+Test { [[
+interface I with
+    var int v;
+end
+
+class T with
     var int v = 0;
 do
 end
@@ -38855,7 +39003,9 @@ async do end;
 
 escape p!:v;
 ]],
-    fin = 'line 15 : unsafe access to pointer "p" across `async´',
+    run = '15] runtime error: invalid tag',
+    --run = 1,
+    --fin = 'line 15 : unsafe access to pointer "p" across `async´',
 }
 
 Test { [[
@@ -38889,11 +39039,14 @@ do
     await 1min;
 end
 watching *u! do
+    var int x1;
+    var int x2;
     emit u!:move => 0;
 end
 escape 2;
 ]],
-    fin = 'line 11 : unsafe access to pointer "u" across `await´',
+    run = { ['~>1min']='12] runtime error: invalid tag', },
+    --fin = 'line 11 : unsafe access to pointer "u" across `await´',
 }
 
 Test { [[
@@ -39632,11 +39785,14 @@ pool Unit[] units;
 u = spawn Unit in units;
 await 2s;
 watching *u! do
+    var int x1;
+    var int x2;
     emit u!:move => 0;
 end
 escape 2;
 ]],
-    fin = 'line 9 : unsafe access to pointer "u" across `await´',
+    run = { ['~>1min']='10] runtime error: invalid tag' },
+    --fin = 'line 9 : unsafe access to pointer "u" across `await´',
 }
 Test { [[
 class Unit with
@@ -40500,7 +40656,8 @@ end
 
 escape t!:v;
 ]],
-    fin = 'line 12 : unsafe access to pointer "t" across `await´',
+    run = '8] runtime error: invalid tag',
+    --fin = 'line 12 : unsafe access to pointer "t" across `await´',
 }
 
 Test { [[
@@ -40519,7 +40676,8 @@ await 1s;
 
 escape t!:v;
 ]],
-    fin = 'line 14 : unsafe access to pointer "t" across `await´',
+    run = '8] runtime error: invalid tag',
+    --fin = 'line 14 : unsafe access to pointer "t" across `await´',
 }
 
 Test { [[

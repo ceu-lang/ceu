@@ -144,18 +144,23 @@ end
 
 function CLEAR_AFT (me)
     if ANA and me.ana.pos[false] then
-        return
+        --return
     end
     if not me.needs_clr then
-        return
+        --return
     end
-    LINE(me, [[
+    if me.lbl_clr then
+        LINE(me, [[
 case ]]..me.lbl_clr.id..[[:;
-
+]])
+    end
+    if not (AST.par(me,'Dcl_fun') or AST.par(me,'Thread')) then
+        LINE(me, [[
 /* switch to 1st trail */
 /* TODO: only if not joining with outer prio */
 _STK->trl = &_STK_ORG->trls[ ]] ..me.trails[1]..[[ ];
 ]])
+    end
 end
 
 
@@ -288,13 +293,6 @@ static void _ceu_pre_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org) {
 
         CASE(me, me.lbl)
 
-        -- TODO: move to _ORG? (MAIN does not call _ORG)
-        LINE(me, [[
-#ifdef CEU_IFCS
-_STK_ORG->cls = ]]..me.n..[[;
-#endif
-]])
-
         CONC_ALL(me)
 
         if ANA and me.ana.pos[false] then
@@ -410,9 +408,8 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
     /* resets org memory and starts org.trail[0]=Class_XXX */
     /* TODO: BUG: _STK_ORG is not necessarily the parent for pool allocations */
     ceu_out_org(_ceu_app, ]]..org..','..t.cls.trails_n..','..t.cls.lbl.id..[[,
-#ifdef CEU_ORGS_NEWS
+                ]]..t.cls.n..[[,
                 ]]..t.isDyn..[[,
-#endif
                 _STK_ORG, ]] ..t.lnks..[[);
 /* TODO: currently idx is always "1" for all interfaces access because pools 
  * are all together there. When we have separate trls for pools, we'll have to 
@@ -469,11 +466,14 @@ case ]]..me.lbls_cnt.id..[[:;
                 val_i  = TP.check(var.tp,'[]') and V({tag='Var',var=var.constructor_iterator}),
                 lnks   = '&_STK_ORG->trls['..var.trl_orgs[1]..'].lnks'
             })
-        elseif TP.check(var.tp,'?') then
-            -- initialize optional types to nil
+
+        -- TODO: similar code in Block_pre for !BlockI
+        elseif AST.par(me,'BlockI') and TP.check(var.tp,'?') then
+            -- has be part of cls_pre to execute before possible binding in constructor
+            -- initialize to nil
             local ID = string.upper(TP.opt2adt(var.tp))
             LINE(me, [[
-]]..V(me,'opt_raw')..[[.tag = CEU_]]..ID..[[_NIL;
+]]..V({tag='Var',var=var},'opt_raw')..[[.tag = CEU_]]..ID..[[_NIL;
 ]])
         end
     end,
@@ -743,7 +743,31 @@ _STK_ORG->trls[ ]]..me.trl_fins[1]..[[ ].lbl   = ]]..me.lbl_fin.id..[[;
             end
 
             if var.pre == 'var' then
-                if TP.check(var.tp,'[]') and (not (var.cls or TP.is_ext(var.tp,'_'))) then
+                local tp_id = TP.id(var.tp)
+
+                -- OPTION TYPE
+                if TP.check(var.tp,'?') then
+                    -- TODO: similar code in Dcl_var for BlockI
+                    if me~=cls.blk_ifc or cls.blk_ifc==cls.blk_body  then
+                        -- initialize to nil
+                        -- has to execute before org initialization in Dcl_var
+                        local ID = string.upper(TP.opt2adt(var.tp))
+                        LINE(me, [[
+]]..V({tag='Var',var=var},'opt_raw')..[[.tag = CEU_]]..ID..[[_NIL;
+]])
+                    end
+
+                    -- opt to org
+                    if ENV.clss[tp_id] and TP.check(var.tp,tp_id,'*','?') then
+                        LINE(me, [[
+/*  RESET OPT-ORG TO NULL */
+_STK_ORG->trls[ ]]..var.trl_optorg[1]..[[ ].evt = CEU_IN__ok_killed;
+_STK_ORG->trls[ ]]..var.trl_optorg[1]..[[ ].lbl = ]]..(var.lbl_optorg_reset).id..[[;
+]])
+                    end
+
+                -- VECTOR
+                elseif TP.check(var.tp,'[]') and (not (var.cls or TP.is_ext(var.tp,'_'))) then
                     local tp_elem = TP.pop( TP.pop(var.tp,'&'), '[]' )
                     local max = (var.tp.arr.cval or 0)
                     LINE(me, [[
@@ -903,7 +927,28 @@ _STK->trl = &_STK_ORG->trls[ ]]..stmts.trails[1]..[[ ];
                            (not (var.cls or var.adt))
             local is_dyn = (var.tp.arr=='[]')
 
-            if is_arr and is_dyn then
+            local tp_id = TP.id(var.tp)
+            if ENV.clss[tp_id] and TP.check(var.tp,tp_id,'*','?') then
+                LINE(me, [[
+if (0) {
+]])
+                CASE(me, var.lbl_optorg_reset)
+                local val = V({tag='Var',var=var})
+                local ID = string.upper(TP.opt2adt(var.tp))
+                LINE(me, [[
+    /* TODO: BUG: id should be saved together with the pointer */
+    if (]]..val..[[.tag!=CEU_]]..ID..[[_NIL &&
+        ((tceu_org*)(]]..val..[[.SOME.v))->id==((tceu_org_kill*)_STK->evt_buf)->org)
+    {
+        ]]..val..' = '..string.upper(TP.toc(var.tp))..[[_pack(NULL);
+    }
+]])
+                HALT(me)
+                LINE(me, [[
+}
+]])
+
+            elseif is_arr and is_dyn then
                 CASE(me, var.lbl_fin_free)
                 LINE(me, [[
 ceu_vector_setlen(]]..V({tag='Var',var=var})..[[, 0);
@@ -1076,18 +1121,32 @@ case ]]..SET.lbl_cnt.id..[[:;
             else
                 local tag
                 if fr.tag == 'NIL' then
+error'oioioi'
                     tag = 'NIL'
+                    LINE(me, V(to,'opt_raw')..'.tag = CEU_'..ID..'_'..tag..';')
                 else
                     tag = 'SOME'
                     if me.__ref_byref then
                         LINE(me, '('..V(to)..'.SOME.v) = '..V(fr,byref)..';')
+                        LINE(me, V(to,'opt_raw')..'.tag = CEU_'..ID..'_'..tag..';')
                     else
+local to_tp_id = TP.id(to.tp)
+if ENV.clss[to_tp_id] and TP.check(to.tp,to_tp_id,'*','?') then
+    LINE(me, [[
+if (((tceu_org*)]]..V(fr)..[[)->isAlive) {
+    ]]..V(to)..' = '..string.upper(TP.toc(to.tp))..[[_pack(]]..V(fr)..[[);
+} else {
+    ]]..V(to)..' = '..string.upper(TP.toc(to.tp))..[[_pack(NULL);
+}
+]])
+else
                         local var = to.var or to
                         local op = (TP.check(var.tp,'&','?') and '*') or ''
                         LINE(me, op..'('..V(to,byref)..'.SOME.v) = '..V(fr,byref)..';')
+                        LINE(me, V(to,'opt_raw')..'.tag = CEU_'..ID..'_'..tag..';')
+end
                     end
                 end
-                LINE(me, V(to,'opt_raw')..'.tag = CEU_'..ID..'_'..tag..';')
             end
 
         -- normal types
@@ -1163,7 +1222,10 @@ ceu_vector_setlen(]]..V(to)..[[, 0);
                             end
                             LINE(me, [[
 {
-]]..TP.toc(ee.tp)..' __ceu_p = '..V(ee)..[[;
+]]..TP.toc(TP.pop(TP.pop(to.tp,'&'),'[]'))..' __ceu_p; /* = '..V(ee)..[[;*/
+]])
+                            F.__set(me, ee, {tag='RawExp', tp=TP.pop(to.tp,'[]'), '__ceu_p'})
+                            LINE(me, [[
 #line ]]..fr.ln[2]..' "'..fr.ln[1]..[["
 ceu_out_assert( ceu_vector_push(]]..V(to)..[[, (byte*)&__ceu_p), "access out of bounds");
 }
@@ -1728,6 +1790,7 @@ _STK->trl->stk = stack_curi(_ceu_go);
     tceu_stk stk;
              stk.evt  = ]]..V(int,'ifc_idx')..[[;
 #ifdef CEU_ORGS
+#line ]]..int.ln[2]..' "'..int.ln[1]..[["
              stk.evto = (tceu_org*) ]]..((int.org and V(int.org)) or '_STK_ORG')..[[;
 #endif
 #ifdef CEU_ORGS

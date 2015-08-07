@@ -41,6 +41,7 @@ F = {
         -- clear trail
         -- adt finalization
         -- vector finalization
+        -- org*? reset to NULL
         -- pointer to contiguous static orgs
         -- pointers to each of the pools
         -- statements
@@ -63,7 +64,10 @@ F = {
                 me.fins = me.fins or {}     -- release adts/vectors
             end
 
-            if var.adt and var.pre=='pool' then
+            local tp_id = TP.id(var.tp)
+            if ENV.clss[tp_id] and TP.check(var.tp,tp_id,'*','?') then
+                me.trails_n = me.trails_n + 1
+            elseif var.adt and var.pre=='pool' then
                 me.trails_n = me.trails_n + 1
             elseif is_arr_dyn then
                 me.trails_n = me.trails_n + 1
@@ -145,7 +149,12 @@ G = {
                                (var.tp.arr=='[]')               and
                                (not (var.cls or var.adt))
 
-            if var.adt and var.pre=='pool' then
+            local tp_id = TP.id(var.tp)
+            if ENV.clss[tp_id] and TP.check(var.tp,tp_id,'*','?') then
+                var.trl_optorg = { t0, t0 }
+                t0 = t0 + 1
+
+            elseif var.adt and var.pre=='pool' then
                 var.trl_adt = { t0, t0 }
                 t0 = t0 + 1
 

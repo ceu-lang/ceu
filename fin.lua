@@ -46,7 +46,11 @@ function ISPTR (node_or_var)
     -- type with '*' anywhere
     for _, v in ipairs(tp.tt) do
         if v == '*' then
-            return true
+            -- skip "var T*? ptr"
+            if ENV.clss[tp_id] and TP.check(tp,tp_id,'*','?') then
+            else
+                return true
+            end
         end
     end
 
@@ -129,7 +133,14 @@ F = {
         -- variables or native symbols
         if (to.var and (not TP.check(to.var.tp,'&'))) or to.c then
                         -- do not track references
-            GET()[to.var or to.id] = 'accessed'
+-- TODO: repeated with Var?
+            if to.var and ENV.clss[TP.id(to.var.tp)] then
+                local old = GET()[to.var]
+                -- do not restart in case of pointers to organisms
+                GET()[to.var] = old or 'accessed'
+            else
+                GET()[to.var or to.id] = 'accessed'
+            end
         end
 
         -- constants are safe
@@ -326,7 +337,15 @@ F = {
             ok = ok or (to.tag=='Field' and to.var==me.var)
             ok = ok or (to.tag=='VarList' and AST.isParent(to, me))
             if ok then
-                GET()[me.var] = 'accessed'
+-- TODO: repeated with Set?
+                if ENV.clss[TP.id(me.var.tp)] then
+                    local old = GET()[me.var]
+                    -- do not restart in case of pointers to organisms
+                    GET()[me.var] = old or 'accessed'
+                else
+                    GET()[me.var] = 'accessed'
+                end
+                --GET()[me.var] = 'accessed'
                 -- set[4] is VarList or Var
                 return
             end

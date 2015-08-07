@@ -268,6 +268,7 @@ error'oi'
 
                     VAL = [[(
 (]]..cast..[[) (
+#line ]]..me.org.ln[2]..' "'..me.org.ln[1]..[["
     ((byte*)]]..V(me.org)..[[) + _CEU_APP.ifcs_flds[]]..gen..[[->cls][
         ]]..ENV.ifcs.flds[me.var.ifc_id]..[[
     ]
@@ -275,6 +276,7 @@ error'oi'
                 else
                     VAL = [[(*(
 (]]..TP.toc(me.var.tp)..[[*) (
+#line ]]..me.org.ln[2]..' "'..me.org.ln[1]..[["
     ((byte*)]]..V(me.org)..[[) + _CEU_APP.ifcs_flds[]]..gen..[[->cls][
         ]]..ENV.ifcs.flds[me.var.ifc_id]..[[
     ]

@@ -236,9 +236,7 @@ static u32 CEU_ORGS_ID = 0;;
 #endif
 
 void ceu_sys_org (tceu_org* org, int n, int lbl,
-#ifdef CEU_ORGS_NEWS
-                  int isDyn,
-#endif
+                  int cls, int isDyn,
                   tceu_org* parent, tceu_org_lnk** lnks)
 {
     /* { evt=0, seqno=0, lbl=0 } for all trails */
@@ -247,6 +245,9 @@ void ceu_sys_org (tceu_org* org, int n, int lbl,
 #if defined(CEU_ORGS) || defined(CEU_OS_KERNEL)
     org->n  = n;
     org->up = parent;
+#ifdef CEU_IFCS
+    org->cls = cls;
+#endif
 #endif
 #if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_WATCHING) || defined(CEU_OS_KERNEL)
     org->isAlive = 1;
@@ -279,9 +280,6 @@ void ceu_sys_org (tceu_org* org, int n, int lbl,
     }
 #endif  /* CEU_ORGS */
 }
-#ifndef CEU_ORGS
-#define ceu_sys_org(a,b,c,d,e) ceu_sys_org(a,b,c,NULL,NULL)
-#endif
 
 #ifdef CEU_ORGS
 void ceu_sys_org_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_org* org)
