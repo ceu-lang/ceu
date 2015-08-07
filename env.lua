@@ -1526,6 +1526,9 @@ F = {
     ['Op2_.'] = function (me)
         local op, e1, id = unpack(me)
 
+        ASR(not TP.check(e1.tp,'?'), me,
+            'invalid `.´ operation : cannot be an option type')
+
         local cls = ENV.v_or_ref(e1.tp, 'cls')
         local adt = ENV.v_or_ref(e1.tp, 'adt')
         local BLK, VAR

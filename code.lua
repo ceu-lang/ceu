@@ -1079,7 +1079,13 @@ case ]]..SET.lbl_cnt.id..[[:;
                     tag = 'NIL'
                 else
                     tag = 'SOME'
-                    LINE(me, V(to,byref)..' = '..V(fr,byref)..';')
+                    if me.__ref_byref then
+                        LINE(me, '('..V(to)..'.SOME.v) = '..V(fr,byref)..';')
+                    else
+                        local var = to.var or to
+                        local op = (TP.check(var.tp,'&','?') and '*') or ''
+                        LINE(me, op..'('..V(to,byref)..'.SOME.v) = '..V(fr,byref)..';')
+                    end
                 end
                 LINE(me, V(to,'opt_raw')..'.tag = CEU_'..ID..'_'..tag..';')
             end

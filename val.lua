@@ -127,12 +127,23 @@ F =
                         VAL = '('..op..'('..VAL..'))'
                     else
                         -- xxx.me = v
+-- TODO: move to env.lua
+ASR(to.tag ~= 'Op1_!', me, 'invalid operand in assignment')
+--[[
+-- TODO: can remove it all: moved to Op1_! and Set in code.lua
+if fr.tag ~= 'Op1_!' then
+                        --VAL = '('..op..'('..VAL..'.SOME.v))'
+end
                         if CTX.byref or (not TP.check(me.tp,'&','?')) then
                             VAL = '('..op..'('..VAL..'.SOME.v))'
                         else
-                            VAL = '('..op..'(CEU_'..ID..'_SOME_assert(_ceu_app, &'
-                                        ..VAL..',__FILE__,__LINE__)->SOME.v))'
+DBG(me.tag)
+ASR(not to.tag == 'Op1_!', me, 'oioi')
+error'oi'
+                            VAL = '('..op..'(CEU_'..ID..'_SOME_assert(_ceu_app,&'
+                                     ..VAL..',__FILE__,__LINE__)->SOME.v))'
                         end
+]]
                     end
 
                 -- CALL
@@ -154,8 +165,10 @@ F =
                 -- NONE
                 else
                     -- ... xxx.me ...
+--[[
                     VAL = '('..op..'(CEU_'..ID..'_SOME_assert(_ceu_app, &'
                                 ..VAL..',__FILE__,__LINE__)->SOME.v))'
+]]
                 end
             end
         elseif var.pre == 'pool' then
@@ -440,9 +453,12 @@ F =
     end,
 
     ['Op1_!'] = function (me)
--- TODO: remove CTX and access "some" from here
-        local op, e1 = unpack(me)
-        return V(e1)
+        local _, e1 = unpack(me)
+        local var = e1.var or e1
+        local ID = string.upper(TP.opt2adt(var.tp))
+        local op = (TP.check(var.tp,'&','?') and '*') or ''
+        return '('..op..'(CEU_'..ID..'_SOME_assert(_ceu_app, &'
+                  ..V(e1)..',__FILE__,__LINE__)->SOME.v))'
     end,
 
     ['Op1_$'] = function (me)

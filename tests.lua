@@ -24360,7 +24360,7 @@ class T with
     var int&? i;
 do
     var int v = 10;
-    i! = v;
+    i = v;
 end
 
 var int ret = 0;
@@ -24394,7 +24394,7 @@ class T with
 do
     var int v = 10;
     if i? then
-        i! = i! + v;
+        i = i! + v;
     end
 end
 
@@ -26997,7 +26997,7 @@ class T with
     var int&? i;
 do
     var int v = 10;
-    i! = v;
+    i = v;
 end
 var T t;
 escape t.i!;
@@ -45640,6 +45640,16 @@ var int&? i = v1;
 i! = v2;
 escape v1;
 ]],
+    code = 'line 4 : invalid operand in assignment',
+}
+
+Test { [[
+var int v1 = 0;
+var int v2 = 1;
+var int&? i = v1;
+i = v2;
+escape v1;
+]],
     run = 1,
 }
 
@@ -45663,8 +45673,8 @@ Test { [[
 var int v1 = 10;
 var int v2 =  1;
 var int&? i = v1;
-i! = v2;
-i! = 10;
+i = v2;
+i = 10;
 var int ret = i!;
 escape v1 + v2 + ret;
 ]],
@@ -45697,6 +45707,7 @@ var T t with
 end;
 escape t.i!;
 ]],
+    code = 'line 5 : invalid operand in assignment',
     --asr = ':5] runtime error: invalid tag',
     run = 10,
 }
@@ -45783,7 +45794,7 @@ var _t t;
 var _t&? t_ = t;
 
 var int ret = t_!.x;
-t_.x = 100;
+t_!.x = 100;
 
 escape ret + _id(t_!.x) + t.x;
 ]],
@@ -45920,6 +45931,16 @@ var SDL_Color clr = SDL_Color(10);
 var SDL_Color? bg_clr = clr;
 escape bg_clr.v;
 ]],
+    env = 'line 6 : invalid `.´ operation : cannot be an option type',
+}
+Test { [[
+data SDL_Color with
+    var int v;
+end
+var SDL_Color clr = SDL_Color(10);
+var SDL_Color? bg_clr = clr;
+escape bg_clr!.v;
+]],
     run = 10,
 }
 Test { [[
@@ -45968,6 +45989,15 @@ escape _fff(ui.bg_clr!).v;
 }
 
 Test { [[
+var int ret;
+var int&? p = ret;
+p = p!;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
 data OptionInt with
     tag NIL;
 or
@@ -45995,13 +46025,13 @@ ret = ret + i!;      // 5
 
 // first
 p = ret;
-p! = p! + 2;          // 7
+p = p! + 2;          // 7
 _assert(ret == 7);
 
 // second
 var int v = 10;
-p! = v;              // 10
-p! = p! + 1;          // 11
+p = v;              // 10
+p = p! + 1;          // 11
 
 ret = ret + v;      // 21
 escape ret;
