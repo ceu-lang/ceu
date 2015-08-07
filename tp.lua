@@ -52,9 +52,6 @@ function TP.check (tp, ...)
     if tp.tup then
         return false
     end
-    if tp.tag == 'Block' then
-        return false
-    end
 
     local tt = tp.tt
 
