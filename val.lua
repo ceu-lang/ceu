@@ -477,7 +477,8 @@ error'oi'
             local op_fld = '.'
             local op_ptr = '&'
             local tag
-            if e1.tp.tag ~= 'Block' then
+            -- [union.TAG].field is 'void'
+            if TP.tostr(e1.tp) ~= 'void' then
                 tag = ('CEU_'..string.upper(TP.id(e1.tp))..'_'..id)
                 local adt = ENV.adts[TP.id(e1.tp)]
                 if adt.is_rec then

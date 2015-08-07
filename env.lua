@@ -160,11 +160,6 @@ local function check (me, pre, tp)
 end
 
 function ENV.v_or_ref (tp, cls_or_adt)
-    if tp.tag == 'Block' then
-        -- TODO: data.TAG
-        return false
-    end
-
     local tp_id = TP.id(tp)
     local ok = TP.check(tp,tp_id,'-[]','-&','-?')
     if cls_or_adt == 'cls' then
@@ -1595,7 +1590,8 @@ F = {
                 else
                     me.__env_tag = 'assert'
                     me.union_tag_blk = blk
-                    me.tp = blk
+                    --me.tp = blk
+                    me.tp = TP.new{'void'}
                 end
             end
 
