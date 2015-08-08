@@ -112,9 +112,6 @@ F =
                     end
                 end
 
-                -- check
-                local check = AST.par(me,'Op1_?')
-
                 -- SET
                 if are_both_opt then
                     -- do nothing, both are opt
@@ -129,21 +126,6 @@ F =
                         -- xxx.me = v
 -- TODO: move to env.lua
 ASR(to.tag ~= 'Op1_!', me, 'invalid operand in assignment')
---[[
--- TODO: can remove it all: moved to Op1_! and Set in code.lua
-if fr.tag ~= 'Op1_!' then
-                        --VAL = '('..op..'('..VAL..'.SOME.v))'
-end
-                        if CTX.byref or (not TP.check(me.tp,'&','?')) then
-                            VAL = '('..op..'('..VAL..'.SOME.v))'
-                        else
-DBG(me.tag)
-ASR(not to.tag == 'Op1_!', me, 'oioi')
-error'oi'
-                            VAL = '('..op..'(CEU_'..ID..'_SOME_assert(_ceu_app,&'
-                                     ..VAL..',__FILE__,__LINE__)->SOME.v))'
-                        end
-]]
                     end
 
                 -- CALL
@@ -156,19 +138,6 @@ error'oi'
                     --      - SOME.v, if v!=nil
                     VAL = '(CEU_'..ID..'_unpack('..VAL..'))'
 
-                -- CHECK
-                -- ? xxx.me
-                elseif check then
-                    VAL = '('..VAL..'.tag)'
-                        -- TODO: optimization: "tp&?" => 'NULL'
-
-                -- NONE
-                else
-                    -- ... xxx.me ...
---[[
-                    VAL = '('..op..'(CEU_'..ID..'_SOME_assert(_ceu_app, &'
-                                ..VAL..',__FILE__,__LINE__)->SOME.v))'
-]]
                 end
             end
         elseif var.pre == 'pool' then
@@ -451,7 +420,7 @@ error'oi'
     ['Op1_?'] = function (me)
         local op, e1 = unpack(me)
         local ID = string.upper(TP.opt2adt(e1.tp))
-        return '('..V(e1)..' != CEU_'..ID..'_NIL)'
+        return '('..V(e1)..'.tag != CEU_'..ID..'_NIL)'
     end,
 
     ['Op1_!'] = function (me)

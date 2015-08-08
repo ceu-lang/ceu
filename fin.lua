@@ -46,8 +46,8 @@ function ISPTR (node_or_var)
     -- type with '*' anywhere
     for _, v in ipairs(tp.tt) do
         if v == '*' then
-            -- skip "var T*? ptr"
-            if ENV.clss[tp_id] and TP.check(tp,tp_id,'*','?') then
+            -- skip [var T*? ptr], [var T*?[] ts]
+            if ENV.clss[tp_id] and TP.check(tp,tp_id,'*','?','-[]') then
             else
                 return true
             end

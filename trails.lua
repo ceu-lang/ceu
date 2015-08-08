@@ -59,17 +59,18 @@ F = {
                                (not TP.is_ext(var.tp,'_','@'))) and 
                                (var.tp.arr=='[]')               and
                                (not (var.cls or var.adt))
+            if is_arr_dyn then
+                me.trails_n = me.trails_n + 1
+            end
 
             if var.pre=='pool' or is_arr_dyn then
                 me.fins = me.fins or {}     -- release adts/vectors
             end
 
             local tp_id = TP.id(var.tp)
-            if ENV.clss[tp_id] and TP.check(var.tp,tp_id,'*','?') then
+            if ENV.clss[tp_id] and TP.check(var.tp,tp_id,'*','?','-[]') then
                 me.trails_n = me.trails_n + 1
             elseif var.adt and var.pre=='pool' then
-                me.trails_n = me.trails_n + 1
-            elseif is_arr_dyn then
                 me.trails_n = me.trails_n + 1
             elseif var.cls then
                 me.trails_n = me.trails_n + 1   -- ORG_POOL_I/ORG_STATS_I
@@ -148,18 +149,18 @@ G = {
                                (not TP.is_ext(var.tp,'_','@'))) and 
                                (var.tp.arr=='[]')               and
                                (not (var.cls or var.adt))
+            if is_arr_dyn then
+                var.trl_vector = { t0, t0 }
+                t0 = t0 + 1
+            end
 
             local tp_id = TP.id(var.tp)
-            if ENV.clss[tp_id] and TP.check(var.tp,tp_id,'*','?') then
+            if ENV.clss[tp_id] and TP.check(var.tp,tp_id,'*','?','-[]') then
                 var.trl_optorg = { t0, t0 }
                 t0 = t0 + 1
 
             elseif var.adt and var.pre=='pool' then
                 var.trl_adt = { t0, t0 }
-                t0 = t0 + 1
-
-            elseif is_arr_dyn then
-                var.trl_vector = { t0, t0 }
                 t0 = t0 + 1
 
             elseif var.cls then

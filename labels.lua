@@ -69,14 +69,15 @@ F = {
                                (not TP.is_ext(var.tp,'_','@'))) and 
                                (var.tp.arr=='[]')               and
                                (not (var.cls or var.adt))
+            if is_arr_dyn then
+                var.lbl_fin_free = new{'vector_fin_kill_free'}
+            end
 
             local tp_id = TP.id(var.tp)
-            if ENV.clss[tp_id] and TP.check(var.tp,tp_id,'*','?') then
+            if ENV.clss[tp_id] and TP.check(var.tp,tp_id,'*','?','-[]') then
                 var.lbl_optorg_reset = new{'optorg_reset'}
             elseif var.adt and var.pre=='pool' then
                 var.lbl_fin_kill_free = new{'adt_fin_kill_free'}
-            elseif is_arr_dyn then
-                var.lbl_fin_free = new{'vector_fin_kill_free'}
             end
         end
     end,

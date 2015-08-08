@@ -757,15 +757,6 @@ _STK_ORG->trls[ ]]..me.trl_fins[1]..[[ ].lbl   = ]]..me.lbl_fin.id..[[;
 ]])
                     end
 
-                    -- opt to org
-                    if ENV.clss[tp_id] and TP.check(var.tp,tp_id,'*','?') then
-                        LINE(me, [[
-/*  RESET OPT-ORG TO NULL */
-_STK_ORG->trls[ ]]..var.trl_optorg[1]..[[ ].evt = CEU_IN__ok_killed;
-_STK_ORG->trls[ ]]..var.trl_optorg[1]..[[ ].lbl = ]]..(var.lbl_optorg_reset).id..[[;
-]])
-                    end
-
                 -- VECTOR
                 elseif TP.check(var.tp,'[]') and (not (var.cls or TP.is_ext(var.tp,'_'))) then
                     local tp_elem = TP.pop( TP.pop(var.tp,'&'), '[]' )
@@ -781,6 +772,16 @@ _STK_ORG->trls[ ]]..var.trl_vector[1]..[[ ].evt = CEU_IN__CLEAR;
 _STK_ORG->trls[ ]]..var.trl_vector[1]..[[ ].lbl = ]]..(var.lbl_fin_free).id..[[;
 ]])
                     end
+                end
+
+                -- OPTION TO ORG or ORG[]
+                if ENV.clss[tp_id] and TP.check(var.tp,tp_id,'*','?','-[]') then
+                    -- TODO: repeated with Block_pos
+                    LINE(me, [[
+/*  RESET OPT-ORG TO NULL */
+_STK_ORG->trls[ ]]..var.trl_optorg[1]..[[ ].evt = CEU_IN__ok_killed;
+_STK_ORG->trls[ ]]..var.trl_optorg[1]..[[ ].lbl = ]]..(var.lbl_optorg_reset).id..[[;
+]])
                 end
 
             elseif var.pre=='pool' and (var.cls or var.adt) then
@@ -920,7 +921,6 @@ _STK->trl = &_STK_ORG->trls[ ]]..stmts.trails[1]..[[ ];
 ]])
         end
 
-        -- release ADT pool items
         for _, var in ipairs(me.vars) do
             local is_arr = (TP.check(var.tp,'[]')           and
                            (not TP.is_ext(var.tp,'_','@'))) and
@@ -928,33 +928,65 @@ _STK->trl = &_STK_ORG->trls[ ]]..stmts.trails[1]..[[ ];
             local is_dyn = (var.tp.arr=='[]')
 
             local tp_id = TP.id(var.tp)
-            if ENV.clss[tp_id] and TP.check(var.tp,tp_id,'*','?') then
+            if ENV.clss[tp_id] and TP.check(var.tp,tp_id,'*','?','-[]') then
+                -- TODO: BUG: id should be saved together with the pointer
                 LINE(me, [[
 if (0) {
 ]])
                 CASE(me, var.lbl_optorg_reset)
                 local val = V({tag='Var',var=var})
-                local ID = string.upper(TP.opt2adt(var.tp))
-                LINE(me, [[
-    /* TODO: BUG: id should be saved together with the pointer */
+                local tp_opt = TP.pop(var.tp,'[]')
+                local ID = string.upper(TP.opt2adt(tp_opt))
+
+                if TP.check(var.tp,'[]') then
+                    LINE(me, [[
+    int __ceu_i;
+    for (__ceu_i=0; __ceu_i<ceu_vector_getlen(]]..val..[[); __ceu_i++) {
+        ]]..TP.toc(tp_opt)..[[* __ceu_one = (]]..TP.toc(tp_opt)..[[*)
+                                            ceu_vector_geti(]]..val..[[, __ceu_i);
+        if ( (__ceu_one->tag != CEU_]]..ID..[[_NIL) &&
+             ( ((tceu_org*)(__ceu_one->SOME.v))->id ==
+               ((tceu_org_kill*)_STK->evt_buf)->org ) )
+        {
+            __ceu_one->tag = CEU_]]..ID..[[_NIL;
+/*
+            ]]..TP.toc(tp_opt)..[[ __ceu_new = ]]..string.upper(TP.toc(tp_opt))..[[_pack(NULL);
+            ceu_vector_seti(]]..val..[[,__ceu_i, (byte*)&__ceu_new);
+*/
+        }
+    }
+]])
+
+                else
+                    LINE(me, [[
     if (]]..val..[[.tag!=CEU_]]..ID..[[_NIL &&
         ((tceu_org*)(]]..val..[[.SOME.v))->id==((tceu_org_kill*)_STK->evt_buf)->org)
     {
         ]]..val..' = '..string.upper(TP.toc(var.tp))..[[_pack(NULL);
     }
 ]])
+                end
+
+            -- TODO: repeated with Block_pre
+            LINE(me, [[
+/*  RESET OPT-ORG TO NULL */
+_STK_ORG->trls[ ]]..var.trl_optorg[1]..[[ ].evt = CEU_IN__ok_killed;
+_STK_ORG->trls[ ]]..var.trl_optorg[1]..[[ ].lbl = ]]..(var.lbl_optorg_reset).id..[[;
+]])
                 HALT(me)
                 LINE(me, [[
 }
 ]])
+            end
 
-            elseif is_arr and is_dyn then
+            if is_arr and is_dyn then
                 CASE(me, var.lbl_fin_free)
                 LINE(me, [[
 ceu_vector_setlen(]]..V({tag='Var',var=var})..[[, 0);
 ]])
                 HALT(me)
 
+            -- release ADT pool items
             elseif var.adt and var.adt.is_rec then
                 local id, op = unpack(var.adt)
                 CASE(me, var.lbl_fin_kill_free)
@@ -1131,7 +1163,7 @@ error'oioioi'
                         LINE(me, V(to,'opt_raw')..'.tag = CEU_'..ID..'_'..tag..';')
                     else
 local to_tp_id = TP.id(to.tp)
-if ENV.clss[to_tp_id] and TP.check(to.tp,to_tp_id,'*','?') then
+if ENV.clss[to_tp_id] and TP.check(to.tp,to_tp_id,'*','?','-[]') then
     LINE(me, [[
 if (((tceu_org*)]]..V(fr)..[[)->isAlive) {
     ]]..V(to)..' = '..string.upper(TP.toc(to.tp))..[[_pack(]]..V(fr)..[[);

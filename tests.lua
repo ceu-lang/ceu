@@ -9,6 +9,7 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
+--]===]
 
 Test { [[
 class T with
@@ -149,6 +150,7 @@ escape ts[0] == &t;
 Test { [[
 class T with
 do
+    await FOREVER;
 end
 var T*?[] ts;
 var T t;
@@ -163,16 +165,71 @@ class T with
 do
 end
 var T*?[] ts;
+var T t;
+ts = [] .. [&t];
+escape ts[0]! == &t;
+]],
+    run = '7] runtime error: invalid tag',
+}
+
+Test { [[
+class T with
+do
+end
+var T*?[] ts;
+var T t;
+ts = [] .. [&t] .. [&t];
+escape ts[1]! == &t;
+]],
+    run = '7] runtime error: invalid tag',
+}
+
+Test { [[
+class T with
+do
+end
+var T*?[] ts;
 var T t1,t2;
 ts = [] .. [&t1];
 ts[0]! = &t2;
 escape ts[0]! == &t2;
 ]],
-    run = 1,
+    run = '7] runtime error: invalid tag',
 }
 
---- TODO
 Test { [[
+class T with
+do
+    await 1s;
+end
+var T*?[] ts;
+var T t;
+ts = [] .. [&t];
+await 1s;
+escape ts[0]! == &t;
+]],
+    run = { ['~>1s']='10] runtime error: invalid tag' },
+}
+
+Test { [[
+interface I with
+end
+class T with
+do
+end
+
+var T t;
+var I*?[] is;
+is = [&t];
+
+escape is[0]? + 1;
+]],
+    run = { ['~>1s'] = 1 },
+}
+
+Test { [[
+interface I with
+end
 class T with
 do
 end
@@ -181,25 +238,35 @@ do
     await FOREVER;
 end
 class V with
-    var int t;
 do
-    await (t)s;
+    await 1s;
 end
 
-<...>
+var T t;
+var U u;
+var V v;
+
+var I*?[] is;
+is = [&t, &u, &v];
+
+var int ret = 0;
+
+ret = ret + is[0]? + is[1]? + is[2]?;
+await 1s;
+ret = ret + is[0]? + is[1]? + is[2]?;
+
+escape ret;
 ]],
-    todo = 'all kinds of terminations',
-    run = 1,
+    run = { ['~>1s'] = 3 },
 }
 
-do return end
+--do return end
 
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------
 -- OK: well tested
 ----------------------------------------------------------------------------
---]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
