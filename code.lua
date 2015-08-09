@@ -74,12 +74,19 @@ goto _CEU_GOTO_;
 ]])
 end
 
+local function __pause_or_dclcls (me)
+    return me.tag=='Pause' or me.tag=='Dcl_cls'
+end
+
 function AWAIT_PAUSE (me, no)
     if not PROPS.has_pses then
         return
     end
 
-    for pse in AST.iter'Pause' do
+    for pse in AST.iter(__pause_or_dclcls) do
+        if pse.tag == 'Dcl_cls' then
+            break
+        end
         COMM(me, 'PAUSE: '..pse.dcl.var.id)
         LINE(me, [[
 if (]]..V(pse.dcl)..[[) {
@@ -1902,8 +1909,12 @@ case ]]..me.lbl.id..[[:;
 
     __AwaitExt = function (me)
         local e, dt = unpack(me)
-        local no = (dt or AST.iter'Pause'()) and '_CEU_NO_'..me.n..'_'
         local suf = (dt and dt.tm and '_') or ''  -- timemachine "WCLOCK_"
+
+        local par_pause  = AST.par(me,'Pause')
+        local par_dclcls = assert(AST.par(me,'Dcl_cls'), 'bug found')
+        local has_pause = par_pause and (par_pause.__depth > par_dclcls.__depth)
+        local no = (dt or has_pause) and '_CEU_NO_'..me.n..'_'
 
         local val = CUR(me, '__wclk_'..me.n)
 

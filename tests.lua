@@ -8,257 +8,69 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
---[===[
---]===]
-
 Test { [[
-class T with
-    var int v = 10;
-do
+input int* SDL_KEYDOWN_;
+event bool in_tm;
+
+pause/if in_tm do
+    class Input with
+    do
+        await SDL_KEYDOWN_ ;
+    end
 end
 
-var T t;
-var T*? p = &t;
-
-escape t.v + p!:v;
-]],
-    run = '9] runtime error: invalid tag',
-}
-Test { [[
-class T with
-    var int v = 10;
-do
-    await FOREVER;
-end
-
-var T t;
-var T*? p = &t;
-
-escape t.v + p!:v;
-]],
-    run = 20,
-}
-Test { [[
-class T with
-    var int v = 10;
-do
-    await 1s;
-end
-
-var T t;
-var T*? p = &t;
-
-await 500ms;
-
-escape t.v + p!:v;
-]],
-    run = { ['~>1s'] = 20 },
-}
-Test { [[
-class T with
-    var int v = 10;
-do
-end
-
-var T t;
-var T*? p = &t;
-
-await 500ms;
-
-escape t.v + p!:v;
-]],
-    run = { ['~>1s'] = '12] runtime error: invalid tag', },
-}
-
-Test { [[
-class T with
-    var int v = 10;
-do
-    await 1s;
-end
-
-var T t;
-var T*? p = &t;
-
-await 1s;
-
-escape t.v + p!:v;
-]],
-    run = { ['~>1s']='13] runtime error: invalid tag' },
-}
-Test { [[
-class U with
-    var int v = 10;
-do
-    await FOREVER;
-end
-class T with
-    var int v = 10;
-do
-    await 1s;
-end
-
-var U u;
-var T t;
-var U*? p = &u;
-
-await 1s;
-
-escape t.v + p!:v;
-]],
-    run = { ['~>1s']=20 },
-}
-
-Test { [[
-class T with
-do
-end
-//var T[]   ts;
-var T*[]  ts1;
-var T*?[] ts2;
 escape 1;
 ]],
     run = 1,
 }
+--do return end
 
 Test { [[
-class T with
-do
+data SDL_Rect with
+    var int x;
 end
-var T*?[] ts;
-var T t;
-ts = [] .. [&t];
-escape $ts;
+var SDL_Rect[1] rcs;
+var SDL_Rect ri;
+ri = SDL_Rect(10);
+rcs[0] = ri;
+escape rcs[0].x;
 ]],
-    run = 1,
+    run = '7] runtime error: access out of bounds',
 }
 
 Test { [[
-class T with
-do
+data SDL_Rect with
+    var int x;
 end
-var T*?[] ts;
-
-var T t;
-ts = [] .. [&t];
-
-escape ts[0] == &t;
+var SDL_Rect ri;
+ri = SDL_Rect(10);
+var SDL_Rect[1] rcs = [ri];
+escape rcs[0].x;
 ]],
-    env = 'line 9 : invalid operands to binary "=="',
+    run = 10,
 }
 
 Test { [[
-class T with
-do
-    await FOREVER;
+native @pure _f();
+native do
+    int f (int* rect) {
+        return *rect;
+    }
 end
-var T*?[] ts;
-var T t;
-ts = [] .. [&t];
-escape ts[0]! == &t;
+
+data SDL_Rect with
+    var int x;
+end
+var SDL_Rect ri;
+ri = SDL_Rect(10);
+var SDL_Rect[1] rcs = [ri];
+escape _f((int*)&rcs[0]);
 ]],
-    run = 1,
+    run = 10,
 }
 
-Test { [[
-class T with
-do
-end
-var T*?[] ts;
-var T t;
-ts = [] .. [&t];
-escape ts[0]! == &t;
-]],
-    run = '7] runtime error: invalid tag',
-}
-
-Test { [[
-class T with
-do
-end
-var T*?[] ts;
-var T t;
-ts = [] .. [&t] .. [&t];
-escape ts[1]! == &t;
-]],
-    run = '7] runtime error: invalid tag',
-}
-
-Test { [[
-class T with
-do
-end
-var T*?[] ts;
-var T t1,t2;
-ts = [] .. [&t1];
-ts[0]! = &t2;
-escape ts[0]! == &t2;
-]],
-    run = '7] runtime error: invalid tag',
-}
-
-Test { [[
-class T with
-do
-    await 1s;
-end
-var T*?[] ts;
-var T t;
-ts = [] .. [&t];
-await 1s;
-escape ts[0]! == &t;
-]],
-    run = { ['~>1s']='10] runtime error: invalid tag' },
-}
-
-Test { [[
-interface I with
-end
-class T with
-do
-end
-
-var T t;
-var I*?[] is;
-is = [&t];
-
-escape is[0]? + 1;
-]],
-    run = { ['~>1s'] = 1 },
-}
-
-Test { [[
-interface I with
-end
-class T with
-do
-end
-class U with
-do
-    await FOREVER;
-end
-class V with
-do
-    await 1s;
-end
-
-var T t;
-var U u;
-var V v;
-
-var I*?[] is;
-is = [&t, &u, &v];
-
-var int ret = 0;
-
-ret = ret + is[0]? + is[1]? + is[2]?;
-await 1s;
-ret = ret + is[0]? + is[1]? + is[2]?;
-
-escape ret;
-]],
-    run = { ['~>1s'] = 3 },
-}
+--[===[
+--]===]
 
 --do return end
 
@@ -20648,6 +20460,255 @@ var T* p = ts[0];
 escape p == &t;
 ]],
     fin = 'line 8 : unsafe access to pointer "ts" across `await´ (tests.lua : 7)',
+}
+
+Test { [[
+class T with
+    var int v = 10;
+do
+end
+
+var T t;
+var T*? p = &t;
+
+escape t.v + p!:v;
+]],
+    run = '9] runtime error: invalid tag',
+}
+Test { [[
+class T with
+    var int v = 10;
+do
+    await FOREVER;
+end
+
+var T t;
+var T*? p = &t;
+
+escape t.v + p!:v;
+]],
+    run = 20,
+}
+Test { [[
+class T with
+    var int v = 10;
+do
+    await 1s;
+end
+
+var T t;
+var T*? p = &t;
+
+await 500ms;
+
+escape t.v + p!:v;
+]],
+    run = { ['~>1s'] = 20 },
+}
+Test { [[
+class T with
+    var int v = 10;
+do
+end
+
+var T t;
+var T*? p = &t;
+
+await 500ms;
+
+escape t.v + p!:v;
+]],
+    run = { ['~>1s'] = '12] runtime error: invalid tag', },
+}
+
+Test { [[
+class T with
+    var int v = 10;
+do
+    await 1s;
+end
+
+var T t;
+var T*? p = &t;
+
+await 1s;
+
+escape t.v + p!:v;
+]],
+    run = { ['~>1s']='13] runtime error: invalid tag' },
+}
+Test { [[
+class U with
+    var int v = 10;
+do
+    await FOREVER;
+end
+class T with
+    var int v = 10;
+do
+    await 1s;
+end
+
+var U u;
+var T t;
+var U*? p = &u;
+
+await 1s;
+
+escape t.v + p!:v;
+]],
+    run = { ['~>1s']=20 },
+}
+
+Test { [[
+class T with
+do
+end
+//var T[]   ts;
+var T*[]  ts1;
+var T*?[] ts2;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+do
+end
+var T*?[] ts;
+var T t;
+ts = [] .. [&t];
+escape $ts;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+do
+end
+var T*?[] ts;
+
+var T t;
+ts = [] .. [&t];
+
+escape ts[0] == &t;
+]],
+    env = 'line 9 : invalid operands to binary "=="',
+}
+
+Test { [[
+class T with
+do
+    await FOREVER;
+end
+var T*?[] ts;
+var T t;
+ts = [] .. [&t];
+escape ts[0]! == &t;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+do
+end
+var T*?[] ts;
+var T t;
+ts = [] .. [&t];
+escape ts[0]! == &t;
+]],
+    run = '7] runtime error: invalid tag',
+}
+
+Test { [[
+class T with
+do
+end
+var T*?[] ts;
+var T t;
+ts = [] .. [&t] .. [&t];
+escape ts[1]! == &t;
+]],
+    run = '7] runtime error: invalid tag',
+}
+
+Test { [[
+class T with
+do
+end
+var T*?[] ts;
+var T t1,t2;
+ts = [] .. [&t1];
+ts[0]! = &t2;
+escape ts[0]! == &t2;
+]],
+    run = '7] runtime error: invalid tag',
+}
+
+Test { [[
+class T with
+do
+    await 1s;
+end
+var T*?[] ts;
+var T t;
+ts = [] .. [&t];
+await 1s;
+escape ts[0]! == &t;
+]],
+    run = { ['~>1s']='10] runtime error: invalid tag' },
+}
+
+Test { [[
+interface I with
+end
+class T with
+do
+end
+
+var T t;
+var I*?[] is;
+is = [&t];
+
+escape is[0]? + 1;
+]],
+    run = { ['~>1s'] = 1 },
+}
+
+Test { [[
+interface I with
+end
+class T with
+do
+end
+class U with
+do
+    await FOREVER;
+end
+class V with
+do
+    await 1s;
+end
+
+var T t;
+var U u;
+var V v;
+
+var I*?[] is;
+is = [&t, &u, &v];
+
+var int ret = 0;
+
+ret = ret + is[0]? + is[1]? + is[2]?;
+await 1s;
+ret = ret + is[0]? + is[1]? + is[2]?;
+
+escape ret;
+]],
+    run = { ['~>1s'] = 3 },
 }
 
 --<< VECTORS

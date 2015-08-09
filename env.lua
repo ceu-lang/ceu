@@ -1110,7 +1110,7 @@ F = {
         end
 
         if not lua_str then
-            ASR(to and to.lval, me, 'invalid attribution')
+            ASR(to and to.lval, me, 'invalid attribution : not assignable')
             ASR(me.read_only or (not to.lval.read_only), me,
                 'read-only variable')
         end
@@ -1360,7 +1360,7 @@ F = {
             tp = TP.pop(tp, '*')
         end
 
-        if ENV.v_or_ref(tp) then
+        if ENV.v_or_ref(tp,'cls') then
             me.lval = false
         else
             me.lval = arr
@@ -1502,8 +1502,13 @@ F = {
             local _, arr, _ = unpack(e1)
             local cls = ENV.clss[TP.id(arr.tp)]
             if TP.check(arr.tp,'[]','-&') and (not (cls or TP.is_ext(arr.tp,'_','@'))) then
-                ASR(false, me, 'invalid operand to unary "&"'..
-                               ' : vector elements are not addressable')
+                -- accept if passing to a native call
+                -- TODO: not checking if the function is really native
+                -- TODO: not checking if in format (<cast>)&e
+                if not AST.par(me,'ExpList') then
+                    ASR(false, me, 'invalid operand to unary "&"'..
+                                   ' : vector elements are not addressable')
+                end
             end
         end
 
