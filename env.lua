@@ -1497,10 +1497,24 @@ F = {
     ['Op1_&'] = function (me)
         local op, e1 = unpack(me)
 
-        ASR(e1.lval, me,
-            'invalid operand to unary "&"')
-        me.lval = e1.lval
-        me.tp = TP.push(e1.tp,'&')
+        -- ExpList in adt-constr
+        ASR(me.__par.tag=='Set' or me.__par.tag=='ExpList', me,
+            'invalid use of operator "&" : not a binding assignment : (use "&&" for "address of")')
+
+        -- refuses first assignment from constants and dereferences:
+        -- var int& i = 1;      // constant
+        -- var int& i = *p;     // dereference
+        -- var D& d = D(...);   // adt-constr
+        ASR(TP.check(e1.tp,'&') or e1.lval or e1.tag=='Op1_&&' or e1.tag=='Op2_call' or
+                (e1.lst and (e1.lst.tag=='Outer' or
+                             e1.lst.var and (e1.lst.var.cls or e1.lst.var.adt))),
+                                               -- orgs/adts are not lval
+            me, 'invalid operand to unary "&" : cannot be aliased')
+        ASR(e1.tag ~= 'Op1_*', me,
+            'invalid operand to unary "&" : cannot be aliased')
+
+        me.lval = false
+        me.tp = e1.tp
         me.fst = e1.fst
         me.lst = e1.lst
     end,

@@ -7,10 +7,16 @@ end
 F = {
     -- before Var
     Set_pre = function (me)
-        local _, _, _, to = unpack(me)
+        local _, _, fr, to = unpack(me)
         local TO = (to.tag=='VarList' and to) or {to}
         for _, to in ipairs(TO) do
             F.__Set_pre(me, to)
+            if me.__ref_byref then
+                assert(fr.tag == 'Op1_&', 'bug found')
+            else
+                ASR(fr.tag ~= 'Op1_&', me,
+                    'invalid attribution : not alias binding')
+            end
         end
     end,
     __Set_pre = function (me, TO)
@@ -117,23 +123,8 @@ F = {
             -- first assignment (and only first assignment) is "by ref"
             me.__ref_byref = true
 
-            -- refuses first assignment from constants and dereferences:
-            -- var int& i = 1;      // constant
-            -- var int& i = *p;     // dereference
-            -- var D& d = D(...);   // adt-constr
-            if (not TP.check(fr.tp,'&')) then
-                ASR(fr.lval or fr.tag=='Op1_&&' or fr.tag=='Op2_call' or
-                        (fr.lst and (fr.lst.tag=='Outer' or
-                                     fr.lst.var and (fr.lst.var.cls or fr.lst.var.adt))),
-                                               -- orgs/adts are not lval
-                    me, 'invalid attribution (not a reference)')
--- TODO: err msg, separate with : inteado of (
-                ASR(fr.tag ~= 'Op1_*', me, 'invalid attribution')
-            end
-
-            -- refuses first assignment from awaits:
-            -- var int& i = await <...>;
-            ASR(set~='await', me, 'invalid attribution')
+            ASR(fr.tag == 'Op1_&', me,
+                'invalid attribution : requires the alias operator `&´')
 
             -- check scopes
 -- TODO: this code is duplicated with "fin.lua"

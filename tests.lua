@@ -1162,7 +1162,7 @@ escape a + 1;
 
 Test { [[
 var int a;
-var int& pa = a;
+var int& pa = &a;
 async (pa) do
     emit 1min;
     pa = 10;
@@ -12703,7 +12703,7 @@ escape v;
 Test { [[
 var int v=2;
 var int x=v;
-var int& px = x;
+var int& px = &x;
 async (px, v) do
     px = v + 1;
 end;
@@ -14437,7 +14437,7 @@ escape ret;
 
 Test { [[
 var int a = 1;
-var int& b = a;
+var int& b = &a;
 a = 2;
 escape b;
 ]],
@@ -14447,7 +14447,7 @@ Test { [[
 native do
     int V = 10;
 end
-var int& v = _V;
+var int& v = &_V;
 escape v;
 ]],
     gcc = 'error: assignment makes pointer from integer without a cast',
@@ -14471,8 +14471,9 @@ var int& v;
 v = &_V;
 escape v;
 ]],
+    gcc = 'error: assignment makes pointer from integer without a cast',
     --env = 'line 5 : invalid attribution (int& vs _&&)',
-    run = 10;
+    --run = 10;
 }
 
 Test { [[
@@ -14486,7 +14487,7 @@ escape b;
 Test { [[
 var int a = 1;
 var int& b;
-b = a;
+b = &a;
 a = 2;
 escape b;
 ]],
@@ -14500,7 +14501,8 @@ var int& v;
 v = &_V;
 escape v;
 ]],
-    run = 10;
+    gcc = 'error: assignment makes pointer from integer without a cast',
+    --run = 10;
 }
 
 Test { [[
@@ -14551,7 +14553,7 @@ native do
 end
 var int vv = 10;
 var int& v;
-v = vv;
+v = &vv;
 await 1s;
 do
     var int vvv = 1;
@@ -14580,7 +14582,7 @@ var int a=1, b=2;
 var int& v;
 if true then
 else
-    v = b;
+    v = &b;
 end
 v = 5;
 escape a + b + v;
@@ -14591,7 +14593,7 @@ Test { [[
 var int a=1, b=2;
 var int& v;
 if true then
-    v = a;
+    v = &a;
 else
 end
 v = 5;
@@ -14603,15 +14605,15 @@ Test { [[
 var int a=1, b=2;
 var int& v;
 if true then
-    v = a;
+    v = &a;
 else
-    v = b;
+    v = &b;
 end
 var int& x;
 if false then
-    x = a;
+    x = &a;
 else
-    x = b;
+    x = &b;
 end
 v = 5;
 x = 1;
@@ -14634,24 +14636,25 @@ end
 v = 1;
 escape _V1+_V2;
 ]],
-    run = 6,
+    gcc = '7:34: error: assignment makes pointer from integer without a cast',
+    --run = 6,
 }
 
 Test { [[
 var int a=1, b=2, c=3;
 var int& v;
 if true then
-    v = a;
+    v = &a;
 else
-    v = b;
+    v = &b;
 end
 var int& x;
 if false then
-    x = a;
+    x = &a;
 else/if true then
-    x = b;
+    x = &b;
 else
-    x = c;
+    x = &c;
 end
 v = 5;
 x = 1;
@@ -14664,18 +14667,18 @@ Test { [[
 var int a=1, b=2, c=3;
 var int& v;
 if true then
-    v = a;
+    v = &a;
 else
-    v = b;
+    v = &b;
 end
 var int& x;
 if false then
-    x = a;
+    x = &a;
 else
     if true then
-        x = b;
+        x = &b;
     else
-        x = c;
+        x = &c;
     end
 end
 v = 5;
@@ -14688,7 +14691,7 @@ escape a + b + x + v;
 Test { [[
 var int v = 10;
 loop do
-    var int& i = v;
+    var int& i = &v;
     i = i + 1;
     break;
 end
@@ -14702,7 +14705,7 @@ Test { [[
 var int v = 10;
 var int& i;
 loop do
-    i = v;
+    i = &v;
     i = i + 1;
     break;
 end
@@ -14715,7 +14718,7 @@ escape v;
 Test { [[
 var int v = 10;
 loop do
-    var int&? i = v;
+    var int&? i = &v;
     i = i + 1;
     break;
 end
@@ -14736,7 +14739,7 @@ Test { [[
 var int v = 10;
 var int&? i;
 loop do
-    i! = v;
+    i! = &v;
     i! = i! + 1;
     break;
 end
@@ -14751,7 +14754,7 @@ Test { [[
 var _SDL_Surface&? sfc;
 every 1s do
     finalize
-        sfc = _TTF_RenderText_Blended();
+        sfc = &_TTF_RenderText_Blended();
     with
         _SDL_FreeSurface(&(sfc!));
     end
@@ -14773,7 +14776,7 @@ var int   v = 1;
 var int&& p = &&v;
 var int&? r;
 finalize
-    r = _fff(*p);
+    r = &_fff(*p);
 with
     nothing;
 end
@@ -14794,7 +14797,7 @@ var int   v = 1;
 var int&& p = &&v;
 var int&? r;
 finalize
-    r = _fff(*p);
+    r = &_fff(*p);
 with
     nothing;
 end
@@ -14807,7 +14810,7 @@ Test { [[
 var int& v;
 do
     var int x;
-    v = x;
+    v = &x;
 end
 escape 1;
 ]],
@@ -14829,7 +14832,7 @@ do
 end
 escape v1.v+v2.v+v3.v;
 ]],
-    ref = 'line 5 : invalid attribution (not a reference)',
+    ref = 'line 5 : invalid attribution : requires the alias operator `&´',
     --run = 6,
 }
 
@@ -14839,15 +14842,15 @@ data V with
 end
 
 var V v1_ = V(1);
-var V& v1 = v1_;
+var V& v1 = &v1_;
 var V& v2, v3;
 do
     var V v2_ = V(2);
-    v2 = v2_;
+    v2 = &v2_;
 end
 do
     var V v3_ = V(3);
-    v3 = v3_;
+    v3 = &v3_;
 end
 escape v1.v+v2.v+v3.v;
 ]],
@@ -14860,7 +14863,7 @@ native @nohold _g();
 
 var _SDL_Renderer&? ren;
     finalize
-        ren = _f();
+        ren = &_f();
     with
     end
 
@@ -14943,7 +14946,7 @@ native _f();
 do
     var int&? a;
     finalize
-        a = _f();
+        a = &_f();
     with
         do await FOREVER; end;
     end
@@ -14957,7 +14960,7 @@ native _f();
 do
     var int&? a;
     finalize
-        a = _f();
+        a = &_f();
     with
         async do
         end;
@@ -14972,7 +14975,7 @@ native _f();
 do
     var int&? a;
     finalize
-        a = _f();
+        a = &_f();
     with
         do escape 0; end;
     end
@@ -15068,7 +15071,7 @@ Test { [[
 input void E;
 var int&? n;
 finalize
-    this.n = _f();
+    this.n = &_f();
 with
 end
 await E;
@@ -15144,7 +15147,7 @@ var int r = 0;
 do
     var int&? a;
     finalize
-        a = _f();
+        a = &_f();
     with
         var int b = do escape 2; end;
     end
@@ -15241,7 +15244,7 @@ end
 
 var int&? v;
 finalize
-    v = _getV();
+    v = &_getV();
 with
     nothing;
 end
@@ -15260,7 +15263,7 @@ end
 
 var int&? v1;
 finalize
-    v1 = _getV();
+    v1 = &_getV();
 with
     nothing;
 end
@@ -15268,7 +15271,7 @@ v1 = 20;
 
 var int&? v2;
 finalize
-    v2 = _getV();
+    v2 = &_getV();
 with
     nothing;
 end
@@ -15287,7 +15290,7 @@ end
 
 var int&? v;
 finalize
-    v = _getV();
+    v = &_getV();
 with
     nothing;
 end
@@ -15298,7 +15301,7 @@ do
     v = 20;
 end
 do T with
-    this.v = v;
+    this.v = &v;
 end;
 
 escape v!;
@@ -15315,7 +15318,7 @@ end
 
 var int&? v;
 finalize
-    v = _getV();
+    v = &_getV();
 with
     nothing;
 end
@@ -15326,7 +15329,7 @@ do
     v = 20;
 end
 do T with
-    this.v = v!;
+    this.v = &v!;
 end;
 
 escape v!;
@@ -15343,7 +15346,7 @@ end
 
 var int&? v;
 finalize
-    v = _getV();
+    v = &_getV();
 with
     nothing;
 end
@@ -15354,7 +15357,7 @@ do
     v = 20;
 end
 do T with
-    this.v = v;
+    this.v = &v;
 end;
 
 escape v!;
@@ -15371,7 +15374,7 @@ end
 
 var int&? v;
 finalize
-    v = _getV();
+    v = &_getV();
 with
     nothing;
 end
@@ -15382,7 +15385,7 @@ do
     v = 20;
 end
 do T with
-    this.v = v;
+    this.v = &v;
 end;
 
 escape v!;
@@ -15399,7 +15402,7 @@ end
 
 var int&? v;
 finalize
-    v = _getV();
+    v = &_getV();
 with
     nothing;
 end
@@ -15410,7 +15413,7 @@ do
     v = 20;
 end
 do T with
-    this.v = v!;
+    this.v = &v!;
 end;
 
 escape v!;
@@ -15427,7 +15430,7 @@ end
 
 var _int&? v;
 finalize
-    v = _getV();
+    v = &_getV();
 with
     nothing;
 end
@@ -15438,7 +15441,7 @@ do
     v = 20;
 end
 do T with
-    this.v = v;
+    this.v = &v;
 end;
 
 escape v!;
@@ -17161,9 +17164,9 @@ native @nohold _dealloc();
 
 var int&? tex;
 finalize
-    tex = _alloc(1);    // v=2
+    tex = &_alloc(1);    // v=2
 with
-    _dealloc(&tex!);
+    _dealloc(&&tex!);
 end
 
 escape 1;
@@ -17183,9 +17186,9 @@ native @nohold _dealloc();
 
 var int&? tex;
 finalize
-    tex = _alloc(1);    // v=2
+    tex = &_alloc(1);    // v=2
 with
-    _dealloc(&tex!);
+    _dealloc(&&tex!);
 end
 
 escape 1;
@@ -17210,7 +17213,7 @@ native @nohold _dealloc();
 do
     var int&? tex;
     finalize
-        tex = _alloc(1);
+        tex = &_alloc(1);
     with
         _dealloc(tex);
     end
@@ -17247,7 +17250,7 @@ var int ret = _V;           // v=1, ret=1
 do
     var _t&? tex;
     finalize
-        tex = _alloc(1);    // v=2
+        tex = &_alloc(1);    // v=2
     with
         _dealloc(tex);
     end
@@ -17262,7 +17265,7 @@ ret = ret + _V;             // ret=7
 do
     var _t&? tex;
     finalize
-        tex = _alloc(0);    // v=4
+        tex = &_alloc(0);    // v=4
     with
         if tex? then
             _dealloc(tex);
@@ -17290,12 +17293,31 @@ end
 
 var void&? ptr;
 finalize
-    ptr = _f();
+    ptr = &_f();
 with
     nothing;
 end
 
 escape &ptr! == &ptr!;  // ptr.SOME fails
+]],
+    env = 'line 14 : invalid use of operator "&" : not a binding assignment',
+}
+
+Test { [[
+native do
+    void* f () {
+        return NULL;
+    }
+end
+
+var void&? ptr;
+finalize
+    ptr = &_f();
+with
+    nothing;
+end
+
+escape &&ptr! == &&ptr!;  // ptr.SOME fails
 ]],
     asr = true,
 }
@@ -17309,7 +17331,7 @@ end
 
 var void&? ptr;
 finalize
-    ptr = _f();
+    ptr = &_f();
 with
     nothing;
 end
@@ -17331,9 +17353,9 @@ native @nohold _g();
 
 var void&? ptr;
 finalize
-    ptr = _f();
+    ptr = &_f();
 with
-    _g(&ptr!);    // error (ptr is NIL)
+    _g(&&ptr!);    // error (ptr is NIL)
 end
 
 escape not ptr?;
@@ -17356,7 +17378,7 @@ var int ret = 0;
 do
     var void&? ptr;
     finalize
-        ptr = _f();
+        ptr = &_f();
     with
         if ptr? then
             _g(ptr);
@@ -17382,7 +17404,7 @@ end
 
 var int&? tex1;
 finalize
-    tex1 = _alloc(1);
+    tex1 = &_alloc(1);
 with
     nothing;
 end
@@ -17405,7 +17427,7 @@ end
 
 var int&? tex1;
 finalize
-    tex1 = _alloc(1);
+    tex1 = &_alloc(1);
 with
     nothing;
 end
@@ -17444,7 +17466,7 @@ var int ret = _V;           // v=1, ret=1
 do
     var _t&? tex;
     finalize
-        tex = _alloc(1);    // v=2
+        tex = &_alloc(1);    // v=2
     with
         _dealloc(tex);
     end
@@ -17459,7 +17481,7 @@ ret = ret + _V;             // ret=7
 do
     var _t&? tex;
     finalize
-        tex = _alloc(0);    // v=4
+        tex = &_alloc(0);    // v=4
     with
         if tex? then
             _dealloc(tex);
@@ -17484,7 +17506,7 @@ var int win_w;
 var int win_h;
 var _SDL_Window& win;
     finalize
-        win = _SDL_CreateWindow("UI - Texture",
+        win = &_SDL_CreateWindow("UI - Texture",
                             500, 1300, 800, 480, _SDL_WINDOW_SHOWN);
     with
         _SDL_DestroyWindow(win);
@@ -17515,7 +17537,7 @@ with
     every SDL_REDRAW do
         var void&? srf;
         finalize
-            srf = _my_alloc();
+            srf = &_my_alloc();
         with
             _my_free();
         end
@@ -17576,7 +17598,7 @@ escape 1;
 Test { [[
 input void A;
 var int ret;
-var int& pret = ret;
+var int& pret = &ret;
 par/or do
    async(pret) do
       pret=10;
@@ -17593,7 +17615,7 @@ escape ret;
 Test { [[
 input void A;
 var int ret;
-var int& pret = ret;
+var int& pret = &ret;
 par/or do
    async(pret) do
       pret=10;
@@ -17724,7 +17746,7 @@ end;
 
 Test { [[
 var int a = 1;
-var int& pa = a;
+var int& pa = &a;
 async (a) do
     var int a = do
         escape 1;
@@ -18197,7 +18219,7 @@ escape ret;
 
 Test { [[
 var int i;
-var int& pi=i;
+var int& pi=&i;
 async (pi) do
     var int i = 10;
     loop do
@@ -18216,7 +18238,7 @@ escape i;
 
 Test { [[
 var int i;
-var int& pi = i;
+var int& pi = &i;
 async (pi) do
     var int i = 10;
     loop do
@@ -18254,7 +18276,7 @@ escape i;
 
 Test { [[
 var int i = 10;
-var int& pi = i;
+var int& pi = &i;
 async (pi) do
     loop do
         i = i - 1;
@@ -18271,7 +18293,7 @@ escape i;
 
 Test { [[
 var int sum;
-var int& p = sum;
+var int& p = &sum;
 async (p) do
     var int i = 10;
     var int sum = 0;
@@ -19720,7 +19742,7 @@ native do
         escape &a;
     }
 end
-var int&? p = _f();
+var int&? p = &_f();
 escape p!;
 ]],
     fin = 'line 8 : attribution requires `finalize´',
@@ -19737,7 +19759,7 @@ native do
 end
 var int&? p;
 finalize
-    p = _f();
+    p = &_f();
 with
     nothing;
 end
@@ -19756,7 +19778,7 @@ native do
 end
 var int&? p;
 finalize
-    p = _f();
+    p = &_f();
 with
     nothing;
 end
@@ -19791,7 +19813,7 @@ var int a;
 do
     var int&? p;
     finalize
-        p = _f();
+        p = &_f();
     with
         a = p!;
 end
@@ -19814,7 +19836,7 @@ do
     var int&? p;
     do
         finalize
-            p = _f();
+            p = &_f();
         with
             a = a + p!;
 end
@@ -19871,7 +19893,7 @@ escape 1;
 Test { [[
 input void OS_START;
 var int h = 10;
-var int& p = h;
+var int& p = &h;
 do
     var int x = 0;
     await OS_START;
@@ -20302,7 +20324,7 @@ escape v2[0] + v2[1] + v2[2];
 
 Test { [[
 var u8[10] vec = [1,2,3];
-var u8[]&  ref = vec;
+var u8[]&  ref = &vec;
 escape $$ref + $ref + ref[0] + ref[1] + ref[2];
 ]],
     run = 19,
@@ -20310,7 +20332,7 @@ escape $$ref + $ref + ref[0] + ref[1] + ref[2];
 
 Test { [[
 var u8[10]  vec = [1,2,3];
-var u8[11]& ref = vec;
+var u8[11]& ref = &vec;
 escape $$ref + $ref + ref[0] + ref[1] + ref[2];
 ]],
     run = 1,
@@ -20319,7 +20341,7 @@ escape $$ref + $ref + ref[0] + ref[1] + ref[2];
 
 Test { [[
 var u8[10] vec = [1,2,3];
-var u8[9]& ref = vec;
+var u8[9]& ref = &vec;
 escape $$ref + $ref + ref[0] + ref[1] + ref[2];
 ]],
     env = 'line 2 : types mismatch (`u8[]&´ <= `u8[]´) : dimension mismatch',
@@ -20356,7 +20378,7 @@ native do
     }
 end
 var int[2] a  = [1,2];
-var int[2]& b = a;
+var int[2]& b = &a;
 _f(b);
 escape b[0] + b[1];
 ]],
@@ -20387,7 +20409,7 @@ end
 
 var int[10] vs;
 var T t with
-    this.vs = vs;
+    this.vs = &vs;
 end;
 t.vs[0] = t.vs[0] + 2;
 
@@ -20409,7 +20431,7 @@ end
 
 var int v;
 var T t with
-    this.v = v;
+    this.v = &v;
 end;
 t.v = t.v + 2;
 
@@ -20424,7 +20446,7 @@ escape t.v;
 Test { [[
 var int[10]& rs;
 var int[10]  vs = [1];
-rs = vs;
+rs = &vs;
 vs[0] = vs[0] + 2;
 
 rs[0] = rs[0] * 3;
@@ -20446,7 +20468,7 @@ end
 
 var int[10] vs;
 var T t with
-    this.vs = vs;
+    this.vs = &vs;
 end;
 t.vs[0] = t.vs[0] + 2;
 
@@ -21113,7 +21135,8 @@ p := { NULL };
 escape 1;
 //escape p==null;
 ]],
-    fin = 'line 2 : attribution requires `finalize´',
+    ref = 'line 2 : invalid attribution : requires the alias operator `&´',
+    --fin = 'line 2 : attribution requires `finalize´',
 }
 
 Test { [[
@@ -21423,7 +21446,7 @@ end
 var _u8[2] v;
 v[0] = 8;
 v[1] = 5;
-escape _f2(&v[0],&v[1]) + _f1(v) + _f1(&v[0]);
+escape _f2(&&v[0],&&v[1]) + _f1(v) + _f1(&&v[0]);
 ]],
     run = 39,
 }
@@ -24667,7 +24690,7 @@ Test { [[
 var int& v;
 do
     var int i = 1;
-    v = i;
+    v = &i;
 end
 escape v;
 ]],
@@ -24766,7 +24789,7 @@ do
     i = v;
 end
 var T t with
-    this.i = outer.i;
+    this.i = &outer.i;
 end;
 escape i;
 ]],
@@ -24782,7 +24805,7 @@ do
     v = i;
 end
 var T t with
-    this.i = outer.i;
+    this.i = &outer.i;
 end;
 escape i;
 ]],
@@ -24800,7 +24823,7 @@ do
     v = i;
 end
 var T t with
-    this.i = outer.i;
+    this.i = &outer.i;
 end;
 i = 10;
 await OS_START;
@@ -24818,7 +24841,7 @@ do
     i = v;
 end
 spawn T with
-    this.i = outer.i;
+    this.i = &outer.i;
 end;
 escape i;
 ]],
@@ -24843,13 +24866,13 @@ spawn T;
 ret = ret + i;  // 2
 
 var T t2 with
-    this.i = outer.i;
+    this.i = &outer.i;
 end;
 ret = ret + i;  // 12
 
 i = 0;
 spawn T with
-    this.i = i;
+    this.i = &i;
 end;
 ret = ret + i;  // 22
 
@@ -24878,13 +24901,13 @@ spawn T;
 ret = ret + i;  // 1    2
 
 var T t2 with
-    this.i = outer.i;
+    this.i = &outer.i;
 end;
 ret = ret + i;  // 11   13
 
 i = 0;
 spawn T with
-    this.i = i;
+    this.i = &i;
 end;
 ret = ret + i;  // 10   23
 
@@ -24902,7 +24925,7 @@ do
     end
 end
 var T t with
-    this.i = outer.i;
+    this.i = &outer.i;
 end;
 escape 1;
 ]],
@@ -24927,13 +24950,13 @@ spawn T;
 ret = ret + i;  // 2
 
 var T t2 with
-    this.i = outer.i;
+    this.i = &outer.i;
 end;
 ret = ret + t2.v;  // 12
 
 i = 0;
 spawn T with
-    this.i = i;
+    this.i = &i;
 end;
 ret = ret + t2.v;  // 22
 
@@ -24954,7 +24977,7 @@ end
 
 var T t with
     this.p = v;
-    this.v = v;
+    this.v = &v;
 end;
 
 escape *(t.p) + *(t.v);
@@ -24964,7 +24987,7 @@ escape *(t.p) + *(t.v);
 
 Test { [[
 var int i = 1;
-var int& v = i;
+var int& v = &i;
 
 class T with
     var int&& p = null;
@@ -24974,7 +24997,7 @@ end
 
 var T t with
     this.p = &&v;
-    this.v = v;
+    this.v = &v;
 end;
 
 escape *(t.p) + (t.v);
@@ -24984,7 +25007,7 @@ escape *(t.p) + (t.v);
 
 Test { [[
 var int i = 1;
-var int& v = i;
+var int& v = &i;
 
 class T with
     var int&& p = null;
@@ -24997,7 +25020,7 @@ end
 
 var T t with
     this.p := &&v;
-    this.v = v;
+    this.v = &v;
 end;
 
 escape *(t.p) + (t.v);
@@ -27442,7 +27465,7 @@ do
 end
 var int v = 0;
 var T t with
-    this.i = v;
+    this.i = &v;
 end;
 escape v;
 ]],
@@ -27501,7 +27524,7 @@ do
 end
 var int i = 10;
 var T t with
-    this.i = outer.i;
+    this.i = &outer.i;
 end;
 escape t.i!;
 ]],
@@ -27543,7 +27566,7 @@ var int i = 1;
 var T t1;
 
 var T t2 with
-    this.i = outer.i;
+    this.i = &outer.i;
 end;
 
 escape t1.i;
@@ -27560,7 +27583,7 @@ end
 var int i = 1;
 
 var T t2 with
-    this.i = outer.i;
+    this.i = &outer.i;
 end;
 
 var T t1;
@@ -27616,7 +27639,7 @@ interface Global with
     var int& v;
 end
 var int  um = 1;
-var int& v = um;
+var int& v = &um;
 escape 1;//global:v;
 ]],
     run = 1,
@@ -27627,7 +27650,7 @@ interface Global with
     var int& v;
 end
 var int  um = 1;
-var int& v = um;
+var int& v = &um;
 escape global:v;
 ]],
     run = 1,
@@ -27645,7 +27668,7 @@ do
 end
 
 var int  um = 111;
-var int& v = um;
+var int& v = &um;
 var T t;
 escape t.v;
 ]],
@@ -27672,8 +27695,8 @@ interface Global with
 end
 
 var T t_;
-var T& t = t_;
-global:t = t;
+var T& t = &t_;
+global:t = &t;
 
 escape global:t.v;
 ]],
@@ -27694,7 +27717,7 @@ do
 end
 
 var U u with
-    this.t = t;
+    this.t = &t;
 end;
 
 escape 1;
@@ -27722,11 +27745,11 @@ do
 end
 
 var U u with
-    this.t = t;
+    this.t = &t;
 end;
 
 var V v with
-    this.u = u;
+    this.u = &u;
 end;
 
 escape t.x + u.t.x + v.u.t.x;
@@ -27755,11 +27778,11 @@ do
 end
 
 var U u with
-    this.t = t;
+    this.t = &t;
 end;
 
 var V v with
-    this.u = u;
+    this.u = &u;
 end;
 
 escape t.x + u.t.x + v.u.t.x;
@@ -27776,7 +27799,7 @@ end
 loop do
     var int x = 10;
     var Ship ship1 with
-        this.v = x;
+        this.v = &x;
     end;
     escape 1;
 end
@@ -27792,7 +27815,7 @@ do
 end
 var T t with
     var int x;
-    this.v = x;
+    this.v = &x;
 end;
 escape 1;
 ]],
@@ -27806,7 +27829,7 @@ do
 end
 var int x = 10;
 var T t with
-    this.v = x;
+    this.v = &x;
 end;
 x = 11;
 escape t.v;
@@ -27826,15 +27849,15 @@ end
 
 var T t1 with
     var V v_ = V(1);
-    this.v = v_;
+    this.v = &v_;
 end;
 var T t2 with
     var V v_ = V(2);
-    this.v = v_;
+    this.v = &v_;
 end;
 var T t3 with
     var V v_ = V(3);
-    this.v = v_;
+    this.v = &v_;
 end;
 
 escape t1.v.v + t2.v.v + t3.v.v;
@@ -27850,7 +27873,7 @@ do
 end
 var int x = 10;
 var T t with
-    this.v = x;
+    this.v = &x;
 end;
 var int y = 15;
 t.v = y;
@@ -28539,7 +28562,7 @@ class T with
 do
     var void&? ptr;
     finalize
-        ptr = _myalloc();
+        ptr = &_myalloc();
     with
         _myfree(&&ptr!);
     end
@@ -29924,7 +29947,7 @@ class Pingu with
 do
     every 10s do
         spawn WalkerAction with
-            this.pingu = outer;
+            this.pingu = &outer;
         end;
     end
 end
@@ -29950,7 +29973,7 @@ do
         pool WalkerAction[] was;
         every 10s do
             spawn WalkerAction in was with
-                this.pingu = outer;
+                this.pingu = &outer;
             end;
         end
     end
@@ -30091,10 +30114,10 @@ end
 pool T[] ts1;
 pool T[2] ts2;
 var U _ with
-    this.ts = ts1;
+    this.ts = &ts1;
 end;
 var U _ with
-    this.ts = ts2;
+    this.ts = &ts2;
 end;
 escape 1;
 ]],
@@ -30105,7 +30128,7 @@ native do
     int V = 0;
 end
 var int i;
-var int& r = i;
+var int& r = &i;
 
 class T with
 do
@@ -30127,7 +30150,7 @@ end
 
 spawn T in ts;
 var U u with
-    this.xxx = outer.ts;
+    this.xxx = &outer.ts;
 end;
 
 escape _V;
@@ -30144,7 +30167,7 @@ end
 
 var int sum = 0;
 var Body b with
-    this.sum = sum;
+    this.sum = &sum;
 end;
 sum = 10;
 
@@ -30173,8 +30196,8 @@ pool X[1] bodies;
 var  int  sum = 1;
 
 var Body b with
-    this.bodies = bodies;
-    this.sum    = sum;
+    this.bodies = &bodies;
+    this.sum    = &sum;
 end;
 
 escape sum;
@@ -30242,8 +30265,8 @@ class Body with
 do
     var Body&&? nested =
         spawn Body in bodies with
-            this.bodies = bodies;
-            this.sum    = sum;
+            this.bodies = &bodies;
+            this.sum    = &sum;
         end;
     if nested? then
         watching *nested! do
@@ -30258,8 +30281,8 @@ pool Body[4] bodies;
 var  int     sum = 0;
 
 var Body b with
-    this.bodies = bodies;
-    this.sum    = sum;
+    this.bodies = &bodies;
+    this.sum    = &sum;
 end;
 
 escape sum;
@@ -30275,8 +30298,8 @@ class Body with
 do
     var Body&&? nested =
         spawn Body in bodies with
-            this.bodies = bodies;
-            this.sum    = sum;
+            this.bodies = &bodies;
+            this.sum    = &sum;
         end;
     if nested? then
         await *nested!;
@@ -30288,8 +30311,8 @@ pool Body[] bodies;
 var  int     sum = 0;
 
 var Body b with
-    this.bodies = bodies;
-    this.sum    = sum;
+    this.bodies = &bodies;
+    this.sum    = &sum;
 end;
 
 escape sum;
@@ -30323,8 +30346,8 @@ class Body with
 do
     var Body&&? nested =
         spawn Body in bodies with
-            this.bodies = bodies;
-            this.sum    = sum;
+            this.bodies = &bodies;
+            this.sum    = &sum;
         end;
     if nested? then
         await *nested!;
@@ -30336,8 +30359,8 @@ pool Body[1] bodies;
 var  int     sum = 0;
 
 var Body b with
-    this.bodies = bodies;
-    this.sum    = sum;
+    this.bodies = &bodies;
+    this.sum    = &sum;
 end;
 
 escape sum;
@@ -30351,8 +30374,8 @@ class Body with
 do
     var Body&&? nested =
         spawn Body in bodies with
-            this.bodies = bodies;
-            this.sum    = sum;
+            this.bodies = &bodies;
+            this.sum    = &sum;
         end;
     sum = sum + 1;
 end
@@ -30361,8 +30384,8 @@ pool Body[1] bodies;
 var  int     sum = 0;
 
 var Body b with
-    this.bodies = bodies;
-    this.sum    = sum;
+    this.bodies = &bodies;
+    this.sum    = &sum;
 end;
 
 escape sum;
@@ -30377,8 +30400,8 @@ class Body with
 do
     var Body&&? nested =
         spawn Body in bodies with
-            this.bodies = bodies;
-            this.sum    = sum;
+            this.bodies = &bodies;
+            this.sum    = &sum;
         end;
     sum = sum + 1;
 end
@@ -30387,8 +30410,8 @@ pool Body[1] bodies;
 var  int     sum = 0;
 
 var Body b with
-    this.bodies = bodies;
-    this.sum    = sum;
+    this.bodies = &bodies;
+    this.sum    = &sum;
 end;
 
 escape sum;
@@ -30402,13 +30425,13 @@ class Body with
     var  int&     sum;
 do
     spawn Body in bodies with
-        this.bodies = bodies;
-        this.sum    = sum;
+        this.bodies = &bodies;
+        this.sum    = &sum;
     end;
     sum = sum + 1;
     spawn Body in bodies with
-        this.bodies = bodies;
-        this.sum    = sum;
+        this.bodies = &bodies;
+        this.sum    = &sum;
     end;
 end
 
@@ -30416,8 +30439,8 @@ pool Body[1] bodies;
 var  int     sum = 0;
 
 var Body b with
-    this.bodies = bodies;
-    this.sum    = sum;
+    this.bodies = &bodies;
+    this.sum    = &sum;
 end;
 
 escape sum;
@@ -30433,8 +30456,8 @@ do
     sum = sum + 1;
     loop do
         spawn Body in bodies with
-            this.bodies = bodies;
-            this.sum    = sum;
+            this.bodies = &bodies;
+            this.sum    = &sum;
         end;
     end
 end
@@ -30443,8 +30466,8 @@ pool Body[1] bodies;
 var  int     sum = 0;
 
 var Body b with
-    this.bodies = bodies;
-    this.sum    = sum;
+    this.bodies = &bodies;
+    this.sum    = &sum;
 end;
 
 escape sum;
@@ -30460,8 +30483,8 @@ do
     sum = sum + 1;
     loop do
         var Body&&? t = spawn Body in bodies with
-            this.bodies = bodies;
-            this.sum    = sum;
+            this.bodies = &bodies;
+            this.sum    = &sum;
         end;
         watching *t! do
             await FOREVER;
@@ -30473,8 +30496,8 @@ pool Body[1] bodies;
 var  int     sum = 0;
 
 var Body b with
-    this.bodies = bodies;
-    this.sum    = sum;
+    this.bodies = &bodies;
+    this.sum    = &sum;
 end;
 
 escape sum;
@@ -30495,8 +30518,8 @@ class Body with
 do
     *this.sum.v = *this.sum.v + 1;
     spawn Body in this.bodies with
-        this.bodies = bodies;
-        this.sum    = sum;
+        this.bodies = &bodies;
+        this.sum    = &sum;
     end;
 end
 
@@ -30507,8 +30530,8 @@ end;
 
 pool Body[7] bodies;
 do Body with
-    this.bodies = bodies;
-    this.sum    = sum;
+    this.bodies = &bodies;
+    this.sum    = &sum;
 end;
 
 escape v;
@@ -30531,8 +30554,8 @@ do
     await 1s;
     *this.sum.v = *this.sum.v + 1;
     spawn Body in this.bodies with
-        this.bodies = bodies;
-        this.sum    = sum;
+        this.bodies = &bodies;
+        this.sum    = &sum;
     end;
 end
 
@@ -30543,8 +30566,8 @@ end;
 
 pool Body[7] bodies;
 do Body with
-    this.bodies = bodies;
-    this.sum    = sum;
+    this.bodies = &bodies;
+    this.sum    = &sum;
 end;
 
 escape v;
@@ -30582,9 +30605,9 @@ do
         if n:NODE then
             *this.sum.v = *this.sum.v + n:NODE.v;
             spawn Body in this.bodies with
-                this.bodies = bodies;
+                this.bodies = &bodies;
                 this.n      = &&n:NODE.left;
-                this.sum    = sum;
+                this.sum    = &sum;
             end;
         end
     end
@@ -30597,9 +30620,9 @@ end;
 
 pool Body[7] bodies;
 do Body with
-    this.bodies = bodies;
+    this.bodies = &bodies;
     this.n      = tree;
-    this.sum    = sum;
+    this.sum    = &sum;
 end;
 
 escape v;
@@ -32029,7 +32052,7 @@ class V with
 do
     var int&? v;
     finalize
-        v = _f();
+        v = &_f();
     with
         _V = _V+1;
     end
@@ -32067,7 +32090,7 @@ class V with
 do
     var int&? v;
     finalize
-        v = _f();
+        v = &_f();
     with
         _V = _V+1;
     end
@@ -32186,7 +32209,7 @@ class V with
 do
     var int&? v;
     finalize
-        v = _f();
+        v = &_f();
     with
         _V = _V+1;
     end
@@ -32228,7 +32251,7 @@ class V with
 do
     var int&? v;
     finalize
-        v = _f();
+        v = &_f();
     with
         _V = _V+1;
     end
@@ -32309,7 +32332,7 @@ class V with
 do
     var int&? v;
     finalize
-        v = _f();
+        v = &_f();
     with
         _V = _V+1;
     end
@@ -32352,7 +32375,7 @@ class V with
 do
     var int&? v;
     finalize
-        v = _f();
+        v = &_f();
     with
         _V = _V+1;
     end
@@ -32398,7 +32421,7 @@ class V with
 do
     var int&? v;
     finalize
-        v = _f();
+        v = &_f();
     with
         _V = _V+1;
     end
@@ -32443,7 +32466,7 @@ class V with
 do
     var int&? v;
     finalize
-        v = _f();
+        v = &_f();
     with
         _V = _V+1;
     end
@@ -32490,7 +32513,7 @@ class V with
 do
     var int&? v;
     finalize
-        v = _f();
+        v = &_f();
     with
         _V = _V+1;
     end
@@ -32538,7 +32561,7 @@ class V with
 do
     var int&? v;
     finalize
-        v = _f();
+        v = &_f();
     with
         _V = _V+1;
     end
@@ -32587,7 +32610,7 @@ class V with
 do
     var int&? v;
     finalize
-        v = _f();
+        v = &_f();
     with
         _V = _V+1;
     end
@@ -32953,7 +32976,7 @@ end
 do
     var U u;
     spawn T with
-        this.u = u;
+        this.u = &u;
     end;
 end
 escape 1;
@@ -32988,7 +33011,7 @@ end
 
     var U u;
     spawn T with
-        this.u = u;
+        this.u = &u;
     end;
 escape 1;
 ]],
@@ -35437,7 +35460,7 @@ class T with
 do
 end
 var T t with
-    this.ptr = _v;
+    this.ptr = &_v;
 end;
 escape 1;
 ]],
@@ -40159,7 +40182,7 @@ end
 do
     var int cmds;
     spawn Run with
-        this.cmds = cmds;
+        this.cmds = &cmds;
     end;
 end
 
@@ -40177,7 +40200,7 @@ do
     pool Run[] rs;
     var int cmds;
     spawn Run in rs with
-        this.cmds = cmds;
+        this.cmds = &cmds;
     end;
 end
 
@@ -40582,7 +40605,7 @@ end
 do
     var UIGridPool pool1;
     var UIGrid g1 with
-        this.uis = pool1;
+        this.uis = &pool1;
     end;
 
     var T g2;
@@ -40626,7 +40649,7 @@ end
 
     var UIGridPool pool1;
     var UIGrid g1 with
-        this.uis = pool1;
+        this.uis = &pool1;
     end;
 
     var T g2;
@@ -40654,7 +40677,7 @@ do
 end
 
 var WorldmapScreen&&? ws = spawn WorldmapScreen with
-    this.me = _new_GUIScreen();
+    this.me = &_new_GUIScreen();
 end;
 
 escape 1;
@@ -40692,7 +40715,7 @@ end
 do
     var UIGridPool pool1;
     var UIGrid g1 with
-        this.uis = pool1;
+        this.uis = &pool1;
     end;
 
     var T g2;
@@ -42280,7 +42303,7 @@ escape 1;
 
 Test { [[
 var int  a=10, b=5;
-var int& p = b;
+var int& p = &b;
 async/thread do
 end
 escape a + b + p;
@@ -42299,7 +42322,7 @@ escape (ret == 1);
 
 Test { [[
 var int  a=10, b=5;
-var int& p = b;
+var int& p = &b;
 async/thread (a, p) do
     a = a + p;
     sync do
@@ -42313,7 +42336,7 @@ escape a + b + p;
 
 Test { [[
 var int  a=10, b=5;
-var int& p = b;
+var int& p = &b;
 var int ret =
     async/thread (a, p) do
         a = a + p;
@@ -42350,7 +42373,7 @@ var int x = 0;
 par/and do
     x = 1;
 with
-    var int& p = x;
+    var int& p = &x;
     p = 2;
     async/thread (p) do
         p = 2;
@@ -42369,7 +42392,7 @@ var int x = 0;
 par/and do
     x = 1;
 with
-    var int& p = x;
+    var int& p = &x;
     p = 2;
     async/thread (p) do
         sync do
@@ -42387,7 +42410,7 @@ escape x;
 
 Test { [[
 var int  a=10, b=5;
-var int& p = b;
+var int& p = &b;
 async/thread (a, p) do
     a = a + p;
     p = a;
@@ -42410,7 +42433,7 @@ escape 1;
 
 Test { [[
 var int  a=10, b=5;
-var int& p = b;
+var int& p = &b;
 par/and do
     async/thread (a, p) do
         a = a + p;
@@ -42429,7 +42452,7 @@ escape a + b + p;
 
 Test { [[
 var int  a=10, b=5;
-var int& p = b;
+var int& p = &b;
 async/thread (a, p) do
     sync do
         a = a + p;
@@ -42447,7 +42470,7 @@ native do
     ##include <unistd.h>
 end
 var int ret = 1;
-var int& p = ret;
+var int& p = &ret;
 par/or do
     async/thread (p) do
         sync do
@@ -42470,7 +42493,7 @@ native do
     ##include <unistd.h>
 end
 var int ret = 0;
-var int& p = ret;
+var int& p = &ret;
 par/or do
     async/thread (p) do
         _usleep(]]..i..[[);
@@ -42493,8 +42516,8 @@ end
 
 Test { [[
 var int  v1=10, v2=5;
-var int& p1 = v1;
-var int& p2 = v2;
+var int& p1 = &v1;
+var int& p2 = &v2;
 
 par/and do
     async/thread (v1, p1) do
@@ -42516,8 +42539,8 @@ escape v1+v2;
 
 Test { [[
 var int  v1, v2;
-var int& p1 = v1;
-var int& p2 = v2;
+var int& p1 = &v1;
+var int& p2 = &v2;
 
 native do
     int calc ()
@@ -42558,8 +42581,8 @@ escape v1;
 
 Test { [[
 var int  v1, v2;
-var int& p1 = v1;
-var int& p2 = v2;
+var int& p1 = &v1;
+var int& p2 = &v2;
 
 par/and do
     async/thread (p1) do
@@ -42595,8 +42618,8 @@ escape v1;
 
 Test { [[
 var int  v1, v2;
-var int& p1 = v1;
-var int& p2 = v2;
+var int& p1 = &v1;
+var int& p2 = &v2;
 
 native do
     int calc ()
@@ -42638,8 +42661,8 @@ escape v1;
 
 Test { [[
 var int  v1, v2;
-var int& p1 = v1;
-var int& p2 = v2;
+var int& p1 = &v1;
+var int& p2 = &v2;
 
 par/and do
     async/thread (p1) do
@@ -42685,7 +42708,7 @@ class T with
     event int ok;
 do
     var int v;
-    var int& p = v;
+    var int& p = &v;
     async/thread (p) do
         var int ret = 0;
         loop i in 50000 do
@@ -42762,7 +42785,7 @@ escape 10;
 
 Test { [[
 var int a;
-var int& pa = a;
+var int& pa = &a;
 async/thread (pa) do
     emit 1min;
     pa = 10;
@@ -42774,7 +42797,7 @@ escape a + 1;
 }
 Test { [[
 var int a;
-var int& pa = a;
+var int& pa = &a;
 async (pa) do
     emit 1min;
     pa = 10;
@@ -43392,7 +43415,7 @@ class T with
     var _t& t;
 do
     await 1s;
-    _f(&t);
+    _f(&&t);
 end
 escape 1;
 ]],
@@ -43605,7 +43628,7 @@ end
 var T t with
     this.v = 10;
 end;
-var T& tt = t;
+var T& tt = &t;
 tt.v = 5;
 escape t.v;
 ]],
@@ -43630,7 +43653,7 @@ do
 end
 var O o;
 var MoveObject m with
-    this.obj = o;
+    this.obj = &o;
 end;
 await 2s;
 escape o.v;
@@ -44412,7 +44435,7 @@ var char[10] str = [] .. "oioioi";
 [[ str = @str ]]
 var bool ret = [[ str == 'oioioi' ]];
 var char[10] cpy;
-var char[10]& ptr = cpy;
+var char[10]& ptr = &cpy;
 ptr = [[ str ]];
 escape ret and (not _strcmp(str,cpy));
 ]=],
@@ -44433,7 +44456,7 @@ native @nohold _strcmp();
 [[ str = '1234567890' ]]
 var char[2] cpy;
 var char[20] cpy_;
-var char[]& ptr = cpy;
+var char[]& ptr = &cpy;
 ptr = [[ str ]];
 escape (not _strcmp(cpy,"1234567890"));
 ]=],
@@ -45094,7 +45117,7 @@ end
 
 var D d;
 var T _ with
-    this.v = d.v;   // 13
+    this.v = &d.v;   // 13
 end;
 
 escape 1;
@@ -45115,7 +45138,7 @@ end
 
 var T _ with
     var D d;
-    this.v = d.v;
+    this.v = &d.v;
 end;
 
 escape 1;
@@ -45153,7 +45176,7 @@ or
 end
 
 var D d = D(10);
-var E e = E.X(d);
+var E e = E.X(&d);
 
 escape e.X.d.x;
 ]],
@@ -45176,7 +45199,7 @@ end
 var E e;
 do
     var D d = D(1);
-    e.X.d = d;
+    e.X.d = &d;
 end
 
 escape e.X.d.x;
@@ -45245,7 +45268,7 @@ end
 class LeafHandler with
     var Leaf& leaf;
 do
-    var Ball& ball = leaf.TWEEN.ball;
+    var Ball& ball = &leaf.TWEEN.ball;
     escape ball.x;
 end
 
@@ -45253,7 +45276,7 @@ var Ball ball = Ball(10);
 var Leaf leaf = Leaf.TWEEN(ball);
 
 var int x = do LeafHandler with
-                this.leaf = leaf;
+                this.leaf = &leaf;
             end;
 
 escape x;
@@ -46196,7 +46219,7 @@ escape not i?;
 
 Test { [[
 var int v = 10;
-var int&? i = v;
+var int&? i = &v;
 escape i!;
 ]],
     run = 10,
@@ -46205,7 +46228,7 @@ escape i!;
 Test { [[
 var int v1 = 0;
 var int v2 = 1;
-var int&? i = v1;
+var int&? i = &v1;
 i! = v2;
 escape v1;
 ]],
@@ -46215,7 +46238,7 @@ escape v1;
 Test { [[
 var int v1 = 0;
 var int v2 = 1;
-var int&? i = v1;
+var int&? i = &v1;
 i = v2;
 escape v1;
 ]],
@@ -46224,7 +46247,7 @@ escape v1;
 
 Test { [[
 var int v = 10;
-var int& i = v;
+var int& i = &v;
 escape v + i;
 ]],
     run = 20,
@@ -46232,7 +46255,7 @@ escape v + i;
 
 Test { [[
 var int v = 10;
-var int&? i = v;
+var int&? i = &v;
 escape v + i!;
 ]],
     run = 20,
@@ -46241,7 +46264,7 @@ escape v + i!;
 Test { [[
 var int v1 = 10;
 var int v2 =  1;
-var int&? i = v1;
+var int&? i = &v1;
 i = v2;
 i = 10;
 var int ret = i!;
@@ -46272,7 +46295,7 @@ do
 end
 var int i = 0;
 var T t with
-    this.i = i;
+    this.i = &i;
 end;
 escape t.i!;
 ]],
@@ -46288,7 +46311,7 @@ do
     var int v = 10;
 end
 var T t with
-    this.i = v;
+    this.i = &v;
 end;
 v = v / 2;
 escape t.i? + t.i! + 1;
@@ -46325,7 +46348,7 @@ do
 end
 var int v = 1;
 var T t with
-    this.i = v;
+    this.i = &v;
 end;
 v = 11;
 escape t.i!;
@@ -46337,7 +46360,7 @@ Test { [[
 native @nohold _g();
 var _SDL_Texture&? t_enemy_0, t_enemy_1;
 finalize
-    t_enemy_1 = _f();
+    t_enemy_1 = &_f();
 with
     _g(&t_enemy_1!);
 end
@@ -46360,7 +46383,7 @@ native @pure _id();
 var _t t;
     t.x = 11;
 
-var _t&? t_ = t;
+var _t&? t_ = &t;
 
 var int ret = t_!.x;
 t_!.x = 100;
@@ -46393,7 +46416,7 @@ native @nohold _myfree();
 
 var void&? v;
 finalize
-    v = _myalloc();
+    v = &_myalloc();
 with
     _myfree(&&v!);
 end
@@ -46415,7 +46438,7 @@ native @nohold _myfree();
 
 var void&? v;
 finalize
-    v = _myalloc();
+    v = &_myalloc();
 with
     if v? then
         _myfree(&&v!);
@@ -46448,28 +46471,28 @@ end
 
 var int&? v1;
     finalize
-        v1 = _fff(1);
+        v1 = &_fff(1);
     with
         nothing;
     end
 
 var int&? v2;
     finalize
-        v2 = _fff(2);
+        v2 = &_fff(2);
     with
         nothing;
     end
 
 var int&? v3;
     finalize
-        v3 = _UNSAFE_POINTER_TO_REFERENCE(_V1);
+        v3 = &_UNSAFE_POINTER_TO_REFERENCE(_V1);
     with
         nothing;
     end
 
 var int&? v4;
     finalize
-        v4 = _UNSAFE_POINTER_TO_REFERENCE(_V2);
+        v4 = &_UNSAFE_POINTER_TO_REFERENCE(_V2);
     with
         nothing;
     end
@@ -46559,7 +46582,7 @@ escape _fff(ui.bg_clr!).v;
 
 Test { [[
 var int ret;
-var int&? p = ret;
+var int&? p = &ret;
 p = p!;
 escape 1;
 ]],
@@ -46593,7 +46616,7 @@ i = 3;
 ret = ret + i!;      // 5
 
 // first
-p = ret;
+p = &ret;
 p = p! + 2;          // 7
 _assert(ret == 7);
 
@@ -46742,7 +46765,7 @@ var T t with
 end;
 
 var U u with
-    this.t = t;
+    this.t = &t;
 end;
 
 escape u.t.x!;
@@ -46768,7 +46791,7 @@ var T t with
 end;
 
 var U u with
-    this.t = t;
+    this.t = &t;
 end;
 
 escape u.t.x! + u.ret;
@@ -46792,11 +46815,11 @@ end
 var int z = 10;
 
 var T t with
-    this.x = z;
+    this.x = &z;
 end;
 
 var U u with
-    this.t = t;
+    this.t = &t;
 end;
 
 escape u.t.x! + u.ret;
@@ -46824,7 +46847,7 @@ var T t with
 end;
 
 var U u with
-    this.t = t;
+    this.t = &t;
 end;
 
 escape u.t.x!;
@@ -46872,7 +46895,7 @@ var T t with
 end;
 
 var U u with
-    this.t = t;
+    this.t = &t;
 end;
 var I&& i = &&u;
 
@@ -46941,7 +46964,7 @@ pool List[] list;
 
 list = new List.CONS(10, List.NIL());
 
-pool List[]& lll = list;
+pool List[]& lll = &list;
 
 escape lll.CONS.head;
 ]],
@@ -47269,8 +47292,8 @@ do
 
     var Body&&? nested =
         spawn Body in bodies with
-            this.bodies = bodies;
-            this.sum    = sum;
+            this.bodies = &bodies;
+            this.sum    = &sum;
         end;
     if nested? then
         watching *nested! do
@@ -47287,8 +47310,8 @@ pool Body[] bodies;
 var  int     sum = 0;
 
 var Body b with
-    this.bodies = bodies;
-    this.sum    = sum;
+    this.bodies = &bodies;
+    this.sum    = &sum;
 end;
 await b;
 
@@ -47307,8 +47330,8 @@ do
 
     var Body&&? nested =
         spawn Body in bodies with
-            this.bodies = bodies;
-            this.sum    = sum;
+            this.bodies = &bodies;
+            this.sum    = &sum;
         end;
     if nested? then
         watching *nested! do
@@ -47325,8 +47348,8 @@ pool Body[2] bodies;
 var  int     sum = 0;
 
 var Body b with
-    this.bodies = bodies;
-    this.sum    = sum;
+    this.bodies = &bodies;
+    this.sum    =& sum;
 end;
 await b;
 
@@ -47362,9 +47385,9 @@ do
         if n:NODE then
             var Body&&? left =
                 spawn Body in this.bodies with
-                    this.bodies = bodies;
+                    this.bodies = &bodies;
                     this.n      = &&n:NODE.left;
-                    this.sum    = sum;
+                    this.sum    = &sum;
                 end;
             if left? then
                 watching *left! do
@@ -47376,9 +47399,9 @@ do
 
             var Body&&? right =
                 spawn Body in this.bodies with
-                    this.bodies = bodies;
+                    this.bodies = &bodies;
                     this.n      = &&n:NODE.right;
-                    this.sum    = sum;
+                    this.sum    = &sum;
                 end;
             if right? then
                 watching *right! do
@@ -47399,9 +47422,9 @@ var int sum = 0;
 
 pool Body[7] bodies;
 do Body with
-    this.bodies = bodies;
+    this.bodies = &bodies;
     this.n      = tree;
-    this.sum    = sum;
+    this.sum    = &sum;
 end;
 
 escape sum;
@@ -47448,9 +47471,9 @@ do
         if n:NODE then
             var Body&&? left =
                 spawn Body in this.bodies with
-                    this.bodies = bodies;
+                    this.bodies = &bodies;
                     this.n      = &&n:NODE.left;
-                    this.sum    = sum;
+                    this.sum    = &sum;
                 end;
             if left? then
                 watching *left! do
@@ -47462,9 +47485,9 @@ do
 
             var Body&&? right =
                 spawn Body in this.bodies with
-                    this.bodies = bodies;
+                    this.bodies = &bodies;
                     this.n      = &&n:NODE.right;
-                    this.sum    = sum;
+                    this.sum    = &sum;
                 end;
             if right? then
                 watching *right! do
@@ -47485,9 +47508,9 @@ var int sum = 0;
 
 pool Body[7] bodies;
 do Body with
-    this.bodies = bodies;
+    this.bodies = &bodies;
     this.n      = tree;
-    this.sum    = sum;
+    this.sum    = &sum;
 end;
 
 escape sum;
@@ -47533,7 +47556,7 @@ do
     watching *n do
         if n:CONS then
             spawn Body in this.bodies with
-                this.bodies = bodies;
+                this.bodies = &bodies;
                 this.n      = &&n:CONS.tail;
             end;
         end
@@ -47542,7 +47565,7 @@ end
 
 pool Body[3] bodies;
 do Body with
-    this.bodies = bodies;
+    this.bodies = &bodies;
     this.n      = list;
 end;
 
@@ -47574,7 +47597,7 @@ do
     watching *n do
         if n:CONS then
             spawn Body in this.bodies with
-                this.bodies = bodies;
+                this.bodies = &bodies;
                 this.n      = &&n:CONS.tail;
             end;
         end
@@ -47583,7 +47606,7 @@ end
 
 pool Body[3] bodies;
 do Body with
-    this.bodies = bodies;
+    this.bodies = &bodies;
     this.n      = list;
 end;
 
@@ -47925,7 +47948,7 @@ do
 
             var Body&&? tail =
                 spawn Body in this.bodies with
-                    this.bodies = bodies;
+                    this.bodies = &bodies;
                     this.n      = &&n:CONS.tail;
                 end;
             if tail? then
@@ -47937,7 +47960,7 @@ end
 
 pool Body[3] bodies;
 do Body with
-    this.bodies = bodies;
+    this.bodies = &bodies;
     this.n      = list;
 end;
 
@@ -47991,7 +48014,7 @@ do
 
             var Body&&? tail =
                 spawn Body in this.bodies with
-                    this.bodies = bodies;
+                    this.bodies = &bodies;
                     this.n      = &&n:CONS.tail;
                 end;
             if tail? then
@@ -48003,7 +48026,7 @@ end
 
 pool Body[4] bodies;
 do Body with
-    this.bodies = bodies;
+    this.bodies = &bodies;
     this.n      = list;
 end;
 
@@ -48052,7 +48075,7 @@ do
 
             var Body&&? tail =
                 spawn Body in this.bodies with
-                    this.bodies = bodies;
+                    this.bodies = &bodies;
                     this.n      = &&n:CONS.tail;
                 end;
             if tail? then
@@ -48064,7 +48087,7 @@ end
 
 pool Body[3] bodies;
 do Body with
-    this.bodies = bodies;
+    this.bodies = &bodies;
     this.n      = list;
 end;
 */
@@ -48113,7 +48136,7 @@ do
 
             var Body&&? tail =
                 spawn Body in this.bodies with
-                    this.bodies = bodies;
+                    this.bodies = &bodies;
                     this.n      = &&n:CONS.tail;
                 end;
             if tail? then
@@ -48125,7 +48148,7 @@ end
 
 pool Body[3] bodies;
 do Body with
-    this.bodies = bodies;
+    this.bodies = &bodies;
     this.n      = list;
 end;
 */
@@ -48495,7 +48518,7 @@ native do
 end
 var void&? p1;
 finalize
-    p1 = _PTR2REF(this);
+    p1 = &_PTR2REF(this);
 with
     nothing;
 end
@@ -48529,7 +48552,7 @@ native do
 end
 var void&? p1;
 finalize
-    p1 = _PTR2REF(this);
+    p1 = &_PTR2REF(this);
 with
     nothing;
 end
@@ -48563,7 +48586,7 @@ native do
 end
 var void&? p1;
 finalize
-    p1 = _PTR2REF(this);
+    p1 = &_PTR2REF(this);
 with
     nothing;
 end
@@ -48612,7 +48635,7 @@ native do
 end
 var void&? p1;
 finalize
-    p1 = _PTR2REF(this);
+    p1 = &_PTR2REF(this);
 with
     nothing;
 end
@@ -49961,7 +49984,7 @@ with
                     angle = cmd:LEFT.angle;
                 end
                 do TurtleTurn with
-                    this.turtle  = turtle;
+                    this.turtle  = &turtle;
                     this.angle   = angle;
                     this.isRight = cmd:RIGHT;
                 end;
@@ -49974,7 +49997,7 @@ with
                     pixels = cmd:BACKWARD.pixels;
                 end
                 do TurtleMove with
-                    this.turtle    = turtle;
+                    this.turtle    = &turtle;
                     this.pixels    = pixels;
                     this.isForward = cmd:FORWARD;
                 end;
@@ -50068,7 +50091,7 @@ Test { [[
 native @nohold _free();
 var void&? ptr;
 finalize
-    ptr = _malloc(10000);
+    ptr = &_malloc(10000);
 with
     _free(&&ptr!);
 end
@@ -50372,7 +50395,7 @@ do
 
             var Body&&? tail =
                 spawn Body in this.bodies with
-                    this.bodies = bodies;
+                    this.bodies = &bodies;
                     this.n      = &&n:CONS.tail;
                 end;
             if tail? then
@@ -50384,7 +50407,7 @@ end
 
 pool Body[4] bodies;
 do Body with
-    this.bodies = bodies;
+    this.bodies = &bodies;
     this.n      = list;
 end;
 
@@ -51094,7 +51117,7 @@ end
 
 pool Command[] cmds1;
 pool Command[]& cmds2;
-cmds2 = cmds1;
+cmds2 = &cmds1;
 escape 1;
 ]],
     run = 1,
@@ -51113,7 +51136,7 @@ cmds1 = new Command.NEXT(
             Command.NEXT(
                 Command.NOTHING()));
 
-pool Command[]& cmds2 = cmds1;
+pool Command[]& cmds2 = &cmds1;
 
 escape cmds2.NEXT.nxt.NEXT.nxt.NOTHING;
 ]],
@@ -51129,13 +51152,14 @@ or
 end
 
 pool Command[]& cmds2
-    = new Command.NEXT(
+    = &new Command.NEXT(
             Command.NEXT(
                 Command.NOTHING()));
 
 escape 1;
 ]],
-    ref = 'line 9 : invalid attribution (not a reference)',
+    parser = 'line 10 : after `new´ : expected `;´'
+    --ref = 'line 9 : invalid attribution (not a reference)',
     --ref = 'line 10 : reference must be bounded before use',
 }
 
@@ -51150,7 +51174,7 @@ end
 
 pool Command[2] cmds1;
 pool Command[2]& cmds2
-        = cmds1;
+        = &cmds1;
 
 cmds1 = new Command.NEXT(
             Command.NEXT(
@@ -51243,7 +51267,7 @@ or
 end
 
 pool Command[2] cmds1;
-pool Command[2]& cmds2 = cmds1;
+pool Command[2]& cmds2 = &cmds1;
 
 cmds1 = new Command.NEXT(Command.NOTHING());
 cmds2.NEXT.nxt = new Command.NEXT(Command.NOTHING());
@@ -51261,7 +51285,7 @@ or
 end
 
 pool Command[2] cmds1;
-pool Command[2]& cmds2 = cmds1;
+pool Command[2]& cmds2 = &cmds1;
 
 cmds1 = new Command.NEXT(Command.NOTHING());
 cmds2.NEXT.nxt = new Command.NEXT(
@@ -51282,7 +51306,7 @@ end
 
 pool Command[3] cmds1;
 pool Command[3]& cmds2;
-cmds2 = cmds1;
+cmds2 = &cmds1;
 
 cmds1 = new Command.NEXT(
             Command.NEXT(
@@ -51306,7 +51330,7 @@ end
 pool Command[10] cmds1;
 
 pool Command[10]& cmds2;
-cmds2 = cmds1;
+cmds2 = &cmds1;
 
 cmds1 = new Command.NEXT(
             Command.NEXT(
@@ -51330,7 +51354,7 @@ end
 
 pool Command[] cmds1;
 
-pool Command[]& cmds2 = cmds1;
+pool Command[]& cmds2 = &cmds1;
 
 cmds1 = new Command.NEXT(
             Command.NEXT(
@@ -51356,7 +51380,7 @@ end
 pool Command[] cmds1;
 
 pool Command[]& cmds2;
-cmds2 = cmds1;
+cmds2 = &cmds1;
 
 cmds1 = new Command.NEXT(
             Command.NEXT(
@@ -51417,7 +51441,7 @@ traverse cmd222 in cmds do
 end
 
 var int ret = do Run with
-    this.cmds1 = cmds;
+    this.cmds1 = &cmds;
 end;
 
 escape ret;
@@ -51472,7 +51496,7 @@ pool Command[] cmds = new Command.NEXT(
                 Command.NOTHING()));
 
 var int ret = do Run with
-    this.cmds = cmds;
+    this.cmds = &cmds;
 end;
 
 escape ret;
@@ -51515,7 +51539,7 @@ do
 end
 
 var Run r with
-    this.cmds   = cmds;
+    this.cmds   = &cmds;
 end;
 
 escape 1;
@@ -51608,7 +51632,7 @@ do
 end
 
 var int ret = do BTreeTraverse with
-                    this.btree = bs;
+                    this.btree = &bs;
               end;
 
 escape ret;
@@ -52039,9 +52063,9 @@ var IOTimeMachine io;
 #endif
 
 var TimeMachine tm with
-    this.app = app;
+    this.app = &app;
 #ifdef TM_QUEUE
-    this.io  = io;
+    this.io  = &io;
 #endif
 end;
 
@@ -52184,9 +52208,9 @@ var IOTimeMachine io;
 #endif
 
 var TimeMachine tm with
-    this.app = app;
+    this.app = &app;
 #ifdef TM_QUEUE
-    this.io  = io;
+    this.io  = &io;
 #endif
 end;
 
@@ -52396,9 +52420,9 @@ var IOTimeMachine io;
 #endif
 
 var TimeMachine tm with
-    this.app = app;
+    this.app = &app;
 #ifdef TM_QUEUE
-    this.io  = io;
+    this.io  = &io;
 #endif
 end;
 
@@ -52614,9 +52638,9 @@ var IOTimeMachine io;
 #endif
 
 var TimeMachine tm with
-    this.app = app;
+    this.app = &app;
 #ifdef TM_QUEUE
-    this.io  = io;
+    this.io  = &io;
 #endif
 end;
 
@@ -52758,9 +52782,9 @@ var IOTimeMachine io;
 #endif
 
 var TimeMachine tm with
-    this.app = app;
+    this.app = &app;
 #ifdef TM_QUEUE
-    this.io  = io;
+    this.io  = &io;
 #endif
 end;
 

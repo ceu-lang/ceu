@@ -326,7 +326,7 @@ do
 
                             var _tceu_queue&? qu;
                             finalize
-                                qu = _queue_nxt(time_now, time_req);
+                                qu = &_queue_nxt(time_now, time_req);
                             with
                                 nothing;
                             end

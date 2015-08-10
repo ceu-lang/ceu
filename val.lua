@@ -406,16 +406,9 @@ ASR(to.tag ~= 'Op1_!', me, 'invalid operand in assignment')
             return '('..ceu2c(op)..V(e1,CTX)..')'
         end
     end,
-    ['Op1_&'] = function (me)
+    ['Op1_&'] = function (me, CTX)
         local op, e1 = unpack(me)
-        local tp_id = TP.id(e1.tp)
-        if ENV.clss[tp_id] and (not TP.check(e1.tp,'&&','-&')) then
-            return V(e1) -- class accesses are already normalized to references
-        elseif ENV.adts[tp_id] and ENV.adts[tp_id].is_rec then
-            return V(e1) -- adt pool accesses are already normalized to references
-        else
-            return '('..ceu2c(op)..V(e1)..')'
-        end
+        return V(e1, CTX)
     end,
     ['Op1_&&'] = function (me)
         local op, e1 = unpack(me)
