@@ -56,9 +56,10 @@ F = {
             local var = me.vars[i]
 
             local is_arr_dyn = (TP.check(var.tp,'[]')           and
+                               (var.pre == 'var')               and
                                (not TP.is_ext(var.tp,'_','@'))) and 
                                (var.tp.arr=='[]')               and
-                               (not (var.cls or var.adt))
+                               (not var.cls)
             if is_arr_dyn then
                 me.trails_n = me.trails_n + 1
             end
@@ -146,9 +147,10 @@ G = {
             local var = me.vars[i]
 
             local is_arr_dyn = (TP.check(var.tp,'[]')           and
+                               (var.pre == 'var')               and
                                (not TP.is_ext(var.tp,'_','@'))) and 
                                (var.tp.arr=='[]')               and
-                               (not (var.cls or var.adt))
+                               (not var.cls)
             if is_arr_dyn then
                 var.trl_vector = { t0, t0 }
                 t0 = t0 + 1

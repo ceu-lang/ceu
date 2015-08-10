@@ -930,8 +930,9 @@ _STK->trl = &_STK_ORG->trls[ ]]..stmts.trails[1]..[[ ];
 
         for _, var in ipairs(me.vars) do
             local is_arr = (TP.check(var.tp,'[]')           and
+                           (var.pre == 'var')               and
                            (not TP.is_ext(var.tp,'_','@'))) and
-                           (not (var.cls or var.adt))
+                           (not var.cls)
             local is_dyn = (var.tp.arr=='[]')
 
             local tp_id = TP.id(var.tp)

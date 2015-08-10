@@ -9,286 +9,8 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
+--do return end
 --]===]
-
-Test { [[
-native do
-    int V = 10;
-    int* getV (void) {
-        return &V;
-    }
-end
-
-var int&? v;
-finalize
-    v = _getV();
-with
-    nothing;
-end
-
-escape v!;
-]],
-    run = 10,
-}
-Test { [[
-native do
-    int V = 10;
-    int* getV (void) {
-        return &V;
-    }
-end
-
-var int&? v1;
-finalize
-    v1 = _getV();
-with
-    nothing;
-end
-v1 = 20;
-
-var int&? v2;
-finalize
-    v2 = _getV();
-with
-    nothing;
-end
-
-escape v1!+v2!;
-]],
-    run = 40,
-}
-Test { [[
-native do
-    int V = 10;
-    int* getV (void) {
-        return &V;
-    }
-end
-
-var int&? v;
-finalize
-    v = _getV();
-with
-    nothing;
-end
-
-class T with
-    var int& v;
-do
-    v = 20;
-end
-do T with
-    this.v = v;
-end;
-
-escape v!;
-]],
-    env = 'line 21 : types mismatch (`int&´ <= `int&?´)',
-}
-Test { [[
-native do
-    int V = 10;
-    int* getV (void) {
-        return &V;
-    }
-end
-
-var int&? v;
-finalize
-    v = _getV();
-with
-    nothing;
-end
-
-class T with
-    var int&? v;
-do
-    v = 20;
-end
-do T with
-    this.v = v!;
-end;
-
-escape v!;
-]],
-    run = 20,
-}
-Test { [[
-native do
-    int V = 10;
-    int* getV (void) {
-        return &V;
-    }
-end
-
-var int&? v;
-finalize
-    v = _getV();
-with
-    nothing;
-end
-
-class T with
-    var int&? v;
-do
-    v = 20;
-end
-do T with
-    this.v = v;
-end;
-
-escape v!;
-]],
-    run = 20,
-}
-Test { [[
-native do
-    int V = 10;
-    int* getV (void) {
-        return &V;
-    }
-end
-
-var int&? v;
-finalize
-    v = _getV();
-with
-    nothing;
-end
-
-class T with
-    var int& v;
-do
-    v = 20;
-end
-do T with
-    this.v = v;
-end;
-
-escape v!;
-]],
-    env = 'line 21 : types mismatch (`int&´ <= `int&?´)',
-}
-Test { [[
-native do
-    int V = 10;
-    int* getV (void) {
-        return &V;
-    }
-end
-
-var int&? v;
-finalize
-    v = _getV();
-with
-    nothing;
-end
-
-class T with
-    var int& v;
-do
-    v = 20;
-end
-do T with
-    this.v = v!;
-end;
-
-escape v!;
-]],
-    run = 20,
-}
-Test { [[
-native do
-    int V = 10;
-    int* getV (void) {
-        return &V;
-    }
-end
-
-var _int&? v;
-finalize
-    v = _getV();
-with
-    nothing;
-end
-
-class T with
-    var _int& v;
-do
-    v = 20;
-end
-do T with
-    this.v = v;
-end;
-
-escape v!;
-]],
-    env = 'line 21 : types mismatch (`_int&´ <= `_int&?´)',
-}
---do return end
-
-Test { [[
-input int* SDL_KEYDOWN_;
-event bool in_tm;
-
-pause/if in_tm do
-    class Input with
-    do
-        await SDL_KEYDOWN_ ;
-    end
-end
-
-escape 1;
-]],
-    run = 1,
-}
---do return end
-
-Test { [[
-data SDL_Rect with
-    var int x;
-end
-var SDL_Rect[1] rcs;
-var SDL_Rect ri;
-ri = SDL_Rect(10);
-rcs[0] = ri;
-escape rcs[0].x;
-]],
-    run = '7] runtime error: access out of bounds',
-}
-
-Test { [[
-data SDL_Rect with
-    var int x;
-end
-var SDL_Rect ri;
-ri = SDL_Rect(10);
-var SDL_Rect[1] rcs = [ri];
-escape rcs[0].x;
-]],
-    run = 10,
-}
-
-Test { [[
-native @pure _f();
-native do
-    int f (int* rect) {
-        return *rect;
-    }
-end
-
-data SDL_Rect with
-    var int x;
-end
-var SDL_Rect ri;
-ri = SDL_Rect(10);
-var SDL_Rect[1] rcs = [ri];
-escape _f((int*)&rcs[0]);
-]],
-    run = 10,
-}
-
---do return end
 
 -------------------------------------------------------------------------------
 
@@ -14699,7 +14421,7 @@ escape ret;
     run = 5,
 }
 
--- REFERENCES / REFS / &
+-->>> REFERENCES / REFS / &
 
 Test { [[
 var int a = 1;
@@ -15496,6 +15218,223 @@ escape(a);
     --env = 'line 8 : native variable/function "_f" is not declared',
     run = 10,
 }
+
+Test { [[
+native do
+    int V = 10;
+    int* getV (void) {
+        return &V;
+    }
+end
+
+var int&? v;
+finalize
+    v = _getV();
+with
+    nothing;
+end
+
+escape v!;
+]],
+    run = 10,
+}
+Test { [[
+native do
+    int V = 10;
+    int* getV (void) {
+        return &V;
+    }
+end
+
+var int&? v1;
+finalize
+    v1 = _getV();
+with
+    nothing;
+end
+v1 = 20;
+
+var int&? v2;
+finalize
+    v2 = _getV();
+with
+    nothing;
+end
+
+escape v1!+v2!;
+]],
+    run = 40,
+}
+Test { [[
+native do
+    int V = 10;
+    int* getV (void) {
+        return &V;
+    }
+end
+
+var int&? v;
+finalize
+    v = _getV();
+with
+    nothing;
+end
+
+class T with
+    var int& v;
+do
+    v = 20;
+end
+do T with
+    this.v = v;
+end;
+
+escape v!;
+]],
+    env = 'line 21 : types mismatch (`int&´ <= `int&?´)',
+}
+Test { [[
+native do
+    int V = 10;
+    int* getV (void) {
+        return &V;
+    }
+end
+
+var int&? v;
+finalize
+    v = _getV();
+with
+    nothing;
+end
+
+class T with
+    var int&? v;
+do
+    v = 20;
+end
+do T with
+    this.v = v!;
+end;
+
+escape v!;
+]],
+    run = 20,
+}
+Test { [[
+native do
+    int V = 10;
+    int* getV (void) {
+        return &V;
+    }
+end
+
+var int&? v;
+finalize
+    v = _getV();
+with
+    nothing;
+end
+
+class T with
+    var int&? v;
+do
+    v = 20;
+end
+do T with
+    this.v = v;
+end;
+
+escape v!;
+]],
+    run = 20,
+}
+Test { [[
+native do
+    int V = 10;
+    int* getV (void) {
+        return &V;
+    }
+end
+
+var int&? v;
+finalize
+    v = _getV();
+with
+    nothing;
+end
+
+class T with
+    var int& v;
+do
+    v = 20;
+end
+do T with
+    this.v = v;
+end;
+
+escape v!;
+]],
+    env = 'line 21 : types mismatch (`int&´ <= `int&?´)',
+}
+Test { [[
+native do
+    int V = 10;
+    int* getV (void) {
+        return &V;
+    }
+end
+
+var int&? v;
+finalize
+    v = _getV();
+with
+    nothing;
+end
+
+class T with
+    var int& v;
+do
+    v = 20;
+end
+do T with
+    this.v = v!;
+end;
+
+escape v!;
+]],
+    run = 20,
+}
+Test { [[
+native do
+    int V = 10;
+    int* getV (void) {
+        return &V;
+    }
+end
+
+var _int&? v;
+finalize
+    v = _getV();
+with
+    nothing;
+end
+
+class T with
+    var _int& v;
+do
+    v = 20;
+end
+do T with
+    this.v = v;
+end;
+
+escape v!;
+]],
+    env = 'line 21 : types mismatch (`_int&´ <= `_int&?´)',
+}
+
+--<<< REFERENCES / REFS / &
 
 Test { [[
 native _f();
@@ -20594,6 +20533,34 @@ escape 1;
     props = 'line 3 : not permitted inside an interface',
 }
 
+Test { [[
+var int[] v;
+$v = 0;
+escape $v + 1;
+]],
+    run = 1,
+}
+Test { [[
+data SDL_Rect with
+    var int x;
+end
+var SDL_Rect[] cell_rects;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+data SDL_Rect with
+    var int x;
+end
+var SDL_Rect r1 = SDL_Rect(10);
+var SDL_Rect[] cell_rects = [r1];
+escape cell_rects[0].x;
+]],
+    run = 10,
+}
+
 -- VECTORS FOR POINTERS TO ORGS
 
 Test { [[
@@ -20925,6 +20892,50 @@ ret = ret + is[0]? + is[1]? + is[2]?;
 escape ret;
 ]],
     run = { ['~>1s'] = 3 },
+}
+
+Test { [[
+data SDL_Rect with
+    var int x;
+end
+var SDL_Rect[1] rcs;
+var SDL_Rect ri;
+ri = SDL_Rect(10);
+rcs[0] = ri;
+escape rcs[0].x;
+]],
+    run = '7] runtime error: access out of bounds',
+}
+
+Test { [[
+data SDL_Rect with
+    var int x;
+end
+var SDL_Rect ri;
+ri = SDL_Rect(10);
+var SDL_Rect[1] rcs = [ri];
+escape rcs[0].x;
+]],
+    run = 10,
+}
+
+Test { [[
+native @pure _f();
+native do
+    int f (int* rect) {
+        return *rect;
+    }
+end
+
+data SDL_Rect with
+    var int x;
+end
+var SDL_Rect ri;
+ri = SDL_Rect(10);
+var SDL_Rect[1] rcs = [ri];
+escape _f((int*)&rcs[0]);
+]],
+    run = 10,
 }
 
 --<< VECTORS
@@ -23109,7 +23120,7 @@ end
     run = 50,
 }
 
-    -- PAUSE
+-->>> PAUSE
 
 Test { [[
 event bool a;
@@ -23398,6 +23409,24 @@ escape 1;
 ]],
     run = 1,
 }
+
+Test { [[
+input int* SDL_KEYDOWN_;
+event bool in_tm;
+
+pause/if in_tm do
+    class Input with
+    do
+        await SDL_KEYDOWN_ ;
+    end
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
+--<<< PAUSE
 
 -- TIGHT LOOPS
 
@@ -38065,6 +38094,32 @@ escape 1;
 ]],
     wrn = true,
     run = 1,
+}
+
+-- TODO: bad message
+Test { [[
+interface UI with
+end
+
+class UIGridItem with
+    var UI*  ui;
+do
+end
+
+class UIGrid with
+    interface UI;
+    pool  UIGridItem[] uis;
+do
+    function (void)=>void go do
+        loop item in this.uis do
+            _f(item:ui);
+        end
+    end
+end
+escape 1;
+]],
+    wrn = true,
+    fin = 'line 15 : unsafe access to pointer "ui" across `class´ (tests.lua : 9)',
 }
 
 -- POOLS / 1ST-CLASS

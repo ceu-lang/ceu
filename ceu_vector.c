@@ -57,7 +57,7 @@ int ceu_vector_setlen (tceu_vector* vector, int nxt) {
 #ifdef CEU_VECTOR_MALLOC
         /* shrink malloc'ed arrays */
         if (vector->max <= 0) {
-            if (ceu_vector_resize(vector,nxt) == NULL) {
+            if (ceu_vector_resize(vector,nxt)==NULL && nxt>0) {
                 return 0;
             }
         }
